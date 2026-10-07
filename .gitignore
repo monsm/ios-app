@@ -1,0 +1,11 @@
+# Xcode
+*.xcodeproj
+*.xcworkspace
+build/
+DerivedData/
+xcuserdata/
+*.ipa
+
+# macOS / Node
+.DS_Store
+node_modules/

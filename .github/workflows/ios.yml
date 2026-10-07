@@ -1,0 +1,82 @@
+# iOS 云编译 — GitHub Actions (macOS + Xcode 26.6 / iOS 26.5 SDK)
+# 部署目标: iOS 26.5 (与 runner 镜像的 SDK 完全一致, 不需要任何降级探测)
+# 产物: 未签名设备 .ipa (供 AltStore/Sideloadly 自签安装) + 编译/测试日志
+#
+# 关于 XCTest: macos-latest 镜像自 2026-09 起不再附带 iOS 模拟器设备,
+# 且禁止 simctl create (SimError 403), 因此差分测试无法在云端执行;
+# 这里保留 build-for-testing 编译闸门, 保证测试代码不会悄悄腐坏。
+# 需要真正执行测试时, 在装有 iOS 26.5 模拟器的 Mac 上跑:
+#   xcodebuild test -project OfflineLock.xcodeproj -scheme OfflineLock \
+#     -destination 'platform=iOS Simulator,name=iPhone 17 Pro' CODE_SIGNING_ALLOWED=NO
+name: iOS Build
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:            # PR 也跑: 编译/测试错误在合并前暴露
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build (iOS 26.5 SDK, unsigned IPA)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node (金标向量重生成)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: 重新生成差分金标 (fixtures/golden.json)
+        run: node tools/golden.js
+
+      - name: Swift 静态闸门 (括号/字符串平衡 + 对比度 + 动态字体/触达)
+        run: |
+          node tools/swiftcheck.js
+          node tools/contrast.js
+          node tools/dynamictype.js
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode Project
+        run: xcodegen generate
+
+      - name: 编译校验测试目标 (云端无模拟器, 只编译不执行)
+        run: |
+          mkdir -p build
+          set -o pipefail
+          xcodebuild build-for-testing \
+            -project OfflineLock.xcodeproj \
+            -scheme OfflineLock \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/DerivedData \
+            CODE_SIGNING_ALLOWED=NO | tee build/test.log
+
+      - name: Build (Device, unsigned IPA)
+        run: |
+          mkdir -p build
+          set -o pipefail
+          xcodebuild archive \
+            -project OfflineLock.xcodeproj \
+            -scheme OfflineLock \
+            -sdk iphoneos \
+            -configuration Release \
+            -archivePath build/OfflineLock.xcarchive \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" | tee build/device.log
+          mkdir -p build/Payload
+          cp -R "build/OfflineLock.xcarchive/Products/Applications/OfflineLock.app" build/Payload/
+          cd build && zip -qry OfflineLock-unsigned.ipa Payload
+
+      - name: 上传产物
+        if: always()          # 失败也能拿到日志
+        uses: actions/upload-artifact@v4
+        with:
+          name: OfflineLock-build
+          path: |
+            build/test.log
+            build/device.log
+            build/OfflineLock-unsigned.ipa
+          if-no-files-found: error

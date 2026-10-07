@@ -1,0 +1,79 @@
+# XcodeGen 工程定义 — 生成 OfflineLock.xcodeproj (CI 上 brew install xcodegen 后执行)
+# 目标: 最新 iOS SDK (Xcode 26.6 / iOS 26.5), 最低部署版本 iOS 26.5
+name: OfflineLock
+options:
+  bundleIdPrefix: com.aapk
+  deploymentTarget:
+    iOS: "26.5"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: ""
+  configs:
+    Debug:
+      ENABLE_TESTABILITY: YES
+targets:
+  OfflineLock:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: 离线锁管家
+        CFBundleShortVersionString: "1.0.0"
+        CFBundleVersion: "1"
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        NSBluetoothAlwaysUsageDescription: 需要蓝牙连接并管理你的智能门锁 (扫描/配网/开锁/固件升级)。
+        NSBluetoothPeripheralUsageDescription: 需要蓝牙连接并管理你的智能门锁。
+        NSPhotoLibraryAddUsageDescription: 将成就分享卡保存到相册 (完全本地生成, 不上传)。
+        # 包8/411 恢复页相机扫码识别二维码备份 (纯本地 CoreImage 解码, 无网络)
+        NSCameraUsageDescription: 识别备份二维码, 用于换机扫码搬运 (411, 全程本地解码无网络)。
+        # 包8/428 充电自动备份: BGTask 注册 (执行时机由系统择机, 不承诺接电即备; 7 天签名下照常调度)
+        BGTaskSchedulerPermittedIdentifiers:
+          - com.kf.chargebackup
+        ITSAppUsesNonExemptEncryption: false
+        # 备选 App 图标 (包16/idea 896): 键名 = setAlternateIconName 入参, 与 Assets.xcassets 的 appiconset 同名
+        CFBundleAlternateIcons:
+          AppIcon-Ring:
+            CFBundleIconFiles:
+              - AppIcon-Ring
+          AppIcon-Key:
+            CFBundleIconFiles:
+              - AppIcon-Key
+          AppIcon-Shield:
+            CFBundleIconFiles:
+              - AppIcon-Shield
+    settings:
+      base:
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        INFOPLIST_KEY_UIUserInterfaceStyle: Automatic
+  OfflineLockTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests
+      - path: fixtures/golden.json
+        buildPhase: resources
+      - path: vendor/fixture/KX_V5.2.9_180503183402.zip
+        buildPhase: resources
+    dependencies:
+      - target: OfflineLock
+    info:
+      path: Tests/Info.plist
+      properties: {}
+schemes:
+  OfflineLock:
+    build:
+      targets:
+        OfflineLock: all
+        OfflineLockTests: [test]
+    test:
+      targets:
+        - OfflineLockTests
