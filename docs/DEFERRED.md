@@ -222,3 +222,15 @@
 | 331 | 提前失效滑杆 | 本地意图 | 滑杆只写 kf_cestudy_earlyexp_, 不改协议; 到点由详情页/列表提示停用（不自动下发） |
 
 统计：本包 ⚠8 项全部按上表降级/占位（"约"级或本地计次）; 舍弃 302/318/321 另有 ROADMAP 包5「舍弃（3）」备案。
+
+## 靠近自动开锁 (AUTOOPEN-PLAN) 暂缓/保守备案
+
+> 落地于 App/Core/AutoOpen.swift + LinkSenseKit (RSSI 喂入) + RootView (F0/F1 scenePhase) +
+> SettingsView (设置-靠近自动开锁 Section, 含标定页 AutoCalView) + DiagnosticsView (上次拒开原因行)。
+> 数据层新增键: kf_autoopen / kf_autoopen_face / kf_autoopen_audit_<mac> (尾段 500, 永不记密钥明文) /
+> kf_autoopen_suspend_until_<mac> (rc=26 防拆 24h 挂起) / kf_autocal_<mac> (F3 RSSI P95 标定)。
+
+| 编号 | 名称 | 状态 | 原因 / 接线点 |
+|---|---|---|---|
+| AUTOOPEN-7 | Siri/Widget 入口 | 暂缓 (方案 §6 第 7 项) | §3.5 定位"只做带到就绪态"——免费账号无 App Groups (Widget target 需每周重签, 见包17 4/943 同源), Intent 10s 窗口 vs BLE 3-5s+命令 2-3s 不承诺"远程开门"; 全门绿判定 AutoOpenGate.rejectReason 可被 Intent 复用, 接线点 AutoOpenController.attempt |
+| AUTOOPEN-G3 | ekey 滚动 (times 语义) | 保守不自动重签 | G3 times 字段语义未确证 (可能非剩余次数), 前置真机矩阵 (times=0/1/8 × 连开/断电/锁侧重置) 未跑; 实验通过前 rc=5 仅提示"请联系主人换钥" (AutoOpenController.dispatch case 5), 不自动重签 |

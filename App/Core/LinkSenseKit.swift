@@ -231,8 +231,11 @@ final class LinkSense: ObservableObject {
     private func autoReconnectTick() {
         guard !DiagFlags.silent else { return }
         let app = self.app
-        guard let mac = app?.currentMac, !mac.isEmpty, sceneActive,
-              lockSvc.connectedMAC != mac else { return }
+        guard let mac = app?.currentMac, !mac.isEmpty, sceneActive else { return }
+        // 靠近自动开锁 (AUTOOPEN): 2s tick 顺带 F2' 停留判定 — RSSI 武装 + 静置满 3s 才走全门判定;
+        // 全门不过 = 静默拒绝 + 审计 (绝不自动开锁, 96 铁律由 AutoOpenController 内部门控兜底)
+        AutoOpenController.shared.tickDwell(mac: mac)
+        guard lockSvc.connectedMAC != mac else { return }
         guard DB.store.getBool("kf_link_auto_" + mac, true) else { return }
         guard CredentialOrg.pendingCount(mac) > 0 else { return }   // 无变更不回连, 省电 (93 同源原则)
         if Date().timeIntervalSince(lastLadderAt) < nextLadderInterval() { return }
@@ -387,6 +390,8 @@ final class LinkSense: ObservableObject {
     // ---------- 每锁 RSSI 记忆 (71 设备列表迷你信号格 / 129 极限距离) ----------
     static func saveRssi(mac: String, rssi: Int) {
         DB.store.set("kf_linkrssi_" + mac, rssi)
+        // 靠近自动开锁 (AUTOOPEN): 每个 RSSI 事件喂入回差滤波 (未开主开关 = 零开销, 控制器内 guard)
+        Task { @MainActor in AutoOpenController.shared.feedRssi(mac: mac, rssi: rssi) }
     }
     /// 上次扫到的该锁 RSSI; nil = 从未扫到
     static func rssiFor(_ mac: String) -> Int? {

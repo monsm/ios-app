@@ -582,6 +582,12 @@ struct RootView: View {
                 }
                 .onChange(of: scenePhase) { _, phase in   // 135 回前台即刷新
                     LinkSense.shared.setSceneActive(phase == .active)
+                    // 靠近自动开锁 (AUTOOPEN): F0 前台门 + F1 进前台按档位刷面容 (挂起期静默)
+                    if phase == .active {
+                        AutoOpenController.shared.onForeground(mac: app.currentMac)
+                    } else {
+                        AutoOpenController.shared.onBackground()
+                    }
                 }
             } else {
                 AppLockView()

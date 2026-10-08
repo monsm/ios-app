@@ -90,6 +90,21 @@ struct DiagnosticsView: View {
                 Text("注入一台名字超长、备注超长、含无时间戳与告警行的测试门锁，用来人工走查各界面在极端数据下是否破版。")
             }
             #endif
+            // 靠近自动开锁 (AUTOOPEN): 上次拒开原因行 (读 kf_autoopen_audit_, 只记哪道门拒了, 永不记密钥材料)
+            if let last = AutoOpen.lastReject(app.currentMac), !app.currentMac.isEmpty {
+                Section("靠近自动开锁") {
+                    LabeledRow("上次拒开原因", last.reason)
+                    if AutoOpen.audits(app.currentMac).count > 1 {
+                        LabeledRow("更早拒开", AutoOpen.recent(app.currentMac, 3).dropFirst().map { $0.at + " " + $0.reason }.joined(separator: " / "))
+                            .accessibilityLabel("更早拒开记录")
+                    }
+                } footer: {
+                    Text("审计只记「哪道门拒了」与时刻, 永不落 ekey/skey 明文; 尾段 500 条。")
+                        .font(.caption)
+                        .foregroundStyle(DS.Palette.textSub)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
             Section("运行日志 (最新在末尾)") {
                 if logRows.isEmpty {
                     HStack(alignment: .top, spacing: DS.Space.s) {

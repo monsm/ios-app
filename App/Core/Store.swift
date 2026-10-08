@@ -270,6 +270,10 @@ enum DB {
                   "kf_linkrssi_", "kf_link_auto_"] {
             store.remove(p + m)
         }
+        // 自动开锁每锁键 (kf_autocal_ / kf_autoopen_audit_ / kf_autoopen_suspend_until_, 尾段带 mac)
+        for p in ["kf_autocal_", "kf_autoopen_audit_", "kf_autoopen_suspend_until_"] {
+            store.remove(p + m)
+        }
         // 包6 历史表键带 <mac>_ 段 (kf_chist_<mac>_...), 按前缀段整族清
         for p in ["kf_chist_" + m + "_"] {
             for k in store.keys() where k.hasPrefix(p) { store.remove(k) }
@@ -418,6 +422,22 @@ enum DB {
     static func saveTailgate(_ mac: String, _ c: TailgateCfg) { set(c, "kf_tailgate_" + mac) }
     static func syncTime(_ mac: String) -> Double { store.get("kf_synctime_" + mac, Double.self) ?? 0 }
     static func saveSyncTime(_ mac: String, _ t: Double) { store.set("kf_synctime_" + mac, t) }
+    // 靠近自动开锁 (AUTOOPEN-PLAN): 主开关/面容档位/拒开审计 (永不记密钥明文, 尾段 500 条)/
+    // rc=26 防拆挂起时刻 — accessor 仿 syncTime 模式, 逻辑在 App/Core/AutoOpen.swift
+    static var autoOpen: Bool {
+        get { store.getBool("kf_autoopen", false) }
+        set { store.set("kf_autoopen", newValue) }
+    }
+    static var autoOpenFaceTier: Int {
+        get { store.getInt("kf_autoopen_face", 0) }   // 0 标准 / 1 严格
+        set { store.set("kf_autoopen_face", newValue) }
+    }
+    static func autoOpenAudit(_ mac: String) -> [String: Any] {
+        store.getDict("kf_autoopen_audit_" + mac)
+    }
+    static func autoOpenSuspendUntil(_ mac: String) -> Int64 {
+        store.get("kf_autoopen_suspend_until_" + mac, Int64.self) ?? 0
+    }
     static func otpStatus(_ mac: String) -> OtpStatus? { get(OtpStatus.self, "otpStatus_" + mac) }
     static func saveOtpStatus(_ mac: String, _ s: OtpStatus) { set(s, "otpStatus_" + mac) }
     static func otpIdx(_ mac: String) -> OtpIdx? { get(OtpIdx.self, "otpIdx_" + mac) }

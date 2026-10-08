@@ -57,6 +57,7 @@ struct SettingsView: View {
                 lockSection
                 securitySection
                 unlockSection
+                autoOpenSection
                 familySection
                 toolsSection
                 drillSection
@@ -114,6 +115,7 @@ struct SettingsView: View {
             SearchHit(id: "s.maint", title: "维护与保养", icon: "wrench.and.screwdriver") { app.tabSelection = 0 },
             SearchHit(id: "s.safemode", title: "门锁安全模式", icon: "shield.lefthalf.filled") { app.tabSelection = 0 },
             SearchHit(id: "s.unlockopt", title: "开锁偏好 (按住确认/围栏/提示音)", icon: "hand.draw") { app.tabSelection = 0 },
+            SearchHit(id: "s.autoopen", title: "靠近自动开锁 (走近自动开门/距离标定)", icon: "person.walk") { app.tabSelection = 3 },
             SearchHit(id: "s.members", title: "成员管理", icon: "person.2") { showMembers = true },
             SearchHit(id: "s.keychainhw", title: "蓝牙钥匙串", icon: "key.horizontal") { showKeychainHW = true },
             SearchHit(id: "s.gateway", title: "智能网关", icon: "antenna.radiowaves.left.and.right") { showGateway = true },
@@ -322,6 +324,13 @@ struct SettingsView: View {
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    // ---------- 靠近自动开锁 (AUTOOPEN-PLAN §4): 全门绿才自动开门, 默认关, fail-closed ----------
+    private var autoOpenSection: some View {
+        if !mac.isEmpty {
+            AutoOpenSection(mac: mac)
         }
     }
 

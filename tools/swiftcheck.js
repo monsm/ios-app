@@ -10,6 +10,7 @@ const files = [];
   }
 })('App');
 files.push('Tests/GoldenDiffTests.swift');
+files.push('Tests/AUTOOPENTests.swift');
 let fail = 0;
 for (const f of files) {
   const src = fs.readFileSync(f, 'utf8');
