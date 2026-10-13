@@ -854,17 +854,24 @@ struct UnlockDial: View {
         }
     }
 
+    /// 圆盘中心图标 (从 dialButtonLabel 再抽一层: 两个 symbolEffect 的重载推断把整个标签拖超时;
+    /// 并把 options 写成显式 SymbolEffectOptions.repeating 进一步消歧)
+    @ViewBuilder
+    private func dialIcon() -> some View {
+        Image(systemName: iconName)
+            .font(.system(size: 46, weight: .medium))
+            .foregroundStyle(contentColor)
+            // 状态切换时图标形变过渡 (锁→信号→勾), 比"换了张图"更有生命感
+            .symbolEffect(.replace.downUp, isActive: !reduceMotion, value: iconName)
+            .symbolEffect(.variableColor.iterative, options: SymbolEffectOptions.repeating,
+                          isActive: !reduceMotion && searching, value: iconName)
+    }
+
     /// 圆盘按钮的标签 (从 body 内联的 Button label 里抽出 —— 巨型表达式报 type-check 超时)
     @ViewBuilder
     private func dialButtonLabel() -> some View {
         VStack(spacing: DS.Space.s) {
-            Image(systemName: iconName)
-                .font(.system(size: 46, weight: .medium))
-                .foregroundStyle(contentColor)
-                // 状态切换时图标形变过渡 (锁→信号→勾), 比"换了张图"更有生命感
-                .symbolEffect(.replace.downUp, isActive: !reduceMotion, value: iconName)
-                .symbolEffect(.variableColor.iterative, options: .repeating,
-                              isActive: !reduceMotion && searching, value: iconName)
+            dialIcon()
             Text(title)
                 .font(.headline)
                 .foregroundStyle(contentColor)

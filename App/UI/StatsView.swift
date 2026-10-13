@@ -1260,6 +1260,18 @@ struct StatsView: View {
     // @ViewBuilder 不是装饰: 体内先一条 let 绑定点数组, 再接一条 Chart{}.chartOverlay{}.frame(...) 的尾随表达式,
     // 已是多语句 body 且没有 return —— 少了这个属性编译器报 "function declares an opaque return type,
     // but has no return statements" (与 run 56 的 LockCompareView/rhythmSection 同一类, swiftshape R1b 现在盯这个)。
+    /// 628 曲线起点旗标 —— 2026-10-13 run 63 从 memberLines 的内联 Chart 内容里抽出:
+    /// 该表达式报 type-check 超时。(Chart 内容用 @ChartContentBuilder, 不是 @ViewBuilder)
+    @ChartContentBuilder
+    private func flagMark(_ s: MemberSeries, _ first: MemberSeries.Point, weekWindowDays: Int) -> some ChartContent {
+        PointMark(x: .value("日", first.day), y: .value(s.name, first.opens))
+            .foregroundStyle(s.color)
+            .symbol { Image(systemName: "flag.fill").font(.system(size: 7)) }
+            .opacity(hiddenMembers.contains(s.id) ? 0 : 1)
+            .accessibilityLabel(s.name + " 近 " + String(weekWindowDays) + " 天首次记录")
+            .accessibilityValue(RecordSearch.dayKeyOf(first.day))
+    }
+
     @ViewBuilder
     private func memberLines(_ m: StatsKit.StatModel) -> some View {
         // 628: 折线与起点插旗共用这一份 memberSeries —— Attribution 全链不便宜, 不各算一遍
@@ -1275,12 +1287,7 @@ struct StatsView: View {
                 // 旗子不挂点按 —— "跳该成员首条记录"那条路在记录页的按成员过滤 (582 pendingRecordsMember),
                 // 这里只做标记, 不承诺旗能跳 (曾写成"落在同一条路由上", 读的人会以为旗可点)。
                 if let first = s.points.min(by: { $0.day < $1.day }) {
-                    PointMark(x: .value("日", first.day), y: .value(s.name, first.opens))
-                        .foregroundStyle(s.color)
-                        .symbol { Image(systemName: "flag.fill").font(.system(size: 7)) }
-                        .opacity(hiddenMembers.contains(s.id) ? 0 : 1)
-                        .accessibilityLabel(s.name + " 近 " + String(m.weekWindowDays) + " 天首次记录")
-                        .accessibilityValue(RecordSearch.dayKeyOf(first.day))
+                    flagMark(s, first, weekWindowDays: m.weekWindowDays)
                 }
             }
         }
@@ -1707,23 +1714,8 @@ struct StatsView: View {
                             // 之前那行是给"没人消费 member 旗标"打的补丁，补丁现在由真正的消费点替代。
                             app.tabSelection = 2
                         } label: {
-                            HStack(spacing: DS.Space.s) {
-                                Text(rec.name)
-                                    .font(.footnote)
-                                    .foregroundStyle(DS.Palette.text)
-                                    .lineLimit(1)
-                                .frame(width: 56, alignment: .leading)
-                                Capsule()
-                                    .fill(StatsKit.StatModel.memberColor(i))
-                                    .frame(width: max(2, CGFloat(rec.approx) / CGFloat(max(members.first?.approx ?? 1, 1)) * 120))
-                                Text("约 \(rec.approx) 次")
-                                    .font(.caption)
-                                    .foregroundStyle(DS.Palette.textSub)
-                                    .lineLimit(1)
-                                Spacer(minLength: 0)
-                            }
-                            .frame(minHeight: DS.Hit.min)
-                            .contentShape(Rectangle())
+                            memberBarLabel(name: rec.name, approx: rec.approx, index: i,
+                                           maxApprox: members.first?.approx ?? 1)
                         }
                         .buttonStyle(PlainButtonStyle())
                         .accessibilityLabel("成员 " + rec.name + ", 近 " + String(barDays) + " 天约 " + String(rec.approx) + " 次; 点按到记录页按该成员筛选 (582)")
@@ -1931,47 +1923,7 @@ struct StatsView: View {
                             .font(.subheadline.weight(.medium))
                             .foregroundStyle(DS.Palette.text)
                         ForEach(pu) { p in
-                            // 628 跳转: 该密码归属的成员在成员表里能证明存在时, 整行可点 → 记录页按该成员过滤
-                            // (582/612 同一条 pendingRecordsMember 路由; 不造"跳到首条"的第二套深链 —— 落点就是该成员
-                            // 全部记录, 排序在记录页自己管)。归属不明 (owner 空/查无此人) 时保持纯文字, 不挂死按钮。
-                            let jumpId = (p.owner.isEmpty || DB.member(p.owner) == nil) ? nil : p.owner
-                            VStack(alignment: .leading, spacing: 4) {
-                                HStack(spacing: DS.Space.xs) {
-                                    Text(p.name)
-                                        .font(.footnote.weight(.medium))
-                                        .foregroundStyle(DS.Palette.text)
-                                        .lineLimit(1)
-                                    if let f = p.firstUseDay {
-                                        Text("首用 " + f + " (628)")
-                                            .font(.caption2)
-                                            .foregroundStyle(DS.Palette.accentText)
-                                            .lineLimit(1)
-                                    }
-                                    Spacer(minLength: 0)
-                                    Text("约 " + String(p.approxUses) + " 次")
-                                        .font(.caption2)
-                                        .foregroundStyle(DS.Palette.textSub)
-                                        .lineLimit(1)
-                                }
-                                // 用量比条: 已用/上限, 接近上限转橙
-                                Capsule()
-                                    .fill(p.ratio >= 0.8 ? DS.Palette.warn : DS.Palette.accent)
-                                    .frame(width: max(2, p.ratio * 120))
-                                .frame(height: 4)
-                            }
-                            .frame(minHeight: DS.Hit.min)
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                if let jid = jumpId {
-                                    app.pendingRecordsMember = jid
-                                    app.tabSelection = 2
-                                }
-                            }
-                            .accessibilityElement(children: .combine)
-                            .accessibilityLabel("密码 " + p.name + " 约使用 " + String(p.approxUses) + " 次, 用量 " + String(Int(p.ratio * 100)) + "%"
-                                + (p.firstUseDay.map { ", 首用 " + $0 } ?? "")
-                                + (jumpId == nil ? "" : "; 点按到记录页按该成员筛选 (628)"))
-                            .accessibilityAddTraits(jumpId == nil ? [] : .isButton)
+                            pwdUsageRow(p)
                         }
                         // 628 数据面实话: 首用只从密码时间窗推断 (锁端无逐凭证计数); 指纹侧没有等价的
                         // 逐指纹用量/首用可算 (attribution 只给"谁开的", 给不了"哪枚指纹开的"), 所以不列。
@@ -2268,6 +2220,74 @@ struct YearReportView: View {
                 }
             }
         }
+    }
+
+    /// 成员条行的标签 (从 body 内联的 Button label 抽出: 该表达式报 type-check 超时)
+    @ViewBuilder
+    private func memberBarLabel(name: String, approx: Int, index: Int, maxApprox: Int) -> some View {
+        HStack(spacing: DS.Space.s) {
+            Text(name)
+                .font(.footnote)
+                .foregroundStyle(DS.Palette.text)
+                .lineLimit(1)
+                .frame(width: 56, alignment: .leading)
+            Capsule()
+                .fill(StatsKit.StatModel.memberColor(index))
+                .frame(width: max(2, CGFloat(approx) / CGFloat(max(maxApprox, 1)) * 120))
+            Text("约 \(approx) 次")
+                .font(.caption)
+                .foregroundStyle(DS.Palette.textSub)
+                .lineLimit(1)
+            Spacer(minLength: 0)
+        }
+        .frame(minHeight: DS.Hit.min)
+        .contentShape(Rectangle())
+    }
+
+    /// 626/628 长期密码用量行 (从 body 内联的 ForEach 里抽出: 该表达式报 type-check 超时)
+    @ViewBuilder
+    private func pwdUsageRow(_ p: StatsKit.PwdUse) -> some View {
+        // 628 跳转: 该密码归属的成员在成员表里能证明存在时, 整行可点 → 记录页按该成员过滤
+        // (582/612 同一条 pendingRecordsMember 路由; 不造"跳到首条"的第二套深链 —— 落点就是该成员
+        // 全部记录, 排序在记录页自己管)。归属不明 (owner 空/查无此人) 时保持纯文字, 不挂死按钮。
+        let jumpId = (p.owner.isEmpty || DB.member(p.owner) == nil) ? nil : p.owner
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: DS.Space.xs) {
+                Text(p.name)
+                    .font(.footnote.weight(.medium))
+                    .foregroundStyle(DS.Palette.text)
+                    .lineLimit(1)
+                if let f = p.firstUseDay {
+                    Text("首用 " + f + " (628)")
+                        .font(.caption2)
+                        .foregroundStyle(DS.Palette.accentText)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 0)
+                Text("约 " + String(p.approxUses) + " 次")
+                    .font(.caption2)
+                    .foregroundStyle(DS.Palette.textSub)
+                    .lineLimit(1)
+            }
+            // 用量比条: 已用/上限, 接近上限转橙
+            Capsule()
+                .fill(p.ratio >= 0.8 ? DS.Palette.warn : DS.Palette.accent)
+                .frame(width: max(2, p.ratio * 120))
+                .frame(height: 4)
+        }
+        .frame(minHeight: DS.Hit.min)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if let jid = jumpId {
+                app.pendingRecordsMember = jid
+                app.tabSelection = 2
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("密码 " + p.name + " 约使用 " + String(p.approxUses) + " 次, 用量 " + String(Int(p.ratio * 100)) + "%"
+            + (p.firstUseDay.map { ", 首用 " + $0 } ?? "")
+            + (jumpId == nil ? "" : "; 点按到记录页按该成员筛选 (628)"))
+        .accessibilityAddTraits(jumpId == nil ? [] : .isButton)
     }
 
     /// 50 年报表的季度/月度聚合 —— 2026-10-13 run 63 从 @ViewBuilder 的 yearReport 里拆出

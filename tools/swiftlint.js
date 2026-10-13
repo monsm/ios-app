@@ -96,7 +96,11 @@ const SYS_NAMES = new Set(['AngularGradient','AxisGridLine','AxisMarks','AxisVal
 //   · Insecure — CryptoKit 里 SHA1 的命名空间。CredentialStudio 150: HMAC-SHA1 是 TOTP 的默认档,
 //     原写法 `HMAC<SHA1>` 里 `SHA1` 这个顶层名并不存在。
 // 与上面几批同理: **加白不等于证明用法正确** —— 编译器才是判定方。
-'DispatchSemaphore', 'CHHapticEngine', 'Insecure']);
+'DispatchSemaphore', 'CHHapticEngine', 'Insecure',
+// SymbolEffectOptions — SwiftUI 的 symbolEffect 选项类型 (iOS 17 起)。run 63 修 UnlockDial 的
+// "unable to type-check this expression in reasonable time" 时, 把 `.repeating` 写成显式
+// `SymbolEffectOptions.repeating` 帮编译器消歧, 于是全仓出现 2 次, 正好落进本检查的误报形态。
+'SymbolEffectOptions']);
 
 let symFail = 0;
 // 判定口径: 只报"全仓库只出现 1–2 次、又不是本仓库声明的类型"的驼峰名 ——

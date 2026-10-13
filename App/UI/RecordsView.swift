@@ -183,6 +183,47 @@ struct RecordsView: View {
         }
     }
 
+    /// 记录页主体列表 —— 2026-10-13 run 63 从 body 的 Group else 分支抽出:
+    /// 整个 body 表达式报 type-check 超时。
+    @ViewBuilder
+    private var mainList: some View {
+        List {
+            statusBanner
+            if offline { jumpBackRow }
+            travelBanner
+            streakBanner
+            activeLine
+            todaySummary
+            birthdayBanner
+            scopeRow
+            searchBar
+            monthJumpRow
+            dayFocusBanner
+            if !searchText.isEmpty || activeFilters { resultCount }
+            filterChips
+            memberChips
+            doorGods
+            if groups.isEmpty && !running { emptyHint }
+            if running { runningRow }
+            // 187 按月跳转 (等价实现): 选月即只看该月, 顶部有清除口。
+            // 原设计的"月份滚轮 + scrollTo"需把 List 包进 ScrollViewReader 并移动整条修饰符链,
+            // 在这个从未编译过的工程里做结构性改动的风险不对等 → 记入需编译器清单, 这里先给可用能力。
+            dropWatchSection   // 1040 掉电观察行 (时间线顶部, 有命中才出现)
+            lastYearTodayRow   // 654 去年今日 (有数据才出现)
+            ForEach(groups.filter { g in (monthJump.isEmpty || g.key.hasPrefix(monthJump)) && (dayFocus.isEmpty || g.key == dayFocus) }) { g in
+                // 657: 缺口行走独立的极简一行，不冒充一天的组头 (它没有"当天 N 条"可说)
+                if g.isGap { gapRow(g) } else { daySection(g) }
+            }
+            if capped { loadMoreRow }   // 598
+            firstDayFooter
+        }
+        // 583 定位滚动: iOS 18+ 的 List 行锚位。绑的是**行 id** (oid = mac#行键)，
+        // 所以"滚到那一天的附近"与"滚到那一行"在 API 层面不是同一件事 ——
+        // 闪一下的高亮 (flashKey) 才是保证用户认得出"是这条"的那一半; 滚动本身若落在
+        // 相邻行 (组头高度/回收布局都会影响)，验收单里写明那不算数据缺陷。
+        .scrollPosition(id: $scrolledRow)
+    }
+
     var body: some View {
         NavigationStack {
             Group {
@@ -194,41 +235,7 @@ struct RecordsView: View {
                 } else if laneMode && scope == 1 {
                     laneView   // 785 泳道时间线 (全部锁模式简化案)
                 } else {
-                    List {
-                        statusBanner
-                        if offline { jumpBackRow }
-                        travelBanner
-                        streakBanner
-                        activeLine
-                        todaySummary
-                        birthdayBanner
-                        scopeRow
-                        searchBar
-                        monthJumpRow
-                        dayFocusBanner
-                        if !searchText.isEmpty || activeFilters { resultCount }
-                        filterChips
-                        memberChips
-                        doorGods
-                        if groups.isEmpty && !running { emptyHint }
-                        if running { runningRow }
-                        // 187 按月跳转 (等价实现): 选月即只看该月, 顶部有清除口。
-                        // 原设计的"月份滚轮 + scrollTo"需把 List 包进 ScrollViewReader 并移动整条修饰符链,
-                        // 在这个从未编译过的工程里做结构性改动的风险不对等 → 记入需编译器清单, 这里先给可用能力。
-                        dropWatchSection   // 1040 掉电观察行 (时间线顶部, 有命中才出现)
-                        lastYearTodayRow   // 654 去年今日 (有数据才出现)
-                        ForEach(groups.filter { g in (monthJump.isEmpty || g.key.hasPrefix(monthJump)) && (dayFocus.isEmpty || g.key == dayFocus) }) { g in
-                            // 657: 缺口行走独立的极简一行，不冒充一天的组头 (它没有"当天 N 条"可说)
-                            if g.isGap { gapRow(g) } else { daySection(g) }
-                        }
-                        if capped { loadMoreRow }   // 598
-                        firstDayFooter
-                    }
-                    // 583 定位滚动: iOS 18+ 的 List 行锚位。绑的是**行 id** (oid = mac#行键)，
-                    // 所以"滚到那一天的附近"与"滚到那一行"在 API 层面不是同一件事 ——
-                    // 闪一下的高亮 (flashKey) 才是保证用户认得出"是这条"的那一半; 滚动本身若落在
-                    // 相邻行 (组头高度/回收布局都会影响)，验收单里写明那不算数据缺陷。
-                    .scrollPosition(id: $scrolledRow)
+                    mainList
                 }
             }
             .navigationTitle("记录")
@@ -1717,6 +1724,44 @@ struct RecordsView: View {
         }
     }
 
+    /// 592 合并行的标签 (从 mergedRow 的 Button label 抽出: 该表达式报 type-check 超时)
+    @ViewBuilder
+    private func mergedRowLabel(_ r: RowVM, _ mergedLabel: String) -> some View {
+        HStack(alignment: .top, spacing: DS.Space.m) {
+            // 647 制式统一出口: 时间线行、合并行、详情卡、导出都走 TimeFormat，不各写 DateFormatter
+            Text(TimeFormat.clock(r.time))
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(DS.Palette.textSub)
+                .frame(width: 42, alignment: .trailing)
+                .padding(.top, 2)
+            Image(systemName: "circle.fill")
+                .font(.system(size: 8))
+                .foregroundStyle(DS.Palette.accent)
+                .frame(width: 12)
+                .padding(.top, 5)
+                .accessibilityHidden(true)
+            HStack(spacing: DS.Space.s) {
+                kindIcon(r)
+                Text(mergedLabel)
+                    .font(.subheadline)
+                    .foregroundStyle(DS.Palette.text)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 1)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: DS.Icon.xs))
+                    .foregroundStyle(DS.Palette.textSub)
+                    .accessibilityHidden(true)
+                Spacer(minLength: 0)
+            }
+            .padding(.bottom, DS.Space.m)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+            .frame(minHeight: DS.Hit.min)
+        }
+        .listRowSeparator(.hidden)
+        .listRowInsets(EdgeInsets(top: 0, leading: DS.Space.l, bottom: 0, trailing: DS.Space.l))
+    }
+
     /// 592 连击合并行: 同一凭证同一分钟内 ≥3 条折叠为一行, 点按展开明细
     private func mergedRow(_ r: RowVM) -> some View {
         let total = r.mergedTail.count + 1
@@ -1724,41 +1769,7 @@ struct RecordsView: View {
         let mergedLabel = r.title + " · 同一分钟内 " + String(total) + " 次 (592)"
         return Button {
             withAnimation(DS.Motion.quick) { expandedMerged.insert(r.key) }
-        } label: {
-            HStack(alignment: .top, spacing: DS.Space.m) {
-                // 647 制式统一出口: 时间线行、合并行、详情卡、导出都走 TimeFormat，不各写 DateFormatter
-                Text(TimeFormat.clock(r.time))
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(DS.Palette.textSub)
-                    .frame(width: 42, alignment: .trailing)
-                    .padding(.top, 2)
-                Image(systemName: "circle.fill")
-                    .font(.system(size: 8))
-                    .foregroundStyle(DS.Palette.accent)
-                    .frame(width: 12)
-                    .padding(.top, 5)
-                    .accessibilityHidden(true)
-                HStack(spacing: DS.Space.s) {
-                    kindIcon(r)
-                    Text(mergedLabel)
-                        .font(.subheadline)
-                        .foregroundStyle(DS.Palette.text)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(.top, 1)
-                    Image(systemName: "chevron.down")
-                        .font(.system(size: DS.Icon.xs))
-                        .foregroundStyle(DS.Palette.textSub)
-                        .accessibilityHidden(true)
-                    Spacer(minLength: 0)
-                }
-                .padding(.bottom, DS.Space.m)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .contentShape(Rectangle())
-                .frame(minHeight: DS.Hit.min)
-            }
-            .listRowSeparator(.hidden)
-            .listRowInsets(EdgeInsets(top: 0, leading: DS.Space.l, bottom: 0, trailing: DS.Space.l))
-        }
+        } label: { mergedRowLabel(r, mergedLabel) }
         .buttonStyle(PlainButtonStyle())
         .accessibilityLabel("连续 " + String(total) + " 次: " + r.title + ", 点按展开")
         .accessibilityHint("点按展开这 " + String(total) + " 条")

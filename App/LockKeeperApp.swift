@@ -1125,49 +1125,7 @@ struct RootView: View {
                         // 344 粘贴建议条: 回前台时本会话刚复制的凭证还在不在, 一条快捷条解决。
                         // 站凭证页时不挂 (人就在那, 不用指路); 文案里的秒数取自回前台那一刻的快照。
                         if let s = app.pasteSuggestion, app.tabSelection != 1 {
-                            HStack(spacing: DS.Space.xs) {
-                                Image(systemName: "doc.on.clipboard")
-                                    .font(.system(size: DS.Icon.sm))
-                                    .accessibilityHidden(true)
-                                Group {
-                                    switch s.stage {
-                                    case .waiting(let n):
-                                        Text("刚复制的「\(s.label)」还在剪贴板 — \(n) 秒后自动清除")
-                                    case .cleared:
-                                        Text("刚复制的「\(s.label)」到点已自动清除")
-                                    }
-                                }
-                                .font(.caption)
-                                .fixedSize(horizontal: false, vertical: true)
-                                Spacer(minLength: DS.Space.xs)
-                                if case .waiting = s.stage {
-                                    // 517 立即清除: 走 ClipboardCare.clearNow() (唯一出口), 不在这里直接写 pasteboard
-                                    Button("立即清除 (517)") {
-                                        ClipboardCare.clearNow()
-                                        withAnimation(DS.Motion.standard) { app.pasteSuggestion = nil }
-                                    }
-                                    Button("再复制一次") {
-                                        ClipboardCare.recopy()
-                                        withAnimation(DS.Motion.standard) { app.refreshPasteSuggestion() }
-                                    }
-                                } else {
-                                    Button("回凭证页") {
-                                        ClipboardCare.dismissSuggestion()
-                                        app.requestTab(1)   // 377: 访客通道开着时这条快捷条同样不能白切进去
-                                        withAnimation(DS.Motion.standard) { app.pasteSuggestion = nil }
-                                    }
-                                }
-                                Button("知道了") {
-                                    ClipboardCare.dismissSuggestion()
-                                    withAnimation(DS.Motion.standard) { app.pasteSuggestion = nil }
-                                }
-                            }
-                            .font(.caption.weight(.medium))
-                            .foregroundStyle(DS.Palette.accentText)
-                            .padding(.horizontal, DS.Space.l)
-                            .padding(.vertical, DS.Space.s)
-                            .background(DS.Palette.accent.opacity(0.12))
-                            .transition(.move(edge: .top).combined(with: .opacity))
+                            pasteSuggestionBar(s)
                         }
                         if let t = app.toast {
                             ToastView(text: t)
@@ -1288,6 +1246,54 @@ struct RootView: View {
         }
         .sensoryFeedback(.selection, trigger: app.tabSelection)   // Tab 切换的轻触感
         .preferredColorScheme(colorScheme)
+    }
+
+    /// 344 粘贴建议条 —— 2026-10-13 run 63 从 body 内联块抽出: 该表达式报 type-check 超时。
+    @ViewBuilder
+    private func pasteSuggestionBar(_ s: ClipboardCare.Suggestion) -> some View {
+        HStack(spacing: DS.Space.xs) {
+            Image(systemName: "doc.on.clipboard")
+                .font(.system(size: DS.Icon.sm))
+                .accessibilityHidden(true)
+            Group {
+                switch s.stage {
+                case .waiting(let n):
+                    Text("刚复制的「\(s.label)」还在剪贴板 — \(n) 秒后自动清除")
+                case .cleared:
+                    Text("刚复制的「\(s.label)」到点已自动清除")
+                }
+            }
+            .font(.caption)
+            .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: DS.Space.xs)
+            if case .waiting = s.stage {
+                // 517 立即清除: 走 ClipboardCare.clearNow() (唯一出口), 不在这里直接写 pasteboard
+                Button("立即清除 (517)") {
+                    ClipboardCare.clearNow()
+                    withAnimation(DS.Motion.standard) { app.pasteSuggestion = nil }
+                }
+                Button("再复制一次") {
+                    ClipboardCare.recopy()
+                    withAnimation(DS.Motion.standard) { app.refreshPasteSuggestion() }
+                }
+            } else {
+                Button("回凭证页") {
+                    ClipboardCare.dismissSuggestion()
+                    app.requestTab(1)   // 377: 访客通道开着时这条快捷条同样不能白切进去
+                    withAnimation(DS.Motion.standard) { app.pasteSuggestion = nil }
+                }
+            }
+            Button("知道了") {
+                ClipboardCare.dismissSuggestion()
+                withAnimation(DS.Motion.standard) { app.pasteSuggestion = nil }
+            }
+        }
+        .font(.caption.weight(.medium))
+        .foregroundStyle(DS.Palette.accentText)
+        .padding(.horizontal, DS.Space.l)
+        .padding(.vertical, DS.Space.s)
+        .background(DS.Palette.accent.opacity(0.12))
+        .transition(.move(edge: .top).combined(with: .opacity))
     }
 
     /// 包8/508 写入回执浮层 —— 2026-10-13 run 63 从 body 内联块抽出:

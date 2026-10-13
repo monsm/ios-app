@@ -2447,6 +2447,91 @@ struct LocalFilesView: View {
         }
         cover = m
     }
+    /// 434/435/437/404 本地备份的一份文件行 —— 2026-10-13 run 63 从 body 的 ForEach 里抽出:
+    /// 整个行表达式报 type-check 超时。
+    @ViewBuilder
+    private func fileRow(_ u: URL) -> some View {
+        VStack(alignment: .leading, spacing: DS.Space.xxs) {
+            HStack {
+                // 433: 有备注就显示备注, 文件名退到下一行小字 (文件名本身不动)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(aliasOf(u).isEmpty ? u.lastPathComponent : aliasOf(u))
+                        .font(.subheadline)
+                        .foregroundStyle(DS.Palette.text)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                    if !aliasOf(u).isEmpty {
+                        Text(u.lastPathComponent)
+                            .font(.caption2)
+                            .foregroundStyle(DS.Palette.textSub)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                    }
+                }
+                Spacer(minLength: 0)
+                Button(u.lastPathComponent) { sel.toggle(u) }
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(DS.Palette.accentText)
+                    .frame(minHeight: DS.Hit.min)
+            }
+            HStack(spacing: DS.Space.xs) {
+                Label(BackupStudio.shortHash(rawOf(u)),
+                      systemImage: "number")
+                    .font(.caption)
+                    .foregroundStyle(DS.Palette.textSub)
+                Text(BackupStudio.verifyChecksum(rawOf(u)) ? "哈希一致" : "哈希缺失")
+                    .font(.caption2)
+                    .foregroundStyle(DS.Palette.textSub)
+                // 432 体积与文件时间 (文件属性, 不用解密, 永远说得出口)
+                Text("\(sizeOf(u)) · \(mtimeOf(u))")
+                    .font(.caption2)
+                    .foregroundStyle(DS.Palette.textSub)
+                    .lineLimit(1)
+            }
+            // 435: 这一份自己的算法参数 (从信封读出来, 不是工作室那枚"当前代码用什么"的徽章)
+            if let n = algos[u.lastPathComponent] {
+                Group {
+                    switch n {
+                    case .envelope(let s): Text("\(s) (435)")
+                    case .plain: Text("明文包 · 没有加密信封 (435)")
+                    case .unknown: Text("未能从文件头识别算法 (435)")
+                    }
+                }
+                .font(.caption2)
+                .foregroundStyle(n == .unknown ? DS.Palette.warn : DS.Palette.textSub)
+                .fixedSize(horizontal: false, vertical: true)
+            }
+            // 432: 内容概览 (备份包不含记录, 所以这里只有台账/成员规模, 密文标"需口令")
+            if let c = cover[u.lastPathComponent] {
+                Text(c)
+                    .font(.caption2)
+                    .foregroundStyle(c == "需口令" ? DS.Palette.warn : DS.Palette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            // 437: 复核钉状态 (未到日只是小字存档, 到日才变橙)
+            if let day = pins[u.lastPathComponent] {
+                if let n = pinOver[u.lastPathComponent] {
+                    Text("复核钉 \(BackupStudio.pinDayText(day)) · 今天该复核 (已过 \(n) 天)")
+                        .font(.caption2)
+                        .foregroundStyle(DS.Palette.warn)
+                        .fixedSize(horizontal: false, vertical: true)
+                    // 404: 到日这一份提示手动销毁/删除 —— 删除出口在本行长按菜单里 (带二次确认)
+                    Text("已到复核日: 核对后手动删除这份备份, 或重做一份新的再删旧的 (404)")
+                        .font(.caption2)
+                        .foregroundStyle(DS.Palette.warn)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else {
+                    Text("复核钉 \(BackupStudio.pinDayText(day)) · 未到日不催")
+                        .font(.caption2)
+                        .foregroundStyle(DS.Palette.textSub)
+                }
+            }
+        }
+        .contextMenu { fileContextMenu(u) }
+        // 404 到期行置灰: 复核钉到日 (pinOver 有值) 的这一份压暗, 与上面那句提示同一判据
+        .opacity(pinOver[u.lastPathComponent] != nil ? 0.55 : 1)
+    }
+
 
     var body: some View {
         NavigationStack {
@@ -2458,85 +2543,7 @@ struct LocalFilesView: View {
                             .foregroundStyle(DS.Palette.textSub)
                     }
                     ForEach(files, id: \.self) { u in
-                        VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                            HStack {
-                                // 433: 有备注就显示备注, 文件名退到下一行小字 (文件名本身不动)
-                                VStack(alignment: .leading, spacing: 1) {
-                                    Text(aliasOf(u).isEmpty ? u.lastPathComponent : aliasOf(u))
-                                        .font(.subheadline)
-                                        .foregroundStyle(DS.Palette.text)
-                                        .lineLimit(1)
-                                        .truncationMode(.middle)
-                                    if !aliasOf(u).isEmpty {
-                                        Text(u.lastPathComponent)
-                                            .font(.caption2)
-                                            .foregroundStyle(DS.Palette.textSub)
-                                            .lineLimit(1)
-                                            .truncationMode(.middle)
-                                    }
-                                }
-                                Spacer(minLength: 0)
-                                Button(u.lastPathComponent) { sel.toggle(u) }
-                                    .font(.caption.weight(.medium))
-                                    .foregroundStyle(DS.Palette.accentText)
-                                    .frame(minHeight: DS.Hit.min)
-                            }
-                            HStack(spacing: DS.Space.xs) {
-                                Label(BackupStudio.shortHash(rawOf(u)),
-                                      systemImage: "number")
-                                    .font(.caption)
-                                    .foregroundStyle(DS.Palette.textSub)
-                                Text(BackupStudio.verifyChecksum(rawOf(u)) ? "哈希一致" : "哈希缺失")
-                                    .font(.caption2)
-                                    .foregroundStyle(DS.Palette.textSub)
-                                // 432 体积与文件时间 (文件属性, 不用解密, 永远说得出口)
-                                Text("\(sizeOf(u)) · \(mtimeOf(u))")
-                                    .font(.caption2)
-                                    .foregroundStyle(DS.Palette.textSub)
-                                    .lineLimit(1)
-                            }
-                            // 435: 这一份自己的算法参数 (从信封读出来, 不是工作室那枚"当前代码用什么"的徽章)
-                            if let n = algos[u.lastPathComponent] {
-                                Group {
-                                    switch n {
-                                    case .envelope(let s): Text("\(s) (435)")
-                                    case .plain: Text("明文包 · 没有加密信封 (435)")
-                                    case .unknown: Text("未能从文件头识别算法 (435)")
-                                    }
-                                }
-                                .font(.caption2)
-                                .foregroundStyle(n == .unknown ? DS.Palette.warn : DS.Palette.textSub)
-                                .fixedSize(horizontal: false, vertical: true)
-                            }
-                            // 432: 内容概览 (备份包不含记录, 所以这里只有台账/成员规模, 密文标"需口令")
-                            if let c = cover[u.lastPathComponent] {
-                                Text(c)
-                                    .font(.caption2)
-                                    .foregroundStyle(c == "需口令" ? DS.Palette.warn : DS.Palette.textSub)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
-                            // 437: 复核钉状态 (未到日只是小字存档, 到日才变橙)
-                            if let day = pins[u.lastPathComponent] {
-                                if let n = pinOver[u.lastPathComponent] {
-                                    Text("复核钉 \(BackupStudio.pinDayText(day)) · 今天该复核 (已过 \(n) 天)")
-                                        .font(.caption2)
-                                        .foregroundStyle(DS.Palette.warn)
-                                        .fixedSize(horizontal: false, vertical: true)
-                                    // 404: 到日这一份提示手动销毁/删除 —— 删除出口在本行长按菜单里 (带二次确认)
-                                    Text("已到复核日: 核对后手动删除这份备份, 或重做一份新的再删旧的 (404)")
-                                        .font(.caption2)
-                                        .foregroundStyle(DS.Palette.warn)
-                                        .fixedSize(horizontal: false, vertical: true)
-                                } else {
-                                    Text("复核钉 \(BackupStudio.pinDayText(day)) · 未到日不催")
-                                        .font(.caption2)
-                                        .foregroundStyle(DS.Palette.textSub)
-                                }
-                            }
-                        }
-                        .contextMenu { fileContextMenu(u) }
-                        // 404 到期行置灰: 复核钉到日 (pinOver 有值) 的这一份压暗, 与上面那句提示同一判据
-                        .opacity(pinOver[u.lastPathComponent] != nil ? 0.55 : 1)
+                        fileRow(u)
                     }
                     if sel.count == 2, let a = sel.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }).first,
                        let b = sel.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }).last {
