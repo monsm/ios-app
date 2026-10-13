@@ -92,10 +92,34 @@ final class LockService: ObservableObject {
         }
         log("info", "扫描解析 MAC=\(m) (请靠近门锁)")
         let deviceId = try await scanForMAC(m, timeoutMs: 8000)
+        // 2026-10-13 对抗式排查: 连接成立后再验一次**锁端自报的身份**, 而不是只认广播字段。
+        // scanForMAC 只比对广播厂商段里的 macRaw —— 而广播是**任何设备都能发**的: 攻击者广播一份
+        // 含目标 MAC 的厂商段并暴露 6E400001, App 就会连到他, 之后把 cmd03/04 的密文发给他。
+        // 原实现在这里把 deviceId 直接写回钥匙串缓存 (kc2.bleId) ⇒ **持久污染**:
+        // 之后每次冷启动都从缓存 deviceId 直连攻击者, 连扫描都不走。
+        // 修法两段: ① 连上后先读一次状态 (cmd03), 用**锁端自己的响应**对 pid ——
+        //   响应比广播难伪造得多; ② 对不上就断开并**不写缓存** (identity mismatch 不落盘)。
+        //   钥匙串里没登记 pid (老配对) 时只记警告不拦, 免得把正常用户挡在门外。
+        try await connect(deviceId: deviceId)
+        do {
+            let st = try await getStatus(mac: m)
+            let knownPid = kc.pid
+            if knownPid > 0, st.pid > 0, st.pid != knownPid {
+                disconnect()
+                log("warn", "连接后身份不符: 锁端 pid=\(st.pid) 与登记的 pid=\(knownPid) 不一致 → 已断开, 不写缓存")
+                throw BLEErrorX.msg("连到的设备与「\(kc.name)」不是同一把锁 (pid 不符)，已断开。附近可能有同名或伪造广播。")
+            }
+            if knownPid <= 0 { log("warn", "钥匙串未登记 pid, 跳过连接后身份复核 (老配对)") }
+        } catch let e as BLEErrorX {
+            throw e
+        } catch {
+            log("warn", "连接后读状态失败 (\(error.localizedDescription)) → 断开, 不写缓存")
+            disconnect()
+            throw BLEErrorX.msg("连上后读不到锁端状态，已断开重来")
+        }
         var kc2 = kc
         kc2.bleId = deviceId
         DB.saveKeychain(kc2)
-        try await connect(deviceId: deviceId)
         connectedMAC = m
         curMac = m   // 仅连接成功后设当前锁 (失败不留残态)
     }

@@ -200,22 +200,37 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
     private func confirmImport() {
         guard !importText.isEmpty else { app.showToast("请先粘贴备份文本"); return }
         guard !busy else { return }
-        confirmDestructive("导入备份", "相同设备将被覆盖, 其它设备保留。确定导入吗？", confirmTitle: "导入") {
+        // 2026-10-13 对抗式排查: 补一句**应用锁口令可能被替换**。
+        // BackupKit.restoreAll 会把包内 globals.passcode 写回 kf_passcode (换机迁移要靠它),
+        // 但"导入一份旧备份"同样会让应用锁口令**回滚到旧值** —— 抢到手机的人用旧口令就能进。
+        // 這件事不能默默发生, 至少在破坏性确认里说清楚。
+        confirmDestructive("导入备份",
+                           "相同设备将被覆盖, 其它设备保留; 若备份里带应用锁口令, 本机口令会被替换成它。确定导入吗？",
+                           confirmTitle: "导入") {
             doImport()
         }
     }
     private func doImport() {
-        guard let data = importText.data(using: .utf8),
-              let bundle = try? JSONDecoder().decode(BackupBundle.self, from: data) else {
-            app.showToast("不是有效的备份包"); return
+        // 2026-10-13 对抗式排查: 原写直接 `JSONDecoder().decode(BackupBundle.self)` + restoreAll,
+        // 把云端那套**口令层 + 453 内容哈希层**整个绕过:
+        //   · 哈希不一致 (内容被改过) 的包在云端路径会被拦下 —— "内容哈希不一致 — 已拦下, 未写任何数据";
+        //   · 本地粘贴导入却照写不疑。备份文件本身就是明文含 skey/pins 的全库快照,
+        //     "能拿到文件就能改"完全在威胁模型之内。
+        // 改成走 parsePreview 这**唯一**入口 (先解密 → 再校验哈希 → 再走升级链), 哈希不过就拦,
+        // 与云端路径同一套判据。加密备份仍需口令 (本页只收明文粘贴, 与改动前一致)。
+        do {
+            let (_, bundle) = try BackupStudioKit.parsePreview(text: importText, password: nil)
+            let r = BackupKit.restoreAll(bundle)
+            app.loadDevices()
+            if bundle.globals?.appearance != nil { app.reloadAppearance() }   // 894 带外观段才刷, 免得白重建一次全树
+            armMigrateWizard(r)
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            app.showToast("导入完成: 新增 \(r.imported), 覆盖 \(r.overwritten)")
+            importText = ""
+        } catch {
+            // 口令错误 / 内容被改过 (453) / 不是备份 —— 一律不写库
+            app.showToast("导入被拦下: \(error.localizedDescription)")
         }
-        let r = BackupKit.restoreAll(bundle)
-        app.loadDevices()
-        if bundle.globals?.appearance != nil { app.reloadAppearance() }   // 894 带外观段才刷, 免得白重建一次全树
-        armMigrateWizard(r)
-        UINotificationFeedbackGenerator().notificationOccurred(.success)
-        app.showToast("导入完成: 新增 \(r.imported), 覆盖 \(r.overwritten)")
-        importText = ""
     }
 
     // 包3/idea 112: 换机恢复后立起验证向导 — 设备 Tab 逐锁点按验证连接, 全部通过后自动收起
