@@ -758,6 +758,11 @@ struct UnlockDial: View {
                     fire()
                 } else if pressing {
                     // 松手取消回弹: 进度环弹回零位
+                    // 2026-10-13 对抗式点击审计: 补 `swipeReady = false`。原实现在取消分支只复位
+                    // pressing/holdProgress, 不碰 swipeReady ⇒ 上滑预填后拉回原点松手 (取消) 时
+                    // swipeReady 残留 true。后果两个: ① 上滑预填捷径失效; ② 上面的阈值判断
+                    // (`!swipeReady`) 失效后, 松手阈值从 -56 变 -30 —— 用户会碰到"轻扫一下就开锁"。
+                    swipeReady = false
                     stopHold()
                     pressing = false
                     if reduceMotion {

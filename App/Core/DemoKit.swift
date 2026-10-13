@@ -65,6 +65,11 @@ enum DemoKit {
     /// 一键清除: 只删演示数据, 不碰任何真实台账
     @MainActor
     static func clearAll() {
+        // 2026-10-13 对抗式点击审计: 补一句取消在飞的演示开锁任务。原实现在这里只清数据,
+        // 而 simulateDemoUnlock 的 Task 是 0.7~2.1s 的三段式 —— 用户点"清除演示数据"后
+        // 旧任务的回调继续跑, 把 unlockState 置成 .success 并弹"演示开锁成功" (数据已经删了还在报成功)。
+        demoUnlockTask?.cancel()
+        demoUnlockTask = nil
         DB.removeDevice(demoMac)
         if let m = DB.members().first(where: { $0.name == demoMemberName }) {
             DB.removeMember(m.id)

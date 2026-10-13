@@ -2944,7 +2944,12 @@ struct OtpStudio: View {
                 }
                 // 346 静态备份码: 本地生成一次性静态码, 不走锁端, 随备份导出
                 Section("静态备份码 (346)") {
-                    let codes = CredentialOrg.staticCodes(mac)
+                    // 2026-10-13 对抗式点击审计: 原写 `staticCodes(mac)` 而写入用 `addStaticCode(otpMac, …)`
+                    // —— 读的是**当前锁**、写的是 Picker 选的**目标锁**。用户路径: OTP 与口令页 →
+                    // 「用于哪把锁 (339)」Picker 改选另一把锁 → 点「生成 8 位静态码」→
+                    // 新码写进目标锁, 当前列表不显示 (切回目标锁才出现), 而编号 `codes.count + 1`
+                    // 还是按当前锁的数量算的 ⇒ 编号也可能重名。读取改成语入一致的 otpMac。
+                    let codes = CredentialOrg.staticCodes(otpMac)
                     ForEach(codes) { c in
                         staticRow(c)
                     }

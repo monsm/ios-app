@@ -698,17 +698,34 @@ enum RecordSearch {
         }
         // "N月D日" (只认含"月"的那个词, 避免"工作日"里的"日"误命中; 当年, 已过则去年)
         if let tok = tokensFirstContaining(joined: joined, "月"),
-           let mo = intBefore(tok, "月"), mo > 0, let dy = intAfter(tok, "日"), dy > 0 {
-            var c = DateComponents(); c.year = cal.component(.year, from: now); c.month = mo; c.day = dy
-            var d = cal.date(from: c)!
-            if d > now {
-                c.year! -= 1
-                d = cal.date(from: c)!
+           let mo = intBefore(tok, "月"), mo > 0, let dy = intAfter(tok, "日"), dy > 0
+           // 2026-10-13 对抗式点击审计: 原写只校下界 (mo>0 / dy>0) 不校上界 ⇒ 用户在搜索框敲
+           // 「13月1日」「2月30日」「4月31日」时 `Calendar.date(from:)` 返回 nil, 下一行 `!` 直接 trap。
+           // 记录页搜索框是 onChange 逐字符触发的 (RecordsView 的 onRecordsAppear/onChange 里 sel = 该值),
+           // 所以**不用回车, 敲到"1""3"那两个字符就崩**。先把月/日夹到合法区间, 再用 guard 兜住
+           // 任何 Calendar 仍然解不出的组合 (2月30日 这种夹不动的)。
+           , mo <= 12, dy <= 31,
+           let d = monthDayComps(cal: cal, now: now, month: mo, day: dy) {
+            var dd = d
+            if dd > now {
+                var cc = DateComponents(); cc.year = cal.component(.year, from: now) - 1; cc.month = mo; cc.day = dy
+                guard let d2 = cal.date(from: cc) else { return out }
+                dd = d2
             }
             let label = String(tok)
-            out.append((label, dayRange(d)))
+            out.append((label, dayRange(dd)))
         }
         return out
+    }
+    /// "当年 N月D日" → 一个合法 Date; 解不出 (2月30日 之类) 返 nil
+    /// 2026-10-13 对抗式点击审计: 从 inline 的 `cal.date(from: c)!` 抽出来 —— 那两处强解包就是
+    /// 搜索框敲「13月1日」即崩的根因。
+    private static func monthDayComps(cal: Calendar, now: Date, month: Int, day: Int) -> Date? {
+        var c = DateComponents()
+        c.year = cal.component(.year, from: now)
+        c.month = max(1, min(12, month))
+        c.day = max(1, min(31, day))
+        return cal.date(from: c)
     }
     /// "最近(\d+)" 取括号内数字
     private static func intAfter(_ s: String, _ head: String) -> Int? {

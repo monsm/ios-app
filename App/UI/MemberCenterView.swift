@@ -1583,7 +1583,11 @@ struct BorrowSheetView: View {
                 }
                 Section("进行中 (\(borrowMap.count)) · 点 已归还 销记") {
                     ForEach(Array(borrowMap.keys.sorted()), id: \.self) { k in
-                        let b = borrowMap[k]!
+                        // 2026-10-13 对抗式点击审计: 原写 `let b = borrowMap[k]!` —— borrowMap 是
+                        // **计算属性** (每次重新查 DB), ForEach 的 key 集合与闭包求值来自两次独立调用,
+                        // 中间任何一次删除/销记都会让 k 在新 map 里消失 ⇒ 强解包 trap。
+                        // 同一帧同线程数据不变所以当前不可达, 但这是"计算属性 + 下标强解包"的教科书款。
+                        guard let b = borrowMap[k] else { continue }
                         HStack(spacing: DS.Space.s) {
                             Text(k.hasPrefix("b") ? "凭证明细见凭证页" : k)
                                 .font(.caption)
