@@ -558,7 +558,7 @@ struct ExportWizardView: View {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: DS.Icon.xl))
                         .foregroundStyle(DS.Palette.ok)
-                        .transition(.scale(0.9).combined(with: .opacity))
+                        .transition(.scale(scale: 0.9).combined(with: .opacity))
                         .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: DS.Space.xs) {
                         Text("已写入本机 (508)")

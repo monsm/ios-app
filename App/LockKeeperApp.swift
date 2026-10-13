@@ -1153,7 +1153,7 @@ struct RootView: View {
         .overlay {
             if let m = app.moment {
                 MomentCardView(moment: m) { app.advanceMoment() }
-                    .transition(.opacity.combined(with: .scale(0.96)))
+                    .transition(.opacity.combined(with: .scale(scale: 0.96)))
             }
         }
         .animation(DS.Motion.soft, value: app.moment)
@@ -1203,7 +1203,7 @@ struct RootView: View {
                     // 解锁的"穿越感": 门禁界面轻微放大溶解, 主界面从后面浮现
                     .transition(.asymmetric(
                         insertion: .opacity,
-                        removal: .scale(1.08).combined(with: .opacity)))
+                        removal: .scale(scale: 1.08).combined(with: .opacity)))
             }
         }
     }
