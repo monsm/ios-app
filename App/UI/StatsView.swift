@@ -37,6 +37,55 @@ struct StatsView: View {
         _labelMode = State(initialValue: DB.store.getInt("kf_stat_labels", 0))
     }
 
+    /// 625 凭证归属子段条的一类 —— 从 body 内联的 ForEach 里抽出: 该表达式报 type-check 超时
+    @ViewBuilder
+    private func kindBreakdownRow(_ k: String, _ segs: [(id: String, name: String, n: Int)]) -> some View {
+        let total = segs.reduce(0) { $0 + $1.n }
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 2) {
+                Text(StatsKit.StatModel.kindWords()[k] ?? k)
+                    .font(.caption2)
+                    .foregroundStyle(DS.Palette.textSub)
+                GeometryReader { geo in
+                    HStack(spacing: 1) {
+                        ForEach(Array(segs.enumerated()), id: \.offset) { idx, sg in
+                            Capsule()
+                                .fill(StatsKit.StatModel.memberColor(idx % 6))
+                                .frame(width: max(3, CGFloat(sg.n) / CGFloat(max(total, 1)) * geo.size.width))
+                        }
+                    }
+                }
+                .frame(height: 6)
+                Text("约 \(total) 次")
+                    .font(.caption2)
+                    .foregroundStyle(DS.Palette.textSub)
+                    .lineLimit(1)
+            }
+            // 625: 色子段下挂成员名与次数 (按次数降序, 超 4 位折叠)
+            HStack(spacing: DS.Space.s) {
+                ForEach(Array(segs.prefix(4).enumerated()), id: \.offset) { idx, sg in
+                    HStack(spacing: 3) {
+                        Circle()
+                            .fill(StatsKit.StatModel.memberColor(idx % 6))
+                            .frame(width: 5, height: 5)
+                            .accessibilityHidden(true)
+                        Text(sg.name + " 约 " + String(sg.n) + " 次")
+                            .font(.caption2)
+                            .foregroundStyle(DS.Palette.textSub)
+                            .lineLimit(1)
+                    }
+                }
+                if segs.count > 4 {
+                    Text("+" + String(segs.count - 4) + " 位")
+                        .font(.caption2)
+                        .foregroundStyle(DS.Palette.textSub)
+                }
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel((StatsKit.StatModel.kindWords()[k] ?? k) + " 归属构成, 共约 \(total) 次; " + segs.prefix(4).map { $0.name + " 约 " + String($0.n) + " 次" }.joined(separator: ", ") + (segs.count > 4 ? "; 另 \(segs.count - 4) 位" : ""))
+    }
+
     var body: some View {
         NavigationStack {
             content
@@ -1279,6 +1328,12 @@ struct StatsView: View {
         // (582/612 同一条 pendingRecordsMember 路由; 不造"跳到首条"的第二套深链 —— 落点就是该成员
         // 全部记录, 排序在记录页自己管)。归属不明 (owner 空/查无此人) 时保持纯文字, 不挂死按钮。
         let jumpId = (p.owner.isEmpty || DB.member(p.owner) == nil) ? nil : p.owner
+        // 2026-10-13 run 68: 颜色/条宽/a11y 串先算好 —— 内联时整个 pwdUsageRow 报 type-check 超时。
+        let barColor: Color = p.ratio >= 0.8 ? DS.Palette.warn : DS.Palette.accent
+        let barWidth = max(2, p.ratio * 120)
+        let a11y = "密码 " + p.name + " 约使用 " + String(p.approxUses) + " 次, 用量 " + String(Int(p.ratio * 100)) + "%"
+            + (p.firstUseDay.map { ", 首用 " + $0 } ?? "")
+            + (jumpId == nil ? "" : "; 点按到记录页按该成员筛选 (628)")
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: DS.Space.xs) {
                 Text(p.name)
@@ -1299,8 +1354,8 @@ struct StatsView: View {
             }
             // 用量比条: 已用/上限, 接近上限转橙
             Capsule()
-                .fill(p.ratio >= 0.8 ? DS.Palette.warn : DS.Palette.accent)
-                .frame(width: max(2, p.ratio * 120))
+                .fill(barColor)
+                .frame(width: barWidth)
                 .frame(height: 4)
         }
         .frame(minHeight: DS.Hit.min)
@@ -1312,9 +1367,7 @@ struct StatsView: View {
             }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("密码 " + p.name + " 约使用 " + String(p.approxUses) + " 次, 用量 " + String(Int(p.ratio * 100)) + "%"
-            + (p.firstUseDay.map { ", 首用 " + $0 } ?? "")
-            + (jumpId == nil ? "" : "; 点按到记录页按该成员筛选 (628)"))
+        .accessibilityLabel(a11y)
         .accessibilityAddTraits(jumpId == nil ? [] : .isButton)
     }
 
@@ -1322,6 +1375,8 @@ struct StatsView: View {
     @ViewBuilder
     private func memberBarRow(id: String, name: String, approx: Int, index: Int,
                               barDays: Int, maxApprox: Int) -> some View {
+        // 2026-10-13 run 68: a11y 串先算好 (内联时 memberBarRow 报 type-check 超时)
+        let a11y = "成员 " + name + ", 近 " + String(barDays) + " 天约 " + String(approx) + " 次; 点按到记录页按该成员筛选 (582)"
         Button {
             // 582 图表下钻: 成员条 → 记录 Tab 按该成员过滤 (台账推断, 落点走可证明口径)。
             // 记录页的 landMember() 会把 sel 与 filters.member 一起写、再走同一条 applyFilter 链并消费后清空旗标,
@@ -1332,7 +1387,13 @@ struct StatsView: View {
             memberBarLabel(name: name, approx: approx, index: index, maxApprox: maxApprox)
         }
         .buttonStyle(PlainButtonStyle())
-        .accessibilityLabel("成员 " + name + ", 近 " + String(barDays) + " 天约 " + String(approx) + " 次; 点按到记录页按该成员筛选 (582)")
+        .accessibilityLabel(a11y)
+    }
+
+    /// 成员条宽度 (抽出: 内联那条 `max(2, CGFloat(approx) / CGFloat(max(maxApprox, 1)) * 120)`
+    /// 参与把 memberBarLabel 拖进 type-check 超时)
+    private func barWidth(_ approx: Int, _ maxApprox: Int) -> CGFloat {
+        max(2, CGFloat(approx) / CGFloat(max(maxApprox, 1)) * 120)
     }
 
     /// 成员条行的标签 (从 memberBarRow 里再抽一层: 该表达式报 type-check 超时)
@@ -1345,7 +1406,7 @@ struct StatsView: View {
                 .frame(width: 56, alignment: .leading)
             Capsule()
                 .fill(StatsKit.StatModel.memberColor(index))
-                .frame(width: max(2, CGFloat(approx) / CGFloat(max(maxApprox, 1)) * 120))
+                .frame(width: barWidth(approx, maxApprox))
             Text("约 \(approx) 次")
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
@@ -1807,50 +1868,7 @@ struct StatsView: View {
                         .foregroundStyle(DS.Palette.textSub)
                     ForEach(StatsKit.StatModel.kindOrder(), id: \.self) { k in
                         if let segs = breakdown[k], !segs.isEmpty {
-                            let total = segs.reduce(0) { $0 + $1.n }
-                            VStack(alignment: .leading, spacing: 3) {
-                                HStack(spacing: 2) {
-                                    Text(StatsKit.StatModel.kindWords()[k] ?? k)
-                                        .font(.caption2)
-                                        .foregroundStyle(DS.Palette.textSub)
-                                    GeometryReader { geo in
-                                        HStack(spacing: 1) {
-                                            ForEach(Array(segs.enumerated()), id: \.offset) { idx, sg in
-                                                Capsule()
-                                                    .fill(StatsKit.StatModel.memberColor(idx % 6))
-                                                    .frame(width: max(3, CGFloat(sg.n) / CGFloat(max(total, 1)) * geo.size.width))
-                                            }
-                                        }
-                                    }
-                                    .frame(height: 6)
-                                    Text("约 \(total) 次")
-                                        .font(.caption2)
-                                        .foregroundStyle(DS.Palette.textSub)
-                                        .lineLimit(1)
-                                }
-                                // 625: 色子段下挂成员名与次数 (按次数降序, 超 4 位折叠)
-                                HStack(spacing: DS.Space.s) {
-                                    ForEach(Array(segs.prefix(4).enumerated()), id: \.offset) { idx, sg in
-                                        HStack(spacing: 3) {
-                                            Circle()
-                                                .fill(StatsKit.StatModel.memberColor(idx % 6))
-                                                .frame(width: 5, height: 5)
-                                                .accessibilityHidden(true)
-                                            Text(sg.name + " 约 " + String(sg.n) + " 次")
-                                                .font(.caption2)
-                                                .foregroundStyle(DS.Palette.textSub)
-                                                .lineLimit(1)
-                                        }
-                                    }
-                                    if segs.count > 4 {
-                                        Text("+" + String(segs.count - 4) + " 位")
-                                            .font(.caption2)
-                                            .foregroundStyle(DS.Palette.textSub)
-                                    }
-                                }
-                            }
-                            .accessibilityElement(children: .combine)
-                            .accessibilityLabel((StatsKit.StatModel.kindWords()[k] ?? k) + " 归属构成, 共约 \(total) 次; " + segs.prefix(4).map { $0.name + " 约 " + String($0.n) + " 次" }.joined(separator: ", ") + (segs.count > 4 ? "; 另 \(segs.count - 4) 位" : ""))
+                            kindBreakdownRow(k, segs)
                         }
                     }
                 }

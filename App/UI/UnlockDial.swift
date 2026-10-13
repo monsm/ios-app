@@ -862,11 +862,12 @@ struct UnlockDial: View {
             .font(.system(size: 46, weight: .medium))
             .foregroundStyle(contentColor)
             // 状态切换时图标形变过渡 (锁→信号→勾), 比"换了张图"更有生命感
-            // 2026-10-13 run 66: `ReplaceSymbolEffect` 是**离散**效果 ⇒ 只能配 `value:` (触发条件),
-            // 不能配 `isActive:` (那是 IndefiniteSymbolEffect 的); 原写两者都带, 报
-            // "requires that 'ReplaceSymbolEffect' conform to 'IndefiniteSymbolEffect'" + "extra argument 'value'"。
-            .symbolEffect(.replace.downUp, value: iconName)
-            // VariableColorSymbolEffect 是**持续**效果 ⇒ 只能配 `isActive:`; 原写又带了 value: ⇒ "extra argument 'value'"。
+            // 2026-10-13 run 68: `.symbolEffect(.replace.downUp, value:)` 报 "requires that
+            // 'ReplaceSymbolEffect' conform to 'DiscreteSymbolEffect'" —— 符号替换的正确写法是
+            // `.contentTransition(.symbolEffect(.replace))` (Apple 文档里的图标替换动画),
+            // 不是把 replace 当离散 symbolEffect 用。
+            .contentTransition(.symbolEffect(.replace))
+            // VariableColorSymbolEffect 是**持续**效果 ⇒ 只配 `isActive:` (原写又带 value: 已去掉)。
             .symbolEffect(.variableColor.iterative, options: SymbolEffectOptions.repeating,
                           isActive: !reduceMotion && searching)
     }

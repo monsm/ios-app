@@ -256,7 +256,7 @@ struct RecordsView: View {
                         }
                     }
             }
-            .accessibilityLabel("告警中心, \(RecordSearch.unhandledAlarmCount(DB.keychains().map { $0.mac })) 条未处置")
+            .accessibilityLabel("告警中心, \(RecordSearch.unhandledAlarmCount(macs: DB.keychains().map { $0.mac })) 条未处置")
         }
         ToolbarItem(placement: .navigationBarTrailing) {
             // 读取中把刷新按钮换成进度圈, 状态一目了然
@@ -291,77 +291,89 @@ struct RecordsView: View {
     }
 
     var body: some View {
+        recordsChrome
+    }
+
+    /// 记录页核心内容 (Group + 页面级修饰符) —— 从巨型 body 拆出: 原表达式报 type-check 超时
+    @ViewBuilder
+    private var recordsCore: some View {
+        Group {
+            if app.current == nil {
+                noLockPlaceholder
+            } else if laneMode && scope == 1 {
+                laneView   // 785 泳道时间线 (全部锁模式简化案)
+            } else {
+                mainList
+            }
+        }
+        .navigationTitle("记录")
+        // 192: 过滤组合按锁留存 (清空全部过滤时自动删键, 不留脏值)
+        .onChange(of: filters) { _, new in new.save(mac: app.currentMac) }
+        .scrollContentBackground(.hidden)
+        .dsScreenBackground()
+        .toolbar {
+            recordsToolbar
+        }
+        .onAppear { onRecordsAppear() }
+        // 576/191: 换当前锁必须重取数据。此前本页只在 onAppear 里 loadFromCache()，
+        // 从设备页/矩阵点另一把锁回来时 allRows 还是旧锁的、recPool 已是新锁的
+        // ⇒ 点行命中"这条记录不在当前显示范围里"的兜底 toast，看起来像数据丢了。
+        .onChange(of: app.currentMac) { _, _ in
+            loadFromCache()
+        }
+        .onChange(of: app.pendingSearch) { _, q in
+            guard let q else { return }
+            landSearch(q)
+        }
+        .onChange(of: app.pendingRecordKey) { _, k in
+            guard let k else { return }
+            landRecordKey(k)
+        }
+        .onChange(of: app.pendingRecordsDay) { _, d in
+            guard let d else { return }
+            landDay(d)
+        }
+        .onChange(of: app.pendingFlashKey) { _, k in
+            guard let k else { return }
+            landFlash(k)
+        }
+        .onChange(of: app.pendingRecordsFilter) { _, f in
+            guard let f else { return }
+            sel = f
+            applyFilter()
+        }
+        .onChange(of: app.pendingRecordsMember) { _, m in
+            // 582 图表下钻: 统计页成员条写的那个 id 此前**全仓没有读取方** (只在 StatsView:1317 赋值),
+            // 所以点成员条跳过来什么也没发生。落点在 landMember —— 与点成员 chip 走同一条过滤链。
+            guard let m else { return }
+            landMember(m)
+        }
+        .onChange(of: scope) { _, s in
+            sel = ""
+            searchText = ""
+            parsedTags = []
+            highlightTokens = []
+            filters = QueryFilters()
+            reversed = false
+            expandedMerged = []
+            if s == 0 { laneMode = false }
+            applyFilter()
+        }
+        .onChange(of: filters) { applyFilter() }
+        .onChange(of: reversed) { applyFilter() }
+        .onChange(of: searchText) { t in
+            let q = RecordSearch.parse(t)
+            parsedTags = q.parsedTags
+            highlightTokens = q.must
+            applyFilter()   // 562 边输入边更新
+        }
+    }
+
+    /// 记录页外层 (导航栈 + 弹窗/弹框) —— 同上, 继续拆
+    @ViewBuilder
+    private var recordsChrome: some View {
         NavigationStack {
-            Group {
-                if app.current == nil {
-                    noLockPlaceholder
-                } else if laneMode && scope == 1 {
-                    laneView   // 785 泳道时间线 (全部锁模式简化案)
-                } else {
-                    mainList
-                }
-            }
-            .navigationTitle("记录")
-            // 192: 过滤组合按锁留存 (清空全部过滤时自动删键, 不留脏值)
-            .onChange(of: filters) { _, new in new.save(mac: app.currentMac) }
-            .scrollContentBackground(.hidden)
-            .dsScreenBackground()
-            .toolbar {
-                recordsToolbar
-            }
-            .onAppear { onRecordsAppear() }
-            // 576/191: 换当前锁必须重取数据。此前本页只在 onAppear 里 loadFromCache()，
-            // 从设备页/矩阵点另一把锁回来时 allRows 还是旧锁的、recPool 已是新锁的
-            // ⇒ 点行命中"这条记录不在当前显示范围里"的兜底 toast，看起来像数据丢了。
-            .onChange(of: app.currentMac) { _, _ in
-                loadFromCache()
-            }
-            .onChange(of: app.pendingSearch) { _, q in
-                guard let q else { return }
-                landSearch(q)
-            }
-            .onChange(of: app.pendingRecordKey) { _, k in
-                guard let k else { return }
-                landRecordKey(k)
-            }
-            .onChange(of: app.pendingRecordsDay) { _, d in
-                guard let d else { return }
-                landDay(d)
-            }
-            .onChange(of: app.pendingFlashKey) { _, k in
-                guard let k else { return }
-                landFlash(k)
-            }
-            .onChange(of: app.pendingRecordsFilter) { _, f in
-                guard let f else { return }
-                sel = f
-                applyFilter()
-            }
-            .onChange(of: app.pendingRecordsMember) { _, m in
-                // 582 图表下钻: 统计页成员条写的那个 id 此前**全仓没有读取方** (只在 StatsView:1317 赋值),
-                // 所以点成员条跳过来什么也没发生。落点在 landMember —— 与点成员 chip 走同一条过滤链。
-                guard let m else { return }
-                landMember(m)
-            }
-            .onChange(of: scope) { _, s in
-                sel = ""
-                searchText = ""
-                parsedTags = []
-                highlightTokens = []
-                filters = QueryFilters()
-                reversed = false
-                expandedMerged = []
-                if s == 0 { laneMode = false }
-                applyFilter()
-            }
-            .onChange(of: filters) { applyFilter() }
-            .onChange(of: reversed) { applyFilter() }
-            .onChange(of: searchText) { t in
-                let q = RecordSearch.parse(t)
-                parsedTags = q.parsedTags
-                highlightTokens = q.must
-                applyFilter()   // 562 边输入边更新
-            }
+            recordsCore
         }
         .sheet(isPresented: $showAdd) { AddDeviceView() }
         .sheet(isPresented: $showGratitude) { GratitudeView() }
@@ -419,6 +431,7 @@ struct RecordsView: View {
             Text("只接受 https 前缀，程序会在后面拼 <年份>.json。清空输入框即回到内置源；换源不影响已缓存的年份，需重新拉取。")
         }
     }
+
 
     // ---------- 735 角标刷新 (处置状态在告警中心内变化, 返回时重算) ----------
     private var unhandledCount: Int {

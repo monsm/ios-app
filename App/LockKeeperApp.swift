@@ -1015,6 +1015,163 @@ struct RootView: View {
         }
     }
 
+    /// 主 TabView + 长按菜单 + 底栏/访客复核 —— 从 appUnlocked 分支抽出: 该表达式报 type-check 超时
+    @ViewBuilder
+    private var mainTabs: some View {
+        // iOS 18+ 的 Tab 声明式写法: 类型安全, 系统按平台自动选择底栏/侧栏形态
+        // 包15 键盘: Cmd 1-4 切 Tab 真接线 (164/530); Tab/Esc 遍历由系统「全键盘控制」提供 (854)
+        // 包2/136 跨页状态细条: 非设备 Tab 顶部一条 BLE 状态细线, 点按跳回设备页定位当前锁;
+        // 162 握手可离开: 切走 Tab 不取消进行中的握手 (回连循环/看门狗继续跑)
+        TabView(selection: $app.tabSelection) {
+            // 280 页面打开耗时: 起点在下面的 onChange(tabSelection)，终点就是各 Tab 内容的 onAppear。
+            Tab("设备", systemImage: "lock.fill", value: 0) { deviceTabContent }
+                // 162 握手可离开: 握手在别的 Tab 完成时这里亮一枚 "✓" (nil = 无角标); 回设备页即清
+                .badge(handshakeDoneAway ? Text("✓") : nil)
+            // 377 访客通道: 受限区没放开时, 凭证与设置这两个 Tab 根本**不进层级树**
+            // (不是禁点、不是加遮罩 —— 进不去的那两页连同里面的口令与成员名都不该挂在屏上)。
+            if !app.guestAreaLocked {
+                // 930 替代: 原句要的中尺寸"到期凭证 Widget"在免费账号读不到台账 (App Groups 禁),
+                // 替代栏给的是"到期前 7/3/1 天三级本地通知 + 凭证页顶部红点" —— 通知在
+                // CredentialOrg.scheduleAlerts, 红点落在系统 Tab 角标上 (与记录 Tab 的 735 角标同一手法,
+                // 0 时系统自动隐藏)。口径与 363 月历格同源, 不另算一套。
+                Tab("凭证", systemImage: "key.horizontal.fill", value: 1) { credentialsTabContent }
+                    .badge(CredentialOrg.expiringSoonCount(macs: DB.keychains().map { $0.mac }))
+            }
+            Tab("记录", systemImage: "list.bullet.rectangle.fill", value: 2) { recordsTabContent }
+                // 735 Tab 角标: 口径与记录页铃铛同源 (RecordSearch.unhandledAlarmCount); 0 时系统自动隐藏
+                .badge(RecordSearch.unhandledAlarmCount(macs: DB.keychains().map { $0.mac }))
+            // 377: 设置页同样收起 —— 里面是本机密码、备份与销毁这些不该给访客看的东西;
+            // 代价如实写在这里: 想关掉访客通道本身也要先重输一次口令 (开关原话的"退出需密码")。
+            if !app.guestAreaLocked {
+                Tab("设置", systemImage: "gearshape.fill", value: 3) { settingsTabContent }
+            }
+        }
+        // 26 Tab 长按快捷菜单 (iOS 18)。这一条只在"真按得动"的项上开口:
+        // 每一项都汇进本仓**已有的落点口** (requestTab / pendingCredPanel 词表 /
+        // pendingRecordsDay / pendingDiag), 没有一项指向还不存在的页面 ——
+        // 长按菜单最容易变成"写了三行其实一行做不到"的地方, 所以宁可每页只给两三项。
+        // ⚠ API-VERIFY: `contextMenu(forSelectionType:tabBar:primaryAction:)` 全仓无先例,
+        //    形状按 iOS 18 TabView 文档; 未编译、未证实。若系统不认这一形, 退路是
+        //    把同样的动作挂到各 Tab 内容的 .contextMenu (长按页内元素), 语义会差一档。
+        .contextMenu(forSelectionType: Int.self) { t in
+            switch t {
+            case 0:
+                if app.current != nil {
+                    Button("打开迷你开锁面板") { app.requestTab(0); app.shakePanel = true }
+                }
+                Button("只看今天的记录") {
+                    app.pendingRecordsDay = StatsKit.dayKey(Date())
+                    app.requestTab(2)
+                }
+            case 1:
+                Button("凭证回收站") { app.pendingCredPanel = "bin"; app.requestTab(1) }
+                Button("到期与整理建议") { app.pendingCredPanel = "expired"; app.requestTab(1) }
+                Button("待补拉队列") { app.pendingCredPanel = "queue"; app.requestTab(1) }
+            case 2:
+                Button("只看今天") {
+                    app.pendingRecordsDay = StatsKit.dayKey(Date())
+                    app.requestTab(2)
+                }
+                Button("回设备页开锁") { app.requestTab(0) }
+            default:
+                // 设置 (3) 与任何没预料到的值: 只给真存在的两条
+                if app.currentMac.isEmpty {
+                    Button("打开这一页") { app.requestTab(t) }
+                } else {
+                    Button("这台锁的诊断") { app.pendingDiag = app.currentMac; app.requestTab(3) }
+                    Button("打开这一页") { app.requestTab(t) }
+                }
+            }
+        } primaryAction: { t in
+            // 长按后直接点一下 (竖屏主操作) = 进那一页, 走的仍是 requestTab 那道访客门禁
+            app.requestTab(t)
+        }
+        // 25 Tab 栏中央主按钮 (Instagram 式)。iOS 的 TabView 没有"中间那个按钮"这种系统位,
+        // 所以落点用 safeAreaInset(.bottom) —— 与上面那条 .top 同一手法, 不是 overlay:
+        // 覆盖式会压住导航栏标题与页面内容 (本文件注释里已经记过一次这个坑)。
+        // **只导航、不开锁**: 主操作仍然只有那一个 176pt 圆盘。第二个开锁入口 = 第二套误开面,
+        // 也违背拍板"主屏/锁屏一键开锁是新的误开面"那条同向判断。
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            VStack(spacing: DS.Space.xs) {
+                if app.tabSelection != 0, !app.decoyMode {
+                    Button {
+                        DS.Haptics.tick.impactOccurred()
+                        app.requestTab(0)
+                    } label: {
+                        Label("开锁", systemImage: "lock.open.fill")
+                            .accessibilityLabel("到设备页开锁")
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .buttonBorderShape(.capsule)
+                    .controlSize(.large)
+                    .transition(.opacity)
+                }
+                // 377 访客通道: 受限区唯一的入口。点它不切页 —— 把**既有**应用锁页拉起来复核,
+                // 通过之后 TabView 才把 凭证/设置 挂回层级树 (不新造第二个解锁面)。
+                if app.guestAreaLocked {
+                    Button {
+                        DS.Haptics.tick.impactOccurred()
+                        app.openGuestGate()
+                    } label: {
+                        Label("凭证与设置 (需重输密码)", systemImage: "lock.badge.clock")
+                            .accessibilityLabel("访客模式已开, 轻点后用应用锁密码放开凭证与设置")
+                    }
+                    .buttonStyle(.bordered)
+                    .buttonBorderShape(.capsule)
+                    .controlSize(.large)
+                    .transition(.opacity)
+                }
+            }
+            .padding(.bottom, DS.Space.xs)
+        }
+        .animation(DS.Motion.quick, value: app.tabSelection)
+        // 377: 受限区复核用的承载体就是 AppLockView 本身 (reauth 档: 验过只放开 Tab, 不动 appUnlocked)。
+        // 用 fullScreenCover 而不是 sheet: 半屏会把底下那层凭证/记录的内容露一角出来。
+        .fullScreenCover(isPresented: $app.showGuestGate) {
+            AppLockView(reauth: true)
+                .environmentObject(app)
+        }
+        // 用 safeAreaInset 而不是 overlay — 覆盖式会压住导航栏标题
+    }
+
+    /// 主界面的顶部横幅/时刻卡/启动 task/前后台钩子 —— 同上, 继续拆
+    @ViewBuilder
+    private var mainTabsChrome: some View {
+        mainTabs
+        .safeAreaInset(edge: .top, spacing: 0) {
+            topBanners
+        }
+        // 包18: 一次性时刻卡 (里程碑/周年/史诗徽章) 覆盖层
+        .overlay {
+            if let m = app.moment {
+                MomentCardView(moment: m) { app.advanceMoment() }
+                    .transition(.opacity.combined(with: .scale(0.96)))
+            }
+        }
+        .animation(DS.Motion.soft, value: app.moment)
+        .task {
+            // 547/758 异常退出档案: 这四个函数此前全库零调用, 整条链路从未跑过。
+            // 顺序要紧: 先按上次的标记判定异常退出, 再为本次会话打点。
+            CrashGuard.checkAbnormalExit()
+            CrashGuard.markSessionStart()
+            app.onLaunch()
+            // 215 启动预算 / 224 启动预热: 两个引擎此前全库零调用。
+            // Prewarm 只做本地键位与热点缓存读取, 不碰 BLE —— 不会在启动时偷偷发起连接。
+            StartupTrace.mark("onLaunch 结束")
+            Prewarm.run(mac: app.currentMac)
+            if StartupTrace.overBudget {
+                app.lock.log("warn", "启动耗时 \(Int(StartupTrace.totalMs))ms, 超 800ms 预算 (215)")
+            }
+            RootView.registerHost(app)   // 包2: LinkSense 宿主注册 + 回连/巡检循环
+            LinkSense.shared.coldStartScan()   // 包2/134 冷启动先扫描 (定位可见锁, 不连接)
+        }
+        // 2026-10-13 run 60: 原来把整段前后台收尾逻辑内联在这个闭包里, 与上下十几个
+        // .onChange / .overlay 同处一个巨型 body 表达式 ⇒ 编译器报
+        //   "unable to type-check this expression in reasonable time"。
+        // 抽成独立方法后 body 只剩一行调用, 类型检查负担从整个 body 缩到一个函数。
+        .onChange(of: scenePhase) { _, phase in handleScenePhase(phase) }   // 135 回前台即刷新
+    }
+
     var body: some View {
         Group {
             if !Onboarding.allDone && !app.onboardingFinished {
@@ -1026,152 +1183,7 @@ struct RootView: View {
                 // 390: 伪装口令进来的会话只渲染空壳, 主 TabView 与其 .task(onLaunch/回连) 都不执行
                 DecoyShellView()
             } else if app.appUnlocked {
-                // iOS 18+ 的 Tab 声明式写法: 类型安全, 系统按平台自动选择底栏/侧栏形态
-                // 包15 键盘: Cmd 1-4 切 Tab 真接线 (164/530); Tab/Esc 遍历由系统「全键盘控制」提供 (854)
-                // 包2/136 跨页状态细条: 非设备 Tab 顶部一条 BLE 状态细线, 点按跳回设备页定位当前锁;
-                // 162 握手可离开: 切走 Tab 不取消进行中的握手 (回连循环/看门狗继续跑)
-                TabView(selection: $app.tabSelection) {
-                    // 280 页面打开耗时: 起点在下面的 onChange(tabSelection)，终点就是各 Tab 内容的 onAppear。
-                    Tab("设备", systemImage: "lock.fill", value: 0) { deviceTabContent }
-                        // 162 握手可离开: 握手在别的 Tab 完成时这里亮一枚 "✓" (nil = 无角标); 回设备页即清
-                        .badge(handshakeDoneAway ? Text("✓") : nil)
-                    // 377 访客通道: 受限区没放开时, 凭证与设置这两个 Tab 根本**不进层级树**
-                    // (不是禁点、不是加遮罩 —— 进不去的那两页连同里面的口令与成员名都不该挂在屏上)。
-                    if !app.guestAreaLocked {
-                        // 930 替代: 原句要的中尺寸"到期凭证 Widget"在免费账号读不到台账 (App Groups 禁),
-                        // 替代栏给的是"到期前 7/3/1 天三级本地通知 + 凭证页顶部红点" —— 通知在
-                        // CredentialOrg.scheduleAlerts, 红点落在系统 Tab 角标上 (与记录 Tab 的 735 角标同一手法,
-                        // 0 时系统自动隐藏)。口径与 363 月历格同源, 不另算一套。
-                        Tab("凭证", systemImage: "key.horizontal.fill", value: 1) { credentialsTabContent }
-                            .badge(CredentialOrg.expiringSoonCount(macs: DB.keychains().map { $0.mac }))
-                    }
-                    Tab("记录", systemImage: "list.bullet.rectangle.fill", value: 2) { recordsTabContent }
-                        // 735 Tab 角标: 口径与记录页铃铛同源 (RecordSearch.unhandledAlarmCount); 0 时系统自动隐藏
-                        .badge(RecordSearch.unhandledAlarmCount(macs: DB.keychains().map { $0.mac }))
-                    // 377: 设置页同样收起 —— 里面是本机密码、备份与销毁这些不该给访客看的东西;
-                    // 代价如实写在这里: 想关掉访客通道本身也要先重输一次口令 (开关原话的"退出需密码")。
-                    if !app.guestAreaLocked {
-                        Tab("设置", systemImage: "gearshape.fill", value: 3) { settingsTabContent }
-                    }
-                }
-                // 26 Tab 长按快捷菜单 (iOS 18)。这一条只在"真按得动"的项上开口:
-                // 每一项都汇进本仓**已有的落点口** (requestTab / pendingCredPanel 词表 /
-                // pendingRecordsDay / pendingDiag), 没有一项指向还不存在的页面 ——
-                // 长按菜单最容易变成"写了三行其实一行做不到"的地方, 所以宁可每页只给两三项。
-                // ⚠ API-VERIFY: `contextMenu(forSelectionType:tabBar:primaryAction:)` 全仓无先例,
-                //    形状按 iOS 18 TabView 文档; 未编译、未证实。若系统不认这一形, 退路是
-                //    把同样的动作挂到各 Tab 内容的 .contextMenu (长按页内元素), 语义会差一档。
-                .contextMenu(forSelectionType: Int.self) { t in
-                    switch t {
-                    case 0:
-                        if app.current != nil {
-                            Button("打开迷你开锁面板") { app.requestTab(0); app.shakePanel = true }
-                        }
-                        Button("只看今天的记录") {
-                            app.pendingRecordsDay = StatsKit.dayKey(Date())
-                            app.requestTab(2)
-                        }
-                    case 1:
-                        Button("凭证回收站") { app.pendingCredPanel = "bin"; app.requestTab(1) }
-                        Button("到期与整理建议") { app.pendingCredPanel = "expired"; app.requestTab(1) }
-                        Button("待补拉队列") { app.pendingCredPanel = "queue"; app.requestTab(1) }
-                    case 2:
-                        Button("只看今天") {
-                            app.pendingRecordsDay = StatsKit.dayKey(Date())
-                            app.requestTab(2)
-                        }
-                        Button("回设备页开锁") { app.requestTab(0) }
-                    default:
-                        // 设置 (3) 与任何没预料到的值: 只给真存在的两条
-                        if app.currentMac.isEmpty {
-                            Button("打开这一页") { app.requestTab(t) }
-                        } else {
-                            Button("这台锁的诊断") { app.pendingDiag = app.currentMac; app.requestTab(3) }
-                            Button("打开这一页") { app.requestTab(t) }
-                        }
-                    }
-                } primaryAction: { t in
-                    // 长按后直接点一下 (竖屏主操作) = 进那一页, 走的仍是 requestTab 那道访客门禁
-                    app.requestTab(t)
-                }
-                // 25 Tab 栏中央主按钮 (Instagram 式)。iOS 的 TabView 没有"中间那个按钮"这种系统位,
-                // 所以落点用 safeAreaInset(.bottom) —— 与上面那条 .top 同一手法, 不是 overlay:
-                // 覆盖式会压住导航栏标题与页面内容 (本文件注释里已经记过一次这个坑)。
-                // **只导航、不开锁**: 主操作仍然只有那一个 176pt 圆盘。第二个开锁入口 = 第二套误开面,
-                // 也违背拍板"主屏/锁屏一键开锁是新的误开面"那条同向判断。
-                .safeAreaInset(edge: .bottom, spacing: 0) {
-                    VStack(spacing: DS.Space.xs) {
-                        if app.tabSelection != 0, !app.decoyMode {
-                            Button {
-                                DS.Haptics.tick.impactOccurred()
-                                app.requestTab(0)
-                            } label: {
-                                Label("开锁", systemImage: "lock.open.fill")
-                                    .accessibilityLabel("到设备页开锁")
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .buttonBorderShape(.capsule)
-                            .controlSize(.large)
-                            .transition(.opacity)
-                        }
-                        // 377 访客通道: 受限区唯一的入口。点它不切页 —— 把**既有**应用锁页拉起来复核,
-                        // 通过之后 TabView 才把 凭证/设置 挂回层级树 (不新造第二个解锁面)。
-                        if app.guestAreaLocked {
-                            Button {
-                                DS.Haptics.tick.impactOccurred()
-                                app.openGuestGate()
-                            } label: {
-                                Label("凭证与设置 (需重输密码)", systemImage: "lock.badge.clock")
-                                    .accessibilityLabel("访客模式已开, 轻点后用应用锁密码放开凭证与设置")
-                            }
-                            .buttonStyle(.bordered)
-                            .buttonBorderShape(.capsule)
-                            .controlSize(.large)
-                            .transition(.opacity)
-                        }
-                    }
-                    .padding(.bottom, DS.Space.xs)
-                }
-                .animation(DS.Motion.quick, value: app.tabSelection)
-                // 377: 受限区复核用的承载体就是 AppLockView 本身 (reauth 档: 验过只放开 Tab, 不动 appUnlocked)。
-                // 用 fullScreenCover 而不是 sheet: 半屏会把底下那层凭证/记录的内容露一角出来。
-                .fullScreenCover(isPresented: $app.showGuestGate) {
-                    AppLockView(reauth: true)
-                        .environmentObject(app)
-                }
-                // 用 safeAreaInset 而不是 overlay — 覆盖式会压住导航栏标题
-                .safeAreaInset(edge: .top, spacing: 0) {
-                    topBanners
-                }
-                // 包18: 一次性时刻卡 (里程碑/周年/史诗徽章) 覆盖层
-                .overlay {
-                    if let m = app.moment {
-                        MomentCardView(moment: m) { app.advanceMoment() }
-                            .transition(.opacity.combined(with: .scale(0.96)))
-                    }
-                }
-                .animation(DS.Motion.soft, value: app.moment)
-                .task {
-                    // 547/758 异常退出档案: 这四个函数此前全库零调用, 整条链路从未跑过。
-                    // 顺序要紧: 先按上次的标记判定异常退出, 再为本次会话打点。
-                    CrashGuard.checkAbnormalExit()
-                    CrashGuard.markSessionStart()
-                    app.onLaunch()
-                    // 215 启动预算 / 224 启动预热: 两个引擎此前全库零调用。
-                    // Prewarm 只做本地键位与热点缓存读取, 不碰 BLE —— 不会在启动时偷偷发起连接。
-                    StartupTrace.mark("onLaunch 结束")
-                    Prewarm.run(mac: app.currentMac)
-                    if StartupTrace.overBudget {
-                        app.lock.log("warn", "启动耗时 \(Int(StartupTrace.totalMs))ms, 超 800ms 预算 (215)")
-                    }
-                    RootView.registerHost(app)   // 包2: LinkSense 宿主注册 + 回连/巡检循环
-                    LinkSense.shared.coldStartScan()   // 包2/134 冷启动先扫描 (定位可见锁, 不连接)
-                }
-                // 2026-10-13 run 60: 原来把整段前后台收尾逻辑内联在这个闭包里, 与上下十几个
-                // .onChange / .overlay 同处一个巨型 body 表达式 ⇒ 编译器报
-                //   "unable to type-check this expression in reasonable time"。
-                // 抽成独立方法后 body 只剩一行调用, 类型检查负担从整个 body 缩到一个函数。
-                .onChange(of: scenePhase) { _, phase in handleScenePhase(phase) }   // 135 回前台即刷新
+                mainTabsChrome
             } else {
                 AppLockView()
                     // 解锁的"穿越感": 门禁界面轻微放大溶解, 主界面从后面浮现
