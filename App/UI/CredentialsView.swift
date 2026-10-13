@@ -2273,16 +2273,16 @@ struct CredentialsView: View {
     }
     private func startUndoTimer() {
         stopUndoTimer()
-        let t = DispatchSource.makeTimerSource()
+        // 2026-10-13 修 CI: Swift 的 DispatchSourceTimer **没有** `setEventHandler(queue:)` 这个重载
+        // (只有 `setEventHandler(qos:flags:handler:)`, 队列是建源时定的), 所以不管写 `.main` 还是
+        // `DispatchQueue.main` 都是 "no exact matches in call to instance method 'setEventHandler'"。
+        // 队列必须在 makeTimerSource(queue:) 这一步给 —— 而且这一步省略时源挂在**默认全局队列**上,
+        // 正是下面注释要防的事: 5 秒后从后台线程改 undoEntry(@State) 还包 withAnimation。
+        let t = DispatchSource.makeTimerSource(queue: DispatchQueue.main)
         t.schedule(deadline: .now() + 5)
-        // 2026-10-13 对抗式排查: `setEventHandler` 不指定 queue 时, 回调跑在 **DispatchSource
-        // 默认的全局队列**上, 于是 5 秒后从后台线程改 `undoEntry`(@State) 还包 `withAnimation`
-        // ⇒ 运行期未定义 (不刷新或崩), Swift 6 直接拒编。
-        // 复现: 删除一条凭证, 等 5 秒撤销条不消失。显式指定 .main。
-        // 2026-10-13 修 CI: 原写 `setEventHandler(queue: .main)` —— 在 SwiftUI 的 View struct 作用域里
-        // 裸 `.main` 解析不到 ("cannot infer contextual base in reference to member 'main'"),
-        // 必须写全 `DispatchQueue.main`。
-        t.setEventHandler(queue: DispatchQueue.main) {
+        // 2026-10-13 对抗式排查: 源不指定 queue 时, 事件回调跑在全局队列上
+        // ⇒ 运行期未定义 (不刷新或崩), Swift 6 直接拒编。复现: 删除一条凭证, 等 5 秒撤销条不消失。
+        t.setEventHandler {
             guard undoEntry != nil else { return }
             withAnimation(DS.Motion.exit) { undoEntry = nil }
         }

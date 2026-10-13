@@ -1587,7 +1587,11 @@ struct BorrowSheetView: View {
                         // **计算属性** (每次重新查 DB), ForEach 的 key 集合与闭包求值来自两次独立调用,
                         // 中间任何一次删除/销记都会让 k 在新 map 里消失 ⇒ 强解包 trap。
                         // 同一帧同线程数据不变所以当前不可达, 但这是"计算属性 + 下标强解包"的教科书款。
-                        guard let b = borrowMap[k] else { continue }
+                        // 2026-10-13 修 CI: 上面那版写成了 `guard let b = borrowMap[k] else { continue }` ——
+                        // ViewBuilder 闭包里 `continue` 找不到所属循环 (这不是 for 循环, 是逐元素的 builder 闭包),
+                        // 编译错被级联到 ForEach 的初始化器上 ("no exact matches in call to initializer")。
+                        // builder 语境的等价写法就是 if let: 键不在新 map 里就安静跳过, 语义一致。
+                        if let b = borrowMap[k] {
                         HStack(spacing: DS.Space.s) {
                             Text(k.hasPrefix("b") ? "凭证明细见凭证页" : k)
                                 .font(.caption)
@@ -1605,6 +1609,7 @@ struct BorrowSheetView: View {
                             .buttonStyle(SecondaryActionStyle(fullWidth: false))
                             .frame(minHeight: DS.Hit.min)
                             .contentShape(Rectangle())
+                        }
                         }
                     }
                     if borrowMap.isEmpty {
