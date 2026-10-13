@@ -588,7 +588,11 @@ struct SecurityLockConfigView: View {
     private var cooldownRow: some View {
         let on = DB.store.getBool(SecKey.lockCoolOn, false)
         let n = DB.store.getInt(SecKey.lockStreak, 0)
-        let nextCd = Int(30 * pow(2, min(n, 8)))
+        // 2026-10-13 run 61: 原写 `Int(30 * pow(2, min(n, 8)))` —— 两个实参都是 Int,
+        // 于是 `pow` 解析到 Foundation 的 `pow(Decimal, Int) -> Decimal`, 再 `Int(Decimal)` 报
+        //   "initializer 'init(_:)' requires that 'Decimal' conform to 'BinaryInteger'"。
+        // 显式走 Double 版: `pow(2.0, Double(min(n, 8)))`。
+        let nextCd = Int(30 * pow(2.0, Double(min(n, 8))))
         let title = on
             ? "连败 \(n) 次" + (cooldownSeconds > 0 ? "，还需等 \(cooldownSeconds) 秒" : "，下次冷却 \(nextCd) 秒")
             : "关闭"
@@ -725,7 +729,11 @@ struct SecurityLockConfigView: View {
             let f1 = alert.textFields?[0].text ?? ""
             let f2 = alert.textFields?[1].text ?? ""
             guard f1 == f2, f1.count >= 4 else { app.showToast("两次输入不一致或不足 4 位"); return }
-            if let msg = conflictCheck(f1), !msg.isEmpty {
+            // 2026-10-13 run 61: `conflictCheck` 是 `@escaping (String) -> String` (见本函数签名),
+            // 返回**非可选** String; 原写 `if let msg = conflictCheck(f1)` 报
+            //   "initializer for conditional binding must have Optional type, not 'String'"。
+            let msg = conflictCheck(f1)
+            if !msg.isEmpty {
                 app.showToast(msg)
                 return
             }
@@ -736,7 +744,11 @@ struct SecurityLockConfigView: View {
         UIApplication.topViewController()?.present(alert, animated: true)
     }
 
-    private static func dateStr(_ t: Double) -> String {
+    // 2026-10-13 run 61: 原为 `private static func dateStr` —— 但 SecurityAuditView (379 审计流水)
+    // 在 1396 行调 `SecurityLockConfigView.dateStr(e.ts)` 格式化时间戳, 跨类型访问 private 报
+    //   "'dateStr' is inaccessible due to 'private' protection level"。
+    // 改 internal (同一文件内的复用出口); 它只读私有 fmt, 仍是单一格式源, 不复制一份。
+    static func dateStr(_ t: Double) -> String {
         fmt.string(from: Date(timeIntervalSince1970: t))
     }
     private static let fmt: DateFormatter = {
@@ -1138,7 +1150,14 @@ struct SecurityAuditView: View {
         List {
             // 379 双流水分段
             Section {
-                Picker("", selection: Binding(get: { self.seg }, set: { withAnimation(DS.Motion.quick) { self.seg = $0 } })) {
+                // 2026-10-13 run 61: 原写 `set: { withAnimation(DS.Motion.quick) { self.seg = $0 } }` ——
+                // 外层闭包参数隐式 ($0 只出现在**内层**闭包里), 编译器把它算成
+                //   "contextual type for closure argument list expects 2 arguments" 与
+                //   "expects 0 arguments, but 1 was used in closure body"。
+                // 给外层参数起名 newValue 后, 两层闭包各自明确, 歧义消失。
+                Picker("", selection: Binding(get: { self.seg }, set: { newValue in
+                    withAnimation(DS.Motion.quick) { self.seg = newValue }
+                })) {
                     Text("管理操作").tag(0)
                     Text("开门事件").tag(1)
                 }
