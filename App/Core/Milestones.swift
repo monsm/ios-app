@@ -469,6 +469,14 @@ enum Milestones {
     static func unlockedMap() -> [String: Double] {
         DB.store.get([String: Double].self, "kf_ach_done") ?? [:]
     }
+    /// 点亮时刻 (毫秒 epoch → Date)。kf_ach_done 存的是 `Date().timeIntervalSince1970 * 1000` 的**毫秒**,
+    /// 而 UI (BadgeTile/BadgeDetailSheet) 要的是 `Date?` —— 2026-10-13 run 57: 两处直接把
+    /// `unlocked[b.id]` (Double?) 当 Date? 传, 报 "cannot convert value of type 'Double?' to expected
+    /// argument type 'Date?'"。转换只此一处, 与 latestUnlocked 里的 ts/1000 同口径 (不再各写各的)。
+    static func unlockedDate(_ id: String) -> Date? {
+        guard let ts = unlockedMap()[id] else { return nil }
+        return Date(timeIntervalSince1970: ts / 1000)
+    }
     /// 988 陈列架: 最近点亮的 n 枚
     static func latestUnlocked(_ n: Int) -> [(badge: Badge, at: Date)] {
         unlockedMap()

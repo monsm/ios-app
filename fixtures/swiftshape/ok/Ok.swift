@@ -90,3 +90,42 @@ struct OkLetSameLine: View {
     var n: Int
     private var badge: some View { Text("\(n)") }
 }
+
+struct OkViewFuncWithArrow: View {
+    // R6 反控之一：视图函数**写了** `-> some View` ⇒ 合法 (rhythmSection/StatsView 修好后的形状) ⇒ 不报。
+    var show: Bool
+    var body: some View {
+        Section("容器") {
+            card()
+        }
+    }
+    @ViewBuilder
+    private func card() -> some View {
+        let n = 1
+        Section("详情") { Text("条数 \(n)") }
+    }
+}
+
+struct OkVoidActionFunc: View {
+    // R6 反控之二：真正的动作函数 (写留痕 + 刷新), 返回 Void 是**本意**, 体内也没有视图构造 ⇒ 不报。
+    // 本仓 AlarmCenterView/markDone 就是这个形状, 报它就是噪音。
+    var tick = 0
+    var body: some View {
+        Button("已处理") { markDone("k") }
+    }
+    private func markDone(_ key: String) {
+        _ = key
+        tick += 1
+    }
+}
+
+struct OkVoidFuncNoViewCtor: View {
+    // R6 反控之三：无返回类型、但体内**没有任何视图构造** (纯计算) ⇒ 即使被当语句调用也不报。
+    var n: Int
+    var body: some View {
+        Text("\(compute())")
+    }
+    private func compute() {
+        _ = n
+    }
+}

@@ -29,7 +29,7 @@ struct AchievementsView: View {
         .navigationTitle("我的成就")
         .onAppear(perform: refresh)
         .sheet(item: $detail) { b in
-            BadgeDetailSheet(badge: b, unlockedAt: unlocked[b.id])
+            BadgeDetailSheet(badge: b, unlockedAt: Milestones.unlockedDate(b.id))
         }
     }
 
@@ -198,7 +198,7 @@ struct AchievementsView: View {
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: DS.Space.s), count: 4),
                                   spacing: DS.Space.s) {
                             ForEach(defs) { b in
-                                BadgeTile(badge: b, unlockedAt: unlocked[b.id]) { detail = b }
+                                BadgeTile(badge: b, unlockedAt: Milestones.unlockedDate(b.id)) { detail = b }
                             }
                         }
                     }

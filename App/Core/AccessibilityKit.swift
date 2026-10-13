@@ -11,13 +11,15 @@ import LocalAuthentication
 // ---------- 系统辅助旗标 (226/227/862/863): 每帧评估, 由 RootView .id(appearanceSeed) 重建兜底 ----------
 enum AXFlags {
     /// 862 增强对比: hairline/textSub 加深一档的触发条件 (DS.Palette 内部消费)
-    // accessibilityHighContrast 是 UIAccessibilityHighContrast 枚举而非 Bool (且 current 非可选) → 用长期稳定的系统 API
-    static var highContrast: Bool { UIAccessibility.accessibilityDisplayShouldIncreaseContrast }
+    /// ⚠ 2026-10-13 run 57 打脸: 此前写 `UIAccessibility.accessibilityDisplayShouldIncreaseContrast` ——
+    /// UIKit **没有**这个成员。Apple 文档 (UIAccessibility「Capabilities」清单) 里 "Increase Contrast" 的官方读法
+    /// 是 `isDarkerSystemColorsEnabled` (iOS 8+, static var)。此前注释还理直气壮写"长期稳定的系统 API",
+    /// 越是没编译证据越要按文档抄全名, 不能凭记忆。
+    static var highContrast: Bool { UIAccessibility.isDarkerSystemColorsEnabled }
     /// 863 智能反转保护: 反转色模式 (全量反转或智能反转) 时 hero 渐变降级为反转幂等色
-    static var invertColors: Bool {
-        // UIAccessibility 没有 isInvertColors 成员, 只有 isInvertColorsEnabled()
-        UIAccessibility.isInvertColorsEnabled()
-    }
+    /// Apple 文档: `static var isInvertColorsEnabled: Bool { get }` —— 是**属性**不是方法。
+    /// (此前写成 `isInvertColorsEnabled()` 并注释"只有方法形态", 是凭记忆写反了; run 57 报 "cannot call value of non-function type 'Bool'")
+    static var invertColors: Bool { UIAccessibility.isInvertColorsEnabled }
     /// 861 系统加粗文本: 系统"加粗文本"开关 (设置→辅助功能→显示与文字大小)。
     /// 根视图按这一档设 legibilityWeight —— 显式字重的文本 (凭证名/开关标签) 才会跟着加粗;
     /// 系统默认只对系统字体的正文自动加粗, 自定义字重的那一族不会变。
@@ -25,12 +27,12 @@ enum AXFlags {
     /// 899 减弱动态效果: 动效令牌 (DS.Motion) 的强制降档条件。
     /// 视图里已经在用 `@Environment(\.accessibilityReduceMotion)` 的那 11 处不受影响 ——
     /// 这里是**非视图**代码 (令牌层) 的唯一读点，两边判据是同一个系统开关。
-    /// 注意它是**属性**不是方法 (Apple 文档: `static var isReduceMotionEnabled: Bool { get }`, iOS 8+)，
-    /// 与上面 isInvertColorsEnabled() 的方法形态相反 —— 这两个正好是反例，别照着抄。
+    /// Apple 文档: `static var isReduceMotionEnabled: Bool { get }` (iOS 8+), 是**属性** (无括号)。
     static var reduceMotion: Bool { UIAccessibility.isReduceMotionEnabled }
     /// 226 降低透明度: 玻璃效果自绘降级为实底 (DesignSystem.dsGlass)
-    // 同名是方法不是属性: 少写 () 会把函数当 Bool 用
-    static var reduceTransparency: Bool { UIAccessibility.isReduceTransparencyEnabled() }
+    /// Apple 文档: `static var isReduceTransparencyEnabled: Bool { get }` —— 同样是**属性**。
+    /// 此前写成 `isReduceTransparencyEnabled()` (方法与属性记混) ⇒ run 57 报 "cannot call value of non-function type 'Bool'"。
+    static var reduceTransparency: Bool { UIAccessibility.isReduceTransparencyEnabled }
 
     // ---------- App 内字号五档 (858): kf_font_scale 0.8/1.0/1.25/1.5/1.75, 默认 1.0 ----------
     /// 叠加语义 (务必先读): App 档位只决定"相对系统正文 17pt 的放大倍率",
@@ -49,10 +51,12 @@ enum AXFlags {
     static func typeSize() -> DynamicTypeSize {
         let base = bigPreview ? 2.0 : appFontScale
         let rel = base * systemTypeRel
-        // 预设近似倍率 (正文 17pt 基线): xxlarge≈1.5, xxxLarge≈1.75, accessibility1..5 ≈ 2.0/2.5/3.0/4.0/5.0
+        // 预设近似倍率 (正文 17pt 基线): xLarge≈1.25, xxLarge≈1.5, xxxLarge≈1.75, accessibility1..5 ≈ 2.0/2.5/3.0/4.0/5.0
+        // ⚠ 2026-10-13 run 57: 此前写成 .xsmall/.xlarge/.xxlarge —— DynamicTypeSize 的官方 case 是
+        // .xSmall/.small/.medium/.large/.xLarge/.xxLarge/.xxxLarge (驼峰里 S/L 大写), 小写那三个不存在。
         let table: [(Double, DynamicTypeSize)] = [
-            (0.625, .xsmall), (0.75, .small), (1.0, .large),
-            (1.25, .xlarge), (1.5, .xxlarge), (1.75, .xxxLarge),
+            (0.625, .xSmall), (0.75, .small), (1.0, .large),
+            (1.25, .xLarge), (1.5, .xxLarge), (1.75, .xxxLarge),
             (2.0, .accessibility1), (2.5, .accessibility2),
             (3.0, .accessibility3), (4.0, .accessibility4), (5.0, .accessibility5),
         ]
@@ -293,12 +297,16 @@ enum AuthKit {
         var err: NSError?
         guard ctx.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &err),
               err?.code != LAError.biometryNotAvailable.rawValue else { return false }
-        return ctx.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics,
-                                  localizedReason: "用 Face ID / Touch ID 代替本机密码") { ok, err in
+        // evaluatePolicy(_:localizedReason:reply:) 的返回值是 Void (结果经 reply 回调异步回),
+        // 所以不能 `return ctx.evaluatePolicy(...)` —— 那是把 Void 当 Bool 返回 (run 57 就报这个)。
+        // 本函数的 Bool = "是否成功发起验证" (canEvaluate 通过就 true), 真正的成败在 reply 里走 onSuccess/onFail。
+        ctx.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics,
+                           localizedReason: "用 Face ID / Touch ID 代替本机密码") { ok, err in
             Task { @MainActor in
                 if ok { onSuccess() } else { onFail?(reasonText(err)) }
             }
         }
+        return true
     }
     /// 392: 面容失败的原因翻成人话 —— 留痕要能读到"到哪一步没成" (不匹配/取消/锁停分开),
     /// 只记一句笼统的"失败"等于有记录读不出事。取消/改用密码是人的选择, 由调用方决定不计连败。

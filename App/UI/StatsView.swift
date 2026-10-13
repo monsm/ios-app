@@ -363,7 +363,7 @@ struct StatsView: View {
     private var wideSplitTrend: Bool { hSize == .regular && brush != nil }
 
     @ViewBuilder
-    private func trendSection(_ m: StatsKit.StatModel) {
+    private func trendSection(_ m: StatsKit.StatModel) -> some View {
         Section("趋势") {
             if wideSplitTrend, let b = brush {
                 // 643 regular 档: 主图与它驱动的 621 区间明细左右并排 —— 主图列取容器的 3/5 (≈60%), 明细列取 2/5 (≈40%)。
@@ -833,7 +833,7 @@ struct StatsView: View {
 
     // ---------- 600 24 小时分布柱 (点柱下钻) / 614 正常与告警分组柱 / 633 轴刻度取整 / 644 逐点朗读 ----------
     @ViewBuilder
-    private func hourSection(_ m: StatsKit.StatModel) {
+    private func hourSection(_ m: StatsKit.StatModel) -> some View {
         let peak = m.hourStats.max(by: { $0.opens < $1.opens })
         // 633: 步长按窗口内最大值挑整数档 (5/10/20/50)。"次数"是整数指标，
         // 让它出现 12.5 这种刻度是**假精度** —— 读数的人会以为中间真有个半次。
@@ -905,7 +905,7 @@ struct StatsView: View {
     /// 与 616 星期几分布刻意分开: 这张看的是"具体哪七天" (有日期，能对上某件事)，
     /// 那张把量按周一~周日聚合 (看的是规律而不是日子)。两张图共用一个 Section 壳、不共用数据。
     @ViewBuilder
-    private func weekBarsSection(_ m: StatsKit.StatModel) {
+    private func weekBarsSection(_ m: StatsKit.StatModel) -> some View {
         let barDays = m.recentBarDays          // 13 固定 7 天 (不跟 678 周族档), 标题那句与 suffix 的参数同一个出处
         let days = Array(m.dailyPoints.suffix(barDays))
         if days.count >= 2 {
@@ -965,7 +965,7 @@ struct StatsView: View {
     /// 假日本身只认本机已收录的公告 (holiday-cn 缓存 + 内置表, 走 RecordSearch.holidayName 一个出口)；
     /// 没收录时整节不出现 —— 猜哪天放假是把推断当事实。
     @ViewBuilder
-    private func holidayBarsSection(_ m: StatsKit.StatModel) {
+    private func holidayBarsSection(_ m: StatsKit.StatModel) -> some View {
         let days = m.holidayTailDays
         if !days.isEmpty {
             Section {
@@ -1021,7 +1021,7 @@ struct StatsView: View {
     /// 只在窗口内真有 ≥5 次开门时出现 (622 护栏的另一面)：三根 0 轴的雷达是个空圈，
     /// 空圈会被读成"作息很规律"，而那其实是没数据。
     @ViewBuilder
-    private func radarSection(_ m: StatsKit.StatModel) {
+    private func radarSection(_ m: StatsKit.StatModel) -> some View {
         let parts = m.dayparts
         if m.daypartTotal >= 5 {
             Section {
@@ -1091,7 +1091,7 @@ struct StatsView: View {
     /// 与 627 OTP 散点同一种点图，但纵轴是**类型**不是时刻: 看的是"哪几天集中爆发哪一类"。
     /// 空的时候整节不出现 (没有告警是好消息，不该用一张空网格占住页面，也不该写"暂无数据"占位)。
     @ViewBuilder
-    private func alarmScatterSection(_ m: StatsKit.StatModel) {
+    private func alarmScatterSection(_ m: StatsKit.StatModel) -> some View {
         let pts = m.alarmScatter
         if !pts.isEmpty {
             Section("告警散点 · 近 \(m.alarmScatterDays) 天 (605)") {
@@ -1124,7 +1124,7 @@ struct StatsView: View {
 
     // ---------- 601 本月上月同比 + 604 成员多线 (632 图例点选排除) ----------
     @ViewBuilder
-    private func monthSection(_ m: StatsKit.StatModel) {
+    private func monthSection(_ m: StatsKit.StatModel) -> some View {
         let mp = m.monthPair
         Section("本月对比") {
             VStack(alignment: .leading, spacing: DS.Space.s) {
@@ -1439,7 +1439,7 @@ struct StatsView: View {
 
     // ---------- 603 累计面积图 + 周分割刻度 ----------
     @ViewBuilder
-    private func cumulativeSection(_ m: StatsKit.StatModel) {
+    private func cumulativeSection(_ m: StatsKit.StatModel) -> some View {
         Section("累计开门 (603)") {
             let pts = m.dailyPoints
             var cum = 0
@@ -1477,7 +1477,7 @@ struct StatsView: View {
 
     // ---------- 609/629 临时码甘特 + 核销率 ----------
     @ViewBuilder
-    private func ganttSection(_ m: StatsKit.StatModel) {
+    private func ganttSection(_ m: StatsKit.StatModel) -> some View {
         let g = m.gantt
         if !g.isEmpty {
             Section("临时码核销 (609 · 629)") {
@@ -1565,7 +1565,7 @@ struct StatsView: View {
 
     // ---------- 构成 (611 堆叠条 / 612 成员条 / 615 帕累托 / 616 周几 / 619 凭证类榜 / 613+620 告警) ----------
     @ViewBuilder
-    private func compositionSection(_ m: StatsKit.StatModel) {
+    private func compositionSection(_ m: StatsKit.StatModel) -> some View {
         let kinds = m.typeOpenCount
         let total = kinds.values.reduce(0, +)
         Section("构成") {
@@ -1815,7 +1815,7 @@ struct StatsView: View {
     ///     所以这一排不是按钮、不给 chevron、读屏也不提点按 —— 不承诺不存在的热区。
     /// 窗口天数与统计同一个出处 (`m.windowDays`), 不写死"本月" (算的是窗口 ∩ 缓存, 不是自然月)。
     @ViewBuilder
-    private func top5Section(_ m: StatsKit.StatModel) {
+    private func top5Section(_ m: StatsKit.StatModel) -> some View {
         let top = Array(m.pareto.prefix(5))
         if !top.isEmpty {
             VStack(alignment: .leading, spacing: DS.Space.s) {
@@ -1853,7 +1853,7 @@ struct StatsView: View {
     }
 
     @ViewBuilder
-    private func alertSection(_ m: StatsKit.StatModel) {
+    private func alertSection(_ m: StatsKit.StatModel) -> some View {
         let stats = m.alertStats
         let colors: [String: Color] = ["warn": DS.Palette.warn, "danger": DS.Palette.danger, "neutral": DS.Palette.textSub]
         VStack(alignment: .leading, spacing: DS.Space.s) {
@@ -1921,7 +1921,7 @@ struct StatsView: View {
 
     // ---------- 凭证维度 (626 用量比 / 628 越界首用 / 627 OTP 散点 / 617 在外时长 / 618 首次区间) ----------
     @ViewBuilder
-    private func credentialSection(_ m: StatsKit.StatModel) {
+    private func credentialSection(_ m: StatsKit.StatModel) -> some View {
         let pu = m.pwdUses
         let outOf = m.outOfRangeTotal
         if !pu.isEmpty || !m.otpPoints.isEmpty || outOf > 0 {
@@ -2104,7 +2104,7 @@ struct StatsView: View {
 
     // ---------- 小结 (799 成员周小结 + 800 在家代理 + 1020 黄金时段) ----------
     @ViewBuilder
-    private func summarySection(_ m: StatsKit.StatModel) {
+    private func summarySection(_ m: StatsKit.StatModel) -> some View {
         let week = m.weekSummary()
         let home = m.homeDurationProxy(days: 7)
         // 800 月对比: 与 601 同比同一种月窗 —— 半开 [月起, 次月1日), 上月整月不丢尾日; 数值走 homeProxyHours 同一出处
@@ -2147,7 +2147,7 @@ struct StatsView: View {
 
     // ---------- 50 年报告占位 ----------
     @ViewBuilder
-    private func yearReportSection(_ m: StatsKit.StatModel) {
+    private func yearReportSection(_ m: StatsKit.StatModel) -> some View {
         let cov = m.coverage
         Section {
             Button {

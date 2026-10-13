@@ -425,7 +425,11 @@ struct AlarmCenterView: View {
 
     /// 736 前后事件上下文: 前后 10 分钟同锁各 3 条
     @ViewBuilder
-    private func contextSection(_ r: Rec) {
+    // 2026-10-13 run 57: 此前写成 `private func contextSection(_ r: Rec) {` —— 没有返回类型 (= Void),
+    // 可函数体是 @ViewBuilder 形状 (多个 Section), 在 body 里又被当 View 用 (line 325) ⇒
+    // 报 "type '()' cannot conform to 'View'"。补 `-> some View`; 体内有顶层 if 无 else, 故必须 @ViewBuilder。
+    @ViewBuilder
+    private func contextSection(_ r: Rec) -> some View {
         let (before, after) = RecordSearch.context(mac: r.mac, aroundKey: r.key)
         if before.isEmpty && after.isEmpty {
             Section("前后事件") {
@@ -467,8 +471,10 @@ struct AlarmCenterView: View {
     }
 
     // ---------- 726 处置留痕 / 727 检查清单 / 739 回退 / 741 同类 / 745 测试标记 / 747 对比 ----------
+    // 同 contextSection: 此前有 @ViewBuilder 却漏了 `-> some View`, 在 body 里当 View 用 (line 326) ⇒
+    // "type '()' cannot conform to 'View'"。补返回类型。
     @ViewBuilder
-    private func detailSection(_ r: Rec) {
+    private func detailSection(_ r: Rec) -> some View {
         let dkey = r.mac + "#" + r.key
         let disp = RecordSearch.disposition(key: dkey)
         let same = RecordSearch.sameTypeCount(mac: r.mac, type: r.type, exceptKey: r.key)
