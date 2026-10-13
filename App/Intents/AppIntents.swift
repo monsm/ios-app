@@ -343,50 +343,53 @@ enum AppShortcuts {
 //   为 Apple 文档 iOS 16+ 标准形状, 全仓无先例可抄, 未编译、未证实。
 // ⚠ API-VERIFY: AppShortcutParameter 的值类型需走 IntentValueQuery 供默认值, 本仓没有可照抄的先例、文档形状
 //   未逐字核对, 故未纳入本轮注册 (想核实时先看本行), 未编译、未证实。
-// ⚠ API-VERIFY: phrases 要求含 App 名 —— 这里用静态中文字面量「离线锁管家」, 与 CFBundleDisplayName (project.yml:29) 一致;
-//   系统是否按字面量收录需真机核, 未编译、未证实。
+// ⚠ API-VERIFY: phrases 要求**含 App 名占位** —— 2026-10-13 run 72 由 appintentsmetadataprocessor 报
+//   "Invalid Utterance. Every App Shortcut utterance should have one '${applicationName}' in it."
+//   (注意: 这条不是 Swift 编译错误, 是编译**之后**的元数据导出步骤拦的 —— 编译器那一关已经过了)。
+//   修法: 把写死的中文 App 名换成 Swift 侧模板 `\(.applicationName)` (系统按 CFBundleDisplayName 渲染),
+//   而不是静态字面量「离线锁管家」。真机上口令是否被系统收录仍需实机核。
 struct LockKeeperShortcuts: AppShortcutsProvider {
     @AppShortcutsBuilder
     static var appShortcuts: [AppShortcut] {
         // 166 注册 UnlockIntent (:73); shortTitle 沿用意图 title; 图标抄本仓已有 SF Symbol: Widget/LockWidget.swift:52
         AppShortcut(
             intent: UnlockIntent(),
-            phrases: ["用离线锁管家打开门锁", "离线锁管家定位门锁"],
+            phrases: ["用\(.applicationName)打开门锁", "\(.applicationName)定位门锁"],
             shortTitle: "打开门锁",
             systemImageName: "lock.open"
         )
         // 166 注册 OtpIntent (:131); 图标抄 App/UI/AlarmCenterView.swift:564
         AppShortcut(
             intent: OtpIntent(),
-            phrases: ["用离线锁管家生成临时码", "离线锁管家临时码"],
+            phrases: ["用\(.applicationName)生成临时码", "\(.applicationName)临时码"],
             shortTitle: "生成临时码",
             systemImageName: "key.zarrowpath"
         )
         // 166 注册 LockStatusIntent (:175); 图标抄 App/UI/DeviceHomeView.swift:624 (状态问答主力字段是电量)
         AppShortcut(
             intent: LockStatusIntent(),
-            phrases: ["用离线锁管家查门锁状态", "离线锁管家查电量"],
+            phrases: ["用\(.applicationName)查门锁状态", "\(.applicationName)查电量"],
             shortTitle: "门锁状态",
             systemImageName: "battery.25percent"
         )
         // 166 注册 ExportCsvIntent (:205); 图标抄 App/LockKeeperApp.swift:1021
         AppShortcut(
             intent: ExportCsvIntent(),
-            phrases: ["用离线锁管家导出开门记录", "离线锁管家导出记录"],
+            phrases: ["用\(.applicationName)导出开门记录", "\(.applicationName)导出记录"],
             shortTitle: "导出开门记录",
             systemImageName: "doc.on.clipboard"
         )
         // 166 注册 MemberQueryIntent (:240); 图标抄 App/UI/CredentialsView.swift:418
         AppShortcut(
             intent: MemberQueryIntent(),
-            phrases: ["用离线锁管家查成员", "离线锁管家成员档案"],
+            phrases: ["用\(.applicationName)查成员", "\(.applicationName)成员档案"],
             shortTitle: "查成员",
             systemImageName: "person.2"
         )
         // 166 注册 ReadRecordsIntent (:266); 图标抄 App/UI/LockOverviewView.swift:65 (朗读的是记录文本)
         AppShortcut(
             intent: ReadRecordsIntent(),
-            phrases: ["用离线锁管家朗读最近开门", "离线锁管家读记录"],
+            phrases: ["用\(.applicationName)朗读最近开门", "\(.applicationName)读记录"],
             shortTitle: "朗读最近开门",
             systemImageName: "text.quote"
         )
