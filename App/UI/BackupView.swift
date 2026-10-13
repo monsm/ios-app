@@ -219,7 +219,8 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
         // 改成走 parsePreview 这**唯一**入口 (先解密 → 再校验哈希 → 再走升级链), 哈希不过就拦,
         // 与云端路径同一套判据。加密备份仍需口令 (本页只收明文粘贴, 与改动前一致)。
         do {
-            let (_, bundle) = try BackupStudioKit.parsePreview(text: importText, password: nil)
+            // 2026-10-13 修 CI: `BackupStudioKit` 是**文件名**, 类型名是 `BackupStudio` (enum)。
+            let (_, bundle) = try BackupStudio.parsePreview(text: importText, password: nil)
             let r = BackupKit.restoreAll(bundle)
             app.loadDevices()
             if bundle.globals?.appearance != nil { app.reloadAppearance() }   // 894 带外观段才刷, 免得白重建一次全树

@@ -2279,7 +2279,10 @@ struct CredentialsView: View {
         // 默认的全局队列**上, 于是 5 秒后从后台线程改 `undoEntry`(@State) 还包 `withAnimation`
         // ⇒ 运行期未定义 (不刷新或崩), Swift 6 直接拒编。
         // 复现: 删除一条凭证, 等 5 秒撤销条不消失。显式指定 .main。
-        t.setEventHandler(queue: .main) {
+        // 2026-10-13 修 CI: 原写 `setEventHandler(queue: .main)` —— 在 SwiftUI 的 View struct 作用域里
+        // 裸 `.main` 解析不到 ("cannot infer contextual base in reference to member 'main'"),
+        // 必须写全 `DispatchQueue.main`。
+        t.setEventHandler(queue: DispatchQueue.main) {
             guard undoEntry != nil else { return }
             withAnimation(DS.Motion.exit) { undoEntry = nil }
         }
