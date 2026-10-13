@@ -53,17 +53,21 @@ struct DeviceManageView: View {
                     // 分组段 (104): 只有一组 (即谁都没分组) 时不套 Section 标题, 免得给一个假分组
                     ForEach(groups) { g in
                         if groups.count > 1 {
+                            // 2026-10-13 run 59: 原来给这节写了 `} footer: {` —— 但
+                            // `Section(isExpanded:content:header:)` 这一重载**没有 footer 参数**,
+                            // 加了报 "extra trailing closure passed in call"。
+                            // 折叠 (104) 必须走 isExpanded 重载, 所以把那句说明并进内容尾部。
                             Section(isExpanded: expandBinding(g.name)) {
                                 rows(g.locks)
+                                if g.name == LockArchive.ungroupedLabel {
+                                    Text("「未分组」不是一个组, 只是还没归类的兜底段 (104)。")
+                                        .font(.caption2)
+                                        .foregroundStyle(DS.Palette.textSub)
+                                }
                             } header: {
                                 // 标题必须是纯 Text: Section(isExpanded:) 的折叠箭头由列表自己画,
                                 // 套一层 HStack 就没那枚箭头了 (104 的"分组头可收起"会静默变成"分组头")
                                 Text("\(g.name) · \(g.locks.count)")
-                            } footer: {
-                                if g.name == LockArchive.ungroupedLabel {
-                                    Text("「未分组」不是一个组, 只是还没归类的兜底段 (104)。")
-                                        .font(.caption2)
-                                }
                             }
                         } else {
                             rows(g.locks)

@@ -696,7 +696,10 @@ struct CredCalendarView: View {
               let days = cal.range(of: .day, in: .month, for: ym)?.count else { return [] }
         let lead = (cal.firstWeekday + 6 - cal.component(.weekday, from: first)) % 7
         var cells: [Int?] = Array(repeating: nil, count: lead)
-        cells.append(contentsOf: 1...days)
+        // 2026-10-13 run 59: 原写 `cells.append(contentsOf: 1...days)` —— cells 的元素是 `Int?`,
+        // 而 `1...days` 的元素是 `Int`, 报 "no exact matches in call to instance method 'append'"
+        // (候选要求 Element == Int)。逐个升成 Optional 再拼。
+        cells.append(contentsOf: (1...days).map { Optional($0) })
         while cells.count % 7 != 0 { cells.append(nil) }
         return cells
     }

@@ -235,8 +235,15 @@ struct MaskedDigits: View {
         HStack(spacing: DS.Space.xs) {
             ForEach(Array(value.enumerated()), id: \.offset) { i, ch in
                 let on = revealed.contains(i)
-                let mask = style == "stars" ? "*"
-                    : (style == "tail4" && i >= value.count - 4) ? String(ch) : "•"
+                // 2026-10-13 run 59: 原写一行嵌套三元
+                //   `style == "stars" ? "*" : (style == "tail4" && i >= value.count - 4) ? String(ch) : "•"`
+                // 加上后面的字体三元与 a11y 三元, 整个 ForEach 体报
+                //   "the compiler is unable to type-check this expression in reasonable time"。
+                // 拆法: 遮蔽字符抽成纯函数, 其余重表达式各自显式标注类型 —— 逐个落地, 不再让一个表达式吞下全部。
+                let mask = maskChar(style: style, index: i, count: value.count, ch: ch)
+                let shown: String = on ? String(ch) : mask
+                let digitFont: Font = (big ? Font.title : Font.title3).weight(.semibold).monospacedDigit()
+                let a11yLabel: String = on ? "第 \(i + 1) 位" : "第 \(i + 1) 位, 点按显示"
                 Button {
                     revealed.formSymmetricDifference([i])
                     if revealed.contains(i), !ledgerLogged {
@@ -247,15 +254,15 @@ struct MaskedDigits: View {
                     clearAt = s > 0 ? Date().timeIntervalSince1970 + Double(s) : 0
                     DS.Haptics.tick.impactOccurred()
                 } label: {
-                    Text(on ? String(ch) : mask)
-                        .font((big ? Font.title : Font.title3).weight(.semibold).monospacedDigit())
+                    Text(shown)
+                        .font(digitFont)
                         .foregroundStyle(on ? DS.Palette.text : DS.Palette.textSub)
                         .frame(width: big ? 36 : 30)
                         .frame(minHeight: DS.Hit.min)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(on ? "第 \(i + 1) 位" : "第 \(i + 1) 位, 点按显示")
+                .accessibilityLabel(a11yLabel)
                 // 849 双击拷贝挂在每个位上: 容器的点按会被按钮吃掉, 只挂容器等于双击数值区没反应。
                 // 双击时按钮自身动作会各切一次揭示, 净效果回到原样, 不影响读数。
                 .simultaneousGesture(TapGesture(count: 2) { copyAll() })
@@ -282,6 +289,14 @@ struct MaskedDigits: View {
     private func copyAll() {
         ClipboardCare.copySecret(value, via: "密码明文")
         app.showToast("已复制")
+    }
+
+    /// 369 遮蔽字符 (三档口径): stars = 全星 / tail4 = 只留末四位 / 其余 = 圆点。
+    /// 抽成纯函数是因为原来那行嵌套三元把 ForEach 体撑到编译器算不过来 (run 59 的类型检查超时)。
+    private func maskChar(style: String, index: Int, count: Int, ch: Character) -> String {
+        if style == "stars" { return "*" }
+        if style == "tail4" && index >= count - 4 { return String(ch) }
+        return "•"
     }
 }
 

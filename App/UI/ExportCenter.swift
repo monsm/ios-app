@@ -253,7 +253,12 @@ struct ExportTextFile: Transferable {
 // (subtitle / keywords / thumbnailProvider), 真编译必拒; 而它本身**零调用** (现役聊天卡片走下面的
 // sharePreview) —— 留一段编译不过的死码没有意义, 需要时按真 API 重写 (docs 里那条"备用口"说明同步失效)。
 extension ExportItem {
-    var sharePreview: SharePreview<Image, Image> {
+    // 2026-10-13 run 59: 此前写 `SharePreview<Image, Image>` —— 但 `init(_:image:)` 的签名是
+    //   SharePreview<Image, Never>(title, image: Image)
+    // 只带 image 时 icon 推导为 `Never`, 显式写 Image 反而报
+    //   "requires the types 'Image' and 'Never' be equivalent"。
+    // (另注: 下面其他 PDF 生成处也需要 ctx.beginPage, 见 renderPDF。)
+    var sharePreview: SharePreview<Image, Never> {
         // init(_:image:) 要的是 SwiftUI `Image` (不是 UIImage); coverImage 可能为 nil → 空图兜底
         SharePreview(title, image: Image(uiImage: ExportKit.coverImage(item: self, w: 480) ?? UIImage()))
     }
@@ -527,7 +532,7 @@ enum ExportKit {
             "generatedAt": stamp.string(from: Date()),
         ]
         let d = (try? JSONSerialization.data(withJSONObject: payload, options: [.prettyPrinted, .sortedKeys])) ?? Data()
-        return Data((ExportItem.bom + String(decoding: d, as: UTF8)).utf8)
+        return Data((ExportItem.bom + String(decoding: d, as: UTF8.self)).utf8)
     }
 
     // ---------- 548 日志三选 (App 运行日志 txt/csv/json, 脱敏独立于格式) ----------
@@ -549,7 +554,7 @@ enum ExportKit {
         case "json":
             let arr = logs.map { l in ["date": l.date, "time": l.time, "level": l.level, "msg": msg(l)] }
             let d = (try? JSONSerialization.data(withJSONObject: arr, options: [.prettyPrinted])) ?? Data()
-            return Data((ExportItem.bom + String(decoding: d, as: UTF8)).utf8)
+            return Data((ExportItem.bom + String(decoding: d, as: UTF8.self)).utf8)
         default:
             let body = logs.map { "[\($0.date) \($0.time)] \($0.level) \(msg($0))" }.joined(separator: "\n")
             return Data((ExportItem.bom + body + "\n").utf8)
@@ -706,7 +711,7 @@ enum ExportKit {
             var cursor = 80.0
             func startTablePage(_ title: String, breakPage: Bool = false) {
                 if breakPage {
-                    footerPage(); ctx.endPDFPage()
+                    footerPage(); ctx.beginPage()
                 }
                 startPageHeader(title)
                 let head = (cols.onIndices.isEmpty ? [0, 1, 3] : cols.onIndices).map { ExportHeaders.zh[$0] }
@@ -717,7 +722,7 @@ enum ExportKit {
             }
             func emitRow(_ r: ExportRecord) {
                 if cursor > 780 {
-                    footerPage(); ctx.endPDFPage()
+                    footerPage(); ctx.beginPage()
                     startPageHeader("续")
                     cursor = 70
                 } else { cursor = max(cursor, 70) }
@@ -747,7 +752,7 @@ enum ExportKit {
                 if r.dayKey != lastDay {
                     lastDay = r.dayKey
                     if cursor > 760 {
-                        footerPage(); ctx.endPDFPage()
+                        footerPage(); ctx.beginPage()
                         startPageHeader("续")
                         cursor = 70
                     }
@@ -762,7 +767,7 @@ enum ExportKit {
                 startTablePage(ReportTexts.t("dispoSection"), breakPage: cursor > 740)
                 for (r, d) in disposed {
                     if cursor > 780 {
-                        footerPage(); ctx.endPDFPage()
+                        footerPage(); ctx.beginPage()
                         startPageHeader("续")
                         cursor = 70
                     }
@@ -772,10 +777,12 @@ enum ExportKit {
                 }
             }
             // 722 尾页校验: 行数 + SHA-256 + 生成时间必须真画在纸面上。
-            // 原来这条注释下面只有一句页脚 + endPDFPage —— 纯文本报告里有对账行，打印出来的 PDF 却没有，
+            // 原来这条注释下面只有一句页脚 + ctx.beginPage —— 纯文本报告里有对账行，打印出来的 PDF 却没有，
             // 而 722 原句要的就是"报告尾页"那一行。
+            // (2026-10-13 run 59: 原写 `ctx.endPDFPage()`, 那是**臆造 API** —— 真名是 beginPage(),
+            //  它结束上一页并开启下一页; 全文件 5 处已统一改回真名。)
             if cursor > 760 {
-                footerPage(); ctx.endPDFPage()
+                footerPage(); ctx.beginPage()
                 startPageHeader("续")
                 cursor = 70
             }
@@ -2034,7 +2041,7 @@ struct ExportCenterView: View {
                               fileName: "锁管家_日志_" + stampTag() + "." + ext,
                               bytes: data, sha256: hex,
                               shaLabel: "App 运行日志 · " + String(DiagLogs.all().count) + " 条 · " + self.logFormat + (self.redact ? " · 已脱敏" : ""),
-                              previewText: String(String(decoding: data, as: UTF8).prefix(300)))
+                              previewText: String(String(decoding: data, as: UTF8.self).prefix(300)))
         } finish: { item, err in
             onDone(item, err)
         }

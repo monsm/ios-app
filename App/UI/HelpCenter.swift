@@ -347,10 +347,10 @@ struct SymptomGuideView: View {
                     Section {
                         Button("重来一遍") { node = "q1"; trail = [] }
                             .font(.subheadline).foregroundStyle(DS.Palette.accentText)
-                            .frame(minHeight: DS.Hit.min, maxWidth: .infinity, alignment: .leading)
+                            .frame(maxWidth: .infinity, minHeight: DS.Hit.min, alignment: .leading)
                         Button("换一类问题") { treeKey = nil; node = "q1"; trail = [] }
                             .font(.subheadline).foregroundStyle(DS.Palette.accentText)
-                            .frame(minHeight: DS.Hit.min, maxWidth: .infinity, alignment: .leading)
+                            .frame(maxWidth: .infinity, minHeight: DS.Hit.min, alignment: .leading)
                     }
                 } else {
                     Section("第 \(trail.count + 1) 问") {
@@ -377,7 +377,7 @@ struct SymptomGuideView: View {
                     Section {
                         Button("重头开始") { node = "q1"; trail = [] }
                             .font(.caption).foregroundStyle(DS.Palette.accentText)
-                            .frame(minHeight: DS.Hit.min, maxWidth: .infinity, alignment: .leading)
+                            .frame(maxWidth: .infinity, minHeight: DS.Hit.min, alignment: .leading)
                     }
                 }
             } else {
@@ -388,7 +388,7 @@ struct SymptomGuideView: View {
                         .fixedSize(horizontal: false, vertical: true)
                     Button("换一类问题") { treeKey = nil; node = "q1"; trail = [] }
                         .font(.subheadline).foregroundStyle(DS.Palette.accentText)
-                        .frame(minHeight: DS.Hit.min, maxWidth: .infinity, alignment: .leading)
+                        .frame(maxWidth: .infinity, minHeight: DS.Hit.min, alignment: .leading)
                 }
             }
         }

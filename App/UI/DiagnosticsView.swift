@@ -661,7 +661,7 @@ struct DiagnosticsView: View {
             // 156 操作流水: DiagOps 早就在记 (预握手 / 到场补发 / 冷启动扫描, 上限 50 条),
             // 但第九十二批查出 `DiagOps.list()` 全库零调用 —— 记了没人读, 只是往 UserDefaults 里堆。
             // 这里补上出口, 让"记下来"真的能被看到 (与 72 断连流水并列, 同一个开关管)。
-            Section("操作流水 (156)") {
+            Section {
                 let ops = DiagOps.list()
                 if ops.isEmpty {
                     Text("暂无操作打点 — 预握手、到场补发与冷启动扫描都会在这里各留一行。")
@@ -677,26 +677,32 @@ struct DiagnosticsView: View {
                 Toggle("记录操作打点 (156)", isOn: Binding(
                     get: { DiagOps.isOn() },
                     set: { DB.store.set(DiagOps.on, $0) }))
+            } header: {
+                Text("操作流水 (156)")
             } footer: {
                 Text("只留最近 \(DiagOps.maxCount) 条；关掉上面这枚开关即不再记 (156)。")
                     .font(.caption)
             }
             // 866 极限字号自检: 原句要求入口在诊断页; 溢出控件无枚举 API, 如实定位为目检
-            Section("渲染自检 (866)") {
+            Section {
                 Toggle("极限字号自检 (866, 以 200% 字号预览)", isOn: Binding(
                     get: { AXFlags.bigPreview },
                     set: { DB.store.set("kf_ax_bigpreview", $0) }))
                 LabeledRow("命中域 (871)", "可点控件全 App 下限 44pt (DS.Hit.min); 时间线认领区加余量到 60pt (RecordsView:1617); 圆盘外沿再留 10pt (UnlockDial:464)")
+            } header: {
+                Text("渲染自检 (866)")
             } footer: {
                 Text("自测开关, 检查后请关回 (与无障碍页同一键位)。溢出控件无法程序枚举, 请开启后逐页目检大字下是否截断/换行。")
                     .font(.caption)
             }
             // 133 蓝牙堆栈急救: 连续 GATT/连接失败后给出 关开蓝牙/重启手机 分步指引
             if failsInLast20 >= 3 {
-                Section("蓝牙急救 (133)") {
+                Section {
                     LabeledRow("第 1 步", "到 控制中心 关闭再打开系统蓝牙, 等 10 秒回设备页")
                     LabeledRow("第 2 步", "仍失败: 到 设置 → 蓝牙 关闭 App 后台后重新打开本 App")
                     LabeledRow("第 3 步", "仍失败: 重启手机后再试 (蓝牙堆栈异常的重启大法)")
+                } header: {
+                    Text("蓝牙急救 (133)")
                 } footer: {
                     Text("近 20 条断连事件中有 \(failsInLast20) 条失败 — 建议按序执行。")
                         .font(.caption)
@@ -724,12 +730,14 @@ struct DiagnosticsView: View {
             #endif
             // 靠近自动开锁 (AUTOOPEN): 上次拒开原因行 (读 kf_autoopen_audit_, 只记哪道门拒了, 永不记密钥材料)
             if let last = AutoOpen.lastReject(app.currentMac), !app.currentMac.isEmpty {
-                Section("靠近自动开锁") {
+                Section {
                     LabeledRow("上次拒开原因", last.reason)
                     if AutoOpen.audits(app.currentMac).count > 1 {
                         LabeledRow("更早拒开", AutoOpen.recent(app.currentMac, 3).dropFirst().map { $0.at + " " + $0.reason }.joined(separator: " / "))
                             .accessibilityLabel("更早拒开记录")
                     }
+                } header: {
+                    Text("靠近自动开锁")
                 } footer: {
                     Text("审计只记「哪道门拒了」与时刻, 永不落 ekey/skey 明文; 尾段 500 条。")
                         .font(.caption)

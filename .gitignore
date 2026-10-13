@@ -19,3 +19,8 @@ state/
 # CI 抓取临时文件 (本地核对用, 不入库)
 .ci-tmp*/
 .ci-tmp*.html
+.ci-w/
+.job-new.html
+.run-new.html
+.run-list.html
+.api-run.json

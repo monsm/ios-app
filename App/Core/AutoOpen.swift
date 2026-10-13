@@ -544,7 +544,7 @@ struct AutoCalView: View {
 
     var body: some View {
         Form {
-            Section("距离标定 (F3)") {
+            Section {
                 if let c = AutoOpen.autocal(mac) {
                     LabeledRow("当前 P95 基准", "RSSI \(c.rssiP95)")
                     LabeledRow("武装线 / 解除线 (回差)",
@@ -557,6 +557,8 @@ struct AutoCalView: View {
                            isBusy: calibrating) {
                     Task { await run() }
                 }
+            } header: {
+                Text("距离标定 (F3)")
             } footer: {
                 Text("静止走近门锁一次, 采 30 秒 RSSI 取 P95 作为武装基准。回差: 越过武装线才武装, 掉回 0.5×基准才解除, 防门口抖动误触发。")
                     .font(.caption)

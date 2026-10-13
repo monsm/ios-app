@@ -543,7 +543,7 @@ struct SettingsView: View {
 
     // ---------- 包6 凭证整理 (491 版本配额 / 497 回收站保留期 / 919 别名显示) ----------
     private var credCareSection: some View {
-        Section("凭证整理") {
+        Section {
             Stepper("历史版本配额 \(CredentialOrg.quota(mac)) 版/凭证 (491)", value: Binding(
                 get: { CredentialOrg.quota(mac) },
                 set: { DB.store.set("kf_ccred_quota", $0) }), in: 3...30, step: 1)
@@ -556,6 +556,8 @@ struct SettingsView: View {
                 get: { CredentialOrg.aliasDisplay },
                 set: { DB.store.set("kf_calias_display", $0) }))
                 .fixedSize(horizontal: false, vertical: true)
+        } header: {
+            Text("凭证整理")
         } footer: {
             Text("版本快照与回收站只在本机留存; 需锁端生效的操作保持「待下发」, 到场连接后在凭证页队列补发。")
                 .font(.caption)
