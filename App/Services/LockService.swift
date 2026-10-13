@@ -218,12 +218,19 @@ final class LockService: ObservableObject {
                 return frame
             } catch {
                 lastErr = error
-                // 写类命令 + 响应超时 = 指令很可能已经生效 (锁已开/密码已写), 只是回执丢了。
-                // 旧实现按 retries 无差别重发 → 一条 cmd04 最多被下发 6 次 (外层 3 × 内层 2), 电机连触发。
-                if ZKProtocol.writeCmdsBlocked.contains(cmd),
-                   case BLEErrorX.code(.responseTimeout) = error {
-                    log("warn", "\(cmdObj.name) 写命令响应超时 → 不重发 (避免重复执行), 交上层判定")
-                    break
+                // 写类命令 + "指令可能已生效"的失败 = 不重发, 交上层判定 (防止电机连触发/双开)。
+                // 旧实现只挡 responseTimeout; 2026-10-13 对抗式排查补上 writeFailed ——
+                // writeFailed 是"写入没回确认", 而 BLE 的 write 完全可能是**字节已送到、ack 丢了**,
+                // 锁端已经执行了。随后断链自愈 (下面那段) 会重连, 外层 for attempt 再发一次
+                // ⇒ 一条 cmd04 被下发两次 = 双开门。防误触的三道保险对第二条真实开门无效。
+                if ZKProtocol.writeCmdsBlocked.contains(cmd) {
+                    var maybeExecuted = false
+                    if case BLEErrorX.code(.responseTimeout) = error { maybeExecuted = true }
+                    if case BLEErrorX.code(.writeFailed) = error { maybeExecuted = true }
+                    if maybeExecuted {
+                        log("warn", "\(cmdObj.name) 写命令失败(响应超时或写失败, 指令可能已生效) → 不重发 (避免重复执行), 交上层判定")
+                        break
+                    }
                 }
                 // 只清自己 cmd 的 waiter (JS lock.js 按 ww.cmd === cmd 清理), 不误杀并发中的其他请求
                 if let w = waiter, w.cmd == cmd { w.timer?.cancel(); waiter = nil }

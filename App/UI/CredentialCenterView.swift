@@ -899,8 +899,11 @@ struct CredQueueView: View {
                             busy = item.id
                             do {
                                 try await app.lock.ensureConnected(mac: mac)
-                                try await applyItem(item)
-                                CredentialOrg.markQueue(mac, id: item.id, state: .done, note: item.title + " · 锁端确认")
+                                // 2026-10-13 对抗式排查: 把 sendQueued 的归位提示拼进 note
+                                // (原先 `_ = ` 丢掉, 凭证页那处反而拼了 —— 两处口径不一致)
+                                let extra = try await applyItem(item)
+                                CredentialOrg.markQueue(mac, id: item.id, state: .done,
+                                                         note: item.title + " · 锁端确认" + extra)
                             } catch {
                                 CredentialOrg.markQueue(mac, id: item.id, state: .failed, note: item.title + " · 失败: " + error.localizedDescription)
                             }
@@ -980,8 +983,12 @@ struct CredQueueView: View {
     }
     /// 365 队列项下发: 唯一实现收在 CredentialOrg.sendQueued (第一百五十四批),
     /// 这里只做"发一条"的最小包装 —— 原先这一行引用的 applyItem 在全仓从未定义过。
-    private func applyItem(_ item: CredQueueItem) async throws {
-        _ = try await CredentialOrg.sendQueued(mac, app.lock, item)
+    /// 2026-10-13 对抗式排查: 原写 `_ = try await CredentialOrg.sendQueued(...)` ——
+    /// sendQueued 的返回值 (锁端把凭证落到新别名时的归位提示) 被**丢掉**, 而凭证页 :791 那一处
+    /// 是 `let extra = try await ...` 并拼进了队列提示。同一件事两处口径不一致 ⇒ 凭证中心
+    /// 少提示"锁端落到别名 #N"。改成把 extra 交回调用方。
+    private func applyItem(_ item: CredQueueItem) async throws -> String {
+        try await CredentialOrg.sendQueued(mac, app.lock, item)
     }
     private func itemTime(_ t: Double) -> String {
         guard t > 0 else { return "" }

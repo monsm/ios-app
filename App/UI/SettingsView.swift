@@ -468,6 +468,12 @@ struct SettingsView: View {
             Toggle("成功提示音", isOn: Binding(
                 get: { DB.store.getBool("kf_unlock_sound") },
                 set: { app.setUnlockOption("kf_unlock_sound", $0) }))
+            // 2026-10-13 对抗式排查: 实时活动的开关位 (`kf_live_unlock`) 原先全仓只有读没有写
+            // ⇒ LiveUnlock.enabled 恒 true, 用户根本关不掉 (77/939/941 "可关" 是假能力)。
+            // 这里补上唯一写入点。关掉只影响锁屏/灵动岛的展示, 开锁链本身一个字不变。
+            Toggle("开锁实时活动 (锁屏/灵动岛)", isOn: Binding(
+                get: { LiveUnlock.enabled },
+                set: { LiveUnlock.setEnabled($0) }))
             // 848 成败两音各自一枚开关: 只开"失败"的人要的是"没开成就别吵我", 只开"成功"的人反过来 ——
             // 合成一枚开关就只能服务其中一半人, 而这一半永远察觉不到另一半的存在。
             Toggle("失败提示音", isOn: Binding(

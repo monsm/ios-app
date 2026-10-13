@@ -8,6 +8,10 @@ struct DiagnosticsView: View {
     @State private var debugRaw = DB.store.getBool("kf_debug_raw")
     @State private var copied = false
     @State private var dumpedLine: LogLine?   // 740 原始报文 hex dump 的当前行
+    // 2026-10-13 对抗式排查: 740 的"原始报文"整帧含 skey/ekey/PIN **明文**, 而这一处漏读录屏态。
+    // 另两处 (CredentialStudio:3126/3133 的当前码与下一码, CredentialsView:2007 的 OTP 行) 都读了
+    // cap.recording 并显示"已隐去 (374)", 这里没读 ⇒ 开着录屏/投屏打开原始报文 = 密钥明文进录屏文件。
+    @ObservedObject private var cap = ScreenCaptureWatch.shared   // 374 录屏/镜像遮罩
     @State private var results: [HealthCheckItem] = []   // 149 体检结果
     @State private var score = 0
     @State private var integrityReport: [String] = []    // 750 完整性自查输出
@@ -1099,12 +1103,26 @@ struct DiagnosticsView: View {
                     let hx = rawFrame(of: row.line).isEmpty ? Self.hexOf(row.line) : rawFrame(of: row.line)
                     let pf = FrameFields.parse(hx)   // 740 字段解析
                     VStack(alignment: .leading, spacing: DS.Space.s) {
-                        Text(HexDump.dump(hx))
-                            .font(.caption.monospaced())
-                            .foregroundStyle(DS.Palette.text)
-                            // 刻意不给 textSelection: 完整帧里带 skey/ekey/PIN 明文, 可以看不可以复制走
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        if !pf.rows.isEmpty {
+                        // 2026-10-13 对抗式排查: 录屏/镜像中不给看完整帧 (与 CredentialStudio/CredentialsView
+                        // 的码值同一判据 374)。字段解析里的 PIN 同样是明文, 一起收起。
+                        if cap.recording {
+                            Text("录屏/投屏中已隐去完整帧 (374)")
+                                .font(.caption.monospaced())
+                                .foregroundStyle(DS.Palette.warn)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            Text("完整帧含 skey/ekey/PIN 明文。停止屏幕录制或镜像后再查看 —— 这一屏不外传,"
+                                 + "但录出来的文件不限流向。")
+                                .font(.caption2)
+                                .foregroundStyle(DS.Palette.textSub)
+                                .fixedSize(horizontal: false, vertical: true)
+                        } else {
+                            Text(HexDump.dump(hx))
+                                .font(.caption.monospaced())
+                                .foregroundStyle(DS.Palette.text)
+                                // 刻意不给 textSelection: 完整帧里带 skey/ekey/PIN 明文, 可以看不可以复制走
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        if !pf.rows.isEmpty && !cap.recording {
                             Text(String(format: "字段解析 (740) — 帧头 %dB · cmd 0x%02X", pf.header, pf.cmd))
                                 .font(.footnote).foregroundStyle(DS.Palette.textSub)
                             ForEach(Array(pf.rows.enumerated()), id: \.offset) { _, f in
