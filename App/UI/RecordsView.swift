@@ -233,6 +233,63 @@ struct RecordsView: View {
         .scrollPosition(id: $scrolledRow)
     }
 
+    /// 记录页右上角工具栏 (从 body 内联的 .toolbar 里抽出: 该表达式报 type-check 超时)。
+    /// 工具栏内容是 ToolbarContent ⇒ 用 @ToolbarContentBuilder。
+    @ToolbarContentBuilder
+    private var recordsToolbar: some ToolbarContent {
+        ToolbarItem(placement: .navigationBarTrailing) {
+            // 735 告警中心入口 + 未处置角标 (口径 = RecordSearch.unhandledAlarmCount, 与告警中心 734 队列同源)
+            Button { showAlarmCenter = true } label: {
+                Image(systemName: "bell.badge.exclamationmark")
+                    .overlay(alignment: .topTrailing) {
+                        let n = RecordSearch.unhandledAlarmCount(macs: DB.keychains().map { $0.mac })
+                        if n > 0 {
+                            Text("\(n)")
+                                .font(.caption2.weight(.semibold))
+                                .lineLimit(1)
+                                .foregroundStyle(DS.Palette.onSem)
+                                .padding(.horizontal, 4)
+                                .padding(.vertical, 1)
+                                .background(DS.Palette.danger, in: Capsule())
+                                .offset(x: 12, y: -9)
+                                .accessibilityHidden(true)
+                        }
+                    }
+            }
+            .accessibilityLabel("告警中心, \(RecordSearch.unhandledAlarmCount(DB.keychains().map { $0.mac })) 条未处置")
+        }
+        ToolbarItem(placement: .navigationBarTrailing) {
+            // 读取中把刷新按钮换成进度圈, 状态一目了然
+            if running {
+                ProgressView()
+                    .accessibilityLabel("正在读取门锁记录")
+            } else {
+                Button { Task { await fetch() } } label: { Image(systemName: "arrow.clockwise") }
+                    .keyboardShortcut("r", modifiers: .command)
+                    .accessibilityLabel("重新读取门锁记录")
+            }
+        }
+        ToolbarItem(placement: .navigationBarTrailing) {
+            Menu {
+                Button { showGratitude = true } label: { Label("感谢清单", systemImage: "heart.text.square") }
+                if app.current != nil {
+                    Button { showExport = true } label: { Label("导出与分享 (包12)", systemImage: "square.and.arrow.up.on.square") }
+                    Button { showStats = true } label: { Label("统计与图表 (包10)", systemImage: "chart.bar") }
+                    Button { copyLastWeekDigest() } label: { Label("复制上周小结 (698)", systemImage: "doc.on.clipboard") }
+                    Button { showRangePick = true } label: { Label("选区导出 (716)", systemImage: "checklist") }
+                    Button { showActiveCreds = true } label: { Label("活跃凭证排序 (约, 574)", systemImage: "list.number") }
+                    Button { showOutWin = true } label: { Label("越界开门清单 (约, 575)", systemImage: "clock.badge.exclamationmark") }
+                    if scope == 1 {
+                        Toggle("泳道时间线 (785)", isOn: $laneMode)
+                    }
+                }
+            } label: {
+                Image(systemName: "ellipsis.circle")
+            }
+            .accessibilityLabel("更多")
+        }
+    }
+
     var body: some View {
         NavigationStack {
             Group {
@@ -250,57 +307,7 @@ struct RecordsView: View {
             .scrollContentBackground(.hidden)
             .dsScreenBackground()
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    // 735 告警中心入口 + 未处置角标 (口径 = RecordSearch.unhandledAlarmCount, 与告警中心 734 队列同源)
-                    Button { showAlarmCenter = true } label: {
-                        Image(systemName: "bell.badge.exclamationmark")
-                            .overlay(alignment: .topTrailing) {
-                                let n = RecordSearch.unhandledAlarmCount(macs: DB.keychains().map { $0.mac })
-                                if n > 0 {
-                                    Text("\(n)")
-                                        .font(.caption2.weight(.semibold))
-                                        .lineLimit(1)
-                                        .foregroundStyle(DS.Palette.onSem)
-                                        .padding(.horizontal, 4)
-                                        .padding(.vertical, 1)
-                                        .background(DS.Palette.danger, in: Capsule())
-                                        .offset(x: 12, y: -9)
-                                        .accessibilityHidden(true)
-                                }
-                            }
-                    }
-                    .accessibilityLabel("告警中心, \(RecordSearch.unhandledAlarmCount(DB.keychains().map { $0.mac })) 条未处置")
-                }
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    // 读取中把刷新按钮换成进度圈, 状态一目了然
-                    if running {
-                        ProgressView()
-                            .accessibilityLabel("正在读取门锁记录")
-                    } else {
-                        Button { Task { await fetch() } } label: { Image(systemName: "arrow.clockwise") }
-                            .keyboardShortcut("r", modifiers: .command)
-                            .accessibilityLabel("重新读取门锁记录")
-                    }
-                }
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Menu {
-                        Button { showGratitude = true } label: { Label("感谢清单", systemImage: "heart.text.square") }
-                        if app.current != nil {
-                            Button { showExport = true } label: { Label("导出与分享 (包12)", systemImage: "square.and.arrow.up.on.square") }
-                            Button { showStats = true } label: { Label("统计与图表 (包10)", systemImage: "chart.bar") }
-                            Button { copyLastWeekDigest() } label: { Label("复制上周小结 (698)", systemImage: "doc.on.clipboard") }
-                            Button { showRangePick = true } label: { Label("选区导出 (716)", systemImage: "checklist") }
-                            Button { showActiveCreds = true } label: { Label("活跃凭证排序 (约, 574)", systemImage: "list.number") }
-                            Button { showOutWin = true } label: { Label("越界开门清单 (约, 575)", systemImage: "clock.badge.exclamationmark") }
-                            if scope == 1 {
-                                Toggle("泳道时间线 (785)", isOn: $laneMode)
-                            }
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
-                    }
-                    .accessibilityLabel("更多")
-                }
+                recordsToolbar
             }
             .onAppear { onRecordsAppear() }
             // 576/191: 换当前锁必须重取数据。此前本页只在 onAppear 里 loadFromCache()，
@@ -1777,7 +1784,10 @@ struct RecordsView: View {
         let mergedA11y = "连续 " + String(total) + " 次: " + r.title + ", 点按展开"
         let mergedHint = "点按展开这 " + String(total) + " 条"
         return Button {
-            withAnimation(DS.Motion.quick) { expandedMerged.insert(r.key) }
+            // 2026-10-13 run 66: Set.insert 返回 (inserted:memberAfterInsert:) 元组, 直接当闭包末句
+            // 会让 Button 的 action 推成"返回元组" ⇒ "conflicting arguments to generic parameter
+            // 'Result' ('Void' vs '(inserted: Bool, memberAfterInsert: String)')"。丢弃返回值。
+            withAnimation(DS.Motion.quick) { _ = expandedMerged.insert(r.key) }
         } label: { mergedRowLabel(r, mergedLabel) }
         .buttonStyle(PlainButtonStyle())
         .accessibilityLabel(mergedA11y)

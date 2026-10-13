@@ -1263,6 +1263,15 @@ struct StatsView: View {
     /// 628 曲线起点旗标 —— 2026-10-13 run 63 从 memberLines 的内联 Chart 内容里抽出:
     /// 该表达式报 type-check 超时。(Chart 内容用 @ChartContentBuilder, 不是 @ViewBuilder)
     @ChartContentBuilder
+    private func flagMark(_ s: MemberSeries, _ first: MemberSeries.Point, weekWindowDays: Int) -> some ChartContent {
+        PointMark(x: .value("日", first.day), y: .value(s.name, first.opens))
+            .foregroundStyle(s.color)
+            .symbol { Image(systemName: "flag.fill").font(.system(size: 7)) }
+            .opacity(hiddenMembers.contains(s.id) ? 0 : 1)
+            .accessibilityLabel(s.name + " 近 " + String(weekWindowDays) + " 天首次记录")
+            .accessibilityValue(RecordSearch.dayKeyOf(first.day))
+    }
+
     /// 626/628 长期密码用量行 (从 body 内联的 ForEach 里抽出: 该表达式报 type-check 超时)
     @ViewBuilder
     private func pwdUsageRow(_ p: StatsKit.PwdUse) -> some View {
@@ -1309,6 +1318,24 @@ struct StatsView: View {
         .accessibilityAddTraits(jumpId == nil ? [] : .isButton)
     }
 
+    /// 612/624 成员水平条的一行 (从 body 内联的 ForEach 里抽出: 该表达式报 type-check 超时)
+    @ViewBuilder
+    private func memberBarRow(id: String, name: String, approx: Int, index: Int,
+                              barDays: Int, maxApprox: Int) -> some View {
+        Button {
+            // 582 图表下钻: 成员条 → 记录 Tab 按该成员过滤 (台账推断, 落点走可证明口径)。
+            // 记录页的 landMember() 会把 sel 与 filters.member 一起写、再走同一条 applyFilter 链并消费后清空旗标,
+            // 这里只写 pendingRecordsMember 一个键 (两处都写 sel 会变成"谁后跑谁赢")。
+            app.pendingRecordsMember = id
+            app.tabSelection = 2
+        } label: {
+            memberBarLabel(name: name, approx: approx, index: index, maxApprox: maxApprox)
+        }
+        .buttonStyle(PlainButtonStyle())
+        .accessibilityLabel("成员 " + name + ", 近 " + String(barDays) + " 天约 " + String(approx) + " 次; 点按到记录页按该成员筛选 (582)")
+    }
+
+    /// 成员条行的标签 (从 memberBarRow 里再抽一层: 该表达式报 type-check 超时)
     private func memberBarLabel(name: String, approx: Int, index: Int, maxApprox: Int) -> some View {
         HStack(spacing: DS.Space.s) {
             Text(name)
@@ -1327,15 +1354,6 @@ struct StatsView: View {
         }
         .frame(minHeight: DS.Hit.min)
         .contentShape(Rectangle())
-    }
-
-    private func flagMark(_ s: MemberSeries, _ first: MemberSeries.Point, weekWindowDays: Int) -> some ChartContent {
-        PointMark(x: .value("日", first.day), y: .value(s.name, first.opens))
-            .foregroundStyle(s.color)
-            .symbol { Image(systemName: "flag.fill").font(.system(size: 7)) }
-            .opacity(hiddenMembers.contains(s.id) ? 0 : 1)
-            .accessibilityLabel(s.name + " 近 " + String(weekWindowDays) + " 天首次记录")
-            .accessibilityValue(RecordSearch.dayKeyOf(first.day))
     }
 
     @ViewBuilder
@@ -1767,24 +1785,9 @@ struct StatsView: View {
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(DS.Palette.text)
                     ForEach(Array(members.enumerated()), id: \.offset) { i, rec in
-                        Button {
-                            // 582 图表下钻: 成员条 → 记录 Tab 按该成员过滤 (台账推断, 落点走可证明口径)。
-                            // 两个键写同一个成员 id, 分工是照现网证据写的, 不是留两套规则:
-                            //   · pendingRecordsMember —— 582 的专用路由, 它的消费点在另一族正在补的那一页里;
-                            //   · pendingRecordsFilter —— 记录页**今天就在消费**它 (onAppear 与 onChange 里 sel = 该值),
-                            //     包3/779 的矩阵点格走的正是这一条。少了这一行, 下面那句读屏文案要等消费点落地才成立。
-                            app.pendingRecordsMember = rec.id
-                            // 582 只留一条路由：记录页的 landMember() 已经会把 sel 与 filters.member 一起写、
-                            // 再走同一条 applyFilter 链，并消费后清空旗标。这里再塞一份 pendingRecordsFilter
-                            // 就成了同一个意图两个入口（两条都写 sel，谁后跑谁赢）。
-                            // 之前那行是给"没人消费 member 旗标"打的补丁，补丁现在由真正的消费点替代。
-                            app.tabSelection = 2
-                        } label: {
-                            memberBarLabel(name: rec.name, approx: rec.approx, index: i,
-                                           maxApprox: members.first?.approx ?? 1)
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        .accessibilityLabel("成员 " + rec.name + ", 近 " + String(barDays) + " 天约 " + String(rec.approx) + " 次; 点按到记录页按该成员筛选 (582)")
+                        // 2026-10-13 run 66: 整行 (Button + 两个修饰符) 抽出 —— 该表达式报 type-check 超时。
+                        memberBarRow(id: rec.id, name: rec.name, approx: rec.approx, index: i,
+                                     barDays: barDays, maxApprox: members.first?.approx ?? 1)
                     }
                     if members.first?.approx == 0 {
                         Text("暂无可证明归属的开门 (归属需台账与日志窗口对齐)")
@@ -1988,7 +1991,7 @@ struct StatsView: View {
                         Text("长期密码用量 (626 · 台账推断约值)")
                             .font(.subheadline.weight(.medium))
                             .foregroundStyle(DS.Palette.text)
-                        ForEach(pu) { p in
+                        ForEach(pu, id: \.alias) { p in
                             pwdUsageRow(p)
                         }
                         // 628 数据面实话: 首用只从密码时间窗推断 (锁端无逐凭证计数); 指纹侧没有等价的

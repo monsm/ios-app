@@ -950,6 +950,57 @@ struct RootView: View {
     @Environment(\.scenePhase) private var scenePhase
     // 读取 themeSeed: 设置页切换主题时立即重建配色
     private var colorScheme: ColorScheme? { Theme.scheme(for: app.themeSeed) }
+    /// 四个 Tab 的内容 (从 body 内联的 TabView 里抽出: 该表达式报 type-check 超时)。
+    /// Tab 内容是 TabContent 不是 View ⇒ 用 @TabContentBuilder。
+    @TabContentBuilder
+    private var appTabs: some TabContent {
+        // 280 页面打开耗时: 起点在下面的 onChange(tabSelection)，终点就是这里各 Tab 的 onAppear。
+        // 挂在 Tab 内容而不是页面内部，是为了让"四页各写一遍"变成"这里写一次"。
+        Tab("设备", systemImage: "lock.fill", value: 0) { DeviceHomeView().onAppear { PageTrace.shown("设备") } }
+            .keyboardShortcut("1", modifiers: .command)
+            // 162 握手可离开: 握手在别的 Tab 完成时这里亮一枚 "✓" (nil = 无角标); 回设备页即清
+            .badge(handshakeDoneAway ? Text("✓") : nil)
+        // 377 访客通道: 受限区没放开时, 凭证与设置这两个 Tab 根本**不进层级树**
+        // (不是禁点、不是加遮罩 —— 进不去的那两页连同里面的口令与成员名都不该挂在屏上)。
+        if !app.guestAreaLocked {
+            Tab("凭证", systemImage: "key.horizontal.fill", value: 1) {
+                // 身份挂在这里 (父层) 才有效: CredentialsView 的 @State 由 TabView 持有,
+                // 在其 body 内部写 .id(app.currentMac) 不会重建该 struct → 切锁后
+                // selPwds/selFps/otpPwd 仍是上一把锁的值, 批量停用会打到错锁。
+                CredentialsView().id(app.currentMac)
+                    .safeAreaInset(edge: .top, spacing: 0) { bleStatusStrip(app: app, sense: sense) }
+                    .onAppear { PageTrace.shown("凭证") }
+            }
+            .keyboardShortcut("2", modifiers: .command)
+            // 930 替代: 原句要的中尺寸"到期凭证 Widget"在免费账号读不到台账 (App Groups 禁),
+            // 替代栏给的是"到期前 7/3/1 天三级本地通知 + 凭证页顶部红点" —— 通知在
+            // CredentialOrg.scheduleAlerts, 红点落在系统 Tab 角标上 (与记录 Tab 的 735 角标同一手法,
+            // 0 时系统自动隐藏)。口径与 363 月历格同源, 不另算一套。
+            .badge(CredentialOrg.expiringSoonCount(macs: DB.keychains().map { $0.mac }))
+        }
+        Tab("记录", systemImage: "list.bullet.rectangle.fill", value: 2) {
+            // 同凭证 Tab: 记录是纯 per-lock 数据, 在父层挂身份才能整体重建。
+            // RecordsView 只有 :178 onAppear→loadFromCache, 编程式切锁 (跳回/意图改 currentMac)
+            // 不触发 → groups/allRows 仍是旧锁行, :1187 的认领会把旧锁 idxRaw 记到新锁键下。
+            RecordsView().id(app.currentMac)
+                .safeAreaInset(edge: .top, spacing: 0) { bleStatusStrip(app: app, sense: sense) }
+                .onAppear { PageTrace.shown("记录") }
+        }
+        .keyboardShortcut("3", modifiers: .command)
+        // 735 Tab 角标: 口径与记录页铃铛同源 (RecordSearch.unhandledAlarmCount); 0 时系统自动隐藏
+        .badge(RecordSearch.unhandledAlarmCount(macs: DB.keychains().map { $0.mac }))
+        // 377: 设置页同样收起 —— 里面是本机密码、备份与销毁这些不该给访客看的东西;
+        // 代价如实写在这里: 想关掉访客通道本身也要先重输一次口令 (开关原话的"退出需密码")。
+        if !app.guestAreaLocked {
+            Tab("设置", systemImage: "gearshape.fill", value: 3) {
+                SettingsView()
+                    .safeAreaInset(edge: .top, spacing: 0) { bleStatusStrip(app: app, sense: sense) }
+                    .onAppear { PageTrace.shown("设置") }
+            }
+            .keyboardShortcut("4", modifiers: .command)
+        }
+    }
+
     var body: some View {
         Group {
             if !Onboarding.allDone && !app.onboardingFinished {
@@ -966,51 +1017,7 @@ struct RootView: View {
                 // 包2/136 跨页状态细条: 非设备 Tab 顶部一条 BLE 状态细线, 点按跳回设备页定位当前锁;
                 // 162 握手可离开: 切走 Tab 不取消进行中的握手 (回连循环/看门狗继续跑)
                 TabView(selection: $app.tabSelection) {
-                    // 280 页面打开耗时: 起点在下面的 onChange(tabSelection)，终点就是这里各 Tab 的 onAppear。
-                    // 挂在 Tab 内容而不是页面内部，是为了让"四页各写一遍"变成"这里写一次"。
-                    Tab("设备", systemImage: "lock.fill", value: 0) { DeviceHomeView().onAppear { PageTrace.shown("设备") } }
-                        .keyboardShortcut("1", modifiers: .command)
-                        // 162 握手可离开: 握手在别的 Tab 完成时这里亮一枚 "✓" (nil = 无角标); 回设备页即清
-                        .badge(handshakeDoneAway ? Text("✓") : nil)
-                    // 377 访客通道: 受限区没放开时, 凭证与设置这两个 Tab 根本**不进层级树**
-                    // (不是禁点、不是加遮罩 —— 进不去的那两页连同里面的口令与成员名都不该挂在屏上)。
-                    if !app.guestAreaLocked {
-                        Tab("凭证", systemImage: "key.horizontal.fill", value: 1) {
-                            // 身份挂在这里 (父层) 才有效: CredentialsView 的 @State 由 TabView 持有,
-                            // 在其 body 内部写 .id(app.currentMac) 不会重建该 struct → 切锁后
-                            // selPwds/selFps/otpPwd 仍是上一把锁的值, 批量停用会打到错锁。
-                            CredentialsView().id(app.currentMac)
-                                .safeAreaInset(edge: .top, spacing: 0) { bleStatusStrip(app: app, sense: sense) }
-                                .onAppear { PageTrace.shown("凭证") }
-                        }
-                        .keyboardShortcut("2", modifiers: .command)
-                        // 930 替代: 原句要的中尺寸"到期凭证 Widget"在免费账号读不到台账 (App Groups 禁),
-                        // 替代栏给的是"到期前 7/3/1 天三级本地通知 + 凭证页顶部红点" —— 通知在
-                        // CredentialOrg.scheduleAlerts, 红点落在系统 Tab 角标上 (与记录 Tab 的 735 角标同一手法,
-                        // 0 时系统自动隐藏)。口径与 363 月历格同源, 不另算一套。
-                        .badge(CredentialOrg.expiringSoonCount(macs: DB.keychains().map { $0.mac }))
-                    }
-                    Tab("记录", systemImage: "list.bullet.rectangle.fill", value: 2) {
-                        // 同凭证 Tab: 记录是纯 per-lock 数据, 在父层挂身份才能整体重建。
-                        // RecordsView 只有 :178 onAppear→loadFromCache, 编程式切锁 (跳回/意图改 currentMac)
-                        // 不触发 → groups/allRows 仍是旧锁行, :1187 的认领会把旧锁 idxRaw 记到新锁键下。
-                        RecordsView().id(app.currentMac)
-                            .safeAreaInset(edge: .top, spacing: 0) { bleStatusStrip(app: app, sense: sense) }
-                            .onAppear { PageTrace.shown("记录") }
-                    }
-                    .keyboardShortcut("3", modifiers: .command)
-                    // 735 Tab 角标: 口径与记录页铃铛同源 (RecordSearch.unhandledAlarmCount); 0 时系统自动隐藏
-                    .badge(RecordSearch.unhandledAlarmCount(macs: DB.keychains().map { $0.mac }))
-                    // 377: 设置页同样收起 —— 里面是本机密码、备份与销毁这些不该给访客看的东西;
-                    // 代价如实写在这里: 想关掉访客通道本身也要先重输一次口令 (开关原话的"退出需密码")。
-                    if !app.guestAreaLocked {
-                        Tab("设置", systemImage: "gearshape.fill", value: 3) {
-                            SettingsView()
-                                .safeAreaInset(edge: .top, spacing: 0) { bleStatusStrip(app: app, sense: sense) }
-                                .onAppear { PageTrace.shown("设置") }
-                        }
-                        .keyboardShortcut("4", modifiers: .command)
-                    }
+                    appTabs
                 }
                 // 26 Tab 长按快捷菜单 (iOS 18)。这一条只在"真按得动"的项上开口:
                 // 每一项都汇进本仓**已有的落点口** (requestTab / pendingCredPanel 词表 /
