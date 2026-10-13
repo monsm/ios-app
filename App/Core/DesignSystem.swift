@@ -587,7 +587,15 @@ extension View {
     func dsScreenBackground() -> some View {
         // 32: 网格渐变作底; 三档回落线性渐变 —— AMOLED 要纯黑、智能反转要幂等色、降透明要实底,
         // 网格色块会把这三档破坏掉 (与 863/226 的既有降级纪律同源, 不另立判据)。
-        Group {
+        //
+        // 2026-10-13 (首次真机运行): 原实现**丢掉了 self** ——
+        //     func dsScreenBackground() -> some View { Group { …渐变… } }
+        // 函数体只构造那个 Group、从不引用接收者, 于是 `X.dsScreenBackground()` 的结果就是
+        // "一层渐变", X 整个不见了。全仓 99 处这么用 ⇒ **每个页面都只剩底色 = 打开 App 一片空白**。
+        // (对照: 同文件的 dsSheetGlass 写的是 `presentationBackground(...)`, 那是 `self.` 的省略,
+        //  所以它是对的 —— 差别就在"是不是对 self 调修饰符"。)
+        // 正确写法: 把渐变放进 .background, 内容留在前景。
+        background {
             if DS.Appearance.isAMOLED || AXFlags.invertColors || AXFlags.reduceTransparency {
                 DS.Gradient.screen.ignoresSafeArea()
             } else {
