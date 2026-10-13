@@ -15,6 +15,7 @@
 import Foundation
 import SwiftUI
 import UserNotifications
+import os   // 2026-10-13 对抗式排查: 凭证通知排期失败要能查 (原先 try? 静默吞掉)
 // 502 彻底删除的统一门槛口 (guardedPurge) 要问生物识别, 所以本文件也吃这一套系统框架;
 // 与 AccessibilityKit 的 AuthKit (877) 同源, 那边不复用的理由写在 guardedPurge 上方。
 import LocalAuthentication
@@ -127,6 +128,10 @@ enum CredGroupMode: Int { case type, owner }
 
 // ================= 组织层 =================
 enum CredentialOrg {
+    /// 2026-10-13 对抗式排查: 凭证通知排期失败的可见出口。
+    /// 原先 `Task { try? await UNUserNotificationCenter…add(req) }` 把失败静默吞掉, 界面照显"已排程"。
+    /// 凭证到期预警是这条链唯一的提醒出口, 静默失败 = "说要提醒但没人提醒"。
+    static let notifyLog = Logger(subsystem: "com.aapk.OfflineLock", category: "credentialNotify")
     // ---------- 键 ----------
     static func histKey(_ mac: String, _ kind: String, _ key: Int) -> String { "kf_chist_\(mac)_\(kind)_\(key)" }
     static func binKey(_ mac: String) -> String { "kf_cbin_" + mac }
@@ -844,7 +849,13 @@ enum CredentialOrg {
         c.sound = .default
         let comps = WeekCal.gregorian.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
         let req = UNNotificationRequest(identifier: id, content: c, trigger: UNCalendarNotificationTrigger(dateMatching: comps, repeats: false))
-        Task { try? await UNUserNotificationCenter.current().add(req) }
+        // 2026-10-13 对抗式排查: 原写 `Task { try? await … }` —— 排期失败被静默吞掉,
+        // 而界面照样显示"已排程/已设定"。凭证到期预警是这条链唯一的提醒出口, 静默失败
+        // 等于"账单说要扣钱但没人扣"。改成 catch 里写 os 日志 (authFail/log 之外唯一可见出口)。
+        Task {
+            do { try await UNUserNotificationCenter.current().add(req) }
+            catch { CredentialOrg.notifyLog.error("凭证通知排期失败 id=\(id, privacy: .public) err=\(String(describing: error), privacy: .public)") }
+        }
     }
     /// App 内 2 小时档: 到期前 2 小时且开了 h2 的条 (设备 Tab Hero 卡下插提醒行)
     /// 359: 提醒行点按要跳最近一条的详情 —— 名单与计数必须同源同一个 filter, 抽出来共用
@@ -1106,7 +1117,10 @@ enum CredentialOrg {
         c.body = "上月有过期凭证待处理, 到「凭证」点「整理」一键清理。"
         let req = UNNotificationRequest(identifier: "c6.monthly", content: c,
                                         trigger: UNCalendarNotificationTrigger(dateMatching: comps, repeats: true))
-        Task { try? await UNUserNotificationCenter.current().add(req) }
+        Task {
+            do { try await UNUserNotificationCenter.current().add(req) }
+            catch { CredentialOrg.notifyLog.error("月度清理通知排期失败 err=\(String(describing: error), privacy: .public)") }
+        }
     }
 
     // ---------- 通知分派 (App 前台时由 didReceive 转发; 后台由系统弹出) ----------
