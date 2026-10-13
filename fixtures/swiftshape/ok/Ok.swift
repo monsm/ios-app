@@ -147,3 +147,42 @@ struct OkBuilderParam: View {
 // 该 fixture 曾断言"带 @ViewBuilder 但无 -> some View 的函数可被当 View 用"。
 // 但这一断言本机无编译器, 从未被证实; run 58 的 CI 又只报了重复 @ViewBuilder, 未证伪也未证实。
 // 按 R6 头部注释的取舍: 既然真身证据不足, 就不留"当作合法"的反控, 一律要求写 -> some View。
+
+// ---- R8/R9 反控: 带 footer 的 Section 只能用三段式; isExpanded 重载干脆不带 footer ----
+struct OkSectionForms: View {
+    @State private var open = true
+    var body: some View {
+        Form {
+            // 三段式: 合法 (本仓修完 run 59 后的统一写法)
+            Section {
+                Text("操作流水")
+            } header: {
+                Text("操作流水 (156)")
+            } footer: {
+                Text("只留最近若干条。")
+            }
+            // isExpanded 重载带 header 不带 footer: 合法
+            Section(isExpanded: $open) {
+                Text("一组锁")
+            } header: {
+                Text("未分组")
+            }
+        }
+    }
+}
+
+// ---- R10 反控: maxWidth 写在 minHeight 之前是合法次序 ----
+struct OkFrameOrder: View {
+    var body: some View {
+        Button("重来一遍") { }
+            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+    }
+}
+
+// ---- R11 反控: as: 后写元类型 (带 .self) 是合法写法 ----
+enum OkMetaType {
+    static func decode(_ d: Data) -> String {
+        return String(decoding: d, as: UTF8.self)
+    }
+}
+
