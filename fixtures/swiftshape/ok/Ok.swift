@@ -54,9 +54,10 @@ struct OkElsePath: View {
 }
 
 struct OkUntypedFunc: View {
-    // 没写显式类型的 @ViewBuilder 函数：判不了 (隐式 opaque 返回类型)，按边界规则不报
+    // 判不了/不该响：@ViewBuilder 函数但**从未被当 View 调用** (没有调用点) ⇒ R6 不响。
+    // 注: 这只说明"没有调用点就不报", 不代表该形状一定编得过 —— 见 R6 头注里两轮 run 的取舍。
     @ViewBuilder
-    private func row(_ t: String) {
+    private func untypedRow(_ t: String) {
         Text(t)
     }
 }
@@ -129,3 +130,20 @@ struct OkVoidFuncNoViewCtor: View {
         _ = n
     }
 }
+
+struct OkBuilderParam: View {
+    // R7 反控：@ViewBuilder 参数属性 (同一行/缩进更深) 不是"重复挂属性" ⇒ 不报。
+    // 本仓 SettingsView/newBadgeRow 就是这个形状。
+    var body: some View {
+        labeledRow("标题") { Text("内容") }
+    }
+    @ViewBuilder
+    func labeledRow(_ title: String, @ViewBuilder dest: () -> some View) -> some View {
+        dest()
+    }
+}
+
+// (已移除 OkBuilderNoArrow 反控)
+// 该 fixture 曾断言"带 @ViewBuilder 但无 -> some View 的函数可被当 View 用"。
+// 但这一断言本机无编译器, 从未被证实; run 58 的 CI 又只报了重复 @ViewBuilder, 未证伪也未证实。
+// 按 R6 头部注释的取舍: 既然真身证据不足, 就不留"当作合法"的反控, 一律要求写 -> some View。

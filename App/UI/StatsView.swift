@@ -2184,8 +2184,10 @@ struct StatsView: View {
     }
 
     // ---------- 638 下钻明细 ----------
+    // 与同批 15 个 xxxSection 统一: 显式写 -> some View (带 @ViewBuilder 却缺返回类型的形状
+    // 本机无编译器证不了, 按 R6 头注释的取舍一律补齐; 且它 body 以 let 起头, 正是 R1b 的雷区)。
     @ViewBuilder
-    private func drillSection(_ m: StatsKit.StatModel, hour: Int16) {
+    private func drillSection(_ m: StatsKit.StatModel, hour: Int16) -> some View {
         let rows = m.logsInWindow().filter { l in
             guard let d = StatsKit.dateOf(l) else { return false }
             return WeekCal.gregorian.component(.hour, from: d) == Int(hour)

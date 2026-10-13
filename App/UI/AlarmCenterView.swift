@@ -424,10 +424,10 @@ struct AlarmCenterView: View {
     }
 
     /// 736 前后事件上下文: 前后 10 分钟同锁各 3 条
-    @ViewBuilder
     // 2026-10-13 run 57: 此前写成 `private func contextSection(_ r: Rec) {` —— 没有返回类型 (= Void),
     // 可函数体是 @ViewBuilder 形状 (多个 Section), 在 body 里又被当 View 用 (line 325) ⇒
-    // 报 "type '()' cannot conform to 'View'"。补 `-> some View`; 体内有顶层 if 无 else, 故必须 @ViewBuilder。
+    // 报 "type '()' cannot conform to 'View'"。补 `-> some View` (原有的 @ViewBuilder 保留, 勿再加第二个 ——
+    // run 58 就是加重复了报 "only one result builder attribute can be attached to a declaration")。
     @ViewBuilder
     private func contextSection(_ r: Rec) -> some View {
         let (before, after) = RecordSearch.context(mac: r.mac, aroundKey: r.key)

@@ -31,6 +31,11 @@
 //     + StatsView 15 处 (`@ViewBuilder private func xxxSection(_ m:)` 全族) —— 全都在 CI 报出前
 //     从未被编到 (编译总在前面就停), 一次 run 57 全冒出来。
 //
+// R7  (第一百九十批新增, run 58 打样): 同一条声明挂了两个 @ViewBuilder ⇒
+//     "only one result builder attribute can be attached to a declaration"。
+//     起因: 修 R6 那批时按注释回看找 @ViewBuilder, 注释挡住了更上面那一个, 于是又加了一个。
+//     参数属性 (@ViewBuilder dest: () -> some View) 不算重复, 判据只比"连续两行整行只有 @ViewBuilder"。
+//
 // R4  调用点的**参数标签**与声明对不上 (第一百四十八批新增)：Swift 的标签是逐字匹配的，
 //     少写、多写、写错一个都不过编译，而名字眼熟 + 括号平衡让它一路通过前面所有闸门。
 //     落地当批即在现网抓到 **13 处**：只判首参那版抓到 10 处 —— RecordSearch.oid(mac:rowKey:) 被 6 处按位置调用、
@@ -163,16 +168,52 @@ function r2(root) {
   return bad;
 }
 
-function run(root) { return [...r1(root), ...r2(root), ...r4(root), ...r6(root)]; }
+function run(root) { return [...r1(root), ...r2(root), ...r4(root), ...r6(root), ...r7(root)]; }
+
+// ---------- R7: 同一条声明上挂了两个结果构建器属性 (第190批新增, run 58 打样) ----------
+// 形状: 连续两行都是纯 `@ViewBuilder` (中间只隔注释/空行), 后面跟着**同一条**声明 ⇒
+// 编译器报 "only one result builder attribute can be attached to a declaration"。
+// 为什么会有这道门: 补 R6 那批"缺 -> some View"时, 我按注释回看找 @ViewBuilder —— 注释挡住了更上面那一个,
+// 于是又加了一个, 当场被 CI (run 58) 抓出。**加属性前先数一遍**, 这道理用机器盯比用眼睛盯可靠。
+// 反控: 同一条声明上"@ViewBuilder + 带 @ViewBuilder 的参数"是合法的 (@ViewBuilder func f(@ViewBuilder body:) -> some View),
+// 那是**参数属性**不是重复, 判据只比"连续两行整行只有 @ViewBuilder"这一种, 参数属性 (同一行/缩进更深) 不触发。
+function r7(root) {
+  const bad = [];
+  for (const f of swiftFiles(root)) {
+    const L = fs.readFileSync(f, 'utf8').split(/\r?\n/);
+    for (let i = 0; i < L.length; i++) {
+      if (!/^\s*@ViewBuilder\s*$/.test(L[i])) continue;
+      let prev = -1;
+      for (let j = i - 1; j >= 0; j--) {
+        if (isCommentOrBlank(L[j])) continue;
+        if (/^\s*@ViewBuilder\s*$/.test(L[j])) prev = j;
+        break;                                   // 只看紧邻的上一条非注释行
+      }
+      if (prev >= 0) {
+        bad.push(f + ':' + (prev + 1) + ' 与 ' + (i + 1) + '  R7 同一条声明挂了两个 @ViewBuilder —— '
+          + 'only one result builder attribute can be attached to a declaration');
+      }
+    }
+  }
+  return bad;
+}
 
 // ---------- R6: 声明缺返回类型的"视图函数" (第189批新增, run 57 打样) ----------
-// 形状: `func` 声明**没有** `->` 返回类型 (= Void), 但被当 View 用 —— 两个可机检的信号:
-//   (a) 带 @ViewBuilder (结果构建器的语义就是拼一个 View; 没有返回类型等于白拼), 或
-//   (b) body 里出现 SwiftUI 视图类型构造 (Section/Card/HStack/VStack/…; 这些名字只可能产出 View)。
-// 在任一信号成立时, 若该函数在**本文件**里被当独立语句调用 (`name(...)` 占一整行、非赋值/非参数),
-// 就报 —— 那正是 "type '()' cannot conform to 'View'" 的来源。
-// 本仓真实命中 2 处 (run 57): AlarmCenterView/contextSection (无 @ViewBuilder 无 ->)、detailSection (有 @ViewBuilder 无 ->)。
-// 为什么不在 R1 里做: R1/R1b 盯的是"有 some View 返回类型却缺 builder", 这里恰恰连返回类型都没有 —— 是另一侧的门。
+// 形状: `func` 声明**没有** `->` 返回类型 (= Void), 却被当 View 用 ⇒
+// 编译器报 "type '()' cannot conform to 'View'" (run 57 的 AlarmCenterView:325 就是这个)。
+// 判据: body 里出现 SwiftUI 视图类型构造 (Section/Card/HStack/VStack/…; 这些名字只可能产出 View),
+// 且该函数在**本文件**里被当独立语句调用 (`name(...)` 占一整行、非赋值/非参数)。
+//
+// 关于 @ViewBuilder 的取舍 (run 57/58 两轮反推, 记录在案):
+//   原始源码里 contextSection 与 detailSection **都**带 @ViewBuilder、都缺 ->。CI 只报了 contextSection
+//   那条 (line 325), detailSection (line 326) 没报 —— 但 job 的 9 条 error 没有一条是"只报一半"的截断
+//   (workflow 的 head -40 没到顶), 更可能是 Swift 类型检查在一次 pass 里只报同形状的第一个。
+//   本机没有编译器无从终局判定, 于是取**两害相权**: 这种"带 @ViewBuilder 却缺 ->"的形状一律补上
+//   `-> some View` (Apple 文档 "Marking methods with the result builder" 的示例**全部**带返回类型,
+//   全仓 StatsView 15 处 + AlarmCenterView 2 处已统一), 再让 R6 把**两种**形状都盯住, 只许减不许增。
+//   与之配套的反控 OkBuilderNoArrow 因此从 ok/ 移除 —— 它的"合法"前提没有被编译器证实, 不能当反控。
+//
+// ⚠ 名字在本文件里**撞名**时不报 (ok/Ok.swift 两个 struct 各有一个 `row` 曾互相误伤) —— 宁漏勿误。
 const VIEW_CTORS = /\b(Section|Card|HStack|VStack|ZStack|List|Form|Group|ScrollView|Grid|LazyVGrid|LazyHGrid|Canvas|Chart|HeroCard|HeroPill)\s*[({]/;
 function r6(root) {
   const bad = [];
@@ -180,34 +221,40 @@ function r6(root) {
     const src = fs.readFileSync(f, 'utf8');
     const L = src.split(/\r?\n/);
     for (let i = 0; i < L.length; i++) {
-      // 只认"没有 -> "的函数声明 (有返回类型的不归 R6 管, 归 R1/R1b 或本就合法)
-      const m = /^\s*(?:@\w+\s+)*(?:private |public |fileprivate |internal |static |final )*func\s+(\w+)\s*(?:<[^>]*>)?\s*\(([^)]*)\)\s*\{\s*$/.exec(L[i]);
+      // 只认"没有 -> "的函数声明
+      const m = /^\s*(?:private |public |fileprivate |internal |static |final )*func\s+(\w+)\s*(?:<[^>]*>)?\s*\(([^)]*)\)\s*\{\s*$/.exec(L[i]);
       if (!m) continue;
       const name = m[1];
+      // 只看**代码行**里的 @ViewBuilder (注释里提到不算 —— R6 夹具第一版就被这个坑过)
       let hasBuilder = false;
       for (let j = i - 1; j >= 0; j--) {
+        if (isCommentOrBlank(L[j])) continue;
         if (/@ViewBuilder/.test(L[j])) { hasBuilder = true; break; }
-        if (isCommentOrBlank(L[j]) || /^\s*@[A-Za-z]/.test(L[j])) continue;
+        if (/^\s*@[A-Za-z]/.test(L[j])) continue;
         break;
       }
-      // 取 body 文本
-      let depth = 0, end = i, bodyLines = [];
+      // body 文本
+      let depth = 0, bodyLines = [];
       for (let j = i; j < L.length; j++) {
         const ln = stripLine(L[j]);
         for (const ch of ln) { if (ch === '{') depth++; else if (ch === '}') depth--; }
         if (j > i) bodyLines.push(L[j]);
-        if (j > i && depth <= 0) { end = j; break; }
+        if (j > i && depth <= 0) break;
       }
-      const body = bodyLines.join('\n');
-      const viewShaped = hasBuilder || VIEW_CTORS.test(body);
-      if (!viewShaped) continue;
-      // 本文件里是否把它当独立语句调用 (整行只有 `name(…)`; 赋值 `x = name(` 或 `.name(` 不算)
+      if (!VIEW_CTORS.test(bodyLines.join('\n'))) continue;   // 体内没有视图构造 ⇒ 不像视图函数, 不判
+      // 名字在本文件里被**声明**了多次时才跳过 —— 两个 struct 各有一个同名私有函数
+      // (ok/Ok.swift 的两个 `row` 就互相误伤过), 按裸名分不清是哪一个在调用 ⇒ 宁漏勿误。
+      // ⚠ 注意数的是"声明次数"而不是"出现次数": 正常函数声明 1 次 + 调用 1 次 = 出现 2 次,
+      //   若按出现次数 > 1 就跳过, 会把**所有**正常命中都漏掉 (R6 夹具第二版就被这个坑过)。
+      const occ = (src.match(new RegExp('(?:^|\\n)\\s*(?:private |public |fileprivate |internal |static |final )*func\\s+' + name + '\\s*[(<]', 'g')) || []).length;
+      if (occ > 1) continue;
+      const callRe = new RegExp('^\\s*' + name + '\\s*\\(');
       let stmtHit = false;
       for (let k = 0; k < L.length; k++) {
         if (k === i) continue;
         const t = stripLine(L[k]);
         if (!/^\s*[A-Za-z_]/.test(t)) continue;
-        if (new RegExp('^\\s*' + name + '\\s*\\(').test(t)) { stmtHit = true; break; }
+        if (callRe.test(t)) { stmtHit = true; break; }
       }
       if (!stmtHit) continue;
       bad.push(f + ':' + (i + 1) + '  R6 视图函数缺返回类型 (无 ->, 却被当 View 用' + (hasBuilder ? '; 带 @ViewBuilder' : '') + ') —— ' + L[i].trim().slice(0, 56));
@@ -482,11 +529,13 @@ function selftest() {
   const n1b = shouldFire.filter(h => h.includes(' R1b ')).length;
   const n2 = shouldFire.filter(h => h.includes(' R2 ')).length;
   const n6 = shouldFire.filter(h => h.includes(' R6 ')).length;
+  const n7 = shouldFire.filter(h => h.includes(' R7 ')).length;
   // fire/ 里 R4 有**四处**有问题的调用，报出 5 条：按位置传那一处第 1、第 2 个参数都少标签，逐位判就该各报一次。
   // R5 有两条：少一个实参、多一个实参。R1 一条 (顶层 if 无 else)、R1b 一条 (body 以 let 起头无 return)、
-  // R6 两条 (无返回类型却被当 View 用: 无 @ViewBuilder 一条 + 有 @ViewBuilder 一条)。
-  if (n1 !== 1 || n1b !== 1 || n2 !== 1 || n4 !== 5 || n5 !== 2 || n6 !== 2) {
-    console.log(`✗ 正控失败: fire/ 里 R1/R2 各应 1 条、R1b 应 1 条、R6 应 2 条、R4 应 5 条、R5 应 2 条，实得 R1=${n1} R1b=${n1b} R2=${n2} R6=${n6} R4=${n4} R5=${n5}`);
+  // R6 两条 (无返回类型却被当 View 用: 无 @ViewBuilder 一条 + 有 @ViewBuilder 一条)、R7 一条 (重复挂 @ViewBuilder)。
+  if (n1 !== 1 || n1b !== 1 || n2 !== 1 || n4 !== 5 || n5 !== 2 || n6 !== 2 || n7 !== 1) {
+    console.log(`✗ 正控失败: fire/ 里 R1/R2 各应 1 条、R1b 应 1 条、R6 应 2 条、R7 应 1 条、R4 应 5 条、R5 应 2 条，`
+      + `实得 R1=${n1} R1b=${n1b} R2=${n2} R6=${n6} R7=${n7} R4=${n4} R5=${n5}`);
     console.log(shouldFire.join('\n'));
     return 2;
   }
@@ -505,7 +554,7 @@ function selftest() {
     console.log([...riskyFire, ...riskyOk].join('\n'));
     return 2;
   }
-  console.log('正控 ✓ (R1/R1b/R6/R2 各开火；R3 两种写法都数得出，且放过有显式解码器的那个；'
+  console.log('正控 ✓ (R1/R1b/R6/R7/R2 各开火；R3 两种写法都数得出，且放过有显式解码器的那个；'
     + 'R4 四处有问题的调用报满 5 条 (含第二个标签写错那种只有逐位判才看得见的)；'
     + 'R5 少参与多参各一条；ok/ 里尾随闭包与带默认值这两种"括号里个数少"的合法写法一条不响)');
   return 0;
@@ -546,5 +595,5 @@ else {
     process.exit(1);
   }
   console.log('Swift 形状机检 ✓ (R1/R1b 缺 @ViewBuilder / R2 属性挂到值类型 / R4 调用点参数标签对不上 / '
-    + 'R5 实参个数对不上 / R6 视图函数缺返回类型 — 零命中; R3 合成 Codable 雷区 ' + r3Count() + ' 个, 基线 ' + R3_BASELINE + ' 个)');
+    + 'R5 实参个数对不上 / R6 视图函数缺返回类型 / R7 重复挂 @ViewBuilder — 零命中; R3 合成 Codable 雷区 ' + r3Count() + ' 个, 基线 ' + R3_BASELINE + ' 个)');
 }
