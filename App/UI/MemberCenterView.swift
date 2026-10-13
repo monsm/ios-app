@@ -1028,12 +1028,16 @@ struct MemberDetail360View: View {
         case "guest": scene = "通常是访客/钟点工：名下仍可以有临时码 (那是锁端的事)，本机这边不给代管、也不给指成紧急管理员 (470)"
         default: scene = "通常是家人：日常开门与补凭证够用，导出与备份不给"
         }
+        // 2026-10-13 run 60: 原来把两个 `isEmpty ? … : joined(…)` 三元直接拼进 Text 的字符串里,
+        // 整个 roleExample 体报 "unable to type-check this expression in reasonable time"。
+        // 先把两串各自算好 (显式 String), 再拼 —— 编译器不再面对一个巨表达式。
+        let canText: String = can.isEmpty ? "没有" : can.joined(separator: "、")
+        let cantText: String = cant.isEmpty ? "没有" : cant.joined(separator: "、")
         return VStack(alignment: .leading, spacing: DS.Space.xxs) {
             Text(MemberHub.roleLabel(r) + (r == current ? " · 当前所选" : ""))
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(r == current ? DS.Palette.accentText : DS.Palette.text)
-            Text("能：" + (can.isEmpty ? "没有" : can.joined(separator: "、"))
-                 + "　不能：" + (cant.isEmpty ? "没有" : cant.joined(separator: "、")))
+            Text("能：" + canText + "　不能：" + cantText)
                 .font(.caption2)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -1052,8 +1056,13 @@ struct MemberDetail360View: View {
         // 843: 角色不再在这里填英文代码 —— 它有了正上方的单选 (主理人/成员/访客)，两处能改一个值就是两个真相源。
         // 旧写法还留着一个真隐患: 手打 "Main"/"管理员" 这类值不报错，只会被 MemberHub.permRows 静默当成"成员"。
         let alert = UIAlertController(title: "补全档案", message: "角色改到下方「权限与应急 (470/843)」里单选，这里不再填英文代码。", preferredStyle: .alert)
-        func field(_ ph: String, _ init: String, _ kb: UIKeyboardType = .default) -> UITextField {
-            alert.addTextField { $0.placeholder = ph; $0.text = init; $0.keyboardType = kb; $0.clearButtonMode = .whileEditing }
+        func field(_ ph: String, _ initial: String, _ kb: UIKeyboardType = .default) -> UITextField {
+            // 2026-10-13 run 60: 参数原名 `init` —— 它是 Swift 的关键字 (初始化器), 于是 `$0.text = init`
+            // 里的 `init` 被解析成"类型的初始化器"而不是这个参数 ⇒ 报
+            //   "'init' is a member of the type; use 'type(of: ...)' to initialize a new object…"
+            //   "cannot reference 'mutating' method as function value" 等 4 条。
+            // 改名 `initial`; 调用点全是位置传参 (`field("关系", m.relation)`), 不受影响。
+            alert.addTextField { $0.placeholder = ph; $0.text = initial; $0.keyboardType = kb; $0.clearButtonMode = .whileEditing }
             return alert.textFields!.last!
         }
         let fRelation = field("与你的关系", m.relation)

@@ -21,6 +21,8 @@ state/
 .ci-tmp*.html
 .ci-w/
 .job-new.html
+.job*.html
 .run-new.html
 .run-list.html
+.r[0-9]*.html
 .api-run.json

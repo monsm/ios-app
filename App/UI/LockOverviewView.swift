@@ -218,10 +218,16 @@ struct LockOverviewView: View {
     // ---------- 71 列表信号预览 (包2): 每行右侧迷你信号格, 切换前先看哪把锁在范围内 ----------
     // RSSI 来自各锁最近一次扫描 (kf_linkrssi_), 未扫到 = 无信号格 (不虚构);
     // 540 第三处角标已舍弃, 本卡是列表行的唯一展示位。
+    // 2026-10-13 run 60: 原写 `if … { return Card {…} }; return Card {…}` —— 两个 return 的
+    // `Card<…>` 泛型内容不同, 而 `some View` 要求所有 return 的底层类型一致 ⇒
+    // "function declares an opaque return type 'some View', but the return statements in its body
+    //  do not have matching underlying types"。改成 @ViewBuilder + if/else 单表达式,
+    // 由构建器把两支包成 _ConditionalContent, 底层类型唯一。
+    @ViewBuilder
     private var signalCard: some View {
         let withSignal = usages.filter { LinkSense.rssiFor($0.mac) != nil }
         if withSignal.isEmpty {
-            return Card {
+            Card {
                 VStack(alignment: .leading, spacing: DS.Space.s) {
                     SectionTitle(text: "信号", count: usages.count)
                     Text("还没扫到任何锁的蓝牙广播 — 到设备页点一次刷新或靠近门锁, 信号格即现。")
@@ -230,31 +236,32 @@ struct LockOverviewView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
-        }
-        return Card {
-            VStack(alignment: .leading, spacing: DS.Space.s) {
-                SectionTitle(text: "信号预览", count: withSignal.count)
-                ForEach(withSignal) { u in
-                    let lvl = LinkSense.rssiLevel(LinkSense.rssiFor(u.mac))
-                    HStack(spacing: DS.Space.s) {
-                        Text(u.name)
-                            .font(.subheadline)
-                            .foregroundStyle(DS.Palette.text)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
-                        Spacer(minLength: 0)
-                        Text(LinkSense.rssiLabel(lvl))
-                            .font(.caption2)
-                            .foregroundStyle(DS.Palette.textSub)
-                        RSSIBars(level: lvl, tint: lvl >= 3 ? DS.Palette.ok : DS.Palette.warn)
+        } else {
+            Card {
+                VStack(alignment: .leading, spacing: DS.Space.s) {
+                    SectionTitle(text: "信号预览", count: withSignal.count)
+                    ForEach(withSignal) { u in
+                        let lvl = LinkSense.rssiLevel(LinkSense.rssiFor(u.mac))
+                        HStack(spacing: DS.Space.s) {
+                            Text(u.name)
+                                .font(.subheadline)
+                                .foregroundStyle(DS.Palette.text)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                            Spacer(minLength: 0)
+                            Text(LinkSense.rssiLabel(lvl))
+                                .font(.caption2)
+                                .foregroundStyle(DS.Palette.textSub)
+                            RSSIBars(level: lvl, tint: lvl >= 3 ? DS.Palette.ok : DS.Palette.warn)
+                        }
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel("\(u.name) 信号" + LinkSense.rssiLabel(lvl))
                     }
-                    .accessibilityElement(children: .combine)
-                    .accessibilityLabel("\(u.name) 信号" + LinkSense.rssiLabel(lvl))
+                    Text("信号格来自最近一次广播扫描 (71) · 切换前先看看哪把锁在范围内。")
+                        .font(.caption2)
+                        .foregroundStyle(DS.Palette.textSub)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                Text("信号格来自最近一次广播扫描 (71) · 切换前先看看哪把锁在范围内。")
-                    .font(.caption2)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }

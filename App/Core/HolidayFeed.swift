@@ -12,7 +12,12 @@ import Foundation
 struct HolidayDayDTO: Codable { var name: String; var date: String; var isOffDay: Bool }
 struct HolidayYearDTO: Codable { var year: Int; var papers: [String]?; var days: [HolidayDayDTO] }
 
-@MainActor
+// 2026-10-13 run 60: 原先这里挂 @MainActor, 于是 HolidayFeed.rows / lastUpdateSec 都被主 actor 隔离,
+// 而 RecordSearch.Holiday.ensureMerged() (非隔离) 读它们 ⇒
+//   "main actor-isolated static property 'rows' can not be referenced from a nonisolated context"。
+// 去掉 @MainActor 是**顺其自然**的: 本枚举只用 DB.store (Store 是普通 final class, 非隔离) 与 URLSession,
+// 没有一处需要主 actor; 而 RecordSearch 那段注释早就写着"本枚举不是 @MainActor ... 所有调用方都在主线程"。
+// 隔离层本来就该在调用方 (View), 不在数据源这一层。
 enum HolidayFeed {
     /// 内置源：raw.githubusercontent.com 上按年份发布的 JSON (取自该仓库 README 里写明的发布路径, 不是猜的域名)
     static let builtinBase = "https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/"

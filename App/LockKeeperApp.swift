@@ -1218,35 +1218,11 @@ struct RootView: View {
                     RootView.registerHost(app)   // 包2: LinkSense 宿主注册 + 回连/巡检循环
                     LinkSense.shared.coldStartScan()   // 包2/134 冷启动先扫描 (定位可见锁, 不连接)
                 }
-                .onChange(of: scenePhase) { _, phase in   // 135 回前台即刷新
-                    LinkSense.shared.setSceneActive(phase == .active)
-                    if phase == .active {
-                        // 393/394: 到点该锁就先落锁, 且锁定后不再跑自动开锁与回连巡检
-                        if app.appUnlocked, LockGuard.shouldLockOnForeground() {
-                            LockGuard.clearDuressMark()
-                            app.decoyMode = false
-                            withAnimation(DS.Motion.standard) { app.appUnlocked = false }
-                        }
-                        if app.appUnlocked {
-                            // 靠近自动开锁 (AUTOOPEN): F0 前台门 + F1 进前台按档位刷面容 (挂起期静默)
-                            AutoOpenController.shared.onForeground(mac: app.currentMac)
-                            // 344 回前台才出快捷条 (344 的原话就是"回前台显示"), 顺带重算剩余秒数
-                            app.refreshPasteSuggestion()
-                            // 671 自动档: 用户没开开关时这里一次请求都不发；开了也每进程只发一次 (HolidayFeed 内部判)
-                            Task { await HolidayFeed.autoRefreshIfNeeded() }
-                            // 897 四季图标: 默认关。开着也只在"季节真的换了"时对齐一次 (年-季记号)，不每次回前台打扰
-                            SeasonIcon.syncIfNeeded()
-                        }
-                    } else {
-                        // 344: 离开前台就收起, 免得回来时挂着一条过期的"N 秒"
-                        app.pasteSuggestion = nil
-                        // 393: 退后台按档位记锁定到期时刻 ("" = 立即, 最严)
-                        LockGuard.onBackground()
-                        // 221 退后台收尾: 记会话时长并清崩溃标记 (CrashGuard 的判定就依赖这一步)
-                        CrashGuard.markCleanExit()
-                        AutoOpenController.shared.onBackground()
-                    }
-                }
+                // 2026-10-13 run 60: 原来把整段前后台收尾逻辑内联在这个闭包里, 与上下十几个
+                // .onChange / .overlay 同处一个巨型 body 表达式 ⇒ 编译器报
+                //   "unable to type-check this expression in reasonable time"。
+                // 抽成独立方法后 body 只剩一行调用, 类型检查负担从整个 body 缩到一个函数。
+                .onChange(of: scenePhase) { _, phase in handleScenePhase(phase) }   // 135 回前台即刷新
             } else {
                 AppLockView()
                     // 解锁的"穿越感": 门禁界面轻微放大溶解, 主界面从后面浮现
@@ -1326,6 +1302,40 @@ struct RootView: View {
         }
         .sensoryFeedback(.selection, trigger: app.tabSelection)   // Tab 切换的轻触感
         .preferredColorScheme(colorScheme)
+    }
+
+    /// 135 前后台切换收尾 —— 2026-10-13 run 60 从 body 的内联 .onChange 闭包里抽出来:
+    /// 内联时整个 body (十几个 .onChange/.overlay 串在一起) 是一个巨型表达式, 编译器报
+    /// "unable to type-check this expression in reasonable time"。抽成方法后 body 只留一行调用。
+    @MainActor
+    private func handleScenePhase(_ phase: ScenePhase) {
+        LinkSense.shared.setSceneActive(phase == .active)
+        if phase == .active {
+            // 393/394: 到点该锁就先落锁, 且锁定后不再跑自动开锁与回连巡检
+            if app.appUnlocked, LockGuard.shouldLockOnForeground() {
+                LockGuard.clearDuressMark()
+                app.decoyMode = false
+                withAnimation(DS.Motion.standard) { app.appUnlocked = false }
+            }
+            if app.appUnlocked {
+                // 靠近自动开锁 (AUTOOPEN): F0 前台门 + F1 进前台按档位刷面容 (挂起期静默)
+                AutoOpenController.shared.onForeground(mac: app.currentMac)
+                // 344 回前台才出快捷条 (344 的原话就是"回前台显示"), 顺带重算剩余秒数
+                app.refreshPasteSuggestion()
+                // 671 自动档: 用户没开开关时这里一次请求都不发；开了也每进程只发一次 (HolidayFeed 内部判)
+                Task { await HolidayFeed.autoRefreshIfNeeded() }
+                // 897 四季图标: 默认关。开着也只在"季节真的换了"时对齐一次 (年-季记号)，不每次回前台打扰
+                SeasonIcon.syncIfNeeded()
+            }
+        } else {
+            // 344: 离开前台就收起, 免得回来时挂着一条过期的"N 秒"
+            app.pasteSuggestion = nil
+            // 393: 退后台按档位记锁定到期时刻 ("" = 立即, 最严)
+            LockGuard.onBackground()
+            // 221 退后台收尾: 记会话时长并清崩溃标记 (CrashGuard 的判定就依赖这一步)
+            CrashGuard.markCleanExit()
+            AutoOpenController.shared.onBackground()
+        }
     }
     // 包2/136 跨页状态细条: 非设备 Tab 顶部一条 BLE 状态细线 (2pt 语义色 + 状态行),
     // 点按跳回设备 Tab 并定位当前锁; 135 scenePhase .active 时静默刷新, 退后台暂停回连。

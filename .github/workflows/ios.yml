@@ -128,6 +128,11 @@ jobs:
 
       - name: 编译校验测试目标 (云端无模拟器, 只编译不执行)
         run: |
+          # SWIFT_ENABLE_BATCH_MODE=NO: 关掉 Swift 批量编译。
+          # 为什么: 批量模式下 ~20 个文件共用一次 swift-frontend 调用, 一个批次失败 → 构建即停,
+          # **后面的批次根本没编** —— 于是每次 run 只能暴露"下一批"的错误, 一轮一轮挤牙膏。
+          # 逐文件编译后各文件是独立任务, 一个失败不影响别的照编, 一次 run 就能把全仓错误一次列全。
+          # 代价: 编译慢一些 (调试期可接受; 全绿后可以再开回批量模式)。
           mkdir -p build
           set -o pipefail
           xcodebuild build-for-testing \
@@ -135,6 +140,7 @@ jobs:
             -scheme OfflineLock \
             -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath build/DerivedData \
+            SWIFT_ENABLE_BATCH_MODE=NO \
             CODE_SIGNING_ALLOWED=NO | tee build/test.log
 
       - name: Build (Device, unsigned IPA)
@@ -147,6 +153,7 @@ jobs:
             -sdk iphoneos \
             -configuration Release \
             -archivePath build/OfflineLock.xcarchive \
+            SWIFT_ENABLE_BATCH_MODE=NO \
             CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" | tee build/device.log
           mkdir -p build/Payload
           cp -R "build/OfflineLock.xcarchive/Products/Applications/OfflineLock.app" build/Payload/
@@ -159,13 +166,15 @@ jobs:
           # 于是"CI 红了"这个事实没有下文，本地 16 道闸门又不含编译器，臆造 API 就这么躲过去了
           # (这一批抓到的 `Calendar.date(bySetting: .hourAndMinute(...))` 就是其中一条)。
           # ::error 工作流命令会生成 check annotations，那是**公开 API 无鉴权可读**的唯一一份证据。
+          # 不设 head 上限: 之前 head -40 会把真问题截掉 (round-6 一次就有 107 个 error)。
+          # 配 SWIFT_ENABLE_BATCH_MODE=NO, 一次 run 就能列出全仓所有 error, 不再一轮挤一个批次。
           for L in build/test.log build/device.log; do
             [ -f "$L" ] || continue
-            grep -E "error: " "$L" | head -40 | sed "s#^#::error file=$L::#" || true
+            grep -E "error: " "$L" | sed "s#^#::error file=$L::#" || true
           done
           {
-            echo "## 编译错误摘录 (去重后最多 40 行)"
-            grep -hE "error: " build/test.log build/device.log 2>/dev/null | sed -E 's#^/[^ ]*/##' | sort -u | head -40 \
+            echo "## 编译错误摘录 (全量, 去重)"
+            grep -hE "error: " build/test.log build/device.log 2>/dev/null | sed -E 's#^/[^ ]*/##' | sort -u \
               || echo "(两份日志里都没有 error: 行 —— 那多半是环境/签名/模拟器问题，不是源码)"
           } >> "$GITHUB_STEP_SUMMARY"
 
