@@ -50,6 +50,13 @@
 //  R11 `as: UTF8` 缺 `.self` ⇒ "expected member name or initializer call after type name"
 //      (run 59 的 ExportCenter×3)。只认编码类型短名单, 避免误伤 `as: SomeProtocol`。
 //
+// R12 (第二百零八批新增, **真机首启白屏**打样): `extension View` 里的方法返回 `some View`, 却
+//     **从不引用 self** ⇒ `X.f()` 的结果是函数体里那个视图, X 整个不见了。编译器不拦 (合法 Swift,
+//     不报错也不警告), 症状只在跑起来之后才现: 编译全绿、装到手机打开 App 一片空白。
+//     真身: `dsScreenBackground()` 只返回一层渐变, 全仓 99 处调用点 ⇒ 每页只剩底色。
+//     反控: 对 self 调修饰符 (`background{}` / `modifier(…)` / `offset(…)` 这些**不带接收者**的调用
+//     就是 `self.` 的省略) 与显式写 `self` 的都放过。
+//
 // R4  调用点的**参数标签**与声明对不上 (第一百四十八批新增)：Swift 的标签是逐字匹配的，
 //     少写、多写、写错一个都不过编译，而名字眼熟 + 括号平衡让它一路通过前面所有闸门。
 //     落地当批即在现网抓到 **13 处**：只判首参那版抓到 10 处 —— RecordSearch.oid(mac:rowKey:) 被 6 处按位置调用、
@@ -182,7 +189,7 @@ function r2(root) {
   return bad;
 }
 
-function run(root) { return [...r1(root), ...r2(root), ...r4(root), ...r6(root), ...r7(root), ...r8(root), ...r9(root), ...r10(root), ...r11(root)]; }
+function run(root) { return [...r1(root), ...r2(root), ...r4(root), ...r6(root), ...r7(root), ...r8(root), ...r9(root), ...r10(root), ...r11(root), ...r12(root)]; }
 
 // 括号增量 (去掉行尾注释后数花括号) —— R8/R9 靠它找 Section 体的收口行。
 function braceDelta(line) {
@@ -279,6 +286,50 @@ function r10(root) {
   return bad;
 }
 
+// ---------- R12: View 扩展方法丢掉了 self (第208批新增, 真机首启白屏打样) ----------
+// 症状: 编译全绿、装上手机打开 App **一片空白**。
+// 形状: `extension View { func f() -> some View { Group { … } } }` —— 函数体只构造一个**别的**视图,
+//   从不引用 self。于是 `X.f()` 的结果是那个视图, **X 整个不见了**。
+// 为什么编译器不拦: 这是合法的 Swift —— 方法不引用 self 不报错、不警告, 而且"看起来还返回了东西"。
+//   真身: `dsScreenBackground()` 就这么写, 全仓 99 处调用点 ⇒ 每页都只剩底色。
+// 反控: 对 self 调修饰符的写法一律放过 —— `background { … }` / `modifier(…)` / `offset(…)` /
+//   `presentationBackground(…)` 这些**不带接收者**的调用就是 `self.` 的省略;
+//   还有显式写 `self` 的 (axOnehand 的 `if on { offset(y: dy) } else { self }`)。
+function r12(root) {
+  const bad = [];
+  for (const f of swiftFiles(root)) {
+    const L = fs.readFileSync(f, 'utf8').split(/\r?\n/);
+    for (let i = 0; i < L.length; i++) {
+      if (!/^\s*extension\s+View\s*\{\s*$/.test(L[i])) continue;
+      let depth = 0, extEnd = -1;
+      for (let j = i; j < L.length; j++) {
+        depth += braceDelta(L[j]);
+        if (j > i && depth <= 0) { extEnd = j; break; }
+      }
+      if (extEnd < 0) continue;
+      for (let k = i + 1; k < extEnd; k++) {
+        const m = /^\s*(?:@\w+\s+)*(?:private |public |fileprivate |internal |static )*func\s+(\w+)\s*\([^)]*\)\s*->\s*some\s+View\s*\{\s*$/.exec(L[k]);
+        if (!m) continue;
+        let d2 = 0, fEnd = -1;
+        for (let j = k; j < extEnd + 1; j++) {
+          d2 += braceDelta(L[j]);
+          if (j > k && d2 <= 0) { fEnd = j; break; }
+        }
+        if (fEnd < 0) continue;
+        const body = L.slice(k + 1, fEnd).map(stripLine);
+        if (body.some((l) => /\bself\b/.test(l))) continue;                       // 显式 self ⇒ 对
+        if (body.some((l) => /^\s*[a-z_]\w*\s*[({[]/.test(l))) continue;          // 隐式 self 修饰符调用 ⇒ 对
+        if (body.every((l) => l.trim() === '')) continue;                          // 空体交给别的判据
+        bad.push(f + ':' + (k + 1) + '  R12 View 扩展方法从不引用 self —— 调用处 `X.' + m[1]
+          + '()` 会把 X 整个丢掉 (只剩这里返回的那一层): ' + L[k].trim().slice(0, 56));
+      }
+    }
+  }
+  return bad;
+}
+
+// 起因: `String(decoding: d, as: UTF8)` 报 "expected member name or initializer call after type name"。
+// 原理: `as:` 这里要的是**元类型**, 必须写 `UTF8.self`。只认编码类型短名单, 避免把 `as: SomeProtocol` 误伤。
 // ---------- R11: `as:` 后跟元类型缺 .self (第192批新增, run 59 打样) ----------
 // 起因: `String(decoding: d, as: UTF8)` 报 "expected member name or initializer call after type name"。
 // 原理: `as:` 这里要的是**元类型**, 必须写 `UTF8.self`。只认编码类型短名单, 避免把 `as: SomeProtocol` 误伤。
@@ -664,14 +715,15 @@ function selftest() {
   const n9 = shouldFire.filter(h => h.includes(' R9 ')).length;
   const n10 = shouldFire.filter(h => h.includes(' R10 ')).length;
   const n11 = shouldFire.filter(h => h.includes(' R11 ')).length;
+  const n12 = shouldFire.filter(h => h.includes(' R12 ')).length;
   // fire/ 里 R4 有**四处**有问题的调用，报出 5 条：按位置传那一处第 1、第 2 个参数都少标签，逐位判就该各报一次。
   // R5 有两条：少一个实参、多一个实参。R1 一条 (顶层 if 无 else)、R1b 一条 (body 以 let 起头无 return)、
   // R6 两条 (无返回类型却被当 View 用: 无 @ViewBuilder 一条 + 有 @ViewBuilder 一条)、R7 一条 (重复挂 @ViewBuilder)、
   // R8/R9/R10/R11 各一条 (带 footer 的 Section 写法两种 + frame 次序 + as: 缺 .self)。
   if (n1 !== 1 || n1b !== 1 || n2 !== 1 || n4 !== 5 || n5 !== 2 || n6 !== 2 || n7 !== 1
-      || n8 !== 1 || n9 !== 1 || n10 !== 1 || n11 !== 1) {
-    console.log(`✗ 正控失败: fire/ 里 R1/R2 各应 1 条、R1b 应 1 条、R6 应 2 条、R7/R8/R9/R10/R11 各应 1 条、R4 应 5 条、R5 应 2 条，`
-      + `实得 R1=${n1} R1b=${n1b} R2=${n2} R6=${n6} R7=${n7} R8=${n8} R9=${n9} R10=${n10} R11=${n11} R4=${n4} R5=${n5}`);
+      || n8 !== 1 || n9 !== 1 || n10 !== 1 || n11 !== 1 || n12 !== 1) {
+    console.log(`✗ 正控失败: fire/ 里 R1/R2 各应 1 条、R1b 应 1 条、R6 应 2 条、R7/R8/R9/R10/R11/R12 各应 1 条、R4 应 5 条、R5 应 2 条，`
+      + `实得 R1=${n1} R1b=${n1b} R2=${n2} R6=${n6} R7=${n7} R8=${n8} R9=${n9} R10=${n10} R11=${n11} R12=${n12} R4=${n4} R5=${n5}`);
     console.log(shouldFire.join('\n'));
     return 2;
   }
@@ -691,7 +743,7 @@ function selftest() {
     return 2;
   }
   console.log('正控 ✓ (R1/R1b/R6/R7/R2 各开火；R8/R9 两种带 footer 的 Section 写法各开火；'
-    + 'R10 frame 次序、R11 as: 缺 .self 各开火；R3 两种写法都数得出，且放过有显式解码器的那个；'
+    + 'R10 frame 次序、R11 as: 缺 .self、R12 View 扩展丢 self 各开火；R3 两种写法都数得出，且放过有显式解码器的那个；'
     + 'R4 四处有问题的调用报满 5 条 (含第二个标签写错那种只有逐位判才看得见的)；'
     + 'R5 少参与多参各一条；ok/ 里尾随闭包与带默认值这两种"括号里个数少"的合法写法、'
     + '三段式 Section、maxWidth 在前、as: 带 .self 一条不响)');
@@ -735,5 +787,5 @@ else {
   console.log('Swift 形状机检 ✓ (R1/R1b 缺 @ViewBuilder / R2 属性挂到值类型 / R4 调用点参数标签对不上 / '
     + 'R5 实参个数对不上 / R6 视图函数缺返回类型 / R7 重复挂 @ViewBuilder / '
     + 'R8 Section("标题") 带 footer / R9 Section(isExpanded:) 带 footer / '
-    + 'R10 frame 次序 / R11 as: 缺 .self — 零命中; R3 合成 Codable 雷区 ' + r3Count() + ' 个, 基线 ' + R3_BASELINE + ' 个)');
+    + 'R10 frame 次序 / R11 as: 缺 .self / R12 View 扩展丢 self — 零命中; R3 合成 Codable 雷区 ' + r3Count() + ' 个, 基线 ' + R3_BASELINE + ' 个)');
 }

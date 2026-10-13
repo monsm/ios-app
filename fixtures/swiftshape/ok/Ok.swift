@@ -186,3 +186,14 @@ enum OkMetaType {
     }
 }
 
+// ---- R12 反控: View 扩展方法对 self 调修饰符 (隐式 self) 或显式写 self, 都合法 ----
+extension View {
+    func okScreenBackground() -> some View {
+        background { Color.clear.ignoresSafeArea() }          // 隐式 self 的修饰符调用
+    }
+    @ViewBuilder
+    func okOnehand(_ on: Bool) -> some View {
+        if on { offset(y: 48) } else { self }                 // 显式 self
+    }
+}
+
