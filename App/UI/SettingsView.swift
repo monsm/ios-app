@@ -1099,8 +1099,10 @@ struct SettingsView: View {
             HStack {
                 Text("构建与主题").foregroundStyle(DS.Palette.text)
                 Spacer(minLength: DS.Space.m)
-                Text("build " + (Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?")
-                     + " · " + String(DS.Palette.themeTable.count) + " 套主题 (279)")
+                // 2026-10-13 run 63: 原来把 infoDictionary 取值 + 三段拼接全内联进 Text, 报 type-check 超时。
+                let buildVer = (Bundle.main.infoDictionary?["CFBundleVersion"] as? String) ?? "?"
+                let themeCount = DS.Palette.themeTable.count
+                Text("build " + buildVer + " · " + String(themeCount) + " 套主题 (279)")
                     .font(.footnote.monospacedDigit())
                     .foregroundStyle(DS.Palette.textSub)
             }

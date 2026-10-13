@@ -34,7 +34,10 @@ final class ScreenCaptureWatch: ObservableObject {
             forName: UIApplication.userDidTakeScreenshotNotification, object: nil, queue: .main) { _ in
                 Task { @MainActor in ScreenCaptureWatch.shared.screenshotAt = Date().timeIntervalSince1970 }
             }
-        refresh()
+        // 2026-10-13 run 63: 原来只写 `refresh()` —— 在实例方法 start() 里裸调, 编译器优先找实例方法,
+        // 找不到就报 "static member 'refresh' cannot be used on instance of type 'ScreenCaptureWatch'"。
+        // 显式写类型名。
+        ScreenCaptureWatch.refresh()
     }
 
     static func refresh() {

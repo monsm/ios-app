@@ -18,7 +18,7 @@ enum Speech {
         let u = AVSpeechUtterance(string: t)
         u.voice = AVSpeechSynthesisVoice(language: "zh-CN")
         u.rate = rate
-        if synth.isSpeaking { synth.stopSpeaking() }
+        if synth.isSpeaking { synth.stopSpeaking(at: .immediate) }
         synth.speak(u)
         return true
     }
@@ -36,5 +36,5 @@ enum Speech {
 
     /// 收页时调用: 引导卡关了却还在念下一张的内容, 比不念更让人摸不着头脑。
     /// (没有留 `isSpeaking` 这种读点 —— 全仓没有读者, 而 AVFoundation 自己也随时能问。)
-    static func stop() { if synth.isSpeaking { synth.stopSpeaking() } }
+    static func stop() { if synth.isSpeaking { synth.stopSpeaking(at: .immediate) } }
 }

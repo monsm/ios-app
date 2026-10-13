@@ -190,11 +190,14 @@ enum BackupStudio {
             },
             members: DB.members().compactMap { try? String(data: JSONEncoder().encode($0), encoding: .utf8) },
             extras: extra)
+        // 2026-10-13 run 63: 原写 `let url = try? data.write(to: …)` —— `Data.write(to:options:)`
+        // 返回 Void, `try?` 得 Void?, 于是 url 是 `()` ⇒ `url.path` 报
+        // "value of tuple type '()' has no member 'path'"。URL 单独算, 写盘结果只判成败。
+        let rollURL = rollbackDir.appendingPathComponent("roll-\(Int(Date().timeIntervalSince1970)).json")
         guard let data = try? JSONEncoder().encode(snap),
-              let url = try? data.write(to: rollbackDir.appendingPathComponent(
-                  "roll-\(Int(Date().timeIntervalSince1970)).json"), options: .atomic) else { return false }
+              (try? data.write(to: rollURL, options: .atomic)) != nil else { return false }
         pruneRollback(keep: 4)
-        DB.store.set("kf_bk_rollback", url.path)
+        DB.store.set("kf_bk_rollback", rollURL.path)
         return true
     }
     static var canUndoLastRestore: Bool {
@@ -225,9 +228,14 @@ enum BackupStudio {
                 DB.saveKeychain(kc)
             }
         }
-        for (mac, s) in snap.ledgers {
-            if let d = s.data(using: .utf8), let l = try? JSONDecoder().decode(Ledger.self, from: d) {
-                DB.saveLedger(mac, l)
+        // 2026-10-13 run 63: snap.ledgers 的类型是 [[String: String]] (每锁一个单键字典, 见上方构造),
+        // 原写 `for (mac, s) in snap.ledgers` 把元素当元组 ⇒ "tuple pattern cannot match values of
+        // non-tuple type '[String : String]'" (并连带 s.data(using:) 报 'utf8' 推不出)。逐层展开。
+        for ledger in snap.ledgers {
+            for (mac, s) in ledger {
+                if let d = s.data(using: .utf8), let l = try? JSONDecoder().decode(Ledger.self, from: d) {
+                    DB.saveLedger(mac, l)
+                }
             }
         }
         for s in snap.dongles {
@@ -273,14 +281,21 @@ enum BackupStudio {
     // ---------- 428 ⚠ 充电自动备份: BGTask 注册 + 诚实文案 (执行时机由系统择机) ----------
     static let chargeBackupTaskId = "com.kf.chargebackup"
     static func registerChargeBackup() {
-        guard BGTaskScheduler.shared.supports([BGTaskType.appRefresh]) else { return }
-        BGTaskScheduler.shared.submit(
-            BGAppRefreshTaskRequest(identifier: chargeBackupTaskId)) { request in
-            guard request.expirationHandler == nil else { request.setTaskCompleted(true); return }
+        // 2026-10-13 run 63: 原写 `BGTaskScheduler.shared.supports([BGTaskType.appRefresh])` + 把
+        // launchHandler 当 submit 的尾随闭包 —— 两处都不是真 API (`BGTaskScheduler` 无 supports,
+        // 无 BGTaskType, submit 也不收尾随闭包) ⇒ 一次报 3 条。真 API 是:
+        //   register(forTaskWithIdentifier:using:launchHandler:) 注册处理块;
+        //   submit(_:) 单独排期。
+        BGTaskScheduler.shared.register(forTaskWithIdentifier: chargeBackupTaskId, using: nil) { task in
+            task.expirationHandler = { task.setTaskCompleted(success: false) }
             _ = makeRollbackPoint()
             MaintenanceLog.record("充电备份快照 (428)")   // 387: 记账才能进设备页"上次会话本机完成 N 项维护"回执
-            request.setTaskCompleted(true)
+            task.setTaskCompleted(success: true)
         }
+        // 排期: 由系统择机执行 (接电+闲置), 最早 6 小时后; 排期失败不抛给调用方 (UI 文案已声明"由系统择机")
+        let req = BGAppRefreshTaskRequest(identifier: chargeBackupTaskId)
+        req.earliestBeginDate = Date(timeIntervalSinceNow: 6 * 3600)
+        try? BGTaskScheduler.shared.submit(req)
     }
     /// UI 文案: 只承诺"注册给系统, 由系统择机执行"
     static var chargeBackupNote: String {
@@ -380,7 +395,9 @@ enum BackupStudio {
             b.devices[i].meta = nil          // 只带密钥与台账, 不带锁端运行参数
         }
         b.globals = nil
-        b.members = b.members
+        // 2026-10-13 run 63: 原写 `b.members = b.members` (自赋值, 编译器报 "assigning a property to
+        // itself")。语义上就是"members 原样保留" —— 凭证的 owner 归属要用它, 不能像 globals 那样清掉。
+        // 删掉这行空操作, 用注释说清意图。
         let t = BackupCanonical.exportText(b)
         guard !t.isEmpty, t.count < 2000 else { return nil }
         return t
@@ -589,20 +606,15 @@ enum BackupStudio {
         if s < 2 { out.members = out.members ?? []; s = 2 }
         if s < 3 { for i in out.devices.indices { out.devices[i].mac = DB.normalizeMac(out.devices[i].mac) }; s = 3 }
         if s < 4 {
-            if var g = out.globals {
-                g.trace = g.trace
-                out.globals = g
-            }
+            // 2026-10-13 run 63: 原写 `if var g = out.globals { g.trace = g.trace; out.globals = g }` ——
+            // 自赋值 (编译器报 "assigning a property to itself"), 整段是空操作。v4 无实际迁移动作,
+            // 只推进版本号 (幂等: 下一级判断读的就是 s)。
             s = 4
         }
         if s < 5 {
-            // v5: otpStatus/otpIdx 从 synctime 序列拆出为独立键位 (旧版塞在 meta 之后)
-            for i in out.devices.indices {
-                var m = out.devices[i].meta ?? .init()
-                m.otpStatus = m.otpStatus
-                m.otpIdx = m.otpIdx
-                out.devices[i].meta = m
-            }
+            // v5: otpStatus/otpIdx 从 synctime 序列拆出为独立键位 (旧版塞在 meta 之后)。
+            // 2026-10-13 run 63: 原写 `m.otpStatus = m.otpStatus; m.otpIdx = m.otpIdx` (两处自赋值),
+            // 同样是空操作 —— 拆键的实际动作当年没落进来, 这里只推进版本号, 不假装做了迁移。
             s = 5
         }
         out.schema = s
@@ -1488,14 +1500,14 @@ final class UNDelegate: NSObject, UNUserNotificationCenterDelegate {
     static let shared = UNDelegate()
     func userNotificationCenter(_ c: UNUserNotificationCenter, didReceive r: UNNotificationResponse,
                                completionHandler: @escaping () -> Void) {
-        if r.request.identifier == "kf.bk.monthly" {
+        if r.notification.request.identifier == "kf.bk.monthly" {
             Task { @MainActor in
                 await BackupStudio.onMonthlyTap()
             }
         }
         // 963 每晚状态确认: 点它就落到设备页 (与深链/快速操作同一个 requestTab 口,
         // 应用锁还锁着时只记 pendingRoute, 不因为"是从通知进来的"就放行)。
-        if r.request.identifier == StatusCheckNotice.notifID {
+        if r.notification.request.identifier == StatusCheckNotice.notifID {
             Task { @MainActor in
                 var waited = 0
                 while AppState.hostRef == nil && waited < 10 {
@@ -1507,14 +1519,14 @@ final class UNDelegate: NSObject, UNUserNotificationCenterDelegate {
         }
         // 366/1013: 凭证族通知此前只排期不分派 —— handleNotificationAction 全仓零调用,
         // 点"密码临期"通知落到系统默认行为(打开 App 停在原页面)。这里补上转发。
-        if let act = CredentialOrg.handleNotificationAction(r.request.identifier) {
+        if let act = CredentialOrg.handleNotificationAction(r.notification.request.identifier) {
             Task { @MainActor in CredentialOrg.applyNotification(act) }
         }
         // 1013: 保养到期通知 → 保养清单页。mac 就在通知 id 里 (m4.care.<mac>)。
         // 冷启动点按: hostRef 要等 RootView 挂载才就位, 等它 (最多 2 秒) 再落点, 不丢这次点按;
         // 锁着/伪装态不直接切页, 与深链同口径记 pendingRoute, 解锁后由 applyPendingRoute 补走。
-        if r.request.identifier.hasPrefix("m4.care.") {
-            let careMac = String(r.request.identifier.dropFirst("m4.care.".count))
+        if r.notification.request.identifier.hasPrefix("m4.care.") {
+            let careMac = String(r.notification.request.identifier.dropFirst("m4.care.".count))
             Task { @MainActor in
                 var waited = 0
                 while AppState.hostRef == nil && waited < 10 {

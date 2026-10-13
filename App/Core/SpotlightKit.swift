@@ -92,7 +92,7 @@ enum SpotlightKit {
             a.title = name
             a.contentDescription = lockSubtitle(kc)
             out.append(CSSearchableItem(uniqueIdentifier: deviceID(kc.mac),
-                                        domainIdentifier: domainDevice, attributes: a))
+                                        domainIdentifier: domainDevice, attributeSet: a))
             let ledger = DB.ledger(kc.mac)
             for p in ledger.pwds {
                 let pa = CSSearchableItemAttributeSet(contentType: .item)
@@ -100,14 +100,14 @@ enum SpotlightKit {
                 pa.contentDescription = "\(name) · \(TimeFormat.range(fromDay: p.from, toDay: p.to))"
                     + ownerSuffix(p.owner)
                 out.append(CSSearchableItem(uniqueIdentifier: pwdID(kc.mac, p.alias),
-                                            domainIdentifier: domainCredential, attributes: pa))
+                                            domainIdentifier: domainCredential, attributeSet: pa))
             }
             for f in ledger.fps {
                 let fa = CSSearchableItemAttributeSet(contentType: .item)
                 fa.title = f.name.isEmpty ? "指纹批次 #\(f.batch)" : f.name
                 fa.contentDescription = "\(name) · 指纹凭证" + ownerSuffix(f.owner)
                 out.append(CSSearchableItem(uniqueIdentifier: fpID(kc.mac, f.batch),
-                                            domainIdentifier: domainCredential, attributes: fa))
+                                            domainIdentifier: domainCredential, attributeSet: fa))
             }
         }
         return out

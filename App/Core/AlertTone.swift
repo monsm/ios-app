@@ -26,10 +26,13 @@ enum AlertTone {
     //    其余三个 ID 未经真机核对：**传入不存在的 ID 时系统静默不响，不会崩也不会报错**，
     //    所以这一组的最坏结果是"开了开关却听不到"，不是安全问题。真机批次要逐个核可听性，
     //    核不响的就换成 AudioServicesPlaySystemSoundWithCompletion 探测或直接改走触感。
-    private static let idSuccess = 1104
-    private static let idFailure = 1053
-    private static let idDuress = 1102
-    private static let idLowBattery = 1006
+    // 2026-10-13 run 63: 这四个常量原来是 `Int`, 而 `AudioServicesPlaySystemSound` 要的是
+    // `SystemSoundID` (aka UInt32) ⇒ 5 处调用报 "cannot convert value of type 'Int' to expected
+    // argument type 'SystemSoundID' (aka 'UInt32')"。显式标注成 SystemSoundID。
+    private static let idSuccess: SystemSoundID = 1104
+    private static let idFailure: SystemSoundID = 1053
+    private static let idDuress: SystemSoundID = 1102
+    private static let idLowBattery: SystemSoundID = 1006
 
     /// 76/848 开锁成功短音 (开关在 设置-开锁，原 kf_unlock_sound 语义不变)
     static func unlockSuccess() {

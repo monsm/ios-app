@@ -59,7 +59,7 @@ enum IntentLock {
         return .ambiguous(part.map { $0.name.isEmpty ? PidMap.productName($0.pid) : $0.name })
     }
     /// 不是唯一命中时该对用户说的话；唯一命中返回 nil。
-    /// 调用点写法：`if let miss = refusal(x) { return .result(dialog: miss) }` 再 `guard case .unique`。
+    /// 调用点写法：`if let miss = refusal(x) { return .result(dialog: IntentDialog(stringLiteral: miss)) }` 再 `guard case .unique`。
     static func refusal(_ raw: String) -> String? {
         switch resolve(raw) {
         case .unique: return nil
@@ -95,7 +95,7 @@ struct UnlockIntent: AppIntent {
 
     func perform() async throws -> some IntentResult {
         // 意图族门禁 (fail-closed): 设了本机密码而未解锁 → 拒绝。此前六个意图没有一个调用 IntentLockGate。
-        if let block = IntentLockGate.blockedMessage() { return .result(dialog: block) }
+        if let block = await IntentLockGate.blockedMessage() { return .result(dialog: IntentDialog(stringLiteral: block)) }
         guard IntentGovernance.passCooldown(intent: "unlock") else {
             IntentGovernance.audit(intent: "unlock", detail: "\(lockName) 被冷却拦截")
             return .result(dialog: "刚执行过, 请稍候 60 秒再试")
@@ -107,7 +107,7 @@ struct UnlockIntent: AppIntent {
                 return .result(dialog: "Face ID 未通过, 未定位门锁 (945)")
             }
         }
-        if let miss = IntentLock.refusal(lockName) { return .result(dialog: miss) }
+        if let miss = IntentLock.refusal(lockName) { return .result(dialog: IntentDialog(stringLiteral: miss)) }
         // 走到这里必定是唯一命中 (refusal 只对没命中的三种情形说话)，但 Swift 需要这里再取一次值。
         guard case .unique(let kc) = IntentLock.resolve(lockName) else { return .result(dialog: "锁名没认出来") }
         if kc.mac == DemoKit.demoMac {
@@ -124,6 +124,9 @@ struct UnlockIntent: AppIntent {
 // 设了本机密码 → 要求 App 已解锁 (hostRef 只在主界面挂载时存在, 冷启直调 Siri 一律拒 = fail-closed)。
 // 未设本机密码 → 本就没有门禁可绕, 放行。
 enum IntentLockGate {
+    // 2026-10-13 run 63: 它读 AppState.hostRef 与 appUnlocked, 两者都在 @MainActor 的 AppState 上
+    // ⇒ 标 @MainActor; 6 个调用点 (都在 async 的 perform() 里) 相应加 await。
+    @MainActor
     static func blockedMessage() -> String? {
         guard DB.hasPasscode() else { return nil }
         guard AppState.hostRef?.appUnlocked == true else { return "App 已锁定, 请先解锁离线锁管家" }
@@ -140,13 +143,13 @@ struct OtpIntent: AppIntent {
 
     func perform() async throws -> some IntentResult {
         // 最高危的一条: 返回值就是**可用的开锁口令**, 会被 Siri 念出来。无门禁 = 锁屏绕过应用锁。
-        if let block = IntentLockGate.blockedMessage() { return .result(dialog: block) }
+        if let block = await IntentLockGate.blockedMessage() { return .result(dialog: IntentDialog(stringLiteral: block)) }
         guard IntentGovernance.passCooldown(intent: "otp") else {
             IntentGovernance.audit(intent: "otp", detail: "\(lockName) 被冷却拦截")
             return .result(dialog: "刚生成过, 请稍候 60 秒再试")
         }
         let q = lockName.trimmingCharacters(in: .whitespaces)
-        if let miss = IntentLock.refusal(q) { return .result(dialog: miss) }
+        if let miss = IntentLock.refusal(q) { return .result(dialog: IntentDialog(stringLiteral: miss)) }
         guard case .unique(let kc) = IntentLock.resolve(q) else { return .result(dialog: "锁名没认出来") }
         if kc.mac == DemoKit.demoMac {
             return .result(dialog: "「\(kc.name)」是演示锁, 请在 App 内连接真实门锁后生成临时码")
@@ -183,13 +186,13 @@ struct LockStatusIntent: AppIntent {
     @Parameter(title: "门锁") var lockName: String
 
     func perform() async throws -> some IntentResult {
-        if let block = IntentLockGate.blockedMessage() { return .result(dialog: block) }   // 电量/固件/锁钟同属本机数据
+        if let block = await IntentLockGate.blockedMessage() { return .result(dialog: IntentDialog(stringLiteral: block)) }   // 电量/固件/锁钟同属本机数据
         guard IntentGovernance.passCooldown(intent: "status") else {
             IntentGovernance.audit(intent: "status", detail: "\(lockName) 被冷却拦截")
             return .result(dialog: "刚查过, 请稍候 60 秒再问")
         }
         let q = lockName.trimmingCharacters(in: .whitespaces)
-        if let miss = IntentLock.refusal(q) { return .result(dialog: miss) }
+        if let miss = IntentLock.refusal(q) { return .result(dialog: IntentDialog(stringLiteral: miss)) }
         guard case .unique(let kc) = IntentLock.resolve(q) else { return .result(dialog: "锁名没认出来") }
         var lines = ["「\(kc.name)」离线缓存:"]
         if let snap = DB.readStatus(kc.mac) {
@@ -201,7 +204,7 @@ struct LockStatusIntent: AppIntent {
         }
         lines.append("连上后可在 App 内刷新最新读数")
         IntentGovernance.audit(intent: "status", detail: kc.name)
-        return .result(dialog: lines.joined(separator: "。"))
+        return .result(dialog: IntentDialog(stringLiteral: lines.joined(separator: "。")))
     }
 }
 
@@ -217,7 +220,7 @@ struct ExportCsvIntent: AppIntent {
     @Parameter(title: "门锁", default: "全部") var lockName: String
 
     func perform() async throws -> some IntentResult {
-        if let block = IntentLockGate.blockedMessage() { return .result(dialog: block) }   // 导出的是开门记录 (PII)
+        if let block = await IntentLockGate.blockedMessage() { return .result(dialog: IntentDialog(stringLiteral: block)) }   // 导出的是开门记录 (PII)
         guard IntentGovernance.passCooldown(intent: "export") else { return .result(dialog: "刚导出过, 请稍候 60 秒") }
         let macs: [String]
         // 原先的没命中分支是 `filter { … }.map { … } + ["(无匹配)"]` —— 把中文哨兵当 mac 传下去，
@@ -228,7 +231,7 @@ struct ExportCsvIntent: AppIntent {
         } else {
             // 走同一把尺 (原先这半只认 `name ==`，不 trim 也不认型号名：说型号名导临时码可以、导 CSV 却说没有)
             let spoken = lockName.trimmingCharacters(in: .whitespacesAndNewlines)
-            if let miss = IntentLock.refusal(spoken) { return .result(dialog: miss) }
+            if let miss = IntentLock.refusal(spoken) { return .result(dialog: IntentDialog(stringLiteral: miss)) }
             guard case .unique(let kc) = IntentLock.resolve(spoken) else { return .result(dialog: "锁名没认出来") }
             macs = [kc.mac]
         }
@@ -248,7 +251,7 @@ struct MemberQueryIntent: AppIntent {
     @Parameter(title: "成员名") var memberName: String
 
     func perform() async throws -> some IntentResult {
-        if let block = IntentLockGate.blockedMessage() { return .result(dialog: block) }   // 成员档案属 PII
+        if let block = await IntentLockGate.blockedMessage() { return .result(dialog: IntentDialog(stringLiteral: block)) }   // 成员档案属 PII
         guard IntentGovernance.passCooldown(intent: "member") else {
             IntentGovernance.audit(intent: "member", detail: "\(memberName) 被冷却拦截")
             return .result(dialog: "刚查过, 请稍候 60 秒再问")
@@ -274,7 +277,7 @@ struct ReadRecordsIntent: AppIntent {
     @Parameter(title: "门锁", default: "第一把") var lockName: String
 
     func perform() async throws -> some IntentResult {
-        if let block = IntentLockGate.blockedMessage() { return .result(dialog: block) }   // 朗读内容含开门时刻
+        if let block = await IntentLockGate.blockedMessage() { return .result(dialog: IntentDialog(stringLiteral: block)) }   // 朗读内容含开门时刻
         guard IntentGovernance.passCooldown(intent: "read") else {
             IntentGovernance.audit(intent: "read", detail: "\(lockName) 被冷却拦截")
             return .result(dialog: "刚朗读过, 请稍候 60 秒再试")
@@ -289,7 +292,7 @@ struct ReadRecordsIntent: AppIntent {
         if spoken.isEmpty || spoken == "第一把" {
             kc = first
         } else {
-            if let miss = IntentLock.refusal(spoken) { return .result(dialog: miss) }
+            if let miss = IntentLock.refusal(spoken) { return .result(dialog: IntentDialog(stringLiteral: miss)) }
             guard case .unique(let hit) = IntentLock.resolve(spoken) else { return .result(dialog: "锁名没认出来") }
             kc = hit
         }

@@ -1176,21 +1176,7 @@ struct RootView: View {
                         }
                         // 包8/508 写入回执: 凭证保存/停用成功后对勾浮出 (替代云同步反馈)
                         if let r = app.writeReceipt {
-                            HStack(spacing: DS.Space.xs) {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .font(.system(size: DS.Icon.md))
-                                    .foregroundStyle(DS.Palette.ok)
-                                    .accessibilityHidden(true)
-                                Text(r)
-                                    .font(.caption.weight(.medium))
-                                    .foregroundStyle(DS.Palette.text)
-                            }
-                            .padding(.horizontal, DS.Space.l)
-                            .padding(.vertical, DS.Space.s)
-                            .background(DS.Palette.surface, in: Capsule())
-                            .shadow(color: .cardElevation, radius: 8, y: 3)
-                            .transition(.move(edge: .bottom).combined(with: .opacity))
-                            .allowsHitTesting(false)
+                            writeReceiptView(r)
                         }
                     }
                 }
@@ -1302,6 +1288,27 @@ struct RootView: View {
         }
         .sensoryFeedback(.selection, trigger: app.tabSelection)   // Tab 切换的轻触感
         .preferredColorScheme(colorScheme)
+    }
+
+    /// 包8/508 写入回执浮层 —— 2026-10-13 run 63 从 body 内联块抽出:
+    /// 巨型 body 里这一段报 "unable to type-check this expression in reasonable time"。
+    @ViewBuilder
+    private func writeReceiptView(_ r: String) -> some View {
+        HStack(spacing: DS.Space.xs) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: DS.Icon.md))
+                .foregroundStyle(DS.Palette.ok)
+                .accessibilityHidden(true)
+            Text(r)
+                .font(.caption.weight(.medium))
+                .foregroundStyle(DS.Palette.text)
+        }
+        .padding(.horizontal, DS.Space.l)
+        .padding(.vertical, DS.Space.s)
+        .background(DS.Palette.surface, in: Capsule())
+        .shadow(color: .cardElevation, radius: 8, y: 3)
+        .transition(.move(edge: .bottom).combined(with: .opacity))
+        .allowsHitTesting(false)
     }
 
     /// 135 前后台切换收尾 —— 2026-10-13 run 60 从 body 的内联 .onChange 闭包里抽出来:

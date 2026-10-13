@@ -289,30 +289,7 @@ struct RecordsView: View {
                     .accessibilityLabel("更多")
                 }
             }
-            .onAppear {
-                loadFromCache()
-                // 566 开场恢复成员选择。908 的策略**不在这里重复判**: 策略是 QueryFilters.load 负责的
-                // (选"每次空白"时它返回的就是空对象, member 自然为空) —— 这里再判一次就是两套规则。
-                // 恢复后必须自己 applyFilter(): loadFromCache 已经跑过一次过滤，那一次还不知道有成员要恢复。
-                if sel.isEmpty, !filters.member.isEmpty {
-                    sel = filters.member
-                    applyFilter()
-                }
-                Milestones.markRecordsViewed()   // 975 管家连续天数
-                // 包3/779: 多锁矩阵点格带入的成员过滤 (消费后清空, 不影响手动切换)
-                if let f = app.pendingRecordsFilter {
-                    sel = f
-                    app.pendingRecordsFilter = nil
-                }
-                // 582 统计页成员条下钻带过来的成员 id (同样消费后清空, 落点走下面那条既有的成员过滤链)
-                if let m = app.pendingRecordsMember { landMember(m) }
-                // 585 记录引用深链落地 (进页时查一次)
-                if let k = app.pendingRecordKey { landRecordKey(k) }
-                // 586 当天全景落地
-                if let d = app.pendingRecordsDay { landDay(d) }
-                // 563 搜索词回填落地 (进页时一次性)
-                if let q = app.pendingSearch { landSearch(q) }
-            }
+            .onAppear { onRecordsAppear() }
             // 576/191: 换当前锁必须重取数据。此前本页只在 onAppear 里 loadFromCache()，
             // 从设备页/矩阵点另一把锁回来时 allRows 还是旧锁的、recPool 已是新锁的
             // ⇒ 点行命中"这条记录不在当前显示范围里"的兜底 toast，看起来像数据丢了。
@@ -699,7 +676,11 @@ struct RecordsView: View {
             tf.placeholder = "名称, 例如: 晚间的告警"
         }
         alert.addAction(UIAlertAction(title: "保存", style: .default) { _ in
-            let name = alert.textFields?.first?.value ?? ""
+            // 2026-10-13 run 63: 原写 `alert.textFields?.first?.value ?? ""` —— `.value` 解析到
+            // NSObject.value(forKey:) 那个方法 (类型 ((String) -> Any?)?), `?? ""` 报
+            // "binary operator '??' cannot be applied to operands of type '((String) -> Any?)?' and 'String'"。
+            // 取输入框文字要用 `.text`。
+            let name = alert.textFields?.first?.text ?? ""
             guard !name.isEmpty else { return }
             RecordSearch.saveNamedView(name: name, text: searchText, filters: filters, scopeAll: scope == 1)
             app.showToast("已保存过滤视图「" + name + "」")
@@ -713,9 +694,12 @@ struct RecordsView: View {
     private var resultCount: some View {
         Section {
             HStack(spacing: DS.Space.s) {
-                Text((searchText.isEmpty ? "筛选后约 " : "命中约 ") + String(filteredTotal) + " 条"
-                     + (searchText.isEmpty ? "" : " · 实时 (562)")
-                     + (capped ? " · 本页已加载 \(rows.count)" : ""))
+                // 2026-10-13 run 63: 原来把三段拼接 + 两个三元全内联进 Text, 报 type-check 超时。
+                // 先算好再拼。
+                let head = searchText.isEmpty ? "筛选后约 " : "命中约 "
+                let tail = searchText.isEmpty ? "" : " · 实时 (562)"
+                let cap = capped ? " · 本页已加载 \(rows.count)" : ""
+                Text(head + String(filteredTotal) + " 条" + tail + cap)
                     .font(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                 Spacer(minLength: DS.Space.s)
@@ -1527,7 +1511,7 @@ struct RecordsView: View {
         let bday = g.key.count == 10 ? String(g.key.suffix(5)) : ""
         let celebrant = bday.isEmpty ? nil : (Milestones.memberBirthdays().first { $0.value == bday }.map { DB.member($0.key) }.flatMap { $0 })
         let showYear = g.yearSeparate   // 679 年份大字分隔 (1 月 1-2 日组头)
-        let hasAlarm = g.rows.contains(\.warn)
+        let hasAlarm = g.rows.contains(where: \.warn)
         let openN = g.rows.filter { StatsKit.openTypes.contains($0.type) || $0.kind != nil }.count
         let alarmN = g.rows.filter(\.warn).count
         // 589 组内告警置顶: 有告警的日子把告警行提到组首，其余保持它原来的顺序。
@@ -1736,6 +1720,8 @@ struct RecordsView: View {
     /// 592 连击合并行: 同一凭证同一分钟内 ≥3 条折叠为一行, 点按展开明细
     private func mergedRow(_ r: RowVM) -> some View {
         let total = r.mergedTail.count + 1
+        // 2026-10-13 run 63: 原来把三段拼接内联进 Text, 整个 mergedRow 报 type-check 超时。先算好。
+        let mergedLabel = r.title + " · 同一分钟内 " + String(total) + " 次 (592)"
         return Button {
             withAnimation(DS.Motion.quick) { expandedMerged.insert(r.key) }
         } label: {
@@ -1754,7 +1740,7 @@ struct RecordsView: View {
                     .accessibilityHidden(true)
                 HStack(spacing: DS.Space.s) {
                     kindIcon(r)
-                    Text(r.title + " · 同一分钟内 " + String(total) + " 次 (592)")
+                    Text(mergedLabel)
                         .font(.subheadline)
                         .foregroundStyle(DS.Palette.text)
                         .fixedSize(horizontal: false, vertical: true)
@@ -2026,7 +2012,11 @@ struct RecordsView: View {
                 .fixedSize(horizontal: false, vertical: true)
         } else {
             HStack(spacing: 0) {
-                ForEach(highlightSegments(r.title), id: \.offset) { seg in
+                // 2026-10-13 run 63: 原写 `ForEach(highlightSegments(r.title), id: \.offset)` ——
+                // HlSeg 没有 `offset` 成员 (它自带 `id`), id: 键路径推不出来 ⇒ 报
+                // "cannot infer key path type from context" 并连带一串重载误判。HlSeg 本就 Identifiable,
+                // 直接用它的 id。
+                ForEach(highlightSegments(r.title)) { seg in
                     if seg.hit {
                         Text(seg.text)
                             .font(.subheadline)
@@ -2094,16 +2084,23 @@ struct RecordsView: View {
             }
     }
     /// 184 开门方式图标: kind → SF 符号 (fp 指纹 / pwd 数字键盘 / temp 一次性 / key 钥匙)
+    /// kind → SF 符号名 (非视图计算, 从 @ViewBuilder 里拆出来:
+    /// @ViewBuilder 的 switch 分支必须是视图, 而这里是纯赋值 ⇒ "type '()' cannot conform to 'View'")
+    private func kindSymbol(_ r: RowVM) -> String {
+        switch r.kind {
+        case "fp": return "fingerprint"
+        case "pwd": return "number"
+        case "temp": return "timer"
+        case "key": return "key"
+        default: return ""
+        }
+    }
     @ViewBuilder
     private func kindIcon(_ r: RowVM) -> some View {
-        let sym: String
-        switch r.kind {
-        case "fp": sym = "fingerprint"
-        case "pwd": sym = "number"
-        case "temp": sym = "timer"
-        case "key": sym = "key"
-        default: sym = ""
-        }
+        // 2026-10-13 run 63: 原写 `let sym: String` + `switch { case: sym = … }` —— @ViewBuilder 把
+        // switch 当视图构造, 分支体是赋值 (`()`) ⇒ "type '()' cannot conform to 'View'"。
+        // 计算拆到 kindSymbol, 这里只留 if。
+        let sym = kindSymbol(r)
         if !sym.isEmpty {
             Image(systemName: sym)
                 .font(.system(size: DS.Icon.xs))
@@ -2471,23 +2468,8 @@ struct RecordsView: View {
                 .frame(width: 64, alignment: .trailing)
             HStack(spacing: DS.Space.xs + 2) {
                 ForEach(Array(day.cells.enumerated()), id: \.offset) { _, c in
-                    let dots = min(c.count / 2, 8)
-                    HStack(spacing: 3) {
-                        ForEach(0..<max(dots, 0), id: \.self) { _ in
-                            Circle()
-                                .fill(c.alarm ? DS.Palette.danger : DS.Palette.accent)
-                                .frame(width: 6, height: 6)
-                                .accessibilityHidden(true)
-                        }
-                        if c.count > 0 {
-                            Text("×" + String(c.count))
-                                .font(.caption2)
-                                .lineLimit(1)
-                                .foregroundStyle(c.alarm ? DS.Palette.danger : DS.Palette.textSub)
-                        }
-                    }
-                    .frame(minWidth: 52, alignment: .leading)
-                    .accessibilityLabel(c.name + " 当日 " + String(c.count) + " 次开门" + (c.alarm ? ", 含告警" : ""))
+                    // 2026-10-13 run 63: 单元格内容抽成 laneCell —— 内联时整个 laneRow 报 type-check 超时。
+                    laneCell(name: c.name, count: c.count, alarm: c.alarm)
                 }
             }
         }
@@ -2497,7 +2479,54 @@ struct RecordsView: View {
                     in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
     }
 
+    /// 638/747 泳道单元格 (从 laneRow 抽出: 巨型表达式报 type-check 超时)
+    @ViewBuilder
+    private func laneCell(name: String, count: Int, alarm: Bool) -> some View {
+        let dots = min(count / 2, 8)
+        HStack(spacing: 3) {
+            ForEach(0..<max(dots, 0), id: \.self) { _ in
+                Circle()
+                    .fill(alarm ? DS.Palette.danger : DS.Palette.accent)
+                    .frame(width: 6, height: 6)
+                    .accessibilityHidden(true)
+            }
+            if count > 0 {
+                Text("×" + String(count))
+                    .font(.caption2)
+                    .lineLimit(1)
+                    .foregroundStyle(alarm ? DS.Palette.danger : DS.Palette.textSub)
+            }
+        }
+        .frame(minWidth: 52, alignment: .leading)
+        .accessibilityLabel(name + " 当日 " + String(count) + " 次开门" + (alarm ? ", 含告警" : ""))
+    }
+
     // ---------- 数据 ----------
+    /// 进页收尾 —— 2026-10-13 run 63 从 body 内联的 .onAppear 闭包里抽出 (巨型 body 里那段报 type-check 超时)。
+    private func onRecordsAppear() {
+        loadFromCache()
+        // 566 开场恢复成员选择。908 的策略**不在这里重复判**: 策略是 QueryFilters.load 负责的
+        // (选"每次空白"时它返回的就是空对象, member 自然为空) —— 这里再判一次就是两套规则。
+        // 恢复后必须自己 applyFilter(): loadFromCache 已经跑过一次过滤，那一次还不知道有成员要恢复。
+        if sel.isEmpty, !filters.member.isEmpty {
+            sel = filters.member
+            applyFilter()
+        }
+        Milestones.markRecordsViewed()   // 975 管家连续天数
+        // 包3/779: 多锁矩阵点格带入的成员过滤 (消费后清空, 不影响手动切换)
+        if let f = app.pendingRecordsFilter {
+            sel = f
+            app.pendingRecordsFilter = nil
+        }
+        // 582 统计页成员条下钻带过来的成员 id (同样消费后清空, 落点走下面那条既有的成员过滤链)
+        if let m = app.pendingRecordsMember { landMember(m) }
+        // 585 记录引用深链落地 (进页时查一次)
+        if let k = app.pendingRecordKey { landRecordKey(k) }
+        // 586 当天全景落地
+        if let d = app.pendingRecordsDay { landDay(d) }
+        // 563 搜索词回填落地 (进页时一次性)
+        if let q = app.pendingSearch { landSearch(q) }
+    }
     private func loadFromCache() {
         // 220: 首屏走热点缓存 (整份解码结果常驻, 免每次重解 UserDefaults JSON);
         // 缓存由唯一写入口 Store.writeLogs/replaceLogs 作废, 不存在陈旧窗。
@@ -3146,7 +3175,12 @@ struct RecordsView: View {
         case "temp":
             if let p = pws.first(where: { $0.temp && (r.whoName == nil || $0.owner == r.whoName) }) { return "pwd:" + String(p.alias) }
         case "fp":
-            if let f = fps.first(where: { (r.whoName == nil) || ($0.owner == r.whoName) || (r.whoName.map { $0.name.contains($0) } ?? false) }) { return "fp:" + String(f.batch) }
+            // 2026-10-13 run 63: 原写 `r.whoName.map { $0.name.contains($0) }` —— whoName 是 String?,
+            // map 里的 $0 是解包后的 String, 它没有 .name ⇒ "value of type 'String' has no member 'name'";
+            // 且内层 $0 与外层 $0 撞名。改成命名外层 fp、内层用解包后的成员名去匹配 fp.name。
+            if let f = fps.first(where: { fp in
+                (r.whoName == nil) || (fp.owner == r.whoName) || (r.whoName.map { fp.name.contains($0) } ?? false)
+            }) { return "fp:" + String(f.batch) }
         default:
             break
         }

@@ -37,7 +37,7 @@ enum TimeFormat {
         case "12": return false
         default:
             // 系统模板里含 'H' 才是 24 小时制；含 'a'(AM/PM) 的是 12 小时制。
-            let t = DateFormatter.dateFormat(fromTemplate: "j", options: 0, identifier: nil) ?? ""
+            let t = DateFormatter.dateFormat(fromTemplate: "j", options: 0, locale: nil) ?? ""
             if t.contains("a") { return false }
             return t.contains("H") || t.contains("k")
         }

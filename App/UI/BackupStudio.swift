@@ -800,8 +800,11 @@ struct RestoreWizardView: View {
             VStack(spacing: DS.Space.m) {
                 if !done, preview == nil {
                     inputStep
-                } else if done, let r = report {
-                    reportStep(r)
+                } else if done {
+                    // 2026-10-13 run 63: 原写 `else if done, let r = report` —— report 是
+                    // `@State [BackupStudio.DiffRow]` (**非可选**), 可选绑定报
+                    // "initializer for conditional binding must have Optional type, not '[BackupStudio.DiffRow]'"。
+                    reportStep(report)
                 } else if let p = preview {
                     previewStep(p)
                 }
@@ -2379,6 +2382,48 @@ struct LocalFilesView: View {
     private func aliasOf(_ u: URL) -> String {
         (aliases[u.lastPathComponent] ?? "").split(separator: "\n").first.map(String.init) ?? ""
     }
+
+    /// 433/437/404 每行的长按菜单 —— 2026-10-13 run 63 从 body 内联的 .contextMenu 块抽出:
+    /// 内联时整个列表行表达式报 "unable to type-check this expression in reasonable time"。
+    @ViewBuilder
+    private func fileContextMenu(_ u: URL) -> some View {
+        Button("加备注 / 改名显示 (433)") {
+            editingFile = u.lastPathComponent
+            noteDraft = aliases[u.lastPathComponent] ?? ""
+            showEditAlert = true
+        }
+        Button("设复核日期 (437)") {
+            pinFile = u.lastPathComponent
+            pinDay = BackupStudio.dayDate(pins[pinFile] ?? "") ?? Date()
+            showPinSheet = true
+        }
+        if aliases[u.lastPathComponent] != nil {
+            Button("去掉备注", role: .destructive) {
+                var m = aliases
+                m.removeValue(forKey: u.lastPathComponent)
+                aliases = m
+                DB.store.setCodable("kf_bk_note", m)
+            }
+        }
+        if pins[u.lastPathComponent] != nil {
+            Button("撤掉复核钉", role: .destructive) {
+                BackupStudio.setPin(u.lastPathComponent, "")
+                reloadPins()
+            }
+        }
+        // 404: 到期备份的手动删除出口 (此前这一族没有删除动作, 提示"手动删除"没有落点)。
+        // 删除面只对本列表里真实存在的这一份文件, 且必须走 confirmDestructive 二次确认。
+        Button("删除这份备份 (404)", role: .destructive) {
+            confirmDestructive("删除这份备份?",
+                               "将删除本机上的 \(u.lastPathComponent) — 不可恢复; 其它设备或远端上的副本不受影响。",
+                               confirmTitle: "删除") {
+                try? FileManager.default.removeItem(at: u)
+                files.removeAll { $0 == u }
+                sel.remove(u)
+            }
+        }
+    }
+
     private func sizeOf(_ u: URL) -> String {
         let b = (try? u.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
         return DataHealth.human(b)
@@ -2489,43 +2534,7 @@ struct LocalFilesView: View {
                                 }
                             }
                         }
-                        .contextMenu {
-                            Button("加备注 / 改名显示 (433)") {
-                                editingFile = u.lastPathComponent
-                                noteDraft = aliases[u.lastPathComponent] ?? ""
-                                showEditAlert = true
-                            }
-                            Button("设复核日期 (437)") {
-                                pinFile = u.lastPathComponent
-                                pinDay = BackupStudio.dayDate(pins[pinFile] ?? "") ?? Date()
-                                showPinSheet = true
-                            }
-                            if aliases[u.lastPathComponent] != nil {
-                                Button("去掉备注", role: .destructive) {
-                                    var m = aliases
-                                    m.removeValue(forKey: u.lastPathComponent)
-                                    aliases = m
-                                    DB.store.setCodable("kf_bk_note", m)
-                                }
-                            }
-                            if pins[u.lastPathComponent] != nil {
-                                Button("撤掉复核钉", role: .destructive) {
-                                    BackupStudio.setPin(u.lastPathComponent, "")
-                                    reloadPins()
-                                }
-                            }
-                            // 404: 到期备份的手动删除出口 (此前这一族没有删除动作, 提示"手动删除"没有落点)。
-                            // 删除面只对本列表里真实存在的这一份文件, 且必须走 confirmDestructive 二次确认。
-                            Button("删除这份备份 (404)", role: .destructive) {
-                                confirmDestructive("删除这份备份?",
-                                                   "将删除本机上的 \(u.lastPathComponent) — 不可恢复; 其它设备或远端上的副本不受影响。",
-                                                   confirmTitle: "删除") {
-                                    try? FileManager.default.removeItem(at: u)
-                                    files.removeAll { $0 == u }
-                                    sel.remove(u)
-                                }
-                            }
-                        }
+                        .contextMenu { fileContextMenu(u) }
                         // 404 到期行置灰: 复核钉到日 (pinOver 有值) 的这一份压暗, 与上面那句提示同一判据
                         .opacity(pinOver[u.lastPathComponent] != nil ? 0.55 : 1)
                     }

@@ -447,19 +447,13 @@ struct AddDeviceView: View {
                 // 251 发现列表: 全量展示 + 评分排序 + 信号强度排序,
                 // 不在列表层硬过滤 resetStatus — 硬过滤会把"已配对未重置"的锁整个藏掉。
                 devices = BLEService.shared.allDiscovered()
-                    .map { d -> (dev: BLEAdvDevice, score: Int) in
-                        let adv = ZKProtocol.parseAdv(d.advertisHex)
-                        let svcHit = d.serviceUUIDs.contains {
-                            $0.uppercased().contains("6E400001") || $0.uppercased().contains("FE90")
-                        }
-                        let nameHit = d.name.range(
-                            of: "ZK|KX|JZ|JINGZAO|ZELKOVA|LOCK|SMART",
-                            options: [.regularExpression, .caseInsensitive]) != nil
-                        let score = (svcHit ? 2 : 0) + (nameHit ? 2 : 0) + (adv != nil ? 4 : 0)
-                        return (d, score)
-                    }
-                    .sorted {
-                        $0.score != $1.score ? $0.score > $1.score : ($0.dev.rssi != $1.dev.rssi ? $0.dev.rssi > $1.dev.rssi : $0.dev.name < $1.dev.name)
+                    .map { d -> (dev: BLEAdvDevice, score: Int) in (d, scoreAdv(d)) }
+                    .sorted { a, b in
+                        // 2026-10-13 run 63: 原来是三重嵌套三元的一行比较, 加上上面的 map 闭包,
+                        // 整个赋值表达式报 type-check 超时。拆成多行 if 更好读也更好算。
+                        if a.score != b.score { return a.score > b.score }
+                        if a.dev.rssi != b.dev.rssi { return a.dev.rssi > b.dev.rssi }
+                        return a.dev.name < b.dev.name
                     }
                     .map { $0.dev }
                 // 旧写法 `try?` 把 CancellationError 一起吞了 → 关页/切流程后循环照样跑到 10s 到点
@@ -472,6 +466,17 @@ struct AddDeviceView: View {
         // allowDuplicates 扫描会在离页后继续回调与占radio (对照 BLEService 的 scanTimer 只在超时才停)。
         BLEService.shared.stopScan()
         scanning = false
+    }
+
+    /// 251 发现列表评分 (从 scan() 的 map 闭包里拆出: 闭包 + 三重嵌套三元的 sorted 一起报 type-check 超时)
+    private func scoreAdv(_ d: BLEAdvDevice) -> Int {
+        let adv = ZKProtocol.parseAdv(d.advertisHex)
+        let svcHit = d.serviceUUIDs.contains {
+            $0.uppercased().contains("6E400001") || $0.uppercased().contains("FE90")
+        }
+        let nameHit = d.name.range(of: "ZK|KX|JZ|JINGZAO|ZELKOVA|LOCK|SMART",
+                                   options: [.regularExpression, .caseInsensitive]) != nil
+        return (svcHit ? 2 : 0) + (nameHit ? 2 : 0) + (adv != nil ? 4 : 0)
     }
 
     private func pair(_ d: BLEAdvDevice, _ mac: String) async {

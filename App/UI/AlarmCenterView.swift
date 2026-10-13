@@ -409,7 +409,9 @@ struct AlarmCenterView: View {
         }
     }
     private func rowButton(_ title: String, systemImage: String, on: Bool, _ action: @escaping () -> Void) -> some View {
-        Button(action) {
+        // 2026-10-13 run 63: 原写 `Button(action) { … }` —— Button 的 init 是 (action:label:),
+        // 首个实参也要写标签 ⇒ "missing argument label 'action:' in call"。
+        Button(action: action) {
             Text(title)
                 .font(.caption.weight(.medium))
                 .foregroundStyle(on ? DS.Palette.accentText : DS.Palette.textSub)
@@ -621,7 +623,8 @@ struct AlarmCenterView: View {
                 .font(.caption.weight(.medium))
                 .foregroundStyle(DS.Palette.textSub)
             HStack(alignment: .bottom, spacing: 3) {
-                ForEach(days) { d in
+                // 2026-10-13 run 63: DayOpen 不是 Identifiable ⇒ ForEach 要显式 id:。
+                ForEach(days, id: \.key) { d in
                     VStack(spacing: 2) {
                         RoundedRectangle(cornerRadius: 2)
                             .fill(d.isAlertDay ? DS.Palette.danger : DS.Palette.accent.opacity(0.65))

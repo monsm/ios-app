@@ -869,7 +869,7 @@ struct StatsView: View {
                 }
             }
             .chartYAxis {
-                AxisMarks(values: .stride(by: step)) { _ in
+                AxisMarks(values: .stride(by: Double(step))) { _ in
                     AxisValueLabel().foregroundStyle(DS.Palette.textSub)
                     AxisGridLine().foregroundStyle(DS.Palette.hairline.opacity(0.5))
                 }
@@ -1130,18 +1130,17 @@ struct StatsView: View {
             VStack(alignment: .leading, spacing: DS.Space.s) {
                 Chart {
                     ForEach(mp.thisMonth) { p in
-                        LineMark(x: .value("日", p.key.suffix(2)), y: .value("本月", p.opens))
+                        LineMark(x: .value("日", String(p.key.suffix(2))), y: .value("本月", p.opens))
                             .foregroundStyle(DS.Palette.accent)
                     }
                     if mp.complete {
                         ForEach(mp.lastMonth) { p in
-                            LineMark(x: .value("日", p.key.suffix(2)), y: .value("上月", p.opens))
+                            LineMark(x: .value("日", String(p.key.suffix(2))), y: .value("上月", p.opens))
                                 .foregroundStyle(DS.Palette.textSub)
                                 .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
                         }
                     }
                 }
-                .foregroundStyle(by: .value("系列", "本月"))
                 .chartLegend(.hidden)
                 .frame(height: 160)
                 legendRow(labels: mp.complete
@@ -1451,11 +1450,11 @@ struct StatsView: View {
             VStack(alignment: .leading, spacing: DS.Space.xs) {
                 Chart {
                     ForEach(Array(rows.enumerated()), id: \.offset) { _, r in
-                        AreaMark(x: .value("日期", r.element.1), y: .value("累计", r.element.2))
+                        AreaMark(x: .value("日期", r.1), y: .value("累计", r.2))
                             .foregroundStyle(
                                 LinearGradient(colors: [DS.Palette.accent.opacity(0.35), DS.Palette.accent.opacity(0.05)],
                                                startPoint: .top, endPoint: .bottom))
-                        LineMark(x: .value("日期", r.element.1), y: .value("累计", r.element.2))
+                        LineMark(x: .value("日期", r.1), y: .value("累计", r.2))
                             .foregroundStyle(DS.Palette.accent)
                             .lineStyle(StrokeStyle(lineWidth: 1.5))
                     }
@@ -1530,7 +1529,7 @@ struct StatsView: View {
         let full = t.from ?? now.addingTimeInterval(-30 * 86400)
         let end = t.to ?? now
         let span = max(end.timeIntervalSince(full), 1)
-        let offset = { d in
+        let offset = { (d: Date) in
             let x = max(0, min(1, (d.timeIntervalSince(full)) / span))
             return CGFloat(x)
         }
@@ -2271,17 +2270,28 @@ struct YearReportView: View {
         }
     }
 
-    @ViewBuilder
-    private func yearReport(cov: Int) -> some View {
-        let m = StatsKit.build(mac: mac, week: 7, window: 365)
+    /// 50 年报表的季度/月度聚合 —— 2026-10-13 run 63 从 @ViewBuilder 的 yearReport 里拆出
+    /// (ViewBuilder 里的 for 循环只做累加不产视图会报 "closure containing control flow statement …")。
+    private func yearReportBuckets(_ pts: [StatsKit.DailyPoint])
+        -> (qO: [Int: Int], qA: [Int: Int], moA: [Int: Int]) {
         let cal = WeekCal.gregorian
         var qO = [Int: Int](), qA = [Int: Int](), moA = [Int: Int]()
-        for p in m.dailyPoints {
+        for p in pts {
             let mo = cal.component(.month, from: p.day)
             qO[(mo - 1) / 3, default: 0] += p.opens
             qA[(mo - 1) / 3, default: 0] += p.alarms
             moA[mo, default: 0] += p.alarms
         }
+        return (qO, qA, moA)
+    }
+    @ViewBuilder
+    private func yearReport(cov: Int) -> some View {
+        let m = StatsKit.build(mac: mac, week: 7, window: 365)
+        // 2026-10-13 run 63: 原来在 @ViewBuilder 里直接 `for p in m.dailyPoints { 累加字典 }` ——
+        // 循环体不产视图 (只累加), ViewBuilder 报 "closure containing control flow statement cannot be
+        // used with result builder 'ViewBuilder'"。聚合拆成纯函数 yearReportBuckets。
+        let buckets = yearReportBuckets(m.dailyPoints)
+        let qO = buckets.qO, qA = buckets.qA, moA = buckets.moA
         let top = m.pwdUses.max { $0.approxUses < $1.approxUses }
         VStack(alignment: .leading, spacing: DS.Space.m) {
             Text("本年开门 " + StatsKit.StatModel.compact(m.opensTotal))

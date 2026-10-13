@@ -442,44 +442,7 @@ struct UnlockDial: View {
                     // VO/开关控制/转子激活直达: 绕过按住确认 (替代按钮降级), 蓝牙关时给出失败解释
                     guard bleReady else { return }
                     action()
-                } label: {
-                    VStack(spacing: DS.Space.s) {
-                        Image(systemName: iconName)
-                            .font(.system(size: 46, weight: .medium))
-                            .foregroundStyle(contentColor)
-                            // 状态切换时图标形变过渡 (锁→信号→勾), 比"换了张图"更有生命感
-                            .symbolEffect(.replace.downUp, isActive: !reduceMotion, value: iconName)
-                            .symbolEffect(.variableColor.iterative, options: .repeating,
-                                          isActive: !reduceMotion && searching, value: iconName)
-                        Text(title)
-                            .font(.headline)
-                            .foregroundStyle(contentColor)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
-                    }
-                    .contentTransition(.opacity)   // 状态色变化时交叉淡化, 而不是 RGB 硬跳
-                    .frame(width: dial, height: dial)
-                    .background(dialFill, in: Circle())
-                    // 871 命中域扩容: 圆盘外沿再留 10pt 命中余量 (直径本身 ≥44pt 远超标)
-                    .contentShape(Circle().inset(by: -10))
-                    // 顶部内高光: 一层"玻璃厚度" (248: 夜间降峰值)
-                    .overlay {
-                        Circle()
-                            .fill(LinearGradient(colors: [DS.heroFg.opacity(0.20 * dim), .clear],
-                                                 startPoint: .top, endPoint: .center))
-                            .allowsHitTesting(false)
-                    }
-                    // 206 双层材质: 外沿磨砂环 (控制中心按键质感) —— 内圈高光 (上一条) + 外沿磨砂 (本条),
-                    // strokeBorder 画在圆内侧, 与既有 hairline/径向光晕叠出厚度; 不吞点击。
-                    .overlay {
-                        Circle()
-                            .strokeBorder(.ultraThinMaterial, lineWidth: max(5, dial * 0.075))
-                            .allowsHitTesting(false)
-                    }
-                    .shadow(color: dialGlow.opacity(0.32), radius: 22, y: 10)
-                    // 开锁成功是罕见的高情绪时刻, 允许一次克制的弹跳 (find-animation 的"稀有档")
-                    .scaleEffect(pop ? 1.04 : 1)
-                }
+                } label: { dialButtonLabel() }
                 .buttonStyle(PressableButtonStyle())
                 // 164 Cmd+U 开锁 (与 Cmd+1..4 同族); 蓝牙关的 guard 在 Button action 里, 照常挡
                 .keyboardShortcut("u", modifiers: .command)
@@ -889,6 +852,47 @@ struct UnlockDial: View {
         case .doubleVerify: return DS.Palette.warn
         case .failed: return DS.Palette.danger
         }
+    }
+
+    /// 圆盘按钮的标签 (从 body 内联的 Button label 里抽出 —— 巨型表达式报 type-check 超时)
+    @ViewBuilder
+    private func dialButtonLabel() -> some View {
+        VStack(spacing: DS.Space.s) {
+            Image(systemName: iconName)
+                .font(.system(size: 46, weight: .medium))
+                .foregroundStyle(contentColor)
+                // 状态切换时图标形变过渡 (锁→信号→勾), 比"换了张图"更有生命感
+                .symbolEffect(.replace.downUp, isActive: !reduceMotion, value: iconName)
+                .symbolEffect(.variableColor.iterative, options: .repeating,
+                              isActive: !reduceMotion && searching, value: iconName)
+            Text(title)
+                .font(.headline)
+                .foregroundStyle(contentColor)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+        .contentTransition(.opacity)   // 状态色变化时交叉淡化, 而不是 RGB 硬跳
+        .frame(width: dial, height: dial)
+        .background(dialFill, in: Circle())
+        // 871 命中域扩容: 圆盘外沿再留 10pt 命中余量 (直径本身 ≥44pt 远超标)
+        .contentShape(Circle().inset(by: -10))
+        // 顶部内高光: 一层"玻璃厚度" (248: 夜间降峰值)
+        .overlay {
+            Circle()
+                .fill(LinearGradient(colors: [DS.heroFg.opacity(0.20 * dim), .clear],
+                                     startPoint: .top, endPoint: .center))
+                .allowsHitTesting(false)
+        }
+        // 206 双层材质: 外沿磨砂环 (控制中心按键质感) —— 内圈高光 (上一条) + 外沿磨砂 (本条),
+        // strokeBorder 画在圆内侧, 与既有 hairline/径向光晕叠出厚度; 不吞点击。
+        .overlay {
+            Circle()
+                .strokeBorder(.ultraThinMaterial, lineWidth: max(5, dial * 0.075))
+                .allowsHitTesting(false)
+        }
+        .shadow(color: dialGlow.opacity(0.32), radius: 22, y: 10)
+        // 开锁成功是罕见的高情绪时刻, 允许一次克制的弹跳 (find-animation 的"稀有档")
+        .scaleEffect(pop ? 1.04 : 1)
     }
 
     // 226 后 heroGradientSafe 是 ShapeStyle (HeroSurface), 不再是 LinearGradient —— 盘子底收成 AnyShapeStyle 一起装

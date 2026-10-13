@@ -95,8 +95,10 @@ enum StatsKit {
     struct DailyPoint: Identifiable {
         let day: Date
         let key: String
-        let opens: Int
-        let alarms: Int
+        // 2026-10-13 run 63: 原为 let —— 但 monthPair 里 `rec.opens += 1` / `rec.alarms += 1`
+        // 要就地累加, 报 "left side of mutating operator isn't mutable: 'opens' is a 'let' constant"。
+        var opens: Int
+        var alarms: Int
         var id: String { key }
     }
     struct MovingPoint: Identifiable {
@@ -147,8 +149,13 @@ enum StatsKit {
         let thisCount: Int
         let lastCount: Int
         let complete: Bool
+        // 2026-10-13 run 63: lackingDays 原先裸用 `coverageDays` —— 那是 StatModel 上的
+        // `static func coverageDays(_ logs:)`, 在 MonthPair 里既不在作用域、又缺实参, 报
+        // "cannot convert value of type '([CachedLog]) -> Int' to expected argument type 'Int'"。
+        // 把外层 StatModel.coverage 作为字段传进来 (构造点在 monthPair)。
+        let coverage: Int
         /// 数据积累中还差多少天 (622 降级文案用)
-        var lackingDays: Int { max(0, Int(start.timeIntervalSince1970 / 86400) - coverageDays) + 1 }
+        var lackingDays: Int { max(0, Int(start.timeIntervalSince1970 / 86400) - coverage) + 1 }
     }
     struct TempGantt: Identifiable {
         let alias: Int
@@ -550,7 +557,8 @@ enum StatsKit {
             let l = lastM.values.sorted { $0.key < $1.key }
             return MonthPair(days: 30, start: lStart, thisMonth: t, lastMonth: l,
                              thisCount: tCount, lastCount: lCount,
-                             complete: earliest != nil && earliest! <= lStart)
+                             complete: earliest != nil && earliest! <= lStart,
+                             coverage: coverage)
         }
 
         /// 641 环比箭头: 近 7 天 vs 前 7 天开门数
@@ -720,7 +728,7 @@ enum StatsKit {
                 let u = per[p.alias] ?? 0
                 let disp = p.note.isEmpty ? ("#" + String(p.alias)) : p.note
                 return PwdUse(alias: p.alias, name: disp, owner: p.owner ?? "", note: p.note,
-                              approxUses: u, firstUseDay: firsts[p.alias], outOfRange: 0,
+                              approxUses: u, firstUseDay: firsts[p.alias] ?? nil, outOfRange: 0,
                               ratio: days > 0 ? Double(min(u, days)) / Double(days) : 0)
             }
         }
@@ -762,7 +770,7 @@ enum StatsKit {
             let s = Date().addingTimeInterval(-Double(days) * 86400)
             let pwds = DB.listPwds(mac), fps = DB.listFps(mac)
             let status = DB.readStatus(mac).map { ($0.fpStock, $0.pwdStock, $0.lockTime) }
-            func classify(_ src: [CachedLog]) -> [Attribution.Result] {
+            func classify(_ src: [CachedLog]) -> [Attribution.Row] {
                 Attribution.classify(
                     logs: src.map { LogEntry(type: $0.type, typeName: $0.typeName, idx: $0.idxRaw, idxRaw: $0.idxRaw,
                                              lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr, body: "") },
@@ -863,7 +871,7 @@ enum StatsKit {
         /// 口径收在 homeDayBuckets: 不再叠 logsInWindow 的第二道窗, 名称是"近 N 天"就按 N 天算。
         func homeDurationProxy(days: Int) -> [String] {
             let cal = WeekCal.gregorian
-            let s = cal.date(byAdding: .day, value: -min(days, 30), to: cal.startOfDay(Date()))!
+            let s = cal.date(byAdding: .day, value: -min(days, 30), to: cal.startOfDay(for: Date()))!
             return homeDayBuckets(from: s, to: Date()).sorted(by: { $0.key < $1.key }).suffix(30).map { k, r in
                 dayLabel(k) + " 约 " + String(homeHours(r)) + " 小时在外"
             }

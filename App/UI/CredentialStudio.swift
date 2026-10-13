@@ -265,7 +265,9 @@ struct MaskedDigits: View {
                 .accessibilityLabel(a11yLabel)
                 // 849 双击拷贝挂在每个位上: 容器的点按会被按钮吃掉, 只挂容器等于双击数值区没反应。
                 // 双击时按钮自身动作会各切一次揭示, 净效果回到原样, 不影响读数。
-                .simultaneousGesture(TapGesture(count: 2) { copyAll() })
+                // 2026-10-13 run 63: 原写 `TapGesture(count: 2) { copyAll() }` —— TapGesture(count:)
+                // 的初始化器不收闭包 ⇒ "extra trailing closure passed in call"。手势动作要挂在 .onEnded。
+                .simultaneousGesture(TapGesture(count: 2).onEnded { copyAll() })
                 // 对 VoiceOver 不承诺"双击" (VO 的双击=激活=揭示), 拷贝走转子自定义动作
                 .accessibilityAction(named: "拷整条明文 (849)") { copyAll() }
             }

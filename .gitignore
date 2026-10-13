@@ -26,3 +26,6 @@ state/
 .run-list.html
 .r[0-9]*.html
 .api-run.json
+
+# WorkBuddy 项目数据 (非版本库内容)
+.workbuddy-ai/

@@ -826,7 +826,12 @@ struct DiagnosticsView: View {
                 // 285 扫描时长自查: 近 7 天每日扫描秒数 + 基于真实累计的省电建议
                 let scans = ScanStats.recent(days: 7)
                 if !scans.isEmpty {
-                    Text("扫描时长: " + scans.map { String($0.day.suffix(5)) + " " + String(Int($0.secs)) + "s" }.joined(separator: " · "))
+                    // 2026-10-13 run 63: 原来把 map/joined 全内联进 Text 的字符串拼接, 报 type-check 超时。
+                    // 先算好字符串再拼。
+                    let scanText = scans.map { s in
+                        String(s.day.suffix(5)) + " " + String(Int(s.secs)) + "s"
+                    }.joined(separator: " · ")
+                    Text("扫描时长: " + scanText)
                         .font(.caption2).foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
