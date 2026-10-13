@@ -473,7 +473,7 @@ enum DS {
         }
         /// 派生六档角色色。band 值来自上面的判据，改动必须同步重跑 sweep。
         static func derived(_ base: UInt32, dark: Bool) -> [String: UInt32] {
-            let white = 0xFFFFFF, ink: UInt32 = 0x0A0E15
+            let white: UInt32 = 0xFFFFFF, ink: UInt32 = 0x0A0E15
             // 填充/hero: 一律压进"白字带" (≤0.1833) —— 深色模式也不放宽，因为 hero 上恒是白字
             let fill = darkenTo(base, 0.1833)
             // 主色文字: 浅色底上 ≤0.154；深色模式下反过来要够亮才压得住深色底 (≥0.40 起判)
@@ -588,7 +588,7 @@ extension View {
         // 32: 网格渐变作底; 三档回落线性渐变 —— AMOLED 要纯黑、智能反转要幂等色、降透明要实底,
         // 网格色块会把这三档破坏掉 (与 863/226 的既有降级纪律同源, 不另立判据)。
         Group {
-            if Appearance.isAMOLED || AXFlags.invertColors || AXFlags.reduceTransparency {
+            if DS.Appearance.isAMOLED || AXFlags.invertColors || AXFlags.reduceTransparency {
                 DS.Gradient.screen.ignoresSafeArea()
             } else {
                 DS.Gradient.screenMesh.ignoresSafeArea()

@@ -1051,6 +1051,42 @@ struct DeviceHomeView: View {
     @ViewBuilder
     private var linkSenseCard: some View {
         let state = sense.linkState
+        let rows = senseRows(state)
+        if !rows.isEmpty {
+            Card {
+                VStack(alignment: .leading, spacing: DS.Space.xs) {
+                    ForEach(Array(rows.enumerated()), id: \.offset) { _, r in
+                        HStack(alignment: .top, spacing: DS.Space.s) {
+                            Image(systemName: r.1)
+                                .font(.system(size: DS.Icon.sm, weight: .semibold))
+                                .foregroundStyle(rowTone(r.2))
+                                .accessibilityHidden(true)
+                            Text(r.0)
+                                .font(.footnote)
+                                .foregroundStyle(r.3 ? DS.Palette.textSub : DS.Palette.text)
+                                .fixedSize(horizontal: false, vertical: true)
+                            if r.3 {
+                                Text("缓存")
+                                    .font(.caption2.weight(.medium))
+                                    .foregroundStyle(DS.Palette.textSub)
+                                    .padding(.horizontal, 4).padding(.vertical, 1)
+                                    .background(DS.Palette.surfaceAlt, in: Capsule())
+                            }
+                            Spacer(minLength: 0)
+                        }
+                    }
+                    // 126 回连节律点阵 (仅在有回连轮次时出现)
+                    if state == .down, sense.reconnectAttempt > 0 {
+                        ReconnectDots(attempt: sense.reconnectAttempt, nextWait: nextLadderWait)
+                    }
+                }
+            }
+        }
+    }
+    /// 69/126/125/535/130/270/272/273 连接感知行 —— 纯函数, 不进 ViewBuilder。
+    /// 原先把 `var rows` + `if { rows.append(...) }` 直接写在 @ViewBuilder 里, 分支体是 `()` 不是 View,
+    /// 编译器报 "type '()' cannot conform to 'View'"。行表是数据, 组装与渲染本就该分开。
+    private func senseRows(_ state: LinkState) -> [(String, String, String, Bool)] {
         var rows: [(String, String, String, Bool)] = []   // (text, icon, toneKey, cached)
         if !btReady {
             rows.append(("系统蓝牙已关闭 — 打开后会自动重连 (69)", "antenna.radiowaves.left.and.right.slash", "warn", false))
@@ -1091,36 +1127,7 @@ struct DeviceHomeView: View {
             rows.append(("最后已知: 电量 " + batt + " / 固件 " + fw + " (缓存" + when + ")",
                          "clock.arrow.circlepath", "sub", true))
         }
-        if !rows.isEmpty {
-            Card {
-                VStack(alignment: .leading, spacing: DS.Space.xs) {
-                    ForEach(Array(rows.enumerated()), id: \.offset) { _, r in
-                        HStack(alignment: .top, spacing: DS.Space.s) {
-                            Image(systemName: r.1)
-                                .font(.system(size: DS.Icon.sm, weight: .semibold))
-                                .foregroundStyle(rowTone(r.2))
-                                .accessibilityHidden(true)
-                            Text(r.0)
-                                .font(.footnote)
-                                .foregroundStyle(r.3 ? DS.Palette.textSub : DS.Palette.text)
-                                .fixedSize(horizontal: false, vertical: true)
-                            if r.3 {
-                                Text("缓存")
-                                    .font(.caption2.weight(.medium))
-                                    .foregroundStyle(DS.Palette.textSub)
-                                    .padding(.horizontal, 4).padding(.vertical, 1)
-                                    .background(DS.Palette.surfaceAlt, in: Capsule())
-                            }
-                            Spacer(minLength: 0)
-                        }
-                    }
-                    // 126 回连节律点阵 (仅在有回连轮次时出现)
-                    if state == .down, sense.reconnectAttempt > 0 {
-                        ReconnectDots(attempt: sense.reconnectAttempt, nextWait: nextLadderWait)
-                    }
-                }
-            }
-        }
+        return rows
     }
     private var nextLadderText: String { "第 \(sense.reconnectAttempt) 轮 · 下一轮等 " + String(nextLadderWait) + " 秒" }
     private var nextLadderWait: Int { Int(sense.nextLadderInterval()) }
@@ -1224,7 +1231,6 @@ struct DeviceHomeView: View {
                 CaptionStepBar(phase: app.phase, unlockState: app.unlockState)
                     .transition(.opacity)
             }
-            .axOnehand()   // 873/60 单手下沉: 圆盘区整体下移入拇指区
             // 39 自动上锁倒计时 (协议 cmd24 档位的本地回放, 不虚构门磁): 开锁成功后提醒关手
             if let left = autoLockLeft {
                 Label("约 \(left) 秒后自动上锁 · 请确认门已关好", systemImage: "timer")
@@ -1290,6 +1296,9 @@ struct DeviceHomeView: View {
                     .buttonStyle(PressableButtonStyle())
             }
         }
+        .axOnehand()   // 873/60 单手下沉: 圆盘区整体下移入拇指区
+                       // (挂在整个圆盘区 VStack 上 —— 原先误挂在 `if AXPrefs.captions` 分支后,
+                       //  那是把修饰符接在 if 语句上, 编译器按隐式成员解析报 "cannot be used on type 'View'")
         .padding(.vertical, DS.Space.l)
         .animation(DS.Motion.soft, value: app.failStreak)
         .animation(DS.Motion.soft, value: autoLockLeft)

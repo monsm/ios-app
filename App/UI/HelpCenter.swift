@@ -163,11 +163,13 @@ enum ManualKit {
 struct DataFlowPage: View {
     var body: some View {
         List {
-            Section("数据从哪来到哪去") {
+            Section {
                 flowRow("lock.shield.fill", "门锁内", "开门日志、电量、固件 — 蓝牙直读, 只在本地缓存最近 100 条")
                 flowRow("key.horizontal.fill", "本机存储", "钥匙串、密码/指纹台账、家人档案 — 全部落在本机, 无网络")
                 flowRow("externaldrive.fill", "备份文本", "由你主动导出/粘贴导入; 坚果云走你的账号, 口令不落盘")
                 flowRow("line.3.horizontal", "不经过任何服务器", "厂商云已停服, App 无在线功能、无遥测 — 唯一会联网的是你主动配置的 WebDAV 备份")
+            } header: {
+                Text("数据从哪来到哪去")
             } footer: {
                 Text("「备份与恢复」是数据转移的唯一通道; 门锁本身不需要任何在线服务。")
                     .font(.caption).foregroundStyle(DS.Palette.textSub)
@@ -310,7 +312,7 @@ struct SymptomGuideView: View {
                 Section("你遇到的是哪一类? (282)") {
                     ForEach(Self.trees) { t in
                         Button {
-                            treeKey = t.key; node = "q1"; trail = []
+                            treeKey = t.id; node = "q1"; trail = []
                             DS.Haptics.tick.impactOccurred()
                         } label: {
                             VStack(alignment: .leading, spacing: DS.Space.xxs) {
@@ -435,7 +437,7 @@ struct ManualPage: View {
 struct CopyCheckPage: View {
     var body: some View {
         List {
-            Section("本 App 文案规范") {
+            Section {
                 ForEach(CopyKit.rules) { r in
                     VStack(alignment: .leading, spacing: DS.Space.xs) {
                         Label(r.rule, systemImage: "checkmark.seal")
@@ -458,6 +460,8 @@ struct CopyCheckPage: View {
                     }
                     .padding(.vertical, 2)
                 }
+            } header: {
+                Text("本 App 文案规范")
             } footer: {
                 Text("量词表 (656): 记录用「条」、锁用「把」、开门用「次」、指纹用「枚」、告警用「条」、临时码用「张」。")
                     .font(.caption).foregroundStyle(DS.Palette.textSub)

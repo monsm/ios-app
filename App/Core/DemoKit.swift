@@ -82,7 +82,7 @@ enum DemoKit {
     }
     @MainActor
     static func clearDemoLogs() {
-        DB.writeLogs(demoMac, DB.readLogs(demoMac).filter { !$0.typeName.hasPrefix("demo_") })
+        DB.replaceLogs(demoMac, DB.readLogs(demoMac).filter { !$0.typeName.hasPrefix("demo_") })
         DB.store.remove(kDemoLogsActive)
     }
     @MainActor
@@ -105,7 +105,7 @@ enum DemoKit {
                                      lockTimeStr: Self.demoStamp(date)))
             }
         }
-        DB.writeLogs(demoMac, out)
+        DB.replaceLogs(demoMac, out)
         DB.store.set(kDemoLogsActive, true)
     }
     private static let demoStampF: DateFormatter = {

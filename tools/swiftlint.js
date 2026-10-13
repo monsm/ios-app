@@ -87,7 +87,16 @@ const SYS_NAMES = new Set(['AngularGradient','AxisGridLine','AxisMarks','AxisVal
 // 真机验证在 docs/VERIFY-CHECKLIST.md (实时活动那条与聚光教练那条)。
 'ActivityAuthorizationInfo', 'ActivityConfiguration',   // ActivityKit: 权限查询 + 活动配置
 'VStackLayout', 'HStackLayout',                          // SwiftUI Layout: AnyLayout 的两种容器 (859)
-'FillStyle']);                                           // SwiftUI Canvas 填充规则 (eoFill 挖洞, 826)
+'FillStyle',                                             // SwiftUI Canvas 填充规则 (eoFill 挖洞, 826)
+// 编译修复批 (1170/1255/150): 三个真实 Apple 符号, 全仓各只出现 1 次, 正好落进本检查的误报形态。
+//   · DispatchSemaphore — Foundation 自带的并发原语。DiagKit 1170 用它把 async 的
+//     `notificationSettings()` 拉回同步体检闭包 (体检项 run 是同步闭包, 不改成 async 是为了不动视图层)。
+//   · CHHapticEngine — CoreHaptics 的引擎入口。DiagKit 1255: 系统没有任何"触感开关"的公开读取口,
+//     `UIImpactFeedbackGenerator` 也没有 isEnabled (原写法编译不过), 能问的只有硬件是否支持触感。
+//   · Insecure — CryptoKit 里 SHA1 的命名空间。CredentialStudio 150: HMAC-SHA1 是 TOTP 的默认档,
+//     原写法 `HMAC<SHA1>` 里 `SHA1` 这个顶层名并不存在。
+// 与上面几批同理: **加白不等于证明用法正确** —— 编译器才是判定方。
+'DispatchSemaphore', 'CHHapticEngine', 'Insecure']);
 
 let symFail = 0;
 // 判定口径: 只报"全仓库只出现 1–2 次、又不是本仓库声明的类型"的驼峰名 ——

@@ -46,7 +46,7 @@ struct ExportCols {
     /// ⇒ 勾选既不改导出列，也不落盘（持久化恒写 111100），而页脚写着「上次选择会沿用」。
     var all: [Bool] { [time, type, member, alarm, cred, hex] }
     func get(_ i: Int) -> Bool { all[i] }
-    func set(_ i: Int, _ on: Bool) {
+    mutating func set(_ i: Int, _ on: Bool) {
         switch i { case 0: time = on; case 1: type = on; case 2: member = on; case 3: alarm = on; case 4: cred = on; default: hex = on }
     }
     var onIndices: [Int] { (0..<6).filter { all[$0] } }
@@ -55,7 +55,7 @@ struct ExportCols {
         let s = DB.store.getString(savedKey)
         guard !s.isEmpty else { return .init() }
         var c = ExportCols()
-        for i in s.indices where i < 6 { c.set(i, s[s.index(s.startIndex, offsetBy: i)] == "1") }
+        for i in 0..<6 where i < s.count { c.set(i, s[s.index(s.startIndex, offsetBy: i)] == "1") }
         return c
     }
     static func save(_ c: ExportCols) { DB.store.set(savedKey, c.all.map { $0 ? "1" : "0" }.joined()) }
@@ -249,26 +249,13 @@ struct ExportTextFile: Transferable {
     }
 }
 
-extension ExportItem {
-    func linkMetadata() -> LPLinkMetadata {
-        let m = LPLinkMetadata()
-        m.title = title
-        m.subtitle = shaLabel + " · 离线锁管家"
-        m.keywords = ["离线锁管家", kind]
-        if let img = ExportKit.coverImage(item: self, w: 480) {
-            let prov = NSItemProvider()
-            prov.registerDataRepresentation(forTypeIdentifier: UTType.png.identifier, visibility: .all) { completion in
-                completion(img.jpegData(compressionQuality: 0.85), nil)
-            }
-            m.thumbnailProvider = prov
-        }
-        return m
-    }
-}
-
+// 709 的 `linkMetadata()` 已删 (2026-10-13): 它引用了 LPLinkMetadata 上**不存在**的三个成员
+// (subtitle / keywords / thumbnailProvider), 真编译必拒; 而它本身**零调用** (现役聊天卡片走下面的
+// sharePreview) —— 留一段编译不过的死码没有意义, 需要时按真 API 重写 (docs 里那条"备用口"说明同步失效)。
 extension ExportItem {
     var sharePreview: SharePreview<Image, Image> {
-        SharePreview(title, image: ExportKit.coverImage(item: self, w: 480))
+        // init(_:image:) 要的是 SwiftUI `Image` (不是 UIImage); coverImage 可能为 nil → 空图兜底
+        SharePreview(title, image: Image(uiImage: ExportKit.coverImage(item: self, w: 480) ?? UIImage()))
     }
 }
 
@@ -487,7 +474,7 @@ enum ExportKit {
         }
         let body = lines.joined(separator: "\n") + "\n"
         // 722 校验行随文件尾部 (与报告尾页同口径)
-        let digest = SHA256.hash(data: Data(ExportItem.bom + body.utf8))
+        let digest = SHA256.hash(data: Data((ExportItem.bom + body).utf8))
         let hex = digest.map { String(format: "%02x", $0) }.joined()
         let tail = "\n# SHA-256(正文): \(hex)\n# 行数: \(recs.count) · 生成: \(stamp.string(from: Date()))\n"
         let finalText = ExportItem.bom + body + tail
@@ -495,7 +482,7 @@ enum ExportKit {
             data: Data(finalText.utf8),
             rowCount: recs.count,
             escapedRows: escapedRows,
-            preview3: String(lines.prefix(3).joined(separator: "\n").utf8.prefix(400)))
+            preview3: String(String(lines.prefix(3).joined(separator: "\n")).prefix(400)))
     }
 
     // 684 hex 源: 诊断原始收发日志 (kf_diag_logs, 开启"记录原始收发 hex"后含协议帧 hex 行)
@@ -540,7 +527,7 @@ enum ExportKit {
             "generatedAt": stamp.string(from: Date()),
         ]
         let d = (try? JSONSerialization.data(withJSONObject: payload, options: [.prettyPrinted, .sortedKeys])) ?? Data()
-        return Data(ExportItem.bom + String(decoding: d, as: UTF8).utf8)
+        return Data((ExportItem.bom + String(decoding: d, as: UTF8)).utf8)
     }
 
     // ---------- 548 日志三选 (App 运行日志 txt/csv/json, 脱敏独立于格式) ----------
@@ -562,7 +549,7 @@ enum ExportKit {
         case "json":
             let arr = logs.map { l in ["date": l.date, "time": l.time, "level": l.level, "msg": msg(l)] }
             let d = (try? JSONSerialization.data(withJSONObject: arr, options: [.prettyPrinted])) ?? Data()
-            return Data(ExportItem.bom + String(decoding: d, as: UTF8).utf8)
+            return Data((ExportItem.bom + String(decoding: d, as: UTF8)).utf8)
         default:
             let body = logs.map { "[\($0.date) \($0.time)] \($0.level) \(msg($0))" }.joined(separator: "\n")
             return Data((ExportItem.bom + body + "\n").utf8)
@@ -680,7 +667,6 @@ enum ExportKit {
             // 697 目录行: 封面先给章节序 (页码由各页页脚给, 702)
             PDFText.line(cg, "本报告: 封面 → 摘要与图表 → 告警章 → 逐日明细 → 处置历史 → 尾页校验",
                          font: .regular, size: 9, x: 36, y: 780, color: .lightGray, pageW: 520)
-            ctx.endPDFPage()
             // ---- 摘要页: 三句摘要 + 699 矢量图 (时段分布条, 直接画在 PDF 里缩放不糊) ----
             PDFText.line(cg, ReportTexts.t("summarySection"), font: .semibold, size: 16, x: 36, y: 40, color: .black, pageW: 595)
             var sy: CGFloat = 70
@@ -701,7 +687,6 @@ enum ExportKit {
                          font: .regular, size: 9, x: 36, y: 28, color: .lightGray, pageW: 460)
             PDFText.line(cg, totalLabel(2),
                          font: .regular, size: 9, x: 36, y: 812, color: .lightGray, pageW: 520)
-            ctx.endPDFPage()
             // ---- 正文页: 告警章(697 置前) + 逐日明细, 702 页眉页脚 ----
             var pageIdx = 2   // 封面=1 / 摘要=2 已消耗 (初值 1 会让首个正文页与摘要页都印「第 2 页」)
             func totalLabel(_ n: Int) -> String {
@@ -801,7 +786,6 @@ enum ExportKit {
                 cursor += 13
             }
             footerPage()
-            ctx.endPDFPage()
             finalPages = pageIdx
         }
         return (pdf, finalPages)
@@ -886,6 +870,7 @@ enum ExportKit {
     }
 
     // ---------- 688 告警分享卡 (9:16 渐变卡, ImageRenderer 出图) ----------
+    @MainActor
     static func alarmCard(_ r: ExportRecord, lockName: String) -> UIImage? {
         let card = AlarmShareCardView(name: lockName, rec: r)
         let renderer = ImageRenderer(content: card)
@@ -894,6 +879,7 @@ enum ExportKit {
     }
 
     // ---------- 718 单条记录分享卡 (明示仅含本条数据) ----------
+    @MainActor
     static func recordCard(_ r: ExportRecord, lockName: String) -> UIImage? {
         let card = RecordShareCardView(name: lockName, rec: r)
         let renderer = ImageRenderer(content: card)
@@ -924,7 +910,6 @@ enum ExportKit {
             PDFText.line(cg, "备用钥匙位置 (手填):", font: .regular, size: 22, x: 56, y: 540, color: .black, pageW: 480)
             PDFText.hairline(cg, y: 590)
             PDFText.line(cg, "离线锁管家 · 本地生成 · 数据未经网络", font: .regular, size: 11, x: 56, y: 780, color: .lightGray, pageW: 480)
-            ctx.endPDFPage()
         }
         return data
     }
@@ -961,7 +946,6 @@ enum ExportKit {
             PDFText.line(cg, "签名 / 日期", font: .regular, size: 10, x: 36, y: y + 50, color: .lightGray, pageW: 240)
             PDFText.line(cg, "确认 / 日期", font: .regular, size: 10, x: 316, y: y + 50, color: .lightGray, pageW: 240)
             PDFText.line(cg, "离线锁管家 · 本机生成 · 数据未经网络", font: .regular, size: 10, x: 36, y: 790, color: .lightGray, pageW: 520)
-            ctx.endPDFPage()
         }
     }
 
@@ -1003,7 +987,6 @@ enum ExportKit {
             PDFText.line(cg, "应急电话 (手填): ______________________", font: .regular, size: 18, x: 36, y: y, color: .black, pageW: 520)
             y += 56
             PDFText.line(cg, "物业 / 厂家热线 (手填): ______________________", font: .regular, size: 18, x: 36, y: y, color: .black, pageW: 520)
-            ctx.endPDFPage()
         }
         return data
     }
@@ -1148,7 +1131,8 @@ extension ExportKit {
             let attrs: [NSAttributedString.Key: Any] = [.font: f, .foregroundColor: color, .paragraphStyle: p]
             let ns = NSAttributedString(string: s, attributes: attrs)
             // 调用点均在 UIGraphics 渲染器 (PDF/图片) 内, UIKit 图形上下文已就位
-            ns.draw(with: CGRect(x: x, y: y, width: pageW, height: size * 4), options: [.usesLineFragmentOrigin, .usesFontLeading])
+            ns.draw(with: CGRect(x: x, y: y, width: pageW, height: size * 4),
+                    options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)
         }
         static func gradient(_ cg: CGContext, _ rect: CGRect, _ colors: [UIColor]) {
             let space = CGColorSpaceCreateDeviceRGB()
@@ -1635,6 +1619,8 @@ struct ExportCenterView: View {
                               bytes: pdf, sha256: hex,
                               shaLabel: "单条告警 · 仅含本条数据",
                               previewText: "746: 事实 / 原始报文 / 处置 / 签名栏 — 只含这一条告警。")
+        } finish: { item, err in
+            onDone(item, err)
         }
     }
 
@@ -1968,6 +1954,8 @@ struct ExportCenterView: View {
                               bytes: data, sha256: hex,
                               shaLabel: "AES-128-CBC + HMAC-SHA256 (与备份包同源)",
                               previewText: "691: 内含记录 CSV 与说明; 口令线下告知, 本机不留。")
+        } finish: { item, err in
+            onDone(item, err)
         }
     }
 
@@ -2046,7 +2034,7 @@ struct ExportCenterView: View {
                               fileName: "锁管家_日志_" + stampTag() + "." + ext,
                               bytes: data, sha256: hex,
                               shaLabel: "App 运行日志 · " + String(DiagLogs.all().count) + " 条 · " + self.logFormat + (self.redact ? " · 已脱敏" : ""),
-                              previewText: String(decoding: data, as: UTF8).prefix(300))
+                              previewText: String(String(decoding: data, as: UTF8).prefix(300)))
         } finish: { item, err in
             onDone(item, err)
         }
@@ -2170,7 +2158,8 @@ struct QLPreviewView: UIViewControllerRepresentable {
         init(url: URL) { self.url = url }
         func numberOfPreviewItems(in controller: QLPreviewController) -> Int { 1 }
         func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem {
-            QLPreviewController.urlPreviewItem(itemAt: index, source: url, controller: controller)
+            // URL 本身就是 QLPreviewItem (NSURL 遵循该协议); 旧写法调的 urlPreviewItem 不存在
+            url as NSURL
         }
     }
 }

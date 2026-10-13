@@ -170,7 +170,7 @@ struct CredentialsView: View {
                     ForEach(Array(bs.keys.sorted()), id: \.self) { k in
                         let b = bs[k]!
                         HStack(spacing: DS.Space.xs) {
-                            Text("借用 " + k + " · 借给 " + b.by + " (还 " + b.due + ")")
+                            Text("借用 \(k) · 借给 \(b.by) (还 \(b.due))")
                                 .font(.caption)
                                 .foregroundStyle(DS.Palette.text)
                                 .lineLimit(1)
@@ -325,7 +325,7 @@ struct CredentialsView: View {
         }
     }
     private var LockArchiveLockName: String {
-        app.devices.first { $0.mac == mac }.map { LockArchive.displayName($0) } ?? mac.prefix(6)
+        app.devices.first { $0.mac == mac }.map { LockArchive.displayName($0) } ?? String(mac.prefix(6))
     }
 
     private var headerToolbar: some View {
@@ -855,14 +855,8 @@ struct CredentialsView: View {
                 // "锁内多出的未知凭证数", 数值与结论都是错的 (正例见 Sheets:959 的 cap − stock)。
                 // 已用 = 容量上限 − 剩余; 上限未知 (旧快照无 KLV#24/#27) 时不做推断, 宁可不显示。
                 let snap = DB.readStatus(mac)
-                let dp: Int
-                if let cap = snap?.pwdCap, cap > 0, pStock >= 0 {
-                    dp = max(0, (cap - pStock) - DB.listPwds(mac).count)
-                } else { dp = 0 }
-                let df: Int
-                if let cap = snap?.fpCap, cap > 0, fStock >= 0 {
-                    df = max(0, (cap - fStock) - DB.listFps(mac).count)
-                } else { df = 0 }
+                let dp = excessInLock(snap?.pwdCap, pStock, DB.listPwds(mac).count)
+                let df = excessInLock(snap?.fpCap, fStock, DB.listFps(mac).count)
                 if dp > 0 || df > 0 {
                     Label {
                         Text("锁内还有 \(dp > 0 ? "密码 \(dp) 条" : "")\(dp > 0 && df > 0 ? "、" : "")\(df > 0 ? "指纹 \(df) 条" : "") 不在本机台账 — 可能由键盘或其他管理员添加。")
@@ -960,7 +954,7 @@ struct CredentialsView: View {
     }
 
     @ViewBuilder
-    private func pwdSections(_ pwds: [LedgerPwd]) {
+    private func pwdSections(_ pwds: [LedgerPwd]) -> some View {
         let pinned = pwds.filter { CredentialOrg.isStarred(mac, "pwd", $0.alias) }
         if !pinned.isEmpty {
             Section("置顶 (\(pinned.count))") {
@@ -973,7 +967,7 @@ struct CredentialsView: View {
             }
         }
         // 528 进行中/已排期/已过期三态分组头, 组头带计数
-        for state in [0, 1, 2] {
+        ForEach([0, 1, 2], id: \.self) { state in
             let group = pwds.filter { CredentialOrg.pwdState($0) == state }
             if !group.isEmpty {
                 Section("\(CredentialOrg.stateLabel(state)) (\(group.count))") {
@@ -1118,6 +1112,13 @@ struct CredentialsView: View {
     private func pwdKeys(_ group: [LedgerPwd]) -> [Int] { group.map { $0.alias } }
     private func fpKeys(_ group: [LedgerFp]) -> [Int] { group.map { $0.batch } }
 
+    /// 已用 = 容量上限 − 剩余; 上限未知 (旧快照无 KLV#24/#27) 时不做推断 → 0。
+    /// 抽成函数是因为 ViewBuilder 里不能出现 `if/else` 赋值语句 (会报 `() cannot conform to View`)。
+    private func excessInLock(_ cap: Int?, _ stock: Int, _ have: Int) -> Int {
+        guard let cap, cap > 0, stock >= 0 else { return 0 }
+        return max(0, (cap - stock) - have)
+    }
+
     /// 529 段尾统计行的统一渲染。两个段种的"使用"不是一个读数 (密码有逐条时间窗推断, 指纹只有锁整体),
     /// 所以只共用样式, 话各说各的 —— 不拿同一句糊过去。
     private func segStatRow(_ text: String) -> some View {
@@ -1129,7 +1130,7 @@ struct CredentialsView: View {
     }
 
     @ViewBuilder
-    private func fpSection(_ fps: [LedgerFp]) {
+    private func fpSection(_ fps: [LedgerFp]) -> some View {
         Section("指纹 (\(fps.count))") {
             // 322 缺失提醒行: 名下无指纹的成员 → 预填直达添加
             let missing = DB.members().filter { m in
@@ -2553,7 +2554,7 @@ struct CredentialsView: View {
                                      message: "长期有效密码无到期点, 不适用。",
                                      preferredStyle: .actionSheet)
         func addTier(_ title: String, current: Bool, toggle: @escaping () -> Void) {
-            sheet.addAction(UIAlertAction(title: (current ? "○ " : "◉ ") + title, style: .default, handler: toggle))
+            sheet.addAction(UIAlertAction(title: (current ? "○ " : "◉ ") + title, style: .default, handler: { _ in toggle() }))
         }
         addTier("到期前 7 天提醒", current: a.day) {
             var n = a; n.day.toggle()
@@ -2587,7 +2588,7 @@ struct CredentialsView: View {
         }
         if p.to.hasPrefix("2118") {
             let off = UIAlertAction(title: "了解", style: .cancel)
-            sheet.actions = [off]
+            sheet.addAction(off)
         }
         sheet.addAction(UIAlertAction(title: "取消", style: .cancel))
         UIApplication.topViewController()?.present(sheet, animated: true)

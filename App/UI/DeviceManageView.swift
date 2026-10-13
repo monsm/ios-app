@@ -58,7 +58,7 @@ struct DeviceManageView: View {
                             } header: {
                                 // 标题必须是纯 Text: Section(isExpanded:) 的折叠箭头由列表自己画,
                                 // 套一层 HStack 就没那枚箭头了 (104 的"分组头可收起"会静默变成"分组头")
-                                Text(g.name + " · " + String(g.locks.count))
+                                Text("\(g.name) · \(g.locks.count)")
                             } footer: {
                                 if g.name == LockArchive.ungroupedLabel {
                                     Text("「未分组」不是一个组, 只是还没归类的兜底段 (104)。")
@@ -282,10 +282,10 @@ struct DeviceManageView: View {
                                       message: "例如 大门 / 卧室 / 出租屋。最多 12 字, 组名会出现在设备页的切换胶囊上。",
                                       preferredStyle: .alert)
         alert.addTextField { tf in
-            tf.placeholder = "组名"; tf.text = current; tf.autocorrectionDisabled()
+            tf.placeholder = "组名"; tf.text = current; tf.autocorrectionType = .no
         }
         alert.addAction(UIAlertAction(title: "保存", style: .default) { _ in
-            let v = alert.textFields?.first?.value ?? ""
+            let v = alert.textFields?.first?.text ?? ""
             LockArchive.setGroup(mac, v)
             reload()
             app.showToast(v.trimmingCharacters(in: .whitespaces).isEmpty ? "已移出分组" : "组名已更新 (104)")
@@ -360,9 +360,9 @@ struct DeviceManageView: View {
         let alert = UIAlertController(title: "批量分组名 (107)",
                                       message: "选中的锁一起改到这个名字下。最多 12 字。",
                                       preferredStyle: .alert)
-        alert.addTextField { tf in tf.placeholder = "组名"; tf.autocorrectionDisabled() }
+        alert.addTextField { tf in tf.placeholder = "组名"; tf.autocorrectionType = .no }
         alert.addAction(UIAlertAction(title: "保存", style: .default) { _ in
-            let v = alert.textFields?.first?.value ?? ""
+            let v = alert.textFields?.first?.text ?? ""
             for m in sel { LockArchive.setGroup(m, v) }
             app.showToast("已把 \(sel.count) 把锁归入该组 (107)")
             endBatch()

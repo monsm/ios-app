@@ -25,12 +25,9 @@ struct ReportScanSheet: View {
 
     var body: some View {
         NavigationStack {
-            DataScannerView { session in
-                session.recognitionLanguages = ["zh-Hans", "en"]
-                session.supportedDataTypes = [.qr, .dataMatrix]
-            } results: { results in
+            DataScannerView { results in
                 for r in results {
-                    if let item = r.data.item, let s = item.string {
+                    if let s = r.codeString {
                         guard fired == false else { return }
                         fired = true
                         onResult(s)

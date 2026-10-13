@@ -147,7 +147,7 @@ enum StudioTools {
         switch e.algo.uppercased() {
         case "SHA256": mac = Data(HMAC<SHA256>.authenticationCode(for: Data(bytes), using: key))
         case "SHA512": mac = Data(HMAC<SHA512>.authenticationCode(for: Data(bytes), using: key))
-        default: mac = Data(HMAC<SHA1>.authenticationCode(for: Data(bytes), using: key))
+        default: mac = Data(HMAC<Insecure.SHA1>.authenticationCode(for: Data(bytes), using: key))
         }
         let off = Int(mac.last ?? 0) & 0x0F
         guard off + 4 < mac.count else { return "" }
@@ -248,7 +248,7 @@ struct MaskedDigits: View {
                     DS.Haptics.tick.impactOccurred()
                 } label: {
                     Text(on ? String(ch) : mask)
-                        .font(big ? .title.weight(.semibold).monospacedDigit() : .title3.weight(.semibold).monospacedDigit())
+                        .font((big ? Font.title : Font.title3).weight(.semibold).monospacedDigit())
                         .foregroundStyle(on ? DS.Palette.text : DS.Palette.textSub)
                         .frame(width: big ? 36 : 30)
                         .frame(minHeight: DS.Hit.min)
@@ -474,12 +474,10 @@ struct CodeScanSheet: View {
         }
     }
     private var scanner: some View {
-        DataScannerView { session in
-            session.recognitionLanguages = ["zh-Hans", "en"]
-            session.supportedDataTypes = [.qr, .dataMatrix]
-        } results: { results in
+        // 522 相机取号: 走共享的 UIKit 扫码包装 (docs/API-VERIFY.md:44 那条退路), 不再自造形状。
+        DataScannerView { results in
             for r in results {
-                if let item = r.data.item, let s = item.string {
+                if let s = r.codeString {
                     let digits = s.filter { $0.isNumber }
                     onResult(digits)
                     dismiss()
@@ -2210,7 +2208,7 @@ struct PwdDetailStudio: View {
         }
     }
     private func row(_ k: String, _ v: String) -> some View {
-        HStack(alignment: .leading) {
+        HStack(alignment: .firstTextBaseline) {
             Text(k)
                 .font(.subheadline)
                 .foregroundStyle(DS.Palette.textSub)
@@ -2367,6 +2365,10 @@ struct FpStudio: View {
                 .foregroundStyle(DS.Palette.text)
             ForEach(DB.members()) { m in
                 let cnt = CredentialOrg.fpCountByOwner(mac, m.id)
+                // 317 归属行可读标签: 拆成显式 String 局部量 —— 原先整条拼接写在 ViewBuilder 里会
+                // 让编译器 "unable to type-check this expression in reasonable time"。
+                let cntTag: String = cnt == 0 ? "无指纹" : "\(cnt) 枚"
+                let selTag: String = owner == m.id ? ", 已选" : ""
                 Button {
                     owner = m.id
                     DS.Haptics.tick.impactOccurred()
@@ -2396,7 +2398,7 @@ struct FpStudio: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("归属 " + m.name + " " + (cnt == 0 ? "无指纹" : "\(cnt) 枚") + (owner == m.id ? ", 已选" : ""))
+                .accessibilityLabel("归属 " + m.name + " " + cntTag + selTag)
             }
             if DB.members().isEmpty {
                 Text("还没有成员 (317 归属先行必选)。请先到成员中心新建成员再返回, 或跳过归属稍后在台账补。")
@@ -2444,7 +2446,7 @@ struct FpStudio: View {
                 }
                 Text("请选好的手指按在门锁指纹头上, 抬起, 重复 8 次 (41 全屏聚焦)")
                     .font(.footnote)
-                    .foregroundStyle(DS.heroFg.opacity())
+                    .foregroundStyle(DS.heroFg)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
                 if !error.isEmpty {
@@ -2776,7 +2778,7 @@ struct FpDetailStudio: View {
         }
     }
     private func fpRow(_ k: String, _ v: String) -> some View {
-        HStack(alignment: .leading) {
+        HStack(alignment: .firstTextBaseline) {
             Text(k)
                 .font(.subheadline)
                 .foregroundStyle(DS.Palette.textSub)

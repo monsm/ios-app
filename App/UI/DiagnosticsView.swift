@@ -177,7 +177,7 @@ struct DiagnosticsView: View {
                 if let shot = diagShot {
                     // 预览用纯标题形状: SharePreview(_:image:) 在这版 SDK 上编译不过 ("extraneous argument label 'image:'"),
                     // 而 SharePreview(_:) 是稳的 —— 分享面板仍有标题, 只是没有渐变封面。
-                    ShareLink(item: UIImageShareItem(image: shot),
+                    ShareLink(item: UIImageShareItem(shot),
                               preview: SharePreview("诊断截图 (239)")) {
                         Label("分享诊断截图 (239, 含时间水印)", systemImage: "photo.on.rectangle.angled")
                     }

@@ -222,7 +222,7 @@ struct CredBinView: View {
         if source >= 0 { list = list.filter { $0.source == source } }
         if !query.isEmpty {
             list = list.filter {
-                let hay = "\($0.pwd?.alias.map { "密码 #\($0)" } ?? "") \($0.fp?.name ?? "") \($0.pwd?.note ?? "")"
+                let hay = "\($0.pwd.map { "密码 #\($0.alias)" } ?? "") \($0.fp?.name ?? "") \($0.pwd?.note ?? "")"
                 return hay.localizedCaseInsensitiveContains(query)
             }
         }
@@ -297,11 +297,12 @@ struct CredBinView: View {
                     // 一套有生物识别、一套没有 (§10.39 修过的正是这种分叉)。现在两条都走 guardedPurge。
                     CredentialOrg.guardedPurge(mac, ids: [x.id],
                                                reason: "彻底删除这条回收站凭证 (502)",
-                                               onDone: { app.showToast("已彻底删除 (指纹无法再录入; 密码值可再生成)") }) { commit in
+                                               onDeniedPresentFallback: { commit in
                         confirmDestructive("彻底删除", "生物识别未通过，或这台设备没有可用的生物识别。仍要彻底删除这一条? 指纹删掉后只能到锁前重录。", confirmTitle: "删除") {
                             commit()
                         }
-                    }
+                    },
+                                               onDone: { app.showToast("已彻底删除 (指纹无法再录入; 密码值可再生成)") })
                 }
                 pendingPurge = nil
             }
@@ -334,14 +335,15 @@ struct CredBinView: View {
         // 两条路深浅各说各话正是漏问的开始 (§10.39 修过的就是这种分叉)。
         CredentialOrg.guardedPurge(mac, ids: entries.map(\.id),
                                    reason: "彻底删除回收站 \(n) 条",
-                                   onDone: {
-                                       app.showToast("已清空回收站 (505 计入整理)")
-                                       _ = Milestones.recordOrganize()
-                                   }) { commit in
+                                   onDeniedPresentFallback: { commit in
             confirmDestructive("彻底清空回收站", "生物识别未通过，或这台设备没有可用的生物识别。仍要彻底清空 \(n) 条已删凭证? 不可找回 (指纹需到锁前重新录入)。", confirmTitle: "清空") {
                 commit()
             }
-        }
+        },
+                                   onDone: {
+                                       app.showToast("已清空回收站 (505 计入整理)")
+                                       _ = Milestones.recordOrganize()
+                                   })
     }
 }
 
@@ -423,10 +425,12 @@ struct CredHistoryView: View {
             if let pv = preview {
                 previewSection(pv)
             }
-            Section("历史 (\(snaps.count + reloadTick - reloadTick), 保留 \(CredentialOrg.quota(mac)) 版)") {
+            Section {
                 ForEach(snaps) { s in
                     snapRow(s)
                 }
+            } header: {
+                Text("历史 (\(snaps.count + reloadTick - reloadTick), 保留 \(CredentialOrg.quota(mac)) 版)")
             } footer: {
                 Text("488 自动还原点 (批量操作前) 置顶加标记; 495 星标版不受配额淘汰; 496 恢复不覆盖, 生成「恢复自 vX」新档。")
                     .font(.caption2)
@@ -604,12 +608,7 @@ struct CredCalendarView: View {
                             .foregroundStyle(DS.Palette.textSub)
                             .frame(maxWidth: .infinity)
                     }
-                    let first = cal.date(from: DateComponents(year: year, month: month, day: 1))!
-                    let lead = (cal.firstWeekday + 6 - cal.component(.weekday, from: first)) % 7
-                    let days = cal.range(of: .day, in: .month, for: ym)!.count
-                    var cells: [Int?] = Array(repeating: nil, count: lead)
-                    cells.append(contentsOf: 1...days)
-                    while cells.count % 7 != 0 { cells.append(nil) }
+                    let cells = monthCells(year: year, month: month, ym: ym, cal: cal)
                     ForEach(0..<cells.count, id: \.self) { i in
                         if let d = cells[i] {
                             dayCell(year: year, month: month, day: d, count: dl[cal.date(from: DateComponents(year: year, month: month, day: d))!] ?? 0)
@@ -688,6 +687,18 @@ struct CredCalendarView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(year) 年 \(month) 月 \(day) 日, 当日到期 \(count) 条")
+    }
+    /// 363 月历格: 前置空位 + 1...天数, 补齐到整周。
+    /// 抽成函数是因为 `while` 循环不能出现在 ViewBuilder 里
+    /// (会报 "closure containing control flow statement cannot be used with result builder 'ViewBuilder'")。
+    private func monthCells(year: Int, month: Int, ym: Date, cal: Calendar) -> [Int?] {
+        guard let first = cal.date(from: DateComponents(year: year, month: month, day: 1)),
+              let days = cal.range(of: .day, in: .month, for: ym)?.count else { return [] }
+        let lead = (cal.firstWeekday + 6 - cal.component(.weekday, from: first)) % 7
+        var cells: [Int?] = Array(repeating: nil, count: lead)
+        cells.append(contentsOf: 1...days)
+        while cells.count % 7 != 0 { cells.append(nil) }
+        return cells
     }
     private func move(_ delta: Int) {
         ym = WeekCal.gregorian.date(byAdding: .month, value: delta, to: ym) ?? ym
@@ -963,6 +974,11 @@ struct CredQueueView: View {
                 app.showToast("重试失败: \(error.localizedDescription)")
             }
         }
+    }
+    /// 365 队列项下发: 唯一实现收在 CredentialOrg.sendQueued (第一百五十四批),
+    /// 这里只做"发一条"的最小包装 —— 原先这一行引用的 applyItem 在全仓从未定义过。
+    private func applyItem(_ item: CredQueueItem) async throws {
+        _ = try await CredentialOrg.sendQueued(mac, app.lock, item)
     }
     private func itemTime(_ t: Double) -> String {
         guard t > 0 else { return "" }

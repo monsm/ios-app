@@ -21,7 +21,7 @@ import LocalAuthentication
 
 // ================= 数据模型 =================
 /// 487/489/490/495/496 版本快照: 值/时段/备注逐字段对齐, 供 diff 与"恢复即新版本"
-struct CredSnapshot: Codable {
+struct CredSnapshot: Codable, Identifiable {
     var version: Int
     var at: Double              // Unix 秒
     var note: String            // 人话摘要 (490), 由 makeSummary 生成
@@ -29,6 +29,8 @@ struct CredSnapshot: Codable {
     var auto: Bool = false      // 488 自动还原点 (还原备份/批量操作前) 置顶加标记
     var pwd: LedgerPwd?
     var fp: LedgerFp?
+    /// 487-496 版本历史列表的标识: 同一凭证的 version 单调递增, 天然唯一
+    var id: Int { version }
 }
 /// 498 来源过滤: 手动删除 / 批量清理 / 过期清理 / 重录替代
 enum CredBinSource: Int, Codable, CaseIterable {
@@ -51,7 +53,7 @@ struct CredBinEntry: Codable, Identifiable {
     var pwd: LedgerPwd? = nil
     var fp: LedgerFp? = nil
     var id: String {
-        at > 0 ? "\(at)" : (pwd?.alias.map { "\($0)" } ?? fp?.batch.map { "\($0)" } ?? "bin")
+        at > 0 ? "\(at)" : (pwd.map { "\($0.alias)" } ?? fp.map { "\($0.batch)" } ?? "bin")
     }
     /// 行首文案 (回收站/撤销条共用)
     var text: String {
@@ -717,7 +719,7 @@ enum CredentialOrg {
 
     // ---------- 526/921 置顶星标 + 高频 ----------
     static func stars(_ mac: String) -> Set<Int> {
-        DB.get([Int].self, starKey(mac)) ?? []
+        Set(DB.get([Int].self, starKey(mac)) ?? [])
     }
     static func toggleStar(_ mac: String, _ kind: String, _ key: Int) {
         setStar(mac, kind, key, !isStarred(mac, kind, key))
@@ -756,7 +758,7 @@ enum CredentialOrg {
 
     // ---------- 354 归档区: 收起不删 — 与停用/彻底删除是两个不同档, 归档只碰展示层, 台账与锁端零改动 ----------
     static func archived(_ mac: String) -> Set<Int> {
-        DB.get([Int].self, archKey(mac)) ?? []
+        Set(DB.get([Int].self, archKey(mac)) ?? [])
     }
     static func setArchived(_ mac: String, _ kind: String, _ key: Int, _ on: Bool) {
         var s = archived(mac)
@@ -786,8 +788,9 @@ enum CredentialOrg {
     static func scheduleAlerts(_ mac: String, _ p: LedgerPwd, _ a: CredAlert) {
         let c = UNUserNotificationCenter.current()
         let id = "c6.alert.\(mac).p\(p.alias)"
-        for r in c.pendingRequests() where r.identifier == id || r.identifier.hasPrefix(id + ".") {
-            c.removePendingNotificationRequests(withIdentifiers: [r.identifier])
+        c.getPendingNotificationRequests { reqs in
+            let stale = reqs.map(\.identifier).filter { $0 == id || $0.hasPrefix(id + ".") }
+            if !stale.isEmpty { c.removePendingNotificationRequests(withIdentifiers: stale) }
         }
         // "到期时"不看单档开关: 开了任何一档 = 在意这条凭证的到期, 到点本身最该说话。
         let any = a.day || a.d3 || a.d1 || a.h24 || a.h2
@@ -837,8 +840,7 @@ enum CredentialOrg {
         c.title = title
         c.body = body
         c.sound = .default
-        var comps = DateComponents()
-        comps.date = date
+        let comps = WeekCal.gregorian.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
         let req = UNNotificationRequest(identifier: id, content: c, trigger: UNCalendarNotificationTrigger(dateMatching: comps, repeats: false))
         Task { try? await UNUserNotificationCenter.current().add(req) }
     }
@@ -847,7 +849,8 @@ enum CredentialOrg {
     static func dueSoonPwds(_ mac: String) -> [LedgerPwd] {
         let soon = nowSec + 2 * 3600
         return DB.listPwds(mac).filter { p in
-            if let a = alert(mac, p), let to = expiryDate(p) {
+            if let to = expiryDate(p) {
+                let a = alert(mac, p)
                 return a.h2 && to.timeIntervalSince1970 <= soon && to.timeIntervalSince1970 >= nowSec - 3600
             }
             return false
@@ -1509,7 +1512,8 @@ enum CredentialOrg {
             let s = p.note.split(separator: "·").map { String($0).trimmingCharacters(in: .whitespaces) }.first
             if let s, !s.isEmpty, s.count <= 12 { return s }
         }
-        if let o = ownerName(p.owner) { return "\(o) 的密码 #\(p.alias)" }
+        let o = ownerName(p.owner)
+        if !o.isEmpty { return "\(o) 的密码 #\(p.alias)" }
         return p.temp ? "临时密码 #\(p.alias)" : "密码 #\(p.alias)"
     }
     /// 918 命名模板 "谁-哪里-何时" 占位建议 (锁端无名称字段, 台账本地展示)

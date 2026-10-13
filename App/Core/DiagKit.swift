@@ -10,9 +10,11 @@
 // VACUUM/索引类创意按其等价落地: "整理"= 清残留空键 + 写队列冲刷; "完整性"= JSON 回环 + 台账计数核对。
 import Foundation
 import UIKit
+import Dispatch          // 1170: DispatchSemaphore (把 async 的 notificationSettings() 拉回同步体检闭包)
 import CoreBluetooth
 import CryptoKit
 import CoreImage
+import CoreHaptics
 import UserNotifications
 
 // ---------- 时间戳辅助 (locale 无关, 台账可比对) ----------
@@ -636,7 +638,7 @@ enum DataHealth {
         var gaps: [String] = []
         for i in 1...days {
             guard let d = cal.date(byAdding: .day, value: -i, to: today) else { continue }
-            let key = localDay(d)   // 与 daySet (锁端墙上日期) 同一个本地口径
+            let key = DiagLogs.localDay(d)   // 与 daySet (锁端墙上日期) 同一个本地口径
             if !daySet.contains(key) { gaps.insert(key, at: 0) }
         }
         // 只报"两侧都有数据"的空洞 (首尾无数据不算缺口)
@@ -648,7 +650,7 @@ enum DataHealth {
     /// 旧版这里有一句 `guard !DB.store.getBool("kf_archive_off")` 并注释"可关" —— 但全仓没有任何写入方,
     /// 该 guard 恒通过 = 空转检查, 且"可关"是给不出来的承诺。归档只在手动按钮时发生, 不需要开关。
     static func archiveOldLogs() -> Int {
-        let cutoffProto = ZKProtocol.protoSecondsFromMs((Date().addingTimeInterval(-365 * 86_400).timeIntervalSince1970 * 1000).rounded())
+        let cutoffProto = ZKProtocol.protoSecondsFromMs(Int64((Date().addingTimeInterval(-365 * 86_400).timeIntervalSince1970 * 1000).rounded()))
         var moved = 0
         for kc in DB.keychains() {
             let all = DB.readLogs(kc.mac)
@@ -1083,11 +1085,12 @@ struct HealthCheckArchive: Codable, Identifiable {
     var score: Int
     var lines: [String]
 }
+@MainActor
 enum DiagHealth {
     struct ItemDef {
         let id: String
         let name: String
-        let run: () -> HealthCheckItem
+        let run: @MainActor () -> HealthCheckItem
     }
     /// 545 能力自检清单 + 760 运行自检共用同一套项 (蓝牙/通知/应用锁/存储/备份/备份可读/连接/数据/触感/面容)
     static var items: [ItemDef] {
@@ -1167,7 +1170,18 @@ enum DiagHealth {
         }
     }
     static func checkNotify() -> HealthCheckItem {
-        switch UNUserNotificationCenter.current().notificationSettings.authorizationStatus {
+        // 1170: notificationSettings() 在 iOS 15+ 是 async 方法, 而体检项 run 是同步闭包 ——
+        // 用信号量把这一次查询拉回同步 (体检是用户主动点的低频操作, 阻塞上限 1.5s 可接受)。
+        // 必须 Task.detached: 本函数在 MainActor 上跑, 若用 Task{} 会继承 MainActor,
+        // 主线程正卡在 sem.wait 上, 任务体永远排不上 → 必超时。
+        let box = NotifyAuthBox()
+        let sem = DispatchSemaphore(value: 0)
+        Task.detached {
+            box.status = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
+            sem.signal()
+        }
+        _ = sem.wait(timeout: .now() + 1.5)
+        switch box.status {
         case .denied:
             return HealthCheckItem(id: "notify", name: "本地通知", ok: false,
                                    detail: "通知被拒绝 — 保养/召回提醒不可用, 到系统设置重新开启")
@@ -1252,7 +1266,9 @@ enum DiagHealth {
         return HealthCheckItem(id: "data", name: "数据完整性", ok: ok, detail: rep.joined(separator: "; "))
     }
     static func checkHaptic() -> HealthCheckItem {
-        let on = UIImpactFeedbackGenerator(style: .light).isEnabled
+        // 系统没有任何"触感开关"的公开读取口 (UIImpactFeedbackGenerator 无 isEnabled 成员);
+        // 能问的只有硬件是否支持触感 (CoreHaptics)。如实按硬件能力报, 不谎报"开着也没关" 也不谎报"关了"。
+        let on = CHHapticEngine.capabilitiesForHardware().supportsHaptics
         return HealthCheckItem(id: "haptic", name: "触感反馈", ok: on,
                                detail: on ? "触感引擎可用" : "系统触感关闭 — 设置 → 辅助功能 → 触感反馈")
     }
@@ -1273,6 +1289,7 @@ enum DiagQR {
         return UIImage(ciImage: raw)
     }
     /// 摘要文本: 版本 + 固件 + 最近错误 + 日志摘要哈希 (SHA256 前 6 字节, 12 hex)
+    @MainActor
     static func summaryText(app: AppState) -> String {
         var t = "【诊断摘要】\n"
         t += "App " + (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?")
@@ -1285,7 +1302,7 @@ enum DiagQR {
         }
         if !app.lock.lastError.isEmpty { t += "最近错误 " + app.lock.lastError + "\n" }
         let tail = DiagLogs.today().suffix(30).map { $0.time + "[" + $0.level + "] " + $0.msg }.joined(separator: "\n")
-        let hash = SHA256.hash(data: tail.utf8).prefix(6).map { String(format: "%02x", $0) }.joined()
+        let hash = SHA256.hash(data: Data(tail.utf8)).prefix(6).map { String(format: "%02x", $0) }.joined()
         t += "日志摘要 " + hash
         return t
     }
@@ -1475,6 +1492,7 @@ enum SymptomGuide {
 /// 三项都只读、不写盘、不碰 BLE：① 库体哈希（只读比对，见 `BackupStudio.hashMismatch` 的注释）
 /// ② 审计链逐条重算 ③ JSON 回环 + 台账计数核对 (750)。
 struct SelfCheckLine { let name: String; let ok: Bool; let detail: String }
+@MainActor
 enum SelfCheck {
     static func run() -> [SelfCheckLine] {
         var out: [SelfCheckLine] = []
@@ -1498,4 +1516,10 @@ enum SelfCheck {
         let bad = lines.filter { !$0.ok }
         return bad.isEmpty ? "本机自检三项全部通过 (397)" : "本机自检 \(bad.count) 项异常 — 详情见下 (397)"
     }
+}
+
+/// 1170 同步读取通知授权状态的载体。
+/// 只写一次 (写完即 signal), 故 @unchecked Sendable 安全 —— 不做跨线程读写交错。
+private final class NotifyAuthBox: @unchecked Sendable {
+    var status: UNAuthorizationStatus = .notDetermined
 }

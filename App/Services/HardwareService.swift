@@ -87,7 +87,7 @@ final class HardwareService: ObservableObject {
         while Date() < deadline {
             for d in ble.allDiscovered() {
                 guard let a = ZKProtocol.parseAdv(d.advertisHex) else { continue }
-                if let pid, a.pid != pid { continue }
+                if a.pid != pid { continue }
                 if resetRequired && a.resetStatus == 0 { continue }
                 ble.stopScan()
                 return d.deviceId
