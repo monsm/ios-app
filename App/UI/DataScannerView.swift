@@ -17,10 +17,10 @@ struct DataScannerView: UIViewControllerRepresentable {
     /// 要识别的码制。默认与三个调用点原写法一致 (QR + DataMatrix)。
     let symbologies: [VNBarcodeSymbology]
     /// 每次新增识别到的条目 (回调在主线程)
-    let results: ([DataScannerViewController.RecognizedItem]) -> Void
+    let results: ([RecognizedItem]) -> Void
 
     init(symbologies: [VNBarcodeSymbology] = [.qr, .dataMatrix],
-         results: @escaping ([DataScannerViewController.RecognizedItem]) -> Void) {
+         results: @escaping ([RecognizedItem]) -> Void) {
         self.symbologies = symbologies
         self.results = results
     }
@@ -46,19 +46,19 @@ struct DataScannerView: UIViewControllerRepresentable {
     func makeCoordinator() -> Coordinator { Coordinator(results: results) }
 
     final class Coordinator: NSObject, DataScannerViewControllerDelegate {
-        private let results: ([DataScannerViewController.RecognizedItem]) -> Void
-        init(results: @escaping ([DataScannerViewController.RecognizedItem]) -> Void) {
+        private let results: ([RecognizedItem]) -> Void
+        init(results: @escaping ([RecognizedItem]) -> Void) {
             self.results = results
         }
         func dataScanner(_ dataScanner: DataScannerViewController,
-                         didAdd addedItems: [DataScannerViewController.RecognizedItem],
-                         allItems: [DataScannerViewController.RecognizedItem]) {
+                         didAdd addedItems: [RecognizedItem],
+                         allItems: [RecognizedItem]) {
             results(addedItems)
         }
     }
 }
 
-extension DataScannerViewController.RecognizedItem {
+extension RecognizedItem {
     /// 取码文本: 只认条码, 文本块返回 nil。
     /// 真实形状是 `RecognizedItem` 枚举的 `.barcode(Barcode)` 分支, `Barcode.payloadStringValue` 才是载荷;
     /// 旧写法的 `r.data.item?.string` 三层取值链对不上任何符号, 故收进这一处。

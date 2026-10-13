@@ -86,7 +86,7 @@ enum BackupStudio {
     /// 198: 档位落地为本地通知提醒 (不做后台静默写); manual 不排期, 换档即重排
     static func scheduleCadenceReminder() async {
         let id = "kf.bk.cadence"
-        UNUserNotificationCenter.current().removePendingNotificationRequests(identifiers: [id])
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [id])
         guard cadence != "manual", await CareSchedule.requestAuth() else { return }
         let c = UNMutableNotificationContent()
         c.title = "该备份了 (198)"
@@ -107,8 +107,10 @@ enum BackupStudio {
         let day = monthlyDay
         guard day > 0 else { return }
         guard await CareSchedule.requestAuth() else { return }
-        for r in UNUserNotificationCenter.current().pendingRequests() where r.identifier == "kf.bk.monthly" {
-            UNUserNotificationCenter.current().removePendingNotificationRequests(identifiers: [r.identifier])
+        // pendingRequests() 这个成员不存在; 本函数本来就是 async, 直接走 async 版即可。
+        let center = UNUserNotificationCenter.current()
+        for r in await center.pendingNotificationRequests() where r.identifier == "kf.bk.monthly" {
+            center.removePendingNotificationRequests(withIdentifiers: [r.identifier])
         }
         let c = UNMutableNotificationContent()
         c.title = "月度备份日 (1018)"
