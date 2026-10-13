@@ -2275,7 +2275,11 @@ struct CredentialsView: View {
         stopUndoTimer()
         let t = DispatchSource.makeTimerSource()
         t.schedule(deadline: .now() + 5)
-        t.setEventHandler {
+        // 2026-10-13 对抗式排查: `setEventHandler` 不指定 queue 时, 回调跑在 **DispatchSource
+        // 默认的全局队列**上, 于是 5 秒后从后台线程改 `undoEntry`(@State) 还包 `withAnimation`
+        // ⇒ 运行期未定义 (不刷新或崩), Swift 6 直接拒编。
+        // 复现: 删除一条凭证, 等 5 秒撤销条不消失。显式指定 .main。
+        t.setEventHandler(queue: .main) {
             guard undoEntry != nil else { return }
             withAnimation(DS.Motion.exit) { undoEntry = nil }
         }

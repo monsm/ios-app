@@ -433,6 +433,10 @@ struct AddDeviceView: View {
         }
     }
 
+    // 2026-10-13 对抗式排查: 补 @MainActor。原写非隔离 async func —— 非隔离 async 被 @MainActor
+    // 上下文 await 时函数体跑到全局执行器, 于是本函数里的 `scanning`(@State) 与
+    // BLEService.shared.stopScan() 都在后台线程上跑, @State 后台写 = 运行期未定义。
+    @MainActor
     private func scan() async {
         guard !scanning, flow == .scan else { return }
         scanning = true

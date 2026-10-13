@@ -148,14 +148,25 @@ enum DemoKit {
     }
 
     /// 演示开锁: 本地走一遍"握手→鉴权→执行"三阶段, 不写失败日志、不碰 BLE (836 包装层)
+    /// 2026-10-13 对抗式排查: 原写的 `Task { @MainActor in ... }` **没有句柄、不可取消**, 且
+    /// `Task.sleep(nanoseconds:)` 在取消后照样睡完。连点圆盘会再起一个任务, 旧任务 0.7~2.1s 后
+    /// 继续覆写 phase/unlockState, 打到新一次开锁态上 (演示态也会把真实态显示覆盖掉)。
+    /// 改成"重启前先 cancel, 每段 sleep 前后各查一次 isCancelled"。
+    @MainActor
+    static var demoUnlockTask: Task<Void, Never>?
+
     @MainActor
     static func simulateDemoUnlock(phase: @escaping (Int) -> Void,
                                    onDone: @escaping () -> Void) {
-        Task { @MainActor in
+        demoUnlockTask?.cancel()
+        demoUnlockTask = Task { @MainActor in
             for p in [1, 2, 3] {
+                if Task.isCancelled { return }
                 phase(p)
                 try? await Task.sleep(nanoseconds: 700_000_000)
+                if Task.isCancelled { return }
             }
+            if Task.isCancelled { return }
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             onDone()
         }

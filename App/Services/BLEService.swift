@@ -163,6 +163,15 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
         }
     }
 
+    // 2026-10-13 对抗式排查: 补 @MainActor。原写是非隔离 async func, 而**非隔离 async 函数被
+    // @MainActor 上下文 await 时会跑到全局执行器** (Swift 不做 actor 继承) ⇒ 两件事一起坏:
+    //   ① `scanning = true` 是 @Published 写入后台线程 (Combine 从后台 emit, SwiftUI 侧行为未定义);
+    //   ② `Timer.scheduledTimer` 把定时器挂在**当前线程的 run loop** 上, GCD worker 没有 run loop
+    //      ⇒ 超时回调永不触发 ⇒ 扫描窗口永不自动关, scanning 卡 true, 射频空转到下一次 startScan。
+    //   冷启动 coldStartScan 没有 defer stopScan, 完全依赖这个定时器 —— 一启动即复现 (蓝牙长扫 = 耗电)。
+    // 全部调用点 (LinkSenseKit/DFUKit/HardwareService/LockService/Sheets) 本就 `await` 它,
+    // 标 @MainActor 后调用点无需改动, 而函数体 (含 Timer) 确定跑在主线程/main run loop 上。
+    @MainActor
     func startScan(allowDuplicates: Bool = false, intervalMs: Int = 500, timeoutMs: Int = 10000) async throws {
         try await waitReady()
         stopScanInternal()

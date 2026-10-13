@@ -67,6 +67,14 @@ final class AppState: ObservableObject {
     @Published var appUnlocked: Bool
     // 390: 伪装码进入后停在空壳界面 (不加载任何门锁/凭证视图与数据)
     @Published var decoyMode = false
+    // 2026-10-13 对抗式排查: 启动块只跑一次的会话令牌。
+    // 起因: `mainTabsChrome` 里那段 `.task { CrashGuard.checkAbnormalExit() … coldStartScan() }`
+    // 被 `.id(app.appearanceSeed)` 包着 —— 改任何外观档 (主题/品牌色/密度/圆角/行高/动效/快捷格次序)
+    // 都会给整树换身份, 子树被销毁重建 ⇒ `.task` **整段重放**:
+    //   · onLaunch() 再跑一遍 (自检 / 月备排程 / 成就结算 / CrashGuard 重复打点);
+    //   · coldStartScan() 再起一个扫描, 而它是裸 `Task {}` 不随 `.task` 取消 ⇒ 两个扫描轮询并发读同一 discovered。
+    // 加这一位让启动块幂等 (AppState 是引用类型, 不受视图换身份影响)。
+    var launchBootstrapped = false
     // ---------- 236/377 访客通道 / 383 毁灭复核: 两枚会话级授权位 ----------
     /// 377: 访客通道开着时主 TabView 只挂 设备/记录; 这一位记"本会话是否已重输口令放开 凭证/设置"。
     /// 刻意是内存态而不是存储键 —— 落盘就等于"退出不用再输密码", 与开关原话相反。
@@ -1158,6 +1166,10 @@ struct RootView: View {
         }
         .animation(DS.Motion.soft, value: app.moment)
         .task {
+            // 2026-10-13 对抗式排查: 启动块幂等 (见 AppState.launchBootstrapped 的注释 ——
+            // `.id(app.appearanceSeed)` 会让整棵子树被销毁重建, `.task` 整段重放)。
+            guard !app.launchBootstrapped else { return }
+            app.launchBootstrapped = true
             // 547/758 异常退出档案: 这四个函数此前全库零调用, 整条链路从未跑过。
             // 顺序要紧: 先按上次的标记判定异常退出, 再为本次会话打点。
             CrashGuard.checkAbnormalExit()
