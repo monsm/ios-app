@@ -65,8 +65,13 @@ struct AuditEvent: Codable, Identifiable {
     var hash: String = ""        // 本条哈希 (覆盖 prevHash + 全字段)
 
     func hashInput(_ prev: String) -> String {
-        let diffText = diff.keys.sorted().map { "\($0)=\(diff[$0!] ?? [])" }.joined(separator: "|")
-        return [id, String(ts), cat.rawValue, action, target, operator_, duress ? "d" : "-", diffText, prev]
+        // 2026-10-13 run 62: `diff.keys.sorted()` 的元素已经是 String, 原来写 `diff[$0!]` 是
+        // 对一个**非可选**值强制解包 ⇒ "cannot force unwrap value of non-optional type
+        // 'Dictionary<String, [String]>.Keys.Element' (aka 'String')"。去掉 `!`。
+        let diffText = diff.keys.sorted().map { "\($0)=\(diff[$0] ?? [])" }.joined(separator: "|")
+        // 第二处: 数组首元素 `id` 是 Int, 其余是 String, 字面量元素类型被推成 String ⇒
+        // "cannot convert value of type 'Int' to expected element type 'String'"。显式转 String。
+        return [String(id), String(ts), cat.rawValue, action, target, operator_, duress ? "d" : "-", diffText, prev]
             .joined(separator: "#")
     }
 

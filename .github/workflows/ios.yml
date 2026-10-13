@@ -128,11 +128,11 @@ jobs:
 
       - name: 编译校验测试目标 (云端无模拟器, 只编译不执行)
         run: |
-          # SWIFT_ENABLE_BATCH_MODE=NO: 关掉 Swift 批量编译。
-          # 为什么: 批量模式下 ~20 个文件共用一次 swift-frontend 调用, 一个批次失败 → 构建即停,
-          # **后面的批次根本没编** —— 于是每次 run 只能暴露"下一批"的错误, 一轮一轮挤牙膏。
-          # 逐文件编译后各文件是独立任务, 一个失败不影响别的照编, 一次 run 就能把全仓错误一次列全。
-          # 代价: 编译慢一些 (调试期可接受; 全绿后可以再开回批量模式)。
+          # SWIFT_COMPILATION_MODE=wholemodule: 整模块**一次** swift-frontend 调用编译。
+          # 为什么: 默认的增量/批量模式下, 一个批次 (或文件) 失败 → 构建即停, 后面的根本没编,
+          # 于是每次 run 只能暴露"下一批"的错误, 一轮一轮挤牙膏 (run 59→62 就是这么过来的)。
+          # 整模块单次调用会把**全仓所有** error 一次性列出来。
+          # (先前试过 SWIFT_ENABLE_BATCH_MODE=NO, 不够 —— xcodebuild 仍会在首个失败后停派新任务。)
           mkdir -p build
           set -o pipefail
           xcodebuild build-for-testing \
@@ -140,7 +140,7 @@ jobs:
             -scheme OfflineLock \
             -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath build/DerivedData \
-            SWIFT_ENABLE_BATCH_MODE=NO \
+            SWIFT_COMPILATION_MODE=wholemodule \
             CODE_SIGNING_ALLOWED=NO | tee build/test.log
 
       - name: Build (Device, unsigned IPA)
@@ -153,7 +153,7 @@ jobs:
             -sdk iphoneos \
             -configuration Release \
             -archivePath build/OfflineLock.xcarchive \
-            SWIFT_ENABLE_BATCH_MODE=NO \
+            SWIFT_COMPILATION_MODE=wholemodule \
             CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" | tee build/device.log
           mkdir -p build/Payload
           cp -R "build/OfflineLock.xcarchive/Products/Applications/OfflineLock.app" build/Payload/
