@@ -221,6 +221,7 @@ enum Milestones {
     }
 
     // ---------- 980/997 备份历史 (上传成功 / 生成本地备份文本 各记一次) ----------
+    @MainActor
     static func recordBackup() {
         var h = DB.store.get([Double].self, "kf_backup_hist") ?? []
         h.append(Date().timeIntervalSince1970 * 1000)

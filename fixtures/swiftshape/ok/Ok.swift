@@ -60,3 +60,33 @@ struct OkUntypedFunc: View {
         Text(t)
     }
 }
+
+struct OkLetWithReturn: View {
+    // R1b 反控之一：body 以 let 起头，但有**显式 return** ⇒ 多语句 body 不需要结果构建器 ⇒ 不报。
+    // 本仓大量存在这种写法 (AchievementsView/weekGoal、CredentialsView/segChip …)，误报就是噪音。
+    var n: Int
+    private var card: some View {
+        let title = "共 \(n) 条"
+        let tone = n > 0 ? "满" : "空"
+        return Text(title + " · " + tone)
+    }
+}
+
+struct OkLetWithBuilder: View {
+    // R1b 反控之二：body 以 let 起头，但写了 @ViewBuilder ⇒ 合法 (rhythmSection 修好后的形状) ⇒ 不报。
+    var n: Int
+    @ViewBuilder
+    private var card: some View {
+        let title = "共 \(n) 条"
+        let tone = n > 0 ? "满" : "空"
+        Section("单据") {
+            Text(title + " · " + tone)
+        }
+    }
+}
+
+struct OkLetSameLine: View {
+    // R1b 反控之三：整行写完的 body (`private var x: some View { Text(…) }`) 里没有顶层语句 ⇒ 不报。
+    var n: Int
+    private var badge: some View { Text("\(n)") }
+}

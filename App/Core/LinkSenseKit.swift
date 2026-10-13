@@ -129,7 +129,7 @@ final class LinkSense: ObservableObject {
         guard !DiagFlags.silent else { return }   // 127 静默排查模式: 暂停全部自动连接
         let app = self.app
         guard let mac = app?.currentMac, !mac.isEmpty, sceneActive,
-              app.unlockState == .idle, lockSvc.connectedMAC != mac else { return }
+              app?.unlockState == .idle, lockSvc.connectedMAC != mac else { return }
         guard DB.store.getBool("kf_link_auto_" + mac, true) else { return }
         do {
             let dev = try await scan(mac: mac, timeoutMs: 6000)
@@ -178,7 +178,7 @@ final class LinkSense: ObservableObject {
     func refresh() async {
         guard !DiagFlags.silent else { return }
         let app = self.app
-        guard let mac = app?.currentMac, !mac.isEmpty, app.unlockState == .idle else { return }
+        guard let mac = app?.currentMac, !mac.isEmpty, app?.unlockState == .idle else { return }
         if lockSvc.connectedMAC == mac {
             markReady(ms: connectMs, rssi: lastRssi)
             return

@@ -159,6 +159,11 @@ struct LockCompareView: View {
         }
     }
     // ---------- 780 工作日首次开门时刻对照 ----------
+    // 为什么写 @ViewBuilder (run 56 编译错误): 体内先两条 let 再一条 Section, 已经**不是单一表达式**,
+    // 结果构建器必须显式声明才把这几句拼成 View; 少了它编译器报
+    // "function declares an opaque return type, but has no return statements"。同文件 overlaySection / dualRadarSection
+    // 都因为同样理由带了这个属性 (它们体内也是 let + if), 这一处是漏网的那个。
+    @ViewBuilder
     private var rhythmSection: some View {
         let la = leftModel?.workdayFirstOpens.count ?? 0
         let lb = rightModel?.workdayFirstOpens.count ?? 0

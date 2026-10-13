@@ -321,9 +321,14 @@ final class AppState: ObservableObject {
         UNUserNotificationCenter.current().delegate = UNDelegate.shared
         // 374: 录屏采集监听在启动就装好 —— 遮罩只有在"进详情页之前"就知道状态才有意义
         ScreenCaptureWatch.shared.start()
-        // 54/372: 摇一摇信号 (UIAccessibility.shakeNotification) 在启动就装好, 与当前页无关 ——
-        // 落点由 handleShake 按 Tab 分流. 不移除观察者: 单例的存活期就是进程期.
-        NotificationCenter.default.addObserver(forName: UIAccessibility.shakeNotification,
+        // 54/372: 摇一摇信号在启动就装好, 与当前页无关 —— 落点由 handleShake 按 Tab 分流.
+        // 不移除观察者: 单例的存活期就是进程期.
+        //
+        // 怎么接的 (2026-10-13 改): 原先写 `UIAccessibility.shakeNotification` —— Apple **从未**公开过
+        // 这个符号 (UIKit 的无障碍通知名清单里没有它), 所以编译不过。改从 `UIWindow.motionEnded`
+        // 改成一层零尺寸 UIViewController 接住 motionEnded, 转成 App 内 .kfDeviceShake 通知 ——
+        // 这是唯一真正会到达的做法: WindowGroup 的 window 由框架自建, 换不成自建子类。
+        NotificationCenter.default.addObserver(forName: .kfDeviceShake,
                                                object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor in self?.handleShake() }
         }
@@ -831,8 +836,8 @@ final class AppState: ObservableObject {
         LiveUnlock.succeeded(lockName: displayName)   // 77/939/941: 更新成"已开锁", 10 秒后自动收起
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         // 包3: 258 首连验证标记 (开锁成功=全链路跑通) + 292 连接基准刷新
-        LockArchive.markVerified(kc.mac)
-        LockArchive.touchConnected(kc.mac)
+        LockArchive.markVerified(currentMac)
+        LockArchive.touchConnected(currentMac)
         // 76 成功短音效: 默认只震动, 开关在设置-开锁 (系统铃声开关静音时自动无声)
         AlertTone.unlockSuccess()
         let crossing = Milestones.recordUnlockSuccess()
@@ -1250,6 +1255,9 @@ struct RootView: View {
                         removal: .scale(1.08).combined(with: .opacity)))
             }
         }
+        // 54/372 摇一摇接收层: SwiftUI 无该手势, UIKit 入口 UIWindow.motionEnded 又换不了 WindowGroup
+        // 的 window —— 用一层零尺寸 VC 接住再转 .kfDeviceShake (实现见文件尾部)。
+        .onDeviceShake()
         // 包16: 外观种子变更时整树重建 — 配色/密度即时全局生效; withAnimation 提供淡入淡出 (idea 21)
         .id(app.appearanceSeed)
         // 包15: App 字号五档 × 系统 Dynamic Type 叠加 (858, 含 866 极限字号自检 200% 预览)
@@ -1785,5 +1793,37 @@ struct SectionTitle: View {
             Spacer(minLength: 0)
         }
         .accessibilityElement(children: .combine)
+    }
+}
+
+// 摇一摇 (54/372) 的接收端 —— 一层零尺寸、不接触摸的 UIViewController。
+// 为什么需要这一层: SwiftUI 没有"摇一摇"手势; UIKit 的入口是 UIWindow.motionEnded, 而 WindowGroup 的
+// window 由框架自建、不能换成自建子类 (试过直接写 `class ShakeWindow: UIWindow` —— 编得过但一个实例
+// 都不会被用上, 等于假热区)。所以走 UIResponder 事件链: 在这层 VC 上覆写 motionEnded,
+// 把 .motionShake 转成 App 内 .kfDeviceShake 通知, 挂到 RootView 根部 (见 onDeviceShake)。
+extension Notification.Name {
+    static let kfDeviceShake = Notification.Name("kf.device.shake")
+}
+
+private struct ShakeReceiver: UIViewControllerRepresentable {
+    func makeUIViewController(context: Context) -> ShakeReceiverVC { ShakeReceiverVC() }
+    func updateUIViewController(_ uiViewController: ShakeReceiverVC, context: Context) {}
+}
+
+final class ShakeReceiverVC: UIViewController {
+    override func motionEnded(_ motion: UIEvent.EventSubtype, with event: UIEvent?) {
+        if motion == .motionShake {
+            NotificationCenter.default.post(name: .kfDeviceShake, object: event)
+        }
+    }
+}
+
+extension View {
+    /// 挂上摇一摇接收层 (0 尺寸 / 不吃触摸 / 不进朗读, 只为接住 UIResponder 的 motion 事件)
+    func onDeviceShake() -> some View {
+        background(ShakeReceiver()
+            .allowsHitTesting(false)
+            .frame(width: 0, height: 0)
+            .accessibilityHidden(true))
     }
 }

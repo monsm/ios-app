@@ -143,7 +143,7 @@ struct RecDetailSheet: View {
     /// 650: `dot` 只给"时间来源"这类需要视觉区分的行用 (锁内时钟=绿点 / 本机录入=灰点);
     /// 其余行不传, 行形状与从前逐字节相同。
     private func fieldRow(_ k: String, _ v: String, dot: Color? = nil) -> some View {
-        HStack(alignment: .leading, spacing: DS.Space.s) {
+        HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {
             Text(k)
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
@@ -309,7 +309,7 @@ struct RecDetailSheet: View {
         }
     }
     private func contextRow(_ r: Rec, tag: String) -> some View {
-        HStack(alignment: .leading, spacing: DS.Space.s) {
+        HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {
             Text(tag)
                 .font(.caption2.weight(.semibold))
                 .lineLimit(1)

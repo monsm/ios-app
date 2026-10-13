@@ -91,20 +91,33 @@ function r1(root) {
       if (/\bvar\s+body\b|func\s+body\s*\(/.test(L[i])) continue;
       if (hasBuilderBefore(L, i)) continue;
       let depth = 0, hasReturn = false, topIf = false, hasElse = false;
+      // R1b 的现场 (打样): body 里**顶层**先出现若干 `let`/`var`/`if` 之类的非表达式语句, 之后才是
+      // 一个尾随表达式, 却没有 return —— 这就是"多语句 body 要靠结果构建器兜"的形状。
+      // 判据只看**顶层第一条**语句是不是 `let`/`var` 绑定: 那一定不是表达式, 于是整段必须是 builder。
+      let firstTop = null;            // 顶层第一条非空语句
       for (let j = i; j < L.length; j++) {
         const ln = stripLine(L[j]);
         const before = depth;                                 // 进这行**之前**的嵌套层
         for (const ch of ln) { if (ch === '{') depth++; else if (ch === '}') depth--; }
         if (j > i && before === 1) {
+          const s = ln.trim();
+          if (s && firstTop === null) firstTop = s;
           if (/^\s*return\b/.test(ln)) hasReturn = true;
           if (/^\s*if\b/.test(ln)) topIf = true;
         }
         if (j > i && /^\s*\}\s*else\b|^\s*else\b/.test(ln)) hasElse = true;   // `} else` 那行 before 是 2
         if (j > i && depth <= 0) break;
       }
-      if (topIf && !hasReturn && !hasElse) {
+      if (hasReturn) continue;                                 // 有显式 return 的 body 不受结果构建器约束
+      if (topIf && !hasElse) {
         bad.push(f + ':' + (i + 1) + '  R1 缺 @ViewBuilder —— ' + L[i].trim().slice(0, 60));
+      } else if (firstTop && /^(let|var)\s/.test(firstTop)) {
+        // R1b: 顶层首句是 let/var 绑定 ⇒ 多语句 body 无 return ⇒ 必须 @ViewBuilder, 否则编译器报
+        // "function declares an opaque return type, but has no return statements"。
+        // 本仓 run 56 的 LockCompareView/rhythmSection 就是这个形状: let la …; let lb …; Section { }。
+        bad.push(f + ':' + (i + 1) + '  R1b 缺 @ViewBuilder (body 以 let/var 起头且无 return) —— ' + L[i].trim().slice(0, 60));
       }
+
     }
   }
   return bad;
@@ -401,11 +414,12 @@ function selftest() {
   const n4 = shouldFire.filter(h => h.includes(' R4 ')).length;
   const n5 = shouldFire.filter(h => h.includes(' R5 ')).length;
   const n1 = shouldFire.filter(h => h.includes(' R1 ')).length;
+  const n1b = shouldFire.filter(h => h.includes(' R1b ')).length;
   const n2 = shouldFire.filter(h => h.includes(' R2 ')).length;
   // fire/ 里 R4 有**四处**有问题的调用，报出 5 条：按位置传那一处第 1、第 2 个参数都少标签，逐位判就该各报一次。
-  // R5 有两条：少一个实参、多一个实参。
-  if (n1 !== 1 || n2 !== 1 || n4 !== 5 || n5 !== 2) {
-    console.log(`✗ 正控失败: fire/ 里 R1/R2 各应 1 条、R4 应 5 条、R5 应 2 条，实得 R1=${n1} R2=${n2} R4=${n4} R5=${n5}`);
+  // R5 有两条：少一个实参、多一个实参。R1 一条 (顶层 if 无 else)、R1b 一条 (body 以 let 起头无 return)。
+  if (n1 !== 1 || n1b !== 1 || n2 !== 1 || n4 !== 5 || n5 !== 2) {
+    console.log(`✗ 正控失败: fire/ 里 R1/R2 各应 1 条、R1b 应 1 条、R4 应 5 条、R5 应 2 条，实得 R1=${n1} R1b=${n1b} R2=${n2} R4=${n4} R5=${n5}`);
     console.log(shouldFire.join('\n'));
     return 2;
   }
@@ -424,7 +438,7 @@ function selftest() {
     console.log([...riskyFire, ...riskyOk].join('\n'));
     return 2;
   }
-  console.log('正控 ✓ (R1/R2 各开火一次；R3 两种写法都数得出，且放过有显式解码器的那个；'
+  console.log('正控 ✓ (R1/R1b/R2 各开火一次；R3 两种写法都数得出，且放过有显式解码器的那个；'
     + 'R4 四处有问题的调用报满 5 条 (含第二个标签写错那种只有逐位判才看得见的)；'
     + 'R5 少参与多参各一条；ok/ 里尾随闭包与带默认值这两种"括号里个数少"的合法写法一条不响)');
   return 0;

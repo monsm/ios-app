@@ -65,7 +65,7 @@ final class LockService: ObservableObject {
         connectedDeviceId = ""
         connectedMAC = ""
         curMac = ""
-        sessionToken = 0
+        sessionTokenHex = "0000"
         tokenExpiryMs = 0
     }
     // 幂等按需连接: 已连同一把 → 直接; 缓存 bleId → 直连; 失败 → MAC 扫描解析 (回写缓存)

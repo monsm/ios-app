@@ -1258,6 +1258,10 @@ struct StatsView: View {
     }
     private static let labelModes: [LabelMode] = [LabelMode(tag: 0, name: "避让"), LabelMode(tag: 1, name: "仅最大值"), LabelMode(tag: 2, name: "不标")]
 
+    // @ViewBuilder 不是装饰: 体内先一条 let 绑定点数组, 再接一条 Chart{}.chartOverlay{}.frame(...) 的尾随表达式,
+    // 已是多语句 body 且没有 return —— 少了这个属性编译器报 "function declares an opaque return type,
+    // but has no return statements" (与 run 56 的 LockCompareView/rhythmSection 同一类, swiftshape R1b 现在盯这个)。
+    @ViewBuilder
     private func memberLines(_ m: StatsKit.StatModel) -> some View {
         // 628: 折线与起点插旗共用这一份 memberSeries —— Attribution 全链不便宜, 不各算一遍
         let series = memberSeries(m)

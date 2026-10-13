@@ -32,7 +32,8 @@ enum QuickActions {
 
     /// 读一次即清: 第二次进界面不该再跳一次。
     static func consume() -> URL? {
-        guard let type = DB.store.getString(tappedKey), !type.isEmpty else { return nil }
+        let type = DB.store.getString(tappedKey)
+        guard !type.isEmpty else { return nil }
         DB.store.remove(tappedKey)
         guard let row = table.first(where: { $0.type == type }), let url = URL(string: row.link) else { return nil }
         return url

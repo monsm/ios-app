@@ -231,7 +231,7 @@ extension QueryFilters {
     /// 设置页把这句讲明白，否则"我选了每次空白，为什么还在写？"会变成一条缺陷单。
     func save(mac: String) {
         guard !mac.isEmpty else { return }
-        if self == QueryFilters() { DB.store.remove(key(mac)) } else { DB.store.set(key(mac), self) }
+        if self == QueryFilters() { DB.store.remove(Self.key(mac)) } else { DB.store.set(Self.key(mac), self) }
     }
 }
 
@@ -371,7 +371,8 @@ enum RecordSearch {
                 guard let d = dateOf(r) else { continue }
                 let t = d.timeIntervalSince1970
                 for p in pws {
-                    guard let f = parseStamp(p.from), let to = parseStamp(p.to), f > 0, to > 0 else { continue }
+                    let f = parseStamp(p.from), to = parseStamp(p.to)
+                    guard f > 0, to > 0 else { continue }
                     let ts = Int(t)
                     if ts > to || ts < f {
                         out.append(OutWin(rec: r, window: "约 " + String(p.from.dropFirst(5).prefix(11)) + " – " + String(p.to.dropFirst(5).prefix(11))))
@@ -904,7 +905,7 @@ enum RecordSearch {
     /// 745 测试标记的键集 (统计口径排除用, 键 = mac#idxRaw): 与处置留痕同一份 kf_rdispo,
     /// 不另造"测试"状态 —— 标记本身就是一条处置结论。此前这个查询零调用, 统计层并未真排除。
     static var testMarkedKeys: Set<String> {
-        dispositions().filter { $0.value.verdict == "测试" }.map(\.key)
+        Set(dispositions().filter { $0.value.verdict == "测试" }.map(\.key))
     }
 
     // ---------- 727 防撬检查清单 (勾选状态复用处置字段, 存 kf_rcheck_<key>) ----------
@@ -999,7 +1000,7 @@ enum RecordSearch {
     static func damageDays(macs: [String]) -> Set<String> {
         var days = Set<String>()
         for mac in macs {
-            for l in DB.readLogs(mac) where damageTypes.contains(l.type) {
+            for l in DB.readLogs(mac) where AlarmMeta.damageTypes.contains(l.type) {
                 guard let d = dateOf(l) else { continue }
                 days.insert(dayKeyOfNight(d))
             }
