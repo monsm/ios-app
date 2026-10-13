@@ -425,6 +425,19 @@ final class AutoOpenController {
         guard let app = AppState.hostRef else { return }
         guard app.currentMac == mac, !mac.isEmpty else { return }
         guard app.unlockState == .idle else { return }
+        // 2026-10-13 对抗式排查: 补 390 伪装会话红线 (两道, 这里是指令入口, 下面 F0 是门判据)。
+        // 原实现在**指令入口**没有 decoy 判断, F0 只看 `appUnlocked`; 而伪装口令进来的会话
+        // **也是** appUnlocked==true (空壳界面 + 锁已解开)。于是被胁迫场景下:
+        //   ①机主在门口, AutoOpen 已武装且 60s 内刚刷过脸 (标准档);
+        //   ②胁迫者让机主点「立即锁定」(只置 appUnlocked=false, 不清 armed/lastFace);
+        //   ③输入伪装口令 → decoyMode=true, appUnlocked=true;
+        //   ④LinkSense 的 2s tick 继续驱动 tickDwell → F0 查 appUnlocked(true) ✓ F1 脸在窗内 ✓ → 下发 04。
+        // 390 行原话: "伪装口令进来的会话只渲染空壳" —— 空壳后面门被打开, 就是这个 bug。
+        // 手动锁定也应清零武装/面容时刻 (SecurityCenterView 那条), 这里先保证自动链在伪装态一律拒。
+        guard !app.decoyMode else {
+            AutoOpen.audit(mac, "拒开 390 伪装会话 (decoy) 禁止自动下发 04")
+            return
+        }
         // 演示模式红线: 不得触碰真实 BLE (旧实现只在 requestUnlock 里守, 自动链直连 lock 绕过)
         guard !DemoKit.isOn else {
             AutoOpen.audit(mac, "拒开 演示模式 (demo) 不允许自动下发 04")
@@ -454,7 +467,7 @@ final class AutoOpenController {
         let snap = app.snapshot
         let coolReady = AutoOpenKit.coolReady(lastDispatch: lastAt, now: Date().timeIntervalSince1970)
         return AutoOpenGate(
-            f0Foreground: LinkSense.shared.sceneActive && app.appUnlocked,
+            f0Foreground: LinkSense.shared.sceneActive && app.appUnlocked && !app.decoyMode,
             faceTier: AutoOpen.faceTier,
             lastFace: AutoOpenKit.lastFace(),
             // 严格档在途位: 弹窗已发起且面容时刻尚未刷新 = 正在确认 (旧实现恒 false → 在途分支是死代码)

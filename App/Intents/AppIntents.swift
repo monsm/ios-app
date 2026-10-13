@@ -126,10 +126,18 @@ struct UnlockIntent: AppIntent {
 enum IntentLockGate {
     // 2026-10-13 run 63: 它读 AppState.hostRef 与 appUnlocked, 两者都在 @MainActor 的 AppState 上
     // ⇒ 标 @MainActor; 6 个调用点 (都在 async 的 perform() 里) 相应加 await。
+    // 2026-10-13 对抗式排查: 补一道 390 伪装会话的拦截。伪装口令进来的会话**也是** appUnlocked==true
+    // (空壳界面 + 锁已解开), 于是上面那句放行后, 对 Siri 说一句「生成临时码」就把实时 ZOTP 念出来并
+    // 复制进剪贴板, MemberQuery/ReadRecords 同样吐成员档案与开门记录。
+    // 390 行的原话: "伪装口令进来的会话只渲染空壳, 主 TabView 与其 .task 都不执行" —— 那时屏上的人是
+    // 胁迫者的常态, 口令/PII 一条都不该出。
     @MainActor
     static func blockedMessage() -> String? {
         guard DB.hasPasscode() else { return nil }
         guard AppState.hostRef?.appUnlocked == true else { return "App 已锁定, 请先解锁离线锁管家" }
+        guard AppState.hostRef?.decoyMode == false else {
+            return "当前处于伪装会话, 已停用这条指令 (390)"
+        }
         return nil
     }
 }

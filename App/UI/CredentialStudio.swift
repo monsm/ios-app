@@ -2810,11 +2810,16 @@ struct FpDetailStudio: View {
     }
     private func delete() async {
         guard let kc = app.current, let f else { return }
+        // 2026-10-13 对抗式排查: UInt32(越界 Int) 是 trap ⇒ 先安全转换, 越界直接中止并说明
+        guard let b = f.batchU32 else {
+            app.showToast("指纹「\(f.name)」批次号越界 (\(f.batch))，已中止 — 台账或备份来源可能损坏")
+            return
+        }
         busy = true
         defer { busy = false }
         do {
             try await app.lock.ensureConnected(mac: kc.mac)
-            try await app.lock.fpDelete(UInt32(f.batch))
+            try await app.lock.fpDelete(b)
             // 同上: 锁端删的是入口捕获的那把锁，本机台账与回收站也必须记在同一把锁上
             // 确认口径：删除入口那一把按钮先过 fpDoubleSignCheck —— 最后一枚要前缀双签，
             // 其余也要走一遍确认，两支都不存在「一按就删」(第一百六十七批补的正是后半支)。

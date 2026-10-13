@@ -162,6 +162,11 @@ struct LedgerFp: Codable, Identifiable {
     var name: String
     var at: Double          // epoch **毫秒** (添加时刻；与 `LedgerPwd.at` 同约定)
     var note: String
+    /// 锁端要 UInt32 批次号, 台账里是 Int, 而导入链 (BackupKit.restoreAll / BackupStudioKit 解码与合账)
+    /// **不校验符号与上界**。`UInt32(-1)` 在 Swift 里是 **trap** (不是 nil、不是异常) ⇒
+    /// 构造/损坏一份含 {"batch": -1} 或超大的备份导进去, 用户在凭证页点一下「删除」进程当场崩。
+    /// (第 209 批对抗式排查确证; 四处 fpDelete 调用点原先都裸转。)
+    var batchU32: UInt32? { (batch >= 0 && batch <= Int(UInt32.max)) ? UInt32(batch) : nil }
     var src: String?
     var owner: String?
     var isAlarm: Bool?

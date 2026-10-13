@@ -155,7 +155,11 @@ enum StatsKit {
         // 把外层 StatModel.coverage 作为字段传进来 (构造点在 monthPair)。
         let coverage: Int
         /// 数据积累中还差多少天 (622 降级文案用)
-        var lackingDays: Int { max(0, Int(start.timeIntervalSince1970 / 86400) - coverage) + 1 }
+        /// 2026-10-13 对抗式排查: 原写 `max(0, Int(start.timeIntervalSince1970 / 86400) - coverage) + 1` ——
+        /// `start.timeIntervalSince1970 / 86400` 是 **epoch 绝对日号** (今天是 20686 这样的数),
+        /// 减掉 coverage 再加 1 得到的是 20627 这种天文数字, 不是"还差几天"。
+        /// 正确的是"从本月首日到今天共几天"减"已覆盖几天", 不足 0 夹到 0。
+        var lackingDays: Int { max(0, Int(Date().timeIntervalSince(start) / 86_400) + 1 - coverage) }
     }
     struct TempGantt: Identifiable {
         let alias: Int
@@ -873,7 +877,11 @@ enum StatsKit {
             let cal = WeekCal.gregorian
             let s = cal.date(byAdding: .day, value: -min(days, 30), to: cal.startOfDay(for: Date()))!
             return homeDayBuckets(from: s, to: Date()).sorted(by: { $0.key < $1.key }).suffix(30).map { k, r in
-                dayLabel(k) + " 约 " + String(homeHours(r)) + " 小时在外"
+                // 2026-10-13 对抗式排查: 原文案是"小时在外", 而同函数名 (homeDurationProxy)/本函数注释
+                // (:870 "800 **在家**时长代理值")/统计页页脚 (StatsView "在家时长为「首末开门间隔求和」的代理值 (800)")
+                // 三处都写"在家" —— 同一块屏幕上一行"在外"一行"在家", 必有一侧反了。按 800 声明的口径
+                // 统一成"在家"(代理值本身仍是首末开门间隔, 语义边界由 800 的口径注释说明, 不在文案里翻案)。
+                dayLabel(k) + " 约 " + String(homeHours(r)) + " 小时在家"
             }
         }
         private func dayLabel(_ key: String) -> String {
@@ -984,12 +992,17 @@ enum StatsKit {
             var out = [OtpPoint]()
             for l in logsInWindow() where l.type == 4 {
                 guard let d = dateOf(l) else { continue }
-                let h = Int16(WeekCal.gregorian.component(.hour, from: d))
+                let comps = WeekCal.gregorian.dateComponents([.hour, .minute], from: d)
+                // 2026-10-13 对抗式排查: 原写 `String(format: ":%02d", h)` 而 h 是**小时**分量,
+                // 又前面 `f.dateFormat = "MM-dd HH"` 已经印过小时 ⇒ 07:12 的开门被印成 "10-05 07:07",
+                // 分钟 12 被吞。改成取 .minute。(y 轴仍用 hour, 那个是对的。)
+                let h = Int16(comps.hour ?? 0)
+                let mi = Int16(comps.minute ?? 0)
                 let f = DateFormatter()
                 f.dateFormat = "MM-dd HH"
                 f.locale = Locale(identifier: "en_US_POSIX")
                 f.timeZone = TimeZone.current
-                out.append(OtpPoint(day: startOfDay(d), hour: h, label: f.string(from: d) + String(format: ":%02d", h)))
+                out.append(OtpPoint(day: startOfDay(d), hour: h, label: f.string(from: d) + String(format: ":%02d", mi)))
             }
             return out
         }
@@ -1024,7 +1037,13 @@ enum StatsKit {
     @MainActor
     static func isIdleLock(_ mac: String) -> Bool {
         let m = build(mac: mac, week: 7, window: 90)
-        guard let last = m.dailyPoints.map({ $0.day }).max() else { return true }
+        // 2026-10-13 对抗式排查: 原写 `m.dailyPoints.map{ $0.day }.max()` —— `dailyPoints` 是**逐日补齐**到
+        // 今天的 (0 次也补行, 见其构造的 "逐日补齐" 注释), 所以 max() 恒等于今天 0 点,
+        // `timeIntervalSince(last)` ≈ 0.x 天 < 30 天 ⇒ **本函数恒返回 false**。
+        // 后果: LockCompareView 的"闲置标签"永远显示"30 天内有开门"; StatsView 的"排除闲置锁"开关恒不动一格。
+        // 判据说的是"超 30 天无开门行", 所以要取**真有开门那天**里的最晚一个。
+        let lastOpen = m.dailyPoints.filter { $0.opens > 0 }.map { $0.day }.max()
+        guard let last = lastOpen else { return true }   // 90 天里一次开门都没有 = 闲置 (口径原文: 从没拉取过日志的锁同样判)
         return Date().timeIntervalSince(last) > 30 * 86_400
     }
 

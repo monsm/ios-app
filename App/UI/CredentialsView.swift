@@ -1805,7 +1805,12 @@ struct CredentialsView: View {
                 done += 1
             }
             for f in fps {
-                try await app.lock.fpDelete(UInt32(f.batch))
+                // 2026-10-13 对抗式排查: UInt32(越界 Int) 是 trap ⇒ 先安全转换, 越界就跳过并告知
+                guard let b = f.batchU32 else {
+                    app.showToast("指纹「\(f.name)」批次号越界 (\(f.batch))，已跳过 — 台账或备份来源可能损坏")
+                    continue
+                }
+                try await app.lock.fpDelete(b)
                 CredentialOrg.addToBin(m, fp: f, source: .manual)
                 DB.delFp(m, f.batch)
                 done += 1
@@ -2458,9 +2463,14 @@ struct CredentialsView: View {
         guard !m.isEmpty else { app.showToast("未选择门锁"); return }
         busyKey = "fp:\(f.batch)"
         defer { busyKey = nil }
+        // 2026-10-13 对抗式排查: UInt32(越界 Int) 是 trap ⇒ 先安全转换
+        guard let b = f.batchU32 else {
+            app.showToast("指纹「\(f.name)」批次号越界 (\(f.batch))，已中止 — 台账或备份来源可能损坏")
+            return
+        }
         do {
             try await app.lock.ensureConnected(mac: m)
-            try await app.lock.fpDelete(UInt32(f.batch))
+            try await app.lock.fpDelete(b)
             CredentialOrg.addToBin(m, fp: f, source: .manual)
             // 确认口径：同上面密码那一支 —— 确认在外层 `deleteFp`，只是指纹侧的后果写得更硬
             //   (无法远程补录，本人重录 8 次指压)；回收站那条回来的仍是档案，开门能力要重录 (670)。

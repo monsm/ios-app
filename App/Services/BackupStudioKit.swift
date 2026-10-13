@@ -157,7 +157,15 @@ enum BackupStudio {
         "kf_mborrow_", "kf_mclaim_", "kf_house_win_", "kf_offboard_",   // 467 的 kf_mtransfer 族已随待接受区一起撤掉
         "kf_rnote_", "kf_rflag_", "kf_rflt_",                       // 186 备注 / 188 标旗 / 记录筛选视图
         "kf_cseq_", "kf_cstar_", "kf_calias_display", "kf_cbin_", "kf_cdisrea_", "kf_clists_", "kf_cqueue_",
-        "kf_bk_note", "kf_bk_pin", "kf_bk_pin_seen"                 // 433 备注 / 437 复核钉
+        "kf_bk_note", "kf_bk_pin", "kf_bk_pin_seen",                 // 433 备注 / 437 复核钉
+        // 2026-10-13 对抗式排查: TOTP/静态口令族漏收。三种导入模式都会写这四个族
+        //   · BackupKit.restoreAll :375-376 → otpStatus_ / otpIdx_
+        //   · BackupStudioKit :740/:765 → kf_cotp_t_ (TOTP 种子) 与 kf_cotp_s_ (静态口令)
+        // 而回滚快照只覆盖上面列出的族 ⇒ 导错备份再点「撤销恢复」, 成员/凭证/备注都回去了,
+        // **TOTP 种子与静态口令仍停在错包的值** (既是数据错, 也是 2FA 密钥残留, 撤销永远不完整)。
+        // 判据①"恢复流程确实会改写它们"②"里面是用户自己攒的内容" 对这四族完全成立。
+        "otpStatus_", "otpIdx_", "kf_cotp_t_", "kf_cotp_s_",
+        "kf_trace_persist_v1"                                        // 583 最近记录写入回执追踪 (同为恢复写入的用户内容)
     ]
     struct RollbackBundle: Codable {
         var keychains: [String]      // JSON: [Keychain]
@@ -275,7 +283,12 @@ enum BackupStudio {
         let all = (try? FileManager.default.contentsOfDirectory(at: rollbackDir,
                   includingPropertiesForKeys: nil)) ?? []
         let sorted = all.sorted { $0.lastPathComponent > $1.lastPathComponent }
-        for f in sorted.suffix(from: keep) { try? FileManager.default.removeItem(at: f) }
+        // 2026-10-13 对抗式排查: 原写 `sorted.suffix(from: keep)` —— keep 恒为 4 (唯一调用点 pruneRollback(keep: 4)),
+        // 而**第 1~3 次**生成还原点时目录里只有 1~3 个文件 ⇒ `suffix(from: 4)` 的起始下标越界,
+        // Swift 的 `suffix(from:)` 越界是 **preconditionFailure = 直接崩进程**, 不是返回空。
+        // 触发路径: 设置-备份点「生成本机还原点」第一次点就崩 (且文件已写盘, 重启后再点还是崩, 直到攒够 4 个)。
+        // 用 dropFirst(min(keep, count)) —— 文件不够就一个都不删, 语义与"只留 keep 个"一致。
+        for f in sorted.dropFirst(min(keep, sorted.count)) { try? FileManager.default.removeItem(at: f) }
     }
 
     // ---------- 428 ⚠ 充电自动备份: BGTask 注册 + 诚实文案 (执行时机由系统择机) ----------

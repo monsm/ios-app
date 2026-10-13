@@ -583,10 +583,12 @@ enum CredentialOrg {
             try await lock.pwdDelete(p.alias)
             return ""
         case "del_fp":
-            guard let f = item.fp, f.batch != 0 else {
-                throw BLEErrorX.msg("队列项缺少指纹批次 (\(item.title))，已中止下发 — 请重新选择该凭证")
+            // 2026-10-13 对抗式排查: 原只判 `f.batch != 0`, 而 `UInt32(f.batch)` 对负数/超上界是 **trap**。
+            // 导入链不校验 batch 符号 ⇒ 构造备份即可让用户点删除时崩进程。改成取安全转换后的值。
+            guard let f = item.fp, let b = f.batchU32 else {
+                throw BLEErrorX.msg("队列项指纹缺失或批次号越界 (\(String(describing: item.title)))，已中止下发 — 请检查台账或备份来源")
             }
-            try await lock.fpDelete(UInt32(f.batch))
+            try await lock.fpDelete(b)
             return ""
         case "period":
             guard let p = item.pwd, p.alias != 0, !item.newFrom.isEmpty else {
