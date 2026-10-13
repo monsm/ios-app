@@ -183,6 +183,15 @@ struct RecordsView: View {
         }
     }
 
+    /// 无锁占位 —— 2026-10-13 run 63 从 body 的 Group 分支抽出 (该表达式报 type-check 超时)
+    @ViewBuilder
+    private var noLockPlaceholder: some View {
+        EmptyState(systemImage: "list.bullet.rectangle",
+                   title: "还没有添加门锁",
+                   message: "开门与操作记录存在门锁内。请先添加并配对门锁，再回到这里读取。",
+                   actionTitle: "去添加门锁") { showAdd = true }
+    }
+
     /// 记录页主体列表 —— 2026-10-13 run 63 从 body 的 Group else 分支抽出:
     /// 整个 body 表达式报 type-check 超时。
     @ViewBuilder
@@ -228,10 +237,7 @@ struct RecordsView: View {
         NavigationStack {
             Group {
                 if app.current == nil {
-                    EmptyState(systemImage: "list.bullet.rectangle",
-                               title: "还没有添加门锁",
-                               message: "开门与操作记录存在门锁内。请先添加并配对门锁，再回到这里读取。",
-                               actionTitle: "去添加门锁") { showAdd = true }
+                    noLockPlaceholder
                 } else if laneMode && scope == 1 {
                     laneView   // 785 泳道时间线 (全部锁模式简化案)
                 } else {
@@ -1767,12 +1773,15 @@ struct RecordsView: View {
         let total = r.mergedTail.count + 1
         // 2026-10-13 run 63: 原来把三段拼接内联进 Text, 整个 mergedRow 报 type-check 超时。先算好。
         let mergedLabel = r.title + " · 同一分钟内 " + String(total) + " 次 (592)"
+        // 2026-10-13 run 64: 两个 a11y 串原来内联在修饰符里, 与 label 一起把表达式拖超时。先算好。
+        let mergedA11y = "连续 " + String(total) + " 次: " + r.title + ", 点按展开"
+        let mergedHint = "点按展开这 " + String(total) + " 条"
         return Button {
             withAnimation(DS.Motion.quick) { expandedMerged.insert(r.key) }
         } label: { mergedRowLabel(r, mergedLabel) }
         .buttonStyle(PlainButtonStyle())
-        .accessibilityLabel("连续 " + String(total) + " 次: " + r.title + ", 点按展开")
-        .accessibilityHint("点按展开这 " + String(total) + " 条")
+        .accessibilityLabel(mergedA11y)
+        .accessibilityHint(mergedHint)
     }
 
     /// 单条: 左时间列 + 时间轴(圆点与连线) + 事件文案

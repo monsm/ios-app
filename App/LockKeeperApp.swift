@@ -1108,19 +1108,7 @@ struct RootView: View {
                         }
                         // 包8/448 启动自检黄条: 库体哈希与上次快照不一致 → 设备 Tab 顶部黄条 "去诊断"
                         if let w = BackupStudio.selfCheckWarning {
-                            HStack(spacing: DS.Space.xs) {
-                                Image(systemName: "exclamationmark.triangle")
-                                    .font(.system(size: DS.Icon.sm, weight: .semibold))
-                                    .accessibilityHidden(true)
-                                Text(w).font(.caption).fixedSize(horizontal: false, vertical: true)
-                                Spacer(minLength: 0)
-                                Button("去诊断") { app.requestTab(3) }   // 377: 访客通道开着时先复核, 不白切
-                                    .font(.caption.weight(.medium))
-                            }
-                            .foregroundStyle(DS.Palette.warn)
-                            .padding(.horizontal, DS.Space.l)
-                            .padding(.vertical, DS.Space.s)
-                            .background(DS.Palette.warn.opacity(0.14))
+                            selfCheckBanner(w)
                         }
                         // 344 粘贴建议条: 回前台时本会话刚复制的凭证还在不在, 一条快捷条解决。
                         // 站凭证页时不挂 (人就在那, 不用指路); 文案里的秒数取自回前台那一刻的快照。
@@ -1246,6 +1234,24 @@ struct RootView: View {
         }
         .sensoryFeedback(.selection, trigger: app.tabSelection)   // Tab 切换的轻触感
         .preferredColorScheme(colorScheme)
+    }
+
+    /// 包8/448 启动自检黄条 —— 2026-10-13 run 64 从 body 内联块抽出: 该表达式报 type-check 超时。
+    @ViewBuilder
+    private func selfCheckBanner(_ w: String) -> some View {
+        HStack(spacing: DS.Space.xs) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: DS.Icon.sm, weight: .semibold))
+                .accessibilityHidden(true)
+            Text(w).font(.caption).fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+            Button("去诊断") { app.requestTab(3) }   // 377: 访客通道开着时先复核, 不白切
+                .font(.caption.weight(.medium))
+        }
+        .foregroundStyle(DS.Palette.warn)
+        .padding(.horizontal, DS.Space.l)
+        .padding(.vertical, DS.Space.s)
+        .background(DS.Palette.warn.opacity(0.14))
     }
 
     /// 344 粘贴建议条 —— 2026-10-13 run 63 从 body 内联块抽出: 该表达式报 type-check 超时。

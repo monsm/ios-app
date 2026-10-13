@@ -1263,6 +1263,72 @@ struct StatsView: View {
     /// 628 曲线起点旗标 —— 2026-10-13 run 63 从 memberLines 的内联 Chart 内容里抽出:
     /// 该表达式报 type-check 超时。(Chart 内容用 @ChartContentBuilder, 不是 @ViewBuilder)
     @ChartContentBuilder
+    /// 626/628 长期密码用量行 (从 body 内联的 ForEach 里抽出: 该表达式报 type-check 超时)
+    @ViewBuilder
+    private func pwdUsageRow(_ p: StatsKit.PwdUse) -> some View {
+        // 628 跳转: 该密码归属的成员在成员表里能证明存在时, 整行可点 → 记录页按该成员过滤
+        // (582/612 同一条 pendingRecordsMember 路由; 不造"跳到首条"的第二套深链 —— 落点就是该成员
+        // 全部记录, 排序在记录页自己管)。归属不明 (owner 空/查无此人) 时保持纯文字, 不挂死按钮。
+        let jumpId = (p.owner.isEmpty || DB.member(p.owner) == nil) ? nil : p.owner
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: DS.Space.xs) {
+                Text(p.name)
+                    .font(.footnote.weight(.medium))
+                    .foregroundStyle(DS.Palette.text)
+                    .lineLimit(1)
+                if let f = p.firstUseDay {
+                    Text("首用 " + f + " (628)")
+                        .font(.caption2)
+                        .foregroundStyle(DS.Palette.accentText)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 0)
+                Text("约 " + String(p.approxUses) + " 次")
+                    .font(.caption2)
+                    .foregroundStyle(DS.Palette.textSub)
+                    .lineLimit(1)
+            }
+            // 用量比条: 已用/上限, 接近上限转橙
+            Capsule()
+                .fill(p.ratio >= 0.8 ? DS.Palette.warn : DS.Palette.accent)
+                .frame(width: max(2, p.ratio * 120))
+                .frame(height: 4)
+        }
+        .frame(minHeight: DS.Hit.min)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if let jid = jumpId {
+                app.pendingRecordsMember = jid
+                app.tabSelection = 2
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("密码 " + p.name + " 约使用 " + String(p.approxUses) + " 次, 用量 " + String(Int(p.ratio * 100)) + "%"
+            + (p.firstUseDay.map { ", 首用 " + $0 } ?? "")
+            + (jumpId == nil ? "" : "; 点按到记录页按该成员筛选 (628)"))
+        .accessibilityAddTraits(jumpId == nil ? [] : .isButton)
+    }
+
+    private func memberBarLabel(name: String, approx: Int, index: Int, maxApprox: Int) -> some View {
+        HStack(spacing: DS.Space.s) {
+            Text(name)
+                .font(.footnote)
+                .foregroundStyle(DS.Palette.text)
+                .lineLimit(1)
+                .frame(width: 56, alignment: .leading)
+            Capsule()
+                .fill(StatsKit.StatModel.memberColor(index))
+                .frame(width: max(2, CGFloat(approx) / CGFloat(max(maxApprox, 1)) * 120))
+            Text("约 \(approx) 次")
+                .font(.caption)
+                .foregroundStyle(DS.Palette.textSub)
+                .lineLimit(1)
+            Spacer(minLength: 0)
+        }
+        .frame(minHeight: DS.Hit.min)
+        .contentShape(Rectangle())
+    }
+
     private func flagMark(_ s: MemberSeries, _ first: MemberSeries.Point, weekWindowDays: Int) -> some ChartContent {
         PointMark(x: .value("日", first.day), y: .value(s.name, first.opens))
             .foregroundStyle(s.color)
@@ -1277,7 +1343,7 @@ struct StatsView: View {
         // 628: 折线与起点插旗共用这一份 memberSeries —— Attribution 全链不便宜, 不各算一遍
         let series = memberSeries(m)
         Chart {
-            ForEach(series) { s in
+            ForEach(series, id: \.id) { s in
                 ForEach(s.points, id: \.id) { p in
                     LineMark(x: .value("日", p.day), y: .value(s.name, p.opens))
                         .foregroundStyle(s.color)
@@ -2220,74 +2286,6 @@ struct YearReportView: View {
                 }
             }
         }
-    }
-
-    /// 成员条行的标签 (从 body 内联的 Button label 抽出: 该表达式报 type-check 超时)
-    @ViewBuilder
-    private func memberBarLabel(name: String, approx: Int, index: Int, maxApprox: Int) -> some View {
-        HStack(spacing: DS.Space.s) {
-            Text(name)
-                .font(.footnote)
-                .foregroundStyle(DS.Palette.text)
-                .lineLimit(1)
-                .frame(width: 56, alignment: .leading)
-            Capsule()
-                .fill(StatsKit.StatModel.memberColor(index))
-                .frame(width: max(2, CGFloat(approx) / CGFloat(max(maxApprox, 1)) * 120))
-            Text("约 \(approx) 次")
-                .font(.caption)
-                .foregroundStyle(DS.Palette.textSub)
-                .lineLimit(1)
-            Spacer(minLength: 0)
-        }
-        .frame(minHeight: DS.Hit.min)
-        .contentShape(Rectangle())
-    }
-
-    /// 626/628 长期密码用量行 (从 body 内联的 ForEach 里抽出: 该表达式报 type-check 超时)
-    @ViewBuilder
-    private func pwdUsageRow(_ p: StatsKit.PwdUse) -> some View {
-        // 628 跳转: 该密码归属的成员在成员表里能证明存在时, 整行可点 → 记录页按该成员过滤
-        // (582/612 同一条 pendingRecordsMember 路由; 不造"跳到首条"的第二套深链 —— 落点就是该成员
-        // 全部记录, 排序在记录页自己管)。归属不明 (owner 空/查无此人) 时保持纯文字, 不挂死按钮。
-        let jumpId = (p.owner.isEmpty || DB.member(p.owner) == nil) ? nil : p.owner
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: DS.Space.xs) {
-                Text(p.name)
-                    .font(.footnote.weight(.medium))
-                    .foregroundStyle(DS.Palette.text)
-                    .lineLimit(1)
-                if let f = p.firstUseDay {
-                    Text("首用 " + f + " (628)")
-                        .font(.caption2)
-                        .foregroundStyle(DS.Palette.accentText)
-                        .lineLimit(1)
-                }
-                Spacer(minLength: 0)
-                Text("约 " + String(p.approxUses) + " 次")
-                    .font(.caption2)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .lineLimit(1)
-            }
-            // 用量比条: 已用/上限, 接近上限转橙
-            Capsule()
-                .fill(p.ratio >= 0.8 ? DS.Palette.warn : DS.Palette.accent)
-                .frame(width: max(2, p.ratio * 120))
-                .frame(height: 4)
-        }
-        .frame(minHeight: DS.Hit.min)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            if let jid = jumpId {
-                app.pendingRecordsMember = jid
-                app.tabSelection = 2
-            }
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("密码 " + p.name + " 约使用 " + String(p.approxUses) + " 次, 用量 " + String(Int(p.ratio * 100)) + "%"
-            + (p.firstUseDay.map { ", 首用 " + $0 } ?? "")
-            + (jumpId == nil ? "" : "; 点按到记录页按该成员筛选 (628)"))
-        .accessibilityAddTraits(jumpId == nil ? [] : .isButton)
     }
 
     /// 50 年报表的季度/月度聚合 —— 2026-10-13 run 63 从 @ViewBuilder 的 yearReport 里拆出

@@ -2469,7 +2469,11 @@ struct LocalFilesView: View {
                     }
                 }
                 Spacer(minLength: 0)
-                Button(u.lastPathComponent) { sel.toggle(u) }
+                // 2026-10-13 run 65: `sel.toggle(u)` —— Set 没有 toggle(_:) (报 "has no dynamic member
+                // 'toggle'"); 显式写 contains/insert/remove。
+                Button(u.lastPathComponent) {
+                    if sel.contains(u) { sel.remove(u) } else { sel.insert(u) }
+                }
                     .font(.caption.weight(.medium))
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
@@ -2610,10 +2614,14 @@ struct LocalFilesView: View {
             .navigationTitle("本地备份文件")
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("关闭") { dismiss() } } }
             .onAppear {
-                files = (try? FileManager.default.contentsOfDirectory(at: BackupStudio.dir,
-                    includingPropertiesForKeys: nil))?.filter {
-                        $0.lastPathComponent.hasSuffix(".enc")
-                    }?.sorted { $0.lastPathComponent > $1.lastPathComponent } ?? []
+                // 2026-10-13 run 65: 原来把 `(try? contentsOfDirectory(...))?.filter{…}?.sorted{…} ?? []`
+                // 写成一条链, 报 "cannot use optional chaining on non-optional value of type '[URL]'"。
+                // 拆开: 先 ?? [] 收成非可选, 再 filter/sorted。
+                let found = (try? FileManager.default.contentsOfDirectory(
+                    at: BackupStudio.dir, includingPropertiesForKeys: nil)) ?? []
+                files = found
+                    .filter { $0.lastPathComponent.hasSuffix(".enc") }
+                    .sorted { $0.lastPathComponent > $1.lastPathComponent }
                 buildCover(files)   // 432: 概览要解密, 只在进页时算一次, 不放 body 里 (每帧重解会卡)
                 // 435: 只读每个文件的头 4KB, 不解密; 认不出信封的走"未能识别", 不套徽章那串
                 algos = Dictionary(uniqueKeysWithValues: files.map { ($0.lastPathComponent, BackupStudio.algoNote($0)) })
