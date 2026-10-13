@@ -215,6 +215,9 @@ enum FirmwareKit {
     /// 降级闸: 包版本低于锁端当前版本时返回一句人话 (nil = 放行)。
     /// 2026-10-13 对抗式排查新增 —— versionLt 此前全仓零调用; 烧旧固件本身不是漏洞,
     /// 但配合"无签名"就是攻击者最省事的一条 (拿一个已知有问题的旧版本往回刷)。
+    /// ⚠ 当前**还没有调用点** (deadscan 会报): 固件选择那一刻要拿到"锁端当前版本"才判得动,
+    ///   而选文件的流程在 DeviceHomeView/SettingsView 两个 DFU 入口里, 接线要改那两处。
+    ///   在本批先把判据与"未认证"写明落进代码, 接线单独一批做 (不塞进安全修复里混着发)。
     static func downgradeBlocked(current: String?, pkg: FirmwarePackage) -> String? {
         guard let cur = current, !cur.isEmpty, let pv = pkg.version, !pv.isEmpty else { return nil }
         return versionLt(pv, cur) ? "固件版本 \(pv) 低于锁端当前 \(cur) — 已拒绝降级烧录" : nil
