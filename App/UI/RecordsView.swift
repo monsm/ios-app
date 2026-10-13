@@ -294,18 +294,24 @@ struct RecordsView: View {
         recordsChrome
     }
 
+    /// 记录页三选一 (无锁占位 / 泳道 / 主体列表) —— 从 recordsCore 拆出: 该表达式报 type-check 超时
+    @ViewBuilder
+    private var recordsGroup: some View {
+        if app.current == nil {
+            noLockPlaceholder
+        } else if laneMode && scope == 1 {
+            laneView   // 785 泳道时间线 (全部锁模式简化案)
+        } else {
+            mainList
+        }
+    }
+
     /// 记录页核心内容 (Group + 页面级修饰符) —— 从巨型 body 拆出: 原表达式报 type-check 超时
     @ViewBuilder
     private var recordsCore: some View {
-        Group {
-            if app.current == nil {
-                noLockPlaceholder
-            } else if laneMode && scope == 1 {
-                laneView   // 785 泳道时间线 (全部锁模式简化案)
-            } else {
-                mainList
-            }
-        }
+        // 2026-10-13 run 69: 原来这里是 `Group { if… }` —— Group 包一层再叠修饰符仍报 type-check 超时;
+        // 改成 @ViewBuilder 计算属性 (无 Group 包装), 分支类型由构建器收成 _ConditionalContent。
+        recordsGroup
         .navigationTitle("记录")
         // 192: 过滤组合按锁留存 (清空全部过滤时自动删键, 不留脏值)
         .onChange(of: filters) { _, new in new.save(mac: app.currentMac) }

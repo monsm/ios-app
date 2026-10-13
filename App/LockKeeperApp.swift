@@ -1015,13 +1015,9 @@ struct RootView: View {
         }
     }
 
-    /// 主 TabView + 长按菜单 + 底栏/访客复核 —— 从 appUnlocked 分支抽出: 该表达式报 type-check 超时
+    /// 四个 Tab 的 TabView (从 mainTabs 抽出: 该表达式报 type-check 超时)
     @ViewBuilder
-    private var mainTabs: some View {
-        // iOS 18+ 的 Tab 声明式写法: 类型安全, 系统按平台自动选择底栏/侧栏形态
-        // 包15 键盘: Cmd 1-4 切 Tab 真接线 (164/530); Tab/Esc 遍历由系统「全键盘控制」提供 (854)
-        // 包2/136 跨页状态细条: 非设备 Tab 顶部一条 BLE 状态细线, 点按跳回设备页定位当前锁;
-        // 162 握手可离开: 切走 Tab 不取消进行中的握手 (回连循环/看门狗继续跑)
+    private var mainTabView: some View {
         TabView(selection: $app.tabSelection) {
             // 280 页面打开耗时: 起点在下面的 onChange(tabSelection)，终点就是各 Tab 内容的 onAppear。
             Tab("设备", systemImage: "lock.fill", value: 0) { deviceTabContent }
@@ -1046,6 +1042,15 @@ struct RootView: View {
                 Tab("设置", systemImage: "gearshape.fill", value: 3) { settingsTabContent }
             }
         }
+    }
+
+    /// 主 TabView + 长按菜单 + 底栏/访客复核 —— 从 appUnlocked 分支抽出: 该表达式报 type-check 超时
+    private var mainTabs: some View {
+        // iOS 18+ 的 Tab 声明式写法: 类型安全, 系统按平台自动选择底栏/侧栏形态
+        // 包15 键盘: Cmd 1-4 切 Tab 真接线 (164/530); Tab/Esc 遍历由系统「全键盘控制」提供 (854)
+        // 包2/136 跨页状态细条: 非设备 Tab 顶部一条 BLE 状态细线, 点按跳回设备页定位当前锁;
+        // 162 握手可离开: 切走 Tab 不取消进行中的握手 (回连循环/看门狗继续跑)
+        mainTabView
         // 26 Tab 长按快捷菜单 (iOS 18)。这一条只在"真按得动"的项上开口:
         // 每一项都汇进本仓**已有的落点口** (requestTab / pendingCredPanel 词表 /
         // pendingRecordsDay / pendingDiag), 没有一项指向还不存在的页面 ——
@@ -1053,8 +1058,11 @@ struct RootView: View {
         // ⚠ API-VERIFY: `contextMenu(forSelectionType:tabBar:primaryAction:)` 全仓无先例,
         //    形状按 iOS 18 TabView 文档; 未编译、未证实。若系统不认这一形, 退路是
         //    把同样的动作挂到各 Tab 内容的 .contextMenu (长按页内元素), 语义会差一档。
-        .contextMenu(forSelectionType: Int.self) { t in
-            switch t {
+        // 2026-10-13 run 69: 这两个闭包的形参是**选中集 `Set<Int>`** (不是单个 Int) ——
+        // 原写 `{ t in switch t { case 0: … } }` 报 "expression pattern of type 'Int' cannot
+        // match values of type 'Set<Int>'" / "cannot convert 'Set<Int>' to 'Int'"。取首个元素。
+        .contextMenu(forSelectionType: Int.self) { selected in
+            switch selected.first ?? -1 {
             case 0:
                 if app.current != nil {
                     Button("打开迷你开锁面板") { app.requestTab(0); app.shakePanel = true }
@@ -1076,15 +1084,15 @@ struct RootView: View {
             default:
                 // 设置 (3) 与任何没预料到的值: 只给真存在的两条
                 if app.currentMac.isEmpty {
-                    Button("打开这一页") { app.requestTab(t) }
+                    Button("打开这一页") { app.requestTab(selected.first ?? 0) }
                 } else {
                     Button("这台锁的诊断") { app.pendingDiag = app.currentMac; app.requestTab(3) }
-                    Button("打开这一页") { app.requestTab(t) }
+                    Button("打开这一页") { app.requestTab(selected.first ?? 0) }
                 }
             }
-        } primaryAction: { t in
+        } primaryAction: { selected in
             // 长按后直接点一下 (竖屏主操作) = 进那一页, 走的仍是 requestTab 那道访客门禁
-            app.requestTab(t)
+            if let t = selected.first { app.requestTab(t) }
         }
         // 25 Tab 栏中央主按钮 (Instagram 式)。iOS 的 TabView 没有"中间那个按钮"这种系统位,
         // 所以落点用 safeAreaInset(.bottom) —— 与上面那条 .top 同一手法, 不是 overlay:

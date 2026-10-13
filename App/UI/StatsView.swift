@@ -41,49 +41,64 @@ struct StatsView: View {
     @ViewBuilder
     private func kindBreakdownRow(_ k: String, _ segs: [(id: String, name: String, n: Int)]) -> some View {
         let total = segs.reduce(0) { $0 + $1.n }
+        // 2026-10-13 run 69: a11y 串 (三段拼接含 map) 先算好 —— 内联时该行仍报 type-check 超时。
+        let a11y = (StatsKit.StatModel.kindWords()[k] ?? k) + " 归属构成, 共约 \(total) 次; "
+            + segs.prefix(4).map { $0.name + " 约 " + String($0.n) + " 次" }.joined(separator: ", ")
+            + (segs.count > 4 ? "; 另 \(segs.count - 4) 位" : "")
         VStack(alignment: .leading, spacing: 3) {
-            HStack(spacing: 2) {
-                Text(StatsKit.StatModel.kindWords()[k] ?? k)
-                    .font(.caption2)
-                    .foregroundStyle(DS.Palette.textSub)
-                GeometryReader { geo in
-                    HStack(spacing: 1) {
-                        ForEach(Array(segs.enumerated()), id: \.offset) { idx, sg in
-                            Capsule()
-                                .fill(StatsKit.StatModel.memberColor(idx % 6))
-                                .frame(width: max(3, CGFloat(sg.n) / CGFloat(max(total, 1)) * geo.size.width))
-                        }
-                    }
-                }
-                .frame(height: 6)
-                Text("约 \(total) 次")
-                    .font(.caption2)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .lineLimit(1)
-            }
-            // 625: 色子段下挂成员名与次数 (按次数降序, 超 4 位折叠)
-            HStack(spacing: DS.Space.s) {
-                ForEach(Array(segs.prefix(4).enumerated()), id: \.offset) { idx, sg in
-                    HStack(spacing: 3) {
-                        Circle()
-                            .fill(StatsKit.StatModel.memberColor(idx % 6))
-                            .frame(width: 5, height: 5)
-                            .accessibilityHidden(true)
-                        Text(sg.name + " 约 " + String(sg.n) + " 次")
-                            .font(.caption2)
-                            .foregroundStyle(DS.Palette.textSub)
-                            .lineLimit(1)
-                    }
-                }
-                if segs.count > 4 {
-                    Text("+" + String(segs.count - 4) + " 位")
-                        .font(.caption2)
-                        .foregroundStyle(DS.Palette.textSub)
-                }
-            }
+            kindBreakdownBar(k: k, segs: segs, total: total)
+            kindBreakdownLegend(segs)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel((StatsKit.StatModel.kindWords()[k] ?? k) + " 归属构成, 共约 \(total) 次; " + segs.prefix(4).map { $0.name + " 约 " + String($0.n) + " 次" }.joined(separator: ", ") + (segs.count > 4 ? "; 另 \(segs.count - 4) 位" : ""))
+        .accessibilityLabel(a11y)
+    }
+
+    /// 625 子段条 (色段) —— 从 kindBreakdownRow 抽出: 该表达式报 type-check 超时
+    @ViewBuilder
+    private func kindBreakdownBar(k: String, segs: [(id: String, name: String, n: Int)], total: Int) -> some View {
+        HStack(spacing: 2) {
+            Text(StatsKit.StatModel.kindWords()[k] ?? k)
+                .font(.caption2)
+                .foregroundStyle(DS.Palette.textSub)
+            GeometryReader { geo in
+                HStack(spacing: 1) {
+                    ForEach(Array(segs.enumerated()), id: \.offset) { idx, sg in
+                        Capsule()
+                            .fill(StatsKit.StatModel.memberColor(idx % 6))
+                            .frame(width: max(3, CGFloat(sg.n) / CGFloat(max(total, 1)) * geo.size.width))
+                    }
+                }
+            }
+            .frame(height: 6)
+            Text("约 \(total) 次")
+                .font(.caption2)
+                .foregroundStyle(DS.Palette.textSub)
+                .lineLimit(1)
+        }
+    }
+
+    /// 625 子段图例 (成员名 + 次数, 超 4 位折叠) —— 同上
+    @ViewBuilder
+    private func kindBreakdownLegend(_ segs: [(id: String, name: String, n: Int)]) -> some View {
+        HStack(spacing: DS.Space.s) {
+            ForEach(Array(segs.prefix(4).enumerated()), id: \.offset) { idx, sg in
+                HStack(spacing: 3) {
+                    Circle()
+                        .fill(StatsKit.StatModel.memberColor(idx % 6))
+                        .frame(width: 5, height: 5)
+                        .accessibilityHidden(true)
+                    Text(sg.name + " 约 " + String(sg.n) + " 次")
+                        .font(.caption2)
+                        .foregroundStyle(DS.Palette.textSub)
+                        .lineLimit(1)
+                }
+            }
+            if segs.count > 4 {
+                Text("+" + String(segs.count - 4) + " 位")
+                    .font(.caption2)
+                    .foregroundStyle(DS.Palette.textSub)
+            }
+        }
     }
 
     var body: some View {
