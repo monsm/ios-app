@@ -29,6 +29,7 @@ final class LinkSense: ObservableObject {
     static let shared = LinkSense()
     @Published private(set) var sceneActive = true          // 135 scenePhase 消费点
     @Published private(set) var lastRssi: Int? = nil        // 最近一次见到的该锁 RSSI (63/71)
+    private var prevRssi: Int? = nil                        // 270 上一次 RSSI: 骤降检测基准 (只在值变化时翻档)
     @Published private(set) var connectMs: Int? = nil        // 67 握手耗时 (最近一次, ms)
     @Published private(set) var reconnectAttempt = 0          // 126 回连节律轮次
     @Published private(set) var lastReconnectAt: Date = Date.distantPast
@@ -37,6 +38,7 @@ final class LinkSense: ObservableObject {
     @Published private(set) var connectSource = "预热"        // 98 冷热连接标识: 预热/回连 vs 即连
     @Published private(set) var btOn = BLEService.shared.isPoweredOn   // 69 系统蓝牙开关镜像
     @Published private(set) var receiptShownAt: Date = Date.distantPast
+    @Published private(set) var revalidating = false         // 131 会话重协商进行中 (假死巡检触发, 完成即消)
     private var lastLadderAt = Date.distantPast
     private var lastDeadlockAt = Date.distantPast
     private var reconnectTask: Task<Void, Never>?
@@ -47,11 +49,18 @@ final class LinkSense: ObservableObject {
     func syncBtOn() { btOn = BLEService.shared.isPoweredOn }
     /// 69 "去开启": 系统设置无 App 级深链 API, 只能引导用户自行开启 (文案 + 常驻提示条)
     func openBluetoothSettings() {
-        lockSvc.log("info", "蓝牙开启引导: 到系统设置 → 蓝牙 打开开关 (无 App 级深链, 69 降级文案)")
+        // 69: iOS 没有直达"蓝牙"面板的 App 级深链, 能跳的只有本 App 的设置页 (与 DiagnosticsView 同一个出口)。
+        // 这函数原来只写一行日志 —— 横幅与无障碍标签都在承诺"点按前往系统设置", 那是个不存在的热区。
+        if let u = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(u) }
+        lockSvc.log("info", "蓝牙开启引导: 已跳到本 App 的系统设置页 (蓝牙开关仍需在系统设置或控制中心里打开, 69)")
         BleTelemetry.recordEvent("蓝牙开启引导", ok: true)
     }
 
     var lockSvc: LockService { LockService.shared }
+
+    /// 93 信号围栏的唯一读点：默认值只写这一处。原先三处各写 -70（预握手判定 / 设置页档位 / 圆盘 129 暂缓），
+    /// 改默认值的人必须同时想起另外两处 —— 本仓同类缺陷修过好几轮，这里先把它收拢。
+    static var rssiFence: Int { DB.store.getInt("kf_rssi_fence", -70) }
     /// 宿主 AppState (RootView 挂载时经 selfRef 注册), LinkSense 只读协作, 不建循环依赖
     var app: AppState? { AppState.hostRef }
 
@@ -71,6 +80,51 @@ final class LinkSense: ObservableObject {
     /// 冷启动即扫 (134) + 信号围栏自动预握手 (93): 只定位可见锁并记录 RSSI, 越过阈值才预热;
     /// 单锁可关 (100 手动连接模式: 关掉自动预握手, 点圆盘才连);
     /// 96 边界: 预握手完成绝不自动开锁, 也绝不主动下发新凭证 (只回收到场补发路径)。
+    // ---------- 276 多锁并行预连 (常用两把锁) ----------
+    /// "并行"的正确做法**不是**开两条扫描 —— BLE 只有一个射频, 两条扫描只会互相抢窗口;
+    /// 正确做法是**一条扫描把多把常用锁的广播都收下** (单锁 scan(mac:) 每次只认一个 MAC, 换锁要重扫)。
+    /// 只写 RSSI 档 (saveRssi), 不建连接、不下发 —— 与 134 冷启动扫描同一纪律。
+    /// 当前锁由 preconnect() 负责, 这条只盯**其余**常用锁, 让"切过去即连"不必从零开始扫。
+    func preconnectOthers(limit: Int = 2, timeoutMs: Int = 3500) async {
+        guard !DiagFlags.silent else { return }
+        let mine = (app?.currentMac ?? "").lowercased()
+        let targets = Set(Self.warmLocks(limit: limit + 1).map { $0.lowercased() }.filter { $0 != mine })
+        guard !targets.isEmpty else { return }
+        let ble = BLEService.shared
+        guard ble.isPoweredOn else { return }
+        let t0 = Date()
+        do {
+            try await ble.startScan(allowDuplicates: true, timeoutMs: timeoutMs)
+            defer {
+                ble.stopScan()
+                ScanStats.record(seconds: Date().timeIntervalSince(t0))   // 285: 也计入扫描时长
+            }
+            let deadline = Date().addingTimeInterval(Double(timeoutMs) / 1000.0)
+            var hits = Set<String>()
+            while Date() < deadline, hits.count < targets.count {
+                for adv in ble.allDiscovered() {
+                    guard let a = ZKProtocol.parseAdv(adv.advertisHex), let m = a.macRaw else { continue }
+                    let mac = m.lowercased()
+                    guard targets.contains(mac), !hits.contains(mac) else { continue }
+                    hits.insert(mac)
+                    Self.saveRssi(mac: mac, rssi: adv.rssi)
+                    lockSvc.log("info", "多锁预连: 收到 \(String(mac.prefix(6))) RSSI \(adv.rssi) (276)")
+                }
+                if hits.count < targets.count { try? await Task.sleep(for: .milliseconds(250)) }
+            }
+        } catch {
+            lockSvc.log("warn", "多锁预连扫描失败: \(error.localizedDescription)")
+        }
+    }
+    /// 276 常用锁 (按本机缓存里的日志行数排): 预连只盯它们, 不是把全部锁都扫一遍
+    static func warmLocks(limit: Int) -> [String] {
+        DB.keychains()
+            .map { ($0.mac, DB.readLogs($0.mac).count) }
+            .sorted { $0.1 > $1.1 }
+            .prefix(max(1, limit))
+            .map { $0.0 }
+    }
+
     func preconnect() async {
         guard !DiagFlags.silent else { return }   // 127 静默排查模式: 暂停全部自动连接
         let app = self.app
@@ -79,7 +133,7 @@ final class LinkSense: ObservableObject {
         guard DB.store.getBool("kf_link_auto_" + mac, true) else { return }
         do {
             let dev = try await scan(mac: mac, timeoutMs: 6000)
-            if let rssi = dev?.rssi { lastRssi = rssi }
+            if let rssi = dev?.rssi { updateRssi(rssi) }
             guard let dev = dev else {
                 BleTelemetry.recordAttempt(mac: mac, ok: false, reason: "未发现 (不在广播范围或锁未广播)")
                 BleTelemetry.recordEvent("预握手: 未发现 " + String(mac.prefix(6)), ok: false)
@@ -87,7 +141,7 @@ final class LinkSense: ObservableObject {
                 reconnectAttempt += 1
                 return
             }
-            let fence = DB.store.getInt("kf_rssi_fence", -70)
+            let fence = LinkSense.rssiFence
             if dev.rssi < fence {
                 BleTelemetry.recordAttempt(mac: mac, ok: false, reason: "RSSI \(dev.rssi) 低于围栏 \(fence), 跳过预热")
                 BleTelemetry.recordEvent("预握手: 信号弱跳过", ok: false)
@@ -101,6 +155,9 @@ final class LinkSense: ObservableObject {
             connectSource = "预热"
             markReady(ms: ms, rssi: dev.rssi)
             lockSvc.log("info", "预握手完成: 耗时 \(ms)ms (只预热不执行, 96)")
+            // 276: 同一次节律里顺手把其余常用锁也扫一遍 —— 不另开定时器 (预握手本身就是节律入口),
+            // 也不改上面那条单锁链的任何判断 (它仍然只决定当前锁要不要预热)。
+            if !Task.isCancelled { await preconnectOthers() }
             if dev.rssi >= -55, let host = AppState.hostRef, !(CareSchedule.quietOn && CareSchedule.isQuietHour()) {   // 99 近场轻提醒 (274 免扰时段静默)
                 DS.Haptics.tick.impactOccurred()
                 host.showToast("锁就在附近, 已就绪 (99)")
@@ -129,7 +186,7 @@ final class LinkSense: ObservableObject {
         guard DB.store.getBool("kf_link_auto_" + mac, true) else { return }
         do {
             let dev = try await scan(mac: mac, timeoutMs: 6000)
-            if let rssi = dev?.rssi { lastRssi = rssi }
+            if let rssi = dev?.rssi { updateRssi(rssi) }
             let t0 = CFAbsoluteTimeGetCurrent()
             try await lockSvc.ensureConnected(mac: mac)
             let ms = Int((CFAbsoluteTimeGetCurrent() - t0) * 1000)
@@ -162,8 +219,8 @@ final class LinkSense: ObservableObject {
         for item in q {
             do {
                 try await lockSvc.ensureConnected(mac: mac)
-                try await Self.applyQueueItem(mac: mac, item: item, lock: lockSvc)
-                CredentialOrg.markQueue(mac, id: item.id, state: .done, note: item.title + " · 锁端确认")
+                let extra = try await Self.applyQueueItem(mac: mac, item: item, lock: lockSvc)
+                CredentialOrg.markQueue(mac, id: item.id, state: .done, note: item.title + " · 锁端确认" + extra)
                 done += 1
             } catch {
                 CredentialOrg.markQueue(mac, id: item.id, state: .failed,
@@ -178,22 +235,16 @@ final class LinkSense: ObservableObject {
         lastReceipt = done
         receiptShownAt = Date()
         lockSvc.log("info", "\(from)自动补发 \(done) 项变更" + (failed > 0 ? ", 失败 \(failed) 项" : ""))
+        if done > 0 { MaintenanceLog.record("\(from)自动补发 \(done) 项") }   // 387 维护回执
         BleTelemetry.recordEvent("补发成功 \(done) 项", ok: true)
         DiagOps.record("\(from)补发 \(done) 项")
     }
 
-    /// 队列项走既有 LockService 命令 (与 CredentialOrg 重试同一套, 不改命令集)。
-    static func applyQueueItem(mac: String, item: CredQueueItem, lock: LockService) async throws {
-        switch item.kind {
-        case "del_pwd": try await lock.pwdDelete(item.pwd?.alias ?? 0)
-        case "del_fp": try await lock.fpDelete(UInt32(item.fp?.batch ?? 0))
-        case "period":
-            if let p = item.pwd, !item.newFrom.isEmpty { try await lock.pwdExpire(p.alias, item.newFrom, item.newTo) }
-        case "restore":
-            if let p = item.pwd, let v = p.pwd { _ = try await lock.pwdAdd(pwd: v, validFrom: p.from, validTo: p.to) }
-        default: break
-        }
-        _ = mac
+    /// 队列项走既有 LockService 命令。**实现只有 CredentialOrg.sendQueued 一份** (第一百五十四批) ——
+    /// 这里原来是第三份 switch，而它走的正是"到场/回前台自动补发"那条**没人盯着**的路：
+    /// 缺载荷时 `?? 0` 会静悄悄地向锁发"删 0 号槽"，本机随后还把这条记成"锁端确认"。
+    static func applyQueueItem(mac: String, item: CredQueueItem, lock: LockService) async throws -> String {
+        try await CredentialOrg.sendQueued(mac, lock, item)
     }
 
     // ---------- 126 回连节律: 5/15/30/60/90 秒梯度, 仅有排队变更的锁才自动回连 ----------
@@ -213,6 +264,10 @@ final class LinkSense: ObservableObject {
             }
         }
     }
+    /// 回连循环的拆除口。**目前刻意没有调用点** —— 这个 2s tick 同时是 AUTOOPEN 的停留判定驱动器
+    /// (autoReconnectTick 里 `AutoOpenController.shared.tickDwell` 在"是否自动回连"偏好**之前**执行),
+    /// 关掉自动回连就停循环 = 悄悄把"靠近自动开锁"也停了, 那是比省电严重得多的副作用。
+    /// 等 tickDwell 有独立节拍后再启用本口; 现在停它反而制造"设置没生效"的错觉。
     func stopReconnectLoop() {
         reconnectTask?.cancel()
         reconnectTask = nil
@@ -247,7 +302,10 @@ final class LinkSense: ObservableObject {
                 try await self.lockSvc.ensureConnected(mac: mac)
                 BleTelemetry.recordAttempt(mac: mac, ok: true, reason: "回连成功 (第 \(kind + 1) 轮)")
                 BleTelemetry.recordEvent("回连成功 (第 \(kind + 1) 轮)", ok: true)
-                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                // 274 免打扰时段: 回连是系统替用户跑的动作, 夜里不该凭它震一下 (与 :111 近场提醒同一把闸)
+                if !(CareSchedule.quietOn && CareSchedule.isQuietHour()) {
+                    UINotificationFeedbackGenerator().notificationOccurred(.success)
+                }
                 self.lastReconnectAt = Date()
                 if kind > 0 {
                     AppState.hostRef?.showToast("回到锁身边 (132)")
@@ -269,16 +327,25 @@ final class LinkSense: ObservableObject {
     }
 
     // ---------- 状态记账 ----------
+    /// 270 统一 RSSI 入口: 旧值翻入 prevRssi 再更新现值 —— 四处喂入共用一份历史, 骤降提示才有基准
+    private func updateRssi(_ r: Int) {
+        if let cur = lastRssi, cur != r { prevRssi = cur }
+        lastRssi = r
+    }
     private func markReady(ms: Int?, rssi: Int?) {
         connectMs = ms
         sessionSince = Date()
         reconnectAttempt = 0
-        if let rssi { lastRssi = rssi }
+        if let rssi { updateRssi(rssi) }
         objectWillChange.send()
     }
 
     // ---------- 275 假死检测 + 131 会话重协商: 连接态久无有效会话 → 重新 ensureConnected ----------
-    // 看门狗 Watchdog (包11) 已每 45s 读 03 自愈; 本层做"长挂起"兜底:
+    // 更正 (第九十一批): 这里原写着"看门狗 Watchdog (包11) 已每 45s 读 03 自愈" —— 那句是假的,
+    // 那个 enum 全仓零调用点 (34 行死码), 已删 (见 DiagKit 同段说明)。
+    // 现役的自愈就是本层: 60s 一拍巡检 (:309 的 deadbeatCheck), 挂起 >10 分钟且**有待下发项**才重协商一次。
+    // 其余自动动作 (自动连接/预热/补发/重连/冷启动) 也都在本层 :75/:122/:150/:237/:417, 一并受 127 静默档管。
+    // 本层做"长挂起"兜底:
     // 连接保持但 10 分钟无刷新标记, 且当前有待下发/正在使用 → 主动重协商一次。
     func startDeadWatch() {
         guard deadWatchTask == nil else { return }
@@ -290,6 +357,8 @@ final class LinkSense: ObservableObject {
             }
         }
     }
+    /// 假死看门狗的拆除口, 同样**没有安全调用点**: 未连接时 deadbeatCheck 第一行就 return,
+    /// 循环本身是惰性的; 真要停它得把"重启动"绑到下一次连接成功上, 那是节拍改造 → 留口不开, 不假接。
     func stopDeadWatch() {
         deadWatchTask?.cancel()
         deadWatchTask = nil
@@ -302,10 +371,12 @@ final class LinkSense: ObservableObject {
         guard idle > 600, Date().timeIntervalSince(lastDeadlockAt) > 300 else { return }
         guard CredentialOrg.pendingCount(mac) > 0 else { return }   // 无待办不打扰
         lastDeadlockAt = Date()
+        revalidating = true
         lockSvc.log("info", "会话巡检: 连接已挂 \(Int(idle / 60)) 分钟, 重新校验会话 (275/131)")
         BleTelemetry.recordEvent("会话重协商 (挂起 \(Int(idle / 60)) 分钟)", ok: true)
         Task { @MainActor [weak self] in
             guard let self else { return }
+            defer { self.revalidating = false }
             do {
                 _ = try await self.lockSvc.getStatus(mac: mac)
                 self.sessionSince = Date()
@@ -315,6 +386,8 @@ final class LinkSense: ObservableObject {
                     self.markReady(ms: self.connectMs, rssi: self.lastRssi)
                     self.lockSvc.log("info", "假死判定 → 已重新握手 (275/131)")
                     BleTelemetry.recordEvent("会话重协商成功", ok: true)
+                    // 277 看门狗自恢复累计: 会话假死被巡检判定并重新握手成功的次数 (明细就是上面那条日志)
+                    DB.store.set("kf_wd_heals", DB.store.getInt("kf_wd_heals", 0) + 1)
                 } catch {
                     self.lockSvc.log("warn", "会话重协商失败: \(error.localizedDescription)")
                     BleTelemetry.recordEvent("会话重协商失败", ok: false)
@@ -323,23 +396,39 @@ final class LinkSense: ObservableObject {
         }
     }
 
-    // ---------- 130 唤醒失败细分 (BLE 未开 / 不在广播范围 / 握手超时) ----------
-    struct WakeReason { let name: String; let hint: String }
-    func wakeFailureReason(_ error: Error) -> WakeReason {
-        let m = error.localizedDescription
-        if m.contains("蓝牙未开启") { return WakeReason(name: "蓝牙未开", hint: "打开系统蓝牙后会自动重连") }
-        if m.contains("权限") { return WakeReason(name: "蓝牙权限", hint: "系统设置 → 隐私与安全性 → 蓝牙 中允许本 App") }
-        if m.contains("未发现") || m.contains("扫描") { return WakeReason(name: "不在广播范围", hint: "走到门锁旁 (1 米内) 再试") }
-        if m.contains("超时") { return WakeReason(name: "握手超时", hint: "保持 1 米内、避开信号干扰源重试") }
-        return WakeReason(name: "唤醒失败", hint: "换个时间段重试; 仍不行到诊断页跑一键体检")
-    }
+    // ---------- 130 唤醒失败细分 ----------
+    // 已删: WakeReason 的四分法 (蓝牙未开/权限/不在广播范围/握手超时) 与在用的两处重合 ——
+    // 日志侧分类走下面的 classifyFailure (536), 人话提示走 DiagnosticsView.friendlyFailReason (133),
+    // 后者覆盖面更大 (还含 信号弱/回连轮次/会话重协商)。留第三份同表只会让三处漂移。
 
     // ---------- 536 失败三分类 (设备 / 蓝牙 / 协议) — 本地词表, 不改协议层 ----------
-    struct FailKind { let name: String; let hint: String }
+    struct FailKind {
+        let name: String
+        let hint: String
+        /// 130 图标细分: 三类各配一枚图标。名称全部取自本仓已在用的 SF Symbol
+        /// (不臆造 systemName —— 名字错了真机上只会显示空白)。做成计算属性而不是新增字段:
+        /// 加字段要全仓改签初始化器 (DiagKit:560 记过这件事), 这里零调用点改动。
+        var icon: String {
+            switch name {
+            case "蓝牙类", "蓝牙未开": return "antenna.radiowaves.left.and.right.slash"
+            case "指令被拒": return "xmark.circle.fill"
+            case "占用类": return "person.2.slash"
+            case "设备类", "不在广播范围": return "dot.radiowaves.left.and.right"
+            default: return "exclamationmark.circle"   // 协议类
+            }
+        }
+    }
     func classifyFailure(_ error: Error) -> FailKind {
         let m = error.localizedDescription
         if m.contains("蓝牙") || m.contains("unauthorized") || m.contains("not powered") {
             return FailKind(name: "蓝牙类", hint: "检查系统蓝牙开关与权限, 开关一次蓝牙再试")
+        }
+        // 536: "指令被拒"档 —— 服务层对锁端 rc != 0 一律以 StatusParser.rcMessage(rc) 抛错
+        // (LockService:282/:498、HardwareService:236/:246), 所以错误串命中 rc 表文案 = 锁端拒绝了指令。
+        // 只取 4 字及以上的码文案: "丢包"/"溢出" 这类两字词出现在别的串里会误判。
+        let rcTexts = StatusParser.rcMsg.filter { $0.key != 0 && $0.value.count >= 4 }.map { $0.value }
+        if rcTexts.contains(where: { m.contains($0) }) || m.hasPrefix("错误码 ") {
+            return FailKind(name: "指令被拒", hint: "锁端拒绝了这条指令 — 到诊断页「错误码对照表 (159)」按码处置; 多为权限/状态不满足, 可重试一次")
         }
         if m.contains("未发现") || m.contains("扫描") || m.contains("超时") {
             return FailKind(name: "设备类", hint: "确认门锁通电并靠近 1 米内; 频繁失败先查电量")
@@ -360,16 +449,40 @@ final class LinkSense: ObservableObject {
         return "成功率 \(Int(Double(ok) * 100 / Double(list.count)))% (\(list.count) 次)"
     }
 
-    /// 539 高成功率时段: 需下发成败历史, 当前占位
+    /// 539 高成功率时段: 从真实留存的连接尝试 (kf_conn_attempts) 按小时分桶算成功率。
+    /// 口径与 DiagKit.successRate() 同源 (全部留存, 上限 300 条)，不假装是滚动 7 天。
+    /// 每桶至少 10 次、总样本至少 30 次才给结论 —— 样本不够时说"积累中"，不编时段。
     static func bestHourHint() -> String {
-        "时段统计积累中 — 每次下发结果会记录, 满 7 天后可见高成功率时段"
+        let a = BleTelemetry.attempts
+        guard a.count >= 30 else { return "时段统计积累中 (\(a.count)/30) — 每次连接结果都记在本地, 攒够才给结论" }
+        // ConnAttempt.t 形如 "MM-dd HH:mm:ss" (DiagKit 写入时就是本地串) ⇒ 直接截小时, 不再过一次历法
+        var n = [Int: Int](), ok = [Int: Int]()
+        for e in a {
+            guard e.t.count >= 10, let h = Int(e.t.dropFirst(6).prefix(2)) else { continue }
+            n[h, default: 0] += 1
+            if e.ok { ok[h, default: 0] += 1 }
+        }
+        let buckets = n.keys.filter { (n[$0] ?? 0) >= 10 }
+        guard !buckets.isEmpty else { return "各小时样本都还不够 (单时段需 ≥10 次) — 现有 \(a.count) 次连接记录" }
+        let best = buckets.max { lhs, rhs in
+            let pl = Double(ok[lhs, default: 0]) / Double(n[lhs] ?? 1)
+            let pr = Double(ok[rhs, default: 0]) / Double(n[rhs] ?? 1)
+            if pl == pr { return (n[lhs] ?? 0) < (n[rhs] ?? 0) }
+            return pl < pr
+        }!
+        let pct = Int(Double(ok[best, default: 0]) * 100 / Double(n[best] ?? 1))
+        return "成功率最高的时段: \(best) 时前后 (\(pct)% · \(n[best] ?? 0) 次样本)"
     }
 
     // ---------- 扫描取 RSSI (63/71 数据源) ----------
     func scan(mac: String, timeoutMs: Int = 6000) async throws -> BLEAdvDevice? {
         let ble = BLEService.shared
+        let scanT0 = Date()   // 285: 扫描时长自查的计时起点
         try await ble.startScan(timeoutMs: timeoutMs)
-        defer { ble.stopScan() }
+        defer {
+            ble.stopScan()
+            ScanStats.record(seconds: Date().timeIntervalSince(scanT0))   // 285
+        }
         let target = mac.lowercased()
         let deadline = Date().addingTimeInterval(Double(timeoutMs) / 1000.0)
         var found: BLEAdvDevice?
@@ -386,10 +499,17 @@ final class LinkSense: ObservableObject {
         }
         return found
     }
+    /// 537 下拉重扫: 把刚扫到的信号推给 UI。**只动"最近见到的信号", 不动连接态** ——
+    /// 扫到广播 ≠ 已连接, 把 linkState 一起改掉就是凭空承诺一个没发生的会话。
+    func noteScannedRssi(_ rssi: Int) {
+        lastRssi = rssi
+        objectWillChange.send()
+    }
 
     // ---------- 每锁 RSSI 记忆 (71 设备列表迷你信号格 / 129 极限距离) ----------
     static func saveRssi(mac: String, rssi: Int) {
         DB.store.set("kf_linkrssi_" + mac, rssi)
+        LinkSense.shared.updateRssi(rssi)
         // 靠近自动开锁 (AUTOOPEN): 每个 RSSI 事件喂入回差滤波 (未开主开关 = 零开销, 控制器内 guard)
         Task { @MainActor in AutoOpenController.shared.feedRssi(mac: mac, rssi: rssi) }
     }
@@ -405,39 +525,64 @@ final class LinkSense: ObservableObject {
             let ble = BLEService.shared
             guard ble.isPoweredOn, !DiagFlags.silent else { return }
             do {
-                try await ble.startScan(timeoutMs: 5000)
+                // 123: 冷启动扫描时长/去重跟随用户档位 (默认 5s = 旧硬编码值, 不改变既有行为)
+                let p = BLEService.ScanProfile.current
+                let t0 = Date()
+                try await ble.startScan(allowDuplicates: p.allowDuplicates, timeoutMs: p.timeoutMs)
+                defer { ScanStats.record(seconds: Date().timeIntervalSince(t0)) }   // 285: 冷启动扫描也计入
+                // 128 修正: startScan 是"启动即返回"的窗口式 API, 旧写法紧接着读 allDiscovered() 恒读到 ~0 台
+                // (委托回调还没进来) ⇒ 拥挤度结论一直在说"未见 BLE 设备"。这里把窗口等满再读数,
+                // 顺带量出"首台可见耗时" —— 首次发现越晚, 说明 2.4G 侦听窗口被挤得越厉害, 这才是拥挤度那一半。
+                var firstSeenMs = -1
+                let deadline = Date().addingTimeInterval(Double(p.timeoutMs) / 1000.0)
+                while Date() < deadline {
+                    if firstSeenMs < 0, !ble.allDiscovered().isEmpty {
+                        firstSeenMs = Int(Date().timeIntervalSince(t0) * 1000)
+                    }
+                    try? await Task.sleep(for: .milliseconds(150))
+                }
                 for adv in ble.allDiscovered() {
                     if let a = ZKProtocol.parseAdv(adv.advertisHex), let m = a.macRaw,
                        DB.keychain(m) != nil {
                         Self.saveRssi(mac: m, rssi: adv.rssi)
                     }
                 }
-                BleTelemetry.recordEvent("冷启动扫描 (134), 可见设备 \(ble.allDiscovered().count)", ok: true)
-                DB.store.set("kf_link_env", ble.allDiscovered().count)
-                DiagOps.record("冷启动扫描 (\(ble.allDiscovered().count) 台可见)")
+                let seen = ble.allDiscovered().count
+                BleTelemetry.recordEvent("冷启动扫描 (134), 可见设备 \(seen)", ok: true)
+                DB.store.set("kf_link_env", seen)
+                DB.store.set("kf_link_envms", firstSeenMs)
+                DiagOps.record("冷启动扫描 (\(seen) 台可见, 首台 \(firstSeenMs >= 0 ? "\(firstSeenMs)ms" : "整窗未见"))")
             } catch {
                 BleTelemetry.recordEvent("冷启动扫描失败", ok: false)
             }
         }
     }
 
-    /// 128 环境拥挤度: 最近一次冷启动扫描的可见 BLE 设备数
+    /// 128 环境拥挤度: 最近一次冷启动扫描的可见 BLE 设备数 + 首台可见耗时
     static var envCount: Int { DB.store.getInt("kf_link_env", 0) }
+    /// 128: 首台可见耗时 (毫秒); -1 = 整窗一台没见
+    static var envFirstSeenMs: Int { DB.store.getInt("kf_link_envms", -1) }
     static func envConclusion() -> String {
         let n = envCount
+        let ms = envFirstSeenMs
+        let t = ms >= 0 ? ", 首台 \(ms)ms 可见" : ""
         if n == 0 { return "近一次扫描未见 BLE 设备 (无数据或蓝牙关闭)" }
-        if n >= 20 { return "环境拥挤 (近一次扫到 \(n) 台 BLE 设备) — 商场/办公楼等密集环境, 连接偶发超时属正常, 保持 1 米内" }
-        if n >= 8 { return "环境中度 (近一次扫到 \(n) 台 BLE 设备) — 可用, 干扰稍多时可贴得更近" }
-        return "环境安静 (近一次扫到 \(n) 台 BLE 设备) — 连接条件良好"
+        if n >= 20 { return "环境拥挤 (近一次扫到 \(n) 台 BLE 设备\(t)) — 商场/办公楼等密集环境, 连接偶发超时属正常, 保持 1 米内" }
+        if n >= 8 { return "环境中度 (近一次扫到 \(n) 台 BLE 设备\(t)) — 可用, 干扰稍多时可贴得更近" }
+        return "环境安静 (近一次扫到 \(n) 台 BLE 设备\(t)) — 连接条件良好"
     }
 
     /// 272 连接保持时长: 会话至今的分钟数 (异常久时 UI 提示重连)
     var holdMinutes: Int {
         sessionSince.map { Int(Date().timeIntervalSince($0) / 60) } ?? 0
     }
-    /// 270/129 弱信号提示: 最近 RSSI 走弱时给"信号在变差"文案 (Hero 卡提示条)
+    /// 270/129 弱信号提示: 骤降优先 (基准 = 上次不同的读数), 否则走绝对值门槛 (Hero 卡提示条)
     var weakSignalHint: String? {
-        guard let r = lastRssi, r < -75 else { return nil }
+        guard let r = lastRssi else { return nil }
+        if let p = prevRssi, p - r >= 12 {
+            return "信号骤降 (\(p) → \(r)) — 建议走近门锁"
+        }
+        guard r < -75 else { return nil }
         return "信号在变差 (RSSI \(r)) — 建议走近门锁"
     }
 
@@ -483,11 +628,30 @@ struct LinkPrefsView: View {
                     set: { DB.store.set("kf_link_auto_" + mac, $0) }))
                 LabeledRow("手动连接模式 (100)",
                            DB.store.getBool("kf_link_auto_" + mac, true) ? "自动" : "手动 — 点圆盘才连")
-                LabeledRow("信号围栏 (93)", "RSSI ≥ \(DB.store.getInt("kf_rssi_fence", -70)) 才预热, 低信号不浪费电量")
-                LabeledRow("连接偏好记忆 (97)", "每锁记住扫描强度与预握手偏好 (kf_linkrssi_ / kf_link_auto_)")
+                // 93 信号围栏: 原先这一行只是 LabeledRow 把常量 -70 显示出来，全仓没有任何写入方
+                // (LinkSenseKit 的预握手判定读的就是这个键) ⇒ "围栏"是个不可调的装饰值。补成真实档位。
+                // -127 当"关"用: 判定式是 `dev.rssi < fence`，取 BLE 可达的最弱下界就等效不设限，
+                // 不必在读侧再加一条 `fence == .off` 分支 (读侧已经在线，改动越少越不容易把拦阻逻辑带歪)。
+                Picker(selection: Binding(
+                    get: { LinkSense.rssiFence },
+                    set: { DB.store.set("kf_rssi_fence", $0) })) {
+                    Text("严格 (≥ -60)").tag(-60)
+                    Text("标准 (≥ -70)").tag(-70)
+                    Text("宽松 (≥ -80)").tag(-80)
+                    Text("关闭围栏").tag(-127)
+                } label: {
+                    Text("信号围栏 (93)")
+                }
+                .pickerStyle(.menu)
+                .tint(DS.Palette.accentText)
+                Text("RSSI 达标才预热, 低信号不浪费电量。只影响自动预握手的启动门槛；手动点圆盘、靠近自动开锁 (AUTOOPEN) 的判定不受这一档约束。")
+                    .font(.caption)
+                    .foregroundStyle(DS.Palette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
+                LabeledRow("连接偏好记忆 (97)", "每锁 kf_link_auto_ 偏好 + rssiFor 实读; 扫描强度档走全局 (123)")
             }
             Section("连接统计") {
-                LabeledRow("连接成功率 (70)", LinkSense.successRateText(mac))
+                LabeledRow("连接成功率 (70)", LinkSense.successRateText(mac: mac))
                 LabeledRow("高成功率时段 (539)", LinkSense.bestHourHint())
                 LabeledRow("占用类错误 (124)", "保守文案 — 协议占用细分未确证")
                 Text("成功率需 7 天握手数据积累, 当前为占位; 占用类 (124) 与高成功率时段 (539) 均备案 DEFERRED。")
@@ -542,6 +706,12 @@ struct LinkPill: View {
         HStack(spacing: DS.Space.xs) {
             Image(systemName: icon)
                 .font(.system(size: DS.Icon.xs, weight: .semibold))
+            // 228 色觉冗余: 三态不能只靠颜色 + 链路圈的虚实来分 —— 色觉障碍下 fill/dashed 几乎同形，
+            // 而本 App 还有一个"灰阶预览"开关 (AXFlags.grayPreview)，那一档里 tint 整条通道直接归零。
+            // 所以补一枚语义符号 (✓ / ⏳ / ✗) 当第三通道: 形状自己就说清状态。
+            Image(systemName: redundancyIcon)
+                .font(.system(size: DS.Icon.xs, weight: .bold))
+                .accessibilityHidden(true)   // 文案与 accessibilityLabel 已经报了状态，符号不重复朗读
             Text(text)
                 .font(.caption.weight(.medium))
                 .lineLimit(1)
@@ -554,7 +724,8 @@ struct LinkPill: View {
         .foregroundStyle(tint)
         .padding(.horizontal, DS.Space.s + 2)
         .padding(.vertical, DS.Space.xs + 1)
-        .background(tint.opacity(0.18), in: Capsule())
+        // 底板用压暗的黑纱而不是同色洗底: 白字压白洗底实测只有 3.09~3.31:1 (对比 tools/contrast.js E4)
+        .background(DS.heroPlate, in: Capsule())
         .overlay(Capsule().strokeBorder(tint.opacity(0.38), lineWidth: 0.5))
         .fixedSize(horizontal: true, vertical: false)
         .accessibilityElement(children: .combine)
@@ -567,6 +738,16 @@ struct LinkPill: View {
         default: return "link.circle.dashed"
         }
     }
+    /// 228 的第二通道: 对勾=就绪、沙漏=握手中、叉=未连接。
+    /// 刻意选**跨文化都读得懂**的三个符号，而不是三个不同样式的链路图标 ——
+    /// 后者的差别正是这里要冗余掉的那个差别。
+    private var redundancyIcon: String {
+        switch state {
+        case .ready: return "checkmark"
+        case .connecting: return "hourglass"
+        default: return "xmark"
+        }
+    }
     // 68 拟人状态文案: "门锁在线，随时可开"
     private var text: String {
         switch state {
@@ -577,9 +758,9 @@ struct LinkPill: View {
     }
     private var tint: Color {
         switch state {
-        case .ready: return Color(hex: 0xBBF7D0)
-        case .connecting: return .white.opacity(0.9)
-        default: return .white.opacity(0.75)
+        case .ready: return DS.heroTint(Color(hex: 0xBBF7D0))
+        case .connecting: return DS.heroFg.opacity(0.9)
+        default: return DS.heroFg.opacity(0.75)
         }
     }
     private var accessibilityText: String {
@@ -587,14 +768,18 @@ struct LinkPill: View {
     }
 }
 
-/// 67 握手耗时标签 (hero 白字): 最近一次连接 ms, 超 2 秒标黄。
+/// 67 握手耗时标签 (hero 上的胶囊): 最近一次连接 ms, 超 2 秒标黄。
 struct ConnectMsBadge: View {
     var ms: Int?
     var body: some View {
         if let ms {
             Label(String(ms) + "ms", systemImage: "stopwatch")
                 .font(.caption2.weight(.medium))
-                .foregroundStyle(ms >= 2000 ? Color(hex: 0xFFE9A8) : .white.opacity(0.85))
+                // 淡黄/纯白都必须坐在压暗底板上: 裸压主题渐变最亮端实测只有 3.95:1 与 3.89:1
+                .foregroundStyle(ms >= 2000 ? DS.heroTint(Color(hex: 0xFFE9A8)) : DS.heroFg.opacity(0.85))
+                .padding(.horizontal, DS.Space.s)
+                .padding(.vertical, 2)
+                .background(DS.heroPlate, in: Capsule())
                 .accessibilityLabel("最近一次连接耗时 " + String(ms) + " 毫秒")
         }
     }

@@ -137,6 +137,18 @@ enum StatusParser {
     static func parseLogs(_ klvs: [ZKLV]) -> [LogEntry] {
         klvs.filter { $0.key == 0x05 }.compactMap { parseLogEntry($0.val) }
     }
+    /// 声明长度与实际长度不符的条数 —— 基线对每条日志做这个强校验
+    /// (vendor status.js:130 `invalid: len !== hex.length/2 - 2`，`len` 就是字节 1 那个声明长度)。
+    /// Swift 侧**没有把 `invalid` 建进 `LogEntry`**：那要在 20 处构造点各补一个参数
+    /// (七属性全无默认值，少传一个就编译不过 —— DiagKit:560 记着这件事)，在没有编译器的一晚里不划算。
+    /// 所以这里只把"这一页里有几条被截断/超长"数出来交给调用点记进诊断日志：
+    /// 翻页边界上截半条是真实会发生的，而它现在的表现是一条看起来正常的记录，
+    /// 事后没人能解释"为什么这条的时间和类型对不上" (§10.46)。
+    static func truncatedLogCount(_ klvs: [ZKLV]) -> Int {
+        klvs.filter { $0.key == 0x05 }.filter { e in
+            e.val.count / 2 < 2 ? true : intHex(String(e.val.dropFirst(2).prefix(2))) != e.val.count / 2 - 2
+        }.count
+    }
 
     // 锁端返回码文案 (JS lock.js RC_MSG, 与 App resultCodeToMessage 一致)
     static let rcMsg: [Int: String] = [

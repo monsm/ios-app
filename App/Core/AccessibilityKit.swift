@@ -11,13 +11,26 @@ import LocalAuthentication
 // ---------- 系统辅助旗标 (226/227/862/863): 每帧评估, 由 RootView .id(appearanceSeed) 重建兜底 ----------
 enum AXFlags {
     /// 862 增强对比: hairline/textSub 加深一档的触发条件 (DS.Palette 内部消费)
-    static var highContrast: Bool { UITraitCollection.current?.accessibilityHighContrast ?? false }
+    // accessibilityHighContrast 是 UIAccessibilityHighContrast 枚举而非 Bool (且 current 非可选) → 用长期稳定的系统 API
+    static var highContrast: Bool { UIAccessibility.accessibilityDisplayShouldIncreaseContrast }
     /// 863 智能反转保护: 反转色模式 (全量反转或智能反转) 时 hero 渐变降级为反转幂等色
     static var invertColors: Bool {
-        UIAccessibility.isInvertColors || (UITraitCollection.current?.accessibilityInvertColors ?? false)
+        // UIAccessibility 没有 isInvertColors 成员, 只有 isInvertColorsEnabled()
+        UIAccessibility.isInvertColorsEnabled()
     }
+    /// 861 系统加粗文本: 系统"加粗文本"开关 (设置→辅助功能→显示与文字大小)。
+    /// 根视图按这一档设 legibilityWeight —— 显式字重的文本 (凭证名/开关标签) 才会跟着加粗;
+    /// 系统默认只对系统字体的正文自动加粗, 自定义字重的那一族不会变。
+    static var boldText: Bool { UIAccessibility.isBoldTextEnabled }
+    /// 899 减弱动态效果: 动效令牌 (DS.Motion) 的强制降档条件。
+    /// 视图里已经在用 `@Environment(\.accessibilityReduceMotion)` 的那 11 处不受影响 ——
+    /// 这里是**非视图**代码 (令牌层) 的唯一读点，两边判据是同一个系统开关。
+    /// 注意它是**属性**不是方法 (Apple 文档: `static var isReduceMotionEnabled: Bool { get }`, iOS 8+)，
+    /// 与上面 isInvertColorsEnabled() 的方法形态相反 —— 这两个正好是反例，别照着抄。
+    static var reduceMotion: Bool { UIAccessibility.isReduceMotionEnabled }
     /// 226 降低透明度: 玻璃效果自绘降级为实底 (DesignSystem.dsGlass)
-    static var reduceTransparency: Bool { UIAccessibility.isReduceTransparencyEnabled }
+    // 同名是方法不是属性: 少写 () 会把函数当 Bool 用
+    static var reduceTransparency: Bool { UIAccessibility.isReduceTransparencyEnabled() }
 
     // ---------- App 内字号五档 (858): kf_font_scale 0.8/1.0/1.25/1.5/1.75, 默认 1.0 ----------
     /// 叠加语义 (务必先读): App 档位只决定"相对系统正文 17pt 的放大倍率",
@@ -47,7 +60,8 @@ enum AXFlags {
         for t in table where abs(t.0 - rel) < abs(best.0 - rel) { best = t }
         return best.1
     }
-    /// 859 AX 档降级布局: 字号 ≥1.5 时 Hero 指标纵向堆叠、圆盘缩至 128pt 保持可操作
+    /// 859 AX 档降级布局: 字号 ≥1.5 时圆盘缩至 128pt (UnlockDial.dial 消费本旗标)。
+    /// 原设计还含"Hero 指标纵向堆叠", 那半未实现 —— 已从说明文案删除, 不要凭本注释以为已做。
     static var axStackLayout: Bool { appFontScale >= 1.5 }
     /// 866 极限字号自检: 诊断开关, 以 200% 字号预览关键页 (仅自检用)
     static var bigPreview: Bool { DB.store.getBool("kf_ax_bigpreview") }
@@ -55,22 +69,43 @@ enum AXFlags {
     static var grayPreview: Bool { DB.store.getBool("kf_ax_gray") }
 }
 
-// ---------- 863 反转保护色: 近白/近黑在反转下幂等 (白↔黑互换仍可读), 避免品牌渐变成"负片" ----------
+// ---------- 863 反转保护色: 降级底走中性色, 避免品牌渐变成"负片" ----------
+// 第八十三批实测更正: 原实现把两端写死成"近白 0xF5F7FB → 近黑 0x0B0F18", 而前景 heroFg 取随明暗的
+// Palette.text, 于是浅色档下 ink 压近黑端 = 1.06:1, 深色档下近白字压近白端 = 1.01:1 ——
+// 降级渐变自己把字吃掉了, 12 个 heroGradientSafe 消费点全中。一条渐变只能配一种前景色,
+// 所以两端必须**同侧** (都浅或都深), 由 Color.adaptive 跟着明暗走; 这四组比值已进 tools/contrast.js 断言。
 private extension Color {
-    static let invHeroLight = Color(hex: 0xF5F7FB)
-    static let invHeroDark  = Color(hex: 0x0B0F18)
+    static let invHeroTop    = Color.adaptive(0xF5F7FB, 0x11161F)
+    static let invHeroBottom = Color.adaptive(0xE7EBF3, 0x05070B)
 }
 
 extension DS {
-    /// 863: hero 渐变在反转色模式下降级为幂等近中性渐变 (文字用 heroFg)
-    static var heroGradientSafe: LinearGradient {
-        if AXFlags.invertColors {
-            return LinearGradient(colors: [Color.invHeroLight, Color.invHeroDark],
-                                  startPoint: .top, endPoint: .bottom)
+    /// 226 降透明实测: hero 面退纯色 (取品牌渐变暗端 heroB; 863 反转档取降级暗端)。
+    /// 选暗端的理由: 纯色只有一层底可兜, 而纯白压 heroB 的比值已在 tools/contrast.js C 段机检 (≥4.5:1),
+    /// 卡内纹理/柔光/黑纱叠上去只会更稳; 前景色仍由 heroFg 给, 这里只换底, 不动 863 的反转判定。
+    static var heroSolid: Color { AXFlags.invertColors ? Color.invHeroBottom : Palette.themed("heroB") }
+
+    /// 226+863 hero 面唯一出口 (沿用旧名 heroGradientSafe, 12 个消费点不用挨个改):
+    /// 降透明 → 纯色 (226); 反转色 → 中性降级渐变 (863); 常规 → 品牌渐变。
+    /// 之所以做成 ShapeStyle.resolve(in:) 而不是静态判断: 环境只有渲染时可知, 消费点各自读一遍旗标
+    /// 迟早在某个页面上漂开 —— 收在这一处, 主控卡/开锁盘/成就卡/导出卡/帮助页/引导页同帧一起换。
+    struct HeroSurface: ShapeStyle {
+        func resolve(in environment: EnvironmentValues) -> AnyShapeStyle {
+            if environment.accessibilityReduceTransparency || DS.Appearance.highContrast { return AnyShapeStyle(DS.heroSolid) }
+            if AXFlags.invertColors { return AnyShapeStyle(DS.heroInvertGradient) }
+            return AnyShapeStyle(Gradient.hero)
         }
-        return Gradient.hero
     }
-    /// 压在 hero 面上的前景色: 常规 = 纯白 (机检两端 ≥4.5:1); 反转 = 随明暗的 text
+    /// 863 反转降级渐变 (两端**同侧**: 浅档中性浅、深档中性深; 文字用 heroFg) — HeroSurface 的 863 分支
+    static var heroInvertGradient: LinearGradient {
+        LinearGradient(colors: [Color.invHeroTop, Color.invHeroBottom],
+                       startPoint: .top, endPoint: .bottom)
+    }
+    /// 226 降透明档的卡片描边色: 与 heroFg 同源 (常规档白、反转档 text), 压在同侧纯色底上边界可辨
+    static var heroSolidStroke: Color { heroFg.opacity(0.30) }
+
+    static var heroGradientSafe: HeroSurface { HeroSurface() }
+    /// 压在 hero 面上的前景色: 常规 = 纯白 (机检六套主题两端 ≥4.5:1); 反转 = 与降级底同侧的 text
     static var heroFg: Color { AXFlags.invertColors ? Palette.text : .white }
 }
 
@@ -99,9 +134,16 @@ enum AXTerms {
     /// 856 盲文简写表: 数值/状态类控件的 accessibilityValue 走简写, 降低盲文转译音节
     static func br(_ s: String) -> String {
         var v = s
+        // 凭证状态那五个词原先不在表里 —— credVoState(CredentialsView:1393) 吐的正是
+        // "已过期/提前失效/已排期/可用/预警指纹", 于是凭证行的 .accessibilityValue(AXTerms.br(...))
+        // 一直是"喂进去什么出来什么", 缩写对它们完全空转。这里补齐, 口径与上面同源 (短、不歧义)。
         for (k, a) in [("%", " pct"), ("已连接", "conn"), ("未连接", "no-conn"),
                        ("电量", "bat"), ("固件", "FW"), ("锁钟", "clk"),
-                       ("今天", "今"), ("次", "次/")] {
+                       ("今天", "今"), ("次", "次/"),
+                       ("提前失效", "early-exp"), ("已过期", "exp"), ("已排期", "queued"),
+                       ("预警指纹", "alarm-FP"),
+                       // "不可用"必须排在"可用"前面: 它是"可用"的超串, 顺序反了会被替换成"不ok"
+                       ("不可用", "no-use"), ("可用", "ok")] {
             v = v.replacingOccurrences(of: k, with: a)
         }
         return v
@@ -138,10 +180,31 @@ enum AXTools {
         "记录": ["读取状态条", "刷新", "更多菜单", "过滤芯片", "天分组行(自然语朗读)", "认领钮(60pt 命中)"],
         "设置": ["门锁", "安全", "开锁", "家人与钥匙", "工具", "本机数据保护", "无障碍(包15)", "外观", "纪念", "提醒", "关于"],
     ]
-    /// 打开巡检: 打印 + 播报当前页焦点序列 (DEBUG 入口挂 DiagnosticsView)
+    /// 855 实屏焦点序列: key window 递归收集无障碍元素标签; 取不到时回落人工表 (不谎报)
+    static func liveFocusSequence() -> [String] {
+        guard let win = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene })
+                .flatMap({ $0.windows }).first(where: { $0.isKeyWindow }),
+              let root = win.rootViewController?.view else { return [] }
+        var out: [String] = []
+        func visit(_ o: Any) {
+            if let e = o as? UIAccessibilityElement {
+                if let l = e.accessibilityLabel, !l.isEmpty { out.append(l) }
+                return
+            }
+            guard let v = o as? UIView else { return }
+            if let kids = v.accessibilityElements, !kids.isEmpty { kids.forEach(visit); return }
+            if v.isAccessibilityElement {
+                if let l = v.accessibilityLabel, !l.isEmpty { out.append(l) }
+            } else { v.subviews.forEach(visit) }
+        }
+        visit(root)
+        return out
+    }
+    /// 打开巡检: 优先实屏读序, 实屏取不到退回人工表; 打印 + 播报 (DEBUG 入口挂 DiagnosticsView)
     static func runFocusAudit(page: String) {
-        let seq = focusReport[page] ?? []
-        let line = "焦点顺序 [\(page)]: " + seq.joined(separator: " → ")
+        let live = liveFocusSequence()
+        let seq = live.isEmpty ? (focusReport[page] ?? []) : live
+        let line = "焦点顺序 [\(live.isEmpty ? page + " · 人工表兜底" : "实屏")]: " + seq.joined(separator: " → ")
         print("[A11Y 855] " + line)
         announce(line)
     }
@@ -206,8 +269,10 @@ enum AXPrefs {
 
 /// 870 底部对齐表单: 开启后 List/Form 默认贴底锚定 (iOS 17 defaultScrollAnchor)
 extension View {
+    @ViewBuilder
     func axBottomAnchor() -> some View {
-        AXPrefs.bottomForm ? defaultScrollAnchor(.bottom) : self
+        // 三目两支 opaque 返回类型不同 (ModifiedContent vs Self) → 必须 @ViewBuilder
+        if AXPrefs.bottomForm { defaultScrollAnchor(.bottom) } else { self }
     }
 }
 
@@ -218,18 +283,47 @@ enum AuthKit {
         let ctx = LAContext()
         var err: NSError?
         guard ctx.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &err),
-              !(err?.code == errBiometryNotAvailable) else { return false }
+              err?.code != LAError.biometryNotAvailable.rawValue else { return false }
         return true
     }
     @discardableResult
-    static func verifyBiometric(_ onSuccess: @escaping () -> Void) -> Bool {
+    static func verifyBiometric(_ onSuccess: @escaping () -> Void,
+                                onFail: ((String) -> Void)? = nil) -> Bool {
         let ctx = LAContext()
         var err: NSError?
         guard ctx.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &err),
-              !(err?.code == errBiometryNotAvailable) else { return false }
+              err?.code != LAError.biometryNotAvailable.rawValue else { return false }
         return ctx.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics,
-                                  localizedReason: "用 Face ID / Touch ID 代替本机密码") { ok, _ in
-            Task { @MainActor in if ok { onSuccess() } }
+                                  localizedReason: "用 Face ID / Touch ID 代替本机密码") { ok, err in
+            Task { @MainActor in
+                if ok { onSuccess() } else { onFail?(reasonText(err)) }
+            }
+        }
+    }
+    /// 392: 面容失败的原因翻成人话 —— 留痕要能读到"到哪一步没成" (不匹配/取消/锁停分开),
+    /// 只记一句笼统的"失败"等于有记录读不出事。取消/改用密码是人的选择, 由调用方决定不计连败。
+    static func reasonText(_ err: Error?) -> String {
+        guard let e = err as? LAError else { return "未知原因" }
+        switch e.code {
+        case .authenticationFailed: return "识别不匹配"
+        case .userCancel: return "用户取消"
+        case .userFallback: return "用户选择改用密码"
+        case .systemCancel: return "系统中断"
+        case .biometryLockout: return "连续失败已锁停生物识别"
+        case .biometryNotEnrolled, .biometryNotAvailable: return "本机未录入或不可用"
+        default: return "错误码 \(e.code.rawValue)"
+        }
+    }
+    /// 945: 供 Intent await 的生物验证 (与 verifyBiometric 同 canEvaluate 判据)
+    static func verifyBiometricAsync(reason: String) async -> Bool {
+        await withCheckedContinuation { cont in
+            let ctx = LAContext()
+            var err: NSError?
+            guard ctx.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &err),
+                  err?.code != LAError.biometryNotAvailable.rawValue else { cont.resume(returning: false); return }
+            ctx.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { ok, _ in
+                cont.resume(returning: ok)
+            }
         }
     }
 }
@@ -240,11 +334,12 @@ enum AuthKit {
 extension View {
     /// 矩形玻璃 (Toast/确认胶囊等) 的降级通道
     func axGlass(_ radius: CGFloat) -> some View {
-        GlassModifier(radius: radius, circle: false).modify(self)
+        // ViewModifier 没有 modify(_:): 应为 View.modifier(_:)
+        modifier(GlassModifier(radius: radius, circle: false))
     }
     /// 圆形玻璃 (AppLock/门禁盾) 的降级通道
     func axGlassCircle() -> some View {
-        GlassModifier(radius: 0, circle: true).modify(self)
+        modifier(GlassModifier(radius: 0, circle: true))
     }
 }
 
@@ -254,9 +349,11 @@ private struct GlassModifier: ViewModifier {
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @Environment(\.colorScheme) private var scheme
 
+    @ViewBuilder
     func body(content: Content) -> some View {
         // 读系统旗标 (比 AXFlags 静态读更稳, 随环境更新); 降低透明度时降为实底
-        if reduceTransparency {
+        // 862: 增强对比 (系统或 App 内 kf_hc) 同样降实底 —— 半透明叠字在高对比模式下属实底色
+        if reduceTransparency || DS.Appearance.highContrast {
             if circle {
                 content.background(DS.Palette.surface, in: Circle())
                     .overlay(Circle().strokeBorder(DS.Palette.hairlineStrong, lineWidth: 0.5))
@@ -276,10 +373,6 @@ private struct GlassModifier: ViewModifier {
     }
 }
 
-// ---------- 871 命中域扩容: 44pt 基础上再留 10pt 余量 (时间线行次级按钮 60pt) ----------
-extension View {
-    func axHit60() -> some View {
-        frame(minWidth: DS.Hit.min + 16, minHeight: DS.Hit.min + 16)
-            .contentShape(Rectangle())
-    }
-}
+// 871 命中域扩容 (44pt 基础上再留 16pt = 60pt): 时间线认领行已内联写了同一组算术 (RecordsView:1094)。
+// 这里曾另有一个 axHit60() 修饰器零调用 —— 留着两份 60pt 算术迟早漂移, 且它把 contentShape 写死成
+// Rectangle 而认领行要的是 Capsule, 换过去反而是视觉退化 → 删修饰器, 保留在用的一处实现。

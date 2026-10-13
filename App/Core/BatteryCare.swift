@@ -62,22 +62,26 @@ struct DFURecord: Codable, Identifiable {
     var to: String
     var at: Double
     var ok: Bool
+    var ms: Double?          // 147 本次升级耗时 (毫秒, 连接+传输+校验); 可选型 = 旧记录没有该键也照样能解出来
     var id: Double { at }
 }
 
 enum BatteryCare {
-    // ============ 五档电量 (113: 满/高/中/低/空) ============
+    // ============ 122/113 五档电量 (满/高/中/低/空) ============
+    // 122 原句要"电压毫伏精确值"，协议只给百分比 (CAPABILITY §2) —— 按拍板走替代口径:
+    // 这一档表就是"档位映射说明"的数据源，界面上展示原值 + 映射，**不标毫伏**，不虚构精度。
     struct Tier {
         let icon: String
         let tone: ToneColor
         let label: String
-        let severe: Bool   // 120 低电视觉降级档 (≤10%)
+        let severe: Bool   // 120 低电视觉降级档 (≤20%): 关流光、压亮度、动效令牌降 calm
     }
     static func tier(_ pct: Int) -> Tier {
         switch pct {
         case ..<0:     return Tier(icon: "battery.0percent", tone: .neutral, label: "未知", severe: false)
         case 0...10:   return Tier(icon: "battery.0percent", tone: .danger, label: "空", severe: true)
-        case 11...35:  return Tier(icon: "battery.25percent", tone: .warn, label: "低", severe: false)
+        case 11...20:  return Tier(icon: "battery.25percent", tone: .warn, label: "低", severe: true)   // 120: 低于两成即降级
+        case 21...35:  return Tier(icon: "battery.25percent", tone: .warn, label: "低", severe: false)
         case 36...60:  return Tier(icon: "battery.50percent", tone: .accent, label: "中", severe: false)
         case 61...80:  return Tier(icon: "battery.75percent", tone: .ok, label: "高", severe: false)
         default:       return Tier(icon: "battery.100percent", tone: .ok, label: "满", severe: false)
@@ -85,10 +89,49 @@ enum BatteryCare {
     }
     /// 1004 喂电提醒判定 (≤20%; 与 287 的可调横幅阈值互相独立)
     static func isLow(_ pct: Int) -> Bool { (0...20).contains(pct) }
+
+    // ---------- 120 全 App 低电分支 ----------
+    /// 最近一次读到的电量 (当前锁) 内存缓存: 动效令牌 (DesignSystem.Motion) 每次求值都问这里,
+    /// 不能每次都解快照 JSON。sample() 每次读 03 后喂新值; 冷启动首问回源一次统一读数。
+    private static var lowCache: (mac: String, low: Bool)?
+    /// 120: 当前锁电量 ≤20% (= 低于两成) 时为 true —— 设计令牌据此把全 App 动效压到 calm。
+    /// 读法: kf_current_mac (当前锁, 与 Store.preferredMac 同一解析) → 统一展示读数 (displayPct 采样+快照取新)。
+    /// 不走 kf_last_device: 它存的是 BLE 外设 id (LockService.connect 写入), 拿它查 kf_batt_/kf_snap_
+    /// 永远查不到 (低电分支恒 false 的死路, 2026-10-11 审计实弹)。
+    /// 无锁 / 无读数 / 未知(-1) → false: 判不出就不降级, 不瞎猜。
+    static var appLowBattery: Bool {
+        let mac = DB.preferredMac()
+        guard !mac.isEmpty else { return false }
+        if let c = lowCache, c.mac == mac { return c.low }
+        let pct = displayPct(mac, snapshot: DB.readStatus(mac)?.powerLevel ?? -1)
+        guard pct >= 0 else { return false }
+        let low = isLow(pct)
+        lowCache = (mac, low)
+        return low
+    }
     /// 121 低温季提示窗口: 11 月–3 月 (纯本地日期规则)
     static var isColdSeason: Bool {
-        let m = Calendar.current.component(.month, from: Date())
+        let m = WeekCal.gregorian.component(.month, from: Date())
         return m == 11 || m == 12 || m <= 3
+    }
+
+    /// 1026 本地气候表: 城市关键词 → 粗粒度寒季窗口 (from > to 即跨年)。表外回退上方 11–3 月默认档。
+    /// 按原句口径"城市手动填、本地气候表" —— 固定粗档只调提醒时机与文案, 不做气象预报 (无网络)。
+    static let coldCityTable: [(keys: [String], label: String, from: Int, to: Int)] = [
+        (["哈尔滨", "长春", "沈阳", "乌鲁木齐", "呼和浩特"], "严寒地区寒季 10–4 月", 10, 4),
+        (["北京", "天津", "石家庄", "太原", "济南", "郑州", "西安", "青岛"], "北方寒季 11–3 月", 11, 3),
+        (["上海", "南京", "杭州", "合肥", "武汉", "长沙", "重庆", "成都"], "长江流域冷月 12–2 月", 12, 2),
+        (["广州", "深圳", "南宁", "福州", "厦门", "海口", "三亚"], "华南低纬 — 仅 1 月提一句", 1, 1),
+    ]
+    static func cityColdWindow(_ city: String) -> (label: String, from: Int, to: Int)? {
+        guard !city.isEmpty else { return nil }
+        for row in coldCityTable where row.keys.contains(where: { city.contains($0) }) {
+            return (row.label, row.from, row.to)
+        }
+        return nil
+    }
+    static func inColdMonth(_ m: Int, from: Int, to: Int) -> Bool {
+        from <= to ? (m >= from && m <= to) : (m >= from || m <= to)
     }
 
     // ============ 电量采样 (idea 45 的数据地基) ============
@@ -116,6 +159,7 @@ enum BatteryCare {
     @discardableResult
     static func sample(_ mac: String, pct: Int) -> Bool {
         guard !mac.isEmpty, pct >= 0 else { return false }
+        lowCache = (mac, isLow(pct))   // 120: 无论是否落点都刷新低电缓存 (动效令牌的读点)
         var list = samples(mac)
         let now = Date().timeIntervalSince1970 * 1000
         if let last = list.last, last.pct == pct, now - last.t < 3_600_000 { return false }
@@ -126,6 +170,35 @@ enum BatteryCare {
         DB.store.setCodable("kf_batt_" + mac, list)
         evaluateLowBattery(mac, pct: pct)
         return true
+    }
+
+    /// 1040 单日掉电观察: 采样表里同一个**本地日**内, 最早与最晚两个采样点的电量差 > threshold。
+    /// 只用真实量到的两个点相减 —— 不拟合、不外推 (与 1029/1032 同一纪律: 本仓不虚构电压/续航)。
+    /// 采样表本身是"读 03 时落点"(BatteryCare.sample), 所以这条只对"当天至少读到过两次"的日子成立。
+    static func bigDropDays(_ mac: String, days: Int = 30, threshold: Int = 20)
+        -> [(day: String, from: Int, to: Int, drop: Int)] {
+        let list = samples(mac)
+        guard list.count >= 2 else { return [] }
+        let fmt = DateFormatter()
+        fmt.locale = Locale(identifier: "en_US_POSIX")
+        fmt.dateFormat = "yyyy-MM-dd"
+        let since = Date().addingTimeInterval(-Double(days) * 86400)
+        var firstOfDay: [String: BattSample] = [:]
+        var lastOfDay: [String: BattSample] = [:]
+        for s in list {
+            let d = Date(timeIntervalSince1970: s.t / 1000)
+            guard d >= since else { continue }
+            let key = fmt.string(from: d)
+            if let f = firstOfDay[key] { if s.t < f.t { firstOfDay[key] = s } } else { firstOfDay[key] = s }
+            if let l = lastOfDay[key] { if s.t > l.t { lastOfDay[key] = s } } else { lastOfDay[key] = s }
+        }
+        var out: [(day: String, from: Int, to: Int, drop: Int)] = []
+        for (key, f) in firstOfDay {
+            guard let l = lastOfDay[key] else { continue }
+            let drop = f.pct - l.pct
+            if drop > threshold { out.append((key, f.pct, l.pct, drop)) }
+        }
+        return out.sorted { $0.day > $1.day }
     }
 
     // ---------- 1004 低电本地通知 (滞回: ≤20% 提醒 / ≤10% 升级, 恢复 >30% 重新武装) ----------
@@ -140,6 +213,8 @@ enum BatteryCare {
         guard DB.store.getInt(key) < level else { return }
         // 先记账再发送: 发送被免扰静默也不反复轰炸
         DB.store.set(key, level)
+        // 733 低电单音: 告警**到达**这一刻响 (两档滞回各响一次, 与通知同一时机), 总开关默认关
+        AlertTone.alert(.lowBattery)
         let name = DB.keychain(mac).map { LockArchive.displayName($0) } ?? mac
         let body = level == 2
             ? "「\(name)」只剩 \(pct)%, 请尽快更换电池"
@@ -156,6 +231,7 @@ enum BatteryCare {
         var list = samples(mac)
         let now = Date().timeIntervalSince1970 * 1000
         if let pct = DB.readStatus(mac)?.powerLevel, pct >= 0 {
+            lowCache = (mac, isLow(pct))   // 120: 换电后电量跳变, 缓存立刻跟上
             list.append(BattSample(t: now, pct: pct))
             let cutoff = now - 90 * 86400 * 1000
             list.removeAll { $0.t < cutoff }
@@ -198,7 +274,7 @@ enum BatteryCare {
     /// 连续有保养的月数 (从本月起, 本月没打则从上月起 — 与 backupStreakMonths 同语义)
     static var careStreakMonths: Int {
         let months = Set(careMarks().keys.map { String($0.prefix(7)) })
-        let cal = Calendar.current
+        let cal = WeekCal.gregorian
         var cursor = Date()
         if !months.contains(Milestones.monthKey(cursor)) {
             guard let prev = cal.date(byAdding: .month, value: -1, to: cursor) else { return 0 }
@@ -243,7 +319,8 @@ enum BatteryCare {
 
     // ============ 1023 指纹头清洁: 锁日志最近 3 条连续为指纹告警 (type 13) ============
     static func fpCleanNeeded(_ mac: String) -> Bool {
-        let logs = DB.readLogs(mac).prefix(3)
+        // 1023: 缓存数组序≠时间序 (新抓的拼在旧缓存前), 先按锁端时间戳降序再取前 3
+        let logs = DB.readLogs(mac).sorted { $0.lockTime > $1.lockTime }.prefix(3)
         guard logs.count == 3 else { return false }
         return logs.allSatisfy { $0.type == 13 }
     }
@@ -262,17 +339,31 @@ enum CareSchedule {
     static var fwRemindOn: Bool { DB.store.getBool("kf_fw_remind", true) }
 
     static func isQuietHour(_ d: Date = Date()) -> Bool {
-        let h = Calendar.current.component(.hour, from: d)
+        let h = WeekCal.gregorian.component(.hour, from: d)
         return h >= 22 || h < 8
     }
 
-    /// 即时本地通知 (1004/1023/校时/146/1013 到期/1024 防潮): 免扰时段静默丢弃
-    static func notifyNow(id: String, title: String, body: String) async {
-        if quietOn && isQuietHour() { return }
+    /// 即时本地通知 (1004/1023/校时/146/1013 到期/1024 防潮): 免扰时段静默丢弃 (1031)
+    /// dayDeliver=true 的升级提醒 (1038): 夜间不丢, 挂到下一个 08:00 白天送达
+    static func notifyNow(id: String, title: String, body: String, dayDeliver: Bool = false) async {
         let c = UNMutableNotificationContent()
         c.title = title
         c.body = body
         c.sound = .default
+        if quietOn && isQuietHour() {
+            guard dayDeliver else { return }
+            let cal = WeekCal.gregorian
+            var target = cal.startOfDay(for: Date())
+            if cal.component(.hour, from: Date()) >= 22 {
+                target = cal.date(byAdding: .day, value: 1, to: target) ?? target
+            }
+            target = cal.date(byAdding: .hour, value: 8, to: target) ?? target
+            let comp = cal.dateComponents([.year, .month, .day, .hour, .minute], from: target)
+            try? await UNUserNotificationCenter.current()
+                .add(UNNotificationRequest(identifier: id, content: c,
+                                           trigger: UNCalendarNotificationTrigger(dateMatching: comp, repeats: false)))
+            return
+        }
         try? await UNUserNotificationCenter.current()
             .add(UNNotificationRequest(identifier: id, content: c, trigger: nil))
     }
@@ -287,20 +378,24 @@ enum CareSchedule {
         guard !DB.keychains().isEmpty else { return }
         guard await requestAuth() else { return }
         let now = Date().timeIntervalSince1970 * 1000
+        // 1022: 到期判据与 CareViews:24-28 的 periodDays 同一口径 (高频锁 60 天档), 通知不再写死 90
+        let usage30 = await MainActor.run { LockStats.usage() }
         for kc in DB.keychains() {
             let name = LockArchive.displayName(kc)
-            // 1013 保养到期: 满 90 天起每天最多一条, 完成保养即停
+            // 1013 保养到期: 满周期起每天最多一条, 完成保养即停
             let s = BatteryCare.care(kc.mac)
-            if s.lastCareAt > 0, now - s.lastCareAt >= 90 * 86400 * 1000,
+            let opens30d = usage30.first(where: { $0.mac == kc.mac })?.opens30d ?? 0
+            let carePeriod = opens30d >= 60 ? 60 : 90
+            if s.lastCareAt > 0, now - s.lastCareAt >= Double(carePeriod) * 86400 * 1000,
                DB.store.getString("kf_care_notify_" + kc.mac) != Milestones.dayKey() {
                 DB.store.set("kf_care_notify_" + kc.mac, Milestones.dayKey())
                 await notifyNow(id: "m4.care." + kc.mac, title: "保养到期",
-                                body: "「\(name)」距上次保养已满 90 天, 找个方便的时间清洁锁体吧。")
+                                body: "「\(name)」距上次保养已满 \(carePeriod) 天, 找个方便的时间清洁锁体吧。")
             }
             // 1024 潮湿位: 场所含湿区关键词 ∧ 6–7 月梅雨 → 每 7 天一条
             let place = LockArchive.meta(kc.mac).place
             let damp = ["浴室", "户外", "院", "阳台", "天台"].contains { place.contains($0) }
-            let month = Calendar.current.component(.month, from: Date())
+            let month = WeekCal.gregorian.component(.month, from: Date())
             if damp, month == 6 || month == 7 {
                 let last = DB.store.get(Double.self, "kf_damp_last_" + kc.mac) ?? 0
                 if now - last > 7 * 86400 * 1000 {
@@ -329,16 +424,20 @@ enum CareSchedule {
                 }
             }
         }
-        // 146 固件提醒: 本地固件清单里有比锁内更新的版本 (每个版本只提醒一次)
+        // 146 固件提醒: 本地固件清单里有比锁内更新的版本。1038: 夜间不丢 → 挂白天 08:00;
+        // 置位不再"只此一次"— 未升级期间每 30 天复提醒 (与校时 30 天同节奏)
         if fwRemindOn {
             for kc in DB.keychains() where !kc.fw.isEmpty {
                 for item in BatteryCare.fwlib {
                     guard let v = _FWVersion(item.version), _FWVersion(kc.fw) != nil,
-                          FirmwareKit.versionLt(kc.fw, item.version),
-                          DB.store.getBool("kf_fw_notify_" + v) == false else { continue }
-                    DB.store.set("kf_fw_notify_" + v, true)
-                    await notifyNow(id: "m4.fw." + v, title: "有固件可升级",
-                                    body: "本地固件包 v\(item.version) 比锁内 v\(kc.fw) 新, 可到工具-检查固件更新执行。")
+                          FirmwareKit.versionLt(kc.fw, item.version) else { continue }
+                    let lastN = DB.store.get(Double.self, "kf_fw_notify_at_" + v) ?? 0
+                    if now - lastN > 30 * 86400 * 1000 {
+                        DB.store.set("kf_fw_notify_at_" + v, now)
+                        await notifyNow(id: "m4.fw." + v, title: "有固件可升级",
+                                        body: "本地固件包 v\(item.version) 比锁内 v\(kc.fw) 新, 可到工具-检查固件更新执行。",
+                                        dayDeliver: true)
+                    }
                 }
             }
         }
@@ -353,7 +452,7 @@ enum CareSchedule {
         guard !ids.isEmpty else { return }
         center.removePendingNotificationRequests(withIdentifiers: ids)
         guard await requestAuth() else { return }
-        let cal = Calendar.current
+        let cal = WeekCal.gregorian
         for kc in DB.keychains() {
             let s = BatteryCare.care(kc.mac)
             // 1012 每年换电池提醒

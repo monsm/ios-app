@@ -7,9 +7,12 @@
 
 | 判定 | 数量 | 说明 |
 |---|---|---|
-| ✅ | 936 | 可直接落地（绝大多数为 UI/本地逻辑增强） |
-| ⚠ | 88 | 需本地数据积累 / NFC·Watch 待实测 / 协议语义标 ？ |
-| ❌ | 26 | 协议或平台硬缺口，需决策（见各 part 的"❌ 清单与替代建议"节） |
+| ✅ | 933 | 可直接落地（绝大多数为 UI/本地逻辑增强）。2026-10-12 本批 −3：184/990 改 ⚠ 替代口径、278 改 ❌ |
+| ⚠ | 84 | 需本地数据积累 / Watch 待实测 / 协议语义标 ？。2026-10-12 本批 −4：NFC 写卡族 957/958/960/961/962 改判 ❌（−5）、990/184 并入（+2）、46 改判 ❌（−1） |
+| ❌ | 33 | 协议或平台硬缺口，需决策（见各 part 的"❌ 清单与替代建议"节）。2026-10-12 本批 +7：278、46、957、958、960、961、962（924/925/931/934/119 判定不变，只补记因） |
+
+> 这三行是**按本批判定行的增减直接算的**（原 936/88/26 −/+ 如上），不是重新点数 1050 行得来的；
+> 各 part 的汇总本批同样只记增减（见 Part 1 汇总注、Part 4 汇总注）。要精确点数请跑仓内台账工具，本批按纪律只跑了 `citecheck` 与 `docpointers`。
 
 ## 协议侧硬缺口（❌ 的高频根因，CAPABILITY.md §5）
 门磁/反锁状态、锁在线状态、推送通道、电量历史、胁迫告警、离线防尾随、NFC 管理、凭证命名、日志清空；
@@ -17,6 +20,9 @@
 
 ## 平台侧硬缺口（❌ 的高频根因，CONSTRAINTS.md）
 **App Groups 不可用** → Widget 无法读取 App 数据（只能做拉起 App 的哑按钮，不能显示锁状态/电量）；
+可复核对证（2026-10-12 现场跑）：`grep -n "AppGroup\|entitlements\|CODE_SIGN_STYLE\|DEVELOPMENT_TEAM" project.yml` 只命中
+`project.yml:12`（`CODE_SIGN_STYLE: Automatic`）与 `project.yml:13`（`DEVELOPMENT_TEAM: ""`）两行，AppGroup/entitlements **0 命中**，
+全仓无 `.entitlements` 文件，Widget target 见 `project.yml:70-87`、其自述见 `project.yml:68` 与 `Widget/LockWidget.swift:20-22/:93`；
 无 APNs（本就离线，无影响）；TestFlight/上架不可用；签名 7 天过期。
 
 ## 第 1–50 项判定（首轮精选，逐条）
@@ -25,12 +31,13 @@
 | 1,2,3 | ✅ | 纯交互/触感，本地可做 |
 | 4 | ⚠ | 哑按钮（拉起App）可做；显示状态需 App Groups 不可用 |
 | 5 | ✅ | App Intents 免费账号可用 |
-| 6 | ❌ | 协议无门磁状态（CAPABILITY §5） |
+| 6 | ❌ 原句无门磁 · 替代已接线 @App/UI/DeviceHomeView.swift:1191 | 协议无门磁状态（CAPABILITY §5）。替代 = 并入 39 自动上锁倒计时: 开锁成功后按 cmd24 档位本地回放倒计时, 文案即"请确认门已关好"; 不依赖门磁, 也不猜门态 |
 | 7–24 | ✅ | 纯 UI/本地逻辑 |
 | 25 | ✅ | iOS 26 Tab API 支持底部主操作 |
 | 26 | ⚠ | 系统 Tab 长按菜单定制能力有限，需实测 |
 | 27–44 | ✅ | 纯 UI/本地逻辑 |
-| 45,46 | ⚠ | 需每日电量采样积累 |
+| 45 | ⚠ | 需每日电量采样积累（采样已埋，展示待数据，见 docs/DEFERRED.md 包4 45 行） |
+| 46 | ❌ 协议无对应字段 · 划掉（2026-10-12 记因） | 电池健康度要的是电压/循环次数/内阻这一类量，协议一个都不回报：`grep -n "powerLevel\|0x11" vendor/app/utils/status.js` 只命中 `status.js:6`（键表复述注释）、`status.js:14`（`0x11: 'powerLevel', 0x14: 'soundVolumn',`）、`status.js:37`（初值 `powerLevel: -1`），`STATUS_KEYS`（`status.js:11-19`）内无健康度/电压/循环位；§2 的 03 响应字段全集（docs/CAPABILITY.md:44-57）也只到 `:50`「11 powerLevel 电量」。⇒ 只能由百分比序列猜，与"不虚构精度"相冲，判 ❌（原行与 45 合写成 ⚠，2026-10-12 拆行分判） |
 | 47,48 | ✅ | 校时偏差协议有补偿；异常本地聚合 |
 | 49 | ⚠ | 快捷指令集成路径需实测 |
 | 50 | ⚠ | 需全年数据积累 |
@@ -45,13 +52,24 @@
 ## 汇总
 
 - 总数 250 条
-- ✅ 可直接做：226 条
-- ⚠ 受限/需数据积累/语义待确证：19 条
-- ❌ 协议或平台不支持：5 条（119、122、141、175、286）
+- ✅ 可直接做：224 条（2026-10-12 由 226 减 2：184 改 ⚠ 替代口径、278 改 ❌）
+- ⚠ 受限/需数据积累/语义待确证：20 条（184 自 ✅ 并入；117 仍是 ⚠，只换口径写法）
+- ❌ 协议或平台不支持：6 条（119、122、141、175、278、286）—— 278 于 2026-10-12 记因入列。**另：46（电池健康）也判 ❌，但它的判定行在「第 1–50 项判定」那张表里，不占本 part 的 250 条计数**
 
-注：创意银行自带 ⚠ 标记的条目按两份权威文档重新判定，部分升级为 ✅（如 55/88/130/131/144/146/166/178/184/278/281/293–295，均属免费账号已确认能力或协议已确证语义），部分降为 ❌（如 175，日志无身份字段是 CAPABILITY §3 明文）。
+注：创意银行自带 ⚠ 标记的条目按两份权威文档重新判定，部分升级为 ✅（如 55/88/130/131/144/146/166/178/281/293–295，均属免费账号已确认能力或协议已确证语义），部分降为 ❌（如 175，日志无身份字段是 CAPABILITY §3 明文）。**原句这份名单里的 184 与 278 已于 2026-10-12 移出**：184 降为 ⚠（协议无"触发来源"字段，见判定表该行），278 降为 ❌（本机无崩溃符号化工具链，见判定表该行）—— 保留这句更正，免得下次照名单以为两条还是 ✅。
 
 ## 判定表
+
+> **这张表有两条轴，别混读**（第九十三批加的，因为我自己就先混了 —— 见 `AUDIT-CODE.md` §103）：
+> - 表头的**「判定」列本义是可行性**：`✅` = 现有协议/平台**能做**，`⚠` = 要做但有条件，`❌` = 协议或平台**做不到**。
+> - 第八十九批起，部分行的「判定」格里追加了**实现状态**（做没做、`file:line` 证据）。写法固定为
+>   `✅ 可行 · 已接线 @file:line` / `✅ 可行 · ⛔ 未实现` / `⚠ PART`（做了一半）/ `✖ 已舍弃`（能做但产品判定与别项重复）/
+>   `⛔ 不适用`（前提在本工程不成立，如无 SQLite）。**只写 `✅` 而不带实现状态的老行，只回答"能不能"，不回答"做没做"。**
+> - 2026-10-12 批起再加两种**带因**写法（沿用上面那批符号，不另造新符号）：
+>   `❌ 划掉（2026-10-12 记因）· 替代已由/已接线 @file:line` = 协议或平台做不到，且**把当场跑过的 grep / 打开过的行写进依据**（如 924/925/931/934 的 `project.yml:12-13`、119 的 `status.js:11-19`+`:101`、278 的那条 0 命中 grep）；
+>   `⚠ 替代口径（本机推断值 · 非锁端事实）` = 协议没有这个字段，但本机有可核的推断数据源，**必须在同一格里写出推断依据与"不是锁端事实"这句话**（如 117/184/990）。
+>   同一条编号在「❌ 项清单与替代建议」节里的行与本表**同一口径**，两处都改，不留两行不同判。
+> - 实现状态的另一份权威来源是 `docs/AUDIT-CODE.md`（按代码正确性）与 `docs/AUDIT-E.md`（按引擎有没有调用点）。
 
 | 编号 | 判定 | 依据 |
 |---|---|---|
@@ -97,7 +115,7 @@
 | 90 | ✅ | UI 动效 |
 | 91 | ✅ | UI 状态点 |
 | 92 | ✅ | 本地记录写入 |
-| 93 | ✅ | 前台扫描+预握手逻辑 |
+| 93 | ✅ 可行 · 已接线 @App/Core/LinkSenseKit.swift:90 (读侧门槛) + :503 (档位写侧, 第九十四批补) | 前台扫描+预握手逻辑。**第九十四批前只有读侧与一行显示**，`kf_rssi_fence` 全仓零写入方 ⇒ 围栏恒为 -70，"可调"是假的 |
 | 94 | ⚠ | NFC 免费账号不确定（CONSTRAINTS），需实测 |
 | 95 | ✅ | 启动预握手逻辑 |
 | 96 | ✅ | 连接状态机约束 |
@@ -121,12 +139,12 @@
 | 114 | ✅ | 本地排序逻辑 |
 | 115 | ⚠ | 系统不供 BLE 功耗，需改本地自测统计 |
 | 116 | ✅ | 静态引导 UI |
-| 117 | ⚠ | 需周期电量采样（且仅 % 无电压） |
+| 117 | ⚠ 替代口径（本机推断值 · 非锁端电压事实）· 采样埋点 @App/Core/BatteryCare.swift:2 + 写入口 @App/Core/BatteryCare.swift:170 | 协议无电压字段：与电池有关的键只有 `0x11: 'powerLevel'`（@vendor/app/utils/status.js:14，整表 `STATUS_KEYS` @:11-19），§2 字段全集（@docs/CAPABILITY.md:44-57）里电量那行是 `:50`，§5 还写明"电量历史/趋势：无，仅实时 0x11 + 本地快照"（@docs/CAPABILITY.md:80）。2026-10-12 拍板：不建"电压"线，**改画本机 0x11 百分比采样序列**（`kf_batt_<mac>`，@App/Core/BatteryCare.swift:2），界面必须带"约 · 按百分比走势，非电压"、**不得出现 mV**；展示层复活条件仍受 45 那条采样稀疏约束 |
 | 118 | ✅ | 本地基线重置 |
-| 119 | ❌ | 协议无充电状态字段（§2 无） |
+| 119 | ❌ 原句无充电位（2026-10-12 记因，**保持划掉，不得编造替代数据**） | 协议无充电状态字段（§2 无）。可复核出处：`vendor/app/utils/status.js:11-19` 的 `STATUS_KEYS` 里与电池有关的只有 `:14` 那行 `0x11: 'powerLevel', 0x14: 'soundVolumn',` —— **没有充电位**；日志条目结构（同文件 `:101`「[type 1B][len 1B][idx 4B LE][lockTime 4B LE][diffBody…]」）与日志类型表（`:111-118`）里也没有"接入充电器"这一型，最接近的 `8: '重新上电'` 是断电重启事件、不等于在充电 ⇒ 无法从协议判"是否在充电"，而"电量涨了就当在充电"这种本机推断会把没插电的跳变标成充电中，属本仓禁止的编造（Part 1 ❌ 清单里 119 那行的"勿凭跳变猜充电中"就是这条） |
 | 120 | ✅ | 低电设计令牌分支 |
 | 121 | ✅ | 纯本地日期规则 |
-| 122 | ❌ | 协议仅电量 %，无电压毫伏（§2） |
+| 122 | ❌ 原句无电压位 · 替代已接线 @App/Core/BatteryCare.swift:69 | 协议仅电量 %，无电压毫伏（§2）。拍板 2026-10-10：按替代落地 = 展示电量原值 + 五档映射说明，界面不标毫伏 |
 | 123 | ✅ | 本地扫描节奏控制 |
 | 124 | ⚠ | 占用类错误细分未确证 |
 | 125 | ✅ | 本地快照展示 |
@@ -145,7 +163,7 @@
 | 138 | ✅ | DFU 进度 0-7 已有（§6） |
 | 139 | ✅ | 本地速率估算 |
 | 140 | ✅ | 导航拦截 UI |
-| 141 | ❌ | DFU 流程无断点续传定义（§6） |
+| 141 | ❌ 原句无续传 · 替代已接线 @App/UI/Sheets.swift:1331 | DFU 流程无断点续传定义（§6）。替代 = 失败后整包重传 + 三段进度/剩余时间 (138/139) + 失败安抚页 (142)，界面上不出现「续传」二字 |
 | 142 | ✅ | 失败态 UI |
 | 143 | ✅ | 03#31 对比文件名版本（§6） |
 | 144 | ✅ | 串行队列属 App 编排，逐把需在场 |
@@ -160,7 +178,7 @@
 | 153 | ✅ | 日志过滤 UI |
 | 154 | ✅ | 搜索高亮 UI |
 | 155 | ✅ | 本地脱敏处理 |
-| 156 | ⚠ | 需新增事件采集 |
+| 156 | ✅ | 需新增事件采集 —— 采集侧早有 `DiagOps.record` (预握手/补发/冷启动)，第九十二批补上读取口：诊断页「操作流水 (156)」段，此前 `DiagOps.list()` 零调用 = 记了没人读 |
 | 157 | ✅ | 本地打包+分享面板 |
 | 158 | ⚠ | 需体检历史存档积累 |
 | 159 | ✅ | 错误码表已有（lbl:35-43） |
@@ -179,7 +197,7 @@
 | 172 | ✅ | 展示 UI |
 | 173 | ✅ | 8 位 ASCII 约束内生成 |
 | 174 | ✅ | 本地命名台账 |
-| 175 | ❌ | 日志无指纹身份字段（§3、attr:1-8） |
+| 175 | ❌ 原句要逐枚次数 · 替代已接线 @App/UI/CredentialsView.swift:1191 | 日志无指纹身份字段（§3、attr:1-8）。替代 = 只统计"指纹开门"总量 (529 段尾「近 30 天指纹开门约 N 次」, `CredentialOrg.fpUseCount30d`)。**"闲置三月置灰"这半判不做**: 按本地录入时间灰显会把天天在用的指纹标成闲置, 与 914 那次"最近使用其实按录入时间排"的纠正是同一类名不副实, 故只保留总量读数 |
 | 176 | ⚠ | 需密码版本数据 |
 | 177 | ✅ | 菜单 UI |
 | 178 | ✅ | ZOTP 纯本地生成，无签发概念 |
@@ -188,7 +206,7 @@
 | 181 | ✅ | 备份选项 UI |
 | 182 | ✅ | 列表拖动 |
 | 183 | ✅ | 本地成员色板 |
-| 184 | ✅ | 日志 type1-5 即开门方式（§3） |
+| 184 | ⚠ 替代口径（拆两半：前半是锁端事实已接线，后半是**本机推断值 · 非锁端事实**）· 图标已接线 @App/UI/RecordsView.swift:1964-1972 | 日志 type1-5 即**开门凭证种类**（§3 @docs/CAPABILITY.md:60），映射在 @App/Services/Attribution.swift:17（原文 `static let openKind: [Int: String] = [1: "key", 2: "pwd", 3: "fp", 4: "temp"]`），行尾图标落点 @App/UI/RecordsView.swift:1964-1968（:1964 是那句注释「184 开门方式图标: kind → SF 符号 (fp 指纹 / pwd 数字键盘 / temp 一次性 / key 钥匙)」，:1966 `private func kindIcon(_ r: RowVM)` 声明、:1968 `switch r.kind` 出四个符号）—— 这一半原行的 ✅ 成立。但原句要的"触发来源（圆盘 / 自动连接 / …）"**协议没有字段**：人手按圆盘与靠近自动开都发同一条 cmd 04、落同一条 type1 日志，日志条目结构里没有来源位（@vendor/app/utils/status.js:101）。2026-10-12 拍板：发起通道只读本机发起侧台账 —— 自动开锁审计 @App/Core/AutoOpen.swift:42-46（写 `kf_autoopen_audit_<mac>`）、快捷指令来源 @App/Intents/AppIntents.swift:27-29（原文「964: 触发来源标记 (意图名即来源)」）；**没有本机台账的旧记录一律不标**，标出来必须写明"本机推断 · 非锁端事实" |
 | 185 | ✅ | 滑动操作 UI |
 | 186 | ✅ | 本地备注字段 |
 | 187 | ✅ | 滚轮 UI |
@@ -203,32 +221,32 @@
 | 196 | ✅ | 本地哈希 |
 | 197 | ✅ | WebDAV 走用户自己账号（CONSTRAINTS） |
 | 198 | ✅ | BGTaskScheduler 免费 |
-| 199 | ✅ | 本地多快照 |
+| 199 | ✅ 可行 · **已实现**（此前误记为"推迟/舍弃"，2026-10-12 实读纠正）· 多份按日期留住 @App/Services/BackupStudioKit.swift:1221-1252 · 任选一份恢复 @App/UI/BackupStudio.swift:1223 | 机制由 430 滚动保留承担（ROADMAP 包8 当初的舍弃理由原文就是"多份快照与 430 滚动保留重复"，docs/ROADMAP-DRAFT.md:144）。实读到的行为：`pruneRemote` 按份成组（`volumeSet` @:1198-1205）、**按名字里的日期段从新到旧排**（`dateInName` @:1207-1210 + 排序 @:1227-1231），最近 N 份之外每月再保最新 1 份（@:1233 原文「430 每月 1 份档: 最近 N 份之外每月再保最新 1 份 (Time Machine 口径)」），超限才删；恢复侧清单每行一个「下载恢复」按钮（@App/UI/BackupStudio.swift:1223）→ 422 预演（@:1354-1378）→ `commitDL` 入库（@:1379-1386）；份数开关在备份页（@App/UI/BackupStudio.swift:195）。**三条边界（本批实读，别当满配）**：① 留住的是远端 WebDAV 那 N 份，本机回滚快照虽 `pruneRollback(keep: 4)` 留 4 个文件（@BackupStudioKit.swift:194）但 `kf_bk_rollback` 只记最新一份路径（:195）、`undoLastRestore`（:207-213）只撤那一处；② 原句"自动备份"没有自动写入 —— 198 三档 @:63 原文「落地为本地通知提醒, 不做后台静默写」；③ 清单行序是文件名字典序（@:1170 `out.sorted { $0.name > $1.name }`），代码自身 @:1218 写明「按整名字典序排 ≠ 按时间排」，界面上的日期是每行的 getlastmodified 列（@App/UI/BackupStudio.swift:1216-1220） |
 | 200 | ✅ | 本地角色说明 |
-| 201 | ✅ | 本地保留策略 |
-| 202 | ✅ | 设置 UI |
-| 203 | ✅ | 本地 JSON 导出 |
-| 204 | ✅ | 本地应用锁逻辑 |
-| 205 | ✅ | 渐变参数分支 |
-| 206 | ✅ | 材质 UI |
-| 207 | ✅ | 数字动画 |
-| 208 | ✅ | 转场规范 |
-| 209 | ✅ | 深色令牌 |
-| 210 | ✅ | CI 脚本 |
-| 211 | ✅ | 动效常量 |
-| 212 | ✅ | 入场动画 |
-| 213 | ✅ | ButtonStyle |
-| 214 | ✅ | 纹理层 |
-| 215 | ✅ | 性能埋点 |
-| 216 | ✅ | 分页查询 |
-| 217 | ✅ | SQLite 索引迁移 |
-| 218 | ✅ | 写队列 |
-| 219 | ✅ | CI 资源检查 |
-| 220 | ✅ | 内存缓存 |
-| 221 | ✅ | 生命周期收尾 |
-| 222 | ✅ | PRAGMA 检查 |
-| 223 | ✅ | 归档表+设置 |
-| 224 | ✅ | 启动并行初始化 |
+| 201 | ✖ 已舍弃 | 日志保留期 —— `ROADMAP-DRAFT.md:144` 明列"舍弃：201 与 385/751 重复"。实际保留档在 `DiagnosticsView:188` (`kf_diag_log_retention` 全部/365/90，属 751) 与 `SecurityCenterView:1010-1031` (按月，属 385)；`StatsKit:28` 那句"7/30/90 天窗口"是**图表可回看窗**不是保留档 —— 原行的 ✅ 就挂在这句话上 |
+| 202 | ✅ | 外观重置 —— 按钮 `SettingsView:704` → `resetAppearance():789-796` 经 `confirmDestructive` (真 present UIAlertController) → 引擎 `LockKeeperApp:472-494` 清 `kf_theme/kf_accent/kf_density…` 并重建 appearanceSeed |
+| 203 | ✖ 已舍弃 | 可读 JSON 导出 —— `ROADMAP-DRAFT.md:200`"与 684 重复舍弃"、`DEFERRED.md:118` 同记（原写 `:117`，本批在 DEFERRED 上方插入判定行后下移一行），`ExportCenter.swift:2` 头注释本身写着"203 舍弃"。备份页现有的是 AES `.lockbak` (可恢复) + CSV/PDF + **684 原始 JSON**；原行 ✅ 挂在 684 上 |
+| 204 | ⚠ PART | 应用锁自动锁 —— 能力真在且端到端：档位 Picker `SecurityCenterView:242-247` (退后台即锁 / m1 / m5 / next) → `LockGuard.onBackground`(`:88` 写 deadline) → 回前台 `shouldLockOnForeground`(`:104`) 由 `LockKeeperApp:807` 消费。**但**按编号严格核它是 393 的重复登记 (`ROADMAP-DRAFT:130`、`DEFERRED.md:98` 都记"与 393 重复舍弃")，且档位固定 1/5 分钟、不是原句的"任意 N 分钟" |
+| 205 | ⚠ PART | 渐变参数分支 —— "断开变灰"做了但**不在渐变上**：`DeviceHomeView:567` `.saturation(connected ? 1 : 0.55)` (背面 :598)；`DS.Gradient.hero` (`DesignSystem:495-505`) 的角度与端点写死、无任何状态分支，紧邻 `:568` 的 `.brightness` 跟的是 120 电量档而非连接态。原句"角度与明度随状态"两半都没做 |
+| 206 | ⚠ PART | 材质 UI —— 中心高光内阴影在 `UnlockDial:277-282` + `dialFill:567-583`；**"外沿磨砂"缺失**：`UnlockDial.swift` 全文 `blur` 命中 0 处，外沿只有 hairline 描边 (`:233-236`)；全仓唯一 `.ultraThinMaterial` 在 `SecurityCenterView:840` (375 挡片，与本圆盘无关) |
+| 207 | ✅ | 数字动画 —— `.contentTransition(.numericText())` 在 `DesignSystem:753` (HeroStat) 与 `:710` (MetricTile)，Hero 卡电量字段实走 `DeviceHomeView:461-465`。**留一句不确定**：`HeroStat` 没有以电量为 value 的 `.animation`，滚动依赖环境事务 —— 只有真机能判它是否真的滚 |
+| 208 | ✅ 可行 · ⛔ 未实现 | 转场规范 —— 没有任何统一规则：17 个文件 71 处 `NavigationStack` / 68 处 `NavigationLink` 全用系统默认推入；Tab 内容 `LockKeeperApp:657-690` 无 `.transition`/`withAnimation`；27 处 `.transition(` 都是局部组件自定。`DesignSystem:184-186` 的注释自己就承认"没有一处 withAnimation 包着 tabSelection" |
+| 209 | ✅ (口径要说清) | 深色令牌 —— 深色分支真生效：`Palette.themeTable[…]["dark"]` (`DesignSystem:286`) → `Palette.themed:331-343` → `Gradient.hero:503` → `HeroCard:786`。**不是**原句那种"另建一套低饱和深靛组" (dark hero 仍是 0x5B5BD6/0x4136C9)，也与 248 的 `isNightDim` 无关 |
+| 210 | ✅ 可行 · 已接线 @tools/iconmap.js:2 | CI 脚本（图标一致性）—— 此前 `tools/` 下无此脚本、`ios.yml` 里也没有任何一条校验 systemImage，而 `ROADMAP-DRAFT:184` 把 210 列在"收录"里 = **把计划记成已做** (`AUDIT-E.md:21` 早判 MISS)。现补 `tools/iconmap.js`（顾问级，已进 CI）：判据是"**同一条标签文字必须配同一图标基名**"，现况 527 处图标引用中 169 处能与标签配成一条、153 个标签族 **0 违例**；`--list` 另生成"标签→图标"对照表（210 要的另一半，由代码生成不手抄）。与 `DiagKit:662` 的 `IconSemantics` 不重复 —— 那张表是给用户看"这个图标代表什么"，不是内部一致性检查 |
+| 211 | ⚠ PART | 动效常量 —— 三档**定义齐**但"全 App 引用"不成立：`DS.Duration` 在 `DesignSystem:228-232`，实引用 quick 1 处 (`LockKeeperApp:214`)、standard 1 处 (`SecurityCenterView:760`)、**slow 0 处**；真正的主力是**另一个类型** `DS.Motion` (quick/standard/soft/exit 共 81 处) —— 同名成员不能混算，这正是第九十二批成员级计数要管住的那类 |
+| 212 | ⚠ PART | 入场动画 —— `StaggeredAppear`/`staggered()` 在 `DesignSystem:569-594`，28 处调用分布在 `AchievementsView`(8) / `DeviceHomeView`(11) / `LockOverviewView`(8) / `BackupStudio`(1)，**凭证 Tab 0 处** (`CredentialsView` 一次都没有)；步长是 50ms (`:580` `Double(index) * 0.05`)，不是原句的 30ms |
+| 213 | ⚠ PART | ButtonStyle —— 统一样式 `PressableButtonStyle` (`LockKeeperApp:1166-1174`) 的 `scaleEffect 0.96` + 阴影变化与原句一致，但只覆盖 **35/165** 处 `.buttonStyle(` (21%)；其余 PrimaryActionStyle 22 / SecondaryActionStyle 27 / Destructive 2 / PlainButtonStyle 18 / 系统 `.plain` 31 / `.bordered` 27 / `.borderedProminent` 3 (合计恰 165)。而且三套自研样式的按压缩放量各不相同 (0.98 / 0.985 / 无缩放) ⇒ "统一按压态"名不副实 |
+| 214 | ✅ (默认关) | 纹理层 —— `DS.HeroTexture` 在 `DesignSystem:109-143` (grain 固定种子 130 粒)，`HeroCard:791` 叠在 hero 渐变之上、透明度 0.07；开关 `DS.Metric.heroTexture:100-105` 读 `kf_hero_tex` (白名单外一律当"无")，UI 在 `SettingsView:527-534`。**默认档就是"无纹理"**，不手动设置就看不到本条 |
+| 215 | ✅ | 性能埋点 —— 第六十九批接线：`StartupTrace.mark/overBudget` 在 `LockKeeperApp:795-798`，诊断页 :288 有出口 |
+| 216 | ✅ | 分页查询 —— 锁端游标分页 `RecordsView:1674-1695` (`getLogs(startIdx:pageSize:5)`，≤20 轮 ≤100 条，749 用剩余条数判"拉全/未拉全")；本机时间线按月跳转 `:2024-2040` (187 等价实现：选月即筛，不是分批加载) |
+| 217 | ⛔ 不适用 | SQLite 索引迁移 —— 本 App 没有 SQLite (全本地 UserDefaults + Codable)，也没有索引层可迁；原行把 ✅ 挂在 `WriteQueue` 的"查询索引"注释上，而那条队列本身零写入方 (见 218) |
+| 218 | ⛔ 退回 MISS | 写队列 —— 原 `enum WriteQueue` 的 `enqueue` 全库**零写入方**，只有 `vacuum()` 冲一个空队列；第九十二批整引擎删除。要真做批量落盘得先给 Store 加"读穿透" (否则 `DB.addPwd` 后立刻回读做快照的路径会读到陈旧)，单独立项 |
+| 219 | ✅ 可行 · 已接线 @tools/assetscheck.js:2 | 零图片资产检查 —— 全 `tools/*.js` 搜 asset/png/xcassets 命中 0 条，`ios.yml` 也没有对应步骤；`docpointers.js:54` 那处只是扩展名白名单，不是资源检查。**前提本身也已被破**：`App/Assets.xcassets/*/*.appiconset/` 实存位图（App 图标是 iOS 必需，不能删）。所以这条要做只能改成"除 appiconset 外不得新增位图资源，且界面图标必须走 `systemImage:`" —— 第九十三批按这个口径补了顾问级 `tools/assetscheck.js`（已进 CI）。**2026-10-12 数量变化**：896 把备选图标由四款扩到九款 ⇒ appiconset 位图从 12 个变 **27 个**（九套 × any/dark/tinted 三档，全部由 `_audit1012/mkicon.js` 本地画出，无外部素材来源）；现况仍 **0 违例** —— 越界的那一半由 R1 抓：位图只允许出现在 `*.appiconset` 里，imageset 一律算违例 · `Image(systemName:)` 界面图标不变 · 捆绑资源 `Image("…")` 0 处。口径原文见该文件头与 IDEA-BANK 219/457/696/916 那几条"零图片资源"约束（它们说的是**界面素材**，不含 iOS 强制的 App 图标） |
+| 220 | ⚠ PART | 内存缓存 —— `load`/`invalidate` 有调用，但**读取口 `recent` 零调用** (写而无读)；接上去要先定失效策略，见 DiagKit:78 的说明 |
+| 221 | ⚠ PART | 退后台收尾 —— scenePhase 落点真在 `LockKeeperApp:803-830`：非 active 分支做 `LinkSense.setSceneActive(false)`(回连/AUTOOPEN tick 在 `LinkSenseKit:239` 的 `sceneActive` 门前停跑) + `LockGuard.onBackground()`(393) + `CrashGuard.markCleanExit()`(547 归档会话) + `AutoOpenController.onBackground()` + 收快捷条。**原句两件事没做**：①"冲刷写队列"——该引擎本就没有写入方，第九十二批删除 (见 218)；②"断开 BLE 会话"——全仓无退后台断链调用点 (`BLEService.disconnect()` 只在 :195 连接前拆旧链)。②是**取舍不是漏接**：主动断链会让"靠近自动开锁 + 回前台补发/回连"在后台彻底失去连接载体，与 AUTOOPEN 批次定的 fail-closed 挂起策略相冲。现按"挂起期静默、不断链"记录，是否改成退后台断链属业主决策 (见 AUDIT-CODE §10.3) |
+| 222 | ⛔ 不适用 (等价实现) | PRAGMA 检查 —— 本工程无 SQLite，PRAGMA 无从执行；等价物是 `DataHealth.integrity()` (`DiagKit:447`)：JSON 回环解析 + 键族计数 + 孤儿缓存只读扫描，出口在诊断页"完整性自查 (750)"按钮 `DiagnosticsView:180`。ROADMAP-DRAFT:186 早已把本条判为与 750 重复；原行那个裸 ✅ 是挂在等价实现上而不是挂在 SQL 检查上，写清以免被当成"跑过 PRAGMA" |
+| 223 | ✅ (无开关) | 归档 + 入口 —— `DataHealth.archiveOldLogs()` (`DiagKit:539`) 把超一年的日志缓存移入 `kf_logarch_<mac>`，手动按钮 `DiagnosticsView:205-208` (先提示备份)，归档区大小由 `archivedCount` 在 :213 回显。**原句"可在设置关闭"没做，且是刻意的**：没有自动归档任务可关，挂一个开关就是假开关；`DiagKit:536-538` 把那句恒真 guard 一起删了 |
+| 224 | ✅ (串行预热，非并行) | 启动预热 —— 没有 SQLite 连接要开；`Prewarm.run(mac:)` (`DiagKit:101-111`) 在 `LockKeeperApp:796` 冷启动跑一次，`done` 标志保证进程内只一次，做 钥匙串清单 / 应用锁状态 / 主题 / 热点缓存 四次本地读，**不碰 BLE**。"并行"三个字没做：这四步是微秒级同步读，为并行起 TaskGroup 只会多出一块永远编译不了的并发面；原句要的"启动即完成、后续零成本"已达成 |
 | 225 | ✅ | Dynamic Type 适配 |
 | 226 | ✅ | 无障碍令牌分支 |
 | 227 | ✅ | 动效降级开关 |
@@ -281,8 +299,8 @@
 | 274 | ✅ | 本地静音时段 |
 | 275 | ✅ | 超时判定重连 |
 | 276 | ✅ | 前台多设备管理 |
-| 277 | ✅ | 本地自恢复+计数 |
-| 278 | ✅ | 未捕获异常/信号本地可捕获 |
+| 277 | ⛔ 已合并到 275 | 本地自恢复+计数 —— 原 `enum Watchdog` 34 行零调用 (第九十一批删)，自愈由 275/131 会话巡检与 LinkSenseKit 自动连接/重连承担；不要再为清清单而接回去 |
+| 278 | ❌ 本机无崩溃符号化工具链 · 划掉（2026-10-12 记因；原行 ✅「未捕获异常/信号本地可捕获」**按实读撤掉**） | 全仓没有任何崩溃现场读取 / 符号化设施：`grep -rniE "\.ips\|MetricKit\|MXCrash\|symbolicator\|signal\(" App/ tools/ vendor/ .github/ Tests/` **0 命中** —— 没有信号处理器、没有 MetricKit 订阅、没有 .ips 读取口（那条 grep 的搜索面已含 `tools/` 与 `.github/`，同样 0 命中）。现存的那半是**标记位档案**，不是堆栈：@App/Core/DiagKit.swift:386-427 的 `enum CrashGuard`（`:391` `checkAbnormalExit()` 只判"上次没走正常退出路径"，写进去的内容见 `:402-403`「异常退出于 … · 上次会话 … · 最后操作:…」= 时刻 + 会话时长 + 最近 5 条操作）⇒ 原句"捕获崩溃写入本地文件（堆栈）"在本版本不可得：iOS 不给第三方 App 读自己那份崩溃现场，要做得自带信号处理器 + 自建落盘这套未审过的本机代码，与"离线、零上传、不加留存面"相冲。替代（已在做）：95 失败台账 + 审计链 + 诊断页分组 + 上面这个异常退出档案 |
 | 279 | ✅ | 静态版本页 |
 | 280 | ✅ | Debug 埋点 |
 | 281 | ✅ | CoreBluetooth 代理回调可录 |
@@ -290,7 +308,7 @@
 | 283 | ✅ | 日志着色 UI |
 | 284 | ✅ | 本地体积统计 |
 | 285 | ⚠ | 需扫描时长统计积累 |
-| 286 | ❌ | 协议无广播参数读取（§1/§2 无） |
+| 286 | ❌ 原句无广播参数读取 · 替代已接线 @App/UI/HelpCenter.swift:140 | 协议 §1/§2 无广播参数读取。替代 = 静态科普落帮助手册「蓝牙广播与省电 (286)」, 只讲原理、不显示"当前档位"; 原案"协议可读则回显当前值"那句承诺已撤 |
 | 287 | ✅ | 本地阈值横幅 |
 | 288 | ✅ | 条带 UI |
 | 289 | ✅ | 本地阈值提醒 |
@@ -310,10 +328,11 @@
 
 | 编号 | 创意 | 不支持原因 | 替代方案 / 跳过理由 |
 |---|---|---|---|
-| 119 | 充电状态显示 | 协议状态字段（§2）只有电量 %，无充电位 | 跳过充电图标；电量数字滚动（207）已足够，勿凭跳变猜"充电中" |
+| 119 | 充电状态显示 | 协议状态字段（§2）只有电量 %，无充电位（`STATUS_KEYS` @vendor/app/utils/status.js:11-19，电池只有一个键 `:14` `0x11: 'powerLevel'`；日志条目结构 @同文件 :101、类型表 @:111-118 内也无充电型，`8: '重新上电'` 是断电重启不是插电） | 跳过充电图标；电量数字滚动（207）已足够，勿凭跳变猜"充电中" —— 2026-10-12 拍板把这句**升成硬纪律**：本条**不做任何本机推断**，替代数据都不给（理由见判定表 119 行） |
 | 122 | 原始电压值 | 协议只回报电量整数（App 按 % 展示，lbl:92-95），无毫伏字段 | 改为展示电量原值+档位映射说明，不要标注"毫伏"以免虚构精度 |
 | 141 | 断点续传 | DFU 流程（§6，Nordic zip）无续传定义，中断即重来 | 失败后整包重传；用三段进度/剩余时间（138/139）+失败安抚页（142）压低重传成本 |
 | 175 | 指纹利用率 | 日志条目无身份字段（无指纹批号，CAPABILITY §3/attr:1-8） | 只能统计"指纹开门"事件总量（type 3），无法归属到具体指纹；闲置置灰改按本地录入时间 |
+| 278 | 崩溃本地留存（堆栈） | **本机无崩溃符号化工具链**：`grep -rniE "\.ips\|MetricKit\|MXCrash\|symbolicator\|signal\(" App/ tools/ vendor/ .github/ Tests/` **0 命中**；现存只有标记位档案 `App/Core/DiagKit.swift:386-427`（`CrashGuard`，写的是时刻+会话时长+最近 5 条操作，无栈无符号化）。iOS 也不给第三方 App 读自己那份崩溃现场 | 不做新留存面；替代（已在做）= 95 失败台账 + 审计链 + 诊断页分组 + 上面那个异常退出档案。判定表 278 行为唯一口径源 |
 | 286 | 广播间隔说明（回显当前值） | 协议无广播参数读取命令/字段 | 保留静态科普文案即可，删去"协议可读则回显当前值"的承诺 |
 # IDEA-BANK triage · Part 2（301–550）
 
@@ -393,7 +412,7 @@
 | 356 | ✅ | 纯 UI 循环全选 |
 | 357 | ✅ | 本地批量备注 |
 | 358 | ✅ | 过期/重复/无归属均可本地聚合 |
-| 359 | ✅ | 本地通知三档预警 |
+| 359 | ✅ | 本地通知三档预警 (930 落地后扩为五档 + 一条"到期时", 见 930 行) |
 | 360 | ✅ | 本地过期分组 |
 | 361 | ✅ | 停用事件为本地管理日志 |
 | 362 | ⚠ | 无读锁端密码列表命令；以本地台账在用值近似 |
@@ -575,7 +594,7 @@
 | 538 | ✅ | 本地按锁排队 |
 | 539 | ⚠ | 需下发成败历史本地积累后才有结论 |
 | 540 | ✅ | 前台 RSSI 读取 |
-| 541 | ❌ | 锁端无配置序号字段，亦无配置拉取命令 |
+| 541 | ❌ 原句无锁端版本号 · 替代已接线 @App/UI/CredentialStudio.swift:1131 | 锁端无配置序号字段，亦无配置拉取命令。替代 = 以本机台账"上次成功下发时刻"(365 队列 state=已下发 的最新 lastAt, `CredentialOrg.swift:536`) 为基准, 下发前如实提示; 文案明写"不是锁端真值", 不承诺锁端现值 |
 | 542 | ✅ | 本地刻度刷选 |
 | 543 | ✅ | 本地实体引用跳转 |
 | 544 | ✅ | 本地诊断报告 |
@@ -657,7 +676,7 @@
 | 593 | ✅ | 本地组尾聚合 |
 | 594 | ⚠ | 需内置节假日表且每年维护调休 |
 | 595 | ✅ | 按月分页本地查询 |
-| 596 | ❌ | 胁迫告警类型协议不存在（§5） |
+| 596 | ❌ 原句无胁迫类 · 替代已接线 @App/UI/RecordsView.swift:1489 | 胁迫告警类型协议不存在（§5）。替代 = 组头红字「含防撬/试错 (596)」, 判据取真实存在的防撬 7 / 试错锁定 10 / 键盘锁定 224 (`RecordSearch.swift:89/977`), 点按落 586 当天全景; 与 581 蓝点不互相替代 (蓝点看未处置, 这条看这一天出过事) |
 | 597 | ✅ | 日志表加本地备注列 |
 | 598 | ✅ | 本地分页加载 |
 | 599 | ✅ | Swift Charts 本地渲染 |
@@ -668,7 +687,7 @@
 | 604 | ✅ | 成员台账统计 |
 | 605 | ✅ | 告警类型 6/7/10/13/224 已有 |
 | 606 | ✅ | 本地均线计算 |
-| 607 | ❌ | 标注对象胁迫告警不存在（§5） |
+| 607 | ❌ 原句无胁迫类 · 替代已接线 @App/UI/StatsView.swift:387 | 标注对象胁迫告警不存在（§5）。替代 = 标注对象换成防撬(7)/低电量(6)告警日: 趋势图上打三角符号 (`StatsView.swift:467` damageMarks), 点按复用 638 读点气泡里的"开门 N 次 · 告警 M 条" |
 | 608 | ✅ | 本地逐时聚合 |
 | 609 | ✅ | 窗口=本地 VF/VT，叠 type4 刻度 |
 | 610 | ✅ | 本地空窗计算 |
@@ -786,7 +805,7 @@
 | 722 | ✅ | SHA256 本地校验行 |
 | 723 | ✅ | 本地告警流聚合 |
 | 724 | ✅ | 按实际告警类型定色 |
-| 725 | ❌ | 依赖不存在的胁迫告警（§5） |
+| 725 | ❌ · 替代未建 | 依赖不存在的胁迫告警（§5）。替代 = "高危告警全屏确认卡"(触发条件用未处置的防撬/键盘锁定告警, 误报/确认双按钮复用); 仍未落 |
 | 726 | ✅ | 本地处置字段，适用现有告警 |
 | 727 | ✅ | 本地检查清单+状态复用 |
 | 728 | ✅ | 静态指引内容 |
@@ -805,7 +824,7 @@
 | 741 | ✅ | 本地聚合子查询 |
 | 742 | ⚠ | 依赖处置时间数据积累 |
 | 743 | ✅ | 本地逐条处置 |
-| 744 | ❌ | 入口依赖不存在的胁迫详情（§5） |
+| 744 | ❌ 原句入口不存在 · 替代已接线 @App/UI/AlarmCenterView.swift:122 | 入口依赖不存在的胁迫详情（§5）。替代 = 科普折叠段挂到真实存在的三类告警 (试错锁定 10 / 键盘锁定 224 / 防撬 7) 上, 段内写明协议无「胁迫」类, 不虚构查不到的类型 |
 | 745 | ✅ | 本地测试标记 |
 | 746 | ✅ | 本地单告警 PDF |
 | 747 | ✅ | 本地前后对比聚合 |
@@ -882,12 +901,13 @@
 
 | 判定 | 数量 |
 |---|---|
-| ✅ 可行 | 205 |
-| ⚠ 受限/需实测 | 30 |
-| ❌ 不可行 | 15 |
+| ✅ 可行 | 204 |
+| ⚠ 受限/需实测 | 26 |
+| ❌ 不可行 | 20 |
 | 合计 | 250 |
 
 ❌ 集中在 M/N 两组（桌面 Widget 显数据、控制中心显状态）：免费账号 App Groups 禁用，Widget 只能做"拉起 App 的哑按钮"；另有 1009 依赖协议不存在的"上锁状态"。
+**2026-10-12 本批的三处变动（在上表数字内已计入）**：957/958/960/961/962 由 ⚠ 改判 ❌（⚠ −5 / ❌ +5，根因 = CoreNFC 不确定 + 协议无 NFC 凭证管理命令 @docs/CAPABILITY.md:82）；990 由 ✅ 改判 ⚠ 替代口径（✅ −1 / ⚠ +1）；924/925/931/934 判定不变，只补记因与证据（App Groups 那条 grep 的实命中行）。**959/963 本批不重判**，仍按原 ⚠。
 
 ## 逐条判定
 
@@ -931,7 +951,7 @@
 | 836 | ✅ | 本地假数据开关 |
 | 837 | ✅ | 本地样例包 |
 | 838 | ✅ | 本地预习动画 |
-| 839 | ✅ | 本地示例过滤 |
+| 839 | ⚠ PART | 本地示例过滤。判定与理由见 `App/Core/DemoKit.swift:122-126`：`kf_demo_drillfilter` 全仓零读取方，记录页取数按锁维度、demo 样例本就挂在演示锁 `demoMac` 下；接上它只是给没人看的旗子加按钮。常量仅留给 clearAll 兜底清键 |
 | 840 | ✅ | 本地成就数据 |
 | 841 | ✅ | SF Symbols 绘制 |
 | 842 | ✅ | 本地备份流程 |
@@ -1016,18 +1036,18 @@
 | 921 | ✅ | 本地星标+引用 |
 | 922 | ✅ | 本地批量操作 |
 | 923 | ✅ | 本地回收站 |
-| 924 | ❌ | App Groups 禁用，Widget 不能读数据 |
-| 925 | ❌ | App Groups 禁用 |
-| 926 | ❌ | App Groups 禁用 |
+| 924 | ❌ 原句无数据源 · 划掉（2026-10-12 记因）· 替代已由 943 承担 @App/Core/QuickActions.swift:18-21 | 技术根因 = **免费 Personal Team 签名没有 App Groups，App Extension 读不到本机数据**：`grep -n "AppGroup\|entitlements\|CODE_SIGN_STYLE\|DEVELOPMENT_TEAM" project.yml` 只有 `project.yml:12`（`CODE_SIGN_STYLE: Automatic`）与 `project.yml:13`（`DEVELOPMENT_TEAM: ""`，team 为空）两行命中，**AppGroup / entitlements 两个词 0 命中**，全仓 `find -name "*.entitlements"` 也是 0 个文件 ⇒ Widget target（`project.yml:70-87`，`type: app-extension`）与主 App 之间没有共享容器，中号组件要的"锁状态+电量+今日次数"三个读数一个都拿不到。哑按钮实装自述：`Widget/LockWidget.swift:20-22`（时间线条目只有 `let date: Date`）、`:93`（「本组件不含锁状态、电量，也不执行开锁」）。替代 = 主屏长按快速操作（查看记录 / 生成临时码 / 查电量，@App/Core/QuickActions.swift:18-21），不另建 Widget |
+| 925 | ❌ 原句无数据源 · 划掉（2026-10-12 记因）· 替代已由 App 内多锁纵览承担 @App/UI/LockOverviewView.swift:38 + @App/UI/DeviceStripCard.swift:20 | 同一根因：无 App Groups（`project.yml:12-13` 是 grep 唯一命中的两行，AppGroup/entitlements 0 命中、全仓无 `.entitlements` 文件），而"每把锁一栏 + 各自配色"要的是**逐锁台账跨进程可读** —— `project.yml:68` 的注释原话就是「免费账号无 App Groups → 这个 target 读不到主 App 的任何数据」。替代 = 设备页锁切换/横滑序列（@App/UI/DeviceHomeView.swift:290-295）+ 跨锁电量总览条带（@App/UI/LockOverviewView.swift:38 `BatteryStripCard(usages: usages)`，实现 @App/UI/DeviceStripCard.swift:20「288 电量总览条带 (低电靠左 = 1041 电量升序)」），多锁一屏纵览留在 App 内，不建 Widget。（原行的指针 `LockOverviewView.swift:79` 本批实读发现那只是一个收尾大括号，且条带卡已迁到 `DeviceStripCard.swift`，故换成上面这两个真落点） |
+| 926 | ❌ 原句无数据源 · 替代已接线 @App/Core/CredentialOrg.swift:775 | App Groups 禁用（Widget 读不到台账）。替代 = 到期前 2 小时与到期时各发本地通知 (scheduleAlerts 六条排程: d7/d3/d1/h24/h2/t0) |
 | 927 | ⚠ | Intent 开锁须回落 App，后台直执行受限 |
-| 928 | ❌ | App Groups 禁用 |
-| 929 | ❌ | App Groups 禁用 |
-| 930 | ❌ | App Groups 禁用 |
-| 931 | ❌ | App Groups 禁用 |
+| 928 | ❌ 原句无数据源 · 替代已由 943 承担 @App/Core/QuickActions.swift:19 | App Groups 禁用。替代 = 主屏长按「查看记录」深链直达记录 Tab; App 首屏即时间线 (975 连续天数常驻顶部) |
+| 929 | ❌ 原句无数据源 · 替代已由 975 承担 @App/Core/Milestones.swift:140 | App Groups 禁用。替代 = 975 连续天数常驻时间线顶部, 无 Widget 诉求 |
+| 930 | ❌ 原句无数据源 · 替代已接线 @App/Core/CredentialOrg.swift:775 + @App/LockKeeperApp.swift:923 | App Groups 禁用。替代 = 到期前 7/3/1 天三级本地通知 (新增 d3/d1 两档) + 凭证 Tab 角标 (近 7 天到期条数, expiringSoonCount) |
+| 931 | ❌ 原句无数据源 · 划掉（2026-10-12 记因）· 替代已由 1041+1004 承担 @App/UI/DeviceHomeView.swift:295 + @App/Core/BatteryCare.swift:175 | 根因同上：电量读数是 03 响应的 `0x11 powerLevel`（@vendor/app/utils/status.js:14），落库在主 App 的 `kf_snap_`/`kf_batt_` 键里，而 Widget target 没有 App Group —— `grep -n "AppGroup\|entitlements\|CODE_SIGN_STYLE\|DEVELOPMENT_TEAM" project.yml` 只有 `:12`/`:13` 两行、AppGroup 与 entitlements 0 命中 ⇒ 大尺寸"并排所有设备电量条形"在本版本拿不到任何一格。替代 = 设备页/设备管理页电量升序（@App/UI/DeviceHomeView.swift:295 `let byBatt = DB.store.getBool("kf_sort_batt")   // 1041 电量升序开关`；同一份条带卡 @App/UI/DeviceStripCard.swift:20）+ ≤20% 低电本地通知（@App/Core/BatteryCare.swift:175「1004 低电本地通知 (滞回: ≤20% 提醒 / ≤10% 升级, 恢复 >30% 重新武装)」），不建 Widget |
 | 932 | ❌ | 条件切换依赖读设置，App Groups 禁 |
 | 933 | ✅ | 渲染模式纯外观，静态 Widget 即可 |
-| 934 | ❌ | 配置 Intent 需锁列表跨进程共享 |
-| 935 | ❌ | App Groups 禁用 |
+| 934 | ❌ 原句无实现面 · 划掉（2026-10-12 记因，**双重不可得**） | ①「每个 Widget 可选锁与显示字段」的选项要写回本机、组件要读出，两侧都跨 target，而没有 App Group：`grep -n "AppGroup\|entitlements\|CODE_SIGN_STYLE\|DEVELOPMENT_TEAM" project.yml` 只命中 `project.yml:12`（Automatic）与 `project.yml:13`（`DEVELOPMENT_TEAM: ""`），AppGroup/entitlements 0 命中、全仓无 `.entitlements` 文件；② 候选锁列表本身只在主 App 进程里（`project.yml:68` 注释：「这个 target 读不到主 App 的任何数据」），Configuration Intent 无数据可列。实装侧也确认没有这一面：现存组件用的是 `Widget/LockWidget.swift:89` 的 `StaticConfiguration(kind: "DialWidget", provider: DialProvider())` —— **不是 `IntentConfiguration`**。替代 = App 内"指标位显隐"偏好（909）定制信息密度，不建第二个配置面 |
+| 935 | ❌ 原句无数据源 · 替代已接线 @App/UI/RecordsView.swift:1080 | App Groups 禁用。替代 = App 内时间线顶部「今日概要」行显示首末开门时间 (挂在 590 连续行同区) |
 | 936 | ❌ | 前提（动态刷新 Widget）不成立 |
 | 937 | ⚠ | ControlWidget 免费可用，BLE 须回落 App |
 | 938 | ❌ | App Groups+上锁状态位协议无（§5） |
@@ -1049,12 +1069,12 @@
 | 954 | ✅ | 本地教程 |
 | 955 | ✅ | 本地台账统计 |
 | 956 | ✅ | 本地语音播报 |
-| 957 | ⚠ | NFC capability 需实测（CONSTRAINTS） |
-| 958 | ⚠ | NFC 需实测 |
+| 957 | ❌ 划掉（2026-10-12 记因）· 两半根因：CoreNFC 不确定 + **协议侧无 NFC 凭证管理命令** | 平台半 = 免费 Personal Team 下 CoreNFC capability 不确定可用（@docs/CONSTRAINTS.md:32「落地前需实测；不可用则放弃 NFC 类创意」）；**协议半是硬缺口** = 没有发卡/删卡命令（@docs/CAPABILITY.md:82 原文「NFC 卡管理：日志有 type5、产品有 Z3NFC，但命令面无发卡/删卡命令（？）」，§1 那 32 条确证命令里没有它）⇒ 就算实测通过，"管理已写标签"也无对象可管。本机侧同样为空：@App/Intents/AppIntents.swift:437-438 原文「`kf_nfc_tags` 全仓**零写入方** (没有任何登记/写卡入口)」。**替代口径** = 面向用户改说「可在系统「快捷指令」App 里做 NFC 自动化」（同口径先例 @App/Intents/AppIntents.swift:330），界面上现有真话文案 @App/Intents/AppIntents.swift:440 + :444-445（「登记与写卡入口 \| 尚无」「能力探测 \| 未探测」）；写卡本身保持划掉 |
+| 958 | ❌ 划掉（2026-10-12 记因，与 957 同两半根因） | 「读到**已注册**标签」这个集合本机建不出来（`kf_nfc_tags` 零写入方 @App/Intents/AppIntents.swift:437-438），协议侧也没有把 NFC 卡登记进锁的命令（@docs/CAPABILITY.md:82）；CoreNFC 读取面同样未实测（@docs/CONSTRAINTS.md:32）。开锁动作只走 cmd 04（@docs/CAPABILITY.md:13），与标签无关 ⇒ 原句"贴标即确认"没有可信的"已注册"判据。**替代口径** = 碰一碰类自动化交系统「快捷指令」App，开锁仍在 App 圆盘按住确认 |
 | 959 | ⚠ | NFC 需实测 |
-| 960 | ⚠ | NFC 需实测 |
-| 961 | ⚠ | 依附 NFC 能力实测结果 |
-| 962 | ⚠ | NFC 需实测 |
+| 960 | ❌ 划掉（2026-10-12 记因）· 写卡向导的两个前提都不成立 | 写这一步落在：① CoreNFC capability 免费账号下不确定（@docs/CONSTRAINTS.md:32）；② 协议无发卡命令，写进卡的凭证锁端不认、也无删卡命令可撤（@docs/CAPABILITY.md:82）。向导做出来只能"写完不知锁认不认"，正是 @App/Intents/AppIntents.swift:439 那句「缺的东西就写缺，别留一个看起来在工作的形状」点名的形状。**替代口径** = 系统「快捷指令」App 写空白 NFC 自动化标签；锁侧凭证仍走 BLE 08/0A/13 |
+| 961 | ❌ 划掉（2026-10-12 记因，依附 957/960） | 依附的读取页不存在：@App/Intents/AppIntents.swift:444 原文「登记与写卡入口 \| 尚无 — 先实测 CoreNFC 可用，再生成写卡数据」⇒ 给一个没有页面的对准动画 = 装饰一个不存在的入口。真机 capability 实测通过并真有读取页时，随那一族一起重开 |
+| 962 | ❌ 划掉（2026-10-12 记因，触发源建不出来） | "限制 NFC 触发只在前台/已解锁生效"要先有触发源，而标签写不出来（957/960 同两半根因：@docs/CONSTRAINTS.md:32 + @docs/CAPABILITY.md:82）⇒ 没有对象可限。系统侧对后台时长的约束本就在（@docs/CONSTRAINTS.md:34）。**既有纪律已覆盖这一诉求**：深链在应用锁未解开时只挂起（@project.yml:33 那条 294 说明），快捷指令自动化的执行态由系统决定 |
 | 963 | ⚠ | 通知可发；"上锁状态"无协议位（§5） |
 | 964 | ✅ | 本地来源标记 |
 | 965 | ⚠ | Watch target 可建但加重签负担 |
@@ -1082,7 +1102,7 @@
 | 987 | ✅ | 本地模糊文案 |
 | 988 | ✅ | 本地陈列 |
 | 989 | ✅ | 本地称号 |
-| 990 | ✅ | 本地附言台账 |
+| 990 | ⚠ 替代口径（本机台账 + **归属是推断值，不是锁端事实**）· 落点复用既有两处 @App/Core/RecordSearch.swift:24 + @App/Core/MemberHub.swift:21 | 2026-10-12 拍板：协议无"开门附言"位（日志条目结构 @vendor/app/utils/status.js:101、类型表 @:111-118 均无），也不新建第三套形状 —— 附言写进既有的 186 逐条备注（@App/Core/RecordSearch.swift:24 `static func noteKey(_ mac: String) -> String { "kf_rnote_" + mac }`；备份侧同键注为"186 备注" @App/Services/BackupStudioKit.swift:156）与 475 家庭便签（@App/Core/MemberHub.swift:21 `var note: String = ""            // 475 家庭便签 (与成员绑定)`）。**"这句附言是谁/哪次开门"只能推断**：日志无身份字段（@docs/CAPABILITY.md:65），归属走 @App/Services/Attribution.swift:1-4 那两条可证规则（R1 临时码窗口唯一命中 / R2 锁内唯一凭证 + 实时背书，JS 同源 @vendor/app/services/attribution.js:1-9），规则外一律不点名；界面口径照 @App/UI/RecordsView.swift:2014 原文「台账推断这条「" + kindWord + "开门」发生在 " + r.time」，带"约/台账推断" |
 | 991 | ✅ | 本地生日日历 |
 | 992 | ✅ | 本地计数彩蛋 |
 | 993 | ✅ | 本地徽章 |
@@ -1101,7 +1121,7 @@
 | 1006 | ✅ | 本地计数 |
 | 1007 | ✅ | 本地计数 |
 | 1008 | ✅ | 本地录入日期台账 |
-| 1009 | ❌ | 协议无上锁命令与状态位（§5） |
+| 1009 | ❌ 原句无触发事件 · 替代已接线 @App/UI/UnlockDial.swift:115 | 协议无上锁命令与状态位（§5）。替代 = 涟漪改挂「指令确认瞬间」，与 73 是同一实现，不再另造触发点 |
 | 1010 | ✅ | 本地绑锁日期 |
 | 1011 | ✅ | 本地凭证日期 |
 | 1012 | ✅ | 本地通知 |
@@ -1148,18 +1168,23 @@
 
 | 编号 | 创意 | 不可行原因 | 替代方案 / 跳过理由 |
 |---|---|---|---|
-| 924 | 状态中号 Widget | App Groups 禁用，Widget 读不到 App 的 SQLite/设置 | 主屏长按快速操作（943）承担"一眼达"，点开即见状态 |
-| 925 | 多锁横滑 Widget | 同上 | App 内顶部锁切换器，多锁一屏纵览 |
+| 924 | 状态中号 Widget | **免费 Personal Team 签名没有 App Groups** ⇒ App Extension 读不到本机数据。（2026-10-12 记因，可复核：`grep -n "AppGroup\|entitlements\|CODE_SIGN_STYLE\|DEVELOPMENT_TEAM" project.yml` 只命中 `project.yml:12` 与 `:13` 两行，AppGroup/entitlements **0 命中**，全仓无 `.entitlements` 文件；Widget target 见 `project.yml:70-87`，注释自述 `:68`。另：本仓**没有 SQLite**（全本地 UserDefaults + Codable，见 217 行那一条），原句"SQLite/设置"是沿用旧措辞，按实读取代） | 主屏长按快速操作（943，@App/Core/QuickActions.swift:18-21）承担"一眼达"，点开即见状态 |
+| 925 | 多锁横滑 Widget | 同 924（无 App Groups，逐锁台账跨不过 target 边界；证据行同上一栏） | App 内顶部锁切换器（@App/UI/DeviceHomeView.swift:290-295）+ 多锁一屏纵览（@App/UI/LockOverviewView.swift:38 → @App/UI/DeviceStripCard.swift:20） |
 | 926 | 下一场到期 Widget | 同上 | 到期前 2 小时与到期时各发本地通知，比 Widget 倒数更及时可靠 |
 | 928 | 速览记录 Widget | 同上 | 快速操作直达记录 Tab；App 首屏即时间线 |
 | 929 | 连续天数 Widget | 同上 | 975 已把连续天数常驻时间线顶部，无 Widget 诉求 |
 | 930 | 到期凭证 Widget | 同上 | 到期前 7/3/1 天三级本地通知 + 凭证页顶部红点 |
-| 931 | 全锁电量 Widget | 同上 | 设备管理页电量升序（1041）+ 低于 20% 本地通知（1004） |
+| 931 | 全锁电量 Widget | 同 924 的签名缺口（无 App Groups ⇒ 03 读回来的 `0x11 powerLevel`，@vendor/app/utils/status.js:14，落在主 App 的 `kf_snap_`/`kf_batt_` 键里，组件一格都读不到） | 设备管理页电量升序（1041，@App/UI/DeviceHomeView.swift:295）+ 低于 20% 本地通知（1004，@App/Core/BatteryCare.swift:175） |
 | 932 | 应用锁联动 Widget | 条件切换需读应用锁设置（App Groups） | Widget 恒显静态盾牌——本就不能显数据，隐私形态天然成立，无需切换 |
-| 934 | 字段自配 Widget | 配置 Intent 需锁列表跨进程注入 | 跳过；App 内"指标位显隐"（909）已可定制信息密度 |
+| 934 | 字段自配 Widget | **双重不可得**（2026-10-12 记因）：① 配置项写回 + 组件读出两侧都跨 target，而没有 App Group（`project.yml:12-13` 是那条 grep 唯一命中的两行，AppGroup/entitlements 0 命中）；② 候选锁列表只在主 App 进程内（`project.yml:68`）。实装侧同样是静态组件：`Widget/LockWidget.swift:89` 用的是 `StaticConfiguration`，**不是 `IntentConfiguration`** | 跳过；App 内"指标位显隐"（909）已可定制信息密度 |
 | 935 | 早晚两点 Widget | App Groups 禁用 | App 内"今日概要"行显示首末开门时间 |
 | 936 | 省电静态模式 | 前提（动态刷新 Widget）在免费账号不存在 | 无需实现：Widget 恒为静态即天然省电 |
 | 938 | 只读状态控件 | 双重不可行：控件读不到数据（App Groups）+ 上锁状态位协议本就没有（CAPABILITY §5） | 控制中心只放"打开 App"深链按钮（937 形态），不带状态色点 |
 | 940 | StandBy 床头模式 | StandBy 展示的就是桌面 Widget，被 App Groups 拦；"已上锁"亦无协议位 | StandBy 用系统自带时钟；锁信息留给充电时点开 App 查看 |
 | 944 | 多锁控件组 | 同 938 | 控制中心单个深链控件；多锁状态进 App 看 |
+| 957 | NFC 标签中心 | **两半根因**：① CoreNFC capability 免费账号下不确定（@docs/CONSTRAINTS.md:32）；② **协议侧没有 NFC 凭证管理命令**（@docs/CAPABILITY.md:82 原文「NFC 卡管理：… 命令面无发卡/删卡命令（？」）⇒ 实测通过也没有卡可登记；本机 `kf_nfc_tags` 零写入方（@App/Intents/AppIntents.swift:437-438） | 面向用户的口径改说「可在系统「快捷指令」App 里做 NFC 自动化」（@App/Intents/AppIntents.swift:330 同口径先例）；**写卡本身保持划掉**，界面现有说明 @App/Intents/AppIntents.swift:440、:444-445 |
+| 958 | 贴标即确认 | 同 957 的协议半（无发卡/删卡命令，@docs/CAPABILITY.md:82）+ 读取面未实测（@docs/CONSTRAINTS.md:32）；开锁只走 cmd 04（@docs/CAPABILITY.md:13），与标签无关 | 碰一碰交系统「快捷指令」App；开锁仍在 App 圆盘按住确认 |
+| 960 | 钥匙扣写卡向导 | 同 957 两半根因：capability 不确定 + 无发卡命令 ⇒ 写完不知锁认不认，也无删卡口 | 系统「快捷指令」App 写空白标签做自动化；锁侧凭证仍走 BLE 08/0A/13 |
+| 961 | 对准波纹提示 | 依附的 NFC 读取页不存在（@App/Intents/AppIntents.swift:444「登记与写卡入口 \| 尚无」），与 957/960 同源 | 不做；那一族实测通过后随读取页一起重开 |
+| 962 | 前台限制（NFC 触发只在前台/已解锁生效） | 触发源（标签）建不出来（同 957/960），"限制生效态"没有对象可限；后台时长另有系统约束（@docs/CONSTRAINTS.md:34） | 既有纪律覆盖：深链在应用锁未解开时只挂起（@project.yml:33），快捷指令自动化执行态由系统决定 |
 | 1009 | 涟漪结界 | 协议无"上锁"命令与状态反馈，涟漪无真实触发点（§5） | 改挂"开锁成功/校时成功"等协议确证的事件，动效效果不变 |

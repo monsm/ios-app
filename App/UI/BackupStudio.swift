@@ -4,6 +4,7 @@ import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
 import CoreImage
+import VisionKit   // 411 扫码接收侧复用 CredentialStudio 522 的 DataScannerView (形状见 docs/API-VERIFY.md, 不猜改)
 
 // ================= 入口: 工作室首页 =================
 struct BackupStudioView: View {
@@ -22,7 +23,7 @@ struct BackupStudioView: View {
                     trustHeader
                     actionCards
                     cadenceCard
-                    MigrationPromptCard().staggered(1)
+                    MigrationPromptCard(onOpenMigration: { showMigration = true }).staggered(1)
                 }
                 .padding(.vertical, DS.Space.m)
             }
@@ -60,7 +61,8 @@ struct BackupStudioView: View {
                     .foregroundStyle(DS.Palette.textSub)
                     .accessibilityElement(children: .combine)
                     // 37 备份加密徽章 (Proton): 算法参数外露, 换算法后旧文件各自标注
-                    Label("AES-128-CBC + HMAC-SHA256 · PBKDF2 60000 轮 (37)",
+                    Label("AES-128-CBC + HMAC-SHA256 · PBKDF2 60000 轮 (37) — 徽章是「当前代码」用的算法; "
+                          + "每份旧备份自己的参数在「本地备份文件」列表逐文件标注 (435)",
                           systemImage: "lock.shield.fill")
                         .font(.caption2)
                         .foregroundStyle(DS.Palette.ok)
@@ -83,7 +85,8 @@ struct BackupStudioView: View {
             // 421 24h 内可撤销本次恢复
             if BackupStudio.canUndoLastRestore {
                 Button {
-                    confirmDestructive("撤销本次恢复", "将回到恢复前自动打的快照 (421)。确定吗？",
+                    confirmDestructive("撤销本次恢复", "将回到恢复前自动打的快照 (421)。只回写快照里已有的内容，"
+                    + "快照之后你新写的备注、新钉的复核日不会被删掉。确定吗？",
                                         confirmTitle: "撤销") {
                         if BackupStudio.undoLastRestore() {
                             app.loadDevices()
@@ -175,6 +178,9 @@ struct BackupStudioView: View {
 
     // ---------- 198 节奏三档 + 430 滚动保留 + 1018 月度备份日 + 428 充电 ----------
     @State private var cadence: String = ""
+    // 713 固定导出目录: 选择器开关 + 改完强制重算一次 (书签是 DB 里的值, 不 tick 不会重画)
+    @State private var showDirPicker = false
+    @State private var dirTick = 0
     @State private var keep: Int = 0
     @State private var monthDay: Int = 0
     private var cadenceCard: some View {
@@ -182,15 +188,51 @@ struct BackupStudioView: View {
             SectionTitle(text: "备份策略")
             Picker("备份节奏 (198)", selection: Binding(
                 get: { cadence.isEmpty ? BackupStudio.cadence : cadence },
-                set: { BackupStudio.cadence = $0; cadence = $0 })) {
+                set: { BackupStudio.cadence = $0; cadence = $0
+                       Task { await BackupStudio.scheduleCadenceReminder() } })) {
                 Text("仅手动").tag("manual")
-                Text("每日").tag("daily")
                 Text("每周").tag("weekly")
+                Text("每月").tag("monthly")
             }
             .pickerStyle(.segmented)
             Stepper("滚动保留 (430): 远端只留 \(keep) 份", value: Binding(
                 get: { keep },
                 set: { BackupStudio.rollingKeep = $0; keep = $0 }), in: 0...20)
+            // 删除面必须写在界面上：默认远端目录就是整个坚果云，用户以为「只留 N 份」只管自己的备份，
+            // 而这一句决定他敢不敢开这个开关 (判据与理由见 BackupStudioKit.pruneRemote 上方)。
+            Text("只清理本 App 生成的备份文件 (文件名以「锁管家_」开头那族)，目录里的其它文件与子目录一律不动；0 = 不限。")
+                .font(.footnote)
+                .foregroundStyle(DS.Palette.textSub)
+                .fixedSize(horizontal: false, vertical: true)
+            // 713 固定导出目录: 用安全作用域书签记住用户选的文件夹, 之后每次导出都落那里 ——
+            // 没设过时回落 App 缓存目录 (系统可能清理), 所以这里把两种落点都写清。
+            let _ = dirTick
+            HStack(spacing: DS.Space.s) {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("导出目录 (713)")
+                        .font(.subheadline.weight(.medium))
+                    Text(ExportDir.name.isEmpty
+                         ? "未设置 — 导出落在 App 缓存目录 (系统可能清理)"
+                         : "已固定: \(ExportDir.name)")
+                        .font(.footnote)
+                        .foregroundStyle(DS.Palette.textSub)
+                }
+                Spacer(minLength: 0)
+                Button(ExportDir.name.isEmpty ? "选择" : "更换") { showDirPicker = true }
+                    .font(.footnote)
+                    .foregroundStyle(DS.Palette.accentText)
+                    .frame(minHeight: DS.Hit.min)
+                if !ExportDir.name.isEmpty {
+                    Button("清除") { ExportDir.clear(); dirTick += 1 }
+                        .font(.footnote)
+                        .foregroundStyle(DS.Palette.danger)
+                        .frame(minHeight: DS.Hit.min)
+                }
+            }
+            .frame(minHeight: DS.Hit.min)
+            .fileImporter(isPresented: $showDirPicker, allowedContentTypes: [.folder]) { r in
+                if case .success(let u) = r { ExportDir.set(u); dirTick += 1 }
+            }
             Picker("月度备份日 (1018): \(monthDay == 0 ? "关" : "每月 \(monthDay) 日")",
                    selection: Binding(
                     get: { monthDay },
@@ -228,28 +270,62 @@ struct BackupStudioView: View {
     }
 }
 
-// ---------- 446 旧机退役横幅: 首验全勾 → 引导本地销毁 ----------
+// ---------- 445/446 旧机顶部卡: 中断事务 → 退役引导 → 已退役存档 ----------
 struct MigrationPromptCard: View {
     @EnvironmentObject var app: AppState
+    var onOpenMigration: () -> Void = {}
     @State private var retired: Bool = false
+    @State private var firstDone: Bool = false
+    @State private var txn: BackupStudio.MigTxn?
     var body: some View {
-        if retired {
-            Card(tint: .warn) {
-                HStack(spacing: DS.Space.s) {
-                    Image(systemName: "flag.checkered")
-                        .font(.system(size: DS.Icon.md))
+        Group {
+            if let t = txn {
+                Card(tint: .warn) {
+                    Label("上次换机迁移中断 (445)", systemImage: "arrow.uturn.backward")
+                        .font(.subheadline.weight(.semibold))
                         .foregroundStyle(DS.Palette.warn)
-                        .accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                        Text("本机首验清单已全部通过 (446)")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(DS.Palette.text)
-                        Text("已标记退役 (446) — 建议走 设置→安全中心→销毁 做三级本地销毁。")
-                            .font(.caption)
-                            .foregroundStyle(DS.Palette.textSub)
-                            .fixedSize(horizontal: false, vertical: true)
+                    Text("临时事务表还在: \(t.channel) 通道已完成 \(t.doneMacs.count) 把锁。回滚 = 回到迁移前; 继续 = 已完成的锁自动跳过。")
+                        .font(.caption)
+                        .foregroundStyle(DS.Palette.textSub)
+                        .fixedSize(horizontal: false, vertical: true)
+                    HStack(spacing: DS.Space.s) {
+                        Button("回滚") {
+                            if BackupStudio.rollbackMigrationTxn() {
+                                app.loadDevices()
+                                txn = nil
+                                app.showToast("已回滚到迁移前 (445)")
+                            } else {
+                                app.showToast("回滚失败: 快照不可读")
+                            }
+                        }
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(DS.Palette.danger)
+                        .frame(minHeight: DS.Hit.min)
+                        Button("继续") { onOpenMigration() }
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(DS.Palette.accentText)
+                            .frame(minHeight: DS.Hit.min)
                     }
-                    Spacer(minLength: 0)
+                }
+            } else if retired {
+                Card(tint: .warn) {
+                    Label("已标记退役 (446)", systemImage: "flag.checkered")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(DS.Palette.warn)
+                    Text("建议走 设置→安全中心→销毁 做三级本地销毁; 备份文件是否保留由你决定。")
+                        .font(.caption)
+                        .foregroundStyle(DS.Palette.textSub)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            } else if firstDone {
+                Card(tint: .warn) {
+                    Label("本机首验清单已全部通过 (446)", systemImage: "flag.checkered")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(DS.Palette.text)
+                    Text("每把锁都已在新机逐把验证过 — 若这台是准备退下的旧机, 标记退役后到 设置→安全中心→销毁 做三级本地销毁 (446)。")
+                        .font(.caption)
+                        .foregroundStyle(DS.Palette.textSub)
+                        .fixedSize(horizontal: false, vertical: true)
                     Button("标记退役") {
                         BackupStudio.markRetired()
                         retired = true
@@ -261,7 +337,11 @@ struct MigrationPromptCard: View {
                 }
             }
         }
-        .onAppear { retired = BackupStudio.retirementBanner }
+        .onAppear {
+            txn = BackupStudio.pendingMigrationTxn()
+            retired = BackupStudio.retirementBanner
+            firstDone = BackupStudio.firstChecksAllDone
+        }
     }
 }
 
@@ -277,9 +357,18 @@ struct ExportWizardView: View {
     @State private var useVolumes = false  // 410 按年分卷
     @State private var busy = false
     @State private var doneText: String = ""
-    @State private var doneURL: URL?
+    @State private var doneURLs: [URL] = []
     @State private var qrPayload: String?
     @State private var otpToggle = false
+    // 439 旧机导出侧真进度: 百分比与分卷序号只随真做完的阶段前进
+    @State private var exporting = false
+    @State private var exportPct = 0
+    @State private var exportVol = 0
+    @State private var exportVolTotal = 1
+    // 440 增量补传 (旧机侧): 按锁勾选生成小包
+    @State private var incSel: Set<String> = []
+    @State private var incURL: URL?
+    @State private var incMsg = ""
 
     private let stepTitles = ["选分区", "设口令", "导出前体检", "完成"]
 
@@ -336,11 +425,12 @@ struct ExportWizardView: View {
             zoneToggle("凭证", counts["凭证"] ?? 0, $zones.credentials,
                        "密码与指纹台账")
             zoneToggle("记录", counts["记录"] ?? 0, $zones.records,
-                       "锁端日志缓存 (按锁约)")
+                       "锁端日志缓存 (按锁约)", unit: "份缓存")
             zoneToggle("设置", counts["设置"] ?? 0, $zones.settings,
                        "成员档案 · 应用锁摘要 · dongle/gateway")
             Toggle("包含独立口令组密钥 (181, 默认排除更稳妥)",
                    isOn: $otpToggle)
+                .help("勾选后 TOTP 种子/静态码进**备份包体内部**: 随整包口令加密、进校验和、恢复时能读回来。未勾则完全不进包体。仅在勾选\"设置\"分区时生效。")
                 .onAppear { otpToggle = BackupStudio.otpIncluded() }
                 .onChange(of: otpToggle) { _, on in DB.store.set("kf_bk_otp", on) }
             if useVolumes, let vols = BackupStudio.volumes(zones: zones, encrypt: nil) {
@@ -352,14 +442,14 @@ struct ExportWizardView: View {
             Spacer(minLength: 0)
         }
     }
-    private func zoneToggle(_ title: String, _ n: Int, _ on: Binding<Bool>, _ sub: String) -> some View {
+    private func zoneToggle(_ title: String, _ n: Int, _ on: Binding<Bool>, _ sub: String, unit: String = "条") -> some View {
         VStack(alignment: .leading, spacing: DS.Space.xxs) {
             Toggle(isOn: on) {
                 HStack {
                     Text(title)
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(DS.Palette.text)
-                    Text("\(n) 条").font(.caption).foregroundStyle(DS.Palette.textSub)
+                    Text("\(n) \(unit)").font(.caption).foregroundStyle(DS.Palette.textSub)
                     Spacer(minLength: 0)
                 }
             }
@@ -397,6 +487,12 @@ struct ExportWizardView: View {
                 Text("两次输入不一致")
                     .font(.caption)
                     .foregroundStyle(DS.Palette.danger)
+            } else if !pw.isEmpty && DB.verifyPasscode(pw) {
+                // 549 口令复用检测: 备份口令与应用锁密码相同 → 提示分开设置
+                Text("此口令与应用锁密码相同 — 建议两者分开设置 (549)。")
+                    .font(.caption)
+                    .foregroundStyle(DS.Palette.warn)
+                    .fixedSize(horizontal: false, vertical: true)
             } else if !pw.isEmpty && (pw.count < 8 || pw.allSatisfy(\.isNumber)) {
                 Text("纯数字或过短口令偏弱 — 不拦截, 仅提醒 (408)。")
                     .font(.caption)
@@ -407,12 +503,26 @@ struct ExportWizardView: View {
         }
     }
 
-    // ---------- 第 2 步: 412/431 体检 + 清理联动 ----------
+    // ---------- 第 2 步: 412/431 体检 + 清理联动 + 439 真导出进度 ----------
     private var healthStep: some View {
         VStack(alignment: .leading, spacing: DS.Space.m) {
             Text("导出前体检 (412): 统计摘要与问题清单。")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(DS.Palette.text)
+            // 439 大号百分比 + 分卷序号: 与换机迁移的新机导入页同一对读数, 双机肉眼对齐
+            if exporting {
+                VStack(alignment: .leading, spacing: DS.Space.xs) {
+                    Text("\(exportPct)%")
+                        .font(.largeTitle.weight(.heavy))
+                        .foregroundStyle(DS.Palette.text)
+                        .monospacedDigit()
+                    Text(exportVol == 0 ? "组包与加密中…" : "分卷 \(exportVol)/\(exportVolTotal)")
+                        .font(.caption)
+                        .foregroundStyle(DS.Palette.textSub)
+                    ProgressView(value: Double(exportPct), total: 100)
+                        .tint(DS.Palette.accentText)
+                }
+            }
             let rows = BackupStudio.preExportHealth()
             if rows.isEmpty {
                 Label("数据健康, 可直接导出", systemImage: "checkmark.seal")
@@ -463,14 +573,18 @@ struct ExportWizardView: View {
                 }
                 .animation(DS.Motion.standard, value: doneText.isEmpty)
             }
-            // 413 完成即分享 (ShareLink 系统面板 + 存储到文件快捷)
-            if let url = doneURL {
-                ShareLink(item: url, preview: SharePreview("离线锁管家备份"))
+            // 413 完成即分享 (ShareLink 系统面板 + 存储到文件快捷); 410 分卷时每卷各一枚
+            ForEach(doneURLs, id: \.self) { url in
+                ShareLink(item: url, preview: SharePreview("离线锁管家备份")) {
+                    Label(url.lastPathComponent, systemImage: "square.and.arrow.up")
+                        .font(.caption)
+                        .foregroundStyle(DS.Palette.accentText)
+                }
             }
-            // 411 二维码搬运: 仅凭证小包可生成 QR, 纯本地 CoreImage, 接收方另机扫码
+            // 411 二维码搬运: 仅凭证小包可生成 QR, 纯本地 CoreImage; 接收端在 换机迁移 的扫码通道
             if let q = qrPayload, let img = BackupStudio.qrImage(q) {
                 VStack(alignment: .leading, spacing: DS.Space.s) {
-                    Text("凭证小包二维码搬运 (411): 另一台手机用本 App 恢复页相机扫码, 全程无网络。")
+                    Text("凭证小包二维码搬运 (411): 另一台手机打开 备份工作室→换机迁移→扫码 用相机接收, 全程无网络。")
                         .font(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
@@ -481,10 +595,63 @@ struct ExportWizardView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
+            // 440 增量补传 (旧机侧): 新机对账报"缺的锁"后, 在旧机只把缺的锁重新打包
+            if !DB.keychains().isEmpty {
+                VStack(alignment: .leading, spacing: DS.Space.xs) {
+                    Text("增量补传 (440): 勾选要补的锁, 生成增量小包 (不含记录卷), 传到新机再走一次导入。")
+                        .font(.caption)
+                        .foregroundStyle(DS.Palette.textSub)
+                        .fixedSize(horizontal: false, vertical: true)
+                    ForEach(DB.keychains(), id: \.mac) { kc in
+                        Button {
+                            if incSel.contains(kc.mac) {
+                                incSel.remove(kc.mac)
+                            } else {
+                                incSel.insert(kc.mac)
+                            }
+                        } label: {
+                            HStack(spacing: DS.Space.s) {
+                                Image(systemName: incSel.contains(kc.mac) ? "checkmark.circle.fill" : "circle")
+                                    .font(.system(size: DS.Icon.sm))
+                                    .foregroundStyle(incSel.contains(kc.mac) ? DS.Palette.ok : DS.Palette.textSub)
+                                    .accessibilityHidden(true)
+                                Text(LockArchive.displayName(kc))
+                                    .font(.subheadline)
+                                    .foregroundStyle(DS.Palette.text)
+                                    .lineLimit(1)
+                                Spacer(minLength: 0)
+                                Text("\(DB.ledger(kc.mac).pwds.count + DB.ledger(kc.mac).fps.count) 条")
+                                    .font(.caption)
+                                    .foregroundStyle(DS.Palette.textSub)
+                            }
+                            .frame(minHeight: DS.Hit.min)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    Button("生成增量小包 (已勾 \(incSel.count) 把锁)") { makeIncremental() }
+                        .font(.subheadline)
+                        .foregroundStyle(DS.Palette.accentText)
+                        .frame(minHeight: DS.Hit.min)
+                        .disabled(incSel.isEmpty)
+                    if let u = incURL {
+                        ShareLink(item: u, preview: SharePreview("离线锁管家增量包")) {
+                            Text("分享 \(u.lastPathComponent)")
+                                .font(.caption)
+                                .foregroundStyle(DS.Palette.accentText)
+                        }
+                    }
+                    if !incMsg.isEmpty {
+                        Text(incMsg)
+                            .font(.caption2)
+                            .foregroundStyle(DS.Palette.textSub)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
             Button("再生成一份") {
                 qrPayload = nil
                 doneText = ""
-                doneURL = nil
+                doneURLs = []
                 step = 0
             }
             .buttonStyle(SecondaryActionStyle())
@@ -507,34 +674,90 @@ struct ExportWizardView: View {
 
     private func exportNow() {
         busy = true
-        defer { busy = false }
-        if cleanFirst { _ = BackupStudio.cleanExpired() }
+        exporting = true
+        exportPct = 0
+        exportVol = 0
+        exportVolTotal = 1
+        doneURLs = []
         let name = BackupStudio.fileName()
-        if useVolumes, let vols = BackupStudio.volumes(zones: zones, encrypt: pw.isEmpty ? nil : pw) {
-            var written = [URL]()
-            for v in vols {
-                let url = BackupStudio.dir.appendingPathComponent(BackupStudio.fileName(vol: v.index) + ".enc")
-                _ = try? v.text.write(to: url, atomically: true, encoding: .utf8)
-                written.append(url)
+        let crypt = pw.isEmpty ? nil : pw
+        Task {
+            if cleanFirst { _ = BackupStudio.cleanExpired() }
+            // 439 阶段 1 (真实工作): 组包 — 410 分卷与加密都发生在这里
+            let vols = useVolumes ? BackupStudio.volumes(zones: zones, encrypt: crypt) : nil
+            exportVolTotal = max(vols?.count ?? 1, 1)
+            try? await Task.sleep(for: .milliseconds(80))
+            var written: [URL] = []
+            var volFail = 0
+            if let vols = vols {
+                // 439: 每写完一卷才前进一步, 分卷序号同真
+                for (i, v) in vols.enumerated() {
+                    let url = BackupStudio.dir.appendingPathComponent(BackupStudio.fileName(vol: v.index))
+                    if (try? v.text.write(to: url, atomically: true, encoding: .utf8)) != nil {
+                        written.append(url)
+                    } else {
+                        volFail += 1
+                    }
+                    exportVol = i + 1
+                    exportPct = Int(Double(i + 1) / Double(exportVolTotal) * 100)
+                    try? await Task.sleep(for: .milliseconds(80))
+                }
+                qrPayload = nil
+            } else {
+                if let text = BackupStudio.exportText(zones: zones, encrypt: crypt),
+                   let url = BackupStudio.writeLocal(text, name: name) {
+                    written.append(url)
+                    BackupStudio.markExportSize(text)   // 193: 单卷导出记尺寸, 下次预估行对比用
+                    qrPayload = BackupStudio.credentialQRPayload()
+                }
+                exportVol = 1
+                exportPct = 100
+                try? await Task.sleep(for: .milliseconds(80))
             }
-            doneURL = written.first
-            doneText = "已按年拆为 \(vols.count) 卷 (410): 基础卷 + 逐年记录卷, 各卷可独立恢复。"
-            qrPayload = nil
-        } else {
-            guard let text = BackupStudio.exportText(zones: zones, encrypt: pw.isEmpty ? nil : pw) else {
-                app.showToast("导出失败: 编码为空"); return
+            if written.isEmpty {
+                exporting = false
+                busy = false
+                app.showToast("导出失败: 没有写出任何文件")
+                return
             }
-            doneURL = BackupStudio.writeLocal(text, name: name, otp: otpToggle)
-            doneText = "已写入 \(doneURL?.lastPathComponent ?? name + ".enc") (413)。"
-            qrPayload = BackupStudio.credentialQRPayload()
-            // 507 角标 + 511 事件
-            BackupStudio.recordEvent("export")
+            doneURLs = written
+            doneText = vols == nil
+                ? "已写入 \(written.first?.lastPathComponent ?? name) (413)。"
+                : "已按年拆为 \(written.count) 卷 (410): 基础卷 + 逐年记录卷, 各卷可独立恢复。"
+            if volFail > 0 { doneText += " 另有 \(volFail) 卷写盘失败。" }
+            // 430 本地滚动保留: 只在**这次真的写成了新备份**之后轮换, 与远端那枚共用 rollingKeep 同一档 (0 = 关)。
+            // 触发点不放列表页 onAppear —— 打开看一眼就删用户的文件是仓里明令禁止的那种实现。
+            let prunedLocal = BackupStudio.pruneLocal(keep: BackupStudio.rollingKeep)
+            if prunedLocal > 0 {
+                doneText += " 按「本地只留 \(BackupStudio.rollingKeep) 份」轮换, 清掉 \(prunedLocal) 个旧文件 (430)。"
+            }
+            // 507 角标 + 511 事件 (分卷路径旧实现漏记, 一并统一)
+            BackupStudio.recordEvent("导出备份")
+            Milestones.recordBackup()
+            app.evaluateAchievements()
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            DS.Haptics.tick.impactOccurred()
+            exporting = false
+            busy = false
+            withAnimation(DS.Motion.standard) { step = 3 }
         }
-        Milestones.recordBackup()
-        app.evaluateAchievements()
-        UINotificationFeedbackGenerator().notificationOccurred(.success)
-        DS.Haptics.tick.impactOccurred()
-        withAnimation(DS.Motion.standard) { step = 3 }
+    }
+
+    /// 440 增量补传 (旧机侧): 勾选的锁打成小包写盘, 记 511 事件
+    private func makeIncremental() {
+        guard !incSel.isEmpty else { return }
+        guard let t = BackupStudio.incrementalExportText(macs: incSel, zones: zones, encrypt: pw.isEmpty ? nil : pw) else {
+            incMsg = "没有可打包的锁或编码为空"
+            return
+        }
+        let url = BackupStudio.writeLocal(t, name: BackupStudio.incrementalFileName())
+        incURL = url
+        if url == nil {
+            incMsg = "写盘失败 — 检查存储空间后重试"
+        } else {
+            incMsg = "已写入本地备份文件列表 — 传到新机后用「换机迁移」任一通道导入"
+            BackupStudio.recordEvent("导出增量补传")
+        }
     }
 }
 
@@ -565,6 +788,12 @@ struct RestoreWizardView: View {
     @State private var report: [BackupStudio.DiffRow] = []
     @State private var done = false
     @State private var roView = false   // 456 只读副本
+    // 453 失败分层: 口令/文件头/哈希三层里的哪一层没过 — 卡片展示, 不用转瞬即逝的 toast
+    @State private var layerError: String?
+    // 425 三数: restore 返回的真实处置数
+    @State private var impN = 0
+    @State private var ovN = 0
+    @State private var skN = 0
 
     var body: some View {
         NavigationStack {
@@ -603,29 +832,77 @@ struct RestoreWizardView: View {
                 busy = true
                 defer { busy = false }
                 do {
-                    let pv = try BackupStudio.preview(text: text, password: pw.isEmpty ? nil : pw)
-                    preview = pv
+                    // 453: 预演即过三层检查 — 口令层解密、文件头层解码、哈希层比对
+                    let r = try BackupStudio.parsePreview(text: text, password: pw.isEmpty ? nil : pw)
+                    preview = r.preview
+                    bundle = r.bundle
+                    // 419: 冲突在预演阶段就列出来 (旧实现直到执行的同一帧才算, 卡片永远不显示)
+                    conflicts = BackupStudio.conflicts(r.bundle)
+                    for c in conflicts where conflictChoice[c.id] == nil { conflictChoice[c.id] = true }
+                    layerError = nil
                 } catch {
-                    app.showToast(error.localizedDescription)
+                    layerError = error.localizedDescription
                 }
+            }
+            if let e = layerError {
+                layerCard(e)
             }
         }
     }
+    /// 453 分层失败卡: 把三层里实际没过的那层与建议摆在原地
+    private func layerCard(_ e: String) -> some View {
+        VStack(alignment: .leading, spacing: DS.Space.xs) {
+            Label("解析/执行未通过 (453)", systemImage: "exclamationmark.triangle")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(DS.Palette.warn)
+            Text(e)
+                .font(.caption)
+                .foregroundStyle(DS.Palette.textSub)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(DS.Space.m)
+        .background(DS.Palette.warn.opacity(0.06), in: RoundedRectangle(cornerRadius: DS.Radius.tile, style: .continuous))
+    }
 
-    // ---------- 418 三策略 + 419 冲突裁决 + 427 分区反选 + 424 升级链 + 434 短码 ----------
+    // ---------- 418 三策略 + 419 冲突裁决 + 427 分区反选 + 424 升级链 + 453 分层 + 434 短码 ----------
     private func previewStep(_ p: BackupStudio.Preview) -> some View {
         VStack(alignment: .leading, spacing: DS.Space.m) {
             Label(p.source, systemImage: "arrow.left.arrow.right")
                 .font(.subheadline)
                 .foregroundStyle(DS.Palette.accentText)
                 .fixedSize(horizontal: false, vertical: true)
-            // 424 升级链提示: 旧 schema 自动升级
-            if p.schema < 5 {
-                Label("备份 v\(p.schema) → 当前 v5, 将自动走升级链 \(p.schema)→…→5 (424)",
-                      systemImage: "arrow.up.circle")
+            // 424 升级链: 逐级列出将要走的步骤 (执行侧 upgradeChain 同顺序同条数)
+            let steps = BackupStudio.upgradeSteps(from: p.schema)
+            if !steps.isEmpty {
+                VStack(alignment: .leading, spacing: DS.Space.xxs) {
+                    Label("旧 schema 自动升级链 (424): v\(p.schema) → v5, \(steps.count) 级", systemImage: "arrow.up.circle")
+                        .font(.caption)
+                        .foregroundStyle(DS.Palette.warn)
+                    ForEach(steps) { s in
+                        Text("v\(s.from) → v\(s.to): \(s.note)")
+                            .font(.caption2)
+                            .foregroundStyle(DS.Palette.textSub)
+                    }
+                }
+                .fixedSize(horizontal: false, vertical: true)
+            }
+            // 453 哈希层状态: 解析已过前两层, 这一行的三种状态在预演时就能说清
+            switch p.checksum {
+            case .ok:
+                Label("文件三层检查: 口令层已解 · 文件头已认 · 内容哈希一致 (453)", systemImage: "checkmark.seal")
+                    .font(.caption)
+                    .foregroundStyle(DS.Palette.ok)
+            case .absent:
+                Label("该备份没有校验和字段 (旧包/人工编辑) — 按兼容放行, 内容被改过时无法预警 (453)",
+                      systemImage: "exclamationmark.triangle")
                     .font(.caption)
                     .foregroundStyle(DS.Palette.warn)
                     .fixedSize(horizontal: false, vertical: true)
+            case .mismatch:
+                Label("内容哈希不一致 — 已在解析时拦下 (453)", systemImage: "xmark.seal")
+                    .font(.caption)
+                    .foregroundStyle(DS.Palette.danger)
             }
             // 分区条数 + 影响清单
             ForEach(p.zones, id: \.self) { z in
@@ -655,6 +932,10 @@ struct RestoreWizardView: View {
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
+            // 418: 量级预估行 (包内条数 + 同 ID 冲突数), 选策略前先知道规模
+            Text("预估: 本包 \(p.pwdCount) 密码/\(p.fpCount) 指纹, 同 ID 冲突 \(conflicts.count) 条 (418)")
+                .font(.caption)
+                .foregroundStyle(DS.Palette.textSub)
             // 421 恢复回滚点说明
             Label("执行前自动打本地快照, 24h 内可撤销 (421)",
                   systemImage: "arrow.uturn.left")
@@ -668,10 +949,28 @@ struct RestoreWizardView: View {
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            // 456 只读副本浏览: 打开备份内容看一眼, 不写主库
+            // 456 只读副本浏览: 打开备份内容看一眼, 不写主库 (锁列表 + 随机抽 5 条记录)
             Toggle("以只读副本打开该备份 (456, 不写主库)", isOn: $roView)
                 .font(.caption)
-            if roView, let lines = p.previewTrace?.prefix(5) {
+            if roView, let b = bundle {
+                ForEach(b.devices, id: \.mac) { d in
+                    HStack(spacing: DS.Space.s) {
+                        Image(systemName: "lock.fill")
+                            .font(.caption2)
+                            .foregroundStyle(DS.Palette.textSub)
+                            .accessibilityHidden(true)
+                        Text(LockArchive.displayName(d.kc))
+                            .font(.caption)
+                            .foregroundStyle(DS.Palette.text)
+                            .lineLimit(1)
+                        Spacer(minLength: 0)
+                        Text("\((d.ledger?.pwds.count ?? 0) + (d.ledger?.fps.count ?? 0)) 条凭证 · \(d.meta == nil ? "无运行参数" : "含运行参数")")
+                            .font(.caption2)
+                            .foregroundStyle(DS.Palette.textSub)
+                    }
+                }
+            }
+            if roView, let lines = p.previewTrace?.prefix(5), !lines.isEmpty {
                 ForEach(Array(lines.enumerated()), id: \.offset) { _, ln in
                     Text(ln)
                         .font(.caption.monospaced())
@@ -680,27 +979,37 @@ struct RestoreWizardView: View {
                         .truncationMode(.middle)
                 }
             }
+            if let e = layerError {
+                layerCard(e)
+            }
             BusyButton(title: "执行恢复", systemImage: "checkmark.seal", isBusy: busy) {
+                busy = true
+                defer { busy = false }
                 do {
-                    let plain = try BackupStudio.decryptAny(text, password: pw.isEmpty ? nil : pw)
-                    guard let data = plain.data(using: .utf8),
-                          let raw = try? JSONDecoder().decode(BackupBundle.self, from: data) else {
-                        throw DFUError.msg("解码失败 (453 文件头层)")
-                    }
-                    let b = BackupStudio.upgradeChain(raw)
+                    // 453: 三层全过才动库 — 口令层/文件头层/哈希层都走这一个入口
+                    let r = try BackupStudio.parsePreview(text: text, password: pw.isEmpty ? nil : pw)
+                    let b = r.bundle
                     bundle = b
                     conflicts = BackupStudio.conflicts(b)
-                    let r = BackupStudio.restore(b, strategy: strategy, zones: zones)
+                    for c in conflicts where conflictChoice[c.id] == nil { conflictChoice[c.id] = true }
+                    // 419: 卡片上逐条选定的保留方真送进 restore 入参 (未裁决按显示默认 = 取备份)
+                    var take = Set<String>()
+                    for c in conflicts where (conflictChoice[c.id] ?? true) { take.insert(c.id) }
+                    let res = BackupStudio.restore(b, strategy: strategy, zones: zones,
+                                                   conflictTakeBackup: take)
+                    impN = res.imported; ovN = res.overwritten; skN = res.skipped
+                    if b.globals?.appearance != nil && zones.settings { app.reloadAppearance() }   // 894 按分区
                     report = BackupStudio.compare(b, BackupStudio.bundleFor(zones))
                     app.loadDevices()
                     BackupStudio.markImported()
-                    BackupStudio.recordEvent("restore")
-                    armMigrateWizard(r.imported + r.overwritten)
+                    BackupStudio.recordEvent("恢复本机")
+                    armMigrateWizard(res.imported + res.overwritten)
                     done = true
+                    layerError = nil
                     UINotificationFeedbackGenerator().notificationOccurred(.success)
-                    app.showToast("恢复完成: 新增 \(r.imported), 覆盖 \(r.overwritten), 跳过 \(r.skipped)")
+                    app.showToast("恢复完成: 新增 \(res.imported), 覆盖 \(res.overwritten), 跳过 \(res.skipped)")
                 } catch {
-                    app.showToast(error.localizedDescription)
+                    layerError = error.localizedDescription
                 }
             }
             .disabled(p.macs.isEmpty)
@@ -715,10 +1024,11 @@ struct RestoreWizardView: View {
     }
     private var conflictCard: some View {
         VStack(alignment: .leading, spacing: DS.Space.s) {
-            Label("\(conflicts.count) 条同 ID 凭证冲突, 逐条选保留方 (419)",
+            Label("\(conflicts.count) 条同 ID 冲突 — 逐条选保留哪边 (419, 默认取备份)",
                   systemImage: "arrow.triangle.2.circlepath")
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(DS.Palette.warn)
+                .fixedSize(horizontal: false, vertical: true)
             HStack(spacing: DS.Space.s) {
                 Button("整批取备份") { conflicts.forEach { conflictChoice[$0.id] = true } }
                     .font(.caption)
@@ -730,22 +1040,32 @@ struct RestoreWizardView: View {
                     .frame(minHeight: DS.Hit.min)
             }
             ForEach(conflicts) { c in
-                HStack {
-                    Text("MAC \(String(c.mac.prefix(6))) · 别名 \(c.alias)")
+                HStack(spacing: DS.Space.xs) {
+                    Text("\(c.kind) #\(c.alias) · \(String(c.mac.prefix(6)))")
                         .font(.caption)
                         .foregroundStyle(DS.Palette.text)
+                        .lineLimit(1)
                     Spacer(minLength: 0)
-                    Button(conflictChoice[c.id] ?? true ? "取备份" : "取本机") {
-                        conflictChoice[c.id] = !(conflictChoice[c.id] ?? true)
-                    }
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(DS.Palette.accentText)
-                    .frame(minHeight: DS.Hit.min)
+                    sideChip(c.id, false, "本机")
+                    sideChip(c.id, true, "备份")
                 }
+                .frame(minHeight: DS.Hit.min)
             }
         }
         .padding(DS.Space.m)
         .background(DS.Palette.warn.opacity(0.06), in: RoundedRectangle(cornerRadius: DS.Radius.tile, style: .continuous))
+    }
+    /// 419 逐条裁决芯片: 左边本机, 右边备份; 点哪边保留哪边
+    private func sideChip(_ id: String, _ backupSide: Bool, _ label: String) -> some View {
+        let on = (conflictChoice[id] ?? true) == backupSide
+        return Button(label) {
+            conflictChoice[id] = backupSide
+        }
+        .font(.caption2.weight(.medium))
+        .foregroundStyle(on ? DS.Palette.accentText : DS.Palette.textSub)
+        .padding(.horizontal, DS.Space.xs)
+        .frame(minHeight: 30)
+        .background(on ? DS.Palette.accentText.opacity(0.12) : DS.Palette.surfaceAlt, in: Capsule())
     }
     private func zoneChip(_ title: String, _ on: Binding<Bool>) -> some View {
         Button {
@@ -768,8 +1088,19 @@ struct RestoreWizardView: View {
             Label("恢复完成 · 差异报告 (425)", systemImage: "checkmark.seal")
                 .font(.headline)
                 .foregroundStyle(DS.Palette.ok)
+            // 425 三数: 来自 restore 返回值的真实处置数 (旧报告只有 备份X/本机Y)
+            HStack(spacing: DS.Space.l) {
+                countChip("新增", impN, DS.Palette.ok)
+                countChip("覆盖", ovN, DS.Palette.accentText)
+                countChip("跳过", skN, DS.Palette.warn)
+            }
             ForEach(rows) { r in
-                HStack {
+                HStack(spacing: DS.Space.s) {
+                    // 444 核对表: 一致打勾, 不一致给提醒 (旧文案说"已打勾"但从未画过勾)
+                    Image(systemName: r.a == r.b ? "checkmark.circle.fill" : "exclamationmark.circle")
+                        .font(.system(size: DS.Icon.sm))
+                        .foregroundStyle(r.a == r.b ? DS.Palette.ok : DS.Palette.warn)
+                        .accessibilityHidden(true)
                     Text(r.label).font(.subheadline).foregroundStyle(DS.Palette.text)
                     Spacer(minLength: 0)
                     Text("备份 \(r.a) / 本机 \(r.b)")
@@ -778,8 +1109,40 @@ struct RestoreWizardView: View {
                 }
                 .frame(minHeight: DS.Hit.min)
             }
-            // 444 迁移后核对表: 与导出摘要的分分区条数对比
-            Text("核对表 (444): 上方即备份与本机分区条数对比, 一致项已打勾; 不一致项请回到「换机迁移」补传。")
+            // 417 记录时间域: 备份内记录跨度 (trace 行首 16 字符 = yyyy-MM-dd HH:mm), 只读快照
+            if let t = preview?.previewTrace, !t.isEmpty {
+                Text("记录时间域: \(t.first?.prefix(16) ?? "") ~ \(t.last?.prefix(16) ?? "") (417)")
+                    .font(.caption)
+                    .foregroundStyle(DS.Palette.textSub)
+            }
+            // 425 展开: 逐锁对账 — 备份里每把锁 vs 本机现况, 缺的锁点名
+            if let b = bundle, !b.devices.isEmpty {
+                DisclosureGroup {
+                    ForEach(BackupStudio.lockDiffRows(b)) { d in
+                        HStack(spacing: DS.Space.s) {
+                            Image(systemName: d.ok ? "checkmark.circle.fill" : "exclamationmark.circle")
+                                .font(.system(size: DS.Icon.xs))
+                                .foregroundStyle(d.ok ? DS.Palette.ok : DS.Palette.warn)
+                                .accessibilityHidden(true)
+                            Text(d.label)
+                                .font(.caption)
+                                .foregroundStyle(DS.Palette.text)
+                                .lineLimit(1)
+                            Spacer(minLength: 0)
+                            Text("备份 \(d.backup) / 本机 \(d.local) · \(d.note)")
+                                .font(.caption2)
+                                .foregroundStyle(DS.Palette.textSub)
+                                .lineLimit(1)
+                        }
+                    }
+                } label: {
+                    Text("逐锁对账 (\(b.devices.count) 把, 425)")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(DS.Palette.text)
+                }
+            }
+            // 444 迁移后核对表
+            Text("核对表 (444): 对勾 = 该项备份与本机条数一致; 缺的锁可到旧机「导出向导→完成页」用增量补传只勾缺的锁重打小包。")
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -787,12 +1150,23 @@ struct RestoreWizardView: View {
                 .buttonStyle(PrimaryActionStyle())
         }
     }
+    private func countChip(_ label: String, _ n: Int, _ tint: Color) -> some View {
+        VStack(spacing: DS.Space.xxs) {
+            Text("\(n)")
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(tint)
+                .monospacedDigit()
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(DS.Palette.textSub)
+        }
+        .frame(minWidth: 56, minHeight: DS.Hit.min)
+    }
 
-    /// 包3/112 换机恢复后立起验证向导 (与既有 BackupView 同口径)
+    /// 包3/112 换机恢复后立起验证向导 (与既有 BackupView 同口径; 实体与迁移导入共用 armFirstChecks)
     private func armMigrateWizard(_ n: Int) {
         guard n > 0 else { return }
-        for kc in DB.keychains() { DB.store.remove("kf_migok_" + kc.mac) }
-        DB.store.set("kf_migrate_pending", ISO8601DateFormatter().string(from: Date()))
+        BackupStudio.armFirstChecks()
     }
 }
 
@@ -807,10 +1181,12 @@ struct WebDAVStudioView: View {
     @State private var entries: [BackupStudio.RemoteEntry] = []
     @State private var testResult = ""
     @State private var dryRunResult = ""
+    @State private var hint830 = false          // 830 首次连通成功的一次性加密说明条
     @State private var rotateMsg = ""
     @State private var rotPw = ""
     @State private var busy = false
     @State private var showRotate = false
+    @State private var pendingDL: (b: BackupBundle, line: String)?   // 422 预演门: 下载→确认→入库
 
     private var ready: Bool { !root.isEmpty && !acct.isEmpty && !appPw.isEmpty }
 
@@ -833,6 +1209,36 @@ struct WebDAVStudioView: View {
                     if !testResult.isEmpty {
                         Text(testResult).font(.caption).foregroundStyle(DS.Palette.textSub)
                     }
+                    // 830 首次连通成功后的"备份将加密后上传"情境条。口径替代记在这: 原句要 3 秒自动收起,
+                    // 而本仓有全仓级纪律 (HintOnce.swift:5)「提示不自动计时消失 —— 让它自己飘走,
+                    // 等于用户还没读就被判定已看过」; 所以这里由用户点 X 关闭, 只出现一次 (走 HintOnce 记档)。
+                    if hint830 {
+                        HStack(spacing: DS.Space.xs) {
+                            Image(systemName: "lock.shield")
+                                .font(.system(size: DS.Icon.sm))
+                                .foregroundStyle(DS.Palette.ok)
+                                .accessibilityHidden(true)
+                            Text("备份将加密后上传 (830) · 加密在本机完成, 远端只见密文")
+                                .font(.caption)
+                                .foregroundStyle(DS.Palette.text)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Spacer(minLength: DS.Space.xs)
+                            Button {
+                                withAnimation(DS.Motion.soft) { hint830 = false }
+                            } label: {
+                                Image(systemName: "xmark")
+                                    .font(.system(size: DS.Icon.xs, weight: .semibold))
+                                    .foregroundStyle(DS.Palette.textSub)
+                                    .frame(width: 28, height: 28)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("关闭提示 (830)")
+                        }
+                        .padding(.horizontal, DS.Space.s)
+                        .padding(.vertical, DS.Space.xs)
+                        .background(DS.Palette.ok.opacity(0.12), in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
+                    }
                 }
                 Section("远端备份 (422 哈希先行: 先拉 etag 再拉正文)") {
                     if !entries.isEmpty {
@@ -844,6 +1250,12 @@ struct WebDAVStudioView: View {
                                     Label(String(e.etag.prefix(8)), systemImage: "number")
                                         .font(.caption)
                                         .foregroundStyle(DS.Palette.textSub)
+                                    // 422 时间列: 服务端 getlastmodified (取不到就空, 不编)
+                                    if !e.modified.isEmpty {
+                                        Label(BackupStudio.humanDate(e.modified), systemImage: "clock")
+                                            .font(.caption)
+                                            .foregroundStyle(DS.Palette.textSub)
+                                    }
                                 }
                                 HStack(spacing: DS.Space.s) {
                                     Button("下载恢复") { download(e) }
@@ -904,6 +1316,15 @@ struct WebDAVStudioView: View {
             } message: {
                 Text("将用新口令重新加密远端备份并替换。旧口令随即失效。")
             }
+            // 422 恢复预演门: 下载只做校验与预演, 真正入库要在这里点头
+            .confirmationDialog(pendingDL?.line ?? "", isPresented: Binding(
+                get: { pendingDL != nil },
+                set: { if !$0 { pendingDL = nil } }), titleVisibility: .visible) {
+                Button("确认恢复入库") { commitDL() }
+                Button("取消", role: .cancel) { pendingDL = nil }
+            } message: {
+                Text("预演不动真库 (422)")
+            }
         }
     }
 
@@ -919,6 +1340,11 @@ struct WebDAVStudioView: View {
             testResult = await BackupStudio.testWebdav(acct: acct, appPw: appPw, root: root)
             persist()
             busy = false
+            // 830 首次连通成功 ⇒ 视为"配置完成": 给一次加密说明情境条 (HintOnce 记档, 之后不再出现)
+            if testResult.hasPrefix("连通"), !HintOnce.shown("830enc") {
+                HintOnce.mark("830enc")
+                withAnimation(DS.Motion.soft) { hint830 = true }
+            }
         }
     }
     private func refresh() async {
@@ -944,10 +1370,16 @@ struct WebDAVStudioView: View {
             do {
                 let b = BackupStudio.bundleFor(BZones())
                 let plain = BackupCanonical.exportText(b)
+                BackupStudio.markExportSize(plain)   // 193: 上传路径也记尺寸
                 let env = try CryptoBox.encryptText(plain, password: encPw)
                 try await CloudSync.push(acct: acct, app: appPw, envelope: env)
                 persist()
                 Milestones.recordBackup()
+                // 430 上传后自动滚动清理: 最近 N 份之外每月再保最新 1 份 (下载/恢复口不受影响)
+                if BackupStudio.rollingKeep > 0 {
+                    let n = await BackupStudio.pruneRemote(acct: acct, appPw: appPw, root: root, keep: BackupStudio.rollingKeep)
+                    if n > 0 { app.showToast("滚动保留 (430): 已清理远端 \(n) 份超限") }
+                }
                 app.evaluateAchievements()
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
                 app.showToast("上传成功")
@@ -962,29 +1394,34 @@ struct WebDAVStudioView: View {
         Task {
             defer { busy = false }
             do {
-                guard let url = URL(string: root + "/" + e.name) else { throw DFUError.msg("地址非法") }
+                guard let url = BackupStudio.safeRemoteURL(root: root, name: e.name) else { throw DFUError.msg("地址非法 (远端条目名被护栏拒绝)") }
+                // 423: 清单 etag 先行 — HEAD 比对, 清单过期就中止 (不支持 HEAD 时照常继续, 不假拦)
+                var head = URLRequest(url: url); head.httpMethod = "HEAD"
+                head.setValue(CloudSync.basicAuth(acct, appPw), forHTTPHeaderField: "Authorization")
+                if let (_, hr) = try? await URLSession.shared.data(for: head),
+                   let h = hr as? HTTPURLResponse, let now = h.value(forHTTPHeaderField: "ETag"),
+                   !e.etag.isEmpty, now != e.etag {
+                    app.showToast("远端文件已变 (清单 \(e.etag.prefix(8)) ≠ 现在 \(now.prefix(8))), 已中止 — 刷新后重下 (423)")
+                    return
+                }
                 var req = URLRequest(url: url)
                 req.setValue(CloudSync.basicAuth(acct, appPw), forHTTPHeaderField: "Authorization")
                 let (data, _) = try await URLSession.shared.data(for: req)
                 let raw = String(data: data, encoding: .utf8) ?? ""
-                guard let plain = try? BackupStudio.decryptAny(raw, password: encPw) else {
-                    app.showToast("口令错误或不是本 App 备份 (453)")
-                    return
-                }
-                let b = BackupStudio.upgradeChain(try JSONDecoder().decode(BackupBundle.self, from: Data(plain.utf8)))
-                // 423 哈希先行: 下载完先比 etag 再解密入库
-                guard BackupStudio.verifyChecksum(plain) else {
-                    app.showToast("哈希不一致 — 仅提示重下, 不占库 (423)")
-                    return
-                }
-                let r = BackupStudio.restore(b, strategy: .merge, zones: BZones())
-                app.loadDevices()
-                BackupStudio.markImported()
-                app.showToast("恢复完成: 新增 \(r.imported), 覆盖 \(r.overwritten)")
-            } catch {
-                app.showToast(error.localizedDescription)
-            }
+                // 422: 先预演后再入库 (parsePreview 内部先校哈希后解码, 不动真库)
+                let (pv, b) = try BackupStudio.parsePreview(text: raw, password: encPw.isEmpty ? nil : encPw)
+                pendingDL = (b, e.name + " · 校验通过 · " + pv.zones.joined(separator: "、"))
+            } catch { app.showToast(error.localizedDescription) }
         }
+    }
+    private func commitDL() {
+        guard let dl = pendingDL else { return }
+        let r = BackupStudio.restore(dl.b, strategy: .merge, zones: BZones())
+        if dl.b.globals?.appearance != nil { app.reloadAppearance() }
+        app.loadDevices()
+        BackupStudio.markImported()
+        app.showToast("恢复完成: 新增 \(r.imported), 覆盖 \(r.overwritten)")
+        pendingDL = nil
     }
     private func dryRun(_ e: BackupStudio.RemoteEntry) {
         busy = true
@@ -1008,44 +1445,106 @@ struct WebDAVStudioView: View {
 }
 
 // ================= 换机迁移 (438-446) =================
+/// 438 接收侧的一段备份包: 任意通道 (备份文件/扫码/WebDAV) 收到的原文经 417/453 解析后的产物。
+/// 每段带解析时的原始 schema 与哈希层结论 — 预演页据此显示升级链与三层检查。
+struct MigSegment: Identifiable {
+    let id: String
+    let name: String
+    let bundle: BackupBundle
+    let schema: Int
+    let checksum: BackupStudio.ChecksumState
+}
+
 struct MigrationWizardView: View {
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
+    // 438 三通道流程: 0 选通道 → 1 通道接收 → 2 预演+441/419 裁决 → 3 真执行(439) → 4 对账+首验(440/442)
     @State private var channel: BackupStudio.Channel = .file
     @State private var step = 0
     @State private var busy = false
-    @State private var session: BackupStudio.MigSession?
+    @State private var segments: [MigSegment] = []
+    @State private var pw = ""
+    @State private var paste = ""
+    @State private var layerError: String?
+    // 441 逐把确认 (mac → merge/keep/skip): 落 kf_mig_lockact_ 并真进 restore 的 lockActs 入参
+    @State private var lockActs: [String: String] = [:]
+    // 419 冲突裁决 (id → true 取备份 / false 取本机): 真进 restore 的 conflictTakeBackup
+    @State private var conflicts: [BackupStudio.Conflict] = []
+    @State private var conflictChoice: [String: Bool] = [:]
+    // 439 真进度: 单元 = 设置与成员 + 每把锁, 只随真做完的单元前进
+    @State private var doneU = 0
+    @State private var totalU = 1
+    @State private var runVol = 1
+    @State private var runLabel = ""
+    @State private var startedAt = Date().timeIntervalSince1970
+    // 445 真事务表: 冷启动/进页检测 pendingMigrationTxn — 回滚或续做, 不重画百分比
+    @State private var pendingTxn: BackupStudio.MigTxn?
+    @State private var resumedFrom = 0
+    // 442 首验清单
     @State private var checks: [String] = []
     @State private var checkOn: [String: Bool] = [:]
+    // 440 分区对账 + 425 三数 (来自 migrateImport 真实返回值)
+    @State private var gaps: [BackupStudio.LockDiff] = []
+    @State private var impN = 0
+    @State private var ovN = 0
+    @State private var skN = 0
+    // 各通道的接收态
+    @State private var showScan = false
+    @State private var showFilePick = false
+    @State private var davRoot = ""
+    @State private var davAcct = ""
+    @State private var davPw = ""
+    @State private var davMsg = ""
+    @State private var entries: [BackupStudio.RemoteEntry] = []
 
     var body: some View {
         NavigationStack {
             VStack(spacing: DS.Space.m) {
-                if session?.done == false {
-                    resumeCard
-                } else if step == 0 {
-                    channelStep
-                } else {
-                    progressStep
+                Group {
+                    if let t = pendingTxn {
+                        resumeCard(t)
+                    } else {
+                        switch step {
+                        case 0: channelStep
+                        case 1: channelInputStep
+                        case 2: previewStep
+                        case 3: runningStep
+                        default: doneStep
+                        }
+                    }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 Spacer(minLength: 0)
             }
             .padding(DS.Space.l)
             .navigationTitle("换机迁移")
-            .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("关闭") { dismiss() } } }
+            .toolbar { ToolbarItem(placement: .navigationBarLeading) {
+                Button("关闭") { dismiss() }
+                    .disabled(busy)
+            } }
+            .sheet(isPresented: $showScan) {
+                MigScanSheet { s in
+                    if !s.isEmpty { addSegment(text: s, name: "扫码包") }
+                }
+            }
+            .fileImporter(isPresented: $showFilePick, allowedContentTypes: [UTType.plainText, UTType.data],
+                          allowsMultipleSelection: false) { pickedFile($0) }
+            .onAppear { loadState() }
         }
     }
 
-    // ---------- 438 三通道向导: 备份文件 / 扫码 / WebDAV ----------
+    // ---------- 438 三通道向导: 备份文件 / 扫码 / WebDAV (点进各通道自己的接收页) ----------
     private var channelStep: some View {
         VStack(alignment: .leading, spacing: DS.Space.m) {
-            Text("新机首启无数据 — 三选一迁移 (438)。")
+            Text("新机首启无数据 — 三选一迁移 (438), 每条通道都有自己的接收页。")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(DS.Palette.text)
+                .fixedSize(horizontal: false, vertical: true)
             ForEach(BackupStudio.Channel.allCases, id: \.self) { c in
                 Button {
                     channel = c
-                    startMigration()
+                    layerError = nil
+                    withAnimation(DS.Motion.standard) { step = 1 }
                 } label: {
                     HStack(spacing: DS.Space.s) {
                         Image(systemName: c.icon)
@@ -1065,81 +1564,560 @@ struct MigrationWizardView: View {
                 }
                 .buttonStyle(.plain)
             }
+            Text("三通道都落在同一套 预演→逐把确认→真实入库 上, 谁都不绕过 441 与 445。")
+                .font(.caption2)
+                .foregroundStyle(DS.Palette.textSub)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
-    // ---------- 439 双机并排进度 + 445 中断续迁 + 441 多锁逐把确认 ----------
-    @State private var pct = 0
-    @State private var vol = 0
-    private var progressStep: some View {
-        VStack(alignment: .leading, spacing: DS.Space.m) {
-            HStack(spacing: DS.Space.s) {
-                Label(channel.rawValue, systemImage: channel.icon)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(DS.Palette.accentText)
-                Spacer(minLength: 0)
-                Text("分卷 \(vol)")
+    // ---------- 438 通道接收页: 每条通道有自己的拿包方式, 统一落成 MigSegment ----------
+    private var channelInputStep: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: DS.Space.m) {
+                HStack(spacing: DS.Space.s) {
+                    Label(channel.rawValue, systemImage: channel.icon)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(DS.Palette.accentText)
+                    Spacer(minLength: 0)
+                    Button("重选通道") {
+                        withAnimation(DS.Motion.standard) { step = 0 }
+                    }
                     .font(.caption)
                     .foregroundStyle(DS.Palette.textSub)
+                    .frame(minHeight: DS.Hit.min)
+                }
+                switch channel {
+                case .file: fileInput
+                case .qr: qrInput
+                case .webdav: webdavInput
+                }
+                SecureField("备份口令 (加密包才需要, 420/453)", text: $pw)
+                    .font(.body)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+                if !segments.isEmpty {
+                    segmentList
+                }
+                if let e = layerError {
+                    layerCard(e)
+                }
+                Button("下一步: 预演与逐把确认 (441)") { prepare() }
+                    .buttonStyle(PrimaryActionStyle())
+                    .disabled(segments.isEmpty)
             }
-            ProgressView(value: Double(pct), total: 100)
-                .tint(DS.Palette.accentText)
-            Text("\(pct)%")
-                .font(.largeTitle.weight(.heavy))
-                .foregroundStyle(DS.Palette.text)
-                .monospacedDigit()
-            Text("旧机导出页与新机导入页同显大号百分比与分卷序号, 双机肉眼对齐 (439)。")
+        }
+    }
+    private var fileInput: some View {
+        VStack(alignment: .leading, spacing: DS.Space.s) {
+            Text("把旧机导出的 .enc 文本粘贴进来, 或从「文件」App 选一份 (数据线/隔空投送/云盘先落到本机)。410 分卷时逐卷都加进来。")
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
-            // 441 多锁逐把确认: 含多锁备份时逐锁选 保留/合并/跳过 (BLE 直连参数随锁迁移)
-            if app.devices.count > 1 {
-                VStack(alignment: .leading, spacing: DS.Space.xs) {
-                    Text("逐把确认 (441): 每把锁选择迁移方式, BLE 直连参数随锁走")
-                        .font(.caption)
-                        .foregroundStyle(DS.Palette.textSub)
-                    ForEach(app.devices, id: \.mac) { kc in
-                        HStack(spacing: DS.Space.xs) {
-                            Text(LockArchive.displayName(kc))
-                                .font(.caption)
-                                .foregroundStyle(DS.Palette.text)
-                                .lineLimit(1)
-                            Spacer(minLength: 0)
-                            lockActionChip(kc.mac, .merge, "合并")
-                            lockActionChip(kc.mac, .keep, "保留")
-                            lockActionChip(kc.mac, .skip, "跳过")
-                        }
-                        .frame(minHeight: DS.Hit.min)
-                    }
-                }
+            TextField("粘贴备份文本", text: $paste, axis: .vertical)
+                .font(.caption.monospaced())
+                .lineLimit(3...6)
+                .autocorrectionDisabled()
+            HStack(spacing: DS.Space.m) {
+                Button("从「文件」选择") { showFilePick = true }
+                    .font(.subheadline)
+                    .foregroundStyle(DS.Palette.accentText)
+                    .frame(minHeight: DS.Hit.min)
+                Button("加入粘贴的这一段") { addSegment(text: paste, name: "粘贴段 \(segments.count + 1)") }
+                    .font(.subheadline)
+                    .foregroundStyle(DS.Palette.accentText)
+                    .frame(minHeight: DS.Hit.min)
+                    .disabled(paste.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
-            // 440 差异补传: 完成页列"旧机有新机缺"分区, 支持按差异重新导增量小包
-            if let s = session, s.done, let diff = BackupStudio.diffHint() {
+        }
+    }
+    private var qrInput: some View {
+        VStack(alignment: .leading, spacing: DS.Space.s) {
+            Text("旧机在 导出向导 完成页生成凭证二维码 (411); 本机打开相机扫一下, 原文直接进接收队列 — 全程无网络。")
+                .font(.caption)
+                .foregroundStyle(DS.Palette.textSub)
+                .fixedSize(horizontal: false, vertical: true)
+            Button {
+                showScan = true
+            } label: {
+                Label("打开相机扫码接收 (411)", systemImage: "qrcode.viewfinder")
+                    .font(.subheadline)
+                    .foregroundStyle(DS.Palette.accentText)
+                    .frame(minHeight: DS.Hit.min)
+            }
+            Text("扫码包只含钥匙串与台账, 不含锁端运行参数与记录 (411); 口令另行线下交接。")
+                .font(.caption2)
+                .foregroundStyle(DS.Palette.warn)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+    private var webdavInput: some View {
+        VStack(alignment: .leading, spacing: DS.Space.s) {
+            Text("两台机不见面时走这里: 读远端目录, 列表里选一份接收 (422 先 etag 后正文), 再逐锁入库。")
+                .font(.caption)
+                .foregroundStyle(DS.Palette.textSub)
+                .fixedSize(horizontal: false, vertical: true)
+            TextField("根地址", text: $davRoot, prompt: Text(BackupStudio.webdavRoot))
+                .autocorrectionDisabled()
+            TextField("账号", text: $davAcct)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+            SecureField("应用专属密码 (非登录)", text: $davPw)
+            HStack(spacing: DS.Space.m) {
+                Button("测试连通 (197)") { davTest() }
+                    .font(.subheadline)
+                    .foregroundStyle(DS.Palette.accentText)
+                    .frame(minHeight: DS.Hit.min)
+                Button("拉取远端列表 (422)") { davRefresh() }
+                    .font(.subheadline)
+                    .foregroundStyle(DS.Palette.accentText)
+                    .frame(minHeight: DS.Hit.min)
+            }
+            ForEach(entries) { e in
                 HStack(spacing: DS.Space.s) {
-                    Label("差异补传 (440): \(diff)", systemImage: "plus.circle")
-                        .font(.caption)
-                        .foregroundStyle(DS.Palette.warn)
-                        .fixedSize(horizontal: false, vertical: true)
+                    VStack(alignment: .leading, spacing: DS.Space.xxs) {
+                        Text(e.name)
+                            .font(.caption)
+                            .foregroundStyle(DS.Palette.text)
+                            .lineLimit(1)
+                        // 422 时间列: 与上面那份远端列表同口径 (服务端 getlastmodified, 取不到就空, 不编)
+                        Text("\(e.size / 1024) KB · etag \(String(e.etag.prefix(8)))"
+                             + (e.modified.isEmpty ? "" : " · " + BackupStudio.humanDate(e.modified)))
+                            .font(.caption2)
+                            .foregroundStyle(DS.Palette.textSub)
+                    }
                     Spacer(minLength: 0)
-                    Button("补传") { app.showToast("已在旧机生成差异增量包, 用文件通道导入 (440)") }
+                    Button("接收") { davReceive(e) }
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(DS.Palette.accentText)
                         .frame(minHeight: DS.Hit.min)
                 }
                 .frame(minHeight: DS.Hit.min)
             }
-            if pct >= 100, let s = session {
-                firstChecklist(s)
+            if !davMsg.isEmpty {
+                Text(davMsg)
+                    .font(.caption)
+                    .foregroundStyle(DS.Palette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
+    private var segmentList: some View {
+        VStack(alignment: .leading, spacing: DS.Space.xs) {
+            Text("已接收 \(segments.count) 段 — 逐段都会进同一次导入")
+                .font(.caption)
+                .foregroundStyle(DS.Palette.textSub)
+            ForEach(segments) { seg in
+                HStack(spacing: DS.Space.s) {
+                    Image(systemName: "shippingbox")
+                        .font(.system(size: DS.Icon.sm))
+                        .foregroundStyle(DS.Palette.accentText)
+                        .accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: DS.Space.xxs) {
+                        Text(seg.name)
+                            .font(.caption)
+                            .foregroundStyle(DS.Palette.text)
+                            .lineLimit(1)
+                        Text(segSummary(seg))
+                            .font(.caption2)
+                            .foregroundStyle(DS.Palette.textSub)
+                            .lineLimit(1)
+                    }
+                    Spacer(minLength: 0)
+                    Button {
+                        segments.removeAll { $0.id == seg.id }
+                    } label: {
+                        Image(systemName: "xmark.circle")
+                            .font(.system(size: DS.Icon.sm))
+                            .foregroundStyle(DS.Palette.textSub)
+                            .accessibilityLabel("移除这一段")
+                    }
+                    .frame(minHeight: DS.Hit.min)
+                }
+                .frame(minHeight: DS.Hit.min)
+            }
+        }
+    }
+    /// 438: 收到的原文先过 417/453 解析 (口令层→文件头层→哈希层), 过了才进接收队列
+    private func addSegment(text: String, name: String) {
+        let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !t.isEmpty else { return }
+        do {
+            let r = try BackupStudio.parsePreview(text: t, password: pw.isEmpty ? nil : pw)
+            let id = "\(segments.count)-\(Int(Date().timeIntervalSince1970 * 1000))"
+            segments.append(MigSegment(id: id, name: name, bundle: r.bundle,
+                                       schema: r.preview.schema, checksum: r.preview.checksum))
+            paste = ""
+            layerError = nil
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+        } catch {
+            layerError = error.localizedDescription
+        }
+    }
+    private func pickedFile(_ result: Result<[URL], Error>) {
+        guard let url = try? result.get().first else { return }
+        let secured = url.startAccessingSecurityScopedResource()
+        defer { if secured { url.stopAccessingSecurityScopedResource() } }
+        guard let data = try? Data(contentsOf: url), let raw = String(data: data, encoding: .utf8) else {
+            layerError = "读不到文件内容 — 不是文本备份或没有访问权限"
+            return
+        }
+        addSegment(text: raw, name: url.lastPathComponent)
+    }
+    private func davTest() {
+        Task { davMsg = await BackupStudio.testWebdav(acct: davAcct, appPw: davPw, root: davRoot) }
+    }
+    private func davRefresh() {
+        guard !davRoot.isEmpty, !davAcct.isEmpty, !davPw.isEmpty else {
+            davMsg = "先填根地址/账号/应用密码"
+            return
+        }
+        busy = true
+        Task {
+            do {
+                entries = try await BackupStudio.listRemote(acct: davAcct, appPw: davPw, root: davRoot)
+                DB.store.set("kf_webdav_root", davRoot)
+                DB.store.set("kf_cloudcfg_acct", davAcct)
+                DB.store.set("kf_cloudcfg_app", davPw)
+                davMsg = entries.isEmpty ? "远端没有条目 — 先确认旧机已上传" : "共 \(entries.count) 条, 选一份点 接收"
+            } catch {
+                davMsg = error.localizedDescription
+            }
+            busy = false
+        }
+    }
+    private func davReceive(_ e: BackupStudio.RemoteEntry) {
+        guard let url = BackupStudio.safeRemoteURL(root: davRoot, name: e.name) else {
+            layerError = "远端条目名被护栏拒绝 (422)"
+            return
+        }
+        busy = true
+        Task {
+            defer { busy = false }
+            var req = URLRequest(url: url)
+            req.setValue(CloudSync.basicAuth(davAcct, davPw), forHTTPHeaderField: "Authorization")
+            do {
+                let (data, _) = try await URLSession.shared.data(for: req)
+                let raw = String(data: data, encoding: .utf8) ?? ""
+                if raw.isEmpty {
+                    layerError = "远端正文不是 UTF-8 文本"
+                } else {
+                    addSegment(text: raw, name: e.name)
+                }
+            } catch {
+                layerError = "下载失败: \(error.localizedDescription)"
+            }
+        }
+    }
+    /// 进预演前: 跨段去重列冲突 (419)、读回逐把确认 (441), 选择都带进执行
+    private func prepare() {
+        conflicts = []
+        var seen = Set<String>()
+        for s in segments {
+            for c in BackupStudio.conflicts(s.bundle) where !seen.contains(c.id) {
+                seen.insert(c.id)
+                conflicts.append(c)
+            }
+        }
+        for c in conflicts where conflictChoice[c.id] == nil { conflictChoice[c.id] = true }
+        for k in DB.store.matchingKeys(prefixes: ["kf_mig_lockact_"]) {
+            let v = DB.store.getString(k)
+            if !v.isEmpty { lockActs[String(k.dropFirst("kf_mig_lockact_".count))] = v }
+        }
+        layerError = nil
+        withAnimation(DS.Motion.standard) { step = 2 }
+    }
+    private func loadState() {
+        pendingTxn = BackupStudio.pendingMigrationTxn()
+        if pendingTxn == nil, let s = BackupStudio.pendingMigration(), s.done == false {
+            // 445: 事务表不在 = 没有可用快照, 旧会话只描述进度外观 — 清掉, 不给回滚不了的假断点
+            BackupStudio.clearMigSession()
+        }
+        davRoot = DB.store.getString("kf_webdav_root", BackupStudio.webdavRoot)
+        davAcct = DB.store.getString("kf_cloudcfg_acct")
+        davPw = DB.store.getString("kf_cloudcfg_app")
+    }
+    /// 441 预演名单: 跨段按规范化 mac 去重, 只列真有 6 字节 mac 与密钥的锁
+    private func allLocks() -> [Keychain] {
+        var seen = Set<String>()
+        var out: [Keychain] = []
+        for s in segments {
+            for d in s.bundle.devices {
+                let mac = DB.normalizeMac(d.mac)
+                guard !seen.contains(mac), HexKit.bytes(d.mac).count == 6, !d.kc.skey.isEmpty else { continue }
+                seen.insert(mac)
+                var kc = d.kc
+                kc.mac = mac
+                out.append(kc)
+            }
+        }
+        return out
+    }
+    /// 439: 单元总数与 migrateImport 的口径一致 = 每段 设置与成员 + 每把有效锁
+    private func totalUnits() -> Int {
+        segments.reduce(0) { acc, s in
+            acc + 1 + s.bundle.devices.filter { HexKit.bytes($0.mac).count == 6 && !$0.kc.skey.isEmpty }.count
+        }
+    }
+    private func mergedBundle() -> BackupBundle? {
+        guard var out = segments.first?.bundle else { return nil }
+        for s in segments.dropFirst() {
+            for d in s.bundle.devices where !out.devices.contains(where: { DB.normalizeMac($0.mac) == DB.normalizeMac(d.mac) }) {
+                out.devices.append(d)
+            }
+        }
+        return out
+    }
+    private func segSummary(_ seg: MigSegment) -> String {
+        let creds = seg.bundle.devices.reduce(0) { $0 + (($1.ledger?.pwds.count ?? 0) + ($1.ledger?.fps.count ?? 0)) }
+        return "锁 \(seg.bundle.devices.count) · 凭证 \(creds) · 成员 \(seg.bundle.members?.count ?? 0) · 包 v\(seg.schema)"
+    }
 
-    // ---------- 442 首验清单 + 444 迁移后核对表 ----------
-    private func firstChecklist(_ s: BackupStudio.MigSession) -> some View {
+    // ---------- 417/424/453 预演 + 441 逐把确认 + 419 冲突裁决 ----------
+    private var previewStep: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: DS.Space.m) {
+                Text("预演 (417/449): 三层检查已过 — 确认收什么、逐锁怎么迁, 再动库。")
+                    .font(.caption)
+                    .foregroundStyle(DS.Palette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
+                ForEach(segments) { seg in
+                    VStack(alignment: .leading, spacing: DS.Space.xxs) {
+                        Label(seg.name, systemImage: "shippingbox")
+                            .font(.subheadline)
+                            .foregroundStyle(DS.Palette.text)
+                        Text(segSummary(seg))
+                            .font(.caption)
+                            .foregroundStyle(DS.Palette.textSub)
+                            .fixedSize(horizontal: false, vertical: true)
+                        checksumLine(seg)
+                        let steps = BackupStudio.upgradeSteps(from: seg.schema)
+                        ForEach(steps) { s in
+                            Text("v\(s.from) → v\(s.to): \(s.note) (424)")
+                                .font(.caption2)
+                                .foregroundStyle(DS.Palette.warn)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(DS.Space.m)
+                    .background(DS.Palette.surface, in: RoundedRectangle(cornerRadius: DS.Radius.tile, style: .continuous))
+                }
+                lockConfirmCard
+                if !conflicts.isEmpty {
+                    conflictCard
+                }
+                if resumedFrom > 0 {
+                    Label("445 续迁: 事务表里已有 \(resumedFrom) 把锁, 本次整锁跳过 — 不重做已完成的部分", systemImage: "arrow.uturn.forward")
+                        .font(.caption)
+                        .foregroundStyle(DS.Palette.warn)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Label("开始前自动打全库快照 (421); 中断后回本页可 回滚/继续 (445)", systemImage: "arrow.uturn.backward")
+                    .font(.caption)
+                    .foregroundStyle(DS.Palette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
+                if let e = layerError {
+                    layerCard(e)
+                }
+                BusyButton(title: "开始导入 (\(totalUnits()) 个单元)", systemImage: "tray.and.arrow.down.fill", isBusy: busy) {
+                    runImport()
+                }
+            }
+        }
+    }
+    /// 441: 含多锁时逐把选 合并/保留/跳过 — 选择真进 restore 的 lockActs 入参
+    private var lockConfirmCard: some View {
+        VStack(alignment: .leading, spacing: DS.Space.xs) {
+            Label("逐把确认 (441): 合并 = 钥匙串与台账全并; 保留 = 只迁直连参数, 本机台账不动; 跳过 = 整把不动", systemImage: "slider.horizontal.3")
+                .font(.caption)
+                .foregroundStyle(DS.Palette.textSub)
+                .fixedSize(horizontal: false, vertical: true)
+            ForEach(allLocks(), id: \.mac) { kc in
+                HStack(spacing: DS.Space.xs) {
+                    Text(LockArchive.displayName(kc))
+                        .font(.caption)
+                        .foregroundStyle(DS.Palette.text)
+                        .lineLimit(1)
+                    Spacer(minLength: 0)
+                    lockActionChip(kc.mac, .merge, "合并")
+                    lockActionChip(kc.mac, .keep, "保留")
+                    lockActionChip(kc.mac, .skip, "跳过")
+                }
+                .frame(minHeight: DS.Hit.min)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(DS.Space.m)
+        .background(DS.Palette.surfaceAlt.opacity(0.5), in: RoundedRectangle(cornerRadius: DS.Radius.tile, style: .continuous))
+    }
+    /// 419: 同 ID 冲突逐条裁决 (左本机右备份), 与恢复向导同语义; 默认取备份
+    private var conflictCard: some View {
         VStack(alignment: .leading, spacing: DS.Space.s) {
-            Label("首验清单 (442): 逐项打勾", systemImage: "checklist")
+            Label("\(conflicts.count) 条同 ID 冲突 — 逐条选保留哪边 (419, 默认取备份)", systemImage: "arrow.triangle.2.circlepath")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(DS.Palette.warn)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: DS.Space.s) {
+                Button("整批取备份") { conflicts.forEach { conflictChoice[$0.id] = true } }
+                    .font(.caption)
+                    .foregroundStyle(DS.Palette.accentText)
+                    .frame(minHeight: DS.Hit.min)
+                Button("整批取本机") { conflicts.forEach { conflictChoice[$0.id] = false } }
+                    .font(.caption)
+                    .foregroundStyle(DS.Palette.textSub)
+                    .frame(minHeight: DS.Hit.min)
+            }
+            ForEach(conflicts) { c in
+                HStack(spacing: DS.Space.xs) {
+                    Text("\(c.kind) #\(c.alias) · \(String(c.mac.prefix(6)))")
+                        .font(.caption)
+                        .foregroundStyle(DS.Palette.text)
+                        .lineLimit(1)
+                    Spacer(minLength: 0)
+                    sideChip(c.id, false, "本机")
+                    sideChip(c.id, true, "备份")
+                }
+                .frame(minHeight: DS.Hit.min)
+            }
+        }
+        .padding(DS.Space.m)
+        .background(DS.Palette.warn.opacity(0.06), in: RoundedRectangle(cornerRadius: DS.Radius.tile, style: .continuous))
+    }
+    /// 419 逐条裁决芯片: 点哪边保留哪边
+    private func sideChip(_ id: String, _ backupSide: Bool, _ label: String) -> some View {
+        let on = (conflictChoice[id] ?? true) == backupSide
+        return Button(label) {
+            conflictChoice[id] = backupSide
+        }
+        .font(.caption2.weight(.medium))
+        .foregroundStyle(on ? DS.Palette.accentText : DS.Palette.textSub)
+        .padding(.horizontal, DS.Space.xs)
+        .frame(minHeight: 30)
+        .background(on ? DS.Palette.accentText.opacity(0.12) : DS.Palette.surfaceAlt, in: Capsule())
+    }
+    /// 453 哈希层逐段展示: 解析时已过前两层, 这里只说第三层结论
+    @ViewBuilder
+    private func checksumLine(_ seg: MigSegment) -> some View {
+        switch seg.checksum {
+        case .ok:
+            Label("三层检查: 口令层已解 · 文件头已认 · 内容哈希一致 (453)", systemImage: "checkmark.seal")
+                .font(.caption)
+                .foregroundStyle(DS.Palette.ok)
+        case .absent:
+            Label("没有校验和字段 — 兼容放行, 内容被改过时无法预警 (453)", systemImage: "exclamationmark.triangle")
+                .font(.caption)
+                .foregroundStyle(DS.Palette.warn)
+                .fixedSize(horizontal: false, vertical: true)
+        case .mismatch:
+            Label("内容哈希不一致 — 已在解析时拦下, 到不了这一步 (453)", systemImage: "xmark.seal")
+                .font(.caption)
+                .foregroundStyle(DS.Palette.danger)
+        }
+    }
+
+    // ---------- 439 双机并排进度: 大号百分比 + 分卷序号只随真做完的单元走 ----------
+    private var runningStep: some View {
+        VStack(alignment: .leading, spacing: DS.Space.m) {
+            HStack(spacing: DS.Space.s) {
+                Label(channel.rawValue, systemImage: channel.icon)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(DS.Palette.accentText)
+                Spacer(minLength: 0)
+                Text(segments.count > 1 ? "分卷 \(runVol)/\(segments.count)" : "单元 \(min(doneU + 1, totalU))/\(totalU)")
+                    .font(.caption)
+                    .foregroundStyle(DS.Palette.textSub)
+            }
+            ProgressView(value: Double(doneU), total: Double(max(totalU, 1)))
+                .tint(DS.Palette.accentText)
+            Text("\(runPct)%")
+                .font(.largeTitle.weight(.heavy))
+                .foregroundStyle(DS.Palette.text)
+                .monospacedDigit()
+            Text(runLabel.isEmpty ? "准备中…" : runLabel)
+                .font(.subheadline)
+                .foregroundStyle(DS.Palette.text)
+                .lineLimit(1)
+            Text("旧机导出页与本页同显大号百分比与分卷序号, 双机肉眼对齐 (439); 进度只随真做完的单元前进。")
+                .font(.caption)
+                .foregroundStyle(DS.Palette.textSub)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+    private var runPct: Int {
+        totalU <= 0 ? 0 : min(100, Int(Double(doneU) / Double(totalU) * 100))
+    }
+
+    // ---------- 440 分区对账 + 442 首验清单 + 444 核对 ----------
+    private var doneStep: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: DS.Space.m) {
+                Label("导入完成 (445 事务表已结算)", systemImage: "checkmark.seal")
+                    .font(.headline)
+                    .foregroundStyle(DS.Palette.ok)
+                HStack(spacing: DS.Space.l) {
+                    countChip("新增", impN, DS.Palette.ok)
+                    countChip("覆盖", ovN, DS.Palette.accentText)
+                    countChip("跳过", skN, DS.Palette.warn)
+                }
+                if gaps.isEmpty {
+                    Label("分区对账 (440): 本次接收的锁在新机全部到齐", systemImage: "checkmark.circle.fill")
+                        .font(.subheadline)
+                        .foregroundStyle(DS.Palette.ok)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else {
+                    VStack(alignment: .leading, spacing: DS.Space.xs) {
+                        Label("分区对账 (440): \(gaps.count) 把锁有缺口 — 旧机有新机缺", systemImage: "exclamationmark.circle")
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(DS.Palette.warn)
+                            .fixedSize(horizontal: false, vertical: true)
+                        ForEach(gaps) { g in
+                            HStack(spacing: DS.Space.s) {
+                                Text(g.label)
+                                    .font(.caption)
+                                    .foregroundStyle(DS.Palette.text)
+                                    .lineLimit(1)
+                                Spacer(minLength: 0)
+                                Text("备份 \(g.backup) / 本机 \(g.local) · \(g.note)")
+                                    .font(.caption2)
+                                    .foregroundStyle(DS.Palette.textSub)
+                                    .lineLimit(1)
+                            }
+                            .frame(minHeight: DS.Hit.min)
+                        }
+                        Text("补齐方式 (440): 旧机开「备份工作室→导出向导→完成页」, 在增量补传里只勾这些缺的锁生成小包, 回本页用任一通道再接收一次。")
+                            .font(.caption)
+                            .foregroundStyle(DS.Palette.textSub)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Button("接收补传包 (回通道输入)") {
+                            withAnimation(DS.Motion.standard) { step = 1 }
+                        }
+                        .font(.subheadline)
+                        .foregroundStyle(DS.Palette.accentText)
+                        .frame(minHeight: DS.Hit.min)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(DS.Space.m)
+                    .background(DS.Palette.warn.opacity(0.06), in: RoundedRectangle(cornerRadius: DS.Radius.tile, style: .continuous))
+                }
+                Text("核对表 (444): 三数来自本次真实处置; 缺的锁按 440 补传后重看这张单。")
+                    .font(.caption)
+                    .foregroundStyle(DS.Palette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
+                firstChecklist()
+                Text("收尾 (446): 首验全部打勾后, 旧机侧备份页会亮出 标记退役 引导, 再做三级本地销毁收尾。")
+                    .font(.caption2)
+                    .foregroundStyle(DS.Palette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+    // ---------- 442 首验清单: 逐项打勾, 与设备页逐锁验证 (kf_migok_) 同口径 ----------
+    private func firstChecklist() -> some View {
+        VStack(alignment: .leading, spacing: DS.Space.s) {
+            Label("首验清单 (442): 在新机真机上逐项验证后打勾", systemImage: "checklist")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(DS.Palette.text)
+                .fixedSize(horizontal: false, vertical: true)
             ForEach(checks, id: \.self) { k in
                 HStack {
                     Image(systemName: checkOn[k] == true ? "checkmark.circle.fill" : "circle")
@@ -1166,57 +2144,22 @@ struct MigrationWizardView: View {
             .disabled(!checks.allSatisfy { checkOn[$0] == true })
         }
     }
-
-    private func startMigration() {
-        session = BackupStudio.MigSession(channel: channel.rawValue,
-                                          startedAt: Date().timeIntervalSince1970,
-                                          step: 0, total: 100, imported: 0, done: false)
-        BackupStudio.saveMigSession(session!)
-        checks = ["开一次门", "看一条记录", "验一处遮蔽状态", "每把锁直连重激活 (443)"]
-        checkOn = BackupStudio.firstChecks()
-        withAnimation(DS.Motion.standard) { step = 1 }
-        runProgress(from: 0)
-    }
-    /// 445 中断续迁: 从断点百分比继续, 不再从头跑
-    private func resumeProgress() {
-        let from = min(max(pct, 0), 99)
-        runProgress(from: from)
-    }
-    private func runProgress(from start: Int) {
-        Task {
-            busy = true
-            for p in start...100 {
-                pct = p
-                vol = p < 50 ? 1 : 2
-                if p % 10 == 0 {
-                    try? await Task.sleep(for: .milliseconds(80))
-                }
-                session?.step = p
-                BackupStudio.saveMigSession(session ?? BackupStudio.MigSession(
-                    channel: channel.rawValue, startedAt: Date().timeIntervalSince1970,
-                    step: p, total: 100, imported: app.devices.count, done: p == 100))
-                if p == 100 {
-                    session?.done = true
-                    session?.imported = app.devices.count
-                }
-            }
-            busy = false
+    private func countChip(_ label: String, _ n: Int, _ tint: Color) -> some View {
+        VStack(spacing: DS.Space.xxs) {
+            Text("\(n)")
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(tint)
+                .monospacedDigit()
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(DS.Palette.textSub)
         }
+        .frame(minWidth: 56, minHeight: DS.Hit.min)
     }
-    private func finish() {
-        if let s = session {
-            s.done = true
-            BackupStudio.saveMigSession(s)
-            BackupStudio.recordEvent("migrate")
-        }
-        UINotificationFeedbackGenerator().notificationOccurred(.success)
-        dismiss()
-    }
-    // 441 逐锁动作
-    private enum LockAction: String { case keep = "保留", merge = "合并", skip = "跳过" }
-    @State private var lockActs: [String: String] = [:]
+    // 441 逐锁动作: mac → merge/keep/skip, 落 kf_mig_lockact_ 并在预演时读回
+    private enum LockAction: String { case merge, keep, skip }
     private func lockActionChip(_ mac: String, _ a: LockAction, _ label: String) -> some View {
-        let on = lockActs[mac] == a.rawValue
+        let on = (lockActs[mac] ?? "merge") == a.rawValue
         return Button(label) {
             lockActs[mac] = a.rawValue
             DB.store.set("kf_mig_lockact_" + mac, a.rawValue)
@@ -1229,39 +2172,126 @@ struct MigrationWizardView: View {
         .background(on ? DS.Palette.accentText.opacity(0.12) : DS.Palette.surfaceAlt, in: Capsule())
     }
 
-    // ---------- 445 中断续迁: 冷启动检测未完成会话, 选择回滚/继续 ----------
-    @ViewBuilder
-    private var resumeCard: some View {
-        if let s = session, s.done == false {
-            Card(tint: .warn) {
-                Label("上次迁移在第 \(s.step)% 中断 (445)", systemImage: "arrow.uturn.backward")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(DS.Palette.warn)
-                Text("选择 回滚 或 继续 (临时事务表已保留)。")
-                    .font(.caption)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-                HStack(spacing: DS.Space.s) {
-                    Button("回滚") {
-                        BackupStudio.clearMigSession()
-                        session = nil
-                        step = 0
+    // ---------- 445 中断续迁: 事务表还在 → 回滚 / 继续 (已落库的锁不重做) ----------
+    private func resumeCard(_ t: BackupStudio.MigTxn) -> some View {
+        Card(tint: .warn) {
+            Label("上次换机迁移中断 (445)", systemImage: "arrow.uturn.backward")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(DS.Palette.warn)
+            Text("临时事务表还在: \(t.channel) 通道已落下 \(t.doneMacs.count) 把锁。回滚 = 整库回到迁移前 (421 快照); 继续 = 重新接收备份, 已落库的锁自动整锁跳过。")
+                .font(.caption)
+                .foregroundStyle(DS.Palette.textSub)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: DS.Space.s) {
+                Button("回滚") {
+                    if BackupStudio.rollbackMigrationTxn() {
+                        pendingTxn = nil
+                        resumedFrom = 0
+                        app.loadDevices()
+                        app.showToast("已回滚到迁移前 (445)")
+                    } else {
+                        app.showToast("回滚失败: 快照不可读")
                     }
-                    .font(.subheadline)
-                    .foregroundStyle(DS.Palette.danger)
-                    .frame(minHeight: DS.Hit.min)
-                    Button("继续") {
-                        pct = s.step
-                        vol = s.step < 50 ? 1 : 2
-                        step = 1
-                        resumeProgress()
-                    }
-                    .font(.subheadline)
-                    .foregroundStyle(DS.Palette.accentText)
-                    .frame(minHeight: DS.Hit.min)
                 }
+                .font(.subheadline)
+                .foregroundStyle(DS.Palette.danger)
+                .frame(minHeight: DS.Hit.min)
+                Button("继续迁移") {
+                    channel = BackupStudio.Channel(rawValue: t.channel) ?? .file
+                    resumedFrom = t.doneMacs.count
+                    pendingTxn = nil
+                    withAnimation(DS.Motion.standard) { step = 1 }
+                }
+                .font(.subheadline)
+                .foregroundStyle(DS.Palette.accentText)
+                .frame(minHeight: DS.Hit.min)
             }
         }
+    }
+
+    // ---------- 439/441/445 真执行: 事务表开局 + 逐段逐锁真实入库 ----------
+    private func runImport() {
+        guard !segments.isEmpty else { return }
+        busy = true
+        layerError = nil
+        impN = 0
+        ovN = 0
+        skN = 0
+        doneU = 0
+        runVol = 1
+        runLabel = ""
+        totalU = totalUnits()
+        startedAt = Date().timeIntervalSince1970
+        // 419: 卡片上逐条选定的保留方 (默认取备份) 真送进 restore 入参
+        var take = Set<String>()
+        for c in conflicts where (conflictChoice[c.id] ?? true) { take.insert(c.id) }
+        let acts = lockActs
+        let segs = segments
+        Task {
+            // 445: 先立/沿用事务表 — 打不出迁移前快照就不开跑
+            guard BackupStudio.beginMigrationTxn(channel: channel.rawValue) else {
+                busy = false
+                layerError = "打不出迁移前全库快照 — 没有回滚点就不开跑 (445)"
+                return
+            }
+            saveSession(false)
+            var offset = 0
+            for (i, seg) in segs.enumerated() {
+                runVol = i + 1
+                // 445: 每段调用前重读事务表 — 本段/上一段已落库的锁整锁跳过, 不重做
+                let skip = Set(BackupStudio.loadMigTxn()?.doneMacs ?? [])
+                let r = await BackupStudio.migrateImport(seg.bundle, zones: BZones(),
+                                                         lockActs: acts,
+                                                         conflictTakeBackup: take,
+                                                         skipMacs: skip) { done, _, name in
+                    doneU = offset + done
+                    runLabel = name
+                }
+                offset += 1 + seg.bundle.devices.filter { HexKit.bytes($0.mac).count == 6 && !$0.kc.skey.isEmpty }.count
+                impN += r.imported
+                ovN += r.overwritten
+                skN += r.skipped
+                saveSession(false)
+            }
+            // 445 结算: 事务清掉 = 本轮闭环; 442 立起首验 (设备页连上每把锁时写 kf_migok_)
+            BackupStudio.finishMigrationTxn()
+            BackupStudio.armFirstChecks()
+            doneU = totalU
+            runLabel = "全部单元完成"
+            gaps = mergedBundle().map { BackupStudio.lockGaps($0) } ?? []
+            checks = ["开一次门", "看一条记录", "验一处遮蔽状态", "每把锁直连重激活 (443)"]
+            checkOn = BackupStudio.firstChecks()
+            app.loadDevices()
+            saveSession(true)
+            busy = false
+            withAnimation(DS.Motion.standard) { step = 4 }
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            app.showToast("换机迁移完成")
+        }
+    }
+    private func saveSession(_ done: Bool) {
+        BackupStudio.saveMigSession(BackupStudio.MigSession(
+            channel: channel.rawValue, startedAt: startedAt,
+            step: doneU, total: max(totalU, 1), imported: impN + ovN, done: done))
+    }
+    private func finish() {
+        BackupStudio.recordEvent("换机迁移")
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        dismiss()
+    }
+    private func layerCard(_ e: String) -> some View {
+        VStack(alignment: .leading, spacing: DS.Space.xs) {
+            Label("解析/执行未通过 (453)", systemImage: "exclamationmark.triangle")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(DS.Palette.warn)
+            Text(e)
+                .font(.caption)
+                .foregroundStyle(DS.Palette.textSub)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(DS.Space.m)
+        .background(DS.Palette.warn.opacity(0.06), in: RoundedRectangle(cornerRadius: DS.Radius.tile, style: .continuous))
     }
 }
 
@@ -1276,9 +2306,43 @@ extension BackupStudio.Channel {
     }
     var hint: String {
         switch self {
-        case .file: return "数据线 + 隔空投送/云盘, 旧机导出文件, 新机导入 (用系统文件分享, 不直接集成 AirDrop)"
-        case .qr: return "仅凭证小包: 旧机生成二维码, 新机相机扫码, 全程无网络 (411)"
-        case .webdav: return "坚果云/自配 WebDAV, 远端下载 → 预演 → 哈希先行入库 (422/423)"
+        case .file: return "旧机导出 .enc 后经数据线/隔空投送/云盘传到本机, 这里粘贴或从「文件」选择接收 (438)"
+        case .qr: return "仅凭证小包: 旧机导出页生成二维码, 本页相机扫码接收, 全程无网络 (411/438)"
+        case .webdav: return "坚果云/自配 WebDAV: 读远端列表 → 下载 → 解析入库, 两台机不见面也能迁 (422/423)"
+        }
+    }
+}
+
+/// 411 扫码接收端 (新机侧): 扫旧机 导出向导 完成页的凭证二维码 → 原文交给换机迁移接收队列。
+/// ⚠ CredentialStudio.swift 里 DataScannerView 的调用形状禁止改写 — 它已挂在 docs/API-VERIFY.md:
+/// 「撞不到 Apple 文档、形状高度可疑、在编译器看过之前不许凭记忆重写」。本页只接接收侧流程
+/// (拿到原文 → 上层 417/453 解密解析入库), 调用形态逐字复用 522 的那一处, 不做任何猜改。
+struct MigScanSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let onResult: (String) -> Void
+    @State private var fired = false
+
+    var body: some View {
+        NavigationStack {
+            DataScannerView { session in
+                session.recognitionLanguages = ["zh-Hans", "en"]
+                session.supportedDataTypes = [.qr, .dataMatrix]
+            } results: { results in
+                for r in results {
+                    if let item = r.data.item, let s = item.string {
+                        guard fired == false else { return }
+                        fired = true
+                        onResult(s)
+                        dismiss()
+                        return
+                    }
+                }
+            }
+            .navigationTitle("扫码接收 (411)")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) {
+                Button("关闭") { dismiss() }
+            } }
         }
     }
 }
@@ -1292,6 +2356,55 @@ struct LocalFilesView: View {
     @State private var compareRows: [BackupStudio.DiffRow]?
     @State private var dryRun: String = ""
     @State private var pw = ""
+    // 432 每行概览: 体积/时间来自文件属性, 内容概览要能解密才算得出, 密文包如实标"需口令"
+    @State private var cover: [String: String] = [:]
+    // 433 别名/备注: **只改显示**, 文件名与内容不动 (哈希短码 434 仍指向同一个文件)
+    @State private var aliases: [String: String] = DB.store.get([String: String].self, "kf_bk_note") ?? [:]
+    @State private var editingFile = ""
+    @State private var showEditAlert = false
+    @State private var noteDraft = ""
+    // 437 复核钉: 键一律是真实文件名 (别名可能被人改), 到期天数在进页时算一次
+    @State private var pins: [String: String] = BackupStudio.pins()
+    // 435 逐文件算法标注: 读文件头即可 (不解密), 也在进页时算一次, 不放 body 里重复读盘
+    @State private var algos: [String: BackupStudio.AlgoNote] = [:]
+    @State private var pinOver: [String: Int] = [:]
+    @State private var pinFile = ""
+    @State private var pinDay = Date()
+    @State private var showPinSheet = false
+
+    /// 重读复核钉 (钉完/撤完/回本页时都按当前磁盘与日历重算一遍到期)
+    private func reloadPins() {
+        pins = BackupStudio.pins()
+        pinOver = Dictionary(uniqueKeysWithValues: BackupStudio.duePins().map { ($0.file, $0.overDays) })
+    }
+
+    /// 433: 备注可能两行 (别名 + 一句话说明), 第一行当显示名
+    private func aliasOf(_ u: URL) -> String {
+        (aliases[u.lastPathComponent] ?? "").split(separator: "\n").first.map(String.init) ?? ""
+    }
+    private func sizeOf(_ u: URL) -> String {
+        let b = (try? u.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
+        return DataHealth.human(b)
+    }
+    private func mtimeOf(_ u: URL) -> String {
+        guard let d = (try? u.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate else { return "?" }
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "MM-dd HH:mm"
+        return f.string(from: d)
+    }
+    /// 432 的"记录起止覆盖列"**做不到**：本机备份包 (BackupBundle) 只有 devices/ledger/members/globals，
+    /// 不含任何记录日志 —— 拿"覆盖的起止日期"就是编。这里改成包体里真有的东西：备份时刻、几台锁、几条凭证。
+    /// 密文包不猜内容，如实标"需口令"。
+    private func buildCover(_ list: [URL]) {
+        var m: [String: String] = [:]
+        for u in list.prefix(40) {
+            guard let b = try? decodeBundle(u) else { m[u.lastPathComponent] = "需口令"; continue }
+            let cred = b.devices.reduce(0) { $0 + (($1.ledger?.pwds.count ?? 0) + ($1.ledger?.fps.count ?? 0)) }
+            m[u.lastPathComponent] = "备份于 \(b.at.prefix(16)) · \(b.devices.count) 台锁 · \(cred) 条凭证"
+        }
+        cover = m
+    }
 
     var body: some View {
         NavigationStack {
@@ -1305,11 +2418,21 @@ struct LocalFilesView: View {
                     ForEach(files, id: \.self) { u in
                         VStack(alignment: .leading, spacing: DS.Space.xxs) {
                             HStack {
-                                Text(u.lastPathComponent)
-                                    .font(.subheadline)
-                                    .foregroundStyle(DS.Palette.text)
-                                    .lineLimit(1)
-                                    .truncationMode(.middle)
+                                // 433: 有备注就显示备注, 文件名退到下一行小字 (文件名本身不动)
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text(aliasOf(u).isEmpty ? u.lastPathComponent : aliasOf(u))
+                                        .font(.subheadline)
+                                        .foregroundStyle(DS.Palette.text)
+                                        .lineLimit(1)
+                                        .truncationMode(.middle)
+                                    if !aliasOf(u).isEmpty {
+                                        Text(u.lastPathComponent)
+                                            .font(.caption2)
+                                            .foregroundStyle(DS.Palette.textSub)
+                                            .lineLimit(1)
+                                            .truncationMode(.middle)
+                                    }
+                                }
                                 Spacer(minLength: 0)
                                 Button(u.lastPathComponent) { sel.toggle(u) }
                                     .font(.caption.weight(.medium))
@@ -1324,8 +2447,90 @@ struct LocalFilesView: View {
                                 Text(BackupStudio.verifyChecksum(rawOf(u)) ? "哈希一致" : "哈希缺失")
                                     .font(.caption2)
                                     .foregroundStyle(DS.Palette.textSub)
+                                // 432 体积与文件时间 (文件属性, 不用解密, 永远说得出口)
+                                Text("\(sizeOf(u)) · \(mtimeOf(u))")
+                                    .font(.caption2)
+                                    .foregroundStyle(DS.Palette.textSub)
+                                    .lineLimit(1)
+                            }
+                            // 435: 这一份自己的算法参数 (从信封读出来, 不是工作室那枚"当前代码用什么"的徽章)
+                            if let n = algos[u.lastPathComponent] {
+                                Group {
+                                    switch n {
+                                    case .envelope(let s): Text("\(s) (435)")
+                                    case .plain: Text("明文包 · 没有加密信封 (435)")
+                                    case .unknown: Text("未能从文件头识别算法 (435)")
+                                    }
+                                }
+                                .font(.caption2)
+                                .foregroundStyle(n == .unknown ? DS.Palette.warn : DS.Palette.textSub)
+                                .fixedSize(horizontal: false, vertical: true)
+                            }
+                            // 432: 内容概览 (备份包不含记录, 所以这里只有台账/成员规模, 密文标"需口令")
+                            if let c = cover[u.lastPathComponent] {
+                                Text(c)
+                                    .font(.caption2)
+                                    .foregroundStyle(c == "需口令" ? DS.Palette.warn : DS.Palette.textSub)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            // 437: 复核钉状态 (未到日只是小字存档, 到日才变橙)
+                            if let day = pins[u.lastPathComponent] {
+                                if let n = pinOver[u.lastPathComponent] {
+                                    Text("复核钉 \(BackupStudio.pinDayText(day)) · 今天该复核 (已过 \(n) 天)")
+                                        .font(.caption2)
+                                        .foregroundStyle(DS.Palette.warn)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                    // 404: 到日这一份提示手动销毁/删除 —— 删除出口在本行长按菜单里 (带二次确认)
+                                    Text("已到复核日: 核对后手动删除这份备份, 或重做一份新的再删旧的 (404)")
+                                        .font(.caption2)
+                                        .foregroundStyle(DS.Palette.warn)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                } else {
+                                    Text("复核钉 \(BackupStudio.pinDayText(day)) · 未到日不催")
+                                        .font(.caption2)
+                                        .foregroundStyle(DS.Palette.textSub)
+                                }
                             }
                         }
+                        .contextMenu {
+                            Button("加备注 / 改名显示 (433)") {
+                                editingFile = u.lastPathComponent
+                                noteDraft = aliases[u.lastPathComponent] ?? ""
+                                showEditAlert = true
+                            }
+                            Button("设复核日期 (437)") {
+                                pinFile = u.lastPathComponent
+                                pinDay = BackupStudio.dayDate(pins[pinFile] ?? "") ?? Date()
+                                showPinSheet = true
+                            }
+                            if aliases[u.lastPathComponent] != nil {
+                                Button("去掉备注", role: .destructive) {
+                                    var m = aliases
+                                    m.removeValue(forKey: u.lastPathComponent)
+                                    aliases = m
+                                    DB.store.setCodable("kf_bk_note", m)
+                                }
+                            }
+                            if pins[u.lastPathComponent] != nil {
+                                Button("撤掉复核钉", role: .destructive) {
+                                    BackupStudio.setPin(u.lastPathComponent, "")
+                                    reloadPins()
+                                }
+                            }
+                            // 404: 到期备份的手动删除出口 (此前这一族没有删除动作, 提示"手动删除"没有落点)。
+                            // 删除面只对本列表里真实存在的这一份文件, 且必须走 confirmDestructive 二次确认。
+                            Button("删除这份备份 (404)", role: .destructive) {
+                                confirmDestructive("删除这份备份?",
+                                                   "将删除本机上的 \(u.lastPathComponent) — 不可恢复; 其它设备或远端上的副本不受影响。",
+                                                   confirmTitle: "删除") {
+                                    try? FileManager.default.removeItem(at: u)
+                                    files.removeAll { $0 == u }
+                                    sel.remove(u)
+                                }
+                            }
+                        }
+                        // 404 到期行置灰: 复核钉到日 (pinOver 有值) 的这一份压暗, 与上面那句提示同一判据
+                        .opacity(pinOver[u.lastPathComponent] != nil ? 0.55 : 1)
                     }
                     if sel.count == 2, let a = sel.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }).first,
                        let b = sel.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }).last {
@@ -1383,7 +2588,7 @@ struct LocalFilesView: View {
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                Section("数据事件 (511): 建库/首次备份/恢复/迁移/清理 关键节点") {
+                Section("数据事件 (511): 本机记的导出 / 恢复 / 迁移 三类节点") {
                     ForEach(BackupStudio.dataEvents(), id: \.self) { s in
                         Text(s).font(.caption).foregroundStyle(DS.Palette.textSub)
                     }
@@ -1396,6 +2601,50 @@ struct LocalFilesView: View {
                     includingPropertiesForKeys: nil))?.filter {
                         $0.lastPathComponent.hasSuffix(".enc")
                     }?.sorted { $0.lastPathComponent > $1.lastPathComponent } ?? []
+                buildCover(files)   // 432: 概览要解密, 只在进页时算一次, 不放 body 里 (每帧重解会卡)
+                // 435: 只读每个文件的头 4KB, 不解密; 认不出信封的走"未能识别", 不套徽章那串
+                algos = Dictionary(uniqueKeysWithValues: files.map { ($0.lastPathComponent, BackupStudio.algoNote($0)) })
+                reloadPins()        // 437: 到期与否跟日历走, 每次进页重算
+            }
+            // 433: 备注/别名只存本机显示用 (kf_bk_note), 文件名与内容都不动
+            .alert("备注 / 改显示名 (433)", isPresented: $showEditAlert) {
+                TextField("如: 换机前 final", text: $noteDraft)
+                Button("保存") {
+                    var m = aliases
+                    let t = noteDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if t.isEmpty { m.removeValue(forKey: editingFile) } else { m[editingFile] = t }
+                    aliases = m
+                    DB.store.setCodable("kf_bk_note", m)
+                }
+                Button("取消", role: .cancel) {}
+            } message: {
+                Text("只改这一页的显示, 文件名、内容与哈希都不变；备份列表仍按文件名排序 (433)。")
+            }
+            // 437 复核钉设置页: 钉的是"哪天该复核这份备份", 到日才在设备页催 (未到日只在小字里存档)
+            .sheet(isPresented: $showPinSheet) {
+                NavigationStack {
+                    Form {
+                        DatePicker("复核日期", selection: $pinDay, displayedComponents: .date)
+                        Text("目标: \(pinFile)\n到日之后设备页 Hero 卡下会催一行, 点「知道了」停止催这一钉；把日期挪到新一天会重新催。")
+                            .font(.caption)
+                            .foregroundStyle(DS.Palette.textSub)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Button("存这个复核日") {
+                            let day = BackupStudio.dayString(pinDay)
+                            BackupStudio.setPin(pinFile, day)
+                            reloadPins()
+                            showPinSheet = false
+                            app.showToast("已钉 \(BackupStudio.pinDayText(day)) 复核 \(BackupStudio.pinLabel(pinFile)) (437)")
+                        }
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(DS.Palette.accentText)
+                        .frame(minHeight: DS.Hit.min)
+                    }
+                    .navigationTitle("备份复核钉 (437)")
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarLeading) { Button("取消") { showPinSheet = false } }
+                    }
+                }
             }
         }
     }
@@ -1419,9 +2668,13 @@ struct LocalFilesView: View {
         let raw = rawOf(u)
         do {
             let body = try BackupStudio.decryptAny(raw, password: pw.isEmpty ? nil : pw)
-            dryRun = BackupStudio.verifyChecksum(body)
-                ? "已验证 · 抽样 5 条可解析 · 哈希 " + BackupStudio.shortHash(body)
-                : "哈希不一致 — 该份备份可能损坏, 建议重下 (423)"
+            if BackupStudio.verifyChecksum(body) {
+                // 436: 抽样数实算 (parsePreview 真抽一遍), 不再写死 "5 条"
+                let sampled = (try? BackupStudio.parsePreview(text: body, password: nil).preview.sampleOk) ?? 0
+                dryRun = "已验证 · 抽样 \(sampled) 条可解析 · 哈希 " + BackupStudio.shortHash(body)
+            } else {
+                dryRun = "哈希不一致 — 该份备份可能损坏, 建议重下 (423)"
+            }
         } catch {
             dryRun = error.localizedDescription
         }

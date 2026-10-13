@@ -73,6 +73,9 @@ struct AddDeviceView: View {
         List {
             if !pairError.isEmpty {
                 // 256: 回滚完成后错误必须可见, 不能无声吞掉
+                // 829 (2026-10-11 拍板, D-150a 方案①): 失败面 = 页内常驻横幅 + 直达说明书症状树。
+                // 排查内容不再在本页抄第四遍 —— 单一来源 = DiagKit.SymptomGuide.bleConnect (282 判断树),
+                // 与 DFU 失败页 (142/1037) 同一先例: 横幅常驻, 出口就挂在横幅旁边, 不新造形状。
                 Section {
                     Label {
                         Text(pairError).fixedSize(horizontal: false, vertical: true)
@@ -81,6 +84,15 @@ struct AddDeviceView: View {
                     }
                     .font(.footnote)
                     .foregroundStyle(DS.Palette.danger)
+                    NavigationLink {
+                        SymptomGuideView(initial: "bleConnect")
+                    } label: {
+                        Label("看三步排查 (829)", systemImage: "stethoscope")
+                            .font(.footnote)
+                            .frame(minHeight: DS.Hit.min)
+                    }
+                } footer: {
+                    Text("配不上先别反复重试: 点上面一步一问答, 结论只给下一步动作, 全程只在本机问答。")
                 }
             }
             Section("操作指引") {
@@ -89,6 +101,21 @@ struct AddDeviceView: View {
                 Text("3. 保持当前页面，等待完成添加").font(.footnote)
             }
             Section {
+                // 807 信号格配对引导 (拍板 2026-10-10: 只给信号与提示，**不自动推进配对**)。
+                // 理由写在这: 配对是在重置态换密钥的不可逆写锁操作，把"信号够了"当成"用户想开始了"
+                // 是替用户做决定 —— 满格时也只是把话说到"现在点它可以了"。
+                HStack(spacing: DS.Space.s) {
+                    RSSIBars(level: LinkSense.rssiLevel(LinkSense.shared.lastRssi))
+                    Text(LinkSense.rssiLevel(LinkSense.shared.lastRssi) >= 3
+                         ? "信号已够，点下面列表里的锁即可开始 (807)"
+                         : "请再靠近门锁：信号越满广播越完整，配对越不容易中途断")
+                        .font(.caption)
+                        .foregroundStyle(DS.Palette.textSub)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
+                }
+                .frame(minHeight: DS.Hit.min)
+                .accessibilityElement(children: .combine)
                 Button {
                     Task { await scan() }
                 } label: {
@@ -416,7 +443,7 @@ struct AddDeviceView: View {
             // 导致 parseAdv 失败。开启后每次广播包都带完整厂商段 (UI 按 deviceId 去重, 无副作用)。
             try await BLEService.shared.startScan(allowDuplicates: true, timeoutMs: 10000)
             let deadline = Date().addingTimeInterval(10)
-            while Date() < deadline {
+            while Date() < deadline, !Task.isCancelled {
                 // 251 发现列表: 全量展示 + 评分排序 + 信号强度排序,
                 // 不在列表层硬过滤 resetStatus — 硬过滤会把"已配对未重置"的锁整个藏掉。
                 devices = BLEService.shared.allDiscovered()
@@ -435,11 +462,15 @@ struct AddDeviceView: View {
                         $0.score != $1.score ? $0.score > $1.score : ($0.dev.rssi != $1.dev.rssi ? $0.dev.rssi > $1.dev.rssi : $0.dev.name < $1.dev.name)
                     }
                     .map { $0.dev }
-                try? await Task.sleep(nanoseconds: 400_000_000)
+                // 旧写法 `try?` 把 CancellationError 一起吞了 → 关页/切流程后循环照样跑到 10s 到点
+                do { try await Task.sleep(nanoseconds: 400_000_000) } catch { break }
             }
         } catch {
             app.showToast(error.localizedDescription)
         }
+        // 扫描必须收口: 本函数与 DFUKit:516 不同, 此前没有任何 stopScan 调用点,
+        // allowDuplicates 扫描会在离页后继续回调与占radio (对照 BLEService 的 scanTimer 只在超时才停)。
+        BLEService.shared.stopScan()
         scanning = false
     }
 
@@ -515,7 +546,9 @@ struct AddPwdView: View {
             // 带 footer 的 Section 必须用 content/header/footer 三段式重载,
             // 不存在 Section("标题") { } footer: { } 这种写法
             Section {
-                TextField("密码 (6~8 位数字)", text: $pwd)
+                // 密码属敏感输入: 明文 TextField 会进系统文字替换/预测缓存, 截屏与旁观也可读
+                // (对照本页网关口令 :1973 用 SecureField) → 统一 SecureField + 可见性切换由系统提供
+                SecureField("密码 (6~8 位数字)", text: $pwd)
                     .keyboardType(.numberPad)
             } header: {
                 Text("门锁密码")
@@ -588,7 +621,7 @@ struct AddPwdView: View {
         guard pwdOK else { app.showToast("请输入6~8位数字密码"); return }
         guard app.current != nil else { app.showToast("请先选择门锁"); return }
         confirmDestructive("下发临时密码",
-                          "将把密码「\(pwd)」以明文下发给门锁「\(app.displayName)」，10 分钟后自动失效。临时密码无法在 App 内提前作废，确定下发吗？",
+                          "将把密码「\(String(repeating: "·", count: pwd.count))」以明文下发给门锁「\(app.displayName)」，10 分钟后自动失效。临时密码无法在 App 内提前作废，确定下发吗？",
                           confirmTitle: "下发") {
             Task { await self.submitTemp() }
         }
@@ -602,6 +635,12 @@ struct AddPwdView: View {
         let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX"); f.dateFormat = "yyyy-MM-dd HH:mm:ss"
         let from = permanent ? "2010-01-01 00:00:00" : f.string(from: fromDate)
         let to = permanent ? "2118-01-01 00:00:00" : f.string(from: toDate)
+        // 自定义区间必须 to 晚于 from: 两个日期选择器的默认值同为 Date(), 用户不改日期直接提交
+        // 就会下发一条"当刻即过期"的密码, 而流程仍提示"添加成功" (锁端收下后立即失效, 无从察觉)
+        if !permanent, toDate <= fromDate {
+            app.showToast("失效时间需晚于生效时间")
+            return
+        }
         do {
             try await app.lock.ensureConnected(mac: kc.mac)
             let alias = try await app.lock.pwdAdd(pwd: pwd, validFrom: from, validTo: to)
@@ -657,7 +696,12 @@ struct StartAddFpView: View {
     @Environment(\.dismiss) private var dismiss
     /// 内容是否已嵌入外部导航容器。默认 false (现存调用点全是 NavigationLink push, 见 AddPwdView 同名参数)
     var embedded: Bool = false
+    var prefillOwner: String? = nil   // 322 预填直达: 从"有 N 位成员还没有指纹"那枚链接带进来的归属
     @State private var presses: [LockService.FpPress] = []
+    // 第八十九批: 录入这种"按钮起的长任务"要有句柄。原先是裸 `Task { await start() }` ——
+    // 关页后 fpStart 仍会转满 30 秒，然后照样 fpConfirm、写台账、弹"已录入"，
+    // 而用户早就走了 (这不是"多点一下"的问题，是后台替用户做了一次锁端写入)。
+    @State private var enrollTask: Task<Void, Never>? = nil
     @State private var busy = false
     @State private var error = ""
     @State private var doneBatch: UInt32?
@@ -720,7 +764,7 @@ struct StartAddFpView: View {
                             .multilineTextAlignment(.center)
                         }
                         BusyButton(title: "开始录入", systemImage: "touchid", isBusy: busy) {
-                            Task { await start() }
+                            enrollTask = Task { await start() }
                         }
                     }
                 }
@@ -734,11 +778,16 @@ struct StartAddFpView: View {
     }
 
     var body: some View {
-        if embedded {
-            AnyView(content)
-        } else {
-            AnyView(NavigationStack { content })
+        // 原先两个分支各套一层 AnyView (只为绕过 if/else 的类型差)，这里换成 Group + @ViewBuilder，
+        // 好把 .onDisappear 挂在**页面最外层** —— 挂在 content 上会因步骤切换误取消刚完成的流程。
+        Group {
+            if embedded {
+                content
+            } else {
+                NavigationStack { content }
+            }
         }
+        .onDisappear { enrollTask?.cancel() }
     }
 
     private var progressText: String {
@@ -751,13 +800,24 @@ struct StartAddFpView: View {
         guard let kc = app.current, !busy else { return }
         busy = true
         error = ""
+        // 重试必须清空: onPress 是**累加**式回填，不清就会出现"9/8"这种读数 (旧写法整批赋值天然不会)
+        presses = []
         defer { busy = false }
         do {
             try await app.lock.ensureConnected(mac: kc.mac)
-            let presses = try await app.lock.fpStart(times: 8, timeoutMs: 30000)
-            self.presses = presses
+            // onPress 每来一帧就填一次: 旧写法要等整个 fpStart 返回才赋值，
+            // 期间"重复此步骤 (0/8)"的进度文案恒停在 0/8 (§4 遗留项)
+            let ps = try await app.lock.fpStart(times: 8, timeoutMs: 30000,
+                                                onPress: { p in self.presses.append(p) })
+            self.presses = ps
             guard let batch = presses.compactMap({ $0.batchNumber }).first, batch > 0 else {
                 throw NSError(domain: "fp", code: 1, userInfo: [NSLocalizedDescriptionKey: "未拿到有效指纹批次, 请重新录入"])
+            }
+            // 第八十九批: 句柄取消后**不越过这个不可逆点**。fpConfirm 会真正把这批指纹启用并写本机台账；
+            // 用户已经关页就走"按压已作废"的路径，不替他做锁端写入，也不弹"已录入"。
+            if Task.isCancelled {
+                presses = []
+                return
             }
             try await app.lock.fpConfirm(batch, validFrom: "2010-01-01 00:00:00", validTo: "2118-01-01 00:00:00")
             // 自动命名: 指纹N (取台账内最大编号 + 1)
@@ -767,7 +827,7 @@ struct StartAddFpView: View {
             }
             let n = (existing.max() ?? 0) + 1
             DB.addFp(kc.mac, LedgerFp(batch: Int(batch), name: "指纹\(n)", at: Date().timeIntervalSince1970 * 1000,
-                                      note: "", src: "app", owner: nil, isAlarm: false))
+                                      note: "", src: "app", owner: prefillOwner, isAlarm: false))
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             doneBatch = UInt32(batch)
         } catch {
@@ -862,9 +922,18 @@ struct DeviceInfoView: View {
                 Text(sampleText)
                     .font(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
-                Text(trendText)
-                    .font(.caption2)
-                    .foregroundStyle(DS.Palette.textSub)
+                // 45 电量 sparkline: 采样 ≥2 个点画真走势; 不足时退回诚实占位文案 (不画假线不插值)
+                let sp = battSamples
+                if sp.count >= 2 {
+                    BattSpark(samples: sp)
+                    Text(battTrendCaption(sp))
+                        .font(.caption2)
+                        .foregroundStyle(DS.Palette.textSub)
+                } else {
+                    Text(trendText)
+                        .font(.caption2)
+                        .foregroundStyle(DS.Palette.textSub)
+                }
             }
             .accessibilityElement(children: .combine)
             LabeledRow("安全模式", modeText)
@@ -872,6 +941,16 @@ struct DeviceInfoView: View {
             capacityRow(title: "密码", used: pwdUsed, cap: pwdCap, stock: status?.pwdStock ?? app.snapshot?.pwdStock ?? -1)
             capacityRow(title: "指纹", used: fpUsed, cap: fpCap, stock: status?.fpStock ?? app.snapshot?.fpStock ?? -1)
         }
+    }
+
+    /// 45: 采样表就是 sparkline 的唯一数据源 (每次读 03 追加, 90 天截断)
+    private var battSamples: [BattSample] { BatteryCare.samples(kc?.mac ?? "") }
+    /// 45: 图下那行写全可核事实 —— 点数/跨度天数/最低最高, 不写"预计""续航"一类协议没有的词
+    private func battTrendCaption(_ sp: [BattSample]) -> String {
+        let lo = sp.map(\.pct).min() ?? 0
+        let hi = sp.map(\.pct).max() ?? 0
+        let days = sp.count >= 2 ? max(Int((sp[sp.count - 1].t - sp[0].t) / 86_400_000) + 1, 1) : 1
+        return "电量走势 (45): \(sp.count) 个采样点 · 跨 \(days) 天 · 最低 \(lo)% / 最高 \(hi)%"
     }
 
     // 290 电池档案: 型号与换电日期 (表单可编辑, 纯本地台账)
@@ -1027,12 +1106,46 @@ struct DeviceInfoView: View {
     }
 }
 
+// ---------- 45 电量 sparkline (Canvas 纯几何: 只连真采样点, 不插值不编造) ----------
+/// Robinhood 式小图: 横轴 = 采样序号 (采样本身间隔不均, 序号制下每点等距, 不假装是等时采样),
+/// 纵轴 = 本段 min/max 归一。精确读数由图下那行 (点数/跨度/最低/最高) 给出 —— 图形只管"一眼看趋势"。
+private struct BattSpark: View {
+    let samples: [BattSample]
+
+    var body: some View {
+        let pts = samples.map(\.pct)
+        let lo = pts.min() ?? 0
+        let hi = pts.max() ?? 0
+        let span = max(hi - lo, 1)
+        Canvas { ctx, size in
+            let ih = max(size.height - 4, 1)
+            func y(_ v: Int) -> CGFloat { 2 + ih - ih * CGFloat(v - lo) / CGFloat(span) }
+            var path = Path()
+            for (i, v) in pts.enumerated() {
+                let x = size.width * CGFloat(i) / CGFloat(max(pts.count - 1, 1))
+                if i == 0 { path.move(to: CGPoint(x: x, y: y(v))) }
+                else { path.addLine(to: CGPoint(x: x, y: y(v))) }
+            }
+            ctx.stroke(path, with: .color(DS.Palette.accent), lineWidth: 1.5)
+            // 末点 (最新值) 一个小实点: "线往哪走"与"现在在哪"是两个问题
+            if let v = pts.last {
+                let d: CGFloat = 5
+                ctx.fill(Path(ellipseIn: CGRect(x: size.width - d / 2, y: y(v) - d / 2, width: d, height: d)),
+                         with: .color(DS.Palette.accent))
+            }
+        }
+        .frame(height: 34)
+        .accessibilityHidden(true)   // 事实由下方 battTrendCaption 那行统一播报 (合成元素)
+    }
+}
+
 // ================= 锁档案 (包3: 105 符号与色标 · 106 昵称+备注 · 774 场所副标题 · 290 电池档案) =================
 struct LockProfileView: View {
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
     @State private var name = ""
     @State private var place = ""
+    @State private var grp = ""      // 104/767 分组名 (与设备管理页同一字段)
     @State private var note = ""
     @State private var symbol = ""
     @State private var colorKey = ""
@@ -1071,18 +1184,38 @@ struct LockProfileView: View {
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel("预览: \(trimmed.isEmpty ? "未命名" : trimmed)")
             } footer: {
-                Text("符号与色标同步用于 Hero 卡与切换胶囊。")
+                Text("符号与色标同步用于 Hero 卡、切换胶囊与记录行的时间线标签 (105)。")
             }
             Section("身份") {
                 TextField("昵称 (如 婆婆家·入户门)", text: $name)
                     .autocorrectionDisabled()
                     .submitLabel(.next)
+                // 920 安装位置字段 = 这一行 (原句的"玄关/车库"就是这里的占位例子)。
+                // 它同时是 Hero 卡副标题与"全部锁总览"的行副标题; **Widget 那一半做不到** ——
+                // 免费账号无 App Groups，组件读不到本机档案 (CONSTRAINTS ❌ 表)，所以那里只显示静态文案。
                 TextField("场所副标题 (如 玄关 / 车库)", text: $place)
+                    .autocorrectionDisabled()
+                    .submitLabel(.next)
+                // 104/767 分组名: 与"设备管理"页写的是同一个字段 (kf_lockmeta_.grp), 两处都能改、改完都生效。
+                // 设备页上方会出现按组切换的胶囊; 建议名 (家用/仓库/办公) 在设备管理页的右键菜单里一键选。
+                TextField("分组名 (如 家用 / 仓库 / 办公, 留空 = 未分组)", text: $grp)
                     .autocorrectionDisabled()
                     .submitLabel(.next)
                 // 106 备注: 备忘录标题正文的双字段案
                 TextField("备注 (换电历史/安装细节/门锁脾气…)", text: $note, axis: .vertical)
                     .lineLimit(3...6)
+            }
+            Section {
+                // 108 手动隐藏这把锁: 只影响设备 Tab 的横滑翻页与胶囊主列表。
+                // 判据刻意与"沉睡 (超 30 天未连接)"分开 —— 隐藏是用户明确说过的，沉睡是推断出来的。
+                Toggle("在翻页里隐藏这把锁 (108)", isOn: Binding(
+                    get: { LockArchive.isHidden(app.currentMac) },
+                    set: { LockArchive.setHidden(app.currentMac, $0) }))
+                Text("隐藏后它退出左右横滑，只在切换胶囊的「已隐藏」区里可达；回到这里取消即恢复。\n"
+                     + "这是本机的视图设置：不写门锁，也不影响凭证、日志与备份。")
+                    .font(.caption)
+                    .foregroundStyle(DS.Palette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Section("符号") {
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: DS.Space.s), count: 4),
@@ -1163,6 +1296,7 @@ struct LockProfileView: View {
             name = kc.name
             let m = LockArchive.meta(kc.mac)
             place = m.place; note = m.note
+            grp = m.grp
             symbol = m.symbol; colorKey = m.colorKey
             batteryModel = m.batteryModel
             batteryHasDate = m.batteryChangedAt > 0
@@ -1178,6 +1312,7 @@ struct LockProfileView: View {
         DB.saveKeychain(kc2)
         var m = LockArchive.meta(kc.mac)
         m.place = place.trimmingCharacters(in: .whitespaces)
+        m.grp = LockArchive.normalizedGroup(grp)
         m.note = note
         m.symbol = symbol
         m.colorKey = colorKey
@@ -1192,6 +1327,9 @@ struct LockProfileView: View {
 
 // ================= 固件更新 (checkfirmwareupdate: 导入 zip → cmd22 → Nordic DFU) =================
 // 包4 全流程: 体检单+三勾 (137/1027/1035) → 版本并排 (143) → 三段进度+剩余时间 (138/139) →
+// 141 断点续传的**替代** = 整包重传 (DFU 协议无续传定义, CAPABILITY §6): 下面三处就是替代方案本身
+// —— 中断提示 (:1331) / 失败安抚页 (:1618) / 「重新升级 (整包重传)」按钮 (:1650)，
+// 配合三段进度 (138/139) 压低重传成本。界面上不出现"续传/接着传"这种词。
 // 禁退保护 (140) → 完成自动校验 (148) / 失败安抚页 (142/1037); 本地清单 (513/145) 与历史 (147)。
 // DFUKit 为只读依赖 — 分段/速率/校验编排全部在视图层完成, 不改协议命令集。
 struct FirmwareView: View {
@@ -1258,6 +1396,7 @@ struct FirmwareView: View {
                     failureSection        // 142/1037
                 } else {
                     currentSection
+                    firstGlanceSection    // 825 首检一眼 (版本三处真相摊开)
                     if fw != nil { compareSection }   // 143
                     noticeSection
                     packageSection        // 513/145
@@ -1375,6 +1514,32 @@ struct FirmwareView: View {
         }
     }
 
+    // ---------- 825 固件首检引导 (Apple Support 那一形态) ----------
+    // 创意原句两半：「首次进入显示当前版本占位」+「比对出厂版本清单按钮」。两半分开处理：
+    //  · 占位这一半是真做得到的 —— 读不到当前版本时明写"没读到"，并说清为什么 (没连过锁 = 没发过 03 状态查询)。
+    //  · 「出厂版本清单」**本机没有这张表**：全仓版本真相只有三处 —— 锁侧 03 快照回的 firmware 字段、
+    //    本机每次读到过的版本历史 (FirmwareHistory)、导入过的包名 (kf_fwlib)。所以这里把这三处一次摊开，
+    //    而不是凭空造一张厂商对照表：点进去只有一句假话的那种按钮，本仓宁可不放。
+    @ViewBuilder
+    private var firstGlanceSection: some View {
+        let obs = FirmwareHistory.observations(mac: mac)
+        let lib = BatteryCare.fwlib
+        Section {
+            LabeledRow("锁上读到的版本", curFw.isEmpty ? "没读到 · 先连一次锁" : curFw)
+            LabeledRow("本机读到过的版本",
+                       obs.isEmpty ? "还没有观测记录"
+                       : obs.prefix(3).map { $0.fw + "(" + $0.day + ")" }.joined(separator: " · "))
+            LabeledRow("导入过的固件包",
+                       lib.isEmpty ? "本机还没有包" : "\(lib.count) 个 · 最近 \(lib.first?.version ?? "未知")")
+        } header: {
+            Text("进这一页先对一眼 (825)")
+        } footer: {
+            Text("没有「出厂版本对照表」可点：厂商云已停服，本机只有上面这三处版本真相 (513/145 那份包清单就在下方)。"
+                 + "要升级就带自己的包来，比对以锁上读到的那一个为准。")
+                .font(.caption2)
+        }
+    }
+
     // ---------- 513/145 固件更新包 + 本地清单 ----------
     private var packageSection: some View {
         let lib = BatteryCare.fwlib
@@ -1447,6 +1612,38 @@ struct FirmwareView: View {
             .buttonStyle(PressableButtonStyle())
             .accessibilityLabel("时间充足")
             .accessibilityAddTraits(tickTime ? [.isSelected] : [])
+            // 144 批量排队升级: 同型号的多把锁勾选后**逐把串行**升级 (DFU 期间手机与锁都是独占态,
+            // 并行既抢 BLE 又抢 bootloader 会话); 队列只做外层编排, 单锁那条链一字未改。
+            let peers = app.devices.filter { $0.pid == app.current?.pid && $0.mac != app.current?.mac }
+            if !peers.isEmpty {
+                Section("批量排队升级 (144)") {
+                    ForEach(peers, id: \.mac) { kc in
+                        Toggle(LockArchive.displayName(kc), isOn: Binding(
+                            get: { queueSel.contains(kc.mac) },
+                            set: { on in if on { queueSel.insert(kc.mac) } else { queueSel.remove(kc.mac) } }))
+                            .frame(minHeight: DS.Hit.min)
+                    }
+                    if !queueSel.isEmpty {
+                        BusyButton(title: "排队逐把升级 (\(queueSel.count) 把)",
+                                   systemImage: "square.stack.3d.up", isBusy: running) {
+                            Task { await runQueue() }
+                        }
+                    }
+                    if !queueNote.isEmpty {
+                        Text(queueNote).font(.caption).foregroundStyle(DS.Palette.textSub)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    ForEach(Array(queueOutcomes.enumerated()), id: \.offset) { _, o in
+                        Text((o.ok ? "✓ " : "✗ ") + o.name + " · " + o.note)
+                            .font(.caption2)
+                            .foregroundStyle(o.ok ? DS.Palette.ok : DS.Palette.danger)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Text("同型号锁才可共用同一个固件包; 队列一把失败不中断, 结果逐把列出。")
+                        .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
             BusyButton(title: "开始升级",
                        systemImage: "arrow.down.circle.fill",
                        isBusy: false,
@@ -1456,7 +1653,7 @@ struct FirmwareView: View {
         } header: {
             Text("升级前体检")
         } footer: {
-            Text("体检单全绿才能开始 — 电量与蓝牙自动判定, 备份与时间两项由你确认。请在门锁敞开时进行更新。")
+            Text("体检单全绿才能开始 — 电量与蓝牙自动判定, 备份与时间两项由你确认。协议里没有门磁状态位 (CAPABILITY §5)，门开没开只能你自己看，原案的「门已关」这一项本机做不了。请在门锁敞开时进行更新。")
         }
     }
     private func checkRow(icon: String, ok: Bool, title: String, detail: String) -> some View {
@@ -1565,7 +1762,8 @@ struct FirmwareView: View {
                                 .foregroundStyle(DS.Palette.text)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
-                            Text(fromToText(r) + " · " + dateShort(r.at))
+                            Text(fromToText(r) + " · " + dateShort(r.at)
+                                 + (r.ms.map { " · 耗时 " + Self.durText($0) } ?? ""))
                                 .font(.caption2)
                                 .monospacedDigit()
                                 .foregroundStyle(DS.Palette.textSub)
@@ -1581,6 +1779,12 @@ struct FirmwareView: View {
         let f = r.from.isEmpty ? "?" : r.from
         let t = r.to.isEmpty ? "?" : r.to
         return "v\(f) → v\(t)"
+    }
+    /// 147 耗时文案: <60 秒报秒, 否则分+秒; 旧记录没这个字段就整段不显示 (r.ms == nil)
+    private static func durText(_ ms: Double) -> String {
+        let s = ms / 1000
+        if s < 60 { return String(format: "%.0f 秒", s) }
+        return String(format: "%.0f 分 %.0f 秒", (s / 60).rounded(.down), s.truncatingRemainder(dividingBy: 60))
     }
 
     // ---------- 142/1037 失败安抚页 ----------
@@ -1654,6 +1858,40 @@ struct FirmwareView: View {
         }
     }
 
+    // 144 批量排队升级的状态
+    @State private var queueSel: Set<String> = []
+    @State private var queueNote = ""
+    @State private var queueOutcomes: [DFURunner.QueueOutcome] = []
+
+    /// 144: 排队逐把升级 (同型号锁共用同一个固件包; 串行, 一把失败不中断)
+    private func runQueue() async {
+        guard let fw, !running, !queueSel.isEmpty else { return }
+        running = true
+        queueOutcomes = []
+        queueNote = ""
+        defer { running = false }
+        let macs = queueSel.sorted()
+        let outcomes = await DFURunner.runUpgradeQueue(
+            lock: app.lock, macs: macs, firmware: fw,
+            onStep: { i, n, name in queueNote = "第 \(i)/\(n) 把: \(name)" },
+            onProgress: { p in
+                switch p {
+                case .switchingDfu, .connecting: stage = 0
+                case .starting: stage = 1
+                case .uploading(let v):
+                    stage = 1
+                    updateRate(Double(v))
+                case .validating: stage = 2
+                case .completed: stage = 2; pct = 100
+                default: break
+                }
+            })
+        queueOutcomes = outcomes
+        let ok = outcomes.filter { $0.ok }.count
+        queueNote = "队列结束: 成功 \(ok) / 共 \(outcomes.count) 把"
+        if ok == outcomes.count { UINotificationFeedbackGenerator().notificationOccurred(.success) }
+    }
+
     private func upgrade() async {
         guard let fw, let kc = app.current, !running else { return }
         running = true
@@ -1666,6 +1904,7 @@ struct FirmwareView: View {
         rate = 0
         lastProg = nil
         defer { running = false }
+        let startedAt = Date().timeIntervalSince1970   // 147 计时起点: 连接 + 升级 + 校验全算进去
         do {
             try await app.lock.ensureConnected(mac: kc.mac)
             try await DFURunner.runUpgrade(lock: app.lock, mac: kc.mac, pid: kc.pid, firmware: fw) { p in
@@ -1683,14 +1922,16 @@ struct FirmwareView: View {
             }
             BatteryCare.addDFURecord(DFURecord(mac: kc.mac, name: fw.sourceName,
                                                from: curFw, to: fw.version ?? "",
-                                               at: Date().timeIntervalSince1970 * 1000, ok: true))
+                                               at: Date().timeIntervalSince1970 * 1000, ok: true,
+                                               ms: (Date().timeIntervalSince1970 - startedAt) * 1000))
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             await verifyAfterUpgrade(kc, fw)   // 148
         } catch {
             failed = true
             BatteryCare.addDFURecord(DFURecord(mac: kc.mac, name: fw.sourceName,
                                                from: curFw, to: fw.version ?? "",
-                                               at: Date().timeIntervalSince1970 * 1000, ok: false))
+                                               at: Date().timeIntervalSince1970 * 1000, ok: false,
+                                               ms: (Date().timeIntervalSince1970 - startedAt) * 1000))
             UINotificationFeedbackGenerator().notificationOccurred(.error)
         }
     }
@@ -1701,6 +1942,7 @@ struct FirmwareView: View {
         let now = Date().timeIntervalSince1970
         defer { lastProg = (v, now) }
         guard let last = lastProg, v > last.pct else { return }
+        // 单位口径：秒 —— `lastProg` 的第二个元素就是上面那行 `Date().timeIntervalSince1970`，同一把尺。
         let dt = now - last.at
         guard dt > 0.2 else { return }
         let inst = (v - last.pct) / dt
@@ -1739,6 +1981,7 @@ struct FirmwareView: View {
     private func dateShort(_ tsMs: Double) -> String {
         let f = DateFormatter()
         f.dateFormat = "MM-dd HH:mm"
+        f.locale = Locale(identifier: "en_US_POSIX")
         return f.string(from: Date(timeIntervalSince1970: tsMs / 1000))
     }
 }
@@ -2133,6 +2376,7 @@ struct MembersView: View {
     @State private var newName = ""
     @FocusState private var nameFocused: Bool
     @State private var showCenter = false
+    @State private var welcome: Member?   // 995 入伙欢迎卡
     /// 成员列表直接持有, 写库后重查赋值;
     /// 不用 .id(tick) 重建整个 List —— 那会连带丢掉滚动位置、键盘焦点和动画上下文。
     @State private var members: [Member] = []
@@ -2205,8 +2449,18 @@ struct MembersView: View {
             .sheet(isPresented: $showCenter) {
                 MemberCenterView()
             }
+            .sheet(item: $welcome) { m in
+                MemberWelcomeCard(member: m)   // 995 入伙欢迎卡
+            }
             .task { reload() }
         }
+    }
+
+    /// 732: 号码只留数字与 +; 清洗后不足 3 位视为无效号码, 不给呼叫入口 (不弹错误页)
+    private static func telURL(_ raw: String) -> URL? {
+        let digits = raw.filter { $0.isNumber || $0 == "+" }
+        guard digits.count >= 3 else { return nil }
+        return URL(string: "tel://" + digits)
     }
 
     private func memberRow(_ m: Member) -> some View {
@@ -2227,6 +2481,10 @@ struct MembersView: View {
             Button(role: .destructive) { confirmRemove(m) } label: { Label("删除", systemImage: "trash") }
         }
         .contextMenu {
+            // 732 一键呼叫成员: 号码只保留数字与 + (去空格/括号/连字符), 空号不给入口
+            if let tel = Self.telURL(m.phone) {
+                Button { UIApplication.shared.open(tel) } label: { Label("呼叫 \(m.name)", systemImage: "phone.fill") }
+            }
             Button("重命名") { rename(m) }
             Button("补全信息") { info(m) }
             Menu("授予徽章") {
@@ -2287,13 +2545,13 @@ struct MembersView: View {
     private func reload() { members = DB.members() }
 
     private func add() {
-        if DB.addMember(newName) == nil {
-            app.showToast("姓名为空或已存在")
-        } else {
+        if let m = DB.addMember(newName) {
             newName = ""
             nameFocused = false
             reload()
-            app.showToast("已添加, 给 TA 录入第一份凭证吧")   // 995 入伙引导
+            welcome = m            // 995: 欢迎卡引导首录凭证, 不再只丢一句 toast
+        } else {
+            app.showToast("姓名为空或已存在")
         }
     }
 
@@ -2326,26 +2584,21 @@ struct MembersView: View {
     }
 
     /// 501 级联预告: 删除成员前列出名下将一并入回收站的凭证清单 (跨锁合计)
+    /// D-152a (2026-10-11 拍板 方案③): 与成员页同一形状 —— 三按钮, 默认「只移除档案」,
+    /// 撤权那一支排 629/353 同一条队列; 指纹不可远程补录 (670) 的代价写在正文里。
     private func confirmRemove(_ m: Member) {
-        var preview: [String] = []
-        for kc in DB.keychains() {
-            for p in DB.listPwds(kc.mac).filter({ $0.owner == m.id }) {
-                preview.append("密码 #\(p.alias) · " + (kc.name.isEmpty ? kc.mac : kc.name))
-            }
-            for f in DB.listFp(kc.mac).filter({ $0.owner == m.id }) {
-                preview.append("指纹「\(f.name)」· " + (kc.name.isEmpty ? kc.mac : kc.name))
-            }
-        }
+        let preview = CredentialOrg.memberCredentialPreview(m.id)
         let msg = preview.isEmpty
-            ? "确定要删除「\(m.name)」吗？TA 名下没有台账凭证, 仅移除成员档案。"
-            : "删除「\(m.name)」后, 名下 \(preview.count) 条凭证将一并入回收站 (可整组还原 501):
-" + preview.prefix(5).joined(separator: "
-") + (preview.count > 5 ? "
-…" : "")
+            ? "确定要删除「\(m.name)」吗？TA 名下没有台账凭证。"
+            // 单行字面量里不能有裸换行 (Swift 语法错): 原文的换行全部写成 \n 转义
+            : "删除「\(m.name)」后, 名下 \(preview.count) 条凭证将转为未分配并入回收站 (可整组还原 501):\n"
+              + preview.prefix(5).joined(separator: "\n")
+              + (preview.count > 5 ? "\n…" : "")
+              + "\n· 只移除档案: 只动本机台账, 锁里的指纹与密码不会被收回, TA 仍能开门。"
+              + "\n· 连锁端一起收回: 这些凭证会排上锁端删除, 到场连接后真正失效。指纹一旦在锁端删掉就无法远程补录, 只能本人到锁前重录 —— 还原时对指纹只剩本机记录。"
         let alert = UIAlertController(title: "删除成员", message: msg, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-        alert.addAction(UIAlertAction(title: "删除并入回收站", style: .destructive) { _ in
-            // 凭证随成员入回收站 (整组同戳), 成员档案移除并解除归属
+        alert.addAction(UIAlertAction(title: "只移除档案", style: .default) { _ in
+            // 凭证随成员入回收站 (整组同戳), 成员档案移除并解除归属; 锁端不动
             for kc in DB.keychains() {
                 CredentialOrg.cascadeBinMember(kc.mac, m.id)
             }
@@ -2353,7 +2606,45 @@ struct MembersView: View {
             _ = Milestones.recordOrganize()
             reload()
         })
+        alert.addAction(UIAlertAction(title: "连锁端一起收回", style: .destructive) { _ in
+            // 排上队列的条数在闭包内取 (不改捕获的局部变量: handler 是 escaping 闭包)
+            let queued = DB.keychains().reduce(0) { sum, kc in
+                sum + CredentialOrg.cascadeBinMember(kc.mac, m.id, revokeLocks: true)
+            }
+            DB.removeMember(m.id)
+            _ = Milestones.recordOrganize()
+            reload()
+            app.showToast(queued > 0 ? "已删除并入回收站 · 已排 \(queued) 条锁端删除 (连接门锁后生效)"
+                                      : "已删除并入回收站 (名下没有可收回的凭证)")
+        })
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         UIApplication.topViewController()?.present(alert, animated: true)
+    }
+}
+
+/// 995 入伙欢迎卡: 三步指路 + 一个去凭证页的动作; 不替用户动任何数据。
+private struct MemberWelcomeCard: View {
+    @EnvironmentObject var app: AppState
+    @Environment(\.dismiss) private var dismiss
+    let member: Member
+    var body: some View {
+        VStack(alignment: .leading, spacing: DS.Space.m) {
+            Text("欢迎 \(member.name) 入伙 (995)")
+                .font(.headline)
+            Text("下一步: ① 去凭证页给 TA 录一条凭证 ② 在凭证详情把「归属」改成 \(member.name) ③ 归属后「各就各位」与「入伙」徽章一起点亮")
+                .font(.subheadline)
+                .foregroundStyle(DS.Palette.textSub)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: DS.Space.s) {
+                Button("去凭证页") { dismiss(); app.requestTab(1) }
+                    .buttonStyle(SecondaryActionStyle(fullWidth: false))
+                Spacer(minLength: 0)
+                Button("知道了") { dismiss() }
+                    .buttonStyle(SecondaryActionStyle(fullWidth: false))
+            }
+        }
+        .padding(DS.Space.l)
+        .presentationDetents([.height(260)])
     }
 }
 
@@ -2424,7 +2715,10 @@ struct MessagesView: View {
         for kc in DB.keychains() {
             let devName = kc.name.isEmpty ? PidMap.productName(kc.pid) + " …" + kc.mac.suffix(4) : kc.name
             for l in DB.readLogs(kc.mac) {
-                let warn = l.type == 7 || l.type == 13 || l.type == 224
+                // 第一百五十七批：这里也曾自己写 `7 || 13 || 224`，5 类告警只圈 3 类 ⇒
+                // 低电量与试错锁定在这一屏既不变色、VoiceOver 也不念"告警："前缀，
+                // 而同一条记录在告警中心/统计/导出里都算告警。口径只认 StatsKit.alarmTypes。
+                let warn = StatsKit.alarmTypes.contains(l.type)
                 out.append(Row(id: kc.mac + "#\(l.idxRaw)", text: l.typeName,
                                sub: "\(l.lockTimeStr) · \(devName)", warn: warn))
             }

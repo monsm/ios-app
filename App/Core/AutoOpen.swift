@@ -4,6 +4,7 @@
 // (审计只记"哪道门拒了、哪把锁、何时", 永不记 ekey/skey 明文)。默认全关、fail-closed。
 // 96 铁律对照: 本特性是 96 的显式用户开关例外 — 未开 = 绝不自动开锁, 开 = 全门绿才出手。
 import Foundation
+import SwiftUI          // 本文件尾部有 SwiftUI 视图 (标定页/面板): 缺这一行 = View/@State/@EnvironmentObject 全找不到
 import CoreMotion
 import LocalAuthentication
 import UIKit
@@ -75,12 +76,16 @@ enum AutoOpen {
 enum AutoOpenKit {
 
     // ---------- F4 布防互锁: control==2 时段布防, 当前时刻在 start/end 内 → 一票否决 (跨午夜 start>end) ----------
-    /// startSec/endSec 为日内秒 (SETDEFENCE 协议口径, 半秒分辨率); 仅 control==2 生效, 0/1/3 不拒。
-    /// 跨午夜: start > end 时时段 = [start, 24h) ∪ [0, end); start == end 视为无时段 (fail-closed 不判布防)。
-    /// cal 注入保证 CI 可测 (UTC 基准); 生产走设备当前时区。
-    static func defendActive(control: Int, startSec: Int, endSec: Int, now: Date, cal: Calendar = .current) -> Bool {
+    /// startSec/endSec 为日内秒 (SETDEFENCE 协议口径, 半秒分辨率)；仅 control==2 生效, 0/1/3 不拒。
+    /// 跨午夜: start > end 时时段 = [start, 24h) ∪ [0, end)。
+    /// start == end 按**全天布防**处理 (fail-closed)：这是一道"否决门"，把退化成空集的窗口读成"不布防"
+    /// 等于让一次配错直接把门关掉 —— 本模块的门序里没有任何其它门会替它兜住这段时段。
+    /// cal 注入保证 CI 可测 (传 UTC 日历即可确定性)；生产默认走 `WeekCal.gregorian`
+    /// —— 它照抄当前时区与周序，但把历法钉成公历，用户把系统历法切成佛历/农历时 `.hour/.minute` 的
+    /// 取法不会跟着换基准日 (全仓取分量都走这一个出口，理由见 WeekCal 头注)。
+    static func defendActive(control: Int, startSec: Int, endSec: Int, now: Date, cal: Calendar = WeekCal.gregorian) -> Bool {
         guard control == 2 else { return false }
-        guard startSec != endSec else { return false }
+        guard startSec != endSec else { return true }
         let comps = cal.dateComponents([.hour, .minute, .second], from: now)
         let secOfDay = ((comps.hour ?? 0) * 3600 + (comps.minute ?? 0) * 60 + (comps.second ?? 0)) * 2
         if startSec < endSec {
@@ -90,20 +95,25 @@ enum AutoOpenKit {
     }
 
     // ---------- F1 面容双档: 标准=60s 窗口静默复用 / 严格=进前台必刷 (LAContext 经 FaceService 注入) ----------
-    /// 窗口边界常量 (表驱动可测): 标准档 60s 内静默通过, 超过即拒; 严格档要求本次进前台刷过脸
-    /// (pendingPrompt = 严格档弹窗在途, 视为"正在确认", 由调用方在下发前复核 lastFace 已刷新)。
-    static func faceFresh(tier: Int, lastFace: Date?, now: Date, pendingPrompt: Bool) -> Bool {
+    /// 档位判据只有"是不是标准档"这一件事：0 = 标准 (60s 复用窗)，**其余任何值一律按严格档处理**。
+    /// 原先各处写的都是 `tier == 1`，于是档位取到 1 以外的值 (台账里加第三档、设置被旧备份带回一个陌生数)
+    /// 就会**静默掉进标准档的 60 秒复用窗** —— 这是这台机子上唯一一处"配置漂移=放松安全门"的形状，
+    /// 与模块开头声明的 fail-closed 相反。要新增档位，请反过来做成枚举并把未知值归到最严的一档。
+    static func isStrict(_ tier: Int) -> Bool { tier != 0 }
+
+    /// 窗口边界常量 (表驱动可测): 标准档 60s 内静默通过，超过即拒；严格档要求本次进前台刷过脸。
+    static func faceFresh(tier: Int, lastFace: Date?, now: Date, pendingPrompt: Bool, strictSince: Date? = nil) -> Bool {
         let window: TimeInterval = 60
-        guard let lf = lastFace else {
-            // 从未刷过脸: 严格档弹窗在途可放行本次尝试 (下发前锁仍会因 rc 门兜底), 标准档必拒
-            return tier == 1 && pendingPrompt
+        if isStrict(tier) {
+            // 严格档 0 窗口 (§2/§3.4): 弹窗在途可放行 (下发前还有锁态门兜底)，
+            // 否则必须是**本次进前台之后**刷成的脸 —— 没有基准时刻就当没刷过。
+            if pendingPrompt { return true }
+            guard let lf = lastFace, let since = strictSince else { return false }
+            return lf >= since
         }
-        let age = now.timeIntervalSince(lf)
-        if tier == 0 {
-            return age < window
-        }
-        // 严格档: 60s 窗口内刷过, 或弹窗在途
-        return age < window || pendingPrompt
+        // 标准档：只认 60 秒内的面容成功时刻；从未刷过脸 (nil) 一律拒。
+        guard let lf = lastFace else { return false }
+        return now.timeIntervalSince(lf) < window
     }
 
     // ---------- F3 距离标定: P95 取法 (线性插值) ----------
@@ -121,13 +131,18 @@ enum AutoOpenKit {
     static func rssiBase(mac: String) -> Int? {
         AutoOpen.autocal(mac)?.rssiP95
     }
-    /// F3 回差阈值: 武装线 = 基准 × 0.7 (RSSI 越接近 0 越强); 解除线 = 基准 × 0.5 (掉回才解除, 防门口来回抖动)。
-    /// 调参: 系数 0.7/0.5 为方案默认, 现场标定后可调。
-    static func armThreshold(base: Int) -> Int { Int((Double(base) * 0.7).rounded()) }
-    static func disarmThreshold(base: Int) -> Int { Int((Double(base) * 0.5).rounded()) }
+    /// F3 回差阈值在**线性功率域**换算 — dBm 是对数单位, 直接对负数乘系数会把方向搞反:
+    /// 旧式 0.7×base / 0.5×base 在 base=-60 时得 武装线 -42 / 解除线 -30, 解除线反而比武装线更强
+    /// → 无回差且逐样本翻转, 标定距离 (-60) 上永不武装。方案 §F3 原意: 基准即武装线, 功率掉回 0.5× 才解除。
+    static func armThreshold(base: Int) -> Int { base }
+    static func disarmThreshold(base: Int) -> Int { Int((Double(base) + 10 * log10(0.5)).rounded()) }
 
     /// RSSI 回差滤波 (纯函数): 已武装需掉到解除线以下才解除; 未武装需越过武装线才武装。
-    /// 基准 P95 (如 -60): 武装线 = 0.7× = -42, 解除线 = 0.5× = -30 — RSSI 比解除线弱才解除, 防门口来回抖动。
+    /// 基准 P95 = -60 时：武装线 = -60 (回到标定点即武装)，解除线 = -60 + 10·log10(0.5) ≈ -63
+    /// (信号功率掉到标定的一半、即比武装线再弱 3 dB 才解除) ⇒ 回差带是 [-63, -60]，
+    /// 门口来回走不会逐样本翻转。**上面那段 0.7×/0.5× 的说法是修好之前的旧公式**：
+    /// dBm 是对数单位，直接对负数乘系数会把方向搞反 (算出 -42 / -30 这两条比基准**更强**的线，
+    /// 结果在标定距离上永不武装)。
     static func rssiSample(prevArmed: Bool, rssi: Int, base: Int) -> Bool {
         let arm = armThreshold(base: base)
         let disarm = disarmThreshold(base: base)
@@ -175,6 +190,7 @@ struct AutoOpenGate {
     var faceTier: Int             // 0 标准 / 1 严格
     var lastFace: Date?          // 最近一次面容成功时刻 (nil = 从未)
     var facePendingPrompt: Bool  // 严格档弹窗在途
+    var facePromptStartedAt: Date? = nil   // 严格档 0 窗口基准: 本次进前台发起弹窗的时刻
     var now: Date
     var defendControl: Int       // DB.defend(mac)?.control ?? 0 (无布防 = 0)
     var defendStartSec: Int
@@ -209,7 +225,8 @@ struct AutoOpenGate {
         guard !suspended else { return .suspended }
         guard f0Foreground else { return .f0 }
         guard faceAvailable else { return .f1face }
-        guard AutoOpenKit.faceFresh(tier: faceTier, lastFace: lastFace, now: now, pendingPrompt: facePendingPrompt)
+        guard AutoOpenKit.faceFresh(tier: faceTier, lastFace: lastFace, now: now,
+                                    pendingPrompt: facePendingPrompt, strictSince: facePromptStartedAt)
         else { return .f1face }
         guard !AutoOpenKit.defendActive(control: defendControl, startSec: defendStartSec, endSec: defendEndSec, now: now)
         else { return .f4defend }
@@ -249,6 +266,11 @@ protocol FaceService {
 }
 
 struct SystemFaceService: FaceService {
+    /// FaceService 协议要求的成员 (旧实现漏写 → 类型检查不过)
+    var biometricAvailable: Bool {
+        var err: NSError?
+        return LAContext().canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &err)
+    }
     func promptFace() {
         Task { @MainActor in
             var err: NSError?
@@ -340,7 +362,10 @@ final class AutoOpenController {
     let face: FaceService
     private var armed = false
     private var armedMac = ""
-    private var lastDispatch: TimeInterval = 0     // F5: 上次成功下发时刻
+    private var lastDispatch: [String: TimeInterval] = [:]   // F5: 按锁记上次下发时刻
+    private var eventFired: Set<String> = []                 // F5: 本次接近事件已发过 04 (掉回解除线才放开)
+    private var promptStartedAt: Date?                       // F1 严格档: 本次进前台是否已发起弹窗
+    private var faceAtPrompt: Date?                          // F1 严格档: 发起弹窗时的面容时刻基准
     private var inFlight = false
 
     init(face: FaceService = SystemFaceService()) {
@@ -350,9 +375,15 @@ final class AutoOpenController {
     // ---------- F0/F1: 进前台 (RootView scenePhase .active) ----------
     func onForeground(mac: String) {
         guard AutoOpen.on, !mac.isEmpty else { return }
-        guard !AutoOpen.isSuspended(mac: mac) else { return }   // rc=26 挂起期不弹面容, 门保持不过
+        guard !AutoOpen.isSuspended(mac: mac) else {
+            AutoOpen.audit(mac, "拒开 rc=26 防拆挂起中, 面容不刷新")
+            return   // rc=26 挂起期不弹面容, 门保持不过
+        }
         MotionStillness.start()
-        if AutoOpen.faceTier == 1 {
+        eventFired.removeAll()          // 新的一次"进前台 + 接近"事件, 放开一次性闩锁
+        if AutoOpenKit.isStrict(AutoOpen.faceTier) {
+            promptStartedAt = Date()    // 严格档: 记录弹窗发起时刻, 供在途位与"本次必刷"判定
+            faceAtPrompt = AutoOpenKit.lastFace()
             face.promptFace()
         } else {
             face.silentRefresh()
@@ -360,16 +391,24 @@ final class AutoOpenController {
     }
     func onBackground() {
         guard AutoOpen.on else { return }
-        // 退后台: 清武装态 (F0 同时失效, 双保险)
+        // 退后台: 清武装态 (F0 同时失效, 双保险) + 清一次性/面容在途位 + 停加速度计
         armed = false
+        eventFired.removeAll()
+        promptStartedAt = nil
+        faceAtPrompt = nil
+        // 旧实现从不调 stop(): 回前台 start() 因 mgr != nil 幂等早退, 而传感器流已被系统停止
+        // → met() 用陈旧 stillSince 恒判"已停留" (fail-open)
+        MotionStillness.stop()
     }
 
     // ---------- F3 喂入: RSSI 事件 (LinkSenseKit saveRssi 后调) ----------
     func feedRssi(mac: String, rssi: Int) {
         guard AutoOpen.on else { return }
-        if mac != armedMac { armedMac = mac; armed = false }
+        if mac != armedMac { armedMac = mac; armed = false; eventFired.remove(mac) }
         guard let base = AutoOpenKit.rssiBase(mac: mac) else { return }
         armed = AutoOpenKit.rssiSample(prevArmed: armed, rssi: rssi, base: base)
+        // 信号掉回解除线以下 = 本次接近事件结束 → 放开一次性闩锁, 下次靠近才可再发
+        if !armed { eventFired.remove(mac) }
     }
     func rssiArmed() -> Bool { armed }
 
@@ -386,6 +425,12 @@ final class AutoOpenController {
         guard let app = AppState.hostRef else { return }
         guard app.currentMac == mac, !mac.isEmpty else { return }
         guard app.unlockState == .idle else { return }
+        // 演示模式红线: 不得触碰真实 BLE (旧实现只在 requestUnlock 里守, 自动链直连 lock 绕过)
+        guard !DemoKit.isOn else {
+            AutoOpen.audit(mac, "拒开 演示模式 (demo) 不允许自动下发 04")
+            return
+        }
+        if eventFired.contains(mac) { return }   // F5 一次性: 每个接近事件只发一次 04
 
         let ctx = makeContext(mac: mac, app: app)
         let rej = ctx.rejectReason(
@@ -405,22 +450,27 @@ final class AutoOpenController {
 
     private func makeContext(mac: String, app: AppState) -> AutoOpenGate {
         let d = DB.defend(mac)
+        let lastAt = lastDispatch[mac] ?? 0
         let snap = app.snapshot
-        let coolReady = AutoOpenKit.coolReady(lastDispatch: lastDispatch, now: Date().timeIntervalSince1970)
+        let coolReady = AutoOpenKit.coolReady(lastDispatch: lastAt, now: Date().timeIntervalSince1970)
         return AutoOpenGate(
             f0Foreground: LinkSense.shared.sceneActive && app.appUnlocked,
             faceTier: AutoOpen.faceTier,
             lastFace: AutoOpenKit.lastFace(),
-            facePendingPrompt: false,
+            // 严格档在途位: 弹窗已发起且面容时刻尚未刷新 = 正在确认 (旧实现恒 false → 在途分支是死代码)
+            facePendingPrompt: promptStartedAt != nil && AutoOpenKit.lastFace() == faceAtPrompt,
+            facePromptStartedAt: promptStartedAt,
             now: Date(),
-            defendControl: d?.control ?? 0,
+            // F4 布防互锁 fail-closed: 本机无布防记忆 = 状态未知, 一律当"在布防中"否决 (§2「缺事件源 = 门不过」)
+            defendControl: d?.control ?? 2,
             defendStartSec: d?.startSec ?? 0,
             defendEndSec: d?.endSec ?? 0,
             rssiArmed: armed,
             calibrated: AutoOpenKit.rssiBase(mac: mac) != nil,
             dwellMet: armed && MotionStillness.met(),
             coolReady: coolReady,
-            lockReady: !(snap?.rc == 25 || snap?.rc == 26)
+            // F6 锁态门 fail-closed: StatusSnapshotData.rc 默认 0 = "成功", 无快照时旧写法会误判锁态绿
+            lockReady: snap != nil && snap?.rc != 25 && snap?.rc != 26
         )
     }
 
@@ -428,7 +478,7 @@ final class AutoOpenController {
         defer { inFlight = false }
         do {
             try await app.lock.ensureConnected(mac: mac)
-            lastDispatch = Date().timeIntervalSince1970
+            lastDispatch[mac] = Date().timeIntervalSince1970
             let rc = try await app.lock.unlock(mac: mac)
             switch rc {
             case 0:

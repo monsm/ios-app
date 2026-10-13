@@ -89,10 +89,12 @@
 - 网关：FE90 服务/FE92 写/FE91 通知，明文 87 帧免令牌（gateway.js:1-8）；能力=读状态(38)/配网 WiFi(31)/重启(35)/读名称(30)；配网需广播 resetStatus=1（gateway.js:41-43）；不能透传锁操作；App 侧锁与网关会话不能并存（静态 UUID 缺陷，REP:145）
 - 校时：先 03 读锁钟(#04) 算偏差再 0E 下发（lock:398-408）；rc=3 命令过期 / rc=9 时间误差过大均为时钟类失败（lbl:37-38）；ZOTP 与全部凭证时间窗依赖锁钟正确（zotp.js:6）
 
-## 7. PidMap 型号差异（PM.swift:6-54）
+## 7. PidMap 型号差异（PidMap.swift:5-56）
 - pid 表：K1=8097 KX=8098 V1=7857 V1_Pro=7858 JZ=7873 Z3=7891 Z3NFC=7892 Z3AL=7893 ZKBBV1=16289（钥匙串硬件）GW=12193 GW_commercial=12209 GW2_commercial=12194（REP:101 同）
-- 设备列表锁族 locks：KX/V1/V1_Pro/JZ（PM:20）
-- 布防(25)：仅 KX/V1_Pro；未知 pid（如实测 49408）按 KX 家族放行（PM:32-35）
-- 防尾随：布防家族且 V1_Pro 固件 <1.0.3 拒绝（PM:46-51, REP:104）
-- 清空密码/设备信息/固件升级：锁族 + 未知 pid 放行；GW 族及 K1/Z3/Z3NFC/Z3AL/ZKBBV1 等已知 pid 不放行（PM:52-54）
+- 设备列表锁族 locks：KX/V1/V1_Pro/JZ（PidMap.swift:20）
+- 布防(25)：仅 KX/V1_Pro；未知 pid（如实测 49408）按 KX 家族放行（PidMap.swift:32-35）
+- 防尾随：布防家族且 V1_Pro 固件 <1.0.3 拒绝（PidMap.swift:46-51, REP:104）
+- 清空密码与固件升级：锁族 + 未知 pid 放行；GW 族及 K1/Z3/Z3NFC/Z3AL/ZKBBV1 等已知 pid 不放行（PidMap.swift:52, 55）。
+  更正：原行还列了「设备信息」，其谓词 `canDeviceInfo` 是 `canClearPwd` 的同义别名且零调用，已删（PidMap.swift:53-54 注释留痕）——
+  锁信息卡片没有独立的能力口径，别照着这一行去补门禁。
 - ZKBBV1 走 41/43/44 钥匙串命令面（明文免令牌），不进锁族（cmds:167-198）

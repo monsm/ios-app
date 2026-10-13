@@ -87,6 +87,14 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
     private var connectCompletion: ((Result<Void, Error>) -> Void)?
     private var connectTimeoutWork: DispatchWorkItem?
     private var writeAckCont: CheckedContinuation<Void, Error>?
+    // 写槽串行化: writeAckCont 是单一槽位, 并发写时后者会覆盖前者的 continuation
+    // → 前者永不 resume (挂死 + continuation 泄漏), 而 LockService 与 HardwareService 各有独立 waiter,
+    // 共用本服务时确实可并发 (看门狗/回连循环 vs 用户手动操作)。didWriteValueFor 本就按序回调, 串起来即可。
+    private var writeBusy = false
+    private var writeBusyWaiters: [CheckedContinuation<Void, Never>] = []
+    // 1b/拍板#1: 无响应写的"可发"就绪等待。单槽即可 —— 分片写 (cmd08) 本身逐片 await, 不会并发。
+    private var readyCont: CheckedContinuation<Void, Never>?
+    private var readyTimer: DispatchWorkItem?
 
     // 帧重组 + 订阅
     private let assembler = ZKProtocol.FrameAssembler()
@@ -101,6 +109,9 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
             manager = CBCentralManager(delegate: self, queue: .main, options: [CBCentralManagerOptionShowPowerAlertKey: false])
         }
     }
+    /// 供体检/诊断读**真实**蓝牙状态。nil = 中心管理尚未创建。
+    /// 诊断侧不要自己 `CBCentralManager()`: 无代理的实例永远停在 .unknown, 会把"蓝牙正常"判成"蓝牙未开启"。
+    var powerState: CBManagerState? { manager?.state }
     /// 等待蓝牙就绪。首装时权限弹窗未答复期间 state 恒 .unknown, 直接判"未开启"会误导;
     /// 仿 DFUKit 的就绪等待, 超时后按真实 state 给可操作文案 (权限/开关/不支持分开)。
     func waitReady(timeoutMs: Int = 3000) async throws {
@@ -128,6 +139,30 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
     }
 
     // ---------- 扫描 ----------
+    /// 123 扫描强度三档: **只作用于发现型扫描** (冷启动扫描 / 环境拥挤度), 不改连接与 AUTOOPEN 的时序，
+    /// 免得一个"省电"档位把靠近自动开锁的判定窗口一起收窄。默认档 = 现状 (5s)。
+    enum ScanProfile: String, CaseIterable {
+        case eco, balanced, fast
+        static let storeKey = "kf_scan_profile"
+        static var current: ScanProfile { ScanProfile(rawValue: DB.store.getString(storeKey)) ?? .balanced }
+        var timeoutMs: Int {
+            switch self {
+            case .eco: return 2_500
+            case .balanced: return 5_000
+            case .fast: return 10_000
+            }
+        }
+        /// 只有极速档开重复广播: 拿满每个广播包用于密集环境清点, 代价是 CPU 与耗电
+        var allowDuplicates: Bool { self == .fast }
+        var label: String {
+            switch self {
+            case .eco: return "省电 · 每次扫 2.5 秒"
+            case .balanced: return "均衡 · 每次扫 5 秒 (默认)"
+            case .fast: return "极速 · 每次扫 10 秒 (含重复广播)"
+            }
+        }
+    }
+
     func startScan(allowDuplicates: Bool = false, intervalMs: Int = 500, timeoutMs: Int = 10000) async throws {
         try await waitReady()
         stopScanInternal()
@@ -148,9 +183,10 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
         scanTimer = nil
         scanning = false
     }
-    func advDevice(_ deviceId: String) -> BLEAdvDevice? { discovered[deviceId] }
     /// 已发现设备快照 (供 MAC 扫描解析)
     func allDiscovered() -> [BLEAdvDevice] { Array(discovered.values) }
+    // 曾另有 advDevice(_ deviceId:) 按 deviceId 单查: 全仓零调用 (连接走 CB 的
+    // retrievePeripherals(withIdentifiers:), 不用这个表), 删。
 
     // ---------- 连接 ----------
     func connect(deviceId: String, timeoutMs: Int = 20000) async throws {
@@ -203,6 +239,13 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
             writeAckCont = nil
             w.resume(throwing: BLEErrorX.msg("连接已断开"))
         }
+        // 写槽随连接一起复位: 断链时若有调用方在 acquireWriteSlot 的队列里等槽,
+        // 不唤醒它们就会永久挂死, 并且 writeBusy 卡 true 会阻塞之后每一次写。
+        // 被唤醒者随后会撞上 writeFrameHex 的 `guard let device` 而快速失败, 不会误发。
+        writeBusy = false
+        let queued = writeBusyWaiters
+        writeBusyWaiters.removeAll()
+        for c in queued { c.resume() }
         if let d = device { manager.cancelPeripheralConnection(d) }
         device = nil
         writeChar = nil
@@ -213,6 +256,12 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
 
     // ---------- 写 (20B 分片, 与 JS writeFrame 一致) ----------
     func writeFrameHex(_ hex: String) async throws {
+        // 演示模式红线收口: 此前 DemoKit.isOn 只在 UI 的个别入口判 (Services 层零引用),
+        // 导致录密码/录指纹/DFU/钥匙串写删/网关写 WiFi 都能在演示态真发到设备。
+        // 写入是唯一会改锁端状态的操作 —— 在这一处拦死即覆盖全部命令面。
+        guard !DemoKit.isOn else {
+            throw BLEErrorX.msg("演示模式禁止下发真实命令 (demo 数据不落锁)")
+        }
         guard let device, let ch = writeChar else { throw BLEErrorX.code(.parseFail) }
         let bytes = HexKit.bytes(hex)
         var i = 0
@@ -225,6 +274,37 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
             try? await Task.sleep(nanoseconds: 30_000_000) // 30ms 分片间隔
         }
     }
+    /// 取写槽 (FIFO): 同一特征值的 with-response 写必须串行, 否则 writeAckCont 单槽被后者覆盖,
+    /// 前者的 continuation 永不完成 (挂死)。已在写的情况下把调用方排进等待队列。
+    private func acquireWriteSlot() async {
+        if !writeBusy { writeBusy = true; return }
+        await withCheckedContinuation { (c: CheckedContinuation<Void, Never>) in writeBusyWaiters.append(c) }
+        writeBusy = true
+    }
+    private func releaseWriteSlot() {
+        guard let next = writeBusyWaiters.first else { writeBusy = false; return }
+        writeBusyWaiters.removeFirst()
+        next.resume()
+    }
+    /// 无响应写的真流控: 等 `peripheralIsReady(toSendWriteWithoutResponse:)`。
+    /// 保留兜底超时 (默认 0.12s, 与旧的 20ms sleep 同量级但更宽) —— 个别固件不再回调时,
+    /// "永远等下去"比原来的盲限速更糟, 所以到点也放行。
+    private func waitWriteReady(_ device: CBPeripheral, maxSeconds: Double = 0.12) async {
+        if device.canSendWriteWithoutResponse { return }
+        await withCheckedContinuation { (c: CheckedContinuation<Void, Never>) in
+            // 单槽: 先放行上一位等待者, 绝不让它悬着 (悬着的 continuation 是永久泄漏)
+            readyCont?.resume()
+            readyCont = c
+            readyTimer?.cancel()
+            let work = DispatchWorkItem { [weak self] in
+                guard let self, self.readyCont != nil else { return }
+                self.readyCont = nil
+                c.resume()
+            }
+            readyTimer = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + maxSeconds, execute: work)
+        }
+    }
     private func writeChunk(_ data: Data, on device: CBPeripheral, characteristic ch: CBCharacteristic) async throws {
         // with-response 真流控 (JS writeBLECharacteristicValue 即此语义): 由 didWriteValueFor 收口。
         // 之前 withoutResponse + 20ms 假 ack — CoreBluetooth 无响应队列满时会静默丢包, 锁收到残帧
@@ -232,17 +312,27 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
         // 特征若不支持 with-response (属性里没有 .write), 退回无响应写 + 短歇限速
         guard ch.properties.contains(.write) else {
             device.writeValue(data, for: ch, type: .withoutResponse)
-            try await Task.sleep(nanoseconds: 20_000_000)
+            // 拍板 #1 (第六十五批): 用系统就绪信号替代原来的 20ms 盲 sleep。
+            // 队列满时 CoreBluetooth 对 withoutResponse 写是**静默丢弃**的, 固定间隔只是在猜到达。
+            await waitWriteReady(device)
             guard device.state == .connected else { throw BLEErrorX.code(.writeFailed) }
             return
         }
+        await acquireWriteSlot()
+        defer { releaseWriteSlot() }
+        // 本轮定时器句柄外提, 函数退出 (成功/失败/抛错) 一律 cancel。
+        // 旧实现从不 cancel: 上一片的 3s 定时器会在**下一次写**把 writeAckCont 当成自己的槽,
+        // 以 .writeFailed 抛掉别人的 continuation → LockService 误判断链 → disconnect + 静默重连
+        // → 配网在"换钥已成功、PIN 池未同步完、keychain 未落库"处中断 = 锁内新 skey 对不上本机, 软砖。
+        var ackTimer: DispatchWorkItem?
+        defer { ackTimer?.cancel() }
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
-            // 超时兜底: didWriteValueFor 丢失时也能解挂 (manager queue = .main, 与回调串行无竞态)
             let work = DispatchWorkItem { [weak self] in
                 guard let self, self.writeAckCont != nil else { return }
                 self.writeAckCont = nil
                 cont.resume(throwing: BLEErrorX.code(.writeFailed))
             }
+            ackTimer = work
             self.writeAckCont = cont
             device.writeValue(data, for: ch, type: .withResponse)
             DispatchQueue.main.asyncAfter(deadline: .now() + 3.0, execute: work)
@@ -250,7 +340,10 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
     }
 
     // ---------- 底层连接辅助 (GateWayConnector/BleLockConnector 流程) ----------
-    func ensureNotify(deviceId: String) async throws { _ = deviceId } // 兼容 JS ble.ensureOpen 调用点
+    // 第九十一批删掉 `ensureNotify(deviceId:)`：它是 `func ensureNotify… { _ = deviceId }` 这种
+    // **名字像行为、体是空操作**的兼容口 (注释说给 JS 的 ble.ensureOpen 用)，而 iOS 侧零调用点。
+    // 这类口最危险的地方在于"调用它就以为订阅了通知" —— 真要补 notify 订阅应在 connect 路径里
+    // 显式 setNotifyValue，而不是留一个吞参数的同名函数。
 }
 
 // MARK: - CBCentralManagerDelegate
@@ -288,6 +381,14 @@ extension BLEService: CBCentralManagerDelegate {
         notifyChar = nil
         connectedMAC = ""
         assembler.reset()
+        // 断开后系统不会再发 ready 回调: 等在 readyCont 上的那一路必须放行, 否则 continuation 就悬着
+        // (waitWriteReady 的兜底超时也会救它, 但那是 0.12s 的无谓等待 —— 两个机制都留着才稳)。
+        readyTimer?.cancel()
+        readyTimer = nil
+        if let r = readyCont {
+            readyCont = nil
+            r.resume()
+        }
         if let w = writeAckCont {
             writeAckCont = nil
             w.resume(throwing: BLEErrorX.msg("连接已断开"))
@@ -376,5 +477,14 @@ extension BLEService: CBPeripheralDelegate {
             cb(.failure(BLEErrorX.code(.writeFailed)))
         }
     }
-    public func peripheralIsReady(toSendWriteWithoutResponse peripheral: CBPeripheral) { }
+    /// 拍板 #1 (第六十五批): 这条回调就是上面 .withoutResponse 分支的正解 —— 本机队列满时系统不报错也不抛,
+    /// 只是暂时不再接受写; 旧的 20ms 盲 sleep 分不清"对端慢"与"队列满", 分片写 (cmd08) 就可能残帧。
+    /// 收到就绪信号即放行 waitWriteReady 里的等待者; 没有等待者时什么也不做。
+    public func peripheralIsReady(toSendWriteWithoutResponse peripheral: CBPeripheral) {
+        readyTimer?.cancel()
+        readyTimer = nil
+        guard let c = readyCont else { return }
+        readyCont = nil
+        c.resume()
+    }
 }

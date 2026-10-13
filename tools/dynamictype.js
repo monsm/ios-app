@@ -22,6 +22,11 @@ function walk(dir, out = []) {
   return out;
 }
 
+// 927 之后有第二个 UI 面: Widget/ (哑按钮扩展)。它同样是 Text/font/accessibility 的宿主,
+// 只扫 App/ 就等于让小组件躲开字号与触达检查。walk 不做存在性判断, 所以先过滤目录。
+const SCAN_DIRS = [APP, path.join(__dirname, '..', 'Widget')].filter((d) => fs.existsSync(d));
+const SWIFT_FILES = SCAN_DIRS.flatMap((d) => walk(d));
+
 const findings = [];
 
 // ---- 规则 1: Text 不得使用 .system(size:) — 它不参与 Dynamic Type 缩放 ----
@@ -29,7 +34,7 @@ const findings = [];
 const TEXT_SIZE_RE = /Text\([^)]*\)(?:[^;]{0,400}?)\.font\(\s*\.system\(size:/g;
 const ICON_SIZE_RE = /Image\(systemName:[^)]*\)(?:[^;]{0,200}?)\.font\(\s*\.system\(size:/g;
 
-for (const file of walk(APP)) {
+for (const file of SWIFT_FILES) {
   const src = fs.readFileSync(file, 'utf8');
   const lines = src.split('\n');
 

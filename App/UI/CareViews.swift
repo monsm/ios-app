@@ -11,6 +11,9 @@ struct MaintenanceView: View {
     @State private var care = CareState()
     @State private var yearlyOn = false
     @State private var yearlyDate = Date()
+    /// yearlyDate 是否真从库里解出来过。没解出来就不许回写, 否则 reload→onChange→saveYearly
+    /// 会把用户的"年度换电日"静默改成今天 (yearlyDate 的初值)。
+    @State private var yearlyLoaded = false
     @State private var ekeyOn = false
     @State private var loaded = false
     @State private var showChecklist = false
@@ -54,18 +57,27 @@ struct MaintenanceView: View {
         yearlyOn = !care.yearlyBattDay.isEmpty
         let p = care.yearlyBattDay.split(separator: "-").compactMap { Int($0) }
         if p.count == 2,
-           let d = Calendar.current.date(from: DateComponents(year: 2000, month: p[0], day: p[1])) {
+           let d = WeekCal.gregorian.date(from: DateComponents(year: 2000, month: p[0], day: p[1])) {
             yearlyDate = d
+            yearlyLoaded = true
+        } else {
+            // 关着 (无日期) 也算已加载; 开着却解不出日期 = 数据异常, 禁止回写
+            yearlyLoaded = !yearlyOn
         }
     }
     private func saveYearly() {
+        // 自激闸: reload() 里的赋值也会走 .onChange(yearlyOn)/.onChange(yearlyDate),
+        // 日期没从库里解出来时直接返回, 不让"读"变成"写"。
+        if yearlyOn, !yearlyLoaded { return }
         var s = BatteryCare.care(mac)
+        let want: String
         if yearlyOn {
-            let p = Calendar.current.dateComponents([.month, .day], from: yearlyDate)
-            s.yearlyBattDay = String(format: "%02d-%02d", p.month ?? 1, p.day ?? 1)
-        } else {
-            s.yearlyBattDay = ""
-        }
+            let q = WeekCal.gregorian.dateComponents([.month, .day], from: yearlyDate)
+            want = String(format: "%02d-%02d", q.month ?? 1, q.day ?? 1)
+        } else { want = "" }
+        // 与库中值一致即无变化: 打断 reload→onChange→save 的回写环 (也让重复 toggle 不再触发 reschedule)
+        if want == s.yearlyBattDay { return }
+        s.yearlyBattDay = want
         BatteryCare.saveCare(mac, s)
         care = s
         Task { await CareSchedule.rescheduleCalendar() }
@@ -136,7 +148,7 @@ struct MaintenanceView: View {
     // ---------- 1030 清洁月历 (本月打点) ----------
     private var careMarksSection: some View {
         let marks = BatteryCare.careMarks()
-        let cal = Calendar.current
+        let cal = WeekCal.gregorian
         let days = cal.range(of: .day, in: .month, for: Date())?.count ?? 30
         let streak = BatteryCare.careStreakMonths
         return Section {
@@ -168,9 +180,15 @@ struct MaintenanceView: View {
         let all = BatteryCare.events(mac)
         return Section {
             if all.isEmpty {
-                Text("还没有保养或换电记录。")
-                    .font(.footnote)
-                    .foregroundStyle(DS.Palette.textSub)
+                // 包14 空态族消费点 (815 双按钮 / 841 小管家默认开 / 1044 便签):
+                // 旧版只有一句"还没有保养或换电记录" —— 现在空态直接给出那件能做的事:
+                // 主动作打开五项清单 (与下方 1015 按钮同一个 sheet, 不另起流程)。
+                GuidedEmptyView(systemImage: "checkmark.seal",
+                                title: "还没有保养记录",
+                                message: "五项清单走一遍就会在这里落下第一条; 换电完成后走「换电关怀」里的图文指引。",
+                                primaryTitle: "开始五项保养",
+                                primary: { showChecklist = true })
+                    .listRowInsets(EdgeInsets())
             }
             ForEach(Array(all.prefix(5).enumerated()), id: \.offset) { _, e in
                 HStack(spacing: DS.Space.s) {
@@ -278,7 +296,19 @@ struct MaintenanceView: View {
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            if BatteryCare.isColdSeason {
+            // 1026: 城市手动填 + 本地气候表 (原句口径); 表外仍回退 11–3 月默认档
+            TextField("城市 (手动填, 如: 哈尔滨)", text: Binding(
+                get: { DB.store.getString("kf_city_" + mac) },
+                set: { DB.store.set("kf_city_" + mac, $0) }))
+                .autocorrectionDisabled()
+            let city = DB.store.getString("kf_city_" + mac).trimmingCharacters(in: .whitespaces)
+            let month = WeekCal.gregorian.component(.month, from: Date())
+            if let w = BatteryCare.cityColdWindow(city), BatteryCare.inColdMonth(month, from: w.from, to: w.to) {
+                Label("按「\(city)」的本地气候表 (\(w.label)): 低温季电池衰减加快, 电量偏低时建议提前整组换新。", systemImage: "thermometer.snowflake")
+                    .font(.footnote)
+                    .foregroundStyle(DS.Palette.warn)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else if BatteryCare.isColdSeason {
                 Label("低温季 (11–3 月): 电池衰减加快, 电量偏低时建议提前整组换新。", systemImage: "thermometer.snowflake")
                     .font(.footnote)
                     .foregroundStyle(DS.Palette.warn)
@@ -371,6 +401,20 @@ struct CareChecklistView: View {
 // ================= 116/1033 换电图文引导 + 118 换电复位 =================
 // 1033 换电池向导与 116 是同一落点: 分步图文 (开盖-换电池-校时), 完成写记录
 // (BatteryCare.recordBatterySwap 已含 1014 事件 + 采样基线), 故不单列向导页, 仅此处备案。
+/// 728 换电步骤的**唯一出处**: 维护页整页 (BatterySwapGuideView) 与低电告警详情的折叠段共用这一份,
+/// 免得两处各写一遍早晚漂移。原句点名的"应急供电方式"本工程无出处 (厂商云已停服、没有手册可引), 不编。
+enum BatterySwapGuide {
+    static func steps(modelHint: String) -> [(icon: String, title: String, detail: String)] {
+        [
+            ("battery.100", "备好同型号新电池", modelHint),
+            ("wrench.and.screwdriver", "拆下电池盖板", "一般在室内面板, 不需要拆卸整锁"),
+            ("arrow.triangle.2.circlepath", "整组换新", "不要新旧电池混用, 触点对准弹簧"),
+            ("clock.arrow.circlepath", "换电后校准门锁时间", "临时密码与时间窗凭证依赖锁钟"),
+            ("checkmark.seal", "点下方「已换新」复位", "基线与低电提醒一并重置"),
+        ]
+    }
+}
+
 struct BatterySwapGuideView: View {
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
@@ -381,13 +425,7 @@ struct BatterySwapGuideView: View {
         return m.isEmpty ? "型号见锁信息名片-电池档案" : "已记型号: \(m)"
     }
     private var steps: [(icon: String, title: String, detail: String)] {
-        [
-            ("battery.100", "备好同型号新电池", modelHint),
-            ("wrench.and.screwdriver", "拆下电池盖板", "一般在室内面板, 不需要拆卸整锁"),
-            ("arrow.triangle.2.circlepath", "整组换新", "不要新旧电池混用, 触点对准弹簧"),
-            ("clock.arrow.circlepath", "换电后校准门锁时间", "临时密码与时间窗凭证依赖锁钟"),
-            ("checkmark.seal", "点下方「已换新」复位", "基线与低电提醒一并重置"),
-        ]
+        BatterySwapGuide.steps(modelHint: modelHint)   // 728: 与低电告警详情共用一份步骤源
     }
 
     var body: some View {
@@ -475,7 +513,12 @@ struct MaintSettingsView: View {
             Section {
                 Toggle("夜间免扰 (22–8 点)", isOn: Binding(
                     get: { CareSchedule.quietOn },
-                    set: { DB.store.set("kf_quiet_night", $0) }))
+                    // 963: 免扰一改动就要立刻重排"每晚状态确认" (22:00 档正撞这条免扰段),
+                    // 不重排就会出现"刚关了免扰却还以为那条没排上"或反过来。
+                    set: { v in
+                        DB.store.set("kf_quiet_night", v)
+                        StatusCheckNotice.sync()
+                    }))
             } header: {
                 Text("免扰")
             } footer: {

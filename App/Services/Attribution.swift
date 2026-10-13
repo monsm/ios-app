@@ -25,8 +25,18 @@ enum Attribution {
         // 看似"错"但这是 JS 生态的既定语义: 写入端(App/小程序)都写本地串、读取端都按 UTC,
         // 两端同平移故窗口长度与相对判定不变; 跨设备互操作也只有与 JS 同语义才互通。
         f.timeZone = TimeZone(identifier: "UTC")
-        guard let d = f.date(from: s) else { return nil }
-        return Int64(d.timeIntervalSince1970 * 1000)
+        var d = f.date(from: s)
+        if d == nil {
+            // 兼容只写到分钟的 from/to (小程序与旧备份包里的 "2026-01-05 08:00"):
+            // JS 侧走宽松 Date.parse 能解, 旧写法返回 nil → R1 临时码窗口静默不归属。
+            let f2 = DateFormatter()
+            f2.locale = Locale(identifier: "en_US_POSIX")
+            f2.dateFormat = "yyyy-MM-dd HH:mm"
+            f2.timeZone = TimeZone(identifier: "UTC")
+            d = f2.date(from: s)
+        }
+        guard let dd = d else { return nil }
+        return Int64(dd.timeIntervalSince1970 * 1000)
     }
 
     static func classify(logs: [LogEntry],

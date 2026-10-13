@@ -13,10 +13,19 @@ enum Onboarding {
     static func mark(_ step: String) { DB.store.set("kf_onb_" + step, true) }
     static var allDone: Bool { DB.store.getBool(kTourDone) }
     static func finishTour() { DB.store.set(kTourDone, true) }
-    /// 805 重看入口用: 已完成的步骤清单
+    /// 853 引导三卡的文字**唯一出处** —— 界面 (tourCard) 与"听完整讲解"的串讲稿共用这一份。
+    /// 原句要的是"把各卡要点串成一段连续音频": 串讲若另写一份稿子, 界面改了字它就会各说各话。
+    static let tourSpec: [(icon: String, title: String, body: String)] = [
+        ("dot.radiowaves.left.and.right", "连锁", "蓝牙直连门锁, 无网关无云。添加设备只需长按门锁 RESET 键一次。"),
+        ("key.horizontal", "录凭证", "密码与指纹台账记在本机; 给家人发临时码, 到期自动归档。"),
+        ("lock.open", "开门", "靠近门锁, 在圆盘上轻点或上滑即开; 失败有排查清单兜底。"),
+    ]
+    /// 805 重看入口用: 已完成的步骤清单。
+    /// 旧写法 `dropFirst(5)` 从 "kf_onb_promise" 只削掉 "kf_on" —— 证书页列出来的是 "b_promise"
+    /// 这类带残头的英文键名, 而且 "kf_onb_ceremony" (813 的展示旗标) 也会混进"已完成步骤"。
+    /// 改为按 Step 枚举取中文标题: 只有真步骤会被列出, 名字与页面所见一致 (813 就消费这份)。
     static var finishedSteps: [String] {
-        DB.store.keys().filter { $0.hasPrefix("kf_onb_") && DB.store.getBool($0) }
-            .map { String($0.dropFirst(5)) }
+        Step.allCases.filter { done($0.key) }.map { $0.title }
     }
     /// 当前应停在哪一步 (从第一个未完成开始)
     static var nextStep: Step {
@@ -86,8 +95,6 @@ struct OnboardingView: View {
     @State private var page = 0            // 801 三卡横滑页
     @State private var demoState: AppState.UnlockState = .idle
     @State private var demoPhase = 0
-    @State private var checks: [Bool] = [false, false, false]
-    @State private var btStatus: String = ""
 
     init(onExit: @escaping () -> Void = {}) {
         self.onExit = onExit
@@ -96,7 +103,7 @@ struct OnboardingView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // 814 进度点: 顶部 1-6 圆点标出当前阶段与下一步
+            // 814 进度点: 顶部 1-7 圆点标出当前阶段与下一步 (七步枚举 allCases, 与第 x/7 文字同口径)
             stepDots
             TabView(selection: $page) {
                 switch step {
@@ -130,7 +137,9 @@ struct OnboardingView: View {
             }
         }
         .dsScreenBackground()
-        .onAppear { refreshBtStatus() }
+        // 810 的两条收尾: 换页就停 (念着第一张却看着第三张 = 串台), 关引导也停。
+        .onChange(of: page) { _, _ in Speech.stop() }
+        .onDisappear { Speech.stop() }
     }
 
     private var stepDots: some View {
@@ -202,25 +211,38 @@ struct OnboardingView: View {
         let loc = CLLocationManager()
         loc.requestWhenInUseAuthorization()
         let center = UNUserNotificationCenter.current()
-        center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
-            DB.store.set("kf_onb_notify", granted)
-        }
+        // 只申请，不缓存答案 (第九十四批删掉 `DB.store.set("kf_onb_notify", granted)`):
+        // 全仓零读取方，而通知授权用户随时能在系统设置里改 —— 存下来的那一份**必然会说谎**，
+        // 将来谁接了它显示"已授权"就是错信息。要显当前状态就该现问 getNotificationSettings。
+        center.requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in }
         _ = loc
     }
 
     // ---------- 550 首启承诺页 ----------
     private var promisePage: some View {
         VStack(alignment: .leading, spacing: DS.Space.m) {
+            // 841 小管家记忆点: 第一眼就见到它 (组件面全仓消费点: 各引导空态卡顶饰 + 这一处首见)。
+            // 素颜模式 (kf_plain / DS.Metric.emptyMascot) 与空态同一闸, 不再单开"隐藏插画"开关。
+            if DS.Metric.emptyMascot {
+                HStack(spacing: DS.Space.s) {
+                    DemoMascot(size: 44)
+                    Text("小管家陪你走第一步")
+                        .font(.footnote)
+                        .foregroundStyle(DS.Palette.textSub)
+                }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("小管家欢迎页")
+            }
             Text("数据只在这台手机")
                 .font(.title2.weight(.semibold))
                 .foregroundStyle(DS.Palette.text)
-            Text("本 App 全程离线: 门锁密钥、密码台账、家人档案保存在本机加密存储, 不上传任何服务器, 无账号、无网络依赖。厂商云已停服, 你不需要它。")
+            Text("本 App 默认全程离线: 门锁密钥、密码台账、家人档案保存在本机加密存储, 无账号、不依赖厂商服务器。厂商云已停服, 你不需要它。唯一会联网的地方是你主动开启的 WebDAV 备份通道 (自选网盘, 默认关闭)。")
                 .font(.footnote)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
-            promiseRow("wifi.slash", "无网络", "没有任何在线功能, 断网照常管理门锁")
+            promiseRow("wifi.slash", "默认无联网", "全部门锁功能离线可用; WebDAV 备份通道由你主动配置, 默认关")
             promiseRow("lock.shield", "本机密钥", "钥匙串只写本地存储, 导入导出由你保管")
-            promiseRow("envelope.open", "备份自留", "换新手机用「备份与恢复」, 不经过云端服务")
+            promiseRow("envelope.open", "备份自留", "换新手机用「备份与恢复」, 默认全程本机, 也可选你自配的 WebDAV")
             Spacer(minLength: 0)
         }
         .padding(DS.Space.xl)
@@ -274,19 +296,15 @@ struct OnboardingView: View {
         }
     }
     private func tourCard(_ i: Int) -> some View {
-        let spec: [(String, String, String)] = [
-            ("dot.radiowaves.left.and.right", "连锁", "蓝牙直连门锁, 无网关无云。添加设备只需长按门锁 RESET 键一次。"),
-            ("key.horizontal", "录凭证", "密码与指纹台账记在本机; 给家人发临时码, 到期自动归档。"),
-            ("lock.open", "开门", "靠近门锁, 在圆盘上轻点或上滑即开; 失败有排查清单兜底。"),
-        ]
+        let spec = Onboarding.tourSpec   // 853: 与"听完整讲解"共用一份 (不再各写一遍)
         let t = spec[i]
         return VStack(alignment: .leading, spacing: DS.Space.m) {
             HStack(spacing: DS.Space.m) {
                 Image(systemName: t.0)
                     .font(.system(size: DS.Icon.xl, weight: .medium))
-                    .foregroundStyle(DS.Palette.onAccent)
+                    .foregroundStyle(DS.heroFg)
                     .frame(width: 64, height: 64)
-                    .background(DS.Gradient.hero, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .background(DS.heroGradientSafe, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                 VStack(alignment: .leading, spacing: DS.Space.xs) {
                     Text("第 \(i + 1) 步 · \(t.1)")
                         .font(.headline)
@@ -302,9 +320,41 @@ struct OnboardingView: View {
                 Button("去连接真锁") {
                     Onboarding.finishTour()
                     app.tabSelection = 0
+                    app.pendingAddDevice = true   // 801: 设备页挂载后直接弹添加设备 (直达扫描)
                 }
                 .buttonStyle(SecondaryActionStyle(fullWidth: false))
-                .accessibilityHint("结束引导, 直接进设备页添加门锁")
+                .accessibilityHint("结束引导, 直接进设备页并弹出添加设备")
+            }
+            HStack(spacing: DS.Space.s) {
+                Spacer(minLength: 0)
+                // 810 逐卡朗读 (Voice Dream Reader 那一形态): 念的就是这张卡自己那两行字 ——
+                // 取自同一个 `spec` 数组, 不另写一份口播稿, 否则界面与朗读会各自漂移。
+                // 再点一次是**重念这一张**: Speech.zh 开口前先停上一句, 所以不会出现两句叠在一起
+                // (那正是收掉两台各自 new 的 synthesizer 之前会发生的事)。
+                Button {
+                    _ = Speech.zh(t.1 + "。" + t.2)
+                } label: {
+                    Label("朗读这张卡 (810)", systemImage: "speaker.wave.2.circle.fill")
+                        .font(.footnote.weight(.medium))
+                        .foregroundStyle(DS.Palette.accentText)
+                        .frame(minHeight: DS.Hit.min)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(PressableButtonStyle())
+                .accessibilityHint("用系统本地语音念出本卡说明, 服务不开 VoiceOver 也想听一遍的用户")
+                // 853 听完整讲解: 把三卡要点串成一段连续音频 (稿子取自同一个 tourSpec)。
+                // 与 810 的差别: 810 是"念这一张", 这里是一次念完三张 —— 原句要的就是"串讲"。
+                Button {
+                    _ = Speech.zh(Onboarding.tourSpec.map { $0.title + "。" + $0.body }.joined(separator: " "))
+                } label: {
+                    Label("听完整讲解 (853)", systemImage: "play.circle.fill")
+                        .font(.footnote.weight(.medium))
+                        .foregroundStyle(DS.Palette.accentText)
+                        .frame(minHeight: DS.Hit.min)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(PressableButtonStyle())
+                .accessibilityHint("把三步引导连起来一次念完")
             }
         }
         .padding(DS.Space.l)
@@ -336,9 +386,9 @@ struct OnboardingView: View {
             HStack(spacing: DS.Space.s) {
                 Image(systemName: icon)
                     .font(.system(size: DS.Icon.md, weight: .medium))
-                    .foregroundStyle(rolePick == key ? DS.Palette.onAccent : DS.Palette.textSub)
+                    .foregroundStyle(rolePick == key ? DS.heroFg : DS.Palette.textSub)
                     .frame(width: 40, height: 40)
-                    .background(rolePick == key ? AnyShapeStyle(DS.Gradient.hero) : AnyShapeStyle(DS.Palette.surfaceAlt),
+                    .background(rolePick == key ? AnyShapeStyle(DS.heroGradientSafe) : AnyShapeStyle(DS.Palette.surfaceAlt),
                                 in: RoundedRectangle(cornerRadius: 13, style: .continuous))
                 VStack(alignment: .leading, spacing: 2) {
                     Text(name)
@@ -481,69 +531,63 @@ struct OnboardingView: View {
                    cancelAction: { demoState = .idle; demoPhase = 0 })
     }
 
-    // ---------- 811 首启自检清单: 蓝牙开 / 设备已配网 / 固件可读 三项可勾选打点 ----------
+    // ---------- 811 首启自检清单: 蓝牙权限 / 存储空间 / 加密库 三项本地体检 (绿勾=真实探测) ----------
     private var checklistPage: some View {
         VStack(alignment: .leading, spacing: DS.Space.m) {
             Text("出门前自查一遍")
                 .font(.title3.weight(.semibold))
                 .foregroundStyle(DS.Palette.text)
-            checkRow("手机蓝牙已开启", detail: btStatus, checked: 0)
-            checkRow("门锁已配网 (完成添加设备)", detail: DB.keychains().isEmpty ? "尚未添加" : "\(DB.keychains().count) 把已配", checked: 1)
-            checkRow("固件版本可读", detail: DB.keychains().first { !$0.fw.isEmpty }.map { "v" + $0.fw } ?? "待连接后显示", checked: 2)
+            checkRow("蓝牙权限", ok: BLEService.shared.isPoweredOn, detail: btStatus)
+            let storage = DiagHealth.checkStorage()
+            checkRow(storage.name, ok: storage.ok, detail: storage.detail)
+            let key = String(repeating: "ab", count: 16)
+            let probe = "00112233445566778899aabbccddeeff"   // 16 字节整块, 零填充解密只对此回环相等
+            let cryptoOK = AESKit.decryptHex(AESKit.encryptHex(probe, keyHex: key), keyHex: key) == probe
+            checkRow("加密库", ok: cryptoOK, detail: cryptoOK ? "AES-128 加解密回环通过" : "回环失败 — 请反馈")
             Spacer(minLength: 0)
         }
         .padding(DS.Space.xl)
     }
     private var btStatus: String {
+        // 计算属性每帧求值: 避免 @State 快照导致清单详情不随系统蓝牙状态变化 (811)
         let on = BLEService.shared.isPoweredOn
         return on ? "已开启" : "未开启 — 可在系统设置中打开"
     }
-    private func checkRow(_ text: String, detail: String, checked: Int) -> some View {
-        Button {
-            checks[checked].toggle()
-            DS.Haptics.tick.impactOccurred()
-        } label: {
-            HStack(spacing: DS.Space.s) {
-                Image(systemName: checks[checked] ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: DS.Icon.sm, weight: .semibold))
-                    .foregroundStyle(checks[checked] ? DS.Palette.ok : DS.Palette.textSub)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(text)
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(DS.Palette.text)
-                    Text(detail)
-                        .font(.caption)
-                        .foregroundStyle(DS.Palette.textSub)
-                }
-                Spacer(minLength: 0)
+    private func checkRow(_ text: String, ok: Bool, detail: String) -> some View {
+        HStack(spacing: DS.Space.s) {
+            Image(systemName: ok ? "checkmark.circle.fill" : "circle")
+                .font(.system(size: DS.Icon.sm, weight: .semibold))
+                .foregroundStyle(ok ? DS.Palette.ok : DS.Palette.textSub)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(text)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(DS.Palette.text)
+                Text(detail)
+                    .font(.caption)
+                    .foregroundStyle(DS.Palette.textSub)
             }
-            .frame(minHeight: DS.Hit.min)
-            .contentShape(Rectangle())
+            Spacer(minLength: 0)
         }
-        .buttonStyle(PressableButtonStyle())
-        .accessibilityAddTraits(checks[checked] ? [.isSelected] : [])
+        .frame(minHeight: DS.Hit.min)
+        .accessibilityElement(children: .combine)
     }
-    private func refreshBtStatus() {
-        btStatus = ""
-    }
-
     // ---------- 813 管家就任证书: 玻璃证书卡, 进入成就体系时刻卡 ----------
     private var certificatePage: some View {
         VStack(spacing: DS.Space.m) {
             ZStack {
                 RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous)
-                    .fill(DS.Gradient.hero)
+                    .fill(DS.heroGradientSafe)
                 VStack(spacing: DS.Space.s) {
                     Image(systemName: "rosette")
                         .font(.system(size: DS.Icon.xl, weight: .medium))
-                        .foregroundStyle(DS.Palette.onAccent)
+                        .foregroundStyle(DS.heroFg)
                         .padding(.top, DS.Space.xl)
                     Text("离线锁管家 · 就任证书")
                         .font(.title3.weight(.semibold))
-                        .foregroundStyle(DS.Palette.onAccent)
+                        .foregroundStyle(DS.heroFg)
                     Text(onboardingSub)
                         .font(.footnote)
-                        .foregroundStyle(DS.Palette.onAccent.opacity(0.92))
+                        .foregroundStyle(DS.heroFg.opacity(0.92))
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
                     HStack(spacing: DS.Space.s) {
@@ -551,7 +595,7 @@ struct OnboardingView: View {
                         Label(Milestones.dayKey(), systemImage: "calendar")
                     }
                     .font(.caption2)
-                    .foregroundStyle(DS.Palette.onAccent.opacity(0.85))
+                    .foregroundStyle(DS.heroFg.opacity(0.85))
                     .padding(.bottom, DS.Space.l)
                 }
                 .padding(.horizontal, DS.Space.l)

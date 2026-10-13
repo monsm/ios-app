@@ -44,11 +44,11 @@ struct AchievementsView: View {
             VStack(alignment: .leading, spacing: DS.Space.m) {
                 Text("徽章")
                     .font(.caption.weight(.medium))
-                    .foregroundStyle(.white.opacity(0.85))
+                    .foregroundStyle(DS.heroFg.opacity(0.85))
                     .lineLimit(1)
                 Text("已点亮 \(unlocked.count) / \(Milestones.definitions.count) 枚")
                     .font(.title3.weight(.semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(DS.heroFg)   // 863: 坐在 HeroCard 上, 不能写死白
                     .lineLimit(1)
                 HStack(spacing: DS.Space.s) {
                     HeroPill(text: "连续 \(Milestones.streak().cur) 天",
@@ -66,10 +66,17 @@ struct AchievementsView: View {
         return Card {
             SectionTitle(text: "徽章陈列架", count: latest.isEmpty ? nil : latest.count)
             if latest.isEmpty {
-                Text("点亮的徽章会陈列在这里。先用一天, 成就自然会长出来。")
-                    .font(.footnote)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
+                // 包14 空态族消费点 (841 小管家默认开 / 834 演示链真上屏 / 1044 便签):
+                // 旧文案只有一句"点亮的徽章会陈列在这里" —— 现在给得出动作: 演示链开演示锁,
+                // 玩几下圆盘, 陈列架与墙都会跟着长起来 (数据全 demo_, 横幅一键清除)。
+                GuidedEmptyView(systemImage: "rosette",
+                                title: "陈列架还空着",
+                                message: "先用一天, 成就自然会长出来; 也可以先看 30 秒演示, 用演示锁玩出第一批时刻。",
+                                demoAction: {
+                                    DemoKit.setOn(true)
+                                    app.loadDevices()
+                                    app.showToast("演示锁已就位: 去设备页点圆盘, 顶部横幅可一键清除")
+                                })
             } else {
                 HStack(spacing: DS.Space.s) {
                     ForEach(latest, id: \.badge.id) { item in
@@ -309,7 +316,7 @@ struct BadgeTile: View {
     private var tileA11y: String {
         if hiddenLocked { return "隐藏成就, 还差一点点" }
         if isUnlocked { return "徽章 \(badge.title), 已点亮" }
-        return "未达成, \(badge.detail)"
+        return "未达成, 还差一点点, 达成条件 \(badge.detail)"   // 987 悬念行 + 840 条件
     }
 }
 
@@ -328,6 +335,14 @@ private struct BadgeDetailSheet: View {
                 Text(badge.hidden && unlockedAt == nil ? "还差一点点" : badge.title)
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(DS.Palette.text)
+                // 987 悬念进度与 840 (未达成直显触发条件) 相抵: 取两面都留 ——
+                // 未达成一律先给"还差一点点"悬念行 (不说还差多少, 本地也没有进度量可报),
+                // 非隐藏徽章的达成条件保留在后 (840 的用途: 让人知道怎么拿到), 隐藏徽章仍不揭底 (978)。
+                if unlockedAt == nil, !badge.hidden {
+                    Text("还差一点点")
+                        .font(.footnote.weight(.medium))
+                        .foregroundStyle(DS.Palette.textSub)
+                }
                 Text(badge.hidden && unlockedAt == nil
                      ? "这是一枚隐藏成就, 达成的那一刻才会揭晓"
                      : badge.detail)
@@ -351,6 +366,8 @@ private struct BadgeDetailSheet: View {
         .frame(maxWidth: .infinity)
         .presentationDetents([.height(320)])
         .presentationDragIndicator(.visible)
+        // 33 玻璃 sheet 底 (令牌见 DesignSystem dsSheetGlass): 降透明开启时自动落回实底 surface
+        .dsSheetGlass()
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button("完成") { dismiss() }
@@ -368,26 +385,26 @@ private struct BadgeShareCard: View {
         VStack(spacing: DS.Space.l) {
             ZStack {
                 Circle()
-                    .fill(.white.opacity(0.16))
+                    .fill(DS.heroFg.opacity(0.16))
                     .frame(width: 110, height: 110)
                 Image(systemName: badge.icon)
                     .font(.system(size: 44, weight: .medium))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(DS.heroFg)
             }
             Text(badge.title)
                 .font(.title2.weight(.semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(DS.heroFg)
             Text(badge.rarity.title + "徽章 · 点亮于 " + dateText)
                 .font(.footnote)
-                .foregroundStyle(.white.opacity(0.85))
+                .foregroundStyle(DS.heroFg.opacity(0.85))
             Spacer()
             Text("离线锁管家 · 本地生成")
                 .font(.caption2)
-                .foregroundStyle(.white.opacity(0.7))
+                .foregroundStyle(DS.heroFg.opacity(0.7))
         }
         .padding(DS.Space.xl)
         .frame(width: 320, height: 400, alignment: .top)
-        .background(DS.Gradient.hero, in: RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous))
+        .background(DS.heroGradientSafe, in: RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous))
     }
 }
 
@@ -468,7 +485,7 @@ struct NightCalendarCard: View {
     }
 
     private var grid: some View {
-        let cal = Calendar.current
+        let cal = WeekCal.gregorian
         let now = Date()
         let y = cal.component(.year, from: now)
         let m = cal.component(.month, from: now)
@@ -565,7 +582,7 @@ struct CapsuleComposeView: View {
     private func nextBondDay() -> String {
         let b = Milestones.bondDay
         let md = String(b.suffix(5))
-        let y = Calendar.current.component(.year, from: Date())
+        let y = WeekCal.gregorian.component(.year, from: Date())
         let cand = "\(y)-\(md)"
         return cand > Milestones.dayKey() ? cand : "\(y + 1)-\(md)"
     }
@@ -585,7 +602,11 @@ struct CareRemindersView: View {
             } header: {
                 Text("家庭公告板")
             } footer: {
-                Text("这句话会出现在各页面的空态里, 像贴在门后的一张便签。")
+                // 1044 消费点如实列名 (原句"各页面的空态"是超售): 设备页/记录页空态直挂,
+                // 引导空态卡 (设置门锁空态、成就陈列架、维护历史、诊断日志) 经 GuidedEmptyView 消费。
+                Text("这句便签已贴在这几处空态旁: 设备页、记录页, 以及走引导空态卡的页面 (设置门锁空态、成就陈列架、维护历史、诊断日志)。未接入的空态不会偷偷显示, 后续批次补。")
+                    .font(.caption).foregroundStyle(DS.Palette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             Section {

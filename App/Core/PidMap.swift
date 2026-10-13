@@ -50,6 +50,7 @@ enum PidMap {
         return true
     }
     static func canClearPwd(_ pid: Int) -> Bool { isGW(pid) ? false : (locks.contains(pid) || !isKnown(pid)) }
-    static func canDeviceInfo(_ pid: Int) -> Bool { canClearPwd(pid) }
+    // 曾有 canDeviceInfo(_:) = canClearPwd 的同义别名 (零调用, 已删): 同一判断留两个名字只会让人
+    // 以为"设备信息"有独立的能力口径。真要给锁信息名片加门禁时再按实际语义写新谓词。
     static func canDeviceUpgrade(_ pid: Int) -> Bool { canClearPwd(pid) }
 }

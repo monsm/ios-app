@@ -32,7 +32,49 @@ enum ZipKit {
     static let maxEntrySize = 8 * 1024 * 1024
     static let maxEntries = 64
 
-    static func crc32(_ b: [UInt8]) -> UInt32 { CRC32.crc32(b) }
+    // `crc32` 转发第九十二批删除：CRC 的唯一实现是上面的 `enum CRC32`，本文件的三处调用
+    // (:107/:348/:370) 都直连 `CRC32.crc32`，留一个零调用的同名转发等于留第二套"看起来能用"的 CRC 入口。
+
+    // ---------- 691 store-only ZIP 写入器 ----------
+    /// 只做**方法 0 (store, 不压缩)** 这一档: 写 deflate 要自己实现压缩器 (仓内只有解压侧
+    /// `compression_decode_buffer`), 而 691 的要点是"打包 + 加密", 不是压缩率 —— CSV/PDF 本来已是紧凑文本。
+    /// 格式简单且**可被自家读侧验证**: 写完立刻用本文件的 `parse` 往返读回 (CRC 逐条核), 读侧就是判据。
+    static func write(entries: [(name: String, data: [UInt8])]) -> [UInt8] {
+        var out: [UInt8] = []
+        var central: [UInt8] = []
+        var recs: [(name: [UInt8], crc: UInt32, size: Int, off: Int)] = []
+        func u16(_ v: Int) -> [UInt8] { [UInt8(v & 0xff), UInt8((v >> 8) & 0xff)] }
+        func u32(_ v: UInt32) -> [UInt8] {
+            [UInt8(v & 0xff), UInt8((v >> 8) & 0xff), UInt8((v >> 16) & 0xff), UInt8((v >> 24) & 0xff)]
+        }
+        for e in entries {
+            let nb = Array(e.name.utf8)
+            let crc = CRC32.crc32(e.data)
+            let off = out.count
+            out += u32(0x04034b50)
+            out += u16(20) + u16(0) + u16(0) + u16(0) + u16(0)          // 版本/标志/方法0/时间/日期
+            out += u32(crc) + u32(UInt32(e.data.count)) + u32(UInt32(e.data.count))
+            out += u16(nb.count) + u16(0)
+            out += nb
+            out += e.data
+            recs.append((nb, crc, e.data.count, off))
+        }
+        let cdStart = out.count
+        for r in recs {
+            central += u32(0x02014b50)
+            central += u16(20) + u16(20) + u16(0) + u16(0) + u16(0) + u16(0)
+            central += u32(r.crc) + u32(UInt32(r.size)) + u32(UInt32(r.size))
+            central += u16(r.name.count) + u16(0) + u16(0) + u16(0) + u16(0)
+            central += u32(0)
+            central += u32(UInt32(r.off))
+            central += r.name
+        }
+        out += central
+        out += u32(0x06054b50)
+        out += u16(0) + u16(0) + u16(recs.count) + u16(recs.count)
+        out += u32(UInt32(central.count)) + u32(UInt32(cdStart)) + u16(0)
+        return out
+    }
 
     // 原生 inflate (raw deflate) — 上限防护
     static func inflate(_ data: [UInt8], expected: Int) throws -> [UInt8] {
@@ -271,14 +313,21 @@ final class DFUBleSession: NSObject, CBCentralManagerDelegate, CBPeripheralDeleg
     }
     private func writeRaw(_ hex: String, ch: CBCharacteristic) async throws {
         let data = Data(HexKit.bytes(hex))
+        // 与 BLEService 同型缺陷: 10s 兜底 block 从不取消。真实包 74KB ≈ 3700 片流式上传,
+        // 某片的 block 在**后面的片**在飞时触发, 就会把别人的 continuation 以"写入超时"抛掉
+        // → 升级在半写 flash 处中断。外提句柄, 本轮结束即 cancel。
+        var ackTimer: DispatchWorkItem?
+        defer { ackTimer?.cancel() }
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
             self.writeAckCont = cont
             // 超时兜底: peripheral 已断开时 writeValue 静默不执行 → 无回调 → 挂死
-            DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [weak self] in
+            let work = DispatchWorkItem { [weak self] in
                 guard let self, let w = self.writeAckCont else { return }
                 self.writeAckCont = nil
                 w.resume(throwing: DFUError.msg("写入超时"))
             }
+            ackTimer = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + 10, execute: work)
             guard let p = self.peripheral else {
                 self.writeAckCont = nil
                 cont.resume(throwing: DFUError.msg("设备已断开"))
@@ -292,7 +341,8 @@ final class DFUBleSession: NSObject, CBCentralManagerDelegate, CBPeripheralDeleg
         let req = Int(HexKit.bytes(hex)[0])
         let deadlineAt = Date().addingTimeInterval(Double(timeoutMs) / 1000.0)
         while Date() < deadlineAt {
-            let rHex = try await waitResponse(timeoutMs: Int(deadlineAt.timeIntervalSinceNow * 1000))
+            // 剩余时间不足 1ms 时旧写法会传入 0/负数 → 立刻假超时 (resp() 一处已有 max(1,..), 这里漏了)
+            let rHex = try await waitResponse(timeoutMs: max(1, Int(deadlineAt.timeIntervalSinceNow * 1000)))
             guard let b = HexKit.bytes(rHex).first else { continue }
             let isResp = (mode == .secure && b == 0x60) || (mode == .legacy && b == 0x10)
             guard isResp, HexKit.bytes(rHex).count >= 3 else { continue }
@@ -526,12 +576,45 @@ enum DFURunner {
                     let dfuHit = a.dfuState == 1 && a.pid == pid
                     if (macHit && dfuHit) || (nameHit && a.pid == pid) { return d.deviceId }
                 } else if nameHit {
-                    return d.deviceId // 广播不可解析时才放行名称兜底
+                    // 广播不可解析时旧写法仅凭名字含 "ZkDFU" 就返回 → 可能把固件推进**附近另一台**设备
+                    // (JS dfu.js:113-114 是要求 pid 匹配的)。收紧: 名字必须带上目标锁 MAC 后 8 位才认。
+                    let nm = d.name.lowercased()
+                    if nm.contains(wantA.suffix(8)) || nm.contains(wantB.suffix(8)) { return d.deviceId }
                 }
             }
             try? await Task.sleep(nanoseconds: 300_000_000)
         }
         throw BLEErrorX.code(.notFound)
+    }
+
+    /// 144 批量排队升级: 勾选的多把**同型号**锁逐把跑既有单锁升级 —— 队列只是外层编排, 单锁那条链一字未改。
+    /// 逐把**串行**是刻意的: DFU 期间手机与锁都是独占态, 并行升级既抢 BLE 又抢 bootloader 会话。
+    /// 一把失败不中断队列 (继续下一把), 但把失败原因带回去逐条列出。
+    struct QueueOutcome: Identifiable {
+        var id: String { mac }
+        let mac: String
+        let name: String
+        let ok: Bool
+        let note: String
+    }
+    @MainActor
+    static func runUpgradeQueue(lock: LockService, macs: [String], firmware: FirmwarePackage,
+                                onStep: @escaping (Int, Int, String) -> Void,
+                                onProgress: @escaping (DFUProgress) -> Void) async -> [QueueOutcome] {
+        var out: [QueueOutcome] = []
+        for (i, mac) in macs.enumerated() {
+            let kc = DB.keychain(mac)
+            let name = kc.map { LockArchive.displayName($0) } ?? mac
+            onStep(i + 1, macs.count, name)
+            do {
+                try await lock.ensureConnected(mac: mac)
+                try await runUpgrade(lock: lock, mac: mac, pid: kc?.pid ?? 0, firmware: firmware, onProgress: onProgress)
+                out.append(QueueOutcome(mac: mac, name: name, ok: true, note: "已升级"))
+            } catch {
+                out.append(QueueOutcome(mac: mac, name: name, ok: false, note: error.localizedDescription))
+            }
+        }
+        return out
     }
 
     static func runUpgrade(lock: LockService, mac: String, pid: Int, firmware: FirmwarePackage,

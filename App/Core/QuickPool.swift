@@ -1,0 +1,222 @@
+// 905 快捷格"十选六"池 + 1047 常用动作排前 + 921「再开一次」格。
+//
+// 两件事共用一份数据源，避免出现"格子里的顺序"和"统计说谁常用"两套真相。
+//
+// 905 的原话是"四选十"。这里把池子做成**真实存在的去处**：原先十个是设备页现状那六格 +
+// 四个 App 里**已经能到达的真实页面** (备份与恢复 / 告警中心 / 固件升级 / 家政与维保，
+// 分别从设置页与 Sheets 的既有入口可达 —— 逐个 grep 过构造点)，默认选中现状那六个
+// —— 也就是**不改变任何人现在看到的界面**。921 后来加第 11 项「再开一次」：
+// 点按不推开新页，而是切到凭证 Tab 并定位星标/最高频凭证 (载荷走 577 深链同一套)。
+// 池子里每一项都对应一个真视图；没有为凑十格而新造的假入口。
+//
+// 1047 ("使用满 30 天后快捷格首格自动推荐最常用动作") 的完整口径:
+// · 静默学习: 从第一次点快捷格起本机记次数 (只存本机, 绝不上传); 点一次 +1。
+// · 满 30 天 (口径 30×86400s, 与仓内其它"30 天"一致) 且从没手动动过开关 →
+//   首格自动推荐最常用的一格, 其余保持用户手选次序。
+// · 开关开着 = 全序按次数降序 (平次保序); 手动关掉 = 硬退出: 停止记录 + 清空计数 +
+//   排序回用户手选 (kf_quick_smart_set 标记保证"关就是关", 自动首格不再介入)。
+import SwiftUI
+
+struct QuickAction: Identifiable, Hashable {
+    let id: String
+    let icon: String
+    let label: String
+}
+
+enum QuickPool {
+    /// 候选格子 (id 一旦发布就是存储值，改名会把用户已有的 kf_quick_ids 打空 → 只能加不能改)
+    /// 921「再开一次」是后来加的第 11 项：它不推开新页，点按 = 切凭证 Tab 并定位星标/最高频那条。
+    static let all: [QuickAction] = [
+        QuickAction(id: "addPwd",   icon: "plus.rectangle.on.rectangle", label: "添加密码"),
+        QuickAction(id: "otp",      icon: "clock.badge.questionmark",    label: "临时密码"),
+        QuickAction(id: "syncTime", icon: "clock.arrow.circlepath",      label: "校准时间"),
+        QuickAction(id: "addFp",    icon: "finger.print",                label: "录指纹"),
+        QuickAction(id: "studio",   icon: "wrench.and.screwdriver",      label: "凭证工坊"),
+        QuickAction(id: "famNote",  icon: "note.text",                   label: "家庭便签"),
+        QuickAction(id: "again",    icon: "arrow.counterclockwise",      label: "再开一次"),   // 921
+        // ↓ 四个是从本页其它位置也到达得到的真实页面，不是新造的入口
+        QuickAction(id: "backup",   icon: "archivebox",                  label: "备份与恢复"),
+        QuickAction(id: "alarm",    icon: "bell.badge",                  label: "告警中心"),
+        QuickAction(id: "firmware", icon: "memorychip",                  label: "固件升级"),
+        QuickAction(id: "care",     icon: "house.and.flag",              label: "家政与维保"),
+    ]
+    /// 默认选中现状那六格 = 与旧版观感一致
+    static let defaultIds = ["addPwd", "otp", "syncTime", "addFp", "studio", "famNote"]
+
+    static let idsKey = "kf_quick_ids"
+    static let freqKey = "kf_quick_freq"
+    static let smartKey = "kf_quick_smart"
+    static let sinceKey = "kf_quick_since"            // 1047: 首次点击时刻 (Unix 秒)
+    static let smartSetKey = "kf_quick_smart_set"     // 1047: 用户手动动过开关的标记 (关掉就不再自动学习)
+
+    /// 读池子: 白名单过滤 + 去重 + 保用户排的序; 空了或全是不认识的 id → 回退默认六格
+    static var selected: [QuickAction] {
+        let stored = DB.store.get([String].self, idsKey) ?? defaultIds
+        var seen = Set<String>()
+        let picked = stored.filter { seen.insert($0).inserted }
+            .compactMap { id in all.first { $0.id == id } }
+        return picked.isEmpty ? all.filter { defaultIds.contains($0.id) } : picked
+    }
+    static func setSelected(_ ids: [String]) {
+        let clean = all.filter { ids.contains($0.id) }.map { $0.id }
+        if clean.sorted() == defaultIds.sorted() && clean.count == defaultIds.count {
+            DB.store.remove(idsKey)          // 与默认等价就删键，不给备份/统计留等价副本
+        } else {
+            DB.store.set(idsKey, clean)
+        }
+    }
+
+    static var smartFirst: Bool { DB.store.getBool(smartKey) }     // 默认关
+    static func setSmartFirst(_ v: Bool) {
+        DB.store.set(smartKey, v)
+        DB.store.set(smartSetKey, true)   // 手动动过开关 = 从此由用户说了算, 1047 的自动首格不再介入
+    }
+    /// 记录中: 从没动过开关 = 静默学习 (1047 的"满 30 天"需要 30 天前的数据);
+    /// 手动关过 = 硬退出 (开关文案承诺"停止记录并清空计数", 这里兑现)。
+    static var recordingOn: Bool { !DB.store.getBool(smartSetKey) || smartFirst }
+    /// 1047: 自首次点击起满 30 天。口径 30×86400s, 与仓内其它 "30 天" (校时/固件复提醒) 一致。
+    static var reached30d: Bool {
+        guard let since = DB.store.get(Double.self, sinceKey) else { return false }
+        return Date().timeIntervalSince1970 - since >= 30 * 86400
+    }
+
+    /// 频次表: 键 → 本机累计点击数
+    static var counts: [String: Int] { DB.store.get([String: Int].self, freqKey) ?? [:] }
+    static func recordTap(_ id: String) {
+        guard recordingOn else { return }
+        if DB.store.get(Double.self, sinceKey) == nil {
+            DB.store.set(sinceKey, Date().timeIntervalSince1970)   // 1047: 学习起点 = 第一次真的用了快捷格
+        }
+        var c = counts
+        c[id, default: 0] += 1
+        DB.store.set(freqKey, c)
+    }
+    static func clearCounts() { DB.store.remove(freqKey) }
+
+    /// 排给设备页看的顺序, 三档 (1047):
+    /// · 开关开 = 点过的按次数降序排前, 次数相同或没点过的保持原序 (稳定排序, 不做预测);
+    /// · 开关关但从未手动调整过 ∧ 满 30 天 = 只把最常用的一格提到首格, 其余保序;
+    /// · 其余 = 用户选的池子原序。
+    static func ordered() -> [QuickAction] {
+        let picked = selected
+        let c = counts
+        if smartFirst {
+            return picked.enumerated()
+                .sorted { a, b in
+                    let ca = c[a.element.id] ?? 0, cb = c[b.element.id] ?? 0
+                    if ca != cb { return ca > cb }
+                    return a.offset < b.offset          // 平次保序: 稳定, 不会每次刷新换队
+                }
+                .map { $0.element }
+        }
+        guard !DB.store.getBool(smartSetKey), reached30d,
+              let top = picked.max(by: { (c[$0.id] ?? 0) < (c[$1.id] ?? 0) }),
+              (c[top.id] ?? 0) > 0 else { return picked }
+        var out = picked.filter { $0.id != top.id }
+        out.insert(top, at: 0)
+        return out
+    }
+
+    /// 921「再开一次」的目标: 星标密码 > 星标指纹 > 921 高频推断 (临时码, 标"约")。
+    /// 返回 (显示名, 深链载荷); 一个都没有 = nil —— 调用方给"先去点亮星标"的空态, 不替用户猜一条。
+    /// 354: 已归档的条目不再作为直达目标 —— 收起的东西不许从快捷入口"复活"
+    static func repeatTarget(_ mac: String) -> (name: String, nav: String)? {
+        let stars = CredentialOrg.stars(mac)
+        if let p = DB.listPwds(mac).first(where: { stars.contains($0.alias) && !CredentialOrg.isArchived(mac, "pwd", $0.alias) }) {
+            return (CredentialOrg.displayPwd(p), "pwd:" + String(p.alias))
+        }
+        if let f = DB.listFps(mac).first(where: { stars.contains(100000 + $0.batch) && !CredentialOrg.isArchived(mac, "fp", $0.batch) }) {
+            return (f.name.isEmpty ? "指纹 #" + String(f.batch) : f.name, "fp:" + String(f.batch))
+        }
+        if let s = CredentialOrg.starSuggestion(mac), s.hasPrefix("p"),
+           let alias = Int(s.dropFirst()),
+           let p = DB.listPwds(mac).first(where: { $0.alias == alias && !CredentialOrg.isArchived(mac, "pwd", $0.alias) }) {
+            return (CredentialOrg.displayPwd(p) + " (约)", s)
+        }
+        return nil
+    }
+}
+
+/// 目标视图集中一处，免得 DeviceHomeView 里散落十个 `if`
+@ViewBuilder
+func quickDestination(_ id: String) -> some View {
+    switch id {
+    case "addPwd":   AddPwdView(embedded: true)
+    case "otp":      SafemodeIntroView(mode: "otp")
+    case "syncTime": SyncTimeView()
+    case "addFp":    StartAddFpView(embedded: true)
+    case "studio":   StudioHome(embedded: true)
+    case "famNote":  FamilyNoteView()
+    case "backup":   BackupView()
+    case "alarm":    AlarmCenterView()
+    case "firmware": FirmwareView()
+    case "care":     MaintenanceView()
+    case "again":    Text("「再开一次」在设备页长按编辑或直接点按, 不需要新页面 (921)")
+    default:         Text("这个快捷入口对应的页面已不存在，请到设置-外观里重新选择")
+    }
+}
+
+/// 1047: 只在"记频次"时才挂手势的辅助修饰器。
+/// 为什么要专门包一层：SwiftUI 里 `if let f = onTap { view.onTapGesture… } else { view }`
+/// 两个分支返回类型不同，得靠 Group/AnyView 兜 —— 那会让整块玻璃砖的渲染类型都变掉。
+/// ViewModifier 传 nil 时就是原样返回，既不插手势也不改类型。
+struct OptionalTap: ViewModifier {
+    var onTap: (() -> Void)?
+    func body(content: Content) -> some View {
+        if let onTap {
+            // simultaneousGesture 而不是 onTapGesture: 后者会和 NavigationLink 的点击抢手势，
+            // 结果就是"记上了次数但页面没进去"。同时识别才两不耽误。
+            // 写法跟本仓既有的一处 TapGesture 用法一致 (SecurityCenterView:1533 的 `onEnded { … }` 尾闭包形态)；
+            // 不写 `onEnded(perform:)` —— 那个参数标签我没有查证过，别拿猜的签名进代码。
+            content.simultaneousGesture(TapGesture().onEnded { onTap() })
+        } else {
+            content
+        }
+    }
+}
+
+/// 905 长按快捷格进入的编辑面板 —— 与设置-外观里那组 Toggle 同一数据源 (QuickPool),
+/// 每改一次都走 bumpAppearanceForLayout 立即生效 (与设置页同口径, 不需要重进 App)。
+struct QuickTileEditorSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var app: AppState
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section("快捷操作格 (905 · 十一选六)") {
+                    ForEach(QuickPool.all) { a in
+                        Toggle(a.label, isOn: Binding(
+                            get: { QuickPool.selected.contains(a) },
+                            set: { on in
+                                var ids = QuickPool.selected.map { $0.id }
+                                if on { if !ids.contains(a.id) { ids.append(a.id) } }
+                                else { ids.removeAll { $0 == a.id } }
+                                // 一格都不留 = 快捷区整体消失: 兜回默认六格 (与设置页同口径)
+                                QuickPool.setSelected(ids.isEmpty ? QuickPool.defaultIds : ids)
+                                app.bumpAppearanceForLayout()
+                            }))
+                    }
+                }
+                Section("常用排前 (1047)") {
+                    Toggle("常用动作排到前面", isOn: Binding(
+                        get: { QuickPool.smartFirst },
+                        set: { v in
+                            QuickPool.setSmartFirst(v)
+                            if !v { QuickPool.clearCounts() }
+                            app.bumpAppearanceForLayout()
+                        }))
+                    Text("没动过开关时: 静默记点击次数, 满 30 天首格自动推荐最常用的那格; 关掉即停止记录并清空。")
+                        .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                }
+            }
+            .navigationTitle("编辑快捷操作格")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("完成") { dismiss() }
+                }
+            }
+        }
+    }
+}

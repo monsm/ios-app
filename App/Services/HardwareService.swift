@@ -42,7 +42,9 @@ final class HardwareService: ObservableObject {
     var debugRaw: Bool { DB.store.getBool("kf_debug_raw") }
     func log(_ msg: String) {
         let t = DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .medium)
-        logs.append("\(t) \(msg)")
+        // 与 LockService 同口径脱敏: 帧 hex 内含 ekey / 网关 WiFi SSID+口令明文, 不得进任何可复制的日志数组
+        let shown = msg.contains("hex=") ? Redact.frameHex(msg) : msg
+        logs.append("\(t) \(shown)")
         if logs.count > 60 { logs.removeFirst(logs.count - 60) }
     }
 
@@ -73,6 +75,12 @@ final class HardwareService: ObservableObject {
     }
 
     private func scanForPID(pid: Int?, resetRequired: Bool, timeoutMs: Int) async throws -> String {
+        // 旧实现在 pid==nil 时跳过型号与 MAC 校验, 直接返回**第一个**可解析广播的设备并连接
+        // → cmd41 把 ekey 写进陌生人设备、cmd31 把家里 WiFi SSID+口令写进陌生网关。
+        // JS 权威强制 macFilter/macRaw (gateway.js:62, keychain.js:69) — 无型号即拒绝。
+        guard let pid else {
+            throw BLEErrorX.msg("台账缺少该设备的型号 (pid), 拒绝按广播盲连 — 请先在 App 内连接门锁刷新档案")
+        }
         try await ble.startScan(timeoutMs: timeoutMs)
         defer { ble.stopScan() }
         let deadline = Date().addingTimeInterval(Double(timeoutMs) / 1000.0)
@@ -146,9 +154,20 @@ final class HardwareService: ObservableObject {
     }
 
     // ================= 钥匙串 (App addkeychain 页) =================
-    /// cmd 43 状态 (响应解析: 11/24/25 直读, 12/31/34/35 反转, 36 逐字节)
+    /// cmd 43 状态 (响应解析: 11/24/25 直读, 12/31/34/35 反转; 基线另有 36 逐字节的 applyPids，
+    /// 本工程不解析也没有任何消费点 —— 理由与钉子见 parseshadow 打印的「口径差」与 docs/AUDIT-CODE.md §10.48)
     func readDongleState(mac: String) async throws -> DongleStat {
         let f = try await send(ZKCmdBuilder.cmd43KeychainStatus([]), target: mac)
+        // 钥匙串返回码在 KLV#03 (vendor keychain.js 的 parseKCStatus 同一口径)。原先这里从不看 rc:
+        // rc=1(解密失败)/rc=3(不在有效期) 那种回字里根本没有 11/24/25/31 这些读数，
+        // parseKCStatus 于是全部给默认值，而这一份"全没读到"会被**当成一次真实读数覆盖上一次的好数据**，
+        // 还会把 lastSeenAt 写成刚刚见过 —— 界面上是"钥匙串刚联系过，只是各项都是空"。
+        // rc = -1 表示帧里没带返回码 (基线同样不判)，所以只在 rc 明确非 0 时才中止。
+        let rc = rcOf(f)
+        if rc > 0 {
+            if rc == 3 { throw BLEErrorX.msg("命令不在有效期，请将手机时间同步到锁内") }
+            throw BLEErrorX.msg("钥匙串返回失败码 " + StatusParser.rcMessage(rc) + "，本次读数未采纳 (上一次的好数据仍留着)")
+        }
         let st = HardwareService.parseKCStatus(f.klvs)
         var rec = DB.dongle(mac) ?? Dongle(mac: mac)
         rec.stat = st
@@ -161,15 +180,24 @@ final class HardwareService: ObservableObject {
     nonisolated static func parseKCStatus(_ klvs: [ZKLV]) -> DongleStat {
         var s = DongleStat()
         func direct(_ key: Int) -> Int? { klvs.first(where: { $0.key == key }).map { StatusParser.intHex($0.val) } }
-        if let v = direct(0x03) { _ = v } // rc
+        // KLV#03 (返回码) 不在这里落：DongleStat 没有 rc 字段，判 rc 的是调用方 readDongleState (走 rcOf)。
+        // 原先这一行写的是 `if let v = direct(0x03) { _ = v }` —— 把值取出来再丢掉，
+        // 看上去像"这里处理过返回码了"，实际什么都没做，而调用方也确实没看过 rc。
         s.power = direct(0x11) ?? -1
         s.absPower = klvs.first(where: { $0.key == 0x12 }).map { Int(StatusParser.leHexToU32($0.val)) } ?? -1
         s.ekeyCount = direct(0x24) ?? -1
         s.ekeyAmount = direct(0x25) ?? -1
-        s.firmware = klvs.first(where: { $0.key == 0x31 }).map { HardwareService.dotted(HexKit.reversePairs($0.val)) } ?? ""
+        s.firmware = klvs.first(where: { $0.key == 0x31 }).map { HardwareService.dotted3($0.val) } ?? ""
         s.pid = klvs.first(where: { $0.key == 0x34 }).map { Int(StatusParser.leHexToU32($0.val)) } ?? 0
-        s.eCtrl = klvs.first(where: { $0.key == 0x35 }).map { HardwareService.dotted(HexKit.reversePairs($0.val)) } ?? ""
+        s.eCtrl = klvs.first(where: { $0.key == 0x35 }).map { HardwareService.dotted3($0.val) } ?? ""
         return s
+    }
+    /// 3B 反转点分，**不是整 3 字节就回空**（对齐基线 keychain.js 的 0x31/0x35：只在 reversed 长度==6 时赋值，
+    /// 否则保持默认 ''）。原先这里直接把 `dotted(...)` 的结果写进去，而 `dotted` 对不是 6 位的输入
+    /// **原样返回那段十六进制** ⇒ 一次长度不对的读数会在界面上显示成一个假版本号，还会被写进备份包。
+    nonisolated static func dotted3(_ hex: String) -> String {
+        let r = HexKit.reversePairs(hex)
+        return r.count == 6 ? dotted(r) : ""
     }
     nonisolated static func dotted(_ hex: String) -> String {
         guard hex.count == 6 else { return hex }
@@ -180,9 +208,17 @@ final class HardwareService: ObservableObject {
     func writeDongleKey(dongleMac: String, lock: Keychain, trackId: UInt32) async throws {
         let vf = UInt32(truncatingIfNeeded: ZKCmdBuilder.protoSec("2010-01-01 00:00:00"))
         let vt = UInt32(truncatingIfNeeded: ZKCmdBuilder.protoSec("2118-01-01 00:00:00"))
-        let pin = lock.pins.first ?? "1"
+        // 旧写法 `lock.pins.first ?? "1"`: PIN 池为空时**回落到 PIN "1"** 去签发硬件钥匙凭证 ——
+        // 写进dongle 的是一条人人猜得到的凭证, 而流程显示"写入成功"。缺 PIN 必须直接拒绝。
+        guard let pin = lock.pins.first, !pin.isEmpty else {
+            throw BLEErrorX.msg("该锁的钥匙串没有 PIN 池, 无法为硬件钥匙签发凭证 (已拒绝, 不回落默认 PIN)")
+        }
         let ekey = ZKCmdBuilder.buildEkeyOpen(lock.skey.lowercased(), lock.mac.lowercased(), pin,
                                              validFromSec: vf, validToSec: vt, trackId: trackId)
+        // 签发失败 (skey 非法 / PIN 不可解析) 返回空串: 空 ekey 不能发给硬件钥匙
+        guard !ekey.isEmpty else {
+            throw BLEErrorX.msg("ekey 签发失败 (skey 非法或 PIN 不可解析), 已中止写入硬件钥匙")
+        }
         let f = try await send(ZKCmdBuilder.cmd41WriteEkey(lock.mac.lowercased(), lock.pid, ekey), target: dongleMac)
         let rc = rcOf(f)
         if rc != 0 {
@@ -202,6 +238,12 @@ final class HardwareService: ObservableObject {
     /// cmd 44 查钥匙 (nil = 全部; lockMac = 本锁)
     func dongleKeys(dongleMac: String, lockMac: String?) async throws -> [String] {
         let f = try await send(ZKCmdBuilder.cmd44GetEkeyInfo(lockMac), target: dongleMac)
+        // 返回码在 KLV#03；基线 keychain.js:176 写明"无 rc KLV (如 44/43 无状态位) — 调用层自行决定" ⇒
+        // 只在明确非 0 时拒绝，帧里没带 (-1) 照常按读数处理。
+        // 原先这里直接看 KLV#04：一次 rc=1(解密失败) 的回字里没有 04，于是返回空列表，
+        // 界面弹的就是"没有查询到钥匙"——把一次失败说成一把钥匙都没有（与 §10.48 的 43 同一族）。
+        let rc = rcOf(f)
+        if rc > 0 { throw BLEErrorX.msg("查钥匙失败: " + StatusParser.rcMessage(rc) + " (这不代表硬件狗里没有钥匙)") }
         guard let k = f.klvs.first(where: { $0.key == 0x04 }) else { return [] }
         let h = k.val
         var out = [String]()
@@ -247,7 +289,10 @@ final class HardwareService: ObservableObject {
         for k in klvs {
             switch k.key {
             case 0x01: s.wifimac = k.val // 原始字节序 hex
-            case 0x02: s.romVer = dotted(HexKit.reversePairs(k.val))
+            case 0x02: // 与 0x03 同式：整 3 字节才点分，否则按 ASCII 解（基线 gateway.js 两支都有 ASCII 回退；
+                       // 原先这里少了那一半回退，长度不对时会把反转后的十六进制直接当版本号显示）
+                let rev2 = HexKit.reversePairs(k.val)
+                s.romVer = (rev2.count == 6) ? dotted(rev2) : HexKit.hexToAscii(k.val)
             case 0x03:
                 let rev = HexKit.reversePairs(k.val)
                 s.eCtrlVer = (rev.count == 6) ? dotted(rev) : HexKit.hexToAscii(k.val)
@@ -300,7 +345,9 @@ final class HardwareService: ObservableObject {
         if ec != 0 { throw BLEErrorX.msg("重启失败 (errCode \(ec))") }
         ble.disconnect()
     }
-    // 网关应答码: 缺 KLV#01 → 0 (App Co/So/Mo 构造器默认)
+    // 网关应答码: 缺 KLV#01 → 0 (App Co/So/Mo 构造器默认)。
+    // ⚠ 只能用在**写类命令**的回字上 (31 写 WiFi / 35 重启)。cmd 38 状态帧里 KLV#01 是 wifimac，
+    //   拿它当应答码读会把 MAC 的第一个字节当成错误码 —— 两套码制 (写:KLV#01 / 钥匙串:KLV#03) 不能混用。
     private func errCodeOf(_ f: ZKProtocol.ParsedFrame) -> Int {
         guard let k = f.klvs.first(where: { $0.key == 0x01 }) else { return 0 }
         return StatusParser.intHex(k.val)

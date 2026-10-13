@@ -16,6 +16,7 @@ struct AccessibilityView: View {
             voSection
             visualSection
             motionSection
+            assistiveTouchSection
             inputSection
             soundSection
             practiceSection
@@ -66,8 +67,8 @@ struct AccessibilityView: View {
                 Text("1.75x").tag("1.75")
             }
             .pickerStyle(.segmented)
-            // 859 AX 档降级布局说明 (字号 ≥1.5 自动收紧, 无需开关)
-            Text("字号 1.5x 起自动启用辅助布局: 卡片指标纵向堆叠、圆盘缩至 128pt (859)。")
+            // 859 AX 档降级布局说明 (只写已实现的: 圆盘缩小; 原先还承诺"指标纵向堆叠", 代码未做, 已删)
+            Text("字号 1.5x 起自动收紧: 开锁圆盘从 176pt 缩至 128pt, 大字号下仍能完成按住手势 (859)。")
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -82,15 +83,18 @@ struct AccessibilityView: View {
             Toggle("大格模式 (230, 快捷格 2 列大格)", isOn: Binding(
                 get: { AXPrefs.bigTile },
                 set: { app.setUnlockOption("kf_bigtile", $0) }))
-            // 163 横屏重排 → 降级说明 (TARGETED_DEVICE_FAMILY=1 仅竖屏, 不做横屏布局, 备案 DEFERRED)
-            LabeledRow("横屏 (163)", "本项目锁定竖屏; 横屏自动提示并保持原布局")
-                .accessibilityLabel("横屏重排已降级: 项目锁定竖屏, 不做横屏布局, 见 DEFERRED 备案")
+            // 163 横屏重排 → 降级说明 (TARGETED_DEVICE_FAMILY=1 仅竖屏, 不做横屏布局, 备案 DEFERRED)。
+            // 口径修正: 竖屏锁定下根本不会出现横屏场景, 旧文案"横屏自动提示"承诺了一个触发不了的机制。
+            LabeledRow("横屏 (163)", "本项目锁定竖屏, 不会出现横屏场景; 横屏布局与横屏提示都不存在 (DEFERRED 备案)")
+                .accessibilityLabel("横屏重排未做: 项目锁定竖屏, 没有横屏布局与提示, 见 DEFERRED 备案")
             // 857 音效说明 (声音策略统一走系统 systemSound, 静音开关天然生效)
             LabeledRow("音效与静音 (857)", "全部音效跟随系统铃声静音开关")
         } header: {
             Text("视觉与字号")
         } footer: {
-            Text("系统级适配无需开关即生效: 增强对比映射 (862, 分隔线/次文本加深一档)、智能反转保护 (863, hero 渐变降级幂等色)、降低透明度 (226, 玻璃降级实底)、减少动态效果 (227, 循环动效静止)、系统加粗跟随 (861)。")
+            // 861 口径 (2026-10-13 更新): 此前全仓无一处读 legibilityWeight/isBoldTextEnabled, 如实写"未接线";
+            // 现在根视图按 AXFlags.boldText 设 legibilityWeight, 这一条与上面四条一样是"无需开关即生效"。
+            Text("系统级适配无需开关即生效: 增强对比映射 (862, 分隔线/次文本加深一档、玻璃卡降实底)、智能反转保护 (863, hero 渐变降级幂等色)、降低透明度 (226, 玻璃降级实底)、减少动态效果 (227, 循环动效静止)、系统加粗跟随 (861, 根视图按系统开关设 legibilityWeight, 凭证名与开关标签随之加粗)。")
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -112,18 +116,67 @@ struct AccessibilityView: View {
         .fixedSize()
     }
 
+    // ---------- 874 辅助触控说明 (iOS AssistiveTouch 自定手势) ----------
+    /// 874: 辅助触控的"自定手势"只能由用户在系统里录一次, App 无法代设 —— 所以这一节是**说明页**,
+    /// 把"在哪一步选哪个动作"写全, 不假装一键接好 (原句要的正是说明页)。
+    private static let assistiveSteps: [String] = [
+        "设置 → 辅助功能 → 触控 → 辅助触控 → 打开",
+        "自定顶层菜单 → 选一枚图标 → 动作选「快捷指令」→ 选本 App 的「打开门锁」",
+        "以后点小白点 → 点那枚图标 → 确认后进 App 完成开锁 (仍在 App 内过应用锁与蓝牙)",
+    ]
+    private var assistiveTouchSection: some View {
+        Section {
+            Text("辅助触控 (小白点) 的自定手势需要你在系统里录一次, App 无法代设。映射开锁的步骤:")
+                .font(.footnote)
+                .foregroundStyle(DS.Palette.text)
+                .fixedSize(horizontal: false, vertical: true)
+            ForEach(Array(Self.assistiveSteps.enumerated()), id: \.offset) { i, s in
+                HStack(alignment: .top, spacing: DS.Space.s) {
+                    Text("\(i + 1)")
+                        .font(.caption2.weight(.semibold))
+                        .monospacedDigit()
+                        .foregroundStyle(DS.Palette.onAccent)
+                        .frame(width: 18, height: 18)
+                        .background(DS.Palette.accent, in: Circle())
+                        .accessibilityHidden(true)
+                    Text(s)
+                        .font(.caption)
+                        .foregroundStyle(DS.Palette.textSub)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
+                }
+                .frame(minHeight: DS.Hit.min)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("第 \(i + 1) 步: \(s)")
+            }
+            Text("更省事的替代: 直接用快捷指令口令「用离线锁管家打开门锁」(166), 或把 App 图标放进辅助触控的顶层菜单。")
+                .font(.caption2)
+                .foregroundStyle(DS.Palette.textSub)
+                .fixedSize(horizontal: false, vertical: true)
+        } header: {
+            Text("辅助触控映射 (874)")
+        }
+    }
+
     // ---------- 运动辅助 (868-877) ----------
     private var motionSection: some View {
         Section {
-            Toggle("防连点开关 (872, 300ms 内忽略重复点击)", isOn: Binding(
+            // 872/229 消费方现状 (2026-10-13): 两个都已接线 ——
+            // 872 在 PressableButtonStyle 的 300ms 去重闸里, 229 在 barSide/快捷格/HeroCard 三处。
+            // 872 已接线 (2026-10-13): 去重闸落在 LockKeeperApp 的 PressableButtonStyle 里
+            // (PrimitiveButtonStyle 外包一层 + 内层真 Button, 见那边的注释), 所以按原口径换回真开关。
+            Toggle("防连点 (872, 300ms 内重复点击忽略)", isOn: Binding(
                 get: { AXPrefs.dbltapGuard },
-                set: { app.setUnlockOption("kf_dbltap_guard", $0) }))
+                set: { DB.store.set("kf_dbltap_guard", $0) }))
+            // 229 左手模式: 消费方三处 —— DeviceHomeView 的 barSide (工具条两侧对调)、快捷格顺序 reversed、
+            // 以及 HeroCard 卡面本体 (DesignSystem 里按 AXPrefs.lefty 切 layoutDirection 镜像)，
+            // 所以这一档是真开关；872 仍无消费方 (去重要落在 LockKeeperApp 的按钮样式里)，保持实话行。
+            Toggle("左手模式 (229, 工具栏与快捷格镜像)", isOn: Binding(
+                get: { AXPrefs.lefty },
+                set: { app.setUnlockOption("kf_lefty", $0) }))
             Toggle("单手下沉 (873/60, 圆盘下移入拇指区)", isOn: Binding(
                 get: { AXPrefs.onehand },
                 set: { app.setUnlockOption("kf_onehand", $0) }))
-            Toggle("左手模式 (229, 工具栏镜像)", isOn: Binding(
-                get: { AXPrefs.lefty },
-                set: { app.setUnlockOption("kf_lefty", $0) }))
             // 875 ⚠ 按住时长自定滑杆 (系统"按住持续时间"无读取 API, 0.4–1.6s, 默认 0.9s 与包1 对齐)
             VStack(alignment: .leading, spacing: DS.Space.xs) {
                 HStack {
@@ -141,7 +194,9 @@ struct AccessibilityView: View {
                     .accessibilityValue(String(format: "%.1f 秒", AXPrefs.holdDuration))
             }
             .fixedSize(horizontal: false, vertical: true)
-            // 869 ⚠ 眼动停留自定滑杆 (系统停留时长无公开 API, 0.5–4s, 默认 2s, 扫描组聚焦停留基准)
+            // 869 ⚠ 眼动停留自定滑杆 (系统停留时长无公开 API, 0.5–4s, 默认 2s)。
+            // 口径如实: 这个值的当前消费只有本页练习区的演示文字 —— 本 App 还没挂上 868 扫描组,
+            // 真正逐项聚焦的节奏由系统 VoiceOver/切换控制自己的设置决定 (接线后此滑杆才成为行为源)。
             VStack(alignment: .leading, spacing: DS.Space.xs) {
                 HStack {
                     Text("扫描停留时长 (868/869)")
@@ -156,9 +211,15 @@ struct AccessibilityView: View {
                        in: 0.5...4.0, step: 0.1)
                     .accessibilityLabel("切换控制扫描停留时长")
                     .accessibilityValue(String(format: "%.1f 秒", AXPrefs.dwellTime))
+                Text("当前只驱动下方练习区的演示文字; 系统逐项聚焦节奏请以 VoiceOver/切换控制设置为准 (868 扫描组未接线)。")
+                    .font(.caption2)
+                    .foregroundStyle(DS.Palette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .fixedSize(horizontal: false, vertical: true)
-            LabeledRow("命中域 (871)", "全 App 44pt + 10pt 余量; 时间线次级按钮 60pt")
+            // 871 口径修正: 60pt 扩容只有时间线认领行一处 (RecordsView 内联), 不是"全 App";
+            // 44pt 是 DS.Hit.min 全 App 下限 — 两句分开写，谁在骗人就一眼看得见。
+            LabeledRow("命中域 (871)", "可点控件全 App 下限 44pt (DS.Hit.min); 时间线认领区另行加余量到 60pt")
             if AuthKit.biometricAvailable {
                 // 877 ⚠ 验证降级大键: 设备支持 Face ID / Touch ID 时提供大字替代键路径 (AppLock 连败 3 次后自动出现)
                 LabeledRow("验证降级大键 (877)", "Face ID / Touch ID 大字替代键已启用")
@@ -172,7 +233,7 @@ struct AccessibilityView: View {
         } header: {
             Text("运动与操作")
         } footer: {
-            Text("868 切换控制: 设备 Tab 的 状态卡/圆盘/快捷格 为三个扫描组 (accessibilityActionDiscovery), 停留时长按上方滑杆. 226 降低透明度与 227 减少动态直接生效, 无需开关. 869 眼动停留: 系统停留时长无公开 API, 已改自定滑杆 (备案 DEFERRED).")
+            Text("868 切换控制: 本 App 尚未把 状态卡/圆盘/快捷格 挂成独立扫描组 (设备页仅有占位注释, accessibilityActionDiscovery 全仓零使用) —— 该项判 PART, 接线前停留滑杆只喂练习区文字. 226 降低透明度与 227 减少动态直接生效, 无需开关. 869 眼动停留: 系统停留时长无公开 API, 已改自定滑杆 (备案 DEFERRED).")
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -185,7 +246,7 @@ struct AccessibilityView: View {
             Toggle("底部对齐表单 (870, 键盘弹起表单贴底)", isOn: Binding(
                 get: { AXPrefs.bottomForm },
                 set: { app.setUnlockOption("kf_form_bottom", $0) }))
-            Text("外接键盘快捷键 (164/530): Cmd/Control + 数字 1–4 切 Tab; Cmd+R 刷新; Cmd+N 新建; Cmd+F 凭证搜索; Esc 关闭弹层. Tab/Shift-Tab 全键盘遍历 (854).")
+            Text("外接键盘快捷键 (164/530, 按代码调用点列, 没接的不写): Cmd + 数字 1–4 切 Tab (App 入口); Cmd+R 刷新 (设备页/记录页); Cmd+F 凭证搜索; 本机密码弹层里 Return = 解锁. 全键盘 Tab/Shift-Tab 遍历由系统「全键盘控制」提供, 不是 App 自建 (854).")
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -207,7 +268,7 @@ struct AccessibilityView: View {
             Toggle("凭证大字模式 (885, OTP 大字号对照抄写)", isOn: Binding(
                 get: { DB.store.getBool("kf_ax_bigotp") },
                 set: { app.setUnlockOption("kf_ax_bigotp", $0) }))
-            Text("闪烁安全线 (882): 全 App 循环动效 ≤3Hz, 核查表见 docs/A11Y-FREQUENCY.md. 数值控件恒等宽数字 (231). 工具栏按钮已全量补无障碍名 (232).")
+            Text("闪烁安全线 (882): 全 App 循环动效 ≤3Hz, 核查表见 docs/A11Y-FREQUENCY.md. 数值控件恒等宽数字 (231). 设置页开关均为系统 Toggle (标题写明用途, 开/关态由系统播报, 232, 不另写重复值); 图标型工具栏按钮逐枚挂无障碍名.")
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -252,12 +313,12 @@ struct VOPracticeField: View {
             .accessibilityLabel("练习转子")
             .accessibilityValue("当前 \( ["状态", "电量", "连接"][rotor] )")
             .accessibilityHint("转子上下滑或转子选择切换档位")
-            Text("扫描组演示: 停留 \(String(format: "%.1f", AXPrefs.dwellTime)) 秒自动跳到下一个控件 (868)")
+            Text("练习区提示 (868/869): 这里的「停留 \(String(format: "%.1f", AXPrefs.dwellTime)) 秒」是本 App 滑杆生成的演示文字 —— 逐项聚焦由系统 VoiceOver/切换控制执行, 节奏以系统设置为准; 本 App 的扫描组还没接线。")
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityElement(children: .combine)
-                .accessibilityLabel("扫描组演示, 停留 \(String(format: "%.1f", AXPrefs.dwellTime)) 秒")
+                .accessibilityLabel("练习区提示, 停留 \(String(format: "%.1f", AXPrefs.dwellTime)) 秒为演示文字, 实际节奏由系统决定")
         }
         .padding(.vertical, DS.Space.xs)
     }
@@ -325,6 +386,20 @@ private struct DevContrastSection: View {
             Text("对比度计算器 (883)")
         } footer: {
             Text("与 tools/contrast.js 同款 WCAG 2.1 公式, 用于任意两设计令牌的快速核算.")
+        }
+        // 883 全量清单: 文字 5 档 × 底色 3 档 = 15 对, 同公式同阈值
+        Section {
+            ForEach(0..<15, id: \.self) { i in
+                let f = [4, 5, 6, 7, 8][i / 3]
+                let b = [0, 1, 2][i % 3]
+                let r = AXTools.contrastRatio(hexOf(f), hexOf(b))
+                LabeledRow(AXTools.calcTokens[f].name + " / " + AXTools.calcTokens[b].name,
+                           String(format: "%.2f:1", r) + (r >= 4.5 ? " 达标" : " 不达标"))
+            }
+        } header: {
+            Text("全部对比值清单 (883)")
+        } footer: {
+            Text("当前模式 (\(mode == "light" ? "浅色" : "深色")) 实测; 正文级阈值 4.5:1.")
         }
     }
     private func tokenPicker(_ tag: String, index: Binding<Int>) -> some View {

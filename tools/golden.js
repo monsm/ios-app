@@ -1,7 +1,16 @@
 // 金标向量生成器 — 用已通过 25 套测试的 JS 核心, 为 Swift 重写生成字节级差分基准
 // 输出 fixtures/golden.json (Swift XCTest 逐项断言)。
-// 用法: node tools/golden.js
+// 用法: node tools/golden.js          重新生成 fixtures/golden.json
+//       node tools/golden.js --check  只校验 committed 金标是否与 JS 核心输出一致 (CI 用, 不写盘)
 'use strict';
+// 时区钉定: cmds 0A/0B/14 与 buildEkeyShare 的有效期是**无 Z 后缀**的本地时间串 (如 '2026-01-01 00:00:00'),
+// new Date(str) 按运行机时区解析。UTC runner 重生成会产出不同字节 (实测 cmd0ASyncPwd_add 尾部
+// 7517c8 vs f137, buildEkeyShare 整体不同) → 差分测试跨时区必假失败。
+// committed 夹具按 Asia/Shanghai 烘焙。这里**无条件**钉死, 否则 runner 的 TZ 会改变 cmds/parse 的字节
+// (实测 TZ=UTC 时 cmd0ASyncPwd_add 尾部从 …7517c8 变成 …f137) → 跨机器复现不了, 漂移校验形同虚设。
+// 确需别的口径时用 GOLDEN_TZ 显式覆盖 (并同步重生成夹具)。
+process.env.TZ = process.env.GOLDEN_TZ || 'Asia/Shanghai';
+const CHECK = process.argv.includes('--check');
 const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
@@ -213,6 +222,11 @@ g.dfuZip = {
 
 // ---------- 归属推断 (attribution R1/R2) ----------
 const ATT = require(CORE + '/services/attribution.js');
+// 冻结时钟: 归属向量按"相对 now 的窗口"计算, 取实时钟会让 committed 夹具每次重生成都漂移
+// (旧状态: 只有"金标向量时间戳同步"这类手工提交能勉强对上, CI 无法做漂移校验)。
+// 测试侧 testAttribution 以 fixture 的 status.lockTime 为基准做相对偏移 → 与冻结值天然兼容。
+const _protoNowReal = T.nowProtoSeconds;
+T.nowProtoSeconds = () => 1800000000;
 const nowStatus = { lockTime: T.nowProtoSeconds(), fpStock: 1, pwdStock: 1 };
 g.attribution = ATT.classify([
   { idxRaw: 1, type: 4, lockTime: T.nowProtoSeconds() - 60 },      // 临时码窗口内
@@ -224,6 +238,7 @@ g.attribution = ATT.classify([
   status: nowStatus
 });
 g.attribution_status = nowStatus;
+T.nowProtoSeconds = _protoNowReal;   // 还原实时钟, 后续向量不受影响
 
 // ---------- 时间基准 ----------
 g.time = {
@@ -231,10 +246,38 @@ g.time = {
   protoFromMs_zero: T.protoSecondsFromMs(Date.parse('2010-01-01T00:00:00Z'))
 };
 
-// ---------- 输出 ----------
+// ---------- 输出 / 漂移校验 ----------
 const outPath = path.resolve(__dirname, '../fixtures/golden.json');
+const text = JSON.stringify(g, null, 1);
+if (CHECK) {
+  // 与 committed 夹具逐字节比对 (vendor JS 核心改了但没重生成 → 这里红, 而不是让 Swift 悄悄偏离权威)
+  let cur = null;
+  try { cur = fs.readFileSync(outPath, 'utf8'); } catch (e) { cur = null; }
+  if (cur === null) { console.error('CHECK FAIL: fixtures/golden.json 不存在'); process.exit(1); }
+  if (cur.replace(/\r\n/g, '\n') !== text) {
+    console.error('CHECK FAIL: committed 金标与 JS 核心输出不一致 — 请运行 `node tools/golden.js` 重生成并提交');
+    const keys = Object.keys(g);
+    let parsed = {};
+    try { parsed = JSON.parse(cur); } catch (e) {}
+    const diff = keys.filter(k => JSON.stringify(parsed[k]) !== JSON.stringify(g[k]));
+    console.error('差异顶层键:', diff.join(', ') || '(结构同级无差, 可能仅格式/键序)');
+    process.exit(1);
+  }
+  console.log('金标漂移校验通过 (与 JS 核心一致)');
+  process.exit(0);
+}
 fs.mkdirSync(path.dirname(outPath), { recursive: true });
-fs.writeFileSync(outPath, JSON.stringify(g, null, 1));
+// 覆盖冻结向量前先报"改了哪些顶层键"：本仓的冻结件是跨语言契约，静默重写会把"我手滑跑了生成模式"
+// 变成一次无人察觉的基线漂移 (第九十二批我自己就这么跑过一次，逐字节相同才算侥幸)。
+let prev = null;
+try { prev = fs.readFileSync(outPath, 'utf8'); } catch (e) { prev = null; }
+if (prev !== null && prev.replace(/\r\n/g, '\n') !== text) {
+  let parsed = {};
+  try { parsed = JSON.parse(prev); } catch (e) {}
+  const diff = Object.keys(g).filter(k => JSON.stringify(parsed[k]) !== JSON.stringify(g[k]));
+  console.warn('⚠ 即将覆盖已存在金标，顶层键差异:', diff.join(', ') || '(仅格式/键序)');
+}
+fs.writeFileSync(outPath, text);
 console.log('金标向量已生成:', outPath,
   '| cmds:', Object.keys(g.cmds).length,
   '| zotp:', Object.keys(g.zotp).length,

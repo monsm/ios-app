@@ -69,7 +69,7 @@ Section("靠近自动开锁") {
 
 ## 5. 验证计划（实现任务的验收清单）
 
-**单元（XCTest，跑 CI 模拟器）**
+**单元（XCTest — 需本地或自建带 iOS 模拟器的 runner 执行；云端 CI 只编译测试目标不跑）**
 - `defendActive`：control 0/1/2/3 ×（不跨夜 22-06 / 跨夜 23-06 / 临界 start/end 秒）表驱动
 - `canAttempt` 门控矩阵：开关 × 布防 × F1 档位 全组合（含默认全关回归）
 - F1 60s 窗口边界：59s 过 / 61s 拒 / 严格档必弹窗（LAContext mock）

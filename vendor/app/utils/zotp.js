@@ -16,6 +16,10 @@ function le2be2(v) { // idx → 2B BE hex (App: toSmallByteOrder→toNormalByteO
   return ('0000' + (v >>> 0).toString(16)).slice(-4).toUpperCase();
 }
 // 生成 6 位临时密码
+// ⚠ 形参名 `periodSec` 是历史遗留：单位其实是**分钟**（下面 `60 * t`，t=30 ⇒ 30 分钟窗口，
+//   金标 case 就叫 v30_*/v60_0）。2026-10-11 拍板**保留现名**——改名要同时动本基线 +
+//   fixtures/golden.json 重生成 + 影子对拍端口，为一次命名付跨语言契约的代价不值。
+//   Swift 侧同名保留并注明换算（App/Core/ZOTP.swift:15）；决策记录 docs/DECISION-NEEDED.md D-137。
 function generate(macHex, skeyHex, periodSec, idx) {
   const t = periodSec || 30;
   let u = Math.floor(T.nowProtoSeconds() / (60 * t)).toString(16).toUpperCase();

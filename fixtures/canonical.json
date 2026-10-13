@@ -1,0 +1,77 @@
+{
+ "note": "checksum 权威侧 = miniprogram-app/utils/storage.js fnv1a32 (JS 语义: 逐 UTF-16 码元的低字节喂入 + 双精度乘法 + 补零 8 位十六进制)。本仓 Swift 侧必须逐向量复现。",
+ "vectors": [
+  {
+   "s": "",
+   "sum": "811c9dc5"
+  },
+  {
+   "s": "a",
+   "sum": "e40c292c"
+  },
+  {
+   "s": "ab",
+   "sum": "4d2505ca"
+  },
+  {
+   "s": "abc",
+   "sum": "1a47e90c"
+  },
+  {
+   "s": "hello",
+   "sum": "a82fb4a1"
+  },
+  {
+   "s": "lockkeeper",
+   "sum": "0190527a"
+  },
+  {
+   "s": "{\"type\":\"kf-bundle\",\"bundleVer\":2,\"schema\":5,\"at\":\"2026-10-11T00:00:00.000Z\",\"currentMac\":\"\",\"devices\":[],\"members\":[]}",
+   "sum": "a5f4b138"
+  },
+  {
+   "s": "{\"type\":\"kf-bundle\",\"bundleVer\":2,\"schema\":5,\"at\":\"2026-10-11T00:00:00.000Z\",\"currentMac\":\"aabbccddeeff\",\"devices\":[{\"mac\":\"aabbccddeeff\",\"kc\":{\"version\":1,\"mac\":\"aabbccddeeff\",\"pid\":7857,\"skey\":\"0123456789abcdef\"},\"ledger\":null,\"meta\":null}],\"members\":[]}",
+   "sum": "cc895adb"
+  },
+  {
+   "s": "家门锁",
+   "sum": "11e05974"
+  },
+  {
+   "s": "给保洁阿姨·今晚10点前",
+   "sum": "3cbfe5c4"
+  },
+  {
+   "s": "{\"type\":\"kf-bundle\",\"devices\":[{\"kc\":{\"name\":\"家门锁\"}}],\"members\":[{\"name\":\"张三\"}]}",
+   "sum": "b8add09f"
+  },
+  {
+   "s": "quote \" back\\slash \t tab \n nl",
+   "sum": "8d4f092a"
+  },
+  {
+   "s": "emoji 🚪 door  SurrogatePair",
+   "sum": "d8630f70"
+  },
+  {
+   "s": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   "sum": "f65f1118"
+  },
+  {
+   "s": "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
+   "sum": "9e96e218"
+  },
+  {
+   "s": "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+   "sum": "3ff31480"
+  },
+  {
+   "s": "{\"a\":1,\"b\":{\"c\":[1,2,3]},\"globals\":{\"appearance\":{\"theme\":\"dark\"},\"trace\":{\"lines\":[\"L1\",\"L2\"]}}}",
+   "sum": "619eed87"
+  },
+  {
+   "s": "Çiğ 你好 Привет    ",
+   "sum": "395bfcec"
+  }
+ ]
+}

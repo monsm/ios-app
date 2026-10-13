@@ -11,29 +11,40 @@ struct ZKCmd {
 
 enum ZKCmdBuilder {
     static func u16leHex(_ v: Int) -> String { HexKit.u16leHex(v) }
-    static func u32leHex(_ v: UInt32) -> String { HexKit.u32leHex(v) }
+    // u32 那一层的同名转发第九十二批删了：本文件自己都是直连 `HexKit.u32leHex` (见 :65/:95/:142)，
+    // 零调用点的别名只会让人以为"协议侧有一套自己的小端编码"。与 `canDeviceInfo` 别名同口径处理。
 
-    // 日期串/ms/协议秒 → 协议秒 (JS protoSec: 字符串按本地时区解释)
-    static func protoSec(_ v: String?) -> Int64 {
-        guard let s = v, !s.isEmpty else { return ZKProtocol.nowProtoSeconds() }
-        let fmt = DateFormatter()
-        fmt.locale = Locale(identifier: "en_US_POSIX")
-        fmt.timeZone = .current
-        fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        if let d = fmt.date(from: s) { return ZKProtocol.protoSecondsFromMs(Int64(d.timeIntervalSince1970 * 1000)) }
-        let f2 = DateFormatter()
-        f2.locale = Locale(identifier: "en_US_POSIX")
-        f2.timeZone = TimeZone(identifier: "UTC") // JS: 日期-only 追加 T00:00:00Z → UTC 解释
-        f2.dateFormat = "yyyy-MM-dd"
-        if let d = f2.date(from: s) { return ZKProtocol.protoSecondsFromMs(Int64(d.timeIntervalSince1970 * 1000)) }
-        // ISO-T 变体 (…THH:mm 无秒): JS Date.parse 接受, 这里补一档避免回落 now
-        let f3 = DateFormatter()
-        f3.locale = Locale(identifier: "en_US_POSIX")
-        f3.timeZone = .current
-        f3.dateFormat = "yyyy-MM-dd'T'HH:mm"
-        if let d = f3.date(from: s) { return ZKProtocol.protoSecondsFromMs(Int64(d.timeIntervalSince1970 * 1000)) }
-        return ZKProtocol.nowProtoSeconds()
+    // 日期串/ms/协议秒 → 协议秒 (JS protoSec: 宽松 Date.parse, 字符串按本地时区解释, 带 Z 按 UTC)
+    // 失败显式返回 nil, 由调用点决定中止 —— 旧写法失败回落"现在", 于是导入 `2026-01-05T08:00:00Z`
+    // 这类台账时, 有效期被静默改写成当前时刻 (JS 得 505296000, Swift 旧版得"现在")。
+    static func protoSecOrNil(_ s: String?) -> Int64? {
+        guard let raw = s?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else { return nil }
+        // 纯数字: 秒或毫秒。**这一档是刻意比 JS 宽**，不是"同口径"：
+        // JS 的 protoSec 只在 `typeof v === 'number'` 时当数字用，数字**字符串**会走 Date.parse
+        // ("1760000000" → "1760000000T00:00:00Z") → 解析失败 → 静默回落"现在" (实测 JS 与本机时钟同值)。
+        // 台账导入的 from/to 常以字符串形态存 epoch，跟着 JS 走就等于把有效期静默改写成今天 —— 宁可多认一种形态。
+        if let n = Int64(raw) { return n > 1_000_000_000_000 ? n / 1000 : n }
+        let iso = ISO8601DateFormatter()          // 含 …THH:mm:ssZ / 带偏移 形态
+        iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let d = iso.date(from: raw) { return ZKProtocol.protoSecondsFromMs(Int64(d.timeIntervalSince1970 * 1000)) }
+        let iso2 = ISO8601DateFormatter()
+        iso2.formatOptions = [.withInternetDateTime]
+        if let d = iso2.date(from: raw) { return ZKProtocol.protoSecondsFromMs(Int64(d.timeIntervalSince1970 * 1000)) }
+        func f(_ fmt: String, _ tz: TimeZone) -> Int64? {
+            let df = DateFormatter()
+            df.locale = Locale(identifier: "en_US_POSIX")
+            df.timeZone = tz
+            df.dateFormat = fmt
+            guard let d = df.date(from: raw) else { return nil }
+            return ZKProtocol.protoSecondsFromMs(Int64(d.timeIntervalSince1970 * 1000))
+        }
+        let cur = TimeZone.current
+        return f("yyyy-MM-dd HH:mm:ss", cur) ?? f("yyyy-MM-dd'T'HH:mm:ss", cur)
+            ?? f("yyyy-MM-dd HH:mm", cur) ?? f("yyyy-MM-dd'T'HH:mm", cur)
+            ?? f("yyyy-MM-dd", TimeZone(identifier: "UTC") ?? cur)   // JS: 日期-only 追加 T00:00:00Z → UTC
     }
+    /// 允许回落"现在"的形态 (仅用于代码里的字面量与"未填=现在"语义)
+    static func protoSec(_ v: String?) -> Int64 { protoSecOrNil(v) ?? ZKProtocol.nowProtoSeconds() }
 
     // ---- 明文面 ----
     static func cmd01Session() -> ZKCmd {
@@ -61,27 +72,36 @@ enum ZKCmdBuilder {
     // ---- 密文管理面 ----
     static func cmd03StatusWrap(_ macHex: String, _ skeyHex: String) -> ZKCmd {
         let enc = AESKit.encryptHex(ZKProtocol.buildEkey(0x03, macHex), keyHex: skeyHex)
+        // 空密文 = skey 非法/CCCrypt 失败: 不能再包成帧 (旧写法会发出 KLV#01 长度为 0 的假请求)
+        if enc.isEmpty { return ZKCmd(name: "03 加密状态", cmd: 0x03, hex: "") }
         let klv = ZKProtocol.buildKLV(0x01, enc) + ZKProtocol.buildKLV(0x02, "")
         return ZKCmd(name: "03 加密状态", cmd: 0x03, hex: ZKProtocol.buildFrame(0x03, klv, header: 8))
     }
     // cmd 04 OPEN: KLV#01 = 左补零 32; KLV#02 = 凭证密文
     static func cmd04Open(_ ekeyHex: String, klv01Hex: String = "0000") -> ZKCmd {
+        // 空 ekey (签发时 AESKit 失败 / 钥匙串里 ekey 为空) 绝不能发给锁: 旧写法会组出
+        // "KLV#02 长度 0" 的开锁帧, 既可能被固件当异常包丢弃, 也可能被误读成一次真实开锁尝试。
+        if ekeyHex.isEmpty { return ZKCmd(name: "04 开锁", cmd: 0x04, hex: "") }
         let klv = ZKProtocol.buildKLV(0x01, HexKit.fillZeroLeft(klv01Hex, 32)) + ZKProtocol.buildKLV(0x02, ekeyHex)
         return ZKCmd(name: "04 开锁", cmd: 0x04, hex: ZKProtocol.buildFrame(0x04, klv, header: 8))
     }
     // pin → LE 4B hex (数字或已是 8 hex 皆可 — JS pinToLE 双兼容)
-    static func pinToLE(_ pin: String) -> String {
-        var h = pin.lowercased()
+    // 旧写法解析失败时回落 "00000000": 那是一个**合法 PIN 值**, 于是"读不到的凭证"会被签成
+    // 一条 pin=0 的 ekey 发给锁 —— 既可能是错误凭证, 也会在锁端留下一次真实开锁尝试。改为显式失败。
+    static func pinToLEOrNil(_ pin: String) -> String? {
+        var h = pin.trimmingCharacters(in: .whitespaces).lowercased()
         if h.hasPrefix("0x") { h = String(h.dropFirst(2)) } // JS: replace(/^0x/i, '')
         if h.count == 8, h.allSatisfy({ $0.isHexDigit }) { return h }
-        guard let v = UInt32(h) else { return "00000000" }
+        guard !h.isEmpty, let v = UInt32(h) else { return nil }
         return HexKit.u32leHex(v)
     }
     // ekey (开锁凭证) = AES(skey)($t 包络); JS buildEkeyOpen/buildEkeyShare
     static func buildEkeyOpen(_ skeyHex: String, _ macHex: String, _ pin: String,
                               validFromSec: UInt32 = 0, validToSec: UInt32? = nil, trackId: UInt32 = 0) -> String {
+        // PIN 解析失败 = 凭证不可用, 整条 ekey 视为签发失败 (返回 "" 由 cmd04Open 的空值闸拦下)
+        guard let pinLE = pinToLEOrNil(pin) else { return "" }
         let env = ZKProtocol.buildEkey(0x04, macHex, validFromSec: validFromSec, validToSec: validToSec, trackIdVal: trackId)
-            + pinToLE(pin) + "00" + "00"
+            + pinLE + "00" + "00"
         return AESKit.encryptHex(env, keyHex: skeyHex)
     }
     // App generateEkey (分享/写钥匙串): 随机 TrackId + 本地时区 2010~2118 窗口
@@ -101,90 +121,107 @@ enum ZKCmdBuilder {
         var body = HexKit.hexPair(UInt32(addPins.count)) + HexKit.hexPair(UInt32(delPins.count))
         body += addPins.joined()
         body += delPins.joined()
-        return ZKCmd(name: "08 PIN 批量", cmd: 0x08, hex: ZKProtocol.buildFrame(0x08, ZKProtocol.wrapEnc(0x08, macHex, skeyHex, body, 0x01), header: 8))
+        return ZKCmd(name: "08 PIN 批量", cmd: 0x08, hex: ZKProtocol.wrapFrame(0x08, macHex, skeyHex, body, 0x01))
     }
     // cmd 21: skeyLen(1B=0x10)+bkey(16B)
     static func cmd21SetBkey(_ macHex: String, _ skeyHex: String, _ bkeyHex: String) -> ZKCmd {
         let body = "10" + bkeyHex
-        return ZKCmd(name: "21 bkey", cmd: 0x21, hex: ZKProtocol.buildFrame(0x21, ZKProtocol.wrapEnc(0x21, macHex, skeyHex, body, 0x02), header: 8))
+        return ZKCmd(name: "21 bkey", cmd: 0x21, hex: ZKProtocol.wrapFrame(0x21, macHex, skeyHex, body, 0x02))
     }
     // cmd 0A: delAlias(2B LE, 0xFFFF=清空) + addPwd(8B ASCII 右补零) + validFrom/To(4B LE)
     static func cmd0ASyncPwd(_ macHex: String, _ skeyHex: String, delAlias: Int = 0, addPwd: String = "", validFrom: String? = nil, validTo: String? = nil) throws -> ZKCmd {
-        guard addPwd.count <= 8 else { throw BLEErrorX.msg("密码最长 8 位") } // JS throw — 不静默截断
+        guard addPwd.utf16.count <= 8 else { throw BLEErrorX.msg("密码最长 8 位") } // JS throw — 不静默截断
+        // 有效期: 未提供 (nil) 按 JS 口径取"现在"; 提供了但解析不出来则必须中止 ——
+        // 旧写法一律回落"现在", 于是导入 ISO 形态 (`2026-01-05T08:00:00Z`) 的台账会把有效期静默改写。
+        let from = protoSecOrNil(validFrom) ?? ZKProtocol.nowProtoSeconds()
+        let to: Int64
+        if let v = protoSecOrNil(validTo) { to = v }
+        else if validTo == nil || validTo?.isEmpty == true { to = ZKProtocol.nowProtoSeconds() }
+        else { throw BLEErrorX.msg("密码有效期无法解析: \(validTo ?? "") (支持 ISO8601/带 Z、'yyyy-MM-dd HH:mm:ss'、秒/毫秒) — 已中止下发") }
         let body = u16leHex(delAlias)
             + HexKit.asciiHex(addPwd, nBytes: 8)
-            + HexKit.u32leHex(UInt32(truncatingIfNeeded: protoSec(validFrom)))
-            + HexKit.u32leHex(UInt32(truncatingIfNeeded: protoSec(validTo)))
-        return ZKCmd(name: "0A 同步密码", cmd: 0x0a, hex: ZKProtocol.buildFrame(0x0a, ZKProtocol.wrapEnc(0x0a, macHex, skeyHex, body, 0x01), header: 8))
+            + HexKit.u32leHex(UInt32(truncatingIfNeeded: from))
+            + HexKit.u32leHex(UInt32(truncatingIfNeeded: to))
+        return ZKCmd(name: "0A 同步密码", cmd: 0x0a, hex: ZKProtocol.wrapFrame(0x0a, macHex, skeyHex, body, 0x01))
     }
     // cmd 0B: alias(2B LE) + validFrom/To
     static func cmd0BSyncPwdExpire(_ macHex: String, _ skeyHex: String, _ alias: Int, _ validFrom: String?, _ validTo: String?) -> ZKCmd {
+        // 同 0A: 传了但解析不出 = 不组帧 (空 hex 由 LockService 的空帧闸拦下并报错), 不静默用"现在"顶替
+        func suppliedButUnparsed(_ s: String?) -> Bool {
+            guard let s, !s.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
+            return protoSecOrNil(s) == nil
+        }
+        if suppliedButUnparsed(validFrom) || suppliedButUnparsed(validTo) {
+            return ZKCmd(name: "0B 密码有效期", cmd: 0x0b, hex: "")
+        }
+        let from = protoSecOrNil(validFrom) ?? ZKProtocol.nowProtoSeconds()
+        let to = protoSecOrNil(validTo) ?? ZKProtocol.nowProtoSeconds()
         let body = u16leHex(alias)
-            + HexKit.u32leHex(UInt32(truncatingIfNeeded: protoSec(validFrom)))
-            + HexKit.u32leHex(UInt32(truncatingIfNeeded: protoSec(validTo)))
-        return ZKCmd(name: "0B 密码有效期", cmd: 0x0b, hex: ZKProtocol.buildFrame(0x0b, ZKProtocol.wrapEnc(0x0b, macHex, skeyHex, body, 0x01), header: 8))
+            + HexKit.u32leHex(UInt32(truncatingIfNeeded: from))
+            + HexKit.u32leHex(UInt32(truncatingIfNeeded: to))
+        return ZKCmd(name: "0B 密码有效期", cmd: 0x0b, hex: ZKProtocol.wrapFrame(0x0b, macHex, skeyHex, body, 0x01))
     }
     // cmd 0E: syncTime(4B LE 协议秒)
     static func cmd0ESyncTime(_ macHex: String, _ skeyHex: String, _ timeSec: Int64) -> ZKCmd {
         let body = HexKit.u32leHex(UInt32(truncatingIfNeeded: timeSec))
-        return ZKCmd(name: "0E 时间同步", cmd: 0x0e, hex: ZKProtocol.buildFrame(0x0e, ZKProtocol.wrapEnc(0x0e, macHex, skeyHex, body, 0x02), header: 8))
+        return ZKCmd(name: "0E 时间同步", cmd: 0x0e, hex: ZKProtocol.wrapFrame(0x0e, macHex, skeyHex, body, 0x02))
     }
     // cmd 13: times(1B) + timeout(1B)
     static func cmd13AddFp(_ macHex: String, _ skeyHex: String, _ times: Int = 8, _ timeout: Int = 15) -> ZKCmd {
         // 兜底对齐 JS cmds.js:119-120 (times||8, timeout<=0→15)
         let t = times > 0 ? times : 8
         let to = timeout > 0 ? timeout : 15
-        let body = HexKit.hexPair(UInt32(t)) + HexKit.hexPair(UInt32(to))
-        return ZKCmd(name: "13 录指纹", cmd: 0x13, hex: ZKProtocol.buildFrame(0x13, ZKProtocol.wrapEnc(0x13, macHex, skeyHex, body, 0x02), header: 8))
+        let body = HexKit.hexPair(UInt32(truncatingIfNeeded: t)) + HexKit.hexPair(UInt32(truncatingIfNeeded: to))
+        return ZKCmd(name: "13 录指纹", cmd: 0x13, hex: ZKProtocol.wrapFrame(0x13, macHex, skeyHex, body, 0x02))
     }
     // cmd 14: batchNumber(4B LE) + validFrom/To
     static func cmd14FpConfirm(_ macHex: String, _ skeyHex: String, _ batchNumber: UInt32, _ validFrom: String?, _ validTo: String?) -> ZKCmd {
         let body = HexKit.u32leHex(batchNumber)
             + HexKit.u32leHex(UInt32(truncatingIfNeeded: protoSec(validFrom)))
             + HexKit.u32leHex(UInt32(truncatingIfNeeded: protoSec(validTo)))
-        return ZKCmd(name: "14 指纹确认", cmd: 0x14, hex: ZKProtocol.buildFrame(0x14, ZKProtocol.wrapEnc(0x14, macHex, skeyHex, body, 0x02), header: 8))
+        return ZKCmd(name: "14 指纹确认", cmd: 0x14, hex: ZKProtocol.wrapFrame(0x14, macHex, skeyHex, body, 0x02))
     }
     // cmd 15: batchNumber(4B LE)
     static func cmd15DeleteFp(_ macHex: String, _ skeyHex: String, _ batchNumber: UInt32) -> ZKCmd {
-        ZKCmd(name: "15 删指纹", cmd: 0x15, hex: ZKProtocol.buildFrame(0x15, ZKProtocol.wrapEnc(0x15, macHex, skeyHex, HexKit.u32leHex(batchNumber), 0x02), header: 8))
+        ZKCmd(name: "15 删指纹", cmd: 0x15, hex: ZKProtocol.wrapFrame(0x15, macHex, skeyHex, HexKit.u32leHex(batchNumber), 0x02))
     }
     // cmd 16: orderType(1B) + startIdx(4B LE) + pageSize(1B)
     static func cmd16GetLog(_ macHex: String, _ skeyHex: String, orderType: Int = 0, startIdx: UInt32 = 0, pageSize: Int = 20) -> ZKCmd {
         // 兜底对齐 JS cmds.js:138 (pageSize||20)
         let size = pageSize > 0 ? pageSize : 20
-        let body = HexKit.hexPair(UInt32(orderType)) + HexKit.u32leHex(startIdx) + HexKit.hexPair(UInt32(size))
-        return ZKCmd(name: "16 日志", cmd: 0x16, hex: ZKProtocol.buildFrame(0x16, ZKProtocol.wrapEnc(0x16, macHex, skeyHex, body, 0x01), header: 8))
+        let body = HexKit.hexPair(UInt32(truncatingIfNeeded: orderType)) + HexKit.u32leHex(startIdx) + HexKit.hexPair(UInt32(truncatingIfNeeded: size))
+        return ZKCmd(name: "16 日志", cmd: 0x16, hex: ZKProtocol.wrapFrame(0x16, macHex, skeyHex, body, 0x01))
     }
     // cmd 18: vol(1B) — App setSilentMode 语义: 0=有声 1=静音
     static func cmd18Volume(_ macHex: String, _ skeyHex: String, _ silent: Bool) -> ZKCmd {
-        ZKCmd(name: "18 音量", cmd: 0x18, hex: ZKProtocol.buildFrame(0x18, ZKProtocol.wrapEnc(0x18, macHex, skeyHex, HexKit.hexPair(UInt32(silent ? 1 : 0)), 0x02), header: 8))
+        ZKCmd(name: "18 音量", cmd: 0x18, hex: ZKProtocol.wrapFrame(0x18, macHex, skeyHex, HexKit.hexPair(UInt32(silent ? 1 : 0)), 0x02))
     }
     // cmd 19: status(1B 0=关/1=开)
     static func cmd19OpenZotp(_ macHex: String, _ skeyHex: String, _ on: Bool) -> ZKCmd {
-        ZKCmd(name: "19 ZOTP", cmd: 0x19, hex: ZKProtocol.buildFrame(0x19, ZKProtocol.wrapEnc(0x19, macHex, skeyHex, HexKit.hexPair(UInt32(on ? 1 : 0)), 0x02), header: 8))
+        ZKCmd(name: "19 ZOTP", cmd: 0x19, hex: ZKProtocol.wrapFrame(0x19, macHex, skeyHex, HexKit.hexPair(UInt32(on ? 1 : 0)), 0x02))
     }
     // cmd 20: mode(1B 0=A单验/1=B双验)
     static func cmd20ValidationMode(_ macHex: String, _ skeyHex: String, _ bMode: Bool) -> ZKCmd {
-        ZKCmd(name: "20 验证模式", cmd: 0x20, hex: ZKProtocol.buildFrame(0x20, ZKProtocol.wrapEnc(0x20, macHex, skeyHex, HexKit.hexPair(UInt32(bMode ? 1 : 0)), 0x02), header: 8))
+        ZKCmd(name: "20 验证模式", cmd: 0x20, hex: ZKProtocol.wrapFrame(0x20, macHex, skeyHex, HexKit.hexPair(UInt32(bMode ? 1 : 0)), 0x02))
     }
     // cmd 22: enableDFUstate param(1B, 0 → 重启进 bootloader)
     static func cmd22EnableDfu(_ macHex: String, _ skeyHex: String, _ param: Int = 0) -> ZKCmd {
-        ZKCmd(name: "22 DFU", cmd: 0x22, hex: ZKProtocol.buildFrame(0x22, ZKProtocol.wrapEnc(0x22, macHex, skeyHex, HexKit.hexPair(UInt32(param & 0xff)), 0x02), header: 8))
+        ZKCmd(name: "22 DFU", cmd: 0x22, hex: ZKProtocol.wrapFrame(0x22, macHex, skeyHex, HexKit.hexPair(UInt32(param & 0xff)), 0x02))
     }
     // cmd 24: interval(1B 档位 1-6)
     static func cmd24AutoLock(_ macHex: String, _ skeyHex: String, _ interval: Int) -> ZKCmd {
-        ZKCmd(name: "24 自动上锁", cmd: 0x24, hex: ZKProtocol.buildFrame(0x24, ZKProtocol.wrapEnc(0x24, macHex, skeyHex, HexKit.hexPair(UInt32(interval)), 0x01), header: 8))
+        ZKCmd(name: "24 自动上锁", cmd: 0x24, hex: ZKProtocol.wrapFrame(0x24, macHex, skeyHex, HexKit.hexPair(UInt32(truncatingIfNeeded: interval)), 0x01))
     }
     // cmd 25: control(1B) + start(4B LE) + end(4B LE)
     static func cmd25Defence(_ macHex: String, _ skeyHex: String, _ control: Int, _ startSec: Int, _ endSec: Int) -> ZKCmd {
-        let body = HexKit.hexPair(UInt32(control)) + HexKit.u32leHex(UInt32(truncatingIfNeeded: startSec)) + HexKit.u32leHex(UInt32(truncatingIfNeeded: endSec))
-        return ZKCmd(name: "25 布防", cmd: 0x25, hex: ZKProtocol.buildFrame(0x25, ZKProtocol.wrapEnc(0x25, macHex, skeyHex, body, 0x01), header: 8))
+        let body = HexKit.hexPair(UInt32(truncatingIfNeeded: control)) + HexKit.u32leHex(UInt32(truncatingIfNeeded: startSec)) + HexKit.u32leHex(UInt32(truncatingIfNeeded: endSec))
+        return ZKCmd(name: "25 布防", cmd: 0x25, hex: ZKProtocol.wrapFrame(0x25, macHex, skeyHex, body, 0x01))
     }
 
     // ---- 钥匙串硬件 (ZKBBV1 pid=16289; 87 帧明文 KLV, needToken=false) ----
     static func cmd41WriteEkey(_ lockMacHex: String, _ pid: Int, _ ekeyHex: String, type: Int = 1) -> ZKCmd {
         let klv = ZKProtocol.buildKLV(0x01, HexKit.reversePairs(lockMacHex))
-            + ZKProtocol.buildKLV(0x02, HexKit.hexPair(UInt32(type)))
+            + ZKProtocol.buildKLV(0x02, HexKit.hexPair(UInt32(truncatingIfNeeded: type)))
             + ZKProtocol.buildKLV(0x03, u16leHex(pid))
             + ZKProtocol.buildKLV(0x04, ekeyHex)
         return ZKCmd(name: "41 钥匙串写钥", cmd: 0x41, hex: ZKProtocol.buildFrame(0x41, klv, header: 8))
@@ -206,8 +243,8 @@ enum ZKCmdBuilder {
     static func cmd31GWSetWifi(_ ssid: String, _ password: String, authMode: Int = 8, encryptType: Int = 0) -> ZKCmd {
         let klv = ZKProtocol.buildKLV(0x01, HexKit.utf8Hex(ssid))
             + ZKProtocol.buildKLV(0x02, HexKit.utf8Hex(password))
-            + ZKProtocol.buildKLV(0x03, HexKit.hexPair(UInt32(authMode)))
-            + ZKProtocol.buildKLV(0x04, HexKit.hexPair(UInt32(encryptType)))
+            + ZKProtocol.buildKLV(0x03, HexKit.hexPair(UInt32(truncatingIfNeeded: authMode)))
+            + ZKProtocol.buildKLV(0x04, HexKit.hexPair(UInt32(truncatingIfNeeded: encryptType)))
             + ZKProtocol.buildKLV(0x05, "00")
         return ZKCmd(name: "31 网关配网", cmd: 0x31, hex: ZKProtocol.buildFrame(0x31, klv, header: 8))
     }

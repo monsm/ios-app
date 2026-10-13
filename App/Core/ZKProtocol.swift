@@ -18,6 +18,12 @@ enum ZKProtocol {
     static func protoSecondsFromMs(_ ms: Int64) -> Int64 { (ms - epochMs) / 1000 }
     static func nowProtoSeconds() -> Int64 { protoSecondsFromMs(Int64(Date().timeIntervalSince1970 * 1000)) }
     static func protoSecondsToMs(_ sec: Int64) -> Int64 { epochMs + sec * 1000 }
+    /// 协议秒 → Unix 秒。**Swift 侧便利出口，JS 里没有对应函数**（JS 那边是 `protoTime(x)/1000` 就地写）。
+    /// 与 `Double(protoSecondsToMs(sec)) / 1000` 逐值相等：`epochMs` 是整千毫秒 (1_262_304_000_000)，
+    /// 绕一圈毫秒再除回来不丢任何位数。此前全仓 14 处各写一遍这条绕路，其中一处还把除法放进了
+    /// `Int64` 里（靠"恰好整千"才没截断）—— 那种形状下次被人改成 `/1000.0` 或换常数基准就静默漂，
+    /// 所以收成一份并由 `swiftlint` 检查⑩ 盯住 (§10.32)。
+    static func protoSecondsToUnix(_ sec: Int64) -> Double { Double(sec) + Double(epochMs / 1000) }
     // JS protoTime('2118-01-01T00:00:00Z') 的默认有效止 (buildEkey 默认 VT)
     static let validTo2118: UInt32 = UInt32(protoSecondsFromMs(4_670_438_400_000)) // 2118-01-01T00:00:00Z (node Date.parse 权威值)
 
@@ -47,12 +53,14 @@ enum ZKProtocol {
     static func buildFrame(_ cmd: UInt8, _ klvHex: String, ssToken: String = "0000", header: Int = 8) -> String {
         let klv = klvHex
         let len = klv.count / 2
+        // 出口统一大写: JS 侧 fillZeroHex 一律 toUpperCase()。字节层无差异 (radix16 不分成小写),
+        // 但金标差分是**字符串级**比对, 大小写不同会造出假差异。
         if header == 8 {
-            return "87" + "00" + HexKit.hexPair(UInt32(len & 0xff)) + HexKit.hexPair(UInt32((len >> 8) & 0xff))
-                + HexKit.hexPair(UInt32(cmd)) + "000000" + klv
+            return ("87" + "00" + HexKit.hexPair(UInt32(len & 0xff)) + HexKit.hexPair(UInt32((len >> 8) & 0xff))
+                + HexKit.hexPair(UInt32(cmd)) + "000000" + klv).uppercased()
         }
-        return "87" + "00" + HexKit.hexPair(UInt32(len & 0xff)) + HexKit.hexPair(UInt32((len >> 8) & 0xff))
-            + HexKit.hexPair(UInt32(cmd)) + ssToken + "000000" + klv
+        return ("87" + "00" + HexKit.hexPair(UInt32(len & 0xff)) + HexKit.hexPair(UInt32((len >> 8) & 0xff))
+            + HexKit.hexPair(UInt32(cmd)) + ssToken + "000000" + klv).uppercased()
     }
 
     // ---------- 0x88 EKey 包络 ----------
@@ -71,9 +79,34 @@ enum ZKProtocol {
     }
 
     // 密文包络封装 (JS wrapEnc): body → EKey(cmd,mac) → AES(skey) → KLV#klvKey
+    // ---------- 试验模式硬护栏 (JS kernel/protocol.js:19-27 READONLY_CMDS / WRITE_CMDS_BLOCKED / assertReadOnly) ----------
+    // Swift 侧此前整块缺失: 小程序用它在真机上做只读试验, 保证任何写入/危险命令 (05 换钥会擦 flash 域 7+8 作废旧钥匙、
+    // 04 开门、08 同步 PIN、31 写网关 WiFi 口令等) 一律发不出去。缺了它 = 缺一道防误操作保险。
+    static let readonlyCmds: Set<UInt8> = [0x01, 0x02, 0x03, 0x12, 0x16, 0x23, 0x30, 0x38]
+    static let writeCmdsBlocked: [UInt8] = [0x04, 0x05, 0x08, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x13, 0x14, 0x15,
+                                            0x18, 0x19, 0x20, 0x21, 0x22, 0x24, 0x25, 0x31, 0x32, 0x35, 0x41, 0x43, 0x44]
+    /// 只读模式下放行只读命令, 其余抛错 (与 JS 同语义)
+    static func assertReadOnly(_ cmd: UInt8) throws {
+        guard readonlyCmds.contains(cmd) else {
+            throw BLEErrorX.msg(String(format: "护栏拦截: cmd 0x%02x 是写入/危险命令, 只读试验模式禁止发送!", cmd))
+        }
+    }
+
+    /// 密文管理面的**成帧收口**: wrapEnc 失败 (skey 非 16B / CCCrypt 失败 → 空密文) 时整帧返回 ""。
+    /// 旧写法 buildFrame(cmd, wrapEnc(...)) 会把失败值包成"含空值 KLV 的完整帧", 于是
+    /// `hex.isEmpty` 永不成立、08/0A/13/14/15/18/19/20/21/0B/0E/16/24/25 全部照样发给锁。
+    static func wrapFrame(_ cmd: UInt8, _ macHex: String, _ skeyHex: String, _ bodyHex: String, _ klvKey: Int) -> String {
+        let enc = wrapEnc(cmd, macHex, skeyHex, bodyHex, klvKey)
+        return enc.isEmpty ? "" : buildFrame(cmd, enc, header: 8)
+    }
+
     static func wrapEnc(_ cmd: UInt8, _ macHex: String, _ skeyHex: String, _ bodyHex: String, _ klvKey: Int) -> String {
         let env = buildEkey(cmd, macHex) + bodyHex
-        return buildKLV(klvKey, AESKit.encryptHex(env, keyHex: skeyHex))
+        let cipher = AESKit.encryptHex(env, keyHex: skeyHex)
+        // AESKit 在 skey 非 16B / CCCrypt 失败时返回 "" (JS crypto.js 是 throw)。
+        // 空串若继续 buildKLV 会得到 "key len=0" 的空值密文 KLV 并真的发给锁 (08/0A/13/14/18/24/25 写命令面)。
+        // 这里以空帧作失败标记, 由 LockService.request 在下发前拦死。
+        return cipher.isEmpty ? "" : buildKLV(klvKey, cipher)
     }
 
     // ---------- 令牌注入 (KLV#0xEE; 头型自适应 8B/10B) ----------
@@ -197,7 +230,7 @@ enum ZKProtocol {
 // ---------- 时间显示 (JS utils/time.js) ----------
 enum ProtoTime {
     static func localStr(_ sec: Int64) -> String {
-        let d = Date(timeIntervalSince1970: TimeInterval(ZKProtocol.protoSecondsToMs(sec) / 1000))
+        let d = Date(timeIntervalSince1970: ZKProtocol.protoSecondsToUnix(sec))
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd HH:mm:ss"
         f.locale = Locale(identifier: "en_US_POSIX")

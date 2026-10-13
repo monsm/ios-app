@@ -14,8 +14,8 @@ struct MemberExt: Codable {
     var emergency: String = ""       // 465 紧急联系 (姓名+电话, 纯本地)
     var groupTag: String = ""        // 630 分组标签: 家人 / 访客 / 服务人员
     var archived: Bool = false       // 460/795 归档 (保留历史, 默认统计隐藏)
-    var proxy: Bool = false          // 468 代管标记 (期间操作记"管理员代操作")
-    var emergencyAdmin: Bool = false // 469 紧急管理员 (纯本地语义, 绑定救援码说明)
+    var proxy: Bool = false          // 468 代管标记 (停用 TA 名下凭证时, 361 便签补一句 管理员代操作)
+    var emergencyAdmin: Bool = false // 469 紧急管理员 (本机点名档: 成员页与 482 会议摘要点名; 锁端与救援码本体都不读它)
     var careText: String = ""        // 480 孩子码关怀文案
     var welcome: String = ""         // 484 访客欢迎语 (归属靠时间推断, 展示带"约")
     var note: String = ""            // 475 家庭便签 (与成员绑定)
@@ -26,17 +26,6 @@ struct MemberBorrow: Codable {
     var by: String        // 借用人
     var due: String       // 归还日 "yyyy-MM-dd"
     var at: Double       // 登记时刻
-}
-
-/// 467 所有权移交 (待目标成员确认才改归属)
-struct MemberTransfer: Codable, Identifiable {
-    var id: String
-    var mac: String
-    var kind: String      // "pwd" / "fp"
-    var key: Int
-    var from: String      // 原成员 id (源成员)
-    var to: String        // 目标成员 id
-    var at: Double
 }
 
 /// 483 家政周期预设 (⚠降级: 协议无循环时段, 只做整段起止窗)
@@ -66,7 +55,8 @@ enum MemberHub {
         DB.store.setCodable(extKey, all)
     }
     static func archivedIDs() -> Set<String> {
-        (DB.store.get([String: MemberExt].self, extKey) ?? [:]).filter { $0.value.archived }.map(\.key)
+        // map(\.key) 产出 [String], 声明是 Set<String> → 不可隐式转换, 显式包一层
+        Set((DB.store.get([String: MemberExt].self, extKey) ?? [:]).filter { $0.value.archived }.map(\.key))
     }
     static func isActive(_ id: String) -> Bool { !ext(id).archived }
 
@@ -80,18 +70,68 @@ enum MemberHub {
         }
     }
 
+    // ---------- 458/470 角色权限行 (全仓唯一定义) ----------
+    /// 470 的权限矩阵此前只在成员页"画"出来给人看, 全仓没有一处按它收起过任何入口 ⇒ 那句话是说明文字。
+    /// 这张表现在同时是**判据**: 成员页上真存在的两枚开关按它亮灭 (468 代管走「管凭证」, 469 紧急管理员走「成员管理」),
+    /// 矩阵行、角色示例卡、建档向导副标题、名册导出 (415) 的角色注记都从这一处算, 不再各写一份。
+    /// 边界照旧写在界面上: 锁端没有角色字段, 这一档不改任何发往锁端的字节, 也不碰备份包 schema。
+    static func permRows(_ role: String) -> [(name: String, allowed: Bool)] {
+        switch role {
+        case "main":
+            return [(name: "看记录", allowed: true), (name: "管凭证", allowed: true), (name: "导出", allowed: true),
+                    (name: "备份", allowed: true), (name: "成员管理", allowed: true)]
+        case "guest":
+            return [(name: "看记录", allowed: false), (name: "管凭证", allowed: false), (name: "导出", allowed: false),
+                    (name: "备份", allowed: false), (name: "成员管理", allowed: false)]
+        default:
+            return [(name: "看记录", allowed: true), (name: "管凭证", allowed: true), (name: "导出", allowed: false),
+                    (name: "备份", allowed: false), (name: "成员管理", allowed: false)]
+        }
+    }
+    /// 470 判定读点: 某角色在某一项上是否被允许 (查不到的项一律按不允许走, 不做"默认放行")。
+    static func permAllows(_ role: String, _ cap: String) -> Bool {
+        permRows(role).first { $0.name == cap }?.allowed ?? false
+    }
+    /// 470 能力名列表 (允许的那几项, 供示例卡与向导副标题现算)
+    static func permCan(_ role: String) -> [String] { permRows(role).filter { $0.allowed }.map { $0.name } }
+    static func permCannot(_ role: String) -> [String] { permRows(role).filter { !$0.allowed }.map { $0.name } }
+
+    /// 469 紧急管理员: 档案上的点名档。
+    /// 原先这个位只有成员页 Toggle 的 set、全仓零读取方, 界面却写"救援码说明与其绑定" ⇒ 空头支票。
+    /// 现在的真读点: 成员页点名 (权限与应急段) + 482 家庭会议摘要 + 设置-安全 救援码下的保管人声明
+    /// (SecurityCenterView.rescueCustodyLine) 三处各读一次。
+    static func emergencyAdmins() -> [Member] {
+        // 一次解表再筛名册: 逐成员调 ext() 会把整张表重复解 N 遍 (同 MemberCenterView 归档计数那一处教训)
+        let all = DB.store.get([String: MemberExt].self, extKey) ?? [:]
+        return DB.members().filter { all[$0.id]?.emergencyAdmin == true }
+    }
+
     // 666 成员名兜底: 超长名中段截断 (头像取首字由 UI 层做)
     static func display(_ m: Member) -> String {
-        var n = m.name.isEmpty ? "成员" : m.name
+        var n = m.name.isEmpty ? unnamedLabel(m.id) : m.name
         if n.count > 6 {
             n = String(n.prefix(3)) + "…" + String(n.suffix(2))
         }
         return n
     }
+    /// 666 编号兜底: 未命名成员不再一律叫"成员" —— 多位未命名时同名分不出人,
+    /// 归属、代管开关、记录行都认不出是谁。按名册自然序号给"成员 N" (序号与成员页行序同源)。
+    private static func unnamedLabel(_ id: String) -> String {
+        let roster = DB.members()
+        guard let i = roster.firstIndex(where: { $0.id == id }) else { return "成员" }
+        return "成员 \(i + 1)"
+    }
     /// 461 双层文本: "称呼（备注）"
     static func doubleLine(_ m: Member) -> String {
         let r = ext(m.id).remark
         return r.isEmpty ? display(m) : display(m) + "（" + r + "）"
+    }
+    /// 919 时间线别名: 开关开且该成员 relation 非空 → 返回关系称呼 (如「老妈」), 否则 nil (调用方回退真名)。
+    /// 只做显示替换 —— 匹配与凭证深链仍走裸名 (owner == whoName 的相等判定不能被别名污染)。
+    static func aliasName(_ whoId: String?) -> String? {
+        guard let whoId, !whoId.isEmpty, CredentialOrg.aliasDisplay,
+              let m = DB.member(whoId), !m.relation.isEmpty else { return nil }
+        return m.relation
     }
 
     // ---------- 活跃度推断 (⚠262/459/466: 台账口径, 必须带"约") ----------
@@ -106,7 +146,7 @@ enum MemberHub {
     static func activity(_ id: String) -> Activity {
         var a = Activity()
         let now = Date().timeIntervalSince1970
-        let mStart = Calendar.current.dateInterval(of: .month, for: Date())!.start.timeIntervalSince1970
+        let mStart = WeekCal.gregorian.dateInterval(of: .month, for: Date())!.start.timeIntervalSince1970
         for kc in DB.keychains() {
             let logs = DB.readLogs(kc.mac).filter { StatsKit.openTypes.contains($0.type) }
             let status = DB.readStatus(kc.mac)
@@ -116,7 +156,7 @@ enum MemberHub {
                 pwds: DB.listPwds(kc.mac), fps: DB.listFps(kc.mac),
                 status: status.map { ($0.fpStock, $0.pwdStock, $0.lockTime) })
             for (i, r) in rows.enumerated() where r.who == id {
-                let unix = Double(ZKProtocol.protoSecondsToMs(Int64(logs[i].lockTime))) / 1000
+                let unix = ZKProtocol.protoSecondsToUnix(Int64(logs[i].lockTime))
                 if unix >= now - 30 * 86400 { a.opens30 += 1 }
                 if unix >= mStart { a.month += 1 }
                 if logs[i].lockTimeStr > a.last { a.last = logs[i].lockTimeStr }
@@ -125,6 +165,35 @@ enum MemberHub {
             a.owns += DB.listFps(kc.mac).filter { $0.owner == id }.count
         }
         return a
+    }
+    /// 799 成员周小结一句人话 (跨全部锁): 近 7 天可证明归属次数 + 工作日最活跃小时段, 归属不出不计
+    static func weekSentence(_ id: String) -> String? {
+        let cutoff = Date().addingTimeInterval(-7 * 86400).timeIntervalSince1970
+        var n = 0
+        var byHour = [Int: Int]()
+        for kc in DB.keychains() {
+            let logs = DB.readLogs(kc.mac).filter { StatsKit.openTypes.contains($0.type) }
+            let rows = Attribution.classify(
+                logs: logs.map { LogEntry(type: $0.type, typeName: $0.typeName, idx: $0.idxRaw, idxRaw: $0.idxRaw,
+                                          lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr, body: "") },
+                pwds: DB.listPwds(kc.mac), fps: DB.listFps(kc.mac),
+                status: DB.readStatus(kc.mac).map { ($0.fpStock, $0.pwdStock, $0.lockTime) })
+            for (i, r) in rows.enumerated() where r.who == id {
+                let unix = ZKProtocol.protoSecondsToUnix(Int64(logs[i].lockTime))
+                guard unix >= cutoff else { continue }
+                n += 1
+                let d = Date(timeIntervalSince1970: unix)
+                if (2...6).contains(WeekCal.gregorian.component(.weekday, from: d)) {
+                    byHour[WeekCal.gregorian.component(.hour, from: d), default: 0] += 1
+                }
+            }
+        }
+        guard n > 0 else { return nil }
+        let name = DB.member(id)?.name ?? "成员"
+        if let b = byHour.max(by: { $0.value < $1.value }) {
+            return "\(name)近 7 天开门约 \(n) 次, 工作日 \(b.key)–\(b.key + 1) 点最活跃。"
+        }
+        return "\(name)近 7 天开门约 \(n) 次 (工作日样本不足)。"
     }
     /// 459/789 最近开门摘录 (归属可证明才进, 展示带"约")
     struct Excerpt {
@@ -180,73 +249,61 @@ enum MemberHub {
         var peer: String    // 对端成员名
         var direction: String // "out" 我创建的给对方 / "in" 对方转给我的
     }
+    /// 移交注记的**落盘前缀** = CredentialOrg.batchTransfer 写进版本历史的那一条: 「移交 → 使用人」。
+    /// 原先这里判 hasPrefix("移交给") —— 两个字符串永不相等, 条件还与 owner != id 互斥,
+    /// 于是图谱恒为占位句, 而界面写的是"移交后这里会画出创建人→使用人"。改成与真实注记同源。
+    private static let transferNotePrefix = "移交 → "
+    /// 图谱上限: 逐条凭证都要解一次版本历史, 这是展示层不是台账层, 扫到够画就停。
+    private static let graphCap = 24
+
     static func graph(_ id: String) -> [Edge] {
         var out = [Edge]()
         for kc in DB.keychains() {
-            for p in DB.listPwds(kc.mac) where p.owner == id {
-                let snaps = CredentialOrg.history(kc.mac, "pwd", p.alias)
-                // 我名下但现在记的是别人的快照 → 我创建后移交出去; 反向看最近一条"移交给 X"
-                if let s = snaps.last, s.note.hasPrefix("移交给"), s.pwd?.owner != id {
-                    out.append(Edge(label: "密码 #" + String(p.alias), peer: s.note.replacingOccurrences(of: "移交给", with: ""), direction: "out"))
-                }
+            for p in DB.listPwds(kc.mac) {
+                if out.count >= graphCap { break }
+                appendEdge(&out, forMe: id, label: "密码 #" + String(p.alias),
+                           snaps: CredentialOrg.history(kc.mac, "pwd", p.alias),
+                           ownerOf: { $0.pwd?.owner })
             }
-            for f in DB.listFps(kc.mac) where f.owner == id {
-                let snaps = CredentialOrg.history(kc.mac, "fp", f.batch)
-                if let s = snaps.last, s.note.hasPrefix("移交给"), s.fp?.owner != id {
-                    out.append(Edge(label: "指纹「" + f.name + "」", peer: s.note.replacingOccurrences(of: "移交给", with: ""), direction: "out"))
-                }
+            for f in DB.listFps(kc.mac) {
+                if out.count >= graphCap { break }
+                appendEdge(&out, forMe: id, label: "指纹「" + f.name + "」",
+                           snaps: CredentialOrg.history(kc.mac, "fp", f.batch),
+                           ownerOf: { $0.fp?.owner })
             }
-            // 转入方向: 历史里有"移交给 (我名)"
-            for p in DB.listPwds(kc.mac) where p.owner == id {
-                if CredentialOrg.history(kc.mac, "pwd", p.alias).contains(where: { $0.note.hasPrefix("移交给") }) {
-                    out.append(Edge(label: "密码 #" + String(p.alias), peer: "家庭成员", direction: "in"))
-                }
-            }
-            break   // 图谱只取第一把锁的样例, 避免大表全扫描 (纯展示层)
         }
         return out
     }
-
-    // ---------- 467 所有权移交 (待确认区) ----------
-    private static let transferKey = "kf_mtransfer"
-    static func pendingTransfers(_ memberId: String) -> [MemberTransfer] {
-        (DB.store.get([String: MemberTransfer].self, transferKey) ?? [:]).values
-            .filter { $0.to == memberId }
-            .sorted { $0.at > $1.at }
-    }
-    static func addTransfer(id: String, mac: String, kind: String, key: Int, from: String, to: String) {
-        var all = DB.store.get([String: MemberTransfer].self, transferKey) ?? [:]
-        let t = MemberTransfer(id: UUID().uuidString, mac: mac, kind: kind, key: key,
-                                from: from, to: to, at: Date().timeIntervalSince1970)
-        all[t.id] = t
-        DB.store.setCodable(transferKey, all)
-    }
-    static func rejectTransfer(_ id: String) {
-        var all = DB.store.get([String: MemberTransfer].self, transferKey) ?? [:]
-        all.removeValue(forKey: id)
-        DB.store.setCodable(transferKey, all)
-    }
-    static func acceptTransfer(_ t: MemberTransfer) {
-        if t.kind == "pwd" {
-            DB.setPwdOwner(t.mac, t.key, t.to)
-            if let p = DB.listPwds(t.mac).first(where: { $0.alias == t.key }) {
-                CredentialOrg.snapshot(t.mac, kind: "pwd", key: t.key, pwd: p, fp: nil,
-                                       note: "移交" + (DB.member(t.to)?.name ?? ""))
-            }
-        } else {
-            DB.setFpOwner(t.mac, t.key, t.to)
-            if let f = DB.listFps(t.mac).first(where: { $0.batch == t.key }) {
-                CredentialOrg.snapshot(t.mac, kind: "fp", key: t.key, pwd: nil, fp: f,
-                                       note: "移交" + (DB.member(t.to)?.name ?? ""))
-            }
+    /// 一条凭证能画出的边: 取**最后一条**「移交 → X」快照 —— 它存的是移交之后的归属,
+    /// 版本号比它小的那一版存的就是移交之前的归属 (按 version 找上一版, 不按数组下标:
+    /// CredentialOrg.snapshot 落盘时把 488 的自动还原点单独排在手动版之后, 下标不等于时间序)。
+    /// 两端都只在本机版本历史留得下来时才知道; 查不到上一手 (最早一版就已经是移交) 就不画,
+    /// 也不拿一个"家庭成员"顶上 (原先的 in 边就编过这个名字)。
+    private static func appendEdge(_ out: inout [Edge], forMe id: String, label: String,
+                                   snaps: [CredSnapshot], ownerOf: (CredSnapshot) -> String?) {
+        guard let hit = snaps.lastIndex(where: { $0.note.hasPrefix(transferNotePrefix) }) else { return }
+        let s = snaps[hit]
+        let to = ownerOf(s)
+        let prev = snaps.filter { $0.version < s.version }.max(by: { $0.version < $1.version })
+        let from = prev.flatMap(ownerOf)
+        if let from, from == id, to != id {
+            out.append(Edge(label: label, peer: peerName(to), direction: "out"))
+        } else if let from, to == id, from != id {
+            out.append(Edge(label: label, peer: peerName(from), direction: "in"))
         }
-        var all = DB.store.get([String: MemberTransfer].self, transferKey) ?? [:]
-        all.removeValue(forKey: t.id)
-        DB.store.setCodable(transferKey, all)
     }
-    /// 468 代管: 目标成员的日志统一标注 (展示层文案用)
+    /// 对端显示名: 成员真在名册里才报名字; 已删/未指派一律写"未指派", 不编一个看起来像名字的词。
+    private static func peerName(_ id: String?) -> String {
+        guard let id, let m = DB.member(id) else { return "未指派" }
+        return m.name
+    }
+
+    /// 468 代管: 目标成员的 id 集合 (读点三处 — 成员页那一行、482 会议摘要、
+    /// 以及凭证页单条停用时往 361 便签里补的那一句「管理员代操作」)。
+    /// 锁端没有"代操作"这一位, 所以这一族标注只落本机便签与本机摘要, 不发往锁。
     static var proxyNames: Set<String> {
-        (DB.store.get([String: MemberExt].self, extKey) ?? [:]).filter { $0.value.proxy }.map(\.key)
+        // 同上: map 出 [String] 需显式转 Set (调用方 MemberCenterView 用 .contains)
+        Set((DB.store.get([String: MemberExt].self, extKey) ?? [:]).filter { $0.value.proxy }.map(\.key))
     }
 
     // ---------- 472 借用登记 (per-lock) ----------
@@ -269,7 +326,9 @@ enum MemberHub {
 
     // ---------- 481 本周轮值 ----------
     private static func weekKey(_ d: Date = Date()) -> String {
-        let c = Calendar.current
+        // 912: 周界必须与 Milestones/RecordSearch/月历同一个 Calendar，
+        // 否则"本周轮值"和"本周整理数"会在跨周那天各说一套。
+        let c = WeekCal.calendar
         return String(c.component(.yearForWeekOfYear, from: d)) + "-W" + String(c.component(.weekOfYear, from: d))
     }
     static var dutyThisWeek: String? {
@@ -291,8 +350,18 @@ enum MemberHub {
         all[logKey] = memberId
         DB.store.setCodable("kf_mclaim_" + mac, all)
     }
+    /// 462 合并/迁移归属: 旧成员 id 认领过的记录改判给新成员 ——
+    /// 合并只迁凭证不迁认领的话, 合并后这些记录会挂在已不存在的 id 上 (显示成"无法归属")。
+    static func reassignClaims(from: String, to: String) {
+        for kc in DB.keychains() {
+            var all = claims(kc.mac)
+            var hit = false
+            for (k, v) in all where v == from { all[k] = to; hit = true }
+            if hit { DB.store.setCodable("kf_mclaim_" + kc.mac, all) }
+        }
+    }
 
-    // ---------- 794 隐私浏览 (限时 10 分钟 + 只显示本人数据 + 水印) ----------
+    // ---------- 794 隐私浏览 (限时 10 分钟) ----------\n    /// 现状: 只有 kf_privacy_until 一个时间戳, 消费方仅成员设置页倒计时回显;\n    /// 794 原句的\"只显示本人数据 + 水印\"两要素未接线 (StatsKit/StatsView 零 privacy 消费), 2026-10-13 文案已按此诚实化。
     static var privacyActive: Bool {
         (DB.store.get(Double.self, "kf_privacy_until") ?? 0) > Date().timeIntervalSince1970
     }
@@ -301,7 +370,14 @@ enum MemberHub {
         DB.store.set("kf_privacy_until", on ? Date().timeIntervalSince1970 + 600.0 : 0.0)
     }
 
-    // ---------- 479/486 长辈模式 (本地布局档: 大字 + 凭证页只留密码/指纹) ----------
+    // ---------- 479/486 长辈模式 (本机布局档) ----------
+    /// 479 这一档真实改的是**凭证页**那一族: 分段只留 全部/密码/指纹 (CredentialsView 分段胶囊)、
+    /// 隐藏批量与导出入口、组尾那条过期清理按钮不出现, 行内字号升到语义标题/正文档并把次文本换成主文本色
+    /// (大字与高对比都在 CredentialsView 的 rowTitleFont / rowSubFont / rowSubColor 三处消费, 字号全走语义档,
+    /// 不写 .system(size:) —— 那一档不跟随 Dynamic Type)。
+    /// 486 (长辈模式下临时码完成页默认进口述卡) 已接: 消费点在 CredentialStudio 的 TempCodeStudio.doneCard
+    /// (完成页收成 口述卡 + 大「完成」, 329/333/再发一张 收起);
+    /// 其余页面仍不跟这一档 —— 成员页的开关说明按这个口径写, 不许它承诺"全 App 大字"。
     static var elderMode: Bool { DB.store.getBool("kf_elder_mode") }
     static func setElderMode(_ on: Bool) { DB.store.set("kf_elder_mode", on) }
 

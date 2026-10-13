@@ -64,12 +64,10 @@ struct MStats {
 
 enum Milestones {
     // ---------- 日期工具 ----------
-    static func dayKey(_ d: Date = Date()) -> String {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd"
-        f.locale = Locale(identifier: "en_US_POSIX")
-        return f.string(from: d)
-    }
+    /// 日 key 的**唯一口径是 `StatsKit.dayKey`** (yyyy-MM-dd + en_US_POSIX + 当前时区)。
+    /// 此前这里自己 new 了一个 DateFormatter 抄同一段逻辑 —— 值恰好相同，但"同一件事两处写"
+    /// 一旦改一处就会让里程碑与统计/日志分组对不齐 (§10.30)。
+    static func dayKey(_ d: Date = Date()) -> String { StatsKit.dayKey(d) }
     static func monthKey(_ d: Date = Date()) -> String {
         String(dayKey(d).prefix(7))
     }
@@ -90,6 +88,23 @@ enum Milestones {
     }
     /// 1046 素颜模式: 一键关闭全部庆祝动效 (时刻卡保留内容, 不播粒子)
     static var plainMode: Bool { DB.store.getBool("kf_plain") }
+    /// 898 启动一句话：本机短语表按**当天**取一条 (不是每次刷新随机)。
+    /// 为什么必须按日期定值：这条挂在 Hero 卡上，而 Hero 卡在一次会话里会重算很多次；
+    /// 用 arc4random 就会每重算一次换一句话，用户看到的是"卡片在自言自语地跳字"。
+    /// 素颜模式 (1046) 与晚归欢迎 (1000)、节气问候 (1001) 都排在它前面 —— 有正事时不打扰。
+    static func launchPhrase(_ now: Date = Date()) -> String? {
+        guard DB.store.getBool("kf_launch_line", true), !plainMode else { return nil }
+        let lines = [
+            "门在这儿，钥匙也在这儿。",
+            "离线也能开 —— 蓝牙就是钥匙。",
+            "今天先看一眼电量，省得蹲门跟前。",
+            "记录都在本机，没往任何地方传。",
+            "备份一次，胜过祈祷十次。",
+            "开门这事，慢半拍比错半拍好。",
+        ]
+        let day = Int(WeekCal.calendar.startOfDay(for: now).timeIntervalSince1970 / 86_400)
+        return lines[abs(day) % lines.count]
+    }
     /// 996 收集音效 (默认开)
     static var collectSound: Bool { DB.store.getBool("kf_collect_sound", true) }
     /// 986 成就解锁本地通知 (默认开)
@@ -133,7 +148,7 @@ enum Milestones {
         var s = DB.store.get([String: Int].self, "kf_streak") ?? [:]
         let lastDay = DB.store.getString("kf_streak_last")   // 单独存字符串键 (与计数字典分型)
         guard lastDay != today else { return }
-        let yest = dayKey(Calendar.current.date(byAdding: .day, value: -1, to: Date())!)
+        let yest = dayKey(WeekCal.gregorian.date(byAdding: .day, value: -1, to: Date())!)
         let cur = (lastDay == yest) ? (s["cur"] ?? 0) + 1 : 1
         s["cur"] = cur
         s["best"] = max(s["best"] ?? 0, cur)
@@ -143,7 +158,7 @@ enum Milestones {
 
     // ---------- 976 安心夜打卡 + 985 衑签 ----------
     /// 22 点后可打卡 (纯手动确认 — 协议无上锁状态位, 不猜测)
-    static var canNightCheckIn: Bool { Calendar.current.component(.hour, from: Date()) >= 22 }
+    static var canNightCheckIn: Bool { WeekCal.gregorian.component(.hour, from: Date()) >= 22 }
     static func nightMarks() -> [String: String] {
         DB.store.get([String: String].self, "kf_night_marks") ?? [:]
     }
@@ -166,7 +181,7 @@ enum Milestones {
     static var repairableDay: String? {
         guard repairQuotaLeft else { return nil }
         let marks = nightMarks()
-        let cal = Calendar.current
+        let cal = WeekCal.gregorian
         var d = cal.date(byAdding: .day, value: -1, to: Date())!
         let mk = monthKey()
         for _ in 0..<31 {
@@ -211,17 +226,27 @@ enum Milestones {
         h.append(Date().timeIntervalSince1970 * 1000)
         if h.count > 60 { h.removeFirst(h.count - 60) }
         DB.store.setCodable("kf_backup_hist", h)
+        // 448: 备份发生点 = 自检基线更新点 (导出/上传/还原点全覆盖; 自检本身绝不回写)
+        BackupStudio.markBackupBaseline()
     }
     static var backupThisMonth: Int {
         let mk = monthKey()
         return (DB.store.get([Double].self, "kf_backup_hist") ?? [])
             .filter { monthKey(Date(timeIntervalSince1970: $0 / 1000)) == mk }.count
     }
+    /// 822 「还没有备份」要看的那一个事实: 本机最后一次生成/上传备份的时刻。
+    /// 读的就是 recordBackup 写的那本历史 (毫秒位，与上面两个读者同一换算)，
+    /// 不另开一个"上次备份时间"键 —— 两处各存一份迟早分叉。
+    static var lastBackupAt: Date? {
+        guard let h = DB.store.get([Double].self, "kf_backup_hist"), let t = h.max(), t > 0
+        else { return nil }
+        return Date(timeIntervalSince1970: t / 1000)
+    }
     /// 980 连续月数 (从本月起; 本月还没备则从上月起)
     static var backupStreakMonths: Int {
         let months = Set((DB.store.get([Double].self, "kf_backup_hist") ?? [])
             .map { monthKey(Date(timeIntervalSince1970: $0 / 1000)) })
-        let cal = Calendar.current
+        let cal = WeekCal.gregorian
         var cursor = Date()
         if !months.contains(monthKey(cursor)) {
             guard let prev = cal.date(byAdding: .month, value: -1, to: cursor) else { return 0 }
@@ -242,10 +267,10 @@ enum Milestones {
         get { DB.store.getInt("kf_week_target", 3) }
         set { DB.store.set("kf_week_target", max(1, min(7, newValue))) }
     }
-    /// 本周整理次数 (周一为一周起点)
+    /// 本周整理次数 (周起点跟随 912 偏好)
     static var weekDone: Int {
         let stamps = DB.store.get([Double].self, "kf_organize_log") ?? []
-        let cal = Calendar.current
+        let cal = WeekCal.calendar
         let wk = cal.component(.weekOfYear, from: Date())
         let yr = cal.component(.yearForWeekOfYear, from: Date())
         return stamps.filter {
@@ -316,7 +341,7 @@ enum Milestones {
     static func capsule() -> Capsule? { DB.store.get(Capsule.self, "kf_capsule") }
     static func saveCapsule(_ text: String) {
         // 开启日 = 下一个结缘日 (无结缘日则写作一年后)
-        let cal = Calendar.current
+        let cal = WeekCal.gregorian
         let b = bondDay
         let now = Date()
         var openOn = dayKey(cal.date(byAdding: .year, value: 1, to: now)!)
@@ -360,11 +385,19 @@ enum Milestones {
     }
 
     // ---------- 1011/1008 陪伴天数文案 ----------
-    static func companionText(_ atMs: Double, prefix: String = "已陪伴") -> String? {
+    /// 1011 陪伴天数唯一算术 (companionText 与满年徽章共用; 无效时间/未来时间 = nil)
+    static func companionDays(_ atMs: Double) -> Int? {
         guard atMs > 0 else { return nil }
         let days = Int(Date().timeIntervalSince1970 * 1000 - atMs) / 86_400_000
-        guard days >= 0 else { return nil }
-        return days >= 365 ? "\(prefix) \(days) 天 · 满一年了" : "\(prefix) \(days) 天"
+        return days >= 0 ? days : nil
+    }
+    /// 1011 满年徽章判据: 与副行 "· 满一年了" 后缀同一道天数额 (365 只写这里一处)
+    static func companionFullYear(_ atMs: Double) -> Bool {
+        (companionDays(atMs) ?? 0) >= 365
+    }
+    static func companionText(_ atMs: Double, prefix: String = "已陪伴") -> String? {
+        guard let days = companionDays(atMs) else { return nil }
+        return companionFullYear(atMs) ? "\(prefix) \(days) 天 · 满一年了" : "\(prefix) \(days) 天"
     }
 
     // ---------- 1001 节气 (寿星公式近似, 纯本地; 问候级容差 ±1 天) ----------
@@ -377,7 +410,7 @@ enum Milestones {
         (11, "立冬", 7.438), (11, "小雪", 22.36), (12, "大雪", 7.18), (12, "冬至", 21.94),
     ]
     static func solarTermToday(_ now: Date = Date()) -> String? {
-        let cal = Calendar.current
+        let cal = WeekCal.gregorian
         let y = cal.component(.year, from: now) % 100
         let m = cal.component(.month, from: now)
         let d = cal.component(.day, from: now)
@@ -412,6 +445,8 @@ enum Milestones {
         Badge(id: "un100", cat: .guardDuty, title: "百次守护", detail: "累计开锁 100 次", icon: "flag.fill", rarity: .common, hidden: false),
         Badge(id: "un500", cat: .guardDuty, title: "五百门神", detail: "累计开锁 500 次", icon: "flag.checkered", rarity: .rare, hidden: false),
         Badge(id: "un2000", cat: .guardDuty, title: "两千传奇", detail: "累计开锁 2000 次", icon: "crown.fill", rarity: .epic, hidden: false),
+        // 993 夜猫守护徽章 (2026-10-10 拍板: 保留**奖励**语义，不改成告警)。判据只用本地日志的凌晨时段
+        // 开门计数 (0-6 点单月 ≥5)，不动协议、不上云; 纯计数事实不是推断，所以文案不写"约"。
         Badge(id: "owl", cat: .guardDuty, title: "夜猫子", detail: "单月凌晨 0-6 点开门 5 次", icon: "moon.zzz.fill", rarity: .rare, hidden: true),
         Badge(id: "heart1000", cat: .guardDuty, title: "千次心跳", detail: "累计开锁 1000 次", icon: "heart.fill", rarity: .epic, hidden: true),
         // 整理
@@ -425,6 +460,8 @@ enum Milestones {
         // 包4: 1039 续航管家 / 1030 爱洁之家
         Badge(id: "batt2", cat: .butler, title: "续航管家", detail: "完成 2 次换电池", icon: "battery.100.bolt", rarity: .common, hidden: false),
         Badge(id: "clean3", cat: .butler, title: "爱洁之家", detail: "连续 3 个月完成锁体保养", icon: "checkmark.seal", rarity: .rare, hidden: false),
+        // 995: 入伙与 owner 同判据 (归属即入伙完成), 语义入口不同
+        Badge(id: "join1", cat: .organize, title: "入伙", detail: "新成员入伙并录下第一条归属凭证", icon: "person.badge.plus", rarity: .common, hidden: false),
     ]
     static func badge(_ id: String) -> Badge? { definitions.first { $0.id == id } }
 
@@ -447,7 +484,7 @@ enum Milestones {
         let md = mdKey()
         return latestUnlocked(definitions.count).first {
             isSameMonthDay($0.at, Date()) &&
-            Calendar.current.component(.year, from: $0.at) < Calendar.current.component(.year, from: Date())
+            WeekCal.gregorian.component(.year, from: $0.at) < WeekCal.gregorian.component(.year, from: Date())
         }?.badge
     }
 
@@ -464,9 +501,11 @@ enum Milestones {
             if pwds.contains(where: { !($0.owner ?? "").isEmpty }) || fps.contains(where: { !($0.owner ?? "").isEmpty }) {
                 s.ownedCred = true
             }
-            for l in DB.readLogs(kc.mac) where Attribution.openKind[l.type] != nil {
-                let d = Date(timeIntervalSince1970: Double(ZKProtocol.protoSecondsToMs(l.lockTime)) / 1000)
-                if Calendar.current.component(.hour, from: d) < 6 {
+            // lockTime == 0 = 锁端时钟没读到/无时钟型号的占位值, 换算后落在协议纪元 (2010-01-01 00:00),
+            // 其"小时"必然 < 6 → 会凭空点亮夜猫子徽章并计入最差的月份桶。必须排除。
+            for l in DB.readLogs(kc.mac) where Attribution.openKind[l.type] != nil && l.lockTime > 0 {
+                let d = Date(timeIntervalSince1970: ZKProtocol.protoSecondsToUnix(l.lockTime))
+                if WeekCal.gregorian.component(.hour, from: d) < 6 {
                     owlMonths[monthKey(d), default: 0] += 1
                 }
             }
@@ -500,6 +539,7 @@ enum Milestones {
         case "owl": return s.nightOwlBest >= 5
         case "heart1000": return s.unlockTotal >= 1000
         case "owner": return s.ownedCred
+        case "join1": return s.ownedCred   // 995: 与 owner 同判据 (归属即入伙完成), 语义入口不同
         case "tidy10": return s.organizeTotal >= 10
         case "week1": return s.weekStar
         case "days90": return s.daysSinceFirst >= 90
@@ -526,7 +566,8 @@ enum Milestones {
 
     // ---------- 996 收集音效 (系统短音, 零资源) ----------
     static func playCollectSound() {
-        AudioServicesPlaySystemSound(1104)
+        // 996/848: 音色与开锁成功短音同源, 调用点收敛到 App/Core/AlertTone.swift (全 App 只那一处裸调)
+        AlertTone.achievement()
     }
 
     // ---------- 986 成就本地通知 ----------
@@ -547,7 +588,7 @@ enum Milestones {
     }
     static func quarterSummary() -> QuarterSummary {
         var out = QuarterSummary()
-        let cal = Calendar.current
+        let cal = WeekCal.gregorian
         let q = cal.component(.quarter, from: Date())
         let y = cal.component(.year, from: Date())
         var whoCount: [String: Int] = [:]
@@ -570,7 +611,7 @@ enum Milestones {
                 pwds: pwds, fps: fps, status: nil)
             for (i, l) in DB.readLogs(kc.mac).enumerated() {
                 guard i < rows.count else { continue }
-                let d = Date(timeIntervalSince1970: Double(ZKProtocol.protoSecondsToMs(l.lockTime)) / 1000)
+                let d = Date(timeIntervalSince1970: ZKProtocol.protoSecondsToUnix(l.lockTime))
                 guard cal.component(.quarter, from: d) == q,
                       cal.component(.year, from: d) == y else { continue }
                 if let who = rows[i].who {
@@ -603,12 +644,14 @@ enum CareReminders {
         center.removePendingNotificationRequests(withIdentifiers:
             (Milestones.memberBirthdays().keys.map { "care.bday." + $0 }) + ["care.anniv"])
         guard await requestAuthorization() else { return }
-        let cal = Calendar.current
+        let cal = WeekCal.gregorian
         if bdayOn {
             for (mid, md) in Milestones.memberBirthdays() {
                 let parts = md.split(separator: "-").compactMap { Int($0) }
-                guard parts.count == 2, let m = parts[0], m >= 1, m <= 12, let d = parts[1], d >= 1, d <= 31,
+                // parts 元素是 Int (compactMap 后非可选), 不能条件绑定 → 先判数量再下标取值
+                guard parts.count == 2, parts[0] >= 1, parts[0] <= 12, parts[1] >= 1, parts[1] <= 31,
                       let member = DB.member(mid) else { continue }
+                let m = parts[0], d = parts[1]
                 // 提前一天: 由日期减一天再取月日, 跨月 (3/1 → 2/28) 也正确
                 guard var fire = cal.date(from: DateComponents(year: cal.component(.year, from: Date()), month: m, day: d)) else { continue }
                 fire = cal.date(byAdding: .day, value: -1, to: fire) ?? fire

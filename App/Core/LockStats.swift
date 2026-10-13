@@ -1,6 +1,12 @@
-// 包3 设备档案与多锁总览 — 锁档案扩展存储 + 多锁统计 (纯本地只读现有表)
+// 包3 设备档案与多锁总览 — 锁档案扩展存储 + 多锁统计 + 设备分组与排序 (纯本地只读现有表)
 // 档案字段放独立键 kf_lockmeta_<mac>, 不动 Keychain (备份包 schema 与小程序互通不受影响):
 //   106 备注 / 105 符号与色标 / 774 场所副标题 / 290 电池档案 / 258 首连验证 / 292 沉睡基准
+//   104/767 分组名 (grp) — 也在档案里
+// 排序 (766) 是"锁之间的关系", 不属于单锁档案 → 独立键 kf_lock_order (mac 全序列)
+// D-36 (2026-10-11 拍板) 之后的边界: 顺序 (766) / 分组 (104/767) / 分组折叠 (28) / 隐藏 (108) 已随
+//   全量备份包的 globals.deviceOrg 走 (BackupKit.collectDeviceOrg / restoreAll), 换机恢复后不必重排;
+//   仍只在本机的是本文件这一族档案字段: 场所副标题 (774) / 备注 (106) / 符号与色标 (105) /
+//   电池与首连档案 (290/258/292) —— 这些没进包, 界面上如实写着。
 // 统计全部读既有本地表 (kf_logcache_ / kf_ledger_ / kf_snap_ / kf_keychains / kf_members),
 // 不新增采集, 不碰协议。思路对标 ROADMAP 包3: 776/778/779/784/787/773/768。
 import Foundation
@@ -16,6 +22,45 @@ struct LockMeta: Codable {
     var batteryChangedAt: Double = 0  // 290 换电日期 (Unix 秒; 0 = 未记录)
     var verifiedAt: Double = 0        // 258 首连验证时刻 (Unix 秒; 0 = 未验证)
     var lastConnectedAt: Double = 0   // 292 沉睡判定基准 (最近一次连接成功)
+    var grp: String = ""              // 104/767 分组名 (家用/仓库/办公… 用户自填; 空 = 未分组)
+
+    // **显式解码器是必需的, 不是风格问题。** 本仓自己在 Store.swift:119 就记着这条事实:
+    // 合成 Codable 对有默认值的属性**同样要求键存在** —— 于是第一百三十六批给这个 struct
+    // 新加 `grp` 之后, 任何**加字段之前**写下的 kf_lockmeta_<mac> 都会 keyNotFound 解不出来,
+    // 而 `DB.get` 在解不出来时返回 nil ⇒ 老用户的昵称色标符号场所电池备注与换电日期**整本档案凭空变空**
+    // (界面看不出任何异常, 只是全成了默认值 —— AUDIT-CODE 反复出现的那类"最难查的失效")。
+    // 全部 decodeIfPresent + 默认值, 与 Keychain 同一处置。
+    private enum CodingKeys: String, CodingKey {
+        case note, symbol, colorKey, place, batteryModel, batteryChangedAt, verifiedAt, lastConnectedAt, grp
+    }
+    init() {}
+    init(note: String = "", symbol: String = "", colorKey: String = "", place: String = "",
+         batteryModel: String = "", batteryChangedAt: Double = 0, verifiedAt: Double = 0,
+         lastConnectedAt: Double = 0, grp: String = "") {
+        self.note = note; self.symbol = symbol; self.colorKey = colorKey; self.place = place
+        self.batteryModel = batteryModel; self.batteryChangedAt = batteryChangedAt
+        self.verifiedAt = verifiedAt; self.lastConnectedAt = lastConnectedAt; self.grp = grp
+    }
+    init(from d: Decoder) throws {
+        let c = try d.container(keyedBy: CodingKeys.self)
+        note = try c.decodeIfPresent(String.self, forKey: .note) ?? ""
+        symbol = try c.decodeIfPresent(String.self, forKey: .symbol) ?? ""
+        colorKey = try c.decodeIfPresent(String.self, forKey: .colorKey) ?? ""
+        place = try c.decodeIfPresent(String.self, forKey: .place) ?? ""
+        batteryModel = try c.decodeIfPresent(String.self, forKey: .batteryModel) ?? ""
+        batteryChangedAt = try c.decodeIfPresent(Double.self, forKey: .batteryChangedAt) ?? 0
+        verifiedAt = try c.decodeIfPresent(Double.self, forKey: .verifiedAt) ?? 0
+        lastConnectedAt = try c.decodeIfPresent(Double.self, forKey: .lastConnectedAt) ?? 0
+        grp = try c.decodeIfPresent(String.self, forKey: .grp) ?? ""
+    }
+}
+
+// ---------- 104/767 分组 ----------
+/// 一组成员: 组名 + 按总顺序排好的锁。Identifiable 用组名当 id (组名在设备管理里就是它的身份)。
+struct LockGroup: Identifiable {
+    let name: String
+    let locks: [Keychain]
+    var id: String { name }
 }
 
 enum LockArchive {
@@ -47,9 +92,115 @@ enum LockArchive {
         guard t > 0 else { return false }   // 从未连接过的不算沉睡 (新绑定/只导入)
         return Date().timeIntervalSince1970 - t > 30 * 86400
     }
+    /// 108 手动隐藏的锁: 退出横滑翻页与胶囊主列表，只从"已隐藏"区可达并可当场恢复。
+    /// 为什么不复用上面 isSleeping 那条自动判据: 隐藏是**用户明确说过的**，沉睡是推断出来的 ——
+    /// 凑成一个开关就会出现"我没藏它，它自己不见了"，而且两种状态得能在界面上分开说明。
+    static func isHidden(_ mac: String) -> Bool { DB.store.getBool("kf_lock_hidden_" + mac) }
+    static func setHidden(_ mac: String, _ on: Bool) { DB.store.set("kf_lock_hidden_" + mac, on) }
     /// 启动默认锁 (271/103: 上滑固定 / 首位), 独立键不属于单锁档案
     static var defaultMac: String { DB.store.getString("kf_default_mac") }
-    static func setDefaultMac(_ mac: String) { DB.store.set("kf_default_mac", mac) }
+    /// 271 与 766 只留一个真相: 手工顺序存在时, "设为启动默认锁"必须同时把它排到首位 ——
+    /// 否则顺序表说 A 在前、默认锁说 B 在前, 翻页首位与冷启动落点会分叉成两个答案。
+    static func setDefaultMac(_ mac: String) {
+        DB.store.set("kf_default_mac", mac)
+        var o = orderMacs
+        guard !mac.isEmpty, let i = o.firstIndex(of: mac) else { return }
+        o.remove(at: i); o.insert(mac, at: 0)
+        DB.store.setCodable(orderKey, o)
+    }
+
+    // ---------- 104/767 分组 + 766 手工排序 ----------
+    /// 分组名建议 (104 原句的"大门/卧室"就是用户自填): 只作快捷选项, 不是枚举白名单
+    static let groupPresets = ["家用", "仓库", "办公"]
+    static let ungroupedLabel = "未分组"
+    private static let orderKey = "kf_lock_order"
+
+    static func group(_ mac: String) -> String { meta(mac).grp }
+    /// 组名归一 (去空白 + 12 字上限): 设备管理页与锁档案两处写同一个字段, 口径放这一个函数里,
+    /// 免得一处截 12 字、另一处不截 —— 组名要当 Section 标题和胶囊 chip 用, 超了就只能裁切。
+    static func normalizedGroup(_ g: String) -> String {
+        String(g.trimmingCharacters(in: .whitespacesAndNewlines).prefix(12))
+    }
+    static func setGroup(_ mac: String, _ g: String) {
+        guard !mac.isEmpty else { return }
+        var m = meta(mac)
+        m.grp = normalizedGroup(g)
+        save(mac, m)
+    }
+    /// 现存组 (按组内首锁在总顺序里的先后), "未分组"固定垫底。
+    /// 为什么是 struct 而不是 `(name:, locks:)` 元组数组：**不是**因为 key path 不能指元组元素 ——
+    /// 2026-10-13 查证更正: 元组元素的 key path 其实是合法的 (Swift 诊断表里根本没有
+    /// "key path cannot refer to tuple element" 这条, 公开资料亦以 `id: \.1.id` / `id: \.element.id`
+    /// 为可用写法)。真正会编译不过的是**单参 `ForEach`/`Chart`**: 那版初始化器要求元素 `Identifiable`,
+    /// 而元组不能遵循协议。换成结构体是为了拿到**稳定身份** (组名唯一、可读), 不是为了绕开 key path。
+    static func grouped(_ devices: [Keychain]) -> [LockGroup] {
+        var names = [String]()
+        var buckets = [String: [Keychain]]()
+        for kc in devices {
+            let g = group(kc.mac).isEmpty ? ungroupedLabel : group(kc.mac)
+            if buckets[g] == nil { names.append(g) }
+            buckets[g, default: []].append(kc)
+        }
+        if let i = names.firstIndex(of: ungroupedLabel) {
+            names.remove(at: i); names.append(ungroupedLabel)
+        }
+        return names.compactMap { n in buckets[n].map { LockGroup(name: n, locks: $0) } }
+    }
+
+    static var orderMacs: [String] { DB.store.get([String].self, orderKey) ?? [] }
+    static var hasManualOrder: Bool { !orderMacs.isEmpty }
+    static func setOrder(_ macs: [String]) {
+        // 写侧剪掉已解绑的 mac: 顺序表是全局键, 删设备那一步 (Store.removeDevice) 删不到按键名含 mac 的
+        // 逐锁族, 但表里的幽灵条目只会让读侧多做无用的查找, 直接剪掉。
+        let alive = Set(DB.keychains().map { $0.mac })
+        DB.store.setCodable(orderKey, macs.filter { alive.contains($0) })
+    }
+    static func clearManualOrder() { DB.store.remove(orderKey) }
+
+    /// 766 设备顺序的唯一读点: 手工顺序优先, 表里没有的 (新绑定) 按绑定先后垫后;
+    /// 无手工顺序时按绑定先后, 但**启动默认锁仍占首位** —— 设备管理页的"第一行就是启动默认锁"
+    /// 与设备页的 271 兜底排序讲的是同一件事, 这里漏掉默认锁就会两页各说一套。
+    /// 低电置顶 (114) 不在这里做 —— 自动置顶会把用户明确排好的顺序挪走, 与 108 隐藏 vs 292 沉睡
+    /// 同一口径 (明确动作优先于推断), 低电改由 764 图标行的橙点如实标出 (1041 电量升序是另一条明确开关)。
+    static func orderedDevices(_ devices: [Keychain]) -> [Keychain] {
+        let o = orderMacs
+        guard !o.isEmpty else {
+            let def = defaultMac
+            return devices.sorted { a, b in
+                if a.mac == def { return true }
+                if b.mac == def { return false }
+                return a.pairedAt < b.pairedAt
+            }
+        }
+        let byMac = Dictionary(devices.map { ($0.mac, $0) }, uniquingKeysWith: { a, _ in a })
+        let head = o.compactMap { byMac[$0] }
+        let rest = devices.filter { !o.contains($0.mac) }.sorted { $0.pairedAt < $1.pairedAt }
+        return head + rest
+    }
+
+    /// 组内拖动回写 (104): 只把这一组成员的新内部次序放回它们**原本占据的位置**,
+    /// 其他组与未分组的位置一步不动 —— 否则"把仓库组两把锁对调"会把别的组一起挤走。
+    static func reordered(_ all: [Keychain], newGroupOrder groupLocks: [Keychain]) -> [Keychain] {
+        let member = Set(groupLocks.map { $0.mac })
+        guard !member.isEmpty else { return all }
+        var queue = groupLocks
+        var out = [Keychain]()
+        for kc in all {
+            if member.contains(kc.mac), queue.isEmpty == false { out.append(queue.removeFirst()) }
+            else { out.append(kc) }
+        }
+        return out
+    }
+
+    /// 置顶 = 首位 + 启动默认锁 (271/766 同一动作, 见上面 setDefaultMac)
+    static func pinToFront(_ mac: String, _ devices: [Keychain]) {
+        guard !mac.isEmpty else { return }
+        var l = orderedDevices(devices).map { $0.mac }
+        l.removeAll { $0 == mac }
+        l.insert(mac, at: 0)
+        setOrder(l)
+        setDefaultMac(mac)
+    }
 
     // 105 色标: 只走 DS 语义令牌 (不引入自定义 hex, 保证对比度闸门覆盖)
     struct Swatch: Identifiable {
@@ -101,6 +252,11 @@ enum LockArchive {
         let m = meta(kc.mac)
         return m.place.isEmpty ? PidMap.productName(kc.pid) : m.place
     }
+    /// 769 绑定时间小字 (设备管理行 / 总览固件卡同口径: 未记录就不虚构日期)
+    static func boundLabel(_ pairedAt: String) -> String {
+        guard pairedAt.count >= 10 else { return "绑定时间未记录" }
+        return "绑定于 " + pairedAt.prefix(10).replacingOccurrences(of: "-", with: "/")
+    }
 }
 
 // ---------- 多锁统计 ----------
@@ -126,8 +282,11 @@ struct LockUsage: Identifiable {
 
 @MainActor
 enum LockStats {
-    static let openTypes: Set<Int> = [1, 2, 3, 4, 5]
-    static let alarmTypes: Set<Int> = [6, 7, 10, 13, 224]
+    /// 第一百五十七批：这两组类型集合原本在 `StatsKit.swift:9-10` 与这里各抄一份 (值相同)。
+    /// 抄两份的意思是"哪天加一类告警，只改一处就会静悄悄地漂" —— 而那正是本批在设备页刚抓到的缺陷形态
+    /// (`recentRecords` 曾自己写了 `7||13||224`，漏掉 6 低电量与 10 试错锁定)。口径只留 StatsKit 一份。
+    static var openTypes: Set<Int> { StatsKit.openTypes }
+    static var alarmTypes: Set<Int> { StatsKit.alarmTypes }
     static let windowDays = 30
 
     /// 快照采样时刻 (291): DB.readStatus 只回状态体, 这里取信封时间
@@ -138,6 +297,7 @@ enum LockStats {
         guard at > 0 else { return "" }
         let f = DateFormatter()
         f.dateFormat = "MM-dd HH:mm"
+        f.locale = Locale(identifier: "en_US_POSIX")
         return "采样于 " + f.string(from: Date(timeIntervalSince1970: at / 1000))
     }
 
@@ -146,11 +306,14 @@ enum LockStats {
         let cutoff = Date().timeIntervalSince1970 - Double(windowDays) * 86400
         return DB.keychains().map { kc -> LockUsage in
             var u = LockUsage(mac: kc.mac, name: LockArchive.displayName(kc))
-            let logs = DB.readLogs(kc.mac)
+            // 745 测试标记: 与 StatsKit.build 同一排除口径 (键 = mac#idxRaw), 对照表/关联建议里
+            // 的 alarms30d 与 alarmRate 也不把自测告警算进去。
+            let testKeys = RecordSearch.testMarkedKeys
+            let logs = DB.readLogs(kc.mac).filter { !testKeys.contains(kc.mac + "#" + String($0.idxRaw)) }
             for l in logs {
                 // 日志 lockTimeStr 是本地串; 时间过滤用日志写入缓存顺序不可靠,
                 // 这里按锁端秒换算 Unix 秒对齐窗口 (ProtoTime 基准 2010-01-01)
-                let unixSec = Double(ZKProtocol.protoSecondsToMs(Int64(l.lockTime))) / 1000
+                let unixSec = ZKProtocol.protoSecondsToUnix(Int64(l.lockTime))
                 if unixSec >= cutoff {
                     if openTypes.contains(l.type) { u.opens30d += 1 }
                     if alarmTypes.contains(l.type) { u.alarms30d += 1 }
@@ -227,10 +390,26 @@ enum LockStats {
             var reasons: [String] = []
             if (0...20).contains(u.power) { reasons.append("电量 \(u.power)%") }
             if u.alarms30d > 0 { reasons.append("近 30 天 \(u.alarms30d) 条告警") }
-            if (DB.readStatus(u.mac)?.sKeyStatus ?? 0) != 0 { reasons.append("密钥未绑定") }
+            // 快照缺失 = 密钥状态未知, 不能当成"正常": 旧写法 (…?.sKeyStatus ?? 0) != 0 在 nil 时判假,
+            // 从未连过的锁直接跳过这一项检查 (fail-open)。
+            if let snap = DB.readStatus(u.mac) {
+                if snap.sKeyStatus != 0 { reasons.append("密钥未绑定") }
+            } else {
+                reasons.append("密钥状态未知 (无 03 快照)")
+            }
             if !reasons.isEmpty { out.append(MaintenanceItem(usage: u, reasons: reasons)) }
         }
         return out
+    }
+
+    /// 764 图标行的告警判据: 近 windowDays 天内**日志缓存里**有告警类记录的锁。
+    /// 只读已有缓存、不主动连锁 —— 图标行每次 body 都会重算, 这里必须是可以放在刷新里算一次的纯本地聚合。
+    /// 读不到日志的锁 (从未同步) 不在集合里, 界面上标成"没有读数"而不是"没有告警" (空心圈)。
+    static func recentAlarmMacs(_ usages: [LockUsage]? = nil) -> Set<String> {
+        let src = usages ?? usage()
+        var set = Set<String>()
+        for u in src where u.alarms30d > 0 { set.insert(u.mac) }
+        return set
     }
 
     /// 787 对比结论一句话 (财报解读式模板, 只引用上方同源数字)

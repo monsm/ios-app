@@ -45,8 +45,14 @@ enum CryptoBox {
         }
         return out
     }
+    /// kdf 参数钳制: iter 来自**不可信备份信封**，且在 HMAC 校验之前就被用于派生密钥。
+    /// 旧实现 `UInt32(iterations)` 对负数或 > UInt32.max 的值直接 trap，超大值等于一次远端可触发的 DoS。
+    /// 越界值一律收敛到安全区间：恶意/异常包因此派生出错误密钥，被随后的 HMAC 校验正常拒绝。
+    static let iterMin = 1_000
+    static let iterMax = 2_000_000
     static func deriveKey(_ password: String, saltHex: String, iter: Int) -> (enc: [UInt8], mac: [UInt8]) {
-        let sk = pbkdf2(password, salt: HexKit.bytes(saltHex), iterations: iter, dkLen: 48)
+        let safe = min(max(iter, iterMin), iterMax)
+        let sk = pbkdf2(password, salt: HexKit.bytes(saltHex), iterations: safe, dkLen: 48)
         return (Array(sk[0..<16]), Array(sk[16..<48]))
     }
     // AES-128-CBC PKCS7
@@ -90,12 +96,43 @@ enum CryptoBox {
         let d = try JSONEncoder().encode(env)
         return String(data: d, encoding: .utf8) ?? ""
     }
+    /// 691: 二进制信封 —— 与 `encryptText` **同一套 KDF/AES/HMAC 与同一个信封结构**,
+    /// 只是明文是字节 (zip) 而不是文本; 不新造第二套算法 (备份包与加密导出件要能用同一流程打开)。
+    static func encryptBytes(_ bytes: [UInt8], password: String, iter: Int = defaultIter) throws -> String {
+        let salt = HexKit.hex(KeyGen.randomBytes(16))
+        let iv = HexKit.hex(KeyGen.randomBytes(16))
+        let keys = deriveKey(password, saltHex: salt, iter: iter)
+        let ct = aesCbcEncrypt(bytes, key: keys.enc, ivHex: iv)
+        let mac = hmacSha256(keys.mac, concat(HexKit.bytes(iv), ct))
+        let env = BackupEnvelope(v: 1, alg: "aes-128-cbc+hmac-sha256",
+                                 kdf: .init(alg: "pbkdf2-hmac-sha256", iter: iter, saltHex: salt),
+                                 ivHex: iv, macHex: HexKit.hex(mac), cHex: HexKit.hex(ct),
+                                 meta: .init(size: bytes.count, at: Date().timeIntervalSince1970 * 1000))
+        let d = try JSONEncoder().encode(env)
+        return String(data: d, encoding: .utf8) ?? ""
+    }
+
+    /// 449: 严格十六进制+长度 —— HexKit.bytes 对坏输入是"尽力解"(奇数长/非 hex 字会静默产出偏短的
+    /// 结果), 当校验判据用等于放行; 这里逐字符查, 供信封头校验。
+    static func isHex(_ s: String, len: Int? = nil) -> Bool {
+        if let len, s.count != len { return false }
+        return !s.isEmpty && s.allSatisfy { $0.isHexDigit }
+    }
     // 解密: 信封 JSON → text (口令错/篡改/版本不符同错误)
     static func decryptEnvelope(_ envelope: String, password: String) throws -> String {
         guard let d = envelope.data(using: .utf8),
               let e = try? JSONDecoder().decode(BackupEnvelope.self, from: d),
-              e.v == 1, !e.ivHex.isEmpty, !e.macHex.isEmpty, !e.cHex.isEmpty, !e.kdf.saltHex.isEmpty else {
+              e.v == 1 else {
             throw DFUError.msg("信封格式/版本不支持")
+        }
+        // 449 声明长度校验: 先验文件头写明的形状, 再碰密码学 —— IV 恰 16 字节 / HMAC 恰 32 字节 /
+        // 盐恰 16 字节 / 密文是 16 字节块的整数倍 (都写成十六进制)。形状不对报"文件头损坏"点名哪一段,
+        // 不再拖到 MAC 层报"口令错误或数据被篡改" —— 那是两件事, 不该一句话。
+        guard isHex(e.ivHex, len: 32) else { throw DFUError.msg("文件头损坏 (449): IV 应为 32 个十六进制字符") }
+        guard isHex(e.macHex, len: 64) else { throw DFUError.msg("文件头损坏 (449): HMAC 应为 64 个十六进制字符") }
+        guard isHex(e.kdf.saltHex, len: 32) else { throw DFUError.msg("文件头损坏 (449): 盐应为 32 个十六进制字符") }
+        guard isHex(e.cHex), e.cHex.count % 32 == 0 else {
+            throw DFUError.msg("文件头损坏 (449): 密文应为 32 的整数倍个十六进制字符")
         }
         let keys = deriveKey(password, saltHex: e.kdf.saltHex, iter: e.kdf.iter)
         let ct = HexKit.bytes(e.cHex)
@@ -110,6 +147,10 @@ enum CryptoBox {
 struct BackupBundle: Codable {
     var type: String = "kf-bundle"
     var bundleVer: Int = 2
+    // 414 版本头标注 (原句"semver"): 包头带 schema 版本号，恢复时按 v1→v5 **逐级**幂等迁移 (424 的升级链)，
+    // 恢复预演页把"包内版本 → 当前版本"显示出来再决定是否执行。
+    // 为什么用整数而不是 semver 三段: 本仓的备份结构靠序号驱动迁移，
+    // 写成语义化版本会让读者以为 patch 位有含义 —— 那是要人猜的字段。
     var schema: Int = 5
     var at: String
     var currentMac: String = ""
@@ -134,6 +175,48 @@ struct BackupBundle: Codable {
         var gatewayList: [Gateway]?
         var passcode: PasscodeRec?   // JS 包互通: {s,d} 应用锁摘要
         var trace: TraceRec?         // JS 包互通: LOCK 日志恢复档 (原样存取)
+        /// 181 OTP 密钥段: 改到**包体内** (随整包加密, 且进 canonical 校验和), 不再作为文件尾部旁路段。
+        /// 键必须白名单核验 (见 BackupKit.restoreAll), 否则恶意包体能借它写任意偏好键。
+        var otpKeys: [String: String]?
+        /// 894 外观随备份走: **typed 结构而不是自由字典**。
+        /// 用字典就等于把"任意偏好键写入"重新开放给一个可伪造的 JSON 字段 —— 那正是 otpKeys
+        /// 当初踩过的坑 (本文件 :239-253 的白名单就是为它加的)。typed 之后，包体能影响的键
+        /// 只有下面这些，且每个值都还要过一遍档位白名单 (见 Appearance.apply)。
+        /// 全部字段可选：缺字段 = 这次备份没带 = 恢复时不动本机，而不是"重置成默认"。
+        var appearance: Appearance?
+        struct Appearance: Codable {
+            var theme: String?        // kf_theme  ""/light/dark/black
+            var accent: String?       // kf_accent 六套品牌色之一
+            var density: String?      // kf_density
+            var radius: String?       // kf_radius (900)
+            var hc: Bool?             // kf_hc (893)
+            var weekStart: String?    // kf_week_start (912)
+            var rowH: String?         // kf_row_h (901)
+            var tlGap: String?        // kf_tl_gap (907)
+            var motion: String?       // kf_motion (899)
+            var heroTex: String?      // kf_hero_tex (889)
+            var launchLine: Bool?     // kf_launch_line (898)
+            var festive: Bool?        // kf_festive (890)
+            var plain: Bool?          // kf_plain (1046)
+            var recentCount: Int?     // kf_recent_count (910)
+            var heroStats: [String]?  // kf_hero_stats (909)
+        }
+        /// D-36 (2026-10-11 拍板「同意进包」): 设备组织随包 —— 顺序 / 分组 / 分组折叠 / 隐藏。
+        /// 四点写在这里, 免得下一个人照"包格式变更"的直觉去动 schema:
+        ///  ① 这是 globals 里的**可选增量段**, 与 894 appearance 同先例; 旧读者忽略它, 缺字段 = 恢复时不动本机。
+        ///  ② **不升 schema**: bundle.js 有一道 `schema > SCHEMA_VERSION` 的闸, 小程序端今天还是 v5 ——
+        ///     升到 v6 会让它把整包判成"来自更新版本"直接拒收, 把一次可选增强变成互通性事故。
+        ///  ③ 一律用**数组**而不是字典: 小程序 canonicalBundle 对 globals 内层是原样透传 (只对顶层键排序),
+        ///     字典的键序在两端不可控; 数组没有这个问题, groups 按 mac 排与 devices 同口径。
+        ///  ④ 落地侧逐项白名单 (只认本包里真有的 mac / 真存在的组名), 见 restoreAll。
+        var deviceOrg: DeviceOrg?
+        struct DeviceOrg: Codable {
+            var order: [String]?      // kf_lock_order: mac 全序列 (小写无冒号)
+            var groups: [GroupRec]?   // kf_lockmeta_<mac>.grp
+            var folded: [String]?     // kf_group_folded: 被收起的组名
+            var hidden: [String]?     // kf_lock_hidden_<mac> = true 的 mac
+            struct GroupRec: Codable { var mac: String; var name: String }
+        }
         struct PasscodeRec: Codable { var s: String; var d: String }
         struct TraceRec: Codable { var savedAt: Double?; var count: Int?; var chars: Int?; var lines: [String]? }
     }
@@ -160,6 +243,18 @@ enum BackupKit {
             BackupBundle.Globals.PasscodeRec(s: $0["s"] ?? "", d: $0["d"] ?? "")
         }
         let trace = DB.get(BackupBundle.Globals.TraceRec.self, "kf_trace_persist_v1")
+        // 181: 仅在用户显勾选时把 OTP 密钥收进包体 (默认排除 —— 独立口令组的密钥不该随手进备份文件)
+        var otps: [String: String]?
+        if DB.store.getBool("kf_bk_otp", false) {
+            var dict = [String: String]()
+            for kc in DB.keychains() {
+                for k in [CredentialOrg.totpKey(kc.mac), CredentialOrg.staticKey(kc.mac)] {
+                    let v = DB.store.getString(k)
+                    if !v.isEmpty { dict[k] = v }
+                }
+            }
+            if !dict.isEmpty { otps = dict }
+        }
         return BackupBundle(
             at: ISO8601DateFormatter().string(from: Date()),
             currentMac: DB.currentMac,
@@ -169,7 +264,81 @@ enum BackupKit {
                 keychainDongles: dongles.isEmpty ? nil : dongles,
                 gatewayList: gws.isEmpty ? nil : gws,
                 passcode: passcode,
-                trace: trace))
+                trace: trace,
+                otpKeys: otps,
+                appearance: collectAppearance(),
+                deviceOrg: collectDeviceOrg()))
+    }
+    /// 894 收集外观档。只收**枚举过的档位值**，读到没见过的值就当没这项 (nil)，
+    /// 免得把一台机器上的脏数据搬到另一台去。
+    static func collectAppearance() -> BackupBundle.Globals.Appearance {
+        func enumVal(_ key: String, _ allowed: [String]) -> String? {
+            let v = DB.store.getString(key)
+            return allowed.contains(v) ? v : nil
+        }
+        let stats = DS.HeroStats.visible
+        let recent = DB.store.getInt("kf_recent_count", 5)
+        return BackupBundle.Globals.Appearance(
+            theme: enumVal("kf_theme", ["", "light", "dark", "black"]),
+            accent: enumVal("kf_accent", ["", "indigo", "forest", "amber", "graphite", "rose", "aurora"]),
+            density: enumVal("kf_density", ["", "compact", "relaxed"]),
+            radius: enumVal("kf_radius", ["", "soft", "plump"]),
+            hc: DB.store.has("kf_hc") ? DB.store.getBool("kf_hc") : nil,
+            weekStart: enumVal("kf_week_start", ["", "mon", "sun", "sat"]),
+            rowH: enumVal("kf_row_h", ["", "tall"]),
+            tlGap: enumVal("kf_tl_gap", ["", "tight", "loose"]),
+            motion: enumVal("kf_motion", ["", "calm", "standard", "lively"]),
+            heroTex: enumVal("kf_hero_tex", ["", "grid", "grain"]),
+            launchLine: DB.store.has("kf_launch_line") ? DB.store.getBool("kf_launch_line") : nil,
+            festive: DB.store.has("kf_festive") ? DB.store.getBool("kf_festive") : nil,
+            plain: DB.store.has("kf_plain") ? DB.store.getBool("kf_plain") : nil,
+            recentCount: [3, 5, 10].contains(recent) ? recent : nil,
+            heroStats: stats.count == DS.HeroStats.all.count ? nil : Array(stats).sorted())
+    }
+    /// D-36 收集设备组织 (顺序 / 分组 / 分组折叠 / 隐藏)。
+    /// 四项全空就整段不带 (缺字段 = 恢复时不动本机); groups 按 mac 排序, 同一份数据两次导出得到同一 canonical。
+    static func collectDeviceOrg() -> BackupBundle.Globals.DeviceOrg? {
+        let order = LockArchive.orderMacs
+        let groups = DB.keychains()
+            .map { kc -> (String, String) in (kc.mac, LockArchive.normalizedGroup(LockArchive.group(kc.mac))) }
+            .filter { !$0.1.isEmpty }
+            .sorted { $0.0 < $1.0 }
+            .map { BackupBundle.Globals.DeviceOrg.GroupRec(mac: $0.0, name: $0.1) }
+        let folded = (DB.store.get([String].self, "kf_group_folded") ?? []).sorted()
+        let hidden = DB.keychains().map { $0.mac }.filter { LockArchive.isHidden($0) }.sorted()
+        if order.isEmpty && groups.isEmpty && folded.isEmpty && hidden.isEmpty { return nil }
+        return BackupBundle.Globals.DeviceOrg(
+            order: order.isEmpty ? nil : order,
+            groups: groups.isEmpty ? nil : groups,
+            folded: folded.isEmpty ? nil : folded,
+            hidden: hidden.isEmpty ? nil : hidden)
+    }
+    /// 894 应用外观档：**逐值再过一遍白名单**才落盘。
+    /// 包体可能来自别的版本或被人改过，读侧的 enumVal 不能只信一次；
+    /// 这里每个字段都独立判定，不合格的就跳过 (本机保持原样)，绝不"整包接受"。
+    static func applyAppearance(_ a: BackupBundle.Globals.Appearance) {
+        func set(_ key: String, _ v: String?, _ allowed: [String]) {
+            guard let v, allowed.contains(v) else { return }
+            DB.store.set(key, v)
+        }
+        set("kf_theme", a.theme, ["", "light", "dark", "black"])
+        set("kf_accent", a.accent, ["", "indigo", "forest", "amber", "graphite", "rose", "aurora"])
+        set("kf_density", a.density, ["", "compact", "relaxed"])
+        set("kf_radius", a.radius, ["", "soft", "plump"])
+        set("kf_week_start", a.weekStart, ["", "mon", "sun", "sat"])
+        set("kf_row_h", a.rowH, ["", "tall"])
+        set("kf_tl_gap", a.tlGap, ["", "tight", "loose"])
+        set("kf_motion", a.motion, ["", "calm", "standard", "lively"])
+        set("kf_hero_tex", a.heroTex, ["", "grid", "grain"])
+        if let v = a.hc { DB.store.set("kf_hc", v) }
+        if let v = a.launchLine { DB.store.set("kf_launch_line", v) }
+        if let v = a.festive { DB.store.set("kf_festive", v) }
+        if let v = a.plain { DB.store.set("kf_plain", v) }
+        if let n = a.recentCount, [3, 5, 10].contains(n) { DB.store.set("kf_recent_count", n) }
+        if let stats = a.heroStats {
+            // 白名单外的项丢掉; 全空由 DS.HeroStats 自己回退全开 (不留一张没有指标的光板卡)
+            DB.store.set("kf_hero_stats", DS.HeroStats.all.filter { stats.contains($0) })
+        }
     }
     @discardableResult
     static func restoreAll(_ bundle: BackupBundle) -> (imported: Int, overwritten: Int) {
@@ -214,10 +383,58 @@ enum BackupKit {
             if let pc = globals.passcode, !pc.s.isEmpty, !pc.d.isEmpty {
                 DB.store.set("kf_passcode", ["s": pc.s, "d": pc.d]) // 应用锁摘要跨端迁移
             }
+            if let otps = globals.otpKeys, !otps.isEmpty {
+                // 白名单核验: 包体可能来自别的设备/被改过, 键只允许"本包内某把锁"的 totp/static 键位。
+                // 不做核验就等于把"任意偏好键写入"开放给一个可伪造的 JSON 字段。
+                // 锁名同时收原样与规范化两种形态, 免得因大小写/分隔符差异把合法键全部丢掉。
+                var allowed = Set<String>()
+                for d in bundle.devices {
+                    for m in [d.mac, DB.normalizeMac(d.mac)] {
+                        allowed.insert(CredentialOrg.totpKey(m))
+                        allowed.insert(CredentialOrg.staticKey(m))
+                    }
+                }
+                for (k, v) in otps where allowed.contains(k) && !v.isEmpty {
+                    DB.store.set(k, v)
+                }
+            }
+            // 894 外观随备份走: 逐值白名单复核后才落盘 (见 applyAppearance)。
+            // 恢复完由调用方走一次外观重建通道，否则"备份里是深色、屏幕上还是浅色"要等到下次冷启动。
+            if let ap = globals.appearance { applyAppearance(ap) }
+            // D-36 设备组织随包: 白名单式落地 —— 顺序只认本包里真有的 mac, 分组只写这些 mac,
+            // 折叠只收现在真存在的组, 隐藏只对包内 mac 生效。缺哪一项就那一项不动 (与 894 同一纪律)。
+            // 这里只碰四个本地偏好键, 不写门锁、不碰凭证与日志。
+            if let org = globals.deviceOrg {
+                let known = Set(bundle.devices.map { DB.normalizeMac($0.mac) })
+                if let order = org.order {
+                    let keep = order.map { DB.normalizeMac($0) }.filter { known.contains($0) }
+                    // 本机已有、这份包里没有的锁垫在包内顺序之后 (按绑定先后), 不把它们从表里挤掉
+                    let rest = DB.keychains().map { $0.mac }.filter { !keep.contains($0) }
+                        .sorted { (DB.keychain($0)?.pairedAt ?? "") < (DB.keychain($1)?.pairedAt ?? "") }
+                    LockArchive.setOrder(keep + rest)
+                }
+                if let groups = org.groups {
+                    for rec in groups where known.contains(DB.normalizeMac(rec.mac)) {
+                        LockArchive.setGroup(DB.normalizeMac(rec.mac), rec.name)
+                    }
+                }
+                if let folded = org.folded {
+                    let live = Set(LockArchive.grouped(DB.keychains()).map { $0.name })
+                    let keep = folded.map { LockArchive.normalizedGroup($0) }.filter { live.contains($0) }
+                    DB.store.setCodable("kf_group_folded", Array(Set(keep)).sorted())
+                }
+                if let hidden = org.hidden {
+                    let hid = Set(hidden.map { DB.normalizeMac($0) })
+                    for mac in known { LockArchive.setHidden(mac, hid.contains(mac)) }
+                }
+            }
             if let tr = globals.trace, let lines = tr.lines, !lines.isEmpty {
+                // 小程序 trace 行内含令牌/密钥 hex (vendor/app/utils/trace.js:5 自述), 原样落本机就会
+                // 进系统备份与导出中心。保留行数/时间语义供"记录"分区预览, 但先过同口径 hex 脱敏。
+                let safe = lines.map { Redact.frameHex($0) }
                 DB.store.set("kf_trace_persist_v1", [
-                    "savedAt": tr.savedAt ?? 0, "count": lines.count,
-                    "chars": tr.chars ?? 0, "lines": lines,
+                    "savedAt": tr.savedAt ?? 0, "count": safe.count,
+                    "chars": tr.chars ?? 0, "lines": safe,
                 ])
             }
         }

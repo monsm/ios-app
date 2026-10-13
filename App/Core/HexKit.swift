@@ -6,24 +6,29 @@ enum HexKit {
     static func bytes(_ hex: String) -> [UInt8] {
         // 非 hex 字符按 JS hexToBytes 语义落 0x00 且保持长度 (NaN→Uint8Array 强转 0),
         // 否则流会缩短、后续所有偏移错位
-        func nib(_ c: Character) -> UInt8 {
-            switch c {
-            case "0"..."9": return UInt8(c.asciiValue! - 0x30)
-            case "a"..."f": return UInt8(c.asciiValue! - 0x61 + 10)
-            case "A"..."F": return UInt8(c.asciiValue! - 0x41 + 10)
-            default: return 0
+        // 旧实现在 Character 含多标量时 (键帽 "1\u{20E3}"、组合音标 é) asciiValue! 直接 fatal。
+        // 返回可选并按 JS parseInt(pair,16) 的前缀语义处理: 首字符非 hex → 0; 次字符非 hex → 只取首位。
+        func nib(_ c: Character) -> UInt8? {
+            guard let a = c.asciiValue else { return nil }
+            switch a {
+            case 0x30...0x39: return a - 0x30
+            case 0x61...0x66: return a - 0x61 + 10
+            case 0x41...0x46: return a - 0x41 + 10
+            default: return nil
             }
         }
         var out = [UInt8]()
         out.reserveCapacity(hex.count / 2)
         var i = hex.startIndex
         while i < hex.endIndex {
-            let n1 = nib(hex[i])
+            let c1 = hex[i]
             i = hex.index(after: i)
             guard i < hex.endIndex else { break }   // 奇长末字符两边同丢 (JS substr 语义)
-            let n2 = nib(hex[i])
+            let c2 = hex[i]
             i = hex.index(after: i)
-            out.append(n1 << 4 | n2)
+            // 与 JS parseInt(pair, 16) 对齐: 首字符非 hex → NaN → 0; 次字符非 hex → 只取首位 ("1g"→1 而非 0x10)
+            guard let n1 = nib(c1) else { out.append(0); continue }
+            if let n2 = nib(c2) { out.append(n1 << 4 | n2) } else { out.append(n1) }
         }
         return out
     }
@@ -66,12 +71,13 @@ enum HexKit {
         while t.count < chars { t = "0" + t }
         return String(t.prefix(max(chars, t.count)))
     }
-    // ASCII → hex 右补零到 n 字节 (JS asciiHex: charCodeAt(i)&0xff + padEnd, 不截断)
-    // 注意与 JS 语义逐项对齐: 取的是 UTF-16 码点低字节 (非 UTF-8 编码), 超长只右补零不前截 —
-    // 非 ASCII 输入 (numberPad 可粘贴) 两种实现字节不同, 必须与 JS 一致
+    // ASCII → hex 右补零到 n 字节 (JS kernel/cmds.js:22 `s.charCodeAt(i) & 0xff` + padEnd, 不截断)
+    // 必须按 **UTF-16 码元** 迭代: 旧写法遍历 unicodeScalars, 对 BMP 字符两者一致, 但 emoji 这类
+    // 补充平面字符 JS 得到两个代理项 (0xD83D→3d, 0xDE00→00 共 2 字节), Swift 只得到 1 字节 ——
+    // 于是"App 台账里的密码"和"实际写进锁的密码"字节不同, 用户下次输入按 JS 口径就开不了锁。
     static func asciiHex(_ s: String, nBytes: Int) -> String {
         var h = ""
-        for scalar in s.unicodeScalars { h += String(format: "%02x", scalar.value & 0xff) }
+        for u in s.utf16 { h += String(format: "%02x", UInt32(u) & 0xff) }
         while h.count < nBytes * 2 { h += "0" }
         return h
     }

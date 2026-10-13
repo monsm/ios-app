@@ -22,6 +22,20 @@ final class GoldenDiffTests: XCTestCase {
         return cur as! T
     }
 
+    /// 夹具必须真加载到: `static var golden` 为空时下面每条 `if let v = golden[...]` 都走空集合,
+    /// 全套差分测试会**静默通过** (资源没打进 bundle / JSON 解不开 都无人知晓)。
+    func testGoldenFixtureLoaded() throws {
+        XCTAssertFalse(GoldenDiffTests.golden.isEmpty, "fixtures/golden.json 未加载进测试 bundle (检查 project.yml 的 resources 配置)")
+        let must = ["aes", "cmds", "parse", "parseAdv", "zotp", "rcMsgTable", "pidTable",
+                    "capabilities", "inflate", "gwStatus", "kcStatus", "dfuZip", "attribution", "time"]
+        for k in must {
+            XCTAssertNotNil(GoldenDiffTests.golden[k], "金标缺少顶层键 \(k)")
+        }
+        // 命令族必须覆盖 40 条 (与 README/ZKCmdBuilder 口径一致)
+        let cmds = GoldenDiffTests.golden["cmds"] as? [String: Any] ?? [:]
+        XCTAssertEqual(cmds.count, 40, "金标 cmds 应为 40 条, 实际 \(cmds.count) — 有命令未生成向量")
+    }
+
     // ================= AES-128-ECB =================
     func testAES() {
         if let v = Self.golden["aes"] as? [String: Any] {

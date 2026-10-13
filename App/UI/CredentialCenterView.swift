@@ -4,7 +4,6 @@
 // 落点: 凭证 Tab 内的 NavigationLink 与批量操作栏; 不经过 vendor/。
 import SwiftUI
 import UIKit
-import LocalAuthentication
 
 // ================= 入口 (从凭证 Tab 进入, 按 section 路由) =================
 struct CredCenterView: View {
@@ -23,7 +22,9 @@ struct CredCenterView: View {
                     CredHistoryListView(mac: mac)
                 }
                 centerRow(icon: "rectangle.3.offgrid", title: "整理建议中心", sub: "\(CredentialOrg.advice(mac).count) 条待办 (358/505)") {
-                    CredOrganizeView(mac: mac)
+                    // 358: 建议行落地后要直达凭证列表 (预勾选已就位), 把整张凭证中心也一起收掉 ——
+                    // 只 pop 一层会停在"凭证中心", 用户还得再点一次关闭才看得到多选
+                    CredOrganizeView(mac: mac, onClose: { dismiss() })
                 }
                 centerRow(icon: "arrow.down.circle", title: "待下发队列", sub: "\(CredentialOrg.pendingQueue(mac).count) 项 · 到场补发 (365)") {
                     CredQueueView(mac: mac)
@@ -73,9 +74,19 @@ struct CredCenterView: View {
 struct CredBinView: View {
     @EnvironmentObject var app: AppState
     var mac: String
+    var initialQuery: String = ""
     @State private var source: Int = -1       // 498 来源过滤: -1 全部
     @State private var query = ""
     @State private var pendingPurge: CredBinEntry?
+
+    /// 532 搜索兜底动作: 凭证页那枚「去回收站搜 (503)」把当前搜索词一起递进来, 打开的就是已过滤的那一屏。
+    /// 原先这一步只有 `showBin = true` —— 词没传, 落地是个空搜索框, 用户还得自己再打一遍 (兜底动作没兜到底)。
+    /// 走 init + State(initialValue:) 而不是 onAppear 里补写: 交接只发生这一次, 之后搜索框归这一页自己。
+    init(mac: String, initialQuery: String = "") {
+        self.mac = mac
+        self.initialQuery = initialQuery
+        _query = State(initialValue: initialQuery)
+    }
 
     var body: some View {
         List {
@@ -120,6 +131,30 @@ struct CredBinView: View {
                 TextField("搜索已删项 (503)", text: $query)
                     .autocorrectionDisabled()
                     .accessibilityLabel("回收站搜索")
+                if !initialQuery.isEmpty {
+                    // 532: 词是凭证页递过来的就说一句, 不然这一屏看着像"谁替我打了字"
+                    Text("这词是从凭证页的搜索带进来的 (532/503), 要改要清都在这里。")
+                        .font(.caption2)
+                        .foregroundStyle(DS.Palette.textSub)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            // 362 复活提示: 只在真有同类开门时出现, 且把"推断"与局限写在同一屏里
+            if !resurrectHints.isEmpty {
+                Section("删除后仍出现同类开门 (362 · 本机推断)") {
+                    ForEach(resurrectHints) { h in
+                        VStack(alignment: .leading, spacing: DS.Space.xxs) {
+                            Text("「\(h.text)」之后仍有 \(h.n) 次\(h.kindName)开门")
+                                .font(.footnote)
+                                .foregroundStyle(DS.Palette.text)
+                            Text("协议没有\"读取锁内凭证清单\"的命令, 这是按凭证类型的推断; 且比较用的是锁自己记的时间, 锁钟未校准时会有偏差。要确认请在锁键盘上试该凭证或逐条删除。")
+                                .font(.caption)
+                                .foregroundStyle(DS.Palette.textSub)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .accessibilityElement(children: .combine)
+                    }
+                }
             }
             Section("已删 (\(rows.count))") {
                 if rows.isEmpty {
@@ -162,6 +197,26 @@ struct CredBinView: View {
         .dsScreenBackground()
     }
 
+    /// 362 复活提示条目 (由本机类型级推断换算成可读行)
+    private struct ResurrectHint: Identifiable {
+        let text: String
+        let kindName: String
+        let n: Int
+        var id: String { text + kindName }
+    }
+    private var resurrectHints: [ResurrectHint] {
+        RecordSearch.resurrectionHints(mac: mac).map { h in
+            let name: String
+            switch h.kind {
+            case "pwd": name = "密码"
+            case "temp": name = "临时码"
+            case "fp": name = "指纹"
+            default: name = "同类凭证"
+            }
+            return ResurrectHint(text: h.text, kindName: name, n: h.n)
+        }
+    }
+
     private var rows: [CredBinEntry] {
         var list = CredentialOrg.bin(mac)
         if source >= 0 { list = list.filter { $0.source == source } }
@@ -195,6 +250,19 @@ struct CredBinView: View {
                     .font(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
+                // 361 停用原因回溯: 台账里已无此条, 便签是"为什么被停"的唯一留存 (非本 App 停用则不显示)
+                if let t = CredentialOrg.disableMarkText(mac, kind: "pwd", key: p.alias) {
+                    Text(t)
+                        .font(.caption2)
+                        .foregroundStyle(DS.Palette.accentText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            } else if let f = e.fp,
+                      let t = CredentialOrg.disableMarkText(mac, kind: "fp", key: f.batch) {
+                Text(t)
+                    .font(.caption2)
+                    .foregroundStyle(DS.Palette.accentText)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             HStack(spacing: DS.Space.s) {
                 // 364 恢复窗口期: 7 天内可一键恢复; 超期按钮说明"需重新下发"
@@ -225,8 +293,15 @@ struct CredBinView: View {
         .confirmationDialog("彻底删除? (502 双验)", isPresented: Binding(get: { pendingPurge != nil }, set: { if !$0 { pendingPurge = nil } }), titleVisibility: .visible) {
             Button("输入确认", role: .destructive) {
                 if let x = pendingPurge {
-                    CredentialOrg.purgeBin(mac, id: x.id)
-                    app.showToast("已彻底删除 (指纹无法再录入; 密码值可再生成)")
+                    // 502 门槛统一: 这一枚原先按下即 purgeBin —— 同一个「彻底删除」在单条与清空两条路上
+                    // 一套有生物识别、一套没有 (§10.39 修过的正是这种分叉)。现在两条都走 guardedPurge。
+                    CredentialOrg.guardedPurge(mac, ids: [x.id],
+                                               reason: "彻底删除这条回收站凭证 (502)",
+                                               onDone: { app.showToast("已彻底删除 (指纹无法再录入; 密码值可再生成)") }) { commit in
+                        confirmDestructive("彻底删除", "生物识别未通过，或这台设备没有可用的生物识别。仍要彻底删除这一条? 指纹删掉后只能到锁前重录。", confirmTitle: "删除") {
+                            commit()
+                        }
+                    }
                 }
                 pendingPurge = nil
             }
@@ -238,48 +313,35 @@ struct CredBinView: View {
 
     private func daysLeftOf(_ e: CredBinEntry) -> Int {
         let keep = Double(CredentialOrg.reclaimDays()) * 86400
+        // 单位口径：秒 —— `e.at` 是 `CredBinEntry.at` (秒)，`keep` 也是秒数的保留窗口；这条算"还剩几天可一键恢复"。
         return Int((e.at + keep - CredentialOrg.nowSec) / 86400)
     }
 
     private func restore(_ e: CredBinEntry) {
-        // 504 还原即重新下发: 在用 (未过期) 密码还原后询问"立即重新下发"
-        var msg = CredentialOrg.restoreBin(mac, entry: e, asCopy: false)
-        if let p = e.pwd, CredentialOrg.expiryDate(p).map({ $0.timeIntervalSinceNow > 0 }) == true {
-            let alert = UIAlertController(title: "重新下发到锁? (504)",
-                                         message: "「\(e.text)」仍在有效期, 还原后锁端该密码已删除, 需重新下发一次才可用。",
-                                         preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "立即重新下发", style: .default) { _ in
-                CredentialOrg.enqueue(mac, kind: "restore", title: "重新下发 \(e.text)")
-                app.showToast("已加入待下发队列, 到场连接锁后点「重试」")
-            })
-            alert.addAction(UIAlertAction(title: "稍后", style: .cancel))
-            UIApplication.topViewController()?.present(alert, animated: true)
-            msg += " · 已询问重新下发"
-        }
-        app.showToast(msg)
+        // 504 还原即重新下发 —— 第一百五十四批把这一步搬进 `CredentialOrg.restoreBin`：
+        // 那时它还写在这个调用点的弹窗里，而 `restoreBin` 一共有三个调用方 (单条 / 批量 / 还原为副本)，
+        // 另两条把密码放回台账却从不排下发 ⇒ 界面"已还原"，锁里没这条。
+        // 现在排队与"排没排、为什么没排"都由 restoreBin 的返回值说清，这里不再各写一遍。
+        app.showToast(CredentialOrg.restoreBin(mac, entry: e, asCopy: false))
     }
 
     private func purgeAll() {
-        let n = CredentialOrg.bin(mac).count
-        guard n > 0 else { return }
-        // 502 双验: 先生物识别 (无生物则走双确认弹窗), 二次确认后清空
-        let ev = LAContext()
-        ev.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: "彻底删除回收站 \(n) 条") { ok, _ in
-            DispatchQueue.main.async {
-                if ok {
-                    doPurgeAll()
-                } else {
-                    confirmDestructive("彻底清空回收站", "生物识别未通过。仍要彻底清空 \(n) 条已删凭证? 不可找回 (指纹需到锁前重新录入)。", confirmTitle: "清空") {
-                        doPurgeAll()
-                    }
-                }
+        let entries = CredentialOrg.bin(mac)
+        guard !entries.isEmpty else { return }
+        let n = entries.count
+        // 502 门槛统一: 与单条那枚同走 guardedPurge。这里原先自己现造 LAContext 直接 evaluatePolicy —
+        // 没先问 canEvaluate、也没有"无生物可刷"的 biometryNotAvailable 分支；同一个「彻底删除」
+        // 两条路深浅各说各话正是漏问的开始 (§10.39 修过的就是这种分叉)。
+        CredentialOrg.guardedPurge(mac, ids: entries.map(\.id),
+                                   reason: "彻底删除回收站 \(n) 条",
+                                   onDone: {
+                                       app.showToast("已清空回收站 (505 计入整理)")
+                                       _ = Milestones.recordOrganize()
+                                   }) { commit in
+            confirmDestructive("彻底清空回收站", "生物识别未通过，或这台设备没有可用的生物识别。仍要彻底清空 \(n) 条已删凭证? 不可找回 (指纹需到锁前重新录入)。", confirmTitle: "清空") {
+                commit()
             }
         }
-    }
-    private func doPurgeAll() {
-        CredentialOrg.saveBin(mac, [])
-        app.showToast("已清空回收站 (505 计入整理)")
-        _ = Milestones.recordOrganize()
     }
 }
 
@@ -347,9 +409,11 @@ struct CredHistoryView: View {
     var key: Int
     @State private var preview: Int? = nil     // 493 只读回看选中的版本
     @State private var diffFrom: Int? = nil    // 489 对比基线版本
+    /// 星标等"只写库"的操作不会触发 body 重算 → 图标不变, 用户以为没生效 (495)
+    @State private var storeTick = 0
 
     private var title: String {
-        if kind == "pwd" { return CredentialOrg.displayPwd(DB.getPwd(mac, key) ?? LedgerPwd(alias: key, from: "2010-01-01 00:00:00", to: "2118-01-01 00:00:00", temp: false, at: 0)) }
+        if kind == "pwd" { return CredentialOrg.displayPwd(DB.getPwd(mac, key) ?? LedgerPwd(alias: key, from: "2010-01-01 00:00:00", to: "2118-01-01 00:00:00", temp: false, at: 0, note: "")) }
         if let f = DB.getFp(mac, key) { return "指纹「\(f.name)」" }
         return kind == "pwd" ? "密码 #\(key)" : "指纹批次 \(key)"
     }
@@ -399,6 +463,7 @@ struct CredHistoryView: View {
                     var next = CredentialOrg.history(mac, kind, key)
                     for i in next.indices where next[i].version == s.version { next[i].starred.toggle() }
                     CredentialOrg.saveHistory(mac, kind, key, next)
+                    storeTick += 1
                     DS.Haptics.tick.impactOccurred()
                 } label: {
                     Image(systemName: s.starred ? "star.fill" : "star")
@@ -412,6 +477,12 @@ struct CredHistoryView: View {
             Text(s.relTime)
                 .font(.caption2)
                 .foregroundStyle(DS.Palette.textSub)
+            // 489 基线可见: 钉住基线时把"在跟谁比"写在行上, 不设就不写 (默认与上一版比)
+            if let base = diffFrom, base != s.version {
+                Text("对比基线已钉在 v\(base)")
+                    .font(.caption2)
+                    .foregroundStyle(DS.Palette.textSub)
+            }
             // 489 修订着色: 与上一版逐字段对齐, 删除红/新增绿/修改黄
             if let up = prevOf(s) {
                 ForEach(CredentialOrg.diff(up, s).filter { $0.kind != "same" }) { d in
@@ -430,9 +501,16 @@ struct CredHistoryView: View {
                 }
             }
             HStack(spacing: DS.Space.s) {
-                Button("看差异") { diffFrom = s.version }
-                    .font(.caption.weight(.medium))
-                    .buttonStyle(.bordered)
+                // 489 基线可清除: 原先"看差异"只能设不能清, 点过一次之后每一行都永久跟那一版比,
+                // 而界面上没有任何地方说明基线被钉住了, 也没有回退口 (同类 storeTick 的问题早前已修)。
+                // 现在同一颗按钮兼作开关: 已选中此版 → 再点即清除基线, 回到"与上一版比"。
+                Button(diffFrom == s.version ? "取消基线" : "看差异") {
+                    diffFrom = (diffFrom == s.version) ? nil : s.version
+                }
+                .font(.caption.weight(.medium))
+                .buttonStyle(.bordered)
+                .accessibilityLabel(diffFrom == s.version ? "取消对比基线 v\(s.version), 改回与上一版比较"
+                                                           : "以此版 v\(s.version) 为对比基线")
                 Button(preview == s.version ? "退出预览" : "回看此版 (493)") {
                     preview = (preview == s.version) ? nil : s.version
                 }
@@ -441,8 +519,10 @@ struct CredHistoryView: View {
                 Spacer(minLength: 0)
                 Button("恢复到 v\(s.version)") {
                     // 496 恢复即新版本: 不覆盖, 新增 "恢复自 vX" 快照
-                    CredentialOrg.restore(mac, kind: kind, key: key, from: s)
-                    app.showToast("已恢复 v\(s.version), 生成新版本 (496)")
+                    // 第一百五十四批: 恢复只改本机台账 ⇒ 密码跟着排一次 504 重新下发，
+                    // 提示语带"锁端那条要重新下发才生效"那半句，不再单说"已恢复"。
+                    let extra = CredentialOrg.restore(mac, kind: kind, key: key, from: s)
+                    app.showToast("已恢复 v\(s.version), 生成新版本 (496)" + extra)
                     reloadCenter()
                 }
                 .font(.caption.weight(.medium))
@@ -461,8 +541,11 @@ struct CredHistoryView: View {
         }
     }
     private func prevOf(_ s: CredSnapshot) -> CredSnapshot? {
-        // 489 对比基线: 选中 "看差异" 的版本与它比, 否则与上一版比
-        let target = diffFrom ?? s.version - 1
+        // 489 对比基线: 钉住别的版本就跟那一版比；基线正好是本行时退回"上一版"。
+        // 第八十五批补这半边: 原先 target 直接取 diffFrom, 于是点"看差异"钉在正在看的这一行
+        // 会得到 diff(自己, 自己) = 全 same = 界面整块空白, 看着像功能坏了。
+        let pinned = diffFrom.flatMap { $0 == s.version ? nil : $0 }
+        let target = pinned ?? s.version - 1
         return CredentialOrg.history(mac, kind, key).first { $0.version == target }
     }
     @ViewBuilder
@@ -492,7 +575,8 @@ struct CredCalendarView: View {
     @State private var picked: Date?
 
     var body: some View {
-        let cal = Calendar.current
+        // 912: 月历的 lead 计算走 WeekCal —— 与上面 weekdayHeaders 的轮转必须同源，否则整体错一天
+        let cal = WeekCal.calendar
         let year = cal.component(.year, from: ym)
         let month = cal.component(.month, from: ym)
         let dl = CredentialOrg.monthDeadlines(mac, year: year, month: month)
@@ -564,13 +648,21 @@ struct CredCalendarView: View {
         .onAppear { picked = nil }
     }
 
-    private var weekdayHeaders: [String] { ["日", "一", "二", "三", "四", "五", "六"] }
+    private var weekdayHeaders: [String] {
+        // 912: 表头必须与月历 lead 用**同一个** firstWeekday 轮转。
+        // 原来是硬写 ["日","一",…] 的周日开头 —— 它只是恰好等于 zh_CN 的默认值;
+        // 一旦周起点可变而表头不动，格子就会整体错位一天 (周一的日期排在"日"下面)。
+        let names = ["日", "一", "二", "三", "四", "五", "六"]
+        let fw = WeekCal.calendar.firstWeekday      // Calendar 约定 1...7，越界也要夹回来而不是 trap
+        let start = min(max(fw - 1, 0), 6)
+        return Array(names[start...] + names[..<start])
+    }
 
     @ViewBuilder
     private func dayCell(year: Int, month: Int, day: Int, count: Int) -> some View {
-        let d = Calendar.current.date(from: DateComponents(year: year, month: month, day: day))!
-        let isToday = Calendar.current.isDateInToday(d)
-        let isPicked = picked.map { Calendar.current.isDate($0, inSameDayAs: d) } ?? false
+        let d = WeekCal.gregorian.date(from: DateComponents(year: year, month: month, day: day))!
+        let isToday = WeekCal.gregorian.isDateInToday(d)
+        let isPicked = picked.map { WeekCal.gregorian.isDate($0, inSameDayAs: d) } ?? false
         Button {
             picked = isPicked ? nil : d
             if !isPicked { onPick(d) }
@@ -579,7 +671,8 @@ struct CredCalendarView: View {
                 if count > 0 {
                     Text("\(count)")
                         .font(.caption2.weight(.semibold))
-                        .foregroundStyle(.white)
+                        // warn 是语义填充色, 走"填充上的前景"令牌 (浅档白字/深档墨字, 机检 E1)
+                        .foregroundStyle(DS.Palette.onSem)
                         .padding(.horizontal, 5).padding(.vertical, 1)
                         .background(DS.Palette.warn, in: Capsule())
                         .lineLimit(1)
@@ -597,7 +690,7 @@ struct CredCalendarView: View {
         .accessibilityLabel("\(year) 年 \(month) 月 \(day) 日, 当日到期 \(count) 条")
     }
     private func move(_ delta: Int) {
-        ym = Calendar.current.date(byAdding: .month, value: delta, to: ym) ?? ym
+        ym = WeekCal.gregorian.date(byAdding: .month, value: delta, to: ym) ?? ym
     }
 }
 
@@ -606,7 +699,10 @@ struct CredOrganizeView: View {
     @EnvironmentObject private var app: AppState
     @Environment(\.dismiss) private var dismiss
     var mac: String
-    var onDone: () -> Void
+    /// 调用方 (CredentialCenterView:26 整理建议中心) 未传 → 旧写法直接编译不过; 默认空闭包 = 由父页 body 重算刷新
+    var onDone: () -> Void = {}
+    /// 358 预勾选落地时用来收掉整张凭证中心 sheet; 未传 (独立预览等场景) 就只 pop 本层
+    var onClose: (() -> Void)? = nil
 
     var body: some View {
         NavigationStack {
@@ -635,7 +731,7 @@ struct CredOrganizeView: View {
                     }
                 }
                 Section("说明") {
-                    Text("「回收站 N 条」直达回收站 (505); 其余建议回凭证列表点「选择」, 再用「智能选取 · 已过期/同类型」套用对应集合 (350)。")
+                    Text("「回收站 N 条」直达回收站 (505); 过期/重复值/无归属点按后带预勾选回凭证列表多选 (358), 底部批量条停用或移交; 成员级建议直接执行 (471)。")
                         .font(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
@@ -675,8 +771,48 @@ struct CredOrganizeView: View {
     }
 
     private func apply(_ a: CredentialOrg.Advice) {
-        app.showToast("回凭证列表点「选择」, 用「智能选取」套用「\(a.title)」对应集合 (350)")
+        // 471 的成员级建议: 智能选取 (350) 没有"按成员"这一集合, 所以不能沿用"用智能选取套用"那句指引。
+        // 这条直接执行停用: 口径与建议生成完全同源 (temp + owner + 已过期, 354: 双方同去归档),
+        // 走 batchDisable 这一条既有批量路径 (删除 + 回收站 + 锁端删除入队), 不另拼一份。
+        if a.action == "memberExpired" {
+            let owner = String(a.id.dropFirst("memberExpired:".count))
+            let aliases = DB.listPwds(mac)
+                .filter { $0.temp && $0.owner == owner && CredentialOrg.pwdState($0) == 2
+                          && !CredentialOrg.isArchived(mac, "pwd", $0.alias) }
+                .map { $0.alias }
+            let n = CredentialOrg.batchDisable(mac, pwdAliases: aliases, fpBatches: [])
+            app.showToast(n > 0 ? "已停用 \(n) 张过期码并收进回收站 (471)" : "没有可停用的过期码")
+            onDone()
+            return
+        }
+        // 358: 「点击进入对应多选」—— 其余建议按各自集合算出 alias 表, 交凭证页多选预勾选 (会话态深链)。
+        // 原先只 toast 一句"回列表点选择再用智能选取", 是把三步手动路推回给用户, 不是"进入多选"。
+        // 集合口径与建议生成 (:752-770) 同源: 过期=pwdState 2 / 重复值=同值组去重后的全体 / 无归属=owner 空。
+        // 354: 预勾选与智能选取同一口径 —— 归档条不进预勾 (勾了也看不见, 等于"看不到却被停掉")
+        let selectable = DB.listPwds(mac).filter { !CredentialOrg.isArchived(mac, "pwd", $0.alias) }
+        let ids: [Int]
+        switch a.action {
+        case "expired":
+            ids = selectable.filter { CredentialOrg.pwdState($0) == 2 }.map { $0.alias }
+        case "dups":
+            var byValue: [String: [Int]] = [:]
+            for p in selectable where p.pwd != nil { byValue[p.pwd!, default: []].append(p.alias) }
+            ids = byValue.values.filter { $0.count > 1 }.flatMap { $0 }
+        case "noowner":
+            ids = selectable.filter { $0.owner == nil }.map { $0.alias }
+        default:
+            ids = []
+        }
+        guard !ids.isEmpty else {
+            app.showToast("这条建议当前没有可勾选的条目")
+            onDone()
+            return
+        }
+        app.pendingCredSelect = ids
+        app.showToast("已勾好 \(ids.count) 条, 回列表继续 (358)")
         onDone()
+        // 有 onClose 就整张 sheet 收起直达列表; 没有则退回上一层 (独立进入时的兜底)
+        if let c = onClose { c() } else { dismiss() }
     }
 }
 
@@ -686,6 +822,8 @@ struct CredQueueView: View {
     @Environment(\.dismiss) private var dismiss
     var mac: String
     @State private var busy: Int? = nil
+    /// 「全部重试」互斥: 旧写法连点会开出多个并发 Task, 对同一队列重复下发删除/延期命令
+    @State private var retryAllRunning = false
 
     var body: some View {
         List {
@@ -729,7 +867,7 @@ struct CredQueueView: View {
                                 .disabled(busy != nil)
                         }
                         if item.attempt > 0 {
-                            Text("第 \(item.attempt) 次尝试 · \(ItemTime(item.lastAt))")
+                            Text("第 \(item.attempt) 次尝试 · \(itemTime(item.lastAt))")
                                 .font(.caption2)
                                 .foregroundStyle(DS.Palette.textSub)
                         }
@@ -739,7 +877,10 @@ struct CredQueueView: View {
             }
             Section {
                 Button("全部重试 (按序)") {
+                    guard !retryAllRunning else { return }
+                    retryAllRunning = true
                     Task {
+                        defer { retryAllRunning = false }
                         for item in q {
                             busy = item.id
                             do {
@@ -754,8 +895,9 @@ struct CredQueueView: View {
                         app.showToast("已逐条重试 \(q.count) 项")
                     }
                 }
+                .disabled(retryAllRunning)
                 .font(.subheadline.weight(.medium))
-                .foregroundStyle(DS.Palette.accentText)
+                .foregroundStyle(retryAllRunning ? DS.Palette.textSub : DS.Palette.accentText)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .frame(minHeight: DS.Hit.min)
             }
@@ -799,40 +941,34 @@ struct CredQueueView: View {
     }
     private func retry(_ item: CredQueueItem) {
         guard busy == nil else { return }
+        // 第八十八批: 入口一次性钉住锁 (含非空校验)。原先 Task 里连读三次活读的 `mac` ——
+        // ensureConnected 一次、成功回写一次、失败回写一次；两次 await 之间当前锁可被 AppIntent /
+        // kf:// 深链改掉，于是"命令发给 A 锁、队列状态记到 B 锁"。current 变 nil 时 `?? ""`
+        // 还会把队列状态写到空 mac 上 (等于把这条待办弄丢)。
+        let m = mac
+        guard !m.isEmpty else { app.showToast("未选择门锁"); return }
         busy = item.id
         Task {
             defer { busy = nil }
             do {
-                try await app.lock.ensureConnected(mac: mac)
-                try await applyItem(item)
-                CredentialOrg.markQueue(mac, id: item.id, state: .done, note: item.title + " · 锁端确认")
+                try await app.lock.ensureConnected(mac: m)
+                // 第一百五十四批: 这条 switch 曾有独立一份，且**没带**"缺别名就中止"的修正 ——
+                // `item.pwd?.alias ?? 0` 会向锁发"删 0 号槽"，删掉的是别人的密码，
+                // 回包后还被标成"锁端确认"。三份实现现在收进 CredentialOrg.sendQueued 一处。
+                let extra = try await CredentialOrg.sendQueued(m, app.lock, item)
+                CredentialOrg.markQueue(m, id: item.id, state: .done, note: item.title + " · 锁端确认" + extra)
                 app.showToast("\(item.title) 已下发")
             } catch {
-                CredentialOrg.markQueue(mac, id: item.id, state: .failed, note: item.title + " · 失败: " + error.localizedDescription)
+                CredentialOrg.markQueue(m, id: item.id, state: .failed, note: item.title + " · 失败: " + error.localizedDescription)
                 app.showToast("重试失败: \(error.localizedDescription)")
             }
         }
     }
-    private func applyItem(_ item: CredQueueItem) async throws {
-        switch item.kind {
-        case "del_pwd":
-            try await app.lock.pwdDelete(item.pwd?.alias ?? 0)
-        case "del_fp":
-            try await app.lock.fpDelete(UInt32(item.fp?.batch ?? 0))
-        case "period":
-            if let p = item.pwd, !item.newFrom.isEmpty {
-                try await app.lock.pwdExpire(p.alias, item.newFrom, item.newTo)
-            }
-        case "restore":
-            if let p = item.pwd, let v = p.pwd { _ = try await app.lock.pwdAdd(pwd: v, validFrom: p.from, validTo: p.to) }
-        default:
-            break
-        }
-    }
-    private func ItemTime(_ t: Double) -> String {
+    private func itemTime(_ t: Double) -> String {
         guard t > 0 else { return "" }
         let f = DateFormatter()
         f.dateFormat = "MM-dd HH:mm"
+        f.locale = Locale(identifier: "en_US_POSIX")
         return f.string(from: Date(timeIntervalSince1970: t))
     }
 }
@@ -958,17 +1094,40 @@ struct CredDisableSheet: View {
     var pwdAliases: [Int]
     var fpBatches: [Int]
     var onDone: () -> Void
+    /// 313 停用必填原因: 空值 = 确认按钮不可点 (不给默认值, 免得"默认原因"变成假记录)
+    @State private var reason = ""
+    /// 367 写入成员动态: 默认关 —— 默认往别人的档案页写一条东西, 等于未经确认改数据
+    @State private var writeToFeed = false
+    private static let reasons: [(String, String)] = [
+        ("leak", "疑似泄露"), ("rotate", "换码"), ("person", "人员变动"), ("other", "其他")]
+
+    /// 367 影响成员及各自名下条数。**按名册顺序**出, 不用 Array(Set(...)):
+    /// Set 的顺序每次启动都可能变 ⇒ 头像列会左右跳, 逐条写动态时同一批凭证还会写到不同顺序里。
+    private var ownerCounts: [(id: String, pwd: Int, fp: Int)] {
+        let pwds = DB.getPwdList(pwdAliases, mac)
+        let fps = DB.getFpList(fpBatches, mac)
+        let ids = Set(pwds.compactMap { $0.owner } + fps.compactMap { $0.owner })
+        return DB.members().filter { ids.contains($0.id) }.map { m in
+            (id: m.id, pwd: pwds.filter { $0.owner == m.id }.count, fp: fps.filter { $0.owner == m.id }.count)
+        }
+    }
+    private var ownerIds: [String] { ownerCounts.map { $0.id } }
+    /// 没归属的那几条: 它们不进任何人的动态, 这句话得能在界面上说出来。
+    private var unownedCount: Int {
+        max(0, (pwdAliases.count + fpBatches.count) - ownerCounts.reduce(0) { $0 + $1.pwd + $1.fp })
+    }
+    /// 367 勾选行文案。「另有 0 条无归属」是把界面写成噪音, 所以只在真有的时候才出现那一半。
+    private var feedToggleLabel: String {
+        let head = "写入该成员动态 (367 · 影响 \(ownerIds.count) 位成员, 各写自己名下的条数)"
+        return unownedCount > 0 ? head + "; 另有 \(unownedCount) 条无归属, 不进任何人的动态" : head
+    }
 
     var body: some View {
         NavigationStack {
             List {
                 Section("停用摘要 (353)") {
                     HStack(spacing: DS.Space.s) {
-                        // 影响成员头像列 (成员色点 183 风格, 纯本地)
-                        let ownerIds = Array(Set(
-                            DB.getPwdList(pwdAliases, mac).compactMap { $0.owner } +
-                            DB.getFpList(fpBatches, mac).compactMap { $0.owner }
-                        ))
+                        // 影响成员头像列 (成员色点 183 风格, 纯本地) —— 名单见 ownerCounts, 顺序稳定
                         ForEach(ownerIds, id: \.self) { id in
                             if let m = DB.member(id) {
                                 Circle()
@@ -976,7 +1135,8 @@ struct CredDisableSheet: View {
                                     .frame(width: 26, height: 26)
                                     .overlay(Text(String(m.name.prefix(1)))
                                         .font(.caption2)
-                                        .foregroundStyle(.white)
+                                        // accentText 在深色模式是浅紫, 白首字母压上去几乎看不见
+                                        .foregroundStyle(DS.Palette.onAccent)
                                         .lineLimit(1))
                                     .accessibilityLabel("成员 \(m.name)")
                             }
@@ -1010,27 +1170,86 @@ struct CredDisableSheet: View {
                         .font(.caption)
                         .foregroundStyle(DS.Palette.danger)
                         .fixedSize(horizontal: false, vertical: true)
+                    // 313: 原因四选一, 没选就不许停用 (工单系统的"必填原因"口径)
+                    HStack(spacing: DS.Space.xs) {
+                        ForEach(Array(Self.reasons.enumerated()), id: \.offset) { _, r in
+                            let on = reason == r.0
+                            Button(r.1) {
+                                reason = r.0
+                                DS.Haptics.tick.impactOccurred()
+                            }
+                            .font(.caption.weight(on ? .semibold : .regular))
+                            .padding(.horizontal, DS.Space.s).padding(.vertical, 6)
+                            .foregroundStyle(on ? DS.Palette.onAccent : DS.Palette.textSub)
+                            .background(on ? AnyShapeStyle(DS.Palette.accent) : AnyShapeStyle(DS.Palette.surfaceAlt), in: Capsule())
+                            .frame(minHeight: DS.Hit.min - DS.Space.xs)
+                            .contentShape(Rectangle())
+                        }
+                    }
+                    .accessibilityElement(children: .contain)
+                    .accessibilityLabel("停用原因 (313 必填)\(reason.isEmpty ? ", 未选择" : "")")
+                    if reason.isEmpty {
+                        Text("先选一个停用原因才能继续 — 原因只写进本机审计与运行日志，不会发给门锁。")
+                            .font(.caption2).foregroundStyle(DS.Palette.warn)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    // 367: 原句就是「勾选写入该成员动态」。勾上之后按归属各写一条 (每人只看到自己名下的条数),
+                    // 不勾则维持改动前那一条汇总流水 —— 两种形态各写各的, 绝不双写:
+                    // 同一件事在敏感流水里出现两行, 388 那个视图就会把一次停用数成两次。
+                    if !ownerIds.isEmpty {
+                        Toggle(feedToggleLabel, isOn: $writeToFeed)
+                            .font(.footnote)
+                    }
                     // 353 二次点确认: 摘要页(一次) + 破坏性按钮(二次)
                     Button {
+                        let label = Self.reasons.first { $0.0 == reason }?.1 ?? "其他"
+                        let n = pwdAliases.count + fpBatches.count
+                        // 只记条数与原因: 口令明文与指纹特征绝不进日志 (AUTOOPEN-PLAN §1 同一纪律)
+                        app.lock.log("info", "停用 \(n) 条凭证 · 原因 \(label) (313)")
+                        if writeToFeed {
+                            for o in ownerCounts {
+                                SensitiveLedger().record("停用·\(label)", target: "密码 \(o.pwd) / 指纹 \(o.fp)", member: o.id)
+                            }
+                        } else {
+                            SensitiveLedger().record("停用·\(label)", target: "密码 \(pwdAliases.count) / 指纹 \(fpBatches.count)")
+                        }
+                        // 361: 逐条落一个回溯便签, 回收站行才答得出"这条当初为什么被停"
+                        // 468 代管补记: 属主被点名「由我代管」的条, via 与单条停用同一口径补「管理员代操作」。
+                        // 按条拆开各写各的 —— 没代管的条不许整批跟着沾这句 (同单条 disableVia 的判据)。
+                        let proxyIDs = MemberHub.proxyNames
+                        let proxyPwds = DB.getPwdList(pwdAliases, mac)
+                            .filter { p in p.owner.map { proxyIDs.contains($0) } == true }.map(\.alias)
+                        let proxyFps = DB.getFpList(fpBatches, mac)
+                            .filter { f in f.owner.map { proxyIDs.contains($0) } == true }.map(\.batch)
+                        CredentialOrg.markDisabled(mac, kind: "pwd", keys: pwdAliases.filter { !proxyPwds.contains($0) },
+                                                   label: label, via: "本机批量停用")
+                        CredentialOrg.markDisabled(mac, kind: "pwd", keys: proxyPwds,
+                                                   label: label, via: "本机批量停用 · 管理员代操作 (468)")
+                        CredentialOrg.markDisabled(mac, kind: "fp", keys: fpBatches.filter { !proxyFps.contains($0) },
+                                                   label: label, via: "本机批量停用")
+                        CredentialOrg.markDisabled(mac, kind: "fp", keys: proxyFps,
+                                                   label: label, via: "本机批量停用 · 管理员代操作 (468)")
                         onDone()
                         dismiss()
                     } label: {
-                        Text("确认停用 (\(pwdAliases.count + fpBatches.count) 条)")
+                        Text(reason.isEmpty ? "先选择停用原因 (313)" : "确认停用 (\(pwdAliases.count + fpBatches.count) 条)")
                             .frame(maxWidth: .infinity)
                             .frame(minHeight: DS.Hit.min)
                     }
                     .buttonStyle(DestructiveActionStyle())
-                    .accessibilityHint("已展示影响成员与不可逆说明, 点按即执行停用")
+                    .disabled(reason.isEmpty)
+                    .opacity(reason.isEmpty ? 0.45 : 1)
+                    .accessibilityHint(reason.isEmpty
+                        ? "需先选停用原因才能执行"
+                        : "已展示影响成员与不可逆说明, 点按即执行停用")
                 }
             }
             .navigationTitle("批量停用确认")
             .scrollContentBackground(.hidden)
             .dsScreenBackground()
+            // 取消 = 只退出, 绝不触发 onDone (调用方 CredentialsView 的 onDone 即 finishDisable, 执行停用与入回收站)
             .toolbar { ToolbarItem(placement: .navigationBarLeading) {
-                Button("取消") {
-                    onDone()
-                    dismiss()
-                }
+                Button("取消") { dismiss() }
             } }
         }
     }

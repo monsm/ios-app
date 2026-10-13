@@ -7,7 +7,7 @@
 | 能力 | 说明 |
 |---|---|
 | App Intents / 快捷指令 | 无需付费能力；App 内动作可注册给快捷指令/动作按钮/轻点背面 |
-| WidgetKit（哑组件） | Widget target 本身可建；**但见下方 App Groups 限制** |
+| WidgetKit（哑组件） | **已按此口径落地**：927 哑按钮 target `OfflineLockWidget`（`project.yml`），组件只拉起 App，不读本机数据 |
 | Control Center 控件（ControlWidget, iOS 18+） | 基于 App Intent，可用 |
 | 本地通知 UNUserNotificationCenter | 免费；全部离线场景的提醒都走这里 |
 | BLE 后台模式 / CoreBluetooth | capability 可用；后台重连/扫描受系统调度约束 |

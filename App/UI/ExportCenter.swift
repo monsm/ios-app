@@ -1,5 +1,9 @@
 // 包12 导出·打印·分享 — 全离线, 数据只出本机一次且每次明示 (718)
-// 收录 478/548/683-722 (⚠703 降级 .eml 文本, 710/711/713 见 DEFERRED.md, 203 舍弃)
+// 收录 478/548/683-710/712/714-722 (703 系统邮件直发, 无邮箱账号时回退 .eml 文本;
+// 710 = 报告校验二维码 + 扫码核对, 实现见 ReportVerify 一节与 ReportVerifyView.swift)
+// 未做: 711/713 (iPad 拖出 / 安全作用域书签, 见 DEFERRED.md 包12 节);
+// 不提供: 203 (可读 JSON 与 684 重复, 已舍弃)。这几条以前和"收录"写在同一行,
+// 于是台账把没做的也当实现证据记了一笔。
 // 纪律: 颜色只经 DS 令牌; 导出文件 UTF-8+BOM (中文 Excel 友好); 打印走 UIPrintInteractionController;
 //       校验行 SHA-256 复用 CryptoKit (722); 归属只走 Attribution 可证明链, 推不出留空 (CAPABILITY §3)。
 import SwiftUI
@@ -9,6 +13,7 @@ import UniformTypeIdentifiers
 import PDFKit
 import QuickLook
 import LinkPresentation
+import MessageUI
 
 // ================= 导出范围 (701 打印范围: 全月/仅告警/仅指定成员) =================
 enum ExportRange: Hashable {
@@ -24,7 +29,10 @@ enum ExportRange: Hashable {
         case .month: return "当月"
         case .day: return "最新单日"
         case .alarms: return "仅告警"
-        case .member(let n): return "仅 " + n
+        // 689: 关联值存的是成员 id (tag 必须是稳定 id), 但 label 会进文件名与标题
+        // (`:1529 title:` / `:1530 fileName:`), 直接拼 id 就导出成 "仅_<成员id>.csv"。
+        // 过滤那侧 (`filtered` 的 `.member`) 一直是先 id→name 再比, 这里与它同一个口径。
+        case .member(let id): return "仅 " + (DB.member(id)?.name ?? id)
         }
     }
 }
@@ -33,14 +41,19 @@ enum ExportRange: Hashable {
 struct ExportCols {
     var time = true, type = true, member = true, alarm = true, cred = false, hex = false
     static let savedKey = "kf_cred_export_cols"
-    var all = [time, type, member, alarm, cred, hex]
+    /// 六个字段是唯一真相，`all` 必须现算。原来写成 `var all = [time, ...]` 是**存储属性**：
+    /// 它在 init 时就固化成默认值，而 set() 只改字段、get()/onIndices/save() 全读 all
+    /// ⇒ 勾选既不改导出列，也不落盘（持久化恒写 111100），而页脚写着「上次选择会沿用」。
+    var all: [Bool] { [time, type, member, alarm, cred, hex] }
     func get(_ i: Int) -> Bool { all[i] }
     func set(_ i: Int, _ on: Bool) {
         switch i { case 0: time = on; case 1: type = on; case 2: member = on; case 3: alarm = on; case 4: cred = on; default: hex = on }
     }
     var onIndices: [Int] { (0..<6).filter { all[$0] } }
     static func load() -> ExportCols {
-        guard let s = DB.store.getString(savedKey) else { return .init() }
+        // Store.getString 返回**非可选** String (无键时为空串): 旧写法 guard let 绑定非可选值, 编译不过
+        let s = DB.store.getString(savedKey)
+        guard !s.isEmpty else { return .init() }
         var c = ExportCols()
         for i in s.indices where i < 6 { c.set(i, s[s.index(s.startIndex, offsetBy: i)] == "1") }
         return c
@@ -48,17 +61,24 @@ struct ExportCols {
     static func save(_ c: ExportCols) { DB.store.set(savedKey, c.all.map { $0 ? "1" : "0" }.joined()) }
 }
 
-// 705 CSV 转义 (RFC 4180): 含 " , 换行 的字段加引号并双引号转义
+// 705 CSV 转义 (RFC 4180) + 公式注入中和
 enum CSVKit {
+    /// 以 = + - @ 或制表符开头的字段会被 Excel / Numbers 当公式执行。成员名、凭证别名、备注均用户可控
+    /// (还可能来自导入的不可信备份) → 前置单引号强制文本, 同时保留 RFC 4180 的引号转义。
+    private static func formulaRisk(_ f: String) -> Bool {
+        guard let first = f.first else { return false }
+        return first == "=" || first == "+" || first == "-" || first == "@" || first == "\t"
+    }
     static func escape(_ f: String) -> String {
-        if f.contains("\"") || f.contains(",") || f.contains("\n") || f.contains("\r") {
-            return "\"" + f.replacingOccurrences(of: "\"", with: "\"\"") + "\""
+        let body = formulaRisk(f) ? "'" + f : f
+        if body.contains("\"") || body.contains(",") || body.contains("\n") || body.contains("\r") {
+            return "\"" + body.replacingOccurrences(of: "\"", with: "\"\"") + "\""
         }
-        return f
+        return body
     }
     /// 705 预检: 导出前扫描哪些字段会触发转义 (预览前 3 行防 Excel 错列)
     static func needEscaping(_ f: String) -> Bool {
-        f.contains("\"") || f.contains(",") || f.contains("\n") || f.contains("\r")
+        formulaRisk(f) || f.contains("\"") || f.contains(",") || f.contains("\n") || f.contains("\r")
     }
 }
 
@@ -68,7 +88,8 @@ enum ExportHeaders {
     static let en = ["time", "type", "member", "alarm", "cred", "hex"]
 }
 
-// 707 报告语言跟随: 项目仅中文, 键位预留 (设置可写 "zh-Hant"), 当前全部中文中立文案
+// 707 报告语言: 项目仅中文。**kf_report_lang 目前没有任何写入方** (界面上没有语言开关),
+// lang 恒为 zh-Hans —— 这是给繁体预留的键位, 不是"设置可写"的能力。加译时先补设置项再动 table。
 enum ReportTexts {
     static var lang: String {
         switch DB.store.getString("kf_report_lang") {
@@ -83,6 +104,7 @@ enum ReportTexts {
             "integrity": ["zh-Hans": "完整性核对"],
             "alarmSection": ["zh-Hans": "告警明细 (置前章节)"],
             "detailSection": ["zh-Hans": "逐日明细"],
+            "dispoSection": ["zh-Hans": "处置历史 (本机留痕)"],
             "summarySection": ["zh-Hans": "三句摘要"],
         ]
         return table[key]?[lang] ?? table[key]?["zh-Hans"] ?? key
@@ -98,6 +120,8 @@ struct ExportRecord {
     var isAlarm: Bool
     var hex: String       // 缓存层存了协议帧则原样带出, 否则 ""
     var dayKey: String    // yyyy-MM-dd, 未知为 "未知"
+    var key: String = ""  // 锁端行键 (idxRaw) — mac#key 即 726 留痕键; 无 idx 的行留空
+    var levelName: String = ""  // 724 告警级别字样 (AlarmMeta.levelName); 非告警留空
 }
 
 // ================= 导出条目 (708 ShareLink / 709 LPLinkMetadata 卡片) =================
@@ -121,23 +145,61 @@ struct ExportItem: Identifiable {
         return body + "\n── 校验 ──\nSHA-256: \(sha256)\n\(shaLabel)\n生成: " + ExportKit.stamp.string(from: Date())
     }
 
-    /// 719/712 写进 Caches/exports (不被系统早清), 返回路径供 Toast 展示
+    /// 719/712 写盘: **优先**写用户用书签固定的导出目录 (713), 没设过回落 Caches/exports (老行为不变)。
     @discardableResult
     func writeLocal() -> URL? {
-        let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("exports", isDirectory: true)
+        let t = ExportDir.target()
+        defer { if t.scoped { t.url.stopAccessingSecurityScopedResource() } }
+        let dir = t.url
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let url = dir.appendingPathComponent(fileName)
         guard (try? bytes.write(to: url)) != nil else { return nil }
         return url
     }
 
-    // 708/709: 共享表示 = 下方各 Transferable struct + linkMetadata() 卡片
+    // 708: 共享表示 = 下方各 Transferable struct (csv/json/pdf/图片/文本)
+    // 注: 本扩展里另有一个 `linkMetadata()` (709)，**目前没有调用点** —— 见下面 709 那段说明。
 }
 
-// 708 原生分享: 按 kind 走系统 UTType 的 Transferable 表示 (csv/json/pdf/图片/文本),
-// 709 分享卡片: 聊天内预览 = sharePreview 的渐变封面图 (LPLinkMetadata 见 linkMetadata(),
-// 供将来自定义 UIActivityController 路径复用 — SwiftUI 无公开挂接点)。
+/// 713 固定导出目录: 用**安全作用域书签**记住用户选的文件夹 (fileImporter 选一次, 之后每次导出都落那里),
+/// 免得导出件躺在 App 缓存目录里被系统清掉、也免得每次都要重新选。
+/// 没设过 / 书签失效 → 一律回落老路径 (Caches/exports), 不改变既有行为。
+enum ExportDir {
+    private static let key = "kf_export_dir_bm"
+    static var name: String {
+        guard let u = resolve(startScope: false) else { return "" }
+        return u.lastPathComponent
+    }
+    static func set(_ url: URL) {
+        // 生成书签时这一份 URL 必须处于"可访问"状态 (fileImporter 给的是临时可访问 URL)
+        let ok = url.startAccessingSecurityScopedResource()
+        defer { if ok { url.stopAccessingSecurityScopedResource() } }
+        if let bm = try? url.bookmarkData() { DB.store.setCodable(key, bm) }
+    }
+    static func clear() { DB.store.remove(key) }
+    /// 解析书签; startScope=true 时已开启安全作用域 (调用方用完必须 stop)
+    static func resolve(startScope: Bool) -> URL? {
+        guard let bm = DB.store.get(Data.self, key) else { return nil }
+        var stale = false
+        guard let u = try? URL(resolvingBookmarkData: bm, bookmarkDataIsStale: &stale) else { return nil }
+        if startScope, !u.startAccessingSecurityScopedResource() { return nil }
+        return u
+    }
+    /// 导出落点: (目录, 是否已开安全作用域需 stop)
+    static func target() -> (url: URL, scoped: Bool) {
+        if let u = resolve(startScope: true) { return (u, true) }
+        let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("exports", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return (dir, false)
+    }
+}
+
+// 708 原生分享: 按 kind 走系统 UTType 的 Transferable 表示 (csv/json/pdf/图片/文本)。
+// 709 聊天内预览: 现役口径是 ShareLink 的 `sharePreview` 渐变封面图。
+// `ExportItem.linkMetadata()` (709) 是**留着不开的备用口**: SwiftUI 没有公开挂接 LPLinkMetadata 的位置，
+// 只有自建 UIActivityViewController 那条路才用得上 —— 与 LinkSenseKit 的 stop* 两个口同类,
+// 由 deadscan 报成零引用是预期内的，判定=留着并写清为什么 (第九十一批把这段说明补到声明旁)。
 struct ExportCSVFile: Transferable {
     let item: ExportItem
     static var transferRepresentation: some TransferRepresentation {
@@ -169,6 +231,16 @@ struct ExportImageFile: Transferable {
         .suggestedFileName { $0.item.fileName }
     }
 }
+/// 718 单条记录卡分享: UIImage 本身不满足 Transferable, 而"分享这一条"不值得为它造一个完整 ExportItem
+/// (ExportItem 带 sha/文件名规范/预览那套是导出中心的事)。PNG 而不是 JPEG: 卡上是锐利文字与数字。
+struct RecordCardImage: Transferable {
+    let image: UIImage
+    let fileName: String
+    static var transferRepresentation: some TransferRepresentation {
+        DataRepresentation(exportedContentType: .png) { $0.image.pngData() ?? Data() }
+            .suggestedFileName { $0.fileName }
+    }
+}
 struct ExportTextFile: Transferable {
     let item: ExportItem
     static var transferRepresentation: some TransferRepresentation {
@@ -195,7 +267,7 @@ extension ExportItem {
 }
 
 extension ExportItem {
-    var sharePreview: SharePreview {
+    var sharePreview: SharePreview<Image, Image> {
         SharePreview(title, image: ExportKit.coverImage(item: self, w: 480))
     }
 }
@@ -212,11 +284,13 @@ extension ExportItem {
         var p = 0
         while i < recs.count && pages.count < 3 {
             let chunk = Array(recs[i ..< min(i + perPage, recs.count)])
-            // 706: 续张带紧凑表头 (渐变头占位 headH/2), 聊天逐张发不丢锁名上下文
-            let header = p == 0 ? 0 : headH / 2
+            // 706: 续张带紧凑表头 (渐变头占位 headH/2), 聊天逐张发不丢锁名上下文;
+            // 686: 首张此前无表头 —— 单张发出去看不出锁名/日期, 现在首张带完整表头
+            let header = p == 0 ? headH : headH / 2
             let h = header + CGFloat(chunk.count) * rowH + 56
             if let img = ExportKit.renderDayPage(recs: chunk, mac: mac, day: day,
-                                                 top: header, h: h, w: w, headH: header, rowH: rowH) {
+                                                 top: header, h: h, w: w, headH: header, rowH: rowH,
+                                                 first: p == 0) {
                 pages.append(img)
             }
             i += perPage
@@ -233,24 +307,39 @@ final class ExportProgress: ObservableObject {
     @Published var done: ExportItem?
     @Published var failed = ""
     private var task: Task<Void, Never>?
+    /// 692: 生成体是 detached 子任务 —— 它不继承外层取消, 只 task?.cancel() 拦不住它。
+    /// 存一份引用, cancel() 同时打到生成体; 完成分支清掉防残留。
+    private var child: Task<ExportItem?, Never>?
+
+    /// 719 失败重试: 记住上一次 start 的入参, 「重试」原地重放 (不复制各生成逻辑)。
+    private var lastLabel = ""
+    private var lastWork: (() -> ExportItem?)?
+    private var lastFinish: ((ExportItem?, String) -> Void)?
+    func retry() {
+        guard let w = lastWork, let f = lastFinish else { return }
+        start(lastLabel, work: w, finish: f)
+    }
 
     /// 692 生成放后台 TaskGroup (可取消, UI 不阻塞); 719 结果触感 + finish 主线程回传
     func start(_ label: String,
                work: @escaping () -> ExportItem?,
                finish: @escaping (ExportItem?, String) -> Void) {
-        task?.cancel()
+        lastLabel = label; lastWork = work; lastFinish = finish
+        cancel()
         running = true; done = nil; failed = ""
         task = Task { [weak self] in
             guard let self else { return }
             await MainActor.run { self.step = label; self.running = true }
             // 生成放后台线程 (UI 不阻塞); 取消时拦"收尾写回" (692)
             let child = Task.detached(priority: .userInitiated) { work() }
+            await MainActor.run { self.child = child }
             let item = await child.value
             let cancelled = Task.isCancelled || child.isCancelled
             await MainActor.run {
+                self.child = nil
                 self.running = false
                 self.step = ""
-                if let v = item {
+                if let v = item, !cancelled {
                     self.done = v
                     UINotificationFeedbackGenerator().notificationOccurred(.success)
                     finish(v, "")
@@ -262,16 +351,16 @@ final class ExportProgress: ObservableObject {
             }
         }
     }
-    func cancel() { task?.cancel() }
+    func cancel() { task?.cancel(); child?.cancel() }
 }
 
 // ================= 核心生成器 =================
 enum ExportKit {
     static let stamp: DateFormatter = {
-        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd HH:mm"; f.timeZone = TimeZone.current; return f
+        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd HH:mm"; f.timeZone = TimeZone.current; f.locale = Locale(identifier: "en_US_POSIX"); return f
     }()
     static let timeFmt: DateFormatter = {
-        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd HH:mm:ss"; f.timeZone = TimeZone.current; return f
+        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd HH:mm:ss"; f.timeZone = TimeZone.current; f.locale = Locale(identifier: "en_US_POSIX"); return f
     }()
 
     // ---------- 数据源 (只读既有表) ----------
@@ -286,7 +375,9 @@ enum ExportKit {
         for (i, e) in entries.enumerated() where i < cls.count {
             let c = cls[i]
             var dayKey = e.lockTimeStr.count >= 10 ? String(e.lockTimeStr.prefix(10)) : "未知"
-            let alarm = e.type == 6 || e.type == 7 || e.type == 10 || e.type == 13 || e.type == 224
+            // 口径只有一份：StatsKit.alarmTypes (这行原来自己写着 5 个 `type ==`，值今天恰好相同，
+            // 但"恰好相同"不是保证 —— 加一类告警时漏改这里，导出就会把告警标成正常行)
+            let alarm = StatsKit.alarmTypes.contains(e.type)
             out.append(ExportRecord(
                 time: e.lockTimeStr.isEmpty ? "时间未知" : e.lockTimeStr,
                 typeName: e.typeName,
@@ -294,9 +385,58 @@ enum ExportKit {
                 credWord: c.kind.map { Attribution.words[$0] ?? "" } ?? "",
                 isAlarm: alarm,
                 hex: e.body,
-                dayKey: dayKey))
+                dayKey: dayKey,
+                key: String(e.idxRaw),
+                levelName: alarm ? AlarmMeta.levelName(e.type) : ""))
         }
         return out.reversed() // 时间正序, 导出可读
+    }
+
+    // ---------- 415 成员名册单独导出 (零凭证值) ----------
+    /// vCard 3.0 逐位成员。名册回答的是"家里有谁"，所以**刻意不写**：锁 MAC、凭证 alias/批次、口令、
+    /// 甚至 MemberExt.commonLocks (常用锁的 mac 列表) —— 要搬库走备份，名册不承担那个职责，
+    /// 也正因为写得少，它才适合打印/发给家人线下核对。
+    static func memberRoster() -> String {
+        var out = ""
+        for m in DB.members() {
+            let ext = MemberHub.ext(m.id)
+            out += "BEGIN:VCARD\nVERSION:3.0\n"
+            out += "FN:" + vcfEscape(MemberHub.display(m)) + "\n"
+            if !ext.remark.isEmpty { out += "NICKNAME:" + vcfEscape(ext.remark) + "\n" }
+            if !m.phone.isEmpty { out += "TEL;TYPE=CELL:" + vcfEscape(m.phone) + "\n" }
+            if !ext.groupTag.isEmpty { out += "CATEGORIES:" + vcfEscape(ext.groupTag) + "\n" }
+            var note: [String] = []
+            if !m.relation.isEmpty { note.append("关系 " + m.relation) }
+            if ext.role == "main" { note.append("主管理员") }
+            if ext.archived { note.append("已归档") }
+            if ext.proxy { note.append("代管中") }
+            if !ext.emergency.isEmpty { note.append("紧急联系 " + ext.emergency) }
+            if !ext.note.isEmpty { note.append("便签 " + ext.note) }
+            if !ext.careText.isEmpty { note.append("关怀 " + ext.careText) }
+            if !note.isEmpty { out += "NOTE:" + vcfEscape(note.joined(separator: " · ")) + "\n" }
+            out += "END:VCARD\n"
+        }
+        return out
+    }
+    /// vCard 转义: 反斜杠必须先转，否则后加的 `\;` `\\,` 会被二次转义成 `\\;`。
+    static func vcfEscape(_ s: String) -> String {
+        s.replacingOccurrences(of: "\\", with: "\\\\")
+         .replacingOccurrences(of: ";", with: "\\;")
+         .replacingOccurrences(of: ",", with: "\\,")
+         .replacingOccurrences(of: "\n", with: "\\n")
+    }
+    /// 写成 Caches/exports 下的 .vcf 文件 (与 ExportItem.writeLocal 同目录同理由: 系统不会早清)。
+    /// 文件名带日期: 415 的用途是核对，"哪一次的名册"必须能从名字看出来。
+    static func writeRoster() -> URL? {
+        let text = memberRoster()
+        guard !text.isEmpty else { return nil }
+        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"; f.timeZone = TimeZone.current; f.locale = Locale(identifier: "en_US_POSIX")
+        let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("exports", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let url = dir.appendingPathComponent("锁管家_成员名册_\(f.string(from: Date())).vcf")
+        guard (try? text.write(to: url, atomically: true, encoding: .utf8)) != nil else { return nil }
+        return url
     }
 
     /// 按范围过滤 (701: 全月/仅告警/仅指定成员; day = 最新单日供 686)
@@ -308,7 +448,7 @@ enum ExportKit {
             let name = DB.member(mid)?.name ?? ""
             return recs.filter { $0.member == name }
         case .month:
-            let comps = Calendar.current.dateComponents([.year, .month], from: Date())
+            let comps = WeekCal.gregorian.dateComponents([.year, .month], from: Date())
             let cur = String(format: "%04d-%02d", comps.year ?? 0, comps.month ?? 0)
             return recs.filter { $0.time.hasPrefix(cur) }
         case .day:
@@ -378,6 +518,7 @@ enum ExportKit {
                 "member": r.member,
                 "cred": r.credWord,
                 "alarm": r.isAlarm,
+                "levelName": r.levelName,
                 "hex": redactHex ? "" : r.hex,
             ]
         }
@@ -454,6 +595,21 @@ enum ExportKit {
         let lockName = kc.map { $0.name.isEmpty ? LockArchive.displayName($0) : $0.name } ?? mac
         let alarms = recs.filter { $0.isAlarm }
         let others = recs.filter { !$0.isAlarm }
+        // 726 处置历史: 文本段与 PDF 章共用这一份 —— 只取**本报告范围内**告警行的本地留痕
+        // (kf_rdispo, 键 = mac#行键), 范围外的留痕不混进这份报告。
+        let dispo = RecordSearch.dispositions()
+        var disposed = [(ExportRecord, RecordSearch.Disposition)]()
+        for a in alarms { if let d = dispo[mac + "#" + a.key] { disposed.append((a, d)) } }
+
+        // 665 导出页眉走区间精简: "当月/全部"这类档名旁边加上**数据落地的具体日子**
+        // (与统计页 665 同一份 TimeFormat.range 规则, 不另写一套省略逻辑); 无有效日期时只说档名。
+        let dayKeys = recs.map { $0.dayKey }.filter { !$0.isEmpty && $0 != "未知" }.sorted()
+        let rangeText: String
+        if let f = dayKeys.first, let l = dayKeys.last {
+            rangeText = rangeLabel + " · " + TimeFormat.range(fromDay: f, toDay: l)
+        } else {
+            rangeText = rangeLabel
+        }
 
         var text = ReportTexts.t("summarySection") + "\n"
         text += threeSentence(recs: recs, mac: mac) + "\n\n"
@@ -461,7 +617,11 @@ enum ExportKit {
         if alarms.isEmpty {
             text += "本期无告警。\n\n"
         } else {
-            for a in alarms { text += "· " + a.time + " " + a.typeName + (a.member.isEmpty ? "" : " " + a.member) + "\n" }
+            for a in alarms {
+                var line = "· " + (a.levelName.isEmpty ? "" : "[" + a.levelName + "] ") + a.time + " " + a.typeName + (a.member.isEmpty ? "" : " " + a.member)
+                if let d = dispo[mac + "#" + a.key] { line += "  [处置: " + d.verdict + "]" }   // 726 行内带上结论
+                text += line + "\n"
+            }
             text += "\n"
         }
         text += ReportTexts.t("detailSection") + "\n"
@@ -470,9 +630,21 @@ enum ExportKit {
             if !r.member.isEmpty { line += " " + r.member }
             text += line + "\n"
         }
-        text += "\n" + integrity(text, rows: recs.count) + "\n"
+        // 726 处置历史段 (与 PDF 章同序: 明细之后、校验之前)
+        text += "\n" + ReportTexts.t("dispoSection") + "\n"
+        if disposed.isEmpty {
+            text += "本期无处置留痕。\n"
+        } else {
+            for (r, d) in disposed { text += "· " + r.time + " " + r.typeName + " → " + d.verdict + " (" + d.atLabel() + ")\n" }
+        }
+        let integrityLine = integrity(text, rows: recs.count)
+        text += "\n" + integrityLine + "\n"
 
         let renderer = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: 595, height: 842))
+        // 702 两遍渲染: 总页数只有画完才知道 —— 首遍数出 M, 次遍页脚写「第 N / M 页」。
+        // 全是内存矢量绘制, 两遍是报告可接受的代价; 生成期间 UI 不阻塞 (692 的 Task.detached 链不变)。
+        func renderPDF(knownTotal: Int?) -> (data: Data, pages: Int) {
+        var finalPages = 0
         let pdf = renderer.pdfData { ctx in
             // ---- 页 1: 矢量封面 (696 渐变封条 + 统计区间 + 生成时间, 无图片资源) ----
             let cg = ctx.cgContext
@@ -480,8 +652,16 @@ enum ExportKit {
             let heroB = UIColor(DS.Palette.themed("heroB"))
             PDFText.gradient(cg, CGRect(x: 0, y: 0, width: 595, height: 150), [heroA, heroB])
             PDFText.line(cg, "离线锁管家", font: .semibold, size: 24, x: 36, y: 34, color: .white, pageW: 595)
-            PDFText.line(cg, "月份: " + rangeLabel + " · 锁: " + lockName, font: .regular, size: 12, x: 36, y: 92, color: UIColor.white.withAlphaComponent(0.85), pageW: 595)
-            PDFText.line(cg, "生成: " + stamp.string(from: Date()) + " · 纯本地生成", font: .regular, size: 10, x: 36, y: 116, color: UIColor.white.withAlphaComponent(0.75), pageW: 595)
+            // 封面上的副信息不再用 withAlphaComponent 稀释白字: 白@0.85 裸压主题渐变最亮端实测只有
+            // 3.89:1 (0.75/0.9 更低), 层级本来已由字号 (24/12/10pt) 表达, 颜色保持满白 = contrast.js B/C 节口径。
+            // 774 场所副标题: Hero 卡与锁列表一直在用，导出报告此前从不引用它
+            // ⇒ 同一把锁在 App 里叫"车库"，导出去的报告上只剩型号，跨设备对账时认不出来。
+            let placeNote = LockArchive.meta(mac).place.isEmpty ? "" : " · 场所: " + LockArchive.meta(mac).place
+            PDFText.line(cg, "月份: " + rangeText + " · 锁: " + lockName + placeNote, font: .regular, size: 12, x: 36, y: 92, color: .white, pageW: 595)
+            PDFText.line(cg, "生成: " + stamp.string(from: Date()) + " · 纯本地生成", font: .regular, size: 10, x: 36, y: 116, color: .white, pageW: 595)
+            // 697 封面告警数: 一翻开先知道"有没有事"
+            PDFText.line(cg, "本期告警 " + String(alarms.count) + " 条" + (alarms.isEmpty ? " · 记录安静" : " · 见置前章节"),
+                         font: .regular, size: 10, x: 36, y: 134, color: UIColor(DS.heroFg), pageW: 595)
             // 700 多锁封面表
             let allMacs = DB.keychains().map { $0.mac }
             if allMacs.count > 1 {
@@ -495,8 +675,11 @@ enum ExportKit {
                     y += 16
                 }
                 y += 6
-                PDFText.line(cg, "本报告区间: " + rangeLabel, font: .regular, size: 10, x: 44, y: y, color: .darkGray, pageW: 595)
+                PDFText.line(cg, "本报告区间: " + rangeText, font: .regular, size: 10, x: 44, y: y, color: .darkGray, pageW: 595)
             }
+            // 697 目录行: 封面先给章节序 (页码由各页页脚给, 702)
+            PDFText.line(cg, "本报告: 封面 → 摘要与图表 → 告警章 → 逐日明细 → 处置历史 → 尾页校验",
+                         font: .regular, size: 9, x: 36, y: 780, color: .lightGray, pageW: 520)
             ctx.endPDFPage()
             // ---- 摘要页: 三句摘要 + 699 矢量图 (时段分布条, 直接画在 PDF 里缩放不糊) ----
             PDFText.line(cg, ReportTexts.t("summarySection"), font: .semibold, size: 16, x: 36, y: 40, color: .black, pageW: 595)
@@ -509,22 +692,30 @@ enum ExportKit {
             PDFText.line(cg, "时段分布 (矢量图)", font: .medium, size: 12, x: 36, y: sy, color: .black, pageW: 595)
             sy += 10
             drawHourBars(cg, recs: recs, x: 36, y: sy, w: 520, h: 140, accent: UIColor(DS.Palette.accent))
-            PDFText.line(cg, ReportTexts.t("footer") + " · " + rangeLabel + " · " + lockName,
+            // 699 成员占比第二组 (时段条之下, 复盘"主要谁在用")
+            sy += 150
+            PDFText.line(cg, "成员分布 (矢量图)", font: .medium, size: 12, x: 36, y: sy, color: .black, pageW: 595)
+            sy += 12
+            drawMemberBars(cg, recs: recs, x: 36, y: sy, w: 520, h: 120, accent: UIColor(DS.Palette.accent))
+            PDFText.line(cg, ReportTexts.t("footer") + " · " + rangeText + " · " + lockName,
                          font: .regular, size: 9, x: 36, y: 28, color: .lightGray, pageW: 460)
-            PDFText.line(cg, "第 2 页 · " + ReportTexts.t("footer"),
+            PDFText.line(cg, totalLabel(2),
                          font: .regular, size: 9, x: 36, y: 812, color: .lightGray, pageW: 520)
             ctx.endPDFPage()
             // ---- 正文页: 告警章(697 置前) + 逐日明细, 702 页眉页脚 ----
-            var pageIdx = 1
+            var pageIdx = 2   // 封面=1 / 摘要=2 已消耗 (初值 1 会让首个正文页与摘要页都印「第 2 页」)
+            func totalLabel(_ n: Int) -> String {
+                "第 " + String(n) + (knownTotal.map { " / " + String($0) } ?? "") + " 页 · " + ReportTexts.t("footer")
+            }
             func startPageHeader(_ title: String) {
                 pageIdx += 1
                 // 页眉回显筛选条件
-                PDFText.line(cg, ReportTexts.t("footer") + " · " + rangeLabel + " · " + lockName,
+                PDFText.line(cg, ReportTexts.t("footer") + " · " + rangeText + " · " + lockName,
                              font: .regular, size: 9, x: 36, y: 28, color: .lightGray, pageW: 460)
                 PDFText.line(cg, title, font: .semibold, size: 15, x: 36, y: 48, color: .black, pageW: 595)
             }
             func footerPage() {
-                PDFText.line(cg, "第 " + String(pageIdx) + " 页 · " + ReportTexts.t("footer"),
+                PDFText.line(cg, totalLabel(pageIdx),
                              font: .regular, size: 9, x: 36, y: 812, color: .lightGray, pageW: 520)
             }
             var cursor = 80.0
@@ -547,10 +738,12 @@ enum ExportKit {
                 } else { cursor = max(cursor, 70) }
                 let use = cols.onIndices.isEmpty ? [0, 1, 3] : cols.onIndices
                 let fields = [r.time, r.typeName, r.member,
-                              r.isAlarm ? r.typeName : "",
+                              r.isAlarm ? (r.levelName.isEmpty ? r.typeName : r.levelName + "·" + r.typeName) : "",
                               r.credWord.isEmpty ? "" : r.credWord + (r.member.isEmpty ? "·未归属" : "·" + r.member),
                               r.hex.isEmpty ? "" : String(r.hex.prefix(12))]
-                let rowText = use.map { fields[$0] }.joined(separator: "  |  ")
+                var rowText = use.map { fields[$0] }.joined(separator: "  |  ")
+                // 726 告警行紧贴结论 (完整历史见文末"处置历史"章)
+                if r.isAlarm, let d = dispo[mac + "#" + r.key] { rowText += "  · 处置: " + d.verdict }
                 let color: UIColor = r.isAlarm ? UIColor(DS.Palette.danger) : .darkGray
                 PDFText.line(cg, rowText, font: .regular, size: 10, x: 36, y: cursor, color: color, pageW: 520)
                 cursor += 16
@@ -562,16 +755,61 @@ enum ExportKit {
                 cursor += 16
             }
             for a in alarms { emitRow(a) }
-            // 明细章 (本页满则切新页)
+            // 明细章 (本页满则切新页); 685 按日分节: 日期变点插小标题 (dayKey = 日志时间串前 10 位)
             startTablePage(ReportTexts.t("detailSection"), breakPage: cursor > 740)
-            for r in others { emitRow(r) }
-            // 722 尾页校验
-            if cursor > 770 { footerPage(); ctx.endPDFPage() }
+            var lastDay = ""
+            for r in others {
+                if r.dayKey != lastDay {
+                    lastDay = r.dayKey
+                    if cursor > 760 {
+                        footerPage(); ctx.endPDFPage()
+                        startPageHeader("续")
+                        cursor = 70
+                    }
+                    cursor += 4
+                    PDFText.line(cg, r.dayKey, font: .medium, size: 11, x: 36, y: cursor, color: .black, pageW: 520)
+                    cursor += 18
+                }
+                emitRow(r)
+            }
+            // 726 处置历史章 (明细之后、校验之前, 与纯文本报告同一序)
+            if !disposed.isEmpty {
+                startTablePage(ReportTexts.t("dispoSection"), breakPage: cursor > 740)
+                for (r, d) in disposed {
+                    if cursor > 780 {
+                        footerPage(); ctx.endPDFPage()
+                        startPageHeader("续")
+                        cursor = 70
+                    }
+                    PDFText.line(cg, r.time + "  " + r.typeName + "  →  " + d.verdict + "  (" + d.atLabel() + ")",
+                                 font: .regular, size: 10, x: 36, y: cursor, color: .darkGray, pageW: 520)
+                    cursor += 16
+                }
+            }
+            // 722 尾页校验: 行数 + SHA-256 + 生成时间必须真画在纸面上。
+            // 原来这条注释下面只有一句页脚 + endPDFPage —— 纯文本报告里有对账行，打印出来的 PDF 却没有，
+            // 而 722 原句要的就是"报告尾页"那一行。
+            if cursor > 760 {
+                footerPage(); ctx.endPDFPage()
+                startPageHeader("续")
+                cursor = 70
+            }
+            PDFText.hairline(cg, y: cursor); cursor += 10
+            for seg in integrityLine.split(separator: "\n") {
+                PDFText.line(cg, String(seg), font: .regular, size: 9, x: 36, y: cursor,
+                             color: .darkGray, pageW: 520)
+                cursor += 13
+            }
             footerPage()
             ctx.endPDFPage()
+            finalPages = pageIdx
         }
-        guard !pdf.isEmpty else { return nil }
-        return ReportBuild(pdfData: pdf, text: text, rows: recs.count)
+        return (pdf, finalPages)
+        }
+        let first = renderPDF(knownTotal: nil)     // 首遍只为数页数, 页脚无总数
+        let second = renderPDF(knownTotal: first.pages)
+        guard !second.data.isEmpty else { return nil }
+        return ReportBuild(pdfData: second.data, text: text, rows: recs.count)
     }
 
     /// 704 三句摘要 (按任务口径: 本月 N 次开门 / M 条告警 / 凭证变动 N 条, 归属带"约")
@@ -585,11 +823,13 @@ enum ExportKit {
         for p in DB.listPwds(mac) { cred += CredentialOrg.history(mac, "pwd", p.alias).count }
         for f in DB.listFps(mac) { cred += CredentialOrg.history(mac, "fp", f.batch).count }
         var who = ""
+        var whoN = 0
         var m = [String: Int]()
         for r in recs where !r.isAlarm && !r.member.isEmpty { m[r.member, default: 0] += 1 }
-        if let top = m.sorted(by: { $0.value > $1.value }).first { who = top.key }
+        if let top = m.sorted(by: { $0.value > $1.value }).first { who = top.key; whoN = top.value }
         var out = [String]()
-        out.append("本期开门 \(opens) 次" + (who.isEmpty ? "" : "，最活跃: 约 \(who)"))
+        // 704 占比: 分母用同段 opens; who 集合(成员非空)与 opens 集合(凭证词非空)口径略有差 ⇒ 带「约」。
+        out.append("本期开门 \(opens) 次" + (who.isEmpty ? "" : "，最活跃: 约 \(who)（占比约 \(whoN * 100 / max(opens, 1))%）"))
         out.append("告警 \(alarms) 条" + (alarms == 0 ? "，记录安静" : "（见置前章节）"))
         out.append("凭证变动 \(cred) 条（版本历史台账口径）")
         return out
@@ -598,9 +838,11 @@ enum ExportKit {
     /// 699 矢量图表: 时段分布条形 (直接画进 PDF 上下文, 缩放不糊)
     static func drawHourBars(_ cg: CGContext, recs: [ExportRecord], x: CGFloat, y: CGFloat, w: CGFloat, h: CGFloat, accent: UIColor) {
         var hs = [Int: Int]()
-        for r in recs where !$0.isAlarm {
+        // for-in 的 where 子句**不是闭包**: `where !$0.isAlarm` 会报
+        // "anonymous closure argument not contained in a closure", 必须用循环变量本身。
+        for r in recs where !r.isAlarm {
             if let d = timeFmt.date(from: r.time) {
-                hs[Calendar.current.component(.hour, from: d), default: 0] += 1
+                hs[WeekCal.gregorian.component(.hour, from: d), default: 0] += 1
             }
         }
         let maxV = max(hs.values.max() ?? 1, 1)
@@ -618,6 +860,29 @@ enum ExportKit {
         // 图例
         PDFText.line(cg, "0 时", font: .regular, size: 8, x: x, y: y + h - 18, color: .lightGray, pageW: 20)
         PDFText.line(cg, "24 时 (矢量内嵌, 缩放不糊)", font: .regular, size: 8, x: x + 200, y: y + h - 18, color: .lightGray, pageW: 300)
+    }
+
+    /// 699 成员占比横条 (与时段条同页): 只统计可证明归属的开门行 —— 推不出的不计,
+    /// 与报表正文 member 列的同一判据 (推不出留空, 不猜)。
+    static func drawMemberBars(_ cg: CGContext, recs: [ExportRecord], x: CGFloat, y: CGFloat, w: CGFloat, h: CGFloat, accent: UIColor) {
+        var m = [String: Int]()
+        for r in recs where !r.isAlarm && !r.member.isEmpty { m[r.member, default: 0] += 1 }
+        let top = m.sorted(by: { $0.value > $1.value }).prefix(6)
+        let maxV = max(top.first?.value ?? 1, 1)
+        let cell = h / CGFloat(max(top.count, 1))
+        var i = 0
+        for (name, n) in top {
+            let yy = y + CGFloat(i) * cell
+            let bw = CGFloat(n) / CGFloat(maxV) * (w - 170)
+            accent.setFill()
+            cg.fill(CGRect(x: x + 120, y: yy + 5, width: max(bw, 2), height: cell - 10))
+            PDFText.line(cg, name, font: .regular, size: 9, x: x, y: yy + 7, color: .darkGray, pageW: 110)
+            PDFText.line(cg, String(n), font: .regular, size: 9, x: x + 126 + max(bw, 2), y: yy + 7, color: .lightGray, pageW: 40)
+            i += 1
+        }
+        if top.isEmpty {
+            PDFText.line(cg, "本期无可证明归属的开门", font: .regular, size: 9, x: x, y: y + 7, color: .lightGray, pageW: 520)
+        }
     }
 
     // ---------- 688 告警分享卡 (9:16 渐变卡, ImageRenderer 出图) ----------
@@ -649,7 +914,12 @@ enum ExportKit {
             PDFText.line(cg, "最近一次: " + last, font: .regular, size: 22, x: 56, y: 250, color: .darkGray, pageW: 480)
             PDFText.line(cg, "本月告警: " + String(alarms) + " 条", font: .regular, size: 22,
                          x: 56, y: 296, color: alarms > 0 ? UIColor(DS.Palette.danger) : .darkGray, pageW: 480)
-            PDFText.line(cg, "应急电话 (手填):", font: .regular, size: 22, x: 56, y: 380, color: .black, pageW: 480)
+            // 465: 成员档案里的紧急联系 (纯本地) 汇一行; 没有就印"保密档"占位
+            let em = DB.members().compactMap { m -> String? in
+                let e = MemberHub.ext(m.id).emergency
+                return e.isEmpty ? nil : "\(m.name) \(e)"
+            }.joined(separator: " / ")
+            PDFText.line(cg, em.isEmpty ? "应急电话: 保密档" : "应急电话: " + em, font: .regular, size: 22, x: 56, y: 380, color: .black, pageW: 480)
             PDFText.hairline(cg, y: 430); PDFText.hairline(cg, y: 500)
             PDFText.line(cg, "备用钥匙位置 (手填):", font: .regular, size: 22, x: 56, y: 540, color: .black, pageW: 480)
             PDFText.hairline(cg, y: 590)
@@ -659,10 +929,48 @@ enum ExportKit {
         return data
     }
 
+    // ---------- 746 单条告警事实单页 (事实 + 原始报文 + 处置 + 签名栏; 用于物业沟通) ----------
+    /// 与 717 的区别: 717 是"最近 10 条合页"的通报, 这条是**一条告警一页**的事实单, 带签名栏。
+    /// 原始报文取 ExportRecord.hex (缓存层存了协议帧才非空, 否则如实写"未留存") —— 不编字节。
+    static func alarmFactSheetPDF(mac: String, rec: ExportRecord) -> Data {
+        let lockName = DB.keychain(mac).map { $0.name.isEmpty ? LockArchive.displayName($0) : $0.name } ?? mac
+        let dispo = RecordSearch.disposition(key: mac + "#" + rec.key)
+        let renderer = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: 595, height: 842))
+        return renderer.pdfData { ctx in
+            let cg = ctx.cgContext
+            PDFText.line(cg, "门锁告警事实单 · " + lockName, font: .semibold, size: 20, x: 36, y: 36, color: .black, pageW: 520)
+            PDFText.line(cg, "本单只含这一条告警的数据 (746) · 导出时间 " + ExportKit.stamp.string(from: Date()),
+                         font: .regular, size: 10, x: 36, y: 66, color: .darkGray, pageW: 520)
+            var y: CGFloat = 104
+            func kv(_ k: String, _ v: String) {
+                PDFText.line(cg, k, font: .medium, size: 12, x: 36, y: y, color: .black, pageW: 520)
+                PDFText.line(cg, v.isEmpty ? "—" : v, font: .regular, size: 12, x: 150, y: y, color: .darkGray, pageW: 410)
+                y += 24
+            }
+            kv("时间", rec.time)
+            kv("告警类型", rec.typeName + (rec.levelName.isEmpty ? "" : " (" + rec.levelName + ")"))
+            kv("涉事成员", rec.member.isEmpty ? "无法归属 (可证明归属才填)" : rec.member)
+            kv("门锁", lockName)
+            kv("原始报文", rec.hex.isEmpty ? "本机未留存 (未开启「记录原始收发 hex」, 740)" : rec.hex)
+            kv("处置结论", dispo.map { $0.verdict + " · " + $0.atLabel() } ?? "未处置")
+            y += 18
+            PDFText.line(cg, "签名栏 (物业 / 处置人)", font: .medium, size: 12, x: 36, y: y, color: .black, pageW: 520)
+            // hairline 的签名只有 (cg, y:) —— 它是全宽横线 (x 36→559), 所以两格签名位共用这一条;
+            // 早先这里写过 x2: 300 (凭空多一个参数), 被 swiftshape 的 R5 调用元数检查当场拦下。
+            PDFText.hairline(cg, y: y + 44)
+            PDFText.line(cg, "签名 / 日期", font: .regular, size: 10, x: 36, y: y + 50, color: .lightGray, pageW: 240)
+            PDFText.line(cg, "确认 / 日期", font: .regular, size: 10, x: 316, y: y + 50, color: .lightGray, pageW: 240)
+            PDFText.line(cg, "离线锁管家 · 本机生成 · 数据未经网络", font: .regular, size: 10, x: 36, y: 790, color: .lightGray, pageW: 520)
+            ctx.endPDFPage()
+        }
+    }
+
     // ---------- 717 告警一页纸 (当前预警配置 + 最近告警 + 手填栏) ----------
     static func alarmOnePagerPDF(mac: String, recs: [ExportRecord]) -> Data {
         let lockName = DB.keychain(mac).map { $0.name.isEmpty ? LockArchive.displayName($0) : $0.name } ?? mac
         let alarms = recs.filter { $0.isAlarm }
+        // 726 处置历史随行: 每条告警旁边带上本地留痕结论
+        let dispo = RecordSearch.dispositions()
         var cfgs = [String]()
         for p in DB.listPwds(mac) {
             let a = CredentialOrg.alert(mac, p)
@@ -685,7 +993,9 @@ enum ExportKit {
             PDFText.line(cg, "最近 " + String(min(alarms.count, 10)) + " 条告警", font: .medium, size: 14, x: 36, y: y, color: .black, pageW: 520)
             y += 22
             for a in alarms.prefix(10) {
-                PDFText.line(cg, a.time + "   " + a.typeName + (a.member.isEmpty ? "" : " · " + a.member),
+                var line = a.time + "   " + a.typeName + (a.member.isEmpty ? "" : " · " + a.member)
+                if let d = dispo[mac + "#" + a.key] { line += " · 处置:" + d.verdict }   // 726
+                PDFText.line(cg, line,
                              font: .regular, size: 12, x: 44, y: y, color: UIColor(DS.Palette.danger), pageW: 500)
                 y += 20
             }
@@ -698,11 +1008,24 @@ enum ExportKit {
         return data
     }
 
+    // ---------- 703 系统邮件直发 ----------
+    /// MFMailCompose 的完成回调 (取消/发送/失败后关闭编辑器)。delegate 是 weak —— 必须常驻, 不留实例引用。
+    final class MailDismisser: NSObject, MFMailComposeViewControllerDelegate {
+        static let shared = MailDismisser()
+        func mailComposeController(_ controller: MFMailComposeViewController,
+                                   didFinishWith result: MFMailComposeResult, error: Error?) {
+            controller.dismiss(animated: true)
+        }
+    }
+
     // ---------- 703 降级: 生成 .eml 文本 (主题预填 + CSV base64 附件), 手动交给系统邮件 ----------
     static func emailTemplate(mac: String, recs: [ExportRecord], cols: ExportCols) -> ExportItem? {
         let build = buildCSV(recs: recs, cols: cols)
         let rangeLabel = ExportRange.month.label
-        let fileName = "锁管家_记录_" + rangeLabel + ".csv"
+        // 693 与 startCSV 同名规范同步 (eml 附件名也不缺锁名)
+        let kc = DB.keychain(mac)
+        let lockName = kc.map { $0.name.isEmpty ? LockArchive.displayName($0) : $0.name } ?? mac
+        let fileName = "锁管家_记录_" + lockName + "_" + rangeLabel + ".csv"
         let b64 = build.data.base64EncodedString()
         let subject = "「离线锁管家」" + rangeLabel + " 开门记录"
         let bodyFinal = "请查收附件 " + fileName + " (共 " + String(build.rowCount) + " 行)。\n\n此邮件为本地文本模板, 请粘贴进系统邮件或备忘录手动发送。"
@@ -743,18 +1066,23 @@ enum ExportKit {
                              [UIColor(DS.Palette.themed("heroA")), UIColor(DS.Palette.themed("heroB"))])
             PDFText.line(cg, "离线锁管家", font: .semibold, size: w * 0.1, x: w * 0.1, y: w * 0.1, color: .white, pageW: w)
             PDFText.line(cg, item.title, font: .regular, size: w * 0.08, x: w * 0.1, y: w * 0.24, color: .white, pageW: w)
-            PDFText.line(cg, item.shaLabel, font: .regular, size: w * 0.06, x: w * 0.1, y: h - w * 0.14, color: UIColor.white.withAlphaComponent(0.75), pageW: w)
+            PDFText.line(cg, item.shaLabel, font: .regular, size: w * 0.06, x: w * 0.1, y: h - w * 0.14, color: .white, pageW: w)
         }
     }
 
     // ---------- 单日长图渲染 (686 表头水印 + 行; 706 每张连图独立成页, 表头随行切) ----------
-    /// 706 分页: top>0 时页顶带渐变表头 (续张); top==0 首张表头省掉 (总图拼接时顶部即封面)
+    /// 706 分页: top>0 时页顶带渐变表头; 686 起首张也带完整表头 (此前首张无表头, 单张发出去看不出锁名/日期)
     static func renderDayPage(recs: [ExportRecord], mac: String, day: String,
-                              top: CGFloat, h: CGFloat, w: CGFloat, headH: CGFloat, rowH: CGFloat) -> UIImage? {
+                              top: CGFloat, h: CGFloat, w: CGFloat, headH: CGFloat, rowH: CGFloat,
+                              first: Bool = false) -> UIImage? {
         guard h > 60, !recs.isEmpty else { return nil }
         let lockName = DB.keychain(mac).map { $0.name.isEmpty ? LockArchive.displayName($0) : $0.name } ?? mac
-        let fmt = UIGraphicsImageRendererFormat(); fmt.scale = 2
-        let headOffset: CGFloat = top == 0 ? 0 : headH   // 首张无表头, 续张带表头 (聊天逐张发不丢上下文)
+        let fmt = UIGraphicsImageRendererFormat()
+        // 720: 原句要"宽 1080px 适配聊天窗口"。此前 w=720pt 配 scale=2 ⇒ 实际 1440px,
+        // 比承诺的更宽, "控制体积"方向做反。版面仍按 720pt 排, 只把出图密度改成 1.5
+        // (720 × 1.5 = 1080px 整), 宽度与文案一致、体积随之下降。
+        fmt.scale = 1.5
+        let headOffset: CGFloat = top == 0 ? 0 : headH   // 行从本页表头下起画; dayPages 首张给完整 headH、续张给 headH/2 (都画), top==0 只是裸页兜底
         return UIGraphicsImageRenderer(size: CGSize(width: w, height: h), format: fmt).image { ctx in
             let cg = ctx.cgContext
             UIColor.white.setFill()
@@ -762,8 +1090,8 @@ enum ExportKit {
             if top > 0 {
                 PDFText.gradient(cg, CGRect(x: 0, y: 0, width: w, height: headH),
                                  [UIColor(DS.Palette.themed("heroA")), UIColor(DS.Palette.themed("heroB"))])
-                let sub = day + " · 离线锁管家 (续)"
-                PDFText.line(cg, sub, font: .regular, size: 13, x: 24, y: 44, color: UIColor.white.withAlphaComponent(0.9), pageW: w - 48)
+                let sub = day + " · 离线锁管家" + (first ? "" : " (续)")
+                PDFText.line(cg, sub, font: .regular, size: 13, x: 24, y: 44, color: .white, pageW: w - 48)
             }
             var i = 0
             for r in recs {
@@ -789,43 +1117,20 @@ enum ExportKit {
         }
     }
 
-    // ---------- 687/701 打印: UIPrintInteractionController + 自定义 UIPrintFormatter ----------
-    final class OneShotFormatter: UIPrintFormatter {
-        var data: Data
-        init(data: Data) {
-            self.data = data
-            super.init()
-        }
-        required init() { fatalError() }
-        private var pages: [PDFPage] { PDFDocument(data: data)?.pages ?? [] }
-        private var pageIndex = 0
-        override func printPage(_ page: Int, in printPageRange: UIPrintPageRange) -> Bool {
-            page < pages.count
-        }
-        override func size(for actualPageSize: CGSize) -> CGSize { actualPageSize }
-        /// 打印控制器逐页调用 draw; 用页序计数取对应 PDF 页 (702 分页打印不重叠)
-        override func draw(in printPage: CGRect) {
-            let ps = pages
-            guard pageIndex < ps.count else { return }
-            ps[pageIndex].draw(in: printPage)
-            pageIndex += 1
-        }
-        override func reset() {
-            pageIndex = 0
-            super.reset()
-        }
-    }
-
+    // ---------- 687/701 打印: UIPrintInteractionController 直接印这份 PDF ----------
+    // 旧写法自造了一个 UIPrintFormatter 子类, 覆写 `printPage(_:in:)` / `size(for:)` 两个
+    // **SDK 里不存在的方法**, 还引用了不存在的 `UIPrintPageRange` —— 真编译报 5 条错。
+    // `printingItem` 是官方支持 PDF 的入口 (行为等价: 整份 PDF 交给系统打印面板), 且少一个自造类。
     @MainActor
     static func presentPrint(pdfData: Data, jobName: String, from view: UIView) {
-        let formatter = OneShotFormatter(data: pdfData)
         let info = UIPrintInfo(dictionary: nil)
         info.outputType = .general
         info.jobName = jobName
-        guard let controller = UIPrintInteractionController.shared else { return }
-        controller.printFormatter = formatter
+        // .shared 是**非可选**单例 (旧写法 guard let 会被编译器拒), present 的真实标签序是 (from:in:animated:)
+        let controller = UIPrintInteractionController.shared
+        controller.printingItem = pdfData
         controller.printInfo = info
-        controller.present(animated: true, from: view.bounds, in: view)
+        controller.present(from: view.bounds, in: view, animated: true, completionHandler: nil)
     }
 }
 
@@ -861,6 +1166,206 @@ extension ExportKit {
     }
 }
 
+// ================= 710 报告校验二维码 (出码侧 + 本机扫码核对侧) =================
+// 这张码的语义只有一句, 页面文案也只承诺这一句: 它记的是"本机数据按下面口径重算出的指纹"
+// (行数 + SHA-256 摘要)。报告文件分享出去之后就不在本机了, 所以这一步能做的是
+// "这份码 vs 本机当前数据"的一致性核对 —— 比对全走只读读链 (records / filtered),
+// 扫到的原文只进结果文案, 库里一个字节都不会被写。
+// 复用既有基础设施: 哈希 = HashKit.sha256Hex (App/Core/AuditChain.swift:20),
+// 出图 = BackupStudio.qrImage (App/Services/BackupStudioKit.swift:364, CIQRCodeGenerator),
+// 相机侧 = ReportScanSheet (App/UI/ReportVerifyView.swift, 逐字抄 BackupStudio.swift:2287)。
+enum ReportVerify {
+    /// 710 载荷前缀: "是不是本 App 的校验码"的唯一判据 (三态里的第三态就靠它)
+    static let magic = "KFRPT1"
+    /// 710 摘要降级档长度 = 12 位 hex, 与 753 诊断摘要同档 (App/Core/DiagKit.swift:1018)
+    static let shortLen = 12
+    /// 710 QR 载荷预算: 120 字符在 CIQRCodeGenerator 的默认纠错档 M 下落在版本 7 上下
+    /// (≈45×45 模块), qrImage 的 scale 6 出图约 270pt —— 相机对得上, 整码也读得完。
+    static let payloadBudget = 120
+    /// 710 小写 hex 字符集 (摘要形状校验用; Character.isLowercase 对数字为 false, 故自己列表)
+    static let hexChars: Set<Character> = Set("0123456789abcdef")
+
+    /// 710 一张码: 行数 + 摘要 + (按预算保留的) 锁与范围口径
+    struct Code {
+        var rows: Int
+        var digest: String
+        var mac: String?
+        var rangeToken: String?
+        var payload: String
+        /// 710 档位: 1 = 64 位摘要 + 口径全带 / 2 = 摘要截到 12 位, 口径仍带 / 3 = 只剩行数 + 12 位摘要
+        var tier: Int
+    }
+
+    /// 710 载荷解析三态: 自家码 / 别人家的码 / 开头对但载荷残缺
+    enum Load {
+        case ours(Code)
+        case foreign
+        case broken
+    }
+
+    /// 710 核对结论: 直接进 UI 的标题 + 逐行说明 (tone/icon 走 DS 语义档)
+    struct Verdict {
+        var tone: ToneColor
+        var icon: String
+        var title: String
+        var lines: [String]
+        var at: String
+    }
+
+    /// 710 摘要口径 —— 改这里必须同步改页面上的口径说明, 否则同一批数据会出现两个"官方口径":
+    /// 一行 = 时间 / 类型名 / 成员名 / 是否告警 / 凭证词 / 锁端行键 六字段, 以 U+001F 分隔;
+    /// 行序 = 报告正文的实际出场序, 判据在 buildReport 里: 告警/明细的分拣 (:561-562) 与两章的
+    /// 逐行循环 (告警章 :585-589 在前、明细章 :593-597 在后), 章内保持 records(mac:) 的行序。
+    /// 原始 hex、级别字样、处置结论、生成时间、列选择 (690) 都在口径之外: 那五项要么由这六项派生,
+    /// 要么每次导出都不同 (含时间戳), 算进去会让同一批数据每次导出得到不同指纹, 核对失去可复现性。
+    static func rowToken(_ r: ExportRecord) -> String {
+        [r.time, r.typeName, r.member, r.isAlarm ? "1" : "0", r.credWord, r.key]
+            .joined(separator: "\u{1F}")
+    }
+    static func reportLineTokens(_ recs: [ExportRecord]) -> [String] {
+        recs.filter { $0.isAlarm }.map { rowToken($0) } + recs.filter { !$0.isAlarm }.map { rowToken($0) }
+    }
+    /// 710 摘要 = SHA-256(报告正文行集合按口径拼出的文本), 全小写 hex (64 位)
+    static func digest(of recs: [ExportRecord]) -> String {
+        HashKit.sha256Hex(reportLineTokens(recs).joined(separator: "\n"))
+    }
+
+    /// 710 范围口径进载荷: 核对侧要能知道这份码是按哪一档算的, 否则页面上换个范围永远对不上。
+    /// 成员用稳定 id 作 tag (689 的教训: 名字会改进文件名, id 才是稳定标识)。
+    static func token(of range: ExportRange) -> String {
+        switch range {
+        case .all: return "all"
+        case .month: return "month"
+        case .day: return "day"
+        case .alarms: return "alarms"
+        case .member(let id): return "member-" + id
+        }
+    }
+    static func range(fromToken t: String) -> ExportRange? {
+        switch t {
+        case "all": return .all
+        case "month": return .month
+        case "day": return .day
+        case "alarms": return .alarms
+        default:
+            guard t.hasPrefix("member-") else { return nil }
+            let id = String(t.dropFirst("member-".count))
+            guard !id.isEmpty, DB.member(id) != nil else { return nil }
+            return .member(id)
+        }
+    }
+
+    /// 710 本机数据 → 一张码; 载荷超预算时按 tier1 → tier2 → tier3 逐级降级 (规则同时进文案)
+    static func code(mac: String, range: ExportRange) -> Code {
+        let recs = ExportKit.filtered(ExportKit.records(mac: mac), range: range)
+        let full = digest(of: recs)
+        let head = magic + "|" + String(recs.count) + "|"
+        let ctx = "|" + mac + "|" + token(of: range)
+        let tok = token(of: range)
+        // 710 第一档: 行数 + 64 位摘要 + 锁 + 范围
+        let tier1 = head + full + ctx
+        if tier1.count <= payloadBudget {
+            return Code(rows: recs.count, digest: full, mac: mac, rangeToken: tok, payload: tier1, tier: 1)
+        }
+        // 710 第二档: 摘要只带前 12 位 (QR 容量优先保口径上下文)
+        let short = String(full.prefix(shortLen))
+        let tier2 = head + short + ctx
+        if tier2.count <= payloadBudget {
+            return Code(rows: recs.count, digest: short, mac: mac, rangeToken: tok, payload: tier2, tier: 2)
+        }
+        // 710 第三档: 口径段一并退出载荷, 只剩行数 + 摘要前 12 位; 核对口径回落到本页当前选择
+        return Code(rows: recs.count, digest: short, mac: nil, rangeToken: nil, payload: head + short, tier: 3)
+    }
+
+    /// 710 解析: 前缀 + 段数 + 摘要形状三道闸都在这里收口, 判定只认形状
+    static func parse(_ s: String) -> Load {
+        let text = s.trimmingCharacters(in: .whitespacesAndNewlines)
+        let parts = text.components(separatedBy: "|")
+        guard parts.first == magic else { return .foreign }
+        guard parts.count == 3 || parts.count == 5 else { return .broken }
+        guard let rows = Int(parts[1]), isDigest(parts[2]) else { return .broken }
+        let hasCtx = parts.count == 5
+        return .ours(Code(rows: rows,
+                          digest: parts[2],
+                          mac: hasCtx ? parts[3] : nil,
+                          rangeToken: hasCtx ? parts[4] : nil,
+                          payload: text,
+                          tier: hasCtx ? (parts[2].count == 64 ? 1 : 2) : 3))
+    }
+    /// 710 摘要形状: 64 位完整档或 12 位降级档, 字符限小写 hex
+    static func isDigest(_ s: String) -> Bool {
+        (s.count == 64 || s.count == shortLen) && s.allSatisfy { hexChars.contains($0) }
+    }
+    /// 710 摘要比对: 两边可能一档 64 一档 12 ⇒ 按共有长度比前缀, 降级不改变判定含义
+    static func digestMatch(_ a: String, _ b: String) -> Bool {
+        let n = min(a.count, b.count)
+        guard n > 0 else { return false }
+        return String(a.prefix(n)) == String(b.prefix(n))
+    }
+
+    /// 710 口径说明: 核对拿什么数据重算的必须写在结果里, 否则"不一致"没法解释
+    static func caliberText(_ scanned: Code, mac: String, range: ExportRange) -> String {
+        var s = "重算口径: 锁 mac 尾 " + String(mac.suffix(4)) + " · 范围 " + range.label
+        if scanned.mac == nil || scanned.rangeToken == nil {
+            s += " · 这一档码上只带行数与摘要, 口径按本页当前选择"
+        }
+        return s
+    }
+    /// 710 降级规则写在码旁边, 让"这张码带什么"在页面上可读
+    static func tierText(_ c: Code) -> String {
+        switch c.tier {
+        case 1: return "完整档载荷 (" + String(c.payload.count) + " 字符 / 预算 " + String(payloadBudget) + "): 行数 + 64 位摘要 + 锁与范围口径。"
+        case 2: return "降级一档: 载荷超 " + String(payloadBudget) + " 字符 ⇒ 摘要只带前 " + String(shortLen) + " 位, 锁与范围口径仍带着。"
+        default: return "降级两档: 摘要降档后仍超 " + String(payloadBudget) + " 字符 ⇒ 载荷只剩行数 + 摘要前 " + String(shortLen) + " 位, 核对口径回落到本页当前的锁与范围。"
+        }
+    }
+
+    /// 710 核对入口: 扫到的载荷原文 + 本页当前锁与范围 (码上带口径时以码为准)
+    static func verify(_ text: String, currentMac: String, currentRange: ExportRange) -> Verdict {
+        let now = ExportKit.stamp.string(from: Date())
+        switch parse(text) {
+        case .foreign:
+            return Verdict(tone: .neutral, icon: "questionmark.circle.fill",
+                           title: "这不是本 App 的校验码",
+                           lines: ["校验码的载荷以 " + magic + " 开头, 扫到的这段开头是 " + String(text.prefix(20)) + "。",
+                                   "相机认得各种码, 这里只比自己家这一种前缀; 扫到的内容只进这屏文案, 不进任何库。"],
+                           at: now)
+        case .broken:
+            return Verdict(tone: .warn, icon: "exclamationmark.triangle.fill",
+                           title: "码读到了, 载荷读不成",
+                           lines: ["开头是 " + magic + ", 但后面缺行数、缺摘要, 或摘要长度落在 64/12 位之外 —— 这张码被裁切过或出自别的版本。",
+                                   "扫到的原文: " + String(text.prefix(96))],
+                           at: now)
+        case .ours(let scanned):
+            let m = scanned.mac ?? currentMac
+            let r = scanned.rangeToken.flatMap { range(fromToken: $0) } ?? currentRange
+            let local = code(mac: m, range: r)
+            var lines = [caliberText(scanned, mac: m, range: r)]
+            let sameRows = scanned.rows == local.rows
+            let sameDigest = digestMatch(scanned.digest, local.digest)
+            if sameRows && sameDigest {
+                lines.append("行数: 双方都是 " + String(local.rows) + " 行。")
+                lines.append("摘要: 双方都是 " + local.digest + " (按共有长度比前缀, 降级档照样可比)。")
+                lines.append("对上的是「这份码记的指纹」与「本机现在的数据」; 报告文件分享出去后就不在本机了, 它自身的真伪在这一条核对之外。")
+                return Verdict(tone: .ok, icon: "checkmark.circle.fill",
+                               title: "一致: 本机数据与这份码对得上", lines: lines, at: now)
+            }
+            if sameRows {
+                lines.append("行数: 双方都是 " + String(local.rows) + " 行, 摘要不同 ⇒ 变的是行内容本身 (成员改名、凭证增删引起的归属变化这类)。")
+            } else {
+                let diff = local.rows - scanned.rows
+                lines.append("行数: 码上 " + String(scanned.rows) + " 行, 本机 " + String(local.rows) + " 行 (本机"
+                             + (diff > 0 ? "多出 " + String(diff) : "少了 " + String(-diff)) + " 行)。")
+            }
+            lines.append("摘要: 码上 " + scanned.digest + " , 本机 " + local.digest + "。")
+            lines.append("本机数据在导出之后又变了才会走到这一态: 新增或删除记录、改成员名、增删凭证都会改变重算结果。")
+            lines.append("核对的两端是「这份码」与「本机当前数据」; 分享出去的报告文件已不在本机, 它的真伪不在核对范围。")
+            return Verdict(tone: .warn, icon: "exclamationmark.triangle.fill",
+                           title: "不一致: 本机数据与这份码对不上", lines: lines, at: now)
+        }
+    }
+}
+
 // ================= 卡片视图 (ImageRenderer 渲染; 固定尺寸, 不参与动态字体 — 分享卡按设计固定) =================
 struct AlarmShareCardView: View {
     let name: String
@@ -869,28 +1374,28 @@ struct AlarmShareCardView: View {
         VStack(alignment: .leading, spacing: DS.Space.m) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: DS.Icon.xl, weight: .semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(DS.heroFg)
                 .accessibilityHidden(true)
             Text(rec.typeName)
                 .font(.title2.weight(.semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(DS.heroFg)
                 .fixedSize(horizontal: false, vertical: true)
             Text(name)
                 .font(.subheadline)
-                .foregroundStyle(.white.opacity(0.85))
+                .foregroundStyle(DS.heroFg.opacity(0.85))
                 .lineLimit(1)
             Text(rec.time)
                 .font(.footnote)
-                .foregroundStyle(.white.opacity(0.7))
+                .foregroundStyle(DS.heroFg.opacity(0.7))
                 .lineLimit(1)
             Spacer()
             Text("离线锁管家 · 单条告警 · 仅含本条数据")
                 .font(.caption2)
-                .foregroundStyle(.white.opacity(0.7))
+                .foregroundStyle(DS.heroFg.opacity(0.7))
         }
         .padding(DS.Space.xl)
         .frame(width: 360, height: 640, alignment: .top)   // 9:16
-        .background(DS.Gradient.hero, in: RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous))
+        .background(DS.heroGradientSafe, in: RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous))
     }
 }
 
@@ -901,24 +1406,24 @@ struct RecordShareCardView: View {
         VStack(alignment: .leading, spacing: DS.Space.m) {
             Image(systemName: rec.isAlarm ? "exclamationmark.triangle.fill" : "lock.open.fill")
                 .font(.system(size: DS.Icon.xl, weight: .semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(DS.heroFg)
                 .accessibilityHidden(true)
             Text(rec.typeName)
                 .font(.title2.weight(.semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(DS.heroFg)
                 .fixedSize(horizontal: false, vertical: true)
             Text((rec.member.isEmpty ? name : name + " · " + rec.member) + " · " + rec.time)
                 .font(.subheadline)
-                .foregroundStyle(.white.opacity(0.85))
+                .foregroundStyle(DS.heroFg.opacity(0.85))
                 .fixedSize(horizontal: false, vertical: true)
             Spacer()
             Text("离线锁管家 · 单条记录 · 仅含本条数据")
                 .font(.caption2)
-                .foregroundStyle(.white.opacity(0.7))
+                .foregroundStyle(DS.heroFg.opacity(0.7))
         }
         .padding(DS.Space.xl)
         .frame(width: 360, height: 640, alignment: .top)
-        .background(DS.Gradient.hero, in: RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous))
+        .background(DS.heroGradientSafe, in: RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous))
     }
 }
 
@@ -935,6 +1440,14 @@ struct ExportCenterView: View {
     @State private var showQL = false
     @State private var lastPath = ""
     @State private var lastSuccess = false
+    @State private var dayPick = ""            // 686 单日长图选中的日子 (空 = 最新一天)
+    @State private var dayOpts: [String] = []  // 686 可选日 = 有记录的最近 14 天
+    // 710 校验二维码: 指纹与出图各缓存一份 @State (同 686 的"进页算一次, 不在 Form 热路径现算"),
+    // 换范围/手动重算时刷新; 核对结论也留在页面上, 让"码"和"比对结果"同屏可读。
+    @State private var verifyCode: ReportVerify.Code?
+    @State private var verifyQR: UIImage?
+    @State private var verifyVerdict: ReportVerify.Verdict?
+    @State private var showVerifyScan = false
 
     let mac: String
     init(mac: String) { self.mac = mac }
@@ -956,9 +1469,19 @@ struct ExportCenterView: View {
                             .font(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
+                        // 719 重试: 重放上次起点的闭包 (取消不重试 —— 取消是用户的决定, 不是失败)
+                        if progress.failed != "已取消" {
+                            Button("重试 (719)") { progress.retry() }
+                                .font(.subheadline)
+                                .foregroundStyle(DS.Palette.accentText)
+                                .frame(minHeight: DS.Hit.min)
+                                .contentShape(Rectangle())
+                        }
                     }
                 }
-                if let item = progress.done { doneSection(item) }
+                if let item = progress.done { doneSection(item).animation(DS.Motion.standard, value: lastSuccess) }
+                // 710 校验二维码区: 出码 + 扫码核对, 与上面的导出动作同页 (报告落点页)
+                verifySection
                 if !lastPath.isEmpty { pathSection }
             }
             .navigationTitle("导出与分享")
@@ -970,7 +1493,24 @@ struct ExportCenterView: View {
             .fullScreenCover(isPresented: $showQL) {
                 if let u = quickLook { QLPreviewView(url: u) }
             }
+            // 710 扫码核对的相机侧: 独立 sheet (与 411/522 两处同一制式), 载荷原文交回 runVerify
+            .sheet(isPresented: $showVerifyScan) {
+                ReportScanSheet { runVerify($0) }
+            }
+            // 686: 可选日期进页时算一次 (读本地缓存日志; 不在 Form 热路径里现算)
+            .onAppear {
+                loadDayOptions()
+                loadVerifyCode()          // 710
+            }
+            // 710: 范围一改, 指纹与二维码就重算一次 (口径跟着范围走, 旧结论随之作废)
+            .onChange(of: range) { _, _ in loadVerifyCode() }
         }
+    }
+
+    private func loadDayOptions() {
+        guard dayOpts.isEmpty else { return }
+        let keys = ExportKit.records(mac: mac).map { $0.dayKey }.filter { $0 != "未知" }
+        dayOpts = Array(Array(Set(keys)).sorted().suffix(14).reversed())
     }
 
     // 718 分享范围明示: 入口处文案明示"文件将离开本机"
@@ -981,6 +1521,10 @@ struct ExportCenterView: View {
                 Text("当月").tag(ExportRange.month)
                 Text("全部记录").tag(ExportRange.all)
                 Text("仅告警").tag(ExportRange.alarms)
+                // 701: 暴露既有 .day 档 (原句要自定义日期; 最小形态先给"最新单日" +
+                // 686 的「导出哪一天」选择器)。两者并不相通: .day 恒导最新一天 (filtered 不读 dayPick),
+                // 686 选择器只驱动"单日长图"这一条出口且只列近 14 天 —— 别并成"任意单日"一句
+                Text("最新单日").tag(ExportRange.day)
                 ForEach(DB.members(), id: \.id) { m in
                     Text("仅 " + m.name).tag(ExportRange.member(m.id))
                 }
@@ -1045,17 +1589,53 @@ struct ExportCenterView: View {
                     .frame(minHeight: DS.Hit.min)
                     .contentShape(Rectangle())
             }
+            // 703 直发: 配置了邮箱就走系统邮件 (附件与 CSV 导出同源); canSendMail=false 时回退 .eml 模板
+            Button { sendByMail() } label: { Label("用系统邮件发送 (703)", systemImage: "envelope.open") }
             Button { startEML() } label: { Label("邮件模板 .eml (703 降级)", systemImage: "envelope") }
         }
         .disabled(progress.running)
         Section {
+            // 686 导出哪一天: 默认"最新一天" (与旧行为一致), 换日重导; 选项=有记录的最近 14 天
+            if !dayOpts.isEmpty {
+                Picker("导出哪一天 (686)", selection: $dayPick) {
+                    Text("最新一天").tag("")
+                    ForEach(dayOpts, id: \.self) { d in Text(d).tag(d) }
+                }
+                .pickerStyle(.menu)
+                .frame(minHeight: DS.Hit.min)
+            }
             Button { startDayImages() } label: { Label("单日长图 (686/706)", systemImage: "photo.on.rectangle.angled") }
             Button { startAlarmCard() } label: { Label("告警分享卡 (688/718)", systemImage: "exclamationmark.bubble") }
+            Button { startAlarmFactSheet() } label: { Label("告警事实单页 (746, PDF)", systemImage: "doc.text") }
+            // 691 加密压缩导出: 口令线下告知, 本机不留 (与备份包同一套信封)
+            SecureField("加密口令 (至少 6 位, 691)", text: $zipPw)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .font(.footnote)
+            Button { startEncryptedZip() } label: { Label("加密压缩导出 (691)", systemImage: "lock.doc") }
+                .disabled(zipPw.trimmingCharacters(in: .whitespaces).count < 6)
             Button { printMonthly() } label: { Label("打印月度记录 (687/701)", systemImage: "printer") }
             Button { printOnePager() } label: { Label("告警一页纸 (717)", systemImage: "doc.text.magnifyingglass") }
             Button { printOralCard() } label: { Label("口述卡打印 (478)", systemImage: "person.text.rectangle") }
         }
         .disabled(progress.running)
+    }
+
+    /// 746 单条告警事实单页: 最新一条告警出 PDF (事实 / 原始报文 / 处置 / 签名栏), 用于物业沟通
+    private func startAlarmFactSheet() {
+        progress.start("正在生成告警事实单 (746)…") {
+            let alarms = ExportKit.filtered(ExportKit.records(mac: self.mac), range: .alarms).reversed()
+            guard let a = alarms.first else { return nil }
+            let pdf = ExportKit.alarmFactSheetPDF(mac: self.mac, rec: a)
+            guard !pdf.isEmpty else { return nil }
+            let hex = SHA256.hash(data: pdf).map { String(format: "%02x", $0) }.joined()
+            return ExportItem(kind: "pdf",
+                              title: "告警事实单 " + a.typeName,
+                              fileName: "锁管家_告警事实单_" + a.dayKey + ".pdf",
+                              bytes: pdf, sha256: hex,
+                              shaLabel: "单条告警 · 仅含本条数据",
+                              previewText: "746: 事实 / 原始报文 / 处置 / 签名栏 — 只含这一条告警。")
+        }
     }
 
     /// 688 告警分享卡: 最新一条告警渲染 9:16 卡片图, 进 doneSection 可 ShareLink 直发 (仅含本条数据, 718)
@@ -1106,6 +1686,8 @@ struct ExportCenterView: View {
                 Label(item.fileName, systemImage: "checkmark.circle.fill")
                     .font(.subheadline)
                     .foregroundStyle(DS.Palette.ok)
+                    // 719 完成动效: 成功态出现时轻弹 (由调用处的 .animation(value: lastSuccess) 驱动)
+                    .transition(.scale(scale: 0.7).combined(with: .opacity))
             } else {
                 Label(item.fileName, systemImage: "circle.fill")
                     .font(.subheadline)
@@ -1148,7 +1730,7 @@ struct ExportCenterView: View {
                 }
                 .buttonStyle(SecondaryActionStyle(fullWidth: false))
                 .frame(minHeight: DS.Hit.min)
-                if item.kind == "png" || item.kind == "pdf" {
+                if item.kind == "png" || item.kind == "pdf" || item.kind == "csv" {   // 712: CSV 也走同一预览 (openQL 已认得)
                     Button { openQL(item) } label: {
                         Label("预览 (712)", systemImage: "eye")
                             .frame(maxWidth: .infinity)
@@ -1164,6 +1746,123 @@ struct ExportCenterView: View {
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
+    }
+
+    // ---------- 710 校验二维码区 (出码 + 扫码核对, 比对全程只读) ----------
+    /// 710 取数走 records + filtered 这条既有读链 (与 683/686 同一口径), 出图交既有的
+    /// BackupStudio.qrImage (BackupStudioKit.swift:364)。换范围或手动重算后旧结论作废:
+    /// 上一次核对讲的是旧口径的事。
+    private func loadVerifyCode() {
+        let c = ReportVerify.code(mac: mac, range: range)
+        verifyCode = c
+        verifyQR = c.rows == 0 ? nil : BackupStudio.qrImage(c.payload)
+        verifyVerdict = nil
+    }
+    /// 710 扫到的载荷原文 → 与本机当前数据重算的指纹比对; 原文只进这屏文案, 库里一个字节都不写。
+    private func runVerify(_ text: String) {
+        guard !text.isEmpty else { return }
+        let v = ReportVerify.verify(text, currentMac: mac, currentRange: range)
+        verifyVerdict = v
+        app.showToast(v.title)
+    }
+
+    @ViewBuilder
+    private var verifySection: some View {
+        Section {
+            if let c = verifyCode {
+                if c.rows == 0 {
+                    EmptyState(systemImage: "qrcode.viewfinder",
+                               title: "这一范围还没有记录",
+                               message: "指纹要由记录行算出来; 换上方「范围」那一档, 或等锁端记录同步到本机后再回这屏, 码就画得出来。扫码核对入口在下面。")
+                } else {
+                    if let img = verifyQR {
+                        Image(uiImage: img)
+                            .resizable()
+                            .interpolation(.none)
+                            .scaledToFit()
+                            .frame(maxWidth: 220, maxHeight: 220)
+                            // 无障碍: QR 是纯图形, VoiceOver 读不出模块 ⇒ 行数与摘要直接写进标签
+                            .accessibilityLabel("报告校验二维码 (710), " + String(c.rows) + " 行, 摘要 " + c.digest)
+                        ShareLink(item: UIImageShareItem(img), preview: SharePreview("报告校验二维码")) {
+                            Label("分享这张二维码 (710)", systemImage: "square.and.arrow.up")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(SecondaryActionStyle(fullWidth: false))
+                        .frame(minHeight: DS.Hit.min)
+                    } else {
+                        // 710 CoreImage 这一趟没回图 (与 753 同一处置): 载荷原文顶同一份内容
+                        Label("二维码这次没出成图, 下面那段载荷文本与码是同一份内容, 扫码核对照常用。",
+                              systemImage: "qrcode")
+                            .font(.caption)
+                            .foregroundStyle(DS.Palette.warn)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    LabeledRow("行数 (710)", String(c.rows) + " 行")
+                    Text("摘要: " + c.digest)
+                        .font(.caption.monospaced())
+                        .foregroundStyle(DS.Palette.textSub)
+                        .textSelection(.enabled)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(c.payload)
+                        .font(.caption.monospaced())
+                        .foregroundStyle(DS.Palette.textSub)
+                        .textSelection(.enabled)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(ReportVerify.tierText(c))
+                        .font(.caption2)
+                        .foregroundStyle(DS.Palette.textSub)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("这张码代表的是「本页上方所选范围的数据, 在本机重算出的指纹」(行数 + SHA-256 摘要)。"
+                         + "扫码核对做的是: 把这份码记的指纹与本机当前数据重算的结果比一比 —— 报告文件分享出去后就不在本机了, 它自身的真伪在这一步之外。")
+                        .font(.footnote)
+                        .foregroundStyle(DS.Palette.textSub)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                HStack(spacing: DS.Space.s) {
+                    Button { showVerifyScan = true } label: {
+                        Label("扫码核对 (710)", systemImage: "viewfinder")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(SecondaryActionStyle(fullWidth: false))
+                    .frame(minHeight: DS.Hit.min)
+                    Button("重算本机指纹") { loadVerifyCode() }
+                        .font(.footnote)
+                        .foregroundStyle(DS.Palette.accentText)
+                        .frame(minHeight: DS.Hit.min)
+                        .contentShape(Rectangle())
+                }
+                if let v = verifyVerdict { verifyVerdictBlock(v) }
+            } else {
+                Text("正在按本机数据算指纹…")
+                    .font(.caption)
+                    .foregroundStyle(DS.Palette.textSub)
+            }
+        } header: {
+            Text("报告校验二维码 (710)")
+        } footer: {
+            Text("摘要口径 (逐行六字段): 时间 / 类型 / 成员 / 是否告警 / 凭证词 / 锁端行键; 行序按报告两章出场序 (告警章在前、明细章在后)。"
+                 + "原始 hex、级别字样、处置结论、生成时间与列选择都在口径之外 ⇒ 换勾选不改指纹。"
+                 + "相机之外没有任何权限申请, 出图与比对全在本机, 不联网。")
+                .font(.caption2)
+        }
+    }
+
+    /// 710 核对结论块: 标题 + 逐行说明, 图标与颜色双通道表达语义 (与 StatusPill 同一判据)
+    @ViewBuilder
+    private func verifyVerdictBlock(_ v: ReportVerify.Verdict) -> some View {
+        VStack(alignment: .leading, spacing: DS.Space.xs) {
+            Label(v.title, systemImage: v.icon)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(v.tone.color)
+            ForEach(v.lines, id: \.self) { line in
+                Text(line)
+                    .font(.caption)
+                    .foregroundStyle(DS.Palette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            StatusPill(text: "核对于 " + v.at, systemImage: v.icon, tone: v.tone)
+        }
+        .accessibilityElement(children: .combine)
     }
 
     private var pathSection: some View {
@@ -1234,15 +1933,56 @@ struct ExportCenterView: View {
         }
     }
 
+    // 691 加密压缩导出的口令 (只在本页内存里, 不落盘)
+    @State private var zipPw = ""
+
+    /// 691 加密压缩导出: 记录 CSV + 说明 → store-only ZIP → 备份同源信封 (PBKDF2 + AES-128-CBC + HMAC)。
+    /// 写完先做**往返自检** (自家 ZipKit.parse 读回 + 逐条 CRC), 通过才加密 —— 读侧就是判据。
+    private func startEncryptedZip() {
+        let pw = zipPw.trimmingCharacters(in: .whitespaces)
+        guard pw.count >= 6 else { app.showToast("口令至少 6 位 (691)"); return }
+        progress.start("正在打包并加密 (691)…") {
+            let recs = ExportKit.filtered(ExportKit.records(mac: self.mac), range: self.range)
+            guard !recs.isEmpty else { return nil }
+            let build = ExportKit.buildCSV(recs: recs, cols: self.cols)
+            let kc = DB.keychain(self.mac)
+            let lockName = kc.map { $0.name.isEmpty ? LockArchive.displayName($0) : $0.name } ?? self.mac
+            let stamp = stampTag()
+            let note = "离线锁管家 加密导出 (691)\n锁: \(lockName)\n范围: \(self.range.label)\n行数: \(recs.count)\n"
+                + "生成: \(Date().formatted(date: .abbreviated, time: .standard))\n\n"
+                + "本文件是 aes-128-cbc+hmac-sha256 信封, 内含一个 zip (store 方式); 用同款 App 的备份口令流程解开即可。"
+            let entries: [(name: String, data: [UInt8])] = [
+                ("锁管家_记录_" + lockName + "_" + stamp + ".csv", Array(build.data)),
+                ("说明.txt", Array(note.utf8)),
+            ]
+            let zip = ZipKit.write(entries: entries)
+            guard let back = try? ZipKit.parse(zip), back.count == entries.count, back.allSatisfy({ $0.crcOk }) else {
+                return nil   // 往返自检不过就不加密 —— 宁可不给, 不给一个解不开的包
+            }
+            guard let env = try? CryptoBox.encryptBytes(zip, password: pw) else { return nil }
+            let data = Data(env.utf8)
+            let hex = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+            return ExportItem(kind: "json",
+                              title: "加密压缩包",
+                              fileName: "锁管家_加密导出_" + lockName + "_" + stamp + ".zip.enc",
+                              bytes: data, sha256: hex,
+                              shaLabel: "AES-128-CBC + HMAC-SHA256 (与备份包同源)",
+                              previewText: "691: 内含记录 CSV 与说明; 口令线下告知, 本机不留。")
+        }
+    }
+
     private func startCSV() {
         progress.start("正在生成 CSV (683)…") {
             let recs = ExportKit.filtered(ExportKit.records(mac: self.mac), range: self.range)
             guard !recs.isEmpty else { return nil }
             let build = ExportKit.buildCSV(recs: recs, cols: self.cols)
             let hex = SHA256.hash(data: build.data).map { String(format: "%02x", $0) }.joined()
+            // 693 CSV 文件名带锁名 (与 :532 报告页同一取名规范), 多锁导出不再同名
+            let kc = DB.keychain(self.mac)
+            let lockName = kc.map { $0.name.isEmpty ? LockArchive.displayName($0) : $0.name } ?? self.mac
             return ExportItem(kind: "csv",
                               title: "记录 " + self.range.label,
-                              fileName: "锁管家_记录_" + stampTag() + "_" + self.range.label + ".csv",
+                              fileName: "锁管家_记录_" + lockName + "_" + stampTag() + "_" + self.range.label + ".csv",
                               bytes: build.data, sha256: hex,
                               shaLabel: "CSV · \(build.rowCount) 行 · 转义 \(build.escapedRows) 行 (705 预检)",
                               previewText: build.preview3,
@@ -1263,7 +2003,9 @@ struct ExportCenterView: View {
                               fileName: "锁管家_原始_" + stampTag() + "_" + self.range.label + ".json",
                               bytes: data, sha256: hex,
                               shaLabel: "JSON · \(recs.count) 条" + (self.redact ? " · 已脱敏" : ""),
-                              previewText: self.redact ? "脱敏导出: hex 列留空。" : "含协议原始 hex, 供 vendor 夹具比对。")
+                              previewText: self.redact
+                                ? "脱敏导出: hex 列与帧 hex 段都留空。"
+                                : "帧 hex 取自诊断原始收发日志 (需开「记录原始收发 hex」，未开则该段为空)。")
         } finish: { item, err in
             onDone(item, err)
         }
@@ -1310,6 +2052,27 @@ struct ExportCenterView: View {
         }
     }
 
+    /// 703 系统邮件直发: 装配 MFMailComposeViewController (主题/正文/CSV 附件), 发送动作交给系统邮件。
+    /// 附件数据与 CSV 导出同源 (buildCSV), 不复制生成逻辑; 未配置邮箱时回退既有 .eml 降级路径。
+    @MainActor
+    private func sendByMail() {
+        let recs = ExportKit.filtered(ExportKit.records(mac: mac), range: range)
+        guard !recs.isEmpty else { app.showToast("无记录可发送"); return }
+        guard MFMailComposeViewController.canSendMail(), let host = UIApplication.topViewController() else {
+            app.showToast("本机未配置邮箱账号, 已改用 .eml 模板")
+            startEML()
+            return
+        }
+        let build = ExportKit.buildCSV(recs: recs, cols: cols)
+        let lockName = DB.keychain(mac).map { $0.name.isEmpty ? LockArchive.displayName($0) : $0.name } ?? mac
+        let vc = MFMailComposeViewController()
+        vc.mailComposeDelegate = ExportKit.MailDismisser.shared
+        vc.setSubject("「离线锁管家」" + range.label + " 开门记录")
+        vc.setMessageBody("请查收附件 (共 " + String(build.rowCount) + " 行)。导出在本机完成, 发送动作由系统邮件执行。", isHTML: false)
+        vc.addAttachmentData(build.data, mimeType: "text/csv", fileName: "锁管家_记录_" + lockName + "_" + range.label + ".csv")
+        host.present(vc, animated: true)
+    }
+
     private func startEML() {
         progress.start("正在生成邮件模板 (703)…") {
             let recs = ExportKit.filtered(ExportKit.records(mac: self.mac), range: self.range)
@@ -1323,9 +2086,10 @@ struct ExportCenterView: View {
     private func startDayImages() {
         progress.start("正在生成长图 (686)…") {
             let all = ExportKit.records(mac: self.mac)
-            let day = ExportKit.latestDayKey(all)
+            // 686: 指定哪天就导哪天 (此前恒导最新一天); 空 = 最新
+            let day = self.dayPick.isEmpty ? ExportKit.latestDayKey(all) : self.dayPick
             guard !day.isEmpty else { return nil }
-            let recs = ExportKit.filtered(all, range: .day)
+            let recs = all.filter { $0.dayKey == day }
             guard !recs.isEmpty else { return nil }
             let pages = ExportItem.dayPages(recs: recs, mac: self.mac, day: day)
             guard let first = pages.first, let jpeg = first.jpegData(compressionQuality: 0.8) else { return nil }
@@ -1384,7 +2148,7 @@ struct ExportCenterView: View {
     }
 
     private func stampTag() -> String {
-        let f = DateFormatter(); f.dateFormat = "yyyyMM"; f.timeZone = .current
+        let f = DateFormatter(); f.dateFormat = "yyyyMM"; f.timeZone = .current; f.locale = Locale(identifier: "en_US_POSIX")
         return f.string(from: Date())
     }
 }

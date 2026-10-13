@@ -15,6 +15,9 @@
 import Foundation
 import SwiftUI
 import UserNotifications
+// 502 彻底删除的统一门槛口 (guardedPurge) 要问生物识别, 所以本文件也吃这一套系统框架;
+// 与 AccessibilityKit 的 AuthKit (877) 同源, 那边不复用的理由写在 guardedPurge 上方。
+import LocalAuthentication
 
 // ================= 数据模型 =================
 /// 487/489/490/495/496 版本快照: 值/时段/备注逐字段对齐, 供 diff 与"恢复即新版本"
@@ -29,13 +32,15 @@ struct CredSnapshot: Codable {
 }
 /// 498 来源过滤: 手动删除 / 批量清理 / 过期清理 / 重录替代
 enum CredBinSource: Int, Codable, CaseIterable {
-    case manual = 0, batch = 1, expired = 2, rererecord = 3
+    case manual = 0, batch = 1, expired = 2, rererecord = 3, orphan = 4
     var label: String {
         switch self {
         case .manual: return "手动删除"
         case .batch: return "批量清理"
         case .expired: return "过期清理"
         case .rererecord: return "重录替代"
+        // 452: 诊断页"隔离无主凭证"这一支 —— 来源单列一档, 用户看得见它是被谁收走的
+        case .orphan: return "无主隔离"
         }
     }
 }
@@ -75,8 +80,25 @@ struct CredQueueItem: Codable, Identifiable {
 }
 struct CredAlert: Codable {
     var day: Bool = false
+    var d3: Bool = false       // 930: 到期前 3 天
+    var d1: Bool = false       // 930: 到期前 1 天
     var h24: Bool = false
     var h2: Bool = false
+    init(day: Bool = false, d3: Bool = false, d1: Bool = false, h24: Bool = false, h2: Bool = false) {
+        self.day = day; self.d3 = d3; self.d1 = d1; self.h24 = h24; self.h2 = h2
+    }
+    enum CodingKeys: String, CodingKey { case day, d3, d1, h24, h2 }
+    /// 930 新增 d3/d1 之后, 老包 `kf_calert_` 的 JSON 里没有这两个键。合成解码器遇到**缺键**是抛错,
+    /// 一抛整组开关会被 `?? CredAlert()` 吞成"全关" —— 用户已经开好的 7 天/24 小时档会静默消失。
+    /// 所以显式解码: 缺键 = 那一档关, 不牵动别的档 (与恢复包"缺字段=不动本机"同一条纪律)。
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        day = (try? c.decodeIfPresent(Bool.self, forKey: .day)) ?? false
+        d3 = (try? c.decodeIfPresent(Bool.self, forKey: .d3)) ?? false
+        d1 = (try? c.decodeIfPresent(Bool.self, forKey: .d1)) ?? false
+        h24 = (try? c.decodeIfPresent(Bool.self, forKey: .h24)) ?? false
+        h2 = (try? c.decodeIfPresent(Bool.self, forKey: .h2)) ?? false
+    }
 }
 /// 527 命名智能列表: 常用筛选组合存为具名快捷
 struct CredSmartList: Codable, Identifiable {
@@ -94,7 +116,7 @@ enum CredSortKey: Int, CaseIterable {
         switch self {
         case .name: return "名称"
         case .type: return "类型"
-        case .recent: return "最近使用"
+        case .recent: return "最近使用(约)"   // 锁端日志不记凭证身份, 长期凭证只能按锁级推断 → 按本仓纪律带"约"
         case .expiry: return "到期"
         }
     }
@@ -108,6 +130,8 @@ enum CredentialOrg {
     static func binKey(_ mac: String) -> String { "kf_cbin_" + mac }
     static func queueKey(_ mac: String) -> String { "kf_cqueue_" + mac }
     static func starKey(_ mac: String) -> String { "kf_cstar_" + mac }
+    /// 354 归档区: 与星标同式的本机单键 (同一把锁一份)
+    static func archKey(_ mac: String) -> String { "kf_carch_" + mac }
     static func alertKey(_ mac: String, _ kind: String, _ key: Int) -> String { "kf_calert_\(mac)_\(kind)_\(key)" }
     static func listsKey(_ mac: String) -> String { "kf_clists_" + mac }
     static func seqKey(_ mac: String) -> String { "kf_cseq_" + mac }
@@ -115,8 +139,8 @@ enum CredentialOrg {
     // ---------- 时间解析 (台账串 "yyyy-MM-dd HH:mm:ss", 本地时区) ----------
     static let credFormatter: DateFormatter = {
         let f = DateFormatter()
-        f.locale = Locale(identifier: "zh_CN")
         f.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        f.locale = Locale(identifier: "en_US_POSIX")   // 这一份既格式化也**反解析**台账串，必须钉公元历 (原 zh_CN 对纯数字格式没起作用，反而跟着系统历法跑)
         return f
     }()
     static func parseLocal(_ s: String) -> Date? {
@@ -157,17 +181,27 @@ enum CredentialOrg {
         let out = manual + autosKeep
         DB.setCodable(out, histKey(mac, kind, key))
     }
-    static func latest(_ mac: String, kind: String, _ key: Int) -> CredSnapshot? {
-        history(mac, kind, key).last
-    }
+    // `latest(_:kind:_:)` (取某条凭证的最新快照) 第九十二批删除：全库零调用点，
+    // 而调用方要的东西都是 `history(...)` 再自己挑 (历史页要整条列表)。
+    // grep 到的 `latest(` 全是 BatteryCare.latest —— 同名不同主，正是成员级限定计数上线才分得清的那种。
     static func saveHistory(_ mac: String, _ kind: String, _ key: Int, _ list: [CredSnapshot]) {
         DB.setCodable(list, histKey(mac, kind, key))
     }
-    /// 496 恢复即新版本: 不覆盖, 按基线 s 复制回台账, 并新增一条 "恢复自 v(s)" 快照
-    static func restore(_ mac: String, kind: String, key: Int, from s: CredSnapshot) {
-        if let p = s.pwd { DB.addPwd(mac, p) }
+    /// 496 恢复即新版本: 不覆盖, 按基线 s 复制回台账, 并新增一条 "恢复自 v(s)" 快照。
+    /// 返回补进提示的那半句 —— 这一条**改的是本机台账，锁里那条不会自己变回来**：
+    /// 第一百五十四批查出这里是"第四处两侧不一致"（与 152 的撤销、153 的删成员、154 的队列同一族）：
+    /// 回滚一个改过的密码值/时段之后，界面报"已恢复"，而用户拿那串码去开门会开不了。
+    /// 密码 ⇒ 按 504 排一次重新下发；指纹 ⇒ 来源口径：锁里存的是指纹模板，快照能变的只有名称/备注/归属
+    /// (全是本机字段，锁那边既改不了也不需要改)，所以不排队。
+    static func restore(_ mac: String, kind: String, key: Int, from s: CredSnapshot) -> String {
+        var note = ""
+        if let p = s.pwd {
+            DB.addPwd(mac, p)
+            note = queueRestore(mac, p)
+        }
         if let f = s.fp { DB.addFp(mac, f) }
         snapshot(mac, kind: kind, key: key, pwd: s.pwd, fp: s.fp, note: "恢复自 v\(s.version)", starred: true)
+        return note
     }
     /// 494 删除前快照: 双通道可找回 (历史 + 回收站)
     static func snapshotBeforeDelete(_ mac: String, pwd: LedgerPwd?, fp: LedgerFp?) {
@@ -239,18 +273,103 @@ enum CredentialOrg {
         list.insert(CredBinEntry(at: nowSec, source: source.rawValue, pwd: pwd, fp: fp), at: 0)
         saveBin(mac, list)
     }
-    /// 506 误删撤销: 原位还原不入回收站 — 撤销 = 从回收站取出放回
+    /// 回收站那一格的移除 + 放回台账。**这只是"从回收站取回"这一步**，
+    /// 一次删除动作在别处留下的痕迹 (365 待下发的锁端删除、361 停用便签) 它管不着 ——
+    /// 所以调用方要的是下面 `undoRemove` 而不是这个。
+    /// 来源口径：被这一行放回台账的凭证，锁端那一半由调用方负责 ——
+    /// 撤销停用走 `reclaim` 收回待发删除，撤销/还原彻底删除走 504 `queueRestore`；直接调本函数就是绕过它。
     @discardableResult
     static func undoBin(_ mac: String, entry: CredBinEntry) -> Bool {
         var list = bin(mac)
         guard let i = list.firstIndex(where: { $0.id == entry.id }) else { return false }
-        var e = list.remove(at: i)
+        let e = list.remove(at: i)
         saveBin(mac, list)
         if let p = e.pwd { DB.addPwd(mac, p) }
         if let f = e.fp { DB.addFp(mac, f) }
         return true
     }
+
+    /// 506 撤销的**完整**语义：把那次删除留在本机的东西一并收回去。
+    /// 为什么必须有这一层 (第一百五十二批读代码读出来的，此前是缺陷不是设计)：
+    ///  · 停用那条路 (`disablePwd/disableFp`) 删之前就 `enqueue("del_pwd"/"del_fp")` 排了锁端删除、
+    ///    并写了 361 停用便签。旧撤销只做 `undoBin` ⇒ 撤销之后
+    ///     ① 队列里那条待下发的删除还在，连上锁就把**刚恢复的凭证从锁上删掉**（本机却显示它在用），
+    ///     ② 列表上这条"已恢复"的凭证仍挂着「停用原因 未填 · 本机单条停用」。
+    ///    界面上那句"已原位还原"因此是假的 —— 现在这里把两样都收回，并把话说清。
+    ///  · 彻底删除那条路 (`doDeletePwd/doDeleteFp`) 里锁端那一步**已经真执行了**，不能"收回"，
+    ///    只能按 504 的既有口径"还原即重新下发"补 `restore`；指纹没有远程补录的路 (670)，只能如实说。
+    /// 返回的是**给用户看的那句话** —— 措辞只在这里有一份，界面不再各写一遍。
+    static func undoRemove(_ mac: String, entry: CredBinEntry, hard: Bool) -> String {
+        guard undoBin(mac, entry: entry) else {
+            return "这条已经不在回收站里了 (506) — 可能已恢复、已清理，或本机刚换过锁"
+        }
+        if hard {
+            if let p = entry.pwd {
+                queueRestore(mac, p)
+                let q = queue(mac).contains { $0.kind == "restore" && $0.pwd?.alias == p.alias }
+                return q ? "本机记录已放回原位；锁端那条已经真删了 —— 按 504 排入「重新下发」，连上锁补回 (506)"
+                         : "本机记录已放回原位；锁端那条已经真删，而这条已过有效期 ⇒ 既不重发也无处可恢复 (506)"
+            }
+            if entry.fp != nil {
+                return "本机记录已放回原位；锁端那条已经真删 —— 指纹只能本人到锁前重录 8 次，App 无法远程补录 (670)"
+            }
+            return "本机记录已放回原位 (506)"
+        }
+        return "已撤销停用：本机记录放回原位" + reclaim(mac, entry: entry)
+    }
+
+    /// 收回**还没发出去**的那条锁端删除。只动 pending 的，已经下发/失败的留着 (那两步是真发生过的，
+    /// 悄悄删掉记录等于抹掉证据 —— 失败的那条改由队列页自己处理)。
+    static func cancelPendingDelete(_ mac: String, entry: CredBinEntry) -> Bool {
+        let q = queue(mac)
+        let dead = q.filter { it in
+            guard it.state == CredQueueState.pending.rawValue else { return false }
+            if it.kind == "del_pwd", let a = entry.pwd?.alias { return it.pwd?.alias == a }
+            if it.kind == "del_fp", let b = entry.fp?.batch { return it.fp?.batch == b }
+            return false
+        }.map { $0.id }
+        guard !dead.isEmpty else { return false }
+        saveQueue(mac, q.filter { !dead.contains($0.id) })
+        return true
+    }
+
+    /// 361 便签的逆操作。写回用的是与 `markDisabled` **同一个** `store.setCodable(键, 值)` 参数序 ——
+    /// 这一族层间参数序是反的 (swiftlint ④ 盯的就是它)，两处各写一套必错一套。
+    static func clearDisabled(_ mac: String, kind: String, key: Int) {
+        var m = DB.store.get([String: DisableMark].self, disReasonKey(mac)) ?? [:]
+        guard m.removeValue(forKey: "\(kind):\(key)") != nil else { return }
+        DB.store.setCodable(disReasonKey(mac), m)
+    }
+    /// 一条凭证"又归本机了"的统一收尾 (506 撤销与 499/504 还原共用这一份)：
+    /// 收回它名下**还没发出去**的锁端删除，并清掉 361 停用便签。
+    /// 不收尾会有两种谎：队列继续排着"删除刚恢复的这条"、列表把它标成"停用中"。
+    /// 没可收回的东西就回空串 —— 提示语不吹一件没发生的事。
+    static func reclaim(_ mac: String, entry: CredBinEntry) -> String {
+        let dropped = cancelPendingDelete(mac, entry: entry)
+        var cleared = false
+        if let p = entry.pwd, disableMark(mac, kind: "pwd", key: p.alias) != nil {
+            clearDisabled(mac, kind: "pwd", key: p.alias); cleared = true
+        }
+        if let f = entry.fp, disableMark(mac, kind: "fp", key: f.batch) != nil {
+            clearDisabled(mac, kind: "fp", key: f.batch); cleared = true
+        }
+        var bits: [String] = []
+        if dropped { bits.append("已收回待下发的锁端删除") }
+        if cleared { bits.append("已清停用便签") }
+        // 指纹这条要多说一句 (第一百五十二批)：密码还原后 504 会问"要不要重新下发"，
+        // 指纹**没有远程补录这条路** (670)，锁端那一半到底是"还没删"还是"已经删了"本机无从证实。
+        // 没收回待发删除时，"已还原"这句话掩盖的正是这个未知 —— 所以按实说。
+        if entry.fp != nil {
+            bits.append(dropped ? "这条指纹锁端那步还没发出去，已收回 —— 仍可开门"
+                                : "锁端这条有无被删过要连上锁才证实；若已删，指纹只能本人到锁前重录 (670)")
+        }
+        return bits.isEmpty ? "" : " · " + bits.joined(separator: " · ")
+    }
     /// 499 还原冲突副本: 同 ID 已存在时, 加 "还原-" 前缀别名还原
+    /// 第一百五十四批把 504 的"排一次重新下发"**搬进这个函数**：以前它写在回收站页那一个调用点的弹窗里，
+    /// 而 `restoreBin` 有三个调用方 (单条还原 / 批量还原 / 还原为副本)，另两条路把密码放回台账却从不排下发
+    /// ⇒ 界面报"已还原"，锁里却没这条，人拿码去开门会开不了。规则收在一处才不会三份各写一份。
+    /// 指纹不排：锁存的是模板，本机改不了也不需要改 (名称/备注/归属都是本机字段) —— 来源口径：见 `reclaim`。
     static func restoreBin(_ mac: String, entry: CredBinEntry, asCopy: Bool) -> String {
         var list = bin(mac)
         list.removeAll { $0.id == entry.id }
@@ -264,6 +383,7 @@ enum CredentialOrg {
                 msg = "已还原为副本 (备注加「还原-」前缀)"
             }
             DB.addPwd(mac, cp)
+            msg += queueRestore(mac, cp)     // 504: 还原的密码一律排一次重新下发 (过期则不排, 由返回值说明)
         }
         if let f = entry.fp {
             var cp = f
@@ -274,10 +394,56 @@ enum CredentialOrg {
             }
             DB.addFp(mac, cp)
         }
-        return msg
+        // 第一百五十二批: 还原 = 这条又归本机了 ⇒ 一并收回它名下那条还没发出去的删除。
+        // 不做这一步，"还原"后队列里仍排着 del_pwd/del_fp，连上锁就把刚还原的凭证再删一次。
+        return msg + reclaim(mac, entry: entry)
     }
+    /// 502 的**裸执行**口: 不问生物识别、不弹确认, 调到这里就直接把这条从回收站抹掉。
+    /// 门槛只允许落在界面上的 `guardedPurge(_:ids:reason:onDeniedPresentFallback:)` ——
+    /// 任何调用点都不得绕过它直接调这里 (delsweep 的 UI_SINK 名单收的正是这一族一按即删的汇点)。
     static func purgeBin(_ mac: String, id: String) {
         saveBin(mac, bin(mac).filter { $0.id != id })
+    }
+    /// 502 彻底删除的**统一门槛**: 单条与清空回收站走同一个函数, 两条路的深浅必须一样。
+    /// 为什么收在一处 (与 323 双签同型的那次整改同一条理由): 原先「清空」自己写了半套生物识别 +
+    /// 兜底弹窗, 「单条」只有一遍 confirmationDialog, 两套深浅各说各话 —— 门槛分叉就是漏问的开始。
+    /// 口径:
+    ///  · 设备有可用的 Face ID / Touch ID ⇒ 先刷, **通过即执行** commit, 不再多问一句;
+    ///  · 没录生物 / 系统判不可用 / 刷失败 ⇒ 把**同一个** commit 交回调用方, 由
+    ///    `onDeniedPresentFallback` 决定 UI 怎么问双确认 (confirmDestructive 或 confirmationDialog 都行),
+    ///    用户确认之后才执行。
+    /// fail-closed: 「没法刷脸」不等于放行 —— 那一支必须过 UI 的第二问。
+    /// commit 落的只有 purgeBin / saveBin 这一条裸执行路, 门槛与执行因此分得开也查得清。
+    /// ⚠ 为什么不走 AccessibilityKit 的 `AuthKit.verifyBiometric` (877): 那份把 localizedReason
+    ///   写死成代替密码那句, 也没有 denied 分支 —— 502 要说的是彻底删除 N 条, 且未通过时得有第二条路。
+    static func guardedPurge(_ mac: String, ids: [String], reason: String,
+                             onDeniedPresentFallback: @escaping (_ commit: @escaping () -> Void) -> Void,
+                             onDone: @escaping () -> Void = {}) {
+        // onDone 挂在 commit 里，而不是挂在调用方的两条分支上：生物识别那一路如果由 UI 自己补一句回执，
+        // 就会出现"刷脸成功了但回执文案只在弹窗那一路有"的分叉。
+        let commit: () -> Void = { purgeNow(mac, ids: ids); onDone() }
+        let ctx = LAContext()
+        var err: NSError?
+        // 可用性与 AuthKit.biometricAvailable (877) 同一判据: canEvaluate 为真却带 biometryNotAvailable
+        // 的情形实测存在过, 两支都按"这台设备没生物可刷"处理 —— 没生物 = 走 UI 第二问, 不是放行。
+        guard ctx.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &err),
+              err?.code != LAError.biometryNotAvailable.rawValue else {
+            onDeniedPresentFallback(commit)
+            return
+        }
+        ctx.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { ok, _ in
+            DispatchQueue.main.async {
+                if ok { commit() } else { onDeniedPresentFallback(commit) }
+            }
+        }
+    }
+    /// 502 门槛过完之后的执行体: 一条就删那一条, 多条/整组按 id 集合删。
+    /// 两支共用同一个过滤口径 (与 purgeBin 逐字同一件事), 不另写第二套清空逻辑 ——
+    /// 否则同一条目在单条与清空两条路上会被删得不一样。
+    static func purgeNow(_ mac: String, ids: [String]) {
+        if ids.count == 1, let only = ids.first { purgeBin(mac, id: only); return }
+        let drop = Set(ids)
+        saveBin(mac, bin(mac).filter { !drop.contains($0.id) })
     }
     static func reclaimDays() -> Int { DB.store.getInt("kf_cbin_reclaim_days", 30) }
     /// 497 启动清理: 超保留期的条目自动清, 返回清掉的条数
@@ -296,39 +462,66 @@ enum CredentialOrg {
         guard let oldest = list.map({ $0.at }).min() else { return (0, nil) }
         return (list.count, Date(timeIntervalSince1970: oldest + Double(reclaimDays()) * 86400))
     }
-    /// 501 级联预告: 删除成员前列出名下将一并入回收站的凭证
-    static func cascadePreview(_ memberID: String) -> (pwds: [LedgerPwd], fps: [LedgerFp]) {
-        var pwds: [LedgerPwd] = [], fps: [LedgerFp] = []
-        for kc in DB.keychains() where kc.mac != "" {
-            pwds.append(contentsOf: DB.listPwds(kc.mac).filter { $0.owner == memberID })
-            fps.append(contentsOf: DB.listFp(kc.mac).filter { $0.owner == memberID })
-        }
-        return (pwds, fps)
-    }
     /// 501/349 成员删除: 名下凭证随成员入回收站 (整组同戳, 可整组还原)
-    static func cascadeBinMember(_ mac: String, _ memberID: String) {
+    /// D-152a (2026-10-11 拍板 方案③): 弹窗当场选「只移除档案 / 连锁端一起收回」, 默认第一项。
+    ///  · revokeLocks = false: 只动本机台账, 整组可还原 (501); 锁里那些指纹与密码仍然有效, TA 照旧能开门。
+    ///  · revokeLocks = true: 每条再排 365 队列的 `del_pwd`/`del_fp` —— 与 629 逐条停用、353 批量停用
+    ///    走的是同一条现成队列, 到场连接后真正生效, 没有新数据面。
+    ///    ⚠ 指纹在锁端删掉就无法远程补录 (670), 还原时对指纹只剩本机记录 —— 这句话必须和选择写在同一屏,
+    ///    两处弹窗都是这么写的。
+    /// 返回本次排上锁端删除的条数: 界面按实数报, 不写死一句"已删除"。
+    @discardableResult
+    static func cascadeBinMember(_ mac: String, _ memberID: String, revokeLocks: Bool = false) -> Int {
+        var queued = 0
         for p in DB.listPwds(mac).filter({ $0.owner == memberID }) {
             var cp = p
             cp.owner = nil
             DB.delPwd(mac, p.alias)
             addToBin(mac, pwd: cp, source: .manual)
+            if revokeLocks {
+                enqueue(mac, kind: "del_pwd", title: "删成员连带 密码 #\(p.alias) (D-152a)")
+                queued += 1
+            }
         }
-        for f in DB.listFp(mac).filter({ $0.owner == memberID }) {
+        for f in DB.listFps(mac).filter({ $0.owner == memberID }) {
             var cp = f
             cp.owner = nil
             DB.delFp(mac, f.batch)
             addToBin(mac, fp: cp, source: .manual)
+            if revokeLocks {
+                enqueue(mac, kind: "del_fp", title: "删成员连带 指纹「\(f.name)」 (D-152a)")
+                queued += 1
+            }
         }
+        return queued
     }
-    /// 504 还原即重新下发: 在用 (未过期) 密码的本地删除项还原后并入队, 由 UI 询问"立即重新下发"
-    static func queueRestore(_ mac: String, _ p: LedgerPwd) {
-        guard let to = expiryDate(p), to.timeIntervalSinceNow > 0 else { return }
-        var q = queue(mac)
-        if !q.contains(where: { $0.kind == "restore" && $0.pwd?.alias == p.alias }) {
-            q.insert(CredQueueItem(id: nextQueueId(mac), kind: "restore", title: "重新下发「\(displayPwd(p))」",
-                                   pwd: p, state: CredQueueState.pending.rawValue), at: 0)
-            saveQueue(mac, q)
+    /// 501/263 删除成员预告: 名下将入回收站的凭证清单 (跨锁合计)。
+    /// 两处「删除成员」弹窗共用这一份, 免得同一条预览各写一遍; 锁名一律走 LockArchive.displayName (769 口径)。
+    static func memberCredentialPreview(_ memberID: String) -> [String] {
+        var out: [String] = []
+        for kc in DB.keychains() {
+            let lockName = LockArchive.displayName(kc)
+            for p in DB.listPwds(kc.mac).filter({ $0.owner == memberID }) {
+                out.append("密码 #" + String(p.alias) + " · " + lockName)
+            }
+            for f in DB.listFps(kc.mac).filter({ $0.owner == memberID }) {
+                out.append("指纹「" + f.name + "」· " + lockName)
+            }
         }
+        return out
+    }
+    /// 504 还原即重新下发: 在用 (未过期) 密码还原后并入队, 由 UI 询问"立即重新下发"。
+    /// 返回补进提示的那半句 (第一百五十四批): 排没排上、为什么没排，界面要说得出来，
+    /// 不能一律"已还原" —— 锁上那条没跟着变，用户拿恢复后的码去开门会吃闭门羹。
+    @discardableResult
+    static func queueRestore(_ mac: String, _ p: LedgerPwd) -> String {
+        guard let to = expiryDate(p), to.timeIntervalSinceNow > 0 else { return " · 已过有效期，不排重新下发" }
+        var q = queue(mac)
+        if q.contains(where: { $0.kind == "restore" && $0.pwd?.alias == p.alias }) { return " · 重新下发本来就在队列里" }
+        q.insert(CredQueueItem(id: nextQueueId(mac), kind: "restore", title: "重新下发「\(displayPwd(p))」",
+                               pwd: p, state: CredQueueState.pending.rawValue), at: 0)
+        saveQueue(mac, q)
+        return " · 已排入重新下发 (504)，到场连接后生效"
     }
 
     // ---------- 365 下发状态队列 (本地容错态, 重试走既有命令) ----------
@@ -337,6 +530,15 @@ enum CredentialOrg {
     }
     static func saveQueue(_ mac: String, _ q: [CredQueueItem]) {
         DB.setCodable(q, queueKey(mac))
+    }
+    /// 541 替代: "此锁配置上次成功下发于 X"。原句要的锁端配置序号字段与配置拉取命令都不存在,
+    /// 所以这把尺只能到**本机台账**: 365 队列里 state = 已下发(1) 的条目中最新的 `lastAt` (毫秒)。
+    /// 它证明的是"本机发过且锁端回过受理", 不是"锁端现在就是这份配置" —— 界面上那句话必须跟着说清这一点,
+    /// 否则又变成替锁端虚报一个读不到的真值。
+    static func lastApplyAt(_ mac: String) -> Double? {
+        let done = queue(mac).filter { $0.state == CredQueueState.done.rawValue }
+        guard let m = done.map({ $0.lastAt }).max(), m > 0 else { return nil }
+        return m
     }
     static func nextQueueId(_ mac: String) -> Int {
         (queue(mac).map { $0.id }.max() ?? 0) + 1
@@ -362,6 +564,55 @@ enum CredentialOrg {
     static func pendingCount(_ mac: String) -> Int {
         queue(mac).filter { $0.state == CredQueueState.pending.rawValue || $0.state == CredQueueState.failed.rawValue }.count
     }
+    /// 365 队列项的**唯一**下发实现 (第一百五十四批收拢的)。
+    /// 为什么要收：这条 switch 原本抄了三份 —— `CredentialsView.applyQueueItem` (带着"缺别名就中止"的修正)、
+    /// `CredentialCenterView.applyItem` (没带)、`LinkSenseKit.applyQueueItem` (没带，而且它走的是
+    /// **回前台/到场自动补发**那条没人盯着的路)。缺对象时 `?? 0` 会向锁发"删 0 号槽"，
+    /// 删掉的是**别人**的密码，回包还被 `markQueue(.done)` 标成"锁端确认"。
+    /// 同一份修正在两份里没落地 —— CredentialsView 里那段注释写的就是这个坑，它只修了自己那份。
+    /// 返回一句要补进队列提示的话 (只有锁端把这条落到别的槽时才有内容)。
+    static func sendQueued(_ mac: String, _ lock: LockService, _ item: CredQueueItem) async throws -> String {
+        switch item.kind {
+        case "del_pwd":
+            guard let p = item.pwd, p.alias != 0 else {
+                throw BLEErrorX.msg("队列项缺少密码别名 (\(item.title))，已中止下发 — 请重新选择该凭证")
+            }
+            // 留存口径：本机台账在停用那一刻就删了 (disablePwd)，这一步只负责把命令发出去
+            try await lock.pwdDelete(p.alias)
+            return ""
+        case "del_fp":
+            guard let f = item.fp, f.batch != 0 else {
+                throw BLEErrorX.msg("队列项缺少指纹批次 (\(item.title))，已中止下发 — 请重新选择该凭证")
+            }
+            try await lock.fpDelete(UInt32(f.batch))
+            return ""
+        case "period":
+            guard let p = item.pwd, p.alias != 0, !item.newFrom.isEmpty else {
+                throw BLEErrorX.msg("队列项缺少改期对象 (\(item.title))，已中止下发")
+            }
+            // 留存口径：batchExtend 入队时已把本机时段改掉 (CredentialOrg.swift:460)，这里不写第二遍
+            try await lock.pwdExpire(p.alias, item.newFrom, item.newTo)
+            return ""
+        case "restore":
+            guard let p = item.pwd, let v = p.pwd else {
+                throw BLEErrorX.msg("这条没有口令明文，无法重新下发 (\(item.title)) — 需重新录入 (504)")
+            }
+            let alias = try await lock.pwdAdd(pwd: v, validFrom: p.from, validTo: p.to)
+            guard alias != p.alias else { return "" }
+            // 锁把这条放进了别的槽 ⇒ 本机那行跟着改号 (照改值那条路 CredentialStudio.swift:1131 的写法：
+            // 删旧号 + 用新号写回，并留一档版本历史)。三份旧实现都把返回值扔了 (`_ =`)，
+            // 不归位就是两份真相：本机按旧别名去"彻底删除/改期"，动的却是**同槽位的另一个凭证**。
+            var moved = p
+            moved.alias = alias
+            DB.delPwd(mac, p.alias)
+            DB.addPwd(mac, moved)
+            snapshot(mac, kind: "pwd", key: alias, pwd: moved, fp: nil,
+                     note: "重新下发落到别名 #\(alias) (365 归位)")
+            return " · 锁端落到别名 #\(alias)"
+        default:
+            return ""
+        }
+    }
     /// 365 顶部徽标与队列页共用的"未完成"子集 (待下发 + 失败可重试)
     static func pendingQueue(_ mac: String) -> [CredQueueItem] {
         queue(mac).filter { $0.state != CredQueueState.done.rawValue }
@@ -383,25 +634,40 @@ enum CredentialOrg {
             guard let p = DB.ledger(mac).pwds.first(where: { $0.alias == a }) else { continue }
             snapshot(mac, kind: "pwd", key: a, pwd: p, fp: nil, note: "统一延期", auto: true)   // 488 批量前自动还原点
             DB.setPwdPeriod(mac, a, from, to)
-            enqueue(mac, kind: "period", title: "延期 密码 #\(a)", pwd: LedgerPwd(alias: a, from: from, to: to, temp: p.temp, at: p.at), newFrom: from, newTo: to)
+            enqueue(mac, kind: "period", title: "延期 密码 #\(a)", pwd: LedgerPwd(alias: a, from: from, to: to, temp: p.temp, at: p.at, note: p.note), newFrom: from, newTo: to)
             out.append(a)
         }
         return out
     }
     /// 349 批量移交: 批量改归属 (本地台账), 各写一条本地记录 (锁端无归属字段)
+    /// 注释里的"各写一条本地记录"此前是**空头支票** —— 两个循环只调了 setPwdOwner/setFpOwner, 没有任何快照落盘,
+    /// 改完归属查不到是谁改的。撤掉 467 待接受区后这条路径就是唯一移交入口, 留痕更不能少, 所以补齐而不是删注释。
     static func batchTransfer(_ mac: String, pwdAliases: [Int], fpBatches: [Int], to: String?) -> Int {
         var n = 0
+        let toName = to.flatMap { DB.member($0)?.name } ?? "未指派"
         for a in pwdAliases {
-            guard DB.ledger(mac).pwds.contains(where: { $0.alias == a }) else { continue }
+            guard let old = DB.ledger(mac).pwds.first(where: { $0.alias == a }) else { continue }
             DB.setPwdOwner(mac, a, to)
+            if let p = DB.listPwds(mac).first(where: { $0.alias == a }) {
+                snapshot(mac, kind: "pwd", key: a, pwd: p, fp: nil, note: "移交 → " + toName + proxySuffix(old.owner))
+            }
             n += 1
         }
         for b in fpBatches {
-            guard DB.ledger(mac).fps.contains(where: { $0.batch == b }) else { continue }
+            guard let old = DB.ledger(mac).fps.first(where: { $0.batch == b }) else { continue }
             DB.setFpOwner(mac, b, to)
+            if let f = DB.listFps(mac).first(where: { $0.batch == b }) {
+                snapshot(mac, kind: "fp", key: b, pwd: nil, fp: f, note: "移交 → " + toName + proxySuffix(old.owner))
+            }
             n += 1
         }
         return n
+    }
+    /// 468 代管补记: 条目**改动前**的属主被点名「由我代管」时, 快照补一句 管理员代操作。
+    /// 判据与单条停用 disableVia、批量停用拆分同一张 proxyNames; 无归属不猜。
+    private static func proxySuffix(_ owner: String?) -> String {
+        guard let o = owner, !o.isEmpty, MemberHub.proxyNames.contains(o) else { return "" }
+        return " · 管理员代操作 (468)"
     }
     /// 357 前缀批量备注
     static func batchPrefixNote(_ mac: String, pwdAliases: [Int], fpBatches: [Int], prefix: String) -> Int {
@@ -422,7 +688,8 @@ enum CredentialOrg {
         for a in pwdAliases {
             guard let p = DB.ledger(mac).pwds.first(where: { $0.alias == a }) else { continue }
             DB.delPwd(mac, a)
-            addToBin(mac, pwd: p, source: .batch)
+            // 498: 已过期的进回收站标"过期", 未过期的手动批量停用仍标"批量"
+            addToBin(mac, pwd: p, source: pwdState(p) == 2 ? .expired : .batch)
             enqueue(mac, kind: "del_pwd", title: "删除密码 #\(a)")
             n += 1
         }
@@ -438,7 +705,7 @@ enum CredentialOrg {
 
     // ---------- 524/526/528 计数与三态 ----------
     static func typeCounts(_ mac: String) -> (all: Int, pwd: Int, fp: Int, otp: Int) {
-        let pwds = DB.listPwds(mac), fps = DB.listFp(mac)
+        let pwds = DB.listPwds(mac), fps = DB.listFps(mac)
         return (pwds.count + fps.count, pwds.count, fps.count, DB.otpStatus(mac)?.on == true ? 1 : 0)
     }
     static func pwdState(_ p: LedgerPwd) -> Int {
@@ -447,18 +714,19 @@ enum CredentialOrg {
         if let f = parseLocal(p.from), f.timeIntervalSinceNow > 0 { return 1 }
         return 0
     }
-    static func groupCount(_ mac: String, state: Int) -> Int {
-        DB.listPwds(mac).filter { pwdState($0) == state }.count
-    }
 
     // ---------- 526/921 置顶星标 + 高频 ----------
     static func stars(_ mac: String) -> Set<Int> {
         DB.get([Int].self, starKey(mac)) ?? []
     }
     static func toggleStar(_ mac: String, _ kind: String, _ key: Int) {
+        setStar(mac, kind, key, !isStarred(mac, kind, key))
+    }
+    /// 922 批量置顶: 同一个星标键, 补一个"设为"写点 —— 批量里用 toggle 会把已置顶的那几条翻下去
+    static func setStar(_ mac: String, _ kind: String, _ key: Int, _ on: Bool) {
         var s = stars(mac)
         let id = kind == "pwd" ? key : 100000 + key   // 指纹段偏移, 避免别名冲突
-        if s.contains(id) { s.remove(id) } else { s.insert(id) }
+        if on { s.insert(id) } else { s.remove(id) }
         DB.setCodable(Array(s), starKey(mac))
     }
     static func isStarred(_ mac: String, _ kind: String, _ key: Int) -> Bool {
@@ -466,7 +734,8 @@ enum CredentialOrg {
     }
     /// 921 高频标记: 台账可推断 (近 30 天开门类日志中命中时间窗次数最多的临时密码), 标"约"
     static func starSuggestion(_ mac: String) -> String? {
-        let temps = DB.listPwds(mac).filter { $0.temp }
+        // 354: 归档条目不进"猜你要开哪条"的候选 —— 与 921 快捷直达同一口径, 收起的东西不许被推荐
+        let temps = DB.listPwds(mac).filter { $0.temp && !isArchived(mac, "pwd", $0.alias) }
         let logs = DB.readLogs(mac).filter { $0.type == 2 || $0.type == 4 }
         guard !temps.isEmpty, !logs.isEmpty else { return nil }
         func inWindow(_ p: LedgerPwd, at t: Double) -> Bool {
@@ -475,7 +744,7 @@ enum CredentialOrg {
         }
         var hits: [String: Int] = [:]
         for l in logs {
-            let t = ZKProtocol.protoSecondsToMs(Int64(l.lockTime)) / 1000
+            let t = ZKProtocol.protoSecondsToUnix(Int64(l.lockTime))
             guard t >= nowSec - 30 * 86400 else { continue }
             for p in temps where inWindow(p, at: t) {
                 hits["p\(p.alias)", default: 0] += 1
@@ -485,6 +754,24 @@ enum CredentialOrg {
         return top.key
     }
 
+    // ---------- 354 归档区: 收起不删 — 与停用/彻底删除是两个不同档, 归档只碰展示层, 台账与锁端零改动 ----------
+    static func archived(_ mac: String) -> Set<Int> {
+        DB.get([Int].self, archKey(mac)) ?? []
+    }
+    static func setArchived(_ mac: String, _ kind: String, _ key: Int, _ on: Bool) {
+        var s = archived(mac)
+        let id = kind == "pwd" ? key : 100000 + key   // 指纹段偏移, 与星标同一约定
+        if on { s.insert(id) } else { s.remove(id) }
+        DB.setCodable(Array(s), archKey(mac))
+    }
+    static func isArchived(_ mac: String, _ kind: String, _ key: Int) -> Bool {
+        archived(mac).contains(kind == "pwd" ? key : 100000 + key)
+    }
+    /// 354 "全部还原": 一次清键 — 逐条 toggle 会把批量里并发的读改写搅在一起
+    static func unarchiveAll(_ mac: String) {
+        DB.setCodable([Int](), archKey(mac))
+    }
+
     // ---------- 359 三档预警 (本地通知; 2 小时档做 App 内提醒行, 7 天/24 小时档排程) ----------
     static func alert(_ mac: String, _ p: LedgerPwd) -> CredAlert {
         DB.get(CredAlert.self, alertKey(mac, "pwd", p.alias)) ?? CredAlert()
@@ -492,23 +779,57 @@ enum CredentialOrg {
     static func saveAlert(_ mac: String, _ p: LedgerPwd, _ a: CredAlert) {
         DB.setCodable(a, alertKey(mac, "pwd", p.alias))
     }
-    /// 7 天 / 24 小时两档按日历触发本地通知; 2 小时档 App 内巡检提醒 (跨 App 前后台均可达)
+    /// 926/930 替代: 7 / 3 / 1 天 + 24 / 2 小时**都**排本地通知, 另加"到期时"一条。
+    /// 原 359 把 2 小时档做成"只插列表提醒行, 不排通知"(详情页卡片上写着这句话);
+    /// 926/930 判 ❌ 后拍板按替代执行 —— 替代栏原话是"到期前 2 小时与到期时各发本地通知"。
+    /// 排程扩到六条, 列表提醒行 (dueSoonPwds) **照旧保留**: 前台多一处提示不是坏事。
     static func scheduleAlerts(_ mac: String, _ p: LedgerPwd, _ a: CredAlert) {
         let c = UNUserNotificationCenter.current()
         let id = "c6.alert.\(mac).p\(p.alias)"
         for r in c.pendingRequests() where r.identifier == id || r.identifier.hasPrefix(id + ".") {
             c.removePendingNotificationRequests(withIdentifiers: [r.identifier])
         }
-        guard let to = expiryDate(p), a.day || a.h24 else { return }
+        // "到期时"不看单档开关: 开了任何一档 = 在意这条凭证的到期, 到点本身最该说话。
+        let any = a.day || a.d3 || a.d1 || a.h24 || a.h2
+        guard let to = expiryDate(p), any else { return }
         let name = displayPwd(p)
-        if a.day {
-            addCalendar(id: id + ".d7", date: to.addingTimeInterval(-7 * 86400),
-                        title: "密码临期", body: "\(name) 距到期还有 7 天, 记得续期或停用。")
+        // 天数档是**日历日** ⇒ 走 WeekCal.shifted; 小时档说的是"还有 N 小时" = 时长。
+        // 两种口径在这里不是一回事 (§10.33), 混用会让 -1 天那条在夏令时切换日多/少一小时。
+        func dayTier(_ on: Bool, _ k: Int, _ suf: String, _ tail: String) {
+            if on {
+                addCalendar(id: id + suf, date: WeekCal.shifted(to, days: -k),
+                            title: "密码临期", body: "\(name) 距到期还有 \(k) 天。" + tail)
+            }
         }
+        dayTier(a.day, 7, ".d7", "记得续期或停用。")
+        dayTier(a.d3, 3, ".d3", "")
+        dayTier(a.d1, 1, ".d1", "明天就失效了。")
         if a.h24 {
             addCalendar(id: id + ".h24", date: to.addingTimeInterval(-86400),
                         title: "密码临期", body: "\(name) 距到期不足 24 小时。")
         }
+        if a.h2 {
+            addCalendar(id: id + ".h2", date: to.addingTimeInterval(-7200),
+                        title: "密码临期", body: "\(name) 距到期还有 2 小时。")
+        }
+        addCalendar(id: id + ".t0", date: to, title: "已到期",
+                    body: "\(name) 到期了, 锁端到这个时刻后不再放行这条凭证。")
+    }
+
+    /// 930 凭证 Tab 角标: 近 7 日内到期的条数。
+    /// 与 363 月历格、dueSoonPwds 同源同一把尺 (expiryDate), 不另算第二套; 长期有效 (2118) 与归档条不计。
+    static func expiringSoonCount(macs: [String], within days: Int = 7) -> Int {
+        let limit = nowSec + Double(days) * 86400
+        var n = 0
+        for mac in macs {
+            for p in DB.listPwds(mac) where !isArchived(mac, "pwd", p.alias) {
+                if let to = expiryDate(p) {
+                    let t = to.timeIntervalSince1970
+                    if t >= nowSec && t <= limit { n += 1 }
+                }
+            }
+        }
+        return n
     }
     private static func addCalendar(id: String, date: Date, title: String, body: String) {
         guard date > Date() else { return }
@@ -521,15 +842,16 @@ enum CredentialOrg {
         let req = UNNotificationRequest(identifier: id, content: c, trigger: UNCalendarNotificationTrigger(dateMatching: comps, repeats: false))
         Task { try? await UNUserNotificationCenter.current().add(req) }
     }
-    /// App 内 2 小时档: 到期前 2 小时且开了 h2 的条数 (设备 Tab Hero 卡下插提醒行)
-    static func dueSoonCount(_ mac: String) -> Int {
+    /// App 内 2 小时档: 到期前 2 小时且开了 h2 的条 (设备 Tab Hero 卡下插提醒行)
+    /// 359: 提醒行点按要跳最近一条的详情 —— 名单与计数必须同源同一个 filter, 抽出来共用
+    static func dueSoonPwds(_ mac: String) -> [LedgerPwd] {
         let soon = nowSec + 2 * 3600
         return DB.listPwds(mac).filter { p in
             if let a = alert(mac, p), let to = expiryDate(p) {
                 return a.h2 && to.timeIntervalSince1970 <= soon && to.timeIntervalSince1970 >= nowSec - 3600
             }
             return false
-        }.count
+        }
     }
 
     // ---------- 358/505 整理建议中心 ----------
@@ -538,23 +860,24 @@ enum CredentialOrg {
         let title: String
         let sub: String
         let icon: String
-        let action: String   // "expired" / "dups" / "noowner" / "bin"
+        let action: String   // "expired" / "dups" / "noowner" / "bin" / "memberExpired" (471)
     }
     static func advice(_ mac: String) -> [Advice] {
         var out: [Advice] = []
-        let expired = groupCount(mac, state: 2)
+        // 354: 整理中心是动作面 — 计数与集合都取"选得中"的那一份 (归档条不参与催办)
+        let expired = DB.listPwds(mac).filter { pwdState($0) == 2 && !isArchived(mac, "pwd", $0.alias) }.count
         if expired > 0 {
             out.append(Advice(id: "expired", title: "过期 \(expired) 条",
                               sub: "已过期凭证待清理或续期", icon: "clock.arrow.circlepath", action: "expired"))
         }
         var values: [String: [LedgerPwd]] = [:]
-        for p in DB.listPwds(mac) where p.pwd != nil { values[p.pwd!, default: []].append(p) }
+        for p in DB.listPwds(mac) where p.pwd != nil && !isArchived(mac, "pwd", p.alias) { values[p.pwd!, default: []].append(p) }
         let dups = values.values.filter { $0.count > 1 }.count
         if dups > 0 {
             out.append(Advice(id: "dups", title: "重复值 \(dups) 组",
                               sub: "多条台账同一密码, 可合并归属", icon: "plus.slash.minus", action: "dups"))
         }
-        let noowner = DB.listPwds(mac).filter { $0.owner == nil }.count
+        let noowner = DB.listPwds(mac).filter { $0.owner == nil && !isArchived(mac, "pwd", $0.alias) }.count
         if noowner > 0 {
             out.append(Advice(id: "noowner", title: "无归属 \(noowner) 条",
                               sub: "未指定成员的凭证, 建议移交或停用", icon: "person.slash", action: "noowner"))
@@ -564,21 +887,41 @@ enum CredentialOrg {
             out.append(Advice(id: "bin", title: "回收站 \(binN) 条可彻底清理",
                               sub: "超过 \(reclaimDays()) 天保留期将自动清除", icon: "trash", action: "bin"))
         }
+        // 471 到期收回建议: 口径是"该成员名下临时码**全部**已过期" (有部分没过期就不该催收回)
+        var byOwner: [String: (all: Int, expired: Int)] = [:]
+        for p in DB.listPwds(mac) where p.temp && !isArchived(mac, "pwd", p.alias) {
+            guard let o = p.owner, !o.isEmpty else { continue }
+            var t = byOwner[o] ?? (0, 0)
+            t.all += 1
+            if pwdState(p) == 2 { t.expired += 1 }
+            byOwner[o] = t
+        }
+        let allGone = byOwner.filter { $0.value.all > 0 && $0.value.all == $0.value.expired }
+                          .sorted { $0.value.all > $1.value.all }
+        for (owner, v) in allGone.prefix(3) {
+            let nm = DB.member(owner)?.name ?? "该成员"
+            out.append(Advice(id: "memberExpired:" + owner,
+                              title: "归属 \(nm) 的 \(v.all) 张临时码已全部过期",
+                              sub: "建议停用收回, 台账与回收站会留着痕迹 (471)",
+                              icon: "person.crop.circle.badge.xmark", action: "memberExpired"))
+        }
         return out
     }
     /// 智能选取 (350 三按钮) 的集合定义: 已过期 / 同成员 / 同类型
+    /// 354: 选择位面与浏览位面同一份 —— 归档条目不进任何选取集合
     static func smartSet(_ mac: String, set: String, base: (pwd: [Int], fp: [Int])) -> (pwd: [Int], fp: [Int]) {
         switch set {
         case "expired":
-            return (DB.listPwds(mac).filter { pwdState($0) == 2 }.map { $0.alias }, [])
+            return (DB.listPwds(mac).filter { pwdState($0) == 2 && !isArchived(mac, "pwd", $0.alias) }.map { $0.alias }, [])
         case "sameowner":
-            guard let first = DB.listPwds(mac).filter({ base.pwd.contains($0.alias) }).first?.owner ?? DB.listFp(mac).filter({ base.fp.contains($0.batch) }).first?.owner else {
+            guard let first = DB.listPwds(mac).filter({ base.pwd.contains($0.alias) }).first?.owner ?? DB.listFps(mac).filter({ base.fp.contains($0.batch) }).first?.owner else {
                 return base }
-            return (DB.listPwds(mac).filter { $0.owner == first }.map { $0.alias },
-                    DB.listFp(mac).filter { $0.owner == first }.map { $0.batch })
+            return (DB.listPwds(mac).filter { $0.owner == first && !isArchived(mac, "pwd", $0.alias) }.map { $0.alias },
+                    DB.listFps(mac).filter { $0.owner == first && !isArchived(mac, "fp", $0.batch) }.map { $0.batch })
         case "samekind":
             let anyPwd = !base.pwd.isEmpty
-            return anyPwd ? (DB.listPwds(mac).map { $0.alias }, []) : ([], DB.listFp(mac).map { $0.batch })
+            return anyPwd ? (DB.listPwds(mac).filter { !isArchived(mac, "pwd", $0.alias) }.map { $0.alias }, [])
+                          : ([], DB.listFps(mac).filter { !isArchived(mac, "fp", $0.batch) }.map { $0.batch })
         default:
             return base
         }
@@ -591,31 +934,11 @@ enum CredentialOrg {
     static func saveSmartLists(_ mac: String, _ l: [CredSmartList]) {
         DB.setCodable(l, listsKey(mac))
     }
-    static func matches(_ mac: String, _ l: CredSmartList) -> Bool {
-        func test(_ p: LedgerPwd) -> Bool {
-            if l.kind == "fp" { return false }
-            if l.owner != "", p.owner != l.owner { return false }
-            if !l.state.isEmpty, stateString(pwdState(p)) != l.state { return false }
-            if l.tag == "stale" && p.at > 0 && nowSec - p.at > 365 * 86400 { return true }
-            if l.tag == "noowner" && p.owner == nil { return true }
-            return true
-        }
-        switch l.kind {
-        case "fp":
-            let fps = DB.listFp(mac).filter { l.owner.isEmpty || $0.owner == l.owner }
-            if l.tag == "noowner" { return fps.contains { $0.owner == nil } }
-            return !fps.isEmpty
-        default:
-            let pwds = DB.listPwds(mac)
-            if l.tag == "stale" {
-                return pwds.contains { p in p.at > 0 && nowSec - p.at > 365 * 86400 }
-            }
-            if l.tag == "noowner" {
-                return pwds.contains { $0.owner == nil }
-            }
-            return pwds.contains { test($0) }
-        }
-    }
+    // 527 智能列表的"整表是否有内容"判定 (原名 `matches(_:_:)`) 与"取某条快照的最新版本"(`latest`)
+    // 都在第九十二批删除：两者全库零调用点 (deadscan 的 A/B 档逐条人读确认，同名调用都属于别的类型)。
+    // 智能列表的**过滤**规则只有一个真实现身 = CredentialsView.swift:759-767 的 inline filter；
+    // 留第二条形状不同、看起来像有主的谓词，正是本仓"半接线"缺陷的经典形态。
+    // 要"空列表灰显"这类需求时按当时的真实签名重写即可 (stateString / pwdState / nowSec 都还在用)。
     static func smartListLabel(_ l: CredSmartList) -> String {
         var s = l.name.isEmpty ? "智能列表" : l.name
         if l.owner != "" { s += " · " + (DB.member(l.owner)?.name ?? l.owner) }
@@ -625,14 +948,49 @@ enum CredentialOrg {
         return s
     }
 
+    // ---------- 361 停用原因回溯 (逐条存, 由 313 的必填原因采集) ----------
+    // 台账在停用后就没有这条凭证了, 详情卡无从打开 —— 所以回显落在回收站行 (CredBinView)。
+    struct DisableMark: Codable {
+        var label: String    // 313 四选一的中文标签
+        var at: Double
+        var via: String      // 真实来源只有本机这几条路径, 不写"操作端"这种无法证实的值
+    }
+    static func disReasonKey(_ mac: String) -> String { "kf_cdisrea_" + mac }
+    static func disableMark(_ mac: String, kind: String, key: Int) -> DisableMark? {
+        (DB.store.get([String: DisableMark].self, disReasonKey(mac)) ?? [:])["\(kind):\(key)"]
+    }
+    static func markDisabled(_ mac: String, kind: String, keys: [Int], label: String, via: String) {
+        guard !keys.isEmpty else { return }
+        var m = DB.store.get([String: DisableMark].self, disReasonKey(mac)) ?? [:]
+        let now = Date().timeIntervalSince1970
+        for k in keys { m["\(kind):\(k)"] = DisableMark(label: label, at: now, via: via) }
+        // 只留最近 200 条: 这是回溯用的便签, 不是第二本台账, 不该无限增长
+        if m.count > 200 {
+            let keep = m.sorted { $0.value.at > $1.value.at }.prefix(200)
+            m = Dictionary(uniqueKeysWithValues: keep.map { ($0.key, $0.value) })
+        }
+        DB.store.setCodable(disReasonKey(mac), m)   // 注意层间参数序相反: store.setCodable(键,值), DB.setCodable(值,键)
+    }
+    /// 361 回显文案: 停用原因 + 时刻 + 来源路径; 没有标记 (非本 App 停用) 就不编造
+    static func disableMarkText(_ mac: String, kind: String, key: Int) -> String? {
+        guard let d = disableMark(mac, kind: kind, key: key) else { return nil }
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "MM-dd HH:mm"
+        return "停用原因 \(d.label) · \(f.string(from: Date(timeIntervalSince1970: d.at))) · \(d.via) (361)"
+    }
+
     // ---------- 355/914 组织偏好持久化 ----------
-    static var groupMode: Int { DB.store.getInt("kf_ccred_prefs", 0) }
+    // kf_ccred_prefs 只有 bit0 是分组模式 (setGroupMode 的掩码一直是这么写的), 其余位留给后续偏好。
+    // CredGroupMode 此前是"另一套没人用的表示", UI 拿裸 Int 比 == 1 → 让枚举成为唯一口径。
+    static var groupMode: CredGroupMode {
+        CredGroupMode(rawValue: DB.store.getInt("kf_ccred_prefs", 0) & 1) ?? .type
+    }
     static var sortKey: CredSortKey { CredSortKey(rawValue: DB.store.getInt("kf_ccred_sort", 3)) ?? .expiry }
     static var aliasDisplay: Bool { DB.store.getBool("kf_calias_display", true) }
-    static func setGroupMode(_ v: Int) {
-        var prefs = groupMode
-        prefs = (prefs & ~1) | (v == 1 ? 1 : 0)
-        DB.store.set("kf_ccred_prefs", prefs)
+    static func setGroupMode(_ v: CredGroupMode) {
+        let prefs = DB.store.getInt("kf_ccred_prefs", 0)
+        DB.store.set("kf_ccred_prefs", (prefs & ~1) | (v.rawValue & 1))
     }
     static func setSortKey(_ k: CredSortKey) { DB.store.set("kf_ccred_sort", k.rawValue) }
 
@@ -659,7 +1017,7 @@ enum CredentialOrg {
 
     // ---------- 363 月历到期 (每日格右上角当日到期凭证数) ----------
     static func monthDeadlines(_ mac: String, year: Int, month: Int) -> [Date: Int] {
-        var cal = Calendar.current
+        var cal = WeekCal.gregorian
         cal.timeZone = TimeZone.current
         guard let start = cal.date(from: DateComponents(year: year, month: month, day: 1)) else { return [:] }
         var out: [Date: Int] = [:]
@@ -674,7 +1032,7 @@ enum CredentialOrg {
         return out
     }
     static func dayDeadlines(_ mac: String, _ date: Date) -> [LedgerPwd] {
-        let cal = Calendar.current
+        let cal = WeekCal.gregorian
         return DB.listPwds(mac).filter { p in
             guard let to = expiryDate(p) else { return false }
             return cal.isDate(to, inSameDayAs: date)
@@ -683,6 +1041,7 @@ enum CredentialOrg {
 
     // ---------- 364 恢复窗口期 (7 天内可一键恢复, 超期需重新下发) ----------
     static func withinRecoverWindow(_ mac: String, entry: CredBinEntry) -> Bool {
+        // 单位口径：秒 —— `CredBinEntry.at` 写的是 `nowSec` (本文件 :249)，与 LedgerPwd.at 的毫秒**不是**一把尺。
         entry.at > 0 && nowSec - entry.at <= 7 * 86400
     }
 
@@ -696,7 +1055,7 @@ enum CredentialOrg {
         guard !logs.isEmpty else { return nil }
         var n = 0
         for l in logs {
-            let t = ZKProtocol.protoSecondsToMs(Int64(l.lockTime)) / 1000
+            let t = ZKProtocol.protoSecondsToUnix(Int64(l.lockTime))
             guard t >= nowSec - Double(days) * 86400 else { continue }
             if p.temp {
                 if let f = parseLocal(p.from), let to = parseLocal(p.to),
@@ -746,31 +1105,36 @@ enum CredentialOrg {
     }
 
     // ---------- 通知分派 (App 前台时由 didReceive 转发; 后台由系统弹出) ----------
+    // 只认全仓真实排期过的标识: `c6.alert.<mac>.p<alias>.d7|.d3|.d1|.h24|.h2|.t0` (scheduleAlerts) 与 `c6.monthly`
+    // (scheduleMonthlySweep)。旧版里的 c6.expired / c6.center / c6.queue / c6.restore.* 没有任何生产者
+    // (grep 全仓仅命中这个函数自身), 属"分派一个不存在的通知" → 删掉而不是留着装作能跳。
     enum Action {
-        case restoreBin(String)
-        case openExpired
-        case openCenter
-        case retryQueue
+        case locatePwd(mac: String, alias: Int)
+        case panel(String)          // 面板名: 与 CredentialsView.consumeCredPanel 同一词表
     }
-    static func handleNotificationAction(_ id: String, _ userInfo: [AnyHashable: Any]) -> Action? {
-        if id.hasPrefix("c6.restore.") {
-            let mac = id.dropFirst("c6.restore.".count).split(separator: ".")[0]
-            return .restoreBin(String(mac))
+    static func handleNotificationAction(_ id: String) -> Action? {
+        // 标识形如 c6.alert.<mac>.p<alias>.d7 —— MAC 归一化后是纯 hex (无点), 按 "." 切是安全的
+        let parts = id.split(separator: ".", omittingEmptySubsequences: true).map(String.init)
+        if parts.count == 5, parts[0] == "c6", parts[1] == "alert", parts[3].hasPrefix("p"),
+           let alias = Int(parts[3].dropFirst(1)), alias > 0, !parts[2].isEmpty {
+            return .locatePwd(mac: parts[2], alias: alias)
         }
-        switch id {
-        case "c6.expired": return .openExpired
-        case "c6.center": return .openCenter
-        case "c6.queue": return .retryQueue
-        default:
-            if let act = userInfo["c6action"] as? String {
-                switch act {
-                case "expired": return .openExpired
-                case "center": return .openCenter
-                default: return nil
-                }
-            }
-        }
+        if id == "c6.monthly" { return .panel("organize") }   // 文案就写着"到「凭证」点「整理」"
         return nil
+    }
+    /// 366/1013 通知落地 (此前 handleNotificationAction 零调用 = 点通知什么也不发生)。
+    /// 只走已有的两条跳法: 单条凭证定位 (577) 与面板打开; 应用锁没开时值一直挂着, 解锁后才落地。
+    @MainActor static func applyNotification(_ a: Action) {
+        guard let app = AppState.hostRef else { return }
+        app.tabSelection = 1
+        switch a {
+        case .locatePwd(let mac, let alias):
+            if !mac.isEmpty, DB.keychain(mac) != nil { app.select(mac) }   // 陌生 MAC 不改当前锁
+            app.pendingCredNav = "pwd:\(alias)"
+            app.pendingCredNavMac = mac
+        case .panel(let p):
+            app.pendingCredPanel = p
+        }
     }
 
     // ================= 包5 凭证工坊辅助 (纯本地推断, 不新增协议命令) =================
@@ -780,15 +1144,18 @@ enum CredentialOrg {
     static func duplicatePwdValues(_ mac: String, _ value: String, excluding: Int) -> [LedgerPwd] {
         DB.listPwds(mac).filter { $0.pwd == value && $0.alias != excluding }
     }
-    /// 跨锁同值 (304 "全库"), 供命中提示跳转
-    static func duplicatePwdValuesAnyLock(_ value: String, excludingMac: String, excludingAlias: Int) -> [LedgerPwd] {
-        var out: [LedgerPwd] = []
-        for k in DB.keychains() {
-            for p in DB.listPwds(k.mac) where p.pwd == value && !(k.mac == excludingMac && p.alias == excludingAlias) {
-                out.append(p)
-            }
+    /// 跨锁同值 (304 "全库"): 只报**其它锁**的显示名 (去重)。
+    /// 旧版 `duplicatePwdValuesAnyLock` 返回 [LedgerPwd] 却不带 mac —— 调用方拿到条目也说不出是哪把锁,
+    /// 还把当前锁的其它别名一起算进来, 与上面的同锁检查重复计数。改成直接给一句警告需要的信息。
+    static func duplicatePwdLockNames(_ value: String, excludingMac: String) -> [String] {
+        guard !value.isEmpty else { return [] }
+        var names: [String] = []
+        for k in DB.keychains() where k.mac != excludingMac {
+            guard DB.listPwds(k.mac).contains(where: { $0.pwd == value }) else { continue }
+            let n = LockArchive.displayName(k)
+            if !names.contains(n) { names.append(n) }
         }
-        return out
+        return names
     }
     /// 314 前缀混淆: 同锁内其它密码前 4 位相同, 口头易混淆
     static func prefixConflict(_ mac: String, _ value: String, excluding: Int) -> [LedgerPwd] {
@@ -797,13 +1164,85 @@ enum CredentialOrg {
         return DB.listPwds(mac).filter { $0.alias != excluding && $0.pwd?.hasPrefix(pre) == true }
     }
 
-    // ---------- 305 老旧巡检: 台账自记录修改时刻起算 (锁端无最后修改字段, 标"约") ----------
+    // ---------- 305 老旧巡检: 台账只记**添加**时刻, 标"约" ----------
+    /// ⚠ 数据源实况 (逐行读过 Store.swift 的三条写口): `addPwd` 落 `at`, 而 `rePwd` (改值) 与
+    ///   `setPwdPeriod` (改期) **都不回写 `at`** —— 所以这里的"天数"是"这条台账添加至今"的天数,
+    ///   不是"这个码值有多久没换"。锁端也没有最后修改字段 (CAPABILITY §3: 日志无凭证身份、无修改时刻),
+    ///   本机又没留改值时刻的字段, 于是换没换过值只能反查 487 版本快照那条路, 不在本函数口径内。
+    ///   因此不新增持久化字段 (避开 swiftshape R3 的合成 Codable 雷区), UI 侧文案照这里的口径写:
+    ///   添加于约 N 天前, 台账无改值时刻、这段时间没留下换码记录。
+    // ---------- 9 凭证风险体检 (安全审计卡) ----------
+    struct PwdRisk: Identifiable {
+        var id: String { kind + "|" + mac + "|" + String(alias) }
+        let kind: String        // 同值 / 超期 / 弱口令
+        let mac: String
+        let alias: Int
+        let lockName: String
+        let detail: String
+    }
+    /// 9 安全审计: 全库密码风险清单 (**只读扫描**, 不写任何东西)。
+    /// 三类判据都写死在代码里, 不编"强度评分": 同值 (同一串值出现在多条凭证上)、
+    /// 超期 (添加至今 > maxAgeDays)、弱口令 (少于 6 位 / 全部同数字 / 连续递增递减)。
+    /// 归属与锁名走既有口径 (769 LockArchive.displayName), 处置动作仍在凭证 Tab 的改码 (305/306)。
+    static func passwordRisks(maxAgeDays: Int = 180) -> [PwdRisk] {
+        var byValue: [String: [(mac: String, alias: Int, lock: String)]] = [:]
+        var all: [(mac: String, lock: String, p: LedgerPwd)] = []
+        for kc in DB.keychains() {
+            let lock = LockArchive.displayName(kc)
+            for p in DB.listPwds(kc.mac) {
+                all.append((kc.mac, lock, p))
+                let v = (p.pwd ?? "").trimmingCharacters(in: .whitespaces)
+                if v.count >= 4 { byValue[v, default: []].append((kc.mac, p.alias, lock)) }
+            }
+        }
+        var out: [PwdRisk] = []
+        for (mac, lock, p) in all {
+            let v = (p.pwd ?? "").trimmingCharacters(in: .whitespaces)
+            if v.count >= 4, let dup = byValue[v], dup.count > 1 {
+                out.append(PwdRisk(kind: "同值", mac: mac, alias: p.alias, lockName: lock,
+                                   detail: "与另外 \(dup.count - 1) 条凭证同值"))
+            }
+            if let age = pwdAgeDays(p), age > maxAgeDays {
+                out.append(PwdRisk(kind: "超期", mac: mac, alias: p.alias, lockName: lock,
+                                   detail: "添加至今 \(age) 天未改"))
+            }
+            if let why = weakReason(v) {
+                out.append(PwdRisk(kind: "弱口令", mac: mac, alias: p.alias, lockName: lock, detail: why))
+            }
+        }
+        return out
+    }
+    /// 弱口令三条判据 (都可证伪; 不评"强度分"): 少于 6 位 / 全部同一位 / 连续递增递减
+    static func weakReason(_ v: String) -> String? {
+        guard !v.isEmpty else { return nil }
+        if v.count < 6 { return "少于 6 位" }
+        if Set(v).count == 1 { return "全部同一位数字" }
+        let digits = v.compactMap { $0.wholeNumberValue }
+        if digits.count == v.count, digits.count >= 3 {
+            var up = true, down = true
+            for i in 1..<digits.count {
+                if digits[i] != digits[i - 1] + 1 { up = false }
+                if digits[i] != digits[i - 1] - 1 { down = false }
+            }
+            if up || down { return "连续递增/递减序列" }
+        }
+        return nil
+    }
     static func pwdAgeDays(_ p: LedgerPwd) -> Int? {
         guard p.at > 0 else { return nil }
+        // 单位口径：毫秒 —— LedgerPwd.at 写的是 `timeIntervalSince1970 * 1000` (见 CredentialStudio 提交那两处)，先除回秒再算天数。
         return Int(max(0, (nowSec - p.at / 1000)) / 86400)
     }
+    /// 305 超阈值建议换码: 阈值量的是**添加至今** (见上面 pwdAgeDays 的数据源实况), 不是"未换值天数"。
     static func isStalePwd(_ p: LedgerPwd, days: Int = 180) -> Bool {
         (pwdAgeDays(p) ?? 0) > days
+    }
+    /// 305 的"换没换过值"到底能不能证实? 台账那侧不能 (at 不回写), 但 487 版本快照那侧能查一角:
+    /// 改造密码 (306/307) 与重新下发落到别的别名时都会留一档快照, 备注里写着这两件事。
+    /// 所以这里只回答"**本机快照里查得到改值留档吗**", 查不到也不等于没换过 (非本 App 改的值本机无痕) ——
+    /// UI 两句都要照这个口径说, 不许说成"多少天没换码"。不新增持久化字段, 读的就是既有 kf_chist_ 键。
+    static func hasReRecordSnapshot(_ mac: String, _ p: LedgerPwd) -> Bool {
+        history(mac, "pwd", p.alias).contains { $0.note.contains("改造") || $0.note.contains("重新下发") }
     }
 
     // ---------- 307 保存前逐位 diff: 改动位集合 (1 起; 长度变化补 "·" 对齐) ----------
@@ -840,58 +1279,88 @@ enum CredentialOrg {
     static func fpCountTotal(_ mac: String) -> Int { DB.listFps(mac).count }
 
     // ---------- 311/316/320/326/335/333 台账推断统计 (⚠ 全部标"约") ----------
+    // 这一族的文案与数据源是**同一份**判据, 不各说一套; 也不许把"约"写成精确:
+    // docs/CAPABILITY.md §3 写明 cmd16 日志每条只有 [type][len][idx][lockTime][body],
+    // **无 alias / 无指纹批号**这类身份字段 ⇒ "谁用它开的门"只能拿凭证自己的时间窗去框。
+    // 约族核对结论: 311/316/320/332 四处 UI 小字与下面这几个函数的口径本就对齐, 本轮不动;
+    // 333 原只滤下界 (超窗的旧日志也会命中, 见 firstUse 的补界)、335/326 的小字原把"时间窗推断"
+    // 说成"本地计次" —— 这两处已改成与数据源同一句话。
     /// 311 同码引用: 时间窗内用它"开过的门"计数 (无 alias 日志字段, 按时间窗推断, 标"约")
     static func openCountInWindow(_ mac: String, p: LedgerPwd) -> Int {
         guard let f = parseLocal(p.from), let to = parseLocal(p.to) else { return 0 }
         return DB.readLogs(mac).filter { log in
             guard log.type == 2 || log.type == 4 else { return false }
-            let t = ZKProtocol.protoSecondsToMs(Int64(log.lockTime)) / 1000
+            let t = ZKProtocol.protoSecondsToUnix(Int64(log.lockTime))
             return f.timeIntervalSince1970 <= t && t <= to.timeIntervalSince1970
         }.count
     }
-    /// 316 档案三行统计 / 320 误识档案: 最近一次使用与近似误识 (type13 指纹告警, ⚠ 语义待实测)
-    static func inferredLastUse(_ mac: String, pwdAlias: Int) -> Double? {
-        guard let p = DB.ledger(mac).pwds.first(where: { $0.alias == pwdAlias }) else { return nil }
-        var hit: Double? = nil
-        for l in DB.readLogs(mac) where l.type == 2 || l.type == 4 {
-            let t = ZKProtocol.protoSecondsToMs(Int64(l.lockTime)) / 1000
-            if p.temp {
-                if let f = parseLocal(p.from), let to = parseLocal(p.to),
-                   f.timeIntervalSince1970 <= t, t <= to.timeIntervalSince1970 { hit = t }
-            } else if hit == nil {
-                hit = t
-            }
+    /// 316 档案三行统计 / 320 误识档案: 最近一次使用 (⚠ 锁端开门日志无凭证身份字段, 全是时间窗推断)
+    /// 旧写法取"数组首条命中"当最近使用 —— writeLogs 是"新抓的拼在旧缓存前", 数组序不等于时间序,
+    /// 跨多次拉取合并后更不保证; 一律改成取最大时间戳。
+    /// 第九十一批删掉了单条版 `inferredLastUse(_:pwdAlias:)`：现役只有批量版
+    /// `inferredLastUseMap` (919 起的注释就写着"逐条调会让排序在每帧重解一遍日志")，
+    /// 单条版全仓零调用点，留着一份更慢的入口只会让人误调用它。
+    /// 316/914 批量版: 一次读日志算完全部凭证。
+    static func inferredLastUseMap(_ mac: String) -> [Int: Double] {
+        let opens = openTimes(mac)
+        guard !opens.isEmpty else { return [:] }
+        var out: [Int: Double] = [:]
+        for p in DB.ledger(mac).pwds {
+            if let t = lastUse(of: p, opens: opens) { out[p.alias] = t }
         }
-        return hit
+        return out
+    }
+    private static func openTimes(_ mac: String) -> [Double] {
+        DB.readLogs(mac).filter { $0.type == 2 || $0.type == 4 }
+            .map { ZKProtocol.protoSecondsToUnix(Int64($0.lockTime)) }
+    }
+    /// 临时凭证: 只算落在它自己时间窗内的开门 (时间窗就是它唯一的归属依据)。
+    /// 长期凭证: 日志无法指认是哪条密码开的门, 只能给"这把锁最近一次开门" —— 同锁各条数值相同,
+    /// 所以调用方拿到它只能当锁级参考, 不能当成"这条凭证被用过"。
+    private static func lastUse(of p: LedgerPwd, opens: [Double]) -> Double? {
+        if p.temp {
+            guard let f = parseLocal(p.from), let to = parseLocal(p.to) else { return nil }
+            let lo = f.timeIntervalSince1970, hi = to.timeIntervalSince1970
+            return opens.filter { $0 >= lo && $0 <= hi }.max()
+        }
+        return opens.max()
     }
     /// 316 指纹档案统计: 近 30 天 type3 (指纹开门) 日志条数 — ⚠ 日志无指纹身份字段, 只能按锁整体推断, 标"约"
     static func fpUseCount30d(_ mac: String) -> Int {
         let cut = nowSec - 30 * 86400
         return DB.readLogs(mac).filter { l in
             guard l.type == 3 else { return false }
-            return ZKProtocol.protoSecondsToMs(Int64(l.lockTime)) / 1000 >= cut
+            return ZKProtocol.protoSecondsToUnix(Int64(l.lockTime)) >= cut
         }.count
     }
     /// 320 误识计数: 本地日志 type13 (指纹告警) 出现次数 — ⚠ 锁端语义待实测, 只做展示标"约"
     static func fpAlarmLogCount(_ mac: String) -> Int {
         DB.readLogs(mac).filter { $0.type == 13 }.count
     }
-    /// 326/335 计次退役与用量刻度: 锁端无计次, 降级为本地 type4 临时码开门计数 (标"约")
+    /// 326/335 计次退役与用量刻度: 锁端**无计次字段**, 所以这里数的是"这条凭证自己的时间窗里
+    /// 本地开门日志 (type4) 有几条" —— 不是锁报过的用量, 也不保证每一条都真用它开过门
+    /// (CAPABILITY §3: 日志无凭证身份字段)。UI 小字与这句同一口径: 按本地开门日志时间窗推断。
     static func usageCount(_ mac: String, p: LedgerPwd) -> Int {
         guard let f = parseLocal(p.from), let to = parseLocal(p.to) else { return 0 }
         return DB.readLogs(mac).filter { log in
             guard log.type == 4 else { return false }
-            let t = ZKProtocol.protoSecondsToMs(Int64(log.lockTime)) / 1000
+            let t = ZKProtocol.protoSecondsToUnix(Int64(log.lockTime))
             return f.timeIntervalSince1970 <= t && t <= to.timeIntervalSince1970
         }.count
     }
-    /// 333 首用回执: 时间窗内最早一条开门日志 (⚠ 无 alias 字段, 按时间推断, 标"约")
+    /// 333 首用回执: 时间窗内**最早**一条开门日志 (⚠ 无 alias 字段, 按时间推断, 标"约")。
+    /// 上界必须一起滤: 原写法只滤了下界 `t >= from`, 于是窗口外(到期之后)的旧日志也会命中,
+    /// 完成页就会指着一条早就失效的码说"约在某时有人用它开过门"。同一族的 311/326/335
+    /// 两个界都滤 (openCountInWindow / usageCount), 这里补齐后才谈得上"同源"。
     static func firstUse(_ mac: String, p: LedgerPwd) -> Double? {
-        guard let f = parseLocal(p.from) else { return nil }
+        guard let f = parseLocal(p.from), let hi = parseLocal(p.to) else { return nil }
+        let lo = f.timeIntervalSince1970
+        let upper = hi.timeIntervalSince1970
         var hit: Double? = nil
         for l in DB.readLogs(mac) where l.type == 2 || l.type == 4 {
-            let t = ZKProtocol.protoSecondsToMs(Int64(l.lockTime)) / 1000
-            if t >= f.timeIntervalSince1970 { hit = hit == nil ? t : min(hit!, t) }
+            let t = ZKProtocol.protoSecondsToUnix(Int64(l.lockTime))
+            guard t >= lo, t <= upper else { continue }
+            hit = hit == nil ? t : min(hit!, t)
         }
         return hit
     }
@@ -908,7 +1377,35 @@ enum CredentialOrg {
         return who.isEmpty ? "指纹·" + base : who + "·" + base
     }
 
-    // ---------- 331 提前失效滑杆 (本地意图, 不改协议; 到点由巡检行提示停用) ----------
+    // ---------- 331 提前失效滑杆 (本地意图, 不改协议; 到点只作提示, 不自动下发停用) ----------
+    // 备案口径见 docs/DEFERRED.md 包5 的 331 那一行: 滑杆只写 kf_cestudy_earlyexp_, 不改协议。
+    // 这里补的是那两个判据 (原文件只有键的读写, 没有任何地方真的算过到没到点):
+    //  · `effectiveExpiry` = 锁端到期时刻减掉本机设的提前量, 是**本机自己的一把尺**;
+    //  · `isEarlyExpired`  = 当前时刻有没有越过那把尺。
+    // ⚠ 越过它**不会**给锁发任何命令, 门锁在自己那份到期时刻之前照样开门 ——
+    //   到点只提示停用 (详情页顶部提醒条 + 状态行标注), 要不要真停用仍由人决定。
+    /// 331 本地提前失效时刻; 滑杆为 0 时就等于锁端到期时刻, 长期有效 (2118) 无到期点 ⇒ nil。
+    static func effectiveExpiry(_ mac: String, _ p: LedgerPwd) -> Date? {
+        guard let to = expiryDate(p) else { return nil }
+        let m = earlyExpireMin(mac, p.alias)
+        guard m > 0 else { return to }
+        return to.addingTimeInterval(-Double(m) * 60)
+    }
+    /// 331 是否已过本机设定的提前失效时刻。`now` 由调用方给一次、两处提示共用 (顶部提醒条与状态行
+    /// 同帧同判据), 不留隐式 Date() —— 隐式取时刻会让同一屏里两条结论各自漂。没设提前量恒 false。
+    static func isEarlyExpired(_ mac: String, _ p: LedgerPwd, _ now: Date) -> Bool {
+        guard earlyExpireMin(mac, p.alias) > 0, let e = effectiveExpiry(mac, p) else { return false }
+        return now >= e
+    }
+    /// 331 详情页状态行的后缀: 设了提前量才给, 没设就空串 (提示语不吹一件没设过的事)。
+    static func earlyExpiryNote(_ mac: String, _ p: LedgerPwd) -> String {
+        let m = earlyExpireMin(mac, p.alias)
+        guard m > 0, let e = effectiveExpiry(mac, p) else { return "" }
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "MM-dd HH:mm"
+        return " · 本机提前 " + String(m) + " 分钟 (331, 约 " + f.string(from: e) + ", 锁端未改)"
+    }
     static func earlyExpireMin(_ mac: String, _ alias: Int) -> Int {
         DB.store.getInt("kf_cestudy_earlyexp_" + mac + "_" + String(alias), 0)
     }
@@ -917,6 +1414,8 @@ enum CredentialOrg {
     }
 
     // ---------- 341/343/346 OTP 独立口令组与静态备份码 (纯本地, 不走锁端) ----------
+    // 341 有两条入口 (otpauth:// 文本导入 + 手工添加), 但只有一份落库形状 = 下面这个 TOTPEntry:
+    // 解析在 UI 侧的 StudioTools.parseOtpAuth, 两条路都经 `addTotp` 落库 ⇒ 存、读、备份只有一套字段。
     struct TOTPEntry: Codable, Identifiable {
         var id: String
         var name: String
@@ -934,6 +1433,10 @@ enum CredentialOrg {
         var used: Bool
         var at: Double
     }
+    /// 343 独立口令的存档键**带 mac**, 这是刻意的: 口令的算法与锁协议毫无关系 (HMAC-TOTP, 手机自己算),
+    /// 但备份是**按锁导出**的 (凭证分区一锁一包, 见 `exportPackage` 与 BackupStudioKit),
+    /// 去掉 mac 就会把 A 锁的包里混进 B 锁的口令、还原时又一并倒回去。
+    /// ⚠ 所以别把键名读成"这些口令属于这把锁": 它只是**按当前锁分格存放**, 换一把锁看的就是另一组。
     static func totpKey(_ mac: String) -> String { "kf_cotp_t_" + mac }
     static func staticKey(_ mac: String) -> String { "kf_cotp_s_" + mac }
     static func totpEntries(_ mac: String) -> [TOTPEntry] {
@@ -961,11 +1464,10 @@ enum CredentialOrg {
         saveStaticCodes(mac, staticCodes(mac).filter { $0.id != id })
     }
 
-    // ---------- 337/171 独立 TOTP 时窗 (⚠ 锁端 ZOTP 为分钟级, 秒级仅独立口令) ----------
-    static func totpRemaining(_ e: TOTPEntry) -> Int {
-        let per = e.period > 0 ? e.period : 30
-        return per - (Int(Date().timeIntervalSince1970) / per)
-    }
+    // ---------- 337/171 独立 TOTP 时窗 ----------
+    // 倒计时的唯一实现是 WindowBar.remaining (CredentialStudio.swift:238, 同一公式 per - epoch % per)。
+    // 这里曾有 totpRemaining —— 与它逐字重复且全仓零调用, 留着只会让人以为有两套口径。
+    // (⚠ 锁端 ZOTP 为分钟级, 秒级只属独立口令)
     /// 345 参数小字: "SHA1·6位·30s"
     static func totpParams(_ e: TOTPEntry) -> String {
         e.algo + "·" + String(e.digits) + "位·" + String(e.period > 0 ? e.period : 30) + "s (独立口令, 约)"
@@ -1033,6 +1535,24 @@ enum CredentialOrg {
         if h >= 1 { return "剩 \(h) 小时" }
         return "剩 \(Int(d / 60)) 分钟"
     }
+    /// 331 列表侧倒计时: 设过本机提前量时改按 effectiveExpiry 这把本机尺读数, 并标 "(本机提前)";
+    /// 没设就与 countdown 完全同值 (不吹一件没设过的事)。now 由调用方给一次, 与同行"提前失效"胶囊同帧同判据。
+    /// 越线但锁端未到期时如实说"锁端未到" —— 提示不是指令, 锁端没被改过。
+    static func listCountdown(_ mac: String, _ p: LedgerPwd, _ now: Date) -> String {
+        guard earlyExpireMin(mac, p.alias) > 0, let e = effectiveExpiry(mac, p) else {
+            return countdown(p)
+        }
+        let d = e.timeIntervalSince(now)
+        if d <= 0 {
+            // 锁端也已过期时按锁端事实报 —— 提前线在先, 更硬的事实在锁端
+            return now >= (expiryDate(p) ?? e) ? countdown(p) : "已过本机提前线 (锁端未到)"
+        }
+        let day = Int(d / 86400)
+        if day >= 1 { return "剩 \(day) 天 (本机提前)" }
+        let h = Int(d / 3600)
+        if h >= 1 { return "剩 \(h) 小时 (本机提前)" }
+        return "剩 \(Int(d / 60)) 分钟 (本机提前)"
+    }
     static func stateLabel(_ s: Int) -> String {
         switch s {
         case 1: return "已排期"
@@ -1056,10 +1576,11 @@ extension CredSnapshot {
         let d = Date(timeIntervalSince1970: at)
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd HH:mm"
+        f.locale = Locale(identifier: "en_US_POSIX")
         let diff = -d.timeIntervalSinceNow
         let abs = f.string(from: d)
         if diff < 60 { return "刚刚 · " + abs }
-        if diff < 3600 { return "刚刚 · " + abs }
+        if diff < 3600 { return String(Int(diff / 60)) + " 分钟前 · " + abs }   // 16: 两档不再同写"刚刚"
         return abs
     }
 }

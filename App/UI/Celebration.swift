@@ -1,6 +1,8 @@
 // ================= 庆祝动效 (功能包18) =================
 // 礼花粒子: SwiftUI Canvas + TimelineView 自绘, 零第三方、零图片资源。
 // 降级链: reduceMotion / 素颜模式(1046) → 不播粒子, 时刻卡保留内容与静态亮起;
+// 24 首次完成庆祝 = 本文件的"一次性时刻"通道 (礼花 + 时刻卡)，不新造一套庆祝视图:
+// 庆祝层各写一份的话，reduceMotion 与素颜模式的降级就得在每个新入口重记一遍 (本仓那两条是硬约束)。
 // 时刻卡复用 HeroCard 的渐变视觉语言与既有触感 (idea 24/992/1010/1021/1050 等一次性时刻)。
 import SwiftUI
 
@@ -50,13 +52,13 @@ struct ConfettiView: View {
             VStack(spacing: DS.Space.s) {
                 Image(systemName: "rosette")
                     .font(.system(size: DS.Icon.xl, weight: .medium))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(DS.heroFg)      // 863: 这枚徽章坐在 hero 上, 写死白会在反转下看不见
                 Text("纪念时刻")
                     .font(.caption.weight(.medium))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(DS.heroFg)
             }
             .padding(DS.Space.l)
-            .background(.white.opacity(0.14), in: Capsule())
+            .background(DS.heroPlate, in: Capsule())
             .accessibilityHidden(true)
         } else {
             TimelineView(.animation) { timeline in
@@ -114,33 +116,33 @@ struct MomentCardView: View {
                 // 徽章圆座: 玻璃感 + 品牌渐变
                 ZStack {
                     Circle()
-                        .fill(.white.opacity(0.16))
+                        .fill(DS.heroFg.opacity(0.16))
                         .frame(width: 96, height: 96)
                     Image(systemName: moment.icon)
                         .font(.system(size: 40, weight: .medium))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(DS.heroFg)
                 }
                 .accessibilityHidden(true)
 
                 VStack(spacing: DS.Space.s) {
                     Text(moment.title)
                         .font(.title3.weight(.semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(DS.heroFg)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
                     Text(moment.subtitle)
                         .font(.footnote)
-                        .foregroundStyle(.white.opacity(0.88))
+                        .foregroundStyle(DS.heroFg.opacity(0.88))
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 Text("轻点任意处继续")
                     .font(.caption2)
-                    .foregroundStyle(.white.opacity(0.62))
+                    .foregroundStyle(DS.heroFg.opacity(0.62))
             }
             .padding(DS.Space.xl)
             .frame(maxWidth: 340)
-            .background(DS.Gradient.hero, in: RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous))
+            .background(DS.heroGradientSafe, in: RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous))
             .shadow(color: DS.Palette.accent.opacity(0.35), radius: 26, y: 12)
             .padding(.horizontal, DS.Space.xl)
             .scaleEffect(shown || reduceMotion ? 1 : 0.94)

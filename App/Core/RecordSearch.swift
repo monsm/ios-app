@@ -2,15 +2,62 @@
 //   检索: 551 全局搜索 / 554 自然语言 / 555 加减号 / 562 实时计数 / 553 历史 /
 //         560 命名过滤视图 / 564 时段 / 571 工作日周末 / 572 深夜预设 / 574 活跃凭证 /
 //         575 越界开门 / 569 失败事件 (仅 10/13/224 告警级, 锁端无逐次失败明细) /
-//         594·671·672 节假日 (内置 2026-2027 简表, 手工维护) / 737 今日试错
+//         594·671·672 节假日 (内置表按国务院公告核对 · 含调休补班日 · 在线源见 NEXT-DECISIONS 组3) / 737 今日试错
 //   告警: 723 跨锁流 / 724 四级色标 / 726 处置留痕 / 734 未处理优先 / 741 同类计数 /
 //         745 测试标记排除 / 727 检查清单 (复用处置字段) / 742 响应时长 (占位"积累中")
+//   551 的搜索面在 `searchFace` 一处定义, 含 186 备注与 568 凭证标签 (第一百八十九批补齐:
+//   此前备注不在任何搜索面上, 而搜索框占位文案写着它可搜)。
 // 纪律: 颜色只走 DS 令牌 (danger 派生, 页面层 .opacity); 告警类型只用 CAPABILITY §3
 //       真实存在的 5 种 (6 低电 / 7 防撬 / 10 试错锁定 / 13 指纹告警 / 224 键盘锁定);
 //       归属统计走 Attribution 可证明链, 推断值一律标"约"。
 import Foundation
 
 /// 一条可检索的记录行 (跨锁聚合单元, 770)
+/// 186 记录备注 / 188 手动标旗 —— 本机覆盖层, 按 (锁, 行) 存, 不写进锁端也不混入日志缓存。
+/// 用行身份 mac#idxRaw 当键: idxRaw 是锁端日志序号, 同一条记录被反复拉取仍是同一个键。
+/// 手机侧行没有 idxRaw: 失败行 = "f_" + Unix 秒、保养行 = "c_" + Unix 毫秒。这一族键的出处只有两处 ——
+/// `RecordSearch.buildRecs` 与 `RecordsView.render`, 第一百八十九批才并成一份 (原先单锁路径给这两族行
+/// 现编了一个 `Int(ts*1000) + 下标` 的派生数当行键, 于是同一条记录在两种范围里身份不同:
+/// 详情卡按 Rec 的键写备注、时间线行按派生数读 ⇒ 备注写了永远不显示, 576 详情也点不开)。
+/// 备注是用户自己写的自由文本 → 属敏感本地数据, 删设备与销毁流程都按族清 (Store.removeDevice 的族表)。
+enum RecordOverlay {
+    static func noteKey(_ mac: String) -> String { "kf_rnote_" + mac }
+    static func flagKey(_ mac: String) -> String { "kf_rflag_" + mac }
+    /// 行身份归一: 多锁模式的 RowVM.key 已带 mac 前缀, 单锁路径没带 → 补齐成同一个键
+    static func oid(mac: String, rowKey: String) -> String {
+        rowKey.hasPrefix(mac + "#") ? rowKey : mac + "#" + rowKey
+    }
+    static func notes(_ mac: String) -> [String: String] {
+        DB.store.get([String: String].self, noteKey(mac)) ?? [:]
+    }
+    static func note(_ mac: String, _ rowKey: String) -> String {
+        notes(mac)[oid(mac: mac, rowKey: rowKey)] ?? ""
+    }
+    /// 空文本 = 删键 (不留 kf_rnote 里的空壳, 否则完整性自查会数出无意义的条目)
+    static func setNote(_ mac: String, _ rowKey: String, _ text: String) {
+        var m = notes(mac)
+        let k = oid(mac: mac, rowKey: rowKey)
+        let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if t.isEmpty { m.removeValue(forKey: k) } else { m[k] = String(t.prefix(60)) }   // 60 字上限: 行下灰字一行放得下
+        DB.store.setCodable(noteKey(mac), m)
+    }
+    static func flags(_ mac: String) -> Set<String> {
+        Set(DB.store.get([String].self, flagKey(mac)) ?? [])
+    }
+    static func isFlagged(_ mac: String, _ rowKey: String) -> Bool {
+        flags(mac).contains(oid(mac: mac, rowKey: rowKey))
+    }
+    @discardableResult
+    static func toggleFlag(_ mac: String, _ rowKey: String) -> Bool {
+        var set = flags(mac)
+        let k = oid(mac: mac, rowKey: rowKey)
+        if set.contains(k) { set.remove(k) } else { set.insert(k) }
+        DB.store.setCodable(flagKey(mac), set.sorted())
+        return set.contains(k)
+    }
+    /// 行下灰字与左旗的读取都由上面几枚函数直接服务 UI; 不再另留 noteLine 这种"看着像入口"的别名。
+}
+
 struct Rec: Identifiable {
     var key: String        // 行 key (锁日志 idxRaw)
     var mac: String        // 归属锁 (全部锁模式下定位)
@@ -20,7 +67,7 @@ struct Rec: Identifiable {
     var idxRaw: UInt32
     var lockTime: Int64
     var timeStr: String    // "yyyy-MM-dd HH:mm:ss"
-    var whoId: String?     // 可证明归属成员 id (791 认领在 UI 层叠加)
+    var whoId: String? = nil  // 可证明归属成员 id (791 认领在 UI 层叠加); 失败/保养行无可证明归属 → 留默认 nil
     var whoName: String?   // 可证明归属才填 (显示名), 否则 nil
     var kind: String?      // fp/pwd/temp/key (开门类才有)
     var provable: String?  // temp/unique
@@ -36,6 +83,10 @@ struct Rec: Identifiable {
 enum AlarmMeta {
     static let urgent: Set<Int> = [7, 224]   // 防撬 / 键盘锁定
     static let serious: Set<Int> = [10, 13]  // 试错锁定 / 指纹告警
+    /// 596 替代: 原句要的是"含胁迫告警"的日警示 —— 协议没有胁迫类 (§5), 改挂这三类**真实存在**
+    /// 且在意的告警: 防撬 / 试错锁定 / 键盘锁定。比 `urgent`([7,224]) 有意多收 10:
+    /// 试错锁定是"有人在试密码"的读数, "这一天出过事"这件事里它必须算。
+    static let damageTypes: Set<Int> = [7, 10, 224]
     static let info: Set<Int> = [6]          // 低电量
     static func isAlarm(_ t: Int) -> Bool { urgent.contains(t) || serious.contains(t) || info.contains(t) }
     static func level(_ t: Int) -> Int {
@@ -49,6 +100,20 @@ enum AlarmMeta {
         case 2: return "严重"
         default: return "提示"
         }
+    }
+}
+
+extension RecordSearch {
+    /// 告警行标题 —— 此前 RecordSearch 根本没有这个成员,
+    /// 但 `AlarmCenterView:212` 与 `RecordsTimeline:83` 都在调用它 (编译期未解析符号)。
+    static func alarmTitle(_ r: Rec) -> String {
+        if !r.typeName.isEmpty { return r.typeName }
+        return RecordVerbs.line(type: r.type, who: r.whoName, kindWord: nil, typeName: "告警 #\(r.type)")
+    }
+    /// 「同类 N」预览计数 —— 同样此前无声明 (`AlarmCenterView:242` 调用)。
+    /// 口径: 本机日志缓存里与该行同 type 的条数 (不虚构锁端总量)。
+    static func sameCountPreview(_ r: Rec) -> Int {
+        DB.readLogs(r.mac).filter { $0.type == r.type }.count
     }
 }
 
@@ -71,16 +136,20 @@ enum AlarmWords {
 /// 674 通勤时段标签: 工作日 7-9 / 17-19 实时计算, 无需积累
 enum CommuteLabel {
     static func tag(date: Date, hour: Int) -> String? {
-        let c = Calendar(identifier: .chinese)
-        let wk = c.component(.weekday, from: date)
-        guard wk != 1, wk != 7 else { return nil }   // 周一=2, 周日=7
+        // 原写法用 `Calendar(identifier: .chinese)` 取 weekday, 而它的注释写"周一=2, 周日=7"、代码却排除 1 和 7 ——
+        // 口径自相矛盾, 且农历历法的 weekday 归属并不是这里要的东西。上一批改成了裸的
+        // `Calendar(identifier: .gregorian)`，但 Apple 对 `init(identifier:)` 的**默认时区没有任何文档承诺**
+        // (那份 JSON 只有 declarations + parameters)，拿一个未约定的时区算"周几"，
+        // 与调用方按当前时区算出的 `hour` 可能在午夜两侧差一天 (§10.31)。
+        // 现在只认 `StatsKit.weekdayIndex` 那一份周序 (1=周一…7=周日，历法与时区都已在 WeekCal 钉死)。
+        guard StatsKit.weekdayIndex(date) <= 5 else { return nil }   // 1~5 = 周一~周五
         if (7...9).contains(hour) { return "通勤" }
         if (17...19).contains(hour) { return "通勤" }
         return nil
     }
 }
 
-/// 658 自然时段词: 清晨/上午/午间/下午/傍晚/深夜 (组头与行级小字共用)
+/// 658 自然时段词: 清晨/上午/午前/午间/下午/傍晚/晚间/深夜 (组头与行级小字共用)
 enum TimeWord {
     static func word(_ hour: Int) -> String {
         switch hour {
@@ -125,7 +194,45 @@ struct QueryFilters: Codable, Equatable {
     var lateNight = false           // 572 深夜预设 (跟随 676 夜间时段配置)
     var alarmOnly = false          // 567
     var kind: String = ""          // 568 凭证维度: fp/pwd/temp/key 或 owner 名
+    /// 566 成员过滤保持: 成员**跟着这一份一起存**，不另开一个键。
+    /// 分开存的结果是"过滤组合记住了、成员没记住"这种半截行为，而且 908 的开场策略只管这一份结构,
+    /// 成员游离在外面时策略切回"每次空白"也不会清掉它。
+    var member: String = ""
     var failedOnly = false          // 569 失败事件 (仅 10/13/224 + 92 手机侧失败, 锁端仅记录告警级)
+    /// 565 告警类型多选: 空 = 不限类型 (与 567 的"仅告警"各自独立, 两个都选中时取交集);
+    /// 非空 = 只留这些告警类型 (StatsKit.alarmTypes 的子集)。按库里实际类型渲染 ——
+    /// 原句列了"胁迫", 但协议日志类型表没有胁迫类 (与 725 判 ❌ 同一理由), 不虚构一个查不到的类型。
+    var alarmKinds: Set<Int> = []
+}
+
+// 192 过滤会话保留: 按锁记住最后一次过滤组合, 再次进记录页不必重设 (与 NamedView 的长期存档不同, 这是"会话续用")
+// 908 默认策略: 在"会话续用"之上加一层可改的开场规则 (见 load 里的 policy)。
+extension QueryFilters {
+    private static func key(_ mac: String) -> String { "kf_rflt_" + mac }
+    /// 908 kf_filter_default: "" 记住上次(=192 原行为) / "fresh" 每次从空白起 / "alarm" 每次默认只看告警
+    static let policyKey = "kf_filter_default"
+    static let policies = ["", "fresh", "alarm"]
+    static var policy: String {
+        let v = DB.store.getString(policyKey)
+        return policies.contains(v) ? v : ""
+    }
+    static func setPolicy(_ v: String) {
+        // 白名单外一律当"记住上次"，不做"未知值就原样存"——那是把脏数据留在偏好里
+        DB.store.set(policyKey, policies.contains(v) ? v : "")
+    }
+    static func load(mac: String) -> QueryFilters {
+        switch policy {
+        case "fresh": return QueryFilters()
+        case "alarm": var f = QueryFilters(); f.alarmOnly = true; return f
+        default: return DB.store.get(QueryFilters.self, key(mac)) ?? QueryFilters()
+        }
+    }
+    /// 非默认策略下**照常保存**是有意的: 用户切回"记住上次"时，他上一次真的过滤组合还在。
+    /// 设置页把这句讲明白，否则"我选了每次空白，为什么还在写？"会变成一条缺陷单。
+    func save(mac: String) {
+        guard !mac.isEmpty else { return }
+        if self == QueryFilters() { DB.store.remove(key(mac)) } else { DB.store.set(key(mac), self) }
+    }
 }
 
 /// 560 命名过滤视图 (kf_rviews): 文本 + 过滤 + 范围长期复用
@@ -138,6 +245,31 @@ struct NamedView: Codable, Identifiable {
 }
 
 enum RecordSearch {
+    /// 362 复活检测（**仅本机类型级推断**）: 回收站条目删除之后, 是否仍出现同凭证类型的开门事件。
+    /// 协议没有"读锁内凭证清单"的命令, 所以只能说"可能仍在用", 绝不能写成"已核对锁内"。
+    /// 比较用的是锁自己记的时间串与手机删除时刻 —— 锁钟未校准时会有偏差, 调用方需带这句提示。
+    static func resurrectionHints(mac: String) -> [(text: String, kind: String, n: Int)] {
+        let entries = CredentialOrg.bin(mac)
+        guard !entries.isEmpty else { return [] }
+        let opens = buildRecs(macs: [mac], includeFails: false, includeCare: false)
+            .filter { StatsKit.openTypes.contains($0.type) && !$0.timeStr.isEmpty }
+        guard !opens.isEmpty else { return [] }
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        var out: [(text: String, kind: String, n: Int)] = []
+        for e in entries where e.at > 0 {
+            let kind: String
+            if let p = e.pwd { kind = p.temp ? "temp" : "pwd" }
+            else if e.fp != nil { kind = "fp" }
+            else { continue }
+            let cutoff = f.string(from: Date(timeIntervalSince1970: e.at))
+            let n = opens.filter { $0.kind == kind && $0.timeStr > cutoff }.count
+            if n > 0 { out.append((e.text, kind, n)) }
+        }
+        return out
+    }
+
     // ---------- 数据源: 聚合多锁 + 手机侧事件 (561/770 跨锁范围切换) ----------
     static func buildRecs(macs: [String], includeFails: Bool = true, includeCare: Bool = true) -> [Rec] {
         var out = [Rec]()
@@ -154,7 +286,7 @@ enum RecordSearch {
             let fps = DB.listFps(mac)
             let snap = DB.readStatus(mac)
             let entries = logs.map { LogEntry(type: $0.type, typeName: $0.typeName, idx: $0.idxRaw, idxRaw: $0.idxRaw, lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr, body: "") }
-            let cls = Attribution.classify(logs: entries, pwds: pws, fps: fps, status: snap.map { ($0.fpStock, $0.pwdStock, $0.lockTime ?? 0) })
+            let cls = Attribution.classify(logs: entries, pwds: pws, fps: fps, status: snap.map { ($0.fpStock, $0.pwdStock, $0.lockTime) })  // StatusSnapshotData.lockTime 非可选
             for (i, e) in entries.enumerated() {
                 guard i < cls.count else { continue }
                 let c = cls[i]
@@ -189,22 +321,38 @@ enum RecordSearch {
         out.sort { $0.timeStr > $1.timeStr }   // 字符串序 = 时间倒序 (同格式)
         return out
     }
-    /// 568 凭证维度标签: 可证明归属才给人名, 否则给类型 (推断值前端标"约")
+    /// 568 凭证维度标签: 可证明归属才给人名，否则给类型 (推断值前端标"约")。
+    /// 310 别名：台账里那条凭证自己的备注 (`LedgerPwd.note` / `LedgerFp.note`，添加页那行
+    /// "给谁·哪扇门·用多久") 的首段。刻意**不新增第二个别名字段** —— 备注已经是别名，
+    /// 再造一个就会出现"两处各写一半、显示时不知道取哪个"。
+    /// 只取首段并截 12 字：整条 note 常在 20 字以上，行里放不下；截断的别名不如不显示。
+    /// 匹配用 `e.idx` = 锁端日志里的凭证槽号，与台账 `alias`/`batch` 同一个数 (协议确证，非推断)。
     private static func credLabel(kind: String?, who: String?, pws: [LedgerPwd], fps: [LedgerFp], e: LogEntry) -> String {
+        let slot = Int(e.idx)
+        func alias(_ raw: String) -> String {
+            let first = raw.components(separatedBy: " · ").first?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            return first.isEmpty ? "" : String(first.prefix(12))
+        }
+        let pwdAlias = kind == "pwd" || kind == "temp" ? pws.first { $0.alias == slot }?.note ?? "" : ""
+        let fpAlias = kind == "fp" ? fps.first { $0.batch == slot }?.note ?? "" : ""
+        let a = alias(kind == "fp" ? fpAlias : pwdAlias)
+        let base: String
         switch kind {
-        case "fp":
-            if let who, !who.isEmpty { return "指纹 · " + who }
-            return "指纹"
-        case "pwd", "temp":
-            if let who, !who.isEmpty { return (kind == "temp" ? "临时码" : "密码") + " · " + who }
-            return kind == "temp" ? "临时码" : "密码"
+        case "fp": base = "指纹"
+        case "pwd": base = "密码"
+        case "temp": base = "临时码"
         case "key": return "数字钥匙"
         default: return ""
         }
+        var parts = [base]
+        if let who, !who.isEmpty { parts.append(who) }
+        if !a.isEmpty, a != who { parts.append(a) }
+        return parts.joined(separator: " · ")
     }
     static func localStr(_ ts: Double) -> String {
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        f.locale = Locale(identifier: "en_US_POSIX")
         f.timeZone = TimeZone.current
         return f.string(from: Date(timeIntervalSince1970: ts))
     }
@@ -242,27 +390,59 @@ enum RecordSearch {
         return Int64(f.date(from: s)?.timeIntervalSince1970 ?? 0)
     }
 
-    /// 574 活跃凭证 (台账推断, 展示层必须标"约"): 近 30 天开门日志按类型计次
+    /// 574 活跃凭证 (台账推断, 展示层必须标"约"): 近 30 天开门日志按「类型 #槽位」计次,
+    /// 槽位翻台账出备注 (指纹查批次 / 密码·临时查别名), 翻不到回落"类型 #槽号" ——
+    /// 旧版只汇总到四类大字, 用户看到"指纹 5 次"不知道是哪一个。
     static func activeCredentials(mac: String) -> [(kind: String, word: String, count: Int)] {
         let now = Date().timeIntervalSince1970
         let logs = DB.readLogs(mac).filter { l in
             guard let d = StatsKit.dateOf(l) else { return false }
             return d.timeIntervalSince1970 >= now - 30 * 86400
         }
-        var c: [String: Int] = ["fp": 0, "pwd": 0, "temp": 0, "key": 0]
+        var c: [String: Int] = [:]
         let typeToKind: [Int: String] = [3: "fp", 2: "pwd", 4: "temp", 1: "key"]
-        for l in logs { if let k = typeToKind[l.type] { c[k, default: 0] += 1 } }
-        return c.sorted { $0.value > $1.value }.map { ($0.key, Attribution.words[$0.key] ?? $0.key, $0.value) }
+        for l in logs { if let k = typeToKind[l.type] { c[k + "#" + String(l.idxRaw), default: 0] += 1 } }
+        let lg = DB.ledger(mac)
+        return c.sorted { $0.value > $1.value }.map { key, n in
+            let parts = key.split(separator: "#", maxSplits: 1).map(String.init)
+            let kind = parts.first ?? "", slot = parts.count > 1 ? parts[1] : ""
+            let base = Attribution.words[kind] ?? kind
+            let note = kind == "fp"
+                ? lg.fps.first { String($0.batch) == slot }?.note
+                : lg.pwds.first { String($0.alias) == slot }?.note
+            let seg = (note ?? "").split(separator: "\n").first.map(String.init) ?? ""
+            let short = seg.count > 12 ? String(seg.prefix(12)) + "…" : seg
+            return (kind, short.isEmpty ? base + " #" + slot : base + " #" + slot + " · " + short, n)
+        }
     }
 
+    /// 737 今日试错判据 (唯一一份): 锁定类事件行 (type 10) 且落在今日 —— 计数与逐次明细共用
+    private static func trialRowsToday(mac: String) -> [CachedLog] {
+        let today = dayKeyOf(Date())
+        return DB.readLogs(mac).filter { $0.type == 10 && String($0.lockTimeStr.prefix(10)) == today }
+    }
     /// 737 今日试错 (⚠ keyboardErrCount 语义不确定, 只用日志条数, 标题带"?"由 UI 层标)
     static func trialCountToday(macs: [String]) -> Int {
-        let today = dayKeyOf(Date())
-        var n = 0
+        macs.reduce(0) { $0 + trialRowsToday(mac: $1).count }
+    }
+    /// 737 今日试错的逐次事件: 锁端只记"锁定级事件"行, 一次一行 —— 把行本身列出来,
+    /// 而不是只给一个计数。涉事凭证在锁定级日志里没有槽位字段 (属协议失败明细, 未实现),
+    /// 所以这里**不带**归属字段: 不猜，由 UI 层写明"无法归属"。
+    struct TrialEvent: Identifiable {
+        var id: String        // mac#行键 (同日多锁也不重)
+        var timeStr: String
+        var lockName: String
+    }
+    static func trialEventsToday(macs: [String]) -> [TrialEvent] {
+        var out = [TrialEvent]()
         for mac in macs {
-            for l in DB.readLogs(mac) where l.type == 10 && String(l.lockTimeStr.prefix(10)) == today { n += 1 }
+            let kc = DB.keychain(mac)
+            let name = LockArchive.displayName(kc ?? Keychain(mac: mac, skey: ""))
+            for l in trialRowsToday(mac: mac) {
+                out.append(TrialEvent(id: mac + "#" + String(l.idxRaw), timeStr: l.lockTimeStr, lockName: name))
+            }
         }
-        return n
+        return out.sorted { $0.timeStr > $1.timeStr }
     }
 
     static func dateOf(_ l: CachedLog) -> Date? { StatsKit.dateOf(l) }
@@ -270,18 +450,15 @@ enum RecordSearch {
         if !r.timeStr.isEmpty {
             let f = DateFormatter()
             f.dateFormat = "yyyy-MM-dd HH:mm:ss"
+            f.locale = Locale(identifier: "en_US_POSIX")
             f.timeZone = TimeZone.current
             return f.date(from: r.timeStr)
         }
         return nil
     }
-    static func dayKeyOf(_ d: Date) -> String {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd"
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.timeZone = TimeZone.current
-        return f.string(from: d)
-    }
+    /// 日 key 口径与 `StatsKit.dayKey` 合并为一份 (§10.30)：此前两处各抄一遍同样的
+    /// yyyy-MM-dd + POSIX + 当前时区，值恰好相同，但改一处就会让检索分组与统计柱对不齐。
+    static func dayKeyOf(_ d: Date) -> String { StatsKit.dayKey(d) }
     /// "yyyy-MM-dd" → 该日 0 点 (本地时区)
     static func dateFromKey(_ key: String) -> Date? {
         let f = DateFormatter()
@@ -292,46 +469,106 @@ enum RecordSearch {
     }
     /// 649 凌晨归属前一晚: 0:00-4:59 归前一天
     static func dayKeyOfNight(_ d: Date) -> String {
-        let c = Calendar.current
+        let c = WeekCal.gregorian
         if c.component(.hour, from: d) < 5 {
             return dayKeyOf(c.date(byAdding: .day, value: -1, to: d) ?? d)
         }
         return dayKeyOf(d)
     }
-    /// 676 夜间时段配置 (默认 22-6, 设置可调): 572 深夜预设 / 564 深夜段共用
-    static var nightFrom: Int { DB.store.getInt("kf_night_from", 22) }
-    static var nightTo: Int { DB.store.getInt("kf_night_to", 6) }
-    static func isLateNight(_ hour: Int) -> Bool {
-        let a = nightFrom, b = nightTo
+    /// 676 夜间时段配置 (默认 22-6): 572 深夜预设 / 564 深夜段共用。
+    /// 写入一律夹到 0...23 —— 键位是 UserDefaults, 手改或导入可能塞进越界值, 判定函数不再做"回落合法值"的静默纠错。
+    static var nightFrom: Int { clamp23(DB.store.getInt("kf_night_from", 22)) }
+    static var nightTo: Int { clamp23(DB.store.getInt("kf_night_to", 6)) }
+    static func setNightFrom(_ h: Int) { DB.store.set("kf_night_from", clamp23(h)) }
+    static func setNightTo(_ h: Int) { DB.store.set("kf_night_to", clamp23(h)) }
+    static func setHolidayExtend(_ on: Bool) { DB.store.set("kf_holiday_extend", on) }
+    private static func clamp23(_ h: Int) -> Int { min(max(h, 0), 23) }
+    /// 起==止 时区间为空集 (什么都筛不出), 界面要如实提示而不是让用户对着空列表猜
+    static var nightWindowDegenerate: Bool { nightFrom == nightTo }
+    /// 564/572 深夜判定。**672 假日顺延接在这里**: 节假日当日把区间终点 +2 小时。
+    /// 此前 extendedEndHour/holidayExtendOn 组成一条没人走的链 = 设置形同虚设。
+    /// dayKey 传 "" (或不传) = 不做假日判定, 与旧行为一致。
+    static func isLateNight(_ hour: Int, dayKey: String = "") -> Bool {
+        let a = nightFrom
+        let b = extendedEndHour(dayKey) ?? nightTo
         return a > b ? (hour >= a || hour < b) : (hour >= a && hour < b)
     }
 
-    // ---------- 594/671/672 节假日内置简表 (手工维护 2026-2027, UI 层标注"手工维护") ----------
+    // ---------- 594/671/672 节假日内置表 ----------
+    // 2026 段按国务院公告逐日核对 (含 `off=false` 的调休补班日)。**2027 不内置**：公告尚未发布，
+    // 原先那些 2027 行是无来源的推测值 —— 节假日表猜错会让"假日顺延/色带/春节注记"整族静默失真，
+    // 所以宁可空着，等 671 的在线源拉到了再填。
     struct Holiday {
         var day: String    // "yyyy-MM-dd"
         var name: String
+        var off: Bool      // true=放假日 · false=调休补班日
     }
-    static let holidays: [Holiday] = [
-        Holiday(day: "2026-01-01", name: "元旦"),
-        Holiday(day: "2026-02-16", name: "春节"),
-        Holiday(day: "2026-02-17", name: "春节"),
-        Holiday(day: "2026-04-05", name: "清明"),
-        Holiday(day: "2026-05-01", name: "劳动节"),
-        Holiday(day: "2026-06-19", name: "端午"),
-        Holiday(day: "2026-09-25", name: "中秋"),
-        Holiday(day: "2026-10-01", name: "国庆"),
-        Holiday(day: "2027-01-01", name: "元旦"),
-        Holiday(day: "2027-02-05", name: "春节"),
-        Holiday(day: "2027-02-06", name: "春节"),
-        Holiday(day: "2027-04-05", name: "清明"),
-        Holiday(day: "2027-05-01", name: "劳动节"),
-        Holiday(day: "2027-06-09", name: "端午"),
-        Holiday(day: "2027-09-15", name: "中秋"),
-        Holiday(day: "2027-10-01", name: "国庆"),
+    static let builtinRows: [Holiday] = [
+        Holiday(day: "2026-01-01", name: "元旦", off: true),
+        Holiday(day: "2026-01-02", name: "元旦", off: true),
+        Holiday(day: "2026-01-03", name: "元旦", off: true),
+        Holiday(day: "2026-01-04", name: "元旦", off: false),
+        Holiday(day: "2026-02-14", name: "春节", off: false),
+        Holiday(day: "2026-02-15", name: "春节", off: true),
+        Holiday(day: "2026-02-16", name: "春节", off: true),
+        Holiday(day: "2026-02-17", name: "春节", off: true),
+        Holiday(day: "2026-02-18", name: "春节", off: true),
+        Holiday(day: "2026-02-19", name: "春节", off: true),
+        Holiday(day: "2026-02-20", name: "春节", off: true),
+        Holiday(day: "2026-02-21", name: "春节", off: true),
+        Holiday(day: "2026-02-22", name: "春节", off: true),
+        Holiday(day: "2026-02-23", name: "春节", off: true),
+        Holiday(day: "2026-02-28", name: "春节", off: false),
+        Holiday(day: "2026-04-04", name: "清明", off: true),
+        Holiday(day: "2026-04-05", name: "清明", off: true),
+        Holiday(day: "2026-04-06", name: "清明", off: true),
+        Holiday(day: "2026-05-01", name: "劳动节", off: true),
+        Holiday(day: "2026-05-02", name: "劳动节", off: true),
+        Holiday(day: "2026-05-03", name: "劳动节", off: true),
+        Holiday(day: "2026-05-04", name: "劳动节", off: true),
+        Holiday(day: "2026-05-05", name: "劳动节", off: true),
+        Holiday(day: "2026-05-09", name: "劳动节", off: false),
+        Holiday(day: "2026-06-19", name: "端午", off: true),
+        Holiday(day: "2026-06-20", name: "端午", off: true),
+        Holiday(day: "2026-06-21", name: "端午", off: true),
+        Holiday(day: "2026-09-20", name: "国庆节", off: false),
+        Holiday(day: "2026-09-25", name: "中秋", off: true),
+        Holiday(day: "2026-09-26", name: "中秋", off: true),
+        Holiday(day: "2026-09-27", name: "中秋", off: true),
+        Holiday(day: "2026-10-01", name: "国庆", off: true),
+        Holiday(day: "2026-10-02", name: "国庆", off: true),
+        Holiday(day: "2026-10-03", name: "国庆", off: true),
+        Holiday(day: "2026-10-04", name: "国庆", off: true),
+        Holiday(day: "2026-10-05", name: "国庆", off: true),
+        Holiday(day: "2026-10-06", name: "国庆", off: true),
+        Holiday(day: "2026-10-07", name: "国庆", off: true),
+        Holiday(day: "2026-10-10", name: "国庆节", off: false),
     ]
-    private static let holidayMap: [String: String] = Dictionary(holidays.map { ($0.day, $0.name) }, by: { a, _ in a })
-    /// 671 节假日名 (组头标签); 调休工作日不内置 (无逐年数据源), 只标法定节假日
-    static func holidayName(_ dayKey: String) -> String? { holidayMap[dayKey] }
+    /// 671 生效表 = 内置 + 在线缓存 (按年整体覆盖, 见 `HolidayFeed`)。
+    /// 本枚举不是 @MainActor, 但这里只加**只读语义的缓存**：所有调用方都在主线程 (View / @MainActor 的 HolidayFeed),
+    /// 失效键是偏好里的"最近更新时间"整数 —— 写缓存的那一步必然改它, 所以不会读到过期合并结果。
+    private static var mergedCache: [Holiday] = []
+    private static var mapCache: [String: String] = [:]
+    private static var makeupCache: Set<String> = []
+    private static var stampCache = -2
+    private static func ensureMerged() {
+        let s = HolidayFeed.lastUpdateSec
+        guard s != stampCache else { return }
+        let rows = HolidayFeed.rows
+        mergedCache = rows
+        mapCache = Dictionary(rows.filter { $0.off }.map { ($0.day, $0.name) }, uniquingKeysWith: { a, _ in a })
+        makeupCache = Set(rows.filter { !$0.off }.map { $0.day })
+        stampCache = s
+    }
+    static var holidays: [Holiday] { ensureMerged(); return mergedCache }
+    /// 671 节假日名 (组头标签); 补班日不在此列
+    static func holidayName(_ dayKey: String) -> String? { ensureMerged(); return mapCache[dayKey] }
+    /// 671 调休补班日 (上班的日子, 不是假期) —— 色带与"假日顺延"都必须把它和放假日分开
+    static func isMakeupWorkday(_ dayKey: String) -> Bool { ensureMerged(); return makeupCache.contains(dayKey) }
+    /// 内置表覆盖到哪一年 (UI 文案据此说明"次年公告未发布前不显示", 不假装全都有)
+    static var builtinHolidayYearMax: Int { builtinRows.compactMap { Int($0.day.prefix(4)) }.max() ?? 0 }
+    /// 生效表覆盖到哪一年 (在线拉到 2027 公告后这里就变成 2027)
+    static var holidayYearMax: Int { holidays.compactMap { Int($0.day.prefix(4)) }.max() ?? 0 }
     /// 672 假日顺延: 节假日当日"异常时段"判定结束时间 +2 小时 (设置可关)
     static var holidayExtendOn: Bool { DB.store.getBool("kf_holiday_extend", true) }
     static func extendedEndHour(_ dayKey: String) -> Int? {
@@ -370,12 +607,14 @@ enum RecordSearch {
         }
         let tokens = q.must
         let joined = tokens.joined(separator: " ")
-        // 554 时间短语
+        // 554 时间短语; 558 配套修: 命中的时间词从 must 摘除, 否则去掉时间窗后它仍被当字面词对搜索面, 必然 0 条
+        var timeHit: [String] = []
         for (phrase, range) in timePhrases(joined: joined) {
-            _ = phrase
+            timeHit.append(phrase)
             q.range = range
             q.parsedTags.append(rangeLabel(range))
         }
+        q.must.removeAll { t in timeHit.contains { $0.contains(t) } }
         // 告警关键词
         if tokens.contains(where: { $0.contains("告警") || $0.contains("异常") }) {
             q.alarmOnly = true
@@ -411,13 +650,14 @@ enum RecordSearch {
         guard let r = r else { return "" }
         let f = DateFormatter()
         f.dateFormat = "MM-dd HH:mm"
+        f.locale = Locale(identifier: "en_US_POSIX")
         f.timeZone = TimeZone.current
         return f.string(from: r.from) + " – " + f.string(from: r.to)
     }
     /// 554 中文时间短语表 (今天/昨天/昨晚/本周/上周/本月/上月/最近N天/N月D日)
     static func timePhrases(joined: String) -> [(String, (from: Date, to: Date)?)] {
         let now = Date()
-        let cal = Calendar.current
+        let cal = WeekCal.gregorian
         func dayRange(_ d: Date) -> (Date, Date) {
             let s = cal.startOfDay(for: d)
             return (s, cal.date(byAdding: .day, value: 1, to: s)!)
@@ -435,11 +675,12 @@ enum RecordSearch {
             out.append(("凌晨", (s, s.addingTimeInterval(5 * 3600))))
         }
         if joined.contains("上周") {
-            let curWeek = cal.dateInterval(of: .weekOfYear, for: now)!
-            out.append(("上周", (curWeek.start.addingTimeInterval(-7 * 86400), curWeek.start)))
+            // 912: 周界走 WeekCal (只影响 firstWeekday / 最小周天数，日与月的边界不动)
+            let curWeek = WeekCal.calendar.dateInterval(of: .weekOfYear, for: now)!
+            out.append(("上周", (WeekCal.shifted(curWeek.start, days: -7), curWeek.start)))
         }
         if joined.contains("本周") {
-            let curWeek = cal.dateInterval(of: .weekOfYear, for: now)!
+            let curWeek = WeekCal.calendar.dateInterval(of: .weekOfYear, for: now)!
             out.append(("本周", (curWeek.start, now)))
         }
         if joined.contains("上月") {
@@ -451,7 +692,7 @@ enum RecordSearch {
             out.append(("本月", (m.start, now)))
         }
         if let n = intAfter(joined, "最近"), n > 0 {
-            let s = now.addingTimeInterval(-Double(n) * 86400)
+            let s = WeekCal.shifted(now, days: -n)
             out.append(("最近 \(n) 天", (cal.startOfDay(for: s), now)))
         }
         // "N月D日" (只认含"月"的那个词, 避免"工作日"里的"日"误命中; 当年, 已过则去年)
@@ -496,9 +737,12 @@ enum RecordSearch {
         return nil
     }
 
-    /// 551 全局搜索 + 过滤: 文本命中 (成员名/凭证/类型名/备注式合成文本) + 过滤条件
+    /// 551 全局搜索 + 过滤: 文本命中走下面那份 `searchFace` (成员名 / 凭证标签 / 类型名) + 过滤条件
+    /// ⚠ 这条是 Rec 侧的同口径实现, 当前**零调用点** —— 记录页的检索与筛选走 `RecordsView.applyFilter`
+    /// (它要在行池上接着做 592 合并、598 分页与 593 的全天口径)。两边共用的是那份搜索面定义,
+    /// 不是各写一遍字符串拼接 (原先就是各写一遍, 于是界面承诺的「备注」两边都搜不到)。
     static func search(recs: [Rec], query: Query, filters: QueryFilters) -> [Rec] {
-        let cal = Calendar.current
+        let cal = WeekCal.gregorian
         var out = [Rec]()
         let hasTextCond = !(query.must.isEmpty && query.member == nil && !query.alarmOnly && query.credKind == nil)
         for r in recs {
@@ -533,7 +777,8 @@ enum RecordSearch {
             // 564/572 时段 (深夜预设跟随 676 夜间时段配置)
             if let d = dateOf(r) {
                 let hour = cal.component(.hour, from: d)
-                let inLate = isLateNight(hour)
+                // 用 649 的归属日 (凌晨归前一晚), 与记录分组键和 RecordsView 过滤同一口径, 免得两条路径判出两种结果
+                let inLate = isLateNight(hour, dayKey: dayKeyOfNight(d))
                 if filters.lateNight && !inLate { continue }
                 switch filters.segment {
                 case 1: if !(6...9).contains(hour) { continue }
@@ -556,25 +801,43 @@ enum RecordSearch {
         }
         return out
     }
-    private static func hayOf(_ r: Rec) -> String {
-        var s = r.typeName + " " + r.cred + " " + r.lockName
-        if let w = r.whoName { s += " " + w }
-        if !r.failMsg.isEmpty { s += " " + r.failMsg }
+    /// 551 搜索面 = 一行「能被搜到的文字」, 全仓只有这一份定义。
+    /// 搜索框占位文案承诺了「成员 / 凭证 / 备注」三段 (RecordsView 的 searchBar), 那三段就得真在串里:
+    ///   · title —— 655 动词化的行标题 (行上显示的那句话, 含成员名与类型词)
+    ///   · lockName —— 770 锁名
+    ///   · whoName —— 可证明归属的成员名
+    ///   · cred —— 568 凭证维度标签 (含 310 那条凭证别名)
+    ///   · note —— 186 本机备注 (RecordOverlay, 用户自己写的字)
+    /// 备注此前完全不在搜索面上, 而界面上写着它可搜 = 承诺了一个搜不到的热区 (第一百八十九批)。
+    /// 备注要按 (锁, 行) 去查本机覆盖层, 只有拿着行的 UI 给得起这个数, 所以它是个参数而不是在这里自己读表。
+    static func searchFace(title: String, lockName: String, whoName: String, cred: String, note: String) -> String {
+        var s = title + " " + lockName + " " + whoName + " " + cred
+        if !note.isEmpty { s += " " + note }
         return s
+    }
+    private static func hayOf(_ r: Rec) -> String {
+        // Rec 侧与时间线行侧 (RecordsView.applyFilter) 共用 `searchFace` 这一份定义。
+        // note 传空串: 由调用方那一层命中备注。failMsg 早已并进 typeName (`开锁失败 · 原因`), 不再重复拼。
+        searchFace(title: r.typeName, lockName: r.lockName, whoName: r.whoName ?? "", cred: r.cred, note: "")
     }
 
     /// 553 搜索历史 (本地偏好, 最近 5 条, 可单删)
     private static let histKey = "kf_rsearch_hist"
-    static func history() -> [String] {
-        (DB.store.get([String].self, histKey) ?? []).reversed()
-    }
+    /// 553 搜索历史的存储约定 = **最新在前** (`pushHistory` 用 `insert(at: 0)`)，读数就按同一顺序给。
+    /// 原先这里是 `.reversed()`：界面旁边写着"再次选用要把这条提到最前"，看到的却是最旧的排第一
+    /// —— 存的时候按最新在前，读的时候又倒过来，两头各自成立、合起来正好反 (第一百六十四批 §10.36)。
+    static func history() -> [String] { DB.store.get([String].self, histKey) ?? [] }
+    /// 留几条 = 553 原句"展示最近 5 条搜索词"。**真正的缺陷不是条数**：
+    /// 原本截的是 `Array(h.suffix(5))` —— 从"最新在前"的列表**尾部**截 5 条，
+    /// 于是第 6 个新词一进去就被挤掉，留下的全是最旧的 (界面上还写着"再次选用要把这条提到最前")。
+    static let historyCap = 5
     static func pushHistory(_ q: String) {
         var h = DB.store.get([String].self, histKey) ?? []
         let t = q.trimmingCharacters(in: .whitespaces)
         guard !t.isEmpty else { return }
         h.removeAll { $0 == t }
         h.insert(t, at: 0)
-        DB.store.setCodable(histKey, Array(h.suffix(5)))
+        DB.store.setCodable(histKey, Array(h.prefix(historyCap)))
     }
     static func removeHistory(_ q: String) {
         var h = DB.store.get([String].self, histKey) ?? []
@@ -605,6 +868,28 @@ enum RecordSearch {
     private static let dispKey = "kf_rdispo"
     static func dispositions() -> [String: Disposition] { DB.store.get([String: Disposition].self, dispKey) ?? [:] }
     static func disposition(key: String) -> Disposition? { dispositions()[key] }
+    /// 729 误报降权读侧: 已标「误报」的告警, 其**同锁同类型**在标记时刻后 24 小时内的后续告警,
+    /// 算"疑似同类误报"并回一组键 (mac#idxRaw) 给界面做折叠灰显。
+    /// 键里只有 mac#idxRaw, 类型与时刻要回日志缓存里取 (与 745 testMarkedKeys 同一套键格式)。
+    /// 只回标记, **不改** 723 逐行流 / 741 同类计数的任何口径 —— 折叠是显示层的事。
+    static func misfireFold(macs: [String]) -> Set<String> {
+        let mis = dispositions().filter { $0.value.verdict == "误报" }
+        guard !mis.isEmpty else { return [] }
+        var folded = Set<String>()
+        for mac in macs {
+            let logs = DB.readLogs(mac)
+            for l in logs {
+                let key = mac + "#" + String(l.idxRaw)
+                guard mis[key] != nil, let t = dateOf(l) else { continue }
+                let until = t.addingTimeInterval(24 * 3600)
+                for l2 in logs where l2.type == l.type && l2.idxRaw != l.idxRaw {
+                    guard let t2 = dateOf(l2), t2 > t, t2 <= until else { continue }
+                    folded.insert(mac + "#" + String(l2.idxRaw))
+                }
+            }
+        }
+        return folded
+    }
     static func markDisposition(key: String, verdict: String) {
         var all = dispositions()
         all[key] = Disposition(at: Date().timeIntervalSince1970, verdict: verdict)
@@ -616,6 +901,11 @@ enum RecordSearch {
         all.removeValue(forKey: key)
         DB.store.setCodable(dispKey, all)
     }
+    /// 745 测试标记的键集 (统计口径排除用, 键 = mac#idxRaw): 与处置留痕同一份 kf_rdispo,
+    /// 不另造"测试"状态 —— 标记本身就是一条处置结论。此前这个查询零调用, 统计层并未真排除。
+    static var testMarkedKeys: Set<String> {
+        dispositions().filter { $0.value.verdict == "测试" }.map(\.key)
+    }
 
     // ---------- 727 防撬检查清单 (勾选状态复用处置字段, 存 kf_rcheck_<key>) ----------
     static let tamperChecks = ["确认门体与锁体完好", "检查门框合页与螺丝", "核对门扇是否被顶住", "确认门锁未被拆卸"]
@@ -623,7 +913,7 @@ enum RecordSearch {
         let saved = DB.store.get([Bool].self, "kf_rcheck_" + key) ?? [Bool](repeating: false, count: tamperChecks.count)
         var s = saved
         while s.count < tamperChecks.count { s.append(false) }
-        return Array(s.prefix(tamperChecks.count))
+        return Array(s.prefix(tamperChecks.count))   // 方向口径：这里不是"留最新 N 条"，是**按序号**把长度夹回清单项数 (append 是补空位、prefix 是截多出来的尾项)
     }
     static func setCheck(_ key: String, index: Int, on: Bool) {
         var s = checkState(key)
@@ -671,7 +961,7 @@ enum RecordSearch {
         let recs = buildRecs(macs: [mac], includeFails: false, includeCare: false)
         guard let mid = recs.first(where: { $0.key == aroundKey }),
               let md = dateOf(mid) else { return [] }
-        let cal = Calendar.current
+        let cal = WeekCal.gregorian
         let alertKey = dayKeyOf(md)
         var out = [DayOpen]()
         for i in stride(from: -days, through: days, by: 1) {
@@ -688,6 +978,34 @@ enum RecordSearch {
     }
 
     /// 735 Tab 未读角标数据源: 未处置告警数 (734 未处理队列)
+    /// 581 未处置告警落在哪些自然日: 与 735 角标、734 队列同一 `dispositions` 口径 (不另造"已读"状态)。
+    /// 日界走 `dayKeyOfNight` —— 时间线分组把 0:00–4:59 归到前一晚 (649)，
+    /// 若这里直接取 lockTimeStr 前 10 位，凌晨告警会把蓝点点到**错的那一天**。
+    static func unhandledAlarmDays(macs: [String]) -> Set<String> {
+        let disp = dispositions()
+        var days = Set<String>()
+        for mac in macs {
+            for l in DB.readLogs(mac) where StatsKit.alarmTypes.contains(l.type) {
+                guard disp[mac + "#" + String(l.idxRaw)] == nil, let d = dateOf(l) else { continue }
+                days.insert(dayKeyOfNight(d))
+            }
+        }
+        return days
+    }
+
+    /// 596 替代: 该日发生过防撬 (7) / 试错锁定 (10) / 键盘锁定 (224) 的日键集合。
+    /// 与 `unhandledAlarmDays` 同一份 IO 形状 (各锁缓存日志) 但**不看处置** ——
+    /// "这一天出过事"与"还没人看过"是两件事, 处置过的也照留; 日的归属沿用 649 (dayKeyOfNight)。
+    static func damageDays(macs: [String]) -> Set<String> {
+        var days = Set<String>()
+        for mac in macs {
+            for l in DB.readLogs(mac) where damageTypes.contains(l.type) {
+                guard let d = dateOf(l) else { continue }
+                days.insert(dayKeyOfNight(d))
+            }
+        }
+        return days
+    }
     static func unhandledAlarmCount(macs: [String]) -> Int {
         let disp = dispositions()
         var n = 0
@@ -709,5 +1027,22 @@ enum RecordSearch {
         let unhandled = recs.filter { disp[$0.mac + "#" + $0.key] == nil }
         let handled = recs.filter { disp[$0.mac + "#" + $0.key] != nil }
         return unhandledOnly ? unhandled : unhandled + handled
+    }
+
+    /// 765 跨锁合并"最近开门": 各锁日志按时间并成一条流 (行尾的锁名标签由 UI 用 Rec.lockName 打)。
+    /// 为什么按 `timeStr` 而不是 `lockTime` 数值排: 与 658 同一口径 —— 那串是本页显示的权威时间,
+    ///   epoch 还带秒/毫秒口径差, 按它排完再显示另一套就成了自相矛盾。空时间串自然沉底,
+    ///   不会伪装成"最近一条"。
+    /// 为什么加 offset 当 tiebreak: 日志只到分钟, 同一分钟内的两行 (尤其跨锁) 先后是**入库次序**
+    ///   而不是时间信息 (与 680 同一坦白)。Swift 的 sorted(by:) 不保证稳定, 不写这一条,
+    ///   同样的数据两次进页可能给出相反的顺序。
+    static func mergedRecentOpens(macs: [String], count: Int) -> [Rec] {
+        let rows = buildRecs(macs: macs, includeFails: false, includeCare: false)
+            .filter { StatsKit.openTypes.contains($0.type) }
+        let sorted = rows.enumerated().sorted { a, b in
+            if a.element.timeStr != b.element.timeStr { return a.element.timeStr > b.element.timeStr }
+            return a.offset < b.offset
+        }
+        return sorted.prefix(max(0, count)).map { $0.element }
     }
 }

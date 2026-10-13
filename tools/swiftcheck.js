@@ -9,8 +9,20 @@ const files = [];
     else if (f.endsWith('.swift')) files.push(f);
   }
 })('App');
-files.push('Tests/GoldenDiffTests.swift');
-files.push('Tests/AUTOOPENTests.swift');
+// Tests 目录整体纳入 (旧实现硬编码两个文件名 → 新增测试文件根本不进闸门)
+// Widget 目录 (927 哑按钮扩展) 同样必须进来: 闸门只扫 App/ 就是让第二个 target 裸奔。
+(function walkMore(dirs) {
+  for (const d of dirs) {
+    if (!fs.existsSync(d)) continue;
+    (function walk(x) {
+      for (const e of fs.readdirSync(x, { withFileTypes: true })) {
+        const f = x + '/' + e.name;
+        if (e.isDirectory()) walk(f);
+        else if (f.endsWith('.swift')) files.push(f);
+      }
+    })(d);
+  }
+})(['Tests', 'Widget']);
 let fail = 0;
 for (const f of files) {
   const src = fs.readFileSync(f, 'utf8');

@@ -9,3 +9,9 @@ xcuserdata/
 # macOS / Node
 .DS_Store
 node_modules/
+
+# 审计跑批草稿 (工具输出、.bak、msg-*.txt)，不是版本库内容
+state/
+
+# 并行子代理的隔离 worktree (不是版本库内容)
+.qoder/

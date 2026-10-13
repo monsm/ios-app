@@ -1,6 +1,9 @@
 // 包7 安全·隐私·审计 — 安全中心 (独立挂载入口, 不侵入既有页面)
 // 四分区: 应用锁升级 / 防窥 / 审计留痕 / 数据销毁
 // 配置一律 kf_ 前键经 DB.store getString/set 读写 (与 SettingsView 同款范式), 不改 Store。
+// 例外 (第一百批): 376/377/383/296 这一族五枚开关的**读侧**统一走 App/Core/LockGuard.swift 的 SecurityPolicy
+// (唯一判据口) —— 这五枚此前"只改标签不改变行为"就是因为读点散在本页的文案里, 界面读到的是自己写的那句;
+// 写侧仍是 DB.store.set, 键语义与小程序互通不变。
 // 接线说明: 后续由 SettingsView 的"安全" Section 加一行
 //   NavigationLink("安全中心") { SecurityCenterView() }
 // 本文件自含 NavigationStack, 也可独立弹出验证。
@@ -20,6 +23,9 @@ enum SecKey {
     static let rescueCode     = "kf_srescue_code"       // 395 码值 (消费后清空)
     static let rescueSeen     = "kf_srescue_seen"       // 395 已手抄确认
     static let randomKeys     = "kf_slock_randkey"      // 396 随机键位
+    /// 396 前提标记: 本机密码确认为纯数字 (设/改密码时写)。标记为假时锁屏页不出现随机键盘,
+    /// 否则历史遗留的含字母密码用户将永远输不进去 = 自己把自己锁死。
+    static let randKeyDigits  = "kf_slock_randdig"
     static let decoyOn        = "kf_sdecoy_on"          // 390 伪装模式启用
     static let decoyCode      = "kf_sdecoy_code"        // 390 伪装口令 (明文仅本机)
     static let duressOn       = "kf_sduress_on"         // 391 胁迫码启用
@@ -41,7 +47,6 @@ enum SecKey {
     static let watermarkTxt   = "kf_swmark_txt"         // 378 水印文案种子
     static let auditRetention = "kf_saudit_months"      // 385 保留期 (0=永久)
     static let sudoOn         = "kf_saudit_sudo"        // 383 毁灭操作 sudo 口令
-    static let offboardTrash  = "kf_sdest_trash"        // 403 回收站 [String]
     static let safeModeOn     = "kf_sdest_safemode"     // 296 只读安全模式
     static let pwdReuseOn     = "kf_sdest_reuseon"      // 549 口令复用检测
 }
@@ -54,6 +59,74 @@ final class SecTickCenter: ObservableObject {
 }
 enum SecTick {
     static func bump() { SecTickCenter.shared.bump() }
+}
+
+// ---------- 383 毁灭动作的前置复核 (sudo) ----------
+/// 383 口令复核的唯一落地: 判据口验 (SecurityPolicy.sudoTicket) + 验不过按 389/392 那条既有失败通道记一笔。
+/// 副作用如实写在这里: sudo 输错与主锁屏输错共用同一条连败计数与冷却, 因为试的是同一把口令 ——
+/// 不给这条共用的话, 销毁按钮就成了绕过 389 递增冷却的第二个试错面。
+@MainActor
+func sudoTicketFromReview(_ input: String) -> SudoTicket? {
+    guard let ticket = SecurityPolicy.sudoTicket(from: input) else {
+        if !input.isEmpty { LockGuard.registerFailure() }
+        return nil
+    }
+    return ticket
+}
+
+/// 需要 sudo 时按**既有应用锁口令通道**当场问一次 (SecurityPolicy.sudoTicket → DB.verifyPasscode),
+/// 验出来那张 SudoTicket 记在 AppState 会话内复用, 不逐颗按钮追问 (383 的原话是"需重输应用锁密码",
+/// 不是"每点一次输一遍")。不新建存储、不新建口令位、不新建第二个解锁面。
+/// 开关关着就直放行: 这一支的存在才是这枚开关的意义 —— 关着少一道确认, 开着一定拦得住。
+@MainActor
+func askSudoThen(_ app: AppState, then action: @escaping () -> Void) {
+    guard SecurityPolicy.sudoRequired else { action(); return }
+    if app.sudoTicket != nil { action(); return }
+    let alert = UIAlertController(title: "重输应用锁密码",
+                                  message: "383: 这是毁灭级操作, 需重输本机密码。口令只当场比对, 不写进任何存储。",
+                                  preferredStyle: .alert)
+    alert.addTextField { f in
+        f.isSecureTextEntry = true
+        f.placeholder = "应用锁密码"
+    }
+    alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+    alert.addAction(UIAlertAction(title: "验证", style: .destructive) { _ in
+        let input = alert.textFields?[0].text ?? ""
+        guard let ticket = sudoTicketFromReview(input) else {
+            app.showToast("密码错误, 已拒绝毁灭操作 (383)")
+            return
+        }
+        app.sudoTicket = ticket
+        AuditLog().append(.admin, "sudo", target: "毁灭操作复核通过",
+                          operator_: DB.store.getString(SecKey.sessionHow, "本机密码"),
+                          duress: DB.store.getBool(SecKey.sessionDuress, false))
+        SecTick.bump()
+        action()
+    })
+    UIApplication.topViewController()?.present(alert, animated: true)
+}
+
+/// 296 + 383 两道闸的合用写法: 先问"只读模式下准不准做", 再问"要不要重输口令"。
+/// 顺序是定的: 只读模式开着时连口令都不该问 (问了也做不成, 那是白打扰)。
+@MainActor
+func guardedDestroy(_ app: AppState, _ action: @escaping () -> Void) {
+    guard SecurityPolicy.allows(.destroy) else {
+        app.showToast(SecurityPolicy.denialMessage(.destroy))
+        return
+    }
+    askSudoThen(app, then: action)
+}
+
+/// 377 访客通道的**唯一写侧**: 落键之后必须把会话级授权一起收回。
+/// 拨开关的人此刻正站在受限的那一页上 (设置页 = Tab 3), AppState.revokeSessionGrants 会把
+/// 选中位 snap 回设备页 —— 不并这一脚就是一句"翻了标签但层级树还没收"的空承诺。
+/// 防窥页那枚 Toggle 与隐私仪表盘那枚轻点即切换的格子都走这里, 别留第二条只落键的侧门。
+@MainActor
+func setGuestChannel(_ on: Bool, app: AppState) {
+    DB.store.set(SecKey.guestOn, on)
+    app.revokeSessionGrants()
+    app.showToast(on ? "访客通道已生效: 已回到设备页, 想进凭证与设置要重输密码 (377)"
+                      : "访客通道已关闭: 四页照常, 本次会话内不用再输密码 (377)")
 }
 
 // ---------- 378 常驻水印层 (截图加扰降级案: 页面常驻, 半透明对角重复) ----------
@@ -114,6 +187,52 @@ struct SecurityCenterView: View {
                     Text("防窥")
                 }
 
+                // 9 凭证风险体检 (Apple Passwords 那种风险卡): 只读扫描本机台账, 处置动作不在这里,
+                // 而是指到凭证 Tab 的改码 (305/306) —— 这一页只回答"有没有该处理的"。
+                Section {
+                    let risks = CredentialOrg.passwordRisks()
+                    if risks.isEmpty {
+                        Text("没有发现同值 / 超期 / 弱口令 —— 台账里的密码都还干净 (9)。")
+                            .font(.footnote)
+                            .foregroundStyle(DS.Palette.textSub)
+                            .fixedSize(horizontal: false, vertical: true)
+                    } else {
+                        ForEach(risks.prefix(8)) { r in
+                            HStack(alignment: .top, spacing: DS.Space.s) {
+                                Image(systemName: r.kind == "同值" ? "doc.on.doc"
+                                      : (r.kind == "超期" ? "clock.badge.exclamationmark" : "exclamationmark.shield"))
+                                    .font(.system(size: DS.Icon.sm))
+                                    .foregroundStyle(r.kind == "弱口令" ? DS.Palette.danger : DS.Palette.warn)
+                                    .accessibilityHidden(true)
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text("\(r.kind) · \(r.lockName) 密码 #\(r.alias)")
+                                        .font(.subheadline)
+                                        .foregroundStyle(DS.Palette.text)
+                                    Text(r.detail)
+                                        .font(.footnote)
+                                        .foregroundStyle(DS.Palette.textSub)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                                Spacer(minLength: 0)
+                            }
+                            .frame(minHeight: DS.Hit.min)
+                            .accessibilityElement(children: .combine)
+                        }
+                        if risks.count > 8 {
+                            Text("另有 \(risks.count - 8) 条 — 只列前 8 条 (9)。")
+                                .font(.footnote)
+                                .foregroundStyle(DS.Palette.textSub)
+                        }
+                    }
+                } header: {
+                    Text("凭证风险体检 (9)")
+                } footer: {
+                    Text("只读扫描本机台账: 同值 / 添加超 180 天未改 / 弱口令 (少于 6 位、全部同数字、连续序列)。处置在凭证 Tab 改码 (305/306)。")
+                        .font(.caption)
+                        .foregroundStyle(DS.Palette.textSub)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
                 Section {
                     NavigationLink { SecurityAuditView() } label: {
                         Label("审计流水", systemImage: "list.bullet.rectangle")
@@ -135,6 +254,27 @@ struct SecurityCenterView: View {
                 } header: {
                     Text("销毁")
                 }
+
+                Section {
+                    // 只读试验模式: 护栏本体 (ZKProtocol.assertReadOnly) 与执行点 (LockService.request 读
+                    // kf_trial_guard) 两边早就写好，**但全仓没有任何写入方** —— 开关不存在，这道保险从来上不上。
+                    // 放行清单直接从 readonlyCmds 现取，不在文案里另抄一份十六进制表:
+                    // 抄了就会与表漂移，而这条恰好是"看着像有、实际拦错命令"最贵的那种漂移。
+                    SecRow(title: "只读试验模式",
+                           subtitle: trialGuardLine,
+                           icon: "exclamationmark.shield", iconTone: .warn) {
+                        Toggle("", isOn: Binding(
+                            get: { DB.store.getBool("kf_trial_guard", false) },
+                            set: { DB.store.set("kf_trial_guard", $0); SecTick.bump() }))
+                            .labelsHidden()
+                    }
+                    Text("用途: 连真机做只读试验 (读状态/读日志/查钥匙串) 时防止误发写入命令。开启后 04 开门、05 换钥、08 同步 PIN、31 写网关口令等一律在成帧前拦下报错，不会发包。关闭即恢复正常下发，不留残余限制。")
+                        .font(.footnote)
+                        .foregroundStyle(DS.Palette.textSub)
+                        .fixedSize(horizontal: false, vertical: true)
+                } header: {
+                    Text("下发护栏")
+                }
             }
             .scrollContentBackground(.hidden)
             .dsScreenBackground()
@@ -152,9 +292,17 @@ struct SecurityCenterView: View {
         }
     }
 
+    /// 只读试验模式状态行。放行清单**取自 ZKProtocol.readonlyCmds** (Set 无序，排序后拼)，
+    /// 不在文案里另抄一份命令表 —— 两处各写一遍迟早对不上，而对不上的是"以为被拦住了"这种事故。
+    private var trialGuardLine: String {
+        guard DB.store.getBool("kf_trial_guard", false) else { return "关闭 — 全部命令正常下发" }
+        let list = ZKProtocol.readonlyCmds.map { String(format: "%02X", $0) }.sorted().joined(separator: "/")
+        return "已开启 — 仅放行只读命令 " + list
+    }
+
     private func auditChainLine() -> String {
         let v = AuditLog().verifyChain()
-        let state = v.brokenAt >= 0 ? "（链断）" : "（完好）"
+        let state = v.brokenAt == -2 ? "（序号异常）" : (v.brokenAt >= 0 ? "（链断）" : "（完好）")
         return "双流水 / 字段 diff / 脱敏导出 / 哈希链 \(v.length) 条 \(state)"
     }
 }
@@ -280,6 +428,7 @@ struct SecurityLockConfigView: View {
                     HStack(spacing: DS.Space.xs) {
                         Toggle("", isOn: binding(SecKey.rescueOn))
                             .labelsHidden()
+                            .disabled(!DB.hasPasscode())   // 395: 没开应用锁时救援码无处消费
                         if DB.store.getBool(SecKey.rescueOn, false) {
                             Button(DB.store.getString(SecKey.rescueCode).isEmpty ? "重新生成" : "查看") {
                                 rescueDetail()
@@ -291,12 +440,26 @@ struct SecurityLockConfigView: View {
                     }
                 }
                 rescueBody
-                // 396 随机键位
+                // 396 随机键位 — 当前**无法安全实现**, 如实标注而不是留个死开关:
+                // 本机密码允许字母/符号 (setCodeAlert 只限"4 位以上"), 一旦换成随机**数字**键盘,
+                // 非数字密码的用户就再也输不进去 = 自己把自己锁死。要做得先把密码限定为纯数字。
+                // 396 随机键位: 只在"本机密码确为纯数字"时可开 (见 LockGuard/AppLockView 的数字键盘)
                 SecRow(title: "随机键位键盘",
-                       subtitle: "数字键盘每次布局随机, 防肩窥轨迹猜测",
+                       subtitle: DB.store.getBool(SecKey.randKeyDigits, false)
+                                ? "锁屏数字键盘每次进入重排, 防肩窥轨迹猜测"
+                                : "需先把本机密码重设为纯数字 (旧密码含字母时不出现数字键盘, 免得把自己锁在门外)",
                        icon: "die.face.5") {
                     Toggle("", isOn: binding(SecKey.randomKeys))
                         .labelsHidden()
+                        .disabled(!DB.store.getBool(SecKey.randKeyDigits, false))
+                }
+                // ★B 迁移引导: 已有密码但含非数字 → 给一条能点的路, 而不是只写"需重设"
+                if DB.hasPasscode(), !DB.store.getBool(SecKey.randKeyDigits, false) {
+                    Button("去「设置」把本机密码重设为纯数字，即可启用随机键位") { app.tabSelection = 3 }
+                        .font(.footnote)
+                        .foregroundStyle(DS.Palette.accentText)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .accessibilityHint("跳转设置 Tab 的密码区，现有字母数字密码仍可继续使用，不会被强制修改")
                 }
             } header: {
                 Text("救援与键位 (395/396)")
@@ -307,7 +470,7 @@ struct SecurityLockConfigView: View {
                 SecRow(title: "伪装模式",
                        subtitle: DB.store.getBool(SecKey.decoyOn, false)
                                 ? "已启用: 输入伪装口令进空壳界面"
-                                : "输入伪装口令进空壳界面 (模拟天气) 防胁迫翻供",
+                                : "输入伪装口令进空壳界面 (只显示本机时钟, 不加载任何门锁数据) 防胁迫翻供",
                        icon: "theatermasks") {
                     Toggle("", isOn: binding(SecKey.decoyOn))
                         .labelsHidden()
@@ -321,6 +484,7 @@ struct SecurityLockConfigView: View {
                     setCodeRow(title: "伪装口令", key: SecKey.decoyCode,
                                hint: "须 4 位以上, 且与胁迫码不同",
                                conflictCheck: { pw in
+                                   if DB.verifyPasscode(pw) { return "不能与本机密码相同 (否则真密码会被当成伪装口令)" }
                                    if pw == DB.store.getString(SecKey.duressCodeRaw) { return "与胁迫码相同" }
                                    return "" })
                 }
@@ -337,6 +501,8 @@ struct SecurityLockConfigView: View {
                     setCodeRow(title: "胁迫码", key: SecKey.duressCodeRaw,
                                hint: "记住它 — 被胁迫时输入即可放行并打标",
                                conflictCheck: { pw in
+                                   // 与本机密码相同 = 打标永远不生效 (真密码分支先命中), 必须在设置时禁止
+                                   if DB.verifyPasscode(pw) { return "不能与本机密码相同" }
                                    let hits = PwReuse.reuseWarnings(mac: DB.currentMac, newPwd: pw)
                                    if DB.store.getBool(SecKey.pwdReuseOn, true), !hits.isEmpty {
                                        return "与 " + hits.joined(separator: "、") + " 相同"
@@ -360,7 +526,7 @@ struct SecurityLockConfigView: View {
                     Toggle("", isOn: binding(SecKey.traceOn))
                         .labelsHidden()
                 }
-                let evs = DB.get([String].self, SecKey.traceEvents) ?? []
+                let evs = LockGuard.traces()   // 读侧走 LockGuard 的口径 (此前这里自己摸 key, traces() 反而零调用)
                 if !evs.isEmpty {
                     ForEach(Array(evs.prefix(5)), id: \.self) { line in
                         HStack(spacing: DS.Space.xs) {
@@ -374,7 +540,7 @@ struct SecurityLockConfigView: View {
                         }
                     }
                     Button("清空留痕 (\(evs.count))") {
-                        DB.store.set(SecKey.traceEvents, [String]())
+                        LockGuard.clearTraces()
                         SecTick.bump()
                     }
                     .font(.footnote)
@@ -452,6 +618,16 @@ struct SecurityLockConfigView: View {
         return DB.store.getString(SecKey.rescueCode).isEmpty ? "已消费, 可重新生成" : "已生成待手抄"
     }
 
+    /// 469 手抄码的保管人: 读成员页点名的紧急管理员 (MemberHub.emergencyAdmins)。
+    /// 空名单不装没事 —— 如实指路到成员详情去点名, 防单点失能。
+    private var rescueCustodyLine: String {
+        let admins = MemberHub.emergencyAdmins()
+        if admins.isEmpty {
+            return "尚未指定保管人 — 到成员详情里点名紧急管理员, 手抄的救援码交其保管 (防单点失能)"
+        }
+        return "手抄后交给: " + admins.map { MemberHub.display($0) }.joined(separator: "、")
+    }
+
     @ViewBuilder
     private var rescueBody: some View {
         if DB.store.getBool(SecKey.rescueOn, false) {
@@ -462,7 +638,7 @@ struct SecurityLockConfigView: View {
                         .font(.system(size: DS.Icon.sm, weight: .medium))
                         .foregroundStyle(DS.Palette.accentText)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("请手抄这张救援码 — 消费后不可找回")
+                        Text("请手抄这张救援码 — 消费后不可找回; 未点「已手抄」前该码不生效 (395)")
                             .font(.footnote.weight(.medium))
                         Text(code)
                             .font(.title3.weight(.semibold))
@@ -483,6 +659,11 @@ struct SecurityLockConfigView: View {
                     .foregroundStyle(DB.store.getBool(SecKey.rescueSeen, false) ? DS.Palette.ok : DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
                 }
+                // 469 保管人声明: 名字来自成员页点名的紧急管理员名单 (MemberHub.emergencyAdmins)
+                Text(rescueCustodyLine)
+                    .font(.caption)
+                    .foregroundStyle(DS.Palette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
@@ -496,6 +677,11 @@ struct SecurityLockConfigView: View {
     }
 
     private func rescueDetail() {
+        // 395: 应用锁没开时救援码没有任何消费口 (rescue 只在锁屏验证里用) —— 别让用户抄一张无用的码
+        guard DB.hasPasscode() else {
+            app.showToast("未启用应用锁 — 救援码无用武之地 (395)")
+            return
+        }
         let code = DB.store.getString(SecKey.rescueCode)
         if code.isEmpty {
             DB.store.set(SecKey.rescueCode, HashKit.rescueCode())
@@ -556,6 +742,7 @@ struct SecurityLockConfigView: View {
     private static let fmt: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "MM-dd HH:mm"
+        f.locale = Locale(identifier: "en_US_POSIX")
         return f
     }()
 
@@ -590,6 +777,31 @@ struct SecurityPeekView: View {
 
     var body: some View {
         List {
+            // 405 剪贴板自清: 口令/OTP 复制到剪贴板后延时清除。
+            // 只有"内容仍是当时那一串"才清 (见 ClipboardCare), 免得把用户后来复制的东西删掉。
+            Section {
+                SecRow(title: "剪贴板自动清除 (405)",
+                       subtitle: ClipboardCare.autoClearOn
+                            ? "复制口令后 \(ClipboardCare.ttl) 秒清除；只对口令与 OTP 生效"
+                            : "已关闭 —— 口令会一直留在系统剪贴板里",
+                       icon: "doc.on.doc") {
+                    Picker("", selection: Binding(
+                        get: { ClipboardCare.ttl },
+                        set: { ClipboardCare.setTTL($0) })) {
+                        Text("关闭").tag(0)
+                        Text("30 秒").tag(30)
+                        Text("60 秒").tag(60)
+                        Text("5 分钟").tag(300)
+                    }
+                    .pickerStyle(.menu)
+                    .frame(minWidth: 110)
+                    .tint(DS.Palette.accentText)
+                }
+            } footer: {
+                Text("加密凭证包与交接包不走这条：那是密文，且你要粘进聊天工具，定时清掉只会打断交接。")
+                    .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             // 369 遮蔽样式自选
             Section {
                 SecRow(title: "列表遮蔽样式", subtitle: maskStyleLabel, icon: "mask") {
@@ -642,23 +854,27 @@ struct SecurityPeekView: View {
                 frostedDemoRow
                 // 376 分享遮半
                 SecRow(title: "分享遮半",
-                       subtitle: DB.store.getBool(SecKey.shareHalfOn, true) ? "口述卡与导出预览默认遮挡码值下半段" : "关闭",
+                       subtitle: SecurityPolicy.shareHalf
+                                ? "已开: 码值在完成页与详情卡上默认遮半, 点「完整显示」才露全值; 复制与分享跟随屏上显示"
+                                : "关: 码值原样显示",
                        icon: "square.and.arrow.up") {
                     Toggle("", isOn: bindingBool(SecKey.shareHalfOn, true))
                         .labelsHidden()
                 }
-                // 377 访客通道
+                // 377 访客通道: 判据口 SecurityPolicy.guestActive, 消费点在主 TabView (LockKeeperApp.swift)
                 SecRow(title: "访客通道",
-                       subtitle: DB.store.getBool(SecKey.guestOn, false)
-                                ? "已开: 仅设备/记录 Tab, 退出需密码"
-                                : "关（应用锁页“访客进入”入口待接线）",
+                       subtitle: SecurityPolicy.guestActive
+                                ? "已开: 主界面只挂 设备/记录 两页, 进 凭证/设置 要先重输密码"
+                                : "关: 四页照常。打开即生效 (会先把受限的那两页收起)",
                        icon: "person.crop.circle.badge.questionmark") {
-                    Toggle("", isOn: bindingBool(SecKey.guestOn, false))
+                    Toggle("", isOn: guestSwitch)
                         .labelsHidden()
                 }
-                if DB.store.getBool(SecKey.guestOn, false) {
+                if SecurityPolicy.guestActive {
                     SecRow(title: "访客隐藏敏感成员",
-                           subtitle: "标记敏感的成员不出现在访客视图",
+                           subtitle: SecurityPolicy.hideSensitiveInGuest
+                                    ? "已开但筛不出东西: 成员档案里没有敏感标记位, 判据口已就位等数据侧"
+                                    : "关: 成员名单照原样给访客",
                            icon: "person.slash") {
                         Toggle("", isOn: bindingBool(SecKey.sensitiveOnly, false))
                             .labelsHidden()
@@ -751,7 +967,7 @@ struct SecurityPeekView: View {
     // ---------- 派生文案 ----------
     private var maskStyleLabel: String {
         switch DB.store.getString(SecKey.maskStyle) {
-        case "stars": return "星号打码 (***) — 凭证全列表统一生效"
+        case "stars": return "星号打码 (***) — 逐位显示格生效 (列表行不显码值)"
         case "tail4": return "保留末 4 位 (· · · 4821)"
         default: return "圆点打码 (••••) — 默认"
         }
@@ -793,10 +1009,14 @@ struct SecurityPeekView: View {
             .padding(.vertical, DS.Space.m)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(.ultraThinMaterial)
-            .onLongPressGesture(minimumDuration: 0.5) {
+            // 375 松手复位: pressing=false 时无条件合挡片 (timedReveal=0 下长按后也曾永开);
+            // timedReveal>0 时定时器到点也收回同一状态, 两条路一个结局。
+            .onLongPressGesture(minimumDuration: 0.5, maximumDistance: 50, pressing: { pressing in
+                if !pressing { withAnimation(DS.Motion.standard) { self.frosted = true } }
+            }, perform: {
                 withAnimation(DS.Motion.standard) { self.frosted = false }
                 self.revealTick()
-            }
+            })
             .overlay {
                 ProgressView()
                     .opacity(self.frosted ? 0.25 : 0)
@@ -814,6 +1034,13 @@ struct SecurityPeekView: View {
         Binding(get: { DB.store.getBool(k, def) },
                 set: { DB.store.set(k, $0); SecTick.bump() })
     }
+    /// 377 访客通道的写侧: 一律走 setGuestChannel (落键 + 收回会话授权 + 一句实话), 这里不重复写第二套。
+    private var guestSwitch: Binding<Bool> {
+        Binding(get: { SecurityPolicy.guestActive }, set: { on in
+            setGuestChannel(on, app: app)
+            SecTick.bump()
+        })
+    }
     private func bindingString(_ k: String) -> Binding<String> {
         Binding(get: { DB.store.getString(k) },
                 set: { DB.store.set(k, $0); SecTick.bump() })
@@ -826,6 +1053,7 @@ struct SecurityPeekView: View {
 
 // ---------- 36 隐私仪表盘 ----------
 struct PrivacyDashboard: View {
+    @EnvironmentObject var app: AppState
     @ObservedObject private var center = SecTickCenter.shared
 
     var body: some View {
@@ -861,7 +1089,13 @@ struct PrivacyDashboard: View {
                     .frame(minHeight: DS.Hit.min)
                     .contentShape(Rectangle())
                     .onTapGesture {
-                        DB.store.set(item.key, !item.on)
+                        // 377: 这一格翻的是同一枚访客通道键, 必须走 setGuestChannel 那唯一一条写侧 ——
+                        // 只落键的话仪表盘就留下一条"翻了开关但主 TabView 没收"的侧门 (与防窥页那枚 Toggle 不同轨)
+                        if item.key == SecKey.guestOn {
+                            setGuestChannel(!item.on, app: app)
+                        } else {
+                            DB.store.set(item.key, !item.on)
+                        }
                         SecTick.bump()
                         self.center.bump()
                     }
@@ -881,8 +1115,9 @@ struct PrivacyDashboard: View {
         static var all: [PeekItem] {
             [PeekItem(key: SecKey.bgBlurOn, name: "切后台即糊", on: DB.store.getBool(SecKey.bgBlurOn, false)),
              PeekItem(key: SecKey.frostedOn, name: "磨砂挡片", on: DB.store.getBool(SecKey.frostedOn, true)),
-             PeekItem(key: SecKey.shareHalfOn, name: "分享遮半", on: DB.store.getBool(SecKey.shareHalfOn, true)),
-             PeekItem(key: SecKey.guestOn, name: "访客通道", on: DB.store.getBool(SecKey.guestOn, false)),
+             // 376/377: 这两格的显示状态一律读判据口, 不在仪表盘里再写第三份 getBool
+             PeekItem(key: SecKey.shareHalfOn, name: "分享遮半", on: SecurityPolicy.shareHalf),
+             PeekItem(key: SecKey.guestOn, name: "访客通道", on: SecurityPolicy.guestActive),
              PeekItem(key: SecKey.watermarkOn, name: "常驻水印", on: DB.store.getBool(SecKey.watermarkOn, false))]
         }
     }
@@ -912,7 +1147,7 @@ struct SecurityAuditView: View {
                     auditRow(e)
                 }
                 if events.isEmpty {
-                    Text("暂无条目 — 管理动作(增删改/导入导出/销毁)会自动记入, 可下方手动记一条")
+                    Text("暂无条目 — 增删改/导入会自动记入 (导出见敏感流水), 也可下方手动记一条")
                         .font(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                 }
@@ -980,10 +1215,14 @@ struct SecurityAuditView: View {
                 }
                 if DB.store.getInt(SecKey.auditRetention, 0) > 0 {
                     Button {
-                        AuditLog().purgeExpired(months: DB.store.getInt(SecKey.auditRetention, 0))
-                        SecTick.bump()
-                        self.center.bump()
-                        app.showToast("已按保留期清理并留痕")
+                        // 385 到期清理是**物理删除**流水条目 (还要整段重封链) ⇒ 归入 296 只读闸与 383 sudo 那一族:
+                        // 只读模式下不做, 开关开着要先重输应用锁口令。
+                        guardedDestroy(app) {
+                            AuditLog().purgeExpired(months: DB.store.getInt(SecKey.auditRetention, 0))
+                            SecTick.bump()
+                            self.center.bump()
+                            app.showToast("已按保留期清理并留痕")
+                        }
                     } label: {
                         Label("立即清理到期条目", systemImage: "clock.arrow.circlepath")
                             .font(.subheadline.weight(.medium))
@@ -997,6 +1236,11 @@ struct SecurityAuditView: View {
             // 382 脱敏导出
             Section {
                 Button {
+                    // 296 只读安全模式: 导出属于"把数据搬到 App 之外"那一族, 只读档下拦下
+                    guard SecurityPolicy.allows(.importExport) else {
+                        app.showToast(SecurityPolicy.denialMessage(.importExport))
+                        return
+                    }
                     exportPlaintext = false
                     doExport("脱敏")
                 } label: {
@@ -1005,6 +1249,10 @@ struct SecurityAuditView: View {
                 }
                 .frame(minHeight: DS.Hit.min)
                 Button {
+                    guard SecurityPolicy.allows(.importExport) else {
+                        app.showToast(SecurityPolicy.denialMessage(.importExport))
+                        return
+                    }
                     // 勾选"含明文"需二次警告确认
                     let alert = UIAlertController(title: "导出含明文",
                                                   message: "明文口令字段将原样写入导出文件。确认要导出吗？",
@@ -1028,17 +1276,19 @@ struct SecurityAuditView: View {
             // 383 毁灭操作 sudo 口令
             Section {
                 SecRow(title: "毁灭操作 sudo 口令",
-                       subtitle: DB.store.getBool(SecKey.sudoOn, true)
-                                ? "清空数据库/删除全部备份需重输应用锁密码"
-                                : "关闭 (不建议)",
+                       subtitle: SecurityPolicy.sudoRequired
+                                ? "已开: 三级销毁的第二级要重输本机密码, 清空回收站/到期清理/离职清除也先问这一道"
+                                : "已关: 上面这几处毁灭动作不再追问口令 (不建议)",
                        icon: "person.crop.circle.badge.xmark") {
                     Toggle("", isOn: Binding(
-                        get: { DB.store.getBool(SecKey.sudoOn, true) },
-                        set: { DB.store.set(SecKey.sudoOn, $0); SecTick.bump() }))
+                        get: { SecurityPolicy.sudoRequired },
+                        // 关掉开关顺手收回已发的那张券: 会话里"上一次验过"不该替下一次做主
+                        set: { DB.store.set(SecKey.sudoOn, $0); app.sudoTicket = nil; SecTick.bump() }))
                         .labelsHidden()
                 }
                 if !DB.hasPasscode() {
-                    Text("需先设置本机密码 (设置 → 本机数据保护) 才有效")
+                    Text("本机没设应用锁密码 ⇒ 口令无从复核 ⇒ 毁灭动作按最严格解释停在门口 (383)。"
+                         + "要在这台机器上销毁, 先设本机密码或把这枚开关关掉。")
                         .font(.footnote)
                         .foregroundStyle(DS.Palette.warn)
                 }
@@ -1072,6 +1322,34 @@ struct SecurityAuditView: View {
             } header: {
                 Text("敏感操作视图 (388)")
             }
+
+            // 953 快捷指令执行日志: 独立分区 (原先把意图流水混在 388 里, 每次 Siri 调用都记,
+            // 会把"最近 5 条"整段挤成意图日志)。被冷却拦下的尝试也留痕 —— 那是风暴的样子。
+            Section {
+                let intents = SensitiveLedger().intentItems(limit: 10)
+                if intents.isEmpty {
+                    Text("暂无 — 六条快捷指令意图每次执行都会记到这里 (被冷却拦下的也留痕)")
+                        .font(.footnote)
+                        .foregroundStyle(DS.Palette.textSub)
+                } else {
+                    ForEach(intents) { it in
+                        HStack(spacing: DS.Space.xs) {
+                            Image(systemName: "command")
+                                .font(.system(size: DS.Icon.xs, weight: .semibold))
+                                .foregroundStyle(DS.Palette.accentText)
+                            Text(String(it.kind.dropFirst("intent·".count)) + " · " + it.target)
+                                .font(.footnote)
+                                .foregroundStyle(DS.Palette.textSub)
+                            Spacer()
+                            Text(SecurityLockConfigView.dateStr(Double(it.id) / 1000))
+                                .font(.caption)
+                                .foregroundStyle(DS.Palette.textSub)
+                        }
+                    }
+                }
+            } header: {
+                Text("快捷指令执行 (953)")
+            }
         }
         .scrollContentBackground(.hidden)
         .dsScreenBackground()
@@ -1097,7 +1375,10 @@ struct SecurityAuditView: View {
         switch kind {
         case "查看": return "eye"
         case "复制": return "doc.on.doc"
-        default: return "square.and.arrow.up"
+        default:
+            // 964 触发来源标记: 意图来源在审计里以 "intent·<意图名>" 记账 (AppIntents.swift 唯一生产点),
+            // 时间线行给专属图标; NFC 来源等 959/957-963 真机探测过再说, 先不画。
+            return kind.hasPrefix("intent·") ? "command" : "square.and.arrow.up"
         }
     }
 
@@ -1177,6 +1458,7 @@ struct SecurityAuditView: View {
 
     private func verifyNow() -> String {
         let v = AuditLog().verifyChain()
+        if v.brokenAt == -2 { return "链序号异常: 条目被截断或换序重放 — 存在篡改痕迹" }
         if v.brokenAt < 0 { return "链完好: \(v.length) 条逐链重算全部通过" }
         return "链在第 \(v.brokenAt + 1) 条断裂 — 存在被篡改或删除痕迹"
     }
@@ -1184,13 +1466,23 @@ struct SecurityAuditView: View {
     private func doExport(_ label: String) {
         let json = AuditLog().exportJSON(includePlaintext: exportPlaintext)
         exportPlaintext = false
+        let host = UIApplication.topViewController()
         let vc = UIActivityViewController(activityItems: [json], applicationActivities: nil)
         vc.completionWithItemsHandler = { _, _, _, _ in
             // 382 导出本身也进敏感操作台账
             SensitiveLedger().record("导出", target: label)
             SecTick.bump()
         }
-        UIApplication.topViewController()?.present(vc, animated: true)
+        // iPad 上 UIActivityViewController 必须走 popover, 没有锚点直接崩 (不是"显示不完整")。
+        // 本 App 现在是 iPhone-only (project.yml TARGETED_DEVICE_FAMILY=1), 今天不会触发,
+        // 但改设备族时这条就是全屏崩溃 —— 补锚点只花三行。
+        if let src = host?.view {
+            vc.popoverPresentationController?.sourceView = src
+            vc.popoverPresentationController?.sourceRect = CGRect(x: src.bounds.midX, y: src.bounds.minY + 80,
+                                                                  width: 0, height: 0)
+            vc.popoverPresentationController?.permittedArrowDirections = .up
+        }
+        host?.present(vc, animated: true)
     }
 }
 
@@ -1203,7 +1495,6 @@ struct SecurityDestroyView: View {
     // 399 三级销毁级联状态
     @State private var ack = false
     @State private var sudoInput = ""
-    @State private var passcodeOk = false
     @State private var typedWord = ""
     @State private var destroying = false
     @State private var destroyReport: String?
@@ -1236,6 +1527,7 @@ struct SecurityDestroyView: View {
             }
 
             // 399 三级销毁: 勾选理解项 → 输应用锁密码 → 键入"销毁"二字
+            // 第二级归 383 管: 开关开着才问, 关着就如实显示"本级已跳过"
             Section {
                 VStack(alignment: .leading, spacing: DS.Space.s) {
                     Toggle(isOn: $ack) {
@@ -1250,7 +1542,7 @@ struct SecurityDestroyView: View {
                     .tint(DS.Palette.accent)
                     if ack {
                         // 第二级: sudo 重输应用锁密码 (383)
-                        if !passcodeOk {
+                        if SecurityPolicy.sudoRequired, app.sudoTicket == nil {
                             HStack(spacing: DS.Space.s) {
                                 SecureField("重输应用锁密码", text: $sudoInput)
                                     .textFieldStyle(.roundedBorder)
@@ -1259,13 +1551,17 @@ struct SecurityDestroyView: View {
                                     .foregroundStyle(DS.Palette.accentText)
                                     .frame(minHeight: DS.Hit.min)
                             }
-                        } else {
+                        } else if app.sudoTicket != nil {
                             Label("sudo 验证通过", systemImage: "checkmark.seal.fill")
                                 .font(.footnote)
                                 .foregroundStyle(DS.Palette.ok)
+                        } else {
+                            Label("383 开关关着: 本级跳过, 不再追问口令", systemImage: "exclamationmark.triangle")
+                                .font(.footnote)
+                                .foregroundStyle(DS.Palette.warn)
                         }
                     }
-                    if ack && passcodeOk {
+                    if ack && sudoSatisfied {
                         // 第三级: 键入"销毁"二字
                         TextField("键入 销毁 二字以继续", text: $typedWord)
                             .autocorrectionDisabled()
@@ -1273,7 +1569,8 @@ struct SecurityDestroyView: View {
                     }
                     BusyButton(title: "销毁全部数据",
                                 isBusy: destroying,
-                                disabled: !(ack && passcodeOk && typedWord.trimmingCharacters(in: .whitespaces) == "销毁")) {
+                                disabled: !(ack && sudoSatisfied
+                                           && typedWord.trimmingCharacters(in: .whitespaces) == "销毁")) {
                         runDestroy()
                     }
                     if let rep = destroyReport {
@@ -1337,11 +1634,15 @@ struct SecurityDestroyView: View {
                             }
                             Spacer()
                             Button("清除") {
-                                Offboard.markDeparted(m.id, name: m.name)
-                                AuditLog().append(.admin, "离", target: m.name)
-                                app.showToast("\(m.name) 已归档")
-                                SecTick.bump()
-                                self.center.bump()
+                                // 402 离职清除: 名下凭证从台账整段搬走 (不可一键还原) ⇒ 归销毁族, 过 296 + 383 两道闸
+                                guardedDestroy(app) {
+                                    Offboard.markDeparted(m.id, name: m.name)
+                                    AuditLog().append(.admin, "离", target: m.name,
+                                                      duress: DB.store.getBool(SecKey.sessionDuress, false))
+                                    app.showToast("\(m.name) 已归档")
+                                    SecTick.bump()
+                                    self.center.bump()
+                                }
                             }
                             .font(.footnote.weight(.medium))
                             .foregroundStyle(DS.Palette.danger)
@@ -1357,19 +1658,22 @@ struct SecurityDestroyView: View {
             // 296 安全模式
             Section {
                 SecRow(title: "只读安全模式",
-                       subtitle: DB.store.getBool(SecKey.safeModeOn, false)
-                                ? "已启用: 只读查看日志, 实验开关停用"
+                       subtitle: SecurityPolicy.readOnly
+                                ? "已启用: 圆盘开锁、销毁与清空、审计导出与到期清理一律拦下"
                                 : "关闭 (异常时手动打开)",
                        icon: "power") {
                     Toggle("", isOn: Binding(
-                        get: { DB.store.getBool(SecKey.safeModeOn, false) },
+                        get: { SecurityPolicy.readOnly },
                         set: { DB.store.set(SecKey.safeModeOn, $0); SecTick.bump() }))
                         .labelsHidden()
                 }
-                if DB.store.getBool(SecKey.safeModeOn, false) {
-                    Text("定位手动应急位 (系统级异常钩子不存在); 启动路径接线由诊断包落地。")
+                if SecurityPolicy.readOnly {
+                    Text("已接线的拦点: 开锁 (圆盘 / 手势 / 靠近自动开 / 二次开锁重发)、销毁全族 (三级销毁、清空回收站、"
+                         + "到期清理、离职清除)、审计导出与含明文导出。"
+                         + "还没接上的: 添加与改造凭证、网关配网、固件升级 —— 那几处的执行点在服务层与配网/升级那几个页面, "
+                         + "闸装到之前, 开着这枚开关不等于全 App 只读。")
                         .font(.footnote)
-                        .foregroundStyle(DS.Palette.textSub)
+                        .foregroundStyle(DS.Palette.warn)
                 }
             } header: {
                 Text("安全模式 (296)")
@@ -1389,6 +1693,20 @@ struct SecurityDestroyView: View {
             } header: {
                 Text("口令复用 (549)")
             }
+
+            // 521 二次输入确认开关 (密码保存前重输码值)
+            Section {
+                SecRow(title: "保存密码二次输入 (521)",
+                       subtitle: DB.store.getBool("kf_scred_2nd", true) ? "密码保存前需重输一遍码值核对" : "关闭",
+                       icon: "lock.rotationgauge") {
+                    Toggle("", isOn: Binding(
+                        get: { DB.store.getBool("kf_scred_2nd", true) },
+                        set: { DB.store.set("kf_scred_2nd", $0); SecTick.bump() }))
+                        .labelsHidden()
+                }
+            } header: {
+                Text("密码保存 (521)")
+            }
         }
         .scrollContentBackground(.hidden)
         .dsScreenBackground()
@@ -1400,7 +1718,7 @@ struct SecurityDestroyView: View {
 
     // ---------- 派生 ----------
     private var trashCount: Int {
-        (DB.get([String].self, SecKey.offboardTrash) ?? []).count
+        DB.keychains().reduce(0) { acc, kc in acc + CredentialOrg.bin(kc.mac).count }
     }
 
     private var backupGateLine: String {
@@ -1441,7 +1759,9 @@ struct SecurityDestroyView: View {
                 .frame(width: holdProgress * 200, height: DS.Hit.min)
             Text(holdProgress >= 1 ? "松开即清空" : "按住")
                 .font(.footnote.weight(.medium))
-                .foregroundStyle(holdProgress >= 1 ? .white : DS.Palette.danger)
+                // 满格时底是 danger.opacity(0.85) 压在 surfaceAlt 上的合成色: 深色档纯白压上去只有
+                // 3.51:1 (合成算法与比值都在 tools/contrast.js), 所以走随明暗换向的 onSem。
+                .foregroundStyle(holdProgress >= 1 ? DS.Palette.onSem : DS.Palette.danger)
                 .frame(width: 200, height: DS.Hit.min)
         }
         .frame(width: 200, height: DS.Hit.min)
@@ -1471,32 +1791,54 @@ struct SecurityDestroyView: View {
         .onDisappear { self.holdTask?.cancel() }
     }
 
+    // ---------- 383 复核状态 (判据口在 SecurityPolicy, 会话券记在 AppState.sudoTicket) ----------
+    /// 本级是否算过关: 开关关着 = 不追问; 开关开着 = 必须手里有那张当场验出来的券。
+    /// 为什么用 app.sudoTicket 而不是本页一个 @State: 销毁页/回收站/到期清理/离职清除是同一族毁灭动作,
+    /// 各页各留一份"我已验证"就是四道各说各话的闸。
+    private var sudoSatisfied: Bool { !SecurityPolicy.sudoRequired || app.sudoTicket != nil }
+
     // ---------- 399/400/401/406 销毁主流程 ----------
     private func verifySudo() {
-        // 383/549 sudo 比对: 与 AppLockView 同款 DB.verifyPasscode 摘要比对
+        // 383/549 sudo 比对: 与 AppLockView 同款 DB.verifyPasscode 摘要比对 (不新建口令存储)
         guard sudoInput.count >= 4 else {
             app.showToast("请输入应用锁密码")
             return
         }
-        guard DB.verifyPasscode(sudoInput) else {
+        guard let ticket = sudoTicketFromReview(sudoInput) else {
             app.showToast("密码错误, 拒绝执行毁灭级操作")
             return
         }
         sudoInput = ""
-        passcodeOk = true
+        app.sudoTicket = ticket
         AuditLog().append(.admin, "销毁", target: "sudo 验证通过",
-                           operator_: DB.store.getString(SecKey.sessionHow, "本机密码"))
+                           operator_: DB.store.getString(SecKey.sessionHow, "本机密码"),
+                           duress: DB.store.getBool(SecKey.sessionDuress, false))
         SecTick.bump()
     }
 
     private func runDestroy() {
+        // 296 只读安全模式: 毁灭动作在这一族里最重的一道, 先过动作闸再问口令
+        guard SecurityPolicy.allows(.destroy) else {
+            app.showToast(SecurityPolicy.denialMessage(.destroy))
+            return
+        }
+        // 383: 按钮的 disabled 已经把过关, 这里再判一次是因为"仍要销毁"那条 alert 回调
+        // 是第二条进入路径 —— 第二条路径不查, 前面的查就只是装饰。
+        guard sudoSatisfied else {
+            app.showToast("还需重输应用锁密码 (383)")
+            return
+        }
         // 400 备份闸: 7 天内无备份先跳导出向导
         guard DestroyKit.backupGatePass else {
             let alert = UIAlertController(title: "销毁前请先备份",
-                                          message: "最近 7 天没有备份。建议先导出备份再销毁 — 要直接销毁吗？",
+                                          message: "最近 7 天没有备份。建议先导出备份再销毁 — 要直接销毁吗？"
+                                            + "\n注意: 销毁会一并覆写删除本机上已有的备份导出件与自动回滚快照 (它们内含全部锁密钥)。",
                                           preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "先去备份", style: .default) { _ in
-                app.showToast("请在 设置 → 备份 生成备份后再销毁")
+                // 400: 真跳一步 (切到设置 Tab) + 把路径写全 —— 与 437 复核钉同一口径:
+                // 备份工作室在三层 sheet 之后, 不为这一条造 pending-sheet 路由, 但也不假装"一点就到"。
+                app.tabSelection = 3
+                app.showToast("已切到设置 — 路径: 备份与恢复 → 备份工作室 → 导出向导")
             })
             alert.addAction(UIAlertAction(title: "仍要销毁", style: .destructive) { _ in
                 commitDestroy()
@@ -1509,18 +1851,36 @@ struct SecurityDestroyView: View {
 
     private func commitDestroy() {
         destroying = true
-        let rep = DestroyKit.destroyAll()
-        let done = rep.residueFound == 0
+        // 383 的执行侧拦点: 券由判据口发, 拦由 AuditChain 落 —— 拿不到券就一个键都不动, 这里如实报"未执行"。
+        guard let rep = DestroyKit.destroyAll(sudoRequired: SecurityPolicy.sudoRequired,
+                                              sudo: app.sudoTicket) else {
+            destroying = false
+            destroyReport = "未执行: 383 要求重输应用锁密码, 本次没有拿到复核凭据, 本机数据未被改动"
+            residueMsg = nil
+            app.showToast("销毁被 383 拦下")
+            return
+        }
+        let done = rep.residueFound == 0 && rep.filesFailed.isEmpty
         destroyReport = done
-            ? "销毁完成: 已覆写 \(rep.keys.count) 键 / 约 \(rep.randomBytes / 1024) KB 随机字节"
-            : "销毁执行完毕但残留检查命中 \(rep.residueFound) 处 — 需人工复核"
-        // 406 独立复核一次残留全文检查
-        residueMsg = DestroyKit.checkResidue([]) == 0 ? "残留复核: 零残留" : "残留复核: 命中 \(DestroyKit.checkResidue([])) 处"
-        AuditLog().append(.admin, "销", target: "全部本地数据, 覆写 \(rep.keys.count) 键",
-                           operator_: DB.store.getString(SecKey.sessionHow, "sudo"))
+            ? "销毁完成: 已覆写 \(rep.keys.count) 键 / 约 \(rep.randomBytes / 1024) KB 随机字节, "
+              + "并覆写删除本地备份与回滚快照 \(rep.filesRemoved) 个文件"
+            : "销毁执行完毕但残留检查命中 \(rep.residueFound) 处"
+              + (rep.filesFailed.isEmpty ? "" : " / \(rep.filesFailed.count) 个文件未能删除") + " — 需人工复核"
+        // 406 独立复核: 走无参数的硬不变量检查 (旧写法传 [] → 恒返回 0, 是一句假验证)
+        let chk = DestroyKit.residueSelfCheck()
+        residueMsg = chk.hits == 0
+            ? "残留复核: 零残留 (已检索 \(chk.scanned) 项键位与备份文件)"
+            : "残留复核: 命中 \(chk.hits) 处 / 检索 \(chk.scanned) 项"
+        // 383: 把"哪一次复核放开了这次销毁"写进流水 —— 券只在当场验过口令时才存在, 它带的时刻就是这次销毁的凭据
+        let sudoNote = app.sudoTicket.map { "sudo 复核于 \(Int(Date().timeIntervalSince1970 - $0.issuedAt)) 秒前" }
+                                     ?? "无 sudo 复核 (383 开关关着)"
+        AuditLog().append(.admin, "销", target: "全部本地数据, 覆写 \(rep.keys.count) 键 · " + sudoNote,
+                           operator_: DB.store.getString(SecKey.sessionHow, "sudo"),
+                           duress: DB.store.getBool(SecKey.sessionDuress, false))
         typedWord = ""
         ack = false
-        passcodeOk = false
+        // 383: 券是一次性的 —— 销毁跑完就作废, 下一次毁灭动作必须重新验 (留着它等于一次输入放开全部)
+        app.sudoTicket = nil
         destroying = false
         SecTick.bump()
         self.center.bump()
@@ -1528,6 +1888,12 @@ struct SecurityDestroyView: View {
 
     // ---------- 403 长按填充驱动 (50ms 步进 → 2s 填满) ----------
     private func startHoldTask() {
+        // 296 只读安全模式: 拦在填充开始之前。按在闸后头等用户按满 2 秒再拒绝,
+        // 那条进度条本身就是一次"看着在做事"的空演 (403 的填充是给用户的承诺, 不是装饰)。
+        guard SecurityPolicy.allows(.destroy) else {
+            app.showToast(SecurityPolicy.denialMessage(.destroy))
+            return
+        }
         self.holdTask?.cancel()
         self.holdProgress = 0
         self.holdTask = Task { @MainActor in
@@ -1535,12 +1901,27 @@ struct SecurityDestroyView: View {
                 try? await Task.sleep(nanoseconds: 50_000_000)
                 self.holdProgress = min(1, self.holdProgress + 0.025)
             }
+            // P0 修复: 任务跑满 2s (未被松手取消) 才真正执行清空 — 旧实现松手后无人调用 clearTrash, 403 形同虚设
+            // 383: 按满之后才问口令 (没问就不动); 取消那一步回收进度条, 免得留着一条"松开即清空"的满格假象
+            if !Task.isCancelled {
+                self.holdProgress = 0
+                guardedDestroy(self.app) { self.clearTrash() }
+            }
         }
     }
 
     private func clearTrash() {
-        DB.store.set(SecKey.offboardTrash, [String]())
-        app.showToast("回收站已清空")
+        // 403 真回收站是 CredentialOrg.kf_cbin_<mac> (逐锁存)。包7 自有的演示键 kf_sdest_trash
+        // 全仓零读取方 (旧实现只往它写空数组)，已从 SecKey 删除 —— 留着会让人以为这里清了两处。
+        // 计数如实回报: 旧写法无论清空与否都弹"已清空"，空回收站也报成功。
+        var cleared = 0
+        for kc in DB.keychains() {
+            let bin = CredentialOrg.bin(kc.mac)
+            guard !bin.isEmpty else { continue }
+            CredentialOrg.saveBin(kc.mac, [])
+            cleared += 1
+        }
+        app.showToast(cleared > 0 ? "回收站已清空 (\(cleared) 把锁, 403)" : "回收站本来就是空的 (403)")
         holdProgress = 0
         SecTick.bump()
     }
@@ -1556,6 +1937,7 @@ struct SecurityDestroyView: View {
         guard t > 0 else { return "无" }
         let f = DateFormatter()
         f.dateFormat = "MM-dd"
+        f.locale = Locale(identifier: "en_US_POSIX")
         return f.string(from: Date(timeIntervalSince1970: t))
     }
 }
