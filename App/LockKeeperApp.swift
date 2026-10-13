@@ -1181,6 +1181,12 @@ struct RootView: View {
     }
 
     var body: some View {
+        rootChrome
+    }
+
+    /// RootView 的四种形态 (引导/伪装空壳/主界面/应用锁) —— 从巨型 body 拆出
+    @ViewBuilder
+    private var rootGroup: some View {
         Group {
             if !Onboarding.allDone && !app.onboardingFinished {
                 // 包14 首启五步: 承诺/导览/角色/权限/演示/自检/证书, 进度逐键存档 (804);
@@ -1200,6 +1206,12 @@ struct RootView: View {
                         removal: .scale(1.08).combined(with: .opacity)))
             }
         }
+    }
+
+    /// 摇一摇/外观种子/字号/灰度/加粗/动效/水印层 —— 继续拆 (原表达式报 type-check 超时)
+    @ViewBuilder
+    private var rootCore: some View {
+        rootGroup
         // 54/372 摇一摇接收层: SwiftUI 无该手势, UIKit 入口 UIWindow.motionEnded 又换不了 WindowGroup
         // 的 window —— 用一层零尺寸 VC 接住再转 .kfDeviceShake (实现见文件尾部)。
         .onDeviceShake()
@@ -1223,6 +1235,12 @@ struct RootView: View {
                     .ignoresSafeArea()
             }
         }
+    }
+
+    /// 后台隐私幕/深链/Tab 与解锁状态钩子/触感/配色 —— 同上
+    @ViewBuilder
+    private var rootChrome: some View {
+        rootCore
         // 233 后台隐私幕: 退到后台/被多任务卡片抓取时盖住内容 (拍板 2026-10-10 的"不加留存面"四条之一)。
         // 只在**已解锁**时出现 —— 锁着的时候屏上本来就是应用锁界面，再盖一层是给门禁套娃。
         .overlay {
@@ -1272,6 +1290,7 @@ struct RootView: View {
         .sensoryFeedback(.selection, trigger: app.tabSelection)   // Tab 切换的轻触感
         .preferredColorScheme(colorScheme)
     }
+
 
     /// 包8/448 启动自检黄条 —— 2026-10-13 run 64 从 body 内联块抽出: 该表达式报 type-check 超时。
     @ViewBuilder
