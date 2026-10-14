@@ -73,3 +73,18 @@ console.log(`  ${alOk ? '✓' : '✗'} allowed-trace 已定性必须单独报一
 if (!alOk) { console.error('R6 材质判据自检失败 (已定性无痕)'); process.exit(1); }
 
 console.log('R6 材质判据自检 ✓ (玻璃列/盘子列/面板实底列/混用严重度/豁免可撤销 六组正负控全过)');
+
+// ---------- R5 触达: 菜单内容项托管 / 菜单触发器照判 ----------
+function r5Of(file) {
+  const pre = R.parseAll([file], tk, 1.0, {});
+  return R.runAll(pre, { tk, scale: 1.0, deviceW: 390, dens: 1.0 }).filter((f) => f.rule.startsWith('R5'));
+}
+const MENU = path.join(__dirname, 'fixtures', 'r5', 'menu.swift');
+if (!fs.existsSync(MENU)) { console.error('  ✗ fixtures/r5/menu.swift 不存在'); process.exit(1); }
+// 固定条件 (标准密度/390pt/字号 1.0) 下的行号: Menu 触发器 7, 内容项 Button 8/9/11
+const menuHits = r5Of(MENU).map((f) => f.line);
+const trigOk = menuHits.includes(7);
+const itemOk = ![8, 9, 11].some((l) => menuHits.includes(l));
+console.log(`  ${trigOk ? '✓' : '✗'} menu-trigger   Menu 触发器自身无 minHeight 必须开火 (实得命中行 ${JSON.stringify(menuHits)})`);
+console.log(`  ${itemOk ? '✓' : '✗'} menu-items    Menu 内容项由系统给行高, 不该判成触达不足 (实得命中行 ${JSON.stringify(menuHits)})`);
+if (!trigOk || !itemOk) { console.error('R5 菜单托管判据自检失败'); process.exit(1); }

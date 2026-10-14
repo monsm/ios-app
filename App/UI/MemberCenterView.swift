@@ -68,6 +68,10 @@ struct MemberCenterView: View {
                     } label: {
                         Image(systemName: "ellipsis.circle").accessibilityLabel("成员中心菜单")
                     }
+                    // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 16.5pt (< 44)。
+                    // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+                    .frame(minHeight: DS.Hit.min)
+                    .contentShape(Rectangle())
                 }
             }
             .sheet(isPresented: $showWizard) { MemberWizardView(onDone: { tick += 1 }) }
@@ -1233,6 +1237,10 @@ struct MemberWizardView: View {
                                 .frame(minHeight: DS.Hit.min)
                         }
                         .buttonStyle(PlainButtonStyle())
+                        // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 14.5pt (< 44)。
+                        // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+                        .frame(minHeight: DS.Hit.min)
+                        .contentShape(Rectangle())
                     }
                 } else {
                     Section {
@@ -1355,6 +1363,10 @@ struct MergeMembersView: View {
                     }
                     .buttonStyle(PrimaryActionStyle())
                     .disabled(secondaryID == nil)
+                    // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 16.5pt (< 44)。
+                    // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+                    .frame(minHeight: DS.Hit.min)
+                    .contentShape(Rectangle())
                 }
             }
             .navigationTitle("重复合并")   // 462 重复合并
@@ -1471,6 +1483,10 @@ struct MemberExitWizard: View {
                             .frame(minHeight: DS.Hit.min)
                     }
                     .buttonStyle(DestructiveActionStyle())
+                    // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 16.5pt (< 44)。
+                    // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+                    .frame(minHeight: DS.Hit.min)
+                    .contentShape(Rectangle())
                 }
             }
             .navigationTitle("退出处置向导")   // 474 退出处置向导
@@ -1742,6 +1758,10 @@ struct MemberGroupSheet: View {
                             .frame(minHeight: DS.Hit.min)
                     }
                     .buttonStyle(PrimaryActionStyle())
+                    // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 16.5pt (< 44)。
+                    // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+                    .frame(minHeight: DS.Hit.min)
+                    .contentShape(Rectangle())
                 }
             }
             .navigationTitle("分组标签")   // 630 分组标签
@@ -2225,6 +2245,8 @@ struct FamilyNoteView: View {
         VStack(alignment: .leading, spacing: DS.Space.m) {
             if !selMember.isEmpty {
                 LabeledContent("挂在谁名下") {
+                    // @layout-allow 触达托管 Picker: 控件本体高度由系统渲染, 我们撑 frame 只会多出一片点不动的死区。
+                    // 上机复测: 用拇指点这一行的上下边缘, 看打不打得开 (打得开=系统已给够 44, 这条可以销)
                     Picker("成员", selection: $selMember) {
                         ForEach(DB.members().filter { !MemberHub.ext($0.id).archived }) { m in
                             Text(MemberHub.display(m)).tag(m.id)
@@ -2248,6 +2270,10 @@ struct FamilyNoteView: View {
                 }
                 .buttonStyle(PrimaryActionStyle())
                 .disabled(selMember.isEmpty || text.isEmpty)
+                // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 16.5pt (< 44)。
+                // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+                .frame(minHeight: DS.Hit.min)
+                .contentShape(Rectangle())
             }
         }
         .padding(DS.Space.l)

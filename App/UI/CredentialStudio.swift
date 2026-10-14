@@ -1128,8 +1128,14 @@ struct PwdStudio: View {
                         Text("\(from.formatted(.dateTime.month().day().hour().minute())) ~ \(to.formatted(.dateTime.month().day().hour().minute())) 生效")
                             .font(.caption)
                             .foregroundStyle(DS.Palette.textSub)
-                            .lineLimit(1)
+                            // 2026-10-14 布局审计 R2: 两个"月日 时分"+ 尾巴"生效"在 375pt 宽 / 大字号档
+                            // 估宽 371pt > 可分配 343pt，lineLimit(1) 会把尾巴切掉 —— 而那半句正是
+                            // "从哪个时刻开始算"。改成允许两行并让它占满该占的竖直空间；
+                            // 原有的 minimumScaleFactor 不动 (缩字号与换行谁先起作用由系统排，不在这里猜)。
+                            .lineLimit(2)
                             .minimumScaleFactor(0.8)
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                     if !note.isEmpty {
                         Text(note)
@@ -3051,6 +3057,8 @@ struct OtpStudio: View {
                 .frame(minHeight: DS.Hit.min)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.characters)
+            // @layout-allow 触达托管 Picker: 控件本体高度由系统渲染, 我们撑 frame 只会多出一片点不动的死区。
+            // 上机复测: 用拇指点这一行的上下边缘, 看打不打得开 (打得开=系统已给够 44, 这条可以销)
             Picker("算法", selection: $manualAlgo) {
                 ForEach(["SHA1", "SHA256", "SHA512"], id: \.self) { a in
                     Text(a).tag(a)
@@ -3058,11 +3066,15 @@ struct OtpStudio: View {
             }
             .font(.caption)
             HStack(spacing: DS.Space.xs) {
+                // @layout-allow 触达托管 Picker: 控件本体高度由系统渲染, 我们撑 frame 只会多出一片点不动的死区。
+                // 上机复测: 用拇指点这一行的上下边缘, 看打不打得开 (打得开=系统已给够 44, 这条可以销)
                 Picker("周期", selection: $manualPeriod) {
                     ForEach([30, 60], id: \.self) { p in
                         Text("\(p) 秒").tag(p)
                     }
                 }
+                // @layout-allow 触达托管 Picker: 控件本体高度由系统渲染, 我们撑 frame 只会多出一片点不动的死区。
+                // 上机复测: 用拇指点这一行的上下边缘, 看打不打得开 (打得开=系统已给够 44, 这条可以销)
                 Picker("位数", selection: $manualDigits) {
                     ForEach([6, 8], id: \.self) { d in
                         Text("\(d) 位").tag(d)

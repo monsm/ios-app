@@ -642,7 +642,11 @@ struct AlarmCenterView: View {
             Text("红色为告警当日; 前后 7 天为本地日志统计 (约)")
                 .font(.caption2)
                 .foregroundStyle(DS.Palette.textSub)
-                .lineLimit(1)
+                // 2026-10-14 布局审计 R2: 图例在 1.75 字号档估宽 407pt > 343pt，lineLimit(1) 会把
+                // "前后 7 天为本地日志统计"整段切没 —— 那是这条图例唯一致歉口径 (数据是本机统计)。
+                .lineLimit(2)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .accessibilityElement(children: .combine)
     }
@@ -698,7 +702,11 @@ struct AlarmCenterView: View {
                         Text("锁端键盘冻结标志为开 (试错锁定可能生效中)")
                             .font(.caption)
                             .foregroundStyle(DS.Palette.warn)
-                            .lineLimit(1)
+                            // 2026-10-14 布局审计 R2: 这条是安全提示, 括号里"试错锁定可能生效中"不能整段被切 ——
+                            // 切掉之后只剩"冻结标志为开", 用户读不出跟自己有没有关系。允许两行。
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                     if kbErr > 0 {
                         Text("锁端键盘错误计数为 " + String(kbErr) + " (语义未确证, 仅供参考)")

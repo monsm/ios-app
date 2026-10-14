@@ -312,6 +312,8 @@ struct VOPracticeField: View {
             .accessibilityLabel("练习按钮, 双击执行")
             .accessibilityValue("\(taps) 次")
             .accessibilityHint("双击执行轻震动反馈")
+            // @layout-allow 触达托管 Stepper: 控件本体高度由系统渲染, 我们撑 frame 只会多出一片点不动的死区。
+            // 上机复测: 用拇指点这一行的上下边缘, 看打不打得开 (打得开=系统已给够 44, 这条可以销)
             Stepper(value: Binding(
                 get: { rotor },
                 set: { rotor = $0 % 3 }), in: 0...100) {
@@ -411,6 +413,8 @@ private struct DevContrastSection: View {
         }
     }
     private func tokenPicker(_ tag: String, index: Binding<Int>) -> some View {
+        // @layout-allow 触达托管 Picker: 控件本体高度由系统渲染, 我们撑 frame 只会多出一片点不动的死区。
+        // 上机复测: 用拇指点这一行的上下边缘, 看打不打得开 (打得开=系统已给够 44, 这条可以销)
         Picker(tag, selection: index) {
             ForEach(AXTools.calcTokens.indices, id: \.self) { i in
                 Text(AXTools.calcTokens[i].name).tag(i)

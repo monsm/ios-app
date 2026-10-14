@@ -209,6 +209,8 @@ struct StatsView: View {
 
     // ---------- 772 锁选择器 ----------
     private var lockPicker: some View {
+        // @layout-allow 触达托管 Picker: 控件本体高度由系统渲染, 我们撑 frame 只会多出一片点不动的死区。
+        // 上机复测: 用拇指点这一行的上下边缘, 看打不打得开 (打得开=系统已给够 44, 这条可以销)
         Picker("门锁", selection: $mac) {
             ForEach(pickerLocks) { kc in
                 Text(LockArchive.displayName(kc)).tag(kc.mac)
@@ -1640,7 +1642,11 @@ struct StatsView: View {
                 Text("窗口累计 \(m.opensTotal) 次 · 虚线为周一分割, 看增长节奏")
                     .font(.caption)
                     .foregroundStyle(DS.Palette.textSub)
-                    .lineLimit(1)
+                    // 2026-10-14 布局审计 R2: 估宽 428pt > 343pt, 而 lineLimit(1) 切掉的正好是后半句
+                    // "虚线为周一分割" —— 图上那条虚线就没有解释了。允许两行。
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .padding(.horizontal, DS.Space.gutter)
         }
@@ -1816,7 +1822,11 @@ struct StatsView: View {
                         Text("帕累托: 前 \(cov.kinds) 类累计 \(Int(cov.cumPct))% 开门 (615 · 折到凭证类, 类内不分条)")
                             .font(.caption)
                             .foregroundStyle(DS.Palette.textSub)
-                            .lineLimit(1)
+                            // 2026-10-14 布局审计 R2: 这条最长 (估宽 599pt vs 343pt)，lineLimit(1) 会把
+                            // "折到凭证类, 类内不分条"整个口径切掉 —— 那正是这句话存在的理由 (数的是类不是条)。
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
                 // 616 周几分布 (周末柱青绿强调)

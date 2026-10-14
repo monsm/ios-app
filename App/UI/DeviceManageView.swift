@@ -179,7 +179,7 @@ struct DeviceManageView: View {
                         Text("首位 · 启动默认")
                             .font(.caption2.weight(.medium))
                             .foregroundStyle(DS.Palette.onAccent)
-                            .padding(.horizontal, DS.Space.s).padding(.vertical, 1)
+                            .padding(.horizontal, DS.Space.s).padding(.vertical, DS.Space.xxs)
                             .background(DS.Palette.accent, in: Capsule())
                     }
                 }
@@ -273,6 +273,10 @@ struct DeviceManageView: View {
                 } label: {
                     if p == groupName { Label(p, systemImage: "checkmark") } else { Text(p) }
                 }
+                // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 16.5pt (< 44)。
+                // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+                .frame(minHeight: DS.Hit.min)
+                .contentShape(Rectangle())
             }
             Button("自定义组名…") { promptGroup(kc.mac, current: groupName) }
             if !groupName.isEmpty {

@@ -1319,6 +1319,10 @@ struct RecordsView: View {
                     .frame(maxWidth: .infinity, alignment: .center)
                     .frame(minHeight: DS.Hit.min)
             }
+            // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 14.5pt (< 44)。
+            // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+            .frame(minHeight: DS.Hit.min)
+            .contentShape(Rectangle())
         } footer: {
             Text("分页只影响本页渲染，不改筛选条件、不改导出与统计的口径 (它们读的是全量缓存)。")
                 .font(.caption2).foregroundStyle(DS.Palette.textSub)

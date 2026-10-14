@@ -481,7 +481,7 @@ struct CredentialsView: View {
                     Text("\(c)")
                         .font(elderOn ? .body.weight(.semibold) : .caption2.weight(.semibold))
                         .foregroundStyle(on ? DS.Palette.onAccent : DS.Palette.textSub)
-                        .padding(.horizontal, DS.Space.xs).padding(.vertical, 1)
+                        .padding(.horizontal, DS.Space.xs).padding(.vertical, DS.Space.xxs)
                         .background(on ? DS.Palette.onFillWash.opacity(0.24) : DS.Palette.surfaceAlt, in: Capsule())
                 }
             }
@@ -638,6 +638,10 @@ struct CredentialsView: View {
                                             .contentShape(Rectangle())
                                     }
                                     .accessibilityLabel("删除最近搜索 \(w)")
+                                    // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 没有 minHeight (< 44)。
+                                    // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+                                    .frame(minHeight: DS.Hit.min)
+                                    .contentShape(Rectangle())
                                 }
                             }
                         }
@@ -828,6 +832,10 @@ struct CredentialsView: View {
             .foregroundStyle(DS.Palette.warn)
             .listRowBackground(DS.Palette.warn.opacity(0.06))
             .accessibilityLabel("\(due.count) 条密码 2 小时内到期, 点按查看最近到期的一条详情")   // 359 条密码
+            // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 16.5pt (< 44)。
+            // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+            .frame(minHeight: DS.Hit.min)
+            .contentShape(Rectangle())
         }
     }
 
@@ -2117,6 +2125,10 @@ struct CredentialsView: View {
                     }
                     .buttonStyle(SecondaryActionStyle(fullWidth: false))
                     .accessibilityHint("打开演示锁试玩, 不碰真实门锁")
+                    // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 14.5pt (< 44)。
+                    // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+                    .frame(minHeight: DS.Hit.min)
+                    .contentShape(Rectangle())
                 }
                 .padding(.top, DS.Space.xs)
             }

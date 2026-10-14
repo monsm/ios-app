@@ -188,6 +188,8 @@ struct BackupStudioView: View {
     private var cadenceCard: some View {
         Card {
             SectionTitle(text: "备份策略")
+            // @layout-allow 触达托管 Picker: 控件本体高度由系统渲染, 我们撑 frame 只会多出一片点不动的死区。
+            // 上机复测: 用拇指点这一行的上下边缘, 看打不打得开 (打得开=系统已给够 44, 这条可以销)
             Picker("备份节奏", selection: Binding(   // 198 备份节奏
                 get: { cadence.isEmpty ? BackupStudio.cadence : cadence },
                 set: { BackupStudio.cadence = $0; cadence = $0
@@ -235,6 +237,8 @@ struct BackupStudioView: View {
             .fileImporter(isPresented: $showDirPicker, allowedContentTypes: [.folder]) { r in
                 if case .success(let u) = r { ExportDir.set(u); dirTick += 1 }
             }
+            // @layout-allow 触达托管 Picker: 控件本体高度由系统渲染, 我们撑 frame 只会多出一片点不动的死区。
+            // 上机复测: 用拇指点这一行的上下边缘, 看打不打得开 (打得开=系统已给够 44, 这条可以销)
             Picker("月度备份日: \(monthDay == 0 ? "关" : "每月 \(monthDay) 日")",   // 1018 月度备份日
                    selection: Binding(
                     get: { monthDay },
@@ -928,6 +932,8 @@ struct RestoreWizardView: View {
                 zoneChip("设置", $zones.settings)
             }
             // 418 三策略
+            // @layout-allow 触达托管 Picker: 控件本体高度由系统渲染, 我们撑 frame 只会多出一片点不动的死区。
+            // 上机复测: 用拇指点这一行的上下边缘, 看打不打得开 (打得开=系统已给够 44, 这条可以销)
             Picker("合并策略", selection: $strategy) {   // 418 合并策略
                 ForEach(BackupStudio.MergeStrategy.allCases, id: \.self) { s in
                     Text(s.rawValue).tag(s)
@@ -1072,6 +1078,10 @@ struct RestoreWizardView: View {
         .padding(.horizontal, DS.Space.xs)
         .frame(minHeight: 30)
         .background(on ? DS.Palette.accentText.opacity(0.12) : DS.Palette.surfaceAlt, in: Capsule())
+        // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 没有 minHeight (< 44)。
+        // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+        .frame(minHeight: DS.Hit.min)
+        .contentShape(Rectangle())
     }
     private func zoneChip(_ title: String, _ on: Binding<Bool>) -> some View {
         Button {
@@ -1240,6 +1250,10 @@ struct WebDAVStudioView: View {
                             }
                             .buttonStyle(.plain)
                             .accessibilityLabel("关闭提示")   // 830 关闭提示
+                            // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 没有 minHeight (< 44)。
+                            // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+                            .frame(minHeight: DS.Hit.min)
+                            .contentShape(Rectangle())
                         }
                         .padding(.horizontal, DS.Space.s)
                         .padding(.vertical, DS.Space.xs)
@@ -1570,6 +1584,10 @@ struct MigrationWizardView: View {
                     .axGlass(DS.Radius.card)
                 }
                 .buttonStyle(.plain)
+                // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 26.5pt (< 44)。
+                // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+                .frame(minHeight: DS.Hit.min)
+                .contentShape(Rectangle())
             }
             Text("三通道都落在同一套 预演→逐把确认→真实入库 上, 谁都不绕过 441 与 445。")
                 .font(.caption2)
@@ -2004,6 +2022,10 @@ struct MigrationWizardView: View {
         .padding(.horizontal, DS.Space.xs)
         .frame(minHeight: 30)
         .background(on ? DS.Palette.accentText.opacity(0.12) : DS.Palette.surfaceAlt, in: Capsule())
+        // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 没有 minHeight (< 44)。
+        // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+        .frame(minHeight: DS.Hit.min)
+        .contentShape(Rectangle())
     }
     /// 453 哈希层逐段展示: 解析时已过前两层, 这里只说第三层结论
     @ViewBuilder
@@ -2180,6 +2202,10 @@ struct MigrationWizardView: View {
         .padding(.horizontal, DS.Space.xs)
         .frame(minHeight: 30)
         .background(on ? DS.Palette.accentText.opacity(0.12) : DS.Palette.surfaceAlt, in: Capsule())
+        // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 没有 minHeight (< 44)。
+        // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+        .frame(minHeight: DS.Hit.min)
+        .contentShape(Rectangle())
     }
 
     // ---------- 445 中断续迁: 事务表还在 → 回滚 / 继续 (已落库的锁不重做) ----------

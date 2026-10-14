@@ -1122,5 +1122,9 @@ struct BusyButton: View {
         }
         .buttonStyle(PrimaryActionStyle())
         .disabled(isBusy || disabled)
+        // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 16.5pt (< 44)。
+        // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+        .frame(minHeight: DS.Hit.min)
+        .contentShape(Rectangle())
     }
 }

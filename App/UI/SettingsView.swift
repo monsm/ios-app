@@ -55,6 +55,10 @@ struct SettingsView: View {
                 }
             }
         }
+        // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 16.6pt (< 44)。
+        // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+        .frame(minHeight: DS.Hit.min)
+        .contentShape(Rectangle())
     }
 
     var body: some View {
@@ -258,6 +262,10 @@ struct SettingsView: View {
                         .foregroundStyle(DS.Palette.textSub)
                 }
             }
+            // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 16.5pt (< 44)。
+            // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+            .frame(minHeight: DS.Hit.min)
+            .contentShape(Rectangle())
         } header: {
             Text("帮助与关于")
         } footer: {
@@ -1138,6 +1146,10 @@ struct SettingsView: View {
                         .monospacedDigit()
                 }
             }
+            // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 16.5pt (< 44)。
+            // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+            .frame(minHeight: DS.Hit.min)
+            .contentShape(Rectangle())
             if eggShown {
                 LabeledRow("构建", Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?")
                 LabeledRow("遥测", "无 · 全程离线")

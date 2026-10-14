@@ -129,7 +129,19 @@ function parseFile(file, tk, dens) {
   const src = fs.readFileSync(file, 'utf8');
   const tree = PARSER.parse(src);
   const errors = [];
-  (function w(n) { if (n.type === 'ERROR' || n.type === 'MISSING') errors.push({ line: n.startPosition.row + 1, kind: n.type }); for (const c of n.children) w(c); })(tree.rootNode);
+  // 文法里这些形状是 tree-sitter-swift 的已知短板 (`do { if x { } else { } }` / 成员级 #if / `try? await` 条件位),
+  // 代码本身是对的 (CI 一直在编)。所以盲区要**分性质**: 里面有没有呈现面决定它值不值得报 ——
+  // 一段 async 拉日志的 do-catch 解析失败不影响布局判定, 报"该区域未参与判定"就是把工具缺陷算成项目风险。
+  const VIEW_RE = /\b(VStack|HStack|ZStack|LazyVGrid|LazyHGrid|List|Form|Section|ScrollView|GroupBox|Text|Label|Button|Toggle|Picker|Menu|NavigationLink|Slider|Stepper|TextField)\s*[({]/;
+  (function w(n) {
+    if (n.type === 'ERROR' || n.type === 'MISSING') {
+      let ui = false;
+      (function deep(m) { if (ui) return; if (m.type === 'call_expression' && VIEW_RE.test((m.text || '').slice(0, 400))) ui = true; for (const c of m.children) deep(c); })(n);
+      errors.push({ line: n.startPosition.row + 1, kind: n.type, ui });
+      return;
+    }
+    for (const c of n.children) w(c);
+  })(tree.rootNode);
   // 材质载体: 自己挂了实底背景/玻璃的那一颗。叶子节点 (Image/Circle/自定义卡) 也常是面板 ——
   // 2026-10-14 与一把正则尺子对表时发现: 只按"容器/可交互/文字"收节点会漏掉这类面板,
   // 于是 MemberCenterView 的角标底板这种实底永远数不到 (R6 就在那儿变成半瞎的)。

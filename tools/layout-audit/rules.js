@@ -23,8 +23,9 @@ function srcLines(file) {
   }
   return lineCache.get(file);
 }
-function allowedNear(lines, ln) {
-  for (let i = Math.max(0, ln - 7); i < Math.min(lines.length, ln); i++) if (/@layout-allow\s+面板实底/.test(lines[i])) return true;
+function allowedNear(lines, ln, tag) {
+  const re = new RegExp('@layout-allow\\s+' + (tag || '面板实底'));
+  for (let i = Math.max(0, ln - 8); i < Math.min(lines.length, ln); i++) if (re.test(lines[i])) return true;
   return false;
 }
 
@@ -108,7 +109,9 @@ function runAll(preparsed, opts) {
   const push = (f) => findings.push(f);
   for (const { file, nodes, errors } of preparsed) {
     // 建 parent 元素引用 (flatten 时只存了 name/line, 这里回连)
-    if (errors.length) push({ rule: 'R0 覆盖缺口', file, line: errors.map((e) => e.line).join(','), msg: `${errors.length} 处 tree-sitter 解析失败, 该文件这些区域未参与判定`, calc: errors.map((e) => e.kind + '@' + e.line).join(' ') });
+    const errUI = errors.filter((e) => e.ui), errLogic = errors.filter((e) => !e.ui);
+    if (errUI.length) push({ rule: 'R0 覆盖缺口', file, line: errUI.map((e) => e.line).join(','), msg: `${errUI.length} 处 tree-sitter 解析失败且区域内有呈现面, 该文件这些区域未参与布局判定`, calc: errUI.map((e) => e.kind + '@' + e.line).join(' ') });
+    if (errLogic.length) push({ rule: 'R0 文法盲区·无呈现面', file, line: errLogic.map((e) => e.line).join(','), sev: 'lo', msg: `${errLogic.length} 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响`, calc: errLogic.map((e) => e.kind + '@' + e.line).join(' ') });
 
     nodes.forEach((e) => {
       const avail = availWidth(e, deviceW, tk, dens);
@@ -180,22 +183,47 @@ function runAll(preparsed, opts) {
       // ---- R5 触达推断 (无显式 frame 时由内容反推) ----
       const inter = A.hasInteractive(e);
       const inSysRow = (function up(n, d2) { while (n && d2 < 12) { if (['List','Form','Section'].includes(n.name)) return true; n = n.parentEl; d2++; } return false; })(e, 0);
-      if (inter && !(inSysRow && ['Picker','Stepper','Menu','Toggle','Slider','TextField','SecureField','NavigationLink'].includes(e.name))) {
+      // Menu 的**内容项**由系统排版 (UIKit 菜单单元自带行高), 给 label 撑 minHeight 不改命中区,
+      // 只会把菜单撑高 —— 所以严格后代不判。但 Menu **触发器本身**照判 (AchievementsView:131 那种
+      // 一整条只有 14.5pt 的触发胶囊是真缺陷), 它不是自己的后代。
+      const inMenuContent = (function up(n, d2) { n = n.parentEl; while (n && d2 < 14) { if (n.name === 'Menu') return true; n = n.parentEl; d2++; } return false; })(e, 0);
+      if (inter && !inMenuContent && !(inSysRow && ['Picker','Stepper','Menu','Toggle','Slider','TextField','SecureField','NavigationLink'].includes(e.name))) {
         // 按钮的命中尺寸由 **label 子节点**决定 (本仓普遍写在 label 里: .frame(minHeight: DS.Hit.min))
         // ⇒ 只看自己的 mods 会把 52 处全判成假警报 (AlarmCenterView:416 就是这么被冤枉的)。
-        const self = (n) => { const fr = A.mod(n, 'frame'); return fr ? (A.num(fr.args.height, tk, dens) ?? A.num(fr.args.minHeight, tk, dens)) : null; };
+        // 链上有多枚 frame 时取**最外那一枚** (源序最后一个): `.frame(minHeight:30)` 里再套
+        // `.frame(minHeight:44)` 是"视觉小、命中大"的写法, 起作用的正是外面那枚; 取 max 会把
+        // 反过来写 (外小内大) 的真缺陷藏起来。
+        const self = (n) => {
+          const frs = (n.mods || []).filter((m) => m.name === 'frame');
+          if (!frs.length) return null;
+          const fr = frs[frs.length - 1];
+          const v = A.num(fr.args.height, tk, dens);
+          return v != null ? v : A.num(fr.args.minHeight, tk, dens);
+        };
         const descendants = (n, acc = []) => { n.children.forEach((c) => { acc.push(c); descendants(c, acc); }); return acc; };
         let h = self(e);
         const kidsH = descendants(e).map(self).filter((v) => v != null);
         if (h == null && kidsH.length) h = Math.max(...kidsH);
         const shaped = descendants(e).some((c) => A.mod(c, 'contentShape')) || !!A.mod(e, 'contentShape');
-        if (h != null && h < tk.HIT) push({ rule: 'R5 触达不足', file, line: e.line, msg: `${e.name} 命中框高 ${h}pt < ${tk.HIT}pt`, calc: 'frame(height/minHeight)', sev: 'hi' });
+        // 与 R6 同一条豁免纪律: 标了 @layout-allow 触达 的 (系统控件本体高度不归我们管那一族) 不改判成"已修",
+        // 而是单列一条"已定性"—— 计数看得见, 复测方法写在源码注释里, 标记挪走立刻重新开火。
+        const allowHit = allowedNear(srcLines(file), e.line, '触达');
+        if (h != null && h < tk.HIT) push({ rule: allowHit ? 'R5 触达已定性' : 'R5 触达不足', file, line: e.line, msg: `${e.name} 命中框高 ${h}pt < ${tk.HIT}pt`, calc: 'frame(height/minHeight)', sev: allowHit ? 'lo' : 'hi' });
         else if (h == null && !shaped) {
-          const pv = (e.mods || []).filter((m) => m.name === 'padding').map((m) => { const c = m.args._ || []; return A.num(c.length > 1 ? c[1] : c[0], tk, dens) || 0; }).reduce((a, b) => a + b, 0);
-          const kid = e.children.find((c) => c.name === 'Text');
+          // 原实现只看**直接子节点**里的 Text ⇒ label 写成 HStack { Image; Text } 那种 (菜单触发器/图标按钮)
+          // 整个跳过, 触发器只有 14.5pt 也报不出来。改为在后代里找第一枚 Text 估行高。
+          const kid = (function first(n) {
+            for (const c of n.children || []) { if (c.name === 'Text') return c; const g = first(c); if (g) return g; }
+            return null;
+          })(e);
+          const padOf = (n) => (n.mods || []).filter((m) => m.name === 'padding').map((m) => { const c = m.args._ || []; return A.num(c.length > 1 ? c[1] : c[0], tk, dens) || 0; }).reduce((a, b) => a + b, 0);
+          // 原实现只看 e 自己的 padding ⇒ "padding 写在 label 里面那种"被低估成纯行高 (假警报)。
+          // 沿 parentEl 从文字收到本节点, 链上每层 padding 都算进去。
+          let pv = 0;
+          if (kid) { let n = kid, d3 = 0; while (n && d3 < 14) { pv += padOf(n); if (n === e) break; n = n.parentEl; d3++; } }
           const { pt } = fontPt(kid || e, scale, 1);
           const est = linePt(pt) + pv;
-          if (kid && est < tk.HIT - 0.5) push({ rule: 'R5 触达不足(推算)', file, line: e.line, msg: `${e.name} 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 ${est.toFixed(1)}pt < ${tk.HIT}pt`, calc: '行高+padding 反推', sev: 'md' });
+          if (kid && est < tk.HIT - 0.5) push({ rule: allowHit ? 'R5 触达已定性' : 'R5 触达不足(推算)', file, line: e.line, msg: `${e.name} 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 ${est.toFixed(1)}pt < ${tk.HIT}pt`, calc: '行高+padding 反推', sev: allowHit ? 'lo' : 'md' });
         }
       }
       // ---- R6 材质一致性 ----

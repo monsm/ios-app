@@ -611,6 +611,10 @@ struct AddPwdView: View {
                 }
                 .buttonStyle(SecondaryActionStyle())
                 .disabled(busy)
+                // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 16.5pt (< 44)。
+                // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+                .frame(minHeight: DS.Hit.min)
+                .contentShape(Rectangle())
             } footer: {
                 Text("请将手机靠近门锁 · 添加成功后密码会登记到本机台账")
             }
@@ -1282,6 +1286,10 @@ struct LockProfileView: View {
                         .buttonStyle(PressableButtonStyle())
                         .accessibilityLabel("色标 \(s.name)")
                         .accessibilityAddTraits(colorKey == s.key ? [.isSelected] : [])
+                        // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 没有 minHeight (< 44)。
+                        // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+                        .frame(minHeight: DS.Hit.min)
+                        .contentShape(Rectangle())
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -2106,6 +2114,10 @@ struct KeychainHWView: View {
             Button("查询全部钥匙") { Task { await listKeys(d) } }
             Button("删除本锁钥匙") { confirmDeleteKey(d) }
         }
+        // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 14.5pt (< 44)。
+        // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+        .frame(minHeight: DS.Hit.min)
+        .contentShape(Rectangle())
     }
 
     private func dongleDisplay(_ hex: String) -> String {
@@ -2311,6 +2323,10 @@ struct GatewayView: View {
             Button("刷新状态") { Task { await refresh(g) } }
             Button("重启网关") { confirmReboot(g) }
         }
+        // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 14.5pt (< 44)。
+        // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+        .frame(minHeight: DS.Hit.min)
+        .contentShape(Rectangle())
     }
 
     private func removeGateway(_ g: Gateway) {
@@ -2516,6 +2532,10 @@ struct MembersView: View {
                 }
             }
         }
+        // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 14.5pt (< 44)。
+        // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+        .frame(minHeight: DS.Hit.min)
+        .contentShape(Rectangle())
     }
 
     private func memberBadgeIcon(_ m: Member) -> some View {

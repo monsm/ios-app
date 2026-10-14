@@ -103,6 +103,10 @@ struct DeviceHomeView: View {
                             }
                             .buttonStyle(PressableButtonStyle())
                             .accessibilityLabel("首用提示：长按主控卡上的连接耗时标记可看最近状态变化，点按收起")
+                            // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 22.6pt (< 44)。
+                            // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+                            .frame(minHeight: DS.Hit.min)
+                            .contentShape(Rectangle())
                         }
                         // 767 按组切换 + 764 多锁状态图标行: 都放在 Hero 卡上方 ——
                         // 先一眼看清"哪把锁有事", 再落到当前锁的主控卡。
@@ -540,6 +544,10 @@ struct DeviceHomeView: View {
                     }
                     .buttonStyle(PressableButtonStyle())
                     .accessibilityLabel("第 \(i + 1) 页 \(LockArchive.displayName(kc))\(isLow(kc) ? ", 低电量" : "")")
+                    // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 没有 minHeight (< 44)。
+                    // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+                    .frame(minHeight: DS.Hit.min)
+                    .contentShape(Rectangle())
                 }
             }
             .accessibilityElement(children: .contain)
@@ -652,6 +660,10 @@ struct DeviceHomeView: View {
                 if LockArchive.isSleeping(kc.mac) { Image(systemName: "moon.zzz.fill").foregroundStyle(DS.Palette.textSub) }
             }
         }
+        // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 没有 minHeight (< 44)。
+        // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+        .frame(minHeight: DS.Hit.min)
+        .contentShape(Rectangle())
     }
     // 101/763/771/786: Hero 卡横滑翻页 — 圆盘与状态文本随卡片平行滑动交接 (TabView 原生平移)。
     // 786 "只有 Hero 区响应翻锁": 手势就挂在这个 TabView 上, 页面别处 (圆盘纵向滑、下拉刷新、Tab 栏) 各管各的轴,
@@ -797,6 +809,10 @@ struct DeviceHomeView: View {
                                         Text(h.at + " " + h.to)
                                     }
                                 }
+                                // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 16.5pt (< 44)。
+                                // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+                                .frame(minHeight: DS.Hit.min)
+                                .contentShape(Rectangle())
                             }
                             // 91 回连静默小点
                             if reconnectDot {
@@ -1654,6 +1670,8 @@ struct DeviceHomeView: View {
                              count: recentAllLocks ? mergedRecent.count : rows.count)
                 // 只有一把锁时不出现这排: 单锁没有"跨锁"可言, 放上去等于给一个恒真的选项。
                 if app.devices.count > 1 {
+                    // @layout-allow 触达托管 Picker: 控件本体高度由系统渲染, 我们撑 frame 只会多出一片点不动的死区。
+                    // 上机复测: 用拇指点这一行的上下边缘, 看打不打得开 (打得开=系统已给够 44, 这条可以销)
                     Picker("最近开门范围", selection: Binding(   // 765 最近开门范围
                         get: { recentAllLocks },
                         set: { recentAllLocks = $0; DB.store.set("kf_recent_all", $0) })) {

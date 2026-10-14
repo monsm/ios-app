@@ -674,7 +674,7 @@ struct CredCalendarView: View {
                         .font(.caption2.weight(.semibold))
                         // warn 是语义填充色, 走"填充上的前景"令牌 (浅档白字/深档墨字, 机检 E1)
                         .foregroundStyle(DS.Palette.onSem)
-                        .padding(.horizontal, DS.Space.xs).padding(.vertical, 1)
+                        .padding(.horizontal, DS.Space.xs).padding(.vertical, DS.Space.xxs)
                         .background(DS.Palette.warn, in: Capsule())
                         .lineLimit(1)
                 }
@@ -1273,6 +1273,10 @@ struct CredDisableSheet: View {
                     .accessibilityHint(reason.isEmpty
                         ? "需先选停用原因才能执行"
                         : "已展示影响成员与不可逆说明, 点按即执行停用")
+                        // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 16.5pt (< 44)。
+                        // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+                        .frame(minHeight: DS.Hit.min)
+                        .contentShape(Rectangle())
                 }
             }
             .navigationTitle("批量停用确认")
