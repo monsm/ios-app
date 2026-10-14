@@ -204,7 +204,7 @@ struct SecurityCenterView: View {
                                     .font(.system(size: DS.Icon.sm))
                                     .foregroundStyle(r.kind == "弱口令" ? DS.Palette.danger : DS.Palette.warn)
                                     .accessibilityHidden(true)
-                                VStack(alignment: .leading, spacing: 1) {
+                                VStack(alignment: .leading, spacing: DS.Space.xxs) {
                                     Text("\(r.kind) · \(r.lockName) 密码 #\(r.alias)")
                                         .font(.subheadline)
                                         .foregroundStyle(DS.Palette.text)
@@ -330,7 +330,7 @@ struct SecRow<Trailing: View>: View {
                 .font(.system(size: DS.Icon.sm, weight: .medium))
                 .foregroundStyle(iconTone.color)
                 .frame(width: DS.Icon.md, height: DS.Icon.md)
-            VStack(alignment: .leading, spacing: 1) {
+            VStack(alignment: .leading, spacing: DS.Space.xxs) {
                 Text(title)
                     .font(.subheadline.weight(.medium))
                 if !subtitle.isEmpty {

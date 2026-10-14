@@ -185,7 +185,7 @@ struct AccessibilityView: View {
                 set: { app.setUnlockOption("kf_onehand", $0) }))
             // 875 ⚠ 按住时长自定滑杆 (系统"按住持续时间"无读取 API, 0.4–1.6s, 默认 0.9s 与包1 对齐)
             VStack(alignment: .leading, spacing: DS.Space.xs) {
-                HStack {
+                HStack(spacing: DS.Space.s) {
                     Text("按住时长")   // 875 按住时长
                     Spacer()
                     Text(String(format: "%.1f 秒", AXPrefs.holdDuration))
@@ -204,7 +204,7 @@ struct AccessibilityView: View {
             // 口径如实: 这个值的当前消费只有本页练习区的演示文字 —— 本 App 还没挂上 868 扫描组,
             // 真正逐项聚焦的节奏由系统 VoiceOver/切换控制自己的设置决定 (接线后此滑杆才成为行为源)。
             VStack(alignment: .leading, spacing: DS.Space.xs) {
-                HStack {
+                HStack(spacing: DS.Space.s) {
                     Text("扫描停留时长")   // 868/869 扫描停留时长
                     Spacer()
                     Text(String(format: "%.1f 秒", AXPrefs.dwellTime))

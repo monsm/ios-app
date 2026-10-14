@@ -156,7 +156,7 @@ struct LockOverviewView: View {
                     } label: {
                         VStack(alignment: .leading, spacing: DS.Space.xxs) {
                             HStack(spacing: DS.Space.s) {
-                                VStack(alignment: .leading, spacing: 1) {
+                                VStack(alignment: .leading, spacing: DS.Space.xxs) {
                                     Text(u.name)
                                         .font(.caption)
                                         .foregroundStyle(DS.Palette.text)
@@ -381,7 +381,7 @@ struct LockOverviewView: View {
                 ForEach(usages) { u in
                     let util = max(utilization(u), 0)
                     VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                        HStack {
+                        HStack(spacing: DS.Space.s) {
                             Text(u.name)
                                 .font(.caption)
                                 .foregroundStyle(DS.Palette.text)

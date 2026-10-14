@@ -1462,7 +1462,9 @@ struct RootView: View {
         }
         .padding(.horizontal, DS.Space.l)
         .padding(.vertical, DS.Space.s)
-        .background(DS.Palette.surface, in: Capsule())
+        // 2026-10-14 材质统一: 悬浮回执条从实底改液态玻璃 (与 ToastView 同一条 axGlass 通道)。
+        // 它是浮在内容之上的一层, 正是折射底该起作用的位置; 描边不加 —— 玻璃自带边缘高光。
+        .axGlassCapsule()
         .shadow(color: .cardElevation, radius: 8, y: 3)
         .transition(.move(edge: .bottom).combined(with: .opacity))
         .allowsHitTesting(false)
@@ -1558,6 +1560,7 @@ struct AppLockView: View {
     @State private var breathe = false
     @State private var failCount = 0   // 877 应用锁连败计数: 3 次后切大字替代键降级路径
     @State private var faceFailStreak = 0   // 235 面容连败计数: 2 次未识别自动落回密码键盘
+    @State private var autoFaceAsked = false   // 面容优先: 每次面对锁屏只自动弹一次
     /// 877 验证降级路径: 生物识别**连败三次**后，键盘换成 56pt 起的大按键密码盘。
     /// 判据挂在面容失败上而不是口令失败上 —— 口令连败那一条早就有 (下面 failCount 出的大字生物键)，
     /// 缺的是反方向: 脸被拒了三次之后，手指还能不能舒服地按对口令。会话态，不落脚本盘。
@@ -1574,6 +1577,63 @@ struct AppLockView: View {
         DB.store.getBool(SecKey.randomKeys, false)
             && DB.store.getBool(SecKey.randKeyDigits, false)
             && !manualEntry
+    }
+
+    /// 面容验证的唯一入口 (2026-10-14 抽出): 877 的"连败三次后大字替代键"与新的"默认先要脸"共用
+    /// 同一份成功/失败口径。分成两处写就会长出两套连败计数 —— 取消只记事件不计连败、两次未识别
+    /// 落回键盘、三次未识别切 56pt 大键, 这三条只能有一份真相。
+    private func runBiometric() {
+        AuthKit.verifyBiometric {
+            LockGuard.resetStreak()
+            LockGuard.clearDuressMark()
+            LockGuard.noteSession(how: "生物识别")
+            app.commitUnlock(reauth: reauth)
+            failCount = 0
+            faceFailStreak = 0
+            faceHint = false
+        } onFail: { why in
+            // 392: 面容失败/中断也进留痕 (原句: 时间+方式+连败次数)。
+            // "识别不匹配/锁停"按一次失败计 (走 389 同一条连败+冷却); 用户取消/改用密码
+            // 只是中断, 记事件但不计连败 —— 把取消算试错会让下次输错就被罚冷却。
+            if why == "识别不匹配" || why == "连续失败已锁停生物识别" {
+                LockGuard.registerFailure(how: "面容")
+                failCount += 1
+                // 235: 面容两次未识别不再干等 — 自动落回密码键盘 (键盘态本就在场,
+                // 这里只置提示并在完整键盘档拉焦点), 与 877 的"密码连败出面容键"合成双向退路
+                faceFailStreak += 1
+                if faceFailStreak >= 2 {
+                    faceHint = true
+                    failed = false   // 陈旧口令错误行让位: 否则它的分支把面容提示挡在 !failed 之外不现身
+                    if !useKeypad { focused = true }
+                    LockGuard.appendTrace("面容两次未识别, 自动落回密码键盘")   // 235 面容两次未识别
+                }
+                // 877 反方向降级: 脸被拒三次之后给一套按得准的大键, 而不是继续要人用脸。
+                // 键序回到自然序 (0…9) —— 刚被系统拒绝三次的人不该再去猜 396 那张随机盘;
+                // 随机序是防偷看的安全特性, 口令连败那一条路仍然照 396 走, 两者不互相顶替。
+                if faceFailStreak == 3 {
+                    bigKeys = true
+                    manualEntry = false
+                    focused = false
+                    keyOrder = (0...9).map { String($0) }
+                    LockGuard.appendTrace("面容三次未识别, 切 56pt 大按键密码盘")   // 877 面容三次未识别
+                    AXTools.announce("面容连续三次没认出来, 已换成大按键密码盘")
+                }
+            } else {
+                LockGuard.appendTrace("应用锁面容验证中断 — \(why) (不计连败)")
+            }
+        }
+    }
+
+    /// 拍板 2026-10-14: 开了本机密码时**默认先要脸**, 通不过再落回口令键盘。
+    /// · 每次面对锁屏只自动弹一次 (autoFaceAsked), 不重复打扰;
+    /// · 冷却中 / 已判失败时不弹 —— 冷却里弹面容等于给 389 的罚时开后门;
+    /// · 延后一个 runloop 发起: 转场动画期间起 LAContext 会被系统 systemCancel 吞掉,
+    ///   用户只会看到"没弹脸就要密码", 那还不如不接这一条。
+    private func biometricFirstOnAppear() {
+        guard !autoFaceAsked else { return }
+        autoFaceAsked = true
+        guard AuthKit.biometricAvailable, cooling <= 0, !failed else { return }
+        DispatchQueue.main.async { runBiometric() }
     }
 
     var body: some View {
@@ -1621,7 +1681,9 @@ struct AppLockView: View {
                     .multilineTextAlignment(.center)
                     .padding(.vertical, DS.Space.m)
                     .padding(.horizontal, DS.Space.l)
-                    .background(DS.Palette.surface, in: RoundedRectangle(cornerRadius: DS.Radius.control))
+                    // 2026-10-14 材质统一: 口令输入框上玻璃 (锁屏页整页都是暗底, 输入框是这一页的主表面)。
+                    // 下面那枚 overlay 必须留着且不能换成玻璃: 它画的是"输错/聚焦"状态色, 不是装饰边。
+                    .axGlass(DS.Radius.control)
                     .overlay(
                         RoundedRectangle(cornerRadius: DS.Radius.control)
                             .strokeBorder(failed ? DS.Palette.danger : DS.Palette.hairline,
@@ -1657,45 +1719,7 @@ struct AppLockView: View {
             // 877 验证降级大键: 连败 3 次后, 设备支持 Face ID / Touch ID 时给大字替代键 (56pt+)
             if failCount >= 3, AuthKit.biometricAvailable {
                 Button("用 Face ID / Touch ID 解锁 (大字)") {
-                    AuthKit.verifyBiometric {
-                        LockGuard.resetStreak()
-                        LockGuard.clearDuressMark()
-                        LockGuard.noteSession(how: "生物识别")
-                        app.commitUnlock(reauth: reauth)
-                        failCount = 0
-                        faceFailStreak = 0
-                        faceHint = false
-                    } onFail: { why in
-                        // 392: 面容失败/中断也进留痕 (原句: 时间+方式+连败次数)。
-                        // "识别不匹配/锁停"按一次失败计 (走 389 同一条连败+冷却); 用户取消/改用密码
-                        // 只是中断, 记事件但不计连败 —— 把取消算试错会让下次输错就被罚冷却。
-                        if why == "识别不匹配" || why == "连续失败已锁停生物识别" {
-                            LockGuard.registerFailure(how: "面容")
-                            failCount += 1
-                            // 235: 面容两次未识别不再干等 — 自动落回密码键盘 (键盘态本就在场,
-                            // 这里只置提示并在完整键盘档拉焦点), 与 877 的"密码连败出面容键"合成双向退路
-                            faceFailStreak += 1
-                            if faceFailStreak >= 2 {
-                                faceHint = true
-                                failed = false   // 陈旧口令错误行让位: 否则它的分支把面容提示挡在 !failed 之外不现身
-                                if !useKeypad { focused = true }
-                                LockGuard.appendTrace("面容两次未识别, 自动落回密码键盘")   // 235 面容两次未识别
-                            }
-                            // 877 反方向降级: 脸被拒三次之后给一套按得准的大键, 而不是继续要人用脸。
-                            // 键序回到自然序 (0…9) —— 刚被系统拒绝三次的人不该再去猜 396 那张随机盘;
-                            // 随机序是防偷看的安全特性, 口令连败那一条路仍然照 396 走, 两者不互相顶替。
-                            if faceFailStreak == 3 {
-                                bigKeys = true
-                                manualEntry = false
-                                focused = false
-                                keyOrder = (0...9).map { String($0) }
-                                LockGuard.appendTrace("面容三次未识别, 切 56pt 大按键密码盘")   // 877 面容三次未识别
-                                AXTools.announce("面容连续三次没认出来, 已换成大按键密码盘")
-                            }
-                        } else {
-                            LockGuard.appendTrace("应用锁面容验证中断 — \(why) (不计连败)")
-                        }
-                    }
+                    runBiometric()   // 2026-10-14 面容优先: 处理逻辑抽到 runBiometric, 两处共用一份
                 }
                 .font(.title2.weight(.semibold))
                 .padding(.vertical, DS.Space.m)
@@ -1731,6 +1755,7 @@ struct AppLockView: View {
             // 877: 大键档是**本次会话**的降级, 重新面对锁屏时回到常态键盘 (与 faceFailStreak 同生同灭,
             // 留下一份落不掉的"大键状态"反而会让下次进来的人找不到熟悉的键位)
             bigKeys = false
+            biometricFirstOnAppear()   // 2026-10-14 面容优先 (通不过再落回键盘, 见 runBiometric)
         }
         .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { _ in
             guard cooling > 0 else { return }
@@ -1800,7 +1825,9 @@ struct AppLockView: View {
             Text(text)
                 .font(tall ? .title2.weight(.medium) : .title3.weight(.medium))
                 .frame(maxWidth: .infinity, minHeight: tall ? 56 : DS.Hit.min)
-                .background(DS.Palette.surface, in: RoundedRectangle(cornerRadius: DS.Radius.control))
+                // 2026-10-14 材质统一: 12 枚键帽同批上玻璃。这里的降级面必须仍带描边 ——
+                // 键帽是实底时靠色块之间的缝隙分格，降成实底后若无边，整片键盘会糊成一块板。
+                .axGlass(DS.Radius.control)
                 .foregroundStyle(DS.Palette.text)
         }
     }
@@ -1928,17 +1955,22 @@ struct Card<Content: View>: View {
         self.tint = tint
         self.content = content()
     }
+    /// 语义色叠底 (低电/告警的 ToneColor)。实底时代是 0.08；改玻璃后提到 0.14 ——
+    /// 染色要同时压住自身与身后折射的底色，沿用 0.08 会让"这张卡是告警色"这件事失色。
     private var tintWash: Color {
-        tint.map { $0.color.opacity(0.08) } ?? .clear
+        tint.map { $0.color.opacity(0.14) } ?? .clear
     }
     var body: some View {
         VStack(alignment: .leading, spacing: DS.Space.m) { content }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(DS.Space.l)
+            // 2026-10-14 材质统一: 主表面 Card 从实底改液态玻璃。走既有 axGlass 而不是自己写 glassEffect ——
+            // 那条路径自带 226 降低透明度 / 862 增强对比 的降实底退路, 另写一份就会让"关玻璃"只关一半界面。
+            .axGlass(DS.Radius.card)
             .background {
+                // 语义色叠底走 tintWash (它为什么是 0.14 而不是实底时代的 0.08，写在那个属性的注释上)
                 let shape = RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous)
-                shape.fill(DS.Palette.surface)
-                    .overlay(shape.fill(tintWash))
+                shape.fill(tintWash)
             }
             .shadow(color: .cardElevation, radius: 12, y: 4)
             .padding(.horizontal, DS.Space.gutter)
@@ -1961,7 +1993,7 @@ struct SectionTitle: View {
                 Text("\(count)")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(DS.Palette.textSub)
-                    .padding(.horizontal, 6).padding(.vertical, 1)
+                    .padding(.horizontal, DS.Space.s).padding(.vertical, 1)
                     .background(DS.Palette.surfaceAlt, in: Capsule())
             }
             Spacer(minLength: 0)

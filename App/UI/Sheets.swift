@@ -208,6 +208,9 @@ struct AddDeviceView: View {
         }
         .padding(.vertical, DS.Space.s)
         .padding(.horizontal, DS.Space.m)
+        // 2026-10-14 材质统一批次: 四步进度条**保持实底**。它在配网 List 的 Section 里,
+        // 行组已经是一层玻璃面 —— 行内再上玻璃就是玻璃叠玻璃, 接缝正好压在步骤字底下。
+        // @layout-allow 面板实底
         .background(DS.Palette.surface, in: RoundedRectangle(cornerRadius: DS.Radius.control))
         .animation(DS.Motion.soft, value: current)
     }
@@ -1700,7 +1703,7 @@ struct FirmwareView: View {
             .accessibilityLabel("升级阶段: \(stage == 0 ? "准备" : stage == 1 ? "传输" : "校验")")
             ProgressView(value: min(pct, 100), total: 100)
                 .accessibilityLabel("传输进度 \(Int(pct))%")
-            HStack {
+            HStack(spacing: DS.Space.s) {
                 Text("\(Int(pct))%")
                     .font(.caption)
                     .monospacedDigit()
@@ -2414,7 +2417,7 @@ struct MembersView: View {
                 // 997 家庭共创目标: 本月全家备份进度
                 Section {
                     VStack(alignment: .leading, spacing: DS.Space.xs) {
-                        HStack {
+                        HStack(spacing: DS.Space.s) {
                             Text("全家本月备份")
                                 .font(.subheadline.weight(.medium))
                                 .foregroundStyle(DS.Palette.text)

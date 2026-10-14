@@ -249,7 +249,7 @@ struct RecordsView: View {
                                 .lineLimit(1)
                                 .foregroundStyle(DS.Palette.onSem)
                                 .padding(.horizontal, 4)
-                                .padding(.vertical, 1)
+                                .padding(.vertical, DS.Space.xxs)
                                 .background(DS.Palette.danger, in: Capsule())
                                 .offset(x: 12, y: -9)
                                 .accessibilityHidden(true)
@@ -570,6 +570,9 @@ struct RecordsView: View {
                     }
                 }
                 .padding(DS.Space.s)
+                // 2026-10-14 材质统一批次: 搜索框**保持实底**。它在 Section 里 (这一页是 List),
+                // 行组本身已经是一层玻璃面 —— 再给行里的控件上玻璃就是玻璃叠玻璃, 接缝全在字底下。
+                // @layout-allow 面板实底
                 .background(DS.Palette.surface, in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: DS.Radius.control).strokeBorder(DS.Palette.hairline, lineWidth: 0.5))
 
@@ -690,7 +693,7 @@ struct RecordsView: View {
                 }
             }
         } header: {
-            HStack {
+            HStack(spacing: DS.Space.s) {
                 Text("搜索")   // 551 搜索
                 Spacer(minLength: DS.Space.s)
                 Menu {
@@ -975,7 +978,7 @@ struct RecordsView: View {
                 holidayFeedRows
             }
         } header: {
-            HStack {
+            HStack(spacing: DS.Space.s) {
                 Text("筛选")   // 564/571/572/567/568/569 筛选
                 Spacer(minLength: DS.Space.s)
                 if activeFilters {
@@ -1015,7 +1018,7 @@ struct RecordsView: View {
                 .font(.footnote.weight(.medium))
                 .lineLimit(1)
                 .padding(.horizontal, 12)
-                .padding(.vertical, 10)
+                .padding(.vertical, DS.Space.m)
                 .background(on ? DS.Palette.accent : DS.Palette.surfaceAlt, in: Capsule())
                 .overlay(Capsule().strokeBorder(DS.Palette.hairline, lineWidth: 0.5))
                 .foregroundStyle(on ? DS.Palette.onAccent : DS.Palette.text)
@@ -1035,7 +1038,7 @@ struct RecordsView: View {
                 .font(.footnote.weight(.medium))
                 .lineLimit(1)
                 .padding(.horizontal, 12)
-                .padding(.vertical, 10)
+                .padding(.vertical, DS.Space.m)
                 .background(on.wrappedValue ? DS.Palette.danger.opacity(0.12) : DS.Palette.surfaceAlt, in: Capsule())
                 .overlay(Capsule().strokeBorder(on.wrappedValue ? DS.Palette.danger.opacity(0.4) : DS.Palette.hairline, lineWidth: 0.5))
                 .foregroundStyle(on.wrappedValue ? DS.Palette.danger : DS.Palette.text)
@@ -1094,7 +1097,7 @@ struct RecordsView: View {
                     .foregroundStyle(DS.Palette.ok)
                 }
                 // 590 断档灰点: 旧→新, 实心=有人开门, 灰点=断档那天
-                HStack(spacing: 6) {
+                HStack(spacing: DS.Space.s) {
                     ForEach(0..<7, id: \.self) { i in
                         Circle()
                             .fill(openGapDots[i].open ? DS.Palette.ok : DS.Palette.hairline)
@@ -1717,7 +1720,7 @@ struct RecordsView: View {
                                 .foregroundStyle(DS.Palette.danger)
                         }
                     }
-                    .padding(.horizontal, 6)
+                    .padding(.horizontal, DS.Space.s)
                     .padding(.vertical, 2)
                     .background(hasAlarm ? DS.Palette.danger.opacity(0.10) : DS.Palette.surfaceAlt, in: Capsule())
                 }
@@ -1852,7 +1855,7 @@ struct RecordsView: View {
                 // 770 全部锁时行首带锁名小标签; 105: 标签前挂该锁档案的符号与色标 (与 Hero 卡/胶囊同一字段)
                 if !r.lockName.isEmpty {
                     let rowLockMac = r.rowMac.isEmpty ? mac : r.rowMac
-                    HStack(spacing: 3) {
+                    HStack(spacing: DS.Space.xs) {
                         Image(systemName: LockArchive.symbolName(LockArchive.meta(rowLockMac)))
                             .font(.system(size: DS.Icon.xs, weight: .semibold))
                             .foregroundStyle(LockArchive.swatchColor(LockArchive.meta(rowLockMac).colorKey))
@@ -1861,7 +1864,7 @@ struct RecordsView: View {
                             .lineLimit(1)
                             .foregroundStyle(DS.Palette.accentText)
                     }
-                    .padding(.horizontal, 6)
+                    .padding(.horizontal, DS.Space.s)
                     .padding(.vertical, 2)
                     .background(DS.Palette.accentText.opacity(0.10), in: Capsule())
                     .frame(maxWidth: 130)
@@ -2080,7 +2083,7 @@ struct RecordsView: View {
                         Text(seg.text)
                             .font(.subheadline)
                             .foregroundStyle(DS.Palette.accentText)
-                            .padding(.vertical, 1)
+                            .padding(.vertical, DS.Space.xxs)
                             .background(DS.Palette.accentText.opacity(0.18), in: RoundedRectangle(cornerRadius: 3, style: .continuous))
                     } else {
                         Text(seg.text)
@@ -2432,7 +2435,7 @@ struct RecordsView: View {
                 .padding(.vertical, DS.Space.xxs)
             }
         } header: {
-            HStack {
+            HStack(spacing: DS.Space.s) {
                 Text("按成员筛选")
                 Spacer(minLength: DS.Space.s)
                 Text(totalCount == rows.count ? "共 \(totalCount) 条" : "\(rows.count)/\(totalCount) 条")
@@ -2453,7 +2456,7 @@ struct RecordsView: View {
                 // 字重固定: 改字重会改变字形宽度, 胶囊随之跳变
                 .font(.subheadline.weight(.medium))
                 .lineLimit(1)
-                .padding(.horizontal, 14)
+                .padding(.horizontal, DS.Space.l)
                 .padding(.vertical, 12)   // 撑到 ≥44pt 触达
                 .background(on ? DS.Palette.accent : DS.Palette.surfaceAlt, in: Capsule())
                 .overlay(Capsule().strokeBorder(DS.Palette.hairline, lineWidth: 0.5))
@@ -2542,7 +2545,7 @@ struct RecordsView: View {
     @ViewBuilder
     private func laneCell(name: String, count: Int, alarm: Bool) -> some View {
         let dots = min(count / 2, 8)
-        HStack(spacing: 3) {
+        HStack(spacing: DS.Space.xs) {
             ForEach(0..<max(dots, 0), id: \.self) { _ in
                 Circle()
                     .fill(alarm ? DS.Palette.danger : DS.Palette.accent)
@@ -3433,7 +3436,7 @@ struct OutWinSheet: View {
                                     .font(.caption2.weight(.medium))
                                     .lineLimit(1)
                                     .foregroundStyle(DS.Palette.accentText)
-                                    .padding(.horizontal, 6)
+                                    .padding(.horizontal, DS.Space.s)
                                     .padding(.vertical, 2)
                                     .background(DS.Palette.accentText.opacity(0.10), in: Capsule())
                                 Text(w.rec.timeStr)
@@ -3495,7 +3498,7 @@ struct GratitudeView: View {
                             .foregroundStyle(DS.Palette.textSub)
                     }
                     ForEach(names, id: \.self) { n in
-                        HStack {
+                        HStack(spacing: DS.Space.s) {
                             Image(systemName: "heart.fill")
                                 .font(.system(size: DS.Icon.sm))
                                 .foregroundStyle(DS.Palette.danger)

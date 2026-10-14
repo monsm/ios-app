@@ -629,7 +629,7 @@ struct CareRemindersView: View {
                         Task { await CareReminders.reschedule() }
                     }))
                 ForEach(DB.members()) { m in
-                    HStack {
+                    HStack(spacing: DS.Space.s) {
                         Text(m.name)
                         Spacer(minLength: DS.Space.m)
                         Text(Milestones.memberBirthdays()[m.id] ?? "未填写")

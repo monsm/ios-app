@@ -48,8 +48,8 @@ struct SettingsView: View {
                     Text("NEW")
                         .font(.caption2.weight(.medium))
                         .foregroundStyle(DS.Palette.onAccent)
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 1)
+                        .padding(.horizontal, DS.Space.xs)
+                        .padding(.vertical, DS.Space.xxs)
                         .background(DS.Palette.accent, in: Capsule())
                         .accessibilityLabel("新功能")
                 }
@@ -249,7 +249,7 @@ struct SettingsView: View {
                 app.onboardingFinished = false
                 app.showToast("下次冷启动重新走引导, 或现在就看")
             } label: {
-                HStack {
+                HStack(spacing: DS.Space.s) {
                     Text("重看新手引导")   // 805 重看新手引导
                     Spacer(minLength: DS.Space.s)
                     // 805 已完成度: 与证书页同一份 finishedSteps, 不另记账
@@ -1102,7 +1102,7 @@ struct SettingsView: View {
     private var aboutSection: some View {
         Section {
             // 机械计数器 (idea 1006): 累计开锁次数
-            HStack {
+            HStack(spacing: DS.Space.s) {
                 Text("累计开锁").foregroundStyle(DS.Palette.text)
                 Spacer(minLength: DS.Space.m)
                 MechCounter(value: Milestones.unlockTotal)
@@ -1111,7 +1111,7 @@ struct SettingsView: View {
             .accessibilityLabel("累计开锁 \(Milestones.unlockTotal) 次")
             // 279 版本信息行: 原句列的"SQLite 版本"在本工程不存在 (库体是 UserDefaults + Keychain,
             // 见 §217 那条 ⛔ 不适用)，所以这里给的是**真实存在**的四项而不是照抄原句。
-            HStack {
+            HStack(spacing: DS.Space.s) {
                 Text("构建与主题").foregroundStyle(DS.Palette.text)
                 Spacer(minLength: DS.Space.m)
                 // 2026-10-13 run 63: 原来把 infoDictionary 取值 + 三段拼接全内联进 Text, 报 type-check 超时。
@@ -1130,7 +1130,7 @@ struct SettingsView: View {
                     UINotificationFeedbackGenerator().notificationOccurred(.success)
                 }
             } label: {
-                HStack {
+                HStack(spacing: DS.Space.s) {
                     Text("当前版本").foregroundStyle(DS.Palette.text)
                     Spacer(minLength: DS.Space.m)
                     Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0")
@@ -1170,7 +1170,7 @@ struct SettingsView: View {
 struct MechCounter: View {
     let value: Int
     var body: some View {
-        HStack(spacing: 3) {
+        HStack(spacing: DS.Space.xs) {
             ForEach(Array(String(value).enumerated()), id: \.offset) { _, ch in
                 Text(String(ch))
                     .font(.subheadline.weight(.semibold))

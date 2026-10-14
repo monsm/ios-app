@@ -168,8 +168,10 @@ struct BackupStudioView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .frame(minHeight: DS.Hit.min)
             .padding(DS.Space.l)
-            .background(DS.Palette.surface,
-                        in: RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous))
+            // 2026-10-14 材质统一: 通道入口行是坐在页面底上的面板 (它下面就是 gutter)，与同页
+            // 三选一卡、预演分段块同材质。这处原本写成两行 `.background(surface,\n in: …)`，
+            // 单行正则扫不到 —— 现在信 AST 那条 R6，不信 grep。
+            .axGlass(DS.Radius.card)
         }
         .buttonStyle(.plain)
         .padding(.horizontal, DS.Space.gutter)
@@ -208,7 +210,7 @@ struct BackupStudioView: View {
             // 没设过时回落 App 缓存目录 (系统可能清理), 所以这里把两种落点都写清。
             let _ = dirTick
             HStack(spacing: DS.Space.s) {
-                VStack(alignment: .leading, spacing: 1) {
+                VStack(alignment: .leading, spacing: DS.Space.xxs) {
                     Text("导出目录")   // 713 导出目录
                         .font(.subheadline.weight(.medium))
                     Text(ExportDir.name.isEmpty
@@ -445,7 +447,7 @@ struct ExportWizardView: View {
     private func zoneToggle(_ title: String, _ n: Int, _ on: Binding<Bool>, _ sub: String, unit: String = "条") -> some View {
         VStack(alignment: .leading, spacing: DS.Space.xxs) {
             Toggle(isOn: on) {
-                HStack {
+                HStack(spacing: DS.Space.s) {
                     Text(title)
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(DS.Palette.text)
@@ -1564,7 +1566,8 @@ struct MigrationWizardView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .frame(minHeight: DS.Hit.min)
                     .padding(DS.Space.m)
-                    .background(DS.Palette.surface, in: RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous))
+                    // 2026-10-14 材质统一: 三条恢复通道卡从实底改液态玻璃 (整页主表面同一枚材质)。
+                    .axGlass(DS.Radius.card)
                 }
                 .buttonStyle(.plain)
             }
@@ -1904,7 +1907,8 @@ struct MigrationWizardView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(DS.Space.m)
-                    .background(DS.Palette.surface, in: RoundedRectangle(cornerRadius: DS.Radius.tile, style: .continuous))
+                    // 2026-10-14 材质统一: 预演分段块直接坐在页面底上, 属面板级表面 → 玻璃 (tile 档圆角)
+                    .axGlass(DS.Radius.tile)
                 }
                 lockConfirmCard
                 if !conflicts.isEmpty {
@@ -2125,7 +2129,7 @@ struct MigrationWizardView: View {
                 .foregroundStyle(DS.Palette.text)
                 .fixedSize(horizontal: false, vertical: true)
             ForEach(checks, id: \.self) { k in
-                HStack {
+                HStack(spacing: DS.Space.s) {
                     Image(systemName: checkOn[k] == true ? "checkmark.circle.fill" : "circle")
                         .font(.system(size: DS.Icon.sm))
                         .foregroundStyle(checkOn[k] == true ? DS.Palette.ok : DS.Palette.textSub)
@@ -2457,7 +2461,7 @@ struct LocalFilesView: View {
         VStack(alignment: .leading, spacing: DS.Space.xxs) {
             HStack {
                 // 433: 有备注就显示备注, 文件名退到下一行小字 (文件名本身不动)
-                VStack(alignment: .leading, spacing: 1) {
+                VStack(alignment: .leading, spacing: DS.Space.xxs) {
                     Text(aliasOf(u).isEmpty ? u.lastPathComponent : aliasOf(u))
                         .font(.subheadline)
                         .foregroundStyle(DS.Palette.text)
@@ -2569,7 +2573,7 @@ struct LocalFilesView: View {
                     if let rows = compareRows {
                         Section("对比结果") {   // 454 对比结果
                             ForEach(rows) { r in
-                                HStack {
+                                HStack(spacing: DS.Space.s) {
                                     Text(r.label).font(.subheadline).foregroundStyle(DS.Palette.text)
                                     Spacer(minLength: 0)
                                     Text("甲 \(r.a) / 乙 \(r.b)").font(.caption).foregroundStyle(DS.Palette.textSub)

@@ -129,7 +129,7 @@ struct DiagReferenceView: View {
             Section("协议字段字典 · 状态帧 \(ProtocolDict.statusFields.count) 项") {   // 754 协议字段字典
                 ForEach(ProtocolDict.statusFields) { f in
                     VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                        HStack {
+                        HStack(spacing: DS.Space.s) {
                             Text(f.k).font(.caption.monospaced()).foregroundStyle(DS.Palette.accentText)
                             Text(f.name).font(.subheadline).foregroundStyle(DS.Palette.text)
                             if copiedKey == "f\(f.k)" {
@@ -225,7 +225,7 @@ struct DiagReferenceView: View {
                 let fams = DataHealth.families()
                 let kw = familyQuery.trimmingCharacters(in: .whitespaces).lowercased()
                 ForEach(kw.isEmpty ? fams : fams.filter { $0.key.lowercased().contains(kw) }) { f in
-                    HStack {
+                    HStack(spacing: DS.Space.s) {
                         Text(f.key).font(.caption.monospaced()).foregroundStyle(DS.Palette.text)
                         Spacer(minLength: DS.Space.s)
                         Text(DataHealth.human(f.bytes)).font(.caption).monospacedDigit().foregroundStyle(DS.Palette.textSub)

@@ -327,12 +327,12 @@ struct LockCompareView: View {
     // ---------- 782 闲置锁标注 + 排除口径 ----------
     private var idleSection: some View {
         Section {
-            HStack {
+            HStack(spacing: DS.Space.s) {
                 Text(leftName)
                 Spacer(minLength: DS.Space.s)
                 idleTag(for: leftMac)
             }
-            HStack {
+            HStack(spacing: DS.Space.s) {
                 Text(rightName)
                 Spacer(minLength: DS.Space.s)
                 idleTag(for: rightMac)

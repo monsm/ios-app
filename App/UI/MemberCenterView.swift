@@ -507,6 +507,10 @@ struct MemberAvatar: View {
             .font(.system(size: cornerGlyph, weight: .semibold))
             .foregroundStyle(base)
             .padding(DS.Space.xxs)
+            // 2026-10-14 材质统一批次: 这一处**故意留实底**。它是角标与头像外环之间的抠边片
+            // (下一行那圈同色 1.5pt 描边也是抠边用的, 两者必须同色才切得开), 玻璃的折射底会把
+            // 头像那圈环再映一遍 —— 换材质反而把"切出来"这件事糊掉。
+            // @layout-allow 面板实底
             .background(DS.Palette.surface, in: Circle())
             .overlay(Circle().strokeBorder(DS.Palette.surface, lineWidth: 1.5))
             .accessibilityHidden(true)
@@ -2175,7 +2179,8 @@ struct MemberMeetingSheet: View {
                         .foregroundStyle(DS.Palette.text)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(DS.Space.l)
-                        .background(DS.Palette.surface, in: RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous))
+                        // 2026-10-14 材质统一: 代管清单面板从实底改玻璃 (它是这页唯一的面板)
+                        .axGlass(DS.Radius.card)
                 }
                 .padding(.horizontal, DS.Space.gutter)
                 HStack(spacing: DS.Space.s) {

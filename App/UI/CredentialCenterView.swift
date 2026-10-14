@@ -93,7 +93,7 @@ struct CredBinView: View {
             // 500 容量头行: 条数 + 下次自动清理日期
             let header = CredentialOrg.binHeader(mac)
             Section {
-                HStack {
+                HStack(spacing: DS.Space.s) {
                     Text("\(header.count) 条")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(DS.Palette.text)
@@ -361,7 +361,7 @@ struct CredHistoryListView: View {
                     NavigationLink {
                         CredHistoryView(mac: mac, kind: "pwd", key: p.alias)
                     } label: {
-                        HStack {
+                        HStack(spacing: DS.Space.s) {
                             Text(CredentialOrg.displayPwd(p))
                                 .font(.subheadline)
                                 .lineLimit(1)
@@ -377,7 +377,7 @@ struct CredHistoryListView: View {
                     NavigationLink {
                         CredHistoryView(mac: mac, kind: "fp", key: f.batch)
                     } label: {
-                        HStack {
+                        HStack(spacing: DS.Space.s) {
                             Text("指纹「\(f.name)」")
                                 .font(.subheadline)
                                 .lineLimit(1)
@@ -588,7 +588,7 @@ struct CredCalendarView: View {
         let dl = CredentialOrg.monthDeadlines(mac, year: year, month: month)
         ScrollView {
             VStack(alignment: .leading, spacing: DS.Space.m) {
-                HStack {
+                HStack(spacing: DS.Space.s) {
                     Button("‹") { move(-1) }
                         .font(.title3.weight(.semibold))
                         .frame(minHeight: DS.Hit.min)
@@ -624,7 +624,7 @@ struct CredCalendarView: View {
                     if !items.isEmpty {
                         Section("\(p.formatted(.dateTime.month().day())) 到期 (\(items.count))") {
                             ForEach(items) { x in
-                                HStack {
+                                HStack(spacing: DS.Space.s) {
                                     Text(CredentialOrg.displayPwd(x))
                                         .font(.subheadline)
                                         .lineLimit(1)
@@ -674,7 +674,7 @@ struct CredCalendarView: View {
                         .font(.caption2.weight(.semibold))
                         // warn 是语义填充色, 走"填充上的前景"令牌 (浅档白字/深档墨字, 机检 E1)
                         .foregroundStyle(DS.Palette.onSem)
-                        .padding(.horizontal, 5).padding(.vertical, 1)
+                        .padding(.horizontal, DS.Space.xs).padding(.vertical, 1)
                         .background(DS.Palette.warn, in: Capsule())
                         .lineLimit(1)
                 }
@@ -951,7 +951,7 @@ struct CredQueueView: View {
     }
     /// 步条小段: 0 灰 / 1 当前黄 / 2 完成绿 (颜色 + 数字双通道, 不只靠颜色)
     private func step(_ label: String, _ level: Int) -> some View {
-        HStack(spacing: 3) {
+        HStack(spacing: DS.Space.xs) {
             Image(systemName: level == 0 ? "circle" : (level == 1 ? "circle.inset.filled" : "checkmark.circle.fill"))
                 .font(.system(size: 11))
                 .foregroundStyle(level == 0 ? DS.Palette.textSub : (level == 1 ? DS.Palette.warn : DS.Palette.ok))
@@ -1028,7 +1028,7 @@ struct CredExtendView: View {
                 Section("变更清单") {
                     ForEach(aliases, id: \.self) { a in
                         if let p = DB.getPwd(mac, a) {
-                            HStack {
+                            HStack(spacing: DS.Space.s) {
                                 Text("#\(a)")
                                     .font(.subheadline)
                                     .monospacedDigit()
@@ -1210,7 +1210,7 @@ struct CredDisableSheet: View {
                                 DS.Haptics.tick.impactOccurred()
                             }
                             .font(.caption.weight(on ? .semibold : .regular))
-                            .padding(.horizontal, DS.Space.s).padding(.vertical, 6)
+                            .padding(.horizontal, DS.Space.s).padding(.vertical, DS.Space.s)
                             .foregroundStyle(on ? DS.Palette.onAccent : DS.Palette.textSub)
                             .background(on ? AnyShapeStyle(DS.Palette.accent) : AnyShapeStyle(DS.Palette.surfaceAlt), in: Capsule())
                             .frame(minHeight: DS.Hit.min - DS.Space.xs)

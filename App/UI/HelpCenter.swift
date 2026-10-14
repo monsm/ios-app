@@ -421,8 +421,8 @@ struct ManualPage: View {
                             Text("未读")
                                 .font(.caption2.weight(.medium))
                                 .foregroundStyle(DS.Palette.accentText)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 1)
+                                .padding(.horizontal, DS.Space.s)
+                                .padding(.vertical, DS.Space.xxs)
                                 .background(DS.Palette.accentText.opacity(0.10), in: Capsule())
                         }
                     }
@@ -471,7 +471,7 @@ struct CopyCheckPage: View {
             }
             Section("量词速查") {
                 ForEach(MeasureWord.table, id: \.thing) { m in
-                    HStack {
+                    HStack(spacing: DS.Space.s) {
                         Text(m.thing).foregroundStyle(DS.Palette.text)
                         Spacer(minLength: DS.Space.m)
                         Text("× \(m.word)")
@@ -491,7 +491,7 @@ struct CopyCheckPage: View {
                 ForEach(CopyTable.entries.keys.sorted(), id: \.self) { k in
                     VStack(alignment: .leading, spacing: DS.Space.xxs) {
                         Text(k).font(.caption.monospaced()).foregroundStyle(DS.Palette.accentText)
-                        HStack(alignment: .top) {
+                        HStack(alignment: .top, spacing: DS.Space.s) {
                             Text(CopyTable.value(k))
                                 .font(.subheadline).foregroundStyle(DS.Palette.text)
                                 .fixedSize(horizontal: false, vertical: true)

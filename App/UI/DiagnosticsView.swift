@@ -156,7 +156,7 @@ struct DiagnosticsView: View {
                     UINotificationFeedbackGenerator().notificationOccurred(.success)
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { copied = false }
                 } label: {
-                    HStack {
+                    HStack(spacing: DS.Space.s) {
                         Label(copied ? "已复制, 请粘贴发给开发者" : "复制全部诊断信息",
                               systemImage: copied ? "checkmark.circle.fill" : "doc.on.doc")
                             .frame(maxWidth: .infinity)
@@ -208,7 +208,7 @@ struct DiagnosticsView: View {
             // 149/150/160/158/151 一键体检: 引擎 (DiagHealth) 一直在, 此前**全库没有任何界面调用它** →
             // 现在跑分、单项复测、结果存档、权限深链四件事一次接上。
             Section("一键体检") {   // 149/160 一键体检
-                HStack(alignment: .firstTextBaseline) {
+                HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {
                     Text("总分 \(score) / 100")
                         .font(.title3.weight(.semibold))
                         .monospacedDigit()
@@ -266,7 +266,7 @@ struct DiagnosticsView: View {
                     .font(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
-                HStack {
+                HStack(spacing: DS.Space.s) {
                     Button("存档本次结果") {   // 158 存档本次结果
                         DiagHealth.saveArchive((score: score, items: results))
                         app.showToast("已存档 \(DiagHealth.archives().count) 份历史记录")
@@ -321,7 +321,7 @@ struct DiagnosticsView: View {
                 let totalBytes = slices.reduce(0) { $0 + $1.bytes }
                 ForEach(slices) { s in
                     VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                        HStack {
+                        HStack(spacing: DS.Space.s) {
                             Text(s.name).font(.subheadline).foregroundStyle(DS.Palette.text)
                             Spacer(minLength: DS.Space.s)
                             Text(DataHealth.human(s.bytes))
@@ -388,7 +388,7 @@ struct DiagnosticsView: View {
                 Text("切到较短保留期会先报「将删条数」并等确认，确认后立即删除；选「全部保留」不删任何东西。")   // 751 切到较短保留期会先报
                     .font(.caption2).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
-                HStack {
+                HStack(spacing: DS.Space.s) {
                     Button("清理空值键位") { guardOrBackup {
                         let r = DataHealth.vacuum()
                         MaintenanceLog.record("清理空值键位")   // 387
@@ -809,7 +809,7 @@ struct DiagnosticsView: View {
                             .font(.system(size: DS.Icon.sm))
                             .foregroundStyle(l.ok ? DS.Palette.ok : DS.Palette.warn)
                             .accessibilityHidden(true)
-                        VStack(alignment: .leading, spacing: 1) {
+                        VStack(alignment: .leading, spacing: DS.Space.xxs) {
                             Text(l.name)
                                 .font(.subheadline)
                                 .foregroundStyle(DS.Palette.text)
@@ -1085,7 +1085,7 @@ struct DiagnosticsView: View {
                                     } label: {
                                         Text(e.text)
                                             .font(.caption2.weight(.medium))
-                                            .padding(.horizontal, DS.Space.s).padding(.vertical, 3)
+                                            .padding(.horizontal, DS.Space.s).padding(.vertical, DS.Space.xs)
                                             .foregroundStyle(DS.Palette.accentText)
                                             .background(DS.Palette.surfaceAlt, in: Capsule())
                                     }
@@ -1217,7 +1217,7 @@ struct DiagnosticsView: View {
                 .font(.caption2)
                 .foregroundStyle(Color.black.opacity(0.32))
                 .rotationEffect(.degrees(-18))
-                .padding(28)
+                .padding(DS.Space.xxl)
         }
         let r = ImageRenderer(content: card)
         r.scale = 2

@@ -343,40 +343,53 @@ extension View {
     /// 矩形玻璃 (Toast/确认胶囊等) 的降级通道
     func axGlass(_ radius: CGFloat) -> some View {
         // ViewModifier 没有 modify(_:): 应为 View.modifier(_:)
-        modifier(GlassModifier(radius: radius, circle: false))
+        modifier(GlassModifier(shape: .rect(radius)))
     }
     /// 圆形玻璃 (AppLock/门禁盾) 的降级通道
     func axGlassCircle() -> some View {
-        modifier(GlassModifier(radius: 0, circle: true))
+        modifier(GlassModifier(shape: .circle))
+    }
+    /// 胶囊玻璃 (顶部切换 chip / 写入回执 / 二次确认提示) 的降级通道。
+    /// 2026-10-14: 这三处原本是 `.background(surface, in: Capsule())`，实底改玻璃时必须走这里，
+    /// 而不是就地再写一份 glassEffect —— 胶囊没有半径参数，塞进 axGlass(_:) 只能瞎猜一个 r，
+    /// 于是"降透明/增强对比要落回哪枚形状"就会和玻璃支分家。形状族只在这一处枚举里。
+    func axGlassCapsule() -> some View {
+        modifier(GlassModifier(shape: .capsule))
     }
 }
 
+/// 玻璃面的形状族: 玻璃支与实底降级支共用同一枚形状，只是材质不同。
+private enum GlassShape {
+    case rect(CGFloat)
+    case circle
+    case capsule
+}
+
 private struct GlassModifier: ViewModifier {
-    let radius: CGFloat
-    let circle: Bool
+    let shape: GlassShape
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @Environment(\.colorScheme) private var scheme
+
+    /// 三支形状收成同一个 AnyShape: 否则 glassEffect 与 background(in:) 各要一个具体 Shape 类型，
+    /// 降级/非降级两支就得把 switch 抄两遍 —— 抄第二遍的那天就是"关玻璃只关一半界面"的那天。
+    private var anyShape: AnyShape {
+        switch shape {
+        case .rect(let r): return AnyShape(RoundedRectangle(cornerRadius: r, style: .continuous))
+        case .circle: return AnyShape(Circle())
+        case .capsule: return AnyShape(Capsule())
+        }
+    }
 
     @ViewBuilder
     func body(content: Content) -> some View {
         // 读系统旗标 (比 AXFlags 静态读更稳, 随环境更新); 降低透明度时降为实底
         // 862: 增强对比 (系统或 App 内 kf_hc) 同样降实底 —— 半透明叠字在高对比模式下属实底色
         if reduceTransparency || DS.Appearance.highContrast {
-            if circle {
-                content.background(DS.Palette.surface, in: Circle())
-                    .overlay(Circle().strokeBorder(DS.Palette.hairlineStrong, lineWidth: 0.5))
-            } else {
-                let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
-                content.background(DS.Palette.surface, in: shape)
-                    .overlay(shape.strokeBorder(DS.Palette.hairlineStrong, lineWidth: 0.5))
-            }
+            let s = anyShape
+            content.background(DS.Palette.surface, in: s)
+                .overlay(s.strokeBorder(DS.Palette.hairlineStrong, lineWidth: 0.5))
         } else {
-            if circle {
-                content.glassEffect(.regular, in: Circle())
-            } else {
-                let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
-                content.glassEffect(.regular, in: shape)
-            }
+            content.glassEffect(.regular, in: anyShape)
         }
     }
 }

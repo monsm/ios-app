@@ -358,7 +358,8 @@ struct OnboardingView: View {
             }
         }
         .padding(DS.Space.l)
-        .background(DS.Palette.surface, in: RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous))
+        // 2026-10-14 材质统一: 引导页主面板与全 App 的 Card 同材质
+        .axGlass(DS.Radius.card)
         .padding(.horizontal, DS.Space.gutter)
     }
 
@@ -407,7 +408,9 @@ struct OnboardingView: View {
                 }
             }
             .padding(DS.Space.m)
-            .background(DS.Palette.surface, in: RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous))
+            // 2026-10-14 材质统一: 角色卡上玻璃。下面那圈描边留着 —— 它画的是"选中/未选中"状态,
+            // 不是装饰边 (accent 1.5 vs hairline 0.5); 卡里那枚图标底板仍是 surfaceAlt, 属玻璃上的盘子。
+            .axGlass(DS.Radius.card)
             .overlay(
                 RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous)
                     .strokeBorder(rolePick == key ? DS.Palette.accent : DS.Palette.hairline,

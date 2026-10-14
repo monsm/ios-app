@@ -187,7 +187,7 @@ struct RecDetailSheet: View {
                     .lineLimit(1)
                     .foregroundStyle(disp != nil ? DS.Palette.ok : DS.Palette.danger)
                     .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
+                    .padding(.vertical, DS.Space.xs)
                     .background((disp != nil ? DS.Palette.ok : DS.Palette.danger).opacity(0.10), in: Capsule())
             }
             .padding(.vertical, DS.Space.xs)
@@ -315,7 +315,7 @@ struct RecDetailSheet: View {
                 .lineLimit(1)
                 .foregroundStyle(DS.Palette.textSub)
                 .frame(width: 14)
-            VStack(alignment: .leading, spacing: 1) {
+            VStack(alignment: .leading, spacing: DS.Space.xxs) {
                 Text(RecordSearch.localStr(r.lockTime > 0 ? Double(r.lockTime) : 0).isEmpty ? r.timeStr : r.timeStr)
                     .font(.caption.monospacedDigit())
                     .lineLimit(1)
@@ -386,7 +386,7 @@ struct RecDetailSheet: View {
                     HStack(spacing: DS.Space.s) {
                         ForEach(Array(ns.enumerated()), id: \.offset) { _, item in
                             Button { at = item.at } label: {
-                                VStack(alignment: .leading, spacing: 1) {
+                                VStack(alignment: .leading, spacing: DS.Space.xxs) {
                                     Text(item.r.timeStr)
                                         .font(.caption2.monospacedDigit())
                                         .foregroundStyle(DS.Palette.textSub)

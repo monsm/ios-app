@@ -421,7 +421,7 @@ struct CredentialsView: View {
                             .font(.caption)
                             .lineLimit(1)
                     }
-                    .padding(.horizontal, DS.Space.s).padding(.vertical, 6)
+                    .padding(.horizontal, DS.Space.s).padding(.vertical, DS.Space.s)
                     .foregroundStyle(memberView ? DS.Palette.accentText : DS.Palette.textSub)
                     .background((memberView ? DS.Palette.accentText.opacity(0.12) : DS.Palette.surfaceAlt), in: Capsule())
                     .frame(minHeight: DS.Hit.min)
@@ -451,7 +451,7 @@ struct CredentialsView: View {
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
                     }
-                    .padding(.horizontal, DS.Space.s).padding(.vertical, 6)
+                    .padding(.horizontal, DS.Space.s).padding(.vertical, DS.Space.s)
                     .foregroundStyle(smartSel.isEmpty ? DS.Palette.textSub : DS.Palette.accentText)
                     .background((!smartSel.isEmpty ? DS.Palette.accentText.opacity(0.12) : DS.Palette.surfaceAlt), in: Capsule())
                     .frame(minHeight: DS.Hit.min)
@@ -481,13 +481,13 @@ struct CredentialsView: View {
                     Text("\(c)")
                         .font(elderOn ? .body.weight(.semibold) : .caption2.weight(.semibold))
                         .foregroundStyle(on ? DS.Palette.onAccent : DS.Palette.textSub)
-                        .padding(.horizontal, 5).padding(.vertical, 1)
+                        .padding(.horizontal, DS.Space.xs).padding(.vertical, 1)
                         .background(on ? DS.Palette.onFillWash.opacity(0.24) : DS.Palette.surfaceAlt, in: Capsule())
                 }
             }
             .lineLimit(1)
             .minimumScaleFactor(0.8)
-            .padding(.horizontal, DS.Space.s).padding(.vertical, 6)
+            .padding(.horizontal, DS.Space.s).padding(.vertical, DS.Space.s)
             .foregroundStyle(on ? DS.Palette.onAccent : DS.Palette.textSub)
             .background(on ? AnyShapeStyle(DS.Palette.accent) : AnyShapeStyle(DS.Palette.surfaceAlt), in: Capsule())
             .frame(minHeight: DS.Hit.min)
@@ -840,7 +840,7 @@ struct CredentialsView: View {
         let fStock = st?.fpStock ?? snap?.fpStock ?? -1
         if pStock >= 0 || fStock >= 0 {
             Section("锁内存量") {
-                HStack(alignment: .top) {
+                HStack(alignment: .top, spacing: DS.Space.s) {
                     Text("最近读到的锁内余量")
                         .foregroundStyle(DS.Palette.textSub)
                     Spacer(minLength: DS.Space.m)
@@ -1516,7 +1516,7 @@ struct CredentialsView: View {
             .font(.caption.weight(.medium))
             .lineLimit(1)
             .foregroundStyle(DS.Palette.accentText)
-            .padding(.horizontal, 7).padding(.vertical, DS.Space.xxs)
+            .padding(.horizontal, DS.Space.s).padding(.vertical, DS.Space.xxs)
             .background(DS.Palette.accentText.opacity(0.12), in: Capsule())
     }
 
@@ -1526,7 +1526,7 @@ struct CredentialsView: View {
     private var editList: some View {
         List {
             Section {
-                HStack {
+                HStack(spacing: DS.Space.s) {
                     Button {
                         cycleSelect()
                         DS.Haptics.tick.impactOccurred()
@@ -1659,7 +1659,7 @@ struct CredentialsView: View {
     @ViewBuilder
     private var batchBar: some View {
         VStack(spacing: DS.Space.xs) {
-            HStack {
+            HStack(spacing: DS.Space.s) {
                 Text("已选 \(selCount) 条")
                     .font(.subheadline.weight(.semibold))
                     .lineLimit(1)
@@ -2205,7 +2205,7 @@ struct CredentialsView: View {
     @ViewBuilder
     private func archRow(title: String, owner: String?, restore: @escaping () -> Void) -> some View {
         HStack(spacing: DS.Space.s) {
-            VStack(alignment: .leading, spacing: 1) {
+            VStack(alignment: .leading, spacing: DS.Space.xxs) {
                 Text(title)
                     .font(.footnote)
                     .foregroundStyle(DS.Palette.text)
@@ -2262,7 +2262,8 @@ struct CredentialsView: View {
             }
             .padding(.horizontal, DS.Space.l)
             .padding(.vertical, DS.Space.s)
-            .background(DS.Palette.surface)
+            // 2026-10-14 材质统一: 撤销条是浮在内容之上的一层 (ToastView 同族) ⇒ 走同一条玻璃通道。
+            .axGlass(DS.Radius.control)
             .transition(.move(edge: .bottom).combined(with: .opacity))
             .accessibilityElement(children: .combine)
             .accessibilityHint("5 秒内点按撤销可取回本机记录；停用那条路还会收回待下发的锁端删除")

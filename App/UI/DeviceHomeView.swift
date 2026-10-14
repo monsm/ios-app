@@ -415,7 +415,7 @@ struct DeviceHomeView: View {
             Text(label)
                 .font(.subheadline.weight(.medium))
                 .lineLimit(1)
-                .padding(.horizontal, 14)
+                .padding(.horizontal, DS.Space.l)
                 .padding(.vertical, 12)
                 .background(on ? DS.Palette.accent : DS.Palette.surfaceAlt, in: Capsule())
                 .overlay(Capsule().strokeBorder(DS.Palette.hairline, lineWidth: 0.5))
@@ -569,7 +569,7 @@ struct DeviceHomeView: View {
                         Button {
                             app.select(kc.mac)
                         } label: {
-                            HStack {
+                            HStack(spacing: DS.Space.s) {
                                 Circle().fill(LockArchive.swatchColor(LockArchive.meta(kc.mac).colorKey))
                                     .frame(width: 8, height: 8)
                                 Text(LockArchive.displayName(kc))
@@ -588,7 +588,7 @@ struct DeviceHomeView: View {
                         Button {
                             app.select(kc.mac)
                         } label: {
-                            HStack {
+                            HStack(spacing: DS.Space.s) {
                                 Circle().fill(LockArchive.swatchColor(LockArchive.meta(kc.mac).colorKey))
                                     .frame(width: 8, height: 8)
                                 Text(LockArchive.displayName(kc))
@@ -632,8 +632,8 @@ struct DeviceHomeView: View {
             }
             .padding(.horizontal, DS.Space.m)
             .padding(.vertical, DS.Space.xs + 2)
-            .background(DS.Palette.surface, in: Capsule())
-            .overlay(Capsule().strokeBorder(DS.Palette.hairline, lineWidth: 0.5))
+            // 2026-10-14 材质统一: 换锁 chip 上玻璃 (装饰性 hairline 描边随之去掉, 玻璃自带边缘高光)
+            .axGlassCapsule()
             // 视觉紧凑胶囊 + 44pt 命中区分离: 胶囊本身不必撑高
             .frame(minHeight: DS.Hit.min)
             .contentShape(Rectangle())
@@ -644,7 +644,7 @@ struct DeviceHomeView: View {
         Button {
             if kc.mac != app.currentMac { app.select(kc.mac) }
         } label: {
-            HStack {
+            HStack(spacing: DS.Space.s) {
                 Circle().fill(LockArchive.swatchColor(LockArchive.meta(kc.mac).colorKey))
                     .frame(width: 8, height: 8)
                 Text(LockArchive.displayName(kc))
@@ -846,7 +846,7 @@ struct DeviceHomeView: View {
                 }
                 // 982 开门里程碑: Hero 卡角标小旗 (全局计数, 只在当前页展示)
                 if isCurrent, Milestones.unlockTotal >= 100 {
-                    HStack {
+                    HStack(spacing: DS.Space.s) {
                         HeroPill(text: "已守护 \(Milestones.unlockTotal) 次", systemImage: "flag.fill")
                         Spacer(minLength: 0)
                     }
@@ -930,7 +930,7 @@ struct DeviceHomeView: View {
                 }
                 // 790 最近活跃成员头像圈: 卡角叠放最近活跃 3 位, 点开列成员名, 选谁直接查谁的记录。
                 if isCurrent {
-                    HStack {
+                    HStack(spacing: DS.Space.s) {
                         Spacer(minLength: 0)
                         activeMembersBadge
                     }
@@ -956,7 +956,7 @@ struct DeviceHomeView: View {
                     }
                 }
             } label: {
-                HStack(spacing: -9) {
+                HStack(spacing: DS.Space.xxs) {
                     ForEach(activeTops) { m in
                         MemberAvatar(member: m, size: 26, tint: DS.heroFg)
                             .overlay(Circle().strokeBorder(DS.heroFg.opacity(0.6), lineWidth: 1.5))
@@ -1069,7 +1069,7 @@ struct DeviceHomeView: View {
                                 Text("缓存")
                                     .font(.caption2.weight(.medium))
                                     .foregroundStyle(DS.Palette.textSub)
-                                    .padding(.horizontal, 4).padding(.vertical, 1)
+                                    .padding(.horizontal, 4).padding(.vertical, DS.Space.xxs)
                                     .background(DS.Palette.surfaceAlt, in: Capsule())
                             }
                             Spacer(minLength: 0)
@@ -1314,7 +1314,9 @@ struct DeviceHomeView: View {
                         .foregroundStyle(DS.Palette.accentText)
                         .padding(.horizontal, DS.Space.l)
                         .padding(.vertical, DS.Space.s)
-                        .background(DS.Palette.surface, in: Capsule())
+                        // 2026-10-14 材质统一: 二次确认提示胶囊上玻璃。
+                        // 下面那圈 accent 1.5pt 留着 —— 它是"还没执行, 再点才开锁"的告警边, 不是装饰边。
+                        .axGlassCapsule()
                         .overlay(Capsule().strokeBorder(DS.Palette.accent, lineWidth: 1.5))
                         .scaleEffect(confirmPulse ? 1.06 : 1)
                     Text("再点一次圆盘开始开锁")
@@ -1368,7 +1370,7 @@ struct DeviceHomeView: View {
             if !pending.isEmpty {
                 Card {
                     VStack(alignment: .leading, spacing: DS.Space.s) {
-                        HStack {
+                        HStack(spacing: DS.Space.s) {
                             SectionTitle(text: "换机迁移验证")
                             Spacer(minLength: 0)
                             Button("收起") { wizardDismissed = true }
@@ -1742,7 +1744,7 @@ struct DeviceHomeView: View {
                                 .font(.caption2.weight(.medium))
                                 .lineLimit(1)
                                 .foregroundStyle(DS.Palette.textSub)
-                                .padding(.horizontal, 7)
+                                .padding(.horizontal, DS.Space.s)
                                 .padding(.vertical, 2)
                                 .background(DS.Palette.surfaceAlt, in: Capsule())
                                 .frame(maxWidth: 82)
@@ -2364,7 +2366,7 @@ struct LabeledRow: View {
     var value: String
     init(_ label: String, _ value: String) { self.label = label; self.value = value }
     var body: some View {
-        HStack(alignment: .firstTextBaseline) {
+        HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {
             // 668: 这类"中文标签 + 英文缩写/数字"的行最容易看出中西文挤在一起, 统一走排版加距 (不插字符)
             cjkSpaced(label).foregroundStyle(DS.Palette.textSub)
             Spacer(minLength: DS.Space.m)
@@ -2467,7 +2469,8 @@ struct UnlockGateView: View {
                 .multilineTextAlignment(.center)
                 .padding(.vertical, DS.Space.m)
                 .padding(.horizontal, DS.Space.l)
-                .background(DS.Palette.surface, in: RoundedRectangle(cornerRadius: DS.Radius.control))
+                // 2026-10-14 材质统一: 与 AppLock 的口令框同一枚材质/同一条降级通道 (原先两处各写实底)
+                .axGlass(DS.Radius.control)
                 .overlay(
                     RoundedRectangle(cornerRadius: DS.Radius.control)
                         .strokeBorder(failed ? DS.Palette.danger : DS.Palette.hairline, lineWidth: 0.5)

@@ -179,7 +179,7 @@ struct DeviceManageView: View {
                         Text("首位 · 启动默认")
                             .font(.caption2.weight(.medium))
                             .foregroundStyle(DS.Palette.onAccent)
-                            .padding(.horizontal, 6).padding(.vertical, 1)
+                            .padding(.horizontal, DS.Space.s).padding(.vertical, 1)
                             .background(DS.Palette.accent, in: Capsule())
                     }
                 }

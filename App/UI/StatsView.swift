@@ -45,7 +45,7 @@ struct StatsView: View {
         let a11y = (StatsKit.StatModel.kindWords()[k] ?? k) + " 归属构成, 共约 \(total) 次; "
             + segs.prefix(4).map { $0.name + " 约 " + String($0.n) + " 次" }.joined(separator: ", ")
             + (segs.count > 4 ? "; 另 \(segs.count - 4) 位" : "")
-        VStack(alignment: .leading, spacing: 3) {
+        VStack(alignment: .leading, spacing: DS.Space.xs) {
             kindBreakdownBar(k: k, segs: segs, total: total)
             kindBreakdownLegend(segs)
         }
@@ -61,7 +61,7 @@ struct StatsView: View {
                 .font(.caption2)
                 .foregroundStyle(DS.Palette.textSub)
             GeometryReader { geo in
-                HStack(spacing: 1) {
+                HStack(spacing: DS.Space.xxs) {
                     ForEach(Array(segs.enumerated()), id: \.offset) { idx, sg in
                         Capsule()
                             .fill(StatsKit.StatModel.memberColor(idx % 6))
@@ -82,7 +82,7 @@ struct StatsView: View {
     private func kindBreakdownLegend(_ segs: [(id: String, name: String, n: Int)]) -> some View {
         HStack(spacing: DS.Space.s) {
             ForEach(Array(segs.prefix(4).enumerated()), id: \.offset) { idx, sg in
-                HStack(spacing: 3) {
+                HStack(spacing: DS.Space.xs) {
                     Circle()
                         .fill(StatsKit.StatModel.memberColor(idx % 6))
                         .frame(width: 5, height: 5)
@@ -257,7 +257,7 @@ struct StatsView: View {
                     } label: {
                         Text(w == 365 ? "近一年" : ("近 " + String(w) + " 天"))
                             .font(.subheadline.weight(.medium))
-                            .padding(.horizontal, 14)
+                            .padding(.horizontal, DS.Space.l)
                             .padding(.vertical, 12)
                             .background(on ? DS.Palette.accent : DS.Palette.surfaceAlt, in: Capsule())
                             .overlay(Capsule().strokeBorder(DS.Palette.hairline, lineWidth: 0.5))
@@ -376,7 +376,9 @@ struct StatsView: View {
             }
             .padding(DS.Space.s)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(DS.Palette.surface, in: RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous))
+            // 2026-10-14 材质统一: 它左右两块 summaryCard 走的是 Card (已玻璃), 这条黄金时段句
+            // 是同排第三块面板, 独留实底 ⇒ 一行三种层感。
+            .axGlass(DS.Radius.card)
         }
         .padding(.horizontal, DS.Space.gutter)
     }
@@ -645,7 +647,10 @@ struct StatsView: View {
                     .lineLimit(1)
             }
         }
-        .padding(6)
+        .padding(DS.Space.s)
+        // 2026-10-14 材质统一批次: 读数气泡**保持实底**。它浮在折线图元之上, 存在的理由就是
+        // 把被点的那一天从图里"盖出来"读清 —— 换成玻璃, 被指的那段线会从字底下透上来。
+        // @layout-allow 面板实底
         .background(DS.Palette.surface, in: RoundedRectangle(cornerRadius: 8))
         .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(DS.Palette.hairline, lineWidth: 0.5))
     }

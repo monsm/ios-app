@@ -205,7 +205,10 @@ struct DemoBanner: View {
             .foregroundStyle(DS.Palette.warn)
             .padding(.horizontal, DS.Space.l)
             .padding(.vertical, DS.Space.s)
-            .background(DS.Palette.surface)
+            // 2026-10-14 材质统一: 演示横幅原先是全 App 唯一一块直角实底带 —— 同一条顶部横幅栈里
+            // 蓝牙条/自检条/粘贴条都是 control 圆角, 只有它是方的。走 axGlass 后它与那几条同几何,
+            // 且 226 降透明 / 862 增强对比时仍落回实底。
+            .axGlass(DS.Radius.control)
         }
     }
 }

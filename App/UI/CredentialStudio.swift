@@ -460,8 +460,10 @@ struct CodeBigCard: View {
         }
         .padding(DS.Space.l)
         .frame(maxWidth: .infinity)
-        .background(DS.Palette.surface, in: RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: DS.Radius.card).strokeBorder(DS.Palette.hairline, lineWidth: 0.5))
+        // 2026-10-14 材质统一: 口述卡与本页其余 13 块 .card() 同材质 (原先独此一块自带描边)。
+        // 大字号密码在玻璃上仍读得清: glassEffect(.regular) 会自己压一层调暗底,
+        // 而 226 降透明 / 862 增强对比下 axGlass 直接落回实底 —— 拍照那张最讲究可读的场合有退路。
+        .axGlass(DS.Radius.card)
         .shadow(color: DS.Palette.accent.opacity(0.14), radius: 10, y: 5)
         .padding(.horizontal, DS.Space.gutter)
         .accessibilityElement(children: .combine)
@@ -509,12 +511,14 @@ struct CodeScanSheet: View {
 
 // 卡片面 + 308 4 位分段 (全 App 只此一份)
 extension View {
-    /// 卡片面: surface + hairline 描边 + 34 轻厚度阴影
+    /// 卡片面: 液态玻璃 + 34 轻厚度阴影。
+    /// 2026-10-14 材质统一: 原为 surface 实底 + hairline 描边。描边一并去掉 —— 玻璃自带边缘高光,
+    /// 再描 0.5pt 就是两道边; 降透明/增强对比时 axGlass 自己会落回 surface + hairlineStrong,
+    /// 所以"实底无边"这条退路并没有丢。13 个 .card() 调用点全在向导页底上 (非卡中卡), 不存在玻璃叠玻璃。
     func card() -> some View {
         padding(DS.Space.m + 2)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(DS.Palette.surface, in: RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: DS.Radius.card).strokeBorder(DS.Palette.hairline, lineWidth: 0.5))
+            .axGlass(DS.Radius.card)
             .shadow(color: DS.Palette.accent.opacity(0.08), radius: 8, y: 4)
     }
 }
@@ -758,7 +762,7 @@ struct PwdStudio: View {
                 .font(.footnote.weight(.medium))
                 .foregroundStyle(on ? DS.Palette.onAccent : DS.Palette.textSub)
                 .padding(.horizontal, DS.Space.s + 2)
-                .padding(.vertical, 6)
+                .padding(.vertical, DS.Space.s)
                 .background(on ? DS.Palette.accent : DS.Palette.surfaceAlt, in: Capsule())
                 .frame(minHeight: DS.Hit.min)
                 .contentShape(Rectangle())
@@ -777,7 +781,7 @@ struct PwdStudio: View {
                     errorField = ""
                     DS.Haptics.tick.impactOccurred()
                 } label: {
-                    HStack {
+                    HStack(spacing: DS.Space.s) {
                         Text(m.name)
                             .font(.subheadline)
                             .foregroundStyle(DS.Palette.text)
@@ -811,7 +815,7 @@ struct PwdStudio: View {
     @ViewBuilder
     private var step1: some View {
         VStack(alignment: .leading, spacing: DS.Space.xs) {
-            HStack {
+            HStack(spacing: DS.Space.s) {
                 Text("码值")
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(errorField == "value" ? DS.Palette.danger : DS.Palette.text)
@@ -870,7 +874,7 @@ struct PwdStudio: View {
             if !pwd.isEmpty {
                 let s = StudioTools.pwdStrength(pwd)
                 HStack(spacing: DS.Space.xs) {
-                    HStack(spacing: 3) {
+                    HStack(spacing: DS.Space.xs) {
                         ForEach(0..<3, id: \.self) { i in
                             Capsule()
                                 .fill(i < s.score ? (s.score <= 1 ? DS.Palette.warn : DS.Palette.ok) : DS.Palette.surfaceAlt)
@@ -1034,7 +1038,7 @@ struct PwdStudio: View {
                             }
                             .font(.caption)
                             .foregroundStyle(DS.Palette.accentText)
-                            .padding(.horizontal, DS.Space.s).padding(.vertical, 5)
+                            .padding(.horizontal, DS.Space.s).padding(.vertical, DS.Space.xs)
                             .background(DS.Palette.surfaceAlt, in: Capsule())
                             .frame(minHeight: DS.Hit.min - DS.Space.xs)
                             .contentShape(Rectangle())
@@ -1193,7 +1197,7 @@ struct PwdStudio: View {
 
     // ---------- 515 导航条 ----------
     private var navBar: some View {
-        HStack {
+        HStack(spacing: DS.Space.s) {
             if step > 0 {
                 Button("上一步") {
                     withAnimation(DS.Motion.quick) { step -= 1 }
@@ -1414,7 +1418,7 @@ struct TempCodeStudio: View {
 
                 // 码值 (301 剪贴板即建 + 303 回显 + 173 生成 + 522 扫号 + 516 数字键盘)
                 VStack(alignment: .leading, spacing: DS.Space.xs) {
-                    HStack {
+                    HStack(spacing: DS.Space.s) {
                         Text("码值 (6~8 位数字)")
                             .font(.footnote.weight(.semibold))
                             .foregroundStyle(DS.Palette.text)
@@ -1574,7 +1578,7 @@ struct TempCodeStudio: View {
                         Button {
                             owner = m.id
                         } label: {
-                            HStack {
+                            HStack(spacing: DS.Space.s) {
                                 Text(m.name)
                                     .font(.subheadline)
                                     .foregroundStyle(DS.Palette.text)
@@ -2040,7 +2044,7 @@ struct PwdDetailStudio: View {
                     if p.temp {
                         Section("提前失效") {   // 331 提前失效
                             VStack(alignment: .leading, spacing: DS.Space.xs) {
-                                HStack {
+                                HStack(spacing: DS.Space.s) {
                                     Text("提前 \(CredentialOrg.earlyExpireMin(mac, p.alias)) 分钟失效")
                                         .font(.subheadline)
                                         .foregroundStyle(DS.Palette.text)
@@ -2087,7 +2091,7 @@ struct PwdDetailStudio: View {
                         Section("用量 (335, 约)") {
                             let u = CredentialOrg.usageCount(mac, p: p)
                             HStack(spacing: DS.Space.s) {
-                                HStack(spacing: 3) {
+                                HStack(spacing: DS.Space.xs) {
                                     ForEach(0..<8, id: \.self) { i in
                                         Capsule()
                                             .fill(i < min(u, 8) ? DS.Palette.accent : DS.Palette.surfaceAlt)
@@ -2228,7 +2232,7 @@ struct PwdDetailStudio: View {
         }
     }
     private func row(_ k: String, _ v: String) -> some View {
-        HStack(alignment: .firstTextBaseline) {
+        HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {
             Text(k)
                 .font(.subheadline)
                 .foregroundStyle(DS.Palette.textSub)
@@ -2611,7 +2615,7 @@ struct FpStudio: View {
     private var fallbackName: String { "指纹" + String(doneBatch ?? 0) }
 
     private var navBar: some View {
-        HStack {
+        HStack(spacing: DS.Space.s) {
             if step > 0 {
                 Button("上一步") {
                     withAnimation(DS.Motion.quick) { step -= 1 }
@@ -2802,7 +2806,7 @@ struct FpDetailStudio: View {
         }
     }
     private func fpRow(_ k: String, _ v: String) -> some View {
-        HStack(alignment: .firstTextBaseline) {
+        HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {
             Text(k)
                 .font(.subheadline)
                 .foregroundStyle(DS.Palette.textSub)
@@ -3188,7 +3192,7 @@ struct OtpStudio: View {
     }
     private func staticRow(_ c: CredentialOrg.StaticCode) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            HStack {
+            HStack(spacing: DS.Space.s) {
                 Text((c.used ? "已用 · " : "") + c.name)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(c.used ? DS.Palette.textSub : DS.Palette.text)

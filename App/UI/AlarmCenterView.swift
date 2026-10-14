@@ -163,7 +163,7 @@ struct AlarmCenterView: View {
                     .lineLimit(1)
             }
             .padding(.horizontal, 12)
-            .padding(.vertical, 10)
+            .padding(.vertical, DS.Space.m)
             .background(on ? DS.Palette.accent : DS.Palette.surfaceAlt, in: Capsule())
             .overlay(Capsule().strokeBorder(DS.Palette.hairline, lineWidth: 0.5))
             .foregroundStyle(on ? DS.Palette.onAccent : DS.Palette.text)
@@ -624,7 +624,7 @@ struct AlarmCenterView: View {
             Text("前后 7 天开门量 (747 · 判断试探迹象, 约)")
                 .font(.caption.weight(.medium))
                 .foregroundStyle(DS.Palette.textSub)
-            HStack(alignment: .bottom, spacing: 3) {
+            HStack(alignment: .bottom, spacing: DS.Space.xs) {
                 // 2026-10-13 run 63: DayOpen 不是 Identifiable ⇒ ForEach 要显式 id:。
                 ForEach(days, id: \.key) { d in
                     VStack(spacing: 2) {
