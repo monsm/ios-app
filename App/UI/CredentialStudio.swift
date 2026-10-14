@@ -1179,7 +1179,7 @@ struct PwdStudio: View {
                 if let at = CredentialOrg.lastApplyAt(mac) {
                     let days = Int((Date().timeIntervalSince1970 - at / 1000) / 86400)
                     Text("此锁上次成功下发: " + (days <= 0 ? "今天" : "\(days) 天前")
-                         + " (541 · 本机台账时刻, 不是锁端真值; 若中途有别人动过这把锁, 以到场核对为准)")
+                         + " (本机台账时刻, 不是锁端真值; 若中途有别人动过这把锁, 以到场核对为准)")   // 541 上次成功下发时刻口径
                         .font(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)

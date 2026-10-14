@@ -1149,7 +1149,7 @@ struct CredDisableSheet: View {
     }
     /// 367 勾选行文案。「另有 0 条无归属」是把界面写成噪音, 所以只在真有的时候才出现那一半。
     private var feedToggleLabel: String {
-        let head = "写入该成员动态 (367 · 影响 \(ownerIds.count) 位成员, 各写自己名下的条数)"
+        let head = "写入该成员动态 (影响 \(ownerIds.count) 位成员, 各写自己名下的条数)"   // 367 写入该成员动态
         return unownedCount > 0 ? head + "; 另有 \(unownedCount) 条无归属, 不进任何人的动态" : head
     }
 

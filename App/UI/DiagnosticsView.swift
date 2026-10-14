@@ -755,7 +755,7 @@ struct DiagnosticsView: View {
             }
             // 455 指令重放摘要: 数据源直接取现有内存日志里 `命令名 -> rc=N` 这一族行 ——
             // 不另建一份流水, 免得两份记录早晚对不上 (行内只有命令名与结果码, 不含帧、密钥或口令)。
-            Section("指令流水 (455 · 最近 \(min(cmdTrace.count, 20)) 条)") {
+            Section("指令流水 (最近 \(min(cmdTrace.count, 20)) 条)") {   // 455 指令流水
                 if cmdTrace.isEmpty {
                     Text("本次会话还没有指令结果 — 做一次开锁/读取后这里才有内容。")
                         .font(.footnote).foregroundStyle(DS.Palette.textSub)

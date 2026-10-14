@@ -1657,7 +1657,7 @@ struct StatsView: View {
     private func ganttSection(_ m: StatsKit.StatModel) -> some View {
         let g = m.gantt
         if !g.isEmpty {
-            Section("临时码核销 (609 · 629)") {
+            Section("临时码核销") {   // 609 临时码甘特   // 629 核销率
                 VStack(spacing: DS.Space.s) {
                     ForEach(g) { t in
                         let rate = t.availDays > 0 ? Double(t.usedDays) / Double(t.availDays) : 0
@@ -1819,7 +1819,7 @@ struct StatsView: View {
                     // 跨过 80% 的那一类被漏计: 60/85/95/100 四档只会数出 1, 界面就说"前 1 类承载 80%",
                     // 而那一类其实只有 60%。现在数够线的那一类, 并把**真实累计**一起念出来 (不拿 80 这个整数档冒充实际值)。
                     if let cov = m.paretoCover {
-                        Text("帕累托: 前 \(cov.kinds) 类累计 \(Int(cov.cumPct))% 开门 (615 · 折到凭证类, 类内不分条)")
+                        Text("帕累托: 前 \(cov.kinds) 类累计 \(Int(cov.cumPct))% 开门 (折到凭证类, 类内不分条)")   // 615 开门
                             .font(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                             // 2026-10-14 布局审计 R2: 这条最长 (估宽 599pt vs 343pt)，lineLimit(1) 会把
@@ -1847,7 +1847,7 @@ struct StatsView: View {
             let bubbles = m.memberBubbles(days: m.memberBarDays)
             if !bubbles.isEmpty {
                 VStack(alignment: .leading, spacing: DS.Space.s) {
-                    Text("成员活跃气泡 (624 · 近 \(m.memberBarDays) 天 · 约)")
+                    Text("成员活跃气泡 (近 \(m.memberBarDays) 天 · 约)")   // 624 成员活跃气泡
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(DS.Palette.text)
                     Chart(bubbles) { b in
@@ -1893,7 +1893,7 @@ struct StatsView: View {
             let breakdown = m.kindOwnerBreakdown()
             if !breakdown.isEmpty {
                 VStack(alignment: .leading, spacing: DS.Space.xs) {
-                    Text("凭证归属构成 (625 · 约 · 仅可证明归属)")
+                    Text("凭证归属构成 (约 · 仅可证明归属)")   // 625 凭证归属构成
                         .font(.caption.weight(.medium))
                         .foregroundStyle(DS.Palette.textSub)
                     ForEach(StatsKit.StatModel.kindOrder(), id: \.self) { k in
@@ -2036,7 +2036,7 @@ struct StatsView: View {
             Section("凭证维度") {
                 if !pu.isEmpty {
                     VStack(alignment: .leading, spacing: DS.Space.s) {
-                        Text("长期密码用量 (626 · 台账推断约值)")
+                        Text("长期密码用量 (台账推断约值)")   // 626 长期密码用量
                             .font(.subheadline.weight(.medium))
                             .foregroundStyle(DS.Palette.text)
                         ForEach(pu, id: \.alias) { p in

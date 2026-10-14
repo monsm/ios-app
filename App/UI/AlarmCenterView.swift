@@ -621,7 +621,7 @@ struct AlarmCenterView: View {
         let days = RecordSearch.aroundDays(mac: r.mac, aroundKey: r.key)
         let maxC = days.map(\.count).max() ?? 1
         return VStack(alignment: .leading, spacing: DS.Space.xs) {
-            Text("前后 7 天开门量 (747 · 判断试探迹象, 约)")
+            Text("前后 7 天开门量 (判断试探迹象, 约)")   // 747 前后 7 天开门量
                 .font(.caption.weight(.medium))
                 .foregroundStyle(DS.Palette.textSub)
             HStack(alignment: .bottom, spacing: DS.Space.xs) {
@@ -663,7 +663,7 @@ struct AlarmCenterView: View {
         let kbErr = liveHere ? (app.status?.keyboardErrCount ?? 0) : 0
         let kbFreeze = liveHere ? (app.status?.keyboardFreeze ?? 0) : 0
         if today > 0 || kbErr > 0 || kbFreeze > 0 {
-            Section("试错累计 (737 · ?)") {
+            Section("试错累计 (待核)") {   // 737 试错累计 (⚠ keyboardErrCount 语义未证实, 标题原来用"?"担着)
                 VStack(alignment: .leading, spacing: DS.Space.xs) {
                     HStack(spacing: DS.Space.s) {
                         Image(systemName: "key.zarrowpath").font(.system(size: DS.Icon.sm)).foregroundStyle(DS.Palette.warn).accessibilityHidden(true)
@@ -748,7 +748,7 @@ struct AlarmCenterView: View {
                 .padding(.vertical, DS.Space.xs)
             }
         } else {
-            Section("响应时长 (742 · 已有 " + String(samples.count) + " 条留痕)") {
+            Section("响应时长 (已有 " + String(samples.count) + " 条留痕)") {   // 742 响应时长
                 // Disposition 非 Identifiable (只 at/verdict), 单参 ForEach 编译不过;
                 // 同一秒内可有多条留痕 → at 不保证唯一, 用 enumerated 的 offset 作身份
                 ForEach(Array(samples.sorted { $0.at > $1.at }.prefix(10).enumerated()), id: \.offset) { _, d in

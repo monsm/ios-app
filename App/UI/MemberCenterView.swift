@@ -1462,7 +1462,7 @@ struct MemberExitWizard: View {
                             .frame(minHeight: DS.Hit.min)
                         }
                     } header: {
-                        Text("逐条处置 (474 · 保留/移交/停用)")
+                        Text("逐条处置 (保留/移交/停用)")   // 474 逐条处置
                     }
                 }
                 Section {
@@ -1585,7 +1585,7 @@ struct BorrowSheetView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("新建借用 (472 · 归属 " + (DB.member(memberID)?.name ?? "成员") + ")") {
+                Section("新建借用 (归属 " + (DB.member(memberID)?.name ?? "成员") + ")") {   // 472 新建借用
                     TextField("借用人", text: $by)
                         .autocorrectionDisabled()
                     TextField("归还日期 yyyy-MM-dd", text: $due)
@@ -1964,7 +1964,7 @@ struct MemberActiveTable: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("成员活跃总表 (788 · 本月次数/最近使用/凭证数)") {
+                Section("成员活跃总表 (本月次数/最近使用/凭证数)") {   // 788 成员活跃总表
                     ForEach(rows) { r in
                         NavigationLink {
                             MemberDetail360View(memberID: r.m.id, onChanged: { onChanged() })
