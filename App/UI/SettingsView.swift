@@ -323,7 +323,9 @@ struct SettingsView: View {
                 NavigationLink("锁档案 (昵称/符号/色标/备注)") { LockProfileView() }
                 // 包2 连接与预握手偏好 (70/97/100): 自动预握手开关 / 成功率积累占位 / 信号围栏记忆
                 NavigationLink("连接与预握手 (自动预热/成功率)") { LinkPrefsView(mac: mac) }
+                note("靠近时先连上，开锁少等一两秒；成功率只在本机统计。")
                 Button("锁信息名片") { showDeviceInfo = true }
+                note("型号、固件、电量与绑定时间的汇总卡。")
                 Toggle("静音模式", isOn: Binding(
                     get: { muteStored },
                     set: { silent in
@@ -343,13 +345,17 @@ struct SettingsView: View {
                         }
                     }))
                     .disabled(settingMute)
+                note("关掉门锁键盘的提示音；不影响本 App 的通知。")
                 NavigationLink("校准门锁时间") { SyncTimeView() }
+                note("锁端时钟不准时，临时码和有效期会失效。")
                 NavigationLink("维护与保养 (周期/换电)") { MaintenanceView() }
                 if canDefend {
                     NavigationLink("一键布防") { DefendView() }
+                    note("出门后锁端拒绝一切开锁，需再次连上解除。")
                 }
                 if canTailgate {
                     NavigationLink("防尾随入室") { TailgateView() }
+                    note("开门后短时间内刷同一凭证才告警。")
                 }
                 if canClearPwd {
                     Button("清空密码", role: .destructive) { clearPwd() }
@@ -360,6 +366,16 @@ struct SettingsView: View {
         }
     }
     private var muteStored: Bool { DB.store.getBool("kf_mute_" + mac) }
+
+    /// 2026-10-14: 设置项小字注解。口径"简洁明了" —— 只说用户决策需要的那一句
+    /// (这一项是干什么的 / 要不要连锁 / 有什么后果), 不铺陈实现细节 (那些留在注释里)。
+    /// 与 deviceManageSection 既有的 caption2 小字同一族, 这里收成一个 helper 免得每处重抄三行修饰。
+    private func note(_ s: String) -> some View {
+        Text(s)
+            .font(.caption)
+            .foregroundStyle(DS.Palette.textSub)
+            .fixedSize(horizontal: false, vertical: true)
+    }
     private var canDefend: Bool { PidMap.canDefend(app.current?.pid ?? 0) }
     private var canTailgate: Bool { PidMap.canTailgate(app.current?.pid ?? 0, fw: app.current?.fw) }
     private var canClearPwd: Bool { PidMap.canClearPwd(app.current?.pid ?? 0) }
@@ -414,10 +430,12 @@ struct SettingsView: View {
     private var securitySection: some View {
         Section("安全") {
             NavigationLink("门锁安全模式") { SafemodeIntroView(mode: "safe") }
+            note("单次 / 双重验证：决定开一道锁还是两道。")
             // 包7: 安全·隐私·审计中心 (应用锁增强/防窥/审计流水/数据销毁)
             NavigationLink { SecurityCenterView() } label: {
                 Label("安全中心 (应用锁/防窥/审计/销毁)", systemImage: "lock.shield")
             }
+            note("应用锁、防窥、审计流水与数据销毁都在这页。")
         }
     }
 
@@ -633,6 +651,7 @@ struct SettingsView: View {
                 Button("关闭本机密码", role: .destructive) { disablePasscode() }
             } else {
                 Button("设置本机密码") { setPasscode() }
+                note("4 位以上数字。查看密码与导出备份前会要求输入。")
             }
         } header: {
             Text("本机数据保护")
@@ -722,6 +741,7 @@ struct SettingsView: View {
                 Text("微噪点").tag("grain")
             }
             .pickerStyle(.menu)
+            note("只换主控卡的底纹，不影响内容与读数。")
             // 动效档位 (899): 管的是全 App 动效令牌，不是"只换 Tab 那一下" —— 文案照实写
             Picker("动效强度", selection: Binding(
                 get: { DB.store.getString("kf_motion").isEmpty ? "standard" : DB.store.getString("kf_motion") },
@@ -751,6 +771,7 @@ struct SettingsView: View {
             Toggle("高对比皮肤", isOn: Binding(
                 get: { DB.store.getBool("kf_hc") },
                 set: { app.setHighContrast($0) }))
+            note("文字与分隔线加深一档，不必去改整机设置。")
             // 周起始日 (912): 一处读点管住"本周"时间词 / 月历表头与格子 / 本周整理数 / 本周轮值键
             Picker("周起始日", selection: Binding(
                 get: { WeekCal.key },
@@ -770,6 +791,7 @@ struct SettingsView: View {
                 Text("宽松").tag("relaxed")
             }
             .pickerStyle(.menu)
+            note("只改间距，字号与按钮大小不变。")
             // 凭证行高 (901): 两档 = 紧凑(隐藏副行, 只留名称与状态) / 舒适(加高, 带副行)。
             // 只加行最小高度，不动字号 —— 压矮会裁多行备注，那不是紧凑
             Picker("凭证行高", selection: Binding(
@@ -798,6 +820,7 @@ struct SettingsView: View {
                 Text("系统默认体").tag("plain")
             }
             .pickerStyle(.menu)
+            note("只换主控卡上电量那几个数字的字体。")
             // Hero 参考指标位 (909): 电量刻意不给开关 (它决定还能不能开锁)
             Toggle("主控卡显示固件位", isOn: Binding(
                 get: { DS.HeroStats.shows("firmware") },
@@ -805,10 +828,12 @@ struct SettingsView: View {
             Toggle("主控卡显示锁钟位", isOn: Binding(
                 get: { DS.HeroStats.shows("lockclock") },
                 set: { v in app.setHeroStats(DS.HeroStats.all.filter { $0 != "lockclock" || v }) }))
+            note("主控卡上那几个小位要显示哪几个；电量不给关。")
             // 素颜模式 (idea 1046): 一键关闭庆祝与徽章动效
             Toggle("素颜模式", isOn: Binding(
                 get: { DB.store.getBool("kf_plain") },
                 set: { DB.store.set("kf_plain", $0) }))
+            note("关掉彩带、徽章动效一类的庆祝效果。")
             // 最近开门条数 (idea 910): 设备页时间线长度
             Picker("最近开门条数", selection: Binding(
                 get: { DB.store.getInt("kf_recent_count", 5) },
