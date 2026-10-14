@@ -245,6 +245,45 @@ final class AppState: ObservableObject {
     // 每个字段一条会同时出现好几个"清除"按钮，指向的却是同一份剪贴板内容。
     @Published var pasteSuggestion: ClipboardCare.Suggestion?
     func refreshPasteSuggestion() { pasteSuggestion = ClipboardCare.suggestion }
+    // ---------- 同屏"闲时提醒"预算 (乱源治理第 2 批) ----------
+    /// 827: 本会话里已点过的快捷格。原先挂在 DeviceHomeView 的 @State 上，而"谁上台"要看全局排位 ——
+    /// 视图层的 @State 预算读不到，所以这一位搬到状态源 (判据一条没改，只是换了存放处)。
+    @Published var ambientTipUsed: Set<String> = []
+    /// 827 「不再提示」的即时状态。写盘那份是 HintOnce(偏好)，而 UserDefaults 不是可观察源 ——
+    /// 只改盘不改状态，这行提示会留到下次进页才消失，看起来像按钮没反应。
+    @Published var ambientTipOff = HintOnce.shown("827off")
+    /// 42/268 首用气泡的同一条坑: HintOnce 写的是偏好盘，而盘不是可观察源 —— 只 mark 不改这一位，
+    /// 气泡会留到下一次状态变化才消失，看起来就是"点掉它没反应"。与 ambientTipOff 同一手法成对出现。
+    @Published var firstUseCapsuleDone = HintOnce.shown("capsule268")
+    /// 汇总胶囊的承载页
+    @Published var showAmbientList = false
+    /// 827: 显示顺序里"还没被点过"的第一格; 全部点过或用户关了提示 ⇒ nil (整行不占位)。
+    /// 判据三选一即算用过: 本次会话点掉过、以前点掉过、或 QuickPool 频次表里已有点击 ——
+    /// 1047 静默学习只在没被手动关过时开着 (SettingsView 那条"关掉就清空计数"的承诺由 QuickPool.recordingOn 兑现)。
+    var quickTipTile: QuickAction? {
+        guard !ambientTipOff, !HintOnce.shown("827off") else { return nil }
+        let c = QuickPool.counts
+        return QuickPool.ordered().first { a in
+            if ambientTipUsed.contains(a.id) || HintOnce.shown("827seen_" + a.id) { return false }
+            return (c[a.id] ?? 0) == 0
+        }
+    }
+    /// 当前成立的全部闲时提醒，按优先级排好。第 0 条上台，其余进汇总胶囊。
+    /// 刻意在这里一次算完 (而不是每条横幅自己 `if`)：六条各自独立判断时，"这屏已经有别的在说话"这件事没人知道。
+    var ambientRanked: [Ambient] {
+        var out: [Ambient] = []
+        if BackupStudio.selfCheckWarning != nil { out.append(.selfCheck) }
+        if pasteSuggestion != nil, tabSelection != 1 { out.append(.pasteCare) }   // 站凭证页时不挂 (人就在那, 不用指路)
+        // 42/268 首用气泡承诺的热点是「主控卡上的连接耗时标记」= ConnectMsBadge (67, hero 上的胶囊),
+        // 单锁也画 ⇒ 不看 devices.count。我上一版照旧注释里"这排胶囊"的说法加了 >1 的闸, 那会把
+        // 单锁用户的首用提示整个吞掉 —— 已收回 (文案说的是哪一块, 得以代码里那块真画不画为准)。
+        if !firstUseCapsuleDone { out.append(.firstUseCapsule) }
+        if quickTipTile != nil { out.append(.quickTileTip) }
+        return NoticeBudget.ranked(out)
+    }
+    var ambientTop: Ambient? { ambientRanked.first }
+    var ambientRest: [Ambient] { Array(ambientRanked.dropFirst()) }
+
     /// 397 本机库体自检 (三项都是本地只读, 不碰 BLE)。结果存这里给诊断页显示, 返回异常项数给调用方决定要不要出声。
     /// 拆成"跑/存"与"提示"两步是因为: 解锁路径只在异常时提示 (每次解锁都弹"一切正常"会被关掉),
     /// 而手动按钮必须无论结果都给反馈。
@@ -255,7 +294,7 @@ final class AppState: ObservableObject {
         selfCheck397 = ls
         let bad = ls.filter { !$0.ok }
         if let first = bad.first {
-            lock.log("warn", "本机自检 \(bad.count) 项异常 (397): \(first.name) — \(first.detail)")
+            lock.log("warn", "本机自检 \(bad.count) 项异常: \(first.name) — \(first.detail)")   // 397 本机自检
         }
         return bad.count
     }
@@ -759,7 +798,7 @@ final class AppState: ObservableObject {
             Milestones.markOnce("crash758_" + top)
             enqueueMoment(Moment(id: "crash758", icon: "exclamationmark.triangle",
                                  title: "上次是异常退出",
-                                 subtitle: "时长与最后操作存在诊断页「异常退出档案 (758)」里, 进去可以核对。"))
+                                 subtitle: "时长与最后操作存在诊断页「异常退出档案」里, 进去可以核对。"))   // 758 时长与最后操作存在诊
         }
         // 385 保留期到期: 启动时自动物理删除 + 重封链 + 留清理记录 (此前只靠安全中心手动按钮才会碰它);
         // months=0 (永久) 时 purgeExpired 内部直接返回, 无须另判。
@@ -934,10 +973,10 @@ struct PrivacyCurtain: View {
                     .font(.system(size: 44, weight: .medium))
                     .foregroundStyle(DS.Palette.accentText)
                     .accessibilityHidden(true)
-                Text("内容已隐藏 (233)")
+                Text("内容已隐藏")   // 233 内容已隐藏
                     .font(.headline)
                     .foregroundStyle(DS.Palette.text)
-                Text("退到后台时以这块幕替换内容，回到前台自动恢复 (233)。")
+                Text("退到后台时以这块幕替换内容，回到前台自动恢复。")   // 233 退到后台时以这块幕替
                     .font(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .multilineTextAlignment(.center)
@@ -1003,13 +1042,18 @@ struct RootView: View {
                 BLEOffBanner { LinkSense.shared.openBluetoothSettings() }
             }
             // 包8/448 启动自检黄条: 库体哈希与上次快照不一致 → 设备 Tab 顶部黄条 "去诊断"
-            if let w = BackupStudio.selfCheckWarning {
+            // 乱源治理第 2 批: 它不再无条件挂 —— 闲时提醒同屏只留一条, 由 app.ambientTop 说了算
+            if app.ambientTop == .selfCheck, let w = BackupStudio.selfCheckWarning {
                 selfCheckBanner(w)
             }
             // 344 粘贴建议条: 回前台时本会话刚复制的凭证还在不在, 一条快捷条解决。
             // 站凭证页时不挂 (人就在那, 不用指路); 文案里的秒数取自回前台那一刻的快照。
-            if let s = app.pasteSuggestion, app.tabSelection != 1 {
+            if app.ambientTop == .pasteCare, let s = app.pasteSuggestion {
                 pasteSuggestionBar(s)
+            }
+            // 被预算压掉的提醒不静默消失: 给一枚汇总入口, 点进去逐条仍是它原来的动作
+            if !app.ambientRest.isEmpty {
+                ambientOverflowChip(app.ambientRest.count)
             }
             if let t = app.toast {
                 ToastView(text: t)
@@ -1147,6 +1191,12 @@ struct RootView: View {
             AppLockView(reauth: true)
                 .environmentObject(app)
         }
+        // 乱源治理第 2 批: 被预算压掉的提醒在这里逐条给回它原来的动作 (sheet 而不是 cover ——
+        // 它是"看一眼再回去"的面，不该把底下的内容全遮掉)
+        .sheet(isPresented: $app.showAmbientList) {
+            AmbientOverflowSheet()
+                .environmentObject(app)
+        }
         // 用 safeAreaInset 而不是 overlay — 覆盖式会压住导航栏标题
     }
 
@@ -1180,7 +1230,7 @@ struct RootView: View {
             StartupTrace.mark("onLaunch 结束")
             Prewarm.run(mac: app.currentMac)
             if StartupTrace.overBudget {
-                app.lock.log("warn", "启动耗时 \(Int(StartupTrace.totalMs))ms, 超 800ms 预算 (215)")
+                app.lock.log("warn", "启动耗时 \(Int(StartupTrace.totalMs))ms, 超 800ms 预算")   // 215 启动耗时
             }
             RootView.registerHost(app)   // 包2: LinkSense 宿主注册 + 回连/巡检循环
             LinkSense.shared.coldStartScan()   // 包2/134 冷启动先扫描 (定位可见锁, 不连接)
@@ -1273,7 +1323,7 @@ struct RootView: View {
                 app.restoreLastTab(); app.applyPendingRoute()
                 // 397 解锁后跑一次本机库体自检 (纯本地读, 不碰 BLE); 只在异常时出声
                 let bad = app.runSelfCheck397()
-                if bad > 0 { app.showToast("本机自检发现 \(bad) 项异常，详见「设置-诊断」(397)") }
+                if bad > 0 { app.showToast("本机自检发现 \(bad) 项异常，详见「设置-诊断」") }   // 397 本机自检发现
             } else {
                 // 377/383: 锁重新落下 (手动锁 / 393 到点自动锁) 就把会话级授权一起收回 ——
                 // 访客区的放开与 sudo 券说的都是"这一次解锁验过", 锁都落了还认旧账就等于没拦。
@@ -1306,6 +1356,33 @@ struct RootView: View {
 
     /// 包8/448 启动自检黄条 —— 2026-10-13 run 64 从 body 内联块抽出: 该表达式报 type-check 超时。
     @ViewBuilder
+    /// 汇总胶囊: 屏上只留一条提醒，其余收在这儿。数字如实是被压掉的条数，不含屏上那条。
+    private func ambientOverflowChip(_ n: Int) -> some View {
+        Button {
+            DS.Haptics.tick.impactOccurred()
+            app.showAmbientList = true
+        } label: {
+            HStack(spacing: DS.Space.xs) {
+                Image(systemName: "bell.badge")
+                    .font(.system(size: DS.Icon.xs))
+                    .accessibilityHidden(true)
+                Text("还有 \(n) 条提醒")
+                    .font(.caption2)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: DS.Icon.xs))
+                    .accessibilityHidden(true)
+            }
+            .foregroundStyle(DS.Palette.textSub)
+            .padding(.horizontal, DS.Space.s)
+            .padding(.vertical, DS.Space.xs)
+            .background(Capsule().fill(DS.Palette.surfaceAlt))
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .frame(minHeight: DS.Hit.min)
+        }
+        .buttonStyle(PressableButtonStyle())
+        .accessibilityLabel("屏上只留了一条提醒，另有 \(n) 条被收起，轻点逐条查看")
+    }
+
     private func selfCheckBanner(_ w: String) -> some View {
         HStack(spacing: DS.Space.xs) {
             Image(systemName: "exclamationmark.triangle")
@@ -1342,7 +1419,7 @@ struct RootView: View {
             Spacer(minLength: DS.Space.xs)
             if case .waiting = s.stage {
                 // 517 立即清除: 走 ClipboardCare.clearNow() (唯一出口), 不在这里直接写 pasteboard
-                Button("立即清除 (517)") {
+                Button("立即清除") {   // 517 立即清除
                     ClipboardCare.clearNow()
                     withAnimation(DS.Motion.standard) { app.pasteSuggestion = nil }
                 }
@@ -1518,7 +1595,7 @@ struct AppLockView: View {
                 }
 
             VStack(spacing: DS.Space.s) {
-                Text(reauth ? "凭证与设置已收起 (377)" : "离线锁管家已锁定")
+                Text(reauth ? "凭证与设置已收起" : "离线锁管家已锁定")   // 377 凭证与设置已收起
                     .font(.title2.weight(.semibold))
                     .foregroundStyle(DS.Palette.text)
                 Text(reauth ? "访客模式进行中, 重输本机密码才放开这两页" : "输入本机密码以查看门锁与凭证")
@@ -1565,7 +1642,7 @@ struct AppLockView: View {
                 }
                 // 235: 面容两次未识别后的可见落点 (字面引导回密码键盘; 取消/改用密码等中断不触发)
                 if faceHint, !failed {
-                    Label("面容两次未识别, 请用本机密码继续 (235)", systemImage: "faceid")
+                    Label("面容两次未识别, 请用本机密码继续", systemImage: "faceid")   // 235 面容两次未识别
                         .font(.footnote)
                         .foregroundStyle(DS.Palette.warn)
                         .transition(.opacity)
@@ -1602,7 +1679,7 @@ struct AppLockView: View {
                                 faceHint = true
                                 failed = false   // 陈旧口令错误行让位: 否则它的分支把面容提示挡在 !failed 之外不现身
                                 if !useKeypad { focused = true }
-                                LockGuard.appendTrace("面容两次未识别, 自动落回密码键盘 (235)")
+                                LockGuard.appendTrace("面容两次未识别, 自动落回密码键盘")   // 235 面容两次未识别
                             }
                             // 877 反方向降级: 脸被拒三次之后给一套按得准的大键, 而不是继续要人用脸。
                             // 键序回到自然序 (0…9) —— 刚被系统拒绝三次的人不该再去猜 396 那张随机盘;
@@ -1612,7 +1689,7 @@ struct AppLockView: View {
                                 manualEntry = false
                                 focused = false
                                 keyOrder = (0...9).map { String($0) }
-                                LockGuard.appendTrace("面容三次未识别, 切 56pt 大按键密码盘 (877)")
+                                LockGuard.appendTrace("面容三次未识别, 切 56pt 大按键密码盘")   // 877 面容三次未识别
                                 AXTools.announce("面容连续三次没认出来, 已换成大按键密码盘")
                             }
                         } else {

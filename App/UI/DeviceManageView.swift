@@ -37,8 +37,8 @@ struct DeviceManageView: View {
                             .listRowInsets(EdgeInsets())
                             .listRowSeparator(.hidden)
                     }
-                    Text("点一行 = 置顶并设为启动默认锁 (271/766)；要精细调序就点右上角「排序」, 出现行尾手柄后拖动。"
-                         + "分好组后, 设备 Tab 上方会出现按组切换的胶囊 (767), 切换胶囊菜单里也按组分区。")
+                    Text("点一行 = 置顶并设为启动默认锁；要精细调序就点右上角「排序」, 出现行尾手柄后拖动。"   // 271/766 点一行
+                         + "分好组后, 设备 Tab 上方会出现按组切换的胶囊, 切换胶囊菜单里也按组分区。")   // 767 分好组后
                         .font(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
@@ -60,7 +60,7 @@ struct DeviceManageView: View {
                             Section(isExpanded: expandBinding(g.name)) {
                                 rows(g.locks)
                                 if g.name == LockArchive.ungroupedLabel {
-                                    Text("「未分组」不是一个组, 只是还没归类的兜底段 (104)。")
+                                    Text("「未分组」不是一个组, 只是还没归类的兜底段。")   // 104 未分组
                                         .font(.caption2)
                                         .foregroundStyle(DS.Palette.textSub)
                                 }
@@ -74,7 +74,7 @@ struct DeviceManageView: View {
                         }
                     }
                     Section {
-                        Button("按添加时间排序 (769)") { sortByPairedAt() }
+                        Button("按添加时间排序") { sortByPairedAt() }   // 769 按添加时间排序
                         Button("恢复绑定先后 (清掉手工排序与置顶)", role: .destructive) { resetOrder() }
                     } footer: {
                         Text("顺序、分组、分组折叠与隐藏会随全量备份包走 (D-36)：换机恢复后不用重排；"
@@ -91,14 +91,14 @@ struct DeviceManageView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) { Button("完成") { close() } }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(multiSelect ? "退出多选" : "多选 (107)") {
+                    Button(multiSelect ? "退出多选" : "多选") {   // 107 多选
                         multiSelect.toggle()
                         sel.removeAll()
                         if multiSelect { sorting = false }
                     }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(sorting ? "结束排序" : "排序 (766)") {
+                    Button(sorting ? "结束排序" : "排序") {   // 766 排序
                         sorting.toggle()
                         if sorting { multiSelect = false; sel.removeAll() }
                     }
@@ -254,13 +254,17 @@ struct DeviceManageView: View {
         Button { pin(kc.mac) } label: { Label("置顶并设为启动默认锁", systemImage: "arrow.up.to.line") }
         Button {
             LockArchive.setHidden(kc.mac, !hidden)
-            app.showToast(hidden ? "已取消隐藏 (108)" : "已隐藏这把锁 (108): 只在胶囊的已隐藏区可达")
+            // 108 已取消隐藏
+            // 108 已隐藏这把锁
+            app.showToast(hidden ? "已取消隐藏" : "已隐藏这把锁: 只在胶囊的已隐藏区可达")
         } label: {
-            Label(hidden ? "取消隐藏 (108)" : "在翻页里隐藏 (108)",
+            // 108 取消隐藏
+            // 108 在翻页里隐藏
+            Label(hidden ? "取消隐藏" : "在翻页里隐藏",
                   systemImage: hidden ? "eye" : "eye.slash")
         }
         Divider()
-        Section("移入分组 (104/767)") {
+        Section("移入分组") {   // 104/767 移入分组
             ForEach(LockArchive.groupPresets, id: \.self) { p in
                 Button {
                     LockArchive.setGroup(kc.mac, p)
@@ -282,7 +286,7 @@ struct DeviceManageView: View {
     }
 
     private func promptGroup(_ mac: String, current: String) {
-        let alert = UIAlertController(title: "自定义组名 (104)",
+        let alert = UIAlertController(title: "自定义组名",   // 104 自定义组名
                                       message: "例如 大门 / 卧室 / 出租屋。最多 12 字, 组名会出现在设备页的切换胶囊上。",
                                       preferredStyle: .alert)
         alert.addTextField { tf in
@@ -292,7 +296,7 @@ struct DeviceManageView: View {
             let v = alert.textFields?.first?.text ?? ""
             LockArchive.setGroup(mac, v)
             reload()
-            app.showToast(v.trimmingCharacters(in: .whitespaces).isEmpty ? "已移出分组" : "组名已更新 (104)")
+            app.showToast(v.trimmingCharacters(in: .whitespaces).isEmpty ? "已移出分组" : "组名已更新")   // 104 组名已更新
         })
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         UIApplication.topViewController()?.present(alert, animated: true)
@@ -304,7 +308,7 @@ struct DeviceManageView: View {
         LockArchive.pinToFront(mac, app.devices)
         reload()
         let hn = LockArchive.displayName(app.devices.first { $0.mac == mac } ?? Keychain(mac: mac, skey: ""))
-        app.showToast("已置顶「" + hn + "」· 即启动默认锁 (271/766)")
+        app.showToast("已置顶「" + hn + "」· 即启动默认锁")   // 271/766 即启动默认锁
     }
     /// 按给定的 mac 序列重排快照 (重复的 mac 只认第一次出现, 所以调用方可以直接拼 "选中的 + 全部")。
     private func reorder(_ macs: [String], _ verb: String) {
@@ -348,27 +352,27 @@ struct DeviceManageView: View {
         .background(.bar)
         .overlay(Rectangle().fill(DS.Palette.hairline).frame(height: 0.5), alignment: .top)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("批量处理已选 \(n) 把锁 (107)")
+        .accessibilityLabel("批量处理已选 \(n) 把锁")   // 107 批量处理已选
     }
     private func batchHidden(_ on: Bool) {
         for m in sel { LockArchive.setHidden(m, on) }
-        app.showToast("已" + (on ? "隐藏" : "显示") + " \(sel.count) 把锁 (107)")
+        app.showToast("已" + (on ? "隐藏" : "显示") + " \(sel.count) 把锁")   // 107 把锁
         endBatch()
     }
     private func batchGroup(_ name: String) {
         for m in sel { LockArchive.setGroup(m, name) }
-        app.showToast("已把 \(sel.count) 把锁归入「" + name + "」 (104/107)")
+        app.showToast("已把 \(sel.count) 把锁归入「" + name + "」")   // 104/107 界面文案
         endBatch()
     }
     private func promptGroupBatch() {
-        let alert = UIAlertController(title: "批量分组名 (107)",
+        let alert = UIAlertController(title: "批量分组名",   // 107 批量分组名
                                       message: "选中的锁一起改到这个名字下。最多 12 字。",
                                       preferredStyle: .alert)
         alert.addTextField { tf in tf.placeholder = "组名"; tf.autocorrectionType = .no }
         alert.addAction(UIAlertAction(title: "保存", style: .default) { _ in
             let v = alert.textFields?.first?.text ?? ""
             for m in sel { LockArchive.setGroup(m, v) }
-            app.showToast("已把 \(sel.count) 把锁归入该组 (107)")
+            app.showToast("已把 \(sel.count) 把锁归入该组")   // 107 已把
             endBatch()
         })
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))

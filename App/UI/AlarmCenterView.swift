@@ -26,7 +26,7 @@ struct AlarmCenterView: View {
     private var macs: [String] { lockMac.map { [$0] } ?? DB.keychains().map { $0.mac } }
     /// 单锁下钻时标题带上锁名 —— 否则进来看见"告警中心"分不清流的是哪把锁的
     private var centerTitle: String {
-        guard let m = lockMac, let kc = DB.keychain(m) else { return "告警中心 (723)" }
+        guard let m = lockMac, let kc = DB.keychain(m) else { return "告警中心" }   // 723 告警中心
         return LockArchive.displayName(kc) + " · 告警流"
     }
 
@@ -129,8 +129,8 @@ struct AlarmCenterView: View {
             // 默认折叠: 这一屏的主体是队列, 科普不该占掉首屏高度。
             DisclosureGroup {
                 VStack(alignment: .leading, spacing: DS.Space.xs) {
-                    Text("试错锁定 (10)：连着输错密码到锁内阈值, 锁端会自行冻结一段时间, 这期间正确的密码也不放行, 等它自己解冻。")
-                    Text("键盘锁定 (224)：锁端键盘冻结标志为开, 通常与上面的试错计数同源; 这里只读标志, 不当成「有人在试」。")
+                    Text("试错锁定：连着输错密码到锁内阈值, 锁端会自行冻结一段时间, 这期间正确的密码也不放行, 等它自己解冻。")   // 10 试错锁定
+                    Text("键盘锁定：锁端键盘冻结标志为开, 通常与上面的试错计数同源; 这里只读标志, 不当成「有人在试」。")   // 224 键盘锁定
                     Text("防撬 (7)：锁体被撬动或拆离时锁端自己记的一条, 与试错无关。")
                     Text("关于「胁迫」：锁端日志类型表里没有这一类, 本 App 不虚构一个查不到的类型。")
                 }
@@ -139,13 +139,13 @@ struct AlarmCenterView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.vertical, DS.Space.xxs)
             } label: {
-                Text("这些告警是什么 (744)")
+                Text("这些告警是什么")   // 744 这些告警是什么
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
             }
         } header: {
-            Text(unhandledOnly ? "未处理队列 (734 · 处置完自动归入已归档)" : "全部告警 (含已处置 743)")
+            Text(unhandledOnly ? "未处理队列" : "全部告警 (含已处置 743)")   // 734 未处理队列
         }
     }
     private func levelChip(_ t: Int, _ name: String) -> some View {
@@ -179,7 +179,7 @@ struct AlarmCenterView: View {
     @ViewBuilder
     private var replayRuler: some View {
         if scrubHour >= 0 || stream.contains(where: { $0.timeStr.hasPrefix(StatsKit.dayKey(Date())) }) {
-            Section("24 小时回放 (730)") {
+            Section("24 小时回放") {   // 730 小时回放
                 VStack(spacing: DS.Space.xs) {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 2) {
@@ -252,7 +252,7 @@ struct AlarmCenterView: View {
                         }
                     }
                 } label: {
-                    Label("\(cluster.count) 把锁在 30 分钟内先后报低电 (731)", systemImage: "battery.25percent")
+                    Label("\(cluster.count) 把锁在 30 分钟内先后报低电", systemImage: "battery.25percent")   // 731 把锁在
                         .font(.footnote.weight(.medium))
                         .foregroundStyle(DS.Palette.warn)
                 }
@@ -284,7 +284,9 @@ struct AlarmCenterView: View {
                 }
             } header: {
                 HStack(spacing: DS.Space.xs) {
-                    Text(showOlder ? "更早 · 超 30 天仍未处置 (682)" : "更早 · 超 30 天仍未处置 \(older.count) 条 (682)")
+                    // 682 更早
+                    // 682 更早
+                    Text(showOlder ? "更早 · 超 30 天仍未处置" : "更早 · 超 30 天仍未处置 \(older.count) 条")
                     Spacer(minLength: 0)
                     if showOlder {
                         Button("收起") { showOlder = false }
@@ -317,7 +319,7 @@ struct AlarmCenterView: View {
                 .opacity(isFolded ? 0.55 : 1)
             if isFolded {
                 // 729: 同锁同类 24 小时内已标过「误报」→ 本行按疑似同类误报折叠灰显 (仍可展开处置)
-                Text("疑似同类误报 — 同锁同类型 24 小时内已标过「误报」, 本行折叠灰显 (729)")
+                Text("疑似同类误报 — 同锁同类型 24 小时内已标过「误报」, 本行折叠灰显")   // 729 疑似同类误报
                     .font(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -382,10 +384,10 @@ struct AlarmCenterView: View {
             // 745 测试标记: 已标"测试"的行灰显排除统计口径
             if disp?.verdict == "测试" { opacity(0.55) }
             HStack(spacing: DS.Space.s) {
-                rowButton(openDetailKey == r.id ? "收起处置" : "处置与留痕 (726)", systemImage: "checklist", on: openDetailKey == r.id) {
+                rowButton(openDetailKey == r.id ? "收起处置" : "处置与留痕", systemImage: "checklist", on: openDetailKey == r.id) {   // 726 处置与留痕
                     openDetailKey = openDetailKey == r.id ? nil : r.id
                 }
-                rowButton("前后事件 (736)", systemImage: "text.bubble", on: openContextKey == r.id) {
+                rowButton("前后事件", systemImage: "text.bubble", on: openContextKey == r.id) {   // 736 前后事件
                     openContextKey = openContextKey == r.id ? nil : r.id
                 }
                 rowButton("同类 \(RecordSearch.sameCountPreview(r))", systemImage: "list.number", on: false) {
@@ -440,7 +442,7 @@ struct AlarmCenterView: View {
                     .foregroundStyle(DS.Palette.textSub)
             }
         } else {
-            Section("前后 10 分钟 · 同锁 (736)") {
+            Section("前后 10 分钟 · 同锁") {   // 736 前后
                 ForEach(Array(before.enumerated()), id: \.offset) { _, x in
                     contextRow(x, tag: "前")
                 }
@@ -498,7 +500,7 @@ struct AlarmCenterView: View {
             // 727 防撬检查清单 (勾选状态本地留存)
             if r.type == 7 {
                 VStack(alignment: .leading, spacing: DS.Space.xs) {
-                    Text("防撬检查清单 (727)")
+                    Text("防撬检查清单")   // 727 防撬检查清单
                         .font(.caption.weight(.medium))
                         .foregroundStyle(DS.Palette.textSub)
                     ForEach(Array(RecordSearch.tamperChecks.enumerated()), id: \.offset) { i, item in
@@ -557,7 +559,7 @@ struct AlarmCenterView: View {
                             .frame(minHeight: DS.Hit.min)
                     }
                 } label: {
-                    Label("换电注意事项 (728)", systemImage: "battery.25percent")
+                    Label("换电注意事项", systemImage: "battery.25percent")   // 728 换电注意事项
                         .font(.caption.weight(.medium))
                         .foregroundStyle(DS.Palette.textSub)
                 }
@@ -567,7 +569,7 @@ struct AlarmCenterView: View {
                 disposeButton("已处理", dkey, disp)
                 disposeButton("误报", dkey, disp)
                 disposeButton("已处置", dkey, disp)
-                disposeButton("标测试 (745)", dkey, disp, danger: true)
+                disposeButton("标测试", dkey, disp, danger: true)   // 745 标测试
             }
             if disp != nil {
                 HStack(spacing: DS.Space.s) {
@@ -575,7 +577,7 @@ struct AlarmCenterView: View {
                         .font(.caption)
                         .foregroundStyle(DS.Palette.ok)
                         .lineLimit(1)
-                    Button("恢复为未处理 (739)") {
+                    Button("恢复为未处理") {   // 739 恢复为未处理
                         RecordSearch.undoDisposition(key: dkey)
                         tick += 1
                     }
@@ -587,7 +589,7 @@ struct AlarmCenterView: View {
                 }
             }
         } header: {
-            Text("处置与留痕 (726 · 仅本机)")
+            Text("处置与留痕")   // 726 处置与留痕
         }
     }
     /// 726/743 处置落点 (行内胶囊与滑动共用): 写留痕 + 触发刷新
@@ -705,7 +707,7 @@ struct AlarmCenterView: View {
                             .lineLimit(1)
                     }
                     if today > 0 {
-                        Text("上面每条即锁端记录的锁定级事件 (569); 其不带凭证槽位 ⇒ 涉事凭证无法归属 (依赖协议失败明细)。")
+                        Text("上面每条即锁端记录的锁定级事件; 其不带凭证槽位 ⇒ 涉事凭证无法归属 (依赖协议失败明细)。")   // 569 上面每条即锁端记录的
                             .font(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
@@ -725,7 +727,7 @@ struct AlarmCenterView: View {
                 VStack(alignment: .leading, spacing: DS.Space.xs) {
                     HStack(spacing: DS.Space.s) {
                         Image(systemName: "hourglass").font(.system(size: DS.Icon.sm)).foregroundStyle(DS.Palette.textSub).accessibilityHidden(true)
-                        Text("响应时长分布 (742 · 积累中)")
+                        Text("响应时长分布")   // 742 响应时长分布
                             .font(.footnote.weight(.medium))
                             .foregroundStyle(DS.Palette.text)
                             .lineLimit(1)

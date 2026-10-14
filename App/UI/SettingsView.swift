@@ -21,6 +21,10 @@ struct SettingsView: View {
     @State private var showCare = false   // 1013: 保养到期通知带 mac 过来 → 切锁并推维护页 (与 587 同构)
     // 包14: 27 设置内搜索 — 顶部搜索框过滤全部设置项
     @State private var query = ""
+    // 乱源治理第 4 批: 五组筛选的当前组。nil = 全部 (默认态与分组之前完全一样)。
+    // 刻意是视图内 @State 而不是落盘键: 记住"上次只看外观与辅助"会让下次进来少看见一堆设置，
+    // 那是把筛选变成隐藏 —— 页内搜索 (§27) 同样是会话态，两处口径一致。
+    @State private var groupFilter: SettingsGroup?
     // 与门锁通信中的忙碌态 — 防止连点重复下发指令
     @State private var settingMute = false
     @State private var clearingPwd = false
@@ -58,23 +62,26 @@ struct SettingsView: View {
             List {
                 searchTextRow
                 searchResults
-                lockSection
-                deviceManageSection
-                securitySection
-                unlockSection
-                timeSection
-                autoOpenSection
-                familySection
-                toolsSection
-                drillSection
-                applockSection
-                a11ySection
-                appearanceSection
-                memorySection
-                reminderSection
-                alertToneSection
-                helpSection
-                aboutSection
+                // 乱源治理第 4 批: 五组筛选片。默认 nil = 全部 ⇒ 这一屏与加这批之前逐字一致，
+                // 谁不碰它就没有任何行为变化；碰了是把 17 节先筛成 3~6 节。
+                SettingsGroupChips(selection: $groupFilter)
+                if settingsSectionShown(groupFilter, .daily) { lockSection }
+                if settingsSectionShown(groupFilter, .daily) { deviceManageSection }
+                if settingsSectionShown(groupFilter, .data) { securitySection }
+                if settingsSectionShown(groupFilter, .daily) { unlockSection }
+                if settingsSectionShown(groupFilter, .look) { timeSection }
+                if settingsSectionShown(groupFilter, .daily) { autoOpenSection }
+                if settingsSectionShown(groupFilter, .keys) { familySection }
+                if settingsSectionShown(groupFilter, .data) { toolsSection }
+                if settingsSectionShown(groupFilter, .data) { drillSection }
+                if settingsSectionShown(groupFilter, .data) { applockSection }
+                if settingsSectionShown(groupFilter, .look) { a11ySection }
+                if settingsSectionShown(groupFilter, .look) { appearanceSection }
+                if settingsSectionShown(groupFilter, .help) { memorySection }
+                if settingsSectionShown(groupFilter, .daily) { reminderSection }
+                if settingsSectionShown(groupFilter, .daily) { alertToneSection }
+                if settingsSectionShown(groupFilter, .help) { helpSection }
+                if settingsSectionShown(groupFilter, .help) { aboutSection }
             }
             .navigationTitle("设置")
             .scrollContentBackground(.hidden)
@@ -175,7 +182,7 @@ struct SettingsView: View {
             SearchHit(id: "s.manual", title: "使用手册", icon: "book") { showManual = true },
             SearchHit(id: "s.flow", title: "数据流向说明", icon: "arrow.right.circle") { app.tabSelection = 3 },
             SearchHit(id: "s.credits", title: "致谢与许可", icon: "hands.clap") { app.tabSelection = 3 },
-            SearchHit(id: "s.copycheck", title: "文案体检 (664)", icon: "text.badge.checkmark") { app.tabSelection = 3 },
+            SearchHit(id: "s.copycheck", title: "文案体检", icon: "text.badge.checkmark") { app.tabSelection = 3 },   // 664 文案体检
         ]
         return all.filter { $0.title.localizedCaseInsensitiveContains(q) || $0.id.hasSuffix(q) }
     }
@@ -203,10 +210,10 @@ struct SettingsView: View {
                     app.showToast(on ? "演示模式已开 · demo_ 数据已铺底" : "已清除全部演示数据")
                 }))
             NavigationLink { DemoLabsView() } label: {
-                Label("演练场: 样例备份/七天样例/锁死演练 (837/845/844)", systemImage: "testtube.2")
+                Label("演练场: 样例备份/七天样例/锁死演练", systemImage: "testtube.2")   // 837/845/844 演练场
             }
             if DemoKit.drillBackupOn {
-                Button("首备演练完成, 转正式备份 (842)", role: .destructive) {
+                Button("首备演练完成, 转正式备份", role: .destructive) {   // 842 首备演练完成
                     DemoKit.finishDrillBackup()
                     app.showToast("备份已转正式")
                 }
@@ -223,18 +230,18 @@ struct SettingsView: View {
         Section {
             Button { showManual = true } label: { Label("使用手册与常见问题", systemImage: "book") }
             // 上一行写着"与常见问题", 但 FAQPage 全仓没有入口 (零引用) → 承诺与实现不符, 这里补上真入口
-            NavigationLink { FAQPage() } label: { Label("常见问题 (514 离线)", systemImage: "questionmark.circle") }
+            NavigationLink { FAQPage() } label: { Label("常见问题", systemImage: "questionmark.circle") }   // 514 常见问题
             // 831: 这一页是本轮新建的, 用 NEW 角标做首见提示 (进入一次即消)
-            newBadgeRow("按症状排查 (282)", "guide282") { SymptomGuideView() }
-            NavigationLink { DataFlowPage() } label: { Label("数据从哪来到哪去 (240)", systemImage: "arrow.right.circle") }
-            NavigationLink { CreditsPage() } label: { Label("致谢与许可 (300)", systemImage: "hands.clap") }
+            newBadgeRow("按症状排查", "guide282") { SymptomGuideView() }   // 282 按症状排查
+            NavigationLink { DataFlowPage() } label: { Label("数据从哪来到哪去", systemImage: "arrow.right.circle") }   // 240 数据从哪来到哪去
+            NavigationLink { CreditsPage() } label: { Label("致谢与许可", systemImage: "hands.clap") }   // 300 致谢与许可
             // 43/44 新变化与更新说明: 每条都带功能编号，构建时由 tools/changelogcheck.js 拿代码标注对拍，
             // 对不上就判失败 —— 所以这一页不可能出现"说了没做"的功能。
-            NavigationLink { ChangelogView() } label: { Label("新变化 (43/44)", systemImage: "sparkles") }
-            NavigationLink { CopyCheckPage() } label: { Label("文案体检 (664 彩蛋)", systemImage: "text.badge.checkmark") }
+            NavigationLink { ChangelogView() } label: { Label("新变化", systemImage: "sparkles") }   // 43/44 新变化
+            NavigationLink { CopyCheckPage() } label: { Label("文案体检", systemImage: "text.badge.checkmark") }   // 664 文案体检
             if DB.store.getBool("kf_onb_ceremony") {
                 NavigationLink { ButlerCertificateView() } label: {
-                    Label("我的就任证书 (813)", systemImage: "rosette")
+                    Label("我的就任证书", systemImage: "rosette")   // 813 我的就任证书
                 }
             }
             Button {
@@ -243,7 +250,7 @@ struct SettingsView: View {
                 app.showToast("下次冷启动重新走引导, 或现在就看")
             } label: {
                 HStack {
-                    Text("重看新手引导 (805)")
+                    Text("重看新手引导")   // 805 重看新手引导
                     Spacer(minLength: DS.Space.s)
                     // 805 已完成度: 与证书页同一份 finishedSteps, 不另记账
                     Text("已完成 \(Onboarding.finishedSteps.count)/\(Onboarding.Step.allCases.count) 步")
@@ -267,7 +274,9 @@ struct SettingsView: View {
             NavigationLink { DeviceManageView() } label: {
                 Label("设备管理 (排序/分组/批量)", systemImage: "rectangle.3.group")
             }
-            Text("拖动排序与置顶同步设备页的翻页顺序 (766)，第一行即启动默认锁 (271)。"
+            // 766 拖动排序与置顶同步设
+            // 271 拖动排序与置顶同步设
+            Text("拖动排序与置顶同步设备页的翻页顺序，第一行即启动默认锁。"
                  + "顺序、分组、分组折叠与隐藏随全量备份包走 (D-36)：换机恢复后不必重排；"
                  + "锁档案的场所副标题 / 备注 / 符号色标仍只存本机。")
                 .font(.caption2)
@@ -419,10 +428,10 @@ struct SettingsView: View {
                 Text("24 小时制").tag("24")
                 Text("12 小时制").tag("12")
             }
-            Toggle("显示秒 (651)", isOn: Binding(
+            Toggle("显示秒", isOn: Binding(   // 651 显示秒
                 get: { TimeFormat.showSeconds },
                 set: { app.setUnlockOption(TimeFormat.secsKey, $0) }))
-            Toggle("记录行加第二行完整日期 (648)", isOn: Binding(
+            Toggle("记录行加第二行完整日期", isOn: Binding(   // 648 记录行加第二行完整日
                 get: { TimeFormat.twoLine },
                 set: { app.setUnlockOption(TimeFormat.twoLineKey, $0) }))
         } footer: {
@@ -446,8 +455,8 @@ struct SettingsView: View {
                 get: { UnlockPrefs.mode },
                 set: { app.setUnlockOption("kf_gesture_mode", $0) })) {
                 Text("按住确认 (默认)").tag("hold")
-                Text("三连点防误开 (58)").tag("triple")
-                Text("旋转充能 (52)").tag("charge")
+                Text("三连点防误开").tag("triple")   // 58 三连点防误开
+                Text("旋转充能").tag("charge")   // 52 旋转充能
             }
             Text("三连点 = 连点圆盘三次才发指令，前两下只有渐强触感；旋转充能 = 沿圆盘外沿转满一圈"
                  + "(iPhone 无数码表冠，本档按原句「转一圈才发」的行为落地)。两种都不缩短防误触的判定，"
@@ -486,7 +495,7 @@ struct SettingsView: View {
                 .fixedSize(horizontal: false, vertical: true)
             // 884 公共场合音量提示: 把"这个声音走的是媒体音量"说出来 —— 用户调小本 App 却发现
             // 响的是整台手机的媒体音量，那才是吓人的地方。界面不假装自己有一个独立音量。
-            Text("提示音跟随系统媒体音量 (884)：本 App 不单独放大，也不新开一路音量。"
+            Text("提示音跟随系统媒体音量：本 App 不单独放大，也不新开一路音量。"   // 884 提示音跟随系统媒体音
                  + "公共场合请先调系统的侧键音量，或直接关掉这一开关改用触感。")
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
@@ -497,9 +506,9 @@ struct SettingsView: View {
             Picker("圆盘尺寸", selection: Binding(
                 get: { DB.store.getInt("kf_dial_size", 176) },
                 set: { app.setUnlockOption("kf_dial_size", $0) })) {
-                Text("小 (160)").tag(160)
-                Text("标准 (176)").tag(176)
-                Text("大 (200)").tag(200)
+                Text("小").tag(160)   // 160 界面文案
+                Text("标准").tag(176)   // 176 标准
+                Text("大").tag(200)   // 200 界面文案
             }
             .pickerStyle(.menu)
         } header: {
@@ -539,10 +548,10 @@ struct SettingsView: View {
     @ViewBuilder
     private var memberFamilyRows: some View {
         Button { showMembers = true } label: { Label("成员管理 (含成员中心)", systemImage: "person.2") }
-        NavigationLink { UnclaimedClaimView() } label: { Label("未归属记录认领 (791)", systemImage: "questionmark.circle") }
-        NavigationLink { MemberStackedView() } label: { Label("成员活跃结构 (798/792)", systemImage: "chart.bar.fill") }
-        NavigationLink { HouseCleaningPresetView() } label: { Label("家政周期预设 (483)", systemImage: "broom.fill") }
-        NavigationLink { MemberFamilySettingsView() } label: { Label("家庭设置: 长辈模式/隐私浏览 (479/794)", systemImage: "hand.raised.fill") }
+        NavigationLink { UnclaimedClaimView() } label: { Label("未归属记录认领", systemImage: "questionmark.circle") }   // 791 未归属记录认领
+        NavigationLink { MemberStackedView() } label: { Label("成员活跃结构", systemImage: "chart.bar.fill") }   // 798/792 成员活跃结构
+        NavigationLink { HouseCleaningPresetView() } label: { Label("家政周期预设", systemImage: "broom.fill") }   // 483 家政周期预设
+        NavigationLink { MemberFamilySettingsView() } label: { Label("家庭设置: 长辈模式/隐私浏览", systemImage: "hand.raised.fill") }   // 479/794 家庭设置
         Button { showKeychainHW = true } label: { Label("蓝牙钥匙串", systemImage: "key.horizontal") }
         Button { showAdd = true } label: { Label("添加另一把锁", systemImage: "plus") }
     }
@@ -550,11 +559,11 @@ struct SettingsView: View {
     // ---------- 包6 凭证整理 (491 版本配额 / 497 回收站保留期 / 919 别名显示) ----------
     private var credCareSection: some View {
         Section {
-            Stepper("历史版本配额 \(CredentialOrg.quota(mac)) 版/凭证 (491)", value: Binding(
+            Stepper("历史版本配额 \(CredentialOrg.quota(mac)) 版/凭证", value: Binding(   // 491 历史版本配额
                 get: { CredentialOrg.quota(mac) },
                 set: { DB.store.set("kf_ccred_quota", $0) }), in: 3...30, step: 1)
                 .fixedSize(horizontal: false, vertical: true)
-            Stepper("回收站保留 \(CredentialOrg.reclaimDays()) 天 (497)", value: Binding(
+            Stepper("回收站保留 \(CredentialOrg.reclaimDays()) 天", value: Binding(   // 497 回收站保留
                 get: { CredentialOrg.reclaimDays() },
                 set: { DB.store.set("kf_cbin_reclaim_days", $0) }), in: 7...90, step: 7)
                 .fixedSize(horizontal: false, vertical: true)
@@ -771,7 +780,7 @@ struct SettingsView: View {
             // 902 数字字体两档: 单一令牌 DS.Metric.digitDesign, 落点只有主控卡读数与指标块两处。
             // 标签写明射程 —— 全仓 58 处散点读数不跟着换 (§84 撤掉的就是那种"总闸"假象),
             // 这里切的正是 902 原句"Hero 卡电量数字圆体/默认体可选"的那两处。
-            Picker("主控读数数字字体 (902)", selection: Binding(
+            Picker("主控读数数字字体", selection: Binding(   // 902 主控读数数字字体
                 get: { DB.store.getString("kf_digit_font") },
                 set: { app.setUnlockOption("kf_digit_font", $0) })) {
                 Text("圆体 (默认)").tag("")
@@ -829,7 +838,7 @@ struct SettingsView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             // 895 "儿童友好"预设：不叫"儿童模式"——本 App 没有内容分级，名字暗示过滤就是虚假承诺
-            Button("套用儿童友好外观预设 (895)") { app.applyFriendlyPreset() }
+            Button("套用儿童友好外观预设") { app.applyFriendlyPreset() }   // 895 套用儿童友好外观预设
                 .font(.callout)
                 .foregroundStyle(DS.Palette.accentText)
             Text("一次把品牌色、圆角、密度、凭证行高、动效与纹理推到「看得清、点得准、不闹」的组合；"
@@ -865,9 +874,9 @@ struct SettingsView: View {
                         app.bumpAppearanceForLayout()
                     }))
             }
-            Text("也可以直接在设备页长按任一快捷格打开这份编辑 (905)。")
+            Text("也可以直接在设备页长按任一快捷格打开这份编辑。")   // 905 也可以直接在设备页长
                 .font(.caption2).foregroundStyle(DS.Palette.textSub)
-            Toggle("常用动作排到前面 (1047)", isOn: Binding(
+            Toggle("常用动作排到前面", isOn: Binding(   // 1047 常用动作排到前面
                 get: { QuickPool.smartFirst },
                 set: { v in
                     QuickPool.setSmartFirst(v)
@@ -1047,7 +1056,7 @@ struct SettingsView: View {
                 .disabled(!DB.store.getBool("kf_alert_tone"))
             if DB.store.getBool("kf_alert_tone") {
                 Text("⚠ 打开后, 用胁迫口令放行的那一刻会响三声, 和正常开锁**不一样** —— 站在旁边的人听得出来。"
-                     + "本 App 的胁迫通道原本刻意做得与真解锁一模一样 (390/391), 这一开关是主动放弃那层掩护去换\"我能听见告警\"。只想留痕不要声音, 就让它关着。")
+                     + "本 App 的胁迫通道原本刻意做得与真解锁一模一样, 这一开关是主动放弃那层掩护去换\"我能听见告警\"。只想留痕不要声音, 就让它关着。")   // 390/391 的胁迫通道原本刻意做
                     .font(.caption)
                     .foregroundStyle(DS.Palette.warn)
                     .fixedSize(horizontal: false, vertical: true)
@@ -1079,7 +1088,7 @@ struct SettingsView: View {
             .pickerStyle(.menu)
             .disabled(!StatusCheckNotice.on)
             Text(StatusCheckNotice.on && CareSchedule.quietOn && StatusCheckNotice.insideQuiet(StatusCheckNotice.hour)
-                 ? "现在这条**没有排上**: 免扰时段 (1031) 覆盖 22–08, 你选的 \(StatusCheckNotice.hour):00 正落在里面, 按\"免扰优先\"不排。把免扰关掉, 或把时点挪到 20:00/21:00 才会响。"
+                 ? "现在这条**没有排上**: 免扰时段覆盖 22–08, 你选的 \(StatusCheckNotice.hour):00 正落在里面, 按\"免扰优先\"不排。把免扰关掉, 或把时点挪到 20:00/21:00 才会响。"   // 1031 现在这条
                  : "到点给一条本地通知, 写的是台账里数得出的数 (几把锁、今天连上过几把)。通知不联网不连锁, 锁的真实状态要到场连上才知道。")
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
@@ -1108,7 +1117,7 @@ struct SettingsView: View {
                 // 2026-10-13 run 63: 原来把 infoDictionary 取值 + 三段拼接全内联进 Text, 报 type-check 超时。
                 let buildVer = (Bundle.main.infoDictionary?["CFBundleVersion"] as? String) ?? "?"
                 let themeCount = DS.Palette.themeTable.count
-                Text("build " + buildVer + " · " + String(themeCount) + " 套主题 (279)")
+                Text("build " + buildVer + " · " + String(themeCount) + " 套主题")   // 279 套主题
                     .font(.footnote.monospacedDigit())
                     .foregroundStyle(DS.Palette.textSub)
             }

@@ -334,7 +334,7 @@ struct OnboardingView: View {
                 Button {
                     _ = Speech.zh(t.1 + "。" + t.2)
                 } label: {
-                    Label("朗读这张卡 (810)", systemImage: "speaker.wave.2.circle.fill")
+                    Label("朗读这张卡", systemImage: "speaker.wave.2.circle.fill")   // 810 朗读这张卡
                         .font(.footnote.weight(.medium))
                         .foregroundStyle(DS.Palette.accentText)
                         .frame(minHeight: DS.Hit.min)
@@ -347,7 +347,7 @@ struct OnboardingView: View {
                 Button {
                     _ = Speech.zh(Onboarding.tourSpec.map { $0.title + "。" + $0.body }.joined(separator: " "))
                 } label: {
-                    Label("听完整讲解 (853)", systemImage: "play.circle.fill")
+                    Label("听完整讲解", systemImage: "play.circle.fill")   // 853 听完整讲解
                         .font(.footnote.weight(.medium))
                         .foregroundStyle(DS.Palette.accentText)
                         .frame(minHeight: DS.Hit.min)
@@ -460,7 +460,10 @@ struct OnboardingView: View {
                     Text("定位")
                         .font(.headline)
                         .foregroundStyle(DS.Palette.text)
-                    Text("iOS 规则: 蓝牙扫描需要定位授权。位置数据只在 App 内使用, 不上传。")
+                    // 原句写的是"iOS 规则: 蓝牙扫描需要定位授权" —— 那是 Android 6~11 的规则，iOS 上
+                    // BLE 扫描不要定位授权。留着这句有两个害处：① 用户以为拒定位就不能开锁；
+                    // ② 掩盖了真实状态 —— 本仓目前没有任何一处读坐标 (见 project.yml 那条 ⚠)。
+                    Text("为「到家自动开锁」这类到位置身功能预留；当前版本不读取你的坐标。拒绝这一项，蓝牙扫描与照常开锁不受影响。")
                         .font(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)

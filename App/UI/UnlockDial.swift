@@ -528,8 +528,8 @@ struct UnlockDial: View {
             // 129 极限距离提示: 最近一次 RSSI 逼近 93 信号围栏下限时, 第一次手势只提示不发出
             if nearRssiLimit {
                 Text(weakNudge
-                     ? "已暂缓这一次: 离门锁再走近一步, 然后重新按住圆盘 (129)"
-                     : "信号偏弱, 走近一步再开更稳 (129)")
+                     ? "已暂缓这一次: 离门锁再走近一步, 然后重新按住圆盘"   // 129 界面文案
+                     : "信号偏弱, 走近一步再开更稳")   // 129 信号偏弱
                     .font(.caption)
                     .foregroundStyle(DS.Palette.warn)
                     .multilineTextAlignment(.center)

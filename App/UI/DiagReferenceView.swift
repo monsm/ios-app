@@ -14,7 +14,7 @@ struct DiagReferenceView: View {
     var body: some View {
         Form {
             // 753 诊断摘要二维码: 只含版本号/固件/最近错误/日志 SHA256 前 6 字节, 不含密钥与明文口令
-            Section("诊断摘要二维码 (753)") {
+            Section("诊断摘要二维码") {   // 753 诊断摘要二维码
                 let text = DiagQR.summaryText(app: app)
                 if let img = DiagQR.image(for: text) {
                     Image(uiImage: img)
@@ -39,7 +39,7 @@ struct DiagReferenceView: View {
             }
 
             // 758 异常退出档案
-            Section("异常退出档案 (758) · \(CrashGuard.archList().count) 条") {
+            Section("异常退出档案 · \(CrashGuard.archList().count) 条") {   // 758 异常退出档案
                 if CrashGuard.pendingAbnormal {
                     Label("本次启动检测到上一次异常退出（会话标记未被正常清掉）", systemImage: "exclamationmark.triangle.fill")
                         .font(.caption)
@@ -61,7 +61,7 @@ struct DiagReferenceView: View {
                     }
                     // 758 档案导出: 列表此前只有看和翻, 没有导出文本的出口
                     ShareLink(item: arch.joined(separator: "\n\n")) {
-                        Label("导出全部档案文本 (758)", systemImage: "square.and.arrow.up")
+                        Label("导出全部档案文本", systemImage: "square.and.arrow.up")   // 758 导出全部档案文本
                     }
                     .font(.footnote)
                     .foregroundStyle(DS.Palette.accentText)
@@ -72,7 +72,7 @@ struct DiagReferenceView: View {
             }
 
             // 755: 本机读到过的固件观测点 (observations() 此前零调用, 记录只在写侧落库)
-            Section("本机固件观测点 (755) · 当前锁") {
+            Section("本机固件观测点 · 当前锁") {   // 755 本机固件观测点
                 let obs = FirmwareHistory.observations(mac: app.currentMac)
                 if obs.isEmpty {
                     Text("这台手机还没有读到过该锁的固件版本 —— 连上一次并读取状态后这里会出现记录。")
@@ -90,7 +90,7 @@ struct DiagReferenceView: View {
             }
 
             // 159 错误码对照表 (rc → 人话, 源自 StatusParser)
-            Section("错误码对照表 (159) · \(StatusParser.rcMsg.count) 条") {
+            Section("错误码对照表 · \(StatusParser.rcMsg.count) 条") {   // 159 错误码对照表
                 if let h = highlightRC {
                     Label("从日志点进来的是 rc=\(h)"
                           + (StatusParser.rcMsg[h].map { ": " + $0 } ?? " — 表里没有这一码"),
@@ -126,7 +126,7 @@ struct DiagReferenceView: View {
             }
 
             // 754 协议字段字典
-            Section("协议字段字典 (754) · 状态帧 \(ProtocolDict.statusFields.count) 项") {
+            Section("协议字段字典 · 状态帧 \(ProtocolDict.statusFields.count) 项") {   // 754 协议字段字典
                 ForEach(ProtocolDict.statusFields) { f in
                     VStack(alignment: .leading, spacing: DS.Space.xxs) {
                         HStack {
@@ -157,11 +157,11 @@ struct DiagReferenceView: View {
                     .accessibilityElement(children: .combine)
                 }
                 // copyable() 此前零调用: 排障时要整表贴给别人, 逐条手抄不现实
-                copyRow("复制全表 (754)", key: "pd", payload: ProtocolDict.copyable())
+                copyRow("复制全表", key: "pd", payload: ProtocolDict.copyable())   // 754 复制全表
             }
 
             // 661 型号市场名映射
-            Section("型号与市场名 (661)") {
+            Section("型号与市场名") {   // 661 型号与市场名
                 ForEach(PidMap.productNames.keys.sorted(), id: \.self) { pid in
                     LabeledRow("pid \(pid)", PidMap.productName(pid))
                 }
@@ -171,7 +171,7 @@ struct DiagReferenceView: View {
             }
 
             // 662 图标语义表 (防漂移)
-            Section("图标语义 (662) · \(IconSemantics.rows.count) 条") {
+            Section("图标语义 · \(IconSemantics.rows.count) 条") {   // 662 图标语义
                 ForEach(IconSemantics.rows) { r in
                     HStack(spacing: DS.Space.s) {
                         Image(systemName: r.icon)
@@ -188,7 +188,7 @@ struct DiagReferenceView: View {
                 }
             }
             // 762 白名单查询模板: 只允许选引擎里预置的四种只读查询 (QueryTemplates), 不开放自由输入
-            Section("只读查询模板 (762)") {
+            Section("只读查询模板") {   // 762 只读查询模板
                 Picker("查询", selection: $template) {
                     Text("最近 20 条日志").tag(0)
                     Text("按类型 1/2/3 (开门类)").tag(1)
@@ -236,7 +236,7 @@ struct DiagReferenceView: View {
                     Text("没有可统计的本地键位。").font(.caption).foregroundStyle(DS.Palette.textSub)
                 }
             } header: {
-                Text("键族占用一览 (546) · \(famsCount) 族")
+                Text("键族占用一览 · \(famsCount) 族")   // 546 键族占用一览
             } footer: {
                 VStack(alignment: .leading, spacing: DS.Space.xxs) {
                     TextField("按族名过滤，如 ledger / logcache", text: $familyQuery)

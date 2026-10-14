@@ -93,7 +93,7 @@ func askSudoThen(_ app: AppState, then action: @escaping () -> Void) {
     alert.addAction(UIAlertAction(title: "验证", style: .destructive) { _ in
         let input = alert.textFields?[0].text ?? ""
         guard let ticket = sudoTicketFromReview(input) else {
-            app.showToast("密码错误, 已拒绝毁灭操作 (383)")
+            app.showToast("密码错误, 已拒绝毁灭操作")   // 383 密码错误
             return
         }
         app.sudoTicket = ticket
@@ -125,8 +125,8 @@ func guardedDestroy(_ app: AppState, _ action: @escaping () -> Void) {
 func setGuestChannel(_ on: Bool, app: AppState) {
     DB.store.set(SecKey.guestOn, on)
     app.revokeSessionGrants()
-    app.showToast(on ? "访客通道已生效: 已回到设备页, 想进凭证与设置要重输密码 (377)"
-                      : "访客通道已关闭: 四页照常, 本次会话内不用再输密码 (377)")
+    app.showToast(on ? "访客通道已生效: 已回到设备页, 想进凭证与设置要重输密码"   // 377 访客通道已生效
+                      : "访客通道已关闭: 四页照常, 本次会话内不用再输密码")   // 377 访客通道已关闭
 }
 
 // ---------- 378 常驻水印层 (截图加扰降级案: 页面常驻, 半透明对角重复) ----------
@@ -227,7 +227,7 @@ struct SecurityCenterView: View {
                 } header: {
                     Text("凭证风险体检 (9)")
                 } footer: {
-                    Text("只读扫描本机台账: 同值 / 添加超 180 天未改 / 弱口令 (少于 6 位、全部同数字、连续序列)。处置在凭证 Tab 改码 (305/306)。")
+                    Text("只读扫描本机台账: 同值 / 添加超 180 天未改 / 弱口令 (少于 6 位、全部同数字、连续序列)。处置在凭证 Tab 改码。")   // 305/306 只读扫描本机台账
                         .font(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
@@ -376,7 +376,7 @@ struct SecurityLockConfigView: View {
                     .frame(minHeight: DS.Hit.min)
                 }
             } header: {
-                Text("错次延时 (234)")
+                Text("错次延时")   // 234 错次延时
             }
 
             Section {
@@ -417,7 +417,7 @@ struct SecurityLockConfigView: View {
                     }
                 }
             } header: {
-                Text("锁定与免验 (393/394)")
+                Text("锁定与免验")   // 393/394 锁定与免验
             }
 
             Section {
@@ -462,7 +462,7 @@ struct SecurityLockConfigView: View {
                         .accessibilityHint("跳转设置 Tab 的密码区，现有字母数字密码仍可继续使用，不会被强制修改")
                 }
             } header: {
-                Text("救援与键位 (395/396)")
+                Text("救援与键位")   // 395/396 救援与键位
             }
 
             Section {
@@ -515,7 +515,7 @@ struct SecurityLockConfigView: View {
                     }
                 }
             } header: {
-                Text("伪装与胁迫 (390/391)")
+                Text("伪装与胁迫")   // 390/391 伪装与胁迫
             }
 
             Section {
@@ -548,7 +548,7 @@ struct SecurityLockConfigView: View {
                     .frame(minHeight: DS.Hit.min)
                 }
             } header: {
-                Text("失败留痕 (392)")
+                Text("失败留痕")   // 392 失败留痕
             }
 
             // 398 会话信息页
@@ -567,7 +567,7 @@ struct SecurityLockConfigView: View {
                         .foregroundStyle(DS.Palette.textSub)
                 }
             } header: {
-                Text("会话 (398)")
+                Text("会话")   // 398 会话
             }
         }
         .scrollContentBackground(.hidden)
@@ -642,7 +642,7 @@ struct SecurityLockConfigView: View {
                         .font(.system(size: DS.Icon.sm, weight: .medium))
                         .foregroundStyle(DS.Palette.accentText)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("请手抄这张救援码 — 消费后不可找回; 未点「已手抄」前该码不生效 (395)")
+                        Text("请手抄这张救援码 — 消费后不可找回; 未点「已手抄」前该码不生效")   // 395 请手抄这张救援码
                             .font(.footnote.weight(.medium))
                         Text(code)
                             .font(.title3.weight(.semibold))
@@ -683,7 +683,7 @@ struct SecurityLockConfigView: View {
     private func rescueDetail() {
         // 395: 应用锁没开时救援码没有任何消费口 (rescue 只在锁屏验证里用) —— 别让用户抄一张无用的码
         guard DB.hasPasscode() else {
-            app.showToast("未启用应用锁 — 救援码无用武之地 (395)")
+            app.showToast("未启用应用锁 — 救援码无用武之地")   // 395 未启用应用锁
             return
         }
         let code = DB.store.getString(SecKey.rescueCode)
@@ -792,7 +792,7 @@ struct SecurityPeekView: View {
             // 405 剪贴板自清: 口令/OTP 复制到剪贴板后延时清除。
             // 只有"内容仍是当时那一串"才清 (见 ClipboardCare), 免得把用户后来复制的东西删掉。
             Section {
-                SecRow(title: "剪贴板自动清除 (405)",
+                SecRow(title: "剪贴板自动清除",   // 405 剪贴板自动清除
                        subtitle: ClipboardCare.autoClearOn
                             ? "复制口令后 \(ClipboardCare.ttl) 秒清除；只对口令与 OTP 生效"
                             : "已关闭 —— 口令会一直留在系统剪贴板里",
@@ -827,7 +827,7 @@ struct SecurityPeekView: View {
                     .tint(DS.Palette.accentText)
                 }
             } header: {
-                Text("遮蔽样式 (369)")
+                Text("遮蔽样式")   // 369 遮蔽样式
             }
 
             // 36 隐私仪表盘
@@ -838,7 +838,7 @@ struct SecurityPeekView: View {
                            icon: "gauge.with.needle") { EmptyView() }
                 }
             } header: {
-                Text("隐私总览 (36)")
+                Text("隐私总览")   // 36 隐私总览
             }
 
             Section {
@@ -893,7 +893,7 @@ struct SecurityPeekView: View {
                     }
                 }
             } header: {
-                Text("背景与限时 (371/373/375/376/377)")
+                Text("背景与限时")   // 371/373/375/376/377 背景与限时
             }
 
             Section {
@@ -926,7 +926,7 @@ struct SecurityPeekView: View {
                     }
                 }
             } header: {
-                Text("水印 (378 降级案)")
+                Text("水印")   // 378 水印
             }
         }
         .scrollContentBackground(.hidden)
@@ -1171,7 +1171,7 @@ struct SecurityAuditView: View {
                         .foregroundStyle(DS.Palette.textSub)
                 }
             } header: {
-                Text("双流水 (379)")
+                Text("双流水")   // 379 双流水
             }
 
             Section {
@@ -1213,7 +1213,7 @@ struct SecurityAuditView: View {
                     .font(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
             } header: {
-                Text("防篡改 (386)")
+                Text("防篡改")   // 386 防篡改
             }
 
             // 385 保留期策略
@@ -1249,7 +1249,7 @@ struct SecurityAuditView: View {
                     .frame(minHeight: DS.Hit.min)
                 }
             } header: {
-                Text("保留期 (385)")
+                Text("保留期")   // 385 保留期
             }
 
             // 382 脱敏导出
@@ -1289,7 +1289,7 @@ struct SecurityAuditView: View {
                 .frame(minHeight: DS.Hit.min)
                 .foregroundStyle(DS.Palette.warn)
             } header: {
-                Text("脱敏导出 (382)")
+                Text("脱敏导出")   // 382 脱敏导出
             }
 
             // 383 毁灭操作 sudo 口令
@@ -1306,13 +1306,13 @@ struct SecurityAuditView: View {
                         .labelsHidden()
                 }
                 if !DB.hasPasscode() {
-                    Text("本机没设应用锁密码 ⇒ 口令无从复核 ⇒ 毁灭动作按最严格解释停在门口 (383)。"
+                    Text("本机没设应用锁密码 ⇒ 口令无从复核 ⇒ 毁灭动作按最严格解释停在门口。"   // 383 本机没设应用锁密码
                          + "要在这台机器上销毁, 先设本机密码或把这枚开关关掉。")
                         .font(.footnote)
                         .foregroundStyle(DS.Palette.warn)
                 }
             } header: {
-                Text("sudo 口令 (383)")
+                Text("sudo 口令")   // 383 口令
             }
 
             // 388 敏感操作视图
@@ -1339,7 +1339,7 @@ struct SecurityAuditView: View {
                     }
                 }
             } header: {
-                Text("敏感操作视图 (388)")
+                Text("敏感操作视图")   // 388 敏感操作视图
             }
 
             // 953 快捷指令执行日志: 独立分区 (原先把意图流水混在 388 里, 每次 Siri 调用都记,
@@ -1367,7 +1367,7 @@ struct SecurityAuditView: View {
                     }
                 }
             } header: {
-                Text("快捷指令执行 (953)")
+                Text("快捷指令执行")   // 953 快捷指令执行
             }
         }
         .scrollContentBackground(.hidden)
@@ -1430,7 +1430,7 @@ struct SecurityAuditView: View {
                     .fill(DS.Palette.warn)
                     .frame(height: 3)
                     .padding(.top, DS.Space.xxs)
-                Text("胁迫会话产生 (391 橙边标记)")
+                Text("胁迫会话产生")   // 391 胁迫会话产生
                     .font(.caption)
                     .foregroundStyle(DS.Palette.warn)
                     .padding(.top, DS.Space.xxs)
@@ -1542,7 +1542,7 @@ struct SecurityDestroyView: View {
                 }
                 .frame(minHeight: DS.Hit.min)
             } header: {
-                Text("备份闸 (400)")
+                Text("备份闸")   // 400 备份闸
             }
 
             // 399 三级销毁: 勾选理解项 → 输应用锁密码 → 键入"销毁"二字
@@ -1611,7 +1611,7 @@ struct SecurityDestroyView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             } header: {
-                Text("三级销毁 (399/401/406)")
+                Text("三级销毁")   // 399/401/406 三级销毁
             } footer: {
                 Text("覆写 3 轮 · 随机 256–4208 字节/键; 残留全文检查零命中才显示“销毁完成”。")
             }
@@ -1628,7 +1628,7 @@ struct SecurityDestroyView: View {
                 }
                 holdClearControl
             } header: {
-                Text("回收站 (403)")
+                Text("回收站")   // 403 回收站
             }
 
             // 402 离职清除
@@ -1671,7 +1671,7 @@ struct SecurityDestroyView: View {
                     }
                 }
             } header: {
-                Text("离职清除 (402)")
+                Text("离职清除")   // 402 离职清除
             }
 
             // 296 安全模式
@@ -1695,7 +1695,7 @@ struct SecurityDestroyView: View {
                         .foregroundStyle(DS.Palette.warn)
                 }
             } header: {
-                Text("安全模式 (296)")
+                Text("安全模式")   // 296 安全模式
             }
 
             // 549 口令复用检测
@@ -1710,12 +1710,12 @@ struct SecurityDestroyView: View {
                 }
                 reuseDemoRow
             } header: {
-                Text("口令复用 (549)")
+                Text("口令复用")   // 549 口令复用
             }
 
             // 521 二次输入确认开关 (密码保存前重输码值)
             Section {
-                SecRow(title: "保存密码二次输入 (521)",
+                SecRow(title: "保存密码二次输入",   // 521 保存密码二次输入
                        subtitle: DB.store.getBool("kf_scred_2nd", true) ? "密码保存前需重输一遍码值核对" : "关闭",
                        icon: "lock.rotationgauge") {
                     Toggle("", isOn: Binding(
@@ -1724,7 +1724,7 @@ struct SecurityDestroyView: View {
                         .labelsHidden()
                 }
             } header: {
-                Text("密码保存 (521)")
+                Text("密码保存")   // 521 密码保存
             }
         }
         .scrollContentBackground(.hidden)
@@ -1844,7 +1844,7 @@ struct SecurityDestroyView: View {
         // 383: 按钮的 disabled 已经把过关, 这里再判一次是因为"仍要销毁"那条 alert 回调
         // 是第二条进入路径 —— 第二条路径不查, 前面的查就只是装饰。
         guard sudoSatisfied else {
-            app.showToast("还需重输应用锁密码 (383)")
+            app.showToast("还需重输应用锁密码")   // 383 还需重输应用锁密码
             return
         }
         // 400 备份闸: 7 天内无备份先跳导出向导
@@ -1892,7 +1892,7 @@ struct SecurityDestroyView: View {
             : "残留复核: 命中 \(chk.hits) 处 / 检索 \(chk.scanned) 项"
         // 383: 把"哪一次复核放开了这次销毁"写进流水 —— 券只在当场验过口令时才存在, 它带的时刻就是这次销毁的凭据
         let sudoNote = app.sudoTicket.map { "sudo 复核于 \(Int(Date().timeIntervalSince1970 - $0.issuedAt)) 秒前" }
-                                     ?? "无 sudo 复核 (383 开关关着)"
+                                     ?? "无 sudo 复核"   // 383 复核
         AuditLog().append(.admin, "销", target: "全部本地数据, 覆写 \(rep.keys.count) 键 · " + sudoNote,
                            operator_: DB.store.getString(SecKey.sessionHow, "sudo"),
                            duress: DB.store.getBool(SecKey.sessionDuress, false))
@@ -1940,7 +1940,7 @@ struct SecurityDestroyView: View {
             CredentialOrg.saveBin(kc.mac, [])
             cleared += 1
         }
-        app.showToast(cleared > 0 ? "回收站已清空 (\(cleared) 把锁, 403)" : "回收站本来就是空的 (403)")
+        app.showToast(cleared > 0 ? "回收站已清空 (\(cleared) 把锁, 403)" : "回收站本来就是空的")   // 403 回收站本来就是空的
         holdProgress = 0
         SecTick.bump()
     }

@@ -60,7 +60,7 @@ struct RecDetailSheet: View {
             .task(id: rec.id) {
                 card = ExportKit.recordCard(exportRow, lockName: rec.lockName)
             }
-            .navigationTitle("记录详情 (576)")
+            .navigationTitle("记录详情")   // 576 记录详情
             .scrollContentBackground(.hidden)
             .dsScreenBackground()
             .toolbar {
@@ -125,7 +125,7 @@ struct RecDetailSheet: View {
                     return abs(t1.timeIntervalSince(t2)) <= 300
                 }
                 if near {
-                    fieldRow("陪同进入 (疑似)", "同一凭证 5 分钟内还有别的成员用过 — 短窗启发式, 只作提示 (797)")
+                    fieldRow("陪同进入 (疑似)", "同一凭证 5 分钟内还有别的成员用过 — 短窗启发式, 只作提示")   // 797 同一凭证
                 }
             }
             if rec.provable != nil {
@@ -196,7 +196,7 @@ struct RecDetailSheet: View {
             if rec.type == 7 {
                 // 727 防撬检查清单 (勾选状态复用处置字段 kf_rcheck_<key>)
                 VStack(alignment: .leading, spacing: DS.Space.s) {
-                    Text("防撬检查清单 (727)")
+                    Text("防撬检查清单")   // 727 防撬检查清单
                         .font(.footnote.weight(.medium))
                         .foregroundStyle(DS.Palette.text)
                     ForEach(Array(RecordSearch.tamperChecks.enumerated()), id: \.offset) { i, item in
@@ -234,7 +234,7 @@ struct RecDetailSheet: View {
                     .font(.system(size: DS.Icon.sm))
                     .foregroundStyle(DS.Palette.warn)
                     .accessibilityHidden(true)
-                Text("今日试错累计 (737)? 本锁 " + String(trials) + " 条锁定类日志")
+                Text("今日试错累计? 本锁 " + String(trials) + " 条锁定类日志")   // 737 今日试错累计
                     .font(.footnote)
                     .foregroundStyle(DS.Palette.warn)
                     .fixedSize(horizontal: false, vertical: true)
@@ -253,7 +253,7 @@ struct RecDetailSheet: View {
                     .font(.system(size: DS.Icon.sm))
                     .foregroundStyle(DS.Palette.textSub)
                     .accessibilityHidden(true)
-                Text("响应时长 (742): 积累中 — 处置记录够多后自动出分布")
+                Text("响应时长: 积累中 — 处置记录够多后自动出分布")   // 742 响应时长
                     .font(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -278,7 +278,7 @@ struct RecDetailSheet: View {
                         RecordSearch.undoDisposition(key: dkey)
                         tick += 1
                     } label: {
-                        Label("撤销 (739)", systemImage: "arrow.uturn.left")
+                        Label("撤销", systemImage: "arrow.uturn.left")   // 739 撤销
                             .font(.footnote.weight(.medium))
                             .foregroundStyle(DS.Palette.danger)
                     }
@@ -289,7 +289,7 @@ struct RecDetailSheet: View {
                 Spacer(minLength: 0)
             }
         } header: {
-            Text("告警 (723/724)")
+            Text("告警")   // 723/724 告警
         }
     }
 
@@ -298,7 +298,7 @@ struct RecDetailSheet: View {
     private var contextSection: some View {
         let ctx = RecordSearch.context(mac: rec.mac, aroundKey: rec.key)
         if !ctx.before.isEmpty || !ctx.after.isEmpty {
-            Section("前后 10 分钟上下文 (736)") {
+            Section("前后 10 分钟上下文") {   // 736 前后
                 ForEach(Array(ctx.before.enumerated()), id: \.offset) { _, r in
                     contextRow(r, tag: "前")
                 }
@@ -349,7 +349,7 @@ struct RecDetailSheet: View {
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(DS.Palette.accentText)
             } footer: {
-                Text("顺序就是你刚才在记录页看到的那份筛选结果 (580)，不是锁端日志原始序号 —— 被筛掉的记录不会翻页翻出来，"
+                Text("顺序就是你刚才在记录页看到的那份筛选结果，不是锁端日志原始序号 —— 被筛掉的记录不会翻页翻出来，"   // 580 顺序就是你刚才在记录
                      + "那等于悄悄改了筛选条件。")
                     .font(.caption2).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -381,7 +381,7 @@ struct RecDetailSheet: View {
     private var nearbySection: some View {
         let ns = nearby
         if !ns.isEmpty {
-            Section("同成员邻近 (584)") {
+            Section("同成员邻近") {   // 584 同成员邻近
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: DS.Space.s) {
                         ForEach(Array(ns.enumerated()), id: \.offset) { _, item in
@@ -423,7 +423,7 @@ struct RecDetailSheet: View {
         Section {
             Button {
                 UIPasteboard.general.string = refLink
-                app.showToast("已复制本条引用链接 (585)")
+                app.showToast("已复制本条引用链接")   // 585 已复制本条引用链接
             } label: {
                 Label("复制本条引用链接", systemImage: "link")
                     .font(.subheadline.weight(.medium))
@@ -432,7 +432,7 @@ struct RecDetailSheet: View {
             }
             Text("链接只编码「哪把锁的哪一行」(mac#行键)，不含口令、指纹数据与原始帧。"
                  + "粘进备忘录点一下 = 回到记录页并按当前显示范围定位本条；"
-                 + "行不在显示范围内时页面如实说明原因，不会打开相邻的一条顶替 (585)。")
+                 + "行不在显示范围内时页面如实说明原因，不会打开相邻的一条顶替。")   // 585 行不在显示范围内时页
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -448,7 +448,7 @@ struct RecDetailSheet: View {
             app.tabSelection = 3
             dismiss()
         } label: {
-            Label("查看这台锁的诊断 (587)", systemImage: "stethoscope")
+            Label("查看这台锁的诊断", systemImage: "stethoscope")   // 587 查看这台锁的诊断
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(DS.Palette.accentText)
                 .frame(minHeight: DS.Hit.min)
@@ -475,7 +475,7 @@ struct RecDetailSheet: View {
                 app.pendingFlashKey = RecordOverlay.oid(mac: rec.mac, rowKey: rec.key)
                 dismiss()
             } label: {
-                Label("在时间线里定位这条 (583)", systemImage: "arrow.down.to.line.compact")
+                Label("在时间线里定位这条", systemImage: "arrow.down.to.line.compact")   // 583 在时间线里定位这条
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
@@ -486,7 +486,7 @@ struct RecDetailSheet: View {
                 app.tabSelection = 2
                 dismiss()
             } label: {
-                Label("搜这类记录 (563)", systemImage: "magnifyingglass.circle")
+                Label("搜这类记录", systemImage: "magnifyingglass.circle")   // 563 搜这类记录
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
@@ -494,14 +494,14 @@ struct RecDetailSheet: View {
             Button {
                 let dk = anchorDayKey
                 guard !dk.isEmpty else {
-                    app.showToast("这条记录的时刻无法定位到某一天 (586)")
+                    app.showToast("这条记录的时刻无法定位到某一天")   // 586 这条记录的时刻无法定
                     return
                 }
                 app.pendingRecordsDay = dk
                 app.tabSelection = 2
                 dismiss()
             } label: {
-                Label("查看当天全部 (586)", systemImage: "calendar.day.timeline.left")
+                Label("查看当天全部", systemImage: "calendar.day.timeline.left")   // 586 查看当天全部
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
@@ -527,8 +527,8 @@ struct RecDetailSheet: View {
         f.timeZone = TimeZone.current
         guard let d = f.date(from: rec.timeStr) else { return nil }
         let h = WeekCal.gregorian.component(.hour, from: d)
-        if let c = CommuteLabel.tag(date: d, hour: h) { return TimeWord.word(h) + " · " + c + "时段 (658/674)" }
-        return TimeWord.word(h) + " (658)"
+        if let c = CommuteLabel.tag(date: d, hour: h) { return TimeWord.word(h) + " · " + c + "时段" }   // 658/674 时段
+        return TimeWord.word(h)   // 658 界面文案
     }
 
     // ---------- 718 本条导出行 + 分享卡 ----------
@@ -541,10 +541,10 @@ struct RecDetailSheet: View {
     }
     @ViewBuilder
     private var shareSection: some View {
-        Section("分享本条 (718)") {
+        Section("分享本条") {   // 718 分享本条
             if let img = card {
                 ShareLink(item: RecordCardImage(image: img, fileName: "锁管家_记录卡_\(exportRow.dayKey).png"),
-                          preview: SharePreview("本条记录卡 (718)", image: Image(uiImage: img))) {
+                          preview: SharePreview("本条记录卡", image: Image(uiImage: img))) {   // 718 本条记录卡
                     Label("分享这张卡", systemImage: "square.and.arrow.up")
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(DS.Palette.accentText)
@@ -555,7 +555,7 @@ struct RecDetailSheet: View {
                     .font(.caption)
                     .foregroundStyle(DS.Palette.textSub)
             }
-            Text("卡上只有这一条: 时间、事件名、可证明的归属、锁名。不含口令、指纹数据与协议帧 (718)。")
+            Text("卡上只有这一条: 时间、事件名、可证明的归属、锁名。不含口令、指纹数据与协议帧。")   // 718 卡上只有这一条
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -569,7 +569,7 @@ struct RecDetailSheet: View {
     @ViewBuilder
     private var noteSection: some View {
         Section {
-            TextField("开门附言 / 备注 (990/186, 只存这台手机)", text: $noteDraft)
+            TextField("开门附言 / 备注", text: $noteDraft)   // 990/186 开门附言
                 .autocorrectionDisabled()
                 .onSubmit { saveNote() }
                 .onAppear { noteDraft = RecordOverlay.note(rec.mac, rec.key) }
@@ -583,7 +583,7 @@ struct RecDetailSheet: View {
             Toggle(isOn: Binding(
                 get: { RecordOverlay.isFlagged(rec.mac, rec.key) },
                 set: { _ in RecordOverlay.toggleFlag(rec.mac, rec.key); tick += 1 })) {
-                Label("标为异常 (188): 时间线行左侧常显红旗", systemImage: "flag.fill")
+                Label("标为异常: 时间线行左侧常显红旗", systemImage: "flag.fill")   // 188 标为异常
                     .font(.subheadline)
             }
             .frame(minHeight: DS.Hit.min)
@@ -597,7 +597,9 @@ struct RecDetailSheet: View {
     private func saveNote() {
         RecordOverlay.setNote(rec.mac, rec.key, noteDraft)
         tick += 1
-        app.showToast(noteDraft.trimmingCharacters(in: .whitespaces).isEmpty ? "备注已清空 (186)" : "备注已保存在这台手机 (186)")
+        // 186 备注已清空
+        // 186 备注已保存在这台手机
+        app.showToast(noteDraft.trimmingCharacters(in: .whitespaces).isEmpty ? "备注已清空" : "备注已保存在这台手机")
     }
 
     @ViewBuilder   // 编译级修正: 这块是"顶层 if 而没有 else/return", 不加 builder 就是一句 "function declares some View…" 的编译错误
@@ -610,9 +612,9 @@ struct RecDetailSheet: View {
                     app.pendingCredNavMac = rec.mac
                     app.tabSelection = 1
                     dismiss()
-                    app.showToast("已定位到来源凭证 (577)")
+                    app.showToast("已定位到来源凭证")   // 577 已定位到来源凭证
                 } label: {
-                    Label("定位来源凭证 (577)", systemImage: "key.horizontal")
+                    Label("定位来源凭证", systemImage: "key.horizontal")   // 577 定位来源凭证
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(DS.Palette.accentText)
                 }

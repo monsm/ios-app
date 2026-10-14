@@ -513,12 +513,12 @@ final class LockService: ObservableObject {
     func fpConfirm(_ batchNumber: UInt32, validFrom: String, validTo: String) async throws {
         let (m, sk) = try keys()
         try await execOk(ZKCmdBuilder.cmd14FpConfirm(m, sk, batchNumber, validFrom, validTo))
-        log("info", "指纹#\(batchNumber) 已确认并设置有效期 (14)")
+        log("info", "指纹#\(batchNumber) 已确认并设置有效期")   // 14 指纹
     }
     func fpDelete(_ batchNumber: UInt32) async throws {
         let (m, sk) = try keys()
         try await execOk(ZKCmdBuilder.cmd15DeleteFp(m, sk, batchNumber))
-        log("info", "指纹#\(batchNumber) 已删除 (15)")
+        log("info", "指纹#\(batchNumber) 已删除")   // 15 指纹
     }
 
     // ---------- 日志 ----------
@@ -533,7 +533,7 @@ final class LockService: ObservableObject {
         // 不记就等于"有一条记录的时间/类型看着怪"永远解释不清，而它其实是帧被截半条。
         let truncated = StatusParser.truncatedLogCount(r.klvs)
         if truncated > 0 {
-            log("warn", "这一页日志有 \(truncated) 条声明长度与实际长度不符 (帧被截断或超长)，已按原样入缓存 (16)")
+            log("warn", "这一页日志有 \(truncated) 条声明长度与实际长度不符 (帧被截断或超长)，已按原样入缓存")   // 16 这一页日志有
         }
         return LogPage(surplus: surplus, logs: logs)
     }

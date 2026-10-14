@@ -33,7 +33,7 @@ struct LockCompareView: View {
                 idleSection
             }
         }
-        .navigationTitle("多锁对比 (775)")
+        .navigationTitle("多锁对比")   // 775 多锁对比
         .scrollContentBackground(.hidden)
         .dsScreenBackground()
         .onAppear { initSides() }
@@ -53,7 +53,7 @@ struct LockCompareView: View {
     private var pickerSection: some View {
         Section("选两把锁") {
             if locks.count < 2 {
-                Text("这台手机只绑了一把锁 —— 对比需要两把 (775)。")
+                Text("这台手机只绑了一把锁 —— 对比需要两把。")   // 775 这台手机只绑了一把锁
                     .font(.footnote).foregroundStyle(DS.Palette.textSub)
             } else {
                 Picker("左侧", selection: $leftMac) {
@@ -63,7 +63,7 @@ struct LockCompareView: View {
                     ForEach(locks) { kc in Text(LockArchive.displayName(kc)).tag(kc.mac) }
                 }
                 if leftMac == rightMac {
-                    Text("两边选的是同一把锁，比出来的差永远是零 —— 请换一把 (775)。")
+                    Text("两边选的是同一把锁，比出来的差永远是零 —— 请换一把。")   // 775 两边选的是同一把锁
                         .font(.caption).foregroundStyle(DS.Palette.warn)
                 }
             }
@@ -115,14 +115,14 @@ struct LockCompareView: View {
     @ViewBuilder
     private var overlaySection: some View {
         if pairs.isEmpty {
-            Section("开门趋势叠加 (775)") {
+            Section("开门趋势叠加") {   // 775 开门趋势叠加
                 // 两把都没有本机日志时不画空图 (边界 2)
-                Text("两把锁在本机都没有日志行 —— 先到设备页各读一次，再回来对比 (775)。")
+                Text("两把锁在本机都没有日志行 —— 先到设备页各读一次，再回来对比。")   // 775 两把锁在本机都没有日
                     .font(.footnote).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
         } else {
-            Section("开门趋势叠加 (775)") {
+            Section("开门趋势叠加") {   // 775 开门趋势叠加
                 Chart(pairs) { p in
                     LineMark(x: .value("日", p.day, unit: .day), y: .value("左", p.a), series: .value("锁", "左"))
                         .foregroundStyle(DS.Palette.accent)
@@ -167,7 +167,7 @@ struct LockCompareView: View {
     private var rhythmSection: some View {
         let la = leftModel?.workdayFirstOpens.count ?? 0
         let lb = rightModel?.workdayFirstOpens.count ?? 0
-        Section("工作日首次开门时刻 (780)") {
+        Section("工作日首次开门时刻") {   // 780 工作日首次开门时刻
             row("中位时刻", firstOpenText(leftModel), firstOpenText(rightModel))
             row("最早 ~ 最晚", firstOpenRange(leftModel), firstOpenRange(rightModel))
             row("参与的工作日", String(la), String(lb))
@@ -192,7 +192,7 @@ struct LockCompareView: View {
         let totA = leftModel?.daypartTotal ?? 0
         let totB = rightModel?.daypartTotal ?? 0
         if a.count == 4, b.count == 4, totA + totB >= 10 {
-            Section("双锁四时段雷达 (777)") {
+            Section("双锁四时段雷达") {   // 777 双锁四时段雷达
                 Canvas { ctx, size in
                     let c = CGPoint(x: size.width / 2, y: size.height / 2)
                     let r = max(20, min(size.width, size.height) / 2 - 14)
@@ -302,7 +302,7 @@ struct LockCompareView: View {
         if !dup.isEmpty {
             Section {
                 Button { showSameNames.toggle() } label: {
-                    Label("全库 \(DB.keychains().count) 把锁上, \(dup.count) 个名字被 2 把及以上锁用到 (781)", systemImage: "person.2")
+                    Label("全库 \(DB.keychains().count) 把锁上, \(dup.count) 个名字被 2 把及以上锁用到", systemImage: "person.2")   // 781 全库
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(DS.Palette.accentText)
                 }
@@ -315,11 +315,11 @@ struct LockCompareView: View {
                     }
                 }
                 Text("同名不代表同一个凭证，也不代表录重了 —— 只说明这台手机上有锁用了同样的称呼。"
-                     + "要不要改名由你判断，这里不下结论 (781)。")
+                     + "要不要改名由你判断，这里不下结论。")   // 781 要不要改名由你判断
                     .font(.caption2).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             } header: {
-                Text("同名凭证对照 (781)")
+                Text("同名凭证对照")   // 781 同名凭证对照
             }
         }
     }
@@ -342,7 +342,7 @@ struct LockCompareView: View {
                 .font(.caption2).foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         } header: {
-            Text("闲置标注 (782)")
+            Text("闲置标注")   // 782 闲置标注
         }
     }
     private func idleTag(for mac: String) -> some View {

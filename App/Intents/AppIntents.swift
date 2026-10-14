@@ -89,7 +89,7 @@ struct UnlockIntent: AppIntent {
     var passphrase: String
 
     @Parameter(title: "Face ID 确认",
-               description: "开启后每次开锁前先用 Face ID 确认是你 (945); 无生物硬件的设备会拒绝执行",
+               description: "开启后每次开锁前先用 Face ID 确认是你; 无生物硬件的设备会拒绝执行",   // 945 开启后每次开锁前先用
                default: false)
     var faceConfirm: Bool
 
@@ -102,9 +102,9 @@ struct UnlockIntent: AppIntent {
         }
         // 945: 可选 Face ID 门槛 (fail-closed: 无生物硬件即拒)
         if faceConfirm {
-            guard AuthKit.biometricAvailable else { return .result(dialog: "本机没有可用的 Face ID / Touch ID, 未定位门锁 (945)") }
+            guard AuthKit.biometricAvailable else { return .result(dialog: "本机没有可用的 Face ID / Touch ID, 未定位门锁") }   // 945 本机没有可用的
             guard await AuthKit.verifyBiometricAsync(reason: "Siri 开锁前确认是你") else {
-                return .result(dialog: "Face ID 未通过, 未定位门锁 (945)")
+                return .result(dialog: "Face ID 未通过, 未定位门锁")   // 945 未通过
             }
         }
         if let miss = IntentLock.refusal(lockName) { return .result(dialog: IntentDialog(stringLiteral: miss)) }
@@ -136,7 +136,7 @@ enum IntentLockGate {
         guard DB.hasPasscode() else { return nil }
         guard AppState.hostRef?.appUnlocked == true else { return "App 已锁定, 请先解锁离线锁管家" }
         guard AppState.hostRef?.decoyMode == false else {
-            return "当前处于伪装会话, 已停用这条指令 (390)"
+            return "当前处于伪装会话, 已停用这条指令"   // 390 当前处于伪装会话
         }
         return nil
     }
@@ -178,7 +178,7 @@ struct OtpIntent: AppIntent {
         }
         IntentGovernance.audit(intent: "otp", detail: kc.name)
         // 947: 顺手落剪贴板 (ClipboardCare 自清/留痕同一套); 30 分钟档标失效时刻, 其它档不猜
-        await MainActor.run { ClipboardCare.copySecret(code, via: "意图·临时码 (947)") }
+        await MainActor.run { ClipboardCare.copySecret(code, via: "意图·临时码") }   // 947 意图
         let winNote = period == 30 ? " (已复制, 于 \(ZOTP.nextWindow()) 失效)" : " (已复制)"
         // 回显用**解析到的那把锁**而不是用户说的那个词: 现在锁名允许"唯一包含命中"，
         // 若还照原样回显说出的词，说"主卧"却给了"客厅门锁"的码，用户听不出来 (审计也记的是真锁名)。
@@ -335,7 +335,7 @@ enum AppShortcuts {
         .init(id: "export", intent: "ExportCsvIntent", phrase: "把 [你的锁名] 最近记录导出", note: "生成 CSV 备取"),
         .init(id: "member", intent: "MemberQueryIntent", phrase: "查一下 [成员名]", note: "成员档案速览"),
         .init(id: "read", intent: "ReadRecordsIntent", phrase: "读最近谁开了门", note: "语音播报 3 条记录"),
-        .init(id: "at8", intent: "LockStatusIntent", phrase: "早上 8 点查一次门锁", note: "时刻建议 (942) 不做: 无 App Groups, 系统读不到本机数据, 可在「快捷指令」App 里手动定一个 8 点自动化"),
+        .init(id: "at8", intent: "LockStatusIntent", phrase: "早上 8 点查一次门锁", note: "时刻建议不做: 无 App Groups, 系统读不到本机数据, 可在「快捷指令」App 里手动定一个 8 点自动化"),   // 942 时刻建议
     ]
 }
 
@@ -441,14 +441,14 @@ struct IntegrationCenterView: View {
             Section("快捷入口") {
                 LabeledRow("主屏 / 锁屏小组件", "927 哑按钮 (拍板 #30): 「开锁入口」组件只做一件事 —— 经 kf://device 把 App 打到设备页。不显示锁状态与电量 (免费账号无 App Groups，组件读不到本机数据)，也不在组件里开锁")
                 LabeledRow("控制中心深链", "937/938 仍不提供: Widget target 已建，缺的是控制中心控件那条写法本身 —— 未编译、未真机核过，不硬接")
-                LabeledRow("本地深链", "kf:// 路由 (294): 支持 device / credentials / records / settings 四个入口, 其余地址一律忽略; 锁屏状态下先挂起, 解锁后才跳转。小组件走的也是 device 这一条")
+                LabeledRow("本地深链", "kf:// 路由: 支持 device / credentials / records / settings 四个入口, 其余地址一律忽略; 锁屏状态下先挂起, 解锁后才跳转。小组件走的也是 device 这一条")   // 294 路由
                 // 293/951 这一行此前是全仓唯一"Spotlight"证据, 而索引写入方根本不存在 (无 CoreSpotlight import)。
                 // 现在写入方在 App/Core/SpotlightKit.swift, 措辞按**真做了的范围**改: 索引的是锁名与凭证条目,
                 // 成员名没有可落地的详情页入口因此不索引 —— 写上就是"搜得到、点不开"。
-                LabeledRow("Spotlight", "锁名 + 凭证条目 (密码备注、指纹批次名) 已写入系统搜索 (293/951)。点结果落到设备页那把锁或凭证页那条详情; 应用锁还锁着时先挂起, 解锁后才跳转 (与深链同一个门禁)。成员名本版不索引: 成员详情没有可供系统搜索直达的入口, 挂进去只会搜到点不开。")
+                LabeledRow("Spotlight", "锁名 + 凭证条目 (密码备注、指纹批次名) 已写入系统搜索。点结果落到设备页那把锁或凭证页那条详情; 应用锁还锁着时先挂起, 解锁后才跳转 (与深链同一个门禁)。成员名本版不索引: 成员详情没有可供系统搜索直达的入口, 挂进去只会搜到点不开。")   // 293/951 锁名
                 // 55 轻点背面 (2026-10-10 拍板: 做"分步指引"那一半)。绑定动作在系统设置里，App 无法代按，
                 // 所以这一行只说明"意图可以被系统挂到轻点背面"，界面不得写成"已绑定"。
-                LabeledRow("动作按钮 / 轻点背面 (55)", "分步指引: ① 打开「快捷指令」App, 新建一条调用本 App「打开锁名」开锁意图的动作 ② 系统设置-辅助功能-触控-轻点背面, 选「轻点两下」 ③ 在动作列表里选刚建的那条 ④ 完成后轻点背面两下只会把 App 打到设备页, 最后一步仍在 App 圆盘上按住确认。绑定动作在系统设置里做, App 无法代按, 界面也不显示成已绑定")
+                LabeledRow("动作按钮 / 轻点背面", "分步指引: ① 打开「快捷指令」App, 新建一条调用本 App「打开锁名」开锁意图的动作 ② 系统设置-辅助功能-触控-轻点背面, 选「轻点两下」 ③ 在动作列表里选刚建的那条 ④ 完成后轻点背面两下只会把 App 打到设备页, 最后一步仍在 App 圆盘上按住确认。绑定动作在系统设置里做, App 无法代按, 界面也不显示成已绑定")   // 55 动作按钮
             }
 
             Section("NFC 标签 (待实测)") {
@@ -470,21 +470,21 @@ struct IntegrationCenterView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            Section("主屏图标教程 (954)") {
+            Section("主屏图标教程") {   // 954 主屏图标教程
                 Text("把开锁意图放上主屏: ① 打开「快捷指令」App → 新建快捷指令 → 添加动作 → 搜「离线锁管家」→ 选「打开门锁」 ② 动作里填好锁名与暗语 ③ 长按该快捷指令卡片 →「添加到主屏」。点图标即触发开锁意图——仍只定位门锁, 最后一步在 App 圆盘按住确认, 不后台开锁。")
                     .font(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("App 图标换肤仍在设置-外观 (长按主屏图标 →「编辑 App 图标」)。包16 那四款之外, 896 又补了五款位图 (家门/警报/定位/门盾/心记), 现在一共九款可选; 四季自动对齐 (897) 仍只认原来那四款, 选新五款不会被系统悄悄换掉。")
+                Text("App 图标换肤仍在设置-外观 (长按主屏图标 →「编辑 App 图标」)。包16 那四款之外, 896 又补了五款位图 (家门/警报/定位/门盾/心记), 现在一共九款可选; 四季自动对齐仍只认原来那四款, 选新五款不会被系统悄悄换掉。")   // 897 图标换肤仍在设置
                     .font(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             Section("治理") {
-                LabeledRow("意图冷却", "同一意图 60 秒 (952) —— 六条意图各记各的键, 互不顶替")
-                LabeledRow("意图审计", "每次执行记入「设置-安全-审计流水」的独立分区「快捷指令执行」 (953/964)")
-                LabeledRow("睡眠焦点", "不提供 (949 已划掉): 意图执行不判定焦点状态, 也不申请 FocusKit 授权")
+                LabeledRow("意图冷却", "同一意图 60 秒 —— 六条意图各记各的键, 互不顶替")   // 952 同一意图
+                LabeledRow("意图审计", "每次执行记入「设置-安全-审计流水」的独立分区「快捷指令执行」")   // 953/964 每次执行记入
+                LabeledRow("睡眠焦点", "不提供: 意图执行不判定焦点状态, 也不申请 FocusKit 授权")   // 949 界面文案
             }
         }
         .dsScreenBackground()

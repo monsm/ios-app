@@ -33,7 +33,7 @@ struct AccessibilityView: View {
     // ---------- VoiceOver (846-857) ----------
     private var voSection: some View {
         Section {
-            Toggle("错误主动播报 (852)", isOn: Binding(
+            Toggle("错误主动播报", isOn: Binding(   // 852 错误主动播报
                 get: { DB.store.getBool("kf_vo_announce", true) },
                 set: { app.setUnlockOption("kf_vo_announce", $0) }))
             // 852 播报试听: 立即演示一次主动朗读
@@ -47,7 +47,11 @@ struct AccessibilityView: View {
         } header: {
             Text("VoiceOver 播报")
         } footer: {
-            Text("圆盘已支持转子上下滑切换 状态/电量/连接 播报 (846/167); 记录页时间线按自然语朗读 \"今天 14:02, 张三用指纹开了门\" (850); 凭证行按 名称-类型-状态 顺序朗读 (849); 数值/状态控件走盲文简写 (856)。")
+            // 846/167 圆盘已支持转子上下滑
+            // 850 圆盘已支持转子上下滑
+            // 849 圆盘已支持转子上下滑
+            // 856 圆盘已支持转子上下滑
+            Text("圆盘已支持转子上下滑切换 状态/电量/连接 播报; 记录页时间线按自然语朗读 \"今天 14:02, 张三用指纹开了门\"; 凭证行按 名称-类型-状态 顺序朗读; 数值/状态控件走盲文简写。")
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -68,7 +72,7 @@ struct AccessibilityView: View {
             }
             .pickerStyle(.segmented)
             // 859 AX 档降级布局说明 (只写已实现的: 圆盘缩小; 原先还承诺"指标纵向堆叠", 代码未做, 已删)
-            Text("字号 1.5x 起自动收紧: 开锁圆盘从 176pt 缩至 128pt, 大字号下仍能完成按住手势 (859)。")
+            Text("字号 1.5x 起自动收紧: 开锁圆盘从 176pt 缩至 128pt, 大字号下仍能完成按住手势。")   // 859 字号
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -85,16 +89,18 @@ struct AccessibilityView: View {
                 set: { app.setUnlockOption("kf_bigtile", $0) }))
             // 163 横屏重排 → 降级说明 (TARGETED_DEVICE_FAMILY=1 仅竖屏, 不做横屏布局, 备案 DEFERRED)。
             // 口径修正: 竖屏锁定下根本不会出现横屏场景, 旧文案"横屏自动提示"承诺了一个触发不了的机制。
-            LabeledRow("横屏 (163)", "本项目锁定竖屏, 不会出现横屏场景; 横屏布局与横屏提示都不存在 (DEFERRED 备案)")
+            LabeledRow("横屏", "本项目锁定竖屏, 不会出现横屏场景; 横屏布局与横屏提示都不存在 (DEFERRED 备案)")   // 163 横屏
                 .accessibilityLabel("横屏重排未做: 项目锁定竖屏, 没有横屏布局与提示, 见 DEFERRED 备案")
             // 857 音效说明 (声音策略统一走系统 systemSound, 静音开关天然生效)
-            LabeledRow("音效与静音 (857)", "全部音效跟随系统铃声静音开关")
+            LabeledRow("音效与静音", "全部音效跟随系统铃声静音开关")   // 857 音效与静音
         } header: {
             Text("视觉与字号")
         } footer: {
             // 861 口径 (2026-10-13 更新): 此前全仓无一处读 legibilityWeight/isBoldTextEnabled, 如实写"未接线";
             // 现在根视图按 AXFlags.boldText 设 legibilityWeight, 这一条与上面四条一样是"无需开关即生效"。
-            Text("系统级适配无需开关即生效: 增强对比映射 (862, 分隔线/次文本加深一档、玻璃卡降实底)、智能反转保护 (863, hero 渐变降级幂等色)、降低透明度 (226, 玻璃降级实底)、减少动态效果 (227, 循环动效静止)、系统加粗跟随 (861, 根视图按系统开关设 legibilityWeight, 凭证名与开关标签随之加粗)。")
+            // 226 系统级适配无需开关即
+            // 227 系统级适配无需开关即
+            Text("系统级适配无需开关即生效: 增强对比映射 (862, 分隔线/次文本加深一档、玻璃卡降实底)、智能反转保护 (863, hero 渐变降级幂等色)、降低透明度、减少动态效果、系统加粗跟随 (861, 根视图按系统开关设 legibilityWeight, 凭证名与开关标签随之加粗)。")
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -149,12 +155,12 @@ struct AccessibilityView: View {
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel("第 \(i + 1) 步: \(s)")
             }
-            Text("更省事的替代: 直接用快捷指令口令「用离线锁管家打开门锁」(166), 或把 App 图标放进辅助触控的顶层菜单。")
+            Text("更省事的替代: 直接用快捷指令口令「用离线锁管家打开门锁」, 或把 App 图标放进辅助触控的顶层菜单。")   // 166 更省事的替代
                 .font(.caption2)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         } header: {
-            Text("辅助触控映射 (874)")
+            Text("辅助触控映射")   // 874 辅助触控映射
         }
     }
 
@@ -171,16 +177,16 @@ struct AccessibilityView: View {
             // 229 左手模式: 消费方三处 —— DeviceHomeView 的 barSide (工具条两侧对调)、快捷格顺序 reversed、
             // 以及 HeroCard 卡面本体 (DesignSystem 里按 AXPrefs.lefty 切 layoutDirection 镜像)，
             // 所以这一档是真开关；872 仍无消费方 (去重要落在 LockKeeperApp 的按钮样式里)，保持实话行。
-            Toggle("左手模式 (229, 工具栏与快捷格镜像)", isOn: Binding(
+            Toggle("左手模式", isOn: Binding(   // 229 左手模式
                 get: { AXPrefs.lefty },
                 set: { app.setUnlockOption("kf_lefty", $0) }))
-            Toggle("单手下沉 (873/60, 圆盘下移入拇指区)", isOn: Binding(
+            Toggle("单手下沉", isOn: Binding(   // 873/60 单手下沉
                 get: { AXPrefs.onehand },
                 set: { app.setUnlockOption("kf_onehand", $0) }))
             // 875 ⚠ 按住时长自定滑杆 (系统"按住持续时间"无读取 API, 0.4–1.6s, 默认 0.9s 与包1 对齐)
             VStack(alignment: .leading, spacing: DS.Space.xs) {
                 HStack {
-                    Text("按住时长 (875)")
+                    Text("按住时长")   // 875 按住时长
                     Spacer()
                     Text(String(format: "%.1f 秒", AXPrefs.holdDuration))
                         .font(.caption.monospacedDigit())
@@ -199,7 +205,7 @@ struct AccessibilityView: View {
             // 真正逐项聚焦的节奏由系统 VoiceOver/切换控制自己的设置决定 (接线后此滑杆才成为行为源)。
             VStack(alignment: .leading, spacing: DS.Space.xs) {
                 HStack {
-                    Text("扫描停留时长 (868/869)")
+                    Text("扫描停留时长")   // 868/869 扫描停留时长
                     Spacer()
                     Text(String(format: "%.1f 秒", AXPrefs.dwellTime))
                         .font(.caption.monospacedDigit())
@@ -211,7 +217,7 @@ struct AccessibilityView: View {
                        in: 0.5...4.0, step: 0.1)
                     .accessibilityLabel("切换控制扫描停留时长")
                     .accessibilityValue(String(format: "%.1f 秒", AXPrefs.dwellTime))
-                Text("当前只驱动下方练习区的演示文字; 系统逐项聚焦节奏请以 VoiceOver/切换控制设置为准 (868 扫描组未接线)。")
+                Text("当前只驱动下方练习区的演示文字; 系统逐项聚焦节奏请以 VoiceOver/切换控制设置为准。")   // 868 当前只驱动下方练习区
                     .font(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -219,16 +225,16 @@ struct AccessibilityView: View {
             .fixedSize(horizontal: false, vertical: true)
             // 871 口径修正: 60pt 扩容只有时间线认领行一处 (RecordsView 内联), 不是"全 App";
             // 44pt 是 DS.Hit.min 全 App 下限 — 两句分开写，谁在骗人就一眼看得见。
-            LabeledRow("命中域 (871)", "可点控件全 App 下限 44pt (DS.Hit.min); 时间线认领区另行加余量到 60pt")
+            LabeledRow("命中域", "可点控件全 App 下限 44pt (DS.Hit.min); 时间线认领区另行加余量到 60pt")   // 871 命中域
             if AuthKit.biometricAvailable {
                 // 877 ⚠ 验证降级大键: 设备支持 Face ID / Touch ID 时提供大字替代键路径 (AppLock 连败 3 次后自动出现)
-                LabeledRow("验证降级大键 (877)", "Face ID / Touch ID 大字替代键已启用")
-                Button("体验: 大字生物识别验证 (877)") {
+                LabeledRow("验证降级大键", "Face ID / Touch ID 大字替代键已启用")   // 877 验证降级大键
+                Button("体验: 大字生物识别验证") {   // 877 体验
                     AuthKit.verifyBiometric { app.showToast("生物识别验证通过 (演示)") }
                 }
                 .frame(minHeight: 56)
             } else {
-                LabeledRow("验证降级大键 (877)", "设备无生物识别硬件, 暂不可用 (DEFERRED 备案)")
+                LabeledRow("验证降级大键", "设备无生物识别硬件, 暂不可用 (DEFERRED 备案)")   // 877 验证降级大键
             }
         } header: {
             Text("运动与操作")
@@ -246,7 +252,7 @@ struct AccessibilityView: View {
             Toggle("底部对齐表单 (870, 键盘弹起表单贴底)", isOn: Binding(
                 get: { AXPrefs.bottomForm },
                 set: { app.setUnlockOption("kf_form_bottom", $0) }))
-            Text("外接键盘快捷键 (164/530, 按代码调用点列, 没接的不写): Cmd + 数字 1–4 切 Tab (App 入口); Cmd+R 刷新 (设备页/记录页); Cmd+F 凭证搜索; 本机密码弹层里 Return = 解锁. 全键盘 Tab/Shift-Tab 遍历由系统「全键盘控制」提供, 不是 App 自建 (854).")
+            Text("外接键盘快捷键 (164/530, 按代码调用点列, 没接的不写): Cmd + 数字 1–4 切 Tab (App 入口); Cmd+R 刷新 (设备页/记录页); Cmd+F 凭证搜索; 本机密码弹层里 Return = 解锁. 全键盘 Tab/Shift-Tab 遍历由系统「全键盘控制」提供, 不是 App 自建.")   // 854 外接键盘快捷键
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -258,7 +264,7 @@ struct AccessibilityView: View {
     // ---------- 听觉与认知 (876/881/882/885/231/232) ----------
     private var soundSection: some View {
         Section {
-            Toggle("新条目双震 (876, 帮助听障用户确认)", isOn: Binding(
+            Toggle("新条目双震", isOn: Binding(   // 876 新条目双震
                 get: { AXPrefs.doubleHaptic },
                 set: { app.setUnlockOption("kf_ax_doublehaptic", $0) }))
             Button("试听双震") { AXTools.newEntryHaptic() }
@@ -268,7 +274,9 @@ struct AccessibilityView: View {
             Toggle("凭证大字模式 (885, OTP 大字号对照抄写)", isOn: Binding(
                 get: { DB.store.getBool("kf_ax_bigotp") },
                 set: { app.setUnlockOption("kf_ax_bigotp", $0) }))
-            Text("闪烁安全线 (882): 全 App 循环动效 ≤3Hz, 核查表见 docs/A11Y-FREQUENCY.md. 数值控件恒等宽数字 (231). 设置页开关均为系统 Toggle (标题写明用途, 开/关态由系统播报, 232, 不另写重复值); 图标型工具栏按钮逐枚挂无障碍名.")
+            // 882 闪烁安全线
+            // 231 闪烁安全线
+            Text("闪烁安全线: 全 App 循环动效 ≤3Hz, 核查表见 docs/A11Y-FREQUENCY.md. 数值控件恒等宽数字. 设置页开关均为系统 Toggle (标题写明用途, 开/关态由系统播报, 232, 不另写重复值); 图标型工具栏按钮逐枚挂无障碍名.")
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -282,7 +290,7 @@ struct AccessibilityView: View {
         Section {
             VOPracticeField()
         } header: {
-            Text("VoiceOver 练习场 (851)")
+            Text("VoiceOver 练习场")   // 851 练习场
         } footer: {
             Text("用 轻扫聚焦 / 双击执行 / 转子上下滑 逐个体验下面三个演示控件, 安全不触发任何门锁指令.")
         }
@@ -313,7 +321,7 @@ struct VOPracticeField: View {
             .accessibilityLabel("练习转子")
             .accessibilityValue("当前 \( ["状态", "电量", "连接"][rotor] )")
             .accessibilityHint("转子上下滑或转子选择切换档位")
-            Text("练习区提示 (868/869): 这里的「停留 \(String(format: "%.1f", AXPrefs.dwellTime)) 秒」是本 App 滑杆生成的演示文字 —— 逐项聚焦由系统 VoiceOver/切换控制执行, 节奏以系统设置为准; 本 App 的扫描组还没接线。")
+            Text("练习区提示: 这里的「停留 \(String(format: "%.1f", AXPrefs.dwellTime)) 秒」是本 App 滑杆生成的演示文字 —— 逐项聚焦由系统 VoiceOver/切换控制执行, 节奏以系统设置为准; 本 App 的扫描组还没接线。")   // 868/869 练习区提示
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -330,10 +338,10 @@ private struct DevFeatureAuditSection: View {
     var body: some View {
         Section {
             ForEach(Array(AXTools.focusReport.keys.enumerated()), id: \.offset) { _, page in
-                Button("\(page)页焦点顺序巡检 (855)") { AXTools.runFocusAudit(page: page) }
+                Button("\(page)页焦点顺序巡检") { AXTools.runFocusAudit(page: page) }   // 855 页焦点顺序巡检
             }
         } header: {
-            Text("焦点顺序巡检 (855, 开发向)")
+            Text("焦点顺序巡检")   // 855 焦点顺序巡检
         } footer: {
             Text("打印并按 VoiceOver 顺序朗读当前页控件序列, 用于走查焦点是否成环、有无跳变.")
         }
@@ -346,7 +354,7 @@ private struct DevGrayscaleSection: View {
         Section {
             // 879 灰度预览自检: 全 App 去饱和渲染 (RootView 消费 AXFlags.grayPreview)
             // 879 灰度预览 / 866 极限字号: 写键 + 外观种子重建, 立即全局生效; 检查完关回
-            Toggle("灰度预览 (879, 检查渐变主题无色可读性)", isOn: Binding(
+            Toggle("灰度预览", isOn: Binding(   // 879 灰度预览
                 get: { AXFlags.grayPreview },
                 set: { app.setUnlockOption("kf_ax_gray", $0) }))
             Toggle("极限字号自检 (866, 以 200% 字号预览)", isOn: Binding(
@@ -381,9 +389,9 @@ private struct DevContrastSection: View {
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel("对比度 \(String(format: "%.2f", ratio)), 正文需达到 4.5")
                 .accessibilityValue(ratio >= 4.5 ? "达标" : "不达标")
-            LabeledRow("盲文简写 (856)", AXTerms.br("\(mode == "light" ? "浅色" : "深色") \(ratio >= 4.5 ? "达标" : "不达标")"))
+            LabeledRow("盲文简写", AXTerms.br("\(mode == "light" ? "浅色" : "深色") \(ratio >= 4.5 ? "达标" : "不达标")"))   // 856 盲文简写
         } header: {
-            Text("对比度计算器 (883)")
+            Text("对比度计算器")   // 883 对比度计算器
         } footer: {
             Text("与 tools/contrast.js 同款 WCAG 2.1 公式, 用于任意两设计令牌的快速核算.")
         }
@@ -397,7 +405,7 @@ private struct DevContrastSection: View {
                            String(format: "%.2f:1", r) + (r >= 4.5 ? " 达标" : " 不达标"))
             }
         } header: {
-            Text("全部对比值清单 (883)")
+            Text("全部对比值清单")   // 883 全部对比值清单
         } footer: {
             Text("当前模式 (\(mode == "light" ? "浅色" : "深色")) 实测; 正文级阈值 4.5:1.")
         }

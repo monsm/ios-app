@@ -37,7 +37,7 @@ struct ReportScanSheet: View {
                 }
             }
             // 710 可读标题: VoiceOver 落到导航栏标题上, 相机画面本身由 DataScannerView 自管
-            .navigationTitle("扫码核对 (710)")
+            .navigationTitle("扫码核对")   // 710 扫码核对
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) {
                 Button("关闭") { dismiss() }

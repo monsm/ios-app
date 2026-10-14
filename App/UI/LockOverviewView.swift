@@ -122,7 +122,7 @@ struct LockOverviewView: View {
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(PressableButtonStyle())
-                        .accessibilityLabel("\(item.usage.name) 待维护: \(item.reasons.joined(separator: ", ")), 点按下钻该锁告警流 (768)")
+                        .accessibilityLabel("\(item.usage.name) 待维护: \(item.reasons.joined(separator: ", ")), 点按下钻该锁告警流")   // 768 待维护
                     }
                 }
             }
@@ -205,9 +205,9 @@ struct LockOverviewView: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(PressableButtonStyle())
-                    .accessibilityHint("点按下钻该锁告警流 (778)")
+                    .accessibilityHint("点按下钻该锁告警流")   // 778 点按下钻该锁告警流
                 }
-                Text("告警占比 ≥20% 记为偏高并上浮到榜顶 (778); 点任一行下钻该锁告警流。")
+                Text("告警占比 ≥20% 记为偏高并上浮到榜顶; 点任一行下钻该锁告警流。")   // 778 告警占比
                     .font(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -257,7 +257,7 @@ struct LockOverviewView: View {
                         .accessibilityElement(children: .combine)
                         .accessibilityLabel("\(u.name) 信号" + LinkSense.rssiLabel(lvl))
                     }
-                    Text("信号格来自最近一次广播扫描 (71) · 切换前先看看哪把锁在范围内。")
+                    Text("信号格来自最近一次广播扫描 · 切换前先看看哪把锁在范围内。")   // 71 信号格来自最近一次广
                         .font(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)

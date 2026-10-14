@@ -1,0 +1,406 @@
+// 复刻页模板: 用解析出的令牌 + 抽取出的真实内容, 生成单文件可自检 HTML
+// 四类判据全部基于 getBoundingClientRect —— 它们是几何事实, 不依赖我把 SwiftUI 语义猜对
+'use strict';
+function render(tokens, content, meta) {
+  const DATA = JSON.stringify({ tokens, content, meta }).replace(/</g, '\\u003c');
+  return `<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>离线锁管家 · 布局复刻自检</title>
+<style>
+:root{
+  --sp-xxs:2px;--sp-xs:4px;--sp-s:8px;--sp-m:12px;--sp-l:16px;--sp-xl:24px;--sp-xxl:32px;--gutter:16px;
+  --r-card:22px;--r-control:16px;--r-tile:18px;--hit:44px;
+  --canvas:#F2F4F9;--surface:#FFF;--surface-alt:#F5F7FB;--hairline:#D3DCE7;--text:#0D1626;--text-sub:#525E77;
+  --ok:#15803D;--warn:#B45309;--danger:#B91C1C;--accent:#4F46E5;--accent-text:#4338CA;--on-accent:#FFF;
+  --hero-a:#5A55EC;--hero-b:#4338CA;--hero-fg:#FFF;--plate:rgba(0,0,0,.22);--elev:rgba(0,0,0,.05);
+  --cjk-extra:0px; --fs:1;
+  font-family:-apple-system,"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#0b0f16;color:#e8edf5;font:14px/1.5 -apple-system,"Microsoft YaHei",sans-serif}
+.wrap{display:grid;grid-template-columns:250px minmax(430px,1fr) 380px;gap:16px;padding:16px;align-items:start}
+h1{font-size:15px;margin:0 0 4px}
+.panel{background:#131a26;border:1px solid #223046;border-radius:12px;padding:12px}
+.panel h2{font-size:12px;text-transform:none;margin:14px 0 6px;color:#8fa3c0;font-weight:600}
+.panel h2:first-child{margin-top:0}
+label.ctl{display:block;font-size:12px;margin:7px 0;color:#c6d3e6}
+label.ctl select,input[type=range]{width:100%;margin-top:3px;font-size:12px}
+button.run{width:100%;padding:9px;margin-top:8px;border:0;border-radius:9px;background:#4F46E5;color:#fff;font-size:13px;cursor:pointer}
+button.run.alt{background:#233047;color:#c6d3e6}
+.stage{display:flex;flex-direction:column;align-items:center;gap:10px}
+.phone{width:var(--pw);height:var(--ph);background:var(--canvas);border-radius:44px;border:10px solid #10141c;
+  overflow:hidden;position:relative;box-shadow:0 24px 60px rgba(0,0,0,.55)}
+.phone[data-mode=dark]{--canvas:#070B12;--surface:#151D29;--surface-alt:#1C2534;--hairline:#29343F;--text:#F2F6FB;--text-sub:#9FACBE;
+  --ok:#4ADE80;--warn:#FBBF24;--danger:#F87171;--elev:rgba(255,255,255,.04)}
+.scroller{position:absolute;inset:0;overflow-y:auto;padding-bottom:92px}
+/* ---- 导航栏 ---- */
+.navbar{position:sticky;top:0;z-index:9;padding:14px var(--gutter) 10px;background:color-mix(in srgb,var(--canvas) 82%,transparent);
+  backdrop-filter:blur(14px);display:flex;align-items:center;gap:10px;font-weight:600;color:var(--text)}
+.navbar .ttl{font-size:17px;flex:1}
+.navbar .ico{width:30px;height:30px;display:grid;place-items:center;color:var(--accent-text);border-radius:8px}
+/* ---- 卡片 / 分区 ---- */
+.card{background:var(--surface);border-radius:var(--r-card);padding:var(--sp-l);margin:0 var(--gutter) var(--sp-m);
+  box-shadow:0 4px 12px var(--elev);display:flex;flex-direction:column;gap:var(--sp-m)}
+.card[data-tone]{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--warn) 30%,transparent),0 4px 12px var(--elev)}
+.stitle{display:flex;align-items:center;gap:var(--sp-s);font-size:calc(17px*var(--fs));font-weight:600;color:var(--text)}
+.stitle .bar{width:3px;height:14px;border-radius:99px;background:var(--accent);flex:none}
+.stitle .cnt{font-size:12px;font-weight:600;color:var(--text-sub);background:var(--surface-alt);border-radius:99px;padding:1px 6px}
+.chip{font-size:calc(11px*var(--fs));color:var(--text-sub);background:var(--surface-alt);border-radius:99px;padding:3px 9px;white-space:nowrap}
+.row{display:flex;align-items:center;gap:var(--sp-s);min-height:var(--hit);color:var(--text);font-size:calc(15px*var(--fs));position:relative}
+.row .lead{width:26px;height:26px;border-radius:8px;background:color-mix(in srgb,var(--accent) 12%,transparent);
+  display:grid;place-items:center;font-size:14px;color:var(--accent-text);flex:none}
+.row .txt{flex:1;min-width:0;overflow:hidden}
+/* 复刻默认允许换行 —— 全仓 Text( 1813 处里只有 254 处写了 lineLimit，默认 nowrap 是我发明的失真。
+   打开"单行锁死"档后，这里才按 lineLimit(1) 的口径量裁切。 */
+body[data-nw] .row .txt,body[data-nw] .hero .m span{white-space:nowrap;text-overflow:ellipsis}
+.row .val{color:var(--text-sub);font-size:calc(14px*var(--fs));flex:none;max-width:44%}
+.row .chev{color:var(--text-sub);flex:none}
+.rows{display:flex;flex-direction:column;gap:var(--sp-xs)}
+.rows .row+.row{border-top:1px solid var(--hairline)}
+.sw{width:51px;height:31px;border-radius:99px;background:var(--hairline);position:relative;flex:none}
+.sw[data-on]{background:var(--ok)}.sw i{position:absolute;top:3px;left:3px;width:25px;height:25px;border-radius:50%;background:#fff;transition:.2s}
+.sw[data-on] i{left:23px}
+.btn{min-height:var(--hit);border-radius:var(--r-control);display:grid;place-items:center;font-weight:600;
+  background:linear-gradient(135deg,var(--accent),var(--hero-b));color:var(--on-accent);padding:0 var(--sp-l);font-size:calc(15px*var(--fs))}
+.btn[data-ghost]{background:var(--surface-alt);color:var(--accent-text)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-s)}
+.grid.big{grid-template-columns:repeat(2,1fr)}
+.tile{min-height:64px;border-radius:var(--r-tile);background:color-mix(in srgb,var(--accent-text) 12%,var(--surface));
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--sp-xs);padding:var(--sp-m) var(--sp-xs);
+  font-size:calc(12px*var(--fs));color:var(--text);text-align:center}
+.tile .ic{font-size:calc(20px*var(--fs))}
+.hero{background:linear-gradient(135deg,var(--hero-a),var(--hero-b));color:var(--hero-fg);border-radius:var(--r-card);
+  margin:0 var(--gutter) var(--sp-m);padding:var(--sp-l);display:flex;flex-direction:column;gap:var(--sp-m);min-height:172px}
+.hero .pill{align-self:flex-start;background:var(--plate);border-radius:99px;padding:3px 10px;font-size:calc(11px*var(--fs))}
+.hero .big{font-size:calc(26px*var(--fs));font-weight:700;letter-spacing:-.3px}
+.hero .metrics{display:flex;gap:var(--sp-s);margin-top:auto}
+.hero .m{flex:1;background:var(--plate);border-radius:12px;padding:var(--sp-s);display:flex;flex-direction:column;gap:2px;min-width:0}
+.hero .m b{font-size:calc(17px*var(--fs));font-variant-numeric:tabular-nums}
+.hero .m span{font-size:calc(11px*var(--fs));opacity:.82;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dial{width:var(--dial);height:var(--dial);border-radius:50%;margin:var(--sp-s) auto;
+  background:radial-gradient(circle at 50% 42%,var(--surface),color-mix(in srgb,var(--accent) 22%,var(--surface)));
+  box-shadow:0 8px 22px var(--elev),inset 0 0 0 1px var(--hairline);display:grid;place-items:center;color:var(--accent-text);
+  font-size:calc(13px*var(--fs));font-weight:600;text-align:center;padding:var(--sp-l)}
+.tabs{position:absolute;bottom:0;left:0;right:0;height:82px;background:color-mix(in srgb,var(--surface) 92%,transparent);
+  border-top:1px solid var(--hairline);display:flex;padding:8px 4px 22px;z-index:8}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--text-sub);font-size:11px;position:relative;cursor:pointer}
+.tab[data-on]{color:var(--accent-text)}
+.tab .g{width:24px;height:24px;display:grid;place-items:center;font-size:17px}
+.tab .bd{position:absolute;top:1px;right:22%;min-width:17px;height:17px;border-radius:99px;background:var(--danger);
+  color:#fff;font-size:10px;display:grid;place-items:center;padding:0 4px}
+.floatbtn{position:absolute;bottom:92px;left:50%;transform:translateX(-50%);z-index:7}
+.banner{margin:0 var(--gutter) var(--sp-s);padding:var(--sp-s) var(--sp-l);border-radius:12px;display:flex;gap:var(--sp-xs);align-items:center;
+  font-size:calc(12px*var(--fs));background:color-mix(in srgb,var(--warn) 14%,var(--surface));color:var(--warn)}
+.banner[data-kind=ble]{background:color-mix(in srgb,var(--accent) 12%,var(--surface));color:var(--accent-text)}
+.banner .go{margin-left:auto;font-weight:600;white-space:nowrap;padding:6px 8px;margin:-6px -4px}
+.capline{margin:0 var(--gutter) var(--sp-s);font-size:calc(11px*var(--fs));color:var(--text-sub)}
+.modtag{display:flex;align-items:center;gap:6px;margin:0 var(--gutter) 6px;font-size:11px;color:var(--text-sub);opacity:.85}
+.modtag b{font-weight:600;color:#7c8ba4}
+.modtag .k{border:1px solid #2a364d;border-radius:6px;padding:0 5px}
+/* 中文字宽补偿: 本机不是 PingFang, 用字距把"文字更宽"的情形造出来, 让裁切能被测到 */
+[data-text]{letter-spacing:var(--cjk-extra)}
+.grp{display:flex;gap:var(--sp-s);padding:var(--sp-xs) var(--gutter);overflow-x:auto}
+.grp .c{flex:none;min-height:var(--hit);display:flex;align-items:center;gap:4px;padding:0 var(--sp-m);border-radius:99px;
+  background:var(--surface-alt);color:var(--text);font-size:calc(13px*var(--fs));white-space:nowrap}
+.grp .c[data-on]{background:color-mix(in srgb,var(--accent) 16%,var(--surface));color:var(--accent-text);font-weight:600}
+.searchbox{margin:var(--sp-s) var(--gutter);min-height:var(--hit);border-radius:10px;background:var(--surface-alt);
+  color:var(--text-sub);display:flex;align-items:center;gap:6px;padding:0 var(--sp-m);font-size:calc(15px*var(--fs))}
+.note{font-size:calc(11px*var(--fs));color:var(--text-sub);line-height:1.55}
+.note.warn{color:var(--warn)}
+/* ---- 自检高亮 ---- */
+[data-aud].hit-ill{outline:2px solid #ff3d5a;outline-offset:-1px}
+[data-aud].clip-ill{outline:2px solid #ffb020;outline-offset:-1px}
+[data-aud].small-ill{outline:2px dashed #ff3d5a;outline-offset:-1px}
+[data-aud].gap-ill{outline:2px solid #22d3ee;outline-offset:0}
+.iss{border:1px solid #223046;border-radius:9px;padding:8px;margin-bottom:7px;font-size:12px;cursor:pointer;background:#0f1520}
+.iss b{display:block;font-size:12px;margin-bottom:2px}
+.iss .t{color:#93a6c3;font-size:11px;word-break:break-all}
+.iss[data-sev=hi]{border-color:#5b1f2c}.iss[data-sev=md]{border-color:#5b4518}
+.cnt-hd{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#93a6c3;margin-bottom:8px}
+.legend{font-size:11px;color:#7f90ac;margin-top:8px;line-height:1.6}
+.tag{display:inline-block;border:1px solid #2a364d;border-radius:6px;padding:0 5px;margin:0 3px 3px 0}
+.cov{font-size:11px;color:#7f90ac;padding:6px var(--gutter);line-height:1.6}
+</style></head><body>
+<div class=wrap>
+  <aside class=panel>
+    <h1>布局复刻自检</h1>
+    <div class=note>数值来自 <b>DesignSystem.swift</b> 解析；文字来自 Swift 源码抽取。<br>生成：<span id=gen></span></div>
+    <h2>界面</h2>
+    <label class=ctl>屏幕<select id=scr></select></label>
+    <label class=ctl>机型<select id=dev><option value="375x667">SE 375×667</option><option value="390x844" selected>标准 390×844</option><option value="430x932">Max 430×932</option></select></label>
+    <h2>外观档</h2>
+    <label class=ctl>明暗<select id=mode><option value=l>浅色</option><option value=d>深色</option></select></label>
+    <label class=ctl>色板<select id=theme></select></label>
+    <label class=ctl>密度<select id=dens><option value=compact>紧凑 0.85</option><option value=standard selected>标准 1.0</option><option value=relaxed>宽松 1.18</option></select></label>
+    <label class=ctl>圆角<select id=rad><option value=soft>小 0.62</option><option value=standard selected>标准 1.0</option><option value=plump>大 1.3</option></select></label>
+    <label class=ctl>圆盘<select id=dialv></select></label>
+    <h2>字号与度量</h2>
+    <label class=ctl>App 字号五档 <span id=fsv>1.00</span><input type=range id=fsr min=0.85 max=2 step=0.05 value=1></label>
+    <label class=ctl>中文字宽补偿 <span id=cjv>0px</span><input type=range id=cjr min=0 max=4 step=0.25 value=0></label>
+    <h2>数据形态</h2>
+    <label class=ctl><input type=checkbox id=worst> 最坏情况（超长名/无空格串/0 条/极端数字）</label>
+    <label class=ctl><input type=checkbox id=nw> 单行锁死档（模拟 lineLimit(1)，量会不会切字）</label>
+    <h2>自检</h2>
+    <button class=run id=run>跑几何自检</button>
+    <button class="run alt" id=sweep>全条件扫描（4 屏 × 3 机型 × 4 字号 × 单行档）</button>
+    <button class="run alt" id=copy>复制报告文本（贴回对话给我）</button>
+    <textarea id=report style="width:100%;height:96px;margin-top:8px;font-size:11px;background:#0f1520;color:#c6d3e6;border:1px solid #223046;border-radius:8px"></textarea>
+    <button class="run alt" id=showmod>显示模块出处</button>
+    <div class=legend>
+      <span class=tag style="color:#ff3d5a">红＝重叠</span><span class=tag style="color:#ffb020">橙＝文字裁切</span>
+      <span class=tag style="color:#22d3ee">青＝间距脱离令牌</span><span class=tag style="color:#ff3d5a">虚线＝触达&lt;44</span>
+    </div>
+  </aside>
+  <main class=stage>
+    <div class=phone id=phone><div class=scroller id=screen></div><nav class=tabs id=tabs></nav></div>
+    <div class=cover id=cov></div>
+  </main>
+  <aside class=panel>
+    <div class=cnt-hd><b style="color:#e8edf5">自检报告</b><span id=sum>未运行</span></div>
+    <div id=issues></div>
+  </aside>
+</div>
+<script>
+const D=${DATA};
+const T=D.tokens,C=D.content;
+const S=(n)=>T.SPACE[n],R=(n)=>T.RADIUS[n];
+const snap=(v)=>Math.round(v*2)/2;
+const sp=(n,d)=>snap(S(n)*(d||1));
+const state={scr:'device',dev:'390x844',mode:'l',theme:Object.keys(T.THEMES)[0]||'indigo',dens:'standard',rad:'standard',
+  dial:T.DIAL_DEF||176,fs:1,cjk:0,worst:false,nw:false,showmod:false,grp:null};
+const W=(a,b)=>state.worst?a:b;                 // 最坏情况取前值
+const esc=(s)=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+// ---------- 令牌落 CSS ----------
+function applyTokens(){
+  const p=document.documentElement.style,d=T.DENSITY[state.dens]||1,k=T.RK[state.rad]||1;
+  for(const n in T.SPACE)p.setProperty('--sp-'+n.replace('gutter','gutter'),sp(n,d)+'px');
+  p.setProperty('--gutter',sp('gutter',d)+'px');
+  for(const n in T.RADIUS)p.setProperty('--r-'+n,snap(R(n)*k)+'px');
+  p.setProperty('--hit',T.HIT+'px');
+  p.setProperty('--dial',state.dial+'px');
+  p.setProperty('--fs',state.fs);
+  p.setProperty('--cjk-extra',state.cjk+'px');
+  const th=(T.THEMES[state.theme]||{})[state.mode==='d'?'dark':'light']||{};
+  const A=T.ADAPT||{};
+  const set2=(v,o)=>p.setProperty(v,'#'+(state.mode==='d'?o.dark:o.light));
+  set2('--surface',A.surfaceBase||{});set2('--surface-alt',A.surfaceAltBase||{});set2('--hairline',A.hairline||{});
+  set2('--text',A.text||{});set2('--text-sub',A.textSub||{});set2('--ok',A.ok||{});set2('--warn',A.warn||{});set2('--danger',A.danger||{});
+  set2('--canvas',A.canvasBase||{});
+  if(th.accent)p.setProperty('--accent','#'+th.accent);
+  if(th.accentText)p.setProperty('--accent-text','#'+th.accentText);
+  if(th.onAccent)p.setProperty('--on-accent','#'+th.onAccent);
+  if(th.heroA)p.setProperty('--hero-a','#'+th.heroA);
+  if(th.heroB)p.setProperty('--hero-b','#'+th.heroB);
+  p.setProperty('--hero-fg',T.HERO_FG||'#FFF');
+  p.setProperty('--plate','rgba(0,0,0,'+(T.plate!=null?T.plate:.22)+')');
+  const el=(T.elev||{});p.setProperty('--elev',state.mode==='d'?'rgba(255,255,255,'+(el.dark!=null?el.dark:.04)+')':'rgba(0,0,0,'+(el.light!=null?el.light:.05)+')');
+  const [w,h]=state.dev.split('x');p.setProperty('--pw',w+'px');p.setProperty('--ph',h+'px');
+  document.getElementById('phone').dataset.mode=state.mode==='d'?'dark':'light';
+}
+// ---------- 片段 ----------
+const lead=(s)=>'<span class=lead>'+esc(s).slice(0,2)+'</span>';
+const row=(txt,kind,val,syn)=>{
+  const k=kind||'row';
+  return '<div class="row" data-aud data-hit'+(syn?' data-syn=1':'')+' data-el="'+esc(txt)+'">'
+   +(k==='link'?'<span class=chev style=display:none></span>':k==='toggle'?'':'<span class=lead>·</span>')
+   +'<span class="txt" data-text>'+esc(txt)+'</span>'
+   +(val?'<span class="val" data-text>'+esc(val)+'</span>':'')
+   +(k==='toggle'?'<span class=sw data-on><i></i></span>':'')
+   +(k==='link'?'<span class=chev>›</span>':'')+'</div>';
+};
+const card=(title,rows,opts)=>{
+  opts=opts||{};
+  return (opts.src?'<div class=modtag><b>'+esc(opts.name||title)+'</b><span>'+esc(opts.src)+'</span></div>':'')
+   +'<section class=card'+(opts.tone?' data-tone=1':'')+'>'
+   +(title?'<div class="stitle" data-aud><span class=bar></span><span data-text>'+esc(title)+'</span>'+(opts.count!=null?'<span class=cnt>'+opts.count+'</span>':'')+'</div>':'')
+   +'<div class=rows data-aud data-rhythm>'+rows.join('')+'</div></section>';
+};
+// ---------- 设备页 ----------
+function screenDevice(){
+  const out=[];
+  const M={};C.device.forEach(m=>M[m.key]=m);
+  const src=(k)=>state.showmod?(M[k]?M[k].src+' @'+(M[k].bodyLine||'?'):''):'';
+  const nm=(k,f)=>state.showmod?undefined:undefined;
+  // 顶部横幅族 (第 2 批预算: 闲时提醒同屏 1 条)
+  out.push('<div class="banner" data-kind=ble data-aud data-el="蓝牙直通条"><span>›</span><span class="txt" data-text>打开系统蓝牙后才能连接门锁</span><span class="go" data-aud data-hit>去设置</span></div>');
+  out.push('<div class=banner data-aud data-el="自检黄条"><span>⚠</span><span class="txt" data-text>数据自检异常, 去诊断</span><span class="go" data-aud data-hit>去诊断</span></div>');
+  out.push('<div class=capline data-aud>闲时提醒同屏只挂 1 条 · 其余收进下面这枚胶囊</div>');
+  out.push('<div class="grp" data-aud data-el="汇总胶囊"><span class=c data-on>还有 2 条提醒 ›</span></div>');
+  // 模块 1: 迁移向导 (一次性)
+  out.push(card(M.migrationWizard.name,(M.migrationWizard.labels||['换机迁移验证']).slice(0,2).map((l,i)=>row(l,i?'button':'row')),{src:src('migrationWizard'),name:M.migrationWizard.name,tone:1}));
+  // 模块 2: 设备切换胶囊
+  const names=[W('主卧卫浴间与儿童房联动玻璃门超大锁','家门'),W('爸妈家','书房'),W('车库内开侧门长期通行门锁','公司'),W('出租屋 A 室','民宿')];
+  out.push('<div class="grp" data-aud data-rhythm data-el="设备切换胶囊">'+names.map((n,i)=>'<span class="c"'+(i===0?' data-on':'')+' data-aud data-hit>'+esc(n)+'</span>').join('')+'</div>');
+  out.push('<div class="grp" data-aud data-el="按组切换"><span class=c data-on>全部</span><span class=c>家</span><span class=c>公司</span><span class=c>沉睡</span><span class=c>已隐藏</span></div>');
+  // 模块 3: Hero 状态卡
+  const hero=M.heroPager.labels||[];
+  out.push('<div class="hero" data-aud data-el="状态卡 Hero"><span class=pill>'+(hero[0]||'已连接')+'</span><div class=big data-text>'+esc(W('主卧卫浴间与儿童房联动玻璃门超大锁','家门'))+'</div>'
+   +'<div class=metrics>'+['电量','信号','最近开门'].map((k,i)=>'<div class=m data-aud><b>'+(i===0?'12%':i===1?'-87 dBm':'14:02')+'</b><span data-text>'+esc(k)+'</span></div>').join('')+'</div></div>');
+  // 模块 4: 异常卡
+  out.push(card(M.attentionCard.name||'需要处理',(M.attentionCard.labels||['电量告急, 打开换电图文指引']).slice(0,3).map((l)=>row(l,'link')),{src:src('attentionCard'),name:M.attentionCard.name,tone:1,count:3}));
+  // 模块 5: 连接感知区 (可隐)
+  out.push(card(M.linkSenseCard.name||'连接感知',(M.linkSenseCard.labels||['蓝牙直通','回连节律','最后已知状态','同步回执']).slice(0,4).map((l,i)=>row(l,'row','开')),{src:src('linkSenseCard'),name:M.linkSenseCard.name}));
+  // 模块 6: 圆盘
+  const dl=M.unlockDial.labels||['开锁'];
+  out.push('<section class=card data-aud data-el="开锁圆盘">'+(state.showmod?'<div class=modtag><b>'+esc(M.unlockDial.name)+'</b><span>'+src('unlockDial')+'</span></div>':'')
+   +'<div class=dial data-aud data-hit data-el="176pt 圆盘">'+esc(dl[0]||'按住开锁')+'</div>'
+   +'<div class="note" data-text>'+esc(dl[1]||'按住 0.4–1.6s 完成开锁')+'</div></section>');
+  // 模块 7: 快捷格
+  const tiles=(state.worst?C.quickAll:C.quickAll.filter(q=>C.quickDefault.includes(q.id)));
+  out.push('<section class=card data-aud data-el="快捷操作格">'+(state.showmod?'<div class=modtag><b>快捷操作格</b><span>'+src('quickActions')+'</span></div>':'')
+   +'<div class="stitle" data-aud><span class=bar></span><span data-text>快捷操作</span><span class=cnt>'+tiles.length+'</span></div>'
+   +'<div class="grid'+(state.worst?' big':'')+'" data-aud data-rhythm>'+tiles.map(q=>'<div class=tile data-aud data-hit data-el="'+esc(q.label)+'"><span class=ic>◆</span><span data-text>'+esc(q.label)+'</span></div>').join('')+'</div>'
+   +'<div class="note" data-text>'+esc(W('试试「再开一次」—— 这一格你还没用过','827 提示行'))+'</div></section>');
+  // 模块 8: 最近开门
+  const rc=M.recentCard.labels||['最近开门'];
+  // 下面三条内容行是我编的样本 (真机数据不可知)，标 data-syn ⇒ 报告会区分"合成的"与"源码抽的"
+  out.push(card(rc[0]||'最近开门',[row('爸爸 · 指纹 · 大门','row','14:02',1),row('妈妈 · 密码 · 大门','row','12:41',1),row('防撬告警','row','昨天 23:07',1)],{src:src('recentCard'),name:M.recentCard.name,count:3}));
+  // 模块 9-11: 可隐三块
+  out.push(card(M.nightCheckRow.name||'安心夜打卡',[row(M.nightCheckRow.labels&&M.nightCheckRow.labels[1]||'记录今晚','button')],{src:src('nightCheckRow'),name:M.nightCheckRow.name}));
+  out.push(card(M.familyCareRows.name||'家庭关怀',(M.familyCareRows.labels||['家庭便签','孩子码','生日']).slice(0,3).map((l)=>row(l,'link')),{src:src('familyCareRows'),name:M.familyCareRows.name}));
+  out.push('<div class="capline" data-aud data-el="隐私脚注">'+esc((M.privacyFootnote.labels&&M.privacyFootnote.labels[0])||'数据全部保存在本机')+'</div>');
+  out.push('<div class="grp" data-aud><span class=c data-aud data-hit>模块排序与显隐 ›</span></div>');
+  return {bar:[esc(W('主卧卫浴间超大联动锁','家门')),'⚙','＋'],body:out.join('')};
+}
+// ---------- 设置页 ----------
+const GROUPS=[['','全部'],['daily','开门日常'],['keys','凭证与成员'],['data','数据与安全'],['look','外观与辅助'],['help','帮助与关于']];
+const GMAP={lockSection:'daily',deviceManageSection:'daily',unlockSection:'daily',autoOpenSection:'daily',reminderSection:'daily',alertToneSection:'daily',
+ familySection:'keys',credCareSection:'keys',securitySection:'data',toolsSection:'data',drillSection:'data',applockSection:'data',
+ timeSection:'look',a11ySection:'look',appearanceSection:'look',memorySection:'help',helpSection:'help',aboutSection:'help'};
+function screenSettings(){
+  const out=[];
+  out.push('<div class=searchbox data-aud data-hit data-el="页内搜索"><span>⌕</span><span data-text>'+esc(W('搜索设置项——超长占位串测试裁切行为','搜索设置项'))+'</span></div>');
+  out.push('<div class=grp data-aud data-rhythm data-el="五组筛选片">'+GROUPS.map(g=>'<span class="c"'+((state.grp||'')===g[0]?' data-on':'')+' data-aud data-hit data-g="'+g[0]+'">'+g[1]+'</span>').join('')+'</div>');
+  for(const s of C.settings){
+    const g=GMAP[s.prop];
+    if(state.grp&&g!==state.grp)continue;
+    const rows=(s.rows&&s.rows.length?s.rows:['（未从源码抽到行标签）']).map((l,i)=>row(l,(i%3===2?'toggle':(l.length>16?'row':'link'))));
+    out.push(card(s.title,rows,{src:state.showmod?s.prop+' ← '+s.src:'',name:s.prop,count:state.worst?99:rows.length}));
+  }
+  return {bar:['设置'],body:out.join('')};
+}
+// ---------- 凭证 / 记录 ----------
+function screenList(key,title){
+  const secs=C[key]||[];const out=[];
+  out.push('<div class=searchbox data-aud data-hit><span>⌕</span><span data-text>'+esc(W('搜索凭证名称、成员、备注——超长占位','搜索'))+'</span></div>');
+  out.push('<div class=grp data-aud data-rhythm><span class="c" data-on>全部</span><span class=c>家人</span><span class=c>临时代码</span><span class=c>待补拉</span><span class=c>回收站</span></div>');
+  if(!secs.length)out.push(card(title,[row('（该页未见 xxxSection 结构属性，需人工核对源码组织方式）','row')],{}));
+  secs.forEach((s)=>{
+    const rows=(s.rows&&s.rows.length?s.rows:['（未抽到行标签）']).slice(0,6).map((l,i)=>row(l,i%3===1?'toggle':'link','12'));
+    out.push(card(s.title,rows,{src:state.showmod?s.prop+' ← '+s.src:'',name:s.prop,count:state.worst?188:rows.length}));
+  });
+  if(key==='records')out.push('<div class=capline data-aud>时间线行距档：标准 = Space.m × 1.0（tlGap 叠在 density 之上）</div>');
+  return {bar:[title],body:out.join('')};
+}
+// ---------- 渲染 ----------
+function render(){
+  applyTokens();
+  const r={device:screenDevice,settings:screenSettings,credentials:()=>screenList('credentials','凭证'),records:()=>screenList('records','记录')}[state.scr]();
+  document.getElementById('screen').innerHTML='<div class=navbar><span class=ttl data-text>'+esc(r.bar[0])+'</span>'+r.bar.slice(1).map(i=>'<span class="ico" data-aud data-hit>'+i+'</span>').join('')+'</div>'+r.body;
+  const badges={device:'✓',credentials:'3',records:'2',settings:''};
+  document.getElementById('tabs').innerHTML=C.tabs.map((t,i)=>'<div class="tab"'+(t.title===tabOf(state.scr)?' data-on':'')+' data-hit data-aud><span class=g>◇</span><span>'+esc(t.title)+'</span>'+(badges[t.title]?'<span class=bd>'+badges[t.title]+'</span>':'')+'</div>').join('');
+  document.getElementById('cov').innerHTML='<div class=cov>覆盖度：设备页 '+C.device.filter(m=>m.labels.length).length+'/'+C.device.length+' 块抽到真实文字；设置页 '+C.settings.length+' 节 × 前 22 行；凭证/记录为<b>节级骨架</b>，未逐行复刻。'
+   +'已知失真：SwiftUI 的 fixedSize/GeometryReader/液态玻璃用 flex+blur 近似；中文字体在本机不是 PingFang（用上面的"字宽补偿"复现裁切）。</div>';
+  document.getElementById('issues').innerHTML='';document.getElementById('sum').textContent='布局变了，重新跑';
+}
+const tabOf=(s)=>({device:'设备',credentials:'凭证',records:'记录',settings:'设置'}[s]);
+// ---------- 几何自检 ----------
+function audit(){
+  const P=document.getElementById('phone');const pr=P.getBoundingClientRect();
+  const els=[...document.querySelectorAll('[data-aud],[data-hit],[data-text]')];
+  const box=(e)=>{const b=e.getBoundingClientRect();return {x:b.x-pr.x,y:b.y-pr.y,w:b.width,h:b.height,e};};
+  // ⚠ data-hit 是**无值属性**，e.dataset.hit 读出来是空字符串 = 假 ⇒ 上一版用 truthy 判断，
+  //   ①重叠 与 ③触达 两道判据整批静默失效（正控注入 88×38px 重叠 + 70×20px 小命中框，一条都没报）。
+  //   必须用 hasAttribute。
+  const hits=els.filter(e=>e.hasAttribute('data-hit')).map(box).filter(o=>o.w>0&&o.h>0);
+  const out=[];
+  // ① 命中框重叠。两条排除：
+  //   · 父子包含不算 (圆盘里的文字与圆盘本身重合是设计)
+  //   · 与固定 chrome (顶部导航栏 / 底部 Tab 栏) 相交不算 —— 内容本就从半透明栏下面滚过，
+  //     上一版把 8 条"列表行 × Tab 栏"报成重叠，全是假警报。
+  const chrome=(e)=>e.closest('.tabs,.navbar,.floatbtn');
+  for(let i=0;i<hits.length;i++)for(let j=i+1;j<hits.length;j++){
+    const a=hits[i],b=hits[j];
+    if(a.e.contains(b.e)||b.e.contains(a.e))continue;
+    if(chrome(a.e)||chrome(b.e))continue;
+    const ox=Math.min(a.x+a.w,b.x+b.w)-Math.max(a.x,b.x),oy=Math.min(a.y+a.h,b.y+b.h)-Math.max(a.y,b.y);
+    if(ox>2&&oy>2){out.push({sev:'hi',t:'重叠',el:a.e,el2:b.e,msg:'「'+lbl(a.e)+'」与「'+lbl(b.e)+'」命中框交 '+Math.round(ox)+'×'+Math.round(oy)+'px'});}
+  }
+  // ② 文字裁切: 横向裁只在"单行锁死档"算 (默认可换行时横向本就不会切)，纵向溢出任何时候都算
+  document.querySelectorAll('[data-text]').forEach(e=>{
+    const wide=state.nw&&e.scrollWidth>e.clientWidth+0.5;
+    const tall=e.scrollHeight>e.clientHeight+0.5;
+    if(wide)out.push({sev:'md',t:'裁切',el:e,msg:tag(e)+'「'+lbl(e).slice(0,26)+'」单行下横向切掉 '+(e.scrollWidth-e.clientWidth)+'px'});
+    else if(tall)out.push({sev:'md',t:'裁切',el:e,msg:tag(e)+'「'+lbl(e).slice(0,26)+'」纵向超出容器 '+(e.scrollHeight-e.clientHeight)+'px（容器高度被写死？）'});
+  });
+  // ③ 触达尺寸
+  hits.forEach(o=>{if(o.w<T.HIT-0.6||o.h<T.HIT-0.6)out.push({sev:'md',t:'触达',el:o.e,msg:tag(o.e)+'「'+lbl(o.e)+'」命中 '+Math.round(o.w)+'×'+Math.round(o.h)+'px < 44'});});
+  // ④ 间距脱离令牌 (只判同一列/行的兄弟间距)
+  const scale=T.DENSITY[state.dens]||1;
+  const legal=[];for(const k in T.SPACE)legal.push(snap(T.SPACE[k]*scale));
+  legal.push(0);
+  document.querySelectorAll('[data-rhythm]').forEach(c=>{
+    const kids=[...c.children];
+    for(let i=1;i<kids.length;i++){
+      const a=kids[i-1].getBoundingClientRect(),b=kids[i].getBoundingClientRect();
+      // .grp 是横排切片 ⇒ 量水平间隙；其余容器 ⇒ 量垂直间隙。(上一版把这两支塞进一个三元嵌套表达式, 括号算错)
+      const raw=c.classList.contains('grp') ? (b.left-a.right) : (b.top-a.bottom);
+      const g=Math.round(raw*10)/10;
+      if(g>=0&&g<200&&Math.min(...legal.map((x)=>Math.abs(g-x)))>0.6)
+        out.push({sev:'lo',t:'间距',el:c,msg:'「'+(lbl(c).slice(0,14)||c.className)+'」第 '+i+' 块间距 '+g+'px 不在令牌表（'+legal.filter(v=>v>0).join('/')+'）上'});
+    }
+  });
+  paint(out); return out;
+}
+const lbl=(e)=>(e.dataset.el||e.textContent||e.className||'').trim().slice(0,34);
+// 命中元素若来自我编的样本数据 (data-syn)，报告里加前缀 —— 免得"复刻的毛病"被当成"app 的毛病"
+const tag=(e)=>e&&e.closest&&e.closest('[data-syn]')?'〔合成样本〕':'';
+function paint(list){
+  document.querySelectorAll('[data-aud]').forEach(e=>e.classList.remove('hit-ill','clip-ill','small-ill','gap-ill'));
+  list.forEach(x=>{const cl={重叠:'hit-ill',裁切:'clip-ill',触达:'small-ill',间距:'gap-ill'}[x.t];if(x.el&&x.el.classList)x.el.classList.add(cl);});
+  document.getElementById('sum').textContent=list.length+' 条';
+  document.getElementById('issues').innerHTML=list.length?list.map((x,i)=>'<div class=iss data-sev='+x.sev+' data-i='+i+'><b>'+x.t+' · '+esc(x.msg)+'</b><span class=t>'
+    +esc((x.el&&x.el.dataset&&x.el.dataset.el)||'')+' '+(x.src||'')+'</span></div>').join(''):
+    '<div class=note>本轮没抓到几何违规。<br>注意：这只说明"在这个机型/字号/数据形态下"没重叠与裁切，不等于真机没有。</div>';
+  document.querySelectorAll('.iss').forEach(n=>n.onclick=()=>{const x=list[+n.dataset.i];if(x.el)x.el.scrollIntoView({block:'center',behavior:'smooth'});});
+}
+// ---------- 控件绑定 ----------
+const $=(id)=>document.getElementById(id);
+const opts=(el,arr)=>el.innerHTML=arr.map(o=>'<option value="'+o[0]+'">'+o[1]+'</option>').join('');
+opts($('scr'),[['device','设备 Tab（全模块）'],['credentials','凭证 Tab'],['records','记录 Tab'],['settings','设置 Tab（18 节）']]);
+opts($('theme'),Object.keys(T.THEMES).map(k=>[k,k]));
+opts($('dialv'),(T.DIALS||[176]).map(v=>[v,v+' pt']));
+$('gen').textContent=D.meta.generated;
+[['scr','scr'],['dev','dev'],['mode','mode'],['theme','theme'],['dens','dens'],['rad','rad'],['dialv','dial']].forEach(([id,k])=>$(id).onchange=(e)=>{state[k]=e.target.value;render();});
+$('fsr').oninput=(e)=>{state.fs=+e.target.value;$('fsv').textContent=state.fs.toFixed(2);render();};
+$('cjr').oninput=(e)=>{state.cjk=+e.target.value;$('cjv').textContent=state.cjk+'px';render();};
+$('worst').onchange=(e)=>{state.worst=e.target.checked;render();};
+$('nw').onchange=(e)=>{state.nw=e.target.checked;document.body.dataset.nw=state.nw?'1':'';render();};
+$('showmod').onclick=()=>{state.showmod=!state.showmod;render();};
+$('run').onclick=audit;
+$('copy').onclick=()=>{const r=audit();$('report').value=(r.length?r.map(x=>x.t+' | '+x.msg):['无违规']).join('\\n')+('\\n\\n条件: '+state.scr+' · '+state.dev+' · 字号'+state.fs+' · 密度'+state.dens+' · 单行'+(state.nw?'开':'关')+' · 最坏'+(state.worst?'开':'关'));$('report').select();};
+// 全条件扫描: 逐组合渲染后同步量几何, 把"哪一档开始破"压成一张文本表
+$('sweep').onclick=()=>{
+  const keep={...state},lines=[];
+  for(const scr of ['device','credentials','records','settings'])
+   for(const dev of ['375x667','390x844','430x932'])
+    for(const fs of [1,1.3,1.6,2])
+     for(const nw of [false,true]){
+      Object.assign(state,{scr,dev,fs,nw,worst:true,grp:null});
+      document.body.dataset.nw=nw?'1':'';
+      render();
+      const r=audit(),c={};
+      r.forEach(x=>c[x.t]=(c[x.t]||0)+1);
+      const hit=Object.keys(c).length;
+      if(hit)lines.push(scr+' '+dev+' 字号'+fs+' 单行'+(nw?'开':'关')+' → '+Object.entries(c).map(([k,v])=>k+v).join(' '));
+     }
+  Object.assign(state,keep);document.body.dataset.nw=state.nw?'1':'';render();
+  $('report').value=lines.length?('会破的组合 '+lines.length+' 个:\\n'+lines.join('\\n')):'全部 96 个组合都没有几何违规';
+  $('sum').textContent=lines.length+' 组有违规';
+  $('report').select();
+};
+document.addEventListener('click',(e)=>{const g=e.target.closest('[data-g]');if(g){state.grp=g.dataset.g;render();}});
+render();
+</script></body></html>`;
+}
+module.exports = { render };

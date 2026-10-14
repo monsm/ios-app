@@ -169,7 +169,7 @@ enum StudioTools {
         SceneDef(key: "repair", name: "维修", hint: "半天 · 含复查", hours: 6, note: "维修师傅·待修项·半天"),
         SceneDef(key: "cleaning", name: "家政", hint: "4 小时 · 单场", hours: 4, note: "钟点工·上午场·4小时"),
         SceneDef(key: "guest", name: "访客", hint: "今晚 10 点前", hours: 8, note: "访客·今晚·10点前"),
-        SceneDef(key: "reno", name: "装修", hint: "整月 · 长期工", hours: 720, note: "装修组·工地·整月 (330 施工中)")
+        SceneDef(key: "reno", name: "装修", hint: "整月 · 长期工", hours: 720, note: "装修组·工地·整月")   // 330 装修组
     ]
 }
 
@@ -269,7 +269,7 @@ struct MaskedDigits: View {
                 // 的初始化器不收闭包 ⇒ "extra trailing closure passed in call"。手势动作要挂在 .onEnded。
                 .simultaneousGesture(TapGesture(count: 2).onEnded { copyAll() })
                 // 对 VoiceOver 不承诺"双击" (VO 的双击=激活=揭示), 拷贝走转子自定义动作
-                .accessibilityAction(named: "拷整条明文 (849)") { copyAll() }
+                .accessibilityAction(named: "拷整条明文") { copyAll() }   // 849 拷整条明文
             }
         }
         // 849 兜住位与位之间的缝: 双击缝里也拷整条
@@ -480,7 +480,7 @@ struct CodeScanSheet: View {
     var body: some View {
         NavigationStack {
             scanner
-                .navigationTitle("扫一扫 (522)")
+                .navigationTitle("扫一扫")   // 522 扫一扫
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { ToolbarItem(placement: .cancellationAction) {
                     Button("关闭") {
@@ -554,7 +554,7 @@ struct StudioHome: View {
     private var content: some View {
         List {
             Group {
-                Section("四类凭证 (177 扇出)") {
+                Section("四类凭证") {   // 177 四类凭证
                     fanoutRow("key.fill", "密码", "301 剪贴板即建 · 303 逐位回显 · 304 重复拦截 · 173 生成器",
                               label: "添加密码") { showAddPwd = true }
                     fanoutRow("clock.badge.chevron.right", "临时码",
@@ -733,7 +733,7 @@ struct PwdStudio: View {
         .padding(.vertical, DS.Space.xs)
         .background(DS.Palette.warn.opacity(0.10), in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("草稿续填 (518): 上次填到第 \(d.step + 1) 步, 点继续可回填")
+        .accessibilityLabel("草稿续填: 上次填到第 \(d.step + 1) 步, 点继续可回填")   // 518 草稿续填
     }
 
     // ---------- 515/317 step0 类型与归属 ----------
@@ -801,7 +801,7 @@ struct PwdStudio: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             if errorField == "owner" {
-                errorLine("归属必选 (317 归属先行): 先选成员; 没有成员可先去成员中心新建再返回。")
+                errorLine("归属必选: 先选成员; 没有成员可先去成员中心新建再返回。")   // 317 归属必选
             }
         }
         .card()
@@ -824,7 +824,7 @@ struct PwdStudio: View {
                 MaskedDigits(value: pwd, big: true)
                     .padding(.vertical, DS.Space.xs)
             }
-            TextField("", text: $pwd, prompt: Text("输入 6~8 位数字 (516 纯数字键盘)"))
+            TextField("", text: $pwd, prompt: Text("输入 6~8 位数字"))   // 516 输入
                 .keyboardType(.numberPad)
                 .font(.title3.weight(.semibold).monospacedDigit())
                 .frame(minHeight: DS.Hit.min)
@@ -835,7 +835,7 @@ struct PwdStudio: View {
                 }
             if clipSource {
                 HStack(spacing: DS.Space.xs) {
-                    Label("来自剪贴板 · 已识别为候选码 (301)", systemImage: "doc.on.clipboard")
+                    Label("来自剪贴板 · 已识别为候选码", systemImage: "doc.on.clipboard")   // 301 来自剪贴板
                         .font(.caption)
                         .foregroundStyle(DS.Palette.warn)
                     Spacer(minLength: 0)
@@ -863,7 +863,7 @@ struct PwdStudio: View {
                     .font(.caption.weight(.medium))
                     .buttonStyle(.bordered)
                     .frame(minHeight: DS.Hit.min)
-                    .accessibilityLabel("本地生成 \(n) 位随机密码 (173)")
+                    .accessibilityLabel("本地生成 \(n) 位随机密码")   // 173 本地生成
                 }
                 Spacer(minLength: 0)
             }
@@ -886,14 +886,14 @@ struct PwdStudio: View {
                 .accessibilityLabel("密码强度 " + s.hint)
             }
             if errorField == "value" {
-                errorLine("码值需 6~8 位数字 (519): 就在上面那格码值里改, 改好再点下一步。")
+                errorLine("码值需 6~8 位数字: 就在上面那格码值里改, 改好再点下一步。")   // 519 码值需
             }
             let dups = pwdOK ? CredentialOrg.duplicatePwdValues(mac, pwd, excluding: editAlias ?? -1) : []
             // 304 说的是"全库", 上面那个只查本锁 → 跨锁检查接上 (duplicatePwdLockNames 此前零调用)
             let others = pwdOK ? CredentialOrg.duplicatePwdLockNames(pwd, excludingMac: mac) : []
             if !others.isEmpty {
                 Label("其它 \(others.count) 把锁上也有同值: " + others.prefix(3).joined(separator: "、")
-                    + (others.count > 3 ? " 等" : "") + " (304 全库)",
+                    + (others.count > 3 ? " 等" : ""),   // 304 界面文案
                       systemImage: "lock.rectangle.stack")
                     .font(.caption)
                     .foregroundStyle(DS.Palette.warn)
@@ -901,7 +901,7 @@ struct PwdStudio: View {
             }
             if !dups.isEmpty {
                 HStack(spacing: DS.Space.xs) {
-                    Label("本锁已有 \(dups.count) 条同值凭证 (304)", systemImage: "plus.slash.minus")
+                    Label("本锁已有 \(dups.count) 条同值凭证", systemImage: "plus.slash.minus")   // 304 本锁已有
                         .font(.caption)
                         .foregroundStyle(DS.Palette.warn)
                     Spacer(minLength: 0)
@@ -923,7 +923,7 @@ struct PwdStudio: View {
                 .accessibilityElement(children: .combine)
             }
             if let c = pwdOK ? CredentialOrg.prefixConflict(mac, pwd, excluding: editAlias ?? -1).first : nil {
-                Text("与「\(CredentialOrg.displayPwd(c))」前 4 位相同, 口头易混淆 (314)。")
+                Text("与「\(CredentialOrg.displayPwd(c))」前 4 位相同, 口头易混淆。")   // 314 位相同
                     .font(.caption)
                     .foregroundStyle(DS.Palette.warn)
                     .fixedSize(horizontal: false, vertical: true)
@@ -931,7 +931,7 @@ struct PwdStudio: View {
             Button {
                 showScan = true
             } label: {
-                Label("扫一扫取号 (522, 识别失败请人工输入)", systemImage: "qrcode.viewfinder")
+                Label("扫一扫取号", systemImage: "qrcode.viewfinder")   // 522 扫一扫取号
             }
             .font(.caption.weight(.medium))
             .foregroundStyle(DS.Palette.accentText)
@@ -945,10 +945,10 @@ struct PwdStudio: View {
         if !s.isEmpty {
             pwd = s
             clipSource = false
-            app.showToast("已识别 \(s.count) 位数字, 请核对位数与内容 (522)")
+            app.showToast("已识别 \(s.count) 位数字, 请核对位数与内容")   // 522 已识别
             DS.Haptics.trigger.impactOccurred()
         } else {
-            app.showToast("未识别到数字码, 请人工输入 (522 回退)")
+            app.showToast("未识别到数字码, 请人工输入")   // 522 未识别到数字码
         }
     }
 
@@ -983,7 +983,7 @@ struct PwdStudio: View {
                     if periodHelp {
                         VStack(alignment: .leading, spacing: DS.Space.xxs) {
                             Text("默认 1 小时；四枚快捷档是 1 小时 / 今天内 (到今晚 23:59) / 7 天 / 30 天。")
-                            Text("到期必须晚于生效，否则这条不让过 (519)。")
+                            Text("到期必须晚于生效，否则这条不让过。")   // 519 到期必须晚于生效
                             Text("生效与到期是写给门锁的两个时刻，门锁用它自己的钟比对 —— 锁钟不准，码会提前或延后失效。")
                             Text("改有效期要重新下发到锁才生效；只改本机台账不算。")
                         }
@@ -1005,13 +1005,13 @@ struct PwdStudio: View {
                         Spacer(minLength: 0)
                     }
                     if to <= from {
-                        errorLine("到期需晚于生效 (519): 点上面任一快捷档, 或把到期往后挪; 这一步不让过。")
+                        errorLine("到期需晚于生效: 点上面任一快捷档, 或把到期往后挪; 这一步不让过。")   // 519 到期需晚于生效
                     }
                 }
                 .card()
             } else {
                 VStack(alignment: .leading, spacing: DS.Space.xs) {
-                    Text("长期密码无到期点; 老旧巡检 (305) 会在详情页提示「添加满 180 天」那一条 —— "
+                    Text("长期密码无到期点; 老旧巡检会在详情页提示「添加满 180 天」那一条 —— "   // 305 长期密码无到期点
                          + "台账只有添加时刻, 那句说的是这条加了多久, 不是这个值多久没换过。")
                         .font(.caption)
                         .foregroundStyle(DS.Palette.textSub)
@@ -1026,7 +1026,7 @@ struct PwdStudio: View {
                 // 312 常用短语条: 点按追加到备注末尾 (不是替换), 空备注时直接填
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: DS.Space.xs) {
-                        Text("常用短语 (312)").font(.caption2).foregroundStyle(DS.Palette.textSub)
+                        Text("常用短语").font(.caption2).foregroundStyle(DS.Palette.textSub)   // 312 常用短语
                         ForEach(["仅白天", "勿外传", "长期有效"], id: \.self) { p in
                             Button(p) {
                                 note = note.isEmpty ? p : note + " · " + p
@@ -1043,7 +1043,7 @@ struct PwdStudio: View {
                     }
                     .padding(.vertical, 2)
                 }
-                TextField("如: 钟点工·大门·仅上午场 (523 可长按调听写)", text: $note,
+                TextField("如: 钟点工·大门·仅上午场", text: $note,   // 523 钟点工
                           prompt: Text("给谁 · 哪扇门 · 用多久"))
                     .font(.subheadline)
                     .frame(minHeight: DS.Hit.min)
@@ -1075,7 +1075,7 @@ struct PwdStudio: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("快捷时长 \(t) (520)")
+        .accessibilityLabel("快捷时长 \(t)")   // 520 快捷时长
     }
     /// 快捷档"今天"的剩余秒数。终点取 `TimeFormat.dayEnd()` (今晚 23:59) ——
     /// 那一份实现刚从**编译失败**里修出来，理由与机检依据写在 TimeFormat.swift:87 上方，不要在这里另抄一份。
@@ -1146,7 +1146,7 @@ struct PwdStudio: View {
                 // 521 二次输入确认: 重输码值一致才放行 (与转账复核同语义; 开关在设置-安全页)
                 if DB.store.getBool("kf_scred_2nd", true) {
                     HStack(spacing: DS.Space.xs) {
-                        TextField("重输一遍码值 (521)", text: $confirmPwd)
+                        TextField("重输一遍码值", text: $confirmPwd)   // 521 重输一遍码值
                             .keyboardType(.numberPad)
                             .font(.subheadline.monospaced())
                             .autocorrectionDisabled()
@@ -1174,7 +1174,7 @@ struct PwdStudio: View {
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 } else {
-                    Text("本机台账里还没有这把锁的成功下发记录 (541) —— 这条提示只说本机台账, 不代表锁端没被配过。")
+                    Text("本机台账里还没有这把锁的成功下发记录 —— 这条提示只说本机台账, 不代表锁端没被配过。")   // 541 本机台账里还没有这把
                         .font(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
@@ -1184,7 +1184,7 @@ struct PwdStudio: View {
                 }
                 .disabled(DB.store.getBool("kf_scred_2nd", true) && confirmPwd != pwd)
             }
-            Text("请将手机靠近门锁; 成功后登记到本机台账并留一档版本快照 (487)。")
+            Text("请将手机靠近门锁; 成功后登记到本机台账并留一档版本快照。")   // 487 请将手机靠近门锁
                 .font(.caption2)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -1208,13 +1208,13 @@ struct PwdStudio: View {
                 Button(step == 0 ? "下一步: 码值" : (step == 1 ? "下一步: 有效期" : "下一步: 确认")) {
                     if step == 0, owner == nil, !DB.members().isEmpty {
                         errorField = "owner"
-                        app.showToast("先选归属成员 (317 归属先行)")
+                        app.showToast("先选归属成员")   // 317 先选归属成员
                         DS.Haptics.trigger.impactOccurred()
                         return
                     }
                     if step == 1, !pwdOK {
                         errorField = "value"
-                        app.showToast("码值需 6~8 位数字 (519)")
+                        app.showToast("码值需 6~8 位数字")   // 519 码值需
                         DS.Haptics.trigger.impactOccurred()
                         return
                     }
@@ -1223,7 +1223,7 @@ struct PwdStudio: View {
                     // 现在停在这一步: toast + 触感 + errorField 同步 (字段下方那行 errorLine 已经在按 to<=from 显示)。
                     if step == 2, kind == 1, to <= from {
                         errorField = "period"
-                        app.showToast("到期要晚于生效, 请先点一枚快捷档 (519)")
+                        app.showToast("到期要晚于生效, 请先点一枚快捷档")   // 519 到期要晚于生效
                         DS.Haptics.trigger.impactOccurred()
                         return
                     }
@@ -1256,7 +1256,7 @@ struct PwdStudio: View {
         owner = d.owner
         if let f = CredentialOrg.parseLocal(d.fromISO) { from = f }
         if let t = CredentialOrg.parseLocal(d.toISO) { to = t }
-        app.showToast("已回填草稿 (518)")
+        app.showToast("已回填草稿")   // 518 已回填草稿
     }
     private func iso(_ d: Date) -> String {
         let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX"); f.dateFormat = "yyyy-MM-dd HH:mm:ss"
@@ -1287,14 +1287,14 @@ struct PwdStudio: View {
         guard pwdOK else {
             step = 1
             errorField = "value"
-            app.showToast("码值需 6~8 位数字 (519 拦在提交前)")
+            app.showToast("码值需 6~8 位数字")   // 519 码值需
             DS.Haptics.trigger.impactOccurred()
             return
         }
         if kind == 1, to <= from {
             step = 2
             errorField = "period"
-            app.showToast("到期要晚于生效 (519 拦在提交前): 草稿里的这一档已过期, 请重选")
+            app.showToast("到期要晚于生效: 草稿里的这一档已过期, 请重选")   // 519 到期要晚于生效
             DS.Haptics.trigger.impactOccurred()
             return
         }
@@ -1338,7 +1338,7 @@ struct PwdStudio: View {
             CredentialOrg.clearDraft(kc.mac)
             showDraftBar = false
             submitted = true   // 518
-            app.flashReceipt("已写入本机 (508)")
+            app.flashReceipt("已写入本机")   // 508 已写入本机
             app.showToast(isTemp ? "临时码已下发" : "密码已下发 (别名 #\(alias))")
             if !embedded { dismiss() }
         } catch {
@@ -1427,14 +1427,14 @@ struct TempCodeStudio: View {
                     if !pwd.isEmpty {
                         MaskedDigits(value: pwd, big: true)
                     }
-                    TextField("输入码值, 或点「生成」", text: $pwd, prompt: Text("输入 6~8 位数字 (516)"))
+                    TextField("输入码值, 或点「生成」", text: $pwd, prompt: Text("输入 6~8 位数字"))   // 516 输入
                         .keyboardType(.numberPad)
                         .font(.title3.weight(.semibold).monospacedDigit())
                         .frame(minHeight: DS.Hit.min)
                         .autocorrectionDisabled()
                     if clipSource {
                         HStack(spacing: DS.Space.xs) {
-                            Label("来自剪贴板 · 已识别为候选码 (301)", systemImage: "doc.on.clipboard")
+                            Label("来自剪贴板 · 已识别为候选码", systemImage: "doc.on.clipboard")   // 301 来自剪贴板
                                 .font(.caption)
                                 .foregroundStyle(DS.Palette.warn)
                             Spacer(minLength: 0)
@@ -1450,24 +1450,24 @@ struct TempCodeStudio: View {
                         .accessibilityLabel("码值来自剪贴板, 点清除可移除")
                     }
                     HStack(spacing: DS.Space.xs) {
-                        Button("生成 (173)") {
+                        Button("生成") {   // 173 生成
                             pwd = StudioTools.genDigits(6)
                             clipSource = false
                         }
                         .font(.caption.weight(.medium))
                         .buttonStyle(.bordered)
                         .frame(minHeight: DS.Hit.min)
-                        .accessibilityLabel("本地生成 6 位随机码 (173)")
-                        Button("扫一扫 (522)") { showScan = true }
+                        .accessibilityLabel("本地生成 6 位随机码")   // 173 本地生成
+                        Button("扫一扫") { showScan = true }   // 522 扫一扫
                             .font(.caption.weight(.medium))
                             .buttonStyle(.bordered)
                             .frame(minHeight: DS.Hit.min)
-                            .accessibilityLabel("相机识别印刷码 (522)")
+                            .accessibilityLabel("相机识别印刷码")   // 522 相机识别印刷码
                         Spacer(minLength: 0)
                     }
                     // 178 批量临时码 (锁端无批量命令, 走既有 0A 逐条, 失败逐条报)
                     HStack(spacing: DS.Space.xs) {
-                        Text("一次生成 (178)")
+                        Text("一次生成")   // 178 一次生成
                             .font(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                         ForEach([1, 2, 3, 5], id: \.self) { n in
@@ -1475,7 +1475,7 @@ struct TempCodeStudio: View {
                                 .font(.caption.weight(batchCount == n ? .semibold : .medium))
                                 .buttonStyle(.bordered)
                                 .frame(minHeight: DS.Hit.min)
-                                .accessibilityLabel("批量 \(n) 张 (178)")
+                                .accessibilityLabel("批量 \(n) 张")   // 178 批量
                         }
                         Spacer(minLength: 0)
                     }
@@ -1484,7 +1484,7 @@ struct TempCodeStudio: View {
                     let others = pwdOK ? CredentialOrg.duplicatePwdLockNames(pwd, excludingMac: mac) : []
                     if !others.isEmpty {
                         Label("其它 \(others.count) 把锁上也有同值: " + others.prefix(3).joined(separator: "、")
-                            + (others.count > 3 ? " 等" : "") + " (304 全库)", systemImage: "lock.rectangle.stack")
+                            + (others.count > 3 ? " 等" : ""), systemImage: "lock.rectangle.stack")   // 304 界面文案
                             .font(.caption)
                             .foregroundStyle(DS.Palette.warn)
                             .fixedSize(horizontal: false, vertical: true)
@@ -1492,7 +1492,7 @@ struct TempCodeStudio: View {
                     if !dups.isEmpty {
                         // 304 查看即跳: 不再只给一句"建议换一组", 真把同值那条的详情打开
                         HStack(spacing: DS.Space.xs) {
-                            Label("本锁已有 \(dups.count) 条同值凭证 (304), 建议换一组", systemImage: "plus.slash.minus")
+                            Label("本锁已有 \(dups.count) 条同值凭证, 建议换一组", systemImage: "plus.slash.minus")   // 304 本锁已有
                                 .font(.caption)
                                 .foregroundStyle(DS.Palette.warn)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -1540,14 +1540,14 @@ struct TempCodeStudio: View {
                         Spacer(minLength: 0)
                     }
                     if to <= from {
-                        Label("到期需晚于生效 (519)", systemImage: "exclamationmark.circle.fill")
+                        Label("到期需晚于生效", systemImage: "exclamationmark.circle.fill")   // 519 到期需晚于生效
                             .font(.caption)
                             .foregroundStyle(DS.Palette.danger)
                     }
                     // 327 租期重叠检测
                     if !overlaps.isEmpty {
                         Label {
-                            Text("与本成员其它 \(overlaps.count) 张码时段撞车 (327, 重叠段建议错开)")
+                            Text("与本成员其它 \(overlaps.count) 张码时段撞车")   // 327 与本成员其它
                                 .fixedSize(horizontal: false, vertical: true)
                         } icon: {
                             Image(systemName: "arrow.left.arrow.right")
@@ -1557,7 +1557,7 @@ struct TempCodeStudio: View {
                     }
                     // 330 装修黄条
                     if scene == "reno" {
-                        Label("长期工场景: 详情页挂「施工中」黄条 (330), 建议 30 天内复查一次", systemImage: "paintbrush")
+                        Label("长期工场景: 详情页挂「施工中」黄条, 建议 30 天内复查一次", systemImage: "paintbrush")   // 330 长期工场景
                             .font(.caption)
                             .foregroundStyle(DS.Palette.warn)
                             .fixedSize(horizontal: false, vertical: true)
@@ -1599,12 +1599,12 @@ struct TempCodeStudio: View {
                 }
                 .card()
 
-                BusyButton(title: batchCount > 1 ? "下发 \(batchCount) 张 (178)" : "下发临时码",
+                BusyButton(title: batchCount > 1 ? "下发 \(batchCount) 张" : "下发临时码",   // 178 下发
                            systemImage: "clock.badge.chevron.right", isBusy: busy) {
                     Task { await submitBatch() }
                 }
                 .disabled(!pwdOK || to <= from)
-                Text("请将手机靠近门锁; 批量 (178) 走既有 0A 逐条下发, 锁端无批量命令, 失败逐条报。")
+                Text("请将手机靠近门锁; 批量走既有 0A 逐条下发, 锁端无批量命令, 失败逐条报。")   // 178 请将手机靠近门锁
                     .font(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -1644,7 +1644,7 @@ struct TempCodeStudio: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("场景 \(s.name): \(s.hint) (325)")
+        .accessibilityLabel("场景 \(s.name): \(s.hint)")   // 325 场景
         .accessibilityAddTraits(scene == s.key ? [.isSelected] : [])
     }
     private func quickPill(_ t: String, _ act: @escaping () -> Void) -> some View {
@@ -1662,7 +1662,7 @@ struct TempCodeStudio: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("快捷时长 \(t) (520)")
+        .accessibilityLabel("快捷时长 \(t)")   // 520 快捷时长
     }
 
     // ---------- 完成页: 172/328 大字口述卡 + 329 一句话 + 333 首用回执 (⚠ 按时间推断标"约") ----------
@@ -1678,7 +1678,10 @@ struct TempCodeStudio: View {
                     // 329/333/再发一张 是常规形态的入口, 这一档收起来并在原地说明 —— 收了不吭声就是本仓反复犯的无声忽略。
                     Button("完成") { dismiss() }
                         .buttonStyle(PrimaryActionStyle())
-                    Text("常规模式这里还有 一句话口令 (329) / 首用回执 (333) / 再发一张 — 长辈模式下不显示 (486)。")
+                    // 329 常规模式这里还有
+                    // 333 常规模式这里还有
+                    // 486 常规模式这里还有
+                    Text("常规模式这里还有 一句话口令 / 首用回执 / 再发一张 — 长辈模式下不显示。")
                         .font(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                         .multilineTextAlignment(.center)
@@ -1689,10 +1692,10 @@ struct TempCodeStudio: View {
                     let text = StudioTools.oneLine(p: r, lockName: lockName, value: r.pwd)
                     Button {
                         ClipboardCare.copySecret(text, via: "一句话口令")   // 405 含口令明文
-                        app.showToast("一句话口令已复制 (329)")
+                        app.showToast("一句话口令已复制")   // 329 一句话口令已复制
                     } label: {
                         VStack(spacing: DS.Space.xs) {
-                            Text("生成一句话口令 (329)")
+                            Text("生成一句话口令")   // 329 生成一句话口令
                                 .font(.footnote.weight(.semibold))
                                 .foregroundStyle(DS.Palette.accentText)
                             Text("“" + text + "”")
@@ -1713,7 +1716,7 @@ struct TempCodeStudio: View {
                     .accessibilityLabel("复制一句话口令: " + text)
                     // 329 分享面板: 系统分享单 (与 405 复制同源明文, 发给家人用)
                     ShareLink(item: text) {
-                        Label("分享一句话口令 (329)", systemImage: "square.and.arrow.up")
+                        Label("分享一句话口令", systemImage: "square.and.arrow.up")   // 329 分享一句话口令
                             .font(.footnote.weight(.medium))
                             .foregroundStyle(DS.Palette.accentText)
                             .frame(maxWidth: .infinity)
@@ -1723,12 +1726,12 @@ struct TempCodeStudio: View {
                     }
                     .buttonStyle(.plain)
                     .padding(.horizontal, DS.Space.gutter)
-                    .accessibilityLabel("分享一句话口令 (329)")
+                    .accessibilityLabel("分享一句话口令")   // 329 分享一句话口令
                 }
                 // 333 首用回执 (⚠ 无 alias 字段, 按时间推断, 标"约")
                 if let r = result, !MemberHub.elderMode, let t = CredentialOrg.firstUse(mac, p: r) {
                     Label {
-                        Text("约在 \(isoShort(Date(timeIntervalSince1970: t))) 有人用它开过门 (333, 按时间窗推断约)")
+                        Text("约在 \(isoShort(Date(timeIntervalSince1970: t))) 有人用它开过门")   // 333 约在
                             .fixedSize(horizontal: false, vertical: true)
                     } icon: {
                         Image(systemName: "checkmark.seal.fill")
@@ -1741,7 +1744,7 @@ struct TempCodeStudio: View {
                     .padding(.horizontal, DS.Space.gutter)
                 } else if let r = result, !MemberHub.elderMode {
                     Label {
-                        Text("等待首次使用 (333, 「记录」出现首用条目即约回执)")
+                        Text("等待首次使用")   // 333 等待首次使用
                             .fixedSize(horizontal: false, vertical: true)
                     } icon: {
                         Image(systemName: "hourglass")
@@ -1778,10 +1781,10 @@ struct TempCodeStudio: View {
     private func onScan(_ s: String) {
         if !s.isEmpty {
             pwd = s
-            app.showToast("已识别 \(s.count) 位数字, 请核对 (522)")
+            app.showToast("已识别 \(s.count) 位数字, 请核对")   // 522 已识别
             DS.Haptics.trigger.impactOccurred()
         } else {
-            app.showToast("未识别到数字码, 请人工输入 (522 回退)")
+            app.showToast("未识别到数字码, 请人工输入")   // 522 未识别到数字码
         }
     }
     private func isoShort(_ d: Date, prefix: String = "") -> String {
@@ -1813,7 +1816,7 @@ struct TempCodeStudio: View {
                 app.showToast("第 \(i + 1)/\(max(batchCount, 1)) 张已下发 (别名 #\(alias))")
             } catch {
                 failed += 1
-                app.showToast("第 \(i + 1) 张下发失败: \(error.localizedDescription) (178 逐条)")
+                app.showToast("第 \(i + 1) 张下发失败: \(error.localizedDescription)")   // 178 张下发失败
             }
         }
         if let r = last {
@@ -1850,7 +1853,7 @@ struct PwdDetailStudio: View {
                     if p.temp, CredentialOrg.isEarlyExpired(mac, p, Date()) {
                         Section {
                             Label {
-                                Text("已过本机设定的提前失效时刻 (331) — 这一条只是提示: 没有向门锁发过任何停用或改期命令, "
+                                Text("已过本机设定的提前失效时刻 — 这一条只是提示: 没有向门锁发过任何停用或改期命令, "   // 331 已过本机设定的提前失
                                      + "门锁在它自己那份到期时刻之前照样能开门。要真停用, 得走列表里的停用或改期。")
                                     .fixedSize(horizontal: false, vertical: true)
                             } icon: {
@@ -1880,7 +1883,7 @@ struct PwdDetailStudio: View {
                                     .font(.caption.weight(.medium))
                                     .buttonStyle(.bordered)
                                     .frame(minHeight: DS.Hit.min)
-                                    .accessibilityLabel("改造该密码 (306)")
+                                    .accessibilityLabel("改造该密码")   // 306 改造该密码
                             }
                             .font(.caption)
                             .foregroundStyle(DS.Palette.warn)
@@ -1903,7 +1906,7 @@ struct PwdDetailStudio: View {
                                     .font(.caption.weight(.medium))
                                     .buttonStyle(.bordered)
                                     .frame(minHeight: DS.Hit.min)
-                                    .accessibilityLabel("改造该密码 (306)")
+                                    .accessibilityLabel("改造该密码")   // 306 改造该密码
                             }
                         }
                         .listRowBackground(DS.Palette.warn.opacity(0.06))
@@ -1938,13 +1941,13 @@ struct PwdDetailStudio: View {
                                         withAnimation(DS.Motion.standard) { copiedFlash = false }
                                     }
                                 } label: {
-                                    Label(copiedFlash ? "已复制" : "复制 (11)",
+                                    Label(copiedFlash ? "已复制" : "复制",   // 11 复制
                                           systemImage: copiedFlash ? "checkmark" : "doc.on.doc")
                                         .font(.caption.weight(.medium))
                                 }
                                 .buttonStyle(.bordered)
                                 .frame(minHeight: DS.Hit.min)
-                                Button("读出 (309)") { Speech.digits(v) }
+                                Button("读出") { Speech.digits(v) }   // 309 读出
                                     .font(.caption.weight(.medium))
                                     .buttonStyle(.bordered)
                                     .frame(minHeight: DS.Hit.min)
@@ -1966,7 +1969,7 @@ struct PwdDetailStudio: View {
                                                 .contentShape(Rectangle())
                                         }
                                         .buttonStyle(.plain)
-                                        .accessibilityLabel("分段 \(i + 1): \(c), 点按只复制该段 (308)")
+                                        .accessibilityLabel("分段 \(i + 1): \(c), 点按只复制该段")   // 308 分段
                                     }
                                 }
                             }
@@ -1976,14 +1979,14 @@ struct PwdDetailStudio: View {
                     // 详情页不另存 @State (防双源漂移)。930 替代落地后 h2 档也排通知了,
                     // 列表提醒行不动 —— 前台那条行仍然有用, 只是不再是 h2 的唯一出口。
                     if CredentialOrg.expiryDate(p) == nil {
-                        Section("到期预警 (359)") {
+                        Section("到期预警") {   // 359 到期预警
                             Text("长期有效密码无到期点, 三档预警不适用。")
                                 .font(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     } else {
-                        Section("到期预警 (359)") {
+                        Section("到期预警") {   // 359 到期预警
                             Toggle("到期前 7 天提醒 (通知)", isOn: Binding(
                                 get: { CredentialOrg.alert(mac, p).day },
                                 set: { v in
@@ -2025,7 +2028,7 @@ struct PwdDetailStudio: View {
                                     CredentialOrg.scheduleAlerts(mac, p, a)
                                 }))
                             Text("五档 (7/3/1 天 · 24/2 小时) 都排本地通知, 另有一条「到期时」通知自动跟着走; "
-                                 + "2 小时档同时还在凭证列表插提醒行。近 7 天到期条数会显示在凭证 Tab 角标上 (930)。"
+                                 + "2 小时档同时还在凭证列表插提醒行。近 7 天到期条数会显示在凭证 Tab 角标上。"   // 930 小时档同时还在凭证列
                                  + "开关只存本机, 与锁端无关。")
                                 .font(.caption2)
                                 .foregroundStyle(DS.Palette.textSub)
@@ -2035,7 +2038,7 @@ struct PwdDetailStudio: View {
                     // 331 提前失效滑杆: 本地意图, 不改协议; 到点**只在本页**提示 (顶部提醒条 + 状态行标注),
                     // 不自动下发停用。副文案原先承诺"临近失效的列表行将挂渐进色条" —— 列表侧没做, 已撤。
                     if p.temp {
-                        Section("提前失效 (331, 本地意图)") {
+                        Section("提前失效") {   // 331 提前失效
                             VStack(alignment: .leading, spacing: DS.Space.xs) {
                                 HStack {
                                     Text("提前 \(CredentialOrg.earlyExpireMin(mac, p.alias)) 分钟失效")
@@ -2057,9 +2060,9 @@ struct PwdDetailStudio: View {
                                 ), in: 0...120, step: 5)
                                 .tint(DS.Palette.accent)
                                 .frame(minHeight: DS.Hit.min)
-                                .accessibilityLabel("提前失效分钟数滑杆 (331)")
+                                .accessibilityLabel("提前失效分钟数滑杆")   // 331 提前失效分钟数滑杆
                                 Text("实话: 这枚滑杆在本机只存一个分钟数 —— 列表行没有渐进色条, 门锁那侧的到期时刻一个字都没改。"
-                                     + "到点本页挂提醒条并在状态行标注, 要不要真停用仍由你决定 (331)。")
+                                     + "到点本页挂提醒条并在状态行标注, 要不要真停用仍由你决定。")   // 331 到点本页挂提醒条并在
                                     .font(.caption2)
                                     .foregroundStyle(DS.Palette.textSub)
                                     .fixedSize(horizontal: false, vertical: true)
@@ -2070,7 +2073,7 @@ struct PwdDetailStudio: View {
                     if p.temp, p.note.contains("装修") || p.note.contains("工地") {
                         Section {
                             HStack(spacing: DS.Space.s) {
-                                Label("施工中 (330 装修黄条)", systemImage: "paintbrush.fill")
+                                Label("施工中", systemImage: "paintbrush.fill")   // 330 施工中
                                 Spacer(minLength: 0)
                                 StatusPill(text: "长期工", systemImage: "clock", tone: .warn)
                             }
@@ -2098,7 +2101,7 @@ struct PwdDetailStudio: View {
                                     .minimumScaleFactor(0.8)
                                 Spacer(minLength: 0)
                             }
-                            .accessibilityLabel("用量刻度, 按本地开门日志时间窗推断约 \(u) 条 (326/335, 锁端无计次字段)")
+                            .accessibilityLabel("用量刻度, 按本地开门日志时间窗推断约 \(u) 条")   // 326/335 用量刻度
                         }
                     }
                     // 332 原码续期 (⚠ 过期码是否留存锁端未确证: 本地沿用原值改期 + 入队兜底, 标"约")
@@ -2150,7 +2153,7 @@ struct PwdDetailStudio: View {
                             Button {
                                 showCard = true
                             } label: {
-                                Label("生成口述卡 (172/328)", systemImage: "rectangle.portrait")
+                                Label("生成口述卡", systemImage: "rectangle.portrait")   // 172/328 生成口述卡
                             }
                             .font(.subheadline)
                             .foregroundStyle(DS.Palette.accentText)
@@ -2216,12 +2219,12 @@ struct PwdDetailStudio: View {
                 DB.setPwdPeriod(kc.mac, p.alias, fromS, toS)
             }
             CredentialOrg.snapshot(kc.mac, kind: "pwd", key: alias, pwd: DB.getPwd(kc.mac, alias), fp: nil, note: "原码续期 7 天 (332, 约)")
-            app.showToast("已沿用原值续期 7 天 (332, 锁端留存未确证)")
+            app.showToast("已沿用原值续期 7 天")   // 332 已沿用原值续期
         } catch {
             // 用函数入口捕获的 kc.mac，不用**活读**的 `mac` 计算属性：两次 await 之间当前锁可能被
             // AppIntent / kf:// 深链改掉，那样成功路径写 A 锁、失败入队却指向 B 锁。
-            CredentialOrg.enqueue(kc.mac, kind: "period", title: "续期 7 天 密码 #\(p.alias) (332)", pwd: p, newFrom: fromS, newTo: toS)
-            app.showToast("锁未连接, 续期已记入待下发队列 (365)")
+            CredentialOrg.enqueue(kc.mac, kind: "period", title: "续期 7 天 密码 #\(p.alias)", pwd: p, newFrom: fromS, newTo: toS)   // 332 续期
+            app.showToast("锁未连接, 续期已记入待下发队列")   // 365 锁未连接
         }
     }
     private func row(_ k: String, _ v: String) -> some View {
@@ -2255,17 +2258,17 @@ func fpDoubleSignCheck(mac: String, batch: Int, confirmTitle: String, action: @e
         // 最后一枚但本机翻不出任何在用密码时 (双签在形式上无法完成) 也落到这一支 —— 那恰恰是最贵的一种：
         // 无密码可核对 == 删完这人既没指纹也没密码，所以后果必须单独说一句。
         let lastWarn = need
-            ? "这是该成员名下最后一枚可用指纹，且本机没有在用的密码可双签；删掉后此人两种凭证都没了，只能本人到锁前重录 (324)。"
+            ? "这是该成员名下最后一枚可用指纹，且本机没有在用的密码可双签；删掉后此人两种凭证都没了，只能本人到锁前重录。"   // 324 这是该成员名下最后一
             : ""
         confirmDestructive("删除指纹「\(f.name)」",
                            lastWarn + "锁端这条立即作废，不可撤销；本机回收站 \(CredentialOrg.reclaimDays()) 天内找回的是名称/备注/归属这条档案，" +
-                           "开门能力只能本人到锁前重录 (670)。",
+                           "开门能力只能本人到锁前重录。",   // 670 开门能力只能本人到锁
                            confirmTitle: confirmTitle) { action() }
         return
     }
     let mask = String(v.prefix(max(v.count / 2, 2)))
     let alert = UIAlertController(
-        title: "双签验证 (323)",
+        title: "双签验证",   // 323 双签验证
         message: "这是「" + (CredentialOrg.ownerName(f.owner).isEmpty ? "未归属" : CredentialOrg.ownerName(f.owner)) + "」名下最后一枚可用指纹。输入任一在用密码的前 " + String(mask.count) + " 位完成双签。",
         preferredStyle: .alert)
     alert.addTextField { tf in
@@ -2279,7 +2282,7 @@ func fpDoubleSignCheck(mac: String, batch: Int, confirmTitle: String, action: @e
             UIPasteboard.general.string = ""
             action()
         } else {
-            let fail = UIAlertController(title: "双签未通过", message: "前缀不符, 删除已取消 (323)。", preferredStyle: .alert)
+            let fail = UIAlertController(title: "双签未通过", message: "前缀不符, 删除已取消。", preferredStyle: .alert)   // 323 前缀不符
             fail.addAction(UIAlertAction(title: "好", style: .cancel))
             UIApplication.topViewController()?.present(fail, animated: true)
         }
@@ -2365,7 +2368,7 @@ struct FpStudio: View {
         // 324 冗余横条: 该锁仅剩 1 枚可用指纹时提示补录
         if CredentialOrg.fpCountTotal(mac) == 1 {
             Label {
-                Text("这把锁只剩 1 枚可用指纹, 建议补一枚备用 (324)")
+                Text("这把锁只剩 1 枚可用指纹, 建议补一枚备用")   // 324 这把锁只剩
                     .fixedSize(horizontal: false, vertical: true)
             } icon: {
                 Image(systemName: "bell.badge")
@@ -2377,7 +2380,7 @@ struct FpStudio: View {
             .background(DS.Palette.warn.opacity(0.10), in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
         }
         VStack(alignment: .leading, spacing: DS.Space.xs) {
-            Text("先选归属, 再录入 (317 归属先行)")
+            Text("先选归属, 再录入")   // 317 先选归属
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(DS.Palette.text)
             ForEach(DB.members()) { m in
@@ -2418,7 +2421,7 @@ struct FpStudio: View {
                 .accessibilityLabel("归属 " + m.name + " " + cntTag + selTag)
             }
             if DB.members().isEmpty {
-                Text("还没有成员 (317 归属先行必选)。请先到成员中心新建成员再返回, 或跳过归属稍后在台账补。")
+                Text("还没有成员。请先到成员中心新建成员再返回, 或跳过归属稍后在台账补。")   // 317 还没有成员
                     .font(.caption)
                     .foregroundStyle(DS.Palette.warn)
                     .fixedSize(horizontal: false, vertical: true)
@@ -2427,10 +2430,10 @@ struct FpStudio: View {
                     app.pendingFpOwner = "request"
                     app.pendingMemberAdd = true
                     app.tabSelection = 3
-                    app.showToast("在「家人与钥匙」里新建成员 (317)")
+                    app.showToast("在「家人与钥匙」里新建成员")   // 317 家人与钥匙
                     dismiss()
                 } label: {
-                    Label("去新建成员 (317)", systemImage: "person.badge.plus")
+                    Label("去新建成员", systemImage: "person.badge.plus")   // 317 去新建成员
                 }
                 .font(.caption.weight(.medium))
                 .foregroundStyle(DS.Palette.accentText)
@@ -2461,7 +2464,7 @@ struct FpStudio: View {
                     }
                     .accessibilityHidden(true)
                 }
-                Text("请选好的手指按在门锁指纹头上, 抬起, 重复 8 次 (41 全屏聚焦)")
+                Text("请选好的手指按在门锁指纹头上, 抬起, 重复 8 次")   // 41 请选好的手指按在门锁
                     .font(.footnote)
                     .foregroundStyle(DS.heroFg)
                     .multilineTextAlignment(.center)
@@ -2559,7 +2562,7 @@ struct FpStudio: View {
                 .font(.subheadline)
                 .frame(minHeight: DS.Hit.min)
                 .autocorrectionDisabled()
-            TextField("备注 (179 给谁·哪扇门·用多久)", text: $note, prompt: Text("仅本机留存"))
+            TextField("备注", text: $note, prompt: Text("仅本机留存"))   // 179 备注
                 .font(.subheadline)
                 .frame(minHeight: DS.Hit.min)
             // 319 重录继承: 同成员已有指纹 → 成功后旧指纹入回收站 (保留原备注/归属, 来源"重录替代")
@@ -2592,7 +2595,7 @@ struct FpStudio: View {
                 .foregroundStyle(DS.Palette.text)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
-            Text("请用新指纹开一次锁, 确认可用。" + (replaceOld ? " 旧指纹已移入回收站 (319, 来源标注「重录替代」)。" : ""))
+            Text("请用新指纹开一次锁, 确认可用。" + (replaceOld ? " 旧指纹已移入回收站。" : ""))   // 319 旧指纹已移入回收站
                 .font(.footnote)
                 .foregroundStyle(DS.Palette.textSub)
                 .multilineTextAlignment(.center)
@@ -2622,7 +2625,7 @@ struct FpStudio: View {
             if step == 0 {
                 Button("下一步: 录入") {
                     guard owner != nil || DB.members().isEmpty else {
-                        app.showToast("先选归属成员 (317 归属先行)")
+                        app.showToast("先选归属成员")   // 317 先选归属成员
                         DS.Haptics.trigger.impactOccurred()
                         return
                     }
@@ -2655,7 +2658,7 @@ struct FpStudio: View {
         DB.addFp(em, LedgerFp(batch: Int(b), name: finalName, at: Date().timeIntervalSince1970 * 1000,
                               note: note, src: "app", owner: owner, isAlarm: false))
         if name.isEmpty {
-            app.showToast("已按建议命名「\(finalName)」 (315/174), 可重命名")
+            app.showToast("已按建议命名「\(finalName)」, 可重命名")   // 315/174 已按建议命名
         }
         // 319 重录继承: 同成员旧指纹入回收站 (来源"重录替代") + 锁端删除入队
         if replaceOld {
@@ -2666,7 +2669,7 @@ struct FpStudio: View {
                 // 还原时第一百五十二批的 reclaim 会把这条还没发出去的 del_fp 一并收回。
                 CredentialOrg.addToBin(em, fp: f, source: .rererecord)
                 DB.delFp(em, f.batch)
-                CredentialOrg.enqueue(em, kind: "del_fp", title: "删除旧指纹批次 \(f.batch) (319 重录替代)")
+                CredentialOrg.enqueue(em, kind: "del_fp", title: "删除旧指纹批次 \(f.batch)")   // 319 删除旧指纹批次
             }
             app.showToast("旧指纹已移入回收站 (319, 备注/归属保留)")
         }
@@ -2730,7 +2733,7 @@ struct FpDetailStudio: View {
                     // 324 冗余横条: 该成员名下仅剩此枚 → 提示补备用
                     if CredentialOrg.fpCountByOwner(mac, f.owner) == 1 {
                         Section {
-                            Label("该成员名下仅剩 1 枚指纹, 建议补一枚备用 (324)", systemImage: "bell.badge")
+                            Label("该成员名下仅剩 1 枚指纹, 建议补一枚备用", systemImage: "bell.badge")   // 324 该成员名下仅剩
                                 .font(.caption)
                                 .foregroundStyle(DS.Palette.warn)
                         }
@@ -2757,7 +2760,7 @@ struct FpDetailStudio: View {
                     Section {
                         // 319 重录入口: 卡里直接重录, 归属/替换旧枚自动带过去
                         Button { showRelink = true } label: {
-                            Label("重录一枚替换它 (319)", systemImage: "arrow.clockwise")
+                            Label("重录一枚替换它", systemImage: "arrow.clockwise")   // 319 重录一枚替换它
                         }
                         .font(.subheadline)
                         .foregroundStyle(DS.Palette.accentText)
@@ -2775,7 +2778,11 @@ struct FpDetailStudio: View {
                                     Task { await delete() }
                                 }
                             } label: {
-                                Label("彻底删除 (323 最后一枚需双签)", systemImage: "trash")
+                                // 210 图标一致: 「彻底删除」全仓统一 xmark.bin —— trash 已被「回收站」占住
+                                // (CredentialsView 那一行 Label("回收站 (N)", systemImage: "trash")), 在回收站里
+                                // 用同一枚垃圾桶画"不可逆地抹掉"等于让图标自己跟文字打架。
+                                // 另一处同标签落点是 CredentialCenterView 的 swipeAction, 它就是 xmark.bin。
+                                Label("彻底删除", systemImage: "xmark.bin")   // 323 彻底删除
                             }
                             .font(.subheadline)
                             .foregroundStyle(DS.Palette.danger)
@@ -2825,11 +2832,11 @@ struct FpDetailStudio: View {
             // 其余也要走一遍确认，两支都不存在「一按就删」(第一百六十七批补的正是后半支)。
             CredentialOrg.addToBin(kc.mac, fp: f, source: .manual)
             DB.delFp(kc.mac, f.batch)
-            app.flashReceipt("已写入本机 (508)")
+            app.flashReceipt("已写入本机")   // 508 已写入本机
             // 原来这句写死「回收站 30 天可找回」：30 天是 `kf_cbin_reclaim_days` 可调项 (写死就会在
             // 用户改成 7/90 天时说谎)，更要命的是「可找回」对指纹只成立一半 —— 回来的名称/备注/归属
             // 是档案，锁端那条模板已经删了，开门能力必须本人重录 (回收站页 670 早就把这句写明了)。
-            app.showToast("指纹已删除：\(CredentialOrg.reclaimDays()) 天内可找回的只是这条档案，开门要本人到锁前重录 (670)")
+            app.showToast("指纹已删除：\(CredentialOrg.reclaimDays()) 天内可找回的只是这条档案，开门要本人到锁前重录")   // 670 界面文案
         } catch {
             app.showToast("删除失败: " + error.localizedDescription)
         }
@@ -2878,7 +2885,7 @@ struct OtpStudio: View {
             List {
                 // 339 用于哪把锁: 独立口令按锁存档, 这里显式选一次 (只多锁时出现)
                 if DB.keychains().count > 1 {
-                    Section("用于哪把锁 (339)") {
+                    Section("用于哪把锁") {   // 339 用于哪把锁
                         Picker("", selection: Binding(get: { otpMac }, set: { targetMac = $0 })) {
                             ForEach(DB.keychains(), id: \.mac) { kc in
                                 Text(LockArchive.displayName(kc)).tag(kc.mac)
@@ -2908,7 +2915,7 @@ struct OtpStudio: View {
                 Section {
                     let list = CredentialOrg.totpEntries(otpMac)   // 339: 按选择的目标锁取组
                     if list.isEmpty {
-                        Text("还没有独立口令。粘贴 otpauth:// 文本导入, 或手工添加 (341)。口令本身跟门锁协议无关 (手机自己算), 但它按当前这把锁存档 —— 换锁就是另一组。")
+                        Text("还没有独立口令。粘贴 otpauth:// 文本导入, 或手工添加。口令本身跟门锁协议无关 (手机自己算), 但它按当前这把锁存档 —— 换锁就是另一组。")   // 341 还没有独立口令
                             .font(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
@@ -2919,7 +2926,7 @@ struct OtpStudio: View {
                     Button {
                         importing = true
                     } label: {
-                        Label("导入 otpauth:// 文本 (341)", systemImage: "square.and.arrow.down")
+                        Label("导入 otpauth:// 文本", systemImage: "square.and.arrow.down")   // 341 导入
                     }
                     .font(.subheadline)
                     .foregroundStyle(DS.Palette.accentText)
@@ -2929,7 +2936,9 @@ struct OtpStudio: View {
                         if !showManual { manualErr = "" }
                         DS.Haptics.tick.impactOccurred()
                     } label: {
-                        Label(showManual ? "收起手工添加 (341)" : "手工添加 (341)", systemImage: "keyboard")
+                        // 341 收起手工添加
+                        // 341 手工添加
+                        Label(showManual ? "收起手工添加" : "手工添加", systemImage: "keyboard")
                     }
                     .font(.subheadline)
                     .foregroundStyle(DS.Palette.accentText)
@@ -2943,7 +2952,7 @@ struct OtpStudio: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 // 346 静态备份码: 本地生成一次性静态码, 不走锁端, 随备份导出
-                Section("静态备份码 (346)") {
+                Section("静态备份码") {   // 346 静态备份码
                     // 2026-10-13 对抗式点击审计: 原写 `staticCodes(mac)` 而写入用 `addStaticCode(otpMac, …)`
                     // —— 读的是**当前锁**、写的是 Picker 选的**目标锁**。用户路径: OTP 与口令页 →
                     // 「用于哪把锁 (339)」Picker 改选另一把锁 → 点「生成 8 位静态码」→
@@ -2963,7 +2972,7 @@ struct OtpStudio: View {
                             code: StudioTools.genDigits(8), note: noteDraft, used: false,
                             at: Date().timeIntervalSince1970))
                         noteDraft = ""
-                        app.showToast("已生成 8 位静态备份码 (346, 本地)")
+                        app.showToast("已生成 8 位静态备份码")   // 346 已生成
                     } label: {
                         Label("生成 8 位静态码", systemImage: "plus")
                     }
@@ -2980,7 +2989,7 @@ struct OtpStudio: View {
             .sheet(isPresented: $importing) {
                 NavigationStack {
                     Form {
-                        Section("粘贴 otpauth 文本 (341, 纯本地解析)") {
+                        Section("粘贴 otpauth 文本") {   // 341 粘贴
                             TextField("otpauth://totp/…?secret=…", text: $importUri, axis: .vertical)
                                 .font(.footnote)
                                 .autocorrectionDisabled()
@@ -3007,13 +3016,13 @@ struct OtpStudio: View {
                                     importErr = ""
                                     importing = false
                                 case .failure(let f):
-                                    importErr = "导入失败 (341): " + f.rawValue + "; 缺什么就补什么, 或直接关掉这里改用手工添加"
+                                    importErr = "导入失败: " + f.rawValue + "; 缺什么就补什么, 或直接关掉这里改用手工添加"   // 341 导入失败
                                 }
                             }
                             .font(.subheadline.weight(.medium))
                         }
                     }
-                    .navigationTitle("导入 otpauth (341)")
+                    .navigationTitle("导入 otpauth")   // 341 导入
                     .navigationBarTitleDisplayMode(.inline)
                     .toolbar { ToolbarItem(placement: .cancellationAction) {
                         Button("关闭") { importing = false }
@@ -3072,7 +3081,7 @@ struct OtpStudio: View {
             .font(.subheadline.weight(.medium))
             .foregroundStyle(DS.Palette.accentText)
             .frame(minHeight: DS.Hit.min)
-            Text("算法与周期按你选的这几档算 (RFC 6238 常用档); 锁端 ZOTP 仍走分钟级, 两者互不相干 (337)。")
+            Text("算法与周期按你选的这几档算 (RFC 6238 常用档); 锁端 ZOTP 仍走分钟级, 两者互不相干。")   // 337 算法与周期按你选的这
                 .font(.caption2)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -3084,12 +3093,12 @@ struct OtpStudio: View {
             .replacingOccurrences(of: " ", with: "")
             .replacingOccurrences(of: "=", with: "")
         guard !secret.isEmpty else {
-            manualErr = "密钥是空的: 请粘贴验证器给出的那串 Base32 (341 手工添加)"
+            manualErr = "密钥是空的: 请粘贴验证器给出的那串 Base32"   // 341 密钥是空的
             DS.Haptics.trigger.impactOccurred()
             return
         }
         guard StudioTools.base32Decode(secret) != nil else {
-            manualErr = "密钥不是合法 Base32: 只允许 A-Z 与 2-7, 这里出现了字母表外的字符 (341 手工添加)"
+            manualErr = "密钥不是合法 Base32: 只允许 A-Z 与 2-7, 这里出现了字母表外的字符"   // 341 密钥不是合法
             DS.Haptics.trigger.impactOccurred()
             return
         }
@@ -3101,8 +3110,8 @@ struct OtpStudio: View {
             at: Date().timeIntervalSince1970))
         manualErr = ""
         // 名称是回退来的就说回退, 参数照实报 —— 用户填的与他看到的必须是同一份。
-        app.showToast((typed.isEmpty ? "已添加「\(named)」(名称按密钥尾段回退, 341)" : "已添加「\(named)」(341)")
-            + " · \(manualAlgo)·\(manualDigits)位·\(manualPeriod)s, 按当前锁存档 (343)")
+        app.showToast((typed.isEmpty ? "已添加「\(named)」(名称按密钥尾段回退, 341)" : "已添加「\(named)」")   // 341 已添加
+            + " · \(manualAlgo)·\(manualDigits)位·\(manualPeriod)s, 按当前锁存档")   // 343 按当前锁存档
         manualName = ""
         manualSecret = ""
         showManual = false
@@ -3125,17 +3134,17 @@ struct OtpStudio: View {
                 // 行本身不当事件源；下面那个「复制」按钮保留，给 VoiceOver 和不想瞄准的人。
                 Button {
                     ClipboardCare.copySecret(now, via: "独立 TOTP")   // 405 同一出口
-                    app.showToast("已复制当前码 (338)")
+                    app.showToast("已复制当前码")   // 338 已复制当前码
                 } label: {
                     HStack(spacing: DS.Space.xs) {
-                        Text(cap.recording ? "已隐去 (374)" : now)
+                        Text(cap.recording ? "已隐去" : now)   // 374 已隐去
                             .font(.title3.weight(.semibold).monospacedDigit())
                             .foregroundStyle(DS.Palette.text)
                             .textSelection(.enabled)
                         Text("↓")
                             .font(.caption)
                             .foregroundStyle(DS.Palette.textSub)
-                        Text(cap.recording ? "已隐去 (374)" : next)
+                        Text(cap.recording ? "已隐去" : next)   // 374 已隐去
                             .font(.title3.weight(.semibold).monospacedDigit())
                             .foregroundStyle(DS.Palette.textSub)
                     }
@@ -3202,7 +3211,7 @@ struct OtpStudio: View {
                 Button {
                     var n = c; n.used = true
                     CredentialOrg.saveStaticCodes(mac, CredentialOrg.staticCodes(mac).map { $0.id == c.id ? n : $0 })
-                    app.showToast("已标记「\(c.name)」为已用 (346)")
+                    app.showToast("已标记「\(c.name)」为已用")   // 346 已标记
                 } label: {
                     Label(c.used ? "撤销已用" : "标记已用", systemImage: c.used ? "arrow.uturn.left" : "checkmark")
                 }

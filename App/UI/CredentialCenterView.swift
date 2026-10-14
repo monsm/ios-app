@@ -15,18 +15,18 @@ struct CredCenterView: View {
     var body: some View {
         NavigationStack {
             List {
-                centerRow(icon: "trash", title: "回收站", sub: "\(CredentialOrg.bin(mac).count) 条 · 保留 \(CredentialOrg.reclaimDays()) 天 (497)") {
+                centerRow(icon: "trash", title: "回收站", sub: "\(CredentialOrg.bin(mac).count) 条 · 保留 \(CredentialOrg.reclaimDays()) 天") {   // 497 保留
                     CredBinView(mac: mac)
                 }
-                centerRow(icon: "clock.arrow.circlepath", title: "版本历史", sub: "保存自动快照 + 恢复即新版本 (487/496)") {
+                centerRow(icon: "clock.arrow.circlepath", title: "版本历史", sub: "保存自动快照 + 恢复即新版本") {   // 487/496 保存自动快照
                     CredHistoryListView(mac: mac)
                 }
-                centerRow(icon: "rectangle.3.offgrid", title: "整理建议中心", sub: "\(CredentialOrg.advice(mac).count) 条待办 (358/505)") {
+                centerRow(icon: "rectangle.3.offgrid", title: "整理建议中心", sub: "\(CredentialOrg.advice(mac).count) 条待办") {   // 358/505 条待办
                     // 358: 建议行落地后要直达凭证列表 (预勾选已就位), 把整张凭证中心也一起收掉 ——
                     // 只 pop 一层会停在"凭证中心", 用户还得再点一次关闭才看得到多选
                     CredOrganizeView(mac: mac, onClose: { dismiss() })
                 }
-                centerRow(icon: "arrow.down.circle", title: "待下发队列", sub: "\(CredentialOrg.pendingQueue(mac).count) 项 · 到场补发 (365)") {
+                centerRow(icon: "arrow.down.circle", title: "待下发队列", sub: "\(CredentialOrg.pendingQueue(mac).count) 项 · 到场补发") {   // 365 到场补发
                     CredQueueView(mac: mac)
                 }
             }
@@ -128,12 +128,12 @@ struct CredBinView: View {
                 }
                 .accessibilityElement(children: .contain)
                 .accessibilityLabel("来源过滤: \(names[source + 1])")
-                TextField("搜索已删项 (503)", text: $query)
+                TextField("搜索已删项", text: $query)   // 503 界面文案
                     .autocorrectionDisabled()
                     .accessibilityLabel("回收站搜索")
                 if !initialQuery.isEmpty {
                     // 532: 词是凭证页递过来的就说一句, 不然这一屏看着像"谁替我打了字"
-                    Text("这词是从凭证页的搜索带进来的 (532/503), 要改要清都在这里。")
+                    Text("这词是从凭证页的搜索带进来的, 要改要清都在这里。")   // 532/503 这词是从凭证页的搜索
                         .font(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
@@ -141,7 +141,7 @@ struct CredBinView: View {
             }
             // 362 复活提示: 只在真有同类开门时出现, 且把"推断"与局限写在同一屏里
             if !resurrectHints.isEmpty {
-                Section("删除后仍出现同类开门 (362 · 本机推断)") {
+                Section("删除后仍出现同类开门") {   // 362 删除后仍出现同类开门
                     ForEach(resurrectHints) { h in
                         VStack(alignment: .leading, spacing: DS.Space.xxs) {
                             Text("「\(h.text)」之后仍有 \(h.n) 次\(h.kindName)开门")
@@ -169,7 +169,7 @@ struct CredBinView: View {
             }
             if rows.count > 1 {
                 Section {
-                    Button("整组还原 (501, 可整组找回)") {
+                    Button("整组还原") {   // 501 整组还原
                         var n = 0
                         for e in rows { _ = CredentialOrg.restoreBin(mac, entry: e, asCopy: false); n += 1 }
                         app.showToast("已整组还原 \(n) 条")
@@ -180,14 +180,14 @@ struct CredBinView: View {
                 }
             }
             Section {
-                Button("清空回收站 (502 双验)", role: .destructive) {
+                Button("清空回收站", role: .destructive) {   // 502 清空回收站
                     pendingPurge = nil
                     purgeAll()
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .frame(minHeight: DS.Hit.min)
             } footer: {
-                Text("彻底删除不可找回。保留期可在 设置-安全-凭证整理 调整 (497)。")
+                Text("彻底删除不可找回。保留期可在 设置-安全-凭证整理 调整。")   // 497 彻底删除不可找回
                     .font(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
             }
@@ -275,7 +275,7 @@ struct CredBinView: View {
                 .buttonStyle(.bordered)
                 .disabled(!inWindow && e.pwd != nil)   // 指纹无锁端窗口概念, 始终可还原台账
                 Button("副本") {
-                    app.showToast(CredentialOrg.restoreBin(mac, entry: e, asCopy: true) + " (499)")
+                    app.showToast(CredentialOrg.restoreBin(mac, entry: e, asCopy: true))   // 499 界面文案
                 }
                 .font(.caption.weight(.medium))
                 .buttonStyle(.bordered)
@@ -290,13 +290,13 @@ struct CredBinView: View {
         .swipeActions(edge: .trailing) {
             Button(role: .destructive) { pendingPurge = e } label: { Label("彻底删除", systemImage: "xmark.bin") }
         }
-        .confirmationDialog("彻底删除? (502 双验)", isPresented: Binding(get: { pendingPurge != nil }, set: { if !$0 { pendingPurge = nil } }), titleVisibility: .visible) {
+        .confirmationDialog("彻底删除?", isPresented: Binding(get: { pendingPurge != nil }, set: { if !$0 { pendingPurge = nil } }), titleVisibility: .visible) {   // 502 彻底删除
             Button("输入确认", role: .destructive) {
                 if let x = pendingPurge {
                     // 502 门槛统一: 这一枚原先按下即 purgeBin —— 同一个「彻底删除」在单条与清空两条路上
                     // 一套有生物识别、一套没有 (§10.39 修过的正是这种分叉)。现在两条都走 guardedPurge。
                     CredentialOrg.guardedPurge(mac, ids: [x.id],
-                                               reason: "彻底删除这条回收站凭证 (502)",
+                                               reason: "彻底删除这条回收站凭证",   // 502 彻底删除这条回收站凭
                                                onDeniedPresentFallback: { commit in
                         confirmDestructive("彻底删除", "生物识别未通过，或这台设备没有可用的生物识别。仍要彻底删除这一条? 指纹删掉后只能到锁前重录。", confirmTitle: "删除") {
                             commit()
@@ -341,7 +341,7 @@ struct CredBinView: View {
             }
         },
                                    onDone: {
-                                       app.showToast("已清空回收站 (505 计入整理)")
+                                       app.showToast("已清空回收站")   // 505 已清空回收站
                                        _ = Milestones.recordOrganize()
                                    })
     }
@@ -390,7 +390,9 @@ struct CredHistoryListView: View {
                     }
                 }
                 if pwds.isEmpty && fps.isEmpty {
-                    Text("还没有快照。改动密码值 / 备注 / 归属 / 改期时会自动留档 (487), 每凭证保留 \(CredentialOrg.quota(mac)) 版 (491)。")
+                    // 487 还没有快照
+                    // 491 还没有快照
+                    Text("还没有快照。改动密码值 / 备注 / 归属 / 改期时会自动留档, 每凭证保留 \(CredentialOrg.quota(mac)) 版。")
                         .font(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
@@ -476,7 +478,7 @@ struct CredHistoryView: View {
                         .frame(width: DS.Hit.min, height: DS.Hit.min)
                         .contentShape(Rectangle())
                 }
-                .accessibilityLabel(s.starred ? "取消星标版本" : "星标此版本 (495)")
+                .accessibilityLabel(s.starred ? "取消星标版本" : "星标此版本")   // 495 星标此版本
             }
             Text(s.relTime)
                 .font(.caption2)
@@ -515,7 +517,7 @@ struct CredHistoryView: View {
                 .buttonStyle(.bordered)
                 .accessibilityLabel(diffFrom == s.version ? "取消对比基线 v\(s.version), 改回与上一版比较"
                                                            : "以此版 v\(s.version) 为对比基线")
-                Button(preview == s.version ? "退出预览" : "回看此版 (493)") {
+                Button(preview == s.version ? "退出预览" : "回看此版") {   // 493 回看此版
                     preview = (preview == s.version) ? nil : s.version
                 }
                 .font(.caption.weight(.medium))
@@ -526,7 +528,7 @@ struct CredHistoryView: View {
                     // 第一百五十四批: 恢复只改本机台账 ⇒ 密码跟着排一次 504 重新下发，
                     // 提示语带"锁端那条要重新下发才生效"那半句，不再单说"已恢复"。
                     let extra = CredentialOrg.restore(mac, kind: kind, key: key, from: s)
-                    app.showToast("已恢复 v\(s.version), 生成新版本 (496)" + extra)
+                    app.showToast("已恢复 v\(s.version), 生成新版本" + extra)   // 496 已恢复
                     reloadCenter()
                 }
                 .font(.caption.weight(.medium))
@@ -556,11 +558,11 @@ struct CredHistoryView: View {
     private func previewSection(_ v: Int) -> some View {
         let s = CredentialOrg.history(mac, kind, key).first { $0.version == v }
         if let s {
-            Section("只读预览 v\(v) (493)") {
+            Section("只读预览 v\(v)") {   // 493 只读预览
                 Text(CredentialOrg.summaryText(of: s))
                     .font(.footnote)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("顶栏「回到此版」= 按此版生成新档 (496), 不覆盖历史。")
+                Text("顶栏「回到此版」= 按此版生成新档, 不覆盖历史。")   // 496 顶栏
                     .font(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
             }
@@ -722,7 +724,7 @@ struct CredOrganizeView: View {
         NavigationStack {
             List {
                 let adv = CredentialOrg.advice(mac)
-                Section("整理建议 (358)") {
+                Section("整理建议") {   // 358 整理建议
                     if adv.isEmpty {
                         Label {
                             Text("没有待整理的项, 台账很干净。")
@@ -745,7 +747,10 @@ struct CredOrganizeView: View {
                     }
                 }
                 Section("说明") {
-                    Text("「回收站 N 条」直达回收站 (505); 过期/重复值/无归属点按后带预勾选回凭证列表多选 (358), 底部批量条停用或移交; 成员级建议直接执行 (471)。")
+                    // 505 回收站
+                    // 358 回收站
+                    // 471 回收站
+                    Text("「回收站 N 条」直达回收站; 过期/重复值/无归属点按后带预勾选回凭证列表多选, 底部批量条停用或移交; 成员级建议直接执行。")
                         .font(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
@@ -795,7 +800,7 @@ struct CredOrganizeView: View {
                           && !CredentialOrg.isArchived(mac, "pwd", $0.alias) }
                 .map { $0.alias }
             let n = CredentialOrg.batchDisable(mac, pwdAliases: aliases, fpBatches: [])
-            app.showToast(n > 0 ? "已停用 \(n) 张过期码并收进回收站 (471)" : "没有可停用的过期码")
+            app.showToast(n > 0 ? "已停用 \(n) 张过期码并收进回收站" : "没有可停用的过期码")   // 471 已停用
             onDone()
             return
         }
@@ -823,7 +828,7 @@ struct CredOrganizeView: View {
             return
         }
         app.pendingCredSelect = ids
-        app.showToast("已勾好 \(ids.count) 条, 回列表继续 (358)")
+        app.showToast("已勾好 \(ids.count) 条, 回列表继续")   // 358 已勾好
         onDone()
         // 有 onClose 就整张 sheet 收起直达列表; 没有则退回上一层 (独立进入时的兜底)
         if let c = onClose { c() } else { dismiss() }
@@ -1058,7 +1063,7 @@ struct CredExtendView: View {
         f.dateFormat = "yyyy-MM-dd HH:mm:ss"
         let out = CredentialOrg.batchExtend(mac, aliases, f.string(from: from), f.string(from: to))
         busy = false
-        app.showToast("已改写 \(out.count) 条有效期, 锁端改期待下发 (348)")
+        app.showToast("已改写 \(out.count) 条有效期, 锁端改期待下发")   // 348 已改写
         _ = Milestones.recordOrganize()
         onDone()
     }
@@ -1151,7 +1156,7 @@ struct CredDisableSheet: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("停用摘要 (353)") {
+                Section("停用摘要") {   // 353 停用摘要
                     HStack(spacing: DS.Space.s) {
                         // 影响成员头像列 (成员色点 183 风格, 纯本地) —— 名单见 ownerCounts, 顺序稳定
                         ForEach(ownerIds, id: \.self) { id in
@@ -1192,7 +1197,7 @@ struct CredDisableSheet: View {
                     }
                 }
                 Section {
-                    Text("不可逆说明: 停用后本机台账移除, 锁端删除记为「待下发」— 7 天内可一键恢复 (364), 超期需重新录入/生成。")
+                    Text("不可逆说明: 停用后本机台账移除, 锁端删除记为「待下发」— 7 天内可一键恢复, 超期需重新录入/生成。")   // 364 不可逆说明
                         .font(.caption)
                         .foregroundStyle(DS.Palette.danger)
                         .fixedSize(horizontal: false, vertical: true)
@@ -1213,7 +1218,7 @@ struct CredDisableSheet: View {
                         }
                     }
                     .accessibilityElement(children: .contain)
-                    .accessibilityLabel("停用原因 (313 必填)\(reason.isEmpty ? ", 未选择" : "")")
+                    .accessibilityLabel("停用原因\(reason.isEmpty ? ", 未选择" : "")")   // 313 停用原因
                     if reason.isEmpty {
                         Text("先选一个停用原因才能继续 — 原因只写进本机审计与运行日志，不会发给门锁。")
                             .font(.caption2).foregroundStyle(DS.Palette.warn)
@@ -1231,7 +1236,7 @@ struct CredDisableSheet: View {
                         let label = Self.reasons.first { $0.0 == reason }?.1 ?? "其他"
                         let n = pwdAliases.count + fpBatches.count
                         // 只记条数与原因: 口令明文与指纹特征绝不进日志 (AUTOOPEN-PLAN §1 同一纪律)
-                        app.lock.log("info", "停用 \(n) 条凭证 · 原因 \(label) (313)")
+                        app.lock.log("info", "停用 \(n) 条凭证 · 原因 \(label)")   // 313 停用
                         if writeToFeed {
                             for o in ownerCounts {
                                 SensitiveLedger().record("停用·\(label)", target: "密码 \(o.pwd) / 指纹 \(o.fp)", member: o.id)
@@ -1250,15 +1255,15 @@ struct CredDisableSheet: View {
                         CredentialOrg.markDisabled(mac, kind: "pwd", keys: pwdAliases.filter { !proxyPwds.contains($0) },
                                                    label: label, via: "本机批量停用")
                         CredentialOrg.markDisabled(mac, kind: "pwd", keys: proxyPwds,
-                                                   label: label, via: "本机批量停用 · 管理员代操作 (468)")
+                                                   label: label, via: "本机批量停用 · 管理员代操作")   // 468 本机批量停用
                         CredentialOrg.markDisabled(mac, kind: "fp", keys: fpBatches.filter { !proxyFps.contains($0) },
                                                    label: label, via: "本机批量停用")
                         CredentialOrg.markDisabled(mac, kind: "fp", keys: proxyFps,
-                                                   label: label, via: "本机批量停用 · 管理员代操作 (468)")
+                                                   label: label, via: "本机批量停用 · 管理员代操作")   // 468 本机批量停用
                         onDone()
                         dismiss()
                     } label: {
-                        Text(reason.isEmpty ? "先选择停用原因 (313)" : "确认停用 (\(pwdAliases.count + fpBatches.count) 条)")
+                        Text(reason.isEmpty ? "先选择停用原因" : "确认停用 (\(pwdAliases.count + fpBatches.count) 条)")   // 313 先选择停用原因
                             .frame(maxWidth: .infinity)
                             .frame(minHeight: DS.Hit.min)
                     }

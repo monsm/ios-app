@@ -41,13 +41,13 @@ struct DeviceHomeView: View {
     @State private var showManage = false     // 104/107/766 设备管理 (排序/分组/批量)
     @State private var showSettings = false   // 包8/507 备份角标跳转
     @State private var showTileEdit = false   // 905 长按快捷格 → 编辑面板
-    // 827: 「不再提示」的即时状态。写盘那份是 HintOnce(偏好)，而 UserDefaults 不是可观察源 ——
-    // 只改盘不改状态，这行提示会留到下次进页才消失，看起来像按钮没反应。
-    @State private var tipOff = HintOnce.shown("827off")
-    // 827 本次会话里已点掉的格。判据**不靠常开频次统计**: SettingsView:775 那条口径写着
-    // "关掉 1047 就把计数清空, 不留统计还在偷偷跑" —— 为了消提示而把频次改成常记, 等于替用户多留一份行为档案。
-    @State private var tipUsed = Set<String>()
+    // 827 的"本会话点过哪些格 / 是否关了提示"两态搬到 AppState (ambientTipUsed / ambientTipOff):
+    // 同屏提醒要按预算排位，视图层的 @State 预算读不到。判据一字未改，只是换了存放处。
     @State private var showRssi = false   // 63 点信号格弹出 dBm 数值 (格数看不出 1 格还是 2 格时看数字化)
+    // 乱源治理第 3 批: 设备页模块显隐。默认空集 = 一块都不隐 (拍板口径), 面板只给能力不给默认。
+    @State private var devHidden = DevModuleStore.hidden
+    /// 这一块现在该不该画 (必留的五块不走这里, 见 DevModules 文件头)
+    private func shown(_ m: DevModule) -> Bool { !devHidden.contains(m.rawValue) }
 
     var body: some View {
         NavigationStack {
@@ -63,9 +63,9 @@ struct DeviceHomeView: View {
                             // 一份备份文件，不是一把门锁。指不到恢复入口的空态等于把数据判了死刑。
                             Button {
                                 app.tabSelection = 3
-                                app.showToast("设置 → 备份：可本地导入，或从坚果云恢复 (824)")
+                                app.showToast("设置 → 备份：可本地导入，或从坚果云恢复")   // 824 设置
                             } label: {
-                                Label("从备份恢复 (824)", systemImage: "square.and.arrow.down")
+                                Label("从备份恢复", systemImage: "square.and.arrow.down")   // 824 从备份恢复
                                     .font(.subheadline.weight(.medium))
                                     .foregroundStyle(DS.Palette.accentText)
                                     .frame(maxWidth: .infinity, minHeight: DS.Hit.min)
@@ -85,12 +85,12 @@ struct DeviceHomeView: View {
                         // 42 首用气泡引导: 多锁用户最容易错过的动作是"长按这排胶囊看最近状态变化"
                         // (那件事本身是 268，已经实现)。只说一次、由用户自己点掉;
                         // 提示承诺的必须是**页面上真做得出**的动作 —— 832 那条就想承诺一个不存在的长按。
-                        if !HintOnce.shown("capsule268") {
-                            Button { HintOnce.mark("capsule268") } label: {
+                        if app.ambientTop == .firstUseCapsule {
+                            Button { app.firstUseCapsuleDone = true; HintOnce.mark("capsule268") } label: {
                                 HStack(spacing: DS.Space.xs) {
                                     Image(systemName: "hand.point.up.left")
                                         .font(.system(size: DS.Icon.xs))
-                                    Text("小提示：长按主控卡上的「连接耗时」标记可看最近状态变化 (42/268)")
+                                    Text("小提示：长按主控卡上的「连接耗时」标记可看最近状态变化")   // 42/268 小提示
                                         .font(.caption2)
                                         .multilineTextAlignment(.leading)
                                 }
@@ -107,31 +107,31 @@ struct DeviceHomeView: View {
                         // 767 按组切换 + 764 多锁状态图标行: 都放在 Hero 卡上方 ——
                         // 先一眼看清"哪把锁有事", 再落到当前锁的主控卡。
                         if app.devices.count > 1 {
-                            groupChips.staggered(0)
-                            statusIconRow.staggered(0)
+                            if shown(.groupChips) { groupChips.staggered(0) }
+                            if shown(.statusIcons) { statusIconRow.staggered(0) }
                         }
                         // 868 扫描组划分: 状态卡 / 圆盘 / 快捷格各自成组 (children: .contain),
                         // 外接开关与"切换控制"可以按组逐项聚焦, 不用在整页里一个个划过去。
                         moduleSlot(devOrder[0], delay: 1)   // 904: 槽位固定, 哪个模块占这个槽由用户定
                         attentionCard.staggered(2)
-                        linkSenseCard.staggered(2)
+                        if shown(.linkSense) { linkSenseCard.staggered(2) }
                         // 246 凭证选择胶囊: 该锁有多条可用 PIN 且还没签发 ekey 时才出现 (有 ekey 时开锁根本不用 PIN, 给了是假选择)
                         if let kc = app.current, kc.ekey.isEmpty, kc.pins.count > 1 {
                             pinPickCapsule(kc).staggered(2)
                         }
                         unlockDial.staggered(3)
                             .accessibilityElement(children: .contain)
-                            .accessibilityLabel("开锁圆盘组 (868)")
+                            .accessibilityLabel("开锁圆盘组")   // 868 开锁圆盘组
                         moduleSlot(devOrder[1], delay: 4)   // 904
                         moduleSlot(devOrder[2], delay: 5)   // 904
-                        nightCheckRow.staggered(6)
-                        familyCareRows.staggered(6)
-                        privacyFootnote.staggered(6)
+                        if shown(.nightCheck) { nightCheckRow.staggered(6) }
+                        if shown(.familyCare) { familyCareRows.staggered(6) }
+                        if shown(.privacyNote) { privacyFootnote.staggered(6) }
                         // 904 模块排序入口: 做成显式文字按钮 —— 原句点名的"长按设备页空白进编辑态"会与
                         // 60/873 那族手势链冲突 (设备页是 ScrollView, 空白长按同时是滚动/下拉刷新的一部分),
                         // 排序落成上/下移按钮, 不改整页手势。
                         Button { showModuleOrder = true } label: {
-                            Label("模块排序 (904)", systemImage: "arrow.up.arrow.down")
+                            Label("模块排序与显隐", systemImage: "arrow.up.arrow.down")   // 904 模块排序
                                 .font(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                                 .frame(maxWidth: .infinity, minHeight: DS.Hit.min)
@@ -257,7 +257,7 @@ struct DeviceHomeView: View {
                     if m != app.currentMac {
                         app.select(m)
                     }
-                    app.showToast("已定位到「" + app.displayName + "」 (136 跳回)")
+                    app.showToast("已定位到「" + app.displayName + "」")   // 136 界面文案
                 }
                 // 801 引导末卡"去连接真锁": 引导退场后本页才挂载, 由这里把添加设备拉起来
                 if app.pendingAddDevice {
@@ -272,18 +272,18 @@ struct DeviceHomeView: View {
     /// 走的是现有 `LinkSense.scan` (startScan/stopScan 成对, 不连接、不下发任何指令)。
     private func rescanPull() async {
         guard sense.btOn else {
-            app.showToast("系统蓝牙未开启 — 下拉重扫做不了 (537)")
+            app.showToast("系统蓝牙未开启 — 下拉重扫做不了")   // 537 系统蓝牙未开启
             return
         }
         do {
             if let dev = try await sense.scan(mac: app.currentMac, timeoutMs: 4000) {
                 sense.noteScannedRssi(dev.rssi)
-                app.showToast("已重扫: 信号 \(dev.rssi) dBm (537)")
+                app.showToast("已重扫: 信号 \(dev.rssi) dBm")   // 537 已重扫
             } else {
-                app.showToast("4 秒内没扫到这把锁的广播 — 走近一点再下拉 (537)")
+                app.showToast("4 秒内没扫到这把锁的广播 — 走近一点再下拉")   // 537 秒内没扫到这把锁的广
             }
         } catch {
-            app.showToast("扫描没能启动 (537): 蓝牙栈忙或权限未就绪")
+            app.showToast("扫描没能启动: 蓝牙栈忙或权限未就绪")   // 537 扫描没能启动
         }
         await refresh(manual: true)
     }
@@ -396,7 +396,7 @@ struct DeviceHomeView: View {
         if names.count > 1 {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: DS.Space.s) {
-                    chip("", "全部 (767)")
+                    chip("", "全部")   // 767 全部
                     ForEach(names, id: \.self) { n in chip(n, n) }
                 }
                 .padding(.horizontal, DS.Space.gutter)
@@ -607,7 +607,7 @@ struct DeviceHomeView: View {
                 // 关掉电量档之后回到哪一档, 取决于有没有手工顺序 (766) —— 文案跟着实际结果走,
                 // 不能一直写"恢复绑定先后": 排过序的用户按下去看到的是自己的顺序回来了, 那句就成了假话。
                 Label(DB.store.getBool("kf_sort_batt")
-                      ? (LockArchive.hasManualOrder ? "恢复手工排序 (766)" : "恢复绑定先后排序")
+                      ? (LockArchive.hasManualOrder ? "恢复手工排序" : "恢复绑定先后排序")   // 766 恢复手工排序
                       : "按电量升序 (先照顾最弱)",
                       systemImage: "arrow.up.arrow.down")
             }
@@ -788,11 +788,11 @@ struct DeviceHomeView: View {
                                             .accessibilityHidden(true)
                                     }
                                 }
-                                .accessibilityLabel(isCurrent ? "信号 \(sense.lastRssi) dBm (63), 轻点显示数值" : "信号")
+                                .accessibilityLabel(isCurrent ? "信号 \(sense.lastRssi) dBm, 轻点显示数值" : "信号")   // 63 信号
                             ConnectMsBadge(ms: sense.connectMs)
                             // 268 状态变化历史: 长按胶囊弹出最近 5 次三态切换时间列表
                             .contextMenu {
-                                Menu("最近状态变化 (268)") {
+                                Menu("最近状态变化") {   // 268 最近状态变化
                                     ForEach(Array(LinkSense.history().enumerated()), id: \.offset) { _, h in
                                         Text(h.at + " " + h.to)
                                     }
@@ -867,7 +867,7 @@ struct DeviceHomeView: View {
                         .background(DS.heroFg.opacity(0.14), in: Capsule())
                     }
                     .frame(minHeight: DS.Hit.min)
-                    .accessibilityLabel("备份状态角标 (507), 打开备份设置")
+                    .accessibilityLabel("备份状态角标, 打开备份设置")   // 507 备份状态角标
                 }
                 // 258 首连验证标记: 添加后完成一次开锁前, Hero 卡上挂着待验证提示
                 if !LockArchive.isVerified(kc.mac) {
@@ -965,7 +965,7 @@ struct DeviceHomeView: View {
                 .frame(minHeight: DS.Hit.min)
                 .contentShape(Rectangle())
             }
-            .accessibilityLabel("最近活跃成员 (790): 点开按成员查记录")
+            .accessibilityLabel("最近活跃成员: 点开按成员查记录")   // 790 最近活跃成员
         }
     }
 
@@ -1089,7 +1089,7 @@ struct DeviceHomeView: View {
     private func senseRows(_ state: LinkState) -> [(String, String, String, Bool)] {
         var rows: [(String, String, String, Bool)] = []   // (text, icon, toneKey, cached)
         if !btReady {
-            rows.append(("系统蓝牙已关闭 — 打开后会自动重连 (69)", "antenna.radiowaves.left.and.right.slash", "warn", false))
+            rows.append(("系统蓝牙已关闭 — 打开后会自动重连", "antenna.radiowaves.left.and.right.slash", "warn", false))   // 69 系统蓝牙已关闭
         }
         if state == .down, sense.reconnectAttempt > 0, CredentialOrg.pendingCount(app.currentMac) > 0 {
             rows.append(("回连节律: " + nextLadderText, "arrow.clockwise", "accent", false))
@@ -1100,7 +1100,7 @@ struct DeviceHomeView: View {
         }
         // 131 会话重协商进行中: 假死巡检触发, 完成即消 (只读旗标, 无手动入口)
         if sense.revalidating {
-            rows.append(("会话重协商中 — 假死巡检触发, 完成后自动消失 (131)", "arrow.triangle.2.circlepath", "accent", false))
+            rows.append(("会话重协商中 — 假死巡检触发, 完成后自动消失", "arrow.triangle.2.circlepath", "accent", false))   // 131 会话重协商中
         }
         // 130 唤醒失败细分 (保守): 最近一次握手失败时给出三类归因 + 124 占用保守文案
         if state == .down, let last = lastWakeFail {
@@ -1112,11 +1112,11 @@ struct DeviceHomeView: View {
         }
         // 272 连接保持时长: 挂起过久提示重连
         if state == .ready, sense.holdMinutes >= 30 {
-            rows.append(("连接已保持 \(sense.holdMinutes) 分钟 — 偏久, 可点刷新重连 (272)", "timer", "sub", false))
+            rows.append(("连接已保持 \(sense.holdMinutes) 分钟 — 偏久, 可点刷新重连", "timer", "sub", false))   // 272 连接已保持
         }
         // 273 意图暂存: 断连且有排队变更时, 明示"已暂存, 回连续作"
         if state == .down, CredentialOrg.pendingCount(app.currentMac) > 0 {
-            rows.append(("变更已暂存 — 回到锁旁会自动补发 (273)", "tray.full", "sub", false))
+            rows.append(("变更已暂存 — 回到锁旁会自动补发", "tray.full", "sub", false))   // 273 变更已暂存
         }
         // 125 最后已知状态: 断连时展示最后一次读到的电量/固件并标注"缓存"
         if state == .down, let snap = DB.readStatus(app.currentMac) {
@@ -1491,7 +1491,7 @@ struct DeviceHomeView: View {
                                     Button {
                                         showTileEdit = true
                                     } label: {
-                                        Label("编辑快捷操作格 (905)", systemImage: "square.grid.2x2")
+                                        Label("编辑快捷操作格", systemImage: "square.grid.2x2")   // 905 编辑快捷操作格
                                     }
                                 }
                         } else {
@@ -1500,8 +1500,8 @@ struct DeviceHomeView: View {
                                           // 1047: 静默记一次本机点击 (手动关过开关即停记, 见 QuickPool.recordingOn)
                                           QuickPool.recordTap(a.id)
                                           // 827: 点的正是当前被提示那一格 ⇒ 消掉它, 下次讲下一格
-                                          if untippedTile?.id == a.id {
-                                              tipUsed.insert(a.id)
+                                          if app.quickTipTile?.id == a.id {
+                                              app.ambientTipUsed.insert(a.id)
                                               HintOnce.mark("827seen_" + a.id)
                                           }
                                       }
@@ -1512,7 +1512,7 @@ struct DeviceHomeView: View {
                                 Button {
                                     showTileEdit = true
                                 } label: {
-                                    Label("编辑快捷操作格 (905)", systemImage: "square.grid.2x2")
+                                    Label("编辑快捷操作格", systemImage: "square.grid.2x2")   // 905 编辑快捷操作格
                                 }
                             }
                         }
@@ -1545,7 +1545,7 @@ struct DeviceHomeView: View {
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(PressableButtonStyle())
-                        .accessibilityLabel("这把锁还没有指纹，轻点直接添加 (812)")
+                        .accessibilityLabel("这把锁还没有指纹，轻点直接添加")   // 812 这把锁还没有指纹
                     }
                 }
             }
@@ -1553,18 +1553,20 @@ struct DeviceHomeView: View {
             // 点过一次就换下一格 (用一次消一格)。
             // 浮签做在网格**下方一行**而不是盖在格子上：Grid 里给一格加 overlay 会压到邻格，
             // 而且盖住正在讲的那格，等于让人看不见它长什么样。
-            if let t = untippedTile {
+            // 乱源治理第 2 批: 这一行也进预算了 —— 顶部有自检黄条或剪贴板条在说话时，这里就静默，
+            // 内容由"还有 N 条提醒"汇总胶囊逐条给回，不丢。
+            if let t = app.quickTipTile, app.ambientTop == .quickTileTip {
                 HStack(spacing: DS.Space.s) {
                     Image(systemName: "hand.point.up.left")
                         .font(.system(size: DS.Icon.xs))
                         .foregroundStyle(DS.Palette.textSub)
                         .accessibilityHidden(true)
-                    Text("试试「" + t.label + "」—— 这一格你还没用过 (827)")
+                    Text("试试「" + t.label + "」—— 这一格你还没用过")   // 827 这一格你还没用过
                         .font(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 0)
-                    Button("不再提示") { tipOff = true; HintOnce.mark("827off") }
+                    Button("不再提示") { app.ambientTipOff = true; HintOnce.mark("827off") }
                         .font(.caption2)
                         .foregroundStyle(DS.Palette.accentText)
                         .frame(minHeight: DS.Hit.min - DS.Space.m)
@@ -1573,18 +1575,8 @@ struct DeviceHomeView: View {
             }
         }
     }
-    /// 827: 显示顺序里"还没被点过"的第一格；全部点过或用户关了提示 ⇒ nil (整行不占位)。
-    /// 判据三选一即算用过：本次会话点掉过 (`tipUsed`)、以前点掉过 (`kf_hint_827seen_<id>`)、
-    /// 或 QuickPool 频次表里已有点击 (`counts`) —— 1047 静默学习, 从未手动关过的用户默认就在记;
-    /// 用户手动关过 1047 = 停止记录并清空计数 (SettingsView:775 的承诺), 那时频次表自然是空的。
-    private var untippedTile: QuickAction? {
-        guard !tipOff else { return nil }
-        let c = QuickPool.counts
-        return QuickPool.ordered().first { a in
-            if tipUsed.contains(a.id) || HintOnce.shown("827seen_" + a.id) { return false }
-            return (c[a.id] ?? 0) == 0
-        }
-    }
+    // 827 的"还没被点过的第一格"判据搬到 AppState.quickTipTile —— 预算要拿它排位，
+    // 而视图层的 private var 预算读不到。判据三选一 (本会话点过 / 以前点过 / 频次表已有点击) 一字未改。
     /// 905/1047: `onTap` 是给 1047 记频次用的**可选**回调。
     /// 用 simultaneousGesture 而不是把 NavigationLink 换成 Button：换掉就会丢导航，
     /// 而 simultaneousGesture 让点击既走导航又能记账。传 nil 时一个手势都不加。
@@ -1630,23 +1622,23 @@ struct DeviceHomeView: View {
         let target = QuickPool.repeatTarget(app.currentMac)
         Button {
             QuickPool.recordTap("again")
-            if untippedTile?.id == "again" {
-                tipUsed.insert("again")
+            if app.quickTipTile?.id == "again" {
+                app.ambientTipUsed.insert("again")
                 HintOnce.mark("827seen_again")
             }
             if let t = target {
                 app.pendingCredNav = t.nav
                 app.pendingCredNavMac = app.currentMac
                 app.tabSelection = 1
-                app.showToast("已跳到凭证页定位「" + t.name + "」(921)")
+                app.showToast("已跳到凭证页定位「" + t.name + "」")   // 921 界面文案
             } else {
-                app.showToast("还没有星标凭证 —— 先在凭证页给最常用的那条点亮星标 (921)")
+                app.showToast("还没有星标凭证 —— 先在凭证页给最常用的那条点亮星标")   // 921 还没有星标凭证
             }
         } label: {
             quickTileBody(icon: "arrow.counterclockwise", label: "再开一次")
         }
         .buttonStyle(PressableButtonStyle())
-        .accessibilityLabel("再开一次 (921)")
+        .accessibilityLabel("再开一次")   // 921 再开一次
         .accessibilityHint(target.map { "跳到凭证页定位 " + $0.name } ?? "还没有星标凭证, 先去凭证页点亮星标")
     }
 
@@ -1660,7 +1652,7 @@ struct DeviceHomeView: View {
                              count: recentAllLocks ? mergedRecent.count : rows.count)
                 // 只有一把锁时不出现这排: 单锁没有"跨锁"可言, 放上去等于给一个恒真的选项。
                 if app.devices.count > 1 {
-                    Picker("最近开门范围 (765)", selection: Binding(
+                    Picker("最近开门范围", selection: Binding(   // 765 最近开门范围
                         get: { recentAllLocks },
                         set: { recentAllLocks = $0; DB.store.set("kf_recent_all", $0) })) {
                         Text("当前锁").tag(false)
@@ -1702,7 +1694,7 @@ struct DeviceHomeView: View {
                             }
                             .buttonStyle(PressableButtonStyle())
                             .accessibilityElement(children: .combine)
-                            .accessibilityHint("点按跳到记录页这条并高亮 (170)")
+                            .accessibilityHint("点按跳到记录页这条并高亮")   // 170 点按跳到记录页这条并
                             // 559: 原句是「行左滑查记录」—— 本区是卡片不是 List, SwiftUI 的 swipeActions
                             // 只对 List 行生效, 左滑在这里拉不出动作; 替代口径 = 行上长按菜单 (与记录页行
                             // 714/761 同一交互档)。跳转并填入成员过滤是真行为, 文案不写"左滑"。
@@ -1712,7 +1704,7 @@ struct DeviceHomeView: View {
                                     Button {
                                         openMemberRecords(mid)
                                     } label: {
-                                        Label("查这位成员的记录 (559)", systemImage: "magnifyingglass")
+                                        Label("查这位成员的记录", systemImage: "magnifyingglass")   // 559 查这位成员的记录
                                     }
                                 }
                             }
@@ -1760,14 +1752,14 @@ struct DeviceHomeView: View {
                     }
                     .buttonStyle(PressableButtonStyle())
                     .accessibilityElement(children: .combine)
-                    .accessibilityHint("点按跳到记录页这条并高亮 (170)")
+                    .accessibilityHint("点按跳到记录页这条并高亮")   // 170 点按跳到记录页这条并
                     // 559: 与单锁行同一口径 (说明见上面那段); 判据换 Rec 的可证明归属。
                     .contextMenu {
                         if let mid = provableMemberId(r) {
                             Button {
                                 openMemberRecords(mid)
                             } label: {
-                                Label("查这位成员的记录 (559)", systemImage: "magnifyingglass")
+                                Label("查这位成员的记录", systemImage: "magnifyingglass")   // 559 查这位成员的记录
                             }
                         }
                     }
@@ -1883,7 +1875,7 @@ struct DeviceHomeView: View {
                         .accessibilityHidden(true)
                     MemberAvatar(member: c.member, tint: who)
                     VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                        Text("「" + MemberHub.display(c.member) + "」的临时码还有 " + String(c.days) + " 天到期 (480)")
+                        Text("「" + MemberHub.display(c.member) + "」的临时码还有 " + String(c.days) + " 天到期")   // 480 天到期
                             .font(.footnote.weight(.medium))
                             .foregroundStyle(DS.Palette.text)
                             .fixedSize(horizontal: false, vertical: true)
@@ -1906,7 +1898,7 @@ struct DeviceHomeView: View {
             Card {
                 HStack(spacing: DS.Space.s) {
                     MemberAvatar(member: b, tint: Self.memberHexColor(b))
-                    Text("今天是" + MemberHub.display(b) + "的生日, 替我们说声生日快乐 (485)")
+                    Text("今天是" + MemberHub.display(b) + "的生日, 替我们说声生日快乐")   // 485 的生日
                         .font(.footnote)
                         .foregroundStyle(DS.Palette.accentText)
                         .fixedSize(horizontal: false, vertical: true)
@@ -1979,7 +1971,7 @@ struct DeviceHomeView: View {
                 }
             }
             if duePins.count > 1 {
-                Text("另有 \(duePins.count - 1) 个复核钉也到期了 (437)")
+                Text("另有 \(duePins.count - 1) 个复核钉也到期了")   // 437 另有
                     .font(.caption)
                     .foregroundStyle(DS.Palette.textSub)
             }
@@ -2014,7 +2006,7 @@ struct DeviceHomeView: View {
                         .font(.system(size: DS.Icon.sm))
                         .foregroundStyle(DS.Palette.accentText)
                         .accessibilityHidden(true)
-                    Text("本周主责: " + MemberHub.display(dm) + " (481)")
+                    Text("本周主责: " + MemberHub.display(dm))   // 481 本周主责
                         .font(.footnote)
                         .foregroundStyle(DS.Palette.text)
                     Spacer(minLength: 0)
@@ -2061,13 +2053,13 @@ struct DeviceHomeView: View {
         case "quick":
             quickActions.staggered(delay)
                 .accessibilityElement(children: .contain)
-                .accessibilityLabel("快捷操作格组 (868)")
+                .accessibilityLabel("快捷操作格组")   // 868 快捷操作格组
         case "recent":
             recentCard.staggered(delay)
         default:
             heroPager.staggered(delay)
                 .accessibilityElement(children: .contain)
-                .accessibilityLabel("状态卡组 (868)")
+                .accessibilityLabel("状态卡组")   // 868 状态卡组
         }
     }
     private var moduleOrderSheet: some View {
@@ -2091,19 +2083,49 @@ struct DeviceHomeView: View {
                         .accessibilityLabel("\(moduleName(id)), 第 \(i + 1) 位")
                     }
                 } header: {
-                    Text("设备页模块顺序 (904)")
+                    Text("设备页模块顺序")   // 904 设备页模块顺序
                 } footer: {
                     Text("槽位固定 (Hero 槽 / 快捷格槽 / 最近开门槽), 改的是哪个模块占哪个槽 —— 默认顺序就是现在的样子。")
+                        .font(.caption).foregroundStyle(DS.Palette.textSub)
+                }
+                // 乱源治理第 3 批: 显隐面板。默认全开 (一块都不隐), 这一节给的是"能不能关"，不是新默认值。
+                Section {
+                    ForEach(DevModule.allCases) { m in
+                        VStack(alignment: .leading, spacing: DS.Space.xs) {
+                            // 系统 Toggle: 标题写明用途, 开/关态由系统播报, 不另写重复值 (232 同口径)
+                            Toggle(isOn: Binding(
+                                get: { !devHidden.contains(m.rawValue) },
+                                set: { on in
+                                    DevModuleStore.setHidden(m, !on)
+                                    devHidden = DevModuleStore.hidden   // 写盘之外还要即时生效 (UserDefaults 不是可观察源)
+                                })) {
+                                Text(m.title)
+                            }
+                            Text(m.cost)
+                                .font(.caption2)
+                                .foregroundStyle(DS.Palette.textSub)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding(.vertical, DS.Space.xs)
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel("\(m.title)，关掉会少什么：\(m.cost)")
+                    }
+                } header: {
+                    Text("显示与隐藏")
+                } footer: {
+                    Text("默认全部显示。关掉只是本页不再画这一块，功能、数据与排程都不受影响；设备切换器、开锁圆盘、三个可排序槽与异常卡不能关 —— 前两件是主操作与身份，后两件藏了就等于把警告和数据说明瞒掉。")
                         .font(.caption).foregroundStyle(DS.Palette.textSub)
                 }
                 Section {
                     Button("恢复默认") {
                         DB.store.remove("kf_dev_order")
+                        DevModuleStore.reset()
+                        devHidden = DevModuleStore.hidden
                         orderTick += 1
                     }
                 }
             }
-            .navigationTitle("模块排序")
+            .navigationTitle("模块排序与显隐")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("完成") { showModuleOrder = false }
@@ -2150,8 +2172,8 @@ struct DeviceHomeView: View {
     private func coachOverlay(_ step: Int) -> some View {
         let items: [(title: String, body: String, y: CGFloat, r: CGFloat)] = [
             ("开锁圆盘", "按住圆盘或上滑即可开锁; 失败会给一份排查清单。", 0.46, 96),
-            ("快捷操作格", "常用动作都在这里; 长按可换格 (169)。", 0.70, 76),
-            ("状态卡", "电量 / 固件 / 锁钟与连接态都在这张卡上 (63/119/272)。", 0.18, 108),
+            ("快捷操作格", "常用动作都在这里; 长按可换格。", 0.70, 76),   // 169 常用动作都在这里
+            ("状态卡", "电量 / 固件 / 锁钟与连接态都在这张卡上。", 0.18, 108),   // 63/119/272 电量
         ]
         let it = items[min(step, items.count - 1)]
         GeometryReader { geo in

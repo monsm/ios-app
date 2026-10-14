@@ -51,17 +51,17 @@ struct MemberCenterView: View {
                 ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
-                        Picker("排序 (264/466)", selection: $sortKey) {
+                        Picker("排序", selection: $sortKey) {   // 264/466 排序
                             Text("添加时间").tag(0)
                             Text("姓名").tag(1)
                             Text("最近开门时间 (约)").tag(2)
                             Text("近 30 天开门次数 (约)").tag(3)
                         }
                         .pickerStyle(.inline)
-                        Button("分组标签 (630)") { showGroups = true }
-                        Button("家庭会议摘要 (482)") { showMeeting = true }
-                        Button("成员家庭设置 (479/794)") { app.tabSelection = 3 }
-                        Button("导出成员名册 (415)") {
+                        Button("分组标签") { showGroups = true }   // 630 分组标签
+                        Button("家庭会议摘要") { showMeeting = true }   // 482 家庭会议摘要
+                        Button("成员家庭设置") { app.tabSelection = 3 }   // 479/794 成员家庭设置
+                        Button("导出成员名册") {   // 415 导出成员名册
                             rosterURL = ExportKit.writeRoster()
                             showRoster = true
                         }
@@ -89,7 +89,7 @@ struct MemberCenterView: View {
             .sheet(isPresented: $showRoster) {
                 NavigationStack {
                     List {
-                        Section("成员名册 (415)") {
+                        Section("成员名册") {   // 415 成员名册
                             Text("共 \(DB.members().count) 位成员 · 文件 "
                                  + (rosterURL?.lastPathComponent ?? "生成失败"))
                                 .font(.subheadline)
@@ -108,7 +108,7 @@ struct MemberCenterView: View {
                                         .frame(minHeight: DS.Hit.min)
                                 }
                             } else {
-                                Text("本机还没有成员档案，名册是空的 (415)")
+                                Text("本机还没有成员档案，名册是空的")   // 415 本机还没有成员档案
                                     .font(.caption)
                                     .foregroundStyle(DS.Palette.warn)
                                     .fixedSize(horizontal: false, vertical: true)
@@ -138,7 +138,7 @@ struct MemberCenterView: View {
                     MemberAvatar(member: Member(id: "g", name: "家", at: 0))
                 }
                 VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                    Text("共 \(n) 位成员 · \(m) 条凭证 (266)")
+                    Text("共 \(n) 位成员 · \(m) 条凭证")   // 266 位成员
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(DS.Palette.text)
                     Text("活跃度按台账推断 (约), 点成员看 360 详情")
@@ -206,7 +206,7 @@ struct MemberCenterView: View {
                 EmptyState(systemImage: "person.2.slash",
                            title: "还没有成员",
                            message: "建档向导分三步: 称呼 → 角色 → 初始凭证。",
-                           actionTitle: "建档向导 (463)") { showWizard = true }
+                           actionTitle: "建档向导") { showWizard = true }   // 463 建档向导
             }
             ForEach(list) { m in
                 NavigationLink { MemberDetail360View(memberID: m.id, onChanged: { tick += 1 }) } label: {
@@ -227,7 +227,7 @@ struct MemberCenterView: View {
             Text("成员 (\(list.count))")
         } footer: {
             Text("活跃度与摘录为台账推断 (约): 锁端日志无身份字段, 归属只算可证明的。"
-                 + "「久未用」(262/466) 判的是近 30 天没有可证明归属的开门, 标在每行行尾; "
+                 + "「久未用」判的是近 30 天没有可证明归属的开门, 标在每行行尾; "   // 262/466 久未用
                  + "要看谁这段时间开得多, 上方选「近 30 天开门次数」那一档。")
         }
     }
@@ -251,7 +251,7 @@ struct MemberCenterView: View {
                 HStack(spacing: DS.Space.s) {
                     MemberAvatar(member: Member(id: MemberHub.visitorId, name: "访客", at: 0))
                     VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                        Text("访客 · 虚拟成员 (793)")
+                        Text("访客 · 虚拟成员")   // 793 访客
                             .font(.subheadline)
                             .foregroundStyle(DS.Palette.text)
                         Text("临时码未归属记录约 \(opens) 条 · 名下临时码 \(temps) 条")
@@ -311,13 +311,13 @@ struct MemberCenterView: View {
     private var sceneSection: some View {
         Section {
             if let dutyID = MemberHub.dutyThisWeek, let dm = DB.member(dutyID) {
-                LabeledContent("本周主责 (481)") {
+                LabeledContent("本周主责") {   // 481 本周主责
                     Text(MemberHub.display(dm))
                         .font(.subheadline)
                         .foregroundStyle(DS.Palette.accentText)
                 }
             } else {
-                Text("本周主责 (481): 未安排 — 在成员 360 页设置")
+                Text("本周主责: 未安排 — 在成员 360 页设置")   // 481 本周主责
                     .font(.subheadline)
                     .foregroundStyle(DS.Palette.textSub)
             }
@@ -354,7 +354,7 @@ struct MemberCenterView: View {
                         .padding(.vertical, 2)
                 }
             } label: {
-                Text(ch.title + " (973)")
+                Text(ch.title)   // 973 界面文案
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(DS.Palette.text)
             }
@@ -363,9 +363,9 @@ struct MemberCenterView: View {
 
     private var navSection: some View {
         Section {
-            NavigationLink("成员活跃总表 (788/789)") { MemberActiveTable(onChanged: { tick += 1 }) }
-            NavigationLink("家庭设置 (479/794)") { MemberFamilySettingsView() }
-            NavigationLink("家庭会议摘要 (482)") { MemberMeetingSheet() }
+            NavigationLink("成员活跃总表") { MemberActiveTable(onChanged: { tick += 1 }) }   // 788/789 成员活跃总表
+            NavigationLink("家庭设置") { MemberFamilySettingsView() }   // 479/794 家庭设置
+            NavigationLink("家庭会议摘要") { MemberMeetingSheet() }   // 482 家庭会议摘要
         } header: {
             Text("聚合视图")
         }
@@ -391,7 +391,7 @@ struct MemberRow: View {
                         .foregroundStyle(DS.Palette.text)
                     rolePill
                     if dup != nil {
-                        StatusPill(text: "同名待合并 (462)", systemImage: "arrow.triangle.merge", tone: .warn)
+                        StatusPill(text: "同名待合并", systemImage: "arrow.triangle.merge", tone: .warn)   // 462 同名待合并
                     }
                 }
                 subLine
@@ -404,14 +404,14 @@ struct MemberRow: View {
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .contextMenu {
-            Button("归档 (460/795)") {
+            Button("归档") {   // 460/795 归档
                 var e = MemberHub.ext(member.id)
                 e.archived = true
                 MemberHub.saveExt(member.id, e)
                 tick += 1
             }
             if let d = dup {
-                Button("并入「\(d.name)」 (462 重复合并)") {
+                Button("并入「\(d.name)」") {   // 462 并入
                     mergeInto(d)
                 }
             }
@@ -606,10 +606,10 @@ struct MemberDetail360View: View {
             .toolbar { ToolbarItem(placement: .navigationBarTrailing) {
                 Menu {
                     Button("补全档案 (关系/电话/生日/代号/分组/便签)") { editProfile(m); onChanged() }
-                    Button("重复合并 (462)") { showMerge = true }
-                    Button("退出处置向导 (474)") { showExitWizard = true }
+                    Button("重复合并") { showMerge = true }   // 462 重复合并
+                    Button("退出处置向导") { showExitWizard = true }   // 474 退出处置向导
                     Button(role: .destructive) { confirmDelete(m) } label: {
-                        Label("删除并级联提示 (263)", systemImage: "trash")
+                        Label("删除并级联提示", systemImage: "trash")   // 263 删除并级联提示
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle").accessibilityLabel("成员操作菜单")
@@ -654,14 +654,14 @@ struct MemberDetail360View: View {
                     StatusPill(text: "名下 \(a.owns) 条", systemImage: "key.fill", tone: .accent)
                 }
                 // 465 紧急联系行 (纯本地)
-                LabeledContent("紧急联系 (465)") {
+                LabeledContent("紧急联系") {   // 465 紧急联系
                     Text(e.emergency.isEmpty ? "未填" : e.emergency)
                         .font(.subheadline)
                         .foregroundStyle(DS.Palette.textSub)
                 }
                 // 464 常用锁
                 if !e.commonLocks.isEmpty {
-                    LabeledContent("常用锁 (464)") {
+                    LabeledContent("常用锁") {   // 464 常用锁
                         let names = e.commonLocks.map { LockArchive.displayName(DB.keychain($0) ?? Keychain(mac: $0, skey: "")) }
                         Text(names.joined(separator: "、"))
                             .font(.subheadline)
@@ -672,7 +672,7 @@ struct MemberDetail360View: View {
                 }
                 // 485/1017/653 生日行 (Milestones 已有数据与提前一天通知, 只接线不重做)
                 if let bd = Milestones.memberBirthdays()[m.id] {
-                    LabeledContent("生日 (485)") {
+                    LabeledContent("生日") {   // 485 生日
                         Text(bd + " · 提前一天提醒")
                             .font(.subheadline)
                             .foregroundStyle(DS.Palette.textSub)
@@ -680,7 +680,7 @@ struct MemberDetail360View: View {
                 }
                 // 994 角标行: 只报 kf_member_badge 里真实存下的那一枚 —— 已选就报徽章名,
                 // 那一位还没挑的照实读作"未选角标", 两种状态都是本机台账的原话。
-                LabeledContent("角标 (994)") {
+                LabeledContent("角标") {   // 994 角标
                     Text(corner.map { "已选「\($0.title)」" } ?? "未选角标")
                         .font(.subheadline)
                         .foregroundStyle(corner == nil ? DS.Palette.textSub : DS.Palette.text)
@@ -695,7 +695,7 @@ struct MemberDetail360View: View {
                     .fixedSize(horizontal: false, vertical: true)
                 // 480 孩子码关怀文案 (家长视角)
                 if !e.careText.isEmpty {
-                    LabeledContent("关怀语 (480)") {
+                    LabeledContent("关怀语") {   // 480 关怀语
                         Text(e.careText)
                             .font(.subheadline)
                             .foregroundStyle(DS.Palette.accentText)
@@ -732,7 +732,7 @@ struct MemberDetail360View: View {
             }
         }
         return Section {
-            Text("密码 \(pwdCount) 条 · 指纹 \(fpCount) 条 · 未归属转未分配不在此列 (261)")
+            Text("密码 \(pwdCount) 条 · 指纹 \(fpCount) 条 · 未归属转未分配不在此列")   // 261 密码
                 .font(.subheadline)
                 .foregroundStyle(DS.Palette.text)
             // 261 清单本体: 只有计数没有名目时, 用户没法核对"名下到底有哪几把"
@@ -745,7 +745,7 @@ struct MemberDetail360View: View {
             }
             ForEach(borrowLines, id: \.self) { line in
                 HStack(spacing: DS.Space.s) {
-                    StatusPill(text: "借用中 (472)", systemImage: "person.2.badge.gearshape", tone: .warn)
+                    StatusPill(text: "借用中", systemImage: "person.2.badge.gearshape", tone: .warn)   // 472 借用中
                     Text(line)
                         .font(.subheadline)
                         .foregroundStyle(DS.Palette.textSub)
@@ -757,7 +757,7 @@ struct MemberDetail360View: View {
             Button {
                 showBorrow = true
             } label: {
-                Label("借用登记 (472)", systemImage: "person.2.badge.plus")
+                Label("借用登记", systemImage: "person.2.badge.plus")   // 472 借用登记
                     .font(.subheadline)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .frame(minHeight: DS.Hit.min)
@@ -766,7 +766,7 @@ struct MemberDetail360View: View {
             .buttonStyle(PlainButtonStyle())
             .foregroundStyle(DS.Palette.accentText)
         } header: {
-            Text("名下凭证 (261)")
+            Text("名下凭证")   // 261 名下凭证
         }
     }
 
@@ -818,13 +818,13 @@ struct MemberDetail360View: View {
                 .accessibilityElement(children: .combine)
             }
             if rows.isEmpty {
-                Text("还没有停用记录。停用凭证时勾「写入该成员动态」(367) 才会写进这里；不勾只在敏感操作流水里留一条汇总，不落到个人档案。")
+                Text("还没有停用记录。停用凭证时勾「写入该成员动态」才会写进这里；不勾只在敏感操作流水里留一条汇总，不落到个人档案。")   // 367 还没有停用记录
                     .font(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
         } header: {
-            Text("凭证停用动态 (367)")
+            Text("凭证停用动态")   // 367 凭证停用动态
         }
     }
 
@@ -839,7 +839,7 @@ struct MemberDetail360View: View {
             }
             .accessibilityElement(children: .combine)
         } header: {
-            Text("授权来源 (473)")
+            Text("授权来源")   // 473 授权来源
         }
     }
     private func sourceCell(_ label: String, _ n: Int) -> some View {
@@ -862,8 +862,8 @@ struct MemberDetail360View: View {
         let edges = MemberHub.graph(m.id)
         return Section {
             if edges.isEmpty {
-                Text("暂无「谁创建给谁」的凭证关系 — 这一张图只画得出本机版本历史里留得下那一手移交的凭证 (476)。"
-                     + "在凭证页批量移交 (349) 之后, 这里就画出 创建人→使用人。")
+                Text("暂无「谁创建给谁」的凭证关系 — 这一张图只画得出本机版本历史里留得下那一手移交的凭证。"   // 476 暂无
+                     + "在凭证页批量移交之后, 这里就画出 创建人→使用人。")   // 349 在凭证页批量移交
                     .font(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -889,7 +889,7 @@ struct MemberDetail360View: View {
                 .accessibilityLabel((e.direction == "out" ? "TA 移交给 " : "移交给 TA 的, 上一手 ") + e.peer + ", " + e.label)
             }
         } header: {
-            Text("归属图谱 (476)")
+            Text("归属图谱")   // 476 归属图谱
         } footer: {
             // 判据与落盘注记同源 (MemberHub.transferNotePrefix 对 CredentialOrg.batchTransfer),
             // 所以这里说的"移交之后会画出来"是真的会画出来 —— 原先判的是另一个字符串, 这一栏恒为占位句。
@@ -916,7 +916,7 @@ struct MemberDetail360View: View {
                     }))
                 .fixedSize(horizontal: false, vertical: true)
             } else {
-                Text("角色是「" + MemberHub.roleLabel(role) + "」: 矩阵里「管凭证」为禁用, 所以这一档不给代管开关 (468/470)。")
+                Text("角色是「" + MemberHub.roleLabel(role) + "」: 矩阵里「管凭证」为禁用, 所以这一档不给代管开关。")   // 468/470 矩阵里
                     .font(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -924,7 +924,7 @@ struct MemberDetail360View: View {
             if MemberHub.dutyThisWeek == m.id {
                 StatusPill(text: "本周主责", systemImage: "calendar.badge.clock", tone: .accent)
             }
-            Toggle("设为本周主责 (481)", isOn: Binding(
+            Toggle("设为本周主责", isOn: Binding(   // 481 设为本周主责
                 get: { MemberHub.dutyThisWeek == m.id },
                 set: { v in
                     MemberHub.setDuty(v ? m.id : nil)
@@ -932,8 +932,8 @@ struct MemberDetail360View: View {
                 }))
             .fixedSize(horizontal: false, vertical: true)
             if MemberHub.proxyNames.contains(m.id) {
-                Text("代管中: 在凭证页对 TA 名下凭证做单条停用时, 那一行的 361 停用便签会写上 管理员代操作 (468); "
-                     + "家庭会议摘要 (482) 也点名代管中的成员。锁端没有代操作这一位, 这句标注只落本机。")
+                Text("代管中: 在凭证页对 TA 名下凭证做单条停用时, 那一行的 361 停用便签会写上 管理员代操作; "   // 468 代管中
+                     + "家庭会议摘要也点名代管中的成员。锁端没有代操作这一位, 这句标注只落本机。")   // 482 家庭会议摘要
                     .font(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -953,7 +953,7 @@ struct MemberDetail360View: View {
             // 选一下当场看得见哪几行亮/灭，不用翻去另一页对照一份会漂移的说明表。
             // 创意原句写的是"查看者/管理员"，本仓那三档是 458 的主理人/成员/访客，
             // 示例文字与矩阵行都由 MemberHub.permRows(role) 现算，不另写一份权限说明 (两处各写一遍迟早互相打脸)。
-            Picker("角色 (458/843)", selection: Binding(
+            Picker("角色", selection: Binding(   // 458/843 角色
                 get: { role },
                 set: { v in
                     var e = MemberHub.ext(m.id)
@@ -975,16 +975,16 @@ struct MemberDetail360View: View {
                                tone: row.allowed ? .ok : .neutral)
                 }
             }
-            Text("矩阵管的是本机 UI (470): 「管凭证」这一行决定这一档给不给 468 的代管开关 (上方「家庭场景」那一节), "
+            Text("矩阵管的是本机 UI: 「管凭证」这一行决定这一档给不给 468 的代管开关 (上方「家庭场景」那一节), "   // 470 矩阵管的是本机
                  + "「成员管理」这一行决定能不能被指成 469 紧急管理员 (就在下面)。不给的那一枚会就地写明为什么少。"
                  + "边界: 锁端没有角色字段, 备份包也不带角色 —— 这三档不改任何发往门锁的字节; "
-                 + "角色与代管会被写进成员名册 (415) 那张 vcf 的备注行。")
+                 + "角色与代管会被写进成员名册那张 vcf 的备注行。")   // 415 角色与代管会被写进成
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             // 469 的真读点之一: 这一页把"谁被指成了紧急管理员"写在明面上。
             // 原先这个位只有 Toggle 的 set、全仓零读取方, 界面却承诺"救援码说明与其绑定" —— 那句已按实情收窄。
-            LabeledContent("紧急管理员 (469)") {
+            LabeledContent("紧急管理员") {   // 469 紧急管理员
                 Text(admins.isEmpty ? "未指定" : admins.map { MemberHub.display($0) }.joined(separator: "、"))
                     .font(.subheadline)
                     .foregroundStyle(admins.isEmpty ? DS.Palette.textSub : DS.Palette.accentText)
@@ -1013,7 +1013,7 @@ struct MemberDetail360View: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         } header: {
-            Text("权限与应急 (470/469)")
+            Text("权限与应急")   // 470/469 权限与应急
         }
     }
     /// 843 角色示例行：能/不能两串**由 MemberHub.permRows 现算**，只有场景句是写死的文案
@@ -1025,7 +1025,7 @@ struct MemberDetail360View: View {
         let scene: String
         switch r {
         case "main": scene = "通常是房子主人：这台机器上的所有事都归 Ta"
-        case "guest": scene = "通常是访客/钟点工：名下仍可以有临时码 (那是锁端的事)，本机这边不给代管、也不给指成紧急管理员 (470)"
+        case "guest": scene = "通常是访客/钟点工：名下仍可以有临时码 (那是锁端的事)，本机这边不给代管、也不给指成紧急管理员"   // 470 通常是访客
         default: scene = "通常是家人：日常开门与补凭证够用，导出与备份不给"
         }
         // 2026-10-13 run 60: 原来把两个 `isEmpty ? … : joined(…)` 三元直接拼进 Text 的字符串里,
@@ -1055,7 +1055,7 @@ struct MemberDetail360View: View {
         let e = MemberHub.ext(m.id)
         // 843: 角色不再在这里填英文代码 —— 它有了正上方的单选 (主理人/成员/访客)，两处能改一个值就是两个真相源。
         // 旧写法还留着一个真隐患: 手打 "Main"/"管理员" 这类值不报错，只会被 MemberHub.permRows 静默当成"成员"。
-        let alert = UIAlertController(title: "补全档案", message: "角色改到下方「权限与应急 (470/843)」里单选，这里不再填英文代码。", preferredStyle: .alert)
+        let alert = UIAlertController(title: "补全档案", message: "角色改到下方「权限与应急」里单选，这里不再填英文代码。", preferredStyle: .alert)   // 470/843 角色改到下方
         func field(_ ph: String, _ initial: String, _ kb: UIKeyboardType = .default) -> UITextField {
             // 2026-10-13 run 60: 参数原名 `init` —— 它是 Swift 的关键字 (初始化器), 于是 `$0.text = init`
             // 里的 `init` 被解析成"类型的初始化器"而不是这个参数 ⇒ 报
@@ -1066,13 +1066,13 @@ struct MemberDetail360View: View {
             return alert.textFields!.last!
         }
         let fRelation = field("与你的关系", m.relation)
-        let fRemark = field("备注名 (461)", e.remark)
-        let fEmoji = field("emoji 代号 (916, 留空用首字)", e.emoji)
-        let fEmergency = field("紧急联系 姓名+电话 (465)", e.emergency)
+        let fRemark = field("备注名", e.remark)   // 461 备注名
+        let fEmoji = field("emoji 代号", e.emoji)   // 916 代号
+        let fEmergency = field("紧急联系 姓名+电话", e.emergency)   // 465 紧急联系
         let fNote = field("家庭便签 (475, 如 周六换锁芯)", e.note)
-        let fCare = field("孩子码关怀文案 (480)", e.careText)
-        let fWelcome = field("访客欢迎语 (484, 归属时间推断约)", e.welcome)
-        let fGroup = field("分组标签 家人/访客/服务人员 (630)", e.groupTag)
+        let fCare = field("孩子码关怀文案", e.careText)   // 480 孩子码关怀文案
+        let fWelcome = field("访客欢迎语", e.welcome)   // 484 访客欢迎语
+        let fGroup = field("分组标签 家人/访客/服务人员", e.groupTag)   // 630 分组标签
         let fCommon = field("常用锁 (mac 或名称, 逗号分隔; 多锁时排前 464)",
                             e.commonLocks.joined(separator: ", "))
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
@@ -1180,14 +1180,14 @@ struct MemberWizardView: View {
                     case 0:
                         TextField("称呼 (汉字/英文/数字, 上限 20)", text: $name)
                             .autocorrectionDisabled()
-                        Picker("emoji 代号 (916, 纯文字头像)", selection: $emoji) {
+                        Picker("emoji 代号", selection: $emoji) {   // 916 代号
                             ForEach(["", "🐻", "🐱", "🐸", "🐙", "🦊", "🐧", "🐯"], id: \.self) { e in
                                 Text(e.isEmpty ? "默认首字" : e).tag(e)
                             }
                         }
                         .pickerStyle(.menu)
                     case 1:
-                        Picker("角色 (458/470 三档)", selection: $role) {
+                        Picker("角色", selection: $role) {   // 458/470 角色
                             // 副标题现算, 不手写第二份"这档能干什么" —— 那张表只有 MemberHub.permRows 一处定义
                             ForEach(MemberHub.roles, id: \.self) { r in
                                 Text(MemberHub.roleLabel(r) + " (" + rolePickHint(r) + ")").tag(r)
@@ -1208,7 +1208,7 @@ struct MemberWizardView: View {
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         // 463: 建档流程内直达指纹录入 (与临时码同格), 录完回凭证页可指归属
-                        NavigationLink("录指纹后到凭证页指归属 (463)") { StartAddFpView(embedded: true) }
+                        NavigationLink("录指纹后到凭证页指归属") { StartAddFpView(embedded: true) }   // 463 录指纹后到凭证页指归
                             .font(.footnote)
                     }
                 }
@@ -1240,7 +1240,7 @@ struct MemberWizardView: View {
                     }
                 }
             }
-            .navigationTitle("建档向导 (463)")
+            .navigationTitle("建档向导")   // 463 建档向导
             .navigationBarTitleDisplayMode(.inline)
             .scrollContentBackground(.hidden)
             .dsScreenBackground()
@@ -1353,7 +1353,7 @@ struct MergeMembersView: View {
                     .disabled(secondaryID == nil)
                 }
             }
-            .navigationTitle("重复合并 (462)")
+            .navigationTitle("重复合并")   // 462 重复合并
             .navigationBarTitleDisplayMode(.inline)
             .scrollContentBackground(.hidden)
             .dsScreenBackground()
@@ -1419,7 +1419,7 @@ struct MemberExitWizard: View {
             Form {
                 if items.isEmpty {
                     Section {
-                        Text("该成员名下没有台账凭证, 直接归档即可 (460/795 历史保留)。")
+                        Text("该成员名下没有台账凭证, 直接归档即可。")   // 460/795 该成员名下没有台账凭
                             .font(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                     }
@@ -1459,7 +1459,7 @@ struct MemberExitWizard: View {
                         e.archived = true
                         MemberHub.saveExt(memberID, e)
                         onDone()
-                        app.showToast("已归档, 历史记录保留 (460/795)")
+                        app.showToast("已归档, 历史记录保留")   // 460/795 已归档
                         dismiss()
                     } label: {
                         Text("归档并执行")
@@ -1469,13 +1469,13 @@ struct MemberExitWizard: View {
                     .buttonStyle(DestructiveActionStyle())
                 }
             }
-            .navigationTitle("退出处置向导 (474)")
+            .navigationTitle("退出处置向导")   // 474 退出处置向导
             .navigationBarTitleDisplayMode(.inline)
             .scrollContentBackground(.hidden)
             .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("取消") { dismiss() } } }
             // 474 候选移接人多于一个时不许替用户抓第一个: 弹确认框让用户自己选目标
-            .confirmationDialog("移交给谁 (474)", isPresented: Binding(
+            .confirmationDialog("移交给谁", isPresented: Binding(   // 474 移交给谁
                 get: { moveItem != nil },
                 set: { if !$0 { moveItem = nil } }
             ), titleVisibility: .visible) {
@@ -1619,7 +1619,7 @@ struct BorrowSheetView: View {
                     }
                 }
             }
-            .navigationTitle("借用登记 (472)")
+            .navigationTitle("借用登记")   // 472 借用登记
             .navigationBarTitleDisplayMode(.inline)
             .scrollContentBackground(.hidden)
             .dsScreenBackground()
@@ -1674,7 +1674,7 @@ struct MemberArchivedView: View {
                                 .font(.subheadline)
                                 .foregroundStyle(DS.Palette.text)
                             Text("归档中 · 只从成员列表与成员统计里收起; 记录页仍能筛到 TA, "
-                                 + "凭证页也仍列 TA 名下凭证 —— 归档不许挡撤权入口 (460/795)。")
+                                 + "凭证页也仍列 TA 名下凭证 —— 归档不许挡撤权入口。")   // 460/795 凭证页也仍列
                                 .font(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -1682,12 +1682,12 @@ struct MemberArchivedView: View {
                     }
                 }
                 if archived.isEmpty {
-                    Text("归档列表为空 — 成员归档后历史不蒸发 (795)。")
+                    Text("归档列表为空 — 成员归档后历史不蒸发。")   // 795 归档列表为空
                         .font(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                 }
             }
-            .navigationTitle("归档成员 (460/795)")
+            .navigationTitle("归档成员")   // 460/795 归档成员
             .navigationBarTitleDisplayMode(.inline)
             .scrollContentBackground(.hidden)
             .dsScreenBackground()
@@ -1709,7 +1709,7 @@ struct MemberGroupSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("成员分组标签 (630 · 与记录页成员过滤联动)") {
+                Section("成员分组标签") {   // 630 成员分组标签
                     ForEach(DB.members(), id: \.id) { m in
                         Picker(MemberHub.display(m), selection: Binding(
                             get: { tags[m.id] ?? MemberHub.ext(m.id).groupTag },
@@ -1740,7 +1740,7 @@ struct MemberGroupSheet: View {
                     .buttonStyle(PrimaryActionStyle())
                 }
             }
-            .navigationTitle("分组标签 (630)")
+            .navigationTitle("分组标签")   // 630 分组标签
             .navigationBarTitleDisplayMode(.inline)
             .scrollContentBackground(.hidden)
             .dsScreenBackground()
@@ -1765,30 +1765,32 @@ struct MemberFamilySettingsView: View {
             Form {
                 // 479/486 长辈模式的两个落点都写在下面那段话里: 479 = 凭证页大字高对比 (凭证页行上),
                 // 486 = 临时码完成页收成口述卡 (CredentialStudio.doneCard)。开关本身只写 MemberHub.elderMode。
-                Section("长辈模式 (479/486)") {
+                Section("长辈模式") {   // 479/486 长辈模式
                     Toggle("长辈模式 (凭证页大字高对比、只留密码/指纹两组 · 临时码完成页收成口述卡)", isOn: $elder)
                         .fixedSize(horizontal: false, vertical: true)
                     if elder {
                         Text("凭证页: 分段只留 全部/密码/指纹, 批量与导出入口收起, 组尾那条过期清理也不出现; "
-                             + "凭证行标题升到标题级、副行升到正文档, 副行文字改用主文本色 —— 大字与高对比就落在这两处 (479)。"
+                             + "凭证行标题升到标题级、副行升到正文档, 副行文字改用主文本色 —— 大字与高对比就落在这两处。"   // 479 凭证行标题升到标题级
                              + "这一档只动凭证页与临时码完成页, 其它页面不跟着变。")
                             .font(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
-                        Text("临时码完成页 (486): 开这一档后完成页只留大字号口述卡 + 一枚大「完成」, "
-                             + "一句话口令 (329) / 首用回执 (333) / 再发一张 那几段收起并在原地说明; 页标题也切到「口述卡」。")
+                        Text("临时码完成页: 开这一档后完成页只留大字号口述卡 + 一枚大「完成」, "   // 486 临时码完成页
+                             // 329 一句话口令
+                             // 333 一句话口令
+                             + "一句话口令 / 首用回执 / 再发一张 那几段收起并在原地说明; 页标题也切到「口述卡」。")
                             .font(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
-                Section("隐私浏览 (794)") {
+                Section("隐私浏览") {   // 794 隐私浏览
                     Toggle("隐私浏览 (限时 10 分钟: 写隐私时段标记, 本页回显剩余时间)", isOn: $privacy)
                         .fixedSize(horizontal: false, vertical: true)
                     if privacy {
                         Text(privacyLeft > 0
                              ? "剩余 \(privacyLeft) 秒后自动关闭"
-                             : "开启后 10 分钟自动关闭; 当前只写隐私时段标记并在本页回显, 不改统计口径 (794)")
+                             : "开启后 10 分钟自动关闭; 当前只写隐私时段标记并在本页回显, 不改统计口径")   // 794 开启后
                             .font(.caption)
                             .monospacedDigit()
                             .foregroundStyle(DS.Palette.textSub)
@@ -1885,7 +1887,7 @@ struct UnclaimedClaimView: View {
                             .foregroundStyle(DS.Palette.textSub)
                     }
                 } header: {
-                    Text("未归属记录认领 (791)")
+                    Text("未归属记录认领")   // 791 未归属记录认领
                 }
                 Section {
                     Button {
@@ -1909,7 +1911,7 @@ struct UnclaimedClaimView: View {
                     .disabled(selMember.isEmpty)
                 }
             }
-            .navigationTitle("认领未归属 (791)")
+            .navigationTitle("认领未归属")   // 791 认领未归属
             .navigationBarTitleDisplayMode(.inline)
             .scrollContentBackground(.hidden)
             .dsScreenBackground()
@@ -1970,7 +1972,7 @@ struct MemberActiveTable: View {
                         let archIds = MemberHub.archivedIDs()
                         let arch = DB.members().filter { archIds.contains($0.id) }.count
                         Text(arch > 0
-                            ? "在册成员是空的 — 本机有 \(arch) 位归档成员，回成员中心点「归档成员」那一栏找回 (788 只统计未归档的)。"
+                            ? "在册成员是空的 — 本机有 \(arch) 位归档成员，回成员中心点「归档成员」那一栏找回。"   // 788 在册成员是空的
                             : "还没有成员 — 在 成员中心 走建档向导。")
                             .font(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
@@ -1978,7 +1980,7 @@ struct MemberActiveTable: View {
                     }
                 }
             }
-            .navigationTitle("成员活跃总表 (788)")
+            .navigationTitle("成员活跃总表")   // 788 成员活跃总表
             .scrollContentBackground(.hidden)
             .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) {
@@ -2102,7 +2104,7 @@ struct MemberStackedView: View {
             }
             if !rotations.isEmpty {
                 VStack(alignment: .leading, spacing: DS.Space.s) {
-                    SectionTitle(text: "成员轮换 (792)", count: rotations.count)
+                    SectionTitle(text: "成员轮换", count: rotations.count)   // 792 成员轮换
                     ForEach(rotations.prefix(5), id: \.label) { r in
                         VStack(alignment: .leading, spacing: DS.Space.xxs) {
                             Text(r.label)
@@ -2156,11 +2158,11 @@ struct MemberMeetingSheet: View {
         }
         // 469 的第二个真读点: 会议材料里点名紧急管理员 (原先这个位全仓零读取方)
         let ea = MemberHub.emergencyAdmins()
-        lines.append("· 紧急管理员 (469): " + (ea.isEmpty ? "未指定" : ea.map { MemberHub.display($0) }.joined(separator: "、")))
+        lines.append("· 紧急管理员: " + (ea.isEmpty ? "未指定" : ea.map { MemberHub.display($0) }.joined(separator: "、")))   // 469 紧急管理员
         // 468 的读点之一: 代管中的成员在这里点名; 逐条标注落在凭证页那一条 361 停用便签上
         let prox = MemberHub.proxyNames
         let pm = DB.members().filter { prox.contains($0.id) }
-        lines.append("· 代管中 (468): " + (pm.isEmpty ? "没有" : pm.map { MemberHub.display($0) }.joined(separator: "、")))
+        lines.append("· 代管中: " + (pm.isEmpty ? "没有" : pm.map { MemberHub.display($0) }.joined(separator: "、")))   // 468 代管中
         return lines.joined(separator: "\n")
     }
 
@@ -2195,7 +2197,7 @@ struct MemberMeetingSheet: View {
                 .padding(.horizontal, DS.Space.gutter)
             }
             .padding(.vertical, DS.Space.m)
-            .navigationTitle("家庭会议摘要 (482)")
+            .navigationTitle("家庭会议摘要")   // 482 家庭会议摘要
             .navigationBarTitleDisplayMode(.inline)
             .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
@@ -2229,7 +2231,7 @@ struct FamilyNoteView: View {
             TextField("一行便签 (如 周六换锁芯)", text: $text)
                 .autocorrectionDisabled()
                 .lineLimit(2)
-            Text("便签存在本机, 绑在成员身上, 设备页 Hero 卡下方浮动显示 (475)。")
+            Text("便签存在本机, 绑在成员身上, 设备页 Hero 卡下方浮动显示。")   // 475 便签存在本机
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -2283,7 +2285,7 @@ struct HouseCleaningPresetView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("家政周期预设 (483 · 降级为整段起止窗)") {
+                Section("家政周期预设") {   // 483 家政周期预设
                     DatePicker("开始", selection: $from, displayedComponents: [.date, .hourAndMinute])
                     DatePicker("结束", selection: $to, displayedComponents: [.date, .hourAndMinute])
                     TextField("标签", text: $label)
@@ -2302,7 +2304,7 @@ struct HouseCleaningPresetView: View {
                 }
                 // houseWin(mac) 此前零调用: 只能写入、读不回来, 用户提交后页面一片空白, 看着像没存上
                 if let cur = MemberHub.houseWin(mac) {
-                    Section("当前已登记 (483)") {
+                    Section("当前已登记") {   // 483 当前已登记
                         LabeledRow("标签", cur.label.isEmpty ? "(无)" : cur.label)
                         LabeledRow("整窗", cur.from + " → " + cur.to)
                         Text("每把锁只留最近一段 (再次生成会覆盖)。这条登记不产生锁端命令, 家政人员用自带钥匙进出。")
@@ -2311,7 +2313,7 @@ struct HouseCleaningPresetView: View {
                     }
                 }
             }
-            .navigationTitle("家政周期预设 (483)")
+            .navigationTitle("家政周期预设")   // 483 家政周期预设
             .navigationBarTitleDisplayMode(.inline)
             .scrollContentBackground(.hidden)
             .dsScreenBackground()

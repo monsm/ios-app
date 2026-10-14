@@ -141,8 +141,8 @@ enum ScanStats {
         let avg = r.reduce(0.0) { $0 + $1.secs } / Double(r.count)
         let win = BLEService.ScanProfile.current.timeoutMs
         if avg < 5 { return "近 \(r.count) 天日均扫描 \(Int(avg)) 秒 — 已经很省 (当前档位单次窗口 \(win)ms, 123)。" }
-        if avg < 30 { return "近 \(r.count) 天日均扫描 \(Int(avg)) 秒 — 正常范围 (单次窗口 \(win)ms); 想更省可换「省电」档 (123)。" }
-        return "近 \(r.count) 天日均扫描 \(Int(avg)) 秒 — 偏多; 不需要即连的话换「省电」档, 或关掉预握手 (97/123)。"
+        if avg < 30 { return "近 \(r.count) 天日均扫描 \(Int(avg)) 秒 — 正常范围 (单次窗口 \(win)ms); 想更省可换「省电」档。" }   // 123 天日均扫描
+        return "近 \(r.count) 天日均扫描 \(Int(avg)) 秒 — 偏多; 不需要即连的话换「省电」档, 或关掉预握手。"   // 97/123 天日均扫描
     }
 }
 
@@ -306,7 +306,7 @@ enum DiagLogs {
             if CredentialOrg.binPwd(mac, alias) != nil {
                 return "台账内已无此凭证, 但回收站有 (可恢复, 见凭证中心 → 回收站)"
             }
-            return "本机台账没有该凭证 —— 可能是锁端自行添加或其它 App 写入, 建议拉一次凭证清单 (734)"
+            return "本机台账没有该凭证 —— 可能是锁端自行添加或其它 App 写入, 建议拉一次凭证清单"   // 734 本机台账没有该凭证
         case .fp(let batch):
             if let f = DB.ledger(mac).fps.first(where: { $0.batch == batch }) {
                 return "台账内 · 名称 \(f.name.isEmpty ? "(未命名)" : f.name)"
@@ -316,7 +316,7 @@ enum DiagLogs {
             if CredentialOrg.binFp(mac, batch) != nil {
                 return "台账内已无此指纹, 但回收站有 (可恢复, 见凭证中心 → 回收站)"
             }
-            return "本机台账没有该指纹批次 —— 建议拉一次凭证清单 (734)"
+            return "本机台账没有该指纹批次 —— 建议拉一次凭证清单"   // 734 本机台账没有该指纹批
         case .member(let id):
             guard let m = DB.member(id) else { return "成员档案已删除" }
             return "成员 \(m.name) · \(m.relation.isEmpty ? "关系未填" : m.relation)"
@@ -874,7 +874,7 @@ enum RecordReconcile {
     }
     /// 749 清单纯文本 (复制与影子对拍共用; 每一行都带"约", 结尾把"到场"这一既有限制写上)
     static func plainLine(_ r: PullGapReport, name: String) -> String {
-        var out = "锁 \(name) · 本机日志 \(r.totalRows) 行 · 覆盖 \(r.coveredDays) 天 (749 本机推断)"
+        var out = "锁 \(name) · 本机日志 \(r.totalRows) 行 · 覆盖 \(r.coveredDays) 天"   // 749 本机日志
         for s in r.segments { out += "\n" + s.line + " — " + s.basis }
         if r.segmentsHidden > 0 { out += "\n另有 \(r.segmentsHidden) 段未列出" }
         if let t = r.tail { out += "\n尾段 " + t.line + " — " + t.basis }
@@ -992,7 +992,7 @@ enum Recovery {
         if logBytes >= 64_000 && retention.isEmpty {
             out.append(RecoveryTip(id: "logs",
                 title: "运行日志约 \(DataHealth.human(logBytes))（\(DiagLogs.all().count) 条）",
-                detail: "保留策略现在是「全部」。改成 365 或 90 天时，切换先报「将删条数」并二次确认，确认后立即删除 (751)。",
+                detail: "保留策略现在是「全部」。改成 365 或 90 天时，切换先报「将删条数」并二次确认，确认后立即删除。",   // 751 保留策略现在是
                 goto: "本页「存储与数据」的日志保留策略"))
         }
         let archBytes = sum(fam, ["kf_logarch_"])
@@ -1332,7 +1332,7 @@ enum ProtocolDict {
         .init(k: "#24-26", name: "pwdInfo", desc: "密码 容量/剩余/最大长度"),
         .init(k: "#27-29", name: "fpInfo", desc: "指纹 容量/剩余/批号"),
         .init(k: "#31", name: "verFirmware", desc: "固件 3B 反转直读 a.b.c"),
-        .init(k: "#34", name: "pid", desc: "型号号, 映射见诊断页型号映射 (661)"),
+        .init(k: "#34", name: "pid", desc: "型号号, 映射见诊断页型号映射"),   // 661 型号号
         .init(k: "#35", name: "eCtrlVer", desc: "电控板版本, ASCII"),
         .init(k: "16#04", name: "surplus", desc: "GETLOG 本次游标之后还剩的日志条数 (只对当页成立, 不是锁内总条数; 749 会话内对账依此)"),
         .init(k: "16#05", name: "logRec", desc: "日志条目: type 1B + len 1B + idx 4B LE + lockTime 4B LE")
@@ -1469,7 +1469,7 @@ enum SymptomGuide {
                    yesNext: ["done_watchdog"], noNext: ["done_wait"]),
         "done_bt": Step(question: "", yesNext: [], noNext: [], conclusion: "手机蓝牙本身异常 — 开关一次蓝牙再试, 或重启手机"),
         "done_repair": Step(question: "", yesNext: [], noNext: [], conclusion: "档案与实物对不上 — 删除该锁重新配对 (本地钥匙串会同步更新)"),
-        "done_watchdog": Step(question: "", yesNext: [], noNext: [], conclusion: "连接不稳 — 看诊断页「BLE 事件流水」与失败归类, 建议先查电量; 保持前台时自动回连与会话巡检 (275/131) 会自行重连, 无需额外开关"),
+        "done_watchdog": Step(question: "", yesNext: [], noNext: [], conclusion: "连接不稳 — 看诊断页「BLE 事件流水」与失败归类, 建议先查电量; 保持前台时自动回连与会话巡检会自行重连, 无需额外开关"),   // 275/131 连接不稳
         "done_wait": Step(question: "", yesNext: [], noNext: [], conclusion: "偶发超时属正常 — 蓝牙近场受干扰常见, 保持 1 米内重试即可")
     ]
     static let records: [String: Step] = [
@@ -1498,23 +1498,25 @@ enum SelfCheck {
         var out: [SelfCheckLine] = []
         let hashBad = BackupStudio.hashMismatch()
         out.append(SelfCheckLine(name: "库体哈希", ok: !hashBad,
-                                 detail: hashBad ? "与上次快照不一致 — 建议立即备份 (448/397)" : "与上次快照一致"))
+                                 detail: hashBad ? "与上次快照不一致 — 建议立即备份" : "与上次快照一致"))   // 448/397 与上次快照不一致
         let v = AuditLog().verifyChain()
         out.append(SelfCheckLine(name: "审计链", ok: v.brokenAt < 0,
-                                 detail: v.brokenAt == -2 ? "链序号异常: 有条目被截断或换序重放 (386)"
+                                 detail: v.brokenAt == -2 ? "链序号异常: 有条目被截断或换序重放"   // 386 链序号异常
                                            : v.brokenAt < 0 ? "\(v.length) 条逐链重算全部通过"
                                            : "第 \(v.brokenAt + 1) 条断裂"))
         // integrity() 干净时也会返回一条"数据解析正常"，所以判 ok 必须按同一条口径过滤，
         // 直接写 `rep.isEmpty` 会永远为假 —— 一项永远说"异常"的检查和永远说"正常"的一样没用 (750)。
         let issues = DataHealth.integrity().filter { !$0.hasPrefix("数据解析正常") }
         out.append(SelfCheckLine(name: "数据完整性", ok: issues.isEmpty,
-                                 detail: issues.isEmpty ? "JSON 回环与台账计数核对无异常 (750)"
+                                 detail: issues.isEmpty ? "JSON 回环与台账计数核对无异常"   // 750 回环与台账计数核对无
                                                         : issues.joined(separator: "; ")))
         return out
     }
     static func summary(_ lines: [SelfCheckLine]) -> String {
         let bad = lines.filter { !$0.ok }
-        return bad.isEmpty ? "本机自检三项全部通过 (397)" : "本机自检 \(bad.count) 项异常 — 详情见下 (397)"
+        // 397 本机自检三项全部通过
+        // 397 本机自检
+        return bad.isEmpty ? "本机自检三项全部通过" : "本机自检 \(bad.count) 项异常 — 详情见下"
     }
 }
 

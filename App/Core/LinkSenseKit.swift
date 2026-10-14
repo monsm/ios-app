@@ -108,7 +108,7 @@ final class LinkSense: ObservableObject {
                     guard targets.contains(mac), !hits.contains(mac) else { continue }
                     hits.insert(mac)
                     Self.saveRssi(mac: mac, rssi: adv.rssi)
-                    lockSvc.log("info", "多锁预连: 收到 \(String(mac.prefix(6))) RSSI \(adv.rssi) (276)")
+                    lockSvc.log("info", "多锁预连: 收到 \(String(mac.prefix(6))) RSSI \(adv.rssi)")   // 276 多锁预连
                 }
                 if hits.count < targets.count { try? await Task.sleep(for: .milliseconds(250)) }
             }
@@ -137,7 +137,7 @@ final class LinkSense: ObservableObject {
             guard let dev = dev else {
                 BleTelemetry.recordAttempt(mac: mac, ok: false, reason: "未发现 (不在广播范围或锁未广播)")
                 BleTelemetry.recordEvent("预握手: 未发现 " + String(mac.prefix(6)), ok: false)
-                lockSvc.log("warn", "预握手: 扫描未发现 \(mac), 不在广播范围 (134/130)")
+                lockSvc.log("warn", "预握手: 扫描未发现 \(mac), 不在广播范围")   // 134/130 预握手
                 reconnectAttempt += 1
                 return
             }
@@ -145,7 +145,7 @@ final class LinkSense: ObservableObject {
             if dev.rssi < fence {
                 BleTelemetry.recordAttempt(mac: mac, ok: false, reason: "RSSI \(dev.rssi) 低于围栏 \(fence), 跳过预热")
                 BleTelemetry.recordEvent("预握手: 信号弱跳过", ok: false)
-                lockSvc.log("info", "预握手: RSSI \(dev.rssi) 低于围栏 \(fence), 低信号不浪费电量 (93)")
+                lockSvc.log("info", "预握手: RSSI \(dev.rssi) 低于围栏 \(fence), 低信号不浪费电量")   // 93 预握手
                 reconnectAttempt += 1
                 return
             }
@@ -160,7 +160,7 @@ final class LinkSense: ObservableObject {
             if !Task.isCancelled { await preconnectOthers() }
             if dev.rssi >= -55, let host = AppState.hostRef, !(CareSchedule.quietOn && CareSchedule.isQuietHour()) {   // 99 近场轻提醒 (274 免扰时段静默)
                 DS.Haptics.tick.impactOccurred()
-                host.showToast("锁就在附近, 已就绪 (99)")
+                host.showToast("锁就在附近, 已就绪")   // 99 锁就在附近
             }
             BleTelemetry.recordAttempt(mac: mac, ok: true, reason: "预握手 \(ms)ms")
             BleTelemetry.recordEvent("预握手完成 \(ms)ms", ok: true)
@@ -169,7 +169,7 @@ final class LinkSense: ObservableObject {
             let kind = classifyFailure(error)
             BleTelemetry.recordAttempt(mac: mac, ok: false, reason: kind.name + " " + error.localizedDescription)
             BleTelemetry.recordEvent("预握手失败 \(kind.name)", ok: false)
-            lockSvc.log("warn", "预握手失败 (\(kind.name)): \(error.localizedDescription) (536)")
+            lockSvc.log("warn", "预握手失败 (\(kind.name)): \(error.localizedDescription)")   // 536 预握手失败
             reconnectAttempt += 1
         }
     }
@@ -308,7 +308,7 @@ final class LinkSense: ObservableObject {
                 }
                 self.lastReconnectAt = Date()
                 if kind > 0 {
-                    AppState.hostRef?.showToast("回到锁身边 (132)")
+                    AppState.hostRef?.showToast("回到锁身边")   // 132 回到锁身边
                 }
                 self.connectSource = "回连"
                 self.markReady(ms: self.connectMs, rssi: self.lastRssi)
@@ -372,7 +372,7 @@ final class LinkSense: ObservableObject {
         guard CredentialOrg.pendingCount(mac) > 0 else { return }   // 无待办不打扰
         lastDeadlockAt = Date()
         revalidating = true
-        lockSvc.log("info", "会话巡检: 连接已挂 \(Int(idle / 60)) 分钟, 重新校验会话 (275/131)")
+        lockSvc.log("info", "会话巡检: 连接已挂 \(Int(idle / 60)) 分钟, 重新校验会话")   // 275/131 会话巡检
         BleTelemetry.recordEvent("会话重协商 (挂起 \(Int(idle / 60)) 分钟)", ok: true)
         Task { @MainActor [weak self] in
             guard let self else { return }
@@ -384,7 +384,7 @@ final class LinkSense: ObservableObject {
                 do {
                     try await self.lockSvc.ensureConnected(mac: mac)
                     self.markReady(ms: self.connectMs, rssi: self.lastRssi)
-                    self.lockSvc.log("info", "假死判定 → 已重新握手 (275/131)")
+                    self.lockSvc.log("info", "假死判定 → 已重新握手")   // 275/131 假死判定
                     BleTelemetry.recordEvent("会话重协商成功", ok: true)
                     // 277 看门狗自恢复累计: 会话假死被巡检判定并重新握手成功的次数 (明细就是上面那条日志)
                     DB.store.set("kf_wd_heals", DB.store.getInt("kf_wd_heals", 0) + 1)
@@ -428,7 +428,7 @@ final class LinkSense: ObservableObject {
         // 只取 4 字及以上的码文案: "丢包"/"溢出" 这类两字词出现在别的串里会误判。
         let rcTexts = StatusParser.rcMsg.filter { $0.key != 0 && $0.value.count >= 4 }.map { $0.value }
         if rcTexts.contains(where: { m.contains($0) }) || m.hasPrefix("错误码 ") {
-            return FailKind(name: "指令被拒", hint: "锁端拒绝了这条指令 — 到诊断页「错误码对照表 (159)」按码处置; 多为权限/状态不满足, 可重试一次")
+            return FailKind(name: "指令被拒", hint: "锁端拒绝了这条指令 — 到诊断页「错误码对照表」按码处置; 多为权限/状态不满足, 可重试一次")   // 159 锁端拒绝了这条指令
         }
         if m.contains("未发现") || m.contains("扫描") || m.contains("超时") {
             return FailKind(name: "设备类", hint: "确认门锁通电并靠近 1 米内; 频繁失败先查电量")
@@ -548,7 +548,7 @@ final class LinkSense: ObservableObject {
                     }
                 }
                 let seen = ble.allDiscovered().count
-                BleTelemetry.recordEvent("冷启动扫描 (134), 可见设备 \(seen)", ok: true)
+                BleTelemetry.recordEvent("冷启动扫描, 可见设备 \(seen)", ok: true)   // 134 冷启动扫描
                 DB.store.set("kf_link_env", seen)
                 DB.store.set("kf_link_envms", firstSeenMs)
                 DiagOps.record("冷启动扫描 (\(seen) 台可见, 首台 \(firstSeenMs >= 0 ? "\(firstSeenMs)ms" : "整窗未见"))")
@@ -623,10 +623,10 @@ struct LinkPrefsView: View {
     var body: some View {
         Form {
             Section("自动预握手") {
-                Toggle("进页/回前台自动预热连接 (95/135)", isOn: Binding(
+                Toggle("进页/回前台自动预热连接", isOn: Binding(   // 95/135 进页
                     get: { DB.store.getBool("kf_link_auto_" + mac, true) },
                     set: { DB.store.set("kf_link_auto_" + mac, $0) }))
-                LabeledRow("手动连接模式 (100)",
+                LabeledRow("手动连接模式",   // 100 手动连接模式
                            DB.store.getBool("kf_link_auto_" + mac, true) ? "自动" : "手动 — 点圆盘才连")
                 // 93 信号围栏: 原先这一行只是 LabeledRow 把常量 -70 显示出来，全仓没有任何写入方
                 // (LinkSenseKit 的预握手判定读的就是这个键) ⇒ "围栏"是个不可调的装饰值。补成真实档位。
@@ -640,7 +640,7 @@ struct LinkPrefsView: View {
                     Text("宽松 (≥ -80)").tag(-80)
                     Text("关闭围栏").tag(-127)
                 } label: {
-                    Text("信号围栏 (93)")
+                    Text("信号围栏")   // 93 信号围栏
                 }
                 .pickerStyle(.menu)
                 .tint(DS.Palette.accentText)
@@ -648,13 +648,17 @@ struct LinkPrefsView: View {
                     .font(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
-                LabeledRow("连接偏好记忆 (97)", "每锁 kf_link_auto_ 偏好 + rssiFor 实读; 扫描强度档走全局 (123)")
+                // 97 连接偏好记忆
+                // 123 每锁
+                LabeledRow("连接偏好记忆", "每锁 kf_link_auto_ 偏好 + rssiFor 实读; 扫描强度档走全局")
             }
             Section("连接统计") {
-                LabeledRow("连接成功率 (70)", LinkSense.successRateText(mac: mac))
-                LabeledRow("高成功率时段 (539)", LinkSense.bestHourHint())
-                LabeledRow("占用类错误 (124)", "保守文案 — 协议占用细分未确证")
-                Text("成功率需 7 天握手数据积累, 当前为占位; 占用类 (124) 与高成功率时段 (539) 均备案 DEFERRED。")
+                LabeledRow("连接成功率", LinkSense.successRateText(mac: mac))   // 70 连接成功率
+                LabeledRow("高成功率时段", LinkSense.bestHourHint())   // 539 高成功率时段
+                LabeledRow("占用类错误", "保守文案 — 协议占用细分未确证")   // 124 占用类错误
+                // 124 成功率需
+                // 539 成功率需
+                Text("成功率需 7 天握手数据积累, 当前为占位; 占用类与高成功率时段均备案 DEFERRED。")
                     .font(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)

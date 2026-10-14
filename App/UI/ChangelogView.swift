@@ -104,7 +104,7 @@ enum Changelog {
                     detail: "这一天有没有防撬、试错锁定或键盘锁定的记录, 原先要把整天的行读完才知道。"
                         + "现在这类日子的组头挂一枚红字「含防撬/试错」, 点一下只看这一天。"
                         + "它与那枚蓝点不是一件事: 蓝点说的是「有告警还没处置」, 红字说的是「这一天出过事」—— "
-                        + "处置完了红字也还在, 因为事情发生过。趋势图上同一批日子另有三角符号 (607), "
+                        + "处置完了红字也还在, 因为事情发生过。趋势图上同一批日子另有三角符号, "   // 607 处置完了红字也还在
                         + "点上去还是那块读点气泡, 不另造第二个。"
                         + "原句这里写的是「含胁迫」: 锁端日志类型表里没有胁迫这一类, 所以照实换成真实存在的三类。",
                     batch: "第一百七十七批"),
@@ -459,7 +459,7 @@ struct ChangelogView: View {
                 .padding(.vertical, DS.Space.xxs)
             }
         }
-        .navigationTitle("新变化 (43/44)")
+        .navigationTitle("新变化")   // 43/44 新变化
         .scrollContentBackground(.hidden)
         .dsScreenBackground()
     }
@@ -486,7 +486,7 @@ struct ChangeBatchView: View {
                         // 44 动作出口: 条目原文里第一个提到的页面名 = 落点, 点按钮真的走到那个 Tab
                         // (先 pop 回设置列表再切)。一个页面名都没提的条目不摆按钮 —— 指错路比没路更糟。
                         if let goto = Self.landingTab(e) {
-                            Button("去\(goto.0)页看看 (44)") {
+                            Button("去\(goto.0)页看看") {   // 44 页看看
                                 dismiss()
                                 app.requestTab(goto.1)
                             }

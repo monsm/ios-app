@@ -275,12 +275,12 @@ struct RecordsView: View {
                 if app.current != nil {
                     Button { showExport = true } label: { Label("导出与分享 (包12)", systemImage: "square.and.arrow.up.on.square") }
                     Button { showStats = true } label: { Label("统计与图表 (包10)", systemImage: "chart.bar") }
-                    Button { copyLastWeekDigest() } label: { Label("复制上周小结 (698)", systemImage: "doc.on.clipboard") }
-                    Button { showRangePick = true } label: { Label("选区导出 (716)", systemImage: "checklist") }
+                    Button { copyLastWeekDigest() } label: { Label("复制上周小结", systemImage: "doc.on.clipboard") }   // 698 复制上周小结
+                    Button { showRangePick = true } label: { Label("选区导出", systemImage: "checklist") }   // 716 选区导出
                     Button { showActiveCreds = true } label: { Label("活跃凭证排序 (约, 574)", systemImage: "list.number") }
                     Button { showOutWin = true } label: { Label("越界开门清单 (约, 575)", systemImage: "clock.badge.exclamationmark") }
                     if scope == 1 {
-                        Toggle("泳道时间线 (785)", isOn: $laneMode)
+                        Toggle("泳道时间线", isOn: $laneMode)   // 785 泳道时间线
                     }
                 }
             } label: {
@@ -394,7 +394,7 @@ struct RecordsView: View {
             Button("保存") { saveRowNote() }
             Button("取消", role: .cancel) { noteTarget = nil }
         } message: {
-            Text("备注跟着这一行 (锁 + 行标识) 走, 不写进锁端日志; 详情页 (576) 里也能改。")
+            Text("备注跟着这一行 (锁 + 行标识) 走, 不写进锁端日志; 详情页里也能改。")   // 576 备注跟着这一行
         }
         .sheet(isPresented: $showRangePick) { rangePickSheet }
         .sheet(isPresented: $showExport) {
@@ -426,7 +426,7 @@ struct RecordsView: View {
                 }
         }
         // 671 换源: 只填前缀, 拼上年份才是完整地址 —— 不让用户贴一整条带年份的 URL, 免得明年悄悄失效
-        .alert("假日表来源 (671)", isPresented: $showHolSrc) {
+        .alert("假日表来源", isPresented: $showHolSrc) {   // 671 假日表来源
             TextField("https:// 开头的 JSON 前缀，以 / 结尾", text: $holSrcDraft)
             Button("保存") {
                 HolidayFeed.setSource(holSrcDraft)
@@ -465,7 +465,7 @@ struct RecordsView: View {
                 Spacer(minLength: DS.Space.xs)
                 Button("复制对账") {
                     UIPasteboard.general.string = reconLine
-                    app.showToast("本次对账结果已复制 (749)")
+                    app.showToast("本次对账结果已复制")   // 749 本次对账结果已复制
                 }
                 .font(.caption.weight(.medium))
                 .foregroundStyle(DS.Palette.accentText)
@@ -486,7 +486,7 @@ struct RecordsView: View {
             .foregroundStyle(DS.Palette.textSub)
             .fixedSize(horizontal: false, vertical: true)
         HStack(spacing: DS.Space.s) {
-            Button(holBusy ? "拉取中…" : "更新 \(thisYear) 年假日表 (671)") {
+            Button(holBusy ? "拉取中…" : "更新 \(thisYear) 年假日表") {   // 671 更新
                 holBusy = true
                 holMsg = ""
                 Task {
@@ -519,7 +519,7 @@ struct RecordsView: View {
             }
             Spacer(minLength: 0)
         }
-        Toggle("回前台时自动更新今年 (671)", isOn: Binding(get: { HolidayFeed.autoOn },
+        Toggle("回前台时自动更新今年", isOn: Binding(get: { HolidayFeed.autoOn },   // 671 回前台时自动更新今年
                                                           set: { HolidayFeed.setAuto($0) }))
             .font(.caption)
             .frame(minHeight: DS.Hit.min)
@@ -547,7 +547,7 @@ struct RecordsView: View {
                         .accessibilityHidden(true)
                     // 551: 这句占位文案承诺的三段 (成员 / 凭证 / 备注) 由 `RecordSearch.searchFace`
                     // 一处定义、在 applyFilter 的检索块里落地 —— 少一段就是让用户搜一个搜不到的热区。
-                    TextField("搜索: 成员 / 凭证 / 昨晚 告警 / +指纹 -临时码 (551/554/555)", text: $searchText)
+                    TextField("搜索: 成员 / 凭证 / 昨晚 告警 / +指纹 -临时码", text: $searchText)   // 551/554/555 搜索
                         .font(.subheadline)
                         .foregroundStyle(DS.Palette.text)
                         // 553: "最近搜索"区此前永远是空的 —— 读侧 (history/clearHistory) 接好了,
@@ -595,7 +595,7 @@ struct RecordsView: View {
                 if !RecordSearch.history().isEmpty {
                     VStack(alignment: .leading, spacing: 0) {
                         HStack(spacing: DS.Space.s) {
-                            Text("最近搜索 (553)")
+                            Text("最近搜索")   // 553 最近搜索
                                 .font(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                             Spacer(minLength: 0)
@@ -640,7 +640,7 @@ struct RecordsView: View {
                 // 560 命名过滤视图: 应用 / 删除 (kf_rviews, 与当前组合同源)
                 if !RecordSearch.namedViews().isEmpty {
                     VStack(alignment: .leading, spacing: DS.Space.xs) {
-                        Text("我的过滤 (560)")
+                        Text("我的过滤")   // 560 我的过滤
                             .font(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                         ForEach(RecordSearch.namedViews()) { v in
@@ -691,10 +691,10 @@ struct RecordsView: View {
             }
         } header: {
             HStack {
-                Text("搜索 (551)")
+                Text("搜索")   // 551 搜索
                 Spacer(minLength: DS.Space.s)
                 Menu {
-                    Button { saveAsView() } label: { Label("另存当前组合 (560)", systemImage: "square.and.arrow.down") }
+                    Button { saveAsView() } label: { Label("另存当前组合", systemImage: "square.and.arrow.down") }   // 560 另存当前组合
                 } label: {
                     Image(systemName: "square.and.arrow.down")
                         .font(.system(size: DS.Icon.sm))
@@ -708,7 +708,7 @@ struct RecordsView: View {
     }
     /// 560 把当前 文本+过滤+范围 另存为命名过滤视图 (长期复用)
     private func saveAsView() {
-        let alert = UIAlertController(title: "另存过滤视图 (560)",
+        let alert = UIAlertController(title: "另存过滤视图",   // 560 另存过滤视图
                                       message: "把当前搜索词与筛选组合存为命名视图, 收进「我的过滤」长期复用。",
                                       preferredStyle: .alert)
         alert.addTextField { tf in
@@ -736,7 +736,7 @@ struct RecordsView: View {
                 // 2026-10-13 run 63: 原来把三段拼接 + 两个三元全内联进 Text, 报 type-check 超时。
                 // 先算好再拼。
                 let head = searchText.isEmpty ? "筛选后约 " : "命中约 "
-                let tail = searchText.isEmpty ? "" : " · 实时 (562)"
+                let tail = searchText.isEmpty ? "" : " · 实时"   // 562 实时
                 let cap = capped ? " · 本页已加载 \(rows.count)" : ""
                 Text(head + String(filteredTotal) + " 条" + tail + cap)
                     .font(.footnote)
@@ -823,9 +823,9 @@ struct RecordsView: View {
                 Text("范围")
                     .font(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
-                Picker("搜索范围 (561)", selection: $scope) {
+                Picker("搜索范围", selection: $scope) {   // 561 搜索范围
                     Text("当前锁").tag(0)
-                    Text("全部锁 (770)").tag(1)
+                    Text("全部锁").tag(1)   // 770 全部锁
                 }
                 .pickerStyle(.segmented)
                 .labelsHidden()
@@ -839,7 +839,7 @@ struct RecordsView: View {
                             }
                         }
                     } label: {
-                        Label("换锁 (191)", systemImage: "arrow.left.arrow.right.circle")
+                        Label("换锁", systemImage: "arrow.left.arrow.right.circle")   // 191 换锁
                             .font(.caption.weight(.medium))
                             .foregroundStyle(DS.Palette.accentText)
                     }
@@ -847,7 +847,7 @@ struct RecordsView: View {
                 }
                 if scope == 1 {
                     Button { laneMode.toggle() } label: {
-                        Label(laneMode ? "看时间线" : "泳道 (785)", systemImage: "rectangle.split.3x1")
+                        Label(laneMode ? "看时间线" : "泳道", systemImage: "rectangle.split.3x1")   // 785 泳道
                             .font(.caption.weight(.medium))
                             .foregroundStyle(DS.Palette.accentText)
                             .padding(.horizontal, DS.Space.s)
@@ -873,11 +873,13 @@ struct RecordsView: View {
     @ViewBuilder
     private var filterChips: some View {
         Section {
-            chipRowSection("时段 (564)", selected: filters.segment, items: [("全部", 0), ("早 6-9", 1), ("午 10-14", 2), ("晚 15-21", 3), ("深夜预设 (572)", 4)]) { name, i in
+            // 564 时段
+            // 572 深夜预设
+            chipRowSection("时段", selected: filters.segment, items: [("全部", 0), ("早 6-9", 1), ("午 10-14", 2), ("晚 15-21", 3), ("深夜预设", 4)]) { name, i in
                 _ = name
                 filters.segment = i
             }
-            chipRowSection("工作日/周末 (571)", selected: filters.dayKind, items: [("全部", 0), ("仅工作日", 1), ("仅周末", 2)]) { name, i in
+            chipRowSection("工作日/周末", selected: filters.dayKind, items: [("全部", 0), ("仅工作日", 1), ("仅周末", 2)]) { name, i in   // 571 工作日
                 _ = name
                 filters.dayKind = i
             }
@@ -889,13 +891,13 @@ struct RecordsView: View {
             // 不再让 lineLimit(1) 把文案截成省略号 (静默截断在本仓是缺陷不是风格)。
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: DS.Space.s) {
-                    chipToggle("仅告警 (567)", on: $filters.alarmOnly)
+                    chipToggle("仅告警", on: $filters.alarmOnly)   // 567 仅告警
                     // 565: 点开对勾多选面板, 选中数回显在本 chip 上 (空 = 不限类型)
-                    miniChip(filters.alarmKinds.isEmpty ? "告警类型 (565)"
-                             : "告警类型 \(filters.alarmKinds.count) 项 (565)",
+                    miniChip(filters.alarmKinds.isEmpty ? "告警类型"   // 565 告警类型
+                             : "告警类型 \(filters.alarmKinds.count) 项",   // 565 告警类型
                              on: !filters.alarmKinds.isEmpty) { showAlarmKinds = true }
                     chipToggle("失败 (锁端仅告警级, 569)", on: $filters.failedOnly)
-                    chipToggle(reversed ? "最早在前" : "正序回放 (570)", on: $reversed)
+                    chipToggle(reversed ? "最早在前" : "正序回放", on: $reversed)   // 570 正序回放
                 }
                 .padding(.vertical, DS.Space.xxs)
             }
@@ -910,21 +912,21 @@ struct RecordsView: View {
                 // 但**不动锁端日志、也不解除任何冷却/挂起** —— 不写清就会被当成"解锁失败的保险开关"。
                 let failN = macs.reduce(0) { $0 + DB.failEvents($1).count }
                 HStack(spacing: DS.Space.s) {
-                    Text("本机失败标记 \(failN) 条 (92)")
+                    Text("本机失败标记 \(failN) 条")   // 92 本机失败标记
                         .font(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                     Spacer(minLength: 0)
                     if failN > 0 {
                         Button("清空本机失败标记") {
                             confirmDestructive("清空本机失败标记",
-                                "将删除本机记录的 \(failN) 条开锁失败标记 (92)。它们会以「失败」行混在时间线里, "
+                                "将删除本机记录的 \(failN) 条开锁失败标记。它们会以「失败」行混在时间线里, "   // 92 将删除本机记录的
                                 + "清掉后这些行就消失; 锁端日志不受影响, 也不会因此解除任何冷却或挂起。",
                                 confirmTitle: "清空") {
                                 for m in macs { DB.clearFailEvents(m) }
                                 loadFromCache()
                                 alarmTick += 1
                                 SensitiveLedger().record("清空失败标记", target: "\(failN) 条")
-                                app.lock.log("warn", "清空本机开锁失败标记 \(failN) 条 (92)")
+                                app.lock.log("warn", "清空本机开锁失败标记 \(failN) 条")   // 92 清空本机开锁失败标记
                                 app.showToast("已清空本机失败标记 (\(failN) 条)")
                             }
                         }
@@ -941,7 +943,7 @@ struct RecordsView: View {
             // 只在选了"深夜预设"这一档时出现 —— 它是这档的定义, 不该常驻在筛选行里。
             if filters.segment == 4 {
                 HStack(spacing: DS.Space.s) {
-                    Text("深夜区间 (676)").font(.caption).foregroundStyle(DS.Palette.textSub)
+                    Text("深夜区间").font(.caption).foregroundStyle(DS.Palette.textSub)   // 676 深夜区间
                     Spacer(minLength: DS.Space.s)
                     Picker("起点", selection: Binding(get: { RecordSearch.nightFrom },
                                                       set: { RecordSearch.setNightFrom($0) })) {
@@ -961,7 +963,7 @@ struct RecordsView: View {
                         .font(.caption2).foregroundStyle(DS.Palette.warn)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                Toggle("节假日当日顺延 2 小时 (672)", isOn: Binding(get: { RecordSearch.holidayExtendOn },
+                Toggle("节假日当日顺延 2 小时", isOn: Binding(get: { RecordSearch.holidayExtendOn },   // 672 节假日当日顺延
                                                                    set: { RecordSearch.setHolidayExtend($0) }))
                     .font(.caption)
                     .frame(minHeight: DS.Hit.min)
@@ -974,7 +976,7 @@ struct RecordsView: View {
             }
         } header: {
             HStack {
-                Text("筛选 (564/571/572/567/568/569)")
+                Text("筛选")   // 564/571/572/567/568/569 筛选
                 Spacer(minLength: DS.Space.s)
                 if activeFilters {
                     Button("复位") {
@@ -1083,7 +1085,7 @@ struct RecordsView: View {
             Section {
                 if n >= 2 {
                     Label {
-                        Text("连续 \(n) 天有人开门 · 这个家一直在 (590)")
+                        Text("连续 \(n) 天有人开门 · 这个家一直在")   // 590 连续
                             .fixedSize(horizontal: false, vertical: true)
                     } icon: {
                         Image(systemName: "flame").accessibilityHidden(true)
@@ -1098,12 +1100,12 @@ struct RecordsView: View {
                             .fill(openGapDots[i].open ? DS.Palette.ok : DS.Palette.hairline)
                             .frame(width: 6, height: 6)
                     }
-                    Text("近 7 天 (590)")
+                    Text("近 7 天")   // 590 界面文案
                         .font(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                 }
                 .accessibilityElement(children: .combine)
-                .accessibilityLabel("近 7 天开门断档 (590)")
+                .accessibilityLabel("近 7 天开门断档")   // 590 天开门断档
             }
         }
     }
@@ -1118,7 +1120,9 @@ struct RecordsView: View {
         if let f = times.first, let l = times.last {
             Section {
                 Label {
-                    Text(f == l ? "今日 \(f) 开过一次门 (935)" : "今日 \(f) 第一次开门 · \(l) 最近一次 (935)")
+                    // 935 今日
+                    // 935 今日
+                    Text(f == l ? "今日 \(f) 开过一次门" : "今日 \(f) 第一次开门 · \(l) 最近一次")
                         .fixedSize(horizontal: false, vertical: true)
                 } icon: {
                     Image(systemName: "clock").accessibilityHidden(true)
@@ -1155,7 +1159,7 @@ struct RecordsView: View {
         travelUntil = Self.dayKey(Date().addingTimeInterval(Double(days) * 86400))
         DB.store.set("kf_travel_until", travelUntil)
         travelDismissed = true
-        app.showToast("已标记出行至 " + travelUntil + " (1016)")
+        app.showToast("已标记出行至 " + travelUntil)   // 1016 已标记出行至
     }
     @ViewBuilder
     private var travelBanner: some View {
@@ -1167,7 +1171,9 @@ struct RecordsView: View {
                         .foregroundStyle(DS.Palette.textSub)
                         .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(travelActive ? "出行中 (1016)" : "近期没人回家? (1016)")
+                        // 1016 出行中
+                        // 1016 近期没人回家
+                        Text(travelActive ? "出行中" : "近期没人回家?")
                             .font(.footnote.weight(.semibold))
                             .lineLimit(1)
                             .foregroundStyle(DS.Palette.text)
@@ -1194,7 +1200,7 @@ struct RecordsView: View {
                         if travelActive {
                             travelUntil = ""
                             DB.store.set("kf_travel_until", "")
-                            app.showToast("已结束出行标记 (1016)")
+                            app.showToast("已结束出行标记")   // 1016 已结束出行标记
                         } else {
                             travelDismissed = true
                         }
@@ -1209,7 +1215,7 @@ struct RecordsView: View {
                 }
                 .padding(.vertical, DS.Space.xs)
             }
-            .confirmationDialog("标记出行日期段 (1016)", isPresented: $showTravelPick, titleVisibility: .visible) {
+            .confirmationDialog("标记出行日期段", isPresented: $showTravelPick, titleVisibility: .visible) {   // 1016 标记出行日期段
                 Button("7 天") { markTravel(days: 7) }
                 Button("14 天") { markTravel(days: 14) }
                 Button("30 天") { markTravel(days: 30) }
@@ -1352,7 +1358,7 @@ struct RecordsView: View {
                             .frame(minHeight: DS.Hit.min)
                     }
                 } header: {
-                    Text("按天勾选 (716)")
+                    Text("按天勾选")   // 716 按天勾选
                 } footer: {
                     Text("只导出勾选那些天的行; CSV 走剪贴板 (与 698 同一通路), 不上传、不落盘。")
                         .font(.caption).foregroundStyle(DS.Palette.textSub)
@@ -1362,7 +1368,7 @@ struct RecordsView: View {
                     Button("清空") { rangeSel = [] }
                 }
             }
-            .navigationTitle("选区导出 (716)")
+            .navigationTitle("选区导出")   // 716 选区导出
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("复制 CSV") { copyRangeCSV() }.disabled(rangeSel.isEmpty)
@@ -1385,7 +1391,7 @@ struct RecordsView: View {
             out.append([esc(r.dayKey), esc(r.time), esc(r.title), esc(who), esc(r.lockName)].joined(separator: ","))
         }
         UIPasteboard.general.string = out.joined(separator: "\n")
-        app.showToast("已复制 \(rows.count) 行 CSV (716)")
+        app.showToast("已复制 \(rows.count) 行 CSV")   // 716 已复制
     }
 
     /// 698 上周小结: 上一个完整自然周 (周一–周日) 的 CSV + 三句话摘要, 一起进剪贴板。
@@ -1396,7 +1402,7 @@ struct RecordsView: View {
         let text = d.lines.joined(separator: "\n") + "\n\n" + d.csv
         UIPasteboard.general.string = text
         let rows = max(d.csv.split(separator: "\n").count - 1, 0)
-        app.showToast("已复制上周小结: \(d.lines.count) 句摘要 + \(rows) 行 CSV (698)")
+        app.showToast("已复制上周小结: \(d.lines.count) 句摘要 + \(rows) 行 CSV")   // 698 已复制上周小结
     }
 
     /// 1040 掉电观察行: 采样表里"同一本地日掉电 > 20 个百分点"的日子, 在时间线顶部插一行提示。
@@ -1407,7 +1413,7 @@ struct RecordsView: View {
         if let d = drops.first {
             Section {
                 Label {
-                    Text("\(d.day) 单日掉电约 \(d.drop)% (\(d.from)% → \(d.to)%) — 建议查一下门体是否被卡住、或电池是否该换 (1040)")
+                    Text("\(d.day) 单日掉电约 \(d.drop)% (\(d.from)% → \(d.to)%) — 建议查一下门体是否被卡住、或电池是否该换")   // 1040 单日掉电约
                         .fixedSize(horizontal: false, vertical: true)
                 } icon: {
                     Image(systemName: "battery.25percent").accessibilityHidden(true)
@@ -1431,7 +1437,7 @@ struct RecordsView: View {
         if n > 0 {
             Section {
                 Label {
-                    Text("去年今日: \(n) 条开门记录 (654)")
+                    Text("去年今日: \(n) 条开门记录")   // 654 去年今日
                         .fixedSize(horizontal: false, vertical: true)
                 } icon: {
                     Image(systemName: "calendar.badge.clock").accessibilityHidden(true)
@@ -1644,14 +1650,14 @@ struct RecordsView: View {
                         Button {
                             landDay(g.key)
                         } label: {
-                            Text("含防撬/试错 (596)")
+                            Text("含防撬/试错")   // 596 含防撬
                                 .font(.caption2.weight(.semibold))
                                 .foregroundStyle(DS.Palette.danger)
                                 .frame(minHeight: DS.Hit.min)
                                 .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel("该日有防撬、试错锁定或键盘锁定告警, 点按只看这一天 (596)")
+                        .accessibilityLabel("该日有防撬、试错锁定或键盘锁定告警, 点按只看这一天")   // 596 该日有防撬
                     }
                     // 594 日型色带 (4pt 竖条): 工作日靛蓝 / 周末青绿 / 法定节假日橙 (判据见 DayGroup.dayKind)。
                     // 每天都出现 —— 三档互比才有"哪天不是平常日"的读法; 原先只在节假日给 3pt 橙条。
@@ -1748,7 +1754,7 @@ struct RecordsView: View {
             if let end = dayEnd, dayFull > 1 {
                 Text("当日最晚 \(end) · 全天 \(dayFull) 条"
                      + (shownEvents == dayFull ? "" : " · 当前显示 \(shownEvents) 条")
-                     + " (593)")
+                    )   // 593 界面文案
                     .font(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .padding(.horizontal, DS.Space.l)
@@ -1798,7 +1804,7 @@ struct RecordsView: View {
     private func mergedRow(_ r: RowVM) -> some View {
         let total = r.mergedTail.count + 1
         // 2026-10-13 run 63: 原来把三段拼接内联进 Text, 整个 mergedRow 报 type-check 超时。先算好。
-        let mergedLabel = r.title + " · 同一分钟内 " + String(total) + " 次 (592)"
+        let mergedLabel = r.title + " · 同一分钟内 " + String(total) + " 次"   // 592 界面文案
         // 2026-10-13 run 64: 两个 a11y 串原来内联在修饰符里, 与 label 一起把表达式拖超时。先算好。
         let mergedA11y = "连续 " + String(total) + " 次: " + r.title + ", 点按展开"
         let mergedHint = "点按展开这 " + String(total) + " 条"
@@ -1962,7 +1968,7 @@ struct RecordsView: View {
             } else {
                 // 打不开要说得出为什么。原先这里 `detailRec = lookupRec(r)` 拿到 nil 就什么都不发生 ——
                 // 那正是 576 在默认「当前锁」视图里坏掉两个版本时用户看到的形状: 行能点, 点了没反应。
-                app.showToast("本机台账里没有这一行对应的记录数据 (576) — 点右上角重新读取后再试")
+                app.showToast("本机台账里没有这一行对应的记录数据 — 点右上角重新读取后再试")   // 576 本机台账里没有这一行
             }
         }
         // 185 左滑快捷操作: 只暴露行本来就有能力 (714 复制 / 577 跳凭证 / 186 备注 / 188 标旗)
@@ -1996,25 +2002,25 @@ struct RecordsView: View {
                 UIPasteboard.general.string = "[" + (r.lockName.isEmpty ? app.displayName : r.lockName) + "] " + r.time + " " + r.title
                 app.showToast("已复制本条记录")
             } label: {
-                Label("复制为文本 (714)", systemImage: "doc.on.doc")
+                Label("复制为文本", systemImage: "doc.on.doc")   // 714 复制为文本
             }
             // 761 溯源: 复制本机缓存行标识 (锁日志序号 idx, 或手机侧事件的 f_/c_ 前缀键) + 日期 + 锁 MAC,
             // 便于和诊断包里的日志逐条对上。不假装能查锁端数据库。
             Button {
                 UIPasteboard.general.string = "row=" + r.key + " · day=" + r.dayKey
                     + " · mac=" + (r.rowMac.isEmpty ? mac : r.rowMac)
-                app.showToast("已复制行标识 (761)")
+                app.showToast("已复制行标识")   // 761 已复制行标识
             } label: {
-                Label("复制行标识 (761)", systemImage: "number")
+                Label("复制行标识", systemImage: "number")   // 761 复制行标识
             }
             if !r.credKey.isEmpty {
                 Button {
                     app.pendingCredNav = r.credKey
                     app.pendingCredNavMac = r.rowMac.isEmpty ? mac : r.rowMac
                     app.tabSelection = 1
-                    app.showToast("已定位到来源凭证 (577)")
+                    app.showToast("已定位到来源凭证")   // 577 已定位到来源凭证
                 } label: {
-                    Label("定位来源凭证 (577)", systemImage: "key.horizontal")
+                    Label("定位来源凭证", systemImage: "key.horizontal")   // 577 定位来源凭证
                 }
             }
         }
@@ -2041,14 +2047,18 @@ struct RecordsView: View {
         RecordOverlay.setNote(m, t.key, noteDraft)
         noteTarget = nil
         applyFilter()
-        app.showToast(noteDraft.trimmingCharacters(in: .whitespaces).isEmpty ? "备注已清空 (186)" : "备注已保存在这台手机 (186)")
+        // 186 备注已清空
+        // 186 备注已保存在这台手机
+        app.showToast(noteDraft.trimmingCharacters(in: .whitespaces).isEmpty ? "备注已清空" : "备注已保存在这台手机")
     }
 
     private func toggleRowFlag(_ r: RowVM) {
         let m = r.rowMac.isEmpty ? mac : r.rowMac
         let on = RecordOverlay.toggleFlag(m, r.key)
         applyFilter()   // 行首红旗是渲染期直读覆盖层, 必须踢一次重建
-        app.showToast(on ? "已标为异常, 行首常显红旗 (188)" : "已取消标旗 (188)")
+        // 188 已标为异常
+        // 188 已取消标旗
+        app.showToast(on ? "已标为异常, 行首常显红旗" : "已取消标旗")
     }
 
     /// 557 命中词高亮: 搜索词在行文案中染 accentText 浅底 (分段 Text, 换行跟随整体流)
@@ -2188,7 +2198,7 @@ struct RecordsView: View {
     /// 791 认领: 列成员选择, 写入 MemberHub.claims 覆盖层 (本机, 锁端数据不动)
     private func claimRow(_ r: RowVM) {
         let kindWord = r.whoKind.map { Attribution.words[$0] ?? "记录" } ?? "记录"
-        let alert = UIAlertController(title: "认领未归属记录 (791)",
+        let alert = UIAlertController(title: "认领未归属记录",   // 791 认领未归属记录
                                       message: "台账推断这条「" + kindWord + "开门」发生在 " + r.time
                                               + ", 认领给哪位成员?",
                                       preferredStyle: .actionSheet)
@@ -2228,7 +2238,7 @@ struct RecordsView: View {
                         }
                     }
                     .foregroundStyle(DS.Palette.accentText)
-                    Button("清掉全部过滤 (573)") { sel = ""; searchText = ""; filters = QueryFilters() }
+                    Button("清掉全部过滤") { sel = ""; searchText = ""; filters = QueryFilters() }   // 573 清掉全部过滤
                         .font(.caption.weight(.medium))
                         .foregroundStyle(DS.Palette.accentText)
                 }
@@ -2270,7 +2280,7 @@ struct RecordsView: View {
                         Button("了解这里记什么") { showSampleGuide = true }
                             .buttonStyle(SecondaryActionStyle(fullWidth: false))
                     }
-                    Text("下面三条是示例, 只说明真实记录读进来长什么样 · 点一条看怎么开始 (808)")
+                    Text("下面三条是示例, 只说明真实记录读进来长什么样 · 点一条看怎么开始")   // 808 下面三条是示例
                         .font(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
@@ -2278,7 +2288,7 @@ struct RecordsView: View {
                         sampleRow(i)
                     }
                     // 845 空态直通生成器 (此前只在帮助中心演练场): 口径与 HelpCenter 一致, 不另造按钮语义
-                    Button("生成 7 天示例记录 (845)") {
+                    Button("生成 7 天示例记录") {   // 845 生成
                         DemoKit.generateSevenDaySamples()
                         app.loadDevices()
                         app.showToast("已生成 7 天 demo_ 样例记录, 顶部横幅可一键清除")
@@ -2329,7 +2339,7 @@ struct RecordsView: View {
             .frame(minHeight: DS.Hit.min)
         }
         .buttonStyle(PlainButtonStyle())
-        .accessibilityLabel("示例条目 " + clock + " " + word + ", 点按看真实数据从哪里开始 (808)")
+        .accessibilityLabel("示例条目 " + clock + " " + word + ", 点按看真实数据从哪里开始")   // 808 点按看真实数据从哪里
     }
 
     private var runningRow: some View {
@@ -2363,7 +2373,7 @@ struct RecordsView: View {
                 .accessibilityHidden(true)
             }
             if AXFlags.reduceMotion {
-                Text("减少动态效果下不闪动，读好后整页自动替换 (19)")
+                Text("减少动态效果下不闪动，读好后整页自动替换")   // 19 减少动态效果下不闪动
                     .font(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
             }
@@ -2384,7 +2394,7 @@ struct RecordsView: View {
                         if rows.contains(where: { $0.whoId == m.id }) { chip(m.id, MemberHub.aliasName(m.id) ?? m.name) }   // 919: chip 同走别名开关
                     }
                     if rows.contains(where: { $0.whoId == nil && $0.whoKind == "temp" }) {
-                        chip(MemberHub.visitorId, "访客 (793)")
+                        chip(MemberHub.visitorId, "访客")   // 793 访客
                     }
                     if rows.contains(where: { $0.whoId == nil && $0.whoKind != "temp" }) {
                         chip("__unknown", "无法识别 · 可认领")
@@ -2398,7 +2408,7 @@ struct RecordsView: View {
                             Button {
                                 app.pendingMemberAdd = true   // 817: 到了成员中心直接弹建档向导, 不再只指路
                                 app.tabSelection = 3
-                                app.showToast("在「家人与钥匙」里添加成员 (817)")
+                                app.showToast("在「家人与钥匙」里添加成员")   // 817 家人与钥匙
                             } label: {
                                 HStack(spacing: DS.Space.xs) {
                                     Text(sample)
@@ -2415,7 +2425,7 @@ struct RecordsView: View {
                                 .contentShape(Capsule())
                             }
                             .buttonStyle(PressableButtonStyle())
-                            .accessibilityLabel("还没有成员，去添加成员 (817)")
+                            .accessibilityLabel("还没有成员，去添加成员")   // 817 还没有成员
                         }
                     }
                 }
@@ -2460,7 +2470,7 @@ struct RecordsView: View {
     private var laneView: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: DS.Space.m) {
-                Text("泳道时间线 (785): 最近 14 天 × 各锁的开门量, 点阵越密越热闹")
+                Text("泳道时间线: 最近 14 天 × 各锁的开门量, 点阵越密越热闹")   // 785 泳道时间线
                     .font(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -2634,13 +2644,13 @@ struct RecordsView: View {
             if noSurplusReport {
                 // 锁端没报告剩余条数 → 对账**不可判**; 这一种最容易被写成"已拉全", 那是假安慰
                 pullGap = "锁端未报告剩余条数 (KLV#04)，本次只读到 \(events.count) 条 — 无法判断是否拉全"
-                reconLine = "锁 \(app.displayName) · 本次拉取 \(events.count) 条 · 锁端未报告剩余 · 对账不可判 · \(Self.stamp.string(from: Date())) (749)"
+                reconLine = "锁 \(app.displayName) · 本次拉取 \(events.count) 条 · 锁端未报告剩余 · 对账不可判 · \(Self.stamp.string(from: Date()))"   // 749 本次拉取
             } else if let gap = lastSurplus, gap > 0 {
                 pullGap = "锁端仍报剩余 \(gap) 条，本次取 \(events.count) 条（翻页上限 20 页 / 100 条）— 属未拉全，不是记录缺失"
-                reconLine = "锁 \(app.displayName) · 本次拉取 \(events.count) 条 · 锁端报告剩余 \(gap) 条 · 未拉全 · \(Self.stamp.string(from: Date())) (749)"
+                reconLine = "锁 \(app.displayName) · 本次拉取 \(events.count) 条 · 锁端报告剩余 \(gap) 条 · 未拉全 · \(Self.stamp.string(from: Date()))"   // 749 本次拉取
             } else {
                 pullGap = nil
-                reconLine = "锁 \(app.displayName) · 本次拉取 \(events.count) 条 · 锁端报告无剩余 · 本次会话内已拉全 · \(Self.stamp.string(from: Date())) (749)"
+                reconLine = "锁 \(app.displayName) · 本次拉取 \(events.count) 条 · 锁端报告无剩余 · 本次会话内已拉全 · \(Self.stamp.string(from: Date()))"   // 749 本次拉取
             }
             // 存取必须同型: set(Int) 落 JSON 数字, getString 解 String 必失败 → lastSyncAt 恒 nil,
             // 刚读完也会误报"未连接·读取时间未知"
@@ -2842,7 +2852,7 @@ struct RecordsView: View {
         app.pendingRecordsMember = nil
         guard !id.isEmpty else { return }
         guard DB.member(id) != nil else {
-            app.showToast("那位成员已不在本机档案里 (582) — 记录过滤没有改变")
+            app.showToast("那位成员已不在本机档案里 — 记录过滤没有改变")   // 582 那位成员已不在本机档
             return
         }
         sel = id
@@ -2857,7 +2867,7 @@ struct RecordsView: View {
         let t = q.trimmingCharacters(in: .whitespaces)
         guard !t.isEmpty else { return }
         searchText = t
-        app.showToast("已带入「\(t)」，可继续编辑 (563)")
+        app.showToast("已带入「\(t)」，可继续编辑")   // 563 已带入
     }
 
     /// 585 深链落地: 按 `mac#行键` 精确找那一条并开详情。
@@ -2870,7 +2880,7 @@ struct RecordsView: View {
             // 583: 闪与滚**等详情卡关闭后**再做 (见 flashOnClose 的说明)
             flashOnClose = RecordOverlay.oid(mac: hit.mac, rowKey: hit.key)
         } else {
-            app.showToast("这条记录不在当前显示范围里 (585) — 可能被筛选挡掉、缓存已重整，或锁已删除")
+            app.showToast("这条记录不在当前显示范围里 — 可能被筛选挡掉、缓存已重整，或锁已删除")   // 585 这条记录不在当前显示
         }
     }
 
@@ -2889,7 +2899,7 @@ struct RecordsView: View {
         if !dayFocus.isEmpty {
             HStack(spacing: DS.Space.s) {
                 Image(systemName: "calendar.day.timeline.left").accessibilityHidden(true)
-                Text("只看 \(dayFocus) 这一天 (586)")
+                Text("只看 \(dayFocus) 这一天")   // 586 只看
                     .font(.caption.weight(.medium))
                     .foregroundStyle(DS.Palette.text)
                 Spacer(minLength: DS.Space.s)
@@ -2940,7 +2950,7 @@ struct RecordsView: View {
         if groups.contains(where: { $0.key == key && !$0.isGap }) {
             dayFocus = key
         } else {
-            app.showToast("那一天在本机台账里没有行 (586) — 未拉取、已过缓存上限，或日期写错")
+            app.showToast("那一天在本机台账里没有行 — 未拉取、已过缓存上限，或日期写错")   // 586 那一天在本机台账里没
         }
     }
 
@@ -2949,11 +2959,11 @@ struct RecordsView: View {
         // "有没有节假日"两件事才能确定它到底说什么 —— 那是把分支藏在字面量里。
         let line: String
         if g.gapDays > 7 {
-            line = "其间 \(g.gapDays) 天无记录 (657)"
+            line = "其间 \(g.gapDays) 天无记录"   // 657 其间
         } else {
-            line = "当日无开门记录 (657)"
+            line = "当日无开门记录"   // 657 当日无开门记录
         }
-        let withHoliday = g.gapHoliday.map { line + " · 含\($0)，假期外出？ (675)" } ?? line
+        let withHoliday = g.gapHoliday.map { line + " · 含\($0)，假期外出？" } ?? line   // 675 假期外出
         return HStack(spacing: DS.Space.s) {
             Capsule()
                 .fill(DS.Palette.hairline)
@@ -3250,7 +3260,7 @@ struct RecordsView: View {
                         Button(m) { monthJump = m }
                     }
                 } label: {
-                    Label(monthJump.isEmpty ? "按月份跳转 (187)" : "只看 \(monthJump)",
+                    Label(monthJump.isEmpty ? "按月份跳转" : "只看 \(monthJump)",   // 187 按月份跳转
                           systemImage: "calendar")
                         .font(.caption.weight(.medium))
                 }
@@ -3320,14 +3330,14 @@ struct AlarmKindsSheet: View {
                         .accessibilityAddTraits(sel.contains(t) ? .isSelected : [])
                     }
                 } header: {
-                    Text("只看选中的类型 · 已选 \(sel.count) 项 (565)")
+                    Text("只看选中的类型 · 已选 \(sel.count) 项")   // 565 只看选中的类型
                 } footer: {
                     Text("不选 = 不限类型。列表按锁端日志实际有的告警类型给出; 协议无「胁迫」类告警, 不列 (与 725 同口径)。")
                         .font(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                 }
             }
-            .navigationTitle("告警类型 (565)")
+            .navigationTitle("告警类型")   // 565 告警类型
             .scrollContentBackground(.hidden)
             .dsScreenBackground()
             .toolbar {
@@ -3383,7 +3393,7 @@ struct ActiveCredsSheet: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 } header: {
-                    Text("活跃凭证排序 (574)")
+                    Text("活跃凭证排序")   // 574 活跃凭证排序
                 }
             }
             .navigationTitle("活跃凭证")
@@ -3430,7 +3440,7 @@ struct OutWinSheet: View {
                                     .font(.footnote.monospacedDigit())
                                     .foregroundStyle(DS.Palette.text)
                             }
-                            Text("临时码窗口 " + w.window + " 外仍产生开门 — 约越界 (575)")
+                            Text("临时码窗口 " + w.window + " 外仍产生开门 — 约越界")   // 575 外仍产生开门
                                 .font(.caption)
                                 .foregroundStyle(DS.Palette.warn)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -3550,7 +3560,7 @@ struct RecordsSampleGuideView: View {
                         .foregroundStyle(DS.Palette.text)
                         .fixedSize(horizontal: false, vertical: true)
                 } header: {
-                    Text("真实数据从这里开始 (808)")
+                    Text("真实数据从这里开始")   // 808 真实数据从这里开始
                 }
                 Section {
                     stepRow(1, "带着手机走到门锁前, 让蓝牙能连上它。")
@@ -3590,12 +3600,12 @@ struct RecordsSampleGuideView: View {
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(PlainButtonStyle())
-                    .accessibilityHint("切到设备页, 在那里连接这把锁 (136 用的同一个出口)")
+                    .accessibilityHint("切到设备页, 在那里连接这把锁")   // 136 切到设备页
                 } header: {
                     Text("现在就试")
                 }
             }
-            .navigationTitle("记录空态 (808)")
+            .navigationTitle("记录空态")   // 808 记录空态
             .scrollContentBackground(.hidden)
             .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }

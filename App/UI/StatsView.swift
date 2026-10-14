@@ -116,7 +116,7 @@ struct StatsView: View {
                     // 包12: 统计页导出入口 — 复用记录 Tab 导出中心 (范围默认当月, 685/701)
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Menu {
-                            Button("导出与分享 (685)") { showExport = true }
+                            Button("导出与分享") { showExport = true }   // 685 导出与分享
                         } label: {
                             Image(systemName: "square.and.arrow.up")
                         }
@@ -169,13 +169,13 @@ struct StatsView: View {
                 Section {
                     lockPicker
                     // 782 口径开关: 原句要求统计页可选择"排除闲置锁" —— 落点就是这处数据源选择列表
-                    Toggle("排除闲置锁 (782)", isOn: Binding(
+                    Toggle("排除闲置锁", isOn: Binding(   // 782 排除闲置锁
                         get: { excludeIdle },
                         set: { DB.store.set("kf_stats_excl_idle", $0); excludeIdle = $0 }))
                     Text("闲置 = 本机日志里超 30 天无开门行 (说的是「没读到」不是「没人开」, 与对照页同判据)。开关只收起选择列表, 已在看的锁不受影响。")
                         .font(.caption2).foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
-                } header: { Text("数据源 · 每锁独立统计 (772/782)") }
+                } header: { Text("数据源 · 每锁独立统计") }   // 772/782 数据源
                 Section { windowChips; breadcrumbRow } header: { Text("窗口") }
                 if m.isDegraded {
                     Section {
@@ -232,7 +232,7 @@ struct StatsView: View {
         if DB.keychains().count >= 2 {
             Section {
                 NavigationLink { LockCompareView() } label: {
-                    Label("多锁对比 (775/783/781/782)", systemImage: "rectangle.split.2x1")
+                    Label("多锁对比", systemImage: "rectangle.split.2x1")   // 775/783/781/782 多锁对比
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(DS.Palette.accentText)
                         .frame(minHeight: DS.Hit.min)
@@ -709,10 +709,10 @@ struct StatsView: View {
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("区间刷选轨道")
                 // 拖动是纯手势，VoiceOver 拿不到它 —— 指回 638 那条真正能操作的路，而不是假装有替代。
-                .accessibilityHint("本轨道靠左右拖动选择区间，读屏用不了。要单日下钻请点上方趋势图 (638)")
+                .accessibilityHint("本轨道靠左右拖动选择区间，读屏用不了。要单日下钻请点上方趋势图")   // 638 本轨道靠左右拖动选择
                 HStack(spacing: DS.Space.s) {
                     Text(brush.map { "刷选 " + $0.lowerBound + " ~ " + $0.upperBound }
-                         ?? "在轨道上左右拖动选一段区间，下面的明细跟着换 (621)")
+                         ?? "在轨道上左右拖动选一段区间，下面的明细跟着换")   // 621 在轨道上左右拖动选一
                         .font(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .lineLimit(2)
@@ -806,7 +806,7 @@ struct StatsView: View {
                 .font(.footnote)
                 .foregroundStyle(DS.Palette.textSub)
             if d.folded {
-                Text("这一档窗口 ≥\(m.longWindowDays) 天: 逐条 \(d.hitCount) 条已按 (日, 时) 折成 \(d.bucketCount) 个小时桶 (646)")
+                Text("这一档窗口 ≥\(m.longWindowDays) 天: 逐条 \(d.hitCount) 条已按 (日, 时) 折成 \(d.bucketCount) 个小时桶")   // 646 这一档窗口
                     .font(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -836,11 +836,11 @@ struct StatsView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityElement(children: .combine)
-                .accessibilityHint(d.folded ? "点按跳到该小时桶最近一条并高亮 (170)"
-                                            : "点按跳到记录页这条并高亮 (170)")
+                .accessibilityHint(d.folded ? "点按跳到该小时桶最近一条并高亮"   // 170 点按跳到该小时桶最近
+                                            : "点按跳到记录页这条并高亮")   // 170 点按跳到记录页这条并
             }
             if d.isEmpty {
-                Text("这段区间里没有开门或告警记录 —— 把轨道拖宽，或看上方趋势的空窗带 (610)")
+                Text("这段区间里没有开门或告警记录 —— 把轨道拖宽，或看上方趋势的空窗带")   // 610 这段区间里没有开门或
                     .font(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
             }
@@ -852,7 +852,7 @@ struct StatsView: View {
     @ViewBuilder
     private func brushSection(_ m: StatsKit.StatModel) -> some View {
         if let b = brush, !wideSplitTrend {
-            Section("「" + b.lowerBound + " ~ " + b.upperBound + "」区间明细 (621)") {
+            Section("「" + b.lowerBound + " ~ " + b.upperBound + "」区间明细") {   // 621 区间明细
                 brushDetailBody(m, brushData(m, b))
                     .padding(.horizontal, DS.Space.gutter)
             }
@@ -866,7 +866,7 @@ struct StatsView: View {
     @ViewBuilder
     private func brushDetailSide(_ m: StatsKit.StatModel, _ b: ClosedRange<String>) -> some View {
         VStack(alignment: .leading, spacing: DS.Space.xs) {
-            Text("「" + b.lowerBound + " ~ " + b.upperBound + "」区间明细 (621)")
+            Text("「" + b.lowerBound + " ~ " + b.upperBound + "」区间明细")   // 621 区间明细
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -903,7 +903,7 @@ struct StatsView: View {
         // 让它出现 12.5 这种刻度是**假精度** —— 读数的人会以为中间真有个半次。
         let topVal = m.hourStats.reduce(0) { max($0, max($1.opens, $1.alarms)) }
         let step = topVal <= 20 ? 5 : (topVal <= 60 ? 10 : (topVal <= 200 ? 20 : 50))
-        Section("24 小时分布 · 点柱下钻 (600)") {
+        Section("24 小时分布 · 点柱下钻") {   // 600 小时分布
             Chart(m.hourStats) { s in
                 // 614: 同一小时内"正常开门"与"告警"各自成柱**并排**。
                 // 原写法只有两条 BarMark 画在同一个 x 上、谁都没带 `position(by:)`, 而注释当时写着
@@ -957,7 +957,7 @@ struct StatsView: View {
             // 644: 逐柱点读之外再给一句整段摘要 —— 听柱形图要一柱一柱点，
             // "峰值在哪一小时"是听读者最想要的那一个结论，不该让他自己点数。
             if let p = peak {
-                Text("峰值在 \(TimeWord.word(Int(p.hour))) \(p.hour) 时，开门 \(p.opens) 次；逐柱可用 VoiceOver 点读 (644)")
+                Text("峰值在 \(TimeWord.word(Int(p.hour))) \(p.hour) 时，开门 \(p.opens) 次；逐柱可用 VoiceOver 点读")   // 644 峰值在
                     .font(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -973,7 +973,7 @@ struct StatsView: View {
         let barDays = m.recentBarDays          // 13 固定 7 天 (不跟 678 周族档), 标题那句与 suffix 的参数同一个出处
         let days = Array(m.dailyPoints.suffix(barDays))
         if days.count >= 2 {
-            Section("近 \(barDays) 天 · 逐日柱 (13)") {
+            Section("近 \(barDays) 天 · 逐日柱") {   // 13 逐日柱
                 Chart(days) { p in
                     BarMark(x: .value("日", p.day, unit: .day), y: .value("开门", p.opens))
                         .foregroundStyle(DS.Palette.accent)
@@ -988,7 +988,7 @@ struct StatsView: View {
                 }
                 .frame(height: 120)
                 .padding(.horizontal, DS.Space.gutter)
-                Text("只统计本机读到的日子 (13)；少于两天时整节不出现 —— 一根柱子谈不上「形状」。")
+                Text("只统计本机读到的日子；少于两天时整节不出现 —— 一根柱子谈不上「形状」。")   // 13 只统计本机读到的日子
                     .font(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -1004,7 +1004,7 @@ struct StatsView: View {
     private func heatmapSection(_ m: StatsKit.StatModel) -> some View {
         let days = m.dailyPoints
         if !days.isEmpty {
-            Section("月度热力格 (14)") {
+            Section("月度热力格") {   // 14 月度热力格
                 ScrollView(.horizontal, showsIndicators: false) {
                     LazyHGrid(rows: Array(repeating: GridItem(.fixed(10), spacing: 2), count: 7),
                               spacing: 2) {
@@ -1067,7 +1067,7 @@ struct StatsView: View {
                     .accessibilityElement(children: .contain)
                 }
             } header: {
-                Text("假期最后 \(days.count) 天 · 逐时开门 (608)")
+                Text("假期最后 \(days.count) 天 · 逐时开门")   // 608 假期最后
             } footer: {
                 Text("放假日按本机已收录的公告判定；峰值只到「时」这一档 (日志只到分)。"
                      + "只统计窗口内读到的日志 —— 没读到的日子不算没开门。")
@@ -1137,7 +1137,7 @@ struct StatsView: View {
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel("作息雷达：" + parts.map { $0.name + " " + $0.span + " 时 " + String($0.opens) + " 次" }.joined(separator: "，"))
             } header: {
-                Text("作息雷达 · 早/午/晚/深夜 (602)")
+                Text("作息雷达 · 早/午/晚/深夜")   // 602 作息雷达
             } footer: {
                 // 676: 深夜轴跟随「夜间时段」设置 (与 572 深夜预设同一份配置), 不再写死 22–04 ——
                 // 页脚原先钉着一句"深夜算 22:00–04:59", 用户把配置改成 22–6 后它就成了假话。
@@ -1158,7 +1158,7 @@ struct StatsView: View {
     private func alarmScatterSection(_ m: StatsKit.StatModel) -> some View {
         let pts = m.alarmScatter
         if !pts.isEmpty {
-            Section("告警散点 · 近 \(m.alarmScatterDays) 天 (605)") {
+            Section("告警散点 · 近 \(m.alarmScatterDays) 天") {   // 605 告警散点
                 Chart(pts) { p in
                     PointMark(
                         x: .value("日", p.day, unit: .day),
@@ -1178,7 +1178,7 @@ struct StatsView: View {
                 .chartLegend(position: .bottom, alignment: .leading)
                 .frame(height: 190)
                 .padding(.horizontal, DS.Space.gutter)
-                Text("\(pts.count) 条告警逐点上屏 (605)；纵轴是告警子类型，横向密集处即集中爆发的日子。")
+                Text("\(pts.count) 条告警逐点上屏；纵轴是告警子类型，横向密集处即集中爆发的日子。")   // 605 条告警逐点上屏
                     .font(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -1348,7 +1348,7 @@ struct StatsView: View {
         let barWidth = max(2, p.ratio * 120)
         let a11y = "密码 " + p.name + " 约使用 " + String(p.approxUses) + " 次, 用量 " + String(Int(p.ratio * 100)) + "%"
             + (p.firstUseDay.map { ", 首用 " + $0 } ?? "")
-            + (jumpId == nil ? "" : "; 点按到记录页按该成员筛选 (628)")
+            + (jumpId == nil ? "" : "; 点按到记录页按该成员筛选")   // 628 点按到记录页按该成员
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: DS.Space.xs) {
                 Text(p.name)
@@ -1356,7 +1356,7 @@ struct StatsView: View {
                     .foregroundStyle(DS.Palette.text)
                     .lineLimit(1)
                 if let f = p.firstUseDay {
-                    Text("首用 " + f + " (628)")
+                    Text("首用 " + f)   // 628 首用
                         .font(.caption2)
                         .foregroundStyle(DS.Palette.accentText)
                         .lineLimit(1)
@@ -1391,7 +1391,7 @@ struct StatsView: View {
     private func memberBarRow(id: String, name: String, approx: Int, index: Int,
                               barDays: Int, maxApprox: Int) -> some View {
         // 2026-10-13 run 68: a11y 串先算好 (内联时 memberBarRow 报 type-check 超时)
-        let a11y = "成员 " + name + ", 近 " + String(barDays) + " 天约 " + String(approx) + " 次; 点按到记录页按该成员筛选 (582)"
+        let a11y = "成员 " + name + ", 近 " + String(barDays) + " 天约 " + String(approx) + " 次; 点按到记录页按该成员筛选"   // 582 点按到记录页按该成员
         Button {
             // 582 图表下钻: 成员条 → 记录 Tab 按该成员过滤 (台账推断, 落点走可证明口径)。
             // 记录页的 landMember() 会把 sel 与 filters.member 一起写、再走同一条 applyFilter 链并消费后清空旗标,
@@ -1606,7 +1606,7 @@ struct StatsView: View {
     // ---------- 603 累计面积图 + 周分割刻度 ----------
     @ViewBuilder
     private func cumulativeSection(_ m: StatsKit.StatModel) -> some View {
-        Section("累计开门 (603)") {
+        Section("累计开门") {   // 603 累计开门
             let pts = m.dailyPoints
             var cum = 0
             let rows = pts.map { p in
@@ -1820,7 +1820,7 @@ struct StatsView: View {
                         .foregroundStyle(s.isWeekend ? DS.Palette.ok : DS.Palette.accent)
                 }
                 .frame(height: 150)
-                Text("周末柱为青绿, 呈现作息节律 (616)")
+                Text("周末柱为青绿, 呈现作息节律")   // 616 周末柱为青绿
                     .font(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .lineLimit(1)
@@ -1912,7 +1912,7 @@ struct StatsView: View {
         let top = Array(m.pareto.prefix(5))
         if !top.isEmpty {
             VStack(alignment: .leading, spacing: DS.Space.s) {
-                Text("凭证类使用榜 · 近 \(m.windowDays) 天 (619)")
+                Text("凭证类使用榜 · 近 \(m.windowDays) 天")   // 619 凭证类使用榜
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(DS.Palette.text)
                 ForEach(Array(top.enumerated()), id: \.offset) { i, p in
@@ -1950,7 +1950,7 @@ struct StatsView: View {
         let stats = m.alertStats
         let colors: [String: Color] = ["warn": DS.Palette.warn, "danger": DS.Palette.danger, "neutral": DS.Palette.textSub]
         VStack(alignment: .leading, spacing: DS.Space.s) {
-            Text("告警构成 (613)")
+            Text("告警构成")   // 613 告警构成
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(DS.Palette.text)
             if stats.isEmpty {
@@ -2047,7 +2047,7 @@ struct StatsView: View {
                 // 627 OTP 使用散点
                 if !m.otpPoints.isEmpty {
                     VStack(alignment: .leading, spacing: DS.Space.s) {
-                        Text("临时密码使用时刻 (627)")
+                        Text("临时密码使用时刻")   // 627 临时密码使用时刻
                             .font(.subheadline.weight(.medium))
                             .foregroundStyle(DS.Palette.text)
                         Chart(m.otpPoints) { p in
@@ -2065,7 +2065,7 @@ struct StatsView: View {
                 let ranges = m.rangeRows.suffix(14).reversed().map { $0 }
                 if !ranges.isEmpty {
                     VStack(alignment: .leading, spacing: DS.Space.s) {
-                        Text("逐日首末开门区间 (617 · 在外时长代理)")
+                        Text("逐日首末开门区间")   // 617 逐日首末开门区间
                             .font(.subheadline.weight(.medium))
                             .foregroundStyle(DS.Palette.text)
                         // 618 一行: 三个数来自 `m.firstOpenHourSpread` —— 它就是下面那排逐日条的 minHour 排出来的
@@ -2100,7 +2100,7 @@ struct StatsView: View {
                             }
                             .frame(minHeight: DS.Hit.min)
                             .accessibilityElement(children: .combine)
-                            .accessibilityLabel("窗口内逐日首次开门: 最早 \(sp.earliest) 时, 中位 \(sp.median) 时, 最晚 \(sp.latest) 时 (618)")
+                            .accessibilityLabel("窗口内逐日首次开门: 最早 \(sp.earliest) 时, 中位 \(sp.median) 时, 最晚 \(sp.latest) 时")   // 618 窗口内逐日首次开门
                         }
                         // 617 竖棒形态 (原句: 每日一根竖棒 = 当日首末开门区间, 顶端圆点标当日次数):
                         // 横轴是日 (最多 14 天), 纵轴是 0–24 时。旧写法是横条 + 右端圆点标"末次开门那一小时"
@@ -2188,7 +2188,7 @@ struct StatsView: View {
                         .font(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
-                    Text("口径: 协议无门磁/上锁状态, 在家时长为「首末开门间隔求和」的代理值 (800, 约级)")
+                    Text("口径: 协议无门磁/上锁状态, 在家时长为「首末开门间隔求和」的代理值")   // 800 口径
                         .font(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
@@ -2232,7 +2232,7 @@ struct StatsView: View {
             .buttonStyle(.plain)
             .accessibilityLabel("开门统计年报告" + (cov >= 365 ? " 数据已积累" : " 数据积累中"))
         } header: {
-            Text("年度回顾 (50)")
+            Text("年度回顾")   // 50 年度回顾
         }
     }
 
@@ -2273,7 +2273,7 @@ struct StatsView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityElement(children: .combine)
-                .accessibilityHint("点按跳到记录页这条并高亮 (170)")
+                .accessibilityHint("点按跳到记录页这条并高亮")   // 170 点按跳到记录页这条并
             }
             if rows.isEmpty {
                 Text("这个时段近 " + String(m.windowDays) + " 天没有记录")
@@ -2406,7 +2406,7 @@ struct HourDetailSheet: View {
                         .foregroundStyle(DS.Palette.textSub)
                 }
             }
-            .navigationTitle(TimeWord.word(Int(hour)) + " " + String(hour) + " 时记录 (638)")
+            .navigationTitle(TimeWord.word(Int(hour)) + " " + String(hour) + " 时记录")   // 638 时记录
             .navigationBarTitleDisplayMode(.inline)
             .scrollContentBackground(.hidden)
             .dsScreenBackground()

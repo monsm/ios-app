@@ -931,7 +931,7 @@ enum ExportKit {
         return renderer.pdfData { ctx in
             let cg = ctx.cgContext
             PDFText.line(cg, "门锁告警事实单 · " + lockName, font: .semibold, size: 20, x: 36, y: 36, color: .black, pageW: 520)
-            PDFText.line(cg, "本单只含这一条告警的数据 (746) · 导出时间 " + ExportKit.stamp.string(from: Date()),
+            PDFText.line(cg, "本单只含这一条告警的数据 · 导出时间 " + ExportKit.stamp.string(from: Date()),   // 746 本单只含这一条告警的
                          font: .regular, size: 10, x: 36, y: 66, color: .darkGray, pageW: 520)
             var y: CGFloat = 104
             func kv(_ k: String, _ v: String) {
@@ -1462,7 +1462,7 @@ struct ExportCenterView: View {
                             .fixedSize(horizontal: false, vertical: true)
                         // 719 重试: 重放上次起点的闭包 (取消不重试 —— 取消是用户的决定, 不是失败)
                         if progress.failed != "已取消" {
-                            Button("重试 (719)") { progress.retry() }
+                            Button("重试") { progress.retry() }   // 719 重试
                                 .font(.subheadline)
                                 .foregroundStyle(DS.Palette.accentText)
                                 .frame(minHeight: DS.Hit.min)
@@ -1508,7 +1508,7 @@ struct ExportCenterView: View {
     @ViewBuilder
     private var scopeSection: some View {
         Section {
-            Picker("范围 (701)", selection: rangeBinding) {
+            Picker("范围", selection: rangeBinding) {   // 701 范围
                 Text("当月").tag(ExportRange.month)
                 Text("全部记录").tag(ExportRange.all)
                 Text("仅告警").tag(ExportRange.alarms)
@@ -1540,7 +1540,7 @@ struct ExportCenterView: View {
                     set: { cols.set(i, $0); ExportCols.save(cols) }))
             }
         } header: {
-            Text("列选择 (690)")
+            Text("列选择")   // 690 列选择
         } footer: {
             Text("勾选即含; 凭证/原始hex 列默认不含, 上次选择会沿用。")
                 .font(.caption)
@@ -1549,7 +1549,7 @@ struct ExportCenterView: View {
 
     private var redactSection: some View {
         Section {
-            Toggle("脱敏导出 (548)", isOn: $redact)
+            Toggle("脱敏导出", isOn: $redact)   // 548 脱敏导出
             Text("脱敏与格式独立: 关时 JSON 含原始 hex、日志不掩码; 开时 hex 列留空、连续数字掩码。")
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
@@ -1560,11 +1560,11 @@ struct ExportCenterView: View {
     @ViewBuilder
     private var actionList: some View {
         Section {
-            Button { startCSV() } label: { Label("CSV 标准导出 (683)", systemImage: "tablecells") }
-            Button { startJSON() } label: { Label("原始 JSON + hex (684)", systemImage: "curlybraces") }
-            Button { startPDF() } label: { Label("月度 PDF 报告 (685)", systemImage: "doc.text") }
+            Button { startCSV() } label: { Label("CSV 标准导出", systemImage: "tablecells") }   // 683 标准导出
+            Button { startJSON() } label: { Label("原始 JSON + hex", systemImage: "curlybraces") }   // 684 原始
+            Button { startPDF() } label: { Label("月度 PDF 报告", systemImage: "doc.text") }   // 685 月度
             VStack(alignment: .leading, spacing: DS.Space.xs) {
-                Label("运行日志 (548)", systemImage: "text.alignleft")
+                Label("运行日志", systemImage: "text.alignleft")   // 548 运行日志
                     .font(.body)
                     .foregroundStyle(DS.Palette.text)
                 Picker("格式", selection: $logFormat) {
@@ -1581,40 +1581,40 @@ struct ExportCenterView: View {
                     .contentShape(Rectangle())
             }
             // 703 直发: 配置了邮箱就走系统邮件 (附件与 CSV 导出同源); canSendMail=false 时回退 .eml 模板
-            Button { sendByMail() } label: { Label("用系统邮件发送 (703)", systemImage: "envelope.open") }
-            Button { startEML() } label: { Label("邮件模板 .eml (703 降级)", systemImage: "envelope") }
+            Button { sendByMail() } label: { Label("用系统邮件发送", systemImage: "envelope.open") }   // 703 用系统邮件发送
+            Button { startEML() } label: { Label("邮件模板 .eml", systemImage: "envelope") }   // 703 邮件模板
         }
         .disabled(progress.running)
         Section {
             // 686 导出哪一天: 默认"最新一天" (与旧行为一致), 换日重导; 选项=有记录的最近 14 天
             if !dayOpts.isEmpty {
-                Picker("导出哪一天 (686)", selection: $dayPick) {
+                Picker("导出哪一天", selection: $dayPick) {   // 686 导出哪一天
                     Text("最新一天").tag("")
                     ForEach(dayOpts, id: \.self) { d in Text(d).tag(d) }
                 }
                 .pickerStyle(.menu)
                 .frame(minHeight: DS.Hit.min)
             }
-            Button { startDayImages() } label: { Label("单日长图 (686/706)", systemImage: "photo.on.rectangle.angled") }
-            Button { startAlarmCard() } label: { Label("告警分享卡 (688/718)", systemImage: "exclamationmark.bubble") }
+            Button { startDayImages() } label: { Label("单日长图", systemImage: "photo.on.rectangle.angled") }   // 686/706 单日长图
+            Button { startAlarmCard() } label: { Label("告警分享卡", systemImage: "exclamationmark.bubble") }   // 688/718 告警分享卡
             Button { startAlarmFactSheet() } label: { Label("告警事实单页 (746, PDF)", systemImage: "doc.text") }
             // 691 加密压缩导出: 口令线下告知, 本机不留 (与备份包同一套信封)
             SecureField("加密口令 (至少 6 位, 691)", text: $zipPw)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .font(.footnote)
-            Button { startEncryptedZip() } label: { Label("加密压缩导出 (691)", systemImage: "lock.doc") }
+            Button { startEncryptedZip() } label: { Label("加密压缩导出", systemImage: "lock.doc") }   // 691 加密压缩导出
                 .disabled(zipPw.trimmingCharacters(in: .whitespaces).count < 6)
-            Button { printMonthly() } label: { Label("打印月度记录 (687/701)", systemImage: "printer") }
-            Button { printOnePager() } label: { Label("告警一页纸 (717)", systemImage: "doc.text.magnifyingglass") }
-            Button { printOralCard() } label: { Label("口述卡打印 (478)", systemImage: "person.text.rectangle") }
+            Button { printMonthly() } label: { Label("打印月度记录", systemImage: "printer") }   // 687/701 打印月度记录
+            Button { printOnePager() } label: { Label("告警一页纸", systemImage: "doc.text.magnifyingglass") }   // 717 告警一页纸
+            Button { printOralCard() } label: { Label("口述卡打印", systemImage: "person.text.rectangle") }   // 478 口述卡打印
         }
         .disabled(progress.running)
     }
 
     /// 746 单条告警事实单页: 最新一条告警出 PDF (事实 / 原始报文 / 处置 / 签名栏), 用于物业沟通
     private func startAlarmFactSheet() {
-        progress.start("正在生成告警事实单 (746)…") {
+        progress.start("正在生成告警事实单…") {   // 746 正在生成告警事实单
             let alarms = ExportKit.filtered(ExportKit.records(mac: self.mac), range: .alarms).reversed()
             guard let a = alarms.first else { return nil }
             let pdf = ExportKit.alarmFactSheetPDF(mac: self.mac, rec: a)
@@ -1633,7 +1633,7 @@ struct ExportCenterView: View {
 
     /// 688 告警分享卡: 最新一条告警渲染 9:16 卡片图, 进 doneSection 可 ShareLink 直发 (仅含本条数据, 718)
     private func startAlarmCard() {
-        progress.start("正在生成告警卡 (688)…") {
+        progress.start("正在生成告警卡…") {   // 688 正在生成告警卡
             let alarms = ExportKit.filtered(ExportKit.records(mac: self.mac), range: .alarms).reversed()
             guard let a = alarms.first else { return nil }
             let lockName = DB.keychain(self.mac).map { $0.name.isEmpty ? LockArchive.displayName($0) : $0.name } ?? self.mac
@@ -1718,14 +1718,14 @@ struct ExportCenterView: View {
                     UIPasteboard.general.string = item.fullText
                     app.showToast("已复制完整文本")
                 } label: {
-                    Label("复制文本 (714)", systemImage: "doc.on.doc")
+                    Label("复制文本", systemImage: "doc.on.doc")   // 714 复制文本
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(SecondaryActionStyle(fullWidth: false))
                 .frame(minHeight: DS.Hit.min)
                 if item.kind == "png" || item.kind == "pdf" || item.kind == "csv" {   // 712: CSV 也走同一预览 (openQL 已认得)
                     Button { openQL(item) } label: {
-                        Label("预览 (712)", systemImage: "eye")
+                        Label("预览", systemImage: "eye")   // 712 预览
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(SecondaryActionStyle(fullWidth: false))
@@ -1775,9 +1775,9 @@ struct ExportCenterView: View {
                             .scaledToFit()
                             .frame(maxWidth: 220, maxHeight: 220)
                             // 无障碍: QR 是纯图形, VoiceOver 读不出模块 ⇒ 行数与摘要直接写进标签
-                            .accessibilityLabel("报告校验二维码 (710), " + String(c.rows) + " 行, 摘要 " + c.digest)
+                            .accessibilityLabel("报告校验二维码, " + String(c.rows) + " 行, 摘要 " + c.digest)   // 710 报告校验二维码
                         ShareLink(item: UIImageShareItem(img), preview: SharePreview("报告校验二维码")) {
-                            Label("分享这张二维码 (710)", systemImage: "square.and.arrow.up")
+                            Label("分享这张二维码", systemImage: "square.and.arrow.up")   // 710 分享这张二维码
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(SecondaryActionStyle(fullWidth: false))
@@ -1790,7 +1790,7 @@ struct ExportCenterView: View {
                             .foregroundStyle(DS.Palette.warn)
                             .fixedSize(horizontal: false, vertical: true)
                     }
-                    LabeledRow("行数 (710)", String(c.rows) + " 行")
+                    LabeledRow("行数", String(c.rows) + " 行")   // 710 行数
                     Text("摘要: " + c.digest)
                         .font(.caption.monospaced())
                         .foregroundStyle(DS.Palette.textSub)
@@ -1813,7 +1813,7 @@ struct ExportCenterView: View {
                 }
                 HStack(spacing: DS.Space.s) {
                     Button { showVerifyScan = true } label: {
-                        Label("扫码核对 (710)", systemImage: "viewfinder")
+                        Label("扫码核对", systemImage: "viewfinder")   // 710 扫码核对
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(SecondaryActionStyle(fullWidth: false))
@@ -1831,7 +1831,7 @@ struct ExportCenterView: View {
                     .foregroundStyle(DS.Palette.textSub)
             }
         } header: {
-            Text("报告校验二维码 (710)")
+            Text("报告校验二维码")   // 710 报告校验二维码
         } footer: {
             Text("摘要口径 (逐行六字段): 时间 / 类型 / 成员 / 是否告警 / 凭证词 / 锁端行键; 行序按报告两章出场序 (告警章在前、明细章在后)。"
                  + "原始 hex、级别字样、处置结论、生成时间与列选择都在口径之外 ⇒ 换勾选不改指纹。"
@@ -1860,7 +1860,7 @@ struct ExportCenterView: View {
 
     private var pathSection: some View {
         Section {
-            LabeledContent("文件位置 (719)", value: lastPath)
+            LabeledContent("文件位置", value: lastPath)   // 719 文件位置
                 .font(.caption)
                 .textSelection(.enabled)
         }
@@ -1876,21 +1876,21 @@ struct ExportCenterView: View {
                 .fixedSize(horizontal: false, vertical: true)
         } else if item.kind == "csv" {
             ShareLink(item: ExportCSVFile(item: item), preview: item.sharePreview) {
-                Label("分享 (708)", systemImage: "square.and.arrow.up")
+                Label("分享", systemImage: "square.and.arrow.up")   // 708 分享
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(SecondaryActionStyle(fullWidth: false))
             .frame(minHeight: DS.Hit.min)
         } else if item.kind == "json" {
             ShareLink(item: ExportJSONFile(item: item), preview: item.sharePreview) {
-                Label("分享 (708)", systemImage: "square.and.arrow.up")
+                Label("分享", systemImage: "square.and.arrow.up")   // 708 分享
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(SecondaryActionStyle(fullWidth: false))
             .frame(minHeight: DS.Hit.min)
         } else if item.kind == "pdf" {
             ShareLink(item: ExportPDFFile(item: item), preview: item.sharePreview) {
-                Label("分享 (708)", systemImage: "square.and.arrow.up")
+                Label("分享", systemImage: "square.and.arrow.up")   // 708 分享
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(SecondaryActionStyle(fullWidth: false))
@@ -1898,14 +1898,14 @@ struct ExportCenterView: View {
         } else if item.kind == "png", let img = item.images.first {
             ShareLink(item: ExportImageFile(item: item, image: img),
                       preview: item.sharePreview) {
-                Label("分享 (708)", systemImage: "square.and.arrow.up")
+                Label("分享", systemImage: "square.and.arrow.up")   // 708 分享
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(SecondaryActionStyle(fullWidth: false))
             .frame(minHeight: DS.Hit.min)
         } else {
             ShareLink(item: ExportTextFile(item: item), preview: item.sharePreview) {
-                Label("分享 (708)", systemImage: "square.and.arrow.up")
+                Label("分享", systemImage: "square.and.arrow.up")   // 708 分享
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(SecondaryActionStyle(fullWidth: false))
@@ -1919,7 +1919,7 @@ struct ExportCenterView: View {
         if let item {
             if let url = item.writeLocal() { lastPath = url.path }
             lastSuccess = true
-            app.showToast("已生成 \(item.fileName) (719)")
+            app.showToast("已生成 \(item.fileName)")   // 719 已生成
         } else if !err.isEmpty {
             lastSuccess = false
             app.showToast(err)
@@ -1933,15 +1933,15 @@ struct ExportCenterView: View {
     /// 写完先做**往返自检** (自家 ZipKit.parse 读回 + 逐条 CRC), 通过才加密 —— 读侧就是判据。
     private func startEncryptedZip() {
         let pw = zipPw.trimmingCharacters(in: .whitespaces)
-        guard pw.count >= 6 else { app.showToast("口令至少 6 位 (691)"); return }
-        progress.start("正在打包并加密 (691)…") {
+        guard pw.count >= 6 else { app.showToast("口令至少 6 位"); return }   // 691 口令至少
+        progress.start("正在打包并加密…") {   // 691 正在打包并加密
             let recs = ExportKit.filtered(ExportKit.records(mac: self.mac), range: self.range)
             guard !recs.isEmpty else { return nil }
             let build = ExportKit.buildCSV(recs: recs, cols: self.cols)
             let kc = DB.keychain(self.mac)
             let lockName = kc.map { $0.name.isEmpty ? LockArchive.displayName($0) : $0.name } ?? self.mac
             let stamp = stampTag()
-            let note = "离线锁管家 加密导出 (691)\n锁: \(lockName)\n范围: \(self.range.label)\n行数: \(recs.count)\n"
+            let note = "离线锁管家 加密导出\n锁: \(lockName)\n范围: \(self.range.label)\n行数: \(recs.count)\n"   // 691 离线锁管家
                 + "生成: \(Date().formatted(date: .abbreviated, time: .standard))\n\n"
                 + "本文件是 aes-128-cbc+hmac-sha256 信封, 内含一个 zip (store 方式); 用同款 App 的备份口令流程解开即可。"
             let entries: [(name: String, data: [UInt8])] = [
@@ -1967,7 +1967,7 @@ struct ExportCenterView: View {
     }
 
     private func startCSV() {
-        progress.start("正在生成 CSV (683)…") {
+        progress.start("正在生成 CSV…") {   // 683 正在生成
             let recs = ExportKit.filtered(ExportKit.records(mac: self.mac), range: self.range)
             guard !recs.isEmpty else { return nil }
             let build = ExportKit.buildCSV(recs: recs, cols: self.cols)
@@ -1979,7 +1979,7 @@ struct ExportCenterView: View {
                               title: "记录 " + self.range.label,
                               fileName: "锁管家_记录_" + lockName + "_" + stampTag() + "_" + self.range.label + ".csv",
                               bytes: build.data, sha256: hex,
-                              shaLabel: "CSV · \(build.rowCount) 行 · 转义 \(build.escapedRows) 行 (705 预检)",
+                              shaLabel: "CSV · \(build.rowCount) 行 · 转义 \(build.escapedRows) 行",   // 705 转义
                               previewText: build.preview3,
                               scopeNote: "含 " + String(build.rowCount) + " 行, 离开本机后不可撤回")
         } finish: { item, err in
@@ -1987,7 +1987,7 @@ struct ExportCenterView: View {
         }
     }
     private func startJSON() {
-        progress.start("正在生成 JSON (684)…") {
+        progress.start("正在生成 JSON…") {   // 684 正在生成
             // 388 敏感操作留痕: 原始 JSON 含协议 hex, 记账进 SensitiveLedger
             SensitiveLedger().record("导出", target: "原始 JSON " + self.range.label)
             let recs = ExportKit.filtered(ExportKit.records(mac: self.mac), range: self.range)
@@ -2007,7 +2007,7 @@ struct ExportCenterView: View {
     }
 
     private func startPDF() {
-        progress.start("正在排版 PDF (685)…") {
+        progress.start("正在排版 PDF…") {   // 685 正在排版
             let recs = ExportKit.filtered(ExportKit.records(mac: self.mac), range: self.range)
             guard !recs.isEmpty else { return nil }
             let memberName = self.memberLabel()
@@ -2032,7 +2032,7 @@ struct ExportCenterView: View {
     }
 
     private func startRunLog() {
-        progress.start("正在生成运行日志 (548)…") {
+        progress.start("正在生成运行日志…") {   // 548 正在生成运行日志
             let data = ExportKit.runLogData(format: self.logFormat, redact: self.redact)
             let hex = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
             let ext = self.logFormat == "txt" ? "txt" : self.logFormat
@@ -2069,7 +2069,7 @@ struct ExportCenterView: View {
     }
 
     private func startEML() {
-        progress.start("正在生成邮件模板 (703)…") {
+        progress.start("正在生成邮件模板…") {   // 703 正在生成邮件模板
             let recs = ExportKit.filtered(ExportKit.records(mac: self.mac), range: self.range)
             guard !recs.isEmpty else { return nil }
             return ExportKit.emailTemplate(mac: self.mac, recs: recs, cols: self.cols)
@@ -2079,7 +2079,7 @@ struct ExportCenterView: View {
     }
 
     private func startDayImages() {
-        progress.start("正在生成长图 (686)…") {
+        progress.start("正在生成长图…") {   // 686 正在生成长图
             let all = ExportKit.records(mac: self.mac)
             // 686: 指定哪天就导哪天 (此前恒导最新一天); 空 = 最新
             let day = self.dayPick.isEmpty ? ExportKit.latestDayKey(all) : self.dayPick
@@ -2094,7 +2094,7 @@ struct ExportCenterView: View {
                               fileName: "锁管家_单日_" + day + ".jpg",
                               bytes: jpeg, sha256: hex,
                               shaLabel: "长图 · \(recs.count) 条" + (pages.count > 1 ? " · 切 \(pages.count) 张" : ""),
-                              previewText: pages.count > 1 ? "已按屏高切 \(pages.count) 张连图 (706)。" : "",
+                              previewText: pages.count > 1 ? "已按屏高切 \(pages.count) 张连图。" : "",   // 706 已按屏高切
                               images: pages)
         } finish: { item, err in
             onDone(item, err)

@@ -89,7 +89,7 @@ enum BackupStudio {
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [id])
         guard cadence != "manual", await CareSchedule.requestAuth() else { return }
         let c = UNMutableNotificationContent()
-        c.title = "该备份了 (198)"
+        c.title = "该备份了"   // 198 该备份了
         c.body = "按「" + (cadence == "weekly" ? "每周" : "每月") + "」节奏, 做一份备份并演练验证。"
         var comps = DateComponents(); comps.hour = 9
         if cadence == "weekly" { comps.weekday = 2 } else { comps.day = monthlyDay > 0 ? monthlyDay : 1 }
@@ -113,7 +113,7 @@ enum BackupStudio {
             center.removePendingNotificationRequests(withIdentifiers: [r.identifier])
         }
         let c = UNMutableNotificationContent()
-        c.title = "月度备份日 (1018)"
+        c.title = "月度备份日"   // 1018 月度备份日
         c.body = "今天是本月备份日 — 打开管家做一份备份并顺带演练验证。"
         c.sound = .default
         c.categoryIdentifier = "KF_BK"
@@ -138,7 +138,7 @@ enum BackupStudio {
         guard let app = AppState.hostRef else { return }
         if app.appUnlocked && !app.decoyMode {
             app.requestTab(3)
-            app.showToast("已生成本机还原点 — 口令加密备份与演练在「设置 · 备份」(1018)")
+            app.showToast("已生成本机还原点 — 口令加密备份与演练在「设置 · 备份」")   // 1018 已生成本机还原点
         } else {
             app.pendingRoute = 3
         }
@@ -302,7 +302,8 @@ enum BackupStudio {
         BGTaskScheduler.shared.register(forTaskWithIdentifier: chargeBackupTaskId, using: nil) { task in
             task.expirationHandler = { task.setTaskCompleted(success: false) }
             _ = makeRollbackPoint()
-            MaintenanceLog.record("充电备份快照 (428)")   // 387: 记账才能进设备页"上次会话本机完成 N 项维护"回执
+            // 428 充电备份快照
+            MaintenanceLog.record("充电备份快照")   // 387: 记账才能进设备页"上次会话本机完成 N 项维护"回执
             task.setTaskCompleted(success: true)
         }
         // 排期: 由系统择机执行 (接电+闲置), 最早 6 小时后; 排期失败不抛给调用方 (UI 文案已声明"由系统择机")
@@ -423,7 +424,7 @@ enum BackupStudio {
         let expired = expiredTemporaryCount()
         if expired > 0 {
             rows.append(.init(label: "过期临时码",
-                              text: "\(expired) 条已过时效仍占台账, 可勾「先清理」减少条数 (431)"))
+                              text: "\(expired) 条已过时效仍占台账, 可勾「先清理」减少条数"))   // 431 条已过时效仍占台账
         }
         let noOwner = DB.keychains().reduce(0) { acc, kc in
             let l = DB.ledger(kc.mac)
@@ -431,11 +432,11 @@ enum BackupStudio {
         }
         if noOwner > 0 {
             rows.append(.init(label: "无归属",
-                              text: "\(noOwner) 条凭证未指定成员, 恢复后仍需认领 (412)"))
+                              text: "\(noOwner) 条凭证未指定成员, 恢复后仍需认领"))   // 412 条凭证未指定成员
         }
         if daysSinceLastExport() >= 14 {
             rows.append(.init(label: "数据陈旧",
-                              text: "距上次备份已 \(daysSinceLastExport()) 天, 本次建议全量并演练验证 (429)"))
+                              text: "距上次备份已 \(daysSinceLastExport()) 天, 本次建议全量并演练验证"))   // 429 距上次备份已
         } else if lastExportMs == nil {
             rows.append(.init(label: "首次备份",
                               text: "这是第一份备份 — 建议同时开 WebDAV 通道做异地冗余"))
@@ -558,7 +559,7 @@ enum BackupStudio {
         }
         let ck = checksumState(body)
         if ck == .mismatch {
-            throw DFUError.msg("内容哈希不一致 — 已拦下, 未写任何数据 (453 哈希层); 建议重传这份备份")
+            throw DFUError.msg("内容哈希不一致 — 已拦下, 未写任何数据; 建议重传这份备份")   // 453 内容哈希不一致
         }
         let m = upgradeChain(raw)
         var zones: [String] = []
@@ -608,7 +609,7 @@ enum BackupStudio {
     static func decryptAny(_ text: String, password: String?) throws -> String {
         guard looksEncrypted(text) else { return text }
         guard let pw = password, !pw.isEmpty else {
-            throw DFUError.msg("此备份带口令 — 输入导出时设置的口令 (453 口令层)")
+            throw DFUError.msg("此备份带口令 — 输入导出时设置的口令")   // 453 此备份带口令
         }
         return try CryptoBox.decryptEnvelope(text, password: pw)
     }
@@ -897,7 +898,7 @@ enum BackupStudio {
         let last = lastExportBytes
         let cmp = last > 0 ? "上次 " + String(format: "%.1f KB", Double(last) / 1024)
                                 + " (\(max(0, daysSinceLastExport())) 天前)" : "上次暂无记录"
-        return "本次预计 ~" + String(format: "%.1f KB", Double(bytes) / 1024) + " · " + cmp + " (193)"
+        return "本次预计 ~" + String(format: "%.1f KB", Double(bytes) / 1024) + " · " + cmp   // 193 界面文案
     }
 
     // ================= 换机迁移 (438-446) =================
@@ -1089,13 +1090,13 @@ enum BackupStudio {
         let last = DB.store.getString("kf_bk_dbhash")
         if !last.isEmpty, last != fp {
             DB.store.set("kf_bk_selfwarn", true)
-            return "数据自检异常 — 库体哈希与上次备份快照不一致, 建议立即备份并去诊断 (448)"
+            return "数据自检异常 — 库体哈希与上次备份快照不一致, 建议立即备份并去诊断"   // 448 数据自检异常
         }
         if DB.store.getBool("kf_bk_selfwarn") { DB.store.remove("kf_bk_selfwarn") }
         return nil
     }
     static var selfCheckWarning: String? {
-        DB.store.getBool("kf_bk_selfwarn") ? "数据自检异常, 去诊断 (448)" : nil
+        DB.store.getBool("kf_bk_selfwarn") ? "数据自检异常, 去诊断" : nil   // 448 数据自检异常
     }
     /// 507 备份状态角标: 今日已备份 / 多日未备份
     enum BadgeState: Equatable { case fresh, stale(Int), none }
@@ -1138,7 +1139,7 @@ enum BackupStudio {
                 let t = http.value(forHTTPHeaderField: "Last-Modified") ?? "ok"
                 return "连通 · 服务器时间 \(t)"
             }
-            if http.statusCode == 401 || http.statusCode == 403 { return "账号或应用密码错误 (401)" }
+            if http.statusCode == 401 || http.statusCode == 403 { return "账号或应用密码错误" }   // 401 账号或应用密码错误
             return "HTTP \(http.statusCode)"
         } catch { return "网络不可达: \(error.localizedDescription)" }
     }
@@ -1299,7 +1300,7 @@ enum BackupStudio {
             }
         }
         if pruned > 0 {
-            AuditLog().append(.admin, "清", target: "WebDAV 滚动保留: 清理远端 \(pruned) 个文件 (430)")
+            AuditLog().append(.admin, "清", target: "WebDAV 滚动保留: 清理远端 \(pruned) 个文件")   // 430 滚动保留
         }
         return pruned
     }
@@ -1313,7 +1314,7 @@ enum BackupStudio {
             let (data, _) = try await URLSession.shared.data(for: req)
             let raw = String(data: data, encoding: .utf8) ?? ""
             let body = (try? decryptAny(raw, password: password)) ?? raw
-            guard verifyChecksum(body) else { return "哈希不一致 — 仅告警, 不入库 (423)" }
+            guard verifyChecksum(body) else { return "哈希不一致 — 仅告警, 不入库" }   // 423 哈希不一致
             // 436: 抽样数是 parsePreview 实抽出来的, 不再写死 "5 条"
             let sampled = (try? parsePreview(text: body, password: nil).preview.sampleOk) ?? 0
             return "已验证 · 抽样 \(sampled) 条可解析 · 哈希 " + shortHash(body)
@@ -1329,7 +1330,7 @@ enum BackupStudio {
             let (data, _) = try await URLSession.shared.data(for: req)
             let raw = String(data: data, encoding: .utf8) ?? ""
             guard let plain = try? decryptAny(raw, password: oldPw) else {
-                return "旧口令解不开, 轮换失败 (453 口令层)"
+                return "旧口令解不开, 轮换失败"   // 453 旧口令解不开
             }
             guard let newEnc = try? CryptoBox.encryptText(plain, password: newPw) else {
                 return "新口令加密失败, 远端未动"
@@ -1341,9 +1342,9 @@ enum BackupStudio {
             put.httpBody = Data(newEnc.utf8)
             let (_, resp) = try await URLSession.shared.data(for: put)
             guard let http = resp as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
-                return "上传新密文失败, 远端仍为旧口令 (237)"
+                return "上传新密文失败, 远端仍为旧口令"   // 237 上传新密文失败
             }
-            return "已轮换 — 旧口令失效, 请用新口令访问 (237)"
+            return "已轮换 — 旧口令失效, 请用新口令访问"   // 237 已轮换
         } catch { return "轮换中断: \(error.localizedDescription)" }
     }
 

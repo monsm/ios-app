@@ -157,12 +157,12 @@ enum LockAction {
     /// 被拦下时对用户说的那句实话: 点名是哪枚开关拦的, 不写成含糊的"操作失败"
     var denial: String {
         switch self {
-        case .unlock: return "只读安全模式已开 (296): 开锁已停用, 要开门请先关掉这枚开关"
-        case .writeCredential: return "只读安全模式已开 (296): 凭证写入已停用"
-        case .provision: return "只读安全模式已开 (296): 网关配网已停用"
-        case .dfu: return "只读安全模式已开 (296): 固件升级已停用"
-        case .destroy: return "只读安全模式已开 (296): 销毁与清空已停用"
-        case .importExport: return "只读安全模式已开 (296): 导入导出已停用"
+        case .unlock: return "只读安全模式已开: 开锁已停用, 要开门请先关掉这枚开关"   // 296 只读安全模式已开
+        case .writeCredential: return "只读安全模式已开: 凭证写入已停用"   // 296 只读安全模式已开
+        case .provision: return "只读安全模式已开: 网关配网已停用"   // 296 只读安全模式已开
+        case .dfu: return "只读安全模式已开: 固件升级已停用"   // 296 只读安全模式已开
+        case .destroy: return "只读安全模式已开: 销毁与清空已停用"   // 296 只读安全模式已开
+        case .importExport: return "只读安全模式已开: 导入导出已停用"   // 296 只读安全模式已开
         }
     }
 }

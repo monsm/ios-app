@@ -204,7 +204,7 @@ struct CredentialsView: View {
                     .font(.system(size: DS.Icon.sm))
                     .foregroundStyle(DS.Palette.accentText)
                     .accessibilityHidden(true)
-                Text("已从记录定位到该凭证 (577)")
+                Text("已从记录定位到该凭证")   // 577 已从记录定位到该凭证
                     .font(.footnote.weight(.medium))
                     .foregroundStyle(DS.Palette.text)
                 Spacer(minLength: 0)
@@ -286,7 +286,7 @@ struct CredentialsView: View {
                         Text("待下发 " + String(q.count) + " 项 · " + LockArchiveLockName)
                             .font(.footnote.weight(.medium))
                             .foregroundStyle(DS.Palette.text)
-                        Text("到场连接后自动补发, 或进清单逐项重试 (510/533/538)")
+                        Text("到场连接后自动补发, 或进清单逐项重试")   // 510/533/538 到场连接后自动补发
                             .font(.caption2)
                             .foregroundStyle(DS.Palette.textSub)
                     }
@@ -312,7 +312,7 @@ struct CredentialsView: View {
                     .font(.system(size: DS.Icon.sm, weight: .semibold))
                     .foregroundStyle(DS.Palette.ok)
                     .accessibilityHidden(true)
-                Text("已同步 " + String(sense.lastReceipt) + " 项变更 — 队列已清空 (535)")
+                Text("已同步 " + String(sense.lastReceipt) + " 项变更 — 队列已清空")   // 535 项变更
                     .font(.footnote)
                     .foregroundStyle(DS.Palette.text)
                 Spacer(minLength: 0)
@@ -350,7 +350,7 @@ struct CredentialsView: View {
                 Button {
                     sortKey = CredSortKey(rawValue: (sortKey.rawValue + 1) % CredSortKey.allCases.count)!
                     CredentialOrg.setSortKey(sortKey)
-                    app.showToast("按「\(sortKey.label)」排序 (914)")
+                    app.showToast("按「\(sortKey.label)」排序")   // 914 排序
                 } label: {
                     Image(systemName: "arrow.up.arrow.down")
                         .font(.system(size: DS.Icon.md, weight: .semibold))
@@ -364,14 +364,14 @@ struct CredentialsView: View {
                         .frame(width: DS.Hit.min, height: DS.Hit.min)
                         .contentShape(Rectangle())
                 }
-                .accessibilityLabel(showCalendar ? "退出月历" : "月历到期视图 (363)")
+                .accessibilityLabel(showCalendar ? "退出月历" : "月历到期视图")   // 363 月历到期视图
                 Button { showOrganize = true } label: {
                     Image(systemName: "rectangle.3.offgrid")
                         .font(.system(size: DS.Icon.md, weight: .semibold))
                         .frame(width: DS.Hit.min, height: DS.Hit.min)
                         .contentShape(Rectangle())
                 }
-                .accessibilityLabel("整理建议中心 (358)")
+                .accessibilityLabel("整理建议中心")   // 358 整理建议中心
                 // 922 凭证批量整理 = 这个入口 (「选择」进多选，批量删除/停用与 313 四选一原因同源)。
                 // 479 长辈模式刻意隐藏: 批量入口对老人是误删风险，不是漏适配。
                 // 182 排序档开着时同样不出现: 一行不能同时挂两套行内控件 (选择圈 + 排序把手)。
@@ -399,7 +399,7 @@ struct CredentialsView: View {
                             .contentShape(Rectangle())
                     }
                     // 图标而不是文字: 这一条工具栏已有三枚图标 + 「选择」, 再塞一枚文字按钮在窄屏上会挤破版
-                    .accessibilityLabel("组内拖动排序 \(sorting ? "已开, 点按结束" : "未开, 点按开始") (182)")
+                    .accessibilityLabel("组内拖动排序 \(sorting ? "已开, 点按结束" : "未开, 点按开始")")   // 182 组内拖动排序
                     .accessibilityAddTraits(sorting ? .isSelected : [])
                 }
             }
@@ -427,7 +427,7 @@ struct CredentialsView: View {
                     .frame(minHeight: DS.Hit.min)
                     .contentShape(Rectangle())
                 }
-                .accessibilityLabel("按成员分组 \(memberView ? "已开" : "未开") (355), 点按切换")
+                .accessibilityLabel("按成员分组 \(memberView ? "已开" : "未开"), 点按切换")   // 355 按成员分组
             }
             // 527 命名智能列表
             HStack(spacing: DS.Space.xs) {
@@ -457,7 +457,7 @@ struct CredentialsView: View {
                     .frame(minHeight: DS.Hit.min)
                     .contentShape(Rectangle())
                 }
-                .accessibilityLabel("智能筛选 \(smartSel.isEmpty ? "默认" : "已套用"), 点按展开 (527)")
+                .accessibilityLabel("智能筛选 \(smartSel.isEmpty ? "默认" : "已套用"), 点按展开")   // 527 智能筛选
                 Spacer(minLength: 0)
             }
         }
@@ -521,7 +521,7 @@ struct CredentialsView: View {
     /// 182 排序档的说明行: 只承诺这一档真做得到的事 (段内先后 + 落 kf_cseq_ 跨启动)。
     @ViewBuilder
     private var sortHintRow: some View {
-        HintRow(text: "拖动行尾的排序把手调整本段先后 (182)。先后写进本机台账: 跨启动保持, 并随全量备份一起走。"
+        HintRow(text: "拖动行尾的排序把手调整本段先后。先后写进本机台账: 跨启动保持, 并随全量备份一起走。"   // 182 拖动行尾的排序把手调
                 + "类型视图里各状态段各排各的, 置顶段不参与; 按成员视图里排的是这个成员段内 密码 与 指纹 各自的先后。")
             .listRowBackground(DS.Palette.accentText.opacity(0.06))
     }
@@ -557,7 +557,7 @@ struct CredentialsView: View {
             .foregroundStyle(DS.Palette.textSub)
             .frame(minHeight: DS.Hit.min)
         } header: {
-            Text("先说清你要哪一种 (806)")
+            Text("先说清你要哪一种")   // 806 先说清你要哪一种
         } footer: {
             Text("三类都是本机台账 + 一次下发到锁，全程离线。选错了也不会锁死人：随时能改或删。")
                 .font(.caption2)
@@ -661,11 +661,11 @@ struct CredentialsView: View {
                                 binQuery = search.trimmingCharacters(in: .whitespaces)
                                 showBin = true
                             } label: {
-                                Label("去回收站搜 (503)", systemImage: "magnifyingglass.circle")
+                                Label("去回收站搜", systemImage: "magnifyingglass.circle")   // 503 去回收站搜
                             }
                             .font(.caption)
                             .buttonStyle(.bordered)
-                            .accessibilityLabel("带着 \(search) 去回收站搜 (503)")
+                            .accessibilityLabel("带着 \(search) 去回收站搜")   // 503 带着
                             Button {
                                 let q = search.trimmingCharacters(in: .whitespaces)
                                 let m = DB.members().first { $0.name.localizedCaseInsensitiveContains(q) || $0.relation.localizedCaseInsensitiveContains(q) }
@@ -676,7 +676,7 @@ struct CredentialsView: View {
                                     let term = CredentialOrg.ownerName(m.id)
                                     search = term.isEmpty ? m.name : term
                                     CredentialOrg.pushSearchHistory(search)
-                                    app.showToast("已改用「\(search)」重搜 (532), 命中的是名称/备注/别名/归属")
+                                    app.showToast("已改用「\(search)」重搜, 命中的是名称/备注/别名/归属")   // 532 已改用
                                 } else {
                                     app.showToast("没有匹配的成员")
                                 }
@@ -690,7 +690,7 @@ struct CredentialsView: View {
                     .padding(.vertical, DS.Space.xs)
                 }
             }
-            TextField("搜索名称 / 备注 / #别名 (531)", text: $search)
+            TextField("搜索名称 / 备注 / #别名", text: $search)   // 531 搜索名称
                 .keyboardShortcut("f", modifiers: .command)
                 .accessibilityLabel("凭证搜索, 键盘 Cmd/Control+F")
                 .autocorrectionDisabled()
@@ -757,7 +757,7 @@ struct CredentialsView: View {
                         .font(.caption)
                         .foregroundStyle(DS.Palette.accentText)
                 }
-                Text("锁端未连接时操作先记在这里, 到场连接后逐条重试; 失败项不会丢 (365, 本地容错态)。")
+                Text("锁端未连接时操作先记在这里, 到场连接后逐条重试; 失败项不会丢。")   // 365 锁端未连接时操作先记
                     .font(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -827,7 +827,7 @@ struct CredentialsView: View {
             .font(.caption)
             .foregroundStyle(DS.Palette.warn)
             .listRowBackground(DS.Palette.warn.opacity(0.06))
-            .accessibilityLabel("\(due.count) 条密码 2 小时内到期, 点按查看最近到期的一条详情 (359)")
+            .accessibilityLabel("\(due.count) 条密码 2 小时内到期, 点按查看最近到期的一条详情")   // 359 条密码
         }
     }
 
@@ -1019,7 +1019,7 @@ struct CredentialsView: View {
                 Label("回收站 (\(CredentialOrg.bin(mac).count))", systemImage: "trash")
             }
             NavigationLink { CredHistoryListView(mac: mac) } label: {
-                Label("版本历史与整理 (487/358)", systemImage: "clock.arrow.circlepath")
+                Label("版本历史与整理", systemImage: "clock.arrow.circlepath")   // 487/358 版本历史与整理
             }
             NavigationLink { CredCenterView(mac: mac, section: "organize") } label: {
                 Label("凭证中心 (队列/整理)", systemImage: "tray.full")
@@ -1106,7 +1106,7 @@ struct CredentialsView: View {
         seq[slot] = base
         CredentialOrg.setSeq(mac, seq)
         reload()
-        app.showToast("组内先后已记住 (182), 跨启动保持")
+        app.showToast("组内先后已记住, 跨启动保持")   // 182 组内先后已记住
     }
     /// 两个段的取键函数 (密码取 alias, 指纹取 batch)
     private func pwdKeys(_ group: [LedgerPwd]) -> [Int] { group.map { $0.alias } }
@@ -1138,7 +1138,7 @@ struct CredentialsView: View {
             }
             if !missing.isEmpty {
                 HStack(spacing: DS.Space.s) {
-                    Label("有 \(missing.count) 位成员还没有指纹 (322)", systemImage: "person.badge.shield.slash")
+                    Label("有 \(missing.count) 位成员还没有指纹", systemImage: "person.badge.shield.slash")   // 322 位成员还没有指纹
                     Spacer(minLength: 0)
                     NavigationLink {
                         StartAddFpView(embedded: true, prefillOwner: missing.count == 1 ? missing.first?.id : nil)
@@ -1160,7 +1160,7 @@ struct CredentialsView: View {
                     StartAddFpView(embedded: true)
                 } label: {
                     HStack(spacing: DS.Space.s) {
-                        Label("只剩 1 枚可用指纹, 建议添加备用 (324)", systemImage: "bell.badge")
+                        Label("只剩 1 枚可用指纹, 建议添加备用", systemImage: "bell.badge")   // 324 只剩
                         Spacer(minLength: 0)
                     }
                     .font(.caption)
@@ -1169,7 +1169,7 @@ struct CredentialsView: View {
                     .contentShape(Rectangle())
                 }
                 .listRowBackground(DS.Palette.warn.opacity(0.06))
-                .accessibilityLabel("冗余横条: 添加备用指纹 (324)")
+                .accessibilityLabel("冗余横条: 添加备用指纹")   // 324 冗余横条
             }
             if fps.isEmpty {
                 Text("本机还没有指纹台账。录入后成员可用手指直接开锁。")
@@ -1326,7 +1326,7 @@ struct CredentialsView: View {
         // 849 拷贝对朗读侧走转子动作, 不对 VoiceOver 承诺"双击" (VO 的双击=激活, 不是我们的双击手势)
         .accessibilityActions {
             if let v = hit.pwd?.pwd {
-                Button("拷贝密码明文 (849)") {
+                Button("拷贝密码明文") {   // 849 拷贝密码明文
                     ClipboardCare.copySecret(v, via: "密码明文")
                     app.showToast("已复制")
                 }
@@ -1442,17 +1442,17 @@ struct CredentialsView: View {
     private func credMenu(_ hit: CredHit) -> some View {
         if let p = hit.pwd {
             Button("查看密码内容") { viewPwd(p) }
-            Button("密码详情 (305/308/309)") { pwdDetailItem = p }
+            Button("密码详情") { pwdDetailItem = p }   // 305/308/309 密码详情
             Button("修改密码内容") { modifyPwd(p) }
             Button("修改有效期") { Task { resetPwdPeriod(p) } }
             Button("添加备注") { editNote(pwd: p) }
             Menu("归属到成员") { ownerMenu(isPwd: true, key: p.alias) }
             Divider()
-            Button("三档预警 (359)") { toggleAlerts(p) }
+            Button("三档预警") { toggleAlerts(p) }   // 359 三档预警
             // 368 延期催办文本: 只对"有到期时间且 7 天内到期"的条目出现, 产出可直接发给住客的礼貌催办语。
             // 文本里**绝不含口令本身** (要复制到聊天工具, 含码等于把门卡发出去)。
             if let d = CredentialOrg.expiryDate(p), d.timeIntervalSinceNow > 0, d.timeIntervalSinceNow < 7 * 86_400 {
-                Button("生成延期提醒文本 (368)") {
+                Button("生成延期提醒文本") {   // 368 生成延期提醒文本
                     UIPasteboard.general.string = renewText(p, d)
                     app.showToast("催办文本已复制到剪贴板 (不含口令)")
                 }
@@ -1466,7 +1466,9 @@ struct CredentialsView: View {
                     CredentialOrg.toggleStar(mac, "pwd", p.alias)
                 }
             }
-            Button(CredentialOrg.isArchived(mac, "pwd", p.alias) ? "移出归档 (354)" : "归档 (354)") {
+            // 354 移出归档
+            // 354 归档
+            Button(CredentialOrg.isArchived(mac, "pwd", p.alias) ? "移出归档" : "归档") {
                 let on = !CredentialOrg.isArchived(mac, "pwd", p.alias)
                 CredentialOrg.setArchived(mac, "pwd", p.alias, on)
                 app.showToast(on ? "已归档 — 列表顶部归档区可还原" : "已移出归档")
@@ -1477,10 +1479,10 @@ struct CredentialsView: View {
             }
             Divider()
             Button("停用 (本地, 锁端待处理)", role: .destructive) { disablePwd(p) }
-            Button("彻底删除 (670)", role: .destructive) { deletePwd(p) }
+            Button("彻底删除", role: .destructive) { deletePwd(p) }   // 670 彻底删除
         }
         if let f = hit.fp {
-            Button("指纹详情 (316/320/323)") { fpDetailItem = f }
+            Button("指纹详情") { fpDetailItem = f }   // 316/320/323 指纹详情
             Button("重命名") { renameFp(f) }
             Button(f.isAlarm == true ? "取消预警指纹" : "设为预警指纹") {
                 DB.setFpAlarm(mac, f.batch, f.isAlarm != true)
@@ -1494,7 +1496,9 @@ struct CredentialsView: View {
             Button(hit.pinned ? "取消置顶" : "置顶") {
                 CredentialOrg.toggleStar(mac, "fp", f.batch)
             }
-            Button(CredentialOrg.isArchived(mac, "fp", f.batch) ? "移出归档 (354)" : "归档 (354)") {
+            // 354 移出归档
+            // 354 归档
+            Button(CredentialOrg.isArchived(mac, "fp", f.batch) ? "移出归档" : "归档") {
                 let on = !CredentialOrg.isArchived(mac, "fp", f.batch)
                 CredentialOrg.setArchived(mac, "fp", f.batch, on)
                 app.showToast(on ? "已归档 — 列表顶部归档区可还原" : "已移出归档")
@@ -1502,7 +1506,7 @@ struct CredentialsView: View {
             }
             Divider()
             Button("停用 (本地, 锁端待处理)", role: .destructive) { disableFp(f) }
-            Button("彻底删除 (670)", role: .destructive) { deleteFp(f) }
+            Button("彻底删除", role: .destructive) { deleteFp(f) }   // 670 彻底删除
         }
     }
 
@@ -1530,7 +1534,7 @@ struct CredentialsView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(cycleLabel)
                                 .font(.subheadline.weight(.semibold))
-                            Text("下一步: \(cycleNextLabel) (356)")
+                            Text("下一步: \(cycleNextLabel)")   // 356 下一步
                                 .font(.caption2)
                                 .foregroundStyle(DS.Palette.textSub)
                         }
@@ -1549,15 +1553,15 @@ struct CredentialsView: View {
                         seq["p"] = seqBasePwds.map { $0.alias }
                         seq["f"] = seqBaseFps.map { $0.batch }
                         CredentialOrg.setSeq(mac, seq)
-                        app.showToast("已记住当前组内顺序 (182/352)")
+                        app.showToast("已记住当前组内顺序")   // 182/352 已记住当前组内顺序
                     }
                     .font(.caption.weight(.medium))
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
-                    .accessibilityLabel("把当前先后写成手动序 (182/352), 与排序档里的拖动共用同一张顺序表")
+                    .accessibilityLabel("把当前先后写成手动序, 与排序档里的拖动共用同一张顺序表")   // 182/352 把当前先后写成手动序
                 }
                 HStack(spacing: DS.Space.s) {
-                    Text("智能选取 (350)")
+                    Text("智能选取")   // 350 智能选取
                         .font(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                     ForEach(["已过期", "同成员", "同类型"], id: \.self) { s in
@@ -1573,7 +1577,9 @@ struct CredentialsView: View {
                 if selCount == 0 {
                     // 347 那句「双指下滑连续选 (双指区划由系统滚动提供)」在 iOS 上不存在: 系统没有多指选择手势,
                     // 也没有一个滚动容器替用户划出多选区。这里改成这一屏真做得到的三条路 (逐条点按 / 行右滑「选」/ 356 循环 + 350 智能选取)。
-                    Text("点按行选一条; 行右侧滑动点「选」同样算一条。要连着选一片: 上面那枚循环键按 全选→反选→清空 走 (356), 或用「智能选取」一次选一把 已过期/同成员/同类型 (350)。")
+                    // 356 点按行选一条
+                    // 350 点按行选一条
+                    Text("点按行选一条; 行右侧滑动点「选」同样算一条。要连着选一片: 上面那枚循环键按 全选→反选→清空 走, 或用「智能选取」一次选一把 已过期/同成员/同类型。")
                         .font(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
@@ -1674,7 +1680,7 @@ struct CredentialsView: View {
                     var n = 0
                     for a in selPwds where !CredentialOrg.isStarred(mac, "pwd", a) { CredentialOrg.setStar(mac, "pwd", a, true); n += 1 }
                     for b in selFps where !CredentialOrg.isStarred(mac, "fp", b) { CredentialOrg.setStar(mac, "fp", b, true); n += 1 }
-                    app.showToast(n > 0 ? "已置顶 \(n) 条 (922)" : "所选都已置顶")
+                    app.showToast(n > 0 ? "已置顶 \(n) 条" : "所选都已置顶")   // 922 已置顶
                     reload()
                 }
                 batchBtn("延期", icon: "calendar.badge.clock") {
@@ -1703,7 +1709,7 @@ struct CredentialsView: View {
                 batchBtn("删除", icon: "trash", destructive: true) {
                     if selCount == 0 { app.showToast("先选择凭证"); return }
                     let n = selCount
-                    confirmDestructive("删除所选 \(n) 条凭证 (922)",
+                    confirmDestructive("删除所选 \(n) 条凭证",   // 922 删除所选
                                        "删除后这些凭证在锁内立即失效 (需门锁在场直发); 本机记录进回收站 \(CredentialOrg.reclaimDays()) 天内可找回, 值或开门能力要重新下发。确定继续？",
                                        confirmTitle: "删除") {
                         Task { await batchDelete() }
@@ -1734,7 +1740,7 @@ struct CredentialsView: View {
 
     private func showPrefixNote() {
         guard selCount > 0 else { app.showToast("先选择凭证"); return }
-        let alert = UIAlertController(title: "前缀批量备注 (357)", message: "统一插入各备注开头, 如「2026春节-」", preferredStyle: .alert)
+        let alert = UIAlertController(title: "前缀批量备注", message: "统一插入各备注开头, 如「2026春节-」", preferredStyle: .alert)   // 357 前缀批量备注
         alert.addTextField { $0.placeholder = "前缀" }
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         alert.addAction(UIAlertAction(title: "应用", style: .default) { _ in
@@ -1774,7 +1780,7 @@ struct CredentialsView: View {
             let n = CredentialOrg.batchDisable(mac, pwdAliases: selPwds, fpBatches: selFps)
             if n > 0 {
                 _ = Milestones.recordOrganize()
-                app.flashReceipt("已写入本机 (508)")
+                app.flashReceipt("已写入本机")   // 508 已写入本机
                 app.showToast("已停用 \(n) 条, 收入回收站, 锁端删除待下发")
                 reload()
             } else {
@@ -1828,7 +1834,7 @@ struct CredentialsView: View {
     final class SmartPick { var chosen: Set<String> = [] }
 
     private func newSmartList(pick: SmartPick = SmartPick(), named: String = "", owner: String = "") {
-        let alert = UIAlertController(title: "新建智能列表 (527)", message: "把常用筛选组合存为命名快捷", preferredStyle: .alert)
+        let alert = UIAlertController(title: "新建智能列表", message: "把常用筛选组合存为命名快捷", preferredStyle: .alert)   // 527 新建智能列表
         alert.addTextField { $0.placeholder = "名称 (如: 已过期访客)"; $0.text = named }
         // 527: 属主可选。筛选 (:890/:1054) 是**成员 id 精确匹配**, 手输姓名在这里解析成 id;
         // 空 = 全部属主。解析不到会退回这一步 (保留已勾条件, 免得存出一条永远 0 命中的列表)
@@ -1889,7 +1895,7 @@ struct CredentialsView: View {
     private func manageSmartLists() {
         let lists = CredentialOrg.smartLists(mac)
         guard !lists.isEmpty else { app.showToast("还没有智能列表"); return }
-        let alert = UIAlertController(title: "管理智能列表 (527)", message: nil, preferredStyle: .actionSheet)
+        let alert = UIAlertController(title: "管理智能列表", message: nil, preferredStyle: .actionSheet)   // 527 管理智能列表
         for l in lists {
             // 删除是不可逆动作: 菜单里给全标签 (名称 · 属主 · 状态) 才认得出删的是哪一条
             alert.addAction(UIAlertAction(title: "删除「\(CredentialOrg.smartListLabel(l))」", style: .destructive) { _ in
@@ -1960,7 +1966,7 @@ struct CredentialsView: View {
     // 画不出来的东西就不该用一张不存在的图去承诺。
     private var otpExplainer: some View {
         VStack(alignment: .leading, spacing: DS.Space.s) {
-            Text("临时密码是怎么来的 (820)")
+            Text("临时密码是怎么来的")   // 820 临时密码是怎么来的
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(DS.Palette.text)
             HStack(alignment: .top, spacing: DS.Space.s) {
@@ -2004,7 +2010,7 @@ struct CredentialsView: View {
     private var otpGenRow: some View {
         HStack(spacing: DS.Space.s) {
             // 374: 采集进行中不把码排出来, 大字模式也拿不到明文 (刻意只换文本, 不整页遮黑)
-            Text(cap.recording ? "录屏中已隐去 (374)" : otpPwd)
+            Text(cap.recording ? "录屏中已隐去" : otpPwd)   // 374 录屏中已隐去
                 // 885 大字模式: 开关 (kf_ax_bigotp) 或双击切换, 等宽数字防跳 (231)
                 .font((DB.store.getBool("kf_ax_bigotp") || otpBig) ? .largeTitle.weight(.semibold).monospacedDigit() : .title3.weight(.semibold).monospacedDigit())
                 // 342 换码微动效: 值换掉时逐位滚过去 (与 207 电量数字滚动同一个 contentTransition(.numericText()))。
@@ -2180,7 +2186,7 @@ struct CredentialsView: View {
                             reload()
                         }
                     }
-                    Button("全部还原 (354)") {
+                    Button("全部还原") {   // 354 全部还原
                         CredentialOrg.unarchiveAll(mac)
                         app.showToast("归档已全部还原")
                         reload()
@@ -2188,7 +2194,7 @@ struct CredentialsView: View {
                     .font(.footnote)
                     .buttonStyle(.borderless)
                 } label: {
-                    Text("归档区 (354) · \(ap.count + af.count) 条 — 收起不删, 随时可还原")
+                    Text("归档区 · \(ap.count + af.count) 条 — 收起不删, 随时可还原")   // 354 归档区
                         .font(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
@@ -2245,10 +2251,10 @@ struct CredentialsView: View {
                 }
                 if undoTeachOnce {
                     Text(undoHard
-                         ? "第一次删: 这条浮出后的 5 秒里点「撤销」能取回本机记录 (833)。"
+                         ? "第一次删: 这条浮出后的 5 秒里点「撤销」能取回本机记录。"   // 833 第一次删
                              + "锁端那一步已经真做过 —— 没过期和密码会排入「重新下发」，指纹只能本人到锁前重录。"
                          : "第一次停用: 这 5 秒里点「撤销」，本机记录放回原位，"
-                             + "那条还没发出去的「锁端删除」与停用便签一并收回 (833)。")
+                             + "那条还没发出去的「锁端删除」与停用便签一并收回。")   // 833 那条还没发出去的
                         .font(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
@@ -2384,7 +2390,7 @@ struct CredentialsView: View {
     /// 便签的回显点在回收站那一行 (CredentialCenterView 的 disableMarkText), 所以这句标注是给人看得见的。
     private func disableVia(owner: String?) -> String {
         guard let o = owner, !o.isEmpty, MemberHub.proxyNames.contains(o) else { return "本机单条停用" }
-        return "本机单条停用 · 管理员代操作 (468)"
+        return "本机单条停用 · 管理员代操作"   // 468 本机单条停用
     }
 
     /// 364/180/360 停用: 本地移除 + 回收站 (7 天恢复窗口), 锁端删除入队 (本地意图, UI 明示)
@@ -2403,7 +2409,7 @@ struct CredentialsView: View {
             if let e = CredentialOrg.bin(mac).first(where: { $0.pwd?.alias == p.alias }) {
                 armUndo(e, hard: false)
             }
-            showToastOrganized("已停用, 7 天内可恢复 (364)")
+            showToastOrganized("已停用, 7 天内可恢复")   // 364 已停用
         }
     }
     private func disableFp(_ f: LedgerFp) {
@@ -2420,7 +2426,7 @@ struct CredentialsView: View {
             if let e = CredentialOrg.bin(mac).first(where: { $0.fp?.batch == f.batch }) {
                 armUndo(e, hard: false)
             }
-            showToastOrganized("已停用, 7 天内可恢复 (364)")
+            showToastOrganized("已停用, 7 天内可恢复")   // 364 已停用
         }
     }
 
@@ -2567,7 +2573,7 @@ struct CredentialsView: View {
     /// 2 小时档不再只是列表提醒行), 另有一条"到期时"通知自动跟着走, 不单设开关。
     private func toggleAlerts(_ p: LedgerPwd) {
         let a = CredentialOrg.alert(mac, p)
-        let sheet = UIAlertController(title: "到期预警 #\(p.alias) (359/930)",
+        let sheet = UIAlertController(title: "到期预警 #\(p.alias)",   // 359/930 到期预警
                                      message: "长期有效密码无到期点, 不适用。",
                                      preferredStyle: .actionSheet)
         func addTier(_ title: String, current: Bool, toggle: @escaping () -> Void) {

@@ -308,19 +308,19 @@ enum CredentialOrg {
     /// 返回的是**给用户看的那句话** —— 措辞只在这里有一份，界面不再各写一遍。
     static func undoRemove(_ mac: String, entry: CredBinEntry, hard: Bool) -> String {
         guard undoBin(mac, entry: entry) else {
-            return "这条已经不在回收站里了 (506) — 可能已恢复、已清理，或本机刚换过锁"
+            return "这条已经不在回收站里了 — 可能已恢复、已清理，或本机刚换过锁"   // 506 这条已经不在回收站里
         }
         if hard {
             if let p = entry.pwd {
                 queueRestore(mac, p)
                 let q = queue(mac).contains { $0.kind == "restore" && $0.pwd?.alias == p.alias }
-                return q ? "本机记录已放回原位；锁端那条已经真删了 —— 按 504 排入「重新下发」，连上锁补回 (506)"
-                         : "本机记录已放回原位；锁端那条已经真删，而这条已过有效期 ⇒ 既不重发也无处可恢复 (506)"
+                return q ? "本机记录已放回原位；锁端那条已经真删了 —— 按 504 排入「重新下发」，连上锁补回"   // 506 本机记录已放回原位
+                         : "本机记录已放回原位；锁端那条已经真删，而这条已过有效期 ⇒ 既不重发也无处可恢复"   // 506 本机记录已放回原位
             }
             if entry.fp != nil {
-                return "本机记录已放回原位；锁端那条已经真删 —— 指纹只能本人到锁前重录 8 次，App 无法远程补录 (670)"
+                return "本机记录已放回原位；锁端那条已经真删 —— 指纹只能本人到锁前重录 8 次，App 无法远程补录"   // 670 本机记录已放回原位
             }
-            return "本机记录已放回原位 (506)"
+            return "本机记录已放回原位"   // 506 本机记录已放回原位
         }
         return "已撤销停用：本机记录放回原位" + reclaim(mac, entry: entry)
     }
@@ -368,7 +368,7 @@ enum CredentialOrg {
         // 没收回待发删除时，"已还原"这句话掩盖的正是这个未知 —— 所以按实说。
         if entry.fp != nil {
             bits.append(dropped ? "这条指纹锁端那步还没发出去，已收回 —— 仍可开门"
-                                : "锁端这条有无被删过要连上锁才证实；若已删，指纹只能本人到锁前重录 (670)")
+                                : "锁端这条有无被删过要连上锁才证实；若已删，指纹只能本人到锁前重录")   // 670 锁端这条有无被删过要
         }
         return bits.isEmpty ? "" : " · " + bits.joined(separator: " · ")
     }
@@ -528,7 +528,7 @@ enum CredentialOrg {
         q.insert(CredQueueItem(id: nextQueueId(mac), kind: "restore", title: "重新下发「\(displayPwd(p))」",
                                pwd: p, state: CredQueueState.pending.rawValue), at: 0)
         saveQueue(mac, q)
-        return " · 已排入重新下发 (504)，到场连接后生效"
+        return " · 已排入重新下发，到场连接后生效"   // 504 已排入重新下发
     }
 
     // ---------- 365 下发状态队列 (本地容错态, 重试走既有命令) ----------
@@ -604,7 +604,7 @@ enum CredentialOrg {
             return ""
         case "restore":
             guard let p = item.pwd, let v = p.pwd else {
-                throw BLEErrorX.msg("这条没有口令明文，无法重新下发 (\(item.title)) — 需重新录入 (504)")
+                throw BLEErrorX.msg("这条没有口令明文，无法重新下发 (\(item.title)) — 需重新录入")   // 504 这条没有口令明文
             }
             let alias = try await lock.pwdAdd(pwd: v, validFrom: p.from, validTo: p.to)
             guard alias != p.alias else { return "" }
@@ -616,7 +616,7 @@ enum CredentialOrg {
             DB.delPwd(mac, p.alias)
             DB.addPwd(mac, moved)
             snapshot(mac, kind: "pwd", key: alias, pwd: moved, fp: nil,
-                     note: "重新下发落到别名 #\(alias) (365 归位)")
+                     note: "重新下发落到别名 #\(alias)")   // 365 重新下发落到别名
             return " · 锁端落到别名 #\(alias)"
         default:
             return ""
@@ -676,7 +676,7 @@ enum CredentialOrg {
     /// 判据与单条停用 disableVia、批量停用拆分同一张 proxyNames; 无归属不猜。
     private static func proxySuffix(_ owner: String?) -> String {
         guard let o = owner, !o.isEmpty, MemberHub.proxyNames.contains(o) else { return "" }
-        return " · 管理员代操作 (468)"
+        return " · 管理员代操作"   // 468 管理员代操作
     }
     /// 357 前缀批量备注
     static func batchPrefixNote(_ mac: String, pwdAliases: [Int], fpBatches: [Int], prefix: String) -> Int {
@@ -918,7 +918,7 @@ enum CredentialOrg {
             let nm = DB.member(owner)?.name ?? "该成员"
             out.append(Advice(id: "memberExpired:" + owner,
                               title: "归属 \(nm) 的 \(v.all) 张临时码已全部过期",
-                              sub: "建议停用收回, 台账与回收站会留着痕迹 (471)",
+                              sub: "建议停用收回, 台账与回收站会留着痕迹",   // 471 建议停用收回
                               icon: "person.crop.circle.badge.xmark", action: "memberExpired"))
         }
         return out
@@ -993,7 +993,7 @@ enum CredentialOrg {
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")
         f.dateFormat = "MM-dd HH:mm"
-        return "停用原因 \(d.label) · \(f.string(from: Date(timeIntervalSince1970: d.at))) · \(d.via) (361)"
+        return "停用原因 \(d.label) · \(f.string(from: Date(timeIntervalSince1970: d.at))) · \(d.via)"   // 361 停用原因
     }
 
     // ---------- 355/914 组织偏好持久化 ----------

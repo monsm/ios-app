@@ -87,7 +87,7 @@ struct AddDeviceView: View {
                     NavigationLink {
                         SymptomGuideView(initial: "bleConnect")
                     } label: {
-                        Label("看三步排查 (829)", systemImage: "stethoscope")
+                        Label("看三步排查", systemImage: "stethoscope")   // 829 看三步排查
                             .font(.footnote)
                             .frame(minHeight: DS.Hit.min)
                     }
@@ -107,7 +107,7 @@ struct AddDeviceView: View {
                 HStack(spacing: DS.Space.s) {
                     RSSIBars(level: LinkSense.rssiLevel(LinkSense.shared.lastRssi))
                     Text(LinkSense.rssiLevel(LinkSense.shared.lastRssi) >= 3
-                         ? "信号已够，点下面列表里的锁即可开始 (807)"
+                         ? "信号已够，点下面列表里的锁即可开始"   // 807 信号已够
                          : "请再靠近门锁：信号越满广播越完整，配对越不容易中途断")
                         .font(.caption)
                         .foregroundStyle(DS.Palette.textSub)
@@ -574,7 +574,9 @@ struct AddPwdView: View {
                 if !permanent {
                     DatePicker("生效日期", selection: $fromDate, displayedComponents: .date)
                     DatePicker("到期日期", selection: $toDate, displayedComponents: .date)
-                    Text("到期待用: 凭证页可开三档预警 (359), 过期进「已过期」分组不消失 (360)。")
+                    // 359 到期待用
+                    // 360 到期待用
+                    Text("到期待用: 凭证页可开三档预警, 过期进「已过期」分组不消失。")
                         .font(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
@@ -959,7 +961,7 @@ struct DeviceInfoView: View {
         let lo = sp.map(\.pct).min() ?? 0
         let hi = sp.map(\.pct).max() ?? 0
         let days = sp.count >= 2 ? max(Int((sp[sp.count - 1].t - sp[0].t) / 86_400_000) + 1, 1) : 1
-        return "电量走势 (45): \(sp.count) 个采样点 · 跨 \(days) 天 · 最低 \(lo)% / 最高 \(hi)%"
+        return "电量走势: \(sp.count) 个采样点 · 跨 \(days) 天 · 最低 \(lo)% / 最高 \(hi)%"   // 45 电量走势
     }
 
     // 290 电池档案: 型号与换电日期 (表单可编辑, 纯本地台账)
@@ -1193,7 +1195,7 @@ struct LockProfileView: View {
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel("预览: \(trimmed.isEmpty ? "未命名" : trimmed)")
             } footer: {
-                Text("符号与色标同步用于 Hero 卡、切换胶囊与记录行的时间线标签 (105)。")
+                Text("符号与色标同步用于 Hero 卡、切换胶囊与记录行的时间线标签。")   // 105 符号与色标同步用于
             }
             Section("身份") {
                 TextField("昵称 (如 婆婆家·入户门)", text: $name)
@@ -1217,7 +1219,7 @@ struct LockProfileView: View {
             Section {
                 // 108 手动隐藏这把锁: 只影响设备 Tab 的横滑翻页与胶囊主列表。
                 // 判据刻意与"沉睡 (超 30 天未连接)"分开 —— 隐藏是用户明确说过的，沉睡是推断出来的。
-                Toggle("在翻页里隐藏这把锁 (108)", isOn: Binding(
+                Toggle("在翻页里隐藏这把锁", isOn: Binding(   // 108 在翻页里隐藏这把锁
                     get: { LockArchive.isHidden(app.currentMac) },
                     set: { LockArchive.setHidden(app.currentMac, $0) }))
                 Text("隐藏后它退出左右横滑，只在切换胶囊的「已隐藏」区里可达；回到这里取消即恢复。\n"
@@ -1541,9 +1543,9 @@ struct FirmwareView: View {
             LabeledRow("导入过的固件包",
                        lib.isEmpty ? "本机还没有包" : "\(lib.count) 个 · 最近 \(lib.first?.version ?? "未知")")
         } header: {
-            Text("进这一页先对一眼 (825)")
+            Text("进这一页先对一眼")   // 825 进这一页先对一眼
         } footer: {
-            Text("没有「出厂版本对照表」可点：厂商云已停服，本机只有上面这三处版本真相 (513/145 那份包清单就在下方)。"
+            Text("没有「出厂版本对照表」可点：厂商云已停服，本机只有上面这三处版本真相。"   // 513/145 没有
                  + "要升级就带自己的包来，比对以锁上读到的那一个为准。")
                 .font(.caption2)
         }
@@ -1625,7 +1627,7 @@ struct FirmwareView: View {
             // 并行既抢 BLE 又抢 bootloader 会话); 队列只做外层编排, 单锁那条链一字未改。
             let peers = app.devices.filter { $0.pid == app.current?.pid && $0.mac != app.current?.mac }
             if !peers.isEmpty {
-                Section("批量排队升级 (144)") {
+                Section("批量排队升级") {   // 144 批量排队升级
                     ForEach(peers, id: \.mac) { kc in
                         Toggle(LockArchive.displayName(kc), isOn: Binding(
                             get: { queueSel.contains(kc.mac) },
@@ -2638,7 +2640,7 @@ private struct MemberWelcomeCard: View {
     let member: Member
     var body: some View {
         VStack(alignment: .leading, spacing: DS.Space.m) {
-            Text("欢迎 \(member.name) 入伙 (995)")
+            Text("欢迎 \(member.name) 入伙")   // 995 欢迎
                 .font(.headline)
             Text("下一步: ① 去凭证页给 TA 录一条凭证 ② 在凭证详情把「归属」改成 \(member.name) ③ 归属后「各就各位」与「入伙」徽章一起点亮")
                 .font(.subheadline)

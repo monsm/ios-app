@@ -121,23 +121,23 @@ enum ManualKit {
                                "临时码 (ZOTP) 每 30 分钟窗口换新, 生成前先校准锁内时间。",
                                "到期凭证自动归档; 回收站保留期可在设置里调。"]),
         ManualChapter(id: "ch.family", title: "给家人开门禁（四步）",
-                      lines: ["第一步 建档：「成员中心」里加称呼与关系，需要就选角色 (458/843)。",
-                              "第二步 给凭证：在 Ta 名下录指纹或密码，到场连接后下发到锁 (177/306)。",
-                              "第三步 限时段：给这条密码设生效与到期；给访客用临时码，到点自动作废 (520/806)。",
-                              "第四步 收回：停用凭证或把人归档；锁端的删除要连接执行，本机台账同步标记 (353/460)。",
+                      lines: ["第一步 建档：「成员中心」里加称呼与关系，需要就选角色。",   // 458/843 第一步
+                              "第二步 给凭证：在 Ta 名下录指纹或密码，到场连接后下发到锁。",   // 177/306 第二步
+                              "第三步 限时段：给这条密码设生效与到期；给访客用临时码，到点自动作废。",   // 520/806 第三步
+                              "第四步 收回：停用凭证或把人归档；锁端的删除要连接执行，本机台账同步标记。",   // 353/460 第四步
                               "关于手表：本 App 没有 watch target，Apple Watch 也替不了这把锁开门 (协议与工程里都没有那条路)。"
-                               + "创意原文那句「给家人配手表」在这里做不到，这一章给的是四步做得完的 (973)。"]),
+                               + "创意原文那句「给家人配手表」在这里做不到，这一章给的是四步做得完的。"]),   // 973 创意原文那句
         ManualChapter(id: "ch.records", title: "记录与统计",
                       lines: ["记录存在锁内, 「重新读取」拉最近 100 条; 归属是本地推断, 带「约」。",
                                "统计全部来自本地台账缓存, 覆盖不足 7 天会显示积累进度而非空图。"]),
         ManualChapter(id: "ch.backup", title: "备份与恢复",
                       lines: ["全量备份是一整段加密文本, 换新手机粘贴即恢复, 门锁无需重置。",
                                "坚果云同步走用户自己的账号与专属密码; 加密口令不落盘。",
-                               "演练入口: 「设置-演练场」的导入样例备份会真走恢复管线 (含自动还原点), 样例可一键清除 (837)。"]),
+                               "演练入口: 「设置-演练场」的导入样例备份会真走恢复管线 (含自动还原点), 样例可一键清除。"]),   // 837 演练入口
         // 286 替代: 原句是"锁详情页解释广播间隔档位与省电关系, 协议可读则回显当前值" ——
         // 协议 §1/§2 没有读取广播参数的字段, 所以"回显当前值"这句承诺撤掉, 只留静态科普,
         // 落点从锁详情页挪到帮助手册 (与 744 同一条落法: 讲原理的地方是静态页, 不是读数页)。
-        ManualChapter(id: "ch.radio", title: "蓝牙广播与省电 (286)",
+        ManualChapter(id: "ch.radio", title: "蓝牙广播与省电",   // 286 蓝牙广播与省电
                       lines: ["门锁靠定时广播让手机「看得见」它; 广播间隔越长越省电, 但从进页到连上要多等一会儿。",
                               "档位由锁本身 (出厂/固件) 定, 协议没有读取广播参数的字段 —— 这里只讲原理, 不显示「当前档位」。",
                               "要改档位按随锁说明书或厂商工具走; 本 App 不猜, 也不回显一个读不到的读数。"]),
@@ -241,7 +241,9 @@ struct FAQPage: View {
         ("临时码为什么有时输不进?", "锁内时间与手机偏差超过 180 秒会校验失败 — 先在快捷操作里校准时间再生成。"),
         ("换新手机怎么办?", "旧手机「备份与恢复」导出一段文本, 新手机粘贴导入, 门锁与密钥无需重置。"),
         ("两台手机能同时管一把锁吗?", "钥匙串是单机的; 跨机用备份文本转移, 同一时刻由一台主手机下发。"),
-        ("蓝牙搜不到锁?", "确认锁在配网态 (RESET 三连响), 手机 1–2 米内, 系统蓝牙与定位已开。"),
+        // 删掉"与定位已开": iOS 上 BLE 扫描不需要定位授权 (那是 Android 的规则)，把定位写成搜到锁的前提，
+        // 会让用户去翻一个跟故障无关的开关 (与首启权限页同一处错话，同批改掉)。
+        ("蓝牙搜不到锁?", "确认锁在配网态 (RESET 三连响), 手机 1–2 米内, 系统蓝牙已开。"),
         ("删除设备会锁我在家外吗?", "只删本机数据, 锁端密钥不变; 未备份的台账删除后不可找回, 删除前有确认。"),
     ]
     var body: some View {
@@ -309,7 +311,7 @@ struct SymptomGuideView: View {
     var body: some View {
         List {
             if treeKey == nil {
-                Section("你遇到的是哪一类? (282)") {
+                Section("你遇到的是哪一类?") {   // 282 你遇到的是哪一类
                     ForEach(Self.trees) { t in
                         Button {
                             treeKey = t.id; node = "q1"; trail = []
@@ -463,7 +465,7 @@ struct CopyCheckPage: View {
             } header: {
                 Text("本 App 文案规范")
             } footer: {
-                Text("量词表 (656): 记录用「条」、锁用「把」、开门用「次」、指纹用「枚」、告警用「条」、临时码用「张」。")
+                Text("量词表: 记录用「条」、锁用「把」、开门用「次」、指纹用「枚」、告警用「条」、临时码用「张」。")   // 656 量词表
                     .font(.caption).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -485,7 +487,7 @@ struct CopyCheckPage: View {
             }
             // 669: CopyTable/LocalizedCopy 此前零调用 —— 键位表写完没地方看。
             // 如实标注"未翻译", 不假称支持繁中 (结构预留 ≠ 功能已就绪)。
-            Section("关键文案键位 (669 繁中预留) · \(CopyTable.entries.count) 条") {
+            Section("关键文案键位 · \(CopyTable.entries.count) 条") {   // 669 关键文案键位
                 ForEach(CopyTable.entries.keys.sorted(), id: \.self) { k in
                     VStack(alignment: .leading, spacing: DS.Space.xxs) {
                         Text(k).font(.caption.monospaced()).foregroundStyle(DS.Palette.accentText)
@@ -505,7 +507,7 @@ struct CopyCheckPage: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .navigationTitle("文案体检 (664)")
+        .navigationTitle("文案体检")   // 664 文案体检
         .scrollContentBackground(.hidden)
         .dsScreenBackground()
     }
@@ -611,7 +613,7 @@ struct DemoLabsView: View {
 
     var body: some View {
         List {
-            Section("样例备份包 (837)") {
+            Section("样例备份包") {   // 837 样例备份包
                 // 837 原句 = "导入样例备份**走完整恢复流程**, 完毕一键清除"。
                 // 旧按钮把文本塞进剪贴板就宣称"走完整恢复体验" —— 恢复一步没跑, 是假文案。
                 // 现在真走 BackupStudio 同一条管线: 解码 (453 文件头) → 424 升级链 →
@@ -644,9 +646,9 @@ struct DemoLabsView: View {
                     }
                 }
             }
-            Section("7 天样例生成器 (845)") {
+            Section("7 天样例生成器") {   // 845 天样例生成器
                 // demoLogsCount 此前零调用: 生成完只报"已生成", 看不到当前到底躺着几条
-                LabeledRow("当前样例条数 (845)", "\(DemoKit.demoLogsCount()) 条 · 只算 demo_ 前缀")
+                LabeledRow("当前样例条数", "\(DemoKit.demoLogsCount()) 条 · 只算 demo_ 前缀")   // 845 当前样例条数
                 Button {
                     DemoKit.generateSevenDaySamples()
                     app.loadDevices()
@@ -663,7 +665,7 @@ struct DemoLabsView: View {
                     }
                 }
             }
-            Section("锁死演练 (844)") {
+            Section("锁死演练") {   // 844 锁死演练
                 Button { runLockoutDrill() } label: {
                     Label("体验凭证全失效的处置流程", systemImage: "lock.slash")
                 }
@@ -687,7 +689,7 @@ struct DemoLabsView: View {
                     .padding(.vertical, DS.Space.xs)
                 }
             }
-            Section("录前预习 (838)") {
+            Section("录前预习") {   // 838 录前预习
                 // 838 原句 = "30 秒分步预习动画, 高亮三阶段后再开始"。旧实现各档 3 秒 (共 9 秒)
                 // 且预习完没有进真正录入的出口 —— 现在每档 10 秒 (共 30 秒), 走完出现"开始真正录入"。
                 // 并写明它只点亮清单, 不碰指纹硬件、不搬任何数据。
@@ -754,7 +756,7 @@ struct DemoLabsView: View {
         guard !text.isEmpty,
               let raw = try? JSONDecoder().decode(BackupBundle.self, from: Data(text.utf8)) else {
             UIPasteboard.general.string = text
-            app.showToast("样例文本解码失败 (453 文件头层) — 已改填入剪贴板, 可到「备份与恢复」手动导入")
+            app.showToast("样例文本解码失败 — 已改填入剪贴板, 可到「备份与恢复」手动导入")   // 453 样例文本解码失败
             return
         }
         let b = BackupStudio.upgradeChain(raw)

@@ -151,7 +151,7 @@ func quickDestination(_ id: String) -> some View {
     case "alarm":    AlarmCenterView()
     case "firmware": FirmwareView()
     case "care":     MaintenanceView()
-    case "again":    Text("「再开一次」在设备页长按编辑或直接点按, 不需要新页面 (921)")
+    case "again":    Text("「再开一次」在设备页长按编辑或直接点按, 不需要新页面")   // 921 再开一次
     default:         Text("这个快捷入口对应的页面已不存在，请到设置-外观里重新选择")
     }
 }
@@ -184,7 +184,7 @@ struct QuickTileEditorSheet: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("快捷操作格 (905 · 十一选六)") {
+                Section("快捷操作格") {   // 905 快捷操作格
                     ForEach(QuickPool.all) { a in
                         Toggle(a.label, isOn: Binding(
                             get: { QuickPool.selected.contains(a) },
@@ -198,7 +198,7 @@ struct QuickTileEditorSheet: View {
                             }))
                     }
                 }
-                Section("常用排前 (1047)") {
+                Section("常用排前") {   // 1047 常用排前
                     Toggle("常用动作排到前面", isOn: Binding(
                         get: { QuickPool.smartFirst },
                         set: { v in

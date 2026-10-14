@@ -81,7 +81,7 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
                         .font(.system(size: DS.Icon.md))
                         .foregroundStyle(DS.Palette.accentText)
                     VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                        Text("还没有备份 (822)").font(.subheadline.weight(.medium))
+                        Text("还没有备份").font(.subheadline.weight(.medium))   // 822 还没有备份
                         Text("本机从未生成过备份文本，也没有上传成功记录。手机丢失或重装即不可恢复。")
                             .font(.caption).foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
@@ -90,7 +90,7 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
                 .accessibilityElement(children: .combine)
             } else if let at = Milestones.lastBackupAt {
                 VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                    Text("上次备份 " + at.formatted(date: .abbreviated, time: .shortened) + " (822)")
+                    Text("上次备份 " + at.formatted(date: .abbreviated, time: .shortened))   // 822 上次备份
                         .font(.caption).foregroundStyle(DS.Palette.textSub)
                     // 822 建议备份时间: 读「备份工作室」的节奏档 (198 的 kf_bk_cadence, 本处为它的读方),
                     // 到期与否按上次备份时刻实算; 节奏为「仅手动」时不建议 —— 没有节奏就没有"到期"这一说。
@@ -158,7 +158,7 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
                     Label("文件先在本机加密，服务器只拿到密文", systemImage: "lock.rectangle.stack")
                     Label("不配也能用：本页的文本导出与本地导入是完整可用的", systemImage: "square.and.arrow.down")
                     NavigationLink { WebDAVStudioView() } label: {
-                        Text("服务器根路径默认内置坚果云，点这里可改 (816)")
+                        Text("服务器根路径默认内置坚果云，点这里可改")   // 816 服务器根路径默认内置
                             .font(.caption2.weight(.medium))
                             .foregroundStyle(DS.Palette.accentText)
                     }
@@ -330,7 +330,7 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
             return nil
         }
         let due = last.addingTimeInterval(TimeInterval(days) * 86_400)
-        if due <= Date() { return "按当前的\(label)节奏, 已经到该再备份一次的时候了 (822)" }
-        return "按当前的\(label)节奏, 建议 " + due.formatted(date: .abbreviated, time: .shortened) + " 前再备一次 (822)"
+        if due <= Date() { return "按当前的\(label)节奏, 已经到该再备份一次的时候了" }   // 822 按当前的
+        return "按当前的\(label)节奏, 建议 " + due.formatted(date: .abbreviated, time: .shortened) + " 前再备一次"   // 822 前再备一次
     }
 }

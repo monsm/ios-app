@@ -42,6 +42,11 @@ targets:
           - UIInterfaceOrientationPortrait
         NSBluetoothAlwaysUsageDescription: 需要蓝牙连接并管理你的智能门锁 (扫描/配网/开锁/固件升级)。
         NSBluetoothPeripheralUsageDescription: 需要蓝牙连接并管理你的智能门锁。
+        # 缺这条 = 首启引导第 4 步「权限说明」点继续即被系统终止进程 (TCC 对缺键不弹窗, 直接杀)。
+        # 触发点: App/UI/Onboarding.swift requestSystemPermissions() 里的 CLLocationManager.requestWhenInUseAuthorization()。
+        # ⚠ 截至本批, 全仓没有任何一处读坐标 / 启动 locateing service —— 这条权限目前是"申请了但无消费方"。
+        #    保留它按拍板"以后要用定位 (到位置身/地理围栏)"预留; 真正接线时把下面这句改成那件事本身。
+        NSLocationWhenInUseUsageDescription: 为"到家自动开锁"这类到位置身功能预留；当前版本不读取你的坐标，位置数据不出本机。
         # 缺这条 = 一弹面容就废：本仓已有四处调 LAContext.evaluatePolicy
         # (AuthKit 877 口令连败大字键 / AutoOpen 严格档 F1 门控 / CredentialCenterView 502 彻底删除双验)。
         NSFaceIDUsageDescription: 用面容确认这一步是本人在操作：应用锁连败后的替代键、靠近自动开锁的严格档、以及彻底删除回收站凭证前的二次确认。
