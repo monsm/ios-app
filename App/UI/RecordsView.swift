@@ -3452,7 +3452,7 @@ struct OutWinSheet: View {
                         .accessibilityElement(children: .combine)
                     }
                 } header: {
-                    Text("越界开门清单 (575, 约)")
+                    Text("越界开门清单 (约)")
                 } footer: {
                     Text("口径: 临时码台账生效区间之外仍出现一次性密码开门 (本地检测, 时刻为锁端时间)。")
                         .font(.caption)

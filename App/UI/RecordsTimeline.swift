@@ -111,7 +111,7 @@ struct RecDetailSheet: View {
                 o.mac == rec.mac && o.key != rec.key && String(o.timeStr.prefix(16)) == stamp
             }.count : 0
             if sameMinute > 0 {
-                fieldRow("同一分钟另有", "\(sameMinute) 条 (917 只在详情注明；时间线不并行，条数仍等于事件数)")
+                fieldRow("同一分钟另有", "\(sameMinute) 条 (只在详情注明；时间线不并行，条数仍等于事件数)")
             }
             if !rec.cred.isEmpty { fieldRow("凭证维度", rec.cred + " (约)") }
             // 797 陪同进入疑似: 同一凭证 (临时码/密码) 在 5 分钟窗口内被**不同成员**用过的后续行。

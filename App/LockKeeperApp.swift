@@ -99,6 +99,9 @@ final class AppState: ObservableObject {
     @Published var themeSeed: String = DB.store.getString("kf_theme")
     /// 外观种子 (包16): 主题/品牌色/密度任一变更 +1, RootView 以 .id 重建全树实现即时换肤
     @Published var appearanceSeed = 0
+    /// 2026-10-14: 行为类偏好 (开锁怎么开/什么动静) 的轻量变更信号 —— 见 setUnlockOption 注释。
+    /// 与 appearanceSeed 的关键区别: 只让视图体重算，**不换身份**，所以滚动位置/焦点/动画全部保留。
+    @Published var prefSeed = 0
     @Published var tabSelection = 0 { // 设备/凭证/记录/设置
         didSet {
             // 54/372 摇一摇的过程态跟着换页走: 回位票只在"留在设置页"期间有效,
@@ -708,9 +711,26 @@ final class AppState: ObservableObject {
         applyAppearance { DB.store.set("kf_recent_count", n) }
     }
     /// 包1 开锁偏好 (76 提示音 / 62 围栏 / 249 圆盘尺寸 / 按住确认 / 自动重试):
-    /// 写存储键并经外观重建通道让圆盘即时生效 (与密度/主题同一机制)
+    /// 区分两类 —— 参与布局/外观求值的走整树重建 (让圆盘/密度即时生效)，纯行为类只发轻量信号。
+    ///
+    /// 2026-10-14 修"设置页拨开关就跳回顶部": 旧实现**一律**走 applyAppearance ⇒ 每次拨开关都给
+    /// `.id(app.appearanceSeed)` 换身份，整棵子树被销毁重建 (该语义见 rootCore 与 390 那条注释)：
+    ///   · 设置页 List 的滚动位置直接回到顶部 (UITableView 的 contentOffset 随视图树一起销毁);
+    ///   · `.task` 整段重放、coldStartScan 再起一轮、onLaunch 再跑一遍 (390 那条已用 launchBootstrapped 兜住)。
+    /// 而这批键没有一处参与配色/密度/圆角/行高/动效求值 (逐个 grep 过读取点: 全在"用时求值" ——
+    /// 开锁流程 / 提示音播放 / 通知排程 / 语音播报)，根本不需要整树重建。
+    /// 改为只 bump `prefSeed`：视图体照常重算 ⇒ Toggle 的 get 重读 ⇒ 视觉翻转，
+    /// 而**视图身份不变** ⇒ 滚动位置、键盘焦点、动画上下文全部保留。
+    static let behaviorKeys: Set<String> = [
+        "kf_hold_confirm", "kf_fence", "kf_tap_direct",
+        "kf_unlock_sound", "kf_unlock_fail_sound", "kf_auto_retry",
+        "kf_alert_tone", "kf_duress_tone",
+        "kf_status_checkin", "kf_status_checkin_hour", "kf_vo_announce"
+    ]
     func setUnlockOption(_ key: String, _ v: Any) {
-        applyAppearance { DB.store.set(key, v) }
+        DB.store.set(key, v)
+        if Self.behaviorKeys.contains(key) { prefSeed &+= 1 }
+        else { applyAppearance {} }
     }
     /// 894 恢复带外观段的备份后重取外观。
     /// 为什么必须由 UI 层显式调：themeSeed / appearanceSeed 是 AppState 的内存镜像，

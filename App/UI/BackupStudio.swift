@@ -549,7 +549,7 @@ struct ExportWizardView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-            Toggle("先清理过期临时码再导出 (431, 将减少 \(BackupStudio.expiredTemporaryCount()) 条)",
+            Toggle("先清理过期临时码再导出 (将减少 \(BackupStudio.expiredTemporaryCount()) 条)",
                    isOn: $cleanFirst)
             Toggle("按年分卷", isOn: $useVolumes)   // 410 按年分卷
             Spacer(minLength: 0)
@@ -1261,7 +1261,7 @@ struct WebDAVStudioView: View {
                         .background(DS.Palette.ok.opacity(0.12), in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
                     }
                 }
-                Section("远端备份 (422 哈希先行: 先拉 etag 再拉正文)") {
+                Section("远端备份 (哈希先行: 先拉 etag 再拉正文)") {
                     if !entries.isEmpty {
                         ForEach(entries) { e in
                             VStack(alignment: .leading, spacing: DS.Space.xxs) {
@@ -2570,7 +2570,7 @@ struct LocalFilesView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("本地备份 (434 哈希短码 / 436 演练 / 454 双备份对比)") {
+                Section("本地备份 (哈希短码 / 演练 / 双备份对比)") {
                     if files.isEmpty {
                         Text("暂无本地备份 — 先到导出向导生成")
                             .font(.caption)
@@ -2712,7 +2712,7 @@ struct LocalFilesView: View {
         guard let plain = try? BackupStudio.decryptAny(raw, password: pw.isEmpty ? nil : pw),
               let data = plain.data(using: .utf8),
               let b = try? JSONDecoder().decode(BackupBundle.self, from: data) else {
-            throw DFUError.msg("不是有效备份 (449 魔数/文件头层)")
+            throw DFUError.msg("不是有效备份 (魔数/文件头层)")
         }
         return b
     }

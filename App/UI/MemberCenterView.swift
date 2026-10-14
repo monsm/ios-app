@@ -915,7 +915,7 @@ struct MemberDetail360View: View {
             // 470 这一档真收 UI 的地方之一: 「管凭证」为禁用的角色 (访客) 不出现这枚代管开关,
             // 并且把"为什么这里少了一枚"写在原地 —— 收起来却不说明, 就是本仓反复犯的无声忽略。
             if MemberHub.permAllows(role, "管凭证") {
-                Toggle("由我代管 (468: TA 名下凭证被单条停用时, 361 便签补一句 管理员代操作)", isOn: Binding(
+                Toggle("由我代管 (TA 名下凭证被单条停用时, 便签补一句 管理员代操作)", isOn: Binding(
                     get: { MemberHub.ext(m.id).proxy },
                     set: { v in
                         var ext = MemberHub.ext(m.id); ext.proxy = v
@@ -1001,7 +1001,7 @@ struct MemberDetail360View: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             if MemberHub.permAllows(role, "成员管理") {
-                Toggle("把 Ta 设为紧急管理员 (469: 本机点名档)", isOn: Binding(
+                Toggle("把 Ta 设为紧急管理员 (本机点名档)", isOn: Binding(
                     get: { MemberHub.ext(m.id).emergencyAdmin },
                     set: { v in
                         var ext = MemberHub.ext(m.id); ext.emergencyAdmin = v
@@ -1015,7 +1015,7 @@ struct MemberDetail360View: View {
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             } else {
-                Text("角色是「" + MemberHub.roleLabel(role) + "」: 矩阵里「成员管理」这一行是禁用, 所以这一档不给指成紧急管理员 (470 收的就是本机 UI)。要给它, 先把角色改成主理人。")
+                Text("角色是「" + MemberHub.roleLabel(role) + "」: 矩阵里「成员管理」这一行是禁用, 所以这一档不给指成紧急管理员 (收的就是本机 UI)。要给它, 先把角色改成主理人。")
                     .font(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -1077,7 +1077,7 @@ struct MemberDetail360View: View {
         let fRemark = field("备注名", e.remark)   // 461 备注名
         let fEmoji = field("emoji 代号", e.emoji)   // 916 代号
         let fEmergency = field("紧急联系 姓名+电话", e.emergency)   // 465 紧急联系
-        let fNote = field("家庭便签 (475, 如 周六换锁芯)", e.note)
+        let fNote = field("家庭便签 (如 周六换锁芯)", e.note)
         let fCare = field("孩子码关怀文案", e.careText)   // 480 孩子码关怀文案
         let fWelcome = field("访客欢迎语", e.welcome)   // 484 访客欢迎语
         let fGroup = field("分组标签 家人/访客/服务人员", e.groupTag)   // 630 分组标签
@@ -1202,7 +1202,7 @@ struct MemberWizardView: View {
                             }
                         }
                         .pickerStyle(.inline)
-                        TextField("备注名 (461, 记录条目显示 称呼（备注）)", text: $remark)
+                        TextField("备注名 (记录条目显示 称呼（备注）)", text: $remark)
                             .autocorrectionDisabled()
                     default:
                         Toggle("顺路建 10 分钟临时码 (末步)", isOn: $makePwd)

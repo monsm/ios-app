@@ -84,7 +84,7 @@ struct AccessibilityView: View {
             }
             .accessibilityElement(children: .combine)
             .accessibilityLabel("形状冗余演示: 成功 对勾, 警告 叹号, 失败 叉, 除颜色外恒有形状加图标双通道")
-            Toggle("大格模式 (230, 快捷格 2 列大格)", isOn: Binding(
+            Toggle("大格模式 (快捷格 2 列大格)", isOn: Binding(
                 get: { AXPrefs.bigTile },
                 set: { app.setUnlockOption("kf_bigtile", $0) }))
             // 163 横屏重排 → 降级说明 (TARGETED_DEVICE_FAMILY=1 仅竖屏, 不做横屏布局, 备案 DEFERRED)。
@@ -100,7 +100,7 @@ struct AccessibilityView: View {
             // 现在根视图按 AXFlags.boldText 设 legibilityWeight, 这一条与上面四条一样是"无需开关即生效"。
             // 226 系统级适配无需开关即
             // 227 系统级适配无需开关即
-            Text("系统级适配无需开关即生效: 增强对比映射 (862, 分隔线/次文本加深一档、玻璃卡降实底)、智能反转保护 (863, hero 渐变降级幂等色)、降低透明度、减少动态效果、系统加粗跟随 (861, 根视图按系统开关设 legibilityWeight, 凭证名与开关标签随之加粗)。")
+            Text("系统级适配无需开关即生效: 增强对比映射 (分隔线/次文本加深一档、玻璃卡降实底)、智能反转保护 (hero 渐变降级幂等色)、降低透明度、减少动态效果、系统加粗跟随 (根视图按系统开关设 legibilityWeight, 凭证名与开关标签随之加粗)。")
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -171,7 +171,7 @@ struct AccessibilityView: View {
             // 872 在 PressableButtonStyle 的 300ms 去重闸里, 229 在 barSide/快捷格/HeroCard 三处。
             // 872 已接线 (2026-10-13): 去重闸落在 LockKeeperApp 的 PressableButtonStyle 里
             // (PrimitiveButtonStyle 外包一层 + 内层真 Button, 见那边的注释), 所以按原口径换回真开关。
-            Toggle("防连点 (872, 300ms 内重复点击忽略)", isOn: Binding(
+            Toggle("防连点 (300ms 内重复点击忽略)", isOn: Binding(
                 get: { AXPrefs.dbltapGuard },
                 set: { DB.store.set("kf_dbltap_guard", $0) }))
             // 229 左手模式: 消费方三处 —— DeviceHomeView 的 barSide (工具条两侧对调)、快捷格顺序 reversed、
@@ -249,7 +249,7 @@ struct AccessibilityView: View {
     // ---------- 输入效率 (164/530/854/870) ----------
     private var inputSection: some View {
         Section {
-            Toggle("底部对齐表单 (870, 键盘弹起表单贴底)", isOn: Binding(
+            Toggle("底部对齐表单 (键盘弹起表单贴底)", isOn: Binding(
                 get: { AXPrefs.bottomForm },
                 set: { app.setUnlockOption("kf_form_bottom", $0) }))
             Text("外接键盘快捷键 (164/530, 按代码调用点列, 没接的不写): Cmd + 数字 1–4 切 Tab (App 入口); Cmd+R 刷新 (设备页/记录页); Cmd+F 凭证搜索; 本机密码弹层里 Return = 解锁. 全键盘 Tab/Shift-Tab 遍历由系统「全键盘控制」提供, 不是 App 自建.")   // 854 外接键盘快捷键
@@ -268,10 +268,10 @@ struct AccessibilityView: View {
                 get: { AXPrefs.doubleHaptic },
                 set: { app.setUnlockOption("kf_ax_doublehaptic", $0) }))
             Button("试听双震") { AXTools.newEntryHaptic() }
-            Toggle("字幕式过程条 (881, 连接/开锁逐步文字)", isOn: Binding(
+            Toggle("字幕式过程条 (连接/开锁逐步文字)", isOn: Binding(
                 get: { AXPrefs.captions },
                 set: { app.setUnlockOption("kf_ax_captions", $0) }))
-            Toggle("凭证大字模式 (885, OTP 大字号对照抄写)", isOn: Binding(
+            Toggle("凭证大字模式 (OTP 大字号对照抄写)", isOn: Binding(
                 get: { DB.store.getBool("kf_ax_bigotp") },
                 set: { app.setUnlockOption("kf_ax_bigotp", $0) }))
             // 882 闪烁安全线
@@ -359,7 +359,7 @@ private struct DevGrayscaleSection: View {
             Toggle("灰度预览", isOn: Binding(   // 879 灰度预览
                 get: { AXFlags.grayPreview },
                 set: { app.setUnlockOption("kf_ax_gray", $0) }))
-            Toggle("极限字号自检 (866, 以 200% 字号预览)", isOn: Binding(
+            Toggle("极限字号自检 (以 200% 字号预览)", isOn: Binding(
                 get: { AXFlags.bigPreview },
                 set: { app.setUnlockOption("kf_ax_bigpreview", $0) }))
         } header: {

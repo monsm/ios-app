@@ -1062,7 +1062,7 @@ struct PwdStudio: View {
                     .autocorrectionDisabled()
                 // 开关必须常驻: 旧写法用 if useTemplate 包住自己的 Toggle,
                 // 一旦用户关掉, 这一行就消失了, 本次会话再也开不回来
-                Toggle("备注自动补命名模板 (918 谁-哪里-何时)", isOn: $useTemplate)
+                Toggle("备注自动补命名模板 (谁-哪里-何时)", isOn: $useTemplate)
                     .font(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -1113,7 +1113,7 @@ struct PwdStudio: View {
                         .foregroundStyle(DS.Palette.text)
                     PwdDiffView(old: old, new: pwd.isEmpty ? old : pwd)
                         .card()
-                    Text("改动位共 \(CredentialOrg.digitDiff(old: old, new: pwd.isEmpty ? old : pwd).count) 处 (307, 逐位高亮, 确认后才落库)。")
+                    Text("改动位共 \(CredentialOrg.digitDiff(old: old, new: pwd.isEmpty ? old : pwd).count) 处 (逐位高亮, 确认后才落库)。")
                         .font(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
@@ -1298,7 +1298,7 @@ struct PwdStudio: View {
         if owner == nil, !DB.members().isEmpty {
             step = 0
             errorField = "owner"
-            app.showToast("先选归属成员 (317 归属先行, 519 拦在提交前)")
+            app.showToast("先选归属成员")
             DS.Haptics.trigger.impactOccurred()
             return
         }
@@ -1419,7 +1419,7 @@ struct TempCodeStudio: View {
             VStack(alignment: .leading, spacing: DS.Space.l) {
                 // 325 五场景预设
                 VStack(alignment: .leading, spacing: DS.Space.xs) {
-                    Text("场景预设 (325, 选中即套默认时长与备注)")
+                    Text("场景预设 (选中即套默认时长与备注)")
                         .font(.footnote.weight(.semibold))
                         .foregroundStyle(DS.Palette.text)
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: DS.Space.xs)], spacing: DS.Space.xs) {
@@ -1609,7 +1609,7 @@ struct TempCodeStudio: View {
                         .buttonStyle(.plain)
                         .accessibilityLabel("归属 " + m.name + (owner == m.id ? ", 已选" : ""))
                     }
-                    TextField("给谁 · 哪扇门 · 用多久 (179, 可长按调听写 523)", text: $note,
+                    TextField("给谁 · 哪扇门 · 用多久 (可长按调听写)", text: $note,
                               prompt: Text(scene.isEmpty ? "如: 钟点工·大门·仅上午场" : sceneNote))
                         .font(.subheadline)
                         .frame(minHeight: DS.Hit.min)
@@ -1690,7 +1690,7 @@ struct TempCodeStudio: View {
                 CodeBigCard(title: "\(lockName) · 临时码", code: result?.pwd ?? pwd,
                             window: "\(isoShort(from)) ~ \(isoShort(to)) 生效",
                             note: note,
-                            extraFoot: batchCount > 1 ? "批量共 \(batchCount) 张, 其余已逐张下发 (178, 逐条 0A)" : "")
+                            extraFoot: batchCount > 1 ? "批量共 \(batchCount) 张, 其余已逐张下发" : "")
                 if MemberHub.elderMode {
                     // 486 代际完成页切换: 长辈模式下完成页默认形态 = 口述卡 (页标题也切到「口述卡」) + 一枚大「完成」;
                     // 329/333/再发一张 是常规形态的入口, 这一档收起来并在原地说明 —— 收了不吭声就是本仓反复犯的无声忽略。
@@ -1891,7 +1891,7 @@ struct PwdDetailStudio: View {
                             let ageDays = CredentialOrg.pwdAgeDays(p) ?? 0
                             // 两支文案分别对应"快照里查到过改值留档"与"查不到", 都不说"多少天没换码"
                             let reChanged = CredentialOrg.hasReRecordSnapshot(mac, p)
-                            let staleNotice = reChanged ? "添加于约 \(ageDays) 天前 (台账只记添加时刻); 本机快照里查到过改值留档, 仍建议换一枚新码 (305, 约)" : "添加于约 \(ageDays) 天前, 台账无改值时刻、本机快照里也没查到换码留档 (305, 约)"
+                            let staleNotice = reChanged ? "添加于约 \(ageDays) 天前 (台账只记添加时刻); 本机快照里查到过改值留档, 仍建议换一枚新码 (约)" : "添加于约 \(ageDays) 天前, 台账无改值时刻、本机快照里也没查到换码留档 (约)"
                             HStack(spacing: DS.Space.s) {
                                 Label(staleNotice, systemImage: "clock.arrow.circlepath")
                                     .fixedSize(horizontal: false, vertical: true)
@@ -2102,7 +2102,7 @@ struct PwdDetailStudio: View {
                     }
                     // 335 线性用量刻度 (⚠ 锁端无计次字段, 数的是本地开门日志落在这条时间窗里的条数)
                     if p.temp {
-                        Section("用量 (335, 约)") {
+                        Section("用量 (约)") {
                             let u = CredentialOrg.usageCount(mac, p: p)
                             HStack(spacing: DS.Space.s) {
                                 HStack(spacing: DS.Space.xs) {
@@ -2128,7 +2128,7 @@ struct PwdDetailStudio: View {
                             Button {
                                 Task { await renewExpired(p) }
                             } label: {
-                                Label("续期 7 天 (332, 原值沿用 · 锁端留存未确证, 约)", systemImage: "arrow.triangle.2.circlepath")
+                                Label("续期 7 天 (原值沿用 · 锁端留存未确证)", systemImage: "arrow.triangle.2.circlepath")
                             }
                             .font(.subheadline)
                             .foregroundStyle(DS.Palette.accentText)
@@ -2142,7 +2142,7 @@ struct PwdDetailStudio: View {
                         row("备注", p.note.isEmpty ? "无" : p.note)
                     }
                     // 311 同码引用卡 (⚠ 按时间窗推断, 标"约")
-                    Section("用它开过的门 (311, 约)") {
+                    Section("用它开过的门 (约)") {
                         let n = CredentialOrg.openCountInWindow(mac, p: p)
                         if n > 0 {
                             Label {
@@ -2163,7 +2163,7 @@ struct PwdDetailStudio: View {
                         NavigationLink {
                             PwdStudio(embedded: true, editAlias: p.alias)
                         } label: {
-                            Label("改造密码 (306 分屏 / 307 逐位 diff)", systemImage: "pencil")
+                            Label("改造密码 (分屏对照 · 逐位高亮)", systemImage: "pencil")
                         }
                         .font(.subheadline)
                         .foregroundStyle(DS.Palette.accentText)
@@ -2236,7 +2236,7 @@ struct PwdDetailStudio: View {
             } else {
                 DB.setPwdPeriod(kc.mac, p.alias, fromS, toS)
             }
-            CredentialOrg.snapshot(kc.mac, kind: "pwd", key: alias, pwd: DB.getPwd(kc.mac, alias), fp: nil, note: "原码续期 7 天 (332, 约)")
+            CredentialOrg.snapshot(kc.mac, kind: "pwd", key: alias, pwd: DB.getPwd(kc.mac, alias), fp: nil, note: "原码续期 7 天")
             app.showToast("已沿用原值续期 7 天")   // 332 已沿用原值续期
         } catch {
             // 用函数入口捕获的 kc.mac，不用**活读**的 `mac` 计算属性：两次 await 之间当前锁可能被
@@ -2585,7 +2585,7 @@ struct FpStudio: View {
                 .frame(minHeight: DS.Hit.min)
             // 319 重录继承: 同成员已有指纹 → 成功后旧指纹入回收站 (保留原备注/归属, 来源"重录替代")
             if !sameOwnerFps.isEmpty {
-                Toggle("该成员已有 \(sameOwnerFps.count) 枚指纹, 录入成功后将旧指纹移入回收站 (319 重录继承, 保留原备注/归属)", isOn: $replaceOld)
+                Toggle("该成员已有 \(sameOwnerFps.count) 枚指纹, 录入成功后将旧指纹移入回收站 (重录继承, 保留原备注/归属)", isOn: $replaceOld)
                     .font(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -2689,7 +2689,7 @@ struct FpStudio: View {
                 DB.delFp(em, f.batch)
                 CredentialOrg.enqueue(em, kind: "del_fp", title: "删除旧指纹批次 \(f.batch)", fp: f)   // 319 删除旧指纹批次
             }
-            app.showToast("旧指纹已移入回收站 (319, 备注/归属保留)")
+            app.showToast("旧指纹已移入回收站 (备注/归属保留)")
         }
         withAnimation(DS.Motion.standard) { step = 3 }
     }
@@ -2758,7 +2758,7 @@ struct FpDetailStudio: View {
                         .listRowBackground(DS.Palette.warn.opacity(0.06))
                     }
                     // 316 档案三行统计 (⚠ 台账推断+积累, 标"约")
-                    Section("档案 (316, 约)") {
+                    Section("档案 (约)") {
                         fpRow("登记", f.at > 0 ? "登记于 " + f.at.credDay() : "已登记在门锁内")
                         let useN = CredentialOrg.fpUseCount30d(mac)
                         if useN > 0 {
@@ -2962,7 +2962,7 @@ struct OtpStudio: View {
                     .foregroundStyle(DS.Palette.accentText)
                     if showManual { manualForm() }
                 } header: {
-                    Text("独立口令 (343, 与锁协议无关 · 按当前锁存档)")
+                    Text("独立口令 (与锁协议无关 · 按当前锁存档)")
                 } footer: {
                     Text("组尾实话: 这些口令不经过门锁、也不进锁端协议, 但存的键带锁的 MAC (kf_cotp_t_) —— 因为备份按锁导出。换一把锁, 这一组就换成另一把锁的那一组。")
                         .font(.caption2)
@@ -2980,7 +2980,7 @@ struct OtpStudio: View {
                     ForEach(codes) { c in
                         staticRow(c)
                     }
-                    TextField("备注 (346 给谁/干什么)", text: $noteDraft, prompt: Text("仅本机留存"))
+                    TextField("备注 (给谁/干什么)", text: $noteDraft, prompt: Text("仅本机留存"))
                         .font(.subheadline)
                         .frame(minHeight: DS.Hit.min)
                     Button {

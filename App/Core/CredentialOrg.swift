@@ -1427,7 +1427,7 @@ enum CredentialOrg {
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")
         f.dateFormat = "MM-dd HH:mm"
-        return " · 本机提前 " + String(m) + " 分钟 (331, 约 " + f.string(from: e) + ", 锁端未改)"
+        return " · 本机提前 " + String(m) + " 分钟 (约 " + f.string(from: e) + ", 锁端未改)"
     }
     static func earlyExpireMin(_ mac: String, _ alias: Int) -> Int {
         DB.store.getInt("kf_cestudy_earlyexp_" + mac + "_" + String(alias), 0)

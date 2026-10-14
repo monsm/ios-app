@@ -192,7 +192,8 @@ struct SecurityCenterView: View {
                 Section {
                     let risks = CredentialOrg.passwordRisks()
                     if risks.isEmpty {
-                        Text("没有发现同值 / 超期 / 弱口令 —— 台账里的密码都还干净 (9)。")
+                        // 2026-10-14: 去掉标签里的规格编号 "(9)"。
+                        Text("没有发现同值 / 超期 / 弱口令 —— 台账里的密码都还干净。")
                             .font(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
@@ -219,13 +220,15 @@ struct SecurityCenterView: View {
                             .accessibilityElement(children: .combine)
                         }
                         if risks.count > 8 {
-                            Text("另有 \(risks.count - 8) 条 — 只列前 8 条 (9)。")
+                            // 2026-10-14: 原句把总数硬编码成 "(9)" —— 实际 12 条风险时会显示"另有 4 条 (9)",
+                            // 那个 9 是**假总数**。改成取真实 count; 同时去掉规格编号。
+                            Text("另有 \(risks.count - 8) 条 — 只列前 8 条, 共 \(risks.count) 条。")
                                 .font(.footnote)
                                 .foregroundStyle(DS.Palette.textSub)
                         }
                     }
                 } header: {
-                    Text("凭证风险体检 (9)")
+                    Text("凭证风险体检")
                 } footer: {
                     Text("只读扫描本机台账: 同值 / 添加超 180 天未改 / 弱口令 (少于 6 位、全部同数字、连续序列)。处置在凭证 Tab 改码。")   // 305/306 只读扫描本机台账
                         .font(.caption)

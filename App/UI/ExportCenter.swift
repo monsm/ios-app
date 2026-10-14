@@ -1598,7 +1598,7 @@ struct ExportCenterView: View {
             }
             Button { startDayImages() } label: { Label("单日长图", systemImage: "photo.on.rectangle.angled") }   // 686/706 单日长图
             Button { startAlarmCard() } label: { Label("告警分享卡", systemImage: "exclamationmark.bubble") }   // 688/718 告警分享卡
-            Button { startAlarmFactSheet() } label: { Label("告警事实单页 (746, PDF)", systemImage: "doc.text") }
+            Button { startAlarmFactSheet() } label: { Label("告警事实单页 (PDF)", systemImage: "doc.text") }
             // 691 加密压缩导出: 口令线下告知, 本机不留 (与备份包同一套信封)
             SecureField("加密口令 (至少 6 位, 691)", text: $zipPw)
                 .textInputAutocapitalization(.never)

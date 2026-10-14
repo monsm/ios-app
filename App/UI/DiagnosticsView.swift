@@ -693,7 +693,7 @@ struct DiagnosticsView: View {
             }
             // 866 极限字号自检: 原句要求入口在诊断页; 溢出控件无枚举 API, 如实定位为目检
             Section {
-                Toggle("极限字号自检 (866, 以 200% 字号预览)", isOn: Binding(
+                Toggle("极限字号自检 (以 200% 字号预览)", isOn: Binding(
                     get: { AXFlags.bigPreview },
                     set: { DB.store.set("kf_ax_bigpreview", $0) }))
                 LabeledRow("命中域", "可点控件全 App 下限 44pt (DS.Hit.min); 时间线认领区加余量到 60pt (RecordsView:1617); 圆盘外沿再留 10pt (UnlockDial:464)")   // 871 命中域
@@ -1356,7 +1356,7 @@ struct DiagnosticsView: View {
 
     private func report() -> String {
         var out = "【离线锁管家诊断报告】\n"
-        out += "格式: 纯文本分节 (157 原案是 zip 包, 本工程不打包 —— 内容都在这一份文本里)\n"
+        out += "格式: 纯文本分节 (内容都在这一份文本里, 本工程不打包)\n"
         // 299 反馈文案: 原句要的是「用户反馈表单」, 本工程没有表单也没有任何提交口 ——
         // 能给的是把这一行留给你自己改写: 复制后在对话窗口里换成实话, 不填也照样能发。
         out += "问题描述: （把这句换成你遇到的事 — 什么时候 / 点了哪个入口 / 本来期待什么 / 实际发生了什么）\n"

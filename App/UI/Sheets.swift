@@ -594,7 +594,7 @@ struct AddPwdView: View {
                 }
                 .pickerStyle(.inline)
                 if useTemplate {
-                    Toggle("备注自动填命名模板 (918: 谁-哪里-何时)", isOn: $useTemplate)
+                    Toggle("备注自动填命名模板 (谁-哪里-何时)", isOn: $useTemplate)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }

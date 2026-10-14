@@ -2049,7 +2049,7 @@ struct StatsView: View {
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                         if outOf > 0 {
-                            Label("约 \(outOf) 次密码开门落在所有时间窗之外 (628 越界标注, 台账推断)",
+                            Label("约 \(outOf) 次密码开门落在所有时间窗之外 (台账推断",
                                   systemImage: "exclamationmark.circle")
                                 .font(.caption)
                                 .foregroundStyle(DS.Palette.warn)
@@ -2198,7 +2198,7 @@ struct StatsView: View {
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
-                    Label("本月至今约 \(thisM) 小时 · 上月全月约 \(lastM) 小时 (800, 天数不等只看量级)",
+                    Label("本月至今约 \(thisM) 小时 · 上月全月约 \(lastM) 小时 (天数不等只看量级)",
                           systemImage: "calendar")
                         .font(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
@@ -2261,7 +2261,7 @@ struct StatsView: View {
             return WeekCal.gregorian.component(.hour, from: d) == Int(hour)
                 && (StatsKit.openTypes.contains(l.type) || StatsKit.alarmTypes.contains(l.type))
         }.sorted { (StatsKit.dateOf($0) ?? .distantPast) > (StatsKit.dateOf($1) ?? .distantPast) }.prefix(20)
-        Section("「\(hour) 时」时段记录 (638 第三级 · 点查单条)") {
+        Section("「\(hour) 时」时段记录 (点查单条)") {
             ForEach(Array(rows.enumerated()), id: \.offset) { _, l in
                 Button {
                     // 638 第三级那句"点查单条"要落地就得给记录页这一条的行身份 (与 621 明细行、170 同一个出口):

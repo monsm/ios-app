@@ -575,14 +575,17 @@ struct SettingsView: View {
                 get: { CredentialOrg.reclaimDays() },
                 set: { DB.store.set("kf_cbin_reclaim_days", $0) }), in: 7...90, step: 7)
                 .fixedSize(horizontal: false, vertical: true)
-            Toggle("成员别名显示 (919: 关系备注优先, 如「老妈」)", isOn: Binding(
+            // 2026-10-14: 去掉标签里的内部规格编号 "(919: …)"。它把一行标签撑成两行、把右侧开关挤到
+            // 第二行居中，而用户看到的是一串跟自己无关的编号 —— 本仓"乱源治理"清过 1037 处同类，这一处漏了。
+            // 语义说明挪进本节 footer，标签回归一行 (截图里折行撑歪开关就是这条)。
+            Toggle("成员别名显示", isOn: Binding(
                 get: { CredentialOrg.aliasDisplay },
                 set: { DB.store.set("kf_calias_display", $0) }))
                 .fixedSize(horizontal: false, vertical: true)
         } header: {
             Text("凭证整理")
         } footer: {
-            Text("版本快照与回收站只在本机留存; 需锁端生效的操作保持「待下发」, 到场连接后在凭证页队列补发。")
+            Text("「成员别名显示」开着时, 有备注名的成员优先显示备注 (如「老妈」), 否则显示称呼。\n版本快照与回收站只在本机留存; 需锁端生效的操作保持「待下发」, 到场连接后在凭证页队列补发。")
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
