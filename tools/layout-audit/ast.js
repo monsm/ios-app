@@ -48,6 +48,13 @@ function num(txt, tk, dens) {
   if (/^DS\.Hit\.min$/.test(t)) return tk.HIT;
   m = /^(\d+(?:\.\d+)?) *([-+*/]) *(\d+(?:\.\d+)?)$/.exec(t);
   if (m) { const a = +m[1], b = +m[3]; return m[2] === '+' ? a + b : m[2] === '-' ? a - b : m[2] === '*' ? a * b : a / b; }
+  // "DS.Hit.min + 6" / "DS.Space.m + 2" 这种**令牌加常数**是本仓高频写法 (按钮样式的 minHeight、徽章的 padding)。
+  // 原先解析不出就返回 null ⇒ 上层把这些尺寸当"未知"放过, 触达判定跟着漏。
+  const om = /^(\S+)\s*([+*/-])\s*(\S+)$/.exec(t);
+  if (om) {
+    const a = num(om[1], tk, dens), b = num(om[3], tk, dens);
+    if (a != null && b != null) return om[2] === '+' ? a + b : om[2] === '-' ? a - b : om[2] === '*' ? a * b : a / b;
+  }
   return null;
 }
 // 这版 tree-sitter 的 Node 没有 isNamed() 方法 —— 用 namedChildren 取值器

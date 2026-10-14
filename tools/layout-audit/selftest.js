@@ -88,3 +88,12 @@ const itemOk = ![8, 9, 11].some((l) => menuHits.includes(l));
 console.log(`  ${trigOk ? '✓' : '✗'} menu-trigger   Menu 触发器自身无 minHeight 必须开火 (实得命中行 ${JSON.stringify(menuHits)})`);
 console.log(`  ${itemOk ? '✓' : '✗'} menu-items    Menu 内容项由系统给行高, 不该判成触达不足 (实得命中行 ${JSON.stringify(menuHits)})`);
 if (!trigOk || !itemOk) { console.error('R5 菜单托管判据自检失败'); process.exit(1); }
+
+// ButtonStyle 自己在 makeBody 里撑 minHeight ⇒ 不判; 样式不给尺寸 ⇒ 照判。
+const STY = path.join(__dirname, 'fixtures', 'r5', 'styled.swift');
+// 行号: 26 = TallStyle 那颗 (样式给到 50pt, 不该报), 31 = FlatStyle 那颗 (样式不给尺寸, 该报)
+const styHits = r5Of(STY).map((f) => f.line);
+const styOk = !styHits.includes(26) && styHits.includes(31);
+console.log(`  ${styOk ? '✓' : '✗'} styled-hit   TallStyle(50pt)那颗不该报、FlatStyle那颗该报 (实得命中行 ${JSON.stringify(styHits)})`);
+if (!styOk) { console.error('R5 样式托管判据自检失败'); process.exit(1); }
+console.log('R5 触达判据自检 ✓ (菜单内容项托管 / 菜单触发器照判 / ButtonStyle 尺寸托管 / 样式不给尺寸照判)');

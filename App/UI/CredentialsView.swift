@@ -1013,6 +1013,10 @@ struct CredentialsView: View {
                             .foregroundStyle(DS.Palette.danger)
                             .frame(minHeight: DS.Hit.min - DS.Space.xs)
                             .accessibilityHint("先把本组全部过期凭证选入停用确认页, 在确认页还要再点一次并填原因")
+                            // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 没有 minHeight (< 44)。
+                            // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+                            .frame(minHeight: DS.Hit.min)
+                            .contentShape(Rectangle())
                         }
                     }
                 }
@@ -2125,10 +2129,6 @@ struct CredentialsView: View {
                     }
                     .buttonStyle(SecondaryActionStyle(fullWidth: false))
                     .accessibilityHint("打开演示锁试玩, 不碰真实门锁")
-                    // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 14.5pt (< 44)。
-                    // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
-                    .frame(minHeight: DS.Hit.min)
-                    .contentShape(Rectangle())
                 }
                 .padding(.top, DS.Space.xs)
             }

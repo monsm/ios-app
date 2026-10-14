@@ -103,10 +103,6 @@ struct DeviceHomeView: View {
                             }
                             .buttonStyle(PressableButtonStyle())
                             .accessibilityLabel("首用提示：长按主控卡上的连接耗时标记可看最近状态变化，点按收起")
-                            // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 22.6pt (< 44)。
-                            // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
-                            .frame(minHeight: DS.Hit.min)
-                            .contentShape(Rectangle())
                         }
                         // 767 按组切换 + 764 多锁状态图标行: 都放在 Hero 卡上方 ——
                         // 先一眼看清"哪把锁有事", 再落到当前锁的主控卡。
@@ -544,10 +540,6 @@ struct DeviceHomeView: View {
                     }
                     .buttonStyle(PressableButtonStyle())
                     .accessibilityLabel("第 \(i + 1) 页 \(LockArchive.displayName(kc))\(isLow(kc) ? ", 低电量" : "")")
-                    // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 没有 minHeight (< 44)。
-                    // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
-                    .frame(minHeight: DS.Hit.min)
-                    .contentShape(Rectangle())
                 }
             }
             .accessibilityElement(children: .contain)
@@ -1588,6 +1580,10 @@ struct DeviceHomeView: View {
                         .font(.caption2)
                         .foregroundStyle(DS.Palette.accentText)
                         .frame(minHeight: DS.Hit.min - DS.Space.m)
+                        // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 没有 minHeight (< 44)。
+                        // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+                        .frame(minHeight: DS.Hit.min)
+                        .contentShape(Rectangle())
                 }
                 .padding(.horizontal, DS.Space.gutter)
             }

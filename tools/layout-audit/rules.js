@@ -28,6 +28,37 @@ function allowedNear(lines, ln, tag) {
   for (let i = Math.max(0, ln - 8); i < Math.min(lines.length, ln); i++) if (re.test(lines[i])) return true;
   return false;
 }
+// ButtonStyle 自己就撑够高度的那些 (PrimaryActionStyle: .frame(minHeight: DS.Hit.min + 6)) ——
+// R5 必须知道: 样式包在 label 外面, 命中区由样式决定。不认它就把 28 个 BusyButton 全判成 16.5pt,
+// 而且我照着假警报真去补了一遍 minHeight (2026-10-14 就这么造出过一批冗余改动, 已回收)。
+// 名字→高度 从源码里读, 不手写对照表: 样式改了数字跟着变。
+let styleCache = new Map();
+function buttonStyleMinima(files, tk, dens) {
+  // 缓存按"密度 + 这一批文件"分档: run.js 会跑三档密度, selftest 每个 fixture 单跑 ——
+  // 只按 dens 缓存会让第二批文件读到第一批的空表 (样式查不到 ⇒ 假警报复活)。
+  const ck = dens + '|' + files.length + '|' + (files[0] || '') + '|' + (files[files.length - 1] || '');
+  if (styleCache.has(ck)) return styleCache.get(ck);
+  const map = {};
+  for (const f of files) {
+    let src; try { src = fs.readFileSync(f, 'utf8'); } catch (e) { continue; }
+    for (const m of src.matchAll(/struct\s+(\w+)\s*:\s*ButtonStyle\b/g)) {
+      const name = m[1];
+      // 取该 struct 的体 (花括号配平)
+      let i = src.indexOf('{', m.index), d = 0, body = '';
+      for (; i < src.length; i++) { const c = src[i]; if (c === '{') { d++; if (d === 1) continue; } else if (c === '}') { d--; if (d === 0) break; } body += c; }
+      let best = null;
+      for (const fr of body.matchAll(/\.frame\(([^)]*)\)/g)) {
+        const mm = /(?:min)?[hH]eight:\s*([^,]+)/.exec(fr[1]);
+        if (!mm) continue;
+        const v = A.num(mm[1].trim(), tk, dens);
+        if (v != null && (best == null || v > best)) best = v;
+      }
+      if (best != null) map[name] = best;
+    }
+  }
+  styleCache.set(ck, map);
+  return map;
+}
 
 // 文字宽度估算: 中日韩全角 = 1em; 拉丁/数字 ≈ 0.55em; 空格 ≈ 0.3em; 标点 ≈ 0.5em
 function textWidth(s, pt) {
@@ -105,6 +136,7 @@ function parseAll(files, tk, dens, cache) {
 }
 function runAll(preparsed, opts) {
   const { tk, scale = 1.0, deviceW = 390, dens = 1.0 } = opts;
+  const styles = buttonStyleMinima(preparsed.map((p) => p.file), tk, dens);
   const findings = [];
   const push = (f) => findings.push(f);
   for (const { file, nodes, errors } of preparsed) {
@@ -204,6 +236,12 @@ function runAll(preparsed, opts) {
         let h = self(e);
         const kidsH = descendants(e).map(self).filter((v) => v != null);
         if (h == null && kidsH.length) h = Math.max(...kidsH);
+        // 挂了 .buttonStyle(X()) 且 X 的 makeBody 自己 .frame(minHeight:) 撑过 ⇒ 命中区由样式给, 不判。
+        const styleHit = (e.mods || []).filter((m) => m.name === 'buttonStyle')
+          .map((m) => { const t = JSON.stringify(m.args || {}); return Object.keys(styles).find((n) => t.includes(n)); })
+          .filter((n) => n != null).map((n) => styles[n]);
+        if (styleHit.length && h == null) h = Math.max(...styleHit);
+        if (h != null && h < tk.HIT && styleHit.length && Math.max(...styleHit) >= tk.HIT) h = Math.max(...styleHit);
         const shaped = descendants(e).some((c) => A.mod(c, 'contentShape')) || !!A.mod(e, 'contentShape');
         // 与 R6 同一条豁免纪律: 标了 @layout-allow 触达 的 (系统控件本体高度不归我们管那一族) 不改判成"已修",
         // 而是单列一条"已定性"—— 计数看得见, 复测方法写在源码注释里, 标记挪走立刻重新开火。

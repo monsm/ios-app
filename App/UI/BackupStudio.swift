@@ -1584,10 +1584,6 @@ struct MigrationWizardView: View {
                     .axGlass(DS.Radius.card)
                 }
                 .buttonStyle(.plain)
-                // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 26.5pt (< 44)。
-                // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
-                .frame(minHeight: DS.Hit.min)
-                .contentShape(Rectangle())
             }
             Text("三通道都落在同一套 预演→逐把确认→真实入库 上, 谁都不绕过 441 与 445。")
                 .font(.caption2)

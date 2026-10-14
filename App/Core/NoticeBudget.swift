@@ -96,6 +96,10 @@ struct AmbientOverflowSheet: View {
                         .font(.caption.weight(.medium))
                         .buttonStyle(.bordered)
                         .frame(minHeight: DS.Hit.min - DS.Space.m)
+                        // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 没有 minHeight (< 44)。
+                        // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+                        .frame(minHeight: DS.Hit.min)
+                        .contentShape(Rectangle())
                 }
             }
         }

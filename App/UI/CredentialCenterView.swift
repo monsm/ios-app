@@ -124,6 +124,10 @@ struct CredBinView: View {
                         .contentShape(Rectangle())
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
+                        // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 没有 minHeight (< 44)。
+                        // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+                        .frame(minHeight: DS.Hit.min)
+                        .contentShape(Rectangle())
                     }
                 }
                 .accessibilityElement(children: .contain)
@@ -1215,6 +1219,10 @@ struct CredDisableSheet: View {
                             .background(on ? AnyShapeStyle(DS.Palette.accent) : AnyShapeStyle(DS.Palette.surfaceAlt), in: Capsule())
                             .frame(minHeight: DS.Hit.min - DS.Space.xs)
                             .contentShape(Rectangle())
+                            // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 没有 minHeight (< 44)。
+                            // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
+                            .frame(minHeight: DS.Hit.min)
+                            .contentShape(Rectangle())
                         }
                     }
                     .accessibilityElement(children: .contain)
@@ -1273,10 +1281,6 @@ struct CredDisableSheet: View {
                     .accessibilityHint(reason.isEmpty
                         ? "需先选停用原因才能执行"
                         : "已展示影响成员与不可逆说明, 点按即执行停用")
-                        // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 16.5pt (< 44)。
-                        // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
-                        .frame(minHeight: DS.Hit.min)
-                        .contentShape(Rectangle())
                 }
             }
             .navigationTitle("批量停用确认")

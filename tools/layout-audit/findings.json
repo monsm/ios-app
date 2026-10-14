@@ -56,16 +56,16 @@
  {
   "rule": "R0 文法盲区·无呈现面",
   "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
-  "line": "2686,2687,2727",
+  "line": "2694,2695,2735",
   "sev": "lo",
   "msg": "3 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
-  "calc": "ERROR@2686 ERROR@2687 ERROR@2727",
+  "calc": "ERROR@2694 ERROR@2695 ERROR@2735",
   "cond": "SE/0.8/标准"
  },
  {
   "rule": "R5 触达已定性",
   "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
-  "line": 3062,
+  "line": 3070,
   "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
   "calc": "行高+padding 反推",
   "sev": "lo",
@@ -74,7 +74,7 @@
  {
   "rule": "R5 触达已定性",
   "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
-  "line": 3071,
+  "line": 3079,
   "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
   "calc": "行高+padding 反推",
   "sev": "lo",
@@ -83,7 +83,7 @@
  {
   "rule": "R5 触达已定性",
   "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
-  "line": 3078,
+  "line": 3086,
   "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
   "calc": "行高+padding 反推",
   "sev": "lo",
@@ -92,16 +92,16 @@
  {
   "rule": "R0 文法盲区·无呈现面",
   "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
-  "line": "286",
+  "line": "282",
   "sev": "lo",
   "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
-  "calc": "ERROR@286",
+  "calc": "ERROR@282",
   "cond": "SE/0.8/标准"
  },
  {
   "rule": "R5 触达已定性",
   "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
-  "line": 1675,
+  "line": 1671,
   "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
   "calc": "行高+padding 反推",
   "sev": "lo",
@@ -119,7 +119,7 @@
  {
   "rule": "R5 触达已定性",
   "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
-  "line": 2250,
+  "line": 2234,
   "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
   "calc": "行高+padding 反推",
   "sev": "lo",
@@ -137,10 +137,10 @@
  {
   "rule": "R0 文法盲区·无呈现面",
   "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
-  "line": "2618,2622,2623,2624,2651,2655",
+  "line": "2614,2618,2619,2620,2647,2651",
   "sev": "lo",
   "msg": "6 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
-  "calc": "ERROR@2618 ERROR@2622 ERROR@2623 ERROR@2624 ERROR@2651 ERROR@2655",
+  "calc": "ERROR@2614 ERROR@2618 ERROR@2619 ERROR@2620 ERROR@2647 ERROR@2651",
   "cond": "SE/0.8/标准"
  },
  {

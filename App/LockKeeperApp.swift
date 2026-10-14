@@ -1381,10 +1381,6 @@ struct RootView: View {
         }
         .buttonStyle(PressableButtonStyle())
         .accessibilityLabel("屏上只留了一条提醒，另有 \(n) 条被收起，轻点逐条查看")
-        // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 22.6pt (< 44)。
-        // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
-        .frame(minHeight: DS.Hit.min)
-        .contentShape(Rectangle())
     }
 
     private func selfCheckBanner(_ w: String) -> some View {
