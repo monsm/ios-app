@@ -274,11 +274,9 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
             guard let envelope = try await CloudSync.download(acct: cloudAcct, app: cloudApp) else {
                 app.showToast("云端暂无备份"); return
             }
-            let text = try CryptoBox.decryptEnvelope(envelope, password: cloudPw)
-            guard let data = text.data(using: .utf8),
-                  let bundle = try? JSONDecoder().decode(BackupBundle.self, from: data) else {
-                throw DFUError.msg("云端数据不是有效备份包")
-            }
+            // 2026-10-14: 走 parsePreview —— 旧实现自己 decrypt+decode, 绕过了 453 内容哈希闸、
+            // schema 上界闸与 upgradeChain (本地粘贴与工作室 WebDAV 都过它)。云端包同样不可信。
+            let (_, bundle) = try BackupStudio.parsePreview(text: envelope, password: cloudPw)
             // 不直接落盘: 交给 confirmationDialog, 用户确认后才覆盖本机
             pendingRestore = bundle
         } catch { app.showToast(error.localizedDescription) }

@@ -153,7 +153,8 @@ struct ExportItem: Identifiable {
         let dir = t.url
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let url = dir.appendingPathComponent(fileName)
-        guard (try? bytes.write(to: url)) != nil else { return nil }
+        // 2026-10-14: 原子写 —— 写书签目录/大文件时进程被杀或低存储会留截断件, 而调用方只判非 nil 即回执"已生成"。
+        guard (try? bytes.write(to: url, options: .atomic)) != nil else { return nil }
         return url
     }
 
@@ -1550,7 +1551,7 @@ struct ExportCenterView: View {
     private var redactSection: some View {
         Section {
             Toggle("脱敏导出", isOn: $redact)   // 548 脱敏导出
-            Text("脱敏与格式独立: 关时 JSON 含原始 hex、日志不掩码; 开时 hex 列留空、连续数字掩码。")
+            Text("脱敏与格式独立: 关时 JSON 含原始 hex、日志不掩码; 开时 JSON 的 hex 列留空、日志导出把连续数字掩码。")
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -1917,9 +1918,15 @@ struct ExportCenterView: View {
     /// 719 完成反馈: 成功触感/失败触感已由 progress.start 触发, 这里补路径与 Toast
     private func onDone(_ item: ExportItem?, _ err: String) {
         if let item {
-            if let url = item.writeLocal() { lastPath = url.path }
-            lastSuccess = true
-            app.showToast("已生成 \(item.fileName)")   // 719 已生成
+            // 2026-10-14: 写盘失败也报"已生成"是假成功; 内容仍可分享, 但如实告知没落盘。
+            if let url = item.writeLocal() {
+                lastPath = url.path
+                lastSuccess = true
+                app.showToast("已生成 \(item.fileName)")   // 719 已生成
+            } else {
+                lastSuccess = true
+                app.showToast("已生成 \(item.fileName) — 但写入本地文件失败, 可直接分享")
+            }
         } else if !err.isEmpty {
             lastSuccess = false
             app.showToast(err)

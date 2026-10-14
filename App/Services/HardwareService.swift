@@ -120,6 +120,9 @@ final class HardwareService: ObservableObject {
 
     private func send(_ cmdObj: ZKCmd, target: String, timeoutMs: Int = 8000) async throws -> ZKProtocol.ParsedFrame {
         try await connectTarget(target)
+        // 忙判必须在写之前 (与 LockService.request 同款修复, 2026-10-14): 旧判据在 Task 内,
+        // 而 writeFrameHex 在 Task 外无条件执行 => 判忙时帧仍被发出 -> 错帧。
+        if waiter != nil { throw BLEErrorX.msg("已有命令在等待响应") }
         let task = Task<ZKProtocol.ParsedFrame, Error> { @MainActor in
             try await withCheckedThrowingContinuation { (cont: CheckedContinuation<ZKProtocol.ParsedFrame, Error>) in
                 let timer = DispatchWorkItem {

@@ -183,6 +183,8 @@ enum FirmwareKit {
         let entries = try ZipKit.parse(zipData)
         guard let manifestE = ZipKit.find(entries, "manifest.json") else { throw DFUError.zip("固件包缺少 manifest.json") }
         guard manifestE.data.count <= limits.manifest else { throw DFUError.zip("manifest.json 异常过大") }
+        // 2026-10-14: bin/dat 都验了 CRC, manifest 只验了大小 —— 补齐 (篡改但仍合法 JSON 的 manifest 会漏过)
+        guard manifestE.crcOk else { throw DFUError.zip("manifest.json CRC 校验失败 (包损坏)") }
         guard let raw = String(bytes: manifestE.data, encoding: .utf8),
               let obj = try? JSONSerialization.jsonObject(with: Data(raw.utf8)) as? [String: Any],
               let manifest = obj["manifest"] as? [String: Any],
@@ -215,15 +217,16 @@ enum FirmwareKit {
     /// 降级闸: 包版本低于锁端当前版本时返回一句人话 (nil = 放行)。
     /// 2026-10-13 对抗式排查新增 —— versionLt 此前全仓零调用; 烧旧固件本身不是漏洞,
     /// 但配合"无签名"就是攻击者最省事的一条 (拿一个已知有问题的旧版本往回刷)。
-    /// ⚠ 当前**还没有调用点** (deadscan 会报): 固件选择那一刻要拿到"锁端当前版本"才判得动,
-    ///   而选文件的流程在 DeviceHomeView/SettingsView 两个 DFU 入口里, 接线要改那两处。
-    ///   在本批先把判据与"未认证"写明落进代码, 接线单独一批做 (不塞进安全修复里混着发)。
+    /// 2026-10-14: 已在 DFURunner.runUpgrade 接线 —— 单锁与批量两条入口都过它 (不再零调用)。
+    /// 判据用本机记录的 kc.fw (锁端当前版本): 该值陈旧时漏判 (fail-open), 但不会误拦正常升级。
     static func downgradeBlocked(current: String?, pkg: FirmwarePackage) -> String? {
         guard let cur = current, !cur.isEmpty, let pv = pkg.version, !pv.isEmpty else { return nil }
         return versionLt(pv, cur) ? "固件版本 \(pv) 低于锁端当前 \(cur) — 已拒绝降级烧录" : nil
     }
     static func versionFromFileName(_ name: String) -> String? {
-        guard let m = name.range(of: "_?V?(\\d+\\.\\d+\\.\\d+)_", options: .regularExpression) else { return nil }
+        // 2026-10-14: 旧式强制尾随 `_`, 遇 "KX_V5.2.9.zip" / "KX_V5.2.9" 匹配失败 => version=nil =>
+        // 版本对比与降级判据整体静默失效。尾随改 `(_|\.|$)`。
+        guard let m = name.range(of: "_?V?(\\d+\\.\\d+\\.\\d+)(?:_|\\.|$)", options: .regularExpression) else { return nil }
         let s = name[m]
         var digits = s.drop(while: { !$0.isNumber })
         while let last = digits.last, !last.isNumber { digits = digits.dropLast() } // 剥尾部 _ (P3-1)
@@ -320,6 +323,14 @@ final class DFUBleSession: NSObject, CBCentralManagerDelegate, CBPeripheralDeleg
         peripheral = nil
         controlChar = nil
         packetChar = nil
+        // 2026-10-14: 一并清残留 —— 否则等待响应中 abort/disconnect 后, 挂起的 waiter 永不 resume
+        // (调用方永久挂起), 且残留字节可能被下一次等待当成响应读走。
+        responseTimer?.cancel()
+        responseBuffer.removeAll()
+        if let w = responseWaiter {
+            responseWaiter = nil
+            w.resume(throwing: DFUError.msg("DFU 会话已断开"))
+        }
     }
 
     // ---- 控制点操作 + 响应匹配 ----
@@ -423,8 +434,10 @@ final class DFUBleSession: NSObject, CBCentralManagerDelegate, CBPeripheralDeleg
             let objSize = min(maxObj, total - sent)
             _ = try await op("01" + "02" + HexKit.u32leHex(UInt32(objSize)), "Create data")
             let objHex = String(binHex.dropFirst(sent * 2).prefix(objSize * 2))
-            try await stream(objHex) { n, t in
-                onProgress(sent + n, t)
+            // 2026-10-14: 进度分母必须用**整包** total, 不是本对象 t —— 旧写法从第 2 个对象起
+            // done(sent+n)/t 会 >100% 并随对象数线性增长。
+            try await stream(objHex) { n, _ in
+                onProgress(sent + n, total)
             }
             let chk = try await op("03", "Checksum")
             let off = try rdU32(chk.payload, 0, "Checksum")
@@ -637,8 +650,17 @@ enum DFURunner {
         return out
     }
 
+    /// 当前在跑的 DFU 会话 (供"仍要离开"真正中止传输)。
+    private static var activeSession: DFUBleSession?
+    /// 2026-10-14: 离开升级页时调用 —— 此前只 dismiss, 传输实际继续, 用户误以为已停。
+    static func cancelActive() { activeSession?.abort() }
+
     static func runUpgrade(lock: LockService, mac: String, pid: Int, firmware: FirmwarePackage,
                            onProgress: @escaping (DFUProgress) -> Void) async throws {
+        // 2026-10-14: 降级闸接线 —— 无签名前提下, 拒绝把低版本固件刷回 (versionLt 此前全仓零调用)。
+        if let msg = FirmwareKit.downgradeBlocked(current: DB.keychain(mac)?.fw, pkg: firmware) {
+            throw BLEErrorX.msg(msg)
+        }
         // 1. cmd 22 (锁重启进 bootloader; 断链属预期)
         onProgress(.switchingDfu)
         var cmd22Err: Error?
@@ -656,6 +678,11 @@ enum DFURunner {
         }
         // 3. 连接 + 上传
         let session = DFUBleSession()
+        // 2026-10-14: 失败路径原先在 catch 里 throw, 永远走不到末尾的 session.disconnect() =>
+        // 上传失败后 central 仍占连接、重试撞旧会话。defer 保证任何出口都断。
+        // 同时登记 activeSession, 让"仍要离开"能真正 abort 传输。
+        activeSession = session
+        defer { session.disconnect(); activeSession = nil }
         let mode = try await session.connect(deviceId: deviceId)
         onProgress(.starting)
         do {
@@ -671,12 +698,12 @@ enum DFURunner {
                     Task { @MainActor in onProgress(.uploading(percent: pct)) }
                 }
             }
+            onProgress(.validating)   // 2026-10-14: 传输结束 → 校验段 (此前该态从不发射, UI 的 stage=2 分支不可达)
             onProgress(.completed)
         } catch {
             onProgress(.aborted)
             session.abort()
             throw error
         }
-        session.disconnect()
     }
 }

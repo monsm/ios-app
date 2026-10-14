@@ -107,10 +107,7 @@ enum ZKCmdBuilder {
     // App generateEkey (分享/写钥匙串): 随机 TrackId + 本地时区 2010~2118 窗口
     static func buildEkeyShare(_ skeyHex: String, _ macHex: String, _ pin: String,
                                random: (UInt32) -> UInt32) -> String {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.timeZone = .current
-        f.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        // 2026-10-14: 删掉从未使用的 DateFormatter f (实际解析走 protoSec) —— 免得误以为此处按本地时区解析。
         let vf = UInt32(truncatingIfNeeded: protoSec("2010-01-01 00:00:00")) // JS: '2010-01-01T00:00:00' 本地解释
         let vt = UInt32(truncatingIfNeeded: protoSec("2118-01-01 00:00:00"))
         return buildEkeyOpen(skeyHex, macHex, pin, validFromSec: vf, validToSec: vt, trackId: random(0x7fffffff))
@@ -133,6 +130,14 @@ enum ZKCmdBuilder {
         guard addPwd.utf16.count <= 8 else { throw BLEErrorX.msg("密码最长 8 位") } // JS throw — 不静默截断
         // 有效期: 未提供 (nil) 按 JS 口径取"现在"; 提供了但解析不出来则必须中止 ——
         // 旧写法一律回落"现在", 于是导入 ISO 形态 (`2026-01-05T08:00:00Z`) 的台账会把有效期静默改写。
+        // 2026-10-14 对抗式排查: 上一批只把 validTo 改成了 throw, validFrom 仍静默回落 —— 补齐。
+        func suppliedButUnparsed(_ s: String?) -> Bool {
+            guard let s, !s.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
+            return protoSecOrNil(s) == nil
+        }
+        if suppliedButUnparsed(validFrom) {
+            throw BLEErrorX.msg("密码生效时间无法解析: \(validFrom ?? "") (支持 ISO8601/带 Z、'yyyy-MM-dd HH:mm:ss'、秒/毫秒) — 已中止下发")
+        }
         let from = protoSecOrNil(validFrom) ?? ZKProtocol.nowProtoSeconds()
         let to: Int64
         if let v = protoSecOrNil(validTo) { to = v }
@@ -220,14 +225,17 @@ enum ZKCmdBuilder {
 
     // ---- 钥匙串硬件 (ZKBBV1 pid=16289; 87 帧明文 KLV, needToken=false) ----
     static func cmd41WriteEkey(_ lockMacHex: String, _ pid: Int, _ ekeyHex: String, type: Int = 1) -> ZKCmd {
-        let klv = ZKProtocol.buildKLV(0x01, HexKit.reversePairs(lockMacHex))
+        // 2026-10-14: 与 cmd43 / buildEkey 同口径先剥冒号, 否则带冒号 MAC 使 reversePairs 返回空串。
+        let klv = ZKProtocol.buildKLV(0x01, HexKit.reversePairs(lockMacHex.replacingOccurrences(of: ":", with: "").lowercased()))
             + ZKProtocol.buildKLV(0x02, HexKit.hexPair(UInt32(truncatingIfNeeded: type)))
             + ZKProtocol.buildKLV(0x03, u16leHex(pid))
             + ZKProtocol.buildKLV(0x04, ekeyHex)
         return ZKCmd(name: "41 钥匙串写钥", cmd: 0x41, hex: ZKProtocol.buildFrame(0x41, klv, header: 8))
     }
     static func cmd44GetEkeyInfo(_ lockMacHex: String?) -> ZKCmd {
-        let v = (lockMacHex?.isEmpty == false) ? HexKit.reversePairs(lockMacHex!) : ""
+        // 2026-10-14: 去掉强解包 (空 = 查全部钥匙, 与旧口径一致), 并把剥冒号/小写收在前一行。
+        let m = (lockMacHex ?? "").replacingOccurrences(of: ":", with: "").lowercased()
+        let v = m.isEmpty ? "" : HexKit.reversePairs(m)
         return ZKCmd(name: "44 钥匙串查钥", cmd: 0x44, hex: ZKProtocol.buildFrame(0x44, ZKProtocol.buildKLV(0x01, v), header: 8))
     }
     static func cmd43KeychainStatus(_ lockMacList: [String]) -> ZKCmd {

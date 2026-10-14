@@ -1071,7 +1071,7 @@ struct MemberDetail360View: View {
             //   "cannot reference 'mutating' method as function value" 等 4 条。
             // 改名 `initial`; 调用点全是位置传参 (`field("关系", m.relation)`), 不受影响。
             alert.addTextField { $0.placeholder = ph; $0.text = initial; $0.keyboardType = kb; $0.clearButtonMode = .whileEditing }
-            return alert.textFields!.last!
+            return alert.textFields?.last ?? UITextField()
         }
         let fRelation = field("与你的关系", m.relation)
         let fRemark = field("备注名", e.remark)   // 461 备注名
@@ -1094,7 +1094,7 @@ struct MemberDetail360View: View {
             next.careText = fCare.text ?? ""
             next.welcome = fWelcome.text ?? ""
             next.groupTag = fGroup.text ?? ""
-            next.commonLocks = fCommon.text!
+            next.commonLocks = (fCommon.text ?? "")
                 .split(separator: ",").map { String($0).trimmingCharacters(in: .whitespaces) }
                 .filter { !$0.isEmpty }
             MemberHub.saveExt(m.id, next)
@@ -1160,7 +1160,7 @@ struct MemberWizardView: View {
         switch step {
         case 0: return !name.trimmingCharacters(in: .whitespaces).isEmpty
         case 1: return true
-        default: return !makePwd || (pwd.count >= 6 && pwd.count <= 8)
+        default: return !makePwd || pwdOK()
         }
     }
     private func pwdOK() -> Bool { pwd.count >= 6 && pwd.count <= 8 && pwd.allSatisfy { $0.isNumber } }
@@ -1226,6 +1226,8 @@ struct MemberWizardView: View {
                             guard canNext else { return }
                             if step == 0, newID == nil {
                                 newID = createMember()
+                                // 2026-10-14: 建档失败 (重名/空名) 不能推进 —— 否则用户走到末步才被踢出, 输入全废。
+                                guard newID != nil else { return }
                             }
                             step += 1
                             DS.Haptics.tick.impactOccurred()
@@ -1259,6 +1261,11 @@ struct MemberWizardView: View {
 
     private func createMember() -> String? {
         let n = name.trimmingCharacters(in: .whitespaces)
+        // 2026-10-14: 与重命名 (rename) 同口径 —— 否则能建出"之后改不动"的名字 (重命名强制字母数字)。
+        guard !n.isEmpty, n.count <= 20, n.allSatisfy({ $0.isLetter || $0.isNumber }) else {
+            app.showToast("姓名需为汉字/英文/数字, 上限 20 字")
+            return nil
+        }
         guard let m = DB.addMember(n) else {
             app.showToast("姓名为空或已存在 (可走 462 合并)")
             return nil
@@ -1277,7 +1284,9 @@ struct MemberWizardView: View {
         guard makePwd, pwdOK() else {
             onDone()
             dismiss()
-            app.showToast("已添加「" + name + "」")
+            // 2026-10-14: 勾了"建临时码"但码非法时, 旧实现只报"已添加", 用户以为码建好了。
+            app.showToast(makePwd ? "已添加「\(name)」— 临时码未建 (需 6~8 位纯数字)"
+                                  : "已添加「\(name)」")
             return
         }
         busy = true

@@ -101,6 +101,9 @@ struct AchievementsView: View {
     /// 984: 本地渲染玻璃卡存相册 (无网络)
     private func shareCard(_ b: Badge, at date: Date) {
         let f = DateFormatter()
+        // 2026-10-14: 钉公历 + POSIX —— 否则泰历/民国/和历等系统区域会把 2026 打成 2569 等。
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.calendar = Calendar(identifier: .gregorian)
         f.dateFormat = "yyyy年M月d日"
         let card = BadgeShareCard(badge: b, dateText: f.string(from: date))
         let renderer = ImageRenderer(content: card.frame(width: 320, height: 400))

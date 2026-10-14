@@ -772,7 +772,7 @@ struct PwdStudio: View {
     }
     private var ownerCard: some View {
         VStack(alignment: .leading, spacing: DS.Space.xs) {
-            Text("归属成员 (317 归属先行, 台账本地)")
+            Text("归属成员")
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(errorField == "owner" ? DS.Palette.danger : DS.Palette.text)
             ForEach(DB.members()) { m in
@@ -1028,7 +1028,7 @@ struct PwdStudio: View {
                 .card()
             }
             VStack(alignment: .leading, spacing: DS.Space.xs) {
-                Text("备注 (179 占位规范: 给谁·哪扇门·用多久)")
+                Text("备注 (给谁·哪扇门·用多久)")
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(DS.Palette.text)
                 // 312 常用短语条: 点按追加到备注末尾 (不是替换), 空备注时直接填
@@ -2548,7 +2548,7 @@ struct FpStudio: View {
     @ViewBuilder
     private var step2: some View {
         VStack(alignment: .leading, spacing: DS.Space.xs) {
-            Text("命名 (315 建议轮播, 点按填入)")
+            Text("命名 (点按建议填入)")
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(DS.Palette.text)
             ScrollView(.horizontal, showsIndicators: false) {
@@ -2687,7 +2687,7 @@ struct FpStudio: View {
                 // 还原时第一百五十二批的 reclaim 会把这条还没发出去的 del_fp 一并收回。
                 CredentialOrg.addToBin(em, fp: f, source: .rererecord)
                 DB.delFp(em, f.batch)
-                CredentialOrg.enqueue(em, kind: "del_fp", title: "删除旧指纹批次 \(f.batch)")   // 319 删除旧指纹批次
+                CredentialOrg.enqueue(em, kind: "del_fp", title: "删除旧指纹批次 \(f.batch)", fp: f)   // 319 删除旧指纹批次
             }
             app.showToast("旧指纹已移入回收站 (319, 备注/归属保留)")
         }

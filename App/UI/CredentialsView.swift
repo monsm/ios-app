@@ -493,7 +493,7 @@ struct CredentialsView: View {
             .frame(minHeight: DS.Hit.min)
             .contentShape(Rectangle())
         }
-        .accessibilityLabel("\(labels[i]) \(c) 条 (524 分段计数)")
+        .accessibilityLabel("\(labels[i]) \(c) 条")
         .accessibilityAddTraits(on ? [.isSelected] : [])
     }
     private func countForSeg(_ i: Int) -> Int {
@@ -2416,7 +2416,7 @@ struct CredentialsView: View {
                           confirmTitle: "停用") {
             CredentialOrg.addToBin(mac, pwd: p, source: .manual)
             DB.delPwd(mac, p.alias)
-            CredentialOrg.enqueue(mac, kind: "del_pwd", title: "删除密码 #\(p.alias)")
+            CredentialOrg.enqueue(mac, kind: "del_pwd", title: "删除密码 #\(p.alias)", pwd: p)
             // 361: 单条停用没有 313 的四选一, 便签如实记"未填", 不编一个原因充数 (要不要补必填见 NEXT-DECISIONS 组5)
             CredentialOrg.markDisabled(mac, kind: "pwd", keys: [p.alias], label: "未填", via: disableVia(owner: p.owner))
             if let e = CredentialOrg.bin(mac).first(where: { $0.pwd?.alias == p.alias }) {
@@ -2434,7 +2434,7 @@ struct CredentialsView: View {
                           confirmTitle: "停用") {
             CredentialOrg.addToBin(mac, fp: f, source: .manual)
             DB.delFp(mac, f.batch)
-            CredentialOrg.enqueue(mac, kind: "del_fp", title: "删除指纹「\(f.name)」")
+            CredentialOrg.enqueue(mac, kind: "del_fp", title: "删除指纹「\(f.name)」", fp: f)
             CredentialOrg.markDisabled(mac, kind: "fp", keys: [f.batch], label: "未填", via: disableVia(owner: f.owner))   // 361 同上, 如实记未填; 468 代管时补标注
             if let e = CredentialOrg.bin(mac).first(where: { $0.fp?.batch == f.batch }) {
                 armUndo(e, hard: false)

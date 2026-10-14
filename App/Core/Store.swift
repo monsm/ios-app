@@ -323,15 +323,53 @@ enum DB {
         return nil
     }
     static func normalizeMac(_ m: String) -> String { m.replacingOccurrences(of: ":", with: "").lowercased() }
+    /// 密钥材料 (skey/bkey/ekey) 的系统 Keychain 账户名。
+    static func secretAccount(_ mac: String, _ field: String) -> String { "kc." + normalizeMac(mac) + "." + field }
+    /// 2026-10-14 一次性迁移: 把旧 plist 里明文的 skey/bkey/ekey 搬进系统 Keychain, 并从 plist 抹掉。
+    /// 幂等 (没有明文字段时不动), 启动时调一次。
+    static func migrateSecretsToKeychain() {
+        var map = store.getDict("kf_keychains")
+        var changed = false
+        for (m, v) in map {
+            guard var d = v as? [String: Any] else { continue }
+            var touched = false
+            for f in ["skey", "bkey", "ekey"] {
+                guard let legacy = d[f] as? String, !legacy.isEmpty else { continue }
+                // 关键: 只有 Keychain 里确实有值 (原本就有, 或本次写成功) 才允许抹掉 plist 明文。
+                // 否则 (如首次解锁前的后台启动) 写失败 + 抹明文 = 永久丢密钥, 门锁再也开不了。
+                let stored = SecretStore.get(secretAccount(m, f)) != nil
+                if stored || SecretStore.set(legacy, for: secretAccount(m, f)) {
+                    d.removeValue(forKey: f)
+                    touched = true
+                }
+            }
+            if touched { map[m] = d; changed = true }
+        }
+        if changed { store.set("kf_keychains", map) }
+    }
     static func saveKeychain(_ kc: Keychain) {
+        // 2026-10-14: 门锁密钥不再随偏好明文写进 plist (越狱/iTunes 备份即可读走), 改存系统 Keychain;
+        // plist 只留非密字段 (mac/名称/pid/pins…)。读侧 fromDict 自动回填。
+        // 空 skey 不覆盖既有值 (Keychain 读失败回填 "" 时, 一次无关的 saveKeychain 会把真密钥写成空)。
+        if !kc.skey.isEmpty, !SecretStore.set(kc.skey, for: secretAccount(kc.mac, "skey")) {
+            MaintenanceLog.record("密钥写入系统 Keychain 失败 (skey, \(kc.mac))")   // 不静默: 诊断页可见
+        }
+        if kc.bkey.isEmpty { SecretStore.remove(secretAccount(kc.mac, "bkey")) }
+        else { SecretStore.set(kc.bkey, for: secretAccount(kc.mac, "bkey")) }
+        if kc.ekey.isEmpty { SecretStore.remove(secretAccount(kc.mac, "ekey")) }
+        else { SecretStore.set(kc.ekey, for: secretAccount(kc.mac, "ekey")) }
         var map = store.getDict("kf_keychains")
         map[normalizeMac(kc.mac)] = kc.toDict()   // 归一化: 防导入冒号/大写 MAC 造成重复条目
         store.set("kf_keychains", map)
         SpotlightKit.scheduleReindex()   // 293 锁的新增/改名/换型号都从这一支出, 索引跟着走
     }
     static func removeKeychain(_ mac: String) {
+        let m = normalizeMac(mac)
+        SecretStore.remove(secretAccount(m, "skey"))
+        SecretStore.remove(secretAccount(m, "bkey"))
+        SecretStore.remove(secretAccount(m, "ekey"))
         var map = store.getDict("kf_keychains")
-        map.removeValue(forKey: normalizeMac(mac))
+        map.removeValue(forKey: m)
         store.set("kf_keychains", map)
         SpotlightKit.scheduleReindex()   // 951 删掉的锁必须从 Spotlight 撤下来, 否则搜到点不开
     }
@@ -395,18 +433,28 @@ enum DB {
     }
 
     // 凭证台账
-    /// 台账解码失败的锁 (防"解不出→空表写回"清空数据)
-    static var ledgerCorrupt: Set<String> = []
+    /// 台账解码失败的锁 (防"解不出→空表写回"清空数据)。
+    /// 2026-10-14: 原为非隔离可变 static var, 后台任务与主线程并发访问是数据竞争; 加锁存取。
+    private static let ledgerLock = NSLock()
+    private static var ledgerCorruptSet: Set<String> = []
+    static func markLedgerCorrupt(_ mac: String) {
+        ledgerLock.lock(); defer { ledgerLock.unlock() }
+        ledgerCorruptSet.insert(mac)
+    }
+    static func isLedgerCorrupt(_ mac: String) -> Bool {
+        ledgerLock.lock(); defer { ledgerLock.unlock() }
+        return ledgerCorruptSet.contains(mac)
+    }
     static func ledger(_ mac: String) -> Ledger {
         if let l = get(Ledger.self, "kf_ledger_" + mac) { return l }
         // get 返回 nil 有两种语义: ①该键不存在 (真空台账) ②有键但解码抛错 (字段缺任一即整表抛)。
         // 旧实现在 ②下返回空 Ledger, 调用方 (addPwd/addFp/…) 紧接着 save → **台账被空表整表覆盖清空**。
-        if store.has("kf_ledger_" + mac) { ledgerCorrupt.insert(mac) }
+        if store.has("kf_ledger_" + mac) { markLedgerCorrupt(mac) }
         return Ledger()
     }
     static func saveLedger(_ mac: String, _ l: Ledger) {
         // 已判定为不可解的台账一律拒写: 宁可界面显示陈旧数据, 也不要把用户的密码/指纹记录抹掉
-        guard !ledgerCorrupt.contains(mac) else { return }
+        guard !isLedgerCorrupt(mac) else { return }
         // 379/380: 台账写入唯一漏斗 — 前后比对出字段级 diff 入管理流水 (增删改/导入恢复全留痕)。
         // 此前 AuditLog().append 只在安全中心手动记账与失败守卫里调用, 而文案宣称"增删改会自动记入"。
         let old = get(Ledger.self, "kf_ledger_" + mac)
@@ -618,8 +666,12 @@ enum DB {
     static func addMember(_ name: String) -> Member? {
         let n = name.trimmingCharacters(in: .whitespacesAndNewlines)
         if n.isEmpty || members().contains(where: { $0.name == n }) { return nil }
+        // 2026-10-14: 旧写法按 count % 6 取色 —— 删成员后 count 回退会与现存成员撞色 (头像/时间线靠色区分)。
+        // 先挑一个当前没被占用的色, 六色用满才按人数轮转。
+        let used = Set(members().map { $0.color })
+        let color = memberPalette.first { !used.contains($0) } ?? memberPalette[members().count % memberPalette.count]
         let m = Member(id: UUID().uuidString.prefix(8).description, name: n,
-                       color: memberPalette[members().count % memberPalette.count],   // 259: 建档即分配, 不再全员品牌靛蓝
+                       color: color,   // 259: 建档即分配, 不再全员品牌靛蓝
                        at: Date().timeIntervalSince1970 * 1000)
         var map = store.getDict("kf_members")
         map[m.id] = m.toDict()
@@ -650,7 +702,23 @@ enum DB {
             for i in l.pwds.indices where l.pwds[i].owner == id { l.pwds[i].owner = nil; changed = true }
             for i in l.fps.indices where l.fps[i].owner == id { l.fps[i].owner = nil; changed = true }
             if changed { saveLedger(kc.mac, l) }
+            // 2026-10-14: 认领映射 (kf_mclaim_) 里指向该成员的条目必须删掉 —— 否则记录页 whoId 指向
+            // 已删 id 既显示不出人, 又因 claims 里仍有该 id 而**永远无法重新认领** (悬空引用)。
+            var claims = store.get([String: String].self, "kf_mclaim_" + kc.mac) ?? [:]
+            let before = claims.count
+            claims = claims.filter { $0.value != id }
+            if claims.count != before { store.setCodable("kf_mclaim_" + kc.mac, claims) }
         }
+        // 档案扩展 / 徽章 / 生日 (均以成员 id 为键) 与值班周表: 删成员后成永久孤儿键, 一并清。
+        for key in ["kf_member_ext", "kf_member_badge", "kf_member_bday"] {
+            var d = store.getDict(key)
+            if d.removeValue(forKey: id) != nil { store.set(key, d) }
+        }
+        var duty = store.get([String: String].self, "kf_duty_week") ?? [:]
+        let dbefore = duty.count
+        // 2026-10-14: 该表是 weekKey → memberId (MemberHub), 上一版误按 key 过滤 → 恒不命中, 值班记录成孤儿。
+        duty = duty.filter { $0.value != id }
+        if duty.count != dbefore { store.setCodable("kf_duty_week", duty) }
     }
 
     // 钥匙串硬件
@@ -810,27 +878,35 @@ enum DB {
 extension Keychain {
     static func fromDict(_ d: [String: Any]) -> Keychain? { Keychain(fromDict: d) }
     init?(fromDict d: [String: Any]) {
-        guard let mac = d["mac"] as? String, let skey = d["skey"] as? String else { return nil }
+        guard let mac = d["mac"] as? String else { return nil }
         self.mac = mac
-        self.skey = skey
+        // 2026-10-14: 密钥优先读系统 Keychain; 旧 plist 明文 (历史数据) 作兜底并顺手迁移进 Keychain。
+        func secret(_ field: String, _ legacy: String?) -> String {
+            if let v = SecretStore.get(DB.secretAccount(mac, field)) { return v }
+            if let legacy, !legacy.isEmpty {
+                SecretStore.set(legacy, for: DB.secretAccount(mac, field))
+                return legacy
+            }
+            return legacy ?? ""
+        }
+        self.skey = secret("skey", d["skey"] as? String)
+        self.bkey = secret("bkey", d["bkey"] as? String)
+        self.ekey = secret("ekey", d["ekey"] as? String)
         self.version = d["version"] as? Int ?? 1
         self.pid = d["pid"] as? Int ?? 0
         self.pidName = d["pidName"] as? String ?? ""
         self.name = d["name"] as? String ?? ""
-        self.bkey = d["bkey"] as? String ?? ""
         self.pins = d["pins"] as? [String] ?? []
-        self.ekey = d["ekey"] as? String ?? ""
         self.trackid = d["trackid"] as? String ?? ""
         self.bleId = d["bleId"] as? String ?? ""
         self.fw = d["fw"] as? String ?? ""
         self.pairedAt = d["pairedAt"] as? String ?? ""
     }
     func toDict() -> [String: Any] {
-        var d: [String: Any] = ["version": version, "mac": mac, "pid": pid, "pidName": pidName, "skey": skey]
+        // 2026-10-14: skey/bkey/ekey 不落 plist (见 SecretStore); 这里只写非密字段。
+        var d: [String: Any] = ["version": version, "mac": mac, "pid": pid, "pidName": pidName]
         if !name.isEmpty { d["name"] = name }
-        if !bkey.isEmpty { d["bkey"] = bkey }
         if !pins.isEmpty { d["pins"] = pins }
-        if !ekey.isEmpty { d["ekey"] = ekey }
         if !trackid.isEmpty { d["trackid"] = trackid }
         if !bleId.isEmpty { d["bleId"] = bleId }
         if !fw.isEmpty { d["fw"] = fw }

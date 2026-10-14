@@ -70,6 +70,17 @@ enum KeyGen {
     static func randomDigits(_ n: Int) -> String {
         // 旧写法 `"0123456789"[Int(...)]`: String 没有 Int 下标 (需 String.Index) → 编译不过
         let digits = Array("0123456789")
-        return String(randomBytes(n).map { digits[Int($0) % digits.count] })
+        // 2026-10-14: `Int($0) % 10` 有模偏置 (256 非 10 倍数 ⇒ 数字 0-5 概率 26/256, 6-9 为 25/256)。
+        // 拒绝采样: 丢弃 >= 250 的字节 (250 = 25×10, 余数均匀); 带轮次上限防极端死循环。
+        var out: [Character] = []
+        // 拒绝率 6/256 ≈ 2.3%, 每轮至少 n*2 字节 ⇒ 极少轮即填满; 刻意**不加**轮次上限
+        // (加了会在极端下返回短串, 而调用方假定长度恰为 n)。randomBytes 不会恒返 >=250, 必终止。
+        while out.count < n {
+            for b in randomBytes(max(n * 2, 16)) where b < 250 {
+                out.append(digits[Int(b) % 10])
+                if out.count >= n { break }
+            }
+        }
+        return String(out)
     }
 }

@@ -906,7 +906,7 @@ struct RecordsView: View {
             }
             if filters.failedOnly {
                 // ⚠569: 锁端仅记录告警级 (10/13/224), 无逐次失败明细 — 文案已标注
-                Text("注: 失败筛选只收录告警级锁定/指纹告警与手机侧开锁失败, 锁端不上报逐次失败 (569 ⚠)")
+                Text("注: 失败筛选只收录告警级锁定/指纹告警与手机侧开锁失败, 锁端不上报逐次失败")
                     .font(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)

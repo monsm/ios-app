@@ -698,7 +698,7 @@ enum RecordSearch {
         }
         // "N月D日" (只认含"月"的那个词, 避免"工作日"里的"日"误命中; 当年, 已过则去年)
         if let tok = tokensFirstContaining(joined: joined, "月"),
-           let mo = intBefore(tok, "月"), mo > 0, let dy = intAfter(tok, "日"), dy > 0
+           let mo = intBefore(tok, "月"), mo > 0, let dy = intBetween(tok, "月", "日"), dy > 0
            // 2026-10-13 对抗式点击审计: 原写只校下界 (mo>0 / dy>0) 不校上界 ⇒ 用户在搜索框敲
            // 「13月1日」「2月30日」「4月31日」时 `Calendar.date(from:)` 返回 nil, 下一行 `!` 直接 trap。
            // 记录页搜索框是 onChange 逐字符触发的 (RecordsView 的 onRecordsAppear/onChange 里 sel = 该值),
@@ -746,6 +746,16 @@ enum RecordSearch {
             if ch.isNumber { digits.append(ch) } else { return nil }
         }
         return Int(digits)
+    }
+    /// 2026-10-14: "N月D日" 里 a 与 b **之间**的纯数字。intBefore(tok,"日") 要求"日"前全是数字,
+    /// 而 "3月15" 里有"月" ⇒ 恒 nil ⇒ 日期短语分支从未命中。这里按区间取。
+    private static func intBetween(_ tok: String, _ a: String, _ b: String) -> Int? {
+        guard let ra = tok.range(of: a),
+              let rb = tok.range(of: b, range: ra.upperBound..<tok.endIndex),
+              ra.upperBound <= rb.lowerBound else { return nil }
+        let mid = tok[ra.upperBound..<rb.lowerBound]
+        guard !mid.isEmpty, mid.allSatisfy({ $0.isNumber }) else { return nil }
+        return Int(mid)
     }
     /// 含"月"的最短匹配词 (空格切词后找, 取首个)
     private static func tokensFirstContaining(joined: String, _ marker: String) -> String? {
@@ -956,17 +966,19 @@ enum RecordSearch {
         guard let mid = recs.first(where: { $0.key == aroundKey }), let md = dateOf(mid) else { return ([], []) }
         let win = Double(minutes) * 60
         let t0 = md.timeIntervalSince1970
-        // 前事件: [t0-win, t0) 内紧邻的 3 条 (recs 倒序 → 最新 3 条在尾部, 取 suffix 再反转为时间正序)
+        // 2026-10-14: 取错极值。recs 是**倒序** (新在前) ——
+        //   前事件 [t0-win, t0) 里"紧邻"的在前 ⇒ 应取 prefix (旧写法 suffix 取到窗内最旧 3 条);
+        //   后事件 (t0, t0+win] 里"最早"的在尾 ⇒ 应取 suffix (旧写法 prefix 取到最新 3 条)。
+        // 两支都反转为时间正序返回, 调用方用 `.before.last` 当"紧邻上一条"才成立。
         let before = recs.filter { r in
             guard let d = dateOf(r) else { return false }
             return r.id != mid.id && d.timeIntervalSince1970 >= t0 - win && d.timeIntervalSince1970 < t0
-        }.suffix(n)
-        // 后事件: 时刻在 (t0, t0+win] 的最早 n 条 (按时间正序返回)
+        }.prefix(n)
         let after = recs.filter { r in
             guard let d = dateOf(r) else { return false }
             return r.id != mid.id && d.timeIntervalSince1970 > t0 && d.timeIntervalSince1970 <= t0 + win
-        }.prefix(n)
-        return (Array(before).reversed(), Array(after))
+        }.suffix(n)
+        return (Array(before).reversed(), Array(after).reversed())
     }
 
     /// 747 前后对比: 当日与前后 7 天每日开门量 (辅助判断试探迹象, 只读统计)

@@ -207,6 +207,10 @@ final class LockService: ObservableObject {
             let frame: ZKProtocol.ParsedFrame
             do {
                 log("info", "TX \(cmdObj.name) attempt=\(attempt + 1)/\(retries) needToken=\(needToken)")
+                // 忙判必须在**写之前** (2026-10-14 对抗式排查): 旧实现把判据放进挂 waiter 的 Task,
+                // 而 writeFrameHex 在 Task 外无条件执行 => 判为"忙"时帧**照样发出去**, 第二条命令的响应
+                // 被第一条的 waiter 收下 = 错帧 (cmd08 批量 13 分片最危险)。这里同步判, 忙即不发。
+                if waiter != nil { throw BLEErrorX.msg("已有命令在等待响应") }
                 // 先挂 waiter 再写 (防响应早于 waiter 注册)
                 let respTask = Task<ZKProtocol.ParsedFrame, Error> { @MainActor in
                     try await withCheckedThrowingContinuation { (cont: CheckedContinuation<ZKProtocol.ParsedFrame, Error>) in
@@ -262,8 +266,11 @@ final class LockService: ObservableObject {
                 var brokenLink = ble.connectedMAC.isEmpty || connectedDeviceId.isEmpty
                 if case BLEErrorX.code(.writeFailed) = error { brokenLink = true }
                 if brokenLink {
+                    // 2026-10-14: disconnect() 会把 curMac 清空, 旧写法 `if !curMac.isEmpty` 紧随其后 =>
+                    // 恒为 false, 自愈重连是死代码 (首个 hiccup 后连接不再恢复)。先存下再断。
+                    let macToHeal = curMac
                     disconnect()
-                    if !curMac.isEmpty { try? await ensureConnected(mac: curMac) }
+                    if !macToHeal.isEmpty { try? await ensureConnected(mac: macToHeal) }
                 }
                 log("warn", "cmd \(String(format: "%02x", cmd)) 第 \(attempt + 1) 次失败: \(error.localizedDescription)")
             }

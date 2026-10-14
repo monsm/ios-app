@@ -390,7 +390,8 @@ final class AutoOpenController {
         }
     }
     func onBackground() {
-        guard AutoOpen.on else { return }
+        // 2026-10-14: 清理与"停传感器"不能挂在开关值上 —— 运行中把开关关掉时 AutoOpen.on 已为 false,
+        // 旧写法直接 return, MotionStillness.stop() 被跳过 → 加速度计泄漏。
         // 退后台: 清武装态 (F0 同时失效, 双保险) + 清一次性/面容在途位 + 停加速度计
         armed = false
         eventFired.removeAll()
@@ -493,6 +494,9 @@ final class AutoOpenController {
             try await app.lock.ensureConnected(mac: mac)
             lastDispatch[mac] = Date().timeIntervalSince1970
             let rc = try await app.lock.unlock(mac: mac)
+            // 2026-10-14: 补上闩锁置位 —— 旧实现只有 remove/removeAll/contains, 从无 insert,
+            // `if eventFired.contains(mac) { return }` 恒 false ⇒ "每个接近事件只发一次 04" 从未生效。
+            eventFired.insert(mac)
             switch rc {
             case 0:
                 // 成功: 60s 冷却起算 (lastDispatch 已置), 复位武装让下次需重新靠近

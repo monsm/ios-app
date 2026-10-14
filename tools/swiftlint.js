@@ -100,7 +100,12 @@ const SYS_NAMES = new Set(['AngularGradient','AxisGridLine','AxisMarks','AxisVal
 // SymbolEffectOptions — SwiftUI 的 symbolEffect 选项类型 (iOS 17 起)。run 63 修 UnlockDial 的
 // "unable to type-check this expression in reasonable time" 时, 把 `.repeating` 写成显式
 // `SymbolEffectOptions.repeating` 帮编译器消歧, 于是全仓出现 2 次, 正好落进本检查的误报形态。
-'SymbolEffectOptions']);
+// 2026-10-14: Security 框架的 Keychain 读写四个入口 (App/Core/SecretStore.swift)。全仓各只出现 1–3 次
+// (单文件封装、经 set/get/remove/removeAll 收口, 不会在别处反复出现), 正好落进本检查的误报形态。
+// 加白**不等于**证明 Keychain 用法正确 —— SecItemUpdate 的返回码分支、kSecAttrAccessible 访问级别、
+// 以及"写失败不抹 plist 明文"那条, 都只有真机能验 (见 docs/VERIFY-CHECKLIST.md 的密钥迁 Keychain 条目)。
+// SymbolEffectOptions — SwiftUI 的 symbolEffect 选项类型 (iOS 17 起), 上面已有注释, 这里补回名字。
+'SecItemAdd', 'SecItemUpdate', 'SecItemCopyMatching', 'SecItemDelete', 'SymbolEffectOptions']);
 
 let symFail = 0;
 // 判定口径: 只报"全仓库只出现 1–2 次、又不是本仓库声明的类型"的驼峰名 ——

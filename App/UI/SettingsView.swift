@@ -1278,8 +1278,8 @@ struct DefendView: View {
                 let cal = WeekCal.gregorian
                 let sHMS = cal.dateComponents([.hour, .minute, .second], from: fromTime)
                 let eHMS = cal.dateComponents([.hour, .minute, .second], from: toTime)
-                let s = (sHMS.hour! * 3600 + sHMS.minute! * 60 + sHMS.second!) / 2
-                let e = (eHMS.hour! * 3600 + eHMS.minute! * 60 + eHMS.second!) / 2
+                let s = ((sHMS.hour ?? 0) * 3600 + (sHMS.minute ?? 0) * 60 + (sHMS.second ?? 0)) / 2
+                let e = ((eHMS.hour ?? 0) * 3600 + (eHMS.minute ?? 0) * 60 + (eHMS.second ?? 0)) / 2
                 guard e != s else { app.showToast("结束时间不能等于开始时间"); return }
                 try await app.lock.ensureConnected(mac: kc.mac)
                 try await app.lock.setDefence(control: 2, startSec: s, endSec: e)

@@ -228,13 +228,14 @@ enum MemberHub {
         var created = 0, moved = 0, restored = 0
         for kc in DB.keychains() {
             for p in DB.listPwds(kc.mac) where p.owner == id {
-                let snap = CredentialOrg.history(kc.mac, "pwd", p.alias).last
+                // 2026-10-14: 快照表把 auto 版排在末尾 ⇒ .last 常是较旧的自动快照; 取版本号最大者。
+                let snap = CredentialOrg.history(kc.mac, "pwd", p.alias).max { $0.version < $1.version }
                 if let s = snap, s.note.hasPrefix("移交") { moved += 1 }
                 else if let s = snap, s.note.hasPrefix("恢复") { restored += 1 }
                 else { created += 1 }
             }
             for f in DB.listFps(kc.mac) where f.owner == id {
-                let snap = CredentialOrg.history(kc.mac, "fp", f.batch).last
+                let snap = CredentialOrg.history(kc.mac, "fp", f.batch).max { $0.version < $1.version }
                 if let s = snap, s.note.hasPrefix("移交") { moved += 1 }
                 else if let s = snap, s.note.hasPrefix("恢复") { restored += 1 }
                 else { created += 1 }

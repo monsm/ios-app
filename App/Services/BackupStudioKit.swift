@@ -165,7 +165,12 @@ enum BackupStudio {
         // **TOTP 种子与静态口令仍停在错包的值** (既是数据错, 也是 2FA 密钥残留, 撤销永远不完整)。
         // 判据①"恢复流程确实会改写它们"②"里面是用户自己攒的内容" 对这四族完全成立。
         "otpStatus_", "otpIdx_", "kf_cotp_t_", "kf_cotp_s_",
-        "kf_trace_persist_v1"                                        // 583 最近记录写入回执追踪 (同为恢复写入的用户内容)
+        "kf_trace_persist_v1",                                       // 583 最近记录写入回执追踪 (同为恢复写入的用户内容)
+        // 2026-10-14 对抗式排查: restoreAll 还会写这七族, 而快照没收 ⇒ 导错备份再"撤销恢复"撤不回来。
+        //   · BackupKit.restoreAll 的 meta 段 → kf_defend_ / kf_tailgate_ / kf_synctime_
+        //   · deviceOrg 段 → kf_lock_order / kf_lockmeta_ / kf_lock_hidden_ / kf_group_folded
+        "kf_defend_", "kf_tailgate_", "kf_synctime_",
+        "kf_lock_order", "kf_lockmeta_", "kf_lock_hidden_", "kf_group_folded"
     ]
     struct RollbackBundle: Codable {
         var keychains: [String]      // JSON: [Keychain]
@@ -201,7 +206,8 @@ enum BackupStudio {
         // 2026-10-13 run 63: 原写 `let url = try? data.write(to: …)` —— `Data.write(to:options:)`
         // 返回 Void, `try?` 得 Void?, 于是 url 是 `()` ⇒ `url.path` 报
         // "value of tuple type '()' has no member 'path'"。URL 单独算, 写盘结果只判成败。
-        let rollURL = rollbackDir.appendingPathComponent("roll-\(Int(Date().timeIntervalSince1970)).json")
+        // 2026-10-14: 秒级时间戳同一秒两次快照会同名覆盖 -> 改毫秒。
+        let rollURL = rollbackDir.appendingPathComponent("roll-\(Int(Date().timeIntervalSince1970 * 1000)).json")
         guard let data = try? JSONEncoder().encode(snap),
               (try? data.write(to: rollURL, options: .atomic)) != nil else { return false }
         pruneRollback(keep: 4)
@@ -293,23 +299,49 @@ enum BackupStudio {
 
     // ---------- 428 ⚠ 充电自动备份: BGTask 注册 + 诚实文案 (执行时机由系统择机) ----------
     static let chargeBackupTaskId = "com.kf.chargebackup"
+    /// 2026-10-14: register 每进程只能一次 (二次注册抛 NSInternalInconsistencyException)。
+    /// 启动注册 + 设置开关 setter 都会调本函数, 用标志去重。
+    private static var registered = false
+    /// 单次完成闸 (跨线程): expirationHandler 与工作体都可能完成, 只允许第一个生效。
+    private final class CompletionOnce: @unchecked Sendable {
+        private let lock = NSLock()
+        private var done = false
+        func finish(_ task: BGTask, success: Bool) {
+            lock.lock(); defer { lock.unlock() }
+            guard !done else { return }
+            done = true
+            task.setTaskCompleted(success: success)
+        }
+    }
     static func registerChargeBackup() {
         // 2026-10-13 run 63: 原写 `BGTaskScheduler.shared.supports([BGTaskType.appRefresh])` + 把
         // launchHandler 当 submit 的尾随闭包 —— 两处都不是真 API (`BGTaskScheduler` 无 supports,
         // 无 BGTaskType, submit 也不收尾随闭包) ⇒ 一次报 3 条。真 API 是:
         //   register(forTaskWithIdentifier:using:launchHandler:) 注册处理块;
         //   submit(_:) 单独排期。
+        // 2026-10-14: 启动时**无条件**调用本函数 —— 注册必须在启动窗口内完成 (晚于 didFinishLaunching
+        // 会抛 NSInternalInconsistencyException 崩进程); 开关只闸住末尾的排期。
+        // 设置里改开关只调 rescheduleChargeBackup(), 不再走这里 (那条路是"启动之后才 register"的崩因)。
+        guard !registered else { if DB.store.getBool("kf_bk_bgtask") { rescheduleChargeBackup() }; return }
+        registered = true
         BGTaskScheduler.shared.register(forTaskWithIdentifier: chargeBackupTaskId, using: nil) { task in
-            task.expirationHandler = { task.setTaskCompleted(success: false) }
-            _ = makeRollbackPoint()
-            // 428 充电备份快照
-            MaintenanceLog.record("充电备份快照")   // 387: 记账才能进设备页"上次会话本机完成 N 项维护"回执
-            task.setTaskCompleted(success: true)
+            // 2026-10-14: 旧实现 expirationHandler 与工作体都会 setTaskCompleted —— 对同一 BGTask
+            // 二次完成抛 NSInternalInconsistencyException。改用单次完成闸。
+            let once = CompletionOnce()
+            task.expirationHandler = { once.finish(task, success: false) }
+            let ok = makeRollbackPoint()
+            if ok { MaintenanceLog.record("充电备份快照") }   // 387: 记账才能进设备页"上次会话本机完成 N 项维护"回执
+            once.finish(task, success: ok)   // 成败如实上报, 不再无条件记成功
         }
-        // 排期: 由系统择机执行 (接电+闲置), 最早 6 小时后; 排期失败不抛给调用方 (UI 文案已声明"由系统择机")
+        if DB.store.getBool("kf_bk_bgtask") { rescheduleChargeBackup() }
+    }
+    /// 排期: 由系统择机执行 (接电+闲置), 最早 6 小时后。
+    /// 2026-10-14: 排期失败原先 `try?` 静默吞掉, 而 UI 文案却称"已交给系统" —— 改为记维护回执。
+    static func rescheduleChargeBackup() {
         let req = BGAppRefreshTaskRequest(identifier: chargeBackupTaskId)
         req.earliestBeginDate = Date(timeIntervalSinceNow: 6 * 3600)
-        try? BGTaskScheduler.shared.submit(req)
+        do { try BGTaskScheduler.shared.submit(req) }
+        catch { MaintenanceLog.record("后台备份排期失败: \((error as NSError).localizedDescription)") }
     }
     /// UI 文案: 只承诺"注册给系统, 由系统择机执行"
     static var chargeBackupNote: String {
@@ -539,6 +571,10 @@ enum BackupStudio {
         guard let c = b.checksum else { return .absent }
         var b2 = b; b2.checksum = nil
         let canon = BackupCanonical.canonical(b2)
+        // 2026-10-14: 撤回"旧语义只对旧 schema 包放行"的收紧 —— 本仓旧版本导出的包恰恰是
+        // schema 5 + 旧 (UTF-8) 语义校验和, 按 schema 判会把用户已有备份误判成篡改 (数据失踪级观感)。
+        // 且 FNV 无密钥, 本就只是**意外损坏检测**而非防篡改 (构造者总能按同一算法重算 checksum),
+        // 收紧既不增安全又伤兼容。如实两条都认; 真要防篡改得换带密钥的 MAC (另立项)。
         return (BackupCanonical.fnv1a32Hex(canon) == c.lowercased()
             || BackupCanonical.fnv1a32HexLegacy(canon) == c.lowercased()) ? .ok : .mismatch
     }
@@ -549,13 +585,19 @@ enum BackupStudio {
     /// 417 预演与解码包一次产出 (口令层 PBKDF2 只跑一遍);
     /// 453 哈希层: 内容被改过 (mismatch) 在这里就拦下 — 先于任何写库
     static func parsePreview(text: String, password: String?) throws -> (preview: Preview, bundle: BackupBundle) {
-        var body = text
-        if password != nil || looksEncrypted(text) {
-            body = try decryptAny(text, password: password)
+        // 2026-10-14: 交接包等文本前面带给人看的 // 说明行 (1048) —— 先剥掉再判机器部分,
+        // 否则 JSONDecoder 直接解不出, 本 App 自己导出的交接包反而导不回来。
+        var body = stripCommentHeader(text)
+        if password != nil || looksEncrypted(body) {
+            body = try decryptAny(body, password: password)
         }
         guard let data = body.data(using: .utf8),
               let raw = try? JSONDecoder().decode(BackupBundle.self, from: data) else {
             throw DFUError.msg("口令错误或内容不是备份 (420/453 口令/文件头层)")
+        }
+        // 2026-10-14: 比本机新的 schema 直接拒绝 —— 否则字段可能被误读且无任何告警。
+        guard raw.schema <= BackupBundle.currentSchema else {
+            throw DFUError.msg("备份包 schema \(raw.schema) 高于本机支持的 \(BackupBundle.currentSchema) — 请先升级 App 再导入")
         }
         let ck = checksumState(body)
         if ck == .mismatch {
@@ -597,6 +639,19 @@ enum BackupStudio {
         if schema < 4 { out.append(UpgradeStep(from: 3, to: 4, note: "记录区键位兼容")) }
         if schema < 5 { out.append(UpgradeStep(from: 4, to: 5, note: "OTP 状态与序号拆为独立键位")) }
         return out
+    }
+    /// 1048: 剥掉开头连续的 // 说明行与空行 (交接包头部), 返回机器可读部分; 没有头部则原样返回。
+    private static func stripCommentHeader(_ s: String) -> String {
+        guard s.contains("\n") else { return s }
+        let lines = s.split(separator: "\n", omittingEmptySubsequences: false)
+        var idx = 0
+        for (i, ln) in lines.enumerated() {
+            let t = ln.trimmingCharacters(in: .whitespaces)
+            if t.isEmpty || t.hasPrefix("//") { idx = i + 1; continue }
+            break
+        }
+        guard idx > 0 else { return s }
+        return lines[idx...].joined(separator: "\n")
     }
     private static func looksEncrypted(_ s: String) -> Bool {
         // 449: 魔数加宽为**信封全键** (v/alg/kdf/ivHex/macHex/cHex 齐) —— 原先只凭 "{"+"cHex"
@@ -705,7 +760,7 @@ enum BackupStudio {
                 let haveP = Set(cur.pwds.map { $0.alias }), haveF = Set(cur.fps.map { $0.batch })
                 for p0 in l.pwds {
                     var p = p0
-                    if let o = p.owner { p.owner = remap[o] ?? o }
+                    if let o = p.owner { p.owner = remap[o] ?? (DB.member(o) != nil ? o : nil) }
                     if haveP.contains(p0.alias) {
                         // 419 同 ID 凭证冲突: 只有用户裁决为"取备份"才覆盖, 未裁决默认保本机 (只增不删)
                         guard conflictTakeBackup.contains("\(mac):p:\(p0.alias)") else { continue }
@@ -720,7 +775,7 @@ enum BackupStudio {
                 }
                 for f0 in l.fps {
                     var f = f0
-                    if let o = f.owner { f.owner = remap[o] ?? o }
+                    if let o = f.owner { f.owner = remap[o] ?? (DB.member(o) != nil ? o : nil) }
                     if haveF.contains(f0.batch) {
                         guard conflictTakeBackup.contains("\(mac):f:\(f0.batch)") else { continue }
                         if let i = cur.fps.firstIndex(where: { $0.batch == f0.batch }) {
@@ -737,9 +792,12 @@ enum BackupStudio {
             // 全局项 (dongle/gateway/应用锁/OTP 键位/记录) 旧实现合并分支一个不写 ——
             // WebDAV 下载恢复与换机迁移走的都是 .merge, 结果这些内容整类进不来。与 .missing 同口径补齐。
             if let g = c.globals {
+                // 2026-10-14: 外观与设备组织随包落地 (与 .overwrite 同口径)
+                BackupKit.applyGlobalsAppearanceAndOrg(g, devices: c.devices)
                 for d in g.keychainDongles ?? [] { DB.saveDongle(d) }
                 for gw in g.gatewayList ?? [] { DB.saveGateway(gw) }
                 if let pc = g.passcode, !pc.s.isEmpty, !pc.d.isEmpty {
+                    // 同 BackupKit.restoreAll: 只写 s/d (d2 不进 canonical, 包体里没有)
                     DB.store.set("kf_passcode", ["s": pc.s, "d": pc.d])
                 }
                 if let otps = g.otpKeys, !otps.isEmpty {
@@ -789,9 +847,12 @@ enum BackupStudio {
                 }
             }
             if let g = c.globals {
+                // 2026-10-14: 外观与设备组织随包落地 (与 .overwrite 同口径)
+                BackupKit.applyGlobalsAppearanceAndOrg(g, devices: c.devices)
                 for d in g.keychainDongles ?? [] { DB.saveDongle(d) }
                 for gw in g.gatewayList ?? [] { DB.saveGateway(gw) }
                 if let pc = g.passcode, !pc.s.isEmpty, !pc.d.isEmpty {
+                    // 同 BackupKit.restoreAll: 只写 s/d (d2 不进 canonical, 包体里没有)
                     DB.store.set("kf_passcode", ["s": pc.s, "d": pc.d])
                 }
                 if let otps = g.otpKeys, !otps.isEmpty {
@@ -1066,17 +1127,24 @@ enum BackupStudio {
 
     // ================= 完整性与信任感 (448-454 / 507-512) =================
     /// 库体指纹 (448/397 共用一份算法, 免得两处各算各的后端口径漂移)
+    /// 库体指纹算法版本: 变更时递增 —— 旧基线 (不带前缀) 不参与比对, 免得升级后误报自检异常。
+    private static let fpVersion = "2:"
     private static func dbFingerprint() -> String {
-        var m = [String: Int]()
-        for kc in DB.keychains() { m[DB.normalizeMac(kc.mac)] = kc.skey.count + kc.pins.count }
+        // 2026-10-14: 旧实现只统计长度 (skey.count + pins.count) —— 替换等长 skey / 增删等量 pin 察觉不到。
+        // 改为对 skey 与 pins **内容**取摘要。
+        var m = [String: String]()
+        for kc in DB.keychains() {
+            let pinsHash = BackupCanonical.fnv1a32Hex(kc.pins.joined(separator: ","))
+            m[DB.normalizeMac(kc.mac)] = BackupCanonical.fnv1a32Hex(kc.skey.lowercased()) + ":" + pinsHash
+        }
         let canon = m.sorted { $0.key < $1.key }.map { "\($0.0):\($0.1)" }.joined(separator: "|")
-        return BackupCanonical.fnv1a32Hex(canon)
+        return fpVersion + BackupCanonical.fnv1a32Hex(canon)
     }
     /// 397 解锁后自检用的**只读**核对: 只比不改。基线由备份时写入 (markBackupBaseline), 本函数只比不改 ——
     /// 一处"每检查一次就把上次的异常抹平"的检查证明不了任何事, 所以自检绝不回写基线。
     static func hashMismatch() -> Bool {
         let last = DB.store.getString("kf_bk_dbhash")
-        guard !last.isEmpty else { return false }      // 还没有基线 (从未备份过), 不算异常
+        guard last.hasPrefix(fpVersion) else { return false }   // 无基线, 或旧算法基线 (升级后不复用), 不算异常
         return last != dbFingerprint()
     }
     /// 448: 基线由"备份发生点"写入 — 自检对比的是与最新快照的差异, 不再自写自读
@@ -1088,7 +1156,7 @@ enum BackupStudio {
     static func runStartupSelfCheck() -> String? {
         let fp = dbFingerprint()
         let last = DB.store.getString("kf_bk_dbhash")
-        if !last.isEmpty, last != fp {
+        if last.hasPrefix(fpVersion), last != fp {
             DB.store.set("kf_bk_selfwarn", true)
             return "数据自检异常 — 库体哈希与上次备份快照不一致, 建议立即备份并去诊断"   // 448 数据自检异常
         }
@@ -1350,8 +1418,11 @@ enum BackupStudio {
 
     // ================= 1048 管家交接包 =================
     struct Handover { let text: String; let fileName: String }
+    /// 1048 交接包 —— 2026-10-14: 必须加密。包体含整库 skey 与台账口令, 旧实现却按明文写出,
+    /// 而说明文字还让收件人"输入口令" (名不副实)。改为以交接口令 CryptoBox 加密后再落盘/复制。
     @discardableResult
-    static func handoverPackage() -> Handover? {
+    static func handoverPackage(password: String) -> Handover? {
+        guard !password.isEmpty else { return nil }
         let b = BackupKit.collectAll()
         let canon = BackupCanonical.exportText(b)
         guard !canon.isEmpty else { return nil }
@@ -1361,9 +1432,12 @@ enum BackupStudio {
         // 1. 新机装「离线锁管家」, 备份页选「导入」, 粘贴本文件并输入口令。
         // 2. 选「合并」策略, 逐锁验证连接 (换机首验清单)。
         // 3. 旧机走「设置→备份→交接」, 本机数据三级清空。
-        // 口令不要写在这里 — 另行线下交接。
+        // 本文件已用交接口令加密 — 口令另行线下交接, 不要与文件同渠道发出。
         """
-        return Handover(text: use + "\n" + canon, fileName: "锁管家_交接_\(Milestones.dayKey()).txt")
+        // 只加密**包体**, 说明头留明文 —— parsePreview 先剥 "//" 头再解密。
+        // 若把头也加密进去, 解密后仍是 "// ...\n{json}", JSONDecoder 解不出 (本 App 自己导出的包反而导不回来)。
+        guard let enc = try? CryptoBox.encryptText(canon, password: password) else { return nil }
+        return Handover(text: use + "\n" + enc, fileName: "锁管家_交接_\(Milestones.dayKey()).txt")
     }
 
     /// 440 增量补传小包: 只打入勾选的锁 (kc + 运行参数 + 台账), 不带记录卷 —— 小包越小越好传;
@@ -1528,7 +1602,10 @@ final class UNDelegate: NSObject, UNUserNotificationCenterDelegate {
                     try? await Task.sleep(nanoseconds: 200_000_000)
                     waited += 1
                 }
-                AppState.hostRef?.requestTab(0)
+                // 2026-10-14: 与月度/保养通知同口径 —— 锁着或伪装态只记 pendingRoute, 不因"从通知进来"放行。
+                if let app = AppState.hostRef {
+                    if app.appUnlocked && !app.decoyMode { app.requestTab(0) } else { app.pendingRoute = 0 }
+                }
             }
         }
         // 366/1013: 凭证族通知此前只排期不分派 —— handleNotificationAction 全仓零调用,

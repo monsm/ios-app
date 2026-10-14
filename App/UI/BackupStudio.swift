@@ -257,7 +257,8 @@ struct BackupStudioView: View {
                     set: { on in
                         DB.store.set("kf_bk_bgtask", on)
                         if on {
-                            BackupStudio.registerChargeBackup()
+                            // 2026-10-14: 注册已在启动时完成, 这里只排期 (启动后 register 会崩)。
+                            BackupStudio.rescheduleChargeBackup()
                             app.showToast(BackupStudio.chargeBackupNote)
                         }
                     }))
@@ -1674,7 +1675,7 @@ struct MigrationWizardView: View {
     }
     private var webdavInput: some View {
         VStack(alignment: .leading, spacing: DS.Space.s) {
-            Text("两台机不见面时走这里: 读远端目录, 列表里选一份接收 (422 先 etag 后正文), 再逐锁入库。")
+            Text("两台机不见面时走这里: 读远端目录, 列表里选一份接收, 再逐锁入库。")
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -2613,12 +2614,16 @@ struct LocalFilesView: View {
                 }
                 Section("管家交接包: 备份 + 使用说明合并导出, 换管理员一键交接") {   // 1048 管家交接包
                     Button {
-                        if let h = BackupStudio.handoverPackage() {
+                        if pw.isEmpty {
+                            app.showToast("请先在上方填写交接口令 — 交接包含门锁密钥, 必须加密")
+                        } else if let h = BackupStudio.handoverPackage(password: pw) {
                             UIPasteboard.general.string = h.text
                             let url = BackupStudio.dir.appendingPathComponent(h.fileName)
-                            _ = try? h.text.write(to: url, atomically: true, encoding: .utf8)
-                            app.flashReceipt("已写入本机")   // 508 已写入本机
-                            app.showToast("交接包已生成并复制到剪贴板, 口令请另行线下交接")   // 1048 交接包已生成并复制到
+                            // 2026-10-14: 写盘失败仍回执"已写入本机"是假回执; 剪贴板有数据但本地文件没有。
+                            if (try? h.text.write(to: url, atomically: true, encoding: .utf8)) != nil {
+                                app.flashReceipt("已写入本机")   // 508 已写入本机
+                            }
+                            app.showToast("交接包已加密并复制到剪贴板, 口令请另行线下交接")   // 1048 交接包已生成并复制到
                         } else {
                             app.showToast("生成失败: 本机暂无可交接数据")
                         }

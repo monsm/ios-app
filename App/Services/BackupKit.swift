@@ -56,14 +56,21 @@ enum CryptoBox {
         return (Array(sk[0..<16]), Array(sk[16..<48]))
     }
     // AES-128-CBC PKCS7
-    static func aesCbcEncrypt(_ plain: [UInt8], key: [UInt8], ivHex: String) -> [UInt8] {
-        let padded = pkcs7Pad(plain)
-        var out = [UInt8](repeating: 0, count: padded.count)
+    static func aesCbcEncrypt(_ plain: [UInt8], key: [UInt8], ivHex: String) throws -> [UInt8] {
+        // 2026-10-14 对抗式排查 (功能级): 旧实现**手动 pkcs7Pad 之后又传 kCCOptionPKCS7Padding** —— 双重填充;
+        // 且输出缓冲只给 padded.count, 而 CommonCrypto 还会再补一整块 ⇒ kCCBufferTooSmall 被 `_ =` 吞掉,
+        // outLen=0 ⇒ 密文恒为空 ⇒ 加密封包/加密导出/交接包**一律打不开**
+        // (解密侧先在"密文须为 32 的整数倍"处直接拒)。修法: 不手动补位, 交给 CommonCrypto;
+        // 缓冲 = 明文长度 + 一个块。这样也才与 JS/标准 PKCS7 互操作。
+        var out = [UInt8](repeating: 0, count: plain.count + kCCBlockSizeAES128)
         var outLen = 0
         let iv = HexKit.bytes(ivHex)
-        _ = CCCrypt(CCOperation(kCCEncrypt), CCAlgorithm(kCCAlgorithmAES),
-                    CCOptions(kCCOptionPKCS7Padding), key, 16, iv,
-                    padded, padded.count, &out, out.count, &outLen)
+        let status = CCCrypt(CCOperation(kCCEncrypt), CCAlgorithm(kCCAlgorithmAES),
+                             CCOptions(kCCOptionPKCS7Padding), key, 16, iv,
+                             plain, plain.count, &out, out.count, &outLen)
+        // 2026-10-14: 失败必须抛 —— 返回空数组会让 cHex="" 落进包体, 解密侧报"文件头损坏: 密文长度不对",
+        // 把"加密失败"误诊成"文件损坏"。
+        guard status == kCCSuccess else { throw DFUError.msg("AES 加密失败 (CCCrypt status \(status))") }
         return Array(out.prefix(outLen))
     }
     static func aesCbcDecrypt(_ cipher: [UInt8], key: [UInt8], ivHex: String) throws -> [UInt8] {
@@ -76,10 +83,6 @@ enum CryptoBox {
         guard status == kCCSuccess else { throw DFUError.msg("填充无效") }
         return Array(out.prefix(outLen))
     }
-    static func pkcs7Pad(_ b: [UInt8]) -> [UInt8] {
-        let pad = 16 - (b.count % 16)
-        return b + [UInt8](repeating: UInt8(pad), count: pad)
-    }
     static func concat(_ a: [UInt8], _ b: [UInt8]) -> [UInt8] { a + b }
 
     // 加密: text → 信封 JSON
@@ -87,7 +90,7 @@ enum CryptoBox {
         let salt = saltHex ?? HexKit.hex(KeyGen.randomBytes(16))
         let iv = ivHex ?? HexKit.hex(KeyGen.randomBytes(16))
         let keys = deriveKey(password, saltHex: salt, iter: iter)
-        let ct = aesCbcEncrypt(Array(text.utf8), key: keys.enc, ivHex: iv)
+        let ct = try aesCbcEncrypt(Array(text.utf8), key: keys.enc, ivHex: iv)
         let mac = hmacSha256(keys.mac, concat(HexKit.bytes(iv), ct))
         let env = BackupEnvelope(v: 1, alg: "aes-128-cbc+hmac-sha256",
                                  kdf: .init(alg: "pbkdf2-hmac-sha256", iter: iter, saltHex: salt),
@@ -102,7 +105,7 @@ enum CryptoBox {
         let salt = HexKit.hex(KeyGen.randomBytes(16))
         let iv = HexKit.hex(KeyGen.randomBytes(16))
         let keys = deriveKey(password, saltHex: salt, iter: iter)
-        let ct = aesCbcEncrypt(bytes, key: keys.enc, ivHex: iv)
+        let ct = try aesCbcEncrypt(bytes, key: keys.enc, ivHex: iv)
         let mac = hmacSha256(keys.mac, concat(HexKit.bytes(iv), ct))
         let env = BackupEnvelope(v: 1, alg: "aes-128-cbc+hmac-sha256",
                                  kdf: .init(alg: "pbkdf2-hmac-sha256", iter: iter, saltHex: salt),
@@ -152,6 +155,8 @@ struct BackupBundle: Codable {
     // 为什么用整数而不是 semver 三段: 本仓的备份结构靠序号驱动迁移，
     // 写成语义化版本会让读者以为 patch 位有含义 —— 那是要人猜的字段。
     var schema: Int = 5
+    /// 本机支持的最高 schema (导入时拒绝更高的包, 防字段被误读且无告警)。
+    static let currentSchema = 5
     var at: String
     var currentMac: String = ""
     var devices: [Device]
@@ -316,6 +321,40 @@ enum BackupKit {
     /// 894 应用外观档：**逐值再过一遍白名单**才落盘。
     /// 包体可能来自别的版本或被人改过，读侧的 enumVal 不能只信一次；
     /// 这里每个字段都独立判定，不合格的就跳过 (本机保持原样)，绝不"整包接受"。
+    /// 894/D-36: 外观与设备组织随包落地的**唯一**实现 —— overwrite / merge / missing 三条恢复路共用。
+    /// 2026-10-14: 原先只有 restoreAll(.overwrite) 走这段, 而 WebDAV 与换机迁移走的是 .merge/.missing
+    /// ⇒ 外观与设备顺序/分组/折叠/隐藏整类进不来。抽成一处, 三条路同口径。
+    /// 白名单式落地: 顺序只认本包里真有的 mac, 分组只写这些 mac, 折叠只收现在真存在的组, 隐藏只对包内 mac 生效。
+    static func applyGlobalsAppearanceAndOrg(_ globals: BackupBundle.Globals, devices: [BackupBundle.Device]) {
+        if let ap = globals.appearance { applyAppearance(ap) }
+        guard let org = globals.deviceOrg else { return }
+        // 2026-10-14: 只对本机**真存在**的锁写 per-lock 键 —— merge 路径下被标 skip 的锁仍在 devices 里,
+        // 不取交集会给不存在的锁写 kf_lockmeta_/kf_lock_hidden_ 孤儿键。两侧都归一化, 免得
+        // 冒号/大小写差异让交集过小、把本机已有的分组恢复漏掉。
+        let known = Set(devices.map { DB.normalizeMac($0.mac) })
+            .intersection(DB.keychains().map { DB.normalizeMac($0.mac) })
+        if let order = org.order {
+            let keep = order.map { DB.normalizeMac($0) }.filter { known.contains($0) }
+            // 本机已有、这份包里没有的锁垫在包内顺序之后 (按绑定先后), 不把它们从表里挤掉
+            let rest = DB.keychains().map { $0.mac }.filter { !keep.contains($0) }
+                .sorted { (DB.keychain($0)?.pairedAt ?? "") < (DB.keychain($1)?.pairedAt ?? "") }
+            LockArchive.setOrder(keep + rest)
+        }
+        if let groups = org.groups {
+            for rec in groups where known.contains(DB.normalizeMac(rec.mac)) {
+                LockArchive.setGroup(DB.normalizeMac(rec.mac), rec.name)
+            }
+        }
+        if let folded = org.folded {
+            let live = Set(LockArchive.grouped(DB.keychains()).map { $0.name })
+            let keep = folded.map { LockArchive.normalizedGroup($0) }.filter { live.contains($0) }
+            DB.store.setCodable("kf_group_folded", Array(Set(keep)).sorted())
+        }
+        if let hidden = org.hidden {
+            let hid = Set(hidden.map { DB.normalizeMac($0) })
+            for mac in known { LockArchive.setHidden(mac, hid.contains(mac)) }
+        }
+    }
     static func applyAppearance(_ a: BackupBundle.Globals.Appearance) {
         func set(_ key: String, _ v: String?, _ allowed: [String]) {
             guard let v, allowed.contains(v) else { return }
@@ -364,8 +403,16 @@ enum BackupKit {
             DB.saveKeychain(kc)
             if let l = d.ledger {
                 var fixed = l
-                for i in fixed.pwds.indices where fixed.pwds[i].owner != nil { fixed.pwds[i].owner = remap[fixed.pwds[i].owner!] ?? fixed.pwds[i].owner }
-                for i in fixed.fps.indices where fixed.fps[i].owner != nil { fixed.fps[i].owner = remap[fixed.fps[i].owner!] ?? fixed.fps[i].owner }
+                // 2026-10-14: 归属必须解得出成员 —— remap 未命中且本机无此成员时置 nil,
+                // 否则留下指向不存在成员的悬空 owner (记录页显示不出人, 且永远无法再认领)。
+                for i in fixed.pwds.indices where fixed.pwds[i].owner != nil {
+                    let o = fixed.pwds[i].owner!
+                    fixed.pwds[i].owner = remap[o] ?? (DB.member(o) != nil ? o : nil)
+                }
+                for i in fixed.fps.indices where fixed.fps[i].owner != nil {
+                    let o = fixed.fps[i].owner!
+                    fixed.fps[i].owner = remap[o] ?? (DB.member(o) != nil ? o : nil)
+                }
                 DB.saveLedger(kc.mac, fixed)
             }
             if let meta = d.meta {
@@ -381,6 +428,10 @@ enum BackupKit {
             for d in globals.keychainDongles ?? [] { DB.saveDongle(d) }
             for g in globals.gatewayList ?? [] { DB.saveGateway(g) }
             if let pc = globals.passcode, !pc.s.isEmpty, !pc.d.isEmpty {
+                // 2026-10-14: 这里**刻意**只写 s/d。强摘要 d2 不在 canonical 里 (canonical 是与小程序
+                // 共享的校验和契约, 加字段会让两侧 checksum 分叉), 所以导出的包体根本没有 d2 ——
+                // 上一版"补回 d2"是死逻辑, 已撤。跨机恢复后应用锁先按 32bit FNV 校验, 用户首次输对
+                // 即由 verifyPasscode 静默升级为 PBKDF2 强摘要 (无感迁移), 不把人锁在外面。
                 DB.store.set("kf_passcode", ["s": pc.s, "d": pc.d]) // 应用锁摘要跨端迁移
             }
             if let otps = globals.otpKeys, !otps.isEmpty {
@@ -400,34 +451,7 @@ enum BackupKit {
             }
             // 894 外观随备份走: 逐值白名单复核后才落盘 (见 applyAppearance)。
             // 恢复完由调用方走一次外观重建通道，否则"备份里是深色、屏幕上还是浅色"要等到下次冷启动。
-            if let ap = globals.appearance { applyAppearance(ap) }
-            // D-36 设备组织随包: 白名单式落地 —— 顺序只认本包里真有的 mac, 分组只写这些 mac,
-            // 折叠只收现在真存在的组, 隐藏只对包内 mac 生效。缺哪一项就那一项不动 (与 894 同一纪律)。
-            // 这里只碰四个本地偏好键, 不写门锁、不碰凭证与日志。
-            if let org = globals.deviceOrg {
-                let known = Set(bundle.devices.map { DB.normalizeMac($0.mac) })
-                if let order = org.order {
-                    let keep = order.map { DB.normalizeMac($0) }.filter { known.contains($0) }
-                    // 本机已有、这份包里没有的锁垫在包内顺序之后 (按绑定先后), 不把它们从表里挤掉
-                    let rest = DB.keychains().map { $0.mac }.filter { !keep.contains($0) }
-                        .sorted { (DB.keychain($0)?.pairedAt ?? "") < (DB.keychain($1)?.pairedAt ?? "") }
-                    LockArchive.setOrder(keep + rest)
-                }
-                if let groups = org.groups {
-                    for rec in groups where known.contains(DB.normalizeMac(rec.mac)) {
-                        LockArchive.setGroup(DB.normalizeMac(rec.mac), rec.name)
-                    }
-                }
-                if let folded = org.folded {
-                    let live = Set(LockArchive.grouped(DB.keychains()).map { $0.name })
-                    let keep = folded.map { LockArchive.normalizedGroup($0) }.filter { live.contains($0) }
-                    DB.store.setCodable("kf_group_folded", Array(Set(keep)).sorted())
-                }
-                if let hidden = org.hidden {
-                    let hid = Set(hidden.map { DB.normalizeMac($0) })
-                    for mac in known { LockArchive.setHidden(mac, hid.contains(mac)) }
-                }
-            }
+            applyGlobalsAppearanceAndOrg(globals, devices: bundle.devices)
             if let tr = globals.trace, let lines = tr.lines, !lines.isEmpty {
                 // 小程序 trace 行内含令牌/密钥 hex (vendor/app/utils/trace.js:5 自述), 原样落本机就会
                 // 进系统备份与导出中心。保留行数/时间语义供"记录"分区预览, 但先过同口径 hex 脱敏。

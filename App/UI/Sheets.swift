@@ -1447,7 +1447,7 @@ struct FirmwareView: View {
             }
             .confirmationDialog("升级进行中", isPresented: $showLeave, titleVisibility: .visible) {
                 Button("继续等待", role: .cancel) { }
-                Button("仍要离开 (传输会中断)", role: .destructive) { dismiss() }
+                Button("仍要离开 (传输会中断)", role: .destructive) { DFURunner.cancelActive(); dismiss() }
             } message: {
                 Text("固件传输中断后没有断点续传, 需要整包重传。建议等传输结束后再离开。")
             }
@@ -1796,9 +1796,11 @@ struct FirmwareView: View {
     }
     /// 147 耗时文案: <60 秒报秒, 否则分+秒; 旧记录没这个字段就整段不显示 (r.ms == nil)
     private static func durText(_ ms: Double) -> String {
-        let s = ms / 1000
-        if s < 60 { return String(format: "%.0f 秒", s) }
-        return String(format: "%.0f 分 %.0f 秒", (s / 60).rounded(.down), s.truncatingRemainder(dividingBy: 60))
+        // 2026-10-14: 旧写法先四舍五入再判单位 => "60 秒" / "1 分 60 秒" 非法读数 (59.6s / 119.6s)。
+        // 先取整成总秒数, 再拆分。
+        let s = Int((ms / 1000).rounded())
+        if s < 60 { return "\(s) 秒" }
+        return "\(s / 60) 分 \(s % 60) 秒"
     }
 
     // ---------- 142/1037 失败安抚页 ----------

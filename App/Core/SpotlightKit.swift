@@ -18,16 +18,23 @@ enum SpotlightKit {
     static let domainCredential = "lockkeeper.credential"
 
     // ---------- 条目 id 制式 (只有这三种前缀会被接住) ----------
-    static func deviceID(_ mac: String) -> String { "dev:" + mac }
-    static func pwdID(_ mac: String, _ alias: Int) -> String { "pwd:\(mac)#\(alias)" }
-    static func fpID(_ mac: String, _ batch: Int) -> String { "fp:\(mac)#\(batch)" }
+    /// 2026-10-14: id 里不再内嵌明文 MAC (CSSearchableIndex 会持久化 identifier) —— 改用 MAC 的 SHA-256 前 16 位。
+    /// 反查靠遍历本机钥匙串比对 (数量级几十, 代价可忽略); 索引与台账同生命周期, 不引入新状态。
+    private static func macToken(_ mac: String) -> String {
+        String(HashKit.sha256Hex(DB.normalizeMac(mac)).prefix(16))
+    }
+    private static func macFromToken(_ token: String) -> String? {
+        DB.keychains().first { macToken($0.mac) == token }?.mac
+    }
+    static func deviceID(_ mac: String) -> String { "dev:" + macToken(mac) }
+    static func pwdID(_ mac: String, _ alias: Int) -> String { "pwd:\(macToken(mac))#\(alias)" }
+    static func fpID(_ mac: String, _ batch: Int) -> String { "fp:\(macToken(mac))#\(batch)" }
 
     /// 系统回传的 identifier → kf:// 深链。认不出的格式一律 nil (不猜、不跳)。
     /// 凭证类不走 URL 而走 handleCredential, 因为凭证定位用的是 pendingCredNav 那对既有状态。
     static func deviceURL(for identifier: String) -> URL? {
         guard identifier.hasPrefix("dev:") else { return nil }
-        let mac = String(identifier.dropFirst(4))
-        guard !mac.isEmpty, DB.keychain(DB.normalizeMac(mac)) != nil else { return nil }
+        guard let mac = macFromToken(String(identifier.dropFirst(4))) else { return nil }
         return URL(string: "kf://device?mac=" + DB.normalizeMac(mac))
     }
     /// 凭证 identifier → (mac, nav) —— nav 串制式与 CredentialsView.consumeCredJump 的解析端一致。
@@ -40,12 +47,14 @@ enum SpotlightKit {
         let m: String
         let nav: String
         if head.hasPrefix("pwd:") {
-            m = DB.normalizeMac(String(head.dropFirst(4)))
+            guard let m0 = macFromToken(String(head.dropFirst(4))) else { return nil }
+            m = DB.normalizeMac(m0)
             guard let a = Int(tail) else { return nil }
             nav = "pwd:\(a)"
             guard DB.getPwd(m, a) != nil else { return nil }
         } else if head.hasPrefix("fp:") {
-            m = DB.normalizeMac(String(head.dropFirst(3)))
+            guard let m0 = macFromToken(String(head.dropFirst(3))) else { return nil }
+            m = DB.normalizeMac(m0)
             guard let b = Int(tail) else { return nil }
             nav = "fp:\(b)"
             guard DB.getFp(m, b) != nil else { return nil }

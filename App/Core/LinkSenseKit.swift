@@ -486,7 +486,8 @@ final class LinkSense: ObservableObject {
         let target = mac.lowercased()
         let deadline = Date().addingTimeInterval(Double(timeoutMs) / 1000.0)
         var found: BLEAdvDevice?
-        while Date() < deadline, found == nil {
+        // 2026-10-14: 补取消判据 (与 LockService 的扫描循环同口径), 否则上层取消后仍空转到超时。
+        while Date() < deadline, found == nil, !Task.isCancelled {
             found = ble.allDiscovered().first { adv in
                 guard let a = ZKProtocol.parseAdv(adv.advertisHex), let m = a.macRaw else { return false }
                 return m == target || a.macDisplay?.replacingOccurrences(of: ":", with: "").lowercased() == target

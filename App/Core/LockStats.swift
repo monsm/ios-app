@@ -304,11 +304,11 @@ enum LockStats {
     /// 全锁聚合 (776/778/784/773/769/292/258 的共同数据源)
     static func usage() -> [LockUsage] {
         let cutoff = Date().timeIntervalSince1970 - Double(windowDays) * 86400
+        // 2026-10-14: 测试标记集合提到 map 外只算一次 (原先每把锁都重新解析一遍 kf_rdispo)。
+        let testKeys = RecordSearch.testMarkedKeys
         return DB.keychains().map { kc -> LockUsage in
             var u = LockUsage(mac: kc.mac, name: LockArchive.displayName(kc))
-            // 745 测试标记: 与 StatsKit.build 同一排除口径 (键 = mac#idxRaw), 对照表/关联建议里
-            // 的 alarms30d 与 alarmRate 也不把自测告警算进去。
-            let testKeys = RecordSearch.testMarkedKeys
+            // 745 测试标记: 与 StatsKit.build 同一排除口径 (键 = mac#idxRaw)
             let logs = DB.readLogs(kc.mac).filter { !testKeys.contains(kc.mac + "#" + String($0.idxRaw)) }
             for l in logs {
                 // 日志 lockTimeStr 是本地串; 时间过滤用日志写入缓存顺序不可靠,

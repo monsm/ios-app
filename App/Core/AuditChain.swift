@@ -89,21 +89,35 @@ final class AuditLog {
     static let key = "kf_audit_events"
     /// 管理流水封顶 (开门事件由锁端日志承载, 这里只留 App 本地增量, 避免无界增长)
     static let cap = 500
+    /// 2026-10-14: append/purgeExpired 都是 load→改→save 的非原子序列, 并发调用会丢事件或断链; 加锁串行。
+    private static let chainLock = NSLock()
 
     func load() -> [AuditEvent] { DB.store.get([AuditEvent].self, AuditLog.key) ?? [] }
 
     @discardableResult
     func append(_ cat: AuditEvent.Category, _ action: String, target: String = "",
                 diff: [String: [String]] = [:], operator_: String = "本机", duress: Bool = false) -> AuditEvent {
+        AuditLog.chainLock.lock()
+        defer { AuditLog.chainLock.unlock() }
         let evs = load()
+        // 386 截断重锚 (2026-10-14 对抗式排查): 达 cap 后截头, 但旧实现不重封哈希链 —— 被留首条的
+        // prevHash 仍指向已丢弃条 => verifyChain 恒在下标 0 报"断链"(假阳性)。与 purgeExpired 同法重锚。
+        var next = evs
+        if evs.count > AuditLog.cap - 1 {
+            next = Array(evs.suffix(AuditLog.cap - 1))
+            var prev = "GENESIS"
+            for i in next.indices {
+                next[i].prevHash = prev
+                next[i].hash = HashKit.sha256Hex(next[i].hashInput(prev))
+                prev = next[i].hash
+            }
+        }
         // id 单调递增 (last+1): 防毫秒同刻碰撞注入 / 换序重放伪造断点
-        var e = AuditEvent(id: (evs.last?.id ?? 0) + 1,
+        var e = AuditEvent(id: (next.last?.id ?? 0) + 1,
                            ts: Date().timeIntervalSince1970,
                            cat: cat, action: action, target: target,
                            diff: diff, operator_: operator_, duress: duress)
-        e.seal(prevHash: evs.last?.hash ?? "GENESIS")
-        let keep = evs.count > AuditLog.cap - 1 ? Array(evs.suffix(AuditLog.cap - 1)) : evs
-        var next = keep
+        e.seal(prevHash: next.last?.hash ?? "GENESIS")
         next.append(e)
         DB.store.setCodable(AuditLog.key, next)
         return e
@@ -135,6 +149,8 @@ final class AuditLog {
     /// 385 保留期策略: 0=永久 / 3/6/12 月, 到期物理删除并留一条清理记录
     func purgeExpired(months: Int) {
         guard months > 0 else { return }
+        AuditLog.chainLock.lock()
+        defer { AuditLog.chainLock.unlock() }
         var evs = load()
         let cutoff = Date().timeIntervalSince1970 - Double(months) * 30.44 * 86400
         var kept = evs.filter { $0.ts >= cutoff }
@@ -192,8 +208,12 @@ final class SensitiveLedger {
         /// Optional + 合成 decoder 的 decodeIfPresent ⇒ 旧流水 (没这个键) 解出来是 nil, 不会整页解不开。
         var member: String?
     }
+    /// 2026-10-14: 与 AuditLog 同款的 load→改→save 非原子序列; 调用方既有 MainActor (复制)
+    /// 又有后台 (Siri 意图 / 导出), 并发会丢条目。加锁。
+    private static let recordLock = NSLock()
     /// 默认不写 member: 默认形态与改动前逐字相同 (同一条事件不在敏感流水里出现两行)。
     func record(_ kind: String, target: String, member: String? = nil) {
+        SensitiveLedger.recordLock.lock(); defer { SensitiveLedger.recordLock.unlock() }
         var items = DB.store.get([Item].self, SensitiveLedger.key) ?? []
         items.append(Item(id: Int(Date().timeIntervalSince1970 * 1000), kind: kind, target: target, member: member))
         items = Array(items.suffix(100))
@@ -244,8 +264,14 @@ enum Offboard {
         }
         var l = DB.ledger(DB.currentMac)
         var archive: [LedgerPwd] = []
-        l.pwds.removeAll { if let o = $0.owner { archive.append($0); return o == memberId || o == name }
-                            else { return false } }
+        // 2026-10-14 对抗式排查: 旧闭包对**每个有 owner 的凭证**都 append 进 archive, 只在 return 处
+        // 按 memberId/name 判归属 => 离职清除会把**其他成员**的凭证也复制进回收站并清掉 owner (数据损坏)。
+        // 只有命中本成员才入档 + 移除。
+        l.pwds.removeAll { p in
+            guard let o = p.owner else { return false }
+            if o == memberId || o == name { archive.append(p); return true }
+            return false
+        }
         DB.saveLedger(DB.currentMac, l)
         // 402: 名下凭证逐条入回收站 (kf_cbin_), owner 清掉避免离职成员再被关联;
         // saveLedger 的 379/380 字段级 diff 已在上面那一步留了管理员流水, 这里不重复。
@@ -310,6 +336,8 @@ enum DestroyKit {
         // 自身审计族不覆写后删除而是清空: 销毁完成的证据链要留到最后
         store.remove(AuditLog.key)
         store.remove(SensitiveLedger.key)
+        // 2026-10-14: 门锁密钥在系统 Keychain (SecretStore), keys() 全表清碰不到它 —— 必须显式清空。
+        SecretStore.removeAll()
         var evs = AuditLog().load()
         evs.removeAll()
         DB.store.setCodable(AuditLog.key, evs)

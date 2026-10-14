@@ -40,8 +40,23 @@ enum QuickActions {
     }
 }
 
-/// 只实现"快捷项被点"这一个回调，其余 UIApplicationDelegate 方法一律不接 (本 App 无后台任务需求)。
+/// 快捷项回调 + 启动期 BGTask 注册 (428)。
 final class QuickActionDelegate: NSObject, UIApplicationDelegate {
+    /// 428: `BGTaskScheduler.register` 必须在启动完成前调用 (Apple 契约) —— 晚于
+    /// applicationDidFinishLaunching 会抛 NSInternalInconsistencyException 直接崩进程。
+    /// 旧实现把它放在 App 的 onLaunch()(.task) 里, 且 onLaunch 可能被多次调用 ->
+    /// 既有崩溃风险又有重复注册风险。挪到这里: 每进程恰好一次, 且在启动窗口内。
+    func application(_ application: UIApplication,
+                     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        // 2026-10-14: 无条件注册 (注册须在启动窗口内且很轻); 排期由开关决定, 见 registerChargeBackup。
+        BackupStudio.registerChargeBackup()
+        // 2026-10-14: ①旧 plist 明文密钥搬进系统 Keychain ②Spotlight id 制式从明文 MAC 换成哈希,
+        // 旧索引要重刷一次才不残留明文 MAC。
+        DB.migrateSecretsToKeychain()
+        SpotlightKit.scheduleReindex()
+        LiveUnlock.reapOrphans()
+        return true
+    }
     func application(_ application: UIApplication,
                      performActionFor shortcutItem: UIApplicationShortcutItem,
                      completionHandler: @escaping (Bool) -> Void) {

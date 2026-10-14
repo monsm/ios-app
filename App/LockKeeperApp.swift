@@ -534,6 +534,9 @@ final class AppState: ObservableObject {
             unlockState = .idle
             if notify { showToast("已取消") }
         }
+        // 2026-10-14: 取消也要收起实时活动 —— 否则 current 未清, 下一次 begin() 被 `current == nil` 挡掉,
+        // 新开锁没有锁屏活动, 旧的"连接中"还挂在锁屏 (30s staleDate 只是标脏, 不会自动 end)。
+        LiveUnlock.failed()
     }
 
     // ---------- 246 本次用哪条 PIN ----------
@@ -552,7 +555,7 @@ final class AppState: ObservableObject {
         let attempts = DB.store.getBool("kf_auto_retry", true) ? 3 : 1
         var lastMsg = ""
         var lastRc: Int? = nil   // 86: 服务层回的错误码 (异常路径没有码, 保持 nil)
-        LiveUnlock.begin(lockName: displayName)   // 77/939/941: 锁屏/灵动岛起一场"连接中" 
+        let liveToken = LiveUnlock.begin(lockName: displayName)   // 77/939/941: 锁屏/灵动岛起一场"连接中" 
         for attempt in 1...attempts {
             phase = 1
             unlockState = .connecting
@@ -572,11 +575,13 @@ final class AppState: ObservableObject {
                     unlockState = .doubleVerify
                     UINotificationFeedbackGenerator().notificationOccurred(.warning)
                     finishDwell(.doubleVerify)
+                    LiveUnlock.fail(liveToken)   // 2026-10-14: 双验档本次流程结束, 收起活动 (代次校验)
                     return
                 }
                 lastRc = rc                             // 86: 错误码进失败快照
                 lastMsg = StatusParser.rcFriendly(rc)   // 84 人话直读
             } catch is CancellationError {
+                LiveUnlock.fail(liveToken)   // 2026-10-14: 取消路径也收活动 (代次校验: 不误收新开锁的活动)
                 return   // cancelUnlock 已复位, 不计入失败
             } catch {
                 lastMsg = error.localizedDescription
@@ -606,7 +611,7 @@ final class AppState: ObservableObject {
                            rssi: LinkSense.shared.lastRssi,
                            pct: DB.readStatus(kc.mac)?.powerLevel,
                            rc: lastRc)
-        LiveUnlock.failed()   // 77/939/941: 失败立刻收起, 不留失败态挂在锁屏上
+        LiveUnlock.fail(liveToken)   // 77/939/941: 失败立刻收起 (代次校验: 不误收新开锁的活动)
         finishDwell(.failed(lastMsg))
     }
 
@@ -864,7 +869,8 @@ final class AppState: ObservableObject {
         Task { @MainActor in
             _ = BackupStudio.runStartupSelfCheck()
             await BackupStudio.scheduleMonthlyBackup()
-            if DB.store.getBool("kf_bk_bgtask") { BackupStudio.registerChargeBackup() }
+            // 428: BGTask 注册已移到 QuickActionDelegate.didFinishLaunchingWithOptions ——
+            // 必须早于启动完成 (Apple 契约), 且每进程只注册一次 (onLaunch 可能被多次调用)。
             if let s = BackupStudio.pendingMigration() {
                 self.showToast("检测到未完成的换机迁移 (\(s.channel) \(s.step)%), 445 可回滚或继续")
             }
@@ -1493,13 +1499,24 @@ struct RootView: View {
                 // 897 四季图标: 默认关。开着也只在"季节真的换了"时对齐一次 (年-季记号)，不每次回前台打扰
                 SeasonIcon.syncIfNeeded()
             }
-        } else {
-            // 344: 离开前台就收起, 免得回来时挂着一条过期的"N 秒"
+        } else if phase == .background {
+            // 2026-10-14: 只有**真进后台**才算退后台。旧实现把 .inactive (下拉通知中心/控制中心、
+            // 来电、Face ID 系统弹窗) 也当退后台 —— 会误记锁定到期时刻 (反复下拉可无限顺延宽限),
+            // 还会提前清掉崩溃标记 (随后真崩溃被判成"正常退出")。.inactive 只收起过期的快捷条。
             app.pasteSuggestion = nil
             // 393: 退后台按档位记锁定到期时刻 ("" = 立即, 最严)
             LockGuard.onBackground()
             // 221 退后台收尾: 记会话时长并清崩溃标记 (CrashGuard 的判定就依赖这一步)
             CrashGuard.markCleanExit()
+            AutoOpenController.shared.onBackground()
+        } else {
+            // .inactive: 只收起过期的快捷条, **不**记锁定到期时刻 (否则反复下拉通知中心可无限顺延宽限)。
+            // 但崩溃标记仍要清 —— 从任务切换器强退时进程多在 .inactive 被 SIGKILL,
+            // 只在 .background 清会把正常强退误报成"异常退出"。
+            app.pasteSuggestion = nil
+            CrashGuard.markCleanExit()
+            // 2026-10-14: .inactive 也要停自动开锁的武装态与加速度计 (下拉通知中心/来电/系统弹窗期间
+            // AUTOOPEN 不该继续武装并喂传感器); 锁定计时与崩溃标记的取舍见上。
             AutoOpenController.shared.onBackground()
         }
     }

@@ -176,7 +176,7 @@ struct AccessibilityView: View {
                 set: { DB.store.set("kf_dbltap_guard", $0) }))
             // 229 左手模式: 消费方三处 —— DeviceHomeView 的 barSide (工具条两侧对调)、快捷格顺序 reversed、
             // 以及 HeroCard 卡面本体 (DesignSystem 里按 AXPrefs.lefty 切 layoutDirection 镜像)，
-            // 所以这一档是真开关；872 仍无消费方 (去重要落在 LockKeeperApp 的按钮样式里)，保持实话行。
+            // 所以这一档是真开关。(2026-10-14: 删去"872 仍无消费方"半句 —— 与本节开头矛盾, 872 已接线。)
             Toggle("左手模式", isOn: Binding(   // 229 左手模式
                 get: { AXPrefs.lefty },
                 set: { app.setUnlockOption("kf_lefty", $0) }))

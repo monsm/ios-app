@@ -56,6 +56,10 @@ targets:
         # 包8/428 充电自动备份: BGTask 注册 (执行时机由系统择机, 不承诺接电即备; 7 天签名下照常调度)
         BGTaskSchedulerPermittedIdentifiers:
           - com.kf.chargebackup
+        # 2026-10-14: BGAppRefreshTaskRequest.submit 要求声明 fetch 后台模式, 缺它 submit 会被系统
+        # 直接拒 (notPermitted) 且旧实现 try? 吞掉 —— 功能"看起来装了其实从没跑过"。
+        UIBackgroundModes:
+          - fetch
         ITSAppUsesNonExemptEncryption: false
         # 77/939/941 实时活动 (灵动岛/锁屏): 缺这一条 Activity.request 直接失败
         NSSupportsLiveActivities: true
@@ -63,31 +67,35 @@ targets:
         # 896 由 4 款扩到 9 款 (2026-10-12 拍板"造位图"): 新增五款的位图由 _audit1012/mkicon.js 按
         # 下面这五个品牌色与几何画出 (底色必须与 SettingsView.iconOptions 里的 hex 逐字相同, 否则
         # "缩略预览色块与真实 PNG 同底色同符号"那句承诺就成假话)。
-        CFBundleAlternateIcons:
-          AppIcon-Ring:
-            CFBundleIconFiles:
-              - AppIcon-Ring
-          AppIcon-Key:
-            CFBundleIconFiles:
-              - AppIcon-Key
-          AppIcon-Shield:
-            CFBundleIconFiles:
-              - AppIcon-Shield
-          AppIcon-Home:
-            CFBundleIconFiles:
-              - AppIcon-Home
-          AppIcon-Bell:
-            CFBundleIconFiles:
-              - AppIcon-Bell
-          AppIcon-Pin:
-            CFBundleIconFiles:
-              - AppIcon-Pin
-          AppIcon-Guard:
-            CFBundleIconFiles:
-              - AppIcon-Guard
-          AppIcon-Heart:
-            CFBundleIconFiles:
-              - AppIcon-Heart
+        # 2026-10-14 对抗式排查: Apple 规定备选图标是 **CFBundleIcons 的子键**
+        # (CFBundleIcons -> CFBundleAlternateIcons)。平铺在 Info.plist 根层时 iOS 不认这些键,
+        # setAlternateIconName 找不到图标 -> 换图标静默失败。故外包一层 CFBundleIcons。
+        CFBundleIcons:
+          CFBundleAlternateIcons:
+            AppIcon-Ring:
+              CFBundleIconFiles:
+                - AppIcon-Ring
+            AppIcon-Key:
+              CFBundleIconFiles:
+                - AppIcon-Key
+            AppIcon-Shield:
+              CFBundleIconFiles:
+                - AppIcon-Shield
+            AppIcon-Home:
+              CFBundleIconFiles:
+                - AppIcon-Home
+            AppIcon-Bell:
+              CFBundleIconFiles:
+                - AppIcon-Bell
+            AppIcon-Pin:
+              CFBundleIconFiles:
+                - AppIcon-Pin
+            AppIcon-Guard:
+              CFBundleIconFiles:
+                - AppIcon-Guard
+            AppIcon-Heart:
+              CFBundleIconFiles:
+                - AppIcon-Heart
     settings:
       base:
         TARGETED_DEVICE_FAMILY: "1"

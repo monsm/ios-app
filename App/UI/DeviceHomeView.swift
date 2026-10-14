@@ -2087,16 +2087,20 @@ struct DeviceHomeView: View {
                             Text(moduleName(id))
                                 .font(.subheadline)
                                 .frame(maxWidth: .infinity, alignment: .leading)
+                                .accessibilityLabel("\(moduleName(id)), 第 \(i + 1) 位")
                             Button { moveModule(i, -1) } label: { Image(systemName: "arrow.up") }
                                 .disabled(i == 0)
                                 .frame(minHeight: DS.Hit.min)
+                                .accessibilityLabel("上移 \(moduleName(id))")
                             Button { moveModule(i, 1) } label: { Image(systemName: "arrow.down") }
                                 .disabled(i == devOrder.count - 1)
                                 .frame(minHeight: DS.Hit.min)
+                                .accessibilityLabel("下移 \(moduleName(id))")
                         }
                         .frame(minHeight: DS.Hit.min)
-                        .accessibilityElement(children: .combine)
-                        .accessibilityLabel("\(moduleName(id)), 第 \(i + 1) 位")
+                        // 2026-10-14: .combine 会把两个纯图标按钮并成单一元素 => 读屏无法分别点上/下移。
+                        // 改 .contain 保留子元素可操作性, 排序提示挪到模块名与按钮上。
+                        .accessibilityElement(children: .contain)
                     }
                 } header: {
                     Text("设备页模块顺序")   // 904 设备页模块顺序

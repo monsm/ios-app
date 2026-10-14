@@ -264,8 +264,16 @@ struct MemberQueryIntent: AppIntent {
             IntentGovernance.audit(intent: "member", detail: "\(memberName) 被冷却拦截")
             return .result(dialog: "刚查过, 请稍候 60 秒再问")
         }
-        let hit = DB.members().first { $0.name.hasPrefix(memberName) || $0.name.contains(memberName) }
-        guard let hit else { return .result(dialog: "没有叫「\(memberName)」的成员") }
+        // 2026-10-14: 空串 hasPrefix("") 恒真 => 空参数会命中首位成员并回其关系/备注/今日门次。先拒空。
+        let q = memberName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !q.isEmpty else { return .result(dialog: "请说出成员名") }
+        let matches = DB.members().filter { $0.name.hasPrefix(q) || $0.name.contains(q) }
+        // 2026-10-14: 多命中不静默取首条 —— 会吐错人的关系/备注/门次 (PII), 与 IntentLock 的"多命中即反问"同纪律。
+        if matches.count > 1 {
+            let names = matches.prefix(5).map { $0.name }.joined(separator: "、")
+            return .result(dialog: "「\(q)」匹配到多位成员: \(names) — 请说全名")
+        }
+        guard let hit = matches.first else { return .result(dialog: "没有叫「\(memberName)」的成员") }
         // 955 今日门次: 与 604/612 同一套 Attribution 归属口径 ("约"级 —— 归属不出的不计数, 绝不猜)
         let memberId = hit.id
         let counts = await MainActor.run { StatsKit.memberTodayCounts(id: memberId) }
@@ -310,7 +318,9 @@ struct ReadRecordsIntent: AppIntent {
             "\(idx + 1), \(r.time.isEmpty ? "时间未知" : r.time) \(r.isAlarm ? "异常" : "正常")"
         }.joined(separator: "。")
         IntentGovernance.audit(intent: "read", detail: "\(kc.name) · \(recs.count) 条")
-        Speech.zh("「\(kc.name)」最近开门记录。" + text)     // 朗读只走 Speech 这一个出口 (原先这里另 new 了一台 synthesizer)
+        // 2026-10-14: Speech.synth 是共享静态 AVSpeechSynthesizer, 而意图 perform 在后台线程跑 —— 归主线程再朗读。
+        let line = "「\(kc.name)」最近开门记录。" + text
+        await MainActor.run { Speech.zh(line) }     // 朗读只走 Speech 这一个出口
         return .result(dialog: "已朗读「\(kc.name)」的 \(recs.count) 条记录")
     }
 }

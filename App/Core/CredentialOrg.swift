@@ -171,7 +171,7 @@ enum CredentialOrg {
     static func snapshot(_ mac: String, kind: String, key: Int, pwd: LedgerPwd?, fp: LedgerFp?,
                          note: String, starred: Bool = false, auto: Bool = false) {
         var list = history(mac, kind, key)
-        let v = (list.last?.version ?? 0) + 1
+        let v = (list.map { $0.version }.max() ?? 0) + 1   // 2026-10-14: autosKeep 被排到末尾后 list.last 可能是较旧 auto 版, 改取 max 防版本号重复
         let snap = CredSnapshot(version: v, at: nowSec, note: note, starred: starred, auto: auto, pwd: pwd, fp: fp)
         list.append(snap)
         let autos = list.filter { $0.auto }
@@ -486,7 +486,7 @@ enum CredentialOrg {
             DB.delPwd(mac, p.alias)
             addToBin(mac, pwd: cp, source: .manual)
             if revokeLocks {
-                enqueue(mac, kind: "del_pwd", title: "删成员连带 密码 #\(p.alias) (D-152a)")
+                enqueue(mac, kind: "del_pwd", title: "删成员连带 密码 #\(p.alias) (D-152a)", pwd: p)
                 queued += 1
             }
         }
@@ -496,7 +496,7 @@ enum CredentialOrg {
             DB.delFp(mac, f.batch)
             addToBin(mac, fp: cp, source: .manual)
             if revokeLocks {
-                enqueue(mac, kind: "del_fp", title: "删成员连带 指纹「\(f.name)」 (D-152a)")
+                enqueue(mac, kind: "del_fp", title: "删成员连带 指纹「\(f.name)」 (D-152a)", fp: f)
                 queued += 1
             }
         }
@@ -699,14 +699,14 @@ enum CredentialOrg {
             DB.delPwd(mac, a)
             // 498: 已过期的进回收站标"过期", 未过期的手动批量停用仍标"批量"
             addToBin(mac, pwd: p, source: pwdState(p) == 2 ? .expired : .batch)
-            enqueue(mac, kind: "del_pwd", title: "删除密码 #\(a)")
+            enqueue(mac, kind: "del_pwd", title: "删除密码 #\(a)", pwd: p)
             n += 1
         }
         for b in fpBatches {
             guard let f = DB.ledger(mac).fps.first(where: { $0.batch == b }) else { continue }
             DB.delFp(mac, b)
             addToBin(mac, fp: f, source: .batch)
-            enqueue(mac, kind: "del_fp", title: "删除指纹批次 \(b)")
+            enqueue(mac, kind: "del_fp", title: "删除指纹批次 \(b)", fp: f)
             n += 1
         }
         return n
@@ -1518,7 +1518,8 @@ enum CredentialOrg {
         DB.setCodable(d, "kf_cdraft_" + mac)
     }
     static func clearDraft(_ mac: String) {
-        DB.store.set("kf_cdraft_" + mac, Data())
+        // 2026-10-14: set(_, Data()) 走 JSONSerialization 必抛 (Data 非 JSON) => 键从未清掉, draft() 仍返回旧草稿。
+        DB.store.remove("kf_cdraft_" + mac)
     }
 
     // ---------- 显示层辅助 (919 别名显示切换: 成员"别名"字段 = relation 备注, 空则回退真名) ----------
