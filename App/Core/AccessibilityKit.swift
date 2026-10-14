@@ -358,7 +358,7 @@ extension View {
     }
 }
 
-/// 玻璃面的形状族: 玻璃支与实底降级支共用同一枚形状，只是材质不同。
+/// 玻璃面的形状族: 玻璃支与实底降级支必须落回同一枚形状，只是材质不同。
 private enum GlassShape {
     case rect(CGFloat)
     case circle
@@ -370,26 +370,38 @@ private struct GlassModifier: ViewModifier {
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @Environment(\.colorScheme) private var scheme
 
-    /// 三支形状收成同一个 AnyShape: 否则 glassEffect 与 background(in:) 各要一个具体 Shape 类型，
-    /// 降级/非降级两支就得把 switch 抄两遍 —— 抄第二遍的那天就是"关玻璃只关一半界面"的那天。
-    private var anyShape: AnyShape {
-        switch shape {
-        case .rect(let r): return AnyShape(RoundedRectangle(cornerRadius: r, style: .continuous))
-        case .circle: return AnyShape(Circle())
-        case .capsule: return AnyShape(Capsule())
-        }
-    }
-
+    // 为什么这里是两个 switch 而不是一枚擦除器: CI run #90 报
+    // `value of type 'AnyShape' has no member 'strokeBorder'` —— SwiftUI 只有 AnyShape (只擦 Shape),
+    // **没有 AnyInsettableShape** (查过 developer.apple.com: 该页 404，社区里那些都是各仓库自己写的)。
+    // 而实底退路要 `strokeBorder`，它在 InsettableShape 上。自造擦除器得让 inset(by:) 返回 Self，
+    // 这条在 Swift 里做不干净 (stackoverflow 上问了很多年)，所以几何映射写两遍、材质判据只留一处:
+    // 会漂移的是"什么时候不该是玻璃"(那个 if)，不是同一枚形状怎么画。
     @ViewBuilder
     func body(content: Content) -> some View {
         // 读系统旗标 (比 AXFlags 静态读更稳, 随环境更新); 降低透明度时降为实底
         // 862: 增强对比 (系统或 App 内 kf_hc) 同样降实底 —— 半透明叠字在高对比模式下属实底色
         if reduceTransparency || DS.Appearance.highContrast {
-            let s = anyShape
-            content.background(DS.Palette.surface, in: s)
-                .overlay(s.strokeBorder(DS.Palette.hairlineStrong, lineWidth: 0.5))
+            switch shape {
+            case .rect(let r):
+                let s = RoundedRectangle(cornerRadius: r, style: .continuous)
+                content.background(DS.Palette.surface, in: s)
+                    .overlay(s.strokeBorder(DS.Palette.hairlineStrong, lineWidth: 0.5))
+            case .circle:
+                content.background(DS.Palette.surface, in: Circle())
+                    .overlay(Circle().strokeBorder(DS.Palette.hairlineStrong, lineWidth: 0.5))
+            case .capsule:
+                content.background(DS.Palette.surface, in: Capsule())
+                    .overlay(Capsule().strokeBorder(DS.Palette.hairlineStrong, lineWidth: 0.5))
+            }
         } else {
-            content.glassEffect(.regular, in: anyShape)
+            switch shape {
+            case .rect(let r):
+                content.glassEffect(.regular, in: RoundedRectangle(cornerRadius: r, style: .continuous))
+            case .circle:
+                content.glassEffect(.regular, in: Circle())
+            case .capsule:
+                content.glassEffect(.regular, in: Capsule())
+            }
         }
     }
 }
