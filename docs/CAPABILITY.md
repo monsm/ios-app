@@ -8,15 +8,15 @@
 | Cmd | 名称(官方) | 参数/响应要点 | 来源 |
 |---|---|---|---|
 | 01 | GETSESSIONTOKEN 会话令牌 | 无参；响应 #01=safety(bit1=1→Token) #02=token #03=有效期秒 u16 | REP:61 |
-| 02 | GETBLEMAC | 读锁 BLE MAC；未入 cmds 实现面 | REP:63 |
+| 02 | GETBLEMAC | 读锁 BLE MAC；未入 cmds 实现面（H5 权威 main.js 仅枚举表 @357100，全库零调用点——原版 App 也不发，2026-10-15 二次反编译对拍确证） | REP:63 |
 | 03 | GETSTATUS 状态 | 密文版 #01=0x88EKey(cmd03)+#02=空，明文版无 KLV；响应字段见 §2；rc@#03 | cmds:53, lock:19 |
 | 04 | OPEN 开锁 | #01=左补零32 #02=凭证=hex(AES(skey)(88 00 MAC反 TrackId VF VT 04 pinLE 00 00))；rc@#03；rc=22→双验继续 | cmds:65-82, lock:370-386 |
 | 05 | EXSECURITYKEY 换钥 | 免令牌；#01=时间 #02=交换方式 1B #03=skey 16B；响应 #01=rc #02=skey 回显；执行即擦旧钥域 | cmds:42-47, P:17-19 |
 | 08 | SYNCPINS PIN 池 | addCount+delCount(各1B)+addPins(4B LE×N, ≤20/批)+delPins；首批 delPins=FFFFFFFF 清哨兵；rc@#03 | cmds:84-92, lock:18 |
 | 0A | SYNCPWD 密码 | delAlias(2B LE, 0xFFFF=清空全部)+addPwd(8B ASCII 右补零, ≤8位)+VF/VT(4B LE)；响应 #04=alias(2B LE) | cmds:98-106, lock:449 |
 | 0B | SYNCPWDEXPIRE 密码改期 | alias(2B LE)+VF/VT(4B LE 协议秒) | cmds:107-111 |
-| 0C | SYNCPWDFREEZEPOLICY 冻结策略 | 参数未确证 ？——不下发 | cmds:5 |
-| 0D | SETZOTPPERIOD OTP 周期 | 参数未确证 ？——不下发 | cmds:5 |
+| 0C | SYNCPWDFREEZEPOLICY 冻结策略 | 参数未确证 ？——不下发。H5 权威 main.js 两套枚举（@357283 外层帧、@368553 0x88 包络）均仅枚举无构造类无调用点 ⇒ 原版 App 从未下发，不实现=对齐原版（2026-10-15 二次反编译对拍确证） | cmds:5 |
+| 0D | SETZOTPPERIOD OTP 周期 | 参数未确证 ？——不下发。H5 同上零构造零调用；锁的窗口期经 cmd03 状态帧 KLV#05 (zotpPeriod u16) 读出，生成侧 (ZOTP.swift:19 periodSec) 用读到的值同窗生成 ⇒ 不写也能对齐，不实现=对齐原版（2026-10-15 二次反编译对拍确证） | cmds:5 |
 | 0E | SYNCTIME 校时 | 协议秒 u32 LE（基准 2010-01-01） | cmds:112-116, P:14 |
 | 12 | ECHO 回声 | #01=hex'123456'（3B 魔数）；连通探测 | cmds:50, P:172-174 |
 | 13 | ADDNEWFP 录指纹 | times(1B 官方8)+timeout(1B 默认15s)；多帧响应 orderIdx@#04 featureNumber@#05 batchNumber@#06 nextTimeout@#07，orderIdx=0 收尾 | cmds:117-123, lock:498-514 |
