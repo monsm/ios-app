@@ -224,7 +224,8 @@ struct OnboardingView: View {
         // 全仓零读取方，而通知授权用户随时能在系统设置里改 —— 存下来的那一份**必然会说谎**，
         // 将来谁接了它显示"已授权"就是错信息。要显当前状态就该现问 getNotificationSettings。
         center.requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in }
-        _ = loc
+        // 2026-10-15 走查·CI 补刀: 这里原先剩一句 `_ = loc` —— 它是旧写法里"别让 loc 变未使用"的消警告句,
+        // 上面删掉那次定位申请时把它留下了 ⇒ 编译报 "cannot find 'loc' in scope" (run 99 抓出)。
     }
 
     // ---------- 550 首启承诺页 ----------

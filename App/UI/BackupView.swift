@@ -29,7 +29,11 @@ struct BackupView: View {
     /// 云端已下载但尚未经用户确认的备份包 (nil = 无待确认的恢复)
     @State private var pendingRestore: BackupBundle?
 
-        @State private var showWebDAV = false   // 2026-10-15: 自带 NavigationStack 的页只能走 sheet
+    // 2026-10-15 走查·CI 补刀: 上一批改这一行时把 `showStudio` **改名成了** `showWebDAV`，
+    // 而 `$showStudio`(:64) 与 `showStudio = true`(:303) 两处用法都还在 ⇒ 编译报 cannot find 'showStudio'（run 99）。
+    // 两个 sheet 各自一枚状态，顺带把这批遗留的 8 空格缩进收齐。
+    @State private var showStudio = false      // 备份工作室（自带 NavigationStack ⇒ 只能 sheet，不能 push）
+    @State private var showWebDAV = false      // WebDAV 策略页，同上
 
 private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloudPw.isEmpty }
 

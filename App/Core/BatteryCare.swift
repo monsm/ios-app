@@ -404,7 +404,7 @@ enum CareSchedule {
             // 1013 保养到期: 满周期起每天最多一条, 完成保养即停
             let s = BatteryCare.care(kc.mac)
             let opens30d = usage30.first(where: { $0.mac == kc.mac })?.opens30d ?? 0
-            let carePeriod = carePeriodDays(opens30d: opens30d)
+            let carePeriod = BatteryCare.carePeriodDays(opens30d: opens30d)
             if s.lastCareAt > 0, now - s.lastCareAt >= Double(carePeriod) * 86400 * 1000,
                DB.store.getString("kf_care_notify_" + kc.mac) != Milestones.dayKey() {
                 DB.store.set("kf_care_notify_" + kc.mac, Milestones.dayKey())
