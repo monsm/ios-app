@@ -275,7 +275,7 @@ enum Changelog {
                     batch: "第一百五十五批"),
         ChangeEntry(id: 496, title: "恢复到旧版本不再只管本机",
                     detail: "回滚一条密码的值或时段，以前只改本机台账和历史，锁里仍是新版本 —— 拿恢复后的码去开门会开不了。"
-                        + "现在恢复的同时按 504 排一次重新下发，提示里带出排队结果；"
+                        + "现在恢复的同时排一次重新下发，提示里带出排队结果；"
                         + "指纹快照恢复不排队（名称/备注/归属都是本机字段，锁存的是指纹模板）。",
                     batch: "第一百五十五批"),
         ChangeEntry(id: 365, title: "待下发队列只有一份执行代码了",
@@ -292,13 +292,17 @@ enum Changelog {
                         // 这一行原先是独立的一句、前面误留了逗号 ⇒ detail 参数在此提前结束,
                         // 下一行成了孤立表达式 (`+` 被当一元运算符), 编译报 "unary operator cannot be separated from its operand"。
                         // 并入同一段拼接即可 (内容一字未改)。
-                        + "还原一条指纹时也不再只说「已还原」—— 锁端那步有没有发出去，按实际状态分别说。",
+                        + "还原一条指纹时也不再只说「已还原」—— 锁端那步有没有发出去，按实际状态分别说。"
+                        + "归组现在有了依据：回收站条目带一个批次号，删除成员、批量停用、离职清除这三条路里"
+                        + "同一次删除的条目共用一个号，那颗「整组还原」按批次收——点一次把这一次删掉的都还原，"
+                        + "包括上面筛选条件没列出来的那几条，多收了就在按钮下面写明为什么不止列出的那些；"
+                        + "旧的与单条删除的条目没有批次号，照旧只还原自己。",
                     batch: "第一百五十三批"),
         ChangeEntry(id: 506, title: "撤销真的能撤销了",
                     detail: "撤销一条停用，除了把记录放回台账，还会收回那条**还没发出去的锁端删除**并清掉停用便签。"
                         + "此前撤销只做前一半：队列里那条删除还在，连上锁就把刚恢复的凭证再删一次。"
                         + "从回收站「还原」也走同一份收尾。彻底删除那条路锁端已经真删了，不能假装收回 —— "
-                        + "密码按 504 排入重新下发，指纹如实写明只能本人到锁前重录。",
+                        + "密码排入重新下发，指纹如实写明只能本人到锁前重录。",
                     batch: "第一百五十二批"),
         ChangeEntry(id: 833, title: "第一次删凭证，撤销条会多说一句",
                     detail: "说的是这条本来就做得到的事：浮出后的 5 秒里点「撤销」，凭证按原位还原、不进回收站。"
@@ -425,8 +429,10 @@ struct ChangelogView: View {
     var body: some View {
         List {
             Section {
-                Text("这里只列**已经做出来**的改动：每一条都带一个功能编号，"
-                     + "构建时会检查它在代码里有没有实现证据，对不上就构建失败。")
+                // 2026-10-14 走查: 这一段是 `"…" + "…"` 拼出来的 ⇒ 走 Text(StringProtocol) 重载,
+                // Markdown 不解析, 屏上会原样出现 `**已经做出来**`。改走 mdText (见 DesignSystem.swift)。
+                mdText("这里只列**已经做出来**的改动：每一条都带一个功能编号，"
+                       + "构建时会检查它在代码里有没有实现证据，对不上就构建失败。")
                     .font(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -448,7 +454,9 @@ struct ChangelogView: View {
                             .font(.caption2.monospacedDigit())
                             .foregroundStyle(DS.Palette.accentText)
                     }
-                    Text(e.detail)
+                    // 2026-10-14 走查: `detail` 是 String 变量 ⇒ Text 不解析 Markdown,
+                    // 条目里那几处 `**…**` 会原样显示两颗星。改走 mdText。
+                    mdText(e.detail)
                         .font(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
@@ -474,11 +482,16 @@ struct ChangeBatchView: View {
 
     var body: some View {
         List {
-            Section("第\(batch)落了这些") {
+            // 2026-10-15 走查: 原先这里是「字面 第 + batch」。而 batch 的取值**全部**形如「第X批」
+            // —— 行首锚定的两条计数相等就是证据 (用不带行首锚的 `grep -o` 会把本段注释自己数进去):
+            //   grep -c '^[[:space:]]*batch: "'        App/UI/ChangelogView.swift  ⇒ 82
+            //   grep -c '^[[:space:]]*batch: "第.*批"' App/UI/ChangelogView.swift  ⇒ 82
+            // ⇒ 每一页标题都渲染成「第第一百八十七批落了这些」。去掉前面那个字面的「第」。
+            Section("\(batch)落了这些") {
                 ForEach(items) { e in
                     VStack(alignment: .leading, spacing: DS.Space.xxs) {
                         Text(e.title).font(.subheadline.weight(.medium))
-                        Text(e.detail).font(.footnote).foregroundStyle(DS.Palette.textSub)
+                        mdText(e.detail).font(.footnote).foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                         Text("功能编号 #" + String(e.id) + " — 可在 docs/IDEA-BANK.md 查到原句，"
                              + "在覆盖表里查到实现证据。")

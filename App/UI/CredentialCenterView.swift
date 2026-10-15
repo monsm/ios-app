@@ -5,12 +5,15 @@
 import SwiftUI
 import UIKit
 
-// ================= 入口 (从凭证 Tab 进入, 按 section 路由) =================
+// ================= 入口 (从凭证 Tab 进入) =================
+// 2026-10-15 走查: 原先这行写着"按 section 路由", 而 `section` 那一枚参数**全文件零读取** ——
+// 调用点还认真地传了 `section: "organize"`。真要"直达整理建议中心", 凭证 Tab 那侧本来就有
+// 一条直达的 sheet (`CredentialsView` 的 showOrganize), 不需要在这页里再实现一次路由,
+// 所以删掉这个假旋钮: 留着它, 下一个人会以为已经路由过了。
 struct CredCenterView: View {
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
     var mac: String
-    var section: String   // "bin" / "histAll" / "queue" / "organize"
 
     var body: some View {
         NavigationStack {
@@ -24,7 +27,10 @@ struct CredCenterView: View {
                 centerRow(icon: "rectangle.3.offgrid", title: "整理建议中心", sub: "\(CredentialOrg.advice(mac).count) 条待办") {   // 358/505 条待办
                     // 358: 建议行落地后要直达凭证列表 (预勾选已就位), 把整张凭证中心也一起收掉 ——
                     // 只 pop 一层会停在"凭证中心", 用户还得再点一次关闭才看得到多选
-                    CredOrganizeView(mac: mac, onClose: { dismiss() })
+                    // 2026-10-15 走查: 这一行是 push (centerRow 里那条 NavigationLink), 而 CredOrganizeView
+                    // 自带 NavigationStack —— 不传 embedded 会叠出两层导航栏 (判据见 SettingsView 里
+                    // 「动态消息只走 sheet」那条)。传 true 让它把内容交给我们这层栈。
+                    CredOrganizeView(mac: mac, embedded: true, onClose: { dismiss() })
                 }
                 centerRow(icon: "arrow.down.circle", title: "待下发队列", sub: "\(CredentialOrg.pendingQueue(mac).count) 项 · 到场补发") {   // 365 到场补发
                     CredQueueView(mac: mac)
@@ -107,8 +113,15 @@ struct CredBinView: View {
                     }
                 }
                 // 498 来源过滤分段
-                let names = ["全部", "手动删除", "批量清理", "过期清理", "重录替代"]
-                HStack(spacing: DS.Space.xs) {
+                // 2026-10-15 走查: 这排档名原先是手抄的四个字, 而 `CredBinSource` 有**五档**
+                // (`orphan = 4`「无主隔离」, 由诊断页"隔离无主凭证"那一支写入) ⇒ 少的那一档的条目
+                // 只能在"全部"里出现, 既筛不掉、也看不出它是被谁收走的。档名与顺序都从枚举取,
+                // 不再抄第二遍 (抄一份迟早对不上, 而对不上的是"以为没有这种东西")。
+                let names = ["全部"] + CredBinSource.allCases.map(\.label)
+                // 容器由 HStack 换成 FlowLayout: 档名从 5 枚变 6 枚，一行放不下时**换行**而不是
+                // 挤窄/藏进横向滚动区 (上一批在设置页筛选片上就是这条理由：横向 ScrollView 会把后几枚
+                // 永远看不见，网格又把胶囊拉成等宽、形状就变了)。
+                FlowLayout(spacing: DS.Space.xs) {
                     ForEach(0..<names.count, id: \.self) { i in
                         let v = i - 1
                         let on = source == v
@@ -171,16 +184,36 @@ struct CredBinView: View {
                     binRow(e)
                 }
             }
-            if rows.count > 1 {
+            if restoreGroup.count > 1 {
                 Section {
-                    Button("整组还原") {   // 501 整组还原
-                        var n = 0
-                        for e in rows { _ = CredentialOrg.restoreBin(mac, entry: e, asCopy: false); n += 1 }
-                        app.showToast("已整组还原 \(n) 条")
+                    Button("整组还原 \(restoreGroup.count) 条") {   // 501 整组还原
+                        // 2026-10-15 走查: 这颗原先写「整组还原」而循环的是 `rows` —— 501 原句里的
+                        // "整组"指**删除成员前那一次级联**的清单, 可回收站条目是逐条取 `nowSec` 落戳的,
+                        // 没有批次号 ⇒ "那一次级联"在数据里根本没有可以拿来分组的键, 于是按钮真正做的是
+                        // "把当前列出来的这些还原", 而列表被来源分段与搜索框过滤过 ⇒ 搜索框输一个字作用域就变。
+                        // 当时先把文案说准, 并记下"真正的批次归组要落 batchId 进 CredBinEntry"。
+                        // 同日第十八批 (用户拍板后) 落了: 三个级联函数各生成一个 UUID 喂给本批全部条目 ⇒
+                        // 这里的作用域跟着改成**整批** (含被筛选滤掉的), 无批次号的旧条目仍只还原自己。
+                        var msgs: [String] = []
+                        for e in restoreGroup { msgs.append(CredentialOrg.restoreBin(mac, entry: e, asCopy: false)) }
+                        // 原先这里是 `_ =` 把每条回执丢掉, 只报一句"已还原 N 条" —— 而单条那两个调用点
+                        // (288 / 339) 一直都在显示 restoreBin 的原文。有锁端补发排队、有值已失效的分支,
+                        // 混在一起看不出来就是假回执。相同的话折叠, 不同的话全列出来。
+                        var seen = Set<String>()
+                        var uniq: [String] = []
+                        for m in msgs where seen.insert(m).inserted { uniq.append(m) }
+                        app.showToast(uniq.joined(separator: " / "))
                     }
                     .font(.caption.weight(.medium))
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
+                    // 只在"整批比列出来的多"时说明一次, 免得这句在旧数据 (无批次号) 上变成假话
+                    if restoreGroup.count > rows.count {
+                        Text("按删除批次归组: 上面筛选没列出的同批条目也会一并还原。")
+                            .font(.footnote)
+                            .foregroundStyle(DS.Palette.textSub)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
             }
             Section {
@@ -191,7 +224,10 @@ struct CredBinView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .frame(minHeight: DS.Hit.min)
             } footer: {
-                Text("彻底删除不可找回。保留期可在 设置-安全-凭证整理 调整。")   // 497 彻底删除不可找回
+                // 2026-10-15 走查: 指路指错了页 —— 「凭证整理」这一节在**设置 → 家人与钥匙**里
+                // (SettingsView 的 familySection), 不在安全页; 而安全页里真有一枚撞名的「保留期」=
+                // 审计流水保留月数, 用户按这句话去改会把设置项拧错。
+                Text("彻底删除不可找回。保留期可在 设置-家人与钥匙-凭证整理 调整。")   // 497 彻底删除不可找回
                     .font(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
             }
@@ -233,6 +269,17 @@ struct CredBinView: View {
         return list
     }
 
+    /// 501「整组还原」真正的作用域 = 当前列出的条目所属**删除批次**的全部回收站条目
+    /// (含被来源分段与搜索框滤掉的那些), 再加上列出的无批次条目自身。
+    /// 批次号只在一次级联里产生 (删成员 / 批量停用 / 离职清除), 所以这一组就是"那一次删除动作"的清单;
+    /// 旧的、单条删除的条目没有批次号 ⇒ 只还原自己, 与加这个字段之前的行为一致。
+    private var restoreGroup: [CredBinEntry] {
+        let ids = Set(rows.compactMap { $0.batchId })
+        guard !ids.isEmpty else { return rows }
+        let grouped = CredentialOrg.bin(mac).filter { e in e.batchId.map { ids.contains($0) } ?? false }
+        return grouped + rows.filter { $0.batchId == nil }
+    }
+
     @ViewBuilder
     private func binRow(_ e: CredBinEntry) -> some View {
         VStack(alignment: .leading, spacing: DS.Space.xs) {
@@ -250,7 +297,7 @@ struct CredBinView: View {
                     .lineLimit(1)
             }
             if let p = e.pwd {
-                Text("到 \(p.to.prefix(16)) · 归属 \(CredentialOrg.ownerName(p.owner).isEmpty ? "无" : CredentialOrg.ownerName(p.owner))")
+                Text("\(CredentialOrg.expiryLabel(p.to, prefix: 16)) · 归属 \(CredentialOrg.ownerName(p.owner).isEmpty ? "无" : CredentialOrg.ownerName(p.owner))")
                     .font(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -295,7 +342,10 @@ struct CredBinView: View {
             Button(role: .destructive) { pendingPurge = e } label: { Label("彻底删除", systemImage: "xmark.bin") }
         }
         .confirmationDialog("彻底删除?", isPresented: Binding(get: { pendingPurge != nil }, set: { if !$0 { pendingPurge = nil } }), titleVisibility: .visible) {   // 502 彻底删除
-            Button("输入确认", role: .destructive) {
+            // 2026-10-15 走查: 这颗写着「输入确认」, 而它走的是一条都不打字的路 —— guardedPurge 要的是
+            // **生物识别**, 没过才落到下面那个 confirmDestructive (也是点按钮, 不是打字)。
+            // 按钮说"输入"而什么都不用输入, 用户会原地找那个输入框。改成它真正要的那件事。
+            Button("验证后彻底删除", role: .destructive) {
                 if let x = pendingPurge {
                     // 502 门槛统一: 这一枚原先按下即 purgeBin —— 同一个「彻底删除」在单条与清空两条路上
                     // 一套有生物识别、一套没有 (§10.39 修过的正是这种分叉)。现在两条都走 guardedPurge。
@@ -332,7 +382,10 @@ struct CredBinView: View {
 
     private func purgeAll() {
         let entries = CredentialOrg.bin(mac)
-        guard !entries.isEmpty else { return }
+        // 2026-10-15 走查: 空回收站点「清空回收站」原先是静默 `return` —— 按钮就在那儿、按下去既不弹窗
+        // 也不说一句，是"点了没反应"最典型的一种。门槛那一路 (guardedPurge) 上一批已经与单条对齐了，
+        // 缺的只是这一句实话。
+        guard !entries.isEmpty else { app.showToast("回收站已经是空的"); return }
         let n = entries.count
         // 502 门槛统一: 与单条那枚同走 guardedPurge。这里原先自己现造 LAContext 直接 evaluatePolicy —
         // 没先问 canEvaluate、也没有"无生物可刷"的 biometryNotAvailable 分支；同一个「彻底删除」
@@ -438,7 +491,9 @@ struct CredHistoryView: View {
             } header: {
                 Text("历史 (\(snaps.count + reloadTick - reloadTick), 保留 \(CredentialOrg.quota(mac)) 版)")
             } footer: {
-                Text("488 自动还原点 (批量操作前) 置顶加标记; 495 星标版不受配额淘汰; 496 恢复不覆盖, 生成「恢复自 vX」新档。")
+                // 2026-10-15 走查: 这一行把三枚规格编号印在屏上 (上一批已按"界面不写规格号"清过 51 处, 这几处是漏的)。
+                // 编号是台账的门牌, 用户读的是那三条规则本身 —— 编号收回行尾注释。
+                Text("自动还原点 (批量操作前) 置顶加标记; 星标版不受配额淘汰; 恢复不覆盖, 生成「恢复自 vX」新档。")   // 488/495/496 历史页三条规则
                     .font(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
             }
@@ -634,7 +689,7 @@ struct CredCalendarView: View {
                                         .lineLimit(1)
                                         .minimumScaleFactor(0.8)
                                     Spacer(minLength: 0)
-                                    Text("到 " + x.to.prefix(10))
+                                    Text(CredentialOrg.expiryLabel(x.to))
                                         .font(.caption)
                                         .foregroundStyle(DS.Palette.textSub)
                                         .lineLimit(1)
@@ -719,14 +774,18 @@ struct CredOrganizeView: View {
     @EnvironmentObject private var app: AppState
     @Environment(\.dismiss) private var dismiss
     var mac: String
-    /// 调用方 (CredentialCenterView:26 整理建议中心) 未传 → 旧写法直接编译不过; 默认空闭包 = 由父页 body 重算刷新
+    /// 内容是否已经嵌在外部导航容器里。2026-10-15 走查: 这一页**自带 NavigationStack**, 却有两个呈现点
+    /// —— 凭证 Tab 的 sheet (需要自己那层栏) 和凭证中心的 NavigationLink push (外面那层栏已经在了)。
+    /// push 那侧不传 true 就叠出两层导航栏。形状照 `AddPwdView` / `StartAddFpView` 的 embedded 抄,
+    /// 那是本仓作者已有的解法, 不另造第三套。
+    var embedded: Bool = false
+    /// 建议行落地/关闭这一页时给调用方的回执 (刷新用)。收页不归它: 由下面那颗按钮里的 dismiss() 负责。
     var onDone: () -> Void = {}
     /// 358 预勾选落地时用来收掉整张凭证中心 sheet; 未传 (独立预览等场景) 就只 pop 本层
     var onClose: (() -> Void)? = nil
 
-    var body: some View {
-        NavigationStack {
-            List {
+    private var content: some View {
+        List {
                 let adv = CredentialOrg.advice(mac)
                 Section("整理建议") {   // 358 整理建议
                     if adv.isEmpty {
@@ -764,8 +823,19 @@ struct CredOrganizeView: View {
             .scrollContentBackground(.hidden)
             .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) {
-                Button("完成") { onDone() }
+                // 2026-10-15 走查: 这颗原先只调 onDone() —— 而过去呈现方 (凭证 Tab 那三枚 sheet 之一)
+                // 的 onDone 也不关自己的开关, 于是「完成」点了什么都不发生。补 dismiss:
+                // sheet 里收掉这一页, push 里退回凭证中心。调用方的 onDone 现在还会顺手 reload。
+                Button("完成") { onDone(); dismiss() }
             } }
+    }
+
+    var body: some View {
+        // AnyView 擦平两分支的类型差异 (与 AddPwdView 同一写法): 两支只差最外层那一只容器
+        if embedded {
+            AnyView(content)
+        } else {
+            AnyView(NavigationStack { content })
         }
     }
 
@@ -879,10 +949,15 @@ struct CredQueueView: View {
                             }
                         }
                         // 365 三步步条: 待下发 → 已下发 → 锁端确认 (rc@#03); 失败态可重试
+                        // 2026-10-15 走查: 这三档原先是**取反**算的 (`item.state != 0 ? 2 : 1`),
+                        // 而 state 只有 0 待下发 / 1 已完成 / 2 失败 三个值 (CredQueueState)。
+                        // 取反的后果: 一条从没发出去的东西, "已下发"画成绿勾; 一条失败的, 前两档全绿。
+                        // 屏上等于对用户说"已经发到锁上了"而其实一次都没发。只有 state == 1 才配绿勾。
+                        // (第几次尝试、什么时候试过 —— 下面那行本来就写着, 失败标志在左侧那颗 pill 上。)
                         HStack(spacing: DS.Space.xs) {
-                            step("待下发", item.state != 0 ? 2 : 1)
-                            step("已下发", item.state == 1 ? 1 : 2)
-                            step("锁端确认", item.state == 1 ? 1 : 0)
+                            step("待下发", item.state == 1 ? 2 : 1)
+                            step("已下发", item.state == 1 ? 2 : 0)
+                            step("锁端确认", item.state == 1 ? 2 : 0)
                             Spacer(minLength: 0)
                             Button("重试") { retry(item) }
                                 .font(.caption.weight(.medium))
@@ -1021,7 +1096,7 @@ struct CredExtendView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("统一延期 (\(aliases.count) 条, 348)") {
+                Section("统一延期 (\(aliases.count) 条)") {   // 348 统一延期
                     DatePicker("生效", selection: $from, displayedComponents: .date)
                     DatePicker("延期至", selection: $to, in: from..., displayedComponents: .date)
                     Text("将一次性改写所选密码的过期字段并列出变更清单; 锁端改期记为「待下发」。")
@@ -1036,7 +1111,7 @@ struct CredExtendView: View {
                                 Text("#\(a)")
                                     .font(.subheadline)
                                     .monospacedDigit()
-                                Text(p.to.prefix(10) + " → " + to.formatted(.dateTime.year().month().day()))
+                                Text(CredentialOrg.expiryLabel(p.to, verb: false) + " → " + to.formatted(.dateTime.year().month().day()))
                                     .font(.caption)
                                     .foregroundStyle(DS.Palette.textSub)
                                     .lineLimit(1)
@@ -1085,7 +1160,7 @@ struct CredTransferView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("批量移交 (\(pwdAliases.count + fpBatches.count) 条, 349)") {
+                Section("批量移交 (\(pwdAliases.count + fpBatches.count) 条)") {   // 349 批量移交
                     Picker("移交给", selection: $target) {
                         Text("解除归属").tag(nil as String?)
                         ForEach(DB.members()) { m in

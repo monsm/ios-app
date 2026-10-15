@@ -275,10 +275,11 @@ enum Offboard {
         DB.saveLedger(DB.currentMac, l)
         // 402: 名下凭证逐条入回收站 (kf_cbin_), owner 清掉避免离职成员再被关联;
         // saveLedger 的 379/380 字段级 diff 已在上面那一步留了管理员流水, 这里不重复。
+        let batchId = UUID().uuidString   // 这一次离职清除的多条凭证共用一个批次号 (501 整组还原)
         for p in archive {
             var cp = p
             cp.owner = nil
-            CredentialOrg.addToBin(DB.currentMac, pwd: cp, source: .manual)
+            CredentialOrg.addToBin(DB.currentMac, pwd: cp, source: .manual, batchId: batchId)
         }
     }
 

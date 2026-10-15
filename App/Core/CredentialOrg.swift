@@ -53,6 +53,10 @@ struct CredBinEntry: Codable, Identifiable {
     var source: Int                 // CredBinSource.rawValue
     var pwd: LedgerPwd? = nil
     var fp: LedgerFp? = nil
+    /// 501 一次级联的批次号: 同一次「删成员 / 批量停用 / 离职清除」落进回收站的条目共用一个值。
+    /// Optional + 合成 decoder 的 decodeIfPresent ⇒ 旧回收站记录 (没这个键) 解出来是 nil, 不会整表失败;
+    /// nil 的条目 (旧数据、单条删除) 不参与整组还原, 只还原自己。
+    var batchId: String? = nil
     var id: String {
         at > 0 ? "\(at)" : (pwd.map { "\($0.alias)" } ?? fp.map { "\($0.batch)" } ?? "bin")
     }
@@ -274,10 +278,12 @@ enum CredentialOrg {
     }
     static func binPwd(_ mac: String, _ alias: Int) -> LedgerPwd? { bin(mac).compactMap { $0.pwd }.first { $0.alias == alias } }
     static func binFp(_ mac: String, _ batch: Int) -> LedgerFp? { bin(mac).compactMap { $0.fp }.first { $0.batch == batch } }
-    static func addToBin(_ mac: String, pwd: LedgerPwd? = nil, fp: LedgerFp? = nil, source: CredBinSource) {
+    /// `batchId` 只由"一次动作产出多条"的级联调用点传入 (同一个值传给这一批全部条目);
+    /// 单条删除留 nil ⇒ 不参与整组还原。名字带 Id 是为了与 `LedgerFp.batch` (指纹批次整数) 区分开。
+    static func addToBin(_ mac: String, pwd: LedgerPwd? = nil, fp: LedgerFp? = nil, source: CredBinSource, batchId: String? = nil) {
         snapshotBeforeDelete(mac, pwd: pwd, fp: fp)   // 494 删除前快照先落
         var list = bin(mac)
-        list.insert(CredBinEntry(at: nowSec, source: source.rawValue, pwd: pwd, fp: fp), at: 0)
+        list.insert(CredBinEntry(at: nowSec, source: source.rawValue, pwd: pwd, fp: fp, batchId: batchId), at: 0)
         saveBin(mac, list)
     }
     /// 回收站那一格的移除 + 放回台账。**这只是"从回收站取回"这一步**，
@@ -314,7 +320,7 @@ enum CredentialOrg {
             if let p = entry.pwd {
                 queueRestore(mac, p)
                 let q = queue(mac).contains { $0.kind == "restore" && $0.pwd?.alias == p.alias }
-                return q ? "本机记录已放回原位；锁端那条已经真删了 —— 按 504 排入「重新下发」，连上锁补回"   // 506 本机记录已放回原位
+                return q ? "本机记录已放回原位；锁端那条已经真删了 —— 已排入「重新下发」，连上锁补回"   // 506 本机记录已放回原位
                          : "本机记录已放回原位；锁端那条已经真删，而这条已过有效期 ⇒ 既不重发也无处可恢复"   // 506 本机记录已放回原位
             }
             if entry.fp != nil {
@@ -469,7 +475,7 @@ enum CredentialOrg {
         guard let oldest = list.map({ $0.at }).min() else { return (0, nil) }
         return (list.count, Date(timeIntervalSince1970: oldest + Double(reclaimDays()) * 86400))
     }
-    /// 501/349 成员删除: 名下凭证随成员入回收站 (整组同戳, 可整组还原)
+    /// 501/349 成员删除: 名下凭证随成员入回收站 (同一个 `batchId`, 可整组还原)
     /// D-152a (2026-10-11 拍板 方案③): 弹窗当场选「只移除档案 / 连锁端一起收回」, 默认第一项。
     ///  · revokeLocks = false: 只动本机台账, 整组可还原 (501); 锁里那些指纹与密码仍然有效, TA 照旧能开门。
     ///  · revokeLocks = true: 每条再排 365 队列的 `del_pwd`/`del_fp` —— 与 629 逐条停用、353 批量停用
@@ -480,11 +486,12 @@ enum CredentialOrg {
     @discardableResult
     static func cascadeBinMember(_ mac: String, _ memberID: String, revokeLocks: Bool = false) -> Int {
         var queued = 0
+        let batchId = UUID().uuidString   // 这一批条目共用一个号 (两个循环、两种凭证都是同一次级联)
         for p in DB.listPwds(mac).filter({ $0.owner == memberID }) {
             var cp = p
             cp.owner = nil
             DB.delPwd(mac, p.alias)
-            addToBin(mac, pwd: cp, source: .manual)
+            addToBin(mac, pwd: cp, source: .manual, batchId: batchId)
             if revokeLocks {
                 enqueue(mac, kind: "del_pwd", title: "删成员连带 密码 #\(p.alias) (D-152a)", pwd: p)
                 queued += 1
@@ -494,7 +501,7 @@ enum CredentialOrg {
             var cp = f
             cp.owner = nil
             DB.delFp(mac, f.batch)
-            addToBin(mac, fp: cp, source: .manual)
+            addToBin(mac, fp: cp, source: .manual, batchId: batchId)
             if revokeLocks {
                 enqueue(mac, kind: "del_fp", title: "删成员连带 指纹「\(f.name)」 (D-152a)", fp: f)
                 queued += 1
@@ -694,18 +701,19 @@ enum CredentialOrg {
     /// 353 批量停用: 所选过期/老旧项本地移除并入回收站, 锁端删除入队
     static func batchDisable(_ mac: String, pwdAliases: [Int], fpBatches: [Int]) -> Int {
         var n = 0
+        let batchId = UUID().uuidString   // 353: 一次批量停用 = 一个批次, 回收站里可整组还原
         for a in pwdAliases {
             guard let p = DB.ledger(mac).pwds.first(where: { $0.alias == a }) else { continue }
             DB.delPwd(mac, a)
             // 498: 已过期的进回收站标"过期", 未过期的手动批量停用仍标"批量"
-            addToBin(mac, pwd: p, source: pwdState(p) == 2 ? .expired : .batch)
+            addToBin(mac, pwd: p, source: pwdState(p) == 2 ? .expired : .batch, batchId: batchId)
             enqueue(mac, kind: "del_pwd", title: "删除密码 #\(a)", pwd: p)
             n += 1
         }
         for b in fpBatches {
             guard let f = DB.ledger(mac).fps.first(where: { $0.batch == b }) else { continue }
             DB.delFp(mac, b)
-            addToBin(mac, fp: f, source: .batch)
+            addToBin(mac, fp: f, source: .batch, batchId: batchId)
             enqueue(mac, kind: "del_fp", title: "删除指纹批次 \(b)", fp: f)
             n += 1
         }
@@ -1536,6 +1544,14 @@ enum CredentialOrg {
         let o = ownerName(p.owner)
         if !o.isEmpty { return "\(o) 的密码 #\(p.alias)" }
         return p.temp ? "临时密码 #\(p.alias)" : "密码 #\(p.alias)"
+    }
+    /// 到期时刻的界面读法。`2118-01-01 00:00` 是**"永不到期"的哨兵值** (写库与 363/331 那两条判据都用它),
+    /// 直接印出来就是"到 2118-01-01"这种把内部哨兵当事实报给用户的话。
+    /// 这条判据此前在 `displayPwd` 那侧有一份、在回收站/历史/延期三处界面各有一份, 收成一处。
+    /// - Parameter verb: 要不要带"到 "这个前缀; 两段式 ("原来 → 新的") 那侧自己拼动词, 传 false。
+    static func expiryLabel(_ to: String, verb: Bool = true, prefix: Int = 10) -> String {
+        let head = to.hasPrefix("2118") ? "长期有效" : String(to.prefix(prefix))
+        return verb && !to.hasPrefix("2118") ? "到 " + head : head
     }
     /// 918 命名模板 "谁-哪里-何时" 占位建议 (锁端无名称字段, 台账本地展示)
     static func namingTemplate(_ p: LedgerPwd) -> String {
