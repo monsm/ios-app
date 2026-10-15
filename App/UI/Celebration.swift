@@ -156,13 +156,20 @@ struct MomentCardView: View {
         }
         .contentShape(Rectangle())
         .onTapGesture(perform: onDismiss)
-        .onAppear {
-            withAnimation(DS.Motion.standard) { shown = true }
-            // 防滞留: 无人点击也自动收起, 回到正常使用流
-            Task { @MainActor in
-                try? await Task.sleep(nanoseconds: 5_400_000_000)
-                onDismiss()
-            }
+        .onAppear { withAnimation(DS.Motion.standard) { shown = true } }
+        // 防滞留: 无人点击也自动收起, 回到正常使用流。
+        // 2026-10-15 走查: 这条原先写在 .onAppear 里的裸 `Task {}` 有两个坑 ——
+        //   ① 用户提前轻点关掉这张后, 那个计时器仍在跑, 5.4s 到点再调一次 onDismiss;
+        //      而 root 那边 onDismiss = advanceMoment() (弹出队列里的下一张), 于是**下一张时刻被这记
+        //      迟到点直接吞掉** (从没显示就没了), 正在显示的这张也会自己闪退。
+        //   ② root 的覆盖层是 `if let m = app.moment` 且没挂 `.id`, 换下一张时**视图身份不变** ⇒
+        //      `.onAppear` 不再触发 ⇒ 第二张起压根没有自动收起计时, "防滞留"只对第一张生效。
+        // `.task(id: moment.id)` 一次解决两条: 换卡即重开一份计时, 卡片离树/被点掉则自动取消。
+        // 取消那一路必须显式判 —— `try?` 会把 CancellationError 吞成一个 nil 继续往下走 (同族见 UnlockDial 心跳)。
+        .task(id: moment.id) {
+            try? await Task.sleep(nanoseconds: 5_400_000_000)
+            guard !Task.isCancelled else { return }
+            onDismiss()
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(moment.title), \(moment.subtitle)")

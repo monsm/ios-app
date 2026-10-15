@@ -42,7 +42,10 @@ struct BatteryStripCard: View {
                                     .font(.system(size: DS.Icon.lg, weight: .medium))
                                     .foregroundStyle(t.tone.color)
                                     .accessibilityHidden(true)
-                                Text(item.pct < 0 ? "--" : (item.pct > 80 ? ">80%" : "\(item.pct)%"))
+                                // 写法走 BatteryCare.faceText —— 这条 ">80% / --" 的规则设备页那侧同一份,
+                                // 两处各写各的早晚漂 (2026-10-15 走查)。无障碍那行仍念精确百分比, 那是有意的:
+                                // 屏上省略是为"80 以上都算充足"这个判据服务, 念出来时给准数更有用。
+                                Text(BatteryCare.faceText(item.pct))
                                     .font(.caption2.weight(.medium))
                                     .monospacedDigit()
                                     .foregroundStyle(DS.Palette.text)

@@ -273,12 +273,12 @@ struct RecordsView: View {
             Menu {
                 Button { showGratitude = true } label: { Label("感谢清单", systemImage: "heart.text.square") }
                 if app.current != nil {
-                    Button { showExport = true } label: { Label("导出与分享 (包12)", systemImage: "square.and.arrow.up.on.square") }
-                    Button { showStats = true } label: { Label("统计与图表 (包10)", systemImage: "chart.bar") }
+                    Button { showExport = true } label: { Label("导出与分享", systemImage: "square.and.arrow.up.on.square") }
+                    Button { showStats = true } label: { Label("统计与图表", systemImage: "chart.bar") }
                     Button { copyLastWeekDigest() } label: { Label("复制上周小结", systemImage: "doc.on.clipboard") }   // 698 复制上周小结
                     Button { showRangePick = true } label: { Label("选区导出", systemImage: "checklist") }   // 716 选区导出
-                    Button { showActiveCreds = true } label: { Label("活跃凭证排序 (约, 574)", systemImage: "list.number") }
-                    Button { showOutWin = true } label: { Label("越界开门清单 (约, 575)", systemImage: "clock.badge.exclamationmark") }
+                    Button { showActiveCreds = true } label: { Label("活跃凭证排序 (约)", systemImage: "list.number") }
+                    Button { showOutWin = true } label: { Label("越界开门清单 (约)", systemImage: "clock.badge.exclamationmark") }
                     if scope == 1 {
                         Toggle("泳道时间线", isOn: $laneMode)   // 785 泳道时间线
                     }
@@ -314,7 +314,17 @@ struct RecordsView: View {
         recordsGroup
         .navigationTitle("记录")
         // 192: 过滤组合按锁留存 (清空全部过滤时自动删键, 不留脏值)
-        .onChange(of: filters) { _, new in new.save(mac: app.currentMac) }
+        // 2026-10-15 走查: 只存"与开场值不同"的组合。唯一的理由是 onRecordsAppear 里那次
+        // **按 908 策略的重取** —— fresh/alarm 两档下 load() 返回的是**派生值** (空白 / 仅告警),
+        // 原样存回去会把用户真存着的那份覆盖掉, fresh 档更会直接删键
+        // (save 里 `self == QueryFilters()` 走 remove)。
+        // 换锁那一路不必在这里补: 父层的 `RecordsView().id(app.currentMac)` 会让整页重建,
+        // @State 连同 filters 一起重读 (见 LockKeeperApp 里 credentialsTabContent 那段注释)。
+        .onChange(of: filters) { _, new in
+            let mac = DB.preferredMac()
+            guard !mac.isEmpty, new != QueryFilters.load(mac: mac) else { return }
+            new.save(mac: mac)
+        }
         .scrollContentBackground(.hidden)
         .dsScreenBackground()
         .toolbar {
@@ -887,7 +897,7 @@ struct RecordsView: View {
                 filters.dayKind = i
             }
             let kindIdx = Self.kindOptions.firstIndex(where: { $0.1 == filters.kind }) ?? 0
-            chipRowSection("凭证 (约, 568)", selected: kindIdx, items: Self.kindOptions.enumerated().map { i, t in (t.0, i) }) { name, _ in
+            chipRowSection("凭证 (约)", selected: kindIdx, items: Self.kindOptions.enumerated().map { i, t in (t.0, i) }) { name, _ in
                 filters.kind = Self.kindOptions.first(where: { $0.0 == name })?.1 ?? ""
             }
             // 这一行挂上 565 的 chip 后共四个, 窄屏一行放不下 —— 与上面三行同一交互改横滚,
@@ -899,7 +909,7 @@ struct RecordsView: View {
                     miniChip(filters.alarmKinds.isEmpty ? "告警类型"   // 565 告警类型
                              : "告警类型 \(filters.alarmKinds.count) 项",   // 565 告警类型
                              on: !filters.alarmKinds.isEmpty) { showAlarmKinds = true }
-                    chipToggle("失败 (锁端仅告警级, 569)", on: $filters.failedOnly)
+                    chipToggle("失败 (锁端仅告警级)", on: $filters.failedOnly)
                     chipToggle(reversed ? "最早在前" : "正序回放", on: $reversed)   // 570 正序回放
                 }
                 .padding(.vertical, DS.Space.xxs)
@@ -970,7 +980,7 @@ struct RecordsView: View {
                                                                    set: { RecordSearch.setHolidayExtend($0) }))
                     .font(.caption)
                     .frame(minHeight: DS.Hit.min)
-                Text("顺延只影响深夜档的判定, 不改记录的归属日 (凌晨仍归前一晚, 649)。")
+                Text("顺延只影响深夜档的判定, 不改记录的归属日 (凌晨仍归前一晚)。")
                     .font(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -1313,7 +1323,7 @@ struct RecordsView: View {
                 shownCap += 600   // 598: 续一页 600; 池就 300 级 ⇒ 通常按一次就到"已全部加载", 不假装有第 N 页
                 applyFilter()
             } label: {
-                Text("继续加载 (已读 \(rows.count) / 共 \(filteredTotal) 条 · 598)")
+                Text("继续加载 (已读 \(rows.count) / 共 \(filteredTotal) 条)")
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(maxWidth: .infinity, alignment: .center)
@@ -1363,7 +1373,7 @@ struct RecordsView: View {
                 } header: {
                     Text("按天勾选")   // 716 按天勾选
                 } footer: {
-                    Text("只导出勾选那些天的行; CSV 走剪贴板 (与 698 同一通路), 不上传、不落盘。")
+                    Text("只导出勾选那些天的行; CSV 走剪贴板, 不上传、不落盘。")
                         .font(.caption).foregroundStyle(DS.Palette.textSub)
                 }
                 Section {
@@ -1484,7 +1494,9 @@ struct RecordsView: View {
                     Text(cachedHint)
                         .fixedSize(horizontal: false, vertical: true)
                 } icon: {
-                    Image(systemName: "wifi.slash").accessibilityHidden(true)
+                    // 2026-10-14 走查: 与 LinkSense 三态条同一处口径 —— 门锁走 BLE, 不是 Wi-Fi,
+                    // 这里说的是"没连上门锁", 不是"没网"。带斜杠的 Wi-Fi 图标会误导。
+                    Image(systemName: "antenna.radiowaves.left.and.right").accessibilityHidden(true)
                 }
                 .font(.caption)
                 .foregroundStyle(DS.Palette.warn)
@@ -1980,7 +1992,7 @@ struct RecordsView: View {
                 Button("看凭证") {
                     app.pendingCredNav = r.credKey
                     app.pendingCredNavMac = r.rowMac.isEmpty ? mac : r.rowMac
-                    app.tabSelection = 1
+                    app.requestTab(1)   // 2026-10-14 走查: 原直写 tabSelection, 访客态绕过 377 门禁
                 }
                 .tint(DS.Palette.warn)
             }
@@ -2020,7 +2032,7 @@ struct RecordsView: View {
                 Button {
                     app.pendingCredNav = r.credKey
                     app.pendingCredNavMac = r.rowMac.isEmpty ? mac : r.rowMac
-                    app.tabSelection = 1
+                    app.requestTab(1)   // 2026-10-14 走查: 原直写 tabSelection, 访客态绕过 377 门禁
                     app.showToast("已定位到来源凭证")   // 577 已定位到来源凭证
                 } label: {
                     Label("定位来源凭证", systemImage: "key.horizontal")   // 577 定位来源凭证
@@ -2410,7 +2422,8 @@ struct RecordsView: View {
                         ForEach(["妈", "我"], id: \.self) { sample in
                             Button {
                                 app.pendingMemberAdd = true   // 817: 到了成员中心直接弹建档向导, 不再只指路
-                                app.tabSelection = 3
+                                app.pendingSettingsFocus = "members"   // §4.3: 上面写着"直达成员入口", 原来只到设置页根
+                                app.requestTab(3)   // 2026-10-14 走查: 原直写 tabSelection, 访客态绕过 377 门禁
                                 app.showToast("在「家人与钥匙」里添加成员")   // 817 家人与钥匙
                             } label: {
                                 HStack(spacing: DS.Space.xs) {
@@ -2566,6 +2579,11 @@ struct RecordsView: View {
     // ---------- 数据 ----------
     /// 进页收尾 —— 2026-10-13 run 63 从 body 内联的 .onAppear 闭包里抽出 (巨型 body 里那段报 type-check 超时)。
     private func onRecordsAppear() {
+        // 2026-10-15 走查: 908 的开场过滤策略原先**只在视图构造时生效一次** —— 本页在 TabView 里
+        // 长期存活, `filters` 是构造时读的 @State, 之后每次进记录页都不会重读, 于是
+        // 「每次都从全部开始 / 每次默认只看告警」这两档从第二次进场起就形同虚设
+        // (设置页那句"只改变进入记录页时的起点"落了空)。进场就按策略重取一次, 来源与构造时一致。
+        filters = QueryFilters.load(mac: DB.preferredMac())
         loadFromCache()
         // 566 开场恢复成员选择。908 的策略**不在这里重复判**: 策略是 QueryFilters.load 负责的
         // (选"每次空白"时它返回的就是空对象, member 自然为空) —— 这里再判一次就是两套规则。
@@ -3335,7 +3353,7 @@ struct AlarmKindsSheet: View {
                 } header: {
                     Text("只看选中的类型 · 已选 \(sel.count) 项")   // 565 只看选中的类型
                 } footer: {
-                    Text("不选 = 不限类型。列表按锁端日志实际有的告警类型给出; 协议无「胁迫」类告警, 不列 (与 725 同口径)。")
+                    Text("不选 = 不限类型。列表按锁端日志实际有的告警类型给出; 协议无「胁迫」类告警, 不列。")
                         .font(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                 }

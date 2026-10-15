@@ -25,7 +25,12 @@ struct LockOverviewView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: DS.Space.m) {
-                    if usages.isEmpty {
+                    // 2026-10-15 走查: `loaded` 这一位在 .task 里置真、**全文件没有任何一处读它** ⇒
+                    // 有锁的用户首帧拿到的是 `usages = []`，于是先闪一屏"还没有门锁 / 添加第二把门锁后…"，
+                    // 下一拍数据到了再换成对比卡。空态要分"还没读"与"真的没有"两档。
+                    if !loaded {
+                        ProgressView().padding(DS.Space.xl)
+                    } else if usages.isEmpty {
                         Card {
                             EmptyState(systemImage: "lock.square.stack",
                                        title: "还没有门锁",
@@ -192,14 +197,17 @@ struct LockOverviewView: View {
                                     .frame(width: 34, alignment: .trailing)
                                     .accessibilityLabel("开门 \(u.opens30d) 次")
                                 // 778 告警率对比列
-                                Text(u.alarms30d == 0 ? "无告警" : String(format: "告警 %.0f%%", u.alarmRate * 100))
+                                // 2026-10-15 走查: 这张表是全量 map 出来的 (LockStats.usage), 从没同步过的锁
+                                // 也在行里, 它的 alarms30d 是**没人写过**的 0 —— 原先这一格把 0 念成"无告警"。
+                                // 本仓在图标行那条注释里已经定过口径: 要写"没有读数"而不是"没有告警"。
+                                Text(!u.logged ? "未读数" : (u.alarms30d == 0 ? "无告警" : String(format: "告警 %.0f%%", u.alarmRate * 100)))
                                     .font(.caption2)
                                     .monospacedDigit()
-                                    .foregroundStyle(u.alarms30d == 0 ? DS.Palette.textSub : (high ? DS.Palette.danger : DS.Palette.warn))
+                                    .foregroundStyle((!u.logged || u.alarms30d == 0) ? DS.Palette.textSub : (high ? DS.Palette.danger : DS.Palette.warn))
                                     .frame(width: 62, alignment: .trailing)
                             }
                             .accessibilityElement(children: .combine)
-                            .accessibilityLabel("\(u.name)\(high ? ", 告警偏高" : ""), 近 30 天开门 \(u.opens30d) 次, \(u.alarms30d == 0 ? "无告警" : "告警占比 \(Int((u.alarmRate * 100).rounded()))%")")
+                            .accessibilityLabel("\(u.name)\(high ? ", 告警偏高" : ""), 近 30 天开门 \(u.opens30d) 次, \(!u.logged ? "这台锁还没有读数" : (u.alarms30d == 0 ? "无告警" : "告警占比 \(Int((u.alarmRate * 100).rounded()))%"))")
                         }
                         .frame(minHeight: DS.Hit.min)
                         .contentShape(Rectangle())
@@ -428,9 +436,12 @@ struct LockOverviewView: View {
         return max(pwdRatio, fpRatio)
     }
     private func capText(_ u: LockUsage) -> String {
+        // 2026-10-15 走查: 容量没读到时 (pwdCap/fpCap ≤ 0) 印的是**本机台账**的条数 —— 773 那条兜底。
+        // 屏上却看不出这一点: "密码 0 条"会被读成"锁里没有密码", 而真实情况可能是"这台锁的容量没读回来、
+        // 台账里也没记过"。给一个来源后缀, 让这一格说的是它真正代表的东西。
         let pwd = u.pwdCap > 0 ? "\(u.pwdUsed)/\(u.pwdCap)" : "\(u.pwdUsed) 条"
         let fp = u.fpCap > 0 ? "\(u.fpUsed)/\(u.fpCap)" : "\(u.fpUsed) 枚"
-        return "密码 \(pwd) · 指纹 \(fp)"
+        return "密码 \(pwd) · 指纹 \(fp)" + (hasKnownCap(u) ? "" : " · 按台账")
     }
 
     // ---------- 784 固件版本对照表 (+769 绑定时间标注) ----------

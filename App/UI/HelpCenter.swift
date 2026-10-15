@@ -164,7 +164,7 @@ struct DataFlowPage: View {
     var body: some View {
         List {
             Section {
-                flowRow("lock.shield.fill", "门锁内", "开门日志、电量、固件 — 蓝牙直读, 只在本地缓存最近 100 条")
+                flowRow("lock.shield.fill", "门锁内", "开门日志、电量、固件 — 蓝牙直读, 本地缓存最多 300 条 (单次拉取上限 100 条)")
                 flowRow("key.horizontal.fill", "本机存储", "钥匙串、密码/指纹台账、家人档案 — 全部落在本机, 无网络")
                 flowRow("externaldrive.fill", "备份文本", "由你主动导出/粘贴导入; 坚果云走你的账号, 口令不落盘")
                 flowRow("line.3.horizontal", "不经过任何服务器", "厂商云已停服, App 无在线功能、无遥测 — 唯一会联网的是你主动配置的 WebDAV 备份")
@@ -206,10 +206,15 @@ struct CreditsPage: View {
         List {
             Section("许可") {
                 creditRow("SF Symbols", "Apple · SFLicense 授权, 全部图标为系统符号, 无图片资源")
-                creditRow("SwiftUI / TipKit", "Apple 系统框架, 随系统更新")
+                // 2026-10-15 走查: 这一行点名的 TipKit 全仓没有任何 import (自造的叫 RecoveryTip),
+                // 而 UIKit 才是真用了 29 支文件的那一个。致谢名单里写一个没引进的框架 = 白给一个不存在的名牌。
+                creditRow("SwiftUI / UIKit", "Apple 系统框架, 随系统更新")
             }
             Section("协议移植说明") {
-                creditRow("Zelkova 协议族", "厂商云已停服。指令构造、日志类型表与固件流程按公开固件逆向归档, 见仓库 REVERSE_REPORT.md; 本 App 只实现离线直连, 不复用厂商在线服务")
+                // 2026-10-15 走查: 这句指着一个不存在的文件 —— 仓库里从来没有 REVERSE_REPORT.md
+                // (git 全history 也没有删过它), 界面上按这句话去找就会落到"文件在哪"的死胡同。
+                // 换成两条真存在的: vendor/ 里的那份 JS 基线, 与 docs/CAPABILITY.md 的协议事实面。
+                creditRow("Zelkova 协议族", "厂商云已停服。指令构造、日志类型表与固件流程按公开固件逆向归档, 依据见仓库内 vendor/ 那份基线 (kernel/cmds.js · protocol.js · labels.js); 本 App 只实现离线直连, 不复用厂商在线服务")
                 creditRow("小程序同源", "存储键与台账结构与「离线锁管家」微信小程序一致, 备份文本两端互通")
             }
             Section("开源组件") {
@@ -572,7 +577,11 @@ struct ButlerCertificateView: View {
                     Text("离线锁管家 · 就任证书")
                         .font(.title3.weight(.semibold))
                         .foregroundStyle(DS.heroFg)
-                    Text("完成首启引导 · " + Milestones.dayKey())
+                    // 2026-10-15 走查: 这行原先取 `Milestones.dayKey()` = **今天**, 而完成时刻此前没有任何地方
+                    // 落盘 (kf_onb_ceremony 只是一枚布尔旗标) ⇒ 设置里回看证书, 那个日期每天变一次。
+                    // 改成读完成那一刻钉下的日期；老用户没有这一键就只说"完成首启引导"，不编一个日期。
+                    let doneAt = DB.store.getString("kf_onb_ceremony_at")
+                    Text(doneAt.isEmpty ? "完成首启引导" : "完成首启引导 · " + doneAt)
                         .font(.footnote)
                         .foregroundStyle(DS.heroFg.opacity(0.92))
                     if !Onboarding.role.isEmpty {
@@ -628,7 +637,7 @@ struct DemoLabsView: View {
                 } label: {
                     Label("导入样例备份 (真走恢复管线)", systemImage: "shippingbox")
                 }
-                Text("与真实备份同一条恢复路径 (含 421 自动还原点); 样例全部 demo_ 前缀, 一键清除后净空。")
+                Text("与真实备份同一条恢复路径 (含自动还原点); 样例全部 demo_ 前缀, 一键清除后净空。")
                     .font(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -698,9 +707,17 @@ struct DemoLabsView: View {
                 // 且预习完没有进真正录入的出口 —— 现在每档 10 秒 (共 30 秒), 走完出现"开始真正录入"。
                 // 并写明它只点亮清单, 不碰指纹硬件、不搬任何数据。
                 Toggle("三档节奏预习 (每档 10 秒, 共约 30 秒)", isOn: Binding(
-                    get: { previewStep > 0 },
+                    // 2026-10-15 走查: 这一对 get/set 与 `previewStep` 的三档语义对不上。
+                    // `previewStep` 本来就是 **-1 = 没在预习 / 0..3 = 走到第几档** (见 fpPreviews 的 step
+                    // 与下面 `if previewStep >= 0`), 而 get 写的是 `> 0`、set 关掉时写回 `0`:
+                    //   · 拨上去 ⇒ startPreview() 先把 step 置 0 ⇒ get 仍是 false ⇒ 开关自己弹回"关",
+                    //     十秒后才被那个 Task 推到 1 而"自己亮起来" —— 用户刚碰过它, 它却唱反调;
+                    //   · 拨下来 ⇒ 写回 0 而不是 -1 ⇒ `previewStep >= 0` 成立, 那张清单留在屏上,
+                    //     第一格「按压指纹头 1 秒」还被画成已打勾, "预习完毕 —" 也一起挂着。
+                    // 两处都改回按那个哨兵判: 开关说的是"有没有这场预习", 与面板的显示条件是同一件事。
+                    get: { previewStep >= 0 },
                     set: { on in
-                        if on { startPreview() } else { previewTask?.cancel(); previewStep = 0 }
+                        if on { startPreview() } else { previewTask?.cancel(); previewStep = -1 }
                     }))
                 Text("预习只点亮下面这张节奏清单 —— 不触碰指纹硬件, 不写入任何凭证数据。")
                     .font(.caption2)

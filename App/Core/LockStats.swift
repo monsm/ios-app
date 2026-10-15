@@ -267,6 +267,10 @@ struct LockUsage: Identifiable {
     var opens30d: Int = 0        // 开门类 (type 1-5)
     var alarms30d: Int = 0       // 告警类 (6 电量低/7 撬锁/10 试错锁定/13 指纹告警/224 键盘锁定)
     var lastOpenAt: String = ""  // 最近一次开门 (日志缓存内)
+    /// 这台锁**有没有日志缓存**。`usage()` 是对 `DB.keychains()` 全量 map 出来的, 从未同步过的锁也在集合里、
+    /// 各项计数天然是 0 —— 而 0 与"没读到"是两件事 (本文件 recentAlarmMacs 那条注释就写着这个口径:
+    /// 界面要标"没有读数"而不是"没有告警")。这一位把那句话变成可以判的数据。
+    var logged: Bool = false
     var power: Int = -1          // 快照电量
     var snapAt: Double = 0       // 快照采样时刻 (291 溯源)
     var fw: String = ""          // 固件 (钥匙串优先, 快照兜底)
@@ -322,6 +326,7 @@ enum LockStats {
                     u.lastOpenAt = l.lockTimeStr
                 }
             }
+            u.logged = !logs.isEmpty   // 缓存是空的 ≠ 这台锁没有告警, 只是从没同步过
             let snap = DB.readStatus(kc.mac)
             u.power = snap?.powerLevel ?? -1
             u.snapAt = snapAt(kc.mac)

@@ -593,10 +593,11 @@ struct AddPwdView: View {
                     }
                 }
                 .pickerStyle(.inline)
-                if useTemplate {
-                    Toggle("备注自动填命名模板 (谁-哪里-何时)", isOn: $useTemplate)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+                // 2026-10-15 走查: 这一枚原先包在 `if useTemplate` 里 ⇒ 关掉它的那一按顺手把自己从屏上摘掉,
+                // 想再打开只能退出这一页重进 (@State 回到默认 true)。自我隐藏的开关是"点了找不到"的一种:
+                // 控制项要一直在那儿, 尤其是它默认开着、用户随时可能改主意的时候。
+                Toggle("备注自动填命名模板 (谁-哪里-何时)", isOn: $useTemplate)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Section {
                 BusyButton(title: "添加密码", systemImage: "key.fill", isBusy: busy) {
@@ -618,7 +619,7 @@ struct AddPwdView: View {
         .navigationTitle("添加密码")
         .scrollContentBackground(.hidden)
         .dsScreenBackground()
-        .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("关闭") { dismiss() } } }
+        .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button(busy ? "写入中…" : "关闭") { dismiss() }.disabled(busy) } } .interactiveDismissDisabled(busy)   // 2026-10-15 走查: 写锁在飞时不给退出入口
     }
 
     var body: some View {
@@ -635,14 +636,21 @@ struct AddPwdView: View {
         guard pwdOK else { app.showToast("请输入6~8位数字密码"); return }
         guard app.current != nil else { app.showToast("请先选择门锁"); return }
         confirmDestructive("下发临时密码",
-                          "将把密码「\(String(repeating: "·", count: pwd.count))」以明文下发给门锁「\(app.displayName)」，10 分钟后自动失效。临时密码无法在 App 内提前作废，确定下发吗？",
+                          // 2026-10-15 走查(第七批更正): 这句原文写「临时密码无法在 App 内提前作废」—— 假的。
+                          // 密码列表里的单条删除与批量删除都走 `app.lock.pwdDelete(p.alias)`，两处都不排除 `p.temp`
+                          // ⇒ 在 App 里删这条就是向锁端发删除，能提前收回。改成说清楚"锁端 10 分钟自己失效 + 要提前收回删这条"。
+                          "将把密码「\(String(repeating: "·", count: pwd.count))」以明文下发给门锁「\(app.displayName)」，锁端 10 分钟后自动失效；要提前收回，就在密码列表里删除这条（会一并向锁端发删除）。确定下发吗？",
                           confirmTitle: "下发") {
             Task { await self.submitTemp() }
         }
     }
 
     private func submit(permanent: Bool) async {
-        guard let kc = app.current, !busy else { return }
+        // 2026-10-15 走查: 没有选中锁时原先**静默 return**, 而同页另一条路径 ("请先选择门锁") 与
+        // 钥匙串那页 ("请先配对门锁") 都会说一句话 —— 同一页两种收法, 用户看到的就是"按钮点了没反应"。
+        // busy 那一半仍保持静默: 忙碌时按钮自己就写着"处理中…"并禁用。
+        guard let kc = app.current else { app.showToast("请先选择门锁"); return }
+        guard !busy else { return }
         guard pwdOK else { app.showToast("请输入6~8位数字密码"); return }
         busy = true
         defer { busy = false }
@@ -663,7 +671,10 @@ struct AddPwdView: View {
                 // 918 命名模板 "谁-哪里-何时": 锁端无名称字段, 台账本地占位建议
                 let who = owner.map { CredentialOrg.ownerName($0) } ?? "未归属"
                 let when = permanent ? "长期" : (fromDate.formatted(.dateTime.month().day()) + "-" + toDate.formatted(.dateTime.month().day()))
-                note = who + "-大门-" + when
+                // 2026-10-15 走查: "哪里"取锁档案里的场所 (这一页上方就在写 meta.place)，不再写死"大门"；
+                // 场所是空的就**省略这一段** —— 拼出一个用户没填过的位置，比少一段更假。
+                let where_ = LockArchive.meta(kc.mac).place.trimmingCharacters(in: .whitespaces)
+                note = who + (where_.isEmpty ? "-" : "-" + where_ + "-") + when
             }
             let rec = LedgerPwd(alias: alias, from: from, to: to, temp: false,
                                 at: Date().timeIntervalSince1970 * 1000, pwd: pwd, owner: owner, note: note)
@@ -677,7 +688,8 @@ struct AddPwdView: View {
     }
 
     private func submitTemp() async {
-        guard let kc = app.current, !busy else { return }
+        guard let kc = app.current else { app.showToast("请先选择门锁"); return }   // 2026-10-15 走查: 同 submit, 别再静默吞掉这一次点击
+        guard !busy else { return }
         guard pwdOK else { app.showToast("请输入6~8位数字密码"); return }
         busy = true
         defer { busy = false }
@@ -690,7 +702,9 @@ struct AddPwdView: View {
             var note = ""
             if useTemplate {
                 let who = owner.map { CredentialOrg.ownerName($0) } ?? "未归属"
-                note = who + "-访客-10分钟"
+                // 同上: 临时码这一支的"哪里"也取场所，不再写死。
+                let where_ = LockArchive.meta(kc.mac).place.trimmingCharacters(in: .whitespaces)
+                note = who + (where_.isEmpty ? "-" : "-" + where_ + "-") + "10分钟"
             }
             let rec = LedgerPwd(alias: alias, from: f.string(from: from), to: f.string(from: to), temp: true,
                                 at: Date().timeIntervalSince1970 * 1000, pwd: pwd, owner: owner, note: note)
@@ -811,7 +825,8 @@ struct StartAddFpView: View {
     }
 
     private func start() async {
-        guard let kc = app.current, !busy else { return }
+        guard let kc = app.current else { app.showToast("请先选择门锁"); return }   // 2026-10-15 走查: 同上, 静默 return 看着像按钮坏了
+        guard !busy else { return }
         busy = true
         error = ""
         // 重试必须清空: onPress 是**累加**式回填，不清就会出现"9/8"这种读数 (旧写法整批赋值天然不会)
@@ -1354,7 +1369,9 @@ struct FirmwareView: View {
     @State private var showPicker = false
     @State private var running = false
     @State private var failed = false
+    @State private var failReason = ""   // 2026-10-15 走查: 单锁失败原先只置 failed, 原因被丢掉 (队列那侧有逐把 note, 单锁反倒没有)
     @State private var showUpgradeConfirm = false
+    @State private var showQueueConfirm = false   // 144 队列也要过同一道确认 (原先它直接开刷)
     @State private var stage = 0              // 138: 0 准备 / 1 传输 / 2 校验
     @State private var pct = 0.0
     @State private var remainText = ""        // 139 剩余时间
@@ -1401,8 +1418,13 @@ struct FirmwareView: View {
         return ("与当前版本相同", .neutral)
     }
 
-    var body: some View {
-        NavigationStack {
+    /// 内容是否已经嵌在外部导航容器里。2026-10-15 走查 §7.4-16: 本页自带 NavigationStack, 而设备页快捷格
+    /// 的 `quickDestination` 是 **push** 进来它的 (外面那层栏已经在) ⇒ 不传 true 就叠出两层导航栏。
+    /// 形状照同文件上方 `AddPwdView` / `StartAddFpView` 的 embedded 抄 —— 作者已有的解法, 不另造第三套。
+    var embedded: Bool = false
+
+    @ViewBuilder
+    private var content: some View {
             List {
                 if running {
                     progressSection       // 138/139/140
@@ -1445,12 +1467,27 @@ struct FirmwareView: View {
             } message: {
                 Text("升级过程门锁会重启并进入 DFU 模式，期间无法开门。若中途失败必须重新升级直到成功。")
             }
+            // 144 队列与单锁同一道确认 (形状逐字照抄上面那段): 一次点下去要刷 N 把, 更该先问一句
+            .confirmationDialog("排队逐把升级", isPresented: $showQueueConfirm, titleVisibility: .visible) {
+                Button("开始升级 \(queueSel.count) 把", role: .destructive) { Task { await runQueue() } }
+                Button("取消", role: .cancel) { }
+            } message: {
+                Text("每把都会重启并进入 DFU 模式，期间无法开门；一把失败不中断其余各把。上面那张体检单是按单把估的电量与时间，\(queueSel.count) 把请把这个时长乘以 \(queueSel.count)。")
+            }
             .confirmationDialog("升级进行中", isPresented: $showLeave, titleVisibility: .visible) {
                 Button("继续等待", role: .cancel) { }
                 Button("仍要离开 (传输会中断)", role: .destructive) { DFURunner.cancelActive(); dismiss() }
             } message: {
                 Text("固件传输中断后没有断点续传, 需要整包重传。建议等传输结束后再离开。")
             }
+    }
+
+    var body: some View {
+        // AnyView 擦平两分支类型差异 (与 AddPwdView 同一写法): 两支只差最外层那一只容器
+        if embedded {
+            AnyView(content)
+        } else {
+            AnyView(NavigationStack { content })
         }
     }
 
@@ -1639,8 +1676,16 @@ struct FirmwareView: View {
                     }
                     if !queueSel.isEmpty {
                         BusyButton(title: "排队逐把升级 (\(queueSel.count) 把)",
-                                   systemImage: "square.stack.3d.up", isBusy: running) {
-                            Task { await runQueue() }
+                                   systemImage: "square.stack.3d.up", isBusy: running,
+                                   disabled: fw == nil || !checklistOk) {
+                            // 2026-10-15 走查: 这颗原先既不查体检单也不弹确认, 一点就直接开刷 N 把 ——
+                            // 而下面单锁那颗两样都有 (1442 那张 confirmationDialog)。DFU 是不可逆动作
+                            // (锁重启进 bootloader、期间不能开门、断了只能整包重传), 门槛按"几把"分叉
+                            // 是反着的: 一次点击覆盖的锁越多, 该问的那一句越不能省。
+                            // 如实写下这一道闸**没覆盖到**的: checklistOk 里的电量/时间两项都是按
+                            // app.current 那一把估的 (battOk 读当前锁), 队列里其余各把的电量这页读不到
+                            // —— 逐把连一次再决定要等一次真机窗口, 不在这里假装已经做了。
+                            showQueueConfirm = true
                         }
                     }
                     if !queueNote.isEmpty {
@@ -1807,6 +1852,14 @@ struct FirmwareView: View {
     @ViewBuilder
     private var failureSection: some View {
         Section("升级失败") {
+            // 2026-10-15 走查: 失败原因原先被丢掉 —— catch 里只置 failed, 这一屏只剩四条通用排查;
+            // 同一条 DFU 链的队列版 (queueOutcomes) 每条都带 note, 单锁反倒不说。补上实际那一句。
+            if !failReason.isEmpty {
+                Label("本次失败: " + failReason, systemImage: "xmark.octagon")
+                    .font(.footnote)
+                    .foregroundStyle(DS.Palette.danger)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             VStack(alignment: .leading, spacing: DS.Space.s) {
                 Label("门锁没有损坏", systemImage: "lock.shield")
                     .font(.headline)
@@ -1886,10 +1939,21 @@ struct FirmwareView: View {
         queueOutcomes = []
         queueNote = ""
         defer { running = false }
-        let macs = queueSel.sorted()
+        // 2026-10-15 走查: 队列原先只跑传输 —— 既不写 147 升级历史, 也不做 148 版本复核回写,
+        // 而单锁那条链 (upgrade()) 两样都有。少后一样的后果不是"台账少一行"这么轻: 刷成功的锁
+        // 在台账里固件版本仍是旧值, 下次选中它打开这一页就判成"低于当前版本 / 推荐升级"。
+        let targets = app.devices.filter { queueSel.contains($0.mac) }.sorted { $0.mac < $1.mac }
+        guard !targets.isEmpty else { queueNote = "队列里选的那些锁已经不在了"; return }
+        // onStep 只给序号与显示名、不给 mac; runUpgradeQueue 串行且每把恰好 append 一条 outcome,
+        // 所以 outcomes[i] 与 targets[i] 同下标 (下面用 zip 走, 不靠下标硬取)。起点按下标记,
+        // 用来算每一把自己那一刻的 at 与 ms —— 串行意味着"下一把的起点"就是"这一把的终点"。
+        var startAt: [Int: Double] = [:]
         let outcomes = await DFURunner.runUpgradeQueue(
-            lock: app.lock, macs: macs, firmware: fw,
-            onStep: { i, n, name in queueNote = "第 \(i)/\(n) 把: \(name)" },
+            lock: app.lock, macs: targets.map { $0.mac }, firmware: fw,
+            onStep: { i, n, name in
+                startAt[i - 1] = Date().timeIntervalSince1970
+                queueNote = "第 \(i)/\(n) 把: \(name)"
+            },
             onProgress: { p in
                 switch p {
                 case .switchingDfu, .connecting: stage = 0
@@ -1903,15 +1967,34 @@ struct FirmwareView: View {
                 }
             })
         queueOutcomes = outcomes
-        let ok = outcomes.filter { $0.ok }.count
+        let endAt = Date().timeIntervalSince1970
+        var ok = 0
+        for (i, pair) in zip(outcomes, targets).enumerated() {
+            let (o, kc) = pair
+            let t0 = startAt[i] ?? endAt
+            let t1 = i + 1 < outcomes.count ? (startAt[i + 1] ?? endAt) : endAt
+            if o.ok { ok += 1 }
+            // name 取固件包名、at 取毫秒、ok=false 也照样记一笔 —— 三条都与单锁那段同口径,
+            // 两处各写一套迟早对不上 (本仓 §10 反复实撞过这一族)。
+            BatteryCare.addDFURecord(DFURecord(mac: o.mac, name: fw.sourceName,
+                                               from: kc.fw, to: fw.version ?? "",
+                                               at: t0 * 1000, ok: o.ok,
+                                               ms: max(0, t1 - t0) * 1000))
+        }
         queueNote = "队列结束: 成功 \(ok) / 共 \(outcomes.count) 把"
         if ok == outcomes.count { UINotificationFeedbackGenerator().notificationOccurred(.success) }
+        // 148: 逐把复核, 沿用单锁那段的同一判据 —— 只有真读回版本且与包版本一致才回写台账。
+        // verifyText 是单锁的显示位, 跑完这里留的是最后一把的复核结论; 上面那行队列汇总不受它影响。
+        for pair in zip(outcomes, targets) where pair.0.ok {
+            await verifyAfterUpgrade(pair.1, fw)
+        }
     }
 
     private func upgrade() async {
         guard let fw, let kc = app.current, !running else { return }
         running = true
         failed = false
+        failReason = ""
         verified = false
         verifyText = ""
         stage = 0
@@ -1944,6 +2027,7 @@ struct FirmwareView: View {
             await verifyAfterUpgrade(kc, fw)   // 148
         } catch {
             failed = true
+            failReason = error.localizedDescription
             BatteryCare.addDFURecord(DFURecord(mac: kc.mac, name: fw.sourceName,
                                                from: curFw, to: fw.version ?? "",
                                                at: Date().timeIntervalSince1970 * 1000, ok: false,
@@ -2059,7 +2143,7 @@ struct KeychainHWView: View {
             .scrollContentBackground(.hidden)
             .dsScreenBackground()
             .task { reload() }
-            .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("关闭") { dismiss() } } }
+            .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button(busy ? "写入中…" : "关闭") { dismiss() }.disabled(busy) } } .interactiveDismissDisabled(busy)   // 2026-10-15 走查: 写锁在飞时不给退出入口
         }
     }
 
@@ -2086,8 +2170,11 @@ struct KeychainHWView: View {
                                tone: st.power < 0 ? .neutral : (st.power <= 20 ? .warn : .ok))
                     MetricTile(systemImage: "key",
                                label: "钥匙",
-                               // -1 = 尚未读到钥匙串状态, 显示"—"而不是 "-1"
-                               value: st.ekeyCount < 0 ? "—" : "\(st.ekeyCount) / \(st.ekeyAmount)",
+                               // -1 = 该字段没读到。两侧是**各自独立**解析的 (KLV#24 与 #25 各默认 -1,
+                               // HardwareService.parseKCStatus), 所以"读到了存量、没读到上限"是正常回字 ——
+                               // 原先只挡 count 那侧, 屏上就印出 "3 / -1" 这种把缺失当读数的数。
+                               value: st.ekeyCount < 0 ? "—"
+                                    : (st.ekeyAmount < 0 ? "\(st.ekeyCount) / —" : "\(st.ekeyCount) / \(st.ekeyAmount)"),
                                emphasized: false)
                     MetricTile(systemImage: "cpu",
                                label: "固件",
@@ -2170,7 +2257,8 @@ struct KeychainHWView: View {
     }
 
     private func writeKey(_ d: Dongle) async {
-        guard let kc = app.current, !busy else { return }
+        guard let kc = app.current else { app.showToast("请先选择门锁"); return }   // 2026-10-15 走查: 下面那句"请先配对门锁"会说, 上面这句却静默 = 同一条链两种收法
+        guard !busy else { return }
         guard !kc.skey.isEmpty, kc.pid != 0 else { app.showToast("请先配对门锁"); return }
         busy = true
         defer { busy = false }
@@ -2182,7 +2270,8 @@ struct KeychainHWView: View {
     }
 
     private func deleteKey(_ d: Dongle) async {
-        guard let kc = app.current, !busy else { return }
+        guard let kc = app.current else { app.showToast("请先选择门锁"); return }   // 2026-10-15 走查: 与 writeKey 同一条口径
+        guard !busy else { return }
         busy = true
         defer { busy = false }
         do {
@@ -2269,7 +2358,7 @@ struct GatewayView: View {
             .scrollContentBackground(.hidden)
             .dsScreenBackground()
             // sheet 呈现时必须自带退出入口, 否则用户出不去
-            .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("关闭") { dismiss() } } }
+            .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button(running ? "写入中…" : "关闭") { dismiss() }.disabled(running) } } .interactiveDismissDisabled(running)   // 2026-10-15 走查: 写锁在飞时不给退出入口
             .task { reload() }
         }
     }
@@ -2362,9 +2451,15 @@ struct GatewayView: View {
         error = ""
         defer { running = false }
         do {
+            let sentWifi = ssid
             _ = try await HardwareService.shared.provisionGateway(ssid: ssid, password: pwd) { s in steps.append(s) }
             ssid = ""; pwd = ""
             confirmed = false
+            // 2026-10-15 走查: 成功这一支原先只清空表单 + 退回第一步, 而"配网进度"那段只在
+            // confirmed == true 的那一支里渲染 —— 于是连服务回调最后那句"添加成功!"也一起没了,
+            // 成功与"点了没反应"完全同形 (失败反倒看得见, error 走的是另一支)。补一句结论,
+            // 并把话说准: 到这里为止被网关 errCode 0 认下的是"WiFi 写入", 联网状态得等它自己上报。
+            app.showToast("配网指令已被网关接受 · 正在用「\(sentWifi)」重连, 联网状态稍后在下方列表复核")
         } catch {
             self.error = error.localizedDescription
         }
@@ -2466,7 +2561,7 @@ struct MembersView: View {
                         showCenter = true
                     } label: {
                         Image(systemName: "person.2.badge.gearshape")
-                            .accessibilityLabel("成员中心 (788/家庭协作)")
+                            .accessibilityLabel("成员中心 (家庭协作)")
                     }
                 }
             }
@@ -2619,7 +2714,7 @@ struct MembersView: View {
         let msg = preview.isEmpty
             ? "确定要删除「\(m.name)」吗？TA 名下没有台账凭证。"
             // 单行字面量里不能有裸换行 (Swift 语法错): 原文的换行全部写成 \n 转义
-            : "删除「\(m.name)」后, 名下 \(preview.count) 条凭证将转为未分配并入回收站 (可整组还原 501):\n"
+            : "删除「\(m.name)」后, 名下 \(preview.count) 条凭证将转为未分配并入回收站 (可整组还原):\n"
               + preview.prefix(5).joined(separator: "\n")
               + (preview.count > 5 ? "\n…" : "")
               + "\n· 只移除档案: 只动本机台账, 锁里的指纹与密码不会被收回, TA 仍能开门。"

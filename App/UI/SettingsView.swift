@@ -19,6 +19,12 @@ struct SettingsView: View {
     @State private var showManual = false
     @State private var showDiag = false   // 587: 记录详情低电告警带 mac 过来 → 切锁并推诊断页
     @State private var showCare = false   // 1013: 保养到期通知带 mac 过来 → 切锁并推维护页 (与 587 同构)
+    // 2026-10-15 走查: 两枚"目标页自带 NavigationStack"的入口改用 sheet 呈现 (见 memberFamilyRows 注释)
+    @State private var showUnclaimed = false
+    @State private var showFamilySettings = false
+    // 2026-10-15 走查: 这两个目标页也自带 NavigationStack, 同样只能走 sheet
+    @State private var showSecurity = false
+    @State private var showHouseCleaning = false
     // 包14: 27 设置内搜索 — 顶部搜索框过滤全部设置项
     @State private var query = ""
     // 乱源治理第 4 批: 五组筛选的当前组。nil = 全部 (默认态与分组之前完全一样)。
@@ -63,64 +69,88 @@ struct SettingsView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                searchTextRow
-                searchResults
-                // 乱源治理第 4 批: 五组筛选片。默认 nil = 全部 ⇒ 这一屏与加这批之前逐字一致，
-                // 谁不碰它就没有任何行为变化；碰了是把 17 节先筛成 3~6 节。
-                SettingsGroupChips(selection: $groupFilter)
-                if settingsSectionShown(groupFilter, .daily) { lockSection }
-                if settingsSectionShown(groupFilter, .daily) { deviceManageSection }
-                if settingsSectionShown(groupFilter, .data) { securitySection }
-                if settingsSectionShown(groupFilter, .daily) { unlockSection }
-                if settingsSectionShown(groupFilter, .look) { timeSection }
-                if settingsSectionShown(groupFilter, .daily) { autoOpenSection }
-                if settingsSectionShown(groupFilter, .keys) { familySection }
-                if settingsSectionShown(groupFilter, .data) { toolsSection }
-                if settingsSectionShown(groupFilter, .data) { drillSection }
-                if settingsSectionShown(groupFilter, .data) { applockSection }
-                if settingsSectionShown(groupFilter, .look) { a11ySection }
-                if settingsSectionShown(groupFilter, .look) { appearanceSection }
-                if settingsSectionShown(groupFilter, .help) { memorySection }
-                if settingsSectionShown(groupFilter, .daily) { reminderSection }
-                if settingsSectionShown(groupFilter, .daily) { alertToneSection }
-                if settingsSectionShown(groupFilter, .help) { helpSection }
-                if settingsSectionShown(groupFilter, .help) { aboutSection }
-            }
-            .navigationTitle("设置")
-            .scrollContentBackground(.hidden)
-            .dsScreenBackground()
-            .sheet(isPresented: $showMembers) { MembersView() }
-            .sheet(isPresented: $showKeychainHW) { KeychainHWView() }
-            .sheet(isPresented: $showGateway) { GatewayView() }
-            .sheet(isPresented: $showFirmware) { FirmwareView() }
-            .sheet(isPresented: $showDeviceInfo) { DeviceInfoView() }
-            .sheet(isPresented: $showBackup) { BackupView() }
-            .sheet(isPresented: $showMessages) { MessagesView() }
-            .sheet(isPresented: $showAdd) { AddDeviceView() }
-            .sheet(isPresented: $showOverview) { LockOverviewView() }
-            .sheet(isPresented: $showManage) { DeviceManageView() }
-            .sheet(isPresented: $showManual) {
-                NavigationStack { ManualPage() }
-                    .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { showManual = false } } }
-            }
-            // 587: 诊断页用 sheet 呈现 (设置栈里那行 NavigationLink 仍走 push, 两条入口同一个页面)。
-            // 为什么不用 navigationDestination(isPresented:): 全仓无先例, 而 sheet+NavigationStack 与
-            // showManual 那一段逐字同构 —— 无编译器的机器上, 复用已验证的写法是唯一稳的取向。
-            .sheet(isPresented: $showDiag) {
-                NavigationStack { DiagnosticsView() }
-                    .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { showDiag = false } } }
-            }
-            // 1013: 保养通知落点, 与 showDiag 逐字同构 (复用已验证的 sheet+NavigationStack 写法)
-            .sheet(isPresented: $showCare) {
-                NavigationStack { MaintenanceView() }
-                    .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { showCare = false } } }
-            }
-            .task { landPendingDiag(app.pendingDiag) }              // 冷启动/首次挂载: 值已挂着
-            .onChange(of: app.pendingDiag) { _, m in landPendingDiag(m) }
-            .task { landPendingCare(app.pendingCare) }              // 1013: 与上两行同构
-            .onChange(of: app.pendingCare) { _, m in landPendingCare(m) }
+            settingsReader
         }
+    }
+
+    /// 2026-10-15 走查: 设置页内搜索命中后要能**滚到那一节**。只切筛选片是不够的 ——
+    /// 命中节常常排在所属分组的第二、第三节 (如「外观」在 .look 组里排第三), 用户还得自己翻。
+    /// 滚动的唯一口子是 ScrollViewReader, 所以 List 外面套一层。
+    /// 拆成两个属性而不是内联进 body: 本仓既有做法就是把巨型表达式拆出来
+    /// (LockKeeperApp 里那几处 "unable to type-check this expression in reasonable time" 同因)。
+    private var settingsReader: some View {
+        ScrollViewReader { proxy in
+            settingsList(proxy)
+        }
+    }
+
+    private func settingsList(_ proxy: ScrollViewProxy) -> some View {
+        List {
+            searchTextRow
+            searchResults(proxy)
+            // 乱源治理第 4 批: 五组筛选片。默认 nil = 全部 ⇒ 这一屏与加这批之前逐字一致，
+            // 谁不碰它就没有任何行为变化；碰了是把 17 节先筛成 3~6 节。
+            SettingsGroupChips(selection: $groupFilter)
+            // 每节挂一枚稳定锚 (`.id`), 供页内搜索 scrollTo 用。锚是字符串常量, 与筛选片无关。
+            if settingsSectionShown(groupFilter, .daily) { lockSection.id(SettingsAnchor.lock) }
+            if settingsSectionShown(groupFilter, .daily) { deviceManageSection.id(SettingsAnchor.deviceManage) }
+            if settingsSectionShown(groupFilter, .data) { securitySection.id(SettingsAnchor.security) }
+            if settingsSectionShown(groupFilter, .daily) { unlockSection.id(SettingsAnchor.unlock) }
+            if settingsSectionShown(groupFilter, .look) { timeSection.id(SettingsAnchor.time) }
+            if settingsSectionShown(groupFilter, .daily) { autoOpenSection.id(SettingsAnchor.autoOpen) }
+            if settingsSectionShown(groupFilter, .keys) { familySection.id(SettingsAnchor.family) }
+            if settingsSectionShown(groupFilter, .data) { toolsSection.id(SettingsAnchor.tools) }
+            if settingsSectionShown(groupFilter, .data) { drillSection.id(SettingsAnchor.drill) }
+            if settingsSectionShown(groupFilter, .data) { applockSection.id(SettingsAnchor.applock) }
+            if settingsSectionShown(groupFilter, .look) { a11ySection.id(SettingsAnchor.a11y) }
+            if settingsSectionShown(groupFilter, .look) { appearanceSection.id(SettingsAnchor.appearance) }
+            if settingsSectionShown(groupFilter, .help) { memorySection.id(SettingsAnchor.memory) }
+            if settingsSectionShown(groupFilter, .daily) { reminderSection.id(SettingsAnchor.reminder) }
+            if settingsSectionShown(groupFilter, .daily) { alertToneSection.id(SettingsAnchor.alertTone) }
+            if settingsSectionShown(groupFilter, .help) { helpSection.id(SettingsAnchor.help) }
+            if settingsSectionShown(groupFilter, .help) { aboutSection.id(SettingsAnchor.about) }
+        }
+        .navigationTitle("设置")
+        .scrollContentBackground(.hidden)
+        .dsScreenBackground()
+        .sheet(isPresented: $showMembers) { MembersView() }
+        .sheet(isPresented: $showKeychainHW) { KeychainHWView() }
+        .sheet(isPresented: $showGateway) { GatewayView() }
+        .sheet(isPresented: $showFirmware) { FirmwareView() }
+        .sheet(isPresented: $showDeviceInfo) { DeviceInfoView() }
+        .sheet(isPresented: $showBackup) { BackupView() }
+        .sheet(isPresented: $showMessages) { MessagesView() }
+        .sheet(isPresented: $showAdd) { AddDeviceView() }
+        .sheet(isPresented: $showOverview) { LockOverviewView() }
+        .sheet(isPresented: $showManage) { DeviceManageView() }
+        // 2026-10-15 走查: 与上面那批 sheet 同款 —— 目标页自带 NavigationStack, 只能走 sheet
+        .sheet(isPresented: $showUnclaimed) { UnclaimedClaimView() }
+        .sheet(isPresented: $showFamilySettings) { MemberFamilySettingsView() }
+        .sheet(isPresented: $showSecurity, onDismiss: { landPendingFocus(app.pendingSettingsFocus) }) { SecurityCenterView() }
+        .sheet(isPresented: $showHouseCleaning) { HouseCleaningPresetView() }
+        .sheet(isPresented: $showManual) {
+            NavigationStack { ManualPage() }
+                .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { showManual = false } } }
+        }
+        // 587: 诊断页用 sheet 呈现 (设置栈里那行 NavigationLink 仍走 push, 两条入口同一个页面)。
+        // 为什么不用 navigationDestination(isPresented:): 全仓无先例, 而 sheet+NavigationStack 与
+        // showManual 那一段逐字同构 —— 无编译器的机器上, 复用已验证的写法是唯一稳的取向。
+        .sheet(isPresented: $showDiag) {
+            NavigationStack { DiagnosticsView() }
+                .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { showDiag = false } } }
+        }
+        // 1013: 保养通知落点, 与 showDiag 逐字同构 (复用已验证的 sheet+NavigationStack 写法)
+        .sheet(isPresented: $showCare) {
+            NavigationStack { MaintenanceView() }
+                .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { showCare = false } } }
+        }
+        .task { landPendingDiag(app.pendingDiag) }              // 冷启动/首次挂载: 值已挂着
+        .onChange(of: app.pendingDiag) { _, m in landPendingDiag(m) }
+        .task { landPendingCare(app.pendingCare) }              // 1013: 与上两行同构
+        .onChange(of: app.pendingCare) { _, m in landPendingCare(m) }
+        // 2026-10-15: 设置 Tab 栈内子页 (安全中心 → 本机密码 / 销毁) 的"去设置…"落点, 同一条形态
+        .task { landPendingFocus(app.pendingSettingsFocus) }
+        .onChange(of: app.pendingSettingsFocus) { _, f in landPendingFocus(f) }
     }
 
     /// 587 落点: 切到本条记录所属锁, 再推诊断页 —— "查看这台锁的诊断"里的"这台锁"要真生效。
@@ -139,35 +169,125 @@ struct SettingsView: View {
         showCare = true
     }
 
+    /// 2026-10-15 落点: 设置 Tab **栈内**子页带回来的"到了之后开什么"。
+    /// 与上面两条同构 —— 那边带 mac、这里带一个落点名, 都是"值挂着 → 设置页收到 → 开面 → 清空"。
+    /// 安全中心那两枚按钮原先只写 `app.tabSelection = 3`, 而它们就在设置 Tab 下, 等于空转。
+    /// 2026-10-15 §4.2 补一条: **被安全中心 sheet 盖住时不许消费**。这一页的所有落点 (备份 sheet /
+    /// 密码 alert) 都挂在被盖住的那层 List 上, 当场开等于开给一个看不见的界面看; 而值一清就再也
+    /// 没人重试。改成"盖着就留着", 由 showSecurity 的 onDismiss 再叫一次 —— 两条路都以"消费即清空"
+    /// 收尾, 所以真机上是开一次还是等人回来才开一次, 都会且只会开一次。
+    private func landPendingFocus(_ f: String?) {
+        guard let f, !f.isEmpty else { return }
+        guard !showSecurity else { return }
+        app.pendingSettingsFocus = nil
+        switch f {
+        case "backup":
+            // 400 销毁前备份闸: 直接开「备份与恢复」(备份工作室在它里面)
+            showBackup = true
+        case "passcode":
+            // 396 随机键位的前提: 直接拉起「设置本机密码」流程
+            setPasscode()
+        case "diag":
+            // 自检黄条与 377 那条快捷条的按钮都写着"去诊断", 而光切 Tab 只把人放在设置页根上 ——
+            // "诊断与运行日志"是这一页里的一行。切过去不等于送到。
+            showDiag = true
+        case "members":
+            // 817/317: 两枚"示例头像/去新建成员"写的是**直达成员入口**, 原来只到设置页根,
+            // 剩下"家人与钥匙 → 成员管理"两跳还得自己找。成员中心到达后仍由 pendingMemberAdd 弹向导。
+            showMembers = true
+        default:
+            // 认不出的落点名**不做任何事**。这一条是本设计的软肋, 如实写下:
+            // 新增落点时这里不会响, 只会退回"点了没反应"那一族。核对办法 = 拿
+            // `grep -rn 'pendingSettingsFocus = "' App --include=*.swift | grep -v '^[^:]*:[0-9]*:[[:space:]]*//'`
+            // 的取值逐个对本 switch 的 case。⚠ 过滤注释要用**整行注释**这一条：写成 `grep -v '//'` 会把
+            // 三行带行尾注释的写入点一起滤掉（实测少算 9→6）。2026-10-15 实测：写入点 9 处 = backup 4 / diag 2 /
+            // members 2 / passcode 1，四个 case 一一对应、无悬空值。
+            // 九处**全部**与 `app.requestTab(3)` 成对：7 处靠它把人先带到设置 Tab（不然这一页没挂载，值没人消费）；
+            // 另 2 处本来就在本 Tab 的「安全中心」sheet 里，那次 requestTab 是同值空转，真正退栈由 §4.2 那套
+            // "安全中心自己收摊 + 设置页 onDismiss 补开"承担。
+            break
+        }
+    }
+
     private var mac: String { app.current?.mac ?? "" }
 
     // ---------- 包14: 27 设置内搜索 + 831 NEW 角标 ----------
     private var searchTextRow: some View {
         Section {
-            TextField("搜索设置 (如: 固件 / 备份 / 主题)", text: $query)
-                .autocorrectionDisabled()
-                .accessibilityLabel("搜索设置项")
+            // 2026-10-14 走查: ① 补放大镜 —— 一个没有图标的输入框在设置页里看着像"又一行标签",
+            // 放大镜是 iOS 搜索框唯一稳定的形状信号; ② 占位符原来是半角括号与半角冒号
+            // ("搜索设置 (如: 固件 / 备份 / 主题)"), 与全页中文混排看着像没写完, 改全角。
+            HStack(spacing: DS.Space.s) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: DS.Icon.sm))
+                    .foregroundStyle(DS.Palette.textSub)
+                    .accessibilityHidden(true)
+                TextField("搜索设置（如：固件 / 备份 / 主题）", text: $query)
+                    .autocorrectionDisabled()
+                    .accessibilityLabel("搜索设置项")
+                // 清空钮: 搜完想回到全部设置时, 不必一个字一个字退格 (删到空为止)
+                if !query.isEmpty {
+                    Button { query = "" } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: DS.Icon.sm))
+                            .foregroundStyle(DS.Palette.textSub)
+                            .frame(minWidth: DS.Hit.min, minHeight: DS.Hit.min, alignment: .trailing)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("清空搜索")
+                }
+            }
         }
     }
+    /// 设置页每一节的滚动锚 (2026-10-15): rawValue 直接当 `.id()` 用 —— 字符串, 稳定且读得懂。
+    /// `group` = 这一节归哪个筛选分组。跳转前必须先切过去, 否则命中节可能压根没被渲染,
+    /// `scrollTo` 会**静默落空** (这正是"点了搜索没反应"的另一种形态)。
+    private enum SettingsAnchor: String {
+        case lock, deviceManage, security, unlock, time, autoOpen, family
+        case tools, drill, applock, a11y, appearance, memory, reminder, alertTone, help, about
+
+        var group: SettingsGroup {
+            switch self {
+            case .lock, .deviceManage, .unlock, .autoOpen, .reminder, .alertTone: return .daily
+            case .security, .tools, .drill, .applock: return .data
+            case .family: return .keys
+            case .time, .a11y, .appearance: return .look
+            case .memory, .help, .about: return .help
+            }
+        }
+    }
+
     /// 27 设置页内搜索 (原句落点"App Store 式设置内搜索"): 命中词映射到对应条目, 直达功能
     private struct SearchHit: Identifiable {
         let id: String
         let title: String
         let icon: String
-        let go: () -> Void
+        /// 命中落在设置页的哪一节 (nil = 这个功能不在本页, 由 `go` 去开 sheet)
+        var anchor: SettingsAnchor? = nil
+        var go: () -> Void = {}
     }
     private var searchHits: [SearchHit] {
         let q = query.trimmingCharacters(in: .whitespaces)
         guard !q.isEmpty else { return [] }
         let all: [SearchHit] = [
-            SearchHit(id: "s.lockprofile", title: "锁档案 (昵称/符号/色标)", icon: "lock") { app.tabSelection = 0 },
+            // 2026-10-14 走查修: 这一排原来有一半的落点是**空转**或**跳错页** ——
+            //   · `app.tabSelection = 3` 的 10 条: 搜索框就在设置页里, 切到"设置" Tab 等于原地不动,
+            //     点一下什么都不发生 (用户会以为搜索坏了);
+            //   · `app.tabSelection = 0` 的 6 条: 把用户送去设备页, 而「静音模式 / 校准门锁时间 /
+            //     维护与保养 / 门锁安全模式 / 开锁偏好 / 锁档案」这些入口全在设置页, 设备页没有它们。
+            // 2026-10-15 补上第二半: 光切筛选片还不够 —— 命中节常常排在所属分组的第二、第三节
+            // (如「外观」在 .look 组里排第三), 用户还得自己翻。现在每条命中带一个 `anchor`,
+            // 由 searchResults 负责"切组 + scrollTo 滚到那一节"。
+            // 不在本页的功能 (开 sheet 的那些) 仍是 `anchor: nil`, 交给 go 直接开。
+            SearchHit(id: "s.lockprofile", title: "锁档案 (昵称/符号/色标)", icon: "lock", anchor: .lock),
             SearchHit(id: "s.devicemanage", title: "设备管理 (排序/分组/批量) — 置顶即启动默认锁", icon: "rectangle.3.group") { showManage = true },
-            SearchHit(id: "s.mute", title: "静音模式", icon: "speaker.slash") { app.tabSelection = 0 },
-            SearchHit(id: "s.synctime", title: "校准门锁时间", icon: "clock.arrow.circlepath") { app.tabSelection = 0 },
-            SearchHit(id: "s.maint", title: "维护与保养", icon: "wrench.and.screwdriver") { app.tabSelection = 0 },
-            SearchHit(id: "s.safemode", title: "门锁安全模式", icon: "shield.lefthalf.filled") { app.tabSelection = 0 },
-            SearchHit(id: "s.unlockopt", title: "开锁偏好 (按住确认/围栏/提示音)", icon: "hand.draw") { app.tabSelection = 0 },
-            SearchHit(id: "s.autoopen", title: "靠近自动开锁 (走近自动开门/距离标定)", icon: "person.walk") { app.tabSelection = 3 },
+            SearchHit(id: "s.mute", title: "静音模式", icon: "speaker.slash", anchor: .lock),
+            SearchHit(id: "s.synctime", title: "校准门锁时间", icon: "clock.arrow.circlepath", anchor: .lock),
+            SearchHit(id: "s.maint", title: "维护与保养", icon: "wrench.and.screwdriver", anchor: .lock),
+            SearchHit(id: "s.safemode", title: "门锁安全模式", icon: "shield.lefthalf.filled", anchor: .security),
+            SearchHit(id: "s.unlockopt", title: "开锁偏好 (按住确认/围栏/提示音)", icon: "hand.draw", anchor: .unlock),
+            SearchHit(id: "s.autoopen", title: "靠近自动开锁 (走近自动开门/距离标定)", icon: "person.walk", anchor: .autoOpen),
             SearchHit(id: "s.members", title: "成员管理", icon: "person.2") { showMembers = true },
             SearchHit(id: "s.keychainhw", title: "蓝牙钥匙串", icon: "key.horizontal") { showKeychainHW = true },
             SearchHit(id: "s.gateway", title: "智能网关", icon: "antenna.radiowaves.left.and.right") { showGateway = true },
@@ -176,26 +296,36 @@ struct SettingsView: View {
             SearchHit(id: "s.backupstudio", title: "备份工作室 (导出向导/恢复/WebDAV策略/换机迁移)", icon: "wrench.and.scissors") { showBackup = true },
             SearchHit(id: "s.messages", title: "动态消息", icon: "bell") { showMessages = true },
             SearchHit(id: "s.logs", title: "诊断与运行日志", icon: "list.bullet.rectangle") { showDiag = true },
-            SearchHit(id: "s.applock", title: "本机数据保护 (应用锁)", icon: "lock.shield") { app.tabSelection = 3 },
-            SearchHit(id: "s.appearance", title: "外观 (主题/品牌色/密度)", icon: "paintbrush") { app.tabSelection = 3 },
-            SearchHit(id: "s.achievements", title: "我的成就", icon: "rosette") { app.tabSelection = 3 },
-            SearchHit(id: "s.care", title: "关怀提醒与公告板", icon: "heart.text.square") { app.tabSelection = 3 },
-            SearchHit(id: "s.maintremind", title: "维护提醒", icon: "bell.badge") { app.tabSelection = 3 },
-            SearchHit(id: "s.demo", title: "演练与演示 (演示模式/样例备份/七天样例)", icon: "theatermasks") { app.tabSelection = 3 },
+            SearchHit(id: "s.applock", title: "本机数据保护 (应用锁)", icon: "lock.shield", anchor: .applock),
+            SearchHit(id: "s.appearance", title: "外观 (主题/品牌色/密度)", icon: "paintbrush", anchor: .appearance),
+            SearchHit(id: "s.achievements", title: "我的成就", icon: "rosette", anchor: .memory),
+            SearchHit(id: "s.care", title: "关怀提醒与公告板", icon: "heart.text.square", anchor: .memory),
+            SearchHit(id: "s.maintremind", title: "维护提醒", icon: "bell.badge", anchor: .reminder),
+            SearchHit(id: "s.demo", title: "演练与演示 (演示模式/样例备份/七天样例)", icon: "theatermasks", anchor: .drill),
             SearchHit(id: "s.faq", title: "常见问题 (FAQ)", icon: "questionmark") { showManual = true },
             SearchHit(id: "s.manual", title: "使用手册", icon: "book") { showManual = true },
-            SearchHit(id: "s.flow", title: "数据流向说明", icon: "arrow.right.circle") { app.tabSelection = 3 },
-            SearchHit(id: "s.credits", title: "致谢与许可", icon: "hands.clap") { app.tabSelection = 3 },
-            SearchHit(id: "s.copycheck", title: "文案体检", icon: "text.badge.checkmark") { app.tabSelection = 3 },   // 664 文案体检
+            SearchHit(id: "s.flow", title: "数据流向说明", icon: "arrow.right.circle", anchor: .help),
+            SearchHit(id: "s.credits", title: "致谢与许可", icon: "hands.clap", anchor: .help),
+            SearchHit(id: "s.copycheck", title: "文案体检", icon: "text.badge.checkmark", anchor: .help),   // 664 文案体检
         ]
         return all.filter { $0.title.localizedCaseInsensitiveContains(q) || $0.id.hasSuffix(q) }
     }
     @ViewBuilder
-    private var searchResults: some View {
+    private func searchResults(_ proxy: ScrollViewProxy) -> some View {
         if !searchHits.isEmpty {
             Section("搜索结果 (\(searchHits.count))") {
                 ForEach(searchHits) { h in
-                    Button { h.go() } label: {
+                    Button {
+                        if let a = h.anchor {
+                            // ① 先把该节所属的分组切过去 —— 否则这一节可能压根没被渲染, scrollTo 会落空
+                            groupFilter = a.group
+                            // ② 再等一拍: 同一帧里新插入的 Section 还没进 List 的布局, 当场 scrollTo 找不到它
+                            DispatchQueue.main.async {
+                                withAnimation(DS.Motion.quick) { proxy.scrollTo(a, anchor: .top) }
+                            }
+                        }
+                        h.go()
+                    } label: {
                         Label(h.title, systemImage: h.icon)
                     }
                 }
@@ -279,7 +409,10 @@ struct SettingsView: View {
     // 而且一把锁都没绑的时候也要进得去 (从备份恢复完的锁要先排序)。
     private var deviceManageSection: some View {
         Section {
-            NavigationLink { DeviceManageView() } label: {
+            // 2026-10-15 走查: DeviceManageView 自带 NavigationStack, 而本页**已经**有一条 sheet 入口
+            // (`showManage`, 页内搜索命中「设备管理」走它) —— 这里再 push 一次既是重复入口, 又是
+            // "自带栈的页被 push" ⇒ 两层导航栏。两条入口并成一条, 统一走 sheet。
+            Button { showManage = true } label: {
                 Label("设备管理 (排序/分组/批量)", systemImage: "rectangle.3.group")
             }
             // 766 拖动排序与置顶同步设
@@ -361,6 +494,9 @@ struct SettingsView: View {
                     Button("清空密码", role: .destructive) { clearPwd() }
                         .disabled(clearingPwd)
                 }
+                // 2026-10-14 走查: 从「家人与钥匙」挪来 (它属于门锁本身, 不属于成员)。
+                // 一加一删成对, 且本节空态那一支本来就带「添加设备」按钮 —— 有锁时才需要"另一把"。
+                Button { showAdd = true } label: { Label("添加另一把锁", systemImage: "plus") }
                 Button("删除设备", role: .destructive) { deleteDevice() }
             }
         }
@@ -432,7 +568,9 @@ struct SettingsView: View {
             NavigationLink("门锁安全模式") { SafemodeIntroView(mode: "safe") }
             note("单次 / 双重验证：决定开一道锁还是两道。")
             // 包7: 安全·隐私·审计中心 (应用锁增强/防窥/审计流水/数据销毁)
-            NavigationLink { SecurityCenterView() } label: {
+            // 2026-10-15 走查: SecurityCenterView 自带 NavigationStack, push 进去会套两层导航栏
+            // (判据见本文件「动态消息」那条注释)。改用 sheet —— 本页已有十余个设置子页走 sheet。
+            Button { showSecurity = true } label: {
                 Label("安全中心 (应用锁/防窥/审计/销毁)", systemImage: "lock.shield")
             }
             note("应用锁、防窥、审计流水与数据销毁都在这页。")
@@ -540,7 +678,7 @@ struct SettingsView: View {
         } header: {
             Text("开锁")
         } footer: {
-            Text("按住圆盘时长 (默认 0.9s, 可在 辅助功能 里 0.4–1.6s 自定, 875) 或上滑触发开锁；关闭「按住确认」后退回轻点直开 (适合单手与 VoiceOver)。误触围栏开启后需先从圆盘边缘拖到中心再执行开锁手势。")
+            Text("按住圆盘时长 (默认 0.9s, 可在 辅助功能 里 0.4–1.6s 自定) 或上滑触发开锁；关闭「按住确认」后退回轻点直开 (适合单手与 VoiceOver)。误触围栏开启后需先从圆盘边缘拖到中心再执行开锁手势。")
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -573,19 +711,31 @@ struct SettingsView: View {
     }
     @ViewBuilder
     private var memberFamilyRows: some View {
-        Button { showMembers = true } label: { Label("成员管理 (含成员中心)", systemImage: "person.2") }
-        NavigationLink { UnclaimedClaimView() } label: { Label("未归属记录认领", systemImage: "questionmark.circle") }   // 791 未归属记录认领
+        Button { showMembers = true } label: { Label("成员管理（含成员中心）", systemImage: "person.2") }
+        // 2026-10-15 走查: 下面两行原为 NavigationLink, 而它们的目标页**自带 NavigationStack**
+        // (UnclaimedClaimView / MemberFamilySettingsView 都是 leading「完成」「保存」+ dismiss 的
+        // sheet 形态) —— push 进去就是内层栈套外层, 两层导航栏。这正是本文件 620 行那条判据
+        // (「MessagesView 自带 NavigationStack, 用 NavigationLink 会嵌套两层导航栏」) 说的形状,
+        // 作者当时的处理就是改用 sheet —— 这里照同一条做法。成员活跃结构 (MemberStackedView)
+        // 没有自带栈, 仍走 push, 不动。
+        Button { showUnclaimed = true } label: { Label("未归属记录认领", systemImage: "questionmark.circle") }   // 791 未归属记录认领
         NavigationLink { MemberStackedView() } label: { Label("成员活跃结构", systemImage: "chart.bar.fill") }   // 798/792 成员活跃结构
-        NavigationLink { HouseCleaningPresetView() } label: { Label("家政周期预设", systemImage: "broom.fill") }   // 483 家政周期预设
-        NavigationLink { MemberFamilySettingsView() } label: { Label("家庭设置: 长辈模式/隐私浏览", systemImage: "hand.raised.fill") }   // 479/794 家庭设置
+        Button { showHouseCleaning = true } label: { Label("家政周期预设", systemImage: "broom.fill") }   // 483 家政周期预设
+        Button { showFamilySettings = true } label: { Label("家庭设置：长辈模式/隐私浏览", systemImage: "hand.raised.fill") }   // 479/794 家庭设置
         Button { showKeychainHW = true } label: { Label("蓝牙钥匙串", systemImage: "key.horizontal") }
-        Button { showAdd = true } label: { Label("添加另一把锁", systemImage: "plus") }
+        // 2026-10-14 走查: 「添加另一把锁」原先挂在本节末尾 —— 它讲的是"再加一把锁", 属于门锁本身,
+        // 与"谁能开门"（家人与钥匙）不是同一件事; 而且本节的 footer 正在解释成员分组, 摆一个添加设备
+        // 在下面读起来像"给这个成员再加一把锁"。已挪进 lockSection 的「门锁」节 (与「删除设备」同处,
+        // 一加一删成对), 空态那一支本来就带「添加设备」按钮。
     }
 
     // ---------- 包6 凭证整理 (491 版本配额 / 497 回收站保留期 / 919 别名显示) ----------
     private var credCareSection: some View {
         Section {
-            Stepper("历史版本配额 \(CredentialOrg.quota(mac)) 版/凭证", value: Binding(   // 491 历史版本配额
+            // 2026-10-14 走查: 原标签「历史版本配额 N 版/凭证」的量纲读不出来 —— "版/凭证" 是
+            // "每凭证几版" 还是 "总共几版"? 同一节下面的「回收站保留 N 天」是单值, 两个 Stepper
+            // 单位不同却并列, 更容易读岔。改成一句能直接念出来的话。
+            Stepper("每个凭证保留 \(CredentialOrg.quota(mac)) 个历史版本", value: Binding(   // 491 历史版本配额
                 get: { CredentialOrg.quota(mac) },
                 set: { DB.store.set("kf_ccred_quota", $0) }), in: 3...30, step: 1)
                 .fixedSize(horizontal: false, vertical: true)
@@ -1091,7 +1241,9 @@ struct SettingsView: View {
                 set: { app.setUnlockOption("kf_duress_tone", $0) }))
                 .disabled(!DB.store.getBool("kf_alert_tone"))
             if DB.store.getBool("kf_alert_tone") {
-                Text("⚠ 打开后, 用胁迫口令放行的那一刻会响三声, 和正常开锁**不一样** —— 站在旁边的人听得出来。"
+                // 2026-10-14 走查: 这条是 `"…" + "…"` 拼的 ⇒ Text 不解析 Markdown, 屏上会出现
+                // `**不一样**`。改走 mdText。
+                mdText("⚠ 打开后, 用胁迫口令放行的那一刻会响三声, 和正常开锁**不一样** —— 站在旁边的人听得出来。"
                      + "本 App 的胁迫通道原本刻意做得与真解锁一模一样, 这一开关是主动放弃那层掩护去换\"我能听见告警\"。只想留痕不要声音, 就让它关着。")   // 390/391 的胁迫通道原本刻意做
                     .font(.caption)
                     .foregroundStyle(DS.Palette.warn)
@@ -1123,7 +1275,9 @@ struct SettingsView: View {
             }
             .pickerStyle(.menu)
             .disabled(!StatusCheckNotice.on)
-            Text(StatusCheckNotice.on && CareSchedule.quietOn && StatusCheckNotice.insideQuiet(StatusCheckNotice.hour)
+            // 2026-10-14 走查: 三元表达式的结果是 String ⇒ Text 不解析 Markdown, 命中免扰时
+            // 屏上会出现 `**没有排上**`。改走 mdText。
+            mdText(StatusCheckNotice.on && CareSchedule.quietOn && StatusCheckNotice.insideQuiet(StatusCheckNotice.hour)
                  ? "现在这条**没有排上**: 免扰时段覆盖 22–08, 你选的 \(StatusCheckNotice.hour):00 正落在里面, 按\"免扰优先\"不排。把免扰关掉, 或把时点挪到 20:00/21:00 才会响。"   // 1031 现在这条
                  : "到点给一条本地通知, 写的是台账里数得出的数 (几把锁、今天连上过几把)。通知不联网不连锁, 锁的真实状态要到场连上才知道。")
                 .font(.caption)

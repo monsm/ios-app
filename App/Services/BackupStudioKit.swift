@@ -137,6 +137,9 @@ enum BackupStudio {
         }
         guard let app = AppState.hostRef else { return }
         if app.appUnlocked && !app.decoyMode {
+            // 2026-10-15 走查 §4.3: 通知正文指着「设置 · 备份」, 原来 requestTab(3) 只到设置页根。
+            // 带落点名, 设置页挂载即开「备份与恢复」。
+            app.pendingSettingsFocus = "backup"
             app.requestTab(3)
             app.showToast("已生成本机还原点 — 口令加密备份与演练在「设置 · 备份」")   // 1018 已生成本机还原点
         } else {
@@ -359,7 +362,11 @@ enum BackupStudio {
             pw += l.pwds.count; fp += l.fps.count
         }
         out["凭证"] = pw + fp
-        out["记录"] = DB.keychains().count      // 每锁一份日志缓存 (条数按卷估算, UI 标"约")
+        // 2026-10-15 走查: 原先这里报 `DB.keychains().count` 并把界面文案写成"锁端日志缓存 (按锁约) 份缓存",
+        // 两头都不对 —— 锁端日志缓存 (`kf_logcache_`) **从不进包** (BackupKit 全文零命中)，而这一档真正裁的是
+        // `globals.trace` 那**一份**本机记录写入轨迹 (见下方 `if !z.records` 那两条)。勾掉它不会让日志消失,
+        // 勾上它也恢复不出锁端日志 —— 报数与单位都说成实际那一件事。
+        out["记录"] = DB.get(BackupBundle.Globals.TraceRec.self, "kf_trace_persist_v1") == nil ? 0 : 1
         out["设置"] = DB.members().count + DB.dongles().count + DB.gateways().count
         return out
     }
@@ -593,7 +600,7 @@ enum BackupStudio {
         }
         guard let data = body.data(using: .utf8),
               let raw = try? JSONDecoder().decode(BackupBundle.self, from: data) else {
-            throw DFUError.msg("口令错误或内容不是备份 (420/453 口令/文件头层)")
+            throw DFUError.msg("口令错误或内容不是备份 (口令层与文件头层都过不了)")
         }
         // 2026-10-14: 比本机新的 schema 直接拒绝 —— 否则字段可能被误读且无任何告警。
         guard raw.schema <= BackupBundle.currentSchema else {
@@ -1052,6 +1059,10 @@ enum BackupStudio {
     /// 442 恢复/迁移落库后立起首验清单: 清掉旧勾, 挂待验标记 (DeviceHomeView 逐锁验证写 kf_migok_)
     static func armFirstChecks() {
         for kc in DB.keychains() { DB.store.remove("kf_migok_" + kc.mac) }
+        // 2026-10-15 走查: 上面这句注释承诺"清掉旧勾", 而这一支原先只清 kf_migok_, **没清 kf_mig_checks**。
+        // 后果是那道"每把锁都要在新机上验一遍"的闸被上一轮自己满足了: 第二次换机迁移一进完成页,
+        // 四格首验全是上一次的勾,「完成迁移」不验任何东西就能点。清掉才是注释说的那件事。
+        DB.store.remove("kf_mig_checks")
         DB.store.set("kf_migrate_pending", ISO8601DateFormatter().string(from: Date()))
     }
 
@@ -1112,9 +1123,9 @@ enum BackupStudio {
     static func firstChecks() -> [String: Bool] {
         DB.store.get([String: Bool].self, "kf_mig_checks") ?? [:]
     }
-    static func markFirstCheck(_ k: String) {
+    static func markFirstCheck(_ k: String, on: Bool = true) {
         var m = firstChecks()
-        m[k] = true
+        m[k] = on   // 2026-10-15 走查: 原先只会写 true —— 取消勾选落不了盘, 而这份字典是完成页那四格的初值
         DB.store.setCodable("kf_mig_checks", m)
     }
     static var firstChecksAllDone: Bool {

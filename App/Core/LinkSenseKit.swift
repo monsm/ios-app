@@ -866,7 +866,11 @@ struct BLEStrip: View {
         switch state {
         case .ready: return "checkmark.circle.fill"
         case .connecting: return "arrow.triangle.2.circlepath"
-        default: return "wifi.slash"
+        // 2026-10-14 走查: 原来是 `wifi.slash` —— 这把锁走的是 BLE, 全 App 不碰网络。
+        // 用带斜杠的 Wi-Fi 图标会让用户以为"要连 Wi-Fi 才能开锁", 而真正该开的是蓝牙。
+        // 换成无线电波图标 (不带斜杠 = 链路空闲, 不是"被关掉"); 「蓝牙已关闭」那条
+        // (BLEOffBanner) 仍用带斜杠的同一族, 两者形状与配色都不同, 不会看混。
+        default: return "antenna.radiowaves.left.and.right"
         }
     }
     private var stTint: Color {

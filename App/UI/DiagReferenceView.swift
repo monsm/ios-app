@@ -9,7 +9,17 @@ struct DiagReferenceView: View {
     @State private var copiedKey: String = ""
     @State private var familyQuery = ""                 // 546 族名过滤
     @State private var template = 0                   // 762 选中的查询模板
+    // 2026-10-15 走查: 「已知晓」那颗按钮原先只调 CrashGuard.consumePending() —— pendingAbnormal 是
+    // 读 UserDefaults 的 static 计算属性, 不是可观察源, 视图不会因此重算: 提示与按钮一起留在屏上,
+    // 看着就是"按了没反应" (再按一次返回 false, 还是一动不动)。加一枚本地旗标参与渲染。
+    @State private var archAcked = false
     private var famsCount: Int { DataHealth.families().count }
+    /// 2026-10-15 走查: 标题原先报全量条数, 内容只画前 20 条 (`arch.prefix(20)`) —— 25 条时屏上 20 行
+    /// 却写着"25 条", 又没有一句"仅列最近 20"。导出那颗按钮给的才是全文, 所以这里把两件事分开说。
+    private var archTitleText: String {
+        let n = CrashGuard.archList().count
+        return n > 20 ? "异常退出档案 · 共 \(n) 条 · 列最近 20" : "异常退出档案 · \(n) 条"
+    }
 
     var body: some View {
         Form {
@@ -39,12 +49,15 @@ struct DiagReferenceView: View {
             }
 
             // 758 异常退出档案
-            Section("异常退出档案 · \(CrashGuard.archList().count) 条") {   // 758 异常退出档案
-                if CrashGuard.pendingAbnormal {
+            Section(archTitleText) {   // 758 异常退出档案
+                if CrashGuard.pendingAbnormal, !archAcked {
                     Label("本次启动检测到上一次异常退出（会话标记未被正常清掉）", systemImage: "exclamationmark.triangle.fill")
                         .font(.caption)
                         .foregroundStyle(DS.Palette.warn)
-                    Button("已知晓，清掉这条提示") { _ = CrashGuard.consumePending() }
+                    Button("已知晓，清掉这条提示") {
+                        _ = CrashGuard.consumePending()
+                        archAcked = true   // 旗标参与上面那个 if —— 没有它这一屏不会重算, 按钮就像没反应
+                    }
                         .font(.footnote)
                         .foregroundStyle(DS.Palette.accentText)
                 }
@@ -228,7 +241,8 @@ struct DiagReferenceView: View {
             Section {
                 let fams = DataHealth.families()
                 let kw = familyQuery.trimmingCharacters(in: .whitespaces).lowercased()
-                ForEach(kw.isEmpty ? fams : fams.filter { $0.key.lowercased().contains(kw) }) { f in
+                let rows = kw.isEmpty ? fams : fams.filter { $0.key.lowercased().contains(kw) }
+                ForEach(rows) { f in
                     HStack(spacing: DS.Space.s) {
                         Text(f.key).font(.caption.monospaced()).foregroundStyle(DS.Palette.text)
                         Spacer(minLength: DS.Space.s)
@@ -236,8 +250,13 @@ struct DiagReferenceView: View {
                     }
                     .accessibilityElement(children: .combine)
                 }
-                if fams.isEmpty {
-                    Text("没有可统计的本地键位。").font(.caption).foregroundStyle(DS.Palette.textSub)
+                // 2026-10-15 走查: 空态原先只兜"一个键族都没有"那一档 —— 过滤命中 0 条时这一节既没有行
+                // 也没有话, 而 header 还写着总族数, 打错一个字就像把整张表清空了。两条分开说。
+                if rows.isEmpty {
+                    Text(kw.isEmpty ? "没有可统计的本地键位。"
+                                    : "没有名字含这一串的族 · 本机共 \(fams.count) 族")
+                        .font(.caption).foregroundStyle(DS.Palette.textSub)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             } header: {
                 Text("键族占用一览 · \(famsCount) 族")   // 546 键族占用一览

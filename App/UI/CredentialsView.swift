@@ -59,6 +59,11 @@ struct CredentialsView: View {
     @State private var fpDetailItem: LedgerFp?     // 包5 FpDetailStudio
     @State private var histItem: HistItem?
     @State private var jumpBarOn = false           // 577: 条子要活过 consumeCredJump 清 nil 的那一步
+    // 2026-10-15 走查: CredCenterView / TempCodeStudio 都自带 NavigationStack, push 进去会套两层
+    // 导航栏 (判据见 SettingsView 里「动态消息」那条注释) —— 本页其余子流程 (回收站/队列/历史) 全走
+    // sheet, 这两条是漏网的。改走 sheet。
+    @State private var showCredCenter = false
+    @State private var showTempCode = false
 
     private var isBusy: Bool { busyKey != nil }
 
@@ -107,18 +112,23 @@ struct CredentialsView: View {
             .onChange(of: app.pendingCredSelect) { _, _ in consumeCredSelect() }
             .overlay { undoBar }
             .sheet(isPresented: $showOrganize) {
-                CredOrganizeView(mac: mac) {
-                    reload()
-                }
+                // 2026-10-15 走查: 这里原本写的是尾随闭包 `CredOrganizeView(mac: mac) { reload() }`,
+                // 而 CredOrganizeView 最后一个函数型参数是 `onClose: (() -> Void)?` —— 尾随闭包绑的是
+                // **onClose** (SE-0286 起可选闭包也接尾随闭包), 不是名字看起来该接它的 onDone。
+                // 结果: onDone 一直是默认空闭包, 页内那颗「完成」调它 = 点了什么都不发生, sheet 也不关。
+                // 现在两件事各归各位: onDone 只管刷新, 收页由页内的 dismiss() 负责 (见 CredentialCenterView)。
+                CredOrganizeView(mac: mac, onDone: { reload() })
             }
             .sheet(isPresented: $showExtend) {
                 if !extendAliases.isEmpty {
-                    CredExtendView(mac: mac, aliases: extendAliases) { reload() }
+                    // 同上: CredExtendView 里那颗按钮写的是「关闭」, 而它过去只 reload()
+                    CredExtendView(mac: mac, aliases: extendAliases) { reload(); showExtend = false }
                 }
             }
             .sheet(isPresented: $showTransfer) {
                 if selCount > 0 {
-                    CredTransferView(mac: mac, pwdAliases: selPwds, fpBatches: selFps) { reload() }
+                    // 同上: CredTransferView 的「关闭」过去也只 reload()
+                    CredTransferView(mac: mac, pwdAliases: selPwds, fpBatches: selFps) { reload(); showTransfer = false }
                 }
             }
             .sheet(isPresented: $showDisable) {
@@ -127,7 +137,17 @@ struct CredentialsView: View {
                 }
             }
             .sheet(isPresented: $showQueue) {
-                CredQueueView(mac: mac)
+                // 2026-10-15 走查: CredQueueView 自己**不带** NavigationStack, 页内那枚 navigationBarLeading
+                // 的「关闭」没有导航栏可挂 —— 呈现方套一层栈就好 (关闭按钮留在页内, 这里不再加第二枚)。
+                // 注意只补容器, 不补按钮: 两处各放一枚「关闭」会变成两个并排的出口。
+                NavigationStack { CredQueueView(mac: mac) }
+            }
+            // 2026-10-15 走查: 两条"自带 NavigationStack"的入口改走 sheet (见上面 @State 注释)
+            .sheet(isPresented: $showCredCenter) {
+                CredCenterView(mac: mac)   // 2026-10-15: 原来的 `section: "organize"` 是个没人读的参数, 已删
+            }
+            .sheet(isPresented: $showTempCode) {
+                TempCodeStudio()
             }
             .sheet(isPresented: $showBin) {
                 NavigationStack {
@@ -545,7 +565,9 @@ struct CredentialsView: View {
                 routerRow("hand.raised.fill", "录指纹",
                           "给固定的人 (家人/钟点工) · 一次录入长期可用")
             }
-            NavigationLink { TempCodeStudio() } label: {
+            Button {
+                showTempCode = true
+            } label: {
                 routerRow("person.2.arrow.trajectory.circle", "临时码",
                           "给访客/租客 · 定好生效与到期，到点自动作废")
             }
@@ -1033,7 +1055,7 @@ struct CredentialsView: View {
             NavigationLink { CredHistoryListView(mac: mac) } label: {
                 Label("版本历史与整理", systemImage: "clock.arrow.circlepath")   // 487/358 版本历史与整理
             }
-            NavigationLink { CredCenterView(mac: mac, section: "organize") } label: {
+            Button { showCredCenter = true } label: {
                 Label("凭证中心 (队列/整理)", systemImage: "tray.full")
             }
         }
@@ -1474,7 +1496,7 @@ struct CredentialsView: View {
                 DS.Haptics.tick.impactOccurred()
             }
             if let sug = CredentialOrg.starSuggestion(mac), sug == "p\(p.alias)" {
-                Button("标为常用 (近 30 天约最常用, 921)") {
+                Button("标为常用 (近 30 天约最常用)") {
                     CredentialOrg.toggleStar(mac, "pwd", p.alias)
                 }
             }
@@ -1486,7 +1508,7 @@ struct CredentialsView: View {
                 app.showToast(on ? "已归档 — 列表顶部归档区可还原" : "已移出归档")
                 reload()
             }
-            Button("历史 (\(CredentialOrg.history(mac, "pwd", p.alias).count), 487)") {
+            Button("历史 (\(CredentialOrg.history(mac, "pwd", p.alias).count))") {
                 histItem = HistItem(kind: "pwd", key: p.alias)
             }
             Divider()
@@ -1502,7 +1524,7 @@ struct CredentialsView: View {
             }
             Button("添加备注") { editNote(fp: f) }
             Menu("归属到成员") { ownerMenu(isPwd: false, key: f.batch) }
-            Button("历史 (\(CredentialOrg.history(mac, "fp", f.batch).count), 487)") {
+            Button("历史 (\(CredentialOrg.history(mac, "fp", f.batch).count))") {
                 histItem = HistItem(kind: "fp", key: f.batch)
             }
             Button(hit.pinned ? "取消置顶" : "置顶") {

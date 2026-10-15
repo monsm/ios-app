@@ -8,6 +8,10 @@ import SwiftUI
 // ================= 维护中心 (锁详情页/设置入口, per-lock) =================
 struct MaintenanceView: View {
     @EnvironmentObject var app: AppState
+    // 2026-10-15 走查: 这一页有两条呈现路 —— 设置页那张 sheet (`SettingsView` 的 `showCare`) 与快捷格/设置栈里的 push。
+    // sheet 是盖在整个 TabView 上的，页里那枚「到记录页查看全部」原先只写 `app.tabSelection = 2` 就完事
+    // ⇒ 切的是**被盖住的那层**，用户点了看着没反应，甩掉 sheet 才发现自己站在记录页 (§7.3 那一族，`StatsView` 六枚格子是同类先例)。
+    @Environment(\.dismiss) private var dismiss
     @State private var care = CareState()
     @State private var yearlyOn = false
     @State private var yearlyDate = Date()
@@ -25,7 +29,9 @@ struct MaintenanceView: View {
         guard let u = LockStats.usage().first(where: { $0.mac == mac }) else { return 0 }
         return u.opens30d
     }
-    private var periodDays: Int { opens30d >= 60 ? 60 : 90 }
+    /// 1022 频次自适应: 高频使用锁 (近 30 天开门 ≥60 次) 保养周期自适应缩短到 60 天。
+    /// 判据本体在 `BatteryCare.carePeriodDays(opens30d:)` —— 通知侧与"保养已记录"那句 toast 都取同一处。
+    private var periodDays: Int { BatteryCare.carePeriodDays(opens30d: opens30d) }
     /// 1013 周期已过天数 / 是否到期
     private var elapsedDays: Double {
         guard care.lastCareAt > 0 else { return 0 }
@@ -46,6 +52,13 @@ struct MaintenanceView: View {
         .scrollContentBackground(.hidden)
         .dsScreenBackground()
         .onAppear { if !loaded { loaded = true; reload() } }
+        // 2026-10-15 走查 §7.4-3: `care` 是 @State 快照、只在上面那一句里读一次，而同一页的 `mac` /
+        // `meta` / `opens30d` / `periodDays` 全是**实时**跟着 `app.current` 走的。这一页既被设置页 push、
+        // 也被 sheet 里的 `DeviceInfoView` push (父层没有 `CredentialsView().id(currentMac)` 那种身份包装，
+        // 全仓只有凭证页与记录页有)，所以换锁而页面不退时：上次保养/进度条还是 A 锁的，场所/周期已是 B 锁的，
+        // 打卡写的还是 B —— 同屏两把锁。补一条换锁重取，形状照本仓已有的两处先例
+        // (`DeviceHomeView` / `RecordsView` 的 `.onChange(of: app.currentMac)`)，不另造第三套。
+        .onChange(of: app.currentMac) { _, _ in reload() }
         .sheet(isPresented: $showChecklist) { CareChecklistView { reload() } }
         .onChange(of: yearlyOn) { _, _ in saveYearly() }
         .onChange(of: yearlyDate) { _, _ in saveYearly() }
@@ -212,6 +225,8 @@ struct MaintenanceView: View {
                 Button {
                     app.pendingRecordsFilter = "__care"
                     app.tabSelection = 2
+                    // 先落点再收摊：sheet 不收，切过去的 Tab 就在它底下 (见本页上方那条注释)
+                    dismiss()
                 } label: {
                     Label("到记录页查看全部 (保养过滤)", systemImage: "line.3.horizontal.decrease.circle")
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -391,7 +406,9 @@ struct CareChecklistView: View {
         BatteryCare.markCareToday()                      // 1030 月历打点
         BatteryCare.addEvent(mac, kind: "care", note: "五项保养完成")   // 1014
         UINotificationFeedbackGenerator().notificationOccurred(.success)
-        app.showToast("保养已记录, 90 天周期重新起算")
+        // 2026-10-15 走查: 这句原先把 90 写死在字面量里, 而保养页自己那个 periodDays 对高频锁给的是
+        // 60 —— 用户按屏上说的等 90 天, 通知却在第 60 天就来催。天数与判据取同一处。
+        app.showToast("保养已记录, \(BatteryCare.carePeriodDays(mac: mac)) 天周期重新起算")
         app.evaluateAchievements()                       // 1030 爱洁之家徽章结算
         onDone()
         dismiss()

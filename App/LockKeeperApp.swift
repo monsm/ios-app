@@ -347,6 +347,13 @@ final class AppState: ObservableObject {
     /// 801 引导末卡"去连接真锁": 置真后设备页挂载即拉起添加设备弹层
     /// (旧写法只切 tab, 落点靠用户自己在设备页再找入口, 不等于"直达 BLE 扫描页")
     @Published var pendingAddDevice = false
+    /// 2026-10-15 走查: 设置 Tab **栈内**子页的"去设置…"落点。
+    /// 起因: 安全中心里的两枚按钮 (`SecurityLockConfigView` 的"去「设置」把本机密码重设为纯数字"、
+    /// `SecurityDestroyView` 销毁前备份闸的"先去备份") 动作都写着 `app.tabSelection = 3` ——
+    /// 而它们本来就是**设置 Tab 下 push 进去的页**, 切 Tab 是一次空转: 点了什么都不发生,
+    /// 前者还配着"跳转设置 Tab 的密码区"的无障碍提示, 后者配着"已切到设置"的 toast。
+    /// 与 pendingDiag / pendingCare 同一条路由形态: 把"到了之后开什么"带过去, 设置页收到即开并清空。
+    @Published var pendingSettingsFocus: String?
     private var unlockTask: Task<Void, Never>? = nil
     private var lastDispatch = Date.distantPast   // 244 指令去重
     private var dispatchAt = Date.distantPast     // 56 撤销窗口计时基准
@@ -725,7 +732,28 @@ final class AppState: ObservableObject {
         "kf_hold_confirm", "kf_fence", "kf_tap_direct",
         "kf_unlock_sound", "kf_unlock_fail_sound", "kf_auto_retry",
         "kf_alert_tone", "kf_duress_tone",
-        "kf_status_checkin", "kf_status_checkin_hour", "kf_vo_announce"
+        "kf_status_checkin", "kf_status_checkin_hour", "kf_vo_announce",
+        // 2026-10-15 走查 §7.4-10: 无障碍那批键此前全部走 applyAppearance ⇒ 换身份 ⇒ 整树重建
+        // = **拨一次开关被弹回设置页顶部**（同一条病灶作者已用上面这批治过）。这十枚并入的准入条件是逐键查出来的：
+        // 它的**全部**读取点都落在"会因 AppState 的 @Published 变化而重算 body"的位置 ——
+        //   · 根上那两枚修饰符 `.dynamicTypeSize(...)` / `.saturation(...)` 挂在 `.id(app.appearanceSeed)`
+        //     **之外**、RootView.body 之内，而 RootView 观察 app ⇒ prefSeed 一样让它们重算，
+        //     "根层修饰符"不构成否决（这条最反直觉，是 kf_ax_gray / kf_ax_bigpreview 能并的依据）；
+        //   · UnlockDial 自己不观察 app，但 `kf_hold_confirm` / `kf_fence` 早就在里面以同一形状
+        //     （计算属性喂 body）被读、且已在名单里跑了很久 ⇒ `kf_dial_size` / `kf_gesture_mode` /
+        //     `kf_ax_hold` 走的是同一条级联，不是新机制；
+        //   · `kf_onehand` 的读取是 `axOnehand(_ on: Bool = AXPrefs.onehand, …)` 的**默认实参**，
+        //     每次调用点展开求值，不是"构造时读一次"；
+        //   · `kf_ax_doublehaptic` / `kf_ax_bigotp` / `kf_ax_captions` / `kf_bigtile` 的读点都在 obs 宿主体内。
+        // **刻意没并的四枚**（判据不齐，宁可留着"跳顶"这个已知 annoyance，也不把开关改成"拨了没作用"）：
+        //   `kf_ax_dwell`（除滑杆与演示文字外**没有任何行为消费者**）、
+        //   `kf_font_scale`（档位变 = 全树布局尺寸变，UIKit-backed 的 List 行不换身份能否重取档位，本机无证据）、
+        //   `kf_form_bottom`（`defaultScrollAnchor` 的语义是"首次布局时的锚点"，偏好变了而不换布局身份能否把已存在的 List 重新锚底，未知）、
+        //   `kf_lefty`（`HeroCard` 不观察 app，且值不从父层传入、没有传参链可追，只能指望级联 —— 无证据可证死也无证据可证活）。
+        // 这一条要真收口，得等一次真机：把四枚逐一试"拨完不退出页面，值是否即时生效"。
+        "kf_ax_bigotp", "kf_ax_bigpreview", "kf_ax_captions", "kf_ax_doublehaptic",
+        "kf_ax_gray", "kf_ax_hold", "kf_bigtile", "kf_dial_size",
+        "kf_gesture_mode", "kf_onehand"
     ]
     func setUnlockOption(_ key: String, _ v: Any) {
         DB.store.set(key, v)
@@ -892,7 +920,7 @@ final class AppState: ObservableObject {
             // 428: BGTask 注册已移到 QuickActionDelegate.didFinishLaunchingWithOptions ——
             // 必须早于启动完成 (Apple 契约), 且每进程只注册一次 (onLaunch 可能被多次调用)。
             if let s = BackupStudio.pendingMigration() {
-                self.showToast("检测到未完成的换机迁移 (\(s.channel) \(s.step)%), 445 可回滚或继续")
+                self.showToast("检测到未完成的换机迁移 (\(s.channel) \(s.step)%) — 可回滚或继续")
             }
         }
     }
@@ -1416,7 +1444,12 @@ struct RootView: View {
                 .accessibilityHidden(true)
             Text(w).font(.caption).fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
-            Button("去诊断") { app.requestTab(3) }   // 377: 访客通道开着时先复核, 不白切
+            Button("去诊断") {
+                // 2026-10-15 走查 §4.3: 与 NoticeBudget 那条同病 —— 按钮说"去诊断", 原来只把人放到
+                // 设置页根上。带落点名, 由设置页直接开诊断面。
+                app.pendingSettingsFocus = "diag"
+                app.requestTab(3)
+            }   // 377: 访客通道开着时先复核, 不白切
                 .font(.caption.weight(.medium))
         }
         .foregroundStyle(DS.Palette.warn)

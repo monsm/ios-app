@@ -62,8 +62,12 @@ struct DeviceHomeView: View {
                             // 824 第二出口: 只有"再扫一次"不够 —— 换机或误删之后用户手上拿的是
                             // 一份备份文件，不是一把门锁。指不到恢复入口的空态等于把数据判了死刑。
                             Button {
-                                app.tabSelection = 3
-                                app.showToast("设置 → 备份：可本地导入，或从坚果云恢复")   // 824 设置
+                                // 2026-10-14 走查: 原为直写 `app.tabSelection = 3` —— 设备页在访客通道
+                                // 下照常可达, 而访客态里「设置」Tab 不进层级树, 直写会落到一个看不见的
+                                // Tab (点一下像没反应)。走 requestTab, 访客态由它拉起复核页。
+                                app.pendingSettingsFocus = "backup"   // §4.3: 这一按直达「备份与恢复」, 不再只放人在设置页根上
+                                app.requestTab(3)
+                                app.showToast("到「备份与恢复」：可本地导入，或从坚果云恢复")   // 824 设置
                             } label: {
                                 Label("从备份恢复", systemImage: "square.and.arrow.down")   // 824 从备份恢复
                                     .font(.subheadline.weight(.medium))
@@ -1222,7 +1226,10 @@ struct DeviceHomeView: View {
 
     // ---------- 开锁主控 ----------
     private var unlockDial: some View {
-        // 868 切换控制扫描组: 圆盘为独立扫描组, 外接开关逐项聚焦 (停留时长按 869 自定滑杆)
+        // 868 切换控制扫描组: 圆盘为独立扫描组 (调用处 `unlockDial.staggered(3)` 后面那两行
+        // `.accessibilityElement(children: .contain)` + `accessibilityLabel("开锁圆盘组")`), 外接开关可以按组逐项聚焦。⚠ 2026-10-15 走查修正: 这里原先写着"停留时长按 869 自定滑杆" —— 那枚滑杆
+        // (`kf_ax_dwell`) 全仓**没有行为消费者**，只被辅助页的滑杆自己与练习区演示文字读 (判据见
+        // `App/UI/AccessibilityView.swift` 那段的同一条注释)，聚焦节奏实际由系统 VoiceOver/切换控制决定。
         VStack(spacing: DS.Space.m) {
             UnlockDial(state: app.unlockState,
                        phase: app.phase,
@@ -1643,7 +1650,7 @@ struct DeviceHomeView: View {
             if let t = target {
                 app.pendingCredNav = t.nav
                 app.pendingCredNavMac = app.currentMac
-                app.tabSelection = 1
+                app.requestTab(1)   // 2026-10-14 走查: 原为直写 tabSelection, 访客态会绕过 377 门禁
                 app.showToast("已跳到凭证页定位「" + t.name + "」")   // 921 界面文案
             } else {
                 app.showToast("还没有星标凭证 —— 先在凭证页给最常用的那条点亮星标")   // 921 还没有星标凭证
@@ -1782,7 +1789,7 @@ struct DeviceHomeView: View {
                 }
             }
             if mergedHasSameMinute {
-                Text("同一分钟内的两条不分先后: 日志只到分钟, 这里的次序是入库次序 (与 680 同一口径)。")
+                Text("同一分钟内的两条不分先后: 日志只到分钟, 这里的次序是入库次序。")
                     .font(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -1965,16 +1972,21 @@ struct DeviceHomeView: View {
                             .fixedSize(horizontal: false, vertical: true)
                         Spacer(minLength: 0)
                     }
-                    Text(p.overDays == 0 ? "复核日就是今天 · 437"
-                                         : "已过 \(p.overDays) 天 · 437")
+                    Text(p.overDays == 0 ? "复核日就是今天"
+                                         : "已过 \(p.overDays) 天")
                         .font(.caption)
                         .foregroundStyle(DS.Palette.textSub)
-                    Text("路径: 设置 → 备份与恢复 → 备份工作室 → 本地备份文件")
+                    Text("路径: 备份与恢复 → 备份工作室 → 本地备份文件")
                         .font(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                     HStack(spacing: DS.Space.s) {
-                        Button("去设置") { app.tabSelection = 3 }
+                        Button("去设置") {
+                            // 2026-10-15 走查 §4.3: 原来只 requestTab(3) —— 把人放到设置页根上,
+                            // 而这一行自己写着路径要从「备份与恢复」起头。带落点名, 由设置页直接开它。
+                            app.pendingSettingsFocus = "backup"
+                            app.requestTab(3)
+                        }   // 2026-10-14 走查: 原直写 tabSelection, 访客态绕过门禁
                         Button("知道了") {
                             BackupStudio.markPinSeen(p.file, p.day)
                             duePins = BackupStudio.duePins()   // 立刻重算: 撤掉的这一钉不该在同一屏上还挂着
@@ -2191,7 +2203,9 @@ struct DeviceHomeView: View {
     @ViewBuilder
     private func coachOverlay(_ step: Int) -> some View {
         let items: [(title: String, body: String, y: CGFloat, r: CGFloat)] = [
-            ("开锁圆盘", "按住圆盘或上滑即可开锁; 失败会给一份排查清单。", 0.46, 96),
+            // 手势那句从 UnlockPrefs.gestureHint 取: 三连点/旋转充能档里"按住或上滑"是不成立的说明。
+            // 这个数组必须留在函数体内 (每次调用重建才跟得上档位) —— 挪成视图的存储属性就变成构造时快照。
+            ("开锁圆盘", "开锁方式: " + UnlockPrefs.gestureHint + "; 失败会给一份排查清单。", 0.46, 96),
             ("快捷操作格", "常用动作都在这里; 长按可换格。", 0.70, 76),   // 169 常用动作都在这里
             ("状态卡", "电量 / 固件 / 锁钟与连接态都在这张卡上。", 0.18, 108),   // 63/119/272 电量
         ]
@@ -2265,14 +2279,12 @@ struct DeviceHomeView: View {
         return isLow(kc) ? "low" : "ok"
     }
     private func batteryPct(for kc: Keychain) -> Int {
-        if kc.mac == app.currentMac, let live = app.status?.powerLevel, live >= 0 { return live }
-        // 包4: 统一走采样最新值 (读 03 即记录), 无采样才落回锁侧快照
-        return BatteryCare.displayPct(kc.mac, snapshot: DB.readStatus(kc.mac)?.powerLevel ?? -1)
+        // 包4 + 2026-10-15 走查: 读数与写法都收进 BatteryCare.facePct/faceText, 这里只留"实时读数只属于当前这把"这一条判据
+        // —— 专注模式那块的圆盘以前拿不到这个式子, 转子播电量时只会念"未知"。
+        BatteryCare.facePct(kc.mac, live: kc.mac == app.currentMac ? (app.status?.powerLevel ?? -1) : -1)
     }
     private func batteryText(for kc: Keychain) -> String {
-        let p = batteryPct(for: kc)
-        if p < 0 { return "--" }
-        return p > 80 ? ">80%" : "\(p)%"
+        BatteryCare.faceText(batteryPct(for: kc))
     }
     private func firmwareText(for kc: Keychain) -> String {
         if kc.mac == app.currentMac, let fw = app.status?.firmware, !fw.isEmpty { return fw }
@@ -2418,7 +2430,7 @@ struct FocusUnlockView: View {
                             .font(.headline)
                             .foregroundStyle(DS.Palette.text)
                             .lineLimit(1)
-                        Text(linkReady ? "已就绪 · 按住圆盘或上滑开锁" : "靠近门锁, 等待就绪")
+                        Text(linkReady ? "已就绪 · " + UnlockPrefs.gestureHint : "靠近门锁, 等待就绪")
                             .font(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                     }
@@ -2440,6 +2452,11 @@ struct FocusUnlockView: View {
                            bleReady: bleSvc.isPoweredOn,
                            failStreak: app.failStreak,
                            retryText: retryText,
+                           // 与设备页那台圆盘同一个读数口径: 少了这一行, VO 转子切到「电量」档时只会念"未知",
+                           // 而本机明明读得到 —— 同一块盘在两个界面报两种状态里的一种。
+                           batteryText: app.current.map {
+                               BatteryCare.faceText(BatteryCare.facePct($0.mac, live: app.status?.powerLevel ?? -1))
+                           } ?? "未知",
                            rssi: LinkSense.rssiFor(app.currentMac),
                            action: { app.requestUnlock() },
                            cancelAction: { app.cancelUnlock(notify: true) })

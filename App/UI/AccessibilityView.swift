@@ -38,6 +38,13 @@ struct AccessibilityView: View {
                 set: { app.setUnlockOption("kf_vo_announce", $0) }))
             // 852 播报试听: 立即演示一次主动朗读
             Button("试听播报效果") {
+                // 2026-10-15 走查: `AXTools.announce` 第一行就是 `guard kf_vo_announce` —— 这一档关着的时候,
+                // 这枚「试听」按下去什么都不发生也不说一句, 看着就是按钮坏了。试听的意义正是"先听听看要不要开",
+                // 所以关掉时要如实说这一档是关的, 而不是替用户把它打开。
+                guard DB.store.getBool("kf_vo_announce", true) else {
+                    app.showToast("「主动播报」这一档现在是关的 · 打开后才能试听")
+                    return
+                }
                 AXTools.announce("示例播报: 连接失败, 可能离门太远. 试试靠近门锁再试")
             }
             Text("播报仅在开启 VoiceOver 或系统「朗读」场景有感; 系统铃声静音不影响播报通道。")
@@ -72,7 +79,11 @@ struct AccessibilityView: View {
             }
             .pickerStyle(.segmented)
             // 859 AX 档降级布局说明 (只写已实现的: 圆盘缩小; 原先还承诺"指标纵向堆叠", 代码未做, 已删)
-            Text("字号 1.5x 起自动收紧: 开锁圆盘从 176pt 缩至 128pt, 大字号下仍能完成按住手势。")   // 859 字号
+            // 2026-10-15 走查: 这句把基准值写死成 176pt，而圆盘直径是 kf_dial_size **三档可调**
+            // (160/176/200，默认 176；唯一读点是 `DS.Metric.dial`，被 `UnlockDial` 的
+            // `AXFlags.axStackLayout ? 128 : DS.Metric.dial` 取用) —— 选了 200 的用户被界面告知
+            // 一个他从来没见过的基础值。基准改从同一个源取，只有"缩到 128"那一侧是代码写死的常量。
+            Text("字号 1.5x 起自动收紧: 开锁圆盘从 \(Int(DS.Metric.dial))pt 缩至 128pt, 大字号下仍能完成按住手势。")   // 859 字号
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -201,8 +212,10 @@ struct AccessibilityView: View {
             }
             .fixedSize(horizontal: false, vertical: true)
             // 869 ⚠ 眼动停留自定滑杆 (系统停留时长无公开 API, 0.5–4s, 默认 2s)。
-            // 口径如实: 这个值的当前消费只有本页练习区的演示文字 —— 本 App 还没挂上 868 扫描组,
-            // 真正逐项聚焦的节奏由系统 VoiceOver/切换控制自己的设置决定 (接线后此滑杆才成为行为源)。
+            // 口径如实: 这个值的当前消费只有本页练习区的演示文字 —— 2026-10-15 走查修正过一次说法:
+            // **868 的扫描组本身是挂了的** (设备页把 状态卡 / 圆盘 / 快捷格 各自成组, `children: .contain` + 组名标签),
+            // 缺的是"App 侧按这枚停留时长驱动聚焦"的那一步 —— 真正逐项聚焦的节奏仍由系统 VoiceOver/切换控制自己的设置决定
+            // (接线后此滑杆才成为行为源)。两处说法要与这段一致: `DeviceHomeView` 的 `unlockDial` 上方注释。
             VStack(alignment: .leading, spacing: DS.Space.xs) {
                 HStack(spacing: DS.Space.s) {
                     Text("扫描停留时长")   // 868/869 扫描停留时长
@@ -239,7 +252,13 @@ struct AccessibilityView: View {
         } header: {
             Text("运动与操作")
         } footer: {
-            Text("868 切换控制: 本 App 尚未把 状态卡/圆盘/快捷格 挂成独立扫描组 (设备页仅有占位注释, accessibilityActionDiscovery 全仓零使用) —— 该项判 PART, 接线前停留滑杆只喂练习区文字. 226 降低透明度与 227 减少动态直接生效, 无需开关. 869 眼动停留: 系统停留时长无公开 API, 已改自定滑杆 (备案 DEFERRED).")
+            // 2026-10-15 走查: 这句页脚原先有三个断言, 回源后**全部不成立**：
+            //   ①「尚未把 状态卡/圆盘/快捷格 挂成独立扫描组」与 ②「设备页仅有占位注释」—— 设备页有 6 处
+            //      `.accessibilityElement(children: .contain)`（判据: `grep -n 'accessibilityElement(children: .contain)' App/UI/DeviceHomeView.swift | grep -v ':[[:space:]]*//' | wc -l` ⇒ 6），其中 `开锁圆盘组`/`快捷操作格组`/`状态卡组` 三枚组名标签正是这三样；
+            //   ③「accessibilityActionDiscovery 全仓零使用」—— 全仓该串的**唯一命中就是这句文案自己**
+            //      (一条关于"没有"的陈述，靠自己成为那"一个")。API 名从用户可见文案里撤掉，真要说的事写实:
+            //      App 没有"按这枚停留时长自动聚焦"的实现。判据: `grep -rn 'accessibilityLabel("开锁圆盘组")' App --include=*.swift` 有命中 = 已分组。
+            Text("切换控制: 设备页已把 状态卡/圆盘/快捷格 各自成组, 外接开关可按组逐项聚焦; 聚焦节奏由系统自己的设置决定, App 没有按这枚停留时长自动聚焦的实现 —— 接线前这滑杆只喂下方练习区的文字. 降低透明度与减少动态直接生效, 无需开关. 眼动停留: 系统停留时长无公开 API, 已改成本机自定滑杆.")   // 868 页脚
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -252,7 +271,7 @@ struct AccessibilityView: View {
             Toggle("底部对齐表单 (键盘弹起表单贴底)", isOn: Binding(
                 get: { AXPrefs.bottomForm },
                 set: { app.setUnlockOption("kf_form_bottom", $0) }))
-            Text("外接键盘快捷键 (164/530, 按代码调用点列, 没接的不写): Cmd + 数字 1–4 切 Tab (App 入口); Cmd+R 刷新 (设备页/记录页); Cmd+F 凭证搜索; 本机密码弹层里 Return = 解锁. 全键盘 Tab/Shift-Tab 遍历由系统「全键盘控制」提供, 不是 App 自建.")   // 854 外接键盘快捷键
+            Text("外接键盘快捷键 (按代码调用点列, 没接的不写): Cmd + 数字 1–4 切 Tab (App 入口); Cmd+R 刷新 (设备页/记录页); Cmd+F 凭证搜索; 本机密码弹层里 Return = 解锁. 全键盘 Tab/Shift-Tab 遍历由系统「全键盘控制」提供, 不是 App 自建.")   // 854 外接键盘快捷键
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -267,7 +286,14 @@ struct AccessibilityView: View {
             Toggle("新条目双震", isOn: Binding(   // 876 新条目双震
                 get: { AXPrefs.doubleHaptic },
                 set: { app.setUnlockOption("kf_ax_doublehaptic", $0) }))
-            Button("试听双震") { AXTools.newEntryHaptic() }
+            // 同一处毛病: `newEntryHaptic` 第一行 guard `kf_ax_doublehaptic`, 关档时按下去零反馈。
+            Button("试听双震") {
+                guard AXPrefs.doubleHaptic else {
+                    app.showToast("「新条目双震」这一档现在是关的 · 打开后才能试听")
+                    return
+                }
+                AXTools.newEntryHaptic()
+            }
             Toggle("字幕式过程条 (连接/开锁逐步文字)", isOn: Binding(
                 get: { AXPrefs.captions },
                 set: { app.setUnlockOption("kf_ax_captions", $0) }))
@@ -276,7 +302,7 @@ struct AccessibilityView: View {
                 set: { app.setUnlockOption("kf_ax_bigotp", $0) }))
             // 882 闪烁安全线
             // 231 闪烁安全线
-            Text("闪烁安全线: 全 App 循环动效 ≤3Hz, 核查表见 docs/A11Y-FREQUENCY.md. 数值控件恒等宽数字. 设置页开关均为系统 Toggle (标题写明用途, 开/关态由系统播报, 232, 不另写重复值); 图标型工具栏按钮逐枚挂无障碍名.")
+            Text("闪烁安全线: 全 App 循环动效 ≤3Hz, 核查表见 docs/A11Y-FREQUENCY.md. 数值控件恒等宽数字. 设置页开关均为系统 Toggle (标题写明用途, 开/关态由系统播报, 不另写重复值); 图标型工具栏按钮逐枚挂无障碍名.")
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -323,7 +349,10 @@ struct VOPracticeField: View {
             .accessibilityLabel("练习转子")
             .accessibilityValue("当前 \( ["状态", "电量", "连接"][rotor] )")
             .accessibilityHint("转子上下滑或转子选择切换档位")
-            Text("练习区提示: 这里的「停留 \(String(format: "%.1f", AXPrefs.dwellTime)) 秒」是本 App 滑杆生成的演示文字 —— 逐项聚焦由系统 VoiceOver/切换控制执行, 节奏以系统设置为准; 本 App 的扫描组还没接线。")   // 868/869 练习区提示
+            // 2026-10-15 走查: 这句尾巴原先写「本 App 的扫描组还没接线」—— 假的。设备页确实把
+            // 圆盘/快捷格/状态卡各自分了组 (`children: .contain` + 组名标签)，没接的只是"按这枚时长自动聚焦"那一步。
+            // 判这半句真假要用: `grep -rn 'accessibilityLabel("开锁圆盘组")' App --include=*.swift` 有命中就是已分组。
+            Text("练习区提示: 这里的「停留 \(String(format: "%.1f", AXPrefs.dwellTime)) 秒」是本 App 滑杆生成的演示文字 —— 逐项聚焦由系统 VoiceOver/切换控制执行, 节奏以系统设置为准; 本 App 只做了分组 (圆盘/快捷格/状态卡), 没有按这枚时长自动聚焦。")   // 868/869 练习区提示
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)

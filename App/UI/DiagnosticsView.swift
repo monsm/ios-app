@@ -5,6 +5,11 @@ import Charts
 
 struct DiagnosticsView: View {
     @EnvironmentObject var app: AppState
+    // 2026-10-15 走查: 这一页有三条来路 —— 设备页 push、设置页 push、以及设置页那张 sheet
+    // (`SettingsView` 的 `showDiag` = `NavigationStack { DiagnosticsView() }`)。
+    // 空态那枚「去设备页操作」原先只写 `app.tabSelection = 0`：sheet 那条路里 TabView 整个被盖住
+    // ⇒ 点了没反应，甩掉 sheet 才发现自己在设备页 (§7.3 那一族；`StatsView` 六枚格子是同类先例)。
+    @Environment(\.dismiss) private var dismiss
     @State private var debugRaw = DB.store.getBool("kf_debug_raw")
     @State private var copied = false
     @State private var dumpedLine: LogLine?   // 740 原始报文 hex dump 的当前行
@@ -125,8 +130,16 @@ struct DiagnosticsView: View {
             if WeekCal.gregorian.component(.day, from: Date()) == 1, monthlyExpired > 0 {
                 Section("月度清理") {   // 366 月度清理
                     Button {
-                        app.tabSelection = 1
+                        // 2026-10-14 走查: 本页不止从设置页进 —— 设备页「打开排查工具」也推它
+                        // (DeviceHomeView 的 failStreak≥3 卡), 而设备页在访客通道下照常可达。
+                        // 直写 tabSelection=1 会落到一个不进层级树的 Tab, 走 requestTab 才过 377 门禁。
+                        app.requestTab(1)
                         app.pendingCredPanel = "organize"
+                        // 2026-10-15 走查: requestTab 管的是**访客门禁**，管不到"这一层盖在 TabView 上"——
+                        // 本页从设置页是以 sheet 进来的 (`showDiag`)，不收掉这层，切过去的凭证 Tab 就在 sheet 底下 (§7.3 那一族)。
+                        // 与 `CredentialStudio` 三枚「查看」的形状一致（那边有 embedded，所以写 `if !embedded { dismiss() }`；
+                        // 本页三条来路——设备页 push、设置页 push、设置页 sheet——**都该退一层**，所以不收在条件里）。
+                        dismiss()
                     } label: {
                         HStack(spacing: DS.Space.s) {
                             Image(systemName: "calendar.badge.exclamationmark")
@@ -525,7 +538,7 @@ struct DiagnosticsView: View {
                         .buttonStyle(.plain)
                         .font(.footnote.weight(.medium))
                         .foregroundStyle(DS.Palette.accentText)
-                        .accessibilityLabel("复制待补拉清单, 749")
+                        .accessibilityLabel("复制待补拉清单")
                         // 749 补拉要到场
                         // 749 补拉要到场
                         Text("补拉要到场: 本 App 与门锁只有蓝牙直连, 不能远程向锁要历史 —— 到场连上门锁后在「记录」页翻页取回。也先说清代价: 锁端日志有上限会滚动, 被新记录顶掉的那几天补拉也取不回来, 所以这份清单是**待补拉的候选**, 不是「锁里一定还有」的保证。")
@@ -568,7 +581,9 @@ struct DiagnosticsView: View {
                 ForEach(tips) { t in
                     VStack(alignment: .leading, spacing: DS.Space.xxs) {
                         Text(t.title).font(.subheadline).foregroundStyle(DS.Palette.text)
-                        Text(t.detail)
+                        // 2026-10-14 走查: RecoveryTip.detail 是 String 变量, 有几条带 `**…**`
+                        // (DiagKit 的 storefail / rollback 两条), Text 不解析 Markdown ⇒ 会显示两颗星。
+                        mdText(t.detail)
                             .font(.caption).foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                         if !t.goto.isEmpty {
@@ -695,8 +710,12 @@ struct DiagnosticsView: View {
             Section {
                 Toggle("极限字号自检 (以 200% 字号预览)", isOn: Binding(
                     get: { AXFlags.bigPreview },
-                    set: { DB.store.set("kf_ax_bigpreview", $0) }))
-                LabeledRow("命中域", "可点控件全 App 下限 44pt (DS.Hit.min); 时间线认领区加余量到 60pt (RecordsView:1617); 圆盘外沿再留 10pt (UnlockDial:464)")   // 871 命中域
+                    // 2026-10-15 走查: 这里原先是 `DB.store.set("kf_ax_bigpreview", $0)` 直接落盘 ——
+                    // 同一个键在无障碍页走的是 `app.setUnlockOption` (那一条会 bump 种子)，这第二条什么都不推
+                    // ⇒ 在这页拨完，根上那枚 `.dynamicTypeSize` 要等下一次别的重建才跟上，看着就是"拨了没作用"。
+                    // 同一状态两个通道必已不一致 (本仓反复实撞那一族)，这里统一走 setUnlockOption 那一个口。
+                    set: { app.setUnlockOption("kf_ax_bigpreview", $0) }))
+                LabeledRow("命中域", "可点控件全 App 下限 44pt (DS.Hit.min); 时间线认领区加余量到 60pt; 圆盘外沿再留 10pt")   // 871 命中域
             } header: {
                 Text("渲染自检")   // 866 渲染自检
             } footer: {
@@ -1030,7 +1049,7 @@ struct DiagnosticsView: View {
                                     primaryTitle: "跑一键体检",
                                     primary: { rerunAll() },
                                     secondaryTitle: "去设备页操作",
-                                    secondary: { app.tabSelection = 0 },
+                                    secondary: { app.tabSelection = 0; dismiss() },   // 收掉这一层 (sheet 或 push) 才看得见切好的 Tab
                                     mascot: true)
                         .listRowInsets(EdgeInsets())
                     // 818 日志来源说明: 空态不只说"还没有", 还说出**哪四类**会进这里。
@@ -1188,7 +1207,8 @@ struct DiagnosticsView: View {
                             default: break
                             }
                             app.pendingCredNavMac = app.currentMac
-                            app.tabSelection = 1
+                            app.requestTab(1)   // 2026-10-14 走查: 同上一处, 本页可从设备页进入
+                            dismiss()           // 2026-10-15 走查: 同上 —— requestTab 只过访客门禁，不收这层 sheet/push 就看不见切好的 Tab
                         }
                         .buttonStyle(PrimaryActionStyle())
                     }
@@ -1231,6 +1251,12 @@ struct DiagnosticsView: View {
                 .rotationEffect(.degrees(-18))
                 .padding(DS.Space.xxl)
         }
+        // 2026-10-14 走查: 这张卡是**硬白底**, 但里面三行 Text 都没写前景色 ⇒ 吃环境的主文本色。
+        // 深色档下主文本色是浅色, 白底白字 = 导出的诊断图整段看不见。ImageRenderer 默认环境
+        // 目前是浅色, 但那是"默认"不是"保证"; 把口径写死在这里, 这张图永远按浅色出。
+        // 位置必须在**最外层**: `.environment` 只作用于它下面的子树, 挂在 `.overlay` 之前
+        // 就漏掉了水印那一层 (它的颜色是写死的黑 0.32, 今天不受影响, 但别留下这个坑)。
+        .environment(\.colorScheme, .light)
         let r = ImageRenderer(content: card)
         r.scale = 2
         return r.uiImage

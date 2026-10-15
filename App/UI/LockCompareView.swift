@@ -31,20 +31,37 @@ struct LockCompareView: View {
                 dualRadarSection   // 777 双锁四时段雷达 (互补规律)
                 sameNameSection
                 idleSection
+            } else if locks.count >= 2 {
+                // 两把都还在台账里却比不出来 = 之前选中的那一把已被删除, 见 sidesOK 那段
+                Section {
+                    Text("之前对比的锁里有一把已不在本机台账 —— 重新选两把。")   // 2026-10-15 走查
+                        .font(.footnote).foregroundStyle(DS.Palette.warn)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
         .navigationTitle("多锁对比")   // 775 多锁对比
         .scrollContentBackground(.hidden)
         .dsScreenBackground()
         .onAppear { initSides() }
+        // 这一页可以被 push 进来一直开着: 期间在设备页删掉一把, 若不重取就留下一个"哪把都不是"的死 mac
+        .onChange(of: app.devices.count) { _, _ in initSides() }
     }
 
-    private var ready: Bool { !leftMac.isEmpty && !rightMac.isEmpty && leftMac != rightMac }
+    private var ready: Bool { sidesOK && !leftMac.isEmpty && !rightMac.isEmpty && leftMac != rightMac }
+    /// 选中的两把必须**还在**本机台账里。这一条不是洁癖: 删掉一把而页面还开着时, `leftMac` 留着那串死 mac,
+    /// Picker 里没有它的 tag ⇒ 选择框空着, `leftName` 退成"左", 所有指标退成 0 ——
+    /// 于是界面在说"这把锁没人用过", 而真相是"这把锁已经不在这台手机上了" (把"没读到"讲成"没有", 军规 §7.5-5)。
+    private var sidesOK: Bool {
+        locks.contains { $0.mac == leftMac } && locks.contains { $0.mac == rightMac }
+    }
 
     private func initSides() {
         guard locks.count >= 2 else { return }
+        if !leftMac.isEmpty, !locks.contains(where: { $0.mac == leftMac }) { leftMac = "" }
+        if !rightMac.isEmpty, !locks.contains(where: { $0.mac == rightMac }) { rightMac = "" }
         if leftMac.isEmpty { leftMac = locks[0].mac }
-        if rightMac.isEmpty, rightMac != leftMac {
+        if rightMac.isEmpty {
             rightMac = locks.first(where: { $0.mac != leftMac })?.mac ?? ""
         }
     }
@@ -155,7 +172,10 @@ struct LockCompareView: View {
             row("告警条数", String(leftModel?.alarmsTotal ?? 0), String(rightModel?.alarmsTotal ?? 0))
             row("可归属成员", String(leftModel?.memberCounts(days: windowDays).count ?? 0),
                                String(rightModel?.memberCounts(days: windowDays).count ?? 0))
-            row("本机日志行", String(leftModel?.dailyPoints.count ?? 0), String(rightModel?.dailyPoints.count ?? 0))
+            // 「本机日志行」以前取的是 `dailyPoints.count` —— 那个数组是 StatsKit 里**逐日补齐**后的序列
+            // (窗口 30 天就固定 30 个点, 没日志的日子补 0), 数它等于数"画了几天", 两把锁还恒等。
+            // 标签写的是行数, 就得取行数: logsInWindow() 是同一个窗口内真实读到的日志条数。
+            row("本机日志行", String(leftModel?.logsInWindow().count ?? 0), String(rightModel?.logsInWindow().count ?? 0))
         }
     }
     // ---------- 780 工作日首次开门时刻对照 ----------
@@ -174,8 +194,8 @@ struct LockCompareView: View {
             Text("取每个工作日里最早的那一次开门，对照值是这些时刻的中位数，不是平均数 —— "
                  + "首次开门是个绕圈的量，23:50 与 01:00 的平均会得出 12:40 那种没人开过的时刻。"
                  + "样本为偶数时取靠早的那一个，它是真发生过的一刻。"
-                 + "工作日 = 非法定假日且 (周一~周五或表里写着补班)，与 616 周几分布同一个周序；"
-                 + "窗口里没读到日志的日子既不算工作日也不进样本 (与 610/642 同口径)。")
+                 + "工作日 = 非法定假日且 (周一~周五或表里写着补班)，与周几分布同一个周序；"
+                 + "窗口里没读到日志的日子既不算工作日也不进样本。")
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -239,7 +259,7 @@ struct LockCompareView: View {
                     row(a[i].name, String(a[i].opens), String(b[i].opens))
                 }
                 Text("两条多边形共用同一个标度 —— 各画各的归一化会让「都很闲」与「都很忙」长得一样。"
-                     + "四轴 = 早/午/晚/深夜 (与 602 同一口径); 只统计窗口内读到的日志, 没读到的时段按 0 画。")
+                     + "四轴 = 早/午/晚/深夜; 只统计窗口内读到的日志, 没读到的时段按 0 画。")
                     .font(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)

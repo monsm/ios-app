@@ -112,8 +112,12 @@ struct AchievementsView: View {
             app.showToast("分享卡生成失败")
             return
         }
+        // 2026-10-15 走查: 这句原先是"分享卡已存入相册" —— 而 `UIImageWriteToSavedPhotosAlbum` 是**异步**的,
+        // 第三个参数 (completion target) 这里传的是 nil, 意味着成功与失败本行代码一概不知道;
+        // 首次还会等用户点"允许" (project.yml 里那条 NSPhotoLibraryAddUsageDescription), 拒绝就是没存。
+        // 回调拿不到 ⇒ 就不该报"已存入"。改成说这一按真正做的事。
         UIImageWriteToSavedPhotosAlbum(img, nil, nil, nil)
-        app.showToast("分享卡已存入相册")
+        app.showToast("已提交相册保存 · 首次会弹允许框, 没允许就没存进去")
     }
 
     // ---------- 981 周目标 ----------

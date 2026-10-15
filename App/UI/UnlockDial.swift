@@ -10,6 +10,17 @@ enum UnlockPrefs {
     }
     /// 53 双击直开只在 hold 档生效 (另两档自带确认动作，叠加会出现"两把钥匙都能开门")。
     static var tapDirect: Bool { DB.store.getBool("kf_tap_direct") && mode == "hold" }
+    /// 当前档位"这一盘该做什么"的一句原文。圆盘演练层 (59) 与专注模式页头都读这一句 ——
+    /// 这句话在两个界面各写一份时, 改档位口径必漏一处; 而漏掉的那处不是"写得不好", 是把人引到
+    /// 一个**在该档位根本不会开锁**的动作上 (2026-10-15 走查在专注页头抓到原样一份)。
+    /// 句式统一带"可"字, 因为页头那侧是拼在「已就绪 · 」后面的。
+    static var gestureHint: String {
+        switch mode {
+        case "triple": return "可连续轻点圆盘三下"
+        case "charge": return "可按住圆盘, 沿外沿转满一圈"
+        default: return "可按住圆盘，也可上滑"
+        }
+    }
 }
 
 // ================= 呼吸环 =================
@@ -56,28 +67,34 @@ private struct UnlockPulseRing: View {
 
 // ================= 待机流光 (idea 75) =================
 // 已连接空闲时一圈靛蓝流光沿外沿慢速环绕, 断开即停 (调用方只在就绪空闲态挂载);
-// reduceMotion 下不出现 — 待机氛围属于纯装饰动效。
+// reduceMotion 下**整条不挂** —— 待机氛围属于纯装饰动效。
+// 2026-10-15 走查: 原来只在 `.onAppear` 里 `guard !reduceMotion` 挡住动画, 视图本身照样在树上 ——
+// `angle` 停在初值 0, 于是装饰档在"减少动效"下反而变成一段**冻住的靛蓝弧**常亮在盘外沿。
+// 注释写的是"不出现", 代码给的是"出现但不动": 这一族的判据是**该不该在树上**, 不是动画开没开。
 private struct UnlockShimmer: View {
     var diameter: CGFloat
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var angle: Double = 0
 
     var body: some View {
-        Circle()
-            .trim(from: 0, to: 0.16)
-            .stroke(AngularGradient(colors: [.clear, DS.Palette.accentText.opacity(0.85), .clear],
-                                    center: .center),
-                    style: StrokeStyle(lineWidth: 3, lineCap: .round))
-            .frame(width: diameter + 18, height: diameter + 18)
-            .rotationEffect(.degrees(angle))
-            .allowsHitTesting(false)
-            .accessibilityHidden(true)
-            .transaction { $0.animation = nil }
-            .onAppear {
-                guard !reduceMotion else { return }
-                angle = 0
-                withAnimation(.linear(duration: 3.2).repeatForever(autoreverses: false)) { angle = 360 }
-            }
+        if reduceMotion {
+            EmptyView()
+        } else {
+            Circle()
+                .trim(from: 0, to: 0.16)
+                .stroke(AngularGradient(colors: [.clear, DS.Palette.accentText.opacity(0.85), .clear],
+                                        center: .center),
+                        style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                .frame(width: diameter + 18, height: diameter + 18)
+                .rotationEffect(.degrees(angle))
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+                .transaction { $0.animation = nil }
+                .onAppear {
+                    angle = 0
+                    withAnimation(.linear(duration: 3.2).repeatForever(autoreverses: false)) { angle = 360 }
+                }
+        }
     }
 }
 
@@ -85,31 +102,49 @@ private struct UnlockShimmer: View {
 // 只在**握手中**挂载: `.connecting` 起、进就绪即停 (调用方按状态决定在不在树上，本视图不判状态)。
 // 与 UnlockPulseRing 的差别不是"再画一圈"，而是**同时两圈、相位错开** —— 单圈呼吸读起来是"在忙"，
 // 两圈外扩才读成"在喊它"。reduceMotion 下不出现 (装饰档，同 75 流光)。
+// 2026-10-15 走查: 相位错开原先是**没落地的**。两圈共用同一枚 `on`, 而 `onAppear` 对同一个属性连发两次
+// `withAnimation` —— 后发的那次 (不带 delay) 覆盖了前一次 (带 .delay(0.55)) 的动画事务, 两圈同起同落,
+// 视觉上就是一根加粗的单环, 正是上面那句要避开的"在忙"。相位要按**每圈自己的态**驱动才成立。
+// 顺带同 75 那条: reduceMotion 的降级落在"挂不挂"这一层, 不是在 onAppear 里挡动画 —— 挡了动画两圈就 static 地留在盘上。
+private struct UnlockRadarRing: View {
+    var diameter: CGFloat
+    var strokeAlpha: Double
+    var peakOpacity: Double
+    var delay: Double
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var on = false
+
+    var body: some View {
+        Circle()
+            .strokeBorder(DS.Palette.accent.opacity(strokeAlpha), lineWidth: 1.5)
+            .frame(width: diameter, height: diameter)
+            .scaleEffect(on ? 1.55 : 0.92)
+            .opacity(on ? 0 : peakOpacity)
+            .transaction { $0.animation = nil }
+            .onAppear {
+                on = false
+                withAnimation(.easeOut(duration: 1.9).repeatForever(autoreverses: false).delay(delay)) { on = true }
+            }
+    }
+}
+
 private struct UnlockRadarWave: View {
     var diameter: CGFloat
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        ZStack {
-            ForEach(0..<2, id: \.self) { i in
-                Circle()
-                    .strokeBorder(DS.Palette.accent.opacity(0.5 - Double(i) * 0.18), lineWidth: 1.5)
-                    .frame(width: diameter, height: diameter)
-                    .scaleEffect(on ? 1.55 : 0.92)
-                    .opacity(on ? 0 : 0.75 - Double(i) * 0.15)
+        if reduceMotion {
+            EmptyView()
+        } else {
+            ZStack {
+                UnlockRadarRing(diameter: diameter, strokeAlpha: 0.5, peakOpacity: 0.75, delay: 0)
+                // 同周期 1.9s、起点晚 0.55s ⇒ 两圈之间恒定错开约 1/4 周期 (delay 只作用在首帧，之后随周期一起走)
+                UnlockRadarRing(diameter: diameter, strokeAlpha: 0.32, peakOpacity: 0.60, delay: 0.55)
             }
-        }
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
-        .transaction { $0.animation = nil }
-        .onAppear {
-            guard !reduceMotion else { return }
-            on = false
-            withAnimation(.easeOut(duration: 1.9).repeatForever(autoreverses: false).delay(0.55)) { on = true }
-            withAnimation(.easeOut(duration: 1.9).repeatForever(autoreverses: false)) { on = true }
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
         }
     }
-    @State private var on = false
 }
 
 // ================= 73 成功涟漪 (Apple Pay 完成动画) / 1009 涟漪结界 =================
@@ -126,20 +161,27 @@ private struct DialRipple: View {
     @State private var go = false
 
     var body: some View {
-        Circle()
-            .strokeBorder(
-                AngularGradient(colors: [color.opacity(0), color, color.opacity(0)], center: .center),
-                lineWidth: 3)
-            .frame(width: diameter, height: diameter)
-            .scaleEffect(go ? 1.7 : 0.95)
-            .opacity(go ? 0 : 0.9)
-            .allowsHitTesting(false)
-            .accessibilityHidden(true)
-            .onAppear {
-                guard !reduceMotion else { return }
-                go = false
-                withAnimation(.easeOut(duration: 0.72)) { go = true }
-            }
+        // reduceMotion 下不挂 (258 那句"降级: reduceMotion 关闭…涟漪"原来并没有成立):
+        // 只在 onAppear 里挡掉动画的话 `go` 停在 false ⇒ `.opacity(0.9)` 的一圈实色环**常亮**,
+        // 而调用方 `if rippleKey > 0` 一旦点过一次开锁就把本视图永久留在树上 —— 结果是减少动效的
+        // 用户开一次门后盘面上从此多出一圈常驻靛蓝环。
+        if reduceMotion {
+            EmptyView()
+        } else {
+            Circle()
+                .strokeBorder(
+                    AngularGradient(colors: [color.opacity(0), color, color.opacity(0)], center: .center),
+                    lineWidth: 3)
+                .frame(width: diameter, height: diameter)
+                .scaleEffect(go ? 1.7 : 0.95)
+                .opacity(go ? 0 : 0.9)
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+                .onAppear {
+                    go = false
+                    withAnimation(.easeOut(duration: 0.72)) { go = true }
+                }
+        }
     }
 }
 
@@ -182,15 +224,22 @@ private struct ChargeTicks: View {
 // 为什么用"轨迹"而不是箭头: 本盘的既有主交互是按住与上滑两条 (idea 1/51)，箭头会把用户指到
 // 其中一条上去，而跟滑动效两条都能看懂。reduceMotion 下退化为一句静态提示 —— 看不见动效时
 // 至少要看得见"这里能做手势"。
+// 2026-10-15 走查: 这条轨迹**只对 hold 档成立**。上滑与按住两条动线在 `dragGesture` 里都挂在
+// `guard holdConfirmOn, gestureMode == "hold"` 之后 (:708 那道), 三连点/旋转充能档里照着一根向上的箭头滑是**不会开锁的**;
+// 而演练层偏偏只在"从没完成过一次真手势"时浮现 —— 也就是正好发给那两个档里还没摸对门路的人。
+// 所以提示语与轨迹都按档位分叉: 非 hold 档不画那条会把人带错的轨迹。
 private struct DrillTrace: View {
     var diameter: CGFloat
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var slide = false
 
+    /// 只有 hold 档的手势是"往上"的; 另两档画向上轨迹 = 把人引到一个不会生效的动作。
+    private var swipeTrace: Bool { UnlockPrefs.mode == "hold" && !reduceMotion }
+
     var body: some View {
         ZStack {
-            if reduceMotion {
-                Text("可按住圆盘，也可上滑")
+            if !swipeTrace {
+                Text(UnlockPrefs.gestureHint)
                     .font(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .padding(DS.Space.s)
@@ -486,7 +535,8 @@ struct UnlockDial: View {
                     .overlay(Circle().strokeBorder(DS.heroFg.opacity(0.65), lineWidth: 1))
                     .offset(x: dial * 0.44, y: -dial * 0.44)
                     .accessibilityHidden(true)
-                // 59 手势演练层: 首进设备 Tab 浮现，任何一次真实手势即永久收起
+                // 59 手势演练层: 首进设备 Tab 浮现，任何一次真实手势即永久收起。
+                // 提示语不从这里传: 层内自读 UnlockPrefs.gestureHint, 与专注页头同一份口径。
                 if drill, state == .idle, !isBusy { DrillTrace(diameter: dial) }
             }
             .offset(x: shakeX)
@@ -565,6 +615,10 @@ struct UnlockDial: View {
             while !Task.isCancelled {
                 DS.Haptics.tick.impactOccurred()
                 try? await Task.sleep(for: .milliseconds(130))
+                // `try?` 把 CancellationError 咽成一个 nil 继续往下走 ⇒ 取消如果落在这 130ms 里,
+                // 第二记触感照样会震, 而这一刻正是"结果回来"的那一瞬 (成功/失败触感同帧叠加),
+                // 用户摸到的是"门开了还多一跳"。必须显式判一次再收尾。
+                guard !Task.isCancelled else { break }
                 DS.Haptics.tick.impactOccurred()
                 try? await Task.sleep(for: .milliseconds(950))
             }
@@ -960,6 +1014,6 @@ struct UnlockDial: View {
     }
     private var voHint: String {
         "轻点两下直接开锁, 无需按住. 转子上下滑可切换 状态/电量/连接 播报. "
-            + "875 按住时长可自定 (0.4–1.6s, 设置-辅助)"
+            + "按住时长可自定 (0.4–1.6s, 设置-辅助)"
     }
 }

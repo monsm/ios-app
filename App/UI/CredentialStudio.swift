@@ -152,7 +152,13 @@ enum StudioTools {
         let off = Int(mac.last ?? 0) & 0x0F
         guard off + 4 < mac.count else { return "" }
         let bin = (Int(mac[off]) & 0x7F) << 24 | Int(mac[off + 1]) << 16 | Int(mac[off + 2]) << 8 | Int(mac[off + 3])
-        let n = e.digits > 0 ? e.digits : 6
+        // 2026-10-15 走查: `e.digits` 是落库/备份里的字段, 解码时没有任何人校验过它 ——
+        // 而下一行的 `Int(pow(10, n))` 在 n ≥ 19 时会超出 Int64, `Int(Double)` 对超范围值
+        // 是**直接 trap 崩进程** (不是返回 nil)。界面上只给 6/8, 但备份文件是外部输入,
+        // 不能靠"上游一定写的是 6 或 8"来保命。这里按 TOTP 的实际上限夹一刀, 原语义 (>0 取原值,
+        // 否则回默认 6) 一个字不改。
+        let raw = e.digits > 0 ? e.digits : 6
+        let n = min(raw, 8)
         return String(format: "%0\(n)d", bin % Int(pow(10, Double(n))))
     }
     struct SceneDef: Identifiable {
@@ -451,7 +457,7 @@ struct CodeBigCard: View {
                 .frame(minHeight: DS.Hit.min)
                 .accessibilityLabel("分享口述卡")
             }
-            let foot = extraFoot.isEmpty ? "172/328 大字号方便对准锁键盘输入; 本卡含密码, 拍照或分享后注意保管。" : extraFoot
+            let foot = extraFoot.isEmpty ? "大字号方便对准锁键盘输入; 本卡含密码, 拍照或分享后注意保管。" : extraFoot
             Text(foot)
                 .font(.caption2)
                 .foregroundStyle(DS.Palette.textSub)
@@ -559,16 +565,16 @@ struct StudioHome: View {
         List {
             Group {
                 Section("四类凭证") {   // 177 四类凭证
-                    fanoutRow("key.fill", "密码", "301 剪贴板即建 · 303 逐位回显 · 304 重复拦截 · 173 生成器",
+                    fanoutRow("key.fill", "密码", "剪贴板即建 · 逐位回显 · 重复拦截 · 生成器",
                               label: "添加密码") { showAddPwd = true }
                     fanoutRow("clock.badge.chevron.right", "临时码",
-                              "325 五场景 · 327 重叠检测 · 330 装修黄条 · 178 批量",
+                              "五场景 · 重叠检测 · 装修黄条 · 批量",
                               label: "添加临时码") { showTemp = true }
                     fanoutRow("touchid", "指纹",
-                              "317 归属先行 · 41 沉浸式录入 · 323 删除双签",
+                              "归属先行 · 沉浸式录入 · 删除双签",
                               label: "录入指纹") { showFp = true }
                     fanoutRow("number.square", "OTP 与口令",
-                              "337 时窗细条 · 341 otpauth · 346 静态备份码",
+                              "时窗细条 · otpauth · 静态备份码",
                               label: "OTP 与口令") { showOtp = true }
                 }
                 Section {
@@ -913,7 +919,7 @@ struct PwdStudio: View {
                         // 304 查看即跳: 真把那枚同值凭证的详情打开 (toast 看不全)
                         app.pendingCredNav = "pwd:\(dups[0].alias)"
                         app.pendingCredNavMac = mac
-                        app.tabSelection = 1
+                        app.requestTab(1)   // 2026-10-15 走查: 与全仓跨 Tab 跳转统一走 requestTab (访客门禁那一口)
                         if !embedded { dismiss() }
                     }
                     .font(.caption.weight(.medium))
@@ -1108,7 +1114,7 @@ struct PwdStudio: View {
         VStack(alignment: .leading, spacing: DS.Space.l) {
             if let e = editing, let old = e.pwd, !old.isEmpty {
                 VStack(alignment: .leading, spacing: DS.Space.s) {
-                    Text("306 新旧对照 (上旧只读 / 下新)")
+                    Text("新旧对照 (上旧只读 / 下新)")
                         .font(.footnote.weight(.semibold))
                         .foregroundStyle(DS.Palette.text)
                     PwdDiffView(old: old, new: pwd.isEmpty ? old : pwd)
@@ -1344,7 +1350,7 @@ struct PwdStudio: View {
                     DB.setPwdOwner(kc.mac, alias, owner)
                 }
                 if let p2 = DB.getPwd(kc.mac, alias) {
-                    CredentialOrg.snapshot(kc.mac, kind: "pwd", key: alias, pwd: p2, fp: nil, note: "改造 (306/307 保存前 diff)")
+                    CredentialOrg.snapshot(kc.mac, kind: "pwd", key: alias, pwd: p2, fp: nil, note: "改造 (保存前先做对照)")
                 }
             } else {
                 alias = try await app.lock.pwdAdd(pwd: pwd, validFrom: fromS, validTo: toS)
@@ -1518,7 +1524,7 @@ struct TempCodeStudio: View {
                             Button("查看") {
                                 app.pendingCredNav = "pwd:\(dups[0].alias)"
                                 app.pendingCredNavMac = mac
-                                app.tabSelection = 1
+                                app.requestTab(1)   // 2026-10-15 走查: 同上, 统一走 requestTab
                                 dismiss()
                             }
                             .font(.caption.weight(.medium))
@@ -1915,10 +1921,17 @@ struct PwdDetailStudio: View {
                     if p.pwd != nil && cap.screenshotAt > openedAt {
                         Section {
                             HStack(spacing: DS.Space.s) {
-                                Label(ScreenCaptureWatch.shotNotice, systemImage: "camera.viewfinder")
-                                    .font(.caption)
-                                    .foregroundStyle(DS.Palette.warn)
-                                    .fixedSize(horizontal: false, vertical: true)
+                                // 2026-10-14 走查: shotNotice 是 String 常量 ⇒ `Label(String, systemImage:)`
+                                // 走 StringProtocol 重载, 不解析 Markdown, 那句「码值**可能**已进那张图片」
+                                // 会把两颗星画在告警条上。改用 ViewBuilder 形态喂 mdText。
+                                Label {
+                                    mdText(ScreenCaptureWatch.shotNotice)
+                                } icon: {
+                                    Image(systemName: "camera.viewfinder")
+                                }
+                                .font(.caption)
+                                .foregroundStyle(DS.Palette.warn)
+                                .fixedSize(horizontal: false, vertical: true)
                                 Spacer(minLength: 0)
                                 Button("换码") { showEdit = true }
                                     .font(.caption.weight(.medium))
@@ -2154,7 +2167,7 @@ struct PwdDetailStudio: View {
                             .font(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                         } else {
-                            Text("暂无记录 (⚠ 311 按时间窗推断, 无数据不编造)")
+                            Text("暂无记录 (⚠ 按时间窗推断, 无数据不编造)")
                                 .font(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                         }
@@ -2447,7 +2460,8 @@ struct FpStudio: View {
                     // 317 无成员直达: 走 817 同一条道 (成员中心到达即弹建档向导), 建完值经 pendingFpOwner 带回
                     app.pendingFpOwner = "request"
                     app.pendingMemberAdd = true
-                    app.tabSelection = 3
+                    app.pendingSettingsFocus = "members"   // §4.3: 按钮写着"去新建成员", 原来只到设置页根
+                    app.requestTab(3)   // 2026-10-15 走查: 与全仓跨 Tab 跳转统一走 requestTab (访客门禁那一口)
                     app.showToast("在「家人与钥匙」里新建成员")   // 317 家人与钥匙
                     dismiss()
                 } label: {
@@ -3029,7 +3043,7 @@ struct OtpStudio: View {
                                         at: Date().timeIntervalSince1970))
                                     // 341: 补了默认值就必须点名补了哪几项 —— 只报"已导入"是把替用户做的决定藏起来。
                                     let tail = r.defaulted.isEmpty ? "" : "; 这条 uri 没写, 按默认补了: " + r.defaulted.joined(separator: ", ")
-                                    app.showToast("已导入「\(r.name)」(\(r.algo)·\(r.digits)位·\(r.period)s)" + tail + " (按当前锁存档, 343)")
+                                    app.showToast("已导入「\(r.name)」(\(r.algo)·\(r.digits)位·\(r.period)s)" + tail + " (按当前锁存档)")
                                     importUri = ""
                                     importErr = ""
                                     importing = false
@@ -3134,7 +3148,7 @@ struct OtpStudio: View {
             at: Date().timeIntervalSince1970))
         manualErr = ""
         // 名称是回退来的就说回退, 参数照实报 —— 用户填的与他看到的必须是同一份。
-        app.showToast((typed.isEmpty ? "已添加「\(named)」(名称按密钥尾段回退, 341)" : "已添加「\(named)」")   // 341 已添加
+        app.showToast((typed.isEmpty ? "已添加「\(named)」(名称按密钥尾段回退)" : "已添加「\(named)」")   // 341 已添加
             + " · \(manualAlgo)·\(manualDigits)位·\(manualPeriod)s, 按当前锁存档")   // 343 按当前锁存档
         manualName = ""
         manualSecret = ""
@@ -3179,7 +3193,7 @@ struct OtpStudio: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("复制当前码 \(e.name)")
             }
-            WindowBar(totalSec: max(e.period, 1), label: "340 当前/下一时窗并排 · " + CredentialOrg.totpParams(e))
+            WindowBar(totalSec: max(e.period, 1), label: "当前/下一时窗并排 · " + CredentialOrg.totpParams(e))
             HStack(spacing: DS.Space.xs) {
                 Button {
                     ClipboardCare.copySecret(now, via: "独立 TOTP")   // 405
@@ -3275,7 +3289,7 @@ struct CredStudioEntryView: View {
                     Text("凭证工坊")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(DS.Palette.text)
-                    Text("添加·改造·口述卡·OTP 独立口令 (包5)")
+                    Text("添加 · 改造 · 口述卡 · OTP 独立口令")
                         .font(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                         .lineLimit(1)

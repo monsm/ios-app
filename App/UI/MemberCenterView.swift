@@ -19,6 +19,12 @@ struct MemberCenterView: View {
     @State private var showArchived = false
     @State private var showGroups = false
     @State private var showMeeting = false
+    // 2026-10-15 走查: 菜单里的「成员家庭设置」原先写 `app.tabSelection = 3` —— 而本页就是设置 Tab
+    // 下弹出来的 sheet, 切 Tab 是**空转**, 点了什么都不发生。它要去的 MemberFamilySettingsView
+    // 自带 NavigationStack + leading「保存」+ dismiss, 本来就是**按 sheet 设计的页** —— 所以这里
+    // 按同菜单 showGroups/showMeeting 的既有写法弹出来, 而不是再 push 一层。
+    @State private var showFamilySettings = false
+    @State private var showActiveTable = false   // 2026-10-15: 同上, 目标页自带 NavigationStack
     // 415 名册导出: ShareLink 要在渲染期就有 URL, 所以点菜单时先按需生成再开面板 (不在 body 里写盘)
     @State private var rosterURL: URL?
     @State private var showRoster = false
@@ -60,7 +66,7 @@ struct MemberCenterView: View {
                         .pickerStyle(.inline)
                         Button("分组标签") { showGroups = true }   // 630 分组标签
                         Button("家庭会议摘要") { showMeeting = true }   // 482 家庭会议摘要
-                        Button("成员家庭设置") { app.tabSelection = 3 }   // 479/794 成员家庭设置
+                        Button("成员家庭设置") { showFamilySettings = true }   // 479/794 成员家庭设置
                         Button("导出成员名册") {   // 415 导出成员名册
                             rosterURL = ExportKit.writeRoster()
                             showRoster = true
@@ -78,6 +84,11 @@ struct MemberCenterView: View {
             .sheet(isPresented: $showArchived) { MemberArchivedView(onRestored: { tick += 1 }) }
             .sheet(isPresented: $showGroups) { MemberGroupSheet(onSaved: { tick += 1 }) }
             .sheet(isPresented: $showMeeting) { MemberMeetingSheet() }
+            // 2026-10-15: 菜单「成员家庭设置」的落点。这一页自带 NavigationStack 与 leading「保存」,
+            // 是 sheet 形态 —— 这里弹出来正好。navSection 的「家庭设置」与设置页那条入口同批改成 sheet,
+            // 不再 push (push 会把内层 NavigationStack 套进外层 ⇒ 两层导航栏)。
+            .sheet(isPresented: $showFamilySettings) { MemberFamilySettingsView() }
+            .sheet(isPresented: $showActiveTable) { MemberActiveTable(onChanged: { tick += 1 }) }
             // 817c 记录页"添加成员"示例位跳过来时直接弹向导; 标记一次性消费。
             // 下一轮 runloop 再置 sheet: onAppear 同步段里开 sheet 在首帧可能因视图未入窗被吞掉。
             .onAppear {
@@ -145,7 +156,7 @@ struct MemberCenterView: View {
                     Text("共 \(n) 位成员 · \(m) 条凭证")   // 266 位成员
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(DS.Palette.text)
-                    Text("活跃度按台账推断 (约), 点成员看 360 详情")
+                    Text("活跃度按台账推断 (约), 点成员看完整档案")
                         .font(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
@@ -300,7 +311,7 @@ struct MemberCenterView: View {
         if !arch.isEmpty {
             Section {
                 Button { showArchived = true } label: {
-                    Label("归档成员 (\(arch.count)) · 460/795 保留历史", systemImage: "archivebox")
+                    Label("归档成员 (\(arch.count)) · 保留历史", systemImage: "archivebox")
                         .font(.subheadline)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .frame(minHeight: DS.Hit.min)
@@ -321,7 +332,7 @@ struct MemberCenterView: View {
                         .foregroundStyle(DS.Palette.accentText)
                 }
             } else {
-                Text("本周主责: 未安排 — 在成员 360 页设置")   // 481 本周主责
+                Text("本周主责: 未安排 — 在成员的详情页里设置")   // 481 本周主责
                     .font(.subheadline)
                     .foregroundStyle(DS.Palette.textSub)
             }
@@ -367,8 +378,11 @@ struct MemberCenterView: View {
 
     private var navSection: some View {
         Section {
-            NavigationLink("成员活跃总表") { MemberActiveTable(onChanged: { tick += 1 }) }   // 788/789 成员活跃总表
-            NavigationLink("家庭设置") { MemberFamilySettingsView() }   // 479/794 家庭设置
+            // 2026-10-15 走查: 这两行原为 NavigationLink, 而目标页**自带 NavigationStack**
+            // (leading「完成」「保存」+ dismiss 的 sheet 形态) ⇒ push 进去内层栈套外层, 两层导航栏。
+            // 与本文件菜单里那条「成员家庭设置」同一处理: 改用 sheet 呈现。
+            Button("成员活跃总表") { showActiveTable = true }   // 788/789 成员活跃总表
+            Button("家庭设置") { showFamilySettings = true }   // 479/794 家庭设置
             NavigationLink("家庭会议摘要") { MemberMeetingSheet() }   // 482 家庭会议摘要
         } header: {
             Text("聚合视图")
@@ -804,7 +818,7 @@ struct MemberDetail360View: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         } header: {
-            Text("最近开门 (约 · 459)")
+            Text("最近开门 (约)")
         }
     }
 
@@ -940,7 +954,7 @@ struct MemberDetail360View: View {
                 }))
             .fixedSize(horizontal: false, vertical: true)
             if MemberHub.proxyNames.contains(m.id) {
-                Text("代管中: 在凭证页对 TA 名下凭证做单条停用时, 那一行的 361 停用便签会写上 管理员代操作; "   // 468 代管中
+                Text("代管中: 在凭证页对 TA 名下凭证做单条停用时, 那一行的停用便签会写上 管理员代操作; "   // 468 代管中
                      + "家庭会议摘要也点名代管中的成员。锁端没有代操作这一位, 这句标注只落本机。")   // 482 家庭会议摘要
                     .font(.caption)
                     .foregroundStyle(DS.Palette.textSub)
@@ -983,8 +997,8 @@ struct MemberDetail360View: View {
                                tone: row.allowed ? .ok : .neutral)
                 }
             }
-            Text("矩阵管的是本机 UI: 「管凭证」这一行决定这一档给不给 468 的代管开关 (上方「家庭场景」那一节), "   // 470 矩阵管的是本机
-                 + "「成员管理」这一行决定能不能被指成 469 紧急管理员 (就在下面)。不给的那一枚会就地写明为什么少。"
+            Text("矩阵管的是本机 UI: 「管凭证」这一行决定这一档给不给代管开关 (上方「家庭场景」那一节), "   // 470 矩阵管的是本机
+                 + "「成员管理」这一行决定能不能被指成紧急管理员 (就在下面)。不给的那一枚会就地写明为什么少。"
                  + "边界: 锁端没有角色字段, 备份包也不带角色 —— 这三档不改任何发往门锁的字节; "
                  + "角色与代管会被写进成员名册那张 vcf 的备注行。")   // 415 角色与代管会被写进成
                 .font(.caption)
@@ -1009,7 +1023,7 @@ struct MemberDetail360View: View {
                         onChanged()
                     }))
                 .fixedSize(horizontal: false, vertical: true)
-                Text("这一档的作用是把人点出来: 上面那一行与 482 家庭会议摘要都会写上 Ta 的名字, 免得只剩一个人管钥匙。"
+                Text("这一档的作用是把人点出来: 上面那一行与家庭会议摘要都会写上 Ta 的名字, 免得只剩一个人管钥匙。"
                      + "救援码本身仍在 设置-安全 里生成, 那段说明目前不读这份名单 —— 两者今天没有绑定关系。")
                     .font(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
@@ -1081,7 +1095,7 @@ struct MemberDetail360View: View {
         let fCare = field("孩子码关怀文案", e.careText)   // 480 孩子码关怀文案
         let fWelcome = field("访客欢迎语", e.welcome)   // 484 访客欢迎语
         let fGroup = field("分组标签 家人/访客/服务人员", e.groupTag)   // 630 分组标签
-        let fCommon = field("常用锁 (mac 或名称, 逗号分隔; 多锁时排前 464)",
+        let fCommon = field("常用锁 (mac 或名称, 逗号分隔; 多锁时排前)",
                             e.commonLocks.joined(separator: ", "))
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         alert.addAction(UIAlertAction(title: "保存", style: .default) { _ in
@@ -1113,7 +1127,7 @@ struct MemberDetail360View: View {
         let preview = CredentialOrg.memberCredentialPreview(m.id)
         let msg = preview.isEmpty
             ? "确定要删除「" + m.name + "」吗? TA 名下没有台账凭证。"
-            : "删除「" + m.name + "」后, 名下 " + String(preview.count) + " 条凭证将转为未分配并入回收站 (可整组还原 501):\n"
+            : "删除「" + m.name + "」后, 名下 " + String(preview.count) + " 条凭证将转为未分配并入回收站 (可整组还原):\n"
               + preview.prefix(5).joined(separator: "\n") + (preview.count > 5 ? "\n…" : "")
               + "\n\n· 只移除档案: 只动本机台账, 锁里那些指纹与密码不会被收回, TA 仍能开门。\n"
               + "· 连锁端一起收回: 这些凭证会排上锁端删除, 到场连接后真正失效。"
@@ -1267,7 +1281,7 @@ struct MemberWizardView: View {
             return nil
         }
         guard let m = DB.addMember(n) else {
-            app.showToast("姓名为空或已存在 (可走 462 合并)")
+            app.showToast("姓名为空或已存在 (可用合并把两个名字并成一个)")
             return nil
         }
         var e = MemberHub.ext(m.id)
@@ -1940,6 +1954,7 @@ struct UnclaimedClaimView: View {
 // ================= 788 成员活跃总表 (每人一行, 点击进 789 聚合详情) =================
 struct MemberActiveTable: View {
     @EnvironmentObject var app: AppState
+    @Environment(\.dismiss) private var dismiss
     var onChanged: () -> Void = {}
 
     private struct Row: Identifiable {
@@ -2000,8 +2015,12 @@ struct MemberActiveTable: View {
             .navigationTitle("成员活跃总表")   // 788 成员活跃总表
             .scrollContentBackground(.hidden)
             .dsScreenBackground()
+            // 2026-10-15 走查: 「完成」原写 `app.tabSelection = 3` —— 本页是设置 Tab 下 push 进来的
+            // (设置 → 安全中心 → 成员中心 → 成员活跃总表), 切 Tab 是**空转**, 点了没反应。
+            // 「完成」该做的就是收掉这一页: dismiss() 在 push 语境里是 pop、在 sheet 语境里是关,
+            // 两种进入方式都对。
             .toolbar { ToolbarItem(placement: .navigationBarLeading) {
-                Button("完成") { app.tabSelection = 3 }
+                Button("完成") { dismiss() }
             } }
         }
     }
@@ -2091,7 +2110,7 @@ struct MemberStackedView: View {
     var body: some View {
         VStack(spacing: 0) {
             if stack.isEmpty {
-                Text("近 30 天还没有可证明归属的开门数据, 积累后这里会出 798 堆叠图 (约级口径)。")
+                Text("近 30 天还没有可证明归属的开门数据, 积累后这里会出按人堆叠的图 (约级口径)。")
                     .font(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .padding(DS.Space.l)
@@ -2339,7 +2358,10 @@ struct HouseCleaningPresetView: View {
             .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) {
                 Button("完成") {
-                    app.tabSelection = 1
+                    // 2026-10-15 走查: 原为 `app.tabSelection = 1; dismiss()` —— 而本页全仓**只有一个入口**,
+                    // 就是设置页 (设置 → 家人与钥匙 → 家政周期预设) 的 NavigationLink, 它属于设置 Tab。
+                    // 跳凭证 Tab 等于把用户扔去别处, 而设置栈里这一页还留着 —— 下次回设置 Tab 仍停在这。
+                    // 「完成」的语义就是收掉这一页: dismiss() 在 push 语境里是 pop。
                     dismiss()
                 }
             } }
@@ -2362,7 +2384,9 @@ struct HouseCleaningPresetView: View {
                 // 359 只按凭证的 from/to 排本地通知; 家政窗是另一族数据 (上面的"当前已登记"区回显)。
                 // 不下发 0 码, 家政自带钥匙。
                 app.showToast("家政窗口 " + label + " 已登记 (整段起止, 无循环; 不参与凭证到期预警)")
-                app.tabSelection = 1
+                // 2026-10-15 走查: 同上 —— 原来这里跟着 `app.tabSelection = 1`, 登记完把人送去凭证 Tab。
+                // 登记的是本机家政窗 (kf_house_win_), 上面那句 toast 已经写明它不参与凭证到期预警,
+                // 所以"去看凭证"不是这一步的下一步。收掉本页即可。
                 dismiss()
             } catch {
                 app.showToast("登记失败: " + error.localizedDescription)

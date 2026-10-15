@@ -1,13 +1,18 @@
 // 390 伪装码进入的空壳界面。刻意只做"本机时钟"这类真实且与门锁无关的内容:
 // 原设计是模拟天气, 但本 App 离线无网络授权, 现编一组气温/城市就是伪造数据 —— 这是本审计反复抓到的一类问题,
 // 不为了"像"而造数据。空壳内不读任何 kf_ledger_/kf_kc_/凭证键, 因此被翻看时没有任何可泄露的门锁信息。
-// 逃生口: 长按时钟标题 3 秒回锁屏, 之后必须用真密码进入 (AUDIT-B P0-3 记录的"真密码逃生"语义)。
+// 逃生口: 长按页脚那行小字 3 秒回锁屏, 之后必须用真密码进入 (AUDIT-B P0-3 记录的"真密码逃生"语义)。
+// 2026-10-15 走查: 原先用 `DragGesture(minimumDistance: 0)` + onChanged 里比时间戳来实现这 3 秒, 静止按住时
+// 收不到第二次 onChanged (Apple 对 DragGesture 的原话是 "invokes an action as the drag-event sequence changes"
+// —— 事件跟着**拖动**走, 不跟着时钟走), 于是 `>= 3` 那句只在手指一直在动时才可能被再次求值:
+// 手指纹丝不动 = 一次事件都不再产生 = 逃生口点不动; 只有来回蹭着按才碰巧成功。
+// 换成 LongPressGesture(minimumDuration:) —— 它的契约就是"按住够久即 onEnded", 不靠位移喂。
+// (刻意不给任何提示, 也不挂 VoiceOver 动作: 空壳自己不能成为破绽。另一条退路是切后台到点自动落锁, 见 LockKeeperApp.handleScenePhase。)
 import SwiftUI
 
 struct DecoyShellView: View {
     @EnvironmentObject var app: AppState
     @State private var now = Date()
-    @State private var hold = 0.0
     private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
@@ -32,12 +37,8 @@ struct DecoyShellView: View {
                 .frame(maxWidth: .infinity)
                 .contentShape(Rectangle())
                 .gesture(
-                    DragGesture(minimumDistance: 0)
-                        .onChanged { _ in
-                            if hold == 0 { hold = Date().timeIntervalSince1970 }
-                            if Date().timeIntervalSince1970 - hold >= 3 { escape() }
-                        }
-                        .onEnded { _ in hold = 0 }
+                    LongPressGesture(minimumDuration: 3)
+                        .onEnded { _ in escape() }
                 )
                 .accessibilityLabel("本地时钟, 无需联网")
             Spacer(minLength: 0)
@@ -46,11 +47,9 @@ struct DecoyShellView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .dsScreenBackground()
         .onReceive(ticker) { now = $0 }
-        .onDisappear { hold = 0 }
     }
 
     private func escape() {
-        hold = 0
         // 回锁屏要重新过验证: 空壳本身不保留任何解锁状态
         app.decoyMode = false
         app.appUnlocked = false

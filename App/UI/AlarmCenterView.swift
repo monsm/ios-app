@@ -30,24 +30,36 @@ struct AlarmCenterView: View {
         return LockArchive.displayName(kc) + " · 告警流"
     }
 
+    /// 内容是否已经嵌在外部导航容器里。2026-10-15 走查 §7.4-16: 本页自带 NavigationStack, 而它有三个呈现点
+    /// —— 两处 sheet/记录页, 以及设备页快捷格 `quickDestination` 的 push (外面那层栏已经在)。
+    /// push 那侧不传 true 就叠出两层导航栏。形状照 `AddPwdView` 的 embedded 抄 (作者既有解法)。
+    var embedded: Bool = false
+
+    private var listContent: some View {
+        List {
+            streamHeader
+            replayRuler   // 730
+            alarmList
+            trialCard     // 737 试错累计
+            responseCard   // 742 响应时长 (占位)
+        }
+        .navigationTitle(centerTitle)
+        .scrollContentBackground(.hidden)
+        .dsScreenBackground()
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button("完成") { dismiss() }
+            }
+        }
+        .onAppear { tick += 1 }
+    }
+
     var body: some View {
-        NavigationStack {
-            List {
-                streamHeader
-                replayRuler   // 730
-                alarmList
-                trialCard     // 737 试错累计
-                responseCard   // 742 响应时长 (占位)
-            }
-            .navigationTitle(centerTitle)
-            .scrollContentBackground(.hidden)
-            .dsScreenBackground()
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("完成") { dismiss() }
-                }
-            }
-            .onAppear { tick += 1 }
+        // AnyView 擦平两分支类型差异 (与 AddPwdView 同一写法): 两支只差最外层那一只容器
+        if embedded {
+            AnyView(listContent)
+        } else {
+            AnyView(NavigationStack { listContent })
         }
     }
 
@@ -146,7 +158,7 @@ struct AlarmCenterView: View {
                     .frame(minHeight: DS.Hit.min)
             }
         } header: {
-            Text(unhandledOnly ? "未处理队列" : "全部告警 (含已处置 743)")   // 734 未处理队列
+            Text(unhandledOnly ? "未处理队列" : "全部告警 (含已处置)")   // 734 未处理队列
         }
     }
     private func levelChip(_ t: Int, _ name: String) -> some View {

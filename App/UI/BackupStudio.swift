@@ -97,7 +97,7 @@ struct BackupStudioView: View {
                         }
                     }
                 } label: {
-                    Label("撤销本次恢复 (24h 内, 421)", systemImage: "arrow.uturn.left")
+                    Label("撤销本次恢复 (24h 内)", systemImage: "arrow.uturn.left")
                         .font(.subheadline)
                         .foregroundStyle(DS.Palette.danger)
                         .frame(maxWidth: .infinity)
@@ -129,13 +129,13 @@ struct BackupStudioView: View {
     // ---------- 五大动作卡 (触达 ≥44pt) ----------
     private var actionCards: some View {
         VStack(spacing: DS.Space.s) {
-            studioRow(title: "导出向导", sub: "分区勾选 · 口令 · 自描述命名 · 二维码搬运 (407-413)",
+            studioRow(title: "导出向导", sub: "分区勾选 · 口令 · 自描述命名 · 二维码搬运",
                       icon: "tray.and.arrow.up", tint: DS.Palette.accentText) { showExport = true }
-            studioRow(title: "恢复向导", sub: "预演 · 三策略 · 冲突裁决 · 回滚点 (417-427)",
+            studioRow(title: "恢复向导", sub: "预演 · 三策略 · 冲突裁决 · 回滚点",
                       icon: "tray.and.arrow.down", tint: DS.Palette.warn) { showRestore = true }
             studioRow(title: "WebDAV 与策略", sub: "连通测试 · 远端列表 · 节奏三档 · 密钥轮换",   // 197/198/237/422 连通测试
                       icon: "externaldrive.badge.wireless", tint: DS.Palette.accentText) { showWebdav = true }
-            studioRow(title: "换机迁移", sub: "三通道向导 · 双机进度 · 差异补传 (438-446)",
+            studioRow(title: "换机迁移", sub: "三通道向导 · 双机进度 · 差异补传",
                       icon: "iphone.radiowaves.left.and.right", tint: DS.Palette.accentText) { showMigration = true }
             studioRow(title: "本地备份文件", sub: "演练 · 哈希短码 · 双备份对比 · 数据事件",   // 434/436/454/511 演练
                       icon: "clock.arrow.circlepath", tint: DS.Palette.textSub) { showFiles = true }
@@ -204,7 +204,9 @@ struct BackupStudioView: View {
                 set: { BackupStudio.rollingKeep = $0; keep = $0 }), in: 0...20)
             // 删除面必须写在界面上：默认远端目录就是整个坚果云，用户以为「只留 N 份」只管自己的备份，
             // 而这一句决定他敢不敢开这个开关 (判据与理由见 BackupStudioKit.pruneRemote 上方)。
-            Text("只清理本 App 生成的备份文件 (文件名以「锁管家_」开头那族)，目录里的其它文件与子目录一律不动；0 = 不限。")
+            // 2026-10-15 走查: 同一档 rollingKeep 还会轮换**本机**导出目录 (pruneLocal, 只在真写成新备份后触发),
+            // 那件事此前只在导出完成的那句回执里说 —— 事后说清 ≠ 事前说清, 开关上手那一刻就得写明。
+            Text("只清理本 App 生成的备份文件 (文件名以「锁管家_」开头那族)，目录里的其它文件与子目录一律不动；0 = 不限。同一档也用于本机导出目录的轮换 (每次成功导出之后)。")
                 .font(.footnote)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -297,12 +299,19 @@ struct MigrationPromptCard: View {
                         .fixedSize(horizontal: false, vertical: true)
                     HStack(spacing: DS.Space.s) {
                         Button("回滚") {
-                            if BackupStudio.rollbackMigrationTxn() {
-                                app.loadDevices()
-                                txn = nil
-                                app.showToast("已回滚到迁移前")   // 445 已回滚到迁移前
-                            } else {
-                                app.showToast("回滚失败: 快照不可读")
+                            // 2026-10-15 走查: 这颗一键把整库还原到迁移前快照并清掉本轮换机验证记录, 零确认;
+                            // 而同一文件里「撤销恢复」那条是走 confirmDestructive 的 —— 两条都是整库级不可逆,
+                            // 门槛不该因为按钮在哪一行而不同 (本仓 delsweep 第二张清单讲的就是这种分叉)。
+                            confirmDestructive("回滚到迁移前",
+                                               "整库恢复到迁移开始前的快照，并清掉本轮的换机验证记录。迁移之后新改动的那些数据会被这份快照盖掉，做完不能撤销。",
+                                               confirmTitle: "回滚") {
+                                if BackupStudio.rollbackMigrationTxn() {
+                                    app.loadDevices()
+                                    txn = nil
+                                    app.showToast("已回滚到迁移前")   // 445 已回滚到迁移前
+                                } else {
+                                    app.showToast("回滚失败: 快照不可读")
+                                }
                             }
                         }
                         .font(.caption.weight(.semibold))
@@ -432,7 +441,9 @@ struct ExportWizardView: View {
             zoneToggle("凭证", counts["凭证"] ?? 0, $zones.credentials,
                        "密码与指纹台账")
             zoneToggle("记录", counts["记录"] ?? 0, $zones.records,
-                       "锁端日志缓存 (按锁约)", unit: "份缓存")
+                       // 2026-10-15 走查: 原文案「锁端日志缓存 (按锁约) · N 份缓存」两头都是假的 ——
+                       // 锁端日志不进备份包, 这一档裁的是 globals.trace 那一份本机写入轨迹。
+                       "本机记录写入轨迹 · 锁端日志缓存根本不进备份包 (要看锁里的记录得到记录页现读)", unit: "份")
             zoneToggle("设置", counts["设置"] ?? 0, $zones.settings,
                        "成员档案 · 应用锁摘要 · dongle/gateway")
             Toggle("包含独立口令组密钥",   // 181 包含独立口令组密钥
@@ -596,7 +607,7 @@ struct ExportWizardView: View {
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                     ShareLink(item: UIImageShareItem(img), preview: SharePreview("凭证二维码"))
-                    Text("口令另行线下交接, 勿与 QR 同渠道 (与 321 导出纪律一致)。")
+                    Text("口令另行线下交接, 勿与 QR 同渠道 (与导出纪律一致)。")
                         .font(.caption2)
                         .foregroundStyle(DS.Palette.warn)
                         .fixedSize(horizontal: false, vertical: true)
@@ -835,7 +846,7 @@ struct RestoreWizardView: View {
                 .font(.caption.monospaced())
                 .lineLimit(3...6)
                 .autocorrectionDisabled()
-            SecureField("口令 (带加密的备份才需要, 420)", text: $pw)
+            SecureField("口令 (带加密的备份才需要)", text: $pw)
                 .font(.body)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
@@ -1153,7 +1164,7 @@ struct RestoreWizardView: View {
                         }
                     }
                 } label: {
-                    Text("逐锁对账 (\(b.devices.count) 把, 425)")
+                    Text("逐锁对账 (\(b.devices.count) 把)")
                         .font(.caption.weight(.medium))
                         .foregroundStyle(DS.Palette.text)
                 }
@@ -1307,7 +1318,7 @@ struct WebDAVStudioView: View {
                         .font(.subheadline)
                         .foregroundStyle(DS.Palette.accentText)
                     SecureField("加密口令 (上传/下载)", text: $encPw)
-                    SecureField("新口令 (轮换 237, 旧口令随即失效)", text: $rotPw)
+                    SecureField("新口令 (轮换后旧口令随即失效)", text: $rotPw)
                     Button("密钥轮换: 新口令重加密替换远端") { showRotate = true }   // 237 密钥轮换
                         .font(.subheadline)
                         .foregroundStyle(DS.Palette.warn)
@@ -1586,7 +1597,7 @@ struct MigrationWizardView: View {
                 }
                 .buttonStyle(.plain)
             }
-            Text("三通道都落在同一套 预演→逐把确认→真实入库 上, 谁都不绕过 441 与 445。")
+            Text("三通道都落在同一套 预演→逐把确认→真实入库 上, 一步都不许跳过。")
                 .font(.caption2)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -1614,7 +1625,7 @@ struct MigrationWizardView: View {
                 case .qr: qrInput
                 case .webdav: webdavInput
                 }
-                SecureField("备份口令 (加密包才需要, 420/453)", text: $pw)
+                SecureField("备份口令 (加密包才需要)", text: $pw)
                     .font(.body)
                     .autocorrectionDisabled()
                     .textInputAutocapitalization(.never)
@@ -1632,7 +1643,7 @@ struct MigrationWizardView: View {
     }
     private var fileInput: some View {
         VStack(alignment: .leading, spacing: DS.Space.s) {
-            Text("把旧机导出的 .enc 文本粘贴进来, 或从「文件」App 选一份 (数据线/隔空投送/云盘先落到本机)。410 分卷时逐卷都加进来。")
+            Text("把旧机导出的 .enc 文本粘贴进来, 或从「文件」App 选一份 (数据线/隔空投送/云盘先落到本机)。分卷时逐卷都加进来。")
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -1798,9 +1809,11 @@ struct MigrationWizardView: View {
         Task {
             do {
                 entries = try await BackupStudio.listRemote(acct: davAcct, appPw: davPw, root: davRoot)
-                DB.store.set("kf_webdav_root", davRoot)
-                DB.store.set("kf_cloudcfg_acct", davAcct)
-                DB.store.set("kf_cloudcfg_app", davPw)
+                // 2026-10-15 走查: 这里原先在**一次"拉列表"之后**就把 root/账号/应用密码写进全局那三个键 ——
+                // 这一屏是换机迁移，用户填的很可能是**旧机那台账号**；点一下「拉取远端列表」就把
+                // 备份工作室/设置页配好的端点与口令整组换掉，下一次自动备份就传进另一个账号里去了。
+                // 读操作不改全局配置 (本文件顶部那条纪律: "Basic Auth 运行时输入")；要真正常用，
+                // 唯一的落盘入口是 WebDAV 那一节的保存 (上面 `DB.store.set` 只在那一处)。
                 davMsg = entries.isEmpty ? "远端没有条目 — 先确认旧机已上传" : "共 \(entries.count) 条, 选一份点 接收"
             } catch {
                 davMsg = error.localizedDescription
@@ -1930,7 +1943,7 @@ struct MigrationWizardView: View {
                     conflictCard
                 }
                 if resumedFrom > 0 {
-                    Label("445 续迁: 事务表里已有 \(resumedFrom) 把锁, 本次整锁跳过 — 不重做已完成的部分", systemImage: "arrow.uturn.forward")
+                    Label("续迁: 事务表里已有 \(resumedFrom) 把锁, 本次整锁跳过 — 不重做已完成的部分", systemImage: "arrow.uturn.forward")
                         .font(.caption)
                         .foregroundStyle(DS.Palette.warn)
                         .fixedSize(horizontal: false, vertical: true)
@@ -2128,7 +2141,7 @@ struct MigrationWizardView: View {
                     .padding(DS.Space.m)
                     .background(DS.Palette.warn.opacity(0.06), in: RoundedRectangle(cornerRadius: DS.Radius.tile, style: .continuous))
                 }
-                Text("核对表: 三数来自本次真实处置; 缺的锁按 440 补传后重看这张单。")   // 444 核对表
+                Text("核对表: 三数来自本次真实处置; 缺的锁补传后重看这张单。")   // 444 核对表
                     .font(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -2160,8 +2173,11 @@ struct MigrationWizardView: View {
                 .contentShape(Rectangle())
                 .onTapGesture {
                     checkOn[k] = !(checkOn[k] ?? false)
+                    // 2026-10-15 走查: 原先只有"勾上"才落盘, 取消勾选只改本地 @State —— 而这四格的
+                    // 初值读的就是盘上那份, 于是取消会在下次进场被悄悄改回来。勾与不勾都写, 屏上与台账
+                    // 才是同一个量 (armFirstChecks 现在会在新一轮迁移开始时把这份整体清掉)。
+                    BackupStudio.markFirstCheck(k, on: checkOn[k] == true)
                     if checkOn[k] == true {
-                        BackupStudio.markFirstCheck(k)
                         UINotificationFeedbackGenerator().notificationOccurred(.success)
                     }
                 }
@@ -2217,13 +2233,19 @@ struct MigrationWizardView: View {
                 .fixedSize(horizontal: false, vertical: true)
             HStack(spacing: DS.Space.s) {
                 Button("回滚") {
-                    if BackupStudio.rollbackMigrationTxn() {
-                        pendingTxn = nil
-                        resumedFrom = 0
-                        app.loadDevices()
-                        app.showToast("已回滚到迁移前")   // 445 已回滚到迁移前
-                    } else {
-                        app.showToast("回滚失败: 快照不可读")
+                    // 2026-10-15 走查: 与上面那枚「回滚」同一件事、同样零确认 —— 上面那张卡已经把后果
+                    // 写在文案里, 但"写在旁边"和"按下去再问一次"是两件事, 整库级还原两条都该问。
+                    confirmDestructive("回滚到迁移前",
+                                       "整库恢复到迁移开始前的快照，已落库的 \(t.doneMacs.count) 把锁与之后改动的数据都会被这份快照盖掉，并清掉本轮换机验证记录。做完不能撤销。",
+                                       confirmTitle: "回滚") {
+                        if BackupStudio.rollbackMigrationTxn() {
+                            pendingTxn = nil
+                            resumedFrom = 0
+                            app.loadDevices()
+                            app.showToast("已回滚到迁移前")   // 445 已回滚到迁移前
+                        } else {
+                            app.showToast("回滚失败: 快照不可读")
+                        }
                     }
                 }
                 .font(.subheadline)

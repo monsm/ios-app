@@ -425,7 +425,13 @@ final class LockService: ObservableObject {
         let r = try await execOk(try ZKCmdBuilder.cmd0ASyncPwd(m, sk, delAlias: 0, addPwd: pwd, validFrom: validFrom, validTo: validTo))
         guard let alias = aliasFrom(r) else {
             log("warn", "0A 响应无 KLV#04 alias (固件未返回)")
-            return 0
+            // 2026-10-15 走查: 这里原先 `return 0`。0 不是"某个编号"，它是协议里 **delAlias: 0 = 本次不删任何密码**
+            // 那个保留值 (上面那条 cmd0ASyncPwd 自己就是这么调的) —— 于是一口气错三处：界面报
+            // "添加成功 (别名 #0)"、台账把这条密码记成 0 号、往后 `pwdDelete(0)` 发出去的就是"不删任何东西"
+            // 那一帧而照样过 execOk ⇒ **屏上说已删除，密码在锁里还活着**。
+            // 拿不到编号就是没确认到编号。本文件对"响应缺关键字段"的既有口径是抛错而不是给默认值
+            // (见上面 01 无令牌那条)，这里同一条。
+            throw BLEErrorX.msg("锁已接受写入，但没有回凭证编号 (0A 响应缺 KLV#04) — 这条密码本机不登记，请到锁内记录核对或重加")
         }
         // 第二步: 0B 设置有效期 (App 两步链)
         do {
@@ -439,6 +445,14 @@ final class LockService: ObservableObject {
     }
     @discardableResult
     func pwdModify(alias: Int, pwd: String, validFrom: String, validTo: String) async throws -> Int {
+        // 2026-10-15 走查: 与 pwdDelete 同一个洞，而后果更脏 —— 这条帧是"删 alias + 加新密码"两步合一，
+        // alias = 0 时删的那一步是空操作 (0 = 不指定)，于是锁里**多出一条密码**、台账那边却按"改写"记账，
+        // 报的还是"已改写"。0 号只可能来自这条密码当初没拿到锁端编号 (本文件上方 pwdAdd 那条)，
+        // 那种情况要做的是删除+重加，不是改写。
+        guard alias > 0 else {
+            log("warn", "pwdModify 收到保留编号 0，已中止 (这条台账没有锁端编号)")
+            throw BLEErrorX.msg("这条密码在本机台账里没有有效的锁端编号 (0 = 协议里的「不指定」)，改写会只在锁里多加一条而删不掉旧的 — 请先删除再重新添加")
+        }
         let (m, sk) = try keys()
         let r = try await execOk(try ZKCmdBuilder.cmd0ASyncPwd(m, sk, delAlias: alias, addPwd: pwd, validFrom: validFrom, validTo: validTo))
         let got = aliasFrom(r) ?? alias
@@ -446,6 +460,14 @@ final class LockService: ObservableObject {
         return got
     }
     func pwdDelete(_ alias: Int) async throws {
+        // 2026-10-15 走查: 0 是协议里"本次不删任何密码"那一族的保留值 (见上面 cmd0ASyncPwd 的 delAlias 口径)。
+        // 把 0 当编号发出去照样会拿到成功码 ⇒ `execOk` 过、日志写"已删除"、锁里那条密码一动不动。
+        // 台账里真出现 0 号，只可能是这条密码当初就没从锁端拿到编号 —— 那种情况要如实报失败，
+        // 而不是给一个假的"已删除"。
+        guard alias > 0 else {
+            log("warn", "pwdDelete 收到保留编号 0，已中止 (这条台账没有锁端编号)")
+            throw BLEErrorX.msg("这条密码在本机台账里没有有效的锁端编号 (0 = 协议里的「不指定」)，无法按编号删除 — 请用「清空密码」或在门锁上处理")
+        }
         let (m, sk) = try keys()
         try await execOk(try ZKCmdBuilder.cmd0ASyncPwd(m, sk, delAlias: alias))
         log("info", "凭证#\(alias) 已删除 (0A)")

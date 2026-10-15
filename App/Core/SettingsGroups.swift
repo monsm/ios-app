@@ -55,15 +55,18 @@ struct SettingsGroupChips: View {
     @Binding var selection: SettingsGroup?
 
     var body: some View {
-        // 一行横切片: "全部"在最左, 因为默认态就是它; 选中片给底色而不是仅靠颜色 (色盲与灰度预览下也要能分辨, 879 同口径)
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: DS.Space.s) {
-                chip(nil, "全部", "square.grid.2x2")
-                ForEach(SettingsGroup.allCases) { g in chip(g, g.title, g.icon) }
-            }
-            .padding(.horizontal, DS.Space.gutter)
-            .padding(.vertical, DS.Space.xs)
+        // 2026-10-15 走查: 原为 `ScrollView(.horizontal, showsIndicators: false)` —— 六枚片
+        // (全部/开门日常/凭证与成员/数据与安全/外观与辅助/帮助与关于) 总宽约 656pt, 而这一行的
+        // 可用宽只有 ~361pt, 于是后两枚永远在滚动区外, 连"还能滚"都不提示。这与本仓自己在
+        // App 图标选择器上写下的原则相悖 (SettingsView 里那条: 横向 ScrollView "会把后几款
+        // 藏在滚动区外, 用户不知道自己有九款可选")。改用 FlowLayout 按宽度换行铺开:
+        // 六枚全在屏上, 片形 (贴字胶囊) 一点没变。
+        FlowLayout(spacing: DS.Space.s) {
+            chip(nil, "全部", "square.grid.2x2")
+            ForEach(SettingsGroup.allCases) { g in chip(g, g.title, g.icon) }
         }
+        .padding(.horizontal, DS.Space.gutter)
+        .padding(.vertical, DS.Space.xs)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("设置分区筛选，当前\(selection?.title ?? "全部")")
     }

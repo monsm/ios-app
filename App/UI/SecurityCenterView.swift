@@ -83,7 +83,7 @@ func askSudoThen(_ app: AppState, then action: @escaping () -> Void) {
     guard SecurityPolicy.sudoRequired else { action(); return }
     if app.sudoTicket != nil { action(); return }
     let alert = UIAlertController(title: "重输应用锁密码",
-                                  message: "383: 这是毁灭级操作, 需重输本机密码。口令只当场比对, 不写进任何存储。",
+                                  message: "这是毁灭级操作, 需重输本机密码。口令只当场比对, 不写进任何存储。",
                                   preferredStyle: .alert)
     alert.addTextField { f in
         f.isSecureTextEntry = true
@@ -160,6 +160,7 @@ struct SecurityWatermark: View {
 // ---------- 主入口 ----------
 struct SecurityCenterView: View {
     @EnvironmentObject var app: AppState
+    @Environment(\.dismiss) private var dismiss
     @ObservedObject private var center = SecTickCenter.shared
 
     var body: some View {
@@ -282,6 +283,12 @@ struct SecurityCenterView: View {
             .scrollContentBackground(.hidden)
             .dsScreenBackground()
             .navigationTitle("安全中心")
+            // 2026-10-15 走查: 本页由 push 改为 **sheet** 呈现 (它自带 NavigationStack, push 会套两层
+            // 导航栏 —— 判据见 SettingsView 里「动态消息」那条注释)。而它此前**没有任何关闭出口**:
+            // push 时有系统返回键, sheet 里没有, 用户只能下滑。补一枚与其余 sheet 页同款的前置「关闭」。
+            .toolbar { ToolbarItem(placement: .navigationBarLeading) {
+                Button("关闭") { dismiss() }
+            } }
             // 378 常驻水印层: 全页对角重复, 设置可关
             .overlay {
                 if DB.store.getBool(SecKey.watermarkOn, false) {
@@ -291,6 +298,19 @@ struct SecurityCenterView: View {
             // 2s 节拍重算派生文案 (哈希链长度/启用数等), 子页 bump 后立即生效
             .onReceive(Timer.publish(every: 2, on: .main, in: .common).autoconnect()) { _ in
                 self.center.bump()
+            }
+            // 2026-10-15 走查 §4.2: 栈内两枚"去设置…"按钮 (`SecurityLockConfigView` 的重设纯数字密码、
+            // `SecurityDestroyView` 的销毁前备份闸) 把落点写进 app.pendingSettingsFocus,
+            // 而**本页是盖在设置页上的 sheet** —— 设置页当场消费, 等于在
+            // 被盖住的 List 上再开一个 sheet: 同一呈现上下文里已经有一个了, 新的不会显示, 而 pending
+            // 已经清空, 按钮就退回成"点了没反应"。改成由这层 sheet 自己收摊, 设置页等收到 onDismiss
+            // 再落地 (见 SettingsView 里 showSecurity 那条)。
+            // dismiss 读的是**本视图**的 @Environment —— 与上面「关闭」那颗按钮同一个动作、同一个值,
+            // 不是从 push 进来的子页里调 (那种情况下它可能只退一层)。整条安全中心栈随 sheet 消失,
+            // 所以不需要给 NavigationStack 另加 path binding。
+            .onChange(of: app.pendingSettingsFocus) { _, f in
+                guard f != nil else { return }
+                dismiss()
             }
         }
     }
@@ -458,11 +478,17 @@ struct SecurityLockConfigView: View {
                 }
                 // ★B 迁移引导: 已有密码但含非数字 → 给一条能点的路, 而不是只写"需重设"
                 if DB.hasPasscode(), !DB.store.getBool(SecKey.randKeyDigits, false) {
-                    Button("去「设置」把本机密码重设为纯数字，即可启用随机键位") { app.tabSelection = 3 }
+                    Button("去「设置」把本机密码重设为纯数字，即可启用随机键位") {
+                        // 2026-10-15 走查: 原为 `app.tabSelection = 3` —— 本页是设置 Tab 下 push 进来的
+                        // (设置 → 安全中心 → 本页), 切 Tab 是**空转**, 用户点了什么都不发生。
+                        // 改成把落点带过去, 由设置页真的拉起「设置本机密码」流程。
+                        app.pendingSettingsFocus = "passcode"
+                        app.requestTab(3)
+                    }
                         .font(.footnote)
                         .foregroundStyle(DS.Palette.accentText)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .accessibilityHint("跳转设置 Tab 的密码区，现有字母数字密码仍可继续使用，不会被强制修改")
+                        .accessibilityHint("到设置页的密码区重设本机密码；现有字母数字密码仍可继续使用，不会被强制修改")
                 }
             } header: {
                 Text("救援与键位")   // 395/396 救援与键位
@@ -819,7 +845,10 @@ struct SecurityPeekView: View {
             }
             // 369 遮蔽样式自选
             Section {
-                SecRow(title: "列表遮蔽样式", subtitle: maskStyleLabel, icon: "mask") {
+                // 2026-10-15 走查: 标题原为「列表遮蔽样式」, 但真实作用点是**凭证详情页的逐位显示格**
+                // (唯一消费者是 CredentialStudio 的逐位行) —— 凭证列表行压根不显示码值,
+                // 这一点连下面 stars 档的副标题自己都写着 ("列表行不显码值")。标题与作用点不符, 改准。
+                SecRow(title: "码值遮蔽样式", subtitle: maskStyleLabel, icon: "mask") {
                     Picker("", selection: bindingString(SecKey.maskStyle)) {
                         Text("圆点打码").tag("")
                         Text("星号打码").tag("stars")
@@ -1578,7 +1607,7 @@ struct SecurityDestroyView: View {
                                 .font(.footnote)
                                 .foregroundStyle(DS.Palette.ok)
                         } else {
-                            Label("383 开关关着: 本级跳过, 不再追问口令", systemImage: "exclamationmark.triangle")
+                            Label("销毁前重输口令的开关关着: 本级跳过, 不再追问口令", systemImage: "exclamationmark.triangle")
                                 .font(.footnote)
                                 .foregroundStyle(DS.Palette.warn)
                         }
@@ -1857,10 +1886,15 @@ struct SecurityDestroyView: View {
                                             + "\n注意: 销毁会一并覆写删除本机上已有的备份导出件与自动回滚快照 (它们内含全部锁密钥)。",
                                           preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "先去备份", style: .default) { _ in
-                // 400: 真跳一步 (切到设置 Tab) + 把路径写全 —— 与 437 复核钉同一口径:
-                // 备份工作室在三层 sheet 之后, 不为这一条造 pending-sheet 路由, 但也不假装"一点就到"。
-                app.tabSelection = 3
-                app.showToast("已切到设置 — 路径: 备份与恢复 → 备份工作室 → 导出向导")
+                // 2026-10-15 走查: 原为 `app.tabSelection = 3` + toast "已切到设置" ——
+                // 而本页 (设置 → 安全中心 → 销毁) 本来就在设置 Tab 上, 切 Tab 是**空转**:
+                // 用户点了什么都没发生, toast 却报了一个没发生的动作。改成把落点带过去,
+                // 由设置页真的打开「备份与恢复」; 文案也不再声称"已切到"。
+                app.pendingSettingsFocus = "backup"
+                app.requestTab(3)
+                // 2026-10-15 §4.2: 措辞改成**将来时** —— 这一按之后还要先收掉安全中心这层 sheet,
+                // 备份面是设置页在 onDismiss 里补开的。说"已打开"就是把还没发生的事报成发生了。
+                app.showToast("离开安全中心后打开「备份与恢复」")
             })
             alert.addAction(UIAlertAction(title: "仍要销毁", style: .destructive) { _ in
                 commitDestroy()
@@ -1877,9 +1911,9 @@ struct SecurityDestroyView: View {
         guard let rep = DestroyKit.destroyAll(sudoRequired: SecurityPolicy.sudoRequired,
                                               sudo: app.sudoTicket) else {
             destroying = false
-            destroyReport = "未执行: 383 要求重输应用锁密码, 本次没有拿到复核凭据, 本机数据未被改动"
+            destroyReport = "未执行: 这一级要求重输应用锁密码, 本次没有拿到复核凭据, 本机数据未被改动"
             residueMsg = nil
-            app.showToast("销毁被 383 拦下")
+            app.showToast("销毁被「重输口令」这一道拦下")
             return
         }
         let done = rep.residueFound == 0 && rep.filesFailed.isEmpty
@@ -1943,7 +1977,7 @@ struct SecurityDestroyView: View {
             CredentialOrg.saveBin(kc.mac, [])
             cleared += 1
         }
-        app.showToast(cleared > 0 ? "回收站已清空 (\(cleared) 把锁, 403)" : "回收站本来就是空的")   // 403 回收站本来就是空的
+        app.showToast(cleared > 0 ? "回收站已清空 (\(cleared) 把锁)" : "回收站本来就是空的")   // 403 回收站本来就是空的
         holdProgress = 0
         SecTick.bump()
     }

@@ -141,16 +141,27 @@ enum BatteryCare {
     static func latest(_ mac: String) -> BattSample? { samples(mac).last }
 
     /// 统一展示读数 (ROADMAP 包4): Hero 卡/总览条带/档案页共用一个来源 —
-    /// 采样表最新值优先 (90 天内且非陈旧才信), 否则回退锁侧快照; 都缺则 -1 未知。
-    /// 陈旧上限 7 天: 采样点再旧于快照也不比快照新, 直接当不可用。
-    /// 统一展示读数 (ROADMAP 包4): Hero 卡/总览条带/档案页共用一个来源 —
     /// 采样表最新值与锁侧快照取时间较新的那个 (采样随读 03 落库, 通常不比快照旧);
     /// 都缺则 -1 未知。调用方另有采样时间标注 (291), 陈旧值由标注兜底, 不在此处猜。
+    /// ⚠ 2026-10-15 走查: 这里原先叠着**第二段**旧说明 ("采样最新值优先, 90 天内且非陈旧才信 / 陈旧上限 7 天"),
+    /// 而下面的代码既没有 90 天也没有 7 天闸门 —— 它只比"谁更新"。留着那段就是在指一条不存在的规则, 删掉。
     static func displayPct(_ mac: String, snapshot: Int = -1) -> Int {
         let snapAt = DB.get(StatusSnapshot.self, "kf_snap_" + mac)?.at ?? 0
         guard let s = latest(mac), s.pct >= 0 else { return snapshot }
         if snapshot < 0 { return s.pct }      // 快照未知 → 采样是唯一证据 (调用方另有时间标注)
         return s.t >= snapAt ? s.pct : snapshot // 快照已知 → 谁更新用谁
+    }
+
+    /// 界面上的那一格电量: 会话实时读数优先, 无则走 displayPct 的采样/快照口径。
+    /// `live` 传 -1 表示"这次没有实时读数" —— 只有正在连着的那把锁才有实时读数, 别的锁必须传 -1,
+    /// 否则 A 锁的电量会被安到 B 锁头上 (设备页那侧的同名判据)。
+    static func facePct(_ mac: String, live: Int = -1) -> Int {
+        live >= 0 ? live : displayPct(mac, snapshot: DB.readStatus(mac)?.powerLevel ?? -1)
+    }
+    /// 电量的界面写法 (<0 未读到 → "--"; >80 只报 ">80%", 锁侧这个量本身就是粗估档)。
+    static func faceText(_ p: Int) -> String {
+        if p < 0 { return "--" }
+        return p > 80 ? ">80%" : "\(p)%"
     }
 
     /// 每次读 03 成功后调用 (LockService.getStatus 埋点)。
@@ -255,6 +266,14 @@ enum BatteryCare {
     }
 
     // ============ 保养状态 (1012/1013/1025) ============
+    /// 1022 保养周期档: 近 30 天开门 ≥60 次的锁算高频, 周期从 90 天缩到 60 天。
+    /// 这条判据此前有**三份** —— 通知侧 (本文件)、保养清单页的 `periodDays`、以及"保养已记录"那句
+    /// toast; 第三份把 90 写死在字面量里, 于是高频锁按屏幕说的等 90 天, 实际 60 天就被催。收成一处。
+    static func carePeriodDays(opens30d: Int) -> Int { opens30d >= 60 ? 60 : 90 }
+    /// 按 mac 取那一档 (usage 那份读法留在主线程侧, 与通知侧那条 await 同一口径)
+    @MainActor static func carePeriodDays(mac: String) -> Int {
+        carePeriodDays(opens30d: LockStats.usage().first(where: { $0.mac == mac })?.opens30d ?? 0)
+    }
     static func care(_ mac: String) -> CareState {
         DB.store.get(CareState.self, "kf_maint_" + mac) ?? CareState()
     }
@@ -378,14 +397,14 @@ enum CareSchedule {
         guard !DB.keychains().isEmpty else { return }
         guard await requestAuth() else { return }
         let now = Date().timeIntervalSince1970 * 1000
-        // 1022: 到期判据与 CareViews:24-28 的 periodDays 同一口径 (高频锁 60 天档), 通知不再写死 90
+        // 1022: 到期判据走 carePeriodDays(opens30d:) 那一处 (本文件上方), 通知侧不再自己算 60/90
         let usage30 = await MainActor.run { LockStats.usage() }
         for kc in DB.keychains() {
             let name = LockArchive.displayName(kc)
             // 1013 保养到期: 满周期起每天最多一条, 完成保养即停
             let s = BatteryCare.care(kc.mac)
             let opens30d = usage30.first(where: { $0.mac == kc.mac })?.opens30d ?? 0
-            let carePeriod = opens30d >= 60 ? 60 : 90
+            let carePeriod = carePeriodDays(opens30d: opens30d)
             if s.lastCareAt > 0, now - s.lastCareAt >= Double(carePeriod) * 86400 * 1000,
                DB.store.getString("kf_care_notify_" + kc.mac) != Milestones.dayKey() {
                 DB.store.set("kf_care_notify_" + kc.mac, Milestones.dayKey())

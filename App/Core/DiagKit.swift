@@ -140,7 +140,7 @@ enum ScanStats {
         guard !r.isEmpty else { return "还没有扫描时长记录 — 冷启动与连接/开锁时才会扫, 攒几天再看趋势。" }
         let avg = r.reduce(0.0) { $0 + $1.secs } / Double(r.count)
         let win = BLEService.ScanProfile.current.timeoutMs
-        if avg < 5 { return "近 \(r.count) 天日均扫描 \(Int(avg)) 秒 — 已经很省 (当前档位单次窗口 \(win)ms, 123)。" }
+        if avg < 5 { return "近 \(r.count) 天日均扫描 \(Int(avg)) 秒 — 已经很省 (当前档位单次窗口 \(win)ms)。" }
         if avg < 30 { return "近 \(r.count) 天日均扫描 \(Int(avg)) 秒 — 正常范围 (单次窗口 \(win)ms); 想更省可换「省电」档。" }   // 123 天日均扫描
         return "近 \(r.count) 天日均扫描 \(Int(avg)) 秒 — 偏多; 不需要即连的话换「省电」档, 或关掉预握手。"   // 97/123 天日均扫描
     }
@@ -753,7 +753,7 @@ enum RecordReconcile {
     /// 与锁端重排会算出上亿的量, 把它当成"缺了几亿条"画出来就是假数据。
     static let idxGapCap = 5000
     /// 749 判据文案的唯一来源 (界面直接显示它, 免得两处各写一套口径)
-    static let interiorBasis = "前后两侧本机都有日志, 中间这些天本机一行都没有 — 与 451 同一口径"
+    static let interiorBasis = "前后两侧本机都有日志, 中间这些天本机一行都没有"
     static let tailBasis = "本机最后一行之后到昨天, 只有前一侧有数据 — 这段可能只是没连过锁, 只作补拉参考"
     /// 749 扫描跨度默认上限。界面那句"超过 N 天只扫了最近一段"报的就是这个数, 所以只存在这一处。
     static let defaultMaxSpanDays = 366
@@ -1031,7 +1031,7 @@ enum Recovery {
         if telemetry >= 32_000 {
             out.append(RecoveryTip(id: "telemetry",
                 title: "连接遥测与事件流水约 \(DataHealth.human(telemetry))",
-                detail: "这些是 748/756 出图的样本源：清了图就退回「积累中」。除非确实在意这几 KB，否则留着。",
+                detail: "这些是出图的样本源：清了图就退回「积累中」。除非确实在意这几 KB，否则留着。",
                 goto: "本页「连接成功率」"))
         }
         return out
@@ -1334,7 +1334,7 @@ enum ProtocolDict {
         .init(k: "#31", name: "verFirmware", desc: "固件 3B 反转直读 a.b.c"),
         .init(k: "#34", name: "pid", desc: "型号号, 映射见诊断页型号映射"),   // 661 型号号
         .init(k: "#35", name: "eCtrlVer", desc: "电控板版本, ASCII"),
-        .init(k: "16#04", name: "surplus", desc: "GETLOG 本次游标之后还剩的日志条数 (只对当页成立, 不是锁内总条数; 749 会话内对账依此)"),
+        .init(k: "16#04", name: "surplus", desc: "GETLOG 本次游标之后还剩的日志条数 (只对当页成立, 不是锁内总条数; 会话内对账依此)"),
         .init(k: "16#05", name: "logRec", desc: "日志条目: type 1B + len 1B + idx 4B LE + lockTime 4B LE")
     ]
     // 原 `static let logTypes` (把 StatusParser.logTypes 排好序再暴露一份) 第九十三批删除：

@@ -140,9 +140,18 @@ struct ExportItem: Identifiable {
     static let bom = "\u{EF}\u{BB}\u{BF}"   // UTF-8 BOM (中文 Excel 友好)
 
     /// 714 复制为完整文本 (正文 + 722 校验行)
+    /// 2026-10-15 走查: 正文原先取的是 `previewText` —— 那是给屏幕看的截断预览 (CSV 前 3 行、
+    /// PDF 前 500 字, 个别生产者干脆放的是一句说明), 于是复制进剪贴板的**从来不是**全文,
+    /// 而按钮旁边那句 toast 一直写着"已复制完整文本"。正文只认真字节; 图与压缩包这类没有文本
+    /// 正文的产物 (UTF-8 解出替换符) 退回 previewText, 由 toast 如实说清复制的是什么。
+    var decodedBody: String? {
+        guard !bytes.isEmpty else { return nil }
+        let s = String(decoding: bytes, as: UTF8.self)
+        return s.contains("\u{FFFD}") ? nil : s
+    }
     var fullText: String {
-        let body = previewText.isEmpty ? String(decoding: bytes, as: UTF8.self) : previewText
-        return body + "\n── 校验 ──\nSHA-256: \(sha256)\n\(shaLabel)\n生成: " + ExportKit.stamp.string(from: Date())
+        (decodedBody ?? previewText)
+            + "\n── 校验 ──\nSHA-256: \(sha256)\n\(shaLabel)\n生成: " + ExportKit.stamp.string(from: Date())
     }
 
     /// 719/712 写盘: **优先**写用户用书签固定的导出目录 (713), 没设过回落 Caches/exports (老行为不变)。
@@ -155,6 +164,18 @@ struct ExportItem: Identifiable {
         let url = dir.appendingPathComponent(fileName)
         // 2026-10-14: 原子写 —— 写书签目录/大文件时进程被杀或低存储会留截断件, 而调用方只判非 nil 即回执"已生成"。
         guard (try? bytes.write(to: url, options: .atomic)) != nil else { return nil }
+        // 2026-10-15 走查: 与 XXXVII 那处分享同一件事落在写盘这一侧 —— 长图切出的第 2、3 张原先只有分享拿得到,
+        // 「写入本地文件」仍只落第 1 张: 页面上写着"共 3 张"而文件夹里只躺一份, 又是报的数与给的东西不符。
+        // 逐张原子写, 命名与分享那侧同一套 (-序号of张数); 任何一张失败就整体返回 nil, 调用方就此报「没落盘」,
+        // 不会报成「全部都已生成」。**不回删已写成的那几张**: 原子写已经把同名旧件覆盖掉了, 再删等于让用户一份不剩。
+        if images.count > 1 {
+            for (i, img) in images.enumerated() where i > 0 {
+                let nm = fileName.replacingOccurrences(of: ".jpg",
+                                                       with: "-" + String(i + 1) + "of" + String(images.count) + ".jpg")
+                guard let d = img.jpegData(compressionQuality: 0.8),
+                      (try? d.write(to: dir.appendingPathComponent(nm), options: .atomic)) != nil else { return nil }
+            }
+        }
         return url
     }
 
@@ -225,11 +246,14 @@ struct ExportPDFFile: Transferable {
 struct ExportImageFile: Transferable {
     let item: ExportItem
     let image: UIImage
+    /// 多张长图共用同一个 ExportItem，而它的 fileName 只有一个 —— 三张同名会被「存储到文件」叠成一份。
+    /// 留一个逐张改名口；不给就沿用原名。(同类壳在本文件还有 4 个，它们没有这一字段，所以两处替换都只锁 ExportImageFile 内部的多行块)
+    var nameOverride: String? = nil
     static var transferRepresentation: some TransferRepresentation {
         DataRepresentation(exportedContentType: UTType.jpeg) {
             $0.image.jpegData(compressionQuality: 0.8) ?? Data()
         }
-        .suggestedFileName { $0.item.fileName }
+        .suggestedFileName { $0.nameOverride ?? $0.item.fileName }
     }
 }
 /// 718 单条记录卡分享: UIImage 本身不满足 Transferable, 而"分享这一条"不值得为它造一个完整 ExportItem
@@ -272,11 +296,16 @@ extension ExportItem {
         let rowH: CGFloat = 44
         let headH: CGFloat = 110
         let perPage = max(Int((844 * 2.2) / rowH), 1)   // 屏高 2.2 倍为一张的上限
+        // 2026-10-15 走查: 方向。`ExportKit.records` 是**时间正序** (`out.reversed() // 时间正序`),
+        // 而下面这张循环从下标 0 起切、最多切 3 张 ⇒ 当日超过 perPage*3 条时, 丢掉的是**最新那批**,
+        // 屏上的条数却按全量报 (本仓军规: 要截断, 截断方向必须与"用户要的那一头"同侧 —— 这里要留的是最近)。
+        // 正序表上取 `suffix` 就是"留最新的一段, 且张与张之间仍是旧的在前"。
+        let window = Array(recs.suffix(perPage * 3))
         var pages = [UIImage]()
         var i = 0
         var p = 0
-        while i < recs.count && pages.count < 3 {
-            let chunk = Array(recs[i ..< min(i + perPage, recs.count)])
+        while i < window.count && pages.count < 3 {
+            let chunk = Array(window[i ..< min(i + perPage, window.count)])
             // 706: 续张带紧凑表头 (渐变头占位 headH/2), 聊天逐张发不丢锁名上下文;
             // 686: 首张此前无表头 —— 单张发出去看不出锁名/日期, 现在首张带完整表头
             let header = p == 0 ? headH : headH / 2
@@ -898,7 +927,13 @@ enum ExportKit {
     // ---------- 478 口述卡 (大字排版 PDF, 供不用智能手机的老人贴门) ----------
     static func oralCardPDF(mac: String, recs: [ExportRecord]) -> Data {
         let lockName = DB.keychain(mac).map { $0.name.isEmpty ? LockArchive.displayName($0) : $0.name } ?? mac
-        let alarms = recs.filter { $0.isAlarm }.count
+        // 2026-10-15 走查: 纸面印「本月告警」而原先数的是**全量** —— `recs` 就是 `ExportKit.records(mac:)` 那份整缓存，
+        // 没有任何期间过滤 (调用点 `printOralCard()` 直接把全量传进来)。同页 `threeSentenceLines` 那句「告警 N 条」
+        // 才是全量口径，两处措辞不同而算法相同 ⇒ 三个月前的告警也会被算进"本月"。
+        // 月 key 用仓里唯一的口径 `Milestones.monthKey()`；`dayKey == "未知"` 那批不计入本月
+        // (它证明不了自己在本月)，宁可少报也不虚报。
+        let month = Milestones.monthKey()
+        let alarms = recs.filter { $0.isAlarm && $0.dayKey.hasPrefix(month) }.count
         let last = recs.last.map { $0.time + " " + $0.typeName } ?? "无记录"
         let renderer = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: 595, height: 842))
         let data = renderer.pdfData { ctx in
@@ -944,7 +979,7 @@ enum ExportKit {
             kv("告警类型", rec.typeName + (rec.levelName.isEmpty ? "" : " (" + rec.levelName + ")"))
             kv("涉事成员", rec.member.isEmpty ? "无法归属 (可证明归属才填)" : rec.member)
             kv("门锁", lockName)
-            kv("原始报文", rec.hex.isEmpty ? "本机未留存 (未开启「记录原始收发 hex」, 740)" : rec.hex)
+            kv("原始报文", rec.hex.isEmpty ? "本机未留存 (未开启「记录原始收发 hex」)" : rec.hex)
             kv("处置结论", dispo.map { $0.verdict + " · " + $0.atLabel() } ?? "未处置")
             y += 18
             PDFText.line(cg, "签名栏 (物业 / 处置人)", font: .medium, size: 12, x: 36, y: y, color: .black, pageW: 520)
@@ -984,7 +1019,11 @@ enum ExportKit {
             var y: CGFloat = 96
             PDFText.line(cg, "最近 " + String(min(alarms.count, 10)) + " 条告警", font: .medium, size: 14, x: 36, y: y, color: .black, pageW: 520)
             y += 22
-            for a in alarms.prefix(10) {
+            // 2026-10-15 走查: 上一行写「最近 N 条告警」而这一圈原先取的是 `prefix(10)` ——
+            // `ExportKit.records` 是**时间正序** (`return out.reversed()`)，正序表上的 prefix 就是**最早那 10 条**，
+            // 印出来的是"这张锁第一次报警一直到第十条"，而标题说的是最近。同 §7.2 长图那张一个病：截断方向要与用户要的那一头同侧
+            // ⇒ 改 `suffix(10)` (仍按时间先后排列，只是留的是最后 10 条)。
+            for a in alarms.suffix(10) {
                 var line = a.time + "   " + a.typeName + (a.member.isEmpty ? "" : " · " + a.member)
                 if let d = dispo[mac + "#" + a.key] { line += " · 处置:" + d.verdict }   // 726
                 PDFText.line(cg, line,
@@ -1522,7 +1561,9 @@ struct ExportCenterView: View {
                 }
             }
             .pickerStyle(.inline)
-            .disabled(false)
+            // 2026-10-14 走查: 这里原来挂着 `.disabled(false)` —— 空修饰符, 既不会解除任何上级禁用
+            // (SwiftUI 的 disabled 是沿树向下传播的, 子级写 false 压不住祖先的 true), 也不改任何行为。
+            // 删掉, 免得下一个读代码的人以为"这里本来有个禁用条件, 后来被关掉了"。
             Text("导出与分享会让文件离开本机 (AirPrint/照片/聊天由你选)。生成过程纯本地, 不经过任何网络。")
                 .font(.footnote)
                 .foregroundStyle(DS.Palette.textSub)
@@ -1600,7 +1641,7 @@ struct ExportCenterView: View {
             Button { startAlarmCard() } label: { Label("告警分享卡", systemImage: "exclamationmark.bubble") }   // 688/718 告警分享卡
             Button { startAlarmFactSheet() } label: { Label("告警事实单页 (PDF)", systemImage: "doc.text") }
             // 691 加密压缩导出: 口令线下告知, 本机不留 (与备份包同一套信封)
-            SecureField("加密口令 (至少 6 位, 691)", text: $zipPw)
+            SecureField("加密口令 (至少 6 位)", text: $zipPw)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .font(.footnote)
@@ -1626,7 +1667,7 @@ struct ExportCenterView: View {
                               fileName: "锁管家_告警事实单_" + a.dayKey + ".pdf",
                               bytes: pdf, sha256: hex,
                               shaLabel: "单条告警 · 仅含本条数据",
-                              previewText: "746: 事实 / 原始报文 / 处置 / 签名栏 — 只含这一条告警。")
+                              previewText: "事实 / 原始报文 / 处置 / 签名栏 — 只含这一条告警。")
         } finish: { item, err in
             onDone(item, err)
         }
@@ -1646,7 +1687,7 @@ struct ExportCenterView: View {
                               fileName: "锁管家_告警卡_" + a.dayKey + ".jpg",
                               bytes: jpeg, sha256: hex,
                               shaLabel: "单条告警 · 仅含本条数据",
-                              previewText: "718: 卡片只含这一条告警, 不含其他成员与记录。",
+                              previewText: "卡片只含这一条告警, 不含其他成员与记录。",
                               images: [img])
         } finish: { item, err in
             onDone(item, err)
@@ -1717,7 +1758,10 @@ struct ExportCenterView: View {
             HStack(spacing: DS.Space.s) {
                 Button {
                     UIPasteboard.general.string = item.fullText
-                    app.showToast("已复制完整文本")
+                    // 2026-10-15 走查: 不再一律报"完整" —— 长图/压缩包那几项没有文本正文, 复制出去的是
+                    // 预览那几句, 说"完整文本"就是把截断的东西报成全部。
+                    app.showToast(item.decodedBody == nil ? "已复制预览文本 · 这一项是图或包, 没有文本正文"
+                                                          : "已复制完整文本")
                 } label: {
                     Label("复制文本", systemImage: "doc.on.doc")   // 714 复制文本
                         .frame(maxWidth: .infinity)
@@ -1735,7 +1779,7 @@ struct ExportCenterView: View {
                 shareButton(item)
             }
         } footer: {
-            Text("718: 分享/打印/存照片都会让数据离开本机; 生成本身纯本地。")
+            Text("分享/打印/存照片都会让数据离开本机; 生成本身纯本地。")
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -1896,11 +1940,30 @@ struct ExportCenterView: View {
             }
             .buttonStyle(SecondaryActionStyle(fullWidth: false))
             .frame(minHeight: DS.Hit.min)
-        } else if item.kind == "png", let img = item.images.first {
-            ShareLink(item: ExportImageFile(item: item, image: img),
-                      preview: item.sharePreview) {
-                Label("分享", systemImage: "square.and.arrow.up")   // 708 分享
-                    .frame(maxWidth: .infinity)
+        } else if item.kind == "png", let first = item.images.first {
+            // 修饰符不能直接挂在 if/else 整体上 (Swift 里 `if … } else … } .buttonStyle(…)` 不成表达式) —— 本机没编译器，不赌，套一层 Group。
+            Group {
+            // 2026-10-15 走查: 这里原先只把 images.first 交出去 —— 单日超过三张容量时切得出第 2、3 张，
+            // 而那几张除了在这一页看看没有任何出口：分享与落盘都只覆盖第 1 张。API 形状按 Apple 文档核过：
+            // init(items:subject:message:preview:label:) (iOS 16 起)，items 要 RandomAccessCollection 且元素
+            // Transferable，preview 是**逐元素**闭包 —— 不是照记忆拼的。只有一张时仍走单 item 那条，行为不变。
+            if item.images.count > 1 {
+                ShareLink(items: item.images.enumerated().map { i, img in
+                            ExportImageFile(item: item, image: img,
+                                            nameOverride: item.fileName.replacingOccurrences(of: ".jpg",
+                                                    with: "-" + String(i + 1) + "of" + String(item.images.count) + ".jpg"))
+                        },
+                          preview: { _ in item.sharePreview }) {
+                    Label("分享全部 " + String(item.images.count) + " 张", systemImage: "square.and.arrow.up")   // 708 分享
+                        .frame(maxWidth: .infinity)
+                }
+            } else {
+                ShareLink(item: ExportImageFile(item: item, image: first),
+                          preview: item.sharePreview) {
+                    Label("分享", systemImage: "square.and.arrow.up")   // 708 分享
+                        .frame(maxWidth: .infinity)
+                }
+            }
             }
             .buttonStyle(SecondaryActionStyle(fullWidth: false))
             .frame(minHeight: DS.Hit.min)
@@ -1967,7 +2030,7 @@ struct ExportCenterView: View {
                               fileName: "锁管家_加密导出_" + lockName + "_" + stamp + ".zip.enc",
                               bytes: data, sha256: hex,
                               shaLabel: "AES-128-CBC + HMAC-SHA256 (与备份包同源)",
-                              previewText: "691: 内含记录 CSV 与说明; 口令线下告知, 本机不留。")
+                              previewText: "内含记录 CSV 与说明; 口令线下告知, 本机不留。")
         } finish: { item, err in
             onDone(item, err)
         }
@@ -2100,8 +2163,14 @@ struct ExportCenterView: View {
                               title: "单日 " + day,
                               fileName: "锁管家_单日_" + day + ".jpg",
                               bytes: jpeg, sha256: hex,
-                              shaLabel: "长图 · \(recs.count) 条" + (pages.count > 1 ? " · 切 \(pages.count) 张" : ""),
-                              previewText: pages.count > 1 ? "已按屏高切 \(pages.count) 张连图。" : "",   // 706 已按屏高切
+                              // 2026-10-15 走查: 这一行原先写「N 条 · 切 M 张」, 而 `bytes`、SHA、分享与落盘
+                              // 覆盖的只是**第 1 张** (ShareLink 走的是 item.images.first) —— 第 2、3 张只能在
+                              // 这一页里看, 没有任何出口。说了"切 3 张"却不给那 3 张, 就是把承诺写成事实。
+                              // 现在说的是这份文件真正包含的东西; 当日条数超出三张容量时, 留在图里的是最近那段。
+                              shaLabel: "长图 · 当日 \(recs.count) 条 · 出图 \(pages.count) 张",
+                              previewText: pages.count > 1
+                                ? "已按屏高切 \(pages.count) 张连图 (上限 3 张)。\n分享与写入本地文件都会带上全部张数, 文件名按 -序号of张数 区分。"
+                                : "",   // 706 已按屏高切
                               images: pages)
         } finish: { item, err in
             onDone(item, err)

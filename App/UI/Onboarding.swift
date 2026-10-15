@@ -2,7 +2,7 @@
 // 首启五步: 承诺页 → 三卡导览 → 角色选择 → 权限说明 → 演示锁试玩 → 自检清单 → 就任证书。
 // 进度逐键存档 (kf_first_tour_done 族, 804): 杀 App 重开从上一步继续, 不重放。
 import SwiftUI
-import CoreLocation
+// import CoreLocation 随 2026-10-15 撤掉定位授权申请一并去掉 (本文件已无任何 CL 符号)
 import UserNotifications
 
 // ---------- 引导进度存档 (804): 每一步独立打点, 重开继续 ----------
@@ -197,6 +197,10 @@ struct OnboardingView: View {
                                      subtitle: Onboarding.roleHint().isEmpty ? "首启引导全部完成" : Onboarding.roleHint(),
                                      celebrate: true))
             DB.store.set("kf_onb_ceremony", true)
+            // 2026-10-15 走查: 就任证书上那行日期此前取的是"看的那天的 dayKey()" —— 没有任何完成时刻落盘,
+            // 于是设置里回看证书, 日期每天变。这一刻就是完成时刻, 顺手钉下来 (旧用户没这一键, 证书那行
+            // 会退回不报日期 —— 报一个没存过的日期比不报更贵)。
+            DB.store.set("kf_onb_ceremony_at", Milestones.dayKey())
             onExit()
             return
         }
@@ -208,8 +212,13 @@ struct OnboardingView: View {
     @State private var rolePick = "family"
     // 802 权限前置: 系统弹窗在 App 内"申请前"触发, 说明卡先行
     private func requestSystemPermissions() {
-        let loc = CLLocationManager()
-        loc.requestWhenInUseAuthorization()
+        // 2026-10-15 走查: 这一支原先有 `let loc = CLLocationManager(); loc.requestWhenInUseAuthorization()`。
+        // 撤掉它，三个理由同在一处：① 802 原句只要求**蓝牙**的前置说明卡（"用 dot.radiowaves 解释蓝牙用途,
+        // 再触发系统权限弹窗"），没有定位这一项；② 本页自己就写着「为『到家自动开锁』这类到位置身功能预留；
+        // **当前版本不读取你的坐标**」，一边说不读坐标一边弹授权框，是界面与代码各说一套；
+        // ③ 920 那条安装位置字段已判舍弃，全仓没有任何消费位置读数。
+        // 原先报的"loc 出函数即释放 ⇒ 弹窗可能不弹"这条确实成立，但**修法是删掉这次申请，
+        // 不是把它 retain 住** —— 那只会让一个没有功能承接的系统弹窗更稳定地弹给用户。
         let center = UNUserNotificationCenter.current()
         // 只申请，不缓存答案 (第九十四批删掉 `DB.store.set("kf_onb_notify", granted)`):
         // 全仓零读取方，而通知授权用户随时能在系统设置里改 —— 存下来的那一份**必然会说谎**，
@@ -487,26 +496,40 @@ struct OnboardingView: View {
             Label("演示 · 不碰真实门锁", systemImage: "theatermasks")
                 .font(.caption.weight(.medium))
                 .foregroundStyle(DS.Palette.warn)
-            Text("这把演示锁可以完整走一遍: 看状态 → 假装开锁。数据全是 demo_ 前缀, 玩完随手清除。")
+            // 2026-10-15 走查: 这句原先写着"数据全是 demo_ 前缀, 玩完随手清除" —— 可这一页从头到尾
+            // 没有一处 `DemoKit.setOn(true)` (全仓 setOn(true) 只有成就页 / 帮助页 / 设置页那三处),
+            // 试玩的是下面那枚**本地模拟圆盘** (demoState / demoPhase, 一行台账都不写)。
+            // 803 原句要的也正是"圆盘进入假数据试玩态", 缺的是文案的说法而不是功能: 改成如实描述。
+            Text("这一屏是一把本地模拟的演示锁: 圆盘可以转、状态会变, 不碰蓝牙、不写台账。")
                 .font(.footnote)
                 .foregroundStyle(DS.Palette.textSub)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
             demoDial
-            HStack(spacing: DS.Space.s) {
-                Button("清除演示数据") {
-                    DemoKit.setOn(false)
-                    app.loadDevices()
-                }
-                .buttonStyle(SecondaryActionStyle(fullWidth: false))
-                if DemoKit.isOn {
+            // 2026-10-15 走查: 这两颗都只在**真开着演示模式**时才出现 —— 本页自己从不打开它。
+            // 原先「清除演示数据」无条件常驻, 而没开过演示时它清的是本来就不存在的东西,
+            // setOn(false) + loadDevices() 之后屏上零变化、零提示 = 又是一个"点了没反应"。
+            if DemoKit.isOn {
+                HStack(spacing: DS.Space.s) {
+                    Button("清除演示数据") {
+                        DemoKit.setOn(false)
+                        app.loadDevices()
+                        app.showToast("已清除全部演示数据")   // 与设置页那枚演示开关同一句回执
+                    }
+                    .buttonStyle(SecondaryActionStyle(fullWidth: false))
+                    // 2026-10-15 走查: 这句提示原本挂在装着**两枚**按钮的 HStack 上 —— 读屏点另一枚
+                    // 也念"清除后…", 那是把另一颗按钮说成了它自己。挪回它说的那一颗。
+                    .accessibilityHint("清除后演示锁从设备列表消失, 真实台账不受影响")
                     Button("去设备页看它") {
+                        // 引导期间主 TabView 根本不在层级树里 (见 LockKeeperApp 的 rootGroup 那条 if),
+                        // 只写 tabSelection 是切了一个还没建出来的 Tab —— 点了屏幕毫无变化。
+                        // 收尾照 320 那颗"去连接真锁"同一条路: 先结束引导 (allDone 翻真 → root 换形态), 再落 Tab。
+                        Onboarding.finishTour()
                         app.tabSelection = 0
                     }
                     .buttonStyle(SecondaryActionStyle(fullWidth: false))
                 }
             }
-            .accessibilityHint("清除后演示锁从设备列表消失, 真实台账不受影响")
         }
         .padding(DS.Space.l)
     }
@@ -611,7 +634,13 @@ struct OnboardingView: View {
             .transition(.scale(scale: 0.94).combined(with: .opacity))
 
             Button("重看新手引导") {
+                // 2026-10-15 走查: 这一枚原先只调 `replayAll()` —— 清了持久化的逐步打点, 却把
+                // 当前页 (证书页) 原地留着: 用户按下去看不出任何变化, 而已完成的打点被悄悄抹掉。
+                // 设置页那两枚同名按钮都做全了 (replayAll + 落点 + toast), 这一枚漏了两半。
+                // 这里就在引导流程内, 不碰 onboardingFinished (人还在引导里), 而是把本地 step 送回第一屏。
                 Onboarding.replayAll()
+                step = .promise
+                app.showToast("已从头重看, 之前的逐步打点已清空")
             }
             .buttonStyle(SecondaryActionStyle())
             .padding(.horizontal, DS.Space.gutter)

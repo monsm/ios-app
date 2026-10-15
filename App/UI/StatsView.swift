@@ -10,6 +10,11 @@ import Charts
 // ---------- 主视图 ----------
 struct StatsView: View {
     @EnvironmentObject var app: AppState
+    // 2026-10-15 走查: 这一页全仓只有一个呈现点 —— 记录页里的 sheet。sheet 浮在最上层时改
+    // tabSelection, 切的是**被盖住的那层 TabView**: 用户点了"去读取记录/去添加门锁"只看见屏幕
+    // 没反应, 等他下拉甩掉这张 sheet 才发现自己站在别的 Tab 上。同锁同页的既有正解见
+    // LockOverviewView 那两枚格子 (跳 Tab 之后紧跟一句 dismiss), 这里照抄, 不另造第三套。
+    @Environment(\.dismiss) private var dismiss
     // 643 横屏分栏的档位读数。形状先例: @Environment 这一族本文件已有 (:2179 年报告与 :2265 时段 sheet 的 \.dismiss),
     // size class 这一路在本条落地前的 App/ 全量 grep 里零命中。
     // ⚠ API-VERIFY: @Environment(\.horizontalSizeClass) 本仓无先例, 未编译、未证实。
@@ -163,7 +168,7 @@ struct StatsView: View {
             EmptyState(systemImage: "chart.bar",
                        title: "还没有门锁",
                        message: "统计全部来自门锁本地台账。先添加并配对门锁, 读取记录后再来看趋势。",
-                       actionTitle: "去添加门锁") { app.tabSelection = 0 }
+                       actionTitle: "去添加门锁") { app.tabSelection = 0; dismiss() }
         } else if let m = model {
             List {
                 Section {
@@ -341,6 +346,7 @@ struct StatsView: View {
                 Button {
                     app.pendingRecordsFilter = ""
                     app.tabSelection = 2
+                    dismiss()
                 } label: {
                     Label("去读取记录", systemImage: "tray")
                         .font(.subheadline.weight(.medium))
@@ -822,6 +828,7 @@ struct StatsView: View {
                 Button {
                     app.pendingRecordKey = RecordOverlay.oid(mac: mac, rowKey: String(r.log.idxRaw))
                     app.tabSelection = 2
+                    dismiss()
                 } label: {
                     HStack(spacing: DS.Space.s) {
                         Image(systemName: r.alarm ? "diamond.fill" : "circle.fill")
@@ -1386,6 +1393,7 @@ struct StatsView: View {
             if let jid = jumpId {
                 app.pendingRecordsMember = jid
                 app.tabSelection = 2
+                dismiss()
             }
         }
         .accessibilityElement(children: .combine)
@@ -1405,6 +1413,7 @@ struct StatsView: View {
             // 这里只写 pendingRecordsMember 一个键 (两处都写 sel 会变成"谁后跑谁赢")。
             app.pendingRecordsMember = id
             app.tabSelection = 2
+            dismiss()
         } label: {
             memberBarLabel(name: name, approx: approx, index: index, maxApprox: maxApprox)
         }
@@ -2044,7 +2053,7 @@ struct StatsView: View {
                         }
                         // 628 数据面实话: 首用只从密码时间窗推断 (锁端无逐凭证计数); 指纹侧没有等价的
                         // 逐指纹用量/首用可算 (attribution 只给"谁开的", 给不了"哪枚指纹开的"), 所以不列。
-                        Text("628 口径: 「首用」= 生效期内唯一时间窗命中的最早一次开门 (台账推断); 指纹凭证无独立首用数据, 不列。")
+                        Text("口径: 「首用」= 生效期内唯一时间窗命中的最早一次开门 (台账推断); 指纹凭证无独立首用数据, 不列。")
                             .font(.caption2)
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
@@ -2159,7 +2168,7 @@ struct StatsView: View {
                         .accessibilityHidden(true)
                         // 这一族画的到底是什么, 写在图下面而不是靠标题猜 (形态与口径一起写清):
                         Text("竖棒 = 当日最早与最晚开门之间 (分辨率到「时」, 纵轴 0–24 时), 棒顶圆点大小 = 当日开门次数"
-                             + " (精确值走读屏标签; 超过 7 天时隔一天标一个日期)。协议没有门磁与上锁状态, 这条只是首末开门夹出来的代理值 (与 800 同一口径)。")
+                             + " (精确值走读屏标签; 超过 7 天时隔一天标一个日期)。协议没有门磁与上锁状态, 这条只是首末开门夹出来的代理值。")
                             .font(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
@@ -2271,6 +2280,7 @@ struct StatsView: View {
                     app.pendingRecordsFilter = ""
                     app.pendingRecordKey = RecordOverlay.oid(mac: mac, rowKey: String(l.idxRaw))
                     app.tabSelection = 2
+                    dismiss()
                 } label: {
                     HStack(spacing: DS.Space.s) {
                         Image(systemName: StatsKit.alarmTypes.contains(l.type) ? "diamond.fill" : "circle.fill")

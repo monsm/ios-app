@@ -81,13 +81,15 @@ struct UnlockIntent: AppIntent {
     @Parameter(title: "门锁")
     var lockName: String
 
+    // 2026-10-15 走查: 这里原本还有一枚 `@Parameter(title: "口令")`，说明写着
+    // 「说『开门』以外的暗语可让家人知道这次开锁是你的」—— 而 `passphrase` 在全仓**只出现在它自己的声明行**，
+    // `perform()` 从头到尾没读过它，审计那行记的是 `detail: kc.name`。也就是说这是个 100% 不起作用的输入格，
+    // 而画廊里的主屏教程还教用户"动作里填好锁名与暗语"(见本节末 主屏图标教程)，白让人配置一遍。
+    // 撤掉输入格与那句教程；若要把这句承诺做真 (把暗语写进 SensitiveLedger 的 target 让家人查得到)，
+    // 那是"把用户自定的半秘密持久化并显示在台账界面上"，属拍板项，不趁这次走查顺手定。
+    // 同处保留 Face ID 那枚 —— 它的判据在 `perform()` 的 `if faceConfirm` 分支里, 是真读了的: 无生物硬件即拒, 说得到做得到。
     // 默认值走 `default:` 参数, **不是**属性声明处的 `= 值` —— 后者会被宏合成成
     // `Parameter(wrappedValue:)`, 而该初始化器不存在 (真编译报 "extra argument 'wrappedValue' in call")。
-    @Parameter(title: "口令",
-               description: "说「开门」以外的暗语可让家人知道这次开锁是你的",
-               default: "开门")
-    var passphrase: String
-
     @Parameter(title: "Face ID 确认",
                description: "开启后每次开锁前先用 Face ID 确认是你; 无生物硬件的设备会拒绝执行",   // 945 开启后每次开锁前先用
                default: false)
@@ -312,7 +314,10 @@ struct ReadRecordsIntent: AppIntent {
             guard case .unique(let hit) = IntentLock.resolve(spoken) else { return .result(dialog: "锁名没认出来") }
             kc = hit
         }
-        let recs = Array(ExportKit.records(mac: kc.mac).prefix(3))
+        // 2026-10-15 走查: 口播第一句是「最近开门记录」，而原先取的是 `prefix(3)` —— `ExportKit.records` 是**时间正序**
+        // (它自己那行 `return out.reversed()`，而 `ExportCenter` 里两处告警清单都要再 `.reversed()` 才 newest-first ⇒ 前提一致)，
+        // 正序表上 prefix 拿到的是**最早那三条**，于是 Siri 念的是这台锁最老的历史。改 `suffix(3)`，编号仍按时间先后 1→3。
+        let recs = Array(ExportKit.records(mac: kc.mac).suffix(3))
         guard !recs.isEmpty else { return .result(dialog: "「\(kc.name)」暂无记录可朗读") }
         let text = recs.enumerated().map { idx, r in
             "\(idx + 1), \(r.time.isEmpty ? "时间未知" : r.time) \(r.isAlarm ? "异常" : "正常")"
@@ -350,12 +355,14 @@ enum AppShortcuts {
 }
 
 // ---------- 166 AppShortcutsProvider — 口令注册的正身 (前六个真能执行的意图在此向系统提供 App Shortcut 出口) ----------
-// 166: 口令注册的正身 —— 上面 :73-:266 的六个意图定义在此经 AppShortcutsProvider 交给系统, 装完 App 后系统据此自动收录口令;
+// 166: 口令注册的正身 —— 上面那六条意图定义在此经 AppShortcutsProvider 交给系统, 装完 App 后系统据此自动收录口令;
+// (原先这行按 `:73-:266` 这种行号指代它们, 行号每改必漂 —— §5 军规 #5, 改成不带行号的说法。)
 // 这一节把 UnlockIntent/OtpIntent/LockStatusIntent/ExportCsvIntent/MemberQueryIntent/ReadRecordsIntent
 // 逐条注册为 AppShortcut。画廊第 7 条 at8 (定时查锁) 保持只出现在画廊 —— 定时触发由系统「快捷指令」App
 // 的自动化承担, 意图本体 (LockStatusIntent) 已在上面注册, 用户在自动化里选它即可。
-// 参数形状: 六条意图各自带 @Parameter (:81/:135/:179/:213/:244/:270)。其中 ExportCsv(默认「全部」)与
-// ReadRecords(默认「第一把」)缺参时按声明默认档执行, 其余缺参时由 IntentLock/提示语引导用户补说锁名;
+// 参数形状: 六条意图都带 @Parameter —— UnlockIntent 两枚 (门锁 + Face ID 确认)，
+// Otp / LockStatus / ExportCsv / ReadRecords 各一枚「门锁」，MemberQuery 一枚「成员名」。(原先这里跟着一串行号, 已漂两轮。)
+// 其中 ExportCsv(默认「全部」)与 ReadRecords(默认「第一把」)缺参时按声明默认档执行, 其余缺参时由 IntentLock/提示语引导用户补说锁名;
 // 注册采用「不带 AppShortcutParameter」的最小形状, 口令里不带槽位, 用户说的时候带上锁名 (画廊一节顶部已写明)。
 // ⚠ API-VERIFY: AppShortcutsProvider / @AppShortcutsBuilder / AppShortcut(intent:phrases:shortTitle:systemImageName:)
 //   为 Apple 文档 iOS 16+ 标准形状, 全仓无先例可抄, 未编译、未证实。
@@ -422,7 +429,7 @@ struct IntegrationCenterView: View {
                 // 166: 节顶说明与 LockKeeperShortcuts 注册同源同行 —— 口令收录由系统在装完 App 后自动完成,
                 // 收录结果归系统侧判定、App 接口不回读, 所以本节文案落在「出口已提供」这一事实上;
                 // 带锁名的说法同时写清 (意图参数靠说的话带上, 见 IntentLock.refusal 的引导语)。
-                Text("这 6 条意图已在本版提供出口 (AppShortcutsProvider 注册, 166), 口令由系统在装完 App 后自动收录; 收录结果只有系统知道, App 读不回来, 所以这里呈现的是「出口已提供」这一事实。说的时候请带上真名, 把方括号占位换成您的锁名/成员名 (如「打开 主卧门锁」); 第 7 条「早上 8 点查一次门锁」属定时自动化, 请在系统「快捷指令」App 的自动化里设置, 动作选本 App 的「门锁状态」意图即可。")
+                Text("这 6 条意图已在本版提供出口 (AppShortcutsProvider 注册), 口令由系统在装完 App 后自动收录; 收录结果只有系统知道, App 读不回来, 所以这里呈现的是「出口已提供」这一事实。说的时候请带上真名, 把方括号占位换成您的锁名/成员名 (如「打开 主卧门锁」); 第 7 条「早上 8 点查一次门锁」属定时自动化, 请在系统「快捷指令」App 的自动化里设置, 动作选本 App 的「门锁状态」意图即可。")
                     .font(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -449,8 +456,8 @@ struct IntegrationCenterView: View {
             }
 
             Section("快捷入口") {
-                LabeledRow("主屏 / 锁屏小组件", "927 哑按钮 (拍板 #30): 「开锁入口」组件只做一件事 —— 经 kf://device 把 App 打到设备页。不显示锁状态与电量 (免费账号无 App Groups，组件读不到本机数据)，也不在组件里开锁")
-                LabeledRow("控制中心深链", "937/938 仍不提供: Widget target 已建，缺的是控制中心控件那条写法本身 —— 未编译、未真机核过，不硬接")
+                LabeledRow("主屏 / 锁屏小组件", "哑按钮 (刻意只留一个动作): 「开锁入口」组件只做一件事 —— 经 kf://device 把 App 打到设备页。不显示锁状态与电量 (免费账号无 App Groups，组件读不到本机数据)，也不在组件里开锁")
+                LabeledRow("控制中心深链", "仍不提供: Widget target 已建，缺的是控制中心控件那条写法本身 —— 未编译、未真机核过，不硬接")
                 LabeledRow("本地深链", "kf:// 路由: 支持 device / credentials / records / settings 四个入口, 其余地址一律忽略; 锁屏状态下先挂起, 解锁后才跳转。小组件走的也是 device 这一条")   // 294 路由
                 // 293/951 这一行此前是全仓唯一"Spotlight"证据, 而索引写入方根本不存在 (无 CoreSpotlight import)。
                 // 现在写入方在 App/Core/SpotlightKit.swift, 措辞按**真做了的范围**改: 索引的是锁名与凭证条目,
@@ -465,7 +472,7 @@ struct IntegrationCenterView: View {
                 // 这一节原来是两处谎报: `kf_nfc_tags` 全仓**零写入方** (没有任何登记/写卡入口)，
                 // getInt 恒回 0，却显示成"已登记标签 0 张" —— 拿缺省值冒充业务数据；
                 // 而"点此探测"并没有可点的按钮。缺的东西就写缺，别留一个看起来在工作的形状。
-                Text("957-963: 写卡需 CoreNFC capability, 免费账号下不确定可用；协议侧也没有 NFC 凭证管理命令 (CAPABILITY §5)。")
+                Text("写卡需 CoreNFC capability, 免费账号下不确定可用；协议侧也没有 NFC 凭证管理命令 (CAPABILITY §5)。")
                     .font(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
@@ -474,18 +481,18 @@ struct IntegrationCenterView: View {
             }
 
             Section("Apple Watch 伴侣 (路线图)") {
-                Text("965-974: 独立 target 且共享每周重签负担, 暂不随版提供。计划: 状态表盘 + 表端触发开锁 (后台 BLE 受限需真机实测)。")
+                Text("需要独立 target 且共享每周重签负担, 暂不随版提供。计划: 状态表盘 + 表端触发开锁 (后台 BLE 受限需真机实测)。")
                     .font(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             Section("主屏图标教程") {   // 954 主屏图标教程
-                Text("把开锁意图放上主屏: ① 打开「快捷指令」App → 新建快捷指令 → 添加动作 → 搜「离线锁管家」→ 选「打开门锁」 ② 动作里填好锁名与暗语 ③ 长按该快捷指令卡片 →「添加到主屏」。点图标即触发开锁意图——仍只定位门锁, 最后一步在 App 圆盘按住确认, 不后台开锁。")
+                Text("把开锁意图放上主屏: ① 打开「快捷指令」App → 新建快捷指令 → 添加动作 → 搜「离线锁管家」→ 选「打开门锁」 ② 动作里填好锁名 ③ 长按该快捷指令卡片 →「添加到主屏」。点图标即触发开锁意图——仍只定位门锁, 最后一步在 App 圆盘按住确认, 不后台开锁。")
                     .font(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("App 图标换肤仍在设置-外观 (长按主屏图标 →「编辑 App 图标」)。包16 那四款之外, 896 又补了五款位图 (家门/警报/定位/门盾/心记), 现在一共九款可选; 四季自动对齐仍只认原来那四款, 选新五款不会被系统悄悄换掉。")   // 897 图标换肤仍在设置
+                Text("App 图标换肤仍在设置-外观 (长按主屏图标 →「编辑 App 图标」)。原有四款之外, 又补了五款位图 (家门/警报/定位/门盾/心记), 现在一共九款可选; 四季自动对齐仍只认原来那四款, 选新五款不会被系统悄悄换掉。")   // 897 图标换肤仍在设置
                     .font(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)

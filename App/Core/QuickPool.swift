@@ -147,9 +147,9 @@ func quickDestination(_ id: String) -> some View {
     case "addFp":    StartAddFpView(embedded: true)
     case "studio":   StudioHome(embedded: true)
     case "famNote":  FamilyNoteView()
-    case "backup":   BackupView()
-    case "alarm":    AlarmCenterView()
-    case "firmware": FirmwareView()
+    case "backup":   BackupView(embedded: true)
+    case "alarm":    AlarmCenterView(embedded: true)
+    case "firmware": FirmwareView(embedded: true)
     case "care":     MaintenanceView()
     case "again":    Text("「再开一次」在设备页长按编辑或直接点按, 不需要新页面")   // 921 再开一次
     default:         Text("这个快捷入口对应的页面已不存在，请到设置-外观里重新选择")

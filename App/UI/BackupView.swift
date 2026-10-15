@@ -29,23 +29,32 @@ struct BackupView: View {
     /// 云端已下载但尚未经用户确认的备份包 (nil = 无待确认的恢复)
     @State private var pendingRestore: BackupBundle?
 
-        @State private var showStudio = false
+        @State private var showWebDAV = false   // 2026-10-15: 自带 NavigationStack 的页只能走 sheet
 
 private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloudPw.isEmpty }
 
-    var body: some View {
-        NavigationStack {
-            List {
-                exportSection
-                importSection
-                cloudSection
-                studioSection
-            }
-            .navigationTitle("备份与恢复")
-            .scrollContentBackground(.hidden)
-            .dsScreenBackground()
-            .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
+    /// 内容是否已经嵌在外部导航容器里。2026-10-15 走查 §7.4-16: 这一页**自带 NavigationStack**,
+    /// 有两个呈现点 —— 设置页的 sheet (要自己那层栏) 和设备页快捷格的 `quickDestination` push
+    /// (那层栏已经在外面了)。push 那侧不传 true 就叠出两层导航栏。形状照 `AddPwdView` 的 embedded 抄,
+    /// 那是本仓作者已有的解法。判据原文见本文件上方那条"自带 NavigationStack 的页只能走 sheet"。
+    var embedded: Bool = false
+
+    private var listContent: some View {
+        List {
+            exportSection
+            importSection
+            cloudSection
+            studioSection
         }
+        .navigationTitle("备份与恢复")
+        .scrollContentBackground(.hidden)
+        .dsScreenBackground()
+        .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
+    }
+
+    var body: some View {
+        // AnyView 擦平两分支类型差异 (与 AddPwdView 同一写法): 两支只差最外层那一只容器
+        (embedded ? AnyView(listContent) : AnyView(NavigationStack { listContent }))
         .confirmationDialog("从云端恢复", isPresented: pendingRestoreBinding, titleVisibility: .visible) {
             Button("覆盖本机 \(DB.keychains().count) 台设备", role: .destructive) { applyPendingRestore() }
             Button("取消", role: .cancel) { pendingRestore = nil }
@@ -53,6 +62,7 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
             Text("云端备份里包含 \(pendingRestore?.devices.count ?? 0) 台门锁。恢复后同名设备会被云端数据覆盖，本机现有改动将丢失。")
         }
         .sheet(isPresented: $showStudio) { BackupStudioView() }
+        .sheet(isPresented: $showWebDAV) { WebDAVStudioView() }
     }
 
     // pendingRestore != nil 即为"待确认", 确认/取消后都要清空以防重复触发
@@ -157,7 +167,10 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
                     Label("换手机或锁被重置时，云端那份是唯一的退路", systemImage: "arrow.left.arrow.right.circle")
                     Label("文件先在本机加密，服务器只拿到密文", systemImage: "lock.rectangle.stack")
                     Label("不配也能用：本页的文本导出与本地导入是完整可用的", systemImage: "square.and.arrow.down")
-                    NavigationLink { WebDAVStudioView() } label: {
+                    // 2026-10-15 走查: WebDAVStudioView 自带 NavigationStack, 而本页是 sheet ——
+                    // push 进去就是内层栈套外层 (两层导航栏)。本页已有 `showStudio` 走 sheet 的先例,
+                    // 这一条照同款改。
+                    Button { showWebDAV = true } label: {
                         Text("服务器根路径默认内置坚果云，点这里可改")   // 816 服务器根路径默认内置
                             .font(.caption2.weight(.medium))
                             .foregroundStyle(DS.Palette.accentText)
@@ -295,7 +308,7 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .frame(minHeight: DS.Hit.min)
             }
-            Text("导出向导 · 恢复预演 · WebDAV 策略 · 换机迁移 · 完整性信任 (包8)。")
+            Text("导出向导 · 恢复预演 · WebDAV 策略 · 换机迁移 · 完整性信任。")
                 .font(.caption).foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }

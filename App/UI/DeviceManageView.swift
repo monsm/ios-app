@@ -2,8 +2,11 @@
 // 原句落点: 104「设备管理支持自定义分组, 分组头可收起」、107「设备管理进入多选模式批量隐藏或调整分组」、
 // 766「设置 Tab 设备管理拖动排序, 最常用锁置顶并同步设备 Tab 翻页顺序」。
 // 这里只写"锁之间的关系": 顺序 (kf_lock_order) 与组名 (kf_lockmeta_.grp) 与隐藏旗标 (kf_lock_hidden_)。
-// 一条都不碰协议、不碰凭证、不碰日志。三者都只在本机 —— BackupBundle 是 typed schema,
-// 没有这些字段, 所以换机恢复后顺序与分组要重设 (页脚写着, 不让用户以为备份带走了)。
+// 一条都不碰协议、不碰凭证、不碰日志。
+// 2026-10-15 走查: 这一段原先写着"三者都只在本机, BackupBundle 是 typed schema 没有这些字段, 所以换机恢复后
+// 顺序与分组要重设" —— 那是 D-36 之前的旧账, 与本页页脚自相矛盾。**页脚才是真的**: BackupKit 的 Globals
+// 里带 order/groups/folded/hidden 四键 (BackupKit 内 collectDeviceOrg), 所以这四样随全量备份包走;
+// 只留在本机的只有锁档案的场所副标题 / 备注 / 符号色标。
 import SwiftUI
 import UIKit
 
@@ -75,7 +78,14 @@ struct DeviceManageView: View {
                     }
                     Section {
                         Button("按添加时间排序") { sortByPairedAt() }   // 769 按添加时间排序
-                        Button("恢复绑定先后 (清掉手工排序与置顶)", role: .destructive) { resetOrder() }
+                        Button("恢复绑定先后 (清掉手工排序与置顶)", role: .destructive) {
+                            // 2026-10-15 走查: 这一颗一键就把手工排出来的顺序与置顶抹掉, 没有撤销条
+                            // (`clearManualOrder` 就是 remove 那个键), 而它上面那颗"按添加时间排序"是可再排的
+                            // —— 同一段里不可逆的那一颗反而问得最少。补一次确认, 与本页其余破坏性动作同口径。
+                            confirmDestructive("恢复绑定先后",
+                                               "会清掉手工拖出来的排序与置顶, 改回按绑定时间的先后。没有撤销, 要重排得再拖一次。门锁、凭证与日志都不受影响。",
+                                               confirmTitle: "恢复") { resetOrder() }
+                        }
                     } footer: {
                         Text("顺序、分组、分组折叠与隐藏会随全量备份包走 (D-36)：换机恢复后不用重排；"
                              + "锁档案里的场所副标题 / 备注 / 符号色标仍只存本机。不写门锁, 也不影响凭证与日志。")
@@ -127,12 +137,12 @@ struct DeviceManageView: View {
     /// 顺序落库的唯一出口: 写表 → 首位同步成启动默认锁 (271/766 的同一条不变量) → 重载快照。
     /// 为什么每次改顺序都要动 kf_default_mac: 页眉写的是"第一行就是启动默认锁",
     /// 让首位与默认锁各走各的, 那句话当场就成了假话 —— 不如把不变量收在这一个出口里。
-    private func persist(_ verb: String, tag: String = "271/766") {
+    private func persist(_ verb: String) {
         LockArchive.setOrder(locks.map { $0.mac })
         if let head = locks.first { LockArchive.setDefaultMac(head.mac) }
         reload()
         let hn = locks.first.map { LockArchive.displayName($0) } ?? ""
-        app.showToast(verb + " · 首位「" + hn + "」即启动默认锁 (" + tag + ")")
+        app.showToast(verb + " · 首位「" + hn + "」即启动默认锁")
     }
 
     @ViewBuilder
@@ -400,7 +410,7 @@ struct DeviceManageView: View {
             if ae != be { return !ae }
             return a.pairedAt < b.pairedAt
         }
-        persist("已按添加时间排序", tag: "769")
+        persist("已按添加时间排序")
     }
     private func resetOrder() {
         LockArchive.clearManualOrder()

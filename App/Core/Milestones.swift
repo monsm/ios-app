@@ -56,6 +56,9 @@ struct MStats {
     var organizeTotal = 0
     var weekStar = false
     var ownedCred = false
+    /// 995 join1 的真判据: **在本 App 里建过档的成员** (建档时刻 `at` > 0) **名下有 ≥1 条归属凭证**。
+    /// 与 `ownedCred` 的区别就是这条徽章文案里"新成员"那半截 —— 见 `case "join1"` 的注释。
+    var joinedWithCred = false
     var daysSinceFirst = 0
     var bondAnnivDone = false
     var batterySwaps = 0   // 包4/1039
@@ -504,11 +507,18 @@ enum Milestones {
         s.streakBest = streak().best
         s.nightCount = nightMarks().count
         var owlMonths: [String: Int] = [:]
+        // join1 用: 名下挂到了凭证的成员 id 集合 (逐锁台账里 owner 就是成员 id)
+        var ownersWithCred = Set<String>()
         for kc in DB.keychains() {
             let pwds = DB.listPwds(kc.mac)
             let fps = DB.listFps(kc.mac)
             if pwds.contains(where: { !($0.owner ?? "").isEmpty }) || fps.contains(where: { !($0.owner ?? "").isEmpty }) {
                 s.ownedCred = true
+            }
+            // 演示锁的凭证也带 owner (DemoKit 里那个 owner 字段), 但"新成员入伙"不该被一次演示点亮 ⇒ 这一格排除演示锁。
+            // 注意 `ownedCred`(上面那枚"指归属"徽章) 没排除演示 —— 那是另一件事, 本轮不动它的口径。
+            if kc.mac != DemoKit.demoMac {
+                for o in pwds.compactMap(\.owner) + fps.compactMap(\.owner) where !o.isEmpty { ownersWithCred.insert(o) }
             }
             // lockTime == 0 = 锁端时钟没读到/无时钟型号的占位值, 换算后落在协议纪元 (2010-01-01 00:00),
             // 其"小时"必然 < 6 → 会凭空点亮夜猫子徽章并计入最差的月份桶。必须排除。
@@ -520,6 +530,10 @@ enum Milestones {
             }
         }
         s.nightOwlBest = owlMonths.values.max() ?? 0
+        // join1 的另一半: 那位 owner 得是**在本 App 里建过档**的成员。建档时刻字段其实早就有 ——
+        // `DB.addMember` 写 `at` (毫秒), `Member(fromDict:)` 读回、缺字段的迁移旧账才是 0
+        // (2026-10-15 走查: 上一批把这条挂成"等拍板要补数据面字段"，那个前提不成立，字段在，判据当场能写)。
+        s.joinedWithCred = DB.members().contains { $0.at > 0 && ownersWithCred.contains($0.id) }
         s.backupStreak = backupStreakMonths
         s.backupThisMonth = backupThisMonth
         s.organizeTotal = organizeTotal
@@ -548,7 +562,14 @@ enum Milestones {
         case "owl": return s.nightOwlBest >= 5
         case "heart1000": return s.unlockTotal >= 1000
         case "owner": return s.ownedCred
-        case "join1": return s.ownedCred   // 995: 与 owner 同判据 (归属即入伙完成), 语义入口不同
+        // 995 原句是两条: **新成员添加后生成欢迎卡**引导首录凭证，完成才点亮"入伙"。
+        // 2026-10-15 走查(第一次记这条时): 判据与上面 "owner" 完全相同 (`ownedCred`) ⇒ 给一条旧凭证指归属，
+        // 两枚徽章一起亮，而屏上写的是"新成员入伙并录下第一条归属凭证"。**没有把文案降到判据的高度**。
+        // 同日续查: 当时写的卡点"真判据要成员建档时刻，那是数据面要补的字段"**是错的** ——
+        // `Member.at` 已在 `DB.addMember` 里写、`fromDict` 读回（迁移旧账为 0），所以"新成员"这一半现在就能判，
+        // 判据换成 `joinedWithCred`（本 App 建的档 + 名下真有归属凭证，且不含演示锁）。
+        // **还剩 995 的前半截没做**：欢迎卡/引导那一步是一个新交互面，仍归产品拍板；本轮不因为它没做而改口径。
+        case "join1": return s.joinedWithCred
         case "tidy10": return s.organizeTotal >= 10
         case "week1": return s.weekStar
         case "days90": return s.daysSinceFirst >= 90

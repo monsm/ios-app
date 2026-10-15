@@ -436,7 +436,7 @@ final class AutoOpenController {
         // 390 行原话: "伪装口令进来的会话只渲染空壳" —— 空壳后面门被打开, 就是这个 bug。
         // 手动锁定也应清零武装/面容时刻 (SecurityCenterView 那条), 这里先保证自动链在伪装态一律拒。
         guard !app.decoyMode else {
-            AutoOpen.audit(mac, "拒开 390 伪装会话 (decoy) 禁止自动下发 04")
+            AutoOpen.audit(mac, "拒开: 伪装会话期间禁止自动下发 04")
             return
         }
         // 演示模式红线: 不得触碰真实 BLE (旧实现只在 requestUnlock 里守, 自动链直连 lock 绕过)

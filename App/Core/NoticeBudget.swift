@@ -135,7 +135,12 @@ enum AmbientCopy {
     static func actions(_ a: Ambient, app: AppState) -> [Action] {
         switch a {
         case .selfCheck:
-            return [Action(id: "diag", title: "去诊断") { app.requestTab(3) }]   // 377: 走 requestTab 那道访客门禁
+            // 2026-10-15 走查 §4.3: 按钮写的是"去诊断", 原来只 requestTab(3) 把人放在设置页根上,
+            // 而「诊断与运行日志」是那一页里的一行 —— 切过去不等于送到。带上落点名, 由设置页开诊断面。
+            return [Action(id: "diag", title: "去诊断") {
+                app.pendingSettingsFocus = "diag"
+                app.requestTab(3)
+            }]   // 377: 走 requestTab 那道访客门禁
         case .pasteCare:
             if let s = app.pasteSuggestion, case .waiting = s.stage {
                 return [

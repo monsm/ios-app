@@ -449,7 +449,9 @@ struct RecDetailSheet: View {
         Button {
             let mac = rec.mac      // 钉住**本条**的锁再跳转: 活读 app.current 会把命令发向 A 锁、台账写进 B 锁
             app.pendingDiag = mac   // 587: 设置 Tab 收到后切 current 再推诊断页 (原写法置 tabSelection=3 无消费方)
-            app.tabSelection = 3
+            // 2026-10-14 走查: 落点补上了, 但这里仍是**直写** tabSelection —— 记录页在访客通道下
+            // 照常可达, 而访客态里「设置」Tab 不进层级树, 直写会落到一个看不见的 Tab。
+            app.requestTab(3)
             dismiss()
         } label: {
             Label("查看这台锁的诊断", systemImage: "stethoscope")   // 587 查看这台锁的诊断
@@ -510,7 +512,7 @@ struct RecDetailSheet: View {
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
             }
-            Text("两个出口都不改你的筛选条件: 583 只是滚过去并闪一下，586 只把显示范围收到那一天，"
+            Text("两个出口都不改你的筛选条件: 一颗只是滚过去并闪一下，另一颗只把显示范围收到那一天，"
                  + "页顶有「看全部日子」可以退回来。")
                 .font(.caption)
                 .foregroundStyle(DS.Palette.textSub)
@@ -614,7 +616,7 @@ struct RecDetailSheet: View {
                 Button {
                     app.pendingCredNav = nav
                     app.pendingCredNavMac = rec.mac
-                    app.tabSelection = 1
+                    app.requestTab(1)   // 2026-10-14 走查: 原直写 tabSelection, 访客态绕过 377 门禁
                     dismiss()
                     app.showToast("已定位到来源凭证")   // 577 已定位到来源凭证
                 } label: {
