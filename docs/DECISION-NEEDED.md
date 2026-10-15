@@ -259,7 +259,7 @@
 > 销案记录与全部复算命令：`docs/HANDOFF-2026-10-15-UI-SWEEP.md` §7.13-A。
 
 > **2026-10-16 拍板**：工单 B（引导"上一步"）= **方案③，已落地** —— `.role` 之前可自由回退，之后按钮就地禁用并说明原因。
-> 改法照工单那条"约 10 行、纯 UI 层、不碰落库"执行，实际 +37 行（含 11 行口径注释）；可证形式 `git diff -U0 -- App/UI/Onboarding.swift | grep -c '^+.*DB\.'` ⇒ **0**。
+> 改法照工单那条"约 10 行、纯 UI 层、不碰落库"执行，实际 +37 行（含 11 行口径注释）；可证形式 `git diff -U0 d0a8c85 -- App/UI/Onboarding.swift | grep -c '^+.*DB\.'` ⇒ **0**（基线取本批开工前那条 commit，裸 `git diff` 提交后会读成空）。
 > **两处没有照字面执行的地方，理由都写在台账里**：
 > ① 禁用式补了左半边 `step.rawValue > Step.promise.rawValue && …` —— 工单只给了右半边，照字面做会在第一步长出一枚按下去零反应的"上一步"（死形状）⇒ 让 `.promise` 整行不出现；这是**加严不是改判**。
 > ② 禁用**同时改标签**（「上一步 · 已不可回退」）—— 本仓 `PrimaryActionStyle`/`SecondaryActionStyle` 都不读 `isEnabled`（`grep -c isEnabled App/Core/DesignSystem.swift` ⇒ 0），

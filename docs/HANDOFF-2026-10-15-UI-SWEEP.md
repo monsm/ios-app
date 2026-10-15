@@ -1012,12 +1012,12 @@ curl -s 'https://api.github.com/repos/monsm/ios-app/check-runs/116364023134/anno
 两处**前提更正**都在 §7.13（B 那条"passphrase 只出现在声明行"已过期一档；C 那条"2 处同型推进要一起改"数字对、判读错）。
 
 ```bash
-git diff --numstat -- App/UI/Onboarding.swift App/Intents/AppIntents.swift   # ⇒ 37/0 与 3/0
+git diff --numstat d0a8c85 -- App/UI/Onboarding.swift App/Intents/AppIntents.swift   # ⇒ 37/0 与 5/0（基线取本批开工前那条 commit；用裸 `git diff` 会在提交后读成空）
 grep -c 'DB.addMember' App/UI/Onboarding.swift                               # ⇒ 1（落库尺子没被注释污染，污染过、已改）
 grep -n 'step.rawValue' App/UI/Onboarding.swift                              # ⇒ 4 行：显示 / canGoBack / 回退 / 前进
 grep -c 'canGoBack' App/UI/Onboarding.swift                                  # ⇒ 4
 grep -c 'rawValue + 1) ?? .certificate' App/UI/Onboarding.swift              # ⇒ 1（前进侧没被顺手改）
-git diff -U0 -- App/UI/Onboarding.swift | grep -c '^+.*DB\.'                 # ⇒ 0（"不碰落库"的可证形式）
+git diff -U0 d0a8c85 -- App/UI/Onboarding.swift | grep -c '^+.*DB\.'         # ⇒ 0（"不碰落库"的可证形式）
 grep -rn 'passphrase' App --include=*.swift | grep -v ':[0-9]*: *//' | wc -l # ⇒ 0（工单 A 那条证据的今日版）
 grep -c 'isEnabled' App/Core/DesignSystem.swift                              # ⇒ 0（所以禁用必须改标签才看得见）
 awk '/^## 7.9 /,/^## 7.10 /' docs/HANDOFF-2026-10-15-UI-SWEEP.md | grep -cE '^[0-9]+\. \*\*'   # ⇒ 11（真机卡数）
@@ -1423,27 +1423,28 @@ for f in App/UI/*.swift App/Intents/*.swift App/*.swift; do b=$(basename $f .swi
 
 > 用户回答原话：**「工单a不做 工单b做3」**。工单化的一问一答在 `docs/DECISION-NEEDED.md` 末节（2026-10-16 那一节），决策包在 §7.11-B/C。
 > 本节是**落地与销案记录**；前面各处旧句一律原地删除线 + 指回本节（§7.1 的规矩）。
-> 批次属性：本批**有代码改动**（两文件、+40 行 / −0 行），是这条走查线上第一条**由拍板驱动**、而不是由缺陷驱动的批次 ——
+> 批次属性：本批**有代码改动**（两文件、+42 行 / −0 行 = Onboarding 37 + AppIntents 5），是这条走查线上第一条**由拍板驱动**、而不是由缺陷驱动的批次 ——
 > 所以它不进 §7.2 已修表（那张表按"每条都是一个说假话的界面"记），只在本节留痕。**未加功能编号**：这两条都不是 IDEA-BANK 条目
 > （`grep -c '暗语\|上一步' docs/DEFERRED.md` ⇒ **0**，本批实测），按 §7.12 末那条同一口径：DEFERRED 不需要新行，`featuremap` 的 A0-w 也不受影响。
 
 **A. 工单 A（Siri 暗语进不进敏感台账）= 不做，零行为改动**
 
-- 落点只有一处：`App/Intents/AppIntents.swift` 的 `UnlockIntent` 注释块尾补三行裁定（锚 `2026-10-16 拍板`），
+- 落点只有一处：`App/Intents/AppIntents.swift` 的 `UnlockIntent` 注释块尾补五行裁定（锚 `2026-10-16 拍板`），
   把 §7.11-B 那句"我的取向（仅建议）"换成定案，依据写成可核的三条（无人消费 / 哈希版收益≈0 / 原文版不可逆且违反"口令绝不落账"）。
 - ⚠ **工单里那句证据今天已经过期一档，本节按当前树重写**：工单写"`passphrase` 全仓只出现在**声明行**（`AppIntents.swift:85-88`）" ——
   那枚输入格在**第十七批就撤掉了**（§7.2-XLIV），今天 85 行不是声明而是**撤除说明**。复算（现状比工单写的更强）：
-  `grep -rn 'passphrase' App --include=*.swift` ⇒ **2 行、两行都是注释**（撤除说明 + 本次拍板），
-  去掉注释行 `grep -rn 'passphrase' App --include=*.swift | grep -v ':[0-9]*: *//' | wc -l` ⇒ **0** = 全仓零代码消费点；
-  HEAD 侧同一条尺子 `git show HEAD:App/Intents/AppIntents.swift | grep -c passphrase` ⇒ **1**。
+  `grep -rn 'passphrase' App --include=*.swift` ⇒ **1 行、就是那句撤除说明**，
+  去掉注释行 `grep -rn 'passphrase' App --include=*.swift | grep -v ':[0-9]*: *//' | wc -l` ⇒ **0** = 全仓零代码消费点。
   ⇒ "不做"的根据不是"存了也没人读"，而是**那个字段本身已经不存在**：要让"这次开锁是谁"可查，得先把 `@Parameter` 加回来，
   那是**重开一个采集口**，不是填一个现成的空 —— 这一层差别正是"不做"比"存哈希"更省的原因。
-  ⚠ 那两个提及里有一个是**本批自己写的拍板行**（§7.5-16：计数会把引述自己算进去）⇒ 下次复跑看到 2 不要当成回归，判据认的是"非注释 0"。
+  ⚠ **本批在这条尺子上自污过一次又改回来了**：拍板那三行注释的第一版把 `passphrase` 原样写进去 ⇒ `grep -c` 当场从 1 变 2（被自己的裁定行数进去），
+  重写为"全仓这个词只剩注释"才回到 1 ⇒ §7.6 第二十批那条新规矩（**代码注释里不要出现复算命令的匹配串**）在这里第二次应验，这次是同一批内连撞两回。
+  ⚠ HEAD 侧（`a292d27`，已发布、不 amend）读出来是 **2**，那是那三行注释的旧措辞；按当前树复算才是 1。
 
 **B. 工单 B（引导「上一步」）= 方案③，已落地**
 
 - 代码：`App/UI/Onboarding.swift` —— body 里 `advanceButton` 之后加一行 `backRow`，同文件新增 `canGoBack` 与 `backRow`（含上方口径注释）。
-  **不碰落库**这句的可证形式：`git diff -U0 -- App/UI/Onboarding.swift | grep -c '^+.*DB\.'` ⇒ **0**（`advance()`、`applyRoleDefaults`、任何 `DB.store` 写入都没动）。
+  **不碰落库**这句的可证形式：`git diff -U0 d0a8c85 -- App/UI/Onboarding.swift | grep -c '^+.*DB\.'` ⇒ **0**（`advance()`、`applyRoleDefaults`、任何 `DB.store` 写入都没动）。
 - 禁用式**比工单那句多写了左半边**：`step.rawValue > Step.promise.rawValue && step.rawValue <= Step.role.rawValue`。
   工单只给了 `step.rawValue > Step.role.rawValue` ⇒ 照字面做，第一步 `.promise` 会长出一枚**按下去零反应**的"上一步"（就是本轮在别的页反复拆的那类死形状）。
   ⇒ 本批让 `.promise` 整行不出现。这是**加严、不是改判**：`.role` 之后仍然禁用、仍然说明。
