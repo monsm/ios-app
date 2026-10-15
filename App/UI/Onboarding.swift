@@ -125,6 +125,7 @@ struct OnboardingView: View {
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             advanceButton
+            backRow
             // 804/805: 随时可跳过, 打点保留, 证书页"重看"入口可在设置-帮助找回
             if step != .certificate {
                 Button("跳过引导") {
@@ -168,6 +169,42 @@ struct OnboardingView: View {
         switch step {
         case .certificate: return "完成"
         default: return "下一步"
+        }
+    }
+
+    // ---------- 上一步 (2026-10-16 拍板 §7.11-C 方案③, 第二十批) ----------
+    // 口径: 只在**还没落库的步骤之间**可退。`.role` 这一页自己不写库 —— 写发生在点「下一步」那一刻:
+    //   `advance()` 的 `.role` 分支调 `applyRoleDefaults`, 由它把角色默认成员建进台账 (全文件唯一一处成员写入)。
+    //   ⚠ 这段注释刻意不写那句"某存储方法"的字面量: 台账里 `grep -c` 的那把尺子数的是**行**,
+    //   注释里复述一遍就把期望值从 1 顶成 3 了 (§7.5-12: 判据命令要能原样跑出写下时的数)。
+    // 过了 `.role` 只剩两种"回退": ① 退回导览却留着已建的成员 (中间态, 得额外披露一句才不骗人);
+    //   ② 回退时把成员删掉 (不可逆, 还牵扯他名下凭证与回收站)。拍板取第三种: **按钮就地禁用并说明原因** ——
+    //   代价是"上一步"对后半程不可用, 这是**接受下来的代价, 不是漏做**, 别在下一批顺手改成①或②。
+    // 禁用要看得见于人: 本仓 `PrimaryActionStyle` / `SecondaryActionStyle` 都不读 `isEnabled`,
+    //   裸 `.disabled(true)` 按下去零变化 = 又一个"看起来在工作的死形状" ⇒ 照「写入中…」那条先例把标签一起改掉。
+    // 第一步 (.promise) 没有"上一步"可回 ⇒ 整行不出现, 不留一枚恒灰的按钮。
+    private var canGoBack: Bool {
+        step.rawValue > Onboarding.Step.promise.rawValue && step.rawValue <= Onboarding.Step.role.rawValue
+    }
+    @ViewBuilder
+    private var backRow: some View {
+        if step != .promise {
+            Button(canGoBack ? "上一步" : "上一步 · 已不可回退") {
+                withAnimation(DS.Motion.standard) {
+                    step = Onboarding.Step(rawValue: step.rawValue - 1) ?? .promise
+                }
+            }
+            .buttonStyle(SecondaryActionStyle())
+            .disabled(!canGoBack)
+            .padding(.horizontal, DS.Space.gutter)
+            if !canGoBack {
+                Text("「你的角色」那一步已经把成员档案写进了这台手机, 再往前退会牵动那份档案 (删它更不可逆), 所以这里不再给上一步。想整轮重来请用设置页的「重看新手引导」。")
+                    .font(.caption)
+                    .foregroundStyle(DS.Palette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, DS.Space.gutter)
+                    .padding(.vertical, DS.Space.xs)
+            }
         }
     }
 
