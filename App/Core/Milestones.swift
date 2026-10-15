@@ -568,7 +568,9 @@ enum Milestones {
         // 同日续查: 当时写的卡点"真判据要成员建档时刻，那是数据面要补的字段"**是错的** ——
         // `Member.at` 已在 `DB.addMember` 里写、`fromDict` 读回（迁移旧账为 0），所以"新成员"这一半现在就能判，
         // 判据换成 `joinedWithCred`（本 App 建的档 + 名下真有归属凭证，且不含演示锁）。
-        // **还剩 995 的前半截没做**：欢迎卡/引导那一步是一个新交互面，仍归产品拍板；本轮不因为它没做而改口径。
+        // ~~还剩 995 的前半截没做~~ ⇒ **2026-10-15 二次核实：前半截已落地** — 建成员成功后
+        // `welcome = m` (Sheets.swift:2675) → `.sheet(item: $welcome)` 弹 `MemberWelcomeCard`
+        // (Sheets.swift:2748, 三步指路 + 去凭证页动作)。此前的"归产品拍板"是过期口径, 划掉留痕。
         case "join1": return s.joinedWithCred
         case "tidy10": return s.organizeTotal >= 10
         case "week1": return s.weekStar

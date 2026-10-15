@@ -272,7 +272,7 @@
 | 992 | 百次彩蛋 | DONE | LockKeeperApp:437 m18.100 时刻卡 |
 | 993 | 夜猫守护徽章 | DONE | definitions "owl" 隐藏徽章 |
 | 994 | 头像角标 | DONE | RecordsView:673 memberBadges 角标 |
-| 995 | 入伙欢迎卡 | PART | Sheets:2296 欢迎 toast; "入伙"徽章不在 definitions |
+| 995 | 入伙欢迎卡 | ~~PART~~ → 2026-10-15 复核**已闭合** (MemberWelcomeCard 三步指路已落: Sheets:2748/2571/2675; join1=joinedWithCred 已修) | Sheets:2296 欢迎 toast; "入伙"徽章不在 definitions |
 | 996 | 收集音效 | DONE | Milestones:528 playCollectSound + 开关 |
 | 997 | 家庭共创目标 | DONE | Sheets:2159 本月全家备份进度 |
 | 998 | 徽章周年回忆 | PART | Milestones:446 badgeAnniversaryToday 零 UI 消费 |

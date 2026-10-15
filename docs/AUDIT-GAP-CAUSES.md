@@ -243,7 +243,7 @@
 | 973 | 配对图文教程 | MISS | D 801-1050 | 包17 第268行 | TRIAGE ✅: 纯 App 内图文教程 ‖ 审计证据:  | 无技术障碍 = 纯漏做 |
 | 989 | 成员称号 | PART | D 801-1050 | 包18 第282行 | TRIAGE ✅: 本地称号 ‖ 审计证据: 仅 994 角标 (kf_member_badge), 称号体系无 | 无技术障碍 = 纯漏做 |
 | 990 | 开门附言 | MISS | D 801-1050 | 包18 第282行 | TRIAGE ✅: 本地附言台账 ‖ 审计证据:  | 无技术障碍 = 纯漏做 |
-| 995 | 入伙欢迎卡 | PART | D 801-1050 | 包18 第282行 | TRIAGE ✅: 本地欢迎流 ‖ 审计证据: Sheets:2296 欢迎 toast; "入伙"徽章不在 definitions | 无技术障碍 = 纯漏做 |
+| 995 | 入伙欢迎卡 | PART | D 801-1050 | 包18 第282行 | TRIAGE ✅: 本地欢迎流 ‖ 审计证据: Sheets:2296 欢迎 toast; "入伙"徽章不在 definitions | 无技术 ⇒ **2026-10-15 复核已闭合**: MemberWelcomeCard 落地 (Sheets:2748 三步指路, :2571 sheet 挂接, :2675 add() 触发) + join1 判据已修 (行 XLVIII joinedWithCred); 旧判留痕不删 |障碍 = 纯漏做 |
 | 998 | 徽章周年回忆 | PART | D 801-1050 | 包18 第282行 | TRIAGE ✅: 本地周年回顾 ‖ 审计证据: Milestones:446 badgeAnniversaryToday 零 UI 消费 | 无技术障碍 = 纯漏做 |
 
 ### B 只差接线(引擎/数据已在) —— 7 项
