@@ -924,9 +924,13 @@ struct CredentialsView: View {
         }
         // 460 归档成员不参与当前显示 (与成员名册/记录过滤口径一致); 只作用展示层,
         // seqBasePwds 仍是全量 — 归档者留下的手排序不能被展示过滤改写。
-        pwds = pwds.filter { !MemberHub.ext($0.owner ?? "").archived }
+        // 2026-10-15 走查 (性能): 原写法在 filter 闭包里逐条 MemberHub.ext/isArchived (每条一次全量解码);
+        // 集合一次取, 闭包内 Set 查, 行为不变。
+        let memberArchived = MemberHub.archivedIDs()
+        let credArchived = CredentialOrg.archived(mac)
+        pwds = pwds.filter { !memberArchived.contains($0.owner ?? "") }
         // 354 已归档只从正常显示里收起; 搜索路径 (filteredResults) 特意不过滤 — 收起不是失效, 搜得到才收得回
-        pwds = pwds.filter { !CredentialOrg.isArchived(mac, "pwd", $0.alias) }
+        pwds = pwds.filter { !credArchived.contains($0.alias) }
         return pwds
     }
     /// 置顶段在前, 其余按 182 手动序 (kf_cseq_), 没有手动序才按 914 的排序维度
@@ -1090,9 +1094,12 @@ struct CredentialsView: View {
             }
         }
         // 460 归档成员的口令/指纹不进当前显示; seqBaseFps 保持全量 (同上)
-        fps = fps.filter { !MemberHub.ext($0.owner ?? "").archived }
+        // 2026-10-15 走查 (性能): 同 segFilteredPwds — 集合一次取, 闭包内 Set 查。
+        let memberArchived = MemberHub.archivedIDs()
+        let credArchived = CredentialOrg.archived(mac)
+        fps = fps.filter { !memberArchived.contains($0.owner ?? "") }
         // 354 已归档的指纹同理 (搜索不过滤)
-        fps = fps.filter { !CredentialOrg.isArchived(mac, "fp", $0.batch) }
+        fps = fps.filter { !credArchived.contains(100000 + $0.batch) }
         return fps
     }
     private func orderedFps(_ fps: [LedgerFp]) -> [LedgerFp] {
@@ -1633,11 +1640,14 @@ struct CredentialsView: View {
 
     /// 354 选择位面 = 浏览位面: 归档条目既看不见, 也不许被"全选/反选/智能选取"选中 —
     /// 隐藏行一旦进破坏性批量 (353 停用 / 922 删除), 就是"看不到却被停掉"。台账级读数不走这里。
+    // 2026-10-15 走查 (性能): isArchived 每条一次全量解码 ⇒ N 条 = O(N²) 解码。集合一次取, 行为不变。
     private var selectablePwds: [LedgerPwd] {
-        DB.listPwds(mac).filter { !CredentialOrg.isArchived(mac, "pwd", $0.alias) }
+        let arch = CredentialOrg.archived(mac)
+        return DB.listPwds(mac).filter { !arch.contains($0.alias) }
     }
     private var selectableFps: [LedgerFp] {
-        DB.listFps(mac).filter { !CredentialOrg.isArchived(mac, "fp", $0.batch) }
+        let arch = CredentialOrg.archived(mac)
+        return DB.listFps(mac).filter { !arch.contains(100000 + $0.batch) }
     }
     private var selectableTotal: Int { selectablePwds.count + selectableFps.count }
     private var cycleLabel: String {
@@ -2207,8 +2217,10 @@ struct CredentialsView: View {
     /// 单条与全部两种还原都在这里; 搜索路径里归档条目仍可见, 它的还原入口在条目长按菜单的「移出归档」。
     @ViewBuilder
     private var archivedStrip: some View {
-        let ap = DB.listPwds(mac).filter { CredentialOrg.isArchived(mac, "pwd", $0.alias) }
-        let af = DB.listFps(mac).filter { CredentialOrg.isArchived(mac, "fp", $0.batch) }
+        // 2026-10-15 走查 (性能): 同上 — 集合一次取, 闭包内 Set 查 (原 N 条 = N 次全量解码)。
+        let archSet = CredentialOrg.archived(mac)
+        let ap = DB.listPwds(mac).filter { archSet.contains($0.alias) }
+        let af = DB.listFps(mac).filter { archSet.contains(100000 + $0.batch) }
         if !ap.isEmpty || !af.isEmpty {
             Section {
                 DisclosureGroup {
