@@ -1237,13 +1237,20 @@ struct CredentialsView: View {
     // 在按成员视图里一概不生效, 于是"切到按成员, 刚排好的顺序没了"。
     @ViewBuilder
     private var memberSections: some View {
+        // 2026-10-15 走查 (性能): 原写法在 ForEach(DB.members()) 行内逐成员调 DB.listPwds/listFps
+        // (M 成员 = M+1 次全量 JSON 解码) 且每条凭证行各调一次 isArchived (每次都 archived(mac)
+        // 全量解码)。提到循环外算一次, 行内只做内存 filter —— 行为不变, 解码次数从 O(M×N) 降为 O(1)。
+        let allPwds = DB.listPwds(mac)
+        let allFps = DB.listFps(mac)
+        let archPwd = CredentialOrg.archived(mac)
+        let archFp = archPwd   // isArchived 内部: pwd 存原 alias, fp 存 100000+batch, 同一个 Set
         ForEach(DB.members()) { m in
             // 354: 归档条目在本页任何浏览方式里都不出现 (含按成员视图); 归档区卡是唯一落点
-            let pwds = orderedPwds(DB.listPwds(mac).filter {
-                $0.owner == m.id && !CredentialOrg.isArchived(mac, "pwd", $0.alias)
+            let pwds = orderedPwds(allPwds.filter {
+                $0.owner == m.id && !archPwd.contains($0.alias)
             })
-            let fps = orderedFps(DB.listFps(mac).filter {
-                $0.owner == m.id && !CredentialOrg.isArchived(mac, "fp", $0.batch)
+            let fps = orderedFps(allFps.filter {
+                $0.owner == m.id && !archFp.contains(100000 + $0.batch)
             })
             if !pwds.isEmpty || !fps.isEmpty {
                 Section("\(CredentialOrg.aliasDisplay && !m.relation.isEmpty ? m.relation + " · " : "")\(m.name) (\(pwds.count + fps.count))") {
@@ -1258,8 +1265,8 @@ struct CredentialsView: View {
                 }
             }
         }
-        let noPwd = orderedPwds(DB.listPwds(mac).filter { $0.owner == nil && !CredentialOrg.isArchived(mac, "pwd", $0.alias) })
-        let noFp = orderedFps(DB.listFps(mac).filter { $0.owner == nil && !CredentialOrg.isArchived(mac, "fp", $0.batch) })
+        let noPwd = orderedPwds(allPwds.filter { $0.owner == nil && !archPwd.contains($0.alias) })
+        let noFp = orderedFps(allFps.filter { $0.owner == nil && !archFp.contains(100000 + $0.batch) })
         if !noPwd.isEmpty || !noFp.isEmpty {
             Section("未归属 (\(noPwd.count + noFp.count))") {
                 ForEach(noPwd) { p in credRow(CredHit(id: "p\(p.alias)", pwd: p)) }
