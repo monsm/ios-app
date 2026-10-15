@@ -82,6 +82,12 @@ const SYS_NAMES = new Set(['AngularGradient','AxisGridLine','AxisMarks','AxisVal
 // LazyHStack 同类)，全仓只此一处所以撞上本检查的误报形态；加白不等于证明布局正确，
 // 格距与密度看真机 (14 的验收项)。
 'LazyHGrid',
+// 392 伪装空壳的长按逃生口 (2026-10-15 走查·行 LIII): 从 `DragGesture(minimumDistance: 0)` + 比时间戳
+// 换成 `LongPressGesture(minimumDuration:)` —— 后者才是"按住够久即 onEnded"的那个契约。
+// Apple 文档: SwiftUI.LongPressGesture, iOS 13 起, 初值签名就是 `init(minimumDuration: Double)`,
+// 且文档自己的示例正是 `LongPressGesture(minimumDuration: 3)`。全仓只出现 2 次 (一次代码一次注释)
+// ⇒ 撞上本检查的误报形态。加白**不等于**证明逃生口按 3 秒真的落锁 —— 那仍要真机核对 (交接书 §7.9 卡 9)。
+'LongPressGesture',
 // 77/939/941 开锁实时活动 (ActivityKit, iOS 16.1 起) 与 826 聚光教练用到的 SwiftUI 布局/绘制类型。
 // 全仓各只出现 1 次, 正好落进本检查的误报形态; 与上面几批同理: **加白不等于证明用法正确** ——
 // 真机验证在 docs/VERIFY-CHECKLIST.md (实时活动那条与聚光教练那条)。
