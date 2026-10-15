@@ -225,3 +225,26 @@
 >   默认第一项；撤权支排 629 逐条停用 / 353 批量停用同一条队列（`CredentialOrg.cascadeBinMember(_:_:revokeLocks:)`），
 >   条数按实数报；指纹在锁端删掉就无法远程补录这句代价写在同一屏；预览清单收成
 >   `CredentialOrg.memberCredentialPreview` 一份。真机项见 `VERIFY-CHECKLIST` ㉕。
+---
+
+## 2026-10-16 追加: 两张待拍板工单 (静态销案后的全部剩余; 回答即施工)
+
+> 背景: AUDIT-STATIC-SWEEP.md 四轮静态对抗已收口 (8 提交全 CI 绿)。
+> 以下两件的决策包在 HANDOFF-2026-10-15-UI-SWEEP.md §7.11-B/C, 此处只留工单化的一问一答。**拍板后按"改法"栏施工, 均为小改动。**
+
+### 工单 A: Siri 暗语入不入敏感台账 (§7.11-B)
+
+- **一问**: 要不要让「这次开锁是谁」在敏感台账里可查?
+- **建议**: **不做**。撤除时的证据链自洽: `passphrase` 全仓只出现在声明行 (AppIntents.swift:85-88), 配置了也无人消费; 哈希版对翻手机的人没有信息量 (收益≈0); 原文版违反「口令绝不落账」纪律且不可逆。
+- **若拍"存哈希前缀"的改法**: `UnlockIntent.perform()` 内把 `String(sha256(phrase).prefix(8))` 塞进 `IntentGovernance.audit(detail:)` (审计口现成, AppIntents.swift:28) — 约 3 行。
+- **若拍"存原文"的改法**: 同上但传原文 — 需同时推翻 Store「刻意不提供清空口」裁定, 属信任成本决策, 不可逆。
+- **拍"不做"的收尾**: 在 AppIntents.swift:85-88 注释块尾加一行"2026-10-16 拍板: 不做, 依据=白配置证据链", 销案。
+
+### 工单 B: 引导流程"上一步" (§7.11-C)
+
+- **一问**: .role 落库那步之后, 回退语义选哪档?
+- **建议**: **方案③** (.role 前可自由回退, 之后按钮就地禁用并说明) — 最诚实最小, 无不可逆。
+- **改法 (拍③)**: Onboarding.swift 前进是 `step = Step(rawValue: step.rawValue + 1) ?? .certificate` (2 处同型, 要一起改); 回退按钮加 `step.rawValue > Step.role.rawValue` 禁用条件 + 说明行 — 约 10 行, 纯 UI 层, 不碰落库。
+- **改法 (拍①)**: 同上但不禁用, 回退只 `step` 不动数据 — 出现"退回导览却已建成员"中间态, 需要在 .role 步加一句披露文案。
+- **改法 (拍②)**: 回退时 `DB` 删成员+二次确认 — 不可逆, 牵扯回收站, 改动面最大, 不建议。
+- 复算: `grep -c 'step.rawValue + 1' App/UI/Onboarding.swift` ⇒ 2; `grep -c 'DB.addMember' App/UI/Onboarding.swift` ⇒ 1。
