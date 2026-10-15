@@ -1888,6 +1888,9 @@ struct UnclaimedClaimView: View {
         NavigationStack {
             List {
                 Section {
+                    // 2026-10-15 走查 (性能): 认领 Picker 数据源在行内, 每行各取一次成员归档集
+                    // (≤20 行 × M 成员的 ext 解码) — 提到行循环外只取一次, 行为不变。
+                    let claimArch = MemberHub.archivedIDs()
                     ForEach(unclaimed.prefix(20)) { r in
                         VStack(alignment: .leading, spacing: DS.Space.xs) {
                             HStack(spacing: DS.Space.s) {
@@ -1905,7 +1908,7 @@ struct UnclaimedClaimView: View {
                                 get: { selMember[r.key] ?? "" },
                                 set: { selMember[r.key] = $0 })
                             ) {
-                                ForEach(DB.members().filter { !MemberHub.ext($0.id).archived }) { m in
+                                ForEach(DB.members().filter { !claimArch.contains($0.id) }) { m in
                                     Text(MemberHub.display(m)).tag(m.id)
                                 }
                             }
@@ -2260,7 +2263,9 @@ struct FamilyNoteView: View {
                     // @layout-allow 触达托管 Picker: 控件本体高度由系统渲染, 我们撑 frame 只会多出一片点不动的死区。
                     // 上机复测: 用拇指点这一行的上下边缘, 看打不打得开 (打得开=系统已给够 44, 这条可以销)
                     Picker("成员", selection: $selMember) {
-                        ForEach(DB.members().filter { !MemberHub.ext($0.id).archived }) { m in
+                        // 2026-10-15 走查 (性能): 同上 — Picker 数据源 ext 逐成员解码, 集合一次取。
+                        let arch = MemberHub.archivedIDs()
+                        ForEach(DB.members().filter { !arch.contains($0.id) }) { m in
                             Text(MemberHub.display(m)).tag(m.id)
                         }
                     }
