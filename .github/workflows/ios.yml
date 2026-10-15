@@ -125,6 +125,11 @@ jobs:
           node tools/sheetcover.js --selftest
           node tools/sheetcover.js
 
+      - name: '界面文案去规格编号 (夹具契约判失败 + 现网顾问级: 七种包围形状各有正控, 量纲/标准名/示例/脱敏样例四类反控不许误响; 现网命中只打印不判失败)'
+        run: |
+          node tools/copynum.js --selftest
+          node tools/copynum.js App Widget
+
       - name: Install XcodeGen
         run: brew install xcodegen
 

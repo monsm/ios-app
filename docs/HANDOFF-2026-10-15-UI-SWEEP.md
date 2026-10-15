@@ -398,6 +398,8 @@ done
 | LVII | **行 LII 那条"换 Tab 要收摊"的一次性尺子落成常驻闸门 `tools/sheetcover.js`**（拍板 ④ 解除后才能做），**现网当场开火一次**：`SettingsView.swift` 的「演示锁」动作写 `app.tabSelection = 0` 不收摊 —— 而 `SettingsView` 有两种呈现（Tab 3 的根 `LockKeeperApp:1081` / 设备页 `.sheet { SettingsView() }`，`DeviceHomeView:197`），后者之下用户本来就在设备页 ⇒ 这一句是空转、缺的正是 `dismiss()`；可前者之下补 `dismiss()` 又会作用在自带 NavigationStack 的 Tab 根上，**会不会 pop 栈本机判不了** ⇒ 不猜，按本仓规矩用具名销号 `收摊口径：` 停手并挂真机卡（§7.9 卡 10） | 闸门判据：① 只判"被某处 `.sheet`/`.fullScreenCover` 端出来过"的 struct，认呈现靠修饰符后 10 行内的 `SomeView(` —— **没有括号的 `{ SomeView }` 不认**（注入探针第一版就这么写，结果不响）；② 窗口 = 动作行的前一行代码 + 后六行代码，先去掉整行注释；③ **不对称是有意的**：`dismiss()` 只在**代码行**上认（注释里引述那句不算，行 LII 踩过），而 `收摊口径：` 必须在**原始行**上认（销号标记天生住在注释里 —— 第一版按同一个"去注释窗口"找，结果现网那一处怎么都销不掉）。**不判**：间接呈现（计算属性包一层）、push 栈该不该退、`dismiss()` 到底退哪一层 | 常驻自测 `node tools/sheetcover.js --selftest` ⇒ `fire=3/3 ok=0/0`。三条正控各测一半：裸写 `tabSelection` / 走 `requestTab` 但不收摊（这一条是给"requestTab 不算修好"那句立字据）/ `dismiss()` 落在窗口外第 8 行。四种反控：紧跟、紧邻前一行、这页从没被 sheet 端出来过、带 `收摊口径：`。现网 `node tools/sheetcover.js` ⇒ 换 Tab 动作 **57** 处 · 落在被 sheet 端出来的页 **24** 处 · 销号 **1** · 违规 **0**；struct 边界认不出 **0** 处（不判的数也印出来，见 §7.5-12）。真树注入探针：临时 `.sheet { ZZProbeCovered() }` + 裸写 ⇒ rc=1 并报出该行；删掉 ⇒ rc=0。**进 CI**：`ios.yml` 新增一步（`--selftest` + 现网跑），闸门总数 27 ⇒ **28** |
 | LVIII | **CI 第一次真跑这批代码 ⇒ 4 条编译错，全是"删/改名留下悬空引用"，而第十七批那条自查明写过"没有一处留下未定义引用"**（run **99** = `2a016f7`：step 1~31 全 success、step 32「编译校验测试目标」failure）：① `Onboarding.swift:227` `_ = loc` —— 撤掉那次定位申请时，旧写法里"别让 loc 变未使用"的消警告句留下了；② `BatteryCare.swift:407` 裸调 `carePeriodDays(opens30d:)`，而这一句在 `enum CareSchedule` 里、那个成员在 `enum BatteryCare` 里 ⇒ 类型上下文里必须限定（同文件 `:405` 的 `BatteryCare.care(...)` 就是本仓自己的写法）；③④ `BackupView.swift:64/:303` 的 `showStudio` / `$showStudio` —— 上一批把 `@State private var showStudio` 那一行**改名成了** `showWebDAV`，两处旧名用法却都还在 ⇒ 备份工作室那层 sheet 整个失去状态 | 三处各补该补的一刀：① 删掉那句 `_ = loc`（注释写清它是旧写法的残留）；② 限定成 `BatteryCare.carePeriodDays(opens30d:)`（判据与值一字未动）；③④ `showStudio` 与 `showWebDAV` **各声明一枚**（两个 sheet 本来就该各有状态），顺带把那行遗留的 8 空格缩进收齐。⚠ **这一批不顺手再加一道静态尺子**：这三条为什么判不了写在 §7.5-17，硬做等于把第十七批那种"看着像结论、其实没测"的尺子再造一把 | 逐条：`grep -c '_ = loc' App/UI/Onboarding.swift` ⇒ 0；`grep -c 'BatteryCare.carePeriodDays(opens30d' App/Core/BatteryCare.swift` ⇒ 1；`grep -c '@State private var showStudio' App/UI/BackupView.swift` ⇒ 1；`grep -c '@State private var showWebDAV' App/UI/BackupView.swift` ⇒ 1。**三条旧断言在这一批被实测推翻，原地更正**：a) ~~CI 自 run 44 连红、最后一次绿 = run 43~~ ⇒ 2026-10-14 的 `fa8423d`/`6051a21` 是 run **96/97/98 全 success**（`curl -s https://api.github.com/repos/monsm/ios-app/actions/runs?per_page=4` 当场读）；b) ~~Actions 的日志匿名不可读 ⇒ "CI 报了什么"无法核实~~ **只对了一半** ⇒ `/actions/runs/{id}`、`/actions/runs/{id}/jobs`（每步 conclusion）与 `/check-runs/{id}/annotations`（**每条编译错误原文**）匿名 **200 可读**，只有整包 `/logs` 要鉴权（403；本仓那把存在 git credential 里的 token 可以直接下整包，实测 163 KB / 4 条 error 全在）；c) §6 末尾那条 `xcodebuild -scheme ZKLock …` **不是 CI 实际跑的命令** ⇒ CI 用 `-scheme OfflineLock -destination 'generic/platform=iOS Simulator' -derivedDataPath build/DerivedData SWIFT_COMPILATION_MODE=wholemodule`（`ios.yml:138`） |
 
+| LIX | **§7.4-21 那条"copynum 要加宽 + 补夹具"做完**（授权一解除就做得动）：原尺子只认"`左括号 + 1~4 位数字 + 分隔符`"这一种包围、作用域只有传进去的一个目录 ⇒ 本轮清掉的 85 行界面编号里**六种形状它当场看不见**（行首 `927 哑按钮`、逗号后 ` 445 可回滚`、斜杠/破折号连号 `937/938`、`957-963:`、`包6 …`、括号**末尾** `(锁端仅告警级, 569)`） | 七条形状逐条加进去（①原支 ②数字对紧跟冒号 ③`包N`（排除 压缩包/包内/打包/装包）④介词挂编号 ⑤句首或逗号后挂编号 ⑥括号末尾挂编号 ⑦数字对后接中文/右括号）+ **四道豁免**：量纲单位表补 15 个（字/毫/千/万/元/组/列/栏/窗/屏/格/键/轮/圈/段/倍/级）、**左贴字母或 `-`** 的结构性豁免（`SHA256`、`iOS16`、`kf_2026`）、6 字内出现 SHA/AES/RFC/GB/MD5/HMAC/UTF 放行、整行含「示例/例如/比如」放行；⑥ 再加一道**比形状更窄**的"脱敏样例"豁免（括号里数字之前只有 `· … *` 与空格 ⇒ 是被遮住的样本值不是编号，现网唯一一例 = 安全中心「保留末 4 位 (· · · 4821)」）。销号改成**按 `文件 + 片段`** 认，不再写行号（行号是消耗品）。作用域默认 `App` + `Widget` | 契约（判失败）：`node tools/copynum.js --selftest` ⇒ `fire=8/8 (开火的形状: ①②③④⑤⑥⑦) ok=0/0`（八条正控 = 七形状 + 一条"掩码豁免不许吃下带汉字的括号"的**近失正控** `(见台账 4821)`；六条反控文件 = 量纲/标准名/示例/真值前导词/压缩包/脱敏）。现网（顾问级）：`node tools/copynum.js App Widget` ⇒ `扫了 87 个文件 · 疑似 0 行 · ALLOW 销号 1 条`。**这一批我自己两次把尺子写坏，都被夹具打回来**：⑴ ⑤ 的宽度写成 `\d{1,4}` ⇒ 现网 **128 行误响**（`22 点后`、`1-27 锁端错误码` 这类真值全被抓），收窄到 `\d{3,4}` 后归 1 行；⑵ 掩码豁免第一版写成"括号里含数字就放行"的近似 ⇒ 会把 `(见台账 4821)` 一起放过，加了那条近失正控才证明豁免真的只吃掩码字符 |
+
 ### 7.2bis 记下但**留给下一批**的三件事
 
 0. **界面残留规格号 —— 第四批已清 24 处，只剩 5 处要判**（下面这份清单留着当"哪些形状不能碰"的判据表）。
@@ -615,7 +617,9 @@ done
 
 21. **`tools/copynum.js` 要加宽 + 补夹具**（这条是 §7.2-XLVII 标定完的直接产物，~~卡在"不许跑 `tools/*.js`"那条用户要求上，本机不能验证 ⇒ 不盲改~~
     **第十九批已解除这道闸**：`tools/sheetcover.js` 已经落成常驻闸门并写进 CI（行 LVII），所以"不许动 tools/"这条前提不再挡它 ——
-    **七条形状与量纲豁免表都还有效**（下面整段照旧），只是现在做得动。剩下的是工作量，不是条件。
+    **七条形状与量纲豁免表**已照下面整段落地 ⇒ **本条第十九批闭合**（行 LIX：七形状 + 四道豁免 + `fixtures/copynum/{fire,ok}` 八正控六反控 + `--selftest` 契约进 CI；
+    现网 `App` + `Widget` 扫 87 个文件 ⇒ **0 行命中**，唯一那条 `status.js:100-101` 证据引用按"文件 + 片段"销号）。
+    下面那段标定记录继续留着，因为它写的是**哪些形状不能碰**（量纲、标准名、示例句），那是判据的另一半，不是待办。
     已标定好的**七条形状**（一条现在都不在闸门眼里，除第一条）：① 原支 `[(（]\d{1,4}[^)]*` + `[:：,，、]`/`)`/空格+非量纲中文；
     ② 数字或数字对紧跟冒号 `(^|[^0-9A-Za-z_.\(-])\d{3,4}([-/]\d{3,4})?\s*[:：]`，前 6 字里出现 SHA/AES/RFC/GB/MD5/HMAC/UTF 放行；
     ③ `包\d{1,3}`（排除 压缩包/包内/打包）；④ 介词挂编号 `[与含按走如同照]\s*\d{3,4}\s+中文`；
@@ -974,17 +978,22 @@ node -e 'const L=require("fs").readFileSync("docs/HANDOFF-2026-10-15-UI-SWEEP.md
 **第十九批（本轮收口 · 有代码改动 · 第一条真编译证据在这一批到手）**
 
 做了什么：推 `2a016f7` 触发 CI ⇒ **run 99** ⇒ 闸门 step 1~31 全 success、step 32「编译校验测试目标」failure
-⇒ 4 条编译错逐条修（行 LVIII）；行 LII 那条一次性尺子落成常驻闸门 `tools/sheetcover.js`（正控 + 反控 + 真树注入，行 LVII）并写进 CI ⇒ **闸门 27 ⇒ 28 道**。
+⇒ 4 条编译错逐条修（行 LVIII）；行 LII 那条一次性尺子落成常驻闸门 `tools/sheetcover.js`（正控 + 反控 + 真树注入，行 LVII）并写进 CI；
+`tools/copynum.js` 按 §7.4-21 加宽七形状 + 四道豁免并补 `fixtures/copynum/{fire,ok}` 与 `--selftest`（行 LIX），也写进 CI。
+⇒ **CI 里跑的工具调用 27 ⇒ 29**（新增 `sheetcover`、`copynum` 两步；`copynum` 此前只是本地脚本、从没进过 CI）。
+⚠ 上一条 commit message 里写的"闸门 27 ⇒ 28"只算了 sheetcover 那一半 —— **commit 已发布、不 amend**，所以这条差异留在台账里当更正记录。
 
 ```bash
 node tools/sheetcover.js --selftest                            # ⇒ fire=3/3 ok=0/0（不符退 2）
 node tools/sheetcover.js                                       # ⇒ 动作 57 / sheet 内 24 / 销号 1 / 违规 0 / struct 认不出 0
+node tools/copynum.js --selftest                               # ⇒ fire=8/8 (①..⑦ 全开火) ok=0/0
+node tools/copynum.js App Widget                               # ⇒ 扫 87 个文件 · 疑似 0 行 · ALLOW 1 条（顾问级，退 0）
 for f in tools/*.js; do node --check "$f"; done                # ⇒ 无输出（CI 里同一把尺子，ios.yml:58）
 curl -s 'https://api.github.com/repos/monsm/ios-app/actions/runs?per_page=4'      # ⇒ 99 failure / 96-98 success
 curl -s 'https://api.github.com/repos/monsm/ios-app/check-runs/116364023134/annotations' | grep -c error:   # ⇒ 4
 ```
 
-台账计数（这批之后）：§7.2 ⇒ **58** 数据行（竖线分布去码段后只有键 `5`）；§7.4 ⇒ **24** 条；§7.5 ⇒ **17** 条；§7.9 ⇒ **10** 张真机卡；闸门 ⇒ **28** 道。
+台账计数（这批之后）：§7.2 ⇒ **59** 数据行（竖线分布去码段后只有键 `5`）；§7.4 ⇒ **24** 条（21 已做完）；§7.5 ⇒ **17** 条；§7.9 ⇒ **10** 张真机卡；CI 工具调用 ⇒ **29** 道。
 ⚠ 这批把写着"真机 9 条"的旧句改成了带旧值的写法 ⇒ 判据换一条：`grep -c '^[0-9]\+\. \*\*' `（在 §7.9 那一段里数卡的**条数**）⇒ **10**，实测过。
 而 `grep -c '真机 9 条'` 现在返回 **3**：521 与 1062 是"旧值 → 新值"的写法、986 就是**这句话自己**
 （§7.5-16 那条"计数会数到注释/引述自己"的第 N 次应验 —— 判"某句话还存不存在"时，先把发起那句排除掉）。
@@ -1333,7 +1342,7 @@ for f in App/UI/*.swift App/Intents/*.swift App/*.swift; do b=$(basename $f .swi
 | ① | 「全部改动未提交」是本会话的常态（§0、§7.0、§7.8 多处） | **按批落本地 commit** | 只授权本地；`--amend` / squash 已发布提交、`force push` 仍然禁止。批次 = 本文件里的"第N批"，一批一个或多个 commit 由改动面决定。**状态：已开跑** —— `7c60a41`（第二~十七批未提交代码 43 个文件的一次补提交，理由写在那条 message 里：**同一文件混着多批改动，已无法按批拆**）、`6fa2d43`（第十八批代码 = 行 LIV/LV）、`7ee87dc`（行 LVI 的 swiftlint 加白）、随后一条是本文档自身。**从这条起"一批一条"是真的**，前面那 16 批只能打包 |
 | ② | 2026-10-11 拍板「不推送」⇒ §4-4 编译不在能力内（§0.2、§7.7 末段、§7.8-1） | **解除「不推送」，跑一次 CI** | 目标是 ~~§6 末尾那条 `xcodebuild -scheme ZKLock …`~~ **第十九批已跑完第一轮**：推 `2a016f7` ⇒ run **99** ⇒ step 1~31（28 道闸门里的全部前置步）success、step 32「编译校验测试目标」**failure** ⇒ 4 条编译错，逐条修完（§7.2-LVIII）。⚠ 这一跑同时推翻三条旧句：① ~~CI 报了什么都无法核实~~ ⇒ `/actions/runs/{id}`、`/jobs`（每步 conclusion）、`/check-runs/{id}/annotations`（**每条错误原文**）**匿名 200 可读**，只有整包 `/logs` 要鉴权；② ~~CI 自 run 44 连红、最后绿 = run 43~~ ⇒ 2026-10-14 的 `fa8423d`/`6051a21` 是 run **96/97/98 全 success**（⇒ 那之前 79 个提交的 Swift **进过编译器**，memory 里那句"一行都没进过"是过期断言）；③ §6 抄的那条命令 scheme 是错的 ⇒ 实际是 `OfflineLock` + `generic/platform=iOS Simulator` + `wholemodule`。下一跑（修完这 4 条之后）的结论只写在这一格里 |
 | ③ | `CredBinEntry` 缺 `batchId` ⇒ 等拍板（§7.4-7 残余、§7.11-A、§7.8-3、§7.2-XLIX/XXIX①） | **做：只给级联函数传批次号** | 用户原话是"只给 **2 个**级联函数传 batch"，实测是 **3 个**（第三个 = `AuditChain.markDeparted`）⇒ 按三条执行并留了理由（漏一条就留一条假话）。字段定名 `batchId`（与 `LedgerFp.batch` 那个整数区分开）。状态：**已落地 = 行 LIV**，真机那半搬进 §7.9 卡 6 |
-| ④ | 本会话不许跑 `tools/*.js`、不许往 `tools/` 加东西（§0.1、行 LII 末"要常驻得等授权"） | **允许落新闸门 + 跑 tools** | 状态：**全量真跑已完成**（27 道 CI 名单，rc 全 0，见 §7.6 第十八批段）；`swiftlint` 的 `SYS_NAMES` 加白已完成并带出处（行 LVI）。**还没做**：把本轮的一次性尺子转成常驻闸门（`sheetcover` 换 Tab 收摊 / `membercheck` 成员名与跨文件 private / `copynum` 加宽 + `fixtures/copynum/{fire,ok}` + `--selftest`），每条都要按 §7.5 的规矩带**正控 + 反控** |
+| ④ | 本会话不许跑 `tools/*.js`、不许往 `tools/` 加东西（§0.1、行 LII 末"要常驻得等授权"） | **允许落新闸门 + 跑 tools** | 状态：**全量真跑已完成**（27 道 CI 名单，rc 全 0，见 §7.6 第十八批段）；`swiftlint` 的 `SYS_NAMES` 加白已完成并带出处（行 LVI）。**已落地**：`tools/sheetcover.js` 与加宽后的 `tools/copynum.js` 都进了 CI（含 `--selftest` 契约与 `fixtures/…/fire` 与 `ok` 两组夹具），行 LVII / LIX 各带一次**真树注入探针**（用完即删，前后 `git status --short` 比对）。**还剩一件**：§7.10 那两把尺子里的"跨文件 `private` 可见性"没落盘 —— 理由是 run 99 用编译器抓到了同族的一条（`carePeriodDays` 裸调，行 LVIII），**要不要再造一把静态尺子留给下一批判**（静态判作用域必然以误报为主，见 §7.5-17）。 |
 
 ⚠ 这一节**不覆盖**的东西（别顺手一起改）：`docs/DEFERRED.md` 的「拍板变更登记」表是 IDEA-BANK **功能编号**的改判入口，
 `featuremap.js` 只认那张表；本节这四条是**会话治理**决定（提交、推送、授权、施工范围），不落在功能清单里，
