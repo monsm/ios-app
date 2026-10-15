@@ -229,9 +229,15 @@ for f in $(git diff --name-only | grep '\.swift$'); do
   [ "$((n2-n))" = "$((m2-m))" ] && echo "OK $f" || echo "不平衡 $f"
 done
 
-# 仍未编译 —— 唯一的真编译在 CI：
+# ~~仍未编译~~ —— 第十九批起这条不再成立：CI 已经在跑，本会话推了 run 99（4 条错，全修，见 §7.2-LVIII）。
+# ⚠ 下面三行是**旧的抄录**，scheme 与 destination 都和 CI 实际用的不一样，别照它自查：
 #   xcodebuild -scheme ZKLock -configuration Debug -destination 'generic/platform=iOS'
 #     -derivedDataPath build/dd build-for-testing
+# CI 真正跑的这一条（抄自 ios.yml:138 原文）：
+#   xcodebuild build-for-testing -project OfflineLock.xcodeproj -scheme OfflineLock \
+#     -destination 'generic/platform=iOS Simulator' -derivedDataPath build/DerivedData \
+#     SWIFT_COMPILATION_MODE=wholemodule CODE_SIGNING_ALLOWED=NO | tee build/test.log
+#   （wholemodule 是刻意的：默认批量模式一处失败就停派，每次 run 只挤出一条错 —— run 59→62 就这么浪费过）
 ```
 
 ---
@@ -389,6 +395,9 @@ done
 | LV | **批次动作页每一页的标题都多说一个「第」**：`ChangeBatchView` 的 Section 是「字面 第」+ `batch`，而 `ChangeEntry.batch` 的取值**全部**已经形如「第X批」⇒ 上屏是「第第一百八十七批落了这些」。同一个 `batch` 还当 `navigationTitle`（那条本来是对的），所以缺陷只在 Section 这一处，且**每一条**更新说明的动作页都中招 | 去掉字面「第」：`Section("\(batch)落了这些")` | 判据是**两侧相等**（取值集合与字面部分重叠 = 重字）：`grep -c '^[[:space:]]*batch: "' App/UI/ChangelogView.swift` ⇒ 82、`grep -c '^[[:space:]]*batch: "第.*批"' App/UI/ChangelogView.swift` ⇒ 82；改后 `grep -c 'Section("第' App/UI/ChangelogView.swift` ⇒ 0。⚠ 这两条**必须行首锚定**：注释里就写着 `batch: "` 字样，不带锚的 `grep -o` 把注释自己数进去（写这行时实测 83/82 就是这个坑，见 §7.5-16） |
 | LVI | **撤回上一批"基线全绿"里没说过的一半**：`tools/swiftlint.js` 的「疑似未声明符号」从行 LIII 那次改动起就一直红一条 —— `LongPressGesture` 在仓里恰好只出现 2 次，正撞"仅出现 2 次且未声明"的误报形态。上一批收口只跑了引用尺子与引号尺子就写下"基线绿"，**把没跑的说成了跑过的** | 加白名单而不是放宽判据：`SYS_NAMES` 增 `'LongPressGesture'`，注释按该文件既有写法给出处（SwiftUI 自带、iOS 13 起、签名 `init(minimumDuration: Double)`，Apple 文档自己的示例就是 `LongPressGesture(minimumDuration: 3)`），并明写"加白不等于证明逃生口真落锁 —— 那条仍在 §7.9 卡 9 等真机"。**顺带这一条是本会话第二次遇到"正控就在现网开火"**：尺子没错，是我没跑 | 改前 `node tools/swiftlint.js >/dev/null; echo $?` ⇒ 1，改后 ⇒ 0；`grep -c "'LongPressGesture'" tools/swiftlint.js` ⇒ 1；全部 27 道 CI 闸门重跑 ⇒ **0 道不过**（第十八批收口实测，含本行这次改动） |
 
+| LVII | **行 LII 那条"换 Tab 要收摊"的一次性尺子落成常驻闸门 `tools/sheetcover.js`**（拍板 ④ 解除后才能做），**现网当场开火一次**：`SettingsView.swift` 的「演示锁」动作写 `app.tabSelection = 0` 不收摊 —— 而 `SettingsView` 有两种呈现（Tab 3 的根 `LockKeeperApp:1081` / 设备页 `.sheet { SettingsView() }`，`DeviceHomeView:197`），后者之下用户本来就在设备页 ⇒ 这一句是空转、缺的正是 `dismiss()`；可前者之下补 `dismiss()` 又会作用在自带 NavigationStack 的 Tab 根上，**会不会 pop 栈本机判不了** ⇒ 不猜，按本仓规矩用具名销号 `收摊口径：` 停手并挂真机卡（§7.9 卡 10） | 闸门判据：① 只判"被某处 `.sheet`/`.fullScreenCover` 端出来过"的 struct，认呈现靠修饰符后 10 行内的 `SomeView(` —— **没有括号的 `{ SomeView }` 不认**（注入探针第一版就这么写，结果不响）；② 窗口 = 动作行的前一行代码 + 后六行代码，先去掉整行注释；③ **不对称是有意的**：`dismiss()` 只在**代码行**上认（注释里引述那句不算，行 LII 踩过），而 `收摊口径：` 必须在**原始行**上认（销号标记天生住在注释里 —— 第一版按同一个"去注释窗口"找，结果现网那一处怎么都销不掉）。**不判**：间接呈现（计算属性包一层）、push 栈该不该退、`dismiss()` 到底退哪一层 | 常驻自测 `node tools/sheetcover.js --selftest` ⇒ `fire=3/3 ok=0/0`。三条正控各测一半：裸写 `tabSelection` / 走 `requestTab` 但不收摊（这一条是给"requestTab 不算修好"那句立字据）/ `dismiss()` 落在窗口外第 8 行。四种反控：紧跟、紧邻前一行、这页从没被 sheet 端出来过、带 `收摊口径：`。现网 `node tools/sheetcover.js` ⇒ 换 Tab 动作 **57** 处 · 落在被 sheet 端出来的页 **24** 处 · 销号 **1** · 违规 **0**；struct 边界认不出 **0** 处（不判的数也印出来，见 §7.5-12）。真树注入探针：临时 `.sheet { ZZProbeCovered() }` + 裸写 ⇒ rc=1 并报出该行；删掉 ⇒ rc=0。**进 CI**：`ios.yml` 新增一步（`--selftest` + 现网跑），闸门总数 27 ⇒ **28** |
+| LVIII | **CI 第一次真跑这批代码 ⇒ 4 条编译错，全是"删/改名留下悬空引用"，而第十七批那条自查明写过"没有一处留下未定义引用"**（run **99** = `2a016f7`：step 1~31 全 success、step 32「编译校验测试目标」failure）：① `Onboarding.swift:227` `_ = loc` —— 撤掉那次定位申请时，旧写法里"别让 loc 变未使用"的消警告句留下了；② `BatteryCare.swift:407` 裸调 `carePeriodDays(opens30d:)`，而这一句在 `enum CareSchedule` 里、那个成员在 `enum BatteryCare` 里 ⇒ 类型上下文里必须限定（同文件 `:405` 的 `BatteryCare.care(...)` 就是本仓自己的写法）；③④ `BackupView.swift:64/:303` 的 `showStudio` / `$showStudio` —— 上一批把 `@State private var showStudio` 那一行**改名成了** `showWebDAV`，两处旧名用法却都还在 ⇒ 备份工作室那层 sheet 整个失去状态 | 三处各补该补的一刀：① 删掉那句 `_ = loc`（注释写清它是旧写法的残留）；② 限定成 `BatteryCare.carePeriodDays(opens30d:)`（判据与值一字未动）；③④ `showStudio` 与 `showWebDAV` **各声明一枚**（两个 sheet 本来就该各有状态），顺带把那行遗留的 8 空格缩进收齐。⚠ **这一批不顺手再加一道静态尺子**：这三条为什么判不了写在 §7.5-17，硬做等于把第十七批那种"看着像结论、其实没测"的尺子再造一把 | 逐条：`grep -c '_ = loc' App/UI/Onboarding.swift` ⇒ 0；`grep -c 'BatteryCare.carePeriodDays(opens30d' App/Core/BatteryCare.swift` ⇒ 1；`grep -c '@State private var showStudio' App/UI/BackupView.swift` ⇒ 1；`grep -c '@State private var showWebDAV' App/UI/BackupView.swift` ⇒ 1。**三条旧断言在这一批被实测推翻，原地更正**：a) ~~CI 自 run 44 连红、最后一次绿 = run 43~~ ⇒ 2026-10-14 的 `fa8423d`/`6051a21` 是 run **96/97/98 全 success**（`curl -s https://api.github.com/repos/monsm/ios-app/actions/runs?per_page=4` 当场读）；b) ~~Actions 的日志匿名不可读 ⇒ "CI 报了什么"无法核实~~ **只对了一半** ⇒ `/actions/runs/{id}`、`/actions/runs/{id}/jobs`（每步 conclusion）与 `/check-runs/{id}/annotations`（**每条编译错误原文**）匿名 **200 可读**，只有整包 `/logs` 要鉴权（403；本仓那把存在 git credential 里的 token 可以直接下整包，实测 163 KB / 4 条 error 全在）；c) §6 末尾那条 `xcodebuild -scheme ZKLock …` **不是 CI 实际跑的命令** ⇒ CI 用 `-scheme OfflineLock -destination 'generic/platform=iOS Simulator' -derivedDataPath build/DerivedData SWIFT_COMPILATION_MODE=wholemodule`（`ios.yml:138`） |
+
 ### 7.2bis 记下但**留给下一批**的三件事
 
 0. **界面残留规格号 —— 第四批已清 24 处，只剩 5 处要判**（下面这份清单留着当"哪些形状不能碰"的判据表）。
@@ -509,7 +518,7 @@ done
 >   改完本机也验不了 ⇒ 不盲改。
 >
 > ⇒ **对账结论**：这一族（现 22 条）里，"本可以现在做却没做"的条目 = **0**（有两条曾经被这样记着，回源后其实早就改完了 —— 见 6 与 13）。
-> 剩下的开口全在**真机 / 授权 / 拍板 / CI** 四侧：真机 9 条（1残、2、3、4、5残、7①残、18、20、**22**）、授权 1 条（21）、
+> 剩下的开口全在**真机 / 授权 / 拍板 / CI** 四侧：真机 9 条 → **10 条**（1残、2、3、4、5残、7①残、18、20、**22**、+ 行 LVII 的收摊那条）、授权 1 条（21）**已在第十九批解除 ⇒ 21 只剩"加宽 + 夹具"这件活**、
 > 拍板 3 条（7①、14、17残）、CI = §4-4。
 
 
@@ -604,7 +613,9 @@ done
     复算：`grep -n landPendingFocus App/UI/SettingsView.swift` ⇒ 4（两条挂载 + 一条 onDismiss 重试 + 定义本身）。
 
 
-21. **`tools/copynum.js` 要加宽 + 补夹具**（这条是 §7.2-XLVII 标定完的直接产物，卡在"不许跑 `tools/*.js`"那条用户要求上，本机不能验证 ⇒ 不盲改）。
+21. **`tools/copynum.js` 要加宽 + 补夹具**（这条是 §7.2-XLVII 标定完的直接产物，~~卡在"不许跑 `tools/*.js`"那条用户要求上，本机不能验证 ⇒ 不盲改~~
+    **第十九批已解除这道闸**：`tools/sheetcover.js` 已经落成常驻闸门并写进 CI（行 LVII），所以"不许动 tools/"这条前提不再挡它 ——
+    **七条形状与量纲豁免表都还有效**（下面整段照旧），只是现在做得动。剩下的是工作量，不是条件。
     已标定好的**七条形状**（一条现在都不在闸门眼里，除第一条）：① 原支 `[(（]\d{1,4}[^)]*` + `[:：,，、]`/`)`/空格+非量纲中文；
     ② 数字或数字对紧跟冒号 `(^|[^0-9A-Za-z_.\(-])\d{3,4}([-/]\d{3,4})?\s*[:：]`，前 6 字里出现 SHA/AES/RFC/GB/MD5/HMAC/UTF 放行；
     ③ `包\d{1,3}`（排除 压缩包/包内/打包）；④ 介词挂编号 `[与含按走如同照]\s*\d{3,4}\s+中文`；
@@ -795,6 +806,18 @@ done
     把注释自己数进去（写行 LV 时实测 83/82 —— 多的那条就是这条注释；这是 §7.5 里"关于没有的断言第一个命中是它自己"的**镜像**：
     关于有/有计数的断言，第一个命中也可能是它自己）。判据 = **两侧相等**，不是某个常数。
 
+17. **"删/改名之后没有悬空引用"这句话，静态说不了全 —— 本会话在这上面被编译器抓过三次**（行 LVIII，CI run 99）。
+    第十七批那条自查（§7.10）判的是"被删掉的**声明行**还有没有人引用"，三个盲区它一个都看不见：
+    ① **局部变量**：`let loc = …` 删了，同函数里那句消警告用的 `_ = loc` 还在 —— 它不在声明行的差集里，它是一条**语句**；
+    ② **改名 = 删除 + 新增**：`showStudio` 那行被改成 `showWebDAV`，而旧名的两处**用法**没跟着改 ⇒ 差集只看到"一行被换掉"，看不到谁还在用旧名；
+    ③ **跨类型的裸调用**：`enum CareSchedule` 里写 `carePeriodDays(opens30d:)`（成员在 `enum BatteryCare`）——
+       这个名字全仓**存在**（`grep` 找得到），所以第十/十一批那把"成员是否存在"的尺子判它干净，
+       但 Swift 在类型上下文里要的是**限定名**（同文件 `:405` 的 `BatteryCare.care(...)` 就是本仓自己的写法）。
+    ⇒ 判据（写给下一批，别再当"已自查"）：**动过某个标识符，就把它的全文使用点列一遍**（`grep -rn '\bNAME\b' App --include=*.swift`），
+    改名的话**旧名**同样要列；跨类型补调用时先抄同文件既有写法。
+    为什么这条不做成闸门：判"这个名字在当前作用域可见吗"要作用域分析与类型推断，node 侧硬做必然以误报为主
+    （§7.5 末尾"语义级判据不写成闸门"那条的又一次应验）—— 这三次全是**编译器**抓到的，那就让编译器站在闸门后面。
+
 ## 7.6 台账自检（写完 §7.2 三十三行之后跑的第一遍；第五批、第六批、第七批、第八批、第九批各在末尾追加一段 —— **每批收口都要跑一遍"第七批收口自检"那个 bash 块，它比本节任何一句散文都新**）
 
 把 §7.2 每行给的复算命令抽出来重跑一遍：**42 条锚点全部对得上**。其中 6 条第一遍报"不中"，逐条手验后都是**校验脚本自己的毛病**，不是台账写错：
@@ -948,6 +971,30 @@ node -e 'const L=require("fs").readFileSync("docs/HANDOFF-2026-10-15-UI-SWEEP.md
 它原先的判据是"要修先得拍板"，拍板已落（行 LIV）⇒ 现在这张卡验的是**新数据的整批收齐**与**旧 plist（没有 `batchId` 键）解出 nil**，
 后一半是本机判不了的（无模拟器），静态只证到"字段 Optional + 仓内先例 `SensitiveLedger.Item.member`"。
 
+**第十九批（本轮收口 · 有代码改动 · 第一条真编译证据在这一批到手）**
+
+做了什么：推 `2a016f7` 触发 CI ⇒ **run 99** ⇒ 闸门 step 1~31 全 success、step 32「编译校验测试目标」failure
+⇒ 4 条编译错逐条修（行 LVIII）；行 LII 那条一次性尺子落成常驻闸门 `tools/sheetcover.js`（正控 + 反控 + 真树注入，行 LVII）并写进 CI ⇒ **闸门 27 ⇒ 28 道**。
+
+```bash
+node tools/sheetcover.js --selftest                            # ⇒ fire=3/3 ok=0/0（不符退 2）
+node tools/sheetcover.js                                       # ⇒ 动作 57 / sheet 内 24 / 销号 1 / 违规 0 / struct 认不出 0
+for f in tools/*.js; do node --check "$f"; done                # ⇒ 无输出（CI 里同一把尺子，ios.yml:58）
+curl -s 'https://api.github.com/repos/monsm/ios-app/actions/runs?per_page=4'      # ⇒ 99 failure / 96-98 success
+curl -s 'https://api.github.com/repos/monsm/ios-app/check-runs/116364023134/annotations' | grep -c error:   # ⇒ 4
+```
+
+台账计数（这批之后）：§7.2 ⇒ **58** 数据行（竖线分布去码段后只有键 `5`）；§7.4 ⇒ **24** 条；§7.5 ⇒ **17** 条；§7.9 ⇒ **10** 张真机卡；闸门 ⇒ **28** 道。
+⚠ 这批把写着"真机 9 条"的旧句改成了带旧值的写法 ⇒ 判据换一条：`grep -c '^[0-9]\+\. \*\*' `（在 §7.9 那一段里数卡的**条数**）⇒ **10**，实测过。
+而 `grep -c '真机 9 条'` 现在返回 **3**：521 与 1062 是"旧值 → 新值"的写法、986 就是**这句话自己**
+（§7.5-16 那条"计数会数到注释/引述自己"的第 N 次应验 —— 判"某句话还存不存在"时，先把发起那句排除掉）。
+
+**这批学到的两条，都是"探针与尺子"那一族的复用**：
+① 注入探针第一版写成 `.sheet { ZZProbeCovered }`（少一对括号）⇒ 闸门不响。**是探针错，不是尺子坏**（§7.5-12⑥ 的第 N 次应验），
+第二版补上 `()` 才红 —— 所以"注入没开火"之后先回头查注入点自己合不合语法。
+② `收摊口径：` 这类**具名销号**必须按原始行找，而 `dismiss()` 必须按去掉整行注释的代码行找：
+第一版用同一个"去注释窗口"跑两条 ⇒ 现网那一处怎么都销不掉（销号天生住在注释里）。**同一段窗口里两种"看不见注释"的相反需求，是一处不对称而不是 bug。**
+
 ## 7.7 边界（一句话版本，报状态时不许省）
 
 本轮同样**一行都没编译**：本机无 Xcode/模拟器，`tools/*.js` 一道没跑（沿用 §0.1 的用户要求），结论全部来自读码 +
@@ -1015,7 +1062,7 @@ while read n; do grep -rn "case \"[a-zA-Z]*\": *$n(" App --include=*.swift | gre
    **第十八批已选第二条**（用户拍板解除不推送）：按批落本地 commit ⇒ 推一个分支 ⇒ `xcodebuild … build-for-testing`（命令在 §6 末尾）⇒ 修真编译错。
    进展与"CI 到底报了什么"只在 §7.12-② 与本节末尾更新，**没跑成之前不许写成已修**。本轮能给的替代都给了：新增/改动符号的参数标签与成员顺序逐个对回声明（0 处不符，§7.2-XLIX）、
    括号/花括号去注释净增成对、引号配对 A/B 段、双栈与表格判据。**这不等于编译通过**，别拿它当过。
-2. **等真机 9 条** —— §7.4 的 1(残)、2、3、4、5(残)、7①(残)、18、20、22。每条都写了"到点该看见什么"，逐条打勾即可；
+2. **等真机 9 条 → 10 条** —— §7.4 的 1(残)、2、3、4、5(残)、7①(残)、18、20、22，第十九批再加行 LVII 那一枚（§7.9 卡 10）。每条都写了"到点该看见什么"，逐条打勾即可；
    §7.7 另列了本批新增的三条真机判据（时刻卡 `.task(id:)` 三件事、减少动效下圆盘只剩盘面、雷达两圈相位差）。
 3. **等拍板 ~~3 条~~ → 剩 2 条**（第十八批）—— ~~`CredBinEntry.batchId` 级联归组（`at` 当不了批次键，证据在 §7.2-XLIX）~~
    **已拍板并落地 = 行 LIV**（用户原话是"只给 2 个级联函数传 batch"，实测**三个**，第三个 `AuditChain.markDeparted` 一并做了，理由写在 LIV 的复算栏）；
@@ -1048,7 +1095,7 @@ while read n; do grep -rn "case \"[a-zA-Z]*\": *$n(" App --include=*.swift | gre
 
 > 每张卡四行：**操作 → 应看见 → 判据（真机上一眼可判）→ 不符就照哪条改法**。代码锚点只写**符号名**（§7.5-12：行号是消耗品）。
 
-**真机 9 条**（§7.4 的 1、2、3、4、5残、7①残、18、20、22）
+**真机 ~~9 条~~ 10 张**（§7.4 的 1、2、3、4、5残、7①残、18、20、22 各一张 + 第十九批加的第 10 张：行 LVII 那处 `收摊口径：`）
 
 1. **写硬件中途退页**（§7.4-A1）—— 操作：`AddPwdView` 加密码，进度条在飞时先试下滑关闭、再点「关闭」。
    应看见：两条退路都被挡住（按钮写着「写入中…」且禁用、下滑不收起）。判据：`grep -c interactiveDismissDisabled App/UI/Sheets.swift` 现为 **4**，三张页各一枚。
@@ -1084,6 +1131,14 @@ while read n; do grep -rn "case \"[a-zA-Z]*\": *$n(" App --include=*.swift | gre
    不弹 ⇒ 缓解就是那条"延一帧"（把落点动作包进 `Task { @MainActor in … }`），且**本会话刻意没预先加**（理由与竞态代价写在 §7.4-20 原文里）。
 
 9. **伪装壳逃生口：静止按住到底触不触发**（§7.4-22；本轮唯一一条"改法已定、诊断待证"的卡）——    操作：**分别**在 HEAD 版与当前版上，长按空壳页脚那行「本地时钟 · 无需联网」小字 **3 秒且手指完全不动**。   应看见：当前版回锁屏（之后必须用真密码进入）。判据 = 两版行为有无差别：   ① HEAD 版静按也能退 ⇒ 我那句"DragGesture 静止不再产生事件"的**推理不成立**，本轮改动只是把契约写清楚 ⇒ 关掉 §7.4-22 并把行 LIII 的现象句改成"契约表述不清"；   ② HEAD 版静按不退、蹭一蹭才退 ⇒ 推理成立 ⇒ 缺陷描述升级成"实测复现"。   ⚠ 两种结果都**不必回改代码**（`LongPressGesture` 的契约本身就够）—— 这条卡的是台账的措辞，不是产品。单独跑它只要 30 秒。
+
+10. **设置页「演示锁」那一句换 Tab，在 sheet 之下到底要不要收摊**（行 LVII —— `tools/sheetcover.js` 现网唯一一处 `收摊口径：`）——
+    操作①（sheet 那一半）：设备页 → 打开**设置那层 sheet** → 空态卡里点「演示锁」。
+    应看见：sheet 收掉、人直接站在设备页上看见那把演示锁。**若 sheet 还盖着、要自己甩掉才看见 = 这一句确实缺 `dismiss()`**。
+    操作②（Tab 根那一半）：从底部 Tab 直接进设置页（不是 sheet）→ 点同一枚按钮。
+    应看见：切到设备页，且设置页自己的 NavigationStack **没有**被弹空（这就是本批不敢补 `dismiss()` 的唯一理由）。
+    判据：`grep -c '收摊口径：' App/UI/SettingsView.swift` ⇒ 1。两条都符合 ⇒ 删掉那行销号、把 `dismiss()` 补上（闸门仍绿 —— 它只在窗口里没有 `dismiss()` 时才响）；
+    ②出现异常 ⇒ 销号保留，并在这一条下面记下"两种呈现要分叉"，改法照 `CredentialStudio` 那三枚的 `if !embedded { dismiss() }` 形状做。
 
 **等拍板 ~~3 条~~ → 剩 2 条（第十八批）**：~~`CredBinEntry` 加 `batch`（**决策包已写好，见 §7.11-A**：17 个调用点里只有 2 个函数是级联、形参带默认值 ⇒ 其余不动、可选字段 ⇒ 无需迁移）~~
 **已拍板并落地 = 行 LIV，字段定名 `batchId`。决策包 §7.11-A 那句"只有 2 个函数是级联"是错的** —— 第十八批回源实测 **3 个**
@@ -1276,7 +1331,7 @@ for f in App/UI/*.swift App/Intents/*.swift App/*.swift; do b=$(basename $f .swi
 | # | 旧结论（写在哪） | 新定案 | 口径与边界 |
 |---|---|---|---|
 | ① | 「全部改动未提交」是本会话的常态（§0、§7.0、§7.8 多处） | **按批落本地 commit** | 只授权本地；`--amend` / squash 已发布提交、`force push` 仍然禁止。批次 = 本文件里的"第N批"，一批一个或多个 commit 由改动面决定。**状态：已开跑** —— `7c60a41`（第二~十七批未提交代码 43 个文件的一次补提交，理由写在那条 message 里：**同一文件混着多批改动，已无法按批拆**）、`6fa2d43`（第十八批代码 = 行 LIV/LV）、`7ee87dc`（行 LVI 的 swiftlint 加白）、随后一条是本文档自身。**从这条起"一批一条"是真的**，前面那 16 批只能打包 |
-| ② | 2026-10-11 拍板「不推送」⇒ §4-4 编译不在能力内（§0.2、§7.7 末段、§7.8-1） | **解除「不推送」，跑一次 CI** | 目标是 §6 末尾那条 `xcodebuild -scheme ZKLock -configuration Debug -destination 'generic/platform=iOS' -derivedDataPath build/dd build-for-testing`。⚠ CI 只能给**编译错误**，给不了"界面长得对"；run 43 之后连红这件事（memory 里那条）在推送后要重新实测，不许照旧句复述"CI 连红" |
+| ② | 2026-10-11 拍板「不推送」⇒ §4-4 编译不在能力内（§0.2、§7.7 末段、§7.8-1） | **解除「不推送」，跑一次 CI** | 目标是 ~~§6 末尾那条 `xcodebuild -scheme ZKLock …`~~ **第十九批已跑完第一轮**：推 `2a016f7` ⇒ run **99** ⇒ step 1~31（28 道闸门里的全部前置步）success、step 32「编译校验测试目标」**failure** ⇒ 4 条编译错，逐条修完（§7.2-LVIII）。⚠ 这一跑同时推翻三条旧句：① ~~CI 报了什么都无法核实~~ ⇒ `/actions/runs/{id}`、`/jobs`（每步 conclusion）、`/check-runs/{id}/annotations`（**每条错误原文**）**匿名 200 可读**，只有整包 `/logs` 要鉴权；② ~~CI 自 run 44 连红、最后绿 = run 43~~ ⇒ 2026-10-14 的 `fa8423d`/`6051a21` 是 run **96/97/98 全 success**（⇒ 那之前 79 个提交的 Swift **进过编译器**，memory 里那句"一行都没进过"是过期断言）；③ §6 抄的那条命令 scheme 是错的 ⇒ 实际是 `OfflineLock` + `generic/platform=iOS Simulator` + `wholemodule`。下一跑（修完这 4 条之后）的结论只写在这一格里 |
 | ③ | `CredBinEntry` 缺 `batchId` ⇒ 等拍板（§7.4-7 残余、§7.11-A、§7.8-3、§7.2-XLIX/XXIX①） | **做：只给级联函数传批次号** | 用户原话是"只给 **2 个**级联函数传 batch"，实测是 **3 个**（第三个 = `AuditChain.markDeparted`）⇒ 按三条执行并留了理由（漏一条就留一条假话）。字段定名 `batchId`（与 `LedgerFp.batch` 那个整数区分开）。状态：**已落地 = 行 LIV**，真机那半搬进 §7.9 卡 6 |
 | ④ | 本会话不许跑 `tools/*.js`、不许往 `tools/` 加东西（§0.1、行 LII 末"要常驻得等授权"） | **允许落新闸门 + 跑 tools** | 状态：**全量真跑已完成**（27 道 CI 名单，rc 全 0，见 §7.6 第十八批段）；`swiftlint` 的 `SYS_NAMES` 加白已完成并带出处（行 LVI）。**还没做**：把本轮的一次性尺子转成常驻闸门（`sheetcover` 换 Tab 收摊 / `membercheck` 成员名与跨文件 private / `copynum` 加宽 + `fixtures/copynum/{fire,ok}` + `--selftest`），每条都要按 §7.5 的规矩带**正控 + 反控** |
 
