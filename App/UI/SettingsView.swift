@@ -449,6 +449,12 @@ struct SettingsView: View {
                                     DemoKit.setOn(true)
                                     app.loadDevices()
                                     app.tabSelection = 0
+                                    // 收摊口径：SettingsView 有两种呈现 —— ① Tab 3 的根 (LockKeeperApp:1081)，
+                                    // 这一句是真跳转，**不该**收摊；② 设备页 `.sheet { SettingsView() }`
+                                    // (DeviceHomeView:197)，用户本来就在设备页 ⇒ 切 0 是空转、缺的正是 dismiss()。
+                                    // 补一句 dismiss() 会同时作用在两种呈现上，而"dismiss() 在自带 NavigationStack 的
+                                    // Tab 根上会不会 pop 栈/退到别处"本机判不了 ⇒ 不猜，挂真机卡 (交接书 §7.9 卡 10)。
+                                    // 判它的尺子是常驻闸门 tools/sheetcover.js（行 LII 那条一次性尺子的落盘版）。
                                     app.showToast("演示锁已就位: 在设备页点圆盘走一遍, 顶部横幅可一键清除")
                                 })
                     .listRowInsets(EdgeInsets())
