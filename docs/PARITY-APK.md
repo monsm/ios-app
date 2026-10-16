@@ -155,6 +155,59 @@ grep -rn "cmd12Echo" App/           # 例：本条命令有没有调用点 (判"
   不写进任何报告/导出"（`DiagnosticsView` 的「查看原始报文」就是这条判据的落地）。能力在（翻页取回 + 逐行原始报文），
   只是收口方式不同 ⇒ 记 ⧉ 而不是 ✅。
 
+## 5b. 锁通讯层差分审计（2026-10-17，真机 rc13 现场倒查）
+
+现场：锁键盘重置（3 声）→ App 显示绿色可配网 → 点配对 → **rc=13（通讯过期）**，锁随即退出可配网态，重做重置后反复同样 rc13（信号 −50 dBm 内，不是距离问题）。
+倒查方法：把原 APK 的**通讯代码全链**（JS 命令类 + Java 插件）与 iOS 侧逐字段对齐。
+
+### 权威取证件
+
+| 层 | 文件 | 作用 |
+|---|---|---|
+| JS 命令构造 | `apk_raw/assets/www/build/main.js`（命令类 `ht` 子类 + `kt` 0x88 包络类） | 决定每条命令的 KLV 布局、`needSSToken` 标志 |
+| Java 帧/传输 | `jzzns22561_v2/sources/cn/zelkova/ZKurlcsPlugin/lockprotocol/*.java` | 决定**线上真字节**: 8B 头、令牌注入位置、分片、重试 |
+
+### 结论 1（真机 rc13 的根因）：cmd 05 必须带会话令牌
+
+原 APK 的 05 构造器 `Et` 逐字：
+
+```js
+l.call(this, Jn.ZKCCOMM_EXSECURITYKEY, !0, "0000")   // 第二实参 = needSSToken = true
+```
+
+Java 侧 `BleLockConnector.doExecute` 照此执行：`if (data.needSessionToken()) { doRefreshSsToken(); token = ssToken.getToken(); }`，
+再由 `LockCommBase.getBytes(ssToken)` 把令牌作为 **KLV#0xEE 追加到帧尾**。
+真机真序是 **23（免令牌）→ 01（取令牌）→ 05（带 KLV#00xEE）→ 08/21/03…**。
+
+本机（与 `vendor/app/utils/kernel/cmds.js:cmd05Exchange` 的"免令牌明文"模型）一直把 05 裸发 ⇒ 锁回 **rc=13「通讯过期」**
+（报的是*通讯会话*无效；命令时间不对才是 rc=3）⇒ 配网链在第 3/7 步断，而锁会就此退出可配网态。
+**rc≠0 ⇒ 锁没有执行换钥（锁内 skey 未动），因此 rc13 是唯一可安全重试的时机。**
+
+### 结论 2：`needSSToken` 全表（原 APK JS 实参，逐条 `l.call(this, Jn.*, !0/!1, "0000")`）
+
+| 令牌=true | 令牌=false |
+|---|---|
+| 03 状态、04 开锁、**05 换钥**、08 PIN 池、0A/0B 密码、0E 校时、13/14/15 指纹、16 日志、18 音量、19 ZOTP、20 验证模式、21 bkey、22 DFU、24 自动锁、25 布防 | 12 回声、23 交换方式、钥匙串 41/43/44、网关 30/31/32/35/38 |
+
+iOS 侧现状：除 05 外全部一致；05 已改为 `needToken: true`（`LockService.pair` 步骤 3/7）并追加"rc13 重开会话重试一次"。
+
+### 结论 3：已核对**一致**的部分（不重复改）
+
+- 帧头：Java `LockCommBase.getBytes` = `87 | 00 | len(u16 LE) | cmd | 00 00 00 | KLV`（8B 头）—— iOS `buildFrame(header: 8)` 一致。
+  JS 里那套 10B 头（`ssToken` 进头、`ZKCCOMM_SESSIONTOKENKEY="F0"`）在混合架构里是**死代码**（H5 只把 `getParams()` JSON 交给 Java），不必跟。
+- 0x88 包络：`88 | 00 | MAC 反转 | TrackId LE4 | ValidFrom LE4 | ValidTo LE4 | Cmd | body`，命令用 TrackId=0 —— 一致。
+  （`ValidFrom/ValidTo` 默认串 APK 用**本地** 2010/2118，本机用 0 与 UTC-2118；两者都包住"现在"，锁的有效期判据不受影响 ⇒ 记差异不改。）
+- 08 body `addCount(1B)+delCount(1B)+addPins+delPins`、首批 `delPins=[0xFFFFFFFF]` —— 一致。
+- 21 body `skeyLen(1B)+bkey` —— 一致；且 `KeyGen.genBkey()` 已实现 APK 的"相邻字节差 ≤2 就 +6"整形，与原版逐行相同。
+- 01 响应解析（#01 安全类型 / #02 令牌 / #03 有效期秒）；令牌在每个需令牌命令前**无条件刷新**（Java doExecute 亦无条件刷新）—— 一致。
+- 传输：20 字节分片、每片等 ACK、连接就绪 = CCCD 写完成 —— iOS `BLEService` 一致（还额外做了 30 ms 片间隔与写槽串行）。
+
+### 结论 4：仍存在的**非阻塞**差异（记录在案）
+
+- PIN 分批：APK 每批 **20**（`o>20?20:o`），iOS 用 16。64 个 PIN 都是 4 批，语义等价 ⇒ 不改（改了要重跑金标，收益为零）。
+- APK 的 03 有一个变体（KLV#02=`"31"` 读 ROM 版本）；本机只发 KLV#02 空（全量状态，固件版本取自状态 KLV#0E）。
+- APK 在进入配网页后有 1 s 静默再发 23（`setTimeout(...,1e3)`）；iOS 由 `connect()` 等 CCCD 就绪，未再加固定静默。
+
 ## 6. 边界（这份表**不**证明什么）
 
 - 不证明真机上每条命令都会被锁接受：整帧比对是**字节级**证据，锁端固件认不认要真锁在场（`cmdsshadow` 自己就这么写）。

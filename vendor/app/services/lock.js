@@ -549,9 +549,16 @@ const label = (o && o.name) || CMD_NAME[cmd] || ('cmd ' + CMD_HEX(cmd));
       //    曾同步误用 → 全零 → genPins 死循环占死主线程 (内存不足被微信杀)
       p('步骤 2/7: 生成本地密钥 (skey/bkey/64 PIN)');
       const skey = await K.genSkeyAsync(), bkey = await K.genBkeyAsync(), pins = await K.genPinsAsync(64);
-      // 2. 05 明文换钥 (免令牌; 已配对锁会 rc=7 — 说明未处于重置态)
-      p('步骤 3/7: cmd 05 交换密钥');
-      const r5 = await this._request(C.cmd05Exchange(skey).hex, 0x05, { needToken: false });
+      // 2. 05 换钥 —— **必须带会话令牌** (2026-10-17 勘误, 依据 = 原 APK 逐字):
+      //    原 APK 的 05 构造器 `Et` (apk_raw/assets/www/build/main.js) 是
+      //      l.call(this, Jn.ZKCCOMM_EXSECURITYKEY, !0, "0000")   ← 第二实参 = needSSToken = **true**
+      //    Java 侧照此执行 (cn.zelkova.ZKurlcsPlugin.lockprotocol.BleLockConnector.doExecute):
+      //      if (data.needSessionToken()) { doRefreshSsToken(); token = ssToken.getToken(); }
+      //      → LockCommBase.getBytes(token) 把令牌作为 KLV#0xEE **追加在帧尾**
+      //    真机真序: 23(免令牌) → 01(取令牌) → 05(带 KLV#0xEE) → 08/21/03…
+      //    裸发 05 会被锁回 rc=13「通讯过期」(通讯会话无效; 命令时间那类是 rc=3), 且锁随即退出可配网态。
+      p('步骤 3/7: cmd 05 交换密钥 (先建通讯会话)');
+      const r5 = await this._request(C.cmd05Exchange(skey).hex, 0x05, { needToken: true });
       const rc5 = this._extractRc(0x05, r5);
       const echoK = (r5.klvs || []).find(x => x.key === 0x02);
       if (rc5 !== 0) throw new Error('换钥失败 rc=' + rc5 + ' (' + this.rcMsg(rc5) + ') — 锁可能未处于重置态');

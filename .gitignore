@@ -29,3 +29,10 @@ state/
 
 # WorkBuddy 项目数据 (非版本库内容)
 .workbuddy-ai/
+
+# 会话期临时脚本/抓取物 (用完即删; 根目录专用, 防误入库)
+/_*.py
+/_*.sh
+/_*.log
+/_*.json
+/_*.txt
