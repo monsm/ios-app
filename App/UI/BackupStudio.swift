@@ -29,7 +29,7 @@ struct BackupStudioView: View {
                 .padding(.vertical, DS.Space.m)
             }
             .navigationTitle("备份工作室")
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
             .sheet(isPresented: $showExport) { ExportWizardView() }
@@ -480,7 +480,7 @@ struct ExportWizardView: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(DS.Space.s)
-        .background(DS.Palette.surfaceAlt, in: RoundedRectangle(cornerRadius: DS.Radius.tile, style: .continuous))
+        .variantPlate(DS.Palette.surfaceAlt, .tile)
         .accessibilityElement(children: .combine)
     }
 
@@ -887,7 +887,7 @@ struct RestoreWizardView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(DS.Space.m)
-        .background(DS.Palette.warn.opacity(0.06), in: RoundedRectangle(cornerRadius: DS.Radius.tile, style: .continuous))
+        .variantCallout(DS.Palette.warn, .tile, wash: 0.06)
     }
 
     // ---------- 418 三策略 + 419 冲突裁决 + 427 分区反选 + 424 升级链 + 453 分层 + 434 短码 ----------
@@ -1080,7 +1080,7 @@ struct RestoreWizardView: View {
             }
         }
         .padding(DS.Space.m)
-        .background(DS.Palette.warn.opacity(0.06), in: RoundedRectangle(cornerRadius: DS.Radius.tile, style: .continuous))
+        .variantCallout(DS.Palette.warn, .tile, wash: 0.06)
     }
     /// 419 逐条裁决芯片: 左边本机, 右边备份; 点哪边保留哪边
     private func sideChip(_ id: String, _ backupSide: Bool, _ label: String) -> some View {
@@ -1273,7 +1273,7 @@ struct WebDAVStudioView: View {
                         }
                         .padding(.horizontal, DS.Space.s)
                         .padding(.vertical, DS.Space.xs)
-                        .background(DS.Palette.ok.opacity(0.12), in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
+                        .variantCallout(DS.Palette.ok, .control, wash: 0.12)
                     }
                 }
                 Section("远端备份 (哈希先行: 先拉 etag 再拉正文)") {
@@ -1338,7 +1338,7 @@ struct WebDAVStudioView: View {
                 }
             }
             .navigationTitle("WebDAV 工作室")
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("关闭") { dismiss() } } }
             .onAppear {
@@ -1991,7 +1991,7 @@ struct MigrationWizardView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(DS.Space.m)
-        .background(DS.Palette.surfaceAlt.opacity(0.5), in: RoundedRectangle(cornerRadius: DS.Radius.tile, style: .continuous))
+        .variantPlate(DS.Palette.surfaceAlt.opacity(0.5), .tile)
     }
     /// 419: 同 ID 冲突逐条裁决 (左本机右备份), 与恢复向导同语义; 默认取备份
     private var conflictCard: some View {
@@ -2024,7 +2024,7 @@ struct MigrationWizardView: View {
             }
         }
         .padding(DS.Space.m)
-        .background(DS.Palette.warn.opacity(0.06), in: RoundedRectangle(cornerRadius: DS.Radius.tile, style: .continuous))
+        .variantCallout(DS.Palette.warn, .tile, wash: 0.06)
     }
     /// 419 逐条裁决芯片: 点哪边保留哪边
     private func sideChip(_ id: String, _ backupSide: Bool, _ label: String) -> some View {
@@ -2144,7 +2144,7 @@ struct MigrationWizardView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(DS.Space.m)
-                    .background(DS.Palette.warn.opacity(0.06), in: RoundedRectangle(cornerRadius: DS.Radius.tile, style: .continuous))
+                    .variantCallout(DS.Palette.warn, .tile, wash: 0.06)
                 }
                 Text("核对表: 三数来自本次真实处置; 缺的锁补传后重看这张单。")   // 444 核对表
                     .font(.caption)
@@ -2351,7 +2351,7 @@ struct MigrationWizardView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(DS.Space.m)
-        .background(DS.Palette.warn.opacity(0.06), in: RoundedRectangle(cornerRadius: DS.Radius.tile, style: .continuous))
+        .variantCallout(DS.Palette.warn, .tile, wash: 0.06)
     }
 }
 

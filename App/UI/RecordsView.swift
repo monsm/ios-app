@@ -326,7 +326,7 @@ struct RecordsView: View {
             guard !mac.isEmpty, new != QueryFilters.load(mac: mac) else { return }
             new.save(mac: mac)
         }
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
         .toolbar {
             recordsToolbar
@@ -780,7 +780,7 @@ struct RecordsView: View {
                                 .foregroundStyle(DS.Palette.accentText)
                                 .padding(.horizontal, DS.Space.s)
                                 .padding(.vertical, DS.Space.xs)
-                                .background(Capsule().fill(DS.Palette.surfaceAlt))
+                                .variantPlate(DS.Palette.surfaceAlt, .capsule)
                                 .frame(minHeight: DS.Hit.min)
                         }
                     }
@@ -1993,7 +1993,7 @@ struct RecordsView: View {
                 Button("看凭证") {
                     app.pendingCredNav = r.credKey
                     app.pendingCredNavMac = r.rowMac.isEmpty ? mac : r.rowMac
-                    app.requestTab(1)   // 2026-10-14 走查: 原直写 tabSelection, 访客态绕过 377 门禁
+                    app.requestRoute(.credentials)   // 2026-10-14 走查: 原直写 tabSelection, 访客态绕过 377 门禁
                     // 收摊口径：这一页在 core/gauge 变体下是被域浮层端出来的，而 requestTab 现在走
                     // requestRoute 这个唯一漏斗 —— 它换的是**浮层内容本身** (AppState.variantDomain)，
                     // 凭证页直接替换掉记录页，不存在"切走了但上一层还压着"。
@@ -2037,7 +2037,7 @@ struct RecordsView: View {
                 Button {
                     app.pendingCredNav = r.credKey
                     app.pendingCredNavMac = r.rowMac.isEmpty ? mac : r.rowMac
-                    app.requestTab(1)   // 2026-10-14 走查: 原直写 tabSelection, 访客态绕过 377 门禁
+                    app.requestRoute(.credentials)   // 2026-10-14 走查: 原直写 tabSelection, 访客态绕过 377 门禁
                     // 收摊口径：这一页在 core/gauge 变体下是被域浮层端出来的，而 requestTab 现在走
                     // requestRoute 这个唯一漏斗 —— 它换的是**浮层内容本身** (AppState.variantDomain)，
                     // 凭证页直接替换掉记录页，不存在"切走了但上一层还压着"。
@@ -2432,7 +2432,7 @@ struct RecordsView: View {
                             Button {
                                 app.pendingMemberAdd = true   // 817: 到了成员中心直接弹建档向导, 不再只指路
                                 app.pendingSettingsFocus = "members"   // §4.3: 上面写着"直达成员入口", 原来只到设置页根
-                                app.requestTab(3)   // 2026-10-14 走查: 原直写 tabSelection, 访客态绕过 377 门禁
+                                app.requestRoute(.settings)   // 2026-10-14 走查: 原直写 tabSelection, 访客态绕过 377 门禁
                                 // 收摊口径：同上 —— requestTab 走 requestRoute 唯一漏斗，
                                 // core/gauge 下换的是域浮层的内容本身而非"切到身后那个 Tab"，
                                 // legacy 下本页是 Tab 根没有层压着。两种情形都不需要 dismiss()。
@@ -3371,7 +3371,7 @@ struct AlarmKindsSheet: View {
                 }
             }
             .navigationTitle("告警类型")   // 565 告警类型
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -3430,7 +3430,7 @@ struct ActiveCredsSheet: View {
                 }
             }
             .navigationTitle("活跃凭证")
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
         }
@@ -3490,7 +3490,7 @@ struct OutWinSheet: View {
                 }
             }
             .navigationTitle("越界开门")
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
         }
@@ -3561,7 +3561,7 @@ struct GratitudeView: View {
                 }
             }
             .navigationTitle("感谢清单")
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
             .onAppear(perform: reload)
@@ -3641,7 +3641,7 @@ struct RecordsSampleGuideView: View {
                 }
             }
             .navigationTitle("记录空态")   // 808 记录空态
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
         }

@@ -588,7 +588,7 @@ struct CapsuleComposeView: View {
             }
         }
         .navigationTitle("时光胶囊")
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
     }
 
@@ -659,7 +659,7 @@ struct CareRemindersView: View {
             }
         }
         .navigationTitle("关怀提醒")
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
         .onDisappear { Milestones.bulletin = bulletin.trimmingCharacters(in: .whitespacesAndNewlines) }
     }

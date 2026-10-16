@@ -511,7 +511,7 @@ struct IntegrationCenterView: View {
             }
         }
         .dsScreenBackground()
-        .scrollContentBackground(.hidden)
+        .variantList()
         .navigationTitle("系统集成")
     }
 }

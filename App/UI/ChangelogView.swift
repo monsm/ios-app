@@ -469,7 +469,7 @@ struct ChangelogView: View {
             }
         }
         .navigationTitle("新变化")   // 43/44 新变化
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
     }
 }
@@ -515,7 +515,7 @@ struct ChangeBatchView: View {
             }
         }
         .navigationTitle(batch)
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
     }
 

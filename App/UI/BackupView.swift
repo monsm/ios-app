@@ -51,7 +51,7 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
             studioSection
         }
         .navigationTitle("备份与恢复")
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
         .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
     }

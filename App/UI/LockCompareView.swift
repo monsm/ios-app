@@ -42,7 +42,7 @@ struct LockCompareView: View {
             }
         }
         .navigationTitle("多锁对比")   // 775 多锁对比
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
         .onAppear { initSides() }
         // 这一页可以被 push 进来一直开着: 期间在设备页删掉一把, 若不重取就留下一个"哪把都不是"的死 mac
@@ -374,6 +374,6 @@ struct LockCompareView: View {
             .foregroundStyle(idle ? DS.Palette.textSub : DS.Palette.ok)
             .padding(.horizontal, DS.Space.s)
             .padding(.vertical, 2)
-            .background(Capsule().fill(DS.Palette.surfaceAlt))
+            .variantPlate(DS.Palette.surfaceAlt, .capsule)
     }
 }

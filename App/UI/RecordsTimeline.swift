@@ -61,7 +61,7 @@ struct RecDetailSheet: View {
                 card = ExportKit.recordCard(exportRow, lockName: rec.lockName)
             }
             .navigationTitle("记录详情")   // 576 记录详情
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -397,8 +397,7 @@ struct RecDetailSheet: View {
                                 }
                                 .padding(DS.Space.s)
                                 .frame(width: 132, alignment: .leading)
-                                .background(DS.Palette.surfaceAlt,
-                                            in: RoundedRectangle(cornerRadius: DS.Radius.tile, style: .continuous))
+                                .variantPlate(DS.Palette.surfaceAlt, .tile)
                             }
                             .buttonStyle(.plain)
                             .accessibilityLabel("切到 \(item.r.timeStr) 的\(item.r.typeName)")
@@ -451,7 +450,7 @@ struct RecDetailSheet: View {
             app.pendingDiag = mac   // 587: 设置 Tab 收到后切 current 再推诊断页 (原写法置 tabSelection=3 无消费方)
             // 2026-10-14 走查: 落点补上了, 但这里仍是**直写** tabSelection —— 记录页在访客通道下
             // 照常可达, 而访客态里「设置」Tab 不进层级树, 直写会落到一个看不见的 Tab。
-            app.requestTab(3)
+            app.requestRoute(.settings)
             dismiss()
         } label: {
             Label("查看这台锁的诊断", systemImage: "stethoscope")   // 587 查看这台锁的诊断
@@ -616,7 +615,7 @@ struct RecDetailSheet: View {
                 Button {
                     app.pendingCredNav = nav
                     app.pendingCredNavMac = rec.mac
-                    app.requestTab(1)   // 2026-10-14 走查: 原直写 tabSelection, 访客态绕过 377 门禁
+                    app.requestRoute(.credentials)   // 2026-10-14 走查: 原直写 tabSelection, 访客态绕过 377 门禁
                     dismiss()
                     app.showToast("已定位到来源凭证")   // 577 已定位到来源凭证
                 } label: {

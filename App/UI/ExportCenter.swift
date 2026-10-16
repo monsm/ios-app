@@ -1517,7 +1517,7 @@ struct ExportCenterView: View {
                 if !lastPath.isEmpty { pathSection }
             }
             .navigationTitle("导出与分享")
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) { Button("关闭") { dismiss() } }

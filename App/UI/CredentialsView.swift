@@ -99,7 +99,7 @@ struct CredentialsView: View {
                 }
             }
             .navigationTitle("凭证")
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .id(app.currentMac)
             .onAppear {
@@ -239,7 +239,7 @@ struct CredentialsView: View {
             }
             .padding(.horizontal, DS.Space.l)
             .padding(.vertical, DS.Space.xs + 2)
-            .background(DS.Palette.accentText.opacity(0.09), in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
+            .variantCallout(DS.Palette.accentText, .control, wash: 0.09)
             .overlay(RoundedRectangle(cornerRadius: DS.Radius.control).strokeBorder(DS.Palette.hairline, lineWidth: 0.5))
             .padding(.horizontal, DS.Space.gutter)
         }
@@ -319,7 +319,7 @@ struct CredentialsView: View {
                 }
                 .padding(.horizontal, DS.Space.l)
                 .padding(.vertical, DS.Space.s + 2)
-                .background(DS.Palette.warn.opacity(0.10), in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
+                .variantCallout(DS.Palette.warn, .control, wash: 0.10)
                 .overlay(RoundedRectangle(cornerRadius: DS.Radius.control).strokeBorder(DS.Palette.hairline, lineWidth: 0.5))
                 .frame(minHeight: DS.Hit.min)
                 .contentShape(Rectangle())
@@ -340,7 +340,7 @@ struct CredentialsView: View {
             }
             .padding(.horizontal, DS.Space.l)
             .padding(.vertical, DS.Space.s + 2)
-            .background(DS.Palette.ok.opacity(0.10), in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
+            .variantCallout(DS.Palette.ok, .control, wash: 0.10)
             .padding(.horizontal, DS.Space.gutter)
             .accessibilityLabel("已同步 " + String(sense.lastReceipt) + " 项变更")
         }
@@ -2036,7 +2036,7 @@ struct CredentialsView: View {
         }
         .padding(DS.Space.s)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(DS.Palette.surfaceAlt, in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
+        .variantPlate(DS.Palette.surfaceAlt, .control)
         .accessibilityElement(children: .contain)
     }
     private func otpStepCell(_ symbol: String, _ title: String, _ note: String) -> some View {

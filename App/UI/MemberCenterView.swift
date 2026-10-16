@@ -52,7 +52,7 @@ struct MemberCenterView: View {
                 navSection
             }
             .navigationTitle("成员中心")
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } }
@@ -625,7 +625,7 @@ struct MemberDetail360View: View {
                 permSection(m)
             }
             .navigationTitle(MemberHub.display(m))
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarTrailing) {
                 Menu {
@@ -878,7 +878,7 @@ struct MemberDetail360View: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, DS.Space.s)
-        .background(DS.Palette.surfaceAlt, in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
+        .variantPlate(DS.Palette.surfaceAlt, .control)
     }
 
     // ---------- 476 归属图谱 (SwiftUI 自绘两列: 创建人→使用人) ----------
@@ -1269,7 +1269,7 @@ struct MemberWizardView: View {
             }
             .navigationTitle("建档向导")   // 463 建档向导
             .navigationBarTitleDisplayMode(.inline)
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("取消") { dismiss() } } }
             .axBottomAnchor()   // 870
@@ -1390,7 +1390,7 @@ struct MergeMembersView: View {
             }
             .navigationTitle("重复合并")   // 462 重复合并
             .navigationBarTitleDisplayMode(.inline)
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("取消") { dismiss() } } }
         }
@@ -1506,7 +1506,7 @@ struct MemberExitWizard: View {
             }
             .navigationTitle("退出处置向导")   // 474 退出处置向导
             .navigationBarTitleDisplayMode(.inline)
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("取消") { dismiss() } } }
             // 474 候选移接人多于一个时不许替用户抓第一个: 弹确认框让用户自己选目标
@@ -1657,7 +1657,7 @@ struct BorrowSheetView: View {
             }
             .navigationTitle("借用登记")   // 472 借用登记
             .navigationBarTitleDisplayMode(.inline)
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
             .id(tick)
@@ -1726,7 +1726,7 @@ struct MemberArchivedView: View {
             }
             .navigationTitle("归档成员")   // 460/795 归档成员
             .navigationBarTitleDisplayMode(.inline)
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
             .id(tick)
@@ -1779,7 +1779,7 @@ struct MemberGroupSheet: View {
             }
             .navigationTitle("分组标签")   // 630 分组标签
             .navigationBarTitleDisplayMode(.inline)
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("取消") { dismiss() } } }
         }
@@ -1837,7 +1837,7 @@ struct MemberFamilySettingsView: View {
                 }
             }
             .navigationTitle("家庭设置")
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) {
                 Button("保存") {
@@ -1955,7 +1955,7 @@ struct UnclaimedClaimView: View {
             }
             .navigationTitle("认领未归属")   // 791 认领未归属
             .navigationBarTitleDisplayMode(.inline)
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
         }
@@ -2024,7 +2024,7 @@ struct MemberActiveTable: View {
                 }
             }
             .navigationTitle("成员活跃总表")   // 788 成员活跃总表
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             // 2026-10-15 走查: 「完成」原写 `app.tabSelection = 3` —— 本页是设置 Tab 下 push 进来的
             // (设置 → 安全中心 → 成员中心 → 成员活跃总表), 切 Tab 是**空转**, 点了没反应。
@@ -2369,7 +2369,7 @@ struct HouseCleaningPresetView: View {
             }
             .navigationTitle("家政周期预设")   // 483 家政周期预设
             .navigationBarTitleDisplayMode(.inline)
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) {
                 Button("完成") {

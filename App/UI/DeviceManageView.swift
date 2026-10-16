@@ -96,7 +96,7 @@ struct DeviceManageView: View {
                 }
             }
             .navigationTitle("设备管理")
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .environment(\.editMode, .constant(sorting ? .active : .inactive))
             .toolbar {

@@ -588,7 +588,7 @@ struct AutoCalView: View {
             }
         }
         .navigationTitle("距离标定")
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
     }
 

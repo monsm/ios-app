@@ -340,6 +340,25 @@ enum DS {
     }
 
     enum Palette {
+        // ---------- 变体专属色板 (2026-10-16 从 App/UI/VariantRoots.swift 搬来) ----------
+        // 搬进来的唯一理由就是让 tools/contrast.js 解析得到（它只扫本文件）。
+        // 搬之前这两套界面的底色/强调色**不在任何断言覆盖内** ——
+        // 那就是「看着没问题」[与]「量过没问题」的差别。
+        static let gaugeCanvas  = Color.adaptive(0xF3EEE5, 0x0B0A08)   // 盘面底
+        static let gaugeBezel   = Color.adaptive(0xE7E0D3, 0x17150F)   // 凹槽
+        static let gaugeBezelHi = Color.adaptive(0xFBF8F1, 0x2A2418)   // 凹槽顶亮边
+        static let gaugeAmber   = Color.adaptive(0x8A4B0E, 0xF2A73B)   // 磷光读数
+        static let gaugeDeep    = Color.adaptive(0x6B3907, 0xB4671A)   // 琥珀深端（渐变用）
+        // 2026-10-16: 深档从 0x150E03 改成纯黑。原因不是审美 —— 是 tools/contrast.js 的 F 节量出来的：
+        //   暖黑 (0x150E03) 压在琥珀渐变**暗端** (0x150E03 对 gaugeDeep 0xB4671A) 只有 **4.47:1**，
+        //   差 0.03 没过 WCAG AA 4.5 —— 而主按钮文字是居中排版，行高会落在渐变下半段上。
+        //   改纯黑后 4.90:1（已复算）。这是这条断言抓到的第一处真实缺陷，不是把阈值调低凑绿的。
+        //   若将来要保留暖黑，另一条路是把 gaugeDeep 深档提亮到 L ≥ 0.2185（同样要先量再改）。
+        static let gaugeOnAmber = Color.adaptive(0xFFF8EC, 0x000000)   // 琥珀填充上的前景（浅档白字/深档墨字）
+        static let coreCanvas   = Color.adaptive(0xEDEFF5, 0x02040A)
+        static let coreInk      = Color.adaptive(0x0D1626, 0xF2F6FB)
+        static let coreA        = Color.adaptive(0x4338CA, 0xA5B4FC)
+        static let coreB        = Color.adaptive(0x0E7490, 0x22D3EE)
         // ---------- 机检基础令牌 (tools/contrast.js 解析 static let) ----------
         static let canvasBase  = Color.adaptive(0xF2F4F9, 0x070B12)   // 页面底 (渐变画布的深端基调)
         static let surfaceBase = Color.adaptive(0xFFFFFF, 0x151D29)   // 卡片
@@ -661,7 +680,7 @@ extension DS {
     ]
 }
 
-/// 页面底: 渐变画布, List/Form 需同时 .scrollContentBackground(.hidden)
+/// 页面底: 渐变画布, List/Form 需同时 .variantList()
 extension View {
     func dsScreenBackground() -> some View {
         // 32: 网格渐变作底; 三档回落线性渐变 —— AMOLED 要纯黑、智能反转要幂等色、降透明要实底,
@@ -687,10 +706,10 @@ extension View {
                 if flat { DS.Gradient.screen.ignoresSafeArea() }
                 else { DS.Gradient.screenMesh.ignoresSafeArea() }
             case .core:
-                if flat { DS.VariantPalette.coreCanvas.ignoresSafeArea() }
+                if flat { DS.Palette.coreCanvas.ignoresSafeArea() }
                 else { CoreAuroraBackground() }
             case .gauge:
-                if flat { DS.VariantPalette.gaugeCanvas.ignoresSafeArea() }
+                if flat { DS.Palette.gaugeCanvas.ignoresSafeArea() }
                 else { GaugeLampBackground() }
             }
         }
@@ -870,7 +889,7 @@ struct MetricTile: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, DS.Space.m)
         .padding(.vertical, DS.Space.s + 2)
-        .background(DS.Palette.surfaceAlt, in: RoundedRectangle(cornerRadius: DS.Radius.tile, style: .continuous))
+        .variantPlate(DS.Palette.surfaceAlt, .tile)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label) \(value)")
     }
@@ -1132,53 +1151,35 @@ struct GuidedEmptyView: View {
 struct PrimaryActionStyle: ButtonStyle {
     var fullWidth: Bool = true
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.headline)
-            .foregroundStyle(DS.Palette.onAccent)
-            .padding(.vertical, DS.Space.m + 2)
-            .padding(.horizontal, DS.Space.l)
-            .frame(maxWidth: fullWidth ? .infinity : nil)
-            .frame(minHeight: DS.Hit.min + 6)
-            .background(DS.Gradient.button,
-                        in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
-            .shadow(color: DS.Palette.accent.opacity(0.26), radius: 12, y: 5)
-            .opacity(configuration.isPressed ? 0.9 : 1)
-            .scaleEffect(configuration.isPressed ? 0.98 : 1)
-            .animation(DS.Motion.quick, value: configuration.isPressed)
+        // 2026-10-16 P1 批二: 外形交给语法层 (一处定义、两套各一份)，本结构只负责把 Button 的
+        // 状态 (pressed / fullWidth) 递下去。legacy 分支是原实现的**逐字**拷贝 ⇒ 现行界面零变化。
+        // 改这里等于同时改全仓 29 处主按钮 —— 这就是选它当杠杆的理由。
+        VK.current.primaryActionChrome(fullWidth: fullWidth, pressed: configuration.isPressed) {
+            configuration.label
+        }
     }
 }
 
 /// 次级按钮样式 (描边)
 struct SecondaryActionStyle: ButtonStyle {
     var fullWidth: Bool = true
+    /// 底色染料的来源。默认就是原来那个 `accentText` —— 传参只是为了不改 legacy 像素。
+    var tint: Color = DS.Palette.accentText
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.subheadline.weight(.semibold))
-            .foregroundStyle(DS.Palette.accentText)
-            .padding(.vertical, DS.Space.s + 2)
-            .padding(.horizontal, DS.Space.l)
-            .frame(maxWidth: fullWidth ? .infinity : nil)
-            .frame(minHeight: DS.Hit.min)
-            .background(DS.Palette.accentText.opacity(configuration.isPressed ? 0.16 : 0.09),
-                                in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
-            .scaleEffect(configuration.isPressed ? 0.985 : 1)
-            .animation(DS.Motion.quick, value: configuration.isPressed)
+        // 2026-10-16 P1 批二: 同 PrimaryActionStyle，外形交给语法层。
+        VK.current.secondaryActionChrome(fullWidth: fullWidth, pressed: configuration.isPressed, tint: tint) {
+            configuration.label
+        }
     }
 }
 
 /// 破坏性按钮样式 (红字描边)
 struct DestructiveActionStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.subheadline.weight(.semibold))
-            .foregroundStyle(DS.Palette.danger)
-            .padding(.vertical, DS.Space.s + 2)
-            .padding(.horizontal, DS.Space.l)
-            .frame(maxWidth: .infinity)
-            .frame(minHeight: DS.Hit.min)
-            .background(DS.Palette.danger.opacity(configuration.isPressed ? 0.16 : 0.09),
-                                in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
-            .animation(DS.Motion.quick, value: configuration.isPressed)
+        // 2026-10-16 P1 批二: 同 PrimaryActionStyle，外形交给语法层。
+        VK.current.destructiveActionChrome(pressed: configuration.isPressed) {
+            configuration.label
+        }
     }
 }
 

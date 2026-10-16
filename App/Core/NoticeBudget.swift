@@ -139,7 +139,7 @@ enum AmbientCopy {
             // 而「诊断与运行日志」是那一页里的一行 —— 切过去不等于送到。带上落点名, 由设置页开诊断面。
             return [Action(id: "diag", title: "去诊断") {
                 app.pendingSettingsFocus = "diag"
-                app.requestTab(3)
+                app.requestRoute(.settings)
             }]   // 377: 走 requestTab 那道访客门禁
         case .pasteCare:
             if let s = app.pasteSuggestion, case .waiting = s.stage {
@@ -157,7 +157,7 @@ enum AmbientCopy {
             return [
                 Action(id: "cred", title: "回凭证页") {
                     ClipboardCare.dismissSuggestion()
-                    app.requestTab(1)
+                    app.requestRoute(.credentials)
                     withAnimation(DS.Motion.standard) { app.pasteSuggestion = nil }
                 },
                 Action(id: "ok", title: "知道了") {
@@ -179,7 +179,7 @@ enum AmbientCopy {
                     app.ambientTipOff = true
                     HintOnce.mark("827off")
                 },
-                Action(id: "go", title: "去设备页") { app.requestTab(0) },
+                Action(id: "go", title: "去设备页") { app.requestRoute(.device) },
             ]
         }
     }

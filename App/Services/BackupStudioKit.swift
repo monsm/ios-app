@@ -140,10 +140,10 @@ enum BackupStudio {
             // 2026-10-15 走查 §4.3: 通知正文指着「设置 · 备份」, 原来 requestTab(3) 只到设置页根。
             // 带落点名, 设置页挂载即开「备份与恢复」。
             app.pendingSettingsFocus = "backup"
-            app.requestTab(3)
+            app.requestRoute(.settings)
             app.showToast("已生成本机还原点 — 口令加密备份与演练在「设置 · 备份」")   // 1018 已生成本机还原点
         } else {
-            app.pendingRoute = 3
+            app.pendingRoute = .settings
         }
     }
 
@@ -1615,7 +1615,7 @@ final class UNDelegate: NSObject, UNUserNotificationCenterDelegate {
                 }
                 // 2026-10-14: 与月度/保养通知同口径 —— 锁着或伪装态只记 pendingRoute, 不因"从通知进来"放行。
                 if let app = AppState.hostRef {
-                    if app.appUnlocked && !app.decoyMode { app.requestTab(0) } else { app.pendingRoute = 0 }
+                    if app.appUnlocked && !app.decoyMode { app.requestRoute(.device) } else { app.pendingRoute = .device }
                 }
             }
         }
@@ -1637,7 +1637,7 @@ final class UNDelegate: NSObject, UNUserNotificationCenterDelegate {
                 }
                 guard let host = AppState.hostRef else { return }
                 host.pendingCare = careMac
-                if host.appUnlocked && !host.decoyMode { host.requestTab(3) } else { host.pendingRoute = 3 }
+                if host.appUnlocked && !host.decoyMode { host.requestRoute(.settings) } else { host.pendingRoute = .settings }
             }
         }
         completionHandler()

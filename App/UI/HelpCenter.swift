@@ -176,7 +176,7 @@ struct DataFlowPage: View {
             }
         }
         .navigationTitle("数据流向")
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
     }
     private func flowRow(_ icon: String, _ head: String, _ tail: String) -> some View {
@@ -222,7 +222,7 @@ struct CreditsPage: View {
             }
         }
         .navigationTitle("致谢")
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
     }
     private func creditRow(_ head: String, _ tail: String) -> some View {
@@ -268,7 +268,7 @@ struct FAQPage: View {
             }
         }
         .navigationTitle("常见问题")
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
     }
 }
@@ -405,7 +405,7 @@ struct SymptomGuideView: View {
             }
         }
         .navigationTitle("按症状排查")
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
     }
 }
@@ -440,7 +440,7 @@ struct ManualPage: View {
             }
         }
         .navigationTitle("使用手册")
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
     }
 }
@@ -518,7 +518,7 @@ struct CopyCheckPage: View {
             }
         }
         .navigationTitle("文案体检")   // 664 文案体检
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
     }
 }
@@ -754,7 +754,7 @@ struct DemoLabsView: View {
             }
         }
         .navigationTitle("演练场")
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
     }
 

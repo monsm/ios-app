@@ -281,7 +281,7 @@ struct SecurityCenterView: View {
                     Text("下发护栏")
                 }
             }
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .navigationTitle("安全中心")
             // 2026-10-15 走查: 本页由 push 改为 **sheet** 呈现 (它自带 NavigationStack, push 会套两层
@@ -485,7 +485,7 @@ struct SecurityLockConfigView: View {
                         // (设置 → 安全中心 → 本页), 切 Tab 是**空转**, 用户点了什么都不发生。
                         // 改成把落点带过去, 由设置页真的拉起「设置本机密码」流程。
                         app.pendingSettingsFocus = "passcode"
-                        app.requestTab(3)
+                        app.requestRoute(.settings)
                     }
                         .font(.footnote)
                         .foregroundStyle(DS.Palette.accentText)
@@ -601,7 +601,7 @@ struct SecurityLockConfigView: View {
                 Text("会话")   // 398 会话
             }
         }
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
         .navigationTitle("应用锁增强")
         .onReceive(Timer.publish(every: 2, on: .main, in: .common).autoconnect()) { _ in
@@ -964,7 +964,7 @@ struct SecurityPeekView: View {
                 Text("水印")   // 378 水印
             }
         }
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
         .navigationTitle("防窥与遮蔽")
         // 371 本地糊屏: 切后台即刻整屏糊, 回前台若已解锁则恢复清晰, 否则先过应用锁
@@ -1149,7 +1149,7 @@ struct PrivacyDashboard: View {
                 }
             }
         }
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
         .navigationTitle("隐私仪表盘")
     }
@@ -1406,7 +1406,7 @@ struct SecurityAuditView: View {
                 Text("快捷指令执行")   // 953 快捷指令执行
             }
         }
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
         .navigationTitle("审计流水")
         .onReceive(Timer.publish(every: 2, on: .main, in: .common).autoconnect()) { _ in
@@ -1764,7 +1764,7 @@ struct SecurityDestroyView: View {
                 Text("密码保存")   // 521 密码保存
             }
         }
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
         .navigationTitle("销毁与应急")
         .onReceive(Timer.publish(every: 2, on: .main, in: .common).autoconnect()) { _ in
@@ -1896,7 +1896,7 @@ struct SecurityDestroyView: View {
                 // 用户点了什么都没发生, toast 却报了一个没发生的动作。改成把落点带过去,
                 // 由设置页真的打开「备份与恢复」; 文案也不再声称"已切到"。
                 app.pendingSettingsFocus = "backup"
-                app.requestTab(3)
+                app.requestRoute(.settings)
                 // 2026-10-15 §4.2: 措辞改成**将来时** —— 这一按之后还要先收掉安全中心这层 sheet,
                 // 备份面是设置页在 onDismiss 里补开的。说"已打开"就是把还没发生的事报成发生了。
                 app.showToast("离开安全中心后打开「备份与恢复」")

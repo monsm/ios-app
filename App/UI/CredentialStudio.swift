@@ -585,7 +585,7 @@ struct StudioHome: View {
                 }
             }
             .navigationTitle("凭证工坊")
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) {
                 if !embedded {
@@ -741,7 +741,7 @@ struct PwdStudio: View {
         }
         .padding(.horizontal, DS.Space.s)
         .padding(.vertical, DS.Space.xs)
-        .background(DS.Palette.warn.opacity(0.10), in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
+        .variantCallout(DS.Palette.warn, .control, wash: 0.10)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("草稿续填: 上次填到第 \(d.step + 1) 步, 点继续可回填")   // 518 草稿续填
     }
@@ -860,7 +860,7 @@ struct PwdStudio: View {
                 }
                 .padding(.horizontal, DS.Space.s)
                 .padding(.vertical, 4)
-                .background(DS.Palette.warn.opacity(0.10), in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
+                .variantCallout(DS.Palette.warn, .control, wash: 0.10)
                 .accessibilityLabel("码值来自剪贴板, 点清除可移除")
             }
             HStack(spacing: DS.Space.s) {
@@ -919,7 +919,7 @@ struct PwdStudio: View {
                         // 304 查看即跳: 真把那枚同值凭证的详情打开 (toast 看不全)
                         app.pendingCredNav = "pwd:\(dups[0].alias)"
                         app.pendingCredNavMac = mac
-                        app.requestTab(1)   // 2026-10-15 走查: 与全仓跨 Tab 跳转统一走 requestTab (访客门禁那一口)
+                        app.requestRoute(.credentials)   // 2026-10-15 走查: 与全仓跨 Tab 跳转统一走 requestRoute (访客门禁那一口)
                         if !embedded { dismiss() }
                     }
                     .font(.caption.weight(.medium))
@@ -929,7 +929,7 @@ struct PwdStudio: View {
                 }
                 .padding(.horizontal, DS.Space.s)
                 .padding(.vertical, 4)
-                .background(DS.Palette.warn.opacity(0.10), in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
+                .variantCallout(DS.Palette.warn, .control, wash: 0.10)
                 .accessibilityElement(children: .combine)
             }
             if let c = pwdOK ? CredentialOrg.prefixConflict(mac, pwd, excluding: editAlias ?? -1).first : nil {
@@ -1049,7 +1049,7 @@ struct PwdStudio: View {
                             .font(.caption)
                             .foregroundStyle(DS.Palette.accentText)
                             .padding(.horizontal, DS.Space.s).padding(.vertical, DS.Space.xs)
-                            .background(DS.Palette.surfaceAlt, in: Capsule())
+                            .variantPlate(DS.Palette.surfaceAlt, .capsule)
                             .frame(minHeight: DS.Hit.min - DS.Space.xs)
                             .contentShape(Rectangle())
                             .accessibilityLabel("追加短语 \(p)")
@@ -1185,7 +1185,7 @@ struct PwdStudio: View {
                         }
                     }
                     .padding(DS.Space.s)
-                    .background(DS.Palette.surfaceAlt, in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
+                    .variantPlate(DS.Palette.surfaceAlt, .control)
                 }
                 // 541 替代: 原句是下发前的乐观锁提示 ("此锁配置上次同步于 X, 建议到场核对后重试")。
                 // 锁端没有配置序号字段, 所以这把尺只到本机台账 (365 队列里最后一条"已下发"的时刻),
@@ -1470,7 +1470,7 @@ struct TempCodeStudio: View {
                         }
                         .padding(.horizontal, DS.Space.s)
                         .padding(.vertical, 4)
-                        .background(DS.Palette.warn.opacity(0.10), in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
+                        .variantCallout(DS.Palette.warn, .control, wash: 0.10)
                         .accessibilityLabel("码值来自剪贴板, 点清除可移除")
                     }
                     HStack(spacing: DS.Space.xs) {
@@ -1524,7 +1524,7 @@ struct TempCodeStudio: View {
                             Button("查看") {
                                 app.pendingCredNav = "pwd:\(dups[0].alias)"
                                 app.pendingCredNavMac = mac
-                                app.requestTab(1)   // 2026-10-15 走查: 同上, 统一走 requestTab
+                                app.requestRoute(.credentials)   // 2026-10-15 走查: 同上, 统一走 requestRoute
                                 dismiss()
                             }
                             .font(.caption.weight(.medium))
@@ -1733,7 +1733,7 @@ struct TempCodeStudio: View {
                         .frame(minHeight: DS.Hit.min + 8)
                         .contentShape(Rectangle())
                         .padding(.vertical, DS.Space.s)
-                        .background(DS.Palette.surfaceAlt, in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
+                        .variantPlate(DS.Palette.surfaceAlt, .control)
                     }
                     .buttonStyle(.plain)
                     .padding(.horizontal, DS.Space.gutter)
@@ -1746,7 +1746,7 @@ struct TempCodeStudio: View {
                             .frame(maxWidth: .infinity)
                             .frame(minHeight: DS.Hit.min)
                             .padding(.vertical, DS.Space.s)
-                            .background(DS.Palette.surfaceAlt, in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
+                            .variantPlate(DS.Palette.surfaceAlt, .control)
                     }
                     .buttonStyle(.plain)
                     .padding(.horizontal, DS.Space.gutter)
@@ -1764,7 +1764,7 @@ struct TempCodeStudio: View {
                     .foregroundStyle(DS.Palette.ok)
                     .frame(maxWidth: .infinity)
                     .padding(DS.Space.s)
-                    .background(DS.Palette.ok.opacity(0.08), in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
+                    .variantCallout(DS.Palette.ok, .control, wash: 0.08)
                     .padding(.horizontal, DS.Space.gutter)
                 } else if let r = result, !MemberHub.elderMode {
                     Label {
@@ -1777,7 +1777,7 @@ struct TempCodeStudio: View {
                     .foregroundStyle(DS.Palette.textSub)
                     .frame(maxWidth: .infinity)
                     .padding(DS.Space.s)
-                    .background(DS.Palette.surfaceAlt, in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
+                    .variantPlate(DS.Palette.surfaceAlt, .control)
                     .padding(.horizontal, DS.Space.gutter)
                 }
                 if !MemberHub.elderMode {
@@ -2192,7 +2192,7 @@ struct PwdDetailStudio: View {
                     }
                 }
                 .navigationTitle(CredentialOrg.displayPwd(p))
-                .scrollContentBackground(.hidden)
+                .variantList()
                 .dsScreenBackground()
                 .toolbar { ToolbarItem(placement: .navigationBarLeading) {
                     Button("关闭") { dismiss() }
@@ -2408,7 +2408,7 @@ struct FpStudio: View {
             .foregroundStyle(DS.Palette.warn)
             .padding(.horizontal, DS.Space.s)
             .padding(.vertical, 4)
-            .background(DS.Palette.warn.opacity(0.10), in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
+            .variantCallout(DS.Palette.warn, .control, wash: 0.10)
         }
         VStack(alignment: .leading, spacing: DS.Space.xs) {
             Text("先选归属, 再录入")   // 317 先选归属
@@ -2461,7 +2461,7 @@ struct FpStudio: View {
                     app.pendingFpOwner = "request"
                     app.pendingMemberAdd = true
                     app.pendingSettingsFocus = "members"   // §4.3: 按钮写着"去新建成员", 原来只到设置页根
-                    app.requestTab(3)   // 2026-10-15 走查: 与全仓跨 Tab 跳转统一走 requestTab (访客门禁那一口)
+                    app.requestRoute(.settings)   // 2026-10-15 走查: 与全仓跨 Tab 跳转统一走 requestRoute (访客门禁那一口)
                     app.showToast("在「家人与钥匙」里新建成员")   // 317 家人与钥匙
                     dismiss()
                 } label: {
@@ -2822,7 +2822,7 @@ struct FpDetailStudio: View {
                     }
                 }
                 .navigationTitle(f.name)
-                .scrollContentBackground(.hidden)
+                .variantList()
                 .dsScreenBackground()
                 .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("关闭") { dismiss() } } }
                 .sheet(isPresented: $showRelink) {
@@ -3013,7 +3013,7 @@ struct OtpStudio: View {
                                     }
             }
             .navigationTitle("OTP 与口令")
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .axBottomAnchor()   // 870
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("关闭") { dismiss() } } }

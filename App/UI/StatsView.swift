@@ -112,7 +112,7 @@ struct StatsView: View {
             content
                 .navigationTitle("统计")
                 .navigationSubtitle(lockName)   // 772 单锁视图标题携带锁名
-                .scrollContentBackground(.hidden)
+                .variantList()
                 .dsScreenBackground()
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
@@ -739,8 +739,7 @@ struct StatsView: View {
                                 .font(.caption.weight(.medium))
                                 .padding(.horizontal, DS.Space.m)
                                 .padding(.vertical, DS.Space.s)
-                                .background(DS.Palette.surfaceAlt, in: Capsule())
-                                .overlay(Capsule().strokeBorder(DS.Palette.hairline, lineWidth: 0.5))
+                                .variantPlate(DS.Palette.surfaceAlt, .capsule, edge: DS.Palette.hairline)
                                 .foregroundStyle(DS.Palette.text)
                                 .frame(minHeight: DS.Hit.min)
                                 .contentShape(Capsule())
@@ -1145,7 +1144,7 @@ struct StatsView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, DS.Space.xs)
                         .padding(.vertical, DS.Space.xs)
-                        .background(DS.Palette.surfaceAlt, in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
+                        .variantPlate(DS.Palette.surfaceAlt, .control)
                     }
                 }
                 .padding(.horizontal, DS.Space.gutter)
@@ -1594,8 +1593,7 @@ struct StatsView: View {
                 }
                 .padding(.horizontal, DS.Space.s)
                 .padding(.vertical, DS.Space.xs + 2)
-                .background(DS.Palette.surfaceAlt, in: Capsule())
-                .overlay(Capsule().strokeBorder(DS.Palette.hairline, lineWidth: 0.5))
+                .variantPlate(DS.Palette.surfaceAlt, .capsule, edge: DS.Palette.hairline)
                 .frame(minHeight: DS.Hit.min)
                 .contentShape(Capsule())
             }
@@ -1793,8 +1791,7 @@ struct StatsView: View {
                             }
                             .padding(.horizontal, DS.Space.s)
                             .padding(.vertical, DS.Space.xs + 2)
-                            .background(DS.Palette.surfaceAlt, in: Capsule())
-                            .overlay(Capsule().strokeBorder(DS.Palette.hairline, lineWidth: 0.5))
+                            .variantPlate(DS.Palette.surfaceAlt, .capsule, edge: DS.Palette.hairline)
                             .frame(minHeight: DS.Hit.min)
                             .contentShape(Capsule())
                         }
@@ -2435,7 +2432,7 @@ struct HourDetailSheet: View {
             }
             .navigationTitle(TimeWord.word(Int(hour)) + " " + String(hour) + " 时记录")   // 638 时记录
             .navigationBarTitleDisplayMode(.inline)
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {

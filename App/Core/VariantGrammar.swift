@@ -46,16 +46,16 @@ struct VK {
     var accent: Color {
         switch variant {
         case .legacy: return DS.Palette.text          // 现行：品牌色由 DS 的 accent 通道给，这里不抢
-        case .core:   return DS.VariantPalette.coreA
-        case .gauge:  return DS.VariantPalette.gaugeAmber
+        case .core:   return DS.Palette.coreA
+        case .gauge:  return DS.Palette.gaugeAmber
         }
     }
 
     var canvas: Color {
         switch variant {
         case .legacy: return DS.Palette.canvasBase
-        case .core:   return DS.VariantPalette.coreCanvas
-        case .gauge:  return DS.VariantPalette.gaugeCanvas
+        case .core:   return DS.Palette.coreCanvas
+        case .gauge:  return DS.Palette.gaugeCanvas
         }
     }
 
@@ -63,7 +63,7 @@ struct VK {
         switch variant {
         case .legacy: return DS.Palette.surfaceBase
         case .core:   return DS.Palette.surfaceBase.opacity(0.55)   // 锁核：半透玻璃，让极光透过来
-        case .gauge:  return DS.VariantPalette.gaugeBezel           // 仪表：凹槽
+        case .gauge:  return DS.Palette.gaugeBezel           // 仪表：凹槽
         }
     }
 
@@ -437,7 +437,7 @@ struct VK {
                     // 不许写 Color.white —— swiftlint 那条"写死纯白前景"的闸门抓的就是这个，
                     // 而且它的名单是上限、只能减不能加。走主题表的 onAccent：
                     // 浅档白字、深档墨字，且 contrast.js 已断言它对主按钮渐变两端 ≥4.5:1。
-                    .foregroundStyle(variant == .gauge ? DS.VariantPalette.gaugeOnAmber
+                    .foregroundStyle(variant == .gauge ? DS.Palette.gaugeOnAmber
                                                        : DS.Palette.themed("onAccent"))
                     .opacity(enabled ? 1 : 0.45)
             }
@@ -474,7 +474,7 @@ struct CoreAuroraBackground: View {
     var body: some View {
         let calm = AXFlags.reduceMotion
         ZStack {
-            DS.VariantPalette.coreCanvas
+            DS.Palette.coreCanvas
             GeometryReader { geo in
                 let w = geo.size.width, h = geo.size.height
                 ForEach(0..<CoreAuroraBackground.blobs.count, id: \.self) { i in
@@ -490,7 +490,7 @@ struct CoreAuroraBackground: View {
                 }
             }
             // veil: 中心透明、四周压暗，让文字有可用的最坏背景
-            RadialGradient(colors: [.clear, DS.VariantPalette.coreCanvas.opacity(0.72)],
+            RadialGradient(colors: [.clear, DS.Palette.coreCanvas.opacity(0.72)],
                            center: .init(x: 0.5, y: 0.62), startRadius: 90, endRadius: 620)
         }
         .opacity(0.414)
@@ -508,9 +508,9 @@ struct CoreAuroraBackground: View {
 struct GaugeLampBackground: View {
     var body: some View {
         ZStack {
-            DS.VariantPalette.gaugeCanvas
-            RadialGradient(colors: [DS.VariantPalette.gaugeAmber.opacity(0.20),
-                                    DS.VariantPalette.gaugeAmber.opacity(0.05), .clear],
+            DS.Palette.gaugeCanvas
+            RadialGradient(colors: [DS.Palette.gaugeAmber.opacity(0.20),
+                                    DS.Palette.gaugeAmber.opacity(0.05), .clear],
                            center: .init(x: 0.5, y: -0.06), startRadius: 0, endRadius: 520)
         }
         .ignoresSafeArea()
@@ -550,6 +550,10 @@ struct DestinedModifier: ViewModifier {
         return content
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(vk.canvas.ignoresSafeArea())
+            // 控件色：`tint` 走环境，所以这**一行**同时改掉全仓 120 处 Toggle、滑杆、选择器、链接的
+            // 高亮色（显式自设 tint 的调用点不受影响 —— 显式优先）。
+            // 这一行是"整页都变了"的一半：另一半是各页自己调 `.variantList()` 换清单骨架。
+            .tint(vk.accent)
             .onAppear { VisitLedger.note(destination, variant: v) }
             .eraseToAnyView()
     }
@@ -566,6 +570,306 @@ extension View {
     /// 挂上目的地缝。**这是两套 UIUX 唯一的分叉下发点**，页面内部不许再自己挑底色/边距/容器。
     func destined(_ d: Destination) -> some View {
         modifier(DestinedModifier(destination: d))
+    }
+}
+
+// ============================================================
+// P1 批一：自绘底衬接进语法层 (2026-10-16)
+// ------------------------------------------------------------
+// uicoverage 检查五数出 176 处"自己画盒子"。它们**不是同一个东西**，不能一把梭：
+//   · 装饰性中性底衬（信息胶囊 / 静态分组块 / 只读信息格）→ 该由变体决定长什么样；
+//   · 带状态语义的底衬（开关轨道 / 进度空槽 / 选中态 / 校验提示条）→ 变体**不许动它**：
+//     core 把它的底去掉，就等于把"开着还是关着"这个信息去掉 —— 那是功能缺陷，不是风格。
+// 这一批只收前者，而且只收 legacy 能**逐字复刻**的写法：
+// `variantPlate` 的 legacy 分支就是改造前那一句 `background(style, in: shape)` ——
+// 同一个调用、同一个形状，像素不可能变。「默认值 = 零行为改动」这条承诺靠这个构造兑现，
+// 而不是靠"照着重写一遍"（后者一定会在某个圆角上写错）。
+// 一次只收一批，收完把 fixtures/uicoverage/budget.json 的基线降到新数（只许降）。
+// ============================================================
+
+/// 底衬的形状档。**故意不是 `Shape` 泛型**：调用点若还留着一句 `in: Capsule()`，
+/// tools/uicoverage.js 的自绘容器预算（只认字面 token）就数不到这次迁移，
+/// 迁移进度会看起来没动 —— 预算得能反映事实，形状就得以令牌形式传进来。
+enum PlateShape {
+    case capsule    // 信息胶囊
+    case tile       // 瓦片 (DS.Radius.tile)
+    case control    // 控件 / 内嵌格 (DS.Radius.control)
+
+    /// legacy 逐字等于改造前那个形状（连 `.continuous` 与非 continuous 的差别一起复刻）。
+    var legacy: AnyShape {
+        switch self {
+        case .capsule: return AnyShape(Capsule())
+        case .tile:    return AnyShape(RoundedRectangle(cornerRadius: DS.Radius.tile, style: .continuous))
+        case .control: return AnyShape(RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
+        }
+    }
+
+    /// legacy 的描边。**必须单独一份**：`strokeBorder` 只长在 `InsettableShape` 上，而 `AnyShape`
+    /// 把那个能力擦掉了（本仓 `AccessibilityKit` 里记过这条）—— 所以描边不能复用 `legacy`。
+    func legacyEdge(_ color: Color, _ lineWidth: CGFloat) -> AnyView {
+        switch self {
+        case .capsule: return AnyView(Capsule().strokeBorder(color, lineWidth: lineWidth))
+        case .tile:    return AnyView(RoundedRectangle(cornerRadius: DS.Radius.tile, style: .continuous).strokeBorder(color, lineWidth: lineWidth))
+        case .control: return AnyView(RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous).strokeBorder(color, lineWidth: lineWidth))
+        }
+    }
+}
+
+extension View {
+    /// 把"我自己画的一块**装饰性中性**底衬"交给当前变体。
+    /// ⚠ 带状态语义的底衬不要走这里（见本节头注释）；那类要单独设一个能表达 state 的语法件。
+    /// `edge` 给了就补一圈发丝描边（legacy 的 `strokeBorder` 仍在同一句里复刻，仍然像素不变）。
+    func variantPlate(_ style: Color, _ shape: PlateShape, edge: Color? = nil) -> AnyView {
+        switch VK.current.variant {
+        case .legacy:
+            let base = AnyView(self.background(style, in: shape.legacy))
+            guard let edge else { return base }
+            return AnyView(base.overlay { shape.legacyEdge(edge, 0.5) })
+        case .core:
+            // 零卡片定理：装饰性底衬整块去掉，内容原样留下 —— 与 VK.container 的 core 分支同一套语法
+            // （分组层级由字号台阶和两端淡出的发丝线承担，不由盒子承担）。
+            // 连描边一起去掉：只剩一圈线的容器仍然是"盒子"。
+            // 这不是"凑数分支"："不画底"就是这套界面对装饰性底衬的完整定义。
+            return AnyView(self)
+        case .gauge:
+            // 仪器窗格：中性底衬换成凹槽 bezel + 小倒角，与 VK.container 的 gauge 分支同源。
+            let base = AnyView(self.background(RoundedRectangle(cornerRadius: VK.current.corner, style: .continuous).fill(VK.current.bezel)))
+            guard let edge else { return base }
+            return AnyView(base.overlay(RoundedRectangle(cornerRadius: VK.current.corner, style: .continuous).strokeBorder(edge, lineWidth: 0.7)))
+        }
+    }
+
+    /// 带语义色的提示块（告警 / 成功 / 强调 / 危险）。**它和 `variantPlate` 不是一类东西**：
+    /// `variantPlate` 收的是装饰性底衬，core 里整块去掉是对的；而提示块的那层洗色是**信息**
+    /// （"这一段是告警"），core 去掉它就等于把这个信息去掉 —— 所以这里换的不是"去底"，是**换载体**：
+    /// 洗底 → 左侧一根染色的线（与 `VK.card` 的 core 分支同一条纪律：盒子没了，语义色还在，而且更显式）。
+    func variantCallout(_ tone: Color, _ shape: PlateShape, wash: Double) -> AnyView {
+        switch VK.current.variant {
+        case .legacy:
+            // 逐字等于改造前那一句。
+            return AnyView(self.background(tone.opacity(wash), in: shape.legacy))
+        case .core:
+            return AnyView(self
+                .overlay(alignment: .leading) { Rectangle().fill(tone).frame(width: 2) }
+                .padding(.leading, DS.Space.s))
+        case .gauge:
+            // 仪表：凹槽窗格 + 同一根 tone 色侧线。不靠整块洗色传达语义。
+            return AnyView(self
+                .background(RoundedRectangle(cornerRadius: VK.current.corner, style: .continuous).fill(VK.current.bezel))
+                .overlay(alignment: .leading) { Rectangle().fill(tone).frame(width: 2) }
+                .overlay(RoundedRectangle(cornerRadius: VK.current.corner, style: .continuous).strokeBorder(VK.current.hair.opacity(0.8), lineWidth: 0.7)))
+        }
+    }
+}
+
+// ============================================================
+// P1 批二：整页级的外观下发 (2026-10-16)
+// ------------------------------------------------------------
+// 用户的问题："切换后每个页面都是全新的吗？"
+// 量过一遍：只接容器是**不够**的 —— 一页的"长相"大半不由那几个盒子决定，而由
+//   · 清单结构（分组内不内缩 / 行间有没有分隔线 / 节距 / Section 标题怎么渲染）
+//   · 原生控件（开关 / 滑杆 / 选择器 / 链接）的颜色
+//   · 三个共享按钮样式
+// 决定。这三样以前两套一模一样 —— 所以 77 个页面里大多数是"新相框、旧内容"。
+// 这一批把这三样也挂到变体上，而它们的调用点又极其集中（这正是为什么它们价值最高）：
+//   viewportList() 换掉 85 处 `.scrollContentBackground(.hidden)`；
+//   `.tint` 只在缝里写一次（`tint` 走环境，一处设、整棵树生效）⇒ 全仓 120 处 Toggle
+//   与所有滑杆/选择器一次跟着走；
+//   三个 ActionStyle 是共享结构，改它们等于改全仓 61 处主(26)/次(33)/破坏性(2)按钮。
+// 口径不变：legacy 分支 **逐字** 等于改造前那一段，像素不可能变。
+// ============================================================
+
+extension View {
+    /// 页面清单（`List`）的结构外观。**替代全仓 85 处 `.scrollContentBackground(.hidden)`**。
+    ///
+    /// 为什么这是最大的一处杠杆：`.listStyle` 不只是样式，它同时决定
+    /// 分组是否内缩、Section 标题怎么渲染 —— 全仓 **255 个 `Section`** 的标题外观都在它手里。
+    /// 一行换掉，两套清单页的"骨架"立刻不一样，而不是只换背景色。
+    func variantList() -> AnyView {
+        switch VK.current.variant {
+        case .legacy:
+            // 逐字等于改造前那一句 —— 像素不可能变。
+            return AnyView(self.scrollContentBackground(.hidden))
+        case .core:
+            // 零卡片定理：清单退成"只有字和线"的一张平面 —— 不内缩、不画行分隔线、节距拉开。
+            // `.plain` 下 Section 标题也不再是 iOS 的分组样式，这正是这套要的"少一层盒子"。
+            return AnyView(self
+                .scrollContentBackground(.hidden)
+                .listStyle(.plain)
+                .listRowSeparator(.hidden)
+                .listSectionSpacing(CGFloat(30)))
+        case .gauge:
+            // 仪表：整幅分组的机加工盘面（`.grouped` 比 iOS 默认的 `.insetGrouped` 更满、更方），
+            // 分隔线保留但染成发丝色、节距收紧 —— "一块块窗格"的读法。
+            return AnyView(self
+                .scrollContentBackground(.hidden)
+                .listStyle(.grouped)
+                .listRowSeparatorTint(DS.Palette.hairline)
+                .listSectionSpacing(CGFloat(12)))
+        }
+    }
+}
+
+// MARK: - 按钮外形
+
+// 为什么拆成三个函数而不是一个 `switch role`：
+// 内层再套一层 switch 会让 tools/uicoverage.js 检查三的分支正则提前收尾（它会看见 `case .primary:`
+// 当成 `case .legacy:` 的结束），于是**每个分支都被判成空壳**。三个函数各自只有一个 `switch variant`，
+// 既能被检查三管到，也不会互相干扰。这是工具约束，不是审美选择。
+
+extension VK {
+    /// 主按钮外形。legacy 分支逐字搬自 `DesignSystem.swift` 原 `PrimaryActionStyle.makeBody`。
+    func primaryActionChrome<Label: View>(fullWidth: Bool, pressed: Bool,
+                                          @ViewBuilder _ label: () -> Label) -> AnyView {
+        switch variant {
+        case .legacy:
+            return AnyView(
+                label()
+                    .font(.headline)
+                    .foregroundStyle(DS.Palette.onAccent)
+                    .padding(.vertical, DS.Space.m + 2)
+                    .padding(.horizontal, DS.Space.l)
+                    .frame(maxWidth: fullWidth ? .infinity : nil)
+                    .frame(minHeight: DS.Hit.min + 6)
+                    .background(DS.Gradient.button,
+                                in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
+                    .shadow(color: DS.Palette.accent.opacity(0.26), radius: 12, y: 5)
+                    .opacity(pressed ? 0.9 : 1)
+                    .scaleEffect(pressed ? 0.98 : 1)
+                    .animation(DS.Motion.quick, value: pressed)
+            )
+        case .core:
+            // 零卡片定理：**不画实底胶囊** —— 主动作是一条被点亮的粗底线。
+            // 该套里唯一的胶囊留给首页那枚核，按钮不再是"块"，是"一句话加一根线"。
+            return AnyView(
+                label()
+                    .font(.system(.body, design: .default).weight(.semibold))
+                    .foregroundStyle(accent)
+                    .padding(.vertical, DS.Space.m)
+                    .frame(maxWidth: fullWidth ? .infinity : nil)
+                    .frame(minHeight: DS.Hit.min + 6)
+                    .overlay(alignment: .bottom) { Rectangle().fill(accent).frame(height: 1.5) }
+                    .opacity(pressed ? 0.55 : 1)
+                    .animation(DS.Motion.quick, value: pressed)
+            )
+        case .gauge:
+            // 仪表：一块上光的琥珀压板（磷光读数色）+ 机加工描边，字距拉开、等宽排版。
+            return AnyView(
+                label()
+                    .font(.system(.body, design: .monospaced).weight(.semibold))
+                    .tracking(1.0)
+                    .foregroundStyle(DS.Palette.gaugeOnAmber)
+                    .padding(.vertical, DS.Space.m + 2)
+                    .frame(maxWidth: fullWidth ? .infinity : nil)
+                    .frame(minHeight: DS.Hit.min + 6)
+                    .background(RoundedRectangle(cornerRadius: 15, style: .continuous)
+                        .fill(LinearGradient(colors: [DS.Palette.gaugeAmber, DS.Palette.gaugeDeep],
+                                             startPoint: .top, endPoint: .bottom)))
+                    .overlay(RoundedRectangle(cornerRadius: 15, style: .continuous)
+                        .strokeBorder(DS.Palette.hairline, lineWidth: 0.6))
+                    .opacity(pressed ? 0.88 : 1)
+                    .scaleEffect(pressed ? 0.99 : 1)
+                    .animation(DS.Motion.quick, value: pressed)
+            )
+        }
+    }
+
+    /// 次按钮外形。legacy 分支逐字搬自原 `SecondaryActionStyle.makeBody`。
+    func secondaryActionChrome<Label: View>(fullWidth: Bool, pressed: Bool, tint: Color,
+                                            @ViewBuilder _ label: () -> Label) -> AnyView {
+        switch variant {
+        case .legacy:
+            return AnyView(
+                label()
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(DS.Palette.accentText)
+                    .padding(.vertical, DS.Space.s + 2)
+                    .padding(.horizontal, DS.Space.l)
+                    .frame(maxWidth: fullWidth ? .infinity : nil)
+                    .frame(minHeight: DS.Hit.min)
+                    .background(tint.opacity(pressed ? 0.16 : 0.09),
+                                in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
+                    .scaleEffect(pressed ? 0.985 : 1)
+                    .animation(DS.Motion.quick, value: pressed)
+            )
+        case .core:
+            // 零卡片：没有底色，只有一根发丝线收住这一行。
+            return AnyView(
+                label()
+                    .font(.system(.subheadline, design: .default).weight(.semibold))
+                    .foregroundStyle(sub)
+                    .padding(.vertical, DS.Space.s + 2)
+                    .frame(maxWidth: fullWidth ? .infinity : nil)
+                    .frame(minHeight: DS.Hit.min)
+                    .overlay(alignment: .bottom) { Rectangle().fill(hair).frame(height: 0.7) }
+                    .opacity(pressed ? 0.6 : 1)
+                    .animation(DS.Motion.quick, value: pressed)
+            )
+        case .gauge:
+            // 仪表：凹槽窗格底 + 细描边。与 VK.container 的 gauge 分支同源。
+            return AnyView(
+                label()
+                    .font(.system(.subheadline, design: .monospaced))
+                    .tracking(0.8)
+                    .foregroundStyle(ink)
+                    .padding(.vertical, DS.Space.s + 2)
+                    .frame(maxWidth: fullWidth ? .infinity : nil)
+                    .frame(minHeight: DS.Hit.min)
+                    .background(RoundedRectangle(cornerRadius: 11, style: .continuous).fill(bezel))
+                    .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous)
+                        .strokeBorder(DS.Palette.hairline, lineWidth: 0.6))
+                    .opacity(pressed ? 0.85 : 1)
+                    .animation(DS.Motion.quick, value: pressed)
+            )
+        }
+    }
+
+    /// 破坏性按钮外形。legacy 分支逐字搬自原 `DestructiveActionStyle.makeBody`。
+    /// 三个变体都保住那条纪律：**破坏性必须靠颜色 + 文字两通道**，不许只靠色（色有时是唯一载体）。
+    func destructiveActionChrome<Label: View>(pressed: Bool,
+                                             @ViewBuilder _ label: () -> Label) -> AnyView {
+        switch variant {
+        case .legacy:
+            return AnyView(
+                label()
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(DS.Palette.danger)
+                    .padding(.vertical, DS.Space.s + 2)
+                    .padding(.horizontal, DS.Space.l)
+                    .frame(maxWidth: .infinity)
+                    .frame(minHeight: DS.Hit.min)
+                    .background(DS.Palette.danger.opacity(pressed ? 0.16 : 0.09),
+                                in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
+                    .animation(DS.Motion.quick, value: pressed)
+            )
+        case .core:
+            return AnyView(
+                label()
+                    .font(.system(.subheadline, design: .default).weight(.semibold))
+                    .foregroundStyle(DS.Palette.danger)
+                    .padding(.vertical, DS.Space.s + 2)
+                    .frame(maxWidth: .infinity)
+                    .frame(minHeight: DS.Hit.min)
+                    .overlay(alignment: .bottom) { Rectangle().fill(DS.Palette.danger).frame(height: 0.7) }
+                    .opacity(pressed ? 0.6 : 1)
+                    .animation(DS.Motion.quick, value: pressed)
+            )
+        case .gauge:
+            return AnyView(
+                label()
+                    .font(.system(.subheadline, design: .monospaced).weight(.semibold))
+                    .tracking(0.8)
+                    .foregroundStyle(DS.Palette.danger)
+                    .padding(.vertical, DS.Space.s + 2)
+                    .frame(maxWidth: .infinity)
+                    .frame(minHeight: DS.Hit.min)
+                    .background(RoundedRectangle(cornerRadius: 11, style: .continuous).fill(bezel))
+                    .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous)
+                        .strokeBorder(DS.Palette.danger.opacity(0.55), lineWidth: 0.8))
+                    .opacity(pressed ? 0.85 : 1)
+                    .animation(DS.Motion.quick, value: pressed)
+            )
+        }
     }
 }
 

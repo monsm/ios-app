@@ -112,7 +112,7 @@ struct SettingsView: View {
             if settingsSectionShown(groupFilter, .help) { aboutSection.id(SettingsAnchor.about) }
         }
         .navigationTitle("设置")
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
         .sheet(isPresented: $showMembers) { MembersView() }
         .sheet(isPresented: $showKeychainHW) { KeychainHWView() }
@@ -1465,7 +1465,7 @@ struct DefendView: View {
             }
         }
         .navigationTitle("一键布防")
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
     }
 
@@ -1535,7 +1535,7 @@ struct TailgateView: View {
             }
         }
         .navigationTitle("防尾随入室")
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
     }
 
@@ -1606,7 +1606,7 @@ struct SafemodeIntroView: View {
             }
         }
         .navigationTitle(isOtp ? "临时密码介绍" : "安全模式说明")
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
     }
 

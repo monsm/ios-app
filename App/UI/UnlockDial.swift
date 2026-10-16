@@ -243,7 +243,7 @@ private struct DrillTrace: View {
                     .font(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .padding(DS.Space.s)
-                    .background(Capsule().fill(DS.Palette.surfaceAlt))
+                    .variantPlate(DS.Palette.surfaceAlt, .capsule)
             } else {
                 Capsule()
                     .fill(LinearGradient(colors: [DS.Palette.accentText.opacity(0.75), .clear],

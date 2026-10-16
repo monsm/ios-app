@@ -1157,7 +1157,7 @@ enum CredentialOrg {
         // 全仓其他编程式跳转 (深链 / 自检黄条 / 粘贴建议条 / 逃生) 走的都是 requestTab ——
         // 访客通道开着时凭证/设置两个 Tab 根本**不进层级树**, 直写 tabSelection 会让系统落到一个
         // 看不见的 Tab, 用户以为点了通知没反应。改走 requestTab (访客时它只会挂起 pending)。
-        app.requestTab(1)
+        app.requestRoute(.credentials)
         switch a {
         case .locatePwd(let mac, let alias):
             if !mac.isEmpty, DB.keychain(mac) != nil { app.select(mac) }   // 陌生 MAC 不改当前锁

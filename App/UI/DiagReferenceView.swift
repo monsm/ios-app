@@ -271,7 +271,7 @@ struct DiagReferenceView: View {
                 .font(.caption2)
             }
         }
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
         .navigationTitle("诊断查阅")
     }

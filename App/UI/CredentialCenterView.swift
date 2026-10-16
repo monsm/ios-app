@@ -38,7 +38,7 @@ struct CredCenterView: View {
                 }
             }
             .navigationTitle("凭证中心")
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) {
                 Button("关闭") { dismiss() }
@@ -235,7 +235,7 @@ struct CredBinView: View {
             }
         }
         .navigationTitle("回收站")
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
     }
 
@@ -460,7 +460,7 @@ struct CredHistoryListView: View {
             }
         }
         .navigationTitle("版本历史")
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
     }
 }
@@ -503,7 +503,7 @@ struct CredHistoryView: View {
             }
         }
         .navigationTitle(title)
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
     }
 
@@ -824,7 +824,7 @@ struct CredOrganizeView: View {
                 }
             }
             .navigationTitle("整理建议")
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) {
                 // 2026-10-15 走查: 这颗原先只调 onDone() —— 而过去呈现方 (凭证 Tab 那三枚 sheet 之一)
@@ -1010,7 +1010,7 @@ struct CredQueueView: View {
             }
         }
         .navigationTitle("待下发队列")
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) {
                 Button("关闭") { dismiss() }
@@ -1134,7 +1134,7 @@ struct CredExtendView: View {
                 }
             }
             .navigationTitle("统一延期")
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) {
                 Button("关闭") { onDone() }
@@ -1195,7 +1195,7 @@ struct CredTransferView: View {
                 }
             }
             .navigationTitle("批量移交")
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) {
                 Button("关闭") { onDone() }
@@ -1367,7 +1367,7 @@ struct CredDisableSheet: View {
                 }
             }
             .navigationTitle("批量停用确认")
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             // 取消 = 只退出, 绝不触发 onDone (调用方 CredentialsView 的 onDone 即 finishDisable, 执行停用与入回收站)
             .toolbar { ToolbarItem(placement: .navigationBarLeading) {

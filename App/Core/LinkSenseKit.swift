@@ -667,7 +667,7 @@ struct LinkPrefsView: View {
             }
         }
         .navigationTitle("连接与预握手")
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
     }
 }
@@ -911,7 +911,7 @@ struct BLEOffBanner: View {
             }
             .padding(.horizontal, DS.Space.l)
             .padding(.vertical, DS.Space.s + 2)
-            .background(DS.Palette.warn.opacity(0.12), in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
+            .variantCallout(DS.Palette.warn, .control, wash: 0.12)
             .frame(minHeight: DS.Hit.min)
             .contentShape(Rectangle())
         }

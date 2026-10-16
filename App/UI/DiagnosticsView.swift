@@ -134,7 +134,7 @@ struct DiagnosticsView: View {
                         // 2026-10-14 走查: 本页不止从设置页进 —— 设备页「打开排查工具」也推它
                         // (DeviceHomeView 的 failStreak≥3 卡), 而设备页在访客通道下照常可达。
                         // 直写 tabSelection=1 会落到一个不进层级树的 Tab, 走 requestTab 才过 377 门禁。
-                        app.requestTab(1)
+                        app.requestRoute(.credentials)
                         app.pendingCredPanel = "organize"
                         // 2026-10-15 走查: requestTab 管的是**访客门禁**，管不到"这一层盖在 TabView 上"——
                         // 本页从设置页是以 sheet 进来的 (`showDiag`)，不收掉这层，切过去的凭证 Tab 就在 sheet 底下 (§7.3 那一族)。
@@ -1115,7 +1115,7 @@ struct DiagnosticsView: View {
                                             .font(.caption2.weight(.medium))
                                             .padding(.horizontal, DS.Space.s).padding(.vertical, DS.Space.xs)
                                             .foregroundStyle(DS.Palette.accentText)
-                                            .background(DS.Palette.surfaceAlt, in: Capsule())
+                                            .variantPlate(DS.Palette.surfaceAlt, .capsule)
                                     }
                                     .buttonStyle(.plain)
                                     .frame(minHeight: DS.Hit.min - DS.Space.xs)
@@ -1208,7 +1208,7 @@ struct DiagnosticsView: View {
                             default: break
                             }
                             app.pendingCredNavMac = app.currentMac
-                            app.requestTab(1)   // 2026-10-14 走查: 同上一处, 本页可从设备页进入
+                            app.requestRoute(.credentials)   // 2026-10-14 走查: 同上一处, 本页可从设备页进入
                             dismiss()           // 2026-10-15 走查: 同上 —— requestTab 只过访客门禁，不收这层 sheet/push 就看不见切好的 Tab
                         }
                         .buttonStyle(PrimaryActionStyle())
@@ -1220,7 +1220,7 @@ struct DiagnosticsView: View {
         }
         // 本页已不止日志: 体检/连接质量/原始报文/急救都在此, 标题按实际范围改
         .navigationTitle("诊断与运行日志")
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
         .task { if results.isEmpty { rerunAll() } }   // 149 进页即出分 (纯本地读, 不发包)
     }

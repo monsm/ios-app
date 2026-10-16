@@ -26,7 +26,7 @@ struct AccessibilityView: View {
             DevContrastSection(calcA: $calcA, calcB: $calcB, mode: $calcMode)
         }
         .navigationTitle("辅助功能")
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
         .axBottomAnchor()
     }
@@ -129,8 +129,7 @@ struct AccessibilityView: View {
         }
         .padding(.horizontal, DS.Space.s)
         .padding(.vertical, DS.Space.xs)
-        .background(DS.Palette.surfaceAlt, in: Capsule())
-        .overlay(Capsule().strokeBorder(DS.Palette.hairlineStrong, lineWidth: 0.5))
+        .variantPlate(DS.Palette.surfaceAlt, .capsule, edge: DS.Palette.hairlineStrong)
         .fixedSize()
     }
 

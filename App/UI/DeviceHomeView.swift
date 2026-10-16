@@ -67,7 +67,7 @@ struct DeviceHomeView: View {
                                 // 下照常可达, 而访客态里「设置」Tab 不进层级树, 直写会落到一个看不见的
                                 // Tab (点一下像没反应)。走 requestTab, 访客态由它拉起复核页。
                                 app.pendingSettingsFocus = "backup"   // §4.3: 这一按直达「备份与恢复」, 不再只放人在设置页根上
-                                app.requestTab(3)
+                                app.requestRoute(.settings)
                                 app.showToast("到「备份与恢复」：可本地导入，或从坚果云恢复")   // 824 设置
                             } label: {
                                 Label("从备份恢复", systemImage: "square.and.arrow.down")   // 824 从备份恢复
@@ -102,7 +102,7 @@ struct DeviceHomeView: View {
                                 .foregroundStyle(DS.Palette.textSub)
                                 .padding(.horizontal, DS.Space.s)
                                 .padding(.vertical, DS.Space.xs)
-                                .background(Capsule().fill(DS.Palette.surfaceAlt))
+                                .variantPlate(DS.Palette.surfaceAlt, .capsule)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .frame(minHeight: DS.Hit.min)
                             }
@@ -1083,7 +1083,7 @@ struct DeviceHomeView: View {
                                     .font(.caption2.weight(.medium))
                                     .foregroundStyle(DS.Palette.textSub)
                                     .padding(.horizontal, 4).padding(.vertical, DS.Space.xxs)
-                                    .background(DS.Palette.surfaceAlt, in: Capsule())
+                                    .variantPlate(DS.Palette.surfaceAlt, .capsule)
                             }
                             Spacer(minLength: 0)
                         }
@@ -1651,7 +1651,7 @@ struct DeviceHomeView: View {
             if let t = target {
                 app.pendingCredNav = t.nav
                 app.pendingCredNavMac = app.currentMac
-                app.requestTab(1)   // 2026-10-14 走查: 原为直写 tabSelection, 访客态会绕过 377 门禁
+                app.requestRoute(.credentials)   // 2026-10-14 走查: 原为直写 tabSelection, 访客态会绕过 377 门禁
                 app.showToast("已跳到凭证页定位「" + t.name + "」")   // 921 界面文案
             } else {
                 app.showToast("还没有星标凭证 —— 先在凭证页给最常用的那条点亮星标")   // 921 还没有星标凭证
@@ -1768,7 +1768,7 @@ struct DeviceHomeView: View {
                                 .foregroundStyle(DS.Palette.textSub)
                                 .padding(.horizontal, DS.Space.s)
                                 .padding(.vertical, 2)
-                                .background(DS.Palette.surfaceAlt, in: Capsule())
+                                .variantPlate(DS.Palette.surfaceAlt, .capsule)
                                 .frame(maxWidth: 82)
                         }
                         .frame(minHeight: DS.Hit.min)
@@ -1986,7 +1986,7 @@ struct DeviceHomeView: View {
                             // 2026-10-15 走查 §4.3: 原来只 requestTab(3) —— 把人放到设置页根上,
                             // 而这一行自己写着路径要从「备份与恢复」起头。带落点名, 由设置页直接开它。
                             app.pendingSettingsFocus = "backup"
-                            app.requestTab(3)
+                            app.requestRoute(.settings)
                         }   // 2026-10-14 走查: 原直写 tabSelection, 访客态绕过门禁
                         Button("知道了") {
                             BackupStudio.markPinSeen(p.file, p.day)
@@ -2346,7 +2346,7 @@ struct SyncTimeView: View {
             }
         }
         .navigationTitle("同步时间")
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
     }
 

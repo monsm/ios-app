@@ -14,34 +14,12 @@ import SwiftUI
 //   四道闸的唯一漏斗 (LockKeeperApp.swift:467)。绕过它 = 新界面开了一条没闸的侧门。
 // ============================================================
 
-// MARK: - 变体专属色板
-
-extension DS {
-    /// 两套新界面各自的品牌色。语义角色 (text/textSub/hairline/danger/ok) **继续用 DS.Palette**，
-    /// 这里只放两套界面互相冲突的那几档底色与强调色。
-    ///
-    /// ⚠ 已知开口：`tools/contrast.js` 只解析 DesignSystem.swift 里的 `static let`，
-    /// 本文件在 DesignSystem.swift 之外 ⇒ 这几档**目前不在那 36 条断言的覆盖范围内**。
-    /// 变体转正为默认之前，必须把它们搬进 DS.Palette 并补断言（记在 S4 闸门批次）。
-    enum VariantPalette {
-        // ---------- 近场仪表: 石墨黑 + 机加工金属 + 单一暖琥珀 ----------
-        // 取自门锁硬件本身（阳极氧化铝 + 暖金），不是品类默认的冷科技蓝。
-        static let gaugeCanvas  = Color.adaptive(0xF3EEE5, 0x0B0A08)   // 盘面底
-        static let gaugeBezel   = Color.adaptive(0xE7E0D3, 0x17150F)   // 凹槽
-        static let gaugeBezelHi = Color.adaptive(0xFBF8F1, 0x2A2418)   // 凹槽顶亮边
-        static let gaugeAmber   = Color.adaptive(0x8A4B0E, 0xF2A73B)   // 磷光读数
-        static let gaugeDeep    = Color.adaptive(0x6B3907, 0xB4671A)   // 琥珀深端（渐变用）
-        static let gaugeOnAmber = Color.adaptive(0xFFF8EC, 0x150E03)   // 琥珀填充上的前景（浅档白字/深档墨字）
-
-        // ---------- 一枚锁核: 暖黑场 + 靛/青极光 ----------
-        // ⚠ 自我批评记在此：#4338CA/#6D28D9/#22D3EE 这组紫蓝弥散正是"AI/开发者工具"的品类默认模板。
-        // 保留是因为两轮独立评审认定深色首页的构图是这组里最有辨识度的部分；换色要连带重解对比度上限。
-        static let coreCanvas   = Color.adaptive(0xEDEFF5, 0x02040A)
-        static let coreInk      = Color.adaptive(0x0D1626, 0xF2F6FB)
-        static let coreA        = Color.adaptive(0x4338CA, 0xA5B4FC)
-        static let coreB        = Color.adaptive(0x0E7490, 0x22D3EE)
-    }
-}
+// MARK: - 变体专属色板 (已搬进 DS.Palette)
+//
+// 2026-10-16: 这十档颜色原先定义在本文件，而 `tools/contrast.js` **只解析 DesignSystem.swift**，
+// 于是两套新界面从一开始就建在「没被任何断言覆盖过」的颜色上。
+// 现在它们住在 `App/Core/DesignSystem.swift` 的 `enum Palette` 里，与其余令牌同一把尺子一起量（法则见 contrast.js 的 F 节）。
+// 调用点仍写 `DS.Palette.gaugeCanvas` —— 名字没变，只是换了家。
 
 // MARK: - 共用的诚实读数层
 
@@ -275,7 +253,7 @@ struct GaugeHomeView: View {
             .padding(.horizontal, 22)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .background(DS.VariantPalette.gaugeCanvas.ignoresSafeArea())
+        .background(DS.Palette.gaugeCanvas.ignoresSafeArea())
         .onAppear { PageTrace.shown("仪表首页") }
         .animation(DS.Motion.soft, value: here)
     }
@@ -287,7 +265,7 @@ struct GaugeHomeView: View {
                 Text(here ? "在场 · 已连接" : "不在场")
                     .font(.system(.footnote, design: .default).weight(.semibold))
                     .tracking(1.6)
-                    .foregroundStyle(here ? DS.VariantPalette.gaugeAmber : DS.Palette.textSub)
+                    .foregroundStyle(here ? DS.Palette.gaugeAmber : DS.Palette.textSub)
                 Text(here ? "读数于本次连接" : "走近门锁即可读取")
                     .font(.system(.caption, design: .default))
                     .foregroundStyle(DS.Palette.textSub)
@@ -310,49 +288,42 @@ struct GaugeHomeView: View {
     private var powerWindow: some View {
         let frac = LockReadout.powerFraction(status)
         let r = LockReadout.power(status)
-        return VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("电量")
-                    .font(.system(.caption, design: .default).weight(.semibold)).tracking(1.7)
-                    .foregroundStyle(DS.Palette.textSub)
-                Spacer()
-                Text(r.field)
-                    .font(.system(.caption2, design: .default).weight(.semibold)).tracking(1.3)
-                    .foregroundStyle(DS.Palette.textSub)
-            }
-            HStack(alignment: .center, spacing: 10) {
-                HStack(alignment: .firstTextBaseline, spacing: 2) {
-                    Text(r.text)
-                        .font(.system(.largeTitle, design: .monospaced).weight(.light))
-                        .tracking(-3.2)
-                        .monospacedDigit()
-                        .foregroundStyle(here ? DS.VariantPalette.gaugeAmber : DS.Palette.textSub)
-                    Text("%")
-                        .font(.system(.title3, design: .monospaced).weight(.regular))
+        // P2: 面板底衬交给语法层。圆角 (14) / 描边透明度 / 凹槽色由 VK 一处定义 —— 首屏不再自己写
+        // 16 / 0.7 / gaugeBezel 这些"语法层一改就得跟着改"的魔数。原来的 windowShape 整块删掉。
+        // (本页只在 gauge 变体下渲染, 所以这里不出现 legacy 分支 —— 也不需要。)
+        return VK(variant: .gauge).container(.hero) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text("电量")
+                        .font(.system(.caption, design: .default).weight(.semibold)).tracking(1.7)
+                        .foregroundStyle(DS.Palette.textSub)
+                    Spacer()
+                    Text(r.field)
+                        .font(.system(.caption2, design: .default).weight(.semibold)).tracking(1.3)
                         .foregroundStyle(DS.Palette.textSub)
                 }
-                Spacer(minLength: 4)
-                gaugeArc(frac: frac)
-                    .frame(width: 92, height: 92)
+                HStack(alignment: .center, spacing: 10) {
+                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                        Text(r.text)
+                            .font(.system(.largeTitle, design: .monospaced).weight(.light))
+                            .tracking(-3.2)
+                            .monospacedDigit()
+                            .foregroundStyle(here ? DS.Palette.gaugeAmber : DS.Palette.textSub)
+                        Text("%")
+                            .font(.system(.title3, design: .monospaced).weight(.regular))
+                            .foregroundStyle(DS.Palette.textSub)
+                    }
+                    Spacer(minLength: 4)
+                    gaugeArc(frac: frac)
+                        .frame(width: 92, height: 92)
+                }
+                .padding(.top, 8)
+                Text(here ? "近场一次性读取 · 本机无在线状态" : "该锁是纯近场协议，没有远程通道")
+                    .font(.system(.caption, design: .monospaced))
+                    .foregroundStyle(DS.Palette.textSub)
+                    .padding(.top, 10)
             }
-            .padding(.top, 8)
-            Text(here ? "近场一次性读取 · 本机无在线状态" : "该锁是纯近场协议，没有远程通道")
-                .font(.system(.caption, design: .monospaced))
-                .foregroundStyle(DS.Palette.textSub)
-                .padding(.top, 10)
         }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(windowShape)
-    }
-
-    private var windowShape: some View {
-        RoundedRectangle(cornerRadius: 16, style: .continuous)
-            .fill(DS.VariantPalette.gaugeBezel)
-            .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(DS.Palette.hairline, lineWidth: 0.7)
-            )
     }
 
     /// 270° 刻度弧。`frac == nil`（没读到）时**只画空轨，不画 0%** ——
@@ -366,7 +337,7 @@ struct GaugeHomeView: View {
             if let frac {
                 Circle()
                     .trim(from: 0, to: 0.75 * frac)
-                    .stroke(DS.VariantPalette.gaugeAmber,
+                    .stroke(DS.Palette.gaugeAmber,
                             style: StrokeStyle(lineWidth: 5, lineCap: .round))
                     .rotationEffect(.degrees(135))
             }
@@ -384,23 +355,22 @@ struct GaugeHomeView: View {
     }
 
     private func cell(_ title: String, _ r: Readout, _ note: String, alarm: Bool) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Text(title)
-                .font(.system(.caption2, design: .default).weight(.semibold)).tracking(1.5)
-                .foregroundStyle(DS.Palette.textSub)
-            Text(r.text)
-                .font(.system(.title, design: .monospaced).weight(.regular))
-                .tracking(-0.6)
-                .monospacedDigit()
-                .foregroundStyle(alarm ? DS.Palette.danger : DS.Palette.text)
-            Text(note)
-                .font(.system(.caption2, design: .monospaced))
-                .foregroundStyle(DS.Palette.textSub)
+        // P2: 内嵌小格交给语法层 (.inset) —— 底衬与倒角同样只由 VK 一处定义。
+        VK(variant: .gauge).container(.inset) {
+            VStack(alignment: .leading, spacing: 5) {
+                Text(title)
+                    .font(.system(.caption2, design: .default).weight(.semibold)).tracking(1.5)
+                    .foregroundStyle(DS.Palette.textSub)
+                Text(r.text)
+                    .font(.system(.title, design: .monospaced).weight(.regular))
+                    .tracking(-0.6)
+                    .monospacedDigit()
+                    .foregroundStyle(alarm ? DS.Palette.danger : DS.Palette.text)
+                Text(note)
+                    .font(.system(.caption2, design: .monospaced))
+                    .foregroundStyle(DS.Palette.textSub)
+            }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-        .background(RoundedRectangle(cornerRadius: 13, style: .continuous).fill(DS.VariantPalette.gaugeBezel))
     }
 
     // ---------- 凭证余量：只有站在锁旁边才准 ----------
@@ -430,7 +400,7 @@ struct GaugeHomeView: View {
                 .foregroundStyle(DS.Palette.text)
                 .frame(width: 52, alignment: .leading)
             SegmentedBar(used: Int(r.text) ?? 0, total: total,
-                         tint: DS.VariantPalette.gaugeAmber,
+                         tint: DS.Palette.gaugeAmber,
                          groove: DS.Palette.hairline.opacity(0.5))
                 .frame(height: 9)
             Text(total > 0 ? "\(r.text) / \(total)" : r.text)
@@ -452,12 +422,12 @@ struct GaugeHomeView: View {
                     // Semibold，于是"我以为更重的那一级"其实从来没重过 (dynamictype 闸门规则 3)。
                     .font(.system(.body, design: .default).weight(.semibold))
                     .tracking(1.2)
-                    .foregroundStyle(DS.VariantPalette.gaugeOnAmber)
+                    .foregroundStyle(DS.Palette.gaugeOnAmber)
                     .frame(maxWidth: .infinity).frame(height: 58)
                     .background(
                         RoundedRectangle(cornerRadius: 15, style: .continuous)
-                            .fill(LinearGradient(colors: [DS.VariantPalette.gaugeAmber,
-                                                          DS.VariantPalette.gaugeDeep],
+                            .fill(LinearGradient(colors: [DS.Palette.gaugeAmber,
+                                                          DS.Palette.gaugeDeep],
                                                  startPoint: .top, endPoint: .bottom))
                     )
             }
@@ -522,7 +492,7 @@ struct CoreHomeView: View {
 
     var body: some View {
         ZStack {
-            DS.VariantPalette.coreCanvas.ignoresSafeArea()
+            DS.Palette.coreCanvas.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 header
@@ -548,14 +518,14 @@ struct CoreHomeView: View {
                 Text(app.currentMac.isEmpty ? Readout.dash : "玄关")
                     .font(.system(.title2, design: .default).weight(.semibold))
                     .tracking(-0.7)
-                    .foregroundStyle(DS.VariantPalette.coreInk)
+                    .foregroundStyle(DS.Palette.coreInk)
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
                 Text(LockReadout.power(app.status).text + "%")
                     .font(.system(.body, design: .monospaced).weight(.semibold))
                     .monospacedDigit()
-                    .foregroundStyle(DS.VariantPalette.coreInk)
+                    .foregroundStyle(DS.Palette.coreInk)
                 Text("CELL")
                     .font(.system(.caption2, design: .default).weight(.semibold)).tracking(1.4)
                     .foregroundStyle(DS.Palette.textSub)
@@ -582,11 +552,11 @@ struct CoreHomeView: View {
                         .fill(DS.Palette.hairline.opacity(0.55))
                         .frame(width: 54, height: 54)
                     Circle()
-                        .strokeBorder(DS.VariantPalette.coreA.opacity(0.55), lineWidth: 0.8)
+                        .strokeBorder(DS.Palette.coreA.opacity(0.55), lineWidth: 0.8)
                         .frame(width: 54, height: 54)
                     Text(String(r.title.prefix(1)))
                         .font(.system(.headline, design: .default).weight(.regular))
-                        .foregroundStyle(DS.VariantPalette.coreInk)
+                        .foregroundStyle(DS.Palette.coreInk)
                 }
                 Text(r.title)
                     .font(.system(.caption2, design: .default).weight(.semibold)).tracking(1.4)
@@ -601,8 +571,8 @@ struct CoreHomeView: View {
         Button(action: { app.requestUnlock() }) {
             ZStack {
                 Circle()
-                    .fill(RadialGradient(colors: [DS.VariantPalette.coreB.opacity(0.85),
-                                                  DS.VariantPalette.coreA.opacity(0.9)],
+                    .fill(RadialGradient(colors: [DS.Palette.coreB.opacity(0.85),
+                                                  DS.Palette.coreA.opacity(0.9)],
                                          center: .center, startRadius: 6, endRadius: 78))
                     .frame(width: 152, height: 152)
                 Circle()
@@ -610,7 +580,7 @@ struct CoreHomeView: View {
                     .frame(width: 152, height: 152)
                 Image(systemName: app.unlockState == .success ? "lock.open.fill" : "lock.fill")
                     .font(.system(size: 34, weight: .regular))
-                    .foregroundStyle(DS.VariantPalette.coreInk)
+                    .foregroundStyle(DS.Palette.coreInk)
             }
         }
         .buttonStyle(.plain)

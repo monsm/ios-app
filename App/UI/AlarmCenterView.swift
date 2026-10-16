@@ -44,7 +44,7 @@ struct AlarmCenterView: View {
             responseCard   // 742 响应时长 (占位)
         }
         .navigationTitle(centerTitle)
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {

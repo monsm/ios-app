@@ -58,8 +58,7 @@ struct BatteryStripCard: View {
                             .padding(.horizontal, DS.Space.xs)
                             .padding(.vertical, DS.Space.xs)
                             .frame(width: 68)
-                            .background(DS.Palette.surfaceAlt,
-                                        in: RoundedRectangle(cornerRadius: DS.Radius.tile, style: .continuous))
+                            .variantPlate(DS.Palette.surfaceAlt, .tile)
                             .accessibilityElement(children: .combine)
                             .accessibilityLabel("\(u.name) 电量 \(item.pct < 0 ? "未知" : "\(item.pct)%")")
                         }

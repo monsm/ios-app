@@ -173,7 +173,7 @@ struct AddDeviceView: View {
                 Text("MAC 印在锁内面板或说明书上。定位到锁后仍需锁处于重置态才能配网。")
             }
         }
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
         .task { await scan() }   // 251: 进页即扫, 发现列表实时滚动
     }
@@ -392,7 +392,7 @@ struct AddDeviceView: View {
                 Text("添加成功后请立刻做一次全量备份, 并成功开一次锁完成「链路已验证」标记。")
             }
         }
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
     }
 
@@ -618,7 +618,7 @@ struct AddPwdView: View {
             }
         }
         .navigationTitle("添加密码")
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
         .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button(busy ? "写入中…" : "关闭") { dismiss() }.disabled(busy) } } .interactiveDismissDisabled(busy)   // 2026-10-15 走查: 写锁在飞时不给退出入口
     }
@@ -897,7 +897,7 @@ struct DeviceInfoView: View {
                 }
             }
             .navigationTitle("锁信息名片")
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("关闭") { dismiss() } } }
         }
@@ -1322,7 +1322,7 @@ struct LockProfileView: View {
             }
         }
         .navigationTitle("锁档案")
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
         .onAppear {
             guard !loaded, let kc = app.current else { return }
@@ -1447,7 +1447,7 @@ struct FirmwareView: View {
                 }
             }
             .navigationTitle("检查固件更新")
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -1789,7 +1789,7 @@ struct FirmwareView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, DS.Space.xs)
-        .background(DS.Palette.surfaceAlt, in: Capsule())
+        .variantPlate(DS.Palette.surfaceAlt, .capsule)
     }
 
     // ---------- 148 结果 ----------
@@ -2147,7 +2147,7 @@ struct KeychainHWView: View {
                 }
             }
             .navigationTitle("蓝牙钥匙串")
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .task { reload() }
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button(busy ? "写入中…" : "关闭") { dismiss() }.disabled(busy) } } .interactiveDismissDisabled(busy)   // 2026-10-15 走查: 写锁在飞时不给退出入口
@@ -2363,7 +2363,7 @@ struct GatewayView: View {
                 gatewayList
             }
             .navigationTitle("智能网关")
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             // sheet 呈现时必须自带退出入口, 否则用户出不去
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button(running ? "写入中…" : "关闭") { dismiss() }.disabled(running) } } .interactiveDismissDisabled(running)   // 2026-10-15 走查: 写锁在飞时不给退出入口
@@ -2560,7 +2560,7 @@ struct MembersView: View {
                 }
             }
             .navigationTitle("成员管理")
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } }
@@ -2768,7 +2768,7 @@ private struct MemberWelcomeCard: View {
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             HStack(spacing: DS.Space.s) {
-                Button("去凭证页") { dismiss(); app.requestTab(1) }
+                Button("去凭证页") { dismiss(); app.requestRoute(.credentials) }
                     .buttonStyle(SecondaryActionStyle(fullWidth: false))
                 Spacer(minLength: 0)
                 Button("知道了") { dismiss() }
@@ -2801,7 +2801,7 @@ struct MessagesView: View {
                 ForEach(rows) { rowItem($0) }
             }
             .navigationTitle("动态")
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
             .sheet(isPresented: $showAddDevice) { AddDeviceView() }

@@ -120,7 +120,7 @@ final class AppState: ObservableObject {
         }
     }
     // 294 本地深链 (kf://): 白名单路由; 应用锁未解开时**先挂起**, 解锁后才落地 (深链不得绕过门禁)
-    @Published var pendingRoute: Int?
+    @Published var pendingRoute: Route?
     @Published var pendingMac: String?   // 294 深链带的锁 ID (kf://device?mac=), 解锁后落地
     /// 294 深链 host 白名单。2026-10-16 C1: **由 Route.deepLinkHosts 派生**，不再手写序号表。
     /// 顺序只有一个声明处 (Route.byHost)，深链、Tab 号、访客受限集三样都从它推。
@@ -143,13 +143,13 @@ final class AppState: ObservableObject {
             let mac = DB.normalizeMac(m)
             if appUnlocked && !decoyMode { select(mac) } else { pendingMac = mac }
         }
-        if appUnlocked && !decoyMode { requestTab(tab) } else { pendingRoute = tab }
+        if appUnlocked && !decoyMode { requestTab(tab) } else { pendingRoute = Route.from(tab: tab) }
     }
     func applyPendingRoute() {
         if let m = pendingMac, appUnlocked && !decoyMode { pendingMac = nil; select(m) }
-        guard let tab = pendingRoute else { return }
+        guard let r = pendingRoute else { return }
         pendingRoute = nil
-        if appUnlocked && !decoyMode { requestTab(tab) }
+        if appUnlocked && !decoyMode { requestRoute(r) }
     }
     /// 293/951 Spotlight 结果 → 既有落点。两条路都是**别人用过的**口:
     /// 锁走 `kf://device?mac=` (与深链/小组件同一个 handleDeepLink)，
@@ -162,7 +162,7 @@ final class AppState: ObservableObject {
         guard let t = SpotlightKit.credentialTarget(for: id) else { return }
         pendingCredNav = t.nav
         pendingCredNavMac = t.mac
-        if appUnlocked && !decoyMode { requestTab(1) } else { pendingRoute = 1 }
+        if appUnlocked && !decoyMode { requestRoute(.credentials) } else { pendingRoute = .credentials }
     }
     // ---------- 377 访客通道: 受限 Tab 的唯一走位口 ----------
     /// 受控跳转都汇到这里: 目标是被收起来的 Tab 且本会话没重输过口令, 就把既有应用锁页拉起来而不是切过去。
@@ -203,7 +203,8 @@ final class AppState: ObservableObject {
     }
     /// 关闭当前域，回到该变体的首屏。等价于 legacy 的"停在根 Tab"。
     func closeRoute() { variantDomain = nil }
-    /// 兼容适配器：全仓还有 40 处 `requestTab(<字面量>)`，逐个换之前先让它们走同一个漏斗。
+    /// 兼容适配器：2026-10-16 起全仓**代码里**已无 `requestTab(<字面量>)`（只剩注释引述），
+    /// 仍在用的只有从深链序号 / List 选中集派生的动态形式；两者都汇到同一个漏斗。
     /// 越界序号 (历史脏值 / 以后加 Tab 忘了改) 直接丢弃而不是崩溃，也不静默切到别的页。
     func requestTab(_ t: Int) {
         guard let r = Route.from(tab: t) else { return }
@@ -235,7 +236,7 @@ final class AppState: ObservableObject {
         case 1, 2:
             shakePanel = false
             let before = tabSelection
-            requestTab(3)
+            requestRoute(.settings)
             // 门禁拦下时没真到设置页, 不发回位票 (否则再摇一次会跳到没人去过的地方)
             shakeReturnTab = tabSelection == 3 ? before : nil
         case 0:
@@ -1239,28 +1240,28 @@ struct RootView: View {
             switch selected.first ?? -1 {
             case 0:
                 if app.current != nil {
-                    Button("打开迷你开锁面板") { app.requestTab(0); app.shakePanel = true }
+                    Button("打开迷你开锁面板") { app.requestRoute(.device); app.shakePanel = true }
                 }
                 Button("只看今天的记录") {
                     app.pendingRecordsDay = StatsKit.dayKey(Date())
-                    app.requestTab(2)
+                    app.requestRoute(.records)
                 }
             case 1:
-                Button("凭证回收站") { app.pendingCredPanel = "bin"; app.requestTab(1) }
-                Button("到期与整理建议") { app.pendingCredPanel = "expired"; app.requestTab(1) }
-                Button("待补拉队列") { app.pendingCredPanel = "queue"; app.requestTab(1) }
+                Button("凭证回收站") { app.pendingCredPanel = "bin"; app.requestRoute(.credentials) }
+                Button("到期与整理建议") { app.pendingCredPanel = "expired"; app.requestRoute(.credentials) }
+                Button("待补拉队列") { app.pendingCredPanel = "queue"; app.requestRoute(.credentials) }
             case 2:
                 Button("只看今天") {
                     app.pendingRecordsDay = StatsKit.dayKey(Date())
-                    app.requestTab(2)
+                    app.requestRoute(.records)
                 }
-                Button("回设备页开锁") { app.requestTab(0) }
+                Button("回设备页开锁") { app.requestRoute(.device) }
             default:
                 // 设置 (3) 与任何没预料到的值: 只给真存在的两条
                 if app.currentMac.isEmpty {
                     Button("打开这一页") { app.requestTab(selected.first ?? 0) }
                 } else {
-                    Button("这台锁的诊断") { app.pendingDiag = app.currentMac; app.requestTab(3) }
+                    Button("这台锁的诊断") { app.pendingDiag = app.currentMac; app.requestRoute(.settings) }
                     Button("打开这一页") { app.requestTab(selected.first ?? 0) }
                 }
             }
@@ -1278,7 +1279,7 @@ struct RootView: View {
                 if app.tabSelection != 0, !app.decoyMode {
                     Button {
                         DS.Haptics.tick.impactOccurred()
-                        app.requestTab(0)
+                        app.requestRoute(.device)
                     } label: {
                         Label("开锁", systemImage: "lock.open.fill")
                             .accessibilityLabel("到设备页开锁")
@@ -1508,7 +1509,7 @@ struct RootView: View {
             .foregroundStyle(DS.Palette.textSub)
             .padding(.horizontal, DS.Space.s)
             .padding(.vertical, DS.Space.xs)
-            .background(Capsule().fill(DS.Palette.surfaceAlt))
+            .variantPlate(DS.Palette.surfaceAlt, .capsule)
             .frame(maxWidth: .infinity, alignment: .trailing)
             .frame(minHeight: DS.Hit.min)
         }
@@ -1527,7 +1528,7 @@ struct RootView: View {
                 // 2026-10-15 走查 §4.3: 与 NoticeBudget 那条同病 —— 按钮说"去诊断", 原来只把人放到
                 // 设置页根上。带落点名, 由设置页直接开诊断面。
                 app.pendingSettingsFocus = "diag"
-                app.requestTab(3)
+                app.requestRoute(.settings)
             }   // 377: 访客通道开着时先复核, 不白切
                 .font(.caption.weight(.medium))
         }
@@ -1568,7 +1569,7 @@ struct RootView: View {
             } else {
                 Button("回凭证页") {
                     ClipboardCare.dismissSuggestion()
-                    app.requestTab(1)   // 377: 访客通道开着时这条快捷条同样不能白切进去
+                    app.requestRoute(.credentials)   // 377: 访客通道开着时这条快捷条同样不能白切进去
                     withAnimation(DS.Motion.standard) { app.pasteSuggestion = nil }
                 }
             }

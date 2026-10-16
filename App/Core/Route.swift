@@ -4,7 +4,8 @@ import Foundation
 // Route —— 目的地身份，取代"裸整数 Tab 号" (2026-10-16, CORE.md 的 C1 批)
 // ------------------------------------------------------------
 // 为什么现在必须做：App 里并存两套完整界面之后，Tab 号这个概念**只在 legacy 里存在**。
-// 而全仓有 40 处 `requestTab(<字面量>)` 与 74 处 `tabSelection`，其中三处已经被
+// 本文件落地时全仓还有 40 处 `requestTab(<字面量>)` 与 74 处 `tabSelection`；前者已于
+// 2026-10-16 全部改成 `requestRoute`（uicoverage 检查六守着不许回潮），其中三处曾被
 // tools/sheetcover.js 抓到实证缺陷：`RecordsView` 被新变体用 sheet 端出来之后，
 // 它内部的 `requestTab(1)` / `tabSelection = 0` 会去切一个不存在的 Tab，而 sheet 还盖在上面。
 //

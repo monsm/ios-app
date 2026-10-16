@@ -50,7 +50,7 @@ struct MaintenanceView: View {
             environmentSection     // 1024/1026
         }
         .navigationTitle("维护与保养")
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
         .onAppear { if !loaded { loaded = true; reload() } }
         // 2026-10-15 走查 §7.4-3: `care` 是 @State 快照、只在上面那一句里读一次，而同一页的 `mac` /
@@ -393,7 +393,7 @@ struct CareChecklistView: View {
                 }
             }
             .navigationTitle("锁体保养")
-            .scrollContentBackground(.hidden)
+            .variantList()
             .dsScreenBackground()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("取消") { dismiss() } } }
         }
@@ -494,7 +494,7 @@ struct BatterySwapGuideView: View {
             }
         }
         .navigationTitle("换电指引")
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
     }
 
@@ -555,7 +555,7 @@ struct MaintSettingsView: View {
             }
         }
         .navigationTitle("维护提醒")
-        .scrollContentBackground(.hidden)
+        .variantList()
         .dsScreenBackground()
     }
 }
