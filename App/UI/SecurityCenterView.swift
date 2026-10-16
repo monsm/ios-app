@@ -133,13 +133,12 @@ func setGuestChannel(_ on: Bool, app: AppState) {
 struct SecurityWatermark: View {
     var seed: String
     /// 水印是画在 `Canvas` 里的 `Text`：`GraphicsContext.draw` 收 `Text`，**不收 `some View`**，
-    /// 所以这里不能写 `.vkFont(...)`（它返回的是 `some View`）。变体差因此改取排版语法的
-    /// `Font` 结果——`VKTypography.font(...)` 与 `.vkFont` 是**同一个实现处**，不是第二份变体差。
-    @Environment(\.uiVariant) private var variant
+    /// 所以这里不能写 `.vkFont(...)`（它返回的是 `some View`），改取排版语法的
+    /// `Font` 结果——`VKTypography.font(...)` 与 `.vkFont` 是**同一个实现处**。
     var body: some View {
         Canvas { ctx, size in
             let tile: CGFloat = 120
-            let stampFont = VKTypography.font(.caption2, weight: nil, variant: variant)
+            let stampFont = VKTypography.font(.caption2, weight: nil)
             let stamp = seed.isEmpty ? "离线锁管家 \(Date().formatted(.dateTime.year().month().day()))" : seed
             var row = 0
             var y: CGFloat = -tile / 3

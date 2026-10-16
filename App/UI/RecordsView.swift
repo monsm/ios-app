@@ -1996,10 +1996,8 @@ struct RecordsView: View {
                     app.pendingCredNav = r.credKey
                     app.pendingCredNavMac = r.rowMac.isEmpty ? mac : r.rowMac
                     app.requestRoute(.credentials)   // 2026-10-14 走查: 原直写 tabSelection, 访客态绕过 377 门禁
-                    // 收摊口径：这一页在 core/gauge 变体下是被域浮层端出来的，而 requestTab 现在走
-                    // requestRoute 这个唯一漏斗 —— 它换的是**浮层内容本身** (AppState.variantDomain)，
-                    // 凭证页直接替换掉记录页，不存在"切走了但上一层还压着"。
-                    // legacy 下本页是 Tab 根，根本没有 sheet 盖着。两种情形都不需要 dismiss()。
+                    // 收摊口径：换页一律走 requestRoute 这个唯一漏斗（先过访客闸再切 Tab），
+                    // 而本页是 Tab 根、没有 sheet 盖着，所以这里不需要 dismiss()。
                 }
                 .tint(DS.Palette.warn)
             }
@@ -2040,10 +2038,8 @@ struct RecordsView: View {
                     app.pendingCredNav = r.credKey
                     app.pendingCredNavMac = r.rowMac.isEmpty ? mac : r.rowMac
                     app.requestRoute(.credentials)   // 2026-10-14 走查: 原直写 tabSelection, 访客态绕过 377 门禁
-                    // 收摊口径：这一页在 core/gauge 变体下是被域浮层端出来的，而 requestTab 现在走
-                    // requestRoute 这个唯一漏斗 —— 它换的是**浮层内容本身** (AppState.variantDomain)，
-                    // 凭证页直接替换掉记录页，不存在"切走了但上一层还压着"。
-                    // legacy 下本页是 Tab 根，根本没有 sheet 盖着。两种情形都不需要 dismiss()。
+                    // 收摊口径：换页一律走 requestRoute 这个唯一漏斗（先过访客闸再切 Tab），
+                    // 而本页是 Tab 根、没有 sheet 盖着，所以这里不需要 dismiss()。
                     app.showToast("已定位到来源凭证")   // 577 已定位到来源凭证
                 } label: {
                     Label("定位来源凭证", systemImage: "key.horizontal")   // 577 定位来源凭证

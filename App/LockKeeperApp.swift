@@ -102,10 +102,6 @@ final class AppState: ObservableObject {
     @Published var toast: String?
     // 主题键的镜像: 变更时驱动 RootView 重建, 让配色立即生效
     @Published var themeSeed: String = DB.store.getString("kf_theme")
-    /// 2026-10-16 界面变体的内存镜像。**默认 .legacy = 现行四标签，一行行为都不改。**
-    /// 和 themeSeed 同构：存储里那份是唯一真源，这一位只是让视图重算 ——
-    /// 所以 setUIVariant 必须同时写两处，且 reloadAppearance() 要回来重取（备份恢复那条病灶）。
-    @Published var uiVariant: UIVariant = UIVariant.current
     /// 外观种子 (包16): 主题/品牌色/密度任一变更 +1, RootView 以 .id 重建全树实现即时换肤
     @Published var appearanceSeed = 0
     /// 2026-10-14: 行为类偏好 (开锁怎么开/什么动静) 的轻量变更信号 —— 见 setUnlockOption 注释。
@@ -168,41 +164,15 @@ final class AppState: ObservableObject {
     /// 受控跳转都汇到这里: 目标是被收起来的 Tab 且本会话没重输过口令, 就把既有应用锁页拉起来而不是切过去。
     /// 深链、粘贴条的"回凭证页"、自检黄条的"去诊断"这些编程式跳转原本直接写 tabSelection,
     /// 不并到这条口上就会留成绕过访客限制的侧门。
-    /// 2026-10-16 C1: 新变体下"当前在哪个域"；**nil = 回到首屏**。legacy 不用它（它用 tabSelection）。
-    ///
-    /// 为什么是"域本身"而不是"再叠一张 sheet"：
-    ///   另开一张 sheet 端出 RecordsView，而 RecordsView 内部有 `requestTab(1)` 这类换页动作 ——
-    ///   新变体没有 Tab，它切不动，而那张 sheet 还盖着。tools/sheetcover.js 抓到的正是这个。
-    ///   把 sheet 的**内容**绑到这个值上，换域就是换内容：不存在"切走了但层还压着"这种状态。
-    ///   这也和原型一致 —— 点另一个光点，浮层里换人，而不是浮层上再叠浮层。
-    @Published var variantDomain: Route?
     /// 换页的**唯一漏斗**。377 访客闸也只在这里判一次。
     func requestRoute(_ r: Route) {
-        if uiVariant == .legacy {
-            // 现行行为逐字不变：受限区先过闸，不受限直接切 Tab。
-            guard guestAreaLocked, Self.guestBlockedTabs.contains(r.tabIndex) else {
-                tabSelection = r.tabIndex; return
-            }
-            guestGateTarget = r.tabIndex
-            showGuestGate = true
-            return
+        // 现行行为逐字不变：受限区先过闸，不受限直接切 Tab。
+        guard guestAreaLocked, Self.guestBlockedTabs.contains(r.tabIndex) else {
+            tabSelection = r.tabIndex; return
         }
-        // 新变体：访客受限集同样生效 —— 判据来自 Route.guestBlocked，
-        // 不再依赖"第几个 Tab"。漏掉这一段就是 CORE.md §7.1 说的静默失守。
-        if guestAreaLocked, r.guestBlocked {
-            guestGateTarget = r.tabIndex
-            showGuestGate = true
-            return
-        }
-        // 新变体里"设备"就是首屏本身，不是一张要端出来的浮层。
-        // 所以 .device 的语义是"收起当前域、回到盘面/锁核"，而不是"呈现 DeviceHomeView"。
-        // 少了这一条，从"全部页面"点设备就会把 DeviceHomeView 塞进 sheet —— 它内部有
-        // requestTab 类换页动作，tools/sheetcover.js 会立刻抓到"被 sheet 盖住时换 Tab"。
-        if r == .device { variantDomain = nil; return }
-        variantDomain = r
+        guestGateTarget = r.tabIndex
+        showGuestGate = true
     }
-    /// 关闭当前域，回到该变体的首屏。等价于 legacy 的"停在根 Tab"。
-    func closeRoute() { variantDomain = nil }
     /// 兼容适配器：2026-10-16 起全仓**代码里**已无 `requestTab(<字面量>)`（只剩注释引述），
     /// 仍在用的只有从深链序号 / List 选中集派生的动态形式；两者都汇到同一个漏斗。
     /// 越界序号 (历史脏值 / 以后加 Tab 忘了改) 直接丢弃而不是崩溃，也不静默切到别的页。
@@ -716,17 +686,6 @@ final class AppState: ObservableObject {
     func setAccent(_ key: String) {
         applyAppearance { DB.store.set("kf_accent", key) }
     }
-    /// 2026-10-16 切换界面变体。**必须走 applyAppearance 这条重建全树通道。**
-    /// 不走会怎样：变体是在 rootGroup 里分叉的，只改内存值不换身份 ⇒ 已挂载的旧根视图
-    /// 带着自己的 @State 活着 = "按了没反应、重进 App 才变"（本仓最常见的那类缺陷，
-    /// themeSeed / accent / density 全都为它单独修过一次）。
-    func setUIVariant(_ v: UIVariant) {
-        applyAppearance {
-            UIVariant.write(v)
-            uiVariant = v
-        }
-        showToast(v.isExperimental ? v.note + " —— " + v.unfinished : "已切回现行界面")
-    }
     /// 布局密度: ""(标准)/compact/relaxed
     func setDensity(_ key: String) {
         applyAppearance { DB.store.set("kf_density", key) }
@@ -825,9 +784,6 @@ final class AppState: ObservableObject {
     /// 要等冷启动才生效 (那就是"恢复了但看着没恢复"的那类投诉)。
     func reloadAppearance() {
         themeSeed = DB.store.getString("kf_theme")
-        // 2026-10-16: kf_ui_variant 同属"落在存储里、由 UI 层镜像"的一档。
-        // 漏掉这一行的后果是"从备份恢复后界面还是旧变体"，与上面那段注释里同一类投诉。
-        uiVariant = UIVariant.current
         applyAppearance {}
     }
     /// 905/1047 快捷格池子或"常用排前"变了：只需要重建一次树让新次序生效，
@@ -1386,14 +1342,7 @@ struct RootView: View {
                 // 390: 伪装口令进来的会话只渲染空壳, 主 TabView 与其 .task(onLaunch/回连) 都不执行
                 DecoyShellView()
             } else if app.appUnlocked {
-                // 2026-10-16 界面变体分叉。**只在这一处**分。
-                // 引导 / 伪装空壳 / 应用锁三条形态与变体无关，不许各复制一份进变体分支 ——
-                // 复制一份就是"同一个门禁算两次"，少改一处就变成某变体下伪装码或应用锁失效。
-                if app.uiVariant == .legacy {
-                    mainTabsChrome
-                } else {
-                    VariantRootView()
-                }
+                mainTabsChrome
             } else {
                 AppLockView()
                     // 解锁的"穿越感": 门禁界面轻微放大溶解, 主界面从后面浮现
@@ -1421,10 +1370,6 @@ struct RootView: View {
         // 显式字重的文本 (凭证名/开关标签) 才跟着加粗。关档时给 .regular 而不是留空:
         // 两档都显式, 不依赖系统默认推断 (LegibilityWeight.bold 的官方语义就是 "force Accessibility Bold")。
         .environment(\.legibilityWeight, AXFlags.boldText ? .bold : .regular)
-        // 2026-10-16 界面变体进环境。**注入点只有这一处**，两棵树共用：
-        // legacy 也显式写自己的值，不留空 —— 字体的调用点有 1700+ 处、绝大多数拿不到 AppState，
-        // 逐处传 VK(variant:) 既改不动也每处一次存储读取（理由见 UIVariant.swift 的 UIVariantKey）。
-        .environment(\.uiVariant, app.uiVariant)
         .animation(DS.Motion.soft, value: app.appUnlocked)
         // 378 常驻水印: 全局对角重复层 (安全中心页内那份保留不动, 那里是设置项自己的预览)。
         // 读一下 tick 使开关拨动后整层重算; hitTesting/朗读屏蔽在 SecurityWatermark 内部已带。
@@ -2124,7 +2069,7 @@ struct Card<Content: View>: View {
         // `.legacy` 分支是原来这段 body 逐字搬过去的，见 VariantGrammar.swift 的 VK.card。
         // 传 tintWash 而不是 tint 本体：0.14 这个叠底浓度是"玻璃时代"定下来的，
         // 它的理由写在下面 tintWash 的注释里，两套新界面各自决定怎么用这个语义色。
-        VK(variant: UIVariant.current).card(tint: tint == nil ? nil : tintWash) { content }
+        VK().card(tint: tint == nil ? nil : tintWash) { content }
     }
 }
 struct SectionTitle: View {
@@ -2133,7 +2078,7 @@ struct SectionTitle: View {
     var body: some View {
         // 2026-10-16: 形状交给当前变体决定 (VK.sectionTitle)，21 处调用一次跟着两套走。
         // legacy 分支是这里原来的实现逐字搬过去的，见 VariantGrammar.swift。
-        VK(variant: UIVariant.current).sectionTitle(text: text, count: count)
+        VK().sectionTitle(text: text, count: count)
     }
 }
 

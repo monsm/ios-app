@@ -335,39 +335,7 @@ if (iconHits === 0) {
 // ---------- 求值 ----------
 let failed = 0;
 const rows = [];
-// F. 变体色板 (2026-10-16 从 VariantRoots.swift 搬进 Palette): 「一枚锁核」与「近场仪表」。
-// 这两套界面的底色是它们自己的（不再是 surfaceBase/canvasBase），所以正文与读数必须在**它们自己的场底**上重算一遍。
-// 阀值取自 WCAG 2.1，不自造：正文/读数 4.5:1，非文本与大号字 3.0:1。
-// 渐变暗端按 B 节已有先例（white on heroB）同样按 4.5 量 —— 主按钮文字会落在那一端上。
-for (const mode of ['light', 'dark']) {
-  push(mode, 'coreInk', 'coreCanvas', 4.5, '锁核: 正文在自己的场底上', base.coreInk[mode], base.coreCanvas[mode]);
-  push(mode, 'text', 'coreCanvas', 4.5, '锁核: 通用正文在场底上', base.text[mode], base.coreCanvas[mode]);
-  push(mode, 'textSub', 'coreCanvas', 4.5, '锁核: 次级文本在场底上', base.textSub[mode], base.coreCanvas[mode]);
-  push(mode, 'coreA', 'coreCanvas', 3.0, '锁核: 极光非文本元素', base.coreA[mode], base.coreCanvas[mode]);
-  push(mode, 'coreB', 'coreCanvas', 3.0, '锁核: 青色极光非文本元素', base.coreB[mode], base.coreCanvas[mode]);
 
-  push(mode, 'text', 'gaugeCanvas', 4.5, '仪表: 通用正文在盘面底上', base.text[mode], base.gaugeCanvas[mode]);
-  push(mode, 'textSub', 'gaugeCanvas', 4.5, '仪表: 次级文本在盘面底上', base.textSub[mode], base.gaugeCanvas[mode]);
-  push(mode, 'textSub', 'gaugeBezel', 4.5, '仪表: 次级文本在凹槽窗格里', base.textSub[mode], base.gaugeBezel[mode]);
-  push(mode, 'gaugeAmber', 'gaugeCanvas', 4.5, '仪表: 磷光读数在盘面底上', base.gaugeAmber[mode], base.gaugeCanvas[mode]);
-  push(mode, 'gaugeAmber', 'gaugeBezel', 4.5, '仪表: 磷光读数在凹槽里', base.gaugeAmber[mode], base.gaugeBezel[mode]);
-  push(mode, 'gaugeOnAmber', 'gaugeAmber', 4.5, '仪表: 主按钮文字在琥珀渐变亮端', base.gaugeOnAmber[mode], base.gaugeAmber[mode]);
-  push(mode, 'gaugeOnAmber', 'gaugeDeep', 4.5, '仪表: 主按钮文字在琥珀渐变暗端', base.gaugeOnAmber[mode], base.gaugeDeep[mode]);
-}
-
-// G. 开关的形状 (2026-10-16 新增): core / gauge 的开关是**自绘控件**, 没有系统开关那对轨道/滑钮。
-//    非文本对比度按 WCAG 2.1 的 1.4.11 取 3.0:1 —— 控件要能被"看出来"才算可用。
-//    OFF 档一开始用的是 hairline, 浅档实测 **1.20:1**: 一根几乎看不见的线上挂一个几乎看不见的点,
-//    连"左还是右"都读不出来。这是**先加尺子**才看见的一条真缺陷，已改成 textSub（≥4.96:1）。
-//    gauge 凹槽的**填充**与盘面只差 1.14:1 —— 那是"面不是控件"，故意不追 3:1；
-//    控件的边界由它的 0.7pt textSub 描边承担（对盘面 5.63:1）。这条口径写在这里，不是事后补的白话。
-for (const mode of ['light', 'dark']) {
-  push(mode, 'coreA', 'coreCanvas', 3.0, '开关(core) ON: 线与点染主色', base.coreA[mode], base.coreCanvas[mode]);
-  push(mode, 'textSub', 'coreCanvas', 3.0, '开关(core) OFF: 线/点要看得见', base.textSub[mode], base.coreCanvas[mode]);
-  push(mode, 'gaugeAmber', 'gaugeBezel', 3.0, '开关(gauge) ON: 滑臂在凹槽里', base.gaugeAmber[mode], base.gaugeBezel[mode]);
-  push(mode, 'textSub', 'gaugeBezel', 3.0, '开关(gauge) OFF: 滑臂在凹槽里', base.textSub[mode], base.gaugeBezel[mode]);
-  push(mode, 'textSub', 'gaugeCanvas', 3.0, '开关(gauge): 凹槽描边对盘面', base.textSub[mode], base.gaugeCanvas[mode]);
-}
 
 for (const a of ASSERTIONS) {
   const r = contrast(a.fgHex, a.bgHex);

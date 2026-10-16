@@ -289,7 +289,7 @@ enum DS {
         /// 召唤锁核的位移弹簧（跟手后的回位与吸附）。
         /// 放在令牌层而不是写在视图里，只有一个理由：`calm` 档（系统减弱动态 / 低电量）
         /// 必须能把它压成直落 —— 动效策略**只有一个读点**，写在视图里就等于把降级规则实现第二遍。
-        /// 数值取自 `design-system/aurora-lock/CORE.md` §4 那张表：response 0.35 / damping 1.0
+        /// 数值：response 0.35 / damping 1.0（与 Apple 判据同向）
         /// （临界阻尼、不过冲）；`calm` 档不给过冲，换成直落。
         static var summon: Animation {
             switch tier {
@@ -361,25 +361,6 @@ enum DS {
     }
 
     enum Palette {
-        // ---------- 变体专属色板 (2026-10-16 从 App/UI/VariantRoots.swift 搬来) ----------
-        // 搬进来的唯一理由就是让 tools/contrast.js 解析得到（它只扫本文件）。
-        // 搬之前这两套界面的底色/强调色**不在任何断言覆盖内** ——
-        // 那就是「看着没问题」[与]「量过没问题」的差别。
-        static let gaugeCanvas  = Color.adaptive(0xF3EEE5, 0x0B0A08)   // 盘面底
-        static let gaugeBezel   = Color.adaptive(0xE7E0D3, 0x17150F)   // 凹槽
-        static let gaugeBezelHi = Color.adaptive(0xFBF8F1, 0x2A2418)   // 凹槽顶亮边
-        static let gaugeAmber   = Color.adaptive(0x8A4B0E, 0xF2A73B)   // 磷光读数
-        static let gaugeDeep    = Color.adaptive(0x6B3907, 0xB4671A)   // 琥珀深端（渐变用）
-        // 2026-10-16: 深档从 0x150E03 改成纯黑。原因不是审美 —— 是 tools/contrast.js 的 F 节量出来的：
-        //   暖黑 (0x150E03) 压在琥珀渐变**暗端** (0x150E03 对 gaugeDeep 0xB4671A) 只有 **4.47:1**，
-        //   差 0.03 没过 WCAG AA 4.5 —— 而主按钮文字是居中排版，行高会落在渐变下半段上。
-        //   改纯黑后 4.90:1（已复算）。这是这条断言抓到的第一处真实缺陷，不是把阈值调低凑绿的。
-        //   若将来要保留暖黑，另一条路是把 gaugeDeep 深档提亮到 L ≥ 0.2185（同样要先量再改）。
-        static let gaugeOnAmber = Color.adaptive(0xFFF8EC, 0x000000)   // 琥珀填充上的前景（浅档白字/深档墨字）
-        static let coreCanvas   = Color.adaptive(0xEDEFF5, 0x02040A)
-        static let coreInk      = Color.adaptive(0x0D1626, 0xF2F6FB)
-        static let coreA        = Color.adaptive(0x4338CA, 0xA5B4FC)
-        static let coreB        = Color.adaptive(0x0E7490, 0x22D3EE)
         // ---------- 机检基础令牌 (tools/contrast.js 解析 static let) ----------
         static let canvasBase  = Color.adaptive(0xF2F4F9, 0x070B12)   // 页面底 (渐变画布的深端基调)
         static let surfaceBase = Color.adaptive(0xFFFFFF, 0x151D29)   // 卡片
@@ -715,24 +696,12 @@ extension View {
         //  所以它是对的 —— 差别就在"是不是对 self 调修饰符"。)
         // 正确写法: 把渐变放进 .background, 内容留在前景。
         //
-        // 2026-10-16 界面变体：底色由当前变体决定，全仓 100 处调用一次跟着两套走。
-        // ⚠ 上面那条"丢掉 self"的事故就发生在这个函数上，所以这里改动只加一层分支，
-        //   legacy 分支逐字保留原样；并且**三档降级对三个变体一视同仁** ——
-        //   新变体的场同样是色块，AMOLED / 智能反转 / 降透明下照样必须退回纯色，
-        //   不然就是"两套新界面把 226/863/AMOLED 这三道闸各开了一半"。
+        // 2026-10-16 晚：两套新界面（「一枚锁核」「近场仪表」）已删，
+        // 这里回到唯一那套底色 —— 与 226/863/AMOLED 三条降级纪律逐字一致。
         let flat = DS.Appearance.isAMOLED || AXFlags.invertColors || AXFlags.reduceTransparency
         return self.background {
-            switch UIVariant.current {
-            case .legacy:
-                if flat { DS.Gradient.screen.ignoresSafeArea() }
-                else { DS.Gradient.screenMesh.ignoresSafeArea() }
-            case .core:
-                if flat { DS.Palette.coreCanvas.ignoresSafeArea() }
-                else { CoreAuroraBackground() }
-            case .gauge:
-                if flat { DS.Palette.gaugeCanvas.ignoresSafeArea() }
-                else { GaugeLampBackground() }
-            }
+            if flat { DS.Gradient.screen.ignoresSafeArea() }
+            else { DS.Gradient.screenMesh.ignoresSafeArea() }
         }
     }
 }
@@ -823,10 +792,8 @@ struct StatusPill: View {
     var tone: ToneColor = .neutral
 
     var body: some View {
-        // 2026-10-16: 形状交给当前变体决定 (VK.statusPill)，29 处调用一次跟着两套走。
-        // legacy 分支是这里原来的实现逐字搬过去的；"颜色不作为唯一信息载体"那条纪律
-        // 在三个分支里都靠保留图标形状来兑现。见 VariantGrammar.swift。
-        VK(variant: UIVariant.current).statusPill(text: text, systemImage: systemImage, tone: tone.color)
+        // 2026-10-16 晚：变体删掉后只有一套形状（见 VariantGrammar.swift 的 statusPill）。
+        VK().statusPill(text: text, systemImage: systemImage, tone: tone.color)
     }
 }
 

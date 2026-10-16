@@ -177,7 +177,7 @@ struct SudoTicket {
 }
 
 /// 安全中心五枚开关的唯一判据口。刻意**不加 @MainActor**:
-/// 判据口要能被界面、逻辑层 (DestroyKit) 与仪表盘那种静态上下文一律读到,
+/// 判据口要能被界面、逻辑层 (DestroyKit) 与静态上下文一律读到,
 /// 一旦隔离到某个 actor, 每个调用点就得为边界绕路, 绕着绕着就又写回 `DB.store.getBool` 去了。
 /// 失败留痕 (389/392 那条通道是 @MainActor 的 LockGuard) 因此放在界面侧那一步做。
 enum SecurityPolicy {

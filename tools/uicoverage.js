@@ -1,8 +1,11 @@
 #!/usr/bin/env node
-// 界面变体覆盖闸门 — node tools/uicoverage.js [--verbose]
+// 界面覆盖闸门 — node tools/uicoverage.js [--verbose]
 //
-// 需求：App 内可切换两套完整 UIUX，各自**一致**、各自**完整**。
-// 这一支把那两个词变成可判定的数：
+// 需求：界面**一致**、**完整** —— 每个目的地都挂在同一条通路与同一套语法上。
+// 这一支把它变成可判定的数：
+//
+// （原「检查三 · 语法层三 case 穷尽性」随界面变体机制一并退休：现在只有一套界面，没有可穷尽的变体；
+//   闸门号不再复用，留号是给历史注释一个落点。）
 //
 //   检查一 · 漂移 (判失败)
 //     App/Core/Destination.swift 是 `node tools/destmap.js --emit` 生成的。
@@ -14,11 +17,6 @@
 //     数 77 个目的地里有几个挂了 `.destined(.xxx)`。
 //     迁移期必然不满，所以只报线索；但它每轮都印在 CI 上，进度掉回去看得见。
 //     不满 100% 之前，"两套都完整"这句话不许出现在任何文档里。
-//
-//   检查三 · 语法层的穷尽性 (判失败)
-//     App/Core/VariantGrammar.swift 里每个方法都必须是 `switch variant` 且三 case 齐全。
-//     少一个 case 是编译错误，但少一个 **分支的实质内容**（写成 `return AnyView(EmptyView())`
-//     凑数）编译器不报 —— 这一条就是抓这个：某变体的语法件是空壳 ⇒ 判失败。
 //
 //   检查六 · 裸写 requestTab(<字面量>) (判失败)
 //   检查七 · 裸写 Toggle(...) (判失败) —— 开关的形状也必须过语法层
@@ -37,7 +35,6 @@ const { execFileSync } = require('child_process');
 
 const ENUM = path.join('App', 'Core', 'Destination.swift');
 const GRAMMAR = path.join('App', 'Core', 'VariantGrammar.swift');
-const VARIANTS = ['legacy', 'core', 'gauge'];
 
 function readSwiftFiles(dir, out) {
   out = out || [];
@@ -85,45 +82,6 @@ function seamCoverage(cases) {
   return hit;
 }
 
-// ---------- 检查三：语法层穷尽性 ----------
-// 空壳判定：某个 case 分支体里只有 EmptyView / 直接透传 self，视为"凑数没实现"。
-function grammarAudit() {
-  if (!fs.existsSync(GRAMMAR)) return ['缺 App/Core/VariantGrammar.swift'];
-  const src = fs.readFileSync(GRAMMAR, 'utf8');
-  const problems = [];
-  // ⚠ `[\s\S]*?` 会**跨过函数边界**：`func destined(...) -> some View {` 之后的下一个
-  // `-> AnyView {` 在别的函数上，于是检查三把它们的身体算到 `destined()` 名下 ——
-  // 2026-10-16 实测到的错名（失败信息指着 destined，其实是 variantPlate）。
-  // 参数表里不会有花括号（本文件的语法件只收 `() -> Content` 这类闭包类型），用 `[^{}]*` 卡住。
-  const methodRe = /func\s+(\w+)\s*\(([^{}]*)\)\s*->\s*AnyView\s*\{/g;
-  let m;
-  while ((m = methodRe.exec(src))) {
-    const name = m[1];
-    const start = m.index + m[0].length - 1;
-    let depth = 0, end = start;
-    for (let i = start; i < src.length; i++) {
-      if (src[i] === '{') depth++;
-      else if (src[i] === '}') { depth--; if (depth === 0) { end = i; break; } }
-    }
-    const body = src.slice(start, end + 1);
-    // 2026-10-16 补洞：原先只认字面的 `switch variant`，于是 `switch vk.variant`
-    // （View 扩展里的语法件只能这么写）会**静默逃过**这道穷尽性检查 —— 语法件越多，漏得越多。
-    // 判据收紧成"switch 后面跟一个以 variant 结尾的表达式"。
-    if (!/switch\s+[\w.]*variant\b/.test(body)) continue;      // 不按 variant 分叉的方法不查
-    for (const v of VARIANTS) {
-      const re = new RegExp(`case\\s+\\.${v}\\s*:([\\s\\S]*?)(?=case\\s+\\.|\\n\\s{8}\\})`);
-      const c = re.exec(body);
-      if (!c) { problems.push(`${name}(): 缺 .${v} 分支`); continue; }
-      const frag = c[1].replace(/\/\/[^\n]*/g, '').trim();
-      if (frag.length < 12 || /^(return\s+)?AnyView\(\s*EmptyView\(\)\s*\);?$/.test(frag)) {
-        problems.push(`${name}(): .${v} 分支是空壳 (${JSON.stringify(frag.slice(0, 40))}) —— 凑数不算实现`);
-      }
-    }
-  }
-  return problems;
-}
-
-// ---------- 自检：正控 + 反控 ----------
 function selfTest() {
   const dir = path.join('fixtures', 'uicoverage');
   fs.mkdirSync(dir, { recursive: true });
@@ -135,20 +93,6 @@ function selfTest() {
   // 反控 1：只在注释里出现 .destined(.beta) 的**不许**算覆盖（注释不是实现）
   fs.writeFileSync(path.join(dir, 'Neg.swift'),
     'import SwiftUI\nstruct BetaView: View {\n  var body: some View {\n    // .destined(.beta)\n    Text("b")\n  }\n}\n');
-  // 反控 2：语法层空壳必须被抓出来
-  fs.writeFileSync(path.join(dir, 'EmptyGrammar.swift'), [
-    'import SwiftUI',
-    'struct EmptyVK {',
-    '    func title(_ t: String) -> AnyView {',
-    '        switch variant {',
-    '        case .legacy: return AnyView(Text(t))',
-    '        case .core: return AnyView(Text(t))',
-    '        case .gauge: return AnyView(EmptyView())',
-    '        }',
-    '    }',
-    '}',
-    ''].join('\n'));
-
   const pos = /destined\(\.alpha\)/.test(fs.readFileSync(path.join(dir, 'Pos.swift'), 'utf8')
     .split('\n').filter((l) => !l.trim().startsWith('//')).join('\n'));
   if (!pos) problems.push('自检失败: 正控 .destined(.alpha) 没被认成覆盖');
@@ -157,10 +101,6 @@ function selfTest() {
     .filter((l) => !l.trim().startsWith('//'))
     .filter((l) => /\.destined\(\.beta\)/.test(l));
   if (negLines.length) problems.push('自检失败: 注释里的 .destined(.beta) 被当成了实现');
-
-  const gsrc = fs.readFileSync(path.join(dir, 'EmptyGrammar.swift'), 'utf8');
-  const shell = /case\s+\.gauge\s*:\s*return\s+AnyView\(\s*EmptyView\(\)\s*\)/.test(gsrc);
-  if (!shell) problems.push('自检失败: 造不出空壳样例，检查三的正控无从验证');
 
   // 正控 3：代码里的裸 requestTab(字面量) 必须被数出来 (检查六)
   fs.writeFileSync(path.join(dir, 'BareTabPos.swift'),
@@ -227,7 +167,7 @@ function selfTest() {
     '    // 历史写法: Text("a").font(.caption)',
     '    Text("b").vkFont(.caption)          // 原来写 .font(.caption)',
     '    Image(systemName: "lock").font(.system(size: DS.Icon.sm, weight: .medium))',
-    '    let gf = VKTypography.font(.caption2, weight: nil, variant: variant)',
+    '    let gf = VKTypography.font(.caption2, weight: nil)',
     '    ctx.draw(Text(stamp).font(gf), at: .zero)',
     '  }',
     '}',
@@ -304,7 +244,7 @@ function bareToggles() {
 // `{{ .font(...) }}` 一写就编译得过、CI 也全绿，而那时两套界面的这一行又长得一模一样。
 // 豁免三条，都是查过的：
 //   ① `App/Core/VariantGrammar.swift` —— 语法层自己就是"真字体"的实现处（同检查七对 Toggle 的豁免）；
-//   ② 图标尺寸 `.system(size: …)` / `DS.Icon` —— 刻意写死、不参与 Dynamic Type 也不跟变体换字重
+//   ② 图标尺寸 `.system(size: …)` / `DS.Icon` —— 刻意写死、不参与 Dynamic Type 也不换字重
 //      （`dynamictype` 闸门的既定口径）；
 //   ③ `Widget/` —— 它只编 Widget + Shared，**看不到 App/Core**，用它就是编译错误。
 //      （曾把这个 target 漏出豁免范围，已回退 —— 这条注释是那次事故的留痕。）
@@ -442,11 +382,6 @@ function main() {
     console.log('  ⚠ 覆盖率不满 100% 之前，任何文档都不许写"两套都完整"这句话。');
   }
 
-  const gp = grammarAudit();
-  console.log('');
-  if (gp.length) { console.log('检查三 · 语法层穷尽性:'); gp.forEach((x) => console.log('  FAIL  ' + x)); }
-  else console.log('检查三 · 语法层穷尽性: 每个按 variant 分叉的方法三 case 齐全且非空壳 → 通过');
-
   const bw = bareTabWrites();
   console.log('');
   if (bw.length) {
@@ -480,7 +415,7 @@ function main() {
   const bf = bareFonts();
   console.log('');
   if (bf.length) {
-    console.log(`检查八 · 裸写文本 .font(...): ${bf.length} 处 —— 行内排版只有 vkFont 一个入口，且它按变体分叉（字号/字重/字族）`);
+    console.log(`检查八 · 裸写文本 .font(...): ${bf.length} 处 —— 行内排版只有 vkFont 一个入口，且它统一接管字号/字重/字族`);
     bf.slice(0, 10).forEach((x) => console.log('  - ' + x));
     if (bf.length > 10) console.log(`  … 其余 ${bf.length - 10} 处`);
   } else {
@@ -499,9 +434,9 @@ function main() {
   const sp = selfTest();
   console.log('');
   if (sp.length) { sp.forEach((x) => console.log('!! ' + x)); }
-  else console.log('尺子自检: 正控 5 (真缝 + 空壳样例 + 裸 requestTab 字面量 + 裸 Toggle + 裸 .font 两条) / 反控 4 (注释里的缝 + 注释里的 requestTab + VariantToggle/chipToggle + 注释/vkFont/图标尺寸) → 通过');
+  else console.log('尺子自检: 正控 4 (真缝 + 裸 requestTab 字面量 + 裸 Toggle + 裸 .font 两条) / 反控 4 (注释里的缝 + 注释里的 requestTab + VariantToggle/chipToggle + 注释/vkFont/图标尺寸) → 通过');
 
-  const fail = drift.length > 0 || gp.length > 0 || sp.length > 0 || bw.length > 0 || br.length > 0 || bt.length > 0 || bf.length > 0 || bud.fail;
+  const fail = drift.length > 0 || sp.length > 0 || bw.length > 0 || br.length > 0 || bt.length > 0 || bf.length > 0 || bud.fail;
   console.log('');
   console.log(fail ? '结论: 判失败' : `结论: 通过 (覆盖 ${covered.length}/${cases.length}，迁移期不判失败)`);
   process.exit(fail ? 1 : 0);

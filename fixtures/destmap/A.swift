@@ -7,12 +7,10 @@ struct NavDestView: View { var body: some View { Text("n") } }
 struct PopoverView: View { var body: some View { Text("p") } }
 struct TabbedView: View { var body: some View { Text("t") } }
 struct BindingSheetView: View { var body: some View { Text("b") } }
-struct LayerPresentedView: View { var body: some View { Text("l") } }
 struct CommentOnlyView: View { var body: some View { Text("c") } }
 struct PropTabView: View { var body: some View { Text("pt") } }
 struct HostView: View {
   @State private var on = false
-  @State private var route = ""
   @ViewBuilder private var tabContentProp: some View { PropTabView() }
   var body: some View {
     TabView {
@@ -26,9 +24,6 @@ struct HostView: View {
       SheetPresentedView()        // 目的地 (sheet)
     }
     .fullScreenCover(isPresented: $on) { FullScreenView() }
-    .domainLayer(domain: route.isEmpty ? nil : "x", onClose: {}) { d in
-      LayerPresentedView()      // 目的地 (域浮层尾随闭包)
-    }
     .navigationDestination(for: String.self) { _ in NavDestView() }
     .popover(isPresented: $on) { PopoverView() }
     .background(

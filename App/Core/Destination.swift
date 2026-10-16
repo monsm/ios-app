@@ -3,8 +3,8 @@
 // 并核对 diff —— 少一条就是某套界面会缺一个页面而没人发现。
 import SwiftUI
 
-/// 一个目的地 = 一套界面变体必须能到达的一站。
-/// rawValue 是 View 类型名，供 tools/variantparity.js 与本台账对账。
+/// 一个目的地 = 界面里的一站（供闸门与台账对账）。
+/// rawValue 是 View 类型名，供 tools/uicoverage.js 与本台账对账。
 enum Destination: String, CaseIterable, Identifiable {
     case accessibility = "AccessibilityView"
     case achievements = "AchievementsView"
@@ -84,7 +84,4 @@ enum Destination: String, CaseIterable, Identifiable {
     case webDAVStudio = "WebDAVStudioView"
     case yearReport = "YearReportView"
     var id: String { rawValue }
-
-    /// 该目的地对应的现行视图类型名（两套变体在自绘完成前都先转发到它）。
-    var legacyTypeName: String { rawValue }
 }

@@ -28,11 +28,7 @@ const SRC = ['App', 'Widget'];
 //     .sheet(isPresented: Binding(get: { … }, set: { … })) { … }
 // 整条匹配失败 —— 该 sheet 端出来的目的地凭空从台账消失 (2026-10-16 实测掉过 CredentialsView /
 // RecordsView 两条，靠 tools/uicoverage.js 的漂移检查才发现)。参数表交给下面的解析器走。
-// 2026-10-16 加第 7 条通道 `domainLayer`：域浮层从系统 `.sheet` 改成了根层级自绘的一层玻璃
-// （理由：matchedGeometryEffect 跨不过 sheet 边界，而"同一枚锁核骑到浮层标题右侧"要求同一层级）。
-// **这条通道必须在这里登记**，否则那三张根页会从台账凭空消失、而自检照样报通过 ——
-// 本文件开头那段注释记的就是同一个失效模式（旧正则吃不下带括号的 sheet，实测掉过两条）。
-const PRESENT = /\.(sheet|fullScreenCover|navigationDestination|popover|domainLayer)\b/g;
+const PRESENT = /\.(sheet|fullScreenCover|navigationDestination|popover)\b/g;
 const LINK = /\bNavigationLink\b/g;
 const LINK_INLINE = /NavigationLink\s*\((?:value|title):[^;]*?\)\s*\{?\s*([A-Z][A-Za-z0-9_]*View)\s*\(/g;
 // Tab 的内容既可能是**直接实例化**（`Tab(...) { XxxView() }`），也可能是一个
@@ -250,13 +246,11 @@ function selfTest() {
     'struct PopoverView: View { var body: some View { Text("p") } }',
     'struct TabbedView: View { var body: some View { Text("t") } }',
     'struct BindingSheetView: View { var body: some View { Text("b") } }',
-    'struct LayerPresentedView: View { var body: some View { Text("l") } }',
     'struct CommentOnlyView: View { var body: some View { Text("c") } }',
     'struct PropTabView: View { var body: some View { Text("pt") } }',
     'struct HostView: View {',
     '  @State private var on = false',
-    '  @State private var route = ""',
-    '  @ViewBuilder private var tabContentProp: some View { PropTabView() }',
+      '  @ViewBuilder private var tabContentProp: some View { PropTabView() }',
     '  var body: some View {',
     '    TabView {',
     '      Tab("一", value: 1) { TabbedView() }',
@@ -273,11 +267,6 @@ function selfTest() {
     '      SheetPresentedView()        // 目的地 (sheet)',
     '    }',
     '    .fullScreenCover(isPresented: $on) { FullScreenView() }',
-    // 正控 8：第 7 条通道（域浮层）。它替掉了一个 `.sheet(item:)`，
-    // 所以必须有一条控件钉住"走这条通道的目的地也进台账"。
-    '    .domainLayer(domain: route.isEmpty ? nil : "x", onClose: {}) { d in',
-    '      LayerPresentedView()      // 目的地 (域浮层尾随闭包)',
-    '    }',
     '    .navigationDestination(for: String.self) { _ in NavDestView() }',
     '    .popover(isPresented: $on) { PopoverView() }',
     '    .background(',
@@ -301,7 +290,6 @@ function selfTest() {
   // 参数表里带花括号的那条 sheet 单独列一条正控：它曾经是**静默消失**的那一类。
   MUST.BindingSheetView = 'sheet(Binding 参数含括号)';
   // 第 7 条通道单独列一条正控：它替掉了一个 sheet，是"台账少三站"的最高危入口。
-  MUST.LayerPresentedView = 'domainLayer(域浮层尾随闭包)';
   // Tab 的"内容属性"写法单独列一条正控：四个 Tab 的根页全靠它才进得了台账。
   MUST.PropTabView = 'Tab(内容属性)';
   for (const v of Object.keys(MUST)) {
@@ -355,14 +343,11 @@ if (process.argv.includes('--emit')) {
     '// 并核对 diff —— 少一条就是某套界面会缺一个页面而没人发现。',
     'import SwiftUI',
     '',
-    '/// 一个目的地 = 一套界面变体必须能到达的一站。',
-    '/// rawValue 是 View 类型名，供 tools/variantparity.js 与本台账对账。',
+    '/// 一个目的地 = 界面里的一站（供闸门与台账对账）。',
+    '/// rawValue 是 View 类型名，供 tools/uicoverage.js 与本台账对账。',
     'enum Destination: String, CaseIterable, Identifiable {',
     rows.join('\n'),
     '    var id: String { rawValue }',
-    '',
-    '    /// 该目的地对应的现行视图类型名（两套变体在自绘完成前都先转发到它）。',
-    '    var legacyTypeName: String { rawValue }',
     '}',
     ''
   ].join('\n');
@@ -373,7 +358,7 @@ if (process.argv.includes('--emit')) {
 const st = selfTest();
 const problems = st.problems;
 console.log('');
-console.log(`目的地总数 = ${list.size || list.length}   (扫 ${files.length} 个 .swift，呈现通道 = sheet/fullScreenCover/navigationDestination/popover/NavigationLink/Tab/domainLayer)`);
+console.log(`目的地总数 = ${list.size || list.length}   (扫 ${files.length} 个 .swift，呈现通道 = sheet/fullScreenCover/navigationDestination/popover/NavigationLink/Tab)`);
 console.log(`判据形状: 每条命中带 文件:行 + 走的是哪条呈现通道；只被 compose 在 body 里的视图不计入。`);
 if (problems.length) {
   problems.forEach((p) => console.log('!! ' + p));
