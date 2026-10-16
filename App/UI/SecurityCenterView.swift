@@ -132,9 +132,14 @@ func setGuestChannel(_ on: Bool, app: AppState) {
 // ---------- 378 常驻水印层 (截图加扰降级案: 页面常驻, 半透明对角重复) ----------
 struct SecurityWatermark: View {
     var seed: String
+    /// 水印是画在 `Canvas` 里的 `Text`：`GraphicsContext.draw` 收 `Text`，**不收 `some View`**，
+    /// 所以这里不能写 `.vkFont(...)`（它返回的是 `some View`）。变体差因此改取排版语法的
+    /// `Font` 结果——`VKTypography.font(...)` 与 `.vkFont` 是**同一个实现处**，不是第二份变体差。
+    @Environment(\.uiVariant) private var variant
     var body: some View {
         Canvas { ctx, size in
             let tile: CGFloat = 120
+            let stampFont = VKTypography.font(.caption2, weight: nil, variant: variant)
             let stamp = seed.isEmpty ? "离线锁管家 \(Date().formatted(.dateTime.year().month().day()))" : seed
             var row = 0
             var y: CGFloat = -tile / 3
@@ -145,7 +150,7 @@ struct SecurityWatermark: View {
                     t.translateBy(x: x, y: y)
                     t.rotate(by: .degrees(-18))
                     t.opacity = 0.05   // 装饰层: 只留潜意识, 不破正文对比度 (颜色仍取 text 令牌的动态色)
-                    t.draw(Text(stamp).vkFont(.caption2).foregroundColor(DS.Palette.text), at: .zero)
+                    t.draw(Text(stamp).font(stampFont).foregroundColor(DS.Palette.text), at: .zero)
                     x += tile
                 }
                 y += tile / 1.6

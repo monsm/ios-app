@@ -425,14 +425,16 @@ struct VK {
     // MARK: - 控件
 
     func primaryButton(title: String, enabled: Bool, action: @escaping () -> Void) -> AnyView {
-        let shape: AnyView
+        // 形状要 `AnyShape` 而不是 `AnyView`：下面那一句是 `shape.fill(...)`，而 `fill` 长在
+        // `Shape` 上 —— `AnyView` 把那个能力擦掉了，编译期就红（CI run 115 抓到的正是这一处）。
+        let shape: AnyShape
         switch variant {
         case .legacy:
-            shape = AnyView(RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
+            shape = AnyShape(RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
         case .core:
-            shape = AnyView(Capsule())                      // 唯一的胶囊：主动作，不是容器
+            shape = AnyShape(Capsule())                      // 唯一的胶囊：主动作，不是容器
         case .gauge:
-            shape = AnyView(RoundedRectangle(cornerRadius: 15, style: .continuous))
+            shape = AnyShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
         }
         return AnyView(
             Button(action: action) {
@@ -601,6 +603,10 @@ enum PlateShape {
     case capsule    // 信息胶囊
     case tile       // 瓦片 (DS.Radius.tile)
     case control    // 控件 / 内嵌格 (DS.Radius.control)
+    // 图标角标 (DS.Space.s) —— 两处调用都在 CredentialStudio (fanoutRow / CredStudioEntryView)。
+    // 它下面的两张表**已各写了一份**这个分支：漏掉这个 case 时它们不是"多写了分支"，
+    // 而是编译不过（`type 'PlateShape' has no member 'iconBadge'`，CI run 115 抓到 6 处）。
+    case iconBadge
 
     /// legacy 逐字等于改造前那个形状（连 `.continuous` 与非 continuous 的差别一起复刻）。
     var legacy: AnyShape {
@@ -1092,14 +1098,17 @@ struct VariantToggleStyle: ToggleStyle {
         switch VK.current.variant {
         case .legacy:
             return AnyView(
-                Toggle(isOn: configuration.isOn) { configuration.label }
+                // `configuration.isOn` 是 **Bool**（`ToggleStyleConfiguration` 里那一枚是 `@Binding`
+                // 属性 ⇒ 取 `$isOn` 才是 `Binding<Bool>`）。CI run 115 在这三处报的是
+                // "cannot convert value 'isOn' of type 'Bool' to expected type 'Binding<Bool>', use wrapper instead"。
+                Toggle(isOn: configuration.$isOn) { configuration.label }
                     .toggleStyle(.switch))
         case .core:
-            return AnyView(VariantToggleFace(isOn: configuration.isOn,
+            return AnyView(VariantToggleFace(isOn: configuration.$isOn,
                                              label: AnyView(configuration.label),
                                              gauge: false))
         case .gauge:
-            return AnyView(VariantToggleFace(isOn: configuration.isOn,
+            return AnyView(VariantToggleFace(isOn: configuration.$isOn,
                                              label: AnyView(configuration.label),
                                              gauge: true))
         }
@@ -1165,14 +1174,22 @@ struct VKTypography: ViewModifier {
     @Environment(\.uiVariant) private var variant
 
     func body(content: Content) -> AnyView {
+        AnyView(content.font(VKTypography.font(base, weight: weight, variant: variant)))
+    }
+
+    /// 变体差**只有这一个实现处**。做成能单独取 `Font` 的静态函数，是因为 `Canvas` 里的
+    /// `draw(...)` 收的是 `Text`（不能是 `some View`，见 `SecurityWatermark` 的水印层）——
+    /// 那条路要的是"这一档字号配上这一档字重"的**结果**，而不是把变体差再写一遍
+    /// （写两遍必然漂移，本仓老病灶）。
+    static func font(_ base: Font, weight: Font.Weight?, variant: UIVariant) -> Font {
         switch variant {
         case .legacy:
             // 逐字复刻：原来的 `.font(X)` 与（如果有）`.weight(w)` 一个不少、一个不多。
-            return AnyView(weight.map { content.font(base.weight($0)) } ?? content.font(base))
+            return weight.map { base.weight($0) } ?? base
         case .core:
-            return AnyView(content.font(base.weight(VKTypography.down(weight ?? .regular))))
+            return base.weight(down(weight ?? .regular))
         case .gauge:
-            return AnyView(content.font(base.monospaced().weight(VKTypography.up(weight ?? .regular))))
+            return base.monospaced().weight(up(weight ?? .regular))
         }
     }
 

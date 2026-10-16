@@ -2093,7 +2093,10 @@ struct PressableButtonStyle: PrimitiveButtonStyle {
 /// iOS 上 surface/canvas 的明度差已经足够表达层级, 描边反而是重复劳动。
 /// 阴影在深色模式下纯黑不可见, 故改用极淡的提亮。
 /// `tint` 给"需要处理"的卡混入语义色底 (8%), 让异常自带色温而不靠描边。
-private extension Color {
+// 2026-10-16: 从 `private` 放开成 internal —— 第二个消费点在 App/Core/VariantGrammar.swift 的
+// `card()`（新语法层的主表面，同一句 `.shadow(color: .cardElevation, radius: 12, y: 4)`）。
+// **只此一处定义**是刻意的：另抄一份阴影色，两套变体迟早会在这一步上分家。
+extension Color {
     static var cardElevation: Color {
         Color(UIColor { tc in
             tc.userInterfaceStyle == .dark

@@ -605,7 +605,11 @@ struct MemberDetail360View: View {
     private var member: Member? { DB.member(memberID) }
 
     var body: some View { vkBody.destined(.memberDetail360) }
-    var vkBody: some View {
+    /// ⚠ `@ViewBuilder` 这一句不能省：顶层是 `if let / else` 两个**不同类型**的分支
+    /// （`List{…}` vs `EmptyState`）。它原先是 `body`，隐式带着协议给的 @ViewBuilder；
+    /// 改名成 `vkBody` 之后那份隐式就没了 —— CI run 115 报的 "branches have mismatching types"
+    /// 说的就是这件事。（其余 76 处 `vkBody` 是单表达式或两支同为 `AnyView` 的 if-表达式，不加也能编。）
+    @ViewBuilder var vkBody: some View {
         if let m = member {
             List {
                 if let line = MemberHub.weekSentence(m.id) {

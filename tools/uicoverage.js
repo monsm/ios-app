@@ -217,7 +217,9 @@ function selfTest() {
     '  }',
     '}',
     ''].join('\n'));
-  // 反控 5：注释里的 / 已过语法层的 / 图标尺寸的，**都不许**被算成裸写
+  // 反控 5：注释里的 / 已过语法层的 / 图标尺寸的 / **取语法层 Font 结果**的，都不许被算成裸写
+  // （最后一条是 2026-10-16 补的：`Canvas` 里 `draw` 收 `Text`，那一行不可能写 `.vkFont(...)`，
+  //   只能拿 `VKTypography.font(...)` 的结果 —— 字形仍出自同一个实现处，不算裸写。）
   fs.writeFileSync(path.join(dir, 'BareFontNeg.swift'), [
     'import SwiftUI',
     'struct BareFontNeg: View {',
@@ -225,6 +227,8 @@ function selfTest() {
     '    // 历史写法: Text("a").font(.caption)',
     '    Text("b").vkFont(.caption)          // 原来写 .font(.caption)',
     '    Image(systemName: "lock").font(.system(size: DS.Icon.sm, weight: .medium))',
+    '    let gf = VKTypography.font(.caption2, weight: nil, variant: variant)',
+    '    ctx.draw(Text(stamp).font(gf), at: .zero)',
     '  }',
     '}',
     ''].join('\n'));
@@ -306,11 +310,19 @@ function bareToggles() {
 //      （曾把这个 target 漏出豁免范围，已回退 —— 这条注释是那次事故的留痕。）
 function scanBareFont(text) {
   const hits = [];
+  // 豁免⑤ 的材料 (2026-10-16, run 115 打样): 本文件里 `let X = VKTypography.font(...)` 绑过的名字,\n  // 出现在 `.font(X)` 里就不算裸写 —— 字号/字重/字族仍出自同一个实现处。
+  // 为什么会需要它: `Canvas` 里 `GraphicsContext.draw` 收 `Text`、收不了 `some View`,
+  // 那一行写不了 `.vkFont(...)`(SecurityWatermark 是唯一一处)。
+  const grammarFonts = new Set([...text.matchAll(/let\s+(\w+)\s*=\s*VKTypography\.font\(/g)].map((m) => m[1]));
   text.split('\n').forEach((l, i) => {
     if (/^\s*\/\//.test(l)) return;          // 整行注释：历史引述（本仓注释里大量出现旧写法）
     const code = l.replace(/\/\/.*$/, '');   // 行尾注释剥掉再判
+    // 豁免④ (2026-10-16, run 115 打样): `VKTypography.font(...)` 是语法层**自己的取字入口**,
+    // 它出现在这一行 = 这一行走的是语法层, 不是调用点裸写。
+    if (/VKTypography\.font\(/.test(code)) return;
     const m = /\.font\(([^()]*(?:\([^()]*\)[^()]*)*)\)/.exec(code);
     if (!m) return;
+    if (grammarFonts.has(m[1].trim())) return;   // 见豁免⑤
     const arg = m[1].trim();
     if (arg.startsWith('size:') || arg.startsWith('.system(size:') || arg.indexOf('DS.Icon') >= 0) return;
     hits.push(i + 1);
