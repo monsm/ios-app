@@ -183,59 +183,11 @@ struct VK {
         return AnyView(Text(text).font(.system(.headline, design: .default).weight(.semibold)).foregroundStyle(ink))
     }
 
-    /// 分组小标签（大写加宽字距那一档）。
-    func eyebrow(_ text: String) -> AnyView {
-        AnyView(Text(text)
-            .font(.system(.caption2, design: .default).weight(.semibold))
-            .tracking(1.6)
-            .foregroundStyle(faint))
-    }
-
-    /// 大读数（读数的排版档）。
-    func metric(value: String, unit: String, source: String) -> AnyView {
-            return AnyView(
-        VStack(alignment: .leading, spacing: 2) {
-            HStack(alignment: .firstTextBaseline, spacing: 2) {
-                Text(value).font(.subheadline.weight(.semibold)).monospacedDigit()
-                Text(unit).font(.caption2).foregroundStyle(sub)
-            }
-            .foregroundStyle(ink)
-            Text(source).font(.system(.caption2, design: .default)).foregroundStyle(faint)
-        })
-    }
-
-    func rowTitle(_ text: String) -> AnyView {
-        AnyView(Text(text).font(.system(.body, design: .default).weight(.medium)).foregroundStyle(ink))
-    }
-
-    func rowSub(_ text: String) -> AnyView {
-        AnyView(Text(text).font(.system(.footnote, design: .default)).foregroundStyle(faint))
-    }
-
-    // MARK: - 控件
-
-    func primaryButton(title: String, enabled: Bool, action: @escaping () -> Void) -> AnyView {
-        // 形状要 `AnyShape` 而不是 `AnyView`：下面那一句是 `shape.fill(...)`，而 `fill` 长在
-        // `Shape` 上 —— `AnyView` 把那个能力擦掉了，编译期就红（CI run 115 抓到的正是这一处）。
-        let shape: AnyShape
-                shape = AnyShape(RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
-        return AnyView(
-            Button(action: action) {
-                Text(title)
-                    .font(.system(.body, design: .default).weight(.semibold))
-                    .tracking(0.4)
-                    .frame(maxWidth: .infinity).frame(height: 54)
-                    .background(shape.fill(enabled ? accent : DS.Palette.hairline))
-                    // 不许写 Color.white —— swiftlint 那条"写死纯白前景"的闸门抓的就是这个，
-                    // 而且它的名单是上限、只能减不能加。走主题表的 onAccent：
-                    // 浅档白字、深档墨字，且 contrast.js 已断言它对主按钮渐变两端 ≥4.5:1。
-                    .foregroundStyle(DS.Palette.themed("onAccent"))
-                    .opacity(enabled ? 1 : 0.45)
-            }
-            .buttonStyle(.plain)
-            .disabled(!enabled)
-        )
-    }
+    // 2026-10-17 清理: eyebrow / metric / rowTitle / rowSub / primaryButton 五件删除。
+    // 它们是两套实验界面还活着时为那两套写的排版件，界面与本文件的那批 switch 一并删掉之后，
+    // deadscan 报这五件"全库零引用"（含本文件内部）—— 现役界面走的是 vkFont + MetricTile +
+    // PrimaryActionStyle / BusyButton 那一套。留着一组没人叫的排版件只会让下一个改界面的人
+    // 在两条路里二选一，而其中一条早就没人维护了。
 }
 
 

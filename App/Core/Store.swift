@@ -596,6 +596,7 @@ enum DB {
         get(StatusSnapshot.self, "kf_snap_" + mac)?.at ?? 0
     }
     static func writeLogs(_ mac: String, _ logs: [LogEntry]) {
+        guard cacheWritable(mac) else { return }
         var cache = get(LogCache.self, "kf_logcache_" + mac) ?? LogCache(at: 0, logs: [])
         cache.at = Date().timeIntervalSince1970 * 1000
         var seen = Set<String>()
@@ -618,6 +619,7 @@ enum DB {
     /// 那是给"锁端只回增量"的抓取用的；归档要的是"把这几行从缓存里移走"，用 writeLogs 就等于
     /// 只写了归档侧、缓存里的旧行一条没少 —— "移入"变成"复制"，下一轮还会把同批再归档一遍。
     static func replaceLogs(_ mac: String, _ logs: [CachedLog]) {
+        guard cacheWritable(mac) else { return }
         var seen = Set<String>()
         var kept = [CachedLog]()
         for l in logs {
@@ -629,6 +631,19 @@ enum DB {
         }
         set(LogCache(at: Date().timeIntervalSince1970 * 1000, logs: kept), "kf_logcache_" + mac)
         HotCache.invalidate(mac)   // 220: 替换写入同属写入口, 一样作废
+    }
+
+    /// 日志缓存只为**还在台账里的锁**而写。为什么要在写入口拦一道: 删除设备会按族清掉 kf_logcache_<mac>,
+    /// 而任何在删锁之后又跑一遍的"改写日志"都会把它重新写回来 —— 于是体检里凭空多出一条
+    /// "已删门锁 … 的日志缓存残留" 的孤儿 (真机报告 2026-10-17: 演示数据的清除路径就踩在这一处)。
+    /// 首次配网的锁在写完钥匙串之后才可能拉日志 (pair 末步才 saveKeychain), 所以这道闸不会拦真实写入。
+    private static func cacheWritable(_ mac: String) -> Bool {
+        guard keychain(mac) != nil else {
+            // 已经存在的话顺手拿掉: 它就是孤儿本身, 留着只会让体检一直报。
+            store.remove("kf_logcache_" + mac)
+            return false
+        }
+        return true
     }
 
     // 配置记忆

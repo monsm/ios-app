@@ -533,8 +533,13 @@ enum DataHealth {
         var badJson = 0, emptyStale = 0
         for (k, v) in rep where k.hasPrefix("kf.") {
             if let d = v as? Data {
-                // jsonObject 会抛且返回非可选: 旧写法缺 try 又与 nil 比较
-                if (try? JSONSerialization.jsonObject(with: d, options: [])) == nil { badJson += 1 }
+                // jsonObject 会抛且返回非可选: 旧写法缺 try 又与 nil 比较。
+                // **必须带 .fragmentsAllowed** —— 写入侧 (Store.set / setCodable) 存的就是 JSON fragment:
+                // 顶层标量 (String/Bool/Int/Double) 编码后是 `true`/`1`/`"black"` 这种片段, 不带这个开关时
+                // jsonObject 一律报错 ⇒ 每一个标量键都被算成"写入被截断"。
+                // 真机报告 2026-10-17: 体检报"58 个数据键无法解析", 且按天递增 (19→24→49→52→54→58) ——
+                // 递增的不是损坏, 是用户当天新存的标量键。这是体检自己误报, 不是数据坏了。
+                if (try? JSONSerialization.jsonObject(with: d, options: [.fragmentsAllowed])) == nil { badJson += 1 }
             } else if let s = v as? String, s.isEmpty {
                 emptyStale += 1
             }

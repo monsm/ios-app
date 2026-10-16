@@ -87,6 +87,15 @@ enum DemoKit {
     }
     @MainActor
     static func clearDemoLogs() {
+        // 演示锁已经不在了 (clearAll 先 removeDevice, 再调本函数) ⇒ **不能**走 replaceLogs:
+        // 那条路会为一把不存在的锁重建一个空缓存, 于是体检里永远挂着
+        // "已删门锁 dea1b2 的日志缓存残留 (0 条)" (真机报告 2026-10-17 抓到 —— clearAll 的顺序就是成因)。
+        // 这种时候要的是把键彻底拿掉, 而不是写一份"空"进去。
+        guard DB.keychain(demoMac) != nil else {
+            DB.store.remove("kf_logcache_" + demoMac)
+            DB.store.remove(kDemoLogsActive)
+            return
+        }
         DB.replaceLogs(demoMac, DB.readLogs(demoMac).filter { !$0.typeName.hasPrefix("demo_") })
         DB.store.remove(kDemoLogsActive)
     }

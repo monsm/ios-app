@@ -173,7 +173,10 @@ final class LockService: ObservableObject {
         log("info", "刷新会话令牌 (cmd 01)")
         let f = try await request(ZKCmdBuilder.cmd01Session(), cmd: 0x01, needToken: false, retries: 3)
         guard let k = f.klvs.first(where: { $0.key == 0x02 }) else {
-            throw BLEErrorX.msg("01 响应无令牌")
+            // 配网期这条基本只有一个含义: 锁已退回不可配网态 (01 拿不到令牌 ⇒ 之后每一步令牌面命令都发不出去)。
+            // 与 05 被拒时同一取证口径: 留"回包形状"(只键与长度, 无值) + 该做什么, 免得现场只看到一句"无令牌"。
+            log("error", "01 会话令牌响应缺 KLV#02 · 回包 " + Self.klvShape(f))
+            throw BLEErrorX.msg("01 响应无令牌 (回包 \(Self.klvShape(f))): 配网期出现说明锁已不在重置/可配网状态, 请在门锁键盘上重置后立即重试")
         }
         // 安全类型 gate 已删: JS lock.js _ensureToken 从不检查 (V81 注释 — Java 发送路径也从不检查),
         // 只要 KLV#02 令牌在就继续。Swift 之前的整串 intHex&3 硬抛会让
@@ -326,6 +329,21 @@ final class LockService: ObservableObject {
     /// 光报"某步失败"会让用户反复重试却永远配不上 (软砖的成因就是这个信息缺失)。
     static func pairWarning(_ exchanged: Bool, _ msg: String) -> String {
         exchanged ? "密钥已交换 (锁内 skey 已更新), 但 \(msg) — 本机未保存钥匙串, 门锁需重新做键盘重置后再配网" : msg
+    }
+    /// 配网期的 rc → 该怎么办。刻意**不**复用 rcHint: 那一条是"已配对"语境 (rc=3 让你去快捷操作校时),
+    /// 而配网期本机还没有钥匙串, 0E 校时根本发不出去 (校时链路要 skey) —— 同一句话在配网语境里是空头支票。
+    private static func pairHint(_ rc: Int) -> String {
+        switch rc {
+        case 3, 9: return "锁内时钟不准, 而配网期无法校时 (校时要密钥); 请在门锁键盘上重置后马上重试"
+        case 7, 27: return "锁当前不在可配网状态, 请在门锁键盘上做一次重置再试"
+        case 13: return "通讯过期: 锁不认这份通讯会话 (会话令牌无效/已过期), 不是距离或信号问题 — 请在门锁键盘上做一次重置, 3 声提示后尽快点配对 (重置后的可配网窗口有限, 一旦超时锁会退回不可配网)"
+        default: return "锁可能不在重置态, 请在门锁键盘上重置后重试"
+        }
+    }
+    /// 回包的 KLV 形状 —— **只报键与长度, 一个值都不带**: 真机排障时 "#02=0B" 这种事实
+    /// (锁压根没回密钥) 比任何猜测都有用, 而值里可能含 skey/ekey/PIN 明文 (不得进日志)。
+    nonisolated static func klvShape(_ f: ZKProtocol.ParsedFrame) -> String {
+        f.klvs.isEmpty ? "(无 KLV)" : f.klvs.map { String(format: "#%02x=%dB", $0.key, $0.vlen) }.joined(separator: " ")
     }
     private func keys() throws -> (mac: String, skey: String) {
         let kc = DB.keychain(curMac)
@@ -651,17 +669,46 @@ final class LockService: ObservableObject {
             throw BLEErrorX.msg("随机源异常: 生成的密钥族含全零字段, 已在换钥前中止 (锁未被改动, 可稍后重试)")
         }
 
-        progress("步骤 3/7: cmd 05 交换密钥")
-        let r5 = try await request(ZKCmdBuilder.cmd05Exchange(skey), cmd: 0x05, needToken: false, retries: 3)
-        let rc5 = extractRc(0x05, r5)
-        if rc5 != 0 { throw BLEErrorX.msg("换钥失败 rc=\(rc5) (\(StatusParser.rcMessage(rc5))) — 锁可能未处于重置态") }
-        var keyExchanged = false
+        progress("步骤 3/7: cmd 05 交换密钥 (先建通讯会话)")
+        // 2026-10-17 真机现象 + APK 逐字对照勘误: **05 必须带会话令牌**。
+        //   APK 原文 (apk_raw/assets/www/build/main.js, 05 构造器 `Et`):
+        //     l.call(this, Jn.ZKCCOMM_EXSECURITYKEY, !0, "0000")   ← 第二个实参 = needSSToken = **true**
+        //   Java 侧据此执行 (cn.zelkova.ZKurlcsPlugin.lockprotocol.BleLockConnector.doExecute):
+        //     if (data.needSessionToken()) { doRefreshSsToken(); token = ssToken.getToken(); }
+        //     → LockCommBase.getBytes(token) 把令牌作为 KLV#0xEE **追加在帧尾**
+        //   ⇒ 真机真序是: 23(免令牌) → 01(取令牌) → 05(带 KLV#0xEE) → ...
+        //   本机 (与 vendor/app/utils/kernel/cmds.js:cmd05Exchange 的"免令牌明文"模型) 一直把 05 裸发,
+        //   锁于是回 rc=13「通讯过期」—— 报的是**通讯会话**无效 (没有有效令牌), 而不是命令时间 (那是 rc=3)。
+        //   真机复现: 锁重置后点配对 → rc13 → 锁随之退出可配网态, 反复都是 rc13。
+        var r5 = try await request(ZKCmdBuilder.cmd05Exchange(skey), cmd: 0x05, needToken: true, retries: 3)
+        var rc5 = extractRc(0x05, r5)
+        if rc5 == 13 {
+            // 13 = 通讯过期 = 会话令牌被判无效/已过期。rc≠0 ⇒ 锁**没有执行**换钥 (锁内 skey 未动),
+            // 所以重开一次会话再发一帧是安全的 — 这是 rc13 唯一可安全重试的时机 (rc=0 之后再发就会
+            // 二次擦写锁内密钥域)。request(needToken:true) 每轮都会重新走 01, 令牌必然是新的。
+            log("warn", "05 rc=13 (通讯过期): 重开会话令牌后重试一次 · 回包 " + Self.klvShape(r5))
+            r5 = try await request(ZKCmdBuilder.cmd05Exchange(skey), cmd: 0x05, needToken: true, retries: 1)
+            rc5 = extractRc(0x05, r5)
+        }
+        if rc5 != 0 {
+            // 真机报告 (2026-10-17): 用户报"锁重置后一直添加不成功", 而运行日志里只有 TX/RX 两行 ——
+            // 05 被锁拒收的原因既没进日志、也没进任何台账, 于是现场只能靠回包长度反推。
+            // 这里把判决 (rc + 人话 + 该做什么) 与证据 (回包 KLV 的键与长度, 值一概不写) 一起留下。
+            log("error", "05 换钥被锁拒收: rc=\(rc5) (\(StatusParser.rcMessage(rc5))) · \(Self.pairHint(rc5))"
+                + " · 回包 " + Self.klvShape(r5))
+            throw BLEErrorX.msg("换钥失败 rc=\(rc5) (\(StatusParser.rcMessage(rc5))) — \(Self.pairHint(rc5))")
+        }
+        // rc=0 = 锁**已经执行**了交换 (vendor lock.js: 执行即擦旧钥域) ⇒ 从这一刻起锁内密钥可能已是新的。
+        // 旧实现把 keyExchanged = true 写在回显比对**之后**, 于是回显异常那一支只报"已中止",
+        // 读起来像"锁没被动过" —— 真机上用户会一遍遍重试, 而每一遍都可能又换掉一次锁里的钥。
+        let keyExchanged = true
         if let echo = r5.klvs.first(where: { $0.key == 0x02 }), echo.val.lowercased() != skey.lowercased() {
             // skey 明文绝不进错误文案: 该串会写入 lastError → DiagLogs → kf.diag_logs (随系统备份) 与 UI 展示
-            throw BLEErrorX.msg("换钥回显不匹配 (本地/回显长度 \(skey.count)/\(echo.val.count)), 已中止")
+            log("error", "05 换钥回包密钥不一致: 回显 \(echo.val.count) 位 / 本地 \(skey.count) 位 · 回包 " + Self.klvShape(r5))
+            throw BLEErrorX.msg(Self.pairWarning(true,
+                "换钥回显不匹配 (本地/回显长度 \(skey.count)/\(echo.val.count)) — 锁内密钥可能已更新而本机未保存; 请在门锁键盘上重置后重新配网"))
         }
 
-        keyExchanged = true        // 自此以后失败 = 锁内新密钥已生效, 必须按 pairWarning 告知
         progress("步骤 4/7: 获取会话令牌")
         try await ensureToken()
 
@@ -674,17 +721,26 @@ final class LockService: ObservableObject {
                 throw BLEErrorX.msg("PIN 批次构建失败")
             }
             let rb = try await exec(c)
-            if rb.rc != 0 { throw BLEErrorX.msg(Self.pairWarning(keyExchanged, "PIN 批次 \(i + 1) 失败 rc=\(rb.rc) (\(StatusParser.rcMessage(rb.rc)))")) }
+            if rb.rc != 0 {
+                log("error", "PIN 批次 \(i + 1) 被锁拒收: rc=\(rb.rc) (\(StatusParser.rcMessage(rb.rc))) · 回包 " + Self.klvShape(rb.frame))
+                throw BLEErrorX.msg(Self.pairWarning(keyExchanged, "PIN 批次 \(i + 1) 失败 rc=\(rb.rc) (\(StatusParser.rcMessage(rb.rc)))"))
+            }
         }
 
         progress("步骤 6/7: 设置 bkey (cmd 21)")
         let r21 = try await exec(ZKCmdBuilder.cmd21SetBkey(m, skey, bkey))
-        if r21.rc != 0 { throw BLEErrorX.msg(Self.pairWarning(keyExchanged, "bkey 失败 rc=\(r21.rc)")) }
+        if r21.rc != 0 {
+            log("error", "21 bkey 被锁拒收: rc=\(r21.rc) (\(StatusParser.rcMessage(r21.rc))) · 回包 " + Self.klvShape(r21.frame))
+            throw BLEErrorX.msg(Self.pairWarning(keyExchanged, "bkey 失败 rc=\(r21.rc) (\(StatusParser.rcMessage(r21.rc)))"))
+        }
 
         progress("步骤 7/7: 加密状态校验 (cmd 03)")
         let stR = try await exec(ZKCmdBuilder.cmd03StatusWrap(m, skey))
         let st = StatusParser.parseStatus(stR.klvs)
-        if stR.rc != 0 { throw BLEErrorX.msg(Self.pairWarning(keyExchanged, "配对校验失败 rc=\(stR.rc)")) }
+        if stR.rc != 0 {
+            log("error", "03 加密回读校验被锁拒收: rc=\(stR.rc) (\(StatusParser.rcMessage(stR.rc))) · 回包 " + Self.klvShape(stR.frame))
+            throw BLEErrorX.msg(Self.pairWarning(keyExchanged, "配对校验失败 rc=\(stR.rc) (\(StatusParser.rcMessage(stR.rc)))"))
+        }
 
         let kc = Keychain(version: 1, mac: m, pid: st.pid, pidName: st.pidName,
                           skey: skey, bkey: bkey, pins: pins,
