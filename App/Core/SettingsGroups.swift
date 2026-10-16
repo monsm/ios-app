@@ -83,7 +83,7 @@ struct SettingsGroupChips: View {
                     .font(.system(size: DS.Icon.xs))
                     .accessibilityHidden(true)
                 Text(title)
-                    .font(.footnote.weight(on ? .semibold : .regular))
+                    .vkFont(.footnote.weight(on ? .semibold : .regular))
             }
             .foregroundStyle(on ? DS.Palette.accentText : DS.Palette.text)
             .padding(.horizontal, DS.Space.m)

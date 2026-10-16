@@ -44,11 +44,11 @@ struct AchievementsView: View {
         HeroCard {
             VStack(alignment: .leading, spacing: DS.Space.m) {
                 Text("徽章")
-                    .font(.caption.weight(.medium))
+                    .vkFont(.caption, weight: .medium)
                     .foregroundStyle(DS.heroFg.opacity(0.85))
                     .lineLimit(1)
                 Text("已点亮 \(unlocked.count) / \(Milestones.definitions.count) 枚")
-                    .font(.title3.weight(.semibold))
+                    .vkFont(.title3, weight: .semibold)
                     .foregroundStyle(DS.heroFg)   // 863: 坐在 HeroCard 上, 不能写死白
                     .lineLimit(1)
                 HStack(spacing: DS.Space.s) {
@@ -88,7 +88,7 @@ struct AchievementsView: View {
                     shareCard(latest[0].badge, at: latest[0].at)
                 } label: {
                     Label("把最新徽章做成分享卡", systemImage: "photo.on.rectangle.angled")
-                        .font(.subheadline.weight(.medium))
+                        .vkFont(.subheadline, weight: .medium)
                         .foregroundStyle(DS.Palette.accentText)
                         .frame(maxWidth: .infinity)
                         .frame(minHeight: DS.Hit.min)
@@ -133,7 +133,7 @@ struct AchievementsView: View {
                         .foregroundStyle(done >= target ? DS.Palette.warn : DS.Palette.textSub)
                         .accessibilityHidden(true)
                     Text("本周目标")
-                        .font(.headline)
+                        .vkFont(.headline)
                         .foregroundStyle(DS.Palette.text)
                     Spacer(minLength: 0)
                     Menu {
@@ -142,7 +142,7 @@ struct AchievementsView: View {
                         }
                     } label: {
                         Text("整理 \(target) 条")
-                            .font(.subheadline)
+                            .vkFont(.subheadline)
                             .foregroundStyle(DS.Palette.accentText)
                     }
                     // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 14.5pt (< 44)。
@@ -155,7 +155,7 @@ struct AchievementsView: View {
                 Text(done >= target
                      ? "目标达成, 这颗星为你亮着"
                      : "本周已整理 \(done) / \(target) 条凭证")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -171,11 +171,11 @@ struct AchievementsView: View {
                 Text(q.unlocks > 0
                      ? "本季有归属的开门 \(q.unlocks) 次" + (q.topMember.isEmpty ? "" : ", \(q.topMember)最勤")
                      : "本季的归属开门记录还不多, 连上门锁读一次就有了")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.text)
                     .fixedSize(horizontal: false, vertical: true)
                 Text(q.newCreds > 0 ? "新增凭证 \(q.newCreds) 条" : "本季暂无新增凭证")
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -197,11 +197,11 @@ struct AchievementsView: View {
                                 .foregroundStyle(DS.Palette.accentText)
                                 .accessibilityHidden(true)
                             Text(cat.rawValue)
-                                .font(.subheadline.weight(.semibold))
+                                .vkFont(.subheadline, weight: .semibold)
                                 .foregroundStyle(DS.Palette.text)
                             Spacer(minLength: 0)
                             Text("\(got)/\(defs.count)")
-                                .font(.caption.weight(.semibold))
+                                .vkFont(.caption, weight: .semibold)
                                 .monospacedDigit()
                                 .foregroundStyle(DS.Palette.textSub)
                         }
@@ -227,16 +227,16 @@ struct AchievementsView: View {
                 SectionTitle(text: "时光胶囊")
                 if Milestones.capsuleIsOpen(c) {
                     Text(c.text)
-                        .font(.subheadline)
+                        .vkFont(.subheadline)
                         .foregroundStyle(DS.Palette.text)
                         .fixedSize(horizontal: false, vertical: true)
                     Text("写于 \(Milestones.dayKey(Date(timeIntervalSince1970: c.at / 1000)))")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .lineLimit(1)
                 } else {
                     Text("给未来留了一封信, \(c.openOn) 开启。")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -245,14 +245,14 @@ struct AchievementsView: View {
             Card {
                 SectionTitle(text: "时光胶囊")
                 Text("写一段话封存起来, 在下一个结缘日打开。")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 NavigationLink {
                     CapsuleComposeView(onSaved: refresh)
                 } label: {
                     Label("写一封给一年后的信", systemImage: "envelope")
-                        .font(.subheadline.weight(.medium))
+                        .vkFont(.subheadline, weight: .medium)
                         .foregroundStyle(DS.Palette.accentText)
                         .frame(maxWidth: .infinity)
                         .frame(minHeight: DS.Hit.min)
@@ -267,13 +267,13 @@ struct AchievementsView: View {
     private var togglesCard: some View {
         Card {
             SectionTitle(text: "仪式感设置")
-            Toggle("成就解锁通知", isOn: Binding(
+            VariantToggle("成就解锁通知", isOn: Binding(
                 get: { Milestones.achNotify },
                 set: { on in
                     DB.store.set("kf_ach_notify", on)
                     if on { Task { await CareReminders.requestAuthorization() } }
                 }))
-            Toggle("收集音效", isOn: Binding(
+            VariantToggle("收集音效", isOn: Binding(
                 get: { Milestones.collectSound },
                 set: { DB.store.set("kf_collect_sound", $0) }))
         }
@@ -312,7 +312,7 @@ struct BadgeTile: View {
                 }
                 .accessibilityHidden(true)
                 Text(hiddenLocked ? "???" : badge.title)
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(isUnlocked ? DS.Palette.text : DS.Palette.textSub)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
@@ -345,30 +345,30 @@ private struct BadgeDetailSheet: View {
                 .disabled(true)
             VStack(spacing: DS.Space.s) {
                 Text(badge.hidden && unlockedAt == nil ? "还差一点点" : badge.title)
-                    .font(.title3.weight(.semibold))
+                    .vkFont(.title3, weight: .semibold)
                     .foregroundStyle(DS.Palette.text)
                 // 987 悬念进度与 840 (未达成直显触发条件) 相抵: 取两面都留 ——
                 // 未达成一律先给"还差一点点"悬念行 (不说还差多少, 本地也没有进度量可报),
                 // 非隐藏徽章的达成条件保留在后 (840 的用途: 让人知道怎么拿到), 隐藏徽章仍不揭底 (978)。
                 if unlockedAt == nil, !badge.hidden {
                     Text("还差一点点")
-                        .font(.footnote.weight(.medium))
+                        .vkFont(.footnote, weight: .medium)
                         .foregroundStyle(DS.Palette.textSub)
                 }
                 Text(badge.hidden && unlockedAt == nil
                      ? "这是一枚隐藏成就, 达成的那一刻才会揭晓"
                      : badge.detail)
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
                 if let at = unlockedAt {
                     Text("点亮于 \(Milestones.dayKey(at)) · \(badge.rarity.title)")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.accentText)
                 } else {
                     Text("稀有度: \(badge.rarity)")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                 }
             }
@@ -404,14 +404,14 @@ private struct BadgeShareCard: View {
                     .foregroundStyle(DS.heroFg)
             }
             Text(badge.title)
-                .font(.title2.weight(.semibold))
+                .vkFont(.title2, weight: .semibold)
                 .foregroundStyle(DS.heroFg)
             Text(badge.rarity.title + "徽章 · 点亮于 " + dateText)
-                .font(.footnote)
+                .vkFont(.footnote)
                 .foregroundStyle(DS.heroFg.opacity(0.85))
             Spacer()
             Text("离线锁管家 · 本地生成")
-                .font(.caption2)
+                .vkFont(.caption2)
                 .foregroundStyle(DS.heroFg.opacity(0.7))
         }
         .padding(DS.Space.xl)
@@ -432,7 +432,7 @@ struct NightCalendarCard: View {
             SectionTitle(text: "安心夜月历")
             VStack(alignment: .leading, spacing: DS.Space.s) {
                 Text("每晚十点后, 确认家里已是安心状态, 就为今晚点一颗星。")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 grid
@@ -447,7 +447,7 @@ struct NightCalendarCard: View {
                                 }
                             } label: {
                                 Label("记录今晚的安心", systemImage: "moon.stars.fill")
-                                    .font(.subheadline.weight(.medium))
+                                    .vkFont(.subheadline, weight: .medium)
                                     .foregroundStyle(DS.Palette.onAccent)
                                     .frame(maxWidth: .infinity)
                                     .frame(minHeight: DS.Hit.min)
@@ -459,13 +459,13 @@ struct NightCalendarCard: View {
                             .accessibilityLabel("记录今晚的安心")
                         } else {
                             Label("今晚已打卡, 晚安", systemImage: "checkmark.circle.fill")
-                                .font(.footnote)
+                                .vkFont(.footnote)
                                 .foregroundStyle(DS.Palette.ok)
                                 .frame(maxWidth: .infinity, minHeight: DS.Hit.min)
                         }
                     } else {
                         Label("22 点后可打卡", systemImage: "moon.haze")
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                             .frame(maxWidth: .infinity, minHeight: DS.Hit.min, alignment: .leading)
                     }
@@ -477,7 +477,7 @@ struct NightCalendarCard: View {
                             }
                         } label: {
                             Label("补签 \(Self.mdLabel(day))", systemImage: "arrow.uturn.backward")
-                                .font(.subheadline.weight(.medium))
+                                .vkFont(.subheadline, weight: .medium)
                                 .foregroundStyle(DS.Palette.accentText)
                                 .padding(.horizontal, DS.Space.m)
                                 .frame(minHeight: DS.Hit.min)
@@ -489,7 +489,7 @@ struct NightCalendarCard: View {
                     }
                 }
                 Text("漏掉的日子每月可补签 1 次, 连续的温度不苛求完美。")
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -510,7 +510,7 @@ struct NightCalendarCard: View {
             HStack(spacing: 0) {
                 ForEach(week, id: \.self) { w in
                     Text(w)
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                         .frame(maxWidth: .infinity)
                 }
@@ -534,7 +534,7 @@ struct NightCalendarCard: View {
         let mark = marks[key]
         return VStack(spacing: 2) {
             Text("\(d)")
-                .font(.caption2)
+                .vkFont(.caption2)
                 .monospacedDigit()
                 .foregroundStyle(isToday ? DS.Palette.accentText : DS.Palette.textSub)
             if mark == "ok" {
@@ -619,13 +619,13 @@ struct CareRemindersView: View {
                 // 1044 消费点如实列名 (原句"各页面的空态"是超售): 设备页/记录页空态直挂,
                 // 引导空态卡 (设置门锁空态、成就陈列架、维护历史、诊断日志) 经 GuidedEmptyView 消费。
                 Text("这句便签已贴在这几处空态旁: 设备页、记录页, 以及走引导空态卡的页面 (设置门锁空态、成就陈列架、维护历史、诊断日志)。未接入的空态不会偷偷显示, 后续批次补。")
-                    .font(.caption).foregroundStyle(DS.Palette.textSub)
+                    .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             Section {
                 LabeledRow("结缘日", Milestones.bondDay.isEmpty ? "添加门锁后自动记录" : Milestones.bondDay)
-                Toggle("结缘纪念日提醒", isOn: Binding(
+                VariantToggle("结缘纪念日提醒", isOn: Binding(
                     get: { CareReminders.annivOn },
                     set: { on in
                         DB.store.set("kf_care_anniv", on)
@@ -636,7 +636,7 @@ struct CareRemindersView: View {
             }
 
             Section {
-                Toggle("成员生日提醒 (提前一天)", isOn: Binding(
+                VariantToggle("成员生日提醒 (提前一天)", isOn: Binding(
                     get: { CareReminders.bdayOn },
                     set: { on in
                         DB.store.set("kf_care_bday", on)

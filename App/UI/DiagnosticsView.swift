@@ -86,12 +86,12 @@ struct DiagnosticsView: View {
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: DS.Space.xxs) {
                 Text(tag + s.line)
-                    .font(.subheadline.weight(.medium))
+                    .vkFont(.subheadline, weight: .medium)
                     .monospacedDigit()
                     .foregroundStyle(DS.Palette.text)
                     .fixedSize(horizontal: false, vertical: true)
                 Text(s.basis)
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -110,7 +110,7 @@ struct DiagnosticsView: View {
                 .foregroundStyle(DS.Palette.textSub)
                 .accessibilityHidden(true)
             Text(g.line)
-                .font(.subheadline)
+                .vkFont(.subheadline)
                 .monospacedDigit()
                 .foregroundStyle(DS.Palette.text)
             Spacer(minLength: 0)
@@ -148,15 +148,15 @@ struct DiagnosticsView: View {
                                 .accessibilityHidden(true)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("过期凭证 \(monthlyExpired) 条待处理")   // 366 过期凭证
-                                    .font(.subheadline.weight(.medium))
+                                    .vkFont(.subheadline, weight: .medium)
                                     .foregroundStyle(DS.Palette.text)
                                 Text("每月 1 日提醒 · 点按进凭证页整理面板")
-                                    .font(.caption2)
+                                    .vkFont(.caption2)
                                     .foregroundStyle(DS.Palette.textSub)
                             }
                             Spacer(minLength: 0)
                             Image(systemName: "chevron.right")
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                         }
                         .frame(minHeight: DS.Hit.min)
@@ -181,14 +181,14 @@ struct DiagnosticsView: View {
                 .accessibilityLabel(copied ? "已复制, 请粘贴发给开发者" : "复制全部诊断信息")
                 .accessibilityValue(copied ? "已复制到剪贴板" : "")
                 Text("报告包含: 一行留白的问题描述、应用/系统版本、全部已配对锁的清单、本次体检分项、最近 100 条会话日志与近 7 天留档日志。回到对话窗口直接粘贴即可 —— 这里没有表单, 也不会替你提交什么。")   // 299 报告包含
-                    .font(.caption).foregroundStyle(DS.Palette.textSub)
+                    .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 // 157 诊断包分享: 与"复制"同一份 report(), 走系统分享面板 (不落盘、不上传)。
                 // 口径降级写在这里也写在报告头部: 原案是 zip 包, 本工程给的是**一份纯文本分节**，不假装打了包。
                 ShareLink(item: report()) {
                     Label("分享诊断报告", systemImage: "square.and.arrow.up")   // 157 分享诊断报告
                 }
-                .font(.footnote)
+                .vkFont(.footnote)
                 // 239 导出截图 (带时间水印): 报告本身是纯文本、没有截图可叠水印 —— 所以这里**渲染**一张:
                 // ImageRenderer 把报告画成图, 再叠一条"离线锁管家 · 时间"的对角水印,
                 // 防的是"转发出去没人知道是哪台机、什么时候导的"。渲染不出就退回上面那条文本分享, 不静默失败。
@@ -199,37 +199,37 @@ struct DiagnosticsView: View {
                               preview: SharePreview("诊断截图")) {   // 239 诊断截图
                         Label("分享诊断截图", systemImage: "photo.on.rectangle.angled")   // 239 分享诊断截图
                     }
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     Button("重新生成截图") { diagShot = renderDiagShot() }
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .frame(minHeight: DS.Hit.min)
                 } else {
                     Button("生成诊断截图") { diagShot = renderDiagShot() }   // 239 生成诊断截图
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.accentText)
                         .frame(minHeight: DS.Hit.min)
                     Text("截图 = 整份报告 + 对角时间水印; 转发出去一眼能看出是哪台机、什么时候导的。")
-                        .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                        .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 // 包11 查阅表: 错误码/型号/字段/图标语义/二维码/崩溃档案, 全部只读
                 NavigationLink { DiagReferenceView().environmentObject(app) } label: {
                     Label("诊断查阅", systemImage: "text.book.closed")   // 159/661/662/753/754/758 诊断查阅
                 }
-                .font(.footnote)
+                .vkFont(.footnote)
             }
             // 149/150/160/158/151 一键体检: 引擎 (DiagHealth) 一直在, 此前**全库没有任何界面调用它** →
             // 现在跑分、单项复测、结果存档、权限深链四件事一次接上。
             Section("一键体检") {   // 149/160 一键体检
                 HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {
                     Text("总分 \(score) / 100")
-                        .font(.title3.weight(.semibold))
+                        .vkFont(.title3, weight: .semibold)
                         .monospacedDigit()
                         .foregroundStyle(DS.Palette.text)
                     Spacer()
                     Button("全部重跑") { rerunAll() }
-                        .font(.footnote.weight(.medium))
+                        .vkFont(.footnote, weight: .medium)
                         .foregroundStyle(DS.Palette.accentText)
                 }
                 .accessibilityElement(children: .combine)
@@ -240,15 +240,15 @@ struct DiagnosticsView: View {
                                 .foregroundStyle(it.ok ? DS.Palette.ok : DS.Palette.warn)
                                 .accessibilityHidden(true)
                             Text(it.name)
-                                .font(.subheadline)
+                                .vkFont(.subheadline)
                                 .foregroundStyle(DS.Palette.text)
                             Spacer(minLength: DS.Space.s)
                             Button("重测 (\(it.id))") { retest(it.id) }   // 160 单项复测
-                                .font(.caption.weight(.medium))
+                                .vkFont(.caption, weight: .medium)
                                 .foregroundStyle(DS.Palette.accentText)
                         }
                         Text(it.detail)
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                         // 151 权限自查: 只有**系统权限类**且未通过时才给入口。
@@ -256,10 +256,10 @@ struct DiagnosticsView: View {
                         // iOS 不提供给"蓝牙/通知"单项的深链 —— 声称能直接跳到那一项就是假功能。
                         if ["ble", "notify"].contains(it.id) && !it.ok {
                             Button("打开系统设置中的本 App 权限页") { openAppSettings() }
-                                .font(.caption.weight(.medium))
+                                .vkFont(.caption, weight: .medium)
                                 .foregroundStyle(DS.Palette.accentText)
                             Text("系统只能打开本 App 的设置页，进去后手动找「\(it.name)」")
-                                .font(.caption2)
+                                .vkFont(.caption2)
                                 .foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -267,7 +267,7 @@ struct DiagnosticsView: View {
                         // (按下去帮不上忙), 只给如实步骤; 检测口径 = DiagKit 545 项 (AuthKit.biometricAvailable)
                         if it.id == "faceid" && !it.ok {
                             Text("想让面容可用: 到 系统设置 ‹ 面容 ID 与密码 录入面容后回来「重测」。iOS 没有直达该页的公开深链，本 App 设置页里也没有这一项；本机无生物识别硬件时可忽略此行 (该能力走 DEFERRED)。")
-                                .font(.caption2)
+                                .vkFont(.caption2)
                                 .foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -277,7 +277,7 @@ struct DiagnosticsView: View {
                 // 151 本地网络: iOS 没有"本地网络授权"的公开查询 API; 本 App 与门锁走蓝牙直连, 全仓无
                 // 局域网通信也未申请该权限 —— 如实说明, 不摆一个永远绿的检查项 (那才是假检查)
                 Text("本地网络: 本 App 不申请也不使用 —— 与门锁走蓝牙直连，无局域网通信；系统设置里查不到本 App 的本地网络记录是正常的。")
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: DS.Space.s) {
@@ -285,11 +285,11 @@ struct DiagnosticsView: View {
                         DiagHealth.saveArchive((score: score, items: results))
                         app.showToast("已存档 \(DiagHealth.archives().count) 份历史记录")
                     }
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     Spacer()
                     if !DiagHealth.archives().isEmpty {
                         Text("已有 \(DiagHealth.archives().count) 份存档 · 最早 \(DiagHealth.archives().last?.at ?? "")")
-                            .font(.caption2)
+                            .vkFont(.caption2)
                             .foregroundStyle(DS.Palette.textSub)
                     }
                 }
@@ -302,30 +302,30 @@ struct DiagnosticsView: View {
                         let pending = a.lines.filter { $0.hasPrefix("待处理") }.count
                         HStack(spacing: DS.Space.s) {
                             Text(a.at)
-                                .font(.caption).monospacedDigit()
+                                .vkFont(.caption).monospacedDigit()
                                 .foregroundStyle(DS.Palette.textSub)
                                 .lineLimit(1)
                             if let p = prev {
                                 let d = a.score - p
                                 Text(d == 0 ? "持平" : (d > 0 ? "+\(d)" : "\(d)"))
-                                    .font(.caption2.weight(.semibold)).monospacedDigit()
+                                    .vkFont(.caption2, weight: .semibold).monospacedDigit()
                                     .foregroundStyle(d > 0 ? DS.Palette.ok : (d < 0 ? DS.Palette.danger : DS.Palette.textSub))
                             }
                             Spacer(minLength: DS.Space.s)
                             if pending > 0 {
                                 Text("待处理 \(pending) 项")
-                                    .font(.caption2)
+                                    .vkFont(.caption2)
                                     .foregroundStyle(DS.Palette.warn)
                             }
                             Text("\(a.score) / 100")
-                                .font(.caption.weight(.semibold)).monospacedDigit()
+                                .vkFont(.caption, weight: .semibold).monospacedDigit()
                                 .foregroundStyle(DS.Palette.text)
                         }
                         .accessibilityElement(children: .combine)
                     }
                 }
                 Text("历史只列分数本身, 不画趋势图 —— 存档跨过体检项数变化的那段时, 折线会把「多了一项」读成体检好坏的起伏。")
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -336,10 +336,10 @@ struct DiagnosticsView: View {
                 ForEach(slices) { s in
                     VStack(alignment: .leading, spacing: DS.Space.xxs) {
                         HStack(spacing: DS.Space.s) {
-                            Text(s.name).font(.subheadline).foregroundStyle(DS.Palette.text)
+                            Text(s.name).vkFont(.subheadline).foregroundStyle(DS.Palette.text)
                             Spacer(minLength: DS.Space.s)
                             Text(DataHealth.human(s.bytes))
-                                .font(.caption).monospacedDigit().foregroundStyle(DS.Palette.textSub)
+                                .vkFont(.caption).monospacedDigit().foregroundStyle(DS.Palette.textSub)
                         }
                         // 构成条本体: 装饰性, 数值已由上面的文本给出 → 对读屏隐藏, 避免"一条 6pt 胶囊"被朗读
                         GeometryReader { g in
@@ -356,13 +356,13 @@ struct DiagnosticsView: View {
                     .accessibilityElement(children: .combine)
                 }
                 Text("合计 \(DataHealth.human(totalBytes)) — 按本机键值大小估算，不是磁盘真实占用（UserDefaults 有对齐与元数据开销）。")
-                    .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                    .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 Button("完整性自查") { integrityReport = DataHealth.integrity() }   // 750 完整性自查
-                    .font(.footnote.weight(.medium)).foregroundStyle(DS.Palette.accentText)
+                    .vkFont(.footnote, weight: .medium).foregroundStyle(DS.Palette.accentText)
                 if !integrityReport.isEmpty {
                     ForEach(integrityReport, id: \.self) { line in
-                        Text(line).font(.caption).foregroundStyle(DS.Palette.textSub)
+                        Text(line).vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -400,7 +400,7 @@ struct DiagnosticsView: View {
                     Text("按新保留期计算，将立即删除 \(retentionAsk?.1 ?? 0) 条已写下的日志（不可恢复）；取消则不改任何东西。")   // 751 按新保留期计算
                 }
                 Text("切到较短保留期会先报「将删条数」并等确认，确认后立即删除；选「全部保留」不删任何东西。")   // 751 切到较短保留期会先报
-                    .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                    .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: DS.Space.s) {
                     Button("清理空值键位") { guardOrBackup {
@@ -408,13 +408,13 @@ struct DiagnosticsView: View {
                         MaintenanceLog.record("清理空值键位")   // 387
                         app.showToast(r)
                     } }
-                        .font(.footnote).foregroundStyle(DS.Palette.accentText)
+                        .vkFont(.footnote).foregroundStyle(DS.Palette.accentText)
                     Button("归档一年以上日志") { guardOrBackup {
                         let n = DataHealth.archiveOldLogs()
                         if n > 0 { MaintenanceLog.record("归档旧日志 \(n) 条") }   // 387
                         app.showToast("已归档 \(n) 条")
                     } }
-                        .font(.footnote).foregroundStyle(DS.Palette.accentText)
+                        .vkFont(.footnote).foregroundStyle(DS.Palette.accentText)
                     // 452: 无主凭证的隔离出口 —— 上面"孤儿数据"只报不处理, 这里给它一个可点的动作。
                     // 不套 guardOrBackup: 动作是入回收站 (reclaimDays 内可 365/504 取回), 不是删除。
                     Button("隔离无主凭证") {   // 452 隔离无主凭证
@@ -424,15 +424,15 @@ struct DiagnosticsView: View {
                             ? "已隔离 \(n) 条无主凭证 (移入回收站, \(CredentialOrg.reclaimDays()) 天内可取回)"
                             : "没有指向已删成员的无主凭证")
                     }
-                        .font(.footnote).foregroundStyle(DS.Palette.accentText)
+                        .vkFont(.footnote).foregroundStyle(DS.Palette.accentText)
                 }
                 // 223 归档的开关档: 原句要求归档能关 —— 这一档此前不存在, 归档只有手动按钮一条路。
                 // 开关只管启动时的自动归档; 手动按钮任何时候都可点 (它本身就是一次明确的动作)。
-                Toggle("启动时自动归档一年以上日志", isOn: Binding(   // 223 启动时自动归档一年以
+                VariantToggle("启动时自动归档一年以上日志", isOn: Binding(   // 223 启动时自动归档一年以
                     get: { DB.store.getBool("kf_diag_autoarchive") },
                     set: { DB.store.set("kf_diag_autoarchive", $0) }))
                 Text("开着时每次冷启动顺手归档一次 (走与按钮同一引擎, 动作进维护回执); 关掉后只有点按钮才归档。")
-                    .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                    .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 // 223: 归档区大小此前无处可看 (archivedCount 全库零调用), 只报"移了多少条"等于看不见结果
                 LabeledRow("已归档日志",   // 223 已归档日志
@@ -443,14 +443,14 @@ struct DiagnosticsView: View {
                     let gaps = DataHealth.gapDays(mac: app.currentMac)
                     if gaps.isEmpty {
                         Text("近 14 天日志覆盖没有整天空洞")   // 451 天日志覆盖没有整天空
-                            .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                            .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     } else {
                         Text("近 14 天有 \(gaps.count) 天整天没有日志: " + gaps.joined(separator: " "))
-                            .font(.caption2).foregroundStyle(DS.Palette.warn)
+                            .vkFont(.caption2).foregroundStyle(DS.Palette.warn)
                             .fixedSize(horizontal: false, vertical: true)
                         Text("空洞通常意味着那几天没连过锁 (日志只在读取/操作时产生), 不等于数据丢了。")
-                            .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                            .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -464,20 +464,20 @@ struct DiagnosticsView: View {
                     LabeledRow("待补拉日期段", pullCoverLine(r))   // 749 待补拉日期段
                     if r.noLogs {
                         Text("待补拉清单要连着锁拉过一次日志才推得出来。本机现在一行日志都没有, 所以这里一行都不列 —— 没有数就不画数。")   // 749 待补拉清单要连着锁拉
-                            .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                            .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     } else {
                         if r.firstDay == nil {
                             Text("这些行的锁端时刻都是占位值 (lockTime 0 换算过来正好是协议纪元 2010-01-01), 按本仓既有判据一律排除 (StatsKit.dateOf), 所以日期段推不出来 —— 宁可空着也不画假日期。")   // 749 这些行的锁端时刻都是
-                                .font(.caption2).foregroundStyle(DS.Palette.warn)
+                                .vkFont(.caption2).foregroundStyle(DS.Palette.warn)
                                 .fixedSize(horizontal: false, vertical: true)
                         } else if r.singleDay {
                             Text("本机日志只覆盖一天 — 中段空洞的定义要求前后两侧都有数据, 一天推不出任何日期段。")   // 749 本机日志只覆盖一天
-                                .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                                .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         } else if r.segments.isEmpty {
                             Text("覆盖区间内没有整天缺日志的日期段 — 序号断档是另一条信号, 单列在下面。")   // 749 覆盖区间内没有整天缺
-                                .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                                .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         } else {
                             ForEach(r.segments) { s in
@@ -485,47 +485,47 @@ struct DiagnosticsView: View {
                             }
                             Text("合计约 \(r.missingDayTotal) 天 (本机天, 不是锁端条数) · 列出最近 \(r.segments.count) 段"
                                  + (r.segmentsHidden > 0 ? " · 另有 \(r.segmentsHidden) 段未列出" : ""))
-                                .font(.caption2).foregroundStyle(DS.Palette.warn)
+                                .vkFont(.caption2).foregroundStyle(DS.Palette.warn)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         // 749 跨度上限如实播报: 没扫到的部分不能让人以为是"没有"
                         if r.windowed {
                             Text("本机覆盖跨度超过 \(RecordReconcile.defaultMaxSpanDays) 天, 这里只扫了最近这一段 — 更早的日期段没算进来。")   // 749 本机覆盖跨度超过
-                                .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                                .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         // 749 尾段单列: 它只有前一侧有依据, 混进上面的空洞就成了越界推断
                         if let t = r.tail {
                             pullGapRow(t, tag: "尾段 ", icon: "hourglass")
                             Text("尾段与前面的空洞不是一回事: 它后面到昨天都没有可比对的一侧, 这些天完全可能是锁上根本没事件。")   // 749 尾段与前面的空洞不是
-                                .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                                .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         // 749 信号 B: 序号断档 —— 单独一条线, 与"哪几天缺日志"分开表述
                         if r.idxGapTotal == 0 && r.idxAnomalies == 0 {
                             Text("序号连续: 本机相邻两行之间没有空号。")   // 749 序号连续
-                                .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                                .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         } else if r.idxGapTotal == 0 {
                             Text("本机相邻行之间的序号差全都超过了报号上限 — 一个号数都不报, 只出下面那一行。")   // 749 本机相邻行之间的序号
-                                .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                                .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         } else {
                             ForEach(r.idxGaps) { g in
                                 idxGapRow(g)
                             }
                             Text("序号这条线与日期是两回事: 本机相邻两行之间共 \(r.idxGapTotal) 处断档, 空号合计 \(r.idxGapSkippedTotal) 个 —— 那只是本机序号的算术, 既可能是那几条没拉到、也可能是缓存 300 行上限把旧行挤掉了, 它不等于「锁内少了几条」, 也不和上面的天数加在一起。")   // 749 序号这条线与日期是两
-                                .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                                .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         if r.idxAnomalies > 0 {
                             Text("另有 \(r.idxAnomalies) 处序号跳变超过 \(RecordReconcile.idxGapCap) 个号 (多为翻页游标边界或锁端重排), 按本条纪律只计数、不报号数。")   // 749 另有
-                                .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                                .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         if r.clocklessRows > 0 {
                             Text("日期推断已排除 \(r.clocklessRows) 行没有有效锁端时刻的日志。")   // 749 日期推断已排除
-                                .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                                .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         Button {
@@ -537,23 +537,23 @@ struct DiagnosticsView: View {
                                 .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
-                        .font(.footnote.weight(.medium))
+                        .vkFont(.footnote, weight: .medium)
                         .foregroundStyle(DS.Palette.accentText)
                         .accessibilityLabel("复制待补拉清单")
                         // 749 补拉要到场
                         // 749 补拉要到场
                         Text("补拉要到场: 本 App 与门锁只有蓝牙直连, 不能远程向锁要历史 —— 到场连上门锁后在「记录」页翻页取回。也先说清代价: 锁端日志有上限会滚动, 被新记录顶掉的那几天补拉也取不回来, 所以这份清单是**待补拉的候选**, 不是「锁里一定还有」的保证。")
-                            .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                            .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                         Text("锁内上报总数在协议里没有对应字段 (证据 vendor/app/utils/status.js:100-101): 03 状态的 21-29 是 PIN/密码/指纹三族凭证槽位的容量与剩余数, 各自再带一枚绑定数/最大长度/批号; 16 日志响应只报本次游标之后的剩余条数。逐键语义在本页「诊断查阅 › 协议字段字典」里同一份表可核 — 所以这里给不出「日志行数 vs 锁内总数」那种对账数字, 上面整份清单都是本机推断。")   // 754 锁内上报总数在协议里
-                            .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                            .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
                 // 752 清理前提醒: 走的是销毁流程同一条备份闸口径, 不另造判断
                 if !DestroyKit.backupGatePass {
                     Text("最近 7 天没有备份 —— 清理/归档前建议先导出备份；此处只提示，不拦你。")
-                        .font(.caption).foregroundStyle(DS.Palette.warn)
+                        .vkFont(.caption).foregroundStyle(DS.Palette.warn)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -563,10 +563,10 @@ struct DiagnosticsView: View {
             if !bkEvents511.isEmpty {
                 Section("数据事件") {   // 511 数据事件
                     ForEach(bkEvents511, id: \.self) { s in
-                        Text(s).font(.caption).foregroundStyle(DS.Palette.textSub)
+                        Text(s).vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                     }
                     Text("最近 12 个导出 / 恢复 / 迁移节点, 与备份页同源 (kf_bk_events); 只在做过备份类操作后出现。")
-                        .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                        .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -576,41 +576,41 @@ struct DiagnosticsView: View {
                 let tips = Recovery.tips()
                 if tips.isEmpty {
                     Text("没有值得回收的项 —— 各键族都在阈值以下，或对应数据本来就是空的。")
-                        .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                        .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 ForEach(tips) { t in
                     VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                        Text(t.title).font(.subheadline).foregroundStyle(DS.Palette.text)
+                        Text(t.title).vkFont(.subheadline).foregroundStyle(DS.Palette.text)
                         // 2026-10-14 走查: RecoveryTip.detail 是 String 变量, 有几条带 `**…**`
                         // (DiagKit 的 storefail / rollback 两条), Text 不解析 Markdown ⇒ 会显示两颗星。
                         mdText(t.detail)
-                            .font(.caption).foregroundStyle(DS.Palette.textSub)
+                            .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                         if !t.goto.isEmpty {
                             Text("去处: \(t.goto)")
-                                .font(.caption2).foregroundStyle(DS.Palette.accentText)
+                                .vkFont(.caption2).foregroundStyle(DS.Palette.accentText)
                         }
                     }
                     .accessibilityElement(children: .combine)
                 }
                 Text("体积口径: 「回滚快照」那一条是真实文件大小；其余按 kf_* 键值长度估算，不等于磁盘真实占用。")
-                    .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                    .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             // 280 性能面板 (自统计, 默认关) + 215 冷启动打点
             Section("性能面板") {   // 215/280 性能面板
-                Toggle("采集页面打开耗时", isOn: Binding(
+                VariantToggle("采集页面打开耗时", isOn: Binding(
                     get: { pageTraceOn },
                     set: { PageTrace.setOn($0); pageTraceOn = $0 }))
                 Text("口径: 从切 Tab 到该页出现之间走过的墙钟时间。只是参考下界 —— SwiftUI 的布局与绘制不完全落在这两点之间, 也不含蓝牙。")
-                    .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                    .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 let rows = PageTrace.entries()
                 if pageTraceOn && rows.isEmpty {
                     Text("还没攒到样本：切一次页再回来看。配不上起点、或超过 3 秒的样本一律直接丢弃，不猜数。")
-                        .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                        .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 ForEach(rows.reversed()) { r in
@@ -618,7 +618,7 @@ struct DiagnosticsView: View {
                 }
                 if !rows.isEmpty {
                     Button("清空样本") { PageTrace.clear() }
-                        .font(.footnote).foregroundStyle(DS.Palette.accentText)
+                        .vkFont(.footnote).foregroundStyle(DS.Palette.accentText)
                 }
                 // 215 全仓只有这一处打点, 所以标题不写成"各阶段"
                 if let launch = StartupTrace.ms("onLaunch 结束") {
@@ -626,13 +626,13 @@ struct DiagnosticsView: View {
                                "\(Int(launch)) ms" + (StartupTrace.overBudget ? " · 超 800ms 预算" : " · 在 800ms 预算内"))
                 } else {
                     Text("本次启动没记录到 onLaunch 结束打点，没有数就不编数。")   // 215 本次启动没记录到
-                        .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                        .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
 
             Section {
-                Toggle("记录原始收发 hex", isOn: Binding(
+                VariantToggle("记录原始收发 hex", isOn: Binding(
                     get: { debugRaw },
                     set: { DB.store.set("kf_debug_raw", $0); debugRaw = $0}))
                 // 127 静默排查模式: DiagFlags.silent 有 6 个消费方, 全在 LinkSenseKit ——
@@ -640,7 +640,7 @@ struct DiagnosticsView: View {
                 // :309 275 会话巡检、:417 134 冷启动广播扫描 (第九十一批逐条打开对过行号)。
                 // 原文案列的第 7 个"看门狗"是零调用死码, 已删, 计数跟着改 (DiagKit 277 段有说明)。
                 // 这些消费方曾长期**没有写入方** ⇒ 这个模式根本打不开, 是下面这条开关把它接真的。
-                Toggle("静默排查模式", isOn: Binding(   // 127 静默排查模式
+                VariantToggle("静默排查模式", isOn: Binding(   // 127 静默排查模式
                     get: { DiagFlags.silent },
                     set: { DB.store.set("kf_silent_trouble", $0); app.showToast($0
                         ? "已静默: 不再自动回连、预握手与靠近自动开锁; 手动圆盘照常"
@@ -661,20 +661,20 @@ struct DiagnosticsView: View {
                 }
                 .pickerStyle(.menu)
                 Text("档位只改变扫描时长与是否接收重复广播；靠近自动开锁与连接重试不受影响。省电档在设备密集环境里可能少扫到几把锁。")
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             } footer: {
                 // 128 按最近一次冷启动扫描
                 // 134 按最近一次冷启动扫描
                 Text("按最近一次冷启动扫描的可见设备数与首台可见耗时本地判断; 冷启动扫描在启动后台自动跑。")
-                    .font(.caption)
+                    .vkFont(.caption)
             }
             // 包2/72 断连原因行: BLE 断连/握手失败事件翻译成人话按时间列出 (数据源 BleTelemetry 流水)
             Section("断连与失败") {   // 72 断连与失败
                 if BleTelemetry.events.isEmpty {
                     Text("暂无断连事件 — 连接全程顺畅。")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                 } else {
                     ForEach(BleTelemetry.events.prefix(20)) { ev in
@@ -689,7 +689,7 @@ struct DiagnosticsView: View {
                 let ops = DiagOps.list()
                 if ops.isEmpty {
                     Text("暂无操作打点 — 预握手、到场补发与冷启动扫描都会在这里各留一行。")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                 } else {
                     ForEach(ops.prefix(20)) { op in
@@ -698,18 +698,18 @@ struct DiagnosticsView: View {
                 }
                 // 156 开关：`DiagOps.record` 一直是"先读 isOn 再记"，但全仓没有任何一处写
                 // kf_diag_ops_on (默认 true) —— footer 那句"关掉开关即不再记"根本没有开关可关。补真开关。
-                Toggle("记录操作打点", isOn: Binding(   // 156 记录操作打点
+                VariantToggle("记录操作打点", isOn: Binding(   // 156 记录操作打点
                     get: { DiagOps.isOn() },
                     set: { DB.store.set(DiagOps.on, $0) }))
             } header: {
                 Text("操作流水")   // 156 操作流水
             } footer: {
                 Text("只留最近 \(DiagOps.maxCount) 条；关掉上面这枚开关即不再记。")   // 156 只留最近
-                    .font(.caption)
+                    .vkFont(.caption)
             }
             // 866 极限字号自检: 原句要求入口在诊断页; 溢出控件无枚举 API, 如实定位为目检
             Section {
-                Toggle("极限字号自检 (以 200% 字号预览)", isOn: Binding(
+                VariantToggle("极限字号自检 (以 200% 字号预览)", isOn: Binding(
                     get: { AXFlags.bigPreview },
                     // 2026-10-15 走查: 这里原先是 `DB.store.set("kf_ax_bigpreview", $0)` 直接落盘 ——
                     // 同一个键在无障碍页走的是 `app.setUnlockOption` (那一条会 bump 种子)，这第二条什么都不推
@@ -721,7 +721,7 @@ struct DiagnosticsView: View {
                 Text("渲染自检")   // 866 渲染自检
             } footer: {
                 Text("自测开关, 检查后请关回 (与无障碍页同一键位)。溢出控件无法程序枚举, 请开启后逐页目检大字下是否截断/换行。")
-                    .font(.caption)
+                    .vkFont(.caption)
             }
             // 133 蓝牙堆栈急救: 连续 GATT/连接失败后给出 关开蓝牙/重启手机 分步指引
             if failsInLast20 >= 3 {
@@ -733,7 +733,7 @@ struct DiagnosticsView: View {
                     Text("蓝牙急救")   // 133 蓝牙急救
                 } footer: {
                     Text("近 20 条断连事件中有 \(failsInLast20) 条失败 — 建议按序执行。")
-                        .font(.caption)
+                        .vkFont(.caption)
                 }
             }
 #if DEBUG
@@ -743,7 +743,7 @@ struct DiagnosticsView: View {
             // 不存在 Section("标题") { } footer: { } 这种写法
             Section {
                 // 标签必须由 @State 驱动: set 里只做副作用不改状态的话, 开关文案不会翻转
-                Toggle(seeded ? "清除最坏数据" : "注入最坏数据",
+                VariantToggle(seeded ? "清除最坏数据" : "注入最坏数据",
                        isOn: Binding(get: { seeded },
                                      set: { on in
                                          seeded = on
@@ -768,7 +768,7 @@ struct DiagnosticsView: View {
                     Text("靠近自动开锁")
                 } footer: {
                     Text("审计只记「哪道门拒了」与时刻, 永不落 ekey/skey 明文; 尾段 500 条。")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -778,13 +778,13 @@ struct DiagnosticsView: View {
             Section("指令流水 (最近 \(min(cmdTrace.count, 20)) 条)") {   // 455 指令流水
                 if cmdTrace.isEmpty {
                     Text("本次会话还没有指令结果 — 做一次开锁/读取后这里才有内容。")
-                        .font(.footnote).foregroundStyle(DS.Palette.textSub)
+                        .vkFont(.footnote).foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 } else {
                     ForEach(Array(cmdTrace.prefix(20).enumerated()), id: \.offset) { _, line in
                         HStack(spacing: DS.Space.s) {
                             Text(line)
-                                .font(.caption.monospaced())
+                                .vkFont(.caption.monospaced())
                                 // 283: rc != 0 的指令行标红 (判据见 cmdTone)
                                 .foregroundStyle(Self.cmdTone(line))
                                 .textSelection(.enabled)
@@ -796,14 +796,14 @@ struct DiagnosticsView: View {
                                 DiagReferenceView(highlightRC: Self.rcOf(line)).environmentObject(app)
                             } label: {
                                 Image(systemName: "text.book.closed")
-                                    .font(.footnote)
+                                    .vkFont(.footnote)
                                     .foregroundStyle(DS.Palette.accentText)
                             }
                             .accessibilityLabel("查错误码对照表")   // 159 查错误码对照表
                         }
                     }
                     Text("只列命令类型与结果码 (rc)。开启\"记录原始收发 hex\"后, 落进日志的行也只剩帧头 4 位并标注已隐去多少位；完整帧只在内存里留着给\"原始报文\"看，不写盘、不进报告与导出。")
-                        .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                        .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -814,12 +814,12 @@ struct DiagnosticsView: View {
                     // 手动按下去必须无论结果都有反馈 (解锁路径才做"只在异常时出声")
                     app.showToast(SelfCheck.summary(app.selfCheck397))
                 }
-                .font(.subheadline.weight(.medium))
+                .vkFont(.subheadline, weight: .medium)
                 .foregroundStyle(DS.Palette.accentText)
                 .frame(minHeight: DS.Hit.min)
                 if app.selfCheck397.isEmpty {
                     Text("解锁时自动跑一次。三项都是本地只读: 库体哈希比对 / 审计链逐条重算 / JSON 回环与台账计数核对。")
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -831,10 +831,10 @@ struct DiagnosticsView: View {
                             .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: DS.Space.xxs) {
                             Text(l.name)
-                                .font(.subheadline)
+                                .vkFont(.subheadline)
                                 .foregroundStyle(DS.Palette.text)
                             Text(l.detail)
-                                .font(.caption2)
+                                .vkFont(.caption2)
                                 .foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -843,7 +843,7 @@ struct DiagnosticsView: View {
                     .accessibilityElement(children: .combine)
                 }
                 Text("本 App 的库体在钥匙串与偏好表里, 没有 SQLite —— 这一栏不是 quick_check, 也不重建索引; 它只做上面这三件读检查。")
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -863,33 +863,33 @@ struct DiagnosticsView: View {
                         String(s.day.suffix(5)) + " " + String(Int(s.secs)) + "s"
                     }.joined(separator: " · ")
                     Text("扫描时长: " + scanText)
-                        .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                        .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 Text(ScanStats.advice())
-                    .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                    .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 LabeledRow("会话自恢复", "\(DB.store.getInt("kf_wd_heals", 0)) 次")   // 277 会话自恢复
                 Text("会话假死被巡检判定并重新握手成功的累计次数; 明细在运行日志的「会话重协商」行。")   // 275/131 会话假死被巡检判定并
-                    .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                    .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 let snaps = DB.failEvents(app.currentMac).prefix(10)
                 if snaps.isEmpty {
                     Text("还没有失败留痕 — 每次开锁失败会在这里留下信号/电量/错误码 (早先的旧记录只有原因文案)。")
-                        .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                        .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 } else {
                     ForEach(Array(snaps.enumerated()), id: \.offset) { _, s in
                         VStack(alignment: .leading, spacing: DS.Space.xxs) {
                             Text(Date(timeIntervalSince1970: s.ts).formatted(date: .abbreviated, time: .shortened)
                                  + " · " + s.msg)
-                                .font(.caption).foregroundStyle(DS.Palette.text)
+                                .vkFont(.caption).foregroundStyle(DS.Palette.text)
                                 .fixedSize(horizontal: false, vertical: true)
                             let bits = [s.rssi.map { "RSSI \($0) dBm" },
                                         s.pct.map { "电量 \($0)%" },
                                         s.rc.map { "rc \($0)" }].compactMap { $0 }
                             Text(bits.isEmpty ? "该条为旧记录, 当时未留信号/电量/错误码" : bits.joined(separator: " · "))
-                                .font(.caption2)
+                                .vkFont(.caption2)
                                 .foregroundStyle(bits.isEmpty ? DS.Palette.textSub : DS.Palette.warn)
                         }
                     }
@@ -899,11 +899,11 @@ struct DiagnosticsView: View {
                 if let rate = BleTelemetry.successRate() {
                     HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {
                         Text("\(rate.pct)%")
-                            .font(.title2.weight(.semibold))
+                            .vkFont(.title2, weight: .semibold)
                             .foregroundStyle(DS.Palette.text)
                             .monospacedDigit()
                         Text("已留存 \(rate.total) 次连接尝试, 成功 \(rate.ok)")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -913,27 +913,27 @@ struct DiagnosticsView: View {
                         Chart(daily) { p in
                             LineMark(x: .value("日期", p.day), y: .value("成功率", p.pct))
                             PointMark(x: .value("日期", p.day), y: .value("成功率", p.pct))
-                                .annotation(position: .top) { Text("\(p.n)").font(.caption2) }
+                                .annotation(position: .top) { Text("\(p.n)").vkFont(.caption2) }
                         }
                         .chartYScale(domain: 0...100)
                         .frame(height: 150)
                         .accessibilityLabel("按日连接成功率趋势, 共 \(daily.count) 天")
                     } else {
                         Text("按日趋势需至少 2 天记录 — 当前只有一天 (\(daily.count))")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                     }
                 } else {
                     Text("尚无连接尝试记录 — 做过扫描/开锁后这里才有数据")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                 }
                 ForEach(BleTelemetry.failClasses(), id: \.name) { c in
                     HStack(alignment: .top, spacing: DS.Space.s) {
-                        Text(c.name).font(.subheadline).foregroundStyle(DS.Palette.text)
-                        Text("\(c.n) 次").font(.footnote).foregroundStyle(DS.Palette.textSub)
+                        Text(c.name).vkFont(.subheadline).foregroundStyle(DS.Palette.text)
+                        Text("\(c.n) 次").vkFont(.footnote).foregroundStyle(DS.Palette.textSub)
                         Spacer(minLength: DS.Space.m)
-                        Text(c.hint).font(.caption).foregroundStyle(DS.Palette.textSub)
+                        Text(c.hint).vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                             .multilineTextAlignment(.trailing)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -950,7 +950,7 @@ struct DiagnosticsView: View {
                             logLevelFilter = lv
                             DS.Haptics.tick.impactOccurred()
                         }
-                        .font(.caption.weight(on ? .semibold : .regular))
+                        .vkFont(.caption.weight(on ? .semibold : .regular))
                         .padding(.horizontal, DS.Space.s).padding(.vertical, 4)
                         .foregroundStyle(on ? DS.Palette.onAccent : DS.Palette.textSub)
                         .background(on ? AnyShapeStyle(DS.Palette.accent) : AnyShapeStyle(DS.Palette.surfaceAlt), in: Capsule())
@@ -969,11 +969,11 @@ struct DiagnosticsView: View {
                 HStack(spacing: DS.Space.s) {
                     TextField("搜索日志", text: $logQuery)   // 154 搜索日志
                         .autocorrectionDisabled()
-                        .font(.caption)
+                        .vkFont(.caption)
                         .accessibilityLabel("日志关键词搜索")
                     if !logQuery.isEmpty {
                         Button("清空") { logQuery = "" }
-                            .font(.caption).foregroundStyle(DS.Palette.accentText)
+                            .vkFont(.caption).foregroundStyle(DS.Palette.accentText)
                             .frame(minHeight: DS.Hit.min)
                     }
                 }
@@ -982,14 +982,14 @@ struct DiagnosticsView: View {
                 VStack(alignment: .leading, spacing: DS.Space.xxs) {
                     HStack(spacing: DS.Space.xs) {
                         Text("时间窗")
-                            .font(.caption2)
+                            .vkFont(.caption2)
                             .foregroundStyle(DS.Palette.textSub)
                         if let a = winFrom, let b = winTo {
                             Text("\(min(a, b))–\(max(a, b)) 时")
-                                .font(.caption2.monospacedDigit())
+                                .vkFont(.caption2.monospacedDigit())
                                 .foregroundStyle(DS.Palette.accentText)
                             Button("清除") { winFrom = nil; winTo = nil }
-                                .font(.caption2)
+                                .vkFont(.caption2)
                                 .foregroundStyle(DS.Palette.accentText)
                                 .frame(minHeight: DS.Hit.min - DS.Space.s)
                                 // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 没有 minHeight (< 44)。
@@ -998,7 +998,7 @@ struct DiagnosticsView: View {
                                 .contentShape(Rectangle())
                         } else {
                             Text("按住刻度拖动选择小时段")   // 542 按住刻度拖动选择小时
-                                .font(.caption2)
+                                .vkFont(.caption2)
                                 .foregroundStyle(DS.Palette.textSub)
                         }
                         Spacer(minLength: 0)
@@ -1033,7 +1033,7 @@ struct DiagnosticsView: View {
                 }
                 if logRows.isEmpty && !app.lock.logs.isEmpty {
                     Text("当前过滤条件下没有匹配行（共 \(app.lock.logs.count) 条日志）。")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -1065,12 +1065,12 @@ struct DiagnosticsView: View {
                             HStack(spacing: DS.Space.xs) {
                                 Image(systemName: s.1)
                                     .font(.system(size: DS.Icon.xs))
-                                Text(s.0).font(.caption2)
+                                Text(s.0).vkFont(.caption2)
                             }
                             .foregroundStyle(DS.Palette.textSub)
                         }
                         Text("做一次连接、开锁或读取, 四类里对应的那几栏就会开始积累。")   // 818 做一次连接
-                            .font(.caption2)
+                            .vkFont(.caption2)
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -1080,14 +1080,14 @@ struct DiagnosticsView: View {
                 // 543 计数: 只报当前过滤后可见行里的引用行数, 不报全库 (与上面的 显示 x/y 同一口径)
                 if entityRows > 0 {
                     Text("当前视图有 \(entityRows) 行含可跳转的凭证/指纹引用")   // 543 当前视图有
-                        .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                        .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 ForEach(logRows) { row in
                     let ents = DiagLogs.entities(in: row.line)
                     VStack(alignment: .leading, spacing: DS.Space.xxs) {
                         highlighted(row.line, base: Self.logTone(row.line))
-                            .font(.caption.monospaced())
+                            .vkFont(.caption.monospaced())
                             .textSelection(.enabled)
                             .fixedSize(horizontal: false, vertical: true)
                             // 740 原始报文查看: HexDump 此前全库无消费者, 这里接成长按入口 (用菜单而非点击,
@@ -1101,7 +1101,7 @@ struct DiagnosticsView: View {
                                     // 有完整帧就按完整帧报字节数; 只报脱敏残片会让人以为帧只有 2 字节
                                     Text("该行帧约 \(max(Self.hexOf(rawFrame(of: row.line)), Self.hexOf(row.line)).count / 2) 字节"
                                         + (rawFrame(of: row.line).isEmpty ? " (仅帧头留存)" : ""))
-                                        .font(.caption2)
+                                        .vkFont(.caption2)
                                 }
                             }
                         if !ents.isEmpty {
@@ -1112,7 +1112,7 @@ struct DiagnosticsView: View {
                                         DS.Haptics.tick.impactOccurred()
                                     } label: {
                                         Text(e.text)
-                                            .font(.caption2.weight(.medium))
+                                            .vkFont(.caption2, weight: .medium)
                                             .padding(.horizontal, DS.Space.s).padding(.vertical, DS.Space.xs)
                                             .foregroundStyle(DS.Palette.accentText)
                                             .variantPlate(DS.Palette.surfaceAlt, .capsule)
@@ -1133,8 +1133,8 @@ struct DiagnosticsView: View {
         }
         .sheet(item: $dumpedLine) { row in
             VStack(alignment: .leading, spacing: DS.Space.s) {
-                Text("原始报文").font(.headline).foregroundStyle(DS.Palette.text)   // 740 原始报文
-                Text(row.line).font(.caption2).foregroundStyle(DS.Palette.textSub)
+                Text("原始报文").vkFont(.headline).foregroundStyle(DS.Palette.text)   // 740 原始报文
+                Text(row.line).vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                     .lineLimit(2).fixedSize(horizontal: false, vertical: true)
                 ScrollView {
                     // 优先展示内存里的完整帧 (此前这里只会 dump 日志行的脱敏残片 = 帧头 4 位,
@@ -1146,24 +1146,24 @@ struct DiagnosticsView: View {
                         // 的码值同一判据 374)。字段解析里的 PIN 同样是明文, 一起收起。
                         if cap.recording {
                             Text("录屏/投屏中已隐去完整帧")   // 374 录屏
-                                .font(.caption.monospaced())
+                                .vkFont(.caption.monospaced())
                                 .foregroundStyle(DS.Palette.warn)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             Text("完整帧含 skey/ekey/PIN 明文。停止屏幕录制或镜像后再查看 —— 这一屏不外传,"
                                  + "但录出来的文件不限流向。")
-                                .font(.caption2)
+                                .vkFont(.caption2)
                                 .foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         } else {
                             Text(HexDump.dump(hx))
-                                .font(.caption.monospaced())
+                                .vkFont(.caption.monospaced())
                                 .foregroundStyle(DS.Palette.text)
                                 // 刻意不给 textSelection: 完整帧里带 skey/ekey/PIN 明文, 可以看不可以复制走
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         if !pf.rows.isEmpty && !cap.recording {
                             Text(String(format: "字段解析 — 帧头 %dB · cmd 0x%02X", pf.header, pf.cmd))   // 740 字段解析
-                                .font(.footnote).foregroundStyle(DS.Palette.textSub)
+                                .vkFont(.footnote).foregroundStyle(DS.Palette.textSub)
                             ForEach(Array(pf.rows.enumerated()), id: \.offset) { _, f in
                                 LabeledRow(f.0, f.1)
                             }
@@ -1174,7 +1174,7 @@ struct DiagnosticsView: View {
                 Text(rawFrame(of: row.line).isEmpty
                      ? "这一行没有可还原的完整帧 (只留了脱敏后的帧头)。"
                      : "完整帧含密钥与口令明文：只在屏幕显示，不能选中复制，也不写进任何报告或导出。请别截图外传。")
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(rawFrame(of: row.line).isEmpty ? DS.Palette.textSub : DS.Palette.warn)
                     .fixedSize(horizontal: false, vertical: true)
                 Button("完成") { dumpedLine = nil }
@@ -1186,17 +1186,17 @@ struct DiagnosticsView: View {
         // 543 实体跳转: 弹出本机台账元数据。LedgerPwd.pwd 存的是口令明文, 只读备注/属主/有效期这些元数据字段
         .sheet(item: $entityRef) { ref in
             VStack(alignment: .leading, spacing: DS.Space.s) {
-                Text(ref.text).font(.headline).foregroundStyle(DS.Palette.text)
+                Text(ref.text).vkFont(.headline).foregroundStyle(DS.Palette.text)
                 Text(DiagLogs.entityDetail(ref, mac: app.currentMac))
-                    .font(.subheadline)
+                    .vkFont(.subheadline)
                     .foregroundStyle(DS.Palette.text)
                     .fixedSize(horizontal: false, vertical: true)
                 Text("这里只显示台账元数据 (备注/属主/有效期)。口令、指纹特征与密钥不会出现在日志和本页。")
-                    .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                    .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: DS.Space.m) {
                     Button("关闭") { entityRef = nil }
-                        .font(.subheadline).foregroundStyle(DS.Palette.accentText)
+                        .vkFont(.subheadline).foregroundStyle(DS.Palette.accentText)
                         .frame(minHeight: DS.Hit.min)
                     if ref.isCredential {
                         // 543 深链: 切 Tab 前挂上定位载荷; 跨锁由 pendingCredNavMac 在消费端先切锁 (与 577 同一条链)
@@ -1234,12 +1234,12 @@ struct DiagnosticsView: View {
         let now = Date()
         let card = VStack(alignment: .leading, spacing: DS.Space.s) {
             Text("离线锁管家 · 诊断摘要")
-                .font(.headline)
+                .vkFont(.headline)
             Text(report())
-                .font(.caption2.monospaced())   // 语义字号: 固定 pt 不参与 Dynamic Type 缩放
+                .vkFont(.caption2.monospaced())   // 语义字号: 固定 pt 不参与 Dynamic Type 缩放
                 .fixedSize(horizontal: false, vertical: true)
             Text("导出时间 " + now.formatted(date: .abbreviated, time: .standard) + " · 本图由 App 本机生成")   // 239 本图由
-                .font(.caption2)
+                .vkFont(.caption2)
                 .foregroundStyle(.secondary)
         }
         .padding(16)
@@ -1247,7 +1247,7 @@ struct DiagnosticsView: View {
         .background(Color.white)
         .overlay(alignment: .bottomTrailing) {
             Text("离线锁管家 " + now.formatted(date: .numeric, time: .shortened))
-                .font(.caption2)
+                .vkFont(.caption2)
                 .foregroundStyle(Color.black.opacity(0.32))
                 .rotationEffect(.degrees(-18))
                 .padding(DS.Space.xxl)

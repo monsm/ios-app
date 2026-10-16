@@ -71,7 +71,7 @@ struct DeviceHomeView: View {
                                 app.showToast("到「备份与恢复」：可本地导入，或从坚果云恢复")   // 824 设置
                             } label: {
                                 Label("从备份恢复", systemImage: "square.and.arrow.down")   // 824 从备份恢复
-                                    .font(.subheadline.weight(.medium))
+                                    .vkFont(.subheadline, weight: .medium)
                                     .foregroundStyle(DS.Palette.accentText)
                                     .frame(maxWidth: .infinity, minHeight: DS.Hit.min)
                             }
@@ -79,7 +79,7 @@ struct DeviceHomeView: View {
                             // 1044 家庭公告板: 空态里的一张便签
                             if !Milestones.bulletin.isEmpty {
                                 Label(Milestones.bulletin, systemImage: "pin.fill")
-                                    .font(.footnote)
+                                    .vkFont(.footnote)
                                     .foregroundStyle(DS.Palette.accentText)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
@@ -96,7 +96,7 @@ struct DeviceHomeView: View {
                                     Image(systemName: "hand.point.up.left")
                                         .font(.system(size: DS.Icon.xs))
                                     Text("小提示：长按主控卡上的「连接耗时」标记可看最近状态变化")   // 42/268 小提示
-                                        .font(.caption2)
+                                        .vkFont(.caption2)
                                         .multilineTextAlignment(.leading)
                                 }
                                 .foregroundStyle(DS.Palette.textSub)
@@ -137,7 +137,7 @@ struct DeviceHomeView: View {
                         // 排序落成上/下移按钮, 不改整页手势。
                         Button { showModuleOrder = true } label: {
                             Label("模块排序与显隐", systemImage: "arrow.up.arrow.down")   // 904 模块排序
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                                 .frame(maxWidth: .infinity, minHeight: DS.Hit.min)
                         }
@@ -418,7 +418,7 @@ struct DeviceHomeView: View {
             DS.Haptics.tick.impactOccurred()
         } label: {
             Text(label)
-                .font(.subheadline.weight(.medium))
+                .vkFont(.subheadline, weight: .medium)
                 .lineLimit(1)
                 .padding(.horizontal, DS.Space.l)
                 .padding(.vertical, 12)
@@ -444,7 +444,7 @@ struct DeviceHomeView: View {
                 .padding(.horizontal, DS.Space.gutter)
             }
             Text("红点=近 30 天日志里有告警 · 橙点=低电 · 绿点=本机已连接 · 空心圈=没读到读数 (不代表门锁正常)")
-                .font(.caption2)
+                .vkFont(.caption2)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, DS.Space.gutter)
@@ -485,7 +485,7 @@ struct DeviceHomeView: View {
                 }
                 // 44pt 是命中区, 文字块另给宽度: 名字长就截断, 完整名走 a11y 标签
                 Text(name)
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(isCur ? DS.Palette.text : DS.Palette.textSub)
                     .lineLimit(1)
                     .truncationMode(.tail)
@@ -628,7 +628,7 @@ struct DeviceHomeView: View {
                 Circle().fill(LockArchive.swatchColor(LockArchive.meta(app.currentMac).colorKey))
                     .frame(width: 8, height: 8)
                 Text(app.displayName)
-                    .font(.footnote.weight(.medium))
+                    .vkFont(.footnote, weight: .medium)
                     .foregroundStyle(DS.Palette.text)
                     .lineLimit(1)
                 Image(systemName: "chevron.up.chevron.down")
@@ -756,19 +756,19 @@ struct DeviceHomeView: View {
                             .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: DS.Space.xxs) {
                             Text(LockArchive.displayName(kc))
-                                .font(.title3.weight(.semibold))
+                                .vkFont(.title3, weight: .semibold)
                                 .foregroundStyle(DS.heroFg)
                                 .lineLimit(1)
                             // 774 场所副标题: 档案里填了场所就替代型号行
                             Text(LockArchive.subtitle(kc))
-                                .font(.footnote)
+                                .vkFont(.footnote)
                                 .foregroundStyle(DS.heroFg.opacity(0.9))
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
                             // 1000 晚归欢迎语 / 1001 节气问候 (只属于当前锁的活页面)
                             if isCurrent, let m = heroMomentText {
                                 Text(m)
-                                    .font(.footnote)
+                                    .vkFont(.footnote)
                                     .foregroundStyle(DS.heroFg.opacity(0.9))
                                     .fixedSize(horizontal: false, vertical: true)
                             }
@@ -788,7 +788,7 @@ struct DeviceHomeView: View {
                                 .overlay(alignment: .top) {
                                     if isCurrent && showRssi {
                                         Text("\(sense.lastRssi) dBm")
-                                            .font(.caption2.monospacedDigit())
+                                            .vkFont(.caption2.monospacedDigit())
                                             .foregroundStyle(DS.heroFg)
                                             .padding(.horizontal, DS.Space.xs)
                                             .padding(.vertical, 2)
@@ -872,7 +872,7 @@ struct DeviceHomeView: View {
                             Circle().fill(bs == .fresh ? DS.Palette.ok : DS.heroFg)
                                 .frame(width: 6, height: 6)
                             Text(bs == .fresh ? "今日已备份" : "多日未备份")
-                                .font(.caption2)
+                                .vkFont(.caption2)
                                 .foregroundStyle(DS.heroFg.opacity(0.92))
                         }
                         .padding(.horizontal, DS.Space.xs)
@@ -890,7 +890,7 @@ struct DeviceHomeView: View {
                             .foregroundStyle(DS.heroFg.opacity(0.9))
                             .accessibilityHidden(true)
                         Text("链路待验证 · 成功开一次锁即打标")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.heroFg.opacity(0.92))
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -904,7 +904,7 @@ struct DeviceHomeView: View {
                             .modifier(BreathingGlyph())
                             .accessibilityHidden(true)
                         Text("该喂电了, 别让它饿着")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.heroFg.opacity(0.92))
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -918,7 +918,7 @@ struct DeviceHomeView: View {
                                 .foregroundStyle(DS.heroFg.opacity(0.9))
                                 .accessibilityHidden(true)
                             Text("打开换电图文指引")
-                                .font(.footnote)
+                                .vkFont(.footnote)
                                 .foregroundStyle(DS.heroFg)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -936,7 +936,7 @@ struct DeviceHomeView: View {
                             .foregroundStyle(DS.heroFg.opacity(0.9))
                             .accessibilityHidden(true)
                         Text("低温季: 电池续航会缩短, 多留意电量")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.heroFg.opacity(0.92))
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -993,16 +993,16 @@ struct DeviceHomeView: View {
                         // 82: 每次翻面弹性弹出一次
                         .symbolEffect(.bounce, value: flipped)
                     Text("已开锁")
-                        .font(.headline)
+                        .vkFont(.headline)
                         .foregroundStyle(DS.heroFg)
                         .lineLimit(1)
                 }
                 Text(backSummary)
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.heroFg.opacity(0.92))
                     .fixedSize(horizontal: false, vertical: true)
                 Text("轻点翻回正面")
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.heroFg.opacity(0.7))
             }
         }
@@ -1028,7 +1028,7 @@ struct DeviceHomeView: View {
                                 .foregroundStyle(n.2.color)
                                 .accessibilityHidden(true)
                             Text(n.0)
-                                .font(.footnote)
+                                .vkFont(.footnote)
                                 .foregroundStyle(DS.Palette.text)
                                 .fixedSize(horizontal: false, vertical: true)
                             Spacer(minLength: 0)
@@ -1075,12 +1075,12 @@ struct DeviceHomeView: View {
                                 .foregroundStyle(rowTone(r.2))
                                 .accessibilityHidden(true)
                             Text(r.0)
-                                .font(.footnote)
+                                .vkFont(.footnote)
                                 .foregroundStyle(r.3 ? DS.Palette.textSub : DS.Palette.text)
                                 .fixedSize(horizontal: false, vertical: true)
                             if r.3 {
                                 Text("缓存")
-                                    .font(.caption2.weight(.medium))
+                                    .vkFont(.caption2, weight: .medium)
                                     .foregroundStyle(DS.Palette.textSub)
                                     .padding(.horizontal, 4).padding(.vertical, DS.Space.xxs)
                                     .variantPlate(DS.Palette.surfaceAlt, .capsule)
@@ -1189,10 +1189,10 @@ struct DeviceHomeView: View {
                     .frame(width: 8, height: 8)
                     .accessibilityHidden(true)
                 Text(app.displayName)
-                    .font(.subheadline.weight(.semibold))
+                    .vkFont(.subheadline, weight: .semibold)
                     .lineLimit(1)
                 Text(bleOn ? "已连接" : "未连接 · 开锁会自动唤醒")
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .lineLimit(1)
                 Spacer(minLength: 0)
@@ -1216,7 +1216,7 @@ struct DeviceHomeView: View {
             .buttonStyle(PrimaryActionStyle(fullWidth: false))
             .accessibilityHint("轻点直发, 绕过按住确认")
             Text("轻点直发: 绕过按住确认 (同 53 口径); 二次应用锁与防抖去重照常")
-                .font(.caption2)
+                .vkFont(.caption2)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -1250,7 +1250,7 @@ struct DeviceHomeView: View {
             // 39 自动上锁倒计时 (协议 cmd24 档位的本地回放, 不虚构门磁): 开锁成功后提醒关手
             if let left = autoLockLeft {
                 Label("约 \(left) 秒后自动上锁 · 请确认门已关好", systemImage: "timer")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.accentText)
                     .fixedSize(horizontal: false, vertical: true)
                     .transition(.opacity)
@@ -1258,17 +1258,17 @@ struct DeviceHomeView: View {
             }
             if !btReady {
                 Text("打开系统蓝牙后即可开锁")
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
             } else if !bleOn {
                 Text("未连接时点击会自动唤醒门锁蓝牙")
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
             }
             // 88 临时码备援: BLE 反复失败时, 已开通的临时码可在锁键盘直接输入 (纯提示, 不涉协议)
             if app.failStreak >= 2, DB.otpStatus(app.currentMac)?.on == true {
                 Label("蓝牙连不稳? 已开通的临时码可直接在门锁键盘输入开门", systemImage: "keyboard")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.accentText)
                     .fixedSize(horizontal: false, vertical: true)
                     .transition(.opacity)
@@ -1277,7 +1277,7 @@ struct DeviceHomeView: View {
             if app.failStreak > 0 {
                 VStack(spacing: DS.Space.xs) {
                     Text(app.failStreak < 3 ? "再试一次, 别着急" : "连着几次没成, 逐项自查一遍:")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
@@ -1287,7 +1287,7 @@ struct DeviceHomeView: View {
                             DiagnosticsView()
                         } label: {
                             Label("打开排查工具", systemImage: "wrench.and.screwdriver")
-                                .font(.subheadline.weight(.medium))
+                                .vkFont(.subheadline, weight: .medium)
                                 .foregroundStyle(DS.Palette.accentText)
                                 .padding(.horizontal, DS.Space.l)
                                 .frame(minHeight: DS.Hit.min)
@@ -1304,11 +1304,11 @@ struct DeviceHomeView: View {
             // (超时失败不涨 failStreak, 所以钩在 .failed 上, 不能挂进上面 failStreak 块)
             if case .failed = app.unlockState {
                 Button("再试一次") { dialAction() }
-                    .font(.subheadline.weight(.semibold))
+                    .vkFont(.subheadline, weight: .semibold)
                     .foregroundStyle(DS.Palette.accentText)
                     .padding(.horizontal, DS.Space.xl)
                     .frame(minHeight: DS.Hit.min)
-                    .background(DS.Palette.accentText.opacity(0.12), in: Capsule())
+                    .variantPlate(DS.Palette.accentText.opacity(0.12), .capsule)
                     .buttonStyle(PressableButtonStyle())
             }
         }
@@ -1323,10 +1323,10 @@ struct DeviceHomeView: View {
             if confirmPulse {
                 VStack(spacing: DS.Space.xs) {
                     Text("即将开锁")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                     Text(app.displayName)
-                        .font(.headline)
+                        .vkFont(.headline)
                         .foregroundStyle(DS.Palette.accentText)
                         .padding(.horizontal, DS.Space.l)
                         .padding(.vertical, DS.Space.s)
@@ -1336,7 +1336,7 @@ struct DeviceHomeView: View {
                         .overlay(Capsule().strokeBorder(DS.Palette.accent, lineWidth: 1.5))
                         .scaleEffect(confirmPulse ? 1.06 : 1)
                     Text("再点一次圆盘开始开锁")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                 }
                 .padding(DS.Space.l)
@@ -1390,11 +1390,11 @@ struct DeviceHomeView: View {
                             SectionTitle(text: "换机迁移验证")
                             Spacer(minLength: 0)
                             Button("收起") { wizardDismissed = true }
-                                .font(.footnote)
+                                .vkFont(.footnote)
                                 .foregroundStyle(DS.Palette.textSub)
                         }
                         Text("检测到刚恢复过备份。逐把靠近门锁点「验证」，确认密钥与连接都正常。")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                         ForEach(pending) { kc in
@@ -1402,7 +1402,7 @@ struct DeviceHomeView: View {
                                 Circle().fill(LockArchive.swatchColor(LockArchive.meta(kc.mac).colorKey))
                                     .frame(width: 8, height: 8)
                                 Text(LockArchive.displayName(kc))
-                                    .font(.subheadline)
+                                    .vkFont(.subheadline)
                                     .foregroundStyle(DS.Palette.text)
                                     .lineLimit(1)
                                     .minimumScaleFactor(0.85)
@@ -1446,7 +1446,7 @@ struct DeviceHomeView: View {
                             .font(.system(size: DS.Icon.sm, weight: .semibold))
                             .foregroundStyle(checks[i] ? DS.Palette.ok : DS.Palette.textSub)
                         Text(txt)
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.text)
                             .fixedSize(horizontal: false, vertical: true)
                         Spacer(minLength: 0)
@@ -1547,7 +1547,7 @@ struct DeviceHomeView: View {
                                     .font(.system(size: DS.Icon.md))
                                     .foregroundStyle(DS.Palette.textSub)
                                 Text("待添加指纹")
-                                    .font(.caption2)
+                                    .vkFont(.caption2)
                                     .foregroundStyle(DS.Palette.textSub)
                                     .lineLimit(1)
                                     .minimumScaleFactor(0.8)
@@ -1580,12 +1580,12 @@ struct DeviceHomeView: View {
                         .foregroundStyle(DS.Palette.textSub)
                         .accessibilityHidden(true)
                     Text("试试「" + t.label + "」—— 这一格你还没用过")   // 827 这一格你还没用过
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 0)
                     Button("不再提示") { app.ambientTipOff = true; HintOnce.mark("827off") }
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.accentText)
                         .frame(minHeight: DS.Hit.min - DS.Space.m)
                         // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 没有 minHeight (< 44)。
@@ -1625,7 +1625,7 @@ struct DeviceHomeView: View {
                 .background(DS.Palette.accentText.opacity(0.12),
                             in: RoundedRectangle(cornerRadius: 13, style: .continuous))
             Text(label)
-                .font(big ? .callout : .caption)
+                .vkFont(big ? .callout : .caption)
                 .foregroundStyle(DS.Palette.text)
                 .lineLimit(1)
                 .minimumScaleFactor(0.85)
@@ -1689,7 +1689,7 @@ struct DeviceHomeView: View {
                     mergedRecentRows
                 } else if rows.isEmpty {
                     Text("还没有开门记录。门锁有新动静时会出现在这里。")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 } else {
@@ -1704,7 +1704,7 @@ struct DeviceHomeView: View {
                                         .foregroundStyle(r.warn ? DS.Palette.warn : DS.Palette.textSub)
                                         .accessibilityHidden(true)
                                     Text(r.text)
-                                        .font(.footnote)
+                                        .vkFont(.footnote)
                                         .foregroundStyle(DS.Palette.text)
                                         .fixedSize(horizontal: false, vertical: true)
                                     Spacer(minLength: 0)
@@ -1743,7 +1743,7 @@ struct DeviceHomeView: View {
     private var mergedRecentRows: some View {
         if mergedRecent.isEmpty {
             Text("这些锁的本地缓存里还没有开门记录 — 连上一次锁、拉一次日志就会出现在这里。")
-                .font(.footnote)
+                .vkFont(.footnote)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         } else {
@@ -1757,13 +1757,13 @@ struct DeviceHomeView: View {
                                 .foregroundStyle(r.alarm ? DS.Palette.warn : DS.Palette.textSub)
                                 .accessibilityHidden(true)
                             Text(mergedLine(r))
-                                .font(.footnote)
+                                .vkFont(.footnote)
                                 .foregroundStyle(DS.Palette.text)
                                 .fixedSize(horizontal: false, vertical: true)
                             Spacer(minLength: DS.Space.xs)
                             // 765 要求的行尾锁名标签: 合并流里"哪把锁"必须一眼可见, 不然跨锁就没有意义
                             Text(r.lockName)
-                                .font(.caption2.weight(.medium))
+                                .vkFont(.caption2, weight: .medium)
                                 .lineLimit(1)
                                 .foregroundStyle(DS.Palette.textSub)
                                 .padding(.horizontal, DS.Space.s)
@@ -1791,7 +1791,7 @@ struct DeviceHomeView: View {
             }
             if mergedHasSameMinute {
                 Text("同一分钟内的两条不分先后: 日志只到分钟, 这里的次序是入库次序。")
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -1856,7 +1856,7 @@ struct DeviceHomeView: View {
                     }
                 } label: {
                     Label("安心夜打卡 · 记录今晚", systemImage: "moon.stars.fill")
-                        .font(.subheadline.weight(.medium))
+                        .vkFont(.subheadline, weight: .medium)
                         .foregroundStyle(DS.Palette.accentText)
                         .frame(maxWidth: .infinity)
                         .frame(minHeight: DS.Hit.min)
@@ -1869,7 +1869,7 @@ struct DeviceHomeView: View {
 
     private var privacyFootnote: some View {
         Text("数据全部保存在本机 · 全程离线，不上传任何服务器")
-            .font(.caption)
+            .vkFont(.caption)
             .foregroundStyle(DS.Palette.textSub)
             .multilineTextAlignment(.center)
             .padding(.horizontal, DS.Space.xl)
@@ -1900,12 +1900,12 @@ struct DeviceHomeView: View {
                     MemberAvatar(member: c.member, tint: who)
                     VStack(alignment: .leading, spacing: DS.Space.xxs) {
                         Text("「" + MemberHub.display(c.member) + "」的临时码还有 " + String(c.days) + " 天到期")   // 480 天到期
-                            .font(.footnote.weight(.medium))
+                            .vkFont(.footnote, weight: .medium)
                             .foregroundStyle(DS.Palette.text)
                             .fixedSize(horizontal: false, vertical: true)
                         if !note.isEmpty {
                             Text(note)
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -1923,7 +1923,7 @@ struct DeviceHomeView: View {
                 HStack(spacing: DS.Space.s) {
                     MemberAvatar(member: b, tint: Self.memberHexColor(b))
                     Text("今天是" + MemberHub.display(b) + "的生日, 替我们说声生日快乐")   // 485 的生日
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.accentText)
                         .fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 0)
@@ -1942,7 +1942,7 @@ struct DeviceHomeView: View {
                         .foregroundStyle(DS.Palette.accentText)
                         .accessibilityHidden(true)
                     Text(line)
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.text)
                         .fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: DS.Space.s)
@@ -1950,7 +1950,7 @@ struct DeviceHomeView: View {
                         MaintenanceLog.markSeen(sessionStart: DB.store.get("kf_session_start", Double.self) ?? 0)
                         app.showToast("已收起维护回执")
                     }
-                    .font(.caption.weight(.medium))
+                    .vkFont(.caption, weight: .medium)
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
                 }
@@ -1968,17 +1968,17 @@ struct DeviceHomeView: View {
                             .foregroundStyle(DS.Palette.warn)
                             .accessibilityHidden(true)
                         Text("该复核 \(BackupStudio.pinDayText(p.day)) 的那份备份了: \(BackupStudio.pinLabel(p.file))")
-                            .font(.footnote.weight(.medium))
+                            .vkFont(.footnote, weight: .medium)
                             .foregroundStyle(DS.Palette.text)
                             .fixedSize(horizontal: false, vertical: true)
                         Spacer(minLength: 0)
                     }
                     Text(p.overDays == 0 ? "复核日就是今天"
                                          : "已过 \(p.overDays) 天")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                     Text("路径: 备份与恢复 → 备份工作室 → 本地备份文件")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                     HStack(spacing: DS.Space.s) {
@@ -1994,14 +1994,14 @@ struct DeviceHomeView: View {
                             app.showToast("这一钉不再催；把复核日挪到新一天会重新催")
                         }
                     }
-                    .font(.caption.weight(.medium))
+                    .vkFont(.caption, weight: .medium)
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
                 }
             }
             if duePins.count > 1 {
                 Text("另有 \(duePins.count - 1) 个复核钉也到期了")   // 437 另有
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
             }
         }
@@ -2019,7 +2019,7 @@ struct DeviceHomeView: View {
                     HStack(spacing: DS.Space.s) {
                         MemberAvatar(member: n.0, size: 22)
                         Text(MemberHub.display(n.0) + " 的便签: " + n.1)
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.text)
                             .fixedSize(horizontal: false, vertical: true)
                         Spacer(minLength: 0)
@@ -2036,7 +2036,7 @@ struct DeviceHomeView: View {
                         .foregroundStyle(DS.Palette.accentText)
                         .accessibilityHidden(true)
                     Text("本周主责: " + MemberHub.display(dm))   // 481 本周主责
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.text)
                     Spacer(minLength: 0)
                 }
@@ -2098,7 +2098,7 @@ struct DeviceHomeView: View {
                     ForEach(Array(devOrder.enumerated()), id: \.offset) { i, id in
                         HStack(spacing: DS.Space.s) {
                             Text(moduleName(id))
-                                .font(.subheadline)
+                                .vkFont(.subheadline)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .accessibilityLabel("\(moduleName(id)), 第 \(i + 1) 位")
                             Button { moveModule(i, -1) } label: { Image(systemName: "arrow.up") }
@@ -2119,14 +2119,14 @@ struct DeviceHomeView: View {
                     Text("设备页模块顺序")   // 904 设备页模块顺序
                 } footer: {
                     Text("槽位固定 (Hero 槽 / 快捷格槽 / 最近开门槽), 改的是哪个模块占哪个槽 —— 默认顺序就是现在的样子。")
-                        .font(.caption).foregroundStyle(DS.Palette.textSub)
+                        .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                 }
                 // 乱源治理第 3 批: 显隐面板。默认全开 (一块都不隐), 这一节给的是"能不能关"，不是新默认值。
                 Section {
                     ForEach(DevModule.allCases) { m in
                         VStack(alignment: .leading, spacing: DS.Space.xs) {
                             // 系统 Toggle: 标题写明用途, 开/关态由系统播报, 不另写重复值 (232 同口径)
-                            Toggle(isOn: Binding(
+                            VariantToggle(isOn: Binding(
                                 get: { !devHidden.contains(m.rawValue) },
                                 set: { on in
                                     DevModuleStore.setHidden(m, !on)
@@ -2135,7 +2135,7 @@ struct DeviceHomeView: View {
                                 Text(m.title)
                             }
                             Text(m.cost)
-                                .font(.caption2)
+                                .vkFont(.caption2)
                                 .foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -2147,7 +2147,7 @@ struct DeviceHomeView: View {
                     Text("显示与隐藏")
                 } footer: {
                     Text("默认全部显示。关掉只是本页不再画这一块，功能、数据与排程都不受影响；设备切换器、开锁圆盘、三个可排序槽与异常卡不能关 —— 前两件是主操作与身份，后两件藏了就等于把警告和数据说明瞒掉。")
-                        .font(.caption).foregroundStyle(DS.Palette.textSub)
+                        .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                 }
                 Section {
                     Button("恢复默认") {
@@ -2183,13 +2183,13 @@ struct DeviceHomeView: View {
                 HStack(spacing: DS.Space.xs) {
                     Image(systemName: "key.horizontal.fill").font(.system(size: DS.Icon.xs))
                     Text(idx >= 0 && idx < kc.pins.count ? "本次用 PIN #\(idx + 1)" : "本次用 PIN (默认第一条)")
-                        .font(.caption)
+                        .vkFont(.caption)
                     Image(systemName: "chevron.down").font(.system(size: 10))
                 }
                 .foregroundStyle(DS.Palette.accentText)
                 .padding(.horizontal, DS.Space.s)
                 .padding(.vertical, DS.Space.xxs)
-                .background(DS.Palette.accent.opacity(0.12), in: Capsule())
+                .variantPlate(DS.Palette.accent.opacity(0.12), .capsule)
             }
             .frame(minHeight: DS.Hit.min)
             .accessibilityLabel(idx >= 0 ? "本次开锁用第 \(idx + 1) 条 PIN, 点按更换" : "本次开锁用默认第一条 PIN, 点按更换")
@@ -2224,13 +2224,13 @@ struct DeviceHomeView: View {
                 .ignoresSafeArea()
                 VStack(spacing: DS.Space.s) {
                     Text("第 \(step + 1)/\(items.count) 步 · \(it.title)")
-                        .font(.subheadline.weight(.semibold))
+                        .vkFont(.subheadline, weight: .semibold)
                     Text(it.body)
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
                     Text(step + 1 < items.count ? "点任意处继续" : "点任意处开始使用")
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.heroFg.opacity(0.8))
                 }
                 // 黑底卡上的前景走 heroFg (不是裸 .white): 它同时承担智能反转 (863) 的幂等色职责
@@ -2319,7 +2319,7 @@ struct SyncTimeView: View {
             Section {
                 if app.current != nil {
                     Text("将手机时间同步到门锁内 (cmd 0E)。校准前会先读锁钟并补偿偏差。")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                     LabeledRow("锁钟", app.status?.lockTime.map { ProtoTime.localStr($0) } ?? "—")
                     LabeledRow("手机时间", DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .medium))
@@ -2338,7 +2338,7 @@ struct SyncTimeView: View {
                 }
                 if !result.isEmpty {
                     Label(result, systemImage: failed ? "xmark.octagon.fill" : "checkmark.circle.fill")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(resultTone.color)
                 }
             } footer: {
@@ -2408,7 +2408,7 @@ struct LabeledRow: View {
                 .lineLimit(2) // MAC/时间等长值换行而不是溢出
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .font(.subheadline)
+        .vkFont(.subheadline)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label) \(value)")
     }
@@ -2430,11 +2430,11 @@ struct FocusUnlockView: View {
                 HStack(spacing: DS.Space.m) {
                     VStack(alignment: .leading, spacing: DS.Space.xxs) {
                         Text(app.displayName)
-                            .font(.headline)
+                            .vkFont(.headline)
                             .foregroundStyle(DS.Palette.text)
                             .lineLimit(1)
                         Text(linkReady ? "已就绪 · " + UnlockPrefs.gestureHint : "靠近门锁, 等待就绪")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                     }
                     Spacer(minLength: 0)
@@ -2494,10 +2494,10 @@ struct UnlockGateView: View {
                 .accessibilityHidden(true)
             VStack(spacing: DS.Space.s) {
                 Text("30 秒内再次开锁")
-                    .font(.title3.weight(.semibold))
+                    .vkFont(.title3, weight: .semibold)
                     .foregroundStyle(DS.Palette.text)
                 Text("为防误触, 请先验证本机密码")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
             }
             TextField("本机密码", text: Binding(
@@ -2519,7 +2519,7 @@ struct UnlockGateView: View {
                 .onSubmit(verify)
             if failed {
                 Label("密码错误, 请重新输入", systemImage: "exclamationmark.circle.fill")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.danger)
                     .transition(.opacity)
             }

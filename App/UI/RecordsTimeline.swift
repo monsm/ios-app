@@ -145,7 +145,7 @@ struct RecDetailSheet: View {
     private func fieldRow(_ k: String, _ v: String, dot: Color? = nil) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {
             Text(k)
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .frame(width: 108, alignment: .leading)
             HStack(spacing: DS.Space.xs) {
@@ -153,7 +153,7 @@ struct RecDetailSheet: View {
                     Circle().fill(dot).frame(width: 8, height: 8).accessibilityHidden(true)
                 }
                 Text(v)
-                    .font(.subheadline)
+                    .vkFont(.subheadline)
                     .foregroundStyle(DS.Palette.text)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -178,12 +178,12 @@ struct RecDetailSheet: View {
                     .foregroundStyle(RecordSearch.toneColor(for: rec.type))
                     .accessibilityHidden(true)
                 Text(AlarmMeta.levelName(rec.type) + " · " + RecordSearch.alarmTitle(rec))
-                    .font(.subheadline.weight(.medium))
+                    .vkFont(.subheadline, weight: .medium)
                     .foregroundStyle(DS.Palette.text)
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
                 Text(disp != nil ? "已处置" : "未处置")
-                    .font(.caption.weight(.medium))
+                    .vkFont(.caption, weight: .medium)
                     .lineLimit(1)
                     .foregroundStyle(disp != nil ? DS.Palette.ok : DS.Palette.danger)
                     .padding(.horizontal, 8)
@@ -197,15 +197,15 @@ struct RecDetailSheet: View {
                 // 727 防撬检查清单 (勾选状态复用处置字段 kf_rcheck_<key>)
                 VStack(alignment: .leading, spacing: DS.Space.s) {
                     Text("防撬检查清单")   // 727 防撬检查清单
-                        .font(.footnote.weight(.medium))
+                        .vkFont(.footnote, weight: .medium)
                         .foregroundStyle(DS.Palette.text)
                     ForEach(Array(RecordSearch.tamperChecks.enumerated()), id: \.offset) { i, item in
-                        Toggle(isOn: Binding(
+                        VariantToggle(isOn: Binding(
                             get: { RecordSearch.checkState(dkey)[i] },
                             set: { RecordSearch.setCheck(dkey, index: i, on: $0) }
                         )) {
                             Text(item)
-                                .font(.footnote)
+                                .vkFont(.footnote)
                                 .foregroundStyle(DS.Palette.text)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -222,7 +222,7 @@ struct RecDetailSheet: View {
                     .foregroundStyle(DS.Palette.textSub)
                     .accessibilityHidden(true)
                 Text("本锁同类累计 " + String(same.total) + " 次" + (same.lastStr.isEmpty ? "" : " · 上次 " + same.lastStr))
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -235,14 +235,14 @@ struct RecDetailSheet: View {
                     .foregroundStyle(DS.Palette.warn)
                     .accessibilityHidden(true)
                 Text("今日试错累计? 本锁 " + String(trials) + " 条锁定类日志")   // 737 今日试错累计
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.warn)
                     .fixedSize(horizontal: false, vertical: true)
             }
             if trials > 0 {
                 // 737 涉事凭证明写"无法归属": 锁定级事件行不带凭证槽位 (依赖协议失败明细), 不猜
                 Text("涉事凭证无法归属: 锁端仅记录锁定级事件行, 不带凭证槽位 (依赖协议失败明细)。")
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -254,7 +254,7 @@ struct RecDetailSheet: View {
                     .foregroundStyle(DS.Palette.textSub)
                     .accessibilityHidden(true)
                 Text("响应时长: 积累中 — 处置记录够多后自动出分布")   // 742 响应时长
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -266,7 +266,7 @@ struct RecDetailSheet: View {
                     tick += 1
                 } label: {
                     Label(disp != nil ? "已处置 · 更新" : "标记已处置", systemImage: "checkmark.circle")
-                        .font(.footnote.weight(.medium))
+                        .vkFont(.footnote, weight: .medium)
                         .foregroundStyle(DS.Palette.accentText)
                 }
                 .buttonStyle(PlainButtonStyle())
@@ -279,7 +279,7 @@ struct RecDetailSheet: View {
                         tick += 1
                     } label: {
                         Label("撤销", systemImage: "arrow.uturn.left")   // 739 撤销
-                            .font(.footnote.weight(.medium))
+                            .vkFont(.footnote, weight: .medium)
                             .foregroundStyle(DS.Palette.danger)
                     }
                     .buttonStyle(PlainButtonStyle())
@@ -311,17 +311,17 @@ struct RecDetailSheet: View {
     private func contextRow(_ r: Rec, tag: String) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {
             Text(tag)
-                .font(.caption2.weight(.semibold))
+                .vkFont(.caption2, weight: .semibold)
                 .lineLimit(1)
                 .foregroundStyle(DS.Palette.textSub)
                 .frame(width: 14)
             VStack(alignment: .leading, spacing: DS.Space.xxs) {
                 Text(RecordSearch.localStr(r.lockTime > 0 ? Double(r.lockTime) : 0).isEmpty ? r.timeStr : r.timeStr)
-                    .font(.caption.monospacedDigit())
+                    .vkFont(.caption.monospacedDigit())
                     .lineLimit(1)
                     .foregroundStyle(DS.Palette.textSub)
                 Text(r.typeName + ((MemberHub.aliasName(r.whoId) ?? r.whoName).map { " · " + $0 } ?? ""))
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.text)
                     .lineLimit(1)
             }
@@ -340,18 +340,18 @@ struct RecDetailSheet: View {
                         .disabled(atSafe <= 0)
                         .frame(maxWidth: .infinity, minHeight: DS.Hit.min)
                     Text("第 \(atSafe + 1) / \(siblings.count) 条")
-                        .font(.footnote.monospacedDigit())
+                        .vkFont(.footnote.monospacedDigit())
                         .foregroundStyle(DS.Palette.textSub)
                     Button("下一条") { if atSafe < siblings.count - 1 { at = atSafe + 1 } }
                         .disabled(atSafe >= siblings.count - 1)
                         .frame(maxWidth: .infinity, minHeight: DS.Hit.min)
                 }
-                .font(.subheadline.weight(.medium))
+                .vkFont(.subheadline, weight: .medium)
                 .foregroundStyle(DS.Palette.accentText)
             } footer: {
                 Text("顺序就是你刚才在记录页看到的那份筛选结果，不是锁端日志原始序号 —— 被筛掉的记录不会翻页翻出来，"   // 580 顺序就是你刚才在记录
                      + "那等于悄悄改了筛选条件。")
-                    .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                    .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -388,10 +388,10 @@ struct RecDetailSheet: View {
                             Button { at = item.at } label: {
                                 VStack(alignment: .leading, spacing: DS.Space.xxs) {
                                     Text(item.r.timeStr)
-                                        .font(.caption2.monospacedDigit())
+                                        .vkFont(.caption2.monospacedDigit())
                                         .foregroundStyle(DS.Palette.textSub)
                                     Text(item.r.typeName)
-                                        .font(.caption)
+                                        .vkFont(.caption)
                                         .foregroundStyle(DS.Palette.text)
                                         .lineLimit(1)
                                 }
@@ -429,14 +429,14 @@ struct RecDetailSheet: View {
                 app.showToast("已复制本条引用链接")   // 585 已复制本条引用链接
             } label: {
                 Label("复制本条引用链接", systemImage: "link")
-                    .font(.subheadline.weight(.medium))
+                    .vkFont(.subheadline, weight: .medium)
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
             }
             Text("链接只编码「哪把锁的哪一行」(mac#行键)，不含口令、指纹数据与原始帧。"
                  + "粘进备忘录点一下 = 回到记录页并按当前显示范围定位本条；"
                  + "行不在显示范围内时页面如实说明原因，不会打开相邻的一条顶替。")   // 585 行不在显示范围内时页
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -454,7 +454,7 @@ struct RecDetailSheet: View {
             dismiss()
         } label: {
             Label("查看这台锁的诊断", systemImage: "stethoscope")   // 587 查看这台锁的诊断
-                .font(.subheadline.weight(.medium))
+                .vkFont(.subheadline, weight: .medium)
                 .foregroundStyle(DS.Palette.accentText)
                 .frame(minHeight: DS.Hit.min)
         }
@@ -481,7 +481,7 @@ struct RecDetailSheet: View {
                 dismiss()
             } label: {
                 Label("在时间线里定位这条", systemImage: "arrow.down.to.line.compact")   // 583 在时间线里定位这条
-                    .font(.subheadline.weight(.medium))
+                    .vkFont(.subheadline, weight: .medium)
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
             }
@@ -492,7 +492,7 @@ struct RecDetailSheet: View {
                 dismiss()
             } label: {
                 Label("搜这类记录", systemImage: "magnifyingglass.circle")   // 563 搜这类记录
-                    .font(.subheadline.weight(.medium))
+                    .vkFont(.subheadline, weight: .medium)
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
             }
@@ -507,13 +507,13 @@ struct RecDetailSheet: View {
                 dismiss()
             } label: {
                 Label("查看当天全部", systemImage: "calendar.day.timeline.left")   // 586 查看当天全部
-                    .font(.subheadline.weight(.medium))
+                    .vkFont(.subheadline, weight: .medium)
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
             }
             Text("两个出口都不改你的筛选条件: 一颗只是滚过去并闪一下，另一颗只把显示范围收到那一天，"
                  + "页顶有「看全部日子」可以退回来。")
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -551,17 +551,17 @@ struct RecDetailSheet: View {
                 ShareLink(item: RecordCardImage(image: img, fileName: "锁管家_记录卡_\(exportRow.dayKey).png"),
                           preview: SharePreview("本条记录卡", image: Image(uiImage: img))) {   // 718 本条记录卡
                     Label("分享这张卡", systemImage: "square.and.arrow.up")
-                        .font(.subheadline.weight(.medium))
+                        .vkFont(.subheadline, weight: .medium)
                         .foregroundStyle(DS.Palette.accentText)
                         .frame(minHeight: DS.Hit.min)
                 }
             } else {
                 Text("卡片渲染中…")
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
             }
             Text("卡上只有这一条: 时间、事件名、可证明的归属、锁名。不含口令、指纹数据与协议帧。")   // 718 卡上只有这一条
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -580,21 +580,21 @@ struct RecDetailSheet: View {
                 .onAppear { noteDraft = RecordOverlay.note(rec.mac, rec.key) }
             HStack(spacing: DS.Space.m) {
                 Button("保存备注") { saveNote() }
-                    .font(.subheadline.weight(.medium))
+                    .vkFont(.subheadline, weight: .medium)
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
                 Spacer(minLength: 0)
             }
-            Toggle(isOn: Binding(
+            VariantToggle(isOn: Binding(
                 get: { RecordOverlay.isFlagged(rec.mac, rec.key) },
                 set: { _ in RecordOverlay.toggleFlag(rec.mac, rec.key); tick += 1 })) {
                 Label("标为异常: 时间线行左侧常显红旗", systemImage: "flag.fill")   // 188 标为异常
-                    .font(.subheadline)
+                    .vkFont(.subheadline)
             }
             .frame(minHeight: DS.Hit.min)
         } footer: {
             Text("附言/备注与旗标都是本机标注：不写进门锁，也不进导出 CSV 之外的任何出口；删除这台设备上的锁会一并清除。")
-                .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -620,7 +620,7 @@ struct RecDetailSheet: View {
                     app.showToast("已定位到来源凭证")   // 577 已定位到来源凭证
                 } label: {
                     Label("定位来源凭证", systemImage: "key.horizontal")   // 577 定位来源凭证
-                        .font(.subheadline.weight(.medium))
+                        .vkFont(.subheadline, weight: .medium)
                         .foregroundStyle(DS.Palette.accentText)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)

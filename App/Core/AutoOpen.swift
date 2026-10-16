@@ -579,7 +579,7 @@ struct AutoCalView: View {
                 Text("距离标定 (F3)")
             } footer: {
                 Text("静止走近门锁一次, 采 30 秒 RSSI 取 P95 作为武装基准。回差: 越过武装线才武装, 掉回 0.5×基准才解除, 防门口抖动误触发。")
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -624,7 +624,7 @@ struct AutoOpenSection: View {
     var mac: String
     var body: some View {
         Section {
-            Toggle("走近自动开门", isOn: Binding(
+            VariantToggle("走近自动开门", isOn: Binding(
                 get: { AutoOpen.on },
                 set: { AutoOpen.on = $0 }))
             if AutoOpen.on {
@@ -636,7 +636,7 @@ struct AutoOpenSection: View {
                 }
                 .pickerStyle(.menu)
                 Text(AutoOpen.riskDisclosure)
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.warn)
                     .fixedSize(horizontal: false, vertical: true)
                 NavigationLink("距离标定 (走近多近才算到)") { AutoCalView(mac: mac) }
@@ -645,7 +645,7 @@ struct AutoOpenSection: View {
             Text("靠近自动开锁")
         } footer: {
             Text("仅 App 在前台且门不在布防时段生效; 布防时段与防拆事件自动关闭自动开锁。睡觉场景请确认布防时段覆盖夜间。")
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }

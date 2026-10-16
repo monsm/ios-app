@@ -436,7 +436,7 @@ struct IntegrationCenterView: View {
                 // 收录结果归系统侧判定、App 接口不回读, 所以本节文案落在「出口已提供」这一事实上;
                 // 带锁名的说法同时写清 (意图参数靠说的话带上, 见 IntentLock.refusal 的引导语)。
                 Text("这 6 条意图已在本版提供出口 (AppShortcutsProvider 注册), 口令由系统在装完 App 后自动收录; 收录结果只有系统知道, App 读不回来, 所以这里呈现的是「出口已提供」这一事实。说的时候请带上真名, 把方括号占位换成您的锁名/成员名 (如「打开 主卧门锁」); 第 7 条「早上 8 点查一次门锁」属定时自动化, 请在系统「快捷指令」App 的自动化里设置, 动作选本 App 的「门锁状态」意图即可。")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 ForEach(AppShortcuts.phrases) { p in
@@ -446,11 +446,11 @@ struct IntegrationCenterView: View {
                                 .font(.system(size: DS.Icon.xs, weight: .semibold))
                                 .foregroundStyle(DS.Palette.accentText)
                             Text("说「\(p.phrase)」")
-                                .font(.subheadline.weight(.semibold))
+                                .vkFont(.subheadline, weight: .semibold)
                                 .lineLimit(1)
                         }
                         Text(p.note)
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                             .lineLimit(2)
                     }
@@ -479,7 +479,7 @@ struct IntegrationCenterView: View {
                 // getInt 恒回 0，却显示成"已登记标签 0 张" —— 拿缺省值冒充业务数据；
                 // 而"点此探测"并没有可点的按钮。缺的东西就写缺，别留一个看起来在工作的形状。
                 Text("写卡需 CoreNFC capability, 免费账号下不确定可用；协议侧也没有 NFC 凭证管理命令 (CAPABILITY §5)。")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 LabeledRow("登记与写卡入口", "尚无 — 先实测 CoreNFC 可用，再生成写卡数据")
@@ -488,18 +488,18 @@ struct IntegrationCenterView: View {
 
             Section("Apple Watch 伴侣 (路线图)") {
                 Text("需要独立 target 且共享每周重签负担, 暂不随版提供。计划: 状态表盘 + 表端触发开锁 (后台 BLE 受限需真机实测)。")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             Section("主屏图标教程") {   // 954 主屏图标教程
                 Text("把开锁意图放上主屏: ① 打开「快捷指令」App → 新建快捷指令 → 添加动作 → 搜「离线锁管家」→ 选「打开门锁」 ② 动作里填好锁名 ③ 长按该快捷指令卡片 →「添加到主屏」。点图标即触发开锁意图——仍只定位门锁, 最后一步在 App 圆盘按住确认, 不后台开锁。")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 Text("App 图标换肤仍在设置-外观 (长按主屏图标 →「编辑 App 图标」)。原有四款之外, 又补了五款位图 (家门/警报/定位/门盾/心记), 现在一共九款可选; 四季自动对齐仍只认原来那四款, 选新五款不会被系统悄悄换掉。")   // 897 图标换肤仍在设置
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }

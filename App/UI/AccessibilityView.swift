@@ -34,7 +34,7 @@ struct AccessibilityView: View {
     // ---------- VoiceOver (846-857) ----------
     private var voSection: some View {
         Section {
-            Toggle("错误主动播报", isOn: Binding(   // 852 错误主动播报
+            VariantToggle("错误主动播报", isOn: Binding(   // 852 错误主动播报
                 get: { DB.store.getBool("kf_vo_announce", true) },
                 set: { app.setUnlockOption("kf_vo_announce", $0) }))
             // 852 播报试听: 立即演示一次主动朗读
@@ -49,7 +49,7 @@ struct AccessibilityView: View {
                 AXTools.announce("示例播报: 连接失败, 可能离门太远. 试试靠近门锁再试")
             }
             Text("播报仅在开启 VoiceOver 或系统「朗读」场景有感; 系统铃声静音不影响播报通道。")
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         } header: {
@@ -60,7 +60,7 @@ struct AccessibilityView: View {
             // 849 圆盘已支持转子上下滑
             // 856 圆盘已支持转子上下滑
             Text("圆盘已支持转子上下滑切换 状态/电量/连接 播报; 记录页时间线按自然语朗读 \"今天 14:02, 张三用指纹开了门\"; 凭证行按 名称-类型-状态 顺序朗读; 数值/状态控件走盲文简写。")
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -85,7 +85,7 @@ struct AccessibilityView: View {
             // `AXFlags.axStackLayout ? 128 : DS.Metric.dial` 取用) —— 选了 200 的用户被界面告知
             // 一个他从来没见过的基础值。基准改从同一个源取，只有"缩到 128"那一侧是代码写死的常量。
             Text("字号 1.5x 起自动收紧: 开锁圆盘从 \(Int(DS.Metric.dial))pt 缩至 128pt, 大字号下仍能完成按住手势。")   // 859 字号
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             // 878 形状冗余三态: 全 App 状态已恒为 形状+图标+颜色 双通道, 此处演示
@@ -96,7 +96,7 @@ struct AccessibilityView: View {
             }
             .accessibilityElement(children: .combine)
             .accessibilityLabel("形状冗余演示: 成功 对勾, 警告 叹号, 失败 叉, 除颜色外恒有形状加图标双通道")
-            Toggle("大格模式 (快捷格 2 列大格)", isOn: Binding(
+            VariantToggle("大格模式 (快捷格 2 列大格)", isOn: Binding(
                 get: { AXPrefs.bigTile },
                 set: { app.setUnlockOption("kf_bigtile", $0) }))
             // 163 横屏重排 → 降级说明 (TARGETED_DEVICE_FAMILY=1 仅竖屏, 不做横屏布局, 备案 DEFERRED)。
@@ -113,7 +113,7 @@ struct AccessibilityView: View {
             // 226 系统级适配无需开关即
             // 227 系统级适配无需开关即
             Text("系统级适配无需开关即生效: 增强对比映射 (分隔线/次文本加深一档、玻璃卡降实底)、智能反转保护 (hero 渐变降级幂等色)、降低透明度、减少动态效果、系统加粗跟随 (根视图按系统开关设 legibilityWeight, 凭证名与开关标签随之加粗)。")
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -124,7 +124,7 @@ struct AccessibilityView: View {
                 .font(.system(size: DS.Icon.xs, weight: .semibold))
                 .foregroundStyle(tone.color)
             Text(text)
-                .font(.caption.weight(.medium))
+                .vkFont(.caption, weight: .medium)
                 .foregroundStyle(DS.Palette.textSub)
         }
         .padding(.horizontal, DS.Space.s)
@@ -144,20 +144,20 @@ struct AccessibilityView: View {
     private var assistiveTouchSection: some View {
         Section {
             Text("辅助触控 (小白点) 的自定手势需要你在系统里录一次, App 无法代设。映射开锁的步骤:")
-                .font(.footnote)
+                .vkFont(.footnote)
                 .foregroundStyle(DS.Palette.text)
                 .fixedSize(horizontal: false, vertical: true)
             ForEach(Array(Self.assistiveSteps.enumerated()), id: \.offset) { i, s in
                 HStack(alignment: .top, spacing: DS.Space.s) {
                     Text("\(i + 1)")
-                        .font(.caption2.weight(.semibold))
+                        .vkFont(.caption2, weight: .semibold)
                         .monospacedDigit()
                         .foregroundStyle(DS.Palette.onAccent)
                         .frame(width: 18, height: 18)
                         .background(DS.Palette.accent, in: Circle())
                         .accessibilityHidden(true)
                     Text(s)
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 0)
@@ -167,7 +167,7 @@ struct AccessibilityView: View {
                 .accessibilityLabel("第 \(i + 1) 步: \(s)")
             }
             Text("更省事的替代: 直接用快捷指令口令「用离线锁管家打开门锁」, 或把 App 图标放进辅助触控的顶层菜单。")   // 166 更省事的替代
-                .font(.caption2)
+                .vkFont(.caption2)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         } header: {
@@ -182,16 +182,16 @@ struct AccessibilityView: View {
             // 872 在 PressableButtonStyle 的 300ms 去重闸里, 229 在 barSide/快捷格/HeroCard 三处。
             // 872 已接线 (2026-10-13): 去重闸落在 LockKeeperApp 的 PressableButtonStyle 里
             // (PrimitiveButtonStyle 外包一层 + 内层真 Button, 见那边的注释), 所以按原口径换回真开关。
-            Toggle("防连点 (300ms 内重复点击忽略)", isOn: Binding(
+            VariantToggle("防连点 (300ms 内重复点击忽略)", isOn: Binding(
                 get: { AXPrefs.dbltapGuard },
                 set: { DB.store.set("kf_dbltap_guard", $0) }))
             // 229 左手模式: 消费方三处 —— DeviceHomeView 的 barSide (工具条两侧对调)、快捷格顺序 reversed、
             // 以及 HeroCard 卡面本体 (DesignSystem 里按 AXPrefs.lefty 切 layoutDirection 镜像)，
             // 所以这一档是真开关。(2026-10-14: 删去"872 仍无消费方"半句 —— 与本节开头矛盾, 872 已接线。)
-            Toggle("左手模式", isOn: Binding(   // 229 左手模式
+            VariantToggle("左手模式", isOn: Binding(   // 229 左手模式
                 get: { AXPrefs.lefty },
                 set: { app.setUnlockOption("kf_lefty", $0) }))
-            Toggle("单手下沉", isOn: Binding(   // 873/60 单手下沉
+            VariantToggle("单手下沉", isOn: Binding(   // 873/60 单手下沉
                 get: { AXPrefs.onehand },
                 set: { app.setUnlockOption("kf_onehand", $0) }))
             // 875 ⚠ 按住时长自定滑杆 (系统"按住持续时间"无读取 API, 0.4–1.6s, 默认 0.9s 与包1 对齐)
@@ -200,7 +200,7 @@ struct AccessibilityView: View {
                     Text("按住时长")   // 875 按住时长
                     Spacer()
                     Text(String(format: "%.1f 秒", AXPrefs.holdDuration))
-                        .font(.caption.monospacedDigit())
+                        .vkFont(.caption.monospacedDigit())
                         .foregroundStyle(DS.Palette.textSub)
                 }
                 Slider(value: Binding(
@@ -221,7 +221,7 @@ struct AccessibilityView: View {
                     Text("扫描停留时长")   // 868/869 扫描停留时长
                     Spacer()
                     Text(String(format: "%.1f 秒", AXPrefs.dwellTime))
-                        .font(.caption.monospacedDigit())
+                        .vkFont(.caption.monospacedDigit())
                         .foregroundStyle(DS.Palette.textSub)
                 }
                 Slider(value: Binding(
@@ -231,7 +231,7 @@ struct AccessibilityView: View {
                     .accessibilityLabel("切换控制扫描停留时长")
                     .accessibilityValue(String(format: "%.1f 秒", AXPrefs.dwellTime))
                 Text("当前只驱动下方练习区的演示文字; 系统逐项聚焦节奏请以 VoiceOver/切换控制设置为准。")   // 868 当前只驱动下方练习区
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -259,7 +259,7 @@ struct AccessibilityView: View {
             //      (一条关于"没有"的陈述，靠自己成为那"一个")。API 名从用户可见文案里撤掉，真要说的事写实:
             //      App 没有"按这枚停留时长自动聚焦"的实现。判据: `grep -rn 'accessibilityLabel("开锁圆盘组")' App --include=*.swift` 有命中 = 已分组。
             Text("切换控制: 设备页已把 状态卡/圆盘/快捷格 各自成组, 外接开关可按组逐项聚焦; 聚焦节奏由系统自己的设置决定, App 没有按这枚停留时长自动聚焦的实现 —— 接线前这滑杆只喂下方练习区的文字. 降低透明度与减少动态直接生效, 无需开关. 眼动停留: 系统停留时长无公开 API, 已改成本机自定滑杆.")   // 868 页脚
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -268,11 +268,11 @@ struct AccessibilityView: View {
     // ---------- 输入效率 (164/530/854/870) ----------
     private var inputSection: some View {
         Section {
-            Toggle("底部对齐表单 (键盘弹起表单贴底)", isOn: Binding(
+            VariantToggle("底部对齐表单 (键盘弹起表单贴底)", isOn: Binding(
                 get: { AXPrefs.bottomForm },
                 set: { app.setUnlockOption("kf_form_bottom", $0) }))
             Text("外接键盘快捷键 (按代码调用点列, 没接的不写): Cmd + 数字 1–4 切 Tab (App 入口); Cmd+R 刷新 (设备页/记录页); Cmd+F 凭证搜索; 本机密码弹层里 Return = 解锁. 全键盘 Tab/Shift-Tab 遍历由系统「全键盘控制」提供, 不是 App 自建.")   // 854 外接键盘快捷键
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         } header: {
@@ -283,7 +283,7 @@ struct AccessibilityView: View {
     // ---------- 听觉与认知 (876/881/882/885/231/232) ----------
     private var soundSection: some View {
         Section {
-            Toggle("新条目双震", isOn: Binding(   // 876 新条目双震
+            VariantToggle("新条目双震", isOn: Binding(   // 876 新条目双震
                 get: { AXPrefs.doubleHaptic },
                 set: { app.setUnlockOption("kf_ax_doublehaptic", $0) }))
             // 同一处毛病: `newEntryHaptic` 第一行 guard `kf_ax_doublehaptic`, 关档时按下去零反馈。
@@ -294,16 +294,16 @@ struct AccessibilityView: View {
                 }
                 AXTools.newEntryHaptic()
             }
-            Toggle("字幕式过程条 (连接/开锁逐步文字)", isOn: Binding(
+            VariantToggle("字幕式过程条 (连接/开锁逐步文字)", isOn: Binding(
                 get: { AXPrefs.captions },
                 set: { app.setUnlockOption("kf_ax_captions", $0) }))
-            Toggle("凭证大字模式 (OTP 大字号对照抄写)", isOn: Binding(
+            VariantToggle("凭证大字模式 (OTP 大字号对照抄写)", isOn: Binding(
                 get: { DB.store.getBool("kf_ax_bigotp") },
                 set: { app.setUnlockOption("kf_ax_bigotp", $0) }))
             // 882 闪烁安全线
             // 231 闪烁安全线
-            Text("闪烁安全线: 全 App 循环动效 ≤3Hz, 核查表见 docs/A11Y-FREQUENCY.md. 数值控件恒等宽数字. 设置页开关均为系统 Toggle (标题写明用途, 开/关态由系统播报, 不另写重复值); 图标型工具栏按钮逐枚挂无障碍名.")
-                .font(.caption)
+            Text("闪烁安全线: 全 App 循环动效 ≤3Hz, 核查表见 docs/A11Y-FREQUENCY.md. 数值控件恒等宽数字. 设置页开关均为系统 VariantToggle(标题写明用途, 开/关态由系统播报, 不另写重复值); 图标型工具栏按钮逐枚挂无障碍名.")
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         } header: {
@@ -353,7 +353,7 @@ struct VOPracticeField: View {
             // 圆盘/快捷格/状态卡各自分了组 (`children: .contain` + 组名标签)，没接的只是"按这枚时长自动聚焦"那一步。
             // 判这半句真假要用: `grep -rn 'accessibilityLabel("开锁圆盘组")' App --include=*.swift` 有命中就是已分组。
             Text("练习区提示: 这里的「停留 \(String(format: "%.1f", AXPrefs.dwellTime)) 秒」是本 App 滑杆生成的演示文字 —— 逐项聚焦由系统 VoiceOver/切换控制执行, 节奏以系统设置为准; 本 App 只做了分组 (圆盘/快捷格/状态卡), 没有按这枚时长自动聚焦。")   // 868/869 练习区提示
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityElement(children: .combine)
@@ -385,10 +385,10 @@ private struct DevGrayscaleSection: View {
         Section {
             // 879 灰度预览自检: 全 App 去饱和渲染 (RootView 消费 AXFlags.grayPreview)
             // 879 灰度预览 / 866 极限字号: 写键 + 外观种子重建, 立即全局生效; 检查完关回
-            Toggle("灰度预览", isOn: Binding(   // 879 灰度预览
+            VariantToggle("灰度预览", isOn: Binding(   // 879 灰度预览
                 get: { AXFlags.grayPreview },
                 set: { app.setUnlockOption("kf_ax_gray", $0) }))
-            Toggle("极限字号自检 (以 200% 字号预览)", isOn: Binding(
+            VariantToggle("极限字号自检 (以 200% 字号预览)", isOn: Binding(
                 get: { AXFlags.bigPreview },
                 set: { app.setUnlockOption("kf_ax_bigpreview", $0) }))
         } header: {
@@ -474,7 +474,7 @@ struct CaptionStepBar: View {
                 captionStep(i)
             }
         }
-        .font(.caption)
+        .vkFont(.caption)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(captionText)
     }

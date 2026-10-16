@@ -286,6 +286,27 @@ enum DS {
             let v = DB.store.getString("kf_motion")
             return ["calm", "standard", "lively"].contains(v) ? v : "standard"
         }
+        /// 召唤锁核的位移弹簧（跟手后的回位与吸附）。
+        /// 放在令牌层而不是写在视图里，只有一个理由：`calm` 档（系统减弱动态 / 低电量）
+        /// 必须能把它压成直落 —— 动效策略**只有一个读点**，写在视图里就等于把降级规则实现第二遍。
+        /// 数值取自 `design-system/aurora-lock/CORE.md` §4 那张表：response 0.35 / damping 1.0
+        /// （临界阻尼、不过冲）；`calm` 档不给过冲，换成直落。
+        static var summon: Animation {
+            switch tier {
+            case "calm": return .easeOut(duration: 0.12)
+            default: return .spring(response: 0.35, dampingFraction: 1.0)
+            }
+        }
+
+        /// 带动量的释放（甩出去、松手回弹）：同一张表给 damping 0.82。
+        /// **只有手势本身带动量时才用这一档** —— 慢慢拖到一半松手给了它，就会莫名其妙弹过头。
+        static var fling: Animation {
+            switch tier {
+            case "calm": return .easeOut(duration: 0.12)
+            default: return .spring(response: 0.35, dampingFraction: 0.82)
+            }
+        }
+
         static var quick: Animation {
             switch tier {
             case "calm": return .easeOut(duration: 0.10)
@@ -840,7 +861,7 @@ struct HeroPill: View {
             Image(systemName: systemImage)
                 .font(.system(size: DS.Icon.xs, weight: .semibold))
             Text(text)
-                .font(.caption.weight(.medium))
+                .vkFont(.caption, weight: .medium)
                 .lineLimit(1)
         }
         .foregroundStyle(tint)
@@ -868,12 +889,12 @@ struct MetricTile: View {
                     .font(.system(size: DS.Icon.sm, weight: .medium))
                     .foregroundStyle(tone.color)
                 Text(label)
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .lineLimit(1)
             }
             Text(value)
-                .font(emphasized ? .subheadline.weight(.semibold) : .subheadline)
+                .vkFont(emphasized ? .subheadline.weight(.semibold) : .subheadline)
                 .foregroundStyle(emphasized ? DS.Palette.text : DS.Palette.textSub)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
@@ -916,12 +937,12 @@ struct HeroStat: View {
                     .font(.system(size: DS.Icon.sm, weight: .medium))
                     .foregroundStyle(tint ?? DS.heroFg.opacity(0.85))
                 Text(label)
-                    .font(.caption2.weight(.medium))
+                    .vkFont(.caption2, weight: .medium)
                     .foregroundStyle(DS.heroFg.opacity(0.8))
                     .lineLimit(1)
             }
             Text(value)
-                .font(emphasized ? .subheadline.weight(.semibold) : .subheadline)
+                .vkFont(emphasized ? .subheadline.weight(.semibold) : .subheadline)
                 .foregroundStyle(DS.heroFg)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
@@ -1099,7 +1120,7 @@ struct GuidedEmptyView: View {
                             .frame(width: 7, height: 7)
                     }
                     Text("第 \(step)/\(stepTotal) 步")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                 }
                 .accessibilityLabel("引导阶段 第 \(step) 步, 共 \(stepTotal) 步")
@@ -1127,13 +1148,13 @@ struct GuidedEmptyView: View {
             // 1044 家庭公告板: 便签也进引导空态 (此前只有设备页/记录页两处直挂, 组件本身不认它)
             if !Milestones.bulletin.isEmpty {
                 Label("公告: " + Milestones.bulletin, systemImage: "pin.fill")
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.accentText)
                     .fixedSize(horizontal: false, vertical: true)
             }
             if let demoAction, showDemoLink {
                 Button("看看它如何工作 (30 秒演示)") { demoAction() }
-                    .font(.footnote.weight(.medium))
+                    .vkFont(.footnote, weight: .medium)
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
                     .accessibilityHint("打开演示锁, 完整走一遍添加与开锁")

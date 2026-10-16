@@ -52,11 +52,11 @@ struct SettingsView: View {
                 Label(title, systemImage: "sparkles")
                 if !DB.store.getBool("kf_seen_" + feature) {
                     Text("NEW")
-                        .font(.caption2.weight(.medium))
+                        .vkFont(.caption2, weight: .medium)
                         .foregroundStyle(DS.Palette.onAccent)
                         .padding(.horizontal, DS.Space.xs)
                         .padding(.vertical, DS.Space.xxs)
-                        .background(DS.Palette.accent, in: Capsule())
+                        .variantPlate(DS.Palette.accent, .capsule)
                         .accessibilityLabel("新功能")
                 }
             }
@@ -337,7 +337,7 @@ struct SettingsView: View {
     // ---------- 包14 演练区 (836/837/844/845): 演示模式总开关 + 样例备份 + 演练入口 ----------
     private var drillSection: some View {
         Section {
-            Toggle("演示模式 (所有开锁走模拟, 不碰锁端)", isOn: Binding(
+            VariantToggle("演示模式 (所有开锁走模拟, 不碰锁端)", isOn: Binding(
                 get: { DemoKit.isOn },
                 set: { on in
                     DemoKit.setOn(on)
@@ -389,7 +389,7 @@ struct SettingsView: View {
                     Spacer(minLength: DS.Space.s)
                     // 805 已完成度: 与证书页同一份 finishedSteps, 不另记账
                     Text("已完成 \(Onboarding.finishedSteps.count)/\(Onboarding.Step.allCases.count) 步")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                 }
             }
@@ -421,7 +421,7 @@ struct SettingsView: View {
             Text("拖动排序与置顶同步设备页的翻页顺序，第一行即启动默认锁。"
                  + "顺序、分组、分组折叠与隐藏随全量备份包走 (D-36)：换机恢复后不必重排；"
                  + "锁档案的场所副标题 / 备注 / 符号色标仍只存本机。")
-                .font(.caption2)
+                .vkFont(.caption2)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -466,7 +466,7 @@ struct SettingsView: View {
                 note("靠近时先连上，开锁少等一两秒；成功率只在本机统计。")
                 Button("锁信息名片") { showDeviceInfo = true }
                 note("型号、固件、电量与绑定时间的汇总卡。")
-                Toggle("静音模式", isOn: Binding(
+                VariantToggle("静音模式", isOn: Binding(
                     get: { muteStored },
                     set: { silent in
                         guard !settingMute else { return }
@@ -515,7 +515,7 @@ struct SettingsView: View {
     /// 与 deviceManageSection 既有的 caption2 小字同一族, 这里收成一个 helper 免得每处重抄三行修饰。
     private func note(_ s: String) -> some View {
         Text(s)
-            .font(.caption)
+            .vkFont(.caption)
             .foregroundStyle(DS.Palette.textSub)
             .fixedSize(horizontal: false, vertical: true)
     }
@@ -599,25 +599,25 @@ struct SettingsView: View {
                 Text("24 小时制").tag("24")
                 Text("12 小时制").tag("12")
             }
-            Toggle("显示秒", isOn: Binding(   // 651 显示秒
+            VariantToggle("显示秒", isOn: Binding(   // 651 显示秒
                 get: { TimeFormat.showSeconds },
                 set: { app.setUnlockOption(TimeFormat.secsKey, $0) }))
-            Toggle("记录行加第二行完整日期", isOn: Binding(   // 648 记录行加第二行完整日
+            VariantToggle("记录行加第二行完整日期", isOn: Binding(   // 648 记录行加第二行完整日
                 get: { TimeFormat.twoLine },
                 set: { app.setUnlockOption(TimeFormat.twoLineKey, $0) }))
         } footer: {
             Text("秒只在日志原文真的带秒时出现，缺位的行不补 “:00”——那等于假装这条记录精确到秒。\n"
                  + "制式不做时区换算：锁端键盘上写的是几点，这里就显示几点。")
-                .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
         }
     }
 
     private var unlockSection: some View {
         Section {
-            Toggle("按住确认开锁", isOn: Binding(
+            VariantToggle("按住确认开锁", isOn: Binding(
                 get: { DB.store.getBool("kf_hold_confirm", true) },
                 set: { app.setUnlockOption("kf_hold_confirm", $0) }))
-            Toggle("误触围栏", isOn: Binding(
+            VariantToggle("误触围栏", isOn: Binding(
                 get: { DB.store.getBool("kf_fence") },
                 set: { app.setUnlockOption("kf_fence", $0) }))
             // 52/58 开锁手势三档 (第九十八批, 2026-10-10 拍板"手势族全做"后补回)。
@@ -632,46 +632,46 @@ struct SettingsView: View {
             Text("三连点 = 连点圆盘三次才发指令，前两下只有渐强触感；旋转充能 = 沿圆盘外沿转满一圈"
                  + "(iPhone 无数码表冠，本档按原句「转一圈才发」的行为落地)。两种都不缩短防误触的判定，"
                  + "只是把「按住」换成另一种必须做完的动作。")
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
             // 53 双击直开: 这是防误触的**减配** (绕过按住确认)，所以默认关、只在按住确认档可开、
             // 标签自己写明「绕过确认」 —— 一个把安全降级说得像便捷特性的开关，本仓不写。
-            Toggle("双击直开 (绕过按住确认)", isOn: Binding(
+            VariantToggle("双击直开 (绕过按住确认)", isOn: Binding(
                 get: { DB.store.getBool("kf_tap_direct") },
                 set: { app.setUnlockOption("kf_tap_direct", $0) }))
                 .disabled(UnlockPrefs.mode != "hold")
             if UnlockPrefs.mode != "hold" {
                 Text("三连点/旋转充能档已自带确认动作，双击直开只在「按住确认」档提供。")
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
             }
-            Toggle("成功提示音", isOn: Binding(
+            VariantToggle("成功提示音", isOn: Binding(
                 get: { DB.store.getBool("kf_unlock_sound") },
                 set: { app.setUnlockOption("kf_unlock_sound", $0) }))
             // 2026-10-13 对抗式排查: 实时活动的开关位 (`kf_live_unlock`) 原先全仓只有读没有写
             // ⇒ LiveUnlock.enabled 恒 true, 用户根本关不掉 (77/939/941 "可关" 是假能力)。
             // 这里补上唯一写入点。关掉只影响锁屏/灵动岛的展示, 开锁链本身一个字不变。
-            Toggle("开锁实时活动 (锁屏/灵动岛)", isOn: Binding(
+            VariantToggle("开锁实时活动 (锁屏/灵动岛)", isOn: Binding(
                 get: { LiveUnlock.enabled },
                 set: { LiveUnlock.setEnabled($0) }))
             // 848 成败两音各自一枚开关: 只开"失败"的人要的是"没开成就别吵我", 只开"成功"的人反过来 ——
             // 合成一枚开关就只能服务其中一半人, 而这一半永远察觉不到另一半的存在。
-            Toggle("失败提示音", isOn: Binding(
+            VariantToggle("失败提示音", isOn: Binding(
                 get: { DB.store.getBool("kf_unlock_fail_sound") },
                 set: { app.setUnlockOption("kf_unlock_fail_sound", $0) }))
             // 音色 ID 未经真机核对 (AlertTone 里标着 ⚠), 所以文案不承诺"两声不同", 只说各响一次。
             Text("失败音只在**试完全部重试仍没开成**那一刻响一次, 中途静默重试不响。两枚开关都默认关, 走系统同一音量通道, 手机静音时一起安静。")
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             // 884 公共场合音量提示: 把"这个声音走的是媒体音量"说出来 —— 用户调小本 App 却发现
             // 响的是整台手机的媒体音量，那才是吓人的地方。界面不假装自己有一个独立音量。
             Text("提示音跟随系统媒体音量：本 App 不单独放大，也不新开一路音量。"   // 884 提示音跟随系统媒体音
                  + "公共场合请先调系统的侧键音量，或直接关掉这一开关改用触感。")
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
-            Toggle("失败自动重试", isOn: Binding(
+            VariantToggle("失败自动重试", isOn: Binding(
                 get: { DB.store.getBool("kf_auto_retry", true) },
                 set: { app.setUnlockOption("kf_auto_retry", $0) }))
             Picker("圆盘尺寸", selection: Binding(
@@ -686,7 +686,7 @@ struct SettingsView: View {
             Text("开锁")
         } footer: {
             Text("按住圆盘时长 (默认 0.9s, 可在 辅助功能 里 0.4–1.6s 自定) 或上滑触发开锁；关闭「按住确认」后退回轻点直开 (适合单手与 VoiceOver)。误触围栏开启后需先从圆盘边缘拖到中心再执行开锁手势。")
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -709,7 +709,7 @@ struct SettingsView: View {
                 Text("家人与钥匙")
             } footer: {
                 Text("「访客」是本地虚拟分组, 不占锁端槽位; 活跃度与摘录均按台账推断 (约)。")
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -753,7 +753,7 @@ struct SettingsView: View {
             // 2026-10-14: 去掉标签里的内部规格编号 "(919: …)"。它把一行标签撑成两行、把右侧开关挤到
             // 第二行居中，而用户看到的是一串跟自己无关的编号 —— 本仓"乱源治理"清过 1037 处同类，这一处漏了。
             // 语义说明挪进本节 footer，标签回归一行 (截图里折行撑歪开关就是这条)。
-            Toggle("成员别名显示", isOn: Binding(
+            VariantToggle("成员别名显示", isOn: Binding(
                 get: { CredentialOrg.aliasDisplay },
                 set: { DB.store.set("kf_calias_display", $0) }))
                 .fixedSize(horizontal: false, vertical: true)
@@ -761,7 +761,7 @@ struct SettingsView: View {
             Text("凭证整理")
         } footer: {
             Text("「成员别名显示」开着时, 有备注名的成员优先显示备注 (如「老妈」), 否则显示称呼。\n版本快照与回收站只在本机留存; 需锁端生效的操作保持「待下发」, 到场连接后在凭证页队列补发。")
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -794,7 +794,7 @@ struct SettingsView: View {
             Text("无障碍")
         } footer: {
             Text("圆盘转子调节、字号五档、切换控制扫描、键盘快捷键、练习场与对比度计算器集中在辅助功能页。")
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -866,7 +866,7 @@ struct SettingsView: View {
             // 会以为功能被删 —— 这正是"两套 UI 必有一套少功能"的投诉形状。
             if app.uiVariant.isExperimental {
                 Text(app.uiVariant.note + "。" + app.uiVariant.unfinished)
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(.secondary)
             }
             // 完整性读数：静态闸门只能说"每个目的地都挂了缝"，
@@ -932,22 +932,22 @@ struct SettingsView: View {
             .pickerStyle(.menu)
             if AXFlags.reduceMotion {
                 Text("系统「减弱动态效果」已开启，当前强制走克制档，上面的选择暂不生效。")
-                    .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                    .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
             // 节日限定色 (890): 默认关。给用户的既有界面换色属于"打扰"，必须显式开。
             // 只在 671 表里的法定假日当天生效；补班日不染色 (那是要上班的日子)；表外节日一律不猜色。
-            Toggle("法定节假日染主控卡", isOn: Binding(
+            VariantToggle("法定节假日染主控卡", isOn: Binding(
                 get: { DB.store.getBool("kf_festive") },
                 set: { app.setFestive($0) }))
             // 启动一句话 (898): 按当天定值的一句本地短语，晚归语与节气排在它前面
-            Toggle("主控卡每日一句话", isOn: Binding(
+            VariantToggle("主控卡每日一句话", isOn: Binding(
                 get: { DB.store.getBool("kf_launch_line", true) },
                 set: { app.setLaunchLine($0) }))
             // 高对比皮肤 (893): App 内这一档，不必为一只 App 去改整机设置。
             // getter 只读**本机偏好** kf_hc —— 读 DS.Appearance.highContrast (系统∪本机) 的话，
             // 系统那边开着而本机没开时这个开关会"关不下去"，看着像坏了。
-            Toggle("高对比皮肤", isOn: Binding(
+            VariantToggle("高对比皮肤", isOn: Binding(
                 get: { DB.store.getBool("kf_hc") },
                 set: { app.setHighContrast($0) }))
             note("文字与分隔线加深一档，不必去改整机设置。")
@@ -1001,15 +1001,15 @@ struct SettingsView: View {
             .pickerStyle(.menu)
             note("只换主控卡上电量那几个数字的字体。")
             // Hero 参考指标位 (909): 电量刻意不给开关 (它决定还能不能开锁)
-            Toggle("主控卡显示固件位", isOn: Binding(
+            VariantToggle("主控卡显示固件位", isOn: Binding(
                 get: { DS.HeroStats.shows("firmware") },
                 set: { v in app.setHeroStats(DS.HeroStats.all.filter { $0 != "firmware" || v }) }))
-            Toggle("主控卡显示锁钟位", isOn: Binding(
+            VariantToggle("主控卡显示锁钟位", isOn: Binding(
                 get: { DS.HeroStats.shows("lockclock") },
                 set: { v in app.setHeroStats(DS.HeroStats.all.filter { $0 != "lockclock" || v }) }))
             note("主控卡上那几个小位要显示哪几个；电量不给关。")
             // 素颜模式 (idea 1046): 一键关闭庆祝与徽章动效
-            Toggle("素颜模式", isOn: Binding(
+            VariantToggle("素颜模式", isOn: Binding(
                 get: { DB.store.getBool("kf_plain") },
                 set: { DB.store.set("kf_plain", $0) }))
             note("关掉彩带、徽章动效一类的庆祝效果。")
@@ -1024,7 +1024,7 @@ struct SettingsView: View {
             .pickerStyle(.menu)
             iconPickerRow
             // 897 四季图标自动对齐: 默认关。桌面图标是用户首屏上看得见的东西，悄悄换属于越界。
-            Toggle("回前台时按当季对齐图标", isOn: Binding(
+            VariantToggle("回前台时按当季对齐图标", isOn: Binding(
                 get: { SeasonIcon.autoOn },
                 set: { v in
                     SeasonIcon.setAuto(v)
@@ -1033,7 +1033,7 @@ struct SettingsView: View {
                                       : "已关掉自动对齐，手动选的图标不受影响")
                 }))
             Text("春夏秋冬分别用现有的四款图标（春绿环 / 夏主图标 / 秋琥珀钥匙 / 冬石墨盾）。只在你选过这四款之一时对齐；手动选别的图标不会被覆盖。")
-                .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             // 892 自定义强调色 (ColorPicker 管线)。存的是"色相来源"，上屏的每一档都要过亮度带，
             // 所以选到近白/近黄这类压不住白字的颜色时，主卡不会变白糊一片 —— 是被压暗后的同色系。
@@ -1047,18 +1047,18 @@ struct SettingsView: View {
                         supportsOpacity: false)
             if DS.CustomAccent.isActive {
                 Button("取消自定义，回到六套预设") { app.setCustomAccent(0) }
-                    .font(.footnote).foregroundStyle(DS.Palette.accentText)
+                    .vkFont(.footnote).foregroundStyle(DS.Palette.accentText)
                 Text("自定义色只影响强调色、主控卡与按钮渐变；文字与语义色仍走系统令牌。选到很亮的颜色时会被压暗到能看清白字的范围，观感接近同色系的深色版。")
-                    .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                    .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
             // 895 "儿童友好"预设：不叫"儿童模式"——本 App 没有内容分级，名字暗示过滤就是虚假承诺
             Button("套用儿童友好外观预设") { app.applyFriendlyPreset() }   // 895 套用儿童友好外观预设
-                .font(.callout)
+                .vkFont(.callout)
                 .foregroundStyle(DS.Palette.accentText)
             Text("一次把品牌色、圆角、密度、凭证行高、动效与纹理推到「看得清、点得准、不闹」的组合；"
                  + "只改外观，不过滤内容，任何一档之后都能单独改回。")
-                .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             // 记录页开场过滤策略 (908): 盖在 192"按锁记住上次过滤"之上的一层开场规则。
             // 措辞刻意避开"清除/删除"—— 三种策略都**不删**已存的会话过滤，只是决定进页面时从哪开始。
@@ -1071,14 +1071,14 @@ struct SettingsView: View {
             }
             .pickerStyle(.menu)
             Text("这只改变进入记录页时的**起点**；你手动改过的过滤仍会按锁留着，切回上一项就还在。不会删任何记录。")
-                .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             // 905 快捷格"十一选六" (921 加了"再开一次") + 1047 常用动作排前。
             // 放在"外观"这一节里是有意的：它改的是设备页那一圈格子的组成与次序，属于布局个性化；
             // 但要注意它改完是**立即生效**的 (走 bumpAppearanceForLayout 重建一次树)，
             // 不需要重进 App。
             ForEach(QuickPool.all) { a in
-                Toggle(a.label, isOn: Binding(
+                VariantToggle(a.label, isOn: Binding(
                     get: { QuickPool.selected.contains(a) },
                     set: { on in
                         var ids = QuickPool.selected.map { $0.id }
@@ -1090,8 +1090,8 @@ struct SettingsView: View {
                     }))
             }
             Text("也可以直接在设备页长按任一快捷格打开这份编辑。")   // 905 也可以直接在设备页长
-                .font(.caption2).foregroundStyle(DS.Palette.textSub)
-            Toggle("常用动作排到前面", isOn: Binding(   // 1047 常用动作排到前面
+                .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
+            VariantToggle("常用动作排到前面", isOn: Binding(   // 1047 常用动作排到前面
                 get: { QuickPool.smartFirst },
                 set: { v in
                     QuickPool.setSmartFirst(v)
@@ -1100,14 +1100,14 @@ struct SettingsView: View {
                     app.bumpAppearanceForLayout()
                 }))
             Text("没动过这个开关时: 本机静默记点击次数, 满 30 天后首格自动推荐最常用的一格; 关掉 = 停止记录并清空计数, 排序回到你手选的次序。")
-                .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             if QuickPool.smartFirst {
                 let c = QuickPool.counts
                 Text(c.isEmpty ? "还没攒到点击记录：去设备页点几次快捷格。"
                                : "已记录: " + QuickPool.all.filter { c[$0.id] != nil }
                                    .map { "\($0.label) \(c[$0.id]!) 次" }.joined(separator: " · "))
-                    .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                    .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
             // 恢复默认外观 (idea 202): 带确认弹窗, 只重置外观偏好
@@ -1116,7 +1116,7 @@ struct SettingsView: View {
             Text("外观")
         } footer: {
             Text("主题、品牌色（六套）、密度、圆角、高对比、周起始日、行高与行距、指标位、纹理、动效强度、节日色、每日一句话都在本机生效，即时可见，不上传。高对比与系统「辅助功能-增加对比度」是并联关系，任一开着都加强；系统「减弱动态效果」会把动效强度压到克制档。素颜模式一键关闭庆祝与徽章动效；纯黑适合 OLED 夜间。")
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -1166,7 +1166,7 @@ struct SettingsView: View {
         // 用户不知道自己有九款可选 —— 换肤这种"看一眼才想换"的界面不该先藏起来。
         VStack(alignment: .leading, spacing: DS.Space.s) {
             Text("App 图标")
-                .font(.body)
+                .vkFont(.body)
                 .foregroundStyle(DS.Palette.text)
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 48), spacing: DS.Space.m)],
                       alignment: .leading, spacing: DS.Space.m) {
@@ -1197,7 +1197,7 @@ struct SettingsView: View {
                 }
             }
         }
-        .font(.body)
+        .vkFont(.body)
         .foregroundStyle(DS.Palette.text)
     }
 
@@ -1256,16 +1256,16 @@ struct SettingsView: View {
     // 必须由用户明确点过才成立 —— 关着的开关也要看得出"它现在不响"。
     private var alertToneSection: some View {
         Section {
-            Toggle("告警提示音 (低电单音)", isOn: Binding(
+            VariantToggle("告警提示音 (低电单音)", isOn: Binding(
                 get: { DB.store.getBool("kf_alert_tone") },
                 set: { app.setUnlockOption("kf_alert_tone", $0) }))
             Text("只在低电告警**到达**那一刻响一声 (两档滞回各一次, 与那条本地通知同一时机)。总开关关掉, 下面这一档也不会响。")
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             // 733 胁迫档: 与 390/391 的既有不变量直接相冲 —— 那两档靠"反馈与真解锁一致"才不被看出来,
             // 而三声急促音恰恰是胁迫放行当场的一个可听破绽。所以它不从属于总开关, 单独一刀 + 默认关 + 写明风险。
-            Toggle("胁迫告警三音 (有风险, 默认关)", isOn: Binding(
+            VariantToggle("胁迫告警三音 (有风险, 默认关)", isOn: Binding(
                 get: { DB.store.getBool("kf_duress_tone") },
                 set: { app.setUnlockOption("kf_duress_tone", $0) }))
                 .disabled(!DB.store.getBool("kf_alert_tone"))
@@ -1274,12 +1274,12 @@ struct SettingsView: View {
                 // `**不一样**`。改走 mdText。
                 mdText("⚠ 打开后, 用胁迫口令放行的那一刻会响三声, 和正常开锁**不一样** —— 站在旁边的人听得出来。"
                      + "本 App 的胁迫通道原本刻意做得与真解锁一模一样, 这一开关是主动放弃那层掩护去换\"我能听见告警\"。只想留痕不要声音, 就让它关着。")   // 390/391 的胁迫通道原本刻意做
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.warn)
                     .fixedSize(horizontal: false, vertical: true)
             }
             // 963 每晚状态确认: 与 1031 免扰 (22–08) 的冲突是结构性的, 界面直接说谁赢。
-            Toggle("每晚状态确认提醒", isOn: Binding(
+            VariantToggle("每晚状态确认提醒", isOn: Binding(
                 get: { StatusCheckNotice.on },
                 set: { v in
                     app.setUnlockOption("kf_status_checkin", v)
@@ -1309,7 +1309,7 @@ struct SettingsView: View {
             mdText(StatusCheckNotice.on && CareSchedule.quietOn && StatusCheckNotice.insideQuiet(StatusCheckNotice.hour)
                  ? "现在这条**没有排上**: 免扰时段覆盖 22–08, 你选的 \(StatusCheckNotice.hour):00 正落在里面, 按\"免扰优先\"不排。把免扰关掉, 或把时点挪到 20:00/21:00 才会响。"   // 1031 现在这条
                  : "到点给一条本地通知, 写的是台账里数得出的数 (几把锁、今天连上过几把)。通知不联网不连锁, 锁的真实状态要到场连上才知道。")
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         } header: {
@@ -1337,7 +1337,7 @@ struct SettingsView: View {
                 let buildVer = (Bundle.main.infoDictionary?["CFBundleVersion"] as? String) ?? "?"
                 let themeCount = DS.Palette.themeTable.count
                 Text("build " + buildVer + " · " + String(themeCount) + " 套主题")   // 279 套主题
-                    .font(.footnote.monospacedDigit())
+                    .vkFont(.footnote.monospacedDigit())
                     .foregroundStyle(DS.Palette.textSub)
             }
             .accessibilityElement(children: .combine)
@@ -1367,7 +1367,7 @@ struct SettingsView: View {
             }
         } footer: {
             Text(aboutFooterText)
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -1396,10 +1396,11 @@ struct MechCounter: View {
         HStack(spacing: DS.Space.xs) {
             ForEach(Array(String(value).enumerated()), id: \.offset) { _, ch in
                 Text(String(ch))
-                    .font(.subheadline.weight(.semibold))
+                    .vkFont(.subheadline, weight: .semibold)
                     .monospacedDigit()
                     .foregroundStyle(DS.Palette.text)
                     .frame(width: 22)
+                    // @layout-allow VK豁免 刻度点: 22pt 宽的控制零件，不是容器
                     .background(DS.Palette.surfaceAlt, in: RoundedRectangle(cornerRadius: 5, style: .continuous))
                     .overlay(
                         RoundedRectangle(cornerRadius: 5, style: .continuous)
@@ -1448,7 +1449,7 @@ struct DefendView: View {
                     } icon: {
                         Image(systemName: "info.circle").accessibilityHidden(true)
                     }
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                 }
             }
@@ -1564,28 +1565,28 @@ struct SafemodeIntroView: View {
         Form {
             if isOtp {
                 Section("临时密码 (ZOTP) 介绍") {
-                    Text("ZOTP 是临时开锁密码：6 位数字密码，每 30 分钟更换一次，同一窗口内最多 99 个。").font(.footnote)
-                    Text("生成前请先校准门锁时间 (0E)，否则手机与锁时间窗不同步会导致密码不匹配。").font(.footnote)
+                    Text("ZOTP 是临时开锁密码：6 位数字密码，每 30 分钟更换一次，同一窗口内最多 99 个。").vkFont(.footnote)
+                    Text("生成前请先校准门锁时间 (0E)，否则手机与锁时间窗不同步会导致密码不匹配。").vkFont(.footnote)
                 }
             } else {
                 Section("门锁的安全模式介绍") {
-                    Text("门锁的安全模式分为A模式和B模式").font(.subheadline)
-                    Text("A模式：只需要单一方式（密码／指纹／手机）验证通过就可以开锁").font(.footnote)
-                    Text("B模式：需要用两种不同方式（指纹+密码／指纹+手机／手机+密码）组合验证通过才可开锁").font(.footnote)
+                    Text("门锁的安全模式分为A模式和B模式").vkFont(.subheadline)
+                    Text("A模式：只需要单一方式（密码／指纹／手机）验证通过就可以开锁").vkFont(.footnote)
+                    Text("B模式：需要用两种不同方式（指纹+密码／指纹+手机／手机+密码）组合验证通过才可开锁").vkFont(.footnote)
                 }
                 Section("怎么设置门锁的安全模式？") {
                     Text("当前模式在「锁信息名片」(设备页) 读取后显示。本 App 只给变严的方向 (A→B)；"
-                         + "要放宽回 A 模式请在门锁键盘上操作或联系管理员。").font(.footnote)
+                         + "要放宽回 A 模式请在门锁键盘上操作或联系管理员。").vkFont(.footnote)
                     // 拍板 #2 (第六十六批): 给切换入口, 但只允许更严方向。
                     // 不给 B→A 的理由写在这: 放宽验证会让"两种组合验证"这条既有保护一指之间消失,
                     // 而锁端不记录是谁改的 —— 本机审计只会留下一条无法解释的降级。
                     if app.status == nil {
                         Text("还没读到锁状态 —— 先在设备页读一次锁信息，这里才会出现切换按钮。")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                     } else if app.status?.verifyMode == 1 {
                         Text("当前已是 B 模式（双验）。本 App 不提供改回 A 模式的入口。")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.ok)
                     } else {
                         Button(switching ? "切换中…" : "切换到 B 模式（双验，更严）(cmd 20)") {
@@ -1597,7 +1598,7 @@ struct SafemodeIntroView: View {
                                 Task { await switchToDoubleVerify() }
                             }
                         }
-                        .font(.subheadline.weight(.medium))
+                        .vkFont(.subheadline, weight: .medium)
                         .foregroundStyle(DS.Palette.accentText)
                         .disabled(switching)
                         .frame(minHeight: DS.Hit.min)

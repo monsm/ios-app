@@ -80,7 +80,7 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
     private var exportSection: some View {
         Section("全量备份") {
             Text("导出全部门锁、钥匙、密码台账与家人档案为一整段文本 (含敏感密钥, 请妥善保管)。")
-                .font(.caption).foregroundStyle(DS.Palette.textSub)
+                .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             BusyButton(title: "生成备份文本", systemImage: "doc.text", isBusy: false) {
                 Milestones.recordBackup()   // 980 备份卫士
@@ -96,9 +96,9 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
                         .font(.system(size: DS.Icon.md))
                         .foregroundStyle(DS.Palette.accentText)
                     VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                        Text("还没有备份").font(.subheadline.weight(.medium))   // 822 还没有备份
+                        Text("还没有备份").vkFont(.subheadline, weight: .medium)   // 822 还没有备份
                         Text("本机从未生成过备份文本，也没有上传成功记录。手机丢失或重装即不可恢复。")
-                            .font(.caption).foregroundStyle(DS.Palette.textSub)
+                            .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -106,24 +106,24 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
             } else if let at = Milestones.lastBackupAt {
                 VStack(alignment: .leading, spacing: DS.Space.xxs) {
                     Text("上次备份 " + at.formatted(date: .abbreviated, time: .shortened))   // 822 上次备份
-                        .font(.caption).foregroundStyle(DS.Palette.textSub)
+                        .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                     // 822 建议备份时间: 读「备份工作室」的节奏档 (198 的 kf_bk_cadence, 本处为它的读方),
                     // 到期与否按上次备份时刻实算; 节奏为「仅手动」时不建议 —— 没有节奏就没有"到期"这一说。
                     if let tip = Self.backupDueTip(cadence: BackupStudio.cadence, last: at) {
-                        Text(tip).font(.caption).foregroundStyle(DS.Palette.textSub)
+                        Text(tip).vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                     }
                     // 193 体积预估: 本次预计 vs 上次实际 (备份工作室同样一行, 这里补全量导出入口的对照)
                     if let est = BackupStudio.estimateBytes() {
-                        Text(BackupStudio.sizeText(est)).font(.caption).foregroundStyle(DS.Palette.textSub)
+                        Text(BackupStudio.sizeText(est)).vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                     }
                 }
             }
             if !exportText.isEmpty {
                 VStack(alignment: .leading, spacing: DS.Space.s) {
                     Text("共 \(exportText.count) 字符")
-                        .font(.caption).foregroundStyle(DS.Palette.textSub)
+                        .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                     Text(exportText)
-                        .font(.caption.monospaced())
+                        .vkFont(.caption.monospaced())
                         .lineLimit(8).truncationMode(.tail)
                         .textSelection(.enabled) // 也可手动复制
                     ShareLink(item: exportText, preview: SharePreview("离线锁管家备份"))
@@ -137,10 +137,10 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
     private var importSection: some View {
         Section("导入恢复") {
             Text("粘贴备份文本后导入。相同设备将覆盖, 其它设备保留 (门锁无需重置)。")
-                .font(.caption).foregroundStyle(DS.Palette.textSub)
+                .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             TextField("粘贴备份文本", text: $importText, axis: .vertical)
-                .font(.caption.monospaced())
+                .vkFont(.caption.monospaced())
                 .lineLimit(3...6)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
@@ -177,12 +177,12 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
                     // 这一条照同款改。
                     Button { showWebDAV = true } label: {
                         Text("服务器根路径默认内置坚果云，点这里可改")   // 816 服务器根路径默认内置
-                            .font(.caption2.weight(.medium))
+                            .vkFont(.caption2, weight: .medium)
                             .foregroundStyle(DS.Palette.accentText)
                     }
                     .frame(minHeight: DS.Hit.min)
                 }
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityElement(children: .contain)
@@ -206,7 +206,7 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
             }
             .disabled(!cloudReady)
             Text("账号与应用密码保存在本机 (可在坚果云网页撤销); 加密口令每次输入, 不落盘。")
-                .font(.caption).foregroundStyle(DS.Palette.textSub)
+                .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -308,13 +308,13 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
                 showStudio = true
             } label: {
                 Label("打开备份工作室", systemImage: "wrench.and.scissors")
-                    .font(.subheadline.weight(.semibold))
+                    .vkFont(.subheadline, weight: .semibold)
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .frame(minHeight: DS.Hit.min)
             }
             Text("导出向导 · 恢复预演 · WebDAV 策略 · 换机迁移 · 完整性信任。")
-                .font(.caption).foregroundStyle(DS.Palette.textSub)
+                .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }

@@ -145,7 +145,7 @@ struct SecurityWatermark: View {
                     t.translateBy(x: x, y: y)
                     t.rotate(by: .degrees(-18))
                     t.opacity = 0.05   // 装饰层: 只留潜意识, 不破正文对比度 (颜色仍取 text 令牌的动态色)
-                    t.draw(Text(stamp).font(.caption2).foregroundColor(DS.Palette.text), at: .zero)
+                    t.draw(Text(stamp).vkFont(.caption2).foregroundColor(DS.Palette.text), at: .zero)
                     x += tile
                 }
                 y += tile / 1.6
@@ -172,7 +172,7 @@ struct SecurityCenterView: View {
                         Label("应用锁增强", systemImage: "lock.shield")
                     }
                     Text("冷却 / 锁定时机 / 免验 / 救援码 / 随机键位 / 伪装与胁迫")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                 } header: {
                     Text("应用锁")
@@ -183,7 +183,7 @@ struct SecurityCenterView: View {
                         Label("防窥与遮蔽", systemImage: "eye.slash")
                     }
                     Text("遮蔽样式 / 后台即糊 / 限时可见 / 磨砂挡片 / 访客通道 / 水印")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                 } header: {
                     Text("防窥")
@@ -196,7 +196,7 @@ struct SecurityCenterView: View {
                     if risks.isEmpty {
                         // 2026-10-14: 去掉标签里的规格编号 "(9)"。
                         Text("没有发现同值 / 超期 / 弱口令 —— 台账里的密码都还干净。")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     } else {
@@ -209,10 +209,10 @@ struct SecurityCenterView: View {
                                     .accessibilityHidden(true)
                                 VStack(alignment: .leading, spacing: DS.Space.xxs) {
                                     Text("\(r.kind) · \(r.lockName) 密码 #\(r.alias)")
-                                        .font(.subheadline)
+                                        .vkFont(.subheadline)
                                         .foregroundStyle(DS.Palette.text)
                                     Text(r.detail)
-                                        .font(.footnote)
+                                        .vkFont(.footnote)
                                         .foregroundStyle(DS.Palette.textSub)
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
@@ -225,7 +225,7 @@ struct SecurityCenterView: View {
                             // 2026-10-14: 原句把总数硬编码成 "(9)" —— 实际 12 条风险时会显示"另有 4 条 (9)",
                             // 那个 9 是**假总数**。改成取真实 count; 同时去掉规格编号。
                             Text("另有 \(risks.count - 8) 条 — 只列前 8 条, 共 \(risks.count) 条。")
-                                .font(.footnote)
+                                .vkFont(.footnote)
                                 .foregroundStyle(DS.Palette.textSub)
                         }
                     }
@@ -233,7 +233,7 @@ struct SecurityCenterView: View {
                     Text("凭证风险体检")
                 } footer: {
                     Text("只读扫描本机台账: 同值 / 添加超 180 天未改 / 弱口令 (少于 6 位、全部同数字、连续序列)。处置在凭证 Tab 改码。")   // 305/306 只读扫描本机台账
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -243,7 +243,7 @@ struct SecurityCenterView: View {
                         Label("审计流水", systemImage: "list.bullet.rectangle")
                     }
                     Text(auditChainLine())
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                 } header: {
                     Text("审计")
@@ -254,7 +254,7 @@ struct SecurityCenterView: View {
                         Label("销毁与应急", systemImage: "trash")
                     }
                     Text("三级销毁 / 备份闸 / 残留检查 / 回收站 / 安全模式 / 口令复用")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                 } header: {
                     Text("销毁")
@@ -268,13 +268,13 @@ struct SecurityCenterView: View {
                     SecRow(title: "只读试验模式",
                            subtitle: trialGuardLine,
                            icon: "exclamationmark.shield", iconTone: .warn) {
-                        Toggle("", isOn: Binding(
+                        VariantToggle("", isOn: Binding(
                             get: { DB.store.getBool("kf_trial_guard", false) },
                             set: { DB.store.set("kf_trial_guard", $0); SecTick.bump() }))
                             .labelsHidden()
                     }
                     Text("用途: 连真机做只读试验 (读状态/读日志/查钥匙串) 时防止误发写入命令。开启后 04 开门、05 换钥、08 同步 PIN、31 写网关口令等一律在成帧前拦下报错，不会发包。关闭即恢复正常下发，不留残余限制。")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 } header: {
@@ -356,10 +356,10 @@ struct SecRow<Trailing: View>: View {
                 .frame(width: DS.Icon.md, height: DS.Icon.md)
             VStack(alignment: .leading, spacing: DS.Space.xxs) {
                 Text(title)
-                    .font(.subheadline.weight(.medium))
+                    .vkFont(.subheadline, weight: .medium)
                 if !subtitle.isEmpty {
                     Text(subtitle)
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                 }
             }
@@ -386,7 +386,7 @@ struct SecurityLockConfigView: View {
                 SecRow(title: "递增冷却",
                        subtitle: "连败等待逐次翻倍 (30s 起), 锁定页显示需等秒数",
                        icon: "hourglass", iconTone: .warn) {
-                    Toggle("", isOn: binding(SecKey.lockCoolOn))
+                    VariantToggle("", isOn: binding(SecKey.lockCoolOn))
                         .labelsHidden()
                 }
                 cooldownRow
@@ -396,7 +396,7 @@ struct SecurityLockConfigView: View {
                         DB.store.set(SecKey.lockUntil, 0.0)
                         SecTick.bump()
                     }
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.danger)
                     .frame(minHeight: DS.Hit.min)
                 }
@@ -425,7 +425,7 @@ struct SecurityLockConfigView: View {
                                 ? "解锁后 \(DB.store.getInt(SecKey.graceSec, 30)) 秒内切回免重验"
                                 : "关闭 (每次切回都重验)",
                        icon: "bolt") {
-                    Toggle("", isOn: binding(SecKey.graceOn))
+                    VariantToggle("", isOn: binding(SecKey.graceOn))
                         .labelsHidden()
                 }
                 if DB.store.getBool(SecKey.graceOn, false) {
@@ -451,14 +451,14 @@ struct SecurityLockConfigView: View {
                        subtitle: rescueSubtitle,
                        icon: "key") {
                     HStack(spacing: DS.Space.xs) {
-                        Toggle("", isOn: binding(SecKey.rescueOn))
+                        VariantToggle("", isOn: binding(SecKey.rescueOn))
                             .labelsHidden()
                             .disabled(!DB.hasPasscode())   // 395: 没开应用锁时救援码无处消费
                         if DB.store.getBool(SecKey.rescueOn, false) {
                             Button(DB.store.getString(SecKey.rescueCode).isEmpty ? "重新生成" : "查看") {
                                 rescueDetail()
                             }
-                            .font(.footnote.weight(.medium))
+                            .vkFont(.footnote, weight: .medium)
                             .foregroundStyle(DS.Palette.accentText)
                             .frame(minHeight: DS.Hit.min)
                         }
@@ -474,7 +474,7 @@ struct SecurityLockConfigView: View {
                                 ? "锁屏数字键盘每次进入重排, 防肩窥轨迹猜测"
                                 : "需先把本机密码重设为纯数字 (旧密码含字母时不出现数字键盘, 免得把自己锁在门外)",
                        icon: "die.face.5") {
-                    Toggle("", isOn: binding(SecKey.randomKeys))
+                    VariantToggle("", isOn: binding(SecKey.randomKeys))
                         .labelsHidden()
                         .disabled(!DB.store.getBool(SecKey.randKeyDigits, false))
                 }
@@ -487,7 +487,7 @@ struct SecurityLockConfigView: View {
                         app.pendingSettingsFocus = "passcode"
                         app.requestRoute(.settings)
                     }
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.accentText)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .accessibilityHint("到设置页的密码区重设本机密码；现有字母数字密码仍可继续使用，不会被强制修改")
@@ -503,12 +503,12 @@ struct SecurityLockConfigView: View {
                                 ? "已启用: 输入伪装口令进空壳界面"
                                 : "输入伪装口令进空壳界面 (只显示本机时钟, 不加载任何门锁数据) 防胁迫翻供",
                        icon: "theatermasks") {
-                    Toggle("", isOn: binding(SecKey.decoyOn))
+                    VariantToggle("", isOn: binding(SecKey.decoyOn))
                         .labelsHidden()
                 }
                 if DB.store.getBool(SecKey.decoyOn, false), !DB.hasPasscode() {
                     Text("伪装口令须与本机密码不同, 请先在「设置 → 本机数据保护」设置密码")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.warn)
                 }
                 if DB.store.getBool(SecKey.decoyOn, false) {
@@ -525,7 +525,7 @@ struct SecurityLockConfigView: View {
                                 ? "已设: 进入后界面正常但会话打标, 操作日志橙边"
                                 : "输入后伪装放行并给会话打标",
                        icon: "exclamationmark.shield") {
-                    Toggle("", isOn: binding(SecKey.duressOn))
+                    VariantToggle("", isOn: binding(SecKey.duressOn))
                         .labelsHidden()
                 }
                 if DB.store.getBool(SecKey.duressOn, false) {
@@ -541,7 +541,7 @@ struct SecurityLockConfigView: View {
                                    return "" })
                     if DB.get(Double.self, SecKey.duressAt) ?? 0 > 0 {
                         Text("最近打标: \(Self.dateStr(DB.get(Double.self, SecKey.duressAt) ?? 0))")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.warn)
                     }
                 }
@@ -554,7 +554,7 @@ struct SecurityLockConfigView: View {
                 SecRow(title: "验证失败留痕",
                        subtitle: DB.store.getBool(SecKey.traceOn, false) ? "面容/密码失败事件写日志 (不存图像)" : "关闭",
                        icon: "antenna.radiowaves.left.and.right") {
-                    Toggle("", isOn: binding(SecKey.traceOn))
+                    VariantToggle("", isOn: binding(SecKey.traceOn))
                         .labelsHidden()
                 }
                 let evs = LockGuard.traces()   // 读侧走 LockGuard 的口径 (此前这里自己摸 key, traces() 反而零调用)
@@ -565,7 +565,7 @@ struct SecurityLockConfigView: View {
                                 .font(.system(size: DS.Icon.xs, weight: .semibold))
                                 .foregroundStyle(DS.Palette.danger)
                             Text(line)
-                                .font(.footnote)
+                                .vkFont(.footnote)
                                 .foregroundStyle(DS.Palette.textSub)
                                 .lineLimit(1)
                         }
@@ -574,7 +574,7 @@ struct SecurityLockConfigView: View {
                         LockGuard.clearTraces()
                         SecTick.bump()
                     }
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.danger)
                     .frame(minHeight: DS.Hit.min)
                 }
@@ -588,13 +588,13 @@ struct SecurityLockConfigView: View {
                        subtitle: sessionLabel,
                        icon: "person.crop.circle.badge.checkmark") {
                     Button("立即重新锁定") { relock() }
-                        .font(.footnote.weight(.medium))
+                        .vkFont(.footnote, weight: .medium)
                         .foregroundStyle(DS.Palette.danger)
                         .frame(minHeight: DS.Hit.min)
                 }
                 if DB.hasPasscode() {
                     Text("会话开始/验证方式由 AppLockView 解锁成功时写入 (接线点: 置 appUnlocked = true 处同步)；“立即重新锁定”即刻生效。")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                 }
             } header: {
@@ -674,14 +674,14 @@ struct SecurityLockConfigView: View {
                         .foregroundStyle(DS.Palette.accentText)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("请手抄这张救援码 — 消费后不可找回; 未点「已手抄」前该码不生效")   // 395 请手抄这张救援码
-                            .font(.footnote.weight(.medium))
+                            .vkFont(.footnote, weight: .medium)
                         Text(code)
-                            .font(.title3.weight(.semibold))
+                            .vkFont(.title3, weight: .semibold)
                             .monospaced()
                             .textSelection(.enabled)
                         if !DB.store.getBool(SecKey.rescueSeen, false) {
                             Text("尚未确认手抄")
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.warn)
                         }
                     }
@@ -690,13 +690,13 @@ struct SecurityLockConfigView: View {
                         DB.store.set(SecKey.rescueSeen, true)
                         SecTick.bump()
                     }
-                    .font(.footnote.weight(.medium))
+                    .vkFont(.footnote, weight: .medium)
                     .foregroundStyle(DB.store.getBool(SecKey.rescueSeen, false) ? DS.Palette.ok : DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
                 }
                 // 469 保管人声明: 名字来自成员页点名的紧急管理员名单 (MemberHub.emergencyAdmins)
                 Text(rescueCustodyLine)
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -735,7 +735,7 @@ struct SecurityLockConfigView: View {
                icon: "number") {
             HStack(spacing: DS.Space.xs) {
                 Button("设置") { setCodeAlert(key: key, conflictCheck: conflictCheck) }
-                    .font(.footnote.weight(.medium))
+                    .vkFont(.footnote, weight: .medium)
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
                 if !stored.isEmpty {
@@ -743,7 +743,7 @@ struct SecurityLockConfigView: View {
                         DB.store.set(key, "")
                         SecTick.bump()
                     }
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.danger)
                     .frame(minHeight: DS.Hit.min)
                 }
@@ -843,7 +843,7 @@ struct SecurityPeekView: View {
                 }
             } footer: {
                 Text("加密凭证包与交接包不走这条：那是密文，且你要粘进聊天工具，定时清掉只会打断交接。")
-                    .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                    .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
             // 369 遮蔽样式自选
@@ -881,7 +881,7 @@ struct SecurityPeekView: View {
                 SecRow(title: "切后台即糊",
                        subtitle: bgBlurLabel,
                        icon: "rectangle.fill.and.rectangle") {
-                    Toggle("", isOn: bindingBool(SecKey.bgBlurOn, false))
+                    VariantToggle("", isOn: bindingBool(SecKey.bgBlurOn, false))
                         .labelsHidden()
                 }
                 // 373 限时可见
@@ -905,7 +905,7 @@ struct SecurityPeekView: View {
                                 ? "已开: 码值在完成页与详情卡上默认遮半, 点「完整显示」才露全值; 复制与分享跟随屏上显示"
                                 : "关: 码值原样显示",
                        icon: "square.and.arrow.up") {
-                    Toggle("", isOn: bindingBool(SecKey.shareHalfOn, true))
+                    VariantToggle("", isOn: bindingBool(SecKey.shareHalfOn, true))
                         .labelsHidden()
                 }
                 // 377 访客通道: 判据口 SecurityPolicy.guestActive, 消费点在主 TabView (LockKeeperApp.swift)
@@ -914,7 +914,7 @@ struct SecurityPeekView: View {
                                 ? "已开: 主界面只挂 设备/记录 两页, 进 凭证/设置 要先重输密码"
                                 : "关: 四页照常。打开即生效 (会先把受限的那两页收起)",
                        icon: "person.crop.circle.badge.questionmark") {
-                    Toggle("", isOn: guestSwitch)
+                    VariantToggle("", isOn: guestSwitch)
                         .labelsHidden()
                 }
                 if SecurityPolicy.guestActive {
@@ -923,7 +923,7 @@ struct SecurityPeekView: View {
                                     ? "已开但筛不出东西: 成员档案里没有敏感标记位, 判据口已就位等数据侧"
                                     : "关: 成员名单照原样给访客",
                            icon: "person.slash") {
-                        Toggle("", isOn: bindingBool(SecKey.sensitiveOnly, false))
+                        VariantToggle("", isOn: bindingBool(SecKey.sensitiveOnly, false))
                             .labelsHidden()
                     }
                 }
@@ -938,7 +938,7 @@ struct SecurityPeekView: View {
                                 ? "全页对角重复 App 名+日期"
                                 : "关闭 (截图加扰降级为常驻水印)",
                        icon: "watermark") {
-                    Toggle("", isOn: bindingBool(SecKey.watermarkOn, false))
+                    VariantToggle("", isOn: bindingBool(SecKey.watermarkOn, false))
                         .labelsHidden()
                 }
                 if DB.store.getBool(SecKey.watermarkOn, false) {
@@ -955,7 +955,7 @@ struct SecurityPeekView: View {
                             })
                             UIApplication.topViewController()?.present(alert, animated: true)
                         }
-                        .font(.footnote.weight(.medium))
+                        .vkFont(.footnote, weight: .medium)
                         .foregroundStyle(DS.Palette.accentText)
                         .frame(minHeight: DS.Hit.min)
                     }
@@ -990,7 +990,7 @@ struct SecurityPeekView: View {
                             .font(.system(size: DS.Icon.xl, weight: .medium))
                             .foregroundStyle(DS.Palette.accentText)
                         Text("已切后台 — 回前台过应用锁后恢复清晰")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                             .multilineTextAlignment(.center)
                     }
@@ -1037,7 +1037,7 @@ struct SecurityPeekView: View {
         SecRow(title: "磨砂挡片",
                subtitle: DB.store.getBool(SecKey.frostedOn, true) ? "OTP 行常驻磨砂, 长按暂时移开" : "关闭",
                icon: "square.fill.on.square") {
-            Toggle("", isOn: bindingBool(SecKey.frostedOn, true))
+            VariantToggle("", isOn: bindingBool(SecKey.frostedOn, true))
                 .labelsHidden()
         }
         .overlay(alignment: .leading) {
@@ -1050,7 +1050,7 @@ struct SecurityPeekView: View {
     @ViewBuilder
     private var frostedPlate: some View {
         Text("0 4 8 2 1  ·  OTP (长按查看)")
-            .font(.title3.weight(.semibold))
+            .vkFont(.title3, weight: .semibold)
             .monospaced()
             .padding(.horizontal, DS.Space.l)
             .padding(.vertical, DS.Space.m)
@@ -1112,9 +1112,9 @@ struct PrivacyDashboard: View {
                         .foregroundStyle(DS.Palette.accentText)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("当前启用 \(SecurityPeekView.activeCount()) 项防窥")
-                            .font(.subheadline.weight(.semibold))
+                            .vkFont(.subheadline, weight: .semibold)
                         Text("遮蔽 / 背景 / 限时 / 挡片 / 分享 / 访客 / 水印 全状态一目了然")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                     }
                 }
@@ -1127,10 +1127,10 @@ struct PrivacyDashboard: View {
                             .font(.system(size: DS.Icon.sm, weight: .semibold))
                             .foregroundStyle(item.on ? DS.Palette.ok : DS.Palette.textSub)
                         Text(item.name)
-                            .font(.subheadline)
+                            .vkFont(.subheadline)
                         Spacer()
                         Text(item.on ? "已启用" : "未启用")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                     }
                     .frame(minHeight: DS.Hit.min)
@@ -1203,7 +1203,7 @@ struct SecurityAuditView: View {
                 }
                 if events.isEmpty {
                     Text("暂无条目 — 增删改/导入会自动记入 (导出见敏感流水), 也可下方手动记一条")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                 }
             } header: {
@@ -1219,7 +1219,7 @@ struct SecurityAuditView: View {
                     self.center.bump()
                 } label: {
                     Label(manualEntryTitle, systemImage: "plus")
-                        .font(.subheadline.weight(.medium))
+                        .vkFont(.subheadline, weight: .medium)
                 }
                 .frame(minHeight: DS.Hit.min)
             }
@@ -1231,7 +1231,7 @@ struct SecurityAuditView: View {
                     self.center.bump()
                 } label: {
                     Label("校验完整性", systemImage: "checkmark.shield")
-                        .font(.subheadline.weight(.medium))
+                        .vkFont(.subheadline, weight: .medium)
                 }
                 .frame(minHeight: DS.Hit.min)
                 if let m = verifyMsg {
@@ -1240,13 +1240,13 @@ struct SecurityAuditView: View {
                             .font(.system(size: DS.Icon.sm, weight: .semibold))
                             .foregroundStyle(m.contains("完好") ? DS.Palette.ok : DS.Palette.danger)
                         Text(m)
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(m.contains("完好") ? DS.Palette.textSub : DS.Palette.danger)
                             .lineLimit(2)
                     }
                 }
                 Text("每条管理日志附前条 SHA-256, 逐链重算验证; 本地轻量口径, 篡改即断链")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
             } header: {
                 Text("防篡改")   // 386 防篡改
@@ -1280,7 +1280,7 @@ struct SecurityAuditView: View {
                         }
                     } label: {
                         Label("立即清理到期条目", systemImage: "clock.arrow.circlepath")
-                            .font(.subheadline.weight(.medium))
+                            .vkFont(.subheadline, weight: .medium)
                     }
                     .frame(minHeight: DS.Hit.min)
                 }
@@ -1300,7 +1300,7 @@ struct SecurityAuditView: View {
                     doExport("脱敏")
                 } label: {
                     Label("导出审计 JSON (脱敏)", systemImage: "square.and.arrow.up")
-                        .font(.subheadline.weight(.medium))
+                        .vkFont(.subheadline, weight: .medium)
                 }
                 .frame(minHeight: DS.Hit.min)
                 Button {
@@ -1320,7 +1320,7 @@ struct SecurityAuditView: View {
                     UIApplication.topViewController()?.present(alert, animated: true)
                 } label: {
                     Label("导出含明文 (需确认)", systemImage: "eye")
-                        .font(.subheadline.weight(.medium))
+                        .vkFont(.subheadline, weight: .medium)
                 }
                 .frame(minHeight: DS.Hit.min)
                 .foregroundStyle(DS.Palette.warn)
@@ -1335,7 +1335,7 @@ struct SecurityAuditView: View {
                                 ? "已开: 三级销毁的第二级要重输本机密码, 清空回收站/到期清理/离职清除也先问这一道"
                                 : "已关: 上面这几处毁灭动作不再追问口令 (不建议)",
                        icon: "person.crop.circle.badge.xmark") {
-                    Toggle("", isOn: Binding(
+                    VariantToggle("", isOn: Binding(
                         get: { SecurityPolicy.sudoRequired },
                         // 关掉开关顺手收回已发的那张券: 会话里"上一次验过"不该替下一次做主
                         set: { DB.store.set(SecKey.sudoOn, $0); app.sudoTicket = nil; SecTick.bump() }))
@@ -1344,7 +1344,7 @@ struct SecurityAuditView: View {
                 if !DB.hasPasscode() {
                     Text("本机没设应用锁密码 ⇒ 口令无从复核 ⇒ 毁灭动作按最严格解释停在门口。"   // 383 本机没设应用锁密码
                          + "要在这台机器上销毁, 先设本机密码或把这枚开关关掉。")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.warn)
                 }
             } header: {
@@ -1356,7 +1356,7 @@ struct SecurityAuditView: View {
                 let recent = SensitiveLedger().recent(limit: 5)
                 if recent.isEmpty {
                     Text("暂无 — 查看/复制/导出明文动作由接线方记入 (查看密码、复制 OTP、导出备份)")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                 } else {
                     ForEach(recent) { it in
@@ -1365,11 +1365,11 @@ struct SecurityAuditView: View {
                                 .font(.system(size: DS.Icon.xs, weight: .semibold))
                                 .foregroundStyle(DS.Palette.warn)
                             Text("\(it.kind) · \(it.target)")
-                                .font(.footnote)
+                                .vkFont(.footnote)
                                 .foregroundStyle(DS.Palette.textSub)
                             Spacer()
                             Text(SecurityLockConfigView.dateStr(Double(it.id) / 1000))
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                         }
                     }
@@ -1384,7 +1384,7 @@ struct SecurityAuditView: View {
                 let intents = SensitiveLedger().intentItems(limit: 10)
                 if intents.isEmpty {
                     Text("暂无 — 六条快捷指令意图每次执行都会记到这里 (被冷却拦下的也留痕)")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                 } else {
                     ForEach(intents) { it in
@@ -1393,11 +1393,11 @@ struct SecurityAuditView: View {
                                 .font(.system(size: DS.Icon.xs, weight: .semibold))
                                 .foregroundStyle(DS.Palette.accentText)
                             Text(String(it.kind.dropFirst("intent·".count)) + " · " + it.target)
-                                .font(.footnote)
+                                .vkFont(.footnote)
                                 .foregroundStyle(DS.Palette.textSub)
                             Spacer()
                             Text(SecurityLockConfigView.dateStr(Double(it.id) / 1000))
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                         }
                     }
@@ -1445,11 +1445,11 @@ struct SecurityAuditView: View {
                     .font(.system(size: DS.Icon.xs, weight: .semibold))
                     .foregroundStyle(e.duress ? DS.Palette.warn : DS.Palette.accentText)
                 Text("\(e.action) \(e.target)")
-                    .font(.subheadline)
+                    .vkFont(.subheadline)
                     .lineLimit(1)
                 Spacer()
                 Text(SecurityLockConfigView.dateStr(e.ts))
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                 Image(systemName: "chevron.down")
                     .font(.system(size: DS.Icon.xs, weight: .semibold))
@@ -1467,7 +1467,7 @@ struct SecurityAuditView: View {
                     .frame(height: 3)
                     .padding(.top, DS.Space.xxs)
                 Text("胁迫会话产生")   // 391 胁迫会话产生
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.warn)
                     .padding(.top, DS.Space.xxs)
             }
@@ -1478,17 +1478,17 @@ struct SecurityAuditView: View {
                         let vals = e.diff[field] ?? []
                         HStack(spacing: DS.Space.xxs) {
                             Text(field)
-                                .font(.caption.weight(.medium))
+                                .vkFont(.caption, weight: .medium)
                                 .foregroundStyle(DS.Palette.textSub)
                             Text((vals.first ?? "") + " → " + (vals.count > 1 ? vals[1] : "∅"))
-                                .font(.caption.monospaced())
+                                .vkFont(.caption.monospaced())
                                 .foregroundStyle(DS.Palette.text)
                                 .lineLimit(2)
                         }
                     }
                     if e.diff.isEmpty {
                         Text("无字段变更")
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                     }
                     HStack(spacing: DS.Space.xs) {
@@ -1496,10 +1496,10 @@ struct SecurityAuditView: View {
                             .font(.system(size: DS.Icon.xs, weight: .medium))
                             .foregroundStyle(DS.Palette.textSub)
                         Text("操作者: \(e.operator_)")
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                         Text(String(e.hash.prefix(12)) + "…")
-                            .font(.caption.monospaced())
+                            .vkFont(.caption.monospaced())
                             .foregroundStyle(DS.Palette.textSub)
                             .frame(maxWidth: .infinity, alignment: .trailing)
                     }
@@ -1570,9 +1570,9 @@ struct SecurityDestroyView: View {
                         .foregroundStyle(DestroyKit.backupGatePass ? DS.Palette.ok : DS.Palette.danger)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("销毁前备份闸")
-                            .font(.subheadline.weight(.medium))
+                            .vkFont(.subheadline, weight: .medium)
                         Text(backupGateLine)
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DestroyKit.backupGatePass ? DS.Palette.textSub : DS.Palette.danger)
                     }
                     Spacer()
@@ -1586,12 +1586,12 @@ struct SecurityDestroyView: View {
             // 第二级归 383 管: 开关开着才问, 关着就如实显示"本级已跳过"
             Section {
                 VStack(alignment: .leading, spacing: DS.Space.s) {
-                    Toggle(isOn: $ack) {
+                    VariantToggle(isOn: $ack) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("我理解销毁不可恢复")
-                                .font(.subheadline)
+                                .vkFont(.subheadline)
                             Text("删除+随机覆写全部本地缓存 (钥匙串/台账/日志/审计)")
-                                .font(.footnote)
+                                .vkFont(.footnote)
                                 .foregroundStyle(DS.Palette.textSub)
                         }
                     }
@@ -1603,17 +1603,17 @@ struct SecurityDestroyView: View {
                                 SecureField("重输应用锁密码", text: $sudoInput)
                                     .textFieldStyle(.roundedBorder)
                                 Button("验证") { verifySudo() }
-                                    .font(.subheadline.weight(.medium))
+                                    .vkFont(.subheadline, weight: .medium)
                                     .foregroundStyle(DS.Palette.accentText)
                                     .frame(minHeight: DS.Hit.min)
                             }
                         } else if app.sudoTicket != nil {
                             Label("sudo 验证通过", systemImage: "checkmark.seal.fill")
-                                .font(.footnote)
+                                .vkFont(.footnote)
                                 .foregroundStyle(DS.Palette.ok)
                         } else {
                             Label("销毁前重输口令的开关关着: 本级跳过, 不再追问口令", systemImage: "exclamationmark.triangle")
-                                .font(.footnote)
+                                .vkFont(.footnote)
                                 .foregroundStyle(DS.Palette.warn)
                         }
                     }
@@ -1631,7 +1631,7 @@ struct SecurityDestroyView: View {
                     }
                     if let rep = destroyReport {
                         Text(rep)
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                             .lineLimit(4)
                     }
@@ -1641,7 +1641,7 @@ struct SecurityDestroyView: View {
                                 .font(.system(size: DS.Icon.sm, weight: .semibold))
                                 .foregroundStyle(msg.contains("零残留") ? DS.Palette.ok : DS.Palette.danger)
                             Text(msg)
-                                .font(.footnote)
+                                .vkFont(.footnote)
                                 .foregroundStyle(msg.contains("零残留") ? DS.Palette.ok : DS.Palette.danger)
                         }
                     }
@@ -1657,10 +1657,10 @@ struct SecurityDestroyView: View {
             Section {
                 HStack(spacing: DS.Space.s) {
                     Text("清空回收站 (\(trashCount) 项)")
-                        .font(.subheadline.weight(.medium))
+                        .vkFont(.subheadline, weight: .medium)
                     Spacer()
                     Text("长按 2 秒释放, 松手取消")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                 }
                 holdClearControl
@@ -1673,7 +1673,7 @@ struct SecurityDestroyView: View {
                 let members = Offboard.members()
                 if members.isEmpty {
                     Text("尚无成员档案 — 在 设置 → 家人与钥匙 添加后可在此“清除并归档”")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                 } else {
                     ForEach(members) { m in
@@ -1683,9 +1683,9 @@ struct SecurityDestroyView: View {
                                 .foregroundStyle(memberColor(m))
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(m.name)
-                                    .font(.subheadline)
+                                    .vkFont(.subheadline)
                                 Text("名下凭证入归档, 记录保留并标“已离开”")
-                                    .font(.footnote)
+                                    .vkFont(.footnote)
                                     .foregroundStyle(DS.Palette.textSub)
                             }
                             Spacer()
@@ -1700,7 +1700,7 @@ struct SecurityDestroyView: View {
                                     self.center.bump()
                                 }
                             }
-                            .font(.footnote.weight(.medium))
+                            .vkFont(.footnote, weight: .medium)
                             .foregroundStyle(DS.Palette.danger)
                             .frame(minHeight: DS.Hit.min)
                         }
@@ -1718,7 +1718,7 @@ struct SecurityDestroyView: View {
                                 ? "已启用: 圆盘开锁、销毁与清空、审计导出与到期清理一律拦下"
                                 : "关闭 (异常时手动打开)",
                        icon: "power") {
-                    Toggle("", isOn: Binding(
+                    VariantToggle("", isOn: Binding(
                         get: { SecurityPolicy.readOnly },
                         set: { DB.store.set(SecKey.safeModeOn, $0); SecTick.bump() }))
                         .labelsHidden()
@@ -1728,7 +1728,7 @@ struct SecurityDestroyView: View {
                          + "到期清理、离职清除)、审计导出与含明文导出。"
                          + "还没接上的: 添加与改造凭证、网关配网、固件升级 —— 那几处的执行点在服务层与配网/升级那几个页面, "
                          + "闸装到之前, 开着这枚开关不等于全 App 只读。")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.warn)
                 }
             } header: {
@@ -1740,7 +1740,7 @@ struct SecurityDestroyView: View {
                 SecRow(title: "口令复用检测",
                        subtitle: DB.store.getBool(SecKey.pwdReuseOn, true) ? "加密码时与存量比对提示" : "关闭",
                        icon: "arrow.triangle.2.circlepath") {
-                    Toggle("", isOn: Binding(
+                    VariantToggle("", isOn: Binding(
                         get: { DB.store.getBool(SecKey.pwdReuseOn, true) },
                         set: { DB.store.set(SecKey.pwdReuseOn, $0); SecTick.bump() }))
                         .labelsHidden()
@@ -1755,7 +1755,7 @@ struct SecurityDestroyView: View {
                 SecRow(title: "保存密码二次输入",   // 521 保存密码二次输入
                        subtitle: DB.store.getBool("kf_scred_2nd", true) ? "密码保存前需重输一遍码值核对" : "关闭",
                        icon: "lock.rotationgauge") {
-                    Toggle("", isOn: Binding(
+                    VariantToggle("", isOn: Binding(
                         get: { DB.store.getBool("kf_scred_2nd", true) },
                         set: { DB.store.set("kf_scred_2nd", $0); SecTick.bump() }))
                         .labelsHidden()
@@ -1792,13 +1792,13 @@ struct SecurityDestroyView: View {
                     .font(.system(size: DS.Icon.sm, weight: .semibold))
                     .foregroundStyle(DS.Palette.warn)
                 Text("示例: 口令 1234 已出现在 " + hit.joined(separator: "、"))
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.warn)
                     .lineLimit(2)
             }
         } else {
             Text("新增口令与本机锁内存量口令 / 应用锁密码比对, 命中即提示“建议分开设置” (加密码处接线, 读现有 listPwds)。")
-                .font(.footnote)
+                .vkFont(.footnote)
                 .foregroundStyle(DS.Palette.textSub)
         }
     }
@@ -1814,7 +1814,7 @@ struct SecurityDestroyView: View {
                 .fill(DS.Palette.danger.opacity(holdProgress >= 1 ? 0.85 : 0.35))
                 .frame(width: holdProgress * 200, height: DS.Hit.min)
             Text(holdProgress >= 1 ? "松开即清空" : "按住")
-                .font(.footnote.weight(.medium))
+                .vkFont(.footnote, weight: .medium)
                 // 满格时底是 danger.opacity(0.85) 压在 surfaceAlt 上的合成色: 深色档纯白压上去只有
                 // 3.51:1 (合成算法与比值都在 tools/contrast.js), 所以走随明暗换向的 onSem。
                 .foregroundStyle(holdProgress >= 1 ? DS.Palette.onSem : DS.Palette.danger)

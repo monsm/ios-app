@@ -57,10 +57,10 @@ struct CredCenterView: View {
                     .frame(width: DS.Icon.xl, height: DS.Icon.xl)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(.subheadline.weight(.semibold))
+                        .vkFont(.subheadline, weight: .semibold)
                         .foregroundStyle(DS.Palette.text)
                     Text(sub)
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
@@ -103,12 +103,12 @@ struct CredBinView: View {
             Section {
                 HStack(spacing: DS.Space.s) {
                     Text("\(header.count) 条")
-                        .font(.subheadline.weight(.semibold))
+                        .vkFont(.subheadline, weight: .semibold)
                         .foregroundStyle(DS.Palette.text)
                     Spacer(minLength: 0)
                     if let d = header.nextClean {
                         Text("下次自动清理 " + d.formatted(.dateTime.month().day()))
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
@@ -131,7 +131,7 @@ struct CredBinView: View {
                             source = v
                             DS.Haptics.tick.impactOccurred()
                         }
-                        .font(.caption.weight(on ? .semibold : .regular))
+                        .vkFont(.caption.weight(on ? .semibold : .regular))
                         .padding(.horizontal, DS.Space.s).padding(.vertical, 4)
                         .foregroundStyle(on ? DS.Palette.onAccent : DS.Palette.textSub)
                         .background(on ? AnyShapeStyle(DS.Palette.accent) : AnyShapeStyle(DS.Palette.surfaceAlt), in: Capsule())
@@ -153,7 +153,7 @@ struct CredBinView: View {
                 if !initialQuery.isEmpty {
                     // 532: 词是凭证页递过来的就说一句, 不然这一屏看着像"谁替我打了字"
                     Text("这词是从凭证页的搜索带进来的, 要改要清都在这里。")   // 532/503 这词是从凭证页的搜索
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -164,10 +164,10 @@ struct CredBinView: View {
                     ForEach(resurrectHints) { h in
                         VStack(alignment: .leading, spacing: DS.Space.xxs) {
                             Text("「\(h.text)」之后仍有 \(h.n) 次\(h.kindName)开门")
-                                .font(.footnote)
+                                .vkFont(.footnote)
                                 .foregroundStyle(DS.Palette.text)
                             Text("协议没有\"读取锁内凭证清单\"的命令, 这是按凭证类型的推断; 且比较用的是锁自己记的时间, 锁钟未校准时会有偏差。要确认请在锁键盘上试该凭证或逐条删除。")
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -178,7 +178,7 @@ struct CredBinView: View {
             Section("已删 (\(rows.count))") {
                 if rows.isEmpty {
                     Text(query.isEmpty ? "回收站是空的。删除的凭证会在这里保留 \(CredentialOrg.reclaimDays()) 天。" : "没有匹配「\(query)」的已删项。")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -206,13 +206,13 @@ struct CredBinView: View {
                         for m in msgs where seen.insert(m).inserted { uniq.append(m) }
                         app.showToast(uniq.joined(separator: " / "))
                     }
-                    .font(.caption.weight(.medium))
+                    .vkFont(.caption, weight: .medium)
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
                     // 只在"整批比列出来的多"时说明一次, 免得这句在旧数据 (无批次号) 上变成假话
                     if restoreGroup.count > rows.count {
                         Text("按删除批次归组: 上面筛选没列出的同批条目也会一并还原。")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -230,7 +230,7 @@ struct CredBinView: View {
                 // (SettingsView 的 familySection), 不在安全页; 而安全页里真有一枚撞名的「保留期」=
                 // 审计流水保留月数, 用户按这句话去改会把设置项拧错。
                 Text("彻底删除不可找回。保留期可在 设置-家人与钥匙-凭证整理 调整。")   // 497 彻底删除不可找回
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
             }
         }
@@ -287,33 +287,33 @@ struct CredBinView: View {
         VStack(alignment: .leading, spacing: DS.Space.xs) {
             HStack(spacing: DS.Space.s) {
                 Text(e.text)
-                    .font(.subheadline.weight(.semibold))
+                    .vkFont(.subheadline, weight: .semibold)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                 StatusPill(text: e.sourceName, systemImage: "archivebox", tone: .neutral)
                 Spacer(minLength: 0)
                 let daysLeft = daysLeftOf(e)
                 Text(daysLeft >= 0 ? "剩 \(daysLeft) 天" : "已过期")
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(daysLeft <= 3 ? DS.Palette.warn : DS.Palette.textSub)
                     .lineLimit(1)
             }
             if let p = e.pwd {
                 Text("\(CredentialOrg.expiryLabel(p.to, prefix: 16)) · 归属 \(CredentialOrg.ownerName(p.owner).isEmpty ? "无" : CredentialOrg.ownerName(p.owner))")
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 // 361 停用原因回溯: 台账里已无此条, 便签是"为什么被停"的唯一留存 (非本 App 停用则不显示)
                 if let t = CredentialOrg.disableMarkText(mac, kind: "pwd", key: p.alias) {
                     Text(t)
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.accentText)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             } else if let f = e.fp,
                       let t = CredentialOrg.disableMarkText(mac, kind: "fp", key: f.batch) {
                 Text(t)
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.accentText)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -323,18 +323,18 @@ struct CredBinView: View {
                 Button(inWindow ? "一键恢复" : "恢复 (需重新下发)") {
                     restore(e)
                 }
-                .font(.caption.weight(.medium))
+                .vkFont(.caption, weight: .medium)
                 .foregroundStyle(inWindow ? DS.Palette.accentText : DS.Palette.textSub)
                 .buttonStyle(.bordered)
                 .disabled(!inWindow && e.pwd != nil)   // 指纹无锁端窗口概念, 始终可还原台账
                 Button("副本") {
                     app.showToast(CredentialOrg.restoreBin(mac, entry: e, asCopy: true))   // 499 界面文案
                 }
-                .font(.caption.weight(.medium))
+                .vkFont(.caption, weight: .medium)
                 .buttonStyle(.bordered)
                 Spacer(minLength: 0)
                 Button("彻底删除") { pendingPurge = e }
-                    .font(.caption.weight(.medium))
+                    .vkFont(.caption, weight: .medium)
                     .foregroundStyle(DS.Palette.danger)
                     .buttonStyle(.bordered)
             }
@@ -423,11 +423,11 @@ struct CredHistoryListView: View {
                     } label: {
                         HStack(spacing: DS.Space.s) {
                             Text(CredentialOrg.displayPwd(p))
-                                .font(.subheadline)
+                                .vkFont(.subheadline)
                                 .lineLimit(1)
                             Spacer(minLength: 0)
                             Text("\(CredentialOrg.history(mac, "pwd", p.alias).count) 版")
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                         }
                         .frame(minHeight: DS.Hit.min)
@@ -439,11 +439,11 @@ struct CredHistoryListView: View {
                     } label: {
                         HStack(spacing: DS.Space.s) {
                             Text("指纹「\(f.name)」")
-                                .font(.subheadline)
+                                .vkFont(.subheadline)
                                 .lineLimit(1)
                             Spacer(minLength: 0)
                             Text("\(CredentialOrg.history(mac, "fp", f.batch).count) 版")
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                         }
                         .frame(minHeight: DS.Hit.min)
@@ -453,7 +453,7 @@ struct CredHistoryListView: View {
                     // 487 还没有快照
                     // 491 还没有快照
                     Text("还没有快照。改动密码值 / 备注 / 归属 / 改期时会自动留档, 每凭证保留 \(CredentialOrg.quota(mac)) 版。")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -498,7 +498,7 @@ struct CredHistoryView: View {
                 // 2026-10-15 走查: 这一行把三枚规格编号印在屏上 (上一批已按"界面不写规格号"清过 51 处, 这几处是漏的)。
                 // 编号是台账的门牌, 用户读的是那三条规则本身 —— 编号收回行尾注释。
                 Text("自动还原点 (批量操作前) 置顶加标记; 星标版不受配额淘汰; 恢复不覆盖, 生成「恢复自 vX」新档。")   // 488/495/496 历史页三条规则
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
             }
         }
@@ -524,7 +524,7 @@ struct CredHistoryView: View {
                     StatusPill(text: "自动还原点", systemImage: "flag.fill", tone: .accent)
                 }
                 Text("v\(s.version) · \(s.note)")
-                    .font(.subheadline.weight(.medium))
+                    .vkFont(.subheadline, weight: .medium)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                 Spacer(minLength: 0)
@@ -544,12 +544,12 @@ struct CredHistoryView: View {
                 .accessibilityLabel(s.starred ? "取消星标版本" : "星标此版本")   // 495 星标此版本
             }
             Text(s.relTime)
-                .font(.caption2)
+                .vkFont(.caption2)
                 .foregroundStyle(DS.Palette.textSub)
             // 489 基线可见: 钉住基线时把"在跟谁比"写在行上, 不设就不写 (默认与上一版比)
             if let base = diffFrom, base != s.version {
                 Text("对比基线已钉在 v\(base)")
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
             }
             // 489 修订着色: 与上一版逐字段对齐, 删除红/新增绿/修改黄
@@ -557,11 +557,11 @@ struct CredHistoryView: View {
                 ForEach(CredentialOrg.diff(up, s).filter { $0.kind != "same" }) { d in
                     HStack(spacing: DS.Space.xs) {
                         Text(d.label)
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                             .lineLimit(1)
                         Text(diffText(d))
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(d.kind == "del" ? DS.Palette.danger : (d.kind == "add" ? DS.Palette.ok : DS.Palette.warn))
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
@@ -576,14 +576,14 @@ struct CredHistoryView: View {
                 Button(diffFrom == s.version ? "取消基线" : "看差异") {
                     diffFrom = (diffFrom == s.version) ? nil : s.version
                 }
-                .font(.caption.weight(.medium))
+                .vkFont(.caption, weight: .medium)
                 .buttonStyle(.bordered)
                 .accessibilityLabel(diffFrom == s.version ? "取消对比基线 v\(s.version), 改回与上一版比较"
                                                            : "以此版 v\(s.version) 为对比基线")
                 Button(preview == s.version ? "退出预览" : "回看此版") {   // 493 回看此版
                     preview = (preview == s.version) ? nil : s.version
                 }
-                .font(.caption.weight(.medium))
+                .vkFont(.caption, weight: .medium)
                 .buttonStyle(.bordered)
                 Spacer(minLength: 0)
                 Button("恢复到 v\(s.version)") {
@@ -594,7 +594,7 @@ struct CredHistoryView: View {
                     app.showToast("已恢复 v\(s.version), 生成新版本" + extra)   // 496 已恢复
                     reloadCenter()
                 }
-                .font(.caption.weight(.medium))
+                .vkFont(.caption, weight: .medium)
                 .foregroundStyle(DS.Palette.accentText)
                 .buttonStyle(.bordered)
             }
@@ -623,10 +623,10 @@ struct CredHistoryView: View {
         if let s {
             Section("只读预览 v\(v)") {   // 493 只读预览
                 Text(CredentialOrg.summaryText(of: s))
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .fixedSize(horizontal: false, vertical: true)
                 Text("顶栏「回到此版」= 按此版生成新档, 不覆盖历史。")   // 496 顶栏
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
             }
         }
@@ -653,23 +653,23 @@ struct CredCalendarView: View {
             VStack(alignment: .leading, spacing: DS.Space.m) {
                 HStack(spacing: DS.Space.s) {
                     Button("‹") { move(-1) }
-                        .font(.title3.weight(.semibold))
+                        .vkFont(.title3, weight: .semibold)
                         .frame(minHeight: DS.Hit.min)
                         .accessibilityLabel("上个月")
                     Spacer(minLength: 0)
                     Text("\(String(year)) 年 \(month) 月")
-                        .font(.headline)
+                        .vkFont(.headline)
                         .foregroundStyle(DS.Palette.text)
                     Spacer(minLength: 0)
                     Button("›") { move(1) }
-                        .font(.title3.weight(.semibold))
+                        .vkFont(.title3, weight: .semibold)
                         .frame(minHeight: DS.Hit.min)
                         .accessibilityLabel("下个月")
                 }
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: DS.Space.xs) {
                     ForEach(weekdayHeaders, id: \.self) { w in
                         Text(w)
-                            .font(.caption2)
+                            .vkFont(.caption2)
                             .foregroundStyle(DS.Palette.textSub)
                             .frame(maxWidth: .infinity)
                     }
@@ -689,12 +689,12 @@ struct CredCalendarView: View {
                             ForEach(items) { x in
                                 HStack(spacing: DS.Space.s) {
                                     Text(CredentialOrg.displayPwd(x))
-                                        .font(.subheadline)
+                                        .vkFont(.subheadline)
                                         .lineLimit(1)
                                         .minimumScaleFactor(0.8)
                                     Spacer(minLength: 0)
                                     Text(CredentialOrg.expiryLabel(x.to))
-                                        .font(.caption)
+                                        .vkFont(.caption)
                                         .foregroundStyle(DS.Palette.textSub)
                                         .lineLimit(1)
                                 }
@@ -734,15 +734,16 @@ struct CredCalendarView: View {
             VStack(alignment: .trailing, spacing: 2) {
                 if count > 0 {
                     Text("\(count)")
-                        .font(.caption2.weight(.semibold))
+                        .vkFont(.caption2, weight: .semibold)
                         // warn 是语义填充色, 走"填充上的前景"令牌 (浅档白字/深档墨字, 机检 E1)
                         .foregroundStyle(DS.Palette.onSem)
                         .padding(.horizontal, DS.Space.xs).padding(.vertical, DS.Space.xxs)
+                        // @layout-allow VK豁免 语义色填充: 实心语义角标，同上
                         .background(DS.Palette.warn, in: Capsule())
                         .lineLimit(1)
                 }
                 Text("\(day)")
-                    .font(.subheadline)
+                    .vkFont(.subheadline)
                     .foregroundStyle(isToday ? DS.Palette.accentText : DS.Palette.text)
                     .frame(minWidth: 14)
             }
@@ -799,7 +800,7 @@ struct CredOrganizeView: View {
                         } icon: {
                             Image(systemName: "checkmark.seal").accessibilityHidden(true)
                         }
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.ok)
                     }
                     ForEach(adv) { a in
@@ -818,7 +819,7 @@ struct CredOrganizeView: View {
                     // 358 回收站
                     // 471 回收站
                     Text("「回收站 N 条」直达回收站; 过期/重复值/无归属点按后带预勾选回凭证列表多选, 底部批量条停用或移交; 成员级建议直接执行。")
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -853,10 +854,10 @@ struct CredOrganizeView: View {
                 .frame(width: DS.Icon.xl, height: DS.Icon.xl)
             VStack(alignment: .leading, spacing: 2) {
                 Text(a.title)
-                    .font(.subheadline.weight(.medium))
+                    .vkFont(.subheadline, weight: .medium)
                     .foregroundStyle(DS.Palette.text)
                 Text(a.sub)
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
@@ -935,7 +936,7 @@ struct CredQueueView: View {
                     } icon: {
                         Image(systemName: "tray").accessibilityHidden(true)
                     }
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                 }
             }
@@ -946,7 +947,7 @@ struct CredQueueView: View {
                         HStack(spacing: DS.Space.s) {
                             StatusPill(text: stateText(item), systemImage: item.state == 2 ? "exclamationmark.triangle" : "arrow.down.circle", tone: tone(item))
                             Text(item.title)
-                                .font(.subheadline)
+                                .vkFont(.subheadline)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
                             Spacer(minLength: 0)
@@ -966,13 +967,13 @@ struct CredQueueView: View {
                             step("锁端确认", item.state == 1 ? 2 : 0)
                             Spacer(minLength: 0)
                             Button("重试") { retry(item) }
-                                .font(.caption.weight(.medium))
+                                .vkFont(.caption, weight: .medium)
                                 .buttonStyle(.bordered)
                                 .disabled(busy != nil)
                         }
                         if item.attempt > 0 {
                             Text("第 \(item.attempt) 次尝试 · \(itemTime(item.lastAt))")
-                                .font(.caption2)
+                                .vkFont(.caption2)
                                 .foregroundStyle(DS.Palette.textSub)
                         }
                     }
@@ -1003,7 +1004,7 @@ struct CredQueueView: View {
                     }
                 }
                 .disabled(retryAllRunning)
-                .font(.subheadline.weight(.medium))
+                .vkFont(.subheadline, weight: .medium)
                 .foregroundStyle(retryAllRunning ? DS.Palette.textSub : DS.Palette.accentText)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .frame(minHeight: DS.Hit.min)
@@ -1041,7 +1042,7 @@ struct CredQueueView: View {
                 .font(.system(size: 11))
                 .foregroundStyle(level == 0 ? DS.Palette.textSub : (level == 1 ? DS.Palette.warn : DS.Palette.ok))
             Text(label)
-                .font(.caption2)
+                .vkFont(.caption2)
                 .foregroundStyle(DS.Palette.textSub)
         }
         .accessibilityElement(children: .combine)
@@ -1107,7 +1108,7 @@ struct CredExtendView: View {
                     DatePicker("生效", selection: $from, displayedComponents: .date)
                     DatePicker("延期至", selection: $to, in: from..., displayedComponents: .date)
                     Text("将一次性改写所选密码的过期字段并列出变更清单; 锁端改期记为「待下发」。")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -1116,10 +1117,10 @@ struct CredExtendView: View {
                         if let p = DB.getPwd(mac, a) {
                             HStack(spacing: DS.Space.s) {
                                 Text("#\(a)")
-                                    .font(.subheadline)
+                                    .vkFont(.subheadline)
                                     .monospacedDigit()
                                 Text(CredentialOrg.expiryLabel(p.to, verb: false) + " → " + to.formatted(.dateTime.year().month().day()))
-                                    .font(.caption)
+                                    .vkFont(.caption)
                                     .foregroundStyle(DS.Palette.textSub)
                                     .lineLimit(1)
                                     .minimumScaleFactor(0.8)
@@ -1177,7 +1178,7 @@ struct CredTransferView: View {
                     }
                     .pickerStyle(.inline)
                     Text("批量改归属并各写一条本地记录; 锁端无归属字段, 移交只作用于本机台账。")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -1188,7 +1189,7 @@ struct CredTransferView: View {
                         _ = Milestones.recordOrganize()
                         onDone()
                     }
-                    .font(.subheadline.weight(.semibold))
+                    .vkFont(.subheadline, weight: .semibold)
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .frame(minHeight: DS.Hit.min)
@@ -1252,7 +1253,7 @@ struct CredDisableSheet: View {
                                     .fill(DS.Palette.accentText)
                                     .frame(width: 26, height: 26)
                                     .overlay(Text(String(m.name.prefix(1)))
-                                        .font(.caption2)
+                                        .vkFont(.caption2)
                                         // accentText 在深色模式是浅紫, 白首字母压上去几乎看不见
                                         .foregroundStyle(DS.Palette.onAccent)
                                         .lineLimit(1))
@@ -1260,23 +1261,23 @@ struct CredDisableSheet: View {
                             }
                         }
                         Text("影响 \(ownerIds.count) 位成员")
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                         Spacer(minLength: 0)
                     }
                     VStack(alignment: .leading, spacing: DS.Space.xs) {
                         Text("密码 \(pwdAliases.count) 条 · 指纹 \(fpBatches.count) 条")
-                            .font(.subheadline.weight(.semibold))
+                            .vkFont(.subheadline, weight: .semibold)
                         ForEach(pwdsLines, id: \.self) { line in
                             Text(line)
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
                         }
                         ForEach(fpLines, id: \.self) { line in
                             Text(line)
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
@@ -1285,7 +1286,7 @@ struct CredDisableSheet: View {
                 }
                 Section {
                     Text("不可逆说明: 停用后本机台账移除, 锁端删除记为「待下发」— 7 天内可一键恢复, 超期需重新录入/生成。")   // 364 不可逆说明
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.danger)
                         .fixedSize(horizontal: false, vertical: true)
                     // 313: 原因四选一, 没选就不许停用 (工单系统的"必填原因"口径)
@@ -1296,7 +1297,7 @@ struct CredDisableSheet: View {
                                 reason = r.0
                                 DS.Haptics.tick.impactOccurred()
                             }
-                            .font(.caption.weight(on ? .semibold : .regular))
+                            .vkFont(.caption.weight(on ? .semibold : .regular))
                             .padding(.horizontal, DS.Space.s).padding(.vertical, DS.Space.s)
                             .foregroundStyle(on ? DS.Palette.onAccent : DS.Palette.textSub)
                             .background(on ? AnyShapeStyle(DS.Palette.accent) : AnyShapeStyle(DS.Palette.surfaceAlt), in: Capsule())
@@ -1312,15 +1313,15 @@ struct CredDisableSheet: View {
                     .accessibilityLabel("停用原因\(reason.isEmpty ? ", 未选择" : "")")   // 313 停用原因
                     if reason.isEmpty {
                         Text("先选一个停用原因才能继续 — 原因只写进本机审计与运行日志，不会发给门锁。")
-                            .font(.caption2).foregroundStyle(DS.Palette.warn)
+                            .vkFont(.caption2).foregroundStyle(DS.Palette.warn)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     // 367: 原句就是「勾选写入该成员动态」。勾上之后按归属各写一条 (每人只看到自己名下的条数),
                     // 不勾则维持改动前那一条汇总流水 —— 两种形态各写各的, 绝不双写:
                     // 同一件事在敏感流水里出现两行, 388 那个视图就会把一次停用数成两次。
                     if !ownerIds.isEmpty {
-                        Toggle(feedToggleLabel, isOn: $writeToFeed)
-                            .font(.footnote)
+                        VariantToggle(feedToggleLabel, isOn: $writeToFeed)
+                            .vkFont(.footnote)
                     }
                     // 353 二次点确认: 摘要页(一次) + 破坏性按钮(二次)
                     Button {

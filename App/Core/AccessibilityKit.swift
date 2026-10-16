@@ -394,7 +394,7 @@ private struct GlassModifier: ViewModifier {
                 content.background(DS.Palette.surface, in: Circle())
                     .overlay(Circle().strokeBorder(DS.Palette.hairlineStrong, lineWidth: 0.5))
             case .capsule:
-                content.background(DS.Palette.surface, in: Capsule())
+                content.variantPlate(DS.Palette.surface, .capsule)
                     .overlay(Capsule().strokeBorder(DS.Palette.hairlineStrong, lineWidth: 0.5))
             }
         } else {

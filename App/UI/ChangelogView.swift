@@ -434,36 +434,36 @@ struct ChangelogView: View {
                 // Markdown 不解析, 屏上会原样出现 `**已经做出来**`。改走 mdText (见 DesignSystem.swift)。
                 mdText("这里只列**已经做出来**的改动：每一条都带一个功能编号，"
                        + "构建时会检查它在代码里有没有实现证据，对不上就构建失败。")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             } footer: {
                 Text("它也承认边界：这条检查只证明「代码里有实现证据」，不证明「界面长得对」——"
                      + "后者仍需在真机上核对 (docs/VERIFY-CHECKLIST.md)。")
-                    .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                    .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
             ForEach(Changelog.entries) { e in
                 VStack(alignment: .leading, spacing: DS.Space.xs) {
                     HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {
                         Text(e.title)
-                            .font(.subheadline.weight(.semibold))
+                            .vkFont(.subheadline, weight: .semibold)
                             .foregroundStyle(DS.Palette.text)
                         Spacer(minLength: DS.Space.s)
                         // 585/943 那类条目把编号显示出来，用户才可能自己去台账里查这一行
                         Text("#" + String(e.id))
-                            .font(.caption2.monospacedDigit())
+                            .vkFont(.caption2.monospacedDigit())
                             .foregroundStyle(DS.Palette.accentText)
                     }
                     // 2026-10-14 走查: `detail` 是 String 变量 ⇒ Text 不解析 Markdown,
                     // 条目里那几处 `**…**` 会原样显示两颗星。改走 mdText。
                     mdText(e.detail)
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                     // 44 更新说明动作页: 同一批条目按"批次"给一条可点的动作出口 (看这批改动的落点页)
                     NavigationLink(e.batch) { ChangeBatchView(batch: e.batch) }
-                        .font(.caption)
+                        .vkFont(.caption)
                 }
                 .padding(.vertical, DS.Space.xxs)
             }
@@ -492,12 +492,12 @@ struct ChangeBatchView: View {
             Section("\(batch)落了这些") {
                 ForEach(items) { e in
                     VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                        Text(e.title).font(.subheadline.weight(.medium))
-                        mdText(e.detail).font(.footnote).foregroundStyle(DS.Palette.textSub)
+                        Text(e.title).vkFont(.subheadline, weight: .medium)
+                        mdText(e.detail).vkFont(.footnote).foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                         Text("功能编号 #" + String(e.id) + " — 可在 docs/IDEA-BANK.md 查到原句，"
                              + "在覆盖表里查到实现证据。")
-                            .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                            .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                         // 44 动作出口: 条目原文里第一个提到的页面名 = 落点, 点按钮真的走到那个 Tab
                         // (先 pop 回设置列表再切)。一个页面名都没提的条目不摆按钮 —— 指错路比没路更糟。
                         if let goto = Self.landingTab(e) {
@@ -505,7 +505,7 @@ struct ChangeBatchView: View {
                                 dismiss()
                                 app.requestTab(goto.1)
                             }
-                            .font(.caption.weight(.medium))
+                            .vkFont(.caption, weight: .medium)
                             .foregroundStyle(DS.Palette.accentText)
                             .buttonStyle(.plain)
                             .frame(minHeight: DS.Hit.min, alignment: .leading)

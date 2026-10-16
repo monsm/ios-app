@@ -1,17 +1,44 @@
 [
  {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 392,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "SE/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 903,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "SE/0.8/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 904,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "SE/0.8/标准"
+ },
+ {
   "rule": "R0 文法盲区·无呈现面",
   "file": "D:\\aapk\\ios-app\\App\\Services\\LockService.swift",
-  "line": "381",
+  "line": "388",
   "sev": "lo",
   "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
-  "calc": "ERROR@381",
+  "calc": "ERROR@388",
   "cond": "SE/0.8/标准"
  },
  {
   "rule": "R5 触达已定性",
   "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
-  "line": 317,
+  "line": 343,
   "msg": "Stepper 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
   "calc": "行高+padding 反推",
   "sev": "lo",
@@ -20,7 +47,7 @@
  {
   "rule": "R5 触达已定性",
   "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
-  "line": 418,
+  "line": 447,
   "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
   "calc": "行高+padding 反推",
   "sev": "lo",
@@ -29,7 +56,7 @@
  {
   "rule": "R5 触达已定性",
   "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
-  "line": 193,
+  "line": 194,
   "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
   "calc": "行高+padding 反推",
   "sev": "lo",
@@ -38,7 +65,7 @@
  {
   "rule": "R5 触达已定性",
   "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
-  "line": 242,
+  "line": 245,
   "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
   "calc": "行高+padding 反推",
   "sev": "lo",
@@ -47,7 +74,7 @@
  {
   "rule": "R5 触达已定性",
   "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
-  "line": 937,
+  "line": 954,
   "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
   "calc": "行高+padding 反推",
   "sev": "lo",
@@ -56,16 +83,16 @@
  {
   "rule": "R0 文法盲区·无呈现面",
   "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
-  "line": "2694,2695,2735",
+  "line": "2708,2709,2749",
   "sev": "lo",
   "msg": "3 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
-  "calc": "ERROR@2694 ERROR@2695 ERROR@2735",
+  "calc": "ERROR@2708 ERROR@2709 ERROR@2749",
   "cond": "SE/0.8/标准"
  },
  {
   "rule": "R5 触达已定性",
   "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
-  "line": 3070,
+  "line": 3084,
   "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
   "calc": "行高+padding 反推",
   "sev": "lo",
@@ -74,7 +101,7 @@
  {
   "rule": "R5 触达已定性",
   "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
-  "line": 3079,
+  "line": 3093,
   "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
   "calc": "行高+padding 反推",
   "sev": "lo",
@@ -83,25 +110,34 @@
  {
   "rule": "R5 触达已定性",
   "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
-  "line": 3086,
+  "line": 3100,
   "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
   "calc": "行高+padding 反推",
   "sev": "lo",
+  "cond": "SE/0.8/标准"
+ },
+ {
+  "rule": "R5 触达不足(推算)",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialsView.swift",
+  "line": 2165,
+  "msg": "Button 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "md",
   "cond": "SE/0.8/标准"
  },
  {
   "rule": "R0 文法盲区·无呈现面",
   "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
-  "line": "282",
+  "line": "287",
   "sev": "lo",
   "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
-  "calc": "ERROR@282",
+  "calc": "ERROR@287",
   "cond": "SE/0.8/标准"
  },
  {
   "rule": "R5 触达已定性",
   "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
-  "line": 1671,
+  "line": 1679,
   "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
   "calc": "行高+padding 反推",
   "sev": "lo",
@@ -110,16 +146,16 @@
  {
   "rule": "R0 文法盲区·无呈现面",
   "file": "D:\\aapk\\ios-app\\App\\UI\\DiagnosticsView.swift",
-  "line": "116,118",
+  "line": "121,123",
   "sev": "lo",
   "msg": "2 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
-  "calc": "ERROR@116 ERROR@118",
+  "calc": "ERROR@121 ERROR@123",
   "cond": "SE/0.8/标准"
  },
  {
   "rule": "R5 触达已定性",
   "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
-  "line": 2234,
+  "line": 2274,
   "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
   "calc": "行高+padding 反推",
   "sev": "lo",
@@ -137,10 +173,10 @@
  {
   "rule": "R0 文法盲区·无呈现面",
   "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
-  "line": "2614,2618,2619,2620,2647,2651",
+  "line": "2647,2651,2652,2653,2680,2684",
   "sev": "lo",
   "msg": "6 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
-  "calc": "ERROR@2614 ERROR@2618 ERROR@2619 ERROR@2620 ERROR@2647 ERROR@2651",
+  "calc": "ERROR@2647 ERROR@2651 ERROR@2652 ERROR@2653 ERROR@2680 ERROR@2684",
   "cond": "SE/0.8/标准"
  },
  {
@@ -164,7 +200,7 @@
  {
   "rule": "R5 触达已定性",
   "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
-  "line": 214,
+  "line": 220,
   "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
   "calc": "行高+padding 反推",
   "sev": "lo",
@@ -178,5 +214,7115 @@
   "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
   "calc": "理由写在标记上方注释里, 不计入混用",
   "cond": "SE/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 205,
+  "msg": "Button.padding(18pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "18",
+  "sev": "md",
+  "cond": "SE/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 354,
+  "msg": "VStack.padding(22pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "22",
+  "sev": "md",
+  "cond": "SE/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 364,
+  "msg": "HStack(spacing: 11pt) 不在令牌档",
+  "calc": "11",
+  "sev": "md",
+  "cond": "SE/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 365,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "SE/0.8/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 397,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "SE/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 406,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "SE/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 461,
+  "msg": "VStack(spacing: 5pt) 不在令牌档",
+  "calc": "5",
+  "sev": "md",
+  "cond": "SE/0.8/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 480,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "SE/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 513,
+  "msg": "HStack.padding(11pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "11",
+  "sev": "md",
+  "cond": "SE/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 519,
+  "msg": "VStack(spacing: 9pt) 不在令牌档",
+  "calc": "9",
+  "sev": "md",
+  "cond": "SE/0.8/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 623,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "SE/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 654,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "SE/0.8/标准"
+ },
+ {
+  "rule": "R5 触达不足",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 709,
+  "msg": "Button 命中框高 40pt < 44pt",
+  "calc": "frame(height/minHeight)",
+  "sev": "hi",
+  "cond": "SE/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 732,
+  "msg": "HStack.padding(14pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "14",
+  "sev": "md",
+  "cond": "SE/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 710,
+  "msg": "HStack(spacing: 14pt) 不在令牌档",
+  "calc": "14",
+  "sev": "md",
+  "cond": "SE/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 861,
+  "msg": "HStack.padding(6pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "6",
+  "sev": "md",
+  "cond": "SE/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 852,
+  "msg": "VStack.padding(9pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "9",
+  "sev": "md",
+  "cond": "SE/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 845,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "SE/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 870,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "SE/0.8/标准"
+ },
+ {
+  "rule": "R6 材质混用",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "面板级实底 1 处 / 玻璃 0 处 / 盘中 plate 0 处 ⇒ 这一页还没有面板玻璃",
+  "calc": "glass 占比 0% (盘子不计入分母)",
+  "cond": "SE/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 392,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 903,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 904,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\Services\\LockService.swift",
+  "line": "388",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@388",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 343,
+  "msg": "Stepper 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 447,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 194,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 245,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 954,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": "2708,2709,2749",
+  "sev": "lo",
+  "msg": "3 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2708 ERROR@2709 ERROR@2749",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3084,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3093,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3100,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R5 触达不足(推算)",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialsView.swift",
+  "line": 2165,
+  "msg": "Button 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "md",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": "287",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@287",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": 1679,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DiagnosticsView.swift",
+  "line": "121,123",
+  "sev": "lo",
+  "msg": "2 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@121 ERROR@123",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": 2274,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "2647,2651,2652,2653,2680,2684",
+  "sev": "lo",
+  "msg": "6 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2647 ERROR@2651 ERROR@2652 ERROR@2653 ERROR@2680 ERROR@2684",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\Sheets.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": 220,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 205,
+  "msg": "Button.padding(18pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "18",
+  "sev": "md",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 354,
+  "msg": "VStack.padding(22pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "22",
+  "sev": "md",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 364,
+  "msg": "HStack(spacing: 11pt) 不在令牌档",
+  "calc": "11",
+  "sev": "md",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 365,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 397,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 406,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 461,
+  "msg": "VStack(spacing: 5pt) 不在令牌档",
+  "calc": "5",
+  "sev": "md",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 480,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 513,
+  "msg": "HStack.padding(11pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "11",
+  "sev": "md",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 519,
+  "msg": "VStack(spacing: 9pt) 不在令牌档",
+  "calc": "9",
+  "sev": "md",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 623,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 654,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R5 触达不足",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 709,
+  "msg": "Button 命中框高 40pt < 44pt",
+  "calc": "frame(height/minHeight)",
+  "sev": "hi",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 732,
+  "msg": "HStack.padding(14pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "14",
+  "sev": "md",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 710,
+  "msg": "HStack(spacing: 14pt) 不在令牌档",
+  "calc": "14",
+  "sev": "md",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 861,
+  "msg": "HStack.padding(6pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "6",
+  "sev": "md",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 852,
+  "msg": "VStack.padding(9pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "9",
+  "sev": "md",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 845,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 870,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R6 材质混用",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "面板级实底 1 处 / 玻璃 0 处 / 盘中 plate 0 处 ⇒ 这一页还没有面板玻璃",
+  "calc": "glass 占比 0% (盘子不计入分母)",
+  "cond": "SE/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 392,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 903,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 904,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\Services\\LockService.swift",
+  "line": "388",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@388",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 343,
+  "msg": "Stepper 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 447,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R2 高度写死装不下",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AchievementsView.swift",
+  "line": 536,
+  "msg": "「〇」需 1 行 ≈ 36pt，但祖先 frame(height: 30) 写死 30pt ⇒ 溢出/裁切",
+  "calc": "可分配宽 343 行高 36.0",
+  "sev": "hi",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 194,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 245,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 954,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": "2708,2709,2749",
+  "sev": "lo",
+  "msg": "3 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2708 ERROR@2709 ERROR@2749",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3084,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3093,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3100,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R2 单行放不下",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3292,
+  "msg": "「添加 · 改造 · 口述卡 · OTP 独立」估宽 480pt > 可分配 343pt (字号 29.8pt, lineLimit(1))",
+  "calc": "CJK=1em 拉丁=0.56em 数字=0.5em",
+  "sev": "hi",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R2 单行放不下",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialsView.swift",
+  "line": 194,
+  "msg": "「借用 〇 · 借给 〇 (还 〇)」估宽 333pt > 可分配 295pt (字号 29.8pt, lineLimit(1))",
+  "calc": "CJK=1em 拉丁=0.56em 数字=0.5em",
+  "sev": "hi",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R5 触达不足(推算)",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialsView.swift",
+  "line": 2165,
+  "msg": "Button 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "md",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": "287",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@287",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": 1679,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DiagnosticsView.swift",
+  "line": "121,123",
+  "sev": "lo",
+  "msg": "2 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@121 ERROR@123",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": 2274,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "2647,2651,2652,2653,2680,2684",
+  "sev": "lo",
+  "msg": "6 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2647 ERROR@2651 ERROR@2652 ERROR@2653 ERROR@2680 ERROR@2684",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\Sheets.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": 220,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R2 单行放不下",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": 1847,
+  "msg": "「周末柱为青绿, 呈现作息节律」估宽 380pt > 可分配 343pt (字号 29.8pt, lineLimit(1))",
+  "calc": "CJK=1em 拉丁=0.56em 数字=0.5em",
+  "sev": "hi",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R2 单行放不下",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": 2120,
+  "msg": "「最早 〇 · 中位 〇 · 最晚 〇 时」估宽 394pt > 可分配 343pt (字号 29.8pt, lineLimit(1))",
+  "calc": "CJK=1em 拉丁=0.56em 数字=0.5em",
+  "sev": "hi",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 205,
+  "msg": "Button.padding(18pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "18",
+  "sev": "md",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 354,
+  "msg": "VStack.padding(22pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "22",
+  "sev": "md",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 364,
+  "msg": "HStack(spacing: 11pt) 不在令牌档",
+  "calc": "11",
+  "sev": "md",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 365,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 397,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 406,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 461,
+  "msg": "VStack(spacing: 5pt) 不在令牌档",
+  "calc": "5",
+  "sev": "md",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 480,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 513,
+  "msg": "HStack.padding(11pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "11",
+  "sev": "md",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 519,
+  "msg": "VStack(spacing: 9pt) 不在令牌档",
+  "calc": "9",
+  "sev": "md",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 623,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 654,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R5 触达不足",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 709,
+  "msg": "Button 命中框高 40pt < 44pt",
+  "calc": "frame(height/minHeight)",
+  "sev": "hi",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 732,
+  "msg": "HStack.padding(14pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "14",
+  "sev": "md",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 710,
+  "msg": "HStack(spacing: 14pt) 不在令牌档",
+  "calc": "14",
+  "sev": "md",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 861,
+  "msg": "HStack.padding(6pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "6",
+  "sev": "md",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 852,
+  "msg": "VStack.padding(9pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "9",
+  "sev": "md",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 845,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 870,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R6 材质混用",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "面板级实底 1 处 / 玻璃 0 处 / 盘中 plate 0 处 ⇒ 这一页还没有面板玻璃",
+  "calc": "glass 占比 0% (盘子不计入分母)",
+  "cond": "SE/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 392,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 903,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 904,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\Services\\LockService.swift",
+  "line": "388",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@388",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 343,
+  "msg": "Stepper 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 447,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 194,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 245,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 954,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": "2708,2709,2749",
+  "sev": "lo",
+  "msg": "3 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2708 ERROR@2709 ERROR@2749",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3084,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3093,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3100,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R5 触达不足(推算)",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialsView.swift",
+  "line": 2165,
+  "msg": "Button 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "md",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": "287",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@287",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": 1679,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DiagnosticsView.swift",
+  "line": "121,123",
+  "sev": "lo",
+  "msg": "2 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@121 ERROR@123",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": 2274,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "2647,2651,2652,2653,2680,2684",
+  "sev": "lo",
+  "msg": "6 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2647 ERROR@2651 ERROR@2652 ERROR@2653 ERROR@2680 ERROR@2684",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\Sheets.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": 220,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 205,
+  "msg": "Button.padding(18pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "18",
+  "sev": "md",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 354,
+  "msg": "VStack.padding(22pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "22",
+  "sev": "md",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 364,
+  "msg": "HStack(spacing: 11pt) 不在令牌档",
+  "calc": "11",
+  "sev": "md",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 365,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 397,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 406,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 461,
+  "msg": "VStack(spacing: 5pt) 不在令牌档",
+  "calc": "5",
+  "sev": "md",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 480,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 513,
+  "msg": "HStack.padding(11pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "11",
+  "sev": "md",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 519,
+  "msg": "VStack(spacing: 9pt) 不在令牌档",
+  "calc": "9",
+  "sev": "md",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 623,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 654,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R5 触达不足",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 709,
+  "msg": "Button 命中框高 40pt < 44pt",
+  "calc": "frame(height/minHeight)",
+  "sev": "hi",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 732,
+  "msg": "HStack.padding(14pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "14",
+  "sev": "md",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 710,
+  "msg": "HStack(spacing: 14pt) 不在令牌档",
+  "calc": "14",
+  "sev": "md",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 861,
+  "msg": "HStack.padding(6pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "6",
+  "sev": "md",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 852,
+  "msg": "VStack.padding(9pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "9",
+  "sev": "md",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 845,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 870,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R6 材质混用",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "面板级实底 1 处 / 玻璃 0 处 / 盘中 plate 0 处 ⇒ 这一页还没有面板玻璃",
+  "calc": "glass 占比 0% (盘子不计入分母)",
+  "cond": "标准/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 392,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 903,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 904,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\Services\\LockService.swift",
+  "line": "388",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@388",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 343,
+  "msg": "Stepper 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 447,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 194,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 245,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 954,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": "2708,2709,2749",
+  "sev": "lo",
+  "msg": "3 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2708 ERROR@2709 ERROR@2749",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3084,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3093,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3100,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R5 触达不足(推算)",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialsView.swift",
+  "line": 2165,
+  "msg": "Button 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "md",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": "287",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@287",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": 1679,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DiagnosticsView.swift",
+  "line": "121,123",
+  "sev": "lo",
+  "msg": "2 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@121 ERROR@123",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": 2274,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "2647,2651,2652,2653,2680,2684",
+  "sev": "lo",
+  "msg": "6 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2647 ERROR@2651 ERROR@2652 ERROR@2653 ERROR@2680 ERROR@2684",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\Sheets.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": 220,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 205,
+  "msg": "Button.padding(18pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "18",
+  "sev": "md",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 354,
+  "msg": "VStack.padding(22pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "22",
+  "sev": "md",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 364,
+  "msg": "HStack(spacing: 11pt) 不在令牌档",
+  "calc": "11",
+  "sev": "md",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 365,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 397,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 406,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 461,
+  "msg": "VStack(spacing: 5pt) 不在令牌档",
+  "calc": "5",
+  "sev": "md",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 480,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 513,
+  "msg": "HStack.padding(11pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "11",
+  "sev": "md",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 519,
+  "msg": "VStack(spacing: 9pt) 不在令牌档",
+  "calc": "9",
+  "sev": "md",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 623,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 654,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R5 触达不足",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 709,
+  "msg": "Button 命中框高 40pt < 44pt",
+  "calc": "frame(height/minHeight)",
+  "sev": "hi",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 732,
+  "msg": "HStack.padding(14pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "14",
+  "sev": "md",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 710,
+  "msg": "HStack(spacing: 14pt) 不在令牌档",
+  "calc": "14",
+  "sev": "md",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 861,
+  "msg": "HStack.padding(6pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "6",
+  "sev": "md",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 852,
+  "msg": "VStack.padding(9pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "9",
+  "sev": "md",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 845,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 870,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R6 材质混用",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "面板级实底 1 处 / 玻璃 0 处 / 盘中 plate 0 处 ⇒ 这一页还没有面板玻璃",
+  "calc": "glass 占比 0% (盘子不计入分母)",
+  "cond": "标准/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 392,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 903,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 904,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\Services\\LockService.swift",
+  "line": "388",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@388",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 343,
+  "msg": "Stepper 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 447,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R2 高度写死装不下",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AchievementsView.swift",
+  "line": 536,
+  "msg": "「〇」需 1 行 ≈ 36pt，但祖先 frame(height: 30) 写死 30pt ⇒ 溢出/裁切",
+  "calc": "可分配宽 358 行高 36.0",
+  "sev": "hi",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 194,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 245,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 954,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": "2708,2709,2749",
+  "sev": "lo",
+  "msg": "3 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2708 ERROR@2709 ERROR@2749",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3084,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3093,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3100,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R2 单行放不下",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3292,
+  "msg": "「添加 · 改造 · 口述卡 · OTP 独立」估宽 480pt > 可分配 358pt (字号 29.8pt, lineLimit(1))",
+  "calc": "CJK=1em 拉丁=0.56em 数字=0.5em",
+  "sev": "hi",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R5 触达不足(推算)",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialsView.swift",
+  "line": 2165,
+  "msg": "Button 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "md",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": "287",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@287",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": 1679,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DiagnosticsView.swift",
+  "line": "121,123",
+  "sev": "lo",
+  "msg": "2 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@121 ERROR@123",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": 2274,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "2647,2651,2652,2653,2680,2684",
+  "sev": "lo",
+  "msg": "6 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2647 ERROR@2651 ERROR@2652 ERROR@2653 ERROR@2680 ERROR@2684",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\Sheets.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": 220,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R2 单行放不下",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": 2120,
+  "msg": "「最早 〇 · 中位 〇 · 最晚 〇 时」估宽 394pt > 可分配 358pt (字号 29.8pt, lineLimit(1))",
+  "calc": "CJK=1em 拉丁=0.56em 数字=0.5em",
+  "sev": "hi",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 205,
+  "msg": "Button.padding(18pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "18",
+  "sev": "md",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 354,
+  "msg": "VStack.padding(22pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "22",
+  "sev": "md",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 364,
+  "msg": "HStack(spacing: 11pt) 不在令牌档",
+  "calc": "11",
+  "sev": "md",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 365,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 397,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 406,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 461,
+  "msg": "VStack(spacing: 5pt) 不在令牌档",
+  "calc": "5",
+  "sev": "md",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 480,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 513,
+  "msg": "HStack.padding(11pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "11",
+  "sev": "md",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 519,
+  "msg": "VStack(spacing: 9pt) 不在令牌档",
+  "calc": "9",
+  "sev": "md",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 623,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 654,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R5 触达不足",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 709,
+  "msg": "Button 命中框高 40pt < 44pt",
+  "calc": "frame(height/minHeight)",
+  "sev": "hi",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 732,
+  "msg": "HStack.padding(14pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "14",
+  "sev": "md",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 710,
+  "msg": "HStack(spacing: 14pt) 不在令牌档",
+  "calc": "14",
+  "sev": "md",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 861,
+  "msg": "HStack.padding(6pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "6",
+  "sev": "md",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 852,
+  "msg": "VStack.padding(9pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "9",
+  "sev": "md",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 845,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 870,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R6 材质混用",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "面板级实底 1 处 / 玻璃 0 处 / 盘中 plate 0 处 ⇒ 这一页还没有面板玻璃",
+  "calc": "glass 占比 0% (盘子不计入分母)",
+  "cond": "标准/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 392,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 903,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 904,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\Services\\LockService.swift",
+  "line": "388",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@388",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 343,
+  "msg": "Stepper 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 447,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 194,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 245,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 954,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": "2708,2709,2749",
+  "sev": "lo",
+  "msg": "3 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2708 ERROR@2709 ERROR@2749",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3084,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3093,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3100,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R5 触达不足(推算)",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialsView.swift",
+  "line": 2165,
+  "msg": "Button 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "md",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": "287",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@287",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": 1679,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DiagnosticsView.swift",
+  "line": "121,123",
+  "sev": "lo",
+  "msg": "2 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@121 ERROR@123",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": 2274,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "2647,2651,2652,2653,2680,2684",
+  "sev": "lo",
+  "msg": "6 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2647 ERROR@2651 ERROR@2652 ERROR@2653 ERROR@2680 ERROR@2684",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\Sheets.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": 220,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 205,
+  "msg": "Button.padding(18pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "18",
+  "sev": "md",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 354,
+  "msg": "VStack.padding(22pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "22",
+  "sev": "md",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 364,
+  "msg": "HStack(spacing: 11pt) 不在令牌档",
+  "calc": "11",
+  "sev": "md",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 365,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 397,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 406,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 461,
+  "msg": "VStack(spacing: 5pt) 不在令牌档",
+  "calc": "5",
+  "sev": "md",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 480,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 513,
+  "msg": "HStack.padding(11pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "11",
+  "sev": "md",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 519,
+  "msg": "VStack(spacing: 9pt) 不在令牌档",
+  "calc": "9",
+  "sev": "md",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 623,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 654,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R5 触达不足",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 709,
+  "msg": "Button 命中框高 40pt < 44pt",
+  "calc": "frame(height/minHeight)",
+  "sev": "hi",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 732,
+  "msg": "HStack.padding(14pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "14",
+  "sev": "md",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 710,
+  "msg": "HStack(spacing: 14pt) 不在令牌档",
+  "calc": "14",
+  "sev": "md",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 861,
+  "msg": "HStack.padding(6pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "6",
+  "sev": "md",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 852,
+  "msg": "VStack.padding(9pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "9",
+  "sev": "md",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 845,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 870,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R6 材质混用",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "面板级实底 1 处 / 玻璃 0 处 / 盘中 plate 0 处 ⇒ 这一页还没有面板玻璃",
+  "calc": "glass 占比 0% (盘子不计入分母)",
+  "cond": "Max/0.8/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 392,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 903,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 904,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\Services\\LockService.swift",
+  "line": "388",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@388",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 343,
+  "msg": "Stepper 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 447,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 194,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 245,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 954,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": "2708,2709,2749",
+  "sev": "lo",
+  "msg": "3 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2708 ERROR@2709 ERROR@2749",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3084,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3093,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3100,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R5 触达不足(推算)",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialsView.swift",
+  "line": 2165,
+  "msg": "Button 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "md",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": "287",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@287",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": 1679,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DiagnosticsView.swift",
+  "line": "121,123",
+  "sev": "lo",
+  "msg": "2 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@121 ERROR@123",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": 2274,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "2647,2651,2652,2653,2680,2684",
+  "sev": "lo",
+  "msg": "6 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2647 ERROR@2651 ERROR@2652 ERROR@2653 ERROR@2680 ERROR@2684",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\Sheets.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": 220,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 205,
+  "msg": "Button.padding(18pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "18",
+  "sev": "md",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 354,
+  "msg": "VStack.padding(22pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "22",
+  "sev": "md",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 364,
+  "msg": "HStack(spacing: 11pt) 不在令牌档",
+  "calc": "11",
+  "sev": "md",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 365,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 397,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 406,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 461,
+  "msg": "VStack(spacing: 5pt) 不在令牌档",
+  "calc": "5",
+  "sev": "md",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 480,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 513,
+  "msg": "HStack.padding(11pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "11",
+  "sev": "md",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 519,
+  "msg": "VStack(spacing: 9pt) 不在令牌档",
+  "calc": "9",
+  "sev": "md",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 623,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 654,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R5 触达不足",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 709,
+  "msg": "Button 命中框高 40pt < 44pt",
+  "calc": "frame(height/minHeight)",
+  "sev": "hi",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 732,
+  "msg": "HStack.padding(14pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "14",
+  "sev": "md",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 710,
+  "msg": "HStack(spacing: 14pt) 不在令牌档",
+  "calc": "14",
+  "sev": "md",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 861,
+  "msg": "HStack.padding(6pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "6",
+  "sev": "md",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 852,
+  "msg": "VStack.padding(9pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "9",
+  "sev": "md",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 845,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 870,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R6 材质混用",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "面板级实底 1 处 / 玻璃 0 处 / 盘中 plate 0 处 ⇒ 这一页还没有面板玻璃",
+  "calc": "glass 占比 0% (盘子不计入分母)",
+  "cond": "Max/1/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 392,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 903,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 904,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\Services\\LockService.swift",
+  "line": "388",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@388",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 343,
+  "msg": "Stepper 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 447,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R2 高度写死装不下",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AchievementsView.swift",
+  "line": 536,
+  "msg": "「〇」需 1 行 ≈ 36pt，但祖先 frame(height: 30) 写死 30pt ⇒ 溢出/裁切",
+  "calc": "可分配宽 398 行高 36.0",
+  "sev": "hi",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 194,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 245,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 954,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": "2708,2709,2749",
+  "sev": "lo",
+  "msg": "3 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2708 ERROR@2709 ERROR@2749",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3084,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3093,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3100,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R2 单行放不下",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3292,
+  "msg": "「添加 · 改造 · 口述卡 · OTP 独立」估宽 480pt > 可分配 398pt (字号 29.8pt, lineLimit(1))",
+  "calc": "CJK=1em 拉丁=0.56em 数字=0.5em",
+  "sev": "hi",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R5 触达不足(推算)",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialsView.swift",
+  "line": 2165,
+  "msg": "Button 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "md",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": "287",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@287",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": 1679,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DiagnosticsView.swift",
+  "line": "121,123",
+  "sev": "lo",
+  "msg": "2 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@121 ERROR@123",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": 2274,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "2647,2651,2652,2653,2680,2684",
+  "sev": "lo",
+  "msg": "6 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2647 ERROR@2651 ERROR@2652 ERROR@2653 ERROR@2680 ERROR@2684",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\Sheets.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": 220,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 205,
+  "msg": "Button.padding(18pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "18",
+  "sev": "md",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 354,
+  "msg": "VStack.padding(22pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "22",
+  "sev": "md",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 364,
+  "msg": "HStack(spacing: 11pt) 不在令牌档",
+  "calc": "11",
+  "sev": "md",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 365,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 397,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 406,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 461,
+  "msg": "VStack(spacing: 5pt) 不在令牌档",
+  "calc": "5",
+  "sev": "md",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 480,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 513,
+  "msg": "HStack.padding(11pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "11",
+  "sev": "md",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 519,
+  "msg": "VStack(spacing: 9pt) 不在令牌档",
+  "calc": "9",
+  "sev": "md",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 623,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 654,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R5 触达不足",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 709,
+  "msg": "Button 命中框高 40pt < 44pt",
+  "calc": "frame(height/minHeight)",
+  "sev": "hi",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 732,
+  "msg": "HStack.padding(14pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "14",
+  "sev": "md",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 710,
+  "msg": "HStack(spacing: 14pt) 不在令牌档",
+  "calc": "14",
+  "sev": "md",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 861,
+  "msg": "HStack.padding(6pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "6",
+  "sev": "md",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 852,
+  "msg": "VStack.padding(9pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "9",
+  "sev": "md",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 845,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 870,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R6 材质混用",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "面板级实底 1 处 / 玻璃 0 处 / 盘中 plate 0 处 ⇒ 这一页还没有面板玻璃",
+  "calc": "glass 占比 0% (盘子不计入分母)",
+  "cond": "Max/1.75/标准"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 392,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 903,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 904,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\Services\\LockService.swift",
+  "line": "388",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@388",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 343,
+  "msg": "Stepper 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 447,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 194,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 245,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 954,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": "2708,2709,2749",
+  "sev": "lo",
+  "msg": "3 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2708 ERROR@2709 ERROR@2749",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3084,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3093,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3100,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达不足(推算)",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialsView.swift",
+  "line": 2165,
+  "msg": "Button 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "md",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": "287",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@287",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": 1679,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DiagnosticsView.swift",
+  "line": "121,123",
+  "sev": "lo",
+  "msg": "2 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@121 ERROR@123",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": 2274,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "2647,2651,2652,2653,2680,2684",
+  "sev": "lo",
+  "msg": "6 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2647 ERROR@2651 ERROR@2652 ERROR@2653 ERROR@2680 ERROR@2684",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\Sheets.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": 220,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 205,
+  "msg": "Button.padding(18pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "18",
+  "sev": "md",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 354,
+  "msg": "VStack.padding(22pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "22",
+  "sev": "md",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 364,
+  "msg": "HStack(spacing: 11pt) 不在令牌档",
+  "calc": "11",
+  "sev": "md",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 365,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 397,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 406,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 461,
+  "msg": "VStack(spacing: 5pt) 不在令牌档",
+  "calc": "5",
+  "sev": "md",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 480,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 513,
+  "msg": "HStack.padding(11pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "11",
+  "sev": "md",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 519,
+  "msg": "VStack(spacing: 9pt) 不在令牌档",
+  "calc": "9",
+  "sev": "md",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 623,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 654,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达不足",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 709,
+  "msg": "Button 命中框高 40pt < 44pt",
+  "calc": "frame(height/minHeight)",
+  "sev": "hi",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 732,
+  "msg": "HStack.padding(14pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "14",
+  "sev": "md",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 710,
+  "msg": "HStack(spacing: 14pt) 不在令牌档",
+  "calc": "14",
+  "sev": "md",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 861,
+  "msg": "HStack.padding(6pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "6",
+  "sev": "md",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 852,
+  "msg": "VStack.padding(9pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "9",
+  "sev": "md",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 845,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 870,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R6 材质混用",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "面板级实底 1 处 / 玻璃 0 处 / 盘中 plate 0 处 ⇒ 这一页还没有面板玻璃",
+  "calc": "glass 占比 0% (盘子不计入分母)",
+  "cond": "SE/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 392,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 903,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 904,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\Services\\LockService.swift",
+  "line": "388",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@388",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 343,
+  "msg": "Stepper 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 447,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 194,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 245,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 954,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": "2708,2709,2749",
+  "sev": "lo",
+  "msg": "3 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2708 ERROR@2709 ERROR@2749",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3084,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3093,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3100,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R5 触达不足(推算)",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialsView.swift",
+  "line": 2165,
+  "msg": "Button 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "md",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": "287",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@287",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": 1679,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DiagnosticsView.swift",
+  "line": "121,123",
+  "sev": "lo",
+  "msg": "2 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@121 ERROR@123",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": 2274,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "2647,2651,2652,2653,2680,2684",
+  "sev": "lo",
+  "msg": "6 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2647 ERROR@2651 ERROR@2652 ERROR@2653 ERROR@2680 ERROR@2684",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\Sheets.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": 220,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 205,
+  "msg": "Button.padding(18pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "18",
+  "sev": "md",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 354,
+  "msg": "VStack.padding(22pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "22",
+  "sev": "md",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 364,
+  "msg": "HStack(spacing: 11pt) 不在令牌档",
+  "calc": "11",
+  "sev": "md",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 365,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 397,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 406,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 461,
+  "msg": "VStack(spacing: 5pt) 不在令牌档",
+  "calc": "5",
+  "sev": "md",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 480,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 513,
+  "msg": "HStack.padding(11pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "11",
+  "sev": "md",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 519,
+  "msg": "VStack(spacing: 9pt) 不在令牌档",
+  "calc": "9",
+  "sev": "md",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 623,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 654,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R5 触达不足",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 709,
+  "msg": "Button 命中框高 40pt < 44pt",
+  "calc": "frame(height/minHeight)",
+  "sev": "hi",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 732,
+  "msg": "HStack.padding(14pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "14",
+  "sev": "md",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 710,
+  "msg": "HStack(spacing: 14pt) 不在令牌档",
+  "calc": "14",
+  "sev": "md",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 861,
+  "msg": "HStack.padding(6pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "6",
+  "sev": "md",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 852,
+  "msg": "VStack.padding(9pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "9",
+  "sev": "md",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 845,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 870,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R6 材质混用",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "面板级实底 1 处 / 玻璃 0 处 / 盘中 plate 0 处 ⇒ 这一页还没有面板玻璃",
+  "calc": "glass 占比 0% (盘子不计入分母)",
+  "cond": "SE/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 392,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 903,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 904,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\Services\\LockService.swift",
+  "line": "388",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@388",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 343,
+  "msg": "Stepper 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 447,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R2 高度写死装不下",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AchievementsView.swift",
+  "line": 536,
+  "msg": "「〇」需 1 行 ≈ 36pt，但祖先 frame(height: 30) 写死 30pt ⇒ 溢出/裁切",
+  "calc": "可分配宽 337 行高 36.0",
+  "sev": "hi",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 194,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 245,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 954,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": "2708,2709,2749",
+  "sev": "lo",
+  "msg": "3 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2708 ERROR@2709 ERROR@2749",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3084,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3093,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3100,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R2 单行放不下",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3292,
+  "msg": "「添加 · 改造 · 口述卡 · OTP 独立」估宽 480pt > 可分配 337pt (字号 29.8pt, lineLimit(1))",
+  "calc": "CJK=1em 拉丁=0.56em 数字=0.5em",
+  "sev": "hi",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R2 单行放不下",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialsView.swift",
+  "line": 194,
+  "msg": "「借用 〇 · 借给 〇 (还 〇)」估宽 333pt > 可分配 280pt (字号 29.8pt, lineLimit(1))",
+  "calc": "CJK=1em 拉丁=0.56em 数字=0.5em",
+  "sev": "hi",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达不足(推算)",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialsView.swift",
+  "line": 2165,
+  "msg": "Button 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "md",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": "287",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@287",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": 1679,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DiagnosticsView.swift",
+  "line": "121,123",
+  "sev": "lo",
+  "msg": "2 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@121 ERROR@123",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": 2274,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "2647,2651,2652,2653,2680,2684",
+  "sev": "lo",
+  "msg": "6 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2647 ERROR@2651 ERROR@2652 ERROR@2653 ERROR@2680 ERROR@2684",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\Sheets.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": 220,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R2 单行放不下",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": 1847,
+  "msg": "「周末柱为青绿, 呈现作息节律」估宽 380pt > 可分配 337pt (字号 29.8pt, lineLimit(1))",
+  "calc": "CJK=1em 拉丁=0.56em 数字=0.5em",
+  "sev": "hi",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R2 单行放不下",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": 2120,
+  "msg": "「最早 〇 · 中位 〇 · 最晚 〇 时」估宽 394pt > 可分配 337pt (字号 29.8pt, lineLimit(1))",
+  "calc": "CJK=1em 拉丁=0.56em 数字=0.5em",
+  "sev": "hi",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 205,
+  "msg": "Button.padding(18pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "18",
+  "sev": "md",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 354,
+  "msg": "VStack.padding(22pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "22",
+  "sev": "md",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 364,
+  "msg": "HStack(spacing: 11pt) 不在令牌档",
+  "calc": "11",
+  "sev": "md",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 365,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 397,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 406,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 461,
+  "msg": "VStack(spacing: 5pt) 不在令牌档",
+  "calc": "5",
+  "sev": "md",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 480,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 513,
+  "msg": "HStack.padding(11pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "11",
+  "sev": "md",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 519,
+  "msg": "VStack(spacing: 9pt) 不在令牌档",
+  "calc": "9",
+  "sev": "md",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 623,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 654,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达不足",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 709,
+  "msg": "Button 命中框高 40pt < 44pt",
+  "calc": "frame(height/minHeight)",
+  "sev": "hi",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 732,
+  "msg": "HStack.padding(14pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "14",
+  "sev": "md",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 710,
+  "msg": "HStack(spacing: 14pt) 不在令牌档",
+  "calc": "14",
+  "sev": "md",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 861,
+  "msg": "HStack.padding(6pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "6",
+  "sev": "md",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 852,
+  "msg": "VStack.padding(9pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "9",
+  "sev": "md",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 845,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 870,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R6 材质混用",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "面板级实底 1 处 / 玻璃 0 处 / 盘中 plate 0 处 ⇒ 这一页还没有面板玻璃",
+  "calc": "glass 占比 0% (盘子不计入分母)",
+  "cond": "SE/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 392,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 903,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 904,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\Services\\LockService.swift",
+  "line": "388",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@388",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 343,
+  "msg": "Stepper 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 447,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 194,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 245,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 954,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": "2708,2709,2749",
+  "sev": "lo",
+  "msg": "3 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2708 ERROR@2709 ERROR@2749",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3084,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3093,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3100,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达不足(推算)",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialsView.swift",
+  "line": 2165,
+  "msg": "Button 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "md",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": "287",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@287",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": 1679,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DiagnosticsView.swift",
+  "line": "121,123",
+  "sev": "lo",
+  "msg": "2 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@121 ERROR@123",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": 2274,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "2647,2651,2652,2653,2680,2684",
+  "sev": "lo",
+  "msg": "6 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2647 ERROR@2651 ERROR@2652 ERROR@2653 ERROR@2680 ERROR@2684",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\Sheets.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": 220,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 205,
+  "msg": "Button.padding(18pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "18",
+  "sev": "md",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 354,
+  "msg": "VStack.padding(22pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "22",
+  "sev": "md",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 364,
+  "msg": "HStack(spacing: 11pt) 不在令牌档",
+  "calc": "11",
+  "sev": "md",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 365,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 397,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 406,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 461,
+  "msg": "VStack(spacing: 5pt) 不在令牌档",
+  "calc": "5",
+  "sev": "md",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 480,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 513,
+  "msg": "HStack.padding(11pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "11",
+  "sev": "md",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 519,
+  "msg": "VStack(spacing: 9pt) 不在令牌档",
+  "calc": "9",
+  "sev": "md",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 623,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 654,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达不足",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 709,
+  "msg": "Button 命中框高 40pt < 44pt",
+  "calc": "frame(height/minHeight)",
+  "sev": "hi",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 732,
+  "msg": "HStack.padding(14pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "14",
+  "sev": "md",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 710,
+  "msg": "HStack(spacing: 14pt) 不在令牌档",
+  "calc": "14",
+  "sev": "md",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 861,
+  "msg": "HStack.padding(6pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "6",
+  "sev": "md",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 852,
+  "msg": "VStack.padding(9pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "9",
+  "sev": "md",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 845,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 870,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R6 材质混用",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "面板级实底 1 处 / 玻璃 0 处 / 盘中 plate 0 处 ⇒ 这一页还没有面板玻璃",
+  "calc": "glass 占比 0% (盘子不计入分母)",
+  "cond": "标准/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 392,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 903,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 904,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\Services\\LockService.swift",
+  "line": "388",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@388",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 343,
+  "msg": "Stepper 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 447,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 194,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 245,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 954,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": "2708,2709,2749",
+  "sev": "lo",
+  "msg": "3 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2708 ERROR@2709 ERROR@2749",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3084,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3093,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3100,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R5 触达不足(推算)",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialsView.swift",
+  "line": 2165,
+  "msg": "Button 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "md",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": "287",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@287",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": 1679,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DiagnosticsView.swift",
+  "line": "121,123",
+  "sev": "lo",
+  "msg": "2 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@121 ERROR@123",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": 2274,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "2647,2651,2652,2653,2680,2684",
+  "sev": "lo",
+  "msg": "6 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2647 ERROR@2651 ERROR@2652 ERROR@2653 ERROR@2680 ERROR@2684",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\Sheets.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": 220,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 205,
+  "msg": "Button.padding(18pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "18",
+  "sev": "md",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 354,
+  "msg": "VStack.padding(22pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "22",
+  "sev": "md",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 364,
+  "msg": "HStack(spacing: 11pt) 不在令牌档",
+  "calc": "11",
+  "sev": "md",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 365,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 397,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 406,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 461,
+  "msg": "VStack(spacing: 5pt) 不在令牌档",
+  "calc": "5",
+  "sev": "md",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 480,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 513,
+  "msg": "HStack.padding(11pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "11",
+  "sev": "md",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 519,
+  "msg": "VStack(spacing: 9pt) 不在令牌档",
+  "calc": "9",
+  "sev": "md",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 623,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 654,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R5 触达不足",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 709,
+  "msg": "Button 命中框高 40pt < 44pt",
+  "calc": "frame(height/minHeight)",
+  "sev": "hi",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 732,
+  "msg": "HStack.padding(14pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "14",
+  "sev": "md",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 710,
+  "msg": "HStack(spacing: 14pt) 不在令牌档",
+  "calc": "14",
+  "sev": "md",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 861,
+  "msg": "HStack.padding(6pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "6",
+  "sev": "md",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 852,
+  "msg": "VStack.padding(9pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "9",
+  "sev": "md",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 845,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 870,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R6 材质混用",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "面板级实底 1 处 / 玻璃 0 处 / 盘中 plate 0 处 ⇒ 这一页还没有面板玻璃",
+  "calc": "glass 占比 0% (盘子不计入分母)",
+  "cond": "标准/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 392,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 903,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 904,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\Services\\LockService.swift",
+  "line": "388",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@388",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 343,
+  "msg": "Stepper 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 447,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R2 高度写死装不下",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AchievementsView.swift",
+  "line": 536,
+  "msg": "「〇」需 1 行 ≈ 36pt，但祖先 frame(height: 30) 写死 30pt ⇒ 溢出/裁切",
+  "calc": "可分配宽 352 行高 36.0",
+  "sev": "hi",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 194,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 245,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 954,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": "2708,2709,2749",
+  "sev": "lo",
+  "msg": "3 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2708 ERROR@2709 ERROR@2749",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3084,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3093,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3100,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R2 单行放不下",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3292,
+  "msg": "「添加 · 改造 · 口述卡 · OTP 独立」估宽 480pt > 可分配 352pt (字号 29.8pt, lineLimit(1))",
+  "calc": "CJK=1em 拉丁=0.56em 数字=0.5em",
+  "sev": "hi",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R2 单行放不下",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialsView.swift",
+  "line": 194,
+  "msg": "「借用 〇 · 借给 〇 (还 〇)」估宽 333pt > 可分配 295pt (字号 29.8pt, lineLimit(1))",
+  "calc": "CJK=1em 拉丁=0.56em 数字=0.5em",
+  "sev": "hi",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达不足(推算)",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialsView.swift",
+  "line": 2165,
+  "msg": "Button 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "md",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": "287",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@287",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": 1679,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DiagnosticsView.swift",
+  "line": "121,123",
+  "sev": "lo",
+  "msg": "2 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@121 ERROR@123",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": 2274,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "2647,2651,2652,2653,2680,2684",
+  "sev": "lo",
+  "msg": "6 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2647 ERROR@2651 ERROR@2652 ERROR@2653 ERROR@2680 ERROR@2684",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\Sheets.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": 220,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R2 单行放不下",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": 1847,
+  "msg": "「周末柱为青绿, 呈现作息节律」估宽 380pt > 可分配 352pt (字号 29.8pt, lineLimit(1))",
+  "calc": "CJK=1em 拉丁=0.56em 数字=0.5em",
+  "sev": "hi",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R2 单行放不下",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": 2120,
+  "msg": "「最早 〇 · 中位 〇 · 最晚 〇 时」估宽 394pt > 可分配 352pt (字号 29.8pt, lineLimit(1))",
+  "calc": "CJK=1em 拉丁=0.56em 数字=0.5em",
+  "sev": "hi",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 205,
+  "msg": "Button.padding(18pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "18",
+  "sev": "md",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 354,
+  "msg": "VStack.padding(22pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "22",
+  "sev": "md",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 364,
+  "msg": "HStack(spacing: 11pt) 不在令牌档",
+  "calc": "11",
+  "sev": "md",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 365,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 397,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 406,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 461,
+  "msg": "VStack(spacing: 5pt) 不在令牌档",
+  "calc": "5",
+  "sev": "md",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 480,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 513,
+  "msg": "HStack.padding(11pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "11",
+  "sev": "md",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 519,
+  "msg": "VStack(spacing: 9pt) 不在令牌档",
+  "calc": "9",
+  "sev": "md",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 623,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 654,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达不足",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 709,
+  "msg": "Button 命中框高 40pt < 44pt",
+  "calc": "frame(height/minHeight)",
+  "sev": "hi",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 732,
+  "msg": "HStack.padding(14pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "14",
+  "sev": "md",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 710,
+  "msg": "HStack(spacing: 14pt) 不在令牌档",
+  "calc": "14",
+  "sev": "md",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 861,
+  "msg": "HStack.padding(6pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "6",
+  "sev": "md",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 852,
+  "msg": "VStack.padding(9pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "9",
+  "sev": "md",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 845,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 870,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R6 材质混用",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "面板级实底 1 处 / 玻璃 0 处 / 盘中 plate 0 处 ⇒ 这一页还没有面板玻璃",
+  "calc": "glass 占比 0% (盘子不计入分母)",
+  "cond": "标准/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 392,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 903,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 904,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\Services\\LockService.swift",
+  "line": "388",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@388",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 343,
+  "msg": "Stepper 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 447,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 194,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 245,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 954,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": "2708,2709,2749",
+  "sev": "lo",
+  "msg": "3 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2708 ERROR@2709 ERROR@2749",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3084,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3093,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3100,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达不足(推算)",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialsView.swift",
+  "line": 2165,
+  "msg": "Button 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "md",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": "287",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@287",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": 1679,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DiagnosticsView.swift",
+  "line": "121,123",
+  "sev": "lo",
+  "msg": "2 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@121 ERROR@123",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": 2274,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "2647,2651,2652,2653,2680,2684",
+  "sev": "lo",
+  "msg": "6 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2647 ERROR@2651 ERROR@2652 ERROR@2653 ERROR@2680 ERROR@2684",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\Sheets.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": 220,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 16.5pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 205,
+  "msg": "Button.padding(18pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "18",
+  "sev": "md",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 354,
+  "msg": "VStack.padding(22pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "22",
+  "sev": "md",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 364,
+  "msg": "HStack(spacing: 11pt) 不在令牌档",
+  "calc": "11",
+  "sev": "md",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 365,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 397,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 406,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 461,
+  "msg": "VStack(spacing: 5pt) 不在令牌档",
+  "calc": "5",
+  "sev": "md",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 480,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 513,
+  "msg": "HStack.padding(11pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "11",
+  "sev": "md",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 519,
+  "msg": "VStack(spacing: 9pt) 不在令牌档",
+  "calc": "9",
+  "sev": "md",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 623,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 654,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R5 触达不足",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 709,
+  "msg": "Button 命中框高 40pt < 44pt",
+  "calc": "frame(height/minHeight)",
+  "sev": "hi",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 732,
+  "msg": "HStack.padding(14pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "14",
+  "sev": "md",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 710,
+  "msg": "HStack(spacing: 14pt) 不在令牌档",
+  "calc": "14",
+  "sev": "md",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 861,
+  "msg": "HStack.padding(6pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "6",
+  "sev": "md",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 852,
+  "msg": "VStack.padding(9pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "9",
+  "sev": "md",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 845,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 870,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R6 材质混用",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "面板级实底 1 处 / 玻璃 0 处 / 盘中 plate 0 处 ⇒ 这一页还没有面板玻璃",
+  "calc": "glass 占比 0% (盘子不计入分母)",
+  "cond": "Max/0.8/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 392,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 903,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 904,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\Services\\LockService.swift",
+  "line": "388",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@388",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 343,
+  "msg": "Stepper 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 447,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 194,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 245,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 954,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": "2708,2709,2749",
+  "sev": "lo",
+  "msg": "3 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2708 ERROR@2709 ERROR@2749",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3084,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3093,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3100,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R5 触达不足(推算)",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialsView.swift",
+  "line": 2165,
+  "msg": "Button 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "md",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": "287",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@287",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": 1679,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DiagnosticsView.swift",
+  "line": "121,123",
+  "sev": "lo",
+  "msg": "2 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@121 ERROR@123",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": 2274,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "2647,2651,2652,2653,2680,2684",
+  "sev": "lo",
+  "msg": "6 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2647 ERROR@2651 ERROR@2652 ERROR@2653 ERROR@2680 ERROR@2684",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\Sheets.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": 220,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 20.6pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 205,
+  "msg": "Button.padding(18pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "18",
+  "sev": "md",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 354,
+  "msg": "VStack.padding(22pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "22",
+  "sev": "md",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 364,
+  "msg": "HStack(spacing: 11pt) 不在令牌档",
+  "calc": "11",
+  "sev": "md",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 365,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 397,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 406,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 461,
+  "msg": "VStack(spacing: 5pt) 不在令牌档",
+  "calc": "5",
+  "sev": "md",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 480,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 513,
+  "msg": "HStack.padding(11pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "11",
+  "sev": "md",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 519,
+  "msg": "VStack(spacing: 9pt) 不在令牌档",
+  "calc": "9",
+  "sev": "md",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 623,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 654,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R5 触达不足",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 709,
+  "msg": "Button 命中框高 40pt < 44pt",
+  "calc": "frame(height/minHeight)",
+  "sev": "hi",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 732,
+  "msg": "HStack.padding(14pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "14",
+  "sev": "md",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 710,
+  "msg": "HStack(spacing: 14pt) 不在令牌档",
+  "calc": "14",
+  "sev": "md",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 861,
+  "msg": "HStack.padding(6pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "6",
+  "sev": "md",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 852,
+  "msg": "VStack.padding(9pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "9",
+  "sev": "md",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 845,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 870,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R6 材质混用",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "面板级实底 1 处 / 玻璃 0 处 / 盘中 plate 0 处 ⇒ 这一页还没有面板玻璃",
+  "calc": "glass 占比 0% (盘子不计入分母)",
+  "cond": "Max/1/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 392,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 903,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\Core\\VariantGrammar.swift",
+  "line": 904,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\Services\\LockService.swift",
+  "line": "388",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@388",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 343,
+  "msg": "Stepper 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AccessibilityView.swift",
+  "line": 447,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R2 高度写死装不下",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\AchievementsView.swift",
+  "line": 536,
+  "msg": "「〇」需 1 行 ≈ 36pt，但祖先 frame(height: 30) 写死 30pt ⇒ 溢出/裁切",
+  "calc": "可分配宽 392 行高 36.0",
+  "sev": "hi",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 194,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 245,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\BackupStudio.swift",
+  "line": 954,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": "2708,2709,2749",
+  "sev": "lo",
+  "msg": "3 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2708 ERROR@2709 ERROR@2749",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3084,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3093,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3100,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R2 单行放不下",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialStudio.swift",
+  "line": 3292,
+  "msg": "「添加 · 改造 · 口述卡 · OTP 独立」估宽 480pt > 可分配 392pt (字号 29.8pt, lineLimit(1))",
+  "calc": "CJK=1em 拉丁=0.56em 数字=0.5em",
+  "sev": "hi",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达不足(推算)",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\CredentialsView.swift",
+  "line": 2165,
+  "msg": "Button 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "md",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": "287",
+  "sev": "lo",
+  "msg": "1 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@287",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DeviceHomeView.swift",
+  "line": 1679,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\DiagnosticsView.swift",
+  "line": "121,123",
+  "sev": "lo",
+  "msg": "2 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@121 ERROR@123",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": 2274,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\MemberCenterView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R0 文法盲区·无呈现面",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "2647,2651,2652,2653,2680,2684",
+  "sev": "lo",
+  "msg": "6 处解析失败但区域内没有视图 (do-catch/成员级 #if/try? await 条件位), 布局判定不受影响",
+  "calc": "ERROR@2647 ERROR@2651 ERROR@2652 ERROR@2653 ERROR@2680 ERROR@2684",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\RecordsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\Sheets.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 0 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": 220,
+  "msg": "Picker 自身与 label 都没有 frame/minHeight、也没有 contentShape ⇒ 命中高仅约 36.0pt < 44pt",
+  "calc": "行高+padding 反推",
+  "sev": "lo",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R6 材质已定性",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\StatsView.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "已定性保留的面板实底 1 处 (源码里带 @layout-allow 面板实底 标记) / 玻璃 1 处",
+  "calc": "理由写在标记上方注释里, 不计入混用",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 205,
+  "msg": "Button.padding(18pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "18",
+  "sev": "md",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 354,
+  "msg": "VStack.padding(22pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "22",
+  "sev": "md",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 364,
+  "msg": "HStack(spacing: 11pt) 不在令牌档",
+  "calc": "11",
+  "sev": "md",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 365,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 397,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 406,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 461,
+  "msg": "VStack(spacing: 5pt) 不在令牌档",
+  "calc": "5",
+  "sev": "md",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 480,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 513,
+  "msg": "HStack.padding(11pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "11",
+  "sev": "md",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 519,
+  "msg": "VStack(spacing: 9pt) 不在令牌档",
+  "calc": "9",
+  "sev": "md",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距未声明",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 623,
+  "msg": "HStack 没写 spacing ⇒ 吃系统默认 (不可控的第三套间距)",
+  "calc": "—",
+  "sev": "lo",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 654,
+  "msg": "VStack(spacing: 6pt) 不在令牌档",
+  "calc": "6",
+  "sev": "md",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R5 触达不足",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 709,
+  "msg": "Button 命中框高 40pt < 44pt",
+  "calc": "frame(height/minHeight)",
+  "sev": "hi",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 732,
+  "msg": "HStack.padding(14pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "14",
+  "sev": "md",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 710,
+  "msg": "HStack(spacing: 14pt) 不在令牌档",
+  "calc": "14",
+  "sev": "md",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 861,
+  "msg": "HStack.padding(6pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "6",
+  "sev": "md",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 852,
+  "msg": "VStack.padding(9pt) 不在 Space 档 (0/2/4/8/12/16/24/32)",
+  "calc": "9",
+  "sev": "md",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 845,
+  "msg": "VStack(spacing: 3pt) 不在令牌档",
+  "calc": "3",
+  "sev": "md",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R3 间距脱离令牌",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": 870,
+  "msg": "HStack(spacing: 10pt) 不在令牌档",
+  "calc": "10",
+  "sev": "md",
+  "cond": "Max/1.75/宽松"
+ },
+ {
+  "rule": "R6 材质混用",
+  "file": "D:\\aapk\\ios-app\\App\\UI\\VariantRoots.swift",
+  "line": "文件级",
+  "sev": "lo",
+  "msg": "面板级实底 1 处 / 玻璃 0 处 / 盘中 plate 0 处 ⇒ 这一页还没有面板玻璃",
+  "calc": "glass 占比 0% (盘子不计入分母)",
+  "cond": "Max/1.75/宽松"
  }
 ]

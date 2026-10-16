@@ -140,7 +140,7 @@ struct MaintenanceView: View {
                     Text(careDue
                          ? "已满 \(periodDays) 天, 建议安排一次保养"
                          : "周期 \(periodDays) 天 · 已过 \(Int(elapsedDays)) 天" + (periodDays == 60 ? " · 高频使用自动缩短" : ""))
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(careDue ? DS.Palette.warn : DS.Palette.textSub)
                 }
                 .accessibilityElement(children: .combine)
@@ -177,7 +177,7 @@ struct MaintenanceView: View {
                     }
                 }
                 Text(streak > 0 ? "已连续 \(streak) 个月有保养" : "本月还没打点 — 完成保养后点亮")
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
             }
             .accessibilityElement(children: .combine)
@@ -212,10 +212,10 @@ struct MaintenanceView: View {
                         .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: DS.Space.xxs) {
                         Text(e.kind == "battery" ? "更换电池" : "保养完成")
-                            .font(.subheadline)
+                            .vkFont(.subheadline)
                             .foregroundStyle(DS.Palette.text)
                         Text(e.note + " · " + daysAgoText(e.ts))
-                            .font(.caption2)
+                            .vkFont(.caption2)
                             .foregroundStyle(DS.Palette.textSub)
                     }
                     Spacer(minLength: 0)
@@ -258,7 +258,7 @@ struct MaintenanceView: View {
                                : "未记录")
             }
             .foregroundStyle(DS.Palette.text)
-            Toggle("每年换电池提醒", isOn: $yearlyOn)
+            VariantToggle("每年换电池提醒", isOn: $yearlyOn)
             if yearlyOn {
                 DatePicker("提醒日期", selection: $yearlyDate, displayedComponents: .date)
             }
@@ -272,7 +272,7 @@ struct MaintenanceView: View {
     // ---------- 1025 应急钥匙半年检 ----------
     private var ekeySection: some View {
         Section {
-            Toggle("应急钥匙半年检提醒", isOn: $ekeyOn)
+            VariantToggle("应急钥匙半年检提醒", isOn: $ekeyOn)
                 .onChange(of: ekeyOn) { _, _ in saveEkey() }
             LabeledRow("上次打卡", care.ekeyCheckAt > 0 ? daysAgoText(care.ekeyCheckAt) : "未打卡")
             Button {
@@ -303,12 +303,12 @@ struct MaintenanceView: View {
         return Section {
             if damp {
                 Label("场所「\(place)」属湿区 — 梅雨季 (6–7 月) 每周提醒防潮", systemImage: "humidity")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.accentText)
                     .fixedSize(horizontal: false, vertical: true)
             } else {
                 Text("在锁档案的「场所副标题」里写上浴室/户外等字样, 即可获得季节防潮提醒。")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -321,12 +321,12 @@ struct MaintenanceView: View {
             let month = WeekCal.gregorian.component(.month, from: Date())
             if let w = BatteryCare.cityColdWindow(city), BatteryCare.inColdMonth(month, from: w.from, to: w.to) {
                 Label("按「\(city)」的本地气候表 (\(w.label)): 低温季电池衰减加快, 电量偏低时建议提前整组换新。", systemImage: "thermometer.snowflake")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.warn)
                     .fixedSize(horizontal: false, vertical: true)
             } else if BatteryCare.isColdSeason {
                 Label("低温季 (11–3 月): 电池衰减加快, 电量偏低时建议提前整组换新。", systemImage: "thermometer.snowflake")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.warn)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -367,7 +367,7 @@ struct CareChecklistView: View {
                                     .frame(width: 24)
                                     .accessibilityHidden(true)
                                 Text(it.label)
-                                    .font(.subheadline)
+                                    .vkFont(.subheadline)
                                     .foregroundStyle(DS.Palette.text)
                                 Spacer(minLength: 0)
                             }
@@ -453,7 +453,7 @@ struct BatterySwapGuideView: View {
                 ForEach(Array(steps.enumerated()), id: \.offset) { i, s in
                     HStack(alignment: .top, spacing: DS.Space.s) {
                         Text("\(i + 1)")
-                            .font(.caption.weight(.semibold))
+                            .vkFont(.caption, weight: .semibold)
                             .monospacedDigit()
                             .foregroundStyle(DS.Palette.onAccent)
                             .frame(width: 22, height: 22)
@@ -466,10 +466,10 @@ struct BatterySwapGuideView: View {
                             .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: DS.Space.xxs) {
                             Text(s.title)
-                                .font(.subheadline.weight(.medium))
+                                .vkFont(.subheadline, weight: .medium)
                                 .foregroundStyle(DS.Palette.text)
                             Text(s.detail)
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -531,7 +531,7 @@ struct MaintSettingsView: View {
                 Text("低于阈值时设备页横幅提醒; 电量 ≤20% 另有「该喂电了」本地通知, ≤10% 升级为告急。")
             }
             Section {
-                Toggle("夜间免扰 (22–8 点)", isOn: Binding(
+                VariantToggle("夜间免扰 (22–8 点)", isOn: Binding(
                     get: { CareSchedule.quietOn },
                     // 963: 免扰一改动就要立刻重排"每晚状态确认" (22:00 档正撞这条免扰段),
                     // 不重排就会出现"刚关了免扰却还以为那条没排上"或反过来。
@@ -545,7 +545,7 @@ struct MaintSettingsView: View {
                 Text("开启后免扰时段不弹通知 (App 内横幅不受影响); 保养/换电/半年检等定时提醒统一在上午 10 点送达。")
             }
             Section {
-                Toggle("本地固件比锁内新时提醒", isOn: Binding(
+                VariantToggle("本地固件比锁内新时提醒", isOn: Binding(
                     get: { CareSchedule.fwRemindOn },
                     set: { DB.store.set("kf_fw_remind", $0) }))
             } header: {

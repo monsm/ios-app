@@ -43,14 +43,14 @@ struct DeviceManageView: View {
                     }
                     Text("点一行 = 置顶并设为启动默认锁；要精细调序就点右上角「排序」, 出现行尾手柄后拖动。"   // 271/766 点一行
                          + "分好组后, 设备 Tab 上方会出现按组切换的胶囊, 切换胶囊菜单里也按组分区。")   // 767 分好组后
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 if locks.isEmpty {
                     Section {
                         Text("台账里还没有门锁 — 先在设备页添加一台。")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                     }
                 } else {
@@ -65,7 +65,7 @@ struct DeviceManageView: View {
                                 rows(g.locks)
                                 if g.name == LockArchive.ungroupedLabel {
                                     Text("「未分组」不是一个组, 只是还没归类的兜底段。")   // 104 未分组
-                                        .font(.caption2)
+                                        .vkFont(.caption2)
                                         .foregroundStyle(DS.Palette.textSub)
                                 }
                             } header: {
@@ -90,7 +90,7 @@ struct DeviceManageView: View {
                     } footer: {
                         Text("顺序、分组、分组折叠与隐藏会随全量备份包走 (D-36)：换机恢复后不用重排；"
                              + "锁档案里的场所副标题 / 备注 / 符号色标仍只存本机。不写门锁, 也不影响凭证与日志。")
-                            .font(.caption2)
+                            .vkFont(.caption2)
                             .foregroundStyle(DS.Palette.textSub)
                     }
                 }
@@ -184,35 +184,35 @@ struct DeviceManageView: View {
                     Circle().fill(LockArchive.swatchColor(LockArchive.meta(kc.mac).colorKey))
                         .frame(width: 8, height: 8)
                     Text(name)
-                        .font(.subheadline.weight(.medium))
+                        .vkFont(.subheadline, weight: .medium)
                         .lineLimit(1)
                     if isDef {
                         Text("首位 · 启动默认")
-                            .font(.caption2.weight(.medium))
+                            .vkFont(.caption2, weight: .medium)
                             .foregroundStyle(DS.Palette.onAccent)
                             .padding(.horizontal, DS.Space.s).padding(.vertical, DS.Space.xxs)
-                            .background(DS.Palette.accent, in: Capsule())
+                            .variantPlate(DS.Palette.accent, .capsule)
                     }
                 }
                 HStack(spacing: DS.Space.xs) {
                     Text(subtitle(kc))
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .lineLimit(1)
                     if hidden {
                         Label("已隐藏", systemImage: "eye.slash")
-                            .font(.caption2)
+                            .vkFont(.caption2)
                             .foregroundStyle(DS.Palette.warn)   // 114/108: 提示色, 不是错误色
                     }
                     if LockArchive.isSleeping(kc.mac) {
                         Label("沉睡", systemImage: "moon.zzz.fill")
-                            .font(.caption2)
+                            .vkFont(.caption2)
                             .foregroundStyle(DS.Palette.textSub)
                     }
                     Spacer(minLength: 0)
                 }
                 Text(LockArchive.boundLabel(kc.pairedAt))   // 769 每锁行显示"绑定于 …"小字
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
             }
             Spacer(minLength: 0)
@@ -226,7 +226,7 @@ struct DeviceManageView: View {
                 let lvl = LinkSense.rssiLevel(rssi)
                 HStack(spacing: DS.Space.xs) {
                     Text(LinkSense.rssiLabel(lvl))
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                         .lineLimit(1)
                     RSSIBars(level: lvl, tint: lvl >= 3 ? DS.Palette.ok : DS.Palette.warn)
@@ -343,23 +343,23 @@ struct DeviceManageView: View {
         let n = sel.count
         return HStack(spacing: DS.Space.m) {
             Text("已选 \(n) 把")
-                .font(.footnote.weight(.medium))
+                .vkFont(.footnote, weight: .medium)
                 .foregroundStyle(DS.Palette.text)
             Spacer(minLength: 0)
             Button { batchHidden(true) } label: { Label("隐藏", systemImage: "eye.slash") }
-                .font(.footnote)
+                .vkFont(.footnote)
             Button { batchHidden(false) } label: { Label("显示", systemImage: "eye") }
-                .font(.footnote)
+                .vkFont(.footnote)
             Menu {
                 ForEach(LockArchive.groupPresets, id: \.self) { p in
                     Button(p) { batchGroup(p) }
                 }
                 Button("自定义组名…") { promptGroupBatch() }
             } label: {
-                Label("分组", systemImage: "rectangle.3.group").font(.footnote)
+                Label("分组", systemImage: "rectangle.3.group").vkFont(.footnote)
             }
             Button("置顶") { batchPin() }
-                .font(.footnote)
+                .vkFont(.footnote)
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, DS.Space.gutter)

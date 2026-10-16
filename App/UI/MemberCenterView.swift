@@ -108,24 +108,24 @@ struct MemberCenterView: View {
                         Section("成员名册") {   // 415 成员名册
                             Text("共 \(DB.members().count) 位成员 · 文件 "
                                  + (rosterURL?.lastPathComponent ?? "生成失败"))
-                                .font(.subheadline)
+                                .vkFont(.subheadline)
                                 .foregroundStyle(DS.Palette.text)
                                 .fixedSize(horizontal: false, vertical: true)
                             Text("名册里只有人与称呼: 不含锁 MAC、凭证编号、口令, 也不含常用锁清单。\n"
                                  + "要搬整套数据请走备份 —— 名册不承担那个用途, 也正因为它少, 才适合发给家人线下核对。")
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                             if let u = rosterURL {
                                 ShareLink(item: u) {
                                     Label("分享这个 .vcf 文件", systemImage: "square.and.arrow.up")
-                                        .font(.subheadline.weight(.semibold))
+                                        .vkFont(.subheadline, weight: .semibold)
                                         .foregroundStyle(DS.Palette.accentText)
                                         .frame(minHeight: DS.Hit.min)
                                 }
                             } else {
                                 Text("本机还没有成员档案，名册是空的")   // 415 本机还没有成员档案
-                                    .font(.caption)
+                                    .vkFont(.caption)
                                     .foregroundStyle(DS.Palette.warn)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
@@ -155,10 +155,10 @@ struct MemberCenterView: View {
                 }
                 VStack(alignment: .leading, spacing: DS.Space.xxs) {
                     Text("共 \(n) 位成员 · \(m) 条凭证")   // 266 位成员
-                        .font(.subheadline.weight(.semibold))
+                        .vkFont(.subheadline, weight: .semibold)
                         .foregroundStyle(DS.Palette.text)
                     Text("活跃度按台账推断 (约), 点成员看完整档案")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -190,7 +190,7 @@ struct MemberCenterView: View {
             withAnimation(DS.Motion.quick) { groupFilter = tag }
         } label: {
             Text(label)
-                .font(.caption.weight(.medium))
+                .vkFont(.caption, weight: .medium)
                 .padding(.horizontal, DS.Space.s)
                 .padding(.vertical, DS.Space.xs + 2)
                 .background(on ? DS.Palette.accentText.opacity(0.14) : DS.Palette.surfaceAlt, in: Capsule())
@@ -268,10 +268,10 @@ struct MemberCenterView: View {
                     MemberAvatar(member: Member(id: MemberHub.visitorId, name: "访客", at: 0))
                     VStack(alignment: .leading, spacing: DS.Space.xxs) {
                         Text("访客 · 虚拟成员")   // 793 访客
-                            .font(.subheadline)
+                            .vkFont(.subheadline)
                             .foregroundStyle(DS.Palette.text)
                         Text("临时码未归属记录约 \(opens) 条 · 名下临时码 \(temps) 条")
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -313,7 +313,7 @@ struct MemberCenterView: View {
             Section {
                 Button { showArchived = true } label: {
                     Label("归档成员 (\(arch.count)) · 保留历史", systemImage: "archivebox")
-                        .font(.subheadline)
+                        .vkFont(.subheadline)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .frame(minHeight: DS.Hit.min)
                         .contentShape(Rectangle())
@@ -329,19 +329,19 @@ struct MemberCenterView: View {
             if let dutyID = MemberHub.dutyThisWeek, let dm = DB.member(dutyID) {
                 LabeledContent("本周主责") {   // 481 本周主责
                     Text(MemberHub.display(dm))
-                        .font(.subheadline)
+                        .vkFont(.subheadline)
                         .foregroundStyle(DS.Palette.accentText)
                 }
             } else {
                 Text("本周主责: 未安排 — 在成员的详情页里设置")   // 481 本周主责
-                    .font(.subheadline)
+                    .vkFont(.subheadline)
                     .foregroundStyle(DS.Palette.textSub)
             }
             ForEach(members.prefix(4)) { m in
                 if !MemberHub.ext(m.id).note.isEmpty {
                     LabeledContent("便签 · " + MemberHub.display(m)) {
                         Text(MemberHub.ext(m.id).note)
-                            .font(.subheadline)
+                            .vkFont(.subheadline)
                             .foregroundStyle(DS.Palette.textSub)
                             .lineLimit(2)
                     }
@@ -364,14 +364,14 @@ struct MemberCenterView: View {
             DisclosureGroup {
                 ForEach(ch.lines, id: \.self) { line in
                     Text(line)
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.vertical, 2)
                 }
             } label: {
                 Text(ch.title)   // 973 界面文案
-                    .font(.subheadline.weight(.semibold))
+                    .vkFont(.subheadline, weight: .semibold)
                     .foregroundStyle(DS.Palette.text)
             }
         }
@@ -406,7 +406,7 @@ struct MemberRow: View {
             VStack(alignment: .leading, spacing: DS.Space.xxs) {
                 HStack(spacing: DS.Space.xs) {
                     Text(MemberHub.doubleLine(member))
-                        .font(.subheadline.weight(.medium))
+                        .vkFont(.subheadline, weight: .medium)
                         .foregroundStyle(DS.Palette.text)
                     rolePill
                     if dup != nil {
@@ -466,7 +466,7 @@ struct MemberRow: View {
                     a.owns > 0 ? "名下 " + String(a.owns) + " 条" : ""]
             .filter { !$0.isEmpty }
         return Text(bits.isEmpty ? "暂无台账凭证" : bits.joined(separator: " · "))
-            .font(.caption)
+            .vkFont(.caption)
             .foregroundStyle(DS.Palette.textSub)
             .fixedSize(horizontal: false, vertical: true)
             // 262 久未用的行整体压暗一档: 只靠右侧"久未用"小字, 扫描名单时视线抓不到
@@ -476,7 +476,7 @@ struct MemberRow: View {
     private var staleTag: some View {
         let stale = MemberHub.activity(member.id).stale
         return Text(stale ? "久未用" : "活跃 (约)")
-            .font(.caption2)
+            .vkFont(.caption2)
             .foregroundStyle(stale ? DS.Palette.textSub : DS.Palette.ok)
             .lineLimit(1)
             .fixedSize(horizontal: false, vertical: true)
@@ -575,14 +575,14 @@ struct MemberAvatar: View {
                 .strokeBorder(base.opacity(0.5), lineWidth: 1)
             if !e.emoji.isEmpty {
                 Text(e.emoji)
-                    .font(.title3)
+                    .vkFont(.title3)
             } else if member.id == MemberHub.visitorId {
                 Image(systemName: "person.badge.clock")
                     .font(.system(size: size * 0.42))
                     .foregroundStyle(base)
             } else {
                 Text(ch.isEmpty ? "员" : ch)
-                    .font(.headline)
+                    .vkFont(.headline)
                     .foregroundStyle(base)
             }
         }
@@ -610,7 +610,7 @@ struct MemberDetail360View: View {
             List {
                 if let line = MemberHub.weekSentence(m.id) {
                     Section { Label(line, systemImage: "calendar.badge.clock")
-                        .font(.footnote).foregroundStyle(DS.Palette.text)
+                        .vkFont(.footnote).foregroundStyle(DS.Palette.text)
                         .fixedSize(horizontal: false, vertical: true) }
                 }
                 archiveSection(m)
@@ -668,10 +668,10 @@ struct MemberDetail360View: View {
                     MemberAvatar(member: m, size: 44)
                     VStack(alignment: .leading, spacing: DS.Space.xxs) {
                         Text(MemberHub.display(m))
-                            .font(.title3.weight(.semibold))
+                            .vkFont(.title3, weight: .semibold)
                             .foregroundStyle(DS.Palette.text)
                         Text(MemberHub.roleLabel(e.role) + (m.relation.isEmpty ? "" : " · " + m.relation))
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                     }
                     Spacer(minLength: 0)
@@ -680,7 +680,7 @@ struct MemberDetail360View: View {
                 // 465 紧急联系行 (纯本地)
                 LabeledContent("紧急联系") {   // 465 紧急联系
                     Text(e.emergency.isEmpty ? "未填" : e.emergency)
-                        .font(.subheadline)
+                        .vkFont(.subheadline)
                         .foregroundStyle(DS.Palette.textSub)
                 }
                 // 464 常用锁
@@ -688,7 +688,7 @@ struct MemberDetail360View: View {
                     LabeledContent("常用锁") {   // 464 常用锁
                         let names = e.commonLocks.map { LockArchive.displayName(DB.keychain($0) ?? Keychain(mac: $0, skey: "")) }
                         Text(names.joined(separator: "、"))
-                            .font(.subheadline)
+                            .vkFont(.subheadline)
                             .foregroundStyle(DS.Palette.textSub)
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
@@ -698,7 +698,7 @@ struct MemberDetail360View: View {
                 if let bd = Milestones.memberBirthdays()[m.id] {
                     LabeledContent("生日") {   // 485 生日
                         Text(bd + " · 提前一天提醒")
-                            .font(.subheadline)
+                            .vkFont(.subheadline)
                             .foregroundStyle(DS.Palette.textSub)
                     }
                 }
@@ -706,7 +706,7 @@ struct MemberDetail360View: View {
                 // 那一位还没挑的照实读作"未选角标", 两种状态都是本机台账的原话。
                 LabeledContent("角标") {   // 994 角标
                     Text(corner.map { "已选「\($0.title)」" } ?? "未选角标")
-                        .font(.subheadline)
+                        .vkFont(.subheadline)
                         .foregroundStyle(corner == nil ? DS.Palette.textSub : DS.Palette.text)
                 }
                 // 994 指路行: 选与撤的真实入口在「设置 → 成员管理」那张列表的长按菜单里
@@ -714,14 +714,14 @@ struct MemberDetail360View: View {
                 // 徽章选择器全 App 保持一处实现, 两处写迟早一处改了另一处走偏。
                 // 文案随状态分两路: 已选的说"改选/撤下", 未选的说"怎么挑", 各自只说自己那一份。
                 Text(cornerHint)
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 // 480 孩子码关怀文案 (家长视角)
                 if !e.careText.isEmpty {
                     LabeledContent("关怀语") {   // 480 关怀语
                         Text(e.careText)
-                            .font(.subheadline)
+                            .vkFont(.subheadline)
                             .foregroundStyle(DS.Palette.accentText)
                     }
                 }
@@ -757,12 +757,12 @@ struct MemberDetail360View: View {
         }
         return Section {
             Text("密码 \(pwdCount) 条 · 指纹 \(fpCount) 条 · 未归属转未分配不在此列")   // 261 密码
-                .font(.subheadline)
+                .vkFont(.subheadline)
                 .foregroundStyle(DS.Palette.text)
             // 261 清单本体: 只有计数没有名目时, 用户没法核对"名下到底有哪几把"
             ForEach(Array(credLines.enumerated()), id: \.offset) { _, line in
                 Text(line)
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
@@ -771,7 +771,7 @@ struct MemberDetail360View: View {
                 HStack(spacing: DS.Space.s) {
                     StatusPill(text: "借用中", systemImage: "person.2.badge.gearshape", tone: .warn)   // 472 借用中
                     Text(line)
-                        .font(.subheadline)
+                        .vkFont(.subheadline)
                         .foregroundStyle(DS.Palette.textSub)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
@@ -782,7 +782,7 @@ struct MemberDetail360View: View {
                 showBorrow = true
             } label: {
                 Label("借用登记", systemImage: "person.2.badge.plus")   // 472 借用登记
-                    .font(.subheadline)
+                    .vkFont(.subheadline)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .frame(minHeight: DS.Hit.min)
                     .contentShape(Rectangle())
@@ -801,21 +801,21 @@ struct MemberDetail360View: View {
             ForEach(Array(rows.enumerated()), id: \.offset) { _, r in
                 HStack(spacing: DS.Space.s) {
                     Text(String(r.time.prefix(10)))
-                        .font(.caption.monospacedDigit())
+                        .vkFont(.caption.monospacedDigit())
                         .foregroundStyle(DS.Palette.textSub)
                     Text(r.text)
-                        .font(.subheadline)
+                        .vkFont(.subheadline)
                         .foregroundStyle(DS.Palette.text)
                     Spacer(minLength: 0)
                     Text("约")
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                 }
                 .accessibilityElement(children: .combine)
             }
             if rows.isEmpty {
                 Text("还没有可证明归属的开门记录 (台账积累中, 属正常)。")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -831,11 +831,11 @@ struct MemberDetail360View: View {
             ForEach(Array(rows.enumerated()), id: \.offset) { _, r in
                 HStack(spacing: DS.Space.s) {
                     Text(SensitiveLedger.stamp(r))
-                        .font(.caption.monospacedDigit())
+                        .vkFont(.caption.monospacedDigit())
                         .foregroundStyle(DS.Palette.textSub)
                     VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                        Text(r.kind).font(.subheadline)
-                        Text(r.target).font(.caption).foregroundStyle(DS.Palette.textSub)
+                        Text(r.kind).vkFont(.subheadline)
+                        Text(r.target).vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                     }
                     Spacer(minLength: 0)
                 }
@@ -843,7 +843,7 @@ struct MemberDetail360View: View {
             }
             if rows.isEmpty {
                 Text("还没有停用记录。停用凭证时勾「写入该成员动态」才会写进这里；不勾只在敏感操作流水里留一条汇总，不落到个人档案。")   // 367 还没有停用记录
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -869,11 +869,11 @@ struct MemberDetail360View: View {
     private func sourceCell(_ label: String, _ n: Int) -> some View {
         VStack(spacing: DS.Space.xs) {
             Text(String(n))
-                .font(.title3.weight(.semibold))
+                .vkFont(.title3, weight: .semibold)
                 .monospacedDigit()
                 .foregroundStyle(DS.Palette.accentText)
             Text(label)
-                .font(.caption2)
+                .vkFont(.caption2)
                 .foregroundStyle(DS.Palette.textSub)
         }
         .frame(maxWidth: .infinity)
@@ -888,7 +888,7 @@ struct MemberDetail360View: View {
             if edges.isEmpty {
                 Text("暂无「谁创建给谁」的凭证关系 — 这一张图只画得出本机版本历史里留得下那一手移交的凭证。"   // 476 暂无
                      + "在凭证页批量移交之后, 这里就画出 创建人→使用人。")   // 349 在凭证页批量移交
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -900,12 +900,12 @@ struct MemberDetail360View: View {
                         .foregroundStyle(DS.Palette.accentText)
                         .accessibilityHidden(true)
                     Text(e.peer)
-                        .font(.subheadline)
+                        .vkFont(.subheadline)
                         .foregroundStyle(DS.Palette.text)
                         .lineLimit(1)
                     Spacer(minLength: 0)
                     Text(e.label)
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .lineLimit(1)
                 }
@@ -919,7 +919,7 @@ struct MemberDetail360View: View {
             // 所以这里说的"移交之后会画出来"是真的会画出来 —— 原先判的是另一个字符串, 这一栏恒为占位句。
             Text("箭头方向: 右 = TA 移交出去 (对端是现在的持有人), 左 = 别人移交给 TA (对端是上一手)。"
                  + "两端都取版本历史里那条「移交 → 使用人」注记与它前一版的归属; 查不到上一手就不画, 不编一个名字顶上。")
-                .font(.caption2)
+                .vkFont(.caption2)
                 .foregroundStyle(DS.Palette.textSub)
         }
     }
@@ -931,7 +931,7 @@ struct MemberDetail360View: View {
             // 470 这一档真收 UI 的地方之一: 「管凭证」为禁用的角色 (访客) 不出现这枚代管开关,
             // 并且把"为什么这里少了一枚"写在原地 —— 收起来却不说明, 就是本仓反复犯的无声忽略。
             if MemberHub.permAllows(role, "管凭证") {
-                Toggle("由我代管 (TA 名下凭证被单条停用时, 便签补一句 管理员代操作)", isOn: Binding(
+                VariantToggle("由我代管 (TA 名下凭证被单条停用时, 便签补一句 管理员代操作)", isOn: Binding(
                     get: { MemberHub.ext(m.id).proxy },
                     set: { v in
                         var ext = MemberHub.ext(m.id); ext.proxy = v
@@ -941,14 +941,14 @@ struct MemberDetail360View: View {
                 .fixedSize(horizontal: false, vertical: true)
             } else {
                 Text("角色是「" + MemberHub.roleLabel(role) + "」: 矩阵里「管凭证」为禁用, 所以这一档不给代管开关。")   // 468/470 矩阵里
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
             if MemberHub.dutyThisWeek == m.id {
                 StatusPill(text: "本周主责", systemImage: "calendar.badge.clock", tone: .accent)
             }
-            Toggle("设为本周主责", isOn: Binding(   // 481 设为本周主责
+            VariantToggle("设为本周主责", isOn: Binding(   // 481 设为本周主责
                 get: { MemberHub.dutyThisWeek == m.id },
                 set: { v in
                     MemberHub.setDuty(v ? m.id : nil)
@@ -958,7 +958,7 @@ struct MemberDetail360View: View {
             if MemberHub.proxyNames.contains(m.id) {
                 Text("代管中: 在凭证页对 TA 名下凭证做单条停用时, 那一行的停用便签会写上 管理员代操作; "   // 468 代管中
                      + "家庭会议摘要也点名代管中的成员。锁端没有代操作这一位, 这句标注只落本机。")   // 482 家庭会议摘要
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -1003,21 +1003,21 @@ struct MemberDetail360View: View {
                  + "「成员管理」这一行决定能不能被指成紧急管理员 (就在下面)。不给的那一枚会就地写明为什么少。"
                  + "边界: 锁端没有角色字段, 备份包也不带角色 —— 这三档不改任何发往门锁的字节; "
                  + "角色与代管会被写进成员名册那张 vcf 的备注行。")   // 415 角色与代管会被写进成
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             // 469 的真读点之一: 这一页把"谁被指成了紧急管理员"写在明面上。
             // 原先这个位只有 Toggle 的 set、全仓零读取方, 界面却承诺"救援码说明与其绑定" —— 那句已按实情收窄。
             LabeledContent("紧急管理员") {   // 469 紧急管理员
                 Text(admins.isEmpty ? "未指定" : admins.map { MemberHub.display($0) }.joined(separator: "、"))
-                    .font(.subheadline)
+                    .vkFont(.subheadline)
                     .foregroundStyle(admins.isEmpty ? DS.Palette.textSub : DS.Palette.accentText)
                     .lineLimit(2)
                     .multilineTextAlignment(.trailing)
                     .fixedSize(horizontal: false, vertical: true)
             }
             if MemberHub.permAllows(role, "成员管理") {
-                Toggle("把 Ta 设为紧急管理员 (本机点名档)", isOn: Binding(
+                VariantToggle("把 Ta 设为紧急管理员 (本机点名档)", isOn: Binding(
                     get: { MemberHub.ext(m.id).emergencyAdmin },
                     set: { v in
                         var ext = MemberHub.ext(m.id); ext.emergencyAdmin = v
@@ -1027,12 +1027,12 @@ struct MemberDetail360View: View {
                 .fixedSize(horizontal: false, vertical: true)
                 Text("这一档的作用是把人点出来: 上面那一行与家庭会议摘要都会写上 Ta 的名字, 免得只剩一个人管钥匙。"
                      + "救援码本身仍在 设置-安全 里生成, 那段说明目前不读这份名单 —— 两者今天没有绑定关系。")
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             } else {
                 Text("角色是「" + MemberHub.roleLabel(role) + "」: 矩阵里「成员管理」这一行是禁用, 所以这一档不给指成紧急管理员 (收的就是本机 UI)。要给它, 先把角色改成主理人。")
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -1059,14 +1059,14 @@ struct MemberDetail360View: View {
         let cantText: String = cant.isEmpty ? "没有" : cant.joined(separator: "、")
         return VStack(alignment: .leading, spacing: DS.Space.xxs) {
             Text(MemberHub.roleLabel(r) + (r == current ? " · 当前所选" : ""))
-                .font(.caption.weight(.semibold))
+                .vkFont(.caption, weight: .semibold)
                 .foregroundStyle(r == current ? DS.Palette.accentText : DS.Palette.text)
             Text("能：" + canText + "　不能：" + cantText)
-                .font(.caption2)
+                .vkFont(.caption2)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             Text(scene)
-                .font(.caption2)
+                .vkFont(.caption2)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -1222,19 +1222,19 @@ struct MemberWizardView: View {
                         TextField("备注名 (记录条目显示 称呼（备注）)", text: $remark)
                             .autocorrectionDisabled()
                     default:
-                        Toggle("顺路建 10 分钟临时码 (末步)", isOn: $makePwd)
+                        VariantToggle("顺路建 10 分钟临时码 (末步)", isOn: $makePwd)
                             .fixedSize(horizontal: false, vertical: true)
                         if makePwd {
                             TextField("6~8 位数字 (下发到当前锁)", text: $pwd)
                                 .keyboardType(.numberPad)
                             Text("归属自动记为 TA; 不建也行, 稍后在凭证页添加。")
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         // 463: 建档流程内直达指纹录入 (与临时码同格), 录完回凭证页可指归属
                         NavigationLink("录指纹后到凭证页指归属") { StartAddFpView(embedded: true) }   // 463 录指纹后到凭证页指归
-                            .font(.footnote)
+                            .vkFont(.footnote)
                     }
                 }
                 if step < 2 {
@@ -1250,7 +1250,7 @@ struct MemberWizardView: View {
                             DS.Haptics.tick.impactOccurred()
                         } label: {
                             Text("下一步")
-                                .font(.subheadline.weight(.medium))
+                                .vkFont(.subheadline, weight: .medium)
                                 .foregroundStyle(DS.Palette.accentText)
                                 .frame(maxWidth: .infinity, alignment: .trailing)
                                 .frame(minHeight: DS.Hit.min)
@@ -1358,7 +1358,7 @@ struct MergeMembersView: View {
                     HStack(spacing: DS.Space.s) {
                         MemberAvatar(member: primary, size: 28)
                         Text(MemberHub.display(primary))
-                            .font(.subheadline)
+                            .vkFont(.subheadline)
                             .foregroundStyle(DS.Palette.text)
                         Spacer(minLength: 0)
                     }
@@ -1373,7 +1373,7 @@ struct MergeMembersView: View {
                     .pickerStyle(.inline)
                     if secondaryID == nil {
                         Text("没有同名成员。若只是称呼重复, 请在成员页重命名其一。")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -1455,7 +1455,7 @@ struct MemberExitWizard: View {
                 if items.isEmpty {
                     Section {
                         Text("该成员名下没有台账凭证, 直接归档即可。")   // 460/795 该成员名下没有台账凭
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                     }
                 } else {
@@ -1463,7 +1463,7 @@ struct MemberExitWizard: View {
                         ForEach(items) { it in
                             HStack(spacing: DS.Space.s) {
                                 Text(it.label)
-                                    .font(.subheadline)
+                                    .vkFont(.subheadline)
                                     .foregroundStyle(DS.Palette.text)
                                     .lineLimit(1)
                                     .minimumScaleFactor(0.8)
@@ -1608,7 +1608,7 @@ struct BorrowSheetView: View {
                         .autocorrectionDisabled()
                     Button { register() } label: {
                         Label("登记", systemImage: "person.2.badge.plus")
-                            .font(.subheadline)
+                            .vkFont(.subheadline)
                             .foregroundStyle(DS.Palette.accentText)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .frame(minHeight: DS.Hit.min)
@@ -1630,10 +1630,10 @@ struct BorrowSheetView: View {
                         if let b = borrowMap[k] {
                         HStack(spacing: DS.Space.s) {
                             Text(k.hasPrefix("b") ? "凭证明细见凭证页" : k)
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                             Text("借给 " + b.by + " · 还 " + b.due)
-                                .font(.subheadline)
+                                .vkFont(.subheadline)
                                 .foregroundStyle(DS.Palette.text)
                             Spacer(minLength: 0)
                             Button("已归还") {
@@ -1650,7 +1650,7 @@ struct BorrowSheetView: View {
                     }
                     if borrowMap.isEmpty {
                         Text("没有进行中的借用。")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                     }
                 }
@@ -1708,11 +1708,11 @@ struct MemberArchivedView: View {
                     } label: {
                         VStack(alignment: .leading, spacing: DS.Space.xxs) {
                             Text(MemberHub.display(m))
-                                .font(.subheadline)
+                                .vkFont(.subheadline)
                                 .foregroundStyle(DS.Palette.text)
                             Text("归档中 · 只从成员列表与成员统计里收起; 记录页仍能筛到 TA, "
                                  + "凭证页也仍列 TA 名下凭证 —— 归档不许挡撤权入口。")   // 460/795 凭证页也仍列
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -1720,7 +1720,7 @@ struct MemberArchivedView: View {
                 }
                 if archived.isEmpty {
                     Text("归档列表为空 — 成员归档后历史不蒸发。")   // 795 归档列表为空
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                 }
             }
@@ -1804,32 +1804,32 @@ struct MemberFamilySettingsView: View {
                 // 479/486 长辈模式的两个落点都写在下面那段话里: 479 = 凭证页大字高对比 (凭证页行上),
                 // 486 = 临时码完成页收成口述卡 (CredentialStudio.doneCard)。开关本身只写 MemberHub.elderMode。
                 Section("长辈模式") {   // 479/486 长辈模式
-                    Toggle("长辈模式 (凭证页大字高对比、只留密码/指纹两组 · 临时码完成页收成口述卡)", isOn: $elder)
+                    VariantToggle("长辈模式 (凭证页大字高对比、只留密码/指纹两组 · 临时码完成页收成口述卡)", isOn: $elder)
                         .fixedSize(horizontal: false, vertical: true)
                     if elder {
                         Text("凭证页: 分段只留 全部/密码/指纹, 批量与导出入口收起, 组尾那条过期清理也不出现; "
                              + "凭证行标题升到标题级、副行升到正文档, 副行文字改用主文本色 —— 大字与高对比就落在这两处。"   // 479 凭证行标题升到标题级
                              + "这一档只动凭证页与临时码完成页, 其它页面不跟着变。")
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                         Text("临时码完成页: 开这一档后完成页只留大字号口述卡 + 一枚大「完成」, "   // 486 临时码完成页
                              // 329 一句话口令
                              // 333 一句话口令
                              + "一句话口令 / 首用回执 / 再发一张 那几段收起并在原地说明; 页标题也切到「口述卡」。")
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
                 Section("隐私浏览") {   // 794 隐私浏览
-                    Toggle("隐私浏览 (限时 10 分钟: 写隐私时段标记, 本页回显剩余时间)", isOn: $privacy)
+                    VariantToggle("隐私浏览 (限时 10 分钟: 写隐私时段标记, 本页回显剩余时间)", isOn: $privacy)
                         .fixedSize(horizontal: false, vertical: true)
                     if privacy {
                         Text(privacyLeft > 0
                              ? "剩余 \(privacyLeft) 秒后自动关闭"
                              : "开启后 10 分钟自动关闭; 当前只写隐私时段标记并在本页回显, 不改统计口径")   // 794 开启后
-                            .font(.caption)
+                            .vkFont(.caption)
                             .monospacedDigit()
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
@@ -1903,10 +1903,10 @@ struct UnclaimedClaimView: View {
                         VStack(alignment: .leading, spacing: DS.Space.xs) {
                             HStack(spacing: DS.Space.s) {
                                 Text(String(r.time.prefix(16)))
-                                    .font(.caption.monospacedDigit())
+                                    .vkFont(.caption.monospacedDigit())
                                     .foregroundStyle(DS.Palette.textSub)
                                 Text(r.kindWord + " (未归属, 台账推断)")
-                                    .font(.subheadline)
+                                    .vkFont(.subheadline)
                                     .foregroundStyle(DS.Palette.textSub)
                                     .fixedSize(horizontal: false, vertical: true)
                                 Spacer(minLength: 0)
@@ -1925,7 +1925,7 @@ struct UnclaimedClaimView: View {
                     }
                     if unclaimed.isEmpty {
                         Text("没有未归属的开门记录 (归属只算可证明的, 推不出就进这里认领)。")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                     }
                 } header: {
@@ -1943,7 +1943,7 @@ struct UnclaimedClaimView: View {
                         dismiss()
                     } label: {
                         Label("认领所选 (\(selMember.count))", systemImage: "checkmark.seal")
-                            .font(.subheadline)
+                            .vkFont(.subheadline)
                             .foregroundStyle(DS.Palette.accentText)
                             .frame(maxWidth: .infinity)
                             .frame(minHeight: DS.Hit.min)
@@ -1992,11 +1992,11 @@ struct MemberActiveTable: View {
                                 MemberAvatar(member: r.m)
                                 VStack(alignment: .leading, spacing: DS.Space.xxs) {
                                     Text(MemberHub.display(r.m))
-                                        .font(.subheadline)
+                                        .vkFont(.subheadline)
                                         .foregroundStyle(DS.Palette.text)
                                     Text("本月约 \(r.a.month) 次 · 名下 \(r.a.owns) 条 · 最近 "
                                          + (r.a.last.isEmpty ? "—" : String(r.a.last.prefix(10))))
-                                        .font(.caption)
+                                        .vkFont(.caption)
                                         .foregroundStyle(DS.Palette.textSub)
                                         .lineLimit(1)
                                         .minimumScaleFactor(0.8)
@@ -2017,7 +2017,7 @@ struct MemberActiveTable: View {
                         Text(arch > 0
                             ? "在册成员是空的 — 本机有 \(arch) 位归档成员，回成员中心点「归档成员」那一栏找回。"   // 788 在册成员是空的
                             : "还没有成员 — 在 成员中心 走建档向导。")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -2123,7 +2123,7 @@ struct MemberStackedView: View {
         VStack(spacing: 0) {
             if stack.isEmpty {
                 Text("近 30 天还没有可证明归属的开门数据, 积累后这里会出按人堆叠的图 (约级口径)。")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .padding(DS.Space.l)
                     .fixedSize(horizontal: false, vertical: true)
@@ -2144,7 +2144,7 @@ struct MemberStackedView: View {
                 ForEach(Set(stack.map(\.who)).sorted(), id: \.self) { w in
                     NavigationLink { MemberDetail360View(memberID: w) } label: {
                         Label(DB.member(w).map(MemberHub.display) ?? w, systemImage: "person.circle")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.accentText)
                     }
                     .frame(minHeight: DS.Hit.min)
@@ -2156,10 +2156,10 @@ struct MemberStackedView: View {
                     ForEach(rotations.prefix(5), id: \.label) { r in
                         VStack(alignment: .leading, spacing: DS.Space.xxs) {
                             Text(r.label)
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                             Text(r.detail)
-                                .font(.subheadline)
+                                .vkFont(.subheadline)
                                 .foregroundStyle(DS.Palette.text)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -2219,7 +2219,7 @@ struct MemberMeetingSheet: View {
             VStack(alignment: .leading, spacing: DS.Space.m) {
                 ScrollView {
                     Text(text)
-                        .font(.subheadline)
+                        .vkFont(.subheadline)
                         .foregroundStyle(DS.Palette.text)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(DS.Space.l)
@@ -2235,7 +2235,7 @@ struct MemberMeetingSheet: View {
                     } label: {
                         Label(copied ? "已复制" : "复制会议材料",
                               systemImage: copied ? "checkmark.circle.fill" : "doc.on.doc")
-                            .font(.subheadline.weight(.medium))
+                            .vkFont(.subheadline, weight: .medium)
                             .foregroundStyle(DS.Palette.accentText)
                             .frame(maxWidth: .infinity)
                             .frame(minHeight: DS.Hit.min)
@@ -2285,7 +2285,7 @@ struct FamilyNoteView: View {
                 .autocorrectionDisabled()
                 .lineLimit(2)
             Text("便签存在本机, 绑在成员身上, 设备页 Hero 卡下方浮动显示。")   // 475 便签存在本机
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             HStack(spacing: DS.Space.s) {
@@ -2345,7 +2345,7 @@ struct HouseCleaningPresetView: View {
                     TextField("标签", text: $label)
                         .autocorrectionDisabled()
                     Text("协议未定义循环时段, 预设只生成一段整窗; 工作日 8:00-18:00 每日循环需锁端支持, 暂不做。")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -2362,7 +2362,7 @@ struct HouseCleaningPresetView: View {
                         LabeledRow("标签", cur.label.isEmpty ? "(无)" : cur.label)
                         LabeledRow("整窗", cur.from + " → " + cur.to)
                         Text("每把锁只留最近一段 (再次生成会覆盖)。这条登记不产生锁端命令, 家政人员用自带钥匙进出。")
-                            .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                            .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }

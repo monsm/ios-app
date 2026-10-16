@@ -46,11 +46,11 @@ struct BatteryStripCard: View {
                                 // 两处各写各的早晚漂 (2026-10-15 走查)。无障碍那行仍念精确百分比, 那是有意的:
                                 // 屏上省略是为"80 以上都算充足"这个判据服务, 念出来时给准数更有用。
                                 Text(BatteryCare.faceText(item.pct))
-                                    .font(.caption2.weight(.medium))
+                                    .vkFont(.caption2, weight: .medium)
                                     .monospacedDigit()
                                     .foregroundStyle(DS.Palette.text)
                                 Text(u.name)
-                                    .font(.caption2)
+                                    .vkFont(.caption2)
                                     .foregroundStyle(DS.Palette.textSub)
                                     .lineLimit(1)
                                     .minimumScaleFactor(0.8)
@@ -65,7 +65,7 @@ struct BatteryStripCard: View {
                     }
                 }
                 Text("趋势曲线积累中 — 每次连接门锁自动记录一个电量采样点, 存满约一周后可看走势; 换电池指引见锁详情。")
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }

@@ -76,7 +76,7 @@ struct LockOverviewView: View {
                     .padding(.top, 2)
                     .accessibilityHidden(true)
                 Text(LockStats.summary(usages))
-                    .font(.subheadline)
+                    .vkFont(.subheadline)
                     .foregroundStyle(DS.Palette.text)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -109,12 +109,12 @@ struct LockOverviewView: View {
                                     .accessibilityHidden(true)
                                 VStack(alignment: .leading, spacing: DS.Space.xxs) {
                                     Text(item.usage.name)
-                                        .font(.subheadline)
+                                        .vkFont(.subheadline)
                                         .foregroundStyle(DS.Palette.text)
                                         .lineLimit(1)
                                         .minimumScaleFactor(0.85)
                                     Text(item.reasons.joined(separator: " · "))
-                                        .font(.caption)
+                                        .vkFont(.caption)
                                         .foregroundStyle(DS.Palette.warn)
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
@@ -151,7 +151,7 @@ struct LockOverviewView: View {
                 SectionTitle(text: "活跃度 (\(LockStats.windowDays) 天)", count: usages.count)
                 if maxOpens == 0 {
                     Text("近 \(LockStats.windowDays) 天还没有开门记录, 连接门锁读取日志后出榜。")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -164,14 +164,14 @@ struct LockOverviewView: View {
                             HStack(spacing: DS.Space.s) {
                                 VStack(alignment: .leading, spacing: DS.Space.xxs) {
                                     Text(u.name)
-                                        .font(.caption)
+                                        .vkFont(.caption)
                                         .foregroundStyle(DS.Palette.text)
                                         .lineLimit(1)
                                         .minimumScaleFactor(0.8)
                                     if high {
                                         // 778 上浮不虚标: 浮到榜顶的行明写原因
                                         Text("偏高")
-                                            .font(.caption2.weight(.medium))
+                                            .vkFont(.caption2, weight: .medium)
                                             .foregroundStyle(DS.Palette.danger)
                                     }
                                 }
@@ -192,7 +192,7 @@ struct LockOverviewView: View {
                                 .frame(height: 18)
                                 .accessibilityHidden(true)
                                 Text("\(u.opens30d)")
-                                    .font(.caption2)
+                                    .vkFont(.caption2)
                                     .monospacedDigit()
                                     .foregroundStyle(DS.Palette.text)
                                     .frame(width: 34, alignment: .trailing)
@@ -202,7 +202,7 @@ struct LockOverviewView: View {
                                 // 也在行里, 它的 alarms30d 是**没人写过**的 0 —— 原先这一格把 0 念成"无告警"。
                                 // 本仓在图标行那条注释里已经定过口径: 要写"没有读数"而不是"没有告警"。
                                 Text(!u.logged ? "未读数" : (u.alarms30d == 0 ? "无告警" : String(format: "告警 %.0f%%", u.alarmRate * 100)))
-                                    .font(.caption2)
+                                    .vkFont(.caption2)
                                     .monospacedDigit()
                                     .foregroundStyle((!u.logged || u.alarms30d == 0) ? DS.Palette.textSub : (high ? DS.Palette.danger : DS.Palette.warn))
                                     .frame(width: 62, alignment: .trailing)
@@ -217,7 +217,7 @@ struct LockOverviewView: View {
                     .accessibilityHint("点按下钻该锁告警流")   // 778 点按下钻该锁告警流
                 }
                 Text("告警占比 ≥20% 记为偏高并上浮到榜顶; 点任一行下钻该锁告警流。")   // 778 告警占比
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -240,7 +240,7 @@ struct LockOverviewView: View {
                 VStack(alignment: .leading, spacing: DS.Space.s) {
                     SectionTitle(text: "信号", count: usages.count)
                     Text("还没扫到任何锁的蓝牙广播 — 到设备页点一次刷新或靠近门锁, 信号格即现。")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -253,13 +253,13 @@ struct LockOverviewView: View {
                         let lvl = LinkSense.rssiLevel(LinkSense.rssiFor(u.mac))
                         HStack(spacing: DS.Space.s) {
                             Text(u.name)
-                                .font(.subheadline)
+                                .vkFont(.subheadline)
                                 .foregroundStyle(DS.Palette.text)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
                             Spacer(minLength: 0)
                             Text(LinkSense.rssiLabel(lvl))
-                                .font(.caption2)
+                                .vkFont(.caption2)
                                 .foregroundStyle(DS.Palette.textSub)
                             RSSIBars(level: lvl, tint: lvl >= 3 ? DS.Palette.ok : DS.Palette.warn)
                         }
@@ -267,7 +267,7 @@ struct LockOverviewView: View {
                         .accessibilityLabel("\(u.name) 信号" + LinkSense.rssiLabel(lvl))
                     }
                     Text("信号格来自最近一次广播扫描 · 切换前先看看哪把锁在范围内。")   // 71 信号格来自最近一次广
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -285,13 +285,13 @@ struct LockOverviewView: View {
                     Grid(horizontalSpacing: 0, verticalSpacing: 0) {
                         GridRow {
                             Text("成员")
-                                .font(.caption2)
+                                .vkFont(.caption2)
                                 .foregroundStyle(DS.Palette.textSub)
                                 .frame(width: 72, alignment: .leading)
                                 .padding(DS.Space.xs)
                             ForEach(locks, id: \.mac) { u in
                                 Text(u.name)
-                                    .font(.caption2)
+                                    .vkFont(.caption2)
                                     .foregroundStyle(DS.Palette.textSub)
                                     .lineLimit(1)
                                     .minimumScaleFactor(0.7)
@@ -306,7 +306,7 @@ struct LockOverviewView: View {
                                     Circle().fill(Color(hex: UInt32(member.color.dropFirst(1), radix: 16) ?? 0x3D8BFF))
                                         .frame(width: 6, height: 6)
                                     Text(member.name)
-                                        .font(.caption)
+                                        .vkFont(.caption)
                                         .foregroundStyle(DS.Palette.text)
                                         .lineLimit(1)
                                         .minimumScaleFactor(0.7)
@@ -324,7 +324,7 @@ struct LockOverviewView: View {
                                             dismiss()
                                         } label: {
                                             Text("\(n)")
-                                                .font(.caption)
+                                                .vkFont(.caption)
                                                 .monospacedDigit()
                                                 .foregroundStyle(DS.Palette.text)
                                                 .frame(width: 64)
@@ -337,7 +337,7 @@ struct LockOverviewView: View {
                                         .accessibilityHint("点按到记录页按该成员筛选")
                                     } else {
                                         Text("·")
-                                            .font(.caption)
+                                            .vkFont(.caption)
                                             .monospacedDigit()
                                             .foregroundStyle(DS.Palette.textSub)
                                             .frame(width: 64)
@@ -350,7 +350,7 @@ struct LockOverviewView: View {
                     }
                 }
                 Text("格内是归属到该成员的开门次数 (只统计可证明归属; 点数字可到记录页按成员筛选)。")
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 if let top = topCell() {
@@ -360,7 +360,7 @@ struct LockOverviewView: View {
                         dismiss()
                     } label: {
                         Label("看「\(top.member.name)」在「\(top.lockName)」的 \(top.count) 条记录", systemImage: "arrow.right.circle")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .frame(minHeight: DS.Hit.min)
                             .contentShape(Rectangle())
@@ -392,13 +392,13 @@ struct LockOverviewView: View {
                     VStack(alignment: .leading, spacing: DS.Space.xxs) {
                         HStack(spacing: DS.Space.s) {
                             Text(u.name)
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.text)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
                             Spacer(minLength: DS.Space.s)
                             Text(capText(u))
-                                .font(.caption2)
+                                .vkFont(.caption2)
                                 .monospacedDigit()
                                 .foregroundStyle(util >= 0.85 ? DS.Palette.warn : DS.Palette.textSub)
                         }
@@ -416,7 +416,7 @@ struct LockOverviewView: View {
                         }
                         if util >= 0.85, hasKnownCap(u) {
                             Text("接近满载, 建议清理过期凭证")
-                                .font(.caption2)
+                                .vkFont(.caption2)
                                 .foregroundStyle(DS.Palette.warn)
                         }
                     }
@@ -459,18 +459,18 @@ struct LockOverviewView: View {
                             .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: DS.Space.xxs) {
                             Text(u.name)
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.text)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
                             // 769 绑定时间标注
                             Text(boundText(u))
-                                .font(.caption2)
+                                .vkFont(.caption2)
                                 .foregroundStyle(DS.Palette.textSub)
                         }
                         Spacer(minLength: DS.Space.s)
                         Text(u.fw.isEmpty ? "未读到" : "v" + u.fw)
-                            .font(.caption)
+                            .vkFont(.caption)
                             .monospacedDigit()
                             .foregroundStyle(lag.lagging.contains(u.mac) ? DS.Palette.warn : DS.Palette.text)
                         if lag.lagging.contains(u.mac) {

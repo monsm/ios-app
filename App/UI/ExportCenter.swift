@@ -1408,20 +1408,20 @@ struct AlarmShareCardView: View {
                 .foregroundStyle(DS.heroFg)
                 .accessibilityHidden(true)
             Text(rec.typeName)
-                .font(.title2.weight(.semibold))
+                .vkFont(.title2, weight: .semibold)
                 .foregroundStyle(DS.heroFg)
                 .fixedSize(horizontal: false, vertical: true)
             Text(name)
-                .font(.subheadline)
+                .vkFont(.subheadline)
                 .foregroundStyle(DS.heroFg.opacity(0.85))
                 .lineLimit(1)
             Text(rec.time)
-                .font(.footnote)
+                .vkFont(.footnote)
                 .foregroundStyle(DS.heroFg.opacity(0.7))
                 .lineLimit(1)
             Spacer()
             Text("离线锁管家 · 单条告警 · 仅含本条数据")
-                .font(.caption2)
+                .vkFont(.caption2)
                 .foregroundStyle(DS.heroFg.opacity(0.7))
         }
         .padding(DS.Space.xl)
@@ -1440,16 +1440,16 @@ struct RecordShareCardView: View {
                 .foregroundStyle(DS.heroFg)
                 .accessibilityHidden(true)
             Text(rec.typeName)
-                .font(.title2.weight(.semibold))
+                .vkFont(.title2, weight: .semibold)
                 .foregroundStyle(DS.heroFg)
                 .fixedSize(horizontal: false, vertical: true)
             Text((rec.member.isEmpty ? name : name + " · " + rec.member) + " · " + rec.time)
-                .font(.subheadline)
+                .vkFont(.subheadline)
                 .foregroundStyle(DS.heroFg.opacity(0.85))
                 .fixedSize(horizontal: false, vertical: true)
             Spacer()
             Text("离线锁管家 · 单条记录 · 仅含本条数据")
-                .font(.caption2)
+                .vkFont(.caption2)
                 .foregroundStyle(DS.heroFg.opacity(0.7))
         }
         .padding(DS.Space.xl)
@@ -1495,16 +1495,16 @@ struct ExportCenterView: View {
                 if !progress.failed.isEmpty {
                     Section {
                         Label(progress.failed, systemImage: "xmark.circle")
-                            .font(.subheadline)
+                            .vkFont(.subheadline)
                             .foregroundStyle(DS.Palette.danger)
                         Text(progress.failed == "生成失败" ? "多为记录为空或空间不足, 重试或稍后再试。" : "已停止生成, 数据未离开本机。")
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                         // 719 重试: 重放上次起点的闭包 (取消不重试 —— 取消是用户的决定, 不是失败)
                         if progress.failed != "已取消" {
                             Button("重试") { progress.retry() }   // 719 重试
-                                .font(.subheadline)
+                                .vkFont(.subheadline)
                                 .foregroundStyle(DS.Palette.accentText)
                                 .frame(minHeight: DS.Hit.min)
                                 .contentShape(Rectangle())
@@ -1566,7 +1566,7 @@ struct ExportCenterView: View {
             // (SwiftUI 的 disabled 是沿树向下传播的, 子级写 false 压不住祖先的 true), 也不改任何行为。
             // 删掉, 免得下一个读代码的人以为"这里本来有个禁用条件, 后来被关掉了"。
             Text("导出与分享会让文件离开本机 (AirPrint/照片/聊天由你选)。生成过程纯本地, 不经过任何网络。")
-                .font(.footnote)
+                .vkFont(.footnote)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -1578,7 +1578,7 @@ struct ExportCenterView: View {
     private var colsSection: some View {
         Section {
             ForEach(0..<6, id: \.self) { i in
-                Toggle(ExportHeaders.zh[i], isOn: Binding(
+                VariantToggle(ExportHeaders.zh[i], isOn: Binding(
                     get: { cols.get(i) },
                     set: { cols.set(i, $0); ExportCols.save(cols) }))
             }
@@ -1586,15 +1586,15 @@ struct ExportCenterView: View {
             Text("列选择")   // 690 列选择
         } footer: {
             Text("勾选即含; 凭证/原始hex 列默认不含, 上次选择会沿用。")
-                .font(.caption)
+                .vkFont(.caption)
         }
     }
 
     private var redactSection: some View {
         Section {
-            Toggle("脱敏导出", isOn: $redact)   // 548 脱敏导出
+            VariantToggle("脱敏导出", isOn: $redact)   // 548 脱敏导出
             Text("脱敏与格式独立: 关时 JSON 含原始 hex、日志不掩码; 开时 JSON 的 hex 列留空、日志导出把连续数字掩码。")
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -1608,7 +1608,7 @@ struct ExportCenterView: View {
             Button { startPDF() } label: { Label("月度 PDF 报告", systemImage: "doc.text") }   // 685 月度
             VStack(alignment: .leading, spacing: DS.Space.xs) {
                 Label("运行日志", systemImage: "text.alignleft")   // 548 运行日志
-                    .font(.body)
+                    .vkFont(.body)
                     .foregroundStyle(DS.Palette.text)
                 Picker("格式", selection: $logFormat) {
                     Text("CSV").tag("csv")
@@ -1618,7 +1618,7 @@ struct ExportCenterView: View {
                 .pickerStyle(.menu)
                 .frame(minHeight: DS.Hit.min)
                 Button("生成运行日志导出") { startRunLog() }
-                    .font(.subheadline)
+                    .vkFont(.subheadline)
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
                     .contentShape(Rectangle())
@@ -1645,7 +1645,7 @@ struct ExportCenterView: View {
             SecureField("加密口令 (至少 6 位)", text: $zipPw)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
-                .font(.footnote)
+                .vkFont(.footnote)
             Button { startEncryptedZip() } label: { Label("加密压缩导出", systemImage: "lock.doc") }   // 691 加密压缩导出
                 .disabled(zipPw.trimmingCharacters(in: .whitespaces).count < 6)
             Button { printMonthly() } label: { Label("打印月度记录", systemImage: "printer") }   // 687/701 打印月度记录
@@ -1701,12 +1701,12 @@ struct ExportCenterView: View {
             HStack(spacing: DS.Space.s) {
                 ProgressView()
                 Text(progress.step.isEmpty ? "处理中…" : progress.step)
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
                 Button("取消") { progress.cancel() }
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
                     .contentShape(Rectangle())
@@ -1720,24 +1720,24 @@ struct ExportCenterView: View {
         Section {
             if lastSuccess {
                 Label(item.fileName, systemImage: "checkmark.circle.fill")
-                    .font(.subheadline)
+                    .vkFont(.subheadline)
                     .foregroundStyle(DS.Palette.ok)
                     // 719 完成动效: 成功态出现时轻弹 (由调用处的 .animation(value: lastSuccess) 驱动)
                     .transition(.scale(scale: 0.7).combined(with: .opacity))
             } else {
                 Label(item.fileName, systemImage: "circle.fill")
-                    .font(.subheadline)
+                    .vkFont(.subheadline)
             }
             if !item.previewText.isEmpty {
                 Text(item.previewText)
-                    .font(.caption.monospaced())
+                    .vkFont(.caption.monospaced())
                     .foregroundStyle(DS.Palette.textSub)
                     .textSelection(.enabled)
                     .fixedSize(horizontal: false, vertical: true)
                     .lineLimit(8)
             }
             Text("SHA-256: " + item.sha256)
-                .font(.caption.monospaced())
+                .vkFont(.caption.monospaced())
                 .foregroundStyle(DS.Palette.textSub)
                 .lineLimit(2)
             if !item.images.isEmpty {
@@ -1750,7 +1750,7 @@ struct ExportCenterView: View {
                             .frame(maxHeight: 80)
                             .clipped()
                         Text("第 \(i + 1)/\(item.images.count) 张")
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                         Spacer(minLength: 0)
                     }
@@ -1781,7 +1781,7 @@ struct ExportCenterView: View {
             }
         } footer: {
             Text("分享/打印/存照片都会让数据离开本机; 生成本身纯本地。")
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -1832,28 +1832,28 @@ struct ExportCenterView: View {
                         // 710 CoreImage 这一趟没回图 (与 753 同一处置): 载荷原文顶同一份内容
                         Label("二维码这次没出成图, 下面那段载荷文本与码是同一份内容, 扫码核对照常用。",
                               systemImage: "qrcode")
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.warn)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     LabeledRow("行数", String(c.rows) + " 行")   // 710 行数
                     Text("摘要: " + c.digest)
-                        .font(.caption.monospaced())
+                        .vkFont(.caption.monospaced())
                         .foregroundStyle(DS.Palette.textSub)
                         .textSelection(.enabled)
                         .fixedSize(horizontal: false, vertical: true)
                     Text(c.payload)
-                        .font(.caption.monospaced())
+                        .vkFont(.caption.monospaced())
                         .foregroundStyle(DS.Palette.textSub)
                         .textSelection(.enabled)
                         .fixedSize(horizontal: false, vertical: true)
                     Text(ReportVerify.tierText(c))
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                     Text("这张码代表的是「本页上方所选范围的数据, 在本机重算出的指纹」(行数 + SHA-256 摘要)。"
                          + "扫码核对做的是: 把这份码记的指纹与本机当前数据重算的结果比一比 —— 报告文件分享出去后就不在本机了, 它自身的真伪在这一步之外。")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -1865,7 +1865,7 @@ struct ExportCenterView: View {
                     .buttonStyle(SecondaryActionStyle(fullWidth: false))
                     .frame(minHeight: DS.Hit.min)
                     Button("重算本机指纹") { loadVerifyCode() }
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.accentText)
                         .frame(minHeight: DS.Hit.min)
                         .contentShape(Rectangle())
@@ -1873,7 +1873,7 @@ struct ExportCenterView: View {
                 if let v = verifyVerdict { verifyVerdictBlock(v) }
             } else {
                 Text("正在按本机数据算指纹…")
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
             }
         } header: {
@@ -1882,7 +1882,7 @@ struct ExportCenterView: View {
             Text("摘要口径 (逐行六字段): 时间 / 类型 / 成员 / 是否告警 / 凭证词 / 锁端行键; 行序按报告两章出场序 (告警章在前、明细章在后)。"
                  + "原始 hex、级别字样、处置结论、生成时间与列选择都在口径之外 ⇒ 换勾选不改指纹。"
                  + "相机之外没有任何权限申请, 出图与比对全在本机, 不联网。")
-                .font(.caption2)
+                .vkFont(.caption2)
         }
     }
 
@@ -1891,11 +1891,11 @@ struct ExportCenterView: View {
     private func verifyVerdictBlock(_ v: ReportVerify.Verdict) -> some View {
         VStack(alignment: .leading, spacing: DS.Space.xs) {
             Label(v.title, systemImage: v.icon)
-                .font(.subheadline.weight(.semibold))
+                .vkFont(.subheadline, weight: .semibold)
                 .foregroundStyle(v.tone.color)
             ForEach(v.lines, id: \.self) { line in
                 Text(line)
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -1907,7 +1907,7 @@ struct ExportCenterView: View {
     private var pathSection: some View {
         Section {
             LabeledContent("文件位置", value: lastPath)   // 719 文件位置
-                .font(.caption)
+                .vkFont(.caption)
                 .textSelection(.enabled)
         }
     }
@@ -1917,7 +1917,7 @@ struct ExportCenterView: View {
         if item.kind == "eml" {
             // .eml 走复制文本 (系统邮件应用可读), 不进分享面板
             Text("邮件模板请直接复制内容, 粘贴进系统邮件或备忘录手动发送。")
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         } else if item.kind == "csv" {

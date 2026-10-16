@@ -192,7 +192,7 @@ struct CredentialsView: View {
                         let b = bs[k]!
                         HStack(spacing: DS.Space.xs) {
                             Text("借用 \(k) · 借给 \(b.by) (还 \(b.due))")
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.text)
                                 .lineLimit(1)
                             Button("已归还") {
@@ -200,14 +200,14 @@ struct CredentialsView: View {
                                 refreshTick += 1
                                 app.showToast("已销记归还 " + k)
                             }
-                            .font(.caption.weight(.medium))
+                            .vkFont(.caption, weight: .medium)
                             .foregroundStyle(DS.Palette.accentText)
                             .frame(minHeight: DS.Hit.min)
                             .contentShape(Capsule())
                         }
                         .padding(.horizontal, DS.Space.s)
                         .padding(.vertical, DS.Space.xs)
-                        .background(DS.Palette.warn.opacity(0.12), in: Capsule())
+                        .variantCallout(DS.Palette.warn, .capsule, wash: 0.12)
                         .overlay(Capsule().strokeBorder(DS.Palette.hairline, lineWidth: 0.5))
                     }
                 }
@@ -226,13 +226,13 @@ struct CredentialsView: View {
                     .foregroundStyle(DS.Palette.accentText)
                     .accessibilityHidden(true)
                 Text("已从记录定位到该凭证")   // 577 已从记录定位到该凭证
-                    .font(.footnote.weight(.medium))
+                    .vkFont(.footnote, weight: .medium)
                     .foregroundStyle(DS.Palette.text)
                 Spacer(minLength: 0)
                 Button("关闭") {
                     jumpBarOn = false
                 }
-                .font(.caption.weight(.medium))
+                .vkFont(.caption, weight: .medium)
                 .foregroundStyle(DS.Palette.accentText)
                 .frame(minHeight: DS.Hit.min)
                 .contentShape(Rectangle())
@@ -305,10 +305,10 @@ struct CredentialsView: View {
                         .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("待下发 " + String(q.count) + " 项 · " + LockArchiveLockName)
-                            .font(.footnote.weight(.medium))
+                            .vkFont(.footnote, weight: .medium)
                             .foregroundStyle(DS.Palette.text)
                         Text("到场连接后自动补发, 或进清单逐项重试")   // 510/533/538 到场连接后自动补发
-                            .font(.caption2)
+                            .vkFont(.caption2)
                             .foregroundStyle(DS.Palette.textSub)
                     }
                     Spacer(minLength: 0)
@@ -334,7 +334,7 @@ struct CredentialsView: View {
                     .foregroundStyle(DS.Palette.ok)
                     .accessibilityHidden(true)
                 Text("已同步 " + String(sense.lastReceipt) + " 项变更 — 队列已清空")   // 535 项变更
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.text)
                 Spacer(minLength: 0)
             }
@@ -353,7 +353,7 @@ struct CredentialsView: View {
         VStack(spacing: DS.Space.xs) {
             HStack(spacing: DS.Space.s) {
                 Text("共 \(CredentialOrg.typeCounts(mac).all) 条")
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
@@ -362,7 +362,7 @@ struct CredentialsView: View {
                     Button { showQueue = true } label: {
                         Label("待处理 \(CredentialOrg.pendingQueue(mac).count) 项", systemImage: "arrow.down.circle")
                     }
-                    .font(.caption)
+                    .vkFont(.caption)
                     .tint(DS.Palette.warn)
                     .frame(minHeight: DS.Hit.min)
                     .contentShape(Rectangle())
@@ -439,7 +439,7 @@ struct CredentialsView: View {
                         Image(systemName: "person.2")
                             .font(.system(size: DS.Icon.sm, weight: .medium))
                         Text("按成员")
-                            .font(.caption)
+                            .vkFont(.caption)
                             .lineLimit(1)
                     }
                     .padding(.horizontal, DS.Space.s).padding(.vertical, DS.Space.s)
@@ -468,7 +468,7 @@ struct CredentialsView: View {
                         Image(systemName: "line.3.horizontal.decrease.circle")
                             .font(.system(size: DS.Icon.sm, weight: .medium))
                         Text(smartSel.isEmpty ? "智能筛选" : CredentialOrg.smartLists(mac).first { $0.id == smartSel }?.name ?? "智能筛选")
-                            .font(.caption)
+                            .vkFont(.caption)
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
                     }
@@ -497,10 +497,10 @@ struct CredentialsView: View {
             DS.Haptics.tick.impactOccurred()
         } label: {
             HStack(spacing: DS.Space.xxs) {
-                Text(labels[i]).font(elderOn ? .body.weight(.medium) : .caption.weight(.medium))
+                Text(labels[i]).vkFont(elderOn ? .body.weight(.medium) : .caption.weight(.medium))
                 if c > 0 {
                     Text("\(c)")
-                        .font(elderOn ? .body.weight(.semibold) : .caption2.weight(.semibold))
+                        .vkFont(elderOn ? .body.weight(.semibold) : .caption2.weight(.semibold))
                         .foregroundStyle(on ? DS.Palette.onAccent : DS.Palette.textSub)
                         .padding(.horizontal, DS.Space.xs).padding(.vertical, DS.Space.xxs)
                         .background(on ? DS.Palette.onFillWash.opacity(0.24) : DS.Palette.surfaceAlt, in: Capsule())
@@ -576,14 +576,14 @@ struct CredentialsView: View {
                 HintOnce.mark("806")
                 app.showToast("这张分流卡不会再出现 (可在页里的入口随时添加)")
             }
-            .font(.footnote)
+            .vkFont(.footnote)
             .foregroundStyle(DS.Palette.textSub)
             .frame(minHeight: DS.Hit.min)
         } header: {
             Text("先说清你要哪一种")   // 806 先说清你要哪一种
         } footer: {
             Text("三类都是本机台账 + 一次下发到锁，全程离线。选错了也不会锁死人：随时能改或删。")
-                .font(.caption2)
+                .vkFont(.caption2)
         }
     }
     private func routerRow(_ symbol: String, _ title: String, _ scene: String) -> some View {
@@ -595,10 +595,10 @@ struct CredentialsView: View {
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: DS.Space.xxs) {
                 Text(title)
-                    .font(.subheadline.weight(.medium))
+                    .vkFont(.subheadline, weight: .medium)
                     .foregroundStyle(DS.Palette.text)
                 Text(scene)
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -645,13 +645,13 @@ struct CredentialsView: View {
                 if !hist.isEmpty {
                     VStack(alignment: .leading, spacing: DS.Space.xs) {
                         Text("最近搜索")
-                            .font(.caption2)
+                            .vkFont(.caption2)
                             .foregroundStyle(DS.Palette.textSub)
                         HStack(spacing: DS.Space.xs) {
                             ForEach(hist.prefix(5), id: \.self) { w in
                                 HStack(spacing: 2) {
                                     Button(w) { search = w }
-                                        .font(.caption)
+                                        .vkFont(.caption)
                                         .buttonStyle(.bordered)
                                         .accessibilityLabel("搜索 \(w)")
                                     Button { CredentialOrg.removeSearchHistory(w) } label: {
@@ -681,7 +681,7 @@ struct CredentialsView: View {
                     // 却弹「已按成员 X 过滤」那句回执 —— 承诺的结果没发生, 属于假回执。
                     VStack(alignment: .leading, spacing: DS.Space.xs) {
                         Text("没有找到「\(search)」")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                         HStack(spacing: DS.Space.s) {
                             Button {
@@ -690,7 +690,7 @@ struct CredentialsView: View {
                             } label: {
                                 Label("去回收站搜", systemImage: "magnifyingglass.circle")   // 503 去回收站搜
                             }
-                            .font(.caption)
+                            .vkFont(.caption)
                             .buttonStyle(.bordered)
                             .accessibilityLabel("带着 \(search) 去回收站搜")   // 503 带着
                             Button {
@@ -710,7 +710,7 @@ struct CredentialsView: View {
                             } label: {
                                 Label("按成员重搜", systemImage: "person")
                             }
-                            .font(.caption)
+                            .vkFont(.caption)
                             .buttonStyle(.bordered)
                         }
                     }
@@ -767,12 +767,12 @@ struct CredentialsView: View {
                     HStack(spacing: DS.Space.s) {
                         StatusPill(text: queueStateText(item), systemImage: "arrow.down.circle", tone: queueTone(item))
                         Text(item.title)
-                            .font(.subheadline)
+                            .vkFont(.subheadline)
                             .lineLimit(1)
                             .minimumScaleFactor(0.75)
                         Spacer(minLength: 0)
                         Button("重试") { retryQueueItem(item) }
-                            .font(.caption)
+                            .vkFont(.caption)
                             .buttonStyle(.bordered)
                             .disabled(isBusy)
                     }
@@ -781,11 +781,11 @@ struct CredentialsView: View {
                 }
                 if q.count > 4 {
                     Button("其余 \(q.count - 4) 项 →") { showQueue = true }
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.accentText)
                 }
                 Text("锁端未连接时操作先记在这里, 到场连接后逐条重试; 失败项不会丢。")   // 365 锁端未连接时操作先记
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -851,7 +851,7 @@ struct CredentialsView: View {
                 }
             }
             .buttonStyle(.plain)
-            .font(.caption)
+            .vkFont(.caption)
             .foregroundStyle(DS.Palette.warn)
             .listRowBackground(DS.Palette.warn.opacity(0.06))
             .accessibilityLabel("\(due.count) 条密码 2 小时内到期, 点按查看最近到期的一条详情")   // 359 条密码
@@ -876,7 +876,7 @@ struct CredentialsView: View {
                         .foregroundStyle(DS.Palette.textSub)
                     Spacer(minLength: DS.Space.m)
                     Text([pStock >= 0 ? "密码 \(pStock)" : nil, fStock >= 0 ? "指纹 \(fStock)" : nil].compactMap { $0 }.joined(separator: " · "))
-                        .font(.subheadline)
+                        .vkFont(.subheadline)
                         .foregroundStyle(DS.Palette.text)
                         .multilineTextAlignment(.trailing)
                         .fixedSize(horizontal: false, vertical: true)
@@ -896,7 +896,7 @@ struct CredentialsView: View {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .accessibilityHidden(true)
                     }
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.warn)
                 }
             }
@@ -1026,7 +1026,7 @@ struct CredentialsView: View {
                             extendAliases = group.map { $0.alias }
                             showExtend = true
                         }
-                        .font(.caption.weight(.medium))
+                        .vkFont(.caption, weight: .medium)
                         .foregroundStyle(DS.Palette.accentText)
                         // 334 过期打包清理: 不新造"本机静默删除", 而是把这组选中后交给现有停用流
                         // (摘要 + 313 必填原因 + 回收站 364 + 锁端删除记待下发), 免得台账与锁端分叉
@@ -1036,7 +1036,7 @@ struct CredentialsView: View {
                                 selFps = []
                                 showDisable = true
                             }
-                            .font(.caption.weight(.medium))
+                            .vkFont(.caption, weight: .medium)
                             .foregroundStyle(DS.Palette.danger)
                             .frame(minHeight: DS.Hit.min - DS.Space.xs)
                             .accessibilityHint("先把本组全部过期凭证选入停用确认页, 在确认页还要再点一次并填原因")
@@ -1071,7 +1071,7 @@ struct CredentialsView: View {
         let text: String
         var body: some View {
             Text(text)
-                .font(.caption2)
+                .vkFont(.caption2)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -1165,7 +1165,7 @@ struct CredentialsView: View {
     /// 所以只共用样式, 话各说各的 —— 不拿同一句糊过去。
     private func segStatRow(_ text: String) -> some View {
         Text(text)
-            .font(.caption2)
+            .vkFont(.caption2)
             .foregroundStyle(DS.Palette.textSub)
             .fixedSize(horizontal: false, vertical: true)
             .accessibilityHidden(true)
@@ -1186,13 +1186,13 @@ struct CredentialsView: View {
                         StartAddFpView(embedded: true, prefillOwner: missing.count == 1 ? missing.first?.id : nil)
                     } label: {
                         Text("去录入")
-                            .font(.caption.weight(.medium))
+                            .vkFont(.caption, weight: .medium)
                             .foregroundStyle(DS.Palette.accentText)
                             .frame(minHeight: DS.Hit.min)
                             .contentShape(Rectangle())
                     }
                 }
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.warn)
                 .accessibilityElement(children: .combine)
             }
@@ -1205,7 +1205,7 @@ struct CredentialsView: View {
                         Label("只剩 1 枚可用指纹, 建议添加备用", systemImage: "bell.badge")   // 324 只剩
                         Spacer(minLength: 0)
                     }
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.warn)
                     .frame(minHeight: DS.Hit.min)
                     .contentShape(Rectangle())
@@ -1215,7 +1215,7 @@ struct CredentialsView: View {
             }
             if fps.isEmpty {
                 Text("本机还没有指纹台账。录入后成员可用手指直接开锁。")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -1316,7 +1316,7 @@ struct CredentialsView: View {
         VStack(alignment: .leading, spacing: DS.Space.xs) {
             HStack(spacing: DS.Space.s) {
                 Text(titleOf(hit))
-                    .font(rowTitleFont)
+                    .vkFont(rowTitleFont)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
                 if let p {
@@ -1353,7 +1353,7 @@ struct CredentialsView: View {
             let sub = subOf(hit, now)
             if !sub.isEmpty && !compactRow {
                 Text(sub)
-                    .font(rowSubFont)
+                    .vkFont(rowSubFont)
                     .foregroundStyle(rowSubColor)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -1361,7 +1361,7 @@ struct CredentialsView: View {
             // 901 紧凑档同副行一起收起 —— "只留名称与状态"里没有它
             if !compactRow, let p, CredentialOrg.aliasDisplay, CredentialOrg.namingTemplate(p) != titleOf(hit) {
                 Text(CredentialOrg.namingTemplate(p))
-                    .font(rowSubFont)
+                    .vkFont(rowSubFont)
                     .foregroundStyle(rowSubColor)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
@@ -1562,11 +1562,11 @@ struct CredentialsView: View {
     // 成员归属徽章: 用 accentText (文字级对比度 6:1), 不用品牌填充色
     private func ownerBadge(_ name: String) -> some View {
         Text(name)
-            .font(.caption.weight(.medium))
+            .vkFont(.caption, weight: .medium)
             .lineLimit(1)
             .foregroundStyle(DS.Palette.accentText)
             .padding(.horizontal, DS.Space.s).padding(.vertical, DS.Space.xxs)
-            .background(DS.Palette.accentText.opacity(0.12), in: Capsule())
+            .variantPlate(DS.Palette.accentText.opacity(0.12), .capsule)
     }
 
     // ---------- 347 编辑模式: 选择圈 + 全选循环 (356) + 智能选取 (350) ----------
@@ -1582,9 +1582,9 @@ struct CredentialsView: View {
                     } label: {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(cycleLabel)
-                                .font(.subheadline.weight(.semibold))
+                                .vkFont(.subheadline, weight: .semibold)
                             Text("下一步: \(cycleNextLabel)")   // 356 下一步
-                                .font(.caption2)
+                                .vkFont(.caption2)
                                 .foregroundStyle(DS.Palette.textSub)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -1604,18 +1604,18 @@ struct CredentialsView: View {
                         CredentialOrg.setSeq(mac, seq)
                         app.showToast("已记住当前组内顺序")   // 182/352 已记住当前组内顺序
                     }
-                    .font(.caption.weight(.medium))
+                    .vkFont(.caption, weight: .medium)
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
                     .accessibilityLabel("把当前先后写成手动序, 与排序档里的拖动共用同一张顺序表")   // 182/352 把当前先后写成手动序
                 }
                 HStack(spacing: DS.Space.s) {
                     Text("智能选取")   // 350 智能选取
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                     ForEach(["已过期", "同成员", "同类型"], id: \.self) { s in
                         Button(s) { applySmart(s) }
-                            .font(.caption.weight(.medium))
+                            .vkFont(.caption, weight: .medium)
                             .buttonStyle(.bordered)
                             .frame(minHeight: DS.Hit.min)
                     }
@@ -1629,7 +1629,7 @@ struct CredentialsView: View {
                     // 356 点按行选一条
                     // 350 点按行选一条
                     Text("点按行选一条; 行右侧滑动点「选」同样算一条。要连着选一片: 上面那枚循环键按 全选→反选→清空 走, 或用「智能选取」一次选一把 已过期/同成员/同类型。")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -1713,14 +1713,14 @@ struct CredentialsView: View {
         VStack(spacing: DS.Space.xs) {
             HStack(spacing: DS.Space.s) {
                 Text("已选 \(selCount) 条")
-                    .font(.subheadline.weight(.semibold))
+                    .vkFont(.subheadline, weight: .semibold)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                 Spacer(minLength: 0)
                 Button("完成") {
                     withAnimation(DS.Motion.quick) { editMode = false; selPwds = []; selFps = [] }
                 }
-                .font(.subheadline.weight(.medium))
+                .vkFont(.subheadline, weight: .medium)
                 .frame(minHeight: DS.Hit.min)
                 .contentShape(Rectangle())
             }
@@ -1779,7 +1779,7 @@ struct CredentialsView: View {
             VStack(spacing: 2) {
                 Image(systemName: icon)
                     .font(.system(size: DS.Icon.md, weight: .medium))
-                Text(t).font(.caption2)
+                Text(t).vkFont(.caption2)
             }
             .foregroundStyle(destructive ? DS.Palette.danger : DS.Palette.accentText)
             .frame(maxWidth: .infinity)
@@ -1968,7 +1968,7 @@ struct CredentialsView: View {
     // ---------- OTP 内联卡 (App credentials + otpgenerate) ----------
     private var otpSection: some View {
         Section("临时密码 (ZOTP)") {
-            Toggle("开通临时密码", isOn: Binding(
+            VariantToggle("开通临时密码", isOn: Binding(
                 get: { DB.otpStatus(mac)?.on ?? false },
                 set: { on in
                     guard busyKey == nil else { return }
@@ -2000,7 +2000,7 @@ struct CredentialsView: View {
                 } icon: {
                     Image(systemName: "info.circle").accessibilityHidden(true)
                 }
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
             } else {
                 otpExplainer   // 820 科普空态: 未开通时先把机制讲清, 而不是只丢一枚看不懂的开关
@@ -2019,7 +2019,7 @@ struct CredentialsView: View {
     private var otpExplainer: some View {
         VStack(alignment: .leading, spacing: DS.Space.s) {
             Text("临时密码是怎么来的")   // 820 临时密码是怎么来的
-                .font(.subheadline.weight(.medium))
+                .vkFont(.subheadline, weight: .medium)
                 .foregroundStyle(DS.Palette.text)
             HStack(alignment: .top, spacing: DS.Space.s) {
                 otpStepCell("key.horizontal", "这把锁的密钥", "绑定时已存在本机，从不外发")
@@ -2030,7 +2030,7 @@ struct CredentialsView: View {
                 Label("先校准门锁时间 (窗口按锁钟切)", systemImage: "clock.arrow.2.circlepath")
             }
             Text("再打开上面那枚「开通临时密码」就能生成。每个窗口最多 100 个码，用完等下一个窗口。")
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -2046,11 +2046,11 @@ struct CredentialsView: View {
                 .foregroundStyle(DS.Palette.accentText)
                 .accessibilityHidden(true)
             Text(title)
-                .font(.caption.weight(.medium))
+                .vkFont(.caption, weight: .medium)
                 .foregroundStyle(DS.Palette.text)
                 .fixedSize(horizontal: false, vertical: true)
             Text(note)
-                .font(.caption2)
+                .vkFont(.caption2)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -2064,7 +2064,7 @@ struct CredentialsView: View {
             // 374: 采集进行中不把码排出来, 大字模式也拿不到明文 (刻意只换文本, 不整页遮黑)
             Text(cap.recording ? "录屏中已隐去" : otpPwd)   // 374 录屏中已隐去
                 // 885 大字模式: 开关 (kf_ax_bigotp) 或双击切换, 等宽数字防跳 (231)
-                .font((DB.store.getBool("kf_ax_bigotp") || otpBig) ? .largeTitle.weight(.semibold).monospacedDigit() : .title3.weight(.semibold).monospacedDigit())
+                .vkFont((DB.store.getBool("kf_ax_bigotp") || otpBig) ? .largeTitle.weight(.semibold).monospacedDigit() : .title3.weight(.semibold).monospacedDigit())
                 // 342 换码微动效: 值换掉时逐位滚过去 (与 207 电量数字滚动同一个 contentTransition(.numericText()))。
                 // 触感沿用 genOtp() 末尾那一次成功反馈，**不再叠第二次** —— 一次生成两下震动只会让人分不清是哪件事。
                 // 动效节操仍由 DS.Motion 那一档决定：系统"减弱动态效果"下走 calm (0.10s easeOut)，不做无响应的滑动。
@@ -2112,7 +2112,7 @@ struct CredentialsView: View {
         }
         if !otpWin.isEmpty {
             Text("于 \(otpWin) 失效, 失效前仅可使用一次")
-                .font(.caption).foregroundStyle(DS.Palette.textSub)
+                .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -2151,20 +2151,20 @@ struct CredentialsView: View {
         Section {
             VStack(alignment: .leading, spacing: DS.Space.xs) {
                 Text("本机还没有凭证台账。用「添加密码」或「录入指纹」开始。")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 // 包14/815 空态双按钮: 主"添加密码" + 次"看看它如何工作"
                 HStack(spacing: DS.Space.s) {
                     NavigationLink { AddPwdView(embedded: true) } label: {
                         Text("添加第一条密码")
-                            .font(.subheadline.weight(.semibold))
+                            .vkFont(.subheadline, weight: .semibold)
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(SecondaryActionStyle(fullWidth: false))
                     Button { showDemo = true } label: {
                         Text("看看它如何工作")
-                            .font(.subheadline.weight(.semibold))
+                            .vkFont(.subheadline, weight: .semibold)
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(SecondaryActionStyle(fullWidth: false))
@@ -2185,7 +2185,7 @@ struct CredentialsView: View {
             Section {
                 VStack(alignment: .leading, spacing: DS.Space.xs) {
                     Text("临时码还没有发过一张 — 像酒店前台的门卡, 客人走一张, 就发下一张。")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                     Button("发第一张临时码") { genFirstOtp() }
@@ -2245,11 +2245,11 @@ struct CredentialsView: View {
                         app.showToast("归档已全部还原")
                         reload()
                     }
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .buttonStyle(.borderless)
                 } label: {
                     Text("归档区 · \(ap.count + af.count) 条 — 收起不删, 随时可还原")   // 354 归档区
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -2261,17 +2261,17 @@ struct CredentialsView: View {
         HStack(spacing: DS.Space.s) {
             VStack(alignment: .leading, spacing: DS.Space.xxs) {
                 Text(title)
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.text)
                 if let o = owner, !o.isEmpty {
                     Text("归属 " + o)
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                 }
             }
             Spacer(minLength: DS.Space.s)
             Button("还原", action: restore)
-                .font(.footnote.weight(.medium))
+                .vkFont(.footnote, weight: .medium)
                 .foregroundStyle(DS.Palette.accentText)
                 .buttonStyle(.borderless)
         }
@@ -2288,7 +2288,7 @@ struct CredentialsView: View {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: DS.Space.s) {
                     Text("\(e.text) \(undoHard ? "已彻底删除" : "已停用")")
-                        .font(.footnote.weight(.medium))
+                        .vkFont(.footnote, weight: .medium)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
                     Spacer(minLength: 0)
@@ -2298,7 +2298,7 @@ struct CredentialsView: View {
                         stopUndoTimer()
                         reload()
                     }
-                    .font(.footnote.weight(.semibold))
+                    .vkFont(.footnote, weight: .semibold)
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
                     .contentShape(Rectangle())
@@ -2309,7 +2309,7 @@ struct CredentialsView: View {
                              + "锁端那一步已经真做过 —— 没过期和密码会排入「重新下发」，指纹只能本人到锁前重录。"
                          : "第一次停用: 这 5 秒里点「撤销」，本机记录放回原位，"
                              + "那条还没发出去的「锁端删除」与停用便签一并收回。")   // 833 那条还没发出去的
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }

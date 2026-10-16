@@ -54,7 +54,7 @@ struct ConfettiView: View {
                     .font(.system(size: DS.Icon.xl, weight: .medium))
                     .foregroundStyle(DS.heroFg)      // 863: 这枚徽章坐在 hero 上, 写死白会在反转下看不见
                 Text("纪念时刻")
-                    .font(.caption.weight(.medium))
+                    .vkFont(.caption, weight: .medium)
                     .foregroundStyle(DS.heroFg)
             }
             .padding(DS.Space.l)
@@ -126,18 +126,18 @@ struct MomentCardView: View {
 
                 VStack(spacing: DS.Space.s) {
                     Text(moment.title)
-                        .font(.title3.weight(.semibold))
+                        .vkFont(.title3, weight: .semibold)
                         .foregroundStyle(DS.heroFg)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
                     Text(moment.subtitle)
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.heroFg.opacity(0.88))
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 Text("轻点任意处继续")
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.heroFg.opacity(0.62))
             }
             .padding(DS.Space.xl)

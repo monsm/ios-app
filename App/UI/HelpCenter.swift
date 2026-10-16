@@ -172,7 +172,7 @@ struct DataFlowPage: View {
                 Text("数据从哪来到哪去")
             } footer: {
                 Text("「备份与恢复」是数据转移的唯一通道; 门锁本身不需要任何在线服务。")
-                    .font(.caption).foregroundStyle(DS.Palette.textSub)
+                    .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
             }
         }
         .navigationTitle("数据流向")
@@ -188,10 +188,10 @@ struct DataFlowPage: View {
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(head)
-                    .font(.subheadline.weight(.semibold))
+                    .vkFont(.subheadline, weight: .semibold)
                     .foregroundStyle(DS.Palette.text)
                 cjkSpaced(tail)
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -228,10 +228,10 @@ struct CreditsPage: View {
     private func creditRow(_ head: String, _ tail: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(head)
-                .font(.subheadline.weight(.semibold))
+                .vkFont(.subheadline, weight: .semibold)
                 .foregroundStyle(DS.Palette.text)
             Text(tail)
-                .font(.footnote)
+                .vkFont(.footnote)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -256,13 +256,13 @@ struct FAQPage: View {
             ForEach(Array(qas.enumerated()), id: \.offset) { _, qa in
                 DisclosureGroup {
                     Text(qa.1)
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.top, DS.Space.xs)
                 } label: {
                     Text(qa.0)
-                        .font(.subheadline.weight(.medium))
+                        .vkFont(.subheadline, weight: .medium)
                         .foregroundStyle(DS.Palette.text)
                 }
             }
@@ -324,8 +324,8 @@ struct SymptomGuideView: View {
                             DS.Haptics.tick.impactOccurred()
                         } label: {
                             VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                                Text(t.title).font(.subheadline.weight(.medium)).foregroundStyle(DS.Palette.text)
-                                Text(t.sub).font(.caption).foregroundStyle(DS.Palette.textSub)
+                                Text(t.title).vkFont(.subheadline, weight: .medium).foregroundStyle(DS.Palette.text)
+                                Text(t.sub).vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
@@ -339,35 +339,35 @@ struct SymptomGuideView: View {
                 }
                 Section {
                     Text("全程只在本机做问答, 不联网、不读你的门锁数据。结论只给下一步动作, 不给诊断书。")
-                        .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                        .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             } else if let step = current {
                 if let concl = step.conclusion {
                     Section("结论") {
                         Text(concl)
-                            .font(.subheadline)
+                            .vkFont(.subheadline)
                             .foregroundStyle(DS.Palette.text)
                             .fixedSize(horizontal: false, vertical: true)
                         if !trail.isEmpty {
                             ForEach(Array(trail.enumerated()), id: \.offset) { _, t in
-                                Text(t).font(.caption).foregroundStyle(DS.Palette.textSub)
+                                Text(t).vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                         }
                     }
                     Section {
                         Button("重来一遍") { node = "q1"; trail = [] }
-                            .font(.subheadline).foregroundStyle(DS.Palette.accentText)
+                            .vkFont(.subheadline).foregroundStyle(DS.Palette.accentText)
                             .frame(maxWidth: .infinity, minHeight: DS.Hit.min, alignment: .leading)
                         Button("换一类问题") { treeKey = nil; node = "q1"; trail = [] }
-                            .font(.subheadline).foregroundStyle(DS.Palette.accentText)
+                            .vkFont(.subheadline).foregroundStyle(DS.Palette.accentText)
                             .frame(maxWidth: .infinity, minHeight: DS.Hit.min, alignment: .leading)
                     }
                 } else {
                     Section("第 \(trail.count + 1) 问") {
                         Text(step.question)
-                            .font(.subheadline.weight(.medium))
+                            .vkFont(.subheadline, weight: .medium)
                             .foregroundStyle(DS.Palette.text)
                             .fixedSize(horizontal: false, vertical: true)
                             .padding(.vertical, DS.Space.xxs)
@@ -381,14 +381,14 @@ struct SymptomGuideView: View {
                     if !trail.isEmpty {
                         Section("已经答过") {
                             ForEach(Array(trail.enumerated()), id: \.offset) { _, t in
-                                Text(t).font(.caption).foregroundStyle(DS.Palette.textSub)
+                                Text(t).vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                         }
                     }
                     Section {
                         Button("重头开始") { node = "q1"; trail = [] }
-                            .font(.caption).foregroundStyle(DS.Palette.accentText)
+                            .vkFont(.caption).foregroundStyle(DS.Palette.accentText)
                             .frame(maxWidth: .infinity, minHeight: DS.Hit.min, alignment: .leading)
                     }
                 }
@@ -396,10 +396,10 @@ struct SymptomGuideView: View {
                 // 走到这里只可能是树里的 id 拼错 (代码问题, 不是用户问题), 如实说明而不是白屏
                 Section("这一步在判断树里找不到") {
                     Text("节点 \(node) 不在树内 —— 属内置内容缺陷, 可先「换一类问题」绕开。")
-                        .font(.caption).foregroundStyle(DS.Palette.warn)
+                        .vkFont(.caption).foregroundStyle(DS.Palette.warn)
                         .fixedSize(horizontal: false, vertical: true)
                     Button("换一类问题") { treeKey = nil; node = "q1"; trail = [] }
-                        .font(.subheadline).foregroundStyle(DS.Palette.accentText)
+                        .vkFont(.subheadline).foregroundStyle(DS.Palette.accentText)
                         .frame(maxWidth: .infinity, minHeight: DS.Hit.min, alignment: .leading)
                 }
             }
@@ -418,22 +418,22 @@ struct ManualPage: View {
                 DisclosureGroup {
                     ForEach(ch.lines, id: \.self) { line in
                         Text(line)
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 } label: {
                     HStack(spacing: DS.Space.xs) {
                         Text(ch.title)
-                            .font(.subheadline.weight(.semibold))
+                            .vkFont(.subheadline, weight: .semibold)
                             .foregroundStyle(DS.Palette.text)
                         if ManualKit.unreadChapter(ch.id) {
                             Text("未读")
-                                .font(.caption2.weight(.medium))
+                                .vkFont(.caption2, weight: .medium)
                                 .foregroundStyle(DS.Palette.accentText)
                                 .padding(.horizontal, DS.Space.s)
                                 .padding(.vertical, DS.Space.xxs)
-                                .background(DS.Palette.accentText.opacity(0.10), in: Capsule())
+                                .variantPlate(DS.Palette.accentText.opacity(0.10), .capsule)
                         }
                     }
                 }
@@ -453,18 +453,18 @@ struct CopyCheckPage: View {
                 ForEach(CopyKit.rules) { r in
                     VStack(alignment: .leading, spacing: DS.Space.xs) {
                         Label(r.rule, systemImage: "checkmark.seal")
-                            .font(.subheadline.weight(.semibold))
+                            .vkFont(.subheadline, weight: .semibold)
                             .foregroundStyle(DS.Palette.ok)
                         HStack(alignment: .top, spacing: DS.Space.xs) {
                             Text("✗ \(r.bad)")
-                                .font(.footnote)
+                                .vkFont(.footnote)
                                 .foregroundStyle(DS.Palette.danger)
                                 .fixedSize(horizontal: false, vertical: true)
                             Spacer(minLength: 0)
                         }
                         HStack(alignment: .top, spacing: DS.Space.xs) {
                             Text("✓ \(r.good)")
-                                .font(.footnote)
+                                .vkFont(.footnote)
                                 .foregroundStyle(DS.Palette.ok)
                                 .fixedSize(horizontal: false, vertical: true)
                             Spacer(minLength: 0)
@@ -476,7 +476,7 @@ struct CopyCheckPage: View {
                 Text("本 App 文案规范")
             } footer: {
                 Text("量词表: 记录用「条」、锁用「把」、开门用「次」、指纹用「枚」、告警用「条」、临时码用「张」。")   // 656 量词表
-                    .font(.caption).foregroundStyle(DS.Palette.textSub)
+                    .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Section("量词速查") {
@@ -485,14 +485,14 @@ struct CopyCheckPage: View {
                         Text(m.thing).foregroundStyle(DS.Palette.text)
                         Spacer(minLength: DS.Space.m)
                         Text("× \(m.word)")
-                            .font(.footnote.weight(.semibold))
+                            .vkFont(.footnote, weight: .semibold)
                             .foregroundStyle(DS.Palette.accentText)
                     }
                 }
             }
             Section {
                 Text("本页只列规范, 不自动改文案; 违规示例是给人看的对照, 不是扫描结果。")
-                    .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                    .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
             // 669: CopyTable/LocalizedCopy 此前零调用 —— 键位表写完没地方看。
@@ -500,20 +500,20 @@ struct CopyCheckPage: View {
             Section("关键文案键位 · \(CopyTable.entries.count) 条") {   // 669 关键文案键位
                 ForEach(CopyTable.entries.keys.sorted(), id: \.self) { k in
                     VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                        Text(k).font(.caption.monospaced()).foregroundStyle(DS.Palette.accentText)
+                        Text(k).vkFont(.caption.monospaced()).foregroundStyle(DS.Palette.accentText)
                         HStack(alignment: .top, spacing: DS.Space.s) {
                             Text(CopyTable.value(k))
-                                .font(.subheadline).foregroundStyle(DS.Palette.text)
+                                .vkFont(.subheadline).foregroundStyle(DS.Palette.text)
                                 .fixedSize(horizontal: false, vertical: true)
                             Spacer(minLength: DS.Space.s)
                             Text((CopyTable.entries[k]?.zhHant.isEmpty ?? true) ? "简" : "繁")
-                                .font(.caption2.weight(.semibold)).foregroundStyle(DS.Palette.textSub)
+                                .vkFont(.caption2, weight: .semibold).foregroundStyle(DS.Palette.textSub)
                         }
                     }
                     .accessibilityElement(children: .combine)
                 }
                 Text("「简」= 该键位只有简体值, 取繁中时按 LocalizedCopy 回落到简体。这一版没有翻译内容, 只保证将来加译不动结构。")
-                    .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                    .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -556,7 +556,7 @@ struct EmptyMascotHeader: View {
         VStack(spacing: DS.Space.xs) {
             DemoMascot(size: 56)
             Text(caption)
-                .font(.caption2)
+                .vkFont(.caption2)
                 .foregroundStyle(DS.Palette.textSub)
         }
         .accessibilityElement(children: .ignore)
@@ -577,18 +577,18 @@ struct ButlerCertificateView: View {
                         .foregroundStyle(DS.heroFg)
                         .padding(.top, DS.Space.xl)
                     Text("离线锁管家 · 就任证书")
-                        .font(.title3.weight(.semibold))
+                        .vkFont(.title3, weight: .semibold)
                         .foregroundStyle(DS.heroFg)
                     // 2026-10-15 走查: 这行原先取 `Milestones.dayKey()` = **今天**, 而完成时刻此前没有任何地方
                     // 落盘 (kf_onb_ceremony 只是一枚布尔旗标) ⇒ 设置里回看证书, 那个日期每天变一次。
                     // 改成读完成那一刻钉下的日期；老用户没有这一键就只说"完成首启引导"，不编一个日期。
                     let doneAt = DB.store.getString("kf_onb_ceremony_at")
                     Text(doneAt.isEmpty ? "完成首启引导" : "完成首启引导 · " + doneAt)
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.heroFg.opacity(0.92))
                     if !Onboarding.role.isEmpty {
                         Text("角色: " + Onboarding.role)
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.heroFg.opacity(0.85))
                     }
                 }
@@ -603,7 +603,7 @@ struct ButlerCertificateView: View {
                     SectionTitle(text: "已完成步骤")
                     ForEach(Onboarding.finishedSteps, id: \.self) { s in
                         Label(s, systemImage: "checkmark.circle.fill")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                     }
                 }
@@ -641,7 +641,7 @@ struct DemoLabsView: View {
                     Label("导入样例备份 (真走恢复管线)", systemImage: "shippingbox")
                 }
                 Text("与真实备份同一条恢复路径 (含自动还原点); 样例全部 demo_ 前缀, 一键清除后净空。")
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 // 剪贴板路线保留为**次选**, 并如实命名 —— 它确实只填剪贴板, 不跑恢复
@@ -688,16 +688,16 @@ struct DemoLabsView: View {
                 if drillRunning {
                     VStack(alignment: .leading, spacing: DS.Space.xs) {
                         Text("演练中: 第 \(min(drillPhase + 1, 3)) 步 (共 3 步) — 不写真实失败日志, 不碰锁端")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                         if drillCool > 0 {
                             // 844: 冷却倒计时界面 — 与锁屏页 389 同款读秒文案 (演示压缩为 12 秒)
                             Label("冷却中, \(drillCool) 秒后可再试", systemImage: "hourglass")
-                                .font(.footnote.weight(.medium).monospacedDigit())
+                                .vkFont(.footnote.monospacedDigit(), weight: .medium)
                                 .foregroundStyle(DS.Palette.danger)
                         } else if drillPhase >= 3 {
                             Text("冷却结束 — 真实场景请按「临时码→钥匙串→救援码」顺序自救。")
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.accentText)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -709,7 +709,7 @@ struct DemoLabsView: View {
                 // 838 原句 = "30 秒分步预习动画, 高亮三阶段后再开始"。旧实现各档 3 秒 (共 9 秒)
                 // 且预习完没有进真正录入的出口 —— 现在每档 10 秒 (共 30 秒), 走完出现"开始真正录入"。
                 // 并写明它只点亮清单, 不碰指纹硬件、不搬任何数据。
-                Toggle("三档节奏预习 (每档 10 秒, 共约 30 秒)", isOn: Binding(
+                VariantToggle("三档节奏预习 (每档 10 秒, 共约 30 秒)", isOn: Binding(
                     // 2026-10-15 走查: 这一对 get/set 与 `previewStep` 的三档语义对不上。
                     // `previewStep` 本来就是 **-1 = 没在预习 / 0..3 = 走到第几档** (见 fpPreviews 的 step
                     // 与下面 `if previewStep >= 0`), 而 get 写的是 `> 0`、set 关掉时写回 `0`:
@@ -723,7 +723,7 @@ struct DemoLabsView: View {
                         if on { startPreview() } else { previewTask?.cancel(); previewStep = -1 }
                     }))
                 Text("预习只点亮下面这张节奏清单 —— 不触碰指纹硬件, 不写入任何凭证数据。")
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 if previewStep >= 0 {
@@ -734,18 +734,18 @@ struct DemoLabsView: View {
                                     .font(.system(size: DS.Icon.xs, weight: .semibold))
                                     .foregroundStyle(previewStep >= s.step ? DS.Palette.ok : DS.Palette.textSub)
                                 Text(s.title)
-                                    .font(.footnote)
+                                    .vkFont(.footnote)
                                     .foregroundStyle(previewStep >= s.step ? DS.Palette.text : DS.Palette.textSub)
                             }
                         }
                         Text("预习完毕 — 真正录入时: 按压 → 停留 → 换位, 重复 8 次。")
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.accentText)
                         // 838: "预习后再开始" — 走完 30 秒给真入口 (与凭证页同一录入页)
                         if previewStep >= 3 {
                             NavigationLink { StartAddFpView(embedded: true) } label: {
                                 Label("按这个节奏开始真正录入", systemImage: "touchid")
-                                    .font(.footnote.weight(.medium))
+                                    .vkFont(.footnote, weight: .medium)
                             }
                         }
                     }

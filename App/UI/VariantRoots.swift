@@ -124,47 +124,46 @@ enum LockReadout {
 struct VariantRootView: View {
     @EnvironmentObject var app: AppState
     @State private var showAll = false
+    /// `matchedGeometryEffect` 的宿主。**显式命名空间，不靠声明顺序** ——
+    /// CORE.md §2.1 那个 z 序事故（浮层整块盖住锁核，"缩小骑在标题上"这个形态在六张截图里
+    /// 根本没交付）在 iOS 侧的对应物就是它。
+    @Namespace private var lockNS
+    /// 跟手位移（已过橡皮筋）。**只有一个写入处**：`dragGesture`。
+    @State private var drag: CGVector = .zero
 
     var body: some View {
-        ZStack(alignment: .bottomTrailing) {
-            VariantHomeView()
-
-            // 兜底通路。变体各自的域导航做好后，这一枚的角色是"全部页面"而不是"救命出口"，
-            // 但**不许删** —— 删了就没有一条两版共用的可达性保证。
-            // 走的是同一个 requestRoute 漏斗，所以它和光点切换是同一套语义（换内容，不叠层）。
-            Button { showAll = true } label: {
-                Image(systemName: "square.grid.2x2")
-                    .font(.system(size: 17, weight: .medium))
-                    .foregroundStyle(DS.Palette.text)
-                    .frame(width: 46, height: 46)
-                    .background(Circle().fill(DS.Palette.surfaceBase.opacity(0.86)))
-                    .overlay(Circle().strokeBorder(DS.Palette.hairline, lineWidth: 0.7))
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("全部页面")
-            .padding(18)
-        }
-        .sheet(item: Binding(
-            get: { app.variantDomain },
-            set: { app.variantDomain = $0 })) { d in
-            // 域浮层挂在**这一层**而不是某个变体的首屏里，原因有两个，都是硬伤：
-            //   1. 挂 CoreHomeView 的话，gauge 变体点"全部页面"会设上 variantDomain 却没有任何
-            //      东西呈现 —— 切过去就少一条通路，正是"两套必有一套缺一块"的成因。
-            //   2. 内容跟着 variantDomain 换：切域是**换人**不是**叠层**，
-            //      所以"换页动作被 sheet 盖住"这一族缺陷在两套里都不成立。
-            // ⚠ 这里不再需要 device/nil 兜底分支：sheet(item:) 只在非 nil 时呈现，
-            //   而 device 由 Route 的四个 case 之一覆盖 —— 少一个 case 编译器就会拦。
-            Group {
-                switch d {
-                // .device 走不到这里：requestRoute(.device) 在非 legacy 下是"收起域浮层"（见 AppState）。
-                // 分支还得留着才能让 switch 穷尽，但里面**不许**放 DeviceHomeView()。
-                case .device:      EmptyView()
-                case .credentials: CredentialsView()
-                case .records:     RecordsView()
-                case .settings:    SettingsView()
+        GeometryReader { geo in
+            let L = SummonGeometry.layout(in: geo.size)
+            ZStack(alignment: .topLeading) {
+                Group {
+                    VariantHomeView(layout: L)
+                        .overlay(alignment: .bottomTrailing) { allPagesButton }
                 }
+                // 域浮层：**不再是系统 `.sheet`**，而是根层级里自绘的一层玻璃。
+                // 为什么这一批必须换掉 sheet（本批唯一一处架构改动，理由写全）：
+                //   `matchedGeometryEffect` **跨不过 sheet 边界** —— sheet 是另一个宿主层级，
+                //   于是"同一枚锁核缩到 0.42 骑在浮层标题右侧"就只能画一枚长得一样的假核，
+                //   而那正好违反 CORE.md 公理 2（一枚物体五种形态，不许出现"另一个组件接管"的接缝）。
+                //   代价是实的：系统 sheet 白送的滚动/下拉关闭/模态语义要自己接 ——
+                //   三条补偿写在 `DomainLayer` 的头注释上。
+                // ⚠ 页面**必须写在这个尾随闭包里**（不能抽成辅助函数）：tools/destmap.js 把这条通道
+                //   当成第 7 条呈现通道；搬进辅助函数 = 台账当场少三站，而它照样报"自检通过"。
+                .domainLayer(domain: app.variantDomain,
+                             onClose: { app.variantDomain = nil }) { d in
+                    switch d {
+                    // .device 走不到这里：requestRoute(.device) 在非 legacy 下是"收起域浮层"（见 AppState）。
+                    // 分支还得留着才能让 switch 穷尽，但里面**不许**放 DeviceHomeView()。
+                    case .device:      EmptyView()
+                    case .credentials: CredentialsView()
+                    case .records:     RecordsView()
+                    case .settings:    SettingsView()
+                    }
+                }
+                // 锁核层：**显式最上层**（z 序由层级决定，不由声明顺序）。骑乘态也在这里 ——
+                // 于是"浮层盖住锁核"这个陷阱从结构上不成立。
+                if app.uiVariant == .core { lockCoreLayer(L) }
             }
-            .environmentObject(app)
+            .frame(width: geo.size.width, height: geo.size.height)
         }
         .sheet(isPresented: $showAll) {
             NavigationStack {
@@ -186,6 +185,105 @@ struct VariantRootView: View {
         // 换成调用同一个实现，见 RootView.bootstrapOnce 与 MomentLayer 的注释。
         .task { RootView.bootstrapOnce(app) }
         .modifier(MomentLayer())
+    }
+
+    /// 兜底通路。变体各自的域导航做好后，这一枚的角色是"全部页面"而不是"救命出口"，
+    /// 但**不许删** —— 删了就没有一条两版共用的可达性保证。
+    /// 走的是同一个 requestRoute 漏斗，所以它和光点切换是同一套语义（换内容，不叠层）。
+    /// 挂在首屏那一层（而不是根的最上层）：浮层打开时它应当被玻璃盖住，而不是浮在上面可点。
+    private var allPagesButton: some View {
+        Button { showAll = true } label: {
+            Image(systemName: "square.grid.2x2")
+                .font(.system(size: 17, weight: .medium))
+                .foregroundStyle(DS.Palette.text)
+                .frame(width: 46, height: 46)
+                .background(Circle().fill(DS.Palette.surfaceBase.opacity(0.86)))
+                .overlay(Circle().strokeBorder(DS.Palette.hairline, lineWidth: 0.7))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("全部页面")
+        .padding(18)
+    }
+
+    // MARK: - 锁核层（拖拽召唤）
+
+    /// 待机位与骑乘位是**同一枚**锁核的两个状态，`matchedGeometryEffect` 负责形变。
+    /// 两态互斥（不会同时在场）—— 这是 matched geometry 的标准用法，也是它能跨层级失败的原因：
+    /// 换 sheet 之前，两个状态分居两个宿主层级，插值无从谈起。
+    @ViewBuilder
+    private func lockCoreLayer(_ L: SummonGeometry.Layout) -> some View {
+        ZStack(alignment: .topLeading) {
+            if app.variantDomain == nil {
+                lockCore(riding: false)
+                    .position(x: L.home.x + drag.dx, y: L.home.y + drag.dy)
+                    .matchedGeometryEffect(id: "lockCore", in: lockNS)
+                    .gesture(dragGesture(L))
+            } else {
+                lockCore(riding: true)
+                    .position(x: L.ride.x, y: L.ride.y)
+                    .matchedGeometryEffect(id: "lockCore", in: lockNS)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .allowsHitTesting(app.variantDomain == nil)
+    }
+
+    /// 锁核本体。`riding` 只改缩放 —— 位置由调用方 `.position` 给，
+    /// 因为位置要在**两个状态之间**被 matched geometry 插值（写在里面就锁死了）。
+    private func lockCore(riding: Bool) -> some View {
+        let here = LockReadout.present(app)
+        return ZStack {
+            Circle()
+                .fill(RadialGradient(colors: [DS.Palette.coreB.opacity(0.85),
+                                              DS.Palette.coreA.opacity(0.9)],
+                                     center: .center, startRadius: 6, endRadius: 78))
+            Circle()
+                .strokeBorder(DS.Palette.text.opacity(0.55), lineWidth: 2.5)
+            Image(systemName: app.unlockState == .success ? "lock.open.fill" : "lock.fill")
+                .font(.system(size: 34, weight: .regular))
+                .foregroundStyle(DS.Palette.coreInk)
+        }
+        .frame(width: 152, height: 152)
+        .scaleEffect(riding ? SummonGeometry.rideScale : 1)
+        .opacity(riding || here ? 1 : 0.5)
+        .contentShape(Circle())
+        .accessibilityElement()
+        .accessibilityLabel("开门")
+        .accessibilityHint(here ? "走现行三道闸通道；拖向周围三个光点可进入对应域"
+                                 : "需先走近门锁；拖向光点仍可进入对应域")
+        .accessibilityAddTraits(.isButton)
+        // 无障碍激活与轻点都会走到这里；重复调用无害 —— 漏斗自带 1.2s 指令去重（244）。
+        .accessibilityAction { app.requestUnlock() }
+        .onTapGesture { if here { app.requestUnlock() } }
+    }
+
+    /// 拖拽：1:1 跟手 → 越界走橡皮筋 → 松手按**动量投影落点**判召唤。
+    /// 三个量全部来自 `SummonGeometry`（纯函数，由 tools/summonshadow.js 用另一门语言对拍）。
+    /// ⚠ 视图里**不许**自己写 `.spring(...)`：降档策略只有一个读点（`DS.Motion.summon` / `.fling`）。
+    private func dragGesture(_ L: SummonGeometry.Layout) -> some Gesture {
+        DragGesture(minimumDistance: 8)
+            .onChanged { v in
+                // 平铺档拖拽退场（CORE.md §1）：那一档三光点摊成三行，轨道位已经不存在了。
+                guard !VK.flatTier else { return }
+                drag = SummonGeometry.dragOffset(CGVector(dx: v.translation.width,
+                                                          dy: v.translation.height),
+                                                 limit: L.limit)
+            }
+            .onEnded { v in
+                guard !VK.flatTier else { return }
+                let velocity = CGVector(dx: v.velocity.width, dy: v.velocity.height)
+                // 落点用**投影位移**判：拿抬手位置判，"朝光点甩一下"永远差一截。
+                let projected = SummonGeometry.projectedOffset(drag, velocity: velocity, limit: L.limit)
+                let landing = CGPoint(x: L.home.x + projected.dx, y: L.home.y + projected.dy)
+                let target = SummonGeometry.summon(projected: landing, dots: L.dots, radius: L.hit)
+                // 只有手势本身带动量才给 0.82 那一档（CORE.md §4）：
+                // 慢慢拖到一半松手也弹过头，是"手感错了"最常见的一种。
+                let momentum = SummonGeometry.hasMomentum(velocity, limit: L.limit)
+                withAnimation(momentum ? DS.Motion.fling : DS.Motion.summon) {
+                    drag = .zero
+                    if let target { app.requestRoute(target) }
+                }
+            }
     }
 }
 
@@ -210,13 +308,16 @@ struct MomentLayer: ViewModifier {
 /// 存储那份不观察变化，切了不会重算 body，就会"按了没反应、重进 App 才变"。
 struct VariantHomeView: View {
     @EnvironmentObject var app: AppState
+    /// 光点轨道位与拖拽半径**只有一个来源**（`SummonGeometry`）：画出来的光点
+    /// 和判命中的光点必须是同一组坐标，否则会出现"看着撞上了却没反应"这种谁都查不出来的手感缺陷。
+    let layout: SummonGeometry.Layout
 
     var body: some View {
         switch app.uiVariant {
         case .legacy:
             DeviceHomeView()
         case .core:
-            CoreHomeView()
+            CoreHomeView(layout: layout)
         case .gauge:
             GaugeHomeView()
         }
@@ -263,21 +364,21 @@ struct GaugeHomeView: View {
         HStack(alignment: .top, spacing: 11) {
             VStack(alignment: .leading, spacing: 3) {
                 Text(here ? "在场 · 已连接" : "不在场")
-                    .font(.system(.footnote, design: .default).weight(.semibold))
+                    .vkFont(.system(.footnote, design: .default), weight: .semibold)
                     .tracking(1.6)
                     .foregroundStyle(here ? DS.Palette.gaugeAmber : DS.Palette.textSub)
                 Text(here ? "读数于本次连接" : "走近门锁即可读取")
-                    .font(.system(.caption, design: .default))
+                    .vkFont(.system(.caption, design: .default))
                     .foregroundStyle(DS.Palette.textSub)
             }
             Spacer(minLength: 8)
             VStack(alignment: .trailing, spacing: 2) {
                 Text(app.currentMac.isEmpty ? Readout.dash : "玄关")
-                    .font(.system(.title3, design: .default).weight(.semibold))
+                    .vkFont(.system(.title3, design: .default), weight: .semibold)
                     .foregroundStyle(DS.Palette.text)
                 Text([LockReadout.model(status).text, "FW " + LockReadout.firmware(status).text]
                         .joined(separator: " · "))
-                    .font(.system(.caption2, design: .default).weight(.semibold))
+                    .vkFont(.system(.caption2, design: .default), weight: .semibold)
                     .tracking(1.3)
                     .foregroundStyle(DS.Palette.textSub)
             }
@@ -295,22 +396,22 @@ struct GaugeHomeView: View {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .firstTextBaseline) {
                     Text("电量")
-                        .font(.system(.caption, design: .default).weight(.semibold)).tracking(1.7)
+                        .vkFont(.system(.caption, design: .default), weight: .semibold).tracking(1.7)
                         .foregroundStyle(DS.Palette.textSub)
                     Spacer()
                     Text(r.field)
-                        .font(.system(.caption2, design: .default).weight(.semibold)).tracking(1.3)
+                        .vkFont(.system(.caption2, design: .default), weight: .semibold).tracking(1.3)
                         .foregroundStyle(DS.Palette.textSub)
                 }
                 HStack(alignment: .center, spacing: 10) {
                     HStack(alignment: .firstTextBaseline, spacing: 2) {
                         Text(r.text)
-                            .font(.system(.largeTitle, design: .monospaced).weight(.light))
+                            .vkFont(.system(.largeTitle, design: .monospaced), weight: .light)
                             .tracking(-3.2)
                             .monospacedDigit()
                             .foregroundStyle(here ? DS.Palette.gaugeAmber : DS.Palette.textSub)
                         Text("%")
-                            .font(.system(.title3, design: .monospaced).weight(.regular))
+                            .vkFont(.system(.title3, design: .monospaced), weight: .regular)
                             .foregroundStyle(DS.Palette.textSub)
                     }
                     Spacer(minLength: 4)
@@ -319,7 +420,7 @@ struct GaugeHomeView: View {
                 }
                 .padding(.top, 8)
                 Text(here ? "近场一次性读取 · 本机无在线状态" : "该锁是纯近场协议，没有远程通道")
-                    .font(.system(.caption, design: .monospaced))
+                    .vkFont(.system(.caption, design: .monospaced))
                     .foregroundStyle(DS.Palette.textSub)
                     .padding(.top, 10)
             }
@@ -359,15 +460,15 @@ struct GaugeHomeView: View {
         VK(variant: .gauge).container(.inset) {
             VStack(alignment: .leading, spacing: 5) {
                 Text(title)
-                    .font(.system(.caption2, design: .default).weight(.semibold)).tracking(1.5)
+                    .vkFont(.system(.caption2, design: .default), weight: .semibold).tracking(1.5)
                     .foregroundStyle(DS.Palette.textSub)
                 Text(r.text)
-                    .font(.system(.title, design: .monospaced).weight(.regular))
+                    .vkFont(.system(.title, design: .monospaced), weight: .regular)
                     .tracking(-0.6)
                     .monospacedDigit()
                     .foregroundStyle(alarm ? DS.Palette.danger : DS.Palette.text)
                 Text(note)
-                    .font(.system(.caption2, design: .monospaced))
+                    .vkFont(.system(.caption2, design: .monospaced))
                     .foregroundStyle(DS.Palette.textSub)
             }
         }
@@ -378,11 +479,11 @@ struct GaugeHomeView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
                 Text("凭证余量")
-                    .font(.system(.caption, design: .default).weight(.semibold)).tracking(1.7)
+                    .vkFont(.system(.caption, design: .default), weight: .semibold).tracking(1.7)
                     .foregroundStyle(DS.Palette.textSub)
                 Spacer()
                 Text("实时读 21 / 24 / 27")
-                    .font(.system(.caption2, design: .default).weight(.semibold)).tracking(1.1)
+                    .vkFont(.system(.caption2, design: .default), weight: .semibold).tracking(1.1)
                     .foregroundStyle(DS.Palette.textSub)
             }
             .padding(.bottom, 8)
@@ -396,7 +497,7 @@ struct GaugeHomeView: View {
     private func capRow(_ name: String, _ r: Readout, total: Int) -> some View {
         HStack(spacing: 12) {
             Text(name)
-                .font(.system(.callout, design: .default).weight(.semibold))
+                .vkFont(.system(.callout, design: .default), weight: .semibold)
                 .foregroundStyle(DS.Palette.text)
                 .frame(width: 52, alignment: .leading)
             SegmentedBar(used: Int(r.text) ?? 0, total: total,
@@ -404,7 +505,7 @@ struct GaugeHomeView: View {
                          groove: DS.Palette.hairline.opacity(0.5))
                 .frame(height: 9)
             Text(total > 0 ? "\(r.text) / \(total)" : r.text)
-                .font(.system(.footnote, design: .monospaced))
+                .vkFont(.system(.footnote, design: .monospaced))
                 .monospacedDigit()
                 .foregroundStyle(DS.Palette.textSub)
                 .frame(width: 62, alignment: .trailing)
@@ -420,7 +521,7 @@ struct GaugeHomeView: View {
                 Text(buttonLabel)
                     // 中文界面不用 .bold：PingFang SC 没有 700 这一档，.bold 会**静默**回退成
                     // Semibold，于是"我以为更重的那一级"其实从来没重过 (dynamictype 闸门规则 3)。
-                    .font(.system(.body, design: .default).weight(.semibold))
+                    .vkFont(.system(.body, design: .default), weight: .semibold)
                     .tracking(1.2)
                     .foregroundStyle(DS.Palette.gaugeOnAmber)
                     .frame(maxWidth: .infinity).frame(height: 58)
@@ -436,7 +537,7 @@ struct GaugeHomeView: View {
             .opacity(here ? 1 : 0.42)
 
             Text(buttonHint)
-                .font(.system(.footnote, design: .default))
+                .vkFont(.system(.footnote, design: .default))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(DS.Palette.textSub)
         }
@@ -479,30 +580,39 @@ private struct SegmentedBar: View {
 
 // MARK: - 一枚锁核首屏
 
-/// 零标签：一枚锁核 + 三个光点。光点是域入口，点它即进入该域。
-/// ⚠ 本文件里只做**可点**的通路；拖拽召唤（1:1 跟手 + 橡皮筋 + 动量投影）在下一批做，
-///   因为它需要 matchedGeometryEffect 与自定义弹簧，全仓 0 使用先例，单独一批好定位编译错误。
+/// 零标签：三个光点 + 一枚由上层画着的锁核。光点是域入口，点它即进入该域；
+/// 拖向光点并松手是熟手的加速键（CORE.md §0："拖拽是给熟手的加速键，点击是给所有人的通路"）。
+/// ⚠ 锁核本身**不在这里** —— 它由 `VariantRootView.lockCoreLayer` 画在根层级的最上层。
+///   为什么必须搬家：待机位 ↔ 骑乘位是一次 `matchedGeometryEffect` 形变，它要求两个状态在
+///   **同一层级**；锁核留在首屏里，浮层里的那枚就只能是另一个对象 —— 而那正是公交
+///   CORE.md 公理 2 禁止的接缝。
+/// ⚠ 光点位置由根层级算好传进来：首屏自己不量尺寸，量了就会和判命中的那份漂移。
 struct CoreHomeView: View {
     @EnvironmentObject var app: AppState
-
-    /// 三个光点走的就是那一条唯一漏斗 `app.requestRoute`。
-    /// 域的内容由 `app.variantDomain` 决定（见 AppState 那条注释）——
-    /// 所以点另一个光点是**换人**，不是**叠层**，"换页动作被 sheet 盖住"这一族缺陷在这里不成立。
-    private static let dots: [Route] = [.records, .credentials, .settings]
+    let layout: SummonGeometry.Layout
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .topLeading) {
             DS.Palette.coreCanvas.ignoresSafeArea()
 
-            VStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 0) {
                 header
                 Spacer(minLength: 0)
-                dotsRow
-                coreButton
-                    .padding(.top, 26)
-                Spacer(minLength: 0)
             }
-            .padding(.horizontal, 26)
+            .padding(.horizontal, VK(variant: .core).gutter)
+
+            // 平铺档（CORE.md §1）：三光点摊成三行带字条目，**拖拽退场**
+            //（拖拽由上层按同一个开关关掉）。
+            // 位置**不许写成内联坐标** —— 原型那次翻车就是坐标写在 markup 的 `style` 上，
+            // 平铺档的重排规则一条都不生效（CORE.md §1 那条硬约束）。
+            if VK.flatTier {
+                flatDots
+            } else {
+                ForEach(SummonGeometry.dotRatios, id: \.route) { slot in
+                    dot(slot.route)
+                        .position(x: slot.point.x, y: slot.point.y)
+                }
+            }
         }
         .onAppear { PageTrace.shown("锁核首页") }
         // 域浮层**不在这里**：挂在 VariantRootView 上由两套共用。
@@ -513,80 +623,291 @@ struct CoreHomeView: View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("FRONT DOOR")
-                    .font(.system(.caption2, design: .default).weight(.semibold)).tracking(1.6)
+                    .vkFont(.system(.caption2, design: .default), weight: .semibold).tracking(1.6)
                     .foregroundStyle(DS.Palette.textSub)
                 Text(app.currentMac.isEmpty ? Readout.dash : "玄关")
-                    .font(.system(.title2, design: .default).weight(.semibold))
+                    .vkFont(.system(.title2, design: .default), weight: .semibold)
                     .tracking(-0.7)
                     .foregroundStyle(DS.Palette.coreInk)
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
                 Text(LockReadout.power(app.status).text + "%")
-                    .font(.system(.body, design: .monospaced).weight(.semibold))
+                    .vkFont(.system(.body, design: .monospaced), weight: .semibold)
                     .monospacedDigit()
                     .foregroundStyle(DS.Palette.coreInk)
                 Text("CELL")
-                    .font(.system(.caption2, design: .default).weight(.semibold)).tracking(1.4)
+                    .vkFont(.system(.caption2, design: .default), weight: .semibold).tracking(1.4)
                     .foregroundStyle(DS.Palette.textSub)
             }
         }
         .padding(.top, 8)
     }
 
-    /// 三个光点。中间那颗在上，另两颗分列下侧 —— 与原型轨道位同一拓扑。
-    private var dotsRow: some View {
-        VStack(spacing: 18) {
-            ForEach(CoreHomeView.dots.prefix(1)) { r in dot(r) }
-            HStack(spacing: 96) {
-                ForEach(CoreHomeView.dots.dropFirst()) { r in dot(r) }
-            }
-        }
-    }
-
+    /// 轨道档：三个光点按 `SummonGeometry` 的轨道位摆开（顶角在上，两颗下侧）。
+    /// 它们走的就是那一条唯一漏斗 `app.requestRoute`；点另一个光点是**换人**不是**叠层**。
     private func dot(_ r: Route) -> some View {
-        Button { app.requestRoute(r) } label: {
+        // 直径取 `layout.dotRadius` 而不是写死 54：光点与轨道半径都是由**同一份画布换算**出来的，
+        // 写死就会在大屏上变成"轨道拉开了、光点没长大"，而命中的是一个看着很小的靶。
+        let d = layout.dotRadius * 2
+        return Button { app.requestRoute(r) } label: {
             VStack(spacing: 6) {
                 ZStack {
                     Circle()
                         .fill(DS.Palette.hairline.opacity(0.55))
-                        .frame(width: 54, height: 54)
+                        .frame(width: d, height: d)
                     Circle()
                         .strokeBorder(DS.Palette.coreA.opacity(0.55), lineWidth: 0.8)
-                        .frame(width: 54, height: 54)
+                        .frame(width: d, height: d)
                     Text(String(r.title.prefix(1)))
-                        .font(.system(.headline, design: .default).weight(.regular))
+                        .vkFont(.system(.headline, design: .default), weight: .regular)
                         .foregroundStyle(DS.Palette.coreInk)
                 }
                 Text(r.title)
-                    .font(.system(.caption2, design: .default).weight(.semibold)).tracking(1.4)
+                    .vkFont(.system(.caption2, design: .default), weight: .semibold).tracking(1.4)
                     .foregroundStyle(DS.Palette.textSub)
             }
         }
         .buttonStyle(.plain)
+        // 命中区由 Button **自己**声明，不写在 label 里：光点是"圆里套一行字"，
+        // 不声明 contentShape 的话，圆与字之间的缝隙是点不动的（看着是一整个目标，
+        // 实际命中只有画出来那几个像素）。`tools/layout-audit` 的 R5 量的就是这件事，
+        // 而它按 `frame(minHeight:)` 认 —— 所以这里必须是**字面令牌**：
+        // 写成 `.frame(minHeight: d)` 这类变量，尺子解不出来就会退回"由行高反推"的估算（实测报 16.5pt）。
+        // ⇒ 尺子能读的形状要写成它读得懂的样子，这是本仓"复算路径要能被机器走一遍"那条纪律的同一件事。
+        .frame(minHeight: DS.Hit.min)
+        .contentShape(Rectangle())
         .accessibilityLabel("进入\(r.title)")
+        .accessibilityHint(r.domainNote)
     }
 
-    private var coreButton: some View {
-        Button(action: { app.requestUnlock() }) {
-            ZStack {
-                Circle()
-                    .fill(RadialGradient(colors: [DS.Palette.coreB.opacity(0.85),
-                                                  DS.Palette.coreA.opacity(0.9)],
-                                         center: .center, startRadius: 6, endRadius: 78))
-                    .frame(width: 152, height: 152)
-                Circle()
-                    .strokeBorder(DS.Palette.text.opacity(0.55), lineWidth: 2.5)
-                    .frame(width: 152, height: 152)
-                Image(systemName: app.unlockState == .success ? "lock.open.fill" : "lock.fill")
-                    .font(.system(size: 34, weight: .regular))
-                    .foregroundStyle(DS.Palette.coreInk)
+    // ---------- 平铺档：三行带字条目 ----------
+
+    /// 顶角那颗在上、两颗在下 —— 与轨道档同一拓扑，只换了密度。
+    /// **降档不许换容器语法**（CORE.md §6.3）：三行是发丝线分出来的条目，不是胶囊。
+    private var flatDots: some View {
+        VStack(spacing: 0) {
+            Spacer(minLength: 0)
+            ForEach(SummonGeometry.dotRatios, id: \.route) { slot in
+                flatRow(slot.route)
+                // 行与行之间一根**两端淡出**的发丝线 —— 零卡片定理里"承载层级"的三样之一。
+                if slot.route != SummonGeometry.dotRatios.last?.route {
+                    LinearGradient(colors: [DS.Palette.hairline.opacity(0),
+                                            DS.Palette.hairline,
+                                            DS.Palette.hairline.opacity(0)],
+                                   startPoint: .leading, endPoint: .trailing)
+                        .frame(height: 0.5)
+                }
             }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, VK(variant: .core).gutter)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func flatRow(_ r: Route) -> some View {
+        Button { app.requestRoute(r) } label: {
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(DS.Palette.hairline.opacity(0.55))
+                        .frame(width: 40, height: 40)
+                    Circle()
+                        .strokeBorder(DS.Palette.coreA.opacity(0.55), lineWidth: 0.8)
+                        .frame(width: 40, height: 40)
+                    Text(String(r.title.prefix(1)))
+                        .vkFont(.system(.headline, design: .default), weight: .regular)
+                        .foregroundStyle(DS.Palette.coreInk)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(r.title)
+                        .vkFont(.system(.body, design: .default), weight: .medium)
+                        .foregroundStyle(DS.Palette.coreInk)
+                    Text(r.domainNote)
+                        .vkFont(.system(.caption2, design: .default))
+                        .foregroundStyle(DS.Palette.textSub)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.vertical, 14)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .disabled(!LockReadout.present(app))
-        .opacity(LockReadout.present(app) ? 1 : 0.5)
-        .accessibilityLabel("开门")
-        .accessibilityHint(LockReadout.present(app) ? "走现行三道闸通道" : "需先走近门锁")
+        .accessibilityLabel("进入\(r.title)")
+        .accessibilityHint(r.domainNote)
+    }
+}
+
+// MARK: - 域浮层（两套新变体共用）
+
+/// 域浮层的宿主。**自绘的一层玻璃，不再是系统 `.sheet`** —— 为什么必须换，见 `VariantRootView` 那段。
+/// 代价是实的，系统 sheet 白送的三件东西这里都得自己接：
+///   ① **模态语义** —— `.accessibilityAddTraits(.isModal)`。不补的话 VoiceOver 会继续读到底下首屏的
+///      光点，而它们被玻璃盖着（本仓"看着在、其实摸不到"那道老毛病）；
+///   ② **收起通路** —— 点空白 + 抓握条 + `.accessibilityAction(.escape)`（`CORE.md` §1 的退出方式）；
+///   ③ **安全区** —— 遮罩自己 `ignoresSafeArea`，面板内容仍留在安全区里。
+///
+/// 浮层态的两条默认线（`CORE.md` §11 的 P-1 / P-2，本轮按默认线施工）：
+///   · **P-1** 顶部保留**一行**小号状态读数（不新增元素，占的是本来空着的顶部空场）：
+///     一个门锁 App 在"门锁"浮层里拨自动上锁，却不告诉你现在锁着还是开着 —— 这是第二轮评审实证报出来的；
+///   · **P-2** 顶部一条**域切换带**：三域之间有横向通路。原先去程（点光点进来）成立、回程
+///     （在这一页直接换域）没有画面 —— 实测两套的 act/key/lock 三帧逐像素相同，等于零横向通路。
+///     平铺档同样给带字条目：降档只改密度，不改"有没有这个东西"（§6.3）。
+struct DomainLayer<Page: View>: ViewModifier {
+    let domain: Route?
+    let onClose: () -> Void
+    let page: (Route) -> Page
+
+    @EnvironmentObject var app: AppState
+    @Environment(\.uiVariant) private var variant
+
+    init(domain: Route?, onClose: @escaping () -> Void, @ViewBuilder page: @escaping (Route) -> Page) {
+        self.domain = domain
+        self.onClose = onClose
+        self.page = page
+    }
+
+    private var vk: VK { VK(variant: variant) }
+
+    func body(content: Content) -> some View {
+        content.overlay {
+            if let d = domain { panel(d) }
+        }
+    }
+
+    /// 面板高度：原型给的是 640pt 容量；小屏上留 72pt 露出首屏 —— 否则"浮层"就变成了"换页"。
+    private func panelHeight(_ h: CGFloat) -> CGFloat { min(640, max(320, h - 72)) }
+
+    @ViewBuilder
+    private func panel(_ d: Route) -> some View {
+        ZStack(alignment: .bottom) {
+            // 遮罩：点空白收起。它也是"浮层与首屏谁是现在"的唯一视觉依据，不能省。
+            Color.black.opacity(0.28)
+                .ignoresSafeArea()
+                .onTapGesture { onClose() }
+                .accessibilityHidden(true)
+
+            GeometryReader { g in
+                VStack(spacing: 0) {
+                    grabber
+                    band(current: d)
+                    statusLine
+                    Rectangle().fill(vk.hair).frame(height: 0.5)
+                    page(d)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                }
+                .frame(height: panelHeight(g.size.height))
+                .background(panelBase)
+                // 顶角圆、底角方（底边落在屏幕外）：clip 一个四角圆矩形会让浮层看着浮在屏幕中间。
+                .clipShape(UnevenRoundedRectangle(topLeadingRadius: 22,
+                                                 topTrailingRadius: 22,
+                                                 style: .continuous))
+                .overlay(alignment: .top) {
+                    UnevenRoundedRectangle(topLeadingRadius: 22,
+                                          topTrailingRadius: 22,
+                                          style: .continuous)
+                        .strokeBorder(vk.hair, lineWidth: 0.7)
+                }
+                .accessibilityElement(children: .contain)
+                .accessibilityAddTraits(.isModal)
+                .accessibilityAction(.escape) { onClose() }
+                .frame(maxHeight: .infinity, alignment: .bottom)
+            }
+            // 升起：从底边推上来。`calm` 档下这一层由 DS.Motion 统一压掉（不在视图里另写曲线）。
+            .transition(.move(edge: .bottom).combined(with: .opacity))
+        }
+        .animation(DS.Motion.soft, value: domain)
+    }
+
+    /// 抓握条：收起通路里最显眼的那一条（也是系统 sheet 白送给你的那一条）。
+    private var grabber: some View {
+        Capsule()
+            .fill(vk.hair)
+            .frame(width: 40, height: 4)
+            .padding(.top, 10)
+            .padding(.bottom, 6)
+            .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
+            .onTapGesture { onClose() }
+            .accessibilityLabel("收起")
+            .accessibilityAddTraits(.isButton)
+    }
+
+    /// **P-2** 域切换带：三域之间有横向通路。
+    /// 再点一次当前域 = 收起（与 CORE.md §1 的退出方式一致："再点同一光点"）。
+    /// 平铺档不做另一套：这一条本来就是**带字**的条目，降档只改密度（§6.3）。
+    private func band(current: Route) -> some View {
+        HStack(spacing: 0) {
+            ForEach(Route.byHost.filter { $0 != .device }) { r in
+                Button {
+                    if r == current { onClose() } else { app.requestRoute(r) }
+                } label: {
+                    VStack(spacing: 3) {
+                        Text(r.title)
+                            .vkFont(.subheadline, weight: r == current ? .semibold : .regular)
+                        Text(r.domainNote)
+                            .vkFont(.caption2)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 9)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(r == current ? vk.accent : vk.ink)
+                .accessibilityLabel("\(r.title)，\(r.domainNote)")
+                .accessibilityAddTraits(r == current ? [.isSelected] : [])
+            }
+        }
+        .padding(.horizontal, 6)
+    }
+
+    /// **P-1** 状态读数。读数一律来自 `LockReadout`（那个"读不到就说读不到"的唯一出口）——
+    /// 在这里另算一次 `app.status?.powerLevel` 就是本仓反复踩的"同一个量算两次"。
+    private var statusLine: some View {
+        let here = LockReadout.present(app)
+        let power = LockReadout.power(app.status)
+        let freeze = LockReadout.freeze(app.status)
+        return HStack(spacing: 10) {
+            Text(here ? "在场" : "不在场")
+            Text("电量 " + power.text + (power.isLive ? "%" : ""))
+            Text("键盘 " + freeze.text)
+            Spacer(minLength: 0)
+            Text(app.currentMac.isEmpty ? "未连接" : app.currentMac)
+        }
+        .vkFont(.caption2, weight: .medium)
+        .foregroundStyle(here ? vk.sub : vk.faint)
+        .padding(.horizontal, 16)
+        .padding(.bottom, 7)
+        .accessibilityElement(children: .combine)
+    }
+
+    /// 面板基底。三套各自不同 —— 这就是"两套界面切换后看着不一样"在浮层上的那一半。
+    @ViewBuilder
+    private var panelBase: some View {
+        switch variant {
+        case .core:
+            // 锁核那套：玻璃（零卡片定理里承载层级的是玻璃本身与发丝线，不是盒子）
+            Rectangle().fill(.ultraThinMaterial)
+        case .gauge:
+            // 仪表：凹槽基底。窗格在这里**不是装饰**，是面板的地（CORE.md §8.8 同一口径）。
+            vk.bezel
+        case .legacy:
+            // 走不到：域浮层只在非 legacy 挂载（`VariantRootView` 只在非 legacy 分叉出来）。
+            // 分支留着是为了让 switch 穷尽 —— 少一个 case 编译就不过，那是刻意的。
+            vk.canvas
+        }
+    }
+}
+
+extension View {
+    /// 挂上域浮层。**这是第 7 条呈现通道**（前六条：sheet / fullScreenCover / navigationDestination /
+    /// popover / NavigationLink / Tab）。`tools/destmap.js` 必须认得它，否则台账会静默少三站 ——
+    /// 那份工具自己记过这个失效模式："一条通道没被正控覆盖，就意味着走那条通道的目的地可能整批漏抽
+    /// 而台账照样报自检通过"。
+    /// ⚠ 目的地**必须写在尾随闭包里**：抽成辅助函数（`overlayPage(d)` 那种）台账就看不见了。
+    func domainLayer<Page: View>(domain: Route?,
+                                 onClose: @escaping () -> Void,
+                                 @ViewBuilder page: @escaping (Route) -> Page) -> some View {
+        modifier(DomainLayer(domain: domain, onClose: onClose, page: page))
     }
 }

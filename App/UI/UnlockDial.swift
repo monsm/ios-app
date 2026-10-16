@@ -240,7 +240,7 @@ private struct DrillTrace: View {
         ZStack {
             if !swipeTrace {
                 Text(UnlockPrefs.gestureHint)
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .padding(DS.Space.s)
                     .variantPlate(DS.Palette.surfaceAlt, .capsule)
@@ -554,12 +554,12 @@ struct UnlockDial: View {
             // 85 退避节奏文案优先; 其次状态详情
             if let retryText {
                 Text(retryText)
-                    .font(.footnote.weight(.medium))
+                    .vkFont(.footnote, weight: .medium)
                     .foregroundStyle(DS.Palette.accentText)
                     .transition(.opacity)
             } else if let detail {
                 Text(detail)
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(detailTone)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
@@ -569,7 +569,7 @@ struct UnlockDial: View {
             // 62 围栏开启但未解锁时的教学一句
             if fenceRequired, !armed, !isBusy, bleReady, state == .idle {
                 Text("误触围栏开启中: 先从圆盘边缘拖到中心, 再执行开锁手势")
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, DS.Space.xl)
@@ -580,7 +580,7 @@ struct UnlockDial: View {
                 Text(weakNudge
                      ? "已暂缓这一次: 离门锁再走近一步, 然后重新按住圆盘"   // 129 界面文案
                      : "信号偏弱, 走近一步再开更稳")   // 129 信号偏弱
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.warn)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, DS.Space.xl)
@@ -937,7 +937,7 @@ struct UnlockDial: View {
         VStack(spacing: DS.Space.s) {
             dialIcon()
             Text(title)
-                .font(.headline)
+                .vkFont(.headline)
                 .foregroundStyle(contentColor)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)

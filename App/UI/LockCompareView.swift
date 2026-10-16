@@ -36,7 +36,7 @@ struct LockCompareView: View {
                 // 两把都还在台账里却比不出来 = 之前选中的那一把已被删除, 见 sidesOK 那段
                 Section {
                     Text("之前对比的锁里有一把已不在本机台账 —— 重新选两把。")   // 2026-10-15 走查
-                        .font(.footnote).foregroundStyle(DS.Palette.warn)
+                        .vkFont(.footnote).foregroundStyle(DS.Palette.warn)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -72,7 +72,7 @@ struct LockCompareView: View {
         Section("选两把锁") {
             if locks.count < 2 {
                 Text("这台手机只绑了一把锁 —— 对比需要两把。")   // 775 这台手机只绑了一把锁
-                    .font(.footnote).foregroundStyle(DS.Palette.textSub)
+                    .vkFont(.footnote).foregroundStyle(DS.Palette.textSub)
             } else {
                 Picker("左侧", selection: $leftMac) {
                     ForEach(locks) { kc in Text(LockArchive.displayName(kc)).tag(kc.mac) }
@@ -82,7 +82,7 @@ struct LockCompareView: View {
                 }
                 if leftMac == rightMac {
                     Text("两边选的是同一把锁，比出来的差永远是零 —— 请换一把。")   // 775 两边选的是同一把锁
-                        .font(.caption).foregroundStyle(DS.Palette.warn)
+                        .vkFont(.caption).foregroundStyle(DS.Palette.warn)
                 }
             }
         }
@@ -96,7 +96,7 @@ struct LockCompareView: View {
             }
             .pickerStyle(.segmented)
             Text(windowLabel)   // 783: 标签写清这段区间到底是哪几天，双锁共用同一个
-                .font(.caption).foregroundStyle(DS.Palette.textSub)
+                .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
         } header: {
             Text("对比窗口 · \(windowLabel) · 双锁")
         }
@@ -136,7 +136,7 @@ struct LockCompareView: View {
             Section("开门趋势叠加") {   // 775 开门趋势叠加
                 // 两把都没有本机日志时不画空图 (边界 2)
                 Text("两把锁在本机都没有日志行 —— 先到设备页各读一次，再回来对比。")   // 775 两把锁在本机都没有日
-                    .font(.footnote).foregroundStyle(DS.Palette.textSub)
+                    .vkFont(.footnote).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
         } else {
@@ -153,7 +153,7 @@ struct LockCompareView: View {
                 }
                 .frame(height: 170)
                 Text("左：\(leftName) · 右：\(rightName)。两把锁的记录窗口各自受本机缓存限制，条数差异不等于使用差异。")
-                    .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                    .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -165,9 +165,9 @@ struct LockCompareView: View {
     private var metricSection: some View {
         Section("关键指标") {
             HStack(spacing: DS.Space.s) {
-                Text("指标").font(.caption).foregroundStyle(DS.Palette.textSub).frame(maxWidth: .infinity, alignment: .leading)
-                Text(leftName).font(.caption.weight(.semibold)).frame(maxWidth: .infinity)
-                Text(rightName).font(.caption.weight(.semibold)).frame(maxWidth: .infinity)
+                Text("指标").vkFont(.caption).foregroundStyle(DS.Palette.textSub).frame(maxWidth: .infinity, alignment: .leading)
+                Text(leftName).vkFont(.caption, weight: .semibold).frame(maxWidth: .infinity)
+                Text(rightName).vkFont(.caption, weight: .semibold).frame(maxWidth: .infinity)
             }
             row("开门次数", String(leftModel?.opensTotal ?? 0), String(rightModel?.opensTotal ?? 0))
             row("告警条数", String(leftModel?.alarmsTotal ?? 0), String(rightModel?.alarmsTotal ?? 0))
@@ -197,7 +197,7 @@ struct LockCompareView: View {
                  + "样本为偶数时取靠早的那一个，它是真发生过的一刻。"
                  + "工作日 = 非法定假日且 (周一~周五或表里写着补班)，与周几分布同一个周序；"
                  + "窗口里没读到日志的日子既不算工作日也不进样本。")
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -261,7 +261,7 @@ struct LockCompareView: View {
                 }
                 Text("两条多边形共用同一个标度 —— 各画各的归一化会让「都很闲」与「都很忙」长得一样。"
                      + "四轴 = 早/午/晚/深夜; 只统计窗口内读到的日志, 没读到的时段按 0 画。")
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -270,7 +270,7 @@ struct LockCompareView: View {
     private func legendDot(_ c: Color, _ name: String) -> some View {
         HStack(spacing: DS.Space.xs) {
             Capsule().fill(c).frame(width: 14, height: 4)
-            Text(name).font(.caption).foregroundStyle(DS.Palette.textSub)
+            Text(name).vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                 .lineLimit(1).minimumScaleFactor(0.8)
         }
     }
@@ -279,9 +279,9 @@ struct LockCompareView: View {
     /// 这样 780 那种"07:12"的读数不必再写第二套行渲染。
     private func row(_ label: String, _ a: String, _ b: String) -> some View {
         HStack(spacing: DS.Space.s) {
-            Text(label).font(.subheadline).frame(maxWidth: .infinity, alignment: .leading)
-            Text(a).font(.subheadline.monospacedDigit()).frame(maxWidth: .infinity)
-            Text(b).font(.subheadline.monospacedDigit()).frame(maxWidth: .infinity)
+            Text(label).vkFont(.subheadline).frame(maxWidth: .infinity, alignment: .leading)
+            Text(a).vkFont(.subheadline.monospacedDigit()).frame(maxWidth: .infinity)
+            Text(b).vkFont(.subheadline.monospacedDigit()).frame(maxWidth: .infinity)
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label): 左 \(a), 右 \(b)")
@@ -324,20 +324,20 @@ struct LockCompareView: View {
             Section {
                 Button { showSameNames.toggle() } label: {
                     Label("全库 \(DB.keychains().count) 把锁上, \(dup.count) 个名字被 2 把及以上锁用到", systemImage: "person.2")   // 781 全库
-                        .font(.subheadline.weight(.medium))
+                        .vkFont(.subheadline, weight: .medium)
                         .foregroundStyle(DS.Palette.accentText)
                 }
                 if showSameNames {
                     ForEach(dup, id: \.name) { d in
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(d.name).font(.footnote).foregroundStyle(DS.Palette.text)
-                            Text(d.locks.joined(separator: " · ")).font(.caption2).foregroundStyle(DS.Palette.textSub)
+                            Text(d.name).vkFont(.footnote).foregroundStyle(DS.Palette.text)
+                            Text(d.locks.joined(separator: " · ")).vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                         }
                     }
                 }
                 Text("同名不代表同一个凭证，也不代表录重了 —— 只说明这台手机上有锁用了同样的称呼。"
                      + "要不要改名由你判断，这里不下结论。")   // 781 要不要改名由你判断
-                    .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                    .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             } header: {
                 Text("同名凭证对照")   // 781 同名凭证对照
@@ -360,7 +360,7 @@ struct LockCompareView: View {
             }
             Text("闲置 = 本机日志里超 30 天没有开门行。它说的是「没读到」，不是「没人开」："
                  + "从没拉取过日志的锁也会落在这里，所以拿它当排除口径之前请自己确认过。")
-                .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         } header: {
             Text("闲置标注")   // 782 闲置标注
@@ -370,7 +370,7 @@ struct LockCompareView: View {
         // 782 判据全仓唯一 = StatsKit.isIdleLock (统计页那枚排除口径开关读同一处, 不再各算各的)
         let idle = StatsKit.isIdleLock(mac)
         return Text(idle ? "闲置 (超 30 天无开门行)" : "30 天内有开门")
-            .font(.caption2.weight(.medium))
+            .vkFont(.caption2, weight: .medium)
             .foregroundStyle(idle ? DS.Palette.textSub : DS.Palette.ok)
             .padding(.horizontal, DS.Space.s)
             .padding(.vertical, 2)

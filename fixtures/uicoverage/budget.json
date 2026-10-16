@@ -1,0 +1,4 @@
+{
+ "selfDrawnContainers": 113,
+ "note": "基线由 tools/uicoverage.js 首跑写入；只能下调。151→131(批三 callout 16 + 批四 带描边胶囊 4)→113(批五 纯装饰 18)。下面这些**不许接**，就地写了 `// @layout-allow VK豁免 <类名>` 留痕：② 语义色填充（warn/ok/danger 实心 + onSem 前景 —— 填充是信息，且那对前景色是按压在填充上量过对比度的）③ 控件可识别性（输入框底衬/描边、进度条实底、面板实底）④ 刻度与点（不是容器）。判据与清单见 design-system/aurora-lock/CORE.md §13.4 与 docs/HANDOFF-2026-10-16-UI-VARIANTS.md §8.9。"
+}

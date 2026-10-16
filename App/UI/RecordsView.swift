@@ -245,11 +245,12 @@ struct RecordsView: View {
                         let n = RecordSearch.unhandledAlarmCount(macs: DB.keychains().map { $0.mac })
                         if n > 0 {
                             Text("\(n)")
-                                .font(.caption2.weight(.semibold))
+                                .vkFont(.caption2, weight: .semibold)
                                 .lineLimit(1)
                                 .foregroundStyle(DS.Palette.onSem)
                                 .padding(.horizontal, 4)
                                 .padding(.vertical, DS.Space.xxs)
+                                // @layout-allow VK豁免 语义色填充: 实心语义角标：填充就是信息，且前景走 onSem —— 去掉填充等于换掉一个已量过对比度的关系
                                 .background(DS.Palette.danger, in: Capsule())
                                 .offset(x: 12, y: -9)
                                 .accessibilityHidden(true)
@@ -280,7 +281,7 @@ struct RecordsView: View {
                     Button { showActiveCreds = true } label: { Label("活跃凭证排序 (约)", systemImage: "list.number") }
                     Button { showOutWin = true } label: { Label("越界开门清单 (约)", systemImage: "clock.badge.exclamationmark") }
                     if scope == 1 {
-                        Toggle("泳道时间线", isOn: $laneMode)   // 785 泳道时间线
+                        VariantToggle("泳道时间线", isOn: $laneMode)   // 785 泳道时间线
                     }
                 }
             } label: {
@@ -470,7 +471,7 @@ struct RecordsView: View {
         if !reconLine.isEmpty {
             HStack(spacing: DS.Space.s) {
                 Text(reconLine)
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: DS.Space.xs)
@@ -478,7 +479,7 @@ struct RecordsView: View {
                     UIPasteboard.general.string = reconLine
                     app.showToast("本次对账结果已复制")   // 749 本次对账结果已复制
                 }
-                .font(.caption.weight(.medium))
+                .vkFont(.caption, weight: .medium)
                 .foregroundStyle(DS.Palette.accentText)
                 .frame(minHeight: DS.Hit.min)
             }
@@ -493,7 +494,7 @@ struct RecordsView: View {
     private var holidayFeedRows: some View {
         let thisYear = WeekCal.gregorian.component(.year, from: Date())
         Text(HolidayFeed.coverageText + " · 生效表覆盖至 \(RecordSearch.holidayYearMax) 年")
-            .font(.caption2)
+            .vkFont(.caption2)
             .foregroundStyle(DS.Palette.textSub)
             .fixedSize(horizontal: false, vertical: true)
         HStack(spacing: DS.Space.s) {
@@ -508,7 +509,7 @@ struct RecordsView: View {
                     holBusy = false
                 }
             }
-            .font(.caption.weight(.medium))
+            .vkFont(.caption, weight: .medium)
             .foregroundStyle(DS.Palette.accentText)
             .disabled(holBusy)
             .frame(minHeight: DS.Hit.min)
@@ -516,7 +517,7 @@ struct RecordsView: View {
                 holSrcDraft = HolidayFeed.sourceBase
                 showHolSrc = true
             }
-            .font(.caption.weight(.medium))
+            .vkFont(.caption, weight: .medium)
             .foregroundStyle(DS.Palette.textSub)
             .frame(minHeight: DS.Hit.min)
             if HolidayFeed.lastUpdateSec > 0 {
@@ -524,23 +525,23 @@ struct RecordsView: View {
                     HolidayFeed.clearCache()
                     holMsg = "已清除在线缓存，回到只信内置表"
                 }
-                .font(.caption.weight(.medium))
+                .vkFont(.caption, weight: .medium)
                 .foregroundStyle(DS.Palette.warn)
                 .frame(minHeight: DS.Hit.min)
             }
             Spacer(minLength: 0)
         }
-        Toggle("回前台时自动更新今年", isOn: Binding(get: { HolidayFeed.autoOn },   // 671 回前台时自动更新今年
+        VariantToggle("回前台时自动更新今年", isOn: Binding(get: { HolidayFeed.autoOn },   // 671 回前台时自动更新今年
                                                           set: { HolidayFeed.setAuto($0) }))
-            .font(.caption)
+            .vkFont(.caption)
             .frame(minHeight: DS.Hit.min)
         Text("默认源是公开仓库按国务院公告发布的年份文件；内置表仍保底，联网失败不影响判定。")
-            .font(.caption2)
+            .vkFont(.caption2)
             .foregroundStyle(DS.Palette.textSub)
             .fixedSize(horizontal: false, vertical: true)
         if !holMsg.isEmpty {
             Text(holMsg)
-                .font(.caption2)
+                .vkFont(.caption2)
                 .foregroundStyle(holMsg.hasPrefix("已收录") || holMsg.hasPrefix("已清除") ? DS.Palette.ok : DS.Palette.warn)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -559,7 +560,7 @@ struct RecordsView: View {
                     // 551: 这句占位文案承诺的三段 (成员 / 凭证 / 备注) 由 `RecordSearch.searchFace`
                     // 一处定义、在 applyFilter 的检索块里落地 —— 少一段就是让用户搜一个搜不到的热区。
                     TextField("搜索: 成员 / 凭证 / 昨晚 告警 / +指纹 -临时码", text: $searchText)   // 551/554/555 搜索
-                        .font(.subheadline)
+                        .vkFont(.subheadline)
                         .foregroundStyle(DS.Palette.text)
                         // 553: "最近搜索"区此前永远是空的 —— 读侧 (history/clearHistory) 接好了,
                         // 写侧 pushHistory 全仓零调用。键盘"搜索"键提交时才入历史, 不随每次击键写。
@@ -584,6 +585,7 @@ struct RecordsView: View {
                 // 2026-10-14 材质统一批次: 搜索框**保持实底**。它在 Section 里 (这一页是 List),
                 // 行组本身已经是一层玻璃面 —— 再给行里的控件上玻璃就是玻璃叠玻璃, 接缝全在字底下。
                 // @layout-allow 面板实底
+                // @layout-allow VK豁免 控件可识别性: 带 hairline 的输入框底衬，同上
                 .background(DS.Palette.surface, in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: DS.Radius.control).strokeBorder(DS.Palette.hairline, lineWidth: 0.5))
 
@@ -593,12 +595,12 @@ struct RecordsView: View {
                         HStack(spacing: DS.Space.xs) {
                             ForEach(Array(parsedTags.enumerated()), id: \.offset) { _, tag in
                                 Text(tag)
-                                    .font(.caption2.weight(.medium))
+                                    .vkFont(.caption2, weight: .medium)
                                     .lineLimit(1)
                                     .foregroundStyle(DS.Palette.accentText)
                                     .padding(.horizontal, DS.Space.xs + 2)
                                     .padding(.vertical, 2)
-                                    .background(DS.Palette.accentText.opacity(0.10), in: Capsule())
+                                    .variantPlate(DS.Palette.accentText.opacity(0.10), .capsule)
                                     .frame(maxWidth: 160)
                             }
                         }
@@ -610,11 +612,11 @@ struct RecordsView: View {
                     VStack(alignment: .leading, spacing: 0) {
                         HStack(spacing: DS.Space.s) {
                             Text("最近搜索")   // 553 最近搜索
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                             Spacer(minLength: 0)
                             Button("全部清空") { RecordSearch.clearHistory() }
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.danger)
                                 .frame(minWidth: 88, minHeight: DS.Hit.min)
                                 .contentShape(Rectangle())
@@ -629,7 +631,7 @@ struct RecordsView: View {
                                     RecordSearch.pushHistory(h)   // 再次选用要把这条提到最前 (pushHistory 自带去重)
                                 } label: {
                                     Text(h)
-                                        .font(.footnote)
+                                        .vkFont(.footnote)
                                         .lineLimit(1)
                                         .foregroundStyle(DS.Palette.text)
                                 }
@@ -655,7 +657,7 @@ struct RecordsView: View {
                 if !RecordSearch.namedViews().isEmpty {
                     VStack(alignment: .leading, spacing: DS.Space.xs) {
                         Text("我的过滤")   // 560 我的过滤
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                         ForEach(RecordSearch.namedViews()) { v in
                             HStack(spacing: DS.Space.s) {
@@ -669,7 +671,7 @@ struct RecordsView: View {
                                     applyFilter()
                                 } label: {
                                     Label(v.name, systemImage: "bookmark")
-                                        .font(.footnote.weight(.medium))
+                                        .vkFont(.footnote, weight: .medium)
                                         .foregroundStyle(DS.Palette.accentText)
                                 }
                                 .buttonStyle(PlainButtonStyle())
@@ -753,20 +755,20 @@ struct RecordsView: View {
                 let tail = searchText.isEmpty ? "" : " · 实时"   // 562 实时
                 let cap = capped ? " · 本页已加载 \(rows.count)" : ""
                 Text(head + String(filteredTotal) + " 条" + tail + cap)
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                 Spacer(minLength: DS.Space.s)
                 // 573 条件计数与重置: 叠了几层过滤要说得出来，并一键回到空白起点。
                 if activeFilterCount > 0 {
                     Text("\(activeFilterCount) 项条件")
-                        .font(.caption2.weight(.semibold).monospacedDigit())
+                        .vkFont(.caption2.monospacedDigit(), weight: .semibold)
                         .foregroundStyle(DS.Palette.accentText)
                     Button("重置") {
                         sel = ""
                         searchText = ""
                         filters = QueryFilters()      // 其余联动靠既有 onChange(of: searchText/filters) 重算，不另起一次 applyFilter
                     }
-                    .font(.caption2.weight(.medium))
+                    .vkFont(.caption2, weight: .medium)
                     .foregroundStyle(DS.Palette.accentText)
                 }
             }
@@ -776,7 +778,7 @@ struct RecordsView: View {
                     HStack(spacing: DS.Space.xs) {
                         ForEach(suggestions, id: \.self) { s in
                             Button(s) { searchText = s }
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.accentText)
                                 .padding(.horizontal, DS.Space.s)
                                 .padding(.vertical, DS.Space.xs)
@@ -835,7 +837,7 @@ struct RecordsView: View {
         Section {
             HStack(spacing: DS.Space.s) {
                 Text("范围")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                 Picker("搜索范围", selection: $scope) {   // 561 搜索范围
                     Text("当前锁").tag(0)
@@ -854,7 +856,7 @@ struct RecordsView: View {
                         }
                     } label: {
                         Label("换锁", systemImage: "arrow.left.arrow.right.circle")   // 191 换锁
-                            .font(.caption.weight(.medium))
+                            .vkFont(.caption, weight: .medium)
                             .foregroundStyle(DS.Palette.accentText)
                     }
                     .accessibilityLabel("切换当前锁，当前为 \(app.displayName)")
@@ -862,11 +864,11 @@ struct RecordsView: View {
                 if scope == 1 {
                     Button { laneMode.toggle() } label: {
                         Label(laneMode ? "看时间线" : "泳道", systemImage: "rectangle.split.3x1")   // 785 泳道
-                            .font(.caption.weight(.medium))
+                            .vkFont(.caption, weight: .medium)
                             .foregroundStyle(DS.Palette.accentText)
                             .padding(.horizontal, DS.Space.s)
                             .padding(.vertical, DS.Space.xs)
-                            .background(DS.Palette.accentText.opacity(0.10), in: Capsule())
+                            .variantPlate(DS.Palette.accentText.opacity(0.10), .capsule)
                             .frame(minHeight: DS.Hit.min)
                             .contentShape(Capsule())
                     }
@@ -918,7 +920,7 @@ struct RecordsView: View {
             if filters.failedOnly {
                 // ⚠569: 锁端仅记录告警级 (10/13/224), 无逐次失败明细 — 文案已标注
                 Text("注: 失败筛选只收录告警级锁定/指纹告警与手机侧开锁失败, 锁端不上报逐次失败")
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 // 拍板 #5 (2026-10-09): 给「清空本机失败标记」一个带二次确认的入口。
@@ -927,7 +929,7 @@ struct RecordsView: View {
                 let failN = macs.reduce(0) { $0 + DB.failEvents($1).count }
                 HStack(spacing: DS.Space.s) {
                     Text("本机失败标记 \(failN) 条")   // 92 本机失败标记
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                     Spacer(minLength: 0)
                     if failN > 0 {
@@ -944,7 +946,7 @@ struct RecordsView: View {
                                 app.showToast("已清空本机失败标记 (\(failN) 条)")
                             }
                         }
-                        .font(.caption.weight(.medium))
+                        .vkFont(.caption, weight: .medium)
                         .foregroundStyle(DS.Palette.warn)
                         .frame(minHeight: DS.Hit.min)
                         .contentShape(Rectangle())
@@ -957,14 +959,14 @@ struct RecordsView: View {
             // 只在选了"深夜预设"这一档时出现 —— 它是这档的定义, 不该常驻在筛选行里。
             if filters.segment == 4 {
                 HStack(spacing: DS.Space.s) {
-                    Text("深夜区间").font(.caption).foregroundStyle(DS.Palette.textSub)   // 676 深夜区间
+                    Text("深夜区间").vkFont(.caption).foregroundStyle(DS.Palette.textSub)   // 676 深夜区间
                     Spacer(minLength: DS.Space.s)
                     Picker("起点", selection: Binding(get: { RecordSearch.nightFrom },
                                                       set: { RecordSearch.setNightFrom($0) })) {
                         ForEach(0..<24, id: \.self) { Text("\($0) 时").tag($0) }
                     }
                     .labelsHidden().pickerStyle(.menu).frame(width: 96)
-                    Text("→").font(.caption).foregroundStyle(DS.Palette.textSub)
+                    Text("→").vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                     Picker("终点", selection: Binding(get: { RecordSearch.nightTo },
                                                      set: { RecordSearch.setNightTo($0) })) {
                         ForEach(0..<24, id: \.self) { Text("\($0) 时").tag($0) }
@@ -974,15 +976,15 @@ struct RecordsView: View {
                 .frame(minHeight: DS.Hit.min)
                 if RecordSearch.nightWindowDegenerate {
                     Text("起点与终点相同 = 空区间, 这一档筛不出任何记录。")
-                        .font(.caption2).foregroundStyle(DS.Palette.warn)
+                        .vkFont(.caption2).foregroundStyle(DS.Palette.warn)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                Toggle("节假日当日顺延 2 小时", isOn: Binding(get: { RecordSearch.holidayExtendOn },   // 672 节假日当日顺延
+                VariantToggle("节假日当日顺延 2 小时", isOn: Binding(get: { RecordSearch.holidayExtendOn },   // 672 节假日当日顺延
                                                                    set: { RecordSearch.setHolidayExtend($0) }))
-                    .font(.caption)
+                    .vkFont(.caption)
                     .frame(minHeight: DS.Hit.min)
                 Text("顺延只影响深夜档的判定, 不改记录的归属日 (凌晨仍归前一晚)。")
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 // 671 在线假日源 (拍板 #22): 内置表始终兜底, 拉到的年份按年整体覆盖; 自动档默认关。
@@ -997,7 +999,7 @@ struct RecordsView: View {
                         filters = QueryFilters()
                         reversed = false
                     }
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
                     .contentShape(Rectangle())
@@ -1008,7 +1010,7 @@ struct RecordsView: View {
     private func chipRowSection(_ title: String, selected: Int, items: [(String, Int)], pick: @escaping (_ name: String, _ i: Int) -> Void) -> some View {
         VStack(alignment: .leading, spacing: DS.Space.xs) {
             Text(title)
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: DS.Space.s) {
@@ -1026,7 +1028,7 @@ struct RecordsView: View {
             tap()
         } label: {
             Text(name)
-                .font(.footnote.weight(.medium))
+                .vkFont(.footnote, weight: .medium)
                 .lineLimit(1)
                 .padding(.horizontal, 12)
                 .padding(.vertical, DS.Space.m)
@@ -1046,7 +1048,7 @@ struct RecordsView: View {
             on.wrappedValue.toggle()
         } label: {
             Text(title)
-                .font(.footnote.weight(.medium))
+                .vkFont(.footnote, weight: .medium)
                 .lineLimit(1)
                 .padding(.horizontal, 12)
                 .padding(.vertical, DS.Space.m)
@@ -1074,7 +1076,7 @@ struct RecordsView: View {
                 } icon: {
                     Image(systemName: "flame.fill").accessibilityHidden(true)
                 }
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.accentText)
             }
         }
@@ -1104,7 +1106,7 @@ struct RecordsView: View {
                     } icon: {
                         Image(systemName: "flame").accessibilityHidden(true)
                     }
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.ok)
                 }
                 // 590 断档灰点: 旧→新, 实心=有人开门, 灰点=断档那天
@@ -1115,7 +1117,7 @@ struct RecordsView: View {
                             .frame(width: 6, height: 6)
                     }
                     Text("近 7 天")   // 590 界面文案
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                 }
                 .accessibilityElement(children: .combine)
@@ -1141,7 +1143,7 @@ struct RecordsView: View {
                 } icon: {
                     Image(systemName: "clock").accessibilityHidden(true)
                 }
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
             }
         }
@@ -1188,17 +1190,17 @@ struct RecordsView: View {
                         // 1016 出行中
                         // 1016 近期没人回家
                         Text(travelActive ? "出行中" : "近期没人回家?")
-                            .font(.footnote.weight(.semibold))
+                            .vkFont(.footnote, weight: .semibold)
                             .lineLimit(1)
                             .foregroundStyle(DS.Palette.text)
                         if travelActive {
                             Text("已标记出行至 " + travelUntil + " — 这期间没有开门记录属预期, 不再提醒。")
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         } else if let last = lastOpenDate {
                             Text("已连续 " + String(Int(Date().timeIntervalSince(last) / 86400)) + " 天没有开门记录 — 出行观察中, 一切正常可忽略。")
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -1206,7 +1208,7 @@ struct RecordsView: View {
                     Spacer(minLength: 0)
                     if !travelActive {
                         Button("标记出行") { showTravelPick = true }
-                            .font(.caption)
+                            .vkFont(.caption)
                             .frame(minHeight: DS.Hit.min)
                             .accessibilityLabel("标记出行日期段, 这期间不再提醒")
                     }
@@ -1260,7 +1262,7 @@ struct RecordsView: View {
                 } icon: {
                     Image(systemName: "party.popper").accessibilityHidden(true)
                 }
-                .font(.footnote)
+                .vkFont(.footnote)
                 .foregroundStyle(DS.Palette.accentText)
             }
         }
@@ -1279,7 +1281,7 @@ struct RecordsView: View {
                             .foregroundStyle(i == 0 ? DS.Palette.warn : DS.Palette.textSub)
                             .accessibilityHidden(true)
                         Text(r.name)
-                            .font(.subheadline)
+                            .vkFont(.subheadline)
                             .foregroundStyle(DS.Palette.text)
                         if let bid = Milestones.memberBadges()[r.id], let b = Milestones.badge(bid) {
                             Image(systemName: b.icon)
@@ -1290,11 +1292,11 @@ struct RecordsView: View {
                         Spacer(minLength: 0)
                         if i == 0 {
                             Text("本月门神")
-                                .font(.caption2.weight(.medium))
+                                .vkFont(.caption2, weight: .medium)
                                 .foregroundStyle(DS.Palette.accentText)
                         }
                         Text("\(r.count) 次")
-                            .font(.subheadline)
+                            .vkFont(.subheadline)
                             .monospacedDigit()
                             .foregroundStyle(DS.Palette.textSub)
                     }
@@ -1325,14 +1327,14 @@ struct RecordsView: View {
                 applyFilter()
             } label: {
                 Text("继续加载 (已读 \(rows.count) / 共 \(filteredTotal) 条)")
-                    .font(.subheadline.weight(.medium))
+                    .vkFont(.subheadline, weight: .medium)
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .frame(minHeight: DS.Hit.min)
             }
         } footer: {
             Text("分页只影响本页渲染，不改筛选条件、不改导出与统计的口径 (它们读的是全量缓存)。")
-                .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
         }
     }
 
@@ -1344,7 +1346,7 @@ struct RecordsView: View {
         if let first = firstLogDay, !groups.isEmpty, DB.readLogs(mac).count < 300 {
             Section {
                 Text("—— 这里是与这把锁的第一天 · \(chineseDay(first)) ——")
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, DS.Space.m)
@@ -1362,11 +1364,11 @@ struct RecordsView: View {
                     let days = Array(Set(allRows.map { $0.dayKey })).sorted(by: >)
                     if days.isEmpty {
                         Text("当前没有可导出的记录行。")
-                            .font(.caption).foregroundStyle(DS.Palette.textSub)
+                            .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                     }
                     ForEach(days, id: \.self) { d in
                         let n = allRows.filter { $0.dayKey == d }.count
-                        Toggle("\(d) · \(n) 条", isOn: Binding(
+                        VariantToggle("\(d) · \(n) 条", isOn: Binding(
                             get: { rangeSel.contains(d) },
                             set: { on in if on { rangeSel.insert(d) } else { rangeSel.remove(d) } }))
                             .frame(minHeight: DS.Hit.min)
@@ -1375,7 +1377,7 @@ struct RecordsView: View {
                     Text("按天勾选")   // 716 按天勾选
                 } footer: {
                     Text("只导出勾选那些天的行; CSV 走剪贴板, 不上传、不落盘。")
-                        .font(.caption).foregroundStyle(DS.Palette.textSub)
+                        .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                 }
                 Section {
                     Button("全选") { rangeSel = Set(allRows.map { $0.dayKey }) }
@@ -1432,12 +1434,12 @@ struct RecordsView: View {
                 } icon: {
                     Image(systemName: "battery.25percent").accessibilityHidden(true)
                 }
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.warn)
                 if drops.count > 1 {
                     Text("近 30 天还有 \(drops.count - 1) 天也超过 20%: "
                          + drops.dropFirst().prefix(3).map { $0.day }.joined(separator: ", "))
-                        .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                        .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                 }
             }
         }
@@ -1456,7 +1458,7 @@ struct RecordsView: View {
                 } icon: {
                     Image(systemName: "calendar.badge.clock").accessibilityHidden(true)
                 }
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.accentText)
             }
         }
@@ -1499,7 +1501,7 @@ struct RecordsView: View {
                     // 这里说的是"没连上门锁", 不是"没网"。带斜杠的 Wi-Fi 图标会误导。
                     Image(systemName: "antenna.radiowaves.left.and.right").accessibilityHidden(true)
                 }
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.warn)
             }
         } else if let g = pullGap {
@@ -1511,7 +1513,7 @@ struct RecordsView: View {
                 } icon: {
                     Image(systemName: "arrow.triangle.2.circlepath").accessibilityHidden(true)
                 }
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.warn)
                 reconRow
             }
@@ -1525,7 +1527,7 @@ struct RecordsView: View {
                 }
                 // 749: 拉全时也要能留一行凭据 (拍板 #28), 否则"完整"只存在于口头
                 reconRow
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
             }
         }
@@ -1546,7 +1548,7 @@ struct RecordsView: View {
             } label: {
                 Label("跳回设备页定位「" + LockArchive.displayName(app.devices.first { $0.mac == mac } ?? Keychain(mac: mac, skey: "")) + "」", systemImage: "lock.rotation")
             }
-            .font(.footnote)
+            .vkFont(.footnote)
             .foregroundStyle(DS.Palette.accentText)
         }
     }
@@ -1637,21 +1639,21 @@ struct RecordsView: View {
                 // 滚动驱动 API，本机无编译器时属于"只有首编译能抓"的改动，先只上**静态**月份大字)。
                 if g.showMonthBig, let md = g.date {
                     Text("\(WeekCal.gregorian.component(.month, from: md)) 月")
-                        .font(.title3.weight(.semibold))
+                        .vkFont(.title3, weight: .semibold)
                         .lineLimit(1)
                         .foregroundStyle(DS.Palette.textSub)
                 }
                 if showYear {
                     if let y = g.date {
                         Text(String(WeekCal.gregorian.component(.year, from: y)) + " 年")
-                            .font(.title3.weight(.semibold))
+                            .vkFont(.title3, weight: .semibold)
                             .lineLimit(1)
                             .foregroundStyle(DS.Palette.textSub)
                     }
                 }
                 HStack(spacing: DS.Space.s) {
                     Text(dayLabel(g.key))
-                        .font(.headline)
+                        .vkFont(.headline)
                     // 581 未处置告警蓝点: 该日有未处置告警才出现, 口径与 735 角标同一条 (不另存"已读"位)
                     if alarmDays.contains(g.key) {
                         Circle()
@@ -1667,7 +1669,7 @@ struct RecordsView: View {
                             landDay(g.key)
                         } label: {
                             Text("含防撬/试错")   // 596 含防撬
-                                .font(.caption2.weight(.semibold))
+                                .vkFont(.caption2, weight: .semibold)
                                 .foregroundStyle(DS.Palette.danger)
                                 .frame(minHeight: DS.Hit.min)
                                 .contentShape(Rectangle())
@@ -1686,7 +1688,7 @@ struct RecordsView: View {
                     // 671 节假日组头标签 (内置表按国务院公告逐日核对) + 594 色带同一数据源, 不另造判定
                     if let h = g.holiday {
                         Text(h)
-                            .font(.caption.weight(.medium))
+                            .vkFont(.caption, weight: .medium)
                             .foregroundStyle(DS.Palette.warn)
                             .lineLimit(1)
                     }
@@ -1694,26 +1696,26 @@ struct RecordsView: View {
                     // 给它同一条橙色色带，会让人把"这天开门多是正常的"读成"这天放假"。
                     if RecordSearch.isMakeupWorkday(g.key) {
                         Text("补班")
-                            .font(.caption2)
+                            .vkFont(.caption2)
                             .foregroundStyle(DS.Palette.textSub)
                             .accessibilityLabel("该日是调休补班日，不是假期")
                     }
                     // 755 固件随行标注: 只有该日或更早真读到过状态才显示; "全部锁"模式不标 (各锁固件可能不同)
                     if scope == 0, let fw = FirmwareHistory.observed(mac: mac, onOrBefore: g.key) {
                         Text("固件 \(fw.fw)")
-                            .font(.caption2)
+                            .vkFont(.caption2)
                             .foregroundStyle(DS.Palette.textSub)
                             .accessibilityLabel("该日前后读到过的固件版本 \(fw.fw)，观测日 \(fw.day)")
                     }
                     // 649 凌晨归属: 组内含 0:00-4:59 事件时注明
                     if g.hasNight {
                         Text("含次日凌晨")
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                     }
                     if let c = celebrant {
                         Text("今天是" + c.name + "的生日")
-                            .font(.caption.weight(.medium))
+                            .vkFont(.caption, weight: .medium)
                             .lineLimit(1)
                             .foregroundStyle(DS.Palette.warn)
                     }
@@ -1721,14 +1723,14 @@ struct RecordsView: View {
                     // 588 组头计数徽标: 开门 N · 告警 M (含告警日染浅红)
                     HStack(spacing: DS.Space.xs) {
                         Text("\(openN) 开")
-                            .font(.caption2.weight(.medium))
+                            .vkFont(.caption2, weight: .medium)
                             .lineLimit(1)
                             .foregroundStyle(DS.Palette.textSub)
                         // 556 组头右侧的"该日命中告警数" (系统相册精选分组那一形态)：搜索/筛选后的结果
                         // 用的就是这一个组头 —— 不另开一套"搜索结果专用头"，那会多出第二份口径。
                         if alarmN > 0 {
                             Text("\(alarmN) 警")
-                                .font(.caption2.weight(.semibold))
+                                .vkFont(.caption2, weight: .semibold)
                                 .lineLimit(1)
                                 .foregroundStyle(DS.Palette.danger)
                         }
@@ -1741,20 +1743,20 @@ struct RecordsView: View {
                     // 681 农历小字 (中国历法直接支持, 失败静默隐藏)
                     if let lunar = g.lunarLabel {
                         Text(lunar)
-                            .font(.caption2)
+                            .vkFont(.caption2)
                             .lineLimit(1)
                             .foregroundStyle(DS.Palette.textSub)
                     }
                     // 796 本日使用者 (组头小字, 归属推断标"约")
                     if g.key == todayKey, g.distinctUsers > 0 {
                         Text("约 \(g.distinctUsers) 位使用者")
-                            .font(.caption2)
+                            .vkFont(.caption2)
                             .lineLimit(1)
                             .foregroundStyle(DS.Palette.textSub)
                     }
                     Spacer(minLength: 0)
                     Text("\(g.rows.count) 条")
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                 }
             }
@@ -1771,7 +1773,7 @@ struct RecordsView: View {
                 Text("当日最晚 \(end) · 全天 \(dayFull) 条"
                      + (shownEvents == dayFull ? "" : " · 当前显示 \(shownEvents) 条")
                     )   // 593 界面文案
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .padding(.horizontal, DS.Space.l)
             }
@@ -1784,7 +1786,7 @@ struct RecordsView: View {
         HStack(alignment: .top, spacing: DS.Space.m) {
             // 647 制式统一出口: 时间线行、合并行、详情卡、导出都走 TimeFormat，不各写 DateFormatter
             Text(TimeFormat.clock(r.time))
-                .font(.caption.monospacedDigit())
+                .vkFont(.caption.monospacedDigit())
                 .foregroundStyle(DS.Palette.textSub)
                 .frame(width: 42, alignment: .trailing)
                 .padding(.top, 2)
@@ -1797,7 +1799,7 @@ struct RecordsView: View {
             HStack(spacing: DS.Space.s) {
                 kindIcon(r)
                 Text(mergedLabel)
-                    .font(.subheadline)
+                    .vkFont(.subheadline)
                     .foregroundStyle(DS.Palette.text)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.top, 1)
@@ -1844,7 +1846,7 @@ struct RecordsView: View {
             // 这一行是裸切片 (rowParts 的 "yyyy-MM-dd HH:mm:ss" 中段), 于是选了"12 小时"后
             // 同一页普通行仍显 24 小时、合并行显 12 小时 —— 一句注释承诺的"全部时间字段"就是这么破的。
             Text(TimeFormat.clock(r.time))
-                .font(.caption.monospacedDigit())
+                .vkFont(.caption.monospacedDigit())
                 .foregroundStyle(DS.Palette.textSub)
                 .frame(width: 42, alignment: .trailing)
                 .padding(.top, 2)
@@ -1873,13 +1875,13 @@ struct RecordsView: View {
                             .font(.system(size: DS.Icon.xs, weight: .semibold))
                             .foregroundStyle(LockArchive.swatchColor(LockArchive.meta(rowLockMac).colorKey))
                         Text(r.lockName)
-                            .font(.caption2.weight(.medium))
+                            .vkFont(.caption2, weight: .medium)
                             .lineLimit(1)
                             .foregroundStyle(DS.Palette.accentText)
                     }
                     .padding(.horizontal, DS.Space.s)
                     .padding(.vertical, 2)
-                    .background(DS.Palette.accentText.opacity(0.10), in: Capsule())
+                    .variantPlate(DS.Palette.accentText.opacity(0.10), .capsule)
                     .frame(maxWidth: 130)
                     .accessibilityLabel("锁 " + r.lockName)
                 }
@@ -1899,7 +1901,7 @@ struct RecordsView: View {
                 // 591 行内次序注释: 只在第 2 次及以后写 —— "今天第一次"是废话，天天写等于没写。
                 if seq >= 2 {
                     Text("今日第 \(seq) 次")
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                         .lineLimit(1)
                         .accessibilityLabel("本日第 \(seq) 次")
@@ -1907,7 +1909,7 @@ struct RecordsView: View {
                 // 796 行级第 N 位使用者: 与 183 同一由头 (归属可证明才算), 第 1 位不写
                 if userOrd >= 2 {
                     Text("本日第 \(userOrd) 位使用者")
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                         .lineLimit(1)
                         .accessibilityLabel("本日第 \(userOrd) 位使用者")
@@ -1917,14 +1919,14 @@ struct RecordsView: View {
                 // 不该由一个新功能单方面替所有用户决定 (组头已经把日期写在每组第一行了)。
                 if TimeFormat.twoLine, let dd = RecordSearch.dateFromKey(r.dayKey) {
                     Text(dd.formatted(date: .complete, time: .omitted))
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                         .lineLimit(1)
                 }
                 // 680 同分钟歧义注: 时间轴上挨着的两行如果时刻字符串相同，先后的来源是入库顺序而不是时间。
                 if dupMinute {
                     Text("按入库顺序")
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                         .lineLimit(1)
                         .accessibilityLabel("与上一行同一分钟，按入库顺序排列")
@@ -1936,7 +1938,7 @@ struct RecordsView: View {
                     let nt = RecordOverlay.note(r.rowMac.isEmpty ? mac : r.rowMac, r.key)
                     if !nt.isEmpty {
                         Text(nt)
-                            .font(.caption2)
+                            .vkFont(.caption2)
                             .foregroundStyle(DS.Palette.textSub)
                             .lineLimit(2)
                             .fixedSize(horizontal: false, vertical: true)
@@ -1947,11 +1949,11 @@ struct RecordsView: View {
                     // 791 未归属记录认领: 行内直达, 写入本机覆盖层 (不改锁端数据)
                     Button { claimRow(r) } label: {
                         Text("认领")
-                            .font(.caption.weight(.medium))
+                            .vkFont(.caption, weight: .medium)
                             .foregroundStyle(DS.Palette.accentText)
                             .padding(.horizontal, DS.Space.s)
                             .padding(.vertical, DS.Space.xs)
-                            .background(DS.Palette.accentText.opacity(0.10), in: Capsule())
+                            .variantPlate(DS.Palette.accentText.opacity(0.10), .capsule)
                             .frame(minHeight: DS.Hit.min + 16)
                             .contentShape(Capsule())
                     }
@@ -1960,7 +1962,7 @@ struct RecordsView: View {
                 // 575 越界小字 (约): 临时码窗口外仍开门
                 if !r.winText.isEmpty {
                     Text(r.winText)
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .lineLimit(1)
                         .foregroundStyle(DS.Palette.warn)
                 }
@@ -2090,7 +2092,7 @@ struct RecordsView: View {
     private func rowTitle(_ r: RowVM) -> some View {
         if highlightTokens.isEmpty {
             Text(r.title)
-                .font(.subheadline)
+                .vkFont(.subheadline)
                 .foregroundStyle(DS.Palette.text)
                 .fixedSize(horizontal: false, vertical: true)
         } else {
@@ -2102,13 +2104,14 @@ struct RecordsView: View {
                 ForEach(highlightSegments(r.title)) { seg in
                     if seg.hit {
                         Text(seg.text)
-                            .font(.subheadline)
+                            .vkFont(.subheadline)
                             .foregroundStyle(DS.Palette.accentText)
                             .padding(.vertical, DS.Space.xxs)
+                            // @layout-allow VK豁免 刻度点: 时间轴上的命中段，是刻度不是容器
                             .background(DS.Palette.accentText.opacity(0.18), in: RoundedRectangle(cornerRadius: 3, style: .continuous))
                     } else {
                         Text(seg.text)
-                            .font(.subheadline)
+                            .vkFont(.subheadline)
                             .foregroundStyle(DS.Palette.text)
                     }
                 }
@@ -2244,26 +2247,26 @@ struct RecordsView: View {
             if activeFilterCount > 0 {
                 VStack(alignment: .leading, spacing: DS.Space.s) {
                     Text("当前条件下 0 条 —— 是过滤把它们挡掉了，不是这台锁没记录 (本机共 \(allRows.count) 行可读)。")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.text)
                         .fixedSize(horizontal: false, vertical: true)
                     HStack(spacing: DS.Space.xs) {
                         // 原句三枚: 成员名 / 类型词 / 日期。全部取**真实存在**的值，不造示例词。
                         if let first = DB.members().first {
                             Button("试试成员「\(first.name)」") { sel = first.id; searchText = "" }
-                                .font(.caption)
+                                .vkFont(.caption)
                         }
                         Button("试试类型词「指纹」") { searchText = Attribution.words["fp"] ?? "指纹" }
-                            .font(.caption)
+                            .vkFont(.caption)
                         // 558 日期那枚: 只在今天真有行时才给 (时间短语经 554 成窗, must 摘除修在 RecordSearch.parse)
                         if allRows.contains(where: { $0.dayKey == Self.dayKey(Date()) }) {
                             Button("试试「今天」") { sel = ""; searchText = "今天" }
-                                .font(.caption)
+                                .vkFont(.caption)
                         }
                     }
                     .foregroundStyle(DS.Palette.accentText)
                     Button("清掉全部过滤") { sel = ""; searchText = ""; filters = QueryFilters() }   // 573 清掉全部过滤
-                        .font(.caption.weight(.medium))
+                        .vkFont(.caption, weight: .medium)
                         .foregroundStyle(DS.Palette.accentText)
                 }
                 .padding(.vertical, DS.Space.m)
@@ -2284,13 +2287,13 @@ struct RecordsView: View {
                                           isActive: !AXFlags.reduceMotion)
                             .accessibilityHidden(true)
                         Text("还没有记录。点右上角「重新读取」从锁内拉取最近 100 条开门/操作记录。")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                         // 1044 家庭公告板
                         if !Milestones.bulletin.isEmpty {
                             Text("公告: " + Milestones.bulletin)
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.accentText)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -2305,7 +2308,7 @@ struct RecordsView: View {
                             .buttonStyle(SecondaryActionStyle(fullWidth: false))
                     }
                     Text("下面三条是示例, 只说明真实记录读进来长什么样 · 点一条看怎么开始")   // 808 下面三条是示例
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                     ForEach(0..<3, id: \.self) { i in
@@ -2317,7 +2320,7 @@ struct RecordsView: View {
                         app.loadDevices()
                         app.showToast("已生成 7 天 demo_ 样例记录, 顶部横幅可一键清除")
                     }
-                    .font(.footnote)
+                    .vkFont(.footnote)
                 }
                 .padding(.vertical, DS.Space.m)
             }
@@ -2335,7 +2338,7 @@ struct RecordsView: View {
         return Button { showSampleGuide = true } label: {
             HStack(alignment: .top, spacing: DS.Space.m) {
                 Text(clock)
-                    .font(.caption.monospacedDigit())
+                    .vkFont(.caption.monospacedDigit())
                     .foregroundStyle(DS.Palette.textSub)
                     .frame(width: 42, alignment: .trailing)
                     .padding(.top, 2)
@@ -2347,7 +2350,7 @@ struct RecordsView: View {
                     .padding(.top, 5)
                     .accessibilityHidden(true)
                 Text("示例 · " + word)
-                    .font(.subheadline)
+                    .vkFont(.subheadline)
                     .foregroundStyle(DS.Palette.textSub)
                     .lineLimit(1)
                 Spacer(minLength: 0)
@@ -2375,7 +2378,7 @@ struct RecordsView: View {
             HStack(spacing: DS.Space.s) {
                 ProgressView()
                 Text("正在读取锁内记录…")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
             }
             .padding(.vertical, DS.Space.s)
@@ -2398,7 +2401,7 @@ struct RecordsView: View {
             }
             if AXFlags.reduceMotion {
                 Text("减少动态效果下不闪动，读好后整页自动替换")   // 19 减少动态效果下不闪动
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
             }
         }
@@ -2440,12 +2443,12 @@ struct RecordsView: View {
                             } label: {
                                 HStack(spacing: DS.Space.xs) {
                                     Text(sample)
-                                        .font(.caption2.weight(.medium))
+                                        .vkFont(.caption2, weight: .medium)
                                         .foregroundStyle(DS.Palette.textSub)
                                         .frame(width: 20, height: 20)
                                         .background(Circle().fill(DS.Palette.hairline.opacity(0.6)))
                                     Text("添加成员")
-                                        .font(.caption)
+                                        .vkFont(.caption)
                                         .foregroundStyle(DS.Palette.textSub)
                                 }
                                 .padding(.horizontal, DS.Space.s)
@@ -2479,7 +2482,7 @@ struct RecordsView: View {
         } label: {
             Text(name)
                 // 字重固定: 改字重会改变字形宽度, 胶囊随之跳变
-                .font(.subheadline.weight(.medium))
+                .vkFont(.subheadline, weight: .medium)
                 .lineLimit(1)
                 .padding(.horizontal, DS.Space.l)
                 .padding(.vertical, 12)   // 撑到 ≥44pt 触达
@@ -2499,7 +2502,7 @@ struct RecordsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: DS.Space.m) {
                 Text("泳道时间线: 最近 14 天 × 各锁的开门量, 点阵越密越热闹")   // 785 泳道时间线
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 ForEach(laneDays) { day in
@@ -2550,7 +2553,7 @@ struct RecordsView: View {
         let hasAlarm = day.cells.contains { $0.alarm }
         return HStack(spacing: DS.Space.s) {
             Text(dayLabel(day.key))
-                .font(.caption.monospacedDigit())
+                .vkFont(.caption.monospacedDigit())
                 .foregroundStyle(DS.Palette.textSub)
                 .frame(width: 64, alignment: .trailing)
             HStack(spacing: DS.Space.xs + 2) {
@@ -2579,7 +2582,7 @@ struct RecordsView: View {
             }
             if count > 0 {
                 Text("×" + String(count))
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .lineLimit(1)
                     .foregroundStyle(alarm ? DS.Palette.danger : DS.Palette.textSub)
             }
@@ -2933,11 +2936,11 @@ struct RecordsView: View {
             HStack(spacing: DS.Space.s) {
                 Image(systemName: "calendar.day.timeline.left").accessibilityHidden(true)
                 Text("只看 \(dayFocus) 这一天")   // 586 只看
-                    .font(.caption.weight(.medium))
+                    .vkFont(.caption, weight: .medium)
                     .foregroundStyle(DS.Palette.text)
                 Spacer(minLength: DS.Space.s)
                 Button("看全部日子") { dayFocus = "" }
-                    .font(.caption.weight(.medium))
+                    .vkFont(.caption, weight: .medium)
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
             }
@@ -3004,7 +3007,7 @@ struct RecordsView: View {
                 .frame(maxHeight: 14)
                 .accessibilityHidden(true)
             Text(withHoliday)
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
@@ -3295,16 +3298,16 @@ struct RecordsView: View {
                 } label: {
                     Label(monthJump.isEmpty ? "按月份跳转" : "只看 \(monthJump)",   // 187 按月份跳转
                           systemImage: "calendar")
-                        .font(.caption.weight(.medium))
+                        .vkFont(.caption, weight: .medium)
                 }
                 .accessibilityLabel(monthJump.isEmpty ? "按月份跳转" : "当前只看 \(monthJump) 月")
                 Spacer(minLength: 0)
                 if !monthJump.isEmpty {
                     Text("\(visibleRowCount) 条")
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                     Button("清除") { monthJump = "" }
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.accentText)
                 }
             }
@@ -3347,7 +3350,7 @@ struct AlarmKindsSheet: View {
                         } label: {
                             HStack(spacing: DS.Space.s) {
                                 Text(RecordVerbs.alarmVerb[t] ?? String(t))
-                                    .font(.subheadline)
+                                    .vkFont(.subheadline)
                                     .foregroundStyle(DS.Palette.text)
                                 Spacer(minLength: 0)
                                 Image(systemName: sel.contains(t) ? "checkmark.circle.fill" : "circle")
@@ -3366,7 +3369,7 @@ struct AlarmKindsSheet: View {
                     Text("只看选中的类型 · 已选 \(sel.count) 项")   // 565 只看选中的类型
                 } footer: {
                     Text("不选 = 不限类型。列表按锁端日志实际有的告警类型给出; 协议无「胁迫」类告警, 不列。")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                 }
             }
@@ -3396,7 +3399,7 @@ struct ActiveCredsSheet: View {
                 Section {
                     if app.current == nil {
                         Text("还没有添加门锁。")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                     } else {
                         ForEach(Array(RecordSearch.activeCredentials(mac: app.current!.mac).enumerated()), id: \.offset) { i, c in
@@ -3407,21 +3410,21 @@ struct ActiveCredsSheet: View {
                                     .accessibilityHidden(true)
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(c.word + " (约)")
-                                        .font(.subheadline.weight(.medium))
+                                        .vkFont(.subheadline, weight: .medium)
                                         .foregroundStyle(DS.Palette.text)
                                     Text("近 30 天约 " + String(c.count) + " 次开门")
-                                        .font(.caption)
+                                        .vkFont(.caption)
                                         .foregroundStyle(DS.Palette.textSub)
                                 }
                                 Spacer(minLength: 0)
                                 Text("#" + String(i + 1))
-                                    .font(.caption.monospacedDigit())
+                                    .vkFont(.caption.monospacedDigit())
                                     .foregroundStyle(DS.Palette.textSub)
                             }
                             .accessibilityElement(children: .combine)
                         }
                         Text("口径: 近 30 天开门日志按凭证类计次 (台账推断, 标「约」)。")
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -3456,25 +3459,25 @@ struct OutWinSheet: View {
                     let wins = RecordSearch.outOfWindow(macs: DB.keychains().map { $0.mac })
                     if wins.isEmpty {
                         Text("没有越界开门 — 临时码都在窗口内使用 (约)。")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                     }
                     ForEach(wins, id: \.rec.id) { w in
                         VStack(alignment: .leading, spacing: 4) {
                             HStack(spacing: DS.Space.s) {
                                 Text(w.rec.lockName)
-                                    .font(.caption2.weight(.medium))
+                                    .vkFont(.caption2, weight: .medium)
                                     .lineLimit(1)
                                     .foregroundStyle(DS.Palette.accentText)
                                     .padding(.horizontal, DS.Space.s)
                                     .padding(.vertical, 2)
-                                    .background(DS.Palette.accentText.opacity(0.10), in: Capsule())
+                                    .variantPlate(DS.Palette.accentText.opacity(0.10), .capsule)
                                 Text(w.rec.timeStr)
-                                    .font(.footnote.monospacedDigit())
+                                    .vkFont(.footnote.monospacedDigit())
                                     .foregroundStyle(DS.Palette.text)
                             }
                             Text("临时码窗口 " + w.window + " 外仍产生开门 — 约越界")   // 575 外仍产生开门
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.warn)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -3485,7 +3488,7 @@ struct OutWinSheet: View {
                     Text("越界开门清单 (约)")
                 } footer: {
                     Text("口径: 临时码台账生效区间之外仍出现一次性密码开门 (本地检测, 时刻为锁端时间)。")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                 }
             }
@@ -3525,7 +3528,7 @@ struct GratitudeView: View {
                 Section {
                     if names.isEmpty {
                         Text("还没有记录, 从一句谢谢开始。")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                     }
                     ForEach(names, id: \.self) { n in
@@ -3535,7 +3538,7 @@ struct GratitudeView: View {
                                 .foregroundStyle(DS.Palette.danger)
                                 .accessibilityHidden(true)
                             Text(n)
-                                .font(.subheadline)
+                                .vkFont(.subheadline)
                                 .foregroundStyle(DS.Palette.text)
                             Spacer(minLength: 0)
                         }
@@ -3591,7 +3594,7 @@ struct RecordsSampleGuideView: View {
             List {
                 Section {
                     Text("刚才那三条是示例, 只说明真实记录读进来长什么样。这个家的一次开门、一次告警, 都会成为这样的一行。")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.text)
                         .fixedSize(horizontal: false, vertical: true)
                 } header: {
@@ -3606,7 +3609,7 @@ struct RecordsSampleGuideView: View {
                 } footer: {
                     Text("记录存在门锁自己的日志里, 只有连上锁去读才会出现在这一页; 示例条目是本机画出的形状, "
                          + "不会进统计、导出与告警, 也不会替你编出任何一次开门。")
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -3616,7 +3619,7 @@ struct RecordsSampleGuideView: View {
                         onFetch()
                     } label: {
                         Label("在本页重新读取", systemImage: "arrow.clockwise")
-                            .font(.subheadline.weight(.medium))
+                            .vkFont(.subheadline, weight: .medium)
                             .foregroundStyle(DS.Palette.accentText)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .frame(minHeight: DS.Hit.min)
@@ -3628,7 +3631,7 @@ struct RecordsSampleGuideView: View {
                         app.requestRoute(.device)
                     } label: {
                         Label("去设备页连接门锁", systemImage: "lock.rotation")
-                            .font(.subheadline.weight(.medium))
+                            .vkFont(.subheadline, weight: .medium)
                             .foregroundStyle(DS.Palette.accentText)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .frame(minHeight: DS.Hit.min)
@@ -3650,13 +3653,13 @@ struct RecordsSampleGuideView: View {
     private func stepRow(_ n: Int, _ text: String) -> some View {
         HStack(alignment: .top, spacing: DS.Space.s) {
             Text(String(n))
-                .font(.caption.weight(.semibold).monospacedDigit())
+                .vkFont(.caption.monospacedDigit(), weight: .semibold)
                 .foregroundStyle(DS.Palette.onAccent)
                 .frame(width: 20, height: 20)
                 .background(DS.Palette.accent, in: Circle())
                 .accessibilityHidden(true)
             Text(text)
-                .font(.footnote)
+                .vkFont(.footnote)
                 .foregroundStyle(DS.Palette.text)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)

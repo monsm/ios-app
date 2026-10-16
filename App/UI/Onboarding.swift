@@ -132,7 +132,7 @@ struct OnboardingView: View {
                     Onboarding.finishTour()
                     onExit()
                 }
-                .font(.footnote)
+                .vkFont(.footnote)
                 .foregroundStyle(DS.Palette.textSub)
                 .frame(minHeight: DS.Hit.min)
             }
@@ -152,7 +152,7 @@ struct OnboardingView: View {
             }
             Spacer(minLength: 0)
             Text("第 \(step.rawValue + 1)/7 步 · \(step.title)")
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
         }
         .padding(.horizontal, DS.Space.gutter)
@@ -199,7 +199,7 @@ struct OnboardingView: View {
             .padding(.horizontal, DS.Space.gutter)
             if !canGoBack {
                 Text("「你的角色」那一步已经把成员档案写进了这台手机, 再往前退会牵动那份档案 (删它更不可逆), 所以这里不再给上一步。想整轮重来请用设置页的「重看新手引导」。")
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, DS.Space.gutter)
@@ -274,17 +274,17 @@ struct OnboardingView: View {
                 HStack(spacing: DS.Space.s) {
                     DemoMascot(size: 44)
                     Text("小管家陪你走第一步")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                 }
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("小管家欢迎页")
             }
             Text("数据只在这台手机")
-                .font(.title2.weight(.semibold))
+                .vkFont(.title2, weight: .semibold)
                 .foregroundStyle(DS.Palette.text)
             Text("本 App 默认全程离线: 门锁密钥、密码台账、家人档案保存在本机加密存储, 无账号、不依赖厂商服务器。厂商云已停服, 你不需要它。唯一会联网的地方是你主动开启的 WebDAV 备份通道 (自选网盘, 默认关闭)。")
-                .font(.footnote)
+                .vkFont(.footnote)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             promiseRow("wifi.slash", "默认无联网", "全部门锁功能离线可用; WebDAV 备份通道由你主动配置, 默认关")
@@ -304,10 +304,10 @@ struct OnboardingView: View {
                             in: RoundedRectangle(cornerRadius: 13, style: .continuous))
             VStack(alignment: .leading, spacing: 2) {
                 Text(head)
-                    .font(.subheadline.weight(.semibold))
+                    .vkFont(.subheadline, weight: .semibold)
                     .foregroundStyle(DS.Palette.text)
                 Text(tail)
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -336,7 +336,7 @@ struct OnboardingView: View {
                 }
                 Spacer(minLength: 0)
                 Text("连锁 → 录凭证 → 开门")
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
             }
             .padding(.horizontal, DS.Space.gutter)
@@ -354,10 +354,10 @@ struct OnboardingView: View {
                     .background(DS.heroGradientSafe, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                 VStack(alignment: .leading, spacing: DS.Space.xs) {
                     Text("第 \(i + 1) 步 · \(t.1)")
-                        .font(.headline)
+                        .vkFont(.headline)
                         .foregroundStyle(DS.Palette.text)
                     Text(t.2)
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -382,7 +382,7 @@ struct OnboardingView: View {
                     _ = Speech.zh(t.1 + "。" + t.2)
                 } label: {
                     Label("朗读这张卡", systemImage: "speaker.wave.2.circle.fill")   // 810 朗读这张卡
-                        .font(.footnote.weight(.medium))
+                        .vkFont(.footnote, weight: .medium)
                         .foregroundStyle(DS.Palette.accentText)
                         .frame(minHeight: DS.Hit.min)
                         .contentShape(Rectangle())
@@ -395,7 +395,7 @@ struct OnboardingView: View {
                     _ = Speech.zh(Onboarding.tourSpec.map { $0.title + "。" + $0.body }.joined(separator: " "))
                 } label: {
                     Label("听完整讲解", systemImage: "play.circle.fill")   // 853 听完整讲解
-                        .font(.footnote.weight(.medium))
+                        .vkFont(.footnote, weight: .medium)
                         .foregroundStyle(DS.Palette.accentText)
                         .frame(minHeight: DS.Hit.min)
                         .contentShape(Rectangle())
@@ -414,13 +414,13 @@ struct OnboardingView: View {
     private var rolePage: some View {
         VStack(alignment: .leading, spacing: DS.Space.m) {
             Text("你以什么身份管这把锁?")
-                .font(.title3.weight(.semibold))
+                .vkFont(.title3, weight: .semibold)
                 .foregroundStyle(DS.Palette.text)
             roleCard("family", "family.fill", "家庭主", "给家人录指纹、发密码, 关怀与提醒围绕全家")
             roleCard("renter", "person.crop.square", "租客", "以临时密码为主, 退租时一键清空台账")
             roleCard("property", "building.2", "物业", "多把锁总览对比, 访客临时码高频流转")
             Text(Onboarding.role == rolePick ? Onboarding.roleHint() : "选择后默认成员与引导话术随之调整, 随时可在设置中重看。")
-                .font(.footnote)
+                .vkFont(.footnote)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
@@ -440,10 +440,10 @@ struct OnboardingView: View {
                                 in: RoundedRectangle(cornerRadius: 13, style: .continuous))
                 VStack(alignment: .leading, spacing: 2) {
                     Text(name)
-                        .font(.subheadline.weight(.semibold))
+                        .vkFont(.subheadline, weight: .semibold)
                         .foregroundStyle(DS.Palette.text)
                     Text(desc)
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -480,10 +480,10 @@ struct OnboardingView: View {
                     .foregroundStyle(DS.Palette.accentText)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("蓝牙")
-                        .font(.headline)
+                        .vkFont(.headline)
                         .foregroundStyle(DS.Palette.text)
                     Text("用于靠近门锁时直连开锁与读取记录 — 全程点对点, 不经过任何服务器。")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -494,10 +494,10 @@ struct OnboardingView: View {
                     .foregroundStyle(DS.Palette.accentText)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("本地通知")
-                        .font(.headline)
+                        .vkFont(.headline)
                         .foregroundStyle(DS.Palette.text)
                     Text("低电量、保养与临时码到期提醒 — 全部由本机排程, 不依赖推送服务。")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -508,20 +508,20 @@ struct OnboardingView: View {
                     .foregroundStyle(DS.Palette.accentText)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("定位")
-                        .font(.headline)
+                        .vkFont(.headline)
                         .foregroundStyle(DS.Palette.text)
                     // 原句写的是"iOS 规则: 蓝牙扫描需要定位授权" —— 那是 Android 6~11 的规则，iOS 上
                     // BLE 扫描不要定位授权。留着这句有两个害处：① 用户以为拒定位就不能开锁；
                     // ② 掩盖了真实状态 —— 本仓目前没有任何一处读坐标 (见 project.yml 那条 ⚠)。
                     Text("为「到家自动开锁」这类到位置身功能预留；当前版本不读取你的坐标。拒绝这一项，蓝牙扫描与照常开锁不受影响。")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
             Spacer(minLength: 0)
             Text("拒绝任何一项 App 都能用, 只是对应功能降级 (如不弹本地提醒)。")
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -532,14 +532,14 @@ struct OnboardingView: View {
     private var demoPage: some View {
         VStack(spacing: DS.Space.m) {
             Label("演示 · 不碰真实门锁", systemImage: "theatermasks")
-                .font(.caption.weight(.medium))
+                .vkFont(.caption, weight: .medium)
                 .foregroundStyle(DS.Palette.warn)
             // 2026-10-15 走查: 这句原先写着"数据全是 demo_ 前缀, 玩完随手清除" —— 可这一页从头到尾
             // 没有一处 `DemoKit.setOn(true)` (全仓 setOn(true) 只有成就页 / 帮助页 / 设置页那三处),
             // 试玩的是下面那枚**本地模拟圆盘** (demoState / demoPhase, 一行台账都不写)。
             // 803 原句要的也正是"圆盘进入假数据试玩态", 缺的是文案的说法而不是功能: 改成如实描述。
             Text("这一屏是一把本地模拟的演示锁: 圆盘可以转、状态会变, 不碰蓝牙、不写台账。")
-                .font(.footnote)
+                .vkFont(.footnote)
                 .foregroundStyle(DS.Palette.textSub)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
@@ -602,7 +602,7 @@ struct OnboardingView: View {
     private var checklistPage: some View {
         VStack(alignment: .leading, spacing: DS.Space.m) {
             Text("出门前自查一遍")
-                .font(.title3.weight(.semibold))
+                .vkFont(.title3, weight: .semibold)
                 .foregroundStyle(DS.Palette.text)
             checkRow("蓝牙权限", ok: BLEService.shared.isPoweredOn, detail: btStatus)
             let storage = DiagHealth.checkStorage()
@@ -627,10 +627,10 @@ struct OnboardingView: View {
                 .foregroundStyle(ok ? DS.Palette.ok : DS.Palette.textSub)
             VStack(alignment: .leading, spacing: 2) {
                 Text(text)
-                    .font(.subheadline.weight(.medium))
+                    .vkFont(.subheadline, weight: .medium)
                     .foregroundStyle(DS.Palette.text)
                 Text(detail)
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
             }
             Spacer(minLength: 0)
@@ -650,10 +650,10 @@ struct OnboardingView: View {
                         .foregroundStyle(DS.heroFg)
                         .padding(.top, DS.Space.xl)
                     Text("离线锁管家 · 就任证书")
-                        .font(.title3.weight(.semibold))
+                        .vkFont(.title3, weight: .semibold)
                         .foregroundStyle(DS.heroFg)
                     Text(onboardingSub)
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.heroFg.opacity(0.92))
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
@@ -661,7 +661,7 @@ struct OnboardingView: View {
                         Label("完成首启引导", systemImage: "checkmark.seal")
                         Label(Milestones.dayKey(), systemImage: "calendar")
                     }
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.heroFg.opacity(0.85))
                     .padding(.bottom, DS.Space.l)
                 }

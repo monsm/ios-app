@@ -79,6 +79,13 @@ struct VK {
     var sub: Color   { DS.Palette.textSub }
     var faint: Color { DS.Palette.textSub.opacity(0.82) }
 
+    /// **平铺档**（CORE.md §3）：三光点摊成三行带字条目那一档。
+    /// 触发条件是系统减弱动态 **且** 降低透明度 —— 两者同时开时，靠“位移/淡入淡出”说话的
+    /// 导航已经完全传不出信息，必须换成静态带字的形式。
+    /// 把判据写在这里而不是散在各视图里：它是**一个**开关（CORE.md §6.3 的“降档不许换容器语法”
+    /// 能立住，就靠它只有一个读点）。
+    static var flatTier: Bool { AXFlags.reduceMotion && AXFlags.reduceTransparency }
+
     /// 页面左右边距。三套刻意不同 —— 这是"两套看着就不一样"最便宜的一处。
     var gutter: CGFloat {
         switch variant {
@@ -601,6 +608,7 @@ enum PlateShape {
         case .capsule: return AnyShape(Capsule())
         case .tile:    return AnyShape(RoundedRectangle(cornerRadius: DS.Radius.tile, style: .continuous))
         case .control: return AnyShape(RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
+        case .iconBadge: return AnyShape(RoundedRectangle(cornerRadius: DS.Space.s, style: .continuous))
         }
     }
 
@@ -611,6 +619,7 @@ enum PlateShape {
         case .capsule: return AnyView(Capsule().strokeBorder(color, lineWidth: lineWidth))
         case .tile:    return AnyView(RoundedRectangle(cornerRadius: DS.Radius.tile, style: .continuous).strokeBorder(color, lineWidth: lineWidth))
         case .control: return AnyView(RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous).strokeBorder(color, lineWidth: lineWidth))
+        case .iconBadge: return AnyView(RoundedRectangle(cornerRadius: DS.Space.s, style: .continuous).strokeBorder(color, lineWidth: lineWidth))
         }
     }
 }
@@ -987,5 +996,217 @@ enum VisitLedger {
         cache = []
         loaded = true
         DB.store.remove(key)
+    }
+}
+
+
+// ============================================================
+// MARK: - 开关的形状（VK 的最后一件：`Toggle` 与 `VariantToggle`）
+// ============================================================
+//
+// **问题**：120 处 `Toggle` 的颜色早就在缝里下发过了（`.tint`），但**形状**一直是系统开关 ——
+// 也就是说两套界面在每个开关上都长得一样。这一层管的就是那个形状。
+//
+// **为什么是改名**：`Toggle` 的标签形状有五种、调用普遍跨多行，要在每个表达式**末尾**插一个
+// `.toggleStyle(...)` 是纯语法手术面；改名只在构造子那几个字符上动手，实参一个字不碰。
+// 本仓 `requestTab` -> `requestRoute` 用的是同一个手法。
+//
+// **legacy 不改一个像素**：那个分支把系统开关**原样装回去**，所以默认变体下外观与行为都不变。
+// 内层那个**显式** `.toggleStyle(.switch)` 不是装饰：不写它，内层 `Toggle` 会继承外层这个自定义样式，
+// `makeBody` 就自己调自己 —— 显式钉一次，递归就断了。
+//
+// **VoiceOver**：core / gauge 是自绘控件，系统不再认识它是开关。补法用
+// `.accessibilityRepresentation { ... }`，而不是手贴 `.accessibilityAddTraits(.isToggle)`：
+// representation 把整棵无障碍子树换成一个**真的 Toggle**，于是值（开/关）、激活动作、可调性
+// 全由系统给出；手贴 traits 得自己把三样都补齐，漏一样就是"读得出、按不动"。
+// 两样都写反而危险：两个来源各说一套。
+//
+// 状态**不只靠颜色**说：core 的滑点位置（左/右）与 gauge 滑臂位置本身就在说开/关，
+// 色觉障碍用户读得到，`contrast.js` 也不承担这条（位置不是颜色）。
+
+/// core / gauge 的自绘开关面。`legacy` 不走这里。
+private struct VariantToggleFace: View {
+    @Binding var isOn: Bool
+    let label: AnyView
+    let gauge: Bool
+
+    var body: some View {
+        HStack(spacing: DS.Space.m) {
+            label
+            Spacer(minLength: DS.Space.m)
+            track
+        }
+        .frame(minHeight: DS.Hit.min)
+        .contentShape(Rectangle())
+        .onTapGesture { isOn.toggle() }
+        .animation(DS.Motion.quick, value: isOn)
+        .accessibilityRepresentation {
+            Toggle(isOn: $isOn) { label }.toggleStyle(.switch)
+        }
+    }
+
+    /// core：**没有轨道盒子**，只有一根 34pt 的线 + 一个沿线滑动的 9pt 点。
+    /// 这是零卡片定理在控件上的同一条纪律 —— 状态由位置 + 染色两个通道给。
+    /// gauge：凹槽窗格 + 机加工滑臂（窗格在这里不是装饰，是仪器基底，同 `variantCallout`）。
+    @ViewBuilder
+    private var track: some View {
+        if gauge {
+            ZStack(alignment: isOn ? .trailing : .leading) {
+                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                    .fill(VK.current.bezel)
+                    // 凹槽**填充**与盘面只差 ~1.14:1 —— 这是"面不是控件"，故意不追 3:1；
+                    // 控件的边界由这根 0.7pt 的描边承担（textSub 对盘面 5.63:1）。
+                    .overlay(RoundedRectangle(cornerRadius: 5, style: .continuous)
+                        .strokeBorder(DS.Palette.textSub, lineWidth: 0.7))
+                RoundedRectangle(cornerRadius: 3, style: .continuous)
+                    .fill(isOn ? DS.Palette.gaugeAmber : DS.Palette.textSub)
+                    .frame(width: 18, height: 18)
+                    .padding(.horizontal, 2)
+            }
+            .frame(width: 46, height: 22)
+            .frame(height: DS.Hit.min)
+            .contentShape(Rectangle())
+        } else {
+            ZStack(alignment: isOn ? .trailing : .leading) {
+                // OFF 不能用 hairline（浅档 1.20:1）: 一根几乎看不见的线上挂一个几乎看不见的点,
+                // "左还是右"读不出来。换成 textSub（≥4.96:1）—— WCAG 1.4.11 要 3:1,
+                // 断言在 contrast.js G 节，量过再改。
+                Rectangle()
+                    .fill(isOn ? VK.current.accent : DS.Palette.textSub)
+                    .frame(height: 1)
+                Circle()
+                    .fill(isOn ? VK.current.accent : DS.Palette.textSub)
+                    .frame(width: 9, height: 9)
+            }
+            .frame(width: 34, height: DS.Hit.min)
+            .contentShape(Rectangle())
+        }
+    }
+}
+
+/// 开关形状的实现。三 case 齐全（`uicoverage` 检查三按变体分叉就要求这个）。
+/// ⚠ 返回类型写 `AnyView` 而不是 `some View` 是**为了被检查三覆盖**：那一支只扫 `-> AnyView {`
+/// 的分叉函数（本文件的既定形状）。改成 `some View` 它就静默逃过穷尽性检查 —— 语法件越多漏得越多。
+struct VariantToggleStyle: ToggleStyle {
+    func makeBody(configuration: Configuration) -> AnyView {
+        switch VK.current.variant {
+        case .legacy:
+            return AnyView(
+                Toggle(isOn: configuration.isOn) { configuration.label }
+                    .toggleStyle(.switch))
+        case .core:
+            return AnyView(VariantToggleFace(isOn: configuration.isOn,
+                                             label: AnyView(configuration.label),
+                                             gauge: false))
+        case .gauge:
+            return AnyView(VariantToggleFace(isOn: configuration.isOn,
+                                             label: AnyView(configuration.label),
+                                             gauge: true))
+        }
+    }
+}
+
+// 三个包装函数，逐一对照 `Toggle` 自己的重载声明（多一个不多、少一个少）。
+// 保留 `LocalizedStringKey` 与 `StringProtocol` **两个**重载是必需的：
+// 只留前者，`Toggle(a.label, isOn:)` 那 5 处（标题是变量/三元式）会推断成 String 而解不动。
+
+/// `Toggle("字面量", isOn:)` 的那 99 处。
+func VariantToggle(_ titleKey: LocalizedStringKey, isOn: Binding<Bool>) -> some View {
+    Toggle(titleKey, isOn: isOn).toggleStyle(VariantToggleStyle())
+}
+
+/// `Toggle(<String 表达式>, isOn:)` 的那 5 处（标题是变量、三元式或下标）。
+func VariantToggle<S: StringProtocol>(_ title: S, isOn: Binding<Bool>) -> some View {
+    Toggle(title, isOn: isOn).toggleStyle(VariantToggleStyle())
+}
+
+/// `Toggle(isOn: ...) { 自定标签 }` 的那 6 处（标题是一个多行视图）。
+func VariantToggle(isOn: Binding<Bool>, @ViewBuilder label: () -> some View) -> some View {
+    Toggle(isOn: isOn, label: label).toggleStyle(VariantToggleStyle())
+}
+
+// ============================================================
+// P1 批七：行内排版接管 (2026-10-16)
+// ------------------------------------------------------------
+// 「两套不同」的最后一块欠账不在容器上，在**行里那几个字怎么排**：
+//   全仓 1,770 处文本 `.font(...)` 是各页手写的，两套变体在它们身上长得一模一样 ——
+//   `CORE.md` §13.4 那条「还不算全新」说的就是这个。
+//
+// 为什么不是"给每页改一遍字号"：那是把同一套排版改两遍，两套必然漂移（本仓老病灶）。
+// 做法与 `variantPlate` 同一条纪律：**语法只有一个实现处**，页面只说"这几个字是多大、多重"。
+//
+// ⚠ legacy 分支是**靠构造保证**的零行为改动，不是"照着再写一份"：
+//   调用点那一句原封不动地作为 `base` 传进来，legacy 就把同一句 `{base}.weight(w)` 装回去
+//   （没写字重的调用点一个修饰符都不加）。批一~批六都是这么做的，因为"照着重写"
+//   一定会在某个圆角/某个字重上写错，而本机没有编译器替我盯。
+//
+// 变体差（都是**字重与字族**差，不动字号、不动字距）：
+//   · core  —— 字重整体降一档（`nil` 视作 `.regular` ⇒ 设成 `.light`）：这一套的层级由
+//              **字号对比**承担（`CORE.md` 公理 1：58pt/200 的超细 vs 9.5px 加宽标签），
+//              字重必须让位，否则同一页会退化成"到处都半粗"的模板感。
+//              下限 `.light`：再往下中文正文开始发虚。
+//   · gauge —— 字重整体升一档（`nil` 视作 `.regular` ⇒ `.medium`）**并且整族等宽化**
+//              （`base.monospaced()`）：仪表是机加工读数，笔画更实、字宽更齐。
+//              ⚠ 封顶 `.semibold` 是硬约束：中文界面里 `.bold` 在 PingFang SC 上**没有 700 那一档**，
+//              会静默回退成 Semibold（本仓 `dynamictype` 闸门规则 3 记过这条）。
+//
+// 为什么不管字距：字距在本仓是**显式写在调用点**的（`.tracking(...)` 那 28 处，全在两套新界面里）。
+//   语法层再加一份就会叠成两倍。谁要接管字距，谁得先把那 28 处收上来 —— 那是下一批，
+//   而这一批把"字号/字重/字族"这三件收了。
+// ============================================================
+
+/// 行内排版的语法件。收的是"这个 Font 与这个字重"，**长成什么样由当前变体决定**。
+/// 读环境里的变体而不是 `VK.current`：`.font(...)` 有 1700+ 处调用点，
+/// 逐处一次存储读取会把"零行为改动"变成"每帧几百次 DB 读取"（理由见 `UIVariantKey`）。
+struct VKTypography: ViewModifier {
+    let base: Font
+    /// 调用点自己写的字重。`nil` 表示"没写"，在变体差里一律视作 `.regular`。
+    let weight: Font.Weight?
+    @Environment(\.uiVariant) private var variant
+
+    func body(content: Content) -> AnyView {
+        switch variant {
+        case .legacy:
+            // 逐字复刻：原来的 `.font(X)` 与（如果有）`.weight(w)` 一个不少、一个不多。
+            return AnyView(weight.map { content.font(base.weight($0)) } ?? content.font(base))
+        case .core:
+            return AnyView(content.font(base.weight(VKTypography.down(weight ?? .regular))))
+        case .gauge:
+            return AnyView(content.font(base.monospaced().weight(VKTypography.up(weight ?? .regular))))
+        }
+    }
+
+    /// 降一档，下限 `.light`。
+    static func down(_ w: Font.Weight) -> Font.Weight {
+        switch w {
+        case .black: return .heavy
+        case .heavy: return .bold
+        case .bold: return .semibold
+        case .semibold: return .medium
+        case .medium: return .regular
+        case .regular: return .light
+        default: return .light          // .light/.thin/.ultraLight 已经够轻，不再往下降
+        }
+    }
+
+    /// 升一档，上限 `.semibold`（`.bold` 在 PingFang SC 上会静默回退，所以封顶）。
+    static func up(_ w: Font.Weight) -> Font.Weight {
+        switch w {
+        case .ultraLight: return .thin
+        case .thin: return .light
+        case .light: return .regular
+        case .regular: return .medium
+        default: return .semibold       // .medium 及以上一律封顶
+        }
+    }
+}
+
+extension View {
+    /// 行内排版的**唯一入口**。全仓文本 `.font(...)` 都改成它（`uicoverage` 检查八守着不许回潮）。
+    /// ⚠ 图标尺寸不在此列：`Image(systemName:).font(.system(size: 17, weight: .medium))` 是刻意写死的，
+    /// 它不参与 Dynamic Type 也不该跟着变体换字重（`dynamictype` 闸门的既定豁免）。
+    /// ⚠ 开关/矩阵之类带 `AnyView` 的地方可能拿不到环境，那时它就是 legacy 行为 —— 这正是默认值的设计。
+    func vkFont(_ base: Font, weight: Font.Weight? = nil) -> some View {
+        modifier(VKTypography(base: base, weight: weight))
     }
 }

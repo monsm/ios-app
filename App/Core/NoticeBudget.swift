@@ -87,13 +87,13 @@ struct AmbientOverflowSheet: View {
                     .foregroundStyle(DS.Palette.textSub)
                     .accessibilityHidden(true)
                 Text(AmbientCopy.text(a, app: app))
-                    .font(.subheadline)
+                    .vkFont(.subheadline)
                     .fixedSize(horizontal: false, vertical: true)
             }
             HStack(spacing: DS.Space.s) {
                 ForEach(AmbientCopy.actions(a, app: app)) { act in
                     Button(act.title) { act.run() }
-                        .font(.caption.weight(.medium))
+                        .vkFont(.caption, weight: .medium)
                         .buttonStyle(.bordered)
                         .frame(minHeight: DS.Hit.min - DS.Space.m)
                         // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 没有 minHeight (< 44)。

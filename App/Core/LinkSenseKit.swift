@@ -625,7 +625,7 @@ struct LinkPrefsView: View {
     var vkBody: some View {
         Form {
             Section("自动预握手") {
-                Toggle("进页/回前台自动预热连接", isOn: Binding(   // 95/135 进页
+                VariantToggle("进页/回前台自动预热连接", isOn: Binding(   // 95/135 进页
                     get: { DB.store.getBool("kf_link_auto_" + mac, true) },
                     set: { DB.store.set("kf_link_auto_" + mac, $0) }))
                 LabeledRow("手动连接模式",   // 100 手动连接模式
@@ -647,7 +647,7 @@ struct LinkPrefsView: View {
                 .pickerStyle(.menu)
                 .tint(DS.Palette.accentText)
                 Text("RSSI 达标才预热, 低信号不浪费电量。只影响自动预握手的启动门槛；手动点圆盘、靠近自动开锁 (AUTOOPEN) 的判定不受这一档约束。")
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 // 97 连接偏好记忆
@@ -661,7 +661,7 @@ struct LinkPrefsView: View {
                 // 124 成功率需
                 // 539 成功率需
                 Text("成功率需 7 天握手数据积累, 当前为占位; 占用类与高成功率时段均备案 DEFERRED。")
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -719,12 +719,12 @@ struct LinkPill: View {
                 .font(.system(size: DS.Icon.xs, weight: .bold))
                 .accessibilityHidden(true)   // 文案与 accessibilityLabel 已经报了状态，符号不重复朗读
             Text(text)
-                .font(.caption.weight(.medium))
+                .vkFont(.caption, weight: .medium)
                 .lineLimit(1)
             // 98 冷热标识: 已连接时标注来源 — 预热/回连("已预热") vs 用户触发的即连, 解释快慢差异
             if state == .ready, source != "" {
                 Text(source)
-                    .font(.caption2.weight(.medium))
+                    .vkFont(.caption2, weight: .medium)
             }
         }
         .foregroundStyle(tint)
@@ -780,7 +780,7 @@ struct ConnectMsBadge: View {
     var body: some View {
         if let ms {
             Label(String(ms) + "ms", systemImage: "stopwatch")
-                .font(.caption2.weight(.medium))
+                .vkFont(.caption2, weight: .medium)
                 // 淡黄/纯白都必须坐在压暗底板上: 裸压主题渐变最亮端实测只有 3.95:1 与 3.89:1
                 .foregroundStyle(ms >= 2000 ? DS.heroTint(Color(hex: 0xFFE9A8)) : DS.heroFg.opacity(0.85))
                 .padding(.horizontal, DS.Space.s)
@@ -805,7 +805,7 @@ struct ReconnectDots: View {
             }
             Text(attempt > 0 ? "回连第 \(attempt) 轮 · 下一轮等 \(nextWait) 秒"
                  : "失联后自动回连 (5/15/30/60/90 秒)")
-                .font(.caption2)
+                .vkFont(.caption2)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -832,19 +832,19 @@ struct BLEStrip: View {
                 .foregroundStyle(stTint)
                 .accessibilityHidden(true)
             Text(stText)
-                .font(.caption2.weight(.medium))
+                .vkFont(.caption2, weight: .medium)
                 .foregroundStyle(DS.Palette.textSub)
                 .lineLimit(1)
             if let detail {
                 Text(detail)
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .lineLimit(1)
             }
             Spacer(minLength: 0)
             Button(action: action) {
                 Label(title, systemImage: "lock.fill")
-                    .font(.caption2.weight(.medium))
+                    .vkFont(.caption2, weight: .medium)
             }
             .buttonStyle(.plain)
             .foregroundStyle(DS.Palette.accentText)
@@ -901,12 +901,12 @@ struct BLEOffBanner: View {
                     .foregroundStyle(DS.Palette.warn)
                     .accessibilityHidden(true)
                 Text("蓝牙已关闭 — 打开系统蓝牙后, 门锁才能被唤醒")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.text)
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
                 Label("去开启", systemImage: "chevron.right")
-                    .font(.footnote.weight(.medium))
+                    .vkFont(.footnote, weight: .medium)
                     .foregroundStyle(DS.Palette.accentText)
             }
             .padding(.horizontal, DS.Space.l)

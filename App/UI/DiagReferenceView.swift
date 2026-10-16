@@ -36,16 +36,16 @@ struct DiagReferenceView: View {
                         .accessibilityLabel("诊断摘要二维码")
                 } else {
                     Text("二维码生成失败（本机 CoreImage 未返回图像），下面是同一段文本。")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.warn)
                 }
                 Text(text)
-                    .font(.caption.monospaced())
+                    .vkFont(.caption.monospaced())
                     .textSelection(.enabled)
                     .fixedSize(horizontal: false, vertical: true)
                 copyRow("复制摘要文本", key: "qr", payload: text)
                 Text("摘要里没有 ekey/skey/PIN 明文；日志部分只放哈希，用于比对是否同一批日志。")
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
             }
 
@@ -53,35 +53,35 @@ struct DiagReferenceView: View {
             Section(archTitleText) {   // 758 异常退出档案
                 if CrashGuard.pendingAbnormal, !archAcked {
                     Label("本次启动检测到上一次异常退出（会话标记未被正常清掉）", systemImage: "exclamationmark.triangle.fill")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.warn)
                     Button("已知晓，清掉这条提示") {
                         _ = CrashGuard.consumePending()
                         archAcked = true   // 旗标参与上面那个 if —— 没有它这一屏不会重算, 按钮就像没反应
                     }
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.accentText)
                 }
                 let arch = CrashGuard.archList()
                 if arch.isEmpty {
                     Text("没有异常退出记录 — 每次都是正常退出或进后台。")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                 } else {
                     ForEach(arch.prefix(20), id: \.self) { line in
                         Text(line)
-                            .font(.caption.monospaced())
+                            .vkFont(.caption.monospaced())
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     // 758 档案导出: 列表此前只有看和翻, 没有导出文本的出口
                     ShareLink(item: arch.joined(separator: "\n\n")) {
                         Label("导出全部档案文本", systemImage: "square.and.arrow.up")   // 758 导出全部档案文本
                     }
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.accentText)
                 }
                 Text("判据是启动时的会话标记位（没走到正常退出路径才算异常），不是崩溃报告：iOS 上 App 拿不到自己的崩溃栈。")
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
             }
 
@@ -90,15 +90,15 @@ struct DiagReferenceView: View {
                 let obs = FirmwareHistory.observations(mac: app.currentMac)
                 if obs.isEmpty {
                     Text("这台手机还没有读到过该锁的固件版本 —— 连上一次并读取状态后这里会出现记录。")
-                        .font(.caption).foregroundStyle(DS.Palette.textSub)
+                        .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 } else {
                     // 先转成字符串再 ForEach: 元组不能遵循 Identifiable, 单参 ForEach 用不了 (id 走 self)
                     ForEach(obs.map { $0.day + " → " + $0.fw }, id: \.self) { line in
-                        Text(line).font(.caption.monospaced()).foregroundStyle(DS.Palette.text)
+                        Text(line).vkFont(.caption.monospaced()).foregroundStyle(DS.Palette.text)
                     }
                     Text("只是**这台手机读到过**的日期与版本, 不是门锁的完整固件历史; 中间没连过的日子不会补。")
-                        .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                        .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -109,7 +109,7 @@ struct DiagReferenceView: View {
                     Label("从日志点进来的是 rc=\(h)"
                           + (StatusParser.rcMsg[h].map { ": " + $0 } ?? " — 表里没有这一码"),
                           systemImage: "arrow.right.circle.fill")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.accent)
                 }
                 ForEach(StatusParser.rcMsg.keys.sorted(), id: \.self) { rc in
@@ -117,7 +117,7 @@ struct DiagReferenceView: View {
                         HStack(spacing: DS.Space.xs) {
                             if rc == highlightRC {
                                 Image(systemName: "arrow.right.circle.fill")
-                                    .font(.caption)
+                                    .vkFont(.caption)
                                     .foregroundStyle(DS.Palette.accent)
                             }
                             LabeledRow("rc=\(rc)", StatusParser.rcMsg[rc] ?? "")
@@ -127,7 +127,7 @@ struct DiagReferenceView: View {
                         // 未给建议的码返回 nil, 这里就不出这一行 (不造"暂无建议"那种空话)。
                         if let hint = StatusParser.rcHint(rc) {
                             Text("怎么办: " + hint)
-                                .font(.caption2)
+                                .vkFont(.caption2)
                                 .foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                                 .padding(.leading, DS.Space.l)
@@ -135,7 +135,7 @@ struct DiagReferenceView: View {
                     }
                 }
                 Text("表内容与开锁失败时提示的文案同源（StatusParser.rcMessage），不是另抄一份。")
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
             }
 
@@ -144,16 +144,16 @@ struct DiagReferenceView: View {
                 ForEach(ProtocolDict.statusFields) { f in
                     VStack(alignment: .leading, spacing: DS.Space.xxs) {
                         HStack(spacing: DS.Space.s) {
-                            Text(f.k).font(.caption.monospaced()).foregroundStyle(DS.Palette.accentText)
-                            Text(f.name).font(.subheadline).foregroundStyle(DS.Palette.text)
+                            Text(f.k).vkFont(.caption.monospaced()).foregroundStyle(DS.Palette.accentText)
+                            Text(f.name).vkFont(.subheadline).foregroundStyle(DS.Palette.text)
                             if copiedKey == "f\(f.k)" {
                                 Image(systemName: "checkmark.circle.fill")
-                                    .font(.caption)
+                                    .vkFont(.caption)
                                     .foregroundStyle(DS.Palette.ok)
                             }
                         }
                         Text(f.desc)
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -184,7 +184,7 @@ struct DiagReferenceView: View {
                     LabeledRow("pid \(pid)", PidMap.productName(pid))
                 }
                 Text("只列已确证的 pid；未收录的 pid 会显示 \"智能门锁 (pid=…)\"，不冒充知道型号。")
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
             }
 
@@ -197,9 +197,9 @@ struct DiagReferenceView: View {
                             .foregroundStyle(DS.Palette.accentText)
                             .frame(width: DS.Icon.xl)
                             .accessibilityHidden(true)
-                        Text(r.use).font(.subheadline).foregroundStyle(DS.Palette.text)
+                        Text(r.use).vkFont(.subheadline).foregroundStyle(DS.Palette.text)
                         Spacer(minLength: 0)
-                        Text(r.icon).font(.caption2.monospaced()).foregroundStyle(DS.Palette.textSub)
+                        Text(r.icon).vkFont(.caption2.monospaced()).foregroundStyle(DS.Palette.textSub)
                             .lineLimit(1)
                     }
                     .accessibilityElement(children: .combine)
@@ -222,19 +222,19 @@ struct DiagReferenceView: View {
                     default: return QueryTemplates.lastNLogs(20)
                     }
                 }()
-                Text(r.title).font(.caption.weight(.medium)).foregroundStyle(DS.Palette.text)
+                Text(r.title).vkFont(.caption, weight: .medium).foregroundStyle(DS.Palette.text)
                 if r.lines.isEmpty {
                     Text("该查询当前无结果 —— 是没数据，不是查询失败。")
-                        .font(.caption).foregroundStyle(DS.Palette.textSub)
+                        .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                 } else {
                     ForEach(r.lines, id: \.self) { l in
-                        Text(l).font(.caption.monospaced()).foregroundStyle(DS.Palette.textSub)
+                        Text(l).vkFont(.caption.monospaced()).foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
                 copyRow("复制查询结果", key: "q\(template)", payload: r.title + "\n" + r.lines.joined(separator: "\n"))
                 Text("数据全部来自本机只读键位。刻意不提供自由输入或 SQL：本工程没有 SQL 层，假装能查任意字段就是假功能。")
-                    .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                    .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
@@ -245,9 +245,9 @@ struct DiagReferenceView: View {
                 let rows = kw.isEmpty ? fams : fams.filter { $0.key.lowercased().contains(kw) }
                 ForEach(rows) { f in
                     HStack(spacing: DS.Space.s) {
-                        Text(f.key).font(.caption.monospaced()).foregroundStyle(DS.Palette.text)
+                        Text(f.key).vkFont(.caption.monospaced()).foregroundStyle(DS.Palette.text)
                         Spacer(minLength: DS.Space.s)
-                        Text(DataHealth.human(f.bytes)).font(.caption).monospacedDigit().foregroundStyle(DS.Palette.textSub)
+                        Text(DataHealth.human(f.bytes)).vkFont(.caption).monospacedDigit().foregroundStyle(DS.Palette.textSub)
                     }
                     .accessibilityElement(children: .combine)
                 }
@@ -256,7 +256,7 @@ struct DiagReferenceView: View {
                 if rows.isEmpty {
                     Text(kw.isEmpty ? "没有可统计的本地键位。"
                                     : "没有名字含这一串的族 · 本机共 \(fams.count) 族")
-                        .font(.caption).foregroundStyle(DS.Palette.textSub)
+                        .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             } header: {
@@ -268,7 +268,7 @@ struct DiagReferenceView: View {
                         .accessibilityLabel("键族过滤输入")
                     Text("口径: 值对象长度估算，非磁盘真实占用；只列 kf_ 前缀族，系统域键位不在此表内。")
                 }
-                .font(.caption2)
+                .vkFont(.caption2)
             }
         }
         .variantList()
@@ -286,7 +286,7 @@ struct DiagReferenceView: View {
             Label(copiedKey == key ? "已复制" : title,
                   systemImage: copiedKey == key ? "checkmark.circle.fill" : "doc.on.doc")
         }
-        .font(.footnote)
+        .vkFont(.footnote)
         .foregroundStyle(copiedKey == key ? DS.Palette.ok : DS.Palette.accentText)
     }
 }

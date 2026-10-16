@@ -63,7 +63,7 @@ struct StatsView: View {
     private func kindBreakdownBar(k: String, segs: [(id: String, name: String, n: Int)], total: Int) -> some View {
         HStack(spacing: 2) {
             Text(StatsKit.StatModel.kindWords()[k] ?? k)
-                .font(.caption2)
+                .vkFont(.caption2)
                 .foregroundStyle(DS.Palette.textSub)
             GeometryReader { geo in
                 HStack(spacing: DS.Space.xxs) {
@@ -76,7 +76,7 @@ struct StatsView: View {
             }
             .frame(height: 6)
             Text("约 \(total) 次")
-                .font(.caption2)
+                .vkFont(.caption2)
                 .foregroundStyle(DS.Palette.textSub)
                 .lineLimit(1)
         }
@@ -93,14 +93,14 @@ struct StatsView: View {
                         .frame(width: 5, height: 5)
                         .accessibilityHidden(true)
                     Text(sg.name + " 约 " + String(sg.n) + " 次")
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                         .lineLimit(1)
                 }
             }
             if segs.count > 4 {
                 Text("+" + String(segs.count - 4) + " 位")
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
             }
         }
@@ -175,11 +175,11 @@ struct StatsView: View {
                 Section {
                     lockPicker
                     // 782 口径开关: 原句要求统计页可选择"排除闲置锁" —— 落点就是这处数据源选择列表
-                    Toggle("排除闲置锁", isOn: Binding(   // 782 排除闲置锁
+                    VariantToggle("排除闲置锁", isOn: Binding(   // 782 排除闲置锁
                         get: { excludeIdle },
                         set: { DB.store.set("kf_stats_excl_idle", $0); excludeIdle = $0 }))
                     Text("闲置 = 本机日志里超 30 天无开门行 (说的是「没读到」不是「没人开」, 与对照页同判据)。开关只收起选择列表, 已在看的锁不受影响。")
-                        .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                        .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 } header: { Text("数据源 · 每锁独立统计") }   // 772/782 数据源
                 Section { windowChips; breadcrumbRow } header: { Text("窗口") }
@@ -241,7 +241,7 @@ struct StatsView: View {
             Section {
                 NavigationLink { LockCompareView() } label: {
                     Label("多锁对比", systemImage: "rectangle.split.2x1")   // 775/783/781/782 多锁对比
-                        .font(.subheadline.weight(.medium))
+                        .vkFont(.subheadline, weight: .medium)
                         .foregroundStyle(DS.Palette.accentText)
                         .frame(minHeight: DS.Hit.min)
                 }
@@ -264,7 +264,7 @@ struct StatsView: View {
                         build()
                     } label: {
                         Text(w == 365 ? "近一年" : ("近 " + String(w) + " 天"))
-                            .font(.subheadline.weight(.medium))
+                            .vkFont(.subheadline, weight: .medium)
                             .padding(.horizontal, DS.Space.l)
                             .padding(.vertical, 12)
                             .background(on ? DS.Palette.accent : DS.Palette.surfaceAlt, in: Capsule())
@@ -294,7 +294,7 @@ struct StatsView: View {
         let span = TimeFormat.range(fromDay: RecordSearch.dayKeyOf(fromD), toDay: RecordSearch.dayKeyOf(toD))
         return Label {
             Text("近 \(windowDays) 天 · " + span + " · " + (n == 0 ? "暂无归属成员" : "\(n) 位成员"))
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .lineLimit(1)
         } icon: {
@@ -313,7 +313,7 @@ struct StatsView: View {
                     else if i == 1 { drillDay = nil }
                 } label: {
                     Text(c)
-                        .font(.footnote.weight(i == breadcrumb.count - 1 ? .semibold : .medium))
+                        .vkFont(.footnote.weight(i == breadcrumb.count - 1 ? .semibold : .medium))
                         .foregroundStyle(i == breadcrumb.count - 1 ? DS.Palette.accentText : DS.Palette.textSub)
                         .frame(minHeight: DS.Hit.min, alignment: .leading)
                         .contentShape(Rectangle())
@@ -331,16 +331,16 @@ struct StatsView: View {
         Card {
             VStack(alignment: .leading, spacing: DS.Space.s) {
                 Label("数据积累中", systemImage: "chart.line.uptrend.xyaxis")
-                    .font(.headline)
+                    .vkFont(.headline)
                     .foregroundStyle(DS.Palette.text)
                 if !m.hasData {
                     Text("这把锁还没有本地记录。连接门锁读取日志后, 这里会出现 7 天以上的趋势图。")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 } else {
                     Text("目前累计 \(m.coverage) 天, 再积累 \(max(0, 7 - m.coverage)) 天即可解锁完整趋势图。当前可看上方摘要。")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -350,7 +350,7 @@ struct StatsView: View {
                     dismiss()
                 } label: {
                     Label("去读取记录", systemImage: "tray")
-                        .font(.subheadline.weight(.medium))
+                        .vkFont(.subheadline, weight: .medium)
                         .foregroundStyle(DS.Palette.accentText)
                         .frame(minHeight: DS.Hit.min)
                         .contentShape(Rectangle())
@@ -377,7 +377,7 @@ struct StatsView: View {
             }
             Label {
                 Text(m.goldenSentence)
-                    .font(.subheadline.weight(.medium))
+                    .vkFont(.subheadline, weight: .medium)
                     .foregroundStyle(DS.Palette.accentText)
                     .fixedSize(horizontal: false, vertical: true)
             } icon: {
@@ -400,7 +400,7 @@ struct StatsView: View {
                         .foregroundStyle(DS.Palette.accentText)
                         .accessibilityHidden(true)
                     Text(title)
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .lineLimit(1)
                     Spacer(minLength: 0)
@@ -411,18 +411,18 @@ struct StatsView: View {
                             .foregroundStyle(DS.Palette.accentText)   // 641 中性靛蓝, 避免涨跌误导
                             .accessibilityHidden(true)
                         Text((up ? "+" : "") + String(Int(d * 100)) + "% 较上周")
-                            .font(.caption2)
+                            .vkFont(.caption2)
                             .foregroundStyle(DS.Palette.accentText)
                             .lineLimit(1)
                     }
                 }
                 HStack(alignment: .firstTextBaseline, spacing: DS.Space.xs) {
                     Text(value)
-                        .font(.title2.weight(.semibold))
+                        .vkFont(.title2, weight: .semibold)
                         .foregroundStyle(DS.Palette.text)
                         .monospacedDigit()
                     Text(sub)
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .lineLimit(1)
                 }
@@ -643,15 +643,15 @@ struct StatsView: View {
     private func pointBubble(_ p: StatsKit.DailyPoint, top: (name: String, n: Int)?) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(p.key)
-                .font(.caption2.weight(.semibold))
+                .vkFont(.caption2, weight: .semibold)
                 .foregroundStyle(DS.Palette.text)
             Text("开门 \(p.opens) 次 · 告警 \(p.alarms) 条")
-                .font(.caption2)
+                .vkFont(.caption2)
                 .foregroundStyle(DS.Palette.textSub)
                 .lineLimit(1)
             if let t = top {
                 Text("成员最多: 约 " + t.name + "（" + String(t.n) + " 次）")
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .lineLimit(1)
             }
@@ -660,6 +660,7 @@ struct StatsView: View {
         // 2026-10-14 材质统一批次: 读数气泡**保持实底**。它浮在折线图元之上, 存在的理由就是
         // 把被点的那一天从图里"盖出来"读清 —— 换成玻璃, 被指的那段线会从字底下透上来。
         // @layout-allow 面板实底
+        // @layout-allow VK豁免 面板实底: 读数气泡：它浮在折线图元之上，存在的理由就是把那一天从图里盖出来可读
         .background(DS.Palette.surface, in: RoundedRectangle(cornerRadius: 8))
         .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(DS.Palette.hairline, lineWidth: 0.5))
     }
@@ -727,7 +728,7 @@ struct StatsView: View {
                 HStack(spacing: DS.Space.s) {
                     Text(brush.map { "刷选 " + $0.lowerBound + " ~ " + $0.upperBound }
                          ?? "在轨道上左右拖动选一段区间，下面的明细跟着换")   // 621 在轨道上左右拖动选一
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .lineLimit(2)
                     Spacer(minLength: 0)
@@ -736,7 +737,7 @@ struct StatsView: View {
                             withAnimation(DS.Motion.quick) { brush = nil }
                         } label: {
                             Text("清除")
-                                .font(.caption.weight(.medium))
+                                .vkFont(.caption, weight: .medium)
                                 .padding(.horizontal, DS.Space.m)
                                 .padding(.vertical, DS.Space.s)
                                 .variantPlate(DS.Palette.surfaceAlt, .capsule, edge: DS.Palette.hairline)
@@ -816,11 +817,11 @@ struct StatsView: View {
             Text("\(d.hitCount) 条 · 开门 \(d.openN) 次 · 告警 \(d.alarmN) 条"
                  + ((d.folded ? d.bucketCount : d.hitCount) > d.rows.count
                     ? " · 下面列最近 \(d.rows.count) " + (d.folded ? "桶" : "条") : ""))
-                .font(.footnote)
+                .vkFont(.footnote)
                 .foregroundStyle(DS.Palette.textSub)
             if d.folded {
                 Text("这一档窗口 ≥\(m.longWindowDays) 天: 逐条 \(d.hitCount) 条已按 (日, 时) 折成 \(d.bucketCount) 个小时桶")   // 646 这一档窗口
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -836,7 +837,7 @@ struct StatsView: View {
                             .foregroundStyle(r.alarm ? DS.Palette.warn : DS.Palette.accent)
                             .accessibilityHidden(true)
                         Text(r.label)
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.text)
                             .lineLimit(1)
                         Spacer(minLength: 0)
@@ -855,7 +856,7 @@ struct StatsView: View {
             }
             if d.isEmpty {
                 Text("这段区间里没有开门或告警记录 —— 把轨道拖宽，或看上方趋势的空窗带")   // 610 这段区间里没有开门或
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
             }
         }
@@ -881,7 +882,7 @@ struct StatsView: View {
     private func brushDetailSide(_ m: StatsKit.StatModel, _ b: ClosedRange<String>) -> some View {
         VStack(alignment: .leading, spacing: DS.Space.xs) {
             Text("「" + b.lowerBound + " ~ " + b.upperBound + "」区间明细")   // 621 区间明细
-                .font(.caption.weight(.semibold))
+                .vkFont(.caption, weight: .semibold)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             brushDetailBody(m, brushData(m, b))
@@ -972,7 +973,7 @@ struct StatsView: View {
             // "峰值在哪一小时"是听读者最想要的那一个结论，不该让他自己点数。
             if let p = peak {
                 Text("峰值在 \(TimeWord.word(Int(p.hour))) \(p.hour) 时，开门 \(p.opens) 次；逐柱可用 VoiceOver 点读")   // 644 峰值在
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -1003,7 +1004,7 @@ struct StatsView: View {
                 .frame(height: 120)
                 .padding(.horizontal, DS.Space.gutter)
                 Text("只统计本机读到的日子；少于两天时整节不出现 —— 一根柱子谈不上「形状」。")   // 13 只统计本机读到的日子
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -1051,10 +1052,10 @@ struct StatsView: View {
                     VStack(alignment: .leading, spacing: DS.Space.xs) {
                         HStack(spacing: DS.Space.xs) {
                             Text(String(d.day.suffix(5)) + (d.name.isEmpty ? "" : " · " + d.name))
-                                .font(.caption.weight(.semibold))
+                                .vkFont(.caption, weight: .semibold)
                                 .foregroundStyle(DS.Palette.text)
                             Text("共 \(d.total) 次 · 峰值 \(TimeWord.word(Int(d.peakHour))) \(d.peakHour) 时")
-                                .font(.caption2)
+                                .vkFont(.caption2)
                                 .foregroundStyle(DS.Palette.textSub)
                             Spacer(minLength: 0)
                         }
@@ -1085,7 +1086,7 @@ struct StatsView: View {
             } footer: {
                 Text("放假日按本机已收录的公告判定；峰值只到「时」这一档 (日志只到分)。"
                      + "只统计窗口内读到的日志 —— 没读到的日子不算没开门。")
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -1136,9 +1137,9 @@ struct StatsView: View {
                 HStack(spacing: DS.Space.xs) {
                     ForEach(Array(parts.enumerated()), id: \.offset) { _, p in
                         VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                            Text(p.name).font(.caption.weight(.semibold)).foregroundStyle(DS.Palette.text)
+                            Text(p.name).vkFont(.caption, weight: .semibold).foregroundStyle(DS.Palette.text)
                             Text(p.span + " · " + String(p.opens) + " 次")
-                                .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                                .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -1158,7 +1159,7 @@ struct StatsView: View {
                 Text("每根轴按最忙那一段归一 (所以外圈永远顶格)，段边界写在标签里：深夜跟随「夜间时段」设置"
                      + " (当前 \(String(format: "%02d:00", RecordSearch.nightFrom)) 起、\(String(format: "%02d:00", RecordSearch.nightTo)) 前)。"
                      + "只统计本机读到的窗口 —— 没读过的时段不算没开门。")
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -1193,7 +1194,7 @@ struct StatsView: View {
                 .frame(height: 190)
                 .padding(.horizontal, DS.Space.gutter)
                 Text("\(pts.count) 条告警逐点上屏；纵轴是告警子类型，横向密集处即集中爆发的日子。")   // 605 条告警逐点上屏
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -1226,11 +1227,11 @@ struct StatsView: View {
                           : [("本月 实线", DS.Palette.accent, false)])
                 HStack(spacing: DS.Space.m) {
                     Text("本月 \(mp.thisCount) 次" + (mp.complete ? " · 上月 \(mp.lastCount) 次" : ""))
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                     if !mp.complete {
                         Text("上月记录未积累, 缓存最早从 " + (m.earliest.map { StatsKit.dayKey($0) } ?? "—") + " 起, 上月曲线暂缺")
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                             .lineLimit(1)
                     }
@@ -1259,7 +1260,7 @@ struct StatsView: View {
     private var weekChips: some View {
         HStack(spacing: DS.Space.s) {
             Text("成员窗口")
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
             ForEach([7, 30], id: \.self) { w in
                 let on = (week == w)
@@ -1268,7 +1269,7 @@ struct StatsView: View {
                     build()
                 } label: {
                     Text(String(w) + " 天")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(on ? DS.Palette.accentText : DS.Palette.text)
                         .padding(.horizontal, DS.Space.s)
                         .padding(.vertical, DS.Space.xs + 2)
@@ -1366,18 +1367,18 @@ struct StatsView: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: DS.Space.xs) {
                 Text(p.name)
-                    .font(.footnote.weight(.medium))
+                    .vkFont(.footnote, weight: .medium)
                     .foregroundStyle(DS.Palette.text)
                     .lineLimit(1)
                 if let f = p.firstUseDay {
                     Text("首用 " + f)   // 628 首用
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.accentText)
                         .lineLimit(1)
                 }
                 Spacer(minLength: 0)
                 Text("约 " + String(p.approxUses) + " 次")
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .lineLimit(1)
             }
@@ -1431,7 +1432,7 @@ struct StatsView: View {
     private func memberBarLabel(name: String, approx: Int, index: Int, maxApprox: Int) -> some View {
         HStack(spacing: DS.Space.s) {
             Text(name)
-                .font(.footnote)
+                .vkFont(.footnote)
                 .foregroundStyle(DS.Palette.text)
                 .lineLimit(1)
                 .frame(width: 56, alignment: .leading)
@@ -1439,7 +1440,7 @@ struct StatsView: View {
                 .fill(StatsKit.StatModel.memberColor(index))
                 .frame(width: barWidth(approx, maxApprox))
             Text("约 \(approx) 次")
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .lineLimit(1)
             Spacer(minLength: 0)
@@ -1471,7 +1472,7 @@ struct StatsView: View {
             GeometryReader { geo in
                 ForEach(Self.placedLabels(seriesEnds(m), proxy: proxy, geo: geo, mode: labelMode)) { t in
                     Text(t.text)
-                        .font(.caption2.weight(.semibold))
+                        .vkFont(.caption2, weight: .semibold)
                         .foregroundStyle(t.color)
                         .position(x: t.x, y: t.y)
                         .accessibilityHidden(true)   // 数字把图例和曲线已经说过的话再说一遍
@@ -1529,7 +1530,7 @@ struct StatsView: View {
     private var labelModeChips: some View {
         HStack(spacing: DS.Space.s) {
             Text("数值标签")
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
             ForEach(Self.labelModes) { mo in
                 let on = (labelMode == mo.tag)
@@ -1538,7 +1539,7 @@ struct StatsView: View {
                     DB.store.set("kf_stat_labels", mo.tag)
                 } label: {
                     Text(mo.name)
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(on ? DS.Palette.accentText : DS.Palette.text)
                         .padding(.horizontal, DS.Space.s)
                         .padding(.vertical, DS.Space.xs + 2)
@@ -1587,7 +1588,7 @@ struct StatsView: View {
                     Capsule().fill(off ? DS.Palette.hairline : StatsKit.StatModel.memberColor(i))
                         .frame(width: 14, height: 4)
                     Text(rec.name + " 约" + String(rec.approx))
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(off ? DS.Palette.textSub : DS.Palette.text)
                         .lineLimit(1)
                 }
@@ -1607,7 +1608,7 @@ struct StatsView: View {
             ForEach(labels.indices, id: \.self) { i in
                 Label {
                     Text(labels[i].0)
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                         .lineLimit(1)
                 } icon: {
@@ -1648,7 +1649,7 @@ struct StatsView: View {
                 }
                 .frame(height: 170)
                 Text("窗口累计 \(m.opensTotal) 次 · 虚线为周一分割, 看增长节奏")
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     // 2026-10-14 布局审计 R2: 估宽 428pt > 343pt, 而 lineLimit(1) 切掉的正好是后半句
                     // "虚线为周一分割" —— 图上那条虚线就没有解释了。允许两行。
@@ -1672,19 +1673,19 @@ struct StatsView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             HStack(spacing: DS.Space.xs) {
                                 Text(t.name)
-                                    .font(.footnote.weight(.medium))
+                                    .vkFont(.footnote, weight: .medium)
                                     .foregroundStyle(DS.Palette.text)
                                     .lineLimit(1)
                                 if !t.owner.isEmpty {
                                     Text(t.owner)
-                                        .font(.caption2)
+                                        .vkFont(.caption2)
                                         .foregroundStyle(DS.Palette.accentText)
                                         .lineLimit(1)
                                 }
                                 Spacer(minLength: 0)
                                 // 629: 已过期那侧同样给核销率
                                 Text((t.expired ? "已过期 · " : "") + "核销 " + String(Int(rate * 100)) + "% (\(t.usedDays)/\(t.availDays) 天)")
-                                    .font(.caption2)
+                                    .vkFont(.caption2)
                                     .foregroundStyle(t.expired ? DS.Palette.danger : DS.Palette.textSub)
                                     .lineLimit(1)
                             }
@@ -1769,6 +1770,7 @@ struct StatsView: View {
                     Spacer(minLength: 0)
                 }
                 .frame(height: 14)
+                // @layout-allow VK豁免 刻度点: 刻度/条，不是容器
                 .background(DS.Palette.surfaceAlt, in: RoundedRectangle(cornerRadius: 7))
                 .overlay(RoundedRectangle(cornerRadius: 7).strokeBorder(DS.Palette.hairline, lineWidth: 0.5))
                 HStack(spacing: DS.Space.m) {
@@ -1785,7 +1787,7 @@ struct StatsView: View {
                                     .fill(off ? DS.Palette.hairline : StatsKit.StatModel.kindColor(k))
                                     .frame(width: 14, height: 4)
                                 Text((StatsKit.StatModel.kindWords()[k] ?? k) + " " + StatsKit.StatModel.compact(c))
-                                    .font(.caption)
+                                    .vkFont(.caption)
                                     .foregroundStyle(off ? DS.Palette.textSub : DS.Palette.text)
                                     .lineLimit(1)
                             }
@@ -1827,7 +1829,7 @@ struct StatsView: View {
                     // 而那一类其实只有 60%。现在数够线的那一类, 并把**真实累计**一起念出来 (不拿 80 这个整数档冒充实际值)。
                     if let cov = m.paretoCover {
                         Text("帕累托: 前 \(cov.kinds) 类累计 \(Int(cov.cumPct))% 开门 (折到凭证类, 类内不分条)")   // 615 开门
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                             // 2026-10-14 布局审计 R2: 这条最长 (估宽 599pt vs 343pt)，lineLimit(1) 会把
                             // "折到凭证类, 类内不分条"整个口径切掉 —— 那正是这句话存在的理由 (数的是类不是条)。
@@ -1843,7 +1845,7 @@ struct StatsView: View {
                 }
                 .frame(height: 150)
                 Text("周末柱为青绿, 呈现作息节律")   // 616 周末柱为青绿
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .lineLimit(1)
             }
@@ -1855,7 +1857,7 @@ struct StatsView: View {
             if !bubbles.isEmpty {
                 VStack(alignment: .leading, spacing: DS.Space.s) {
                     Text("成员活跃气泡 (近 \(m.memberBarDays) 天 · 约)")   // 624 成员活跃气泡
-                        .font(.subheadline.weight(.medium))
+                        .vkFont(.subheadline, weight: .medium)
                         .foregroundStyle(DS.Palette.text)
                     Chart(bubbles) { b in
                         PointMark(x: .value("次数", b.count), y: .value("距最近使用 (天)", b.daysAgo))
@@ -1867,7 +1869,7 @@ struct StatsView: View {
                     .chartXAxisLabel("窗口内开门次数")
                     .chartYAxisLabel("距最近一次开门 (天)")
                     Text("泡越大 = 名下凭证越多; 左上角 = 次数少但很久没开 (值得看一眼)。归属与凭证数都是本机台账口径 (约)。")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -1880,7 +1882,7 @@ struct StatsView: View {
             if !members.isEmpty {
                 VStack(alignment: .leading, spacing: DS.Space.s) {
                     Text("成员近 \(barDays) 天 (约 · 仅可证明归属)")
-                        .font(.subheadline.weight(.medium))
+                        .vkFont(.subheadline, weight: .medium)
                         .foregroundStyle(DS.Palette.text)
                     ForEach(Array(members.enumerated()), id: \.offset) { i, rec in
                         // 2026-10-13 run 66: 整行 (Button + 两个修饰符) 抽出 —— 该表达式报 type-check 超时。
@@ -1889,7 +1891,7 @@ struct StatsView: View {
                     }
                     if members.first?.approx == 0 {
                         Text("暂无可证明归属的开门 (归属需台账与日志窗口对齐)")
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                     }
                 }
@@ -1901,7 +1903,7 @@ struct StatsView: View {
             if !breakdown.isEmpty {
                 VStack(alignment: .leading, spacing: DS.Space.xs) {
                     Text("凭证归属构成 (约 · 仅可证明归属)")   // 625 凭证归属构成
-                        .font(.caption.weight(.medium))
+                        .vkFont(.caption, weight: .medium)
                         .foregroundStyle(DS.Palette.textSub)
                     ForEach(StatsKit.StatModel.kindOrder(), id: \.self) { k in
                         if let segs = breakdown[k], !segs.isEmpty {
@@ -1935,23 +1937,23 @@ struct StatsView: View {
         if !top.isEmpty {
             VStack(alignment: .leading, spacing: DS.Space.s) {
                 Text("凭证类使用榜 · 近 \(m.windowDays) 天")   // 619 凭证类使用榜
-                    .font(.subheadline.weight(.medium))
+                    .vkFont(.subheadline, weight: .medium)
                     .foregroundStyle(DS.Palette.text)
                 ForEach(Array(top.enumerated()), id: \.offset) { i, p in
                     HStack(spacing: DS.Space.s) {
                         Text(String(i + 1))
-                            .font(.caption2.weight(.semibold))
+                            .vkFont(.caption2, weight: .semibold)
                             .foregroundStyle(DS.Palette.textSub)
                             .monospacedDigit()
                             .frame(width: 18, alignment: .leading)
                             .accessibilityLabel("第 \(i + 1) 名")
                         Text(p.label)
-                            .font(.footnote.weight(.medium))
+                            .vkFont(.footnote, weight: .medium)
                             .foregroundStyle(DS.Palette.text)
                             .lineLimit(1)
                         Spacer(minLength: 0)
                         Text(StatsKit.StatModel.compact(p.count) + " · 累计 " + String(Int(p.cumPct)) + "%")
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                             .lineLimit(1)
                     }
@@ -1959,7 +1961,7 @@ struct StatsView: View {
                     .accessibilityElement(children: .combine)
                 }
                 Text("排的是凭证类 (窗口内共 \(top.count) 类上榜), 类内不逐条; 名次按窗口内开门次数排。")
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -1973,18 +1975,18 @@ struct StatsView: View {
         let colors: [String: Color] = ["warn": DS.Palette.warn, "danger": DS.Palette.danger, "neutral": DS.Palette.textSub]
         VStack(alignment: .leading, spacing: DS.Space.s) {
             Text("告警构成")   // 613 告警构成
-                .font(.subheadline.weight(.medium))
+                .vkFont(.subheadline, weight: .medium)
                 .foregroundStyle(DS.Palette.text)
             if stats.isEmpty {
                 Text("本月还没有告警记录, 这扇门很安静。")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             } else {
                 ForEach(stats) { s in
                     HStack(spacing: DS.Space.s) {
                         Text(s.typeName)
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.text)
                             .lineLimit(1)
                             .frame(width: 56, alignment: .leading)
@@ -1992,7 +1994,7 @@ struct StatsView: View {
                             .fill(colors[s.color] ?? DS.Palette.textSub)
                             .frame(width: max(2, CGFloat(s.month) / CGFloat(max(m.alertTotalMonth, 1)) * 120))
                         Text("\(s.month) 条" + (s.last > 0 ? " · 上月 \(s.last)" : ""))
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                             .lineLimit(1)
                         Spacer(minLength: 0)
@@ -2005,7 +2007,7 @@ struct StatsView: View {
             HStack(alignment: .bottom, spacing: DS.Space.m) {
                 VStack(alignment: .leading, spacing: DS.Space.xs) {
                     Text("上月 \(m.alertTotalLast)")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .lineLimit(1)
                     Capsule()
@@ -2014,7 +2016,7 @@ struct StatsView: View {
                 }
                 VStack(alignment: .leading, spacing: DS.Space.xs) {
                     Text("本月 \(m.alertTotalMonth)")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .lineLimit(1)
                     Capsule()
@@ -2023,7 +2025,7 @@ struct StatsView: View {
                 }
                 Spacer(minLength: 0)
                 Text(m.alertTotalMonth > m.alertTotalLast ? "本月告警多于上月, 建议看看告警记录" : "告警未超上月")
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .lineLimit(1)
             }
@@ -2044,7 +2046,7 @@ struct StatsView: View {
                 if !pu.isEmpty {
                     VStack(alignment: .leading, spacing: DS.Space.s) {
                         Text("长期密码用量 (台账推断约值)")   // 626 长期密码用量
-                            .font(.subheadline.weight(.medium))
+                            .vkFont(.subheadline, weight: .medium)
                             .foregroundStyle(DS.Palette.text)
                         ForEach(pu, id: \.alias) { p in
                             pwdUsageRow(p)
@@ -2052,13 +2054,13 @@ struct StatsView: View {
                         // 628 数据面实话: 首用只从密码时间窗推断 (锁端无逐凭证计数); 指纹侧没有等价的
                         // 逐指纹用量/首用可算 (attribution 只给"谁开的", 给不了"哪枚指纹开的"), 所以不列。
                         Text("口径: 「首用」= 生效期内唯一时间窗命中的最早一次开门 (台账推断); 指纹凭证无独立首用数据, 不列。")
-                            .font(.caption2)
+                            .vkFont(.caption2)
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                         if outOf > 0 {
                             Label("约 \(outOf) 次密码开门落在所有时间窗之外 (台账推断",
                                   systemImage: "exclamationmark.circle")
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.warn)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -2070,7 +2072,7 @@ struct StatsView: View {
                 if !m.otpPoints.isEmpty {
                     VStack(alignment: .leading, spacing: DS.Space.s) {
                         Text("临时密码使用时刻")   // 627 临时密码使用时刻
-                            .font(.subheadline.weight(.medium))
+                            .vkFont(.subheadline, weight: .medium)
                             .foregroundStyle(DS.Palette.text)
                         Chart(m.otpPoints) { p in
                             PointMark(x: .value("日", p.day), y: .value("时", p.hour))
@@ -2088,14 +2090,14 @@ struct StatsView: View {
                 if !ranges.isEmpty {
                     VStack(alignment: .leading, spacing: DS.Space.s) {
                         Text("逐日首末开门区间")   // 617 逐日首末开门区间
-                            .font(.subheadline.weight(.medium))
+                            .vkFont(.subheadline, weight: .medium)
                             .foregroundStyle(DS.Palette.text)
                         // 618 一行: 三个数来自 `m.firstOpenHourSpread` —— 它就是下面那排逐日条的 minHour 排出来的
                         // 最早/中位/最晚, 同一个出处, 不在别处再算第二套"首次开门"。中位取**下中位数** (理由同 780)。
                         if let sp = m.firstOpenHourSpread {
                             HStack(spacing: DS.Space.s) {
                                 Text("窗口首开")
-                                    .font(.caption2)
+                                    .vkFont(.caption2)
                                     .foregroundStyle(DS.Palette.textSub)
                                     .lineLimit(1)
                                 GeometryReader { geo in
@@ -2116,7 +2118,7 @@ struct StatsView: View {
                                     .frame(height: 12)
                                 }
                                 Text("最早 \(sp.earliest) · 中位 \(sp.median) · 最晚 \(sp.latest) 时")
-                                    .font(.caption2)
+                                    .vkFont(.caption2)
                                     .foregroundStyle(DS.Palette.textSub)
                                     .lineLimit(1)
                             }
@@ -2158,7 +2160,7 @@ struct StatsView: View {
                         HStack(spacing: 0) {
                             ForEach(Array(ranges.enumerated()), id: \.offset) { i, r in
                                 Text((ranges.count <= 7 || i % 2 == 0) ? String(r.key.suffix(5)) : "")
-                                    .font(.caption2)   // 语义字号: 9pt 固定值不参与 Dynamic Type
+                                    .vkFont(.caption2)   // 语义字号: 9pt 固定值不参与 Dynamic Type
                                     .foregroundStyle(DS.Palette.textSub)
                                     .frame(maxWidth: .infinity)
                             }
@@ -2167,7 +2169,7 @@ struct StatsView: View {
                         // 这一族画的到底是什么, 写在图下面而不是靠标题猜 (形态与口径一起写清):
                         Text("竖棒 = 当日最早与最晚开门之间 (分辨率到「时」, 纵轴 0–24 时), 棒顶圆点大小 = 当日开门次数"
                              + " (精确值走读屏标签; 超过 7 天时隔一天标一个日期)。协议没有门磁与上锁状态, 这条只是首末开门夹出来的代理值。")
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -2195,23 +2197,23 @@ struct StatsView: View {
                 VStack(alignment: .leading, spacing: DS.Space.s) {
                     ForEach(Array(week.enumerated()), id: \.offset) { _, s in
                         Label(s, systemImage: "person.fill")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.text)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     ForEach(Array(home.enumerated()), id: \.offset) { _, s in
                         Label(s, systemImage: "house.fill")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     Label("本月至今约 \(thisM) 小时 · 上月全月约 \(lastM) 小时 (天数不等只看量级)",
                           systemImage: "calendar")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                     Text("口径: 协议无门磁/上锁状态, 在家时长为「首末开门间隔求和」的代理值")   // 800 口径
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -2235,10 +2237,10 @@ struct StatsView: View {
                         .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("开门统计年报告")
-                            .font(.subheadline.weight(.medium))
+                            .vkFont(.subheadline, weight: .medium)
                             .foregroundStyle(DS.Palette.text)
                         Text(cov >= 365 ? "数据已积累, 可生成" : "数据积累中 (\(cov)/365 天)")
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(cov >= 365 ? DS.Palette.ok : DS.Palette.textSub)
                             .lineLimit(1)
                     }
@@ -2286,7 +2288,7 @@ struct StatsView: View {
                             .foregroundStyle(StatsKit.alarmTypes.contains(l.type) ? DS.Palette.warn : DS.Palette.accent)
                             .accessibilityHidden(true)
                         Text(l.lockTimeStr.isEmpty ? l.typeName : l.lockTimeStr + " · " + l.typeName)
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.text)
                             .lineLimit(1)
                         Spacer(minLength: 0)
@@ -2300,7 +2302,7 @@ struct StatsView: View {
             }
             if rows.isEmpty {
                 Text("这个时段近 " + String(m.windowDays) + " 天没有记录")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
             }
         }
@@ -2326,10 +2328,10 @@ struct YearReportView: View {
                             .foregroundStyle(DS.Palette.accentText)
                             .accessibilityHidden(true)
                         Text("数据积累中")
-                            .font(.title3.weight(.semibold))
+                            .vkFont(.title3, weight: .semibold)
                             .foregroundStyle(DS.Palette.text)
                         Text("年报告需要连续积累满一年 (365 天) 的门禁日志。当前已积累 \(cov) 天, 还差 \(max(0, 365 - cov)) 天。积累满后这里会按季度给出「最活跃时段 / 使用最多的凭证 / 告警最少的月份」。")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
@@ -2373,29 +2375,29 @@ struct YearReportView: View {
         let top = m.pwdUses.max { $0.approxUses < $1.approxUses }
         VStack(alignment: .leading, spacing: DS.Space.m) {
             Text("本年开门 " + StatsKit.StatModel.compact(m.opensTotal))
-                .font(.title3.weight(.semibold))
+                .vkFont(.title3, weight: .semibold)
                 .foregroundStyle(DS.Palette.text)
             // 50: 季度拆行 + 最常用凭证 + 最少告警月 (数据全取自既有 365 天模型)
             ForEach(0..<4, id: \.self) { i in
                 Text("Q\(i + 1): 开门 \(qO[i] ?? 0) 次 · 告警 \(qA[i] ?? 0) 条")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
             }
             Text("黄金时段: " + m.goldenSentence)
-                .font(.footnote)
+                .vkFont(.footnote)
                 .foregroundStyle(DS.Palette.textSub)
             if let t = top, t.approxUses > 0 {
                 Text("最常用凭证: " + t.name + " 约 " + String(t.approxUses) + " 次 (台账推断)")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
             }
             if let c = moA.min(by: { $0.value < $1.value }) {
                 Text("告警最少月: \(c.key) 月 (\(c.value) 条)")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
             }
             Text("告警共 " + String(m.alertStats.reduce(0) { $0 + $1.month + $1.last }))
-                .font(.footnote)
+                .vkFont(.footnote)
                 .foregroundStyle(DS.Palette.textSub)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -2416,17 +2418,17 @@ struct HourDetailSheet: View {
                 ForEach(Array(drillRows.enumerated()), id: \.offset) { i, l in
                     VStack(alignment: .leading, spacing: 4) {
                         Text(l.lockTimeStr.isEmpty ? l.typeName : l.lockTimeStr)
-                            .font(.subheadline.weight(.medium))
+                            .vkFont(.subheadline, weight: .medium)
                             .foregroundStyle(DS.Palette.text)
                         Text(l.typeName)
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                     }
                     .accessibilityElement(children: .combine)
                 }
                 if drillRows.isEmpty {
                     Text("这个时段近 \(windowDays) 天没有记录")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                 }
             }

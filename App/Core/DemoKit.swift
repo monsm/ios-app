@@ -193,7 +193,7 @@ struct DemoBanner: View {
                         DemoKit.setOn(false)
                         onCleared()
                     }
-                    .font(.footnote.weight(.semibold))
+                    .vkFont(.footnote, weight: .semibold)
                     .foregroundStyle(DS.Palette.danger)
                     .frame(minHeight: DS.Hit.min)
                     .contentShape(Rectangle())
@@ -201,7 +201,7 @@ struct DemoBanner: View {
             } icon: {
                 Image(systemName: "theatermasks.fill").accessibilityHidden(true)
             }
-            .font(.caption)
+            .vkFont(.caption)
             .foregroundStyle(DS.Palette.warn)
             .padding(.horizontal, DS.Space.l)
             .padding(.vertical, DS.Space.s)

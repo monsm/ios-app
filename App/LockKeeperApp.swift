@@ -1097,10 +1097,10 @@ struct PrivacyCurtain: View {
                     .foregroundStyle(DS.Palette.accentText)
                     .accessibilityHidden(true)
                 Text("内容已隐藏")   // 233 内容已隐藏
-                    .font(.headline)
+                    .vkFont(.headline)
                     .foregroundStyle(DS.Palette.text)
                 Text("退到后台时以这块幕替换内容，回到前台自动恢复。")   // 233 退到后台时以这块幕替
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, DS.Space.xl)
@@ -1421,6 +1421,10 @@ struct RootView: View {
         // 显式字重的文本 (凭证名/开关标签) 才跟着加粗。关档时给 .regular 而不是留空:
         // 两档都显式, 不依赖系统默认推断 (LegibilityWeight.bold 的官方语义就是 "force Accessibility Bold")。
         .environment(\.legibilityWeight, AXFlags.boldText ? .bold : .regular)
+        // 2026-10-16 界面变体进环境。**注入点只有这一处**，两棵树共用：
+        // legacy 也显式写自己的值，不留空 —— 字体的调用点有 1700+ 处、绝大多数拿不到 AppState，
+        // 逐处传 VK(variant:) 既改不动也每处一次存储读取（理由见 UIVariant.swift 的 UIVariantKey）。
+        .environment(\.uiVariant, app.uiVariant)
         .animation(DS.Motion.soft, value: app.appUnlocked)
         // 378 常驻水印: 全局对角重复层 (安全中心页内那份保留不动, 那里是设置项自己的预览)。
         // 读一下 tick 使开关拨动后整层重算; hitTesting/朗读屏蔽在 SecurityWatermark 内部已带。
@@ -1501,7 +1505,7 @@ struct RootView: View {
                     .font(.system(size: DS.Icon.xs))
                     .accessibilityHidden(true)
                 Text("还有 \(n) 条提醒")
-                    .font(.caption2)
+                    .vkFont(.caption2)
                 Image(systemName: "chevron.right")
                     .font(.system(size: DS.Icon.xs))
                     .accessibilityHidden(true)
@@ -1522,7 +1526,7 @@ struct RootView: View {
             Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: DS.Icon.sm, weight: .semibold))
                 .accessibilityHidden(true)
-            Text(w).font(.caption).fixedSize(horizontal: false, vertical: true)
+            Text(w).vkFont(.caption).fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
             Button("去诊断") {
                 // 2026-10-15 走查 §4.3: 与 NoticeBudget 那条同病 —— 按钮说"去诊断", 原来只把人放到
@@ -1530,7 +1534,7 @@ struct RootView: View {
                 app.pendingSettingsFocus = "diag"
                 app.requestRoute(.settings)
             }   // 377: 访客通道开着时先复核, 不白切
-                .font(.caption.weight(.medium))
+                .vkFont(.caption, weight: .medium)
         }
         .foregroundStyle(DS.Palette.warn)
         .padding(.horizontal, DS.Space.l)
@@ -1553,7 +1557,7 @@ struct RootView: View {
                     Text("刚复制的「\(s.label)」到点已自动清除")
                 }
             }
-            .font(.caption)
+            .vkFont(.caption)
             .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: DS.Space.xs)
             if case .waiting = s.stage {
@@ -1578,7 +1582,7 @@ struct RootView: View {
                 withAnimation(DS.Motion.standard) { app.pasteSuggestion = nil }
             }
         }
-        .font(.caption.weight(.medium))
+        .vkFont(.caption, weight: .medium)
         .foregroundStyle(DS.Palette.accentText)
         .padding(.horizontal, DS.Space.l)
         .padding(.vertical, DS.Space.s)
@@ -1596,7 +1600,7 @@ struct RootView: View {
                 .foregroundStyle(DS.Palette.ok)
                 .accessibilityHidden(true)
             Text(r)
-                .font(.caption.weight(.medium))
+                .vkFont(.caption, weight: .medium)
                 .foregroundStyle(DS.Palette.text)
         }
         .padding(.horizontal, DS.Space.l)
@@ -1680,7 +1684,7 @@ struct ToastView: View {
     var text: String
     var body: some View {
         Text(text)
-            .font(.footnote.weight(.medium))
+            .vkFont(.footnote, weight: .medium)
             .foregroundStyle(DS.Palette.text)
             .lineLimit(3)
             .multilineTextAlignment(.center)
@@ -1807,10 +1811,10 @@ struct AppLockView: View {
 
             VStack(spacing: DS.Space.s) {
                 Text(reauth ? "凭证与设置已收起" : "离线锁管家已锁定")   // 377 凭证与设置已收起
-                    .font(.title2.weight(.semibold))
+                    .vkFont(.title2, weight: .semibold)
                     .foregroundStyle(DS.Palette.text)
                 Text(reauth ? "访客模式进行中, 重输本机密码才放开这两页" : "输入本机密码以查看门锁与凭证")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .multilineTextAlignment(.center)
             }
@@ -1849,14 +1853,14 @@ struct AppLockView: View {
                 if failed {
                     Label(cooling > 0 ? "冷却中, \(cooling) 秒后可再试" : "密码错误, 请重新输入",
                           systemImage: cooling > 0 ? "hourglass" : "exclamationmark.circle.fill")
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.danger)
                         .transition(.opacity)
                 }
                 // 235: 面容两次未识别后的可见落点 (字面引导回密码键盘; 取消/改用密码等中断不触发)
                 if faceHint, !failed {
                     Label("面容两次未识别, 请用本机密码继续", systemImage: "faceid")   // 235 面容两次未识别
-                        .font(.footnote)
+                        .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.warn)
                         .transition(.opacity)
                 }
@@ -1872,7 +1876,7 @@ struct AppLockView: View {
                 Button("用 Face ID / Touch ID 解锁 (大字)") {
                     runBiometric()   // 2026-10-14 面容优先: 处理逻辑抽到 runBiometric, 两处共用一份
                 }
-                .font(.title2.weight(.semibold))
+                .vkFont(.title2, weight: .semibold)
                 .padding(.vertical, DS.Space.m)
                 .padding(.horizontal, DS.Space.xl)
                 .frame(maxWidth: 280)
@@ -1885,7 +1889,7 @@ struct AppLockView: View {
             // 377: 复核档必须给一条退路 —— 全屏罩上没有返回键, 不给取消就等于把人扣在口令页里
             if reauth {
                 Button("取消, 先不进这两页") { app.showGuestGate = false }
-                    .font(.footnote.weight(.medium))
+                    .vkFont(.footnote, weight: .medium)
                     .foregroundStyle(DS.Palette.textSub)
                     .frame(minHeight: DS.Hit.min)
             }
@@ -1921,7 +1925,7 @@ struct AppLockView: View {
     private var keypad: some View {
         VStack(spacing: DS.Space.s) {
             Text(pw.isEmpty ? "—" : String(repeating: "·", count: pw.count))
-                .font(.title2.monospaced())
+                .vkFont(.title2.monospaced())
                 .foregroundStyle(DS.Palette.text)
                 .accessibilityLabel(pw.isEmpty ? "尚未输入" : "已输入 \(pw.count) 位")
                 .frame(maxWidth: 280)
@@ -1941,7 +1945,7 @@ struct AppLockView: View {
             // 无声地换一套键位会让人以为 App 坏了, 而这正是刚被面容拒绝三次的人最不该有的怀疑。
             if bigKeys {
                 Label("面容连续三次没认出来, 已换成大按键密码盘", systemImage: "keyboard")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.warn)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -1950,7 +1954,7 @@ struct AppLockView: View {
                 manualEntry = true
                 focused = true
             }
-            .font(.footnote)
+            .vkFont(.footnote)
             .foregroundStyle(DS.Palette.accentText)
             .frame(minHeight: DS.Hit.min)
             .accessibilityHint("切回系统键盘输入非数字内容")
@@ -1974,7 +1978,7 @@ struct AppLockView: View {
         init(_ t: String, tall: Bool = false) { text = t; self.tall = tall }
         var body: some View {
             Text(text)
-                .font(tall ? .title2.weight(.medium) : .title3.weight(.medium))
+                .vkFont(tall ? .title2.weight(.medium) : .title3.weight(.medium))
                 .frame(maxWidth: .infinity, minHeight: tall ? 56 : DS.Hit.min)
                 // 2026-10-14 材质统一: 12 枚键帽同批上玻璃。这里的降级面必须仍带描边 ——
                 // 键帽是实底时靠色块之间的缝隙分格，降成实底后若无边，整片键盘会糊成一块板。

@@ -83,13 +83,13 @@ struct AddDeviceView: View {
                     } icon: {
                         Image(systemName: "exclamationmark.triangle.fill").accessibilityHidden(true)
                     }
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.danger)
                     NavigationLink {
                         SymptomGuideView(initial: "bleConnect")
                     } label: {
                         Label("看三步排查", systemImage: "stethoscope")   // 829 看三步排查
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .frame(minHeight: DS.Hit.min)
                     }
                 } footer: {
@@ -97,9 +97,9 @@ struct AddDeviceView: View {
                 }
             }
             Section("操作指引") {
-                Text("1. 从后面板下方打开板盖").font(.footnote)
-                Text("2. 长按后面板左侧 RESET 按键，直到\"嘀嘀嘀\"三声后松开").font(.footnote)
-                Text("3. 保持当前页面，等待完成添加").font(.footnote)
+                Text("1. 从后面板下方打开板盖").vkFont(.footnote)
+                Text("2. 长按后面板左侧 RESET 按键，直到\"嘀嘀嘀\"三声后松开").vkFont(.footnote)
+                Text("3. 保持当前页面，等待完成添加").vkFont(.footnote)
             }
             Section {
                 // 807 信号格配对引导 (拍板 2026-10-10: 只给信号与提示，**不自动推进配对**)。
@@ -110,7 +110,7 @@ struct AddDeviceView: View {
                     Text(LinkSense.rssiLevel(LinkSense.shared.lastRssi) >= 3
                          ? "信号已够，点下面列表里的锁即可开始"   // 807 信号已够
                          : "请再靠近门锁：信号越满广播越完整，配对越不容易中途断")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 0)
@@ -191,7 +191,7 @@ struct AddDeviceView: View {
                         .font(.system(size: DS.Icon.sm, weight: .semibold))
                         .foregroundStyle(i <= current ? DS.Palette.accentText : DS.Palette.textSub)
                     Text(s.1)
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(i <= current ? DS.Palette.text : DS.Palette.textSub)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
@@ -212,6 +212,7 @@ struct AddDeviceView: View {
         // 2026-10-14 材质统一批次: 四步进度条**保持实底**。它在配网 List 的 Section 里,
         // 行组已经是一层玻璃面 —— 行内再上玻璃就是玻璃叠玻璃, 接缝正好压在步骤字底下。
         // @layout-allow 面板实底
+        // @layout-allow VK豁免 控件可识别性: 四步进度条的实底，它自己的注释就写着"保持实底"
         .background(DS.Palette.surface, in: RoundedRectangle(cornerRadius: DS.Radius.control))
         .animation(DS.Motion.soft, value: current)
     }
@@ -231,25 +232,25 @@ struct AddDeviceView: View {
                 VStack(alignment: .leading, spacing: DS.Space.xxs) {
                     HStack(spacing: DS.Space.xs) {
                         Text(d.name)
-                            .font(.subheadline)
+                            .vkFont(.subheadline)
                             .foregroundStyle(DS.Palette.text)
                             .lineLimit(1)
                             .minimumScaleFactor(0.85)
                         // 251: 信号强度是"该先点哪把锁"的排序依据, 标出来
                         Text("\(d.rssi) dBm")
-                            .font(.caption2)
+                            .vkFont(.caption2)
                             .monospacedDigit()
                             .foregroundStyle(DS.Palette.textSub)
                     }
                     Text("\(adv?.macDisplay ?? "—") · \(adv.map { PidMap.modelName($0.pid) } ?? "未知")")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         // 型号是判断"是不是我的锁"的关键信息, 不做 lineLimit(1) 截断
                         .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
                     if !inReset {
                         Text("需先在键盘上物理重置")
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                     }
                 }
@@ -325,10 +326,10 @@ struct AddDeviceView: View {
                 // 253 四步进度: 配网链映射到 校验(1) → 初始化(2)
                 stepBar(current: max(step, 1))
                 Text("正在添加设备")
-                    .font(.headline)
+                    .vkFont(.headline)
                     .foregroundStyle(DS.Palette.text)
                 Text("请勿断开蓝牙并将手机靠近门锁")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .multilineTextAlignment(.center)
                 // 步骤区限高内滚: 步骤再多也不会把页面顶出屏幕
@@ -340,13 +341,13 @@ struct AddDeviceView: View {
                             } icon: {
                                 Image(systemName: "checkmark").accessibilityHidden(true)
                             }
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.ok)
                             .transition(.opacity.combined(with: .move(edge: .top)))
                         }
                         if !pairError.isEmpty {
                             Text(pairError)
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.danger)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -356,7 +357,7 @@ struct AddDeviceView: View {
                 }
                 // 240pt 为刻意上限 (约 6 行步骤), 刻意不入令牌: 令牌只有间距刻度, 没有版面高度刻度
                 .frame(maxHeight: 240)
-                .background(DS.Palette.surfaceAlt, in: RoundedRectangle(cornerRadius: DS.Radius.tile))
+                .variantPlate(DS.Palette.surfaceAlt, .tile)
                 // 新步骤逐条浮现 (空间一致性: 从上方推进)
                 .animation(DS.Motion.standard, value: pairSteps)
                 Spacer(minLength: 0)
@@ -418,16 +419,16 @@ struct AddDeviceView: View {
                     .foregroundStyle(DS.Palette.ok)
                     .accessibilityHidden(true)
                 Text("添加成功")
-                    .font(.headline)
+                    .vkFont(.headline)
                     .foregroundStyle(DS.Palette.text)
                 Text("已生成本机密钥并写入门锁。请立刻做一次全量备份, 钥匙串只存于本机。")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
                 // 258 首连验证引导: 添加完成 → 引导首次开锁跑通全链路
                 Label("下一步: 到设备页成功开一次锁, 完成「链路已验证」标记", systemImage: "checkmark.seal")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.accentText)
                     .fixedSize(horizontal: false, vertical: true)
                 Button("完成") { dismiss() }
@@ -581,7 +582,7 @@ struct AddPwdView: View {
                     // 359 到期待用
                     // 360 到期待用
                     Text("到期待用: 凭证页可开三档预警, 过期进「已过期」分组不消失。")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -597,7 +598,7 @@ struct AddPwdView: View {
                 // 2026-10-15 走查: 这一枚原先包在 `if useTemplate` 里 ⇒ 关掉它的那一按顺手把自己从屏上摘掉,
                 // 想再打开只能退出这一页重进 (@State 回到默认 true)。自我隐藏的开关是"点了找不到"的一种:
                 // 控制项要一直在那儿, 尤其是它默认开着、用户随时可能改主意的时候。
-                Toggle("备注自动填命名模板 (谁-哪里-何时)", isOn: $useTemplate)
+                VariantToggle("备注自动填命名模板 (谁-哪里-何时)", isOn: $useTemplate)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Section {
@@ -746,10 +747,10 @@ struct StartAddFpView: View {
                             .foregroundStyle(DS.Palette.ok)
                             .accessibilityHidden(true)
                         Text("添加成功")
-                            .font(.headline)
+                            .vkFont(.headline)
                             .foregroundStyle(DS.Palette.text)
                         Text("请用新添加的指纹开一次锁, 确保指纹可用")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                             .multilineTextAlignment(.center)
                         Button("完成") { dismiss() }
@@ -763,12 +764,12 @@ struct StartAddFpView: View {
                             .accessibilityLabel("指纹录入进度")
                             .accessibilityValue("\(min(presses.count, 8)) / 8 次")
                         Text(progressText)
-                            .font(.headline)
+                            .vkFont(.headline)
                             .foregroundStyle(DS.Palette.text)
                             .contentTransition(.opacity)
                             .animation(DS.Motion.soft, value: presses.count)
                         Text("最舒适的姿势，将手指按在门锁指纹头上，重复 8 次")
-                            .font(.footnote)
+                            .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
@@ -789,7 +790,7 @@ struct StartAddFpView: View {
                             } icon: {
                                 Image(systemName: "exclamationmark.triangle.fill").accessibilityHidden(true)
                             }
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.danger)
                             .multilineTextAlignment(.center)
                         }
@@ -919,13 +920,13 @@ struct DeviceInfoView: View {
                         .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: DS.Space.xxs) {
                         Text(app.displayName)
-                            .font(.headline)
+                            .vkFont(.headline)
                             .foregroundStyle(DS.Palette.text)
                             .lineLimit(1)
                             .minimumScaleFactor(0.85)
                         // 774 场所副标题
                         Text(LockArchive.subtitle(kc))
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                             .lineLimit(1)
                             .minimumScaleFactor(0.85)
@@ -953,18 +954,18 @@ struct DeviceInfoView: View {
             VStack(alignment: .leading, spacing: DS.Space.xxs) {
                 LabeledRow("门锁电量", pctText)
                 Text(sampleText)
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                 // 45 电量 sparkline: 采样 ≥2 个点画真走势; 不足时退回诚实占位文案 (不画假线不插值)
                 let sp = battSamples
                 if sp.count >= 2 {
                     BattSpark(samples: sp)
                     Text(battTrendCaption(sp))
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                 } else {
                     Text(trendText)
-                        .font(.caption2)
+                        .vkFont(.caption2)
                         .foregroundStyle(DS.Palette.textSub)
                 }
             }
@@ -1002,7 +1003,7 @@ struct DeviceInfoView: View {
                                               snapshot: status?.powerLevel ?? app.snapshot?.powerLevel ?? -1)
             if p289 >= 0, p289 <= 25 {
                 Text("耗材提醒: 电量 \(p289)%, 建议备一枚\(meta.batteryModel.isEmpty ? "对应型号" : meta.batteryModel)电池。")
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.warn)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -1203,12 +1204,12 @@ struct LockProfileView: View {
                         .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: DS.Space.xxs) {
                         Text(trimmed.isEmpty ? "未命名" : trimmed)
-                            .font(.headline)
+                            .vkFont(.headline)
                             .foregroundStyle(DS.Palette.text)
                             .lineLimit(1)
                             .minimumScaleFactor(0.85)
                         Text(place.trimmingCharacters(in: .whitespaces).isEmpty ? "未填场所" : place)
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                             .lineLimit(1)
                             .minimumScaleFactor(0.85)
@@ -1242,12 +1243,12 @@ struct LockProfileView: View {
             Section {
                 // 108 手动隐藏这把锁: 只影响设备 Tab 的横滑翻页与胶囊主列表。
                 // 判据刻意与"沉睡 (超 30 天未连接)"分开 —— 隐藏是用户明确说过的，沉睡是推断出来的。
-                Toggle("在翻页里隐藏这把锁", isOn: Binding(   // 108 在翻页里隐藏这把锁
+                VariantToggle("在翻页里隐藏这把锁", isOn: Binding(   // 108 在翻页里隐藏这把锁
                     get: { LockArchive.isHidden(app.currentMac) },
                     set: { LockArchive.setHidden(app.currentMac, $0) }))
                 Text("隐藏后它退出左右横滑，只在切换胶囊的「已隐藏」区里可达；回到这里取消即恢复。\n"
                      + "这是本机的视图设置：不写门锁，也不影响凭证、日志与备份。")
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -1267,7 +1268,7 @@ struct LockProfileView: View {
                                     .background(symbol == s.name ? DS.Palette.accentText.opacity(0.12) : DS.Palette.surfaceAlt,
                                                 in: Circle())
                                 Text(s.label)
-                                    .font(.caption2)
+                                    .vkFont(.caption2)
                                     .foregroundStyle(DS.Palette.textSub)
                             }
                         }
@@ -1308,7 +1309,7 @@ struct LockProfileView: View {
             }
             Section("电池档案") {
                 TextField("电池型号 (如 CR123A × 2)", text: $batteryModel)
-                Toggle("记录换电日期", isOn: $batteryHasDate)
+                VariantToggle("记录换电日期", isOn: $batteryHasDate)
                 if batteryHasDate {
                     DatePicker("换电日期", selection: $batteryDate, displayedComponents: .date)
                 }
@@ -1519,10 +1520,10 @@ struct FirmwareView: View {
             HStack(spacing: DS.Space.s) {
                 VStack(alignment: .leading, spacing: DS.Space.xxs) {
                     Text("当前")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                     Text(curFw.isEmpty ? "未知" : "v" + curFw)
-                        .font(.subheadline.weight(.semibold))
+                        .vkFont(.subheadline, weight: .semibold)
                         .monospacedDigit()
                         .foregroundStyle(DS.Palette.text)
                 }
@@ -1533,10 +1534,10 @@ struct FirmwareView: View {
                     .accessibilityHidden(true)
                 VStack(alignment: .trailing, spacing: DS.Space.xxs) {
                     Text("目标")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                     Text(fw?.version.map { "v" + $0 } ?? "未知")
-                        .font(.subheadline.weight(.semibold))
+                        .vkFont(.subheadline, weight: .semibold)
                         .monospacedDigit()
                         .foregroundStyle(DS.Palette.text)
                 }
@@ -1558,16 +1559,16 @@ struct FirmwareView: View {
     private var noticeSection: some View {
         Section("升级须知") {
             Text("• 更新过程中请不要使用门锁\n• 手机与门锁距离保持在 1 米内\n• 更新失败必须重新更新，直到更新成功")
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.warn)
                 .fixedSize(horizontal: false, vertical: true)
             DisclosureGroup("已知问题与规避") {
                 Text("• 升级后门锁重启, 时间窗凭证失效 — 校准时间即可恢复\n• 升级中门锁广播名变为 ZkDFU、MAC 尾字节 +1, 属正常现象\n• 电量低于 30% 时升级失败率高, 体检单会拦截")
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .font(.footnote)
+            .vkFont(.footnote)
         }
     }
 
@@ -1593,7 +1594,7 @@ struct FirmwareView: View {
         } footer: {
             Text("没有「出厂版本对照表」可点：厂商云已停服，本机只有上面这三处版本真相。"   // 513/145 没有
                  + "要升级就带自己的包来，比对以锁上读到的那一个为准。")
-                .font(.caption2)
+                .vkFont(.caption2)
         }
     }
 
@@ -1621,19 +1622,19 @@ struct FirmwareView: View {
                     ForEach(lib) { item in
                         VStack(alignment: .leading, spacing: DS.Space.xxs) {
                             Text(item.name)
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.text)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
                             Text("v\(item.version) · \(sizeText(item.size)) · \(dateShort(item.at))")
-                                .font(.caption2)
+                                .vkFont(.caption2)
                                 .monospacedDigit()
                                 .foregroundStyle(DS.Palette.textSub)
                         }
                         .accessibilityElement(children: .combine)
                     }
                 }
-                .font(.footnote)
+                .vkFont(.footnote)
             }
         } header: {
             Text("固件更新包")
@@ -1675,7 +1676,7 @@ struct FirmwareView: View {
             if !peers.isEmpty {
                 Section("批量排队升级") {   // 144 批量排队升级
                     ForEach(peers, id: \.mac) { kc in
-                        Toggle(LockArchive.displayName(kc), isOn: Binding(
+                        VariantToggle(LockArchive.displayName(kc), isOn: Binding(
                             get: { queueSel.contains(kc.mac) },
                             set: { on in if on { queueSel.insert(kc.mac) } else { queueSel.remove(kc.mac) } }))
                             .frame(minHeight: DS.Hit.min)
@@ -1695,17 +1696,17 @@ struct FirmwareView: View {
                         }
                     }
                     if !queueNote.isEmpty {
-                        Text(queueNote).font(.caption).foregroundStyle(DS.Palette.textSub)
+                        Text(queueNote).vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     ForEach(Array(queueOutcomes.enumerated()), id: \.offset) { _, o in
                         Text((o.ok ? "✓ " : "✗ ") + o.name + " · " + o.note)
-                            .font(.caption2)
+                            .vkFont(.caption2)
                             .foregroundStyle(o.ok ? DS.Palette.ok : DS.Palette.danger)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     Text("同型号锁才可共用同一个固件包; 队列一把失败不中断, 结果逐把列出。")
-                        .font(.caption2).foregroundStyle(DS.Palette.textSub)
+                        .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -1729,10 +1730,10 @@ struct FirmwareView: View {
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: DS.Space.xxs) {
                 Text(title)
-                    .font(.subheadline)
+                    .vkFont(.subheadline)
                     .foregroundStyle(DS.Palette.text)
                 Text(detail)
-                    .font(.caption2)
+                    .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -1756,25 +1757,25 @@ struct FirmwareView: View {
                 .accessibilityLabel("传输进度 \(Int(pct))%")
             HStack(spacing: DS.Space.s) {
                 Text("\(Int(pct))%")
-                    .font(.caption)
+                    .vkFont(.caption)
                     .monospacedDigit()
                     .foregroundStyle(DS.Palette.textSub)
                 Spacer(minLength: DS.Space.s)
                 if !remainText.isEmpty {
                     Text(remainText)
-                        .font(.caption)
+                        .vkFont(.caption)
                         .monospacedDigit()
                         .foregroundStyle(DS.Palette.accentText)
                 }
             }
             if !verifyText.isEmpty {
                 Text(verifyText)
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Label("升级中请勿离开本页、请勿使用门锁", systemImage: "lock.shield")
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.warn)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -1784,7 +1785,7 @@ struct FirmwareView: View {
         return HStack(spacing: DS.Space.xxs) {
             Circle().fill(tone.color).frame(width: 8, height: 8)
             Text(label)
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(stage >= i ? DS.Palette.text : DS.Palette.textSub)
         }
         .frame(maxWidth: .infinity)
@@ -1803,7 +1804,7 @@ struct FirmwareView: View {
                     Image(systemName: verified ? "checkmark.circle.fill" : "questionmark.circle")
                         .accessibilityHidden(true)
                 }
-                .font(.footnote)
+                .vkFont(.footnote)
                 .foregroundStyle(verified ? DS.Palette.ok : DS.Palette.textSub)
             }
         }
@@ -1823,13 +1824,13 @@ struct FirmwareView: View {
                             .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: DS.Space.xxs) {
                             Text("\(r.name) · \(r.ok ? "成功" : "失败")")
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.text)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
                             Text(fromToText(r) + " · " + dateShort(r.at)
                                  + (r.ms.map { " · 耗时 " + Self.durText($0) } ?? ""))
-                                .font(.caption2)
+                                .vkFont(.caption2)
                                 .monospacedDigit()
                                 .foregroundStyle(DS.Palette.textSub)
                         }
@@ -1862,34 +1863,34 @@ struct FirmwareView: View {
             // 同一条 DFU 链的队列版 (queueOutcomes) 每条都带 note, 单锁反倒不说。补上实际那一句。
             if !failReason.isEmpty {
                 Label("本次失败: " + failReason, systemImage: "xmark.octagon")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.danger)
                     .fixedSize(horizontal: false, vertical: true)
             }
             VStack(alignment: .leading, spacing: DS.Space.s) {
                 Label("门锁没有损坏", systemImage: "lock.shield")
-                    .font(.headline)
+                    .vkFont(.headline)
                     .foregroundStyle(DS.Palette.text)
                 Text("传输中断后没有断点续传, 重新执行一次完整升级即可。若门锁仍显示 DFU 或白灯, 属升级模式的正常表现, 重传成功后会自动恢复。")
-                    .font(.footnote)
+                    .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .accessibilityElement(children: .combine)
             Label("锁电量是否 > 30% — 低电是升级失败首因", systemImage: "1.circle")
-                .font(.footnote)
+                .vkFont(.footnote)
                 .foregroundStyle(DS.Palette.text)
                 .fixedSize(horizontal: false, vertical: true)
             Label("与门锁距离是否在 1 米内", systemImage: "2.circle")
-                .font(.footnote)
+                .vkFont(.footnote)
                 .foregroundStyle(DS.Palette.text)
                 .fixedSize(horizontal: false, vertical: true)
             Label("手机蓝牙是否被其他连接占用", systemImage: "3.circle")
-                .font(.footnote)
+                .vkFont(.footnote)
                 .foregroundStyle(DS.Palette.text)
                 .fixedSize(horizontal: false, vertical: true)
             Label("等 1 分钟让门锁退出升级模式, 再重试", systemImage: "4.circle")
-                .font(.footnote)
+                .vkFont(.footnote)
                 .foregroundStyle(DS.Palette.text)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -2105,7 +2106,7 @@ struct KeychainHWView: View {
             List {
                 Section("蓝牙钥匙串") {
                     Text("钥匙串是一个随身蓝牙硬件，可写入多把门锁的数字钥匙。持有人靠近门锁时即可开门，无需手机。")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                     Button {
@@ -2141,7 +2142,7 @@ struct KeychainHWView: View {
                         } icon: {
                             Image(systemName: "exclamationmark.triangle.fill").accessibilityHidden(true)
                         }
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.warn)
                     }
                 }
@@ -2158,7 +2159,7 @@ struct KeychainHWView: View {
         VStack(alignment: .leading, spacing: DS.Space.xs) {
             HStack(spacing: DS.Space.s) {
                 Text(d.name.isEmpty ? "钥匙串" : d.name)
-                    .font(.subheadline.weight(.semibold))
+                    .vkFont(.subheadline, weight: .semibold)
                     .foregroundStyle(DS.Palette.text)
                 if !d.lastKeyLock.isEmpty {
                     StatusPill(text: "已配钥匙", systemImage: "checkmark.circle.fill", tone: .ok)
@@ -2166,7 +2167,7 @@ struct KeychainHWView: View {
                 Spacer(minLength: 0)
             }
             Text(dongleDisplay(d.mac))
-                .font(.caption)
+                .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
             if let st = d.stat {
                 // 电量/钥匙存量/固件是三条独立读数, 用 MetricTile 横排比挤在 caption 里层级更清楚
@@ -2318,10 +2319,10 @@ struct GatewayView: View {
             List {
                 if !confirmed {
                     Section("准备网关") {
-                        Text("接通电源，重置网关，待网关指示灯闪烁橙色后点击下一步。").font(.footnote)
-                        Toggle("橙色灯闪烁中", isOn: $confirmed)
+                        Text("接通电源，重置网关，待网关指示灯闪烁橙色后点击下一步。").vkFont(.footnote)
+                        VariantToggle("橙色灯闪烁中", isOn: $confirmed)
                         Text("长捅网关的重置孔，保持5s左右，至指示灯变为橙色，即重置成功。")
-                            .font(.caption)
+                            .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                     }
                 } else {
@@ -2346,13 +2347,13 @@ struct GatewayView: View {
                                 } icon: {
                                     Image(systemName: "checkmark").accessibilityHidden(true)
                                 }
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.ok)
                                 .transition(.opacity.combined(with: .move(edge: .top)))
                             }
                             if !error.isEmpty {
                                 Text(error)
-                                    .font(.caption)
+                                    .vkFont(.caption)
                                     .foregroundStyle(DS.Palette.danger)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
@@ -2387,7 +2388,7 @@ struct GatewayView: View {
         VStack(alignment: .leading, spacing: DS.Space.xs) {
             HStack(spacing: DS.Space.s) {
                 Text(g.name.isEmpty ? "智能网关" : g.name)
-                    .font(.subheadline.weight(.semibold))
+                    .vkFont(.subheadline, weight: .semibold)
                     .foregroundStyle(DS.Palette.text)
                 StatusPill(text: g.netState == 1 ? "已联网" : "未联网",
                            systemImage: g.netState == 1 ? "wifi" : "wifi.slash",
@@ -2514,7 +2515,7 @@ struct MembersView: View {
             List {
                 Section {
                     Text("添加成员后，就可以给成员添加密码，指纹和手机钥匙")
-                        .font(.caption)
+                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                     HStack(spacing: DS.Space.m) {
@@ -2533,11 +2534,11 @@ struct MembersView: View {
                     VStack(alignment: .leading, spacing: DS.Space.xs) {
                         HStack(spacing: DS.Space.s) {
                             Text("全家本月备份")
-                                .font(.subheadline.weight(.medium))
+                                .vkFont(.subheadline, weight: .medium)
                                 .foregroundStyle(DS.Palette.text)
                             Spacer(minLength: 0)
                             Text("\(Milestones.backupThisMonth) / 4 次")
-                                .font(.caption)
+                                .vkFont(.caption)
                                 .monospacedDigit()
                                 .foregroundStyle(DS.Palette.textSub)
                         }
@@ -2594,12 +2595,12 @@ struct MembersView: View {
     private func memberRow(_ m: Member) -> some View {
         VStack(alignment: .leading, spacing: DS.Space.xxs) {
             HStack(spacing: DS.Space.xs) {
-                Text(m.name).font(.subheadline).foregroundStyle(DS.Palette.text)
+                Text(m.name).vkFont(.subheadline).foregroundStyle(DS.Palette.text)
                 memberBadgeIcon(m)   // 989/994 徽章角标
             }
             if !m.relation.isEmpty || !m.phone.isEmpty {
                 Text([m.relation, m.phone].filter { !$0.isEmpty }.joined(separator: " · "))
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -2762,9 +2763,9 @@ private struct MemberWelcomeCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: DS.Space.m) {
             Text("欢迎 \(member.name) 入伙")   // 995 欢迎
-                .font(.headline)
+                .vkFont(.headline)
             Text("下一步: ① 去凭证页给 TA 录一条凭证 ② 在凭证详情把「归属」改成 \(member.name) ③ 归属后「各就各位」与「入伙」徽章一起点亮")
-                .font(.subheadline)
+                .vkFont(.subheadline)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             HStack(spacing: DS.Space.s) {
@@ -2830,11 +2831,11 @@ struct MessagesView: View {
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: DS.Space.xxs) {
                 Text(r.text)
-                    .font(.subheadline)
+                    .vkFont(.subheadline)
                     .foregroundStyle(DS.Palette.text)
                     .fixedSize(horizontal: false, vertical: true)
                 Text(r.sub)
-                    .font(.caption)
+                    .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }

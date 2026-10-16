@@ -111,7 +111,13 @@ const SYS_NAMES = new Set(['AngularGradient','AxisGridLine','AxisMarks','AxisVal
 // 加白**不等于**证明 Keychain 用法正确 —— SecItemUpdate 的返回码分支、kSecAttrAccessible 访问级别、
 // 以及"写失败不抹 plist 明文"那条, 都只有真机能验 (见 docs/VERIFY-CHECKLIST.md 的密钥迁 Keychain 条目)。
 // SymbolEffectOptions — SwiftUI 的 symbolEffect 选项类型 (iOS 17 起), 上面已有注释, 这里补回名字。
-'SecItemAdd', 'SecItemUpdate', 'SecItemCopyMatching', 'SecItemDelete', 'SymbolEffectOptions']);
+// UnevenRoundedRectangle — SwiftUI 的"四角不同圆角"矩形 (iOS 16.4 起)。域浮层只用它两处
+// (顶角圆、底角方), 正好落进本检查"全仓 1–2 次"的误报形态。
+// 依据: Apple 文档 `swiftui/unevenroundedrectangle/init(topleadingradius:bottomleadingradius:
+//   bottomtrailingradius:toptrailingradius:style:)` —— 参数名与顺序照抄, 不是凭记忆拼的。
+// ⚠ 加白不等于它编得过: 本机无 Xcode, 只能靠 CI 编译定案 (与 SymbolEffectOptions 那条同口径)。
+'SecItemAdd', 'SecItemUpdate', 'SecItemCopyMatching', 'SecItemDelete', 'SymbolEffectOptions',
+'UnevenRoundedRectangle']);
 
 let symFail = 0;
 // 判定口径: 只报"全仓库只出现 1–2 次、又不是本仓库声明的类型"的驼峰名 ——

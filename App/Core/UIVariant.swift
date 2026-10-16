@@ -75,3 +75,30 @@ enum UIVariant: String, CaseIterable, Identifiable {
 
     var isExperimental: Bool { self != .legacy }
 }
+
+// ============================================================
+// 变体的环境值 (2026-10-16，行内排版接管批)
+// ------------------------------------------------------------
+// 为什么需要它、而不是像 `variantPlate` 那样读 `VK.current`：
+//   `VK.current` 是从存储现读的（`UIVariant.current` → `DB.store.getString`），一次调用一次读取。
+//   容器语法件只有 100 多处，那个代价看不出来；而 `.font(...)` 的调用点有 **1700+ 处**，
+//   列表滚动时每帧要过几百次 —— 那就从"零行为改动"变成了"每帧几百次存储读取"。
+//   环境注入一次、叶子读一次，是唯一既能覆盖全仓又不动每帧开销的形状。
+//
+// ⚠ 注入点在 `RootView.rootCore`（`LockKeeperApp.swift`）**一处**，两棵树共用：
+//   legacy 树也显式注入自己的值，而不是留空 —— 留空就等于把"这套界面此刻是哪种"交给默认值猜。
+
+private struct UIVariantKey: EnvironmentKey {
+    /// ⚠ 默认必须是**字面量** `.legacy`，不能写 `UIVariant.current`：
+    /// 后者会在"切到 core 之后又切回 legacy"的场景里被求值成 stale 值，
+    /// 于是 legacy 的每一页都染上新变体的字重 —— 而这条没有任何闸门看得见。
+    /// **未注入 = legacy = 逐字原样**，是这台机器上唯一安全的默认。
+    static let defaultValue: UIVariant = .legacy
+}
+
+extension EnvironmentValues {
+    var uiVariant: UIVariant {
+        get { self[UIVariantKey.self] }
+        set { self[UIVariantKey.self] = newValue }
+    }
+}
