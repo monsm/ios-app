@@ -26,6 +26,7 @@ struct AddDeviceView: View {
     @State private var manualMac = ""            // 257 手输 MAC 兜底
     @State private var locating = false
     @State private var dupMac: (name: String, mac: String)?   // 255 去重拦截
+    @State private var probingId: String?        // APK 对照 page-romlist: 正在做连通探测的那一行
 
     var body: some View { vkBody.destined(.addDevice) }
     var vkBody: some View {
@@ -137,7 +138,7 @@ struct AddDeviceView: View {
                 stepBar(current: 0)
                     .padding(.vertical, DS.Space.xs)
             }
-            Section("发现的设备") {
+            Section {
                 if devices.isEmpty {
                     EmptyState(systemImage: "dot.radiowaves.left.and.right",
                                title: "还没扫到设备",
@@ -149,6 +150,10 @@ struct AddDeviceView: View {
                 ForEach(devices) { d in
                     deviceRow(d)
                 }
+            } header: {
+                Text("发现的设备")
+            } footer: {
+                Text("长按任意一行可发一条免令牌明文回声，看这台设备答不答话 —— 它不改锁内任何东西，也不影响配对；点行本身仍是开始配对。")
             }
             // 257 手输 MAC 兜底: 扫不到时的手动定位 (服务换机场景)
             Section {
@@ -269,6 +274,17 @@ struct AddDeviceView: View {
             .contentShape(Rectangle()) // 整行可点
         }
         .accessibilityLabel("\(d.name)，\(d.rssi) dBm，\(canPair ? "可配网" : (adv == nil ? "未识别广播" : "已配对，需先重置"))")
+        // APK 对照 (page-romlist): 原版在扫描列表里先对每台设备发一次回声 (cmd12) 再进锁页。
+        // 本机放在长按菜单里 —— 行本身就是"点它开始配对"的入口, 再塞一个按钮会把两件事做成同形。
+        .contextMenu {
+            Button {
+                Task { await probeEcho(d) }
+            } label: {
+                Label(probingId == d.deviceId ? "正在探测…" : "连通探测",
+                      systemImage: "dot.radiowaves.left.and.right")
+            }
+            .disabled(probingId != nil)
+        }
     }
 
     // 写硬件类动作一律先确认: 配网会生成本机密钥并写入门锁, App 内无法撤销
@@ -315,6 +331,27 @@ struct AddDeviceView: View {
             }
         } catch {
             app.showToast("8 秒内未发现该 MAC — 请确认锁已通电并靠近手机")
+        }
+    }
+
+    // APK 对照 page-romlist「固件列表」: 发一条免令牌明文回声, 看这台设备答不答话。
+    // 不改锁内任何东西, 也不写本机台账 (读 03 状态会落快照/电量/固件观测三处); 不改配对状态。
+    @MainActor
+    private func probeEcho(_ d: BLEAdvDevice) async {
+        guard probingId == nil else { return }
+        probingId = d.deviceId
+        defer { probingId = nil }
+        do {
+            let r = try await LockService.shared.probeEcho(deviceId: d.deviceId)
+            if r.ok {
+                let e = r.echoHex.isEmpty ? "无回显" : r.echoHex
+                app.showToast("\(d.name) 回声往返 \(r.ms) ms · 回显 \(e)"
+                             + (r.matched ? " (与发出值一致)" : " (与发出的 123456 不同 — 记下来, 不一定就是链路故障)"))
+            } else {
+                app.showToast("\(d.name) 回声 rc=\(r.rc): \(StatusParser.rcMessage(r.rc))")
+            }
+        } catch {
+            app.showToast("探测失败: \(error.localizedDescription)")
         }
     }
 
@@ -820,6 +857,9 @@ struct StartAddFpView: View {
             }
         }
         .onDisappear { enrollTask?.cancel() }
+        // APK 对照 (StartaddfpPage.setKeepScreenOn): 录入期间不许自动锁屏 —— 用户手指按在锁上时
+        // 屏一黑本进程就被挂起, 蓝牙录入链会在中途断掉, 而屏上还停在"重复此步骤 (n/8)"。
+        .keepingScreenAwake(busy)
     }
 
     private var progressText: String {
@@ -935,6 +975,10 @@ struct DeviceInfoView: View {
                 .accessibilityElement(children: .combine)
                 LabeledRow("型号", PidMap.productName(kc.pid))
                 LabeledRow("固件版本", firmwareText)
+                // APK 对照 page-rominfo「固件信息」的 Boot版本 / 键盘版本 (03 状态 KLV#32 / KLV#33)。
+                // 只在锁真报了这两支时才出现 —— 老固件不报时这里没有行, 那不是"读失败", 也不拿 0 冒充版本号。
+                if let v = status?.verDFU, v > 0 { LabeledRow("Boot 版本", "\(v)") }
+                if let v = status?.verKeyboard, v > 0 { LabeledRow("键盘版本", "\(v)") }
                 LabeledRow("固件服役", fwAgeText)   // 1019
                 LabeledRow("MAC", kc.mac)
                 LabeledRow("绑定于", boundText)
@@ -944,7 +988,7 @@ struct DeviceInfoView: View {
                 LabeledRow("锁钟偏差", driftText)
             }
         } footer: {
-            Text("锁钟偏差较大时临时密码与时间窗凭证会失效, 可到快捷操作「校准时间」。")
+            Text("锁钟偏差较大时临时密码与时间窗凭证会失效, 可到快捷操作「校准时间」。Boot / 键盘版本只在锁上报时出现，这两行缺失表示该固件不报这两支，不是读取失败。")
         }
     }
 
@@ -1491,11 +1535,10 @@ struct FirmwareView: View {
     var body: some View { vkBody.destined(.firmware) }
     var vkBody: some View {
         // AnyView 擦平两分支类型差异 (与 AddPwdView 同一写法): 两支只差最外层那一只容器
-        if embedded {
-            AnyView(content)
-        } else {
-            AnyView(NavigationStack { content })
-        }
+        let base = embedded ? AnyView(content) : AnyView(NavigationStack { content })
+        // APK 对照 (CheckfirmwareupdatePage.setKeepScreenOn): 传输/校验期间不许自动锁屏 ——
+        // 屏一黑本进程就被系统挂起, DFU 的 32 字节分包写会当场断掉, 而屏上还停在"正在传输"。
+        return base.keepingScreenAwake(running)
     }
 
     // ---------- 当前固件 (1019 服役天数) ----------

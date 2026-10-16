@@ -358,6 +358,46 @@ final class LockService: ObservableObject {
         return t
     }
 
+    // ---------- 连通探测 (cmd12 回声) ----------
+    /// 一次回声往返的结果。`matched` = 锁回显的 KLV#01 与本机发出去的值**逐字节相同**。
+    struct EchoProbe { var ok: Bool; var rc: Int; var echoHex: String; var ms: Int; var matched: Bool }
+
+    /// 对一台**已经扫到、但可能还没配对**的蓝牙设备发一条免令牌明文回声 (cmd12)。
+    /// APK 侧的同一个动作在 RomlistPage: 扫描列表里对每台 ZK* 设备先 echo, rc=0 才进那把锁的页面
+    /// (apk_raw/assets/www/build/main.js RomlistPage.echo)。
+    /// 为什么本机需要它、而不是直接读 03 状态:
+    ///   · 回声**不改锁内任何东西**, 也不写本机台账 —— 读 03 会落状态快照 + 电量采样 + 固件观测三处;
+    ///   · 它不需要 skey (免令牌明文族: vendor/app/utils/kernel/cmds.js:50 的 cmd12Echo 不注入 KLV#0xEE),
+    ///     所以**对还没配对的设备**也发得出去 —— 这正是它存在的理由。
+    func probeEcho(deviceId: String, valueHex: String = "123456") async throws -> EchoProbe {
+        // 临时链路: 不走 connect(deviceId:) —— 那条路会把 deviceId 写进 DB.lastDevice 与 connectedMAC,
+        // 等于让本机记住一台没有钥匙的设备 (下次冷启动会去连它)。
+        let hadLink = !ble.connectedMAC.isEmpty
+        try await ble.connect(deviceId: deviceId)
+        defer {
+            // 拆掉临时链路, 并把探测期间假装出来的连接态清干净 —— 留着会骗过 ensureConnected
+            // (它会以为本机还连着, 于是下一次操作发向一条已经不存在的链路)。
+            rejectWaiter("探测用临时链路已断开")
+            ble.disconnect()
+            connectedDeviceId = ""
+            connectedMAC = ""
+            sessionTokenHex = "0000"
+            tokenExpiryMs = 0
+            if hadLink { log("warn", "探测用临时链路已撤下 — 原有链路需按需重连") }
+        }
+        return try await sendEcho(valueHex)
+    }
+
+    private func sendEcho(_ valueHex: String) async throws -> EchoProbe {
+        let t0 = Date()
+        // retries: 1 —— 这是"这一下通不通"的一次探测, 不是重试到通为止的操作
+        let r = try await exec(ZKCmdBuilder.cmd12Echo(valueHex), needToken: false, retries: 1)
+        let ms = Int(Date().timeIntervalSince(t0) * 1000)
+        let echo = (r.klvs.first { $0.key == 0x01 }?.val ?? "").lowercased()
+        return EchoProbe(ok: r.rc == 0, rc: r.rc, echoHex: echo, ms: ms,
+                         matched: !echo.isEmpty && echo == valueHex.lowercased())
+    }
+
     // ---------- 开锁 ----------
     func unlock(mac: String? = nil, pinDec: String? = nil) async throws -> Int {
         if let mac { curMac = mac.lowercased() }

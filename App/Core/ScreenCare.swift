@@ -11,6 +11,7 @@
 // 所以 336 的话术是"可能已进那张图片"而不是"已拍到"。
 import UIKit
 import Combine
+import SwiftUI   // 常亮修饰符 (ScreenAwakeWhile) 要用 View/ViewModifier —— 原文件只用 UIKit/Combine, 这里是本文件第一处 SwiftUI 依赖
 
 @MainActor
 final class ScreenCaptureWatch: ObservableObject {
@@ -47,4 +48,34 @@ final class ScreenCaptureWatch: ObservableObject {
     /// 提示文案统一口径：说清挡什么、不假装能挡什么 (本仓纪律: 不虚构能力)
     static let notice = "检测到屏幕录制/镜像，口令明文已收起 — 停止采集后可再点一次揭示"   // 374 检测到屏幕录制
     static let shotNotice = "刚检测到一次系统截图。这张卡上的码值**可能**已进那张图片 — 截图 API 只说发生过截图，不保证拍到的就是这一屏。不放心就换码。"   // 336 刚检测到一次系统截图
+}
+
+// ================= 常亮 (APK 对照: brightness.setKeepScreenOn) =================
+// 原版在两页调 brightness 插件的 setKeepScreenOn (build/main.js: CheckfirmwareupdatePage.ionViewDidEnter/Leave
+// 与 StartaddfpPage 同名回调 —— 本仓一度以为这个插件是装饰, 实际它就在这两条长任务上)。
+// 为什么 iOS 上也要做: 升级要连续传输几分钟、录指纹要用户把手指按在锁上几十秒 ——
+// 屏幕一旦自动锁定, 系统会把本进程挂起, 蓝牙链路跟着断, 传输死在半途而界面上还停在"正在传输"。
+// 只覆写 isIdleTimerDisabled 这一个公开开关: 不碰亮度、不装后台任务、不申请任何权限。
+@MainActor
+struct ScreenAwakeWhile: ViewModifier {
+    /// 条件为真时置常亮; 变假或页面消失即恢复
+    /// (刻意不留全局开关: 长任务失败后忘记复位的代价是整机不再息屏, 比多写两行修饰符贵得多)
+    var active: Bool
+
+    func body(content: Content) -> some View {
+        content
+            .onAppear { sync() }
+            .onDisappear { release() }
+            .onChange(of: active) { _, _ in sync() }
+    }
+
+    private func sync() { UIApplication.shared.isIdleTimerDisabled = active }
+    private func release() { UIApplication.shared.isIdleTimerDisabled = false }
+}
+
+extension View {
+    /// 长任务期间不许自动锁屏。调用点: FirmwareView (升级中) / StartAddFpView (录入中)。
+    func keepingScreenAwake(_ active: Bool) -> some View {
+        modifier(ScreenAwakeWhile(active: active))
+    }
 }
