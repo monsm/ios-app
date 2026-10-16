@@ -78,6 +78,10 @@ const PROTOCOL_MEMBERS = new Set([
   'centralManagerDidUpdateState',
   'transferRepresentation',    // Transferable
   'encode', 'decode',          // Codable / Transferable
+  // 第九十四批 (真机 rc13 倒查那轮顺手清账): A 档里还剩两条"结构上不可能有调用点"的假阳性,
+  // 它们每次跑都占掉两行, 而每一行都要人重读一次 —— 名单里补上并各自写明理由。
+  'placeSubviews',             // SwiftUI `Layout` 协议要求; FlowLayout: Layout 的布局由运行时按名回调
+  'LockKeeperShortcuts',       // `AppShortcutsProvider` 的 appShortcuts 由系统导出元数据时读取, 源码里没有调用点
 ]);
 // 注: 不豁免"可能被字符串/Selector 间接调用"的名字 —— handleNotificationAction 这类
 // 到底有没有人接, 正是要扫出来的东西, 豁免等于把线索自己抹掉。
