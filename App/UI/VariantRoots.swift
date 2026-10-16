@@ -111,8 +111,13 @@ enum LockReadout {
     }
 
     /// 在场判据：读的是 LinkSense 的现成结论，不在这里另算一次"连没连上"。
-    static func present(_ app: AppState) -> Bool {
-        !app.currentMac.isEmpty && app.status != nil
+    /// ⚠ 两个入参是**故意的**：`AppState` 是 `@MainActor`（LockKeeperApp.swift:60），而这个
+    /// `enum` 不是 —— 直接收 `app` 就是 "main actor-isolated property 'currentMac' can not be
+    /// referenced from a nonisolated context"（CI run 116 抓到）。取数动作留在调用点（那里是
+    /// View 的成员，本身带主 actor 推断，`app.status` 那样的读法全仓都是），这里只留一个
+    /// **纯函数**：给两个入参、返回一个 Bool —— 这样它也能被工具拿去做影子对拍。
+    static func present(currentMac: String, status: LockStatus?) -> Bool {
+        !currentMac.isEmpty && status != nil
     }
 }
 
@@ -231,7 +236,7 @@ struct VariantRootView: View {
     /// 锁核本体。`riding` 只改缩放 —— 位置由调用方 `.position` 给，
     /// 因为位置要在**两个状态之间**被 matched geometry 插值（写在里面就锁死了）。
     private func lockCore(riding: Bool) -> some View {
-        let here = LockReadout.present(app)
+        let here = LockReadout.present(currentMac: app.currentMac, status: app.status)
         return ZStack {
             Circle()
                 .fill(RadialGradient(colors: [DS.Palette.coreB.opacity(0.85),
@@ -332,7 +337,7 @@ struct GaugeHomeView: View {
     @Environment(\.colorScheme) private var scheme
 
     private var status: LockStatus? { app.status }
-    private var here: Bool { LockReadout.present(app) }
+    private var here: Bool { LockReadout.present(currentMac: app.currentMac, status: app.status) }
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -343,8 +348,9 @@ struct GaugeHomeView: View {
                     .padding(.top, 26)
                 secondaryRow
                     .padding(.top, 12)
-                alarmRow
-                    .padding(.top, 22)
+                // 此处**没有告警行**：原稿引用了一个始终没写出来的 `alarmRow`，编译期把它抓住了。
+                // 首屏不写"防撬告警"这类无源断言 —— 这台锁没有上锁状态位/门磁（CAPABILITY §5），
+                // 不在场时那一行只能显示破折号；冻结/连错已由上一行的 `secondaryRow` 承担。
                 capacityBlock
                     .padding(.top, 20)
                 unlockButton
@@ -864,7 +870,7 @@ struct DomainLayer<Page: View>: ViewModifier {
     /// **P-1** 状态读数。读数一律来自 `LockReadout`（那个"读不到就说读不到"的唯一出口）——
     /// 在这里另算一次 `app.status?.powerLevel` 就是本仓反复踩的"同一个量算两次"。
     private var statusLine: some View {
-        let here = LockReadout.present(app)
+        let here = LockReadout.present(currentMac: app.currentMac, status: app.status)
         let power = LockReadout.power(app.status)
         let freeze = LockReadout.freeze(app.status)
         return HStack(spacing: 10) {
