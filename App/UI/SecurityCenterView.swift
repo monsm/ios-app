@@ -163,7 +163,8 @@ struct SecurityCenterView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var center = SecTickCenter.shared
 
-    var body: some View {
+    var body: some View { vkBody.destined(.securityCenter) }
+    var vkBody: some View {
         NavigationStack {
             List {
                 Section {
@@ -377,7 +378,8 @@ struct SecurityLockConfigView: View {
     @EnvironmentObject var app: AppState
     @ObservedObject private var center = SecTickCenter.shared
 
-    var body: some View {
+    var body: some View { vkBody.destined(.securityLockConfig) }
+    var vkBody: some View {
         List {
             Section {
                 // 389/234 递增冷却
@@ -816,7 +818,8 @@ struct SecurityPeekView: View {
     // 375 磨砂挡片: 长按移开, 松手复位
     @State private var frosted = true
 
-    var body: some View {
+    var body: some View { vkBody.destined(.securityPeek) }
+    var vkBody: some View {
         List {
             // 405 剪贴板自清: 口令/OTP 复制到剪贴板后延时清除。
             // 只有"内容仍是当时那一串"才清 (见 ClipboardCare), 免得把用户后来复制的东西删掉。
@@ -1178,7 +1181,8 @@ struct SecurityAuditView: View {
     @State private var verifyMsg: String?
     @State private var exportPlaintext = false
 
-    var body: some View {
+    var body: some View { vkBody.destined(.securityAudit) }
+    var vkBody: some View {
         List {
             // 379 双流水分段
             Section {
@@ -1555,7 +1559,8 @@ struct SecurityDestroyView: View {
     // 401/406 残留复核
     @State private var residueMsg: String?
 
-    var body: some View {
+    var body: some View { vkBody.destined(.securityDestroy) }
+    var vkBody: some View {
         List {
             // 400 销毁前备份闸
             Section {

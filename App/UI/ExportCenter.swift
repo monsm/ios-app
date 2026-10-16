@@ -1483,7 +1483,8 @@ struct ExportCenterView: View {
     let mac: String
     init(mac: String) { self.mac = mac }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.exportCenter) }
+    var vkBody: some View {
         NavigationStack {
             Form {
                 scopeSection

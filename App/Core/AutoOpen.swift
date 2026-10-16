@@ -559,7 +559,8 @@ struct AutoCalView: View {
     @State private var calibrating = false
     @State private var collected = 0
 
-    var body: some View {
+    var body: some View { vkBody.destined(.autoCal) }
+    var vkBody: some View {
         Form {
             Section {
                 if let c = AutoOpen.autocal(mac) {

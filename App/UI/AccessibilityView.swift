@@ -11,7 +11,8 @@ struct AccessibilityView: View {
     @State private var calcB = 5
     @State private var calcMode = "light"
 
-    var body: some View {
+    var body: some View { vkBody.destined(.accessibility) }
+    var vkBody: some View {
         List {
             voSection
             visualSection

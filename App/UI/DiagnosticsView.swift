@@ -122,7 +122,8 @@ struct DiagnosticsView: View {
     @State private var seeded = BreakFixture.isSeeded()
 #endif
 
-    var body: some View {
+    var body: some View { vkBody.destined(.diagnostics) }
+    var vkBody: some View {
         Form {
             // 366 月度清理任务: 每月 1 日在页顶出一条任务行; 过期口径与 431 清理同源 (expiredTemporaryCount),
             // 点按走通知落地同一条路 —— 切凭证 Tab 并开整理面板 (pendingCredPanel 词表内的 organize)。
@@ -1049,7 +1050,7 @@ struct DiagnosticsView: View {
                                     primaryTitle: "跑一键体检",
                                     primary: { rerunAll() },
                                     secondaryTitle: "去设备页操作",
-                                    secondary: { app.tabSelection = 0; dismiss() },   // 收掉这一层 (sheet 或 push) 才看得见切好的 Tab
+                                    secondary: { app.requestRoute(.device); dismiss() },   // 收掉这一层 (sheet 或 push) 才看得见切好的 Tab
                                     mascot: true)
                         .listRowInsets(EdgeInsets())
                     // 818 日志来源说明: 空态不只说"还没有", 还说出**哪四类**会进这里。

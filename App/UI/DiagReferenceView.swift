@@ -21,7 +21,8 @@ struct DiagReferenceView: View {
         return n > 20 ? "异常退出档案 · 共 \(n) 条 · 列最近 20" : "异常退出档案 · \(n) 条"
     }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.diagReference) }
+    var vkBody: some View {
         Form {
             // 753 诊断摘要二维码: 只含版本号/固件/最近错误/日志 SHA256 前 6 字节, 不含密钥与明文口令
             Section("诊断摘要二维码") {   // 753 诊断摘要二维码

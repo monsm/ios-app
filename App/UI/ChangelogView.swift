@@ -426,7 +426,8 @@ enum Changelog {
 
 // ---------- 43 时间线页 ----------
 struct ChangelogView: View {
-    var body: some View {
+    var body: some View { vkBody.destined(.changelog) }
+    var vkBody: some View {
         List {
             Section {
                 // 2026-10-14 走查: 这一段是 `"…" + "…"` 拼出来的 ⇒ 走 Text(StringProtocol) 重载,
@@ -480,7 +481,8 @@ struct ChangeBatchView: View {
     @Environment(\.dismiss) private var dismiss
     private var items: [ChangeEntry] { Changelog.entries.filter { $0.batch == batch } }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.changeBatch) }
+    var vkBody: some View {
         List {
             // 2026-10-15 走查: 原先这里是「字面 第 + batch」。而 batch 的取值**全部**形如「第X批」
             // —— 行首锚定的两条计数相等就是证据 (用不带行首锚的 `grep -o` 会把本段注释自己数进去):

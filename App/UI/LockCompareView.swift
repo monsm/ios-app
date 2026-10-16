@@ -20,7 +20,8 @@ struct LockCompareView: View {
 
     private var locks: [Keychain] { app.devices }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.lockCompare) }
+    var vkBody: some View {
         List {
             pickerSection
             if ready {

@@ -313,7 +313,8 @@ struct SymptomGuideView: View {
         node = nxt
     }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.symptomGuide) }
+    var vkBody: some View {
         List {
             if treeKey == nil {
                 Section("你遇到的是哪一类?") {   // 282 你遇到的是哪一类
@@ -564,7 +565,8 @@ struct EmptyMascotHeader: View {
 
 // ---------- 813 管家就任证书 (设置-成就区常驻卡, 点开回看已完成步骤) ----------
 struct ButlerCertificateView: View {
-    var body: some View {
+    var body: some View { vkBody.destined(.butlerCertificate) }
+    var vkBody: some View {
         VStack(spacing: DS.Space.m) {
             ZStack {
                 RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous)
@@ -624,7 +626,8 @@ struct DemoLabsView: View {
     @State private var previewStep = -1
     @State private var previewTask: Task<Void, Never>? = nil   // 838: 30 秒预习的可取消句柄 (关掉开关要真停)
 
-    var body: some View {
+    var body: some View { vkBody.destined(.demoLabs) }
+    var vkBody: some View {
         List {
             Section("样例备份包") {   // 837 样例备份包
                 // 837 原句 = "导入样例备份**走完整恢复流程**, 完毕一键清除"。

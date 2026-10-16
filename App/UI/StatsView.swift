@@ -106,7 +106,8 @@ struct StatsView: View {
         }
     }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.stats) }
+    var vkBody: some View {
         NavigationStack {
             content
                 .navigationTitle("统计")
@@ -168,7 +169,7 @@ struct StatsView: View {
             EmptyState(systemImage: "chart.bar",
                        title: "还没有门锁",
                        message: "统计全部来自门锁本地台账。先添加并配对门锁, 读取记录后再来看趋势。",
-                       actionTitle: "去添加门锁") { app.tabSelection = 0; dismiss() }
+                       actionTitle: "去添加门锁") { app.requestRoute(.device); dismiss() }
         } else if let m = model {
             List {
                 Section {
@@ -345,7 +346,7 @@ struct StatsView: View {
                 }
                 Button {
                     app.pendingRecordsFilter = ""
-                    app.tabSelection = 2
+                    app.requestRoute(.records)
                     dismiss()
                 } label: {
                     Label("去读取记录", systemImage: "tray")
@@ -827,7 +828,7 @@ struct StatsView: View {
             ForEach(Array(d.rows.enumerated()), id: \.offset) { _, r in
                 Button {
                     app.pendingRecordKey = RecordOverlay.oid(mac: mac, rowKey: String(r.log.idxRaw))
-                    app.tabSelection = 2
+                    app.requestRoute(.records)
                     dismiss()
                 } label: {
                     HStack(spacing: DS.Space.s) {
@@ -1392,7 +1393,7 @@ struct StatsView: View {
         .onTapGesture {
             if let jid = jumpId {
                 app.pendingRecordsMember = jid
-                app.tabSelection = 2
+                app.requestRoute(.records)
                 dismiss()
             }
         }
@@ -1412,7 +1413,7 @@ struct StatsView: View {
             // 记录页的 landMember() 会把 sel 与 filters.member 一起写、再走同一条 applyFilter 链并消费后清空旗标,
             // 这里只写 pendingRecordsMember 一个键 (两处都写 sel 会变成"谁后跑谁赢")。
             app.pendingRecordsMember = id
-            app.tabSelection = 2
+            app.requestRoute(.records)
             dismiss()
         } label: {
             memberBarLabel(name: name, approx: approx, index: index, maxApprox: maxApprox)
@@ -2279,7 +2280,7 @@ struct StatsView: View {
                     // 那种情形记录页自己会弹一句"这条记录不在当前显示范围里 (585)", 不静默换一把锁念。
                     app.pendingRecordsFilter = ""
                     app.pendingRecordKey = RecordOverlay.oid(mac: mac, rowKey: String(l.idxRaw))
-                    app.tabSelection = 2
+                    app.requestRoute(.records)
                     dismiss()
                 } label: {
                     HStack(spacing: DS.Space.s) {
@@ -2314,7 +2315,8 @@ struct YearReportView: View {
     let mac: String
     @Environment(\.dismiss) private var dismiss
 
-    var body: some View {
+    var body: some View { vkBody.destined(.yearReport) }
+    var vkBody: some View {
         NavigationStack {
             let cov = StatsKit.coverageDays(DB.readLogs(mac))
             VStack(spacing: DS.Space.l) {

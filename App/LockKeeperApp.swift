@@ -89,7 +89,12 @@ final class AppState: ObservableObject {
     /// 236 与本条同行为一 (DEFERRED 舍弃表: 访客模式并入 377): 原句「只看设备 Tab / 进凭证要密码 /
     /// 退出需密码 / 落点应用锁」全部落在本通道; 只拦 凭证/设置 两页, 记录页不含凭证本体照常可看,
     /// 界面文字也只写"凭证与设置", 不夸口拦记录。
-    static let guestBlockedTabs: Set<Int> = [1, 3]
+    ///
+    /// 2026-10-16 C1: 值改为**从 Route.guestBlocked 派生**，不再手写 `[1, 3]`。
+    /// 原来这张字面量集合是"同一个量的第二次计算"（判据的另一半在视图里按序号摘除层级），
+    /// 而新变体没有 Tab 序号 —— 两处同时失去指称对象，访客门禁会**静默**不再覆盖
+    /// 应用锁/访客/伪装/销毁那一块，不崩不报错。判据收到 Route.guestBlocked 一处。
+    static let guestBlockedTabs: Set<Int> = Route.guestBlockedTabs
     /// 377: 已进 App、但受限区还没放开
     var guestAreaLocked: Bool {
         appUnlocked && !decoyMode && SecurityPolicy.guestActive && !guestAreaUnlocked
@@ -97,6 +102,10 @@ final class AppState: ObservableObject {
     @Published var toast: String?
     // 主题键的镜像: 变更时驱动 RootView 重建, 让配色立即生效
     @Published var themeSeed: String = DB.store.getString("kf_theme")
+    /// 2026-10-16 界面变体的内存镜像。**默认 .legacy = 现行四标签，一行行为都不改。**
+    /// 和 themeSeed 同构：存储里那份是唯一真源，这一位只是让视图重算 ——
+    /// 所以 setUIVariant 必须同时写两处，且 reloadAppearance() 要回来重取（备份恢复那条病灶）。
+    @Published var uiVariant: UIVariant = UIVariant.current
     /// 外观种子 (包16): 主题/品牌色/密度任一变更 +1, RootView 以 .id 重建全树实现即时换肤
     @Published var appearanceSeed = 0
     /// 2026-10-14: 行为类偏好 (开锁怎么开/什么动静) 的轻量变更信号 —— 见 setUnlockOption 注释。
@@ -113,7 +122,9 @@ final class AppState: ObservableObject {
     // 294 本地深链 (kf://): 白名单路由; 应用锁未解开时**先挂起**, 解锁后才落地 (深链不得绕过门禁)
     @Published var pendingRoute: Int?
     @Published var pendingMac: String?   // 294 深链带的锁 ID (kf://device?mac=), 解锁后落地
-    static let deepLinkHosts: [String: Int] = ["device": 0, "credentials": 1, "records": 2, "settings": 3]
+    /// 294 深链 host 白名单。2026-10-16 C1: **由 Route.deepLinkHosts 派生**，不再手写序号表。
+    /// 顺序只有一个声明处 (Route.byHost)，深链、Tab 号、访客受限集三样都从它推。
+    static let deepLinkHosts: [String: Int] = Route.deepLinkHosts
     func handleDeepLink(_ url: URL) {
         guard url.scheme == "kf", let host = url.host?.lowercased(),
               let tab = AppState.deepLinkHosts[host] else { return }   // 未知 host = 忽略, 不跳不崩
@@ -157,10 +168,46 @@ final class AppState: ObservableObject {
     /// 受控跳转都汇到这里: 目标是被收起来的 Tab 且本会话没重输过口令, 就把既有应用锁页拉起来而不是切过去。
     /// 深链、粘贴条的"回凭证页"、自检黄条的"去诊断"这些编程式跳转原本直接写 tabSelection,
     /// 不并到这条口上就会留成绕过访客限制的侧门。
+    /// 2026-10-16 C1: 新变体下"当前在哪个域"；**nil = 回到首屏**。legacy 不用它（它用 tabSelection）。
+    ///
+    /// 为什么是"域本身"而不是"再叠一张 sheet"：
+    ///   另开一张 sheet 端出 RecordsView，而 RecordsView 内部有 `requestTab(1)` 这类换页动作 ——
+    ///   新变体没有 Tab，它切不动，而那张 sheet 还盖着。tools/sheetcover.js 抓到的正是这个。
+    ///   把 sheet 的**内容**绑到这个值上，换域就是换内容：不存在"切走了但层还压着"这种状态。
+    ///   这也和原型一致 —— 点另一个光点，浮层里换人，而不是浮层上再叠浮层。
+    @Published var variantDomain: Route?
+    /// 换页的**唯一漏斗**。377 访客闸也只在这里判一次。
+    func requestRoute(_ r: Route) {
+        if uiVariant == .legacy {
+            // 现行行为逐字不变：受限区先过闸，不受限直接切 Tab。
+            guard guestAreaLocked, Self.guestBlockedTabs.contains(r.tabIndex) else {
+                tabSelection = r.tabIndex; return
+            }
+            guestGateTarget = r.tabIndex
+            showGuestGate = true
+            return
+        }
+        // 新变体：访客受限集同样生效 —— 判据来自 Route.guestBlocked，
+        // 不再依赖"第几个 Tab"。漏掉这一段就是 CORE.md §7.1 说的静默失守。
+        if guestAreaLocked, r.guestBlocked {
+            guestGateTarget = r.tabIndex
+            showGuestGate = true
+            return
+        }
+        // 新变体里"设备"就是首屏本身，不是一张要端出来的浮层。
+        // 所以 .device 的语义是"收起当前域、回到盘面/锁核"，而不是"呈现 DeviceHomeView"。
+        // 少了这一条，从"全部页面"点设备就会把 DeviceHomeView 塞进 sheet —— 它内部有
+        // requestTab 类换页动作，tools/sheetcover.js 会立刻抓到"被 sheet 盖住时换 Tab"。
+        if r == .device { variantDomain = nil; return }
+        variantDomain = r
+    }
+    /// 关闭当前域，回到该变体的首屏。等价于 legacy 的"停在根 Tab"。
+    func closeRoute() { variantDomain = nil }
+    /// 兼容适配器：全仓还有 40 处 `requestTab(<字面量>)`，逐个换之前先让它们走同一个漏斗。
+    /// 越界序号 (历史脏值 / 以后加 Tab 忘了改) 直接丢弃而不是崩溃，也不静默切到别的页。
     func requestTab(_ t: Int) {
-        guard guestAreaLocked, Self.guestBlockedTabs.contains(t) else { tabSelection = t; return }
-        guestGateTarget = t
-        showGuestGate = true
+        guard let r = Route.from(tab: t) else { return }
+        requestRoute(r)
     }
     /// 377: 底部那颗"凭证与设置"胶囊 —— 只放开受限区, 不指定落点
     func openGuestGate() {
@@ -668,6 +715,17 @@ final class AppState: ObservableObject {
     func setAccent(_ key: String) {
         applyAppearance { DB.store.set("kf_accent", key) }
     }
+    /// 2026-10-16 切换界面变体。**必须走 applyAppearance 这条重建全树通道。**
+    /// 不走会怎样：变体是在 rootGroup 里分叉的，只改内存值不换身份 ⇒ 已挂载的旧根视图
+    /// 带着自己的 @State 活着 = "按了没反应、重进 App 才变"（本仓最常见的那类缺陷，
+    /// themeSeed / accent / density 全都为它单独修过一次）。
+    func setUIVariant(_ v: UIVariant) {
+        applyAppearance {
+            UIVariant.write(v)
+            uiVariant = v
+        }
+        showToast(v.isExperimental ? v.note + " —— " + v.unfinished : "已切回现行界面")
+    }
     /// 布局密度: ""(标准)/compact/relaxed
     func setDensity(_ key: String) {
         applyAppearance { DB.store.set("kf_density", key) }
@@ -766,6 +824,9 @@ final class AppState: ObservableObject {
     /// 要等冷启动才生效 (那就是"恢复了但看着没恢复"的那类投诉)。
     func reloadAppearance() {
         themeSeed = DB.store.getString("kf_theme")
+        // 2026-10-16: kf_ui_variant 同属"落在存储里、由 UI 层镜像"的一档。
+        // 漏掉这一行的后果是"从备份恢复后界面还是旧变体"，与上面那段注释里同一类投诉。
+        uiVariant = UIVariant.current
         applyAppearance {}
     }
     /// 905/1047 快捷格池子或"常用排前"变了：只需要重建一次树让新次序生效，
@@ -1269,39 +1330,43 @@ struct RootView: View {
             topBanners
         }
         // 包18: 一次性时刻卡 (里程碑/周年/史诗徽章) 覆盖层
-        .overlay {
-            if let m = app.moment {
-                MomentCardView(moment: m) { app.advanceMoment() }
-                    .transition(.opacity.combined(with: .scale(scale: 0.96)))
-            }
-        }
-        .animation(DS.Motion.soft, value: app.moment)
-        .task {
-            // 2026-10-13 对抗式排查: 启动块幂等 (见 AppState.launchBootstrapped 的注释 ——
-            // `.id(app.appearanceSeed)` 会让整棵子树被销毁重建, `.task` 整段重放)。
-            guard !app.launchBootstrapped else { return }
-            app.launchBootstrapped = true
-            // 547/758 异常退出档案: 这四个函数此前全库零调用, 整条链路从未跑过。
-            // 顺序要紧: 先按上次的标记判定异常退出, 再为本次会话打点。
-            CrashGuard.checkAbnormalExit()
-            CrashGuard.markSessionStart()
-            app.onLaunch()
-            // 215 启动预算 / 224 启动预热: 两个引擎此前全库零调用。
-            // Prewarm 只做本地键位与热点缓存读取, 不碰 BLE —— 不会在启动时偷偷发起连接。
-            StartupTrace.mark("onLaunch 结束")
-            Prewarm.run(mac: app.currentMac)
-            if StartupTrace.overBudget {
-                app.lock.log("warn", "启动耗时 \(Int(StartupTrace.totalMs))ms, 超 800ms 预算")   // 215 启动耗时
-            }
-            RootView.registerHost(app)   // 包2: LinkSense 宿主注册 + 回连/巡检循环
-            LinkSense.shared.coldStartScan()   // 包2/134 冷启动先扫描 (定位可见锁, 不连接)
-        }
+        // 2026-10-16: 纪念卡层抽成 MomentLayer 修饰符 —— 和 bootstrapOnce 同一条理由：
+        // 它原先长在 mainTabsChrome 上，两个新变体不挂 mainTabsChrome 就会**静默收不到纪念时刻**。
+        // 一处实现、两处挂载，禁止复制第二份条件与 transition。
+        .modifier(MomentLayer())
+        .task { bootstrapOnce() }
         // 2026-10-13 run 60: 原来把整段前后台收尾逻辑内联在这个闭包里, 与上下十几个
         // .onChange / .overlay 同处一个巨型 body 表达式 ⇒ 编译器报
         //   "unable to type-check this expression in reasonable time"。
         // 抽成独立方法后 body 只剩一行调用, 类型检查负担从整个 body 缩到一个函数。
         .onChange(of: scenePhase) { _, phase in handleScenePhase(phase) }   // 135 回前台即刷新
     }
+
+    /// 2026-10-16 启动块从 `mainTabsChrome` 里抽出来成这一个函数，**不是重构好看**：
+    /// 界面变体（core / gauge）不挂 `mainTabsChrome`，抽出来之前那些变体会**静默跳过整条启动链** ——
+    /// 异常退出档案、onLaunch 的自检/月备排程/成就结算、启动预热、LinkSense 宿主注册与冷启动扫描
+    /// 全都不跑，而且不报错。这就是本仓"删/改名留悬空引用"那一族的新成员：**换容器留孤儿副作用**。
+    /// 现在 legacy 与两个新变体都调用这一个实现，`launchBootstrapped` 继续兜 `.id(appearanceSeed)` 的重放。
+    static func bootstrapOnce(_ app: AppState) {
+        guard !app.launchBootstrapped else { return }
+        app.launchBootstrapped = true
+        // 547/758 异常退出档案: 这四个函数此前全库零调用, 整条链路从未跑过。
+        // 顺序要紧: 先按上次的标记判定异常退出, 再为本次会话打点。
+        CrashGuard.checkAbnormalExit()
+        CrashGuard.markSessionStart()
+        app.onLaunch()
+        // 215 启动预算 / 224 启动预热: 两个引擎此前全库零调用。
+        // Prewarm 只做本地键位与热点缓存读取, 不碰 BLE —— 不会在启动时偷偷发起连接。
+        StartupTrace.mark("onLaunch 结束")
+        Prewarm.run(mac: app.currentMac)
+        if StartupTrace.overBudget {
+            app.lock.log("warn", "启动耗时 \(Int(StartupTrace.totalMs))ms, 超 800ms 预算")   // 215 启动耗时
+        }
+        RootView.registerHost(app)   // 包2: LinkSense 宿主注册 + 回连/巡检循环
+        LinkSense.shared.coldStartScan()   // 包2/134 冷启动先扫描 (定位可见锁, 不连接)
+    }
+    /// 实例便捷转发，供 `.task` 直接调用（保持 body 表达式小，见本文件多处 type-check 超时的教训）。
+    private func bootstrapOnce() { RootView.bootstrapOnce(app) }
 
     var body: some View {
         rootChrome
@@ -1320,7 +1385,14 @@ struct RootView: View {
                 // 390: 伪装口令进来的会话只渲染空壳, 主 TabView 与其 .task(onLaunch/回连) 都不执行
                 DecoyShellView()
             } else if app.appUnlocked {
-                mainTabsChrome
+                // 2026-10-16 界面变体分叉。**只在这一处**分。
+                // 引导 / 伪装空壳 / 应用锁三条形态与变体无关，不许各复制一份进变体分支 ——
+                // 复制一份就是"同一个门禁算两次"，少改一处就变成某变体下伪装码或应用锁失效。
+                if app.uiVariant == .legacy {
+                    mainTabsChrome
+                } else {
+                    VariantRootView()
+                }
             } else {
                 AppLockView()
                     // 解锁的"穿越感": 门禁界面轻微放大溶解, 主界面从后面浮现
@@ -1586,7 +1658,7 @@ struct RootView: View {
     private func bleStatusStrip(app: AppState, sense: LinkSense) -> some View {
         BLEStrip(title: "跳回设备页", state: sense.linkState,
                  detail: sense.lastRssi.map { "RSSI \($0)" }) {
-            app.tabSelection = 0
+            app.requestRoute(.device)
             app.pendingJumpLock = app.currentMac
         }
     }
@@ -1713,7 +1785,8 @@ struct AppLockView: View {
         DispatchQueue.main.async { runBiometric() }
     }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.appLock) }
+    var vkBody: some View {
         VStack(spacing: DS.Space.l) {
             Spacer(minLength: DS.Space.xl)
 
@@ -2038,44 +2111,21 @@ struct Card<Content: View>: View {
         tint.map { $0.color.opacity(0.14) } ?? .clear
     }
     var body: some View {
-        VStack(alignment: .leading, spacing: DS.Space.m) { content }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(DS.Space.l)
-            // 2026-10-14 材质统一: 主表面 Card 从实底改液态玻璃。走既有 axGlass 而不是自己写 glassEffect ——
-            // 那条路径自带 226 降低透明度 / 862 增强对比 的降实底退路, 另写一份就会让"关玻璃"只关一半界面。
-            .axGlass(DS.Radius.card)
-            .background {
-                // 语义色叠底走 tintWash (它为什么是 0.14 而不是实底时代的 0.08，写在那个属性的注释上)
-                let shape = RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous)
-                shape.fill(tintWash)
-            }
-            .shadow(color: .cardElevation, radius: 12, y: 4)
-            .padding(.horizontal, DS.Space.gutter)
+        // 2026-10-16: 形状的决定权交给 VK.card —— 53 处 Card 调用一次跟着两套界面变，
+        // 而不是去 53 个调用点各改一遍（那既是"同一个量算两次"，也必然漏改）。
+        // `.legacy` 分支是原来这段 body 逐字搬过去的，见 VariantGrammar.swift 的 VK.card。
+        // 传 tintWash 而不是 tint 本体：0.14 这个叠底浓度是"玻璃时代"定下来的，
+        // 它的理由写在下面 tintWash 的注释里，两套新界面各自决定怎么用这个语义色。
+        VK(variant: UIVariant.current).card(tint: tint == nil ? nil : tintWash) { content }
     }
 }
 struct SectionTitle: View {
     var text: String
     var count: Int?
     var body: some View {
-        HStack(spacing: DS.Space.s) {
-            // 品牌色小竖标: 不占一行的宽度, 却让分区标题有自己的"签名"
-            Capsule()
-                .fill(DS.Palette.accent)
-                .frame(width: 3, height: 14)
-                .accessibilityHidden(true)
-            Text(text)
-                .font(.headline)
-                .foregroundStyle(DS.Palette.text)
-            if let count {
-                Text("\(count)")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(DS.Palette.textSub)
-                    .padding(.horizontal, DS.Space.s).padding(.vertical, DS.Space.xxs)
-                    .background(DS.Palette.surfaceAlt, in: Capsule())
-            }
-            Spacer(minLength: 0)
-        }
-        .accessibilityElement(children: .combine)
+        // 2026-10-16: 形状交给当前变体决定 (VK.sectionTitle)，21 处调用一次跟着两套走。
+        // legacy 分支是这里原来的实现逐字搬过去的，见 VariantGrammar.swift。
+        VK(variant: UIVariant.current).sectionTitle(text: text, count: count)
     }
 }
 

@@ -674,11 +674,24 @@ extension View {
         // (对照: 同文件的 dsSheetGlass 写的是 `presentationBackground(...)`, 那是 `self.` 的省略,
         //  所以它是对的 —— 差别就在"是不是对 self 调修饰符"。)
         // 正确写法: 把渐变放进 .background, 内容留在前景。
-        background {
-            if DS.Appearance.isAMOLED || AXFlags.invertColors || AXFlags.reduceTransparency {
-                DS.Gradient.screen.ignoresSafeArea()
-            } else {
-                DS.Gradient.screenMesh.ignoresSafeArea()
+        //
+        // 2026-10-16 界面变体：底色由当前变体决定，全仓 100 处调用一次跟着两套走。
+        // ⚠ 上面那条"丢掉 self"的事故就发生在这个函数上，所以这里改动只加一层分支，
+        //   legacy 分支逐字保留原样；并且**三档降级对三个变体一视同仁** ——
+        //   新变体的场同样是色块，AMOLED / 智能反转 / 降透明下照样必须退回纯色，
+        //   不然就是"两套新界面把 226/863/AMOLED 这三道闸各开了一半"。
+        let flat = DS.Appearance.isAMOLED || AXFlags.invertColors || AXFlags.reduceTransparency
+        return self.background {
+            switch UIVariant.current {
+            case .legacy:
+                if flat { DS.Gradient.screen.ignoresSafeArea() }
+                else { DS.Gradient.screenMesh.ignoresSafeArea() }
+            case .core:
+                if flat { DS.VariantPalette.coreCanvas.ignoresSafeArea() }
+                else { CoreAuroraBackground() }
+            case .gauge:
+                if flat { DS.VariantPalette.gaugeCanvas.ignoresSafeArea() }
+                else { GaugeLampBackground() }
             }
         }
     }
@@ -770,21 +783,10 @@ struct StatusPill: View {
     var tone: ToneColor = .neutral
 
     var body: some View {
-        HStack(spacing: DS.Space.xs) {
-            Image(systemName: systemImage)
-                .font(.system(size: DS.Icon.xs, weight: .semibold))
-                .foregroundStyle(tone.color)
-            Text(text)
-                .font(.caption.weight(.medium))
-                .foregroundStyle(DS.Palette.textSub)
-                .lineLimit(1)
-        }
-        .padding(.horizontal, DS.Space.s + 2)
-        .padding(.vertical, DS.Space.xs + 1)
-        .background(DS.Palette.surfaceAlt, in: Capsule())
-        .overlay(Capsule().strokeBorder(DS.Palette.hairline, lineWidth: 0.5))
-        // 不允许被父容器压缩: 状态文案换行会把胶囊撑成两行, 行高随之错位
-        .fixedSize(horizontal: true, vertical: false)
+        // 2026-10-16: 形状交给当前变体决定 (VK.statusPill)，29 处调用一次跟着两套走。
+        // legacy 分支是这里原来的实现逐字搬过去的；"颜色不作为唯一信息载体"那条纪律
+        // 在三个分支里都靠保留图标形状来兑现。见 VariantGrammar.swift。
+        VK(variant: UIVariant.current).statusPill(text: text, systemImage: systemImage, tone: tone.color)
     }
 }
 

@@ -21,7 +21,8 @@ struct LockOverviewView: View {
     /// 778 偏高阈值: 上浮排序、染色、标签共用一个数 (散写三处迟早漂)
     private static let alarmHighCut = 0.2
 
-    var body: some View {
+    var body: some View { vkBody.destined(.lockOverview) }
+    var vkBody: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: DS.Space.m) {
@@ -319,7 +320,7 @@ struct LockOverviewView: View {
                                     if n > 0 {
                                         Button {
                                             app.pendingRecordsFilter = member.id
-                                            app.tabSelection = 2
+                                            app.requestRoute(.records)
                                             dismiss()
                                         } label: {
                                             Text("\(n)")
@@ -355,7 +356,7 @@ struct LockOverviewView: View {
                 if let top = topCell() {
                     Button {
                         app.pendingRecordsFilter = top.member.id
-                        app.tabSelection = 2
+                        app.requestRoute(.records)
                         dismiss()
                     } label: {
                         Label("看「\(top.member.name)」在「\(top.lockName)」的 \(top.count) 条记录", systemImage: "arrow.right.circle")

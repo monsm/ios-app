@@ -366,7 +366,7 @@ struct OnboardingView: View {
             if i == 2 {
                 Button("去连接真锁") {
                     Onboarding.finishTour()
-                    app.tabSelection = 0
+                    app.requestRoute(.device)
                     app.pendingAddDevice = true   // 801: 设备页挂载后直接弹添加设备 (直达扫描)
                 }
                 .buttonStyle(SecondaryActionStyle(fullWidth: false))
@@ -563,7 +563,7 @@ struct OnboardingView: View {
                         // 只写 tabSelection 是切了一个还没建出来的 Tab —— 点了屏幕毫无变化。
                         // 收尾照 320 那颗"去连接真锁"同一条路: 先结束引导 (allDone 翻真 → root 换形态), 再落 Tab。
                         Onboarding.finishTour()
-                        app.tabSelection = 0
+                        app.requestRoute(.device)
                     }
                     .buttonStyle(SecondaryActionStyle(fullWidth: false))
                 }

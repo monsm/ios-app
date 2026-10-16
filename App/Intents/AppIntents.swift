@@ -428,7 +428,8 @@ struct LockKeeperShortcuts: AppShortcutsProvider {
 
 // ---------- 集成中心页: 快捷指令画廊 + 入口 + 治理 (包17 UI 落点) ----------
 struct IntegrationCenterView: View {
-    var body: some View {
+    var body: some View { vkBody.destined(.integrationCenter) }
+    var vkBody: some View {
         List {
             Section("快捷指令 · 说一句就行 (全部 foreground, 不后台开锁)") {
                 // 166: 节顶说明与 LockKeeperShortcuts 注册同源同行 —— 口令收录由系统在装完 App 后自动完成,

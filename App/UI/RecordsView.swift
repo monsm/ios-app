@@ -290,7 +290,8 @@ struct RecordsView: View {
         }
     }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.records) }
+    var vkBody: some View {
         recordsChrome
     }
 
@@ -1541,7 +1542,7 @@ struct RecordsView: View {
         Section {
             Button {
                 app.pendingJumpLock = mac
-                app.tabSelection = 0
+                app.requestRoute(.device)
             } label: {
                 Label("跳回设备页定位「" + LockArchive.displayName(app.devices.first { $0.mac == mac } ?? Keychain(mac: mac, skey: "")) + "」", systemImage: "lock.rotation")
             }
@@ -1993,6 +1994,10 @@ struct RecordsView: View {
                     app.pendingCredNav = r.credKey
                     app.pendingCredNavMac = r.rowMac.isEmpty ? mac : r.rowMac
                     app.requestTab(1)   // 2026-10-14 走查: 原直写 tabSelection, 访客态绕过 377 门禁
+                    // 收摊口径：这一页在 core/gauge 变体下是被域浮层端出来的，而 requestTab 现在走
+                    // requestRoute 这个唯一漏斗 —— 它换的是**浮层内容本身** (AppState.variantDomain)，
+                    // 凭证页直接替换掉记录页，不存在"切走了但上一层还压着"。
+                    // legacy 下本页是 Tab 根，根本没有 sheet 盖着。两种情形都不需要 dismiss()。
                 }
                 .tint(DS.Palette.warn)
             }
@@ -2033,6 +2038,10 @@ struct RecordsView: View {
                     app.pendingCredNav = r.credKey
                     app.pendingCredNavMac = r.rowMac.isEmpty ? mac : r.rowMac
                     app.requestTab(1)   // 2026-10-14 走查: 原直写 tabSelection, 访客态绕过 377 门禁
+                    // 收摊口径：这一页在 core/gauge 变体下是被域浮层端出来的，而 requestTab 现在走
+                    // requestRoute 这个唯一漏斗 —— 它换的是**浮层内容本身** (AppState.variantDomain)，
+                    // 凭证页直接替换掉记录页，不存在"切走了但上一层还压着"。
+                    // legacy 下本页是 Tab 根，根本没有 sheet 盖着。两种情形都不需要 dismiss()。
                     app.showToast("已定位到来源凭证")   // 577 已定位到来源凭证
                 } label: {
                     Label("定位来源凭证", systemImage: "key.horizontal")   // 577 定位来源凭证
@@ -2290,7 +2299,7 @@ struct RecordsView: View {
                     // 815 空态两个真出路: 记录是锁里拉出来的, 先连设备; 不知道这里记什么就看示例说明。
                     // 旧空态只有一行字 + 右上角一个入口, 用户读完了也不知道下一步点什么。
                     HStack(spacing: DS.Space.s) {
-                        Button("连接设备") { app.tabSelection = 0 }
+                        Button("连接设备") { app.requestRoute(.device) }
                             .buttonStyle(PrimaryActionStyle())
                         Button("了解这里记什么") { showSampleGuide = true }
                             .buttonStyle(SecondaryActionStyle(fullWidth: false))
@@ -2424,6 +2433,9 @@ struct RecordsView: View {
                                 app.pendingMemberAdd = true   // 817: 到了成员中心直接弹建档向导, 不再只指路
                                 app.pendingSettingsFocus = "members"   // §4.3: 上面写着"直达成员入口", 原来只到设置页根
                                 app.requestTab(3)   // 2026-10-14 走查: 原直写 tabSelection, 访客态绕过 377 门禁
+                                // 收摊口径：同上 —— requestTab 走 requestRoute 唯一漏斗，
+                                // core/gauge 下换的是域浮层的内容本身而非"切到身后那个 Tab"，
+                                // legacy 下本页是 Tab 根没有层压着。两种情形都不需要 dismiss()。
                                 app.showToast("在「家人与钥匙」里添加成员")   // 817 家人与钥匙
                             } label: {
                                 HStack(spacing: DS.Space.xs) {
@@ -3492,7 +3504,8 @@ struct GratitudeView: View {
     @State private var names: [String] = []
     @State private var input = ""
 
-    var body: some View {
+    var body: some View { vkBody.destined(.gratitude) }
+    var vkBody: some View {
         NavigationStack {
             List {
                 Section {
@@ -3572,7 +3585,8 @@ struct RecordsSampleGuideView: View {
     @Environment(\.dismiss) private var dismiss
     var onFetch: () -> Void = {}
 
-    var body: some View {
+    var body: some View { vkBody.destined(.recordsSampleGuide) }
+    var vkBody: some View {
         NavigationStack {
             List {
                 Section {
@@ -3611,7 +3625,7 @@ struct RecordsSampleGuideView: View {
                     .buttonStyle(PlainButtonStyle())
                     Button {
                         dismiss()
-                        app.tabSelection = 0
+                        app.requestRoute(.device)
                     } label: {
                         Label("去设备页连接门锁", systemImage: "lock.rotation")
                             .font(.subheadline.weight(.medium))

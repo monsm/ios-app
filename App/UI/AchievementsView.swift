@@ -11,7 +11,8 @@ struct AchievementsView: View {
     @State private var unlocked: [String: Double] = [:]
     @State private var detail: Badge?
 
-    var body: some View {
+    var body: some View { vkBody.destined(.achievements) }
+    var vkBody: some View {
         ScrollView {
             VStack(spacing: DS.Space.m) {
                 headerCard.staggered(0)
@@ -562,7 +563,8 @@ struct CapsuleComposeView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var text = ""
 
-    var body: some View {
+    var body: some View { vkBody.destined(.capsuleCompose) }
+    var vkBody: some View {
         Form {
             Section {
                 TextEditor(text: $text)
@@ -604,7 +606,8 @@ struct CareRemindersView: View {
     @EnvironmentObject var app: AppState
     @State private var bulletin = Milestones.bulletin
 
-    var body: some View {
+    var body: some View { vkBody.destined(.careReminders) }
+    var vkBody: some View {
         Form {
             Section {
                 TextField("写一句常驻家里的话", text: $bulletin)

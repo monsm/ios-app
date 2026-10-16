@@ -39,7 +39,8 @@ struct MaintenanceView: View {
     }
     private var careDue: Bool { care.lastCareAt > 0 && elapsedDays >= Double(periodDays) }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.maintenance) }
+    var vkBody: some View {
         Form {
             carePeriodSection      // 1013/1015
             careMarksSection       // 1030
@@ -224,7 +225,7 @@ struct MaintenanceView: View {
             if !all.isEmpty {
                 Button {
                     app.pendingRecordsFilter = "__care"
-                    app.tabSelection = 2
+                    app.requestRoute(.records)
                     // 先落点再收摊：sheet 不收，切过去的 Tab 就在它底下 (见本页上方那条注释)
                     dismiss()
                 } label: {
@@ -445,7 +446,8 @@ struct BatterySwapGuideView: View {
         BatterySwapGuide.steps(modelHint: modelHint)   // 728: 与低电告警详情共用一份步骤源
     }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.batterySwapGuide) }
+    var vkBody: some View {
         Form {
             Section {
                 ForEach(Array(steps.enumerated()), id: \.offset) { i, s in
@@ -511,7 +513,8 @@ struct BatterySwapGuideView: View {
 
 // ================= 设置-提醒 (287 阈值 / 1031 免扰 / 1038 白天送达 / 146 升级提醒) =================
 struct MaintSettingsView: View {
-    var body: some View {
+    var body: some View { vkBody.destined(.maintSettings) }
+    var vkBody: some View {
         Form {
             Section {
                 Picker("低电提醒阈值", selection: Binding(

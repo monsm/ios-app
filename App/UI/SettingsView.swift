@@ -67,7 +67,8 @@ struct SettingsView: View {
         .contentShape(Rectangle())
     }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.settings) }
+    var vkBody: some View {
         NavigationStack {
             settingsReader
         }
@@ -448,7 +449,7 @@ struct SettingsView: View {
                                 demoAction: {
                                     DemoKit.setOn(true)
                                     app.loadDevices()
-                                    app.tabSelection = 0
+                                    app.requestRoute(.device)
                                     // 收摊口径：SettingsView 有两种呈现 —— ① Tab 3 的根 (LockKeeperApp:1081)，
                                     // 这一句是真跳转，**不该**收摊；② 设备页 `.sheet { SettingsView() }`
                                     // (DeviceHomeView:197)，用户本来就在设备页 ⇒ 切 0 是空转、缺的正是 dismiss()。
@@ -850,6 +851,28 @@ struct SettingsView: View {
 
     private var appearanceSection: some View {
         Section {
+            // 2026-10-16 界面变体切换。放在"外观"节是因为它是显示层选择，
+            // 但**它不参与 resetAppearance() 那张清单** —— 理由见 UIVariant.canResetWithAppearance：
+            // 换的是整个导航模型，"将外观重置为默认值"这句弹窗没承诺过这件事。
+            Picker("界面样式", selection: Binding(
+                get: { app.uiVariant },
+                set: { app.setUIVariant($0) })) {
+                ForEach(UIVariant.allCases) { v in
+                    Text(v.title).tag(v)
+                }
+            }
+            .pickerStyle(.menu)
+            // 实验性变体必须自报边界：不写这句，用户切过去发现某页没了，
+            // 会以为功能被删 —— 这正是"两套 UI 必有一套少功能"的投诉形状。
+            if app.uiVariant.isExperimental {
+                Text(app.uiVariant.note + "。" + app.uiVariant.unfinished)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+            // 完整性读数：静态闸门只能说"每个目的地都挂了缝"，
+            // 说不了"你在真机上真的走到过没有"。这一行把后者变成可见数字 ——
+            // 没点到的那几站列得出来，"两套都完整"才不是一句自我声明。
+            VariantCoverageRow()
             // 外观模式 (idea 30): 跟随系统/浅色/深色/纯黑 — 纯黑为 OLED 省电与夜间的极暗档
             Picker("主题", selection: Binding(
                 get: { DB.store.getString("kf_theme") },
@@ -1398,7 +1421,8 @@ struct DefendView: View {
     @State private var toDate = Date()
     @State private var busy = false
 
-    var body: some View {
+    var body: some View { vkBody.destined(.defend) }
+    var vkBody: some View {
         Form {
             Picker("模式", selection: $mode) {
                 Text("外出布防").tag(1)
@@ -1491,7 +1515,8 @@ struct TailgateView: View {
     @State private var seconds = 6
     @State private var busy = false
 
-    var body: some View {
+    var body: some View { vkBody.destined(.tailgate) }
+    var vkBody: some View {
         Form {
             Section {
                 Picker("等待时长", selection: $seconds) {
@@ -1534,7 +1559,8 @@ struct SafemodeIntroView: View {
     @State private var switching = false      // 拍板 #2: cmd20 下发中, 防止连点重复改锁端策略
     private var isOtp: Bool { mode == "otp" }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.safemodeIntro) }
+    var vkBody: some View {
         Form {
             if isOtp {
                 Section("临时密码 (ZOTP) 介绍") {

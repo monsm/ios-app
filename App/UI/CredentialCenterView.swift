@@ -15,7 +15,8 @@ struct CredCenterView: View {
     @Environment(\.dismiss) private var dismiss
     var mac: String
 
-    var body: some View {
+    var body: some View { vkBody.destined(.credCenter) }
+    var vkBody: some View {
         NavigationStack {
             List {
                 centerRow(icon: "trash", title: "回收站", sub: "\(CredentialOrg.bin(mac).count) 条 · 保留 \(CredentialOrg.reclaimDays()) 天") {   // 497 保留
@@ -94,7 +95,8 @@ struct CredBinView: View {
         _query = State(initialValue: initialQuery)
     }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.credBin) }
+    var vkBody: some View {
         List {
             // 500 容量头行: 条数 + 下次自动清理日期
             let header = CredentialOrg.binHeader(mac)
@@ -409,7 +411,8 @@ struct CredBinView: View {
 struct CredHistoryListView: View {
     @EnvironmentObject var app: AppState
     var mac: String
-    var body: some View {
+    var body: some View { vkBody.destined(.credHistoryList) }
+    var vkBody: some View {
         List {
             let pwds = DB.listPwds(mac).filter { !CredentialOrg.history(mac, "pwd", $0.alias).isEmpty }
             let fps = DB.listFps(mac).filter { !CredentialOrg.history(mac, "fp", $0.batch).isEmpty }
@@ -479,7 +482,8 @@ struct CredHistoryView: View {
         return kind == "pwd" ? "密码 #\(key)" : "指纹批次 \(key)"
     }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.credHistory) }
+    var vkBody: some View {
         List {
             if let pv = preview {
                 previewSection(pv)
@@ -830,7 +834,8 @@ struct CredOrganizeView: View {
             } }
     }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.credOrganize) }
+    var vkBody: some View {
         // AnyView 擦平两分支的类型差异 (与 AddPwdView 同一写法): 两支只差最外层那一只容器
         if embedded {
             AnyView(content)
@@ -918,7 +923,8 @@ struct CredQueueView: View {
     /// 「全部重试」互斥: 旧写法连点会开出多个并发 Task, 对同一队列重复下发删除/延期命令
     @State private var retryAllRunning = false
 
-    var body: some View {
+    var body: some View { vkBody.destined(.credQueue) }
+    var vkBody: some View {
         List {
             let q = CredentialOrg.pendingQueue(mac)
             if q.isEmpty {
@@ -1093,7 +1099,8 @@ struct CredExtendView: View {
     @State private var to = Date().addingTimeInterval(30 * 86400)
     @State private var busy = false
 
-    var body: some View {
+    var body: some View { vkBody.destined(.credExtend) }
+    var vkBody: some View {
         NavigationStack {
             Form {
                 Section("统一延期 (\(aliases.count) 条)") {   // 348 统一延期
@@ -1157,7 +1164,8 @@ struct CredTransferView: View {
     var onDone: () -> Void
     @State private var target: String? = nil
 
-    var body: some View {
+    var body: some View { vkBody.destined(.credTransfer) }
+    var vkBody: some View {
         NavigationStack {
             List {
                 Section("批量移交 (\(pwdAliases.count + fpBatches.count) 条)") {   // 349 批量移交

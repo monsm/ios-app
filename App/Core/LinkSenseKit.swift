@@ -621,7 +621,8 @@ extension AppState {
 /// 落点 设置-门锁 "连接与预握手"; 全部本地偏好键, 不碰协议。
 struct LinkPrefsView: View {
     var mac: String
-    var body: some View {
+    var body: some View { vkBody.destined(.linkPrefs) }
+    var vkBody: some View {
         Form {
             Section("自动预握手") {
                 Toggle("进页/回前台自动预热连接", isOn: Binding(   // 95/135 进页

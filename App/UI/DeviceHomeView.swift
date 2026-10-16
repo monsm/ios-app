@@ -49,7 +49,8 @@ struct DeviceHomeView: View {
     /// 这一块现在该不该画 (必留的五块不走这里, 见 DevModules 文件头)
     private func shown(_ m: DevModule) -> Bool { !devHidden.contains(m.rawValue) }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.deviceHome) }
+    var vkBody: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: DS.Space.m) {
@@ -1803,14 +1804,14 @@ struct DeviceHomeView: View {
     private func landRecord(_ key: String) {
         guard !key.isEmpty else { return }
         app.pendingRecordKey = key
-        app.tabSelection = 2
+        app.requestRoute(.records)
     }
 
     /// 559 落地: 「最近开门」行上可证明的成员 → 记录 Tab 并按该成员过滤。
     /// 复用 582 的 pendingRecordsMember → landMember 链路 (记录页消费后清空, 不残留过滤)。
     private func openMemberRecords(_ id: String) {
         app.pendingRecordsMember = id
-        app.tabSelection = 2
+        app.requestRoute(.records)
     }
     /// 559: Rec 行的归属可证明才给"查记录" (与 landMember 的 guard 同判据 —— 动作出现就必然落得下去)。
     private func provableMemberId(_ r: Rec) -> String? {
@@ -2312,7 +2313,8 @@ struct SyncTimeView: View {
 
     private var resultTone: ToneColor { failed ? .danger : .ok }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.syncTime) }
+    var vkBody: some View {
         Form {
             Section {
                 if app.current != nil {
@@ -2420,7 +2422,8 @@ struct FocusUnlockView: View {
     @ObservedObject private var lockSvc = LockService.shared
     @ObservedObject private var bleSvc = BLEService.shared
 
-    var body: some View {
+    var body: some View { vkBody.destined(.focusUnlock) }
+    var vkBody: some View {
         ZStack {
             DS.Gradient.screen.ignoresSafeArea()
             VStack(spacing: DS.Space.l) {
@@ -2480,7 +2483,8 @@ struct UnlockGateView: View {
     @State private var pw = ""
     @State private var failed = false
 
-    var body: some View {
+    var body: some View { vkBody.destined(.unlockGate) }
+    var vkBody: some View {
         VStack(spacing: DS.Space.l) {
             Image(systemName: "lock.shield")
                 .font(.system(size: 34, weight: .medium))

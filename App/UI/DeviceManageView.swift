@@ -26,7 +26,8 @@ struct DeviceManageView: View {
     @State private var sel = Set<String>()
     @State private var sorting = false             // 766 拖动排序模式 (打开系统编辑态才出拖动手柄)
 
-    var body: some View {
+    var body: some View { vkBody.destined(.deviceManage) }
+    var vkBody: some View {
         NavigationStack {
             List {
                 Section {

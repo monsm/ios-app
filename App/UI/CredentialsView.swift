@@ -67,7 +67,8 @@ struct CredentialsView: View {
 
     private var isBusy: Bool { busyKey != nil }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.credentials) }
+    var vkBody: some View {
         NavigationStack {
             Group {
                 if app.current == nil {

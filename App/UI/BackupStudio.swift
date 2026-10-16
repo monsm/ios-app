@@ -16,7 +16,8 @@ struct BackupStudioView: View {
     @State private var showMigration = false
     @State private var showFiles = false
 
-    var body: some View {
+    var body: some View { vkBody.destined(.backupStudio) }
+    var vkBody: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: DS.Space.l) {
@@ -388,7 +389,8 @@ struct ExportWizardView: View {
 
     private let stepTitles = ["选分区", "设口令", "导出前体检", "完成"]
 
-    var body: some View {
+    var body: some View { vkBody.destined(.exportWizard) }
+    var vkBody: some View {
         NavigationStack {
             VStack(spacing: DS.Space.m) {
                 // 步骤指示条
@@ -813,7 +815,8 @@ struct RestoreWizardView: View {
     @State private var ovN = 0
     @State private var skN = 0
 
-    var body: some View {
+    var body: some View { vkBody.destined(.restoreWizard) }
+    var vkBody: some View {
         NavigationStack {
             VStack(spacing: DS.Space.m) {
                 if !done, preview == nil {
@@ -1218,7 +1221,8 @@ struct WebDAVStudioView: View {
 
     private var ready: Bool { !root.isEmpty && !acct.isEmpty && !appPw.isEmpty }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.webDAVStudio) }
+    var vkBody: some View {
         NavigationStack {
             Form {
                 Section("WebDAV 端点 (走用户自配账号, 仅 Basic Auth 运行时输入)") {
@@ -1529,7 +1533,8 @@ struct MigrationWizardView: View {
     @State private var davMsg = ""
     @State private var entries: [BackupStudio.RemoteEntry] = []
 
-    var body: some View {
+    var body: some View { vkBody.destined(.migrationWizard) }
+    var vkBody: some View {
         NavigationStack {
             VStack(spacing: DS.Space.m) {
                 Group {
@@ -2589,7 +2594,8 @@ struct LocalFilesView: View {
     }
 
 
-    var body: some View {
+    var body: some View { vkBody.destined(.localFiles) }
+    var vkBody: some View {
         NavigationStack {
             List {
                 Section("本地备份 (哈希短码 / 演练 / 双备份对比)") {

@@ -130,6 +130,11 @@ jobs:
           node tools/copynum.js --selftest
           node tools/copynum.js App Widget
 
+      - name: '界面变体完整性与一致性 (判失败: 目的地枚举不得与台账漂移 / 语法层三 case 不得缺或空壳 / 不得再出现绕过 requestRoute 的裸写换页; 覆盖率只报进度不判失败)'
+        run: |
+          node tools/destmap.js
+          node tools/uicoverage.js
+
       - name: Install XcodeGen
         run: brew install xcodegen
 

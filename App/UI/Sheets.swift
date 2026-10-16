@@ -27,7 +27,8 @@ struct AddDeviceView: View {
     @State private var locating = false
     @State private var dupMac: (name: String, mac: String)?   // 255 去重拦截
 
-    var body: some View {
+    var body: some View { vkBody.destined(.addDevice) }
+    var vkBody: some View {
         NavigationStack {
             Group {
                 switch flow {
@@ -56,7 +57,7 @@ struct AddDeviceView: View {
                     if let dup = dupMac {
                         app.loadDevices()
                         app.select(dup.mac)
-                        app.tabSelection = 0
+                        app.requestRoute(.device)
                     }
                     dismiss()
                 }
@@ -622,7 +623,8 @@ struct AddPwdView: View {
         .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button(busy ? "写入中…" : "关闭") { dismiss() }.disabled(busy) } } .interactiveDismissDisabled(busy)   // 2026-10-15 走查: 写锁在飞时不给退出入口
     }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.addPwd) }
+    var vkBody: some View {
         // AnyView 擦平两分支类型差异: embedded 与否只在最外层容器上不同
         if embedded {
             AnyView(content)
@@ -805,7 +807,8 @@ struct StartAddFpView: View {
         .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("关闭") { dismiss() } } }
     }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.startAddFp) }
+    var vkBody: some View {
         // 原先两个分支各套一层 AnyView (只为绕过 if/else 的类型差)，这里换成 Group + @ViewBuilder，
         // 好把 .onDisappear 挂在**页面最外层** —— 挂在 content 上会因步骤切换误取消刚完成的流程。
         Group {
@@ -875,7 +878,8 @@ struct DeviceInfoView: View {
     @State private var busy = false
     @State private var clockDrift: Int? = nil   // 47 锁钟偏差 (秒; nil = 未读到锁钟)
 
-    var body: some View {
+    var body: some View { vkBody.destined(.deviceInfo) }
+    var vkBody: some View {
         NavigationStack {
             List {
                 infoCardSection
@@ -1185,7 +1189,8 @@ struct LockProfileView: View {
 
     private var trimmed: String { name.trimmingCharacters(in: .whitespaces) }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.lockProfile) }
+    var vkBody: some View {
         Form {
             // 预览: 与 Hero 卡同构的身份行, 编辑即所见
             Section {
@@ -1482,7 +1487,8 @@ struct FirmwareView: View {
             }
     }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.firmware) }
+    var vkBody: some View {
         // AnyView 擦平两分支类型差异 (与 AddPwdView 同一写法): 两支只差最外层那一只容器
         if embedded {
             AnyView(content)
@@ -2093,7 +2099,8 @@ struct KeychainHWView: View {
     @State private var dongles: [Dongle] = []
     @State private var busy = false
 
-    var body: some View {
+    var body: some View { vkBody.destined(.keychainHW) }
+    var vkBody: some View {
         NavigationStack {
             List {
                 Section("蓝牙钥匙串") {
@@ -2305,7 +2312,8 @@ struct GatewayView: View {
     @State private var error = ""
     @State private var gateways: [Gateway] = []
 
-    var body: some View {
+    var body: some View { vkBody.destined(.gateway) }
+    var vkBody: some View {
         NavigationStack {
             List {
                 if !confirmed {
@@ -2500,7 +2508,8 @@ struct MembersView: View {
     /// 不用 .id(tick) 重建整个 List —— 那会连带丢掉滚动位置、键盘焦点和动画上下文。
     @State private var members: [Member] = []
 
-    var body: some View {
+    var body: some View { vkBody.destined(.members) }
+    var vkBody: some View {
         NavigationStack {
             List {
                 Section {
@@ -2784,7 +2793,8 @@ struct MessagesView: View {
         var warn: Bool
     }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.messages) }
+    var vkBody: some View {
         NavigationStack {
             List {
                 if rows.isEmpty { emptyHint }

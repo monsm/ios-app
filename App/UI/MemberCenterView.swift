@@ -38,7 +38,8 @@ struct MemberCenterView: View {
             .filter { m in groupFilter.isEmpty || MemberHub.ext(m.id).groupTag == groupFilter }
     }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.memberCenter) }
+    var vkBody: some View {
         NavigationStack {
             List {
                 headerStat
@@ -260,7 +261,7 @@ struct MemberCenterView: View {
         return Section {
             Button {
                 app.pendingRecordsFilter = MemberHub.visitorId
-                app.tabSelection = 2
+                app.requestRoute(.records)
                 dismiss()
             } label: {
                 HStack(spacing: DS.Space.s) {
@@ -603,7 +604,8 @@ struct MemberDetail360View: View {
 
     private var member: Member? { DB.member(memberID) }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.memberDetail360) }
+    var vkBody: some View {
         if let m = member {
             List {
                 if let line = MemberHub.weekSentence(m.id) {
@@ -1194,7 +1196,8 @@ struct MemberWizardView: View {
         return "与成员同"
     }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.memberWizard) }
+    var vkBody: some View {
         NavigationStack {
             Form {
                 Section("步骤 \(step + 1)/3 · " + steps[step]) {
@@ -1347,7 +1350,8 @@ struct MergeMembersView: View {
         DB.members().filter { $0.id != primary.id && $0.name == primary.name }
     }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.mergeMembers) }
+    var vkBody: some View {
         NavigationStack {
             Form {
                 Section("主档 (保留)") {
@@ -1593,7 +1597,8 @@ struct BorrowSheetView: View {
 
     private var borrowMap: [String: MemberBorrow] { MemberHub.borrows(mac) }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.borrowSheet) }
+    var vkBody: some View {
         NavigationStack {
             List {
                 Section("新建借用 (归属 " + (DB.member(memberID)?.name ?? "成员") + ")") {   // 472 新建借用
@@ -1684,7 +1689,8 @@ struct MemberArchivedView: View {
         DB.members().filter { MemberHub.ext($0.id).archived }
     }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.memberArchived) }
+    var vkBody: some View {
         NavigationStack {
             List {
                 ForEach(archived) { m in
@@ -1791,7 +1797,8 @@ struct MemberFamilySettingsView: View {
     @State private var privacy = MemberHub.privacyActive
     @State private var privacyLeft = 0
 
-    var body: some View {
+    var body: some View { vkBody.destined(.memberFamilySettings) }
+    var vkBody: some View {
         NavigationStack {
             Form {
                 // 479/486 长辈模式的两个落点都写在下面那段话里: 479 = 凭证页大字高对比 (凭证页行上),
@@ -1884,7 +1891,8 @@ struct UnclaimedClaimView: View {
         return out.sorted { $0.time > $1.time }
     }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.unclaimedClaim) }
+    var vkBody: some View {
         NavigationStack {
             List {
                 Section {
@@ -2110,7 +2118,8 @@ struct MemberStackedView: View {
         return out
     }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.memberStacked) }
+    var vkBody: some View {
         VStack(spacing: 0) {
             if stack.isEmpty {
                 Text("近 30 天还没有可证明归属的开门数据, 积累后这里会出按人堆叠的图 (约级口径)。")
@@ -2326,7 +2335,8 @@ struct HouseCleaningPresetView: View {
         _to = State(initialValue: Date().addingTimeInterval(8 * 3600))
     }
 
-    var body: some View {
+    var body: some View { vkBody.destined(.houseCleaningPreset) }
+    var vkBody: some View {
         NavigationStack {
             Form {
                 Section("家政周期预设") {   // 483 家政周期预设

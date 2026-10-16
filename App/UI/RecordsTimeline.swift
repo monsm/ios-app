@@ -489,7 +489,7 @@ struct RecDetailSheet: View {
             Button {
                 // 563 带过去的就是这一行显示的**类型词** —— 与搜索框同一个语法，到达后可再编辑。
                 app.pendingSearch = rec.typeName
-                app.tabSelection = 2
+                app.requestRoute(.records)
                 dismiss()
             } label: {
                 Label("搜这类记录", systemImage: "magnifyingglass.circle")   // 563 搜这类记录
@@ -504,7 +504,7 @@ struct RecDetailSheet: View {
                     return
                 }
                 app.pendingRecordsDay = dk
-                app.tabSelection = 2
+                app.requestRoute(.records)
                 dismiss()
             } label: {
                 Label("查看当天全部", systemImage: "calendar.day.timeline.left")   // 586 查看当天全部
