@@ -74,40 +74,31 @@ func sudoTicketFromReview(_ input: String) -> SudoTicket? {
     return ticket
 }
 
-/// 需要 sudo 时按**既有应用锁口令通道**当场问一次 (SecurityPolicy.sudoTicket → DB.verifyPasscode),
-/// 验出来那张 SudoTicket 记在 AppState 会话内复用, 不逐颗按钮追问 (383 的原话是"需重输应用锁密码",
-/// 不是"每点一次输一遍")。不新建存储、不新建口令位、不新建第二个解锁面。
+/// 383 毁灭操作的当场复核 —— 2026-10-17 拍板 A: **只走面容/指纹**, 不再问本机密码。
+/// 原实现弹 UIAlertController 收口令再 `SecurityPolicy.sudoTicket(from:)` 比对摘要;
+/// 口令这个凭据已随启动门禁一起删掉, 所以这里换成一次生物识别, 通过即发同一张 SudoTicket。
 /// 开关关着就直放行: 这一支的存在才是这枚开关的意义 —— 关着少一道确认, 开着一定拦得住。
 @MainActor
 func askSudoThen(_ app: AppState, then action: @escaping () -> Void) {
     guard SecurityPolicy.sudoRequired else { action(); return }
     if app.sudoTicket != nil { action(); return }
-    let alert = UIAlertController(title: "重输应用锁密码",
-                                  message: "这是毁灭级操作, 需重输本机密码。口令只当场比对, 不写进任何存储。",
-                                  preferredStyle: .alert)
-    alert.addTextField { f in
-        f.isSecureTextEntry = true
-        f.placeholder = "应用锁密码"
-    }
-    alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-    alert.addAction(UIAlertAction(title: "验证", style: .destructive) { _ in
-        let input = alert.textFields?[0].text ?? ""
-        guard let ticket = sudoTicketFromReview(input) else {
-            app.showToast("密码错误, 已拒绝毁灭操作")   // 383 密码错误
+    Task { @MainActor in
+        let ok = await AuthKit.verifyBiometricAsync(reason: "这是毁灭级操作, 请用面容/指纹确认")
+        guard ok else {
+            app.showToast("未通过面容/指纹确认, 已拒绝毁灭操作")   // 383 未通过确认
             return
         }
-        app.sudoTicket = ticket
+        app.sudoTicket = SudoTicket(issuedAt: Date().timeIntervalSince1970)
         AuditLog().append(.admin, "sudo", target: "毁灭操作复核通过",
-                          operator_: DB.store.getString(SecKey.sessionHow, "本机密码"),
+                          operator_: "面容/指纹",
                           duress: DB.store.getBool(SecKey.sessionDuress, false))
         SecTick.bump()
         action()
-    })
-    UIApplication.topViewController()?.present(alert, animated: true)
+    }
 }
 
 /// 296 + 383 两道闸的合用写法: 先问"只读模式下准不准做", 再问"要不要重输口令"。
-/// 顺序是定的: 只读模式开着时连口令都不该问 (问了也做不成, 那是白打扰)。
+/// 顺序是定的: 只读模式开着时连复核都不该问 (问了也做不成, 那是白打扰)。
 @MainActor
 func guardedDestroy(_ app: AppState, _ action: @escaping () -> Void) {
     guard SecurityPolicy.allows(.destroy) else {
@@ -125,8 +116,8 @@ func guardedDestroy(_ app: AppState, _ action: @escaping () -> Void) {
 func setGuestChannel(_ on: Bool, app: AppState) {
     DB.store.set(SecKey.guestOn, on)
     app.revokeSessionGrants()
-    app.showToast(on ? "访客通道已生效: 已回到设备页, 想进凭证与设置要重输密码"   // 377 访客通道已生效
-                      : "访客通道已关闭: 四页照常, 本次会话内不用再输密码")   // 377 访客通道已关闭
+    app.showToast(on ? "访客通道已生效: 已回到设备页, 想进凭证与设置要用面容/指纹确认"   // 377 访客通道已生效
+                      : "访客通道已关闭: 四页照常, 本次会话内不再复核")   // 377 访客通道已关闭
 }
 
 // ---------- 378 常驻水印层 (截图加扰降级案: 页面常驻, 半透明对角重复) ----------
@@ -171,17 +162,8 @@ struct SecurityCenterView: View {
     var vkBody: some View {
         NavigationStack {
             List {
-                Section {
-                    NavigationLink { SecurityLockConfigView() } label: {
-                        Label("应用锁增强", systemImage: "lock.shield")
-                    }
-                    Text("冷却 / 锁定时机 / 免验 / 救援码 / 随机键位 / 伪装与胁迫")
-                        .vkFont(.footnote)
-                        .foregroundStyle(DS.Palette.textSub)
-                } header: {
-                    Text("应用锁")
-                }
-
+                // 2026-10-17 拍板 A: 「应用锁」整块入口移除 —— 启动门禁已删, 本机不再有打开 App 要输的
+                // 密码/FaceID。剩下的安全动作只走面容/指纹 (383 毁灭复核、377 访客复核), 见各自调用点。
                 Section {
                     NavigationLink { SecurityPeekView() } label: {
                         Label("防窥与遮蔽", systemImage: "eye.slash")
@@ -597,7 +579,7 @@ struct SecurityLockConfigView: View {
                         .frame(minHeight: DS.Hit.min)
                 }
                 if DB.hasPasscode() {
-                    Text("会话开始/验证方式由 AppLockView 解锁成功时写入 (接线点: 置 appUnlocked = true 处同步)；“立即重新锁定”即刻生效。")
+                    Text("会话开始时间由进入 App 时写入；“立即重新锁定”已随启动门禁移除。")
                         .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.textSub)
                 }

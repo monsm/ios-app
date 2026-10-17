@@ -389,7 +389,10 @@ final class AppState: ObservableObject {
     }
 
     init() {
-        appUnlocked = !DB.hasPasscode()
+        // 2026-10-17 拍板 A: 删掉启动门禁 —— 打开 App 不再需要本机密码/FaceID。
+        // 旧值 `!DB.hasPasscode()`: 设过密码的机器每次冷启动都停在 AppLockView。
+        // 其余安全动作 (毁灭操作复核 383 / 访客受限区复核 377) 改成**只走面容/指纹**。
+        appUnlocked = true
         loadDevices(preferDefault: true)   // 包3/271: 冷启动落到上滑固定的默认锁
         // 366/1013: delegate 此前只在"排月度备份提醒"那条路径里顺手装 (BackupStudioKit:108)
         // → 没开月备的用户点任何本地通知都没反应。分派器必须在启动就装好, 与是否开月备无关。
@@ -1267,7 +1270,7 @@ struct RootView: View {
         // 377: 受限区复核用的承载体就是 AppLockView 本身 (reauth 档: 验过只放开 Tab, 不动 appUnlocked)。
         // 用 fullScreenCover 而不是 sheet: 半屏会把底下那层凭证/记录的内容露一角出来。
         .fullScreenCover(isPresented: $app.showGuestGate) {
-            AppLockView(reauth: true)
+            GuestReauthGate()
                 .environmentObject(app)
         }
         // 乱源治理第 2 批: 被预算压掉的提醒在这里逐条给回它原来的动作 (sheet 而不是 cover ——
@@ -1338,17 +1341,10 @@ struct RootView: View {
                 // 完成后切换进主界面, 其 .task 触发 onLaunch 结算
                 OnboardingView(onExit: { app.onboardingFinished = true })
                     .environmentObject(app)
-            } else if app.appUnlocked, app.decoyMode {
-                // 390: 伪装口令进来的会话只渲染空壳, 主 TabView 与其 .task(onLaunch/回连) 都不执行
-                DecoyShellView()
-            } else if app.appUnlocked {
-                mainTabsChrome
             } else {
-                AppLockView()
-                    // 解锁的"穿越感": 门禁界面轻微放大溶解, 主界面从后面浮现
-                    .transition(.asymmetric(
-                        insertion: .opacity,
-                        removal: .scale(scale: 1.08).combined(with: .opacity)))
+                // 2026-10-17 拍板 A: 应用锁启动门禁已删 (伪装口令 390 随之不可达, 一并移除)。
+                // 进 App 只分两种形态: 首启引导 / 主界面。
+                mainTabsChrome
             }
         }
     }
@@ -1565,12 +1561,8 @@ struct RootView: View {
     private func handleScenePhase(_ phase: ScenePhase) {
         LinkSense.shared.setSceneActive(phase == .active)
         if phase == .active {
-            // 393/394: 到点该锁就先落锁, 且锁定后不再跑自动开锁与回连巡检
-            if app.appUnlocked, LockGuard.shouldLockOnForeground() {
-                LockGuard.clearDuressMark()
-                app.decoyMode = false
-                withAnimation(DS.Motion.standard) { app.appUnlocked = false }
-            }
+            // 2026-10-17 拍板 A: 「到点自动落锁」随启动门禁一起删 —— 现在没有锁屏页可回,
+            // 留着它只会把 appUnlocked 置 false, 让深链/落点/回连那些 guard 静默失效。
             if app.appUnlocked {
                 // 靠近自动开锁 (AUTOOPEN): F0 前台门 + F1 进前台按档位刷面容 (挂起期静默)
                 AutoOpenController.shared.onForeground(mac: app.currentMac)
@@ -1646,359 +1638,52 @@ struct ToastView: View {
     }
 }
 
-// ---------- 应用锁 (JS utils/passcode.js 语义) ----------
-struct AppLockView: View {
+// ---------- 377 访客受限区复核 (2026-10-17 拍板 A: 只走面容/指纹, 不再有本机密码) ----------
+/// 原承载体是 AppLockView 的口令键盘。启动门禁删掉后, 口令这个凭据在本机已不存在,
+/// 复核只剩生物识别一条路 —— 所以这里是一个**只做一件事**的小页, 不重建第二个解锁面。
+struct GuestReauthGate: View {
     @EnvironmentObject var app: AppState
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    /// 377 复核档: 同一套验证 (含 389 冷却 / 396 随机键位 / 390 伪装 / 391 胁迫 / 395 救援 / 877 生物降级),
-    /// 通过后只放开访客受限区 (AppState.commitUnlock(reauth:)), 不改 appUnlocked。
-    /// 用它而不是新写一个口令页: 第二个解锁面意味着第二套绕过方式与两套失败留痕口径。
-    var reauth = false
-    @State private var pw = ""
-    @State private var failed = false
-    @State private var breathe = false
-    @State private var failCount = 0   // 877 应用锁连败计数: 3 次后切大字替代键降级路径
-    @State private var faceFailStreak = 0   // 235 面容连败计数: 2 次未识别自动落回密码键盘
-    @State private var autoFaceAsked = false   // 面容优先: 每次面对锁屏只自动弹一次
-    /// 877 验证降级路径: 生物识别**连败三次**后，键盘换成 56pt 起的大按键密码盘。
-    /// 判据挂在面容失败上而不是口令失败上 —— 口令连败那一条早就有 (下面 failCount 出的大字生物键)，
-    /// 缺的是反方向: 脸被拒了三次之后，手指还能不能舒服地按对口令。会话态，不落脚本盘。
-    @State private var bigKeys = false
-    @State private var faceHint = false     // 235 落回后的可见提示 (只有真未识别才置, 取消/中断不计)
-    @State private var cooling = 0      // 389 冷却剩余秒数 (>0 时不接受输入)
-    @State private var keyOrder: [String] = (0...9).map { String($0) }.shuffled()  // 396 每次进锁屏重排
-    @State private var manualEntry = false   // 396 "改用完整键盘": 救援码/含字母的历史口令仍可输入
-    @FocusState private var focused: Bool
-
-    /// 396 随机数字键盘的启用条件: 开关开 **且** 本机密码确认为纯数字。
-    /// 后者是关键护栏: 密码摘要不可反推字符集, 历史遗留的含字母密码一旦只给数字键盘就永远输不进去。
-    private var useKeypad: Bool {
-        DB.store.getBool(SecKey.randomKeys, false)
-            && DB.store.getBool(SecKey.randKeyDigits, false)
-            && !manualEntry
-    }
-
-    /// 面容验证的唯一入口 (2026-10-14 抽出): 877 的"连败三次后大字替代键"与新的"默认先要脸"共用
-    /// 同一份成功/失败口径。分成两处写就会长出两套连败计数 —— 取消只记事件不计连败、两次未识别
-    /// 落回键盘、三次未识别切 56pt 大键, 这三条只能有一份真相。
-    private func runBiometric() {
-        AuthKit.verifyBiometric {
-            LockGuard.resetStreak()
-            LockGuard.clearDuressMark()
-            LockGuard.noteSession(how: "生物识别")
-            app.commitUnlock(reauth: reauth)
-            failCount = 0
-            faceFailStreak = 0
-            faceHint = false
-        } onFail: { why in
-            // 392: 面容失败/中断也进留痕 (原句: 时间+方式+连败次数)。
-            // "识别不匹配/锁停"按一次失败计 (走 389 同一条连败+冷却); 用户取消/改用密码
-            // 只是中断, 记事件但不计连败 —— 把取消算试错会让下次输错就被罚冷却。
-            if why == "识别不匹配" || why == "连续失败已锁停生物识别" {
-                LockGuard.registerFailure(how: "面容")
-                failCount += 1
-                // 235: 面容两次未识别不再干等 — 自动落回密码键盘 (键盘态本就在场,
-                // 这里只置提示并在完整键盘档拉焦点), 与 877 的"密码连败出面容键"合成双向退路
-                faceFailStreak += 1
-                if faceFailStreak >= 2 {
-                    faceHint = true
-                    failed = false   // 陈旧口令错误行让位: 否则它的分支把面容提示挡在 !failed 之外不现身
-                    if !useKeypad { focused = true }
-                    LockGuard.appendTrace("面容两次未识别, 自动落回密码键盘")   // 235 面容两次未识别
-                }
-                // 877 反方向降级: 脸被拒三次之后给一套按得准的大键, 而不是继续要人用脸。
-                // 键序回到自然序 (0…9) —— 刚被系统拒绝三次的人不该再去猜 396 那张随机盘;
-                // 随机序是防偷看的安全特性, 口令连败那一条路仍然照 396 走, 两者不互相顶替。
-                if faceFailStreak == 3 {
-                    bigKeys = true
-                    manualEntry = false
-                    focused = false
-                    keyOrder = (0...9).map { String($0) }
-                    LockGuard.appendTrace("面容三次未识别, 切 56pt 大按键密码盘")   // 877 面容三次未识别
-                    AXTools.announce("面容连续三次没认出来, 已换成大按键密码盘")
-                }
-            } else {
-                LockGuard.appendTrace("应用锁面容验证中断 — \(why) (不计连败)")
-            }
-        }
-    }
-
-    /// 拍板 2026-10-14: 开了本机密码时**默认先要脸**, 通不过再落回口令键盘。
-    /// · 每次面对锁屏只自动弹一次 (autoFaceAsked), 不重复打扰;
-    /// · 冷却中 / 已判失败时不弹 —— 冷却里弹面容等于给 389 的罚时开后门;
-    /// · 延后一个 runloop 发起: 转场动画期间起 LAContext 会被系统 systemCancel 吞掉,
-    ///   用户只会看到"没弹脸就要密码", 那还不如不接这一条。
-    private func biometricFirstOnAppear() {
-        guard !autoFaceAsked else { return }
-        autoFaceAsked = true
-        guard AuthKit.biometricAvailable, cooling <= 0, !failed else { return }
-        DispatchQueue.main.async { runBiometric() }
-    }
-
-    var body: some View { vkBody.destined(.appLock) }
-    var vkBody: some View {
-        VStack(spacing: DS.Space.l) {
-            Spacer(minLength: DS.Space.xl)
-
-            // 门禁入口的第一眼: 玻璃圆盘托住盾形锁, 缓慢呼吸 (±3% / 3.2s) —
-            // 静止的锁屏像贴图, 会呼吸的像正在值守的门卫
-            Image(systemName: "lock.shield.fill")
-                .font(.system(size: 38, weight: .medium))
+    @State private var busy = false
+    @State private var note = "用面容/指纹确认是你本人后, 放开凭证与设置两页"
+    var body: some View {
+        VStack(spacing: DS.Space.m) {
+            Image(systemName: "faceid")
+                .font(.system(size: 44))
                 .foregroundStyle(DS.Palette.accentText)
-                .frame(width: 92, height: 92)
-                .axGlassCircle()
-                .scaleEffect(breathe ? 1.03 : 1)
                 .accessibilityHidden(true)
-                .onAppear {
-                    guard !reduceMotion else { return }
-                    withAnimation(.easeInOut(duration: 3.2).repeatForever(autoreverses: true)) { breathe = true }
-                }
-
-            VStack(spacing: DS.Space.s) {
-                Text(reauth ? "凭证与设置已收起" : "离线锁管家已锁定")   // 377 凭证与设置已收起
-                    .vkFont(.title2, weight: .semibold)
-                    .foregroundStyle(DS.Palette.text)
-                Text(reauth ? "访客模式进行中, 重输本机密码才放开这两页" : "输入本机密码以查看门锁与凭证")
-                    .vkFont(.footnote)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .multilineTextAlignment(.center)
+            Text("凭证与设置已收起")
+                .vkFont(.headline)
+            Text(note)
+                .vkFont(.footnote)
+                .foregroundStyle(DS.Palette.textSub)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+            Button {
+                Task { await verify() }
+            } label: {
+                Text(busy ? "验证中…" : "验证")
+                    .frame(maxWidth: .infinity, minHeight: DS.Hit.min)
             }
-
-            VStack(spacing: DS.Space.s) {
-                // 877: 大键档与 396 随机档共用同一份 keypad (差别只在 tall 与键序), 不另造第二套键盘 ——
-                // manualEntry 一旦为真 (人点了"改用系统键盘"), 两档都必须让位给完整输入框,
-                // 否则含字母的密码在大键档里永远输不进去。
-                if (useKeypad || bigKeys), !manualEntry {
-                    keypad
-                } else {
-                // 自定义 Binding 而非 onChange: 后者在新 SDK 已废弃, 且会连带触发弃用警告
-                TextField("本机密码", text: Binding(get: { pw }, set: { newValue in
-                    pw = newValue
-                    if failed { withAnimation(DS.Motion.quick) { failed = false } }
-                }))
-                    .textContentType(.password)
-                    .textFieldStyle(.plain)
-                    .multilineTextAlignment(.center)
-                    .padding(.vertical, DS.Space.m)
-                    .padding(.horizontal, DS.Space.l)
-                    // 2026-10-14 材质统一: 口令输入框上玻璃 (锁屏页整页都是暗底, 输入框是这一页的主表面)。
-                    // 下面那枚 overlay 必须留着且不能换成玻璃: 它画的是"输错/聚焦"状态色, 不是装饰边。
-                    .axGlass(DS.Radius.control)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: DS.Radius.control)
-                            .strokeBorder(failed ? DS.Palette.danger : DS.Palette.hairline,
-                                          lineWidth: focused || failed ? 1.5 : 0.5)
-                    )
-                    .frame(maxWidth: 280)
-                    .focused($focused)
-                    .submitLabel(.go)
-                    .onSubmit(unlockAttempt)
-                }
-
-                if failed {
-                    Label(cooling > 0 ? "冷却中, \(cooling) 秒后可再试" : "密码错误, 请重新输入",
-                          systemImage: cooling > 0 ? "hourglass" : "exclamationmark.circle.fill")
-                        .vkFont(.footnote)
-                        .foregroundStyle(DS.Palette.danger)
-                        .transition(.opacity)
-                }
-                // 235: 面容两次未识别后的可见落点 (字面引导回密码键盘; 取消/改用密码等中断不触发)
-                if faceHint, !failed {
-                    Label("面容两次未识别, 请用本机密码继续", systemImage: "faceid")   // 235 面容两次未识别
-                        .vkFont(.footnote)
-                        .foregroundStyle(DS.Palette.warn)
-                        .transition(.opacity)
-                }
-            }
-
-            Button(reauth ? "验证" : "解锁", action: unlockAttempt)
-                .buttonStyle(PrimaryActionStyle())
-                .frame(maxWidth: 280)
-                .keyboardShortcut(.return, modifiers: [])
-                .disabled(pw.isEmpty || cooling > 0)
-            // 877 验证降级大键: 连败 3 次后, 设备支持 Face ID / Touch ID 时给大字替代键 (56pt+)
-            if failCount >= 3, AuthKit.biometricAvailable {
-                Button("用 Face ID / Touch ID 解锁 (大字)") {
-                    runBiometric()   // 2026-10-14 面容优先: 处理逻辑抽到 runBiometric, 两处共用一份
-                }
-                .vkFont(.title2, weight: .semibold)
-                .padding(.vertical, DS.Space.m)
-                .padding(.horizontal, DS.Space.xl)
-                .frame(maxWidth: 280)
-                .frame(minHeight: 56)
-                .background(DS.Palette.accentText.opacity(0.09),
-                            in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
-                .foregroundStyle(DS.Palette.accentText)
-                .accessibilityLabel("生物识别解锁, 大字替代键")
-            }
-            // 377: 复核档必须给一条退路 —— 全屏罩上没有返回键, 不给取消就等于把人扣在口令页里
-            if reauth {
-                Button("取消, 先不进这两页") { app.showGuestGate = false }
-                    .vkFont(.footnote, weight: .medium)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .frame(minHeight: DS.Hit.min)
-            }
-
-            Spacer(minLength: DS.Space.xl)
+            .buttonStyle(.borderedProminent)
+            .disabled(busy)
+            Button("取消") { app.showGuestGate = false }
+                .frame(minHeight: DS.Hit.min)
         }
-        .padding(DS.Space.xl)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .dsScreenBackground()
-        .animation(DS.Motion.soft, value: failed)
-        // 389: 冷却读秒 (锁屏页是唯一入口, 秒表只在这一页跑)
-        .onAppear {
-            cooling = Int(LockGuard.cooldownLeft().rounded(.up))
-            if useKeypad { keyOrder = (0...9).map { String($0) }.shuffled() }   // 396 每次进锁屏重排
-            manualEntry = false
-            faceFailStreak = 0
-            faceHint = false
-            // 877: 大键档是**本次会话**的降级, 重新面对锁屏时回到常态键盘 (与 faceFailStreak 同生同灭,
-            // 留下一份落不掉的"大键状态"反而会让下次进来的人找不到熟悉的键位)
-            bigKeys = false
-            biometricFirstOnAppear()   // 2026-10-14 面容优先 (通不过再落回键盘, 见 runBiometric)
-        }
-        .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { _ in
-            guard cooling > 0 else { return }
-            let left = Int(LockGuard.cooldownLeft().rounded(.up))
-            cooling = left
-            if left <= 0 { withAnimation(DS.Motion.quick) { failed = false } }
-        }
+        .padding(DS.Space.l)
+        .task { await verify() }
     }
-
-    /// 396 随机数字键盘: 每次进入锁屏重排 (keyOrder 的初值在 @State 声明里 shuffled(), onAppear 再洗一次),
-    /// 只收数字; 救援码与历史遗留的含字母口令走"改用完整键盘"分支, 不把人锁在门外。
-    private var keypad: some View {
-        VStack(spacing: DS.Space.s) {
-            Text(pw.isEmpty ? "—" : String(repeating: "·", count: pw.count))
-                .vkFont(.title2.monospaced())
-                .foregroundStyle(DS.Palette.text)
-                .accessibilityLabel(pw.isEmpty ? "尚未输入" : "已输入 \(pw.count) 位")
-                .frame(maxWidth: 280)
-            let cols = [GridItem(.flexible(), spacing: DS.Space.s),
-                        GridItem(.flexible(), spacing: DS.Space.s),
-                        GridItem(.flexible(), spacing: DS.Space.s)]
-            LazyVGrid(columns: cols, spacing: DS.Space.s) {
-                ForEach(keyOrder.prefix(9), id: \.self) { d in digitKey(d, tall: bigKeys) }
-                Button { pw = "" } label: { KeyCap("清空", tall: bigKeys) }
-                    .accessibilityLabel("清空已输入")
-                digitKey(keyOrder.last ?? "0", tall: bigKeys)
-                Button { if !pw.isEmpty { pw.removeLast() } } label: { KeyCap("退格", tall: bigKeys) }
-                    .accessibilityLabel("退格删除一位")
-            }
-            .frame(maxWidth: 280)
-            // 877: 大键档一旦是**生物识别连败**切进来的, 页面上必须写清为什么换了键盘 ——
-            // 无声地换一套键位会让人以为 App 坏了, 而这正是刚被面容拒绝三次的人最不该有的怀疑。
-            if bigKeys {
-                Label("面容连续三次没认出来, 已换成大按键密码盘", systemImage: "keyboard")
-                    .vkFont(.footnote)
-                    .foregroundStyle(DS.Palette.warn)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Button(bigKeys ? "改用系统键盘 (救援码或含字母的密码)"
-                           : "改用完整键盘 (救援码或含字母的旧密码)") {
-                manualEntry = true
-                focused = true
-            }
-            .vkFont(.footnote)
-            .foregroundStyle(DS.Palette.accentText)
-            .frame(minHeight: DS.Hit.min)
-            .accessibilityHint("切回系统键盘输入非数字内容")
+    private func verify() async {
+        guard !busy else { return }
+        busy = true
+        defer { busy = false }
+        if await AuthKit.verifyBiometricAsync(reason: "放开凭证与设置") {
+            app.commitUnlock(reauth: true)
+        } else {
+            note = "未通过面容/指纹确认, 这两页仍收着"
         }
-    }
-
-    /// 877 大按键档: 生物识别连败后切的降级键盘 —— 命中区 56pt 起 (拍板原句"按钮 56pt 起")。
-    /// 非大键档走原形状 (DS.Hit.min), 一处也不改, 免得把 396 随机键盘的既有排版带偏。
-    private func digitKey(_ d: String, tall: Bool = false) -> some View {
-        Button {
-            guard pw.count < 12, cooling == 0 else { return }
-            pw += d
-            if failed { withAnimation(DS.Motion.quick) { failed = false } }
-        } label: { KeyCap(d, tall: tall) }
-            .accessibilityLabel("数字 \(d)")
-    }
-
-    private struct KeyCap: View {
-        let text: String
-        let tall: Bool
-        init(_ t: String, tall: Bool = false) { text = t; self.tall = tall }
-        var body: some View {
-            Text(text)
-                .vkFont(tall ? .title2.weight(.medium) : .title3.weight(.medium))
-                .frame(maxWidth: .infinity, minHeight: tall ? 56 : DS.Hit.min)
-                // 2026-10-14 材质统一: 12 枚键帽同批上玻璃。这里的降级面必须仍带描边 ——
-                // 键帽是实底时靠色块之间的缝隙分格，降成实底后若无边，整片键盘会糊成一块板。
-                .axGlass(DS.Radius.control)
-                .foregroundStyle(DS.Palette.text)
-        }
-    }
-
-    private func unlockAttempt() {
-        guard !pw.isEmpty else { return }
-        let input = pw
-        pw = ""
-        // 389 冷却中: 连验证都不执行 (穷举式试探被时间闸门挡住)
-        if cooling > 0 || LockGuard.cooldownLeft() > 0 {
-            cooling = Int(LockGuard.cooldownLeft().rounded(.up))
-            LockGuard.appendTrace("冷却期内尝试输入被拒 (剩 \(cooling) 秒)")
-            withAnimation(DS.Motion.quick) { failed = true }
-            AXTools.announce("正在冷却, 请 \(cooling) 秒后再试")
-            return
-        }
-        // 先验本机密码: 历史配置里伪装/胁迫口令可能与真密码相同 (旧版设置页没做这条冲突校验),
-        // 若让口令分支抢先匹配, 机主输入真密码只会进空壳 = 自己把自己锁死。
-        if DB.verifyPasscode(input) {
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
-            focused = false
-            failCount = 0
-            LockGuard.resetStreak()
-            LockGuard.clearDuressMark()
-            LockGuard.noteSession(how: "本机密码")
-            // 377: 复核档下这一支只放开受限 Tab, 常规门禁这一支才落 appUnlocked
-            app.commitUnlock(reauth: reauth)
-            return
-        }
-        // 390 伪装口令 / 391 胁迫口令: 反馈与真解锁一致, 否则开关本身就是破绽
-        if LockGuard.isDecoy(input) {
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
-            focused = false
-            LockGuard.noteSession(how: "伪装口令")
-            withAnimation(DS.Motion.standard) { app.decoyMode = true; app.appUnlocked = true }
-            // 377: 复核档里命中伪装口令同样收封面 —— 空壳语义 (390) 不因走的是复核而露破绽
-            if reauth { app.showGuestGate = false }
-            return
-        }
-        if LockGuard.isDuress(input) {
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
-            focused = false
-            LockGuard.markDuress()
-            AlertTone.alert(.duress)   // 733 胁迫急促三音: 总开关 + 本档独立开关**都打开**才响 (风险见 AlertTone 文件头)
-            LockGuard.noteSession(how: "胁迫放行")
-            app.commitUnlock(reauth: reauth)
-            return
-        }
-        // 395 一次性救援码 (命中即作废)
-        if LockGuard.consumeRescue(input) {
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
-            focused = false
-            failCount = 0
-            LockGuard.resetStreak()
-            LockGuard.noteSession(how: "救援码")
-            app.commitUnlock(reauth: reauth)
-            return
-        }
-        UINotificationFeedbackGenerator().notificationOccurred(.error)
-        LockGuard.registerFailure()   // 389 连败计数与冷却 + 392 留痕
-        failCount += 1
-        cooling = Int(LockGuard.cooldownLeft().rounded(.up))
-        if failCount >= 3 { AXTools.announce("密码连续输错, 可改用下方大字生物识别解锁") }
-        withAnimation(DS.Motion.quick) { failed = true }
     }
 }
 
-// ---------- 通用组件 ----------
-// 按压反馈 (idea 213 统一按压态): 轻缩放 0.96 + 阴影抬升, 只做 transform 不改 bounds,
-// 不引起周围布局抖动。全 App 通用按钮统一走这一份。
-/// 按压反馈本体 (原 PressableButtonStyle 的视觉, 一字未动) —— 拆出来给下面那层闸复用。
 struct PressFeedback: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label

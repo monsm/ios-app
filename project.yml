@@ -49,7 +49,7 @@ targets:
         NSLocationWhenInUseUsageDescription: 为"到家自动开锁"这类到位置身功能预留；当前版本不读取你的坐标，位置数据不出本机。
         # 缺这条 = 一弹面容就废：本仓已有四处调 LAContext.evaluatePolicy
         # (AuthKit 877 口令连败大字键 / AutoOpen 严格档 F1 门控 / CredentialCenterView 502 彻底删除双验)。
-        NSFaceIDUsageDescription: 用面容确认这一步是本人在操作：应用锁连败后的替代键、靠近自动开锁的严格档、以及彻底删除回收站凭证前的二次确认。
+        NSFaceIDUsageDescription: 用面容确认这一步是本人在操作：毁灭级操作前的复核、访客模式放开凭证与设置前的复核、靠近自动开锁的严格档。
         NSPhotoLibraryAddUsageDescription: 将成就分享卡保存到相册 (完全本地生成, 不上传)。
         # 包8/411 恢复页相机扫码识别二维码备份 (纯本地 CoreImage 解码, 无网络)
         NSCameraUsageDescription: 识别备份二维码, 用于换机扫码搬运 (411, 全程本地解码无网络)。
