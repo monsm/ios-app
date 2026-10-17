@@ -400,9 +400,11 @@ enum DB {
         store.remove("kf_pending_pair_" + m)
     }
 
+    /// 只清钥匙串本身。**不动**未完成的配网记录: 配网尾链失败时 UI 的 rollback 会调到这里,
+    /// 而那一份记录正是"再点一次配网就能接着配完"的依据 (2026-10-17 真机截图里的承诺就是它)。
+    /// 真要连记录一起清 —— 用户主动删设备 —— 走 `removeDevice`。
     static func removeKeychain(_ mac: String) {
         let m = normalizeMac(mac)
-        clearPendingPair(m)   // 删设备要连"未完成的配网记录"一起删, 否则下次配对先撞上一份过期密钥
         SecretStore.remove(secretAccount(m, "skey"))
         SecretStore.remove(secretAccount(m, "bkey"))
         SecretStore.remove(secretAccount(m, "ekey"))
@@ -415,6 +417,7 @@ enum DB {
     static func removeDevice(_ mac: String) {
         let m = mac.replacingOccurrences(of: ":", with: "").lowercased()
         removeKeychain(m)
+        clearPendingPair(m)   // 删设备 = 连"未完成的配网记录"一起删 (否则下次配对先撞上一份过期密钥)
         for p in ["kf_ledger_", "kf_snap_", "kf_logcache_", "kf_defend_", "kf_tailgate_", "kf_synctime_", "otpStatus_", "otpIdx_", "kf_fevents_", "kf_lockmeta_", "kf_migok_",
                   "kf_batt_", "kf_batt_state_", "kf_mevents_", "kf_maint_", "kf_fwsince_", "kf_clock_notify_", "kf_damp_last_", "kf_fp_last_", "kf_care_notify_",
                   "kf_cbin_", "kf_cqueue_", "kf_cstar_", "kf_calert_", "kf_clists_", "kf_cseq_",

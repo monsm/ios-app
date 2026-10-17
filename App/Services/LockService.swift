@@ -774,8 +774,20 @@ final class LockService: ObservableObject {
         let kc = try await finishPairing(m: m, deviceId: deviceId, skey: skey, bkey: bkey, pins: pins,
                                         trackid: pending.trackid, resumable: resumable, progress: progress)
         DB.clearPendingPair(m)   // 尾链成功才摘掉中断记录 (先删再落库会造出"无保护"窗口)
+        cleanWrongOrderTwin(m)
         connectedMAC = m
         return kc
+    }
+
+    /// 清掉一份"MAC 正好反过来"的幽灵台账。2026-10-17 的 rc=12 (mac地址不正确) 就是这么来的:
+    /// 旧版把广播里的**线上序** macRaw 当 MAC 落库, 那份记录从未与锁对上过一次话, 却会一直挂在
+    /// 设备页里 (同一把锁两条记录, 删了一条另一条还在)。配网成功后顺手清掉 ——
+    /// 只在**配对确实成功**时做, 所以不会误删一份正在用的台账。
+    private func cleanWrongOrderTwin(_ mac: String) {
+        let twin = HexKit.reversePairs(mac).lowercased()
+        guard twin != mac, DB.keychain(twin) != nil else { return }
+        DB.removeKeychain(twin)
+        log("warn", "清掉一份 MAC 顺序相反的幽灵台账 (\(twin)) — 旧版把广播线上序当锁 MAC 留下的")
     }
 
     /// 配网尾链 (步骤 5~7 + 落库)。**完整配网与续配共用同一条尾链** ——

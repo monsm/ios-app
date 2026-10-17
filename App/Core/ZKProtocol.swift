@@ -182,6 +182,20 @@ enum ZKProtocol {
     }
 
     // ---------- 广播厂商段解析 (JS services/ble.js parseAdv; 依据 BLEAdData.java) ----------
+    /// 台账 / 0x88 包络要用的门锁 MAC —— **显示序** (小写无冒号)。
+    /// 广播厂商段里那 6 字节是**线上序** (`macRaw`), 两者逐字节相反:
+    ///   macRaw = "95ccc593b9fb"  ⇔  锁的 MAC = "fbb993c5cc95"
+    /// (与 Android `BluetoothDevice.getAddress()` 同序 —— 原版 APK 就是把那个值当 TargetMAC 用的,
+    ///  再由 `kt.getBytes()` 反转成线上序; 见 docs/BRICK-AUDIT.md §10。)
+    /// 单独立一个口的原因: 2026-10-17 真机配对在 PIN 批次第 1 批回 rc=12「mac地址不正确」——
+    /// 拿 `macRaw` 当 MAC 用, 包络里又 reversePairs 一次 ⇒ 送出的 MAC 正好是**反的**。
+    /// 锁因此什么都没写, 只是拒绝 (rc≠0)。
+    static func lockMac(fromAdv adv: AdvData) -> String? {
+        guard let d = adv.macDisplay else { return nil }
+        let m = d.replacingOccurrences(of: ":", with: "").lowercased()
+        return m.count == 12 ? m : nil
+    }
+
     struct AdvData {
         var frameCtrl: Int
         var pid: Int

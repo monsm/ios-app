@@ -289,7 +289,10 @@ struct AddDeviceView: View {
 
     // 写硬件类动作一律先确认: 配网会生成本机密钥并写入门锁, App 内无法撤销
     private func confirmPair(_ d: BLEAdvDevice, _ adv: ZKProtocol.AdvData?) {
-        guard flow == .scan, let adv, let mac = adv.macRaw else { return }
+        // MAC 一律取**显示序** (ZKProtocol.lockMac) —— 2026-10-17 真机: 这里原先用 adv.macRaw,
+        // 而包络里还会 reversePairs 一次 ⇒ 锁收到的 0x88 TargetMAC 正好是反的, 05 之后的每一步
+        // 都回 rc=12「mac地址不正确」(锁什么都没写, 只是拒绝), 且台账里会多一份永远对不上号的幽灵记录。
+        guard flow == .scan, let adv, let mac = ZKProtocol.lockMac(fromAdv: adv) else { return }
         let display = adv.macDisplay ?? "—"
         // 255 MAC 去重拦截: 本地已有该锁 → 不进配网, 引导跳转
         if let existing = DB.keychain(mac) {

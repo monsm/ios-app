@@ -604,7 +604,10 @@ enum DFURunner {
             for d in ble.allDiscovered() {
                 let adv = ZKProtocol.parseAdv(d.advertisHex)
                 let nameHit = d.name.range(of: "ZkDFU", options: .caseInsensitive) != nil
-                if let a = adv, let mac = a.macRaw {
+                // MAC 一律取**显示序** (与台账/包络同一口径): wantA 是台账里的锁 MAC (显示序),
+                // 而广播段里那 6 字节是线上序 —— 旧写法拿 a.macRaw 比, 于是这个匹配**永远不成立**,
+                // 只剩名字兜底 (名字兜底又要 MAC 后 8 位对得上, 同样对不上) ⇒ 升级搜不到 DFU 设备。
+                if let a = adv, let mac = ZKProtocol.lockMac(fromAdv: a) {
                     let macHit = (mac == wantA || mac == wantB)
                     let dfuHit = a.dfuState == 1 && a.pid == pid
                     if (macHit && dfuHit) || (nameHit && a.pid == pid) { return d.deviceId }
