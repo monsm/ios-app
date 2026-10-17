@@ -547,7 +547,7 @@ enum StatsKit {
                 let isThis = d >= tStart
                 let inLast = d >= lStart && d < lEnd
                 guard isThis || inLast else { continue }
-                var map = isThis ? thisM : lastM
+                let map = isThis ? thisM : lastM
                 var rec = map[k] ?? DailyPoint(day: startOfDay(d), key: k, opens: 0, alarms: 0)
                 if openTypes.contains(e.type) {
                     rec.opens += 1
@@ -857,7 +857,7 @@ enum StatsKit {
                 guard let d = dateOf(l), d >= from, d < to else { continue }
                 let k = dayKey(d)
                 let hm = cal.component(.hour, from: d) * 100 + cal.component(.minute, from: d)
-                var rec = byDay[k] ?? (hm, hm)
+                let rec = byDay[k] ?? (hm, hm)
                 byDay[k] = (min(rec.0, hm), max(rec.1, hm))
             }
             return byDay

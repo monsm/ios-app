@@ -9,6 +9,10 @@ import UIKit
 import LocalAuthentication
 
 // ---------- 系统辅助旗标 (226/227/862/863): 每帧评估, 由 RootView .id(appearanceSeed) 重建兜底 ----------
+/// Swift 6: 本族读的全是 UIKit 的 @MainActor 旗标 (UIAccessibility.*), 所以整族就住在主 actor 上。
+/// 它以前是 nonisolated —— 那不是"能读", 只是 Swift 5 允许跨隔离同步调用; Swift 6 直接判错。
+/// 代价为零: 读它的只有视图与设计令牌, 两者本来就在主 actor。
+@MainActor
 enum AXFlags {
     /// 862 增强对比: hairline/textSub 加深一档的触发条件 (DS.Palette 内部消费)
     /// ⚠ 2026-10-13 run 57 打脸: 此前写 `UIAccessibility.accessibilityDisplayShouldIncreaseContrast` ——
@@ -87,7 +91,7 @@ extension DS {
     /// 226 降透明实测: hero 面退纯色 (取品牌渐变暗端 heroB; 863 反转档取降级暗端)。
     /// 选暗端的理由: 纯色只有一层底可兜, 而纯白压 heroB 的比值已在 tools/contrast.js C 段机检 (≥4.5:1),
     /// 卡内纹理/柔光/黑纱叠上去只会更稳; 前景色仍由 heroFg 给, 这里只换底, 不动 863 的反转判定。
-    static var heroSolid: Color { AXFlags.invertColors ? Color.invHeroBottom : Palette.themed("heroB") }
+    @MainActor static var heroSolid: Color { AXFlags.invertColors ? Color.invHeroBottom : Palette.themed("heroB") }
 
     /// 226+863 hero 面唯一出口 (沿用旧名 heroGradientSafe, 12 个消费点不用挨个改):
     /// 降透明 → 纯色 (226); 反转色 → 中性降级渐变 (863); 常规 → 品牌渐变。
@@ -95,8 +99,18 @@ extension DS {
     /// 迟早在某个页面上漂开 —— 收在这一处, 主控卡/开锁盘/成就卡/导出卡/帮助页/引导页同帧一起换。
     struct HeroSurface: ShapeStyle {
         func resolve(in environment: EnvironmentValues) -> AnyShapeStyle {
-            if environment.accessibilityReduceTransparency || DS.Appearance.highContrast { return AnyShapeStyle(DS.heroSolid) }
-            if AXFlags.invertColors { return AnyShapeStyle(DS.heroInvertGradient) }
+            // 判据全部取自 EnvironmentValues, 不读 UIAccessibility 全局: resolve 是渲染期回调,
+            // 而系统旗标在 Swift 6 下属于主 actor。环境里本来就有同样三个值 (降透明/增强对比/反转),
+            // 走环境既没有隔离问题, 也保证同一次渲染里所有令牌看到的是同一份环境。
+            // App 内的 kf_hc 皮肤不是系统状态, 直接读偏好 (Store 线程安全, 不涉及隔离)。
+            let flat = environment.accessibilityReduceTransparency
+                || environment.accessibilityContrast == .high
+                || DB.store.getBool("kf_hc")
+            if flat {
+                let base = environment.accessibilityInvertColors ? Color.invHeroBottom : Palette.themed("heroB")
+                return AnyShapeStyle(base)
+            }
+            if environment.accessibilityInvertColors { return AnyShapeStyle(DS.heroInvertGradient) }
             return AnyShapeStyle(Gradient.hero)
         }
     }
@@ -110,7 +124,7 @@ extension DS {
 
     static var heroGradientSafe: HeroSurface { HeroSurface() }
     /// 压在 hero 面上的前景色: 常规 = 纯白 (机检六套主题两端 ≥4.5:1); 反转 = 与降级底同侧的 text
-    static var heroFg: Color { AXFlags.invertColors ? Palette.text : .white }
+    @MainActor static var heroFg: Color { AXFlags.invertColors ? Palette.text : .white }
 }
 
 // ---------- 朗读词表 (880): accessibilityLabel 统一走这里, 审计口径 = 本文件 ----------
@@ -155,6 +169,7 @@ enum AXTerms {
 }
 
 // ---------- 主动播报 / 触感 / 焦点巡检 / 对比度 (852/876/855/883) ----------
+@MainActor
 enum AXTools {
     /// 852 错误主动播报: UIAccessibility.post — VO 运行时即时朗读, 非运行时排队不影响
     static func announce(_ text: String) {
@@ -295,8 +310,11 @@ enum AuthKit {
         return true
     }
     @discardableResult
-    static func verifyBiometric(_ onSuccess: @escaping () -> Void,
-                                onFail: ((String) -> Void)? = nil) -> Bool {
+    // 两个回调标 @MainActor: 它们最终写的是界面状态, 而 evaluatePolicy 的 reply 是 @Sendable 的 ——
+    // 只有把回调本身标成"主 actor 隔离"(因此 Sendable), 才能在 reply 里安全地跨到主 actor 执行,
+    // 而不是靠 assumeIsolated 赌线程。
+    static func verifyBiometric(_ onSuccess: @escaping @MainActor () -> Void,
+                                onFail: (@MainActor (String) -> Void)? = nil) -> Bool {
         let ctx = LAContext()
         var err: NSError?
         guard ctx.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &err),
@@ -314,7 +332,8 @@ enum AuthKit {
     }
     /// 392: 面容失败的原因翻成人话 —— 留痕要能读到"到哪一步没成" (不匹配/取消/锁停分开),
     /// 只记一句笼统的"失败"等于有记录读不出事。取消/改用密码是人的选择, 由调用方决定不计连败。
-    static func reasonText(_ err: Error?) -> String {
+    /// 纯函数 (只做 LAError 到中文的映射, 不碰 UI) —— 显式 nonisolated, 让非 UI 层也能直接问原因。
+    nonisolated static func reasonText(_ err: Error?) -> String {
         guard let e = err as? LAError else { return "未知原因" }
         switch e.code {
         case .authenticationFailed: return "识别不匹配"

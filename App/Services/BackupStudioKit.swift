@@ -6,7 +6,7 @@ import Foundation
 import UIKit
 import CoreImage.CIFilterBuiltins
 import BackgroundTasks
-import UserNotifications
+@preconcurrency import UserNotifications   // 通知中心对象是系统侧线程安全的, SDK 未标 Sendable
 
 // ---------- 分区模型 (407: 设备/凭证/记录/设置 四分区 + 181 OTP 开关) ----------
 struct BZones: Codable, Equatable {
@@ -1595,10 +1595,14 @@ enum BackupStudio {
 }
 
 // ---------- UNUserNotificationCenter delegate 单例 (1018 通知点按 → 还原点 + 指路备份) ----------
-final class UNDelegate: NSObject, UNUserNotificationCenterDelegate {
+/// @unchecked Sendable 的依据是**没有可保护的状态**: 本类零存储属性, 唯一职责是把点按转发成
+/// 主 actor 上的路由动作 (每个分支都已经 Task { @MainActor in })。不是"把检查关掉", 是无锁可上。
+final class UNDelegate: NSObject, UNUserNotificationCenterDelegate, @unchecked Sendable {
     static let shared = UNDelegate()
+    // 方法名必须是 `withCompletionHandler:`。原写法 `completionHandler:` 与协议要求只差一个前缀,
+    // 编译器给的是 nearly-matches 告警, 而运行时这一支**永远不被调用** —— 通知点按等于没接。
     func userNotificationCenter(_ c: UNUserNotificationCenter, didReceive r: UNNotificationResponse,
-                               completionHandler: @escaping () -> Void) {
+                               withCompletionHandler completionHandler: @escaping () -> Void) {
         if r.notification.request.identifier == "kf.bk.monthly" {
             Task { @MainActor in
                 await BackupStudio.onMonthlyTap()

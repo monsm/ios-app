@@ -151,7 +151,7 @@ final class AuditLog {
         guard months > 0 else { return }
         AuditLog.chainLock.lock()
         defer { AuditLog.chainLock.unlock() }
-        var evs = load()
+        let evs = load()
         let cutoff = Date().timeIntervalSince1970 - Double(months) * 30.44 * 86400
         var kept = evs.filter { $0.ts >= cutoff }
         let n = evs.count - kept.count

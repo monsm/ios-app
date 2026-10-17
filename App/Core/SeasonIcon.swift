@@ -41,6 +41,7 @@ enum SeasonIcon {
     /// ① 开关没开; ② 系统不允许换图标 (supportsAlternateIcons == false);
     /// ③ 这一季已经对齐过 (用年-季记号防"每次回前台都调一次 API")。
     /// 与用户手动选过的图标冲突时**不覆盖**：只有当他选的就是别的季节图标且季节确实变了才换。
+    @MainActor
     static func syncIfNeeded(now: Date = Date()) {
         guard autoOn else { return }
         let app = UIApplication.shared

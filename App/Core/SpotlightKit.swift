@@ -9,7 +9,9 @@
 // 成员名**不在**本版索引里: 凭证页有 pwd:/fp: 两条真落点, 成员详情没有对应的编程式入口,
 // 索引进去点不开就是第二次谎报。落点接通后再补, 不在这里挂空条目。
 import Foundation
-import CoreSpotlight
+// CSSearchableIndex / CSSearchableItem 是系统侧线程安全的对象, 但 SDK 未标 Sendable ——
+// 用 @preconcurrency 桥接 (Apple 给这类"事实上线程安全、尚未标注"的框架留的官方通道), 不是关检查。
+@preconcurrency import CoreSpotlight
 import UniformTypeIdentifiers
 
 enum SpotlightKit {
@@ -66,12 +68,19 @@ enum SpotlightKit {
     // ---------- 写入 ----------
     /// 档案有任何变化就排队重刷 (0.6s 合并): 一次连续改名不该写索引五次。
     static func scheduleReindex() {
-        pending?.cancel()
         let item = DispatchWorkItem { reindexNow() }
-        pending = item
+        // "上一次排的那个"是跨线程共享的可变状态 (台账写入可能在任何线程), 裸 static var 在 Swift 6 下判错。
+        // 取旧值 + 写新值必须在**同一个临界区**里完成: 分成两步的话, 两次并发改名会各自 cancel 掉
+        // 对方刚排上的那一个, 最后谁也没刷 —— 这不是编译问题, 是真的会漏索引。
+        let old = pending.withLock { p -> DispatchWorkItem? in
+            let o = p
+            p = item
+            return o
+        }
+        old?.cancel()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6, execute: item)
     }
-    private static var pending: DispatchWorkItem?
+    private static let pending = Locked<DispatchWorkItem?>(nil)
 
     static func reindexNow() {
         let items = buildItems()

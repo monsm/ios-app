@@ -23,6 +23,9 @@ enum QuickActions {
     /// 一次性中转键: 只存"哪个快捷项被点过"，不存任何数据内容 (值本身在消费后立即删除)。
     static let tappedKey = "kf_quick_action"
 
+    /// 写 UIApplication.shared.shortcutItems = 改系统主屏菜单, UIKit 侧主 actor。
+    /// 调用点只有 App 启动那一次 (.task), 本来就在主 actor 上。
+    @MainActor
     static func install() {
         UIApplication.shared.shortcutItems = table.map {
             UIApplicationShortcutItem(type: $0.type, localizedTitle: $0.title, localizedSubtitle: "",

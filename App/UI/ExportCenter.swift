@@ -323,6 +323,10 @@ extension ExportItem {
 }
 
 // ================= 导出进度 (692 生成可取消, 不阻塞 UI) =================
+/// 导出进度是纯界面状态 (@Published 三枚), 整类住在主 actor:
+/// · @Published 必须在主线程写 (BLEService 头注里那条真机崩溃就是这个原因);
+/// · 生成体仍走 Task.detached —— 重活一点都没有被拉回主线程, 性能口径不变。
+@MainActor
 final class ExportProgress: ObservableObject {
     @Published var running = false
     @Published var step = ""
@@ -349,27 +353,31 @@ final class ExportProgress: ObservableObject {
         lastLabel = label; lastWork = work; lastFinish = finish
         cancel()
         running = true; done = nil; failed = ""
+        // Task { } 从 @MainActor 的 start() 里创建, 因此**继承主 actor 隔离** ——
+        // 原来那三层 await MainActor.run 是多余的 (而且每层都要把一个 @Sendable 闭包
+        // 连人带 self 一起塞过去, 正是告警的来源)。生成体依旧 Task.detached, 不占主线程。
         task = Task { [weak self] in
             guard let self else { return }
-            await MainActor.run { self.step = label; self.running = true }
+            self.step = label
+            self.running = true
             // 生成放后台线程 (UI 不阻塞); 取消时拦"收尾写回" (692)
             let child = Task.detached(priority: .userInitiated) { work() }
-            await MainActor.run { self.child = child }
+            self.child = child
             let item = await child.value
             let cancelled = Task.isCancelled || child.isCancelled
-            await MainActor.run {
-                self.child = nil
-                self.running = false
-                self.step = ""
-                if let v = item, !cancelled {
-                    self.done = v
-                    UINotificationFeedbackGenerator().notificationOccurred(.success)
-                    finish(v, "")
-                } else {
-                    self.failed = cancelled ? "已取消" : "生成失败"
-                    if !cancelled { UINotificationFeedbackGenerator().notificationOccurred(.error) }
-                    finish(nil, self.failed)
-                }
+            self.child = nil
+            self.running = false
+            self.step = ""
+            // finish 走 self.lastFinish 而不是捕获局部闭包: 后者不是 Sendable,
+            // 一旦被送进 Task 闭包就是 Swift 6 的"non-Sendable capture"。
+            if let v = item, !cancelled {
+                self.done = v
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                self.lastFinish?(v, "")
+            } else {
+                self.failed = cancelled ? "已取消" : "生成失败"
+                if !cancelled { UINotificationFeedbackGenerator().notificationOccurred(.error) }
+                self.lastFinish?(nil, self.failed)
             }
         }
     }
@@ -396,7 +404,7 @@ enum ExportKit {
         var out = [ExportRecord]()
         for (i, e) in entries.enumerated() where i < cls.count {
             let c = cls[i]
-            var dayKey = e.lockTimeStr.count >= 10 ? String(e.lockTimeStr.prefix(10)) : "未知"
+            let dayKey = e.lockTimeStr.count >= 10 ? String(e.lockTimeStr.prefix(10)) : "未知"
             // 口径只有一份：StatsKit.alarmTypes (这行原来自己写着 5 个 `type ==`，值今天恰好相同，
             // 但"恰好相同"不是保证 —— 加一类告警时漏改这里，导出就会把告警标成正常行)
             let alarm = StatsKit.alarmTypes.contains(e.type)
@@ -1040,11 +1048,15 @@ enum ExportKit {
 
     // ---------- 703 系统邮件直发 ----------
     /// MFMailCompose 的完成回调 (取消/发送/失败后关闭编辑器)。delegate 是 weak —— 必须常驻, 不留实例引用。
-    final class MailDismisser: NSObject, MFMailComposeViewControllerDelegate {
+    /// 无状态单例: 零存储属性, 唯一职责是把邮件编辑器收起来 —— 所以 @unchecked Sendable 有依据
+    /// (没有可保护的状态, 不是把检查关掉)。
+    /// MessageUI 的 delegate 要求**不是** @MainActor 隔离的 (与 UIKit 本体不同), 而 dismiss 是 ——
+    /// 因此不能把本类整体拉上主 actor (那样会与协议要求冲突), 只能在回调里跳一次。
+    final class MailDismisser: NSObject, MFMailComposeViewControllerDelegate, @unchecked Sendable {
         static let shared = MailDismisser()
         func mailComposeController(_ controller: MFMailComposeViewController,
                                    didFinishWith result: MFMailComposeResult, error: Error?) {
-            controller.dismiss(animated: true)
+            Task { @MainActor in controller.dismiss(animated: true) }
         }
     }
 

@@ -138,6 +138,8 @@ enum QuickPool {
 }
 
 /// 目标视图集中一处，免得 DeviceHomeView 里散落十个 `if`
+/// 十个目标视图的 init 都是主 actor 的 (View 协议隔离), 所以这一枚也必须在主 actor 上。
+@MainActor
 @ViewBuilder
 func quickDestination(_ id: String) -> some View {
     switch id {

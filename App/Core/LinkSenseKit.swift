@@ -159,7 +159,7 @@ final class LinkSense: ObservableObject {
             // 也不改上面那条单锁链的任何判断 (它仍然只决定当前锁要不要预热)。
             if !Task.isCancelled { await preconnectOthers() }
             if dev.rssi >= -55, let host = AppState.hostRef, !(CareSchedule.quietOn && CareSchedule.isQuietHour()) {   // 99 近场轻提醒 (274 免扰时段静默)
-                DS.Haptics.tick.impactOccurred()
+                Task { @MainActor in DS.Haptics.tick.impactOccurred() }
                 host.showToast("锁就在附近, 已就绪")   // 99 锁就在附近
             }
             BleTelemetry.recordAttempt(mac: mac, ok: true, reason: "预握手 \(ms)ms")

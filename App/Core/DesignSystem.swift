@@ -249,6 +249,9 @@ enum DS {
     ///   tick    = light 档: 围栏解锁/进度刻度/就绪轻震 (269) 等过程触感
     ///   trigger = medium 档: 手势确认触发/断连提醒 (243) 等动作触感
     ///   结果档   = UINotificationFeedbackGenerator 的 success/warning/error, 只用于操作结果
+    /// UIFeedbackGenerator 是 UIKit 对象 (主 actor)。整族标主 actor: 触感是 UI 反馈,
+    /// 调用点只有视图动作; 唯一一处非 UI 调用 (预握手节律) 显式跳主 actor, 见 LinkSenseKit.preconnect。
+    @MainActor
     enum Haptics {
         static let tick = UIImpactFeedbackGenerator(style: .light)
         static let trigger = UIImpactFeedbackGenerator(style: .medium)
@@ -357,7 +360,7 @@ enum DS {
         /// 为什么要 App 内这一个: 系统的对比度开关是全局的，很多人不愿为这一个 App 改整机;
         /// 而"我就是想在看锁的时候字更硬"是 App 内可以满足的。加强项三组 (分隔线/次级文本加深 +
         /// 862 玻璃卡降实底)，不引入新颜色 —— 用的就是原本给系统高对比准备的那对令牌。
-        static var highContrast: Bool { AXFlags.highContrast || DB.store.getBool("kf_hc") }
+        @MainActor static var highContrast: Bool { AXFlags.highContrast || DB.store.getBool("kf_hc") }
     }
 
     enum Palette {
@@ -390,8 +393,8 @@ enum DS {
         // 页面继续引用 hairline/textSub 不感知, 只有这两组"增强"变体不同。
         private static let hairlineHC = Color.adaptive(0x98A6B8, 0x5C7084)
         private static let textSubHC  = Color.adaptive(0x38445A, 0xC2CFE2)
-        static var hairlineStrong: Color { Appearance.highContrast ? hairlineHC : hairline }
-        static var textSubStrong: Color { Appearance.highContrast ? textSubHC : textSub }
+        @MainActor static var hairlineStrong: Color { Appearance.highContrast ? hairlineHC : hairline }
+        @MainActor static var textSubStrong: Color { Appearance.highContrast ? textSubHC : textSub }
 
         // ---------- 品牌主题表 (idea 31: 靛蓝/墨绿/琥珀) ----------
         // 结构: [主题: [明暗: [角色: hex]]]。tools/contrast.js 机检本表:
@@ -806,12 +809,12 @@ extension DS {
     static var heroScrim: Color { Color.black.opacity(0.20) }
     /// 右上那团"光源": 常规是白纱 (压暗纱之下, 机检 E4 已把它算进叠层), 863 反转档换成黑纱,
     /// 否则白纱落在中性浅底上等于什么都没画。
-    static var heroGlow: Color { AXFlags.invertColors ? Color.black.opacity(0.10) : Color.white.opacity(0.12) }
+        @MainActor static var heroGlow: Color { AXFlags.invertColors ? Color.black.opacity(0.10) : Color.white.opacity(0.12) }
     /// hero 面上的玻璃底板 (HeroStat / HeroPill / 节日胶囊 / 状态胶囊 / 耗时标签共用)
     static var heroPlate: Color { Color.black.opacity(0.22) }
     /// hero 面上的淡色状态字 (在线绿 / 超时黄): 常规是淡色压深渐变 (机检 ≥5.7:1),
     /// 863 反转档与 heroFg 同源降级为 text —— 淡色压中性浅底只有 1 点几比, 会整个消失。
-    static func heroTint(_ light: Color) -> Color { AXFlags.invertColors ? Palette.text : light }
+        @MainActor static func heroTint(_ light: Color) -> Color { AXFlags.invertColors ? Palette.text : light }
 }
 
 /// 玻璃胶囊 (hero 渐变上的专属变体): 压暗底板 + heroFg 字。

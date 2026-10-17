@@ -2275,7 +2275,9 @@ struct PwdDetailStudio: View {
 }
 
 // ================= 323 删除双签: 删除成员最后一枚指纹需前缀验证任一在用密码 =================
-func fpDoubleSignCheck(mac: String, batch: Int, confirmTitle: String, action: @escaping () -> Void) {
+// 这一枚是 UI 入口 (内部要弹 UIAlertController + 走 confirmDestructive), 所以整条下沉主 actor。
+@MainActor
+func fpDoubleSignCheck(mac: String, batch: Int, confirmTitle: String, action: @escaping @MainActor () -> Void) {
     // 档案已经不在这台锁的台账里 (并发删除/切锁) ⇒ 没有任何可删的东西。原先这里直接 action()，
     // 而调用方那条异步体重读一次 DB 就静默返回 —— 界面什么都不说，人以为删掉了。
     // 现在两支都不越过「先问一句」：无档案 = 不做，有档案 = 必确认。

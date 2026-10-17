@@ -102,7 +102,10 @@ enum BatteryCare {
     static var appLowBattery: Bool {
         let mac = DB.preferredMac()
         guard !mac.isEmpty else { return false }
-        if let c = lowCacheLock.withLock({ $0 }), c.mac == mac { return c.low }
+        // 缓存值是**非可选**元组 (Locked 里存的永远是最后一组读数, 空值由 mac == "" 表示),
+        // 原写法 `if let c = ...` 是 OSAllocatedLock 时代的残留 —— 那时 withLock 返回 Optional。
+        let cached = lowCacheLock.withLock { $0 }
+        if cached.mac == mac { return cached.low }
         let pct = displayPct(mac, snapshot: DB.readStatus(mac)?.powerLevel ?? -1)
         guard pct >= 0 else { return false }
         let low = isLow(pct)

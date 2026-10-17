@@ -1289,7 +1289,7 @@ enum DiagHealth {
 // ---------- 753 诊断摘要二维码 (CoreImage 本地生成, 扫码即得本机可读文本) ----------
 enum DiagQR {
     static func image(for text: String) -> UIImage? {
-        var filter: CIFilter! = CIFilter(name: "CIQRCodeGenerator")
+        let filter: CIFilter! = CIFilter(name: "CIQRCodeGenerator")
         guard let input = filter, let data = text.data(using: .utf8) else { return nil }
         input.setValue(data, forKey: "inputMessage")
         input.setValue("M", forKey: "inputCorrectionLevel")

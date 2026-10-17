@@ -1189,10 +1189,14 @@ struct SettingsView: View {
             return
         }
         UIApplication.shared.setAlternateIconName(name) { error in
-            if let error {
-                app.showToast("更换失败: \(error.localizedDescription)")
-            } else {
-                currentIcon = name
+            // 完成回调是 @Sendable 的 (系统在任意线程回): 两处写入都是主 actor 状态,
+            // 所以跳一次主 actor 再写 —— 不是 assumeIsolated 赌线程。
+            Task { @MainActor in
+                if let error {
+                    app.showToast("更换失败: \(error.localizedDescription)")
+                } else {
+                    currentIcon = name
+                }
             }
         }
     }

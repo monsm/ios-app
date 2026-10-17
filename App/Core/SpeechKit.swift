@@ -7,7 +7,11 @@
 import AVFoundation
 
 enum Speech {
-    static let synth = AVSpeechSynthesizer()
+    /// 唯一的合成器实例 —— 由一把锁持有, 而不是裸 static let。
+    /// AVSpeechSynthesizer 不是 Sendable, 裸 static let 在 Swift 6 下判"非隔离全局共享可变状态";
+    /// 而它**确实是**共享可变状态 (isSpeaking / speak / stop 必须看同一份, 否则两句话会叠音)。
+    /// 上锁 = 让原语保证互斥, 不是把检查关掉。朗读是低频动作, 一次锁的开销在听感上不可测。
+    private static let synth = Locked(AVSpeechSynthesizer())
 
     /// 中文朗读。`rate` 默认 0.5：系统档位里 0.5 是"清楚但不赶"的一档，逐位报码那种要更慢。
     /// 开口前先 stop 掉上一句 —— 老人跟着抄一串叠音的密码，比不念更糟。
@@ -18,8 +22,10 @@ enum Speech {
         let u = AVSpeechUtterance(string: t)
         u.voice = AVSpeechSynthesisVoice(language: "zh-CN")
         u.rate = rate
-        if synth.isSpeaking { synth.stopSpeaking(at: .immediate) }
-        synth.speak(u)
+        synth.withLock { s in
+            if s.isSpeaking { s.stopSpeaking(at: .immediate) }
+            s.speak(u)
+        }
         return true
     }
 
@@ -36,5 +42,7 @@ enum Speech {
 
     /// 收页时调用: 引导卡关了却还在念下一张的内容, 比不念更让人摸不着头脑。
     /// (没有留 `isSpeaking` 这种读点 —— 全仓没有读者, 而 AVFoundation 自己也随时能问。)
-    static func stop() { if synth.isSpeaking { synth.stopSpeaking(at: .immediate) } }
+    static func stop() {
+        synth.withLock { s in if s.isSpeaking { s.stopSpeaking(at: .immediate) } }
+    }
 }

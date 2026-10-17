@@ -666,7 +666,9 @@ struct DeviceHomeView: View {
     // 786 "只有 Hero 区响应翻锁": 手势就挂在这个 TabView 上, 页面别处 (圆盘纵向滑、下拉刷新、Tab 栏) 各管各的轴,
     // 所以不需要任何 gesture 仲裁 —— 两套手势抢同一条轴的写法才是这里要避免的。
     private var heroPager: some View {
-        TabView(selection: $pageIndex) {
+        // 环境值先取出来: scrollTransition 的闭包是 @Sendable, 里面不能直接读主 actor 的 @Environment。
+        let stillMotion = reduceMotion
+        return TabView(selection: $pageIndex) {
             ForEach(Array(pagedLocks.enumerated()), id: \.offset) { i, kc in
                 statusCard(for: kc)
                     .padding(.horizontal, DS.Space.xs)
@@ -677,7 +679,7 @@ struct DeviceHomeView: View {
         // 23 HeroCard 滚动视差 (Halide): 身份卡随页面上滚以约三分之一倍速跟手, 制造"卡片浮在内容上"的层次。
         // 只动位移; 翻面 (78)/低电触感 (113/120)/reduceMotion 退化全部不动。
         .scrollTransition(.interactive, axis: .vertical) { content, phase in
-            content.offset(y: reduceMotion ? 0 : phase.value * 36)
+            content.offset(y: stillMotion ? 0 : phase.value * 36)
         }
         .animation(DS.Motion.soft, value: pageIndex)
         // 267 换锁二次确认: 横滑落点换锁后, 首次点圆盘只弹锁名胶囊, 再点才执行

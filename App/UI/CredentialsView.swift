@@ -2690,10 +2690,13 @@ struct HistItem: Identifiable, Hashable {
 
 // ================= 全局弹窗助手 (各页面共用, 不再各写一份) =================
 // 破坏性确认: 取消 / 标红确认
+// UIAlertController 与 topViewController() 都是主 actor 的; 这两个助手只由界面动作调用,
+// 所以整枚函数下沉到主 actor, action 也标 @MainActor (它执行的永远是界面上的"确认"动作)。
+@MainActor
 func confirmDestructive(_ title: String,
                         _ message: String,
                         confirmTitle: String = "确定",
-                        action: @escaping () -> Void) {
+                        action: @escaping @MainActor () -> Void) {
     let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
     alert.addAction(UIAlertAction(title: "取消", style: .cancel))
     alert.addAction(UIAlertAction(title: confirmTitle, style: .destructive) { _ in action() })
@@ -2702,11 +2705,12 @@ func confirmDestructive(_ title: String,
 
 /// 109 删除冷静期: 比 confirmDestructive 更严一档 —— 必须**逐字键入指定词**才能提交,
 /// 并把将被连带删除的数量写进正文 (破坏性动作的"后果预告"要可核对, 不能只说"将删除若干")。
+@MainActor
 func confirmDestructiveTyped(_ title: String,
                              _ message: String,
                              requireWord: String,
                              confirmTitle: String = "确认删除",
-                             action: @escaping () -> Void) {
+                             action: @escaping @MainActor () -> Void) {
     let alert = UIAlertController(title: title,
                                   message: message + "\n\n请输入「\(requireWord)」以解锁删除按钮:",
                                   preferredStyle: .alert)

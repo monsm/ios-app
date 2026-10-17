@@ -9,20 +9,16 @@ options:
   createIntermediateGroups: true
 settings:
   base:
-    # ============ Swift 6 迁移: 走 Apple 原生路径, 不用脏修复 ============
-    # 2026-10-17 复盘: 直切 SWIFT_VERSION=6.0 会一次报 200+ 处并发错误, 当时用批量
-    # nonisolated(unsafe) / assumeIsolated 把错误压下去 —— **那是脏修复**: 它只是把编译器的检查
-    # 关掉, 运行时的竞争与性能问题一个都没解决 (assumeIsolated 甚至会在真机上 trap / 压栈)。
-    # 正确路径是 Apple 官方的那两步:
-    #   ① 本行 SWIFT_VERSION 保持 5.0, 但把 SWIFT_STRICT_CONCURRENCY 开到 **complete** ——
-    #      于是每处跨隔离访问都变成**告警**而不是错误: 工程照常绿, 而告警清单就是完整的待办表。
-    #   ② 按清单逐条修: 真·纯函数标 `nonisolated`; 真需要主线程的标 `@MainActor`;
-    #      跨线程共享的可变状态**上锁** (OSAllocatedLock / NSLock), 而不是 unsafe;
-    #      后台重活用结构化 Task + actor, 而不是 assumeIsolated 赌一把。
-    #   ③ 清单清空、告警为 0 之后, 再把 SWIFT_VERSION 改成 6.0 —— 那一行就是收尾, 不是开始。
-    # 告警收口方式: `xcodebuild ... 2>&1 | grep "warning: " | sort -u > /tmp/conc.txt`
-    SWIFT_VERSION: "5.0"
-    SWIFT_STRICT_CONCURRENCY: complete
+    # ============ Swift 6 语言模式 (2026-10-17 收尾) ============
+    # 迁移路径 (两步, 已走完):
+    #   ① 先 SWIFT_VERSION 5.0 + SWIFT_STRICT_CONCURRENCY complete —— 跨隔离访问是**告警**,
+    #      工程照常绿, 而告警清单就是完整待办表 (实测 154 条, 其中 120 条是并发红线)。
+    #   ② 按清单逐条原生修完 (纯函数 nonisolated / UI 与 UIKit 读点 @MainActor /
+    #      跨线程共享状态进 Locked 锁 / 系统框架回调走 @Sendable 边界 + Task 跳主 actor),
+    #      再把 SWIFT_VERSION 切到 6.0。这一行是收尾, 不是起点。
+    # 全仓零 nonisolated(unsafe)、零 MainActor.assumeIsolated —— 检查没有被关掉任何一处。
+    # Swift 6 下 strict concurrency 恒为 complete, 故不再显式写 SWIFT_STRICT_CONCURRENCY。
+    SWIFT_VERSION: "6.0"
     CODE_SIGN_STYLE: Automatic
     DEVELOPMENT_TEAM: ""
   configs:

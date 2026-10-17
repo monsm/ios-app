@@ -14,7 +14,7 @@
 // 展示层语义: 一次性/周期/暂停锁端协议未定义 (CAPABILITY §4) — 全部按时间窗推断, 标注"约"。
 import Foundation
 import SwiftUI
-import UserNotifications
+@preconcurrency import UserNotifications   // 通知中心对象是系统侧线程安全的, SDK 未标 Sendable
 import os   // 2026-10-13 对抗式排查: 凭证通知排期失败要能查 (原先 try? 静默吞掉)
 // 502 彻底删除的统一门槛口 (guardedPurge) 要问生物识别, 所以本文件也吃这一套系统框架;
 // 与 AccessibilityKit 的 AuthKit (877) 同源, 那边不复用的理由写在 guardedPurge 上方。
@@ -429,12 +429,16 @@ enum CredentialOrg {
     /// commit 落的只有 purgeBin / saveBin 这一条裸执行路, 门槛与执行因此分得开也查得清。
     /// ⚠ 为什么不走 AccessibilityKit 的 `AuthKit.verifyBiometric` (877): 那份把 localizedReason
     ///   写死成代替密码那句, 也没有 denied 分支 —— 502 要说的是彻底删除 N 条, 且未通过时得有第二条路。
+    // 整条门槛在主 actor 上: 它只由界面上的删除按钮触发, 两支回调也都是界面动作。
+    // 两个闭包参数标 @MainActor 之后**本身即 Sendable**, 于是 evaluatePolicy 的 @Sendable reply
+    // 可以合法地把它们转交给主 actor —— 这是 Swift 6 里跨回调边界的原生写法。
+    @MainActor
     static func guardedPurge(_ mac: String, ids: [String], reason: String,
-                             onDeniedPresentFallback: @escaping (_ commit: @escaping () -> Void) -> Void,
-                             onDone: @escaping () -> Void = {}) {
+                             onDeniedPresentFallback: @escaping @MainActor (_ commit: @escaping @MainActor () -> Void) -> Void,
+                             onDone: @escaping @MainActor () -> Void = {}) {
         // onDone 挂在 commit 里，而不是挂在调用方的两条分支上：生物识别那一路如果由 UI 自己补一句回执，
         // 就会出现"刷脸成功了但回执文案只在弹窗那一路有"的分叉。
-        let commit: () -> Void = { purgeNow(mac, ids: ids); onDone() }
+        let commit: @MainActor () -> Void = { purgeNow(mac, ids: ids); onDone() }
         let ctx = LAContext()
         var err: NSError?
         // 可用性与 AuthKit.biometricAvailable (877) 同一判据: canEvaluate 为真却带 biometryNotAvailable
@@ -445,7 +449,9 @@ enum CredentialOrg {
             return
         }
         ctx.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { ok, _ in
-            DispatchQueue.main.async {
+            // reply 在任意线程回来 (且是 @Sendable): 这里只捕获 ok 与两个 @MainActor 闭包 (皆 Sendable),
+            // 真正跳主 actor 由 Task 完成 —— 与 DispatchQueue.main.async 同一语义, 但类型上是结构化的。
+            Task { @MainActor in
                 if ok { commit() } else { onDeniedPresentFallback(commit) }
             }
         }

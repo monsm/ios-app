@@ -87,7 +87,9 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
     @Published private(set) var connectedMAC: String = ""
 
     /// 非主线程也能安全写 @Published: 已在主线程就直接写，否则跳回主线程写 (为什么要跳见上方那段)。
-    private func publishOnMain(_ apply: @escaping () -> Void) {
+    // @Sendable: 这个闭包要交给 DispatchQueue.main.async (@Sendable 参数)。三个调用点都是
+    // `[weak self] in self?.xxx = ...`, self 本身已是 @unchecked Sendable, 所以不需要再包一层。
+    private func publishOnMain(_ apply: @escaping @Sendable () -> Void) {
         if Thread.isMainThread { apply() } else { DispatchQueue.main.async(execute: apply) }
     }
 

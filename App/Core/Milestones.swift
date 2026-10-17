@@ -217,8 +217,12 @@ enum Milestones {
     }
     /// 1005 千次心跳触感 (两拍)
     static func heartbeatHaptic() {
-        UINotificationFeedbackGenerator().notificationOccurred(.success)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
+        // 触感生成器是主 actor 的; 本函数挂在开锁收尾链上 (那一段不保证在主线程), 所以显式跳一次。
+        // 两拍用 Task.sleep 而不是 DispatchQueue.asyncAfter: 同一件事, 但 Task 是结构化并发的一等公民,
+        // 也不必把一个 @Sendable 的 GCD 闭包塞进非隔离函数里 (那正是 Swift 6 判错的那种写法)。
+        Task { @MainActor in
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            try? await Task.sleep(for: .milliseconds(220))
             UINotificationFeedbackGenerator().notificationOccurred(.success)
         }
     }

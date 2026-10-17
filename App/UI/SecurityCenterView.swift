@@ -52,11 +52,13 @@ enum SecKey {
 }
 
 // ---------- 配置变更广播: 子页写完 kf_ 键后 bump, 各页派生文案 2s 节拍内刷新 ----------
+@MainActor
 final class SecTickCenter: ObservableObject {
     static let shared = SecTickCenter()
     @Published private(set) var tick = 0
     func bump() { tick &+= 1 }
 }
+@MainActor
 enum SecTick {
     static func bump() { SecTickCenter.shared.bump() }
 }

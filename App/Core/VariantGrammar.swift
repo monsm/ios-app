@@ -76,6 +76,8 @@ struct VK {
     /// `.legacy` 分支是 `LockKeeperApp.swift` 里原 `Card.body` **逐字搬过来的**，
     /// 一个像素都不该变：「默认值 = 零行为改动」这条承诺靠"把代码搬过来"保证，
     /// 而不是靠"照着再写一份"—— 后者一定会在某个间距上写错。
+    /// 体内走 .axGlass (View 扩展 = 主 actor); 本类型不是 View, 所以显式标主 actor。
+    @MainActor
     func card<Content: View>(tint: Color? = nil, @ViewBuilder _ content: () -> Content) -> AnyView {
         // 用 Optional 而不是拿 Color 比相等：`tint == .clear` 依赖 Color 的 Equatable 实现，
         // 而它比较的是色彩值 —— 语义上"没染色"的写法一变（.clear / Color.white.opacity(0)）就判错。
