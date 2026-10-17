@@ -1766,7 +1766,7 @@ struct TempCodeStudio: View {
                     .padding(DS.Space.s)
                     .variantCallout(DS.Palette.ok, .control, wash: 0.08)
                     .padding(.horizontal, DS.Space.gutter)
-                } else if let r = result, !MemberHub.elderMode {
+                } else if result != nil, !MemberHub.elderMode {   // 原来绑了 r 却从没读过
                     Label {
                         Text("等待首次使用")   // 333 等待首次使用
                             .fixedSize(horizontal: false, vertical: true)
@@ -2640,7 +2640,10 @@ struct FpStudio: View {
         }
         // 319 重录继承: 同成员旧指纹入回收站 (来源"重录替代") + 锁端删除入队
         if replaceOld {
-            for f in DB.listFps(em).filter { $0.owner == owner && $0.batch != Int(b) } {
+            // 先把待清旧的筛成局部量再遍历: 原写法把 filter 的尾随闭包贴在 for 语句后面,
+            // 编译器都怀疑人要看错 (trailing closure in this context is confusable)
+            let staleFps = DB.listFps(em).filter { $0.owner == owner && $0.batch != Int(b) }
+            for f in staleFps {
                 // 确认口径：这一刀是用户在上一步**自己勾上**的 (录入第 2 步那条 Toggle 的文案就把后果写全了：
                 // 「录入成功后将旧指纹移入回收站 (319 重录继承, 保留原备注/归属)」) ⇒ 勾选即知情同意，
                 // 再弹一次确认是把同一句话问两遍。可逆性也在那里兜住：addToBin 在前、锁端删除只是入队，

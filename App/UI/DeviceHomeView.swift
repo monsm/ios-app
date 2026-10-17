@@ -792,7 +792,7 @@ struct DeviceHomeView: View {
                                 .onTapGesture { if isCurrent { showRssi.toggle() } }
                                 .overlay(alignment: .top) {
                                     if isCurrent && showRssi {
-                                        Text("\(sense.lastRssi) dBm")
+                                        Text(sense.lastRssi.map { "\($0) dBm" } ?? "未读到信号")
                                             .vkFont(.caption2.monospacedDigit())
                                             .foregroundStyle(DS.heroFg)
                                             .padding(.horizontal, DS.Space.xs)
@@ -802,7 +802,9 @@ struct DeviceHomeView: View {
                                             .accessibilityHidden(true)
                                     }
                                 }
-                                .accessibilityLabel(isCurrent ? "信号 \(sense.lastRssi) dBm, 轻点显示数值" : "信号")   // 63 信号
+                                .accessibilityLabel(isCurrent
+                                    ? (sense.lastRssi.map { "信号 \($0) dBm, 轻点显示数值" } ?? "信号未读到")   // 63 信号
+                                    : "信号")
                             ConnectMsBadge(ms: sense.connectMs)
                             // 268 状态变化历史: 长按胶囊弹出最近 5 次三态切换时间列表
                             .contextMenu {

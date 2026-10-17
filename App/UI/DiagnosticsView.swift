@@ -1362,9 +1362,18 @@ struct DiagnosticsView: View {
         let pre = String(line[line.startIndex..<first.lowerBound])
         let hit = String(line[first])
         let post = String(line[first.upperBound...])
-        return Text(pre).foregroundColor(base)
-            + Text(hit).fontWeight(.bold).foregroundColor(DS.Palette.accentText)
-            + Text(post).foregroundColor(base)
+        // Text + Text 自 iOS 26 弃用。这里改成 AttributedString 逐段上色:
+        // 上面 1357 行立的规矩是"颜色只能写在 run 上" —— 插值版若在外层再套 foregroundColor(base),
+        // 命中段的强调色会被整体盖掉 (正是那条注释点名的坑), 所以不用插值, 用属性逐段给。
+        // bold 走 inlinePresentationIntent, 与 DesignSystem.mdText 同一手法 (仓库内已被 CI 编过)。
+        var out = AttributedString()
+        for (seg, color, heavy) in [(pre, base, false), (hit, DS.Palette.accentText, true), (post, base, false)] {
+            var a = AttributedString(seg)
+            a.foregroundColor = color
+            if heavy { a.inlinePresentationIntent = .stronglyEmphasized }
+            out.append(a)
+        }
+        return Text(out)
     }
 
     /// 133: 近 20 条断连事件中的失败条数 (≥3 触发急救块)

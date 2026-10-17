@@ -26,7 +26,7 @@ jobs:
     needs: stamp
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: '工作流自检 (step 名里的裸冒号会让严格 YAML 解析器拒收整份工作流)'
         run: |
@@ -41,7 +41,7 @@ jobs:
           echo "工作流 step 名检查 ✓"
 
       - name: Setup Node (金标漂移校验用)
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "24"
 
@@ -242,7 +242,7 @@ jobs:
 
       - name: 上传产物
         if: always()          # 失败也能拿到日志
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: OfflineLock-build
           path: |
@@ -294,10 +294,10 @@ jobs:
       KF_BUILD_STAMP: ${{ needs.stamp.outputs.kf_build_stamp }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "17"
@@ -312,7 +312,7 @@ jobs:
           ls "$ANDROID_HOME/build-tools" || true
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: "8.9"
 
@@ -394,7 +394,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: 上传 APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: KfKey-apk
           # 通配会连 app-debug.apk 一起传上去 (两份同内容不同名, 容易拿错):

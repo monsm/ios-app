@@ -32,7 +32,10 @@ func cjkSpaced(_ s: String, gap: CGFloat = 0.09) -> Text {
         }
     }
     guard hasBoundary else { return Text(s) }        // 纯中文/纯拉丁 → 零成本快路
-    var out = Text("")
+    // Text + Text 自 iOS 26 弃用。这里的形状 (逐字给不同 kern) 插值表达不了,
+    // 所以换成 AttributedString + SwiftUI 的 kern 属性 (attribute-scopes/swiftuiattributes 里在册)。
+    // 不设 .font: 字号仍由调用点外面的 .vkFont 决定, 与原先逐段 .kerning 的层级一致。
+    var out = AttributedString()
     for i in chars.indices {
         let c = chars[i]
         var k: CGFloat = 0
@@ -40,9 +43,11 @@ func cjkSpaced(_ s: String, gap: CGFloat = 0.09) -> Text {
             let b = chars[i + 1]
             if (isCJK668(c) && isLatin668(b)) || (isLatin668(c) && isCJK668(b)) { k = gap }
         }
-        out = out + Text(String(c)).kerning(k)
+        var seg = AttributedString(String(c))
+        if k != 0 { seg.kern = k }
+        out.append(seg)
     }
-    return out
+    return Text(out)
 }
 
 // ---------- 量词表 (656): 计数一律带量词 ----------

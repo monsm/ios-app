@@ -1130,7 +1130,7 @@ struct CredExtendView: View {
                 }
                 Section {
                     BusyButton(title: "延期并登记待下发", isBusy: busy) {
-                        Task { await apply() }
+                        Task { apply() }   // apply() 是同步方法: 那个 await 什么都没等 (UnnecessaryEffectMarker)
                     }
                 }
             }

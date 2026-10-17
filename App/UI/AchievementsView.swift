@@ -367,7 +367,7 @@ private struct BadgeDetailSheet: View {
                         .vkFont(.caption)
                         .foregroundStyle(DS.Palette.accentText)
                 } else {
-                    Text("稀有度: \(badge.rarity)")
+                    Text("稀有度: " + badge.rarity.title)   // 直接插枚举走 appendInterpolation 弃用路径, 打出的是 debug 描述而不是档位名
                         .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                 }

@@ -305,7 +305,10 @@ final class LinkSense: ObservableObject {
         if lockSvc.connectedMAC == mac {
             BLEService.shared.readLinkRSSI { rssi in
                 guard let rssi else { return }   // 读不到就不发明数据 (与安卓同一口径)
-                Self.saveRssi(mac: mac, rssi: rssi)
+                // saveRssi 是 @MainActor 上的静态方法, 而这个闭包由 BLEService 调用 (非隔离类型);
+                // 运行时它确实落在主线程 (CBCentralManager 建在 queue: .main), 但**类型上不保证** ——
+                // 显式跳一次, 与本文件 saveRssi 里喂 feedRssi 的写法同构, 不靠"大概都在主线程"。
+                Task { @MainActor in Self.saveRssi(mac: mac, rssi: rssi) }
             }
             return
         }

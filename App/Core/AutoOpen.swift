@@ -224,7 +224,12 @@ struct AutoOpenGate {
         guard autoOpenOn else { return .off }
         guard !suspended else { return .suspended }
         guard f0Foreground else { return .f0 }
-        guard faceAvailable else { return .f1face }
+        // 生物识别可用性只在**严格档**才是硬条件: 默认档不发起任何面容验证,
+        // 没有 Face ID / 用户关了生物识别的机器上也该能自动开 (机主在场由 F0 兜)。
+        // 上一版把这条放在档位判断之前, 等于 tier 0 也被生物识别可用性否决 —— 死门换个位置留着。
+        if AutoOpenKit.isStrict(faceTier) {
+            guard faceAvailable else { return .f1face }
+        }
         guard AutoOpenKit.faceFresh(tier: faceTier, lastFace: lastFace, now: now,
                                     pendingPrompt: facePendingPrompt, strictSince: facePromptStartedAt)
         else { return .f1face }

@@ -15,7 +15,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import kotlin.math.cos
@@ -589,8 +588,8 @@ private fun ProximityCard(
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    "一次靠近只开一次: 要走开让信号掉到 " + AutoOpenKit.disarmThreshold() + " dBm 以下,"",
-                        " 隔 6 秒后再靠近才会再开。",
+                    "一次靠近只开一次: 要走开让信号掉到 " + AutoOpenKit.disarmThreshold() +
+                        " dBm 以下, 隔 6 秒后再靠近才会再开。",
                     color = InkSub.copy(alpha = 0.75f), fontSize = 12.sp, lineHeight = 17.sp,
                 )
             }
@@ -654,7 +653,9 @@ private fun GearButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
             val c = Offset(size.width / 2f, size.height / 2f)
             val rOut = size.minDimension / 2f
             for (k in 0 until 8) {
-                val a = Math.toRadians(k * 45.0)
+                // toRadians 返回 Double, 而 Offset 的公开构造只吃 Float。少了 toFloat() 编译器会去挑那个
+                // internal 的 Offset(packedValue: Long) 并报「无法访问」—— 括号平衡看不出这种类型错。
+                val a = Math.toRadians((k * 45).toDouble()).toFloat()
                 drawLine(
                     InkSub,
                     Offset(c.x + cos(a) * (rOut - 5f), c.y + sin(a) * (rOut - 5f)),

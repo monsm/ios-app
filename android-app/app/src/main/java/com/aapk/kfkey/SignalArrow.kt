@@ -82,11 +82,16 @@ object HeadingSense {
         val sm = ctx.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
         val sensor = sm?.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
         if (sm == null || sensor == null) { close(); return@callbackFlow }
-        val out = FloatArray(3)
+        val R = FloatArray(9)            // getRotationMatrixFromVector 的输出 (3×3)
+        val out = FloatArray(3)          // getOrientation 的输出 (yaw/pitch/roll)
         val listener = object : SensorEventListener {
             override fun onSensorChanged(e: SensorEvent) {
                 if (e.sensor.type != Sensor.TYPE_ROTATION_VECTOR) return
-                SensorManager.getOrientation(e.values, out)
+                // 必须先把旋转矢量转成 3×3 矩阵再取姿态角。直接把手上的四元数数组喂给
+                // getOrientation 会当场 ArrayIndexOutOfBoundsException (它要的是 9 个元素),
+                // 而这条路只在真机上走得到 —— 编译器与 CI 都看不见这种错。
+                SensorManager.getRotationMatrixFromVector(R, e.values)
+                SensorManager.getOrientation(R, out)
                 var deg = Math.toDegrees(out[0].toDouble()).toFloat()
                 if (deg < 0f) deg += 360f
                 trySend(deg)
@@ -148,7 +153,8 @@ fun SignalArrow(
                 )
             }
             for (k in 0 until 12) {
-                val a = Math.toRadians((k * 30 - 90).toDouble())
+                // 同齿轮那处: Offset 只吃 Float, toRadians 给的 Double 必须转回来
+                val a = Math.toRadians((k * 30 - 90).toDouble()).toFloat()
                 val inner = r - 6.dp.toPx()
                 val outer = r - if (k % 3 == 0) 13.dp.toPx() else 10.dp.toPx()
                 drawLine(

@@ -330,7 +330,7 @@ struct ReadRecordsIntent: AppIntent {
         IntentGovernance.audit(intent: "read", detail: "\(kc.name) · \(recs.count) 条")
         // 2026-10-14: Speech.synth 是共享静态 AVSpeechSynthesizer, 而意图 perform 在后台线程跑 —— 归主线程再朗读。
         let line = "「\(kc.name)」最近开门记录。" + text
-        await MainActor.run { Speech.zh(line) }     // 朗读只走 Speech 这一个出口
+        _ = await MainActor.run { Speech.zh(line) }   // 朗读只走 Speech 这一个出口; 返回值显式丢弃 (NoUsage)
         return .result(dialog: "已朗读「\(kc.name)」的 \(recs.count) 条记录")
     }
 }

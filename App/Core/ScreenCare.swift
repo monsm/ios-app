@@ -2,8 +2,9 @@
 // 336 截图警示 —— 监 `UIApplication.userDidTakeScreenshotNotification` (公开 API, 已按 docs/API-VERIFY.md
 // 撞过官方页: UIKit/UIApplication/userDidTakeScreenshotNotification = 200)。
 // 用 UIScreen.isCaptured (公开 API, iOS 11+) + capturedDidChangeNotification。
-// 刻意用 UIScreen.screens.first 而不是 UIScreen.main —— 后者 iOS 16 起已废弃，
-// 而且多屏 (外接显示) 时"哪块屏在录"本来就不该由 main 猜。
+// 取"正在采集的那块屏"走 scene 一侧 (key window 所在 scene 的 screen)。
+// 历史上这里先用 UIScreen.main (iOS 16 起弃用), 又换成 UIScreen.screens.first (同样弃用) ——
+// 多屏 (外接显示) 时"哪块屏在录"既不该由 main 猜, 也不该由数组顺序猜。
 //
 // 边界写清楚，不过度承诺：这个 API 只能告诉你"系统正在采集屏幕"，
 // 不知道被谁采集、采集到哪；越狱/私有钩子绕过不可防。所以它挡的是"随手录屏留档"，不是硬对抗。
@@ -16,7 +17,7 @@ import SwiftUI   // 常亮修饰符 (ScreenAwakeWhile) 要用 View/ViewModifier 
 @MainActor
 final class ScreenCaptureWatch: ObservableObject {
     static let shared = ScreenCaptureWatch()
-    @Published private(set) var recording = UIScreen.screens.first?.isCaptured ?? false
+    @Published private(set) var recording = false   // 真值由 start() 末尾的 refresh() 落 (不在默认值里用弃用 API)
     /// 336：最近一次系统截图的 Unix 秒；0 = 本进程启动以来没观测到。
     /// 读侧比的是"本页打开时刻"，所以这个值只在同一进程内有意义 (不写盘、不进备份)。
     @Published private(set) var screenshotAt: Double = 0
@@ -42,7 +43,13 @@ final class ScreenCaptureWatch: ObservableObject {
     }
 
     static func refresh() {
-        shared.recording = UIScreen.screens.first?.isCaptured ?? false
+        // UIScreen.screens 自 iOS 16 弃用 (编译器点名改用 scene 一侧)。要的是"用户正在看的这块屏
+        // 是否在录", 所以取 key window 所在 scene 的 screen —— 外接显示时这比 screens.first 那个
+        // "数组里第一个"更有定义。取 key window 的写法仓库里早有先例 (AccessibilityKit:214)。
+        let captured = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .flatMap({ $0.windows }).first(where: { $0.isKeyWindow })?.screen.isCaptured ?? false
+        shared.recording = captured
     }
 
     /// 提示文案统一口径：说清挡什么、不假装能挡什么 (本仓纪律: 不虚构能力)

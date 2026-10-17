@@ -343,8 +343,12 @@ enum BackupStudio {
     static func rescheduleChargeBackup() {
         let req = BGAppRefreshTaskRequest(identifier: chargeBackupTaskId)
         req.earliestBeginDate = Date(timeIntervalSinceNow: 6 * 3600)
-        do { try BGTaskScheduler.shared.submit(req) }
-        catch { MaintenanceLog.record("后台备份排期失败: \((error as NSError).localizedDescription)") }
+        // iOS 27 起 submit(_:) 弃用, 编译器点名换 submitTaskRequest(_:completionHandler:)。
+        // 换完仍然要留痕: 排期失败被吞掉, UI 那句"已交给系统"就成了假话 (2026-10-14 就是为这个改的)。
+        BGTaskScheduler.shared.submitTaskRequest(req) { err in
+            guard let err else { return }
+            MaintenanceLog.record("后台备份排期失败: " + err.localizedDescription)
+        }
     }
     /// UI 文案: 只承诺"注册给系统, 由系统择机执行"
     static var chargeBackupNote: String {

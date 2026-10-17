@@ -107,6 +107,8 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
     /// 连接层测距的单槽回调。只在主线程读写: CBCentralManager 建在 queue: .main (见 init),
     /// 于是 didReadRSSI 与调用点 (LinkSense 的 @MainActor tick) 都在主线程, 不需要再加锁。
     private var rssiCompletion: ((Int?) -> Void)?
+    /// 测距代次: 定时器要判断"等的还是不是我那一次"。
+    private var rssiGeneration = 0
     // 写槽串行化: writeAckCont 是单一槽位, 并发写时后者会覆盖前者的 continuation
     // → 前者永不 resume (挂死 + continuation 泄漏), 而 LockService 与 HardwareService 各有独立 waiter,
     // 共用本服务时确实可并发 (看门狗/回连循环 vs 用户手动操作)。didWriteValueFor 本就按序回调, 串起来即可。
@@ -304,10 +306,13 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
     func readLinkRSSI(timeoutMs: Int = 1500, completion: @escaping (Int?) -> Void) {
         guard let d = device, d.state == .connected else { completion(nil); return }
         rssiCompletion = completion
+        rssiGeneration += 1
+        let myGen = rssiGeneration
         d.readRSSI()
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(timeoutMs)) { [weak self] in
-            // 只回收"还是我这一次"的等待: 回调已落地并换过槽时, 不能把新一轮的槽清掉
-            guard let self, self.rssiCompletion === completion else { return }
+            // 只回收"还是我这一次"的等待。Swift 不允许对闭包用 === 比引用 (run 179 的 error:
+            // cannot check reference equality of functions), 所以用整数代次判断新一轮是否已开始。
+            guard let self, self.rssiGeneration == myGen, self.rssiCompletion != nil else { return }
             self.rssiCompletion = nil
             completion(nil)
         }
