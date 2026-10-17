@@ -2077,7 +2077,10 @@ struct CredentialsView: View {
                 // 375 挡片: 开关开着才出现; 长按移开, 松手复位。
                 // 挡片在顶层会吃掉触摸, 所以 885 的双击在挡片上也挂一份 —— 否则默认开挡片时双击等于失灵。
                 .overlay(alignment: .leading) {
-                    if DB.store.getBool(SecKey.frostedOn, true), !otpPeek {
+                    // 2026-10-17 真机勘误「临时码能生成但不显示」: 挡片默认值原为 true ——
+                    // 生成出来的六位码被一层 .ultraThinMaterial 常驻盖住, 只有长按 0.5s 才露出来,
+                    // 用户看到的就是"空白/******"。默认改为关 (需要的人仍可在设置-安全里打开)。
+                    if DB.store.getBool(SecKey.frostedOn, false), !otpPeek {
                         RoundedRectangle(cornerRadius: DS.Radius.control)
                             .fill(.ultraThinMaterial)
                             .onLongPressGesture(minimumDuration: 0.5, maximumDistance: 50, pressing: { p in

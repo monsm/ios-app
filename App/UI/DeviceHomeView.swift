@@ -1605,9 +1605,14 @@ struct DeviceHomeView: View {
     private func quickLink<Content: View>(icon: String, label: String,
                                           onTap: (() -> Void)? = nil,
                                           @ViewBuilder content: () -> Content) -> some View {
-        NavigationLink { content() } label: {
+        // 2026-10-17 真机勘误「首页快捷操作点了没反应」: 记账原先是挂在 NavigationLink 的 **label**
+        // 上的 simultaneousGesture(TapGesture) —— 同一次点击被两个手势系统抢 (label 的 Tap 与
+        // NavigationLink 自身的激活), 结果就是"次数记上了、页面没进去"。label 现在零手势,
+        // 记账挪到**目的地出现时**, 语义也更准 (用过这一格 = 进过它的页面)。
+        NavigationLink {
+            content().onAppear { onTap?() }
+        } label: {
             quickTileBody(icon: icon, label: label)
-                .modifier(OptionalTap(onTap: onTap))
         }
         .buttonStyle(PressableButtonStyle())
         .accessibilityLabel(label)

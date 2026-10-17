@@ -30,7 +30,7 @@ enum QuickPool {
         QuickAction(id: "addPwd",   icon: "plus.rectangle.on.rectangle", label: "添加密码"),
         QuickAction(id: "otp",      icon: "clock.badge.questionmark",    label: "临时密码"),
         QuickAction(id: "syncTime", icon: "clock.arrow.circlepath",      label: "校准时间"),
-        QuickAction(id: "addFp",    icon: "finger.print",                label: "录指纹"),
+        QuickAction(id: "addFp",    icon: "touchid",                     label: "录指纹"),
         QuickAction(id: "studio",   icon: "wrench.and.screwdriver",      label: "凭证工坊"),
         QuickAction(id: "famNote",  icon: "note.text",                   label: "家庭便签"),
         QuickAction(id: "again",    icon: "arrow.counterclockwise",      label: "再开一次"),   // 921
@@ -153,25 +153,6 @@ func quickDestination(_ id: String) -> some View {
     case "care":     MaintenanceView()
     case "again":    Text("「再开一次」在设备页长按编辑或直接点按, 不需要新页面")   // 921 再开一次
     default:         Text("这个快捷入口对应的页面已不存在，请到设置-外观里重新选择")
-    }
-}
-
-/// 1047: 只在"记频次"时才挂手势的辅助修饰器。
-/// 为什么要专门包一层：SwiftUI 里 `if let f = onTap { view.onTapGesture… } else { view }`
-/// 两个分支返回类型不同，得靠 Group/AnyView 兜 —— 那会让整块玻璃砖的渲染类型都变掉。
-/// ViewModifier 传 nil 时就是原样返回，既不插手势也不改类型。
-struct OptionalTap: ViewModifier {
-    var onTap: (() -> Void)?
-    func body(content: Content) -> some View {
-        if let onTap {
-            // simultaneousGesture 而不是 onTapGesture: 后者会和 NavigationLink 的点击抢手势，
-            // 结果就是"记上了次数但页面没进去"。同时识别才两不耽误。
-            // 写法跟本仓既有的一处 TapGesture 用法一致 (SecurityCenterView:1533 的 `onEnded { … }` 尾闭包形态)；
-            // 不写 `onEnded(perform:)` —— 那个参数标签我没有查证过，别拿猜的签名进代码。
-            content.simultaneousGesture(TapGesture().onEnded { onTap() })
-        } else {
-            content
-        }
     }
 }
 

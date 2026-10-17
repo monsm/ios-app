@@ -1039,13 +1039,13 @@ struct SecurityPeekView: View {
     // ---------- 375 磨砂挡片演示: 常驻磨砂薄层, 长按移开, 松手复位 ----------
     private var frostedDemoRow: some View {
         SecRow(title: "磨砂挡片",
-               subtitle: DB.store.getBool(SecKey.frostedOn, true) ? "OTP 行常驻磨砂, 长按暂时移开" : "关闭",
+               subtitle: DB.store.getBool(SecKey.frostedOn, false) ? "OTP 行常驻磨砂, 长按暂时移开" : "关闭",
                icon: "square.fill.on.square") {
-            VariantToggle("", isOn: bindingBool(SecKey.frostedOn, true))
+            VariantToggle("", isOn: bindingBool(SecKey.frostedOn, false))
                 .labelsHidden()
         }
         .overlay(alignment: .leading) {
-            if DB.store.getBool(SecKey.frostedOn, true), frosted {
+            if DB.store.getBool(SecKey.frostedOn, false), frosted {
                 frostedPlate
             }
         }
@@ -1165,7 +1165,7 @@ struct PrivacyDashboard: View {
         var id: String { key }
         static var all: [PeekItem] {
             [PeekItem(key: SecKey.bgBlurOn, name: "切后台即糊", on: DB.store.getBool(SecKey.bgBlurOn, false)),
-             PeekItem(key: SecKey.frostedOn, name: "磨砂挡片", on: DB.store.getBool(SecKey.frostedOn, true)),
+             PeekItem(key: SecKey.frostedOn, name: "磨砂挡片", on: DB.store.getBool(SecKey.frostedOn, false)),
              // 376/377: 这两格的显示状态一律读判据口, 不在仪表盘里再写第三份 getBool
              PeekItem(key: SecKey.shareHalfOn, name: "分享遮半", on: SecurityPolicy.shareHalf),
              PeekItem(key: SecKey.guestOn, name: "访客通道", on: SecurityPolicy.guestActive),
