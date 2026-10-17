@@ -325,10 +325,12 @@ final class LockService: ObservableObject {
     }
 
     // ---------- 密钥面 ----------
-    /// 换钥 (cmd05) 之后任何一步失败: 锁内 skey 已是新值而本机没存钥匙串,
-    /// 光报"某步失败"会让用户反复重试却永远配不上 (软砖的成因就是这个信息缺失)。
-    static func pairWarning(_ exchanged: Bool, _ msg: String) -> String {
-        exchanged ? "密钥已交换 (锁内 skey 已更新), 但 \(msg) — 本机未保存钥匙串, 门锁需重新做键盘重置后再配网" : msg
+    /// 配网尾链中断的提示。参数是"**本机有没有留存这一份密钥**", 而不是"换钥有没有发生":
+    /// 留存过就不必去门锁键盘做重置 (再点一次配网会跳过换钥接着配完) —— 这是软砖后路的分水岭。
+    static func pairWarning(_ resumable: Bool, _ msg: String) -> String {
+        resumable
+            ? "\(msg) — 本机已留存这一步的密钥 (skey/PIN/bkey), 再点一次配网会接着配完, 不必做键盘重置"
+            : msg
     }
     /// 配网期的 rc → 该怎么办。刻意**不**复用 rcHint: 那一条是"已配对"语境 (rc=3 让你去快捷操作校时),
     /// 而配网期本机还没有钥匙串, 0E 校时根本发不出去 (校时链路要 skey) —— 同一句话在配网语境里是空头支票。
@@ -438,17 +440,39 @@ final class LockService: ObservableObject {
         let (m, sk) = try keys()
         try await execOk(ZKCmdBuilder.cmd25Defence(m, sk, control, startSec, endSec))
     }
-    func syncTime() async throws {
+    /// 校时 (cmd 0E): 发**手机当前时间** —— 与原版 APK synctime 页完全一致
+    /// (那边就是 `new St(En.getNowTimeString(), mac)`, 载荷为手机此刻的协议秒)。
+    /// 旧实现算的是 `target = now + (lockSec - now)`, 数学上等于**把锁自己的钟原样写回去**:
+    /// 屏上报"同步成功"而锁钟一秒没动 —— 而锁的命令有效期判据 (rc=3 命令过期 / rc=13 通讯过期)
+    /// 全看这个钟, 所以这个空操作会把后面每一类命令都拖进时间问题里。
+    /// 先读锁钟现在只用来**报告偏差** (读了不写回去), 再回读一次作为"真的写进去了"的证据 ——
+    /// rc=0 只证明命令被接收, 不证明锁钟变了。
+    @discardableResult
+    func syncTime() async throws -> (before: Int, after: Int) {
         let (m, sk) = try keys()
-        var offset: Int64 = 0
+        let now = ZKProtocol.nowProtoSeconds()
+        var before = 0
         if let lockSec = try? await readLockTime() {
-            offset = lockSec - ZKProtocol.nowProtoSeconds()
+            before = Int(lockSec - now)
+            if before != 0 { log("info", "校时前锁钟比手机\(before > 0 ? "快" : "慢") \(abs(before))s") }
         } else {
-            log("warn", "读锁钟失败, 直接用手机时间")
+            log("warn", "读锁钟失败 (不影响下发: 0E 用手机当前时间)")
         }
-        let target = ZKProtocol.nowProtoSeconds() + offset
-        try await execOk(ZKCmdBuilder.cmd0ESyncTime(m, sk, target))
+        try await execOk(ZKCmdBuilder.cmd0ESyncTime(m, sk, now))
         DB.saveSyncTime(m, Date().timeIntervalSince1970 * 1000)
+        var after = 0
+        if let lockSec = try? await readLockTime() {
+            after = Int(lockSec - ZKProtocol.nowProtoSeconds())
+            log("info", "校时回读: 锁钟偏差 \(after)s")
+            // >60s 不可能是秒级回读误差 (即使固件把锁钟取整到分钟也只有几十秒) ⇒ 当成"压根没写进去"报错,
+            // 而不是拿一句"同步成功"把用户送走。
+            if abs(after) > 60 {
+                throw BLEErrorX.msg("校时命令已被接受, 但回读锁钟仍偏差 \(after)s — 门锁可能忽略了 0E (rc=0 不等于写成功)")
+            }
+        } else {
+            log("warn", "校时回读失败 — 无法确认锁钟已更新")
+        }
+        return (before, after)
     }
     func setSilent(_ on: Bool) async throws {
         let (m, sk) = try keys()
@@ -652,6 +676,27 @@ final class LockService: ObservableObject {
         curMac = m
         defer { pairMac = nil }
 
+        // 0. 续配: 上一次配网在换钥之后中断 (App 被杀 / 08·21·03 任一步失败 / 断链) 时, 锁内 skey
+        //    就是本机留存的那一份 —— 先拿它把尾链走完。走不通 (锁被重新重置过, 密钥域已擦) 再回退整链。
+        //    这是本 App 最接近"变砖"的那条后路: 没有它, 用户手上没锁 (或锁在门上) 就只能干等下次到锁跟前。
+        if let pend = DB.pendingPair(m), !pend.skey.isEmpty, !pend.pins.isEmpty {
+            progress("发现上次中断的配网记录 → 先试续配 (不重新换钥)")
+            log("info", "续配尝试: 用留存密钥直接走尾链 (留存于 \(pend.pairedAt))")
+            do {
+                let kc = try await finishPairing(m: m, deviceId: deviceId, skey: pend.skey.lowercased(),
+                                                bkey: pend.bkey, pins: pend.pins,
+                                                trackid: pend.trackid.isEmpty ? String(KeyGen.genTrackId()) : pend.trackid,
+                                                resumable: true, progress: progress)
+                DB.clearPendingPair(m)
+                connectedMAC = m
+                progress("续配完成: \(kc.pidName.isEmpty ? "pid=\(kc.pid)" : kc.pidName) @ \(m)")
+                return kc
+            } catch {
+                log("warn", "续配不通 (\(error.localizedDescription)) → 回退完整配网链 (锁可能已被再次重置)")
+                progress("续配不通 (锁可能已再次重置) → 走完整配网")
+            }
+        }
+
         progress("步骤 1/7: 探测交换方式 (cmd 23)")
         let w = try await request(ZKCmdBuilder.cmd23ExKeyWay(), cmd: 0x23, needToken: false, retries: 3)
         let way = w.klvs.first(where: { $0.key == 0x01 }).map { StatusParser.intHex($0.val) } ?? 0
@@ -698,40 +743,71 @@ final class LockService: ObservableObject {
                 + " · 回包 " + Self.klvShape(r5))
             throw BLEErrorX.msg("换钥失败 rc=\(rc5) (\(StatusParser.rcMessage(rc5))) — \(Self.pairHint(rc5))")
         }
-        // rc=0 = 锁**已经执行**了交换 (vendor lock.js: 执行即擦旧钥域) ⇒ 从这一刻起锁内密钥可能已是新的。
-        // 旧实现把 keyExchanged = true 写在回显比对**之后**, 于是回显异常那一支只报"已中止",
-        // 读起来像"锁没被动过" —— 真机上用户会一遍遍重试, 而每一遍都可能又换掉一次锁里的钥。
-        let keyExchanged = true
+        // rc=0 = 锁**已经执行**了交换 (vendor lock.js: 执行即擦旧钥域) ⇒ 从这一刻起锁内密钥就是新的。
+        // (旧实现在这里还有一个 `keyExchanged = true` 旗子, 写在回显比对**之后** —— 于是回显异常那一支
+        //  只报"已中止", 读起来像"锁没被动过"; 那个旗子现已全部换成"本机有没有留存密钥"，
+        //  因为对用户真正要紧的不是换钥发没发生, 而是他还能不能不再跑一趟锁跟前。)
         if let echo = r5.klvs.first(where: { $0.key == 0x02 }), echo.val.lowercased() != skey.lowercased() {
             // skey 明文绝不进错误文案: 该串会写入 lastError → DiagLogs → kf.diag_logs (随系统备份) 与 UI 展示
             log("error", "05 换钥回包密钥不一致: 回显 \(echo.val.count) 位 / 本地 \(skey.count) 位 · 回包 " + Self.klvShape(r5))
-            throw BLEErrorX.msg(Self.pairWarning(true,
-                "换钥回显不匹配 (本地/回显长度 \(skey.count)/\(echo.val.count)) — 锁内密钥可能已更新而本机未保存; 请在门锁键盘上重置后重新配网"))
+            // 回显不匹配时**不能**说"再点一次就能续配": 锁端那一份是本机读不懂的, 续配也白搭。
+            // 这类必须去键盘重置 —— 文案与可续配那一族明确分开 (pairWarning(false, ...) 不追加续配承诺)。
+            throw BLEErrorX.msg(Self.pairWarning(false,
+                "换钥回显不匹配 (本地/回显长度 \(skey.count)/\(echo.val.count)) — 锁内密钥已是本机读不懂的一份, 无法续配; 请在门锁键盘上重置后重新配网"))
         }
 
-        progress("步骤 4/7: 获取会话令牌")
-        try await ensureToken()
+        progress("步骤 4/7: 留存本次密钥 (配网中断可续配)")
+        // 从 05 rc=0 这一刻起, 锁内 skey 已经是新的一份。旧实现要等到尾链全部成功才落盘 ⇒ 尾链任一步
+        // 失败就只剩"去门锁键盘重置"一条路 (锁内部密钥对本机不可知 = 软砖)。现在换钥后立即留存,
+        // 尾链走完再提升为正式钥匙串 (saveKeychain + clearPendingPair)。
+        let pending = Keychain(version: 1, mac: m, skey: skey, bkey: bkey, pins: pins,
+                               ekey: ZKCmdBuilder.buildEkeyOpen(skey, m, pins[0]),
+                               trackid: String(KeyGen.genTrackId()), bleId: deviceId, fw: "",
+                               pairedAt: ISO8601DateFormatter().string(from: Date()))
+        let resumable = DB.savePendingPair(pending)
+        if resumable {
+            log("info", "已留存换钥后的密钥 (尾链若中断, 再点一次配网即续配, 无需键盘重置)")
+        } else {
+            log("error", "配网中断保护未能落盘 (系统 Keychain 写失败) — 尾链若中断只能靠门锁键盘重置恢复")
+        }
 
-        progress("步骤 5/7: 同步 PIN 池 (4 批)")
-        let batchSize = 16
-        for i in 0..<4 {
-            let batch = Array(pins[i * batchSize..<(i + 1) * batchSize])
+        let kc = try await finishPairing(m: m, deviceId: deviceId, skey: skey, bkey: bkey, pins: pins,
+                                        trackid: pending.trackid, resumable: resumable, progress: progress)
+        DB.clearPendingPair(m)   // 尾链成功才摘掉中断记录 (先删再落库会造出"无保护"窗口)
+        connectedMAC = m
+        return kc
+    }
+
+    /// 配网尾链 (步骤 5~7 + 落库)。**完整配网与续配共用同一条尾链** ——
+    /// 分开写迟早只改一条, 而"续配"漏一步的后果正好是软砖。
+    private func finishPairing(m: String, deviceId: String, skey: String, bkey: String, pins: [String],
+                               trackid: String, resumable: Bool,
+                               progress: @escaping (String) -> Void) async throws -> Keychain {
+        let batchSize = 16   // APK 用 20 (o>20?20:o) —— 同样 4 批; 16 让单帧更小, 保留
+        let batches = (pins.count + batchSize - 1) / batchSize
+        progress("步骤 5/7: 同步 PIN 池 (\(pins.count) 个 / \(batches) 批)")
+        var i = 0
+        var n = 0
+        while i < pins.count {
+            n += 1
+            let batch = Array(pins[i..<min(i + batchSize, pins.count)])
             let del = (i == 0) ? [KeyGen.delPinSentinel] : []
             guard let c = ZKCmdBuilder.cmd08SyncPinsBatch(m, skey, batch, delPins: del) else {
                 throw BLEErrorX.msg("PIN 批次构建失败")
             }
             let rb = try await exec(c)
             if rb.rc != 0 {
-                log("error", "PIN 批次 \(i + 1) 被锁拒收: rc=\(rb.rc) (\(StatusParser.rcMessage(rb.rc))) · 回包 " + Self.klvShape(rb.frame))
-                throw BLEErrorX.msg(Self.pairWarning(keyExchanged, "PIN 批次 \(i + 1) 失败 rc=\(rb.rc) (\(StatusParser.rcMessage(rb.rc)))"))
+                log("error", "PIN 批次 \(n) 被锁拒收: rc=\(rb.rc) (\(StatusParser.rcMessage(rb.rc))) · 回包 " + Self.klvShape(rb.frame))
+                throw BLEErrorX.msg(Self.pairWarning(resumable, "PIN 批次 \(n) 失败 rc=\(rb.rc) (\(StatusParser.rcMessage(rb.rc)))"))
             }
+            i += batchSize
         }
 
         progress("步骤 6/7: 设置 bkey (cmd 21)")
         let r21 = try await exec(ZKCmdBuilder.cmd21SetBkey(m, skey, bkey))
         if r21.rc != 0 {
             log("error", "21 bkey 被锁拒收: rc=\(r21.rc) (\(StatusParser.rcMessage(r21.rc))) · 回包 " + Self.klvShape(r21.frame))
-            throw BLEErrorX.msg(Self.pairWarning(keyExchanged, "bkey 失败 rc=\(r21.rc) (\(StatusParser.rcMessage(r21.rc)))"))
+            throw BLEErrorX.msg(Self.pairWarning(resumable, "bkey 失败 rc=\(r21.rc) (\(StatusParser.rcMessage(r21.rc)))"))
         }
 
         progress("步骤 7/7: 加密状态校验 (cmd 03)")
@@ -739,17 +815,15 @@ final class LockService: ObservableObject {
         let st = StatusParser.parseStatus(stR.klvs)
         if stR.rc != 0 {
             log("error", "03 加密回读校验被锁拒收: rc=\(stR.rc) (\(StatusParser.rcMessage(stR.rc))) · 回包 " + Self.klvShape(stR.frame))
-            throw BLEErrorX.msg(Self.pairWarning(keyExchanged, "配对校验失败 rc=\(stR.rc) (\(StatusParser.rcMessage(stR.rc)))"))
+            throw BLEErrorX.msg(Self.pairWarning(resumable, "配对校验失败 rc=\(stR.rc) (\(StatusParser.rcMessage(stR.rc)))"))
         }
 
         let kc = Keychain(version: 1, mac: m, pid: st.pid, pidName: st.pidName,
                           skey: skey, bkey: bkey, pins: pins,
                           ekey: ZKCmdBuilder.buildEkeyOpen(skey, m, pins[0]),
-                          trackid: String(KeyGen.genTrackId()),
-                          bleId: deviceId, fw: st.firmware,
+                          trackid: trackid, bleId: deviceId, fw: st.firmware,
                           pairedAt: ISO8601DateFormatter().string(from: Date()))
         DB.saveKeychain(kc)
-        connectedMAC = m
         progress("配网完成: \(st.pidName.isEmpty ? "pid=\(st.pid)" : st.pidName) @ \(m)")
         return kc
     }

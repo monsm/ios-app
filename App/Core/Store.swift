@@ -363,8 +363,46 @@ enum DB {
         store.set("kf_keychains", map)
         SpotlightKit.scheduleReindex()   // 293 锁的新增/改名/换型号都从这一支出, 索引跟着走
     }
+    // ---------- 配网中断保护 (防软砖) ----------
+    /// 05 换钥一 rc=0, 锁内 skey 就已经是**新的**了。本机若没把这套钥落盘, 后面任何一步失败
+    /// (断链 / App 被杀 / 08·21·03 被拒) 都只能靠"去门锁键盘重置一遍"收场 —— 那是最接近"变砖"的状态:
+    /// 锁在你手上、门就在那儿, 却谁也配不上, 而重置需要人到锁跟前。
+    /// 所以: 换钥成功后**先落盘**这套密钥 (密钥材料进系统 Keychain, plist 只留非密字段),
+    /// 尾链走完再提升为正式钥匙串; 走到一半断了就用这份记录**续配** (跳过 05, 不碰锁内密钥域)。
+    static func pendingPairAccount(_ mac: String, _ field: String) -> String { "pair." + normalizeMac(mac) + "." + field }
+    @discardableResult
+    static func savePendingPair(_ kc: Keychain) -> Bool {
+        guard !kc.skey.isEmpty, !kc.pins.isEmpty else { return false }
+        var ok = true
+        for (f, v) in [("skey", kc.skey), ("bkey", kc.bkey), ("ekey", kc.ekey), ("pins", kc.pins.joined(separator: ","))] {
+            if v.isEmpty { SecretStore.remove(pendingPairAccount(kc.mac, f)); continue }
+            if !SecretStore.set(v, for: pendingPairAccount(kc.mac, f)) { ok = false }
+        }
+        var d = kc.toDict()
+        d["at"] = Date().timeIntervalSince1970 * 1000
+        store.set("kf_pending_pair_" + normalizeMac(kc.mac), d)
+        return ok
+    }
+    static func pendingPair(_ mac: String) -> Keychain? {
+        let m = normalizeMac(mac)
+        let d = store.getDict("kf_pending_pair_" + m)
+        guard !d.isEmpty, var kc = Keychain.fromDict(d) else { return nil }
+        kc.skey = SecretStore.get(pendingPairAccount(m, "skey")) ?? ""
+        kc.bkey = SecretStore.get(pendingPairAccount(m, "bkey")) ?? ""
+        kc.ekey = SecretStore.get(pendingPairAccount(m, "ekey")) ?? ""
+        let pins = SecretStore.get(pendingPairAccount(m, "pins")) ?? ""
+        kc.pins = pins.isEmpty ? [] : pins.components(separatedBy: ",")
+        return kc.skey.isEmpty ? nil : kc   // 只有 plist 标记、没有密钥材料 = 无用的残片
+    }
+    static func clearPendingPair(_ mac: String) {
+        let m = normalizeMac(mac)
+        for f in ["skey", "bkey", "ekey", "pins"] { SecretStore.remove(pendingPairAccount(m, f)) }
+        store.remove("kf_pending_pair_" + m)
+    }
+
     static func removeKeychain(_ mac: String) {
         let m = normalizeMac(mac)
+        clearPendingPair(m)   // 删设备要连"未完成的配网记录"一起删, 否则下次配对先撞上一份过期密钥
         SecretStore.remove(secretAccount(m, "skey"))
         SecretStore.remove(secretAccount(m, "bkey"))
         SecretStore.remove(secretAccount(m, "ekey"))
