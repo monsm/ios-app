@@ -9,12 +9,27 @@ options:
   createIntermediateGroups: true
 settings:
   base:
-    SWIFT_VERSION: "5.0"
+    # 2026-10-17 拍板"Swift 也用最新": 语言模式 5 → 6 (严格并发)。
+    # 单靠这一行, 6.4 万行里的全局可变状态/跨隔离捕获会成片报错; 所以同时开 Swift 6.2 的
+    # "approachable concurrency" 两件套:
+    #   · SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor —— 未标注的类型默认落在主 actor 上。
+    #     这个仓是 SwiftUI + BLE 回调(本来就在 .main 队列), 默认主隔离与真实执行面一致;
+    #     267 个 static var 因此天然满足隔离要求, 不必逐个加 @MainActor。
+    #   · SWIFT_APPROACHABLE_CONCURRENCY = YES —— 打开 NonisolatedNonsendingByDefault /
+    #     InferSendableFromCaptures 等 6.2 的默认行为, 减少跨隔离的显式标注。
+    SWIFT_VERSION: "6.0"
+    SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+    SWIFT_APPROACHABLE_CONCURRENCY: YES
     CODE_SIGN_STYLE: Automatic
     DEVELOPMENT_TEAM: ""
   configs:
     Debug:
       ENABLE_TESTABILITY: YES
+    # Release 锁死"最快档": 整模块优化 + 全量优化 + 去断言 (默认就是这三项, 显式写出来防止将来漂)
+    Release:
+      SWIFT_OPTIMIZATION_LEVEL: "-O"
+      SWIFT_COMPILATION_MODE: wholemodule
+      ENABLE_NS_ASSERTIONS: NO
 targets:
   OfflineLock:
     type: application
