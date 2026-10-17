@@ -61,7 +61,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 // ---------- 视觉常量 ----------
@@ -97,7 +96,9 @@ private fun KfApp() {
     var proximity by remember { mutableStateOf(LockStore.loadProximity(ctx)) }
     var rssi by remember { mutableStateOf<Int?>(null) }
     var pending by remember { mutableStateOf<LockInfo?>(null) }   // 待二次确认的绑定
-    var lastAuto by remember { mutableStateOf(0L) }
+    var lastAuto by remember { mutableStateOf(0L) }                 // 上次自动下发时刻 (冷却基准)
+    var armed by remember { mutableStateOf(false) }                // 回差滤波后的"已武装"位
+    var fired by remember { mutableStateOf(false) }                // 本次接近事件是否已发过 04
 
     fun say(text: String, bad: Boolean = false) {
         status = text
@@ -153,17 +154,41 @@ private fun KfApp() {
         )
     }
 
-    // 近场自动开锁: 只在这把锁的广播 RSSI 强于 -38 dBm 时触发, 8 秒冷却防连环开
-    LaunchedEffect(proximity, lock?.mac) {
+    // ---------- 靠近自动开锁: 回差 + 一次性闩锁 + 冷却 (对齐 iOS AutoOpenKit F3/F5) ----------
+    // 旧口径是"RSSI ≥ -38 且距上次 >8 秒"→ 人站在门口不动时, 每 8 秒再发一次 04。
+    // iOS 那条链早就裁定过这件事 ("每个接近事件只发一次 04"), 理由是 04 驱动执行器:
+    // 反复下发 = 电机反复试, 既费电也可能把锁拖进 rc=25「锁正忙」。现在照 iOS 的三重闸:
+    //   ① 回差 (F3 rssiSample): 越过武装线才武装, 掉到解除线以下才解除 —— 门口来回走不翻转;
+    //   ② 一次性闩锁 (F5): 一次"接近事件"只发一次, 解除后才放开;
+    //   ③ 冷却 (F5 coolReady): 上次下发距今 >60s 才允许下一次 (跨事件也拦)。
+    // 写成局部函数而不是塞进 collect 的 lambda: collect 外面已经套着 LaunchedEffect 一层
+    // lambda, 再从内层跨出去要写 return@collect 那个 label —— label 名字错了就是编译失败,
+    // 而这一段的判据本身就是会算错的东西, 不该押在一个字符串上。
+    fun maybeAutoUnlock(r: Int) {
+        val now = System.currentTimeMillis()
+        armed = AutoOpenKit.rssiSample(prevArmed = armed, rssi = r)
+        // 信号掉回解除线以下 = 这一次接近事件结束 → 放开闩锁, 下次靠近才可再发
+        if (!armed) fired = false
+        if (!armed || fired) return
+        if (!AutoOpenKit.coolReady(lastAuto, now)) return
+        if (busy) return
+        fired = true
+        lastAuto = now
+        doUnlock(auto = true)
+    }
+
+    // busy 也进 key: 安卓蓝牙栈**一边扫描一边连接**极易失败 (GATT 133 的头号成因),
+    // 而开锁这一趟自己就要扫描+连接, 所以开锁在途时把 RSSI 监测整条撤掉, 完了再挂回去。
+    // 不只是抢射频: 同 App 里第二次 startScan 会重启扫描, 前一个 callback 静默失声,
+    // 且 scanForLock 收尾那句 stopScan 会把监测的扫描一起停掉 —— 于是自动开锁跑过一次之后
+    // "当前信号"再也不更新, 用户只能关掉开关再打开。
+    LaunchedEffect(proximity, lock?.mac, busy) {
         val l = lock ?: return@LaunchedEffect
-        if (!proximity) { rssi = null; return@LaunchedEffect }
+        if (!proximity) { rssi = null; armed = false; fired = false }
+        if (!proximity || busy) return@LaunchedEffect
         unlocker.observeRssi(l).collect { r ->
             rssi = r
-            val now = System.currentTimeMillis()
-            if (r >= -38 && now - lastAuto > 8_000 && !busy) {
-                lastAuto = now
-                doUnlock(auto = true)
-            }
+            maybeAutoUnlock(r)
         }
     }
 
@@ -398,7 +423,9 @@ private fun ProximityCard(on: Boolean, onToggle: (Boolean) -> Unit, onRescan: ()
             Column(Modifier.weight(1f)) {
                 Text("靠近自动开锁", color = Ink, fontSize = 15.sp)
                 Spacer(Modifier.height(3.dp))
-                Text("信号强于 -38 dBm 时自动开锁 (无需点击)", color = InkSub, fontSize = 12.sp)
+                // 文案如实描述现在的三闸 (旧句"信号强于 -38 时自动开锁"会让人以为站在门口会一直开):
+                // 一次靠近只开一次, 要走开让信号掉回 -41 以下再靠近, 才会再开。
+                Text("靠近到 -38 dBm 时自动开一次锁; 要再开得先走开一点再靠近", color = InkSub, fontSize = 12.sp)
             }
             Switch(
                 checked = on,

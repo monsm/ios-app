@@ -212,8 +212,33 @@ git push -u origin main
     > 已定性的臆造 API 与修法见 `docs/AUDIT-CODE.md §10.11`；
     > 失败步骤现在会把 `error:` 行转成 annotations + job summary，下一场红自带诊断。
     > **读这份 README 的人请注意**：任何一批写"闸门全绿"，绿的是那 22 道，不含编译。
-25. 真机未签名 IPA (`xcodebuild archive -sdk iphoneos CODE_SIGNING_ALLOWED=NO`)
-26. 上传构建产物 (Actions → Artifacts → `OfflineLock-build`)
+25. 注入编译号 (`注入编译号` 步骤; 由 `stamp` 作业那一个构建时刻派生, 见下) — 排在 `xcodegen generate` **之后**, 因为 Info.plist 是生成物
+26. 真机未签名 IPA (`xcodebuild archive -sdk iphoneos CODE_SIGNING_ALLOWED=NO`)
+27. 上传构建产物 (Actions → Artifacts → `OfflineLock-build`；`OfflineLock-build` 那份含日志与带时刻的 IPA)
+
+## 编译号 = 构建时刻 (东八区, 一次 push 一个号)
+
+`.github/workflows/ios.yml` 里 `stamp` 作业取一次 `date +%s`, 两个构建作业 `needs` 它 ——
+**同一次 push 的 ipa 与 apk 共享同一个时刻**, 出问题能确定"这台手机上装的是哪一次 push"。
+两个并行作业各自取 now 会差出几十秒 (archive 排在 build-for-testing 之后), 所以要单独算。
+
+| 端 | 字段 | 取值 |
+|---|---|---|
+| iOS | `CFBundleVersion` (App **与 Widget 两份**) | `yyyyMMdd.HHmmss` (例 `20261017.184500`) |
+| iOS | `CFBundleShortVersionString` | 保持 `1.0.0` (人认的产品版本; 变的是"构建"那一行) |
+| 安卓 | `versionCode` | 距 `2026-01-01 00:00` (东八区) 的**秒数** |
+| 安卓 | `versionName` | `1.0.yyyyMMdd.HHmmss` (与 iOS 的 CFBundleVersion 同一个串) |
+| 产物名 | IPA / APK | `OfflineLock-<时刻>-unsigned.ipa` / `KfKey-<时刻>.apk` |
+
+- ⚠ 安卓 `versionCode` **不能**用 `yyyyMMddHHmm`: 它是 32 位 Int (上界 2147483647),
+  `202610171833` 已溢出 —— 不是"看着别扭"而是装不上。所以走"距基准秒数", 人读的那份放 versionName。
+- 秒数口径同时解决**覆盖安装**: 号单调递增 ⇒ 新包总能盖旧包 (配合 `android-app/keystore/` 随仓库走的
+  固定签名; CI 每次都是全新 runner, 默认 debug.keystore 每台不一样, 于是"装一次就不让升级")。
+- 时区/格式只在 `stamp` 那一支算 (ubuntu = GNU `date -d`); macOS 没有 GNU 版 `date -d`,
+  所以 iOS 那支直接用算好的字符串, 不再自己转换 —— 否则 BSD `date` 当场报错。
+- `stamp` 作业最后一步把 stamp 反算回 ts 比对: 两端一致才放行 (不一致宁可红,
+  也不要"包内号与文件名不是同一时刻", 那正是安装台上分不清版本的成因)。
+- 本地手编 (无 `KF_BUILD_TS`) 回落"构建当刻" —— 单人开发时这就是最合理的号。
 
 ## 证据分三层，各管一件事 (缺哪一层都会出现"绿着绿着就红了")
 | 层 | 载体 | 能判 | 判不了 |
@@ -227,7 +252,8 @@ git push -u origin main
 ## 安装到手机
 
 未签名 IPA 需要自签 (免费 Apple ID 即可):
-- **AltStore / SideStore**: 手机与电脑装 AltServer, 用 Apple ID 侧载 `OfflineLock-unsigned.ipa`
+- **AltStore / SideStore**: 手机与电脑装 AltServer, 用 Apple ID 侧载 `OfflineLock-<时刻>-unsigned.ipa`
+  (文件名里那个时刻 = 包内 `CFBundleVersion` = 安卓 `versionName` 后半段, 三份堆在桌面上时分得清)
 - **Sideloadly**: 拖入 IPA + Apple ID 自动签名安装
 - **Xcode** (如有 Mac): 打开 `xcodegen generate` 生成的工程直接跑真机
 

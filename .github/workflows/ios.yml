@@ -23,6 +23,7 @@ jobs:
   build:
     name: Build (iOS 27 SDK, unsigned IPA)
     runs-on: xcode-27
+    needs: stamp
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -158,6 +159,30 @@ jobs:
       - name: Generate Xcode Project
         run: xcodegen generate
 
+      - name: 注入编译号
+        run: |
+          # 为什么改生成物而不是改 project.yml: Info.plist 是 XcodeGen 每次**重新生成**的
+          # (磁盘上没有 checked-in 的 plist, git ls-files 为空), 所以正确位置是 generate 之后、
+          # xcodebuild 之前 —— 不引入"把生成物提交回仓库"这种会把金标漂移检查带偏的规矩。
+          #
+          # ⚠ App 与 Widget 两份都要改: Apple 要求 app-extension 的 CFBundleVersion 与容器 App
+          #   一致, 只改一份会在安装/校验时被拒 (报得像签名问题, 实际是版本不匹配)。
+          # CFBundleShortVersionString 保持 1.0.0 (人认的产品版本), 变的是"构建"那一行:
+          #   设置页 LabeledRow("构建") 与诊断报告读的都是 CFBundleVersion。
+          STAMP="${{ needs.stamp.outputs.kf_build_stamp }}"
+          [ -n "$STAMP" ] || { echo "::error::stamp 作业没输出 kf_build_stamp"; exit 1; }
+          for PLIST in App/Info.plist Widget/Info.plist; do
+            [ -f "$PLIST" ] || { echo "::error::XcodeGen 没生成 $PLIST"; exit 1; }
+            # Set 在键不存在时会失败 —— 键来自 project.yml 的 info.properties, 那边被人删掉就
+            # 正好落在这里; 回退成 Add, 别把一个配置漂移变成 CI 红。
+            /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $STAMP" "$PLIST" 2>/dev/null \
+              || /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string $STAMP" "$PLIST"
+            GOT=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$PLIST")
+            # 写进去的必须就是它: 读回核对, 不一致宁可红 (装出来的包挂错时刻, 后面全靠猜)
+            [ "$GOT" = "$STAMP" ] || { echo "::error::$PLIST CFBundleVersion=$GOT 期望=$STAMP"; exit 1; }
+            echo "$PLIST -> $GOT"
+          done
+
       - name: 编译校验测试目标 (云端无模拟器, 只编译不执行)
         run: |
           # SWIFT_COMPILATION_MODE=wholemodule: 整模块**一次** swift-frontend 调用编译。
@@ -189,7 +214,12 @@ jobs:
             CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" | tee build/device.log
           mkdir -p build/Payload
           cp -R "build/OfflineLock.xcarchive/Products/Applications/OfflineLock.app" build/Payload/
-          cd build && zip -qry OfflineLock-unsigned.ipa Payload
+          # 文件名与包内 CFBundleVersion 同一个串: AltStore 里堆三份 "unsigned.ipa" 时,
+          # 装错版本比不装更糟 (开了门才发现不是这把锁的号)。
+          # 每个 step 是独立 shell, 上一步里的 $STAMP 到这里已经不存在 —— 必须重新取一次。
+          STAMP="${{ needs.stamp.outputs.kf_build_stamp }}"
+          [ -n "$STAMP" ] || { echo "::error::stamp 作业没输出 kf_build_stamp"; exit 1; }
+          cd build && zip -qry "OfflineLock-$STAMP-unsigned.ipa" Payload
 
       - name: 编译失败时把错误行转成注解 (不登录也能读)
         if: failure()
@@ -218,8 +248,36 @@ jobs:
           path: |
             build/test.log
             build/device.log
-            build/OfflineLock-unsigned.ipa
+            build/OfflineLock-*-unsigned.ipa
           if-no-files-found: error
+
+  # ================= 构建时刻 = 两端编译号的唯一来源 =================
+  # iOS 的 CFBundleVersion 与安卓的 versionCode/versionName 都由这一个戳派生:
+  #   一次 push 出一个时刻 → 两个并行 job 各自取 now 会差几十秒 (archive 排在 build-for-testing 之后),
+  #   于是"同一次生成的 ipa 和 apk"对不上号。所以 stamp 单独算一次, 两个 job needs 它。
+  # ⚠ 时区与格式只在**这一支**里算 (ubuntu = GNU date); macOS 没有 GNU 的 date -d,
+  #   所以 iOS 那支直接用算好的字符串, 不再自己转换 —— 否则 BSD date 会当场报错。
+  stamp:
+    name: Stamp 构建时刻
+    runs-on: ubuntu-latest
+    outputs:
+      kf_build_ts: ${{ steps.ts.outputs.kf_build_ts }}
+      kf_build_stamp: ${{ steps.ts.outputs.kf_build_stamp }}
+    steps:
+      - name: 取构建时刻
+        id: ts
+        run: |
+          TS=$(date +%s)
+          STAMP=$(TZ=Asia/Shanghai date -d "@$TS" +%Y%m%d.%H%M%S)
+          echo "kf_build_ts=$TS" >> "$GITHUB_OUTPUT"
+          echo "kf_build_stamp=$STAMP" >> "$GITHUB_OUTPUT"
+      - name: 回读校验 时刻与戳必须能互相换算
+        run: |
+          # 早失败: 戳与 ts 对不上 (时区没生效/date 行为变了) 就宁可红,
+          # 也不要产出"包内号与文件名不是同一时刻"的两种ipa 混在安装台上分不出来。
+          BACK=$(TZ=Asia/Shanghai date -d "${{ steps.ts.outputs.kf_build_ts }}" +%Y%m%d.%H%M%S)
+          [ "$BACK" = "${{ steps.ts.outputs.kf_build_stamp }}" ] || { echo "::error::stamp 与 ts 不一致: $BACK"; exit 1; }
+          echo "构建时刻 ts=${{ steps.ts.outputs.kf_build_ts }} → ${{ steps.ts.outputs.kf_build_stamp }} (东八区)"
 
   # ================= 安卓极简版 (KfKey) =================
   # 与 iOS 同一个仓库、同一次 push: 上面出 IPA, 这里出 APK —— 用户口径是"一次性生成 ipa 和 apk"。
@@ -227,6 +285,11 @@ jobs:
   android:
     name: Build (Android 13+, APK)
     runs-on: ubuntu-latest
+    needs: stamp
+    env:
+      # gradle 读它当编译号 (android-app/app/build.gradle.kts); 本地手编没这个变量时回落"构建当刻"
+      KF_BUILD_TS: ${{ needs.stamp.outputs.kf_build_ts }}
+      KF_BUILD_STAMP: ${{ needs.stamp.outputs.kf_build_stamp }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -251,11 +314,73 @@ jobs:
         with:
           gradle-version: "8.9"
 
+      # 编译只证明"编得过", 不证明"发出去的字节与 vendor 权威口径相同"。
+      # 2026-10-17 那个"恒报错误码 13"的坑就是编译全绿、真机全废: injectToken 把长度字段读偏
+      # 一个字节 → 自己那行长度守卫成立 → 令牌被静默丢掉 → 04 裸发。gradle 永远看不出这件事。
+      # 这一支排在 gradle **之前**: 只要 node, 秒级出结果, 不必等三分多钟的 APK 构建。
+      # (步骤名不含裸冒号, 与上面那条工作流自检的 grep 兼容。)
+      - name: '安卓端字节面影子对拍 (KfProtocol/AutoOpenKit vs vendor JS + golden, 判失败)'
+        run: node tools/kotlinshadow.js
+
       - name: 编译 APK (debug, 可直接安装)
         working-directory: android-app
         run: |
           set -o pipefail
           gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log
+
+      - name: 核对编译号 = 注入的时刻
+        working-directory: android-app
+        run: |
+          # 为什么单独立一步: KF_BUILD_TS 万一没传进来 (env 名写错 / stamp 作业被改名),
+          # gradle 会**静默**回落 Instant.now() —— 号照样单调、照样能覆盖安装, 一切看着都对,
+          # 只剩"ipa 与 apk 的时刻不再相同"这一个后果, 而那正是这次改动唯一要解决的问题。
+          #
+          # 优先读**产物本身**: 日志行只证明 gradle 算过, 不证明它写进了 APK。
+          # aapt 不在/没产物时退回日志核对 (build-tools 里 aapt 是遗留 shim, 不能假定它一定在)。
+          SRC=app/build/outputs/apk/debug/app-debug.apk
+          AAPT=$(ls "$ANDROID_HOME"/build-tools/*/aapt 2>/dev/null | tail -1 || true)
+          BADGE=""
+          if [ -n "$AAPT" ] && [ -f "$SRC" ]; then
+            BADGE=$("$AAPT" dump badging "$SRC" 2>/dev/null | grep -E "^package:" | head -1 || true)
+          fi
+          if [ -n "$BADGE" ]; then
+            echo "产物头部: $BADGE"
+            # 只从 versionName/versionCode= 后面吃"数字和点": 不依赖 GNU sed 的 \x27、
+            # 也不依赖 aapt 属性顺序与引号风格 (aapt2/badging 的引号会变)。
+            VN=$(printf "%s" "$BADGE" | sed -E "s/.*versionName=[^0-9A-Za-z]*([0-9][0-9.]*)?.*/\1/")
+            VC=$(printf "%s" "$BADGE" | sed -E "s/.*versionCode=[^0-9]*([0-9]+).*/\1/")
+            echo "读到的 versionName=$VN versionCode=$VC  期望时刻=$KF_BUILD_STAMP"
+            case "$VN" in
+              "1.0.$KF_BUILD_STAMP") echo "versionName 与注入时刻一致" ;;
+              *) echo "::error::APK 里的 versionName=$VN 不是本次注入的 1.0.$KF_BUILD_STAMP"; exit 1 ;;
+            esac
+            # versionCode 也要跟着变: 只动 versionName 的话, 系统按 versionCode 判新旧,
+            # 覆盖安装会报"已存在更高版本"或静默不更新 —— 又回到"装一次就不让升级"。
+            case "$VC" in
+              ""|1) echo "::error::versionCode=$VC 仍是旧默认值, 时间戳没生效"; exit 1 ;;
+              *) echo "versionCode=$VC (距 2026-01-01 的秒数)" ;;
+            esac
+          else
+            echo "没有 aapt 或没有产物 —— 退回 gradle 配置期打印核对"
+            grep -F "KfBuildStamp" build.log || { echo "::error::既读不到产物也找不到 KfBuildStamp 日志行"; exit 1; }
+            ACTUAL=$(grep -F "KfBuildStamp" build.log | tail -1 | sed -E "s/.*versionName=1\.0\.//")
+            [ "$ACTUAL" = "$KF_BUILD_STAMP" ] || { echo "::error::gradle 用的时刻 ($ACTUAL) 与 stamp 作业 ($KF_BUILD_STAMP) 不一致"; exit 1; }
+          fi
+      - name: 产物改名带编译号
+        working-directory: android-app
+        run: |
+          # gradle 恒输出 app-debug.apk (不含版本), 装几份下来就全同名了 —— 与 iOS 那支同一个理由:
+          # 名字、包内 versionName、包内 versionCode 三者同源于 stamp 作业那一个时刻。
+          [ -n "$KF_BUILD_STAMP" ] || { echo "::error::env 里的 KF_BUILD_STAMP 是空的 (stamp 作业没输出)"; exit 1; }
+          # 空戳会产出 "KfKey-.apk" —— 上传那条是通配 KfKey-*.apk, 照样命中, 于是**静默**拿到一个
+          # 没有时刻的包, 正是这次要治的"桌面上分不清版本"。所以在这里就拦住。
+          # 钉死源文件名, 不用 *.apk 通配后 head -1: 一旦目录里已经有 KfKey-<戳>.apk (本地手跑过
+          # 这一步、或同一 runner 复用过), head -1 按字母序可能挑到它, 于是"改名"改的是上次的产物。
+          SRC=app/build/outputs/apk/debug/app-debug.apk
+          [ -f "$SRC" ] || { echo "::error::找不到 $SRC (gradle 产物路径变了?)"; exit 1; }
+          cp "$SRC" "app/build/outputs/apk/debug/KfKey-$KF_BUILD_STAMP.apk"
+          ls -l app/build/outputs/apk/debug/
+          echo "本次编译号: versionCode=距 2026-01-01 的秒数 (KF_BUILD_TS=$KF_BUILD_TS), versionName=1.0.$KF_BUILD_STAMP" >> "$GITHUB_STEP_SUMMARY"
 
       - name: 编译失败时把 Kotlin 错误写进摘要
         if: failure()
@@ -270,5 +395,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: KfKey-apk
-          path: android-app/app/build/outputs/apk/debug/*.apk
+          # 通配会连 app-debug.apk 一起传上去 (两份同内容不同名, 容易拿错):
+          # 只传带编译号的那一份, 拿到的文件名就是这次构建的时刻。
+          path: android-app/app/build/outputs/apk/debug/KfKey-*.apk
           if-no-files-found: error

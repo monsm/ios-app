@@ -46,6 +46,10 @@ targets:
       properties:
         CFBundleDisplayName: 离线锁管家
         CFBundleShortVersionString: "1.0.0"
+        # CFBundleVersion 是**出厂默认**, 不是最终值: CI 的"注入编译号"步骤会在
+        # xcodegen generate 之后把它改成本次构建时刻 (yyyyMMdd.HHmmss, 东八区; stamp 作业
+        # 那个唯一时刻)。改这里没用 —— 每次 push 都会被覆盖, 想改口径去改那条步骤。
+        # 默认留 "1" 而不是写死日期: 写死的日期在本地构建里永远是假的。
         CFBundleVersion: "1"
         UILaunchScreen: {}
         # 294 本地深链 (kf://): 快捷指令「打开 App」带参数直达; 只允许白名单路由, 且在应用锁未解开时不落地
@@ -133,6 +137,9 @@ targets:
       properties:
         CFBundleDisplayName: 离线锁管家
         CFBundleShortVersionString: "1.0.0"
+        # 与主 App 同源: CI 注入编译号时**两份 Info.plist 一起改** —— Apple 要求
+        # app-extension 的 CFBundleVersion 与容器 App 一致, 只改一份会在安装时被拒,
+        # 报出来像签名问题, 实际是版本不匹配。
         CFBundleVersion: "1"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension

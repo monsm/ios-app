@@ -68,9 +68,17 @@ object LockStore {
             val mac = KfProtocol.normMac(o.optString("m"))
             val ekey = o.optString("e").lowercase()
             if (mac.length != 12 || mac.any { it !in "0123456789abcdef" }) return null
-            if (ekey.length < 16 || ekey.length % 2 != 0) return null
+            // 上界是协议逼出来的: KLV 的长度字段只有 1 字节 (≤255B), 帧总长只有 2 字节。
+            // 不封顶的话, 一张被改过的二维码会把超长 ekey 塞进帧里 → 长度字节回绕 → 锁收到残帧
+            // (表现同样是"没回执/报错码"), 而且这里存下来就是一把开不了的钥匙。
+            // 真 ekey = AES 包络, iOS 侧恒 32B (64 个 hex 字符)。上界不是拍脑袋:
+            // KLV 的长度字段只有 1 字节 ⇒ 值最长 255B = 510 个 hex 字符, 再长就要回绕成残帧。
+            if (ekey.length < 16 || ekey.length % 2 != 0 || ekey.length > 510) return null
+            // 锁名**只用于显示** (mac/ekey 才是开锁依据), 所以超长不拒收、只截断: iOS 侧对名字
+            // 没有长度上限, 拒收等于把一张正常能用的码判成坏码, 用户会被挡在"这不是本 App 的钥匙码"外面。
+            val name = o.optString("n").ifBlank { "门锁" }.take(40)
             LockInfo(
-                name = o.optString("n").ifBlank { "门锁" },
+                name = name,
                 mac = mac,
                 pid = o.optInt("p", 0),
                 ekey = ekey,
