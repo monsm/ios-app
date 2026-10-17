@@ -19,7 +19,8 @@ const P = require(path.join(ROOT, 'vendor', 'app', 'utils', 'kernel', 'protocol.
 const C = require(path.join(ROOT, 'vendor', 'app', 'utils', 'kernel', 'cmds.js'));
 const golden = JSON.parse(fs.readFileSync(path.join(ROOT, 'fixtures', 'golden.json'), 'utf8'));
 
-const kt = (f) => fs.readFileSync(path.join(KT_DIR, f), 'utf8');
+const readNorm = (p) => fs.readFileSync(p, 'utf8').replace(/\r\n/g, '\n');   // 行尾与判定结果解耦 (见上)
+const kt = (f) => readNorm(path.join(KT_DIR, f));
 const kf = kt('KfProtocol.kt');
 const ao = kt('AutoOpenKit.kt');
 
@@ -138,7 +139,12 @@ else good('A4 令牌通道 KLV#0xEE');
   const blUnlock = (kt("BleUnlocker.kt").match(/suspend fun unlock[\s\S]*?\n    \}/) || [""])[0];
   if (!blUnlock) bad("A8 找不到 unlock 函数 (同样会让下面几条断言静默失效)");
   else {
-  if (!/freshSeen\(lock\.mac\)\s*\?:/.test(blUnlock)) bad("A8 冷路径没先吃缓存句柄 (白付一次扫描的时间, 秒开就没了)");
+  // 判意图不判写法: 冷路径必须在**自己起扫描之前**先问一次缓存句柄。
+  // (run 175 的 FAIL 是尺子太字面: 把 `freshSeen(…) ?: try {…}` 改成显式 if/else 之后,
+  //  意图没变、写法变了就判红。用 indexOf 比位置, 不再绑某种句法形状。)
+  const seenPos = blUnlock.indexOf("freshSeen(lock.mac)");
+  const coldScanPos = blUnlock.indexOf("scanForLock(lock,");
+  if (seenPos < 0 || (coldScanPos >= 0 && seenPos > coldScanPos)) bad("A8 冷路径没在自起扫描之前先吃缓存句柄 (白付一次扫描的时间, 秒开就没了)");
   else good("A8 冷路径优先复用广播句柄");
   // 热链路必须能被拆: 复用不留出口 = 解绑/退出后那条 GATT 一直占着锁
   if (!/suspend fun release\(/.test(kt("BleUnlocker.kt"))) bad("A8 没有 release() 出口 (热链路拆不掉)");
@@ -200,8 +206,8 @@ else good('A4 令牌通道 KLV#0xEE');
 //        号照样单调、照样能装, 只有"ipa 与 apk 时刻不再相同"一个后果, 而那正是唯一要解决的问题;
 //     ③ iOS 只注入 App 不注入 Widget (extension 与容器版本不一致, 安装被拒, 报得像签名问题)。
 {
-  const gradle = fs.readFileSync(path.join(ROOT, "android-app", "app", "build.gradle.kts"), "utf8");
-  const wfText = fs.readFileSync(path.join(ROOT, ".github", "workflows", "ios.yml"), "utf8");
+  const gradle = readNorm(path.join(ROOT, "android-app", "app", "build.gradle.kts"));
+  const wfText = readNorm(path.join(ROOT, ".github", "workflows", "ios.yml"));
   const hasIntGuard = /versionCode\s*=\s*run\s*\{/.test(gradle) && /Int\.MAX_VALUE - 1L/.test(gradle);
   if (!hasIntGuard) bad("A10 build.gradle.kts 少了 int32 上界那道闸 (versionCode 溢出是静默回绕, 先转再查等于没查)");
   else good("A10 versionCode 有截断前的 int32 上界闸");
