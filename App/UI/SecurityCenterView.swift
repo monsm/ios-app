@@ -84,11 +84,11 @@ func askSudoThen(_ app: AppState, then action: @escaping () -> Void) {
     if app.sudoTicket != nil { action(); return }
     Task { @MainActor in
         let ok = await AuthKit.verifyBiometricAsync(reason: "这是毁灭级操作, 请用面容/指纹确认")
-        guard ok else {
+        guard ok, let ticket = SecurityPolicy.sudoTicketBiometric(ok) else {
             app.showToast("未通过面容/指纹确认, 已拒绝毁灭操作")   // 383 未通过确认
             return
         }
-        app.sudoTicket = SudoTicket(issuedAt: Date().timeIntervalSince1970)
+        app.sudoTicket = ticket
         AuditLog().append(.admin, "sudo", target: "毁灭操作复核通过",
                           operator_: "面容/指纹",
                           duress: DB.store.getBool(SecKey.sessionDuress, false))

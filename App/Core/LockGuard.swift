@@ -225,4 +225,11 @@ enum SecurityPolicy {
         guard sudoOk(input) else { return nil }
         return SudoTicket(issuedAt: Date().timeIntervalSince1970)
     }
+    /// 2026-10-17 拍板 A: 面容/指纹复核通过后发同一张券。
+    /// `SudoTicket.init` 是 fileprivate ⇒ 只能在本文件铸造 —— 这条也留在本文件里,
+    /// 界面只把"生物识别通过了"这个事实传进来, 仍然造不出无凭据的券。
+    static func sudoTicketBiometric(_ passed: Bool) -> SudoTicket? {
+        guard passed else { return nil }
+        return SudoTicket(issuedAt: Date().timeIntervalSince1970)
+    }
 }
