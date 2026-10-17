@@ -126,3 +126,21 @@ APK 三处都恒 `reversePairs(显示序)`; 本机走 `ZKProtocol.targetMac()`, 
 1. DFU 数据点特征属性 (决定 §3.1 是否要改)
 2. 钥匙串 dongle 的 MAC 字节序是否与门锁共用一份裁定 (§3.2)
 3. `execOk` 对 rc=-1 fail-closed: 若某固件对 21/24/25 不回 rc, 本机会报"无法确认锁端结果"
+
+## 7. 核查完成度自证 (逐层, 每层写清"怎么核的")
+
+| 层 | 覆盖对象 | 核对方式 | 状态 |
+|---|---|---|---|
+| 命令构造 | 32 条 | 从 main.js 抽 `call(this,Jn.ZKCCOMM_*,needToken)` + 各载荷类 `getCmdBody` 原文, 与 `ZKCmdBuilder.swift` 逐字段比 | 完成 |
+| 回包解析 | 9 个解析类 (pt/Jt/_e/Ki/ku/Su/Nu/io/Oo) + 03 状态 23 键 | 抽 `setKlvs` 里 `"xx"==klvs[i].key` 分支, 与 `StatusParser`/各调用点比 | 完成 |
+| 时序 | 连接/分片/写确认/响应超时/令牌/重试/多帧 | 对 `BleLockConnector.java` 原文 (非 JS 移植稿) | 完成 |
+| 流程 | 15 条链 | 对 main.js 页面调用序列 | 完成 |
+| 加密/临时码/密钥族/型号 | AESKit/ZOTP/KeyGen/PidMap | 对 crypto.js/zotp.js/keys.js/pidmap.js 逐行 | 完成 |
+| 钥匙串/网关/DFU | 41/43/44, 30/31/32/35/38, DFU 全链 | 对 keychain.js/gateway.js/dfu.js/nordic.js | 完成 (3 项待真机, 见 §6) |
+| 纯本地功能 | 备份/成员/告警/统计/徽章/分享/Siri/小组件等 | 无 APK 对应物, 不参与"一致性"; 其锁端读写部分已并入上面 32 条 | 不适用 |
+
+**尚未完成 / 无法在本地完成**:
+1. DFU 数据点特征属性 (§3.1) —— 需真机读 `8EC90002` 的 properties
+2. 钥匙串 dongle 的 MAC 字节序 (§3.2) —— 需真机
+3. rc=-1 fail-closed 是否会误伤某固件 (§6.3) —— 需真机
+4. 任何"真机行为"结论 —— 本机无 Swift 工具链、无锁, 只能靠云端编译 + 真机
