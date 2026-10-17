@@ -6,13 +6,14 @@ plugins {
 
 android {
     namespace = "com.aapk.kfkey"
-    compileSdk = 34
+    // 与 GitHub ubuntu 镜像自带的平台对齐, 免得 CI 现下载
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.aapk.kfkey"
         // 用户口径: 最低 Android 13
         minSdk = 33
-        targetSdk = 34
+        targetSdk = 34   // 刻意停在 34: 35 会强制 edge-to-edge, 而本界面没有做 inset 适配
         versionCode = 1
         versionName = "1.0"
     }

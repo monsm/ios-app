@@ -237,8 +237,14 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      # 不再调 android-actions/setup-android: 它在 ubuntu-latest 上这一步本身就失败过
+      # (v3 的 Node 运行时与镜像不匹配)。GitHub 的 ubuntu 镜像**自带** Android SDK
+      # ($ANDROID_HOME 已设好、licenses 已接受), AGP 缺哪个平台会自己补。
+      - name: 确认镜像自带 Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls "$ANDROID_HOME/platforms" || true
+          ls "$ANDROID_HOME/build-tools" || true
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
