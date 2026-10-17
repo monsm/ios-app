@@ -275,7 +275,9 @@ jobs:
         run: |
           # 早失败: 戳与 ts 对不上 (时区没生效/date 行为变了) 就宁可红,
           # 也不要产出"包内号与文件名不是同一时刻"的两种ipa 混在安装台上分不出来。
-          BACK=$(TZ=Asia/Shanghai date -d "${{ steps.ts.outputs.kf_build_ts }}" +%Y%m%d.%H%M%S)
+          # ⚠ -d 后面必须带 @ 前缀: GNU date 拿裸的 10 位秒数会按 YYYYMMDDHH 解析成
+          #   invalid date (run 173/174 就是栽在这一步, BACK 空串 ⇒ 与 STAMP 不等 ⇒ 整个工作流连坐 skip)。
+          BACK=$(TZ=Asia/Shanghai date -d "@${{ steps.ts.outputs.kf_build_ts }}" +%Y%m%d.%H%M%S)
           [ "$BACK" = "${{ steps.ts.outputs.kf_build_stamp }}" ] || { echo "::error::stamp 与 ts 不一致: $BACK"; exit 1; }
           echo "构建时刻 ts=${{ steps.ts.outputs.kf_build_ts }} → ${{ steps.ts.outputs.kf_build_stamp }} (东八区)"
 

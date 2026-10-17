@@ -198,7 +198,9 @@ private fun KfApp(unlocker: BleUnlocker) {
         // 所以只在"没在开锁 && 还没有热链路"时发起, 避免和开锁抢同一次 startScan。
         if (!prewarmStarted && !busy && !warming && r >= prewarmLineDbm && lock != null) {
             prewarmStarted = true
-            val target = lock          // 局部不可空引用: 下面跨了挂起点, 不能再 lock!!
+            // lock 是 by remember 委托属性: Kotlin 不对委托属性做智能转换 (即使上一行刚判过 != null),
+            // 所以这里必须当场取一个非空局部量, 否则 prewarm(target) 是类型不匹配 = 编译不过。
+            val target = lock ?: return
             scope.launch {
                 warming = true
                 // 等一帧多, 让 LaunchedEffect 因 warming 变化而把监测流拆掉 (那句 awaitClose

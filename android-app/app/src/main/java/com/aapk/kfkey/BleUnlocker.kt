@@ -158,13 +158,23 @@ class BleUnlocker(private val ctx: Context) {
         }
 
         // ② 冷路径。先用监测流刚扫到的句柄 (不另起扫描); 没有/过期才自己扫一次。
-        val device = freshSeen(lock.mac) ?: try {
-            scanForLock(lock, 7000)
-        } catch (ce: CancellationException) {
-            throw ce
-        } catch (e: Exception) {
-            return@withLock Outcome(false, "扫描失败: " + humanBle(e))
-        } ?: return@withLock Outcome(false, "没找到这把锁 — 靠近门锁, 或确认门锁有电")
+        // 写成显式 if/else 而不是 `freshSeen(...) ?: try { ... } ?: ...`: elvis 右侧接 try 表达式
+        // 再串第二个 elvis 属于可读性极差的写法, 而本文件只能在 CI 编译, 不该拿语法边界去赌。
+        val seenDevice = freshSeen(lock.mac)
+        val scanned: BluetoothDevice?
+        if (seenDevice != null) {
+            scanned = seenDevice
+        } else {
+            scanned = try {
+                scanForLock(lock, 7000)
+            } catch (ce: CancellationException) {
+                throw ce
+            } catch (e: Exception) {
+                return@withLock Outcome(false, "扫描失败: " + humanBle(e))
+            }
+        }
+        val device = scanned
+            ?: return@withLock Outcome(false, "没找到这把锁 — 靠近门锁, 或确认门锁有电")
 
         val s = Session(lock.mac)
         val built = try {
