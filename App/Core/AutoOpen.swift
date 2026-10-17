@@ -170,7 +170,7 @@ nonisolated enum AutoOpenKit {
     }
 
     // ---------- F1 面容成功时刻记账 (进程内语义: 重启即失效 = fail-closed) ----------
-    private static var _lastFace: Date? = nil
+    private nonisolated(unsafe) static var _lastFace: Date? = nil
     private static let lock = NSLock()
     static func noteFaceSuccess() {
         lock.lock()
@@ -304,9 +304,9 @@ nonisolated enum MotionStillness {
     static let varianceThreshold = 0.05
     static let stillnessSeconds: Double = 3.0
     static let windowFrames = 30
-    private static var samples: [(t: Double, x: Double, y: Double, z: Double)] = []
-    private static var stillSince: Double? = nil
-    private static var mgr: CMMotionManager? = nil
+    private nonisolated(unsafe) static var samples: [(t: Double, x: Double, y: Double, z: Double)] = []
+    private nonisolated(unsafe) static var stillSince: Double? = nil
+    private nonisolated(unsafe) static var mgr: CMMotionManager? = nil
 
     static func start() {
         guard mgr == nil else { return }

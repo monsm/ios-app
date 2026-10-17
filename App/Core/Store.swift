@@ -496,7 +496,7 @@ nonisolated enum DB {
     /// 台账解码失败的锁 (防"解不出→空表写回"清空数据)。
     /// 2026-10-14: 原为非隔离可变 static var, 后台任务与主线程并发访问是数据竞争; 加锁存取。
     private static let ledgerLock = NSLock()
-    private static var ledgerCorruptSet: Set<String> = []
+    private nonisolated(unsafe) static var ledgerCorruptSet: Set<String> = []
     static func markLedgerCorrupt(_ mac: String) {
         ledgerLock.lock(); defer { ledgerLock.unlock() }
         ledgerCorruptSet.insert(mac)

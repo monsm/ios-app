@@ -46,7 +46,7 @@ nonisolated enum SettingsGroup: String, CaseIterable, Identifiable {
 }
 
 /// 这一节现在该不该出现。`nil` = 全部 (与加这一批之前的画面逐字一致 —— 默认态不许变)。
-func settingsSectionShown(_ group: SettingsGroup?, _ mine: SettingsGroup) -> Bool {
+nonisolated func settingsSectionShown(_ group: SettingsGroup?, _ mine: SettingsGroup) -> Bool {
     group == nil || group == mine
 }
 

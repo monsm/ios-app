@@ -249,6 +249,7 @@ nonisolated enum DS {
     ///   tick    = light 档: 围栏解锁/进度刻度/就绪轻震 (269) 等过程触感
     ///   trigger = medium 档: 手势确认触发/断连提醒 (243) 等动作触感
     ///   结果档   = UINotificationFeedbackGenerator 的 success/warning/error, 只用于操作结果
+    @MainActor
     enum Haptics {
         static let tick = UIImpactFeedbackGenerator(style: .light)
         static let trigger = UIImpactFeedbackGenerator(style: .medium)
@@ -352,7 +353,7 @@ nonisolated enum DS {
         /// 品牌主题键 (idea 31): "" = 默认靛蓝
         static var accentKey: String { DB.store.getString("kf_accent") }
         /// AMOLED 纯黑 (idea 30): kf_theme == "black"
-        static var isAMOLED: Bool { DB.store.getString("kf_theme") == "black" }
+        nonisolated(unsafe) static var isAMOLED: Bool { DB.store.getString("kf_theme") = = "black" }
         /// 893 App 内高对比皮肤: 与系统"增加对比度"**并联** (任一为真即加强)，不替代系统开关。
         /// 为什么要 App 内这一个: 系统的对比度开关是全局的，很多人不愿为这一个 App 改整机;
         /// 而"我就是想在看锁的时候字更硬"是 App 内可以满足的。加强项三组 (分隔线/次级文本加深 +
@@ -510,7 +511,7 @@ nonisolated enum DS {
             let v = DB.store.getInt(key)          // Store 存 Int, 免得依赖 String 解析的歧义
             return (v >= 0 && v <= 0xFFFFFF) ? UInt32(v) : 0
         }
-        static var isActive: Bool { rgb != 0 }
+        nonisolated(unsafe) static var isActive: Bool { rgb ! = 0 }
         static func set(_ hex: UInt32) {
             // Store 只有 set(_:Any) (顶层标量走 .fragmentsAllowed)；没有 setInt 这种东西 ——
             // 写之前查过 App/Core/Store.swift:29，别凭手感造方法 (第七十九批刚为这类缺陷扫过全表)。

@@ -139,7 +139,7 @@ nonisolated enum QuickPool {
 
 /// 目标视图集中一处，免得 DeviceHomeView 里散落十个 `if`
 @ViewBuilder
-func quickDestination(_ id: String) -> some View {
+nonisolated func quickDestination(_ id: String) -> some View {
     switch id {
     case "addPwd":   AddPwdView(embedded: true)
     case "otp":      SafemodeIntroView(mode: "otp")

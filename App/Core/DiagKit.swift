@@ -62,7 +62,7 @@ nonisolated enum DiagOps {
 // ---------- 215 启动预算: 冷启动各阶段打点 (本地自统计, 预算 800ms) ----------
 nonisolated enum StartupTrace {
     static let t0 = CFAbsoluteTimeGetCurrent()
-    private static var marks: [String: Double] = [:]
+    private nonisolated(unsafe) static var marks: [String: Double] = [:]
     static func mark(_ p: String) { marks[p] = CFAbsoluteTimeGetCurrent() - t0 }
     /// 各阶段耗时 (ms)
     static func ms(_ p: String) -> Double? { marks[p].map { ($0 * 1000).rounded() } }
@@ -90,8 +90,8 @@ nonisolated enum HotCache {
     /// 读写可能跨线程 (写入口 Store.writeLogs 在 BLE 回调线程上), 所以自己带锁 ——
     /// 旧注释把线程安全推给调用方 ("刻意留主线程"), 加锁后失效点才能落在写入口上。
     private static let lock = NSLock()
-    private static var store: [String: [CachedLog]] = [:]
-    static var currentMac: String = ""
+    private nonisolated(unsafe) static var store: [String: [CachedLog]] = [:]
+    nonisolated(unsafe) static var currentMac: String = ""
     static func load(mac: String) {
         lock.lock(); defer { lock.unlock() }
         currentMac = mac
@@ -148,7 +148,7 @@ nonisolated enum ScanStats {
 
 // ---------- 224 启动并行预热 (冷启动一次完成, 后续零成本) ----------
 nonisolated enum Prewarm {
-    static var done = false
+    nonisolated(unsafe) static var done = false
     static func run(mac: String) {
         guard !done else { return }
         done = true

@@ -304,7 +304,7 @@ nonisolated enum BackupStudio {
     static let chargeBackupTaskId = "com.kf.chargebackup"
     /// 2026-10-14: register 每进程只能一次 (二次注册抛 NSInternalInconsistencyException)。
     /// 启动注册 + 设置开关 setter 都会调本函数, 用标志去重。
-    private static var registered = false
+    private nonisolated(unsafe) static var registered = false
     /// 单次完成闸 (跨线程): expirationHandler 与工作体都可能完成, 只允许第一个生效。
     private final class CompletionOnce: @unchecked Sendable {
         private let lock = NSLock()

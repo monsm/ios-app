@@ -27,8 +27,8 @@ nonisolated enum HolidayFeed {
     static let maxBytes = 256 * 1024
     static func cacheKey(_ y: Int) -> String { "kf_hol_" + String(y) }
 
-    static var sourceBase: String { let s = DB.store.getString(srcKey); return s.isEmpty ? builtinBase : s }
-    static var usingBuiltinSource: Bool { sourceBase == builtinBase }
+    nonisolated(unsafe) static var sourceBase: String { let s = DB.store.getString(srcKey); return s.isEmpty ? builtinBase : s }
+    nonisolated(unsafe) static var usingBuiltinSource: Bool { sourceBase = = builtinBase }
     static func setSource(_ s: String) {
         let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
         if t.isEmpty || t == builtinBase { DB.store.remove(srcKey) } else { DB.store.set(srcKey, t) }
@@ -110,8 +110,8 @@ nonisolated enum HolidayFeed {
 
     // ---------- 合并视图 ----------
     // 缓存**按年整体覆盖**内置表：同一年里不混两副表, 否则公告临时改期会出现"春节前一天还在内置表里"的错位。
-    private static var mergedCache: [RecordSearch.Holiday] = []
-    private static var mergedStamp = -2
+    private nonisolated(unsafe) static var mergedCache: [RecordSearch.Holiday] = []
+    private nonisolated(unsafe) static var mergedStamp = -2
     static var rows: [RecordSearch.Holiday] {
         let stamp = lastUpdateSec
         if stamp != mergedStamp {
@@ -142,7 +142,7 @@ nonisolated enum HolidayFeed {
         return "在线缓存覆盖 " + ys.map(String.init).joined(separator: "/") + " 年 · 拉取于 " + lastUpdateText
     }
     /// 自动档：本会话只发一次, 且只在用户明确开过开关后发 (RootView 的前台钩子调)。
-    private static var autoDoneYear = 0
+    private nonisolated(unsafe) static var autoDoneYear = 0
     static func autoRefreshIfNeeded() async {
         guard autoOn else { return }
         let y = WeekCal.gregorian.component(.year, from: Date())

@@ -409,17 +409,17 @@ nonisolated struct VariantToggleStyle: ToggleStyle {
 // 只留前者，`Toggle(a.label, isOn:)` 那 5 处（标题是变量/三元式）会推断成 String 而解不动。
 
 /// `Toggle("字面量", isOn:)` 的那 99 处。
-func VariantToggle(_ titleKey: LocalizedStringKey, isOn: Binding<Bool>) -> some View {
+nonisolated func VariantToggle(_ titleKey: LocalizedStringKey, isOn: Binding<Bool>) -> some View {
     Toggle(titleKey, isOn: isOn).toggleStyle(VariantToggleStyle())
 }
 
 /// `Toggle(<String 表达式>, isOn:)` 的那 5 处（标题是变量、三元式或下标）。
-func VariantToggle<S: StringProtocol>(_ title: S, isOn: Binding<Bool>) -> some View {
+nonisolated func VariantToggle<S: StringProtocol>(_ title: S, isOn: Binding<Bool>) -> some View {
     Toggle(title, isOn: isOn).toggleStyle(VariantToggleStyle())
 }
 
 /// `Toggle(isOn: ...) { 自定标签 }` 的那 6 处（标题是一个多行视图）。
-func VariantToggle(isOn: Binding<Bool>, @ViewBuilder label: () -> some View) -> some View {
+nonisolated func VariantToggle(isOn: Binding<Bool>, @ViewBuilder label: () -> some View) -> some View {
     Toggle(isOn: isOn, label: label).toggleStyle(VariantToggleStyle())
 }
 

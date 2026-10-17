@@ -485,7 +485,7 @@ nonisolated enum RecordSearch {
     static func setHolidayExtend(_ on: Bool) { DB.store.set("kf_holiday_extend", on) }
     private static func clamp23(_ h: Int) -> Int { min(max(h, 0), 23) }
     /// 起==止 时区间为空集 (什么都筛不出), 界面要如实提示而不是让用户对着空列表猜
-    static var nightWindowDegenerate: Bool { nightFrom == nightTo }
+    nonisolated(unsafe) static var nightWindowDegenerate: Bool { nightFrom = = nightTo }
     /// 564/572 深夜判定。**672 假日顺延接在这里**: 节假日当日把区间终点 +2 小时。
     /// 此前 extendedEndHour/holidayExtendOn 组成一条没人走的链 = 设置形同虚设。
     /// dayKey 传 "" (或不传) = 不做假日判定, 与旧行为一致。
@@ -548,10 +548,10 @@ nonisolated enum RecordSearch {
     /// 671 生效表 = 内置 + 在线缓存 (按年整体覆盖, 见 `HolidayFeed`)。
     /// 本枚举不是 @MainActor, 但这里只加**只读语义的缓存**：所有调用方都在主线程 (View / @MainActor 的 HolidayFeed),
     /// 失效键是偏好里的"最近更新时间"整数 —— 写缓存的那一步必然改它, 所以不会读到过期合并结果。
-    private static var mergedCache: [Holiday] = []
-    private static var mapCache: [String: String] = [:]
-    private static var makeupCache: Set<String> = []
-    private static var stampCache = -2
+    private nonisolated(unsafe) static var mergedCache: [Holiday] = []
+    private nonisolated(unsafe) static var mapCache: [String: String] = [:]
+    private nonisolated(unsafe) static var makeupCache: Set<String> = []
+    private nonisolated(unsafe) static var stampCache = -2
     private static func ensureMerged() {
         let s = HolidayFeed.lastUpdateSec
         guard s != stampCache else { return }
