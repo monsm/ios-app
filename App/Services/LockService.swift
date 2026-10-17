@@ -652,7 +652,8 @@ final class LockService: ObservableObject {
                 + "order=\(p.orderIdx.map(String.init) ?? "-") "
                 + "feature=\(p.featureNumber.map(String.init) ?? "-") "
                 + "batch=\(p.batchNumber.map(String.init) ?? "-") rc=\(p.rc)")
-            if let r = p.rc, r != 0, r != -1, r != rcBlurry { stopRc = r }
+            let r = p.rc   // FpPress.rc 是 Int (extractRc 缺省给 -1), 不是 Optional
+            if r != 0 && r != -1 && r != rcBlurry { stopRc = r }
             if let onPress, isPress(f) { onPress(p) }
         }
         defer { collector = nil; collectorCmd = 0 }
