@@ -153,6 +153,20 @@ struct SecurityWatermark: View {
 }
 
 // ---------- 主入口 ----------
+// 审计流水的时间戳格式 (原 SecurityLockConfigView.dateStr 的落点: 那个页随应用锁一起删了,
+// 但 SecurityAuditView 还在用它, 所以搬成一个独立的小工具, 不复制第二份格式串)。
+enum SecFmt {
+    private static let fmt: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MM-dd HH:mm"
+        f.locale = Locale(identifier: "en_US_POSIX")
+        return f
+    }()
+    static func dateStr(_ t: Double) -> String {
+        fmt.string(from: Date(timeIntervalSince1970: t))
+    }
+}
+
 struct SecurityCenterView: View {
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
@@ -357,442 +371,6 @@ struct SecRow<Trailing: View>: View {
     }
 }
 
-// ================================================================
-// 一、应用锁升级 (369-396 区段 + 161/234)
-// ================================================================
-struct SecurityLockConfigView: View {
-    @EnvironmentObject var app: AppState
-    @ObservedObject private var center = SecTickCenter.shared
-
-    var body: some View { vkBody.destined(.securityLockConfig) }
-    var vkBody: some View {
-        List {
-            Section {
-                // 389/234 递增冷却
-                SecRow(title: "递增冷却",
-                       subtitle: "连败等待逐次翻倍 (30s 起), 锁定页显示需等秒数",
-                       icon: "hourglass", iconTone: .warn) {
-                    VariantToggle("", isOn: binding(SecKey.lockCoolOn))
-                        .labelsHidden()
-                }
-                cooldownRow
-                if DB.store.getBool(SecKey.lockCoolOn, false), cooldownSeconds > 0 {
-                    Button("立即解除冷却") {
-                        DB.store.set(SecKey.lockStreak, 0)
-                        DB.store.set(SecKey.lockUntil, 0.0)
-                        SecTick.bump()
-                    }
-                    .vkFont(.footnote)
-                    .foregroundStyle(DS.Palette.danger)
-                    .frame(minHeight: DS.Hit.min)
-                }
-            } header: {
-                Text("错次延时")   // 234 错次延时
-            }
-
-            Section {
-                // 393 锁定时机四档
-                SecRow(title: "锁定时机",
-                       subtitle: lockTimingLabel,
-                       icon: "clock") {
-                    Picker("", selection: bindingString(SecKey.lockTiming)) {
-                        Text("退后台即锁").tag("")
-                        Text("1 分钟后").tag("m1")
-                        Text("5 分钟后").tag("m5")
-                        Text("下次启动").tag("next")
-                    }
-                    .pickerStyle(.menu)
-                    .frame(minWidth: 100)
-                    .tint(DS.Palette.accentText)
-                }
-                // 394 短时免验
-                SecRow(title: "短时免验",
-                       subtitle: DB.store.getBool(SecKey.graceOn, false)
-                                ? "解锁后 \(DB.store.getInt(SecKey.graceSec, 30)) 秒内切回免重验"
-                                : "关闭 (每次切回都重验)",
-                       icon: "bolt") {
-                    VariantToggle("", isOn: binding(SecKey.graceOn))
-                        .labelsHidden()
-                }
-                if DB.store.getBool(SecKey.graceOn, false) {
-                    SecRow(title: "免验窗口", subtitle: "\(DB.store.getInt(SecKey.graceSec, 30)) 秒") {
-                        Picker("", selection: bindingInt(SecKey.graceSec, 30)) {
-                            Text("15 秒").tag(15)
-                            Text("30 秒").tag(30)
-                            Text("60 秒").tag(60)
-                            Text("120 秒").tag(120)
-                        }
-                        .pickerStyle(.menu)
-                        .frame(minWidth: 84)
-                        .tint(DS.Palette.accentText)
-                    }
-                }
-            } header: {
-                Text("锁定与免验")   // 393/394 锁定与免验
-            }
-
-            Section {
-                // 395 一次性救援码
-                SecRow(title: "一次性救援码",
-                       subtitle: rescueSubtitle,
-                       icon: "key") {
-                    HStack(spacing: DS.Space.xs) {
-                        VariantToggle("", isOn: binding(SecKey.rescueOn))
-                            .labelsHidden()
-                            .disabled(!DB.hasPasscode())   // 395: 没开应用锁时救援码无处消费
-                        if DB.store.getBool(SecKey.rescueOn, false) {
-                            Button(DB.store.getString(SecKey.rescueCode).isEmpty ? "重新生成" : "查看") {
-                                rescueDetail()
-                            }
-                            .vkFont(.footnote, weight: .medium)
-                            .foregroundStyle(DS.Palette.accentText)
-                            .frame(minHeight: DS.Hit.min)
-                        }
-                    }
-                }
-                rescueBody
-                // 396 随机键位 — 当前**无法安全实现**, 如实标注而不是留个死开关:
-                // 本机密码允许字母/符号 (setCodeAlert 只限"4 位以上"), 一旦换成随机**数字**键盘,
-                // 非数字密码的用户就再也输不进去 = 自己把自己锁死。要做得先把密码限定为纯数字。
-                // 396 随机键位: 只在"本机密码确为纯数字"时可开 (见 LockGuard/AppLockView 的数字键盘)
-                SecRow(title: "随机键位键盘",
-                       subtitle: DB.store.getBool(SecKey.randKeyDigits, false)
-                                ? "锁屏数字键盘每次进入重排, 防肩窥轨迹猜测"
-                                : "需先把本机密码重设为纯数字 (旧密码含字母时不出现数字键盘, 免得把自己锁在门外)",
-                       icon: "die.face.5") {
-                    VariantToggle("", isOn: binding(SecKey.randomKeys))
-                        .labelsHidden()
-                        .disabled(!DB.store.getBool(SecKey.randKeyDigits, false))
-                }
-                // ★B 迁移引导: 已有密码但含非数字 → 给一条能点的路, 而不是只写"需重设"
-                if DB.hasPasscode(), !DB.store.getBool(SecKey.randKeyDigits, false) {
-                    Button("去「设置」把本机密码重设为纯数字，即可启用随机键位") {
-                        // 2026-10-15 走查: 原为 `app.tabSelection = 3` —— 本页是设置 Tab 下 push 进来的
-                        // (设置 → 安全中心 → 本页), 切 Tab 是**空转**, 用户点了什么都不发生。
-                        // 改成把落点带过去, 由设置页真的拉起「设置本机密码」流程。
-                        app.pendingSettingsFocus = "passcode"
-                        app.requestRoute(.settings)
-                    }
-                        .vkFont(.footnote)
-                        .foregroundStyle(DS.Palette.accentText)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .accessibilityHint("到设置页的密码区重设本机密码；现有字母数字密码仍可继续使用，不会被强制修改")
-                }
-            } header: {
-                Text("救援与键位")   // 395/396 救援与键位
-            }
-
-            Section {
-                // 390 伪装密码
-                SecRow(title: "伪装模式",
-                       subtitle: DB.store.getBool(SecKey.decoyOn, false)
-                                ? "已启用: 输入伪装口令进空壳界面"
-                                : "输入伪装口令进空壳界面 (只显示本机时钟, 不加载任何门锁数据) 防胁迫翻供",
-                       icon: "theatermasks") {
-                    VariantToggle("", isOn: binding(SecKey.decoyOn))
-                        .labelsHidden()
-                }
-                if DB.store.getBool(SecKey.decoyOn, false), !DB.hasPasscode() {
-                    Text("伪装口令须与本机密码不同, 请先在「设置 → 本机数据保护」设置密码")
-                        .vkFont(.footnote)
-                        .foregroundStyle(DS.Palette.warn)
-                }
-                if DB.store.getBool(SecKey.decoyOn, false) {
-                    setCodeRow(title: "伪装口令", key: SecKey.decoyCode,
-                               hint: "须 4 位以上, 且与胁迫码不同",
-                               conflictCheck: { pw in
-                                   if DB.verifyPasscode(pw) { return "不能与本机密码相同 (否则真密码会被当成伪装口令)" }
-                                   if pw == DB.store.getString(SecKey.duressCodeRaw) { return "与胁迫码相同" }
-                                   return "" })
-                }
-                // 391 App 层胁迫码
-                SecRow(title: "胁迫码",
-                       subtitle: DB.store.getBool(SecKey.duressOn, false)
-                                ? "已设: 进入后界面正常但会话打标, 操作日志橙边"
-                                : "输入后伪装放行并给会话打标",
-                       icon: "exclamationmark.shield") {
-                    VariantToggle("", isOn: binding(SecKey.duressOn))
-                        .labelsHidden()
-                }
-                if DB.store.getBool(SecKey.duressOn, false) {
-                    setCodeRow(title: "胁迫码", key: SecKey.duressCodeRaw,
-                               hint: "记住它 — 被胁迫时输入即可放行并打标",
-                               conflictCheck: { pw in
-                                   // 与本机密码相同 = 打标永远不生效 (真密码分支先命中), 必须在设置时禁止
-                                   if DB.verifyPasscode(pw) { return "不能与本机密码相同" }
-                                   let hits = PwReuse.reuseWarnings(mac: DB.currentMac, newPwd: pw)
-                                   if DB.store.getBool(SecKey.pwdReuseOn, true), !hits.isEmpty {
-                                       return "与 " + hits.joined(separator: "、") + " 相同"
-                                   }
-                                   return "" })
-                    if DB.get(Double.self, SecKey.duressAt) ?? 0 > 0 {
-                        Text("最近打标: \(Self.dateStr(DB.get(Double.self, SecKey.duressAt) ?? 0))")
-                            .vkFont(.footnote)
-                            .foregroundStyle(DS.Palette.warn)
-                    }
-                }
-            } header: {
-                Text("伪装与胁迫")   // 390/391 伪装与胁迫
-            }
-
-            Section {
-                // 392 失败留痕
-                SecRow(title: "验证失败留痕",
-                       subtitle: DB.store.getBool(SecKey.traceOn, false) ? "面容/密码失败事件写日志 (不存图像)" : "关闭",
-                       icon: "antenna.radiowaves.left.and.right") {
-                    VariantToggle("", isOn: binding(SecKey.traceOn))
-                        .labelsHidden()
-                }
-                let evs = LockGuard.traces()   // 读侧走 LockGuard 的口径 (此前这里自己摸 key, traces() 反而零调用)
-                if !evs.isEmpty {
-                    ForEach(Array(evs.prefix(5)), id: \.self) { line in
-                        HStack(spacing: DS.Space.xs) {
-                            Image(systemName: "xmark.circle")
-                                .font(.system(size: DS.Icon.xs, weight: .semibold))
-                                .foregroundStyle(DS.Palette.danger)
-                            Text(line)
-                                .vkFont(.footnote)
-                                .foregroundStyle(DS.Palette.textSub)
-                                .lineLimit(1)
-                        }
-                    }
-                    Button("清空留痕 (\(evs.count))") {
-                        LockGuard.clearTraces()
-                        SecTick.bump()
-                    }
-                    .vkFont(.footnote)
-                    .foregroundStyle(DS.Palette.danger)
-                    .frame(minHeight: DS.Hit.min)
-                }
-            } header: {
-                Text("失败留痕")   // 392 失败留痕
-            }
-
-            // 398 会话信息页
-            Section {
-                SecRow(title: "当前解锁会话",
-                       subtitle: sessionLabel,
-                       icon: "person.crop.circle.badge.checkmark") {
-                    Button("立即重新锁定") { relock() }
-                        .vkFont(.footnote, weight: .medium)
-                        .foregroundStyle(DS.Palette.danger)
-                        .frame(minHeight: DS.Hit.min)
-                }
-                if DB.hasPasscode() {
-                    Text("会话开始时间由进入 App 时写入；“立即重新锁定”已随启动门禁移除。")
-                        .vkFont(.footnote)
-                        .foregroundStyle(DS.Palette.textSub)
-                }
-            } header: {
-                Text("会话")   // 398 会话
-            }
-        }
-        .variantList()
-        .dsScreenBackground()
-        .navigationTitle("应用锁增强")
-        .onReceive(Timer.publish(every: 2, on: .main, in: .common).autoconnect()) { _ in
-            self.center.bump()
-        }
-    }
-
-    // ---------- 派生数据 ----------
-    private var cooldownSeconds: Int {
-        let until = DB.get(Double.self, SecKey.lockUntil) ?? 0
-        let remain = until - Date().timeIntervalSince1970
-        return remain > 0 ? Int(remain.rounded(.up)) : 0
-    }
-
-    private var cooldownRow: some View {
-        let on = DB.store.getBool(SecKey.lockCoolOn, false)
-        let n = DB.store.getInt(SecKey.lockStreak, 0)
-        // 2026-10-13 run 61: 原写 `Int(30 * pow(2, min(n, 8)))` —— 两个实参都是 Int,
-        // 于是 `pow` 解析到 Foundation 的 `pow(Decimal, Int) -> Decimal`, 再 `Int(Decimal)` 报
-        //   "initializer 'init(_:)' requires that 'Decimal' conform to 'BinaryInteger'"。
-        // 显式走 Double 版: `pow(2.0, Double(min(n, 8)))`。
-        let nextCd = Int(30 * pow(2.0, Double(min(n, 8))))
-        let title = on
-            ? "连败 \(n) 次" + (cooldownSeconds > 0 ? "，还需等 \(cooldownSeconds) 秒" : "，下次冷却 \(nextCd) 秒")
-            : "关闭"
-        return SecRow(title: title,
-                      subtitle: "冷却基线 30s × 2^n (n 封顶 8)",
-                      icon: "figure.walk", iconTone: on ? .warn : .neutral) { EmptyView() }
-    }
-
-    private var lockTimingLabel: String {
-        switch DB.store.getString(SecKey.lockTiming) {
-        case "m1": return "后台 1 分钟后锁定"
-        case "m5": return "后台 5 分钟后锁定"
-        case "next": return "下次启动时锁定"
-        default: return "退后台即锁 (最严)"
-        }
-    }
-
-    private var sessionLabel: String {
-        let at = DB.get(Double.self, SecKey.sessionAt) ?? 0
-        if at <= 0 { return "尚无会话记录 (解锁成功后写入)" }
-        let how = DB.store.getString(SecKey.sessionHow, "本机密码")
-        return "开始 \(Self.dateStr(at)) · \(how)" + (DB.store.getBool(SecKey.sessionDuress, false) ? " · 胁迫会话" : "")
-    }
-
-    private var rescueSubtitle: String {
-        if !DB.store.getBool(SecKey.rescueOn, false) { return "忘记密码时的唯一重置入口" }
-        return DB.store.getString(SecKey.rescueCode).isEmpty ? "已消费, 可重新生成" : "已生成待手抄"
-    }
-
-    /// 469 手抄码的保管人: 读成员页点名的紧急管理员 (MemberHub.emergencyAdmins)。
-    /// 空名单不装没事 —— 如实指路到成员详情去点名, 防单点失能。
-    private var rescueCustodyLine: String {
-        let admins = MemberHub.emergencyAdmins()
-        if admins.isEmpty {
-            return "尚未指定保管人 — 到成员详情里点名紧急管理员, 手抄的救援码交其保管 (防单点失能)"
-        }
-        return "手抄后交给: " + admins.map { MemberHub.display($0) }.joined(separator: "、")
-    }
-
-    @ViewBuilder
-    private var rescueBody: some View {
-        if DB.store.getBool(SecKey.rescueOn, false) {
-            let code = DB.store.getString(SecKey.rescueCode)
-            if !code.isEmpty {
-                HStack(spacing: DS.Space.s) {
-                    Image(systemName: "key.fill")
-                        .font(.system(size: DS.Icon.sm, weight: .medium))
-                        .foregroundStyle(DS.Palette.accentText)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("请手抄这张救援码 — 消费后不可找回; 未点「已手抄」前该码不生效")   // 395 请手抄这张救援码
-                            .vkFont(.footnote, weight: .medium)
-                        Text(code)
-                            .vkFont(.title3, weight: .semibold)
-                            .monospaced()
-                            .textSelection(.enabled)
-                        if !DB.store.getBool(SecKey.rescueSeen, false) {
-                            Text("尚未确认手抄")
-                                .vkFont(.caption)
-                                .foregroundStyle(DS.Palette.warn)
-                        }
-                    }
-                    Spacer()
-                    Button("已手抄") {
-                        DB.store.set(SecKey.rescueSeen, true)
-                        SecTick.bump()
-                    }
-                    .vkFont(.footnote, weight: .medium)
-                    .foregroundStyle(DB.store.getBool(SecKey.rescueSeen, false) ? DS.Palette.ok : DS.Palette.accentText)
-                    .frame(minHeight: DS.Hit.min)
-                }
-                // 469 保管人声明: 名字来自成员页点名的紧急管理员名单 (MemberHub.emergencyAdmins)
-                Text(rescueCustodyLine)
-                    .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
-
-    private func relock() {
-        DB.store.set(SecKey.sessionAt, 0.0)
-        DB.store.set(SecKey.sessionDuress, false)
-        app.appUnlocked = false
-        app.showToast("已重新锁定")
-        SecTick.bump()
-    }
-
-    private func rescueDetail() {
-        // 395: 应用锁没开时救援码没有任何消费口 (rescue 只在锁屏验证里用) —— 别让用户抄一张无用的码
-        guard DB.hasPasscode() else {
-            app.showToast("未启用应用锁 — 救援码无用武之地")   // 395 未启用应用锁
-            return
-        }
-        let code = DB.store.getString(SecKey.rescueCode)
-        if code.isEmpty {
-            DB.store.set(SecKey.rescueCode, HashKit.rescueCode())
-            DB.store.set(SecKey.rescueSeen, false)
-        }
-        SecTick.bump()
-    }
-
-    // ---------- 口令录入行 (390/391 共用) ----------
-    @ViewBuilder
-    private func setCodeRow(title: String, key: String, hint: String,
-                            conflictCheck: @escaping (String) -> String) -> some View {
-        let stored = DB.store.getString(key)
-        SecRow(title: title,
-               subtitle: stored.isEmpty ? hint : "已设置 (\(stored.count) 位)",
-               icon: "number") {
-            HStack(spacing: DS.Space.xs) {
-                Button("设置") { setCodeAlert(key: key, conflictCheck: conflictCheck) }
-                    .vkFont(.footnote, weight: .medium)
-                    .foregroundStyle(DS.Palette.accentText)
-                    .frame(minHeight: DS.Hit.min)
-                if !stored.isEmpty {
-                    Button("清除") {
-                        DB.store.set(key, "")
-                        SecTick.bump()
-                    }
-                    .vkFont(.footnote)
-                    .foregroundStyle(DS.Palette.danger)
-                    .frame(minHeight: DS.Hit.min)
-                }
-            }
-        }
-    }
-
-    private func setCodeAlert(key: String, conflictCheck: @escaping (String) -> String) {
-        let alert = UIAlertController(title: "设置口令", message: "4 位以上", preferredStyle: .alert)
-        alert.addTextField { $0.isSecureTextEntry = true }
-        alert.addTextField { $0.isSecureTextEntry = true; $0.placeholder = "再次输入" }
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-        alert.addAction(UIAlertAction(title: "确定", style: .default) { _ in
-            let f1 = alert.textFields?[0].text ?? ""
-            let f2 = alert.textFields?[1].text ?? ""
-            guard f1 == f2, f1.count >= 4 else { app.showToast("两次输入不一致或不足 4 位"); return }
-            // 2026-10-13 run 61: `conflictCheck` 是 `@escaping (String) -> String` (见本函数签名),
-            // 返回**非可选** String; 原写 `if let msg = conflictCheck(f1)` 报
-            //   "initializer for conditional binding must have Optional type, not 'String'"。
-            let msg = conflictCheck(f1)
-            if !msg.isEmpty {
-                app.showToast(msg)
-                return
-            }
-            DB.store.set(key, f1)
-            app.showToast("已设置")
-            SecTick.bump()
-        })
-        UIApplication.topViewController()?.present(alert, animated: true)
-    }
-
-    // 2026-10-13 run 61: 原为 `private static func dateStr` —— 但 SecurityAuditView (379 审计流水)
-    // 在 1396 行调 `SecurityLockConfigView.dateStr(e.ts)` 格式化时间戳, 跨类型访问 private 报
-    //   "'dateStr' is inaccessible due to 'private' protection level"。
-    // 改 internal (同一文件内的复用出口); 它只读私有 fmt, 仍是单一格式源, 不复制一份。
-    static func dateStr(_ t: Double) -> String {
-        fmt.string(from: Date(timeIntervalSince1970: t))
-    }
-    private static let fmt: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "MM-dd HH:mm"
-        f.locale = Locale(identifier: "en_US_POSIX")
-        return f
-    }()
-
-    // ---------- Store 绑定辅助 (与上页同范式) ----------
-    private func binding(_ k: String) -> Binding<Bool> {
-        Binding(get: { DB.store.getBool(k) },
-                set: { DB.store.set(k, $0); SecTick.bump() })
-    }
-    private func bindingString(_ k: String) -> Binding<String> {
-        Binding(get: { DB.store.getString(k) },
-                set: { DB.store.set(k, $0); SecTick.bump() })
-    }
-    private func bindingInt(_ k: String, _ def: Int) -> Binding<Int> {
-        Binding(get: { DB.store.getInt(k, def) },
-                set: { DB.store.set(k, $0); SecTick.bump() })
-    }
-}
-
-// ================================================================
-// 二、防窥 (36/385-392 区段防窥部分)
-// ================================================================
 struct SecurityPeekView: View {
     @EnvironmentObject var app: AppState
     @Environment(\.scenePhase) private var scenePhase
@@ -1354,7 +932,7 @@ struct SecurityAuditView: View {
                                 .vkFont(.footnote)
                                 .foregroundStyle(DS.Palette.textSub)
                             Spacer()
-                            Text(SecurityLockConfigView.dateStr(Double(it.id) / 1000))
+                            Text(SecFmt.dateStr(Double(it.id) / 1000))
                                 .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                         }
@@ -1382,7 +960,7 @@ struct SecurityAuditView: View {
                                 .vkFont(.footnote)
                                 .foregroundStyle(DS.Palette.textSub)
                             Spacer()
-                            Text(SecurityLockConfigView.dateStr(Double(it.id) / 1000))
+                            Text(SecFmt.dateStr(Double(it.id) / 1000))
                                 .vkFont(.caption)
                                 .foregroundStyle(DS.Palette.textSub)
                         }
@@ -1434,7 +1012,7 @@ struct SecurityAuditView: View {
                     .vkFont(.subheadline)
                     .lineLimit(1)
                 Spacer()
-                Text(SecurityLockConfigView.dateStr(e.ts))
+                Text(SecFmt.dateStr(e.ts))
                     .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                 Image(systemName: "chevron.down")
