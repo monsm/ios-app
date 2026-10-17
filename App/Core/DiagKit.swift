@@ -62,10 +62,10 @@ enum DiagOps {
 // ---------- 215 启动预算: 冷启动各阶段打点 (本地自统计, 预算 800ms) ----------
 enum StartupTrace {
     static let t0 = CFAbsoluteTimeGetCurrent()
-    private static var marks: [String: Double] = [:]
-    static func mark(_ p: String) { marks[p] = CFAbsoluteTimeGetCurrent() - t0 }
+    private static let marksLock = OSAllocatedLock([String: Double]())
+    static func mark(_ p: String) { marksLock.withLock { $0[p] = CFAbsoluteTimeGetCurrent() - t0 } }
     /// 各阶段耗时 (ms)
-    static func ms(_ p: String) -> Double? { marks[p].map { ($0 * 1000).rounded() } }
+    static func ms(_ p: String) -> Double? { marksLock.withLock { $0[p] }.map { ($0 * 1000).rounded() } }
     static var totalMs: Double { (CFAbsoluteTimeGetCurrent() - t0) * 1000 }
     static var overBudget: Bool { totalMs > 800 }
 }

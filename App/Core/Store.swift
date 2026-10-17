@@ -3,7 +3,7 @@
 import Foundation
 
 // ---------- 存储 ----------
-final class Store {
+final class Store: @unchecked Sendable {
     static let shared = Store()
     private let defaults = UserDefaults.standard
     private func key(_ k: String) -> String { "kf." + k }
@@ -307,7 +307,7 @@ struct OtpIdx: Codable {
 
 // ---------- 存储访问层 ----------
 enum DB {
-    static var store = Store.shared
+    static let store = Store.shared
 
     // 钥匙串 (多锁)
     static func keychains() -> [Keychain] {

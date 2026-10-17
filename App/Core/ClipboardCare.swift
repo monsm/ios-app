@@ -44,11 +44,11 @@ enum ClipboardCare {
         let label: String
         let stage: PasteStage
     }
-    private static var pending: Pending?
+    private static let pendingLock = OSAllocatedLock<Pending?>(nil)
     private static var clearedLabel: String?
 
     static var suggestion: Suggestion? {
-        if let p = pending {
+        if let p = pendingLock.withLock({ $0 }) {
             guard UIPasteboard.general.changeCount == p.change else { return nil }   // 已被别处覆盖, 不冒充"还在"
             // 单位口径：秒 —— `Pending.at` 由本文件 `pending = Pending(` 那一行写入，取的就是
             // `Date().timeIntervalSince1970`，与 ttl/now 同一把尺（不是台账里那种 epoch 毫秒）。
@@ -61,12 +61,12 @@ enum ClipboardCare {
     }
     /// 一键再复制: 明文还在内存里才有这个按钮, 点完重新起算窗口。
     static func recopy() {
-        guard let p = pending else { return }
+        guard let p = pendingLock.withLock({ $0 }) else { return }
         copySecret(p.text, via: p.label)
     }
     /// "知道了" / 跳走之后就地收起, 不挂成常驻广告。
     static func dismissSuggestion() {
-        pending = nil
+        pendingLock.withLock { $0 = nil }
         clearedLabel = nil
     }
 
@@ -74,7 +74,7 @@ enum ClipboardCare {
     /// 复用本文件同一代数守卫与 changeCount 口径: 只在剪贴板仍是当时那串时才抹,
     /// 用户中途复制了别的就只收起建议条, 绝不替他删 (与 copySecret 同款规矩)。
     static func clearNow() {
-        if let p = pending, UIPasteboard.general.changeCount == p.change {
+        if let p = pendingLock.withLock({ $0 }), UIPasteboard.general.changeCount == p.change {
             UIPasteboard.general.string = ""
             generation += 1        // 让在飞的延时任务认输 (不弹"已自动清除", 这不是自动的)
         }
@@ -89,10 +89,10 @@ enum ClipboardCare {
         let secs = ttl
         let change = UIPasteboard.general.changeCount
         guard secs > 0 else {
-            pending = nil                    // 关自清 = 不在内存多留一份明文
+            pendingLock.withLock { $0 = nil }                    // 关自清 = 不在内存多留一份明文
             return
         }
-        pending = Pending(text: text, label: via, at: Date().timeIntervalSince1970, change: change)
+        pendingLock.withLock { $0 = Pending(text: text, label: via, at: Date().timeIntervalSince1970, change: change) }
         generation += 1
         let my = generation
         Task { @MainActor in
@@ -100,11 +100,11 @@ enum ClipboardCare {
             guard my == generation else { return }                       // 后面又复制过新的, 不归本次管
             guard UIPasteboard.general.changeCount == change else {
                 // 用户中途复制了别的东西: 绝不清, 也不再留本串和"还在剪贴板"的说法
-                if my == generation { pending = nil }
+                if my == generation { pendingLock.withLock { $0 = nil } }
                 return
             }
             UIPasteboard.general.string = ""
-            pending = nil
+            pendingLock.withLock { $0 = nil }
             clearedLabel = via
             // 只报"已清除", 不回显内容本身
             AppState.hostRef?.showToast("剪贴板内容已自动清除 (\(secs) 秒 · \(via))")

@@ -93,7 +93,7 @@ enum BatteryCare {
     // ---------- 120 全 App 低电分支 ----------
     /// 最近一次读到的电量 (当前锁) 内存缓存: 动效令牌 (DesignSystem.Motion) 每次求值都问这里,
     /// 不能每次都解快照 JSON。sample() 每次读 03 后喂新值; 冷启动首问回源一次统一读数。
-    private static var lowCache: (mac: String, low: Bool)?
+    private static let lowCacheLock = OSAllocatedLock((mac: "", low: false))
     /// 120: 当前锁电量 ≤20% (= 低于两成) 时为 true —— 设计令牌据此把全 App 动效压到 calm。
     /// 读法: kf_current_mac (当前锁, 与 Store.preferredMac 同一解析) → 统一展示读数 (displayPct 采样+快照取新)。
     /// 不走 kf_last_device: 它存的是 BLE 外设 id (LockService.connect 写入), 拿它查 kf_batt_/kf_snap_
@@ -102,11 +102,11 @@ enum BatteryCare {
     static var appLowBattery: Bool {
         let mac = DB.preferredMac()
         guard !mac.isEmpty else { return false }
-        if let c = lowCache, c.mac == mac { return c.low }
+        if let c = lowCacheLock.withLock({ $0 }), c.mac == mac { return c.low }
         let pct = displayPct(mac, snapshot: DB.readStatus(mac)?.powerLevel ?? -1)
         guard pct >= 0 else { return false }
         let low = isLow(pct)
-        lowCache = (mac, low)
+        lowCacheLock.withLock { $0 = (mac, low) }
         return low
     }
     /// 121 低温季提示窗口: 11 月–3 月 (纯本地日期规则)
@@ -170,7 +170,7 @@ enum BatteryCare {
     @discardableResult
     static func sample(_ mac: String, pct: Int) -> Bool {
         guard !mac.isEmpty, pct >= 0 else { return false }
-        lowCache = (mac, isLow(pct))   // 120: 无论是否落点都刷新低电缓存 (动效令牌的读点)
+        lowCacheLock.withLock { $0 = (mac, isLow(pct)) }   // 120: 无论是否落点都刷新低电缓存
         var list = samples(mac)
         let now = Date().timeIntervalSince1970 * 1000
         if let last = list.last, last.pct == pct, now - last.t < 3_600_000 { return false }
@@ -242,7 +242,7 @@ enum BatteryCare {
         var list = samples(mac)
         let now = Date().timeIntervalSince1970 * 1000
         if let pct = DB.readStatus(mac)?.powerLevel, pct >= 0 {
-            lowCache = (mac, isLow(pct))   // 120: 换电后电量跳变, 缓存立刻跟上
+            lowCacheLock.withLock { $0 = (mac, isLow(pct)) }   // 120: 换电后电量跳变, 缓存立刻跟上
             list.append(BattSample(t: now, pct: pct))
             let cutoff = now - 90 * 86400 * 1000
             list.removeAll { $0.t < cutoff }

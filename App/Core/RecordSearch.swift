@@ -11,6 +11,7 @@
 //       真实存在的 5 种 (6 低电 / 7 防撬 / 10 试错锁定 / 13 指纹告警 / 224 键盘锁定);
 //       归属统计走 Attribution 可证明链, 推断值一律标"约"。
 import Foundation
+import os
 
 /// 一条可检索的记录行 (跨锁聚合单元, 770)
 /// 186 记录备注 / 188 手动标旗 —— 本机覆盖层, 按 (锁, 行) 存, 不写进锁端也不混入日志缓存。
@@ -548,24 +549,33 @@ enum RecordSearch {
     /// 671 生效表 = 内置 + 在线缓存 (按年整体覆盖, 见 `HolidayFeed`)。
     /// 本枚举不是 @MainActor, 但这里只加**只读语义的缓存**：所有调用方都在主线程 (View / @MainActor 的 HolidayFeed),
     /// 失效键是偏好里的"最近更新时间"整数 —— 写缓存的那一步必然改它, 所以不会读到过期合并结果。
-    private static var mergedCache: [Holiday] = []
-    private static var mapCache: [String: String] = [:]
-    private static var makeupCache: Set<String> = []
-    private static var stampCache = -2
+    // 三个缓存 + 失效键是一组 (ensureMerged 一次写全, accessor 只读) —— 用一把原生锁护住整组。
+    // 选 OSAllocatedLock (iOS 16+) 而不是 unsafe: 它是 Swift 并发组里的标准互斥原语,
+    // withLock 保证 unlock 一定执行; 读多写少 (只在公告更新时才写), 锁竞争可忽略。
+    private struct Merged: Sendable {
+        var rows: [Holiday] = []
+        var map: [String: String] = [:]
+        var makeup: Set<String> = []
+        var stamp = -2
+    }
+    private static let mergedLock = OSAllocatedLock(Merged())
     private static func ensureMerged() {
         let s = HolidayFeed.lastUpdateSec
-        guard s != stampCache else { return }
-        let rows = HolidayFeed.rows
-        mergedCache = rows
-        mapCache = Dictionary(rows.filter { $0.off }.map { ($0.day, $0.name) }, uniquingKeysWith: { a, _ in a })
-        makeupCache = Set(rows.filter { !$0.off }.map { $0.day })
-        stampCache = s
+        mergedLock.withLock { m in
+            guard s != m.stamp else { return }
+            let rows = HolidayFeed.rows
+            m.rows = rows
+            m.map = Dictionary(rows.filter { $0.off }.map { ($0.day, $0.name) }, uniquingKeysWith: { a, _ in a })
+            m.makeup = Set(rows.filter { !$0.off }.map { $0.day }
+            )
+            m.stamp = s
+        }
     }
-    static var holidays: [Holiday] { ensureMerged(); return mergedCache }
+    static var holidays: [Holiday] { ensureMerged(); return mergedLock.withLock { $0.rows } }
     /// 671 节假日名 (组头标签); 补班日不在此列
-    static func holidayName(_ dayKey: String) -> String? { ensureMerged(); return mapCache[dayKey] }
+    static func holidayName(_ dayKey: String) -> String? { ensureMerged(); return mergedLock.withLock { $0.map[dayKey] } }
     /// 671 调休补班日 (上班的日子, 不是假期) —— 色带与"假日顺延"都必须把它和放假日分开
-    static func isMakeupWorkday(_ dayKey: String) -> Bool { ensureMerged(); return makeupCache.contains(dayKey) }
+    static func isMakeupWorkday(_ dayKey: String) -> Bool { ensureMerged(); return mergedLock.withLock { $0.makeup.contains(dayKey) } }
     /// 内置表覆盖到哪一年 (UI 文案据此说明"次年公告未发布前不显示", 不假装全都有)
     static var builtinHolidayYearMax: Int { builtinRows.compactMap { Int($0.day.prefix(4)) }.max() ?? 0 }
     /// 生效表覆盖到哪一年 (在线拉到 2027 公告后这里就变成 2027)

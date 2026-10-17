@@ -1,0 +1,241 @@
+- warning: capture of 'commit' with non-Sendable type '() -> Void' in a '@Sendable' closure [#SendableClosureCaptures]
+- warning: capture of 'finish' with non-Sendable type '(ExportItem?, String) -> Void' in a '@Sendable' closure; this is an error in the Swift 6 language mode [#SendableClosureCaptures]
+- warning: capture of 'onDeniedPresentFallback' with non-Sendable type '(@escaping () -> Void) -> Void' in a '@Sendable' closure [#SendableClosureCaptures]
+- warning: capture of 'onFail' with non-Sendable type '((String) -> Void)?' in a '@Sendable' closure [#SendableClosureCaptures]
+- warning: capture of 'onSuccess' with non-Sendable type '() -> Void' in a '@Sendable' closure [#SendableClosureCaptures]
+- warning: sending 'a' risks causing data races; this is an error in the Swift 6 language mode [#RegionIsolation::SendingRisksDataRace]
+- warning: sending 'commit' risks causing data races; this is an error in the Swift 6 language mode [#RegionIsolation::SendingRisksDataRace]
+- warning: sending 'finish' risks causing data races; this is an error in the Swift 6 language mode [#RegionIsolation::SendingRisksDataRace]
+- warning: sending 'onDeniedPresentFallback' risks causing data races; this is an error in the Swift 6 language mode [#RegionIsolation::SendingRisksDataRace]
+- warning: sending 'onFail' risks causing data races; this is an error in the Swift 6 language mode [#RegionIsolation::SendingRisksDataRace]
+- warning: sending 'onSuccess' risks causing data races; this is an error in the Swift 6 language mode [#RegionIsolation::SendingRisksDataRace]
+- warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode [#RegionIsolation::SendingRisksDataRace]
+- warning: sending value of non-Sendable type '(Int, Int) -> Void' risks causing data races; this is an error in the Swift 6 language mode [#RegionIsolation::SendingRisksDataRace]
+- warning: sending value of non-Sendable type '(UIAlertAction) -> Void' risks causing data races; this is an error in the Swift 6 language mode [#RegionIsolation::SendingRisksDataRace]
+- warning: sending value of non-Sendable type 'some View' risks causing data races; this is an error in the Swift 6 language mode [#RegionIsolation::SendingRisksDataRace]
+- warning: static property '_lastFace' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+- warning: static property 'autoDoneYear' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+- warning: static property 'currentMac' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+- warning: static property 'done' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+- warning: static property 'golden' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+- warning: static property 'ledgerCorruptSet' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+- warning: static property 'lowCache' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+- warning: static property 'macOrders' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+- warning: static property 'makeupCache' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+- warning: static property 'mapCache' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+- warning: static property 'marks' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+- warning: static property 'mergedCache' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+- warning: static property 'mergedStamp' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+- warning: static property 'mgr' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+- warning: static property 'navAt' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+- warning: static property 'navName' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+- warning: static property 'pending' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+- warning: static property 'samples' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+- warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'ExportKit.MailDismisser' may have shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+- warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'SecTickCenter' may have shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+- warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'Store' may have shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+- warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'UNDelegate' may have shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+- warning: static property 'stampCache' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+- warning: static property 'stillSince' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+- warning: static property 'store' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+- warning: static property 'synth' is not concurrency-safe because non-'Sendable' type 'AVSpeechSynthesizer' may have shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+App/Core/AccessibilityKit.swift:162:25: warning: call to main actor-isolated static method 'post(notification:argument:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/AccessibilityKit.swift:172:17: warning: call to main actor-isolated initializer 'init()' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/AccessibilityKit.swift:173:11: warning: call to main actor-isolated instance method 'notificationOccurred' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/AccessibilityKit.swift:189:39: warning: main actor-isolated class property 'shared' can not be referenced from a nonisolated context
+App/Core/AccessibilityKit.swift:189:46: warning: main actor-isolated property 'connectedScenes' can not be referenced from a nonisolated context
+App/Core/AccessibilityKit.swift:18:53: warning: main actor-isolated static property 'isDarkerSystemColorsEnabled' can not be referenced from a nonisolated context
+App/Core/AccessibilityKit.swift:190:31: warning: main actor-isolated property 'windows' can not be referenced from a nonisolated context
+App/Core/AccessibilityKit.swift:190:60: warning: main actor-isolated property 'isKeyWindow' can not be referenced from a nonisolated context
+App/Core/AccessibilityKit.swift:191:30: warning: main actor-isolated property 'rootViewController' can not be referenced from a nonisolated context
+App/Core/AccessibilityKit.swift:191:50: warning: main actor-isolated property 'view' can not be referenced from a nonisolated context
+App/Core/AccessibilityKit.swift:195:30: warning: main actor-isolated property 'accessibilityLabel' can not be referenced from a nonisolated context
+App/Core/AccessibilityKit.swift:199:29: warning: main actor-isolated property 'accessibilityElements' can not be referenced from a nonisolated context
+App/Core/AccessibilityKit.swift:200:18: warning: main actor-isolated property 'isAccessibilityElement' can not be referenced from a nonisolated context
+App/Core/AccessibilityKit.swift:201:30: warning: main actor-isolated property 'accessibilityLabel' can not be referenced from a nonisolated context
+App/Core/AccessibilityKit.swift:202:24: warning: main actor-isolated property 'subviews' can not be referenced from a nonisolated context
+App/Core/AccessibilityKit.swift:22:53: warning: main actor-isolated static property 'isInvertColorsEnabled' can not be referenced from a nonisolated context
+App/Core/AccessibilityKit.swift:26:49: warning: main actor-isolated static property 'isBoldTextEnabled' can not be referenced from a nonisolated context
+App/Core/AccessibilityKit.swift:310:25: warning: capture of 'onSuccess' with non-Sendable type '() -> Void' in a '@Sendable' closure [#SendableClosureCaptures]
+App/Core/AccessibilityKit.swift:310:25: warning: sending 'onSuccess' risks causing data races; this is an error in the Swift 6 language mode [#RegionIsolation::SendingRisksDataRace]
+App/Core/AccessibilityKit.swift:310:46: warning: capture of 'onFail' with non-Sendable type '((String) -> Void)?' in a '@Sendable' closure [#SendableClosureCaptures]
+App/Core/AccessibilityKit.swift:310:52: warning: sending 'onFail' risks causing data races; this is an error in the Swift 6 language mode [#RegionIsolation::SendingRisksDataRace]
+App/Core/AccessibilityKit.swift:31:53: warning: main actor-isolated static property 'isReduceMotionEnabled' can not be referenced from a nonisolated context
+App/Core/AccessibilityKit.swift:35:59: warning: main actor-isolated static property 'isReduceTransparencyEnabled' can not be referenced from a nonisolated context
+App/Core/AutoOpen.swift:173:24: warning: static property '_lastFace' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+App/Core/AutoOpen.swift:301:24: warning: static property 'samples' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+App/Core/AutoOpen.swift:302:24: warning: static property 'stillSince' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+App/Core/AutoOpen.swift:303:24: warning: static property 'mgr' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+App/Core/BatteryCare.swift:96:24: warning: static property 'lowCache' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+App/Core/CredentialOrg.swift:449:25: warning: capture of 'commit' with non-Sendable type '() -> Void' in a '@Sendable' closure [#SendableClosureCaptures]
+App/Core/CredentialOrg.swift:449:25: warning: sending 'commit' risks causing data races; this is an error in the Swift 6 language mode [#RegionIsolation::SendingRisksDataRace]
+App/Core/CredentialOrg.swift:449:43: warning: capture of 'onDeniedPresentFallback' with non-Sendable type '(@escaping () -> Void) -> Void' in a '@Sendable' closure [#SendableClosureCaptures]
+App/Core/CredentialOrg.swift:449:43: warning: sending 'onDeniedPresentFallback' risks causing data races; this is an error in the Swift 6 language mode [#RegionIsolation::SendingRisksDataRace]
+App/Core/CredentialOrg.swift:808:33: warning: capture of 'c' with non-Sendable type 'UNUserNotificationCenter' in a '@Sendable' closure [#SendableClosureCaptures]
+App/Core/DiagKit.swift:151:16: warning: static property 'done' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+App/Core/DiagKit.swift:65:24: warning: static property 'marks' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+App/Core/DiagKit.swift:911:24: warning: static property 'navAt' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+App/Core/DiagKit.swift:912:24: warning: static property 'navName' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+App/Core/DiagKit.swift:93:24: warning: static property 'store' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+App/Core/DiagKit.swift:94:16: warning: static property 'currentMac' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+App/Core/HolidayFeed.swift:113:24: warning: static property 'mergedCache' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+App/Core/HolidayFeed.swift:114:24: warning: static property 'mergedStamp' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+App/Core/HolidayFeed.swift:145:24: warning: static property 'autoDoneYear' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+App/Core/LiveUnlock.swift:43:21: warning: sending 'a' risks causing data races; this is an error in the Swift 6 language mode [#RegionIsolation::SendingRisksDataRace]
+App/Core/LiveUnlock.swift:45:21: warning: sending 'a' risks causing data races; this is an error in the Swift 6 language mode [#RegionIsolation::SendingRisksDataRace]
+App/Core/LiveUnlock.swift:54:24: warning: sending 'a' risks causing data races; this is an error in the Swift 6 language mode [#RegionIsolation::SendingRisksDataRace]
+App/Core/Milestones.swift:220:43: warning: call to main actor-isolated instance method 'notificationOccurred' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/Milestones.swift:220:9: warning: call to main actor-isolated initializer 'init()' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/QuickActions.swift:27:23: warning: main actor-isolated class property 'shared' can not be mutated from a nonisolated context
+App/Core/QuickActions.swift:27:30: warning: main actor-isolated property 'shortcutItems' can not be mutated from a nonisolated context
+App/Core/QuickPool.swift:144:22: warning: call to main actor-isolated initializer 'init(app:embedded:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/QuickPool.swift:145:22: warning: call to main actor-isolated initializer 'init(mode:app:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/QuickPool.swift:146:22: warning: call to main actor-isolated initializer 'init()' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/QuickPool.swift:147:22: warning: call to main actor-isolated initializer 'init(app:embedded:prefillOwner:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/QuickPool.swift:148:22: warning: call to main actor-isolated initializer 'init(app:embedded:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/QuickPool.swift:149:22: warning: call to main actor-isolated initializer 'init()' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/QuickPool.swift:150:22: warning: call to main actor-isolated initializer 'init(app:embedded:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/QuickPool.swift:151:22: warning: call to main actor-isolated initializer 'init(app:lockMac:embedded:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/QuickPool.swift:152:22: warning: call to main actor-isolated initializer 'init(app:embedded:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/QuickPool.swift:153:22: warning: call to main actor-isolated initializer 'init()' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/RecordSearch.swift:551:24: warning: static property 'mergedCache' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+App/Core/RecordSearch.swift:552:24: warning: static property 'mapCache' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+App/Core/RecordSearch.swift:553:24: warning: static property 'makeupCache' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+App/Core/RecordSearch.swift:554:24: warning: static property 'stampCache' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+App/Core/SeasonIcon.swift:46:33: warning: main actor-isolated class property 'shared' can not be referenced from a nonisolated context
+App/Core/SeasonIcon.swift:47:19: warning: main actor-isolated property 'supportsAlternateIcons' can not be referenced from a nonisolated context
+App/Core/SeasonIcon.swift:57:33: warning: main actor-isolated property 'alternateIconName' can not be referenced from a nonisolated context
+App/Core/SeasonIcon.swift:62:13: warning: call to main actor-isolated instance method 'setAlternateIconName(_:completionHandler:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/SpeechKit.swift:10:16: warning: static property 'synth' is not concurrency-safe because non-'Sendable' type 'AVSpeechSynthesizer' may have shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+App/Core/SpotlightKit.swift:74:24: warning: static property 'pending' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+App/Core/SpotlightKit.swift:85:13: warning: capture of 'index' with non-Sendable type 'CSSearchableIndex' in a '@Sendable' closure [#SendableClosureCaptures]
+App/Core/SpotlightKit.swift:85:40: warning: capture of 'items' with non-Sendable type '[CSSearchableItem]' in a '@Sendable' closure [#SendableClosureCaptures]
+App/Core/SpotlightKit.swift:87:76: warning: capture of 'items' with non-Sendable type '[CSSearchableItem]' in a '@Sendable' closure [#SendableClosureCaptures]
+App/Core/Store.swift:310:16: warning: static property 'store' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+App/Core/Store.swift:499:24: warning: static property 'ledgerCorruptSet' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+App/Core/Store.swift:7:16: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'Store' may have shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+App/Core/VariantGrammar.swift:89:18: warning: call to main actor-isolated instance method 'axGlass' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/VariantGrammar.swift:89:18: warning: non-Sendable 'some View'-typed result can not be returned from main actor-isolated instance method 'axGlass' to nonisolated context; this is an error in the Swift 6 language mode [#RegionIsolation]
+App/Core/VariantGrammar.swift:89:18: warning: sending value of non-Sendable type 'some View' risks causing data races; this is an error in the Swift 6 language mode [#RegionIsolation::SendingRisksDataRace]
+App/Core/ZKProtocol.swift:98:24: warning: static property 'macOrders' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+App/Services/BackupStudioKit.swift:1599:16: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'UNDelegate' may have shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+App/Services/DFUKit.swift:694:35: warning: sending value of non-Sendable type '(Int, Int) -> Void' risks causing data races; this is an error in the Swift 6 language mode [#RegionIsolation::SendingRisksDataRace]
+App/Services/DFUKit.swift:699:35: warning: sending value of non-Sendable type '(Int, Int) -> Void' risks causing data races; this is an error in the Swift 6 language mode [#RegionIsolation::SendingRisksDataRace]
+App/UI/CredentialStudio.swift:2301:17: warning: call to main actor-isolated initializer 'init(title:message:preferredStyle:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/CredentialStudio.swift:2305:11: warning: call to main actor-isolated instance method 'addTextField(configurationHandler:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/CredentialStudio.swift:2306:12: warning: main actor-isolated property 'placeholder' can not be mutated from a nonisolated context
+App/UI/CredentialStudio.swift:2307:12: warning: main actor-isolated property 'keyboardType' can not be mutated from a nonisolated context
+App/UI/CredentialStudio.swift:2309:11: warning: call to main actor-isolated instance method 'addAction' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/CredentialStudio.swift:2309:21: warning: call to main actor-isolated initializer 'init(title:style:handler:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/CredentialStudio.swift:2310:11: warning: call to main actor-isolated instance method 'addAction' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/CredentialStudio.swift:2310:21: warning: call to main actor-isolated initializer 'init(title:style:handler:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/CredentialStudio.swift:2310:21: warning: sending value of non-Sendable type '(UIAlertAction) -> Void' risks causing data races; this is an error in the Swift 6 language mode [#RegionIsolation::SendingRisksDataRace]
+App/UI/CredentialStudio.swift:2311:27: warning: main actor-isolated property 'textFields' can not be referenced from a nonisolated context
+App/UI/CredentialStudio.swift:2311:46: warning: main actor-isolated property 'text' can not be referenced from a nonisolated context
+App/UI/CredentialStudio.swift:2316:24: warning: call to main actor-isolated initializer 'init(title:message:preferredStyle:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/CredentialStudio.swift:2317:18: warning: call to main actor-isolated instance method 'addAction' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/CredentialStudio.swift:2317:28: warning: call to main actor-isolated initializer 'init(title:style:handler:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/CredentialStudio.swift:2318:27: warning: call to main actor-isolated static method 'topViewController()' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/CredentialStudio.swift:2318:48: warning: call to main actor-isolated instance method 'present(_:animated:completion:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/CredentialStudio.swift:2321:19: warning: call to main actor-isolated static method 'topViewController()' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/CredentialStudio.swift:2321:40: warning: call to main actor-isolated instance method 'present(_:animated:completion:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/CredentialsView.swift:2697:17: warning: call to main actor-isolated initializer 'init(title:message:preferredStyle:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/CredentialsView.swift:2698:11: warning: call to main actor-isolated instance method 'addAction' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/CredentialsView.swift:2698:21: warning: call to main actor-isolated initializer 'init(title:style:handler:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/CredentialsView.swift:2699:11: warning: call to main actor-isolated instance method 'addAction' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/CredentialsView.swift:2699:21: warning: call to main actor-isolated initializer 'init(title:style:handler:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/CredentialsView.swift:2699:21: warning: sending value of non-Sendable type '(UIAlertAction) -> Void' risks causing data races; this is an error in the Swift 6 language mode [#RegionIsolation::SendingRisksDataRace]
+App/UI/CredentialsView.swift:2700:19: warning: call to main actor-isolated static method 'topViewController()' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/CredentialsView.swift:2700:40: warning: call to main actor-isolated instance method 'present(_:animated:completion:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/CredentialsView.swift:2710:17: warning: call to main actor-isolated initializer 'init(title:message:preferredStyle:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/CredentialsView.swift:2713:11: warning: call to main actor-isolated instance method 'addTextField(configurationHandler:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/CredentialsView.swift:2713:29: warning: main actor-isolated property 'placeholder' can not be mutated from a nonisolated context
+App/UI/CredentialsView.swift:2713:59: warning: main actor-isolated property 'autocorrectionType' can not be mutated from a nonisolated context
+App/UI/CredentialsView.swift:2713:88: warning: main actor-isolated property 'autocapitalizationType' can not be mutated from a nonisolated context
+App/UI/CredentialsView.swift:2714:11: warning: call to main actor-isolated instance method 'addAction' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/CredentialsView.swift:2714:21: warning: call to main actor-isolated initializer 'init(title:style:handler:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/CredentialsView.swift:2715:14: warning: call to main actor-isolated initializer 'init(title:style:handler:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/CredentialsView.swift:2715:14: warning: sending value of non-Sendable type '(UIAlertAction) -> Void' risks causing data races; this is an error in the Swift 6 language mode [#RegionIsolation::SendingRisksDataRace]
+App/UI/CredentialsView.swift:2716:8: warning: main actor-isolated property 'isEnabled' can not be mutated from a nonisolated context
+App/UI/CredentialsView.swift:2717:11: warning: call to main actor-isolated instance method 'addAction' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/CredentialsView.swift:2719:11: warning: main actor-isolated property 'textFields' can not be referenced from a nonisolated context
+App/UI/CredentialsView.swift:2719:26: warning: call to main actor-isolated instance method 'addAction(_:for:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/CredentialsView.swift:2719:36: warning: call to main actor-isolated initializer 'init(title:subtitle:image:selectedImage:preferredImageVisibility:identifier:discoverabilityTitle:attributes:state:handler:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/CredentialsView.swift:2720:12: warning: main actor-isolated property 'isEnabled' can not be mutated from a nonisolated context
+App/UI/CredentialsView.swift:2720:31: warning: main actor-isolated property 'textFields' can not be referenced from a nonisolated context
+App/UI/CredentialsView.swift:2720:46: warning: main actor-isolated property 'text' can not be referenced from a nonisolated context
+App/UI/CredentialsView.swift:2722:19: warning: call to main actor-isolated static method 'topViewController()' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/CredentialsView.swift:2722:40: warning: call to main actor-isolated instance method 'present(_:animated:completion:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/ExportCenter.swift:1044:20: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'ExportKit.MailDismisser' may have shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+App/UI/ExportCenter.swift:1047:24: warning: call to main actor-isolated instance method 'dismiss(animated:completion:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/ExportCenter.swift:352:16: warning: passing closure as a 'sending' parameter risks causing data races between code in the current isolation context and concurrent execution of the closure; this is an error in the Swift 6 language mode [#RegionIsolation::SendingClosureRisksDataRace]
+App/UI/ExportCenter.swift:354:35: warning: capture of 'self' with non-Sendable type 'ExportProgress' in a '@Sendable' closure; this is an error in the Swift 6 language mode [#SendableClosureCaptures]
+App/UI/ExportCenter.swift:354:45: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode [#RegionIsolation::SendingRisksDataRace]
+App/UI/ExportCenter.swift:356:30: warning: passing closure as a 'sending' parameter risks causing data races between code in the current isolation context and concurrent execution of the closure; this is an error in the Swift 6 language mode [#RegionIsolation::SendingClosureRisksDataRace]
+App/UI/ExportCenter.swift:357:35: warning: capture of 'self' with non-Sendable type 'ExportProgress' in a '@Sendable' closure; this is an error in the Swift 6 language mode [#SendableClosureCaptures]
+App/UI/ExportCenter.swift:357:46: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode [#RegionIsolation::SendingRisksDataRace]
+App/UI/ExportCenter.swift:361:17: warning: capture of 'self' with non-Sendable type 'ExportProgress' in a '@Sendable' closure; this is an error in the Swift 6 language mode [#SendableClosureCaptures]
+App/UI/ExportCenter.swift:361:28: warning: sending 'self' risks causing data races; this is an error in the Swift 6 language mode [#RegionIsolation::SendingRisksDataRace]
+App/UI/ExportCenter.swift:367:21: warning: capture of 'finish' with non-Sendable type '(ExportItem?, String) -> Void' in a '@Sendable' closure; this is an error in the Swift 6 language mode [#SendableClosureCaptures]
+App/UI/ExportCenter.swift:367:21: warning: sending 'finish' risks causing data races; this is an error in the Swift 6 language mode [#RegionIsolation::SendingRisksDataRace]
+App/UI/SecurityCenterView.swift:56:16: warning: static property 'shared' is not concurrency-safe because non-'Sendable' type 'SecTickCenter' may have shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+App/UI/SettingsView.swift:1193:21: warning: call to main actor-isolated instance method 'showToast' in a synchronous nonisolated context [#ActorIsolatedCall]
+Tests/GoldenDiffTests.swift:7:16: warning: static property 'golden' is not concurrency-safe because it is nonisolated global shared mutable state; this is an error in the Swift 6 language mode [#MutableGlobalVariable]
+Tests/TimeFormatTests.swift:16:12: warning: reference to static property 'store' is not concurrency-safe because it involves shared mutable state; this is an error in the Swift 6 language mode
+Tests/TimeFormatTests.swift:17:12: warning: reference to static property 'store' is not concurrency-safe because it involves shared mutable state; this is an error in the Swift 6 language mode
+Tests/TimeFormatTests.swift:22:12: warning: reference to static property 'store' is not concurrency-safe because it involves shared mutable state; this is an error in the Swift 6 language mode
+Tests/TimeFormatTests.swift:24:12: warning: reference to static property 'store' is not concurrency-safe because it involves shared mutable state; this is an error in the Swift 6 language mode
+Tests/TimeFormatTests.swift:30:12: warning: reference to static property 'store' is not concurrency-safe because it involves shared mutable state; this is an error in the Swift 6 language mode
+Tests/TimeFormatTests.swift:32:12: warning: reference to static property 'store' is not concurrency-safe because it involves shared mutable state; this is an error in the Swift 6 language mode
+`- warning: call to main actor-isolated initializer 'init()' in a synchronous nonisolated context [#ActorIsolatedCall]
+`- warning: call to main actor-isolated initializer 'init(app:embedded:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+`- warning: call to main actor-isolated initializer 'init(app:embedded:prefillOwner:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+`- warning: call to main actor-isolated initializer 'init(app:lockMac:embedded:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+`- warning: call to main actor-isolated initializer 'init(mode:app:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+`- warning: call to main actor-isolated initializer 'init(title:message:preferredStyle:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+`- warning: call to main actor-isolated initializer 'init(title:style:handler:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+`- warning: call to main actor-isolated initializer 'init(title:subtitle:image:selectedImage:preferredImageVisibility:identifier:discoverabilityTitle:attributes:state:handler:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+`- warning: call to main actor-isolated instance method 'addAction' in a synchronous nonisolated context [#ActorIsolatedCall]
+`- warning: call to main actor-isolated instance method 'addAction(_:for:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+`- warning: call to main actor-isolated instance method 'addTextField(configurationHandler:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+`- warning: call to main actor-isolated instance method 'axGlass' in a synchronous nonisolated context [#ActorIsolatedCall]
+`- warning: call to main actor-isolated instance method 'dismiss(animated:completion:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+`- warning: call to main actor-isolated instance method 'notificationOccurred' in a synchronous nonisolated context [#ActorIsolatedCall]
+`- warning: call to main actor-isolated instance method 'present(_:animated:completion:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+`- warning: call to main actor-isolated instance method 'setAlternateIconName(_:completionHandler:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+`- warning: call to main actor-isolated instance method 'showToast' in a synchronous nonisolated context [#ActorIsolatedCall]
+`- warning: call to main actor-isolated static method 'post(notification:argument:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+`- warning: call to main actor-isolated static method 'topViewController()' in a synchronous nonisolated context [#ActorIsolatedCall]
+`- warning: capture of 'c' with non-Sendable type 'UNUserNotificationCenter' in a '@Sendable' closure [#SendableClosureCaptures]
+`- warning: capture of 'index' with non-Sendable type 'CSSearchableIndex' in a '@Sendable' closure [#SendableClosureCaptures]
+`- warning: capture of 'items' with non-Sendable type '[CSSearchableItem]' in a '@Sendable' closure [#SendableClosureCaptures]
+`- warning: capture of 'self' with non-Sendable type 'ExportProgress' in a '@Sendable' closure; this is an error in the Swift 6 language mode [#SendableClosureCaptures]
+`- warning: main actor-isolated class property 'shared' can not be mutated from a nonisolated context
+`- warning: main actor-isolated class property 'shared' can not be referenced from a nonisolated context
+`- warning: main actor-isolated property 'accessibilityElements' can not be referenced from a nonisolated context
+`- warning: main actor-isolated property 'accessibilityLabel' can not be referenced from a nonisolated context
+`- warning: main actor-isolated property 'alternateIconName' can not be referenced from a nonisolated context
+`- warning: main actor-isolated property 'autocapitalizationType' can not be mutated from a nonisolated context
+`- warning: main actor-isolated property 'autocorrectionType' can not be mutated from a nonisolated context
+`- warning: main actor-isolated property 'connectedScenes' can not be referenced from a nonisolated context
+`- warning: main actor-isolated property 'isAccessibilityElement' can not be referenced from a nonisolated context
+`- warning: main actor-isolated property 'isEnabled' can not be mutated from a nonisolated context
+`- warning: main actor-isolated property 'isKeyWindow' can not be referenced from a nonisolated context
+`- warning: main actor-isolated property 'keyboardType' can not be mutated from a nonisolated context
+`- warning: main actor-isolated property 'placeholder' can not be mutated from a nonisolated context
+`- warning: main actor-isolated property 'rootViewController' can not be referenced from a nonisolated context
+`- warning: main actor-isolated property 'shortcutItems' can not be mutated from a nonisolated context
+`- warning: main actor-isolated property 'subviews' can not be referenced from a nonisolated context
+`- warning: main actor-isolated property 'supportsAlternateIcons' can not be referenced from a nonisolated context
+`- warning: main actor-isolated property 'text' can not be referenced from a nonisolated context
+`- warning: main actor-isolated property 'textFields' can not be referenced from a nonisolated context
+`- warning: main actor-isolated property 'view' can not be referenced from a nonisolated context
+`- warning: main actor-isolated property 'windows' can not be referenced from a nonisolated context
+`- warning: main actor-isolated static property 'isBoldTextEnabled' can not be referenced from a nonisolated context
+`- warning: main actor-isolated static property 'isDarkerSystemColorsEnabled' can not be referenced from a nonisolated context
+`- warning: main actor-isolated static property 'isInvertColorsEnabled' can not be referenced from a nonisolated context
+`- warning: main actor-isolated static property 'isReduceMotionEnabled' can not be referenced from a nonisolated context
+`- warning: main actor-isolated static property 'isReduceTransparencyEnabled' can not be referenced from a nonisolated context
+`- warning: non-Sendable 'some View'-typed result can not be returned from main actor-isolated instance method 'axGlass' to nonisolated context; this is an error in the Swift 6 language mode [#RegionIsolation]
+`- warning: passing closure as a 'sending' parameter risks causing data races between code in the current isolation context and concurrent execution of the closure; this is an error in the Swift 6 language mode [#RegionIsolation::SendingClosureRisksDataRace]
+`- warning: reference to static property 'store' is not concurrency-safe because it involves shared mutable state; this is an error in the Swift 6 language mode

@@ -351,7 +351,7 @@ enum MotionStillness {
 
 // ================= 控制器: 状态机 + 全门绿才走既有 unlock 管线下发 04 =================
 @MainActor
-final class AutoOpenController {
+@MainActor final class AutoOpenController {
     static let shared = AutoOpenController()
     let face: FaceService
     private var armed = false
