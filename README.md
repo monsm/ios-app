@@ -53,6 +53,57 @@ git remote add origin https://github.com/<你的用户名>/<仓库名>.git
 git push -u origin main
 ```
 
+### 三个作业, 一条依赖链 —— stamp 红了会"假装什么都没发生"
+
+`stamp`(构建时刻) → `build`(iOS) 与 `android`(APK) 两个作业都 `needs: stamp`。
+所以 **stamp 一红, 两端整个 skip**, 看上去"今天没编译", 其实是它先炸:
+
+```bash
+# 踩过的坑 (run 173/174): GNU date 的 -d 必须带 @ 前缀
+date -d "@1792240940" +%Y%m%d.%H%M%S   # ✓ 20261017.204220
+date -d "1792240940"   +%Y%m%d.%H%M%S  # ✗ invalid date —— 裸的 10 位秒数被当 YYYYMMDDHH 解析
+```
+
+回读校验那一步就是专门用来暴露这个的: 戳与 ts 换不回去 ⇒ 宁可红, 也不要产出
+"包内号与文件名不是同一时刻"的两种 ipa 混在安装台上分不出来。
+
+### CI 的判定为什么和行尾有关 (`core.autocrlf=true`)
+
+CI 检出是 **LF**, Windows 工作区是 **CRLF**。闸门里有跨行正则 (`…[\s\S]*?\n    \}`) 与
+`split("\n")` + `$` 剥行尾注释这类写法时, 同一份代码会在两边给出**不同结论**。
+两次真实事故:
+
+- `uicoverage` 在我本机报"1 处绕过漏斗的裸写换页", 指向 `RecordsTimeline.swift:450` ——
+  实际那是**行尾注释里的历史说明**("(原写法置 tabSelection=3 无消费方)")。
+  `split("\n")` 留着行尾 `\r`, 而 JS 的 `$` 不在 `\r` 前匹配 ⇒ 剥注释失效。CI 上是 LF, 不报。
+- `kotlinshadow` 在 CI 报"A8 冷路径没先吃缓存句柄" (run 175), 本机全绿 —— 同一族行尾差异。
+
+所以: **判断"这条红是不是我引入的", 要用与 CI 相同的 LF 树复现**, 别拿本机结论直接下:
+
+```bash
+git -c core.autocrlf=false archive HEAD | tar -x -C <空目录>   # 等价 CI 检出
+# 再把未提交改动按 LF 覆盖进去 (改过的文件 readFileSync → replace(/\r\n/g,"\n") → 写回)
+```
+
+### 安卓的本地编译回路 (不必每轮等 CI)
+
+`node tools/kotlinlocal.js` —— 用 gradle 缓存里的 `kotlin-compiler-embeddable` + SDK 的
+`android.jar` 真编译**协议/链路那一层** (KfProtocol/AutoOpenKit/LockStore/BleUnlocker),
+十几秒出结果。它编出 error 就退 1 (注入 run 169 那个真实错误验过开火), 缺工具链退 0 并说明。
+
+- **覆盖不到 UI 层**: `MainActivity.kt` 要 Compose/androidx 的 aar, 本地 classpath 凑不齐,
+  硬编只会刷一屏 Unresolved reference 噪音。UI 层与"真 APK 能不能装"仍只有 CI 判。
+- 路径全走环境变量, 仓里不写死任何人的用户名或盘符:
+  `KF_ANDROID_SDK` / `KF_GRADLE_CACHE` / `KF_JDK_HOME`。
+
+```bash
+# Windows 示例 (本机有 Android SDK 与跑过一次 gradle 才有这些)
+set KF_ANDROID_SDK=<你的 SDK 根, 例如 %LOCALAPPDATA%\Android\Sdk>
+set KF_GRADLE_CACHE=%USERPROFILE%\.gradle\caches\modules-2\files-2.1
+set KF_JDK_HOME=<你的 JDK 21 根>
+node tools/kotlinlocal.js
+```
+
 构建流水线 (`.github/workflows/ios.yml`):
 1. `node tools/golden.js --check` — 已提交的 `fixtures/golden.json` 必须等于 JS 核心当前输出 (改了 vendor 却没重生成即失败)
 2. `node tools/shadowdiff.js` — 影子对拍（第八道）。把 Swift 侧纯函数（`HexKit.bytes/reversePairs/asciiHex/u32leHex/fillZeroLeft`、`StatusParser.leHexToU32`、`ZKCmdBuilder.protoSecOrNil` 等）**手抄成语义等价的 JS 端口**，与 vendor JS 权威核心在 106 组输入上对拍；分四档：判失败 / 域外差异（非 hex、奇长、字节不够）/ 仅大小写（帧构造统一 `.uppercased()`，到不了字节面）/ 有意分歧（如纯数字字符串 JS 回落"现在"而 Swift 认下）。它**不替代** `xcodebuild test`：绿只说明"我读到的两边一致"
