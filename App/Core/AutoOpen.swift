@@ -4,6 +4,7 @@
 // (审计只记"哪道门拒了、哪把锁、何时", 永不记 ekey/skey 明文)。默认全关、fail-closed。
 // 96 铁律对照: 本特性是 96 的显式用户开关例外 — 未开 = 绝不自动开锁, 开 = 全门绿才出手。
 import Foundation
+import os
 import SwiftUI          // 本文件尾部有 SwiftUI 视图 (标定页/面板): 缺这一行 = View/@State/@EnvironmentObject 全找不到
 import CoreMotion
 import LocalAuthentication
@@ -170,18 +171,11 @@ enum AutoOpenKit {
     }
 
     // ---------- F1 面容成功时刻记账 (进程内语义: 重启即失效 = fail-closed) ----------
-    private static var _lastFace: Date? = nil
-    private static let lock = NSLock()
-    static func noteFaceSuccess() {
-        lock.lock()
-        _lastFace = Date()
-        lock.unlock()
-    }
-    static func lastFace() -> Date? {
-        lock.lock()
-        defer { lock.unlock() }
-        return _lastFace
-    }
+    // 原生形态: 状态**活在锁里面** —— 不是"一个 static var + 一把锁", 那样 Swift 6 仍然看得见
+    // 那个全局可变变量。把值交给 OSAllocatedLock 持有, 可变性就只存在于临界区内部。
+    private static let lastFaceLock = OSAllocatedLock<Date?>(nil)
+    static func noteFaceSuccess() { lastFaceLock.withLock { $0 = Date() } }
+    static func lastFace() -> Date? { lastFaceLock.withLock { $0 } }
 }
 
 // ================= 门控矩阵: 全绿才允许下发 04 =================
@@ -294,6 +288,7 @@ struct SystemFaceService: FaceService {
 // ================= F2' 停留判定: 加速度计方差窗口 (降速/静置 ≥3s) =================
 /// 简化: 加速度计 20Hz, 滑窗 30 帧 (1.5s), 方差 < 阈值 判为静置; 连续静置 ≥3s = 停留满足 (堵"骑车路过")。
 /// 阈值 0.05 (m/s²)² 为常量。调参: 口袋/桌面微动 vs 走动, 现场标定后可调。
+@MainActor
 enum MotionStillness {
     static let varianceThreshold = 0.05
     static let stillnessSeconds: Double = 3.0
@@ -351,7 +346,7 @@ enum MotionStillness {
 
 // ================= 控制器: 状态机 + 全门绿才走既有 unlock 管线下发 04 =================
 @MainActor
-@MainActor final class AutoOpenController {
+final class AutoOpenController {
     static let shared = AutoOpenController()
     let face: FaceService
     private var armed = false

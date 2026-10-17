@@ -3,6 +3,7 @@
 // 纪律: 备份文件只去用户自配 WebDAV (Basic Auth 运行时输入), 口令不出本机内存;
 //       加密语义 (CryptoBox AES-128-CBC+HMAC/PBKDF2, ZOTP 相关) 不动, 本层只做外围策略。
 import Foundation
+import os
 import UIKit
 import CoreImage.CIFilterBuiltins
 import BackgroundTasks
@@ -304,7 +305,7 @@ enum BackupStudio {
     static let chargeBackupTaskId = "com.kf.chargebackup"
     /// 2026-10-14: register 每进程只能一次 (二次注册抛 NSInternalInconsistencyException)。
     /// 启动注册 + 设置开关 setter 都会调本函数, 用标志去重。
-    private static var registered = false
+    private static let registeredLock = OSAllocatedLock(false)
     /// 单次完成闸 (跨线程): expirationHandler 与工作体都可能完成, 只允许第一个生效。
     private final class CompletionOnce: @unchecked Sendable {
         private let lock = NSLock()
@@ -325,8 +326,8 @@ enum BackupStudio {
         // 2026-10-14: 启动时**无条件**调用本函数 —— 注册必须在启动窗口内完成 (晚于 didFinishLaunching
         // 会抛 NSInternalInconsistencyException 崩进程); 开关只闸住末尾的排期。
         // 设置里改开关只调 rescheduleChargeBackup(), 不再走这里 (那条路是"启动之后才 register"的崩因)。
-        guard !registered else { if DB.store.getBool("kf_bk_bgtask") { rescheduleChargeBackup() }; return }
-        registered = true
+        guard !registeredLock.withLock({ $0 }) else { if DB.store.getBool("kf_bk_bgtask") { rescheduleChargeBackup() }; return }
+        registeredLock.withLock { $0 = true }
         BGTaskScheduler.shared.register(forTaskWithIdentifier: chargeBackupTaskId, using: nil) { task in
             // 2026-10-14: 旧实现 expirationHandler 与工作体都会 setTaskCompleted —— 对同一 BGTask
             // 二次完成抛 NSInternalInconsistencyException。改用单次完成闸。

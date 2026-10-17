@@ -1,6 +1,7 @@
 // 本地存储与数据模型 — JS utils/store.js + services/{ledger,snapshot,keychain,gateway,members}.js 移植
 // 存储键与小程序完全一致 (kf_*), 便于全量备份跨端互换
 import Foundation
+import os
 
 // ---------- 存储 ----------
 final class Store: @unchecked Sendable {
@@ -495,16 +496,9 @@ enum DB {
     // 凭证台账
     /// 台账解码失败的锁 (防"解不出→空表写回"清空数据)。
     /// 2026-10-14: 原为非隔离可变 static var, 后台任务与主线程并发访问是数据竞争; 加锁存取。
-    private static let ledgerLock = NSLock()
-    private static var ledgerCorruptSet: Set<String> = []
-    static func markLedgerCorrupt(_ mac: String) {
-        ledgerLock.lock(); defer { ledgerLock.unlock() }
-        ledgerCorruptSet.insert(mac)
-    }
-    static func isLedgerCorrupt(_ mac: String) -> Bool {
-        ledgerLock.lock(); defer { ledgerLock.unlock() }
-        return ledgerCorruptSet.contains(mac)
-    }
+    private static let ledgerLock = OSAllocatedLock(Set<String>())
+    static func markLedgerCorrupt(_ mac: String) { ledgerLock.withLock { $0.insert(mac) } }
+    static func isLedgerCorrupt(_ mac: String) -> Bool { ledgerLock.withLock { $0.contains(mac) } }
     static func ledger(_ mac: String) -> Ledger {
         if let l = get(Ledger.self, "kf_ledger_" + mac) { return l }
         // get 返回 nil 有两种语义: ①该键不存在 (真空台账) ②有键但解码抛错 (字段缺任一即整表抛)。

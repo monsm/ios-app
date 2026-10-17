@@ -9,6 +9,7 @@
 // 底层说明: 本项目"数据库"是 UserDefaults(JSON 编码) 语义封装 (Store.swift),
 // VACUUM/索引类创意按其等价落地: "整理"= 清残留空键 + 写队列冲刷; "完整性"= JSON 回环 + 台账计数核对。
 import Foundation
+import os
 import UIKit
 import Dispatch          // 1170: DispatchSemaphore (把 async 的 notificationSettings() 拉回同步体检闭包)
 import CoreBluetooth
@@ -89,13 +90,19 @@ enum StartupTrace {
 enum HotCache {
     /// 读写可能跨线程 (写入口 Store.writeLogs 在 BLE 回调线程上), 所以自己带锁 ——
     /// 旧注释把线程安全推给调用方 ("刻意留主线程"), 加锁后失效点才能落在写入口上。
-    private static let lock = NSLock()
-    private static var store: [String: [CachedLog]] = [:]
-    static var currentMac: String = ""
+    // 原生互斥: OSAllocatedLock (iOS 16+) —— withLock 保证 unlock 一定执行,
+    // 比手写 lock()/defer unlock 少一类"提前 return 忘了解锁"的错误。
+    private static let lock = OSAllocatedLock(HotState())
+    private struct HotState: Sendable {
+        var store: [String: [CachedLog]] = [:]
+        var currentMac: String = ""
+    }
+    static var currentMac: String { lock.withLock { $0.currentMac } }
     static func load(mac: String) {
-        lock.lock(); defer { lock.unlock() }
-        currentMac = mac
-        store[mac] = DB.readLogs(mac)
+        lock.withLock { h in
+            h.currentMac = mac
+            h.store[mac] = DB.readLogs(mac)
+        }
     }
     /// 日志写入后作废 (惰性: 下一次 recent 重读) —— 比"写完立刻重读一遍"少一次解码。
     static func invalidate(_ mac: String) {
@@ -147,6 +154,7 @@ enum ScanStats {
 }
 
 // ---------- 224 启动并行预热 (冷启动一次完成, 后续零成本) ----------
+@MainActor
 enum Prewarm {
     static var done = false
     static func run(mac: String) {
@@ -903,6 +911,7 @@ struct PageOpen: Codable, Identifiable {
     var id: Double { at }
 }
 
+@MainActor
 enum PageTrace {
     static let onKey = "kf_page_trace_on"
     static let listKey = "kf_page_opens"

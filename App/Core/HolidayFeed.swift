@@ -8,6 +8,7 @@
 //   2. 回来的 `year` 必须等于请求的年份 —— 防重定向/CDN 把另一年的文件递过来；
 //   3. 自动档默认关：这是离线锁管家，静默对外发请求要用户明确开一次。
 import Foundation
+import os
 
 struct HolidayDayDTO: Codable { var name: String; var date: String; var isOffDay: Bool }
 struct HolidayYearDTO: Codable { var year: Int; var papers: [String]?; var days: [HolidayDayDTO] }
@@ -110,15 +111,22 @@ enum HolidayFeed {
 
     // ---------- 合并视图 ----------
     // 缓存**按年整体覆盖**内置表：同一年里不混两副表, 否则公告临时改期会出现"春节前一天还在内置表里"的错位。
-    private static var mergedCache: [RecordSearch.Holiday] = []
-    private static var mergedStamp = -2
+    // rows 是纯读缓存 (DB.store → 内存), 但 RecordSearch 的节假日查询会从多处并发读 ——
+    // 一把 OSAllocatedLock 护住"缓存 + 失效键", 与 RecordSearch 的 ensureMerged 同一种原生形态。
+    private static let mergedLock = OSAllocatedLock(MergedCache())
+    private struct MergedCache: Sendable {
+        var rows: [RecordSearch.Holiday] = []
+        var stamp = -2
+    }
     static var rows: [RecordSearch.Holiday] {
         let stamp = lastUpdateSec
-        if stamp != mergedStamp {
-            mergedCache = buildRows()
-            mergedStamp = stamp
+        return mergedLock.withLock { m in
+            if stamp != m.stamp {
+                m.rows = buildRows()
+                m.stamp = stamp
+            }
+            return m.rows
         }
-        return mergedCache
     }
     private static func buildRows() -> [RecordSearch.Holiday] {
         var cachedYears: [Int] = []
@@ -142,12 +150,13 @@ enum HolidayFeed {
         return "在线缓存覆盖 " + ys.map(String.init).joined(separator: "/") + " 年 · 拉取于 " + lastUpdateText
     }
     /// 自动档：本会话只发一次, 且只在用户明确开过开关后发 (RootView 的前台钩子调)。
-    private static var autoDoneYear = 0
+    private static let autoDoneYearLock = OSAllocatedLock(0)
     static func autoRefreshIfNeeded() async {
         guard autoOn else { return }
         let y = WeekCal.gregorian.component(.year, from: Date())
-        guard y != autoDoneYear else { return }
-        autoDoneYear = y
+        let first = autoDoneYearLock.withLock { $0 != y }
+        guard first else { return }
+        autoDoneYearLock.withLock { $0 = y }
         _ = await fetch(year: y)
     }
 }
