@@ -351,7 +351,9 @@ final class ExportProgress: ObservableObject, @unchecked Sendable {
 
     /// 692 生成放后台 TaskGroup (可取消, UI 不阻塞); 719 结果触感 + finish 主线程回传
     func start(_ label: String,
-               work: @escaping () -> ExportItem?,
+               // @Sendable: 这个闭包会被送进 Task.detached 在后台跑。Swift 6 的 sending 检查要求
+               // 它不捕获主 actor 状态 —— 所以 9 个调用点都先把界面配置取成局部常量再进闭包。
+               work: @escaping @Sendable () -> ExportItem?,
                finish: @escaping (ExportItem?, String) -> Void) {
         lastLabel = label; lastWork = work; lastFinish = finish
         cancel()
@@ -1674,10 +1676,12 @@ struct ExportCenterView: View {
 
     /// 746 单条告警事实单页: 最新一条告警出 PDF (事实 / 原始报文 / 处置 / 签名栏), 用于物业沟通
     private func startAlarmFactSheet() {
+        // 后台闭包不能读主 actor 的 @State —— 先把界面配置取成局部常量 (Sendable)。
+        let mac = self.mac
         progress.start("正在生成告警事实单…") {   // 746 正在生成告警事实单
-            let alarms = ExportKit.filtered(ExportKit.records(mac: self.mac), range: .alarms).reversed()
+            let alarms = ExportKit.filtered(ExportKit.records(mac: mac), range: .alarms).reversed()
             guard let a = alarms.first else { return nil }
-            let pdf = ExportKit.alarmFactSheetPDF(mac: self.mac, rec: a)
+            let pdf = ExportKit.alarmFactSheetPDF(mac: mac, rec: a)
             guard !pdf.isEmpty else { return nil }
             let hex = SHA256.hash(data: pdf).map { String(format: "%02x", $0) }.joined()
             return ExportItem(kind: "pdf",
@@ -1693,10 +1697,12 @@ struct ExportCenterView: View {
 
     /// 688 告警分享卡: 最新一条告警渲染 9:16 卡片图, 进 doneSection 可 ShareLink 直发 (仅含本条数据, 718)
     private func startAlarmCard() {
+        // 后台闭包不能读主 actor 的 @State —— 先把界面配置取成局部常量 (Sendable)。
+        let mac = self.mac
         progress.start("正在生成告警卡…") {   // 688 正在生成告警卡
-            let alarms = ExportKit.filtered(ExportKit.records(mac: self.mac), range: .alarms).reversed()
+            let alarms = ExportKit.filtered(ExportKit.records(mac: mac), range: .alarms).reversed()
             guard let a = alarms.first else { return nil }
-            let lockName = DB.keychain(self.mac).map { $0.name.isEmpty ? LockArchive.displayName($0) : $0.name } ?? self.mac
+            let lockName = DB.keychain(mac).map { $0.name.isEmpty ? LockArchive.displayName($0) : $0.name } ?? mac
             guard let img = ExportKit.alarmCard(a, lockName: lockName),
                   let jpeg = img.jpegData(compressionQuality: 0.8) else { return nil }
             let hex = SHA256.hash(data: jpeg).map { String(format: "%02x", $0) }.joined()
@@ -2022,14 +2028,18 @@ struct ExportCenterView: View {
     private func startEncryptedZip() {
         let pw = zipPw.trimmingCharacters(in: .whitespaces)
         guard pw.count >= 6 else { app.showToast("口令至少 6 位"); return }   // 691 口令至少
+        // 后台闭包不能读主 actor 的 @State —— 先把界面配置取成局部常量 (Sendable)。
+        let mac = self.mac
+        let range = self.range
+        let cols = self.cols
         progress.start("正在打包并加密…") {   // 691 正在打包并加密
-            let recs = ExportKit.filtered(ExportKit.records(mac: self.mac), range: self.range)
+            let recs = ExportKit.filtered(ExportKit.records(mac: mac), range: range)
             guard !recs.isEmpty else { return nil }
-            let build = ExportKit.buildCSV(recs: recs, cols: self.cols)
-            let kc = DB.keychain(self.mac)
-            let lockName = kc.map { $0.name.isEmpty ? LockArchive.displayName($0) : $0.name } ?? self.mac
+            let build = ExportKit.buildCSV(recs: recs, cols: cols)
+            let kc = DB.keychain(mac)
+            let lockName = kc.map { $0.name.isEmpty ? LockArchive.displayName($0) : $0.name } ?? mac
             let stamp = stampTag()
-            let note = "离线锁管家 加密导出\n锁: \(lockName)\n范围: \(self.range.label)\n行数: \(recs.count)\n"   // 691 离线锁管家
+            let note = "离线锁管家 加密导出\n锁: \(lockName)\n范围: \(range.label)\n行数: \(recs.count)\n"   // 691 离线锁管家
                 + "生成: \(Date().formatted(date: .abbreviated, time: .standard))\n\n"
                 + "本文件是 aes-128-cbc+hmac-sha256 信封, 内含一个 zip (store 方式); 用同款 App 的备份口令流程解开即可。"
             let entries: [(name: String, data: [UInt8])] = [
@@ -2055,17 +2065,21 @@ struct ExportCenterView: View {
     }
 
     private func startCSV() {
+        // 后台闭包不能读主 actor 的 @State —— 先把界面配置取成局部常量 (Sendable)。
+        let mac = self.mac
+        let range = self.range
+        let cols = self.cols
         progress.start("正在生成 CSV…") {   // 683 正在生成
-            let recs = ExportKit.filtered(ExportKit.records(mac: self.mac), range: self.range)
+            let recs = ExportKit.filtered(ExportKit.records(mac: mac), range: range)
             guard !recs.isEmpty else { return nil }
-            let build = ExportKit.buildCSV(recs: recs, cols: self.cols)
+            let build = ExportKit.buildCSV(recs: recs, cols: cols)
             let hex = SHA256.hash(data: build.data).map { String(format: "%02x", $0) }.joined()
             // 693 CSV 文件名带锁名 (与 :532 报告页同一取名规范), 多锁导出不再同名
-            let kc = DB.keychain(self.mac)
-            let lockName = kc.map { $0.name.isEmpty ? LockArchive.displayName($0) : $0.name } ?? self.mac
+            let kc = DB.keychain(mac)
+            let lockName = kc.map { $0.name.isEmpty ? LockArchive.displayName($0) : $0.name } ?? mac
             return ExportItem(kind: "csv",
-                              title: "记录 " + self.range.label,
-                              fileName: "锁管家_记录_" + lockName + "_" + stampTag() + "_" + self.range.label + ".csv",
+                              title: "记录 " + range.label,
+                              fileName: "锁管家_记录_" + lockName + "_" + stampTag() + "_" + range.label + ".csv",
                               bytes: build.data, sha256: hex,
                               shaLabel: "CSV · \(build.rowCount) 行 · 转义 \(build.escapedRows) 行",   // 705 转义
                               previewText: build.preview3,
@@ -2075,18 +2089,22 @@ struct ExportCenterView: View {
         }
     }
     private func startJSON() {
+        // 后台闭包不能读主 actor 的 @State —— 先把界面配置取成局部常量 (Sendable)。
+        let mac = self.mac
+        let range = self.range
+        let redact = self.redact
         progress.start("正在生成 JSON…") {   // 684 正在生成
             // 388 敏感操作留痕: 原始 JSON 含协议 hex, 记账进 SensitiveLedger
-            SensitiveLedger().record("导出", target: "原始 JSON " + self.range.label)
-            let recs = ExportKit.filtered(ExportKit.records(mac: self.mac), range: self.range)
-            let data = ExportKit.rawJSON(mac: self.mac, recs: recs, redactHex: self.redact)
+            SensitiveLedger().record("导出", target: "原始 JSON " + range.label)
+            let recs = ExportKit.filtered(ExportKit.records(mac: mac), range: range)
+            let data = ExportKit.rawJSON(mac: mac, recs: recs, redactHex: redact)
             let hex = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
             return ExportItem(kind: "json",
-                              title: "原始 JSON " + self.range.label,
-                              fileName: "锁管家_原始_" + stampTag() + "_" + self.range.label + ".json",
+                              title: "原始 JSON " + range.label,
+                              fileName: "锁管家_原始_" + stampTag() + "_" + range.label + ".json",
                               bytes: data, sha256: hex,
-                              shaLabel: "JSON · \(recs.count) 条" + (self.redact ? " · 已脱敏" : ""),
-                              previewText: self.redact
+                              shaLabel: "JSON · \(recs.count) 条" + (redact ? " · 已脱敏" : ""),
+                              previewText: redact
                                 ? "脱敏导出: hex 列与帧 hex 段都留空。"
                                 : "帧 hex 取自诊断原始收发日志 (需开「记录原始收发 hex」，未开则该段为空)。")
         } finish: { item, err in
@@ -2095,12 +2113,17 @@ struct ExportCenterView: View {
     }
 
     private func startPDF() {
+        // 后台闭包不能读主 actor 的 @State —— 先把界面配置取成局部常量 (Sendable)。
+        let mac = self.mac
+        let range = self.range
+        let cols = self.cols
+        let memberName = memberLabel()
         progress.start("正在排版 PDF…") {   // 685 正在排版
-            let recs = ExportKit.filtered(ExportKit.records(mac: self.mac), range: self.range)
+            let recs = ExportKit.filtered(ExportKit.records(mac: mac), range: range)
             guard !recs.isEmpty else { return nil }
-            let memberName = self.memberLabel()
-            guard let build = ExportKit.buildReport(mac: self.mac, recs: recs, cols: self.cols,
-                                                    rangeLabel: self.range.label, memberName: memberName),
+            let memberName = memberName
+            guard let build = ExportKit.buildReport(mac: mac, recs: recs, cols: cols,
+                                                    rangeLabel: range.label, memberName: memberName),
                   !build.pdfData.isEmpty else { return nil }
             let hex = SHA256.hash(data: build.pdfData).map { String(format: "%02x", $0) }.joined()
             return ExportItem(kind: "pdf",
@@ -2120,15 +2143,18 @@ struct ExportCenterView: View {
     }
 
     private func startRunLog() {
+        // 后台闭包不能读主 actor 的 @State —— 先把界面配置取成局部常量 (Sendable)。
+        let redact = self.redact
+        let logFormat = self.logFormat
         progress.start("正在生成运行日志…") {   // 548 正在生成运行日志
-            let data = ExportKit.runLogData(format: self.logFormat, redact: self.redact)
+            let data = ExportKit.runLogData(format: logFormat, redact: redact)
             let hex = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
-            let ext = self.logFormat == "txt" ? "txt" : self.logFormat
+            let ext = logFormat == "txt" ? "txt" : logFormat
             return ExportItem(kind: ext,
                               title: "运行日志",
                               fileName: "锁管家_日志_" + stampTag() + "." + ext,
                               bytes: data, sha256: hex,
-                              shaLabel: "App 运行日志 · " + String(DiagLogs.all().count) + " 条 · " + self.logFormat + (self.redact ? " · 已脱敏" : ""),
+                              shaLabel: "App 运行日志 · " + String(DiagLogs.all().count) + " 条 · " + logFormat + (redact ? " · 已脱敏" : ""),
                               previewText: String(String(decoding: data, as: UTF8.self).prefix(300)))
         } finish: { item, err in
             onDone(item, err)
@@ -2157,24 +2183,31 @@ struct ExportCenterView: View {
     }
 
     private func startEML() {
+        // 后台闭包不能读主 actor 的 @State —— 先把界面配置取成局部常量 (Sendable)。
+        let mac = self.mac
+        let range = self.range
+        let cols = self.cols
         progress.start("正在生成邮件模板…") {   // 703 正在生成邮件模板
-            let recs = ExportKit.filtered(ExportKit.records(mac: self.mac), range: self.range)
+            let recs = ExportKit.filtered(ExportKit.records(mac: mac), range: range)
             guard !recs.isEmpty else { return nil }
-            return ExportKit.emailTemplate(mac: self.mac, recs: recs, cols: self.cols)
+            return ExportKit.emailTemplate(mac: mac, recs: recs, cols: cols)
         } finish: { item, err in
             onDone(item, err)
         }
     }
 
     private func startDayImages() {
+        // 后台闭包不能读主 actor 的 @State —— 先把界面配置取成局部常量 (Sendable)。
+        let mac = self.mac
+        let dayPick = self.dayPick
         progress.start("正在生成长图…") {   // 686 正在生成长图
-            let all = ExportKit.records(mac: self.mac)
+            let all = ExportKit.records(mac: mac)
             // 686: 指定哪天就导哪天 (此前恒导最新一天); 空 = 最新
-            let day = self.dayPick.isEmpty ? ExportKit.latestDayKey(all) : self.dayPick
+            let day = dayPick.isEmpty ? ExportKit.latestDayKey(all) : dayPick
             guard !day.isEmpty else { return nil }
             let recs = all.filter { $0.dayKey == day }
             guard !recs.isEmpty else { return nil }
-            let pages = ExportItem.dayPages(recs: recs, mac: self.mac, day: day)
+            let pages = ExportItem.dayPages(recs: recs, mac: mac, day: day)
             guard let first = pages.first, let jpeg = first.jpegData(compressionQuality: 0.8) else { return nil }
             let hex = SHA256.hash(data: jpeg).map { String(format: "%02x", $0) }.joined()
             return ExportItem(kind: "png",
@@ -2236,7 +2269,8 @@ struct ExportCenterView: View {
         showQL = true
     }
 
-    private func stampTag() -> String {
+    /// 纯函数 (只读当前时间) —— 显式 nonisolated: 导出闭包在后台线程里也要用它取文件名。
+    nonisolated private func stampTag() -> String {
         let f = DateFormatter(); f.dateFormat = "yyyyMM"; f.timeZone = .current; f.locale = Locale(identifier: "en_US_POSIX")
         return f.string(from: Date())
     }
