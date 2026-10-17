@@ -17,13 +17,13 @@
 //   排序回用户手选 (kf_quick_smart_set 标记保证"关就是关", 自动首格不再介入)。
 import SwiftUI
 
-struct QuickAction: Identifiable, Hashable {
+nonisolated struct QuickAction: Identifiable, Hashable {
     let id: String
     let icon: String
     let label: String
 }
 
-enum QuickPool {
+nonisolated enum QuickPool {
     /// 候选格子 (id 一旦发布就是存储值，改名会把用户已有的 kf_quick_ids 打空 → 只能加不能改)
     /// 921「再开一次」是后来加的第 11 项：它不推开新页，点按 = 切凭证 Tab 并定位星标/最高频那条。
     static let all: [QuickAction] = [

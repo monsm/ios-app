@@ -10,7 +10,7 @@
 //   · 377 访客通道入口: 门禁，让位就等于放开受限区。
 import SwiftUI
 
-enum Ambient: String, CaseIterable, Identifiable {
+nonisolated enum Ambient: String, CaseIterable, Identifiable {
     case selfCheck          // 8/448 本机库体自检异常
     case pasteCare          // 344/517 剪贴板粘贴建议 (有时效窗口)
     case firstUseCapsule    // 42/268 首用: 长按胶囊看状态变化
@@ -39,7 +39,7 @@ enum Ambient: String, CaseIterable, Identifiable {
 }
 
 /// 排位这一步单独拆出来: 纯函数, 不碰视图也不碰存储, 便于"同一批候选换了优先级"这种改动可核对
-enum NoticeBudget {
+nonisolated enum NoticeBudget {
     static func ranked(_ present: [Ambient]) -> [Ambient] {
         var out: [Ambient] = []
         for a in present where !out.contains(a) { out.append(a) }   // 去重 + 稳定
@@ -109,7 +109,7 @@ struct AmbientOverflowSheet: View {
 
 /// 每条闲时提醒的文案与动作。从各横幅内联处搬来，语义一字未改 ——
 /// 集中在这里是为了"屏上那一条"和"汇总里那一条"说法必须完全一致，不允许两套。
-enum AmbientCopy {
+nonisolated enum AmbientCopy {
     struct Action: Identifiable { let id: String; let title: String; let run: @MainActor () -> Void }
 
     @MainActor

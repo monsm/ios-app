@@ -9,7 +9,7 @@ import BackgroundTasks
 import UserNotifications
 
 // ---------- 分区模型 (407: 设备/凭证/记录/设置 四分区 + 181 OTP 开关) ----------
-struct BZones: Codable, Equatable {
+nonisolated struct BZones: Codable, Equatable {
     var devices: Bool = true      // 门锁钥匙串 + BLE 直连参数 (441 迁移逐把确认)
     var credentials: Bool = true  // 台账 (密码/指纹)
     var records: Bool = true      // 锁端日志缓存 + 全局事件

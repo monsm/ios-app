@@ -9,7 +9,7 @@
 // 只有 `clock()` 与 `full()` 两个出口，页面不许自己拼 DateFormatter。
 import Foundation
 
-enum TimeFormat {
+nonisolated enum TimeFormat {
     /// "跟随系统 / 24 小时 / 12 小时" 三档。空串 = 跟随系统 (默认，老用户观感不变)。
     static let styleKey = "kf_time_style"
     /// 651 到秒: 默认关。协议时刻只到分 (`timeStr` 的秒位来自日志原文，不是每条都有)，

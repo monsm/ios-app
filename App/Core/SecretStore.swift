@@ -13,7 +13,7 @@
 import Foundation
 import Security
 
-enum SecretStore {
+nonisolated enum SecretStore {
     private static let service = "com.aapk.OfflineLock.secrets"
 
     private static func baseQuery(_ account: String) -> [String: Any] {

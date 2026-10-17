@@ -9,7 +9,7 @@ import UIKit
 import LocalAuthentication
 
 // ---------- 系统辅助旗标 (226/227/862/863): 每帧评估, 由 RootView .id(appearanceSeed) 重建兜底 ----------
-enum AXFlags {
+nonisolated enum AXFlags {
     /// 862 增强对比: hairline/textSub 加深一档的触发条件 (DS.Palette 内部消费)
     /// ⚠ 2026-10-13 run 57 打脸: 此前写 `UIAccessibility.accessibilityDisplayShouldIncreaseContrast` ——
     /// UIKit **没有**这个成员。Apple 文档 (UIAccessibility「Capabilities」清单) 里 "Increase Contrast" 的官方读法
@@ -119,7 +119,7 @@ extension DS {
 }
 
 // ---------- 朗读词表 (880): accessibilityLabel 统一走这里, 审计口径 = 本文件 ----------
-enum AXTerms {
+nonisolated enum AXTerms {
     static let lock = "门锁"
     static let credential = "凭证"          // 不混用"密钥/口令"
     static let pwd = "密码"
@@ -160,7 +160,7 @@ enum AXTerms {
 }
 
 // ---------- 主动播报 / 触感 / 焦点巡检 / 对比度 (852/876/855/883) ----------
-enum AXTools {
+nonisolated enum AXTools {
     /// 852 错误主动播报: UIAccessibility.post — VO 运行时即时朗读, 非运行时排队不影响
     static func announce(_ text: String) {
         guard DB.store.getBool("kf_vo_announce", true) else { return }
@@ -248,7 +248,7 @@ enum AXTools {
 }
 
 // ---------- App 偏好读点 (包15 全 App 开关集中于此, 页面不直接查 DB) ----------
-enum AXPrefs {
+nonisolated enum AXPrefs {
     /// 872 防连点开关: 高频按钮 300ms 内重复点击忽略 (默认开, 防双击误开门)
     static var dbltapGuard: Bool { DB.store.getBool("kf_dbltap_guard", true) }
     /// 875 按住时长跟随 (⚠ 系统"按住持续时间"无读取 API, 自定滑杆 0.4–1.6s, 默认 0.9 与包1 对齐)
@@ -290,7 +290,7 @@ extension View {
 }
 
 // ---------- 877 生物识别降级验证: 应用锁连败 3 次后的大字替代键 (设备支持时) ----------
-enum AuthKit {
+nonisolated enum AuthKit {
     /// 设备是否可用 Face ID / Touch ID 验证本机门禁 (无生物硬件 = false, 该项走 DEFERRED)
     static var biometricAvailable: Bool {
         let ctx = LAContext()

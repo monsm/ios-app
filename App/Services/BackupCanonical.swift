@@ -5,7 +5,7 @@
 //   * JS 侧 kc/ledger/meta 是「原样透传」(键序保留写入序) → 只需 Swift 写出与自算 hash 同字节即可互通
 import Foundation
 
-enum JValue {
+nonisolated enum JValue {
     case str(String)
     case num(Double)
     case bool(Bool)

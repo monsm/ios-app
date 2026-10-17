@@ -8,7 +8,7 @@
 // 默认关 (拍板口径)：一条每天定时弹的通知，不开就永远不响，开了才生效。
 import UserNotifications
 
-enum StatusCheckNotice {
+nonisolated enum StatusCheckNotice {
     static let notifID = "kf.status.checkin"
 
     static var on: Bool { DB.store.getBool("kf_status_checkin") }        // 默认关

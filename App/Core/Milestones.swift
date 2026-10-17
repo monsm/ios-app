@@ -8,7 +8,7 @@ import UserNotifications
 import AudioToolbox
 
 // ---------- 徽章定义 (977 四类 / 979 稀有度 / 978 隐藏) ----------
-enum BadgeRarity {
+nonisolated enum BadgeRarity {
     case common, rare, epic
     var title: String {
         switch self {
@@ -19,7 +19,7 @@ enum BadgeRarity {
     }
 }
 
-enum BadgeCat: String, CaseIterable, Identifiable {
+nonisolated enum BadgeCat: String, CaseIterable, Identifiable {
     case butler = "管家"
     case guardDuty = "守护"
     case organize = "整理"
@@ -35,7 +35,7 @@ enum BadgeCat: String, CaseIterable, Identifiable {
     }
 }
 
-struct Badge: Identifiable, Equatable {
+nonisolated struct Badge: Identifiable, Equatable {
     let id: String
     let cat: BadgeCat
     let title: String
@@ -46,7 +46,7 @@ struct Badge: Identifiable, Equatable {
 }
 
 // ---------- 统计快照 ----------
-struct MStats {
+nonisolated struct MStats {
     var unlockTotal = 0
     var streakBest = 0
     var nightCount = 0
@@ -660,7 +660,7 @@ nonisolated enum Milestones {
 }
 
 // ================= 关怀提醒 (本地通知; 免费账号不推送, 全部 UNUserNotificationCenter) =================
-enum CareReminders {
+nonisolated enum CareReminders {
     static var bdayOn: Bool { DB.store.getBool("kf_care_bday") }
     static var annivOn: Bool { DB.store.getBool("kf_care_anniv") }
 

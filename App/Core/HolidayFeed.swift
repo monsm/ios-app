@@ -18,7 +18,7 @@ struct HolidayYearDTO: Codable { var year: Int; var papers: [String]?; var days:
 // 去掉 @MainActor 是**顺其自然**的: 本枚举只用 DB.store (Store 是普通 final class, 非隔离) 与 URLSession,
 // 没有一处需要主 actor; 而 RecordSearch 那段注释早就写着"本枚举不是 @MainActor ... 所有调用方都在主线程"。
 // 隔离层本来就该在调用方 (View), 不在数据源这一层。
-enum HolidayFeed {
+nonisolated enum HolidayFeed {
     /// 内置源：raw.githubusercontent.com 上按年份发布的 JSON (取自该仓库 README 里写明的发布路径, 不是猜的域名)
     static let builtinBase = "https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/"
     static let srcKey = "kf_hol_src"

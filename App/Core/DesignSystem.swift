@@ -103,7 +103,7 @@ struct FlowLayout: Layout {
     }
 }
 
-enum DS {
+nonisolated enum DS {
     /// 间距: 统一 4 / 8 节奏。
     /// 布局密度 (包16): kf_density 三档映射为间距缩放系数 — 字号、触达、图标不缩放,
     /// 只动"呼吸感"; 变更由 AppState.bumpAppearance 驱动全局重建, 即时生效。
@@ -769,7 +769,7 @@ extension View {
 }
 
 // ---------- 状态语义色 (供状态胶囊 / 文案统一取用) ----------
-enum ToneColor {
+nonisolated enum ToneColor {
     case neutral, accent, ok, warn, danger
     var color: Color {
         switch self {

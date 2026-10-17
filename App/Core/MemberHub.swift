@@ -6,7 +6,7 @@
 import Foundation
 
 /// 成员档案扩展 (包13): 挂在成员 id 上, 不动 Member 结构体 (备份互通不受影响)
-struct MemberExt: Codable {
+nonisolated struct MemberExt: Codable {
     var role: String = "member"      // 458 三档: main / member / guest
     var emoji: String = ""           // 916 emoji 代号 (纯文字头像, 零图片资源)
     var remark: String = ""          // 265/461 备注名 (独立于称呼 relation)
@@ -22,20 +22,20 @@ struct MemberExt: Codable {
 }
 
 /// 472 借用登记 (per-lock)
-struct MemberBorrow: Codable {
+nonisolated struct MemberBorrow: Codable {
     var by: String        // 借用人
     var due: String       // 归还日 "yyyy-MM-dd"
     var at: Double       // 登记时刻
 }
 
 /// 483 家政周期预设 (⚠降级: 协议无循环时段, 只做整段起止窗)
-struct HouseWin: Codable {
+nonisolated struct HouseWin: Codable {
     var from: String      // "yyyy-MM-dd HH:mm:ss"
     var to: String
     var label: String
 }
 
-enum MemberHub {
+nonisolated enum MemberHub {
     // 793 访客虚拟分组: 只存在于本地展示层, 绝不写入锁端凭证表
     static let visitorId = "__visitor"
     /// 访客虚拟行判定: 临时码类记录且无可证明归属 (与 793 "不与家人混淆" 的独立分组)

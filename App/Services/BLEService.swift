@@ -9,7 +9,7 @@ import Combine
 
 // 服务/特征 UUID (依据 Java BleLockConnector + GateWayConnector)
 // Java 缺陷注记: GateWayConnector 构造会覆盖静态 UUID 导致锁/网关不可共存 — 本实现按连接目标选对 UUID, 无此缺陷
-enum BLEUUID {
+nonisolated enum BLEUUID {
     static let svcMain = CBUUID(string: "6E400001-B5A3-F393-E0A9-E50E24DCCA9E")   // 门锁 NUS
     static let chrWrite = CBUUID(string: "6E400002-B5A3-F393-E0A9-E50E24DCCA9E")
     static let chrNotify = CBUUID(string: "6E400003-B5A3-F393-E0A9-E50E24DCCA9E")
@@ -25,7 +25,7 @@ enum BLEUUID {
     static let dfuLegacyPacket = CBUUID(string: "00001532-1212-EFDE-1523-785FEABCD123")
 }
 
-struct BLEAdvDevice: Identifiable {
+nonisolated struct BLEAdvDevice: Identifiable {
     var id: String { deviceId }
     var deviceId: String
     var name: String

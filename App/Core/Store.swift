@@ -190,11 +190,11 @@ nonisolated struct Member: Codable, Identifiable {
 }
 
 // ---------- 快照 (services/snapshot.js) ----------
-struct StatusSnapshot: Codable {
+nonisolated struct StatusSnapshot: Codable {
     var at: Double
     var status: StatusSnapshotData
 }
-struct StatusSnapshotData: Codable {
+nonisolated struct StatusSnapshotData: Codable {
     var rc: Int = 0
     var powerLevel: Int = 0
     var firmware: String = ""
@@ -215,11 +215,11 @@ struct StatusSnapshotData: Codable {
     var pwdCap: Int?
     var fpCap: Int?
 }
-struct LogCache: Codable {
+nonisolated struct LogCache: Codable {
     var at: Double
     var logs: [CachedLog]
 }
-struct CachedLog: Codable {
+nonisolated struct CachedLog: Codable {
     var type: Int
     var typeName: String
     var idxRaw: UInt32
@@ -286,21 +286,21 @@ nonisolated struct Gateway: Codable, Identifiable {
 }
 
 // ---------- 配置记忆 ----------
-struct DefendCfg: Codable {
+nonisolated struct DefendCfg: Codable {
     var control: Int
     var startSec: Int
     var endSec: Int
     var at: Double
 }
-struct TailgateCfg: Codable {
+nonisolated struct TailgateCfg: Codable {
     var interval: Int
     var at: Double
 }
-struct OtpStatus: Codable {
+nonisolated struct OtpStatus: Codable {
     var on: Bool
     var at: Double
 }
-struct OtpIdx: Codable {
+nonisolated struct OtpIdx: Codable {
     var idx: Int
     var invalidTime: String
 }

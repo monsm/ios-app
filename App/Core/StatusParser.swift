@@ -5,7 +5,7 @@
 // 差分基准: golden.parse.*
 import Foundation
 
-struct LockStatus {
+nonisolated struct LockStatus {
     var rc: Int = -1
     var sKeyStatus: Int = -1
     var powerLevel: Int = -1
@@ -29,7 +29,7 @@ struct LockStatus {
     var eCtrlVer: String = ""
 }
 
-struct LogEntry {
+nonisolated struct LogEntry {
     var type: Int
     var typeName: String
     var idx: UInt32

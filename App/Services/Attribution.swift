@@ -4,7 +4,7 @@
 // 差分基准: golden.attribution*
 import Foundation
 
-enum Attribution {
+nonisolated enum Attribution {
     struct Row {
         var key: UInt32
         var type: Int

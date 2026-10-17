@@ -8,13 +8,13 @@
 import Foundation
 import UserNotifications
 
-struct BattSample: Codable {
+nonisolated struct BattSample: Codable {
     var t: Double   // Unix 毫秒
     var pct: Int
 }
 
 /// 维护事件 (1014: 记录页"更换电池/保养完成"事件; 1028: 记录页专属过滤)
-struct MaintEvent: Codable {
+nonisolated struct MaintEvent: Codable {
     var ts: Double      // Unix 毫秒
     var kind: String    // "care" | "battery"
     var note: String
@@ -22,7 +22,7 @@ struct MaintEvent: Codable {
 
 /// 保养状态 (per-lock, kf_maint_<mac>)
 /// 自定义 decodeIfPresent: 与 Keychain 同理 — 后续加字段不能让旧 JSON 解码失败而静默清档
-struct CareState: Codable {
+nonisolated struct CareState: Codable {
     var lastCareAt: Double = 0      // 1013 90 天周期起点 (Unix 毫秒)
     var yearlyBattDay: String = ""  // 1012 每年换电池提醒 "MM-dd" (空 = 未设)
     var ekeyCheckAt: Double = 0     // 1025 应急钥匙半年检上次打卡
@@ -46,7 +46,7 @@ struct CareState: Codable {
 }
 
 /// 513/145 固件本地清单条目 (只记出处元数据, 不落包体 — zip 最大 8MB 不进 UserDefaults)
-struct FWLibItem: Codable, Identifiable {
+nonisolated struct FWLibItem: Codable, Identifiable {
     var name: String
     var version: String
     var size: Int
@@ -55,7 +55,7 @@ struct FWLibItem: Codable, Identifiable {
 }
 
 /// 147 升级历史
-struct DFURecord: Codable, Identifiable {
+nonisolated struct DFURecord: Codable, Identifiable {
     var mac: String
     var name: String
     var from: String
@@ -66,7 +66,7 @@ struct DFURecord: Codable, Identifiable {
     var id: Double { at }
 }
 
-enum BatteryCare {
+nonisolated enum BatteryCare {
     // ============ 122/113 五档电量 (满/高/中/低/空) ============
     // 122 原句要"电压毫伏精确值"，协议只给百分比 (CAPABILITY §2) —— 按拍板走替代口径:
     // 这一档表就是"档位映射说明"的数据源，界面上展示原值 + 映射，**不标毫伏**，不虚构精度。
@@ -346,7 +346,7 @@ enum BatteryCare {
 }
 
 // ================= 包4 关怀提醒调度 (本地通知; 1031 夜间免扰 / 1038 白天送达) =================
-enum CareSchedule {
+nonisolated enum CareSchedule {
     /// 1031 夜间免扰 (默认开): 免扰时段不发即时通知, 首页横幅仍在
     static var quietOn: Bool { DB.store.getBool("kf_quiet_night", true) }
     /// 287 低电横幅阈值 (默认 15%, 可选 10/15/20)

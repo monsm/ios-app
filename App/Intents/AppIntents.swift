@@ -11,7 +11,7 @@ import AppIntents
 import AVFoundation
 
 // ---------- 意图治理 (冷却/审计/来源) ----------
-enum IntentGovernance {
+nonisolated enum IntentGovernance {
     static let cooldownPrefix = "kf_intent_cd_"
     /// 952: **同一意图** 60 秒内重复触发给冷却提示。键按意图名分开 —— 原先全族共用
     /// kf_intent_cooldown: 说一句「开锁」会把你 60 秒内的「查电量」一起顶掉、反过来也一样，
@@ -37,7 +37,7 @@ enum IntentGovernance {
 /// 把别的锁的开门记录念给用户听，还听着像他说的那把 (§10.37)。
 /// 现在的次序：去空白 → 精确锁名 → 型号名 → **只有一个**包含命中才算；
 /// 多把都含这个词时宁可反问，也不替用户挑一把 (锁是安全物件，猜错方向的代价不对称)。
-enum IntentLock {
+nonisolated enum IntentLock {
     // 刻意不写 `: Equatable`：`Keychain` 只 conform `Codable, Identifiable`，
     // 带上 Equatable 会让综合失败 (而这里从不需要比较 Outcome 本身)。
     enum Outcome {
@@ -130,7 +130,7 @@ struct UnlockIntent: AppIntent {
 // ---------- 意图族门禁: 锁屏可达时不得产出凭证/PII ----------
 // 设了本机密码 → 要求 App 已解锁 (hostRef 只在主界面挂载时存在, 冷启直调 Siri 一律拒 = fail-closed)。
 // 未设本机密码 → 本就没有门禁可绕, 放行。
-enum IntentLockGate {
+nonisolated enum IntentLockGate {
     // 2026-10-13 run 63: 它读 AppState.hostRef 与 appUnlocked, 两者都在 @MainActor 的 AppState 上
     // ⇒ 标 @MainActor; 6 个调用点 (都在 async 的 perform() 里) 相应加 await。
     // 2026-10-13 对抗式排查: 补一道 390 伪装会话的拦截。伪装口令进来的会话**也是** appUnlocked==true
@@ -336,14 +336,14 @@ struct ReadRecordsIntent: AppIntent {
 }
 
 // ---------- 26/295/948 Siri 口令与快捷指令画廊数据 (166: 参数名中文口语化) ----------
-struct ShortcutGallery: Identifiable {
+nonisolated struct ShortcutGallery: Identifiable {
     let id: String
     let intent: String
     let phrase: String
     let note: String
 }
 
-enum AppShortcuts {
+nonisolated enum AppShortcuts {
     /// 948 示例指令包: 可注册的口令清单; 942 时刻建议
     // 948: 画廊文案是给人看的示例口令, 不是运行时插值 —— 原先此处写了 `\(锁名)`/`\(成员名)`,
     // 这两个名字在 Swift 里是真实求值的标识符而全仓没有任何声明, 等于编译阻断 (cannot find '锁名' in scope);

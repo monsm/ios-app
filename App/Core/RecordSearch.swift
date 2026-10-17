@@ -20,7 +20,7 @@ import Foundation
 /// 现编了一个 `Int(ts*1000) + 下标` 的派生数当行键, 于是同一条记录在两种范围里身份不同:
 /// 详情卡按 Rec 的键写备注、时间线行按派生数读 ⇒ 备注写了永远不显示, 576 详情也点不开)。
 /// 备注是用户自己写的自由文本 → 属敏感本地数据, 删设备与销毁流程都按族清 (Store.removeDevice 的族表)。
-enum RecordOverlay {
+nonisolated enum RecordOverlay {
     static func noteKey(_ mac: String) -> String { "kf_rnote_" + mac }
     static func flagKey(_ mac: String) -> String { "kf_rflag_" + mac }
     /// 行身份归一: 多锁模式的 RowVM.key 已带 mac 前缀, 单锁路径没带 → 补齐成同一个键
@@ -58,7 +58,7 @@ enum RecordOverlay {
     /// 行下灰字与左旗的读取都由上面几枚函数直接服务 UI; 不再另留 noteLine 这种"看着像入口"的别名。
 }
 
-struct Rec: Identifiable {
+nonisolated struct Rec: Identifiable {
     var key: String        // 行 key (锁日志 idxRaw)
     var mac: String        // 归属锁 (全部锁模式下定位)
     var lockName: String   // 770 锁名前缀标签
@@ -80,7 +80,7 @@ struct Rec: Identifiable {
 
 /// 724 四级告警色标: 提示/注意/严重/紧急 — 真实 5 种告警类的本地定级
 /// (协议无胁迫类, 不虚构; 定级与色标映射在 AlarmCenterView 的 RecordSearch 扩展, 形状冗余保色觉可读)
-enum AlarmMeta {
+nonisolated enum AlarmMeta {
     static let urgent: Set<Int> = [7, 224]   // 防撬 / 键盘锁定
     static let serious: Set<Int> = [10, 13]  // 试错锁定 / 指纹告警
     /// 596 替代: 原句要的是"含胁迫告警"的日警示 —— 协议没有胁迫类 (§5), 改挂这三类**真实存在**
@@ -118,7 +118,7 @@ extension RecordSearch {
 }
 
 /// 660 告警措辞分级: 紧急强措辞 / 严重关注 / 提示建议式, 文案集中一处
-enum AlarmWords {
+nonisolated enum AlarmWords {
     static func phrase(_ t: Int) -> String {
         switch t {
         case 7: return "请立即确认门体安全"
@@ -134,7 +134,7 @@ enum AlarmWords {
 }
 
 /// 674 通勤时段标签: 工作日 7-9 / 17-19 实时计算, 无需积累
-enum CommuteLabel {
+nonisolated enum CommuteLabel {
     static func tag(date: Date, hour: Int) -> String? {
         // 原写法用 `Calendar(identifier: .chinese)` 取 weekday, 而它的注释写"周一=2, 周日=7"、代码却排除 1 和 7 ——
         // 口径自相矛盾, 且农历历法的 weekday 归属并不是这里要的东西。上一批改成了裸的
@@ -150,7 +150,7 @@ enum CommuteLabel {
 }
 
 /// 658 自然时段词: 清晨/上午/午前/午间/下午/傍晚/晚间/深夜 (组头与行级小字共用)
-enum TimeWord {
+nonisolated enum TimeWord {
     static func word(_ hour: Int) -> String {
         switch hour {
         case 0..<5: return "清晨"
@@ -166,7 +166,7 @@ enum TimeWord {
 }
 
 /// 655 动词化日志文案 (统一动词表: "张三 用 指纹 开了门", 告警/操作各用各的动词)
-enum RecordVerbs {
+nonisolated enum RecordVerbs {
     static let openVerb: [Int: String] = [1: "用了数字钥匙开了门", 2: "用了密码开门", 3: "用指纹开了门", 4: "用一次性密码开门", 5: "用 NFC 开了门"]
     static let alarmVerb: [Int: String] = [6: "触发低电量提醒", 7: "出现撬锁告警", 10: "多次密码失败已锁定", 13: "指纹模块告警", 224: "键盘被锁定"]
     static let opVerb: [Int: String] = [
@@ -188,7 +188,7 @@ enum RecordVerbs {
 }
 
 /// 查询过滤 (564/571/572/567/568 的本地筛选态)
-struct QueryFilters: Codable, Equatable {
+nonisolated struct QueryFilters: Codable, Equatable {
     var segment: Int = 0            // 564 时段: 0 全部 / 1 早(6-10) / 2 午(10-15) / 3 晚(15-22) / 4 深夜
     var dayKind: Int = 0            // 571: 0 全部 / 1 仅工作日 / 2 仅周末
     var lateNight = false           // 572 深夜预设 (跟随 676 夜间时段配置)
@@ -236,7 +236,7 @@ extension QueryFilters {
 }
 
 /// 560 命名过滤视图 (kf_rviews): 文本 + 过滤 + 范围长期复用
-struct NamedView: Codable, Identifiable {
+nonisolated struct NamedView: Codable, Identifiable {
     var id: String
     var name: String
     var text: String
@@ -244,7 +244,7 @@ struct NamedView: Codable, Identifiable {
     var scopeAll: Bool
 }
 
-enum RecordSearch {
+nonisolated enum RecordSearch {
     /// 362 复活检测（**仅本机类型级推断**）: 回收站条目删除之后, 是否仍出现同凭证类型的开门事件。
     /// 协议没有"读锁内凭证清单"的命令, 所以只能说"可能仍在用", 绝不能写成"已核对锁内"。
     /// 比较用的是锁自己记的时间串与手机删除时刻 —— 锁钟未校准时会有偏差, 调用方需带这句提示。

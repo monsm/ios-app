@@ -15,7 +15,7 @@
 // 确实分属两件事, 但把一节拆成两处会让页内搜索的命中映射出现两个落点 —— 那是更大的乱)。
 import SwiftUI
 
-enum SettingsGroup: String, CaseIterable, Identifiable {
+nonisolated enum SettingsGroup: String, CaseIterable, Identifiable {
     case daily       // 开门日常
     case keys        // 凭证与成员
     case data        // 数据与安全

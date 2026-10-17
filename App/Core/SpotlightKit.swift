@@ -12,7 +12,7 @@ import Foundation
 import CoreSpotlight
 import UniformTypeIdentifiers
 
-enum SpotlightKit {
+nonisolated enum SpotlightKit {
     /// 按域整删再整写: 改名与删除不会在系统里留下旧条目 (逐条增删容易漏掉 rename 那一支)
     static let domainDevice = "lockkeeper.device"
     static let domainCredential = "lockkeeper.credential"

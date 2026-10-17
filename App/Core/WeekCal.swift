@@ -14,7 +14,7 @@
 // 都是公历的。`gregorian` 就是为此存在：只把历法钉成公历，其余四个旋钮原样照抄当前设置。
 import Foundation
 
-enum WeekCal {
+nonisolated enum WeekCal {
     /// 公历化的"当前日历"：只钉 identifier = 公历，时区 / Locale / 一周首日 / 年初最少天数
     /// 全部照抄 `Calendar.current`。对系统本就设成公历的用户，这与 `Calendar.current` 同值。
     /// 刻意不缓存：`Calendar` 值类型每次读都反映当下设置 (用户中途改时区/地区不需要重启 App)，

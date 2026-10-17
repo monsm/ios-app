@@ -7,7 +7,7 @@ import Foundation
 import Compression
 
 // ================= CRC32 (IEEE 802.3, 与 zlib 一致) =================
-enum CRC32 {
+nonisolated enum CRC32 {
     static let table: [UInt32] = {
         (0..<256).map { n -> UInt32 in
             var c = UInt32(n)
@@ -23,12 +23,12 @@ enum CRC32 {
 }
 
 // ================= ZIP 解析 (对抗上限: 单条目 8MB, ≤64 条目) =================
-struct ZipEntry {
+nonisolated struct ZipEntry {
     var name: String
     var data: [UInt8]
     var crcOk: Bool
 }
-enum ZipKit {
+nonisolated enum ZipKit {
     static let maxEntrySize = 8 * 1024 * 1024
     static let maxEntries = 64
 
@@ -159,7 +159,7 @@ enum ZipKit {
 }
 
 // ================= 固件包解析 (JS services/dfu.js parseDfuZip) =================
-enum DFUError: LocalizedError {
+nonisolated enum DFUError: LocalizedError {
     case zip(String)
     case msg(String)
     var errorDescription: String? {
@@ -169,7 +169,7 @@ enum DFUError: LocalizedError {
         }
     }
 }
-struct FirmwarePackage {
+nonisolated struct FirmwarePackage {
     var binHex: String
     var datHex: String
     var binSize: Int
@@ -177,7 +177,7 @@ struct FirmwarePackage {
     var version: String?   // 文件名 KX_V5.2.9_* → 5.2.9
     var sourceName: String
 }
-enum FirmwareKit {
+nonisolated enum FirmwareKit {
     static let limits = (manifest: 4096, dat: 4096, bin: 8 * 1024 * 1024)
     static func parse(zipData: [UInt8], fileName: String) throws -> FirmwarePackage {
         let entries = try ZipKit.parse(zipData)
@@ -580,7 +580,7 @@ final class DFUBleSession: NSObject, CBCentralManagerDelegate, CBPeripheralDeleg
 }
 
 // ================= 升级编排 (JS services/dfu.js runUpgrade) =================
-enum DFUProgress {
+nonisolated enum DFUProgress {
     case connecting      // 0
     case starting        // 1
     case switchingDfu    // 2

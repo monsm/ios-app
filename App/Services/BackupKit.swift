@@ -6,7 +6,7 @@ import Foundation
 import CryptoKit
 import CommonCrypto
 
-struct BackupEnvelope: Codable {
+nonisolated struct BackupEnvelope: Codable {
     var v: Int
     var alg: String
     var kdf: Kdf
@@ -18,7 +18,7 @@ struct BackupEnvelope: Codable {
     struct Meta: Codable { var size: Int; var at: Double }
 }
 
-enum CryptoBox {
+nonisolated enum CryptoBox {
     static let defaultIter = 60000
 
     static func sha256(_ data: [UInt8]) -> [UInt8] {
@@ -147,7 +147,7 @@ enum CryptoBox {
 }
 
 // ---------- 全量备份包 (JS services/bundle.js collectAll/restoreAll 同构) ----------
-struct BackupBundle: Codable {
+nonisolated struct BackupBundle: Codable {
     var type: String = "kf-bundle"
     var bundleVer: Int = 2
     // 414 版本头标注 (原句"semver"): 包头带 schema 版本号，恢复时按 v1→v5 **逐级**幂等迁移 (424 的升级链)，
@@ -469,7 +469,7 @@ nonisolated enum BackupKit {
 }
 
 // ---------- WebDAV 同步 (JS services/cloudsync.js) ----------
-enum CloudSync {
+nonisolated enum CloudSync {
     static let remoteURL = "https://dav.jianguoyun.com/dav/%E6%88%91%E7%9A%84%E5%9D%9A%E6%9E%9C%E4%BA%91/zklock-backup.enc"
     static func basicAuth(_ acct: String, _ app: String) -> String {
         let raw = Data("\(acct):\(app)".utf8).base64EncodedString()

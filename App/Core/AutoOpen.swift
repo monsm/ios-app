@@ -10,7 +10,7 @@ import LocalAuthentication
 import UIKit
 
 // ================= 存储 accessor (Store.swift 同步, kf.* 自动进备份) =================
-enum AutoOpen {
+nonisolated enum AutoOpen {
     /// 主开关 (默认关): kf_autoopen
     static var on: Bool {
         get { DB.store.getBool("kf_autoopen", false) }
@@ -73,7 +73,7 @@ enum AutoOpen {
 }
 
 // ================= 纯逻辑: 门控判定 / 标定 / 滤波器 / 0E 双确认 (可单测, 无 UI 依赖) =================
-enum AutoOpenKit {
+nonisolated enum AutoOpenKit {
 
     // ---------- F4 布防互锁: control==2 时段布防, 当前时刻在 start/end 内 → 一票否决 (跨午夜 start>end) ----------
     /// startSec/endSec 为日内秒 (SETDEFENCE 协议口径, 半秒分辨率)；仅 control==2 生效, 0/1/3 不拒。
@@ -185,7 +185,7 @@ enum AutoOpenKit {
 }
 
 // ================= 门控矩阵: 全绿才允许下发 04 =================
-struct AutoOpenGate {
+nonisolated struct AutoOpenGate {
     var f0Foreground: Bool        // App 前台且已解锁 (sceneActive && appUnlocked)
     var faceTier: Int             // 0 标准 / 1 严格
     var lastFace: Date?          // 最近一次面容成功时刻 (nil = 从未)
@@ -265,7 +265,7 @@ protocol FaceService {
     func silentRefresh()
 }
 
-struct SystemFaceService: FaceService {
+nonisolated struct SystemFaceService: FaceService {
     /// FaceService 协议要求的成员 (旧实现漏写 → 类型检查不过)
     var biometricAvailable: Bool {
         var err: NSError?
@@ -300,7 +300,7 @@ struct SystemFaceService: FaceService {
 // ================= F2' 停留判定: 加速度计方差窗口 (降速/静置 ≥3s) =================
 /// 简化: 加速度计 20Hz, 滑窗 30 帧 (1.5s), 方差 < 阈值 判为静置; 连续静置 ≥3s = 停留满足 (堵"骑车路过")。
 /// 阈值 0.05 (m/s²)² 为常量。调参: 口袋/桌面微动 vs 走动, 现场标定后可调。
-enum MotionStillness {
+nonisolated enum MotionStillness {
     static let varianceThreshold = 0.05
     static let stillnessSeconds: Double = 3.0
     static let windowFrames = 30

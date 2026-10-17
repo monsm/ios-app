@@ -13,7 +13,7 @@ import Foundation
 import SwiftUI
 
 // ---------- 锁档案 (per-lock 元数据) ----------
-struct LockMeta: Codable {
+nonisolated struct LockMeta: Codable {
     var note: String = ""             // 106 备注 (备忘录标题正文的双字段案)
     var symbol: String = ""           // 105 符号 (SF Symbol 名; 空 = 默认 lock.fill)
     var colorKey: String = ""         // 105 色标 (LockArchive.swatch 键; 空 = 跟随主题)
@@ -57,7 +57,7 @@ struct LockMeta: Codable {
 
 // ---------- 104/767 分组 ----------
 /// 一组成员: 组名 + 按总顺序排好的锁。Identifiable 用组名当 id (组名在设备管理里就是它的身份)。
-struct LockGroup: Identifiable {
+nonisolated struct LockGroup: Identifiable {
     let name: String
     let locks: [Keychain]
     var id: String { name }
@@ -261,7 +261,7 @@ nonisolated enum LockArchive {
 
 // ---------- 多锁统计 ----------
 /// 每把锁一行的聚合读数: 30 天窗口从日志缓存统计, 容量/电量/固件从快照读。
-struct LockUsage: Identifiable {
+nonisolated struct LockUsage: Identifiable {
     var mac: String
     var name: String
     var opens30d: Int = 0        // 开门类 (type 1-5)

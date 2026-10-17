@@ -22,7 +22,7 @@ import LocalAuthentication
 
 // ================= 数据模型 =================
 /// 487/489/490/495/496 版本快照: 值/时段/备注逐字段对齐, 供 diff 与"恢复即新版本"
-struct CredSnapshot: Codable, Identifiable {
+nonisolated struct CredSnapshot: Codable, Identifiable {
     var version: Int
     var at: Double              // Unix 秒
     var note: String            // 人话摘要 (490), 由 makeSummary 生成
@@ -34,7 +34,7 @@ struct CredSnapshot: Codable, Identifiable {
     var id: Int { version }
 }
 /// 498 来源过滤: 手动删除 / 批量清理 / 过期清理 / 重录替代
-enum CredBinSource: Int, Codable, CaseIterable {
+nonisolated enum CredBinSource: Int, Codable, CaseIterable {
     case manual = 0, batch = 1, expired = 2, rererecord = 3, orphan = 4
     var label: String {
         switch self {
@@ -48,7 +48,7 @@ enum CredBinSource: Int, Codable, CaseIterable {
     }
 }
 /// 497-502 回收站条目
-struct CredBinEntry: Codable, Identifiable {
+nonisolated struct CredBinEntry: Codable, Identifiable {
     var at: Double
     var source: Int                 // CredBinSource.rawValue
     var pwd: LedgerPwd? = nil
@@ -69,11 +69,11 @@ struct CredBinEntry: Codable, Identifiable {
     var sourceName: String { CredBinSource(rawValue: source)?.label ?? "手动删除" }
 }
 /// 365 下发状态 (本地容错态): 待下发 → 已下发 → 锁端确认 (rc@#03)
-enum CredQueueState: Int, Codable {
+nonisolated enum CredQueueState: Int, Codable {
     case pending = 0, done = 1, failed = 2
 }
 /// 365 队列条目: kind 决定重试时下发哪条既有命令, 不新增协议指令
-struct CredQueueItem: Codable, Identifiable {
+nonisolated struct CredQueueItem: Codable, Identifiable {
     var id: Int
     var kind: String      // "del_pwd"/"del_fp"/"period"/"restore"/"copy"
     var title: String     // 行内一句话 (如 "删除密码 #3")
@@ -85,7 +85,7 @@ struct CredQueueItem: Codable, Identifiable {
     var attempt: Int = 0
     var lastAt: Double = 0
 }
-struct CredAlert: Codable {
+nonisolated struct CredAlert: Codable {
     var day: Bool = false
     var d3: Bool = false       // 930: 到期前 3 天
     var d1: Bool = false       // 930: 到期前 1 天
@@ -108,7 +108,7 @@ struct CredAlert: Codable {
     }
 }
 /// 527 命名智能列表: 常用筛选组合存为具名快捷
-struct CredSmartList: Codable, Identifiable {
+nonisolated struct CredSmartList: Codable, Identifiable {
     var id: String
     var name: String
     var kind: String     // "all"/"pwd"/"fp"
@@ -117,7 +117,7 @@ struct CredSmartList: Codable, Identifiable {
     var tag: String      // "stale" 老旧值 / "noowner" 无归属
 }
 /// 四维排序 (914): 名称 / 类型 / 最近使用 / 到期
-enum CredSortKey: Int, CaseIterable {
+nonisolated enum CredSortKey: Int, CaseIterable {
     case name = 0, type, recent, expiry
     var label: String {
         switch self {
@@ -131,7 +131,7 @@ enum CredSortKey: Int, CaseIterable {
 enum CredGroupMode: Int { case type, owner }
 
 // ================= 组织层 =================
-enum CredentialOrg {
+nonisolated enum CredentialOrg {
     /// 2026-10-13 对抗式排查: 凭证通知排期失败的可见出口。
     /// 原先 `Task { try? await UNUserNotificationCenter…add(req) }` 把失败静默吞掉, 界面照显"已排程"。
     /// 凭证到期预警是这条链唯一的提醒出口, 静默失败 = "说要提醒但没人提醒"。

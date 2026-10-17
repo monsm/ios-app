@@ -27,14 +27,14 @@ import SwiftUI
 
 /// 容器的语义种类。页面只说"这是一个分组 / 一块瓦片 / 一条内嵌行"，
 /// **长成什么样由当前变体决定** —— 这是两套 UIUX 能真正不同、又不会各画一遍的关键切分。
-enum ContainerKind {
+nonisolated enum ContainerKind {
     case group      // 一组相关读数/设置
     case tile       // 可点的一次性入口
     case inset      // 嵌在别的东西里面的小格
     case hero       // 首屏主角那一块
 }
 
-struct VK {
+nonisolated struct VK {
 
     /// 视觉语法。拿不到 AppState 的叶子视图走这个静态入口。
     static var current: VK { VK() }
@@ -221,7 +221,7 @@ extension View {
 /// 底衬的形状档。**故意不是 `Shape` 泛型**：调用点若还留着一句 `in: Capsule()`，
 /// tools/uicoverage.js 的自绘容器预算（只认字面 token）就数不到这次迁移，
 /// 迁移进度会看起来没动 —— 预算得能反映事实，形状就得以令牌形式传进来。
-enum PlateShape {
+nonisolated enum PlateShape {
     case capsule    // 信息胶囊
     case tile       // 瓦片 (DS.Radius.tile)
     case control    // 控件 / 内嵌格 (DS.Radius.control)
@@ -393,7 +393,7 @@ extension VK {
 /// 开关形状的实现。三 case 齐全（`uicoverage` 检查三按变体分叉就要求这个）。
 /// ⚠ 返回类型写 `AnyView` 而不是 `some View` 是**为了被检查三覆盖**：那一支只扫 `-> AnyView {`
 /// 的分叉函数（本文件的既定形状）。改成 `some View` 它就静默逃过穷尽性检查 —— 语法件越多漏得越多。
-struct VariantToggleStyle: ToggleStyle {
+nonisolated struct VariantToggleStyle: ToggleStyle {
     func makeBody(configuration: Configuration) -> AnyView {
             return AnyView(
         // `configuration.isOn` 是 **Bool**（`ToggleStyleConfiguration` 里那一枚是 `@Binding`

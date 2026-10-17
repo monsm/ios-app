@@ -10,7 +10,7 @@ import Combine
 import AudioToolbox
 
 // ---------- 链路三态 (64 语义色: 已连接 / 握手中 / 未连接) ----------
-enum LinkState: Equatable {
+nonisolated enum LinkState: Equatable {
     case ready, connecting, down
     var name: String {
         switch self {

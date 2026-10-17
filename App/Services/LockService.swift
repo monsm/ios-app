@@ -967,7 +967,7 @@ final class LockService: ObservableObject {
 /// 帧 hex 脱敏: 保留长度与前 4 位供排障对位, 密钥材料不落盘、不外传。
 /// 放在文件作用域而非 LockService 内: 该类是 @MainActor, 嵌套类型会继承隔离域,
 /// 导致非隔离上下文 (BackupKit.restoreAll / 日志工具) 无法复用同一份脱敏实现。
-enum Redact {
+nonisolated enum Redact {
     static func frameHex(_ s: String) -> String {
         guard let r = s.range(of: "hex=") else { return s }
         let tail = s[r.upperBound...]

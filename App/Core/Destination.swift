@@ -5,7 +5,7 @@ import SwiftUI
 
 /// 一个目的地 = 界面里的一站（供闸门与台账对账）。
 /// rawValue 是 View 类型名，供 tools/uicoverage.js 与本台账对账。
-enum Destination: String, CaseIterable, Identifiable {
+nonisolated enum Destination: String, CaseIterable, Identifiable {
     case accessibility = "AccessibilityView"
     case achievements = "AchievementsView"
     case addDevice = "AddDeviceView"

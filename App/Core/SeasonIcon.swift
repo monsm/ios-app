@@ -10,7 +10,7 @@
 // 所以这一档必须显式开，且关掉后行为与旧版一致 (只有手动点图标会换)。
 import UIKit
 
-enum SeasonIcon {
+nonisolated enum SeasonIcon {
     static let autoKey = "kf_icon_season"
     static let lastKey = "kf_icon_season_last"
 

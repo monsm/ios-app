@@ -6,7 +6,7 @@
 // 差分基准: golden.cmds.* / golden.parse.*
 import Foundation
 
-struct ZKLV: Equatable {
+nonisolated struct ZKLV: Equatable {
     var key: Int
     var val: String   // hex
     var vlen: Int
