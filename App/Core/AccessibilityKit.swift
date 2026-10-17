@@ -335,7 +335,14 @@ enum AuthKit {
         ctx.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics,
                            localizedReason: "用 Face ID / Touch ID 代替本机密码") { ok, err in
             Task { @MainActor in
-                if ok { onSuccess() } else { onFail?(reasonText(err)) }
+                if ok {
+                    // F1 面容时刻记账: 这是一次真实的面容/指纹通过 (evaluatePolicy 返回 ok),
+                    // 与 AutoOpen 的"标准档 = 沿用最近一次真实验证的 60s 窗口"是同一条证据。
+                    // 缺这一行的后果是**功能整条死掉**: 标准档 (默认) 下 lastFace 永远是 nil,
+                    // faceFresh 恒 false ⇒ F1 恒拒 ⇒ 靠近自动开锁一次都不会触发 (见 AutoOpen.swift:114)。
+                    AutoOpenKit.noteFaceSuccess()
+                    onSuccess()
+                } else { onFail?(reasonText(err)) }
             }
         }
         return true
@@ -363,6 +370,10 @@ enum AuthKit {
             guard ctx.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &err),
                   err?.code != LAError.biometryNotAvailable.rawValue else { cont.resume(returning: false); return }
             ctx.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { ok, _ in
+                // 同上: 真实面容通过就记账。Siri 开锁 (AppIntents:113)、受限区复核
+                // (LockKeeperApp:1647)、毁灭操作复核 (SecurityCenterView:88) 都走这一支 ——
+                // 这三处是标准档下唯一能拿到"最近刷过脸"这个事实的地方。
+                if ok { AutoOpenKit.noteFaceSuccess() }
                 cont.resume(returning: ok)
             }
         }

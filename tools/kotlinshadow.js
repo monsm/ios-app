@@ -106,15 +106,60 @@ else good('A4 令牌通道 KLV#0xEE');
     bad('A8 MainActivity 没有把 armed 回灌给 rssiSample (回差滤波等于没接)');
   else good('A8 武装位跨样本回灌');
   // ② 一次性闩锁: 掉回解除线才放开, 发过就别再发
-  if (!/if \(!armed\) fired = false/.test(ma)) bad('A8 缺少"掉线放开闩锁"那一步 (一次事件之后再也开不了)');
+  if (!/if \(!armed\)\s*\{?\s*fired = false/.test(ma)) bad('A8 缺少"掉线放开闩锁"那一步 (一次事件之后再也开不了)');
   else good('A8 接近事件结束时放开闩锁');
   if (!/if \(!armed \|\| fired\) return/.test(ma)) bad('A8 缺少 fired 拦截 (人站在门口会反复下发 04)');
   else good('A8 一次接近事件只发一次');
   if (!/AutoOpenKit\.coolReady\(lastAuto, now\)/.test(ma)) bad('A8 没读 60s 冷却');
   else good('A8 冷却闸在链上');
-  if (!/LaunchedEffect\(proximity, lock\?\.mac, busy\)/.test(ma))
+  // 抠意图而不是字面: 监测的 key 里必须有 busy (开锁在途要撤监测), 可以有更多 (warming 也进了 key,
+  //   预热同样要撤监测) —— 断言写死整串会在每次合理扩展 key 时假红。
+  const leKey = (ma.match(/LaunchedEffect\(proximity,([^)]*)\)/) || ['', ''])[1];
+  if (!/\bbusy\b/.test(leKey))
     bad('A8 RSSI 监测没有随 busy 撤下 (安卓一边扫一边连 = GATT 133 头号成因, 且 scanForLock 的 stopScan 会把监测一起停掉)');
-  else good('A8 开锁在途时撤下 RSSI 监测');
+  else good('A8 监测随 busy 撤下 (key: ' + leKey.trim() + ')');
+
+  // ② 预热 (秒开的关键): prewarm 只许建链, 一个命令都不发; 且**绝不自己起扫描** ——
+  //    监测流正在扫时另起 startScan 会顶掉它, 收尾那句 stopScan 又把监测一起停掉,
+  //    那就是本轮刚修过的那个坑 (表现 = "当前信号再也不更新")。句柄必须来自缓存。
+  const blPrewarm = (kt("BleUnlocker.kt").match(/suspend fun prewarm[\s\S]*?\n    \}/) || [""])[0];
+  if (!blPrewarm) bad("A8 找不到 prewarm 函数 (改名或删除会让这一整组断言失效 —— 必须同步改这里)");
+  else {
+    for (const [cmd, name] of [["tokenFrame()", "01 取令牌"], ["unlockFrame(", "04 开锁"], ["statusFrame()", "03 认锁"]]) {
+      if (blPrewarm.includes(cmd)) bad('A8 prewarm 里发了 ' + name + ' —— 预热只许建链, 发命令就不是「预热」而是真开锁了');
+      else good("A8 prewarm 不发 " + name);
+    }
+    if (/scanForLock\(/.test(blPrewarm)) bad("A8 prewarm 自己起扫描 —— 会和监测流抢那唯一一路扫描 (本轮刚修的坑)");
+    else good("A8 prewarm 用缓存句柄, 不自起扫描");
+    if (!/freshSeen\(lock\.mac\)/.test(blPrewarm)) bad("A8 prewarm 没有从广播缓存取句柄");
+    else good("A8 prewarm 复用广播句柄");
+  }
+  // 开锁冷路径同样不许在监测还在扫时另起扫描: 必须先试缓存句柄
+  const blUnlock = (kt("BleUnlocker.kt").match(/suspend fun unlock[\s\S]*?\n    \}/) || [""])[0];
+  if (!blUnlock) bad("A8 找不到 unlock 函数 (同样会让下面几条断言静默失效)");
+  else {
+  if (!/freshSeen\(lock\.mac\)\s*\?:/.test(blUnlock)) bad("A8 冷路径没先吃缓存句柄 (白付一次扫描的时间, 秒开就没了)");
+  else good("A8 冷路径优先复用广播句柄");
+  // 热链路必须能被拆: 复用不留出口 = 解绑/退出后那条 GATT 一直占着锁
+  if (!/suspend fun release\(/.test(kt("BleUnlocker.kt"))) bad("A8 没有 release() 出口 (热链路拆不掉)");
+  else good("A8 release() 出口在");
+  if (!/unlocker\.release\(\)/.test(ma)) bad("A8 MainActivity 没在解绑/销毁时拆链路");
+  else good("A8 解绑与销毁都会拆链路");
+  // 预热在途也必须撤监测: 安卓同时只跑一路扫描, prewarm 建链时监测还在扫 = 边扫边连 (133)。
+  // 上一条只查 busy 在不在 key 里 (合理扩展 key 时不该假红), 所以 warming 单独钉一条。
+  if (!/\bwarming\b/.test(leKey)) bad("A8 预热在途时监测没撤下 (warming 不在 LaunchedEffect 的 key 里)");
+  else if (!/if \(!proximity \|\| busy \|\| warming\) return@LaunchedEffect/.test(ma)) bad("A8 warming 进了 key 但早退那行没带上它 (撤不下监测)");
+  else good("A8 预热在途同样撤下监测");
+  // 掉回解除线时要连 prewarmStarted 一起放开, 否则一次 App 生命周期内只会预热一次,
+  //   第二次靠近就没有热链路 —— "秒开"退化成只有第一次快。
+  if (!/if \(!armed\)[^\n]*prewarmStarted = false/.test(ma) && !/prewarmStarted = false[^\n]*\n[^\n]*fired = false/.test(ma)) bad("A8 信号掉线时没有放开 prewarmStarted (第二次靠近不再有热链路)");
+  else good("A8 掉线同时放开闩锁与预热位");
+  if (!/unlocker\.prewarm\(/.test(ma)) bad('A8 MainActivity 没发起预热 (那「秒开」就只剩省了拆链那一半)');
+  else good("A8 预热被 UI 调用");
+  // 热链路复用前必须核过身份 (prewarm 刻意不核, 开锁这次非核不可)
+  if (!/verifyIdentity\(reuse, lock, trace\)/.test(blUnlock)) bad("A8 走热链路时跳过了身份复核 (预热建的链没核过!)");
+  else good("A8 热链路开锁前补身份复核");
+  }
 
   // ③ 帧必须**经过** injectToken 再落地 —— 直接写 unlockFrame 就等于回到裸发
   const bl = kt('BleUnlocker.kt');

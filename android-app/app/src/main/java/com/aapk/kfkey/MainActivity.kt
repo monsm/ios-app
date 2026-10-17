@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 // ---------- 视觉常量 ----------
@@ -74,17 +75,36 @@ private val Ok = Color(0xFF6EE7A8)
 private val Bad = Color(0xFFF87171)
 
 class MainActivity : ComponentActivity() {
+    // 只在 unlocker 需要时建一次: KfApp() 是 Composable, remember 的状态跟着组合走,
+    // 但 release() 是挂起函数, 不能从 onDestroy 里直接调 —— 所以把 unlocker 提到 Activity 上,
+    // 生命周期出口才有东西可拆。
+    private val unlocker by lazy { BleUnlocker(this) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent { KfApp() }
+        setContent { KfApp(unlocker) }
+    }
+
+    override fun onDestroy() {
+        // 后台把链路拆干净 (不等回执, 进程都要走了)。不拆的话锁那侧会挂着一条
+        // "对端已消失但仍连着"的链路, 下次靠近反而连不上。
+        val u = unlocker
+        Thread {
+            try {
+                kotlinx.coroutines.runBlocking { u.release() }
+            } catch (_: Exception) {
+            }
+        }.start()
+        super.onDestroy()
     }
 }
 
 @Composable
-private fun KfApp() {
+private fun KfApp(unlocker: BleUnlocker) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
-    val unlocker = remember { BleUnlocker(ctx) }
+    // unlocker 由 Activity 持有 (而不是在这里 remember 一个): 热链路要能被 onDestroy 拆掉。
+    // 两处各 new 一个的话, Activity 拆的是空的那个, 真正连着锁的那条永远留在后台。
 
     var lock by remember { mutableStateOf(LockStore.load(ctx)) }
     var status by remember { mutableStateOf("") }
@@ -99,6 +119,8 @@ private fun KfApp() {
     var lastAuto by remember { mutableStateOf(0L) }                 // 上次自动下发时刻 (冷却基准)
     var armed by remember { mutableStateOf(false) }                // 回差滤波后的"已武装"位
     var fired by remember { mutableStateOf(false) }                // 本次接近事件是否已发过 04
+    var prewarmStarted by remember { mutableStateOf(false) }       // 本次靠近是否已预热过
+    var warming by remember { mutableStateOf(false) }              // 预热建链在途 (要让监测撤下)
 
     fun say(text: String, bad: Boolean = false) {
         status = text
@@ -164,11 +186,34 @@ private fun KfApp() {
     // 写成局部函数而不是塞进 collect 的 lambda: collect 外面已经套着 LaunchedEffect 一层
     // lambda, 再从内层跨出去要写 return@collect 那个 label —— label 名字错了就是编译失败,
     // 而这一段的判据本身就是会算错的东西, 不该押在一个字符串上。
+    // 预热线: 比武装线 (AutoOpenKit.BASE = -38) 弱 24 dB ⇒ 功率约 1/250, 大致一两米开外。
+    // 越过它就在后台把链路建好 (prewarm 只建链, 一个命令都不发), 等越过武装线时只剩
+    // 01+04 两个往返 —— "秒开"靠的是这一步, 不是把协议改快。
+    // 用 PREWARM 这个固定值而不是标定值: 安卓端没有标定页 (见 AutoOpenKit 注释)。
+    val prewarmLineDbm = AutoOpenKit.BASE - 24
+
     fun maybeAutoUnlock(r: Int) {
         val now = System.currentTimeMillis()
+        // 预热不排队、不抢锁: prewarm 内部 mutex 会排在建链后面, 而开锁那一趟优先级更高,
+        // 所以只在"没在开锁 && 还没有热链路"时发起, 避免和开锁抢同一次 startScan。
+        if (!prewarmStarted && !busy && !warming && r >= prewarmLineDbm && lock != null) {
+            prewarmStarted = true
+            val target = lock          // 局部不可空引用: 下面跨了挂起点, 不能再 lock!!
+            scope.launch {
+                warming = true
+                // 等一帧多, 让 LaunchedEffect 因 warming 变化而把监测流拆掉 (那句 awaitClose
+                // 里的 stopScan 才是真的把射频放掉)。不等就是"边扫边连", 133 的成因之一。
+                delay(220)
+                try {
+                    unlocker.prewarm(target)
+                } finally {
+                    warming = false
+                }
+            }
+        }
         armed = AutoOpenKit.rssiSample(prevArmed = armed, rssi = r)
-        // 信号掉回解除线以下 = 这一次接近事件结束 → 放开闩锁, 下次靠近才可再发
-        if (!armed) fired = false
+        // 信号掉回解除线以下 = 这一次接近事件结束 → 放开闩锁与预热位, 下次靠近重来一遍
+        if (!armed) { fired = false; prewarmStarted = false }
         if (!armed || fired) return
         if (!AutoOpenKit.coolReady(lastAuto, now)) return
         if (busy) return
@@ -182,10 +227,12 @@ private fun KfApp() {
     // 不只是抢射频: 同 App 里第二次 startScan 会重启扫描, 前一个 callback 静默失声,
     // 且 scanForLock 收尾那句 stopScan 会把监测的扫描一起停掉 —— 于是自动开锁跑过一次之后
     // "当前信号"再也不更新, 用户只能关掉开关再打开。
-    LaunchedEffect(proximity, lock?.mac, busy) {
+    LaunchedEffect(proximity, lock?.mac, busy, warming) {
         val l = lock ?: return@LaunchedEffect
-        if (!proximity) { rssi = null; armed = false; fired = false }
-        if (!proximity || busy) return@LaunchedEffect
+        if (!proximity) { rssi = null; armed = false; fired = false; prewarmStarted = false }
+        // 开锁在途 **或预热在途** 都撤下监测: 安卓同时只跑一路扫描, 而且边扫边连极易 133。
+        // 撤下后 rssi 保持最后一次的读数 (不抹成 null), 免得界面在预热那一瞬闪成"正在寻找门锁…"
+        if (!proximity || busy || warming) return@LaunchedEffect
         unlocker.observeRssi(l).collect { r ->
             rssi = r
             maybeAutoUnlock(r)
@@ -252,6 +299,9 @@ private fun KfApp() {
                         LockStore.clear(ctx)
                         lock = null
                         proximity = false
+                        // 解绑之后这条链路就没有主人了: 不收, 它会一直占着锁的 GATT 接口位,
+                        // 而下一把锁要连的时候还得先拆它 (安卓一次只养一条热链路)。
+                        scope.launch { unlocker.release() }
                         say("已解绑")
                     }
                 )
