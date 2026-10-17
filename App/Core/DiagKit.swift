@@ -1,3 +1,4 @@
+import os
 // 包11 诊断·性能·运维 — 数据层 (无 UI; 全部本地)
 // 编号对照 docs/ROADMAP-DRAFT.md「包11」:
 //   体检 149/150/151/158/160/545/760 · 日志 152-154/281/283/542/543/740 ·
@@ -105,15 +106,14 @@ enum HotCache {
         }
     }
     /// 日志写入后作废 (惰性: 下一次 recent 重读) —— 比"写完立刻重读一遍"少一次解码。
-    static func invalidate(_ mac: String) {
-        lock.lock(); defer { lock.unlock() }
-        store[mac] = nil
-    }
+    static func invalidate(_ mac: String) { lock.withLock { $0.store[mac] = nil } }
     static func recent(_ mac: String) -> [CachedLog] {
-        lock.lock(); defer { lock.unlock() }
-        if mac == currentMac, let v = store[mac] { return v }
-        store[mac] = DB.readLogs(mac)
-        return store[mac] ?? []
+        lock.withLock { h -> [CachedLog] in
+            if mac == h.currentMac, let v = h.store[mac] { return v }
+            let v = DB.readLogs(mac)
+            h.store[mac] = v
+            return v
+        }
     }
 }
 

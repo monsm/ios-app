@@ -1,3 +1,4 @@
+import os
 // 靠近自动开锁 — AUTOOPEN-PLAN.md 落地 (docs)
 // 门控链 F0 前台 / F1 面容双档 / F2' 停留 / F3 距离标定 / F4 布防互锁 / F5 一次性 / F6 锁态,
 // 全绿才经既有 LockService.unlock 管线下发 cmd04 (不改协议/命令构造); 任一门不过 = 静默拒绝 + 审计落盘
