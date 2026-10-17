@@ -602,12 +602,13 @@ final class LockService: ObservableObject {
     // 而 handle 本身就是 Task { @MainActor in … })，让录入页的 8 点进度能实时填。
     // 返回值与不传 onPress 时逐字节一致 —— 不拿它当协议能力，只是把已有数据早一点交给界面。
     /// 采集窗口口径 (逐字对齐 APK Java `BleLockConnector`):
-    ///   · `post()` 发帧后只起**一个** 8s 接收计时器 (`BLE_TIMEOUT`), 收到第一帧即 `cancelReceiveTimer()`;
-    ///     之后 APK 侧**没有** App 计时器 —— 由锁自己按 13 帧里的 timeout=15s 决定还接不接受下一次按压。
-    ///   · 所以本方法: 首帧窗口 `firstFrameMs`(默认 8s, = Java 计时器), 之后每次按压间隔上限
-    ///     `perPressMs`(默认 16s = 锁端 15s + 1s 余量), 外加 `overallMs` 兜底 (用户按得极慢时封顶)。
-    ///   · 旧实现是单个 30s 整体窗口: 停在 n/8 时既不收尾也不提示, 与 APK 的 8s 口径不同。
-    func fpStart(times: Int = 8, firstFrameMs: Int = 8000, perPressMs: Int = 16000,
+    ///   · `post()` 发帧后只起**一个** 8s 接收计时器 (`BLE_TIMEOUT`, :692);
+    ///   · `onCharacteristicChanged` 里**收到任何一帧就 cancelReceiveTimer()** (:196), 且**不重启**;
+    ///   · ⇒ 首帧之后 APK 侧**没有任何 App 计时器**, 8 次按压的节拍完全由锁按 13 帧里的 timeout=15s 裁定。
+    /// 所以本方法: 只有**首帧**窗口 `firstFrameMs`(默认 8s = Java 那个计时器) + 整体兜底 `overallMs`。
+    /// 2026-10-17 对拍勘误: 旧实现自创了"两次按压之间 16s 空闲即收尾" —— 用户看一眼屏幕、换个姿势
+    /// 就会被提前掐断, 表现是"按了 3 下就不动了 / 只收到 3/8 次按压", 而原 APK 会一直等下去。
+    func fpStart(times: Int = 8, firstFrameMs: Int = 8000,
                  overallMs: Int = 150000, onPress: ((FpPress) -> Void)? = nil) async throws -> [FpPress] {
         let (m, sk) = try keys()
         try await ensureToken()
@@ -670,13 +671,14 @@ final class LockService: ObservableObject {
                     break
                 }
                 if collectionDone() { break }
-                // 空闲收尾 (对齐 Java 接收计时器): 首帧前 8s; 已收到按压后按锁端 15s 窗口放宽到 16s
-                let limit = frames.isEmpty ? Double(firstFrameMs) / 1000.0 : Double(perPressMs) / 1000.0
-                let silent = Date().timeIntervalSince(lastFrameAt)
-                if silent > limit {
-                    log("warn", "13 录指纹空闲 \(String(format: "%.0f", silent))s 超过窗口 "
-                        + "\(frames.isEmpty ? "首帧 \(firstFrameMs)ms" : "两次按压 \(perPressMs)ms"), 提前收尾")
-                    break
+                // 空闲判据**只对首帧**成立 —— 这就是 Java 唯一的那个计时器 (BLE_TIMEOUT=8000):
+                // 收到任何一帧即 cancelReceiveTimer(), 之后再不重启。已收过帧之后一律只等锁自己收尾。
+                if frames.isEmpty {
+                    let silent = Date().timeIntervalSince(lastFrameAt)
+                    if silent > Double(firstFrameMs) / 1000.0 {
+                        log("warn", "13 录指纹首帧窗口 \(firstFrameMs)ms 内无任何回包, 提前收尾")
+                        break
+                    }
                 }
                 try? await Task.sleep(nanoseconds: 200_000_000)
             }
