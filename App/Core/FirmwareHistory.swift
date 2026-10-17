@@ -3,7 +3,7 @@
 // 刻意不叫"固件历史": 观测点只在读状态时产生, 中间升级过几次、具体哪天升的, 本机无从得知。
 import Foundation
 
-nonisolated enum FirmwareHistory {
+enum FirmwareHistory {
     private static func key(_ mac: String) -> String { "kf_fw_hist_" + mac }
     private static let cap = 120          // 按日存, 120 天足够排障用; 超出丢最旧的
 

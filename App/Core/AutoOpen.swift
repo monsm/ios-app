@@ -10,7 +10,7 @@ import LocalAuthentication
 import UIKit
 
 // ================= 存储 accessor (Store.swift 同步, kf.* 自动进备份) =================
-nonisolated enum AutoOpen {
+enum AutoOpen {
     /// 主开关 (默认关): kf_autoopen
     static var on: Bool {
         get { DB.store.getBool("kf_autoopen", false) }
@@ -73,7 +73,7 @@ nonisolated enum AutoOpen {
 }
 
 // ================= 纯逻辑: 门控判定 / 标定 / 滤波器 / 0E 双确认 (可单测, 无 UI 依赖) =================
-nonisolated enum AutoOpenKit {
+enum AutoOpenKit {
 
     // ---------- F4 布防互锁: control==2 时段布防, 当前时刻在 start/end 内 → 一票否决 (跨午夜 start>end) ----------
     /// startSec/endSec 为日内秒 (SETDEFENCE 协议口径, 半秒分辨率)；仅 control==2 生效, 0/1/3 不拒。
@@ -170,7 +170,7 @@ nonisolated enum AutoOpenKit {
     }
 
     // ---------- F1 面容成功时刻记账 (进程内语义: 重启即失效 = fail-closed) ----------
-    private nonisolated(unsafe) static var _lastFace: Date? = nil
+    private static var _lastFace: Date? = nil
     private static let lock = NSLock()
     static func noteFaceSuccess() {
         lock.lock()
@@ -185,7 +185,7 @@ nonisolated enum AutoOpenKit {
 }
 
 // ================= 门控矩阵: 全绿才允许下发 04 =================
-nonisolated struct AutoOpenGate {
+struct AutoOpenGate {
     var f0Foreground: Bool        // App 前台且已解锁 (sceneActive && appUnlocked)
     var faceTier: Int             // 0 标准 / 1 严格
     var lastFace: Date?          // 最近一次面容成功时刻 (nil = 从未)
@@ -265,7 +265,7 @@ protocol FaceService {
     func silentRefresh()
 }
 
-nonisolated struct SystemFaceService: FaceService {
+struct SystemFaceService: FaceService {
     /// FaceService 协议要求的成员 (旧实现漏写 → 类型检查不过)
     var biometricAvailable: Bool {
         var err: NSError?
@@ -285,24 +285,22 @@ nonisolated struct SystemFaceService: FaceService {
     }
     func silentRefresh() {
         // 2026-10-17 真机勘误「一直在请求 Face ID, 按压开锁也被挡住」:
-        // 这里原本调 evaluatePolicy —— 而 iOS **没有静默的生物识别**: 只要调它, 系统就弹窗。
-        // 于是"标准档 = 不弹窗"这句承诺是假的: 每次回前台 (BLE 重连/切回 App/通知点开) 都弹一次,
-        // 系统弹窗是模态的, 期间连开锁圆盘的按压都被吃掉, 表现就是"按了没反应"。
-        // 改法: 标准档**不主动验证**, 只沿用最近一次真实验证留下的窗口 (lastFace ≤60s);
-        // 需要"每次进前台必验"的用户走严格档 (promptFace, 明确弹窗)。
+        // iOS 没有静默的生物识别 —— evaluatePolicy 一调就弹系统模态窗, 而 onForeground 每次
+        // 进前台都调它 (标准档), 于是切回 App / BLE 重连 / 点通知都弹一次, 弹窗期间开锁圆盘的
+        // 按压被吃掉。改为标准档不主动验证, 只沿用最近一次真实验证的 60s 窗口。
     }
 }
 
 // ================= F2' 停留判定: 加速度计方差窗口 (降速/静置 ≥3s) =================
 /// 简化: 加速度计 20Hz, 滑窗 30 帧 (1.5s), 方差 < 阈值 判为静置; 连续静置 ≥3s = 停留满足 (堵"骑车路过")。
 /// 阈值 0.05 (m/s²)² 为常量。调参: 口袋/桌面微动 vs 走动, 现场标定后可调。
-nonisolated enum MotionStillness {
+enum MotionStillness {
     static let varianceThreshold = 0.05
     static let stillnessSeconds: Double = 3.0
     static let windowFrames = 30
-    private nonisolated(unsafe) static var samples: [(t: Double, x: Double, y: Double, z: Double)] = []
-    private nonisolated(unsafe) static var stillSince: Double? = nil
-    private nonisolated(unsafe) static var mgr: CMMotionManager? = nil
+    private static var samples: [(t: Double, x: Double, y: Double, z: Double)] = []
+    private static var stillSince: Double? = nil
+    private static var mgr: CMMotionManager? = nil
 
     static func start() {
         guard mgr == nil else { return }

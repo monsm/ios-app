@@ -9,15 +9,20 @@ options:
   createIntermediateGroups: true
 settings:
   base:
-    # Swift 6 语言模式 (严格并发) + 6.2 approachable concurrency。
-    # 迁移策略 (2026-10-17): 首跑 204 处错误的根因是"未标注类型默认继承主 actor, 把原本非隔离的
-    # 存储层/模型/纯函数一起拉上主线程"。修法不是逐个加 @MainActor, 而是把**本来就不该在主 actor 上**
-    # 的那一层显式标 nonisolated: DB / ZKProtocol / HexKit / StatusParser / PidMap / AESKit / KeyGen /
-    # ZOTP / ExportKit / PDFText / BackupStudio / 模型结构体 —— 行为零变化 (它们本来就是非隔离的)。
-    # 真正需要主 actor 的只有 UI 与 AppIntent, 后者给 perform 标 @MainActor (async 要求允许隔离见证)。
-    SWIFT_VERSION: "6.0"
-    SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
-    SWIFT_APPROACHABLE_CONCURRENCY: YES
+    # ============ Swift 6 迁移: 走 Apple 原生路径, 不用脏修复 ============
+    # 2026-10-17 复盘: 直切 SWIFT_VERSION=6.0 会一次报 200+ 处并发错误, 当时用批量
+    # nonisolated(unsafe) / assumeIsolated 把错误压下去 —— **那是脏修复**: 它只是把编译器的检查
+    # 关掉, 运行时的竞争与性能问题一个都没解决 (assumeIsolated 甚至会在真机上 trap / 压栈)。
+    # 正确路径是 Apple 官方的那两步:
+    #   ① 本行 SWIFT_VERSION 保持 5.0, 但把 SWIFT_STRICT_CONCURRENCY 开到 **complete** ——
+    #      于是每处跨隔离访问都变成**告警**而不是错误: 工程照常绿, 而告警清单就是完整的待办表。
+    #   ② 按清单逐条修: 真·纯函数标 `nonisolated`; 真需要主线程的标 `@MainActor`;
+    #      跨线程共享的可变状态**上锁** (OSAllocatedLock / NSLock), 而不是 unsafe;
+    #      后台重活用结构化 Task + actor, 而不是 assumeIsolated 赌一把。
+    #   ③ 清单清空、告警为 0 之后, 再把 SWIFT_VERSION 改成 6.0 —— 那一行就是收尾, 不是开始。
+    # 告警收口方式: `xcodebuild ... 2>&1 | grep "warning: " | sort -u > /tmp/conc.txt`
+    SWIFT_VERSION: "5.0"
+    SWIFT_STRICT_CONCURRENCY: complete
     CODE_SIGN_STYLE: Automatic
     DEVELOPMENT_TEAM: ""
   configs:

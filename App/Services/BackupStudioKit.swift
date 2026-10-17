@@ -9,7 +9,7 @@ import BackgroundTasks
 import UserNotifications
 
 // ---------- 分区模型 (407: 设备/凭证/记录/设置 四分区 + 181 OTP 开关) ----------
-nonisolated struct BZones: Codable, Equatable {
+struct BZones: Codable, Equatable {
     var devices: Bool = true      // 门锁钥匙串 + BLE 直连参数 (441 迁移逐把确认)
     var credentials: Bool = true  // 台账 (密码/指纹)
     var records: Bool = true      // 锁端日志缓存 + 全局事件
@@ -17,7 +17,7 @@ nonisolated struct BZones: Codable, Equatable {
 }
 
 @MainActor
-nonisolated enum BackupStudio {
+enum BackupStudio {
     // ================= 路径与命名 (409/410) =================
     // nonisolated: makeRollbackPoint/pruneRollback 本就是 nonisolated 而引用了这两个路径,
     // 挂在 @MainActor 枚举上会直接编译不过 (纯 FileManager, 无 actor 状态)
@@ -304,7 +304,7 @@ nonisolated enum BackupStudio {
     static let chargeBackupTaskId = "com.kf.chargebackup"
     /// 2026-10-14: register 每进程只能一次 (二次注册抛 NSInternalInconsistencyException)。
     /// 启动注册 + 设置开关 setter 都会调本函数, 用标志去重。
-    private nonisolated(unsafe) static var registered = false
+    private static var registered = false
     /// 单次完成闸 (跨线程): expirationHandler 与工作体都可能完成, 只允许第一个生效。
     private final class CompletionOnce: @unchecked Sendable {
         private let lock = NSLock()

@@ -18,7 +18,7 @@ struct HolidayYearDTO: Codable { var year: Int; var papers: [String]?; var days:
 // 去掉 @MainActor 是**顺其自然**的: 本枚举只用 DB.store (Store 是普通 final class, 非隔离) 与 URLSession,
 // 没有一处需要主 actor; 而 RecordSearch 那段注释早就写着"本枚举不是 @MainActor ... 所有调用方都在主线程"。
 // 隔离层本来就该在调用方 (View), 不在数据源这一层。
-nonisolated enum HolidayFeed {
+enum HolidayFeed {
     /// 内置源：raw.githubusercontent.com 上按年份发布的 JSON (取自该仓库 README 里写明的发布路径, 不是猜的域名)
     static let builtinBase = "https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/"
     static let srcKey = "kf_hol_src"
@@ -27,8 +27,8 @@ nonisolated enum HolidayFeed {
     static let maxBytes = 256 * 1024
     static func cacheKey(_ y: Int) -> String { "kf_hol_" + String(y) }
 
-    nonisolated(unsafe) static var sourceBase: String { let s = DB.store.getString(srcKey); return s.isEmpty ? builtinBase : s }
-    nonisolated(unsafe) static var usingBuiltinSource: Bool { sourceBase == builtinBase }
+    static var sourceBase: String { let s = DB.store.getString(srcKey); return s.isEmpty ? builtinBase : s }
+    static var usingBuiltinSource: Bool { sourceBase == builtinBase }
     static func setSource(_ s: String) {
         let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
         if t.isEmpty || t == builtinBase { DB.store.remove(srcKey) } else { DB.store.set(srcKey, t) }
@@ -110,8 +110,8 @@ nonisolated enum HolidayFeed {
 
     // ---------- 合并视图 ----------
     // 缓存**按年整体覆盖**内置表：同一年里不混两副表, 否则公告临时改期会出现"春节前一天还在内置表里"的错位。
-    private nonisolated(unsafe) static var mergedCache: [RecordSearch.Holiday] = []
-    private nonisolated(unsafe) static var mergedStamp = -2
+    private static var mergedCache: [RecordSearch.Holiday] = []
+    private static var mergedStamp = -2
     static var rows: [RecordSearch.Holiday] {
         let stamp = lastUpdateSec
         if stamp != mergedStamp {
@@ -142,7 +142,7 @@ nonisolated enum HolidayFeed {
         return "在线缓存覆盖 " + ys.map(String.init).joined(separator: "/") + " 年 · 拉取于 " + lastUpdateText
     }
     /// 自动档：本会话只发一次, 且只在用户明确开过开关后发 (RootView 的前台钩子调)。
-    private nonisolated(unsafe) static var autoDoneYear = 0
+    private static var autoDoneYear = 0
     static func autoRefreshIfNeeded() async {
         guard autoOn else { return }
         let y = WeekCal.gregorian.component(.year, from: Date())

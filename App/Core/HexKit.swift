@@ -2,7 +2,7 @@
 // 差分基准: fixtures/golden.json (由 vendor JS 核心生成)
 import Foundation
 
-nonisolated enum HexKit {
+enum HexKit {
     static func bytes(_ hex: String) -> [UInt8] {
         // 非 hex 字符按 JS hexToBytes 语义落 0x00 且保持长度 (NaN→Uint8Array 强转 0),
         // 否则流会缩短、后续所有偏移错位

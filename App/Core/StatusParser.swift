@@ -5,7 +5,7 @@
 // 差分基准: golden.parse.*
 import Foundation
 
-nonisolated struct LockStatus {
+struct LockStatus {
     var rc: Int = -1
     var sKeyStatus: Int = -1
     var powerLevel: Int = -1
@@ -29,7 +29,7 @@ nonisolated struct LockStatus {
     var eCtrlVer: String = ""
 }
 
-nonisolated struct LogEntry {
+struct LogEntry {
     var type: Int
     var typeName: String
     var idx: UInt32
@@ -39,7 +39,7 @@ nonisolated struct LogEntry {
     var body: String
 }
 
-nonisolated enum StatusParser {
+enum StatusParser {
     static func intHex(_ val: String) -> Int { Int(val.isEmpty ? "0" : val, radix: 16) ?? 0 }
     static func leHexToU32(_ val: String) -> UInt32 {
         let b = HexKit.bytes(val)

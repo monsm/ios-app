@@ -14,7 +14,7 @@ import CommonCrypto
 #endif
 
 // ---------- 哈希基元 (SHA-256 hex, 本地轻量防篡改) ----------
-nonisolated enum HashKit {
+enum HashKit {
     /// SHA-256 → 小写十六进制。CryptoKit 不可用 (旧工具链) 时退化为 FNV-1a32 双轮拼接,
     /// 只要求"改一条即破链"的防篡改性质, 不要求密码学强度 (离线 App, 无中心校验方)。
     static func sha256Hex(_ s: String) -> String {
@@ -51,7 +51,7 @@ nonisolated enum HashKit {
 }
 
 // ---------- 审计事件 (379 双流水: 开门事件 / 管理操作) ----------
-nonisolated struct AuditEvent: Codable, Identifiable {
+struct AuditEvent: Codable, Identifiable {
     enum Category: String, Codable { case door = "door", admin = "admin" }
     var id: Int                 // 毫秒级序号, 链上唯一定位
     var ts: Double               // Unix 秒
@@ -85,7 +85,7 @@ nonisolated struct AuditEvent: Codable, Identifiable {
 }
 
 // ---------- 审计台账 + 哈希链校验 ----------
-nonisolated final class AuditLog {
+final class AuditLog {
     static let key = "kf_audit_events"
     /// 管理流水封顶 (开门事件由锁端日志承载, 这里只留 App 本地增量, 避免无界增长)
     static let cap = 500
@@ -198,7 +198,7 @@ nonisolated final class AuditLog {
 }
 
 // ---------- 388 敏感操作视图 (接触明文子集: 查看/复制/导出) ----------
-nonisolated final class SensitiveLedger {
+final class SensitiveLedger {
     static let key = "kf_audit_sensitive"
     struct Item: Codable, Identifiable {
         var id: Int
@@ -250,7 +250,7 @@ nonisolated final class SensitiveLedger {
 }
 
 // ---------- 402 离职清除: 成员档案打标 + 名下凭证入回收站 (非物理删除) ----------
-nonisolated enum Offboard {
+enum Offboard {
     /// 成员标记"已离开"; 名下凭证入回收站 (kf_cbin_) —— 402 改成可 365/504 取回的那条路。
     /// 旧写法学过 kf_offboard_<member> 归档族, 但那条路没有取回入口, 等于进了黑洞。
     static func markDeparted(_ memberId: String, name: String) {
@@ -291,7 +291,7 @@ nonisolated enum Offboard {
 }
 
 // ---------- 401 覆写收尾 (Store 底层 = UserDefaults plist: 覆写 = 随机字节重灌再删) ----------
-nonisolated enum DestroyKit {
+enum DestroyKit {
     struct Report {
         var keys: [String]
         var randomBytes: Int
@@ -473,7 +473,7 @@ nonisolated enum DestroyKit {
 }
 
 // ---------- 405/剪贴板与 549 口令复用检测 (读现有台账即可, 不新增写点) ----------
-nonisolated enum PwReuse {
+enum PwReuse {
     /// 新增/修改口令时与本机存量比对: 命中则提示"与已有口令重复"
     static func reuseWarnings(mac: String, newPwd: String, ignoreAlias: Int = -1) -> [String] {
         guard newPwd.count >= 4 else { return [] }

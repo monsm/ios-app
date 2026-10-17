@@ -3,7 +3,7 @@
 import Foundation
 import CommonCrypto
 
-nonisolated enum AESKit {
+enum AESKit {
     static func encryptHex(_ plainHex: String, keyHex: String) -> String {
         var plain = HexKit.bytes(plainHex)
         // ZeroPadding: 补 0x00 到 16 的倍数 (已对齐则不补)

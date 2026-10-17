@@ -1,0 +1,98 @@
+App/Core/AuditChain.swift:289:34: error: call to main actor-isolated static method 'fromDict' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/BatteryCare.swift:451:35: error: main actor-isolated global function '_FWVersion' cannot be called from outside of the actor
+App/Core/BatteryCare.swift:451:61: error: main actor-isolated global function '_FWVersion' cannot be called from outside of the actor
+App/Core/BatteryCare.swift:96:24: error: static property 'lowCache' is not concurrency-safe because it is nonisolated global shared mutable state [#MutableGlobalVariable]
+App/Core/DesignSystem.swift:366:20: error: main actor-isolated default value in a nonisolated context
+App/Core/DesignSystem.swift:367:20: error: main actor-isolated default value in a nonisolated context
+App/Core/DesignSystem.swift:368:20: error: main actor-isolated default value in a nonisolated context
+App/Core/DesignSystem.swift:369:20: error: main actor-isolated default value in a nonisolated context
+App/Core/DesignSystem.swift:370:20: error: main actor-isolated default value in a nonisolated context
+App/Core/DesignSystem.swift:371:20: error: main actor-isolated default value in a nonisolated context
+App/Core/DesignSystem.swift:372:20: error: main actor-isolated default value in a nonisolated context
+App/Core/DesignSystem.swift:373:20: error: main actor-isolated default value in a nonisolated context
+App/Core/DesignSystem.swift:374:20: error: main actor-isolated default value in a nonisolated context
+App/Core/DesignSystem.swift:377:20: error: main actor-isolated default value in a nonisolated context
+App/Core/DesignSystem.swift:378:20: error: main actor-isolated default value in a nonisolated context
+App/Core/DesignSystem.swift:383:20: error: main actor-isolated default value in a nonisolated context
+App/Core/DesignSystem.swift:387:20: error: main actor-isolated default value in a nonisolated context
+App/Core/DesignSystem.swift:392:28: error: main actor-isolated default value in a nonisolated context
+App/Core/DesignSystem.swift:393:28: error: main actor-isolated default value in a nonisolated context
+App/Core/DesignSystem.swift:472:58: error: call to main actor-isolated initializer 'init(hex:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/DesignSystem.swift:473:59: error: call to main actor-isolated initializer 'init(hex:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/DesignSystem.swift:474:62: error: call to main actor-isolated initializer 'init(hex:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/DesignSystem.swift:623:48: error: call to main actor-isolated initializer 'init(hex:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/DesignSystem.swift:623:65: error: call to main actor-isolated initializer 'init(hex:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/DesignSystem.swift:636:45: error: call to main actor-isolated initializer 'init(hex:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/DesignSystem.swift:636:74: error: call to main actor-isolated static method 'adaptive' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/DesignSystem.swift:637:48: error: call to main actor-isolated initializer 'init(hex:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/DesignSystem.swift:637:77: error: call to main actor-isolated static method 'adaptive' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/DesignSystem.swift:638:29: error: call to main actor-isolated static method 'adaptive' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/DesignSystem.swift:650:45: error: call to main actor-isolated initializer 'init(hex:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/DesignSystem.swift:650:74: error: call to main actor-isolated static method 'adaptive' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/DesignSystem.swift:651:48: error: call to main actor-isolated initializer 'init(hex:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/DesignSystem.swift:651:77: error: call to main actor-isolated static method 'adaptive' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/DiagKit.swift:1185:17: error: main actor-isolated property 'status' can not be mutated from a nonisolated context
+App/Core/DiagKit.swift:142:42: error: main actor-isolated static property 'current' can not be referenced from a nonisolated context
+App/Core/DiagKit.swift:142:50: error: main actor-isolated property 'timeoutMs' can not be referenced from a nonisolated context
+App/Core/DiagKit.swift:911:24: error: static property 'navAt' is not concurrency-safe because it is nonisolated global shared mutable state [#MutableGlobalVariable]
+App/Core/DiagKit.swift:912:24: error: static property 'navName' is not concurrency-safe because it is nonisolated global shared mutable state [#MutableGlobalVariable]
+App/Core/LockGuard.swift:137:76: error: main actor-isolated static property 'sessionDuress' can not be referenced from a nonisolated context
+App/Core/LockGuard.swift:186:60: error: main actor-isolated static property 'guestOn' can not be referenced from a nonisolated context
+App/Core/LockGuard.swift:188:69: error: main actor-isolated static property 'sensitiveOnly' can not be referenced from a nonisolated context
+App/Core/LockGuard.swift:190:61: error: main actor-isolated static property 'sudoOn' can not be referenced from a nonisolated context
+App/Core/LockGuard.swift:192:57: error: main actor-isolated static property 'safeModeOn' can not be referenced from a nonisolated context
+App/Core/LockGuard.swift:194:58: error: main actor-isolated static property 'shareHalfOn' can not be referenced from a nonisolated context
+App/Core/SpeechKit.swift:10:16: error: static property 'synth' is not concurrency-safe because non-'Sendable' type 'AVSpeechSynthesizer' may have shared mutable state [#MutableGlobalVariable]
+App/Core/SpotlightKit.swift:74:24: error: static property 'pending' is not concurrency-safe because it is nonisolated global shared mutable state [#MutableGlobalVariable]
+App/Core/Store.swift:316:36: error: call to main actor-isolated static method 'fromDict' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/Store.swift:322:63: error: call to main actor-isolated static method 'fromDict' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/Store.swift:381:40: error: call to main actor-isolated instance method 'toDict()' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/Store.swift:400:20: error: call to main actor-isolated instance method 'toDict()' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/Store.swift:408:45: error: call to main actor-isolated static method 'fromDict' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/Store.swift:732:74: error: converting function value of type '@MainActor ([String : Any]) throws -> Member?' to '([String : Any]) throws -> Member?' loses global actor 'MainActor'
+App/Core/Store.swift:752:23: error: call to main actor-isolated instance method 'toDict()' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/Store.swift:802:74: error: converting function value of type '@MainActor ([String : Any]) throws -> Dongle?' to '([String : Any]) throws -> Dongle?' loses global actor 'MainActor'
+App/Core/Store.swift:806:94: error: call to main actor-isolated static method 'fromDict' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/Store.swift:822:34: error: call to main actor-isolated instance method 'toDict()' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/Store.swift:834:74: error: converting function value of type '@MainActor ([String : Any]) throws -> Gateway?' to '([String : Any]) throws -> Gateway?' loses global actor 'MainActor'
+App/Core/Store.swift:838:87: error: call to main actor-isolated static method 'fromDict' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/Store.swift:859:34: error: call to main actor-isolated instance method 'toDict()' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Core/VariantGrammar.swift:95:33: error: main actor-isolated static property 'cardElevation' can not be referenced from a nonisolated context
+App/Services/BackupKit.swift:232:18: error: enum 'BackupKit' has multiple actor-isolation attributes (@MainActor and 'nonisolated')
+App/Services/BackupStudioKit.swift:1056:24: error: call to main actor-isolated static method 'recordBackup()' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Services/BackupStudioKit.swift:126:66: error: main actor-isolated static property 'shared' cannot be accessed from outside of the actor
+App/Services/BackupStudioKit.swift:20:18: error: enum 'BackupStudio' has multiple actor-isolation attributes (@MainActor and 'nonisolated')
+App/Services/BackupStudioKit.swift:233:24: error: call to main actor-isolated static method 'recordBackup()' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Services/BackupStudioKit.swift:429:24: error: call to main actor-isolated static method 'recordBackup()' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/Services/BackupStudioKit.swift:98:66: error: main actor-isolated static property 'shared' cannot be accessed from outside of the actor
+App/UI/ExportCenter.swift:1044:20: error: static property 'shared' is not concurrency-safe because non-'Sendable' type 'ExportKit.MailDismisser' may have shared mutable state [#MutableGlobalVariable]
+App/UI/ExportCenter.swift:1054:44: error: main actor-isolated property 'label' can not be referenced from a nonisolated context
+App/UI/ExportCenter.swift:1081:37: error: main actor-isolated static property 'bom' can not be referenced from a nonisolated context
+App/UI/ExportCenter.swift:494:24: error: main actor-isolated property 'onIndices' can not be referenced from a nonisolated context
+App/UI/ExportCenter.swift:497:46: error: main actor-isolated static property 'zh' can not be referenced from a nonisolated context
+App/UI/ExportCenter.swift:499:53: error: main actor-isolated static property 'en' can not be referenced from a nonisolated context
+App/UI/ExportCenter.swift:506:41: error: call to main actor-isolated static method 'escape' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/ExportCenter.swift:507:45: error: call to main actor-isolated static method 'needEscaping' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/ExportCenter.swift:512:57: error: main actor-isolated static property 'bom' can not be referenced from a nonisolated context
+App/UI/ExportCenter.swift:515:36: error: main actor-isolated static property 'bom' can not be referenced from a nonisolated context
+App/UI/ExportCenter.swift:565:33: error: main actor-isolated static property 'bom' can not be referenced from a nonisolated context
+App/UI/ExportCenter.swift:577:28: error: call to main actor-isolated static method 'escape' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/ExportCenter.swift:578:28: error: call to main actor-isolated static method 'escape' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/ExportCenter.swift:579:28: error: call to main actor-isolated static method 'escape' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/ExportCenter.swift:580:28: error: call to main actor-isolated static method 'escape' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/ExportCenter.swift:583:37: error: main actor-isolated static property 'bom' can not be referenced from a nonisolated context
+App/UI/ExportCenter.swift:587:37: error: main actor-isolated static property 'bom' can not be referenced from a nonisolated context
+App/UI/ExportCenter.swift:590:37: error: main actor-isolated static property 'bom' can not be referenced from a nonisolated context
+App/UI/ExportCenter.swift:604:28: error: call to main actor-isolated static method 't' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/ExportCenter.swift:636:32: error: call to main actor-isolated static method 't' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/ExportCenter.swift:638:29: error: call to main actor-isolated static method 't' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/ExportCenter.swift:649:29: error: call to main actor-isolated static method 't' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/ExportCenter.swift:656:36: error: call to main actor-isolated static method 't' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/ExportCenter.swift:660:113: error: call to main actor-isolated instance method 'atLabel()' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/ExportCenter.swift:728:111: error: call to main actor-isolated static method 't' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/ExportCenter.swift:733:46: error: call to main actor-isolated static method 't' in a synchronous nonisolated context [#ActorIsolatedCall]
+App/UI/ExportCenter.swift:747:102: error: main actor-isolated static property 'zh' can not be referenced from a nonisolated context
+App/UI/ExportCenter.swift:747:34: error: main actor-isolated property 'onIndices' can not be referenced from a nonisolated context
+App/UI/ExportCenter.swift:747:71: error: main actor-isolated property 'onIndices' can not be referenced from a nonisolated context
+App/UI/ExportCenter.swift:759:32: error: main actor-isolated property 'onIndices' can not be referenced from a nonisolated context
+App/UI/ExportCenter.swift:759:69: error: main actor-isolated property 'onIndices' can not be referenced from a nonisolated context

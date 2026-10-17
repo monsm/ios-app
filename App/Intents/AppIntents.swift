@@ -11,7 +11,7 @@ import AppIntents
 import AVFoundation
 
 // ---------- 意图治理 (冷却/审计/来源) ----------
-nonisolated enum IntentGovernance {
+enum IntentGovernance {
     static let cooldownPrefix = "kf_intent_cd_"
     /// 952: **同一意图** 60 秒内重复触发给冷却提示。键按意图名分开 —— 原先全族共用
     /// kf_intent_cooldown: 说一句「开锁」会把你 60 秒内的「查电量」一起顶掉、反过来也一样，
@@ -37,7 +37,7 @@ nonisolated enum IntentGovernance {
 /// 把别的锁的开门记录念给用户听，还听着像他说的那把 (§10.37)。
 /// 现在的次序：去空白 → 精确锁名 → 型号名 → **只有一个**包含命中才算；
 /// 多把都含这个词时宁可反问，也不替用户挑一把 (锁是安全物件，猜错方向的代价不对称)。
-nonisolated enum IntentLock {
+enum IntentLock {
     // 刻意不写 `: Equatable`：`Keychain` 只 conform `Codable, Identifiable`，
     // 带上 Equatable 会让综合失败 (而这里从不需要比较 Outcome 本身)。
     enum Outcome {
@@ -100,7 +100,7 @@ struct UnlockIntent: AppIntent {
                default: false)
     var faceConfirm: Bool
 
-    @MainActor func perform() async throws -> some IntentResult {
+    func perform() async throws -> some IntentResult {
         // 意图族门禁 (fail-closed): 设了本机密码而未解锁 → 拒绝。此前六个意图没有一个调用 IntentLockGate。
         if let block = await IntentLockGate.blockedMessage() { return .result(dialog: IntentDialog(stringLiteral: block)) }
         guard IntentGovernance.passCooldown(intent: "unlock") else {
@@ -130,7 +130,7 @@ struct UnlockIntent: AppIntent {
 // ---------- 意图族门禁: 锁屏可达时不得产出凭证/PII ----------
 // 设了本机密码 → 要求 App 已解锁 (hostRef 只在主界面挂载时存在, 冷启直调 Siri 一律拒 = fail-closed)。
 // 未设本机密码 → 本就没有门禁可绕, 放行。
-nonisolated enum IntentLockGate {
+enum IntentLockGate {
     // 2026-10-13 run 63: 它读 AppState.hostRef 与 appUnlocked, 两者都在 @MainActor 的 AppState 上
     // ⇒ 标 @MainActor; 6 个调用点 (都在 async 的 perform() 里) 相应加 await。
     // 2026-10-13 对抗式排查: 补一道 390 伪装会话的拦截。伪装口令进来的会话**也是** appUnlocked==true
@@ -156,7 +156,7 @@ struct OtpIntent: AppIntent {
 
     @Parameter(title: "门锁") var lockName: String
 
-    @MainActor func perform() async throws -> some IntentResult {
+    func perform() async throws -> some IntentResult {
         // 最高危的一条: 返回值就是**可用的开锁口令**, 会被 Siri 念出来。无门禁 = 锁屏绕过应用锁。
         if let block = await IntentLockGate.blockedMessage() { return .result(dialog: IntentDialog(stringLiteral: block)) }
         guard IntentGovernance.passCooldown(intent: "otp") else {
@@ -200,7 +200,7 @@ struct LockStatusIntent: AppIntent {
 
     @Parameter(title: "门锁") var lockName: String
 
-    @MainActor func perform() async throws -> some IntentResult {
+    func perform() async throws -> some IntentResult {
         if let block = await IntentLockGate.blockedMessage() { return .result(dialog: IntentDialog(stringLiteral: block)) }   // 电量/固件/锁钟同属本机数据
         guard IntentGovernance.passCooldown(intent: "status") else {
             IntentGovernance.audit(intent: "status", detail: "\(lockName) 被冷却拦截")
@@ -234,7 +234,7 @@ struct ExportCsvIntent: AppIntent {
 
     @Parameter(title: "门锁", default: "全部") var lockName: String
 
-    @MainActor func perform() async throws -> some IntentResult {
+    func perform() async throws -> some IntentResult {
         if let block = await IntentLockGate.blockedMessage() { return .result(dialog: IntentDialog(stringLiteral: block)) }   // 导出的是开门记录 (PII)
         guard IntentGovernance.passCooldown(intent: "export") else { return .result(dialog: "刚导出过, 请稍候 60 秒") }
         let macs: [String]
@@ -265,7 +265,7 @@ struct MemberQueryIntent: AppIntent {
 
     @Parameter(title: "成员名") var memberName: String
 
-    @MainActor func perform() async throws -> some IntentResult {
+    func perform() async throws -> some IntentResult {
         if let block = await IntentLockGate.blockedMessage() { return .result(dialog: IntentDialog(stringLiteral: block)) }   // 成员档案属 PII
         guard IntentGovernance.passCooldown(intent: "member") else {
             IntentGovernance.audit(intent: "member", detail: "\(memberName) 被冷却拦截")
@@ -299,7 +299,7 @@ struct ReadRecordsIntent: AppIntent {
 
     @Parameter(title: "门锁", default: "第一把") var lockName: String
 
-    @MainActor func perform() async throws -> some IntentResult {
+    func perform() async throws -> some IntentResult {
         if let block = await IntentLockGate.blockedMessage() { return .result(dialog: IntentDialog(stringLiteral: block)) }   // 朗读内容含开门时刻
         guard IntentGovernance.passCooldown(intent: "read") else {
             IntentGovernance.audit(intent: "read", detail: "\(lockName) 被冷却拦截")
@@ -336,14 +336,14 @@ struct ReadRecordsIntent: AppIntent {
 }
 
 // ---------- 26/295/948 Siri 口令与快捷指令画廊数据 (166: 参数名中文口语化) ----------
-nonisolated struct ShortcutGallery: Identifiable {
+struct ShortcutGallery: Identifiable {
     let id: String
     let intent: String
     let phrase: String
     let note: String
 }
 
-nonisolated enum AppShortcuts {
+enum AppShortcuts {
     /// 948 示例指令包: 可注册的口令清单; 942 时刻建议
     // 948: 画廊文案是给人看的示例口令, 不是运行时插值 —— 原先此处写了 `\(锁名)`/`\(成员名)`,
     // 这两个名字在 Swift 里是真实求值的标识符而全仓没有任何声明, 等于编译阻断 (cannot find '锁名' in scope);

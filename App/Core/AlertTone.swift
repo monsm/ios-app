@@ -9,7 +9,7 @@
 // 而在会议室里突然三声急促音是打扰 —— 所以必须用户自己开。
 import AudioToolbox
 
-nonisolated enum AlertTone {
+enum AlertTone {
     /// 848 失败短音开关 (成功那枚沿用既有 kf_unlock_sound，两者互相独立，可只开一个)
     static var failOn: Bool { DB.store.getBool("kf_unlock_fail_sound") }
     /// 733 告警分级音总开关 (胁迫三音 / 低电单音都归它管，关掉就全部静默)

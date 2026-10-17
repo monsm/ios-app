@@ -8,7 +8,7 @@ import UserNotifications
 import AudioToolbox
 
 // ---------- 徽章定义 (977 四类 / 979 稀有度 / 978 隐藏) ----------
-nonisolated enum BadgeRarity {
+enum BadgeRarity {
     case common, rare, epic
     var title: String {
         switch self {
@@ -19,7 +19,7 @@ nonisolated enum BadgeRarity {
     }
 }
 
-nonisolated enum BadgeCat: String, CaseIterable, Identifiable {
+enum BadgeCat: String, CaseIterable, Identifiable {
     case butler = "管家"
     case guardDuty = "守护"
     case organize = "整理"
@@ -35,7 +35,7 @@ nonisolated enum BadgeCat: String, CaseIterable, Identifiable {
     }
 }
 
-nonisolated struct Badge: Identifiable, Equatable {
+struct Badge: Identifiable, Equatable {
     let id: String
     let cat: BadgeCat
     let title: String
@@ -46,7 +46,7 @@ nonisolated struct Badge: Identifiable, Equatable {
 }
 
 // ---------- 统计快照 ----------
-nonisolated struct MStats {
+struct MStats {
     var unlockTotal = 0
     var streakBest = 0
     var nightCount = 0
@@ -65,7 +65,7 @@ nonisolated struct MStats {
     var careStreak = 0     // 包4/1030
 }
 
-nonisolated enum Milestones {
+enum Milestones {
     // ---------- 日期工具 ----------
     /// 日 key 的**唯一口径是 `StatsKit.dayKey`** (yyyy-MM-dd + en_US_POSIX + 当前时区)。
     /// 此前这里自己 new 了一个 DateFormatter 抄同一段逻辑 —— 值恰好相同，但"同一件事两处写"
@@ -161,7 +161,7 @@ nonisolated enum Milestones {
 
     // ---------- 976 安心夜打卡 + 985 衑签 ----------
     /// 22 点后可打卡 (纯手动确认 — 协议无上锁状态位, 不猜测)
-    nonisolated(unsafe) static var canNightCheckIn: Bool { WeekCal.gregorian.component(.hour, from: Date()) >= 22 }
+    static var canNightCheckIn: Bool { WeekCal.gregorian.component(.hour, from: Date()) >= 22 }
     static func nightMarks() -> [String: String] {
         DB.store.get([String: String].self, "kf_night_marks") ?? [:]
     }
@@ -660,7 +660,7 @@ nonisolated enum Milestones {
 }
 
 // ================= 关怀提醒 (本地通知; 免费账号不推送, 全部 UNUserNotificationCenter) =================
-nonisolated enum CareReminders {
+enum CareReminders {
     static var bdayOn: Bool { DB.store.getBool("kf_care_bday") }
     static var annivOn: Bool { DB.store.getBool("kf_care_anniv") }
 

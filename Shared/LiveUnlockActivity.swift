@@ -31,7 +31,7 @@ enum LiveUnlockPhase: String, Codable, Hashable {
 }
 
 /// 活动属性: 锁名是**静态**的 (整场活动不变), 阶段是**动态**的 (随状态更新)。
-nonisolated struct UnlockActivityAttributes: ActivityAttributes {
+struct UnlockActivityAttributes: ActivityAttributes {
     struct ContentState: Codable, Hashable {
         var phase: LiveUnlockPhase
     }

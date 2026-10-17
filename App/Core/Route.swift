@@ -21,7 +21,7 @@ import Foundation
 // 以后再加一个变体或改一个顺序，只有一个地方要改。
 // ============================================================
 
-nonisolated enum Route: String, CaseIterable, Identifiable {
+enum Route: String, CaseIterable, Identifiable {
     case device
     case credentials
     case records

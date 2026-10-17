@@ -3,7 +3,7 @@
 // 严禁与真实台账混淆; 演示模式不碰 BLE/协议, 所有开锁/下发走本地模拟结果。
 import SwiftUI
 
-nonisolated enum DemoKit {
+enum DemoKit {
     // ---------- 键位 (新 kf_ 键, 全部向后兼容: 旧版本读到默认值即无演示数据) ----------
     static let kMode = "kf_demo_mode"                 // 836 演示模式总开关
     static let kDrillFilter = "kf_demo_drillfilter"   // 839 示例过滤 — **已判 PART 删档**: 全仓零读取方，仅留常量给 clearAll 兜底清键 (详见下方 839 注)

@@ -13,7 +13,7 @@
 import SwiftUI
 import UIKit
 
-nonisolated enum QuickActions {
+enum QuickActions {
     /// (type, 标题, SF Symbol, 目标深链) —— 图标全部 systemName，不引位图 (219 资源纪律)。
     static let table: [(type: String, title: String, icon: String, link: String)] = [
         ("records", "查看记录", "list.bullet.rectangle", "kf://records"),

@@ -14,7 +14,7 @@
 // 与 QuickPool.idsKey 同一口径: 改名或删模块都不会把用户已有的一整串设置打空。
 import Foundation
 
-nonisolated enum DevModule: String, CaseIterable, Identifiable {
+enum DevModule: String, CaseIterable, Identifiable {
     case groupChips      // 767 按组切换 chips
     case statusIcons     // 764 多锁状态图标行 (家庭 App 房间行)
     case linkSense       // 包2: 69 蓝牙直通条 / 126 回连节律 / 125 最后已知状态 / 535 同步回执 / 130 唤醒失败细分
@@ -55,7 +55,7 @@ nonisolated enum DevModule: String, CaseIterable, Identifiable {
     }
 }
 
-nonisolated enum DevModuleStore {
+enum DevModuleStore {
     static let key = "kf_dev_hidden"
 
     /// 读被关掉的那些 (白名单过滤; 空 = 全部显示 = 默认态)

@@ -18,7 +18,7 @@ import CoreHaptics
 import UserNotifications
 
 // ---------- 时间戳辅助 (locale 无关, 台账可比对) ----------
-nonisolated enum DiagTime {
+enum DiagTime {
     static func hhmmss() -> String {
         let c = WeekCal.gregorian
         return String(format: "%02d:%02d:%02d", c.component(.hour, from: Date()), c.component(.minute, from: Date()), c.component(.second, from: Date()))
@@ -39,12 +39,12 @@ nonisolated enum DiagTime {
 }
 
 // ---------- 156 本次会话操作序列 (⚠ 降级: 仅本会话, 跨会话采集 DEFERRED) ----------
-nonisolated struct DiagOp: Codable, Identifiable {
+struct DiagOp: Codable, Identifiable {
     var t: String            // MM-dd HH:mm:ss
     var label: String
     var id: String { t + label }
 }
-nonisolated enum DiagOps {
+enum DiagOps {
     static let on = "kf_diag_ops_on"      // 156 开关 (诊断页)
     static let maxCount = 50
     // 计算属性声明不能带参数列表 → 语法非法
@@ -60,9 +60,9 @@ nonisolated enum DiagOps {
 }
 
 // ---------- 215 启动预算: 冷启动各阶段打点 (本地自统计, 预算 800ms) ----------
-nonisolated enum StartupTrace {
+enum StartupTrace {
     static let t0 = CFAbsoluteTimeGetCurrent()
-    private nonisolated(unsafe) static var marks: [String: Double] = [:]
+    private static var marks: [String: Double] = [:]
     static func mark(_ p: String) { marks[p] = CFAbsoluteTimeGetCurrent() - t0 }
     /// 各阶段耗时 (ms)
     static func ms(_ p: String) -> Double? { marks[p].map { ($0 * 1000).rounded() } }
@@ -86,12 +86,12 @@ nonisolated enum StartupTrace {
 // 所以不存在"比直连 defaults 更容易出陈旧"的窗口。
 // 缓存整份解码结果而不是只留 50 条: 原句要的"最近 50 条加速首屏"目的已达到; 而只留 50 条时,
 // 时间线的其余行仍要再读一次盘, 等于把一次解码变成两次。
-nonisolated enum HotCache {
+enum HotCache {
     /// 读写可能跨线程 (写入口 Store.writeLogs 在 BLE 回调线程上), 所以自己带锁 ——
     /// 旧注释把线程安全推给调用方 ("刻意留主线程"), 加锁后失效点才能落在写入口上。
     private static let lock = NSLock()
-    private nonisolated(unsafe) static var store: [String: [CachedLog]] = [:]
-    nonisolated(unsafe) static var currentMac: String = ""
+    private static var store: [String: [CachedLog]] = [:]
+    static var currentMac: String = ""
     static func load(mac: String) {
         lock.lock(); defer { lock.unlock() }
         currentMac = mac
@@ -113,7 +113,7 @@ nonisolated enum HotCache {
 // ---------- 285 扫描时长自查: 按本地日累计 BLE 扫描秒数 (原句"诊断页统计每日扫描时长趋势并给省电建议") ----------
 /// 写入点只有两个, 都在 LinkSenseKit: 冷启动扫描 (134) 与按锁扫描 (63/71)。
 /// 建议句基于**真实累计**给, 不是档位科普 (285 的缺就是"只有档位说明, 没有基于用量的推算")。
-nonisolated enum ScanStats {
+enum ScanStats {
     private static let key = "kf_scan_secs"
     private static let fmt: DateFormatter = {
         let f = DateFormatter()
@@ -147,8 +147,8 @@ nonisolated enum ScanStats {
 }
 
 // ---------- 224 启动并行预热 (冷启动一次完成, 后续零成本) ----------
-nonisolated enum Prewarm {
-    nonisolated(unsafe) static var done = false
+enum Prewarm {
+    static var done = false
     static func run(mac: String) {
         guard !done else { return }
         done = true
@@ -169,14 +169,14 @@ nonisolated enum Prewarm {
 }
 
 // ---------- 日志分级台账 (153/154/283/542/543/751 的解析与留档) ----------
-nonisolated struct DiagLogEntry: Codable, Identifiable {
+struct DiagLogEntry: Codable, Identifiable {
     var date: String        // yyyy-MM-dd
     var time: String        // HH:mm:ss
     var level: String       // info / warn / error
     var msg: String
     var id: String { date + time + level + msg }
 }
-nonisolated enum DiagLogs {
+enum DiagLogs {
     static let retentionKey = "kf_diag_log_retention"  // 751: "" 全部 / "365" / "90"
     static var retentionDays: Int? {
         switch DB.store.getString(retentionKey) {
@@ -328,19 +328,19 @@ nonisolated enum DiagLogs {
 }
 
 // ---------- 748 BLE 事件流水与连接成败遥测 (⚠ 降级: 环形留存, 图表随积累展示) ----------
-nonisolated struct BleEvent: Codable, Identifiable {
+struct BleEvent: Codable, Identifiable {
     var at: String          // MM-dd HH:mm
     var what: String        // 扫描/连接成功/连接失败/断开
     var ok: Bool
     var id: String { at + what + (ok ? "Y" : "N") }
 }
-nonisolated struct ConnAttempt: Codable {
+struct ConnAttempt: Codable {
     var t: String          // MM-dd HH:mm:ss
     var mac: String
     var ok: Bool
     var reason: String
 }
-nonisolated enum BleTelemetry {
+enum BleTelemetry {
     static func recordEvent(_ what: String, ok: Bool) {
         var list = DB.store.get([BleEvent].self, "kf_ble_events") ?? []
         list.insert(BleEvent(at: DiagTime.mmddHHmm(), what: what, ok: ok), at: 0)
@@ -425,12 +425,12 @@ nonisolated enum BleTelemetry {
 /// 127 静默排查模式: 打开后暂停**自动连接/预热刷新/到场补发/自动重连/会话巡检/冷启动扫描**
 /// 这 6 处自动动作 (消费点全在 LinkSenseKit :75/:122/:150/:237/:309/:417 —— 第九十一批逐条对过行号),
 /// 便于干净复现问题。原文案还写着"暂停看门狗心跳"，那是指上面已删除的零调用副本。
-nonisolated enum DiagFlags {
+enum DiagFlags {
     static var silent: Bool { DB.store.getBool("kf_silent_trouble") }
 }
 
 // ---------- 547/758 异常退出档案 (崩溃标记位 + 上次会话时长) ----------
-nonisolated enum CrashGuard {
+enum CrashGuard {
     static let marker = "kf_crash_marker"
     static let lastDur = "kf_last_session"
     /// 启动调用: 若上次没走正常退出路径 (进后台未被杀死时标记应为 false), 记异常档案
@@ -474,7 +474,7 @@ nonisolated enum CrashGuard {
 }
 
 // ---------- 750/546/152 数据库体检·表级体积·存储构成 (UserDefaults 等价实现) ----------
-nonisolated enum DataHealth {
+enum DataHealth {
     static func bytesOf(_ v: Any) -> Int {
         if let d = v as? Data { return d.count }
         if let s = v as? String { return s.utf8.count }
@@ -710,7 +710,7 @@ nonisolated enum DataHealth {
 //   (Store/LockService 那两处按**符号名**引而不按行号引: 同一晚有别的批在动那几个文件, 行号会漂;
 //    vendor/app/utils/status.js 是只读权威, 它的行号按实读写死。)
 /// 749 一段连续"本机整天没有日志"的日期段 (起止都含)。
-nonisolated struct PullSegment: Identifiable {
+struct PullSegment: Identifiable {
     let fromDay: String        // yyyy-MM-dd 段首日 (含)
     let toDay: String          // yyyy-MM-dd 段尾日 (含)
     let missingDays: Int       // 本机缺的天数 (整天计, 不是锁端条数)
@@ -726,7 +726,7 @@ nonisolated struct PullSegment: Identifiable {
     }
 }
 /// 749 本机 idx 序列的相邻断档 (信号 B, 不参与日期段的任何算术)。
-nonisolated struct IdxGap: Identifiable {
+struct IdxGap: Identifiable {
     let lowIdx: UInt32
     let highIdx: UInt32
     let skipped: Int           // 两行之间本机看不到的序号个数 — 纯本机算术, 不等于"锁内丢了几条"
@@ -734,7 +734,7 @@ nonisolated struct IdxGap: Identifiable {
     var line: String { "序号 \(lowIdx) → \(highIdx) · 中间空 \(skipped) 个号" }
 }
 /// 749 一次推断的完整输出 (字段只增不减, 便于影子对拍时逐字段断言)
-nonisolated struct PullGapReport {
+struct PullGapReport {
     let totalRows: Int          // 本机日志行数 (含无有效时刻的行)
     let clocklessRows: Int      // 被"协议纪元判据"排除的行数 (lockTime 0 那类占位值)
     let firstDay: String?       // 本机最早有日志的一天 (一天都没有 = nil)
@@ -753,7 +753,7 @@ nonisolated struct PullGapReport {
     var singleDay: Bool { coveredDays <= 1 }
 }
 
-nonisolated enum RecordReconcile {
+enum RecordReconcile {
     /// 749 相邻序号之间空号数超过这个上限就只计数、不报号数: 游标边界 (startIdx 从 0xFFFFFFFF 起)
     /// 与锁端重排会算出上亿的量, 把它当成"缺了几亿条"画出来就是假数据。
     static let idxGapCap = 5000
@@ -896,14 +896,14 @@ nonisolated enum RecordReconcile {
 /// 不包含 BLE/网络（那本来就不在"页面打开"里）。
 /// 默认关闭：这是自统计，开着等于每次切页多两次 UserDefaults 读写；
 /// 而且在没有编译基线的工程里，不该用"默认改变全局行为"的方式交付一个观测功能。
-nonisolated struct PageOpen: Codable, Identifiable {
+struct PageOpen: Codable, Identifiable {
     let name: String
     let ms: Int
     let at: Double          // epoch 毫秒
     var id: Double { at }
 }
 
-nonisolated enum PageTrace {
+enum PageTrace {
     static let onKey = "kf_page_trace_on"
     static let listKey = "kf_page_opens"
     static var isOn: Bool { DB.store.getBool(onKey, false) }
@@ -962,7 +962,7 @@ nonisolated enum PageTrace {
 }
 
 // ---------- 284 空间回收建议 ----------
-nonisolated struct RecoveryTip: Identifiable {
+struct RecoveryTip: Identifiable {
     let id: String
     let title: String
     let detail: String
@@ -971,7 +971,7 @@ nonisolated struct RecoveryTip: Identifiable {
 
 /// 只读数 + 给建议，**不删任何东西**：删除动作全部留在各节既有的二次确认里 (真空清理/归档/保留策略)。
 /// 体积口径与 152 一致：kf_* 键值长度估算，不是磁盘真实占用 —— 这句话必须和数字一起出现。
-nonisolated enum Recovery {
+enum Recovery {
     private static func sum(_ fam: [DataHealth.Family], _ prefixes: [String]) -> Int {
         fam.filter { f in prefixes.contains(where: { f.key.hasPrefix($0) }) }.reduce(0) { $0 + $1.bytes }
     }
@@ -1048,7 +1048,7 @@ nonisolated enum Recovery {
 /// (`BackupStudioKit.swift:237-240` 提交的 appRefresh)，它既不做这里的三类维护 (真空清理/归档/自动补发)，
 /// 而且系统随时可以不执行、执行时机也不由 App 定 → "退出期间"那段窗口里没有可承诺的动作。
 /// 所以按可实现口径改成"上次会话"，并在 UI 上就这么写。
-nonisolated enum MaintenanceLog {
+enum MaintenanceLog {
     struct Act: Codable { var at: Double; var label: String }
     static let key = "kf_maint_acts"
     private static let seenKey = "kf_maint_seen_at"
@@ -1078,13 +1078,13 @@ nonisolated enum MaintenanceLog {
 }
 
 // ---------- 149/150/160/545/760 一键体检引擎 (10 项, 单项可复测) ----------
-nonisolated struct HealthCheckItem: Identifiable {
+struct HealthCheckItem: Identifiable {
     let id: String
     let name: String
     let ok: Bool
     let detail: String        // 人话: 状态 + 怎么办
 }
-nonisolated struct HealthCheckArchive: Codable, Identifiable {
+struct HealthCheckArchive: Codable, Identifiable {
     var id = UUID().uuidString
     var at: String
     var score: Int
@@ -1280,7 +1280,7 @@ enum DiagHealth {
 }
 
 // ---------- 753 诊断摘要二维码 (CoreImage 本地生成, 扫码即得本机可读文本) ----------
-nonisolated enum DiagQR {
+enum DiagQR {
     static func image(for text: String) -> UIImage? {
         var filter: CIFilter! = CIFilter(name: "CIQRCodeGenerator")
         guard let input = filter, let data = text.data(using: .utf8) else { return nil }
@@ -1314,7 +1314,7 @@ nonisolated enum DiagQR {
 }
 
 // ---------- 754 协议字段字典 (CAPABILITY.md 内容内置, 可查可复制) ----------
-nonisolated enum ProtocolDict {
+enum ProtocolDict {
     struct Field: Identifiable {
         let k: String
         let name: String
@@ -1351,7 +1351,7 @@ nonisolated enum ProtocolDict {
 }
 
 // ---------- 662 图标语义表 (SF Symbols 集中映射, 防漂移) ----------
-nonisolated enum IconSemantics {
+enum IconSemantics {
     struct Row: Identifiable {
         let icon: String
         let use: String
@@ -1378,7 +1378,7 @@ nonisolated enum IconSemantics {
 }
 
 // ---------- 762 白名单查询模板 (只读下拉, 不开放自由输入) ----------
-nonisolated enum QueryTemplates {
+enum QueryTemplates {
     struct Result { let title: String; let lines: [String] }
     static func lastNLogs(_ n: Int) -> Result {
         let mac = DB.currentMac
@@ -1411,7 +1411,7 @@ nonisolated enum QueryTemplates {
 }
 
 // ---------- 740 原始报文查看 (hex dump, 常开入口; Debug 友好) ----------
-nonisolated enum HexDump {
+enum HexDump {
     static func dump(_ hex: String, lineLen: Int = 32) -> String {
         var out: [String] = []
         let s = String(hex.uppercased()).filter { $0.isLetter || $0.isNumber }
@@ -1427,7 +1427,7 @@ nonisolated enum HexDump {
 }
 
 // ---------- 740 字段解析表: 帧 KLV → 字段名 (名源单一 = 754 协议字段字典) ----------
-nonisolated enum FrameFields {
+enum FrameFields {
     static func name(cmd: UInt8, key: Int) -> String {
         let k = cmd == 0x16 ? String(format: "16#%02X", key) : String(format: "#%02X", key)
         return ProtocolDict.statusFields.first { $0.k == k }?.name ?? String(format: "KLV %02X", key)
@@ -1440,7 +1440,7 @@ nonisolated enum FrameFields {
 }
 
 // ---------- 282 症状向导 (故障树, 本地词表) ----------
-nonisolated enum SymptomGuide {
+enum SymptomGuide {
     struct Step {
         let question: String
         let yesNext: [String]   // 下一步的 step id

@@ -6,7 +6,7 @@
 // 全程走系统本地语音，不联网、不采集、不录音 (CONSTRAINTS 的离线口径)。
 import AVFoundation
 
-nonisolated enum Speech {
+enum Speech {
     static let synth = AVSpeechSynthesizer()
 
     /// 中文朗读。`rate` 默认 0.5：系统档位里 0.5 是"清楚但不赶"的一档，逐位报码那种要更慢。

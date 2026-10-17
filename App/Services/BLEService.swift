@@ -9,7 +9,7 @@ import Combine
 
 // 服务/特征 UUID (依据 Java BleLockConnector + GateWayConnector)
 // Java 缺陷注记: GateWayConnector 构造会覆盖静态 UUID 导致锁/网关不可共存 — 本实现按连接目标选对 UUID, 无此缺陷
-nonisolated enum BLEUUID {
+enum BLEUUID {
     static let svcMain = CBUUID(string: "6E400001-B5A3-F393-E0A9-E50E24DCCA9E")   // 门锁 NUS
     static let chrWrite = CBUUID(string: "6E400002-B5A3-F393-E0A9-E50E24DCCA9E")
     static let chrNotify = CBUUID(string: "6E400003-B5A3-F393-E0A9-E50E24DCCA9E")
@@ -25,7 +25,7 @@ nonisolated enum BLEUUID {
     static let dfuLegacyPacket = CBUUID(string: "00001532-1212-EFDE-1523-785FEABCD123")
 }
 
-nonisolated struct BLEAdvDevice: Identifiable {
+struct BLEAdvDevice: Identifiable {
     var id: String { deviceId }
     var deviceId: String
     var name: String
@@ -35,7 +35,7 @@ nonisolated struct BLEAdvDevice: Identifiable {
 }
 
 // 错误码 (JS ble.js classifyError/bleCodeMessage 词表 — 与 App 同套编号)
-nonisolated enum BLEError: Int {
+enum BLEError: Int {
     case notFound = 1001        // 未发现设备
     case ssTokenFail = 1006
     case responseTimeout = 1007
@@ -59,7 +59,7 @@ nonisolated enum BLEError: Int {
     }
 }
 
-nonisolated enum BLEErrorX: LocalizedError {
+enum BLEErrorX: LocalizedError {
     case code(BLEError)
     case msg(String)
     var errorDescription: String? {

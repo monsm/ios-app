@@ -3,7 +3,7 @@
 import Foundation
 
 // ---------- 存储 ----------
-nonisolated final class Store: @unchecked Sendable {
+final class Store {
     static let shared = Store()
     private let defaults = UserDefaults.standard
     private func key(_ k: String) -> String { "kf." + k }
@@ -100,7 +100,7 @@ nonisolated final class Store: @unchecked Sendable {
 }
 
 // ---------- 钥匙串台账 (services/lock.js) ----------
-nonisolated struct Keychain: Codable, Identifiable {
+struct Keychain: Codable, Identifiable {
     var version: Int = 1
     var mac: String
     var pid: Int = 0
@@ -146,7 +146,7 @@ nonisolated struct Keychain: Codable, Identifiable {
 }
 
 // ---------- 凭证台账 (services/ledger.js) ----------
-nonisolated struct LedgerPwd: Codable, Identifiable {
+struct LedgerPwd: Codable, Identifiable {
     var alias: Int
     var from: String
     var to: String
@@ -157,7 +157,7 @@ nonisolated struct LedgerPwd: Codable, Identifiable {
     var note: String
     var id: Int { alias }
 }
-nonisolated struct LedgerFp: Codable, Identifiable {
+struct LedgerFp: Codable, Identifiable {
     var batch: Int
     var name: String
     var at: Double          // epoch **毫秒** (添加时刻；与 `LedgerPwd.at` 同约定)
@@ -172,13 +172,13 @@ nonisolated struct LedgerFp: Codable, Identifiable {
     var isAlarm: Bool?
     var id: Int { batch }
 }
-nonisolated struct Ledger: Codable {
+struct Ledger: Codable {
     var pwds: [LedgerPwd] = []
     var fps: [LedgerFp] = []
 }
 
 // ---------- 成员档案 (services/members.js v3) ----------
-nonisolated struct Member: Codable, Identifiable {
+struct Member: Codable, Identifiable {
     // 259/623 成员色板 = 这个字段 (新成员建档时分配固定色，头像/时间线/过滤按钮统一取色)。
     // 类型里那个十六进制默认值是品牌靛蓝本身，第一个成员拿到它是巧合，不是"成员色有默认偏好"。
     var id: String
@@ -190,11 +190,11 @@ nonisolated struct Member: Codable, Identifiable {
 }
 
 // ---------- 快照 (services/snapshot.js) ----------
-nonisolated struct StatusSnapshot: Codable {
+struct StatusSnapshot: Codable {
     var at: Double
     var status: StatusSnapshotData
 }
-nonisolated struct StatusSnapshotData: Codable {
+struct StatusSnapshotData: Codable {
     var rc: Int = 0
     var powerLevel: Int = 0
     var firmware: String = ""
@@ -215,11 +215,11 @@ nonisolated struct StatusSnapshotData: Codable {
     var pwdCap: Int?
     var fpCap: Int?
 }
-nonisolated struct LogCache: Codable {
+struct LogCache: Codable {
     var at: Double
     var logs: [CachedLog]
 }
-nonisolated struct CachedLog: Codable {
+struct CachedLog: Codable {
     var type: Int
     var typeName: String
     var idxRaw: UInt32
@@ -228,7 +228,7 @@ nonisolated struct CachedLog: Codable {
 }
 
 // ---------- 钥匙串硬件台账 ----------
-nonisolated struct Dongle: Codable, Identifiable {
+struct Dongle: Codable, Identifiable {
     var mac: String
     var name: String = ""
     var bleId: String = ""
@@ -257,7 +257,7 @@ nonisolated struct Dongle: Codable, Identifiable {
         stat = try c.decodeIfPresent(DongleStat.self, forKey: .stat)
     }
 }
-nonisolated struct DongleStat: Codable {
+struct DongleStat: Codable {
     var power: Int = -1
     var absPower: Int = -1
     var ekeyCount: Int = -1
@@ -268,7 +268,7 @@ nonisolated struct DongleStat: Codable {
 }
 
 // ---------- 网关台账 ----------
-nonisolated struct Gateway: Codable, Identifiable {
+struct Gateway: Codable, Identifiable {
     var mac: String
     var name: String = ""
     var pid: Int = 0
@@ -286,28 +286,28 @@ nonisolated struct Gateway: Codable, Identifiable {
 }
 
 // ---------- 配置记忆 ----------
-nonisolated struct DefendCfg: Codable {
+struct DefendCfg: Codable {
     var control: Int
     var startSec: Int
     var endSec: Int
     var at: Double
 }
-nonisolated struct TailgateCfg: Codable {
+struct TailgateCfg: Codable {
     var interval: Int
     var at: Double
 }
-nonisolated struct OtpStatus: Codable {
+struct OtpStatus: Codable {
     var on: Bool
     var at: Double
 }
-nonisolated struct OtpIdx: Codable {
+struct OtpIdx: Codable {
     var idx: Int
     var invalidTime: String
 }
 
 // ---------- 存储访问层 ----------
-nonisolated enum DB {
-    nonisolated(unsafe) static var store = Store.shared   // UserDefaults 封装本身线程安全; 全仓把它当非隔离用
+enum DB {
+    static var store = Store.shared
 
     // 钥匙串 (多锁)
     static func keychains() -> [Keychain] {
@@ -496,7 +496,7 @@ nonisolated enum DB {
     /// 台账解码失败的锁 (防"解不出→空表写回"清空数据)。
     /// 2026-10-14: 原为非隔离可变 static var, 后台任务与主线程并发访问是数据竞争; 加锁存取。
     private static let ledgerLock = NSLock()
-    private nonisolated(unsafe) static var ledgerCorruptSet: Set<String> = []
+    private static var ledgerCorruptSet: Set<String> = []
     static func markLedgerCorrupt(_ mac: String) {
         ledgerLock.lock(); defer { ledgerLock.unlock() }
         ledgerCorruptSet.insert(mac)

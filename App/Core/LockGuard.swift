@@ -141,7 +141,7 @@ enum LockGuard {
 /// 危险动作族: 296 只读模式要停下来的那一族, 也是 383 要追问口令的那一族的父集。
 /// 界面与调用点报的是同一个枚举, 不再各处写 `if DB.store.getBool(SecKey.xxx)` ——
 /// 这五枚开关此前失效的成因正是"读点散在设置页的文案里": 标签跟着开关变, 行为一行没动。
-nonisolated enum LockAction {
+enum LockAction {
     case unlock             // 圆盘/手势/自动开锁的开锁动作
     case writeCredential    // 凭证增删改 (口令/指纹/临时码)
     case provision          // 网关配网
@@ -171,7 +171,7 @@ nonisolated enum LockAction {
 /// 只能由 SecurityPolicy.sudoTicket(from:) 当场验过应用锁口令之后发一张。
 /// 为什么不用一个 Bool 标志: 布尔能被任何调用方随手写成 true, 而"要不要重输口令"这件事
 /// 一旦可以由调用方自述, 383 就又是一枚只改标签的开关。
-nonisolated struct SudoTicket {
+struct SudoTicket {
     let issuedAt: Double
     fileprivate init(issuedAt: Double) { self.issuedAt = issuedAt }
 }
@@ -180,7 +180,7 @@ nonisolated struct SudoTicket {
 /// 判据口要能被界面、逻辑层 (DestroyKit) 与静态上下文一律读到,
 /// 一旦隔离到某个 actor, 每个调用点就得为边界绕路, 绕着绕着就又写回 `DB.store.getBool` 去了。
 /// 失败留痕 (389/392 那条通道是 @MainActor 的 LockGuard) 因此放在界面侧那一步做。
-nonisolated enum SecurityPolicy {
+enum SecurityPolicy {
     // ---------- 唯一读点: 界面与调用点一律从这里取, 不许再摸 DB.store ----------
     /// 377 访客通道: 真开时主 TabView 只暴露 设备/记录, 进 凭证/设置 要先过口令
     static var guestActive: Bool { DB.store.getBool(SecKey.guestOn, false) }

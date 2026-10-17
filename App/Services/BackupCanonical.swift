@@ -5,7 +5,7 @@
 //   * JS 侧 kc/ledger/meta 是「原样透传」(键序保留写入序) → 只需 Swift 写出与自算 hash 同字节即可互通
 import Foundation
 
-nonisolated enum JValue {
+enum JValue {
     case str(String)
     case num(Double)
     case bool(Bool)
@@ -49,7 +49,7 @@ nonisolated enum JValue {
     }
 }
 
-nonisolated enum BackupCanonical {
+enum BackupCanonical {
     /// 备份包校验和。**必须逐位复现小程序 `utils/storage.js` 的 fnv1a32**，而不是教科书 FNV-1a：
     /// JS 那侧 ① 按 **UTF-16 码元**逐个喂 `charCodeAt(i) & 0xff`（中文/emoji 与 UTF-8 字节流不同），
     /// ② `h ^ c` 是有符号 int32 运算（结果可为负），③ `h * 16777619` 走**双精度**，

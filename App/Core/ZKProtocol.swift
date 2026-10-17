@@ -6,13 +6,13 @@
 // 差分基准: golden.cmds.* / golden.parse.*
 import Foundation
 
-nonisolated struct ZKLV: Equatable {
+struct ZKLV: Equatable {
     var key: Int
     var val: String   // hex
     var vlen: Int
 }
 
-nonisolated enum ZKProtocol {
+enum ZKProtocol {
     // 协议时间基准 = **本地** 2010-01-01 00:00:00 (2026-10-17 全量盘点勘误: 旧值 1_262_304_000_000 是
     // 2010-01-01T00:00:00**Z**, 比 APK 少一个时区偏移)。
     //   依据 (逐字): APK `En.getProtocolTimeSecond(x) = An.getDate(x) − An.getDate('2010-01-01 00:00:00')`,
@@ -95,7 +95,7 @@ nonisolated enum ZKProtocol {
 
     /// 内存注册表: 只有 DB 的落盘口与配网探针会写它 (协议层不读库, 免得 Core 里绕成环)。
     /// 进程重启后由 `DB.hydrateMacOrders()` 在启动窗口补上, 补不上的锁会走一次 rc=12 自愈再学习。
-    private nonisolated(unsafe) static var macOrders: [String: MacOrder] = [:]   // 只有配网探针与落盘口写; 读写都在主线程调用链上
+    private static var macOrders: [String: MacOrder] = [:]
     static func normMac(_ s: String) -> String { s.lowercased().replacingOccurrences(of: ":", with: "") }
     static func setMacOrder(_ mac: String, _ o: MacOrder) { macOrders[normMac(mac)] = o }
     static func macOrder(_ mac: String) -> MacOrder { macOrders[normMac(mac)] ?? .display }
@@ -288,7 +288,7 @@ nonisolated enum ZKProtocol {
 }
 
 // ---------- 时间显示 (JS utils/time.js) ----------
-nonisolated enum ProtoTime {
+enum ProtoTime {
     static func localStr(_ sec: Int64) -> String {
         let d = Date(timeIntervalSince1970: ZKProtocol.protoSecondsToUnix(sec))
         let f = DateFormatter()

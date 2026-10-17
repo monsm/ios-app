@@ -15,7 +15,7 @@
 // 确实分属两件事, 但把一节拆成两处会让页内搜索的命中映射出现两个落点 —— 那是更大的乱)。
 import SwiftUI
 
-nonisolated enum SettingsGroup: String, CaseIterable, Identifiable {
+enum SettingsGroup: String, CaseIterable, Identifiable {
     case daily       // 开门日常
     case keys        // 凭证与成员
     case data        // 数据与安全
@@ -46,7 +46,7 @@ nonisolated enum SettingsGroup: String, CaseIterable, Identifiable {
 }
 
 /// 这一节现在该不该出现。`nil` = 全部 (与加这一批之前的画面逐字一致 —— 默认态不许变)。
-nonisolated func settingsSectionShown(_ group: SettingsGroup?, _ mine: SettingsGroup) -> Bool {
+func settingsSectionShown(_ group: SettingsGroup?, _ mine: SettingsGroup) -> Bool {
     group == nil || group == mine
 }
 

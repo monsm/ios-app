@@ -27,14 +27,14 @@ import SwiftUI
 
 /// 容器的语义种类。页面只说"这是一个分组 / 一块瓦片 / 一条内嵌行"，
 /// **长成什么样由当前变体决定** —— 这是两套 UIUX 能真正不同、又不会各画一遍的关键切分。
-nonisolated enum ContainerKind {
+enum ContainerKind {
     case group      // 一组相关读数/设置
     case tile       // 可点的一次性入口
     case inset      // 嵌在别的东西里面的小格
     case hero       // 首屏主角那一块
 }
 
-nonisolated struct VK {
+struct VK {
 
     /// 视觉语法。拿不到 AppState 的叶子视图走这个静态入口。
     static var current: VK { VK() }
@@ -221,7 +221,7 @@ extension View {
 /// 底衬的形状档。**故意不是 `Shape` 泛型**：调用点若还留着一句 `in: Capsule()`，
 /// tools/uicoverage.js 的自绘容器预算（只认字面 token）就数不到这次迁移，
 /// 迁移进度会看起来没动 —— 预算得能反映事实，形状就得以令牌形式传进来。
-nonisolated enum PlateShape {
+enum PlateShape {
     case capsule    // 信息胶囊
     case tile       // 瓦片 (DS.Radius.tile)
     case control    // 控件 / 内嵌格 (DS.Radius.control)
@@ -393,7 +393,7 @@ extension VK {
 /// 开关形状的实现。三 case 齐全（`uicoverage` 检查三按变体分叉就要求这个）。
 /// ⚠ 返回类型写 `AnyView` 而不是 `some View` 是**为了被检查三覆盖**：那一支只扫 `-> AnyView {`
 /// 的分叉函数（本文件的既定形状）。改成 `some View` 它就静默逃过穷尽性检查 —— 语法件越多漏得越多。
-nonisolated struct VariantToggleStyle: ToggleStyle {
+struct VariantToggleStyle: ToggleStyle {
     func makeBody(configuration: Configuration) -> AnyView {
             return AnyView(
         // `configuration.isOn` 是 **Bool**（`ToggleStyleConfiguration` 里那一枚是 `@Binding`
@@ -409,17 +409,17 @@ nonisolated struct VariantToggleStyle: ToggleStyle {
 // 只留前者，`Toggle(a.label, isOn:)` 那 5 处（标题是变量/三元式）会推断成 String 而解不动。
 
 /// `Toggle("字面量", isOn:)` 的那 99 处。
-nonisolated func VariantToggle(_ titleKey: LocalizedStringKey, isOn: Binding<Bool>) -> some View {
+func VariantToggle(_ titleKey: LocalizedStringKey, isOn: Binding<Bool>) -> some View {
     Toggle(titleKey, isOn: isOn).toggleStyle(VariantToggleStyle())
 }
 
 /// `Toggle(<String 表达式>, isOn:)` 的那 5 处（标题是变量、三元式或下标）。
-nonisolated func VariantToggle<S: StringProtocol>(_ title: S, isOn: Binding<Bool>) -> some View {
+func VariantToggle<S: StringProtocol>(_ title: S, isOn: Binding<Bool>) -> some View {
     Toggle(title, isOn: isOn).toggleStyle(VariantToggleStyle())
 }
 
 /// `Toggle(isOn: ...) { 自定标签 }` 的那 6 处（标题是一个多行视图）。
-nonisolated func VariantToggle(isOn: Binding<Bool>, @ViewBuilder label: () -> some View) -> some View {
+func VariantToggle(isOn: Binding<Bool>, @ViewBuilder label: () -> some View) -> some View {
     Toggle(isOn: isOn, label: label).toggleStyle(VariantToggleStyle())
 }
 

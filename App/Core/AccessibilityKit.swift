@@ -9,7 +9,7 @@ import UIKit
 import LocalAuthentication
 
 // ---------- 系统辅助旗标 (226/227/862/863): 每帧评估, 由 RootView .id(appearanceSeed) 重建兜底 ----------
-nonisolated enum AXFlags {
+enum AXFlags {
     /// 862 增强对比: hairline/textSub 加深一档的触发条件 (DS.Palette 内部消费)
     /// ⚠ 2026-10-13 run 57 打脸: 此前写 `UIAccessibility.accessibilityDisplayShouldIncreaseContrast` ——
     /// UIKit **没有**这个成员。Apple 文档 (UIAccessibility「Capabilities」清单) 里 "Increase Contrast" 的官方读法
@@ -66,7 +66,7 @@ nonisolated enum AXFlags {
     }
     /// 859 AX 档降级布局: 字号 ≥1.5 时圆盘缩至 128pt (UnlockDial.dial 消费本旗标)。
     /// 原设计还含"Hero 指标纵向堆叠", 那半未实现 —— 已从说明文案删除, 不要凭本注释以为已做。
-    nonisolated(unsafe) static var axStackLayout: Bool { appFontScale >= 1.5 }
+    static var axStackLayout: Bool { appFontScale >= 1.5 }
     /// 866 极限字号自检: 诊断开关, 以 200% 字号预览关键页 (仅自检用)
     static var bigPreview: Bool { DB.store.getBool("kf_ax_bigpreview") }
     /// 879 灰度预览自检: 全 App 去饱和渲染, 检查渐变主题无色可读性 (仅自检用)
@@ -95,14 +95,9 @@ extension DS {
     /// 迟早在某个页面上漂开 —— 收在这一处, 主控卡/开锁盘/成就卡/导出卡/帮助页/引导页同帧一起换。
     struct HeroSurface: ShapeStyle {
         func resolve(in environment: EnvironmentValues) -> AnyShapeStyle {
-            // ShapeStyle.resolve 是 **nonisolated** 要求, 而这几枚旗标读的是 UIKit/UIAccessibility (主 actor)。
-            // 它只在渲染时被调, 而渲染必在主线程 ⇒ assumeIsolated 是如实的断言, 不是绕过:
-            // 万一将来有人在后台线程取样式, 这里会当场 trap, 而不是读到半截状态。
-            MainActor.assumeIsolated {
-                if environment.accessibilityReduceTransparency || DS.Appearance.highContrast { return AnyShapeStyle(DS.heroSolid) }
-                if AXFlags.invertColors { return AnyShapeStyle(DS.heroInvertGradient) }
-                return AnyShapeStyle(Gradient.hero)
-            }
+            if environment.accessibilityReduceTransparency || DS.Appearance.highContrast { return AnyShapeStyle(DS.heroSolid) }
+            if AXFlags.invertColors { return AnyShapeStyle(DS.heroInvertGradient) }
+            return AnyShapeStyle(Gradient.hero)
         }
     }
     /// 863 反转降级渐变 (两端**同侧**: 浅档中性浅、深档中性深; 文字用 heroFg) — HeroSurface 的 863 分支
@@ -119,7 +114,7 @@ extension DS {
 }
 
 // ---------- 朗读词表 (880): accessibilityLabel 统一走这里, 审计口径 = 本文件 ----------
-nonisolated enum AXTerms {
+enum AXTerms {
     static let lock = "门锁"
     static let credential = "凭证"          // 不混用"密钥/口令"
     static let pwd = "密码"
@@ -160,7 +155,7 @@ nonisolated enum AXTerms {
 }
 
 // ---------- 主动播报 / 触感 / 焦点巡检 / 对比度 (852/876/855/883) ----------
-nonisolated enum AXTools {
+enum AXTools {
     /// 852 错误主动播报: UIAccessibility.post — VO 运行时即时朗读, 非运行时排队不影响
     static func announce(_ text: String) {
         guard DB.store.getBool("kf_vo_announce", true) else { return }
@@ -248,7 +243,7 @@ nonisolated enum AXTools {
 }
 
 // ---------- App 偏好读点 (包15 全 App 开关集中于此, 页面不直接查 DB) ----------
-nonisolated enum AXPrefs {
+enum AXPrefs {
     /// 872 防连点开关: 高频按钮 300ms 内重复点击忽略 (默认开, 防双击误开门)
     static var dbltapGuard: Bool { DB.store.getBool("kf_dbltap_guard", true) }
     /// 875 按住时长跟随 (⚠ 系统"按住持续时间"无读取 API, 自定滑杆 0.4–1.6s, 默认 0.9 与包1 对齐)
@@ -290,7 +285,7 @@ extension View {
 }
 
 // ---------- 877 生物识别降级验证: 应用锁连败 3 次后的大字替代键 (设备支持时) ----------
-nonisolated enum AuthKit {
+enum AuthKit {
     /// 设备是否可用 Face ID / Touch ID 验证本机门禁 (无生物硬件 = false, 该项走 DEFERRED)
     static var biometricAvailable: Bool {
         let ctx = LAContext()

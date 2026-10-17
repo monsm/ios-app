@@ -377,7 +377,7 @@ final class ExportProgress: ObservableObject {
 }
 
 // ================= 核心生成器 =================
-nonisolated enum ExportKit {
+enum ExportKit {
     static let stamp: DateFormatter = {
         let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd HH:mm"; f.timeZone = TimeZone.current; f.locale = Locale(identifier: "en_US_POSIX"); return f
     }()
@@ -1166,7 +1166,7 @@ nonisolated enum ExportKit {
 
 // ---------- PDF 矢量排版助手 (无图片资源, 缩放不糊) ----------
 extension ExportKit {
-    nonisolated enum PDFText {
+    enum PDFText {
         /// y 坐标按 UIKit 顶下向 (UIGraphicsPDFRenderer 页面原点在左上), 经
         /// UIGraphicsPushContext + NSString.draw 保证文字不倒置、中文排版正确
         static func line(_ cg: CGContext, _ s: String, font: UIFont.Weight, size: CGFloat,

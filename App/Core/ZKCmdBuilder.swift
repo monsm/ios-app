@@ -3,13 +3,13 @@
 // 差分基准: golden.cmds.* (40 个命令的完整帧 hex)
 import Foundation
 
-nonisolated struct ZKCmd {
+struct ZKCmd {
     let name: String
     let cmd: UInt8
     let hex: String
 }
 
-nonisolated enum ZKCmdBuilder {
+enum ZKCmdBuilder {
     static func u16leHex(_ v: Int) -> String { HexKit.u16leHex(v) }
     // u32 那一层的同名转发第九十二批删了：本文件自己都是直连 `HexKit.u32leHex` (见 :65/:95/:142)，
     // 零调用点的别名只会让人以为"协议侧有一套自己的小端编码"。与 `canDeviceInfo` 别名同口径处理。
