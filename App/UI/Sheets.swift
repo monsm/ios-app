@@ -227,8 +227,14 @@ struct AddDeviceView: View {
         let inReset = (adv?.resetStatus ?? 0) == 1
         let isLock = adv.map { PidMap.isLock($0.pid) } ?? false
         let canPair = inReset && isLock
+        // 续配入口 (2026-10-17 真机): 05 换钥回 rc=0 之后锁内 skey 已经是新的, 锁**不再广播重置位** ——
+        // 而本机此时正好留着一份尾链没走完的记录 (pendingPair)。若这一行因为 !inReset 不可点, 用户
+        // 就只剩"再跑一趟键盘重置"一条路, 而截图里那句"再点一次配网会接着配完"就成空头支票。
+        // 判据是**本机有没有这份记录**, 不是锁的广播位。
+        let pendMac = adv.flatMap { ZKProtocol.lockMac(fromAdv: $0) }
+        let canResume = isLock && (pendMac.map { DB.pendingPair($0) != nil } ?? false)
         return Button {
-            if canPair { confirmPair(d, adv) }
+            if canPair || canResume { confirmPair(d, adv) }
             else if adv == nil { app.showToast("广播未识别 — 非门锁设备, 或系统缓存了不完整广播") }
             else if !inReset { app.showToast("该锁不在重置态 — 请先做键盘物理重置") }
             else { app.showToast("未识别的设备型号") }
@@ -253,7 +259,11 @@ struct AddDeviceView: View {
                         // 型号是判断"是不是我的锁"的关键信息, 不做 lineLimit(1) 截断
                         .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
-                    if !inReset {
+                    if canResume {
+                        Text("本机已留存密钥 — 点它接着配完, 不必再重置")
+                            .vkFont(.caption)
+                            .foregroundStyle(DS.Palette.textSub)
+                    } else if !inReset {
                         Text("需先在键盘上物理重置")
                             .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
@@ -264,6 +274,8 @@ struct AddDeviceView: View {
                     StatusPill(text: "未识别", systemImage: "questionmark.circle", tone: .neutral)
                 } else if canPair {
                     StatusPill(text: "可配网", systemImage: "checkmark.circle.fill", tone: .ok)
+                } else if canResume {
+                    StatusPill(text: "待续配", systemImage: "arrow.clockwise", tone: .warn)
                 } else if !inReset {
                     StatusPill(text: "已配对", systemImage: "lock.fill", tone: .neutral)
                 } else {
@@ -273,7 +285,7 @@ struct AddDeviceView: View {
             .frame(minHeight: DS.Hit.min)
             .contentShape(Rectangle()) // 整行可点
         }
-        .accessibilityLabel("\(d.name)，\(d.rssi) dBm，\(canPair ? "可配网" : (adv == nil ? "未识别广播" : "已配对，需先重置"))")
+        .accessibilityLabel("\(d.name)，\(d.rssi) dBm，\(canPair ? "可配网" : (adv == nil ? "未识别广播" : (canResume ? "待续配，本机已留存密钥" : "已配对，需先重置")))")
         // APK 对照 (page-romlist): 原版在扫描列表里先对每台设备发一次回声 (cmd12) 再进锁页。
         // 本机放在长按菜单里 —— 行本身就是"点它开始配对"的入口, 再塞一个按钮会把两件事做成同形。
         .contextMenu {
@@ -300,6 +312,17 @@ struct AddDeviceView: View {
             return
         }
         let model = PidMap.modelName(adv.pid)
+        // 续配: 锁在 05 换钥之后就不再广播重置位了 (截图里那句"再点一次配网会接着配完"就是这个状态),
+        // 所以这一支**不看 inReset**, 只看本机有没有那份没走完的记录 —— 文案也必须说清
+        // "不会再换钥", 因为它与"添加"最危险的那一步 (擦锁内密钥域) 完全是两回事。
+        if DB.pendingPair(mac) != nil {
+            confirmDestructive("继续配网",
+                              "本机留有一份「\(d.name)」（\(display) · \(model)）未走完的配网密钥。这次会跳过换钥, 直接把 PIN 池与 bkey 写完 —— 不重新生成密钥, 也不必再做键盘重置。请贴近门锁后继续。",
+                              confirmTitle: "继续配网") {
+                Task { await self.pair(d, mac) }
+            }
+            return
+        }
         confirmDestructive("添加门锁",
                           "将配对「\(d.name)」（\(display) · \(model)）。配网会生成本机密钥并写入门锁密钥槽，App 内无法撤销，请确认手机已贴近门锁。确定添加吗？",
                           confirmTitle: "开始添加") {

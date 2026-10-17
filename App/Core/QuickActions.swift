@@ -53,6 +53,7 @@ final class QuickActionDelegate: NSObject, UIApplicationDelegate {
         // 2026-10-14: ①旧 plist 明文密钥搬进系统 Keychain ②Spotlight id 制式从明文 MAC 换成哈希,
         // 旧索引要重刷一次才不残留明文 MAC。
         DB.migrateSecretsToKeychain()
+        DB.hydrateMacOrders()   // 0x88 包络 MAC 字节序: 把已裁定的顺序灌回协议层 (2026-10-17)
         SpotlightKit.scheduleReindex()
         LiveUnlock.reapOrphans()
         return true

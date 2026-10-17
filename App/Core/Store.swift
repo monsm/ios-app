@@ -323,6 +323,25 @@ enum DB {
         return nil
     }
     static func normalizeMac(_ m: String) -> String { m.replacingOccurrences(of: ":", with: "").lowercased() }
+
+    // ---------- 0x88 包络 MAC 字节序 (per MAC, 2026-10-17) ----------
+    /// 顺序是"这台手机跟这把锁谈过话"的**观测结果**, 不是密钥材料, 所以刻意**不进 `Keychain`**:
+    /// 那个结构是要随备份/导出走的密钥台账, 多一个字段就要动它的 Codable 容错链与备份口径;
+    /// 而顺序认不出来时的代价很小 (默认回原版 APK 语义, 错一次由 rc=12 自愈纠正)。
+    static func macOrderKey(_ mac: String) -> String { "kf_macorder_" + normalizeMac(mac) }
+    static func macOrder(_ mac: String) -> ZKProtocol.MacOrder {
+        ZKProtocol.MacOrder(rawValue: store.getString(macOrderKey(mac))) ?? .display
+    }
+    /// 落盘 + 同步进协议层注册表 (协议层成帧只看注册表)
+    static func setMacOrder(_ mac: String, _ o: ZKProtocol.MacOrder) {
+        store.set(macOrderKey(mac), o.rawValue)
+        ZKProtocol.setMacOrder(mac, o)
+    }
+    /// 启动窗口把已裁定的顺序灌回协议层 —— 协议层不读库, 补不上这一支时进程重启后第一帧会回 rc=12,
+    /// 由 exec 的顺序自愈再学一次 (代价: 多一个来回, 不会写错锁)。
+    static func hydrateMacOrders() {
+        for kc in keychains() { ZKProtocol.setMacOrder(kc.mac, macOrder(kc.mac)) }
+    }
     /// 密钥材料 (skey/bkey/ekey) 的系统 Keychain 账户名。
     static func secretAccount(_ mac: String, _ field: String) -> String { "kc." + normalizeMac(mac) + "." + field }
     /// 2026-10-14 一次性迁移: 把旧 plist 里明文的 skey/bkey/ekey 搬进系统 Keychain, 并从 plist 抹掉。
@@ -425,7 +444,7 @@ enum DB {
                   "kf_rnote_", "kf_rflag_",
                   // 361 停用原因便签 (逐条, 只留最近 200 条)
                   "kf_cdisrea_",
-                  "kf_linkrssi_", "kf_link_auto_"] {
+                  "kf_linkrssi_", "kf_link_auto_", "kf_macorder_"] {
             store.remove(p + m)
         }
         // 自动开锁每锁键 (kf_autocal_ / kf_autoopen_audit_ / kf_autoopen_suspend_until_, 尾段带 mac)

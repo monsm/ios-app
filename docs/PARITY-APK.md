@@ -198,6 +198,9 @@ iOS 侧现状：除 05 外全部一致；05 已改为 `needToken: true`（`LockS
 - 帧头：Java `LockCommBase.getBytes` = `87 | 00 | len(u16 LE) | cmd | 00 00 00 | KLV`（8B 头）—— iOS `buildFrame(header: 8)` 一致。
   JS 里那套 10B 头（`ssToken` 进头、`ZKCCOMM_SESSIONTOKENKEY="F0"`）在混合架构里是**死代码**（H5 只把 `getParams()` JSON 交给 Java），不必跟。
 - 0x88 包络：`88 | 00 | MAC 反转 | TrackId LE4 | ValidFrom LE4 | ValidTo LE4 | Cmd | body`，命令用 TrackId=0 —— 一致。
+  **但"MAC 从哪个序反转"两个参照实现不同**：APK 的 TargetMAC = `getAddress()`（显示序）⇒ 包络里落线上序；
+  小程序旁支（`services/ble.js` 把 `adv.mac` 别名成 `macRaw`）⇒ 包络里落显示序。锁只认一种，认错回 rc=12。
+  本机默认按 APK 语义，并由配网期**只读 03 探针**真机裁定后落盘（详见 `docs/BRICK-AUDIT.md` §7d/§10）。
   （`ValidFrom/ValidTo` 默认串 APK 用**本地** 2010/2118，本机用 0 与 UTC-2118；两者都包住"现在"，锁的有效期判据不受影响 ⇒ 记差异不改。）
 - 08 body `addCount(1B)+delCount(1B)+addPins+delPins`、首批 `delPins=[0xFFFFFFFF]` —— 一致。
 - 21 body `skeyLen(1B)+bkey` —— 一致；且 `KeyGen.genBkey()` 已实现 APK 的"相邻字节差 ≤2 就 +6"整形，与原版逐行相同。

@@ -282,6 +282,10 @@ final class LockService: ObservableObject {
     }
 
     // rc 所在 KLV key (JS lock.js RC_KLV, 勘误后权威表)
+    /// 0x88 包络里带 MAC 的命令 (rc=12 的顺序自愈只对它们有意义; 网关/明面命令的 MAC 在别处)。
+    private static let macBearingCmds: Set<UInt8> = [0x03, 0x04, 0x08, 0x0a, 0x0b, 0x0e, 0x13, 0x14,
+                                                    0x15, 0x16, 0x18, 0x19, 0x20, 0x21, 0x22, 0x24,
+                                                    0x25, 0x41, 0x43, 0x44]
     private static let rcKLV: [UInt8: Int] = [
         0x03: 3, 0x04: 3, 0x05: 1, 0x08: 3, 0x0a: 3, 0x0b: 3, 0x0e: 3, 0x12: 3,
         0x13: 3, 0x14: 3, 0x15: 3, 0x16: 3, 0x18: 3, 0x19: 3, 0x20: 3,
@@ -307,6 +311,27 @@ final class LockService: ObservableObject {
                 let rc2 = extractRc(cmd, r2)
                 if rc2 != 3 { return ExecResult(frame: r2, rc: rc2, klvs: r2.klvs) }
             }
+        }
+        // rc=12「mac地址不正确」的**顺序自愈** (2026-10-17 真机): 0x88 包络里那 6 字节 MAC 有两种取法,
+        // 本机默认按原版 APK 语义 (见 ZKProtocol.MacOrder)。老钥匙串是在没有这一层之前配的, 若它是
+        // 另一种取法, 之后每条命令都会回 rc=12 —— 而 rc≠0 的语义正是"锁没执行", 所以换一种取法重发
+        // 一帧是安全的 (与 rc=3 刷令牌那一支同一条纪律)。只做一次, 成功即落盘: 下一帧起不必再试。
+        // 配网期 (pairMac != nil) 刻意不走这一支: 那里由只读探针 calibrateMacOrder 裁定, 免得把
+        // "写命令自愈"混进配网链 (配网期每条命令都是改锁的)。
+        if rc == 12, pairMac == nil, LockService.macBearingCmds.contains(cmd), DB.keychain(curMac) != nil {
+            let used = ZKProtocol.macOrder(curMac)
+            let other = ZKProtocol.flipped(used)
+            ZKProtocol.setMacOrder(curMac, other)
+            let resp2 = try? await request(cmdObj, cmd: cmd, needToken: needToken, retries: 1)
+            let rc2 = resp2.map { extractRc(cmd, $0) } ?? -1
+            if let r2 = resp2, rc2 == 0 {
+                DB.setMacOrder(curMac, other)
+                log("warn", "\(cmdObj.name) rc=12 (mac地址不正确) → 换一种 MAC 字节序 (\(other.rawValue)) 重发即通过; 已记住这把锁的顺序")
+                return ExecResult(frame: r2, rc: rc2, klvs: r2.klvs)
+            }
+            // 不是顺序问题 → 复原注册表 (方向错了会比默认更难查), 让上层按 mac 不符去报错
+            ZKProtocol.setMacOrder(curMac, used)
+            log("warn", "\(cmdObj.name) rc=12: 两种 MAC 字节序都被拒 (回退 \(used.rawValue)) — 不是字节序问题, 是锁内密钥与本机不一致")
         }
         log("info", "\(cmdObj.name) -> rc=\(rc)")
         return ExecResult(frame: resp, rc: rc, klvs: resp.klvs)
@@ -669,6 +694,9 @@ final class LockService: ObservableObject {
     func pair(deviceId: String, mac: String, progress: @escaping (String) -> Void) async throws -> Keychain {
         let m = mac.replacingOccurrences(of: ":", with: "").lowercased()
         pairMac = m
+        // 把落盘的字节序先灌进协议层: 上次裁定的结果直接作为探针的第一个候选 (少一个来回),
+        // 也让"续配"这条路径在重启后的第一帧就按已知顺序成帧。
+        ZKProtocol.setMacOrder(m, DB.macOrder(m))
         if let old = DB.keychain(m), !old.skey.isEmpty {
             throw BLEErrorX.msg("该锁已有钥匙串 (MAC=\(old.mac)), 拒绝覆盖配网; 如需重配请先删除该设备")
         }
@@ -683,6 +711,9 @@ final class LockService: ObservableObject {
             progress("发现上次中断的配网记录 → 先试续配 (不重新换钥)")
             log("info", "续配尝试: 用留存密钥直接走尾链 (留存于 \(pend.pairedAt))")
             do {
+                // 续配也要先裁定字节序: 03 是只读的, 顺带把"这份留存密钥还认不认"也一起验了 ——
+                // 探针两种都被 rc=12 拒 ⇒ 留存密钥已过期 (锁被再次重置过), 落到 catch 走完整链。
+                try await calibrateMacOrder(m, skey: pend.skey.lowercased(), resumable: true)
                 let kc = try await finishPairing(m: m, deviceId: deviceId, skey: pend.skey.lowercased(),
                                                 bkey: pend.bkey, pins: pend.pins,
                                                 trackid: pend.trackid.isEmpty ? String(KeyGen.genTrackId()) : pend.trackid,
@@ -771,12 +802,48 @@ final class LockService: ObservableObject {
             log("error", "配网中断保护未能落盘 (系统 Keychain 写失败) — 尾链若中断只能靠门锁键盘重置恢复")
         }
 
+        // 步骤 4.5/7: **MAC 字节序只读探针** (2026-10-17 真机 rc=12 的根治)
+        //   锁重置后 05 回 rc=0 说明"换钥发生了", 但锁**没有**回显 skey (回包只有 KLV#01=rc),
+        //   所以下一步 08 回 rc=12 时现场有两种解释: ① 包络里那 6 字节 MAC 取反了 ② 锁内 skey 与本机
+        //   这份对不上。两者都会让锁回同一句「mac地址不正确」, 而 08 是写 PIN 池 —— 在错的前提下继续
+        //   写, 现场只会更难判。03 密文面命令同样带 MAC, 却**什么都不改**: 拿它当探针, 一次配对里就把
+        //   ①/② 分开, 并且把正确的取法记在 `kf_macorder_<mac>` 上供此后每一帧使用。
+        progress("步骤 4.5/7: 裁定包络 MAC 字节序 (只读 03 探针)")
+        try await calibrateMacOrder(m, skey: skey, resumable: resumable)
+
         let kc = try await finishPairing(m: m, deviceId: deviceId, skey: skey, bkey: bkey, pins: pins,
                                         trackid: pending.trackid, resumable: resumable, progress: progress)
         DB.clearPendingPair(m)   // 尾链成功才摘掉中断记录 (先删再落库会造出"无保护"窗口)
         cleanWrongOrderTwin(m)
         connectedMAC = m
         return kc
+    }
+
+    /// 0x88 包络 MAC 字节序的裁定 (只读, 不改锁上任何东西)。
+    /// 两种取法各试一次 03 (密文面, 带 MAC, 无副作用); 谁 rc=0 谁对, 立即落盘。
+    /// 两种都被 rc=12 拒 ⇒ 不是字节序问题, 是**锁内 skey 与本机这份对不上** (换钥没落进锁里):
+    /// 这时**必须停手** —— 继续发 08 会在"配不上的前提"下往 PIN 池写, 而现场唯一的证据就是这条 rc。
+    /// 返回前一定把注册表恢复成"已裁定/默认"的那个值, 免得留一个临时值害到别的锁。
+    private func calibrateMacOrder(_ m: String, skey: String, resumable: Bool) async throws {
+        var lastRc = -1
+        for order in [ZKProtocol.MacOrder.display, ZKProtocol.flipped(.display)] {
+            ZKProtocol.setMacOrder(m, order)
+            let r = try await exec(ZKCmdBuilder.cmd03StatusWrap(m, skey, order: order))
+            lastRc = r.rc
+            if r.rc == 0 {
+                DB.setMacOrder(m, order)
+                log("info", "MAC 字节序裁定: \(order.rawValue) — 只读 03 探针 rc=0 (此后本机对这把锁一律按它成帧)")
+                return
+            }
+            log("warn", "MAC 字节序候选 \(order.rawValue) 被拒: 03 探针 rc=\(r.rc) (\(StatusParser.rcMessage(r.rc))) · 回包 " + Self.klvShape(r.frame))
+            if r.rc != 12 {
+                ZKProtocol.setMacOrder(m, .display)
+                throw BLEErrorX.msg("MAC 字节序探针失败 rc=\(r.rc) (\(StatusParser.rcMessage(r.rc))) — \(Self.pairHint(r.rc))")
+            }
+        }
+        ZKProtocol.setMacOrder(m, .display)
+        throw BLEErrorX.msg(Self.pairWarning(resumable,
+            "两种 MAC 字节序都被锁拒 (rc=\(lastRc) mac地址不正确): 锁内密钥与本机这份对不上 (换钥没落进锁里)。本机已留存这套密钥, 再点一次配网会先试续配; 仍不通才需要去门锁键盘重置"))
     }
 
     /// 清掉一份"MAC 正好反过来"的幽灵台账。2026-10-17 的 rc=12 (mac地址不正确) 就是这么来的:
@@ -795,6 +862,7 @@ final class LockService: ObservableObject {
     private func finishPairing(m: String, deviceId: String, skey: String, bkey: String, pins: [String],
                                trackid: String, resumable: Bool,
                                progress: @escaping (String) -> Void) async throws -> Keychain {
+        log("info", "配网尾链 MAC 字节序 = \(ZKProtocol.macOrder(m).rawValue) (只读探针裁定结果)")
         let batchSize = 16   // APK 用 20 (o>20?20:o) —— 同样 4 批; 16 让单帧更小, 保留
         let batches = (pins.count + batchSize - 1) / batchSize
         progress("步骤 5/7: 同步 PIN 池 (\(pins.count) 个 / \(batches) 批)")

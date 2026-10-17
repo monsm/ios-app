@@ -70,8 +70,10 @@ enum ZKCmdBuilder {
     }
 
     // ---- 密文管理面 ----
-    static func cmd03StatusWrap(_ macHex: String, _ skeyHex: String) -> ZKCmd {
-        let enc = AESKit.encryptHex(ZKProtocol.buildEkey(0x03, macHex), keyHex: skeyHex)
+    /// `order` 只有配网期的"MAC 字节序只读探针"会显式传 (见 LockService.calibrateMacOrder);
+    /// 其余调用点一律 nil = 按本机对这把锁已裁定的顺序 (默认原版 APK 语义)。
+    static func cmd03StatusWrap(_ macHex: String, _ skeyHex: String, order: ZKProtocol.MacOrder? = nil) -> ZKCmd {
+        let enc = AESKit.encryptHex(ZKProtocol.buildEkey(0x03, macHex, order: order), keyHex: skeyHex)
         // 空密文 = skey 非法/CCCrypt 失败: 不能再包成帧 (旧写法会发出 KLV#01 长度为 0 的假请求)
         if enc.isEmpty { return ZKCmd(name: "03 加密状态", cmd: 0x03, hex: "") }
         let klv = ZKProtocol.buildKLV(0x01, enc) + ZKProtocol.buildKLV(0x02, "")
@@ -226,7 +228,7 @@ enum ZKCmdBuilder {
     // ---- 钥匙串硬件 (ZKBBV1 pid=16289; 87 帧明文 KLV, needToken=false) ----
     static func cmd41WriteEkey(_ lockMacHex: String, _ pid: Int, _ ekeyHex: String, type: Int = 1) -> ZKCmd {
         // 2026-10-14: 与 cmd43 / buildEkey 同口径先剥冒号, 否则带冒号 MAC 使 reversePairs 返回空串。
-        let klv = ZKProtocol.buildKLV(0x01, HexKit.reversePairs(lockMacHex.replacingOccurrences(of: ":", with: "").lowercased()))
+        let klv = ZKProtocol.buildKLV(0x01, HexKit.reversePairs(ZKProtocol.targetMac(lockMacHex)))
             + ZKProtocol.buildKLV(0x02, HexKit.hexPair(UInt32(truncatingIfNeeded: type)))
             + ZKProtocol.buildKLV(0x03, u16leHex(pid))
             + ZKProtocol.buildKLV(0x04, ekeyHex)
@@ -235,12 +237,12 @@ enum ZKCmdBuilder {
     static func cmd44GetEkeyInfo(_ lockMacHex: String?) -> ZKCmd {
         // 2026-10-14: 去掉强解包 (空 = 查全部钥匙, 与旧口径一致), 并把剥冒号/小写收在前一行。
         let m = (lockMacHex ?? "").replacingOccurrences(of: ":", with: "").lowercased()
-        let v = m.isEmpty ? "" : HexKit.reversePairs(m)
+        let v = m.isEmpty ? "" : HexKit.reversePairs(ZKProtocol.targetMac(m))
         return ZKCmd(name: "44 钥匙串查钥", cmd: 0x44, hex: ZKProtocol.buildFrame(0x44, ZKProtocol.buildKLV(0x01, v), header: 8))
     }
     static func cmd43KeychainStatus(_ lockMacList: [String]) -> ZKCmd {
         var v = ""
-        for m in lockMacList { v += HexKit.reversePairs(m.replacingOccurrences(of: ":", with: "").lowercased()) }
+        for m in lockMacList { v += HexKit.reversePairs(ZKProtocol.targetMac(m)) }
         return ZKCmd(name: "43 钥匙串状态", cmd: 0x43, hex: ZKProtocol.buildFrame(0x43, ZKProtocol.buildKLV(0x01, v), header: 8))
     }
 

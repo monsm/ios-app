@@ -63,13 +63,40 @@ enum ZKProtocol {
             + HexKit.hexPair(UInt32(cmd)) + ssToken + "000000" + klv).uppercased()
     }
 
+    // ---------- 0x88 包络里的 MAC 字节序 (per MAC, 真机裁定) ----------
+    /// 0x88 包络里那 6 字节 MAC 有两个参照实现各写了一种取法, 而锁只认一种:
+    ///   · `.display` — 原版 APK (main.js 的 `kt.getBytes`): `TargetMAC` 取 `BluetoothDevice.getAddress()`
+    ///     (**显示序**, 也是页面/台账里那个值), 而 getBytes 自己会按字节对翻转一次 ⇒ 包络里落**线上序**;
+    ///   · `.raw` — 小程序旁支 (services/ble.js 把 `adv.mac` 别名成 `macRaw`): TargetMAC 直接给**线上序**,
+    ///     翻转后包络里落**显示序**。
+    /// 差的就是这 6 字节的先后。认错的表现是锁回 rc=12「mac地址不正确」—— 而 rc≠0 的语义是
+    /// "锁什么都没执行", 所以**试错本身不改锁** (见 docs/BRICK-AUDIT.md §10)。裁定不靠猜: 配网期拿
+    /// **只读**的 03 当探针 (它同样带 MAC, 却不落任何状态), 谁 rc=0 谁对, 结果记在 `kf_macorder_<mac>`。
+    /// 不认识时**默认 `.display`** = 原版 APK 语义, 于是未裁定的锁与金标 (`fixtures/golden.json` 的
+    /// cmds.*, 逐字节按显示序烘的) 完全一致 —— 这也是本仓唯一的"生产链"口径。
+    enum MacOrder: String { case display, raw }
+
+    /// 内存注册表: 只有 DB 的落盘口与配网探针会写它 (协议层不读库, 免得 Core 里绕成环)。
+    /// 进程重启后由 `DB.hydrateMacOrders()` 在启动窗口补上, 补不上的锁会走一次 rc=12 自愈再学习。
+    private static var macOrders: [String: MacOrder] = [:]
+    static func normMac(_ s: String) -> String { s.lowercased().replacingOccurrences(of: ":", with: "") }
+    static func setMacOrder(_ mac: String, _ o: MacOrder) { macOrders[normMac(mac)] = o }
+    static func macOrder(_ mac: String) -> MacOrder { macOrders[normMac(mac)] ?? .display }
+    static func flipped(_ o: MacOrder) -> MacOrder { o == .display ? .raw : .display }
+    /// 交给 `buildEkey` 的那个 TargetMAC 串 (它内部还会按字节对翻转一次)
+    static func targetMac(_ macHex: String, order: MacOrder? = nil) -> String {
+        let m = normMac(macHex)
+        return (order ?? macOrder(m)) == .raw ? HexKit.reversePairs(m) : m
+    }
+
     // ---------- 0x88 EKey 包络 ----------
     static func buildEkey(_ cmd: UInt8, _ macHex: String,
                           validFromSec: UInt32 = 0,
                           validToSec: UInt32? = nil,
-                          trackIdVal: UInt32 = 0) -> String {
+                          trackIdVal: UInt32 = 0,
+                          order: MacOrder? = nil) -> String {
         let vt = validToSec ?? validTo2118
-        var mac = macHex.lowercased().replacingOccurrences(of: ":", with: "")
+        var mac = targetMac(macHex, order: order)
         if mac.isEmpty { mac = "000000000000" }
         return "8800" + HexKit.reversePairs(mac)
             + HexKit.u32leHex(trackIdVal)
@@ -95,13 +122,15 @@ enum ZKProtocol {
     /// 密文管理面的**成帧收口**: wrapEnc 失败 (skey 非 16B / CCCrypt 失败 → 空密文) 时整帧返回 ""。
     /// 旧写法 buildFrame(cmd, wrapEnc(...)) 会把失败值包成"含空值 KLV 的完整帧", 于是
     /// `hex.isEmpty` 永不成立、08/0A/13/14/15/18/19/20/21/0B/0E/16/24/25 全部照样发给锁。
-    static func wrapFrame(_ cmd: UInt8, _ macHex: String, _ skeyHex: String, _ bodyHex: String, _ klvKey: Int) -> String {
-        let enc = wrapEnc(cmd, macHex, skeyHex, bodyHex, klvKey)
+    static func wrapFrame(_ cmd: UInt8, _ macHex: String, _ skeyHex: String, _ bodyHex: String, _ klvKey: Int,
+                          order: MacOrder? = nil) -> String {
+        let enc = wrapEnc(cmd, macHex, skeyHex, bodyHex, klvKey, order: order)
         return enc.isEmpty ? "" : buildFrame(cmd, enc, header: 8)
     }
 
-    static func wrapEnc(_ cmd: UInt8, _ macHex: String, _ skeyHex: String, _ bodyHex: String, _ klvKey: Int) -> String {
-        let env = buildEkey(cmd, macHex) + bodyHex
+    static func wrapEnc(_ cmd: UInt8, _ macHex: String, _ skeyHex: String, _ bodyHex: String, _ klvKey: Int,
+                        order: MacOrder? = nil) -> String {
+        let env = buildEkey(cmd, macHex, order: order) + bodyHex
         let cipher = AESKit.encryptHex(env, keyHex: skeyHex)
         // AESKit 在 skey 非 16B / CCCrypt 失败时返回 "" (JS crypto.js 是 throw)。
         // 空串若继续 buildKLV 会得到 "key len=0" 的空值密文 KLV 并真的发给锁 (08/0A/13/14/18/24/25 写命令面)。
