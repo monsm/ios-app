@@ -342,7 +342,9 @@ final class ExportProgress: ObservableObject, @unchecked Sendable {
 
     /// 719 失败重试: 记住上一次 start 的入参, 「重试」原地重放 (不复制各生成逻辑)。
     private var lastLabel = ""
-    private var lastWork: (() -> ExportItem?)?
+    /// 存的是 @Sendable 版本: 重试要把它再交给 start 的后台闭包参数, 非 Sendable 的存法会在
+    /// 重试那一行被判"把非 Sendable 函数值转成 @Sendable 可能引入竞争"。
+    private var lastWork: (@Sendable () -> ExportItem?)?
     private var lastFinish: ((ExportItem?, String) -> Void)?
     func retry() {
         guard let w = lastWork, let f = lastFinish else { return }
