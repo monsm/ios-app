@@ -200,7 +200,7 @@ iOS 侧现状：除 05 外全部一致；05 已改为 `needToken: true`（`LockS
 - 0x88 包络：`88 | 00 | MAC 反转 | TrackId LE4 | ValidFrom LE4 | ValidTo LE4 | Cmd | body`，命令用 TrackId=0 —— 一致。
   **但"MAC 从哪个序反转"两个参照实现不同**：APK 的 TargetMAC = `getAddress()`（显示序）⇒ 包络里落线上序；
   小程序旁支（`services/ble.js` 把 `adv.mac` 别名成 `macRaw`）⇒ 包络里落显示序。锁只认一种，认错回 rc=12。
-  本机默认按 APK 语义，并由配网期**只读 03 探针**真机裁定后落盘（详见 `docs/BRICK-AUDIT.md` §7d/§10）。
+  本机默认按 APK 语义（`.display`），真机裁定点 = **08 批次 1 的换序重发**（详见 `docs/BRICK-AUDIT.md` §10.1）。
   （`ValidFrom/ValidTo` 默认串 APK 用**本地** 2010/2118，本机用 0 与 UTC-2118；两者都包住"现在"，锁的有效期判据不受影响 ⇒ 记差异不改。）
 - 08 body `addCount(1B)+delCount(1B)+addPins+delPins`、首批 `delPins=[0xFFFFFFFF]` —— 一致。
 - 21 body `skeyLen(1B)+bkey` —— 一致；且 `KeyGen.genBkey()` 已实现 APK 的"相邻字节差 ≤2 就 +6"整形，与原版逐行相同。
@@ -209,7 +209,7 @@ iOS 侧现状：除 05 外全部一致；05 已改为 `needToken: true`（`LockS
 
 ### 结论 4：仍存在的**非阻塞**差异（记录在案）
 
-- PIN 分批：APK 每批 **20**（`o>20?20:o`），iOS 用 16。64 个 PIN 都是 4 批，语义等价 ⇒ 不改（改了要重跑金标，收益为零）。
+- ~~PIN 分批：APK 每批 20，iOS 用 16 ⇒ 不改~~ ⇒ **2026-10-17 夜已勘误为 20**（见 §7.3）。
 - APK 的 03 有一个变体（KLV#02=`"31"` 读 ROM 版本）；本机只发 KLV#02 空（全量状态，固件版本取自状态 KLV#0E）。
 - APK 在进入配网页后有 1 s 静默再发 23（`setTimeout(...,1e3)`）；iOS 由 `connect()` 等 CCCD 就绪，未再加固定静默。
 
@@ -220,3 +220,65 @@ iOS 侧现状：除 05 外全部一致；05 已改为 `needToken: true`（`LockS
   差分工具只复刻了 32 条；剩下 8 条的证据目前只在 vendor 基线夹具里。
 - 不替代 XCTest：云 runner 自 2026-09 起没有模拟器设备，仓里那批测试**从未执行过**（`ios.yml` 头注已写明），
   编译闸门只保证它们不会腐坏。真机行为一律见 `docs/VERIFY-CHECKLIST.md`。
+
+## 7. 2026-10-17 夜：配对链路逐字复核 (Java 生产链 + main.js) 与三处勘误
+
+### 7.1 明文包络 (`kt.getBytes`, main.js 368818 起) —— 本机已一致
+
+```
+getBytes() = ot.HeadMark("88") + Version("00")
+           + 按字节对反转(TargetMAC)          // TargetMAC = 页面/台账里的 MAC 串 (= Android getAddress())
+           + toSmallByteOrder(TrackId,4) + toSmallByteOrder(ValidFrom,4) + toSmallByteOrder(ValidTo,4)
+           + Cmd(1B) + getCmdBody()
+```
+
+- `ot` 枚举 (`HeadMark="88"`, GetStatus "03", Open "04", SyncPINs "08", SyncPwd "0A", …) 与 `Jn` **同号**；
+  密文面里那个 Cmd 字节 = 外框 cmd 号 —— 本机 `buildEkey(cmd, …)` 一致。
+- 默认窗口：`ValidFrom = getProtocolTimeSecond("2010-01-01 00:00:00") = 0`；
+  `ValidTo = 3408134400 = 0xCB240100` (2118-01-01 减去 2010-01-01，两端同解析口径) —— 本机 `validTo2118` 逐值相同。
+
+### 7.2 帧与令牌 (Java `LockCommBase.getBytes(ssToken)`) —— 本机已一致
+
+```
+87 00 | u16LE(仅 KLV 的长度) | cmdId | 00 00 00 | KLV…      // 8 字节头; 长度只数 KLV, 不含头/命令字
+needSessionToken() ⇒ mKLVList.add((byte) -18, ssToken)        // 0xEE, 追加在 KLV 表**最后**
+```
+
+- `needToken` 由 JS `getParams().needToken` 原样下来（28 个命令类各有定值）：05 = **true**；08/21/03/04/0E/16/18/20/24/25/13/14/15/0A/0B/22 = true；
+  23/12/41/43/44 与网关类 = false。本机 `rcKLV` + needToken 表逐条对齐。
+- 令牌在每条需令牌命令前**无条件重取**（`doExecute` → `doRefreshSsToken`，不查有效期）—— 本机一致。
+- 响应 rc 所在 KLV：03→#03、04→#03、05→**#01**（#02 = skey 回显）、08→#03、21→#03、23→**#01** = 交换方式。
+
+### 7.3 已勘误 A：PIN 分批 16 → **20**
+
+`syncPins` / `syncPins20` 逐字：`pins = generateRandomNumbers(64)`；`0==start && (del=[4294967295])`；
+`end = start + (remain > 20 ? 20 : remain)` ⇒ 真机帧序 **20/20/20/4**。本机（Swift 与 vendor/小程序 JS）此前取 16 是自创值，
+已全部改回 20 —— 锁端若按固定 20 槽位对位解析这一批，16 的批会让后续字节错位，而错位读出的“目标 MAC”
+正好会回 rc=12「mac地址不正确」。
+
+### 7.4 待办 B（**未改**，需真锁验证）：协议时间差一个时区偏移
+
+- APK：`getProtocolTime(str) = floor(epoch(str)) - floor(epoch(本地 2010-01-01 00:00:00))` ⇒ 东八区 = UTC 基准 **+28800**。
+- 本机：`ZKProtocol.nowProtoSeconds()` / `protoSecOrNil()` 是纯 UTC 基准 ⇒ 恒定**少 28800 秒**（8 小时）。
+- 影响面：05 的 KLV#01 时间、0E 校时、0A/0B/13/14 的有效期窗口（锁拿自己的钟比）。两边各自自洽、彼此不同 ——
+  同一把锁被两个 App 配过就会出现 8 小时偏差。
+- 为什么这轮没动：要同时改 Swift 与 vendor JS，且 `tools/golden.js` 里有按本机时区解析的字面量
+  (`new Date('2010-01-01T00:00:00')`)，得连基准一起改成显式口径才算净收益 —— 属独立一批。
+- 验证方式（手上有已配对的锁时）：0E 校时后回读 03 的 `lockTime`，与手机本地时间对比。
+
+### 7.5 已勘误 C：只读 03 探针作废（真机反例）
+
+见 `docs/BRICK-AUDIT.md` §10.1：03 的 rc=0 **不能**证明包络 MAC 字节序（真机上 03 rc=0 而 08 回 rc=12），
+裁定权已交给 08 批次 1 的换序重发。
+
+### 7.6 顺带复核（无差异，记录以免下次重查）
+
+- `Gt`(ot.SyncPINs) body = `addCount(1B)` + `delCount(1B)` + addPins(每个 4B LE) + delPins —— 一致。
+- `Qt`(ot.setBeacomKey) body = `skeyLen(1B)` + skey(16B)；命令 `ne` = KLV#**02** = 密文 —— 一致。
+- `Et`(05) KLV = #01 时间(4B LE) / #02 keyType(1B = 1) / #03 skey(16B) —— 一致。
+- `Rt`(08) = KLV#01 密文；`yt`(03) = KLV#01 密文 + KLV#02 空 —— 一致。
+- 配对真序：23 → **01** → 05 → **01** → 08×4 → 21 → (cloud)。本机 23 → 01 → 05 → 08×4 → 21 → 03(回读) 同一条，
+  末条 03 为本机自加（离线环境要靠它取 pid/固件版本），读类、无写副作用。
+- CryptoJS `pad.ZeroPadding` 在**已对齐**时仍补满一整块 (`blockSize - ((len % blockSize) || blockSize)`)，
+  本机 `AESKit` 只在实际缺位时补 —— 05/03/08/0E/21 的明文长度都**不对齐**，两者逐字节相同；
+  新增命令若明文恰为 16 的倍数，必须按 CryptoJS 规则补一整块。

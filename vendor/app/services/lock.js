@@ -568,10 +568,12 @@ const label = (o && o.name) || CMD_NAME[cmd] || ('cmd ' + CMD_HEX(cmd));
       // 3. 刷新令牌 (密文面需要)
       p('步骤 4/7: 获取会话令牌');
       await this._ensureToken();
-      // 4. 08 PIN 池: 64 个分 4 批 (≤20/批); 首批 delPins=[0xFFFFFFFF] 清哨兵
+      // 4. 08 PIN 池: 64 个**每批 20** (20/20/20/4, 共 4 批); 首批 delPins=[0xFFFFFFFF] 清哨兵
+      //    2026-10-17 夜据原版 APK 逐字勘误: main.js `syncPins20` 取名即批大小 20 (`o>20?20:o`),
+      //    64 个 PIN 由 `generateRandomNumbers(64)` 出 —— 旧版这里的 16 是自创值, 已改回 20。
       p('步骤 5/7: 同步 PIN 池 (4 批)');
-      const BATCH = 16;
-      for (let i = 0; i < 4; i++) {
+      const BATCH = 20;
+      for (let i = 0; i * BATCH < pins.length; i++) {
         const batch = pins.slice(i * BATCH, (i + 1) * BATCH);
         const delPins = i === 0 ? [K.DEL_PIN_SENTINEL] : [];
         const rb = await this._exec(C.cmd08SyncPinsBatch(this._macOf(deviceId), skey, batch, { delPins }));
