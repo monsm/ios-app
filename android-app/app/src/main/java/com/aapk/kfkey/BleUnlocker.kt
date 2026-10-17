@@ -9,6 +9,7 @@ import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
+import android.bluetooth.BluetoothStatusCodes
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
@@ -189,7 +190,10 @@ class BleUnlocker(private val ctx: Context) {
             val chunk = data.copyOfRange(off, off + n)
             val done = CompletableDeferred<Boolean>()
             bind(done)
-            if (!gatt.writeCharacteristic(chr, chunk, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT)) return false
+            // API 33 起 writeCharacteristic 返回的是 BluetoothStatusCodes (Int), 不是 Boolean
+            if (gatt.writeCharacteristic(chr, chunk, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT)
+                != BluetoothStatusCodes.SUCCESS
+            ) return false
             val ok = withTimeoutOrNull(4_000) { done.await() } ?: return false
             if (!ok) return false
             off += n
