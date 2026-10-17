@@ -16,6 +16,7 @@ import android.bluetooth.le.ScanSettings
 import android.content.Context
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.awaitClose
@@ -263,7 +264,14 @@ class BleUnlocker(private val ctx: Context) {
         runCatching { s.notes.close() }
     }
 
-    /** 建链失败到底卡在哪一步, 给用户分得开的那两档。 */
+    /**
+     * 建链失败到底卡在哪一步, 给用户分得开的那两档。
+     *
+     * getCompleted() 是 ExperimentalCoroutinesApi, 所以**只给这一个函数**加 @OptIn: 这里读的是
+     * connected 已完成的那个 Boolean (true=GATT 连上了但服务没读到 / false=链路死了), 用
+     * isCompletedExceptionally 区分不出来 (complete(false) 是正常完成, 不是异常完成)。
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun linkFailMessage(s: Session): String {
         val connected = s.connected.isCompleted && runCatching { s.connected.getCompleted() }.getOrDefault(false)
         return if (connected) "连上了但读不到开锁通道 (服务/特征缺失) — 这把锁的凭证可能不是给本机的"
