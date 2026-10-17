@@ -35,10 +35,14 @@ enum ZKProtocol {
     /// `Int64` 里（靠"恰好整千"才没截断）—— 那种形状下次被人改成 `/1000.0` 或换常数基准就静默漂，
     /// 所以收成一份并由 `swiftlint` 检查⑩ 盯住 (§10.32)。
     static func protoSecondsToUnix(_ sec: Int64) -> Double { Double(sec) + Double(epochMs / 1000) }
-    // 默认有效止 (buildEkey 的默认 VT) = JS protoTime('2118-01-01T00:00:00') 本地口径。
-    //   本地 2118 减本地 2010 = 108 年整 ⇒ **与机器时区无关**, 恒 4_670_438_400 (=4670438400),
-    //   与 APK kt.ValidTo 逐字节一致 (已用 0A/14 解密帧核对过)。
-    static let validTo2118: UInt32 = UInt32(protoSecondsFromMs(4_670_438_400_000))
+    // 默认有效止 (buildEkey 的默认 VT) = JS protoTime('2118-01-01T00:00:00') 本地口径 = **3_408_134_400**。
+    //   2026-10-17 对拍勘误: 旧写法 `protoSecondsFromMs(4_670_438_400_000)` 里的 4_670_438_400 是
+    //   **2118-01-01T00:00:00Z** 的 Unix 秒, 拿它减"本地 2010"基准 ⇒ 凭空多一个时区偏移 (+28800),
+    //   东八区算得 3_408_163_200, 而 JS `buildEkey` 的默认 vt 是 3_408_134_400 (= 本地 2118 − 本地 2010,
+    //   108 年整, 与机器时区无关)。差 8 小时: 对 2118 年这个上界无害, 但 08/0A/0B/0E/13/14/15/16/18/19/
+    //   20/21/24/25 的**包络 VT 与金标逐字节不一致** —— 而 cmdsshadow 的影子副本用的是 JS 值,
+    //   于是这道闸门一直是"假绿"(它没有忠实复刻这一行)。
+    static let validTo2118: UInt32 = 3_408_134_400
 
     // ---------- KLV ----------
     static func buildKLV(_ key: Int, _ valHex: String) -> String {

@@ -70,8 +70,32 @@ final class HardwareService: ObservableObject {
     private func gatewayRecord(_ mac: String) -> Gateway? { DB.gateway(mac) }
     private func pidFor(_ mac: String) -> Int? {
         if dongleRecord(mac) != nil { return PidMap.ZKBBV1 }  // 钥匙串当前型号恒为 ZKBBV1 (原两分支同值)
-        if let g = gatewayRecord(mac) { return g.pid }
+        // 网关: 旧记录从未落 pid (见 provisionGateway 的对拍勘误), pid=0 时按 GW 家族首项回落,
+        // 否则 scanForPID(pid: 0) 永远匹配不到广播 ⇒ 缓存 deviceId 失效后网关全部操作 20s 超时。
+        if let g = gatewayRecord(mac) { return g.pid > 0 ? g.pid : PidMap.GW }
         return nil
+    }
+
+    /// 按**型号族**扫描 (网关有 GW / GW_commercial / GW2_commercial 三个 pid)。
+    /// 原 APK gateway.js 的扫描就是 GW_PIDS 全族匹配, 只认 12193 会让另外两种网关永远搜不到。
+    private func scanForPIDs(pids: [Int], resetRequired: Bool, timeoutMs: Int) async throws -> String {
+        guard !pids.isEmpty else {
+            throw BLEErrorX.msg("台账缺少该设备的型号 (pid), 拒绝按广播盲连 — 请先在 App 内连接门锁刷新档案")
+        }
+        try await ble.startScan(timeoutMs: timeoutMs)
+        defer { ble.stopScan() }
+        let deadline = Date().addingTimeInterval(Double(timeoutMs) / 1000.0)
+        while Date() < deadline {
+            for d in ble.allDiscovered() {
+                guard let a = ZKProtocol.parseAdv(d.advertisHex) else { continue }
+                if !pids.contains(a.pid) { continue }
+                if resetRequired && a.resetStatus == 0 { continue }
+                ble.stopScan()
+                return d.deviceId
+            }
+            try? await Task.sleep(nanoseconds: 300_000_000)
+        }
+        throw BLEErrorX.code(.notFound)
     }
 
     private func scanForPID(pid: Int?, resetRequired: Bool, timeoutMs: Int) async throws -> String {
@@ -81,20 +105,7 @@ final class HardwareService: ObservableObject {
         guard let pid else {
             throw BLEErrorX.msg("台账缺少该设备的型号 (pid), 拒绝按广播盲连 — 请先在 App 内连接门锁刷新档案")
         }
-        try await ble.startScan(timeoutMs: timeoutMs)
-        defer { ble.stopScan() }
-        let deadline = Date().addingTimeInterval(Double(timeoutMs) / 1000.0)
-        while Date() < deadline {
-            for d in ble.allDiscovered() {
-                guard let a = ZKProtocol.parseAdv(d.advertisHex) else { continue }
-                if a.pid != pid { continue }
-                if resetRequired && a.resetStatus == 0 { continue }
-                ble.stopScan()
-                return d.deviceId
-            }
-            try? await Task.sleep(nanoseconds: 300_000_000)
-        }
-        throw BLEErrorX.code(.notFound)
+        return try await scanForPIDs(pids: [pid], resetRequired: resetRequired, timeoutMs: timeoutMs)
     }
 
     // 扫描并登记新硬件 (页面「搜索」动作)
@@ -312,18 +323,26 @@ final class HardwareService: ObservableObject {
     /// 网关配网全链 (App gwreset: 扫描 → 38 → 31 写 WiFi → 35 重启)
     func provisionGateway(ssid: String, password: String, progress: @escaping (String) -> Void) async throws -> Gateway {
         progress("步骤 1/5: 搜索网关 (请靠近网关, 橙色灯闪烁中)")
-        let deviceId = try await scanForPID(pid: PidMap.GW, resetRequired: true, timeoutMs: 15000)
+        let deviceId = try await scanForPIDs(pids: PidMap.gws, resetRequired: true, timeoutMs: 15000)
         try await ble.connect(deviceId: deviceId)
         connectedTargetId = deviceId   // 否则后续 readGatewayState→connectTarget 会自断重连,
                                        // 且台账未落盘 pidFor=nil → scanForPID 匹配任意广播设备
-        // 读取广播 MAC → 台账键
+        // 读取广播 MAC → 台账键; 顺带把 pid 落库 (2026-10-17 对拍勘误: 旧写法只写 bleId/boundAt,
+        // pid 恒为 Gateway.pid 默认值 0 ⇒ 缓存 deviceId 失效后 pidFor 返回 0, scanForPID 永不命中,
+        // 网关的刷新状态/重启/重新配网全部 20s 超时失败)。
         var mac = ""
+        var advPid = 0
         for d in ble.allDiscovered() {
-            if d.deviceId == deviceId, let a = ZKProtocol.parseAdv(d.advertisHex), let m = a.macRaw { mac = m; break }
+            if d.deviceId == deviceId, let a = ZKProtocol.parseAdv(d.advertisHex) {
+                if let m = a.macRaw { mac = m }
+                advPid = a.pid
+                break
+            }
         }
         if mac.isEmpty { mac = deviceId } // 兜底: 以 deviceId 为键
         var rec = DB.gateway(mac) ?? Gateway(mac: mac)
         rec.bleId = deviceId
+        if rec.pid <= 0 { rec.pid = advPid > 0 ? advPid : PidMap.GW }
         if rec.boundAt.isEmpty { rec.boundAt = ISO8601DateFormatter().string(from: Date()) }
 
         progress("步骤 2/5: 读取网关信息 (cmd 38)")

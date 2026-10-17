@@ -2129,7 +2129,12 @@ struct CredentialsView: View {
             UINotificationFeedbackGenerator().notificationOccurred(.error)
             return false
         }
-        let pwd = ZOTP.generate(macHex: kc.mac, skeyHex: kc.skey, periodSec: 30, idx: idx)
+        // 周期必须取**锁端上报**的 zotpPeriod (03#05, 单位分钟), 缺省才回落 30 —— 与 AppIntents 同口径。
+        // 2026-10-17 对拍发现: 这里写死 30, 而锁端若是别的窗口, 页面算出的六位码锁端必判错
+        // (同一把锁上 Siri 读快照生成、反而能用)。原 APK 的 to.generateZOTPPwd 用的就是锁端窗口。
+        let pRaw = DB.readStatus(kc.mac)?.zotpPeriod ?? 0
+        let period = pRaw > 0 ? pRaw : 30
+        let pwd = ZOTP.generate(macHex: kc.mac, skeyHex: kc.skey, periodSec: period, idx: idx)
         // `generate` 只在算得出码时才返回值 (钥匙串长度、MAC 形状任一不过就返回空串，见 ZOTP.swift)。
         // 空串不许当「生成成功」：原先会一路把空值写进 otpPwd、复制进剪贴板、再震一下「成功」，
         // 屏幕上是一个看不见的码，而 idx 也已经被记进窗口 —— 用户只知道「没开门」。
