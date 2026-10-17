@@ -323,11 +323,14 @@ extension ExportItem {
 }
 
 // ================= 导出进度 (692 生成可取消, 不阻塞 UI) =================
-/// 导出进度是纯界面状态 (@Published 三枚), 整类住在主 actor:
-/// · @Published 必须在主线程写 (BLEService 头注里那条真机崩溃就是这个原因);
-/// · 生成体仍走 Task.detached —— 重活一点都没有被拉回主线程, 性能口径不变。
-@MainActor
-final class ExportProgress: ObservableObject {
+/// 导出进度: 三枚 @Published 必须在**主线程**写 (BLEService 头注里那条真机崩溃就是这个原因),
+/// 而生成体必须能离开主线程 —— 所以这个类刻意**不是** @MainActor, 而是把"写状态"的那几段
+/// 显式 hop 到主 actor (MainActor.run)。
+/// @unchecked Sendable 的依据与 BLEService 的 publishOnMain 同一口径: 全部可变状态的写入都发生在
+/// 主 actor 上, 后台只有 detached 的生成体在跑, 它不碰这个对象。
+/// (试过把整类拉上主 actor: 那样 Task.detached 就变成"把主 actor 隔离的闭包发出去", Swift 6 直接判错 ——
+///  而那个闭包捕获的是界面配置, 恰恰是它必须离开主线程的理由。)
+final class ExportProgress: ObservableObject, @unchecked Sendable {
     @Published var running = false
     @Published var step = ""
     @Published var done: ExportItem?
@@ -353,31 +356,29 @@ final class ExportProgress: ObservableObject {
         lastLabel = label; lastWork = work; lastFinish = finish
         cancel()
         running = true; done = nil; failed = ""
-        // Task { } 从 @MainActor 的 start() 里创建, 因此**继承主 actor 隔离** ——
-        // 原来那三层 await MainActor.run 是多余的 (而且每层都要把一个 @Sendable 闭包
-        // 连人带 self 一起塞过去, 正是告警的来源)。生成体依旧 Task.detached, 不占主线程。
         task = Task { [weak self] in
             guard let self else { return }
-            self.step = label
-            self.running = true
+            await MainActor.run { self.step = label; self.running = true }
             // 生成放后台线程 (UI 不阻塞); 取消时拦"收尾写回" (692)
             let child = Task.detached(priority: .userInitiated) { work() }
-            self.child = child
+            await MainActor.run { self.child = child }
             let item = await child.value
             let cancelled = Task.isCancelled || child.isCancelled
-            self.child = nil
-            self.running = false
-            self.step = ""
-            // finish 走 self.lastFinish 而不是捕获局部闭包: 后者不是 Sendable,
-            // 一旦被送进 Task 闭包就是 Swift 6 的"non-Sendable capture"。
-            if let v = item, !cancelled {
-                self.done = v
-                UINotificationFeedbackGenerator().notificationOccurred(.success)
-                self.lastFinish?(v, "")
-            } else {
-                self.failed = cancelled ? "已取消" : "生成失败"
-                if !cancelled { UINotificationFeedbackGenerator().notificationOccurred(.error) }
-                self.lastFinish?(nil, self.failed)
+            await MainActor.run {
+                self.child = nil
+                self.running = false
+                self.step = ""
+                // finish 走 self.lastFinish 而不是捕获局部闭包: 后者不是 Sendable,
+                // 一旦被送进 MainActor.run 的 @Sendable 闭包就是 Swift 6 的"non-Sendable capture"。
+                if let v = item, !cancelled {
+                    self.done = v
+                    UINotificationFeedbackGenerator().notificationOccurred(.success)
+                    self.lastFinish?(v, "")
+                } else {
+                    self.failed = cancelled ? "已取消" : "生成失败"
+                    if !cancelled { UINotificationFeedbackGenerator().notificationOccurred(.error) }
+                    self.lastFinish?(nil, self.failed)
+                }
             }
         }
     }

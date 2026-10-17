@@ -408,7 +408,9 @@ final class DFUBleSession: NSObject, CBCentralManagerDelegate, CBPeripheralDeleg
     }
 
     // ---- Secure DFU ----
-    func uploadSecure(binHex: String, datHex: String, onProgress: @escaping (Int, Int) -> Void) async throws {
+    /// onProgress 标 @Sendable: 这个闭包会被送进 async 上传链 (Swift 6 的 sending 检查)。
+    /// 调用点传进来的闭包只捕获 @MainActor 的进度回调与一个 Int, 因此本身即 Sendable。
+    func uploadSecure(binHex: String, datHex: String, onProgress: @escaping @Sendable (Int, Int) -> Void) async throws {
         _ = try await op("02" + "0000", "PRN")                       // PRN=0
         let selCmd = try await op("06" + "01", "Select command")     // 选命令对象
         let cmdMax = try rdU32(selCmd.payload, 0, "Select command")
@@ -452,7 +454,7 @@ final class DFUBleSession: NSObject, CBCentralManagerDelegate, CBPeripheralDeleg
     }
 
     // ---- Legacy DFU ----
-    func uploadLegacy(binHex: String, datHex: String, onProgress: @escaping (Int, Int) -> Void) async throws {
+    func uploadLegacy(binHex: String, datHex: String, onProgress: @escaping @Sendable (Int, Int) -> Void) async throws {
         try await writeControl("01" + "04") // Start DFU (mode 4 = application)
         try await writePacket(HexKit.u32leHex(0) + HexKit.u32leHex(0) + HexKit.u32leHex(UInt32(binHex.count / 2)))
         _ = try await resp(1, "Start DFU", timeoutMs: 10000)

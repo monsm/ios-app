@@ -6,7 +6,23 @@ import Foundation
 
 @MainActor
 enum LiveUnlock {
-    private static var current: Activity<UnlockActivityAttributes>?
+    /// 活动句柄放进 Locked 而不是裸 static var:
+    /// `Activity` **不是** Sendable, 而 update/end 是 nonisolated async —— 从主 actor 上的裸变量
+    /// 取出来再送进 async 调用, Swift 6 判"发送风险"(RegionIsolation::SendingRisksDataRace)。
+    /// 放进 Sendable 的锁容器、并经 nonisolated 取件口取出后, 拿到的值区域是"断开的", 可以合法发送。
+    private nonisolated static let currentBox = Locked<Activity<UnlockActivityAttributes>?>(nil)
+    /// 取走当前活动 (顺手清空): 非隔离 —— 返回值不挂在主 actor 区域上
+    nonisolated private static func takeCurrent() -> Activity<UnlockActivityAttributes>? {
+        currentBox.withLock { v in
+            let o = v
+            v = nil
+            return o
+        }
+    }
+    /// 只读一眼 (begin 的去重守卫 / 孤儿收割的比对用)
+    nonisolated private static func peekCurrent() -> Activity<UnlockActivityAttributes>? {
+        currentBox.withLock { $0 }
+    }
     /// 2026-10-14: 代次令牌 —— 取消/失败路径可能**晚于**下一次 begin 执行, 若只按 `current` 收,
     /// 会把新开锁的活动误收掉 (1.2s 内二次触发开锁即可复现)。begin 返回本场令牌, 收场按令牌校验。
     private static var generation = 0
@@ -22,22 +38,22 @@ enum LiveUnlock {
     /// 返回本场令牌 (收场时回传; -1 = 本场没有起活动)。
     @discardableResult
     static func begin(lockName: String) -> Int {
-        guard enabled, current == nil else { return -1 }
+        guard enabled, peekCurrent() == nil else { return -1 }
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return -1 }
         generation += 1
         let token = generation
         let attr = UnlockActivityAttributes(lockName: lockName)
-        current = try? Activity.request(
+        let made = try? Activity.request(
             attributes: attr,
             content: .init(state: .init(phase: .connecting), staleDate: Date().addingTimeInterval(30)),
             pushType: nil)
+        currentBox.withLock { $0 = made }
         return token
     }
 
     /// 开锁成功: 更新成"已开锁", **10 秒后自动收起** (原句口径)
     static func succeeded(lockName: String) {
-        guard let a = current else { return }
-        current = nil
+        guard let a = takeCurrent() else { return }
         generation += 1
         Task {
             await a.update(.init(state: .init(phase: .unlocked), staleDate: Date().addingTimeInterval(10)))
@@ -48,8 +64,7 @@ enum LiveUnlock {
 
     /// 失败: 立刻收起 —— 不留一条失败态挂在锁屏上等人误会
     static func failed() {
-        guard let a = current else { return }
-        current = nil
+        guard let a = takeCurrent() else { return }
         generation += 1
         Task { await a.end(nil, dismissalPolicy: .immediate) }
     }
@@ -64,7 +79,7 @@ enum LiveUnlock {
     /// 而 `begin` 的 `current == nil` 守卫只认内存态 → 会叠出第二条。启动时枚举并全部收起。
     static func reapOrphans() {
         Task {
-            for a in Activity<UnlockActivityAttributes>.activities where a.id != current?.id {
+            for a in Activity<UnlockActivityAttributes>.activities where a.id != peekCurrent()?.id {
                 await a.end(nil, dismissalPolicy: .immediate)
             }
         }
