@@ -312,9 +312,13 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(timeoutMs)) { [weak self] in
             // 只回收"还是我这一次"的等待。Swift 不允许对闭包用 === 比引用 (run 179 的 error:
             // cannot check reference equality of functions), 所以用整数代次判断新一轮是否已开始。
-            guard let self, self.rssiGeneration == myGen, self.rssiCompletion != nil else { return }
+            // 不直接捕获 completion: 把它带进 @Sendable 闭包正是 run 181 报
+            // sending 'completion' risks causing data races 的根因。改为经 self 回读
+            // (self 是 @unchecked Sendable, 且本类全部读写都在 main 队列, didReadRSSI
+            // 与超时回收互斥于 rssiGeneration), 于是跨闭包边界的只有 self 与 myGen。
+            guard let self, self.rssiGeneration == myGen, let cb = self.rssiCompletion else { return }
             self.rssiCompletion = nil
-            completion(nil)
+            cb(nil)
         }
     }
 
