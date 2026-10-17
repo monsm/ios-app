@@ -171,6 +171,8 @@ enum StatusParser {
         case 6: return "这条开锁凭证已绑定到别的设备, 请重新下发凭证"
         case 9: return "锁内时间与手机偏差过大 — 先校准时间再试"
         case 21: return "门从里面反锁了, 先解除反锁再试"
+        case 23: return "这一下没取到有效指纹图像 (按太快/手指太湿/重复同一位置) — 换一个位置重按"
+        case 24: return "锁已结束录入 (两次按压之间超过 15 秒) — 请重新开始录入"
         case 25: return "锁正忙 (可能刚有人操作过), 等两秒再试"
         case 27: return "门锁处于布防状态, 请先解除布防再开锁"
         default: return nil

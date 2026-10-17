@@ -2555,9 +2555,14 @@ struct FpStudio: View {
         .animation(DS.Motion.standard, value: presses.count)
     }
     private var progressText: String {
-        if presses.isEmpty { return "准备就绪" }
-        if presses.count < 8 { return "重复此步骤 (\(presses.count)/8)" }
-        return "正在确认…"
+        // 与 StartAddFpView 同一套提示节奏 (APK 第 4 下起要求换到手指边缘):
+        // 同一处连按会被锁判 rc=23「无法获取有效的指纹图片」而不计数 —— 换位置是能不能收满 8 次的关键。
+        switch presses.count {
+        case 0: return "准备就绪"
+        case 1...3: return "重复此步骤 (\(presses.count)/8) — 抬起后再按"
+        case 4...6: return "第 \(presses.count + 1)/8 次: 把手指的边缘按上去, 换一个位置"
+        default: return "第 \(presses.count + 1)/8 次: 再换一个角度"
+        }
     }
 
     // ---------- 315/174 命名建议轮播 + 319 重录继承 ----------

@@ -889,9 +889,15 @@ struct StartAddFpView: View {
     }
 
     private var progressText: String {
-        if presses.isEmpty { return "请将手指按在指纹头上再抬起" }
-        if presses.count < 8 { return "重复此步骤 (\(presses.count)/8)" }
-        return "正在确认…"
+        // 提示随次数走 (APK StartaddfpPage 同一做法: 第 4 下起改口"请将手指边缘按在指纹头上再抬起")。
+        // 为什么必须换位置: 同一处连按 8 次, 锁会回 rc=23「无法获取有效的指纹图片」——
+        // 那一下**不计数**, 于是屏上永远停在 6/8 附近, 最后锁的 15s 窗口一过就退出录入。
+        switch presses.count {
+        case 0: return "请将手指按在指纹头上再抬起"
+        case 1...3: return "重复此步骤 (\(presses.count)/8) — 抬起后再按"
+        case 4...6: return "第 \(presses.count + 1)/8 次: 把手指的边缘按上去, 换一个位置"
+        default: return "第 \(presses.count + 1)/8 次: 再换一个角度"
+        }
     }
 
     private func start() async {

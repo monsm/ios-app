@@ -597,18 +597,20 @@ final class LockService: ObservableObject {
         var nextTimeout: UInt32?
         var rc: Int
     }
-    // cmd 13: 一次请求多响应 — 锁逐次按压逐次回帧 (orderIdx 1..N, orderIdx==0 收尾), JS _execMulti 语义
-    // onPress 是**纯 UI 出口**: 每收到一帧就在 MainActor 上调一次 (collector 由 handle() 起,
-    // 而 handle 本身就是 Task { @MainActor in … })，让录入页的 8 点进度能实时填。
-    // 返回值与不传 onPress 时逐字节一致 —— 不拿它当协议能力，只是把已有数据早一点交给界面。
-    /// 采集窗口口径 (逐字对齐 APK Java `BleLockConnector`):
-    ///   · `post()` 发帧后只起**一个** 8s 接收计时器 (`BLE_TIMEOUT`, :692);
-    ///   · `onCharacteristicChanged` 里**收到任何一帧就 cancelReceiveTimer()** (:196), 且**不重启**;
-    ///   · ⇒ 首帧之后 APK 侧**没有任何 App 计时器**, 8 次按压的节拍完全由锁按 13 帧里的 timeout=15s 裁定。
-    /// 所以本方法: 只有**首帧**窗口 `firstFrameMs`(默认 8s = Java 那个计时器) + 整体兜底 `overallMs`。
-    /// 2026-10-17 对拍勘误: 旧实现自创了"两次按压之间 16s 空闲即收尾" —— 用户看一眼屏幕、换个姿势
-    /// 就会被提前掐断, 表现是"按了 3 下就不动了 / 只收到 3/8 次按压", 而原 APK 会一直等下去。
-    func fpStart(times: Int = 8, firstFrameMs: Int = 8000,
+    // cmd 13: 一次请求多响应 — 锁逐次按压逐次回帧 (orderIdx 1..N), 到第 N 次由 App 发 14 启用。
+    // onPress 是**纯 UI 出口**: 每收到一帧干净按压就在主 actor 上调一次, 让录入页的 8 点进度实时填。
+    //
+    // 采集窗口与收尾判据 (逐字对齐 APK: Java `BleLockConnector` + 前端 `main.js` requestAddFp):
+    //   · `post()` 发帧后只起**一个** 8s 接收计时器 (BLE_TIMEOUT); 收到第一帧即 cancel, 且不重启;
+    //   · 首帧之后 APK 侧没有任何 App 计时器 —— 每次按压的节拍由 13 帧里的 timeout=15s 裁定;
+    //   · **锁从不发"结束帧"**: `orderIdx==0` 只有一个含义 = "启动成功"应答 (APK: 0==orderIdx → "启动成功");
+    //     rc==23 = 指纹模糊 (这一下没取到有效图像, 不计数, 用户重按); rc==24 = 录入超时 (锁已退出录入);
+    //     orderIdx 1..8 = 第 N 次按压, 到 8 由 App 用该帧 batchNumber 发 14。
+    // 2026-10-17 真机勘误 (「按一下就被判结束 / 永远到不了 8 次, 最后门锁提示验证失败」):
+    //   旧判据把「收过按压之后出现的 orderIdx==0」当成锁的收尾帧 —— 但锁在模糊/重复按压时同样会回
+    //   0 号帧, 于是第一下之后就被判"结束"、页面退出; 再进来时锁的 15s 按压窗口已经过去, 后面的
+    //   按压全被锁当成普通开锁验证 (所以门锁提示"验证失败")。现在只认"收满 times 次干净按压"。
+    func fpStart(times: Int = 8, firstFrameMs: Int = 8000, idleAfterPressMs: Int = 16000,
                  overallMs: Int = 150000, onPress: ((FpPress) -> Void)? = nil) async throws -> [FpPress] {
         let (m, sk) = try keys()
         try await ensureToken()
@@ -623,23 +625,22 @@ final class LockService: ObservableObject {
             return FpPress(orderIdx: u32(0x04), featureNumber: u32(0x05),
                            batchNumber: u32(0x06), nextTimeout: u32(0x07), rc: extractRc(0x13, f))
         }
-        // 按压帧 = 带 KLV#04 且序号 > 0。锁收到 13 后会**先回一帧不表示按压的应答**
-        // (APK StartaddfpPage: orderIdx==0 → "启动成功"), 那一帧不能拿去点亮 1/8 进度。
-        func isPress(_ f: ZKProtocol.ParsedFrame) -> Bool { (press(of: f).orderIdx ?? 0) > 0 }
-        func pressesCount() -> Int { frames.reduce(0) { $0 + (isPress($1) ? 1 : 0) } }
-        // 收尾判据 (JS _execMulti 的 done + APK 状态机):
-        // ① 显式收尾帧 = 带 KLV#04、序号 0, **且已经收过按压** —— 只认「按压之后的那一帧 0」;
-        //    旧实现是 `while frames.isEmpty`, 首帧应答一到就退出并清掉 collector ⇒ 之后每一下按压
-        //    都被 handle() 丢掉, 屏上恒停在「重复此步骤 (1/8)」—— 这就是"手指按上去没有任何反应"的根因。
-        // ② 已收满 times 次按压; ③ 时间上界由下面的 deadline 兜。
-        func collectionDone() -> Bool {
-            guard pressesCount() > 0 else { return false }
-            if frames.contains(where: { f in
-                f.klvs.first(where: { $0.key == 0x04 }).map { StatusParser.leHexToU32($0.val) } == 0
-            }) { return true }
-            return pressesCount() >= times
+        let rcBlurry = 23   // 锁端"无法获取有效的指纹图片" (= APK 前端说的"指纹模糊")
+        let rcTimeout = 24  // 锁端"录入指纹超时" = 锁已退出录入态
+        func rcOf(_ f: ZKProtocol.ParsedFrame) -> Int { extractRc(0x13, f) }
+        /// 干净按压 = rc 正常 (0 或缺省 -1) 且 KLV#04 序号 > 0。
+        /// 模糊帧/超时帧**不计数** —— 旧写法只判 orderIdx>0, 模糊那一下也会点亮一格进度,
+        /// 于是屏上写着 4/8、锁里其实只有 3 次有效特征。
+        func isPress(_ f: ZKProtocol.ParsedFrame) -> Bool {
+            let r = rcOf(f)
+            guard r == 0 || r == -1 else { return false }
+            return (press(of: f).orderIdx ?? 0) > 0
         }
-        var lastFrameAt = Date()   // 最近一帧到达时刻 (collector 刷新; 空闲判据用)
+        func pressesCount() -> Int { frames.reduce(0) { $0 + (isPress($1) ? 1 : 0) } }
+        /// 收尾判据只有一条: 收满 times 次干净按压。没有任何"提前收尾"的合法信号。
+        func collectionDone() -> Bool { pressesCount() >= times }
+        var lastFrameAt = Date()          // 最近一帧到达时刻 (collector 刷新; 空闲判据用)
+        var stopRc: Int? = nil            // 锁主动中止 (模糊以外的错误码 / 超时)
         let hardDeadline = Date().addingTimeInterval(Double(overallMs) / 1000.0)
         collectorCmd = 0x13
         collector = { f in
@@ -651,6 +652,7 @@ final class LockService: ObservableObject {
                 + "order=\(p.orderIdx.map(String.init) ?? "-") "
                 + "feature=\(p.featureNumber.map(String.init) ?? "-") "
                 + "batch=\(p.batchNumber.map(String.init) ?? "-") rc=\(p.rc)")
+            if let r = p.rc, r != 0, r != -1, r != rcBlurry { stopRc = r }
             if let onPress, isPress(f) { onPress(p) }
         }
         defer { collector = nil; collectorCmd = 0 }
@@ -670,24 +672,39 @@ final class LockService: ObservableObject {
                     broken = true
                     break
                 }
+                if stopRc != nil { break }
                 if collectionDone() { break }
-                // 空闲判据**只对首帧**成立 —— 这就是 Java 唯一的那个计时器 (BLE_TIMEOUT=8000):
-                // 收到任何一帧即 cancelReceiveTimer(), 之后再不重启。已收过帧之后一律只等锁自己收尾。
+                let silent = Date().timeIntervalSince(lastFrameAt)
                 if frames.isEmpty {
-                    let silent = Date().timeIntervalSince(lastFrameAt)
+                    // Java 唯一的那个计时器 (BLE_TIMEOUT=8000): 收到任何一帧即 cancel 且不重启
                     if silent > Double(firstFrameMs) / 1000.0 {
                         log("warn", "13 录指纹首帧窗口 \(firstFrameMs)ms 内无任何回包, 提前收尾")
                         break
                     }
+                } else if silent > Double(idleAfterPressMs) / 1000.0 {
+                    // 锁按 13 帧里的 timeout=15s 裁定"还接不接受下一次按压"; 超过 16s 没有新帧,
+                    // 说明锁已经退出录入态 —— 再按就是普通开锁验证 (会听到"验证失败")。
+                    // 这里如实收尾并报错, 不干等到 150s 让用户以为程序卡死。
+                    log("warn", "13 录指纹已 \(Int(silent))s 无新帧 (锁端按压窗口 15s), 判定锁已退出录入")
+                    break
                 }
                 try? await Task.sleep(nanoseconds: 200_000_000)
             }
             if broken { break }
         }
         let presses = frames.filter(isPress).map { press(of: $0) }
+        if let r = stopRc {
+            if r == rcTimeout {
+                throw BLEErrorX.msg("锁已结束录入 (rc=24 录入超时: 两次按压之间超过 15 秒) — 已收 \(presses.count)/\(times) 次, 请重新开始")
+            }
+            throw BLEErrorX.msg("13 录指纹被锁端中止 (rc=\(r): \(StatusParser.rcMessage(r))) — 已收 \(presses.count)/\(times) 次")
+        }
         guard !presses.isEmpty else {
             // 应答帧里的 rc 是唯一能解释"为什么锁没开始收指纹"的证据 (拒绝/指纹被禁/未校时…)
             let ackRc = frames.first.map { extractRc(0x13, $0) } ?? -1
+            if ackRc == rcBlurry {
+                throw BLEErrorX.msg("锁回「无法获取有效的指纹图片」(rc=23): 手指按得太快/太湿, 或反复按同一处 — 请换一个角度重按")
+            }
             if ackRc != 0 && ackRc != -1 {
                 throw BLEErrorX.msg("13 录指纹被锁端拒绝 (rc=\(ackRc): \(StatusParser.rcMessage(ackRc))) — 未进入按压采集")
             }
@@ -698,6 +715,7 @@ final class LockService: ObservableObject {
         }
         return presses
     }
+
     func fpConfirm(_ batchNumber: UInt32, validFrom: String, validTo: String) async throws {
         let (m, sk) = try keys()
         try await execOk(ZKCmdBuilder.cmd14FpConfirm(m, sk, batchNumber, validFrom, validTo))
