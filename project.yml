@@ -1,11 +1,11 @@
 # XcodeGen 工程定义 — 生成 OfflineLock.xcodeproj (CI 上 brew install xcodegen 后执行)
 # 编译 SDK: CI 用 `xcode-27` 预览镜像的 iOS 27.2 (Xcode 27.2); 稳定通道 macos-latest 最高 iOS 26.5。
-# 最低部署版本: iOS 26.5 (刻意不跟着 SDK 升 —— 升到 27 会让真机 iOS 26.x 装不上)
+# 最低部署版本: iOS 27.0 (2026-10-17 按"全量最新"拍板抬上来; 代价 = 手机必须是 iOS 27+, iOS 26.x 装不上)
 name: OfflineLock
 options:
   bundleIdPrefix: com.aapk
   deploymentTarget:
-    iOS: "26.5"
+    iOS: "27.0"
   createIntermediateGroups: true
 settings:
   base:
