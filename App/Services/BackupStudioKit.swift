@@ -1,10 +1,8 @@
-import os
 // 包8 备份工作室服务层 — 备份·恢复·换机迁移
 // 覆盖 idea: 181/193/197/198/237/407-413/417-427/429-431/434-436/438-446/448-450/453/454/456/477/507-509/511/512/1018/1048
 // 纪律: 备份文件只去用户自配 WebDAV (Basic Auth 运行时输入), 口令不出本机内存;
 //       加密语义 (CryptoBox AES-128-CBC+HMAC/PBKDF2, ZOTP 相关) 不动, 本层只做外围策略。
 import Foundation
-import os
 import UIKit
 import CoreImage.CIFilterBuiltins
 import BackgroundTasks
@@ -306,7 +304,7 @@ enum BackupStudio {
     static let chargeBackupTaskId = "com.kf.chargebackup"
     /// 2026-10-14: register 每进程只能一次 (二次注册抛 NSInternalInconsistencyException)。
     /// 启动注册 + 设置开关 setter 都会调本函数, 用标志去重。
-    private static let registeredLock = OSAllocatedLock(false)
+    private static let registeredLock = Locked(false)
     /// 单次完成闸 (跨线程): expirationHandler 与工作体都可能完成, 只允许第一个生效。
     private final class CompletionOnce: @unchecked Sendable {
         private let lock = NSLock()

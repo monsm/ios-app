@@ -1,11 +1,9 @@
-import os
 // 靠近自动开锁 — AUTOOPEN-PLAN.md 落地 (docs)
 // 门控链 F0 前台 / F1 面容双档 / F2' 停留 / F3 距离标定 / F4 布防互锁 / F5 一次性 / F6 锁态,
 // 全绿才经既有 LockService.unlock 管线下发 cmd04 (不改协议/命令构造); 任一门不过 = 静默拒绝 + 审计落盘
 // (审计只记"哪道门拒了、哪把锁、何时", 永不记 ekey/skey 明文)。默认全关、fail-closed。
 // 96 铁律对照: 本特性是 96 的显式用户开关例外 — 未开 = 绝不自动开锁, 开 = 全门绿才出手。
 import Foundation
-import os
 import SwiftUI          // 本文件尾部有 SwiftUI 视图 (标定页/面板): 缺这一行 = View/@State/@EnvironmentObject 全找不到
 import CoreMotion
 import LocalAuthentication
@@ -173,8 +171,8 @@ enum AutoOpenKit {
 
     // ---------- F1 面容成功时刻记账 (进程内语义: 重启即失效 = fail-closed) ----------
     // 原生形态: 状态**活在锁里面** —— 不是"一个 static var + 一把锁", 那样 Swift 6 仍然看得见
-    // 那个全局可变变量。把值交给 OSAllocatedLock 持有, 可变性就只存在于临界区内部。
-    private static let lastFaceLock = OSAllocatedLock<Date?>(nil)
+    // 那个全局可变变量。把值交给 Locked 持有, 可变性就只存在于临界区内部。
+    private static let lastFaceLock = Locked<Date?>(nil)
     static func noteFaceSuccess() { lastFaceLock.withLock { $0 = Date() } }
     static func lastFace() -> Date? { lastFaceLock.withLock { $0 } }
 }

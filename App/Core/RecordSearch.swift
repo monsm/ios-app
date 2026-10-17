@@ -1,4 +1,3 @@
-import os
 // 包9 记录检索与告警核心 (纯本地, 只读既有台账)
 //   检索: 551 全局搜索 / 554 自然语言 / 555 加减号 / 562 实时计数 / 553 历史 /
 //         560 命名过滤视图 / 564 时段 / 571 工作日周末 / 572 深夜预设 / 574 活跃凭证 /
@@ -12,7 +11,6 @@ import os
 //       真实存在的 5 种 (6 低电 / 7 防撬 / 10 试错锁定 / 13 指纹告警 / 224 键盘锁定);
 //       归属统计走 Attribution 可证明链, 推断值一律标"约"。
 import Foundation
-import os
 
 /// 一条可检索的记录行 (跨锁聚合单元, 770)
 /// 186 记录备注 / 188 手动标旗 —— 本机覆盖层, 按 (锁, 行) 存, 不写进锁端也不混入日志缓存。
@@ -551,7 +549,7 @@ enum RecordSearch {
     /// 本枚举不是 @MainActor, 但这里只加**只读语义的缓存**：所有调用方都在主线程 (View / @MainActor 的 HolidayFeed),
     /// 失效键是偏好里的"最近更新时间"整数 —— 写缓存的那一步必然改它, 所以不会读到过期合并结果。
     // 三个缓存 + 失效键是一组 (ensureMerged 一次写全, accessor 只读) —— 用一把原生锁护住整组。
-    // 选 OSAllocatedLock (iOS 16+) 而不是 unsafe: 它是 Swift 并发组里的标准互斥原语,
+    // 选 Locked (值活在临界区内) 而不是 unsafe: 它是 Swift 并发组里的标准互斥原语,
     // withLock 保证 unlock 一定执行; 读多写少 (只在公告更新时才写), 锁竞争可忽略。
     private struct Merged: Sendable {
         var rows: [Holiday] = []
@@ -559,7 +557,7 @@ enum RecordSearch {
         var makeup: Set<String> = []
         var stamp = -2
     }
-    private static let mergedLock = OSAllocatedLock(Merged())
+    private static let mergedLock = Locked(Merged())
     private static func ensureMerged() {
         let s = HolidayFeed.lastUpdateSec
         mergedLock.withLock { m in

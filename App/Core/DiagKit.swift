@@ -1,4 +1,3 @@
-import os
 // 包11 诊断·性能·运维 — 数据层 (无 UI; 全部本地)
 // 编号对照 docs/ROADMAP-DRAFT.md「包11」:
 //   体检 149/150/151/158/160/545/760 · 日志 152-154/281/283/542/543/740 ·
@@ -10,7 +9,6 @@ import os
 // 底层说明: 本项目"数据库"是 UserDefaults(JSON 编码) 语义封装 (Store.swift),
 // VACUUM/索引类创意按其等价落地: "整理"= 清残留空键 + 写队列冲刷; "完整性"= JSON 回环 + 台账计数核对。
 import Foundation
-import os
 import UIKit
 import Dispatch          // 1170: DispatchSemaphore (把 async 的 notificationSettings() 拉回同步体检闭包)
 import CoreBluetooth
@@ -64,7 +62,7 @@ enum DiagOps {
 // ---------- 215 启动预算: 冷启动各阶段打点 (本地自统计, 预算 800ms) ----------
 enum StartupTrace {
     static let t0 = CFAbsoluteTimeGetCurrent()
-    private static let marksLock = OSAllocatedLock([String: Double]())
+    private static let marksLock = Locked([String: Double]())
     static func mark(_ p: String) { marksLock.withLock { $0[p] = CFAbsoluteTimeGetCurrent() - t0 } }
     /// 各阶段耗时 (ms)
     static func ms(_ p: String) -> Double? { marksLock.withLock { $0[p] }.map { ($0 * 1000).rounded() } }
@@ -91,9 +89,9 @@ enum StartupTrace {
 enum HotCache {
     /// 读写可能跨线程 (写入口 Store.writeLogs 在 BLE 回调线程上), 所以自己带锁 ——
     /// 旧注释把线程安全推给调用方 ("刻意留主线程"), 加锁后失效点才能落在写入口上。
-    // 原生互斥: OSAllocatedLock (iOS 16+) —— withLock 保证 unlock 一定执行,
+    // 原生互斥: Locked (NSLock + 值在临界区内) —— withLock 保证 unlock 一定执行,
     // 比手写 lock()/defer unlock 少一类"提前 return 忘了解锁"的错误。
-    private static let lock = OSAllocatedLock(HotState())
+    private static let lock = Locked(HotState())
     private struct HotState: Sendable {
         var store: [String: [CachedLog]] = [:]
         var currentMac: String = ""

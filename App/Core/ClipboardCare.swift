@@ -1,4 +1,3 @@
-import os
 // 405/238 敏感内容剪贴板自清 —— 唯一出口 (choke point)。238 原句的"90 秒"是本文件这一个延时档，
 // 不在别处再写第二个延时数 (两处各写一个秒数, 改一处就是谎)。
 // 为什么不逐个调用点各写一份定时器: 20 处 pasteboard 写入迟早会漏一处 (本仓就是"两处路径口径不一致"的现场),
@@ -45,7 +44,7 @@ enum ClipboardCare {
         let label: String
         let stage: PasteStage
     }
-    private static let pendingLock = OSAllocatedLock<Pending?>(nil)
+    private static let pendingLock = Locked<Pending?>(nil)
     private static var clearedLabel: String?
 
     static var suggestion: Suggestion? {

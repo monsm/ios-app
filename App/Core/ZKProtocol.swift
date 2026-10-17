@@ -5,7 +5,6 @@
 //   会话令牌注入: KLV#0xEE (固件 0x253FE 特判通道)
 // 差分基准: golden.cmds.* / golden.parse.*
 import Foundation
-import os
 
 struct ZKLV: Equatable {
     var key: Int
@@ -96,7 +95,7 @@ enum ZKProtocol {
 
     /// 内存注册表: 只有 DB 的落盘口与配网探针会写它 (协议层不读库, 免得 Core 里绕成环)。
     /// 进程重启后由 `DB.hydrateMacOrders()` 在启动窗口补上, 补不上的锁会走一次 rc=12 自愈再学习。
-    private static let macOrdersLock = OSAllocatedLock([String: MacOrder]())
+    private static let macOrdersLock = Locked([String: MacOrder]())
     static func normMac(_ s: String) -> String { s.lowercased().replacingOccurrences(of: ":", with: "") }
     static func setMacOrder(_ mac: String, _ o: MacOrder) { macOrdersLock.withLock { $0[normMac(mac)] = o } }
     static func macOrder(_ mac: String) -> MacOrder { macOrdersLock.withLock { $0[normMac(mac)] } ?? .display }

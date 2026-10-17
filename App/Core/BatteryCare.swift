@@ -1,4 +1,3 @@
-import os
 // 包4 电量·维护·固件关怀 — 本地采样与关怀提醒引擎 (纯数据层, 无 UI)
 // 数据地基: kf_batt_<mac> 电量采样表 (idea 45 ⚠ 的趋势数据源: 每次读 03 追加点, 90 天截断)。
 // 其余键: kf_mevents_<mac> 维护事件 (1014/1028) · kf_maint_<mac> 保养状态 (1012/1013/1025)
@@ -94,7 +93,7 @@ enum BatteryCare {
     // ---------- 120 全 App 低电分支 ----------
     /// 最近一次读到的电量 (当前锁) 内存缓存: 动效令牌 (DesignSystem.Motion) 每次求值都问这里,
     /// 不能每次都解快照 JSON。sample() 每次读 03 后喂新值; 冷启动首问回源一次统一读数。
-    private static let lowCacheLock = OSAllocatedLock((mac: "", low: false))
+    private static let lowCacheLock = Locked((mac: "", low: false))
     /// 120: 当前锁电量 ≤20% (= 低于两成) 时为 true —— 设计令牌据此把全 App 动效压到 calm。
     /// 读法: kf_current_mac (当前锁, 与 Store.preferredMac 同一解析) → 统一展示读数 (displayPct 采样+快照取新)。
     /// 不走 kf_last_device: 它存的是 BLE 外设 id (LockService.connect 写入), 拿它查 kf_batt_/kf_snap_
