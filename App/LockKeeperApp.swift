@@ -1039,36 +1039,6 @@ final class AppState: ObservableObject {
 }
 
 // ---------- 根视图 (AppLock 门禁 + TabView) ----------
-/// 233 后台隐私幕。**不是**"给多任务快照打模糊" —— iOS 没有那种 API，
-/// 能做的是在 resign 那一刻用一块不透明幕把内容**替换掉** (银行 App 的通行做法):
-/// 卡片里看不见内容，而不是看见一张模糊的图。原句的"模糊占位"在这里按这个口径落地，
-/// 界面也不写"已模糊"，写"内容已隐藏" —— 说一句做不到的话，比不说不但更糟而且更难修。
-///
-/// 时序边界 (只有真机能定论): 系统抓快照与 `scenePhase` 更新之间没有保证的先后，
-/// 若快照早于状态变化，卡片仍可能露出上一帧。写进验收单，不在这里假装已解决。
-struct PrivacyCurtain: View {
-    var body: some View {
-        ZStack {
-            DS.Palette.surface.ignoresSafeArea()
-            VStack(spacing: DS.Space.m) {
-                Image(systemName: "lock.shield.fill")
-                    .font(.system(size: 44, weight: .medium))
-                    .foregroundStyle(DS.Palette.accentText)
-                    .accessibilityHidden(true)
-                Text("内容已隐藏")   // 233 内容已隐藏
-                    .vkFont(.headline)
-                    .foregroundStyle(DS.Palette.text)
-                Text("退到后台时以这块幕替换内容，回到前台自动恢复。")   // 233 退到后台时以这块幕替
-                    .vkFont(.footnote)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, DS.Space.xl)
-            }
-        }
-        .transition(.opacity)
-    }
-}
-
 struct RootView: View {
     @EnvironmentObject var app: AppState
     @ObservedObject private var sense = LinkSense.shared
@@ -1382,13 +1352,9 @@ struct RootView: View {
     @ViewBuilder
     private var rootChrome: some View {
         rootCore
-        // 233 后台隐私幕: 退到后台/被多任务卡片抓取时盖住内容 (拍板 2026-10-10 的"不加留存面"四条之一)。
-        // 只在**已解锁**时出现 —— 锁着的时候屏上本来就是应用锁界面，再盖一层是给门禁套娃。
-        .overlay {
-            if scenePhase != .active, app.appUnlocked {
-                PrivacyCurtain()
-            }
-        }
+        // 2026-10-17 拍板: 删除 233「内容已隐藏」后台隐私幕 (连同 PrivacyCurtain 结构体)。
+        // 它是退后台时盖一层不透明幕, 回前台不要求任何验证 —— 与"需要面容才能看"的直觉不符,
+        // 且启动门禁已删, 留着只会让用户回前台时以为 App 卡住。
         // 294 本地深链: 系统把 kf:// 路由送到这里; 解锁完成的瞬间才落地挂起的路由
         .onOpenURL { url in app.handleDeepLink(url) }
         .onChange(of: app.tabSelection) { _, new in

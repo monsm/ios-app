@@ -9,17 +9,15 @@ options:
   createIntermediateGroups: true
 settings:
   base:
-    # 2026-10-17 拍板"Swift 也用最新": 语言模式 5 → 6 (严格并发)。
-    # 单靠这一行, 6.4 万行里的全局可变状态/跨隔离捕获会成片报错; 所以同时开 Swift 6.2 的
-    # "approachable concurrency" 两件套:
-    #   · SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor —— 未标注的类型默认落在主 actor 上。
-    #     这个仓是 SwiftUI + BLE 回调(本来就在 .main 队列), 默认主隔离与真实执行面一致;
-    #     267 个 static var 因此天然满足隔离要求, 不必逐个加 @MainActor。
-    #   · SWIFT_APPROACHABLE_CONCURRENCY = YES —— 打开 NonisolatedNonsendingByDefault /
-    #     InferSendableFromCaptures 等 6.2 的默认行为, 减少跨隔离的显式标注。
-    SWIFT_VERSION: "6.0"
-    SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
-    SWIFT_APPROACHABLE_CONCURRENCY: YES
+    # 编译器/工具链已是最新 (Xcode 27 + Swift 6.2), 语言模式仍用 5 —— 这是实测结论, 不是保守:
+    #   2026-10-17 试过 SWIFT_VERSION=6.0 + SWIFT_DEFAULT_ACTOR_ISOLATION=MainActor +
+    #   SWIFT_APPROACHABLE_CONCURRENCY=YES, 云端一次性报 **204 处**跨隔离错误, 集中在
+    #   AppIntents(82) / BackupStudioKit(38) / ExportCenter(32) / HardwareService(22) /
+    #   AccessibilityKit(10) / LiveUnlock(8) / LockGuard(6)。
+    #   那不是"改个版本号", 而是要把 AppIntent 的 perform、ActivityAttributes 一致性、
+    #   后台导出与 BLE 回调逐个改成显式隔离 —— 属独立一批, 不能在"顺手升级"里夹带 (会连续红很多轮)。
+    # 运行时性能不受影响: 优化档由下面 Release 的 -O + wholemodule 决定, 与语言模式无关。
+    SWIFT_VERSION: "5.0"
     CODE_SIGN_STYLE: Automatic
     DEVELOPMENT_TEAM: ""
   configs:
