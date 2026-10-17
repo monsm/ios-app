@@ -1,5 +1,9 @@
-# iOS 云编译 — GitHub Actions (macOS + Xcode 26.6 / iOS 26.5 SDK)
-# 部署目标: iOS 26.5 (与 runner 镜像的 SDK 完全一致, 不需要任何降级探测)
+# iOS 云编译 — GitHub Actions
+# 镜像: `xcode-27` (Public preview, macOS 27, arm64) —— 它带 iOS 27.0/27.1/27.2 SDK (Xcode 27.0-27.2),
+#   比稳定通道 (`macos-latest` = macOS 26) 的 iOS 26.5 高一档。2026-10-17 按拍板切过来。
+#   ⚠ 预览镜像无 SLA、3C/7G; 若它抽风, 把下面 runs-on 改回 `macos-latest` 即可 (SDK 退回 26.5, 代码不用动)。
+# 部署目标: **仍是 iOS 26.5** —— 编译 SDK 与最低系统是两件事。跟着升到 27 会让真机 (iOS 26.x) 装不上,
+#   等 27 正式版铺开再动 deploymentTarget。
 # 产物: 未签名设备 .ipa (供 AltStore/Sideloadly 自签安装) + 编译/测试日志
 #
 # 关于 XCTest: macos-latest 镜像自 2026-09 起不再附带 iOS 模拟器设备,
@@ -19,7 +23,7 @@ on:
 jobs:
   build:
     name: Build (iOS 26.5 SDK, unsigned IPA)
-    runs-on: macos-latest
+    runs-on: xcode-27
     steps:
       - name: Checkout
         uses: actions/checkout@v4
