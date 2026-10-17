@@ -24,7 +24,9 @@ const ROOT = path.resolve(__dirname, '..');
 const golden = JSON.parse(fs.readFileSync(path.join(ROOT, 'fixtures/golden.json'), 'utf8')).cmds;
 const MAC = 'aabbccddeeff';
 const SKEY = '00112233445566778899aabbccddeeff';
-const EP_MS = 1262304000000n;                       // ZKProtocol.epochMs
+// 2026-10-17 全量盘点后: ZKProtocol.epochMs 改为**本地** 2010-01-01 (APK getProtocolTimeSecond 两侧同墙钟)。
+// 本文件已钉 TZ=Asia/Shanghai ⇒ 无 Z 的 parse 就是本地基准; 仍写常量会少一个时区偏移 (28800s)。
+const EP_MS = BigInt(Date.parse('2010-01-01T00:00:00'));   // = ZKProtocol.epochMs (本地)
 const protoFromMs = (ms) => (BigInt(ms) - EP_MS) / 1000n;
 
 // ---------------- HexKit ----------------
@@ -62,7 +64,7 @@ function encryptHex(plainHex, keyHex) {
 }
 
 // ---------------- ZKProtocol ----------------
-const VALID_TO_2118 = Number(protoFromMs(4670438400000)) >>> 0;
+const VALID_TO_2118 = Number(protoFromMs(Date.parse('2118-01-01T00:00:00'))) >>> 0;
 function buildKLV(key, valHex) { return hexPair(key) + hexPair(valHex.length / 2) + valHex; }
 function buildFrame(cmd, klvHex, header = 8) {
   const len = klvHex.length / 2;
@@ -146,7 +148,7 @@ add('cmd22EnableDfu', wrapFrame(0x22, MAC, SKEY, hexPair(0), 0x02));
 add('cmd24AutoLock', wrapFrame(0x24, MAC, SKEY, hexPair(3), 0x01));
 add('cmd25Defence_aperiodic', wrapFrame(0x25, MAC, SKEY, hexPair(1) + u32leHex(0) + u32leHex(0), 0x01));
 add('cmd25Defence_period', wrapFrame(0x25, MAC, SKEY, hexPair(2) + u32leHex(21600) + u32leHex(43200), 0x01));
-add('buildEkeyOpen', buildEkeyOpen(SKEY, MAC, 123456, 0, Number(protoFromMs(Date.parse('2118-01-01T00:00:00Z'))), 12345));
+add('buildEkeyOpen', buildEkeyOpen(SKEY, MAC, 123456, 0, Number(protoFromMs(Date.parse('2118-01-01T00:00:00'))), 12345));
 add('cmd41WriteEkey', buildFrame(0x41, buildKLV(0x01, reversePairs(MAC)) + buildKLV(0x02, hexPair(1)) + buildKLV(0x03, u16leHex(16289)) + buildKLV(0x04, V.find((x) => x[0] === 'buildEkeyOpen')[2]), 8));
 add('cmd41WriteEkey_del', buildFrame(0x41, buildKLV(0x01, reversePairs(MAC)) + buildKLV(0x02, hexPair(1)) + buildKLV(0x03, u16leHex(16289)) + buildKLV(0x04, ''), 8));
 add('cmd44GetEkeyInfo_all', buildFrame(0x44, buildKLV(0x01, ''), 8));

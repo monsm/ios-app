@@ -2720,9 +2720,18 @@ struct FpStudio: View {
             // 留存口径：录入这两步**故意不写台账** —— 批次要等第 3 步命名与归属填完才落 DB.addFp，
             // 中途关页 (上面 89 批那道 cancel 检查) 就该本机一条不留。lockpair 扫到这里时读这句。
             // onPress: 沉浸页那 8 个点随每帧亮起 (旧写法等整个调用返回才赋值，录入全程恒 0 个点)
-            let ps = try await app.lock.fpStart(times: 8, timeoutMs: 30000,
-                                                onPress: { p in self.presses.append(p) })
+            // 窗口口径在 LockService.fpStart 里 (首帧 8s / 两次按压 16s, 对齐 APK Java 接收计时器)
+            let ps = try await app.lock.fpStart(times: 8,
+                                                onPress: { p in
+                                                    self.presses.append(p)
+                                                    DS.Haptics.tick.impactOccurred()   // 手指在锁上, 屏幕看不见
+                                                })
             self.presses = ps
+            // 14 会把这一批指纹真正启用: 不满 8 次按压的批次不确认
+            guard presses.count >= 8 else {
+                throw NSError(domain: "fp", code: 2,
+                              userInfo: [NSLocalizedDescriptionKey: "只收到 \(presses.count)/8 次按压, 未写入; 请重新录入并多按几次"])
+            }
             guard let batch = ps.compactMap({ $0.batchNumber }).first, batch > 0 else {
                 throw NSError(domain: "fp", code: 1, userInfo: [NSLocalizedDescriptionKey: "未拿到有效指纹批次, 请重新录入"])
             }

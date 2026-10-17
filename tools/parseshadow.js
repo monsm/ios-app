@@ -24,7 +24,10 @@ const assert = require('assert');
 const ROOT = path.resolve(__dirname, '..');
 const G = JSON.parse(fs.readFileSync(path.join(ROOT, 'fixtures/golden.json'), 'utf8'));
 const SKEY = '00112233445566778899aabbccddeeff';
-const EP_MS = 1262304000000;
+// 2026-10-17 全量盘点后基准改为**本地** 2010-01-01 (APK getProtocolTimeSecond 两侧同墙钟):
+// 本文件已钉 TZ=Asia/Shanghai ⇒ 无 Z 的 parse 就是本地基准。旧常量 = UTC 基准,
+// 会让每一条锁钟/日志时间整体差一个时区偏移 (东八区 8h) —— 本工具此前 3 条红就是这一处。
+const EP_MS = new Date(2010, 0, 1, 0, 0, 0).getTime();
 const protoFromMs = (ms) => Math.floor((ms - EP_MS) / 1000);
 
 // ---------------- HexKit / AESKit ----------------
@@ -258,7 +261,7 @@ else console.log(`ok  pidTable ${pidPairs.length} 个型号名字与 Swift PidMa
 
 // time
 checks++;
-if (G.time.epochMs !== EP_MS || G.time.protoFromMs_zero !== protoFromMs(Date.parse('2010-01-01T00:00:00Z'))) { bad++; console.log('✗ time 基准不同'); }
+if (G.time.epochMs !== EP_MS || G.time.protoFromMs_zero !== protoFromMs(new Date('2010-01-01T00:00:00').getTime())) { bad++; console.log('✗ time 基准不同'); }
 else console.log('ok  time 纪元 (epochMs 与 2010-01-01 ⇒ 0)');
 
 // ---------------- 钥匙串 / 网关状态解析 (第一百七十六批新增) ----------------

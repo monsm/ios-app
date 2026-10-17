@@ -601,8 +601,14 @@ final class LockService: ObservableObject {
     // onPress 是**纯 UI 出口**: 每收到一帧就在 MainActor 上调一次 (collector 由 handle() 起,
     // 而 handle 本身就是 Task { @MainActor in … })，让录入页的 8 点进度能实时填。
     // 返回值与不传 onPress 时逐字节一致 —— 不拿它当协议能力，只是把已有数据早一点交给界面。
-    func fpStart(times: Int = 8, timeoutMs: Int = 30000,
-                 onPress: ((FpPress) -> Void)? = nil) async throws -> [FpPress] {
+    /// 采集窗口口径 (逐字对齐 APK Java `BleLockConnector`):
+    ///   · `post()` 发帧后只起**一个** 8s 接收计时器 (`BLE_TIMEOUT`), 收到第一帧即 `cancelReceiveTimer()`;
+    ///     之后 APK 侧**没有** App 计时器 —— 由锁自己按 13 帧里的 timeout=15s 决定还接不接受下一次按压。
+    ///   · 所以本方法: 首帧窗口 `firstFrameMs`(默认 8s, = Java 计时器), 之后每次按压间隔上限
+    ///     `perPressMs`(默认 16s = 锁端 15s + 1s 余量), 外加 `overallMs` 兜底 (用户按得极慢时封顶)。
+    ///   · 旧实现是单个 30s 整体窗口: 停在 n/8 时既不收尾也不提示, 与 APK 的 8s 口径不同。
+    func fpStart(times: Int = 8, firstFrameMs: Int = 8000, perPressMs: Int = 16000,
+                 overallMs: Int = 150000, onPress: ((FpPress) -> Void)? = nil) async throws -> [FpPress] {
         let (m, sk) = try keys()
         try await ensureToken()
         let hex = ZKProtocol.injectToken(ZKCmdBuilder.cmd13AddFp(m, sk, times, 15).hex,
@@ -616,35 +622,79 @@ final class LockService: ObservableObject {
             return FpPress(orderIdx: u32(0x04), featureNumber: u32(0x05),
                            batchNumber: u32(0x06), nextTimeout: u32(0x07), rc: extractRc(0x13, f))
         }
+        // 按压帧 = 带 KLV#04 且序号 > 0。锁收到 13 后会**先回一帧不表示按压的应答**
+        // (APK StartaddfpPage: orderIdx==0 → "启动成功"), 那一帧不能拿去点亮 1/8 进度。
+        func isPress(_ f: ZKProtocol.ParsedFrame) -> Bool { (press(of: f).orderIdx ?? 0) > 0 }
+        func pressesCount() -> Int { frames.reduce(0) { $0 + (isPress($1) ? 1 : 0) } }
+        // 收尾判据 (JS _execMulti 的 done + APK 状态机):
+        // ① 显式收尾帧 = 带 KLV#04、序号 0, **且已经收过按压** —— 只认「按压之后的那一帧 0」;
+        //    旧实现是 `while frames.isEmpty`, 首帧应答一到就退出并清掉 collector ⇒ 之后每一下按压
+        //    都被 handle() 丢掉, 屏上恒停在「重复此步骤 (1/8)」—— 这就是"手指按上去没有任何反应"的根因。
+        // ② 已收满 times 次按压; ③ 时间上界由下面的 deadline 兜。
+        func collectionDone() -> Bool {
+            guard pressesCount() > 0 else { return false }
+            if frames.contains(where: { f in
+                f.klvs.first(where: { $0.key == 0x04 }).map { StatusParser.leHexToU32($0.val) } == 0
+            }) { return true }
+            return pressesCount() >= times
+        }
+        var lastFrameAt = Date()   // 最近一帧到达时刻 (collector 刷新; 空闲判据用)
+        let hardDeadline = Date().addingTimeInterval(Double(overallMs) / 1000.0)
         collectorCmd = 0x13
         collector = { f in
             guard f.cmd == self.collectorCmd else { return }
             frames.append(f)
-            if let onPress { onPress(press(of: f)) }
+            lastFrameAt = Date()
+            let p = press(of: f)
+            self.log("info", "RX 13 #\(frames.count) press=\(isPress(f) ? 1 : 0) "
+                + "order=\(p.orderIdx.map(String.init) ?? "-") "
+                + "feature=\(p.featureNumber.map(String.init) ?? "-") "
+                + "batch=\(p.batchNumber.map(String.init) ?? "-") rc=\(p.rc)")
+            if let onPress, isPress(f) { onPress(p) }
         }
         defer { collector = nil; collectorCmd = 0 }
         log("info", "TX 13 录指纹 (多响应, \(times) 次按压)")
         var attemptsLeft = 2 // JS _execMulti retries=2: 无帧时重发一次
+        var broken = false
         while frames.isEmpty && attemptsLeft > 0 {
             attemptsLeft -= 1
             try await ble.writeFrameHex(hex)
-            let deadline = Date().addingTimeInterval(Double(timeoutMs) / 1000.0)
-            while Date() < deadline {
-                // 断链/取消早退: 旧写法会一直转到 30s 到点才抛"未收到任何按压响应",
+            let sentAt = Date()
+            lastFrameAt = sentAt
+            while Date() < hardDeadline {
+                // 断链/取消早退: 旧写法会一直转到窗口到点才抛"未收到任何按压响应",
                 // 期间锁已被人拿走/电量耗尽也不知情, collector 也一直被占 (新会话的 cmd13 帧会被吞)
                 if Task.isCancelled || ble.connectedMAC.isEmpty || connectedDeviceId.isEmpty {
                     log("warn", "13 录指纹中链路断开或任务取消, 提前结束")
+                    broken = true
                     break
                 }
-                // 收尾: 任一帧 orderIdx == 0
-                if frames.contains(where: { f in
-                    f.klvs.first(where: { $0.key == 0x04 }).map { StatusParser.leHexToU32($0.val) } == 0
-                }) { break }
+                if collectionDone() { break }
+                // 空闲收尾 (对齐 Java 接收计时器): 首帧前 8s; 已收到按压后按锁端 15s 窗口放宽到 16s
+                let limit = frames.isEmpty ? Double(firstFrameMs) / 1000.0 : Double(perPressMs) / 1000.0
+                let silent = Date().timeIntervalSince(lastFrameAt)
+                if silent > limit {
+                    log("warn", "13 录指纹空闲 \(String(format: "%.0f", silent))s 超过窗口 "
+                        + "\(frames.isEmpty ? "首帧 \(firstFrameMs)ms" : "两次按压 \(perPressMs)ms"), 提前收尾")
+                    break
+                }
                 try? await Task.sleep(nanoseconds: 200_000_000)
             }
+            if broken { break }
         }
-        guard !frames.isEmpty else { throw BLEErrorX.msg("13 未收到任何按压响应") }
-        return frames.map { press(of: $0) }
+        let presses = frames.filter(isPress).map { press(of: $0) }
+        guard !presses.isEmpty else {
+            // 应答帧里的 rc 是唯一能解释"为什么锁没开始收指纹"的证据 (拒绝/指纹被禁/未校时…)
+            let ackRc = frames.first.map { extractRc(0x13, $0) } ?? -1
+            if ackRc != 0 && ackRc != -1 {
+                throw BLEErrorX.msg("13 录指纹被锁端拒绝 (rc=\(ackRc): \(StatusParser.rcMessage(ackRc))) — 未进入按压采集")
+            }
+            throw BLEErrorX.msg("13 已下发但没收到按压帧 (锁回了 \(frames.count) 帧应答) — 请把手指按在指纹头上再抬起, 间隔 3 秒内")
+        }
+        if presses.count < times {
+            log("warn", "13 只收到 \(presses.count)/\(times) 次按压 (超时/提前收尾)")
+        }
+        return presses
     }
     func fpConfirm(_ batchNumber: UInt32, validFrom: String, validTo: String) async throws {
         let (m, sk) = try keys()

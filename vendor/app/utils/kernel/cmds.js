@@ -24,11 +24,15 @@ function asciiHex(s, n) {
 }
 // 日期字符串/ms/协议秒 → 协议秒; 缺省=现在
 function protoSec(v) {
-  if (typeof v === 'number') return v;
+  // 2026-10-17 真机勘误 (「添加密码/指纹成功但解不开」): '2010-01-01 00:00:00' 这类**本地墙钟**串按
+  // 本地时区解析、却减 2010-01-01T00:00:00**Z** 基准 ⇒ 东八区得 -28800, 4B 下发按无符号回绕成
+  // 4294938496 (≈2146) ⇒「永久」窗口变成 [2146 … 2118], 锁照收但永不生效。原 APK 该字段走
+  // getProtocolTimeSecond('2010-01-01 00:00:00') = 0 (被减数与减数同一本地时刻) ⇒ 以 0 为下界收口。
+  if (typeof v === 'number') return Math.max(0, v);
   if (typeof v === 'string') {
     const s = v.replace(' ', 'T');
     const ms = Date.parse(s + (s.indexOf('T') >= 0 ? '' : 'T00:00:00Z'));
-    if (!isNaN(ms)) return T.protoSecondsFromMs(ms);
+    if (!isNaN(ms)) return Math.max(0, T.protoSecondsFromMs(ms));
   }
   return T.nowProtoSeconds();
 }

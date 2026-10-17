@@ -66,7 +66,10 @@ g.cmds.cmd25Defence_period = CM.cmd25Defence(MAC, SKEY, 2, 21600, 43200).hex;
 // 令牌注入
 g.cmds.withToken = CM.withToken(CM.cmd12Echo('123456').hex, 'beef');
 // ekey (开锁凭证, 定 TrackId/窗口)
-g.cmds.buildEkeyOpen = CM.buildEkeyOpen(SKEY, MAC, 123456, { trackId: 12345, validFromSec: 0, validToSec: T.protoSecondsFromMs(Date.parse('2118-01-01T00:00:00Z')) });
+// 2118 用**本地**解析 (无 Z): 与 ZKProtocol.VALID_TO_2118 / APK `getProtocolTimeSecond('2118-01-01 00:00:00')` 同口径
+// (两侧同墙钟相减 ⇒ 与机器时区无关, 恒 3408134400)。旧夹具写的是 `Date.parse('…T00:00:00Z')`, 与本地基准
+// 混用会凭空多出一个时区偏移 (东八区 +28800s) —— cmdsshadow 的两条 ekey 向量就是被这一处带红的。
+g.cmds.buildEkeyOpen = CM.buildEkeyOpen(SKEY, MAC, 123456, { trackId: 12345, validFromSec: 0, validToSec: T.protoSecondsFromMs(new Date('2118-01-01T00:00:00').getTime()) });
 // 确定性 share 向量 (App buildEkeyShare 的本地窗口 + 固定 TrackId=7; Swift 侧用相同输入复算)
 g.cmds.buildEkeyShare = CM.buildEkeyOpen(SKEY, MAC, 654321, { trackId: 7, validFromSec: T.protoSecondsFromMs(new Date('2010-01-01T00:00:00').getTime()), validToSec: T.protoSecondsFromMs(new Date('2118-01-01T00:00:00').getTime()) });
 // 钥匙串 41/43/44
@@ -243,7 +246,7 @@ T.nowProtoSeconds = _protoNowReal;   // 还原实时钟, 后续向量不受影�
 // ---------- 时间基准 ----------
 g.time = {
   epochMs: T.EPOCH_MS,
-  protoFromMs_zero: T.protoSecondsFromMs(Date.parse('2010-01-01T00:00:00Z'))
+  protoFromMs_zero: T.protoSecondsFromMs(new Date('2010-01-01T00:00:00').getTime())   // 本地基准 ⇒ 恰为 0 (与 APK 两侧同墙钟一致)
 };
 
 // ---------- 输出 / 漂移校验 ----------

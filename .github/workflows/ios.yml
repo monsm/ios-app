@@ -108,6 +108,9 @@ jobs:
       - name: '备份包校验和跨语言差分 (第一百七十八批: 权威侧 = 小程序 utils/storage.js fnv1a32, vendor 里没有这个文件 ⇒ 向量烘进 fixtures/canonical.json; 复刻不一致就红)'
         run: node tools/bundleshadow.js
 
+      - name: '逻辑面差分 (判失败: 分片/写确认超时/重试次数/令牌刷新时机/rc 自愈/13 采集窗口 等 17 条时序不变量 + 4 条已裁定分歧 + 3 条反向围栏; 规则表 fixtures/logic-parity.json 每条带 APK 证据)'
+        run: node tools/logicparity.js
+
       - name: 功能点覆盖台账 (1050 项 × 判定 × 代码标注 × 台账下落; 报线索不判失败)
         run: node tools/featuremap.js
 

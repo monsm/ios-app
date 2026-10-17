@@ -11,7 +11,9 @@
 // 状态请求: KLV#01 = 0x88-EKey 结构(TargetMAC反转+trackId+有效期+cmd), KLV#02 = 空
 // 0x88-EKey: [0x88][0x00][MAC:6 反转][trackId:4 LE][validFrom:4 LE][validTo:4 LE][cmd:1][body]
 
-const EPOCH = Date.parse('2010-01-01T00:00:00Z') / 1000; // 协议时间基准
+// 协议时间基准 = **本地** 2010-01-01 00:00:00 (对齐 APK An.getDate('2010-01-01 00:00:00'); UTC 基准会让
+// 每一项都差一个时区偏移 —— 见 utils/time.js 顶部注释与 docs/PARITY-APK.md §7.4)
+const EPOCH = new Date(2010, 0, 1, 0, 0, 0).getTime() / 1000;
 
 // 只读命令白名单 — 试验模式硬护栏: 任何写入命令 (包含 05 换钥/08 PIN/04 开门等) 一律拦截
 // 为什么 05 必须永禁: 固件 05 处理器 (@0x258A0) 会擦除 flash 区域 7+8 (skey 密钥域) 并写新密钥条目,
@@ -87,7 +89,9 @@ function hexPair(v) { return ('00' + v.toString(16)).slice(-2); }
 function buildEkey(cmd, macHex, validFromSec, validToSec, trackIdVal) {
   const trackId = u32le(trackIdVal === undefined ? 0 : trackIdVal);
   const vf = u32le(validFromSec === undefined ? 0 : validFromSec);
-  const vt = u32le(validToSec === undefined ? protoTime('2118-01-01T00:00:00Z') : validToSec);
+  // 默认 VT: **本地** 2118-01-01 00:00:00 (不带 Z) —— APK kt.ValidTo 的字面量就是本地墙钟串,
+  // 经 getProtocolTimeSecond 得 108 年的秒差 (本地两端相减 ⇒ 与机器时区无关, 恒 4670438400)
+  const vt = u32le(validToSec === undefined ? protoTime('2118-01-01T00:00:00') : validToSec);
   let mac = (macHex || '000000000000').toLowerCase();
   if (mac.indexOf(':') >= 0) mac = mac.replace(/:/g, '');
   return '8800' + reversePairs(mac) + b2h(trackId) + b2h(vf) + b2h(vt) + hexPair(cmd) + '';

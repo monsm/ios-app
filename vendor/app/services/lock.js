@@ -293,7 +293,13 @@ const label = (o && o.name) || CMD_NAME[cmd] || ('cmd ' + CMD_HEX(cmd));
 
   // ---------- 多响应执行 (13 录指纹: 锁逐次按压逐次回 orderIdx 1..N, orderIdx==0 收尾) ----------
   async _execMulti(cmdObj, opts) {
-    const o = Object.assign({ needToken: true, timeout: 20000, retries: 2, done: () => true }, opts);
+    // 采集窗口口径 (2026-10-17 全量盘点, 对齐 APK Java `BleLockConnector.post()`):
+    //   · 发帧后只起一个 `firstFrameMs`(默认 8s = Java BLE_TIMEOUT) 计时器 —— 收到第一帧即取消;
+    //   · 之后 APK 侧没有 App 计时器, 由锁按 13 帧里的 timeout=15s 决定还接不接受下一次按压
+    //     ⇒ 这里用 `perPressMs`(默认 16s = 15s + 1s 余量) 作两次帧之间的空闲上界;
+    //   · `timeout` 仅作整体兜底 (默认 150s)。
+    const o = Object.assign({ needToken: true, timeout: 150000, firstFrameMs: 8000, perPressMs: 16000,
+                              retries: 2, done: () => true }, opts);
     if (o.needToken) await this._ensureToken();
     const hex2 = C.withToken(cmdObj.hex, this.session.tokenHex);
     if (!this.conn) throw new Error('未连接门锁');
@@ -301,7 +307,8 @@ const label = (o && o.name) || CMD_NAME[cmd] || ('cmd ' + CMD_HEX(cmd));
     for (let attempt = 0; attempt < o.retries; attempt++) {
       const ret = await new Promise((resolve, reject) => {
         const pushes = [];
-        this._onMulti = f => { if (f.cmd === cmdObj.cmd) pushes.push(f); };
+        let lastAt = Date.now();
+        this._onMulti = f => { if (f.cmd === cmdObj.cmd) { lastAt = Date.now(); pushes.push(f); } };
         this._multiCb = this._onMulti;
         const done = (framesArr, timedOut) => {
           clearTimeout(timer); clearInterval(check);
@@ -313,7 +320,13 @@ const label = (o && o.name) || CMD_NAME[cmd] || ('cmd ' + CMD_HEX(cmd));
         this.conn.write(hex2).catch(e => { done(pushes, true); reject(e); });
         // G2: interval 句柄存实例, disconnect() 可中止
         const check = setInterval(() => {
-          if (o.done(pushes.slice())) done(pushes, false);
+          if (o.done(pushes.slice())) { done(pushes, false); return; }
+          const limit = pushes.length ? o.perPressMs : o.firstFrameMs;
+          if (Date.now() - lastAt > limit) {
+            this.log('warn', '13 录指纹空闲 ' + Math.round((Date.now() - lastAt) / 1000) + 's 超过窗口 ('
+              + limit + 'ms), 提前收尾');
+            done(pushes, true);
+          }
         }, 200);
         this._multiTimer = check;
       });
@@ -498,18 +511,26 @@ const label = (o && o.name) || CMD_NAME[cmd] || ('cmd ' + CMD_HEX(cmd));
   // 13 录指纹: 一请求多响应 (App: times=8, 每按一次锁回一帧 orderIdx=1..8, orderIdx==0=结束)
   async fpStart(times, timeoutMs) {
     const { mac, skey } = this._keys();
+    // 收尾判据 (2026-10-17 真机勘误: 「添加指纹时手指按上去没有任何反应, 屏上卡在 1/8」):
+    // 锁收到 13 后**先回一帧应答** (APK StartaddfpPage: orderIdx==0 → "启动成功"), 之后每按一下
+    // 才回一帧 orderIdx=1..8。旧判据只看「有没有 orderIdx==0」—— 应答帧若带 0 就当场收尾,
+    // 采集被关掉、之后每一下按压的帧全丢, 进度恒停在 1/8。改成: **已经收过按压之后**的显式 0
+    // 才算收尾; 只有应答帧 = 没开始收指纹, 交给超时路径报"无按压响应"。
+    const ord = f => { const k = (f.klvs || []).find(x => x.key === 0x04); return k ? STT.leHexToU32(k.val) : null; };
     const frames = await this._execMulti(C.cmd13AddFp(mac, skey, times || 8, 15), {
-      done: fs => fs.some(f => {
-        const k = (f.klvs || []).find(x => x.key === 0x04);
-        return k ? STT.leHexToU32(k.val) === 0 : false;
-      })
+      done: fs => fs.some(f => ord(f) === 0) && fs.some(f => (ord(f) || 0) > 0)
     });
     const g = (f, key) => { const k = (f.klvs || []).find(x => x.key === key); return k ? STT.leHexToU32(k.val) : null; };
     const presses = frames.map(f => ({
       orderIdx: g(f, 0x04), featureNumber: g(f, 0x05),
       batchNumber: g(f, 0x06), nextTimeout: g(f, 0x07), rc: this._extractRc(0x13, f)
     }));
-    if (!presses.length) throw new Error('无按压响应');
+    // 只有应答帧 (没有任何 orderIdx>0 的按压帧) = 锁根本没开始收指纹: 如实报错。
+    // 旧写法只判 `!presses.length` —— 应答帧本身也是一帧, 于是「成功返回 1 帧」,
+    // 页面把它当第 1 次按压点亮点阵 ⇒ 屏上恒停在 1/8 (2026-10-17 真机勘误)。
+    if (!presses.some(p => (p.orderIdx || 0) > 0)) {
+      throw new Error('13 已下发但没有按压响应 (只收到 ' + presses.length + ' 帧应答; rc=' + (presses[0] ? presses[0].rc : '-') + ') — 请把手指按在指纹头上再抬起');
+    }
     return presses;
   }
   async fpConfirm(batchNumber, validFrom, validTo) {

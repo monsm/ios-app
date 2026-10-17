@@ -209,8 +209,10 @@ final class HardwareService: ObservableObject {
     }
     /// cmd 41 写钥 (ekey = AES(skey)($t 包络); 空串 = 删除该锁钥匙)
     func writeDongleKey(dongleMac: String, lock: Keychain, trackId: UInt32) async throws {
-        let vf = UInt32(truncatingIfNeeded: ZKCmdBuilder.protoSec("2010-01-01 00:00:00"))
-        let vt = UInt32(truncatingIfNeeded: ZKCmdBuilder.protoSec("2118-01-01 00:00:00"))
+        // protoSecU32: 东八区下 '2010-01-01 00:00:00' 原为 −28800, 直接 truncatingIfNeeded 会回绕成
+        // 4294938496 (≈2146) ⇒ 写进硬件钥匙的凭证窗口永远不生效 (同 0A/14 的真机勘误)
+        let vf = ZKCmdBuilder.protoSecU32("2010-01-01 00:00:00")
+        let vt = ZKCmdBuilder.protoSecU32("2118-01-01 00:00:00")
         // 旧写法 `lock.pins.first ?? "1"`: PIN 池为空时**回落到 PIN "1"** 去签发硬件钥匙凭证 ——
         // 写进dongle 的是一条人人猜得到的凭证, 而流程显示"写入成功"。缺 PIN 必须直接拒绝。
         guard let pin = lock.pins.first, !pin.isEmpty else {

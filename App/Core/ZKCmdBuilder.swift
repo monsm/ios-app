@@ -17,7 +17,20 @@ enum ZKCmdBuilder {
     // 日期串/ms/协议秒 → 协议秒 (JS protoSec: 宽松 Date.parse, 字符串按本地时区解释, 带 Z 按 UTC)
     // 失败显式返回 nil, 由调用点决定中止 —— 旧写法失败回落"现在", 于是导入 `2026-01-05T08:00:00Z`
     // 这类台账时, 有效期被静默改写成当前时刻 (JS 得 505296000, Swift 旧版得"现在")。
-    static func protoSecOrNil(_ s: String?) -> Int64? {
+    /// 解析结果 → 下发用的**无符号**协议秒收口。
+    /// (2026-10-17 全量盘点: 基准改成"本地 2010-01-01"后, '2010-01-01 00:00:00' 自然解析为 0;
+    ///  这里的 max(0,…) 仍是**护栏** —— 早于 2010 的输入不允许回绕成未来时间。)
+    /// 2026-10-17 真机勘误 (「添加密码/指纹成功但解不开」): `protoSec` 对 '2010-01-01 00:00:00' 走的是
+    /// 「按**本地时区**解析 − 2010-01-01T00:00:00**Z** 基准」, 在东八区得 −28800; 而旧的下发写法
+    /// `UInt32(truncatingIfNeeded:)` 把它**静默回绕**成 4294938496 (≈2146-02-06)。于是「永久」有效期
+    /// 被写成 [2146 … 2118] —— 锁照收 (rc=0)、台账照记「已添加」, 但任何时刻都不在窗口内 ⇒ 密码/指纹
+    /// 添加成功却永远解不开。原 APK 同一字段走 getProtocolTimeSecond('2010-01-01 00:00:00') = **0**
+    /// (被减数与减数是同一个本地时刻), 所以永久窗口下界就是 0。这里以 0 为下界收口,
+    /// 顺带让任何早于 2010 的输入不再回绕到未来。
+    static func protoSecU32(_ v: String?) -> UInt32 { UInt32(clamping: max(0, protoSec(v))) }
+    static func protoSecOrNil(_ s: String?) -> Int64? { protoSecRawOrNil(s).map { max(0, $0) } }
+    /// 原样解析 (可能为负, 只给 protoSecOrNil 用)
+    private static func protoSecRawOrNil(_ s: String?) -> Int64? {
         guard let raw = s?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else { return nil }
         // 纯数字: 秒或毫秒。**这一档是刻意比 JS 宽**，不是"同口径"：
         // JS 的 protoSec 只在 `typeof v === 'number'` 时当数字用，数字**字符串**会走 Date.parse
@@ -110,8 +123,9 @@ enum ZKCmdBuilder {
     static func buildEkeyShare(_ skeyHex: String, _ macHex: String, _ pin: String,
                                random: (UInt32) -> UInt32) -> String {
         // 2026-10-14: 删掉从未使用的 DateFormatter f (实际解析走 protoSec) —— 免得误以为此处按本地时区解析。
-        let vf = UInt32(truncatingIfNeeded: protoSec("2010-01-01 00:00:00")) // JS: '2010-01-01T00:00:00' 本地解释
-        let vt = UInt32(truncatingIfNeeded: protoSec("2118-01-01 00:00:00"))
+        // JS: '2010-01-01T00:00:00' 本地解释 ⇒ 东八区为 −28800; 经 protoSecU32 收口成 0 (= APK 的取值)
+        let vf = protoSecU32("2010-01-01 00:00:00")
+        let vt = protoSecU32("2118-01-01 00:00:00")
         return buildEkeyOpen(skeyHex, macHex, pin, validFromSec: vf, validToSec: vt, trackId: random(0x7fffffff))
     }
     // cmd 08: addCount(1B)+delCount(1B)+addPins(4B LE×N)+delPins(4B LE×M)
@@ -147,8 +161,8 @@ enum ZKCmdBuilder {
         else { throw BLEErrorX.msg("密码有效期无法解析: \(validTo ?? "") (支持 ISO8601/带 Z、'yyyy-MM-dd HH:mm:ss'、秒/毫秒) — 已中止下发") }
         let body = u16leHex(delAlias)
             + HexKit.asciiHex(addPwd, nBytes: 8)
-            + HexKit.u32leHex(UInt32(truncatingIfNeeded: from))
-            + HexKit.u32leHex(UInt32(truncatingIfNeeded: to))
+            + HexKit.u32leHex(UInt32(clamping: max(0, from)))
+            + HexKit.u32leHex(UInt32(clamping: max(0, to)))
         return ZKCmd(name: "0A 同步密码", cmd: 0x0a, hex: ZKProtocol.wrapFrame(0x0a, macHex, skeyHex, body, 0x01))
     }
     // cmd 0B: alias(2B LE) + validFrom/To
@@ -164,8 +178,8 @@ enum ZKCmdBuilder {
         let from = protoSecOrNil(validFrom) ?? ZKProtocol.nowProtoSeconds()
         let to = protoSecOrNil(validTo) ?? ZKProtocol.nowProtoSeconds()
         let body = u16leHex(alias)
-            + HexKit.u32leHex(UInt32(truncatingIfNeeded: from))
-            + HexKit.u32leHex(UInt32(truncatingIfNeeded: to))
+            + HexKit.u32leHex(UInt32(clamping: max(0, from)))
+            + HexKit.u32leHex(UInt32(clamping: max(0, to)))
         return ZKCmd(name: "0B 密码有效期", cmd: 0x0b, hex: ZKProtocol.wrapFrame(0x0b, macHex, skeyHex, body, 0x01))
     }
     // cmd 0E: syncTime(4B LE 协议秒)
@@ -184,8 +198,8 @@ enum ZKCmdBuilder {
     // cmd 14: batchNumber(4B LE) + validFrom/To
     static func cmd14FpConfirm(_ macHex: String, _ skeyHex: String, _ batchNumber: UInt32, _ validFrom: String?, _ validTo: String?) -> ZKCmd {
         let body = HexKit.u32leHex(batchNumber)
-            + HexKit.u32leHex(UInt32(truncatingIfNeeded: protoSec(validFrom)))
-            + HexKit.u32leHex(UInt32(truncatingIfNeeded: protoSec(validTo)))
+            + HexKit.u32leHex(protoSecU32(validFrom))
+            + HexKit.u32leHex(protoSecU32(validTo))
         return ZKCmd(name: "14 指纹确认", cmd: 0x14, hex: ZKProtocol.wrapFrame(0x14, macHex, skeyHex, body, 0x02))
     }
     // cmd 15: batchNumber(4B LE)

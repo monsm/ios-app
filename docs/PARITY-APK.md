@@ -266,6 +266,24 @@ needSessionToken() ⇒ mKLVList.add((byte) -18, ssToken)        // 0xEE, 追加�
   (`new Date('2010-01-01T00:00:00')`)，得连基准一起改成显式口径才算净收益 —— 属独立一批。
 - 验证方式（手上有已配对的锁时）：0E 校时后回读 03 的 `lockTime`，与手机本地时间对比。
 
+**2026-10-17 部分勘误（「永久」字面量这一支已修）**：上面说的 +28800 只对**任意墙钟串**成立；
+`'2010-01-01 00:00:00'` 本身在 APK 里是 **0** —— `getProtocolTimeSecond` 的被减数与减数是
+*同一个本地时刻*（`getDate('2010-01-01 00:00:00')`），时区自己消掉；而本机 `protoSec()` 减的是
+`2010-01-01T00:00:00Z` 这个 **UTC 瞬时**，东八区得 **−28800**，4B 下发按无符号回绕成
+**4294938496（≈2146-02-06）** ⇒ 「永久」密码/指纹的有效期被写成 `[2146 … 2118]`：锁照收（rc=0）、
+台账照记「已添加」，但任何时刻都不在窗口内 —— 真机表现就是**添加成功却解不开**（2026-10-17 用户报告）。
+修法：`ZKCmdBuilder.protoSecU32`（Swift）与 `protoSec`（vendor/小程序 JS）统一以 **0** 为下界收口，
+与 APK 逐字一致；`fixtures/golden.json` 的 0A/14 三条随之重生成，且现在**与机器时区无关**
+（UTC / Asia-Shanghai / America-New_York 三处 `node tools/golden.js --check` 均绿）。
+仍未动的：任意墙钟串与 `nowProtoSeconds()`/0E 相对 APK 的 +28800 口径差（本条上文），照旧需真锁验证。
+
+**2026-10-17 全量盘点: 本项已整体修完（不再是待办）** —— 协议时间基准改为 **本地 2010-01-01 00:00:00**
+（Swift `ZKProtocol.epochMs`、`utils/time.js EPOCH_MS`、`kernel/protocol.js EPOCH`，vendor 与小程序两份同步），
+`buildEkey` 默认 VT 改用本地 2118 字面量，`protoSecondsToDateStr` 改本地渲染。
+证据: 0A/14 解密帧逐字段对比 —— body_vt 3408105600 → **3408134400**（= APK `getProtocolTimeSecond`），
+包络 vf/vt 与 APK `kt` 默认值一致（本地两端相减 ⇒ 与机器时区无关）。`fixtures/golden.json` 随之重生成（12 处）。
+逐项对照、逐命令表与仍未覆盖项见 [PARITY-FULL-AUDIT.md](PARITY-FULL-AUDIT.md)。
+
 ### 7.5 已勘误 C：只读 03 探针作废（真机反例）
 
 见 `docs/BRICK-AUDIT.md` §10.1：03 的 rc=0 **不能**证明包络 MAC 字节序（真机上 03 rc=0 而 08 回 rc=12），

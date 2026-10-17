@@ -13,8 +13,19 @@ struct ZKLV: Equatable {
 }
 
 enum ZKProtocol {
-    // 协议时间基准 2010-01-01 00:00:00 UTC
-    static let epochMs: Int64 = 1_262_304_000_000 // Date.parse('2010-01-01T00:00:00Z')
+    // 协议时间基准 = **本地** 2010-01-01 00:00:00 (2026-10-17 全量盘点勘误: 旧值 1_262_304_000_000 是
+    // 2010-01-01T00:00:00**Z**, 比 APK 少一个时区偏移)。
+    //   依据 (逐字): APK `En.getProtocolTimeSecond(x) = An.getDate(x) − An.getDate('2010-01-01 00:00:00')`,
+    //   而 `An.getDate` 是 `new Date(y, m-1, d, h, mi, s)` —— 被减数与减数都在**本地墙钟**上, 时区自己消掉。
+    //   东八区里同一时刻的协议秒 = UTC 基准值 + 28800; 锁钟/0E/05/0A/0B/14 全用这一口径。
+    static let epochMs: Int64 = {
+        var c = DateComponents()
+        c.year = 2010; c.month = 1; c.day = 1; c.hour = 0; c.minute = 0; c.second = 0
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = TimeZone.current
+        guard let d = cal.date(from: c) else { return 1_262_304_000_000 }   // 理论不可达; 回落旧值
+        return Int64((d.timeIntervalSince1970 * 1000).rounded())
+    }()
     static func protoSecondsFromMs(_ ms: Int64) -> Int64 { (ms - epochMs) / 1000 }
     static func nowProtoSeconds() -> Int64 { protoSecondsFromMs(Int64(Date().timeIntervalSince1970 * 1000)) }
     static func protoSecondsToMs(_ sec: Int64) -> Int64 { epochMs + sec * 1000 }
@@ -24,8 +35,10 @@ enum ZKProtocol {
     /// `Int64` 里（靠"恰好整千"才没截断）—— 那种形状下次被人改成 `/1000.0` 或换常数基准就静默漂，
     /// 所以收成一份并由 `swiftlint` 检查⑩ 盯住 (§10.32)。
     static func protoSecondsToUnix(_ sec: Int64) -> Double { Double(sec) + Double(epochMs / 1000) }
-    // JS protoTime('2118-01-01T00:00:00Z') 的默认有效止 (buildEkey 默认 VT)
-    static let validTo2118: UInt32 = UInt32(protoSecondsFromMs(4_670_438_400_000)) // 2118-01-01T00:00:00Z (node Date.parse 权威值)
+    // 默认有效止 (buildEkey 的默认 VT) = JS protoTime('2118-01-01T00:00:00') 本地口径。
+    //   本地 2118 减本地 2010 = 108 年整 ⇒ **与机器时区无关**, 恒 4_670_438_400 (=4670438400),
+    //   与 APK kt.ValidTo 逐字节一致 (已用 0A/14 解密帧核对过)。
+    static let validTo2118: UInt32 = UInt32(protoSecondsFromMs(4_670_438_400_000))
 
     // ---------- KLV ----------
     static func buildKLV(_ key: Int, _ valHex: String) -> String {

@@ -906,9 +906,19 @@ struct StartAddFpView: View {
             try await app.lock.ensureConnected(mac: kc.mac)
             // onPress 每来一帧就填一次: 旧写法要等整个 fpStart 返回才赋值，
             // 期间"重复此步骤 (0/8)"的进度文案恒停在 0/8 (§4 遗留项)
-            let ps = try await app.lock.fpStart(times: 8, timeoutMs: 30000,
-                                                onPress: { p in self.presses.append(p) })
+            // 窗口口径在 LockService.fpStart 里 (首帧 8s / 两次按压 16s, 对齐 APK Java 接收计时器)
+            let ps = try await app.lock.fpStart(times: 8,
+                                                onPress: { p in
+                                                    self.presses.append(p)
+                                                    // 手指在锁上时用户看不到屏幕: 每次按压给一声轻触感, 免得"按了像没按"
+                                                    DS.Haptics.tick.impactOccurred()
+                                                })
             self.presses = ps
+            // 14 会把这一批指纹真正启用: 不满 8 次按压的批次不确认 (否则启用的是一枚残缺指纹)
+            guard presses.count >= 8 else {
+                throw NSError(domain: "fp", code: 2,
+                              userInfo: [NSLocalizedDescriptionKey: "只收到 \(presses.count)/8 次按压, 未写入; 请重新录入并多按几次"])
+            }
             guard let batch = presses.compactMap({ $0.batchNumber }).first, batch > 0 else {
                 throw NSError(domain: "fp", code: 1, userInfo: [NSLocalizedDescriptionKey: "未拿到有效指纹批次, 请重新录入"])
             }
@@ -1178,6 +1188,18 @@ struct DeviceInfoView: View {
             // 47: 状态读回瞬间锁钟与手机时钟的差 (协议秒基准换算)
             if let lt = status?.lockTime {
                 clockDrift = Int(lt - ZKProtocol.nowProtoSeconds())
+            }
+            // APK 逻辑对齐 (2026-10-17 全量盘点): 原 APK 的 RominfoPage.ionViewDidLoad 里**进页就
+            // `syncTime()`** (new St(En.getNowTimeString(), mac) → Dt → 0E), 本机此前只有手动入口。
+            // 锁钟是所有有效期窗口 (0A/0B/14) 与临时码的判据 —— 进页自动对齐, 漂移 > 2s 才真写
+            // (APK 无条件写; 我们只在真漂移时写, 终态一致: 锁钟 == 手机钟)。
+            if let drift = clockDrift, abs(drift) > 2 {
+                app.lock.log("info", "设备信息页自动校时 (偏差 \(drift)s, APK RominfoPage 进页同步口径)")
+                if let res = try? await app.lock.syncTime() {
+                    app.lock.log("info", "自动校时完成: 校前偏差 \(res.before)s, 校后偏差 \(res.after)s")
+                    status = try await app.lock.getStatus()
+                    if let lt = status?.lockTime { clockDrift = Int(lt - ZKProtocol.nowProtoSeconds()) }
+                }
             }
         } catch { app.showToast(error.localizedDescription) }
     }

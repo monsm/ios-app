@@ -296,8 +296,11 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
             if device.state != .connected { throw BLEErrorX.code(.writeFailed) }
             let part = Data(bytes[i..<min(i + chunk, bytes.count)])
             i += chunk
+            // 分片之间**不加** sleep: APK Java `writeRXCharacteristic` 是每片 write 后等
+            // onCharacteristicWrite 才发下一片 (BLE_TIMEOUT=8s), 没有固定间隔 —— 我们这里的
+            // writeChunk 同样等 didWriteValueFor (见其内注释), ack 就是流控。旧实现额外多 30ms/片,
+            // 长帧 (0A 116 hex / 15 命令帧) 白等 0.15~0.5s。
             try await writeChunk(part, on: device, characteristic: ch)
-            try? await Task.sleep(nanoseconds: 30_000_000) // 30ms 分片间隔
         }
     }
     /// 取写槽 (FIFO): 同一特征值的 with-response 写必须串行, 否则 writeAckCont 单槽被后者覆盖,
@@ -361,7 +364,10 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
             ackTimer = work
             self.writeAckCont = cont
             device.writeValue(data, for: ch, type: .withResponse)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0, execute: work)
+            // 每片写确认的超时 = 8s: APK Java 侧同一处是 `BLE_TIMEOUT` (8000ms, BleLockConnector.
+            // writeRXCharacteristic 里每片 writeCharacteristic 后等 onCharacteristicWrite)。
+            // 旧值 3s 比 APK 紧 2.6 倍, 弱信号下真机容易把"已写成功"误判成写失败。
+            DispatchQueue.main.asyncAfter(deadline: .now() + 8.0, execute: work)
         }
     }
 
