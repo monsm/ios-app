@@ -89,6 +89,8 @@ private fun KfApp() {
 
     var lock by remember { mutableStateOf(LockStore.load(ctx)) }
     var status by remember { mutableStateOf("") }
+    /// 失败时的过程留痕 (令牌前缀 / rc) —— 真机排障就靠这一行, 平时不占地方
+    var detail by remember { mutableStateOf("") }
     var statusBad by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
     // 初值从本机读 (跨重启保留); 切换时立刻落盘 —— 见 LockStore.loadProximity 的注释
@@ -119,6 +121,7 @@ private fun KfApp() {
             val r = unlocker.unlock(l)
             busy = false
             say(r.message, !r.ok)
+            detail = if (r.ok || r.trace.isEmpty()) "" else r.trace
             if (r.ok) vibrate(ctx)
         }
     }
@@ -199,6 +202,16 @@ private fun KfApp() {
                     fontSize = 12.sp,
                     fontFamily = FontFamily.Monospace
                 )
+                if (!detail.isEmpty()) {
+                    Text(
+                        text = detail,
+                        color = InkSub.copy(alpha = 0.55f),
+                        fontSize = 11.sp,
+                        fontFamily = FontFamily.Monospace,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
             }
             Spacer(Modifier.weight(1f))
             if (lock != null) {

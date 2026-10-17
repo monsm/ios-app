@@ -40,7 +40,8 @@ class BleUnlocker(private val ctx: Context) {
     private val mutex = Mutex()
     private val svcUuid: UUID = UUID.fromString(KfProtocol.SVC)
 
-    data class Outcome(val ok: Boolean, val message: String)
+    /// trace = 这一趟开锁的过程留痕 (令牌前缀 / rc)。只在失败时给用户看, 用来在真机上定位问题。
+    data class Outcome(val ok: Boolean, val message: String, val trace: String = "")
 
     fun isReady(): Boolean = adapter?.isEnabled == true
 
@@ -82,6 +83,7 @@ class BleUnlocker(private val ctx: Context) {
             val connected = CompletableDeferred<Boolean>()
             val servicesOk = CompletableDeferred<Boolean>()
             val notifyOn = CompletableDeferred<Boolean>()
+            val mtuOk = CompletableDeferred<Boolean>()
             var writeDone: CompletableDeferred<Boolean>? = null
 
             val cb = object : BluetoothGattCallback() {
@@ -105,6 +107,9 @@ class BleUnlocker(private val ctx: Context) {
                 override fun onCharacteristicChanged(g: BluetoothGatt, c: BluetoothGattCharacteristic, value: ByteArray) {
                     notes.trySend(value)
                 }
+                override fun onMtuChanged(g: BluetoothGatt, mtu: Int, status: Int) {
+                    mtuOk.complete(true)
+                }
             }
 
             // connectGatt 之后再取一次非空引用: gatt 是 var, 编译器不会对它做智能转换
@@ -118,6 +123,12 @@ class BleUnlocker(private val ctx: Context) {
             if (withTimeoutOrNull(6_000) { servicesOk.await() } != true) {
                 return@withLock Outcome(false, "读取门锁服务失败")
             }
+            // 把 ATT MTU 抬起来: 安卓默认 23 (每包 20 字节), 而 iOS 侧自动协商到 180+。
+            // 不抬也能用 (我们本来就是 20 字节分片), 但 56 字节的开锁帧要分成 3 片、每片等一次写确认。
+            // 抬上去之后 1 片写完 —— "靠近自动开锁"的体感差别就在这儿。
+            g.requestMtu(256)
+            withTimeoutOrNull(2_000) { mtuOk.await() }
+
             val svc = g.getService(svcUuid) ?: return@withLock Outcome(false, "这把锁不支持开锁通道")
             val write = svc.getCharacteristic(UUID.fromString(KfProtocol.CHR_WRITE))
                 ?: return@withLock Outcome(false, "门锁写通道缺失")
@@ -131,24 +142,38 @@ class BleUnlocker(private val ctx: Context) {
                 withTimeoutOrNull(4_000) { notifyOn.await() }
             }
 
-            // ---- 01 取会话令牌 ----
-            if (!writeChunked(g, write, KfProtocol.bytes(KfProtocol.tokenFrame())) { writeDone = it }) {
-                return@withLock Outcome(false, "写入失败 — 重连后再试")
-            }
-            val tokenFrame = awaitFrame(notes, 0x01, 4_000)
-                ?: return@withLock Outcome(false, "门锁没有回应 — 靠近一点再试")
-            val token = tokenFrame.klvs[0x02]
-                ?: return@withLock Outcome(false, "门锁未给会话令牌 (rc=${KfProtocol.rc(tokenFrame)})")
+            val trace = StringBuilder()
+            // 01 取会话令牌 → 04 开锁。rc=3 (命令过期) / rc=13 (通讯过期) 都是"会话令牌不认了":
+            // 重取一次令牌再发, 只做一轮 (iOS 对 rc=3 是同一招; rc=13 在配对语境里也是令牌失效)。
+            var rc = -1
+            for (attempt in 1..2) {
+                if (!writeChunked(g, write, KfProtocol.bytes(KfProtocol.tokenFrame())) { writeDone = it }) {
+                    return@withLock Outcome(false, "写入失败 — 重连后再试", trace.toString())
+                }
+                val tokenFrame = awaitFrame(notes, 0x01, 4_000)
+                    ?: return@withLock Outcome(false, "门锁没有回应 — 靠近一点再试", trace.toString())
+                val token = tokenFrame.klvs[0x02]
+                if (token == null) {
+                    return@withLock Outcome(
+                        false, "门锁未给会话令牌 (rc=${KfProtocol.rc(tokenFrame)})", trace.toString())
+                }
+                trace.append("01→${token.take(8)} ")
 
-            // ---- 04 开锁 ----
-            val hex = KfProtocol.injectToken(KfProtocol.unlockFrame(lock.ekey), token)
-            if (!writeChunked(g, write, KfProtocol.bytes(hex)) { writeDone = it }) {
-                return@withLock Outcome(false, "写入失败 — 重连后再试")
+                val hex = KfProtocol.injectToken(KfProtocol.unlockFrame(lock.ekey), token)
+                if (!writeChunked(g, write, KfProtocol.bytes(hex)) { writeDone = it }) {
+                    return@withLock Outcome(false, "写入失败 — 重连后再试", trace.toString())
+                }
+                val res = awaitFrame(notes, 0x04, 5_000)
+                    ?: return@withLock Outcome(false, "开锁没有回执 — 门锁可能已执行, 先看一眼门", trace.toString())
+                rc = KfProtocol.rc(res)
+                trace.append("04→rc=$rc ")
+                if ((rc == 3 || rc == 13) && attempt == 1) {
+                    trace.append("(会话过期, 重取令牌再试) ")
+                    continue
+                }
+                break
             }
-            val res = awaitFrame(notes, 0x04, 5_000)
-                ?: return@withLock Outcome(false, "开锁没有回执 — 门锁可能已执行, 先看一眼门")
-            val rc = KfProtocol.rc(res)
-            Outcome(rc == 0, KfProtocol.rcText(rc))
+            Outcome(rc == 0, KfProtocol.rcText(rc), trace.toString())
         } catch (e: Exception) {
             Outcome(false, "开锁失败: ${e.message ?: "未知错误"}")
         } finally {

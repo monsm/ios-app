@@ -1,0 +1,5 @@
+/build
+/openapi
+# 签名仓库**不**忽略: 要的就是跨构建稳定
+!keystore/
+!/keystore/kfkey.p12

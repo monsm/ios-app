@@ -18,8 +18,26 @@ android {
         versionName = "1.0"
     }
 
+    signingConfigs {
+        // 固定签名的仓库文件随仓库提交: CI 每次都是全新的 runner, 默认 debug.keystore 每台都不一样,
+        // 于是"装一次就不让升级"。选一个随仓库走的签名, 之后每次构建都能原地覆盖安装。
+        // ⚠ 这是自签的**安装用**密钥 (给 AltStore/直接安装用的), 不是 Google Play 上传密钥 ——
+        //   真要上架 Play 得另建并自己保存。
+        create("kf") {
+            storeFile = file("keystore/kfkey.p12")
+            storeType = "PKCS12"
+            storePassword = (project.findProperty("KF_STORE_PW") as String?) ?: "kfkey2026"
+            keyAlias = "kfkey"
+            keyPassword = (project.findProperty("KF_KEY_PW") as String?) ?: "kfkey2026"
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("kf")
+        }
         release {
+            signingConfig = signingConfigs.getByName("kf")
             // 这是个两人用的极简工具, 不混淆也能保持体积与崩溃栈可读
             isMinifyEnabled = false
         }
