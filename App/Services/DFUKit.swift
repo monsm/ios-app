@@ -636,7 +636,7 @@ enum DFURunner {
     @MainActor
     static func runUpgradeQueue(lock: LockService, macs: [String], firmware: FirmwarePackage,
                                 onStep: @escaping (Int, Int, String) -> Void,
-                                onProgress: @escaping (DFUProgress) -> Void) async -> [QueueOutcome] {
+                                onProgress: @escaping @MainActor (DFUProgress) -> Void) async -> [QueueOutcome] {
         var out: [QueueOutcome] = []
         for (i, mac) in macs.enumerated() {
             let kc = DB.keychain(mac)
@@ -658,8 +658,12 @@ enum DFURunner {
     /// 2026-10-14: 离开升级页时调用 —— 此前只 dismiss, 传输实际继续, 用户误以为已停。
     static func cancelActive() { activeSession?.abort() }
 
+    /// onProgress 标 @MainActor: 它最终改的是界面进度条。标了之后这个闭包本身即 Sendable,
+    /// 于是它被上传链里的 `{ done, total in ... }` 捕获时, 那个闭包的区域是"断开的",
+    /// 可以安全地送进 DFUBleSession 的 async 上传函数 —— 否则 Swift 6 报
+    /// "sending value of non-Sendable type '(Int, Int) -> Void' risks causing data races"。
     static func runUpgrade(lock: LockService, mac: String, pid: Int, firmware: FirmwarePackage,
-                           onProgress: @escaping (DFUProgress) -> Void) async throws {
+                           onProgress: @escaping @MainActor (DFUProgress) -> Void) async throws {
         // 2026-10-14: 降级闸接线 —— 无签名前提下, 拒绝把低版本固件刷回 (versionLt 此前全仓零调用)。
         if let msg = FirmwareKit.downgradeBlocked(current: DB.keychain(mac)?.fw, pkg: firmware) {
             throw BLEErrorX.msg(msg)

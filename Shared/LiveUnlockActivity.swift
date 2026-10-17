@@ -31,8 +31,12 @@ enum LiveUnlockPhase: String, Codable, Hashable {
 }
 
 /// 活动属性: 锁名是**静态**的 (整场活动不变), 阶段是**动态**的 (随状态更新)。
-struct UnlockActivityAttributes: ActivityAttributes {
-    struct ContentState: Codable, Hashable {
+/// `Activity<Attributes>` 的 Sendable 是**条件式**的 (`where Attributes: Sendable`), 而
+/// ActivityAttributes 本身并不要求 Sendable —— 不显式写这一行, 主 actor 上取到的活动实例
+/// 就是"不可跨隔离发送", Swift 6 下 update/end 那几处直接判错。
+/// 本类型的成员只有 String 与一个纯值 enum, 所以这个一致性是事实, 不是声明式免检。
+struct UnlockActivityAttributes: ActivityAttributes, Sendable {
+    struct ContentState: Codable, Hashable, Sendable {
         var phase: LiveUnlockPhase
     }
     var lockName: String
