@@ -344,7 +344,7 @@ final class ExportProgress: ObservableObject, @unchecked Sendable {
     private var lastLabel = ""
     /// 存的是 @Sendable 版本: 重试要把它再交给 start 的后台闭包参数, 非 Sendable 的存法会在
     /// 重试那一行被判"把非 Sendable 函数值转成 @Sendable 可能引入竞争"。
-    private var lastWork: (@Sendable () -> ExportItem?)?
+    private var lastWork: (@Sendable () async -> ExportItem?)?
     private var lastFinish: ((ExportItem?, String) -> Void)?
     func retry() {
         guard let w = lastWork, let f = lastFinish else { return }
@@ -355,7 +355,7 @@ final class ExportProgress: ObservableObject, @unchecked Sendable {
     func start(_ label: String,
                // @Sendable: 这个闭包会被送进 Task.detached 在后台跑。Swift 6 的 sending 检查要求
                // 它不捕获主 actor 状态 —— 所以 9 个调用点都先把界面配置取成局部常量再进闭包。
-               work: @escaping @Sendable () -> ExportItem?,
+               work: @escaping @Sendable () async -> ExportItem?,
                finish: @escaping (ExportItem?, String) -> Void) {
         lastLabel = label; lastWork = work; lastFinish = finish
         cancel()
@@ -364,7 +364,7 @@ final class ExportProgress: ObservableObject, @unchecked Sendable {
             guard let self else { return }
             await MainActor.run { self.step = label; self.running = true }
             // 生成放后台线程 (UI 不阻塞); 取消时拦"收尾写回" (692)
-            let child = Task.detached(priority: .userInitiated) { work() }
+            let child = Task.detached(priority: .userInitiated) { await work() }
             await MainActor.run { self.child = child }
             let item = await child.value
             let cancelled = Task.isCancelled || child.isCancelled
@@ -1705,8 +1705,10 @@ struct ExportCenterView: View {
             let alarms = ExportKit.filtered(ExportKit.records(mac: mac), range: .alarms).reversed()
             guard let a = alarms.first else { return nil }
             let lockName = DB.keychain(mac).map { $0.name.isEmpty ? LockArchive.displayName($0) : $0.name } ?? mac
-            guard let img = ExportKit.alarmCard(a, lockName: lockName),
-                  let jpeg = img.jpegData(compressionQuality: 0.8) else { return nil }
+            // 告警卡走 SwiftUI 的 ImageRenderer —— 它**必须在主 actor 上**渲染, 所以只有这一步回主线程;
+            // 之后的 jpeg 编码与哈希仍在后台 (那是纯 CPU)。生成体整体是 async, 回主一次不会卡 UI。
+            let img = await MainActor.run { ExportKit.alarmCard(a, lockName: lockName) }
+            guard let img, let jpeg = img.jpegData(compressionQuality: 0.8) else { return nil }
             let hex = SHA256.hash(data: jpeg).map { String(format: "%02x", $0) }.joined()
             return ExportItem(kind: "png",
                               title: "告警卡 " + a.typeName,
