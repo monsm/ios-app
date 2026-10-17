@@ -46,6 +46,16 @@ enum AXFlags {
         let v = Double(DB.store.getString("kf_font_scale", "1.0")) ?? 1.0
         return [0.8, 1.0, 1.25, 1.5, 1.75].contains(v) ? v : 1.0
     }
+    // ---------- 非隔离读点 (只给动效令牌) ----------
+    /// `DS.Motion` 的令牌要在**非隔离**处求值 (ButtonStyle / ToggleStyle 的 makeBody 都不是主 actor),
+    /// 而系统"减弱动态效果"是主 actor 旗标。这里留一份"最近一次在主 actor 上读到的值":
+    /// 值本身进 Locked, 读写都不越界 —— 不是 unsafe, 也不是 assumeIsolated。
+    /// 刷新点 = 启动 + 每次回前台: 改这个系统开关**必须先离开 App 去设置**, 回来一定经过
+    /// scenePhase .active, 所以不会读到过期值。
+    nonisolated static let reduceMotionBox = Locked(false)
+    nonisolated static var reduceMotionSnapshot: Bool { reduceMotionBox.withLock { $0 } }
+    static func refreshSnapshots() { reduceMotionBox.withLock { $0 = reduceMotion } }
+
     /// 系统 Dynamic Type 相对正文 17pt 的倍率 (preferredFont 跟随用户所选字号)
     static var systemTypeRel: Double {
         UIFont.preferredFont(forTextStyle: .body).pointSize / 17.0

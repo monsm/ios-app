@@ -277,13 +277,12 @@ enum DS {
     /// App 侧没有任何一处 `withAnimation` 包着 tabSelection —— 所以这一档管的是**全 App 的动效令牌**
     /// (81 处调用点)，不是"只换 Tab 那一下"。写清这一点，才不会让人以为调了它 Tab 就一定跟着变。
     /// 默认档 "standard" 的三个值 = 本批之前的字面值，所以不改任何人的既有观感。
-    /// 系统"减弱动态效果"是主 actor 旗标, 所以整族令牌住主 actor。
-    /// 调用点全是视图与 `AmbientCopy.Action.run` (那个闭包类型本身就是 @MainActor)。
-    @MainActor
     enum Motion {
         /// 系统减弱动态 = 强制最静的一档，用户偏好让路 (这不是偏好，是无障碍硬约束)。
-        /// 读 AXFlags.reduceMotion 而不是自己调 UIAccessibility：本仓的系统旗标只有一个读点。
-        private static var systemReduceMotion: Bool { AXFlags.reduceMotion }
+        /// 读 AXFlags 而不是自己调 UIAccessibility：本仓的系统旗标只有一个读点。
+        /// 这里用的是**快照**而不是 @MainActor 的那个属性: 令牌会被 ButtonStyle/ToggleStyle 的
+        /// makeBody (非隔离) 求值, 而系统旗标本身是主 actor 的 —— 快照由 AXFlags 在回前台时刷新。
+        private static var systemReduceMotion: Bool { AXFlags.reduceMotionSnapshot }
         private static var tier: String {
             if systemReduceMotion { return "calm" }
             // 120 低电视觉降级: 锁电量 ≤20% 时全 App 动效也压到 calm —— 与系统减弱动态同优先级,

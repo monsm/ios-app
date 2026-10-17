@@ -1527,6 +1527,8 @@ struct RootView: View {
     private func handleScenePhase(_ phase: ScenePhase) {
         LinkSense.shared.setSceneActive(phase == .active)
         if phase == .active {
+            // 动效令牌的非隔离读点: 系统"减弱动态效果"只能在设置里改, 改完回来必然经过这里。
+            AXFlags.refreshSnapshots()
             // 2026-10-17 拍板 A: 「到点自动落锁」随启动门禁一起删 —— 现在没有锁屏页可回,
             // 留着它只会把 appUnlocked 置 false, 让深链/落点/回连那些 guard 静默失效。
             if app.appUnlocked {
