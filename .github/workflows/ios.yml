@@ -43,7 +43,7 @@ jobs:
       - name: Setup Node (金标漂移校验用)
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
 
       - name: 金标漂移校验 (committed 必须等于 JS 核心输出; 改 vendor 后须重生成并提交)
         run: node tools/golden.js --check
@@ -141,6 +141,17 @@ jobs:
         run: |
           node tools/destmap.js
           node tools/uicoverage.js
+
+      - name: '选用镜像里最新的 Xcode (最新 iOS SDK)'
+        run: |
+          # 镜像里同时装了 27.0/27.1/27.2, 默认可能是旧的 —— 显式挑版本号最大的那个,
+          # 否则 deploymentTarget 与 SDK 会差档 (报 "deployment target is greater than SDK")。
+          echo "已安装: $(ls -d /Applications/Xcode*.app | xargs -n1 basename | tr '\n' ' ')"
+          LATEST=$(ls -d /Applications/Xcode*.app | sort | tail -1)   # BSD sort 没有 -V; Xcode_27.0/27.1/27.2 字典序即版本序
+          echo "选用: $LATEST"
+          sudo xcode-select -s "$LATEST"
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
 
       - name: Install XcodeGen
         run: brew install xcodegen
