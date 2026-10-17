@@ -154,7 +154,7 @@ else good('A4 令牌通道 KLV#0xEE');
   // 预热在途也必须撤监测: 安卓同时只跑一路扫描, prewarm 建链时监测还在扫 = 边扫边连 (133)。
   // 上一条只查 busy 在不在 key 里 (合理扩展 key 时不该假红), 所以 warming 单独钉一条。
   if (!/\bwarming\b/.test(leKey)) bad("A8 预热在途时监测没撤下 (warming 不在 LaunchedEffect 的 key 里)");
-  else if (!/if \(!proximity \|\| busy \|\| warming\) return@LaunchedEffect/.test(ma)) bad("A8 warming 进了 key 但早退那行没带上它 (撤不下监测)");
+  else if (!/if \(!proximity \|\| busy \|\| warming[^)]*\) return@LaunchedEffect/.test(ma)) bad("A8 warming 进了 key 但早退那行没带上它 (撤不下监测)");
   else good("A8 预热在途同样撤下监测");
   // 掉回解除线时要连 prewarmStarted 一起放开, 否则一次 App 生命周期内只会预热一次,
   //   第二次靠近就没有热链路 —— "秒开"退化成只有第一次快。
@@ -340,8 +340,8 @@ const disarm = b => Math.round(b + 10 * Math.log10(0.5));
 if (!/fun armThreshold\(base: Int = BASE\): Int = base/.test(ao)) bad('C 武装线公式漂移 (应为 base)');
 if (!/10 \* log10\(0\.5\)/.test(ao)) bad('C 解除线不再是线性功率域换算 (10·log10(0.5)) —— dBm 上直接乘系数会把方向搞反');
 else good('C 解除线 = base + 10·log10(0.5) (与 iOS disarmThreshold 同式)');
-if (!/const val COOLDOWN_MS = 60_000L/.test(ao)) bad('C 冷却时长与 iOS cooldownSeconds=60 不一致');
-else good('C 冷却 60s (对齐 iOS AutoOpenKit.cooldownSeconds)');
+if (!/const val COOLDOWN_MS = 6_000L/.test(ao)) bad('C 冷却时长不是 6_000L (用户 2026-10-17: 开完锁等 6 秒恢复自动扫锁; iOS cooldownSeconds 必须同步改 6)');
+else good('C 冷却 6s (与 iOS AutoOpenKit.cooldownSeconds=6 同口径)');
 
 function sample(prev, r, b) { return prev ? r > disarm(b) : r >= arm(b); }
 // 不变式: 信号恒强 (站在门口不动) ⇒ 逐样本只武装一次, 不反复翻转

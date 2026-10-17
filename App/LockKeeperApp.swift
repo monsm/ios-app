@@ -966,6 +966,10 @@ final class AppState: ObservableObject {
         // LockOverviewView「未读到≠无告警」同一口径)。
         if status?.verifyMode == 1 {
             showToast("双验模式: 第一道已通过, 请再用指纹或密码完成第二道验证")
+        } else {
+            // 来源标注 (用户 2026-10-17): 与自动档那句成对 —— 开完要能说清是自己点的还是走近自动开的。
+            // 只在非双验时报"成功", 双验那条上面已经给了实话。
+            showToast("手动开锁成功 — \(displayName)")
         }
         // 76 成功短音效: 默认只震动, 开关在设置-开锁 (系统铃声开关静音时自动无声)
         AlertTone.unlockSuccess()

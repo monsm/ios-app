@@ -21,8 +21,11 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
@@ -77,6 +80,7 @@ class BleUnlocker(private val ctx: Context) {
         @Volatile var gatt: BluetoothGatt? = null
         @Volatile var write: BluetoothGattCharacteristic? = null
         @Volatile var writeDone: CompletableDeferred<Boolean>? = null
+        @Volatile var rssiRead: CompletableDeferred<Int?>? = null   // 连接层测距的落点
         @Volatile var identityVerified = false   // 这条链路已用锁端 03 自报 pid 核过身份
         @Volatile var lastUsedAt = System.currentTimeMillis()
 
@@ -294,7 +298,10 @@ class BleUnlocker(private val ctx: Context) {
         }
         val ad = adapter ?: return@withLock
         if (!ad.isEnabled) return@withLock
-        val device = freshSeen(lock.mac) ?: return@withLock   // 预热只在"已经扫到过"时做, 绝不为此另起扫描
+        // 预热**绝不自己起扫描**: 安卓同时只跑一路扫描, 另起一次会顶掉监测流, 而它收尾那句
+        // stopScan 又把监测一起停 (表现 = "当前信号再也不更新")。句柄一律从 observeSignal 的
+        // 广播缓存里取 —— 监测窗 3 秒一轮, 首轮就会把句柄填进来。
+        val device = freshSeen(lock.mac) ?: return@withLock
         seen.remove(lock.mac)   // 一次性: 句柄交给连接用了, 连着失败时不拿旧句柄反复重试
         val s = Session(lock.mac)
         try {
@@ -403,6 +410,10 @@ class BleUnlocker(private val ctx: Context) {
             override fun onCharacteristicChanged(g: BluetoothGatt, c: BluetoothGattCharacteristic, value: ByteArray) {
                 s.notes.trySend(value)
             }
+            override fun onReadRemoteRssi(g: BluetoothGatt, rssi: Int, status: Int) {
+                // status 带错给 null: "读不到"与"读到 -80"是两件事, 不硬编数字。
+                s.rssiRead?.complete(if (status == BluetoothGatt.GATT_SUCCESS) rssi else null)
+            }
             override fun onMtuChanged(g: BluetoothGatt, mtu: Int, status: Int) {
                 // MTU 是纯优化 (分片恒 20B), 不参与判定, 所以这里什么都不做。
                 // 旧实现不看 status 就恒 complete(true), 那是把"协商失败"报成"协商成功"。
@@ -467,6 +478,55 @@ class BleUnlocker(private val ctx: Context) {
     }
 
     // ---------- 近场信号 ----------
+
+    /**
+     * 统一信号流 —— **"靠近秒开"成不成立就在这一条上**。
+     *
+     * 物理事实: 门锁一旦被连上就**停掉广播** (连着还发广播是白费的, 厂商固件不为已连接的设备
+     * 继续 advertise)。所以只看扫描结果的旧写法, 从"链路热起来"那一刻起就再也收不到样本。
+     * 用户报的两条症状正是它:
+     *   · "信号刷新很慢很慢" = 连上之后信号干脆不动了, 界面停在最后一次读数;
+     *   · "自动解锁很慢/不开" = 没有新样本 ⇒ 武装位永远置不起来, 自动链根本不会点火。
+     * iOS 侧更彻底: BLEService 里 readRSSI() 一次都没调过 (本轮查实), 所以自动开锁在
+     * "已连接"状态下只能靠连接前最后一帧广播的陈旧值。
+     *
+     * 于是分两路: **有活链路就按连接层测距 (readRemoteRssi), 没有才去扫广播**。
+     * 另两个好处: ① 测距顺带刷新 lastUsedAt, 热链路不会在 60 秒后被自己判过期 —— 那正是
+     * "手动点击也要 3 秒以上"的成因 (又付一遍扫描+建链+订阅+认锁);
+     * ② 连着的时候不再扫描, 手机射频与锁的电量都少一份开销 (与"后台不扫锁"同源)。
+     *
+     * 用 channelFlow 而不是 flow: 内层 withTimeoutOrNull 跑在子协程里, 从子协程向 flow{}
+     * 的 emitter 发射违反 Flow 不变式 (运行期 IllegalStateException, 编译器抓不到)。
+     */
+    fun observeSignal(lock: LockInfo): Flow<Int> = channelFlow {
+        val pump = launch {
+            while (isActive) {
+                val warm = pickWarm(lock)
+                if (warm != null) {
+                    val r = readLinkedRssi(warm)
+                    if (r != null) send(r)
+                    if (warm.disconnected.isCompleted) continue   // 链路刚死: 立刻回到循环去扫
+                    delay(800)
+                } else {
+                    // 扫描只在"没有链路"时开, 3 秒一窗: 窗内若预热把链路建好, 下一窗自动
+                    // 切到连接层测距, 而这一窗收尾时 stopScan 已经把射频放掉了。
+                    withTimeoutOrNull(3_000) { observeRssi(lock).collect { send(it) } }
+                }
+            }
+        }
+        awaitClose { pump.cancel() }
+    }
+
+    /** 一次连接层测距。读到就算"这条链路还活着", 顺手刷新 lastUsedAt。 */
+    private suspend fun readLinkedRssi(s: Session): Int? {
+        val g = s.gatt ?: return null
+        val d = CompletableDeferred<Int?>()
+        s.rssiRead = d
+        if (!runCatching { g.readRemoteRssi() }.getOrDefault(false)) return null
+        val v = withTimeoutOrNull(1_500) { d.await() }
+        if (v != null) s.lastUsedAt = System.currentTimeMillis()
+        return v
+    }
 
     /**
      * 近场信号流: 只上报这把锁的广播 RSSI (dBm)。UI 拿它判"到没到门口"以及触发预热。

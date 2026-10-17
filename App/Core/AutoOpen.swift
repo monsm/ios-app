@@ -16,7 +16,10 @@ enum AutoOpen {
         get { DB.store.getBool("kf_autoopen", false) }
         set { DB.store.set("kf_autoopen", newValue) }
     }
-    /// 面容档位: 0 标准(静默复用≤60s) / 1 严格(进前台必刷): kf_autoopen_face
+    /// 面容档位: 0 免额外验证(靠"手机已解锁+App 前台", 默认) / 1 严格(进前台必刷): kf_autoopen_face
+    /// 0 不是"没有门" —— 机主在场由 f0Foreground(sceneActive && appUnlocked && !decoyMode) 兜:
+    /// 手机没解锁进不了 App, App 在后台也不放行。iOS 没有静默生物识别, 0 档因此**一次弹窗都不发起**
+    /// (这正是用户要的"闸门不许弹前台黑窗")。要严格复核请把这里切到 1。
     static var faceTier: Int {
         get { DB.store.getInt("kf_autoopen_face", 0) }
         set { DB.store.set("kf_autoopen_face", newValue) }
@@ -69,7 +72,9 @@ enum AutoOpen {
     /// 删除设备时随每锁数据族清 (DB.removeDevice 已按族清 kf_autocal_/kf_autoopen_audit_/kf_autoopen_suspend_until_ 前缀键)
 
     /// §3.4 标准档风险披露文案 (强制展示, 不得弱化)
-    static let riskDisclosure = "标准档: 最近 60 秒内无需重新刷脸。注意——这 60 秒内别人拿走手机也能开门。介意请切严格档。"
+    /// §3.4 风险披露 (强制展示, 不得弱化)。讲的是**现在的门** —— 默认档不再额外验面容,
+    /// 而不是旧的"60 秒复用窗"; 文案描述已经不存在的门就等于对用户说谎。
+    static let riskDisclosure = "默认档只认「手机已解锁 + App 在前台」: 别人拿你已解锁的手机走近门锁, 6 秒后仍可能自动开门。介意请切严格档 (每次进前台刷一次脸)。"
 }
 
 // ================= 纯逻辑: 门控判定 / 标定 / 滤波器 / 0E 双确认 (可单测, 无 UI 依赖) =================
@@ -95,25 +100,22 @@ enum AutoOpenKit {
     }
 
     // ---------- F1 面容双档: 标准=60s 窗口静默复用 / 严格=进前台必刷 (LAContext 经 FaceService 注入) ----------
-    /// 档位判据只有"是不是标准档"这一件事：0 = 标准 (60s 复用窗)，**其余任何值一律按严格档处理**。
-    /// 原先各处写的都是 `tier == 1`，于是档位取到 1 以外的值 (台账里加第三档、设置被旧备份带回一个陌生数)
-    /// 就会**静默掉进标准档的 60 秒复用窗** —— 这是这台机子上唯一一处"配置漂移=放松安全门"的形状，
-    /// 与模块开头声明的 fail-closed 相反。要新增档位，请反过来做成枚举并把未知值归到最严的一档。
+    /// 档位判据只有"是不是严格档"这一件事：0 = 免额外验证 (默认)，**其余任何值一律按严格档处理**。
+    /// 未知档位往严的一侧靠: 台账加了第三档、或设置被旧备份带回一个陌生数时, 宁可多刷一次脸,
+    /// 也不要静默掉进宽松档 —— 这是本模块唯一一处"配置漂移可能放松安全门"的形状。
     static func isStrict(_ tier: Int) -> Bool { tier != 0 }
 
-    /// 窗口边界常量 (表驱动可测): 标准档 60s 内静默通过，超过即拒；严格档要求本次进前台刷过脸。
+    /// 面容门 (两档): 0 = 免额外验证 (默认) / 非 0 = 严格 (本次进前台必须刷过脸)。
+    /// 0 档为什么直接放行: 机主在场由 F0 (sceneActive && appUnlocked && !decoyMode) 兜 —— 手机没解锁
+    /// 进不到 App, 在后台也不放行。旧写法 0 档要求"60 秒内有一次 App 内容容", 而 iOS 没有静默生物识别
+    /// (LAContext 一调就弹模态窗), 于是没主动刷过脸的人 lastFace 恒 nil ⇒ 恒拒 ⇒
+    /// 用户报的"iOS 从来不会自动解锁"正是这条。默认档不能依赖任何弹窗。
+    /// 严格档 = 0 窗口: 弹窗在途可放行 (下发前还有 F6 锁态门兜), 否则必须是本次进前台之后刷成的脸。
     static func faceFresh(tier: Int, lastFace: Date?, now: Date, pendingPrompt: Bool, strictSince: Date? = nil) -> Bool {
-        let window: TimeInterval = 60
-        if isStrict(tier) {
-            // 严格档 0 窗口 (§2/§3.4): 弹窗在途可放行 (下发前还有锁态门兜底)，
-            // 否则必须是**本次进前台之后**刷成的脸 —— 没有基准时刻就当没刷过。
-            if pendingPrompt { return true }
-            guard let lf = lastFace, let since = strictSince else { return false }
-            return lf >= since
-        }
-        // 标准档：只认 60 秒内的面容成功时刻；从未刷过脸 (nil) 一律拒。
-        guard let lf = lastFace else { return false }
-        return now.timeIntervalSince(lf) < window
+        if !isStrict(tier) { return true }
+        if pendingPrompt { return true }
+        guard let lf = lastFace, let since = strictSince else { return false }
+        return lf >= since
     }
 
     // ---------- F3 距离标定: P95 取法 (线性插值) ----------
@@ -127,9 +129,12 @@ enum AutoOpenKit {
         let v = Double(sorted[lo]) + (Double(sorted[hi]) - Double(sorted[lo])) * frac
         return Int(v.rounded())
     }
-    /// 标定基准: 有按锁标定时取 P95; 未标定 = nil → F3 门不过 (fail-closed)
-    static func rssiBase(mac: String) -> Int? {
-        AutoOpen.autocal(mac)?.rssiP95
+    /// 标定基准: 做过按锁标定 (F3) 用它的 P95; 没标定退回固定线 -40 —— 与安卓 AutoOpenKit.BASE 同值。
+    /// 旧写法未标定返回 nil ⇒ feedRssi 直接 return ⇒ armed 永不置位 ⇒ 自动开锁对没标定过的用户**永不触发**。
+    /// 用户口径是"信号优于 -40 就开", 标定从"必需"降级为"可选精修" (标定过仍按你的实际距离算, 更贴这把锁)。
+    static let fallbackBase = -40
+    static func rssiBase(mac: String) -> Int {
+        AutoOpen.autocal(mac)?.rssiP95 ?? fallbackBase
     }
     /// F3 回差阈值在**线性功率域**换算 — dBm 是对数单位, 直接对负数乘系数会把方向搞反:
     /// 旧式 0.7×base / 0.5×base 在 base=-60 时得 武装线 -42 / 解除线 -30, 解除线反而比武装线更强
@@ -152,8 +157,10 @@ enum AutoOpenKit {
         return rssi >= arm
     }
 
-    // ---------- F5 冷却: 每次接近事件只发一次 04, 成功后 60s 冷却 ----------
-    static let cooldownSeconds: TimeInterval = 60
+    // ---------- F5 冷却: 每次接近事件只发一次 04, 成功后 6s 冷却 ----------
+    // 60s 太保守 (人走开再回来要等一分钟), 用户口径 6 秒。双开不靠这个数兜: 靠 F5 一次性闩锁
+    // (eventFired, 信号掉回解除线才放开) + 回差带 (-43..-40) + 04 超时绝不重发。
+    static let cooldownSeconds: TimeInterval = 6
     static func coolReady(lastDispatch: TimeInterval, now: TimeInterval) -> Bool {
         lastDispatch == 0 || now - lastDispatch > cooldownSeconds
     }
@@ -200,10 +207,10 @@ struct AutoOpenGate {
         case f0                  // 非前台/App 未解锁
         case f1face             // 面容档不满足 (无面容/过期/严格未刷)
         case f4defend          // 布防时段一票否决
-        case f3nocal           // 未标定
+        case f3nocal           // 未标定 (已不是开门条件; 保留给审计历史与 UI 文案)
         case f3rssi            // 信号未武装
         case f2dwell           // 停留未满足 (移动中)
-        case f5cool            // 60s 冷却中
+        case f5cool            // 6s 冷却中
         case f6busy            // 锁忙 / 防拆 (锁态门)
         case none
     }
@@ -223,7 +230,9 @@ struct AutoOpenGate {
         else { return .f1face }
         guard !AutoOpenKit.defendActive(control: defendControl, startSec: defendStartSec, endSec: defendEndSec, now: now)
         else { return .f4defend }
-        guard calibrated else { return .f3nocal }
+        // F3 不再要求"必须做过标定": 未标定走 AutoOpenKit.fallbackBase (-40, 与安卓 AutoOpenKit.BASE 同值)。
+        // 旧写法把"没标定"当一票否决 ⇒ 新用户/新锁永远开不了, 而标定页要站着等 30 秒, 多数人不会做。
+        // 标定降级为可选精修 (做过就按你这把锁的实际信号定线)。calibrated 仍留着给界面如实显示。
         guard rssiArmed else { return .f3rssi }
         guard dwellMet else { return .f2dwell }
         guard coolReady else { return .f5cool }
@@ -237,12 +246,12 @@ struct AutoOpenGate {
         case .off: return "主开关未开"
         case .suspended: return "rc=26 防拆挂起, 自动开锁 24h 内禁用"
         case .f0: return "F0 非前台/App 未解锁"
-        case .f1face: return "F1 面容未确认或已过期 (标准 60s 窗口 / 严格必刷)"
+        case .f1face: return "F1 面容未确认 (严格档要求本次进前台刷过脸)"
         case .f4defend: return "F4 布防时段内, 一票否决"
         case .f3nocal: return "F3 未做距离标定"
         case .f3rssi: return "F3 信号未达武装线"
         case .f2dwell: return "F2' 未停留满 3s (移动中)"
-        case .f5cool: return "F5 60s 冷却中"
+        case .f5cool: return "F5 冷却中 (6 秒)"
         case .f6busy: return "F6 锁态未知或忙 (rc=25/无 03 回显)"
         case .none: return "可开"
         }
@@ -290,7 +299,10 @@ struct SystemFaceService: FaceService {
 @MainActor
 enum MotionStillness {
     static let varianceThreshold = 0.05
-    static let stillnessSeconds: Double = 3.0
+    /// 静置判定时长。原 3.0s: 人站定到触发要等满 3 秒 + 2 秒一拍 = 门口等五秒,
+    /// 与用户要的"秒开"对不上 (安卓那侧本来就没有这条闸)。降到 1.0s ——
+    /// 仍拦得住"骑车路过门口"(车在动, met() 不成立), 但站定后基本下一拍就开。
+    static let stillnessSeconds: Double = 1.0
     static let windowFrames = 30
     private static var samples: [(t: Double, x: Double, y: Double, z: Double)] = []
     private static var stillSince: Double? = nil
@@ -394,7 +406,9 @@ final class AutoOpenController {
     func feedRssi(mac: String, rssi: Int) {
         guard AutoOpen.on else { return }
         if mac != armedMac { armedMac = mac; armed = false; eventFired.remove(mac) }
-        guard let base = AutoOpenKit.rssiBase(mac: mac) else { return }
+        // rssiBase 现在恒有值 (未标定退回 -40), 所以不再有"没标定就 return"这条 —— 那正是
+        // 旧写法让未标定用户 armed 永远置不起来、自动开锁一次都不触发的那道死门。
+        let base = AutoOpenKit.rssiBase(mac: mac)
         armed = AutoOpenKit.rssiSample(prevArmed: armed, rssi: rssi, base: base)
         // 信号掉回解除线以下 = 本次接近事件结束 → 放开一次性闩锁, 下次靠近才可再发
         if !armed { eventFired.remove(mac) }
@@ -463,12 +477,15 @@ final class AutoOpenController {
             facePendingPrompt: promptStartedAt != nil && AutoOpenKit.lastFace() == faceAtPrompt,
             facePromptStartedAt: promptStartedAt,
             now: Date(),
-            // F4 布防互锁 fail-closed: 本机无布防记忆 = 状态未知, 一律当"在布防中"否决 (§2「缺事件源 = 门不过」)
-            defendControl: d?.control ?? 2,
+            // F4: 用户配了布防 (control=2) 就照常一票否决 + 落审计; 但"本机没存过布防记录"不能再读成
+            // "全天布防" —— 那等于从没进过布防页的人被永久否决。按用户口径改 ?? 0 (没配 = 没布防)。
+            // 这不是拆门: 一旦布防设置存在, control=2 仍严格生效 (defendActive 的时段判定一字未改)。
+            defendControl: d?.control ?? 0,
             defendStartSec: d?.startSec ?? 0,
             defendEndSec: d?.endSec ?? 0,
             rssiArmed: armed,
-            calibrated: AutoOpenKit.rssiBase(mac: mac) != nil,
+            // calibrated 现在如实表示"做过按锁标定" (不再是能不能开的硬条件 —— 未标定走 fallbackBase)
+            calibrated: AutoOpen.autocal(mac) != nil,
             dwellMet: armed && MotionStillness.met(),
             coolReady: coolReady,
             // F6 锁态门 fail-closed: StatusSnapshotData.rc 默认 0 = "成功", 无快照时旧写法会误判锁态绿
@@ -487,9 +504,18 @@ final class AutoOpenController {
             eventFired.insert(mac)
             switch rc {
             case 0:
-                // 成功: 60s 冷却起算 (lastDispatch 已置), 复位武装让下次需重新靠近
+                // 成功: 冷却起算 (lastDispatch 已置), 复位武装让下次需重新靠近
                 armed = false
+                // 先刷新锁态快照再报成功: 双验模式 (verifyMode==1) 下 rc=0 只是第一道过了,
+                // 直接喊"自动开锁成功"就是谎报 —— 与手动档 settleUnlockSuccess 同一口径 (2026-10-15 走查)。
                 _ = try? await app.lock.getStatus()   // 顺带刷新 F6 锁态快照
+                // 来源标注 (用户 2026-10-17): 自动链不经过 AppState.runUnlock, 那句"开锁成功"
+                // 在自动档下从来没出现过 —— 门开了却没人说是谁开的。这里点明"自动"。
+                if app.status?.verifyMode == 1 {
+                    app.showToast("自动: 第一道已通过 — 请再用指纹或密码完成第二道")
+                } else {
+                    app.showToast("自动开锁成功 — \(app.displayName)")
+                }
             case 3:
                 // 0E 双确认自愈 (rc=3 命令过期): 30s < |偏差| < 24h 才写, ≥24h 只提示不写
                 await selfHealTime(mac: mac)
@@ -619,7 +645,7 @@ struct AutoOpenSection: View {
                 Picker("面容确认", selection: Binding(
                     get: { AutoOpen.faceTier },
                     set: { AutoOpen.faceTier = $0 })) {
-                    Text("标准 (静默≤60s)").tag(0)
+                    Text("免额外验证 (默认)").tag(0)
                     Text("严格 (每次必刷)").tag(1)
                 }
                 .pickerStyle(.menu)

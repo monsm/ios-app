@@ -104,6 +104,9 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
     private var connectCompletion: ((Result<Void, Error>) -> Void)?
     private var connectTimeoutWork: DispatchWorkItem?
     private var writeAckCont: CheckedContinuation<Void, Error>?
+    /// 连接层测距的单槽回调。只在主线程读写: CBCentralManager 建在 queue: .main (见 init),
+    /// 于是 didReadRSSI 与调用点 (LinkSense 的 @MainActor tick) 都在主线程, 不需要再加锁。
+    private var rssiCompletion: ((Int?) -> Void)?
     // 写槽串行化: writeAckCont 是单一槽位, 并发写时后者会覆盖前者的 continuation
     // → 前者永不 resume (挂死 + continuation 泄漏), 而 LockService 与 HardwareService 各有独立 waiter,
     // 共用本服务时确实可并发 (看门狗/回连循环 vs 用户手动操作)。didWriteValueFor 本就按序回调, 串起来即可。
@@ -287,6 +290,27 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
         // 与 connect() 同理: disconnect() 是同步非隔离函数, 可能从任意线程进来
         publishOnMain { [weak self] in self?.connectedMAC = "" }
         assembler.reset()
+    }
+
+    /// 从**已建立的连接**上取一次 RSSI (peripheral.readRSSI → didReadRSSI)。
+    ///
+    /// 为什么非要有这一条: 门锁一旦被连上就停止广播, 所以 didDiscover 那一侧从"连上"那一刻起
+    /// 再也不产生样本。靠近自动开锁的武装位 (AutoOpen.feedRssi) 因此永远收不到新数,
+    /// 表现就是用户报的两条: 连上之后"信号再也不更新", 以及开完锁走开再回来不会再自动开。
+    /// iOS 此前从没调过 readRSSI (本轮查实), 安卓对应的是 BleUnlocker.observeSignal 里的
+    /// readRemoteRssi —— 两端同一物理事实, 用同一种解法。
+    ///
+    /// 失败/超时都给 nil 而不是编一个数: "读不到"与"读到 -80"是两件事 (与安卓同一口径)。
+    func readLinkRSSI(timeoutMs: Int = 1500, completion: @escaping (Int?) -> Void) {
+        guard let d = device, d.state == .connected else { completion(nil); return }
+        rssiCompletion = completion
+        d.readRSSI()
+        DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(timeoutMs)) { [weak self] in
+            // 只回收"还是我这一次"的等待: 回调已落地并换过槽时, 不能把新一轮的槽清掉
+            guard let self, self.rssiCompletion === completion else { return }
+            self.rssiCompletion = nil
+            completion(nil)
+        }
     }
 
     // ---------- 写 (20B 分片, 与 JS writeFrame 一致) ----------
@@ -544,5 +568,12 @@ extension BLEService: CBPeripheralDelegate {
         guard let c = readyCont else { return }
         readyCont = nil
         c.resume()
+    }
+    /// 连接层测距的回执。本扩展的回调都跑在 CBCentralManager 的 .main 队列上 (见 init),
+    /// 所以这里可以直接调 completion —— 而 completion 那头是 @MainActor 的 LinkSense 代码。
+    public func peripheral(_ peripheral: CBPeripheral, didReadRSSI RSSI: NSNumber, error: Error?) {
+        let cb = rssiCompletion
+        rssiCompletion = nil
+        cb?(error == nil ? RSSI.intValue : nil)
     }
 }

@@ -281,6 +281,11 @@ final class LinkSense: ObservableObject {
                 await self.refresh()
                 self.onPreconnectDone()
             }
+        } else {
+            // 用户口径 2026-10-17: **后台不许扫锁** (不耗手机射频, 也不逼锁一直广播费它的电)。
+            // sceneActive=false 让 2s tick 不再发起; 这里补一刀把**正在进行**的那轮立刻停掉 ——
+            // 否则退后台后那轮扫描还要跑满 6~10s 超时才自然停。
+            BLEService.shared.stopScan()
         }
     }
     private func autoReconnectTick() {
@@ -290,7 +295,20 @@ final class LinkSense: ObservableObject {
         // 靠近自动开锁 (AUTOOPEN): 2s tick 顺带 F2' 停留判定 — RSSI 武装 + 静置满 3s 才走全门判定;
         // 全门不过 = 静默拒绝 + 审计 (绝不自动开锁, 96 铁律由 AutoOpenController 内部门控兜底)
         AutoOpenController.shared.tickDwell(mac: mac)
-        guard lockSvc.connectedMAC != mac else { return }
+        // 已连上这把锁: 门锁一旦连接就**停止广播**, didDiscover 那一侧不再产生样本 ——
+        // 于是自动开锁的武装位 (feedRssi) 收不到新数, 表现就是用户报的两条:
+        //   · 连上之后"信号再也不更新";
+        //   · 开完锁走开再回来, 不会再自动开 (armed 回不来)。
+        // 解法: 从**已建立的连接**上按节拍取一次 RSSI (readLinkRSSI → didReadRSSI), 喂回同一条
+        // saveRssi → updateRssi → feedRssi 链。与安卓 BleUnlocker.observeSignal 的 readRemoteRssi 同解。
+        // 只在已连接、前台 (sceneActive, 上面已 guard)、非静默档时取 —— 后台不测不扫, 不耗电。
+        if lockSvc.connectedMAC == mac {
+            BLEService.shared.readLinkRSSI { rssi in
+                guard let rssi else { return }   // 读不到就不发明数据 (与安卓同一口径)
+                Self.saveRssi(mac: mac, rssi: rssi)
+            }
+            return
+        }
         guard DB.store.getBool("kf_link_auto_" + mac, true) else { return }
         guard CredentialOrg.pendingCount(mac) > 0 else { return }   // 无变更不回连, 省电 (93 同源原则)
         if Date().timeIntervalSince(lastLadderAt) < nextLadderInterval() { return }

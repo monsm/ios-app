@@ -12,10 +12,11 @@ import kotlin.math.roundToInt
 object AutoOpenKit {
 
     /**
-     * 武装线 (dBm)。iOS 的武装线来自按锁标定 (F3 P95); 安卓极简版没有标定页, 用固定基准 -38 ——
-     * 与原代码里那条 -38 同一数值, 变的不是阈值, 是"越过线之后不再逐样本反复触发"。
+     * 武装线 (dBm)。用户口径 (2026-10-17): "信号小于 40 就自动秒开" ⇒ -40。
+     * (iOS 的武装线来自按锁标定 F3; 安卓极简版没标定页, 用这条固定线。)
+     * 回差解除线仍按线性功率域 -3 dB 换算 ⇒ -43, 比旧值同步平移。
      */
-    const val BASE = -38
+    const val BASE = -40
 
     /**
      * 解除线必须在**线性功率域**换算, 不能对 dBm 直接乘系数: dBm 是对数单位,
@@ -34,8 +35,17 @@ object AutoOpenKit {
         return if (prevArmed) rssi > disarm else rssi >= arm
     }
 
-    /** F5 冷却: 上次下发距今 >60s 才允许下一次 —— 跨"接近事件"也拦 (AutoOpenKit.coolReady)。 */
-    const val COOLDOWN_MS = 60_000L
+    /**
+     * F5 冷却: 上次下发距今 >6s 才允许下一次。
+     *
+     * 旧值 60s 是"每个接近事件只发一次 04"之外的第二道闸。用户口径 (2026-10-17) 改成 6s:
+     * 开完锁等 6 秒就恢复自动监测。双开风险由**另一条更强的闸**兜住, 不靠这个 60s:
+     *   · 一次性闩锁 fired: 同一个接近事件内只发一次 04 (要信号先掉回解除线 -43 才放开);
+     *   · 回差带 [-43,-40]: 人站在门口信号不会自己掉回去 ⇒ 站着不会反复开 (闸门 C 直接演算钉住);
+     *   · 04 回执超时绝不重发 (G4 红线, 在 BleUnlocker.runUnlock 里)。
+     * 所以 6s 只是"走开再回来至少要隔 6 秒", 不是防双开的那道闸。
+     */
+    const val COOLDOWN_MS = 6_000L
 
     fun coolReady(lastDispatchMs: Long, nowMs: Long): Boolean =
         lastDispatchMs == 0L || nowMs - lastDispatchMs > COOLDOWN_MS

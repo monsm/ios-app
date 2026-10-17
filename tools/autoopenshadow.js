@@ -26,14 +26,13 @@ function defendActive(control, startSec, endSec, secOfDayReal) {
 const isStrict = (tier) => tier !== 0;
 // ages 单位: 距今年秒; lastFaceAge = -1 表示 nil；strictSinceAge = -1 表示 nil
 function faceFresh(tier, lastFaceAge, pendingPrompt, strictSinceAge) {
-  const window = 60;
-  if (isStrict(tier)) {
-    if (pendingPrompt) return true;
-    if (lastFaceAge < 0 || strictSinceAge < 0) return false;
-    return lastFaceAge <= strictSinceAge;                  // Swift: lf >= since
-  }
-  if (lastFaceAge < 0) return false;
-  return lastFaceAge < window;
+  // 与 Swift 同语义 (2026-10-17 用户口径): 0 = 免额外验证 ⇒ 放行; 非 0 = 严格 ⇒ 必须本次进前台刷过脸。
+  // 旧影子跑 "0 = 60 秒复用窗", 那是把 iOS 自己的死门当成正确行为 —— iOS 没有静默生物识别,
+  // 没人主动刷脸就 lastFace 恒 nil ⇒ 恒拒 ⇒ "iOS 从来不会自动解锁"。影子跟着测它只会把谎测得自洽。
+  if (!isStrict(tier)) return true;
+  if (pendingPrompt) return true;
+  if (lastFaceAge < 0 || strictSinceAge < 0) return false;
+  return lastFaceAge <= strictSinceAge;                  // Swift: lf >= since
 }
 const armThreshold = (base) => base;
 // Swift: Int((Double(base) + 10 * log10(0.5)).rounded())
@@ -76,10 +75,10 @@ push('F4', '23:00→06:00 起点', defendActive(2, 46 * 3600, E, tickToRealSec(4
 push('F4', '23:00→06:00 终点', defendActive(2, 46 * 3600, E, tickToRealSec(12 * 3600)), false);
 
 // F1 faceFresh: 标准档 60s / 严格档 0 窗口 / 档位漂移
-push('F1', '标准 t59 过', faceFresh(0, 59, false, -1), true);
-push('F1', '标准 t60 拒', faceFresh(0, 60, false, -1), false);
-push('F1', '标准 t61 拒', faceFresh(0, 61, false, -1), false);
-push('F1', '标准 nil+弹窗 拒', faceFresh(0, -1, true, -1), false);
+  push('F1', '默认档 无面容记录 放行', faceFresh(0, -1, false, -1), true);
+  push('F1', '默认档 脸2s 放行', faceFresh(0, 2, false, -1), true);
+  push('F1', '默认档 脸60s 仍放行 (不吃时间窗)', faceFresh(0, 60, false, -1), true);
+  push('F1', '默认档 弹窗在途也放行', faceFresh(0, -1, true, -1), true);
 push('F1', '严格 t59 无 since 拒', faceFresh(1, 59, false, -1), false);
 push('F1', '严格 t59 早于 since 拒', faceFresh(1, 59, false, 10), false);
 push('F1', '严格 脸2s/since10s 过', faceFresh(1, 2, false, 10), true);
@@ -110,12 +109,38 @@ push('P95', '95 个 -60 + 5 个 -50', p95([...Array(95).fill(-60), ...Array(5).f
 // 反向不变式: 这套影子必须真的会响 —— 若复刻与 Swift 漂开，期望表要红
 assert.notStrictEqual(defendActive(2, 12 * 3600, 12 * 3600, 21600), false, '影子自检: start==end 已改成全天布防');
 assert.notStrictEqual(faceFresh(1, 59, false, -1), true, '影子自检: 严格档不再吃 60s 窗');
+assert.strictEqual(faceFresh(0, -1, false, -1), true, '影子自检: 默认档无面容也必须放行 (否则 iOS 自动开锁还是死的)');
 
-let bad = 0;
+let bad = 0;   // 也供下面的"与 Swift 源码对钉"累加
 for (const c of CASES) {
   let ok = true;
   try { assert.deepStrictEqual(c.got, c.want); } catch (e) { ok = false; }
   if (!ok) { bad++; console.log(`✗ ${c.group} ${c.name}  期望=${c.want} 影子算出=${c.got}`); }
+}
+// ---------- 与 Swift 源码对钉 ----------
+// 上面测的是 JS 复刻。JS 与 Swift 各自改了才红, 一起改错就一路绿 ——
+// 本轮真实踩过 (JS 改了阈值/Swift 没改, 影子全绿而功能仍是死的)。
+// 所以把"最要命的几个口径"直接钉在 AutoOpen.swift 的文本上: 漂移当场红灯。
+{
+  const fs2 = require("fs"), path2 = require("path");
+  const swiftPath = path2.join(__dirname, "..", "App", "Core", "AutoOpen.swift");
+  const swift = fs2.readFileSync(swiftPath, "utf8").replace(/\r\n/g, "\n");
+  const must = [
+    [/if !isStrict\(tier\) \{ return true \}/, "F1 默认档直接放行 (iOS 无静默生物识别, 旧写法恒拒=自动开锁死门)"],
+    [/static let fallbackBase = -40/, "F3 未标定退回 -40 (与安卓 AutoOpenKit.BASE 同值)"],
+    [/static let cooldownSeconds: TimeInterval = 6/, "F5 冷却 6s (用户口径: 开完锁等 6 秒恢复)"],
+    [/static let stillnessSeconds: Double = 1\.0/, "F2' 停留 1s (否则门口等五秒谈不上秒开)"],
+    [/d\?\.control \?\? 0/, "F4 无布防记忆读成不布防 (旧 ?? 2 会永久否决没配过的人)"],
+  ];
+  for (const [re, why] of must) {
+    if (!re.test(swift)) { bad++; console.log("✗ Swift 源码漂移: " + why); }
+  }
+  if (/guard calibrated else \{ return \.f3nocal \}/.test(swift)) {
+    bad++; console.log("✗ Swift 源码漂移: F3 仍把「未标定」当硬门 → fallbackBase 白改, 新用户永远开不了");
+  }
+  if (!/func readLinkRSSI/.test(fs2.readFileSync(path2.join(__dirname, "..", "App", "Services", "BLEService.swift"), "utf8"))) {
+    bad++; console.log("✗ Swift 源码漂移: BLEService 没有连接层测距 → 连上锁之后没有 RSSI 样本, armed 回不来");
+  }
 }
 const total = CASES.length;
 console.log(`AUTOOPEN 影子对拍: ${total - bad}/${total} 条与 Swift 期望表一致`
