@@ -58,20 +58,28 @@ enum LiveUnlock {
     static func succeeded(lockName: String) {
         guard let id = takeCurrentID() else { return }
         generation += 1
-        Task {
-            guard let a = Activity<UnlockActivityAttributes>.activities.first(where: { $0.id == id }) else { return }
-            await a.update(.init(state: .init(phase: .unlocked), staleDate: Date().addingTimeInterval(10)))
-            try? await Task.sleep(for: .seconds(10))
-            await a.end(nil, dismissalPolicy: .after(.now + 1))
-        }
+        Task { await retire(id: id, unlockAfter: 10) }
     }
 
     /// 失败: 立刻收起 —— 不留一条失败态挂在锁屏上等人误会
     static func failed() {
         guard let id = takeCurrentID() else { return }
         generation += 1
-        Task {
-            guard let a = Activity<UnlockActivityAttributes>.activities.first(where: { $0.id == id }) else { return }
+        Task { await retire(id: id, unlockAfter: nil) }
+    }
+
+    /// 收场动作放在**非隔离**的 async 函数里: 只有在这里, `Activity` 才是"任务自己的局部值"
+    /// (断开的区域), 送进 update/end 才合法。在 @MainActor 的 Task 里从静态列表取出来的值
+    /// 会挂在主 actor 区域上, Swift 6 一律判 sending 风险 —— 这也是 ActivityKit 在 Swift 6 下
+    /// 唯一稳的用法: 让 Activity 永远不跨越隔离边界, 跨的只有 String id。
+    nonisolated private static func retire(id: String, unlockAfter seconds: Double?) async {
+        guard let a = Activity<UnlockActivityAttributes>.activities.first(where: { $0.id == id }) else { return }
+        if let seconds {
+            await a.update(.init(state: .init(phase: .unlocked),
+                                 staleDate: Date().addingTimeInterval(seconds)))
+            try? await Task.sleep(for: .seconds(seconds))
+            await a.end(nil, dismissalPolicy: .after(.now + 1))
+        } else {
             await a.end(nil, dismissalPolicy: .immediate)
         }
     }
@@ -85,10 +93,13 @@ enum LiveUnlock {
     /// 2026-10-14: 进程被杀 / 7 天签名重装后, 锁屏可能残留上一条活动 (current 只在内存里, 重启即失忆),
     /// 而 `begin` 的 `current == nil` 守卫只认内存态 → 会叠出第二条。启动时枚举并全部收起。
     static func reapOrphans() {
-        Task {
-            for a in Activity<UnlockActivityAttributes>.activities where a.id != peekCurrentID() {
-                await a.end(nil, dismissalPolicy: .immediate)
-            }
+        let keep = peekCurrentID()
+        Task { await reapAll(keeping: keep) }
+    }
+
+    nonisolated private static func reapAll(keeping keepID: String?) async {
+        for a in Activity<UnlockActivityAttributes>.activities where a.id != keepID {
+            await a.end(nil, dismissalPolicy: .immediate)
         }
     }
 }
