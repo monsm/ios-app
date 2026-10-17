@@ -81,7 +81,7 @@ enum Milestones {
 
     // ---------- 一次性标记 / 偏好 ----------
     static func onceDone(_ k: String) -> Bool {
-        var m = DB.store.get([String: Bool].self, "kf_once") ?? [:]
+        let m = DB.store.get([String: Bool].self, "kf_once") ?? [:]
         return m[k] == true
     }
     static func markOnce(_ k: String) {

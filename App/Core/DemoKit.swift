@@ -51,7 +51,7 @@ enum DemoKit {
         if DB.keychain("DEMOA1B2C3D4E5") != nil { DB.removeDevice("DEMOA1B2C3D4E5") }
         if DB.keychain(demoMac) == nil { DB.saveKeychain(demoDevice()) }
         if !DB.members().contains(where: { $0.name == demoMemberName }) {
-            DB.addMember(demoMemberName)
+            _ = DB.addMember(demoMemberName)
         }
         var l = DB.ledger(demoMac)
         if !l.pwds.contains(where: { $0.note.hasPrefix("demo_") }) {

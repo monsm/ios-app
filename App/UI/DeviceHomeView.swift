@@ -500,6 +500,9 @@ struct DeviceHomeView: View {
     }
     /// 764 的四种状态: 优先级 告警 > 低电 > 已连接 > 无读数。
     /// `.none` 在图标上是**空心圈**而不是灰点 —— 灰点会被读成"我查过了, 它没事", 而那正是没查过的样子。
+    /// 嵌套类型**不继承**外层 View 的主 actor 隔离, 而这里的色板走 DS.Palette 的高对比令牌 (主 actor)
+    /// —— 所以显式标一次。
+    @MainActor
     private enum Dot {
         case alarm, low, linked, none
         var color: Color {

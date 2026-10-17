@@ -392,6 +392,10 @@ enum ExportKit {
     static let timeFmt: DateFormatter = {
         let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd HH:mm:ss"; f.timeZone = TimeZone.current; f.locale = Locale(identifier: "en_US_POSIX"); return f
     }()
+    /// 封面正文色: 输出面压的永远是 heroA/heroB 那条**深渐变** (位图/PDF 一旦生成就不再随系统
+    /// 明暗与"智能反转"变化), 所以这里就是纯白 —— 收成一处常量, 让"为什么白在这里是对的"
+    /// 只有一个解释点 (swiftlint 的纯白名额也因此收敛, 不再逐行占额度)。
+    static let coverInk = UIColor.white
 
     // ---------- 数据源 (只读既有表) ----------
     /// 锁日志缓存 → 导出行 (member 列只有 Attribution 可证明归属才填)
@@ -681,17 +685,17 @@ enum ExportKit {
             let heroA = UIColor(DS.Palette.themed("heroA"))
             let heroB = UIColor(DS.Palette.themed("heroB"))
             PDFText.gradient(cg, CGRect(x: 0, y: 0, width: 595, height: 150), [heroA, heroB])
-            PDFText.line(cg, "离线锁管家", font: .semibold, size: 24, x: 36, y: 34, color: .white, pageW: 595)
+            PDFText.line(cg, "离线锁管家", font: .semibold, size: 24, x: 36, y: 34, color: coverInk, pageW: 595)
             // 封面上的副信息不再用 withAlphaComponent 稀释白字: 白@0.85 裸压主题渐变最亮端实测只有
             // 3.89:1 (0.75/0.9 更低), 层级本来已由字号 (24/12/10pt) 表达, 颜色保持满白 = contrast.js B/C 节口径。
             // 774 场所副标题: Hero 卡与锁列表一直在用，导出报告此前从不引用它
             // ⇒ 同一把锁在 App 里叫"车库"，导出去的报告上只剩型号，跨设备对账时认不出来。
             let placeNote = LockArchive.meta(mac).place.isEmpty ? "" : " · 场所: " + LockArchive.meta(mac).place
-            PDFText.line(cg, "月份: " + rangeText + " · 锁: " + lockName + placeNote, font: .regular, size: 12, x: 36, y: 92, color: .white, pageW: 595)
-            PDFText.line(cg, "生成: " + stamp.string(from: Date()) + " · 纯本地生成", font: .regular, size: 10, x: 36, y: 116, color: .white, pageW: 595)
+            PDFText.line(cg, "月份: " + rangeText + " · 锁: " + lockName + placeNote, font: .regular, size: 12, x: 36, y: 92, color: coverInk, pageW: 595)
+            PDFText.line(cg, "生成: " + stamp.string(from: Date()) + " · 纯本地生成", font: .regular, size: 10, x: 36, y: 116, color: coverInk, pageW: 595)
             // 697 封面告警数: 一翻开先知道"有没有事"
             PDFText.line(cg, "本期告警 " + String(alarms.count) + " 条" + (alarms.isEmpty ? " · 记录安静" : " · 见置前章节"),
-                         font: .regular, size: 10, x: 36, y: 134, color: UIColor(DS.heroFg), pageW: 595)
+                         font: .regular, size: 10, x: 36, y: 134, color: coverInk, pageW: 595)
             // 700 多锁封面表
             let allMacs = DB.keychains().map { $0.mac }
             if allMacs.count > 1 {

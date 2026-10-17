@@ -128,7 +128,7 @@ enum BackupStudio {
     /// 1018 通知点按: 本机还原点 + 记历史, 并把用户送到备份工作室 (口令加密备份与演练的落点)
     @MainActor static func onMonthlyTap() async {
         _ = makeRollbackPoint()
-        _ = Milestones.recordBackup()
+        Milestones.recordBackup()
         // 冷启动点按: hostRef 等 RootView 挂载 (最多 2 秒), 与 1013 保养通知同款, 不丢这次点按
         var waited = 0
         while AppState.hostRef == nil && waited < 10 {
@@ -230,7 +230,7 @@ enum BackupStudio {
         let path = DB.store.getString("kf_bk_rollback")
         guard restoreRollbackSnapshot(path) else { return false }
         DB.store.remove("kf_bk_rollback")
-        _ = Milestones.recordBackup()
+        Milestones.recordBackup()
         return true
     }
     /// 421/445 快照还原实体: 由 undoLastRestore 与迁移事务回滚 (rollbackMigrationTxn) 共用。
@@ -426,7 +426,7 @@ enum BackupStudio {
         // (413 那句"已写入 …"显示的就是它)。后缀判据 `hasSuffix(".enc")` 看不出来，所以一直没暴露。
         let url = dir.appendingPathComponent(name)
         guard (try? text.write(to: url, atomically: true, encoding: .utf8)) != nil else { return nil }
-        _ = Milestones.recordBackup()
+        Milestones.recordBackup()
         return url
     }
 
@@ -520,7 +520,7 @@ enum BackupStudio {
     static let volumeThreshold = 400   // 记录条数阈值
     /// 返回 nil = 记录不足不需分卷; 否则 vol0 = 基础卷 (无 trace), vol1..n = 逐年 trace
     static func volumes(zones: BZones, encrypt: String?) -> [Volume]? {
-        var b = bundleFor(zones)
+        let b = bundleFor(zones)
         let tr = b.globals?.trace?.lines ?? []
         guard tr.count >= volumeThreshold else { return nil }
         var perYear = [String: [String]]()
@@ -825,7 +825,7 @@ enum BackupStudio {
                     ])
                 }
             }
-            _ = markImported()
+            markImported()
             return (mimp, mover, mskip)
         case .missing:
             // 仅补缺失: 跳过已存在的锁, 只写新机没有的
@@ -880,7 +880,7 @@ enum BackupStudio {
                     ])
                 }
             }
-            _ = markImported()
+            markImported()
             return (imp, 0, skipped)
         }
     }
@@ -1053,7 +1053,7 @@ enum BackupStudio {
         if DB.store.getString("kf_bk_rollback") == t.rollbackPath { DB.store.remove("kf_bk_rollback") }
         DB.store.remove("kf_migrate_pending")
         for kc in DB.keychains() { DB.store.remove("kf_migok_" + kc.mac) }
-        _ = Milestones.recordBackup()
+        Milestones.recordBackup()
         return true
     }
     /// 442 恢复/迁移落库后立起首验清单: 清掉旧勾, 挂待验标记 (DeviceHomeView 逐锁验证写 kf_migok_)

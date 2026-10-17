@@ -104,7 +104,7 @@ extension DS {
             // 走环境既没有隔离问题, 也保证同一次渲染里所有令牌看到的是同一份环境。
             // App 内的 kf_hc 皮肤不是系统状态, 直接读偏好 (Store 线程安全, 不涉及隔离)。
             let flat = environment.accessibilityReduceTransparency
-                || environment.accessibilityContrast == .high
+                || environment.colorSchemeContrast == .increased
                 || DB.store.getBool("kf_hc")
             if flat {
                 let base = environment.accessibilityInvertColors ? Color.invHeroBottom : Palette.themed("heroB")
@@ -120,7 +120,7 @@ extension DS {
                        startPoint: .top, endPoint: .bottom)
     }
     /// 226 降透明档的卡片描边色: 与 heroFg 同源 (常规档白、反转档 text), 压在同侧纯色底上边界可辨
-    static var heroSolidStroke: Color { heroFg.opacity(0.30) }
+    @MainActor static var heroSolidStroke: Color { heroFg.opacity(0.30) }
 
     static var heroGradientSafe: HeroSurface { HeroSurface() }
     /// 压在 hero 面上的前景色: 常规 = 纯白 (机检六套主题两端 ≥4.5:1); 反转 = 与降级底同侧的 text

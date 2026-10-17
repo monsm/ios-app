@@ -74,7 +74,7 @@ enum Onboarding {
             "property": ["访客"],
         ]
         for n in names[r] ?? [] where !DB.members().contains(where: { $0.name == n }) {
-            DB.addMember(n)
+            _ = DB.addMember(n)
         }
     }
     static func roleHint() -> String {

@@ -529,7 +529,7 @@ struct StatsView: View {
                 GeometryReader { geo in
                     Rectangle().fill(.clear).contentShape(Rectangle())
                         .onTapGesture { loc in
-                            let origin = geo[proxy.plotAreaFrame].origin
+                            let origin = geo[proxy.plotFrame].origin
                             if let d = proxy.value(atX: loc.x - origin.x, as: Date.self) {
                                 let key = StatsKit.dayKey(d)
                                 drillDaySel = (drillDaySel == key) ? nil : key
@@ -957,7 +957,7 @@ struct StatsView: View {
                 GeometryReader { geo in
                     Rectangle().fill(.clear).contentShape(Rectangle())
                         .onTapGesture { loc in
-                            let origin = geo[proxy.plotAreaFrame].origin
+                            let origin = geo[proxy.plotFrame].origin
                             if let h = proxy.value(atX: loc.x - origin.x, as: Int16.self), h >= 0, h < 24 {
                                 withAnimation(DS.Motion.quick) { selHour = h }
                             }
@@ -1497,7 +1497,7 @@ struct StatsView: View {
     /// proxy 拿不到比例尺时返回空表：这一帧没标签，比叠成一团糊字诚实。
     private static func placedLabels(_ ends: [SeriesEnd], proxy: ChartProxy, geo: GeometryProxy, mode: Int) -> [PlacedLabel] {
         if mode == 2 { return [] }
-        let plot = geo[proxy.plotAreaFrame]
+        let plot = geo[proxy.plotFrame]
         var cands: [(id: String, text: String, color: Color, x: CGFloat, y: CGFloat)] = []
         for e in ends {
             guard let px = proxy.position(forX: e.day), let py = proxy.position(forY: e.opens) else { continue }
@@ -2469,4 +2469,4 @@ extension StatsKit {
 }
 
 // 时段下钻 sheet(item:) 要求 item 为 Identifiable；Int16 此前不满足 (原写法 h != nil / h! 亦对非可选值非法)
-extension Int16: Identifiable { public var id: Int16 { self } }
+extension Int16: @retroactive Identifiable { public var id: Int16 { self } }

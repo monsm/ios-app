@@ -284,7 +284,7 @@ enum Offboard {
     }
 
     static func members() -> [Member] {
-        var map = DB.store.getDict("kf_members")
+        let map = DB.store.getDict("kf_members")
         return map.values.compactMap { $0 as? [String: Any] }
             .compactMap { Member.fromDict($0) }
     }
