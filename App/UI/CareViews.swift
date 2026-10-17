@@ -346,7 +346,7 @@ struct CareChecklistView: View {
         ("gearshape.2", "滑轨与把手顺滑"),
         ("lock.rotation", "锁舌伸缩顺畅"),
         ("battery.100", "电池触点无锈蚀"),
-        ("finger.print", "指纹头清洁"),
+        ("touchid", "指纹头清洁"),
         ("key.fill", "应急钥匙位置确认"),
     ]
 
