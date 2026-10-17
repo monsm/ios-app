@@ -3,7 +3,7 @@
 import Foundation
 
 // ---------- 存储 ----------
-final class Store {
+nonisolated final class Store: @unchecked Sendable {
     static let shared = Store()
     private let defaults = UserDefaults.standard
     private func key(_ k: String) -> String { "kf." + k }

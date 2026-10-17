@@ -65,7 +65,7 @@ struct MStats {
     var careStreak = 0     // 包4/1030
 }
 
-enum Milestones {
+nonisolated enum Milestones {
     // ---------- 日期工具 ----------
     /// 日 key 的**唯一口径是 `StatsKit.dayKey`** (yyyy-MM-dd + en_US_POSIX + 当前时区)。
     /// 此前这里自己 new 了一个 DateFormatter 抄同一段逻辑 —— 值恰好相同，但"同一件事两处写"

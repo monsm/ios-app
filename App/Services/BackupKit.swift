@@ -229,7 +229,7 @@ struct BackupBundle: Codable {
 }
 
 @MainActor
-enum BackupKit {
+nonisolated enum BackupKit {
     static func collectAll() -> BackupBundle {
         let devices = DB.keychains().map { kc -> BackupBundle.Device in
             let mac = kc.mac

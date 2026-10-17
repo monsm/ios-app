@@ -5,7 +5,7 @@
 import Foundation
 import SwiftUI
 
-enum StatsKit {
+nonisolated enum StatsKit {
     static let openTypes: Set<Int> = [1, 2, 3, 4, 5]
     static let alarmTypes: Set<Int> = [6, 7, 10, 13, 224]
 

@@ -63,7 +63,7 @@ struct LockGroup: Identifiable {
     var id: String { name }
 }
 
-enum LockArchive {
+nonisolated enum LockArchive {
     static func meta(_ mac: String) -> LockMeta {
         DB.get(LockMeta.self, "kf_lockmeta_" + mac) ?? LockMeta()
     }
