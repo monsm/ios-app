@@ -11,11 +11,9 @@ import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.bluetooth.BluetoothStatusCodes
 import android.bluetooth.le.ScanCallback
-import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.Context
-import android.os.ParcelUuid
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -53,21 +51,20 @@ class BleUnlocker(private val ctx: Context) {
     fun observeRssi(lock: LockInfo): Flow<Int> = callbackFlow {
         val scanner = adapter?.bluetoothLeScanner
         if (scanner == null) { close(); return@callbackFlow }
-        val filters = listOf(
-            ScanFilter.Builder().setServiceUuid(ParcelUuid(svcUuid)).build()
-        )
         val settings = ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
             .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
             .build()
         val cb = object : ScanCallback() {
             override fun onScanResult(callbackType: Int, result: ScanResult) {
-                val adv = KfProtocol.parseAdv(manufacturerOf(result), result.rssi) ?: return
+                val adv = advOf(result) ?: return
                 if (KfProtocol.normMac(adv.mac) == lock.mac) trySend(result.rssi)
             }
             override fun onScanFailed(errorCode: Int) { close() }
         }
-        scanner.startScan(filters, settings, cb)
+        // 不带 filters: 门锁的广播里只有厂商段 (98ED), **没有** 128 位服务 UUID ——
+        // 按服务过滤会一条结果都收不到, 这正是"提示找不到门锁"的第一个原因 (iOS 侧同样 withServices: nil)
+        scanner.startScan(null, settings, cb)
         awaitClose { runCatching { scanner.stopScan(cb) } }
     }
 
@@ -75,8 +72,9 @@ class BleUnlocker(private val ctx: Context) {
     suspend fun unlock(lock: LockInfo): Outcome = mutex.withLock {
         val ad = adapter ?: return@withLock Outcome(false, "这台手机没有蓝牙")
         if (!ad.isEnabled) return@withLock Outcome(false, "蓝牙未开启")
-        val device = scanForLock(lock, 7000)
-            ?: return@withLock Outcome(false, "没找到这把锁 — 靠近门锁, 或确认门锁有电")
+        val device = runCatching { scanForLock(lock, 7000) }.getOrElse { e ->
+            return@withLock Outcome(false, "扫描失败: ${e.message ?: "蓝牙权限被拒绝?"}")
+        } ?: return@withLock Outcome(false, "没找到这把锁 — 靠近门锁, 或确认门锁有电")
 
         var gatt: BluetoothGatt? = null
         return@withLock try {
@@ -164,15 +162,14 @@ class BleUnlocker(private val ctx: Context) {
     private suspend fun scanForLock(lock: LockInfo, timeoutMs: Long): BluetoothDevice? {
         val scanner = adapter?.bluetoothLeScanner ?: return null
         val found = CompletableDeferred<BluetoothDevice>()
-        val filters = listOf(ScanFilter.Builder().setServiceUuid(ParcelUuid(svcUuid)).build())
         val settings = ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build()
         val cb = object : ScanCallback() {
             override fun onScanResult(callbackType: Int, result: ScanResult) {
-                val adv = KfProtocol.parseAdv(manufacturerOf(result), result.rssi) ?: return
+                val adv = advOf(result) ?: return
                 if (KfProtocol.normMac(adv.mac) == lock.mac) found.complete(result.device)
             }
         }
-        scanner.startScan(filters, settings, cb)
+        scanner.startScan(null, settings, cb)   // 同上: 不能按服务 UUID 过滤
         val dev = withTimeoutOrNull(timeoutMs) { found.await() }
         runCatching { scanner.stopScan(cb) }
         return dev
@@ -221,19 +218,30 @@ class BleUnlocker(private val ctx: Context) {
         return null
     }
 
-    /** Android 的 manufacturerSpecificData **不含** 2 字节厂商 ID, 而协议段从 98ED 之后开始。 */
-    private fun manufacturerOf(result: ScanResult): ByteArray? {
+    /**
+     * 从广播里认出这把锁的身份段。
+     * Android 的 manufacturerSpecificData **不含** 2 字节厂商 ID (正常机型), 但也有机型把它一起塞进
+     * value —— 所以两条都试: 先按"值即身份段"解析, 再在值里找 98 ED 从其后解析。
+     * 与 iOS 端"在厂商 hex 里找 98ed"是同一件事, 只是这里不用拼字符串。
+     */
+    private fun advOf(result: ScanResult): KfProtocol.Adv? {
         val data = result.scanRecord?.manufacturerSpecificData ?: return null
         for (i in 0 until data.size()) {
-            val payload = data.valueAt(i) ?: continue
-            if (data.keyAt(i) == 0xED98) return payload
-        }
-        // 个别机型把厂商 ID 也塞进 value: 兜底从 98 ED 之后取
-        for (i in 0 until data.size()) {
             val p = data.valueAt(i) ?: continue
-            if (p.size >= 12 && p[0] == 0x98.toByte() && p[1] == 0xED.toByte()) return p.copyOfRange(2, p.size)
+            KfProtocol.parseAdv(p, result.rssi)?.let { return it }
+            val idx = indexOfCompanyId(p)
+            if (idx >= 0 && idx + 2 < p.size) {
+                KfProtocol.parseAdv(p.copyOfRange(idx + 2, p.size), result.rssi)?.let { return it }
+            }
         }
         return null
+    }
+
+    private fun indexOfCompanyId(p: ByteArray): Int {
+        for (i in 0 until p.size - 1) {
+            if (p[i] == 0x98.toByte() && p[i + 1] == 0xED.toByte()) return i
+        }
+        return -1
     }
 
     private companion object {

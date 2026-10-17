@@ -16,6 +16,7 @@ data class LockInfo(val name: String, val mac: String, val pid: Int, val ekey: S
 object LockStore {
     private const val PREF = "kf_key_v1"
     private const val KEY = "lock"
+    private const val KEY_PROX = "proximity"
 
     fun load(ctx: Context): LockInfo? {
         val raw = ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE).getString(KEY, null) ?: return null
@@ -37,6 +38,17 @@ object LockStore {
             .put("p", lock.pid)
             .put("e", lock.ekey)
         ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE).edit().putString(KEY, o.toString()).apply()
+    }
+
+    /**
+     * 「靠近自动开锁」开关要跨重启保留: 这是用户对这台手机的长期选择, 不是一次会话的临时态。
+     * 之前只放在 Compose 的 remember 里 —— 关掉 App 再打开就回到默认关, 等于每次都白设一遍。
+     */
+    fun loadProximity(ctx: Context): Boolean =
+        ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE).getBoolean(KEY_PROX, false)
+
+    fun saveProximity(ctx: Context, on: Boolean) {
+        ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE).edit().putBoolean(KEY_PROX, on).apply()
     }
 
     fun clear(ctx: Context) {

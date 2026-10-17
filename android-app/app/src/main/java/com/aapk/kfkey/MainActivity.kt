@@ -91,7 +91,8 @@ private fun KfApp() {
     var status by remember { mutableStateOf("") }
     var statusBad by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
-    var proximity by remember { mutableStateOf(false) }
+    // 初值从本机读 (跨重启保留); 切换时立刻落盘 —— 见 LockStore.loadProximity 的注释
+    var proximity by remember { mutableStateOf(LockStore.loadProximity(ctx)) }
     var rssi by remember { mutableStateOf<Int?>(null) }
     var pending by remember { mutableStateOf<LockInfo?>(null) }   // 待二次确认的绑定
     var lastAuto by remember { mutableStateOf(0L) }
@@ -203,7 +204,11 @@ private fun KfApp() {
             if (lock != null) {
                 ProximityCard(
                     on = proximity,
-                    onToggle = { proximity = it; if (!it) rssi = null },
+                    onToggle = {
+                        proximity = it
+                        LockStore.saveProximity(ctx, it)
+                        if (!it) rssi = null
+                    },
                     onRescan = { launchScan() },
                     onUnbind = {
                         LockStore.clear(ctx)
