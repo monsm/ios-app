@@ -171,7 +171,7 @@ class BleUnlocker(private val ctx: Context) {
             scanned = seenDevice
         } else {
             scanned = try {
-                scanForLock(lock, 7000)
+                scanForLock(lock, 3000)
             } catch (ce: CancellationException) {
                 throw ce
             } catch (e: Exception) {
@@ -365,7 +365,7 @@ class BleUnlocker(private val ctx: Context) {
                     Outcome(false, "开锁写入中断 — 门锁可能已执行, 先看一眼门", trace.toString()),
                     true)
             }
-            val res = awaitFrame(s.notes, 0x04, 5_000)
+            val res = awaitFrame(s.notes, 0x04, 3_000)
                 // 回执超时: 帧已出手机, 锁可能正在开 —— linkBroken=false, 绝不重建重发 (双开红线)
                 ?: return Attempt(
                     Outcome(false, "开锁没有回执 — 门锁可能已执行, 先看一眼门", trace.toString()),
@@ -424,8 +424,8 @@ class BleUnlocker(private val ctx: Context) {
         delay(120)
         val g = device.connectGatt(ctx, false, cb, BluetoothDevice.TRANSPORT_LE) ?: return false
         s.gatt = g
-        if (withTimeoutOrNull(10_000) { s.connected.await() } != true) return false
-        if (withTimeoutOrNull(6_000) { s.servicesOk.await() } != true) return false
+        if (withTimeoutOrNull(3_000) { s.connected.await() } != true) return false
+        if (withTimeoutOrNull(2_000) { s.servicesOk.await() } != true) return false
         val svc = g.getService(svcUuid) ?: return false
         val write = svc.getCharacteristic(UUID.fromString(KfProtocol.CHR_WRITE)) ?: return false
         val notify = svc.getCharacteristic(UUID.fromString(KfProtocol.CHR_NOTIFY)) ?: return false
@@ -506,7 +506,7 @@ class BleUnlocker(private val ctx: Context) {
                     val r = readLinkedRssi(warm)
                     if (r != null) send(r)
                     if (warm.disconnected.isCompleted) continue   // 链路刚死: 立刻回到循环去扫
-                    delay(800)
+                    delay(200)
                 } else {
                     // 扫描只在"没有链路"时开, 3 秒一窗: 窗内若预热把链路建好, 下一窗自动
                     // 切到连接层测距, 而这一窗收尾时 stopScan 已经把射频放掉了。
