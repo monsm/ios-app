@@ -107,7 +107,7 @@ enum DS {
     /// 间距: 统一 4 / 8 节奏。
     /// 布局密度 (包16): kf_density 三档映射为间距缩放系数 — 字号、触达、图标不缩放,
     /// 只动"呼吸感"; 变更由 AppState.bumpAppearance 驱动全局重建, 即时生效。
-    enum Space {
+    nonisolated enum Space {
         /// 紧凑 0.85 / 标准 1.0 / 宽松 1.18
         static var densityScale: CGFloat {
             switch DB.store.getString("kf_density") {

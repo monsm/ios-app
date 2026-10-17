@@ -35,7 +35,7 @@ struct BLEAdvDevice: Identifiable {
 }
 
 // 错误码 (JS ble.js classifyError/bleCodeMessage 词表 — 与 App 同套编号)
-enum BLEError: Int {
+nonisolated enum BLEError: Int {
     case notFound = 1001        // 未发现设备
     case ssTokenFail = 1006
     case responseTimeout = 1007
@@ -59,7 +59,7 @@ enum BLEError: Int {
     }
 }
 
-enum BLEErrorX: LocalizedError {
+nonisolated enum BLEErrorX: LocalizedError {
     case code(BLEError)
     case msg(String)
     var errorDescription: String? {

@@ -17,7 +17,7 @@ struct BZones: Codable, Equatable {
 }
 
 @MainActor
-enum BackupStudio {
+nonisolated enum BackupStudio {
     // ================= 路径与命名 (409/410) =================
     // nonisolated: makeRollbackPoint/pruneRollback 本就是 nonisolated 而引用了这两个路径,
     // 挂在 @MainActor 枚举上会直接编译不过 (纯 FileManager, 无 actor 状态)

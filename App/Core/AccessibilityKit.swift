@@ -95,9 +95,14 @@ extension DS {
     /// 迟早在某个页面上漂开 —— 收在这一处, 主控卡/开锁盘/成就卡/导出卡/帮助页/引导页同帧一起换。
     struct HeroSurface: ShapeStyle {
         func resolve(in environment: EnvironmentValues) -> AnyShapeStyle {
-            if environment.accessibilityReduceTransparency || DS.Appearance.highContrast { return AnyShapeStyle(DS.heroSolid) }
-            if AXFlags.invertColors { return AnyShapeStyle(DS.heroInvertGradient) }
-            return AnyShapeStyle(Gradient.hero)
+            // ShapeStyle.resolve 是 **nonisolated** 要求, 而这几枚旗标读的是 UIKit/UIAccessibility (主 actor)。
+            // 它只在渲染时被调, 而渲染必在主线程 ⇒ assumeIsolated 是如实的断言, 不是绕过:
+            // 万一将来有人在后台线程取样式, 这里会当场 trap, 而不是读到半截状态。
+            MainActor.assumeIsolated {
+                if environment.accessibilityReduceTransparency || DS.Appearance.highContrast { return AnyShapeStyle(DS.heroSolid) }
+                if AXFlags.invertColors { return AnyShapeStyle(DS.heroInvertGradient) }
+                return AnyShapeStyle(Gradient.hero)
+            }
         }
     }
     /// 863 反转降级渐变 (两端**同侧**: 浅档中性浅、深档中性深; 文字用 heroFg) — HeroSurface 的 863 分支

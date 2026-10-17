@@ -2,7 +2,7 @@
 // 差分基准: golden.pidTable / golden.capabilities
 import Foundation
 
-enum PidMap {
+nonisolated enum PidMap {
     static let K1 = 8097, KX = 8098, V1 = 7857, V1_Pro = 7858, JZ = 7873
     static let Z3 = 7891, Z3NFC = 7892, Z3AL = 7893, ZKBBV1 = 16289
     static let GW = 12193, GW_commercial = 12209, GW2_commercial = 12194

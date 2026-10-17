@@ -6,7 +6,7 @@
 import Foundation
 import Security
 
-enum KeyGen {
+nonisolated enum KeyGen {
     static let delPinSentinel = "ffffffff"
 
     static func randomBytes(_ n: Int) -> [UInt8] {

@@ -100,7 +100,7 @@ struct UnlockIntent: AppIntent {
                default: false)
     var faceConfirm: Bool
 
-    func perform() async throws -> some IntentResult {
+    @MainActor func perform() async throws -> some IntentResult {
         // 意图族门禁 (fail-closed): 设了本机密码而未解锁 → 拒绝。此前六个意图没有一个调用 IntentLockGate。
         if let block = await IntentLockGate.blockedMessage() { return .result(dialog: IntentDialog(stringLiteral: block)) }
         guard IntentGovernance.passCooldown(intent: "unlock") else {
@@ -156,7 +156,7 @@ struct OtpIntent: AppIntent {
 
     @Parameter(title: "门锁") var lockName: String
 
-    func perform() async throws -> some IntentResult {
+    @MainActor func perform() async throws -> some IntentResult {
         // 最高危的一条: 返回值就是**可用的开锁口令**, 会被 Siri 念出来。无门禁 = 锁屏绕过应用锁。
         if let block = await IntentLockGate.blockedMessage() { return .result(dialog: IntentDialog(stringLiteral: block)) }
         guard IntentGovernance.passCooldown(intent: "otp") else {
@@ -200,7 +200,7 @@ struct LockStatusIntent: AppIntent {
 
     @Parameter(title: "门锁") var lockName: String
 
-    func perform() async throws -> some IntentResult {
+    @MainActor func perform() async throws -> some IntentResult {
         if let block = await IntentLockGate.blockedMessage() { return .result(dialog: IntentDialog(stringLiteral: block)) }   // 电量/固件/锁钟同属本机数据
         guard IntentGovernance.passCooldown(intent: "status") else {
             IntentGovernance.audit(intent: "status", detail: "\(lockName) 被冷却拦截")
@@ -234,7 +234,7 @@ struct ExportCsvIntent: AppIntent {
 
     @Parameter(title: "门锁", default: "全部") var lockName: String
 
-    func perform() async throws -> some IntentResult {
+    @MainActor func perform() async throws -> some IntentResult {
         if let block = await IntentLockGate.blockedMessage() { return .result(dialog: IntentDialog(stringLiteral: block)) }   // 导出的是开门记录 (PII)
         guard IntentGovernance.passCooldown(intent: "export") else { return .result(dialog: "刚导出过, 请稍候 60 秒") }
         let macs: [String]
@@ -265,7 +265,7 @@ struct MemberQueryIntent: AppIntent {
 
     @Parameter(title: "成员名") var memberName: String
 
-    func perform() async throws -> some IntentResult {
+    @MainActor func perform() async throws -> some IntentResult {
         if let block = await IntentLockGate.blockedMessage() { return .result(dialog: IntentDialog(stringLiteral: block)) }   // 成员档案属 PII
         guard IntentGovernance.passCooldown(intent: "member") else {
             IntentGovernance.audit(intent: "member", detail: "\(memberName) 被冷却拦截")
@@ -299,7 +299,7 @@ struct ReadRecordsIntent: AppIntent {
 
     @Parameter(title: "门锁", default: "第一把") var lockName: String
 
-    func perform() async throws -> some IntentResult {
+    @MainActor func perform() async throws -> some IntentResult {
         if let block = await IntentLockGate.blockedMessage() { return .result(dialog: IntentDialog(stringLiteral: block)) }   // 朗读内容含开门时刻
         guard IntentGovernance.passCooldown(intent: "read") else {
             IntentGovernance.audit(intent: "read", detail: "\(lockName) 被冷却拦截")

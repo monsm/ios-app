@@ -5,7 +5,7 @@
 // 差分基准: golden.zotp.*
 import Foundation
 
-enum ZOTP {
+nonisolated enum ZOTP {
     static func reversePairHex(_ hex: String) -> String { HexKit.reversePairs(hex) }
     // idx → 2B BE hex (App: toSmallByteOrder→toNormalByteOrder 双反转 = 恒等)
     static func le2be2(_ v: Int) -> String {

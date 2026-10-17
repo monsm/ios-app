@@ -39,7 +39,7 @@ struct LogEntry {
     var body: String
 }
 
-enum StatusParser {
+nonisolated enum StatusParser {
     static func intHex(_ val: String) -> Int { Int(val.isEmpty ? "0" : val, radix: 16) ?? 0 }
     static func leHexToU32(_ val: String) -> UInt32 {
         let b = HexKit.bytes(val)

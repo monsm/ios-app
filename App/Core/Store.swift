@@ -100,7 +100,7 @@ final class Store {
 }
 
 // ---------- 钥匙串台账 (services/lock.js) ----------
-struct Keychain: Codable, Identifiable {
+nonisolated struct Keychain: Codable, Identifiable {
     var version: Int = 1
     var mac: String
     var pid: Int = 0
@@ -146,7 +146,7 @@ struct Keychain: Codable, Identifiable {
 }
 
 // ---------- 凭证台账 (services/ledger.js) ----------
-struct LedgerPwd: Codable, Identifiable {
+nonisolated struct LedgerPwd: Codable, Identifiable {
     var alias: Int
     var from: String
     var to: String
@@ -157,7 +157,7 @@ struct LedgerPwd: Codable, Identifiable {
     var note: String
     var id: Int { alias }
 }
-struct LedgerFp: Codable, Identifiable {
+nonisolated struct LedgerFp: Codable, Identifiable {
     var batch: Int
     var name: String
     var at: Double          // epoch **毫秒** (添加时刻；与 `LedgerPwd.at` 同约定)
@@ -172,13 +172,13 @@ struct LedgerFp: Codable, Identifiable {
     var isAlarm: Bool?
     var id: Int { batch }
 }
-struct Ledger: Codable {
+nonisolated struct Ledger: Codable {
     var pwds: [LedgerPwd] = []
     var fps: [LedgerFp] = []
 }
 
 // ---------- 成员档案 (services/members.js v3) ----------
-struct Member: Codable, Identifiable {
+nonisolated struct Member: Codable, Identifiable {
     // 259/623 成员色板 = 这个字段 (新成员建档时分配固定色，头像/时间线/过滤按钮统一取色)。
     // 类型里那个十六进制默认值是品牌靛蓝本身，第一个成员拿到它是巧合，不是"成员色有默认偏好"。
     var id: String
@@ -228,7 +228,7 @@ struct CachedLog: Codable {
 }
 
 // ---------- 钥匙串硬件台账 ----------
-struct Dongle: Codable, Identifiable {
+nonisolated struct Dongle: Codable, Identifiable {
     var mac: String
     var name: String = ""
     var bleId: String = ""
@@ -257,7 +257,7 @@ struct Dongle: Codable, Identifiable {
         stat = try c.decodeIfPresent(DongleStat.self, forKey: .stat)
     }
 }
-struct DongleStat: Codable {
+nonisolated struct DongleStat: Codable {
     var power: Int = -1
     var absPower: Int = -1
     var ekeyCount: Int = -1
@@ -268,7 +268,7 @@ struct DongleStat: Codable {
 }
 
 // ---------- 网关台账 ----------
-struct Gateway: Codable, Identifiable {
+nonisolated struct Gateway: Codable, Identifiable {
     var mac: String
     var name: String = ""
     var pid: Int = 0
@@ -306,8 +306,8 @@ struct OtpIdx: Codable {
 }
 
 // ---------- 存储访问层 ----------
-enum DB {
-    static var store = Store.shared
+nonisolated enum DB {
+    nonisolated(unsafe) static var store = Store.shared   // UserDefaults 封装本身线程安全; 全仓把它当非隔离用
 
     // 钥匙串 (多锁)
     static func keychains() -> [Keychain] {

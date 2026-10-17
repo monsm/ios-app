@@ -9,15 +9,15 @@ options:
   createIntermediateGroups: true
 settings:
   base:
-    # 编译器/工具链已是最新 (Xcode 27 + Swift 6.2), 语言模式仍用 5 —— 这是实测结论, 不是保守:
-    #   2026-10-17 试过 SWIFT_VERSION=6.0 + SWIFT_DEFAULT_ACTOR_ISOLATION=MainActor +
-    #   SWIFT_APPROACHABLE_CONCURRENCY=YES, 云端一次性报 **204 处**跨隔离错误, 集中在
-    #   AppIntents(82) / BackupStudioKit(38) / ExportCenter(32) / HardwareService(22) /
-    #   AccessibilityKit(10) / LiveUnlock(8) / LockGuard(6)。
-    #   那不是"改个版本号", 而是要把 AppIntent 的 perform、ActivityAttributes 一致性、
-    #   后台导出与 BLE 回调逐个改成显式隔离 —— 属独立一批, 不能在"顺手升级"里夹带 (会连续红很多轮)。
-    # 运行时性能不受影响: 优化档由下面 Release 的 -O + wholemodule 决定, 与语言模式无关。
-    SWIFT_VERSION: "5.0"
+    # Swift 6 语言模式 (严格并发) + 6.2 approachable concurrency。
+    # 迁移策略 (2026-10-17): 首跑 204 处错误的根因是"未标注类型默认继承主 actor, 把原本非隔离的
+    # 存储层/模型/纯函数一起拉上主线程"。修法不是逐个加 @MainActor, 而是把**本来就不该在主 actor 上**
+    # 的那一层显式标 nonisolated: DB / ZKProtocol / HexKit / StatusParser / PidMap / AESKit / KeyGen /
+    # ZOTP / ExportKit / PDFText / BackupStudio / 模型结构体 —— 行为零变化 (它们本来就是非隔离的)。
+    # 真正需要主 actor 的只有 UI 与 AppIntent, 后者给 perform 标 @MainActor (async 要求允许隔离见证)。
+    SWIFT_VERSION: "6.0"
+    SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+    SWIFT_APPROACHABLE_CONCURRENCY: YES
     CODE_SIGN_STYLE: Automatic
     DEVELOPMENT_TEAM: ""
   configs:
