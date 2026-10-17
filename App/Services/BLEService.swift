@@ -72,9 +72,24 @@ enum BLEErrorX: LocalizedError {
 
 final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
     static let shared = BLEService()
+    // ↑ 这三个 @Published 必须在**主线程**写。理由不是洁癖: Combine 在哪个线程 emit, SwiftUI 就在那个
+    //   线程**同步**重算受影响的 body —— 而本类刻意不是 @MainActor (CoreBluetooth 回调按 .main 队列
+    //   进来就够)，于是 `connect()` / `disconnect()` 这类**非隔离 async/同步**函数在全局执行器上跑时，
+    //   那几行赋值会落在 cooperative 线程 (栈约 512KB，主线程是 1MB)。根视图 body 一旦在这条线上重算，
+    //   就在 512KB 里撑爆 —— 真机 2026-10-17 09:14 的崩溃就是这个:
+    //     "Thread stack size exceeded" (SIGBUS / KERN_PROTECTION_FAILURE)
+    //     栈顶 Published.setter ← completeTaskWithClosure (一个 Task 续体，不是主线程)
+    //     栈底 ViewBodyAccessor.updateBody ← NavigationStack.init(root:) ← 本 App 的 body
+    //   下面三处非主线程写入点因此都走 publishOnMain；`@MainActor` 的 startScan 与 .main 队列回调
+    //   (didUpdateState / didDisconnect) 本来就落在主线程，保持不变。
     @Published private(set) var isPoweredOn = false
     @Published private(set) var scanning = false
     @Published private(set) var connectedMAC: String = ""
+
+    /// 非主线程也能安全写 @Published: 已在主线程就直接写，否则跳回主线程写 (为什么要跳见上方那段)。
+    private func publishOnMain(_ apply: @escaping () -> Void) {
+        if Thread.isMainThread { apply() } else { DispatchQueue.main.async(execute: apply) }
+    }
 
     private var manager: CBCentralManager!
     private var scanTimer: Timer?
@@ -190,7 +205,7 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
         if manager.isScanning { manager.stopScan() }
         scanTimer?.invalidate()
         scanTimer = nil
-        scanning = false
+        publishOnMain { [weak self] in self?.scanning = false }
     }
     /// 已发现设备快照 (供 MAC 扫描解析)
     func allDiscovered() -> [BLEAdvDevice] { Array(discovered.values) }
@@ -234,7 +249,8 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
             if device?.identifier.uuidString == deviceId { device = nil }
             throw error
         }
-        connectedMAC = deviceId
+        // connect() 是非隔离 async 函数 ⇒ 续体在 cooperative 线程上恢复, 这行绝不能直写 (见类头那段)
+        publishOnMain { [weak self] in self?.connectedMAC = deviceId }
         assembler.reset()
     }
     func disconnect() {
@@ -259,7 +275,8 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
         device = nil
         writeChar = nil
         notifyChar = nil
-        connectedMAC = ""
+        // 与 connect() 同理: disconnect() 是同步非隔离函数, 可能从任意线程进来
+        publishOnMain { [weak self] in self?.connectedMAC = "" }
         assembler.reset()
     }
 

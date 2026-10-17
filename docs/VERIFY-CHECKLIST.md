@@ -1258,3 +1258,17 @@ xcodebuild -project OfflineLock.xcodeproj -scheme OfflineLock \
   注意：指纹一旦在锁端删掉无法远程补录，b) 走完只能本人在锁前重录 —— 试完记得把测试成员与凭证清干净。
 - ㉖ 829 失败面：故意让配网失败（例如过程里走开 2 米）→ 扫描页顶部错误横幅常驻，点「看三步排查 (829)」进
   症状树「连不上或总断」，问答能一路走到结论；横幅不随页面重绘消失。反控：横幅一闪而过、或点不开症状树即回归。
+
+## 2026-10-17 真机崩溃回归项 (新增)
+- ㉗ 09:14 的崩溃 (`Thread stack size exceeded`, SIGBUS/KERN_PROTECTION_FAILURE) 修复点:
+  真机重新走**扫描/连接**那条路 —— 添加设备页停 1~2 分钟、反复开关扫描、连上一把锁再断开、
+  切后台再回前台重连。期望: 不再崩。
+  依据 (崩溃栈两条 + 代码形状): `Published.setter ← completeTaskWithClosure` (不是主线程的 Task 续体)
+  与 `ViewBodyAccessor.updateBody ← NavigationStack.init(root:) ← 本 App 的 body` 同时出现;
+  而 `BLEService.connect()` 是**非隔离 async 函数** (续体在 cooperative 线程恢复, 栈 ≈512KB),
+  `connectedMAC` / `scanning` 又是 @Published ⇒ 那几行赋值把整棵根视图的 body 拉到小栈上同步重算。
+  修法: 三处非主线程写入点改走 `publishOnMain` (App/Services/BLEService.swift 类头有完整取证与时间线)。
+  反控: 若仍崩 ⇒ 还有别的非主线程 @Published 写入点。本仓非 @MainActor 的 ObservableObject 只剩
+  `ExportProgress` 与 `SecTickCenter`, 两处都已分别被 `MainActor.run` 与"主线程调用点"包住 (已逐条核对)。
+  **未做**: 把崩溃里的两个 App 帧偏移 (+3213952 / +3482540) 符号化定位到具体 view —— 手上没有这台
+  设备的 dSYM/IPA, 做不到, 所以本条只按栈形状归因, 不声称逐帧对上。

@@ -117,7 +117,16 @@ const SYS_NAMES = new Set(['AngularGradient','AxisGridLine','AxisMarks','AxisVal
 //   bottomtrailingradius:toptrailingradius:style:)` —— 参数名与顺序照抄, 不是凭记忆拼的。
 // ⚠ 加白不等于它编得过: 本机无 Xcode, 只能靠 CI 编译定案 (与 SymbolEffectOptions 那条同口径)。
 'SecItemAdd', 'SecItemUpdate', 'SecItemCopyMatching', 'SecItemDelete', 'SymbolEffectOptions',
-'UnevenRoundedRectangle']);
+'UnevenRoundedRectangle',
+// Thread — Foundation 的"现在是不是主线程"判据 (`Thread.isMainThread`)。用得少是因为全仓只该有
+// 一处需要它: BLEService.publishOnMain —— 2026-10-17 真机崩溃 (Thread stack size exceeded,
+// 栈里 Published.setter ← 一个 Task 续体, body ← NavigationStack.init(root:)) 的修复点。
+// 为什么非要问这一句: Combine 在哪个线程 emit, SwiftUI 就在哪个线程**同步**重算 body ——
+// 非隔离 async 函数 (connect()) 的续体落在 cooperative 线程 (栈 ≈512KB), 直接写 @Published
+// 就会把整棵根视图的 body 拉到那条小栈上算。已在主线程时不跳队列是刻意的 (少一次异步,
+// 免得 `scanning = false` 这类状态在下一帧才可见)。
+// 与上面几批同理: **加白不等于用法正确** —— 编译器才是判定方。
+'Thread']);
 
 let symFail = 0;
 // 判定口径: 只报"全仓库只出现 1–2 次、又不是本仓库声明的类型"的驼峰名 ——
