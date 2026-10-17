@@ -17,19 +17,26 @@
 const fs = require('fs');
 const path = require('path');
 
-const ROOT = path.resolve(__dirname, '..');          // ios-app/
-const REPO = path.resolve(ROOT, '..');               // 仓库根
+const ROOT = path.resolve(__dirname, '..');          // ios-app/ = 本仓库根
+const REPO = path.resolve(ROOT, '..');               // 仓库根的上一级 (历史路径 /d/aapk/... 仍可用)
 const SPEC = path.join(ROOT, 'fixtures/logic-parity.json');
 const VERBOSE = process.argv.includes('-v') || process.argv.includes('--verbose');
 const MD = process.argv.includes('--md');   // 生成文档用的表格 (给 PARITY-FULL-AUDIT §9 抄, 不落盘)
 
 const spec = JSON.parse(fs.readFileSync(SPEC, 'utf8'));
 const cache = new Map();
+// 解析顺序: 仓库根 → 上一级 (兼容旧表里 `ios-app/...` 的写法)。
+// 为什么要落到仓库根: 云端 checkout 只有 ios-app 这一层, 上一级里没有 jzzns22561_v2/ 与
+// miniprogram-app/ —— 第一百八十批首跑就是这样红的 (20 条全报"文件不存在")。
+// 结论不是让闸门在云端静默跳过, 而是把证据搬进仓库: APK 反编译的 BleLockConnector.java
+// 落在 vendor/apk/, 小程序侧 JS 与 vendor/app/ 同源同步 (见 540f4a3)。
 function load(rel) {
   if (cache.has(rel)) return cache.get(rel);
-  const abs = path.join(REPO, rel);
+  const cands = [path.join(ROOT, rel), path.join(REPO, rel)];
   let txt = null;
-  try { txt = fs.readFileSync(abs, 'utf8'); } catch (e) { txt = null; }
+  for (const abs of cands) {
+    try { txt = fs.readFileSync(abs, 'utf8'); break; } catch (e) { txt = null; }
+  }
   cache.set(rel, txt);
   return txt;
 }

@@ -265,11 +265,15 @@ function writeFrame(conn, hex, log, wxWrite) {
   const writer = wxWrite || (o => wx.writeBLECharacteristicValue(o));
   return new Promise((resolve, reject) => {
     let i = 0;
-    const t0 = Date.now();
+    // 逐片写确认窗口 = 8s, 与 APK Java `writeRXCharacteristic` 同口径:
+    //   那边每片 writeCharacteristic 后等 onCharacteristicWrite(BLE_TIMEOUT=8000), **每片重新计时**。
+    // 旧实现是"整帧 3s 总超时"(G12) —— 08 PIN 池 13 分片长帧在弱信号下会被误判成写失败,
+    // 而 iOS 侧同族缺陷(3s/片)已按 8s 修过, 两份 JS 也该一致。计时器每发一片就重置。
+    let chunkAt = Date.now();
     const next = () => {
-      // G12: 总超时兜底 (正常 ≤180ms; 设备静默时避免挂死)
-      if (Date.now() - t0 > 3000) { reject(withCode(new Error('写入超时'), 6001)); return; }
+      if (Date.now() - chunkAt > 8000) { reject(withCode(new Error('写入超时'), 6001)); return; }
       if (i >= bytes.length) return resolve();
+      chunkAt = Date.now();
       const part = bytes.slice(i, i + chunk);
       i += chunk;
       TRACE.bleTxChunk(i, total, proto.bytesToHex(part), 'chunk=20B'); // 逐片原始 hex
