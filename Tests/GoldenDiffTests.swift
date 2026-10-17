@@ -4,7 +4,14 @@ import XCTest
 @testable import OfflineLock
 
 final class GoldenDiffTests: XCTestCase {
-    static var golden: [String: Any] = [:]
+    /// 金标夹具。Swift 6 下裸 `static var` 是"非隔离全局可变状态", 直接判错; 而夹具是
+    /// `[String: Any]` (非 Sendable), 也不能靠 `static let` 绕 —— 所以用本仓的 Locked 持有,
+    /// 读写都过临界区。对调用方 API 不变 (仍是 `golden` 这个名字)。
+    private static let goldenBox = Locked<[String: Any]>([:])
+    static var golden: [String: Any] {
+        get { goldenBox.withLock { $0 } }
+        set { goldenBox.withLock { $0 = newValue } }
+    }
 
     override class func setUp() {
         super.setUp()
