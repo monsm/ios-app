@@ -161,7 +161,7 @@ nonisolated enum Milestones {
 
     // ---------- 976 安心夜打卡 + 985 衑签 ----------
     /// 22 点后可打卡 (纯手动确认 — 协议无上锁状态位, 不猜测)
-    nonisolated(unsafe) static var canNightCheckIn: Bool { WeekCal.gregorian.component(.hour, from: Date()) > = 22 }
+    nonisolated(unsafe) static var canNightCheckIn: Bool { WeekCal.gregorian.component(.hour, from: Date()) >= 22 }
     static func nightMarks() -> [String: String] {
         DB.store.get([String: String].self, "kf_night_marks") ?? [:]
     }

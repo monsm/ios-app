@@ -485,7 +485,7 @@ nonisolated enum RecordSearch {
     static func setHolidayExtend(_ on: Bool) { DB.store.set("kf_holiday_extend", on) }
     private static func clamp23(_ h: Int) -> Int { min(max(h, 0), 23) }
     /// 起==止 时区间为空集 (什么都筛不出), 界面要如实提示而不是让用户对着空列表猜
-    nonisolated(unsafe) static var nightWindowDegenerate: Bool { nightFrom = = nightTo }
+    nonisolated(unsafe) static var nightWindowDegenerate: Bool { nightFrom == nightTo }
     /// 564/572 深夜判定。**672 假日顺延接在这里**: 节假日当日把区间终点 +2 小时。
     /// 此前 extendedEndHour/holidayExtendOn 组成一条没人走的链 = 设置形同虚设。
     /// dayKey 传 "" (或不传) = 不做假日判定, 与旧行为一致。

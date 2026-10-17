@@ -28,7 +28,7 @@ nonisolated enum HolidayFeed {
     static func cacheKey(_ y: Int) -> String { "kf_hol_" + String(y) }
 
     nonisolated(unsafe) static var sourceBase: String { let s = DB.store.getString(srcKey); return s.isEmpty ? builtinBase : s }
-    nonisolated(unsafe) static var usingBuiltinSource: Bool { sourceBase = = builtinBase }
+    nonisolated(unsafe) static var usingBuiltinSource: Bool { sourceBase == builtinBase }
     static func setSource(_ s: String) {
         let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
         if t.isEmpty || t == builtinBase { DB.store.remove(srcKey) } else { DB.store.set(srcKey, t) }

@@ -66,7 +66,7 @@ nonisolated enum AXFlags {
     }
     /// 859 AX 档降级布局: 字号 ≥1.5 时圆盘缩至 128pt (UnlockDial.dial 消费本旗标)。
     /// 原设计还含"Hero 指标纵向堆叠", 那半未实现 —— 已从说明文案删除, 不要凭本注释以为已做。
-    nonisolated(unsafe) static var axStackLayout: Bool { appFontScale > = 1.5 }
+    nonisolated(unsafe) static var axStackLayout: Bool { appFontScale >= 1.5 }
     /// 866 极限字号自检: 诊断开关, 以 200% 字号预览关键页 (仅自检用)
     static var bigPreview: Bool { DB.store.getBool("kf_ax_bigpreview") }
     /// 879 灰度预览自检: 全 App 去饱和渲染, 检查渐变主题无色可读性 (仅自检用)
