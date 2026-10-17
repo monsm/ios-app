@@ -107,8 +107,12 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
     // 写槽串行化: writeAckCont 是单一槽位, 并发写时后者会覆盖前者的 continuation
     // → 前者永不 resume (挂死 + continuation 泄漏), 而 LockService 与 HardwareService 各有独立 waiter,
     // 共用本服务时确实可并发 (看门狗/回连循环 vs 用户手动操作)。didWriteValueFor 本就按序回调, 串起来即可。
-    private var writeBusy = false
-    private var writeBusyWaiters: [CheckedContinuation<Void, Never>] = []
+    /// 写槽 = 「忙标志 + FIFO 等待队列」, 由一把锁保护。
+    /// 为什么不能再用裸 Bool: 取槽是"检查并占用"的复合动作, 而 writeFrameHex 是非隔离 async
+    /// (跑在全局执行器上) —— LockService 与 HardwareService 各有独立 waiter, 同时下发时两个调用方
+    /// 会双双看到 busy=false 而同时进入临界区, 后者的 continuation 覆盖前者 ⇒ 前者永不 resume
+    /// (挂死) + continuation 泄漏。Swift 6 的模型把这类跨线程读写直接算 UB, 所以这里必须上锁。
+    private let writeSlot = Locked((busy: false, waiters: [CheckedContinuation<Void, Never>]()))
     // 1b/拍板#1: 无响应写的"可发"就绪等待。单槽即可 —— 分片写 (cmd08) 本身逐片 await, 不会并发。
     private var readyCont: CheckedContinuation<Void, Never>?
     private var readyTimer: DispatchWorkItem?
@@ -269,9 +273,12 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
         // 写槽随连接一起复位: 断链时若有调用方在 acquireWriteSlot 的队列里等槽,
         // 不唤醒它们就会永久挂死, 并且 writeBusy 卡 true 会阻塞之后每一次写。
         // 被唤醒者随后会撞上 writeFrameHex 的 `guard let device` 而快速失败, 不会误发。
-        writeBusy = false
-        let queued = writeBusyWaiters
-        writeBusyWaiters.removeAll()
+        let queued = writeSlot.withLock { s -> [CheckedContinuation<Void, Never>] in
+            s.busy = false
+            let q = s.waiters
+            s.waiters.removeAll()
+            return q
+        }
         for c in queued { c.resume() }
         if let d = device { manager.cancelPeripheralConnection(d) }
         device = nil
@@ -308,14 +315,31 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
     /// 取写槽 (FIFO): 同一特征值的 with-response 写必须串行, 否则 writeAckCont 单槽被后者覆盖,
     /// 前者的 continuation 永不完成 (挂死)。已在写的情况下把调用方排进等待队列。
     private func acquireWriteSlot() async {
-        if !writeBusy { writeBusy = true; return }
-        await withCheckedContinuation { (c: CheckedContinuation<Void, Never>) in writeBusyWaiters.append(c) }
-        writeBusy = true
+        // 快路径: 空槽直接占用 (判定与占用在同一个临界区里, 不存在中间窗口)
+        let gotIt = writeSlot.withLock { s -> Bool in
+            if s.busy { return false }
+            s.busy = true
+            return true
+        }
+        if gotIt { return }
+        // 慢路径: 入队; 入队时再判一次空档 (上一位可能刚好在这两条语句之间放槽)
+        await withCheckedContinuation { (c: CheckedContinuation<Void, Never>) in
+            let raced = writeSlot.withLock { s -> Bool in
+                if !s.busy { s.busy = true; return true }
+                s.waiters.append(c)
+                return false
+            }
+            if raced { c.resume() }   // resume 必须在锁外, 否则可能在锁内同步重入
+        }
     }
     private func releaseWriteSlot() {
-        guard let next = writeBusyWaiters.first else { writeBusy = false; return }
-        writeBusyWaiters.removeFirst()
-        next.resume()
+        // 出队与放槽也在同一个临界区: 有等待者时**保持 busy=true**, 槽直接交给下一位,
+        // 中间不留"谁都能进"的空档。
+        let next = writeSlot.withLock { s -> CheckedContinuation<Void, Never>? in
+            if s.waiters.isEmpty { s.busy = false; return nil }
+            return s.waiters.removeFirst()
+        }
+        next?.resume()
     }
     /// 无响应写的真流控: 等 `peripheralIsReady(toSendWriteWithoutResponse:)`。
     /// 保留兜底超时 (默认 0.12s, 与旧的 20ms sleep 同量级但更宽) —— 个别固件不再回调时,

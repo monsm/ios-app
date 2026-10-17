@@ -534,7 +534,7 @@ struct SecurityPeekView: View {
         .dsScreenBackground()
         .navigationTitle("防窥与遮蔽")
         // 371 本地糊屏: 切后台即刻整屏糊, 回前台若已解锁则恢复清晰, 否则先过应用锁
-        .onChange(of: scenePhase) { phase in
+        .onChange(of: scenePhase) { _, phase in
             let on = DB.store.getBool(SecKey.bgBlurOn, false)
             switch phase {
             case .background:

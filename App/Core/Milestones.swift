@@ -497,7 +497,6 @@ enum Milestones {
     }
     /// 998 徽章周年回忆: 恰好满一年 (同一月日) 的徽章
     static func badgeAnniversaryToday() -> Badge? {
-        let md = mdKey()
         return latestUnlocked(definitions.count).first {
             isSameMonthDay($0.at, Date()) &&
             WeekCal.gregorian.component(.year, from: $0.at) < WeekCal.gregorian.component(.year, from: Date())

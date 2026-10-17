@@ -522,7 +522,7 @@ final class LinkSense: ObservableObject {
     /// 134 冷启动先扫描: App 启动广播扫描一次, 把可见已配对锁的 RSSI 落档 (不连接、不下发)
     func coldStartScan() {
         Task { @MainActor [weak self] in
-            guard let self else { return }
+            guard self != nil else { return }   // 只为"已销毁就别扫", 本体内不读 self
             let ble = BLEService.shared
             guard ble.isPoweredOn, !DiagFlags.silent else { return }
             do {

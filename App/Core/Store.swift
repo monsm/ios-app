@@ -61,13 +61,21 @@ final class Store: @unchecked Sendable {
     /// 只存"键 ← 失败原因"，**不存值** (值可能是口令或 2FA 种子，绝不能在诊断里重现)。
     /// 同键同因只记一次: 热 getter 若每帧都失败，不把 defaults 当日志刷。
     static let failureKey = "wf"
+    /// 失败台账的读改写串行化。
+    /// Store 是 @unchecked Sendable (UserDefaults 本身线程安全), 但"读数组 → 判重 → 插入 → 写回"
+    /// 是**复合动作**: 两个线程同时写失败时会各自读到同一份旧数组, 后写的把先写的那条覆盖掉
+    /// (丢证据)。Swift 6 的模型把这种无同步的读改写直接算 UB, 所以这一小段上锁 —— 只在失败路径上,
+    /// 正常读写一次都不经过它。
+    private let failureLock = Locked(false)
     private func recordFailure(_ k: String, _ why: String) {
-        let tail = k + " ← " + why
-        if failureLines().contains(where: { $0.hasSuffix(tail) }) { return }
-        var next = failureLines()
-        next.insert(DiagTime.mmddHHmm() + " " + tail, at: 0)
-        if next.count > 40 { next = Array(next.prefix(40)) }
-        defaults.set(next, forKey: key(Self.failureKey))
+        failureLock.withLock { _ in
+            let tail = k + " ← " + why
+            if failureLines().contains(where: { $0.hasSuffix(tail) }) { return }
+            var next = failureLines()
+            next.insert(DiagTime.mmddHHmm() + " " + tail, at: 0)
+            if next.count > 40 { next = Array(next.prefix(40)) }
+            defaults.set(next, forKey: key(Self.failureKey))
+        }
     }
     func failureLines() -> [String] { (defaults.array(forKey: key(Self.failureKey)) as? [String]) ?? [] }
     /// 刻意**不提供**清空口: 这本账的删除动作留在既有语义里 —— 核弹销毁按 `keys()` 全表清 (AuditChain:242)，

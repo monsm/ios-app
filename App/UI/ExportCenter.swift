@@ -285,7 +285,7 @@ extension ExportItem {
     // (另注: 下面其他 PDF 生成处也需要 ctx.beginPage, 见 renderPDF。)
     var sharePreview: SharePreview<Image, Never> {
         // init(_:image:) 要的是 SwiftUI `Image` (不是 UIImage); coverImage 可能为 nil → 空图兜底
-        SharePreview(title, image: Image(uiImage: ExportKit.coverImage(item: self, w: 480) ?? UIImage()))
+        SharePreview(title, image: Image(uiImage: ExportKit.coverImage(item: self, w: 480)))
     }
 }
 
@@ -1141,7 +1141,9 @@ enum ExportKit {
             if top > 0 {
                 PDFText.gradient(cg, CGRect(x: 0, y: 0, width: w, height: headH),
                                  [UIColor(DS.Palette.themed("heroA")), UIColor(DS.Palette.themed("heroB"))])
-                let sub = day + " · 离线锁管家" + (first ? "" : " (续)")
+                // 686 的原话是"单张发出去看不出锁名/日期": 日期有了, 锁名也必须真的画上去 ——
+                // 上面那行 lockName 此前算完就丢了 (编译器只在告警里提了一句 unused)。
+                let sub = day + " · " + lockName + " · 离线锁管家" + (first ? "" : " (续)")
                 PDFText.line(cg, sub, font: .regular, size: 13, x: 24, y: 44, color: .white, pageW: w - 48)
             }
             var i = 0

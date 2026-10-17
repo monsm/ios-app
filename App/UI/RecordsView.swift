@@ -379,7 +379,7 @@ struct RecordsView: View {
         }
         .onChange(of: filters) { applyFilter() }
         .onChange(of: reversed) { applyFilter() }
-        .onChange(of: searchText) { t in
+        .onChange(of: searchText) { _, t in
             let q = RecordSearch.parse(t)
             parsedTags = q.parsedTags
             highlightTokens = q.must

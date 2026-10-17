@@ -222,7 +222,7 @@ struct DeviceHomeView: View {
                     if let i = pageOrder.firstIndex(of: new) { pageIndex = i }
                 }
             }
-            .onChange(of: app.devices.count) { _ in
+            .onChange(of: app.devices.count) { _, _ in
                 syncPageOrder()
                 // 绑定/删除之后合并流与告警点位都会留下上一批锁的行: 立刻按新台账重算,
                 // 不等用户手动刷新 (否则解绑那把锁的"最近开门"会继续挂在列表里)。

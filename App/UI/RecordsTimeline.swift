@@ -641,7 +641,7 @@ struct RecDetailSheet: View {
         case "fp":
             let match: (LedgerFp) -> Bool = { f in
                 if r.whoName == nil { return true }
-                return f.owner == r.whoName || (f.name ?? "").contains(r.whoName!)
+                return f.owner == r.whoName || f.name.contains(r.whoName!)
             }
             if let f = fps.first(where: match) { return "fp:\(f.batch)" }
         default:
