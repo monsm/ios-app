@@ -284,16 +284,12 @@ nonisolated struct SystemFaceService: FaceService {
         }
     }
     func silentRefresh() {
-        Task { @MainActor in
-            var err: NSError?
-            let ctx = LAContext()
-            guard ctx.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &err),
-                  err?.code != LAError.biometryNotAvailable.rawValue else { return }
-            ctx.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics,
-                               localizedReason: "静默确认在场") { ok, _ in
-                if ok { AutoOpenKit.noteFaceSuccess() }
-            }
-        }
+        // 2026-10-17 真机勘误「一直在请求 Face ID, 按压开锁也被挡住」:
+        // 这里原本调 evaluatePolicy —— 而 iOS **没有静默的生物识别**: 只要调它, 系统就弹窗。
+        // 于是"标准档 = 不弹窗"这句承诺是假的: 每次回前台 (BLE 重连/切回 App/通知点开) 都弹一次,
+        // 系统弹窗是模态的, 期间连开锁圆盘的按压都被吃掉, 表现就是"按了没反应"。
+        // 改法: 标准档**不主动验证**, 只沿用最近一次真实验证留下的窗口 (lastFace ≤60s);
+        // 需要"每次进前台必验"的用户走严格档 (promptFace, 明确弹窗)。
     }
 }
 
