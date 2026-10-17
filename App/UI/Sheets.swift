@@ -799,6 +799,9 @@ struct StartAddFpView: View {
     @State private var busy = false
     @State private var error = ""
     @State private var doneBatch: UInt32?
+    /// 2026-10-17 用户口径: 录指纹**先选归属**。此前这一页直接开录, 记出来的指纹恒为"未归属",
+    /// 事后只能到台账里一条条补 —— 而归属本来就是录入前就知道的事。
+    @State private var owner: String? = nil
 
     private var content: some View {
         ScrollView {
@@ -822,6 +825,9 @@ struct StartAddFpView: View {
                     .transition(.scale(scale: 0.95).combined(with: .opacity))
                 } else {
                     VStack(spacing: DS.Space.xl) {
+                        // 先选归属; 这把锁还没有成员时, 选择器会直接弹"新增归属"。
+                        FpOwnerPicker(mac: app.current?.mac ?? "", owner: $owner)
+                            .card()
                         ProgressView(value: Double(min(presses.count, 8)), total: 8)
                             .padding(.horizontal, DS.Space.gutter)
                             .accessibilityLabel("指纹录入进度")
@@ -857,8 +863,14 @@ struct StartAddFpView: View {
                             .foregroundStyle(DS.Palette.danger)
                             .multilineTextAlignment(.center)
                         }
-                        BusyButton(title: "开始录入", systemImage: "touchid", isBusy: busy) {
+                        BusyButton(title: "开始录入", systemImage: "touchid", isBusy: busy,
+                                   disabled: owner == nil) {
                             enrollTask = Task { await start() }
+                        }
+                        if owner == nil {
+                            Text("先在上面选一位归属, 才开始录入")   // 317 先选归属
+                                .vkFont(.caption)
+                                .foregroundStyle(DS.Palette.textSub)
                         }
                     }
                 }
@@ -882,6 +894,7 @@ struct StartAddFpView: View {
                 NavigationStack { content }
             }
         }
+        .onAppear { if owner == nil { owner = prefillOwner } }   // 322 预填直达
         .onDisappear { enrollTask?.cancel() }
         // APK 对照 (StartaddfpPage.setKeepScreenOn): 录入期间不许自动锁屏 —— 用户手指按在锁上时
         // 屏一黑本进程就被挂起, 蓝牙录入链会在中途断掉, 而屏上还停在"重复此步骤 (n/8)"。
@@ -902,6 +915,7 @@ struct StartAddFpView: View {
 
     private func start() async {
         guard let kc = app.current else { app.showToast("请先选择门锁"); return }   // 2026-10-15 走查: 同上, 静默 return 看着像按钮坏了
+        guard let owner else { error = "请先选择归属再录入"; return }
         guard !busy else { return }
         busy = true
         error = ""
@@ -942,7 +956,7 @@ struct StartAddFpView: View {
             }
             let n = (existing.max() ?? 0) + 1
             DB.addFp(kc.mac, LedgerFp(batch: Int(batch), name: "指纹\(n)", at: Date().timeIntervalSince1970 * 1000,
-                                      note: "", src: "app", owner: prefillOwner, isAlarm: false))
+                                      note: "", src: "app", owner: owner, isAlarm: false))
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             doneBatch = UInt32(batch)
         } catch {

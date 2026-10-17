@@ -11,7 +11,7 @@
 # 需要真正执行测试时, 在装有 iOS 27 模拟器的 Mac 上跑:
 #   xcodebuild test -project OfflineLock.xcodeproj -scheme OfflineLock \
 #     -destination 'platform=iOS Simulator,name=iPhone 17 Pro' CODE_SIGNING_ALLOWED=NO
-name: iOS Build
+name: Build (iOS + Android)
 
 on:
   push:
@@ -219,4 +219,50 @@ jobs:
             build/test.log
             build/device.log
             build/OfflineLock-unsigned.ipa
+          if-no-files-found: error
+
+  # ================= 安卓极简版 (KfKey) =================
+  # 与 iOS 同一个仓库、同一次 push: 上面出 IPA, 这里出 APK —— 用户口径是"一次性生成 ipa 和 apk"。
+  # 只做两件事: 点一下开锁 / 靠近自动开锁 (RSSI 强于 -38 dBm)。锁信息由 iOS 生成的二维码导入。
+  android:
+    name: Build (Android 13+, APK)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+
+      - name: 编译 APK (debug, 可直接安装)
+        working-directory: android-app
+        run: |
+          set -o pipefail
+          gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log
+
+      - name: 编译失败时把 Kotlin 错误写进摘要
+        if: failure()
+        working-directory: android-app
+        run: |
+          {
+            echo "## Android 编译错误"
+            grep -E "^e: |^w: .*error|error:" build.log | head -60 || echo "(build.log 里没有 e: 行)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 上传 APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: KfKey-apk
+          path: android-app/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error

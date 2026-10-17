@@ -2412,70 +2412,9 @@ struct FpStudio: View {
             .padding(.vertical, 4)
             .variantCallout(DS.Palette.warn, .control, wash: 0.10)
         }
-        VStack(alignment: .leading, spacing: DS.Space.xs) {
-            Text("先选归属, 再录入")   // 317 先选归属
-                .vkFont(.footnote, weight: .semibold)
-                .foregroundStyle(DS.Palette.text)
-            ForEach(DB.members()) { m in
-                let cnt = CredentialOrg.fpCountByOwner(mac, m.id)
-                // 317 归属行可读标签: 拆成显式 String 局部量 —— 原先整条拼接写在 ViewBuilder 里会
-                // 让编译器 "unable to type-check this expression in reasonable time"。
-                let cntTag: String = cnt == 0 ? "无指纹" : "\(cnt) 枚"
-                let selTag: String = owner == m.id ? ", 已选" : ""
-                Button {
-                    owner = m.id
-                    DS.Haptics.tick.impactOccurred()
-                } label: {
-                    HStack(spacing: DS.Space.xs) {
-                        Text(m.name)
-                            .vkFont(.subheadline)
-                            .foregroundStyle(DS.Palette.text)
-                        Spacer(minLength: 0)
-                        if cnt == 0 {
-                            Label("无指纹", systemImage: "person.badge.shield.slash")
-                                .vkFont(.caption2)
-                                .foregroundStyle(DS.Palette.warn)
-                                .lineLimit(1)
-                        } else {
-                            Text("\(cnt) 枚")
-                                .vkFont(.caption2)
-                                .foregroundStyle(DS.Palette.textSub)
-                        }
-                        if owner == m.id {
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.system(size: DS.Icon.sm, weight: .medium))
-                                .foregroundStyle(DS.Palette.accentText)
-                        }
-                    }
-                    .frame(minHeight: DS.Hit.min)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("归属 " + m.name + " " + cntTag + selTag)
-            }
-            if DB.members().isEmpty {
-                Text("还没有成员。请先到成员中心新建成员再返回, 或跳过归属稍后在台账补。")   // 317 还没有成员
-                    .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.warn)
-                    .fixedSize(horizontal: false, vertical: true)
-                Button {
-                    // 317 无成员直达: 走 817 同一条道 (成员中心到达即弹建档向导), 建完值经 pendingFpOwner 带回
-                    app.pendingFpOwner = "request"
-                    app.pendingMemberAdd = true
-                    app.pendingSettingsFocus = "members"   // §4.3: 按钮写着"去新建成员", 原来只到设置页根
-                    app.requestRoute(.settings)   // 2026-10-15 走查: 与全仓跨 Tab 跳转统一走 requestRoute (访客门禁那一口)
-                    app.showToast("在「家人与钥匙」里新建成员")   // 317 家人与钥匙
-                    dismiss()
-                } label: {
-                    Label("去新建成员", systemImage: "person.badge.plus")   // 317 去新建成员
-                }
-                .vkFont(.caption, weight: .medium)
-                .foregroundStyle(DS.Palette.accentText)
-                .frame(minHeight: DS.Hit.min)
-                .contentShape(Rectangle())
-            }
-        }
-        .card()
+        // 317 归属先行: 选择器自带"空态就地新建" —— 一个成员都没有时直接弹新增, 不再把人赶去成员中心。
+        FpOwnerPicker(mac: mac, owner: $owner)
+            .card()
     }
 
     // ---------- 41 沉浸式录入 (复用 Achievement 的 hero 渐变聚焦语言 + 大圆点) ----------

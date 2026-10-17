@@ -1,0 +1,13 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 钥匙孔: 圆 + 梯形槽, 与界面里的圆盘同一形状语言 -->
+    <path
+        android:fillColor="#E8B45C"
+        android:pathData="M54,28 m-13,0 a13,13 0 1,0 26,0 a13,13 0 1,0 -26,0" />
+    <path
+        android:fillColor="#E8B45C"
+        android:pathData="M46,54 h16 l4,24 h-24 z" />
+</vector>

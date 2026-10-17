@@ -1,0 +1,10 @@
+<resources>
+    <!-- 只有一个 Compose 界面: 主题只负责窗口底色与系统栏, 避免启动时白闪 -->
+    <style name="Theme.KfKey" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#0A0C10</item>
+        <item name="android:statusBarColor">#0A0C10</item>
+        <item name="android:navigationBarColor">#0A0C10</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+</resources>

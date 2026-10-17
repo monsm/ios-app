@@ -16,6 +16,8 @@ struct SettingsView: View {
     @State private var showAdd = false
     @State private var showOverview = false
     @State private var showManage = false
+    /// 2026-10-17 安卓版: 把当前锁的开锁凭证渲染成二维码 (扫码导入, 之后不再需要)
+    @State private var shareLock: Keychain?
     @State private var showManual = false
     @State private var showDiag = false   // 587: 记录详情低电告警带 mac 过来 → 切锁并推诊断页
     @State private var showCare = false   // 1013: 保养到期通知带 mac 过来 → 切锁并推维护页 (与 587 同构)
@@ -121,6 +123,7 @@ struct SettingsView: View {
         .sheet(isPresented: $showDeviceInfo) { DeviceInfoView() }
         .sheet(isPresented: $showBackup) { BackupView() }
         .sheet(isPresented: $showMessages) { MessagesView() }
+        .sheet(item: $shareLock) { ShareToAndroidView(kc: $0) }
         .sheet(isPresented: $showAdd) { AddDeviceView() }
         .sheet(isPresented: $showOverview) { LockOverviewView() }
         .sheet(isPresented: $showManage) { DeviceManageView() }
@@ -429,6 +432,13 @@ struct SettingsView: View {
 
     private var lockSection: some View {
         Section("门锁") {
+            // 分享给安卓: 只在有当前锁时出现。入口放在门锁段而不是设备管理页 ——
+            // 这张码是"这一把锁"的凭证, 而设备管理讲的是锁与锁之间的关系。
+            if let kc = app.current {
+                Button { shareLock = kc } label: {
+                    Label("分享给安卓 (扫码开锁)", systemImage: "qrcode")
+                }
+            }
             if app.current == nil {
                 // 包14 空态族第一次在设置页真接上 (814 顶部进度点 / 815 双按钮 / 834 演示链 / 841 小管家 / 1044 便签):
                 // 814 的 1/3 = 三卡导览的次序 (连锁→录凭证→开门, 与 Onboarding 801 同口径), 这里停在"连锁"前一步;
