@@ -202,17 +202,26 @@ struct RecordsView: View {
             travelBanner
             streakBanner
             activeLine
+            // ─────────────────────────────────────────────────────────────
+            // 2026-10-18 重构: 列表前方原来叠了 **14 个区** ——
+            //   todaySummary / birthdayBanner / scopeRow / searchBar / monthJumpRow /
+            //   dayFocusBanner / resultCount / filterChips / memberChips / doorGods /
+            //   emptyHint / runningRow / dropWatchSection / lastYearTodayRow
+            // 记录列表被推到屏幕外, 这就是"记录页很乱"的真正来源。
+            //
+            // 现在按三条判据收敛 (不是删功能, 是分级):
+            //   · **常驻 3 个**: 今日摘要 / 范围(当前锁·全部锁) / 搜索
+            //   · **按需 2 个**: 日期跳转(选了月才显示) / 结果计数(有筛选才显示)
+            //   · 其余全部**收进"更多"或移到列表之后**: 生日条 / 成员 chip / 门神 / 掉电观察 / 去年今日
+            // ─────────────────────────────────────────────────────────────
             todaySummary
-            birthdayBanner
             scopeRow
             searchBar
             monthJumpRow
-            dayFocusBanner
             if !searchText.isEmpty || activeFilters { resultCount }
-            filterChips
-            memberChips
-            doorGods
-            if groups.isEmpty && !running { emptyHint }
+            filterChips          // 已折叠为一行摘要 + 可展开面板 (见 filterChips 注释)
+            // 低频区: 收进一行"更多"之后, 不再占首屏
+            secondaryRowsDisclosure
             if running { runningRow }
             // 187 按月跳转 (等价实现): 选月即只看该月, 顶部有清除口。
             // 原设计的"月份滚轮 + scrollTo"需把 List 包进 ScrollViewReader 并移动整条修饰符链,
