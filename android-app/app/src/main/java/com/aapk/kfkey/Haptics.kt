@@ -44,11 +44,17 @@ internal object KfHaptics {
             (ctx.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator)
         }
         if (v == null || !v.hasVibrator()) return
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            v.vibrate(VibrationEffect.createOneShot(ms, amplitude.coerceIn(1, 255)))
-        } else {
-            @Suppress("DEPRECATION")
-            v.vibrate(ms)
+        // 2026-10-18 真机事故: manifest 漏了 android.permission.VIBRATE，
+        // vibrate() 抛 SecurityException 并被协程当异常抛出 —— 开锁成功后整条流程崩掉。
+        // 两层修: ① manifest 补权限（正解）; ② 这里兜住任何异常 ——
+        // 触觉是锦上添花，永远不该成为把开锁打断的理由。
+        runCatching {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                v.vibrate(VibrationEffect.createOneShot(ms, amplitude.coerceIn(1, 255)))
+            } else {
+                @Suppress("DEPRECATION")
+                v.vibrate(ms)
+            }
         }
     }
 }

@@ -6,6 +6,9 @@
         android:name="android.permission.BLUETOOTH_SCAN"
         android:usesPermissionFlags="neverForLocation" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <!-- 2026-10-18: KfHaptics 调 Vibrator 需要它。漏声明时 vibrate() 会抛
+         SecurityException 并把开锁流程整条打断 (真机报错见提交说明)。 -->
+    <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.CAMERA" />
 
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="true" />
