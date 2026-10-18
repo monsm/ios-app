@@ -508,7 +508,7 @@ private fun Header(lock: LockInfo?) {
 private fun UnlockDial(busy: Boolean, onClick: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
-    val scale by animateFloatAsState(if (pressed) 0.965f else 1f, tween(120), label = "dial")
+    val scale by animateFloatAsState(if (pressed) 0.972f else 1f, tween(100), label = "dial")
 
     Box(contentAlignment = Alignment.Center) {
         // 外圈柔光
@@ -521,51 +521,87 @@ private fun UnlockDial(busy: Boolean, onClick: () -> Unit) {
                 radius = size.minDimension / 2
             )
         }
+        // 锁体: 凹槽 / 金属倒角(sweepGradient) / 深色玻璃 / 镜面高光 (对应 iOS LockPlate)
         Box(
             Modifier
                 .size(232.dp)
                 .scale(scale)
                 .clip(CircleShape)
-                .background(Brush.radialGradient(listOf(Color(0xFF1D2530), Color(0xFF0E1319))))
                 .clickable(interactionSource = interaction, indication = null, enabled = !busy) { onClick() },
             contentAlignment = Alignment.Center
         ) {
             Canvas(Modifier.fillMaxSize()) {
                 val dim = size
-                val r = dim.minDimension / 2 - 1.dp.toPx()
-                // 细环: 两层, 外层极淡 (描边), 内层一道亮弧做"锁孔高光"
-                drawCircle(
-                    color = Color.White.copy(alpha = 0.10f),
-                    radius = r,
-                    style = Stroke(width = 1.dp.toPx())
-                )
-                drawArc(
-                    color = Accent.copy(alpha = if (busy) 0.9f else 0.45f),
-                    startAngle = -90f,
-                    sweepAngle = if (busy) 300f else 70f,
-                    useCenter = false,
-                    topLeft = Offset(1.dp.toPx(), 1.dp.toPx()),
-                    size = Size(dim.width - 2.dp.toPx(), dim.height - 2.dp.toPx()),
-                    style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
-                )
-                // 钥匙孔
                 val cx = size.width / 2
                 val cy = size.height / 2
-                drawCircle(color = Accent, radius = 13.dp.toPx(), center = Offset(cx, cy - 10.dp.toPx()))
-                val top = cy + 2.dp.toPx()
-                val halfTop = 7.dp.toPx()
-                val halfBottom = 12.dp.toPx()
-                val bottom = cy + 34.dp.toPx()
+                val rOuter = dim.minDimension / 2 - 1.dp.toPx()
+
+                // 第 1 层: 金属倒角 —— sweepGradient 让亮面随角度变化 (对应 iOS AngularGradient)
+                drawCircle(
+                    brush = Brush.sweepGradient(
+                        0f to Color(0xFFFEFDFB),
+                        0.11f to Color(0xFFC3BCB1),
+                        0.26f to Color(0xFFFBF9F5),
+                        0.44f to Color(0xFFB6AFA4),
+                        0.58f to Color(0xFFEFEBE3),
+                        0.74f to Color(0xFFC8C1B6),
+                        0.88f to Color(0xFFFCFDFA),
+                        1f to Color(0xFFC3BCB1),
+                        center = Offset(cx, cy)
+                    ),
+                    radius = rOuter
+                )
+
+                // 第 2 层: 深色玻璃面 (光源在 26% / 4%)
+                val inset = 9.dp.toPx()
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        listOf(Color(0xFF3A4044), Color(0xFF202528), Color(0xFF0F1214), Color(0xFF080A0B)),
+                        center = Offset(cx - rOuter * 0.24f, cy - rOuter * 0.46f),
+                        radius = rOuter * 1.2f
+                    ),
+                    radius = rOuter - inset
+                )
+
+                // 第 3 层: 斜向镜面高光
+                drawArc(
+                    brush = Brush.linearGradient(
+                        listOf(Color.Transparent, Color.White.copy(alpha = 0.52f), Color.Transparent),
+                        start = Offset(cx - rOuter, cy - rOuter),
+                        end = Offset(cx + rOuter, cy + rOuter)
+                    ),
+                    startAngle = 200f,
+                    sweepAngle = 90f,
+                    useCenter = false,
+                    style = Stroke(width = (rOuter - inset) * 0.55f, cap = StrokeCap.Round)
+                )
+
+                // 字形: 锁 (与既有语义一致, 不改交互)
+                val g = rOuter * 0.30f
+                drawCircle(color = Accent, radius = g * 0.42f, center = Offset(cx, cy - g * 0.32f))
+                val top = cy + g * 0.06f
                 drawPath(
                     path = androidx.compose.ui.graphics.Path().apply {
-                        moveTo(cx - halfTop, top)
-                        lineTo(cx + halfTop, top)
-                        lineTo(cx + halfBottom, bottom)
-                        lineTo(cx - halfBottom, bottom)
+                        moveTo(cx - g * 0.22f, top)
+                        lineTo(cx + g * 0.22f, top)
+                        lineTo(cx + g * 0.38f, top + g * 1.0f)
+                        lineTo(cx - g * 0.38f, top + g * 1.0f)
                         close()
                     },
                     color = Accent
                 )
+
+                if (busy) {
+                    drawArc(
+                        color = Accent.copy(alpha = 0.9f),
+                        startAngle = -90f,
+                        sweepAngle = 300f,
+                        useCenter = false,
+                        topLeft = Offset(1.dp.toPx(), 1.dp.toPx()),
+                        size = Size(dim.width - 2.dp.toPx(), dim.height - 2.dp.toPx()),
+                        style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
+                    )
+                }
             }
         }
     }

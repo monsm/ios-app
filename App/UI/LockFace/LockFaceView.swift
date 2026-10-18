@@ -74,6 +74,21 @@ struct LockFaceView: View {
                     .opacity(lightLeak)
                     .allowsHitTesting(false)
 
+                // 状态行 (D13): **只说本机真知道的事**。
+                // 协议里没有「在线」「反锁状态」「门磁」——CAPABILITY.md §5 已确证。
+                // 允许的三个真源: CoreBluetooth 连接态 / cmd03 的 powerLevel / 本机记录。
+                if isLockedPhase {
+                    VStack(spacing: DS.Space.xs) {
+                        Text(app.current?.name ?? "门")
+                            .vkFont(.largeTitle, weight: .semibold)   // D15 第 2 条: 34pt semibold
+                            .foregroundStyle(DS.Palette.text)
+                        Text(truthfulStatusLine)
+                            .vkFont(.footnote)                        // D15 第 3 条: 13pt
+                            .foregroundStyle(DS.Palette.textSub)
+                    }
+                    .padding(.top, DS.Space.xl)
+                }
+
                 // 推门而入: 不解锁也能进 (D2 —— 开锁是安全动作, 进门是导航动作, 两者分开)。
                 // 位置: 右下角, 不抢锁体的视觉焦点, 但触达 >= 44pt。
                 if isLockedPhase {
@@ -172,6 +187,22 @@ struct LockFaceView: View {
         case .opening, .open, .closing: return max(0, 1 - openProgress * 2)
         default: return 1
         }
+    }
+
+    /// 门面状态行 —— **每一句都必须是真的** (D13)。
+    /// 不写「在线」(协议无此状态)、不写「已锁定」(不是锁端事实)、绝不写「门磁未合上」(协议无门磁)。
+    private var truthfulStatusLine: String {
+        // 连接态: CoreBluetooth 的本机事实
+        let link: String
+        switch app.unlockState {
+        case .connecting, .opening: link = "正在连接"
+        default: link = app.current == nil ? "未选择门锁" : "已连接"
+        }
+        // 电量: 走既有的统一读数口径 (采样 + 快照取新), -1 = 未知。
+        // **不自己解快照、不自己猜** —— BatteryCare.facePct 就是这一格的唯一来源。
+        let pct = app.current.map { BatteryCare.facePct($0.mac) } ?? -1
+        let bat = pct < 0 ? "电量未知" : (pct > 80 ? "电量 >80%" : "电量 \(pct)%")
+        return "\(link) · \(bat)"
     }
 
     private var accessibilityValue: String {
