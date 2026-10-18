@@ -31,13 +31,14 @@ struct LockFaceView: View {
 
     /// 门是否展示 (由 LockFacePolicy 决定; 深链/小组件/Siri 一律 false)。
     @Binding var presented: Bool
+    /// 已进门 (App 可见)。门转开后由本视图置 true。
+    @Binding var entered: Bool
 
     @State private var phase: LockFacePhase = .locked
     @State private var openProgress: Double = 0
     @State private var shakeX: CGFloat = 0
     @State private var pressed = false
     @State private var lightLeak: Double = 0
-    @State private var appReveal: Double = 0
     @State private var holdTask: Task<Void, Never>?
     @State private var lastTick = 0
 
@@ -159,7 +160,9 @@ struct LockFaceView: View {
         .ignoresSafeArea()
         .background(DS.Palette.canvas)
         .onChange(of: app.unlockState) { _, new in react(to: new) }
-        .onChange(of: presented) { _, show in if !show { phase = .locked; openProgress = 0; lightLeak = 0 } }
+        .onChange(of: presented) { _, show in
+            if !show { phase = .locked; openProgress = 0; lightLeak = 0; entered = false }
+        }
     }
 
     // MARK: - 派生状态
@@ -309,11 +312,10 @@ struct LockFaceView: View {
                 openProgress = 1
                 phase = .opening
             }
-            withAnimation(DS.Motion.doorReveal.delay(LockFaceStyle.appRevealDelay)) {
-                appReveal = 1
-            }
             try? await Task.sleep(nanoseconds: 800_000_000)
             phase = .open
+            // 门已转开 -> 交接给根容器: 现在可以显示 App 了。
+            withAnimation(DS.Motion.doorReveal) { entered = true }
             try? await Task.sleep(nanoseconds: UInt64(LockFaceStyle.lightLeakFadeDelay * 1_000_000_000))
             withAnimation(DS.Motion.exit) { lightLeak = 0 }
         }
@@ -343,10 +345,10 @@ struct LockFaceView: View {
         DS.Haptics.tick.impactOccurred()
         phase = .opening
         withAnimation(DS.Motion.doorSwing) { openProgress = 1 }
-        withAnimation(DS.Motion.doorReveal.delay(LockFaceStyle.appRevealDelay)) { appReveal = 1 }
-        Task { @MainActor in
+                Task { @MainActor in
             try? await Task.sleep(nanoseconds: 800_000_000)
             phase = .open
+            withAnimation(DS.Motion.doorReveal) { entered = true }
         }
     }
     /// 关门 (右缘拖 >=96pt / 导航栏按钮 / Esc)。
@@ -354,12 +356,13 @@ struct LockFaceView: View {
     func closeDoor() {
         guard phase == .open else { return }
         phase = .closing
-        withAnimation(DS.Motion.exit) { appReveal = 0 }
+        withAnimation(DS.Motion.exit) { entered = false }
         withAnimation(DS.Motion.doorSwing) { openProgress = 0 }
         Task { @MainActor in
             try? await Task.sleep(nanoseconds: 820_000_000)
             phase = .locked
             presented = false
+            entered = false
         }
     }
 }

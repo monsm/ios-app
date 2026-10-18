@@ -1324,6 +1324,9 @@ struct RootView: View {
 
     /// 2026-10-18 门面改造: 是否展示门面层。由 LockFacePolicy 在启动/回前台时决定。
     @State private var showLockFace = false
+    /// 2026-10-18: 是否已"推门而入"(App 可见)。与 showLockFace 分开是因为
+    /// 门转开需要 820ms, 那段时间门还在屏上但 App 还不该出现。
+    @State private var entered = false
     /// 2026-10-18 门面改造: 76 项目录 (sheet 级, 不占 Tab 位 — D1/D7)。
     @State private var showAppIndex = false
 
@@ -1365,18 +1368,23 @@ struct RootView: View {
                 //   条件插入会重建 TabView 持有的 @State (CredentialsView 的筛选/展开状态会丢),
                 //   本仓 1065-1068 已就这条留过注释。这里主界面始终在树上, 只改显隐。
                 ZStack {
-                    LockFaceView(presented: $showLockFace)
+                    // 门层: 门关着时可见。门转开后它自己淡出, 但**仍留在树上**
+                    // (转开的门扇不需要再显示, 淡出即可; 移除会打断正在进行的动画)。
+                    LockFaceView(presented: $showLockFace, entered: $entered)
                         .opacity(showLockFace ? 1 : 0)
-                        .allowsHitTesting(showLockFace)
-                        .accessibilityHidden(!showLockFace)
+                        .allowsHitTesting(showLockFace && !entered)
+                        .accessibilityHidden(!showLockFace || entered)
 
+                    // 门后 App: 只有**进了门**才可见 (不是门一关就可见)。
+                    // 这两个状态分开是必须的 —— 门层在屏上(showLockFace) 与 已进门(entered)
+                    // 是两个不同的时刻, 中间隔着 820ms 的转门动画。
                     mainTabsChrome
-                        .opacity(showLockFace ? 0 : 1)
-                        .allowsHitTesting(!showLockFace)
-                        .accessibilityHidden(showLockFace)
-                        .scaleEffect(showLockFace ? 0.986 : 1)
+                        .opacity(entered ? 1 : 0)
+                        .allowsHitTesting(entered)
+                        .accessibilityHidden(!entered)
+                        .scaleEffect(entered ? 1 : 0.986)
                 }
-                .animation(DS.Motion.doorReveal, value: showLockFace)
+                .animation(DS.Motion.doorReveal, value: entered)
                 .sheet(isPresented: $showAppIndex) {
                     AppIndexView().environmentObject(app)
                 }
