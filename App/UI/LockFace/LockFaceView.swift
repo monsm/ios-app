@@ -1,0 +1,334 @@
+//  LockFaceView.swift
+//  门面层容器: 相位状态机 + 时间轴 + 手势。2026-10-18 门面改造新增。
+//
+//  相位 (D2, 唯一实现, 禁止第二处):
+//    .locked -> .charging(p) -> .unlocking -> .peeking -> .opening -> .open
+//                                        \-> .failed(rc)   (门**完全不动**)
+//  红线: .failed 时门一个像素都不许动 —— "门动了 = 锁开了" 是用户唯一可靠的读法。
+//
+//  开锁入口是 app.requestUnlock() (LockKeeperApp.swift:488), **不是** LockService:
+//  那里面有三道闸 (只读 / 去重 / 二次锁), 绕过它们等于绕过安全策略。
+
+import SwiftUI
+
+enum LockFacePhase: Equatable {
+    case locked
+    case charging(CGFloat)
+    case unlocking
+    case peeking
+    case opening
+    case open
+    case closing
+    case failed(String)
+
+    var isOpen: Bool { self == .open }
+}
+
+struct LockFaceView: View {
+    @EnvironmentObject private var app: AppState
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// 门是否展示 (由 LockFacePolicy 决定; 深链/小组件/Siri 一律 false)。
+    @Binding var presented: Bool
+
+    @State private var phase: LockFacePhase = .locked
+    @State private var openProgress: Double = 0
+    @State private var shakeX: CGFloat = 0
+    @State private var pressed = false
+    @State private var lightLeak: Double = 0
+    @State private var appReveal: Double = 0
+    @State private var holdTask: Task<Void, Never>?
+    @State private var lastTick = 0
+
+    /// 皮肤来自当前锁的 LockMeta (不是 LockProfile —— 那个类型不存在)。
+    private var skin: LockFaceSkin {
+        LockFacePolicy.skin(for: app.currentMac)
+    }
+
+    private var plateD: CGFloat {
+        LockFaceStyle.plateDiameter(screenWidth: LockFaceGeometry.screenWidth)
+    }
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack {
+                // 两扇门
+                HStack(spacing: 0) {
+                    LockLeaf(openProgress: openProgress, isRight: false, skin: skin)
+                    LockLeaf(openProgress: openProgress, isRight: true, skin: skin)
+                }
+
+                // 中缝透光 (先于门转动亮起)
+                Rectangle()
+                    .fill(
+                        LinearGradient(
+                            colors: [.clear,
+                                    Color(hex: 0xFFE4B6).opacity(0.90),
+                                    Color(hex: 0xFFECC4).opacity(0.95),
+                                    .clear],
+                            startPoint: .top, endPoint: .bottom)
+                    )
+                    .frame(width: LockFaceStyle.gapWidth)
+                    .shadow(color: Color(hex: 0xFFCE8A).opacity(0.42), radius: 22)
+                    .opacity(lightLeak)
+                    .allowsHitTesting(false)
+
+                // 推门而入: 不解锁也能进 (D2 —— 开锁是安全动作, 进门是导航动作, 两者分开)。
+                // 位置: 右下角, 不抢锁体的视觉焦点, 但触达 >= 44pt。
+                if isLockedPhase {
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            Button {
+                                enterWithoutUnlocking()
+                            } label: {
+                                Text("进入")
+                                    .vkFont(.subheadline, weight: .medium)
+                                    .foregroundStyle(DS.Palette.textSub)
+                                    .padding(.horizontal, DS.Space.l)
+                                    .frame(minHeight: DS.Hit.min)
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.trailing, DS.Space.l)
+                        }
+                    }
+                    .padding(.bottom, 74)
+                }
+
+                // 关门: 门开着时右上角一颗, 这是 D8 推荐的"只保留按钮 + 左缘拖"中的按钮那半。
+                if phase == .open {
+                    VStack {
+                        HStack {
+                            Spacer()
+                            Button {
+                                closeDoor()
+                            } label: {
+                                Text("关门")
+                                    .vkFont(.subheadline, weight: .medium)
+                                    .foregroundStyle(DS.Palette.text)
+                                    .padding(.horizontal, DS.Space.l)
+                                    .frame(minHeight: DS.Hit.min)
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.trailing, DS.Space.l)
+                            .padding(.top, DS.Space.l)
+                        }
+                        Spacer()
+                    }
+                }
+
+                // 锁体
+                LockPlate(progress: chargeProgress,
+                          pressed: pressed,
+                          unlocked: unlockedGlyph,
+                          shakeX: shakeX,
+                          diameter: plateD,
+                          skin: skin)
+                    .position(x: geo.size.width / 2,
+                              y: geo.size.height * LockFaceStyle.plateCenterRatio(
+                                  isLandscape: geo.size.width > geo.size.height))
+                    .opacity(plateOpacity)
+                    .allowsHitTesting(isLockedPhase)
+                    .gesture(chargeGesture)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityAddTraits(.isButton)
+                    .accessibilityLabel("开锁，\(app.current?.name ?? "前门")")
+                    .accessibilityValue(accessibilityValue)
+                    .accessibilityHint(UnlockPrefs.gestureHint)
+                    .accessibilityAction { startUnlock() }
+            }
+            .frame(width: geo.size.width, height: geo.size.height)
+        }
+        .ignoresSafeArea()
+        .background(DS.Palette.canvas)
+        .onChange(of: app.unlockState) { _, new in react(to: new) }
+        .onChange(of: presented) { _, show in if !show { phase = .locked; openProgress = 0; lightLeak = 0 } }
+    }
+
+    // MARK: - 派生状态
+
+    private var chargeProgress: CGFloat {
+        if case .charging(let p) = phase { return p }
+        return 0
+    }
+
+    private var isLockedPhase: Bool {
+        if case .locked = phase { return true }
+        if case .charging = phase { return true }
+        return false
+    }
+
+    private var unlockedGlyph: Bool {
+        switch phase {
+        case .peeking, .opening, .open: return true
+        default: return false
+        }
+    }
+
+    private var plateOpacity: Double {
+        switch phase {
+        case .opening, .open, .closing: return max(0, 1 - openProgress * 2)
+        default: return 1
+        }
+    }
+
+    private var accessibilityValue: String {
+        switch phase {
+        case .locked: return "已锁定"
+        case .charging(let p): return "充能 \(Int(p * 100))%"
+        case .unlocking: return "正在开锁"
+        case .failed(let msg): return "开锁失败，\(msg)"
+        default: return "已开锁"
+        }
+    }
+
+    // MARK: - 手势: 按住充能 (连续量, 不是分段状态)
+
+    private var chargeGesture: some Gesture {
+        DragGesture(minimumDistance: 0)
+            .onChanged { _ in
+                guard isLockedPhase else { return }
+                if !pressed {
+                    pressed = true
+                    startCharge()
+                }
+            }
+            .onEnded { _ in
+                pressed = false
+                cancelChargeIfNeeded()
+            }
+    }
+
+    // MARK: - 时间轴
+
+    private func startCharge() {
+        holdTask?.cancel()
+        phase = .charging(0)
+        lastTick = 0
+        let total = reduceMotion ? 0.25 : 1.10   // 充满所需时长
+        holdTask = Task { @MainActor in
+            let steps = 60
+            for i in 1...steps {
+                if Task.isCancelled { return }
+                try? await Task.sleep(nanoseconds: UInt64(total / Double(steps) * 1_000_000_000))
+                if Task.isCancelled { return }
+                let p = CGFloat(i) / CGFloat(steps)
+                phase = .charging(p)
+                // 每 10% 一次轻触觉 (触觉只有三档: tick / trigger / 结果档)
+                let tick = Int(p * 10)
+                if tick > lastTick {
+                    lastTick = tick
+                    if tick % 2 == 0 { DS.Haptics.tick.impactOccurred() }
+                }
+                if p >= 1 { break }
+            }
+            if !Task.isCancelled { startUnlock() }
+        }
+    }
+
+    private func cancelChargeIfNeeded() {
+        guard isLockedPhase else { return }
+        holdTask?.cancel(); holdTask = nil
+        withAnimation(DS.Motion.chargeReset) { phase = .locked }
+    }
+
+    /// 真正开锁。**唯一入口** app.requestUnlock(); 不直连 LockService。
+    /// 注意: requestUnlock() 返回 Void —— 它只是**发指令**, 结果从 app.unlockState 异步回来。
+    /// 所以这里不 await 返回值, 而是把相位挂到 onChange(of: app.unlockState) 上 (见 body)。
+    private func startUnlock() {
+        guard isLockedPhase else { return }
+        holdTask?.cancel(); holdTask = nil
+        DS.Haptics.trigger.impactOccurred()
+        phase = .unlocking
+        app.requestUnlock()
+    }
+
+    /// unlockState 变化 -> 推进相位。这是门面与开锁链路的**唯一**耦合点。
+    private func react(to state: AppState.UnlockState) {
+        switch state {
+        case .success:
+            guard phase == .unlocking else { return }
+            succeed()
+        case .failed(let msg):
+            guard phase == .unlocking else { return }
+            fail(reason: msg)
+        case .doubleVerify:
+            // 250 二次开锁闸: 等用户在别处验证, 门面回到可再次按压的状态。
+            guard phase == .unlocking else { return }
+            withAnimation(DS.Motion.chargeReset) { phase = .locked }
+        default:
+            break
+        }
+    }
+
+    private func succeed() {
+        withAnimation(DS.Motion.glyphSwap) { phase = .peeking }
+        withAnimation(DS.Motion.lightLeak) { lightLeak = 1 }
+        let turnDelay = reduceMotion ? 0 : LockFaceStyle.doorTurnDelay
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: UInt64(turnDelay * 1_000_000_000))
+            withAnimation(DS.Motion.doorSwing) {
+                openProgress = 1
+                phase = .opening
+            }
+            withAnimation(DS.Motion.doorReveal.delay(LockFaceStyle.appRevealDelay)) {
+                appReveal = 1
+            }
+            try? await Task.sleep(nanoseconds: 800_000_000)
+            phase = .open
+            try? await Task.sleep(nanoseconds: UInt64(LockFaceStyle.lightLeakFadeDelay * 1_000_000_000))
+            withAnimation(DS.Motion.exit) { lightLeak = 0 }
+        }
+    }
+
+    /// 失败: **门完全不动**, 只抖锁体 + 触觉 + 文案。
+    private func fail(reason: String) {
+        phase = .failed(reason)
+        UINotificationFeedbackGenerator().notificationOccurred(.error)
+        Task { @MainActor in
+            for _ in 0..<3 {
+                withAnimation(.easeInOut(duration: 0.09)) { shakeX = 6 }
+                try? await Task.sleep(nanoseconds: 90_000_000)
+                withAnimation(.easeInOut(duration: 0.09)) { shakeX = -6 }
+                try? await Task.sleep(nanoseconds: 90_000_000)
+            }
+            withAnimation(DS.Motion.quick) { shakeX = 0 }
+            try? await Task.sleep(nanoseconds: 600_000_000)
+            withAnimation(DS.Motion.chargeReset) { phase = .locked }
+        }
+    }
+    /// 推门而入: 不解锁, 直接把门打开 (锁状态**不变**)。
+    /// 这是"只想看记录/设置"的人的唯一出口 —— 没有它, 每个想改设置的人都得先对真锁发一次开锁指令。
+    private func enterWithoutUnlocking() {
+        DS.Haptics.tick.impactOccurred()
+        phase = .opening
+        withAnimation(DS.Motion.doorSwing) { openProgress = 1 }
+        withAnimation(DS.Motion.doorReveal.delay(LockFaceStyle.appRevealDelay)) { appReveal = 1 }
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 800_000_000)
+            phase = .open
+        }
+    }
+    /// 关门 (右缘拖 >=96pt / 导航栏按钮 / Esc)。
+    func closeDoor() {
+        guard phase == .open else { return }
+        phase = .closing
+        withAnimation(DS.Motion.exit) { appReveal = 0 }
+        withAnimation(DS.Motion.doorSwing) { openProgress = 0 }
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 820_000_000)
+            phase = .locked
+            presented = false
+        }
+    }
+}
+
+/// 屏宽读取 (锁体直径换算用)。用 UIScreen 而不是 GeometryReader, 因为直径要在 body 外算好。
+enum LockFaceGeometry {
+    static var screenWidth: CGFloat {
+        (UIApplication.shared.connectedScenes.first as? UIWindowScene)?
+            .screen.bounds.width ?? 393
+    }
+}

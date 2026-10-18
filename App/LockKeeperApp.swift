@@ -1302,6 +1302,25 @@ struct RootView: View {
     /// 实例便捷转发，供 `.task` 直接调用（保持 body 表达式小，见本文件多处 type-check 超时的教训）。
     private func bootstrapOnce() { RootView.bootstrapOnce(app) }
 
+    /// 2026-10-18 门面改造: 是否展示门面层。由 LockFacePolicy 在启动/回前台时决定。
+    @State private var showLockFace = false
+
+    /// 门面展示判定。**纯调用策略**, 不自己判时间 —— 阈值与规则都在 LockFacePolicy。
+    /// @MainActor: 读的是 @Published (devices/pendingRoute), 与同文件 handleScenePhase 同一处置。
+    @MainActor
+    private func evaluateLockFace(launchedFresh: Bool) {
+        // 本仓没有专门记"退后台时刻"的状态位, 用 handleScenePhase 维护的 activeSince 近似。
+        let away: TimeInterval? = LockFaceRuntime.shared.awaySeconds()
+        let show = LockFacePolicy.shouldPresent(
+            launchedFresh: launchedFresh,
+            awaySeconds: away,
+            hasLocks: !app.devices.isEmpty,
+            onboardingDone: Onboarding.allDone || app.onboardingFinished,
+            cameFromDeepLink: app.pendingRoute != nil || app.pendingMac != nil
+        )
+        withAnimation(DS.Motion.doorReveal) { showLockFace = show }
+    }
+
     var body: some View {
         rootChrome
     }
@@ -1318,7 +1337,24 @@ struct RootView: View {
             } else {
                 // 2026-10-17 拍板 A: 应用锁启动门禁已删 (伪装口令 390 随之不可达, 一并移除)。
                 // 进 App 只分两种形态: 首启引导 / 主界面。
-                mainTabsChrome
+                //
+                // 2026-10-18 门面改造: 在"主界面"这一形态外包一层 ZStack, 门面在最底。
+                // 为什么用 ZStack + opacity 而不是 if 条件插入/移除主界面:
+                //   条件插入会重建 TabView 持有的 @State (CredentialsView 的筛选/展开状态会丢),
+                //   本仓 1065-1068 已就这条留过注释。这里主界面始终在树上, 只改显隐。
+                ZStack {
+                    LockFaceView(presented: $showLockFace)
+                        .opacity(showLockFace ? 1 : 0)
+                        .allowsHitTesting(showLockFace)
+                        .accessibilityHidden(!showLockFace)
+
+                    mainTabsChrome
+                        .opacity(showLockFace ? 0 : 1)
+                        .allowsHitTesting(!showLockFace)
+                        .accessibilityHidden(showLockFace)
+                        .scaleEffect(showLockFace ? 0.986 : 1)
+                }
+                .animation(DS.Motion.doorReveal, value: showLockFace)
             }
         }
     }
@@ -1331,6 +1367,12 @@ struct RootView: View {
         // 的 window —— 用一层零尺寸 VC 接住再转 .kfDeviceShake (实现见文件尾部)。
         .onDeviceShake()
         // 包16: 外观种子变更时整树重建 — 配色/密度即时全局生效; withAnimation 提供淡入淡出 (idea 21)
+        // 2026-10-18 门面改造: 启动/回前台按策略决定是否展示门面。
+        // 冷启动展示; 回前台 < 300s 不重演; 深链/小组件/Siri 一律不展示。
+        .task { evaluateLockFace(launchedFresh: true) }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active { evaluateLockFace(launchedFresh: false) }
+        }
         .id(app.appearanceSeed)
         // 包15: App 字号五档 × 系统 Dynamic Type 叠加 (858, 含 866 极限字号自检 200% 预览)
         .dynamicTypeSize(AXFlags.typeSize())
@@ -1529,6 +1571,8 @@ struct RootView: View {
     /// "unable to type-check this expression in reasonable time"。抽成方法后 body 只留一行调用。
     @MainActor
     private func handleScenePhase(_ phase: ScenePhase) {
+        // 2026-10-18 门面改造: 记下退后台时刻, 回前台时按 LockFacePolicy.revealAfter 判定要不要重演门。
+        if phase == .background { LockFaceRuntime.shared.markBackground() }
         LinkSense.shared.setSceneActive(phase == .active)
         if phase == .active {
             // 动效令牌的非隔离读点: 系统"减弱动态效果"只能在设置里改, 改完回来必然经过这里。

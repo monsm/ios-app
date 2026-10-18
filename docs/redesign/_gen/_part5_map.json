@@ -1,0 +1,422 @@
+{
+ "viewToFile": {
+  "AutoCalView": "App/Core/AutoOpen.swift",
+  "AutoOpenSection": "App/Core/AutoOpen.swift",
+  "DemoBanner": "App/Core/DemoKit.swift",
+  "HeroTexture": "App/Core/DesignSystem.swift",
+  "StatusPill": "App/Core/DesignSystem.swift",
+  "HeroPill": "App/Core/DesignSystem.swift",
+  "MetricTile": "App/Core/DesignSystem.swift",
+  "HeroStat": "App/Core/DesignSystem.swift",
+  "HeroFlairBorder": "App/Core/DesignSystem.swift",
+  "EmptyState": "App/Core/DesignSystem.swift",
+  "GuidedEmptyView": "App/Core/DesignSystem.swift",
+  "BusyButton": "App/Core/DesignSystem.swift",
+  "LinkPrefsView": "App/Core/LinkSenseKit.swift",
+  "RSSIBars": "App/Core/LinkSenseKit.swift",
+  "LinkPill": "App/Core/LinkSenseKit.swift",
+  "ConnectMsBadge": "App/Core/LinkSenseKit.swift",
+  "ReconnectDots": "App/Core/LinkSenseKit.swift",
+  "BLEStrip": "App/Core/LinkSenseKit.swift",
+  "BLEOffBanner": "App/Core/LinkSenseKit.swift",
+  "AmbientOverflowSheet": "App/Core/NoticeBudget.swift",
+  "QuickTileEditorSheet": "App/Core/QuickPool.swift",
+  "SettingsGroupChips": "App/Core/SettingsGroups.swift",
+  "IntegrationCenterView": "App/Intents/AppIntents.swift",
+  "RootView": "App/LockKeeperApp.swift",
+  "ToastView": "App/LockKeeperApp.swift",
+  "GuestReauthGate": "App/LockKeeperApp.swift",
+  "Gate": "App/LockKeeperApp.swift",
+  "SectionTitle": "App/LockKeeperApp.swift",
+  "AccessibilityView": "App/UI/AccessibilityView.swift",
+  "VOPracticeField": "App/UI/AccessibilityView.swift",
+  "DevFeatureAuditSection": "App/UI/AccessibilityView.swift",
+  "DevGrayscaleSection": "App/UI/AccessibilityView.swift",
+  "DevContrastSection": "App/UI/AccessibilityView.swift",
+  "CaptionStepBar": "App/UI/AccessibilityView.swift",
+  "AchievementsView": "App/UI/AchievementsView.swift",
+  "BadgeTile": "App/UI/AchievementsView.swift",
+  "BadgeDetailSheet": "App/UI/AchievementsView.swift",
+  "BadgeShareCard": "App/UI/AchievementsView.swift",
+  "NightCalendarCard": "App/UI/AchievementsView.swift",
+  "CapsuleComposeView": "App/UI/AchievementsView.swift",
+  "CareRemindersView": "App/UI/AchievementsView.swift",
+  "AlarmCenterView": "App/UI/AlarmCenterView.swift",
+  "BackupStudioView": "App/UI/BackupStudio.swift",
+  "MigrationPromptCard": "App/UI/BackupStudio.swift",
+  "ExportWizardView": "App/UI/BackupStudio.swift",
+  "RestoreWizardView": "App/UI/BackupStudio.swift",
+  "WebDAVStudioView": "App/UI/BackupStudio.swift",
+  "MigrationWizardView": "App/UI/BackupStudio.swift",
+  "MigScanSheet": "App/UI/BackupStudio.swift",
+  "LocalFilesView": "App/UI/BackupStudio.swift",
+  "BackupView": "App/UI/BackupView.swift",
+  "MaintenanceView": "App/UI/CareViews.swift",
+  "CareChecklistView": "App/UI/CareViews.swift",
+  "BatterySwapGuideView": "App/UI/CareViews.swift",
+  "MaintSettingsView": "App/UI/CareViews.swift",
+  "ConfettiView": "App/UI/Celebration.swift",
+  "MomentCardView": "App/UI/Celebration.swift",
+  "ChangelogView": "App/UI/ChangelogView.swift",
+  "ChangeBatchView": "App/UI/ChangelogView.swift",
+  "CredCenterView": "App/UI/CredentialCenterView.swift",
+  "CredBinView": "App/UI/CredentialCenterView.swift",
+  "CredHistoryListView": "App/UI/CredentialCenterView.swift",
+  "CredHistoryView": "App/UI/CredentialCenterView.swift",
+  "CredCalendarView": "App/UI/CredentialCenterView.swift",
+  "CredOrganizeView": "App/UI/CredentialCenterView.swift",
+  "CredQueueView": "App/UI/CredentialCenterView.swift",
+  "CredExtendView": "App/UI/CredentialCenterView.swift",
+  "CredTransferView": "App/UI/CredentialCenterView.swift",
+  "CredDisableSheet": "App/UI/CredentialCenterView.swift",
+  "StepDots": "App/UI/CredentialStudio.swift",
+  "MaskedDigits": "App/UI/CredentialStudio.swift",
+  "PwdDiffView": "App/UI/CredentialStudio.swift",
+  "WindowBar": "App/UI/CredentialStudio.swift",
+  "CodeBigCard": "App/UI/CredentialStudio.swift",
+  "CodeScanSheet": "App/UI/CredentialStudio.swift",
+  "StudioHome": "App/UI/CredentialStudio.swift",
+  "PwdStudio": "App/UI/CredentialStudio.swift",
+  "TempCodeStudio": "App/UI/CredentialStudio.swift",
+  "PwdDetailStudio": "App/UI/CredentialStudio.swift",
+  "FpStudio": "App/UI/CredentialStudio.swift",
+  "FpDetailStudio": "App/UI/CredentialStudio.swift",
+  "OtpStudio": "App/UI/CredentialStudio.swift",
+  "CredStudioEntryView": "App/UI/CredentialStudio.swift",
+  "CredentialsView": "App/UI/CredentialsView.swift",
+  "HintRow": "App/UI/CredentialsView.swift",
+  "DeviceHomeView": "App/UI/DeviceHomeView.swift",
+  "SyncTimeView": "App/UI/DeviceHomeView.swift",
+  "LabeledRow": "App/UI/DeviceHomeView.swift",
+  "FocusUnlockView": "App/UI/DeviceHomeView.swift",
+  "UnlockGateView": "App/UI/DeviceHomeView.swift",
+  "DeviceManageView": "App/UI/DeviceManageView.swift",
+  "BatteryStripCard": "App/UI/DeviceStripCard.swift",
+  "DiagnosticsView": "App/UI/DiagnosticsView.swift",
+  "DiagReferenceView": "App/UI/DiagReferenceView.swift",
+  "AlarmShareCardView": "App/UI/ExportCenter.swift",
+  "RecordShareCardView": "App/UI/ExportCenter.swift",
+  "ExportCenterView": "App/UI/ExportCenter.swift",
+  "FpOwnerPicker": "App/UI/FpOwnerPicker.swift",
+  "DataFlowPage": "App/UI/HelpCenter.swift",
+  "CreditsPage": "App/UI/HelpCenter.swift",
+  "FAQPage": "App/UI/HelpCenter.swift",
+  "SymptomGuideView": "App/UI/HelpCenter.swift",
+  "ManualPage": "App/UI/HelpCenter.swift",
+  "CopyCheckPage": "App/UI/HelpCenter.swift",
+  "DemoMascot": "App/UI/HelpCenter.swift",
+  "EmptyMascotHeader": "App/UI/HelpCenter.swift",
+  "ButlerCertificateView": "App/UI/HelpCenter.swift",
+  "DemoLabsView": "App/UI/HelpCenter.swift",
+  "LockCompareView": "App/UI/LockCompareView.swift",
+  "LockOverviewView": "App/UI/LockOverviewView.swift",
+  "MemberCenterView": "App/UI/MemberCenterView.swift",
+  "MemberRow": "App/UI/MemberCenterView.swift",
+  "MemberAvatar": "App/UI/MemberCenterView.swift",
+  "MemberDetail360View": "App/UI/MemberCenterView.swift",
+  "MemberWizardView": "App/UI/MemberCenterView.swift",
+  "MergeMembersView": "App/UI/MemberCenterView.swift",
+  "MemberExitWizard": "App/UI/MemberCenterView.swift",
+  "BorrowSheetView": "App/UI/MemberCenterView.swift",
+  "MemberArchivedView": "App/UI/MemberCenterView.swift",
+  "MemberGroupSheet": "App/UI/MemberCenterView.swift",
+  "MemberFamilySettingsView": "App/UI/MemberCenterView.swift",
+  "UnclaimedClaimView": "App/UI/MemberCenterView.swift",
+  "MemberActiveTable": "App/UI/MemberCenterView.swift",
+  "MemberStackedView": "App/UI/MemberCenterView.swift",
+  "MemberMeetingSheet": "App/UI/MemberCenterView.swift",
+  "FamilyNoteView": "App/UI/MemberCenterView.swift",
+  "HouseCleaningPresetView": "App/UI/MemberCenterView.swift",
+  "OnboardingView": "App/UI/Onboarding.swift",
+  "RecDetailSheet": "App/UI/RecordsTimeline.swift",
+  "RecordsView": "App/UI/RecordsView.swift",
+  "FlashWash": "App/UI/RecordsView.swift",
+  "AlarmKindsSheet": "App/UI/RecordsView.swift",
+  "ActiveCredsSheet": "App/UI/RecordsView.swift",
+  "OutWinSheet": "App/UI/RecordsView.swift",
+  "GratitudeView": "App/UI/RecordsView.swift",
+  "RecordsSampleGuideView": "App/UI/RecordsView.swift",
+  "ReportScanSheet": "App/UI/ReportVerifyView.swift",
+  "SecurityWatermark": "App/UI/SecurityCenterView.swift",
+  "SecurityCenterView": "App/UI/SecurityCenterView.swift",
+  "SecurityPeekView": "App/UI/SecurityCenterView.swift",
+  "PrivacyDashboard": "App/UI/SecurityCenterView.swift",
+  "SecurityAuditView": "App/UI/SecurityCenterView.swift",
+  "SecurityDestroyView": "App/UI/SecurityCenterView.swift",
+  "SettingsView": "App/UI/SettingsView.swift",
+  "MechCounter": "App/UI/SettingsView.swift",
+  "DefendView": "App/UI/SettingsView.swift",
+  "TailgateView": "App/UI/SettingsView.swift",
+  "SafemodeIntroView": "App/UI/SettingsView.swift",
+  "ShareToAndroidView": "App/UI/ShareToAndroidView.swift",
+  "AddDeviceView": "App/UI/Sheets.swift",
+  "AddPwdView": "App/UI/Sheets.swift",
+  "StartAddFpView": "App/UI/Sheets.swift",
+  "DeviceInfoView": "App/UI/Sheets.swift",
+  "BattSpark": "App/UI/Sheets.swift",
+  "LockProfileView": "App/UI/Sheets.swift",
+  "FirmwareView": "App/UI/Sheets.swift",
+  "KeychainHWView": "App/UI/Sheets.swift",
+  "GatewayView": "App/UI/Sheets.swift",
+  "MembersView": "App/UI/Sheets.swift",
+  "MemberWelcomeCard": "App/UI/Sheets.swift",
+  "MessagesView": "App/UI/Sheets.swift",
+  "StatsView": "App/UI/StatsView.swift",
+  "YearReportView": "App/UI/StatsView.swift",
+  "HourDetailSheet": "App/UI/StatsView.swift",
+  "UnlockPulseRing": "App/UI/UnlockDial.swift",
+  "UnlockShimmer": "App/UI/UnlockDial.swift",
+  "UnlockRadarRing": "App/UI/UnlockDial.swift",
+  "UnlockRadarWave": "App/UI/UnlockDial.swift",
+  "DialRipple": "App/UI/UnlockDial.swift",
+  "ChargeTicks": "App/UI/UnlockDial.swift",
+  "DrillTrace": "App/UI/UnlockDial.swift",
+  "PhaseBar": "App/UI/UnlockDial.swift",
+  "UnlockDial": "App/UI/UnlockDial.swift"
+ },
+ "fileMarkers": {
+  "App/Core/AccessibilityKit.swift": [],
+  "App/Core/AESKit.swift": [
+   "AESKit"
+  ],
+  "App/Core/AlertTone.swift": [],
+  "App/Core/AndroidPair.swift": [
+   "ZKCmdBuilder"
+  ],
+  "App/Core/AuditChain.swift": [
+   "SecretStore"
+  ],
+  "App/Core/AutoOpen.swift": [
+   "LockService",
+   "ZKProtocol"
+  ],
+  "App/Core/BatteryCare.swift": [
+   "LockService"
+  ],
+  "App/Core/ClipboardCare.swift": [],
+  "App/Core/CredentialOrg.swift": [
+   "LockService",
+   "delPwd",
+   "addPwd",
+   "ZKProtocol"
+  ],
+  "App/Core/DemoKit.swift": [
+   "LockService"
+  ],
+  "App/Core/DesignSystem.swift": [],
+  "App/Core/Destination.swift": [
+   "WebDAV",
+   "addPwd"
+  ],
+  "App/Core/DevModules.swift": [],
+  "App/Core/DiagKit.swift": [
+   "LockService",
+   "BLEService",
+   "delPwd",
+   "ZKProtocol"
+  ],
+  "App/Core/FirmwareHistory.swift": [],
+  "App/Core/HexKit.swift": [],
+  "App/Core/HintOnce.swift": [],
+  "App/Core/HolidayFeed.swift": [],
+  "App/Core/KeyGen.swift": [
+   "LockService"
+  ],
+  "App/Core/LinkSenseKit.swift": [
+   "LockService",
+   "HardwareService",
+   "BLEService",
+   "ZKProtocol"
+  ],
+  "App/Core/LiveUnlock.swift": [],
+  "App/Core/Locked.swift": [],
+  "App/Core/LockGuard.swift": [],
+  "App/Core/LockStats.swift": [
+   "BackupKit",
+   "ZKProtocol"
+  ],
+  "App/Core/MemberHub.swift": [
+   "ZKProtocol"
+  ],
+  "App/Core/Milestones.swift": [
+   "ZKProtocol"
+  ],
+  "App/Core/NoticeBudget.swift": [],
+  "App/Core/PidMap.swift": [],
+  "App/Core/QuickActions.swift": [],
+  "App/Core/QuickPool.swift": [
+   "addPwd"
+  ],
+  "App/Core/RecordSearch.swift": [],
+  "App/Core/Route.swift": [],
+  "App/Core/ScreenCare.swift": [],
+  "App/Core/SeasonIcon.swift": [],
+  "App/Core/SecretStore.swift": [
+   "SecretStore"
+  ],
+  "App/Core/SettingsGroups.swift": [],
+  "App/Core/SpeechKit.swift": [],
+  "App/Core/SpotlightKit.swift": [],
+  "App/Core/StatsKit.swift": [
+   "ZKProtocol"
+  ],
+  "App/Core/StatusCheckNotice.swift": [],
+  "App/Core/StatusParser.swift": [],
+  "App/Core/Store.swift": [
+   "BackupKit",
+   "delPwd",
+   "addPwd",
+   "ZKProtocol",
+   "SecretStore"
+  ],
+  "App/Core/TimeFormat.swift": [],
+  "App/Core/VariantGrammar.swift": [],
+  "App/Core/WeekCal.swift": [],
+  "App/Core/ZKCmdBuilder.swift": [
+   "LockService",
+   "addPwd",
+   "ZKCmdBuilder",
+   "ZKProtocol",
+   "AESKit"
+  ],
+  "App/Core/ZKProtocol.swift": [
+   "LockService",
+   "ZKProtocol",
+   "AESKit"
+  ],
+  "App/Core/ZOTP.swift": [
+   "ZKProtocol",
+   "AESKit"
+  ],
+  "App/DebugBreak.swift": [],
+  "App/Intents/AppIntents.swift": [],
+  "App/LockKeeperApp.swift": [
+   "LockService",
+   "HardwareService"
+  ],
+  "App/Services/Attribution.swift": [
+   "ZKProtocol"
+  ],
+  "App/Services/BackupCanonical.swift": [],
+  "App/Services/BackupKit.swift": [
+   "BackupKit",
+   "WebDAV",
+   "BackupEnvelope"
+  ],
+  "App/Services/BackupStudioKit.swift": [
+   "BackupKit",
+   "WebDAV"
+  ],
+  "App/Services/BLEService.swift": [
+   "LockService",
+   "HardwareService",
+   "DFUKit",
+   "BLEService",
+   "ZKProtocol"
+  ],
+  "App/Services/DFUKit.swift": [
+   "LockService",
+   "DFUKit",
+   "BLEService",
+   "ZKProtocol"
+  ],
+  "App/Services/HardwareService.swift": [
+   "LockService",
+   "HardwareService",
+   "BLEService",
+   "ZKCmdBuilder",
+   "ZKProtocol"
+  ],
+  "App/Services/LockService.swift": [
+   "LockService",
+   "BackupKit",
+   "BLEService",
+   "addPwd",
+   "ZKCmdBuilder",
+   "ZKProtocol"
+  ],
+  "App/UI/AccessibilityView.swift": [],
+  "App/UI/AchievementsView.swift": [],
+  "App/UI/AlarmCenterView.swift": [],
+  "App/UI/BackupStudio.swift": [
+   "WebDAV"
+  ],
+  "App/UI/BackupView.swift": [
+   "BackupKit",
+   "WebDAV"
+  ],
+  "App/UI/CareViews.swift": [],
+  "App/UI/Celebration.swift": [],
+  "App/UI/ChangelogView.swift": [
+   "WebDAV"
+  ],
+  "App/UI/CredentialCenterView.swift": [],
+  "App/UI/CredentialStudio.swift": [
+   "LockService",
+   "delPwd",
+   "addPwd"
+  ],
+  "App/UI/CredentialsView.swift": [
+   "LockService",
+   "delPwd",
+   "addPwd"
+  ],
+  "App/UI/DataScannerView.swift": [],
+  "App/UI/DeviceHomeView.swift": [
+   "LockService",
+   "BLEService"
+  ],
+  "App/UI/DeviceManageView.swift": [
+   "BackupKit"
+  ],
+  "App/UI/DeviceStripCard.swift": [],
+  "App/UI/DiagnosticsView.swift": [
+   "LockService",
+   "BLEService"
+  ],
+  "App/UI/DiagReferenceView.swift": [],
+  "App/UI/ExportCenter.swift": [
+   "BLEService"
+  ],
+  "App/UI/FpOwnerPicker.swift": [],
+  "App/UI/HelpCenter.swift": [
+   "WebDAV",
+   "AESKit"
+  ],
+  "App/UI/LockCompareView.swift": [],
+  "App/UI/LockOverviewView.swift": [],
+  "App/UI/MemberCenterView.swift": [
+   "delPwd",
+   "addPwd",
+   "ZKProtocol"
+  ],
+  "App/UI/MomentLayer.swift": [],
+  "App/UI/Onboarding.swift": [
+   "BLEService",
+   "WebDAV",
+   "AESKit"
+  ],
+  "App/UI/RecordsTimeline.swift": [],
+  "App/UI/RecordsView.swift": [],
+  "App/UI/ReportVerifyView.swift": [],
+  "App/UI/SecurityCenterView.swift": [
+   "LockService",
+   "ZKProtocol"
+  ],
+  "App/UI/SettingsView.swift": [
+   "WebDAV",
+   "ZKCmdBuilder"
+  ],
+  "App/UI/ShareToAndroidView.swift": [],
+  "App/UI/Sheets.swift": [
+   "LockService",
+   "HardwareService",
+   "DFUKit",
+   "BLEService",
+   "addPwd",
+   "ZKProtocol"
+  ],
+  "App/UI/StatsView.swift": [],
+  "App/UI/UnlockDial.swift": []
+ }
+}

@@ -71,7 +71,7 @@ function seamCoverage(cases) {
   const byCase = new Map(cases.map((c) => [c.swCase, c.typeName]));
   for (const f of files) {
     if (f === ENUM || f === GRAMMAR) continue;
-    const lines = fs.readFileSync(f, 'utf8').split('\n');
+    const lines = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n');
     lines.forEach((l, i) => {
       const m = /\.destined\(\.([a-zA-Z0-9_]+)\)/.exec(l);
       if (!m) return;
@@ -94,10 +94,10 @@ function selfTest() {
   fs.writeFileSync(path.join(dir, 'Neg.swift'),
     'import SwiftUI\nstruct BetaView: View {\n  var body: some View {\n    // .destined(.beta)\n    Text("b")\n  }\n}\n');
   const pos = /destined\(\.alpha\)/.test(fs.readFileSync(path.join(dir, 'Pos.swift'), 'utf8')
-    .split('\n').filter((l) => !l.trim().startsWith('//')).join('\n'));
+    .replace(/\r\n/g, '\n').split('\n').filter((l) => !l.trim().startsWith('//')).join('\n'));
   if (!pos) problems.push('自检失败: 正控 .destined(.alpha) 没被认成覆盖');
 
-  const negLines = fs.readFileSync(path.join(dir, 'Neg.swift'), 'utf8').split('\n')
+  const negLines = fs.readFileSync(path.join(dir, 'Neg.swift'), 'utf8').replace(/\r\n/g, '\n').split('\n')
     .filter((l) => !l.trim().startsWith('//'))
     .filter((l) => /\.destined\(\.beta\)/.test(l));
   if (negLines.length) problems.push('自检失败: 注释里的 .destined(.beta) 被当成了实现');
@@ -198,8 +198,9 @@ function bareRequestTabs() {
   const files = readSwiftFiles('App').concat(readSwiftFiles('Widget'), readSwiftFiles('Shared'));
   for (const f of files) {
     const rel = f.replace(/\\/g, '/');
-    const src = fs.readFileSync(f, 'utf8');
-    const lines = src.split('\n');
+    const src = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n');
+    const lines = src.replace(/\r\n/g, '\n').split('\n');
+
     for (const ln of scanBareRequestTab(src)) {
       bad.push(`${rel}:${ln}  ${lines[ln - 1].replace(/\/\/.*$/, '').trim().slice(0, 72)}`);
     }
@@ -230,8 +231,9 @@ function bareToggles() {
   for (const f of files) {
     const rel = f.replace(/\\/g, '/');
     if (rel === 'App/Core/VariantGrammar.swift') continue;   // 语法层自己当然在建真 Toggle
-    const src = fs.readFileSync(f, 'utf8');
-    const lines = src.split('\n');
+    const src = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n');
+    const lines = src.replace(/\r\n/g, '\n').split('\n');
+
     for (const ln of scanBareToggle(src)) {
       bad.push(`${rel}:${ln}  ${lines[ln - 1].replace(/\/\/.*$/, '').trim().slice(0, 72)}`);
     }
@@ -276,8 +278,9 @@ function bareFonts() {
   for (const f of files) {
     const rel = f.replace(/\\/g, '/');
     if (rel === 'App/Core/VariantGrammar.swift') continue;
-    const src = fs.readFileSync(f, 'utf8');
-    const lines = src.split('\n');
+    const src = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n');
+    const lines = src.replace(/\r\n/g, '\n').split('\n');
+
     for (const ln of scanBareFont(src)) {
       bad.push(`${rel}:${ln}  ${lines[ln - 1].replace(/\/\/.*$/, '').trim().slice(0, 72)}`);
     }
@@ -297,7 +300,7 @@ function bareTabWrites() {
   const files = readSwiftFiles('App').concat(readSwiftFiles('Widget'), readSwiftFiles('Shared'));
   for (const f of files) {
     const rel = f.replace(/\\/g, '/');
-    fs.readFileSync(f, 'utf8').split('\n').forEach((l, i) => {
+    fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n').forEach((l, i) => {
       if (/^\s*\/\//.test(l)) return;                       // 整行注释：历史证据，不算
       const code = l.replace(/\/\/.*$/, '');
       if (!RE.test(code)) return;
@@ -324,7 +327,7 @@ function selfDrawnContainers() {
   for (const f of files) {
     const rel = f.replace(/\\/g, '/');
     if (/Variant(Grammar|Roots)\.swift$/.test(rel)) continue;   // 语法层自己当然在画形状
-    fs.readFileSync(f, 'utf8').split('\n').forEach((l, i) => {
+    fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n').forEach((l, i) => {
       if (/^\s*\/\//.test(l)) return;
       if (!RE.test(l)) return;
       n++; byFile.set(rel, (byFile.get(rel) || 0) + 1);

@@ -23,6 +23,7 @@ struct LockMeta: Codable {
     var verifiedAt: Double = 0        // 258 首连验证时刻 (Unix 秒; 0 = 未验证)
     var lastConnectedAt: Double = 0   // 292 沉睡判定基准 (最近一次连接成功)
     var grp: String = ""              // 104/767 分组名 (家用/仓库/办公… 用户自填; 空 = 未分组)
+    var skin: String = ""             // 2026-10-18 门面皮肤 (wood/metal/darkGlass/frosted; 空 = wood)
 
     // **显式解码器是必需的, 不是风格问题。** 本仓自己在 Store.swift:119 就记着这条事实:
     // 合成 Codable 对有默认值的属性**同样要求键存在** —— 于是第一百三十六批给这个 struct
@@ -31,15 +32,16 @@ struct LockMeta: Codable {
     // (界面看不出任何异常, 只是全成了默认值 —— AUDIT-CODE 反复出现的那类"最难查的失效")。
     // 全部 decodeIfPresent + 默认值, 与 Keychain 同一处置。
     private enum CodingKeys: String, CodingKey {
-        case note, symbol, colorKey, place, batteryModel, batteryChangedAt, verifiedAt, lastConnectedAt, grp
+        case note, symbol, colorKey, place, batteryModel, batteryChangedAt, verifiedAt, lastConnectedAt, grp, skin
     }
     init() {}
     init(note: String = "", symbol: String = "", colorKey: String = "", place: String = "",
          batteryModel: String = "", batteryChangedAt: Double = 0, verifiedAt: Double = 0,
-         lastConnectedAt: Double = 0, grp: String = "") {
+         lastConnectedAt: Double = 0, grp: String = "", skin: String = "") {
         self.note = note; self.symbol = symbol; self.colorKey = colorKey; self.place = place
         self.batteryModel = batteryModel; self.batteryChangedAt = batteryChangedAt
         self.verifiedAt = verifiedAt; self.lastConnectedAt = lastConnectedAt; self.grp = grp
+        self.skin = skin
     }
     init(from d: Decoder) throws {
         let c = try d.container(keyedBy: CodingKeys.self)
@@ -52,6 +54,7 @@ struct LockMeta: Codable {
         verifiedAt = try c.decodeIfPresent(Double.self, forKey: .verifiedAt) ?? 0
         lastConnectedAt = try c.decodeIfPresent(Double.self, forKey: .lastConnectedAt) ?? 0
         grp = try c.decodeIfPresent(String.self, forKey: .grp) ?? ""
+        skin = try c.decodeIfPresent(String.self, forKey: .skin) ?? ""
     }
 }
 
