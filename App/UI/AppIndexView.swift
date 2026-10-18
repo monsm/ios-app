@@ -1,19 +1,8 @@
-    /// 跳转。**本仓没有统一的目的地路由层** —— 76 个目的地各自维护
-    /// `@State private var showXxx` (如 SettingsView.swift:9-14), `destined()` 只是台账标记。
-    /// 所以这里做的是**跳到该目的地所属的 Tab**, 而不是假装能直达任意页。
-    /// 要真正直达, 得先引入一个路由层 (那是另一个改造, 不在本轮)。
-    private func jump(_ item: AppIndexItem) {
-        let route = AppIndexData.route(forGroup: item.group)
-        dismiss()
-        Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 220_000_000)   // 等 sheet 收起
-            app.requestRoute(route)
-        }
-    }//  AppIndexView.swift
-//  76 项目录。**是 sheet, 不占 Tab 位** (D1/D7)。2026-10-18 门面改造新增。
+//  AppIndexView.swift
+//  77 项目录。**是 sheet, 不占 Tab 位** (D1/D7)。2026-10-18 门面改造新增。
 //
-//  三处触达 (PART2 §4.1): Tab 根右上「全部」/ 长按 Tab / 下拉搜索。
-//  数据来自 AppIndexData (由 tools/gen-appindex.js 生成), 这里**不许**写死数组。
+//  三处触达 (PART2 §4.1): 四 Tab 根右上「全部」按钮 (已接) / 长按 Tab / 下拉搜索。
+//  数据来自 AppIndexData (从 uiux-v3.data.js 生成), 这里**不许**写死数组。
 
 import SwiftUI
 
@@ -55,7 +44,6 @@ struct AppIndexView: View {
             }
         }
         .onAppear {
-            // 搜索时自动展开命中组 (PART2 §4.3)
             if expanded.isEmpty { expanded = Set(AppIndexData.groups.map(\.name)) }
         }
         .onChange(of: query) { _, newValue in
@@ -124,14 +112,15 @@ struct AppIndexView: View {
         .buttonStyle(.plain)
     }
 
-    /// 跳转。**必须先 dismiss 再 requestRoute** —— 顺序反了会切到被盖住的那层 Tab
-    /// (tools/sheetcover.js 专抓这个)。
+    /// 跳转。**本仓没有统一的目的地路由层** —— 76 个目的地各自维护
+    /// `@State private var showXxx` (如 SettingsView.swift:9-14), `destined()` 只是台账标记。
+    /// 所以这里做的是**跳到该目的地所属的 Tab**, 而不是假装能直达任意页。
     private func jump(_ item: AppIndexItem) {
-        guard let dest = Destination(rawValue: item.id) else { return }
+        let route = AppIndexData.route(forGroup: item.group)
         dismiss()
         Task { @MainActor in
             try? await Task.sleep(nanoseconds: 220_000_000)   // 等 sheet 收起
-            app.openDestination(dest)
+            app.requestRoute(route)
         }
     }
 }
