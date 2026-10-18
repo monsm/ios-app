@@ -17,6 +17,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import kotlin.math.cos
@@ -168,7 +169,9 @@ private fun KfApp(unlocker: BleUnlocker) {
             // 再加前缀会把它挤得读不完。
             say(if (r.ok) (if (auto) "自动开锁成功 — " else "手动开锁成功 — ") + r.message else r.message, !r.ok)
             detail = if (r.ok || r.trace.isEmpty()) "" else r.trace
-            if (r.ok) vibrate(ctx)
+            // 2026-10-18: 统一走 KfHaptics (与 iOS DS.Haptics 三档语义对齐)。
+            // 原来只有成功震一下, 失败是静默的 —— 开锁失败是最需要被感知的时刻。
+            if (r.ok) KfHaptics.ok(ctx) else KfHaptics.fail(ctx)
         }
     }
 
@@ -514,7 +517,13 @@ private fun Header(lock: LockInfo?) {
 private fun UnlockDial(busy: Boolean, onClick: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
-    val scale by animateFloatAsState(if (pressed) 0.972f else 1f, tween(100), label = "dial")
+    // 2026-10-18: 按压用 CubicBezierEasing 而不是线性 tween ——
+    // 线性在"按下→松手"两端都显得硬; 用与 iOS DS.Motion.quick 同族的曲线。
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.972f else 1f,
+        animationSpec = tween(100, easing = CubicBezierEasing(0.42f, 0f, 0.58f, 1f)),
+        label = "dial"
+    )
 
     Box(contentAlignment = Alignment.Center) {
         // 外圈柔光
@@ -761,14 +770,6 @@ private fun PillButton(text: String, onClick: () -> Unit) {
     ) {
         Text(text, color = Color(0xFF14181E), fontSize = 15.sp, fontWeight = FontWeight.Medium)
     }
-}
-
-private fun vibrate(ctx: Context) {
-    // minSdk = 33 ⇒ VibratorManager 这条路恒可用。旧写法还留着 Context.VIBRATOR_SERVICE 那条 else:
-    // 那是 API 31 起的弃用符号, 而且这台机器永远走不到 —— 留着它只换来 CI 每轮一条 w: 警告。删。
-    val v = (ctx.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager)?.defaultVibrator
-        ?: return
-    runCatching { v.vibrate(VibrationEffect.createOneShot(28, VibrationEffect.DEFAULT_AMPLITUDE)) }
 }
 
 // ---------- AirTag 精确查找层 ----------

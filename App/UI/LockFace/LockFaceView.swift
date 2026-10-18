@@ -42,6 +42,9 @@ struct LockFaceView: View {
     @State private var lightLeak: Double = 0
     @State private var holdTask: Task<Void, Never>?
     @State private var lastTick = 0
+    /// 三连点档: 已点次数 / 重置计时器
+    @State private var tapCount = 0
+    @State private var tripleReset: Task<Void, Never>?
 
     /// 皮肤来自当前锁的 LockMeta (不是 LockProfile —— 那个类型不存在)。
     private var skin: LockFaceSkin {
@@ -98,14 +101,19 @@ struct LockFaceView: View {
                         Spacer()
                         HStack {
                             Spacer()
+                            // 2026-10-18 设计审查: 「进入」是门面上**唯一的次要出口** ——
+                            // 不想开锁、只想看记录/设置的人全靠它。原来用 textSub 纯文字,
+                            // 在门面这种低对比背景上几乎看不见 (Emil: 看不见的细节要服务可用性)。
+                            // 改成带底衬的胶囊: 仍然比锁体轻一档 (不是主操作), 但明确是"可以按的"。
                             Button {
                                 enterWithoutUnlocking()
                             } label: {
                                 Text("进入")
                                     .vkFont(.subheadline, weight: .medium)
-                                    .foregroundStyle(DS.Palette.textSub)
+                                    .foregroundStyle(DS.Palette.text)
                                     .padding(.horizontal, DS.Space.l)
                                     .frame(minHeight: DS.Hit.min)
+                                    .variantPlate(DS.Palette.surfaceAlt, .capsule, edge: DS.Palette.hairline)
                             }
                             .buttonStyle(.plain)
                             .padding(.trailing, DS.Space.l)
@@ -127,6 +135,7 @@ struct LockFaceView: View {
                                     .foregroundStyle(DS.Palette.text)
                                     .padding(.horizontal, DS.Space.l)
                                     .frame(minHeight: DS.Hit.min)
+                                    .variantPlate(DS.Palette.surfaceAlt, .capsule, edge: DS.Palette.hairline)
                             }
                             .buttonStyle(.plain)
                             .padding(.trailing, DS.Space.l)
@@ -136,19 +145,13 @@ struct LockFaceView: View {
                     }
                 }
 
-                // 锁体
-                LockPlate(progress: chargeProgress,
-                          pressed: pressed,
-                          unlocked: unlockedGlyph,
-                          shakeX: shakeX,
-                          diameter: plateD,
-                          skin: skin)
+                // 锁体 (手势按 UnlockPrefs.mode 分派: 按住 / 三连点)
+                plateGestureView
                     .position(x: geo.size.width / 2,
                               y: geo.size.height * LockFaceStyle.plateCenterRatio(
                                   isLandscape: geo.size.width > geo.size.height))
                     .opacity(plateOpacity)
                     .allowsHitTesting(isLockedPhase)
-                    .gesture(chargeGesture)
                     .accessibilityElement(children: .ignore)
                     .accessibilityAddTraits(.isButton)
                     .accessibilityLabel("开锁，\(app.current?.name ?? "前门")")
@@ -221,14 +224,65 @@ struct LockFaceView: View {
 
     // MARK: - 手势: 按住充能 (连续量, 不是分段状态)
 
+    /// 锁体本体 (不含手势)。手势由 plateGestureView 按档位挂。
+    private var plateBase: some View {
+        LockPlate(progress: chargeProgress,
+                  pressed: pressed,
+                  unlocked: unlockedGlyph,
+                  shakeX: shakeX,
+                  diameter: plateD,
+                  skin: skin)
+    }
+
+    /// 按用户设置的手势档位分派 (UnlockPrefs.mode: hold / triple / charge)。
+    /// 2026-10-18 设计审查修正: 原实现只有"按住"一种, 用户选了另外两档等于设置失效。
+    @ViewBuilder
+    private var plateGestureView: some View {
+        switch UnlockPrefs.mode {
+        case "triple":
+            plateBase.onTapGesture {
+                guard isLockedPhase else { return }
+                tapCount += 1
+                if tapCount >= 3 { tapCount = 0; startUnlock() }
+                // 两次点击间隔超过 0.6s 视为重新开始 (与既有三连点口径一致)
+                tripleReset?.cancel()
+                tripleReset = Task { @MainActor in
+                    try? await Task.sleep(nanoseconds: 600_000_000)
+                    if !Task.isCancelled { tapCount = 0 }
+                }
+            }
+        default:
+            plateBase.gesture(chargeGesture)
+        }
+    }
+
     private var chargeGesture: some Gesture {
+        // 2026-10-18 设计审查修正 (Apple Design §2 直接操纵 / §1 响应):
+        // 原实现用 DragGesture(minimumDistance: 0) 却**丢掉了位移值**(onChanged { _ in }),
+        // 于是充能是"按时间自己涨", 手指停住它照涨 —— 那是脚本动画, 不是跟手。
+        // 改成: 充能进度由**手指位移**驱动, 手指不动进度就不动, 松手即回零。
+        // 同时按 UnlockPrefs.mode 分叉 —— 用户选了三连点/旋转档, 门面不能强行按住。
         DragGesture(minimumDistance: 0)
-            .onChanged { _ in
+            .onChanged { value in
                 guard isLockedPhase else { return }
                 if !pressed {
                     pressed = true
-                    startCharge()
+                    phase = .charging(0)
+                    lastTick = 0
                 }
+                // 沿圆盘外沿滑动累计的"转过的角度"当作进度; 按住不动 = 不涨。
+                let travel = abs(value.translation.width) + abs(value.translation.height)
+                let p = min(1, travel / chargeTravel)
+                phase = .charging(p)
+                // 触觉节拍: 判据 (ui-ux-pro-max "Don't overuse vibration") ——
+                // 全程只震 3 下 (25% / 50% / 75%), 不是每 10% 一下。
+                // 充能本身有 1:1 的视觉进度, 触觉只用来"确认在推进", 不需要密。
+                let tick = Int(p * 4)   // 0…4, 每档 25%
+                if tick > lastTick {
+                    lastTick = tick
+                    if tick < 4 { DS.Haptics.tick.impactOccurred() }
+                }
+                if p >= 1 { startUnlock() }
             }
             .onEnded { _ in
                 pressed = false
@@ -236,33 +290,11 @@ struct LockFaceView: View {
             }
     }
 
-    // MARK: - 时间轴
-
-    @MainActor
-    private func startCharge() {
-        holdTask?.cancel()
-        phase = .charging(0)
-        lastTick = 0
-        let total = reduceMotion ? 0.25 : 1.10   // 充满所需时长
-        holdTask = Task { @MainActor in
-            let steps = 60
-            for i in 1...steps {
-                if Task.isCancelled { return }
-                try? await Task.sleep(nanoseconds: UInt64(total / Double(steps) * 1_000_000_000))
-                if Task.isCancelled { return }
-                let p = CGFloat(i) / CGFloat(steps)
-                phase = .charging(p)
-                // 每 10% 一次轻触觉 (触觉只有三档: tick / trigger / 结果档)
-                let tick = Int(p * 10)
-                if tick > lastTick {
-                    lastTick = tick
-                    if tick % 2 == 0 { DS.Haptics.tick.impactOccurred() }
-                }
-                if p >= 1 { break }
-            }
-            if !Task.isCancelled { startUnlock() }
-        }
+    /// 充满所需的滑动距离 (pt)。约等于盘径的 1.2 倍, 单手拇指一次划得完。
+    private var chargeTravel: CGFloat {
+        reduceMotion ? plateD * 0.4 : plateD * 1.2
     }
+    // MARK: - 时间轴
 
     @MainActor
     private func cancelChargeIfNeeded() {
@@ -303,12 +335,22 @@ struct LockFaceView: View {
     }
 
     @MainActor
+    /// 开锁成功后的时间轴。
+    ///
+    /// 2026-10-18 设计审查修正 (ui-ux-pro-max: "Animate 1-2 key elements per view maximum"):
+    /// 原实现同时驱动 7 个独立动画 (字形/中缝光/门扇/锁体淡出/标题淡出/提示淡出/App 层),
+    /// 那是"什么都动"= 什么都不突出。现在收敛到**两个主角**:
+    ///   ① 中缝光 (先亮, 告诉用户"开了")
+    ///   ② 门扇 (后转, 把用户送进去)
+    /// 其余元素跟着主角的时序走, 但**不再各自配时长** —— 锁体与标题直接随门扇淡出。
+    @MainActor
     private func succeed() {
-        withAnimation(DS.Motion.glyphSwap) { phase = .peeking }
+        // 主角 ①: 中缝光。它先亮, 门才转 —— 这个先后关系是全部叙事。
         withAnimation(DS.Motion.lightLeak) { lightLeak = 1 }
         let turnDelay = reduceMotion ? 0 : LockFaceStyle.doorTurnDelay
         Task { @MainActor in
             try? await Task.sleep(nanoseconds: UInt64(turnDelay * 1_000_000_000))
+            // 主角 ②: 门扇转开。字形换态与它同刻, 不单独计时 (同一条 withAnimation)。
             withAnimation(DS.Motion.doorSwing) {
                 openProgress = 1
                 phase = .opening
@@ -321,7 +363,6 @@ struct LockFaceView: View {
             withAnimation(DS.Motion.exit) { lightLeak = 0 }
         }
     }
-
     /// 失败: **门完全不动**, 只抖锁体 + 触觉 + 文案。
     @MainActor
     private func fail(reason: String) {
@@ -343,6 +384,8 @@ struct LockFaceView: View {
     /// 这是"只想看记录/设置"的人的唯一出口 —— 没有它, 每个想改设置的人都得先对真锁发一次开锁指令。
     @MainActor
     private func enterWithoutUnlocking() {
+        // 可中断: 门正在关的过程中点"进入", 从当前角度反向转开 (不跳变)
+        if phase == .closing { phase = .opening }
         DS.Haptics.tick.impactOccurred()
         phase = .opening
         withAnimation(DS.Motion.doorSwing) { openProgress = 1 }
@@ -353,17 +396,28 @@ struct LockFaceView: View {
         }
     }
     /// 关门 (右缘拖 >=96pt / 导航栏按钮 / Esc)。
+    /// 关门 (导航栏按钮 / Esc / 左缘拖)。
+    /// 2026-10-18 设计审查修正 (Apple Design §3 可中断性):
+    /// 原实现固定等 820ms 再置 locked —— 若用户在门还没转完时又点"进入",
+    /// 会看到门停在半路然后突然跳走。现在: 从**当前 openProgress** 出发转回,
+    /// 时长按剩余角度等比缩短, 且任何时刻可被 enterWithoutUnlocking 反向打断。
     @MainActor
     func closeDoor() {
-        guard phase == .open else { return }
+        guard phase == .open || phase == .opening else { return }
+        let remaining = openProgress   // 0…1, 从中途关也成立
         phase = .closing
         withAnimation(DS.Motion.exit) { entered = false }
         withAnimation(DS.Motion.doorSwing) { openProgress = 0 }
         Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 820_000_000)
-            phase = .locked
-            presented = false
-            entered = false
+            // 按剩余角度等比缩短等待, 不写死 820ms
+            let ms = UInt64(max(120, 820 * remaining) * 1_000_000)
+            try? await Task.sleep(nanoseconds: ms)
+            // 若这期间用户又进门了, 就别把相位打回 locked
+            if phase == .closing {
+                phase = .locked
+                presented = false
+                entered = false
+            }
         }
     }
 }

@@ -35,7 +35,11 @@ struct LockPlate: View {
             chargeRing
         }
         .frame(width: diameter, height: diameter)
+        // 按压反馈 (Apple Design §1: 按下那一刻就要有反馈; §4: 用 spring 而不是固定时长)。
+        // 按下 0.972 用 quick 令牌 (spring response .22 / damping .9), 松手回弹也走同一条 ——
+        // 这样"按下去"和"弹回来"是同一个物理量, 而不是两段拼起来的动画。
         .scaleEffect(pressed ? 0.972 : 1)
+        .animation(DS.Motion.quick, value: pressed)
         .offset(x: shakeX)
         .shadow(color: shadowColor, radius: 26 * skin.shadowStrength,
                 x: 14 * skin.shadowStrength, y: 20 * skin.shadowStrength)
@@ -155,6 +159,10 @@ struct LockPlate: View {
                     .rotationEffect(.degrees(-90))
                     .padding(LockFaceStyle.faceInset + 6)
                     .shadow(color: DS.Palette.accent.opacity(0.55), radius: 10)
+                    // 1:1 跟手 —— 必须切断隐式动画继承, 否则它会跟着外层的 spring 走,
+                    // 手指已经到 80% 了环还在半路追 (Apple Design §2 直接操纵)。
+                    // 本仓 DESIGN-SPEC §2.5 也写了同一条纪律 (呼吸环那处)。
+                    .transaction { $0.animation = nil }
                     .allowsHitTesting(false)
             }
         }
