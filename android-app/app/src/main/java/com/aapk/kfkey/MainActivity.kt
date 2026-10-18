@@ -21,6 +21,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import kotlin.math.cos
 import kotlin.math.sin
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -86,7 +87,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent { KfApp(unlocker) }
+        // 2026-10-18: 外层包 KfTheme 下发深浅双模色板 (跟随系统 isSystemInDarkTheme)。
+        setContent { KfTheme { KfApp(unlocker) } }
     }
 
     override fun onDestroy() {
@@ -303,10 +305,14 @@ private fun KfApp(unlocker: BleUnlocker) {
     // 连上锁信号 (有 RSSI 读数) 且没被手动收起 ⇒ 弹出 AirTag 精确查找层。
     val airTagShowing = proximity && rssi != null && !airTagDismissed
 
+    // 2026-10-18: 接入深浅双模 (KfTheme)。
+    // 暗色档仍取既有 Theme.kt 的值 (D14: Android 保留暗色 + 暖金),
+    // 浅色档是新做的一套; 两套都由 LocalKfColors 下发, 页面里不再直接读 BgTop/BgBottom。
+    val colors = LocalKfColors.current
     Box(
         Modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(BgTop, BgBottom)))
+            .background(Brush.verticalGradient(listOf(colors.bgTop, colors.bgBottom)))
     ) {
         Column(
             Modifier
