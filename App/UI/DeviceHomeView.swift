@@ -640,8 +640,10 @@ struct DeviceHomeView: View {
             }
             .padding(.horizontal, DS.Space.m)
             .padding(.vertical, DS.Space.xs + 2)
-            // 2026-10-14 材质统一: 换锁 chip 上玻璃 (装饰性 hairline 描边随之去掉, 玻璃自带边缘高光)
-            .axGlassCapsule()
+            // 2026-10-18 表面预算 (MASTER.md §3.1: 同屏玻璃面 ≤3):
+            // 设备页同屏已经有 圆盘卡 + 快捷格 两组玻璃面, 这枚换锁 chip 再上玻璃就超预算。
+            // 它是个**操作控件**不是内容容器, 实底反而更清楚; 44pt 命中区不受影响。
+            .variantPlate(DS.Palette.surfaceAlt, .capsule)
             // 视觉紧凑胶囊 + 44pt 命中区分离: 胶囊本身不必撑高
             .frame(minHeight: DS.Hit.min)
             .contentShape(Rectangle())
@@ -1337,9 +1339,11 @@ struct DeviceHomeView: View {
                         .foregroundStyle(DS.Palette.accentText)
                         .padding(.horizontal, DS.Space.l)
                         .padding(.vertical, DS.Space.s)
-                        // 2026-10-14 材质统一: 二次确认提示胶囊上玻璃。
-                        // 下面那圈 accent 1.5pt 留着 —— 它是"还没执行, 再点才开锁"的告警边, 不是装饰边。
-                        .axGlassCapsule()
+                        // 2026-10-18 表面预算: **玻璃不叠玻璃** (MASTER.md §3.1 的 0 预算)。
+                        // 外层卡片已经是 axGlass, 内层胶囊再上玻璃就是两层材质叠一起 ——
+                        // 观感上只是更糊, 信息上什么也没增加。改成实底 + accent 描边:
+                        // 那圈 1.5pt 是"还没执行, 再点才开锁"的告警边, 属于信息不是装饰, 保留。
+                        .variantPlate(DS.Palette.surfaceAlt, .capsule)
                         .overlay(Capsule().strokeBorder(DS.Palette.accent, lineWidth: 1.5))
                         .scaleEffect(confirmPulse ? 1.06 : 1)
                     Text("再点一次圆盘开始开锁")
@@ -1645,7 +1649,11 @@ struct DeviceHomeView: View {
         .frame(maxWidth: .infinity)
         .frame(minHeight: DS.Hit.min + DS.Space.xl)
         .padding(.vertical, DS.Space.m)
-        .axGlass(DS.Radius.tile)
+        // 2026-10-18 表面预算 (MASTER.md §3.1): 快捷格是 **4 格一屏的网格**,
+        // 每格都上玻璃 = 同屏 4 层玻璃面, 直接把「同屏 ≤3」顶穿。
+        // 改成实底 + hairline 描边: 4 格之间仍有清晰的块面节奏, 但不再叠材质。
+        .background(DS.Palette.surface, in: .rect(cornerRadius: DS.Radius.tile))
+        .overlay(.rect(cornerRadius: DS.Radius.tile).strokeBorder(DS.Palette.hairline, lineWidth: 0.5))
         .contentShape(Rectangle())
     }
 
