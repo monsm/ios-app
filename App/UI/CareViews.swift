@@ -256,6 +256,9 @@ struct MaintenanceView: View {
                            care.chargeAt > 0
                                ? daysAgoText(care.chargeAt) + (care.chargeLenMin > 0 ? " · \(care.chargeLenMin) 分钟" : "")
                                : "未记录")
+                    // 2026-10-18 设计审核: 可点行补 44pt 最小触达 (ui-ux-pro-max)
+                    .frame(maxWidth: .infinity, minHeight: DS.Hit.min, alignment: .leading)
+                    .contentShape(Rectangle())
             }
             .foregroundStyle(DS.Palette.text)
             VariantToggle("每年换电池提醒", isOn: $yearlyOn)

@@ -325,10 +325,19 @@ struct AlarmCenterView: View {
                 // 743 逐条滑动处置: 收件箱清零的快捷路径 —— 与行内胶囊写同一份 kf_rdispo 留痕,
                 // 不是另一套状态。首按钮"已处理"允许一滑到底直接生效 (误触可走 739 恢复为未处理)。
                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                    Button { markDone(r.mac + "#" + r.key, "已处理") } label: { Label("已处理", systemImage: "checkmark.circle") }
-                        .tint(DS.Palette.ok)
-                    Button { markDone(r.mac + "#" + r.key, "误报") } label: { Label("误报", systemImage: "exclamationmark.bubble") }
-                        .tint(DS.Palette.warn)
+                    // 2026-10-18 设计审核: 两个处置按钮原来紧贴且无最小触达。
+                    // 补 44pt 触达 + 两个按钮之间留 8pt (ui-ux-pro-max: 相邻触达 ≥8pt)。
+                    Button { markDone(r.mac + "#" + r.key, "已处理") } label: {
+                        Label("已处理", systemImage: "checkmark.circle")
+                            .frame(minHeight: DS.Hit.min)
+                    }
+                    .tint(DS.Palette.ok)
+                    .padding(.trailing, DS.Space.s)
+                    Button { markDone(r.mac + "#" + r.key, "误报") } label: {
+                        Label("误报", systemImage: "exclamationmark.bubble")
+                            .frame(minHeight: DS.Hit.min)
+                    }
+                    .tint(DS.Palette.warn)
                 }
                 .opacity(isFolded ? 0.55 : 1)
             if isFolded {

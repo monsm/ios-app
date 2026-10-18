@@ -124,7 +124,13 @@ enum LockFaceStyle {
     static func surfaceColors(skin: LockFaceSkin, dark: Bool) -> [Color] {
         if dark {
             // 夜景门廊: 不是把浅色灰搬进深色 (MASTER.md §1 已判死这条)。
-            return [Color(hex: 0x141618), Color(hex: 0x0F1113), Color(hex: 0x0A0B0C)]
+            //
+            // ⚠️ 2026-10-18 真机截图修正: 原值 #141618/#0F1113/#0A0B0C 与画布 #070B12
+            // 的对比度只有 **1.09 / 1.00** —— 门在深色模式下**根本看不见**, 用户看到的是
+            // 一个锁体浮在纯黑上。设计文档里写的"夜景门廊"必须**肉眼可辨**才算数。
+            // 提到 1.33 那一档: 门面比画布亮一档 (像被走廊灯照到的深色木门),
+            // 既不是浅色灰搬过来, 也不会亮到破坏夜景感。
+            return [Color(hex: 0x232830), Color(hex: 0x1C2128), Color(hex: 0x161A1F)]
         }
         switch skin {
         case .wood:

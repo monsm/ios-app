@@ -82,6 +82,9 @@ struct LockFaceView: View {
                 // 状态行 (D13): **只说本机真知道的事**。
                 // 协议里没有「在线」「反锁状态」「门磁」——CAPABILITY.md §5 已确证。
                 // 允许的三个真源: CoreBluetooth 连接态 / cmd03 的 powerLevel / 本机记录。
+                // ⚠️ 2026-10-18 真机截图修正: 原来这个 VStack 直接放在 ZStack 里,
+                // ZStack 默认居中 —— 标题跑到屏幕正中间压在锁体上。设计稿是**顶部大标题**。
+                // 修法: 用 VStack{ 标题; Spacer() } 把标题顶到顶部, 并让它跟随安全区。
                 if isLockedPhase {
                     VStack(spacing: DS.Space.xs) {
                         Text(app.current?.name ?? "门")
@@ -90,8 +93,12 @@ struct LockFaceView: View {
                         Text(truthfulStatusLine)
                             .vkFont(.footnote)                        // D15 第 3 条: 13pt
                             .foregroundStyle(DS.Palette.textSub)
+                        Spacer(minLength: 0)
                     }
-                    .padding(.top, DS.Space.xl)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                    .padding(.horizontal, DS.Space.gutter)   // D15 第 1 条: 16pt
+                    .padding(.top, geo.safeAreaInsets.top + DS.Space.m)
+                    .allowsHitTesting(false)
                 }
 
                 // 推门而入: 不解锁也能进 (D2 —— 开锁是安全动作, 进门是导航动作, 两者分开)。

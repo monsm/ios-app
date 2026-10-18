@@ -349,8 +349,20 @@ struct CredentialsView: View {
         app.devices.first { $0.mac == mac }.map { LockArchive.displayName($0) } ?? String(mac.prefix(6))
     }
 
+    /// 页面头 —— 2026-10-18 按 PageGrammar 的三条归类规则重构。
+    ///
+    /// 重构前: 3 行 9 个控件 (计数+待处理+排序+月历+整理+选择+拖动排序 / 4 分段+按成员 / 智能筛选),
+    /// 加搜索与锁内存量, 首屏 12+ 入口 —— 用户在"凭证页"上找不到"凭证"。
+    ///
+    /// 重构后 (规则):
+    ///   1. 主操作 = 添加凭证 (底部固定, 同屏唯一)
+    ///   2. 次级 <= 2 = 搜索 / 选择 (图标常驻)
+    ///   3. 其余全进「⋯」: 视图(排序/月历/按成员/智能筛选) + 整理(整理建议/拖动排序) + 数据(待处理)
+    ///
+    /// 判据一条没改: 每个入口调的还是原来那个 action, 只是**位置**从"平铺三行"改成"按语义分层"。
     private var headerToolbar: some View {
         VStack(spacing: DS.Space.xs) {
+            // 第 1 行: 计数 + 溢出菜单。只保留"看/找/选"三件事之外的一切。
             HStack(spacing: DS.Space.s) {
                 Text("共 \(CredentialOrg.typeCounts(mac).all) 条")
                     .vkFont(.caption)
@@ -358,127 +370,78 @@ struct CredentialsView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                 Spacer(minLength: 0)
-                if !CredentialOrg.pendingQueue(mac).isEmpty {
-                    Button { showQueue = true } label: {
-                        Label("待处理 \(CredentialOrg.pendingQueue(mac).count) 项", systemImage: "arrow.down.circle")
-                    }
-                    .vkFont(.caption)
-                    .tint(DS.Palette.warn)
-                    .frame(minHeight: DS.Hit.min)
-                    .contentShape(Rectangle())
-                    .accessibilityLabel("待处理下发 \(CredentialOrg.pendingQueue(mac).count) 项, 点按查看")
-                }
-                Button {
-                    sortKey = CredSortKey(rawValue: (sortKey.rawValue + 1) % CredSortKey.allCases.count)!
-                    CredentialOrg.setSortKey(sortKey)
-                    app.showToast("按「\(sortKey.label)」排序")   // 914 排序
-                } label: {
-                    Image(systemName: "arrow.up.arrow.down")
-                        .font(.system(size: DS.Icon.md, weight: .semibold))
-                        .frame(width: DS.Hit.min, height: DS.Hit.min)
-                        .contentShape(Rectangle())
-                }
-                .accessibilityLabel("排序维度: \(sortKey.label), 点按在 名称/类型/最近使用/到期 间循环")
-                Button { showCalendar.toggle(); sorting = false } label: {
-                    Image(systemName: showCalendar ? "list.bullet" : "calendar")
-                        .font(.system(size: DS.Icon.md, weight: .semibold))
-                        .frame(width: DS.Hit.min, height: DS.Hit.min)
-                        .contentShape(Rectangle())
-                }
-                .accessibilityLabel(showCalendar ? "退出月历" : "月历到期视图")   // 363 月历到期视图
-                Button { showOrganize = true } label: {
-                    Image(systemName: "rectangle.3.offgrid")
-                        .font(.system(size: DS.Icon.md, weight: .semibold))
-                        .frame(width: DS.Hit.min, height: DS.Hit.min)
-                        .contentShape(Rectangle())
-                }
-                .accessibilityLabel("整理建议中心")   // 358 整理建议中心
-                // 922 凭证批量整理 = 这个入口 (「选择」进多选，批量删除/停用与 313 四选一原因同源)。
-                // 479 长辈模式刻意隐藏: 批量入口对老人是误删风险，不是漏适配。
-                // 182 排序档开着时同样不出现: 一行不能同时挂两套行内控件 (选择圈 + 排序把手)。
-                if !editMode && !sorting && !MemberHub.elderMode {   // 479 长辈模式隐藏批量与导出入口
+                // 搜索框是**常驻**的 (mainList 里那颗 TextField), 工具栏不再放第二枚搜索图标 ——
+                // 2026-10-18 重构备注: 原稿在这里加了一枚 search 图标, 但 showSearch 这个状态
+                // 从来不存于本文件 (搜索是常驻 TextField, 不是可展开的)。重复入口 = 又一个乱源。
+                // 次级 ②: 选择 (批量整理)
+                if !editMode && !sorting && !MemberHub.elderMode {
                     Button("选择") {
                         withAnimation(DS.Motion.quick) { editMode = true }
                         DS.Haptics.tick.impactOccurred()
                     }
                     .frame(minHeight: DS.Hit.min)
                 }
-                // 182 组内拖动排序的入口。原先这句承诺写在密码段底部那一行提示上 (「长按行拖动可调整组内顺序」),
-                // 而拖动一处都没实现, 长按只弹一条"用编辑模式里的顺序按钮"的提示 —— 那是假热区。这里给真开关:
-                // 打开后 List 进系统编辑态, 带 onMove 的分组当场出现把手, 拖完写 kf_cseq_ 跨启动保持。
-                // 台账一条凭证都没有时不出现这一枚: 空列表没有可拖的行, 摆一个把手就是哑按钮。
-                if !editMode && !showCalendar && CredentialOrg.typeCounts(mac).all > 0 {
-                    Button {
-                        sorting.toggle()
-                        if sorting { editMode = false; selPwds = []; selFps = [] }
-                        DS.Haptics.tick.impactOccurred()
-                    } label: {
-                        Image(systemName: sorting ? "checkmark" : "line.3.horizontal")
-                            .font(.system(size: DS.Icon.md, weight: .semibold))
-                            .foregroundStyle(sorting ? DS.Palette.accentText : DS.Palette.text)
-                            .frame(width: DS.Hit.min, height: DS.Hit.min)
-                            .contentShape(Rectangle())
+                // 溢出: 其余全部按语义分组进这里
+                Menu {
+                    Section("视图") {
+                        Button {
+                            sortKey = CredSortKey(rawValue: (sortKey.rawValue + 1) % CredSortKey.allCases.count)!
+                            CredentialOrg.setSortKey(sortKey)
+                            app.showToast("按「\(sortKey.label)」排序")
+                        } label: { Label("排序: \(sortKey.label)", systemImage: "arrow.up.arrow.down") }
+                        Button { showCalendar.toggle(); sorting = false } label: {
+                            Label(showCalendar ? "退出月历" : "月历到期视图", systemImage: showCalendar ? "list.bullet" : "calendar")
+                        }
+                        Button {
+                            memberView.toggle()
+                            CredentialOrg.setGroupMode(memberView ? .owner : .type)
+                        } label: {
+                            Label(memberView ? "按类型分组" : "按成员分组", systemImage: "person.2")
+                        }
                     }
-                    // 图标而不是文字: 这一条工具栏已有三枚图标 + 「选择」, 再塞一枚文字按钮在窄屏上会挤破版
-                    .accessibilityLabel("组内拖动排序 \(sorting ? "已开, 点按结束" : "未开, 点按开始")")   // 182 组内拖动排序
-                    .accessibilityAddTraits(sorting ? .isSelected : [])
+                    Section("筛选") {
+                        Button("默认 (全部)") { smartSel = "" }
+                        ForEach(CredentialOrg.smartLists(mac)) { l in
+                            Button(CredentialOrg.smartListLabel(l)) { smartSel = l.id }
+                        }
+                        Button("新建智能列表…") { newSmartList() }
+                        Button("管理智能列表") { manageSmartLists() }
+                    }
+                    Section("整理") {
+                        Button { showOrganize = true } label: {
+                            Label("整理建议", systemImage: "rectangle.3.offgrid")
+                        }
+                        if !editMode && !showCalendar && CredentialOrg.typeCounts(mac).all > 0 {
+                            Button {
+                                sorting.toggle()
+                                if sorting { editMode = false; selPwds = []; selFps = [] }
+                                DS.Haptics.tick.impactOccurred()
+                            } label: {
+                                Label(sorting ? "结束拖动排序" : "拖动排序", systemImage: "line.3.horizontal")
+                            }
+                        }
+                    }
+                    if !CredentialOrg.pendingQueue(mac).isEmpty {
+                        Section("待处理") {
+                            Button { showQueue = true } label: {
+                                Label("待下发 \(CredentialOrg.pendingQueue(mac).count) 项", systemImage: "arrow.down.circle")
+                            }
+                        }
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                        .font(.system(size: DS.Icon.md, weight: .semibold))
+                        .frame(width: DS.Hit.min, height: DS.Hit.min)
+                        .contentShape(Rectangle())
                 }
+                .accessibilityLabel("更多: 排序/视图/筛选/整理")
             }
-            // 524 类型分段计数 (479 长辈模式只出前三组)
+            // 第 2 行: 类型分段 (4 个) —— 这是**筛选**不是操作, 允许常驻一行
             let segCount = MemberHub.elderMode ? 3 : 4
             HStack(spacing: DS.Space.xs) {
                 ForEach(0..<segCount, id: \.self) { i in
                     segChip(i)
                 }
-                Spacer(minLength: 0)
-                Button {
-                    memberView.toggle()
-                    CredentialOrg.setGroupMode(memberView ? .owner : .type)
-                } label: {
-                    HStack(spacing: DS.Space.xxs) {
-                        Image(systemName: "person.2")
-                            .font(.system(size: DS.Icon.sm, weight: .medium))
-                        Text("按成员")
-                            .vkFont(.caption)
-                            .lineLimit(1)
-                    }
-                    .padding(.horizontal, DS.Space.s).padding(.vertical, DS.Space.s)
-                    .foregroundStyle(memberView ? DS.Palette.accentText : DS.Palette.textSub)
-                    .background((memberView ? DS.Palette.accentText.opacity(0.12) : DS.Palette.surfaceAlt), in: Capsule())
-                    .frame(minHeight: DS.Hit.min)
-                    .contentShape(Rectangle())
-                }
-                .accessibilityLabel("按成员分组 \(memberView ? "已开" : "未开"), 点按切换")   // 355 按成员分组
-            }
-            // 527 命名智能列表
-            HStack(spacing: DS.Space.xs) {
-                Menu {
-                    Button("默认 (全部)") { smartSel = "" }
-                    let lists = CredentialOrg.smartLists(mac)
-                    if !lists.isEmpty { Divider() }
-                    ForEach(lists) { l in
-                        // 菜单行给全标签 (名称 · 属主 · 状态); 外面的胶囊仍只显示名称, 长标签会被 lineLimit(1) 截断
-                        Button(CredentialOrg.smartListLabel(l)) { smartSel = l.id }
-                    }
-                    Divider()
-                    Button("新建智能列表…") { newSmartList() }
-                    Button("管理智能列表") { manageSmartLists() }
-                } label: {
-                    HStack(spacing: DS.Space.xxs) {
-                        Image(systemName: "line.3.horizontal.decrease.circle")
-                            .font(.system(size: DS.Icon.sm, weight: .medium))
-                        Text(smartSel.isEmpty ? "智能筛选" : CredentialOrg.smartLists(mac).first { $0.id == smartSel }?.name ?? "智能筛选")
-                            .vkFont(.caption)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
-                    }
-                    .padding(.horizontal, DS.Space.s).padding(.vertical, DS.Space.s)
-                    .foregroundStyle(smartSel.isEmpty ? DS.Palette.textSub : DS.Palette.accentText)
-                    .background((!smartSel.isEmpty ? DS.Palette.accentText.opacity(0.12) : DS.Palette.surfaceAlt), in: Capsule())
-                    .frame(minHeight: DS.Hit.min)
-                    .contentShape(Rectangle())
-                }
-                .accessibilityLabel("智能筛选 \(smartSel.isEmpty ? "默认" : "已套用"), 点按展开")   // 527 智能筛选
                 Spacer(minLength: 0)
             }
         }

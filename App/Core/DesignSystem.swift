@@ -410,12 +410,12 @@ enum DS {
 
     enum Palette {
         // ---------- 机检基础令牌 (tools/contrast.js 解析 static let) ----------
-        static let canvasBase  = Color.adaptive(0xF2F4F9, 0x070B12)   // 页面底 (渐变画布的深端基调)
-        static let surfaceBase = Color.adaptive(0xFFFFFF, 0x151D29)   // 卡片
-        static let surfaceAltBase = Color.adaptive(0xF5F7FB, 0x1C2534) // 卡片内次级块
-        static let hairline   = Color.adaptive(0xD3DCE7, 0x29343F)   // 分隔线 / 描边 (需 ≥1.2:1 才看得见)
-        static let text       = Color.adaptive(0x0D1626, 0xF2F6FB)   // 主文本
-        static let textSub    = Color.adaptive(0x525E77, 0x9FACBE)   // 次文本 6.5:1 / 7.4:1
+        static let canvasBase  = Color.adaptive(0xF6F3EC, 0x070B12)   // 页面底: v10 暖白 (2026-10-18 从冷蓝白 0xF2F4F9 换过来)
+        static let surfaceBase = Color.adaptive(0xFFFDF9, 0x151D29)   // 卡片: 暖白, 比页面底亮一档
+        static let surfaceAltBase = Color.adaptive(0xF0ECE3, 0x1C2534) // 卡片内次级块: 暖灰
+        static let hairline   = Color.adaptive(0xDCD5C9, 0x29343F)   // 分隔线: 暖色 (实测 1.32:1 对画布)
+        static let text       = Color.adaptive(0x17140F, 0xF2F6FB)   // 主文本
+        static let textSub    = Color.adaptive(0x5C5245, 0x9FACBE)   // 暖灰: 对暖白底 6.90:1 / 深色 7.4:1
         static let ok         = Color.adaptive(0x15803D, 0x4ADE80)   // 成功
         static let warn       = Color.adaptive(0xB45309, 0xFBBF24)   // 警告 4.5:1 / 高
         static let danger     = Color.adaptive(0xB91C1C, 0xF87171)   // 错误 6.0:1
@@ -453,6 +453,13 @@ enum DS {
         // 原句"另建一套低饱和深靛组"没有单独再做: 深色档已经在这张表里，再造一套就是两个真相源。
         // 886 六套色板与 892 自定义强调色共用这一张表 —— 皮肤只有一处定义，页面各自读令牌。
         static let themeTable: [String: [String: [String: UInt32]]] = [
+            // 2026-10-18 v10 暖金/黄铜 —— v10 原型的锁体就是黄铜倒角, 这是与它同族的强调色。
+            // 取色口径与其余六套一致: accentText 对三种底 ≥4.5 / onAccent 对 accent 与 btnA/btnB /
+            // 纯白对 hero 两端 ≥4.5。浅色 heroA 取 #855915 (白字 6.11), 深色 heroA 取 #9C6B1C (白字 4.63)。
+            "brass": [
+                "light": ["accent": 0x8F6119, "accentText": 0x6F4A10, "onAccent": 0xFFFFFF, "heroA": 0x855915, "heroB": 0x6F4A10, "btnA": 0x855915, "btnB": 0x6F4A10],
+                "dark": ["accent": 0xE8B45C, "accentText": 0xF5CB85, "onAccent": 0x0A0E15, "heroA": 0x9C6B1C, "heroB": 0x855915, "btnA": 0xF5CB85, "btnB": 0xE8B45C]
+            ],
             "indigo": [
                 "light": ["accent": 0x4F46E5, "accentText": 0x4338CA, "onAccent": 0xFFFFFF, "heroA": 0x5A55EC, "heroB": 0x4338CA, "btnA": 0x5A55EC, "btnB": 0x4338CA],
                 "dark": ["accent": 0x818CF8, "accentText": 0xA5B4FC, "onAccent": 0x0A0E15, "heroA": 0x5B5BD6, "heroB": 0x4136C9, "btnA": 0xA5B4FC, "btnB": 0x818CF8]
@@ -496,7 +503,8 @@ enum DS {
         /// 当前生效主题 (kf_accent, 空值归一到靛蓝)
         private static func effectiveKey(_ key: String?) -> String {
             let k = key ?? Appearance.accentKey
-            return k.isEmpty ? "indigo" : k
+            // 2026-10-18: 新装用户默认暖金 (brass), 与 v10 黄铜语言一致; 老用户 kf_accent 已存值不受影响。
+            return k.isEmpty ? "brass" : k
         }
         /// 主题表 → 动态色: 明暗 trait 在 provider 内解析 (与 Color.adaptive 同一机制),
         /// kf_accent 变更经全局重建后重新求值。key 缺省 = 当前主题, 显式传 key 供色板小样预览。
@@ -508,7 +516,7 @@ enum DS {
                    let hex = CustomAccent.derived(CustomAccent.rgb, dark: tc.userInterfaceStyle == .dark)[role] {
                     return UIColor(Color(hex: hex))
                 }
-                let theme = Palette.themeTable[effectiveKey(key)] ?? Palette.themeTable["indigo"]!
+                let theme = Palette.themeTable[effectiveKey(key)] ?? Palette.themeTable["brass"]!
                 let mode = theme[tc.userInterfaceStyle == .dark ? "dark" : "light"] ?? theme["light"]!
                 return UIColor(Color(hex: mode[role]!))
             })
@@ -720,6 +728,9 @@ extension DS {
         }
     }
     static let accentThemes: [AccentTheme] = [
+        // 2026-10-18 v10 暖金/黄铜 —— 设为**默认** (与 v10 原型的黄铜锁体同族)。
+        // 顺序即设置页色板从左到右的次序: brass 放最前 = 默认)。
+        AccentTheme(key: "brass", name: "暖金"),
         AccentTheme(key: "indigo", name: "靛蓝"),
         AccentTheme(key: "forest", name: "墨绿"),
         AccentTheme(key: "amber", name: "琥珀"),
