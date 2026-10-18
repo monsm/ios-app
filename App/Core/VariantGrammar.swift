@@ -94,18 +94,6 @@ struct VK {
                     let shape = RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous)
                     shape.fill(wash)
                 }
-                // 2026-10-18 材质 v2: 顶端 0.5pt 高光 = 光落在玻璃的边上 (Apple 的"材料有厚度"那条);
-                // 只在顶部一条, 不做满框描边 —— 满框会让卡片变成一模一样的模板, 这是本文件既有口径。
-                .overlay(alignment: .top) {
-                    RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous)
-                        .strokeBorder(
-                            LinearGradient(colors: [DS.Palette.onFillWash.opacity(0.10), .clear],
-                                           startPoint: .top, endPoint: .bottom),
-                            lineWidth: 0.5
-                        )
-                        .allowsHitTesting(false)
-                        .accessibilityHidden(true)
-                }
                 .shadow(color: .cardElevation, radius: 12, y: 4)
                 .padding(.horizontal, DS.Space.gutter)
         )
@@ -122,26 +110,18 @@ struct VK {
     }
 
     /// 分区标题。**21 处 `SectionTitle` 全走这里。** legacy 分支逐字搬自原实现。
-    ///
-    /// 2026-10-18 排版 v2: 分区标题从"和正文抢视线"的 headline/主色, 退到"引导但不争抢"的
-    /// footnote/次色 + 0.6 字距。理由 (Apple 分组列表的层级): 一屏里真正该被第一眼看到的是
-    /// 卡片内容本身; 标题是路标, 把路标做得和内容一样重, 整页就没有主次了 —— 这正是"乱"的来源之一。
-    /// 品牌色小竖标保留: 它是本 App 的签名, 且不占宽度。
     func sectionTitle(text: String, count: Int?) -> AnyView {
         return AnyView(
             HStack(spacing: DS.Space.s) {
+                // 品牌色小竖标: 不占一行的宽度, 却让分区标题有自己的"签名"
                 Capsule()
                     .fill(DS.Palette.accent)
-                    .frame(width: 3, height: 12)
+                    .frame(width: 3, height: 14)
                     .accessibilityHidden(true)
-                Text(text)
-                    .font(.footnote.weight(.semibold))
-                    .tracking(0.6)
-                    .foregroundStyle(DS.Palette.textSub)
+                Text(text).font(.headline).foregroundStyle(DS.Palette.text)
                 if let count {
                     Text("\(count)")
-                        .font(.caption2.weight(.semibold))
-                        .monospacedDigit()
+                        .font(.caption.weight(.semibold))
                         .foregroundStyle(DS.Palette.textSub)
                         .padding(.horizontal, DS.Space.s).padding(.vertical, DS.Space.xxs)
                         .background(DS.Palette.surfaceAlt, in: Capsule())

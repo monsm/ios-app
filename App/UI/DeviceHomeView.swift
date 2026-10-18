@@ -1498,17 +1498,19 @@ struct DeviceHomeView: View {
         VStack(alignment: .leading, spacing: DS.Space.m) {
             SectionTitle(text: "快捷操作")
                 .padding(.horizontal, DS.Space.gutter)
-            // 2026-10-18 UIUX v2: 3 列玻璃格 → 分组列表 (Apple 分组列表的做法)。
-            // 为什么改: 九个同尺寸格子并列 = 九个入口一样重要, 主次只能靠用户自己读字;
-            // 列表天生有从上到下的阅读顺序, 行高 52pt 也让触达比 44pt 更稳。
-            // 功能零删减: 顺序仍由 QuickPool.ordered() 决定, 点击仍记账 (1047),
-            // 仍可长按进编辑面板 (905), 空指纹仍给"待添加"行 (812)。
-            Card {
-                VStack(spacing: 0) {
-                    ForEach(Array(tiles.enumerated()), id: \.element.id) { idx, a in
-                        if idx > 0 { quickRowRule }
+            // 230 大格模式: 2 列大格 (长辈友好, 设置-辅助可切); 229 左手模式镜像工具条侧
+            let cols = AXPrefs.bigTile ? 2 : 3
+            GlassEffectContainer(spacing: DS.Space.s) {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: DS.Space.s), count: cols),
+                          spacing: DS.Space.s) {
+                    // 905: 格子来自池子 (默认选中就是原来的六格，观感不变; 921 加了"再开一次")；
+                    // 1047: 顺序由 QuickPool.ordered() 决定 —— 默认关还跟一条 30 天规则:
+                    //        从未手动调整过且满 30 天 → 只把最常用的一格提到首格, 其余保序。
+                    // 仍走 quickLink 这一个渲染器：它带着 .axGlass / .contentShape / 按压态 / 朗读标签，
+                    // 在网格里另抄一份 label 就等于把这四样悄悄丢了 (第七十八批差点犯的那条)。
+                    ForEach(tiles) { a in
                         if a.id == "again" {
-                            // 921: 这一行是 Button 不是 NavigationLink —— 它不推开新页, 而是跨 Tab 定位
+                            // 921: 这一格是 Button 不是 NavigationLink —— 它不推开新页, 而是跨 Tab 定位
                             againTile
                                 .contextMenu {
                                     Button {
@@ -1529,7 +1531,7 @@ struct DeviceHomeView: View {
                                           }
                                       }
                             ) { quickDestination(a.id) }
-                            // 905: 长按任一行 → 编辑面板。走系统 contextMenu 而不是自挂长按手势:
+                            // 905: 长按任一格 → 编辑面板。走系统 contextMenu 而不是自挂长按手势:
                             // 与 NavigationLink 的点击零冲突 (同 740 "长按走菜单"的先例), 面板内改动即时生效。
                             .contextMenu {
                                 Button {
@@ -1540,30 +1542,31 @@ struct DeviceHomeView: View {
                             }
                         }
                     }
-                    // 812 延迟添加指纹: 这把锁一枚指纹都没有时, 行尾多一条"待添加"行。
-                    // 点它直接开真正的录入表单 (quickDestination addFp = 与"添加指纹"入口同一个
+                    // 812 延迟添加指纹: 这把锁一枚指纹都没有时，格尾多一枚**虚线待添加**格。
+                    // 点它直接开真正的录入表单 (quickDestination addFp = 与"添加指纹"大格同一个
                     // 嵌入视图, 不是第二份校验逻辑); 旧版只弹 toast 指点去凭证 Tab, 等于把用户支走。
                     if DB.listFps(app.currentMac).isEmpty {
-                        if !tiles.isEmpty { quickRowRule }
                         NavigationLink {
                             quickDestination("addFp")
                         } label: {
-                            HStack(spacing: DS.Space.m) {
+                            VStack(spacing: DS.Space.xs) {
                                 Image(systemName: "hand.raised.dotted")
-                                    .font(.system(size: DS.Icon.sm, weight: .semibold))
+                                    .font(.system(size: DS.Icon.md))
                                     .foregroundStyle(DS.Palette.textSub)
-                                    .frame(width: 32, height: 32)
-                                    .background(DS.Palette.surfaceAlt,
-                                                in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                                 Text("待添加指纹")
-                                    .vkFont(.body)
+                                    .vkFont(.caption2)
                                     .foregroundStyle(DS.Palette.textSub)
-                                Spacer(minLength: 0)
-                                Image(systemName: "plus")
-                                    .font(.system(size: DS.Icon.xs, weight: .semibold))
-                                    .foregroundStyle(DS.Palette.textSub)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.8)
                             }
-                            .frame(minHeight: DS.Hit.min + 8)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, DS.Space.m)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: DS.Radius.tile, style: .continuous)
+                                    .strokeBorder(DS.Palette.hairline,
+                                                  style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                            )
+                            .frame(minHeight: DS.Hit.min)
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(PressableButtonStyle())
@@ -1625,38 +1628,25 @@ struct DeviceHomeView: View {
     @ViewBuilder
     private func quickTileBody(icon: String, label: String) -> some View {
         let big = AXPrefs.bigTile   // 230 大格: 图标与字号随加大
-        // 2026-10-18 UIUX v2: 格体 → 列表行。图标坐 32pt 圆角底座 (与设置页的分组行同一节奏),
-        // 行尾统一一个 chevron —— 用户不用猜"这一块点得进去吗", 形状本身就是答案。
-        HStack(spacing: DS.Space.m) {
+        VStack(spacing: DS.Space.s) {
+            // 图标坐进主色 12% 的圆角底座: 四个入口有了统一的"图标 + 玻璃砖"节奏
             Image(systemName: icon)
-                .font(.system(size: big ? DS.Icon.md : DS.Icon.sm, weight: .semibold))
+                .font(.system(size: big ? DS.Icon.lg : DS.Icon.md, weight: .semibold))
                 .foregroundStyle(DS.Palette.accentText)
-                .frame(width: 32, height: 32)
+                .frame(width: big ? 48 : 40, height: big ? 48 : 40)
                 .background(DS.Palette.accentText.opacity(0.12),
-                            in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                            in: RoundedRectangle(cornerRadius: 13, style: .continuous))
             Text(label)
-                .vkFont(big ? .callout : .body)
+                .vkFont(big ? .callout : .caption)
                 .foregroundStyle(DS.Palette.text)
                 .lineLimit(1)
-            Spacer(minLength: 0)
-            Image(systemName: "chevron.right")
-                .font(.system(size: DS.Icon.xs, weight: .semibold))
-                .foregroundStyle(DS.Palette.textSub.opacity(0.6))
-                .accessibilityHidden(true)
+                .minimumScaleFactor(0.85)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .frame(minHeight: DS.Hit.min + 8)
+        .frame(maxWidth: .infinity)
+        .frame(minHeight: DS.Hit.min + DS.Space.xl)
+        .padding(.vertical, DS.Space.m)
+        .axGlass(DS.Radius.tile)
         .contentShape(Rectangle())
-    }
-
-    /// 分组行之间的发丝线: 从文字起始处开始 (缩进 44 = 32 图标 + 12 间距),
-    /// 与 Apple 分组列表的分隔线一致 —— 顶到边会让列表回到"表格"观感。
-    private var quickRowRule: some View {
-        Rectangle()
-            .fill(DS.Palette.hairline)
-            .frame(height: 0.5)
-            .padding(.leading, 44)
-            .accessibilityHidden(true)
     }
 
     /// 921「再开一次」格: 目标 = QuickPool.repeatTarget (星标密码 > 星标指纹 > 高频推断)。
