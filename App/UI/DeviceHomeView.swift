@@ -748,6 +748,44 @@ struct DeviceHomeView: View {
     }
     // 243 断连灰化: 连接断开时整卡去饱和, 恢复即回彩
     // 包3: 参数化到任意锁 — 当前页吃实时状态, 其余页读各锁快照 (101/763 横滑预览)
+    /// Hero 卡的**唯一**条件提示行 (构图预算: ≤1)。
+    /// 按优先级取一条, 而不是四条并列 —— 判据与原实现逐条一致。
+    @ViewBuilder
+    private func heroNotice(kc: Keychain, tier: BatteryCare.Tier, isCurrent: Bool) -> some View {
+        if isCurrent, tier.severe {
+            NavigationLink { BatterySwapGuideView() } label: {
+                heroNoticeRow(icon: "arrow.right.circle", text: "打开换电图文指引", tint: DS.heroFg)
+            }
+            .buttonStyle(PressableButtonStyle())
+            .accessibilityLabel("电量告急, 打开换电图文指引")
+        } else if isLow(kc) {
+            heroNoticeRow(icon: "battery.25percent", text: "该喂电了, 别让它饿着", tint: DS.Palette.warn)
+        } else if !LockArchive.isVerified(kc.mac) {
+            heroNoticeRow(icon: "checkmark.seal", text: "链路待验证 · 成功开一次锁即打标", tint: DS.heroFg)
+        } else if isCurrent, BatteryCare.isColdSeason {
+            heroNoticeRow(icon: "thermometer.snowflake", text: "低温季: 电池续航会缩短, 多留意电量", tint: DS.heroFg)
+        }
+    }
+
+    /// 提示行的统一长相 (四个提示共用, 免得各写一份样式)。
+    @ViewBuilder
+    private func heroNoticeRow(icon: String, text: String, tint: Color) -> some View {
+        HStack(spacing: DS.Space.xs) {
+            Image(systemName: icon)
+                .font(.system(size: DS.Icon.sm, weight: .semibold))
+                .foregroundStyle(tint)
+                .accessibilityHidden(true)
+            Text(text)
+                .vkFont(.footnote)
+                .foregroundStyle(DS.heroFg.opacity(0.92))
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(minHeight: DS.Hit.min)
+        .contentShape(Rectangle())
+    }
+
     private func heroCard(for kc: Keychain, isCurrent: Bool) -> some View {
         let connected = isCurrent && bleOn
         // 113 五档电量 / 120: 低电降级档 (≤20%) 关流光边并压亮度, 动效令牌同步降 calm
@@ -891,65 +929,13 @@ struct DeviceHomeView: View {
                     .frame(minHeight: DS.Hit.min)
                     .accessibilityLabel("备份状态角标, 打开备份设置")   // 507 备份状态角标
                 }
-                // 258 首连验证标记: 添加后完成一次开锁前, Hero 卡上挂着待验证提示
-                if !LockArchive.isVerified(kc.mac) {
-                    HStack(spacing: DS.Space.xs) {
-                        Image(systemName: "checkmark.seal")
-                            .font(.system(size: DS.Icon.sm, weight: .semibold))
-                            .foregroundStyle(DS.heroFg.opacity(0.9))
-                            .accessibilityHidden(true)
-                        Text("链路待验证 · 成功开一次锁即打标")
-                            .vkFont(.footnote)
-                            .foregroundStyle(DS.heroFg.opacity(0.92))
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-                // 1004 喂电提醒: 电量 ≤20% 时图标呼吸 + 一句叮嘱
-                if isLow(kc) {
-                    HStack(spacing: DS.Space.xs) {
-                        Image(systemName: "battery.25percent")
-                            .font(.system(size: DS.Icon.sm, weight: .semibold))
-                            .foregroundStyle(DS.Palette.warn)
-                            .modifier(BreathingGlyph())
-                            .accessibilityHidden(true)
-                        Text("该喂电了, 别让它饿着")
-                            .vkFont(.footnote)
-                            .foregroundStyle(DS.heroFg.opacity(0.92))
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-                // 116 换电图文引导: 低电降级档 (≤20%) 时 Hero 卡直接给出入口
-                if isCurrent, tier.severe {
-                    NavigationLink { BatterySwapGuideView() } label: {
-                        HStack(spacing: DS.Space.xs) {
-                            Image(systemName: "arrow.right.circle")
-                                .font(.system(size: DS.Icon.sm, weight: .semibold))
-                                .foregroundStyle(DS.heroFg.opacity(0.9))
-                                .accessibilityHidden(true)
-                            Text("打开换电图文指引")
-                                .vkFont(.footnote)
-                                .foregroundStyle(DS.heroFg)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .frame(minHeight: DS.Hit.min)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(PressableButtonStyle())
-                    .accessibilityLabel("电量告急, 打开换电图文指引")
-                }
-                // 121 低温季静默提示 (11–3 月, 纯本地日期规则)
-                if isCurrent, !isLow(kc), BatteryCare.isColdSeason {
-                    HStack(spacing: DS.Space.xs) {
-                        Image(systemName: "thermometer.snowflake")
-                            .font(.system(size: DS.Icon.sm, weight: .semibold))
-                            .foregroundStyle(DS.heroFg.opacity(0.9))
-                            .accessibilityHidden(true)
-                        Text("低温季: 电池续航会缩短, 多留意电量")
-                            .vkFont(.footnote)
-                            .foregroundStyle(DS.heroFg.opacity(0.92))
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
+                // 2026-10-18 构图预算 (MASTER.md §3.1: Hero 条件提示行 ≤1):
+                // 原来这里有四条独立提示行 (未验证 / 低电 / 严重低电 / 冷季),
+                // 它们**可以同时出现** —— 一屏 Hero 卡里叠四行叮嘱, 卡片就不像身份卡了。
+                // 改成**优先级单行**: 同一时刻只显示最要紧的那一条。
+                //   严重低电 > 低电 > 未验证 > 冷季
+                // 判据本身一个字没改, 只是从"并列显示"改成"按优先级取一"。
+                heroNotice(kc: kc, tier: tier, isCurrent: isCurrent)
                 // 790 最近活跃成员头像圈: 卡角叠放最近活跃 3 位, 点开列成员名, 选谁直接查谁的记录。
                 if isCurrent {
                     HStack(spacing: DS.Space.s) {
