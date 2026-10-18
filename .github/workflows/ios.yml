@@ -324,6 +324,26 @@ jobs:
       - name: '安卓端字节面影子对拍 (KfProtocol/AutoOpenKit vs vendor JS + golden, 判失败)'
         run: node tools/kotlinshadow.js
 
+      # 签名密钥指纹核对 (2026-10-18): 用户报"签名不一致, 不能覆盖安装"。
+      # 排查结论: keystore/kfkey.p12 自 c4a6a4d 起就随仓库走且从未被改过 (本地与 HEAD 的
+      # SHA-256 一致), 所以不一致的那台手机装的是 **c4a6a4d 之前**的产物 —— 那时 debug 还没
+      # 绑固定签名, 每台 CI runner 用自己的临时 debug.keystore, 换一次构建就换一次签名。
+      # 这一步把指纹钉死: 密钥若被无意替换 (重新生成 / 换机器 / 误提交), 立刻红并说明后果,
+      # 而不是让用户在手机上撞 "INSTALL_FAILED_UPDATE_INCOMPATIBLE" 才发现。
+      - name: 核对签名密钥指纹
+        working-directory: android-app
+        run: |
+          WANT=4fed9ca07b2d86ece40d65174214215c0ab928bd413b2d962ffb790778878268
+          [ -f app/keystore/kfkey.p12 ] || { echo "::error::app/keystore/kfkey.p12 不见了, debug/release 都绑了它"; exit 1; }
+          GOT=$(sha256sum app/keystore/kfkey.p12 | cut -d" " -f1)
+          if [ "$GOT" != "$WANT" ]; then
+            echo "::error::签名密钥指纹变了 GOT=$GOT 期望=$WANT"
+            echo "::error::换密钥 = 老手机上这个 App 只能先卸载再装 (签名不同不能覆盖安装)。"
+            echo "::error::确实是有意轮换的话, 把上面 WANT 改成新指纹, 并在提交说明里写清要重装。"
+            exit 1
+          fi
+          echo "签名密钥指纹一致 ($GOT), 可与既往构建互相覆盖安装"
+
       - name: 编译 APK (debug, 可直接安装)
         working-directory: android-app
         run: |
