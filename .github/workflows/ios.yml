@@ -408,6 +408,13 @@ jobs:
         if: failure()
         working-directory: android-app
         run: |
+          # 与 iOS 那支同一个理由: 日志要登录才能下载, 而 ::error 生成的 check annotation
+          # 是**无鉴权可读**的唯一一份证据。run#188 就是栽在"只知道红了、读不到 e: 行",
+          # 于是把一条 import 写错当成修好了 (SignalArrow 的 graphicsLayer 包名)。
+          # 先按 file= 形式提升 (GitHub 会把注解挂到文件行号上), 落不到文件名的退回纯文本。
+          grep -hE "^e: " build.log \
+            | sed -E 's#^e: file://[^:]+/(android-app/.*)$#::error file=\1#' \
+            | sed -E 's#^e: #::error::e: #' || true
           {
             echo "## Android 编译错误"
             grep -E "^e: |^w: .*error|error:" build.log | head -60 || echo "(build.log 里没有 e: 行)"
