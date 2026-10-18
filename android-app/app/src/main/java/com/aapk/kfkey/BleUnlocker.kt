@@ -538,10 +538,10 @@ class BleUnlocker(private val ctx: Context) {
         val settings = ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
             .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
-            // 激进匹配 (2026-10-18 用户口径 "信号刷新很慢"): 同一广播尽量多回调、尽快回调,
-            // 门口 RSSI 的刷新率从"秒级一跳"提到"亚秒级", 箭头灌绿和自动点火都更跟手。
-            .setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
-            .setNumMatches(ScanSettings.MATCH_NUM_MAX)
+            // 不加 setMatchMode/setNumOfMatches: 那两个只在**设了 ScanFilter 时**才生效,
+            // 而这里必须 null filters (锁的广播只有厂商段 98ED、没有服务 UUID, 按 UUID 过滤
+            // 一条都收不到)。写了就是假装提速的死配置 —— 刷新率的真实地板是锁端 1.5s 广播间隔,
+            // 连上之后走 readRemoteRssi 的 200ms 轮询 (见 observeSignal), 那才是亚秒级的那一路。
             .build()
         val cb = object : ScanCallback() {
             override fun onScanResult(callbackType: Int, result: ScanResult) {
