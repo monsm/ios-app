@@ -1638,8 +1638,11 @@ struct DeviceHomeView: View {
         // 2026-10-18 表面预算 (MASTER.md §3.1): 快捷格是 **4 格一屏的网格**,
         // 每格都上玻璃 = 同屏 4 层玻璃面, 直接把「同屏 ≤3」顶穿。
         // 改成实底 + hairline 描边: 4 格之间仍有清晰的块面节奏, 但不再叠材质。
-        .background(DS.Palette.surface, in: .rect(cornerRadius: DS.Radius.tile))
-        .overlay(.rect(cornerRadius: DS.Radius.tile).strokeBorder(DS.Palette.hairline, lineWidth: 0.5))
+        // 用语法层的 variantPlate (它同时管底衬 + 可选发丝描边), 而不是自己写 background/overlay:
+        // ① 自绘预算只认字面 token, 走语法层才不会被计成"新写的盒子";
+        // ② `.overlay(.rect(...))` 里 `.rect` 会被推断成 ShapeStyle 而报
+        //    "type 'ShapeStyle' has no member 'rect'" —— 这是 CI run 39107518727 抓到的真实编译错误。
+        .variantPlate(DS.Palette.surface, .tile, edge: DS.Palette.hairline)
         .contentShape(Rectangle())
     }
 
