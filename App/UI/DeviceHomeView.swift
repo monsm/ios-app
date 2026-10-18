@@ -583,6 +583,8 @@ struct DeviceHomeView: View {
                                 Text(LockArchive.displayName(kc))
                                 Image(systemName: "moon.zzz.fill").foregroundStyle(DS.Palette.textSub)
                             }
+                            .frame(minHeight: DS.Hit.min)   // 2026-10-18 设计审核: chip 原来只有 ContentIG 高度
+                            .contentShape(Rectangle())
                         }
                     }
                 }
@@ -602,6 +604,8 @@ struct DeviceHomeView: View {
                                 Text(LockArchive.displayName(kc))
                                 Image(systemName: "eye.slash").foregroundStyle(DS.Palette.textSub)
                             }
+                            .frame(minHeight: DS.Hit.min)   // 2026-10-18 设计审核: chip 原来只有 ContentIG 高度
+                            .contentShape(Rectangle())
                         }
                     }
                 }
@@ -619,6 +623,7 @@ struct DeviceHomeView: View {
                       : "按电量升序 (先照顾最弱)",
                       systemImage: "arrow.up.arrow.down")
             }
+            .frame(minHeight: DS.Hit.min)   // 2026-10-18: 菜单项在窄屏上原来只有文字行高
             Divider()
             Button { showOverview = true } label: {
                 Label("全部锁总览与对比", systemImage: "chart.bar.horizontal")
@@ -661,6 +666,8 @@ struct DeviceHomeView: View {
                 if isLow(kc) { Image(systemName: "battery.25percent").foregroundStyle(DS.Palette.warn) }
                 if LockArchive.isSleeping(kc.mac) { Image(systemName: "moon.zzz.fill").foregroundStyle(DS.Palette.textSub) }
             }
+            .frame(minHeight: DS.Hit.min)   // 2026-10-18: 同上
+            .contentShape(Rectangle())
         }
         // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 没有 minHeight (< 44)。
         // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。

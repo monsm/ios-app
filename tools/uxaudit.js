@@ -6,6 +6,10 @@
 //  但它们散在 3 个 SKILL.md 里, 1235 处交互靠人读不完。
 //  这个脚本把判据翻译成正则, 一次扫全仓, 输出**线索**而不是判决。
 //
+//  ⚠️ 能力边界 (必须讲清, 否则会被误当成门禁): 本脚本只能做"单行/固定窗口"级模式匹配。
+//     SwiftUI 的嵌套结构 (Button 内嵌 HStack 内嵌 Label、修饰符链跨十几行) 正则**看不出层级**。
+//     因此 A/B/E 三类只作线索; C/D 两类 (repeatForever / 触觉调用) 是点查, 相对可靠。
+//
 //  判据来源:
 //    · apple-design        —— 响应/直接操纵/可中断性/spring
 //    · emil-design-eng     —— 动效决策框架/看不见的细节
@@ -57,16 +61,15 @@ for (const f of files) {
     const ln = i + 1;
 
     // A · 可点元素没有最小触达 (ui-ux-pro-max: 44pt iOS / 48dp Android)
+    // ⚠️ A 判据的已知局限（2026-10-18 记录）:
+    //   SwiftUI 的 Button 是**嵌套结构**, 而正则看不出层级的边界。
+    //   试过"按大括号配对取完整块"——结果把外层函数整段吞进来, 反而 100% 命中, 更不准。
+    //   所以这里退回"固定窗口"并**明确它只产生线索**: 命中不一定真缺触达(可能触达写在窗口外),
+    //   不命中也不一定没问题(触达可能写在 Button 前)。
+    //   真判据只能靠真机走查或 Swift 语法树 —— 那是本脚本做不到的, 不假装能做到。
     if (/\bButton\s*\{/.test(l)) {
-      // 只看**这一个 Button 的 label 块**: 从 Button 行起, 遇到 .buttonStyle / .onTapGesture /
-      // 顶层 } 就停。原来用大括号配对会把整个外层函数都算进去 —— 那样永远"有触达"。
-      let end = i;
-      for (let j = i + 1; j < Math.min(lines.length, i + 40); j++) {
-        if (/\.buttonStyle|\.onTapGesture|\.contentShape/.test(lines[j])) { end = j; break; }
-        if (/^\s{0,12}\}\s*$/.test(lines[j])) { end = j; break; }
-      }
-      const win = lines.slice(i, end + 1).join('\n');
-      if (!/DS\.Hit\.min|minHeight:\s*4[4-9]|minHeight:\s*5\d|frame\(height:\s*4[4-9]|frame\(height:\s*5\d|padding\(\.vertical: DS\.Space\.(m|l|xl)\)|Capsule\(\)|RoundedRectangle/.test(win)) {
+      const win = lines.slice(i, i + 8).join('\n');
+      if (!/DS\.Hit\.min|minHeight:\s*4[4-9]|frame\(width:\s*DS\.Hit|Capsule\(\)|RoundedRectangle/.test(win)) {
         hits.A.push(rel + ':' + ln + '  ' + l.trim().slice(0, 70));
       }
     }
