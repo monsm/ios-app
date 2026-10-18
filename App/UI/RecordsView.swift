@@ -886,9 +886,53 @@ struct RecordsView: View {
     // ---------- 包9: 筛选 chip 行 (564/571/572/567/568/569/570) ----------
     private static let kindOptions: [(String, String)] = [("全部凭证", ""), ("指纹", "fp"), ("密码", "pwd"), ("临时码", "temp"), ("数字钥匙", "key")]
 
+    /// 筛选区 —— 2026-10-18 按 PageGrammar 规则 3 重构。
+    ///
+    /// 重构前: **5 行筛选片全部常驻展开** (时段 / 工作日周末 / 凭证类型 / 告警四连 / 说明),
+    /// 首屏被筛选占掉大半, 用户要看的"记录"被推到下面 —— 这就是截图里那堆 chip 的来源。
+    ///
+    /// 重构后:
+    ///   · 默认只留**一行摘要**: 「全部记录」或「时段·工作日·密码·仅告警 (4)」+ 调整入口
+    ///   · 点摘要才展开完整筛选面板 (原来那 5 行原样保留在里面, 判据一点没改)
+    ///   · 有意向筛选时摘要会显示已启用项数, 不让人忘了自己筛过什么
+    ///
+    /// 为什么不是删掉低频筛选项: 它们是真功能 (567/565/570 都是拍板过的),
+    /// 问题从来不是"有这些筛选", 而是"它们一直摊在首屏"。
     @ViewBuilder
     private var filterChips: some View {
         Section {
+            Button {
+                withAnimation(DS.Motion.quick) { filtersExpanded.toggle() }
+                DS.Haptics.tick.impactOccurred()
+            } label: {
+                HStack(spacing: DS.Space.s) {
+                    Image(systemName: "line.3.horizontal.decrease.circle")
+                        .font(.system(size: DS.Icon.sm, weight: .medium))
+                        .accessibilityHidden(true)
+                    Text(filterSummary)
+                        .vkFont(.subheadline, weight: activeFilterCount > 0 ? .semibold : .regular)
+                        .lineLimit(1)
+                    if activeFilterCount > 0 {
+                        Text("\(activeFilterCount)")
+                            .vkFont(.caption2, weight: .semibold)
+                            .foregroundStyle(DS.Palette.onAccent)
+                            .padding(.horizontal, DS.Space.xs)
+                            .frame(minHeight: 18)
+                            .background(DS.Palette.accentText, in: Capsule())
+                    }
+                    Spacer(minLength: 0)
+                    Image(systemName: filtersExpanded ? "chevron.up" : "chevron.down")
+                        .font(.system(size: DS.Icon.xs, weight: .semibold))
+                        .foregroundStyle(DS.Palette.textSub)
+                }
+                .foregroundStyle(activeFilterCount > 0 ? DS.Palette.accentText : DS.Palette.text)
+                .frame(minHeight: DS.Hit.min)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("筛选: \(filterSummary), 点按\(filtersExpanded ? "收起" : "展开")全部筛选项")
+
+            if filtersExpanded {
             // 564 时段
             // 572 深夜预设
             chipRowSection("时段", selected: filters.segment, items: [("全部", 0), ("早 6-9", 1), ("午 10-14", 2), ("晚 15-21", 3), ("深夜预设", 4)]) { name, i in
@@ -990,11 +1034,13 @@ struct RecordsView: View {
                 // 671 在线假日源 (拍板 #22): 内置表始终兜底, 拉到的年份按年整体覆盖; 自动档默认关。
                 holidayFeedRows
             }
-        } header: {
-            HStack(spacing: DS.Space.s) {
-                Text("筛选")   // 564/571/572/567/568/569 筛选
-                Spacer(minLength: DS.Space.s)
-                if activeFilters {
+            // 复位按钮: 原来是 section header 里的附属品, 现在面板展开时放在顶部一行
+            if activeFilters {
+                HStack(spacing: DS.Space.s) {
+                    Text("筛选")
+                        .vkFont(.caption)
+                        .foregroundStyle(DS.Palette.textSub)
+                    Spacer(minLength: DS.Space.s)
                     Button("复位") {
                         filters = QueryFilters()
                         reversed = false
@@ -1006,6 +1052,38 @@ struct RecordsView: View {
                 }
             }
         }
+        }
+    }
+
+    /// 一行摘要: 没筛选时是「全部记录」, 有筛选时列出已启用项。
+    private var filterSummary: String {
+        var parts: [String] = []
+        if filters.segment != 0 {
+            let names = ["全部", "早 6-9", "午 10-14", "晚 15-21", "深夜"]
+            parts.append(names.indices.contains(filters.segment) ? names[filters.segment] : "时段")
+        }
+        if filters.dayKind != 0 { parts.append(filters.dayKind == 1 ? "工作日" : "周末") }
+        if !filters.kind.isEmpty {
+            parts.append(Self.kindOptions.first { $0.1 == filters.kind }?.0 ?? "类型")
+        }
+        if filters.alarmOnly { parts.append("仅告警") }
+        if !filters.alarmKinds.isEmpty { parts.append("告警 \(filters.alarmKinds.count) 类") }
+        if filters.failedOnly { parts.append("失败") }
+        if reversed { parts.append("最早在前") }
+        return parts.isEmpty ? "全部记录" : parts.joined(separator: " · ")
+    }
+
+    /// 已启用筛选的项数 (摘要上那枚数字)。
+    private var activeFilterCount: Int {
+        var n = 0
+        if filters.segment != 0 { n += 1 }
+        if filters.dayKind != 0 { n += 1 }
+        if !filters.kind.isEmpty { n += 1 }
+        if filters.alarmOnly { n += 1 }
+        if !filters.alarmKinds.isEmpty { n += 1 }
+        if filters.failedOnly { n += 1 }
+        if reversed { n += 1 }
+        return n
     }
     private func chipRowSection(_ title: String, selected: Int, items: [(String, Int)], pick: @escaping (_ name: String, _ i: Int) -> Void) -> some View {
         VStack(alignment: .leading, spacing: DS.Space.xs) {
