@@ -45,6 +45,10 @@ struct RecordsView: View {
     @State private var parsedTags: [String] = []    // 555 解析预览标签
     @State private var highlightTokens: [String] = []  // 557 命中高亮词
     @State private var filters = QueryFilters.load(mac: DB.preferredMac())   // 192 会话保留
+    /// 2026-10-18 记录页重构: 筛选面板是否展开。默认 false = 只显示一行摘要。
+    @State private var filtersExpanded = false
+    /// 2026-10-18: 低频区是否展开。默认收起。
+    @State private var secondaryRowsExpanded = false
     @State private var reversed = false       // 570 正序回放
     @State private var laneMode = false       // 785 泳道时间线 (全部锁模式)
     @State private var detailRec: Rec?        // 576 记录详情 sheet
