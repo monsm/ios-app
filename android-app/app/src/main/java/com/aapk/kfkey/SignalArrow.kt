@@ -222,3 +222,43 @@ private fun DrawScope.drawFindArrow(cx: Float, cy: Float, len: Float, color: Col
     }
     drawPath(p, color)
 }
+/** Hollow triangle arrow with 3D gyro rotation + green stroke effect */
+private fun DrawScope.drawHollowTriangleWithGyro(
+    cx: Float, 
+    cy: Float, 
+    len: Float, 
+    color: Color,
+    gyroYaw: Float
+) {
+    val strokeWidth = 6.dp.toPx()
+    val halfWidth = len * 0.12f
+    
+    // Create hollow triangle path (stroke only, no fill)
+    val arrowPath = Path().apply {
+        moveTo(cx, cy - len/2)      // Top tip
+        lineTo(cx + halfWidth*0.3f, cy + len/4)  // Lower right inner point
+        lineTo(cx + halfWidth, cy + len/2)       // Bottom right corner
+        lineTo(cx, cy + len/3)           // Middle indent (V shape)
+        lineTo(cx - halfWidth, cy + len/2)       // Bottom left corner
+        lineTo(cx - halfWidth*0.3f, cy + len/4)  // Upper left inner point
+        close()                          // Close for stroke but won't fill
+    }
+    
+    // Rotate based on gyro yaw for 3D directional feel (±30° range)
+    val adjustedAngle = ((gyroYaw % 360) - 180).coerceIn(-30f, 30f).toDouble()
+    rotate(adjustedAngle.toFloat(), pivot = Offset(cx, cy)) {
+        // Stroke only → hollow arrow (no fill)
+        drawPath(
+            arrowPath,
+            color = color,
+            style = androidx.compose.ui.graphics.drawscope.Stroke(width = strokeWidth)
+        )
+    }
+    
+    // Small center dot marker
+    drawCircle(
+        color = color,
+        radius = 2.dp.toPx(),
+        center = Offset(cx, cy)
+    )
+}
