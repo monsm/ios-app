@@ -425,7 +425,7 @@ final class AutoOpenController {
         // 真正耗电的是**为了即时而持续开着的扫描**。所以门判定可以在两个模式下都在，
         // 但"每 150ms 读一次 RSSI"那种激进采样**只在箭头界面里发生** ——
         // 那个开关在 FindArrowSession 里，此处不重复判。
-        if armed, FindArrowSession.shared.isActive { tickDwell(mac: mac) }
+        if armed, FindArrowPower.intensive { tickDwell(mac: mac) }
     }
     func rssiArmed() -> Bool { armed }
 

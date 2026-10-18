@@ -482,6 +482,7 @@ private fun KfApp(unlocker: BleUnlocker) {
                 pitch = pitch,
                 roll = roll,
                 soundOn = findSound,
+                foreground = foreground,
                 onToggleSound = { findSound = !findSound },
                 onClose = { airTagDismissed = true },
             )
@@ -789,6 +790,7 @@ private fun AirTagLayer(
     pitch: Float,
     roll: Float,
     soundOn: Boolean,
+    foreground: Boolean,
     onToggleSound: () -> Unit,
     onClose: () -> Unit,
 ) {

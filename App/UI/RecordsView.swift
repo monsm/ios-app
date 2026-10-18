@@ -1086,18 +1086,53 @@ struct RecordsView: View {
         return parts.isEmpty ? "全部记录" : parts.joined(separator: " · ")
     }
 
-    /// 已启用筛选的项数 (摘要上那枚数字)。
-    private var activeFilterCount: Int {
-        var n = 0
-        if filters.segment != 0 { n += 1 }
-        if filters.dayKind != 0 { n += 1 }
-        if !filters.kind.isEmpty { n += 1 }
-        if filters.alarmOnly { n += 1 }
-        if !filters.alarmKinds.isEmpty { n += 1 }
-        if filters.failedOnly { n += 1 }
-        if reversed { n += 1 }
-        return n
+    /// 低频区折叠入口 —— 2026-10-18 记录页重构新增。
+    ///
+    /// 生日条 / 成员筛选 chip / 门神 / 掉电观察 / 去年今日 这五块不是不重要,
+    /// 而是不是每次进记录页都要看。原来全部常驻在列表前, 首屏被它们占满。
+    /// 现在收进一个可展开区: 默认收起, 展开后与原来逐字一致。
+    @ViewBuilder
+    private var secondaryRowsDisclosure: some View {
+        Section {
+            Button {
+                withAnimation(DS.Motion.quick) { secondaryRowsExpanded.toggle() }
+                DS.Haptics.tick.impactOccurred()
+            } label: {
+                HStack(spacing: DS.Space.s) {
+                    Image(systemName: "square.stack.3d.up")
+                        .font(.system(size: DS.Icon.sm, weight: .medium))
+                        .accessibilityHidden(true)
+                    Text(secondaryRowsSummary)
+                        .vkFont(.footnote)
+                        .lineLimit(1)
+                    Spacer(minLength: 0)
+                    Image(systemName: secondaryRowsExpanded ? "chevron.up" : "chevron.down")
+                        .font(.system(size: DS.Icon.xs, weight: .semibold))
+                }
+                .foregroundStyle(DS.Palette.textSub)
+                .frame(minHeight: DS.Hit.min)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("更多记录视图")
+
+            if secondaryRowsExpanded {
+                birthdayBanner
+                memberChips
+                doorGods
+                dropWatchSection
+                lastYearTodayRow
+            }
+        }
     }
+
+    /// 折叠行上的一行说明: 只列现在真有内容的那几块, 空的不占字。
+    private var secondaryRowsSummary: String {
+        var parts: [String] = []
+        if !DB.members().isEmpty { parts.append("成员筛选") }
+        return parts.isEmpty ? "更多视图" : parts.joined(separator: " · ")
+    }
+
     private func chipRowSection(_ title: String, selected: Int, items: [(String, Int)], pick: @escaping (_ name: String, _ i: Int) -> Void) -> some View {
         VStack(alignment: .leading, spacing: DS.Space.xs) {
             Text(title)

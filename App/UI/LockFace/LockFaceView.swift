@@ -341,7 +341,6 @@ struct LockFaceView: View {
         }
     }
 
-    @MainActor
     /// 开锁成功后的时间轴。
     ///
     /// 2026-10-18 设计审查修正 (ui-ux-pro-max: "Animate 1-2 key elements per view maximum"):
