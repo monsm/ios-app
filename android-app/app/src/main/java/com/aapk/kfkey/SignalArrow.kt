@@ -165,13 +165,46 @@ fun SignalArrow(
                 )
             }
             rotate(bearing + sweep, pivot = Offset(cx, cy)) {
-                drawFindArrow(cx, cy, r - 22.dp.toPx(), line.copy(alpha = if (busy) 0.5f else 1f))
+                drawHollowTriangleWithGyro(
+                    cx, cy, r - 22.dp.toPx(), 
+                    line.copy(alpha = if (busy) 0.5f else 1f),
+                    azimuthDeg  // Pass actual gyro yaw
+                )
+                
+                // Outer circle ring background (FindMy style)
+                drawCircle(
+                    color = Accent.copy(alpha = 0.1f),
+                    radius = r - 10.dp.toPx(),
+                    center = Offset(cx, cy),
+                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.dp.toPx())
+                )
             }
             drawCircle(color = Ink.copy(alpha = 0.9f), radius = 3.dp.toPx(), center = Offset(cx, cy))
         }
+        
+        // Glow effect when signal > 70% (like AirTag strong signal)
+
+        if (fill > 0.7f && peakDeg != null) {
+
+            Canvas(modifier.size(208.dp)) {
+
+                val glowRadius = (size.minDimension / 2f - 22.dp.toPx()) * 1.5f
+
+                drawCircle(
+
+                    color = line.copy(alpha = 0.15f),
+
+                    radius = glowRadius,
+
+                    center = Offset(size.width / 2f, size.height / 2f)
+
+                )
+
+            }
+
+        }
     }
 }
-
 /** FindMy 式箭头: 细腰长身, 尖端朝上 (0°)。DrawScope 本身就是 Density, 所以 8.dp.toPx() 直接用。 */
 private fun DrawScope.drawFindArrow(cx: Float, cy: Float, len: Float, color: Color) {
     val w = len * 0.16f
