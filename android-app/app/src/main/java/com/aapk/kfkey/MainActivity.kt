@@ -2,6 +2,8 @@ package com.aapk.kfkey
 
 import android.Manifest
 import android.content.Context
+import android.media.AudioManager
+import android.media.ToneGenerator
 import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
@@ -132,6 +134,10 @@ private fun KfApp(unlocker: BleUnlocker) {
     var peakRssi by remember { mutableStateOf<Int?>(null) }
     var peakAz by remember { mutableStateOf<Float?>(null) }
     var showSettings by remember { mutableStateOf(false) }   // 二级菜单: 靠近开关 / 重新扫码 / 解绑
+    var pitch by remember { mutableStateOf(0f) }              // 手机俯仰 (AirTag 层 3D 视差)
+    var roll by remember { mutableStateOf(0f) }               // 手机横滚 (同上)
+    var airTagDismissed by remember { mutableStateOf(false) }  // 用户手动收起 AirTag 层 (本次靠近事件内不再弹)
+    var findSound by remember { mutableStateOf(true) }         // AirTag 层提示音开关
     val lifecycleOwner = LocalLifecycleOwner.current
 
     fun say(text: String, bad: Boolean = false) {
@@ -203,6 +209,7 @@ private fun KfApp(unlocker: BleUnlocker) {
                     foreground = true
                     prewarmStarted = false
                     fired = false
+                    airTagDismissed = false
                 }
                 Lifecycle.Event.ON_PAUSE -> {
                     foreground = false
@@ -273,7 +280,7 @@ private fun KfApp(unlocker: BleUnlocker) {
     // "当前信号"再也不更新, 用户只能关掉开关再打开。
     LaunchedEffect(proximity, lock?.mac, busy, warming, foreground) {
         val l = lock ?: return@LaunchedEffect
-        if (!proximity) { rssi = null; armed = false; fired = false; prewarmStarted = false; peakRssi = null; peakAz = null }
+        if (!proximity) { rssi = null; armed = false; fired = false; prewarmStarted = false; peakRssi = null; peakAz = null; airTagDismissed = false }
         // 开锁在途 **或预热在途** 都撤下监测: 安卓同时只跑一路扫描, 而且边扫边连极易 133。
         // 撤下后 rssi 保持最后一次的读数 (不抹成 null), 免得界面在预热那一瞬闪成"正在寻找门锁…"
         if (!proximity || busy || warming || !foreground) return@LaunchedEffect
@@ -290,8 +297,11 @@ private fun KfApp(unlocker: BleUnlocker) {
     // 手机姿态角: 只在有前台时收 (后台不占传感器)。箭头旋转用的是这个真值, 不假装知道锁的方位。
     LaunchedEffect(foreground) {
         if (!foreground) return@LaunchedEffect
-        HeadingSense.azimuth(ctx).collect { azimuth = it }
+        HeadingSense.attitude(ctx).collect { a -> azimuth = a[0]; pitch = a[1]; roll = a[2] }
     }
+
+    // 连上锁信号 (有 RSSI 读数) 且没被手动收起 ⇒ 弹出 AirTag 精确查找层。
+    val airTagShowing = proximity && rssi != null && !airTagDismissed
 
     Box(
         Modifier
@@ -312,13 +322,16 @@ private fun KfApp(unlocker: BleUnlocker) {
                 // 靠近指示箭头 (FindMy 式): 只在开了「靠近自动开锁」时出现。
                 // 旋转 = 手机姿态角 (真); 填充 = 当前信号 (真)。这把锁没有 UWB, 算不出绝对方位,
                 // 所以箭头指"转动手机时信号最强的那个朝向", 不谎称指针自动指向门 (见 SignalArrow 头注)。
-                AnimatedVisibility(visible = proximity) {
+                AnimatedVisibility(visible = proximity && !airTagShowing) {
                     SignalArrow(
                         azimuthDeg = azimuth,
                         peakDeg = peakAz,
                         rssi = rssi,
                         armed = armed,
                         busy = busy,
+                        pitchDeg = pitch,
+                        rollDeg = roll,
+                        sizeDp = 208,
                     )
                 }
                 UnlockDial(busy = busy, onClick = { doUnlock(auto = false) })
@@ -438,6 +451,32 @@ private fun KfApp(unlocker: BleUnlocker) {
                 TextButton(onClick = { pending = null }) { Text("取消", color = InkSub) }
             }
         )
+    }
+
+    // ---------- 上层: AirTag 精确查找层 (连上锁信号自动弹出, 可手动收起) ----------
+    // 底层 = 手动解锁圆盘 (一直在, 齿轮/二级菜单都在那); 上层 = 全屏绿, 空心箭头随信号灌绿,
+    // 满绿即达武装线自动开锁。点 ✕ 收起 (airTagDismissed), 本次靠近事件内不再弹, 回到底层手动操作。
+    AnimatedVisibility(
+        visible = airTagShowing,
+        enter = fadeIn(tween(180)) + slideInVertically(tween(260)) { it },
+        exit = fadeOut(tween(150)) + slideOutVertically(tween(220)) { it },
+    ) {
+        val l = lock
+        if (l != null) {
+            AirTagLayer(
+                name = l.name,
+                rssi = rssi,
+                armed = armed,
+                busy = busy,
+                azimuthDeg = azimuth,
+                peakDeg = peakAz,
+                pitch = pitch,
+                roll = roll,
+                soundOn = findSound,
+                onToggleSound = { findSound = !findSound },
+                onClose = { airTagDismissed = true },
+            )
+        }
     }
 }
 
@@ -688,4 +727,107 @@ private fun vibrate(ctx: Context) {
     val v = (ctx.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager)?.defaultVibrator
         ?: return
     runCatching { v.vibrate(VibrationEffect.createOneShot(28, VibrationEffect.DEFAULT_AMPLITUDE)) }
+}
+
+// ---------- AirTag 精确查找层 ----------
+@Composable
+private fun AirTagLayer(
+    name: String,
+    rssi: Int?,
+    armed: Boolean,
+    busy: Boolean,
+    azimuthDeg: Float,
+    peakDeg: Float?,
+    pitch: Float,
+    roll: Float,
+    soundOn: Boolean,
+    onToggleSound: () -> Unit,
+    onClose: () -> Unit,
+) {
+    val fill = signalFill(rssi)
+    val bearing = relativeBearing(azimuthDeg, peakDeg).coerceIn(-30f, 30f)
+    val dist = distanceMeters(rssi)
+    val distText = when {
+        dist < 0f -> "测距中…"
+        dist < 1f -> (dist * 100).toInt().toString() + " 厘米"
+        else -> ((dist * 10).toInt() / 10f).toString() + " 米"
+    }
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(if (armed) Color(0xFF12B24A) else Color(0xFF1CC964))
+    ) {
+        // 顶部: 正在查找 + 锁名 (对齐 AirTag 精确查找的标题区)
+        Column(Modifier.padding(start = 28.dp, top = 56.dp)) {
+            Text("正在查找", color = Color.White.copy(alpha = 0.85f), fontSize = 15.sp, fontWeight = FontWeight.Medium)
+            Spacer(Modifier.height(2.dp))
+            Text(name, color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.Bold)
+        }
+        // 中央: 空心箭头 (随信号从下往上灌绿, 满绿=可开)
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            SignalArrow(
+                azimuthDeg = azimuthDeg,
+                peakDeg = peakDeg,
+                rssi = rssi,
+                armed = armed,
+                busy = busy,
+                pitchDeg = pitch,
+                rollDeg = roll,
+                sizeDp = 300,
+            )
+        }
+        // 底部左: 粗估距离 + 方向 (诚实: 是估计值, 不是 UWB 测距)
+        Column(Modifier.align(Alignment.BottomStart).padding(start = 28.dp, bottom = 116.dp)) {
+            Text(distText, color = Color.White, fontSize = 34.sp, fontWeight = FontWeight.Bold)
+            Text(directionLabel(bearing), color = Color.White.copy(alpha = 0.92f), fontSize = 26.sp, fontWeight = FontWeight.SemiBold)
+        }
+        // 左下: 收起 (回到手动底层)
+        Box(Modifier.align(Alignment.BottomStart).padding(28.dp)) {
+            CircleIconButton(label = "✕", onClick = onClose)
+        }
+        // 右下: 提示音开关
+        Box(Modifier.align(Alignment.BottomEnd).padding(28.dp)) {
+            CircleIconButton(label = if (soundOn) "🔊" else "🔇", onClick = onToggleSound)
+        }
+    }
+    ProximityBeep(active = true, fill = fill, soundOn = soundOn)
+}
+
+@Composable
+private fun CircleIconButton(label: String, onClick: () -> Unit) {
+    Box(
+        Modifier
+            .size(52.dp)
+            .clip(CircleShape)
+            .background(Color.White.copy(alpha = 0.22f))
+            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(label, color = Color.White, fontSize = 20.sp)
+    }
+}
+
+/** 靠近提示音: 信号越强间隔越短 (AirTag 那种"滴滴滴"加速)。按 fill 分档, 档位不变就不重启协程。 */
+@Composable
+private fun ProximityBeep(active: Boolean, fill: Float, soundOn: Boolean) {
+    val level = when {
+        fill > 0.85f -> 3
+        fill > 0.6f -> 2
+        fill > 0.3f -> 1
+        fill > 0.05f -> 0
+        else -> -1
+    }
+    LaunchedEffect(active, soundOn, level) {
+        if (!active || !soundOn || level < 0) return@LaunchedEffect
+        val tg = runCatching { ToneGenerator(AudioManager.STREAM_NOTIFICATION, 90) }.getOrNull() ?: return@LaunchedEffect
+        val period = when (level) { 3 -> 240L; 2 -> 420L; 1 -> 700L; else -> 1100L }
+        try {
+            while (true) {
+                runCatching { tg.startTone(ToneGenerator.TONE_PROP_BEEP, 110) }
+                delay(period)
+            }
+        } finally {
+            runCatching { tg.release() }
+        }
+    }
 }

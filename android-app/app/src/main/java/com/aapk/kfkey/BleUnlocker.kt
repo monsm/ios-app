@@ -421,7 +421,7 @@ class BleUnlocker(private val ctx: Context) {
         }
         // 停扫之后 settle 一下再连: scanForLock 收尾那句 stopScan 是异步生效的, 立刻 connectGatt
         // 是安卓 GATT 133 的头号成因 (射频还在扫描态)。命中复用链路时**根本不走这里**, 不付这个钱。
-        delay(120)
+        delay(80)   // 停扫后仍需 settle 一拍再连 (边扫边连 = 133 头号成因), 但从 120 收到 80
         val g = device.connectGatt(ctx, false, cb, BluetoothDevice.TRANSPORT_LE) ?: return false
         s.gatt = g
         if (withTimeoutOrNull(3_000) { s.connected.await() } != true) return false
@@ -538,6 +538,10 @@ class BleUnlocker(private val ctx: Context) {
         val settings = ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
             .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
+            // 激进匹配 (2026-10-18 用户口径 "信号刷新很慢"): 同一广播尽量多回调、尽快回调,
+            // 门口 RSSI 的刷新率从"秒级一跳"提到"亚秒级", 箭头灌绿和自动点火都更跟手。
+            .setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
+            .setNumMatches(ScanSettings.MATCH_NUM_MAX)
             .build()
         val cb = object : ScanCallback() {
             override fun onScanResult(callbackType: Int, result: ScanResult) {
