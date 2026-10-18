@@ -1060,6 +1060,7 @@ struct RootView: View {
         DeviceHomeView()
             .onAppear { PageTrace.shown("设备") }
             .keyboardShortcut("1", modifiers: .command)
+            .toolbar { appIndexToolbar }
     }
     @ViewBuilder private var credentialsTabContent: some View {
         // 身份挂在这里 (父层) 才有效: CredentialsView 的 @State 由 TabView 持有,
@@ -1069,6 +1070,23 @@ struct RootView: View {
             .safeAreaInset(edge: .top, spacing: 0) { bleStatusStrip(app: app, sense: sense) }
             .onAppear { PageTrace.shown("凭证") }
             .keyboardShortcut("2", modifiers: .command)
+            .toolbar { appIndexToolbar }
+    }
+    /// 2026-10-18 门面改造: Tab 根右上角「全部」入口 (PART2 §4.1 的第一处触达)。
+    /// 为什么做成 toolbar 而不是塞进各页面: 76 个目的地各自维护自己的导航栏,
+    /// 在父层挂一次就够, 页面里一处都不用改。
+    @ViewBuilder private var appIndexToolbar: some ToolbarContent {
+        ToolbarItem(placement: .topBarTrailing) {
+            Button {
+                showAppIndex = true
+            } label: {
+                Text("全部")
+                    .vkFont(.body)
+                    .frame(minHeight: DS.Hit.min)
+            }
+            .accessibilityLabel("全部功能")
+            .accessibilityHint("打开 77 项功能目录")
+        }
     }
     @ViewBuilder private var recordsTabContent: some View {
         // 同凭证 Tab: 记录是纯 per-lock 数据, 在父层挂身份才能整体重建。
@@ -1078,12 +1096,14 @@ struct RootView: View {
             .safeAreaInset(edge: .top, spacing: 0) { bleStatusStrip(app: app, sense: sense) }
             .onAppear { PageTrace.shown("记录") }
             .keyboardShortcut("3", modifiers: .command)
+            .toolbar { appIndexToolbar }
     }
     @ViewBuilder private var settingsTabContent: some View {
         SettingsView()
             .safeAreaInset(edge: .top, spacing: 0) { bleStatusStrip(app: app, sense: sense) }
             .onAppear { PageTrace.shown("设置") }
             .keyboardShortcut("4", modifiers: .command)
+            .toolbar { appIndexToolbar }
     }
 
     /// 顶部横幅栈 (演示/BLE/自检/粘贴建议/toast/写入回执) —— 从 body 内联的 safeAreaInset
@@ -1304,6 +1324,8 @@ struct RootView: View {
 
     /// 2026-10-18 门面改造: 是否展示门面层。由 LockFacePolicy 在启动/回前台时决定。
     @State private var showLockFace = false
+    /// 2026-10-18 门面改造: 76 项目录 (sheet 级, 不占 Tab 位 — D1/D7)。
+    @State private var showAppIndex = false
 
     /// 门面展示判定。**纯调用策略**, 不自己判时间 —— 阈值与规则都在 LockFacePolicy。
     /// @MainActor: 读的是 @Published (devices/pendingRoute), 与同文件 handleScenePhase 同一处置。
@@ -1355,6 +1377,9 @@ struct RootView: View {
                         .scaleEffect(showLockFace ? 0.986 : 1)
                 }
                 .animation(DS.Motion.doorReveal, value: showLockFace)
+                .sheet(isPresented: $showAppIndex) {
+                    AppIndexView().environmentObject(app)
+                }
             }
         }
     }

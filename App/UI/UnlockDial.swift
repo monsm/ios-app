@@ -71,32 +71,6 @@ private struct UnlockPulseRing: View {
 // 2026-10-15 走查: 原来只在 `.onAppear` 里 `guard !reduceMotion` 挡住动画, 视图本身照样在树上 ——
 // `angle` 停在初值 0, 于是装饰档在"减少动效"下反而变成一段**冻住的靛蓝弧**常亮在盘外沿。
 // 注释写的是"不出现", 代码给的是"出现但不动": 这一族的判据是**该不该在树上**, 不是动画开没开。
-private struct UnlockShimmer: View {
-    var diameter: CGFloat
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var angle: Double = 0
-
-    var body: some View {
-        if reduceMotion {
-            EmptyView()
-        } else {
-            Circle()
-                .trim(from: 0, to: 0.16)
-                .stroke(AngularGradient(colors: [.clear, DS.Palette.accentText.opacity(0.85), .clear],
-                                        center: .center),
-                        style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                .frame(width: diameter + 18, height: diameter + 18)
-                .rotationEffect(.degrees(angle))
-                .allowsHitTesting(false)
-                .accessibilityHidden(true)
-                .transaction { $0.animation = nil }
-                .onAppear {
-                    angle = 0
-                    withAnimation(.linear(duration: 3.2).repeatForever(autoreverses: false)) { angle = 360 }
-                }
-        }
-    }
-}
 
 // ================= 65 雷达波纹 (Find My 查找) =================
 // 只在**握手中**挂载: `.connecting` 起、进就绪即停 (调用方按状态决定在不在树上，本视图不判状态)。
@@ -106,46 +80,7 @@ private struct UnlockShimmer: View {
 // `withAnimation` —— 后发的那次 (不带 delay) 覆盖了前一次 (带 .delay(0.55)) 的动画事务, 两圈同起同落,
 // 视觉上就是一根加粗的单环, 正是上面那句要避开的"在忙"。相位要按**每圈自己的态**驱动才成立。
 // 顺带同 75 那条: reduceMotion 的降级落在"挂不挂"这一层, 不是在 onAppear 里挡动画 —— 挡了动画两圈就 static 地留在盘上。
-private struct UnlockRadarRing: View {
-    var diameter: CGFloat
-    var strokeAlpha: Double
-    var peakOpacity: Double
-    var delay: Double
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var on = false
 
-    var body: some View {
-        Circle()
-            .strokeBorder(DS.Palette.accent.opacity(strokeAlpha), lineWidth: 1.5)
-            .frame(width: diameter, height: diameter)
-            .scaleEffect(on ? 1.55 : 0.92)
-            .opacity(on ? 0 : peakOpacity)
-            .transaction { $0.animation = nil }
-            .onAppear {
-                on = false
-                withAnimation(.easeOut(duration: 1.9).repeatForever(autoreverses: false).delay(delay)) { on = true }
-            }
-    }
-}
-
-private struct UnlockRadarWave: View {
-    var diameter: CGFloat
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    var body: some View {
-        if reduceMotion {
-            EmptyView()
-        } else {
-            ZStack {
-                UnlockRadarRing(diameter: diameter, strokeAlpha: 0.5, peakOpacity: 0.75, delay: 0)
-                // 同周期 1.9s、起点晚 0.55s ⇒ 两圈之间恒定错开约 1/4 周期 (delay 只作用在首帧，之后随周期一起走)
-                UnlockRadarRing(diameter: diameter, strokeAlpha: 0.32, peakOpacity: 0.60, delay: 0.55)
-            }
-            .allowsHitTesting(false)
-            .accessibilityHidden(true)
-        }
-    }
-}
 
 // ================= 73 成功涟漪 (Apple Pay 完成动画) / 1009 涟漪结界 =================
 // 1009 原案"上锁成功后的涟漪结界"判 ❌: 协议根本没有上锁命令与状态位 (CAPABILITY §5)，涟漪没有真实触发点。
@@ -154,36 +89,6 @@ private struct UnlockRadarWave: View {
 // IDEA-BANK 原句是"**指令确认瞬间**扩散一圈靛蓝渐变涟漪"，落点在 176pt 圆盘 —— 与已有的
 // `shock` 不是同一个东西: shock 是 `.success`(开门**结果**回来)后的绿圈冲击波。两者时刻不同、
 // 语义不同 (发出指令已确认 vs 锁真的开了)，所以各留各的: 这里走靛蓝、只在 .opening 触发一次。
-private struct DialRipple: View {
-    var diameter: CGFloat
-    var color: Color
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var go = false
-
-    var body: some View {
-        // reduceMotion 下不挂 (258 那句"降级: reduceMotion 关闭…涟漪"原来并没有成立):
-        // 只在 onAppear 里挡掉动画的话 `go` 停在 false ⇒ `.opacity(0.9)` 的一圈实色环**常亮**,
-        // 而调用方 `if rippleKey > 0` 一旦点过一次开锁就把本视图永久留在树上 —— 结果是减少动效的
-        // 用户开一次门后盘面上从此多出一圈常驻靛蓝环。
-        if reduceMotion {
-            EmptyView()
-        } else {
-            Circle()
-                .strokeBorder(
-                    AngularGradient(colors: [color.opacity(0), color, color.opacity(0)], center: .center),
-                    lineWidth: 3)
-                .frame(width: diameter, height: diameter)
-                .scaleEffect(go ? 1.7 : 0.95)
-                .opacity(go ? 0 : 0.9)
-                .allowsHitTesting(false)
-                .accessibilityHidden(true)
-                .onAppear {
-                    go = false
-                    withAnimation(.easeOut(duration: 0.72)) { go = true }
-                }
-        }
-    }
-}
 
 // ================= 52 旋转充能刻度 (原案"数码表冠") =================
 // iPhone 没有数码表冠 —— 这条按 IDEA-BANK 描述的**行为**落地: "沿圆盘外沿刻度旋转一圈完成充能才发指令，
@@ -460,10 +365,6 @@ struct UnlockDial: View {
                     .strokeBorder(DS.Palette.hairline, lineWidth: 1)
                     .frame(width: dial + 16, height: dial + 16)
                     .allowsHitTesting(false)
-                // 75 待机流光: 只在就绪空闲时环绕
-                if connected, case .idle = state {
-                    UnlockShimmer(diameter: dial)
-                }
                 // 成功冲击波: 一次性扩散, 罕见时刻才配得的庆祝 (reduceMotion 下不出现)
                 if shock {
                     Circle()
@@ -475,14 +376,6 @@ struct UnlockDial: View {
                 }
                 // 呼吸环独立成视图并切断隐式动画继承, 见 UnlockPulseRing 的注释
                 if isBusy { UnlockPulseRing(diameter: dial, rssi: rssi) }
-                // 65 雷达波纹: 只在**握手中**扩散，进就绪 (state 离开 .connecting) 即随挂载条件一起消失
-                if state == .connecting { UnlockRadarWave(diameter: dial) }
-                // 73 成功涟漪: 指令**确认瞬间** (.idle→.opening 那一刻) 从中心扩散一圈靛蓝渐变涟漪。
-                // 与下面的 shock 是两个时刻: shock 等的是锁真开了的结果，涟漪等的是命令已发出并被接受。
-                if rippleKey > 0 {
-                    DialRipple(diameter: dial, color: DS.Palette.accent)
-                        .id(rippleKey)
-                }
                 // 52 旋转充能刻度: 只在 charge 档挂 (hold 档画一圈死刻度会让人以为可以转)
                 if gestureMode == "charge", !isBusy, bleReady {
                     ChargeTicks(diameter: dial, progress: chargeProgress)
