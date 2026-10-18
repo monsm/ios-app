@@ -1318,6 +1318,18 @@ struct RootView: View {
         }
         RootView.registerHost(app)   // 包2: LinkSense 宿主注册 + 回连/巡检循环
         LinkSense.shared.coldStartScan()   // 包2/134 冷启动先扫描 (定位可见锁, 不连接)
+        // 2026-10-18 冷启动预连接（用户口径："打开 app 1 秒内做完一遍"）。
+        //
+        // 原来连接要等 DeviceHomeView 的 .task → sense.enterPage() → preconnect()，
+        // 也就是**首页渲染完之后**才开始建链。而建链本身（扫描→connect→发现服务→setNotify）
+        // 是这条链上最贵的一段。用户从点图标到"能开锁"之间，这段时间完全是白等的。
+        //
+        // 现在：启动链路里**立刻**发起预连接（与 coldStartScan 同一拍，不等 UI）。
+        // 它是静默的（不弹权限、不弹面容、不 toast），失败也只是安静退出 ——
+        // 真到用户按圆盘时 ensureConnected 仍然会兜底重试，不改变任何既有语义。
+        //
+        // 时序上它和首页渲染并行：用户看到界面的那一刻，链路往往已经建好了。
+        LinkSense.shared.startupPreconnect(mac: app.currentMac)
     }
     /// 实例便捷转发，供 `.task` 直接调用（保持 body 表达式小，见本文件多处 type-check 超时的教训）。
     private func bootstrapOnce() { RootView.bootstrapOnce(app) }

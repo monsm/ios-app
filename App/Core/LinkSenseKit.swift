@@ -621,6 +621,24 @@ final class LinkSense: ObservableObject {
         DB.store.setCodable("kf_link_hist", list)
     }
 
+    /// 2026-10-18 冷启动预连接: 在 App 启动链路里**立刻**建链，不等首页渲染。
+    ///
+    /// 与 enterPage() 的区别只是**发起时机**:
+    ///   · enterPage  —— DeviceHomeView 的 .task 里，首页渲染完才跑;
+    ///   · startupPreconnect —— bootstrapOnce 里，与 coldStartScan 同一拍。
+    /// 两者最终都汇到 preconnect()，所以行为、幂等、失败处理完全一致。
+    ///
+    /// 仍然受既有开关 `kf_link_auto_<mac>` 管: 用户选了"手动连接模式"就不预热。
+    func startupPreconnect(mac: String) {
+        guard !mac.isEmpty else { return }
+        guard DB.store.getBool("kf_link_auto_" + mac, true) else { return }
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            await self.preconnect()
+            self.onPreconnectDone()
+        }
+    }
+
     /// 95 进页预热入口 (DeviceHomeView.task 调用): 静默 ensureConnected, 成功后顺手 135 补发。
     func enterPage() {
         Task { @MainActor [weak self] in

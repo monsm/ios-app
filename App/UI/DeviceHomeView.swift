@@ -14,6 +14,8 @@ struct DeviceHomeView: View {
     @ObservedObject private var sense = LinkSense.shared
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var showAdd = false
+    /// 2026-10-18: 精确查找层（箭头 + 距离档）。进入即开激进节拍，退出即全停。
+    @State private var showFindArrow = false
     /// 437 到期的备份复核钉。**不进 body 里算** —— duePins 要列一次目录 + 解两份偏好,
     /// 而本页 body 随 BLE 状态频繁重算 (与 432 的 buildCover 同一条理由), 所以进页/刷新时算一次。
     @State private var duePins: [BackupStudio.PinDue] = []

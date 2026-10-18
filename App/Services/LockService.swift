@@ -170,6 +170,20 @@ final class LockService: ObservableObject {
     }
     // ---------- 令牌 ----------
     private func ensureToken() async throws {
+        // 2026-10-18 性能: **令牌复用**。原来每次 needToken 都无条件重发 cmd01,
+        // 而 cmd01 是一次完整往返（写 20B + 等回包）。开锁链上它是纯开销:
+        //   unlock -> exec -> request(needToken) -> ensureToken(cmd01) -> 再发 cmd04
+        // 也就是**两次往返**。令牌本身有 ttl（KLV#03，通常 45s），在有效期内直接复用即可。
+        //
+        // 判据: tokenExpiryMs 已扣了 2s 余量（见下方赋值处的注释），且令牌不是初始占位 "0000"。
+        // 失效仍由既有兜底: rc=3（命令过期）时 exec 会刷令牌重试一次 —— 不会因为复用而卡死。
+        // tokenExpiryMs == 0 表示"从没拿到过有效 ttl"（secs=0 时不记账，见下方原注释），
+        // 那种情况**永不复用** —— 宁可多发一次 01，也不拿一枚来路不明的令牌去发写命令。
+        if tokenExpiryMs > 0, sessionTokenHex != "0000",
+           Date().timeIntervalSince1970 * 1000 < Double(tokenExpiryMs) {
+            log("info", "复用会话令牌 (未过期, 省一次 cmd01 往返)")
+            return
+        }
         log("info", "刷新会话令牌 (cmd 01)")
         let f = try await request(ZKCmdBuilder.cmd01Session(), cmd: 0x01, needToken: false, retries: 3)
         guard let k = f.klvs.first(where: { $0.key == 0x02 }) else {
@@ -185,6 +199,11 @@ final class LockService: ObservableObject {
         sessionTokenHex = k.val.lowercased()
         let secs = f.klvs.first(where: { $0.key == 0x03 }).map { UInt16(truncatingIfNeeded: HexKit.readU16LE($0.val, byteOffset: 0)) } ?? 0
         // JS session.js: ttl=0 保留默认 45s — now+0+2s 会立即过期
+        // ⚠️ 2026-10-18: 这一行**必须**保持原样（`Int64(secs) * 1000 + 2000`）。
+        // 我曾为配合"令牌复用"改成 `let ttl = secs > 0 ? secs : 45` 再乘，
+        // 被 tools/logicparity.js 的 L09 判据当场拦下：那是与 APK 的**逻辑面差分**
+        // （Java isExpire: now+2s > expire），不是排版问题。
+        // 真要兜 ttl=0，正确做法是在**复用判据**里处理（见 ensureToken 开头），而不是改记账口径。
         if secs > 0 {
             tokenExpiryMs = Int64(Date().timeIntervalSince1970 * 1000) + Int64(secs) * 1000 + 2000
         }

@@ -38,6 +38,21 @@ enum AlertTone {
     static func unlockSuccess() {
         if DB.store.getBool("kf_unlock_sound") { AudioServicesPlaySystemSound(idSuccess) }
     }
+    /// 2026-10-18 自动开锁成功音开关 (独立持久化开关, 默认开)。
+    ///
+    /// 为什么与 kf_unlock_sound 分开:
+    ///   · 手动开锁是"我主动按的", 响一声是确认;
+    ///   · 自动开锁是"我走近它自己开的", 用户可能正低头看手机, 声音是**唯一**的到场信号;
+    ///   · 但也有人不希望每次路过门口都响 —— 所以给独立开关, 而不是并进手动那枚。
+    /// 默认 **true**: 自动开锁没有视觉确认(手机可能在口袋里), 默认有声才是安全的;
+    /// 静音偏好由系统铃声开关统一兜底 (本文件头注的既有制式)。
+    static var autoUnlockOn: Bool { DB.store.getBool("kf_auto_unlock_sound", true) }
+
+    /// 自动开锁成功短音。与 unlockSuccess() 用同一音色, 但读**独立开关**。
+    static func autoUnlockSuccess() {
+        if autoUnlockOn { AudioServicesPlaySystemSound(idSuccess) }
+    }
+
     /// 848 开锁终态失败短音: 只在**走完重试链的终态失败**响 (中间静默重试不响，
     /// 否则一次开锁失败连响三声，用户会以为出了三件事)
     static func unlockFailure() {

@@ -417,13 +417,29 @@ final class AutoOpenController {
         armed = AutoOpenKit.rssiSample(prevArmed: armed, rssi: rssi, base: base)
         // 信号掉回解除线以下 = 本次接近事件结束 → 放开一次性闩锁, 下次靠近才可再发
         if !armed { eventFired.remove(mac) }
+        // 2026-10-18 性能分级（用户口径："只在箭头界面追求极致，退出就完全切断"）:
+        //   · 箭头界面在场 → 武装的那一拍**立即**判定（不等 2s tick）；
+        //   · 箭头界面不在场 → 回到原有 2s tick 节拍（不做事件驱动的连续判定）。
+        //
+        // 为什么这样分: 事件驱动的即时判定本身不耗电（它只是在收到广播时多做一次门判定），
+        // 真正耗电的是**为了即时而持续开着的扫描**。所以门判定可以在两个模式下都在，
+        // 但"每 150ms 读一次 RSSI"那种激进采样**只在箭头界面里发生** ——
+        // 那个开关在 FindArrowSession 里，此处不重复判。
+        if armed, FindArrowSession.shared.isActive { tickDwell(mac: mac) }
     }
     func rssiArmed() -> Bool { armed }
 
-    // ---------- F2': RSSI 武装 + 静置 ≥3s → 触发一次门判定 (LinkSense 2s tick 驱动) ----------
+    // ---------- F2': RSSI 武装 → 立刻触发一次门判定 ----------
+    //
+    // 2026-10-18 拍板变更（用户口径："连接后信号合格直接解锁"）:
+    // **删掉静置判定**。原实现要求 `MotionStillness.met()`（加速度计方差 < 阈值并持续 1s），
+    // 目的是拦"骑车路过门口"。代价是站到门口还要等满静置窗口才判定。
+    // 现在信号达标 (`armed`) 就是唯一条件 —— 拦"路过"不再靠静止，靠 RSSI 的进入/退出回差
+    // (见 AutoOpenKit.rssiSample: 进入线与解除线是两条不同的阈值，本身就有滞回)。
+    //
+    // 同时把调用点从"2s tick"改成"feedRssi 事件驱动"——见 AutoOpenController.feedRssi 尾部。
     func tickDwell(mac: String) {
         guard AutoOpen.on, armed else { return }
-        guard MotionStillness.met() else { return }
         attempt(mac: mac)
     }
 
@@ -520,6 +536,11 @@ final class AutoOpenController {
                     app.showToast("自动: 第一道已通过 — 请再用指纹或密码完成第二道")
                 } else {
                     app.showToast("自动开锁成功 — \(app.displayName)")
+                    // 2026-10-18: 自动开锁成功音 (独立持久化开关 kf_auto_unlock_sound, 默认开)。
+                    // 为什么自动档需要它而手动档已有: 手动开锁时用户盯着屏幕, toast 看得见;
+                    // 自动开锁是"走近它自己开的", 手机可能还在口袋里 —— 声音是唯一的到场信号。
+                    // 只在**真成功**这一支响: 双验第一道不算成功 (用户还没进门), 不能响。
+                    AlertTone.autoUnlockSuccess()
                 }
             case 3:
                 // 0E 双确认自愈 (rc=3 命令过期): 30s < |偏差| < 24h 才写, ≥24h 只提示不写
@@ -647,6 +668,13 @@ struct AutoOpenSection: View {
                 get: { AutoOpen.on },
                 set: { AutoOpen.on = $0 }))
             if AutoOpen.on {
+                // 2026-10-18 自动开锁成功音 (独立持久化开关, 默认开)。
+                // 为什么默认开: 自动开锁时手机可能还在口袋里, 声音是唯一的"门开了"信号。
+                // 为什么与手动那枚「成功提示音」分开: 手动是主动按的(看得见 toast),
+                // 自动是被动触发的(可能看不到), 两者需求不同 —— 并成一枚只能服务一半人。
+                VariantToggle("自动开锁成功音", isOn: Binding(
+                    get: { AlertTone.autoUnlockOn },
+                    set: { DB.store.set("kf_auto_unlock_sound", $0) }))
                 Picker("面容确认", selection: Binding(
                     get: { AutoOpen.faceTier },
                     set: { AutoOpen.faceTier = $0 })) {

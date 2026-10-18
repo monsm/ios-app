@@ -838,7 +838,7 @@ private fun AirTagLayer(
             CircleIconButton(label = if (soundOn) "🔊" else "🔇", onClick = onToggleSound)
         }
     }
-    ProximityBeep(active = true, fill = fill, soundOn = soundOn)
+    ProximityBeep(active = true, fill = fill, soundOn = soundOn, foreground = foreground)
 }
 
 @Composable
@@ -857,7 +857,7 @@ private fun CircleIconButton(label: String, onClick: () -> Unit) {
 
 /** 靠近提示音: 信号越强间隔越短 (AirTag 那种"滴滴滴"加速)。按 fill 分档, 档位不变就不重启协程。 */
 @Composable
-private fun ProximityBeep(active: Boolean, fill: Float, soundOn: Boolean) {
+private fun ProximityBeep(active: Boolean, fill: Float, soundOn: Boolean, foreground: Boolean) {
     val level = when {
         fill > 0.85f -> 3
         fill > 0.6f -> 2
@@ -865,8 +865,8 @@ private fun ProximityBeep(active: Boolean, fill: Float, soundOn: Boolean) {
         fill > 0.05f -> 0
         else -> -1
     }
-    LaunchedEffect(active, soundOn, level) {
-        if (!active || !soundOn || level < 0) return@LaunchedEffect
+    LaunchedEffect(active, soundOn, level, foreground) {
+        if (!active || !soundOn || level < 0 || !foreground) return@LaunchedEffect
         val tg = runCatching { ToneGenerator(AudioManager.STREAM_NOTIFICATION, 90) }.getOrNull() ?: return@LaunchedEffect
         val period = when (level) { 3 -> 240L; 2 -> 420L; 1 -> 700L; else -> 1100L }
         try {
