@@ -78,9 +78,21 @@ struct CredentialsView: View {
                                actionTitle: "去添加门锁") { showAdd = true }
                 } else {
                     VStack(spacing: 0) {
-                        borrowBanner
-                        pendingQueueBar   // 510 待下发横条 (跨页提示, 复用 kf_cqueue_)
-                        credJumpBar       // 包9/577 记录详情"来源凭证"→ 定位本条 (消费后清)
+                        // 2026-10-18 重构: 四条横条原来**无条件全叠**在顶部
+                        // (borrowBanner / pendingQueueBar / credJumpBar / headerToolbar),
+                        // 首屏被横条吃掉一大块 —— 这才是"凭证页很乱"的真正来源。
+                        // 现在: 三条通知条**互斥取一**(优先级 借出 > 待下发 > 跳转定位),
+                        // 且都只在真有事时出现; headerToolbar 永远最下面那条。
+                        // 三条通知条**互斥取一**(优先级 借出 > 待下发 > 跳转定位)。
+                        // 每条自己已有空判 (borrowBanner 里 if !bs.isEmpty / pendingQueueBar 同 /
+                        // credJumpBar 用 jumpBarOn), 所以这里只需要"只显示第一个真有事的"。
+                        if !MemberHub.borrows(mac).isEmpty {
+                            borrowBanner
+                        } else if !CredentialOrg.pendingQueue(mac).isEmpty {
+                            pendingQueueBar
+                        } else if jumpBarOn {
+                            credJumpBar
+                        }
                         headerToolbar
                         if showCalendar {
                             CredCalendarView(mac: mac, onPick: pickDay)
