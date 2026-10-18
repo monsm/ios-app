@@ -410,12 +410,12 @@ enum DS {
 
     enum Palette {
         // ---------- 机检基础令牌 (tools/contrast.js 解析 static let) ----------
-        static let canvasBase  = Color.adaptive(0xF6F3EC, 0x070B12)   // 页面底: v10 暖白 (2026-10-18 从冷蓝白 0xF2F4F9 换过来)
-        static let surfaceBase = Color.adaptive(0xFFFDF9, 0x151D29)   // 卡片: 暖白, 比页面底亮一档
-        static let surfaceAltBase = Color.adaptive(0xF0ECE3, 0x1C2534) // 卡片内次级块: 暖灰
-        static let hairline   = Color.adaptive(0xDCD5C9, 0x29343F)   // 分隔线: 暖色 (实测 1.32:1 对画布)
-        static let text       = Color.adaptive(0x17140F, 0xF2F6FB)   // 主文本
-        static let textSub    = Color.adaptive(0x5C5245, 0x9FACBE)   // 暖灰: 对暖白底 6.90:1 / 深色 7.4:1
+        static let canvasBase  = Color.adaptive(0xF6F3EC, 0x121009)   // 页面底: v10 暖白 / 暖黑 (2026-10-18 两端都转暖)
+        static let surfaceBase = Color.adaptive(0xFFFDF9, 0x1C1913)   // 卡片: 暖白 / 暖黑, 比页面底亮一档
+        static let surfaceAltBase = Color.adaptive(0xF0ECE3, 0x252017) // 卡片内次级块: 暖灰 / 暖褐
+        static let hairline   = Color.adaptive(0xDCD5C9, 0x38322A)   // 分隔线: 暖色 (浅 1.32:1 / 深 1.50:1 对画布)
+        static let text       = Color.adaptive(0x17140F, 0xF7F3EA)   // 主文本
+        static let textSub    = Color.adaptive(0x5C5245, 0xACA08D)   // 暖灰: 浅 6.90:1 / 深 7.40:1
         static let ok         = Color.adaptive(0x15803D, 0x4ADE80)   // 成功
         static let warn       = Color.adaptive(0xB45309, 0xFBBF24)   // 警告 4.5:1 / 高
         static let danger     = Color.adaptive(0xB91C1C, 0xF87171)   // 错误 6.0:1
@@ -436,8 +436,8 @@ enum DS {
         // ---------- 862 增强对比映射 (包15): 系统 accessibilityHighContrast 开启时加深一档 ----------
         // 语义角色不变, 只是明端向纯黑 / 暗端向纯白再走一步 (hairline 可辨 1.2:1 余量放大);
         // 页面继续引用 hairline/textSub 不感知, 只有这两组"增强"变体不同。
-        private static let hairlineHC = Color.adaptive(0x98A6B8, 0x5C7084)
-        private static let textSubHC  = Color.adaptive(0x38445A, 0xC2CFE2)
+        private static let hairlineHC = Color.adaptive(0x8A7D6A, 0x6E6454)
+        private static let textSubHC  = Color.adaptive(0x443D32, 0xD4C9B6)
         @MainActor static var hairlineStrong: Color { Appearance.highContrast ? hairlineHC : hairline }
         @MainActor static var textSubStrong: Color { Appearance.highContrast ? textSubHC : textSub }
 
@@ -497,7 +497,7 @@ enum DS {
         /// AMOLED 纯黑覆盖 (idea 30): 表面与画布降为纯黑/近黑。
         /// 机检: text/textSub/ok/warn/danger 与各主题 dark accentText 在这些底上 ≥4.5:1。
         static let amoledOverride: [String: UInt32] = [
-            "canvas": 0x000000, "surface": 0x0B0E14, "surfaceAlt": 0x121821
+            "canvas": 0x000000, "surface": 0x121009, "surfaceAlt": 0x1A1610
         ]
 
         /// 当前生效主题 (kf_accent, 空值归一到靛蓝)

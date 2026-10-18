@@ -348,10 +348,10 @@ private fun KfApp(unlocker: BleUnlocker) {
                 Text(
                     text = status.ifBlank { "点一下开锁" },
                     color = when {
-                        statusBad -> Bad
+                        statusBad -> colors.bad
                         // 成功语现在是 "手动/自动开锁成功 — …"; 旧句只认 "已开锁" 会把成功念成灰色
-                        status.contains("成功") || status.startsWith("已开锁") -> Ok
-                        else -> InkSub
+                        status.contains("成功") || status.startsWith("已开锁") -> colors.ok
+                        else -> colors.inkSub
                     },
                     fontSize = 15.sp,
                     textAlign = TextAlign.Center
@@ -437,9 +437,9 @@ private fun KfApp(unlocker: BleUnlocker) {
         val same = p.mac == lock?.mac
         AlertDialog(
             onDismissRequest = { pending = null },
-            containerColor = Surface,
-            titleContentColor = Ink,
-            textContentColor = InkSub,
+            containerColor = colors.surface,
+            titleContentColor = colors.ink,
+            textContentColor = colors.inkSub,
             title = { Text(if (same) "更新这把锁的凭证?" else "换一把锁?", fontWeight = FontWeight.Medium) },
             text = {
                 Text(
@@ -454,10 +454,10 @@ private fun KfApp(unlocker: BleUnlocker) {
                     lock = p
                     pending = null
                     say("已绑定「${p.name}」")
-                }) { Text(if (same) "覆盖" else "换绑", color = Accent) }
+                }) { Text(if (same) "覆盖" else "换绑", color = colors.accent) }
             },
             dismissButton = {
-                TextButton(onClick = { pending = null }) { Text("取消", color = InkSub) }
+                TextButton(onClick = { pending = null }) { Text("取消", color = colors.inkSub) }
             }
         )
     }
@@ -491,10 +491,11 @@ private fun KfApp(unlocker: BleUnlocker) {
 
 @Composable
 private fun Header(lock: LockInfo?) {
+    val colors = LocalKfColors.current
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = lock?.name ?: "离线锁钥匙",
-            color = Ink,
+            color = colors.ink,
             fontSize = if (lock == null) 22.sp else 26.sp,
             fontWeight = FontWeight.Light,
             letterSpacing = 1.sp
@@ -515,6 +516,7 @@ private fun Header(lock: LockInfo?) {
 /** 开锁圆盘: 自绘 (不用现成图标), 环 + 钥匙孔, 按下时整盘轻微收缩。 */
 @Composable
 private fun UnlockDial(busy: Boolean, onClick: () -> Unit) {
+    val colors = LocalKfColors.current
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     // 2026-10-18: 按压用 CubicBezierEasing 而不是线性 tween ——
@@ -593,7 +595,7 @@ private fun UnlockDial(busy: Boolean, onClick: () -> Unit) {
 
                 // 字形: 锁 (与既有语义一致, 不改交互)
                 val g = rOuter * 0.30f
-                drawCircle(color = Accent, radius = g * 0.42f, center = Offset(cx, cy - g * 0.32f))
+                drawCircle(color = colors.accent, radius = g * 0.42f, center = Offset(cx, cy - g * 0.32f))
                 val top = cy + g * 0.06f
                 drawPath(
                     path = androidx.compose.ui.graphics.Path().apply {
@@ -603,7 +605,7 @@ private fun UnlockDial(busy: Boolean, onClick: () -> Unit) {
                         lineTo(cx - g * 0.38f, top + g * 1.0f)
                         close()
                     },
-                    color = Accent
+                    color = colors.accent
                 )
 
                 if (busy) {
@@ -624,6 +626,7 @@ private fun UnlockDial(busy: Boolean, onClick: () -> Unit) {
 
 @Composable
 private fun EmptyState(onScan: () -> Unit) {
+    val colors = LocalKfColors.current
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         // 二维码框: 四个角的自绘框, 比一个 stock 图标更像"待扫描"
         Canvas(Modifier.size(120.dp)) {
@@ -640,11 +643,11 @@ private fun EmptyState(onScan: () -> Unit) {
             corner(size.width, size.height, -1f, -1f)
         }
         Spacer(Modifier.height(28.dp))
-        Text("还没有绑定门锁", color = Ink, fontSize = 20.sp, fontWeight = FontWeight.Light)
+        Text("还没有绑定门锁", color = colors.ink, fontSize = 20.sp, fontWeight = FontWeight.Light)
         Spacer(Modifier.height(10.dp))
         Text(
             "在 iOS 端「设置 → 门锁 → 分享给安卓」生成二维码,\n扫一次即可。之后开锁不再需要它。",
-            color = InkSub, fontSize = 13.sp, textAlign = TextAlign.Center, lineHeight = 20.sp
+            color = colors.inkSub, fontSize = 13.sp, textAlign = TextAlign.Center, lineHeight = 20.sp
         )
         Spacer(Modifier.height(28.dp))
         PillButton("扫码添加门锁", onScan)
@@ -730,6 +733,7 @@ private fun ProximityCard(
 /** 首页右下齿轮: 二级菜单的唯一入口 (首页只留解锁相关, 开关与账号操作都收进来)。 */
 @Composable
 private fun GearButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
+    val colors = LocalKfColors.current
     Box(
         modifier
             .size(56.dp)
@@ -747,24 +751,25 @@ private fun GearButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
                 // internal 的 Offset(packedValue: Long) 并报「无法访问」—— 括号平衡看不出这种类型错。
                 val a = Math.toRadians((k * 45).toDouble()).toFloat()
                 drawLine(
-                    InkSub,
+                    colors.inkSub,
                     Offset(c.x + cos(a) * (rOut - 5f), c.y + sin(a) * (rOut - 5f)),
                     Offset(c.x + cos(a) * rOut, c.y + sin(a) * rOut),
                     strokeWidth = 3.5f, cap = StrokeCap.Round,
                 )
             }
-            drawCircle(InkSub, radius = rOut - 7.5f, center = c, style = Stroke(width = 2.5f))
-            drawCircle(BgTop, radius = 4f, center = c)
+            drawCircle(colors.inkSub, radius = rOut - 7.5f, center = c, style = Stroke(width = 2.5f))
+            drawCircle(colors.bgTop, radius = 4f, center = c)
         }
     }
 }
 
 @Composable
 private fun PillButton(text: String, onClick: () -> Unit) {
+    val colors = LocalKfColors.current
     Box(
         Modifier
             .clip(RoundedCornerShape(50))
-            .background(Accent)
+            .background(colors.accent)
             .clickable { onClick() }
             .padding(horizontal = 28.dp, vertical = 14.dp)
     ) {
