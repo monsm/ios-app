@@ -10,6 +10,7 @@
 //  那里面有三道闸 (只读 / 去重 / 二次锁), 绕过它们等于绕过安全策略。
 
 import SwiftUI
+import UIKit
 
 enum LockFacePhase: Equatable {
     case locked
