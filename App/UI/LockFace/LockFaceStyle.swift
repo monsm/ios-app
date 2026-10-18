@@ -3,7 +3,7 @@
 //
 //  为什么单独一个文件: 门面是**装饰层**, 它的底色/渐变/倒角/投影不参与
 //  tools/contrast.js 的 397 条语义对比断言, 也不进 Palette (D4)。
-//  门面上的**文字**仍然只准用 Palette.text / textSub —— 这一条写在 LockFaceView 里。
+//  门面上的**文字**仍然只准用 DS.Palette.text / textSub —— 这一条写在 LockFaceView 里。
 //
 //  动效时长**不在这里**: DS.Motion 的 tier 是 private, 只有 DesignSystem.swift 内能读降级档,
 //  所以 doorSwing / lightLeak / doorReveal / glyphSwap / chargeReset 都放在 DS.Motion 里。

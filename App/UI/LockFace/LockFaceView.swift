@@ -203,6 +203,7 @@ struct LockFaceView: View {
 
     // MARK: - 时间轴
 
+    @MainActor
     private func startCharge() {
         holdTask?.cancel()
         phase = .charging(0)
@@ -228,6 +229,7 @@ struct LockFaceView: View {
         }
     }
 
+    @MainActor
     private func cancelChargeIfNeeded() {
         guard isLockedPhase else { return }
         holdTask?.cancel(); holdTask = nil
@@ -237,6 +239,7 @@ struct LockFaceView: View {
     /// 真正开锁。**唯一入口** app.requestUnlock(); 不直连 LockService。
     /// 注意: requestUnlock() 返回 Void —— 它只是**发指令**, 结果从 app.unlockState 异步回来。
     /// 所以这里不 await 返回值, 而是把相位挂到 onChange(of: app.unlockState) 上 (见 body)。
+    @MainActor
     private func startUnlock() {
         guard isLockedPhase else { return }
         holdTask?.cancel(); holdTask = nil
@@ -246,6 +249,7 @@ struct LockFaceView: View {
     }
 
     /// unlockState 变化 -> 推进相位。这是门面与开锁链路的**唯一**耦合点。
+    @MainActor
     private func react(to state: AppState.UnlockState) {
         switch state {
         case .success:
@@ -263,6 +267,7 @@ struct LockFaceView: View {
         }
     }
 
+    @MainActor
     private func succeed() {
         withAnimation(DS.Motion.glyphSwap) { phase = .peeking }
         withAnimation(DS.Motion.lightLeak) { lightLeak = 1 }
@@ -284,6 +289,7 @@ struct LockFaceView: View {
     }
 
     /// 失败: **门完全不动**, 只抖锁体 + 触觉 + 文案。
+    @MainActor
     private func fail(reason: String) {
         phase = .failed(reason)
         UINotificationFeedbackGenerator().notificationOccurred(.error)
@@ -301,6 +307,7 @@ struct LockFaceView: View {
     }
     /// 推门而入: 不解锁, 直接把门打开 (锁状态**不变**)。
     /// 这是"只想看记录/设置"的人的唯一出口 —— 没有它, 每个想改设置的人都得先对真锁发一次开锁指令。
+    @MainActor
     private func enterWithoutUnlocking() {
         DS.Haptics.tick.impactOccurred()
         phase = .opening
@@ -312,6 +319,7 @@ struct LockFaceView: View {
         }
     }
     /// 关门 (右缘拖 >=96pt / 导航栏按钮 / Esc)。
+    @MainActor
     func closeDoor() {
         guard phase == .open else { return }
         phase = .closing

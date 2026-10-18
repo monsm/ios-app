@@ -91,7 +91,7 @@ struct DoorSurface: View {
             }
         }
         .blendMode(.multiply)
-        .opacity(LockFaceStyle.noiseOpacity(skin: skin, dark: dark))
+        .opacity(skin.noiseOpacity(dark: dark))
         .drawingGroup()   // 只光栅化一次, 不逐帧重绘
         .allowsHitTesting(false)
     }
