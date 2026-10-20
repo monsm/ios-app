@@ -152,7 +152,7 @@ struct MePage: View {
                     subtitle: "CSV / 报告",
                     showsChevron: true)
             }
-            NavigationLink { MessagesView().environmentObject(app) } label: {
+            NavigationLink { FeedPage().environmentObject(app) } label: {
                 XRow(
                     systemImage: "bell",
                     title: "动态消息",
