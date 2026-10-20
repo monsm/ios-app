@@ -145,7 +145,7 @@ func quickDestination(_ id: String) -> some View {
     case "addPwd":   NavigationStack { AddKeyPage() }
     case "otp":      SafemodeIntroView(mode: "otp")
     case "syncTime": SyncTimeView()
-    case "addFp":    StartAddFpView(embedded: true)
+    case "addFp":    NavigationStack { AddFingerPage() }
     case "studio":   StudioHome(embedded: true)
     case "backup":   BackupView(embedded: true)
     case "alarm":    AlarmCenterView(embedded: true)

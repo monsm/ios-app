@@ -498,7 +498,7 @@ struct MemberWizardView: View {
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         // 463: 建档流程内直达指纹录入 (与临时码同格), 录完回凭证页可指归属
-                        NavigationLink("录指纹后到凭证页指归属") { StartAddFpView(embedded: true) }   // 463 录指纹后到凭证页指归
+                        NavigationLink("录指纹后到凭证页指归属") { AddFingerPage() }   // 463 录指纹后到凭证页指归
                             .vkFont(.footnote)
                     }
                 }
