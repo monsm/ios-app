@@ -83,7 +83,7 @@ struct MePage: View {
 
     private var lockSection: some View {
         Section {
-            NavigationLink { DeviceManageView().environmentObject(app) } label: {
+            NavigationLink { LocksPage().environmentObject(app) } label: {
                 XRow(
                     systemImage: "square.stack.3d.up",
                     title: "设备管理",
