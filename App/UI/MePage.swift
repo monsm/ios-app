@@ -54,7 +54,7 @@ struct MePage: View {
 
     private var protectionSection: some View {
         Section {
-            NavigationLink { SecurityCenterView().environmentObject(app) } label: {
+            NavigationLink { SecurityPage().environmentObject(app) } label: {
                 XRow(
                     systemImage: "lock.shield",
                     title: "本机数据保护",
@@ -63,7 +63,7 @@ struct MePage: View {
                     tone: DB.store.getBool("kf_applock") ? .ok : .warn,
                     showsChevron: true)
             }
-            NavigationLink { SecurityCenterView().environmentObject(app) } label: {
+            NavigationLink { SecurityPage().environmentObject(app) } label: {
                 XRow(
                     systemImage: "eye.slash",
                     title: "隐私与伪装",
