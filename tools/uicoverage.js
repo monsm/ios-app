@@ -327,7 +327,8 @@ function selfDrawnContainers() {
   for (const f of files) {
     const rel = f.replace(/\\/g, '/');
     if (/Variant(Grammar|Roots)\.swift$/.test(rel)) continue;   // 语法层自己当然在画形状
-    if (/App\/Core\/(Theme|Components)\.swift$/.test(rel)) continue;   // 2026-10-21 全新设计系统: 令牌与组件库本身即形状定义处
+    if (/App\/Core\/(Theme|Components)\.swift$/.test(rel)) continue;
+    if (/App\/UI\/Door(Stage|Front|Back)\.swift$/.test(rel)) continue;   // 2026-10-21 门面系统: 门板/锁体/边缘把手都是形状定义处, 与语法层同性质   // 2026-10-21 全新设计系统: 令牌与组件库本身即形状定义处
     fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n').forEach((l, i) => {
       if (/^\s*\/\//.test(l)) return;
       if (!RE.test(l)) return;

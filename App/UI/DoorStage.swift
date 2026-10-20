@@ -1,0 +1,481 @@
+//
+//  DoorStage.swift
+//  门面系统 · 全新设计 (2026-10-21)
+//
+//  ═══════════════════════════════════════════════════════════
+//  设计契约
+//  ═══════════════════════════════════════════════════════════
+//
+//  隐喻   : 一扇真实的门。App 有门里门外两面。
+//  性格   : Premium —— 刚性材质 1.2x 时长, 零过冲。
+//  材质   : 金属门板 (无位图, 纯程序化) + 门缝透光。
+//  动效   : 三层视差 (前景锁体 / 中景门板 / 背景光晕), 单调曲线。
+//  手势   : 左边缘 24pt 牵引, 1:1 跟手, 连续可控。
+//
+//  ═══════════════════════════════════════════════════════════
+//  关键技术决策
+//  ═══════════════════════════════════════════════════════════
+//
+//  1. 为什么是「两扇门转开」而不是「180° 翻转」
+//     · 180° 翻转会在 90° 时把视图压成一条线, 视觉断裂
+//     · 真实门的开法是绕铰链转, 有厚度、有透视
+//     · rotation3DEffect 的 anchor 设 .leading, 就是铰链
+//
+//  2. 为什么必须用单调曲线
+//     · spring 即使 damping 1.0 也可能因初速度过冲
+//     · 过冲越过 90° 会露出镜像背面 (SwiftUI 不自动隐藏背面)
+//     · timingCurve 单调, 绝不越过终点
+//
+//  3. 为什么背面要透明度斜坡
+//     · SwiftUI 的 rotation3DEffect 没有 backface-visibility
+//     · 必须用与角度联动的连续函数隐藏背面
+//     · 斜坡区间 [86°, 94°] —— 足够窄不闪, 足够宽不突变
+//
+//  4. 为什么手势挂在左边缘 24pt
+//     · SwiftUI DragGesture 不暴露手指数, 双指方案不可行
+//     · 左边缘是"门把手"的自然位置, 符合物理隐喻
+//     · 不侵占中间的按住开锁区域
+//     · VoiceOver 有独立按钮, 手势只是增强
+//
+
+import SwiftUI
+import UIKit
+
+// ═══════════════════════════════════════════════════════════
+// MARK: - 相位状态机
+// ═══════════════════════════════════════════════════════════
+
+/// 门的相位 —— 唯一真相, 禁止在视图里再算一套
+enum DoorPhase: Equatable {
+    /// 关着 (默认)
+    case closed
+    /// 充能中 (按住开锁, p 为 0...1 连续量)
+    case charging(CGFloat)
+    /// 正在开锁 (已下发指令, 等回执)
+    case unlocking
+    /// 已开 (门开了, 等待翻面或回关)
+    case open
+    /// 翻面中 (p 为 0...1, 0=门外 1=门里)
+    case flipping(CGFloat)
+    /// 失败 (门一个像素都不动, 只抖动)
+    case failed(String)
+
+    var isCharging: Bool { if case .charging = self { return true }; return false }
+    var isFailed: Bool { if case .failed = self { return true }; return false }
+    var isFlipping: Bool { if case .flipping = self { return true }; return false }
+
+    /// 充能进度 (0...1)
+    var chargeProgress: CGFloat {
+        if case .charging(let p) = self { return p }
+        return 0
+    }
+
+    /// 翻面进度 (0...1)
+    var flipProgress: CGFloat {
+        if case .flipping(let p) = self { return p }
+        return 0
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// MARK: - 几何
+// ═══════════════════════════════════════════════════════════
+
+enum DoorGeometry {
+    /// 门板最大开启角度 —— 106° 而非 180°:
+    /// 真实门不会转平, 106° 时仍能看到门板厚度与投影, 视觉上"门真的开了"
+    static let maxOpenAngle: Double = 106
+
+    /// 翻面最大角度 —— 180° (整面翻过去)
+    static let flipAngle: Double = 180
+
+    /// 透视强度。iOS 默认 1, 门需要更强纵深
+    static let perspective: CGFloat = 0.55
+
+    /// 背面透明度斜坡区间 (度)
+    static let backfaceFadeStart: Double = 86
+    static let backfaceFadeEnd: Double = 94
+
+    /// 左边缘手势热区宽度
+    static let edgeGrabWidth: CGFloat = 24
+
+    /// 翻面吸附阈值 (拖过 50% 才吸附)
+    static let flipThreshold: CGFloat = 0.5
+
+    /// 锁体直径相对屏幕宽度的比例
+    static func plateDiameter(screenWidth: CGFloat) -> CGFloat {
+        min(max(screenWidth * 0.52, 160), 260)
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// MARK: - 背面透明度 (连续函数)
+// ═══════════════════════════════════════════════════════════
+
+/// 与角度联动的透明度。
+///
+/// SwiftUI 的 rotation3DEffect **不自动隐藏背面** (CSS 的 backface-visibility
+/// 没有等价物)。90° 之后看到的是镜像的正面, 必须自己用透明度藏掉。
+///
+/// 用 smoothstep 而非 if/else: 阶跃在 90° 会闪一下, smoothstep 是连续函数。
+@inline(__always)
+func backfaceOpacity(angle: Double) -> Double {
+    let a = abs(angle.truncatingRemainder(dividingBy: 360))
+    if a <= DoorGeometry.backfaceFadeStart { return 0 }
+    if a >= DoorGeometry.backfaceFadeEnd { return 1 }
+    let t = (a - DoorGeometry.backfaceFadeStart) /
+            (DoorGeometry.backfaceFadeEnd - DoorGeometry.backfaceFadeStart)
+    // smoothstep 淡入
+    return 3 * t * t - 2 * t * t * t
+}
+
+/// 正面的透明度 —— 角度 < 90° 可见, 90° 之后淡出。
+///
+/// 与 backfaceOpacity 严格互补: front + back == 1, 任何角度都成立。
+/// 这保证翻转过程中屏幕上永远有内容, 不会出现"两面都透明"的空档。
+@inline(__always)
+func frontfaceOpacity(angle: Double) -> Double {
+    let a = abs(angle.truncatingRemainder(dividingBy: 360))
+    if a <= DoorGeometry.backfaceFadeStart { return 1 }
+    if a >= DoorGeometry.backfaceFadeEnd { return 0 }
+    let t = (a - DoorGeometry.backfaceFadeStart) /
+            (DoorGeometry.backfaceFadeEnd - DoorGeometry.backfaceFadeStart)
+    return 1 - (3 * t * t - 2 * t * t * t)
+}
+
+// ═══════════════════════════════════════════════════════════
+// MARK: - 门板材质 (纯程序化, 零位图)
+// ═══════════════════════════════════════════════════════════
+
+/// 金属门板 —— 三停渐变 + 高光 + 细噪点
+struct DoorMaterial: View {
+    var angle: Double = 0   // 用于高光随角度移动
+
+    var body: some View {
+        ZStack {
+            // 底色: 上暗 → 中亮 → 下暗 (模拟顶光)
+            XGradient.doorSurface
+
+            // 高光带 (随角度横向移动, 模拟反光扫过)
+            GeometryReader { geo in
+                LinearGradient(
+                    colors: [.clear, Color.white.opacity(0.07), .clear],
+                    startPoint: .leading, endPoint: .trailing)
+                    .frame(width: geo.size.width * 0.42)
+                    .offset(x: geo.size.width * (0.12 + CGFloat(angle / 180) * 0.5))
+                    .blendMode(.plusLighter)
+            }
+            .allowsHitTesting(false)
+
+            // 细噪点 (固定种子, 不闪)
+            GrainOverlay()
+                .opacity(0.045)
+                .blendMode(.overlay)
+                .allowsHitTesting(false)
+        }
+    }
+}
+
+/// 程序化噪点 —— 固定种子, 每次重建都一样
+private struct GrainOverlay: View {
+    var body: some View {
+        Canvas { ctx, size in
+            var seed: UInt64 = 0x9E3779B97F4A7C15
+            func next() -> Double {
+                seed = seed &* 6364136223846793005 &+ 1442695040888963407
+                return Double((seed >> 33) & 0xFFFF) / 65535.0
+            }
+            let step: CGFloat = 3
+            var y: CGFloat = 0
+            while y < size.height {
+                var x: CGFloat = 0
+                while x < size.width {
+                    let v = next()
+                    if v > 0.72 {
+                        let r = CGRect(x: x, y: y, width: 1, height: 1)
+                        ctx.fill(Path(r), with: .color(.white.opacity(v * 0.5)))
+                    }
+                    x += step
+                }
+                y += step
+            }
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// MARK: - 门缝透光
+// ═══════════════════════════════════════════════════════════
+
+/// 中缝透光 —— 先于门转动亮起 (340ms 先行)
+struct SeamLight: View {
+    /// 0...1
+    var intensity: Double
+
+    var body: some View {
+        Rectangle()
+            .fill(XGradient.seamLight)
+            .frame(width: 2 + intensity * 6)
+            .shadow(color: Color(hex: 0xFFCE8A).opacity(0.42 * intensity), radius: 22 * intensity)
+            .opacity(intensity)
+            .blur(radius: (1 - intensity) * 3)
+            .allowsHitTesting(false)
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// MARK: - 锁体
+// ═══════════════════════════════════════════════════════════
+
+/// 锁体 —— 金属环 + 中心字形 + 充能进度
+struct LockPlate: View {
+    /// 充能进度 0...1
+    var charge: CGFloat
+    /// 是否已开
+    var isOpen: Bool
+    /// 是否失败
+    var isFailed: Bool
+    /// 直径
+    var diameter: CGFloat
+
+    @State private var breathe: CGFloat = 0
+
+    var body: some View {
+        ZStack {
+            // 外环 (金属渐变)
+            Circle()
+                .strokeBorder(XGradient.lockRing, lineWidth: diameter * 0.035)
+                .frame(width: diameter, height: diameter)
+
+            // 充能环 (铜色, 从 12 点顺时针)
+            Circle()
+                .trim(from: 0, to: charge)
+                .stroke(XPalette.accent,
+                        style: StrokeStyle(lineWidth: diameter * 0.045, lineCap: .round))
+                .frame(width: diameter, height: diameter)
+                .rotationEffect(.degrees(-90))
+                .shadow(color: XPalette.accent.opacity(charge > 0 ? 0.5 : 0), radius: 12)
+
+            // 内圈 (凹槽)
+            Circle()
+                .fill(XPalette.surfaceSunken)
+                .frame(width: diameter * 0.72, height: diameter * 0.72)
+                .overlay(
+                    Circle().strokeBorder(XPalette.hairline, lineWidth: 1)
+                        .frame(width: diameter * 0.72, height: diameter * 0.72)
+                )
+
+            // 中心字形
+            Image(systemName: glyphName)
+                .font(.system(size: diameter * 0.28, weight: .light))
+                .foregroundStyle(glyphColor)
+                .contentTransition(.symbolEffect(.replace))
+                .accessibilityHidden(true)
+        }
+        .scaleEffect(isFailed ? 1.0 : 1.0)
+        .modifier(ShakeEffect(animatableData: isFailed ? 1 : 0))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(isOpen ? "门已开" : "门已锁")
+        .accessibilityValue(charge > 0 ? "充能 \(Int(charge * 100))%" : "")
+    }
+
+    private var glyphName: String {
+        if isOpen { return "lock.open" }
+        if isFailed { return "exclamationmark.triangle" }
+        return "lock.fill"
+    }
+
+    private var glyphColor: Color {
+        if isFailed { return XPalette.danger }
+        if isOpen { return XPalette.ok }
+        return XPalette.textSub
+    }
+}
+
+/// 抖动效果 (失败时)
+struct ShakeEffect: GeometryEffect {
+    var animatableData: CGFloat
+    func effectValue(size: CGSize) -> ProjectionTransform {
+        let t = sin(animatableData * .pi * 4) * 6
+        return ProjectionTransform(CGAffineTransform(translationX: t, y: 0))
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// MARK: - 门面主视图
+// ═══════════════════════════════════════════════════════════
+
+/// 门面 —— 首屏唯一内容。
+///
+/// 结构: 三层视差
+///   Layer 1 (背景): 光晕, 旋转最慢
+///   Layer 2 (中景): 门板, 标准速度
+///   Layer 3 (前景): 锁体 + 文字, 旋转最快
+struct DoorStage<Front: View, Back: View>: View {
+    @Binding var flipped: Bool
+    @Binding var phase: DoorPhase
+
+    /// 门外内容
+    @ViewBuilder var front: () -> Front
+    /// 门里内容
+    @ViewBuilder var back: () -> Back
+
+    /// 手势拖拽进度 0...1 (0=门外, 1=门里)
+    @State private var dragProgress: CGFloat = 0
+    @State private var isDragging = false
+    @State private var hapticTickAt: Int = -1
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// 当前翻转角度
+    private var angle: Double {
+        let base = flipped ? 1.0 : 0.0
+        let p = isDragging ? dragProgress : base
+        return p * DoorGeometry.flipAngle
+    }
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack {
+                if reduceMotion {
+                    // ── 真降级: 不挂 rotation3DEffect ──
+                    // 只做交叉淡入 + 微缩放, 空间隐喻消失但内容可读
+                    ZStack {
+                        front()
+                            .opacity(flipped ? 0 : 1)
+                            .scaleEffect(flipped ? 0.98 : 1)
+                        back()
+                            .opacity(flipped ? 1 : 0)
+                            .scaleEffect(flipped ? 1 : 0.98)
+                    }
+                    .animation(XMotion.soft, value: flipped)
+                } else {
+                    // ── 真 3D: 三层视差 ──
+                    ZStack {
+                        // Layer 1: 背景光晕 (最慢)
+                        RadialGradient(
+                            colors: [XPalette.accent.opacity(0.08), .clear],
+                            center: .center, startRadius: 0, endRadius: geo.size.width * 0.8)
+                            .rotation3DEffect(
+                                .degrees(angle * 0.6),
+                                axis: (x: 0, y: 1, z: 0),
+                                anchor: .leading,
+                                perspective: DoorGeometry.perspective)
+                            .allowsHitTesting(false)
+
+                        // Layer 2 + 3: 门板与内容
+                        ZStack {
+                            // 正面
+                            front()
+                                .opacity(frontfaceOpacity(angle: angle))
+                                .allowsHitTesting(!flipped && !isDragging)
+                                .accessibilityHidden(flipped)
+
+                            // 背面 (预旋转 180° 防镜像)
+                            back()
+                                .opacity(backfaceOpacity(angle: angle))
+                                .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
+                                .allowsHitTesting(flipped && !isDragging)
+                                .accessibilityHidden(!flipped)
+                        }
+                        .rotation3DEffect(
+                            .degrees(angle),
+                            axis: (x: 0, y: 1, z: 0),
+                            anchor: .leading,
+                            perspective: DoorGeometry.perspective)
+                    }
+                }
+            }
+            .overlay(alignment: .leading) {
+                // 左边缘手势热区 (仅增强, 不是唯一入口)
+                if !reduceMotion {
+                    Color.clear
+                        .frame(width: DoorGeometry.edgeGrabWidth)
+                        .contentShape(Rectangle())
+                        .gesture(edgeDrag(width: geo.size.width))
+                        .accessibilityHidden(true)
+                }
+            }
+            .overlay(alignment: .leading) {
+                // 边缘视觉把手 (细光条, 暗示可拖)
+                if !flipped && !isDragging {
+                    LinearGradient(
+                        colors: [.clear, XPalette.accent.opacity(0.18), .clear],
+                        startPoint: .top, endPoint: .bottom)
+                        .frame(width: 2)
+                        .padding(.vertical, 120)
+                        .allowsHitTesting(false)
+                        .transition(.opacity)
+                }
+            }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(flipped ? "门里" : "门外")
+    }
+
+    // ── 边缘牵引手势 ──
+    private func edgeDrag(width: CGFloat) -> some Gesture {
+        DragGesture(minimumDistance: 4, coordinateSpace: .local)
+            .onChanged { g in
+                if !isDragging { isDragging = true }
+                let p = min(max(g.translation.width / (width * 0.7), 0), 1)
+                dragProgress = flipped ? 1 - p : p
+                // 每过 25% 给一次 tick
+                let tick = Int(dragProgress * 4)
+                if tick != hapticTickAt {
+                    hapticTickAt = tick
+                    XHaptics.tick.impactOccurred()
+                }
+            }
+            .onEnded { g in
+                let p = min(max(g.translation.width / (width * 0.7), 0), 1)
+                let target = flipped ? 1 - p : p
+                isDragging = false
+                hapticTickAt = -1
+                if target > DoorGeometry.flipThreshold {
+                    withAnimation(XMotion.doorSwing) {
+                        flipped = true
+                        dragProgress = 1
+                    }
+                    XHaptics.trigger.impactOccurred()
+                    UIAccessibility.post(notification: .screenChanged,
+                                         argument: flipped ? "门里" : "门外")
+                } else {
+                    withAnimation(XMotion.doorSwing) {
+                        dragProgress = flipped ? 1 : 0
+                    }
+                }
+            }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// MARK: - 翻面按钮 (无障碍唯一入口)
+// ═══════════════════════════════════════════════════════════
+
+/// 翻面按钮 —— VoiceOver 用户的可达路径。
+/// 手势只是增强, 这个按钮才是"必须存在"的入口。
+struct DoorFlipButton: View {
+    @Binding var flipped: Bool
+
+    var body: some View {
+        Button {
+            withAnimation(XMotion.doorSwing) {
+                flipped.toggle()
+            }
+            XHaptics.trigger.impactOccurred()
+            UIAccessibility.post(notification: .screenChanged,
+                                 argument: flipped ? "门里" : "门外")
+        } label: {
+            Image(systemName: flipped ? "door.left.hand.open" : "door.left.hand.closed")
+                .font(.system(size: XIcon.md, weight: .medium))
+                .foregroundStyle(XPalette.textSub)
+                .frame(width: XHit.min, height: XHit.min)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(flipped ? "返回门外" : "进入门里")
+        .accessibilityHint("切换门的正反面")
+        .accessibilityAddTraits(.isButton)
+    }
+}
