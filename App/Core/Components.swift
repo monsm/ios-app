@@ -53,14 +53,26 @@ enum XToneColor {
 struct XPanel<Content: View>: View {
     var kind: ContainerKind = .group
     var tone: XToneColor = .neutral
+    /// 0 = 用 VK 语法层的默认内边距; >0 = 显式覆盖 (用于自带内边距的列表)
+    var padding: CGFloat? = nil
     @ViewBuilder var content: () -> Content
 
     var body: some View {
-        VK.current.container(kind) { content() }
-            .overlay(
-                RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
-                    .strokeBorder(tone == .neutral ? XPalette.hairline : tone.color.opacity(0.35), lineWidth: 1)
-            )
+        Group {
+            if let padding {
+                content()
+                    .padding(padding)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(XPalette.surface,
+                                in: RoundedRectangle(cornerRadius: XRadius.card, style: .continuous))
+            } else {
+                VK.current.container(kind) { content() }
+            }
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
+                .strokeBorder(tone == .neutral ? XPalette.hairline : tone.color.opacity(0.35), lineWidth: 1)
+        )
     }
 }
 

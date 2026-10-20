@@ -49,6 +49,9 @@ struct DoorRoot: View {
     /// 失败文案
     @State private var failureText: String?
 
+    /// 门里的导航栈
+    @State private var navPath: [DoorDomain] = []
+
     /// 充能计时
     @State private var chargeTask: Task<Void, Never>?
     /// 连接阶段计时
@@ -90,8 +93,28 @@ struct DoorRoot: View {
 
     // ── 门里 ──
     private var backContent: some View {
-        DoorBack(flipped: $flipped) { domain in
-            enter(domain)
+        NavigationStack(path: $navPath) {
+            DoorBack(flipped: $flipped) { domain in
+                enter(domain)
+            }
+            .navigationDestination(for: DoorDomain.self) { domain in
+                domainDestination(domain)
+            }
+        }
+    }
+
+    /// 四域各自的落地页
+    @ViewBuilder
+    private func domainDestination(_ domain: DoorDomain) -> some View {
+        switch domain {
+        case .lock:
+            DevicePage()
+        case .keys:
+            CredentialsView().id(app.currentMac)
+        case .events:
+            RecordsView().id(app.currentMac)
+        case .device:
+            SettingsView()
         }
     }
 
@@ -211,26 +234,14 @@ struct DoorRoot: View {
 
     private func enter(_ domain: DoorDomain) {
         // 377 访客门禁: 受限区未放开时, 凭证与设置两域必须走复核闸门。
-        // 这不是"加个遮罩"—— 是被收起的区域根本不该出现在门里。
         let restricted: Set<DoorDomain> = [.keys, .device]
         if app.guestAreaLocked && restricted.contains(domain) {
             app.guestGateTarget = tabIndex(for: domain)
             app.showGuestGate = true
             return
         }
-        // 四域映射到既有 Tab / 路由 —— 全部功能保留
-        switch domain {
-        case .keys:
-            app.requestRoute(.credentials)
-        case .events:
-            app.requestRoute(.records)
-        case .lock:
-            app.requestRoute(.device)
-        case .device:
-            app.requestRoute(.settings)
-        }
-        // 翻回门外, 避免返回时还停在门里
-        withAnimation(XMotion.doorSwing) { flipped = false }
+        // 门里直接推入新页面 (NavigationStack), 不再切旧 Tab
+        navPath.append(domain)
     }
 
     /// 四域 → 既有 Tab 序号 (与 mainTabView 的 value 一一对应)
