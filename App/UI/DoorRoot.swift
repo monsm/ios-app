@@ -248,8 +248,12 @@ struct DoorRoot: View {
     // ═══════════════════════════════════════════════════════
 
     /// 上次确认时刻 —— 用最近一次开锁记录
+    ///
+    /// recentRecords 返回元组 (text/time/warn/key/whoId), 没有 type 字段。
+    /// 协议无门磁, 无法知道门当前开合; 只能诚实表达"上次确认于何时"。
     private var lastConfirmedAt: Date? {
         guard let rec = app.recentRecords(count: 1).first else { return nil }
+        guard !rec.time.isEmpty else { return nil }
         let fmt = DateFormatter()
         fmt.locale = Locale(identifier: "en_US_POSIX")
         fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
@@ -257,9 +261,9 @@ struct DoorRoot: View {
         return fmt.date(from: rec.time)
     }
 
-    /// 上次已知的开合状态 —— 协议无门磁, 只能从"上次开锁"推断
+    /// 上次已知状态 —— 有记录 = 曾成功开过门 (协议无门磁, 不猜当前开合)
     private var lastKnownOpen: Bool {
         guard let rec = app.recentRecords(count: 1).first else { return false }
-        return rec.type == 1 || rec.type == 2 || rec.type == 3 || rec.type == 4
+        return !rec.text.isEmpty
     }
 }
