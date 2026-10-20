@@ -190,7 +190,7 @@ struct MePage: View {
                 XRow(systemImage: "app.badge", title: "App 图标",
                      subtitle: "锁环 / 钥匙 / 盾牌 等 9 款", showsChevron: true)
             }
-            NavigationLink { FirmwareView().environmentObject(app) } label: {
+            NavigationLink { FirmwarePage().environmentObject(app) } label: {
                 XRow(
                     systemImage: "arrow.up.circle",
                     title: "检查固件更新",
