@@ -402,14 +402,6 @@ enum DataHealth {
         if out.isEmpty { out.append("数据解析正常, 台账计数一致") }
         return out
     }
-    /// 452 孤儿日志缓存隔离 (仅由显式「立即整理」调用): 台账/钥匙串一律不碰;
-    /// 缓存转入 kf_logpark_<mac> 键位停放不真删 —— 删锁是常规操作, 直接清历史等于顺手烧掉证据。
-    @discardableResult
-    /// 452 无主凭证隔离: owner 指向已删成员的密码/指纹移入回收站 (kf_cbin_), owner 清空。
-    /// 与 purgeOrphanLogCaches 同纪律 —— 只由诊断页显式按钮调用, 只读自检 (integrity) 里绝不删数据;
-    /// 入回收站而非真删 (reclaimDays 内可 365/504 取回), 所以这一支不套 752 的备份闸。
-    @discardableResult
-    /// 452 孤儿扫描: 凭证 owner 指向不存在成员 / 已删锁的日志残留 (可一键"隔离"移除)
     static func scanOrphans() -> [String] {
         var out: [String] = []
         let memberIds = Set(DB.members().map { $0.id })
