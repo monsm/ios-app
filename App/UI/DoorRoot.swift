@@ -112,7 +112,7 @@ struct DoorRoot: View {
         case .keys:
             KeysPage()
         case .events:
-            RecordsView().id(app.currentMac)
+            EventsPage()
         case .device:
             SettingsView()
         }
