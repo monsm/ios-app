@@ -54,7 +54,16 @@ enum AXFlags {
     /// scenePhase .active, 所以不会读到过期值。
     nonisolated static let reduceMotionBox = Locked(false)
     nonisolated static var reduceMotionSnapshot: Bool { reduceMotionBox.withLock { $0 } }
-    static func refreshSnapshots() { reduceMotionBox.withLock { $0 = reduceMotion } }
+    /// 同一手法给 Dynamic Type 档位留一份非隔离快照 —— `XMetric.decorIcon` 与 `DS.Motion`
+    /// 一样要在 ButtonStyle / 非主 actor 的构图代码里求值, 而 typeSize() 读的是主 actor 旗标。
+    /// 刷新点与 reduceMotionBox 相同 (启动 + 回前台), 理由也一样: 改字号必须先离开 App。
+    nonisolated static let typeSizeBox = Locked(DynamicTypeSize.large)
+    nonisolated static var typeSizeSnapshot: DynamicTypeSize { typeSizeBox.withLock { $0 } }
+
+    static func refreshSnapshots() {
+        reduceMotionBox.withLock { $0 = reduceMotion }
+        typeSizeBox.withLock { $0 = typeSize() }
+    }
 
     /// 系统 Dynamic Type 相对正文 17pt 的倍率 (preferredFont 跟随用户所选字号)
     static var systemTypeRel: Double {

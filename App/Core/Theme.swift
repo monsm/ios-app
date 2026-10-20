@@ -145,7 +145,7 @@ enum XMetric {
     /// 在字号变大时也要跟着变大 —— 上限 1.35 倍, 再大就会顶破版面)。
     /// 纯装饰图形 (空态吉祥物 / 成功对勾) 也走这一档, 免得两套口径。
     static func decorIcon(_ base: CGFloat) -> CGFloat {
-        let size = AXFlags.typeSize()
+        let size = AXFlags.typeSizeSnapshot
         let scale: CGFloat
         switch size {
         case .xSmall, .small, .medium: scale = 1.0
