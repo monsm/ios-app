@@ -40,6 +40,9 @@ import UIKit
                        bg: [Color(hex: 0x7C3AED), Color(hex: 0x7C3AED)]),
         ]
     }
+    @EnvironmentObject private var app: AppState
+    @State private var currentIcon: String? = UIApplication.shared.alternateIconName
+
     private var iconPickerRow: some View {
         // 896: 四款→九款之后这一排装不下了 (9×48 + 间距 ≈ 560pt, 远超 iPhone 宽度), 所以从
         // "标题在左、图排在右的一行"改成"标题在上、图排自适应换行"的两段式。
@@ -80,4 +83,20 @@ import UIKit
         }
         .vkFont(.body)
         .foregroundStyle(DS.Palette.text)
+
+    private func setIcon(_ name: String?) {
+        guard UIApplication.shared.supportsAlternateIcons else {
+            app.showToast("当前系统不支持更换图标")
+            return
+        }
+        UIApplication.shared.setAlternateIconName(name) { error in
+            Task { @MainActor in
+                if let error {
+                    app.showToast("更换失败: \(error.localizedDescription)")
+                } else {
+                    currentIcon = name
+                }
+            }
+        }
+    }
     }

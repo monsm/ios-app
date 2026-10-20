@@ -38,7 +38,6 @@ struct DefendView: View {
     @State private var toDate = Date()
     @State private var busy = false
 
-    var body: some View { vkBody.destined(.defend) }
     var vkBody: some View {
         Form {
             Picker("模式", selection: $mode) {
@@ -132,7 +131,6 @@ struct TailgateView: View {
     @State private var seconds = 6
     @State private var busy = false
 
-    var body: some View { vkBody.destined(.tailgate) }
     var vkBody: some View {
         Form {
             Section {

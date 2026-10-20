@@ -43,7 +43,6 @@ struct BackupView: View {
         .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
     }
 
-    var body: some View { vkBody.destined(.backup) }
     var vkBody: some View {
         // AnyView 擦平两分支类型差异 (与 AddPwdView 同一写法): 两支只差最外层那一只容器
         (embedded ? AnyView(listContent) : AnyView(NavigationStack { listContent }))

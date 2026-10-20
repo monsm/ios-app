@@ -968,7 +968,6 @@ struct DeviceInfoView: View {
     @State private var busy = false
     @State private var clockDrift: Int? = nil   // 47 锁钟偏差 (秒; nil = 未读到锁钟)
 
-    var body: some View { vkBody.destined(.deviceInfo) }
     var vkBody: some View {
         NavigationStack {
             List {
@@ -2613,7 +2612,6 @@ struct MembersView: View {
     /// 不用 .id(tick) 重建整个 List —— 那会连带丢掉滚动位置、键盘焦点和动画上下文。
     @State private var members: [Member] = []
 
-    var body: some View { vkBody.destined(.members) }
     var vkBody: some View {
         NavigationStack {
             List {
