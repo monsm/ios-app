@@ -107,8 +107,6 @@ struct SettingsView: View {
             NavigationStack { MaintenanceView() }
                 .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { showCare = false } } }
         }
-        .task { landPendingDiag(app.pendingDiag) }              // 冷启动/首次挂载: 值已挂着
-        .onChange(of: app.pendingDiag) { _, m in landPendingDiag(m) }
         .task { landPendingCare(app.pendingCare) }              // 1013: 与上两行同构
         .onChange(of: app.pendingCare) { _, m in landPendingCare(m) }
         // 2026-10-15: 设置 Tab 栈内子页 (安全中心 → 本机密码 / 销毁) 的"去设置…"落点, 同一条形态
@@ -116,13 +114,6 @@ struct SettingsView: View {
         .onChange(of: app.pendingSettingsFocus) { _, f in landPendingFocus(f) }
     }
 
-    /// 587 落点: 切到本条记录所属锁, 再推诊断页 —— "查看这台锁的诊断"里的"这台锁"要真生效。
-    private func landPendingDiag(_ m: String?) {
-        guard let m, !m.isEmpty else { return }
-        app.pendingDiag = nil
-        if m != app.currentMac { app.select(m) }
-        showDiag = true
-    }
 
     /// 1013 落点: 切到通知里那台锁, 再推维护与保养页
     private func landPendingCare(_ m: String?) {
@@ -150,10 +141,6 @@ struct SettingsView: View {
         case "passcode":
             // 396 随机键位的前提: 直接拉起「设置本机密码」流程
             setPasscode()
-        case "diag":
-            // 自检黄条与 377 那条快捷条的按钮都写着"去诊断", 而光切 Tab 只把人放在设置页根上 ——
-            // "诊断与运行日志"是这一页里的一行。切过去不等于送到。
-            showDiag = true
         case "members":
             // 817/317: 两枚"示例头像/去新建成员"写的是**直达成员入口**, 原来只到设置页根,
             // 剩下"家人与钥匙 → 成员管理"两跳还得自己找。成员中心到达后仍由 pendingMemberAdd 弹向导。
@@ -258,7 +245,6 @@ struct SettingsView: View {
             SearchHit(id: "s.backup", title: "备份与恢复", icon: "externaldrive") { showBackup = true },
             SearchHit(id: "s.backupstudio", title: "备份工作室 (导出向导/恢复/WebDAV策略/换机迁移)", icon: "wrench.and.scissors") { showBackup = true },
             SearchHit(id: "s.messages", title: "动态消息", icon: "bell") { showMessages = true },
-            SearchHit(id: "s.logs", title: "诊断与运行日志", icon: "list.bullet.rectangle") { showDiag = true },
             SearchHit(id: "s.applock", title: "本机数据保护 (应用锁)", icon: "lock.shield", anchor: .applock),
             SearchHit(id: "s.appearance", title: "外观 (主题/品牌色/密度)", icon: "paintbrush", anchor: .appearance),
             SearchHit(id: "s.care", title: "关怀提醒与公告板", icon: "heart.text.square", anchor: .memory),

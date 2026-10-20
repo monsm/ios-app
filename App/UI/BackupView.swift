@@ -17,6 +17,7 @@ struct BackupView: View {
     /// 加密口令**不入库**，所以它仍是 `@State`（每次输入、用完即弃）。
     /// 输入框直写本机存储：与工坊那页共用一份真相，谁改完另一页立刻读到新值。
     @State private var busy = false
+    @State private var pendingRestore: BackupBundle?
     /// 云端已下载但尚未经用户确认的备份包 (nil = 无待确认的恢复)
 
     // 2026-10-15 走查·CI 补刀: 上一批改这一行时把 `showStudio` **改名成了** `showWebDAV`，

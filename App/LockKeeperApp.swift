@@ -308,7 +308,6 @@ final class AppState: ObservableObject {
     @Published var pendingSearch: String?
     /// 587 低电告警 → 这台锁的诊断: 记录详情带过去的**mac**。设置 Tab 收到后先把 current 切到该锁
     /// 再推诊断页 —— 原写法只置 tabSelection=3, 全仓无消费方, 按钮等于没落点。
-    @Published var pendingDiag: String?
     /// 1013 保养到期通知 → 这台锁的维护与保养页: 通知层只带 mac 进来 (m4.care.<mac>),
     /// 设置 Tab 收到后切 current 再推页 —— 与 587 同一条路由形态, 不新造第二套。
     @Published var pendingCare: String?
@@ -320,7 +319,7 @@ final class AppState: ObservableObject {
     /// `SecurityDestroyView` 销毁前备份闸的"先去备份") 动作都写着 `app.tabSelection = 3` ——
     /// 而它们本来就是**设置 Tab 下 push 进去的页**, 切 Tab 是一次空转: 点了什么都不发生,
     /// 前者还配着"跳转设置 Tab 的密码区"的无障碍提示, 后者配着"已切到设置"的 toast。
-    /// 与 pendingDiag / pendingCare 同一条路由形态: 把"到了之后开什么"带过去, 设置页收到即开并清空。
+    /// 与 pendingCare 同一条路由形态: 把"到了之后开什么"带过去, 设置页收到即开并清空。
     @Published var pendingSettingsFocus: String?
     private var unlockTask: Task<Void, Never>? = nil
     private var lastDispatch = Date.distantPast   // 244 指令去重
@@ -1057,7 +1056,7 @@ struct RootView: View {
         mainTabView
         // 26 Tab 长按快捷菜单 (iOS 18)。这一条只在"真按得动"的项上开口:
         // 每一项都汇进本仓**已有的落点口** (requestTab / pendingCredPanel 词表 /
-        // pendingRecordsDay / pendingDiag), 没有一项指向还不存在的页面 ——
+        // pendingRecordsDay), 没有一项指向还不存在的页面 ——
         // 长按菜单最容易变成"写了三行其实一行做不到"的地方, 所以宁可每页只给两三项。
         // ⚠ API-VERIFY: `contextMenu(forSelectionType:tabBar:primaryAction:)` 全仓无先例,
         //    形状按 iOS 18 TabView 文档; 未编译、未证实。若系统不认这一形, 退路是
@@ -1090,7 +1089,6 @@ struct RootView: View {
                 if app.currentMac.isEmpty {
                     Button("打开这一页") { app.requestTab(selected.first ?? 0) }
                 } else {
-                    Button("这台锁的诊断") { app.pendingDiag = app.currentMac; app.requestRoute(.settings) }
                     Button("打开这一页") { app.requestTab(selected.first ?? 0) }
                 }
             }

@@ -54,7 +54,6 @@ struct RecDetailSheet: View {
                 jumpSection     // 583 定位 / 586 当天全景
                 // 587 低电告警才给这个出口: 按 typeName 判而不是硬写类型号 —— 低电的 type 在
                 // StatusParser 文案表里，抄数字会抄成第二个真相源 (本仓反复犯的那类错)。
-                if rec.alarm, rec.typeName.contains("低电") { diagJumpSection }
             }
             // 718: 卡片图在开卡时渲染一次存进 @State —— 放 body 里每帧重跑 ImageRenderer 是白付的代价
             .task(id: rec.id) {
@@ -442,23 +441,6 @@ struct RecDetailSheet: View {
         }
     }
 
-    // ---------- 587 低电告警 → 这台锁的诊断页 ----------
-    @ViewBuilder
-    private var diagJumpSection: some View {
-        Button {
-            let mac = rec.mac      // 钉住**本条**的锁再跳转: 活读 app.current 会把命令发向 A 锁、台账写进 B 锁
-            app.pendingDiag = mac   // 587: 设置 Tab 收到后切 current 再推诊断页 (原写法置 tabSelection=3 无消费方)
-            // 2026-10-14 走查: 落点补上了, 但这里仍是**直写** tabSelection —— 记录页在访客通道下
-            // 照常可达, 而访客态里「设置」Tab 不进层级树, 直写会落到一个看不见的 Tab。
-            app.requestRoute(.settings)
-            dismiss()
-        } label: {
-            Label("查看这台锁的诊断", systemImage: "stethoscope")   // 587 查看这台锁的诊断
-                .vkFont(.subheadline, weight: .medium)
-                .foregroundStyle(DS.Palette.accentText)
-                .frame(minHeight: DS.Hit.min)
-        }
-    }
 
     // ---------- 583 / 586 回到时间线的两个出口 ----------
     /// 586 用哪一天做锚: 与 applyFilter **完全同口径** —— 0:00-4:59 的行归前一晚的组 (649)。
