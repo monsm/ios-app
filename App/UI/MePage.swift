@@ -91,7 +91,7 @@ struct MePage: View {
                     value: "\(DB.keychains().count) 把",
                     showsChevron: true)
             }
-            NavigationLink { LockProfileView().environmentObject(app) } label: {
+            NavigationLink { LockProfilePage().environmentObject(app) } label: {
                 XRow(
                     systemImage: "tag",
                     title: "锁档案",
