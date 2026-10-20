@@ -314,7 +314,8 @@ for (const [name, t] of Object.entries(themes)) {
 
 // E6. SettingsView 图标选择器的四个预览块: 预览底是**写死的**渐变 (与真 PNG 同底色),
 //     白勾压在写死的深色上 —— 这一组不在主题表里, 只能直接从 UI 文件解析, 否则改预览色没人知道。
-const SV = path.join(__dirname, '..', 'App', 'UI', 'SettingsView.swift');
+// 2026-10-21: 图标选择器迁到 IconPicker.swift (SettingsView 被 MePage 替代)
+const SV = path.join(__dirname, '..', 'App', 'UI', 'IconPicker.swift');
 const svSrc = fs.readFileSync(SV, 'utf8');
 const reIconBg = /bg:\s*\[Color\(hex:\s*0x([0-9a-fA-F]{6})\),\s*Color\(hex:\s*0x([0-9a-fA-F]{6})\)\]/g;
 let iconHits = 0;

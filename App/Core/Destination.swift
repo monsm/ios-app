@@ -1,5 +1,5 @@
 // 本文件由 `node tools/destmap.js --emit` 生成，**不要手改**。
-// 生成时的目的地总数 = 42。改了界面呈现方式之后重新生成，
+// 生成时的目的地总数 = 31。改了界面呈现方式之后重新生成，
 // 并核对 diff —— 少一条就是某套界面会缺一个页面而没人发现。
 import SwiftUI
 
@@ -11,42 +11,31 @@ enum Destination: String, CaseIterable, Identifiable {
     case alarmCenter = "AlarmCenterView"
     case autoCal = "AutoCalView"
     case backupStudio = "BackupStudioView"
-    case backup = "BackupView"
     case batterySwapGuide = "BatterySwapGuideView"
     case careReminders = "CareRemindersView"
-    case defend = "DefendView"
-    case deviceInfo = "DeviceInfoView"
-    case deviceManage = "DeviceManageView"
     case exportCenter = "ExportCenterView"
     case exportWizard = "ExportWizardView"
     case firmware = "FirmwareView"
     case gateway = "GatewayView"
     case keychainHW = "KeychainHWView"
     case linkPrefs = "LinkPrefsView"
-    case lockOverview = "LockOverviewView"
     case lockProfile = "LockProfileView"
     case maintenance = "MaintenanceView"
-    case maintSettings = "MaintSettingsView"
     case memberArchived = "MemberArchivedView"
     case memberCenter = "MemberCenterView"
     case memberDetail360 = "MemberDetail360View"
     case memberFamilySettings = "MemberFamilySettingsView"
-    case memberStacked = "MemberStackedView"
-    case members = "MembersView"
     case memberWizard = "MemberWizardView"
     case mergeMembers = "MergeMembersView"
     case messages = "MessagesView"
     case restoreWizard = "RestoreWizardView"
     case safemodeIntro = "SafemodeIntroView"
     case securityAudit = "SecurityAuditView"
-    case securityCenter = "SecurityCenterView"
     case securityDestroy = "SecurityDestroyView"
     case securityPeek = "SecurityPeekView"
     case shareToAndroid = "ShareToAndroidView"
     case startAddFp = "StartAddFpView"
     case syncTime = "SyncTimeView"
-    case tailgate = "TailgateView"
     case unclaimedClaim = "UnclaimedClaimView"
-    case yearReport = "YearReportView"
     var id: String { rawValue }
 }
