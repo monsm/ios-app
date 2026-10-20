@@ -142,7 +142,7 @@ enum QuickPool {
 @ViewBuilder
 func quickDestination(_ id: String) -> some View {
     switch id {
-    case "addPwd":   AddPwdView(embedded: true)
+    case "addPwd":   NavigationStack { AddKeyPage() }
     case "otp":      SafemodeIntroView(mode: "otp")
     case "syncTime": SyncTimeView()
     case "addFp":    StartAddFpView(embedded: true)
