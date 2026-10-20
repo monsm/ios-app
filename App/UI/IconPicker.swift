@@ -57,7 +57,7 @@ struct IconPicker: View {
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
-        .background(Palette.canvas)
+        .background(DS.Palette.canvas)
         .navigationTitle("App 图标")
         .navigationBarTitleDisplayMode(.inline)
     }
