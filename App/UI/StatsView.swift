@@ -2456,16 +2456,8 @@ struct HourDetailSheet: View {
         }
         return Array(out.sorted { (StatsKit.dateOf($0) ?? .distantPast) > (StatsKit.dateOf($1) ?? .distantPast) }.prefix(20))
     }
-    private var rows: [StatsKit.CachedLogRow] { [] }
-}
-
-// ---------- 供 StatsKit 用的扩展行 ----------
-extension StatsKit {
-    struct CachedLogRow {
-        let type: Int
-        let time: String
-        let name: String
-    }
+    // 这里原来有一个 `private var rows: [StatsKit.CachedLogRow] { [] }` 与配套的 CachedLogRow 扩展。
+    // 它恒为空且零读点 —— 真正的下钻数据在 drillRows (638), 删除它不影响时段下钻。
 }
 
 // 时段下钻 sheet(item:) 要求 item 为 Identifiable；Int16 此前不满足 (原写法 h != nil / h! 亦对非可选值非法)

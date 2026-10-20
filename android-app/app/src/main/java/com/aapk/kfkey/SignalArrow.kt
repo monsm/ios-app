@@ -135,6 +135,10 @@ fun SignalArrow(
     pitchDeg: Float = 0f,
     rollDeg: Float = 0f,
     sizeDp: Int = 260,
+    // 颜色由调用方从 LocalKfColors 显式传入: DrawScope 不是 Composable,
+    // 在这里读 LocalKfColors 编译不过 (Theme.kt:8 记过这次未采纳的尝试)。
+    okColor: Color = KfDarkColors.ok,
+    outlineColor: Color = Color.White,
     modifier: Modifier = Modifier,
 ) {
     val ctx = LocalContext.current
@@ -151,7 +155,6 @@ fun SignalArrow(
         rememberInfiniteTransition(label = "sweep").animateFloat(
             -8f, 8f, infiniteRepeatable(tween(1500, easing = LinearEasing), RepeatMode.Reverse), label = "sweep",
         ).value
-    val line = if (armed) Ok else Accent
     val desc = when {
         rssi == null -> "正在寻找门锁的信号"
         armed -> "信号已满, 可以开锁"
@@ -175,7 +178,7 @@ fun SignalArrow(
             val cx = size.width / 2f
             val cy = size.height / 2f
             val len = size.minDimension * 0.62f
-            drawAirTagArrow(cx, cy, len, fill, armed, line)
+            drawAirTagArrow(cx, cy, len, fill, armed, okColor, outlineColor)
         }
     }
 }
@@ -184,7 +187,8 @@ fun SignalArrow(
  * 空心箭头 (无外圈): 白色描边轮廓 + 内部从下往上灌的绿色填充。
  * 满绿 = 达武装线。DrawScope 本身就是 Density, 所以 dp.toPx() 直接用。
  */
-private fun DrawScope.drawAirTagArrow(cx: Float, cy: Float, len: Float, fill: Float, armed: Boolean, accent: Color) {
+private fun DrawScope.drawAirTagArrow(cx: Float, cy: Float, len: Float, fill: Float, armed: Boolean,
+                                      okColor: Color, outlineColor: Color) {
     val halfShaft = len * 0.11f
     val barb = len * 0.30f
     val headY = cy - len * 0.06f
@@ -208,13 +212,14 @@ private fun DrawScope.drawAirTagArrow(cx: Float, cy: Float, len: Float, fill: Fl
         }
     }
     // 2) 轮廓描边: 白色 (达武装线时更亮 + 外发光), 空心感就来自这里
-    val outline = if (armed) Color.White else Color.White.copy(alpha = 0.82f)
+    // 浅色档不能再用写死的白色描边: 白底 + 白线 = 箭头消失。outlineColor 由主题给 (暗色≈白, 浅色=深墨)。
+    val outline = if (armed) outlineColor else outlineColor.copy(alpha = 0.82f)
     if (armed) {
-        drawPath(arrow, color = Ok.copy(alpha = 0.28f), style = Stroke(width = len * 0.14f, cap = StrokeCap.Round, join = StrokeJoin.Round))
+        drawPath(arrow, color = okColor.copy(alpha = 0.28f), style = Stroke(width = len * 0.14f, cap = StrokeCap.Round, join = StrokeJoin.Round))
     }
     drawPath(arrow, color = outline, style = Stroke(width = len * 0.05f, cap = StrokeCap.Round, join = StrokeJoin.Round))
     // 3) 箭头上方的小圆点 (AirTag 精确查找那个"目标点")
     val dotY = tipY - len * 0.16f
-    drawCircle(color = Color.White.copy(alpha = 0.25f), radius = len * 0.10f, center = Offset(cx, dotY))
-    drawCircle(color = Color.White.copy(alpha = 0.92f), radius = len * 0.055f, center = Offset(cx, dotY))
+    drawCircle(color = outlineColor.copy(alpha = 0.25f), radius = len * 0.10f, center = Offset(cx, dotY))
+    drawCircle(color = outlineColor.copy(alpha = 0.92f), radius = len * 0.055f, center = Offset(cx, dotY))
 }

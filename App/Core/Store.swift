@@ -445,30 +445,9 @@ enum DB {
         let m = mac.replacingOccurrences(of: ":", with: "").lowercased()
         removeKeychain(m)
         clearPendingPair(m)   // 删设备 = 连"未完成的配网记录"一起删 (否则下次配对先撞上一份过期密钥)
-        for p in ["kf_ledger_", "kf_snap_", "kf_logcache_", "kf_defend_", "kf_tailgate_", "kf_synctime_", "otpStatus_", "otpIdx_", "kf_fevents_", "kf_lockmeta_", "kf_migok_",
-                  "kf_batt_", "kf_batt_state_", "kf_mevents_", "kf_maint_", "kf_fwsince_", "kf_clock_notify_", "kf_damp_last_", "kf_fp_last_", "kf_care_notify_",
-                  "kf_cbin_", "kf_cqueue_", "kf_cstar_", "kf_calert_", "kf_clists_", "kf_cseq_",
-                  // 186/188 记录备注与标旗: 备注是用户写的自由文本 (可能含人名/地址), 必须随锁清除
-                  "kf_rnote_", "kf_rflag_",
-                  // 361 停用原因便签 (逐条, 只留最近 200 条)
-                  "kf_cdisrea_",
-                  "kf_linkrssi_", "kf_link_auto_", "kf_macorder_"] {
-            store.remove(p + m)
-        }
-        // 自动开锁每锁键 (kf_autocal_ / kf_autoopen_audit_ / kf_autoopen_suspend_until_, 尾段带 mac)
-        for p in ["kf_autocal_", "kf_autoopen_audit_", "kf_autoopen_suspend_until_"] {
-            store.remove(p + m)
-        }
-        // 包6 历史表键带 <mac>_ 段 (kf_chist_<mac>_...), 按前缀段整族清
-        for p in ["kf_chist_" + m + "_"] {
-            for k in store.keys() where k.hasPrefix(p) { store.remove(k) }
-        }
-        // 兜底清理 (审计 §6.6): 一批每锁键在 mac 之后**还带尾段**, 精确前缀删永远删不掉 ——
-        // kf_calert_<mac>_<kind>_<key>、kf_cestudy_earlyexp_<mac>_<alias>、kf_cotp_t_/<mac>、
-        // kf_cdraft_<mac>、kf_logarch_<mac>、kf_mborrow_/kf_mclaim_/kf_mig_lockact_<mac>、kf_offboard_<member> 等。
-        // 判据: 键名里含本锁 MAC (大小写不敏感, 兼容 DemoKit 的大写 demoMac) 即属该锁数据族。
-        let up = m.uppercased()
-        for k in store.keys() where k.contains(m) || k.contains(up) { store.remove(k) }
+        // 每锁键族只有一个所有权表 (App/Core/LockKeySpace.swift): 精确前缀 / 分段前缀 / MAC 兜底
+        // 三档都在那里, 本函数不再自己维护一份会漂移的清单。
+        LockKeySpace.purge(m)
         // 指针类全局键: 删除后不得悬空
         let defWasThis = store.getString("kf_default_mac") == m
         if defWasThis { store.remove("kf_default_mac") }

@@ -146,6 +146,7 @@ enum LockAction {
     case writeCredential    // 凭证增删改 (口令/指纹/临时码)
     case provision          // 网关配网
     case dfu                // 固件升级
+    case configure          // 锁端运行参数 (校时/音量/布防/自动上锁/验证模式/网关重启)
     case destroy            // 销毁/清空回收站/离职清除这类不可逆动作
     case importExport       // 备份导入与导出分享
 
@@ -159,8 +160,9 @@ enum LockAction {
         switch self {
         case .unlock: return "只读安全模式已开: 开锁已停用, 要开门请先关掉这枚开关"   // 296 只读安全模式已开
         case .writeCredential: return "只读安全模式已开: 凭证写入已停用"   // 296 只读安全模式已开
-        case .provision: return "只读安全模式已开: 网关配网已停用"   // 296 只读安全模式已开
+        case .provision: return "只读安全模式已开: 配网/换钥已停用 (含网关配网)"   // 296 只读安全模式已开
         case .dfu: return "只读安全模式已开: 固件升级已停用"   // 296 只读安全模式已开
+        case .configure: return "只读安全模式已开: 校时/布防/音量等锁端设置已停用"   // 296 只读安全模式已开
         case .destroy: return "只读安全模式已开: 销毁与清空已停用"   // 296 只读安全模式已开
         case .importExport: return "只读安全模式已开: 导入导出已停用"   // 296 只读安全模式已开
         }

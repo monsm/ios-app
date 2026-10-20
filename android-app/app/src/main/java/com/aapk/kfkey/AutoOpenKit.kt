@@ -21,7 +21,7 @@ object AutoOpenKit {
     /**
      * 解除线必须在**线性功率域**换算, 不能对 dBm 直接乘系数: dBm 是对数单位,
      * 旧式 0.7×base / 0.5×base 在 base=-60 时会算出"解除线比武装线更强"→ 无回差、逐样本翻转。
-     * iOS 那段教训 (AutoOpen.swift 里 F3 注释) 原样保留。base=-38 → -38 + 10·log10(0.5) ≈ -41。
+     * iOS 那段教训 (AutoOpen.swift 里 F3 注释) 原样保留。base=-40 → -40 + 10·log10(0.5) ≈ -43。
      */
     fun armThreshold(base: Int = BASE): Int = base
 

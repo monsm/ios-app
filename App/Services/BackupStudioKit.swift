@@ -445,19 +445,35 @@ enum BackupStudio {
         guard let cg = ctx.createCGImage(scaled, from: scaled.extent) else { return nil }
         return UIImage(cgImage: cg)
     }
-    /// 411: 仅凭证的小备份 → QR 载荷 (明文 canonical, 接收方 App 扫码导入; 超容量则失败)
-    static func credentialQRPayload() -> String? {
+    /// 411: 仅凭证的小备份 → QR 载荷。
+    ///
+    /// 2026-10-20 P0 修正: 旧实现返回**明文 canonical**, 里面是 skey/bkey/PIN 池/ekey 与成员名册;
+    /// 同屏文案却写"口令另行线下交接" —— 那张码根本没有口令。谁拍到/截图就拿到整把锁。
+    /// 现在只有一条出路: 口令必填 → `CryptoBox.encryptText` 信封 (PBKDF2 60k + AES-CBC + HMAC)。
+    /// 接收端本来就把扫到的原文交给 `parsePreview(password:)`, 加密包走同一条解密链, 不必新造格式。
+    /// 容量按 QR (纠错档 M, 上限约 2331 **字节**) 留余量: 明文 ≤900 字节, 信封 ≤2200 字符。
+    /// 口径必须是 UTF-8 字节而不是 String.count: 中文一个字符 3 字节, 按字符数卡会让
+    /// 一份看似"900 字"的成员/锁名册变成 3 倍大的密文, 最后得到一张扫不出来的码。
+    /// 信封 = hex 密文 (约 2×明文字节) + 固定 JSON 字段 (≈250), 900 是能把 2200 装下的上界;
+    /// 超了如实返回 nil, 让 UI 劝用文件通道。
+    static func credentialQRPayload(password: String) -> String? {
+        guard !password.isEmpty else { return nil }
         var b = BackupKit.collectAll()
         for i in b.devices.indices {
             b.devices[i].meta = nil          // 只带密钥与台账, 不带锁端运行参数
         }
         b.globals = nil
-        // 2026-10-13 run 63: 原写 `b.members = b.members` (自赋值, 编译器报 "assigning a property to
-        // itself")。语义上就是"members 原样保留" —— 凭证的 owner 归属要用它, 不能像 globals 那样清掉。
-        // 删掉这行空操作, 用注释说清意图。
+        // 成员保留 (凭证 owner 归属要用), 但联系方式不进二维码: 码可能被截图, 人名的必要性远高于电话。
+        // members 是 Optional<[Member]> —— 用局部副本改, 不碰可选链的可变性。
+        if var ms = b.members {
+            for i in ms.indices { ms[i].phone = "" }
+            b.members = ms
+        }
         let t = BackupCanonical.exportText(b)
-        guard !t.isEmpty, t.count < 2000 else { return nil }
-        return t
+        guard !t.isEmpty, t.utf8.count <= 900 else { return nil }
+        guard let env = try? CryptoBox.encryptText(t, password: password),
+              !env.isEmpty, env.count <= 2200 else { return nil }
+        return env
     }
 
     // ---------- 412/431 导出前体检 + 清理联动 ----------

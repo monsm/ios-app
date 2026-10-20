@@ -109,6 +109,12 @@ jobs:
       - name: '解析侧跨语言差分 (锁回来的帧 → 状态/日志/广播/词表; 输入与期望都取自金标夹具, 算法复刻自 Swift)'
         run: node tools/parseshadow.js
 
+      - name: '命令安全表对账 (判失败: 每条构造器命令都必须在 LockCommand 登记动作族; request/send/13 直写/DFU 四路都必须接闸; 411 二维码只许口令信封)'
+        run: node tools/policygate.js
+
+      - name: '每锁键族所有权表 (判失败: removeDevice 只许走 LockKeySpace; 前缀不得重复/为空/失效)'
+        run: node tools/keyspace.js
+
       - name: '备份包校验和跨语言差分 (第一百七十八批: 权威侧 = 小程序 utils/storage.js fnv1a32, vendor 里没有这个文件 ⇒ 向量烘进 fixtures/canonical.json; 复刻不一致就红)'
         run: node tools/bundleshadow.js
 

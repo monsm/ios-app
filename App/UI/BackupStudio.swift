@@ -376,6 +376,9 @@ struct ExportWizardView: View {
     @State private var doneText: String = ""
     @State private var doneURLs: [URL] = []
     @State private var qrPayload: String?
+    // 411 P0: 二维码不再是明文母钥包。没口令就不出码; 完成页可单独设一个二维码口令。
+    @State private var qrPass = ""
+    @State private var qrMsg = ""
     @State private var otpToggle = false
     // 439 旧机导出侧真进度: 百分比与分卷序号只随真做完的阶段前进
     @State private var exporting = false
@@ -603,18 +606,44 @@ struct ExportWizardView: View {
                         .foregroundStyle(DS.Palette.accentText)
                 }
             }
-            // 411 二维码搬运: 仅凭证小包可生成 QR, 纯本地 CoreImage; 接收端在 换机迁移 的扫码通道
-            if let q = qrPayload, let img = BackupStudio.qrImage(q) {
+            // 411 二维码搬运: 只出**口令信封**, 不再出明文 canonical (P0, 2026-10-20)。
+            // 接收端把扫到的原文交给 parsePreview(password:), 与加密备份走同一条解密链。
+            if !useVolumes {
                 VStack(alignment: .leading, spacing: DS.Space.s) {
-                    Text("凭证小包二维码搬运: 另一台手机打开 备份工作室→换机迁移→扫码 用相机接收, 全程无网络。")   // 411 凭证小包二维码搬运
+                    Text("凭证二维码(加密): 另一台手机打开 备份工作室→换机迁移→扫码, 输入同一口令才能导入; 全程无网络。")   // 411 凭证二维码(加密)
                         .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
-                    ShareLink(item: UIImageShareItem(img), preview: SharePreview("凭证二维码"))
-                    Text("口令另行线下交接, 勿与 QR 同渠道 (与导出纪律一致)。")
-                        .vkFont(.caption2)
-                        .foregroundStyle(DS.Palette.warn)
-                        .fixedSize(horizontal: false, vertical: true)
+                    if let q = qrPayload, let img = BackupStudio.qrImage(q) {
+                        ShareLink(item: UIImageShareItem(img), preview: SharePreview("凭证二维码"))
+                        Text("这张码本身是口令信封: 截到码也打不开。但口令请当面或走另一条渠道, 不要和码一起发。")
+                            .vkFont(.caption2)
+                            .foregroundStyle(DS.Palette.warn)
+                            .fixedSize(horizontal: false, vertical: true)
+                    } else {
+                        Text(qrMsg.isEmpty ? "要用二维码搬运, 先设一个二维码口令 (至少 6 位)。" : qrMsg)
+                            .vkFont(.caption2)
+                            .foregroundStyle(qrMsg.isEmpty ? DS.Palette.textSub : DS.Palette.warn)
+                            .fixedSize(horizontal: false, vertical: true)
+                        SecureField("二维码口令", text: $qrPass)
+                            .vkFont(.caption)
+                            .autocorrectionDisabled()
+                            .textInputAutocapitalization(.never)
+                        Button("生成加密二维码") {
+                            let strong = qrPass.trimmingCharacters(in: .whitespacesAndNewlines)
+                            guard strong.count >= 6 else { qrMsg = "口令太短: 二维码会被截图, 至少 6 位。"; return }
+                            if let q = BackupStudio.credentialQRPayload(password: strong) {
+                                qrPayload = q
+                                qrMsg = ""
+                            } else {
+                                qrMsg = "凭证太多或生成失败, 一张二维码装不下 — 请用文件通道。"
+                            }
+                        }
+                        .vkFont(.caption, weight: .semibold)
+                        .foregroundStyle(DS.Palette.accentText)
+                        .frame(minHeight: DS.Hit.min)
+                        .disabled(qrPass.count < 6)
+                    }
                 }
             }
             // 440 增量补传 (旧机侧): 新机对账报"缺的锁"后, 在旧机只把缺的锁重新打包
@@ -672,6 +701,8 @@ struct ExportWizardView: View {
             }
             Button("再生成一份") {
                 qrPayload = nil
+                qrPass = ""
+                qrMsg = ""
                 doneText = ""
                 doneURLs = []
                 step = 0
@@ -730,7 +761,9 @@ struct ExportWizardView: View {
                    let url = BackupStudio.writeLocal(text, name: name) {
                     written.append(url)
                     BackupStudio.markExportSize(text)   // 193: 单卷导出记尺寸, 下次预估行对比用
-                    qrPayload = BackupStudio.credentialQRPayload()
+                    // 只有用户已经设了导出/备份口令才自动出码; 没设就留空, 由完成页要求单独输入。
+                    qrPayload = pw.isEmpty ? nil : BackupStudio.credentialQRPayload(password: pw)
+                    qrMsg = (pw.isEmpty || qrPayload != nil) ? "" : "凭证太多, 一张二维码装不下 — 请用文件通道。"
                 }
                 exportVol = 1
                 exportPct = 100
@@ -1685,7 +1718,7 @@ struct MigrationWizardView: View {
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
             }
-            Text("扫码包只含钥匙串与台账, 不含锁端运行参数与记录; 口令另行线下交接。")   // 411 扫码包只含钥匙串与台
+            Text("扫码包是加密信封: 只含钥匙串与台账, 不含锁端运行参数与记录。请在上方填旧机用的同一口令; 口令别和码走同一条渠道。")   // 411 扫码包是加密信封
                 .vkFont(.caption2)
                 .foregroundStyle(DS.Palette.warn)
                 .fixedSize(horizontal: false, vertical: true)
@@ -2369,7 +2402,7 @@ extension BackupStudio.Channel {
     var hint: String {
         switch self {
         case .file: return "旧机导出 .enc 后经数据线/隔空投送/云盘传到本机, 这里粘贴或从「文件」选择接收"   // 438 旧机导出
-        case .qr: return "仅凭证小包: 旧机导出页生成二维码, 本页相机扫码接收, 全程无网络"   // 411/438 仅凭证小包
+        case .qr: return "仅凭证小包 (口令信封): 旧机导出页生成二维码, 本页相机扫码 + 同一口令导入, 全程无网络"   // 411/438 仅凭证小包 (口令信封)
         case .webdav: return "坚果云/自配 WebDAV: 读远端列表 → 下载 → 解析入库, 两台机不见面也能迁"   // 422/423 坚果云
         }
     }

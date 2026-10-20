@@ -21,9 +21,14 @@ struct AccessibilityView: View {
             inputSection
             soundSection
             practiceSection
+            // 855/866/879/883 是**开发自检区**, 不是给用户的功能: 灰度预览会把整个 App 变灰,
+            // 200% 字号预览会改全局外观种子。旧实现无条件挂在 Release 里 —— 普通用户能一键把界面弄坏。
+            // 只在 DEBUG 构建出现; Release 里连入口都不渲染。
+            #if DEBUG
             DevFeatureAuditSection()
             DevGrayscaleSection()
             DevContrastSection(calcA: $calcA, calcB: $calcB, mode: $calcMode)
+            #endif
         }
         .navigationTitle("辅助功能")
         .variantList()

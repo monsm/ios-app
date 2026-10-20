@@ -136,3 +136,31 @@ fs.writeFileSync(p, "utf8" === "x" ? p : p, "utf8")   // 第二个参数写成�
 2. **深色档底色**改暖调（需重跑 439 条断言）。
 3. **Android 双模全量**：把 `DrawScope` / 非 Composable 的取色改成显式传参。
 4. 其余页面按需——**先看真机再决定哪页还乱**，不要凭静态分析猜。
+
+---
+
+## 五、2026-10-20 代码主干预重构（已落地，未编译）
+
+这一轮不是界面重构，而是把"同一事实多份真相"收成唯一判据口。四处已落地：
+
+| 主干 | 改动 | 判据 |
+|---|---|---|
+| 命令安全 | 新增 `App/Core/LockCommand.swift`：29 条命令逐条声明动作族；`LockService.request` / `HardwareService.send` / 13 直写 / DFU 两入口全部接闸 | `node tools/policygate.js`（判失败，已进 CI） |
+| 每锁键族 | `removeDevice` 的 35 条前缀清单抽成 `App/Core/LockKeySpace.swift`（精确/分段/MAC 兜底三档） | `node tools/keyspace.js`（判失败，已进 CI） |
+| P0 二维码 | 411 只出 **CryptoBox 口令信封**（明文 ≤900 / 信封 ≤2200），删除"口令另行交接"的假承诺；接收端复用 `parsePreview(password:)` | `policygate` 同时检查无 password 调用点 |
+| Android | 解绑同事务清 proximity；权限拒绝有人话；`ProximityCard` / `SignalArrow` / `PillButton` 接 `LocalKfColors`；箭头描边不再写死白色 | `kotlinshadow` + CI android job |
+
+同时修掉三处"假绿/注释说谎"：
+
+- `kotlinshadow` 不再把 `BASE=-38` 写死在断言里（源码已是 -40）；
+- `autoopenshadow` 不再要求 `stillnessSeconds=1.0`，改为钉 `dwellMet: armed`；
+- 自动开锁的 `MotionStillness` 整族删除 —— 加速度计不可用的机器不再永久拒开。
+
+**验证边界（不许合并成一句）**：上述新闸门与既有 20 道 node 闸门全绿；但本机仍无 Swift/Xcode/Kotlin 工具链，**0 行 Swift、0 行 Kotlin 被编译**，也没有真机/模拟器。CI 的 `build-for-testing` 才是第一道编译器检查。
+
+## 六、还没做（下一刀）
+
+1. **共享契约**：rc 表 / PID 表 / 命令号仍由 Swift 与 Kotlin 各写一份；应生成或对拍同一份 `Shared/Contract`。
+2. **UI 巨文件**：`RecordsView` 3792 / `CredentialStudio` 3268 / `Sheets` 2972 行，按功能域拆子模块（需编译器在场）。
+3. **两条恢复路**：`BackupKit.restoreAll`（覆盖）与 `BackupStudio.restore`（merge）仍是两套实现，需各自回归。
+4. **伪装/胁迫整族**：产品决策未拍板前不要只补一半（见 09 §5 P2-9）。

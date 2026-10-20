@@ -639,6 +639,13 @@ enum DFURunner {
     static func runUpgradeQueue(lock: LockService, macs: [String], firmware: FirmwarePackage,
                                 onStep: @escaping (Int, Int, String) -> Void,
                                 onProgress: @escaping @MainActor (DFUProgress) -> Void) async -> [QueueOutcome] {
+        // 只读安全模式: 在连接第一把锁之前就停手, 不要先建链再逐把报错。
+        guard SecurityPolicy.allows(.dfu) else {
+            return macs.map { mac in
+                QueueOutcome(mac: mac, name: DB.keychain(mac).map { LockArchive.displayName($0) } ?? mac,
+                             ok: false, note: SecurityPolicy.denialMessage(.dfu))
+            }
+        }
         var out: [QueueOutcome] = []
         for (i, mac) in macs.enumerated() {
             let kc = DB.keychain(mac)
@@ -666,6 +673,10 @@ enum DFURunner {
     /// "sending value of non-Sendable type '(Int, Int) -> Void' risks causing data races"。
     static func runUpgrade(lock: LockService, mac: String, pid: Int, firmware: FirmwarePackage,
                            onProgress: @escaping @MainActor (DFUProgress) -> Void) async throws {
+        // 唯一安全闸 (与 LockService.request 同一判据): DFU 不走 87 帧, 必须在这里自己挡一次。
+        guard SecurityPolicy.allows(.dfu) else {
+            throw BLEErrorX.msg(SecurityPolicy.denialMessage(.dfu))
+        }
         // 2026-10-14: 降级闸接线 —— 无签名前提下, 拒绝把低版本固件刷回 (versionLt 此前全仓零调用)。
         if let msg = FirmwareKit.downgradeBlocked(current: DB.keychain(mac)?.fw, pkg: firmware) {
             throw BLEErrorX.msg(msg)

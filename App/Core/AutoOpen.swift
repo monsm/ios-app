@@ -1,11 +1,10 @@
 // 靠近自动开锁 — AUTOOPEN-PLAN.md 落地 (docs)
-// 门控链 F0 前台 / F1 面容双档 / F2' 停留 / F3 距离标定 / F4 布防互锁 / F5 一次性 / F6 锁态,
+// 门控链 F0 前台 / F1 面容双档 / F2' 信号达标 / F3 距离标定 / F4 布防互锁 / F5 一次性 / F6 锁态,
 // 全绿才经既有 LockService.unlock 管线下发 cmd04 (不改协议/命令构造); 任一门不过 = 静默拒绝 + 审计落盘
 // (审计只记"哪道门拒了、哪把锁、何时", 永不记 ekey/skey 明文)。默认全关、fail-closed。
 // 96 铁律对照: 本特性是 96 的显式用户开关例外 — 未开 = 绝不自动开锁, 开 = 全门绿才出手。
 import Foundation
 import SwiftUI          // 本文件尾部有 SwiftUI 视图 (标定页/面板): 缺这一行 = View/@State/@EnvironmentObject 全找不到
-import CoreMotion
 import LocalAuthentication
 import UIKit
 
@@ -197,7 +196,7 @@ struct AutoOpenGate {
     var defendEndSec: Int
     var rssiArmed: Bool          // F3 滤波当前态
     var calibrated: Bool         // 该锁做过距离标定
-    var dwellMet: Bool           // F2' 降速/静置 ≥3s 已满足
+    var dwellMet: Bool           // F2' 信号已武装 (静置传感器闸已删除)
     var coolReady: Bool          // F5 冷却: 上一次下发距今 >60s
     var lockReady: Bool          // F6: 非 busy(25) 且非防拆(26)
 
@@ -255,7 +254,7 @@ struct AutoOpenGate {
         case .f4defend: return "F4 布防时段内, 一票否决"
         case .f3nocal: return "F3 未做距离标定"
         case .f3rssi: return "F3 信号未达武装线"
-        case .f2dwell: return "F2' 未停留满 3s (移动中)"
+        case .f2dwell: return "F2' 信号未达武装线 (走近或转动手机)"
         case .f5cool: return "F5 冷却中 (6 秒)"
         case .f6busy: return "F6 锁态未知或忙 (rc=25/无 03 回显)"
         case .none: return "可开"
@@ -298,67 +297,12 @@ struct SystemFaceService: FaceService {
     }
 }
 
-// ================= F2' 停留判定: 加速度计方差窗口 (降速/静置 ≥3s) =================
-/// 简化: 加速度计 20Hz, 滑窗 30 帧 (1.5s), 方差 < 阈值 判为静置; 连续静置 ≥3s = 停留满足 (堵"骑车路过")。
-/// 阈值 0.05 (m/s²)² 为常量。调参: 口袋/桌面微动 vs 走动, 现场标定后可调。
-@MainActor
-enum MotionStillness {
-    static let varianceThreshold = 0.05
-    /// 静置判定时长。原 3.0s: 人站定到触发要等满 3 秒 + 2 秒一拍 = 门口等五秒,
-    /// 与用户要的"秒开"对不上 (安卓那侧本来就没有这条闸)。降到 1.0s ——
-    /// 仍拦得住"骑车路过门口"(车在动, met() 不成立), 但站定后基本下一拍就开。
-    static let stillnessSeconds: Double = 1.0
-    static let windowFrames = 30
-    private static var samples: [(t: Double, x: Double, y: Double, z: Double)] = []
-    private static var stillSince: Double? = nil
-    private static var mgr: CMMotionManager? = nil
-
-    static func start() {
-        guard mgr == nil else { return }
-        let m = CMMotionManager()
-        guard m.isAccelerometerAvailable else { return }
-        m.accelerometerUpdateInterval = 1.0 / 20.0
-        mgr = m
-        m.startAccelerometerUpdates(to: .main) { data, _ in
-            guard let d = data else { return }
-            feed(x: Double(d.acceleration.x), y: Double(d.acceleration.y), z: Double(d.acceleration.z))
-        }
-    }
-    static func stop() {
-        mgr?.stopAccelerometerUpdates()
-        mgr = nil
-        samples.removeAll()
-        stillSince = nil
-    }
-    /// 喂入一帧 (可单测: 喂模拟轨迹判 静止/路过)
-    static func feed(x: Double, y: Double, z: Double) {
-        let now = Date().timeIntervalSince1970
-        samples.append((now, x, y, z))
-        if samples.count > windowFrames { samples.removeFirst(samples.count - windowFrames) }
-        if variance() < varianceThreshold {
-            if stillSince == nil { stillSince = now }
-        } else {
-            stillSince = nil
-        }
-    }
-    /// 当前是否已静置满 3s (单测口径: 喂入时间戳判定)
-    static func met(at now: TimeInterval = Date().timeIntervalSince1970) -> Bool {
-        guard let s = stillSince else { return false }
-        return now - s >= stillnessSeconds
-    }
-    private static func variance() -> Double {
-        guard samples.count >= windowFrames else { return 1 }
-        let n = Double(samples.count)
-        let mx = samples.reduce(0) { $0 + $1.x } / n
-        let my = samples.reduce(0) { $0 + $1.y } / n
-        let mz = samples.reduce(0) { $0 + $1.z } / n
-        var acc = 0.0
-        for s in samples {
-            acc += (s.x - mx) * (s.x - mx) + (s.y - my) * (s.y - my) + (s.z - mz) * (s.z - mz)
-        }
-        return acc / (n * 3.0)
-    }
-}
+// ================= F2': 没有独立的"静置"传感器闸 =================
+// 判据就是 F3 的武装位: 进入线/解除线是两条不同阈值, 本身已有滞回, 足以拦住"站着不动反复开"。
+// 旧的 MotionStillness (20Hz 加速度计 + 1s 静置) 已删除, 原因是它在真机上会造成**永久拒开**:
+// `start()` 在加速度计不可用时直接 return, `met()` 永远 false ⇒ dwellMet 永远 false。
+// 而 tickDwell 的注释从 2026-10-18 起就写着"删掉静置判定", 代码却仍在调 met() —— 注释与实现相反,
+// 下一个改这里的人会按注释删掉正确的部分。现在两者一致: 信号达标即判定。
 
 // ================= 控制器: 状态机 + 全门绿才走既有 unlock 管线下发 04 =================
 @MainActor
@@ -384,7 +328,6 @@ final class AutoOpenController {
             AutoOpen.audit(mac, "拒开 rc=26 防拆挂起中, 面容不刷新")
             return   // rc=26 挂起期不弹面容, 门保持不过
         }
-        MotionStillness.start()
         eventFired.removeAll()          // 新的一次"进前台 + 接近"事件, 放开一次性闩锁
         if AutoOpenKit.isStrict(AutoOpen.faceTier) {
             promptStartedAt = Date()    // 严格档: 记录弹窗发起时刻, 供在途位与"本次必刷"判定
@@ -395,16 +338,13 @@ final class AutoOpenController {
         }
     }
     func onBackground() {
-        // 2026-10-14: 清理与"停传感器"不能挂在开关值上 —— 运行中把开关关掉时 AutoOpen.on 已为 false,
-        // 旧写法直接 return, MotionStillness.stop() 被跳过 → 加速度计泄漏。
-        // 退后台: 清武装态 (F0 同时失效, 双保险) + 清一次性/面容在途位 + 停加速度计
+        // 退后台: 清武装态 (F0 同时失效, 双保险) + 清一次性/面容在途位。
+        // 静置传感器已删除, 这里不再需要停加速度计。
         armed = false
         eventFired.removeAll()
         promptStartedAt = nil
         faceAtPrompt = nil
-        // 旧实现从不调 stop(): 回前台 start() 因 mgr != nil 幂等早退, 而传感器流已被系统停止
-        // → met() 用陈旧 stillSince 恒判"已停留" (fail-open)
-        MotionStillness.stop()
+        // 静置传感器已删除 (F2' 只看武装位); 这里只清进程内的接近事件状态。
     }
 
     // ---------- F3 喂入: RSSI 事件 (LinkSenseKit saveRssi 后调) ----------
@@ -507,7 +447,7 @@ final class AutoOpenController {
             rssiArmed: armed,
             // calibrated 现在如实表示"做过按锁标定" (不再是能不能开的硬条件 —— 未标定走 fallbackBase)
             calibrated: AutoOpen.autocal(mac) != nil,
-            dwellMet: armed && MotionStillness.met(),
+            dwellMet: armed,
             coolReady: coolReady,
             // F6 锁态门 fail-closed: StatusSnapshotData.rc 默认 0 = "成功", 无快照时旧写法会误判锁态绿
             lockReady: snap != nil && snap?.rc != 25 && snap?.rc != 26

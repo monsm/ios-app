@@ -335,6 +335,11 @@ if (!fails) good('B 共 ' + nB + ' 项与 vendor / golden 逐字节一致');
 
 // ============================ C. 自动开锁判据 ============================
 console.log('--- C. AutoOpenKit F3/F5 ---');
+// BASE 必须**从源码读**, 不能在这里再写一个数: 旧版本把 -38 写死在断言里, 而 AutoOpenKit
+// 早已改成 -40 ⇒ 闸门一直绿, 验的是不存在的代码。这是"同一事实两份真相"最典型的假绿。
+const baseM = ao.match(/const val BASE\s*=\s*(-?\d+)/);
+if (!baseM) bad('C 找不到 AutoOpenKit.BASE 常量');
+const BASE = baseM ? Number(baseM[1]) : -40;
 const arm = b => b;
 const disarm = b => Math.round(b + 10 * Math.log10(0.5));
 if (!/fun armThreshold\(base: Int = BASE\): Int = base/.test(ao)) bad('C 武装线公式漂移 (应为 base)');
@@ -348,7 +353,7 @@ function sample(prev, r, b) { return prev ? r > disarm(b) : r >= arm(b); }
 {
   let armed = false, fired = false, fires = 0;
   for (let t = 0; t < 40; t++) {
-    armed = sample(armed, -35, -38);
+    armed = sample(armed, BASE + 5, BASE);
     if (!armed) fired = false;
     if (armed && !fired) { fired = true; fires++; }
   }
@@ -356,17 +361,18 @@ function sample(prev, r, b) { return prev ? r > disarm(b) : r >= arm(b); }
   else good('C 一次接近事件只发一次 04');
   // 走开再回来: 掉到解除线以下 → 放开闩锁 → 可再发一次
   let armedB = true, firedB = true, firesB = 0;
-  for (const r of [-50, -60]) { armedB = sample(armedB, r, -38); if (!armedB) firedB = false; }
-  for (let t = 0; t < 10; t++) { armedB = sample(armedB, -34, -38); if (armedB && !firedB) { firedB = true; firesB++; } }
+  for (const r of [BASE - 10, BASE - 20]) { armedB = sample(armedB, r, BASE); if (!armedB) firedB = false; }
+  for (let t = 0; t < 10; t++) { armedB = sample(armedB, BASE + 6, BASE); if (armedB && !firedB) { firedB = true; firesB++; } }
   if (firesB !== 1) bad('C 走开再靠近没有再触发 (=' + firesB + '), 应恰好 1 次');
   else good('C 离开后重新靠近可再触发一次');
   // 回差带内来回抖动不翻转
   let a = true;
-  for (const r of [-40, -38, -40, -39, -40]) a = sample(a, r, -38);
-  if (!a) bad('C 回差失效: -40..-38 抖动把武装位翻掉了 (解除线应≈ ' + disarm(-38) + ')');
-  else good('C 回差带 [-41,-38] 内抖动不翻转');
+  const band = [disarm(BASE) + 1, BASE, disarm(BASE) + 1, BASE - 1, disarm(BASE) + 1];
+  for (const r of band) a = sample(a, r, BASE);
+  if (!a) bad('C 回差失效: ' + band.join('/') + ' 抖动把武装位翻掉了 (解除线应≈ ' + disarm(BASE) + ')');
+  else good('C 回差带 [' + disarm(BASE) + ',' + BASE + '] 内抖动不翻转');
 }
-console.log('--- C 公式校验: BASE=' + (-38) + ' 武装线=-38 解除线=' + disarm(-38) + ' ---');
+console.log('--- C 公式校验: BASE=' + BASE + ' 武装线=' + arm(BASE) + ' 解除线=' + disarm(BASE) + ' ---');
 
 console.log(fails ? '\n影子对拍不通过 (' + fails + ')' : '\n全部通过');
 process.exit(fails ? 1 : 0);

@@ -130,6 +130,9 @@ final class HardwareService: ObservableObject {
     }
 
     private func send(_ cmdObj: ZKCmd, target: String, timeoutMs: Int = 8000) async throws -> ZKProtocol.ParsedFrame {
+        // 与 LockService.request 同一道闸: 网关/钥匙串的写命令也受只读安全模式约束。
+        // 先判再连 —— 被拦下的命令不该先把链路建起来。
+        try LockCommand.requireAllowed(cmdObj.cmd)
         try await connectTarget(target)
         // 忙判必须在写之前 (与 LockService.request 同款修复, 2026-10-14): 旧判据在 Task 内,
         // 而 writeFrameHex 在 Task 外无条件执行 => 判忙时帧仍被发出 -> 错帧。

@@ -1,30 +1,21 @@
 package com.aapk.kfkey
 
 import android.content.Context
-import android.os.Build
 import android.os.VibrationEffect
-import android.os.Vibrator
 import android.os.VibratorManager
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
 
 /**
- * 触觉封装 —— 对应 iOS 的 DS.Haptics 三档 (2026-10-18 门面改造新增)。
+ * 触觉封装 —— 与 iOS 的 DS.Haptics 结果档对齐 (2026-10-18 门面改造新增)。
  *
- * iOS 侧只允许三档: tick(light, 过程) / trigger(medium, 动作) / 结果档(success/warning/error)。
- * Android 侧用同一套语义, 底层映射到 HapticFeedbackConstants / VibratorManager。
+ * 只保留**有调用点**的两档: ok / fail。原先还有 tick/trigger 与 Compose 的
+ * rememberKfHaptics/KfTick/KfConfirm, 但全仓零调用 —— 同一件事留两套入口,
+ * 下一个人就不知道该用哪套。要加过程触感时, 按 iOS .tick 语义在这里补一个函数,
+ * 不要在页面里直接写 performHapticFeedback。
  *
- * 为什么必须封装: 散写 performHapticFeedback 会让"三档"这个约定失效,
- * 而 iOS 侧的设计令牌已经把它钉死了 (DesignSystem.swift:248-258)。
+ * minSdk = 33 (Android 13) ⇒ VibratorManager 恒可用, 不再需要 Build.VERSION 分支;
+ * 旧代码那两段 fallback (VIBRATOR_SERVICE / 无 effect 的 vibrate) 是 minSdk 21 时代的残留。
  */
 internal object KfHaptics {
-
-    /** 过程触感: 充能刻度 / 围栏解锁 / 就绪轻震 —— 对应 iOS .tick */
-    fun tick(ctx: Context) = buzz(ctx, 8, 60)
-
-    /** 动作触感: 手势确认 / 断连提醒 —— 对应 iOS .trigger */
-    fun trigger(ctx: Context) = buzz(ctx, 20, 120)
 
     /** 结果触感: 操作成功 —— 对应 iOS 的 success */
     fun ok(ctx: Context) = buzz(ctx, 12, 90)
@@ -34,39 +25,15 @@ internal object KfHaptics {
 
     /**
      * 统一震动入口。
-     * 尊重系统"触感反馈"开关: 关掉时这里静默返回 (视觉必须自成一体, 不依赖触觉)。
+     * 触觉是锦上添花: 没有马达、系统关了触感、或厂商 ROM 抛异常时一律静默返回,
+     * 绝不能让一次震动把开锁流程打断 (2026-10-18 真机事故的教训)。
      */
     private fun buzz(ctx: Context, ms: Long, amplitude: Int) {
-        val v: Vibrator? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            (ctx.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager)?.defaultVibrator
-        } else {
-            @Suppress("DEPRECATION")
-            (ctx.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator)
-        }
-        if (v == null || !v.hasVibrator()) return
-        // 2026-10-18 真机事故: manifest 漏了 android.permission.VIBRATE，
-        // vibrate() 抛 SecurityException 并被协程当异常抛出 —— 开锁成功后整条流程崩掉。
-        // 两层修: ① manifest 补权限（正解）; ② 这里兜住任何异常 ——
-        // 触觉是锦上添花，永远不该成为把开锁打断的理由。
+        val v = (ctx.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager)?.defaultVibrator
+            ?: return
+        if (!v.hasVibrator()) return
         runCatching {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                v.vibrate(VibrationEffect.createOneShot(ms, amplitude.coerceIn(1, 255)))
-            } else {
-                @Suppress("DEPRECATION")
-                v.vibrate(ms)
-            }
+            v.vibrate(VibrationEffect.createOneShot(ms, amplitude.coerceIn(1, 255)))
         }
     }
 }
-
-/**
- * Compose 侧的触觉入口 —— 走平台的 HapticFeedback, 由系统按用户设置自动抑制。
- * 用在需要与点击同步的场景 (按键反馈), 长震动仍用 KfHaptics。
- */
-@Composable
-internal fun rememberKfHaptics(): androidx.compose.ui.hapticfeedback.HapticFeedback {
-    return LocalHapticFeedback.current
-}
-
-internal val KfTick = HapticFeedbackType.TextHandleMove
-internal val KfConfirm = HapticFeedbackType.LongPress

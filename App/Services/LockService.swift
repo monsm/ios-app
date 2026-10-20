@@ -220,6 +220,10 @@ final class LockService: ObservableObject {
         guard !hex.isEmpty else {
             throw BLEErrorX.msg("\(cmdObj.name) 帧构造失败 (密钥或参数无效), 已中止下发")
         }
+        // 唯一安全闸: 命令属于哪一族 (开锁/凭证/配网/参数/DFU) 由 LockCommand 表回答,
+        // 只读安全模式 (296) 在这里拦下, 不再依赖每个页面自己写 if。
+        // 未登记的命令 fail-closed —— 新增构建器必须先到 LockCommand 登记。
+        try LockCommand.requireAllowed(cmd)
         if needToken {
             try await ensureToken()
             hex = ZKProtocol.injectToken(hex, sessionTokenHex)
@@ -631,6 +635,11 @@ final class LockService: ObservableObject {
     //   按压全被锁当成普通开锁验证 (所以门锁提示"验证失败")。现在只认"收满 times 次干净按压"。
     func fpStart(times: Int = 8, firstFrameMs: Int = 8000, idleAfterPressMs: Int = 16000,
                  overallMs: Int = 150000, onPress: ((FpPress) -> Void)? = nil) async throws -> [FpPress] {
+        // 13 是**直写**的 (多响应命令不能走 request 的单 waiter), 所以它必须自己过两道闸:
+        // 用户级只读安全模式 (LockCommand) 与只读试验模式 (kf_trial_guard)。
+        // 漏掉这里 = 只读模式下仍能录指纹 — 而它正是一条凭证写入。
+        try LockCommand.requireAllowed(0x13)
+        if DB.store.getBool("kf_trial_guard", false) { try ZKProtocol.assertReadOnly(0x13) }
         let (m, sk) = try keys()
         try await ensureToken()
         let hex = ZKProtocol.injectToken(ZKCmdBuilder.cmd13AddFp(m, sk, times, 15).hex,
