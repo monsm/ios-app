@@ -114,7 +114,7 @@ struct DoorRoot: View {
         case .events:
             EventsPage()
         case .device:
-            SettingsView()
+            MePage()
         }
     }
 
