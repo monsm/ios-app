@@ -116,7 +116,8 @@ struct DevicePage: View {
         if let ms = sense.connectMs, sense.linkState == .ready {
             return "握手耗时 \(ms)ms · 信号 \(sense.lastRssi ?? 0) dBm"
         }
-        if let t = DB.statusTime(mac), t > 0 {
+        let t = DB.statusTime(mac)
+        if t > 0 {
             let mins = Int((Date().timeIntervalSince1970 * 1000 - t) / 60000)
             if mins < 60 { return "数据截至 \(mins) 分钟前" }
             return "数据截至 \(mins / 60) 小时前"

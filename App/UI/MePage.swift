@@ -145,7 +145,7 @@ struct MePage: View {
                     value: backupAgeText,
                     showsChevron: true)
             }
-            NavigationLink { ExportCenterView().environmentObject(app) } label: {
+            NavigationLink { ExportCenterView(mac: mac).environmentObject(app) } label: {
                 XRow(
                     systemImage: "square.and.arrow.up",
                     title: "导出中心",
