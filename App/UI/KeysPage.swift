@@ -74,8 +74,10 @@ struct KeysPage: View {
             }
         }
         .sheet(isPresented: $showAdd) {
-            AddPwdView(embedded: true)
-                .environmentObject(app)
+            NavigationStack {
+                AddKeyPage()
+                    .environmentObject(app)
+            }
         }
         .id(refreshTick)
     }
