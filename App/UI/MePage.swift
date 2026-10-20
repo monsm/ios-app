@@ -137,7 +137,7 @@ struct MePage: View {
 
     private var dataSection: some View {
         Section {
-            NavigationLink { BackupView().environmentObject(app) } label: {
+            NavigationLink { BackupPage().environmentObject(app) } label: {
                 XRow(
                     systemImage: "externaldrive",
                     title: "备份与恢复",
