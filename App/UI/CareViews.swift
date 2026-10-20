@@ -366,3 +366,83 @@ struct BatterySwapGuideView: View {
     }
 }
 
+
+
+struct CareChecklistView: View {
+    @EnvironmentObject var app: AppState
+    @Environment(\.dismiss) private var dismiss
+    var onDone: () -> Void = {}
+    @State private var checks = [false, false, false, false, false]
+    private let items: [(icon: String, label: String)] = [
+        ("gearshape.2", "滑轨与把手顺滑"),
+        ("lock.rotation", "锁舌伸缩顺畅"),
+        ("battery.100", "电池触点无锈蚀"),
+        ("touchid", "指纹头清洁"),
+        ("key.fill", "应急钥匙位置确认"),
+    ]
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    ForEach(Array(items.enumerated()), id: \.offset) { i, it in
+                        Button { checks[i].toggle() } label: {
+                            HStack(spacing: DS.Space.s) {
+                                Image(systemName: checks[i] ? "checkmark.circle.fill" : "circle")
+                                    .font(.system(size: DS.Icon.sm, weight: .semibold))
+                                    .foregroundStyle(checks[i] ? DS.Palette.ok : DS.Palette.textSub)
+                                    .accessibilityHidden(true)
+                                Image(systemName: it.icon)
+                                    .font(.system(size: DS.Icon.sm, weight: .medium))
+                                    .foregroundStyle(DS.Palette.accentText)
+                                    .frame(width: 24)
+                                    .accessibilityHidden(true)
+                                Text(it.label)
+                                    .vkFont(.subheadline)
+                                    .foregroundStyle(DS.Palette.text)
+                                Spacer(minLength: 0)
+                            }
+                            .frame(minHeight: DS.Hit.min)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(PressableButtonStyle())
+                        .accessibilityLabel(it.label)
+                        .accessibilityAddTraits(checks[i] ? [.isSelected] : [])
+                    }
+                } header: {
+                    Text("五项清单")
+                } footer: {
+                    Text("逐项确认后才能完成保养 — 汽车保养手册的严谨, 用在门上一样合适。")
+                }
+                Section {
+                    BusyButton(title: "完成保养",
+                               systemImage: "checkmark.seal",
+                               isBusy: false,
+                               disabled: !checks.allSatisfy({ $0 })) {
+                        complete()
+                    }
+                }
+            }
+            .navigationTitle("锁体保养")
+            .variantList()
+            .dsScreenBackground()
+            .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("取消") { dismiss() } } }
+        }
+    }
+
+    private func complete() {
+        let mac = app.current?.mac ?? ""
+        var s = BatteryCare.care(mac)
+        s.lastCareAt = Date().timeIntervalSince1970 * 1000
+        BatteryCare.saveCare(mac, s)
+        BatteryCare.markCareToday()                      // 1030 月历打点
+        BatteryCare.addEvent(mac, kind: "care", note: "五项保养完成")   // 1014
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        // 2026-10-15 走查: 这句原先把 90 写死在字面量里, 而保养页自己那个 periodDays 对高频锁给的是
+        // 60 —— 用户按屏上说的等 90 天, 通知却在第 60 天就来催。天数与判据取同一处。
+        app.showToast("保养已记录, \(BatteryCare.carePeriodDays(mac: mac)) 天周期重新起算")
+        app.evaluateAchievements()                       // 1030 爱洁之家徽章结算
+        onDone()
+        dismiss()
+    }
+}

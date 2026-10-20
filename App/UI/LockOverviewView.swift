@@ -20,6 +20,7 @@ struct LockOverviewView: View {
     /// 778 偏高阈值: 上浮排序、染色、标签共用一个数 (散写三处迟早漂)
     private static let alarmHighCut = 0.2
 
+    var body: some View { vkBody }
     var vkBody: some View {
         NavigationStack {
             ScrollView {

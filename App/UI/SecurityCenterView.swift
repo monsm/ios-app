@@ -173,6 +173,7 @@ struct SecurityCenterView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var center = SecTickCenter.shared
 
+    var body: some View { vkBody }
     var vkBody: some View {
         NavigationStack {
             List {

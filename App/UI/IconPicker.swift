@@ -47,6 +47,21 @@ struct IconPicker: View {
         ]
     }
 
+    var body: some View {
+        List {
+            Section {
+                iconPickerRow
+            } footer: {
+                Text("预览块底色与生成的图标位图逐字相同。")
+            }
+        }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(Palette.canvas)
+        .navigationTitle("App 图标")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
     private var iconPickerRow: some View {
         // 896: 四款→九款之后这一排装不下了 (9×48 + 间距 ≈ 560pt, 远超 iPhone 宽度), 所以从
         // "标题在左、图排在右的一行"改成"标题在上、图排自适应换行"的两段式。

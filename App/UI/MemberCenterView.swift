@@ -1824,6 +1824,7 @@ struct MemberStackedView: View {
         return out
     }
 
+    var body: some View { vkBody }
     var vkBody: some View {
         VStack(spacing: 0) {
             if stack.isEmpty {

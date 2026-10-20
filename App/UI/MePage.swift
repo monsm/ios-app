@@ -186,7 +186,7 @@ struct MePage: View {
 
     private var aboutSection: some View {
         Section {
-            NavigationLink { IconPickerRow().environmentObject(app) } label: {
+            NavigationLink { IconPicker().environmentObject(app) } label: {
                 XRow(systemImage: "app.badge", title: "App 图标",
                      subtitle: "锁环 / 钥匙 / 盾牌 等 9 款", showsChevron: true)
             }
