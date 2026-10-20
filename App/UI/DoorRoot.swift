@@ -110,7 +110,7 @@ struct DoorRoot: View {
         case .lock:
             DevicePage()
         case .keys:
-            CredentialsView().id(app.currentMac)
+            KeysPage()
         case .events:
             RecordsView().id(app.currentMac)
         case .device:
