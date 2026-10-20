@@ -717,15 +717,6 @@ extension View {
     }
 }
 
-/// 33 玻璃 sheet 底: 弹层(sheet)用薄材料垫底, 开启系统"降低透明度"时降级为实底 surface。
-/// 复用 226 那条既有闸门与降级纪律 (AXFlags.reduceTransparency 是本仓降透明的唯一读点,
-/// 与 AccessibilityKit 的 axGlass 同源), 不另立第二套"什么算玻璃"的判据。
-/// 台账判 PART 的收口: 全仓此前只有 SecurityCenterView 一处把 ultraThinMaterial 落在卡片底,
-/// sheet 面没有任何玻璃语义 —— 这一枚令牌就是 sheet 侧的统一入口; 首个真实消费点是
-/// 成就页徽章详情 sheet (自带 detents、无自绘底, 材料能透出来)。其余 sheet 按批次逐个换。
-extension View {
-    @ViewBuilder   // 两支 presentationBackground 的 ShapeStyle 类型不同 (Material vs Color) → 必须 builder
-}
 
 // ---------- 入场编排 ----------
 /// 包15 声音策略 (857 静音开关尊重): App 内 App 音效一律走系统 systemSound —
