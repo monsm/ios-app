@@ -1234,6 +1234,8 @@ struct StatsView: View {
             .accessibilityValue(RecordSearch.dayKeyOf(first.day))
     }
 
+    /// 612/624 成员水平条的一行 (从 body 内联的 ForEach 里抽出: 该表达式报 type-check 超时)
+    @ViewBuilder
     private func memberBarRow(id: String, name: String, approx: Int, index: Int,
                               barDays: Int, maxApprox: Int) -> some View {
         // 2026-10-13 run 68: a11y 串先算好 (内联时 memberBarRow 报 type-check 超时)
