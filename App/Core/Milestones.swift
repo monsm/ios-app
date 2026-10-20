@@ -195,7 +195,6 @@ enum Milestones {
         }
         return nil
     }
-    @discardableResult
 
     // ---------- 982/992/1005/1006 开锁计数 (App 侧成功次数, 不受锁端日志条数上限约束) ----------
     struct UnlockCrossing { var first = false; var at100 = false; var at1000 = false }
