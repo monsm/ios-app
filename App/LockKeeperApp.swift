@@ -3,33 +3,16 @@ import SwiftUI
 import UIKit
 import AudioToolbox
 import UserNotifications
-import CoreSpotlight   // 293/951 接住 Spotlight 结果回传的 NSUserActivity (索引写入见 App/Core/SpotlightKit.swift)
 
 @main
 struct LockKeeperApp: App {
     @StateObject private var app = AppState()
     // 943 主屏长按快速操作: 只借 UIApplicationDelegate 的 performActionFor 一个回调，
-    // 其余方法一律不接 (本 App 没有后台任务需求)。取舍与"为什么不配闭包"写在 App/Core/QuickActions.swift。
-    @UIApplicationDelegateAdaptor(QuickActionDelegate.self) private var quickActions
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environmentObject(app)
                 .tint(DS.Palette.accent)
-                .task {
-                    QuickActions.install()   // 装三项; 从未启动过时长按看不到它们, 是系统限制不是漏做
-                    SpotlightKit.reindexNow()   // 293/951 启动即整刷一次索引 (改名/增删另有即时钩子, 见 Store)
-                }
-                .onAppear {
-                    // 落地走 handleDeepLink: 与手点深链**同一个**门禁 (应用锁未解开时只挂起 pendingRoute)，
-                    // 快速操作因此不可能绕过应用锁 —— 这条性质由既有代码保证，不在新文件里重做一遍。
-                    if let url = QuickActions.consume() { app.handleDeepLink(url) }
-                }
-                // 293/951 Spotlight 结果落地: 仍走 handleDeepLink 那一套门禁 —— 应用锁没开时只记 pending，
-                // 解锁后由 applyPendingRoute 补走。索引能给的是"跳到哪"，不是"绕过锁"。
-                .onContinueUserActivity(CSSearchableItemActionType) { activity in
-                    app.handleSpotlight(activity)
-                }
         }
     }
 }
@@ -121,44 +104,11 @@ final class AppState: ObservableObject {
     /// 294 深链 host 白名单。2026-10-16 C1: **由 Route.deepLinkHosts 派生**，不再手写序号表。
     /// 顺序只有一个声明处 (Route.byHost)，深链、Tab 号、访客受限集三样都从它推。
     static let deepLinkHosts: [String: Int] = Route.deepLinkHosts
-    func handleDeepLink(_ url: URL) {
-        guard url.scheme == "kf", let host = url.host?.lowercased(),
-              let tab = AppState.deepLinkHosts[host] else { return }   // 未知 host = 忽略, 不跳不崩
-        // 585 行内定位键: 只有 `?k=` 这一个参数被认，其余一律丢 (不拿任意 query 当指令)。
-        // 值本身只是"到那页以后找哪条"的字符串，找不到的由消费方如实说"不在本机台账里"。
-        if let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems,
-           let k = items.first(where: { $0.name == "k" })?.value, !k.isEmpty {
-            pendingRecordKey = k
-        }
-        // 294 带锁 ID 直达: kf://device?mac=<hex> 落点为该锁详情 (开锁入口), 锁着先挂起。
-        // 未知 MAC 直接忽略 (与 host 白名单同款, 不跳不崩)。
-        if host == "device",
-           let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems,
-           let m = items.first(where: { $0.name == "mac" })?.value, !m.isEmpty,
-           DB.keychain(DB.normalizeMac(m)) != nil {
-            let mac = DB.normalizeMac(m)
-            if appUnlocked && !decoyMode { select(mac) } else { pendingMac = mac }
-        }
-        if appUnlocked && !decoyMode { requestTab(tab) } else { pendingRoute = Route.from(tab: tab) }
-    }
     func applyPendingRoute() {
         if let m = pendingMac, appUnlocked && !decoyMode { pendingMac = nil; select(m) }
         guard let r = pendingRoute else { return }
         pendingRoute = nil
         if appUnlocked && !decoyMode { requestRoute(r) }
-    }
-    /// 293/951 Spotlight 结果 → 既有落点。两条路都是**别人用过的**口:
-    /// 锁走 `kf://device?mac=` (与深链/小组件同一个 handleDeepLink)，
-    /// 凭证走 `pendingCredNav` 那对状态 (与通知落地同一个词表，解析端 CredentialsView.consumeCredJump
-    /// 会自己切锁并打开 pwd:/fp: 详情)。认不出的 identifier 什么都不做 —— 索引可能比台账慢半拍，
-    /// 条目点不开就不跳，不拿"跳到一个空页"冒充直达。
-    func handleSpotlight(_ activity: NSUserActivity) {
-        guard let id = activity.userInfo?[CSSearchableItemActivityIdentifier] as? String else { return }
-        if let url = SpotlightKit.deviceURL(for: id) { handleDeepLink(url); return }
-        guard let t = SpotlightKit.credentialTarget(for: id) else { return }
-        pendingCredNav = t.nav
-        pendingCredNavMac = t.mac
-        if appUnlocked && !decoyMode { requestRoute(.credentials) } else { pendingRoute = .credentials }
     }
     // ---------- 377 访客通道: 受限 Tab 的唯一走位口 ----------
     /// 受控跳转都汇到这里: 目标是被收起来的 Tab 且本会话没重输过口令, 就把既有应用锁页拉起来而不是切过去。
@@ -526,34 +476,9 @@ final class AppState: ObservableObject {
             return
         }
         unlockTask?.cancel()
-        // 836 演练包装层: 演示模式下开锁全走本地模拟 (不碰 BLE/协议/失败日志), 三阶段节奏同真实路径
-        if DemoKit.isOn {
-            demoUnlock()
-            return
-        }
         unlockTask = Task { await runUnlock() }
     }
 
-    private func demoUnlock() {
-        DemoKit.simulateDemoUnlock(phase: { p in
-            self.phase = p
-            self.unlockState = p == 1 ? .connecting : .opening
-        }, onDone: {
-            self.unlockState = .success
-            self.phase = 0
-            self.finishDemoDwell()
-            self.showToast("演示开锁成功 (demo_ 不碰真实门锁)")
-        })
-    }
-    private func finishDemoDwell() {
-        Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 2_000_000_000)
-            if unlockState == .success {
-                unlockState = .idle
-                phase = 0
-            }
-        }
-    }
 
     /// 56/89: 提前取消 (撤销窗口 / 握手超时取消按钮)
     func cancelUnlock(notify: Bool = false) {
@@ -689,38 +614,18 @@ final class AppState: ObservableObject {
     func setAccent(_ key: String) {
         applyAppearance { DB.store.set("kf_accent", key) }
     }
-    /// 布局密度: ""(标准)/compact/relaxed
-    func setDensity(_ key: String) {
-        applyAppearance { DB.store.set("kf_density", key) }
-    }
     /// 893 App 内高对比皮肤: 与系统"增加对比度"并联，任一开着就加强
     func setHighContrast(_ v: Bool) {
         applyAppearance { DB.store.set("kf_hc", v) }
-    }
-    /// 900 全局圆角档位: ""(标准)/soft/plump
-    func setRadius(_ key: String) {
-        applyAppearance { DB.store.set("kf_radius", key) }
     }
     /// 912 周起始日: ""(跟随系统)/mon/sun/sat。走外观通道 ——
     /// 周界变了的话"本周"区、月历表头与轮值键都要重算，留着旧值就是三处各说一套。
     func setWeekStart(_ key: String) {
         applyAppearance { DB.store.set("kf_week_start", key) }
     }
-    /// 901 凭证行高: ""(标准)/tall
-    func setRowHeight(_ key: String) {
-        applyAppearance { DB.store.set("kf_row_h", key) }
-    }
-    /// 907 时间线行距: ""(标准)/tight/loose
-    func setTimelineGap(_ key: String) {
-        applyAppearance { DB.store.set("kf_tl_gap", key) }
-    }
     /// 909 Hero 参考指标位 (电量不参与)
     func setHeroStats(_ ids: [String]) {
         applyAppearance { DS.HeroStats.setVisible(ids) }
-    }
-    /// 889 主控卡纹理: ""(无)/grid/grain，白名单在 DS.Metric.heroTexture 里守
-    func setHeroTexture(_ key: String) {
-        applyAppearance { DB.store.set("kf_hero_tex", key) }
     }
     /// 898 主控卡每日一句话 (按当天定值，不是每次刷新随机)
     func setLaunchLine(_ v: Bool) {
@@ -729,10 +634,6 @@ final class AppState: ObservableObject {
     /// 890 节日限定色 (默认关)：走外观通道，切换当天 hero 立刻重新取值
     func setFestive(_ v: Bool) {
         applyAppearance { DB.store.set("kf_festive", v) }
-    }
-    /// 899 动效强度: calm/standard/lively (系统"减弱动态"会在令牌层把任何档压到 calm)
-    func setMotionTier(_ key: String) {
-        applyAppearance { DB.store.set("kf_motion", key) }
     }
     /// 最近开门条数 (idea 910): 3/5/10
     func setRecentCount(_ n: Int) {
@@ -847,13 +748,11 @@ final class AppState: ObservableObject {
     /// 成就结算 (开锁/备份/整理/打卡后调用): 音效(996)/本地通知(986)/时刻卡或 toast
     func evaluateAchievements() {
         for b in Milestones.evaluate() {
-            if Milestones.collectSound && !Milestones.plainMode { Milestones.playCollectSound() }
-            if Milestones.achNotify { Task { await Milestones.notifyAchievement(b) } }
             if Milestones.plainMode {
                 showToast("徽章点亮: \(b.title)")
             } else if b.rarity == .epic {
                 enqueueMoment(Moment(id: "m18." + b.id, icon: b.icon, title: "徽章点亮",
-                                     subtitle: "\(b.title) · \(b.rarity.title)", celebrate: true))
+                                     subtitle: "\(b.title) · \(b.rarity.title)"))
             } else {
                 showToast("成就达成: \(b.title)")
             }
@@ -902,14 +801,14 @@ final class AppState: ObservableObject {
            !Milestones.onceDone("ny\(year)") {
             Milestones.markOnce("ny\(year)")
             enqueueMoment(Moment(id: "ny\(year)", icon: "sparkles", title: "陪你跨入新一年",
-                                 subtitle: "日历翻过一页, 这扇门继续交给你。", celebrate: true))
+                                 subtitle: "日历翻过一页, 这扇门继续交给你。"))
         }
         if let first = Milestones.firstDate, Milestones.daysSinceFirst >= 365,
            Milestones.isSameMonthDay(first, now), !Milestones.onceDone("appann\(year)") {
             Milestones.markOnce("appann\(year)")
             enqueueMoment(Moment(id: "appann\(year)", icon: "rosette",
                                  title: "一起管了 \(Milestones.daysSinceFirst) 天",
-                                 subtitle: "从第一天到现在, 谢谢你一直在。", celebrate: true))
+                                 subtitle: "从第一天到现在, 谢谢你一直在。"))
         }
         if UIAccessibility.isVoiceOverRunning { Milestones.markVoiceOver() }
         // 998 徽章周年回忆: 某枚徽章恰好满一年 (同一月日, 且去年或更早达成) → 一年只弹一次的时刻卡。
@@ -918,7 +817,7 @@ final class AppState: ObservableObject {
             Milestones.markOnce("badgeann_\(b.id)_\(year)")
             enqueueMoment(Moment(id: "badgeann_\(b.id)_\(year)", icon: b.icon,
                                  title: "「\(b.title)」满一年了",
-                                 subtitle: "去年这天拿到的徽章, 现在还在你手上。", celebrate: true))
+                                 subtitle: "去年这天拿到的徽章, 现在还在你手上。"))
         }
         // 1043 时光胶囊到期: 到日启动弹一次时刻卡 (onceDone 键带 openOn 防重, 与 badgeann 同口径)
         if let c = Milestones.capsule(), Milestones.capsuleIsOpen(c),
@@ -926,7 +825,7 @@ final class AppState: ObservableObject {
             Milestones.markOnce("capsule_\(c.openOn)")
             enqueueMoment(Moment(id: "capsule." + c.openOn, icon: "hourglass",
                                  title: "时光胶囊到时间了",
-                                 subtitle: "打开成就页看看那时写下的话。", celebrate: true))
+                                 subtitle: "打开成就页看看那时写下的话。"))
         }
         evaluateAchievements()
         // 包4: 关怀提醒巡检 (1013 保养到期/1023 指纹头/校时 30 天/1024 防潮/146 固件, 全部本地通知)
@@ -980,13 +879,12 @@ final class AppState: ObservableObject {
         if crossing.first {
             enqueueMoment(Moment(id: "m18.first", icon: "key.horizontal.fill",
                                  title: "第一扇门, 由你打开",
-                                 subtitle: "这是你和这个家故事的开始。", celebrate: !Milestones.plainMode))
+                                 subtitle: "这是你和这个家故事的开始。"))
         } else if crossing.at100 {
             // 里程碑开锁触发一次庆祝: 与包18 礼花打通 (素颜模式只亮卡不撒花)
             enqueueMoment(Moment(id: "m18.100", icon: "flag.fill",
                                  title: "你已守护这个家 100 次",
-                                 subtitle: "寻常的日子, 不寻常的守护。",
-                                 celebrate: !Milestones.plainMode))
+                                 subtitle: "寻常的日子, 不寻常的守护。"))
         }
         if crossing.at1000 { Milestones.heartbeatHaptic() }
         let year = WeekCal.gregorian.component(.year, from: Date())
@@ -994,7 +892,7 @@ final class AppState: ObservableObject {
             Milestones.markOnce("bondann\(year)")
             DB.store.set("kf_bond_anniv_done", true)
             enqueueMoment(Moment(id: "m18.bondann", icon: "sparkles", title: "结缘纪念日快乐",
-                                 subtitle: "这一年的每一次开关, 都有你。", celebrate: !Milestones.plainMode))
+                                 subtitle: "这一年的每一次开关, 都有你。"))
         }
         if hour >= 22 { publishHomeMoment("欢迎回家, 辛苦了") }
     }
@@ -1060,7 +958,6 @@ struct RootView: View {
         DeviceHomeView()
             .onAppear { PageTrace.shown("设备") }
             .keyboardShortcut("1", modifiers: .command)
-            .toolbar { appIndexToolbar }
     }
     @ViewBuilder private var credentialsTabContent: some View {
         // 身份挂在这里 (父层) 才有效: CredentialsView 的 @State 由 TabView 持有,
@@ -1070,23 +967,6 @@ struct RootView: View {
             .safeAreaInset(edge: .top, spacing: 0) { bleStatusStrip(app: app, sense: sense) }
             .onAppear { PageTrace.shown("凭证") }
             .keyboardShortcut("2", modifiers: .command)
-            .toolbar { appIndexToolbar }
-    }
-    /// 2026-10-18 门面改造: Tab 根右上角「全部」入口 (PART2 §4.1 的第一处触达)。
-    /// 为什么做成 toolbar 而不是塞进各页面: 76 个目的地各自维护自己的导航栏,
-    /// 在父层挂一次就够, 页面里一处都不用改。
-    @ViewBuilder private var appIndexToolbar: some ToolbarContent {
-        ToolbarItem(placement: .topBarTrailing) {
-            Button {
-                showAppIndex = true
-            } label: {
-                Text("全部")
-                    .vkFont(.body)
-                    .frame(minHeight: DS.Hit.min)
-            }
-            .accessibilityLabel("全部功能")
-            .accessibilityHint("打开 77 项功能目录")
-        }
     }
     @ViewBuilder private var recordsTabContent: some View {
         // 同凭证 Tab: 记录是纯 per-lock 数据, 在父层挂身份才能整体重建。
@@ -1096,14 +976,12 @@ struct RootView: View {
             .safeAreaInset(edge: .top, spacing: 0) { bleStatusStrip(app: app, sense: sense) }
             .onAppear { PageTrace.shown("记录") }
             .keyboardShortcut("3", modifiers: .command)
-            .toolbar { appIndexToolbar }
     }
     @ViewBuilder private var settingsTabContent: some View {
         SettingsView()
             .safeAreaInset(edge: .top, spacing: 0) { bleStatusStrip(app: app, sense: sense) }
             .onAppear { PageTrace.shown("设置") }
             .keyboardShortcut("4", modifiers: .command)
-            .toolbar { appIndexToolbar }
     }
 
     /// 顶部横幅栈 (演示/BLE/自检/粘贴建议/toast/写入回执) —— 从 body 内联的 safeAreaInset
@@ -1111,8 +989,6 @@ struct RootView: View {
     @ViewBuilder
     private var topBanners: some View {
         VStack(spacing: 0) {
-            // 包14/836 演示模式常驻横幅: 四 Tab 共用, 演示数据全路径可辨识
-            DemoBanner()
             // 包2/69 蓝牙直通条: 系统蓝牙关闭时全 App 顶部提示 (深链系统设置不可用 → 指引文案)
             if !LinkSense.shared.btOn {
                 BLEOffBanner { LinkSense.shared.openBluetoothSettings() }
@@ -1334,74 +1210,15 @@ struct RootView: View {
     /// 实例便捷转发，供 `.task` 直接调用（保持 body 表达式小，见本文件多处 type-check 超时的教训）。
     private func bootstrapOnce() { RootView.bootstrapOnce(app) }
 
-    /// 2026-10-18 门面改造: 是否展示门面层。由 LockFacePolicy 在启动/回前台时决定。
-    @State private var showLockFace = false
-    /// 2026-10-18: 是否已"推门而入"(App 可见)。与 showLockFace 分开是因为
-    /// 门转开需要 820ms, 那段时间门还在屏上但 App 还不该出现。
-    @State private var entered = false
-    /// 2026-10-18 门面改造: 76 项目录 (sheet 级, 不占 Tab 位 — D1/D7)。
-    @State private var showAppIndex = false
-
-    /// 门面展示判定。**纯调用策略**, 不自己判时间 —— 阈值与规则都在 LockFacePolicy。
-    /// @MainActor: 读的是 @Published (devices/pendingRoute), 与同文件 handleScenePhase 同一处置。
-    @MainActor
-    private func evaluateLockFace(launchedFresh: Bool) {
-        // 本仓没有专门记"退后台时刻"的状态位, 用 handleScenePhase 维护的 activeSince 近似。
-        let away: TimeInterval? = LockFaceRuntime.shared.awaySeconds()
-        let show = LockFacePolicy.shouldPresent(
-            launchedFresh: launchedFresh,
-            awaySeconds: away,
-            hasLocks: !app.devices.isEmpty,
-            onboardingDone: Onboarding.allDone || app.onboardingFinished,
-            cameFromDeepLink: app.pendingRoute != nil || app.pendingMac != nil
-        )
-        withAnimation(DS.Motion.doorReveal) { showLockFace = show }
-    }
 
     var body: some View {
         rootChrome
     }
 
-    /// RootView 的四种形态 (引导/伪装空壳/主界面/应用锁) —— 从巨型 body 拆出
+    /// RootView 形态: 只剩主界面 (引导/伪装/应用锁/门面四族已减掉, Q8+Q13+Q5)。
     @ViewBuilder
     private var rootGroup: some View {
-        Group {
-            if !Onboarding.allDone && !app.onboardingFinished {
-                // 包14 首启五步: 承诺/导览/角色/权限/演示/自检/证书, 进度逐键存档 (804);
-                // 完成后切换进主界面, 其 .task 触发 onLaunch 结算
-                OnboardingView(onExit: { app.onboardingFinished = true })
-                    .environmentObject(app)
-            } else {
-                // 2026-10-17 拍板 A: 应用锁启动门禁已删 (伪装口令 390 随之不可达, 一并移除)。
-                // 进 App 只分两种形态: 首启引导 / 主界面。
-                //
-                // 2026-10-18 门面改造: 在"主界面"这一形态外包一层 ZStack, 门面在最底。
-                // 为什么用 ZStack + opacity 而不是 if 条件插入/移除主界面:
-                //   条件插入会重建 TabView 持有的 @State (CredentialsView 的筛选/展开状态会丢),
-                //   本仓 1065-1068 已就这条留过注释。这里主界面始终在树上, 只改显隐。
-                ZStack {
-                    // 门层: 门关着时可见。门转开后它自己淡出, 但**仍留在树上**
-                    // (转开的门扇不需要再显示, 淡出即可; 移除会打断正在进行的动画)。
-                    LockFaceView(presented: $showLockFace, entered: $entered)
-                        .opacity(showLockFace ? 1 : 0)
-                        .allowsHitTesting(showLockFace && !entered)
-                        .accessibilityHidden(!showLockFace || entered)
-
-                    // 门后 App: 只有**进了门**才可见 (不是门一关就可见)。
-                    // 这两个状态分开是必须的 —— 门层在屏上(showLockFace) 与 已进门(entered)
-                    // 是两个不同的时刻, 中间隔着 820ms 的转门动画。
-                    mainTabsChrome
-                        .opacity(entered ? 1 : 0)
-                        .allowsHitTesting(entered)
-                        .accessibilityHidden(!entered)
-                        .scaleEffect(entered ? 1 : 0.986)
-                }
-                .animation(DS.Motion.doorReveal, value: entered)
-                .sheet(isPresented: $showAppIndex) {
-                    AppIndexView().environmentObject(app)
-                }
-            }
-        }
+        mainTabsChrome
     }
 
     /// 摇一摇/外观种子/字号/灰度/加粗/动效/水印层 —— 继续拆 (原表达式报 type-check 超时)
@@ -1412,11 +1229,7 @@ struct RootView: View {
         // 的 window —— 用一层零尺寸 VC 接住再转 .kfDeviceShake (实现见文件尾部)。
         .onDeviceShake()
         // 包16: 外观种子变更时整树重建 — 配色/密度即时全局生效; withAnimation 提供淡入淡出 (idea 21)
-        // 2026-10-18 门面改造: 启动/回前台按策略决定是否展示门面。
-        // 冷启动展示; 回前台 < 300s 不重演; 深链/小组件/Siri 一律不展示。
-        .task { evaluateLockFace(launchedFresh: true) }
         .onChange(of: scenePhase) { _, newPhase in
-            if newPhase == .active { evaluateLockFace(launchedFresh: false) }
         }
         .id(app.appearanceSeed)
         // 包15: App 字号五档 × 系统 Dynamic Type 叠加 (858, 含 866 极限字号自检 200% 预览)
@@ -1447,7 +1260,6 @@ struct RootView: View {
         // 它是退后台时盖一层不透明幕, 回前台不要求任何验证 —— 与"需要面容才能看"的直觉不符,
         // 且启动门禁已删, 留着只会让用户回前台时以为 App 卡住。
         // 294 本地深链: 系统把 kf:// 路由送到这里; 解锁完成的瞬间才落地挂起的路由
-        .onOpenURL { url in app.handleDeepLink(url) }
         .onChange(of: app.tabSelection) { _, new in
             // 280 起点: 只在采集开着时记时间戳 (关着就等于零成本)。深链/意图造成的切换同样会记一次,
             // 因为对用户而言那也是一次"页面打开"。
@@ -1616,8 +1428,6 @@ struct RootView: View {
     /// "unable to type-check this expression in reasonable time"。抽成方法后 body 只留一行调用。
     @MainActor
     private func handleScenePhase(_ phase: ScenePhase) {
-        // 2026-10-18 门面改造: 记下退后台时刻, 回前台时按 LockFacePolicy.revealAfter 判定要不要重演门。
-        if phase == .background { LockFaceRuntime.shared.markBackground() }
         LinkSense.shared.setSceneActive(phase == .active)
         if phase == .active {
             // 动效令牌的非隔离读点: 系统"减弱动态效果"只能在设置里改, 改完回来必然经过这里。

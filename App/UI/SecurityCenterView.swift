@@ -22,7 +22,6 @@ enum SecKey {
     static let rescueOn       = "kf_srescue_on"         // 395 一次性救援码启用
     static let rescueCode     = "kf_srescue_code"       // 395 码值 (消费后清空)
     static let rescueSeen     = "kf_srescue_seen"       // 395 已手抄确认
-    static let randomKeys     = "kf_slock_randkey"      // 396 随机键位
     /// 396 前提标记: 本机密码确认为纯数字 (设/改密码时写)。标记为假时锁屏页不出现随机键盘,
     /// 否则历史遗留的含字母密码用户将永远输不进去 = 自己把自己锁死。
     static let randKeyDigits  = "kf_slock_randdig"

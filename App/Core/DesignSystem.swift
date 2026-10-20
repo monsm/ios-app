@@ -105,19 +105,10 @@ struct FlowLayout: Layout {
 
 enum DS {
     /// 间距: 统一 4 / 8 节奏。
-    /// 布局密度 (包16): kf_density 三档映射为间距缩放系数 — 字号、触达、图标不缩放,
-    /// 只动"呼吸感"; 变更由 AppState.bumpAppearance 驱动全局重建, 即时生效。
+    /// 2026-10-20 (Q15 减法): "布局密度"档位已删除 —— 间距恒为标准档, 原 0.85 / 1.18 缩放不再存在。
     enum Space {
-        /// 紧凑 0.85 / 标准 1.0 / 宽松 1.18
-        static var densityScale: CGFloat {
-            switch DB.store.getString("kf_density") {
-            case "compact": return 0.85
-            case "relaxed": return 1.18
-            default: return 1.0
-            }
-        }
-        /// 缩放并吸附到 0.5pt, 避免亚像素抖动
-        private static func d(_ v: CGFloat) -> CGFloat { (v * densityScale * 2).rounded() / 2 }
+        /// 缩放并吸附到 0.5pt, 避免亚像素抖动 (缩放系数已固定为 1.0)
+        private static func d(_ v: CGFloat) -> CGFloat { (v * 2).rounded() / 2 }
         static var xxs: CGFloat { d(2) }
         static var xs: CGFloat { d(4) }
         static var s: CGFloat { d(8) }
@@ -128,19 +119,10 @@ enum DS {
         /// 页面左右边距 (统一 gutter)
         static var gutter: CGFloat { d(16) }
     }
-    /// 全局圆角档位 (包16/idea 900): kf_radius "" 标准 / "soft" 小 / "plump" 大。
-    /// 三档值都经过检查：card 最大 28pt，卡片仍明显小于半宽，不会出现"圆到看不出是卡片"的破形。
-    /// 注: 原第 4 档 `pill = 999` 第九十三批删除 —— 上面那句"刻意保留 pill 不参与缩放"讲的是胶囊语义，
-    /// 但全仓胶囊一律走 `Capsule()` (115 处)，没有任何一处读这个值，等于**注释替一个零读取的常量编理由**。
+    /// 全局圆角: 2026-10-20 (Q15 减法) 三档已删除, 恒为标准档 (card 22 / control 16 / tile 18)。
+    /// 保留 r() 做 0.5pt 吸附以免亚像素抖动; 保留枚举名让既有 60+ 调用点无需改动。
     enum Radius {
-        private static var k: CGFloat {
-            switch DB.store.getString("kf_radius") {
-            case "soft": return 0.62      // 小圆角: 更硬朗, 密集列表更省空间
-            case "plump": return 1.3      // 大圆角: 更柔和, 与"儿童友好档"预设同向
-            default: return 1.0
-            }
-        }
-        private static func r(_ v: CGFloat) -> CGFloat { (v * k * 2).rounded() / 2 }
+        private static func r(_ v: CGFloat) -> CGFloat { (v * 2).rounded() / 2 }
         static var card: CGFloat { r(22) }
         static var control: CGFloat { r(16) }
         static var tile: CGFloat { r(18) }
@@ -154,44 +136,18 @@ enum DS {
             let v = DB.store.getInt("kf_dial_size", 176)
             return CGFloat([160, 176, 200].contains(v) ? v : 176)
         }
-        /// 901 凭证行高两档: kf_row_h ""(紧凑: 44, 隐藏副行只留名称与状态)/"tall"(舒适: 60, 带副行)。
-        /// 只做"加高"不做"压矮" —— 矮过内容自己撑开的高度就得靠裁切文字换空间，那是破版不是紧凑。
-        /// 与无障碍页的 `kf_ax_bigotp` (OTP 大字) 是两回事：那档改字号，这档改行最小高度。
-        static var rowMinH: CGFloat {
-            DB.store.getString("kf_row_h") == "tall" ? 60 : 44
-        }
-        /// 907 时间线行距三档: kf_tl_gap。刻意**乘在 densityScale 之上**而不是替代它 ——
-        /// 布局密度 (kf_density) 管的是全 App 的呼吸感，这一档只管记录时间线那一条竖列。
-        /// 两档体系叠乘而不是各写一套，是为了避免"密度调了、时间线不动"的那类假设置。
-        static var tlGap: CGFloat {
-            let f: CGFloat
-            switch DB.store.getString("kf_tl_gap") {
-            case "tight": f = 0.5
-            case "loose": f = 2.0
-            default: f = 1.0
-            }
-            return (DS.Space.m * f * 2).rounded() / 2
-        }
+        /// 凭证行最小高度: 2026-10-20 (Q15 减法) 两档已删除, 恒为 44 (原"紧凑"档)。
+        static var rowMinH: CGFloat { 44 }
+        /// 时间线行距: 2026-10-20 (Q15 减法) 三档已删除, 恒为标准 (Space.m)。
+        static var tlGap: CGFloat { DS.Space.m }
         /// 903 空态装饰图形: 复用**已有的** 素颜模式 (kf_plain)，不另立新键。
         /// 理由就写在调用点：一个 App 里同时存在"关庆祝"和"关插画"两个语义重叠开关，
         /// 用户只会记住其中一个，而记住的那个会变成"切了没反应"。
         static var emptyMascot: Bool { !Milestones.plainMode }
-        /// 889 Hero 纹理: kf_hero_tex ""(无)/"grid" 网格/"grain" 细点。
-        /// 214 噪点质感 (杂志封面颗粒) = 这里的 "grain" 档 —— 纯矢量画点，不引位图 (219 资源纪律)，
-        /// 而且和 889 一样在"关掉装饰"的射程内: 装饰层不许越过无障碍与素颜模式开关。
-        /// 白名单之外的值一律当"无" —— 偏好键走文本存储，不做区间校验就会读出垃圾值再画垃圾。
-        static var heroTexture: String {
-            let v = DB.store.getString("kf_hero_tex")
-            return ["grid", "grain"].contains(v) ? v : ""
-        }
-        /// 902 数字字体两档: kf_digit_font ""(圆体 = 默认, 与旧版观感一致) / "plain"(系统默认体)。
-        /// 射程如实圈死: 这一档只管**读数令牌的两处落点** (MetricTile 与 HeroStat 的数字 Text),
-        /// 902 原句就是"Hero 卡电量数字圆体/默认体可选"。它不是全 App 数字字体总闸 ——
-        /// 那版 (§84 撤掉的那种) 要动 58 处各写死 monospacedDigit 的散点, 散点没统一成令牌之前
-        /// 加总闸只会造出"切了没反应"；这里只承诺切得到、也切得到的那两处。
-        static var digitDesign: Font.Design {
-            DB.store.getString("kf_digit_font") == "plain" ? .default : .rounded
-        }
+        /// Hero 纹理: 2026-10-20 (Q15 减法) 三档已删除, 恒为"无纹理"。
+        static var heroTexture: String { "" }
+        /// 主控读数数字字体: 2026-10-20 (Q15 减法) 两档已删除, 恒为圆体 (与旧版观感一致)。
+        static var digitDesign: Font.Design { .rounded }
     }
 
     /// 889 Hero 卡纹理层 (纯矢量)。三档里默认档是"无纹理"，即与旧版完全一致。
@@ -272,11 +228,13 @@ enum DS {
     }
     /// 动效令牌 — 不给每个页面各写一个 duration。
     /// 默认接近临界阻尼 (苹果 fluid interfaces 的"日常档"), 只给高频物理感交互留轻微回弹。
-    /// 动效档位 (包16/idea 899)：kf_motion 三档 × 系统"减弱动态效果"叠加。
-    /// 命名要说实话：创意原文叫"Tab 动效三档"，但 TabView 的切页动画由系统持有，
-    /// App 侧没有任何一处 `withAnimation` 包着 tabSelection —— 所以这一档管的是**全 App 的动效令牌**
-    /// (81 处调用点)，不是"只换 Tab 那一下"。写清这一点，才不会让人以为调了它 Tab 就一定跟着变。
-    /// 默认档 "standard" 的三个值 = 本批之前的字面值，所以不改任何人的既有观感。
+    /// 动效令牌 — 不给每个页面各写一个 duration。
+    /// 默认接近临界阻尼 (苹果 fluid interfaces 的"日常档"), 只给高频物理感交互留轻微回弹。
+    /// 2026-10-20 (Q15 减法): 用户可选的三档动效**已删除**, 恒为 standard。
+    /// 但以下两条降级路径**保留** —— 它们不是"偏好", 是无障碍与省电硬约束:
+    ///   ① 系统"减弱动态效果"开启 → calm (用户偏好必须让路);
+    ///   ② 低电量 (≤20%) → calm (120 低电视觉降级)。
+    /// 默认档 "standard" 的数值 = 本批之前的字面值, 观感不变。
     enum Motion {
         /// 系统减弱动态 = 强制最静的一档，用户偏好让路 (这不是偏好，是无障碍硬约束)。
         /// 读 AXFlags 而不是自己调 UIAccessibility：本仓的系统旗标只有一个读点。
@@ -285,11 +243,9 @@ enum DS {
         private static var systemReduceMotion: Bool { AXFlags.reduceMotionSnapshot }
         private static var tier: String {
             if systemReduceMotion { return "calm" }
-            // 120 低电视觉降级: 锁电量 ≤20% 时全 App 动效也压到 calm —— 与系统减弱动态同优先级,
-            // 用户显式 lively/standard 也让路 (原句"低电量模式"本就是系统级压降动效的形态)。
+            // 120 低电视觉降级: 锁电量 ≤20% 时全 App 动效也压到 calm
             if BatteryCare.appLowBattery { return "calm" }
-            let v = DB.store.getString("kf_motion")
-            return ["calm", "standard", "lively"].contains(v) ? v : "standard"
+            return "standard"
         }
         /// 召唤锁核的位移弹簧（跟手后的回位与吸附）。
         /// 放在令牌层而不是写在视图里，只有一个理由：`calm` 档（系统减弱动态 / 低电量）
@@ -533,17 +489,13 @@ enum DS {
         static var accentText : Color { themed("accentText") } // 主色文字
         static var onAccent   : Color { themed("onAccent") }   // 压在 accent/hero 上的文字
     }
-    /// 895 "儿童友好"预设 —— **名字里不写"模式/空间/过滤"**，因为它只调外观档位：
+    /// 895 "儿童友好"预设 —— **名字里不写"模式/空间/过滤"**，因为它只调外观：
     /// 本 App 没有任何内容分级或过滤机制 (锁台账本身就是成人内容)，把它叫"儿童模式"就是虚假承诺。
-    /// 一次把五档推到"看得清、点得准、不闹"的组合，任何一档仍可事后单独改回。
+    /// 2026-10-20 (Q15 减法): 圆角/密度/行高/动效/纹理五档已删除, 预设只剩**品牌色**一项。
+    /// 保留这个入口是因为"一键换到最亮眼的一套品牌色"仍有意义; 文案已相应收窄。
     enum FriendlyPreset {
         static func apply() {
             DB.store.set("kf_accent", "aurora")      // 极光: 六套里明度最高的一套
-            DB.store.set("kf_radius", "plump")        // 大圆角
-            DB.store.set("kf_density", "relaxed")     // 间距放宽
-            DB.store.set("kf_row_h", "tall")          // 凭证行加高
-            DB.store.set("kf_motion", "calm")         // 动效克制
-            DB.store.set("kf_hero_tex", "")           // 关掉装饰纹理
         }
         // 刻意不写 isApplied 之类的"是否已套用"回显：预设是一次性动作，
         // 用户套完还会单独改某一档，届时"未套用"的显示反而是错的。没有消费点就不留这个 API。
@@ -1150,11 +1102,6 @@ struct GuidedEmptyView: View {
                         .foregroundStyle(DS.Palette.textSub)
                 }
                 .accessibilityLabel("引导阶段 第 \(step) 步, 共 \(stepTotal) 步")
-            }
-            // 903 空态装饰图形挂素颜模式 (kf_plain)，见 DS.Metric.emptyMascot：
-            // 不再造第二个"关插画"开关，理由写在那条令牌的注释里。
-            if mascot, DS.Metric.emptyMascot {
-                EmptyMascotHeader()
             }
             ContentUnavailableView {
                 Label(title, systemImage: systemImage)

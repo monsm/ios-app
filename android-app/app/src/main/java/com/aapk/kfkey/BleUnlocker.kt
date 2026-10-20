@@ -60,7 +60,6 @@ class BleUnlocker(private val ctx: Context) {
     /// trace = 这一趟的过程留痕 (链路来源 / 令牌前缀 / rc)。只在失败时给用户看。
     data class Outcome(val ok: Boolean, val message: String, val trace: String = "")
 
-    fun isReady(): Boolean = adapter?.isEnabled == true
 
     // ---------- 链路会话 (复用单位) ----------
 

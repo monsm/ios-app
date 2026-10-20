@@ -42,10 +42,10 @@ enum LockKeySpace {
     /// 且历史上前缀不统一 —— 精确前缀删够不着, 只能按键名判定。
     /// 例: kf_calert_<mac>_<kind>_<key>、kf_cestudy_earlyexp_<mac>_<alias>、
     ///     kf_cotp_t_<mac>、kf_cdraft_<mac>、kf_logarch_<mac>、
-    ///     kf_mborrow_/kf_mclaim_/kf_mig_lockact_<mac>、kf_offboard_<member>。
+    ///     kf_mborrow_/kf_mclaim_<mac>、kf_offboard_<member>。
     static let macInKeyFamilies = [
         "kf_calert_", "kf_cestudy_", "kf_cotp_t_", "kf_cdraft_", "kf_logarch_",
-        "kf_mborrow_", "kf_mclaim_", "kf_mig_lockact_", "kf_offboard_",
+        "kf_mborrow_", "kf_mclaim_", "kf_offboard_",
     ]
 
     /// 这把锁的键是否属于本锁数据族 (兜底判据)。大小写不敏感: DemoKit 用大写 demoMac。

@@ -210,24 +210,9 @@ enum DiagLogs {
         }
         return list
     }
-    /// 751: 切档前先算"这一刀会删掉几条" — 界面拿它做二次确认的第一行。
-    static func pruneCount(days: Int?) -> Int {
-        guard let days else { return 0 }
-        let cs = localDay(WeekCal.shifted(Date(), days: -days))
-        return entries.filter { $0.date < cs }.count
-    }
     /// 751: 确认后**立即应用**保留策略 (与 append 的裁剪同一口径), 返回实际删掉的条数。
     /// 原先只从下一次写入起生效 —— 切完看不到任何变化, "显示将删条数+二次确认"也就无从谈起。
     @discardableResult
-    static func pruneNow() -> Int {
-        let before = entries
-        guard let days = retentionDays else { return 0 }
-        let cs = localDay(WeekCal.shifted(Date(), days: -days))
-        let kept = before.filter { $0.date >= cs }
-        guard kept.count != before.count else { return 0 }
-        DB.store.setCodable("kf_diag_logs", kept)
-        return before.count - kept.count
-    }
     static func today() -> [DiagLogEntry] {
         let d = localDay()
         return entries.filter { $0.date == d }
@@ -270,67 +255,6 @@ enum DiagLogs {
             return false
         }
     }
-    /// 识别器按 LockService 实际写出的词表匹配 (`凭证#N` / `指纹#N` / `MAC=…`)。
-    /// 旧版匹配 `pwd:` / `fp:` —— 全仓没有任何日志生产者写过这个前缀, 接上 UI 也永远是空数组 (空跑)。
-    static func entities(in msg: String) -> [EntityRef] {
-        let s = msg
-        var out: [EntityRef] = []
-        // range(of:options:range:) 要 Range<String.Index>; `...` 推成 ClosedRange → 类型不符
-        var rng = s.startIndex..<s.endIndex
-        while let r = s.range(of: "凭证#(\\d+)", options: .regularExpression, range: rng) {
-            // "凭证#" = 3 字符, dropFirst(4) 会把首位数字一起吃掉
-            if let a = Int(String(s[r].dropFirst(3))) { out.append(EntityRef(kind: .pwd(a))) }
-            rng = r.upperBound..<s.endIndex
-        }
-        rng = s.startIndex..<s.endIndex
-        while let r = s.range(of: "指纹#(\\d+)", options: .regularExpression, range: rng) {
-            if let b = Int(String(s[r].dropFirst(3))) { out.append(EntityRef(kind: .fp(b))) }
-            rng = r.upperBound..<s.endIndex
-        }
-        for m in DB.members() where !m.name.isEmpty && s.contains(m.name) {
-            out.append(EntityRef(kind: .member(m.id)))
-        }
-        // 只认 `MAC=` 后面的整串 12 位: 裸 [0-9a-f]{12} 会从 debugRaw 的长 hex dump 里
-        // 任意截一段当 MAC, 点进去是凭空的设备
-        rng = s.startIndex..<s.endIndex
-        while let r = s.range(of: "MAC=([0-9a-fA-F]{12})(?![0-9a-fA-F])", options: .regularExpression, range: rng) {
-            out.append(EntityRef(kind: .mac(String(s[r].dropFirst(4)))))   // "MAC=" 4 字符
-            rng = r.upperBound..<s.endIndex
-        }
-        return out
-    }
-    /// 543 实体详情文案: 只给台账元数据。pwd 字段存的是口令明文 (Store:109), 绝不进这里。
-    static func entityDetail(_ e: EntityRef, mac: String) -> String {
-        switch e.kind {
-        case .pwd(let alias):
-            if let p = DB.ledger(mac).pwds.first(where: { $0.alias == alias }) {
-                return "台账内 · 备注 \(p.note.isEmpty ? "(无)" : p.note)"
-                    + " · \(p.temp ? "临时凭证" : "长期凭证")"
-                    + " · 属主 " + (p.owner.flatMap { DB.member($0)?.name } ?? "未指派")
-                    + " · 有效期 \(p.from) ~ \(p.to)"
-            }
-            if CredentialOrg.binPwd(mac, alias) != nil {
-                return "台账内已无此凭证, 但回收站有 (可恢复, 见凭证中心 → 回收站)"
-            }
-            return "本机台账没有该凭证 —— 可能是锁端自行添加或其它 App 写入, 建议拉一次凭证清单"   // 734 本机台账没有该凭证
-        case .fp(let batch):
-            if let f = DB.ledger(mac).fps.first(where: { $0.batch == batch }) {
-                return "台账内 · 名称 \(f.name.isEmpty ? "(未命名)" : f.name)"
-                    + " · 属主 " + (f.owner.flatMap { DB.member($0)?.name } ?? "未指派")
-                    + (f.isAlarm == true ? " · 告警指纹" : "")
-            }
-            if CredentialOrg.binFp(mac, batch) != nil {
-                return "台账内已无此指纹, 但回收站有 (可恢复, 见凭证中心 → 回收站)"
-            }
-            return "本机台账没有该指纹批次 —— 建议拉一次凭证清单"   // 734 本机台账没有该指纹批
-        case .member(let id):
-            guard let m = DB.member(id) else { return "成员档案已删除" }
-            return "成员 \(m.name) · \(m.relation.isEmpty ? "关系未填" : m.relation)"
-        case .mac(let m):
-            let shown = DB.keychains().first { $0.mac.uppercased() == m.uppercased() }
-            return shown.map { "本机设备档案: \($0.name)" } ?? "MAC 出现在日志里, 但不在本机设备清单中"
-        }
-    }
 }
 
 // ---------- 748 BLE 事件流水与连接成败遥测 (⚠ 降级: 环形留存, 图表随积累展示) ----------
@@ -361,14 +285,6 @@ enum BleTelemetry {
         DB.store.setCodable("kf_conn_attempts", list)
     }
     static var attempts: [ConnAttempt] { DB.store.get([ConnAttempt].self, "kf_conn_attempts") ?? [] }
-    /// 近 30 天成功率 (⚠ 需积累, 冷启动为 nil → UI 显示"积累中")
-    static func successRate() -> (total: Int, ok: Int, pct: Int)? {
-        let a = attempts
-        guard !a.isEmpty else { return nil }
-        let total = a.count
-        let ok = a.filter { $0.ok }.count
-        return (total, ok, Int(Double(ok) * 100 / Double(total)))
-    }
     /// 748 按日成功率: 只统计**真实留存**的尝试 (kf_conn_attempts 上限 300 条)。
     /// 注意 successRate() 的口径是"全部留存", 不是滚动 30 天 —— 界面不得写"近 30 天"。
     struct DayRate: Identifiable {
@@ -378,43 +294,8 @@ enum BleTelemetry {
         var pct: Int
         var id: String { day }
     }
-    static func dailyRates() -> [DayRate] {
-        var order: [String] = []
-        var bucket: [String: (n: Int, ok: Int)] = [:]
-        // attempts 是新在前 (insert at 0); 按日聚合后反转成时间正序画趋势
-        for a in attempts {
-            let day = String(a.t.prefix(5))          // MM-dd
-            if bucket[day] == nil { order.append(day) }
-            var v = bucket[day] ?? (0, 0)
-            v.n += 1
-            if a.ok { v.ok += 1 }
-            bucket[day] = v
-        }
-        return order.reversed().map { d in
-            let v = bucket[d] ?? (0, 0)
-            return DayRate(day: d, n: v.n, ok: v.ok, pct: v.n > 0 ? v.ok * 100 / v.n : 0)
-        }
-    }
     /// 756 失败原因归类 (本地词表, 给"重试建议")
     struct FailClass { let name: String; let n: Int; let hint: String }
-    static func failClasses() -> [FailClass] {
-        func classify(_ r: String) -> String {
-            if r.contains("超时") { return "超时" }
-            if r.contains("未发现") || r.contains("扫描") { return "未发现设备" }
-            if r.contains("断开") { return "中途断开" }
-            return "其他"
-        }
-        let fails = attempts.filter { !$0.ok }
-        let groups = Dictionary(grouping: fails) { classify($0.reason) }
-        let hints: [String: String] = [
-            "超时": "把手机贴近门锁、避开拥挤商场等干扰源后再试",
-            "未发现设备": "确认门锁已通电、手机蓝牙已开, 距离 1 米内再扫",
-            "中途断开": "走动中掉线属正常, 靠近后再试; 频繁出现先查门锁电量",
-            "其他": "换个时间段重试; 仍不行请跑一次一键体检"
-        ]
-        return groups.map { k, v in FailClass(name: k, n: v.count, hint: hints[k] ?? "") }
-            .sorted { $0.n > $1.n }
-    }
 }
 
 // ---------- 277 看门狗自恢复 —— 第九十一批删除这份零调用副本 ----------
@@ -471,62 +352,23 @@ enum CrashGuard {
     static func markSessionStart() {
         DB.store.set("kf_session_start", CFAbsoluteTimeGetCurrent())
     }
-    static func consumePending() -> Bool {
-        defer { DB.store.remove("kf_crash_arch_pending") }
-        return DB.store.getBool("kf_crash_arch_pending")
-    }
     static var pendingAbnormal: Bool { DB.store.getBool("kf_crash_arch_pending") }
     static func archList() -> [String] { DB.store.get([String].self, "kf_crash_arch") ?? [] }
 }
 
 // ---------- 750/546/152 数据库体检·表级体积·存储构成 (UserDefaults 等价实现) ----------
 enum DataHealth {
-    static func bytesOf(_ v: Any) -> Int {
-        if let d = v as? Data { return d.count }
-        if let s = v as? String { return s.utf8.count }
-        return 16
-    }
     /// 各 kf_ 键族占用估算 (546 表级体积等价), 前缀分组
     struct Family: Identifiable {
         let key: String
         let bytes: Int
         var id: String { key }
     }
-    static func families() -> [Family] {
-        let rep = UserDefaults.standard.dictionaryRepresentation()
-        var byPrefix: [String: Int] = [:]
-        for (k, v) in rep where k.hasPrefix("kf.") {
-            let kk = String(k.dropFirst(3))
-            // 键族: 去掉 mac 后缀段 (kf_ledger_aabbccddeeff → kf_ledger_)
-            var prefix = kk
-            if let idx = kk.lastIndex(of: "_") {
-                let tail = String(kk.suffix(kk.distance(from: kk.index(idx, offsetBy: 1), to: kk.endIndex)))
-                if tail.count == 12 || tail.count == 8 { prefix = String(kk.prefix(upTo: kk.index(after: idx))) }   // String.Index 无 + 运算符
-            }
-            byPrefix[prefix, default: 0] += bytesOf(v)
-        }
-        return byPrefix.map { Family(key: $0.key, bytes: $0.value) }.sorted { $0.bytes > $1.bytes }
-    }
     /// 存储构成条 (152): 数据台账 / 日志与遥测 / 偏好设置 三段
     struct Slice: Identifiable {
         let name: String
         let bytes: Int
         var id: String { name }
-    }
-    static func composition() -> [Slice] {
-        let rep = UserDefaults.standard.dictionaryRepresentation()
-        var data = 0, logT = 0, pref = 0
-        let dataPrefix = ["kf_keychains", "kf_ledger_", "kf_snap_", "kf_logcache_", "kf_members", "kf_keychain_dongles",
-                          "kf_gateways", "kf_chist_", "kf_cbin_", "kf_ccred", "kf_cseq_", "kf_clists_", "kf_calert_", "kf_fevents_"]
-        let logPrefix = ["kf_diag_logs", "kf_ble_events", "kf_conn_attempts", "kf_crash_", "kf_wd_"]
-        for (k, v) in rep where k.hasPrefix("kf.") {
-            let b = bytesOf(v)
-            let kk = String(k.dropFirst(3))
-            if dataPrefix.contains(where: { kk.hasPrefix($0) }) { data += b }
-            else if logPrefix.contains(where: { kk.hasPrefix($0) }) { logT += b }
-            else { pref += b }
-        }
-        return [Slice(name: "数据台账", bytes: data), Slice(name: "日志与遥测", bytes: logT), Slice(name: "偏好设置", bytes: pref)]
     }
     static func human(_ bytes: Int) -> String {
         if bytes >= 1_000_000 { return String(format: "%.1f MB", Double(bytes) / 1_000_000) }
@@ -560,61 +402,13 @@ enum DataHealth {
         if out.isEmpty { out.append("数据解析正常, 台账计数一致") }
         return out
     }
-    /// 750 "立即整理" (等价 VACUUM): 清残留空键 + 冲刷写队列 + 校验回显
-    static func vacuum() -> String {
-        var removed = 0
-        let rep = UserDefaults.standard.dictionaryRepresentation()
-        for (k, v) in rep where k.hasPrefix("kf.") {
-            if let s = v as? String, s.isEmpty {
-                UserDefaults.standard.removeObject(forKey: k); removed += 1
-            }
-        }
-        let purged = purgeOrphanLogCaches()
-        let issues = integrity().filter { !$0.hasPrefix("数据解析正常") }
-        return (issues.isEmpty ? "整理完成: 数据解析正常" : "整理完成, 仍待处理: " + issues.joined(separator: "; "))
-            + " · 清理 \(removed) 个残留键" + (purged > 0 ? " · 隔离 \(purged) 把已删锁的日志缓存" : "")
-    }
     /// 452 孤儿日志缓存隔离 (仅由显式「立即整理」调用): 台账/钥匙串一律不碰;
     /// 缓存转入 kf_logpark_<mac> 键位停放不真删 —— 删锁是常规操作, 直接清历史等于顺手烧掉证据。
     @discardableResult
-    static func purgeOrphanLogCaches() -> Int {
-        let kcs = Set(DB.keychains().map { $0.mac })
-        var n = 0
-        for k in DB.store.keys() where k.hasPrefix("kf_logcache_") {
-            let mac = String(k.dropFirst("kf_logcache_".count))
-            if !kcs.contains(mac) {
-                if let c = DB.store.get(LogCache.self, k) { DB.store.set("kf_logpark_" + mac, c) }
-                DB.store.remove(k); n += 1
-            }
-        }
-        return n
-    }
     /// 452 无主凭证隔离: owner 指向已删成员的密码/指纹移入回收站 (kf_cbin_), owner 清空。
     /// 与 purgeOrphanLogCaches 同纪律 —— 只由诊断页显式按钮调用, 只读自检 (integrity) 里绝不删数据;
     /// 入回收站而非真删 (reclaimDays 内可 365/504 取回), 所以这一支不套 752 的备份闸。
     @discardableResult
-    static func quarantineOrphanCredentials() -> Int {
-        let memberIds = Set(DB.members().map { $0.id })
-        var n = 0
-        for kc in DB.keychains() {
-            let mac = kc.mac
-            for p in DB.listPwds(mac) where (p.owner.map { !memberIds.contains($0) } ?? false) {
-                var cp = p
-                cp.owner = nil
-                DB.delPwd(mac, p.alias)
-                CredentialOrg.addToBin(mac, pwd: cp, source: .orphan)
-                n += 1
-            }
-            for f in DB.listFps(mac) where (f.owner.map { !memberIds.contains($0) } ?? false) {
-                var cf = f
-                cf.owner = nil
-                DB.delFp(mac, f.batch)
-                CredentialOrg.addToBin(mac, fp: cf, source: .orphan)
-                n += 1
-            }
-        }
-        return n
-    }
     /// 452 孤儿扫描: 凭证 owner 指向不存在成员 / 已删锁的日志残留 (可一键"隔离"移除)
     static func scanOrphans() -> [String] {
         var out: [String] = []
@@ -686,9 +480,6 @@ enum DataHealth {
         }
         return moved
     }
-    static func archivedCount(_ mac: String) -> Int {
-        DB.store.get([CachedLog].self, "kf_logarch_" + mac)?.count ?? 0
-    }
 }
 
 // ---------- 749 记录完整性校验 (对账) — 待补拉日期段引擎 (纯函数: 只吃日志数组, 不碰 UI、不写存储) ----------
@@ -715,186 +506,6 @@ enum DataHealth {
 //      缓存上限挤掉的旧行 (DB.writeLogs / DB.replaceLogs 每次写入都截 300 行), 与"哪天没日志"是两回事。
 //   (Store/LockService 那两处按**符号名**引而不按行号引: 同一晚有别的批在动那几个文件, 行号会漂;
 //    vendor/app/utils/status.js 是只读权威, 它的行号按实读写死。)
-/// 749 一段连续"本机整天没有日志"的日期段 (起止都含)。
-struct PullSegment: Identifiable {
-    let fromDay: String        // yyyy-MM-dd 段首日 (含)
-    let toDay: String          // yyyy-MM-dd 段尾日 (含)
-    let missingDays: Int       // 本机缺的天数 (整天计, 不是锁端条数)
-    let approximate: Bool      // 749: 恒 true — 锁端无缺口清单, 只能本机推断; 界面文案因此强制带"约"
-    let basis: String          // 判据说明 (口径只写在引擎这一处, 界面直接读它)
-    var id: String { fromDay + "~" + toDay }
-    /// 749 界面行首: "约 <起> ~ <止> · 本机缺 N 天" (单日不重复画 "~")。
-    /// "约" 这个字由 approximate 这个字段决定而不是写死在文案里 —— 这样锁端哪天真给了缺口清单,
-    /// 引擎把 false 传进来就够了, 界面不会留着一句过期的谦辞, 也不会留着一条假承诺。
-    var line: String {
-        let span = fromDay == toDay ? fromDay : "\(fromDay) ~ \(toDay)"
-        return (approximate ? "约 " : "") + span + " · 本机缺 \(missingDays) 天"
-    }
-}
-/// 749 本机 idx 序列的相邻断档 (信号 B, 不参与日期段的任何算术)。
-struct IdxGap: Identifiable {
-    let lowIdx: UInt32
-    let highIdx: UInt32
-    let skipped: Int           // 两行之间本机看不到的序号个数 — 纯本机算术, 不等于"锁内丢了几条"
-    var id: String { "\(lowIdx)-\(highIdx)" }
-    var line: String { "序号 \(lowIdx) → \(highIdx) · 中间空 \(skipped) 个号" }
-}
-/// 749 一次推断的完整输出 (字段只增不减, 便于影子对拍时逐字段断言)
-struct PullGapReport {
-    let totalRows: Int          // 本机日志行数 (含无有效时刻的行)
-    let clocklessRows: Int      // 被"协议纪元判据"排除的行数 (lockTime 0 那类占位值)
-    let firstDay: String?       // 本机最早有日志的一天 (一天都没有 = nil)
-    let lastDay: String?
-    let coveredDays: Int        // 本机有日志的天数
-    let segments: [PullSegment] // 待补拉日期段 (最近在前, 已按上限截断)
-    let segmentsHidden: Int     // 因上限没列出来的段数
-    let missingDayTotal: Int    // 全部段的缺天合计 (本机天, 不是锁端条数)
-    let windowed: Bool          // 跨度超上限, 只扫了最近一段
-    let tail: PullSegment?      // 最后一行之后的尾段 (单列, 不算进 segments)
-    let idxGaps: [IdxGap]       // 断档样本 (最近在前, 已按上限截断)
-    let idxGapTotal: Int        // 断档总处数
-    let idxGapSkippedTotal: Int // 空号合计 (与"缺 N 天"分列, 不相加)
-    let idxAnomalies: Int       // 跳变过大、没报号数的相邻对数
-    var noLogs: Bool { totalRows == 0 }
-    var singleDay: Bool { coveredDays <= 1 }
-}
-
-enum RecordReconcile {
-    /// 749 相邻序号之间空号数超过这个上限就只计数、不报号数: 游标边界 (startIdx 从 0xFFFFFFFF 起)
-    /// 与锁端重排会算出上亿的量, 把它当成"缺了几亿条"画出来就是假数据。
-    static let idxGapCap = 5000
-    /// 749 判据文案的唯一来源 (界面直接显示它, 免得两处各写一套口径)
-    static let interiorBasis = "前后两侧本机都有日志, 中间这些天本机一行都没有"
-    static let tailBasis = "本机最后一行之后到昨天, 只有前一侧有数据 — 这段可能只是没连过锁, 只作补拉参考"
-    /// 749 扫描跨度默认上限。界面那句"超过 N 天只扫了最近一段"报的就是这个数, 所以只存在这一处。
-    static let defaultMaxSpanDays = 366
-    /// 749 界面入口: 读当前锁的本机缓存后喂给纯函数 (引擎本身只做"数组→结构"这一件事)
-    static func pendingPull(mac: String) -> PullGapReport { pendingPull(logs: DB.readLogs(mac)) }
-    /// 749 纯函数: 本机 idx 序列 + lockTime 换算的 dayKey → 待补拉的连续日期段。
-    /// - Parameter logs: 已有的本机日志数组 (影子对拍直接喂同一份数据即可复现, 全程只读)
-    /// - Parameter maxSpanDays: 扫描跨度上限。缓存只有 300 行, 但 223 归档之后跨度可能拉到几年,
-    ///   不设上限等于拿一次页面刷新去数几千格日历。
-    static func pendingPull(logs: [CachedLog], maxSpanDays: Int = RecordReconcile.defaultMaxSpanDays,
-                            maxSegments: Int = 8, maxGaps: Int = 5) -> PullGapReport {
-        let cal = WeekCal.gregorian
-        // 749 有效时刻判据复用 StatsKit.dateOf 这一个口径 (lockTime == 0 换算后落在协议纪元
-        // 2010-01-01, 那是"锁端时钟没读到/无时钟型号"的占位值 —— StatsKit.swift:13-19 与
-        // Milestones.swift:504-506 已把它定成"没有锁端时刻就没有日期")。这里不另立第二个定义。
-        var daySet = Set<String>()
-        var lo: Date?
-        var hi: Date?
-        var dated = 0
-        for l in logs {
-            guard let d = StatsKit.dateOf(l) else { continue }
-            dated += 1
-            daySet.insert(StatsKit.dayKey(d))
-            if lo == nil || d < lo! { lo = d }
-            if hi == nil || d > hi! { hi = d }
-        }
-        // 749 信号 B: 序号断档与有没有时刻无关, 所以无时钟的行也照样参与 (行本身已按 idxRaw 去重)。
-        var gaps: [IdxGap] = []
-        var anomalies = 0
-        let idxs = Array(Set(logs.map { $0.idxRaw })).sorted()
-        if idxs.count >= 2 {
-            for i in 1..<idxs.count {
-                // Int64 中转: 排序后已保证 b > a, 但 `-1` 在 0 附近不想靠截断语义。
-                let skipped = Int(Int64(idxs[i]) - Int64(idxs[i - 1]) - 1)
-                if skipped <= 0 { continue }
-                if skipped > idxGapCap { anomalies += 1; continue }
-                gaps.append(IdxGap(lowIdx: idxs[i - 1], highIdx: idxs[i], skipped: skipped))
-            }
-        }
-        let gapSkipped = gaps.reduce(0) { $0 + $1.skipped }
-        let shownGaps = Array(gaps.suffix(maxGaps).reversed())
-        // 749 信号 A: 日期段。中段空洞的定义要求两侧都有数据, 所以只在 [最早日, 最后日) 内逐日走。
-        var segs: [PullSegment] = []
-        var allSegs: [PullSegment] = []
-        var windowed = false
-        var tail: PullSegment?
-        if let firstDate = lo, let lastDate = hi {
-            let firstDayDate = cal.startOfDay(for: firstDate)
-            let lastDayDate = cal.startOfDay(for: lastDate)
-            // 749 尾段: 只数到"昨天" —— 今天还没过完, 算成整天会凭空多出一格。
-            // 尾段的要求比中段低 (只要有"最后一行"就行), 所以它在 daySet 只有一天的时候也成立:
-            // 那种情形下"此后到今天之前本机没数据"恰恰是最该看得见的一条。
-            let yest = WeekCal.shifted(cal.startOfDay(for: Date()), days: -1)
-            if lastDayDate < yest {
-                let t0 = WeekCal.shifted(lastDayDate, days: 1)
-                let n = (cal.dateComponents([.day], from: t0, to: yest).day ?? 0) + 1   // 749 闭区间: 差值 + 1
-                if n > 0 {
-                    tail = PullSegment(fromDay: StatsKit.dayKey(t0), toDay: StatsKit.dayKey(yest),
-                                       missingDays: n, approximate: true, basis: tailBasis)
-                }
-            }
-            // 749 中段空洞要两侧都有依据 (451 的口径): 覆盖天数不足两天就一段也推不出来。
-            // 这时候界面上只剩尾段与序号两条线, 各说各的, 不会冒出一条"缺 N 天"的假段。
-            if daySet.count >= 2 {
-                let span = cal.dateComponents([.day], from: firstDayDate, to: lastDayDate).day ?? 0
-                var cur = firstDayDate
-                if span > maxSpanDays {
-                    windowed = true
-                    cur = WeekCal.shifted(lastDayDate, days: -maxSpanDays)
-                    // 749 窗口左边必须钉在"本机有日志的那一天"上: 否则最左那段就成了只有一侧有依据的猜测,
-                    // 451 定下的"两侧都有数据"口径不能因为开窗而破。lastDay 本身在 daySet 里, 所以必停得住。
-                    var snap = 0
-                    while !daySet.contains(StatsKit.dayKey(cur)), snap < maxSpanDays + 2 {
-                        cur = WeekCal.shifted(cur, days: 1)
-                        snap += 1
-                    }
-                }
-                // 749 第一步: 把要扫的那些天按序列成 dayKey (逐日走而不是比字符串 —— 跨度是日历日,
-                // 用 86400 秒在有夏令时的地区会数错一格, 见 WeekCal:39-45)。
-                var days: [String] = []
-                var steps = 0
-                let stepCeil = maxSpanDays + 400
-                while cur < lastDayDate && steps < stepCeil {
-                    steps += 1
-                    days.append(StatsKit.dayKey(cur))
-                    cur = WeekCal.shifted(cur, days: 1)
-                }
-                // 749 第二步: 连续缺的天并成段。这里只用下标算术, 不写需要跨层捕获可变局部量的闭包 ——
-                // 本机没有编译器, 少一种形状就少一处"只有编译器才能定论"的地方。
-                var i = 0
-                while i < days.count {
-                    if daySet.contains(days[i]) { i += 1; continue }
-                    var j = i
-                    while j < days.count, !daySet.contains(days[j]) { j += 1 }
-                    allSegs.append(PullSegment(fromDay: days[i], toDay: days[j - 1],
-                                               missingDays: j - i, approximate: true, basis: interiorBasis))
-                    i = j
-                }
-                segs = Array(allSegs.reversed().prefix(maxSegments))   // 749 最近在前, 与本页其它清单一致
-            }
-        }
-        return PullGapReport(
-            totalRows: logs.count,
-            clocklessRows: logs.count - dated,
-            firstDay: lo.map { StatsKit.dayKey($0) },
-            lastDay: hi.map { StatsKit.dayKey($0) },
-            coveredDays: daySet.count,
-            segments: segs,
-            segmentsHidden: max(0, allSegs.count - segs.count),
-            missingDayTotal: allSegs.reduce(0) { $0 + $1.missingDays },
-            windowed: windowed,
-            tail: tail,
-            idxGaps: shownGaps,
-            idxGapTotal: gaps.count,
-            idxGapSkippedTotal: gapSkipped,
-            idxAnomalies: anomalies
-        )
-    }
-    /// 749 清单纯文本 (复制与影子对拍共用; 每一行都带"约", 结尾把"到场"这一既有限制写上)
-    static func plainLine(_ r: PullGapReport, name: String) -> String {
-        var out = "锁 \(name) · 本机日志 \(r.totalRows) 行 · 覆盖 \(r.coveredDays) 天"   // 749 本机日志
-        for s in r.segments { out += "\n" + s.line + " — " + s.basis }
-        if r.segmentsHidden > 0 { out += "\n另有 \(r.segmentsHidden) 段未列出" }
-        if let t = r.tail { out += "\n尾段 " + t.line + " — " + t.basis }
-        for g in r.idxGaps { out += "\n" + g.line }
-        if r.idxAnomalies > 0 { out += "\n另有 \(r.idxAnomalies) 处序号跳变过大, 未报号数" }
-        out += "\n以上全部为约: 锁端不提供缺口清单, 协议也没有锁内上报总数 — 补拉要到场连接后在记录页执行"
-        return out
-    }
-}
 
 // ---------- 280 性能面板: 页面打开耗时 (切 Tab → 该页出现) ----------
 /// 口径写死在这里，免得 UI 文案吹成"渲染耗时"：测的是 **tabSelection 变更** 到 **该页 onAppear**
@@ -918,11 +529,6 @@ enum PageTrace {
     private static var navAt: CFAbsoluteTime?
     private static var navName: String?
 
-    static func setOn(_ v: Bool) {
-        DB.store.set(onKey, v)
-        navAt = nil
-        navName = nil
-    }
 
     /// RootView 只有四个 Tab，越界不可能是用户切页 → 返回空串让调用方丢弃
     static func name(forTab tab: Int) -> String {
@@ -978,77 +584,6 @@ struct RecoveryTip: Identifiable {
 
 /// 只读数 + 给建议，**不删任何东西**：删除动作全部留在各节既有的二次确认里 (真空清理/归档/保留策略)。
 /// 体积口径与 152 一致：kf_* 键值长度估算，不是磁盘真实占用 —— 这句话必须和数字一起出现。
-enum Recovery {
-    private static func sum(_ fam: [DataHealth.Family], _ prefixes: [String]) -> Int {
-        fam.filter { f in prefixes.contains(where: { f.key.hasPrefix($0) }) }.reduce(0) { $0 + $1.bytes }
-    }
-
-    static func tips() -> [RecoveryTip] {
-        var out: [RecoveryTip] = []
-        let fam = DataHealth.families()
-        // 第九十五批: 本机存取失败台账。此前 set/setCodable/get 三处都是 `try?` 静默吞，
-        // 写不进去、或写得进去却解不出来时，界面照旧弹"已设置/已保存"。现在留了这本账，
-        // 就必须有个**看见它的地方**，否则等于没记 —— 这也是本条建议与其余各条不同之处:
-        // 命中它不代表有垃圾要清，代表**某处显示的成功不可信**。
-        let fails = DB.store.failureLines()
-        if !fails.isEmpty {
-            out.append(RecoveryTip(id: "storefail",
-                title: "本机存取失败 \(fails.count) 条",
-                detail: "最近: " + fails.prefix(3).joined(separator: " · ")
-                       + " —— 只记键名与原因，不含值 (值可能是口令或 2FA 种子)。"
-                       + "命中这条说明**某个设置没真落盘或读不出来**，相关界面上的成功文案不可信。",
-                goto: "本页「存储与数据」"))
-        }
-        let retention = DB.store.getString(DiagLogs.retentionKey)
-        let logBytes = sum(fam, ["kf_diag_logs"])
-        if logBytes >= 64_000 && retention.isEmpty {
-            out.append(RecoveryTip(id: "logs",
-                title: "运行日志约 \(DataHealth.human(logBytes))（\(DiagLogs.all().count) 条）",
-                detail: "保留策略现在是「全部」。改成 365 或 90 天时，切换先报「将删条数」并二次确认，确认后立即删除。",   // 751 保留策略现在是
-                goto: "本页「存储与数据」的日志保留策略"))
-        }
-        let archBytes = sum(fam, ["kf_logarch_"])
-        if archBytes > 0 {
-            out.append(RecoveryTip(id: "arch",
-                title: "老数据归档约 \(DataHealth.human(archBytes))",
-                detail: "归档是「超一年的锁端日志缓存」，每锁上限 400 条、超出丢最旧。确认不再需要回看就可以在归档节清掉。",
-                goto: "本页「存储与数据」的归档区"))
-        }
-        // 回滚快照是**文件** (BackupStudio.rollbackDir)，所以这一条给的是真实磁盘字节；
-        // 其余各条是 kf_* 键值长度估算。两种口径混在一张表里必须标出来，否则读者以为同一把尺。
-        if let files = try? FileManager.default.contentsOfDirectory(
-            at: BackupStudio.rollbackDir, includingPropertiesForKeys: [.fileSizeKey]) {
-            var bytes = 0
-            for u in files {
-                // 注意是 (try? …)?.fileSize ?? 0：写成 (try? x.fileSize) ?? 0 会得到 Int?，
-                // 因为 try? 作用在一个本来就返回 Optional 的表达式上是双重 Optional，编译器直接拒。
-                let sz = (try? u.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
-                bytes += sz
-            }
-            if !files.isEmpty {
-                out.append(RecoveryTip(id: "rollback",
-                    title: "回滚快照 \(files.count) 份，共 \(DataHealth.human(bytes))（真实文件大小）",
-                    detail: "每次恢复前自动留一份，系统只保留最近 4 份。它含整库密钥材料，所以放在 Application Support 并标记不进系统备份。这里**不给清理入口**：快照是唯一能撤销一次恢复的东西，与其放一个诱人的删除键，不如让系统自己收敛；只有「核弹销毁」会连它一起覆写删除。",
-                    goto: ""))
-            }
-        }
-        let crashBytes = sum(fam, ["kf_crash_"])
-        if crashBytes > 0 {
-            out.append(RecoveryTip(id: "crash",
-                title: "异常退出档案约 \(DataHealth.human(crashBytes))",
-                detail: "档案只留最近几条，通常不值得清。真嫌占地方可在查阅节看内容后决定。",
-                goto: "诊断查阅"))
-        }
-        let telemetry = sum(fam, ["kf_conn_attempts", "kf_ble_events", "kf_wd_"])
-        if telemetry >= 32_000 {
-            out.append(RecoveryTip(id: "telemetry",
-                title: "连接遥测与事件流水约 \(DataHealth.human(telemetry))",
-                detail: "这些是出图的样本源：清了图就退回「积累中」。除非确实在意这几 KB，否则留着。",
-                goto: "本页「连接成功率」"))
-        }
-        return out
-    }
-}
 
 /// 387 维护回执：把本会话做过的"本机维护"记下来，下次启动在设备页 Hero 卡下回一行。
 /// 创意原文写"上次**退出期间**" —— 本 App 唯一的后台任务是 428 充电备份
@@ -1081,368 +616,6 @@ enum MaintenanceLog {
     static func markSeen(sessionStart: Double) {
         guard let m = (DB.store.get([Act].self, key) ?? []).filter({ $0.at < sessionStart }).max(by: { $0.at < $1.at }) else { return }
         DB.store.set(seenKey, m.at)
-    }
-}
-
-// ---------- 149/150/160/545/760 一键体检引擎 (10 项, 单项可复测) ----------
-struct HealthCheckItem: Identifiable {
-    let id: String
-    let name: String
-    let ok: Bool
-    let detail: String        // 人话: 状态 + 怎么办
-}
-struct HealthCheckArchive: Codable, Identifiable {
-    var id = UUID().uuidString
-    var at: String
-    var score: Int
-    var lines: [String]
-}
-@MainActor
-enum DiagHealth {
-    struct ItemDef {
-        let id: String
-        let name: String
-        let run: @MainActor () -> HealthCheckItem
-    }
-    /// 545 能力自检清单 + 760 运行自检共用同一套项 (蓝牙/通知/应用锁/存储/备份/备份可读/连接/数据/触感/面容)
-    static var items: [ItemDef] {
-        [ItemDef(id: "ble", name: "蓝牙权限") { checkBLE() },
-         ItemDef(id: "notify", name: "本地通知") { checkNotify() },
-         ItemDef(id: "applock", name: "本机密码") { checkAppLock() },
-         ItemDef(id: "storage", name: "存储余量") { checkStorage() },
-         ItemDef(id: "backup", name: "备份新鲜度") { checkBackup() },
-         ItemDef(id: "backupfile", name: "备份文件可读性") { checkBackupFile() },
-         ItemDef(id: "conn", name: "门锁连接") { checkConn() },
-         ItemDef(id: "data", name: "数据完整性") { checkData() },
-         ItemDef(id: "haptic", name: "触感反馈") { checkHaptic() },
-         // 545 面容可用性: 无生物硬件的设备不算故障 (877 降级链已定义该情形), 如实报"走 DEFERRED"
-         ItemDef(id: "faceid", name: "面容可用性") {
-             let ok = AuthKit.biometricAvailable
-             return HealthCheckItem(id: "faceid", name: "面容可用性", ok: ok,
-                                    detail: ok ? "Face ID / Touch ID 可用" : "本机无生物识别硬件, 该能力走 DEFERRED")
-         }]
-    }
-    /// 149 总分口径 (唯一算术, 视图不另算): 每项满分 20, 总分 = Σ得分 × 100 / 满分。
-    /// 界面写"总分 X / 100", 原先 runAll 的 raw/10 与视图重测的 raw/2 各给各的 (9 项满分 18 / 90),
-    /// "/100" 是假数 —— 两处收进这里, 全绿必然 100。
-    static func percent(_ list: [HealthCheckItem]) -> Int {
-        let full = list.count * 20
-        guard full > 0 else { return 0 }
-        let raw = list.reduce(0) { $0 + ($1.ok ? 20 : 10) }
-        return Int(Double(raw) * 100 / Double(full))
-    }
-    /// 149 一键体检: 全量跑一遍出总分 (每项 20 / 警告 10)
-    static func runAll() -> (score: Int, items: [HealthCheckItem]) {
-        let list = items.map { $0.run() }
-        return (percent(list), list)
-    }
-    /// 160 单项复测: 只重跑指定项
-    static func runItem(_ id: String) -> HealthCheckItem? {
-        items.first(where: { $0.id == id })?.run()
-    }
-    // ---------- 158 体检存档 (⚠ 降级: 本地存档列表, 历史对比"积累中"占位) ----------
-    static func saveArchive(_ r: (score: Int, items: [HealthCheckItem])) {
-        var list = archives()
-        list.insert(HealthCheckArchive(at: DiagTime.full(), score: r.score,
-                                       lines: r.items.map { ($0.ok ? "通过" : "待处理") + " " + $0.name }), at: 0)
-        if list.count > 30 { list = Array(list.prefix(30)) }
-        DB.store.setCodable("kf_diag_arch", list)
-    }
-    static func archives() -> [HealthCheckArchive] {
-        DB.store.get([HealthCheckArchive].self, "kf_diag_arch") ?? []
-    }
-    // ---------- 分项 ----------
-    /// 旧写法这里自建 `CBCentralManager()` 且**不传代理**: 没有代理的中央管理器状态永远停在 .unknown,
-    /// 于是蓝牙明明开着, 体检这一项也恒红, 文案还把用户支去"控制中心打开蓝牙后重测" —— 永远重测不好。
-    /// 现改用 BLEService 那个有代理、真正在跑的管理器的状态, 并把"不可判定"与"未开启"分开表述。
-    static func checkBLE() -> HealthCheckItem {
-        let auth = CBCentralManager.authorization
-        if auth == .denied {
-            return HealthCheckItem(id: "ble", name: "蓝牙权限", ok: false,
-                                   detail: "蓝牙权限被拒绝 — 到 设置 → 离线锁管家 → 蓝牙 开启后复测")
-        }
-        func item(_ detail: String, ok: Bool = false) -> HealthCheckItem {
-            HealthCheckItem(id: "ble", name: "蓝牙权限", ok: ok, detail: detail)
-        }
-        switch BLEService.shared.powerState {
-        case .poweredOn:
-            return item("蓝牙已开启, 可正常连接门锁", ok: true)
-        case .poweredOff:
-            return item("蓝牙未开启 — 控制中心打开蓝牙后点「重测」")
-        case .unsupported:
-            return item("此设备不支持所需的蓝牙功能")
-        case .unauthorized:
-            return item("未获得蓝牙权限: 系统设置 → 隐私与安全性 → 蓝牙 中允许本 App")
-        case .resetting:
-            return item("蓝牙栈正在重置, 稍后点「重测」")
-        case .unknown, nil:
-            return item("蓝牙状态尚未回报 (App 刚启动或中心管理器未初始化) — 不等于蓝牙正常, 请进入门锁页后复测")
-        @unknown default:
-            return item("蓝牙状态不可判定 — 不计为通过")
-        }
-    }
-    static func checkNotify() -> HealthCheckItem {
-        // 1170: notificationSettings() 在 iOS 15+ 是 async 方法, 而体检项 run 是同步闭包 ——
-        // 用信号量把这一次查询拉回同步 (体检是用户主动点的低频操作, 阻塞上限 1.5s 可接受)。
-        // 必须 Task.detached: 本函数在 MainActor 上跑, 若用 Task{} 会继承 MainActor,
-        // 主线程正卡在 sem.wait 上, 任务体永远排不上 → 必超时。
-        let box = NotifyAuthBox()
-        let sem = DispatchSemaphore(value: 0)
-        Task.detached {
-            box.status = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
-            sem.signal()
-        }
-        _ = sem.wait(timeout: .now() + 1.5)
-        switch box.status {
-        case .denied:
-            return HealthCheckItem(id: "notify", name: "本地通知", ok: false,
-                                   detail: "通知被拒绝 — 保养/召回提醒不可用, 到系统设置重新开启")
-        case .notDetermined:
-            return HealthCheckItem(id: "notify", name: "本地通知", ok: true,
-                                   detail: "尚未授权, 首次用到提醒时会弹请求")
-        default:
-            return HealthCheckItem(id: "notify", name: "本地通知", ok: true, detail: "通知已授权")
-        }
-    }
-    static func checkAppLock() -> HealthCheckItem {
-        DB.hasPasscode()
-            ? HealthCheckItem(id: "applock", name: "本机密码", ok: true, detail: "已设置, 查看密码与备份需验证")
-            : HealthCheckItem(id: "applock", name: "本机密码", ok: false, detail: "未设置 — 建议设置, 防他人直接看到密码明文")
-    }
-    static func checkStorage() -> HealthCheckItem {
-        guard let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
-            // 读不到 = 不可判定, 不能计成通过 (旧写法让体检出现假绿灯)
-            return HealthCheckItem(id: "storage", name: "存储余量", ok: false, detail: "无法读取卷容量 — 保守计为不通过")
-        }
-        let b = (try? url.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey]))?
-            .volumeAvailableCapacityForImportantUsage ?? 0
-        let ok = b > 500 * 1_048_576
-        return HealthCheckItem(id: "storage", name: "存储余量", ok: ok,
-                               detail: ok ? "剩余空间充足" : "剩余不足 500MB — 备份导出会受影响, 建议清理")
-    }
-    static func checkBackup() -> HealthCheckItem {
-        let hist = DB.store.get([Double].self, "kf_backup_hist") ?? []
-        guard let last = hist.max() else {
-            return HealthCheckItem(id: "backup", name: "备份新鲜度", ok: false, detail: "从未备份 — 建议先做一次本地备份")
-        }
-        // last 是 epoch **毫秒**: 旧写法 now秒 - (毫秒/1000/86400) 把两种量纲直接相减,
-        // 结果恒为 ~1.7e9 "天" → 备份新鲜度永远判超期。先换算成秒再算天数差。
-        let days = max(0, Date().timeIntervalSince1970 - last / 1000) / 86_400
-        let ok = days < 30
-        return HealthCheckItem(id: "backup", name: "备份新鲜度", ok: ok,
-                               detail: String(format: "上次备份 %.0f 天前", days) + (ok ? "" : " — 超过 30 天, 建议补一次"))
-    }
-    /// 760 备份文件可读性: 取导出目录最新的 .enc, 认信封 (加密包) / 明文包 (checksum 校验) / 损坏件
-    static func checkBackupFile() -> HealthCheckItem {
-        let encs = ((try? FileManager.default.contentsOfDirectory(
-            at: BackupStudio.dir, includingPropertiesForKeys: [.contentModificationDateKey])) ?? [])
-            .filter { $0.pathExtension == "enc" }
-            .sorted { a, b in
-                let da = (try? a.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
-                let db = (try? b.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
-                return da > db
-            }
-        guard let f = encs.first else {
-            return HealthCheckItem(id: "backupfile", name: "备份文件可读性", ok: true,
-                                   detail: "尚无本地备份文件 — 做一次备份后此项自动检查")
-        }
-        switch BackupStudio.algoNote(f) {
-        case .envelope(let alg):
-            return HealthCheckItem(id: "backupfile", name: "备份文件可读性", ok: true,
-                                   detail: f.lastPathComponent + " 信封完整 (" + alg + ")")
-        case .plain:
-            let ok = (try? String(contentsOf: f, encoding: .utf8)).map { BackupStudio.verifyChecksum($0) } ?? false
-            return HealthCheckItem(id: "backupfile", name: "备份文件可读性", ok: ok,
-                                   detail: ok ? f.lastPathComponent + " 明文包 checksum 校验通过"
-                                              : f.lastPathComponent + " 明文包 checksum 对不上 — 建议重新导出一份")
-        case .unknown:
-            return HealthCheckItem(id: "backupfile", name: "备份文件可读性", ok: false,
-                                   detail: f.lastPathComponent + " 无法解析 — 文件可能损坏, 建议重新备份")
-        }
-    }
-    static func checkConn() -> HealthCheckItem {
-        let mac = DB.currentMac
-        guard !mac.isEmpty else {
-            return HealthCheckItem(id: "conn", name: "门锁连接", ok: true, detail: "未配对门锁 — 添加并首连验证后启用")
-        }
-        let m = LockArchive.meta(mac)
-        if m.lastConnectedAt > 0, !LockArchive.isSleeping(mac) {
-            return HealthCheckItem(id: "conn", name: "门锁连接", ok: true, detail: "近期连接成功, 链路正常")
-        }
-        return HealthCheckItem(id: "conn", name: "门锁连接", ok: m.lastConnectedAt > 0,
-                                detail: m.lastConnectedAt > 0 ? "超过 30 天未连接 — 到设备页连一次验证" : "从未验证过连接 — 建议做一次首连验证")
-    }
-    static func checkData() -> HealthCheckItem {
-        let rep = DataHealth.integrity()
-        let ok = rep.allSatisfy { $0.hasPrefix("数据解析正常") }
-        return HealthCheckItem(id: "data", name: "数据完整性", ok: ok, detail: rep.joined(separator: "; "))
-    }
-    static func checkHaptic() -> HealthCheckItem {
-        // 系统没有任何"触感开关"的公开读取口 (UIImpactFeedbackGenerator 无 isEnabled 成员);
-        // 能问的只有硬件是否支持触感 (CoreHaptics)。如实按硬件能力报, 不谎报"开着也没关" 也不谎报"关了"。
-        let on = CHHapticEngine.capabilitiesForHardware().supportsHaptics
-        return HealthCheckItem(id: "haptic", name: "触感反馈", ok: on,
-                               detail: on ? "触感引擎可用" : "系统触感关闭 — 设置 → 辅助功能 → 触感反馈")
-    }
-}
-
-// ---------- 753 诊断摘要二维码 (CoreImage 本地生成, 扫码即得本机可读文本) ----------
-enum DiagQR {
-    static func image(for text: String) -> UIImage? {
-        let filter: CIFilter! = CIFilter(name: "CIQRCodeGenerator")
-        guard let input = filter, let data = text.data(using: .utf8) else { return nil }
-        input.setValue(data, forKey: "inputMessage")
-        input.setValue("M", forKey: "inputCorrectionLevel")
-        guard let raw = input.outputImage else { return nil }
-        // 753 修正 (2026-10-13): CIImage 没有 imageRepresentation 这个成员 (全仓无扩展定义,
-        // 旧写法 `big.imageRepresentation` 编译不过); 顺带修掉语义bug —— 旧代码把
-        // outputImage cropped 成 1x1 再 scale 480, 等于把一个像素抻成一张图, 码根本扫不出来。
-        // CIQRCodeGenerator 的 extent 就是有效码区, 直接渲染; 此图只上屏给人扫, 不过 CIContext。
-        return UIImage(ciImage: raw)
-    }
-    /// 摘要文本: 版本 + 固件 + 最近错误 + 日志摘要哈希 (SHA256 前 6 字节, 12 hex)
-    @MainActor
-    static func summaryText(app: AppState) -> String {
-        var t = "【诊断摘要】\n"
-        t += "App " + (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?")
-            + " (\(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"))\n"
-        t += "系统 " + UIDevice.current.systemName + " " + UIDevice.current.systemVersion + "\n"
-        if let kc = app.current {
-            t += "门锁 " + app.displayName + " pid=" + String(kc.pid) + " 固件 " + (kc.fw.isEmpty ? "未知" : kc.fw) + "\n"
-        } else {
-            t += "门锁 未配对\n"
-        }
-        if !app.lock.lastError.isEmpty { t += "最近错误 " + app.lock.lastError + "\n" }
-        let tail = DiagLogs.today().suffix(30).map { $0.time + "[" + $0.level + "] " + $0.msg }.joined(separator: "\n")
-        let hash = SHA256.hash(data: Data(tail.utf8)).prefix(6).map { String(format: "%02x", $0) }.joined()
-        t += "日志摘要 " + hash
-        return t
-    }
-}
-
-// ---------- 754 协议字段字典 (CAPABILITY.md 内容内置, 可查可复制) ----------
-enum ProtocolDict {
-    struct Field: Identifiable {
-        let k: String
-        let name: String
-        let desc: String
-        var id: String { k + name }
-    }
-    // 659 错误码人话表 = 下面这张 statusFields 的 rc 行 + StatusParser 的 rc 文案表 (单一来源)。
-    // 之所以在数据侧标注: "人话表"如果只写在界面上，诊断页与开锁失败提示会各译一套错误码。
-    static let statusFields: [Field] = [
-        .init(k: "#01", name: "sKeyStatus", desc: "密钥状态 (1=清除态 / 2=ECDH)"),
-        .init(k: "#03", name: "rc", desc: "总返回码, 0 成功; 1-27 锁端错误码 (对照错误码人话表)"),
-        .init(k: "#04", name: "lockTime", desc: "锁内时钟, 协议秒 (基准 2010-01-01), 0 视为无效"),
-        .init(k: "#05", name: "zotpPeriod", desc: "临时码周期, 单位分钟, 默认 30"),
-        .init(k: "#06", name: "keyboardFreeze", desc: "键盘冻结标志"),
-        .init(k: "#07", name: "keyboardErrCount", desc: "密码连续错误次数"),
-        .init(k: "#08", name: "securityLevel", desc: "位域: bit0 单双验 / bit1 状态广播 / bit2 临时码开通"),
-        .init(k: "#11", name: "powerLevel", desc: "电量百分比"),
-        .init(k: "#14", name: "soundVolumn", desc: "音量, 0=有声 / 1=静音"),
-        .init(k: "#21-23", name: "pinInfo", desc: "PIN 池 容量/剩余/绑定数"),
-        .init(k: "#24-26", name: "pwdInfo", desc: "密码 容量/剩余/最大长度"),
-        .init(k: "#27-29", name: "fpInfo", desc: "指纹 容量/剩余/批号"),
-        .init(k: "#31", name: "verFirmware", desc: "固件 3B 反转直读 a.b.c"),
-        .init(k: "#34", name: "pid", desc: "型号号, 映射见诊断页型号映射"),   // 661 型号号
-        .init(k: "#35", name: "eCtrlVer", desc: "电控板版本, ASCII"),
-        .init(k: "16#04", name: "surplus", desc: "GETLOG 本次游标之后还剩的日志条数 (只对当页成立, 不是锁内总条数; 会话内对账依此)"),
-        .init(k: "16#05", name: "logRec", desc: "日志条目: type 1B + len 1B + idx 4B LE + lockTime 4B LE")
-    ]
-    // 原 `static let logTypes` (把 StatusParser.logTypes 排好序再暴露一份) 第九十三批删除：
-    // 全仓零读取 —— 用到的地方 (`DiagKit:990` 与 StatusParser 自己) 都直连 `StatusParser.logTypes`。
-    // 这种"同一份表在隔壁再抄一遍导出"的别名最容易在表更新时只改一处而悄悄分叉，所以不留。
-    static func copyable() -> String {
-        statusFields.map { $0.k + " " + $0.name + " — " + $0.desc }.joined(separator: "\n")
-    }
-}
-
-// ---------- 662 图标语义表 (SF Symbols 集中映射, 防漂移) ----------
-enum IconSemantics {
-    struct Row: Identifiable {
-        let icon: String
-        let use: String
-        var id: String { icon }
-    }
-    static let rows: [Row] = [
-        Row(icon: "fingerprint", use: "指纹凭证 / 录指纹"),
-        Row(icon: "keyboard", use: "密码凭证 / 键盘输入"),
-        Row(icon: "exclamationmark.triangle", use: "胁迫码 / 告警提示"),
-        Row(icon: "shield.fill", use: "防撬 / 布防 / 安全中心"),
-        Row(icon: "lock.fill", use: "门锁主体 / 设备 Tab"),
-        Row(icon: "key.horizontal.fill", use: "凭证 Tab / 密码开门"),
-        Row(icon: "list.bullet.rectangle.fill", use: "记录 Tab"),
-        Row(icon: "gearshape.fill", use: "设置 Tab"),
-        Row(icon: "bolt.fill", use: "电量 / 低电告警"),
-        Row(icon: "network", use: "BLE 连接状态"),
-        Row(icon: "archivebox.fill", use: "备份 / 归档"),
-        Row(icon: "stethoscope", use: "诊断 / 体检"),
-        Row(icon: "stop.circle.fill", use: "静默排查模式"),
-        Row(icon: "chart.bar.fill", use: "统计 / 成功率"),
-        Row(icon: "qrcode", use: "诊断摘要二维码"),
-        Row(icon: "doc.text.magnifyingglass", use: "日志检索")
-    ]
-}
-
-// ---------- 762 白名单查询模板 (只读下拉, 不开放自由输入) ----------
-enum QueryTemplates {
-    struct Result { let title: String; let lines: [String] }
-    static func lastNLogs(_ n: Int) -> Result {
-        let mac = DB.currentMac
-        let logs = DB.readLogs(mac).prefix(n)
-        return Result(title: "「\(mac.prefix(6))」最近 \(n) 条日志",
-                      lines: logs.map { String($0.lockTimeStr.prefix(16)) + " " + $0.typeName })
-    }
-    static func byType(_ types: [Int]) -> Result {
-        let mac = DB.currentMac
-        let names = Set(types.map { StatusParser.logTypes[$0] ?? "未知(\($0))" })
-        let logs = DB.readLogs(mac).filter { names.contains($0.typeName) }
-        return Result(title: "按类型: " + types.map { String($0) }.joined(separator: "/"),
-                      lines: logs.prefix(30).map { String($0.lockTimeStr.prefix(16)) + " " + $0.typeName })
-    }
-    static func memberUsage() -> Result {
-        let l = DB.ledger(DB.currentMac)
-        let rows = DB.members().map { m in
-            let p = l.pwds.filter { $0.owner == m.id }.count
-            let f = l.fps.filter { $0.owner == m.id }.count
-            return "\(m.name): 密码 \(p) · 指纹 \(f)"
-        }
-        return Result(title: "成员凭证用量 (当前锁)", lines: rows)
-    }
-    static func recentFails() -> Result {
-        let ev = DB.failEvents(DB.currentMac).prefix(10)
-        return Result(title: "最近开锁失败", lines: ev.map {
-            Date(timeIntervalSince1970: $0.ts).formatted(.dateTime.month().day().hour().minute()) + " " + $0.msg
-        })
-    }
-}
-
-// ---------- 740 原始报文查看 (hex dump, 常开入口; Debug 友好) ----------
-enum HexDump {
-    static func dump(_ hex: String, lineLen: Int = 32) -> String {
-        var out: [String] = []
-        let s = String(hex.uppercased()).filter { $0.isLetter || $0.isNumber }
-        var i = 0
-        while i < s.count {
-            let start = s.index(s.startIndex, offsetBy: i)
-            let n = min(lineLen, s.distance(from: start, to: s.endIndex))
-            out.append(String(format: "%08d", i) + "  " + String(s[start..<s.index(start, offsetBy: n)]))
-            i += lineLen
-        }
-        return out.isEmpty ? "(无数据)" : out.joined(separator: "\n")
-    }
-}
-
-// ---------- 740 字段解析表: 帧 KLV → 字段名 (名源单一 = 754 协议字段字典) ----------
-enum FrameFields {
-    static func name(cmd: UInt8, key: Int) -> String {
-        let k = cmd == 0x16 ? String(format: "16#%02X", key) : String(format: "#%02X", key)
-        return ProtocolDict.statusFields.first { $0.k == k }?.name ?? String(format: "KLV %02X", key)
-    }
-    static func parse(_ hex: String) -> (header: Int, cmd: UInt8, rows: [(String, String)]) {
-        let f = ZKProtocol.parseResponse(hex)
-        guard f.ok else { return (0, 0, []) }
-        return (f.header, f.cmd, f.klvs.map { (name(cmd: f.cmd, key: $0.key), $0.val) })
     }
 }
 
@@ -1532,8 +705,3 @@ enum SelfCheck {
     }
 }
 
-/// 1170 同步读取通知授权状态的载体。
-/// 只写一次 (写完即 signal), 故 @unchecked Sendable 安全 —— 不做跨线程读写交错。
-private final class NotifyAuthBox: @unchecked Sendable {
-    var status: UNAuthorizationStatus = .notDetermined
-}

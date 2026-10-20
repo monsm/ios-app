@@ -316,28 +316,6 @@ enum BackupStudio {
             task.setTaskCompleted(success: success)
         }
     }
-    static func registerChargeBackup() {
-        // 2026-10-13 run 63: 原写 `BGTaskScheduler.shared.supports([BGTaskType.appRefresh])` + 把
-        // launchHandler 当 submit 的尾随闭包 —— 两处都不是真 API (`BGTaskScheduler` 无 supports,
-        // 无 BGTaskType, submit 也不收尾随闭包) ⇒ 一次报 3 条。真 API 是:
-        //   register(forTaskWithIdentifier:using:launchHandler:) 注册处理块;
-        //   submit(_:) 单独排期。
-        // 2026-10-14: 启动时**无条件**调用本函数 —— 注册必须在启动窗口内完成 (晚于 didFinishLaunching
-        // 会抛 NSInternalInconsistencyException 崩进程); 开关只闸住末尾的排期。
-        // 设置里改开关只调 rescheduleChargeBackup(), 不再走这里 (那条路是"启动之后才 register"的崩因)。
-        guard !registeredLock.withLock({ $0 }) else { if DB.store.getBool("kf_bk_bgtask") { rescheduleChargeBackup() }; return }
-        registeredLock.withLock { $0 = true }
-        BGTaskScheduler.shared.register(forTaskWithIdentifier: chargeBackupTaskId, using: nil) { task in
-            // 2026-10-14: 旧实现 expirationHandler 与工作体都会 setTaskCompleted —— 对同一 BGTask
-            // 二次完成抛 NSInternalInconsistencyException。改用单次完成闸。
-            let once = CompletionOnce()
-            task.expirationHandler = { once.finish(task, success: false) }
-            let ok = makeRollbackPoint()
-            if ok { MaintenanceLog.record("充电备份快照") }   // 387: 记账才能进设备页"上次会话本机完成 N 项维护"回执
-            once.finish(task, success: ok)   // 成败如实上报, 不再无条件记成功
-        }
-        if DB.store.getBool("kf_bk_bgtask") { rescheduleChargeBackup() }
-    }
     /// 排期: 由系统择机执行 (接电+闲置), 最早 6 小时后。
     /// 2026-10-14: 排期失败原先 `try?` 静默吞掉, 而 UI 文案却称"已交给系统" —— 改为记维护回执。
     static func rescheduleChargeBackup() {

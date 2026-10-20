@@ -18,15 +18,12 @@ struct SettingsView: View {
     @State private var showManage = false
     /// 2026-10-17 安卓版: 把当前锁的开锁凭证渲染成二维码 (扫码导入, 之后不再需要)
     @State private var shareLock: Keychain?
-    @State private var showManual = false
-    @State private var showDiag = false   // 587: 记录详情低电告警带 mac 过来 → 切锁并推诊断页
     @State private var showCare = false   // 1013: 保养到期通知带 mac 过来 → 切锁并推维护页 (与 587 同构)
     // 2026-10-15 走查: 两枚"目标页自带 NavigationStack"的入口改用 sheet 呈现 (见 memberFamilyRows 注释)
     @State private var showUnclaimed = false
     @State private var showFamilySettings = false
     // 2026-10-15 走查: 这两个目标页也自带 NavigationStack, 同样只能走 sheet
     @State private var showSecurity = false
-    @State private var showHouseCleaning = false
     // 包14: 27 设置内搜索 — 顶部搜索框过滤全部设置项
     @State private var query = ""
     // 乱源治理第 4 批: 五组筛选的当前组。nil = 全部 (默认态与分组之前完全一样)。
@@ -45,29 +42,6 @@ struct SettingsView: View {
     /// "已看过"的落库放在 destination 的 .onAppear: 写在 ViewBuilder 里等于在构造视图时改数据,
     /// 视图被重建/预取时会反复触发, 而且 body 有副作用本来就是 SwiftUI 明确要避免的。
     @ViewBuilder
-    func newBadgeRow(_ title: String, _ feature: String, @ViewBuilder dest: () -> some View) -> some View {
-        NavigationLink {
-            dest()
-                .onAppear { DB.store.set("kf_seen_" + feature, true) }
-        } label: {
-            HStack(spacing: DS.Space.xs) {
-                Label(title, systemImage: "sparkles")
-                if !DB.store.getBool("kf_seen_" + feature) {
-                    Text("NEW")
-                        .vkFont(.caption2, weight: .medium)
-                        .foregroundStyle(DS.Palette.onAccent)
-                        .padding(.horizontal, DS.Space.xs)
-                        .padding(.vertical, DS.Space.xxs)
-                        .variantPlate(DS.Palette.accent, .capsule)
-                        .accessibilityLabel("新功能")
-                }
-            }
-        }
-        // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 16.6pt (< 44)。
-        // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
-        .frame(minHeight: DS.Hit.min)
-        .contentShape(Rectangle())
-    }
 
     var body: some View { vkBody.destined(.settings) }
     var vkBody: some View {
@@ -103,14 +77,11 @@ struct SettingsView: View {
             if settingsSectionShown(groupFilter, .daily) { autoOpenSection.id(SettingsAnchor.autoOpen) }
             if settingsSectionShown(groupFilter, .keys) { familySection.id(SettingsAnchor.family) }
             if settingsSectionShown(groupFilter, .data) { toolsSection.id(SettingsAnchor.tools) }
-            if settingsSectionShown(groupFilter, .data) { drillSection.id(SettingsAnchor.drill) }
             if settingsSectionShown(groupFilter, .data) { applockSection.id(SettingsAnchor.applock) }
-            if settingsSectionShown(groupFilter, .look) { a11ySection.id(SettingsAnchor.a11y) }
             if settingsSectionShown(groupFilter, .look) { appearanceSection.id(SettingsAnchor.appearance) }
             if settingsSectionShown(groupFilter, .help) { memorySection.id(SettingsAnchor.memory) }
             if settingsSectionShown(groupFilter, .daily) { reminderSection.id(SettingsAnchor.reminder) }
             if settingsSectionShown(groupFilter, .daily) { alertToneSection.id(SettingsAnchor.alertTone) }
-            if settingsSectionShown(groupFilter, .help) { helpSection.id(SettingsAnchor.help) }
             if settingsSectionShown(groupFilter, .help) { aboutSection.id(SettingsAnchor.about) }
         }
         .navigationTitle("设置")
@@ -131,18 +102,6 @@ struct SettingsView: View {
         .sheet(isPresented: $showUnclaimed) { UnclaimedClaimView() }
         .sheet(isPresented: $showFamilySettings) { MemberFamilySettingsView() }
         .sheet(isPresented: $showSecurity, onDismiss: { landPendingFocus(app.pendingSettingsFocus) }) { SecurityCenterView() }
-        .sheet(isPresented: $showHouseCleaning) { HouseCleaningPresetView() }
-        .sheet(isPresented: $showManual) {
-            NavigationStack { ManualPage() }
-                .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { showManual = false } } }
-        }
-        // 587: 诊断页用 sheet 呈现 (设置栈里那行 NavigationLink 仍走 push, 两条入口同一个页面)。
-        // 为什么不用 navigationDestination(isPresented:): 全仓无先例, 而 sheet+NavigationStack 与
-        // showManual 那一段逐字同构 —— 无编译器的机器上, 复用已验证的写法是唯一稳的取向。
-        .sheet(isPresented: $showDiag) {
-            NavigationStack { DiagnosticsView() }
-                .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { showDiag = false } } }
-        }
         // 1013: 保养通知落点, 与 showDiag 逐字同构 (复用已验证的 sheet+NavigationStack 写法)
         .sheet(isPresented: $showCare) {
             NavigationStack { MaintenanceView() }
@@ -302,7 +261,6 @@ struct SettingsView: View {
             SearchHit(id: "s.logs", title: "诊断与运行日志", icon: "list.bullet.rectangle") { showDiag = true },
             SearchHit(id: "s.applock", title: "本机数据保护 (应用锁)", icon: "lock.shield", anchor: .applock),
             SearchHit(id: "s.appearance", title: "外观 (主题/品牌色/密度)", icon: "paintbrush", anchor: .appearance),
-            SearchHit(id: "s.achievements", title: "我的成就", icon: "rosette", anchor: .memory),
             SearchHit(id: "s.care", title: "关怀提醒与公告板", icon: "heart.text.square", anchor: .memory),
             SearchHit(id: "s.maintremind", title: "维护提醒", icon: "bell.badge", anchor: .reminder),
             SearchHit(id: "s.demo", title: "演练与演示 (演示模式/样例备份/七天样例)", icon: "theatermasks", anchor: .drill),
@@ -337,75 +295,7 @@ struct SettingsView: View {
         }
     }
 
-    // ---------- 包14 演练区 (836/837/844/845): 演示模式总开关 + 样例备份 + 演练入口 ----------
-    private var drillSection: some View {
-        Section {
-            VariantToggle("演示模式 (所有开锁走模拟, 不碰锁端)", isOn: Binding(
-                get: { DemoKit.isOn },
-                set: { on in
-                    DemoKit.setOn(on)
-                    app.loadDevices()
-                    app.showToast(on ? "演示模式已开 · demo_ 数据已铺底" : "已清除全部演示数据")
-                }))
-            NavigationLink { DemoLabsView() } label: {
-                Label("演练场: 样例备份/七天样例/锁死演练", systemImage: "testtube.2")   // 837/845/844 演练场
-            }
-            if DemoKit.drillBackupOn {
-                Button("首备演练完成, 转正式备份", role: .destructive) {   // 842 首备演练完成
-                    DemoKit.finishDrillBackup()
-                    app.showToast("备份已转正式")
-                }
-            }
-        } header: {
-            Text("演练与演示")
-        } footer: {
-            Text("演示数据全部带 demo_ 前缀 + 常驻横幅标识, 一键清除不影响真实台账; 演示模式不触碰 BLE 与协议。")
-        }
-    }
 
-    // ---------- 包14 帮助区 (835/514/240/300/664/813): 手册/FAQ/数据流向/致谢/文案体检/证书 ----------
-    private var helpSection: some View {
-        Section {
-            Button { showManual = true } label: { Label("使用手册与常见问题", systemImage: "book") }
-            // 上一行写着"与常见问题", 但 FAQPage 全仓没有入口 (零引用) → 承诺与实现不符, 这里补上真入口
-            NavigationLink { FAQPage() } label: { Label("常见问题", systemImage: "questionmark.circle") }   // 514 常见问题
-            // 831: 这一页是本轮新建的, 用 NEW 角标做首见提示 (进入一次即消)
-            newBadgeRow("按症状排查", "guide282") { SymptomGuideView() }   // 282 按症状排查
-            NavigationLink { DataFlowPage() } label: { Label("数据从哪来到哪去", systemImage: "arrow.right.circle") }   // 240 数据从哪来到哪去
-            NavigationLink { CreditsPage() } label: { Label("致谢与许可", systemImage: "hands.clap") }   // 300 致谢与许可
-            // 43/44 新变化与更新说明: 每条都带功能编号，构建时由 tools/changelogcheck.js 拿代码标注对拍，
-            // 对不上就判失败 —— 所以这一页不可能出现"说了没做"的功能。
-            NavigationLink { ChangelogView() } label: { Label("新变化", systemImage: "sparkles") }   // 43/44 新变化
-            NavigationLink { CopyCheckPage() } label: { Label("文案体检", systemImage: "text.badge.checkmark") }   // 664 文案体检
-            if DB.store.getBool("kf_onb_ceremony") {
-                NavigationLink { ButlerCertificateView() } label: {
-                    Label("我的就任证书", systemImage: "rosette")   // 813 我的就任证书
-                }
-            }
-            Button {
-                Onboarding.replayAll()
-                app.onboardingFinished = false
-                app.showToast("下次冷启动重新走引导, 或现在就看")
-            } label: {
-                HStack(spacing: DS.Space.s) {
-                    Text("重看新手引导")   // 805 重看新手引导
-                    Spacer(minLength: DS.Space.s)
-                    // 805 已完成度: 与证书页同一份 finishedSteps, 不另记账
-                    Text("已完成 \(Onboarding.finishedSteps.count)/\(Onboarding.Step.allCases.count) 步")
-                        .vkFont(.caption)
-                        .foregroundStyle(DS.Palette.textSub)
-                }
-            }
-            // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 16.5pt (< 44)。
-            // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
-            .frame(minHeight: DS.Hit.min)
-            .contentShape(Rectangle())
-        } header: {
-            Text("帮助与关于")
-        } footer: {
-            Text("全部本地内容, 无在线客服; 手册章节随引导进度标记未读。")
-        }
-    }
 
     // ---------- 门锁 ----------
     // ---------- 设备管理 (104 分组 / 107 批量 / 766 排序置顶 / 767 分组场景) ----------
@@ -449,25 +339,7 @@ struct SettingsView: View {
                                 message: "添加后这一段才会出现锁档案、静音、校时与删除等设置。三步走: 连锁 → 录凭证 → 开门。",
                                 step: 1, stepTotal: 3,
                                 primaryTitle: "添加设备",
-                                primary: { showAdd = true },
-                                secondaryTitle: "重看新手引导",
-                                secondary: {
-                                    Onboarding.replayAll()
-                                    app.onboardingFinished = false
-                                    app.showToast("下次冷启动重新走引导")
-                                },
-                                demoAction: {
-                                    DemoKit.setOn(true)
-                                    app.loadDevices()
-                                    app.requestRoute(.device)
-                                    // 收摊口径：SettingsView 有两种呈现 —— ① Tab 3 的根 (LockKeeperApp:1081)，
-                                    // 这一句是真跳转，**不该**收摊；② 设备页 `.sheet { SettingsView() }`
-                                    // (DeviceHomeView:197)，用户本来就在设备页 ⇒ 切 0 是空转、缺的正是 dismiss()。
-                                    // 补一句 dismiss() 会同时作用在两种呈现上，而"dismiss() 在自带 NavigationStack 的
-                                    // Tab 根上会不会 pop 栈/退到别处"本机判不了 ⇒ 不猜，挂真机卡 (交接书 §7.9 卡 10)。
-                                    // 判它的尺子是常驻闸门 tools/sheetcover.js（行 LII 那条一次性尺子的落盘版）。
-                                    app.showToast("演示锁已就位: 在设备页点圆盘走一遍, 顶部横幅可一键清除")
-                                })
+                                primary: { showAdd = true })
                     .listRowInsets(EdgeInsets())
             } else {
                 NavigationLink("锁档案 (昵称/符号/色标/备注)") { LockProfileView() }
@@ -737,7 +609,6 @@ struct SettingsView: View {
         // 没有自带栈, 仍走 push, 不动。
         Button { showUnclaimed = true } label: { Label("未归属记录认领", systemImage: "questionmark.circle") }   // 791 未归属记录认领
         NavigationLink { MemberStackedView() } label: { Label("成员活跃结构", systemImage: "chart.bar.fill") }   // 798/792 成员活跃结构
-        Button { showHouseCleaning = true } label: { Label("家政周期预设", systemImage: "broom.fill") }   // 483 家政周期预设
         Button { showFamilySettings = true } label: { Label("家庭设置：长辈模式/隐私浏览", systemImage: "hand.raised.fill") }   // 479/794 家庭设置
         Button { showKeychainHW = true } label: { Label("蓝牙钥匙串", systemImage: "key.horizontal") }
         // 2026-10-14 走查: 「添加另一把锁」原先挂在本节末尾 —— 它讲的是"再加一把锁", 属于门锁本身,
@@ -786,29 +657,9 @@ struct SettingsView: View {
             Button { showBackup = true } label: { Label("备份与恢复", systemImage: "externaldrive") }
             // 动态消息只走 sheet: MessagesView 自带 NavigationStack, 用 NavigationLink 会嵌套两层导航栏
             Button { showMessages = true } label: { Label("动态消息", systemImage: "bell") }
-            NavigationLink("诊断与运行日志") { DiagnosticsView() }
-            // 包17: 系统集成 (快捷指令/深链/NFC 登记/Watch 路线图)
-            NavigationLink { IntegrationCenterView() } label: {
-                Label("系统集成 (快捷指令/入口)", systemImage: "point.3.forward")
-            }
         }
     }
 
-    // ---------- 包15 无障碍与操作辅助 (设置-辅助功能入口) ----------
-    private var a11ySection: some View {
-        Section {
-            NavigationLink { AccessibilityView() } label: {
-                Label("辅助功能 (VoiceOver/视觉/运动/输入/听觉)", systemImage: "accessibility")
-            }
-        } header: {
-            Text("无障碍")
-        } footer: {
-            Text("圆盘转子调节、字号五档、切换控制扫描、键盘快捷键、练习场与对比度计算器集中在辅助功能页。")
-                .vkFont(.caption)
-                .foregroundStyle(DS.Palette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
 
     // ---------- 本机数据保护 ----------
     private var applockSection: some View {
@@ -890,48 +741,6 @@ struct SettingsView: View {
                 }
             }
             .pickerStyle(.menu)
-            // 圆角档位 (900): 只动卡片/控件/格子三档，胶囊不参与
-            Picker("圆角", selection: Binding(
-                get: { DB.store.getString("kf_radius") },
-                set: { app.setRadius($0) })) {
-                Text("标准").tag("")
-                Text("偏硬朗 (小)").tag("soft")
-                Text("偏柔和 (大)").tag("plump")
-            }
-            .pickerStyle(.menu)
-            // Hero 卡纹理 (889): 纯矢量三层之一，默认"无纹理"= 与旧版一致
-            Picker("主控卡纹理", selection: Binding(
-                get: { DS.Metric.heroTexture },
-                set: { app.setHeroTexture($0) })) {
-                Text("无").tag("")
-                Text("细网格").tag("grid")
-                Text("微噪点").tag("grain")
-            }
-            .pickerStyle(.menu)
-            note("只换主控卡的底纹，不影响内容与读数。")
-            // 动效档位 (899): 管的是全 App 动效令牌，不是"只换 Tab 那一下" —— 文案照实写
-            Picker("动效强度", selection: Binding(
-                get: { DB.store.getString("kf_motion").isEmpty ? "standard" : DB.store.getString("kf_motion") },
-                set: { app.setMotionTier($0) })) {
-                Text("克制").tag("calm")
-                Text("标准").tag("standard")
-                Text("活泼").tag("lively")
-            }
-            .pickerStyle(.menu)
-            if AXFlags.reduceMotion {
-                Text("系统「减弱动态效果」已开启，当前强制走克制档，上面的选择暂不生效。")
-                    .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            // 节日限定色 (890): 默认关。给用户的既有界面换色属于"打扰"，必须显式开。
-            // 只在 671 表里的法定假日当天生效；补班日不染色 (那是要上班的日子)；表外节日一律不猜色。
-            VariantToggle("法定节假日染主控卡", isOn: Binding(
-                get: { DB.store.getBool("kf_festive") },
-                set: { app.setFestive($0) }))
-            // 启动一句话 (898): 按当天定值的一句本地短语，晚归语与节气排在它前面
-            VariantToggle("主控卡每日一句话", isOn: Binding(
-                get: { DB.store.getBool("kf_launch_line", true) },
-                set: { app.setLaunchLine($0) }))
             // 高对比皮肤 (893): App 内这一档，不必为一只 App 去改整机设置。
             // getter 只读**本机偏好** kf_hc —— 读 DS.Appearance.highContrast (系统∪本机) 的话，
             // 系统那边开着而本机没开时这个开关会"关不下去"，看着像坏了。
@@ -949,45 +758,6 @@ struct SettingsView: View {
                 Text("周六").tag("sat")
             }
             .pickerStyle(.menu)
-            // 布局密度 (包16): 只缩放间距令牌, 字号与触达不动
-            Picker("布局密度", selection: Binding(
-                get: { DB.store.getString("kf_density") },
-                set: { app.setDensity($0) })) {
-                Text("标准").tag("")
-                Text("紧凑").tag("compact")
-                Text("宽松").tag("relaxed")
-            }
-            .pickerStyle(.menu)
-            note("只改间距，字号与按钮大小不变。")
-            // 凭证行高 (901): 两档 = 紧凑(隐藏副行, 只留名称与状态) / 舒适(加高, 带副行)。
-            // 只加行最小高度，不动字号 —— 压矮会裁多行备注，那不是紧凑
-            Picker("凭证行高", selection: Binding(
-                get: { DB.store.getString("kf_row_h") },
-                set: { app.setRowHeight($0) })) {
-                Text("紧凑 (只留名称与状态)").tag("")
-                Text("舒适 (加高)")   .tag("tall")
-            }
-            .pickerStyle(.menu)
-            // 时间线行距 (907): 叠在上面的布局密度之上，两档体系是相乘不是各写一套
-            Picker("时间线行距", selection: Binding(
-                get: { DB.store.getString("kf_tl_gap") },
-                set: { app.setTimelineGap($0) })) {
-                Text("紧凑").tag("tight")
-                Text("标准").tag("")
-                Text("宽松").tag("loose")
-            }
-            .pickerStyle(.menu)
-            // 902 数字字体两档: 单一令牌 DS.Metric.digitDesign, 落点只有主控卡读数与指标块两处。
-            // 标签写明射程 —— 全仓 58 处散点读数不跟着换 (§84 撤掉的就是那种"总闸"假象),
-            // 这里切的正是 902 原句"Hero 卡电量数字圆体/默认体可选"的那两处。
-            Picker("主控读数数字字体", selection: Binding(   // 902 主控读数数字字体
-                get: { DB.store.getString("kf_digit_font") },
-                set: { app.setUnlockOption("kf_digit_font", $0) })) {
-                Text("圆体 (默认)").tag("")
-                Text("系统默认体").tag("plain")
-            }
-            .pickerStyle(.menu)
-            note("只换主控卡上电量那几个数字的字体。")
             // Hero 参考指标位 (909): 电量刻意不给开关 (它决定还能不能开锁)
             VariantToggle("主控卡显示固件位", isOn: Binding(
                 get: { DS.HeroStats.shows("firmware") },
@@ -1011,43 +781,6 @@ struct SettingsView: View {
             }
             .pickerStyle(.menu)
             iconPickerRow
-            // 897 四季图标自动对齐: 默认关。桌面图标是用户首屏上看得见的东西，悄悄换属于越界。
-            VariantToggle("回前台时按当季对齐图标", isOn: Binding(
-                get: { SeasonIcon.autoOn },
-                set: { v in
-                    SeasonIcon.setAuto(v)
-                    if v { SeasonIcon.syncIfNeeded() } else { DB.store.remove(SeasonIcon.lastKey) }
-                    app.showToast(v ? "只在季节真的换了时对齐一次；不想用就关掉"
-                                      : "已关掉自动对齐，手动选的图标不受影响")
-                }))
-            Text("春夏秋冬分别用现有的四款图标（春绿环 / 夏主图标 / 秋琥珀钥匙 / 冬石墨盾）。只在你选过这四款之一时对齐；手动选别的图标不会被覆盖。")
-                .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
-            // 892 自定义强调色 (ColorPicker 管线)。存的是"色相来源"，上屏的每一档都要过亮度带，
-            // 所以选到近白/近黄这类压不住白字的颜色时，主卡不会变白糊一片 —— 是被压暗后的同色系。
-            ColorPicker("自定义强调色 (会盖过上面六套)",
-                        selection: Binding(
-                            get: { Color(hex: DS.CustomAccent.rgb == 0 ? 0x4F46E5 : DS.CustomAccent.rgb) },
-                            set: { c in
-                                let hex = DS.CustomAccent.rgb(from: c)
-                                app.setCustomAccent(hex)
-                            }),
-                        supportsOpacity: false)
-            if DS.CustomAccent.isActive {
-                Button("取消自定义，回到六套预设") { app.setCustomAccent(0) }
-                    .vkFont(.footnote).foregroundStyle(DS.Palette.accentText)
-                Text("自定义色只影响强调色、主控卡与按钮渐变；文字与语义色仍走系统令牌。选到很亮的颜色时会被压暗到能看清白字的范围，观感接近同色系的深色版。")
-                    .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            // 895 "儿童友好"预设：不叫"儿童模式"——本 App 没有内容分级，名字暗示过滤就是虚假承诺
-            Button("套用儿童友好外观预设") { app.applyFriendlyPreset() }   // 895 套用儿童友好外观预设
-                .vkFont(.callout)
-                .foregroundStyle(DS.Palette.accentText)
-            Text("一次把品牌色、圆角、密度、凭证行高、动效与纹理推到「看得清、点得准、不闹」的组合；"
-                 + "只改外观，不过滤内容，任何一档之后都能单独改回。")
-                .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
             // 记录页开场过滤策略 (908): 盖在 192"按锁记住上次过滤"之上的一层开场规则。
             // 措辞刻意避开"清除/删除"—— 三种策略都**不删**已存的会话过滤，只是决定进页面时从哪开始。
             Picker("记录页开场过滤", selection: Binding(
@@ -1223,7 +956,6 @@ struct SettingsView: View {
     // ---------- 纪念与成就 (包18) ----------
     private var memorySection: some View {
         Section {
-            NavigationLink { AchievementsView() } label: { Label("我的成就", systemImage: "rosette") }
             NavigationLink { CareRemindersView() } label: { Label("关怀提醒与公告板", systemImage: "heart.text.square") }
         } header: {
             Text("纪念与成就")

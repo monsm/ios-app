@@ -324,12 +324,6 @@ final class BLEService: NSObject, ObservableObject, @unchecked Sendable {
 
     // ---------- 写 (20B 分片, 与 JS writeFrame 一致) ----------
     func writeFrameHex(_ hex: String) async throws {
-        // 演示模式红线收口: 此前 DemoKit.isOn 只在 UI 的个别入口判 (Services 层零引用),
-        // 导致录密码/录指纹/DFU/钥匙串写删/网关写 WiFi 都能在演示态真发到设备。
-        // 写入是唯一会改锁端状态的操作 —— 在这一处拦死即覆盖全部命令面。
-        guard !DemoKit.isOn else {
-            throw BLEErrorX.msg("演示模式禁止下发真实命令 (demo 数据不落锁)")
-        }
         guard let device, let ch = writeChar else { throw BLEErrorX.code(.parseFail) }
         let bytes = HexKit.bytes(hex)
         var i = 0

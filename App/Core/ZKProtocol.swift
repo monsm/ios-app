@@ -201,7 +201,6 @@ enum ZKProtocol {
     // ---------- 粘包/多帧重组 (JS services/ble.js makeAssembler 逐行移植) ----------
     final class FrameAssembler {
         private var buf = ""
-        var pendingBytes: Int { buf.count / 2 }
         func reset() { buf = "" }
         func push(_ chunkHex: String) -> [ParsedFrame] {
             buf += chunkHex

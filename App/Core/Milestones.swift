@@ -196,16 +196,6 @@ enum Milestones {
         return nil
     }
     @discardableResult
-    static func repairDay(_ k: String) -> Bool {
-        guard k == repairableDay else { return false }
-        var m = nightMarks()
-        m[k] = "repair"
-        DB.store.setCodable("kf_night_marks", m)
-        var r = DB.store.get([String: Int].self, "kf_night_repairs") ?? [:]
-        r[monthKey(), default: 0] += 1
-        DB.store.setCodable("kf_night_repairs", r)
-        return true
-    }
 
     // ---------- 982/992/1005/1006 开锁计数 (App 侧成功次数, 不受锁端日志条数上限约束) ----------
     struct UnlockCrossing { var first = false; var at100 = false; var at1000 = false }
@@ -347,22 +337,6 @@ enum Milestones {
     // ---------- 1043 时光胶囊 ----------
     struct Capsule: Codable { var text: String; var at: Double; var openOn: String }
     static func capsule() -> Capsule? { DB.store.get(Capsule.self, "kf_capsule") }
-    static func saveCapsule(_ text: String) {
-        // 开启日 = 下一个结缘日 (无结缘日则写作一年后)
-        let cal = WeekCal.gregorian
-        let b = bondDay
-        let now = Date()
-        var openOn = dayKey(cal.date(byAdding: .year, value: 1, to: now)!)
-        if b.count == 10 {
-            // 开启日 = 下一个结缘日 (今天恰是结缘日则落到明年, 避免当天写当天开)
-            let md = String(b.suffix(5))
-            let y = cal.component(.year, from: now)
-            var candidate = "\(y)-\(md)"
-            if candidate <= dayKey(now) { candidate = "\(y + 1)-\(md)" }
-            openOn = candidate
-        }
-        DB.store.setCodable("kf_capsule", Capsule(text: text, at: now.timeIntervalSince1970 * 1000, openOn: openOn))
-    }
     static func capsuleIsOpen(_ c: Capsule) -> Bool { dayKey() >= c.openOn }
 
     // ---------- 1044 家庭公告板 ----------
@@ -476,14 +450,6 @@ enum Milestones {
     static func unlockedMap() -> [String: Double] {
         DB.store.get([String: Double].self, "kf_ach_done") ?? [:]
     }
-    /// 点亮时刻 (毫秒 epoch → Date)。kf_ach_done 存的是 `Date().timeIntervalSince1970 * 1000` 的**毫秒**,
-    /// 而 UI (BadgeTile/BadgeDetailSheet) 要的是 `Date?` —— 2026-10-13 run 57: 两处直接把
-    /// `unlocked[b.id]` (Double?) 当 Date? 传, 报 "cannot convert value of type 'Double?' to expected
-    /// argument type 'Date?'"。转换只此一处, 与 latestUnlocked 里的 ts/1000 同口径 (不再各写各的)。
-    static func unlockedDate(_ id: String) -> Date? {
-        guard let ts = unlockedMap()[id] else { return nil }
-        return Date(timeIntervalSince1970: ts / 1000)
-    }
     /// 988 陈列架: 最近点亮的 n 枚
     static func latestUnlocked(_ n: Int) -> [(badge: Badge, at: Date)] {
         unlockedMap()
@@ -517,11 +483,6 @@ enum Milestones {
             let fps = DB.listFps(kc.mac)
             if pwds.contains(where: { !($0.owner ?? "").isEmpty }) || fps.contains(where: { !($0.owner ?? "").isEmpty }) {
                 s.ownedCred = true
-            }
-            // 演示锁的凭证也带 owner (DemoKit 里那个 owner 字段), 但"新成员入伙"不该被一次演示点亮 ⇒ 这一格排除演示锁。
-            // 注意 `ownedCred`(上面那枚"指归属"徽章) 没排除演示 —— 那是另一件事, 本轮不动它的口径。
-            if kc.mac != DemoKit.demoMac {
-                for o in pwds.compactMap(\.owner) + fps.compactMap(\.owner) where !o.isEmpty { ownersWithCred.insert(o) }
             }
             // lockTime == 0 = 锁端时钟没读到/无时钟型号的占位值, 换算后落在协议纪元 (2010-01-01 00:00),
             // 其"小时"必然 < 6 → 会凭空点亮夜猫子徽章并计入最差的月份桶。必须排除。
@@ -599,66 +560,13 @@ enum Milestones {
         return fresh
     }
 
-    // ---------- 996 收集音效 (系统短音, 零资源) ----------
-    static func playCollectSound() {
-        // 996/848: 音色与开锁成功短音同源, 调用点收敛到 App/Core/AlertTone.swift (全 App 只那一处裸调)
-        AlertTone.achievement()
-    }
 
-    // ---------- 986 成就本地通知 ----------
-    static func notifyAchievement(_ b: Badge) async {
-        let c = UNMutableNotificationContent()
-        c.title = "徽章点亮"
-        c.body = "\(b.title) — \(b.detail)"
-        c.sound = .default
-        let req = UNNotificationRequest(identifier: "m18.ach." + b.id, content: c, trigger: nil)
-        try? await UNUserNotificationCenter.current().add(req)
-    }
 
     // ---------- 1042 季度速览 ----------
     struct QuarterSummary {
         var unlocks = 0
         var topMember = ""
         var newCreds = 0
-    }
-    static func quarterSummary() -> QuarterSummary {
-        var out = QuarterSummary()
-        let cal = WeekCal.gregorian
-        let q = cal.component(.quarter, from: Date())
-        let y = cal.component(.year, from: Date())
-        var whoCount: [String: Int] = [:]
-        for kc in DB.keychains() {
-            let pwds = DB.listPwds(kc.mac)
-            let fps = DB.listFps(kc.mac)
-            out.newCreds += pwds.filter {
-                cal.component(.quarter, from: Date(timeIntervalSince1970: $0.at / 1000)) == q &&
-                cal.component(.year, from: Date(timeIntervalSince1970: $0.at / 1000)) == y
-            }.count
-            out.newCreds += fps.filter {
-                cal.component(.quarter, from: Date(timeIntervalSince1970: $0.at / 1000)) == q &&
-                cal.component(.year, from: Date(timeIntervalSince1970: $0.at / 1000)) == y
-            }.count
-            let rows = Attribution.classify(
-                logs: DB.readLogs(kc.mac).map {
-                    LogEntry(type: $0.type, typeName: $0.typeName, idx: $0.idxRaw, idxRaw: $0.idxRaw,
-                             lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr, body: "")
-                },
-                pwds: pwds, fps: fps, status: nil)
-            for (i, l) in DB.readLogs(kc.mac).enumerated() {
-                guard i < rows.count else { continue }
-                let d = Date(timeIntervalSince1970: ZKProtocol.protoSecondsToUnix(l.lockTime))
-                guard cal.component(.quarter, from: d) == q,
-                      cal.component(.year, from: d) == y else { continue }
-                if let who = rows[i].who {
-                    whoCount[who, default: 0] += 1
-                    out.unlocks += 1
-                }
-            }
-        }
-        if let top = whoCount.max(by: { $0.value < $1.value }), let m = DB.member(top.key) {
-            out.topMember = m.name
-        }
-        return out
     }
 }
 

@@ -14,28 +14,15 @@ struct BackupView: View {
     /// 而本页与工坊 (`WebDAVStudioView`，经 NavigationLink/sheet 打开) 写的是同一对键 ——
     /// 在工坊里改完账号回到本页再关掉，`onDisappear` 就把**进页时那份旧快照**写回去，
     /// 刚改的凭据被静默覆盖 (第一百六十六批 §10.38)。读写穿透后没有"旧快照"这个东西。
-    private var cloudAcct: String { DB.store.getString("kf_cloudcfg_acct") }
-    private var cloudApp: String { DB.store.getString("kf_cloudcfg_app") }
     /// 加密口令**不入库**，所以它仍是 `@State`（每次输入、用完即弃）。
-    @State private var cloudPw = ""
     /// 输入框直写本机存储：与工坊那页共用一份真相，谁改完另一页立刻读到新值。
-    private var cloudAcctField: Binding<String> {
-        Binding(get: { cloudAcct }, set: { DB.store.set("kf_cloudcfg_acct", $0) })
-    }
-    private var cloudAppField: Binding<String> {
-        Binding(get: { cloudApp }, set: { DB.store.set("kf_cloudcfg_app", $0) })
-    }
     @State private var busy = false
     /// 云端已下载但尚未经用户确认的备份包 (nil = 无待确认的恢复)
-    @State private var pendingRestore: BackupBundle?
 
     // 2026-10-15 走查·CI 补刀: 上一批改这一行时把 `showStudio` **改名成了** `showWebDAV`，
     // 而 `$showStudio`(:64) 与 `showStudio = true`(:303) 两处用法都还在 ⇒ 编译报 cannot find 'showStudio'（run 99）。
     // 两个 sheet 各自一枚状态，顺带把这批遗留的 8 空格缩进收齐。
     @State private var showStudio = false      // 备份工作室（自带 NavigationStack ⇒ 只能 sheet，不能 push）
-    @State private var showWebDAV = false      // WebDAV 策略页，同上
-
-private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloudPw.isEmpty }
 
     /// 内容是否已经嵌在外部导航容器里。2026-10-15 走查 §7.4-16: 这一页**自带 NavigationStack**,
     /// 有两个呈现点 —— 设置页的 sheet (要自己那层栏) 和设备页快捷格的 `quickDestination` push
@@ -47,7 +34,6 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
         List {
             exportSection
             importSection
-            cloudSection
             studioSection
         }
         .navigationTitle("备份与恢复")
@@ -67,7 +53,6 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
             Text("云端备份里包含 \(pendingRestore?.devices.count ?? 0) 台门锁。恢复后同名设备会被云端数据覆盖，本机现有改动将丢失。")
         }
         .sheet(isPresented: $showStudio) { BackupStudioView() }
-        .sheet(isPresented: $showWebDAV) { WebDAVStudioView() }
     }
 
     // pendingRestore != nil 即为"待确认", 确认/取消后都要清空以防重复触发
@@ -161,58 +146,8 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
         }
     }
 
-    // ---------- 坚果云同步 ----------
-    private var cloudSection: some View {
-        Section("坚果云同步") {
-            // 816 引导空态: 没配账号时先说"配了多什么"，再给**直达填写的入口**。
-            // 三行只写这里真做得到的小事: 手动上传/手动恢复/先本机加密 —— 不写"自动同步"这种没实现的能力。
-            // 原句要的"填服务器地址"确实在另一页 (WebDAVStudioView 改根路径)，所以这里给链接而不是假装一个输入框。
-            if cloudAcct.isEmpty {
-                VStack(alignment: .leading, spacing: DS.Space.xs) {
-                    Label("换手机或锁被重置时，云端那份是唯一的退路", systemImage: "arrow.left.arrow.right.circle")
-                    Label("文件先在本机加密，服务器只拿到密文", systemImage: "lock.rectangle.stack")
-                    Label("不配也能用：本页的文本导出与本地导入是完整可用的", systemImage: "square.and.arrow.down")
-                    // 2026-10-15 走查: WebDAVStudioView 自带 NavigationStack, 而本页是 sheet ——
-                    // push 进去就是内层栈套外层 (两层导航栏)。本页已有 `showStudio` 走 sheet 的先例,
-                    // 这一条照同款改。
-                    Button { showWebDAV = true } label: {
-                        Text("服务器根路径默认内置坚果云，点这里可改")   // 816 服务器根路径默认内置
-                            .vkFont(.caption2, weight: .medium)
-                            .foregroundStyle(DS.Palette.accentText)
-                    }
-                    .frame(minHeight: DS.Hit.min)
-                }
-                .vkFont(.caption)
-                .foregroundStyle(DS.Palette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
-                .accessibilityElement(children: .contain)
-            }
-            TextField("坚果云账号", text: cloudAcctField)
-                .keyboardType(.emailAddress)
-                .textContentType(.username)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .disabled(busy)
-            SecureField("应用专属密码 (非登录密码)", text: cloudAppField)
-                .disabled(busy)
-            SecureField("加密口令 (不落盘)", text: $cloudPw)
-                .disabled(busy)
-            BusyButton(title: "上传备份到坚果云", systemImage: "icloud.and.arrow.up", isBusy: busy && cloudMode == .push) {
-                Task { await push() }
-            }
-            .disabled(!cloudReady)
-            BusyButton(title: "从坚果云恢复", systemImage: "icloud.and.arrow.down", isBusy: busy && cloudMode == .pull) {
-                Task { await pull() }
-            }
-            .disabled(!cloudReady)
-            Text("账号与应用密码保存在本机 (可在坚果云网页撤销); 加密口令每次输入, 不落盘。")
-                .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
 
     private enum CloudMode { case push, pull }
-    @State private var cloudMode: CloudMode = .push
 
     // ---------- 本地导入 ----------
     private func confirmImport() {
@@ -259,49 +194,10 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
         DB.store.set("kf_migrate_pending", ISO8601DateFormatter().string(from: Date()))
     }
 
-    // ---------- 云端上传 ----------
-    private func push() async {
-        guard !busy else { return }
-        guard cloudReady else { app.showToast("请填写账号/应用密码/加密口令"); return }
-        busy = true
-        cloudMode = .push
-        defer { busy = false }
-        do {
-            let payload = BackupKit.collectAll()
-            guard let data = try? JSONEncoder().encode(payload),
-                  let text = String(data: data, encoding: .utf8), !text.isEmpty else {
-                throw NSError(domain: "backup", code: 1, userInfo: [NSLocalizedDescriptionKey: "备份编码失败, 已中止上传"])
-            }
-            let envelope = try CryptoBox.encryptText(text, password: cloudPw)
-            try await CloudSync.push(acct: cloudAcct, app: cloudApp, envelope: envelope)
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
-            Milestones.recordBackup()   // 980 备份卫士
-            app.evaluateAchievements()
-            app.showToast("上传成功")
-        } catch { app.showToast(error.localizedDescription) }
-    }
-
-    // ---------- 云端恢复: 先下载解密, 再让用户确认覆盖, 最后才写盘 ----------
-    private func pull() async {
-        guard !busy else { return }
-        guard cloudReady else { app.showToast("请填写账号/应用密码/加密口令"); return }
-        busy = true
-        cloudMode = .pull
-        defer { busy = false }
-        do {
-            guard let envelope = try await CloudSync.download(acct: cloudAcct, app: cloudApp) else {
-                app.showToast("云端暂无备份"); return
-            }
-            // 2026-10-14: 走 parsePreview —— 旧实现自己 decrypt+decode, 绕过了 453 内容哈希闸、
-            // schema 上界闸与 upgradeChain (本地粘贴与工作室 WebDAV 都过它)。云端包同样不可信。
-            let (_, bundle) = try BackupStudio.parsePreview(text: envelope, password: cloudPw)
-            // 不直接落盘: 交给 confirmationDialog, 用户确认后才覆盖本机
-            pendingRestore = bundle
-        } catch { app.showToast(error.localizedDescription) }
-    }
 
 
-    // ---------- 包8: 备份工作室入口 (导出向导/恢复/WebDAV策略/换机迁移) ----------
+
+    // ---------- 包8: 备份工作室入口 (导出向导/恢复) ----------
     private var studioSection: some View {
         Section("备份工作室") {
             Button {
@@ -313,7 +209,7 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .frame(minHeight: DS.Hit.min)
             }
-            Text("导出向导 · 恢复预演 · WebDAV 策略 · 换机迁移 · 完整性信任。")
+            Text("导出向导 · 恢复预演 · 完整性信任。")
                 .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -327,8 +223,6 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
         if bundle.globals?.appearance != nil { app.reloadAppearance() }   // 894 带外观段才刷, 免得白重建一次全树
         armMigrateWizard(r)
         UINotificationFeedbackGenerator().notificationOccurred(.success)
-        app.showToast("恢复完成: 新增 \(r.imported), 覆盖 \(r.overwritten)")
-        cloudPw = ""   // 口令用完即弃, 不留在内存里等下次
     }
 
     /// 822: 按节奏档 (weekly/monthly) 与上次备份时刻算建议; 仅手动档给 nil (没有节奏就没有到期)。

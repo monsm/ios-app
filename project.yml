@@ -120,29 +120,6 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         INFOPLIST_KEY_UIUserInterfaceStyle: Automatic
-  # 927 哑按钮小组件 (拍板 #30 选 B)。免费账号无 App Groups → 这个 target 读不到主 App 的任何数据
-  # (docs/CONSTRAINTS.md 的 ❌ 表)，因此它只能拉起 App，不显示锁状态/电量 (那属已判 ❌ 的 924)。
-  OfflineLockWidget:
-    type: app-extension
-    platform: iOS
-    sources:
-      - path: Widget
-      - path: Shared   # 77/939/941: 与主 App 共用同一份活动属性定义 (见上)
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.aapk.OfflineLock.widget
-        TARGETED_DEVICE_FAMILY: "1"
-    info:
-      path: Widget/Info.plist
-      properties:
-        CFBundleDisplayName: 离线锁管家
-        CFBundleShortVersionString: "1.0.0"
-        # 与主 App 同源: CI 注入编译号时**两份 Info.plist 一起改** —— Apple 要求
-        # app-extension 的 CFBundleVersion 与容器 App 一致, 只改一份会在安装时被拒,
-        # 报出来像签名问题, 实际是版本不匹配。
-        CFBundleVersion: "1"
-        NSExtension:
-          NSExtensionPointIdentifier: com.apple.widgetkit-extension
   OfflineLockTests:
     type: bundle.unit-test
     platform: iOS

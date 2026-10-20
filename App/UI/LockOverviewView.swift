@@ -13,7 +13,6 @@ struct LockOverviewView: View {
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
     @State private var usages: [LockUsage] = []
-    @State private var matrix: (members: [Member], counts: [[String: Int]]) = ([], [])
     @State private var loaded = false
     // 768/778: 待维护行与活跃度行都在本页本地 sheet 里弹单锁告警流 —— 不走跨 Tab 跳转,
     // 关掉 sheet 就回到总览, 不丢滚动位置也不挪当前锁。
@@ -45,7 +44,6 @@ struct LockOverviewView: View {
                         maintenanceCard.staggered(2)    // 768
                         activityCard.staggered(3)       // 776 + 778
                         signalCard.staggered(3)         // 71 列表信号预览 (包2)
-                        if !matrix.members.isEmpty { matrixCard.staggered(4) }   // 779
                         capacityCard.staggered(5)       // 773
                         firmwareCard.staggered(6)       // 784 + 769
                     }
@@ -57,7 +55,6 @@ struct LockOverviewView: View {
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
             .task {
                 usages = LockStats.usage()
-                matrix = LockStats.memberMatrix(usages)
                 loaded = true
             }
             .sheet(item: $alarmTarget) { t in
@@ -135,94 +132,6 @@ struct LockOverviewView: View {
         }
     }
 
-    // ---------- 776 活跃度条形榜 + 778 告警率对比列 ----------
-    private var activityCard: some View {
-        // 778 偏高上浮: 告警占比 ≥20% 的锁整体浮到榜顶 (层内仍按开门次数降序)。
-        // 上浮是可解释的固定规则, 不并进阈值染色 —— 颜色换档不该顺带挪位置。
-        let ranked = usages.sorted { a, b in
-            let ah = a.alarmRate >= Self.alarmHighCut, bh = b.alarmRate >= Self.alarmHighCut
-            if ah != bh { return ah }
-            if a.opens30d != b.opens30d { return a.opens30d > b.opens30d }
-            return a.name < b.name
-        }
-        let maxOpens = ranked.map { $0.opens30d }.max() ?? 0
-        return Card {
-            VStack(alignment: .leading, spacing: DS.Space.s) {
-                SectionTitle(text: "活跃度 (\(LockStats.windowDays) 天)", count: usages.count)
-                if maxOpens == 0 {
-                    Text("近 \(LockStats.windowDays) 天还没有开门记录, 连接门锁读取日志后出榜。")
-                        .vkFont(.footnote)
-                        .foregroundStyle(DS.Palette.textSub)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                ForEach(ranked) { u in
-                    let high = u.alarmRate >= Self.alarmHighCut
-                    Button {
-                        alarmTarget = AlarmTarget(mac: u.mac)   // 778: 下钻该锁告警流
-                    } label: {
-                        VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                            HStack(spacing: DS.Space.s) {
-                                VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                                    Text(u.name)
-                                        .vkFont(.caption)
-                                        .foregroundStyle(DS.Palette.text)
-                                        .lineLimit(1)
-                                        .minimumScaleFactor(0.8)
-                                    if high {
-                                        // 778 上浮不虚标: 浮到榜顶的行明写原因
-                                        Text("偏高")
-                                            .vkFont(.caption2, weight: .medium)
-                                            .foregroundStyle(DS.Palette.danger)
-                                    }
-                                }
-                                .frame(width: 88, alignment: .leading)
-                                // 776 水平条形: 次数**写在条外** (第八十四批改口径)。
-                                // 原来写在条内: 条宽 = geo.width × opens/maxOpens, 小值时条只有 1pt,
-                                // 数字实际落在 surfaceAlt 上而前景写的是 onAccent (浅档=纯白) ⇒ 白字压白卡;
-                                // 非榜首条的填充是 accentText@0.55, 合成底本身就浅, 白/墨两种前景都不合格。
-                                // 顺带一条: 次数原先在 .accessibilityHidden(true) 的容器里, VoiceOver 完全读不到。
-                                GeometryReader { geo in
-                                    ZStack(alignment: .leading) {
-                                        Capsule().fill(DS.Palette.surfaceAlt)
-                                        Capsule()
-                                            .fill(u.opens30d == maxOpens ? DS.Palette.accent : DS.Palette.accentText.opacity(0.55))
-                                            .frame(width: maxOpens > 0 ? geo.size.width * CGFloat(u.opens30d) / CGFloat(maxOpens) : 1)
-                                    }
-                                }
-                                .frame(height: 18)
-                                .accessibilityHidden(true)
-                                Text("\(u.opens30d)")
-                                    .vkFont(.caption2)
-                                    .monospacedDigit()
-                                    .foregroundStyle(DS.Palette.text)
-                                    .frame(width: 34, alignment: .trailing)
-                                    .accessibilityLabel("开门 \(u.opens30d) 次")
-                                // 778 告警率对比列
-                                // 2026-10-15 走查: 这张表是全量 map 出来的 (LockStats.usage), 从没同步过的锁
-                                // 也在行里, 它的 alarms30d 是**没人写过**的 0 —— 原先这一格把 0 念成"无告警"。
-                                // 本仓在图标行那条注释里已经定过口径: 要写"没有读数"而不是"没有告警"。
-                                Text(!u.logged ? "未读数" : (u.alarms30d == 0 ? "无告警" : String(format: "告警 %.0f%%", u.alarmRate * 100)))
-                                    .vkFont(.caption2)
-                                    .monospacedDigit()
-                                    .foregroundStyle((!u.logged || u.alarms30d == 0) ? DS.Palette.textSub : (high ? DS.Palette.danger : DS.Palette.warn))
-                                    .frame(width: 62, alignment: .trailing)
-                            }
-                            .accessibilityElement(children: .combine)
-                            .accessibilityLabel("\(u.name)\(high ? ", 告警偏高" : ""), 近 30 天开门 \(u.opens30d) 次, \(!u.logged ? "这台锁还没有读数" : (u.alarms30d == 0 ? "无告警" : "告警占比 \(Int((u.alarmRate * 100).rounded()))%"))")
-                        }
-                        .frame(minHeight: DS.Hit.min)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(PressableButtonStyle())
-                    .accessibilityHint("点按下钻该锁告警流")   // 778 点按下钻该锁告警流
-                }
-                Text("告警占比 ≥20% 记为偏高并上浮到榜顶; 点任一行下钻该锁告警流。")   // 778 告警占比
-                    .vkFont(.caption2)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
 
     // ---------- 71 列表信号预览 (包2): 每行右侧迷你信号格, 切换前先看哪把锁在范围内 ----------
     // RSSI 来自各锁最近一次扫描 (kf_linkrssi_), 未扫到 = 无信号格 (不虚构);
@@ -275,112 +184,6 @@ struct LockOverviewView: View {
         }
     }
 
-    // ---------- 779 成员×锁交叉矩阵 ----------
-    private var matrixCard: some View {
-        let locks = usages
-        return Card {
-            VStack(alignment: .leading, spacing: DS.Space.s) {
-                SectionTitle(text: "成员 × 锁", count: matrix.members.count)
-                ScrollView(.horizontal, showsIndicators: false) {
-                    Grid(horizontalSpacing: 0, verticalSpacing: 0) {
-                        GridRow {
-                            Text("成员")
-                                .vkFont(.caption2)
-                                .foregroundStyle(DS.Palette.textSub)
-                                .frame(width: 72, alignment: .leading)
-                                .padding(DS.Space.xs)
-                            ForEach(locks, id: \.mac) { u in
-                                Text(u.name)
-                                    .vkFont(.caption2)
-                                    .foregroundStyle(DS.Palette.textSub)
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.7)
-                                    .frame(width: 64)
-                                    .padding(DS.Space.xs)
-                            }
-                        }
-                        Divider().gridCellUnsizedAxes(.horizontal)
-                        ForEach(Array(matrix.members.enumerated()), id: \.offset) { mi, member in
-                            GridRow {
-                                HStack(spacing: DS.Space.xs) {
-                                    Circle().fill(Color(hex: UInt32(member.color.dropFirst(1), radix: 16) ?? 0x3D8BFF))
-                                        .frame(width: 6, height: 6)
-                                    Text(member.name)
-                                        .vkFont(.caption)
-                                        .foregroundStyle(DS.Palette.text)
-                                        .lineLimit(1)
-                                        .minimumScaleFactor(0.7)
-                                }
-                                .frame(width: 72, alignment: .leading)
-                                .padding(DS.Space.xs)
-                                ForEach(Array(locks.enumerated()), id: \.offset) { li, _ in
-                                    let n = matrix.counts[li][member.id, default: 0]
-                                    // 779 脚注早就写着"点数字可到记录页按成员筛选", 原先格子是死的文字 —— 接上。
-                                    // 走与下方"看最高格"按钮同一条路 (pendingRecordsFilter + 记录页), 不另造第二套筛选。
-                                    if n > 0 {
-                                        Button {
-                                            app.pendingRecordsFilter = member.id
-                                            app.requestRoute(.records)
-                                            dismiss()
-                                        } label: {
-                                            Text("\(n)")
-                                                .vkFont(.caption)
-                                                .monospacedDigit()
-                                                .foregroundStyle(DS.Palette.text)
-                                                .frame(width: 64)
-                                                .padding(DS.Space.xs)
-                                                .background(DS.Palette.accentText.opacity(0.08))
-                                                .contentShape(Rectangle())
-                                        }
-                                        .buttonStyle(PressableButtonStyle())
-                                        .accessibilityLabel("\(member.name) 开门 \(n) 次")
-                                        .accessibilityHint("点按到记录页按该成员筛选")
-                                    } else {
-                                        Text("·")
-                                            .vkFont(.caption)
-                                            .monospacedDigit()
-                                            .foregroundStyle(DS.Palette.textSub)
-                                            .frame(width: 64)
-                                            .padding(DS.Space.xs)
-                                    }
-                                }
-                            }
-                            Divider().gridCellUnsizedAxes(.horizontal)
-                        }
-                    }
-                }
-                Text("格内是归属到该成员的开门次数 (只统计可证明归属; 点数字可到记录页按成员筛选)。")
-                    .vkFont(.caption2)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-                if let top = topCell() {
-                    Button {
-                        app.pendingRecordsFilter = top.member.id
-                        app.requestRoute(.records)
-                        dismiss()
-                    } label: {
-                        Label("看「\(top.member.name)」在「\(top.lockName)」的 \(top.count) 条记录", systemImage: "arrow.right.circle")
-                            .vkFont(.footnote)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .frame(minHeight: DS.Hit.min)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(PressableButtonStyle())
-                }
-            }
-        }
-    }
-    private func topCell() -> (member: Member, lockName: String, count: Int)? {
-        var best: (Member, String, Int)? = nil
-        for (li, u) in usages.enumerated() {
-            for m in matrix.members {
-                let n = matrix.counts[li][m.id, default: 0]
-                if n > (best?.2 ?? 0) { best = (m, u.name, n) }
-            }
-        }
-        guard let b = best else { return nil }
-        return (b.0, b.1, b.2)
-    }
 
     // ---------- 773 凭证容量水位 ----------
     private var capacityCard: some View {

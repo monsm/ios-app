@@ -1231,10 +1231,6 @@ struct DeviceHomeView: View {
 
     // ---------- 开锁主控 ----------
     private var unlockDial: some View {
-        // 868 切换控制扫描组: 圆盘为独立扫描组 (调用处 `unlockDial.staggered(3)` 后面那两行
-        // `.accessibilityElement(children: .contain)` + `accessibilityLabel("开锁圆盘组")`), 外接开关可以按组逐项聚焦。⚠ 2026-10-15 走查修正: 这里原先写着"停留时长按 869 自定滑杆" —— 那枚滑杆
-        // (`kf_ax_dwell`) 全仓**没有行为消费者**，只被辅助页的滑杆自己与练习区演示文字读 (判据见
-        // `App/UI/AccessibilityView.swift` 那段的同一条注释)，聚焦节奏实际由系统 VoiceOver/切换控制决定。
         VStack(spacing: DS.Space.m) {
             UnlockDial(state: app.unlockState,
                        phase: app.phase,
@@ -1287,18 +1283,6 @@ struct DeviceHomeView: View {
                         .fixedSize(horizontal: false, vertical: true)
                     if app.failStreak >= 3 {
                         checklist
-                        NavigationLink {
-                            DiagnosticsView()
-                        } label: {
-                            Label("打开排查工具", systemImage: "wrench.and.screwdriver")
-                                .vkFont(.subheadline, weight: .medium)
-                                .foregroundStyle(DS.Palette.accentText)
-                                .padding(.horizontal, DS.Space.l)
-                                .frame(minHeight: DS.Hit.min)
-                                .background(DS.Palette.accentText.opacity(0.09),
-                                            in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
-                                .contentShape(Rectangle())
-                        }
                         .buttonStyle(PressableButtonStyle())
                     }
                 }
@@ -2045,23 +2029,6 @@ struct DeviceHomeView: View {
                 }
             }
         }
-        // 481 本周轮值副标题: 已挂到 Hero 卡 heroMomentText 之后
-        if let d = MemberHub.dutyThisWeek, let dm = DB.member(d) {
-            Card {
-                HStack(spacing: DS.Space.s) {
-                    Image(systemName: "calendar.badge.clock")
-                        .font(.system(size: DS.Icon.sm))
-                        .foregroundStyle(DS.Palette.accentText)
-                        .accessibilityHidden(true)
-                    Text("本周主责: " + MemberHub.display(dm))   // 481 本周主责
-                        .vkFont(.footnote)
-                        .foregroundStyle(DS.Palette.text)
-                    Spacer(minLength: 0)
-                }
-                .frame(minHeight: DS.Hit.min)
-                .contentShape(Rectangle())
-            }
-        }
     }
 
     // ---------- 派生数据 (包3: 参数化到任意锁 — 当前页吃实时, 其余页读快照) ----------
@@ -2394,20 +2361,6 @@ struct SyncTimeView: View {
             result = "同步失败：\(error.localizedDescription)"
         }
         busy = false
-    }
-}
-
-/// 呼吸缩放 (1004 喂电提醒): reduceMotion 时静止
-private struct BreathingGlyph: ViewModifier {
-    @Environment(\.accessibilityReduceMotion) private var rm
-    @State private var on = false
-    func body(content: Content) -> some View {
-        content
-            .scaleEffect(on ? 1.12 : 1.0)
-            .onAppear {
-                guard !rm else { return }
-                withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) { on = true }
-            }
     }
 }
 

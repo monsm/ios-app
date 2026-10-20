@@ -43,11 +43,9 @@ struct MaintenanceView: View {
     var vkBody: some View {
         Form {
             carePeriodSection      // 1013/1015
-            careMarksSection       // 1030
             historySection         // 1028/1014
             swapSection            // 116/118/1012
             ekeySection            // 1025
-            environmentSection     // 1024/1026
         }
         .navigationTitle("维护与保养")
         .variantList()
@@ -159,35 +157,6 @@ struct MaintenanceView: View {
         }
     }
 
-    // ---------- 1030 清洁月历 (本月打点) ----------
-    private var careMarksSection: some View {
-        let marks = BatteryCare.careMarks()
-        let cal = WeekCal.gregorian
-        let days = cal.range(of: .day, in: .month, for: Date())?.count ?? 30
-        let streak = BatteryCare.careStreakMonths
-        return Section {
-            VStack(alignment: .leading, spacing: DS.Space.xs) {
-                HStack(spacing: 4) {
-                    ForEach(1...max(days, 1), id: \.self) { d in
-                        let key = Milestones.monthKey() + String(format: "-%02d", d)
-                        Circle()
-                            .fill(marks[key] == true ? DS.Palette.ok : DS.Palette.surfaceAlt)
-                            .overlay(Circle().strokeBorder(DS.Palette.hairline, lineWidth: 0.5))
-                            .frame(width: 11, height: 11)
-                    }
-                }
-                Text(streak > 0 ? "已连续 \(streak) 个月有保养" : "本月还没打点 — 完成保养后点亮")
-                    .vkFont(.caption2)
-                    .foregroundStyle(DS.Palette.textSub)
-            }
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel("本月保养日历, \(streak > 0 ? "已连续 \(streak) 个月有保养" : "本月还未保养")")
-        } header: {
-            Text("清洁月历")
-        } footer: {
-            Text("完成保养即在月历打点; 连续 3 个月点亮「爱洁之家」徽章。")
-        }
-    }
 
     // ---------- 1028 保养历史过滤 (1014 事件) ----------
     private var historySection: some View {
@@ -299,44 +268,6 @@ struct MaintenanceView: View {
         }
     }
 
-    // ---------- 1024 潮湿位 + 1026 低温季 ----------
-    private var environmentSection: some View {
-        let place = meta.place
-        let damp = ["浴室", "户外", "院", "阳台", "天台"].contains { place.contains($0) }
-        return Section {
-            if damp {
-                Label("场所「\(place)」属湿区 — 梅雨季 (6–7 月) 每周提醒防潮", systemImage: "humidity")
-                    .vkFont(.footnote)
-                    .foregroundStyle(DS.Palette.accentText)
-                    .fixedSize(horizontal: false, vertical: true)
-            } else {
-                Text("在锁档案的「场所副标题」里写上浴室/户外等字样, 即可获得季节防潮提醒。")
-                    .vkFont(.footnote)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            // 1026: 城市手动填 + 本地气候表 (原句口径); 表外仍回退 11–3 月默认档
-            TextField("城市 (手动填, 如: 哈尔滨)", text: Binding(
-                get: { DB.store.getString("kf_city_" + mac) },
-                set: { DB.store.set("kf_city_" + mac, $0) }))
-                .autocorrectionDisabled()
-            let city = DB.store.getString("kf_city_" + mac).trimmingCharacters(in: .whitespaces)
-            let month = WeekCal.gregorian.component(.month, from: Date())
-            if let w = BatteryCare.cityColdWindow(city), BatteryCare.inColdMonth(month, from: w.from, to: w.to) {
-                Label("按「\(city)」的本地气候表 (\(w.label)): 低温季电池衰减加快, 电量偏低时建议提前整组换新。", systemImage: "thermometer.snowflake")
-                    .vkFont(.footnote)
-                    .foregroundStyle(DS.Palette.warn)
-                    .fixedSize(horizontal: false, vertical: true)
-            } else if BatteryCare.isColdSeason {
-                Label("低温季 (11–3 月): 电池衰减加快, 电量偏低时建议提前整组换新。", systemImage: "thermometer.snowflake")
-                    .vkFont(.footnote)
-                    .foregroundStyle(DS.Palette.warn)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        } header: {
-            Text("环境关怀")
-        }
-    }
 }
 
 // ================= 1015 保养五项清单 =================

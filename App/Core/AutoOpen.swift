@@ -195,7 +195,6 @@ struct AutoOpenGate {
     var defendStartSec: Int
     var defendEndSec: Int
     var rssiArmed: Bool          // F3 滤波当前态
-    var calibrated: Bool         // 该锁做过距离标定
     var dwellMet: Bool           // F2' 信号已武装 (静置传感器闸已删除)
     var coolReady: Bool          // F5 冷却: 上一次下发距今 >60s
     var lockReady: Bool          // F6: 非 busy(25) 且非防拆(26)
@@ -206,9 +205,7 @@ struct AutoOpenGate {
         case f0                  // 非前台/App 未解锁
         case f1face             // 面容档不满足 (无面容/过期/严格未刷)
         case f4defend          // 布防时段一票否决
-        case f3nocal           // 未标定 (已不是开门条件; 保留给审计历史与 UI 文案)
         case f3rssi            // 信号未武装
-        case f2dwell           // 停留未满足 (移动中)
         case f5cool            // 6s 冷却中
         case f6busy            // 锁忙 / 防拆 (锁态门)
         case none
@@ -238,7 +235,6 @@ struct AutoOpenGate {
         // 旧写法把"没标定"当一票否决 ⇒ 新用户/新锁永远开不了, 而标定页要站着等 30 秒, 多数人不会做。
         // 标定降级为可选精修 (做过就按你这把锁的实际信号定线)。calibrated 仍留着给界面如实显示。
         guard rssiArmed else { return .f3rssi }
-        guard dwellMet else { return .f2dwell }
         guard coolReady else { return .f5cool }
         guard lockReady else { return .f6busy }
         return .none
@@ -252,9 +248,7 @@ struct AutoOpenGate {
         case .f0: return "F0 非前台/App 未解锁"
         case .f1face: return "F1 面容未确认 (严格档要求本次进前台刷过脸)"
         case .f4defend: return "F4 布防时段内, 一票否决"
-        case .f3nocal: return "F3 未做距离标定"
         case .f3rssi: return "F3 信号未达武装线"
-        case .f2dwell: return "F2' 信号未达武装线 (走近或转动手机)"
         case .f5cool: return "F5 冷却中 (6 秒)"
         case .f6busy: return "F6 锁态未知或忙 (rc=25/无 03 回显)"
         case .none: return "可开"
@@ -402,11 +396,6 @@ final class AutoOpenController {
             AutoOpen.audit(mac, "拒开: 伪装会话期间禁止自动下发 04")
             return
         }
-        // 演示模式红线: 不得触碰真实 BLE (旧实现只在 requestUnlock 里守, 自动链直连 lock 绕过)
-        guard !DemoKit.isOn else {
-            AutoOpen.audit(mac, "拒开 演示模式 (demo) 不允许自动下发 04")
-            return
-        }
         if eventFired.contains(mac) { return }   // F5 一次性: 每个接近事件只发一次 04
 
         let ctx = makeContext(mac: mac, app: app)
@@ -445,8 +434,6 @@ final class AutoOpenController {
             defendStartSec: d?.startSec ?? 0,
             defendEndSec: d?.endSec ?? 0,
             rssiArmed: armed,
-            // calibrated 现在如实表示"做过按锁标定" (不再是能不能开的硬条件 —— 未标定走 fallbackBase)
-            calibrated: AutoOpen.autocal(mac) != nil,
             dwellMet: armed,
             coolReady: coolReady,
             // F6 锁态门 fail-closed: StatusSnapshotData.rc 默认 0 = "成功", 无快照时旧写法会误判锁态绿

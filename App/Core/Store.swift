@@ -388,7 +388,6 @@ enum DB {
         var map = store.getDict("kf_keychains")
         map[normalizeMac(kc.mac)] = kc.toDict()   // 归一化: 防导入冒号/大写 MAC 造成重复条目
         store.set("kf_keychains", map)
-        SpotlightKit.scheduleReindex()   // 293 锁的新增/改名/换型号都从这一支出, 索引跟着走
     }
     // ---------- 配网中断保护 (防软砖) ----------
     /// 05 换钥一 rc=0, 锁内 skey 就已经是**新的**了。本机若没把这套钥落盘, 后面任何一步失败
@@ -438,7 +437,6 @@ enum DB {
         var map = store.getDict("kf_keychains")
         map.removeValue(forKey: m)
         store.set("kf_keychains", map)
-        SpotlightKit.scheduleReindex()   // 951 删掉的锁必须从 Spotlight 撤下来, 否则搜到点不开
     }
     // 删除设备: 钥匙串 + 每锁数据族 + 指针 (JS removeDevice 全量语义)
     static func removeDevice(_ mac: String) {
@@ -499,7 +497,6 @@ enum DB {
         // 此前 AuditLog().append 只在安全中心手动记账与失败守卫里调用, 而文案宣称"增删改会自动记入"。
         let old = get(Ledger.self, "kf_ledger_" + mac)
         set(l, "kf_ledger_" + mac)
-        SpotlightKit.scheduleReindex()   // 951 凭证条目的增删改都过这一支, Spotlight 里不能留着已删的那条
         let changes = ledgerDiff(old, l)
         if !changes.isEmpty {
             let name = keychain(mac).map { LockArchive.displayName($0) } ?? mac

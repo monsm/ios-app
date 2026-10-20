@@ -86,13 +86,6 @@ struct AddDeviceView: View {
                     }
                     .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.danger)
-                    NavigationLink {
-                        SymptomGuideView(initial: "bleConnect")
-                    } label: {
-                        Label("看三步排查", systemImage: "stethoscope")   // 829 看三步排查
-                            .vkFont(.footnote)
-                            .frame(minHeight: DS.Hit.min)
-                    }
                 } footer: {
                     Text("配不上先别反复重试: 点上面一步一问答, 结论只给下一步动作, 全程只在本机问答。")
                 }

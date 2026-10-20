@@ -267,7 +267,6 @@ final class DFUBleSession: NSObject, CBCentralManagerDelegate, CBPeripheralDeleg
     private var responseWaiter: CheckedContinuation<String, Error>?
     private var writeAckCont: CheckedContinuation<Void, Error>?
     private var aborted = false
-    var logFn: ((String) -> Void)?
 
     // 等待一条控制点响应 hex (超时随本次等待捕获 — 无共享 deadline, 陈旧定时器不会误杀)
     private var responseTimer: DispatchWorkItem?
@@ -588,7 +587,6 @@ enum DFUProgress {
     case switchingDfu    // 2
     case uploading(percent: Int)  // 3
     case validating      // 4
-    case disconnecting   // 5
     case completed       // 6
     case aborted         // 7
 }

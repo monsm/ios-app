@@ -21,19 +21,7 @@ struct MemberExt: Codable {
     var note: String = ""            // 475 家庭便签 (与成员绑定)
 }
 
-/// 472 借用登记 (per-lock)
-struct MemberBorrow: Codable {
-    var by: String        // 借用人
-    var due: String       // 归还日 "yyyy-MM-dd"
-    var at: Double       // 登记时刻
-}
 
-/// 483 家政周期预设 (⚠降级: 协议无循环时段, 只做整段起止窗)
-struct HouseWin: Codable {
-    var from: String      // "yyyy-MM-dd HH:mm:ss"
-    var to: String
-    var label: String
-}
 
 enum MemberHub {
     // 793 访客虚拟分组: 只存在于本地展示层, 绝不写入锁端凭证表
@@ -307,40 +295,8 @@ enum MemberHub {
         Set((DB.store.get([String: MemberExt].self, extKey) ?? [:]).filter { $0.value.proxy }.map(\.key))
     }
 
-    // ---------- 472 借用登记 (per-lock) ----------
-    static func borrows(_ mac: String) -> [String: MemberBorrow] {
-        DB.store.get([String: MemberBorrow].self, "kf_mborrow_" + mac) ?? [:]
-    }
-    static func saveBorrow(_ mac: String, itemKey: String, _ b: MemberBorrow?) {
-        var all = borrows(mac)
-        if let b { all[itemKey] = b } else { all.removeValue(forKey: itemKey) }
-        DB.store.setCodable("kf_mborrow_" + mac, all)
-    }
 
-    // ---------- 483 家政周期预设 (整段起止窗, 降级备案) ----------
-    static func houseWin(_ mac: String) -> HouseWin? {
-        DB.store.get(HouseWin.self, "kf_house_win_" + mac)
-    }
-    static func saveHouseWin(_ mac: String, _ w: HouseWin) {
-        DB.store.setCodable("kf_house_win_" + mac, w)
-    }
 
-    // ---------- 481 本周轮值 ----------
-    private static func weekKey(_ d: Date = Date()) -> String {
-        // 912: 周界必须与 Milestones/RecordSearch/月历同一个 Calendar，
-        // 否则"本周轮值"和"本周整理数"会在跨周那天各说一套。
-        let c = WeekCal.calendar
-        return String(c.component(.yearForWeekOfYear, from: d)) + "-W" + String(c.component(.weekOfYear, from: d))
-    }
-    static var dutyThisWeek: String? {
-        let map = DB.store.get([String: String].self, "kf_duty_week") ?? [:]
-        return map[weekKey()]
-    }
-    static func setDuty(_ memberId: String?) {
-        var map = DB.store.get([String: String].self, "kf_duty_week") ?? [:]
-        if let memberId { map[weekKey()] = memberId } else { map.removeValue(forKey: weekKey()) }
-        DB.store.setCodable("kf_duty_week", map)
-    }
 
     // ---------- 791 未归属记录认领 (记录 key = idxRaw, 本机覆盖层) ----------
     static func claims(_ mac: String) -> [String: String] {

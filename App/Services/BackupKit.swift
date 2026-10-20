@@ -283,17 +283,20 @@ enum BackupKit {
         }
         let stats = DS.HeroStats.visible
         let recent = DB.store.getInt("kf_recent_count", 5)
+        // 2026-10-20 (Q15 减法): density/radius/rowH/tlGap/motion/heroTex 六档已从产品中删除。
+        // 字段**保留在 schema 里**(旧包/小程序仍可能带这些键, 删字段会破坏 Codable 兼容),
+        // 但收集时一律传 nil —— 新备份不再携带这些已不存在的偏好。
         return BackupBundle.Globals.Appearance(
             theme: enumVal("kf_theme", ["", "light", "dark", "black"]),
             accent: enumVal("kf_accent", ["", "indigo", "forest", "amber", "graphite", "rose", "aurora"]),
-            density: enumVal("kf_density", ["", "compact", "relaxed"]),
-            radius: enumVal("kf_radius", ["", "soft", "plump"]),
+            density: nil,
+            radius: nil,
             hc: DB.store.has("kf_hc") ? DB.store.getBool("kf_hc") : nil,
             weekStart: enumVal("kf_week_start", ["", "mon", "sun", "sat"]),
-            rowH: enumVal("kf_row_h", ["", "tall"]),
-            tlGap: enumVal("kf_tl_gap", ["", "tight", "loose"]),
-            motion: enumVal("kf_motion", ["", "calm", "standard", "lively"]),
-            heroTex: enumVal("kf_hero_tex", ["", "grid", "grain"]),
+            rowH: nil,
+            tlGap: nil,
+            motion: nil,
+            heroTex: nil,
             launchLine: DB.store.has("kf_launch_line") ? DB.store.getBool("kf_launch_line") : nil,
             festive: DB.store.has("kf_festive") ? DB.store.getBool("kf_festive") : nil,
             plain: DB.store.has("kf_plain") ? DB.store.getBool("kf_plain") : nil,
@@ -362,13 +365,9 @@ enum BackupKit {
         }
         set("kf_theme", a.theme, ["", "light", "dark", "black"])
         set("kf_accent", a.accent, ["", "indigo", "forest", "amber", "graphite", "rose", "aurora"])
-        set("kf_density", a.density, ["", "compact", "relaxed"])
-        set("kf_radius", a.radius, ["", "soft", "plump"])
         set("kf_week_start", a.weekStart, ["", "mon", "sun", "sat"])
-        set("kf_row_h", a.rowH, ["", "tall"])
-        set("kf_tl_gap", a.tlGap, ["", "tight", "loose"])
-        set("kf_motion", a.motion, ["", "calm", "standard", "lively"])
-        set("kf_hero_tex", a.heroTex, ["", "grid", "grain"])
+        // 2026-10-20 (Q15 减法): density/radius/rowH/tlGap/motion/heroTex 六档已删除。
+        // 旧备份包仍可能带这些字段 —— **静默忽略**(不写盘); schema 字段本身保留, 所以读旧包不报错。
         if let v = a.hc { DB.store.set("kf_hc", v) }
         if let v = a.launchLine { DB.store.set("kf_launch_line", v) }
         if let v = a.festive { DB.store.set("kf_festive", v) }

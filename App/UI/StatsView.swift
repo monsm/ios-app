@@ -195,16 +195,9 @@ struct StatsView: View {
                     weekBarsSection(m)
                     heatmapSection(m)   // 14 月度热力格 (GitHub 形态)
                     holidayBarsSection(m)   // 608 假期最后 3 天逐时柱
-                    radarSection(m)          // 602 作息雷达 (四轴)
-                    alarmScatterSection(m)
                     monthSection(m)
-                    cumulativeSection(m)
-                    ganttSection(m)
                     compositionSection(m)
-                    credentialSection(m)
                     summarySection(m)
-                    yearReportSection(m)
-                    compareEntry
                     if let h = selHour { drillSection(m, hour: h) }
                 }
             }
@@ -235,19 +228,6 @@ struct StatsView: View {
 
     /// 775 一族 (775/783/781/782) 的入口。只有一把锁时**不出现**，
     /// 而不是进来看到一句"请再添加一把锁" —— 对比这个动作在单锁设备上根本不存在。
-    @ViewBuilder
-    private var compareEntry: some View {
-        if DB.keychains().count >= 2 {
-            Section {
-                NavigationLink { LockCompareView() } label: {
-                    Label("多锁对比", systemImage: "rectangle.split.2x1")   // 775/783/781/782 多锁对比
-                        .vkFont(.subheadline, weight: .medium)
-                        .foregroundStyle(DS.Palette.accentText)
-                        .frame(minHeight: DS.Hit.min)
-                }
-            }
-        }
-    }
 
     // ---------- 678/634/636 窗口胶囊 + 上下文标签 ----------
     /// 636 在这里落地的是原句的后半 (7/30/90/365 四档窗口 + 窗口状态在本次会话内保持, 见 `windowDays` 那枚 @State)。
@@ -1099,107 +1079,10 @@ struct StatsView: View {
     /// 正是"看起来在工作其实是缺省值"的那类显示。标签行同时是 VoiceOver 的读数来源。
     /// 只在窗口内真有 ≥5 次开门时出现 (622 护栏的另一面)：三根 0 轴的雷达是个空圈，
     /// 空圈会被读成"作息很规律"，而那其实是没数据。
-    @ViewBuilder
-    private func radarSection(_ m: StatsKit.StatModel) -> some View {
-        let parts = m.dayparts
-        if m.daypartTotal >= 5 {
-            Section {
-                Canvas { ctx, size in
-                    let c = CGPoint(x: size.width / 2, y: size.height / 2)
-                    let r = max(20, min(size.width, size.height) / 2 - 12)
-                    let maxV = max(1, parts.map { $0.opens }.max() ?? 1)
-                    func vertex(_ i: Int, _ k: CGFloat) -> CGPoint {
-                        let ang = -Double.pi / 2 + Double(i) * Double.pi / 2
-                        return CGPoint(x: c.x + cos(ang) * r * k, y: c.y + sin(ang) * r * k)
-                    }
-                    for k in [0.5, 1.0] {
-                        var ring = Path()
-                        for i in 0..<4 {
-                            let p = vertex(i, CGFloat(k))
-                            if i == 0 { ring.move(to: p) } else { ring.addLine(to: p) }
-                        }
-                        ring.closeSubpath()
-                        ctx.stroke(ring, with: .color(DS.Palette.hairline), lineWidth: 0.8)
-                    }
-                    var poly = Path()
-                    for (i, p) in parts.enumerated() {
-                        let v = CGFloat(p.opens) / CGFloat(maxV)
-                        let pt = vertex(i, max(0.02, v))
-                        if i == 0 { poly.move(to: pt) } else { poly.addLine(to: pt) }
-                    }
-                    poly.closeSubpath()
-                    ctx.fill(poly, with: .color(DS.Palette.accent.opacity(0.22)))
-                    ctx.stroke(poly, with: .color(DS.Palette.accent), lineWidth: 2)
-                }
-                .frame(height: 168)
-                .padding(.horizontal, DS.Space.gutter)
-                .accessibilityHidden(true)   // 图形本身不给 VoiceOver 念，念下面那行标签
-                HStack(spacing: DS.Space.xs) {
-                    ForEach(Array(parts.enumerated()), id: \.offset) { _, p in
-                        VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                            Text(p.name).vkFont(.caption, weight: .semibold).foregroundStyle(DS.Palette.text)
-                            Text(p.span + " · " + String(p.opens) + " 次")
-                                .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, DS.Space.xs)
-                        .padding(.vertical, DS.Space.xs)
-                        .variantPlate(DS.Palette.surfaceAlt, .control)
-                    }
-                }
-                .padding(.horizontal, DS.Space.gutter)
-                .accessibilityElement(children: .combine)
-                .accessibilityLabel("作息雷达：" + parts.map { $0.name + " " + $0.span + " 时 " + String($0.opens) + " 次" }.joined(separator: "，"))
-            } header: {
-                Text("作息雷达 · 早/午/晚/深夜")   // 602 作息雷达
-            } footer: {
-                // 676: 深夜轴跟随「夜间时段」设置 (与 572 深夜预设同一份配置), 不再写死 22–04 ——
-                // 页脚原先钉着一句"深夜算 22:00–04:59", 用户把配置改成 22–6 后它就成了假话。
-                Text("每根轴按最忙那一段归一 (所以外圈永远顶格)，段边界写在标签里：深夜跟随「夜间时段」设置"
-                     + " (当前 \(String(format: "%02d:00", RecordSearch.nightFrom)) 起、\(String(format: "%02d:00", RecordSearch.nightTo)) 前)。"
-                     + "只统计本机读到的窗口 —— 没读过的时段不算没开门。")
-                    .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
 
     // ---------- 605 告警散点阵 (近 90 天 × 告警子类型) ----------
     /// 与 627 OTP 散点同一种点图，但纵轴是**类型**不是时刻: 看的是"哪几天集中爆发哪一类"。
     /// 空的时候整节不出现 (没有告警是好消息，不该用一张空网格占住页面，也不该写"暂无数据"占位)。
-    @ViewBuilder
-    private func alarmScatterSection(_ m: StatsKit.StatModel) -> some View {
-        let pts = m.alarmScatter
-        if !pts.isEmpty {
-            Section("告警散点 · 近 \(m.alarmScatterDays) 天") {   // 605 告警散点
-                Chart(pts) { p in
-                    PointMark(
-                        x: .value("日", p.day, unit: .day),
-                        y: .value("子类型", p.typeName)
-                    )
-                    .foregroundStyle(by: .value("子类型", p.typeName))
-                    .symbolSize(48)
-                    .accessibilityLabel(p.typeName)
-                    .accessibilityValue(p.day.formatted(date: .abbreviated, time: .omitted))
-                }
-                .chartXAxis {
-                    AxisMarks(values: .stride(by: .weekOfYear)) { _ in
-                        AxisGridLine().foregroundStyle(DS.Palette.hairline.opacity(0.5))
-                        AxisValueLabel(format: .dateTime.month(.abbreviated).day())
-                    }
-                }
-                .chartLegend(position: .bottom, alignment: .leading)
-                .frame(height: 190)
-                .padding(.horizontal, DS.Space.gutter)
-                Text("\(pts.count) 条告警逐点上屏；纵轴是告警子类型，横向密集处即集中爆发的日子。")   // 605 条告警逐点上屏
-                    .vkFont(.footnote)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
 
     // ---------- 601 本月上月同比 + 604 成员多线 (632 图例点选排除) ----------
     @ViewBuilder
@@ -1620,96 +1503,9 @@ struct StatsView: View {
     }
 
     // ---------- 603 累计面积图 + 周分割刻度 ----------
-    @ViewBuilder
-    private func cumulativeSection(_ m: StatsKit.StatModel) -> some View {
-        Section("累计开门") {   // 603 累计开门
-            let pts = m.dailyPoints
-            var cum = 0
-            let rows = pts.map { p in
-                cum += p.opens
-                return ("c" + p.key, p.day, cum)
-            }
-            let weekBreaks = pts.filter { WeekCal.gregorian.component(.weekday, from: $0.day) == 2 }.map { $0.day }
-            VStack(alignment: .leading, spacing: DS.Space.xs) {
-                Chart {
-                    ForEach(Array(rows.enumerated()), id: \.offset) { _, r in
-                        AreaMark(x: .value("日期", r.1), y: .value("累计", r.2))
-                            .foregroundStyle(
-                                LinearGradient(colors: [DS.Palette.accent.opacity(0.35), DS.Palette.accent.opacity(0.05)],
-                                               startPoint: .top, endPoint: .bottom))
-                        LineMark(x: .value("日期", r.1), y: .value("累计", r.2))
-                            .foregroundStyle(DS.Palette.accent)
-                            .lineStyle(StrokeStyle(lineWidth: 1.5))
-                    }
-                    ForEach(weekBreaks, id: \.self) { d in
-                        RuleMark(x: .value("周分割", d))
-                            .foregroundStyle(DS.Palette.hairline)
-                            .lineStyle(StrokeStyle(lineWidth: 1, dash: [2, 4]))
-                    }
-                }
-                .frame(height: 170)
-                Text("窗口累计 \(m.opensTotal) 次 · 虚线为周一分割, 看增长节奏")
-                    .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.textSub)
-                    // 2026-10-14 布局审计 R2: 估宽 428pt > 343pt, 而 lineLimit(1) 切掉的正好是后半句
-                    // "虚线为周一分割" —— 图上那条虚线就没有解释了。允许两行。
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .padding(.horizontal, DS.Space.gutter)
-        }
-    }
 
     // ---------- 609/629 临时码甘特 + 核销率 ----------
     @ViewBuilder
-    private func ganttSection(_ m: StatsKit.StatModel) -> some View {
-        let g = m.gantt
-        if !g.isEmpty {
-            Section("临时码核销") {   // 609 临时码甘特   // 629 核销率
-                VStack(spacing: DS.Space.s) {
-                    ForEach(g) { t in
-                        let rate = t.availDays > 0 ? Double(t.usedDays) / Double(t.availDays) : 0
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack(spacing: DS.Space.xs) {
-                                Text(t.name)
-                                    .vkFont(.footnote, weight: .medium)
-                                    .foregroundStyle(DS.Palette.text)
-                                    .lineLimit(1)
-                                if !t.owner.isEmpty {
-                                    Text(t.owner)
-                                        .vkFont(.caption2)
-                                        .foregroundStyle(DS.Palette.accentText)
-                                        .lineLimit(1)
-                                }
-                                Spacer(minLength: 0)
-                                // 629: 已过期那侧同样给核销率
-                                Text((t.expired ? "已过期 · " : "") + "核销 " + String(Int(rate * 100)) + "% (\(t.usedDays)/\(t.availDays) 天)")
-                                    .vkFont(.caption2)
-                                    .foregroundStyle(t.expired ? DS.Palette.danger : DS.Palette.textSub)
-                                    .lineLimit(1)
-                            }
-                            ganttBar(t)
-                            // 629: 核销率比率条 (过期转灰, ≥0.8 转橙)
-                            GeometryReader { geo in
-                                ZStack(alignment: .leading) {
-                                    Capsule().fill(DS.Palette.surfaceAlt)
-                                    Capsule()
-                                        .fill(t.expired ? DS.Palette.textSub.opacity(0.6) : (rate >= 0.8 ? DS.Palette.warn : DS.Palette.ok))
-                                        .frame(width: max(2, geo.size.width * CGFloat(min(1, max(0, rate)))))
-                                }
-                            }
-                            .frame(height: 4)
-                            .accessibilityHidden(true)
-                        }
-                        .accessibilityElement(children: .combine)
-                        .accessibilityLabel("临时码 \(t.name)" + (t.expired ? " 已过期" : "") + " 核销 \(t.usedDays)/\(t.availDays) 天, 约 \(Int(rate * 100))%")
-                    }
-                }
-                .padding(.horizontal, DS.Space.gutter)
-            }
-        }
-    }
     private func ganttBar(_ t: StatsKit.TempGantt) -> some View {
         // 自绘甘特: 横条 = 生效区间, 圆点 = 可证明的开门刻度 (R1 窗口命中)
         let now = Date()
@@ -2037,147 +1833,6 @@ struct StatsView: View {
     }
 
     // ---------- 凭证维度 (626 用量比 / 628 越界首用 / 627 OTP 散点 / 617 在外时长 / 618 首次区间) ----------
-    @ViewBuilder
-    private func credentialSection(_ m: StatsKit.StatModel) -> some View {
-        let pu = m.pwdUses
-        let outOf = m.outOfRangeTotal
-        if !pu.isEmpty || !m.otpPoints.isEmpty || outOf > 0 {
-            Section("凭证维度") {
-                if !pu.isEmpty {
-                    VStack(alignment: .leading, spacing: DS.Space.s) {
-                        Text("长期密码用量 (台账推断约值)")   // 626 长期密码用量
-                            .vkFont(.subheadline, weight: .medium)
-                            .foregroundStyle(DS.Palette.text)
-                        ForEach(pu, id: \.alias) { p in
-                            pwdUsageRow(p)
-                        }
-                        // 628 数据面实话: 首用只从密码时间窗推断 (锁端无逐凭证计数); 指纹侧没有等价的
-                        // 逐指纹用量/首用可算 (attribution 只给"谁开的", 给不了"哪枚指纹开的"), 所以不列。
-                        Text("口径: 「首用」= 生效期内唯一时间窗命中的最早一次开门 (台账推断); 指纹凭证无独立首用数据, 不列。")
-                            .vkFont(.caption2)
-                            .foregroundStyle(DS.Palette.textSub)
-                            .fixedSize(horizontal: false, vertical: true)
-                        if outOf > 0 {
-                            Label("约 \(outOf) 次密码开门落在所有时间窗之外 (台账推断",
-                                  systemImage: "exclamationmark.circle")
-                                .vkFont(.caption)
-                                .foregroundStyle(DS.Palette.warn)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                    }
-                    .padding(.horizontal, DS.Space.gutter)
-                }
-
-                // 627 OTP 使用散点
-                if !m.otpPoints.isEmpty {
-                    VStack(alignment: .leading, spacing: DS.Space.s) {
-                        Text("临时密码使用时刻")   // 627 临时密码使用时刻
-                            .vkFont(.subheadline, weight: .medium)
-                            .foregroundStyle(DS.Palette.text)
-                        Chart(m.otpPoints) { p in
-                            PointMark(x: .value("日", p.day), y: .value("时", p.hour))
-                                .foregroundStyle(DS.Palette.warn)
-                                .symbolSize(60)
-                        }
-                        .frame(height: 140)
-                        .accessibilityLabel("临时密码使用散点图, 共 \(m.otpPoints.count) 点")
-                    }
-                    .padding(.horizontal, DS.Space.gutter)
-                }
-
-                // 617 逐日首末开门区间 + 618 窗口内逐日首次开门的最早/中位/最晚
-                let ranges = m.rangeRows.suffix(14).reversed().map { $0 }
-                if !ranges.isEmpty {
-                    VStack(alignment: .leading, spacing: DS.Space.s) {
-                        Text("逐日首末开门区间")   // 617 逐日首末开门区间
-                            .vkFont(.subheadline, weight: .medium)
-                            .foregroundStyle(DS.Palette.text)
-                        // 618 一行: 三个数来自 `m.firstOpenHourSpread` —— 它就是下面那排逐日条的 minHour 排出来的
-                        // 最早/中位/最晚, 同一个出处, 不在别处再算第二套"首次开门"。中位取**下中位数** (理由同 780)。
-                        if let sp = m.firstOpenHourSpread {
-                            HStack(spacing: DS.Space.s) {
-                                Text("窗口首开")
-                                    .vkFont(.caption2)
-                                    .foregroundStyle(DS.Palette.textSub)
-                                    .lineLimit(1)
-                                GeometryReader { geo in
-                                    let w = geo.size.width
-                                    ZStack(alignment: .leading) {
-                                        Capsule().fill(DS.Palette.surfaceAlt)
-                                        Capsule()
-                                            .fill(DS.Palette.accent.opacity(0.30))
-                                            .frame(width: max(w * 0.03, CGFloat(sp.latest - sp.earliest) / 24 * w))
-                                            .offset(x: CGFloat(sp.earliest) / 24 * w)
-                                        // 中位那一根竖标: 落在真实发生过的下中位上, 不是两端插出来的时刻
-                                        Rectangle()
-                                            .fill(DS.Palette.warn)
-                                            .frame(width: 2, height: 12)
-                                            .offset(x: CGFloat(sp.median) / 24 * w - 1)
-                                            .accessibilityHidden(true)
-                                    }
-                                    .frame(height: 12)
-                                }
-                                Text("最早 \(sp.earliest) · 中位 \(sp.median) · 最晚 \(sp.latest) 时")
-                                    .vkFont(.caption2)
-                                    .foregroundStyle(DS.Palette.textSub)
-                                    .lineLimit(1)
-                            }
-                            .frame(minHeight: DS.Hit.min)
-                            .accessibilityElement(children: .combine)
-                            .accessibilityLabel("窗口内逐日首次开门: 最早 \(sp.earliest) 时, 中位 \(sp.median) 时, 最晚 \(sp.latest) 时")   // 618 窗口内逐日首次开门
-                        }
-                        // 617 竖棒形态 (原句: 每日一根竖棒 = 当日首末开门区间, 顶端圆点标当日次数):
-                        // 横轴是日 (最多 14 天), 纵轴是 0–24 时。旧写法是横条 + 右端圆点标"末次开门那一小时"
-                        // + 行末文字报次数 —— 与"竖棒 / 顶端圆点标次数"两处都不符。
-                        // 圆点半径随次数增大 (3–9pt) 只作视觉量级; 精确次数在日标签行的读屏标签里。
-                        // ForEach 用 id: \.offset: enumerated 的元素是元组, 不能遵循 Identifiable。
-                        GeometryReader { geo in
-                            let w = geo.size.width
-                            let h = geo.size.height
-                            let step = w / CGFloat(max(ranges.count, 1))
-                            ZStack(alignment: .topLeading) {
-                                ForEach(Array(ranges.enumerated()), id: \.offset) { i, r in
-                                    let x = step * (CGFloat(i) + 0.5)
-                                    let yTop = CGFloat(r.minHour) / 24 * h
-                                    let stickH = max(3, CGFloat(max(r.maxHour - r.minHour, 0)) / 24 * h)
-                                    let dot = min(9, 3 + CGFloat(r.count))
-                                    Capsule()
-                                        .fill(DS.Palette.accent.opacity(0.7))
-                                        .frame(width: 4, height: stickH)
-                                        .offset(x: x - 2, y: yTop)
-                                    Circle()
-                                        .fill(DS.Palette.ok)
-                                        .frame(width: dot, height: dot)
-                                        .offset(x: x - dot / 2, y: max(0, yTop - dot / 2))
-                                }
-                            }
-                        }
-                        .frame(height: 132)
-                        .accessibilityElement(children: .ignore)
-                        .accessibilityLabel("逐日首末开门竖棒图, 纵轴 0 到 24 时。"
-                            + ranges.map { "\($0.key) \($0.minHour) 时至 \($0.maxHour) 时, \($0.count) 次" }.joined(separator: "; "))
-                        // 日标签行: 与上面横轴同一份等宽分格 (单元格中心对齐竖棒); 超过 7 天隔一天标一个, 免得挤成一团
-                        HStack(spacing: 0) {
-                            ForEach(Array(ranges.enumerated()), id: \.offset) { i, r in
-                                Text((ranges.count <= 7 || i % 2 == 0) ? String(r.key.suffix(5)) : "")
-                                    .vkFont(.caption2)   // 语义字号: 9pt 固定值不参与 Dynamic Type
-                                    .foregroundStyle(DS.Palette.textSub)
-                                    .frame(maxWidth: .infinity)
-                            }
-                        }
-                        .accessibilityHidden(true)
-                        // 这一族画的到底是什么, 写在图下面而不是靠标题猜 (形态与口径一起写清):
-                        Text("竖棒 = 当日最早与最晚开门之间 (分辨率到「时」, 纵轴 0–24 时), 棒顶圆点大小 = 当日开门次数"
-                             + " (精确值走读屏标签; 超过 7 天时隔一天标一个日期)。协议没有门磁与上锁状态, 这条只是首末开门夹出来的代理值。")
-                            .vkFont(.caption)
-                            .foregroundStyle(DS.Palette.textSub)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    .padding(.horizontal, DS.Space.gutter)
-                }
-            }
-        }
-    }
 
     // ---------- 小结 (799 成员周小结 + 800 在家代理 + 1020 黄金时段) ----------
     @ViewBuilder
@@ -2223,42 +1878,6 @@ struct StatsView: View {
     }
 
     // ---------- 50 年报告占位 ----------
-    @ViewBuilder
-    private func yearReportSection(_ m: StatsKit.StatModel) -> some View {
-        let cov = m.coverage
-        Section {
-            Button {
-                showYearSheet = true
-            } label: {
-                HStack(spacing: DS.Space.s) {
-                    Image(systemName: "calendar")
-                        .font(.system(size: DS.Icon.sm))
-                        .foregroundStyle(DS.Palette.accentText)
-                        .accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("开门统计年报告")
-                            .vkFont(.subheadline, weight: .medium)
-                            .foregroundStyle(DS.Palette.text)
-                        Text(cov >= 365 ? "数据已积累, 可生成" : "数据积累中 (\(cov)/365 天)")
-                            .vkFont(.caption)
-                            .foregroundStyle(cov >= 365 ? DS.Palette.ok : DS.Palette.textSub)
-                            .lineLimit(1)
-                    }
-                    Spacer(minLength: 0)
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: DS.Icon.xs))
-                        .foregroundStyle(DS.Palette.textSub)
-                        .accessibilityHidden(true)
-                }
-                .frame(minHeight: DS.Hit.min)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("开门统计年报告" + (cov >= 365 ? " 数据已积累" : " 数据积累中"))
-        } header: {
-            Text("年度回顾")   // 50 年度回顾
-        }
-    }
 
     // ---------- 638 下钻明细 ----------
     // 与同批 15 个 xxxSection 统一: 显式写 -> some View (带 @ViewBuilder 却缺返回类型的形状

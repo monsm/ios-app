@@ -30,10 +30,8 @@ struct CredentialsView: View {
     // ---------- 包6 列表组织 ----------
     @State private var seg: Int = 0          // 524 类型分段: 0 全部 / 1 密码 / 2 指纹 / 3 临时码
     @State private var memberView = CredentialOrg.groupMode == .owner   // 355 按成员视图
-    @State private var smartSel: String = "" // 527 智能列表选中 id ("" = 默认)
     @State private var sortKey: CredSortKey = CredentialOrg.sortKey   // 914
     @State private var showCalendar = false  // 363 月历
-    @State private var showOrganize = false  // 358 整理建议中心
     @State private var search = ""
     @State private var undoEntry: CredBinEntry?
     @State private var undoHard = false                    // 506 撤销条属于哪条路: 停用(false) / 彻底删除(true)
@@ -51,18 +49,11 @@ struct CredentialsView: View {
     @State private var showTransfer = false
     @State private var showDisable = false
     @State private var showQueue = false
-    @State private var showBin = false
     /// 532 搜索兜底: 「去回收站搜」要把当前搜索词递进回收站, 而不是只把门打开 (空搜索框等于把人丢回原地)
-    @State private var binQuery = ""
     @State private var showDemo = false   // 包14/834 30 秒演示链接
     @State private var pwdDetailItem: LedgerPwd?   // 包5 PwdDetailStudio
     @State private var fpDetailItem: LedgerFp?     // 包5 FpDetailStudio
-    @State private var histItem: HistItem?
     @State private var jumpBarOn = false           // 577: 条子要活过 consumeCredJump 清 nil 的那一步
-    // 2026-10-15 走查: CredCenterView / TempCodeStudio 都自带 NavigationStack, push 进去会套两层
-    // 导航栏 (判据见 SettingsView 里「动态消息」那条注释) —— 本页其余子流程 (回收站/队列/历史) 全走
-    // sheet, 这两条是漏网的。改走 sheet。
-    @State private var showCredCenter = false
     @State private var showTempCode = false
 
     private var isBusy: Bool { busyKey != nil }
@@ -78,17 +69,10 @@ struct CredentialsView: View {
                                actionTitle: "去添加门锁") { showAdd = true }
                 } else {
                     VStack(spacing: 0) {
-                        // 2026-10-18 重构: 四条横条原来**无条件全叠**在顶部
-                        // (borrowBanner / pendingQueueBar / credJumpBar / headerToolbar),
-                        // 首屏被横条吃掉一大块 —— 这才是"凭证页很乱"的真正来源。
-                        // 现在: 三条通知条**互斥取一**(优先级 借出 > 待下发 > 跳转定位),
-                        // 且都只在真有事时出现; headerToolbar 永远最下面那条。
-                        // 三条通知条**互斥取一**(优先级 借出 > 待下发 > 跳转定位)。
-                        // 每条自己已有空判 (borrowBanner 里 if !bs.isEmpty / pendingQueueBar 同 /
-                        // credJumpBar 用 jumpBarOn), 所以这里只需要"只显示第一个真有事的"。
-                        if !MemberHub.borrows(mac).isEmpty {
-                            borrowBanner
-                        } else if !CredentialOrg.pendingQueue(mac).isEmpty {
+                        // 2026-10-20: 借用横条已删 (Q26 成员协作减法)。
+                        // 剩两条通知条**互斥取一** (优先级 待下发 > 跳转定位), 都只在真有事时出现;
+                        // headerToolbar 永远最下面那条。
+                        if !CredentialOrg.pendingQueue(mac).isEmpty {
                             pendingQueueBar
                         } else if jumpBarOn {
                             credJumpBar
@@ -124,14 +108,6 @@ struct CredentialsView: View {
             .onChange(of: app.pendingCredPanel) { _, _ in consumeCredPanel() }
             .onChange(of: app.pendingCredSelect) { _, _ in consumeCredSelect() }
             .overlay { undoBar }
-            .sheet(isPresented: $showOrganize) {
-                // 2026-10-15 走查: 这里原本写的是尾随闭包 `CredOrganizeView(mac: mac) { reload() }`,
-                // 而 CredOrganizeView 最后一个函数型参数是 `onClose: (() -> Void)?` —— 尾随闭包绑的是
-                // **onClose** (SE-0286 起可选闭包也接尾随闭包), 不是名字看起来该接它的 onDone。
-                // 结果: onDone 一直是默认空闭包, 页内那颗「完成」调它 = 点了什么都不发生, sheet 也不关。
-                // 现在两件事各归各位: onDone 只管刷新, 收页由页内的 dismiss() 负责 (见 CredentialCenterView)。
-                CredOrganizeView(mac: mac, onDone: { reload() })
-            }
             .sheet(isPresented: $showExtend) {
                 if !extendAliases.isEmpty {
                     // 同上: CredExtendView 里那颗按钮写的是「关闭」, 而它过去只 reload()
@@ -155,28 +131,8 @@ struct CredentialsView: View {
                 // 注意只补容器, 不补按钮: 两处各放一枚「关闭」会变成两个并排的出口。
                 NavigationStack { CredQueueView(mac: mac) }
             }
-            // 2026-10-15 走查: 两条"自带 NavigationStack"的入口改走 sheet (见上面 @State 注释)
-            .sheet(isPresented: $showCredCenter) {
-                CredCenterView(mac: mac)   // 2026-10-15: 原来的 `section: "organize"` 是个没人读的参数, 已删
-            }
             .sheet(isPresented: $showTempCode) {
                 TempCodeStudio()
-            }
-            .sheet(isPresented: $showBin) {
-                NavigationStack {
-                    CredBinView(mac: mac, initialQuery: binQuery)
-                        .toolbar { ToolbarItem(placement: .navigationBarLeading) {
-                            Button("关闭") { showBin = false; binQuery = "" }
-                        } }
-                }
-            }
-            .sheet(item: $histItem) { item in
-                NavigationStack {
-                    CredHistoryView(mac: mac, kind: item.kind, key: item.key)
-                        .toolbar { ToolbarItem(placement: .navigationBarLeading) {
-                            Button("关闭") { histItem = nil }
-                        } }
-                }
             }
             .sheet(item: $pwdDetailItem) { item in
                 PwdDetailStudio(alias: item.alias)
@@ -193,40 +149,6 @@ struct CredentialsView: View {
     private var mac: String { app.current?.mac ?? "" }
 
     // ---------- 顶部工具条 (524 分段计数 / 914 四维排序器 / 363 月历 / 358 整理 / 347 选择) ----------
-    // 472 借用横条: 页顶显示进行中借用, 点 已归还 销记
-    @ViewBuilder
-    private var borrowBanner: some View {
-        let bs = MemberHub.borrows(mac)
-        if !bs.isEmpty {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: DS.Space.xs) {
-                    ForEach(Array(bs.keys.sorted()), id: \.self) { k in
-                        let b = bs[k]!
-                        HStack(spacing: DS.Space.xs) {
-                            Text("借用 \(k) · 借给 \(b.by) (还 \(b.due))")
-                                .vkFont(.caption)
-                                .foregroundStyle(DS.Palette.text)
-                                .lineLimit(1)
-                            Button("已归还") {
-                                MemberHub.saveBorrow(mac, itemKey: k, nil)
-                                refreshTick += 1
-                                app.showToast("已销记归还 " + k)
-                            }
-                            .vkFont(.caption, weight: .medium)
-                            .foregroundStyle(DS.Palette.accentText)
-                            .frame(minHeight: DS.Hit.min)
-                            .contentShape(Capsule())
-                        }
-                        .padding(.horizontal, DS.Space.s)
-                        .padding(.vertical, DS.Space.xs)
-                        .variantCallout(DS.Palette.warn, .capsule, wash: 0.12)
-                        .overlay(Capsule().strokeBorder(DS.Palette.hairline, lineWidth: 0.5))
-                    }
-                }
-                .padding(.horizontal, DS.Space.gutter)
-            }
-        }
-    }
 
     // ---------- 577 详情跳凭证定位 (包9): 记录/告警详情"来源凭证"深链 → 高亮条 + 打开对应详情 ----------
     @ViewBuilder
@@ -282,11 +204,6 @@ struct CredentialsView: View {
         guard let p = app.pendingCredPanel else { return }
         app.pendingCredPanel = nil
         switch p {
-        case "bin":
-            binQuery = ""   // 532: 只有「去回收站搜」那个动作才带词, 通知落地那条路不带
-            showBin = true
-        case "queue": showQueue = true
-        case "organize", "expired": showOrganize = true
         default: app.showToast("已跳到凭证页")
         }
     }
@@ -412,17 +329,8 @@ struct CredentialsView: View {
                         }
                     }
                     Section("筛选") {
-                        Button("默认 (全部)") { smartSel = "" }
-                        ForEach(CredentialOrg.smartLists(mac)) { l in
-                            Button(CredentialOrg.smartListLabel(l)) { smartSel = l.id }
-                        }
-                        Button("新建智能列表…") { newSmartList() }
-                        Button("管理智能列表") { manageSmartLists() }
                     }
                     Section("整理") {
-                        Button { showOrganize = true } label: {
-                            Label("整理建议", systemImage: "rectangle.3.offgrid")
-                        }
                         if !editMode && !showCalendar && CredentialOrg.typeCounts(mac).all > 0 {
                             Button {
                                 sorting.toggle()
@@ -591,7 +499,6 @@ struct CredentialsView: View {
             stockSection
             dueSoonBanner
             otpStockHint
-            archivedStrip
             if memberView {
                 memberSections
             } else {
@@ -659,12 +566,6 @@ struct CredentialsView: View {
                             .vkFont(.footnote)
                             .foregroundStyle(DS.Palette.textSub)
                         HStack(spacing: DS.Space.s) {
-                            Button {
-                                binQuery = search.trimmingCharacters(in: .whitespaces)
-                                showBin = true
-                            } label: {
-                                Label("去回收站搜", systemImage: "magnifyingglass.circle")   // 503 去回收站搜
-                            }
                             .vkFont(.caption)
                             .buttonStyle(.bordered)
                             .accessibilityLabel("带着 \(search) 去回收站搜")   // 503 带着
@@ -889,15 +790,6 @@ struct CredentialsView: View {
         if seg == 1 || seg == 3 {
             pwds = pwds.filter { seg == 3 ? $0.temp : !$0.temp }
         }
-        if let l = CredentialOrg.smartLists(mac).first(where: { $0.id == smartSel }), l.kind != "fp" {
-            pwds = pwds.filter { p in
-                if l.owner != "", p.owner != l.owner { return false }
-                if !l.state.isEmpty, CredentialOrg.stateString(CredentialOrg.pwdState(p)) != l.state { return false }
-                if l.tag == "stale" { return p.at > 0 && CredentialOrg.nowSec - p.at / 1000 > 365 * 86400 }
-                if l.tag == "noowner" { return p.owner == nil }
-                return true
-            }
-        }
         // 460 归档成员不参与当前显示 (与成员名册/记录过滤口径一致); 只作用展示层,
         // seqBasePwds 仍是全量 — 归档者留下的手排序不能被展示过滤改写。
         // 2026-10-15 走查 (性能): 原写法在 filter 闭包里逐条 MemberHub.ext/isArchived (每条一次全量解码);
@@ -1029,15 +921,6 @@ struct CredentialsView: View {
         Section {
             CredStudioEntryView()   // 包5 凭证工坊 (177 扇出: 密码/临时码/指纹/OTP 四类)
             NavigationLink { AddPwdView(embedded: true) } label: { Label("添加密码", systemImage: "plus") }
-            NavigationLink { CredBinView(mac: mac) } label: {
-                Label("回收站 (\(CredentialOrg.bin(mac).count))", systemImage: "trash")
-            }
-            NavigationLink { CredHistoryListView(mac: mac) } label: {
-                Label("版本历史与整理", systemImage: "clock.arrow.circlepath")   // 487/358 版本历史与整理
-            }
-            Button { showCredCenter = true } label: {
-                Label("凭证中心 (队列/整理)", systemImage: "tray.full")
-            }
         }
     }
 
@@ -1059,16 +942,6 @@ struct CredentialsView: View {
 
     private func segFilteredFps() -> [LedgerFp] {
         var fps = DB.listFps(mac)
-        if let l = CredentialOrg.smartLists(mac).first(where: { $0.id == smartSel }), l.kind == "fp" {
-            fps = fps.filter {
-                if l.owner != "", $0.owner != l.owner { return false }
-                if l.tag == "noowner" { return $0.owner == nil }
-                // 「添加超一年」这一档此前**只接在密码段**：指纹侧没有对应分支 ⇒ 芯片被无声忽略，
-                // 选它等于没选 (显示全部指纹)。单位与密码侧同 (LedgerFp.at 是 epoch 毫秒)。
-                if l.tag == "stale" { return $0.at > 0 && CredentialOrg.nowSec - $0.at / 1000 > 365 * 86400 }
-                return true
-            }
-        }
         // 460 归档成员的口令/指纹不进当前显示; seqBaseFps 保持全量 (同上)
         // 2026-10-15 走查 (性能): 同 segFilteredPwds — 集合一次取, 闭包内 Set 查。
         let memberArchived = MemberHub.archivedIDs()
@@ -1498,9 +1371,6 @@ struct CredentialsView: View {
                 app.showToast(on ? "已归档 — 列表顶部归档区可还原" : "已移出归档")
                 reload()
             }
-            Button("历史 (\(CredentialOrg.history(mac, "pwd", p.alias).count))") {
-                histItem = HistItem(kind: "pwd", key: p.alias)
-            }
             Divider()
             Button("停用 (本地, 锁端待处理)", role: .destructive) { disablePwd(p) }
             Button("彻底删除", role: .destructive) { deletePwd(p) }   // 670 彻底删除
@@ -1514,9 +1384,6 @@ struct CredentialsView: View {
             }
             Button("添加备注") { editNote(fp: f) }
             Menu("归属到成员") { ownerMenu(isPwd: false, key: f.batch) }
-            Button("历史 (\(CredentialOrg.history(mac, "fp", f.batch).count))") {
-                histItem = HistItem(kind: "fp", key: f.batch)
-            }
             Button(hit.pinned ? "取消置顶" : "置顶") {
                 CredentialOrg.toggleStar(mac, "fp", f.batch)
             }
@@ -1860,33 +1727,6 @@ struct CredentialsView: View {
     /// 旧写法把 Pick 放函数体里、勾一次整条向导重启, 勾选和名称全丢; 提成引用类型后条件层只重建自己。
     final class SmartPick { var chosen: Set<String> = [] }
 
-    private func newSmartList(pick: SmartPick = SmartPick(), named: String = "", owner: String = "") {
-        let alert = UIAlertController(title: "新建智能列表", message: "把常用筛选组合存为命名快捷", preferredStyle: .alert)   // 527 新建智能列表
-        alert.addTextField { $0.placeholder = "名称 (如: 已过期访客)"; $0.text = named }
-        // 527: 属主可选。筛选 (:890/:1054) 是**成员 id 精确匹配**, 手输姓名在这里解析成 id;
-        // 空 = 全部属主。解析不到会退回这一步 (保留已勾条件, 免得存出一条永远 0 命中的列表)
-        alert.addTextField { $0.placeholder = "属主 (可选: 成员 id 或姓名)"; $0.text = owner }
-        alert.addAction(UIAlertAction(title: "下一步", style: .default) { _ in
-            let name = (alert.textFields?.first?.text ?? "").trimmingCharacters(in: .whitespaces)
-            guard !name.isEmpty else { app.showToast("起个名字"); return }
-            let raw = (alert.textFields?.dropFirst().first?.text ?? "").trimmingCharacters(in: .whitespaces)
-            var ownerID = ""
-            if !raw.isEmpty {
-                if DB.member(raw) != nil {
-                    ownerID = raw
-                } else if let m = DB.members().first(where: { $0.name == raw }) {
-                    ownerID = m.id
-                } else {
-                    app.showToast("没找到成员「\(raw)」: 属主按成员 id 或姓名对上才行, 请重填")
-                    newSmartList(pick: pick, named: name, owner: raw)
-                    return
-                }
-            }
-            UIApplication.topViewController()?.present(smartSheet(pick, name: name, owner: ownerID), animated: true)
-        })
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-        UIApplication.topViewController()?.present(alert, animated: true)
-    }
 
     /// 527 条件多选层: 勾选只重建这一层, 名称/属主不再重问
     private func smartSheet(_ pick: SmartPick, name: String, owner: String) -> UIAlertController {
@@ -1913,25 +1753,10 @@ struct CredentialsView: View {
             let l = CredSmartList(id: UUID().uuidString, name: name, kind: kind, owner: owner, state: state, tag: tag)
             lists.append(l)
             CredentialOrg.saveSmartLists(mac, lists)
-            smartSel = l.id
             app.showToast("已套用智能列表「\(name)」")
         })
         sheet.addAction(UIAlertAction(title: "取消", style: .cancel))
         return sheet
-    }
-    private func manageSmartLists() {
-        let lists = CredentialOrg.smartLists(mac)
-        guard !lists.isEmpty else { app.showToast("还没有智能列表"); return }
-        let alert = UIAlertController(title: "管理智能列表", message: nil, preferredStyle: .actionSheet)   // 527 管理智能列表
-        for l in lists {
-            // 删除是不可逆动作: 菜单里给全标签 (名称 · 属主 · 状态) 才认得出删的是哪一条
-            alert.addAction(UIAlertAction(title: "删除「\(CredentialOrg.smartListLabel(l))」", style: .destructive) { _ in
-                CredentialOrg.saveSmartLists(mac, lists.filter { $0.id != l.id })
-                if smartSel == l.id { smartSel = "" }
-            })
-        }
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-        UIApplication.topViewController()?.present(alert, animated: true)
     }
 
     /// 363 月历点日 → 落到当日到期清单 (App 内滚动到位)
@@ -2199,46 +2024,6 @@ struct CredentialsView: View {
 
     /// 354 归档区: 归档 = 收起不删 — 与停用 (锁端待处理) / 彻底删除 (670) 是三个不同档, 这里只碰展示层。
     /// 单条与全部两种还原都在这里; 搜索路径里归档条目仍可见, 它的还原入口在条目长按菜单的「移出归档」。
-    @ViewBuilder
-    private var archivedStrip: some View {
-        // 2026-10-15 走查 (性能): 同上 — 集合一次取, 闭包内 Set 查 (原 N 条 = N 次全量解码)。
-        let archSet = CredentialOrg.archived(mac)
-        let ap = DB.listPwds(mac).filter { archSet.contains($0.alias) }
-        let af = DB.listFps(mac).filter { archSet.contains(100000 + $0.batch) }
-        if !ap.isEmpty || !af.isEmpty {
-            Section {
-                DisclosureGroup {
-                    ForEach(ap, id: \.alias) { p in
-                        archRow(title: p.temp ? "临时码 #\(p.alias)" : "密码 #\(p.alias)",
-                                owner: p.owner) {
-                            CredentialOrg.setArchived(mac, "pwd", p.alias, false)
-                            app.showToast("已还原到列表")
-                            reload()
-                        }
-                    }
-                    ForEach(af, id: \.batch) { f in
-                        archRow(title: "指纹 · \(f.name)", owner: f.owner) {
-                            CredentialOrg.setArchived(mac, "fp", f.batch, false)
-                            app.showToast("已还原到列表")
-                            reload()
-                        }
-                    }
-                    Button("全部还原") {   // 354 全部还原
-                        CredentialOrg.unarchiveAll(mac)
-                        app.showToast("归档已全部还原")
-                        reload()
-                    }
-                    .vkFont(.footnote)
-                    .buttonStyle(.borderless)
-                } label: {
-                    Text("归档区 · \(ap.count + af.count) 条 — 收起不删, 随时可还原")   // 354 归档区
-                        .vkFont(.footnote)
-                        .foregroundStyle(DS.Palette.textSub)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-        }
-    }
     @ViewBuilder
     private func archRow(title: String, owner: String?, restore: @escaping () -> Void) -> some View {
         HStack(spacing: DS.Space.s) {
@@ -2657,11 +2442,6 @@ struct CredentialsView: View {
 }
 
 /// 487 历史页路由载荷 (contextMenu 里只能存值, 元组不满足 Identifiable)
-struct HistItem: Identifiable, Hashable {
-    var kind: String
-    var key: Int
-    var id: String { kind + ":" + String(key) }
-}
 
 // ================= 全局弹窗助手 (各页面共用, 不再各写一份) =================
 // 破坏性确认: 取消 / 标红确认

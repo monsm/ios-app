@@ -56,18 +56,6 @@ enum Route: String, CaseIterable, Identifiable {
         }
     }
 
-    /// 域的一句话说明。
-    /// **用户此刻想干的事**分，不按代码实现归属）。
-    /// 与 `title` 同一处声明是刻意的：平铺档的三行条目、浮层切换带、无障碍提示语三处都用它，
-    /// 各写一份必然漂移。
-    var domainNote: String {
-        switch self {
-        case .device: return "与任何一把锁无关 · 本机与隐私"
-        case .credentials: return "谁能开门"
-        case .records: return "这一把锁发生过什么"
-        case .settings: return "这一把锁怎么行为"
-        }
-    }
 
     /// kf:// 的 host 白名单。**由 byHost 派生**，不再手写一张 `["device":0, ...]`。
     static var deepLinkHosts: [String: Int] {

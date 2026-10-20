@@ -33,7 +33,6 @@ struct RecordsView: View {
     @State private var reconLine = ""     // 749 对账结果一行 (可复制, 供发给管理员/记进工单)
     @State private var sel = "" // '' 全部 / 成员id / __unknown
     @State private var showAdd = false
-    @State private var showGratitude = false   // 1045 感谢清单
     @State private var showExport = false      // 包12 导出中心
     @State private var showStats = false       // 包10 统计
     // 716 选区导出: 按天整组勾选 (行级多选不做 —— 一页上千行, 逐行勾选的手势成本远高于按天勾)
@@ -50,7 +49,6 @@ struct RecordsView: View {
     /// 2026-10-18: 低频区是否展开。默认收起。
     @State private var secondaryRowsExpanded = false
     @State private var reversed = false       // 570 正序回放
-    @State private var laneMode = false       // 785 泳道时间线 (全部锁模式)
     @State private var detailRec: Rec?        // 576 记录详情 sheet
     // 586 当天全景 / 583 结果定位高亮 —— 两个都是"从别处跳进时间线"的落点，用完即清。
     // dayFocus 是**显示范围**的收窄而不是筛选条件: 它不进 QueryFilters、不进 192 会话保留，
@@ -81,8 +79,6 @@ struct RecordsView: View {
     @State private var holMsg = ""
     @State private var holSrcDraft = ""
     @State private var showHolSrc = false
-    @State private var showActiveCreds = false  // 574 活跃凭证排序
-    @State private var showOutWin = false      // 575 越界开门清单
     @State private var travelDismissed = false // 1016 出行观察横幅 (会话内可关)
     @State private var travelUntil = DB.store.getString("kf_travel_until")   // 1016 用户声明的出行结束日 (dayKey)
     @State private var showTravelPick = false                                  // 1016 出行时长选择
@@ -95,7 +91,6 @@ struct RecordsView: View {
     /// 原先这两个数取自 g.rows —— 那是筛过、截过的显示集, 于是每设一次过滤就在谎报"今天只有 3 条"。
     @State private var dayFullCount: [String: Int] = [:]
     @State private var dayLatest: [String: String] = [:]
-    @State private var showSampleGuide = false   // 808 示例条目点开的引导卡
 
     struct RowVM: Identifiable {
         var key: String
@@ -204,7 +199,6 @@ struct RecordsView: View {
             statusBanner
             if offline { jumpBackRow }
             travelBanner
-            streakBanner
             activeLine
             // ─────────────────────────────────────────────────────────────
             // 2026-10-18 重构: 列表前方原来叠了 **14 个区** ——
@@ -285,16 +279,12 @@ struct RecordsView: View {
         }
         ToolbarItem(placement: .navigationBarTrailing) {
             Menu {
-                Button { showGratitude = true } label: { Label("感谢清单", systemImage: "heart.text.square") }
                 if app.current != nil {
                     Button { showExport = true } label: { Label("导出与分享", systemImage: "square.and.arrow.up.on.square") }
                     Button { showStats = true } label: { Label("统计与图表", systemImage: "chart.bar") }
                     Button { copyLastWeekDigest() } label: { Label("复制上周小结", systemImage: "doc.on.clipboard") }   // 698 复制上周小结
                     Button { showRangePick = true } label: { Label("选区导出", systemImage: "checklist") }   // 716 选区导出
-                    Button { showActiveCreds = true } label: { Label("活跃凭证排序 (约)", systemImage: "list.number") }
-                    Button { showOutWin = true } label: { Label("越界开门清单 (约)", systemImage: "clock.badge.exclamationmark") }
                     if scope == 1 {
-                        VariantToggle("泳道时间线", isOn: $laneMode)   // 785 泳道时间线
                     }
                 }
             } label: {
@@ -309,18 +299,15 @@ struct RecordsView: View {
         recordsChrome
     }
 
-    /// 记录页三选一 (无锁占位 / 泳道 / 主体列表) —— 从 recordsCore 拆出: 该表达式报 type-check 超时
+    /// 记录页二选一 (无锁占位 / 主体列表) —— 从 recordsCore 拆出: 该表达式报 type-check 超时
     @ViewBuilder
     private var recordsGroup: some View {
         if app.current == nil {
             noLockPlaceholder
-        } else if laneMode && scope == 1 {
-            laneView   // 785 泳道时间线 (全部锁模式简化案)
         } else {
             mainList
         }
     }
-
     /// 记录页核心内容 (Group + 页面级修饰符) —— 从巨型 body 拆出: 原表达式报 type-check 超时
     @ViewBuilder
     private var recordsCore: some View {
@@ -387,7 +374,6 @@ struct RecordsView: View {
             filters = QueryFilters()
             reversed = false
             expandedMerged = []
-            if s == 0 { laneMode = false }
             applyFilter()
         }
         .onChange(of: filters) { applyFilter() }
@@ -407,9 +393,7 @@ struct RecordsView: View {
             recordsCore
         }
         .sheet(isPresented: $showAdd) { AddDeviceView() }
-        .sheet(isPresented: $showGratitude) { GratitudeView() }
         // 808 示例条目点开的引导卡: "在本页重新读取"走的就是右上角那一条 fetch 链, 不另开第二条读取路径。
-        .sheet(isPresented: $showSampleGuide) { RecordsSampleGuideView(onFetch: { Task { await fetch() } }) }
         // 185/597 行备注弹窗: 前缘(597)与后缘(185)两个滑出都把目标装进 noteTarget, 共用这一只
         .alert("行备注 (最多 60 字)", isPresented: Binding(
             get: { noteTarget != nil },
@@ -428,10 +412,8 @@ struct RecordsView: View {
         .sheet(isPresented: $showStats) {
             if app.current != nil { StatsView(mac: app.current!.mac) }
         }
-        .sheet(isPresented: $showActiveCreds) { ActiveCredsSheet() }
         // 565 告警类型多选: 选中集直接写回 filters (走既有 onChange(of: filters) → applyFilter)
         .sheet(isPresented: $showAlarmKinds) { AlarmKindsSheet(sel: $filters.alarmKinds) }
-        .sheet(isPresented: $showOutWin) { OutWinSheet() }
         .sheet(isPresented: $showAlarmCenter) {
             // 735 未处置角标: 从告警中心处置回来重算角标
             AlarmCenterView().onDisappear { alarmTick += 1 }
@@ -874,20 +856,6 @@ struct RecordsView: View {
                     }
                     .accessibilityLabel("切换当前锁，当前为 \(app.displayName)")
                 }
-                if scope == 1 {
-                    Button { laneMode.toggle() } label: {
-                        Label(laneMode ? "看时间线" : "泳道", systemImage: "rectangle.split.3x1")   // 785 泳道
-                            .vkFont(.caption, weight: .medium)
-                            .foregroundStyle(DS.Palette.accentText)
-                            .padding(.horizontal, DS.Space.s)
-                            .padding(.vertical, DS.Space.xs)
-                            .variantPlate(DS.Palette.accentText.opacity(0.10), .capsule)
-                            .frame(minHeight: DS.Hit.min)
-                            .contentShape(Capsule())
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    .accessibilityLabel(laneMode ? "切回时间线" : "打开泳道时间线")
-                }
                 Spacer(minLength: 0)
             }
             .frame(minHeight: DS.Hit.min)
@@ -1192,21 +1160,6 @@ struct RecordsView: View {
     // ---------- 顶部情绪行 ----------
     /// 975 管家连续天数
     @ViewBuilder
-    private var streakBanner: some View {
-        let s = Milestones.streak()
-        if s.cur >= 1 {
-            Section {
-                Label {
-                    Text(s.cur > 1 ? "管家连续 \(s.cur) 天 · 最佳 \(s.best) 天" : "管家第 1 天, 明天也要来")
-                        .fixedSize(horizontal: false, vertical: true)
-                } icon: {
-                    Image(systemName: "flame.fill").accessibilityHidden(true)
-                }
-                .vkFont(.caption)
-                .foregroundStyle(DS.Palette.accentText)
-            }
-        }
-    }
 
     /// 590 连续活跃行 + 断档灰点 (近 7 天; 从 allRows 取, 断档是事实不该被过滤搬走)
     private var openDaySet: Set<String> {
@@ -2426,7 +2379,6 @@ struct RecordsView: View {
                     HStack(spacing: DS.Space.s) {
                         Button("连接设备") { app.requestRoute(.device) }
                             .buttonStyle(PrimaryActionStyle())
-                        Button("了解这里记什么") { showSampleGuide = true }
                             .buttonStyle(SecondaryActionStyle(fullWidth: false))
                     }
                     Text("下面三条是示例, 只说明真实记录读进来长什么样 · 点一条看怎么开始")   // 808 下面三条是示例
@@ -2436,13 +2388,6 @@ struct RecordsView: View {
                     ForEach(0..<3, id: \.self) { i in
                         sampleRow(i)
                     }
-                    // 845 空态直通生成器 (此前只在帮助中心演练场): 口径与 HelpCenter 一致, 不另造按钮语义
-                    Button("生成 7 天示例记录") {   // 845 生成
-                        DemoKit.generateSevenDaySamples()
-                        app.loadDevices()
-                        app.showToast("已生成 7 天 demo_ 样例记录, 顶部横幅可一键清除")
-                    }
-                    .vkFont(.footnote)
                 }
                 .padding(.vertical, DS.Space.m)
             }
@@ -2457,7 +2402,7 @@ struct RecordsView: View {
         let clock = i == 0 ? "08:12" : (i == 1 ? "18:20" : "23:47")
         let word = i == 0 ? "用指纹开了门" : (i == 1 ? "用一次性密码开门" : "键盘被锁定")
         let alarm = i == 2
-        return Button { showSampleGuide = true } label: {
+        return VStack(alignment: .leading) {
             HStack(alignment: .top, spacing: DS.Space.m) {
                 Text(clock)
                     .vkFont(.caption.monospacedDigit())
@@ -2619,99 +2564,6 @@ struct RecordsView: View {
         .accessibilityAddTraits(on ? .isSelected : [])
     }
 
-    // ---------- 785 泳道时间线 (全部锁简化案): 按锁分组的平行小点阵, 同日水平对齐 ----------
-    private var laneView: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: DS.Space.m) {
-                Text("泳道时间线: 最近 14 天 × 各锁的开门量, 点阵越密越热闹")   // 785 泳道时间线
-                    .vkFont(.footnote)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-                ForEach(laneDays) { day in
-                    laneRow(day)
-                }
-            }
-            .padding(.horizontal, DS.Space.l)
-            .padding(.vertical, DS.Space.m)
-        }
-        .dsScreenBackground()
-    }
-    struct LaneDay: Identifiable {
-        var key: String
-        var cells: [(name: String, count: Int, alarm: Bool)]
-        var id: String { key }
-    }
-    private var laneDays: [LaneDay] {
-        let allMacs = DB.keychains().map { $0.mac }
-        var names: [String: String] = [:]
-        for kc in DB.keychains() { names[kc.mac] = LockArchive.displayName(kc) }
-        var byDay: [String: [String: (n: Int, a: Int)]] = [:]
-        for m in allMacs {
-            for l in DB.readLogs(m) {
-                guard let d = StatsKit.dateOf(l) else { continue }
-                let k = Self.dayKey(d)
-                var dict = byDay[k] ?? [:]
-                var e = dict[m] ?? (n: 0, a: 0)
-                if StatsKit.openTypes.contains(l.type) { e.n += 1 }
-                if StatsKit.alarmTypes.contains(l.type) { e.a += 1 }
-                dict[m] = e
-                byDay[k] = dict
-            }
-        }
-        var out: [LaneDay] = []
-        let cal = WeekCal.gregorian
-        let today = cal.startOfDay(for: Date())
-        for i in 0..<14 {
-            let d = cal.date(byAdding: .day, value: -i, to: today)!
-            let k = Self.dayKey(d)
-            let cells = allMacs.map { m -> (name: String, count: Int, alarm: Bool) in
-                (names[m] ?? m, byDay[k]?[m]?.n ?? 0, (byDay[k]?[m]?.a ?? 0) > 0)
-            }
-            out.append(LaneDay(key: k, cells: cells))
-        }
-        return out
-    }
-    private func laneRow(_ day: LaneDay) -> some View {
-        let hasAlarm = day.cells.contains { $0.alarm }
-        return HStack(spacing: DS.Space.s) {
-            Text(dayLabel(day.key))
-                .vkFont(.caption.monospacedDigit())
-                .foregroundStyle(DS.Palette.textSub)
-                .frame(width: 64, alignment: .trailing)
-            HStack(spacing: DS.Space.xs + 2) {
-                ForEach(Array(day.cells.enumerated()), id: \.offset) { _, c in
-                    // 2026-10-13 run 63: 单元格内容抽成 laneCell —— 内联时整个 laneRow 报 type-check 超时。
-                    laneCell(name: c.name, count: c.count, alarm: c.alarm)
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, DS.Space.xs)
-        .background(hasAlarm ? DS.Palette.danger.opacity(0.05) : Color.clear,
-                    in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
-    }
-
-    /// 638/747 泳道单元格 (从 laneRow 抽出: 巨型表达式报 type-check 超时)
-    @ViewBuilder
-    private func laneCell(name: String, count: Int, alarm: Bool) -> some View {
-        let dots = min(count / 2, 8)
-        HStack(spacing: DS.Space.xs) {
-            ForEach(0..<max(dots, 0), id: \.self) { _ in
-                Circle()
-                    .fill(alarm ? DS.Palette.danger : DS.Palette.accent)
-                    .frame(width: 6, height: 6)
-                    .accessibilityHidden(true)
-            }
-            if count > 0 {
-                Text("×" + String(count))
-                    .vkFont(.caption2)
-                    .lineLimit(1)
-                    .foregroundStyle(alarm ? DS.Palette.danger : DS.Palette.textSub)
-            }
-        }
-        .frame(minWidth: 52, alignment: .leading)
-        .accessibilityLabel(name + " 当日 " + String(count) + " 次开门" + (alarm ? ", 含告警" : ""))
-    }
 
     // ---------- 数据 ----------
     /// 进页收尾 —— 2026-10-13 run 63 从 body 内联的 .onAppear 闭包里抽出 (巨型 body 里那段报 type-check 超时)。
@@ -3512,281 +3364,8 @@ struct AlarmKindsSheet: View {
 }
 
 // ---------- 包9/574 活跃凭证排序 (台账近 30 天推断, 一律标"约") ----------
-struct ActiveCredsSheet: View {
-    @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
-    var body: some View {
-        NavigationStack {
-            List {
-                Section {
-                    if app.current == nil {
-                        Text("还没有添加门锁。")
-                            .vkFont(.footnote)
-                            .foregroundStyle(DS.Palette.textSub)
-                    } else {
-                        ForEach(Array(RecordSearch.activeCredentials(mac: app.current!.mac).enumerated()), id: \.offset) { i, c in
-                            HStack(spacing: DS.Space.s) {
-                                Image(systemName: Self.icon(c.kind))
-                                    .font(.system(size: DS.Icon.sm))
-                                    .foregroundStyle(DS.Palette.accentText)
-                                    .accessibilityHidden(true)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(c.word + " (约)")
-                                        .vkFont(.subheadline, weight: .medium)
-                                        .foregroundStyle(DS.Palette.text)
-                                    Text("近 30 天约 " + String(c.count) + " 次开门")
-                                        .vkFont(.caption)
-                                        .foregroundStyle(DS.Palette.textSub)
-                                }
-                                Spacer(minLength: 0)
-                                Text("#" + String(i + 1))
-                                    .vkFont(.caption.monospacedDigit())
-                                    .foregroundStyle(DS.Palette.textSub)
-                            }
-                            .accessibilityElement(children: .combine)
-                        }
-                        Text("口径: 近 30 天开门日志按凭证类计次 (台账推断, 标「约」)。")
-                            .vkFont(.caption)
-                            .foregroundStyle(DS.Palette.textSub)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                } header: {
-                    Text("活跃凭证排序")   // 574 活跃凭证排序
-                }
-            }
-            .navigationTitle("活跃凭证")
-            .variantList()
-            .dsScreenBackground()
-            .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
-        }
-    }
-    private static func icon(_ kind: String) -> String {
-        switch kind {
-        case "fp": return "fingerprint"
-        case "pwd": return "number"
-        case "temp": return "timer"
-        default: return "key"
-        }
-    }
-}
 
 // ---------- 包9/575 越界开门清单 (本地检测, 窗口为台账 from/to, 一律标"约") ----------
-struct OutWinSheet: View {
-    @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
-    var body: some View {
-        NavigationStack {
-            List {
-                Section {
-                    let wins = RecordSearch.outOfWindow(macs: DB.keychains().map { $0.mac })
-                    if wins.isEmpty {
-                        Text("没有越界开门 — 临时码都在窗口内使用 (约)。")
-                            .vkFont(.footnote)
-                            .foregroundStyle(DS.Palette.textSub)
-                    }
-                    ForEach(wins, id: \.rec.id) { w in
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack(spacing: DS.Space.s) {
-                                Text(w.rec.lockName)
-                                    .vkFont(.caption2, weight: .medium)
-                                    .lineLimit(1)
-                                    .foregroundStyle(DS.Palette.accentText)
-                                    .padding(.horizontal, DS.Space.s)
-                                    .padding(.vertical, 2)
-                                    .variantPlate(DS.Palette.accentText.opacity(0.10), .capsule)
-                                Text(w.rec.timeStr)
-                                    .vkFont(.footnote.monospacedDigit())
-                                    .foregroundStyle(DS.Palette.text)
-                            }
-                            Text("临时码窗口 " + w.window + " 外仍产生开门 — 约越界")   // 575 外仍产生开门
-                                .vkFont(.caption)
-                                .foregroundStyle(DS.Palette.warn)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                        .padding(.vertical, 2)
-                        .accessibilityElement(children: .combine)
-                    }
-                } header: {
-                    Text("越界开门清单 (约)")
-                } footer: {
-                    Text("口径: 临时码台账生效区间之外仍出现一次性密码开门 (本地检测, 时刻为锁端时间)。")
-                        .vkFont(.caption)
-                        .foregroundStyle(DS.Palette.textSub)
-                }
-            }
-            .navigationTitle("越界开门")
-            .variantList()
-            .dsScreenBackground()
-            .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
-        }
-    }
-}
 
 // ---------- 1045 感谢清单 (本地按月留存, 可生成感谢卡文本) ----------
-struct GratitudeView: View {
-    @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
-    @State private var names: [String] = []
-    @State private var input = ""
 
-    var body: some View { vkBody.destined(.gratitude) }
-    var vkBody: some View {
-        NavigationStack {
-            List {
-                Section {
-                    HStack(spacing: DS.Space.m) {
-                        TextField("本月想感谢谁?", text: $input)
-                            .submitLabel(.done)
-                            .onSubmit(add)
-                        Button("添加", action: add)
-                            .buttonStyle(SecondaryActionStyle(fullWidth: false))
-                            .disabled(input.trimmingCharacters(in: .whitespaces).isEmpty)
-                    }
-                } header: {
-                    Text("本月感谢清单")
-                } footer: {
-                    Text("记下这个月为这扇门出过力的人, 全部只存在本机。")
-                }
-                Section {
-                    if names.isEmpty {
-                        Text("还没有记录, 从一句谢谢开始。")
-                            .vkFont(.footnote)
-                            .foregroundStyle(DS.Palette.textSub)
-                    }
-                    ForEach(names, id: \.self) { n in
-                        HStack(spacing: DS.Space.s) {
-                            Image(systemName: "heart.fill")
-                                .font(.system(size: DS.Icon.sm))
-                                .foregroundStyle(DS.Palette.danger)
-                                .accessibilityHidden(true)
-                            Text(n)
-                                .vkFont(.subheadline)
-                                .foregroundStyle(DS.Palette.text)
-                            Spacer(minLength: 0)
-                        }
-                        .swipeActions {
-                            Button(role: .destructive) {
-                                Milestones.removeGratitude(n)
-                                reload()
-                            } label: { Label("移除", systemImage: "trash") }
-                        }
-                    }
-                }
-                if !names.isEmpty {
-                    Section {
-                        Button {
-                            UIPasteboard.general.string = "本月想感谢: " + names.joined(separator: "、")
-                                + "。谢谢你, 把家管得有人情味。"
-                            app.showToast("感谢卡已复制")
-                        } label: {
-                            Label("生成感谢卡 (复制文本)", systemImage: "doc.on.doc")
-                                .frame(minHeight: DS.Hit.min)
-                        }
-                    }
-                }
-            }
-            .navigationTitle("感谢清单")
-            .variantList()
-            .dsScreenBackground()
-            .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
-            .onAppear(perform: reload)
-        }
-    }
-    private func add() {
-        Milestones.addGratitude(input)
-        input = ""
-        reload()
-    }
-    private func reload() { names = Milestones.gratitude() }
-}
-
-// ---------- 808 记录空态的「真实数据从这里开始」引导卡 ----------
-/// 从示例条目点进来。这一页只说三件能核的事: ① 刚才那三条是示例不是数据; ② 记录存在门锁自己的日志里;
-/// ③ 把它变成真行要做的动作。两个按钮都是真出口: 「在本页重新读取」调 RecordsView 既有的 fetch 链
-/// (与右上角那枚刷新同一个函数, 不另开第二条读取路径), 「去设备页连接门锁」走 136 那条同一个 tab 出口。
-/// 这里不写"左滑 / 长按 / 自动同步"这类本页根本没有的热区。
-struct RecordsSampleGuideView: View {
-    @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
-    var onFetch: () -> Void = {}
-
-    var body: some View { vkBody.destined(.recordsSampleGuide) }
-    var vkBody: some View {
-        NavigationStack {
-            List {
-                Section {
-                    Text("刚才那三条是示例, 只说明真实记录读进来长什么样。这个家的一次开门、一次告警, 都会成为这样的一行。")
-                        .vkFont(.footnote)
-                        .foregroundStyle(DS.Palette.text)
-                        .fixedSize(horizontal: false, vertical: true)
-                } header: {
-                    Text("真实数据从这里开始")   // 808 真实数据从这里开始
-                }
-                Section {
-                    stepRow(1, "带着手机走到门锁前, 让蓝牙能连上它。")
-                    stepRow(2, "点下面的「在本页重新读取」, 或先到设备页连接门锁再读。")
-                    stepRow(3, "读到的开门与操作记录会替掉这三条示例, 按天分组排在最上面。")
-                } header: {
-                    Text("三步把记录读进来")
-                } footer: {
-                    Text("记录存在门锁自己的日志里, 只有连上锁去读才会出现在这一页; 示例条目是本机画出的形状, "
-                         + "不会进统计、导出与告警, 也不会替你编出任何一次开门。")
-                        .vkFont(.caption2)
-                        .foregroundStyle(DS.Palette.textSub)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Section {
-                    Button {
-                        dismiss()
-                        onFetch()
-                    } label: {
-                        Label("在本页重新读取", systemImage: "arrow.clockwise")
-                            .vkFont(.subheadline, weight: .medium)
-                            .foregroundStyle(DS.Palette.accentText)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .frame(minHeight: DS.Hit.min)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    Button {
-                        dismiss()
-                        app.requestRoute(.device)
-                    } label: {
-                        Label("去设备页连接门锁", systemImage: "lock.rotation")
-                            .vkFont(.subheadline, weight: .medium)
-                            .foregroundStyle(DS.Palette.accentText)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .frame(minHeight: DS.Hit.min)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    .accessibilityHint("切到设备页, 在那里连接这把锁")   // 136 切到设备页
-                } header: {
-                    Text("现在就试")
-                }
-            }
-            .navigationTitle("记录空态")   // 808 记录空态
-            .variantList()
-            .dsScreenBackground()
-            .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
-        }
-    }
-
-    private func stepRow(_ n: Int, _ text: String) -> some View {
-        HStack(alignment: .top, spacing: DS.Space.s) {
-            Text(String(n))
-                .vkFont(.caption.monospacedDigit(), weight: .semibold)
-                .foregroundStyle(DS.Palette.onAccent)
-                .frame(width: 20, height: 20)
-                .background(DS.Palette.accent, in: Circle())
-                .accessibilityHidden(true)
-            Text(text)
-                .vkFont(.footnote)
-                .foregroundStyle(DS.Palette.text)
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 0)
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("第 \(n) 步, " + text)
-    }
-}

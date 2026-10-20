@@ -17,12 +17,6 @@ enum LockGuard {
     private static let coolCapSec = 600.0
     private static let traceCap = 50
 
-    // ---------- 389 失败递增冷却 ----------
-    /// 剩余冷却秒数; 0 = 可以接受下一次输入
-    static func cooldownLeft(now: Date = Date()) -> Double {
-        let until = DB.store.get(Double.self, SecKey.lockUntil) ?? 0
-        return max(0, until - now.timeIntervalSince1970)
-    }
     /// 冷却档位是否启用 (关时不锁, 但仍累计连败数供 392/877 用)
     static var cooldownEnabled: Bool { DB.store.getBool(SecKey.lockCoolOn) }
 
@@ -40,41 +34,7 @@ enum LockGuard {
             appendTrace("应用锁\(how)验证失败 第\(n)次 (冷却开关未开)")
         }
     }
-    static func resetStreak() {
-        DB.store.remove(SecKey.lockStreak)
-        DB.store.remove(SecKey.lockUntil)
-    }
 
-    // ---------- 390 伪装码 / 391 胁迫码 / 395 救援码 ----------
-    /// 口令类键位为空时一律不匹配 (否则空输入会被当成"伪装码命中")
-    private static func matches(_ key: String, _ input: String) -> Bool {
-        let saved = DB.store.getString(key)
-        return !saved.isEmpty && !input.isEmpty && saved == input
-    }
-    static func isDecoy(_ input: String) -> Bool {
-        DB.store.getBool(SecKey.decoyOn) && matches(SecKey.decoyCode, input)
-    }
-    static func isDuress(_ input: String) -> Bool {
-        DB.store.getBool(SecKey.duressOn) && matches(SecKey.duressCodeRaw, input)
-    }
-    /// 391 胁迫放行: 只打位与留痕, 界面表现与正常解锁完全一致 (不给翻供者任何可见破绽)
-    static func markDuress(now: Date = Date()) {
-        DB.store.set(SecKey.sessionDuress, true)
-        DB.store.set(SecKey.duressAt, now.timeIntervalSince1970)
-        AuditLog().append(.admin, "应用锁放行", target: "胁迫会话已打标", duress: true)
-    }
-    /// 395 一次性救援码: 命中即消费 (清空), 用第二次不成立
-    static func consumeRescue(_ input: String, now: Date = Date()) -> Bool {
-        // 395: 未点「已手抄」的码不生效 — 卡面写着要手抄, 没确认手抄就还能被使用等于承诺落空
-        guard DB.store.getBool(SecKey.rescueOn), DB.store.getBool(SecKey.rescueSeen),
-              matches(SecKey.rescueCode, input) else { return false }
-        DB.store.remove(SecKey.rescueCode)
-        DB.store.remove(SecKey.rescueSeen)
-        appendTrace("使用一次性救援码进入, 该码已作废")
-        AuditLog().append(.admin, "救援码进入", target: "一次性码已消费清空")
-        _ = now
-        return true
-    }
 
     // ---------- 392 失败留痕 (只存事件, 绝不存输入) ----------
     static func appendTrace(_ s: String, now: Date = Date()) {
@@ -87,9 +47,6 @@ enum LockGuard {
         if list.count > traceCap { list = Array(list.prefix(traceCap)) }
         DB.store.set(SecKey.traceEvents, list)
     }
-    static func traces() -> [String] { DB.store.get([String].self, SecKey.traceEvents) ?? [] }
-    /// 392: 留痕键位的清写口 (与 traces() 同属本文件, 界面不再自己摸 key)
-    static func clearTraces() { DB.store.set(SecKey.traceEvents, [String]()) }
 
     // ---------- 393 退后台锁定时机 / 394 短时免验 ----------
     /// "" 或未知档位 = 退后台即锁 (最严); m1/m5/next 记锁定到期时刻
@@ -108,27 +65,7 @@ enum LockGuard {
         }
         DB.store.set(bgDeadline, deadline)
     }
-    /// 回前台是否必须重新验证
-    static func shouldLockOnForeground(now: Date = Date()) -> Bool {
-        guard let d = DB.store.get(Double.self, bgDeadline), d > 0 else { return false }
-        DB.store.remove(bgDeadline)
-        if now.timeIntervalSince1970 < d { return false }
-        if DB.store.getBool(SecKey.graceOn) {
-            let g = max(0, Double(DB.store.getInt(SecKey.graceSec)))
-            let last = DB.store.get(Double.self, unlockedAt) ?? 0
-            if now.timeIntervalSince1970 - last <= g { return false }
-        }
-        return true
-    }
 
-    // ---------- 398 会话方式记录 (成功进入时统一写) ----------
-    static func noteSession(how: String, now: Date = Date()) {
-        DB.store.set(SecKey.sessionAt, now.timeIntervalSince1970)
-        DB.store.set(SecKey.sessionHow, how)
-        DB.store.set(unlockedAt, now.timeIntervalSince1970)
-    }
-    /// 真密码/生物识别进入时清掉胁迫打标, 免得一次胁迫会话污染整个进程
-    static func clearDuressMark() { DB.store.set(SecKey.sessionDuress, false) }
     // 2026-10-13 run 63: 原来它是 @MainActor 隔离的 (LockGuard 整个是 @MainActor), 而
     // Store.saveLedger (非隔离) 在写审计链时要读它 ⇒ "main actor-isolated static property
     // 'inDuressSession' can not be referenced from a nonisolated context"。
