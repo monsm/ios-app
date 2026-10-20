@@ -64,7 +64,7 @@ struct AlarmsPage: View {
     private var alarms: [Rec] {
         recs.filter { rec in
             guard rec.alarm else { return false }
-            return !RecordSearch.isFlagged(rec.mac, rec.key)
+            return !RecordOverlay.isFlagged(rec.mac, rec.key)
         }
     }
 
@@ -72,7 +72,7 @@ struct AlarmsPage: View {
     private var handled: [Rec] {
         recs.filter { rec in
             guard rec.alarm else { return false }
-            return RecordSearch.isFlagged(rec.mac, rec.key)
+            return RecordOverlay.isFlagged(rec.mac, rec.key)
         }
     }
 
@@ -185,7 +185,7 @@ struct AlarmsPage: View {
     // ═══════════════════════════════════════════════════════
 
     private func markHandled(_ rec: Rec) {
-        _ = RecordSearch.toggleFlag(rec.mac, rec.key)
+        _ = RecordOverlay.toggleFlag(rec.mac, rec.key)
         XHaptics.trigger.impactOccurred()
         withAnimation(XMotion.soft) {
             // 触发重算
@@ -198,7 +198,7 @@ struct AlarmsPage: View {
     // ═══════════════════════════════════════════════════════
 
     private func levelColor(_ rec: Rec) -> Color {
-        let lvl = RecordSearch.level(rec.type)
+        let lvl = AlarmMeta.level(rec.type)
         switch lvl {
         case 3: return XPalette.danger
         case 2: return XPalette.warn

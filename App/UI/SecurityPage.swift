@@ -28,7 +28,7 @@ import SwiftUI
 struct SecurityPage: View {
     @EnvironmentObject private var app: AppState
 
-    private var risks: [PwdRisk] { CredentialOrg.passwordRisks() }
+    private var risks: [CredentialOrg.PwdRisk] { CredentialOrg.passwordRisks() }
     private var auditBroken: Bool {
         AuditLog().verifyChain().brokenAt >= 0
     }
