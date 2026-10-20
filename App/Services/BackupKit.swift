@@ -466,40 +466,4 @@ enum BackupKit {
         return (imported, overwritten)
     }
 }
-
-// ---------- WebDAV 同步 (JS services/cloudsync.js) ----------
-enum CloudSync {
-    static let remoteURL = "https://dav.jianguoyun.com/dav/%E6%88%91%E7%9A%84%E5%9D%9A%E6%9E%9C%E4%BA%91/zklock-backup.enc"
-    static func basicAuth(_ acct: String, _ app: String) -> String {
-        let raw = Data("\(acct):\(app)".utf8).base64EncodedString()
-        return "Basic \(raw)"
-    }
-    static func push(acct: String, app: String, envelope: String) async throws {
-        var req = URLRequest(url: URL(string: remoteURL)!)
-        req.httpMethod = "PUT"
-        req.timeoutInterval = 20
-        req.setValue(basicAuth(acct, app), forHTTPHeaderField: "Authorization")
-        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.httpBody = Data(envelope.utf8)
-        let (_, resp) = try await URLSession.shared.data(for: req)
-        guard let http = resp as? HTTPURLResponse else { throw DFUError.msg("网络请求失败") }
-        if (200..<300).contains(http.statusCode) { return }
-        if http.statusCode == 401 || http.statusCode == 403 { throw DFUError.msg("账号或应用密码错误 (坚果云需「应用专属密码」)") }
-        if http.statusCode == 507 || http.statusCode == 509 { throw DFUError.msg("坚果云免费额度已满, 请清理或升级") }
-        throw DFUError.msg("上传失败 HTTP \(http.statusCode)")
-    }
-    static func download(acct: String, app: String) async throws -> String? {
-        var req = URLRequest(url: URL(string: remoteURL)!)
-        req.httpMethod = "GET"
-        req.timeoutInterval = 20
-        req.setValue(basicAuth(acct, app), forHTTPHeaderField: "Authorization")
-        let (data, resp) = try await URLSession.shared.data(for: req)
-        guard let http = resp as? HTTPURLResponse else { throw DFUError.msg("网络请求失败") }
-        if http.statusCode == 404 { return nil }
-        guard (200..<300).contains(http.statusCode) else {
-            if http.statusCode == 401 || http.statusCode == 403 { throw DFUError.msg("账号或应用密码错误") }
-            throw DFUError.msg("下载失败 HTTP \(http.statusCode)")
-        }
-        return String(data: data, encoding: .utf8)
-    }
-}
+

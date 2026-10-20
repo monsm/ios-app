@@ -83,9 +83,4 @@ enum AlertTone {
         }
     }
 
-    /// 977-980 成就点亮音 (原先直接裸调 AudioServicesPlaySystemSound(1104)，接进来收敛调用点；
-    /// 它不归 848/733 任何一枚开关管 —— 庆祝音的开关是 15 包那套庆祝预算，不是提示音)
-    static func achievement() {
-        AudioServicesPlaySystemSound(idSuccess)
-    }
 }

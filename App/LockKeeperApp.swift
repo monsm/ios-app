@@ -619,14 +619,6 @@ final class AppState: ObservableObject {
     func setHeroStats(_ ids: [String]) {
         applyAppearance { DS.HeroStats.setVisible(ids) }
     }
-    /// 898 主控卡每日一句话 (按当天定值，不是每次刷新随机)
-    func setLaunchLine(_ v: Bool) {
-        applyAppearance { DB.store.set("kf_launch_line", v) }
-    }
-    /// 890 节日限定色 (默认关)：走外观通道，切换当天 hero 立刻重新取值
-    func setFestive(_ v: Bool) {
-        applyAppearance { DB.store.set("kf_festive", v) }
-    }
     /// 最近开门条数 (idea 910): 3/5/10
     func setRecentCount(_ n: Int) {
         applyAppearance { DB.store.set("kf_recent_count", n) }
@@ -685,18 +677,6 @@ final class AppState: ObservableObject {
     /// 905/1047 快捷格池子或"常用排前"变了：只需要重建一次树让新次序生效，
     /// 不涉及配色，所以走同一条外观通道 (它本来就是"重建全树"的通道，名字里的 appearance 是历史包袱)。
     func bumpAppearanceForLayout() { applyAppearance {} }
-    /// 892 自定义强调色 (0 = 取消, 回到六套预设)。走外观通道：Palette.themed 是在 UIColor provider 里读的，
-    /// 不重建树的话"选了色但界面不动"，要等下一次冷启动才生效。
-    func setCustomAccent(_ hex: UInt32) {
-        applyAppearance { DS.CustomAccent.set(hex) }
-    }
-    /// 895 "儿童友好"预设：一次推五档外观。**必须走外观通道** ——
-    /// DS.FriendlyPreset.apply() 只写 Store，不重建树就会"按了没反应、重进 App 才变"（本仓最常见的那类缺陷）。
-    func applyFriendlyPreset() {
-        applyAppearance { DS.FriendlyPreset.apply() }
-        showToast("已套用友好预设：只改了外观档位（品牌色/圆角/密度/行高/动效/纹理），"
-                  + "本 App 没有内容分级，任何一档都能单独改回")
-    }
     /// 恢复默认外观 (idea 202): 只重置外观偏好, 不触碰任何门锁数据。
     /// 清单必须与"外观"节里出现的键一一对应 —— 包16 加圆角/高对比时这里同步补上。
     /// (902 数字字体在役: kf_digit_font 只圈定 MetricTile/HeroStat 两处落点 (DesignSystem.digitDesign),

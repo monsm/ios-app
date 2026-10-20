@@ -315,23 +315,6 @@ enum Milestones {
         return DB.member(id)
     }
 
-    // ---------- 1045 感谢清单 (按月) ----------
-    static func gratitude(_ month: String = "") -> [String] {
-        (DB.store.get([String: [String]].self, "kf_gratitude") ?? [:])[month.isEmpty ? monthKey() : month] ?? []
-    }
-    static func addGratitude(_ name: String) {
-        var g = DB.store.get([String: [String]].self, "kf_gratitude") ?? [:]
-        let list = g[monthKey()] ?? []
-        let n = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !n.isEmpty, !list.contains(n) else { return }
-        g[monthKey(), default: []].append(n)
-        DB.store.setCodable("kf_gratitude", g)
-    }
-    static func removeGratitude(_ name: String) {
-        var g = DB.store.get([String: [String]].self, "kf_gratitude") ?? [:]
-        g[monthKey()]?.removeAll { $0 == name }
-        DB.store.setCodable("kf_gratitude", g)
-    }
 
     // ---------- 1043 时光胶囊 ----------
     struct Capsule: Codable { var text: String; var at: Double; var openOn: String }

@@ -264,14 +264,6 @@ final class LinkSense: ObservableObject {
             }
         }
     }
-    /// 回连循环的拆除口。**目前刻意没有调用点** —— 这个 2s tick 同时是 AUTOOPEN 的停留判定驱动器
-    /// (autoReconnectTick 里 `AutoOpenController.shared.tickDwell` 在"是否自动回连"偏好**之前**执行),
-    /// 关掉自动回连就停循环 = 悄悄把"靠近自动开锁"也停了, 那是比省电严重得多的副作用。
-    /// 等 tickDwell 有独立节拍后再启用本口; 现在停它反而制造"设置没生效"的错觉。
-    func stopReconnectLoop() {
-        reconnectTask?.cancel()
-        reconnectTask = nil
-    }
     /// 135 scenePhase 消费点: .active → 回前台即刷新 (静默预热一次 + 补发); 非 active 暂停回连
     func setSceneActive(_ active: Bool) {
         sceneActive = active
@@ -377,12 +369,6 @@ final class LinkSense: ObservableObject {
                 self.deadbeatCheck()
             }
         }
-    }
-    /// 假死看门狗的拆除口, 同样**没有安全调用点**: 未连接时 deadbeatCheck 第一行就 return,
-    /// 循环本身是惰性的; 真要停它得把"重启动"绑到下一次连接成功上, 那是节拍改造 → 留口不开, 不假接。
-    func stopDeadWatch() {
-        deadWatchTask?.cancel()
-        deadWatchTask = nil
     }
     private func deadbeatCheck() {
         guard !DiagFlags.silent else { return }
@@ -584,15 +570,6 @@ final class LinkSense: ObservableObject {
     static var envCount: Int { DB.store.getInt("kf_link_env", 0) }
     /// 128: 首台可见耗时 (毫秒); -1 = 整窗一台没见
     static var envFirstSeenMs: Int { DB.store.getInt("kf_link_envms", -1) }
-    static func envConclusion() -> String {
-        let n = envCount
-        let ms = envFirstSeenMs
-        let t = ms >= 0 ? ", 首台 \(ms)ms 可见" : ""
-        if n == 0 { return "近一次扫描未见 BLE 设备 (无数据或蓝牙关闭)" }
-        if n >= 20 { return "环境拥挤 (近一次扫到 \(n) 台 BLE 设备\(t)) — 商场/办公楼等密集环境, 连接偶发超时属正常, 保持 1 米内" }
-        if n >= 8 { return "环境中度 (近一次扫到 \(n) 台 BLE 设备\(t)) — 可用, 干扰稍多时可贴得更近" }
-        return "环境安静 (近一次扫到 \(n) 台 BLE 设备\(t)) — 连接条件良好"
-    }
 
     /// 272 连接保持时长: 会话至今的分钟数 (异常久时 UI 提示重连)
     var holdMinutes: Int {

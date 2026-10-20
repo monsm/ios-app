@@ -725,13 +725,6 @@ extension View {
 /// 成就页徽章详情 sheet (自带 detents、无自绘底, 材料能透出来)。其余 sheet 按批次逐个换。
 extension View {
     @ViewBuilder   // 两支 presentationBackground 的 ShapeStyle 类型不同 (Material vs Color) → 必须 builder
-    func dsSheetGlass() -> some View {
-        if AXFlags.reduceTransparency {
-            presentationBackground(DS.Palette.surface)   // 降透明 = 实底, 信息零丢失
-        } else {
-            presentationBackground(.ultraThinMaterial)   // 33 玻璃底
-        }
-    }
 }
 
 // ---------- 入场编排 ----------

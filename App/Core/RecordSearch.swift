@@ -245,30 +245,6 @@ struct NamedView: Codable, Identifiable {
 }
 
 enum RecordSearch {
-    /// 362 复活检测（**仅本机类型级推断**）: 回收站条目删除之后, 是否仍出现同凭证类型的开门事件。
-    /// 协议没有"读锁内凭证清单"的命令, 所以只能说"可能仍在用", 绝不能写成"已核对锁内"。
-    /// 比较用的是锁自己记的时间串与手机删除时刻 —— 锁钟未校准时会有偏差, 调用方需带这句提示。
-    static func resurrectionHints(mac: String) -> [(text: String, kind: String, n: Int)] {
-        let entries = CredentialOrg.bin(mac)
-        guard !entries.isEmpty else { return [] }
-        let opens = buildRecs(macs: [mac], includeFails: false, includeCare: false)
-            .filter { StatsKit.openTypes.contains($0.type) && !$0.timeStr.isEmpty }
-        guard !opens.isEmpty else { return [] }
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        var out: [(text: String, kind: String, n: Int)] = []
-        for e in entries where e.at > 0 {
-            let kind: String
-            if let p = e.pwd { kind = p.temp ? "temp" : "pwd" }
-            else if e.fp != nil { kind = "fp" }
-            else { continue }
-            let cutoff = f.string(from: Date(timeIntervalSince1970: e.at))
-            let n = opens.filter { $0.kind == kind && $0.timeStr > cutoff }.count
-            if n > 0 { out.append((e.text, kind, n)) }
-        }
-        return out
-    }
 
     // ---------- 数据源: 聚合多锁 + 手机侧事件 (561/770 跨锁范围切换) ----------
     static func buildRecs(macs: [String], includeFails: Bool = true, includeCare: Bool = true) -> [Rec] {
@@ -391,31 +367,6 @@ enum RecordSearch {
         return Int64(f.date(from: s)?.timeIntervalSince1970 ?? 0)
     }
 
-    /// 574 活跃凭证 (台账推断, 展示层必须标"约"): 近 30 天开门日志按「类型 #槽位」计次,
-    /// 槽位翻台账出备注 (指纹查批次 / 密码·临时查别名), 翻不到回落"类型 #槽号" ——
-    /// 旧版只汇总到四类大字, 用户看到"指纹 5 次"不知道是哪一个。
-    static func activeCredentials(mac: String) -> [(kind: String, word: String, count: Int)] {
-        let now = Date().timeIntervalSince1970
-        let logs = DB.readLogs(mac).filter { l in
-            guard let d = StatsKit.dateOf(l) else { return false }
-            return d.timeIntervalSince1970 >= now - 30 * 86400
-        }
-        var c: [String: Int] = [:]
-        let typeToKind: [Int: String] = [3: "fp", 2: "pwd", 4: "temp", 1: "key"]
-        for l in logs { if let k = typeToKind[l.type] { c[k + "#" + String(l.idxRaw), default: 0] += 1 } }
-        let lg = DB.ledger(mac)
-        return c.sorted { $0.value > $1.value }.map { key, n in
-            let parts = key.split(separator: "#", maxSplits: 1).map(String.init)
-            let kind = parts.first ?? "", slot = parts.count > 1 ? parts[1] : ""
-            let base = Attribution.words[kind] ?? kind
-            let note = kind == "fp"
-                ? lg.fps.first { String($0.batch) == slot }?.note
-                : lg.pwds.first { String($0.alias) == slot }?.note
-            let seg = (note ?? "").split(separator: "\n").first.map(String.init) ?? ""
-            let short = seg.count > 12 ? String(seg.prefix(12)) + "…" : seg
-            return (kind, short.isEmpty ? base + " #" + slot : base + " #" + slot + " · " + short, n)
-        }
-    }
 
     /// 737 今日试错判据 (唯一一份): 锁定类事件行 (type 10) 且落在今日 —— 计数与逐次明细共用
     private static func trialRowsToday(mac: String) -> [CachedLog] {

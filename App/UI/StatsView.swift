@@ -1234,59 +1234,6 @@ struct StatsView: View {
             .accessibilityValue(RecordSearch.dayKeyOf(first.day))
     }
 
-    /// 626/628 长期密码用量行 (从 body 内联的 ForEach 里抽出: 该表达式报 type-check 超时)
-    @ViewBuilder
-    private func pwdUsageRow(_ p: StatsKit.PwdUse) -> some View {
-        // 628 跳转: 该密码归属的成员在成员表里能证明存在时, 整行可点 → 记录页按该成员过滤
-        // (582/612 同一条 pendingRecordsMember 路由; 不造"跳到首条"的第二套深链 —— 落点就是该成员
-        // 全部记录, 排序在记录页自己管)。归属不明 (owner 空/查无此人) 时保持纯文字, 不挂死按钮。
-        let jumpId = (p.owner.isEmpty || DB.member(p.owner) == nil) ? nil : p.owner
-        // 2026-10-13 run 68: 颜色/条宽/a11y 串先算好 —— 内联时整个 pwdUsageRow 报 type-check 超时。
-        let barColor: Color = p.ratio >= 0.8 ? DS.Palette.warn : DS.Palette.accent
-        let barWidth = max(2, p.ratio * 120)
-        let a11y = "密码 " + p.name + " 约使用 " + String(p.approxUses) + " 次, 用量 " + String(Int(p.ratio * 100)) + "%"
-            + (p.firstUseDay.map { ", 首用 " + $0 } ?? "")
-            + (jumpId == nil ? "" : "; 点按到记录页按该成员筛选")   // 628 点按到记录页按该成员
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: DS.Space.xs) {
-                Text(p.name)
-                    .vkFont(.footnote, weight: .medium)
-                    .foregroundStyle(DS.Palette.text)
-                    .lineLimit(1)
-                if let f = p.firstUseDay {
-                    Text("首用 " + f)   // 628 首用
-                        .vkFont(.caption2)
-                        .foregroundStyle(DS.Palette.accentText)
-                        .lineLimit(1)
-                }
-                Spacer(minLength: 0)
-                Text("约 " + String(p.approxUses) + " 次")
-                    .vkFont(.caption2)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .lineLimit(1)
-            }
-            // 用量比条: 已用/上限, 接近上限转橙
-            Capsule()
-                .fill(barColor)
-                .frame(width: barWidth)
-                .frame(height: 4)
-        }
-        .frame(minHeight: DS.Hit.min)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            if let jid = jumpId {
-                app.pendingRecordsMember = jid
-                app.requestRoute(.records)
-                dismiss()
-            }
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(a11y)
-        .accessibilityAddTraits(jumpId == nil ? [] : .isButton)
-    }
-
-    /// 612/624 成员水平条的一行 (从 body 内联的 ForEach 里抽出: 该表达式报 type-check 超时)
-    @ViewBuilder
     private func memberBarRow(id: String, name: String, approx: Int, index: Int,
                               barDays: Int, maxApprox: Int) -> some View {
         // 2026-10-13 run 68: a11y 串先算好 (内联时 memberBarRow 报 type-check 超时)
@@ -1502,50 +1449,6 @@ struct StatsView: View {
         }
     }
 
-    // ---------- 603 累计面积图 + 周分割刻度 ----------
-
-    // ---------- 609/629 临时码甘特 + 核销率 ----------
-    @ViewBuilder
-    private func ganttBar(_ t: StatsKit.TempGantt) -> some View {
-        // 自绘甘特: 横条 = 生效区间, 圆点 = 可证明的开门刻度 (R1 窗口命中)
-        let now = Date()
-        let full = t.from ?? now.addingTimeInterval(-30 * 86400)
-        let end = t.to ?? now
-        let span = max(end.timeIntervalSince(full), 1)
-        let offset = { (d: Date) in
-            let x = max(0, min(1, (d.timeIntervalSince(full)) / span))
-            return CGFloat(x)
-        }
-        return GeometryReader { geo in
-            let w = geo.size.width
-            ZStack(alignment: .leading) {
-                Capsule()
-                    .fill(DS.Palette.surfaceAlt)
-                Capsule()
-                    .fill(t.expired ? DS.Palette.textSub.opacity(0.5) : DS.Palette.warn.opacity(0.85))
-                    .frame(width: max(w * 0.02, (w * (offset(end) - offset(full))) ))
-                    .offset(x: w * offset(full))
-                ForEach(Array(t.ticks.enumerated()), id: \.offset) { _, d in
-                    Circle()
-                        .fill(DS.Palette.ok)
-                        .frame(width: 5, height: 5)
-                        .offset(x: max(0, min(w - 5, w * offset(d) - 2.5)), y: 0)
-                        .accessibilityHidden(true)
-                }
-                if let f = t.from, let e = t.to {
-                    Rectangle()
-                        .fill(now >= f && now <= e ? DS.Palette.danger : .clear)
-                        .frame(width: 1.5)
-                        .offset(x: w * offset(now))
-                        .accessibilityHidden(true)
-                }
-            }
-            .frame(height: 18)
-            .accessibilityLabel("生效区间条, 圆点为已使用时刻, 竖线为今天")
-        }
-    }
-
-    // ---------- 构成 (611 堆叠条 / 612 成员条 / 615 帕累托 / 616 周几 / 619 凭证类榜 / 613+620 告警) ----------
     @ViewBuilder
     private func compositionSection(_ m: StatsKit.StatModel) -> some View {
         let kinds = m.typeOpenCount

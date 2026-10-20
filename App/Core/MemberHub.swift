@@ -84,15 +84,6 @@ enum MemberHub {
     static func permCan(_ role: String) -> [String] { permRows(role).filter { $0.allowed }.map { $0.name } }
     static func permCannot(_ role: String) -> [String] { permRows(role).filter { !$0.allowed }.map { $0.name } }
 
-    /// 469 紧急管理员: 档案上的点名档。
-    /// 原先这个位只有成员页 Toggle 的 set、全仓零读取方, 界面却写"救援码说明与其绑定" ⇒ 空头支票。
-    /// 现在的真读点: 成员页点名 (权限与应急段) + 482 家庭会议摘要 + 设置-安全 救援码下的保管人声明
-    /// (SecurityCenterView.rescueCustodyLine) 三处各读一次。
-    static func emergencyAdmins() -> [Member] {
-        // 一次解表再筛名册: 逐成员调 ext() 会把整张表重复解 N 遍 (同 MemberCenterView 归档计数那一处教训)
-        let all = DB.store.get([String: MemberExt].self, extKey) ?? [:]
-        return DB.members().filter { all[$0.id]?.emergencyAdmin == true }
-    }
 
     // 666 成员名兜底: 超长名中段截断 (头像取首字由 UI 层做)
     static func display(_ m: Member) -> String {
@@ -245,24 +236,6 @@ enum MemberHub {
     /// 图谱上限: 逐条凭证都要解一次版本历史, 这是展示层不是台账层, 扫到够画就停。
     private static let graphCap = 24
 
-    static func graph(_ id: String) -> [Edge] {
-        var out = [Edge]()
-        for kc in DB.keychains() {
-            for p in DB.listPwds(kc.mac) {
-                if out.count >= graphCap { break }
-                appendEdge(&out, forMe: id, label: "密码 #" + String(p.alias),
-                           snaps: CredentialOrg.history(kc.mac, "pwd", p.alias),
-                           ownerOf: { $0.pwd?.owner })
-            }
-            for f in DB.listFps(kc.mac) {
-                if out.count >= graphCap { break }
-                appendEdge(&out, forMe: id, label: "指纹「" + f.name + "」",
-                           snaps: CredentialOrg.history(kc.mac, "fp", f.batch),
-                           ownerOf: { $0.fp?.owner })
-            }
-        }
-        return out
-    }
     /// 一条凭证能画出的边: 取**最后一条**「移交 → X」快照 —— 它存的是移交之后的归属,
     /// 版本号比它小的那一版存的就是移交之前的归属 (按 version 找上一版, 不按数组下标:
     /// CredentialOrg.snapshot 落盘时把 488 的自动还原点单独排在手动版之后, 下标不等于时间序)。

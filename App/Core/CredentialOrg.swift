@@ -192,12 +192,6 @@ enum CredentialOrg {
         let out = manual + autosKeep
         DB.setCodable(out, histKey(mac, kind, key))
     }
-    // `latest(_:kind:_:)` (取某条凭证的最新快照) 第九十二批删除：全库零调用点，
-    // 而调用方要的东西都是 `history(...)` 再自己挑 (历史页要整条列表)。
-    // grep 到的 `latest(` 全是 BatteryCare.latest —— 同名不同主，正是成员级限定计数上线才分得清的那种。
-    static func saveHistory(_ mac: String, _ kind: String, _ key: Int, _ list: [CredSnapshot]) {
-        DB.setCodable(list, histKey(mac, kind, key))
-    }
     /// 496 恢复即新版本: 不覆盖, 按基线 s 复制回台账, 并新增一条 "恢复自 v(s)" 快照。
     /// 返回补进提示的那半句 —— 这一条**改的是本机台账，锁里那条不会自己变回来**：
     /// 第一百五十四批查出这里是"第四处两侧不一致"（与 152 的撤销、153 的删成员、154 的队列同一族）：
@@ -276,8 +270,6 @@ enum CredentialOrg {
     static func saveBin(_ mac: String, _ list: [CredBinEntry]) {
         DB.setCodable(list, binKey(mac))
     }
-    static func binPwd(_ mac: String, _ alias: Int) -> LedgerPwd? { bin(mac).compactMap { $0.pwd }.first { $0.alias == alias } }
-    static func binFp(_ mac: String, _ batch: Int) -> LedgerFp? { bin(mac).compactMap { $0.fp }.first { $0.batch == batch } }
     /// `batchId` 只由"一次动作产出多条"的级联调用点传入 (同一个值传给这一批全部条目);
     /// 单条删除留 nil ⇒ 不参与整组还原。名字带 Id 是为了与 `LedgerFp.batch` (指纹批次整数) 区分开。
     static func addToBin(_ mac: String, pwd: LedgerPwd? = nil, fp: LedgerFp? = nil, source: CredBinSource, batchId: String? = nil) {
@@ -378,39 +370,6 @@ enum CredentialOrg {
         }
         return bits.isEmpty ? "" : " · " + bits.joined(separator: " · ")
     }
-    /// 499 还原冲突副本: 同 ID 已存在时, 加 "还原-" 前缀别名还原
-    /// 第一百五十四批把 504 的"排一次重新下发"**搬进这个函数**：以前它写在回收站页那一个调用点的弹窗里，
-    /// 而 `restoreBin` 有三个调用方 (单条还原 / 批量还原 / 还原为副本)，另两条路把密码放回台账却从不排下发
-    /// ⇒ 界面报"已还原"，锁里却没这条，人拿码去开门会开不了。规则收在一处才不会三份各写一份。
-    /// 指纹不排：锁存的是模板，本机改不了也不需要改 (名称/备注/归属都是本机字段) —— 来源口径：见 `reclaim`。
-    static func restoreBin(_ mac: String, entry: CredBinEntry, asCopy: Bool) -> String {
-        var list = bin(mac)
-        list.removeAll { $0.id == entry.id }
-        saveBin(mac, list)
-        var msg = "已还原"
-        if let p = entry.pwd {
-            var cp = p
-            let clash = DB.ledger(mac).pwds.contains { $0.alias == cp.alias }
-            if asCopy || clash {
-                cp.note = "还原-" + cp.note
-                msg = "已还原为副本 (备注加「还原-」前缀)"
-            }
-            DB.addPwd(mac, cp)
-            msg += queueRestore(mac, cp)     // 504: 还原的密码一律排一次重新下发 (过期则不排, 由返回值说明)
-        }
-        if let f = entry.fp {
-            var cp = f
-            let clash = DB.ledger(mac).fps.contains { $0.batch == cp.batch }
-            if asCopy || clash {
-                cp.name = "还原-" + cp.name
-                msg = "已还原为副本 (名称加「还原-」前缀)"
-            }
-            DB.addFp(mac, cp)
-        }
-        // 第一百五十二批: 还原 = 这条又归本机了 ⇒ 一并收回它名下那条还没发出去的删除。
-        // 不做这一步，"还原"后队列里仍排着 del_pwd/del_fp，连上锁就把刚还原的凭证再删一次。
-        return msg + reclaim(mac, entry: entry)
-    }
     /// 502 的**裸执行**口: 不问生物识别、不弹确认, 调到这里就直接把这条从回收站抹掉。
     /// 门槛只允许落在界面上的 `guardedPurge(_:ids:reason:onDeniedPresentFallback:)` ——
     /// 任何调用点都不得绕过它直接调这里 (delsweep 的 UI_SINK 名单收的正是这一族一按即删的汇点)。
@@ -433,29 +392,6 @@ enum CredentialOrg {
     // 两个闭包参数标 @MainActor 之后**本身即 Sendable**, 于是 evaluatePolicy 的 @Sendable reply
     // 可以合法地把它们转交给主 actor —— 这是 Swift 6 里跨回调边界的原生写法。
     @MainActor
-    static func guardedPurge(_ mac: String, ids: [String], reason: String,
-                             onDeniedPresentFallback: @escaping @MainActor (_ commit: @escaping @MainActor () -> Void) -> Void,
-                             onDone: @escaping @MainActor () -> Void = {}) {
-        // onDone 挂在 commit 里，而不是挂在调用方的两条分支上：生物识别那一路如果由 UI 自己补一句回执，
-        // 就会出现"刷脸成功了但回执文案只在弹窗那一路有"的分叉。
-        let commit: @MainActor () -> Void = { purgeNow(mac, ids: ids); onDone() }
-        let ctx = LAContext()
-        var err: NSError?
-        // 可用性与 AuthKit.biometricAvailable (877) 同一判据: canEvaluate 为真却带 biometryNotAvailable
-        // 的情形实测存在过, 两支都按"这台设备没生物可刷"处理 —— 没生物 = 走 UI 第二问, 不是放行。
-        guard ctx.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &err),
-              err?.code != LAError.biometryNotAvailable.rawValue else {
-            onDeniedPresentFallback(commit)
-            return
-        }
-        ctx.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { ok, _ in
-            // reply 在任意线程回来 (且是 @Sendable): 这里只捕获 ok 与两个 @MainActor 闭包 (皆 Sendable),
-            // 真正跳主 actor 由 Task 完成 —— 与 DispatchQueue.main.async 同一语义, 但类型上是结构化的。
-            Task { @MainActor in
-                if ok { commit() } else { onDeniedPresentFallback(commit) }
-            }
-        }
-    }
     /// 502 门槛过完之后的执行体: 一条就删那一条, 多条/整组按 id 集合删。
     /// 两支共用同一个过滤口径 (与 purgeBin 逐字同一件事), 不另写第二套清空逻辑 ——
     /// 否则同一条目在单条与清空两条路上会被删得不一样。
@@ -474,12 +410,6 @@ enum CredentialOrg {
         list = list.filter { $0.at >= cut }
         saveBin(mac, list)
         return before - list.count
-    }
-    /// 500 容量头行: 条数 + 下次自动清理日期 (最老条目到保留期)
-    static func binHeader(_ mac: String) -> (count: Int, nextClean: Date?) {
-        let list = bin(mac)
-        guard let oldest = list.map({ $0.at }).min() else { return (0, nil) }
-        return (list.count, Date(timeIntervalSince1970: oldest + Double(reclaimDays()) * 86400))
     }
     /// 501/349 成员删除: 名下凭证随成员入回收站 (同一个 `batchId`, 可整组还原)
     /// D-152a (2026-10-11 拍板 方案③): 弹窗当场选「只移除档案 / 连锁端一起收回」, 默认第一项。
@@ -790,10 +720,6 @@ enum CredentialOrg {
     static func isArchived(_ mac: String, _ kind: String, _ key: Int) -> Bool {
         archived(mac).contains(kind == "pwd" ? key : 100000 + key)
     }
-    /// 354 "全部还原": 一次清键 — 逐条 toggle 会把批量里并发的读改写搅在一起
-    static func unarchiveAll(_ mac: String) {
-        DB.setCodable([Int](), archKey(mac))
-    }
 
     // ---------- 359 三档预警 (本地通知; 2 小时档做 App 内提醒行, 7 天/24 小时档排程) ----------
     static func alert(_ mac: String, _ p: LedgerPwd) -> CredAlert {
@@ -964,19 +890,6 @@ enum CredentialOrg {
     static func saveSmartLists(_ mac: String, _ l: [CredSmartList]) {
         DB.setCodable(l, listsKey(mac))
     }
-    // 527 智能列表的"整表是否有内容"判定 (原名 `matches(_:_:)`) 与"取某条快照的最新版本"(`latest`)
-    // 都在第九十二批删除：两者全库零调用点 (deadscan 的 A/B 档逐条人读确认，同名调用都属于别的类型)。
-    // 智能列表的**过滤**规则只有一个真实现身 = CredentialsView.swift:759-767 的 inline filter；
-    // 留第二条形状不同、看起来像有主的谓词，正是本仓"半接线"缺陷的经典形态。
-    // 要"空列表灰显"这类需求时按当时的真实签名重写即可 (stateString / pwdState / nowSec 都还在用)。
-    static func smartListLabel(_ l: CredSmartList) -> String {
-        var s = l.name.isEmpty ? "智能列表" : l.name
-        if l.owner != "" { s += " · " + (DB.member(l.owner)?.name ?? l.owner) }
-        if !l.state.isEmpty {
-            s += " · " + ["active": "进行中", "scheduled": "已排期", "expired": "已过期"][l.state, default: l.state]
-        }
-        return s
-    }
 
     // ---------- 361 停用原因回溯 (逐条存, 由 313 的必填原因采集) ----------
     // 台账在停用后就没有这条凭证了, 详情卡无从打开 —— 所以回显落在回收站行 (CredBinView)。
@@ -1000,14 +913,6 @@ enum CredentialOrg {
             m = Dictionary(uniqueKeysWithValues: keep.map { ($0.key, $0.value) })
         }
         DB.store.setCodable(disReasonKey(mac), m)   // 注意层间参数序相反: store.setCodable(键,值), DB.setCodable(值,键)
-    }
-    /// 361 回显文案: 停用原因 + 时刻 + 来源路径; 没有标记 (非本 App 停用) 就不编造
-    static func disableMarkText(_ mac: String, kind: String, key: Int) -> String? {
-        guard let d = disableMark(mac, kind: kind, key: key) else { return nil }
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "MM-dd HH:mm"
-        return "停用原因 \(d.label) · \(f.string(from: Date(timeIntervalSince1970: d.at))) · \(d.via)"   // 361 停用原因
     }
 
     // ---------- 355/914 组织偏好持久化 ----------
@@ -1069,11 +974,6 @@ enum CredentialOrg {
         }
     }
 
-    // ---------- 364 恢复窗口期 (7 天内可一键恢复, 超期需重新下发) ----------
-    static func withinRecoverWindow(_ mac: String, entry: CredBinEntry) -> Bool {
-        // 单位口径：秒 —— `CredBinEntry.at` 写的是 `nowSec` (本文件 :249)，与 LedgerPwd.at 的毫秒**不是**一把尺。
-        entry.at > 0 && nowSec - entry.at <= 7 * 86400
-    }
 
     // ---------- 529 组尾统计 (基于台账推断, 标"约") ----------
     /// 近 N 天使用次数: 临时密码按时间窗命中开门日志 (type2/4) 计, 长期密码只在
@@ -1605,14 +1505,6 @@ enum CredentialOrg {
         case 1: return "已排期"
         case 2: return "已过期"
         default: return "进行中"
-        }
-    }
-    /// 智能列表 state 字段用的机读串 (matches/label 共用)
-    static func stateString(_ s: Int) -> String {
-        switch s {
-        case 1: return "scheduled"
-        case 2: return "expired"
-        default: return "active"
         }
     }
 }

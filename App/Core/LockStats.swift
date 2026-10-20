@@ -355,36 +355,6 @@ enum LockStats {
         }
     }
 
-    /// 779 成员×锁交叉矩阵: 行成员 / 列锁 / 格内次数 — 归属只走 Attribution 可证明链
-    /// (R1 临时码窗口 / R2 唯一凭证), 推不出的格子留空, 绝不猜测。
-    static func memberMatrix(_ usages: [LockUsage]) -> (members: [Member], counts: [[String: Int]]) {
-        var members = DB.members()
-        var counts: [[String: Int]] = []
-        for u in usages {
-            let pwds = DB.listPwds(u.mac), fps = DB.listFps(u.mac)
-            let snap = DB.readStatus(u.mac)
-            let status: (fpStock: Int, pwdStock: Int, lockTime: Int64)? = snap.map {
-                ($0.fpStock, $0.pwdStock, $0.lockTime)
-            }
-            let logs = DB.readLogs(u.mac).filter { openTypes.contains($0.type) }
-            let rows = Attribution.classify(
-                logs: logs.map { LogEntry(type: $0.type, typeName: $0.typeName, idx: $0.idxRaw, idxRaw: $0.idxRaw,
-                                          lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr, body: "") },
-                pwds: pwds, fps: fps, status: status)
-            var perMember = [String: Int]()
-            for r in rows {
-                guard let who = r.who else { continue }
-                perMember[who, default: 0] += 1
-            }
-            counts.append(perMember)
-        }
-        // 只保留至少有一次可证明归属的成员, 空矩阵不占版面
-        let active = members.enumerated().filter { i, m in
-            counts.contains { $0[m.id, default: 0] > 0 }
-        }
-        members = active.map { $0.element }
-        return (members, counts)
-    }
 
     /// 768 待维护锁清单: 低电 / 近 30 天有告警 / 密钥未绑定, 全部来自可读证据
     struct MaintenanceItem: Identifiable {

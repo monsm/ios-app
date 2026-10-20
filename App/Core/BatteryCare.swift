@@ -126,16 +126,6 @@ enum BatteryCare {
         (["上海", "南京", "杭州", "合肥", "武汉", "长沙", "重庆", "成都"], "长江流域冷月 12–2 月", 12, 2),
         (["广州", "深圳", "南宁", "福州", "厦门", "海口", "三亚"], "华南低纬 — 仅 1 月提一句", 1, 1),
     ]
-    static func cityColdWindow(_ city: String) -> (label: String, from: Int, to: Int)? {
-        guard !city.isEmpty else { return nil }
-        for row in coldCityTable where row.keys.contains(where: { city.contains($0) }) {
-            return (row.label, row.from, row.to)
-        }
-        return nil
-    }
-    static func inColdMonth(_ m: Int, from: Int, to: Int) -> Bool {
-        from <= to ? (m >= from && m <= to) : (m >= from || m <= to)
-    }
 
     // ============ 电量采样 (idea 45 的数据地基) ============
     static func samples(_ mac: String) -> [BattSample] {

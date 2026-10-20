@@ -229,46 +229,9 @@ enum AXTools {
         visit(root)
         return out
     }
-    /// 打开巡检: 优先实屏读序, 实屏取不到退回人工表; 打印 + 播报 (DEBUG 入口挂 DiagnosticsView)
-    static func runFocusAudit(page: String) {
-        let live = liveFocusSequence()
-        let seq = live.isEmpty ? (focusReport[page] ?? []) : live
-        let line = "焦点顺序 [\(live.isEmpty ? page + " · 人工表兜底" : "实屏")]: " + seq.joined(separator: " → ")
-        print("[A11Y 855] " + line)
-        announce(line)
-    }
 
-    // ---------- 883 对比度计算器: 与 tools/contrast.js 同款 WCAG 2.1 相对亮度公式 ----------
-    static func contrastRatio(_ a: UInt32, _ b: UInt32) -> Double {
-        func lum(_ hex: UInt32) -> Double {
-            func ch(_ c: UInt32) -> Double {
-                let s = Double(c & 0xff) / 255.0
-                return s <= 0.03928 ? s / 12.92 : pow((s + 0.055) / 1.055, 2.4)
-            }
-            return 0.2126 * ch((a >> 16) & 0xff) + 0.7152 * ch((a >> 8) & 0xff) + 0.0722 * ch(a & 0xff)
-        }
-        let la = lum(a), lb = lum(b)
-        let hi = max(la, lb), lo = min(la, lb)
-        return (hi + 0.05) / (lo + 0.05)
-    }
     /// 883 令牌表 (App/Core/DesignSystem.swift 的机检同款取值, 明暗各一套)
     struct CalcToken: Identifiable { let name: String; let light: UInt32; let dark: UInt32; var id: String { name } }
-    static let calcTokens: [CalcToken] = [
-        CalcToken(name: "页面底", light: 0xF2F4F9, dark: 0x070B12),
-        CalcToken(name: "卡片", light: 0xFFFFFF, dark: 0x151D29),
-        CalcToken(name: "次级块", light: 0xF5F7FB, dark: 0x1C2534),
-        CalcToken(name: "分隔线", light: 0xD3DCE7, dark: 0x29343F),
-        CalcToken(name: "正文", light: 0x0D1626, dark: 0xF2F6FB),
-        CalcToken(name: "次文本", light: 0x525E77, dark: 0x9FACBE),
-        CalcToken(name: "成功", light: 0x15803D, dark: 0x4ADE80),
-        CalcToken(name: "警告", light: 0xB45309, dark: 0xFBBF24),
-        CalcToken(name: "错误", light: 0xB91C1C, dark: 0xF87171),
-        CalcToken(name: "靛蓝heroA", light: 0x5A55EC, dark: 0x5B5BD6),
-    ]
-}
-
-// ---------- App 偏好读点 (包15 全 App 开关集中于此, 页面不直接查 DB) ----------
-enum AXPrefs {
     // 2026-10-20 (Q50 减法): 无障碍面板已删除, App 不再提供自定义无障碍开关。
     // 这些偏好**冻结在各自的默认值**: 行为回到"只用系统设置", 与 iOS 原生 App 一致。
     //   · 字号/灰度/反色/减弱动效/高对比 仍由 AXFlags 读**系统**设置 (不受本改动影响);
@@ -313,33 +276,6 @@ enum AuthKit {
         return true
     }
     @discardableResult
-    // 两个回调标 @MainActor: 它们最终写的是界面状态, 而 evaluatePolicy 的 reply 是 @Sendable 的 ——
-    // 只有把回调本身标成"主 actor 隔离"(因此 Sendable), 才能在 reply 里安全地跨到主 actor 执行,
-    // 而不是靠 assumeIsolated 赌线程。
-    static func verifyBiometric(_ onSuccess: @escaping @MainActor () -> Void,
-                                onFail: (@MainActor (String) -> Void)? = nil) -> Bool {
-        let ctx = LAContext()
-        var err: NSError?
-        guard ctx.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &err),
-              err?.code != LAError.biometryNotAvailable.rawValue else { return false }
-        // evaluatePolicy(_:localizedReason:reply:) 的返回值是 Void (结果经 reply 回调异步回),
-        // 所以不能 `return ctx.evaluatePolicy(...)` —— 那是把 Void 当 Bool 返回 (run 57 就报这个)。
-        // 本函数的 Bool = "是否成功发起验证" (canEvaluate 通过就 true), 真正的成败在 reply 里走 onSuccess/onFail。
-        ctx.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics,
-                           localizedReason: "用 Face ID / Touch ID 代替本机密码") { ok, err in
-            Task { @MainActor in
-                if ok {
-                    // F1 面容时刻记账: 这是一次真实的面容/指纹通过 (evaluatePolicy 返回 ok),
-                    // 与 AutoOpen 的"标准档 = 沿用最近一次真实验证的 60s 窗口"是同一条证据。
-                    // 缺这一行的后果是**功能整条死掉**: 标准档 (默认) 下 lastFace 永远是 nil,
-                    // faceFresh 恒 false ⇒ F1 恒拒 ⇒ 靠近自动开锁一次都不会触发 (见 AutoOpen.swift:114)。
-                    AutoOpenKit.noteFaceSuccess()
-                    onSuccess()
-                } else { onFail?(reasonText(err)) }
-            }
-        }
-        return true
-    }
     /// 392: 面容失败的原因翻成人话 —— 留痕要能读到"到哪一步没成" (不匹配/取消/锁停分开),
     /// 只记一句笼统的"失败"等于有记录读不出事。取消/改用密码是人的选择, 由调用方决定不计连败。
     /// 纯函数 (只做 LAError 到中文的映射, 不碰 UI) —— 显式 nonisolated, 让非 UI 层也能直接问原因。

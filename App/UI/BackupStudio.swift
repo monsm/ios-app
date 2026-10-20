@@ -1145,16 +1145,6 @@ struct RestoreWizardView: View {
 
 // ================= WebDAV 工作室 (197/198/237/422/423/430/436) =================
 
-// ================= 换机迁移 (438-446) =================
-/// 438 接收侧的一段备份包: 任意通道 (备份文件/扫码/WebDAV) 收到的原文经 417/453 解析后的产物。
-/// 每段带解析时的原始 schema 与哈希层结论 — 预演页据此显示升级链与三层检查。
-struct MigSegment: Identifiable {
-    let id: String
-    let name: String
-    let bundle: BackupBundle
-    let schema: Int
-    let checksum: BackupStudio.ChecksumState
-}
 
 
 

@@ -946,10 +946,6 @@ enum BackupStudio {
         }
         return out
     }
-    /// 440 迁移完成页用: 只看"旧机有新机缺"的行
-    static func lockGaps(_ bundle: BackupBundle) -> [LockDiff] {
-        lockDiffRows(bundle).filter { !$0.ok }
-    }
 
     /// 193 体积预估: 本次 canonical 字符数 × 加密膨胀 (~1.75x hex) 估算, 与上次对比
     static func estimateBytes() -> Int? {
@@ -980,7 +976,6 @@ enum BackupStudio {
         var done: Bool
     }
     static func loadMigSession() -> MigSession? { DB.store.get(MigSession.self, "kf_mig_session") }
-    static func saveMigSession(_ s: MigSession) { DB.store.setCodable("kf_mig_session", s) }
     static func clearMigSession() { DB.store.remove("kf_mig_session") }
     /// 445: 冷启动检测未完成的迁移会话
     static func pendingMigration() -> MigSession? {
@@ -1012,21 +1007,6 @@ enum BackupStudio {
     }
     static func loadMigTxn() -> MigTxn? { DB.store.get(MigTxn.self, "kf_mig_txn") }
     static func saveMigTxn(_ t: MigTxn) { DB.store.setCodable("kf_mig_txn", t) }
-    /// 445 开始/续做迁移: 首次先打全库快照 (打不出就不允许开跑); 有可用旧事务表则沿用其回滚点,
-    /// 不重拍快照 —— 否则中途崩溃后"回滚"只能回到半截状态, 等于没有回滚。
-    @discardableResult
-    static func beginMigrationTxn(channel: String) -> Bool {
-        if let t = loadMigTxn(), !t.rollbackPath.isEmpty,
-           FileManager.default.fileExists(atPath: t.rollbackPath) {
-            return true
-        }
-        guard makeRollbackPoint() else { return false }
-        let path = DB.store.getString("kf_bk_rollback")
-        guard !path.isEmpty, FileManager.default.fileExists(atPath: path) else { return false }
-        saveMigTxn(MigTxn(channel: channel, rollbackPath: path,
-                          at: Date().timeIntervalSince1970 * 1000, doneMacs: []))
-        return true
-    }
     /// 445: 每把锁真实落库后调用 — 这是续迁的断点
     static func noteMigTxnDone(_ mac: String) {
         guard var t = loadMigTxn() else { return }
@@ -1040,20 +1020,6 @@ enum BackupStudio {
               FileManager.default.fileExists(atPath: t.rollbackPath) else { return nil }
         return t
     }
-    static func finishMigrationTxn() { DB.store.remove("kf_mig_txn") }
-    /// 445 回滚: 把库体还原到迁移前快照, 并清掉迁移期间立起的全部标记
-    @discardableResult
-    static func rollbackMigrationTxn() -> Bool {
-        guard let t = pendingMigrationTxn() else { return false }
-        guard restoreRollbackSnapshot(t.rollbackPath) else { return false }
-        DB.store.remove("kf_mig_txn")
-        clearMigSession()
-        if DB.store.getString("kf_bk_rollback") == t.rollbackPath { DB.store.remove("kf_bk_rollback") }
-        DB.store.remove("kf_migrate_pending")
-        for kc in DB.keychains() { DB.store.remove("kf_migok_" + kc.mac) }
-        Milestones.recordBackup()
-        return true
-    }
     /// 442 恢复/迁移落库后立起首验清单: 清掉旧勾, 挂待验标记 (DeviceHomeView 逐锁验证写 kf_migok_)
     static func armFirstChecks() {
         for kc in DB.keychains() { DB.store.remove("kf_migok_" + kc.mac) }
@@ -1064,67 +1030,9 @@ enum BackupStudio {
         DB.store.set("kf_migrate_pending", ISO8601DateFormatter().string(from: Date()))
     }
 
-    /// 439/441/445 真实迁移导入: 逐段 (410 分卷可多段) 逐锁真实执行, 每完成一个真实单元回调一次
-    /// (进度只跟着真做完的单元走); 每把锁落库后立即写事务表 doneMacs — 中断续做按它跳过,
-    /// 不是把百分比接着画。skipMacs = 上次已落库的锁 (整锁跳过, 计 skipped)。
-    @discardableResult
-    static func migrateImport(_ b: BackupBundle, zones: BZones,
-                              lockActs: [String: String] = [:],
-                              conflictTakeBackup: Set<String> = [],
-                              skipMacs: Set<String> = [],
-                              onStep: (Int, Int, String) -> Void) async -> (imported: Int, overwritten: Int, skipped: Int) {
-        let valid = b.devices.filter { HexKit.bytes($0.mac).count == 6 && !$0.kc.skey.isEmpty }
-        let total = valid.count + 1
-        var imp = 0, ov = 0, sk = 0
-        // 单元①: 设置/成员/全局 (不含 otpKeys — 它按锁白名单, 放逐锁单元)
-        var setBundle = b
-        setBundle.globals = setBundle.globals.map { var g = $0; g.otpKeys = nil; return g }
-        var z0 = zones
-        z0.devices = false
-        let r0 = restore(setBundle, strategy: .merge, zones: z0, makeSnapshot: false)
-        imp += r0.imported; ov += r0.overwritten; sk += r0.skipped
-        onStep(1, total, "设置与成员")
-        try? await Task.sleep(for: .milliseconds(60))
-        // 单元②…: 逐锁真实执行
-        for (i, d) in valid.enumerated() {
-            let mac = DB.normalizeMac(d.mac)
-            let name = LockArchive.displayName(d.kc)
-            if skipMacs.contains(mac) {
-                sk += 1
-                onStep(i + 2, total, name + " · 已迁移过, 跳过")
-                try? await Task.sleep(for: .milliseconds(60))
-                continue
-            }
-            var one = b
-            one.devices = [d]
-            one.members = nil
-            // 全局只留 otpKeys: 白名单按本锁算, 其余全局项已在单元①落库
-            one.globals = b.globals.map { var g = $0
-                g.trace = nil
-                g.keychainDongles = nil
-                g.gatewayList = nil
-                g.passcode = nil
-                g.appearance = nil
-                return g
-            }
-            let r = restore(one, strategy: .merge, zones: zones,
-                            lockActs: lockActs, conflictTakeBackup: conflictTakeBackup,
-                            makeSnapshot: false)
-            imp += r.imported; ov += r.overwritten; sk += r.skipped
-            noteMigTxnDone(mac)
-            onStep(i + 2, total, name)
-            try? await Task.sleep(for: .milliseconds(60))
-        }
-        return (imp, ov, sk)
-    }
     /// 442 首验清单: 恢复后逐项打勾 (开一次门 / 看一条记录 / 验一处遮蔽)
     static func firstChecks() -> [String: Bool] {
         DB.store.get([String: Bool].self, "kf_mig_checks") ?? [:]
-    }
-    static func markFirstCheck(_ k: String, on: Bool = true) {
-        var m = firstChecks()
-        m[k] = on   // 2026-10-15 走查: 原先只会写 true —— 取消勾选落不了盘, 而这份字典是完成页那四格的初值
-        DB.store.setCodable("kf_mig_checks", m)
     }
     static var firstChecksAllDone: Bool {
         !DB.store.getString("kf_migrate_pending").isEmpty &&
@@ -1132,7 +1040,6 @@ enum BackupStudio {
     }
     /// 446 旧机退役横幅: 首验全勾 → 旧机顶部引导本地销毁
     static var retirementBanner: Bool { DB.store.getBool("kf_mig_retire") }
-    static func markRetired() { DB.store.set("kf_mig_retire", true) }
 
     // ================= 完整性与信任感 (448-454 / 507-512) =================
     /// 库体指纹 (448/397 共用一份算法, 免得两处各算各的后端口径漂移)
@@ -1184,110 +1091,6 @@ enum BackupStudio {
         return .stale(daysSinceLastExport())
     }
 
-    // ================= WebDAV 增强 (197/422-423/430/436) =================
-    /// 用户自配 WebDAV 根 (坚果云或任意 WebDAV), 运行时输入 Basic Auth; 绝不上传非用户自配位置
-    static var webdavRoot: String {
-        get { DB.store.getString("kf_webdav_root", "https://dav.jianguoyun.com/dav/%E6%88%91%E7%9A%84%E5%9D%9A%E6%9E%9C%E4%BA%91") }
-        set { DB.store.set("kf_webdav_root", newValue) }
-    }
-    struct RemoteEntry: Identifiable { var id: String { name }; let name: String; let size: Int; let etag: String; let modified: String }
-    /// 422 时间列: RFC1123 → 本地短格式, 解不开原样返回
-    static func humanDate(_ s: String) -> String {
-        let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "EEE, dd MMM yyyy HH:mm:ss zzz"
-        guard let d = f.date(from: s) else { return s }
-        let g = DateFormatter(); g.locale = Locale(identifier: "en_US_POSIX"); g.dateFormat = "yyyy-MM-dd HH:mm"
-        return g.string(from: d)
-    }
-    /// 197 连通测试: PROPFIND 回显服务器时间
-    @discardableResult
-    static func testWebdav(acct: String, appPw: String, root: String) async -> String {
-        guard let url = URL(string: root) else { return "地址非法" }
-        var req = URLRequest(url: url)
-        req.httpMethod = "PROPFIND"
-        req.setValue(CloudSync.basicAuth(acct, appPw), forHTTPHeaderField: "Authorization")
-        req.setValue("application/xml", forHTTPHeaderField: "Content-Type")
-        req.httpBody = Data("<?xml version=\"1.0\"?><propfind xmlns=\"DAV:\"><prop><getlastmodified/><resourcetype/></prop></propfind>".utf8)
-        req.timeoutInterval = 15
-        do {
-            let (_, resp) = try await URLSession.shared.data(for: req)
-            guard let http = resp as? HTTPURLResponse else { return "响应异常" }
-            if (200..<300).contains(http.statusCode) {
-                let t = http.value(forHTTPHeaderField: "Last-Modified") ?? "ok"
-                return "连通 · 服务器时间 \(t)"
-            }
-            if http.statusCode == 401 || http.statusCode == 403 { return "账号或应用密码错误" }   // 401 账号或应用密码错误
-            return "HTTP \(http.statusCode)"
-        } catch { return "网络不可达: \(error.localizedDescription)" }
-    }
-    /// 422/423 远端列表: 拉 etag (哈希) + 大小, 再按需拉正文 — 断点友好
-    static func listRemote(acct: String, appPw: String, root: String) async throws -> [RemoteEntry] {
-        // 原先这一行是 `return "地址非法"` —— 一个声明 `-> [RemoteEntry]` 的函数返回 String，编译器必拒。
-        // 可核实的出处：这一行在 `origin/main` (31df7a6，最后一次推送) 里就已经是这个样子，
-        // 而那一次推送对应的 CI run 47 结论是 failure (日志匿名取不到，所以不能断言 CI 报的就是它)。
-        // 改成抛错才对：调用方 `refresh()` 有 do/catch 会把这句话 toast 出来，
-        // `pruneRemote` 那侧是 try? ⇒ 直接不动远端。
-        guard let url = URL(string: root) else { throw DFUError.msg("远端地址非法") }
-        var req = URLRequest(url: url)
-        req.httpMethod = "PROPFIND"
-        // Depth: 1 必须显式写。不写时按 RFC 4918 服务端默认取 **Infinity**，那 430 滚动保留看到的就是
-        // 整个子树的每一层条目 (默认 root 又是整个坚果云根目录) —— 配合下面的删除面就是删到用户照片里。
-        req.setValue("1", forHTTPHeaderField: "Depth")
-        req.setValue(CloudSync.basicAuth(acct, appPw), forHTTPHeaderField: "Authorization")
-        req.setValue("application/xml", forHTTPHeaderField: "Content-Type")
-        req.httpBody = Data("<?xml version=\"1.0\"?><propfind xmlns=\"DAV:\"><prop><resourcename/><getcontentlength/><getetag/><getlastmodified/></prop></propfind>".utf8)
-        req.timeoutInterval = 20
-        let (data, resp) = try await URLSession.shared.data(for: req)
-        guard let http = resp as? HTTPURLResponse else { throw DFUError.msg("响应异常") }
-        if http.statusCode == 404 { return [] }
-        if http.statusCode == 401 || http.statusCode == 403 { throw DFUError.msg("账号或应用密码错误") }
-        guard http.statusCode == 207 else { throw DFUError.msg("PROPFIND HTTP \(http.statusCode)") }
-        // 422/423 远端列表: 拉 etag (哈希) + 大小, 再按需拉正文 — 断点友好
-        // 对抗硬化: 只取 UTF-8 可读正文, 恶意/二进制 XML 直接拒绝 (不静默误读为空)
-        guard let xml = String(data: data, encoding: .utf8), !xml.isEmpty else { throw DFUError.msg("远端列表解析失败 (响应非 UTF-8 XML)") }
-        var out: [RemoteEntry] = []
-        var i = xml.startIndex
-        while let s = xml.range(of: "<resourcename>", range: i..<xml.endIndex) {
-            // 对抗硬化: 内容做实体解码 + 长度护栏, 防恶意 XML 注入名直接拼进 URL
-            i = s.upperBound
-            guard let e = xml.range(of: "</resourcename>", range: i..<xml.endIndex) else { break }
-            var name = String(xml[i..<e.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
-            name = Self.xmlUnescape(name)
-            guard !name.isEmpty, name.count <= 256 else { continue }   // 长度护栏
-            i = e.upperBound
-            func cap(_ tag: String, from: String.Index) -> String {
-                var idx = from
-                while let r = xml.range(of: "<\(tag)>", range: idx..<xml.endIndex) {
-                    guard let en = xml.range(of: "</\(tag)>", range: r.upperBound..<xml.endIndex) else {
-                        idx = r.upperBound
-                        continue
-                    }
-                    idx = en.upperBound
-                    return Self.xmlUnescape(String(xml[r.upperBound..<en.lowerBound]))
-                }
-                return ""
-            }
-            out.append(RemoteEntry(name: name,
-                                   size: Int(cap("getcontentlength", from: i)) ?? 0,
-                                   etag: cap("getetag", from: i),
-                                   modified: cap("getlastmodified", from: i)))
-        }
-        return out.sorted { $0.name > $1.name }
-    }
-    /// XML 实体最小解码 (&lt; &gt; &amp; &quot; &apos; + 数字实体), 防注入名直接进 URL
-    private static func xmlUnescape(_ s: String) -> String {
-        var out = s
-        for (ent, ch) in [("&#38;", "&"), ("&amp;", "&"), ("&lt;", "<"), ("&gt;", ">"), ("&quot;", "\""), ("&apos;", "'")] {
-            out = out.replacingOccurrences(of: ent, with: ch)
-        }
-        return out
-    }
-    static func safeRemoteURL(root: String, name: String) -> URL? {
-        // 对抗护栏: 远端条目名可能来自恶意/越权账号 — 拒绝路径穿越与外链, 只允许目录内相对名
-        guard !name.hasPrefix("/"), !name.contains("://") else { return nil }
-        for part in name.split(separator: "/") where part == ".." { return nil }
-        return URL(string: root + "/" + name)
-    }
     /// 430 滚动保留: 远端只留最近 N 份, 按名字 (带日期戳) 排序
     /// 本 App 自己写出来的备份文件名 (409 命名 = `锁管家_<锁名>_<yyyy-MM-dd-HHmm>_全量[_卷N].enc`)。
     /// 只有这个名字族才允许被滚动保留删掉 —— 见 `pruneRemote` 上方那段。
@@ -1348,106 +1151,9 @@ enum BackupStudio {
         }
         return pruned
     }
-    @discardableResult
-    static func pruneRemote(acct: String, appPw: String, root: String, keep: Int) async -> Int {
-        guard keep > 0, let entries = try? await listRemote(acct: acct, appPw: appPw, root: root) else { return 0 }
-        var groups: [String: [RemoteEntry]] = [:]
-        for e in entries where isOurBackup(e.name) {
-            groups[volumeSet(e.name), default: []].append(e)
-        }
-        // 按日期段 (其次按组名) 从新到旧；`zklock-backup.enc` 那种固定名备份不在名字族内，永不参与计数
-        let ordered = groups.keys.sorted { a, b in
-            let da = dateInName(a), db = dateInName(b)
-            return da == db ? a > b : da > db
-        }
-        var pruned = 0
-        // 430 每月 1 份档: 最近 N 份之外每月再保最新 1 份 (Time Machine 口径); 无日期组只走 N。
-        // ordered 是从新到旧, 所以某月第一次出现的那组就是该月最新的一份。
-        var keptMonths = Set<String>()
-        for (i, key) in ordered.enumerated() {
-            let month = String(dateInName(key).prefix(7))
-            if i < keep || (!month.isEmpty && keptMonths.insert(month).inserted) { continue }
-            for e in groups[key] ?? [] {
-                guard let url = safeRemoteURL(root: root, name: e.name) else { continue }
-                var req = URLRequest(url: url)
-                req.httpMethod = "DELETE"
-                req.setValue(CloudSync.basicAuth(acct, appPw), forHTTPHeaderField: "Authorization")
-                _ = try? await URLSession.shared.data(for: req)
-                pruned += 1
-            }
-        }
-        if pruned > 0 {
-            AuditLog().append(.admin, "清", target: "WebDAV 滚动保留: 清理远端 \(pruned) 个文件")   // 430 滚动保留
-        }
-        return pruned
-    }
-    /// 436 演练恢复: 远端 → 内存解密试读 + 哈希, 不碰真库
-    @discardableResult
-    static func dryRunRemote(acct: String, appPw: String, root: String, name: String, password: String) async -> String {
-        guard let url = safeRemoteURL(root: root, name: name) else { return "地址非法 (远端条目名被护栏拒绝)" }
-        var req = URLRequest(url: url)
-        req.setValue(CloudSync.basicAuth(acct, appPw), forHTTPHeaderField: "Authorization")
-        do {
-            let (data, _) = try await URLSession.shared.data(for: req)
-            let raw = String(data: data, encoding: .utf8) ?? ""
-            let body = (try? decryptAny(raw, password: password)) ?? raw
-            guard verifyChecksum(body) else { return "哈希不一致 — 仅告警, 不入库" }   // 423 哈希不一致
-            // 436: 抽样数是 parsePreview 实抽出来的, 不再写死 "5 条"
-            let sampled = (try? parsePreview(text: body, password: nil).preview.sampleOk) ?? 0
-            return "已验证 · 抽样 \(sampled) 条可解析 · 哈希 " + shortHash(body)
-        } catch { return "下载失败: \(error.localizedDescription)" }
-    }
-    /// 237 密钥轮换: 新口令重加密替换远端旧备份 (旧文件重命名留痕)
-    @discardableResult
-    static func rotateKey(acct: String, appPw: String, root: String, oldPw: String, newPw: String) async -> String {
-        guard let url = URL(string: root + "/zklock-backup.enc") else { return "地址非法" }
-        var req = URLRequest(url: url)
-        req.setValue(CloudSync.basicAuth(acct, appPw), forHTTPHeaderField: "Authorization")
-        do {
-            let (data, _) = try await URLSession.shared.data(for: req)
-            let raw = String(data: data, encoding: .utf8) ?? ""
-            guard let plain = try? decryptAny(raw, password: oldPw) else {
-                return "旧口令解不开, 轮换失败"   // 453 旧口令解不开
-            }
-            guard let newEnc = try? CryptoBox.encryptText(plain, password: newPw) else {
-                return "新口令加密失败, 远端未动"
-            }
-            var put = URLRequest(url: url)
-            put.httpMethod = "PUT"
-            put.setValue(CloudSync.basicAuth(acct, appPw), forHTTPHeaderField: "Authorization")
-            put.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            put.httpBody = Data(newEnc.utf8)
-            let (_, resp) = try await URLSession.shared.data(for: put)
-            guard let http = resp as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
-                return "上传新密文失败, 远端仍为旧口令"   // 237 上传新密文失败
-            }
-            return "已轮换 — 旧口令失效, 请用新口令访问"   // 237 已轮换
-        } catch { return "轮换中断: \(error.localizedDescription)" }
-    }
 
     // ================= 1048 管家交接包 =================
     struct Handover { let text: String; let fileName: String }
-    /// 1048 交接包 —— 2026-10-14: 必须加密。包体含整库 skey 与台账口令, 旧实现却按明文写出,
-    /// 而说明文字还让收件人"输入口令" (名不副实)。改为以交接口令 CryptoBox 加密后再落盘/复制。
-    @discardableResult
-    static func handoverPackage(password: String) -> Handover? {
-        guard !password.isEmpty else { return nil }
-        let b = BackupKit.collectAll()
-        let canon = BackupCanonical.exportText(b)
-        guard !canon.isEmpty else { return nil }
-        let use = """
-        // 离线锁管家 · 交接信 (1048)
-        // 给下一位管家人: 这份备份含 \(b.devices.count) 台门锁 / \(b.members?.count ?? 0) 位成员。
-        // 1. 新机装「离线锁管家」, 备份页选「导入」, 粘贴本文件并输入口令。
-        // 2. 选「合并」策略, 逐锁验证连接 (换机首验清单)。
-        // 3. 旧机走「设置→备份→交接」, 本机数据三级清空。
-        // 本文件已用交接口令加密 — 口令另行线下交接, 不要与文件同渠道发出。
-        """
-        // 只加密**包体**, 说明头留明文 —— parsePreview 先剥 "//" 头再解密。
-        // 若把头也加密进去, 解密后仍是 "// ...\n{json}", JSONDecoder 解不出 (本 App 自己导出的包反而导不回来)。
-        guard let enc = try? CryptoBox.encryptText(canon, password: password) else { return nil }
-        return Handover(text: use + "\n" + enc, fileName: "锁管家_交接_\(Milestones.dayKey()).txt")
-    }
 
     /// 440 增量补传小包: 只打入勾选的锁 (kc + 运行参数 + 台账), 不带记录卷 —— 小包越小越好传;
     /// 恢复端走 .merge 只增不删, 重复导入同一把锁不会产生副本。返回 canonical 文本或加密信封。
@@ -1489,18 +1195,6 @@ enum BackupStudio {
     /// 认不出信封就说"未能识别"，绝不回落到徽章那串 —— 那会把一个明文包或损坏件标成"加密过"。
     /// 明文包 (BackupBundle 直接写盘, 没有信封) 单独一档: 混进"未能识别"会让人以为文件坏了。
     enum AlgoNote: Equatable { case envelope(String), plain, unknown }
-    static func algoNote(_ url: URL) -> AlgoNote {
-        guard let data = try? Data(contentsOf: url, options: [.mappedIfSafe]) else { return .unknown }
-        // 前 4096 字节全 ASCII (键名与参数值都是 ASCII), 不存在截断多字节字符导致解不出的情况
-        let head = String(data: data.prefix(4096), encoding: .utf8) ?? ""
-        guard head.hasPrefix("{") else { return .unknown }
-        if let alg = jsonStr(head, "\"alg\":\""),
-           let kdf = jsonStr(head, "\"kdf\":{\"alg\":\""),
-           let iter = jsonNum(head, "\"iter\":") {
-            return .envelope("\(alg) · \(kdf) \(iter) 轮")
-        }
-        return head.contains("\"devices\":") ? .plain : .unknown
-    }
 
     // ================= 511 数据事件 (导出/恢复/迁移) =================
     /// 事件带名字: 旧实现收 `_ label: String` 却只存毫秒, 列表只能显示"备份事件 #N" ——
@@ -1518,14 +1212,6 @@ enum BackupStudio {
         if let old = DB.store.get([Double].self, "kf_bk_events") { return old.map { BkEvent(at: $0, label: "未具名") } }
         return []
     }
-    static func dataEvents() -> [String] {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd HH:mm"
-        f.locale = Locale(identifier: "en_US_POSIX")
-        return bkEvents().enumerated().reversed().prefix(12).map { i, e in
-            "\(f.string(from: Date(timeIntervalSince1970: e.at / 1000))) · \(e.label)"
-        }
-    }
 
     // ================= 437 备份复核钉 =================
     // 备份的失效方式是"到要用的那天才发现用不了"，所以这里钉的是**复核日期**而不是提醒文案。
@@ -1537,24 +1223,12 @@ enum BackupStudio {
     static let pinSeenKey = "kf_bk_pin_seen"
     struct PinDue { let file: String; let day: String; let overDays: Int }
     static func pins() -> [String: String] { DB.store.get([String: String].self, pinKey) ?? [:] }
-    static func setPin(_ file: String, _ day: String) {
-        var m = pins()
-        if day.isEmpty { m.removeValue(forKey: file) } else { m[file] = day }
-        DB.store.setCodable(pinKey, m)
-    }
     static func dayDate(_ s: String) -> Date? {
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")
         f.dateFormat = "yyyy-MM-dd"
         f.timeZone = TimeZone.current
         return f.date(from: s)
-    }
-    static func dayString(_ d: Date) -> String {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "yyyy-MM-dd"
-        f.timeZone = TimeZone.current
-        return f.string(from: d)
     }
     /// 到日 (含) 之后每天都算到期, 因为"错过一天就再也不提"只会让备份更晚被发现坏掉
     static func duePins(now: Date = Date()) -> [PinDue] {
