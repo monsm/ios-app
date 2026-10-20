@@ -31,7 +31,6 @@ struct CredentialsView: View {
     @State private var seg: Int = 0          // 524 类型分段: 0 全部 / 1 密码 / 2 指纹 / 3 临时码
     @State private var memberView = CredentialOrg.groupMode == .owner   // 355 按成员视图
     @State private var sortKey: CredSortKey = CredentialOrg.sortKey   // 914
-    @State private var showCalendar = false  // 363 月历
     @State private var search = ""
     @State private var undoEntry: CredBinEntry?
     @State private var undoHard = false                    // 506 撤销条属于哪条路: 停用(false) / 彻底删除(true)
@@ -78,9 +77,7 @@ struct CredentialsView: View {
                             credJumpBar
                         }
                         headerToolbar
-                        if showCalendar {
-                            CredCalendarView(mac: mac, onPick: pickDay)
-                        } else if editMode {
+                        if editMode {
                             editList
                         } else {
                             mainList
@@ -318,9 +315,6 @@ struct CredentialsView: View {
                             CredentialOrg.setSortKey(sortKey)
                             app.showToast("按「\(sortKey.label)」排序")
                         } label: { Label("排序: \(sortKey.label)", systemImage: "arrow.up.arrow.down") }
-                        Button { showCalendar.toggle(); sorting = false } label: {
-                            Label(showCalendar ? "退出月历" : "月历到期视图", systemImage: showCalendar ? "list.bullet" : "calendar")
-                        }
                         Button {
                             memberView.toggle()
                             CredentialOrg.setGroupMode(memberView ? .owner : .type)
@@ -331,7 +325,7 @@ struct CredentialsView: View {
                     Section("筛选") {
                     }
                     Section("整理") {
-                        if !editMode && !showCalendar && CredentialOrg.typeCounts(mac).all > 0 {
+                        if !editMode && CredentialOrg.typeCounts(mac).all > 0 {
                             Button {
                                 sorting.toggle()
                                 if sorting { editMode = false; selPwds = []; selFps = [] }
@@ -1756,11 +1750,6 @@ struct CredentialsView: View {
         return sheet
     }
 
-    /// 363 月历点日 → 落到当日到期清单 (App 内滚动到位)
-    private func pickDay(_ date: Date) {
-        let items = CredentialOrg.dayDeadlines(mac, date)
-        app.showToast("当日到期 \(items.count) 条: " + items.map { "#\($0.alias)" }.prefix(6).joined(separator: " ") + (items.count > 6 ? " …" : ""))
-    }
 
     // ---------- OTP 内联卡 (App credentials + otpgenerate) ----------
     private var otpSection: some View {

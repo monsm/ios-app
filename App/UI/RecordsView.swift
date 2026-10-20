@@ -161,25 +161,11 @@ struct RecordsView: View {
             let wk = WeekCal.gregorian.component(.weekday, from: d)
             return (wk == 1 || wk == 7) ? .weekend : .workday
         }
-        var lunarLabel: String? { isNone ? nil : Self.lunar(key) }
         var yearSeparate: Bool {
             guard let d = date else { return false }
             return WeekCal.gregorian.component(.month, from: d) == 1 && WeekCal.gregorian.component(.day, from: d) <= 2
         }
         var distinctUsers: Int { Set(rows.compactMap(\.whoId)).count }
-        static func lunar(_ key: String) -> String? {
-            guard let d = RecordSearch.dateFromKey(key) else { return nil }
-            var c = Calendar(identifier: .chinese)
-            c.timeZone = TimeZone.current
-            let m = c.component(.month, from: d)
-            let day = c.component(.day, from: d)
-            guard m >= 1, m <= 12, day >= 1, day <= 30 else { return nil }
-            let mn = ["正", "二", "三", "四", "五", "六", "七", "八", "九", "十", "十一", "腊"]
-            let dn = ["初一", "初二", "初三", "初四", "初五", "初六", "初七", "初八", "初九", "初十",
-                      "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十",
-                      "廿一", "廿二", "廿三", "廿四", "廿五", "廿六", "廿七", "廿八", "廿九", "三十"]
-            return mn[m - 1] + "月" + dn[day - 1]
-        }
     }
 
     /// 无锁占位 —— 2026-10-13 run 63 从 body 的 Group 分支抽出 (该表达式报 type-check 超时)
@@ -1819,13 +1805,6 @@ struct RecordsView: View {
                     .background(hasAlarm ? DS.Palette.danger.opacity(0.10) : DS.Palette.surfaceAlt, in: Capsule())
                 }
                 HStack(spacing: DS.Space.s) {
-                    // 681 农历小字 (中国历法直接支持, 失败静默隐藏)
-                    if let lunar = g.lunarLabel {
-                        Text(lunar)
-                            .vkFont(.caption2)
-                            .lineLimit(1)
-                            .foregroundStyle(DS.Palette.textSub)
-                    }
                     // 796 本日使用者 (组头小字, 归属推断标"约")
                     if g.key == todayKey, g.distinctUsers > 0 {
                         Text("约 \(g.distinctUsers) 位使用者")
