@@ -56,6 +56,18 @@ struct EventsPage: View {
         .searchable(text: $search, isPresented: $searchActive, prompt: "搜索事件")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink { StatsPage().environmentObject(app) } label: {
+                    Image(systemName: "chart.bar")
+                }
+                .accessibilityLabel("统计")
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink { AlarmsPage().environmentObject(app) } label: {
+                    Image(systemName: "exclamationmark.triangle")
+                }
+                .accessibilityLabel("告警")
+            }
+            ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     VariantToggle("只看告警", isOn: $alarmOnly)
                     Divider()
