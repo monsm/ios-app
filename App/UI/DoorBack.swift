@@ -50,9 +50,13 @@ enum DoorDomain: String, CaseIterable, Identifiable {
     var summary: String {
         switch self {
         case .keys:
+            let macs = DB.keychains().map { $0.mac }
             let n = DB.keychains().reduce(0) { acc, kc in
                 acc + DB.listPwds(kc.mac).count + DB.listFps(kc.mac).count
             }
+            // 到期预警 —— 与 Tab 角标同源 (CredentialOrg.expiringSoonCount)
+            let soon = CredentialOrg.expiringSoonCount(macs: macs)
+            if soon > 0 { return "\(n) 份生效 · \(soon) 份将到期" }
             return n > 0 ? "\(n) 份生效" : "还没有凭证"
         case .events:
             let n = RecordSearch.unhandledAlarmCount(macs: DB.keychains().map { $0.mac })
