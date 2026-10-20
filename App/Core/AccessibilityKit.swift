@@ -87,6 +87,32 @@ enum AXFlags {
     static var grayPreview: Bool { DB.store.getBool("kf_ax_gray") }
 }
 
+enum AXPrefs {
+    // 2026-10-20 (Q50 减法): 无障碍面板已删除, App 不再提供自定义无障碍开关。
+    // 这些偏好**冻结在各自的默认值**: 行为回到"只用系统设置", 与 iOS 原生 App 一致。
+    //   · 字号/灰度/反色/减弱动效/高对比 仍由 AXFlags 读**系统**设置 (不受本改动影响);
+    //   · 生物识别仍由 AuthKit 提供 (377/383 的复核依赖它, 不在本次删除范围)。
+    /// 872 防连点: 默认开 (防双击误开门)
+    static var dbltapGuard: Bool { true }
+    /// 875 按住时长: 默认 0.9s
+    static var holdDuration: Double { 0.9 }
+    /// 869 眼动停留: 默认 2.0s (该值本来也没有行为消费者)
+    static var dwellTime: Double { 2.0 }
+    /// 881 字幕式过程条: 默认开
+    static var captions: Bool { true }
+    /// 876 新条目双震: 默认开
+    static var doubleHaptic: Bool { true }
+    /// 873/60 单手下沉: 默认关
+    static var onehand: Bool { false }
+    /// 229 左手模式: 默认关
+    static var lefty: Bool { false }
+    /// 230 大格模式: 默认关
+    static var bigTile: Bool { false }
+    /// 870 底部对齐表单: 默认关
+    static var bottomForm: Bool { false }
+}
+
+
 // ---------- 863 反转保护色: 降级底走中性色, 避免品牌渐变成"负片" ----------
 // 第八十三批实测更正: 原实现把两端写死成"近白 0xF5F7FB → 近黑 0x0B0F18", 而前景 heroFg 取随明暗的
 // Palette.text, 于是浅色档下 ink 压近黑端 = 1.06:1, 深色档下近白字压近白端 = 1.01:1 ——
