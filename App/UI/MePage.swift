@@ -193,7 +193,7 @@ struct MePage: View {
                     value: DB.readStatus(mac)?.firmware,
                     showsChevron: true)
             }
-            NavigationLink { MaintenanceView().environmentObject(app) } label: {
+            NavigationLink { CarePage().environmentObject(app) } label: {
                 XRow(
                     systemImage: "wrench.and.screwdriver",
                     title: "维护与保养",
