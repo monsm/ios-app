@@ -288,6 +288,10 @@ enum XDuration {
 ///   trigger = 完成 / 确认
 ///   warning = 需要你注意
 ///   error   = 失败 / 拒绝
+///
+/// UIFeedbackGenerator 是 UIKit 对象 (主 actor), 整族标 @MainActor。
+/// 调用点都在视图动作里; 非 UI 调用需显式跳主 actor。
+@MainActor
 enum XHaptics {
     static let tick = UIImpactFeedbackGenerator(style: .light)
     static let trigger = UIImpactFeedbackGenerator(style: .medium)
