@@ -249,12 +249,6 @@ struct SettingsView: View {
             SearchHit(id: "s.appearance", title: "外观 (主题/品牌色/密度)", icon: "paintbrush", anchor: .appearance),
             SearchHit(id: "s.care", title: "关怀提醒与公告板", icon: "heart.text.square", anchor: .memory),
             SearchHit(id: "s.maintremind", title: "维护提醒", icon: "bell.badge", anchor: .reminder),
-            SearchHit(id: "s.demo", title: "演练与演示 (演示模式/样例备份/七天样例)", icon: "theatermasks", anchor: .drill),
-            SearchHit(id: "s.faq", title: "常见问题 (FAQ)", icon: "questionmark") { showManual = true },
-            SearchHit(id: "s.manual", title: "使用手册", icon: "book") { showManual = true },
-            SearchHit(id: "s.flow", title: "数据流向说明", icon: "arrow.right.circle", anchor: .help),
-            SearchHit(id: "s.credits", title: "致谢与许可", icon: "hands.clap", anchor: .help),
-            SearchHit(id: "s.copycheck", title: "文案体检", icon: "text.badge.checkmark", anchor: .help),   // 664 文案体检
         ]
         return all.filter { $0.title.localizedCaseInsensitiveContains(q) || $0.id.hasSuffix(q) }
     }

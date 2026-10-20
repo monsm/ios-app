@@ -21,7 +21,7 @@ struct MemberCenterView: View {
     // 2026-10-15 走查: 菜单里的「成员家庭设置」原先写 `app.tabSelection = 3` —— 而本页就是设置 Tab
     // 下弹出来的 sheet, 切 Tab 是**空转**, 点了什么都不发生。它要去的 MemberFamilySettingsView
     // 自带 NavigationStack + leading「保存」+ dismiss, 本来就是**按 sheet 设计的页** —— 所以这里
-    // 按同菜单 showGroups/showMeeting 的既有写法弹出来, 而不是再 push 一层。
+    // 按同菜单 showGroups 的既有写法弹出来, 而不是再 push 一层。
     @State private var showFamilySettings = false
     @State private var showActiveTable = false   // 2026-10-15: 同上, 目标页自带 NavigationStack
     // 415 名册导出: ShareLink 要在渲染期就有 URL, 所以点菜单时先按需生成再开面板 (不在 body 里写盘)
@@ -64,7 +64,6 @@ struct MemberCenterView: View {
                         }
                         .pickerStyle(.inline)
                         Button("分组标签") { showGroups = true }   // 630 分组标签
-                        Button("家庭会议摘要") { showMeeting = true }   // 482 家庭会议摘要
                         Button("成员家庭设置") { showFamilySettings = true }   // 479/794 成员家庭设置
                         Button("导出成员名册") {   // 415 导出成员名册
                             rosterURL = ExportKit.writeRoster()
