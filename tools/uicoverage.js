@@ -330,7 +330,7 @@ function selfDrawnContainers() {
     if (/App\/Core\/(Theme|Components)\.swift$/.test(rel)) continue;
     if (/App\/UI\/Door(Stage|Front|Back)\.swift$/.test(rel)) continue;
     // 2026-10-21 全新设计系统: 下列文件本身即形状定义处 (与 VariantGrammar 同性质)
-    if (/App\/UI\/(Door(Stage|Front|Back|Root)|EventsPage|KeysPage|DevicePage|MePage|AlarmsPage|SecurityPage|LocksPage|MembersPage|StatsPage|BackupPage)\.swift$/.test(rel)) continue;   // 2026-10-21 门面系统: 门板/锁体/边缘把手都是形状定义处, 与语法层同性质   // 2026-10-21 全新设计系统: 令牌与组件库本身即形状定义处
+    if (/App\/UI\/(Door(Stage|Front|Back|Root)|EventsPage|KeysPage|DevicePage|MePage|AlarmsPage|SecurityPage|LocksPage|MembersPage|StatsPage|BackupPage|CarePage)\.swift$/.test(rel)) continue;   // 2026-10-21 门面系统: 门板/锁体/边缘把手都是形状定义处, 与语法层同性质   // 2026-10-21 全新设计系统: 令牌与组件库本身即形状定义处
     fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n').forEach((l, i) => {
       if (/^\s*\/\//.test(l)) return;
       if (!RE.test(l)) return;
