@@ -9,12 +9,18 @@
 import SwiftUI
 import UIKit
 
+/// App 图标选择器
+struct IconPicker: View {
+    @EnvironmentObject private var app: AppState
+    @State private var currentIcon: String? = UIApplication.shared.alternateIconName
+
     private struct IconOption: Identifiable {
         let id: String?      // nil = 默认图标
         let name: String
         let glyph: String
         let bg: [Color]
     }
+
     private var iconOptions: [IconOption] {
         [
             IconOption(id: nil, name: "默认", glyph: "lock.fill",
@@ -40,8 +46,6 @@ import UIKit
                        bg: [Color(hex: 0x7C3AED), Color(hex: 0x7C3AED)]),
         ]
     }
-    @EnvironmentObject private var app: AppState
-    @State private var currentIcon: String? = UIApplication.shared.alternateIconName
 
     private var iconPickerRow: some View {
         // 896: 四款→九款之后这一排装不下了 (9×48 + 间距 ≈ 560pt, 远超 iPhone 宽度), 所以从
@@ -83,6 +87,7 @@ import UIKit
         }
         .vkFont(.body)
         .foregroundStyle(DS.Palette.text)
+    }
 
     private func setIcon(_ name: String?) {
         guard UIApplication.shared.supportsAlternateIcons else {
@@ -90,6 +95,8 @@ import UIKit
             return
         }
         UIApplication.shared.setAlternateIconName(name) { error in
+            // 完成回调是 @Sendable 的 (系统在任意线程回): 两处写入都是主 actor 状态,
+            // 所以跳一次主 actor 再写 —— 不是 assumeIsolated 赌线程。
             Task { @MainActor in
                 if let error {
                     app.showToast("更换失败: \(error.localizedDescription)")
@@ -99,4 +106,4 @@ import UIKit
             }
         }
     }
-    }
+}
