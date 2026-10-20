@@ -35,12 +35,6 @@ targets:
     platform: iOS
     sources:
       - path: App
-      # 77/939/941: 开锁实时活动的属性类型 —— **同时编进主 App 与 widget 两个 target**,
-      # 因为 ActivityKit 要求属性类型跨 target 形状一致, 而 app-extension 不能 import 主 App 的类型。
-      - path: Shared
-    # 927: 桌面小组件扩展。XcodeGen 会把 app-extension 依赖自动放进 PlugIns/ (embed 默认 true)
-    dependencies:
-      - target: OfflineLockWidget
     info:
       path: App/Info.plist
       properties:
