@@ -67,8 +67,10 @@ struct FeedPage: View {
             }
         }
         .sheet(isPresented: $showAddDevice) {
-            AddDeviceView()
-                .environmentObject(app)
+            NavigationStack {
+                AddLockPage()
+                    .environmentObject(app)
+            }
         }
     }
 
