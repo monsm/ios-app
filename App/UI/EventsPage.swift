@@ -57,7 +57,7 @@ struct EventsPage: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
-                    Toggle("只看告警", isOn: $alarmOnly)
+                    VariantToggle("只看告警", isOn: $alarmOnly)
                     Divider()
                     Button("刷新") { load() }
                 } label: {
@@ -241,13 +241,17 @@ struct EventsPage: View {
 
     private func dayLabel(_ day: String) -> String {
         let fmt = DateFormatter()
-        fmt.locale = Locale(identifier: "zh_CN")
+        fmt.locale = Locale(identifier: "en_US_POSIX")
+        fmt.calendar = WeekCal.gregorian
         fmt.dateFormat = "yyyy-MM-dd"
         guard let d = fmt.date(from: day) else { return day }
-        let cal = Calendar.current
+        let cal = WeekCal.gregorian
         if cal.isDateInToday(d) { return "今天" }
         if cal.isDateInYesterday(d) { return "昨天" }
-        fmt.dateFormat = "M 月 d 日 EEEE"
-        return fmt.string(from: d)
+        let out = DateFormatter()
+        out.locale = Locale(identifier: "zh_CN")
+        out.calendar = WeekCal.gregorian
+        out.dateFormat = "M 月 d 日 EEEE"
+        return out.string(from: d)
     }
 }
