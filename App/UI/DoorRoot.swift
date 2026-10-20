@@ -71,6 +71,23 @@ struct DoorRoot: View {
             // 翻面时清理开锁状态
             cancelCharge()
         }
+        // 旧 Tab 路由兼容: 别处仍调用 requestRoute(.credentials/.records/...),
+        // 这里把它翻译成门里对应的域, 保证跨页跳转不断链。
+        .onChange(of: app.tabSelection) { _, newValue in
+            if let domain = domainForTab(newValue) {
+                flipped = true
+                if navPath.last != domain {
+                    navPath = [domain]
+                }
+            }
+        }
+        .onAppear {
+            // 冷启动若已带 Tab 意图, 直接进对应域
+            if let domain = domainForTab(app.tabSelection) {
+                flipped = true
+                navPath = [domain]
+            }
+        }
     }
 
     // ── 门外 ──
@@ -242,6 +259,17 @@ struct DoorRoot: View {
         }
         // 门里直接推入新页面 (NavigationStack), 不再切旧 Tab
         navPath.append(domain)
+    }
+
+    /// 旧 Tab 序号 → 门里域 (反向映射, 供 requestRoute 兼容)
+    private func domainForTab(_ index: Int) -> DoorDomain? {
+        switch index {
+        case 0: return .lock        // 设备
+        case 1: return .keys        // 凭证
+        case 2: return .events      // 记录
+        case 3: return .device      // 设置
+        default: return nil
+        }
     }
 
     /// 四域 → 既有 Tab 序号 (与 mainTabView 的 value 一一对应)

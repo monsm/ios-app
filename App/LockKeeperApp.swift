@@ -990,11 +990,6 @@ struct RootView: View {
         }
     }
 
-    /// 四个 Tab 的 TabView (从 mainTabs 抽出: 该表达式报 type-check 超时)
-    @ViewBuilder
-
-    /// 主 TabView + 长按菜单 + 底栏/访客复核 —— 从 appUnlocked 分支抽出: 该表达式报 type-check 超时
-
     /// 主界面的顶部横幅/时刻卡/启动 task/前后台钩子 —— 同上, 继续拆
     @ViewBuilder
     private var mainTabsChrome: some View {

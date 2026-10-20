@@ -88,6 +88,7 @@ struct ShareToAndroidView: View {
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("关闭") { dismiss() } } }
         }
         .onAppear(perform: build)
+        .destined(.shareToAndroid)
     }
 
     private func build() {

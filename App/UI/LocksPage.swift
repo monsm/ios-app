@@ -33,6 +33,7 @@ struct LocksPage: View {
 
     @State private var locks: [Keychain] = []
     @State private var editMode: EditMode = .inactive
+    @State private var shareTarget: Keychain?
 
     var body: some View {
         List {
@@ -76,6 +77,10 @@ struct LocksPage: View {
             }
         }
         .onAppear { reload() }
+        .sheet(item: $shareTarget) { kc in
+            ShareToAndroidView(kc: kc)
+                .environmentObject(app)
+        }
     }
 
     // ═══════════════════════════════════════════════════════
@@ -133,6 +138,13 @@ struct LocksPage: View {
                 }
                 .tint(XPalette.accent)
             }
+            Button {
+                shareTarget = kc
+                XHaptics.tick.impactOccurred()
+            } label: {
+                Label("分享给安卓", systemImage: "qrcode")
+            }
+            .tint(XPalette.ok)
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(LockArchive.displayName(kc) + (isCurrent ? ", 当前锁" : ""))

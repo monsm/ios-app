@@ -80,6 +80,7 @@ struct EventsPage: View {
         }
         .task { if !loaded { load() } }
         .refreshable { load() }
+        .destined(.records)
     }
 
     // ═══════════════════════════════════════════════════════
