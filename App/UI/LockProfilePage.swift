@@ -76,7 +76,7 @@ struct LockProfilePage: View {
                     .shadow(color: tint.opacity(0.4), radius: 18)
 
                 Image(systemName: symbol.isEmpty ? "lock.fill" : symbol)
-                    .font(.system(size: 46, weight: .medium))
+                    .font(.system(size: XMetric.decorIcon(46), weight: .medium))
                     .foregroundStyle(XPalette.onAccent)
                     .contentTransition(.symbolEffect(.replace))
             }

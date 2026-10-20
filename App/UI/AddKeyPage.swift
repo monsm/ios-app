@@ -158,6 +158,8 @@ struct AddKeyPage: View {
                     .frame(width: 4, height: 4)
             }
         }
+        .frame(minWidth: XHit.min, minHeight: XHit.min)
+        .contentShape(Rectangle())
         .animation(XMotion.quick, value: filled)
         .accessibilityHidden(true)
     }

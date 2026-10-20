@@ -159,7 +159,7 @@ struct FeedPage: View {
     private var emptyState: some View {
         VStack(spacing: XSpace.l) {
             Image(systemName: "bell.slash")
-                .font(.system(size: 64, weight: .ultraLight))
+                .font(.system(size: XMetric.decorIcon(64), weight: .ultraLight))
                 .foregroundStyle(XPalette.textTertiary)
                 .accessibilityHidden(true)
             Text("还没有动态")

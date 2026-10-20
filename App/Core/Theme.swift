@@ -140,6 +140,24 @@ enum XMetric {
     static var emptyMascot: Bool { !Milestones.plainMode }
     static var heroTexture: String { "" }
     static var digitDesign: Font.Design { .rounded }
+
+    /// 装饰性大图标随辅助功能字号适度放大 (HIG typography: 承载信息的图标
+    /// 在字号变大时也要跟着变大 —— 上限 1.35 倍, 再大就会顶破版面)。
+    /// 纯装饰图形 (空态吉祥物 / 成功对勾) 也走这一档, 免得两套口径。
+    static func decorIcon(_ base: CGFloat) -> CGFloat {
+        let size = AXFlags.typeSize()
+        let scale: CGFloat
+        switch size {
+        case .xSmall, .small, .medium: scale = 1.0
+        case .large: scale = 1.05
+        case .xLarge: scale = 1.10
+        case .xxLarge: scale = 1.15
+        case .xxxLarge: scale = 1.20
+        case .accessibility1: scale = 1.26
+        default: scale = 1.35
+        }
+        return base * scale
+    }
 }
 
 /// 从「密度」设置派生 (兼容旧 API)

@@ -24,6 +24,7 @@ import UIKit
 struct AddFingerPage: View {
     @EnvironmentObject private var app: AppState
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var prefillOwner: String? = nil
 
@@ -66,7 +67,8 @@ struct AddFingerPage: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             owner = prefillOwner
-            breathe = true
+            // 减弱动态效果时不做呼吸循环 (HIG motion: 动效必须可关)
+            if !reduceMotion { breathe = true }
         }
         .onDisappear {
             // 关页即取消: 不替用户做锁端写入
@@ -105,15 +107,16 @@ struct AddFingerPage: View {
 
                 // 中心指纹
                 Image(systemName: "touchid")
-                    .font(.system(size: 96, weight: .ultraLight))
+                    .font(.system(size: XMetric.decorIcon(96), weight: .ultraLight))
                     .foregroundStyle(
                         LinearGradient(
                             colors: presses.isEmpty
                                 ? [XPalette.textTertiary, XPalette.textTertiary.opacity(0.6)]
                                 : [XPalette.accent, XPalette.accent.opacity(0.7)],
                             startPoint: .top, endPoint: .bottom))
-                    .scaleEffect(breathe ? 1.03 : 0.97)
-                    .animation(.easeInOut(duration: 2.6).repeatForever(autoreverses: true), value: breathe)
+                    .scaleEffect(reduceMotion ? 1 : (breathe ? 1.03 : 0.97))
+                    .animation(reduceMotion ? nil : .easeInOut(duration: 2.6).repeatForever(autoreverses: true),
+                               value: breathe)
                     .shadow(color: presses.isEmpty ? .clear : XPalette.accent.opacity(0.4),
                             radius: presses.isEmpty ? 0 : 20)
 
@@ -261,7 +264,7 @@ struct AddFingerPage: View {
                     .fill(XPalette.ok.opacity(0.12))
                     .frame(width: 180, height: 180)
                 Image(systemName: "checkmark")
-                    .font(.system(size: 76, weight: .light))
+                    .font(.system(size: XMetric.decorIcon(76), weight: .light))
                     .foregroundStyle(XPalette.ok)
             }
             .transition(.scale(scale: 0.8).combined(with: .opacity))
