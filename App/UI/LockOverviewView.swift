@@ -42,7 +42,6 @@ struct LockOverviewView: View {
                         // 两页共用同一份 BatteryStripCard (App/UI/DeviceStripCard.swift), 全仓仅此一个实现。
                         BatteryStripCard(usages: usages).staggered(1)   // 288/1041/45 (包4)
                         maintenanceCard.staggered(2)    // 768
-                        activityCard.staggered(3)       // 776 + 778
                         signalCard.staggered(3)         // 71 列表信号预览 (包2)
                         capacityCard.staggered(5)       // 773
                         firmwareCard.staggered(6)       // 784 + 769
