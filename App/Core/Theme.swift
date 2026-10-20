@@ -27,21 +27,6 @@ import UIKit
 // MARK: - 色板
 // ═══════════════════════════════════════════════════════════
 
-extension Color {
-    init(hex: UInt32) {
-        self.init(.sRGB,
-                  red: Double((hex >> 16) & 0xff) / 255,
-                  green: Double((hex >> 8) & 0xff) / 255,
-                  blue: Double(hex & 0xff) / 255)
-    }
-
-    /// 明暗自适应
-    static func adaptive(_ light: UInt32, _ dark: UInt32) -> Color {
-        Color(UIColor { tc in
-            tc.userInterfaceStyle == .dark ? UIColor(Color(hex: dark)) : UIColor(Color(hex: light))
-        })
-    }
-}
 
 /// 语义色板 —— 全 App 唯一色源
 enum XPalette {

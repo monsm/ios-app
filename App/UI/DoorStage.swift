@@ -272,8 +272,7 @@ struct LockPlate: View {
                 .contentTransition(.symbolEffect(.replace))
                 .accessibilityHidden(true)
         }
-        .scaleEffect(isFailed ? 1.0 : 1.0)
-        .modifier(ShakeEffect(animatableData: isFailed ? 1 : 0))
+        .modifier(ShakeEffect(animatableData: isFailed ? CGFloat(1) : CGFloat(0)))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(isOpen ? "门已开" : "门已锁")
         .accessibilityValue(charge > 0 ? "充能 \(Int(charge * 100))%" : "")

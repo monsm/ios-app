@@ -77,8 +77,6 @@ struct DoorFront: View {
     var onPressChanged: (Bool) -> Void
 
     @State private var breathe = false
-    @State private var holdTask: Task<Void, Never>?
-    @State private var holdStart: Date?
 
     private var lockName: String {
         app.current.map { LockArchive.displayName($0) } ?? "门"
