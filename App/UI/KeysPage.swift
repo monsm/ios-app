@@ -58,6 +58,12 @@ struct KeysPage: View {
         .searchable(text: $search, isPresented: $searchActive, prompt: "搜索名称 / 备注 / 归属")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink { MembersPage().environmentObject(app) } label: {
+                    Image(systemName: "person.2")
+                }
+                .accessibilityLabel("成员")
+            }
+            ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     showAdd = true
                     XHaptics.tick.impactOccurred()
