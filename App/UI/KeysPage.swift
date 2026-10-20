@@ -78,7 +78,6 @@ struct KeysPage: View {
                 .environmentObject(app)
         }
         .id(refreshTick)
-        .destined(.credentials)
     }
 
     // ═══════════════════════════════════════════════════════

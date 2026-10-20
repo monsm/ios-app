@@ -52,7 +52,6 @@ struct DevicePage: View {
         .navigationTitle("这台锁")
         .navigationBarTitleDisplayMode(.large)
         .refreshable { await refresh() }
-        .destined(.deviceHome)
     }
 
     // ═══════════════════════════════════════════════════════
