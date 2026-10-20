@@ -316,7 +316,7 @@ struct AddLockPage: View {
                 ForEach(Array(pairSteps.enumerated()), id: \.offset) { i, s in
                     HStack(spacing: XSpace.s) {
                         Image(systemName: "checkmark")
-                            .font(.system(size: XIcon.xxs, weight: .bold))
+                            .font(.system(size: XIcon.xs, weight: .bold))
                             .foregroundStyle(XPalette.ok)
                         Text(s)
                             .vkFont(.caption.monospaced())
