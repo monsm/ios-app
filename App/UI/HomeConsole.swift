@@ -46,6 +46,7 @@ import SwiftUI
 struct HomeConsole: View {
     @EnvironmentObject private var app: AppState
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     @State private var phase: UnlockPhase = .idle
     @State private var progress: CGFloat = 0
@@ -99,13 +100,13 @@ struct HomeConsole: View {
     private var masthead: some View {
         HStack {
             Text(clockText)
-                .xFont(.system(size: 15, weight: .medium, design: .rounded).monospacedDigit())
+                .xFont(.system(.subheadline, design: .rounded, weight: .medium).monospacedDigit())
                 .foregroundStyle(XPalette.textSub)
             Spacer(minLength: 0)
             HStack(spacing: 5) {
                 Circle().fill(phase.tone).frame(width: 6, height: 6)
                 Text(phase.label)
-                    .xFont(.system(size: 12, weight: .medium))
+                    .xFont(.system(.caption, weight: .medium))
                     .foregroundStyle(phase.tone)
             }
             .accessibilityElement(children: .combine)
@@ -118,12 +119,12 @@ struct HomeConsole: View {
     private var identity: some View {
         VStack(alignment: .leading, spacing: XSpace.xs) {
             Text(lockName)
-                .xFont(.system(size: 26, weight: .bold))
+                .xFont(.system(.title, weight: .bold))
                 .foregroundStyle(XPalette.text)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
             Text(digest)
-                .xFont(.system(size: 13))
+                .xFont(.system(.footnote))
                 .foregroundStyle(XPalette.textTertiary)
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
@@ -155,7 +156,7 @@ struct HomeConsole: View {
                         .foregroundStyle(phase == .idle ? XPalette.textSub : phase.arcTone)
                         .contentTransition(.symbolEffect(.replace))
                     Text(centerCaption)
-                        .xFont(.system(size: 13, weight: .medium))
+                        .xFont(.system(.footnote, weight: .medium))
                         .foregroundStyle(XPalette.textTertiary)
                         .contentTransition(.opacity)
                 }
@@ -186,7 +187,7 @@ struct HomeConsole: View {
                         .foregroundStyle(XPalette.textTertiary)
                 }
             }
-            .xFont(.system(size: 13))
+            .xFont(.system(.footnote))
             .lineLimit(1)
             .minimumScaleFactor(0.8)
             .frame(height: 18)
@@ -213,12 +214,17 @@ struct HomeConsole: View {
     }
 
     // ─────────────────────────────────────────── ④ 三指标
+    // 无障碍字号下，三列横排会挤到每列不足 60pt —— 改为纵向堆叠。
+    // 这不是"降级"，是让内容本身换一种排法，字号不缩。
     private var metricsRow: some View {
-        HStack(spacing: 0) {
+        let layout = typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: XSpace.l))
+            : AnyLayout(HStackLayout(spacing: 0))
+        return layout {
             metric(value: String(opensToday), label: "今日开门")
-            metricDivider
+            if !typeSize.isAccessibilitySize { metricDivider }
             metric(value: String(memberRows.count), label: "在家成员")
-            metricDivider
+            if !typeSize.isAccessibilitySize { metricDivider }
             metric(value: firstOpenText, label: "最早开门")
         }
     }
@@ -226,12 +232,11 @@ struct HomeConsole: View {
     private func metric(value: String, label: String) -> some View {
         VStack(spacing: 6) {
             Text(value)
-                .xFont(.system(size: 28, weight: .semibold, design: .rounded).monospacedDigit())
+                .xFont(.system(.title, design: .rounded, weight: .semibold).monospacedDigit())
                 .foregroundStyle(XPalette.text)
                 .lineLimit(1)
-                .minimumScaleFactor(0.55)
             Text(label)
-                .xFont(.system(size: 11, weight: .medium))
+                .xFont(.system(.caption2, weight: .medium))
                 .foregroundStyle(XPalette.textTertiary)
                 .textCase(.uppercase)
                 .tracking(0.8)
@@ -279,7 +284,7 @@ struct HomeConsole: View {
                 Text("18").frame(maxWidth: .infinity)
                 Text("24").frame(maxWidth: .infinity, alignment: .trailing)
             }
-            .xFont(.system(size: 10).monospacedDigit())
+            .xFont(.system(.caption2).monospacedDigit())
             .foregroundStyle(XPalette.textTertiary)
         }
         .accessibilityElement(children: .ignore)
@@ -312,17 +317,17 @@ struct HomeConsole: View {
     private func memberChip(_ r: (id: String, name: String, n: Int)) -> some View {
         HStack(spacing: XSpace.s) {
             Text(String(r.name.prefix(1)))
-                .xFont(.system(size: 14, weight: .semibold))
+                .xFont(.system(.subheadline, weight: .semibold))
                 .foregroundStyle(XPalette.text)
                 .frame(width: 28, height: 28)
                 .background(XPalette.surfaceAlt, in: Circle())
             VStack(alignment: .leading, spacing: 1) {
                 Text(r.name)
-                    .xFont(.system(size: 13, weight: .medium))
+                    .xFont(.system(.footnote, weight: .medium))
                     .foregroundStyle(XPalette.text)
                     .lineLimit(1)
                 Text("\(r.n) 次")
-                    .xFont(.system(size: 11).monospacedDigit())
+                    .xFont(.system(.caption2).monospacedDigit())
                     .foregroundStyle(XPalette.textTertiary)
             }
         }
@@ -338,7 +343,11 @@ struct HomeConsole: View {
     private var manageSection: some View {
         VStack(alignment: .leading, spacing: XSpace.m) {
             sectionLabel("管理")
-            HStack(spacing: XSpace.s) {
+            // 5 个瓦片在无障碍字号下横排放不下 —— 改 2 列网格，字号不缩
+            let cols = typeSize.isAccessibilitySize
+                ? [GridItem(.flexible(), spacing: XSpace.s), GridItem(.flexible(), spacing: XSpace.s)]
+                : Array(repeating: GridItem(.flexible(), spacing: XSpace.s), count: 5)
+            LazyVGrid(columns: cols, spacing: XSpace.s) {
                 ForEach(ManagerGroup.allCases) { g in
                     Button { openGroup(g) } label: {
                         VStack(spacing: 7) {
@@ -346,7 +355,7 @@ struct HomeConsole: View {
                                 .font(.system(size: 19, weight: .medium))
                                 .foregroundStyle(XPalette.accentText)
                             Text(g.rawValue)
-                                .xFont(.system(size: 10, weight: .medium))
+                                .xFont(.system(.caption2, weight: .medium))
                                 .foregroundStyle(XPalette.textSub)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.75)
@@ -367,7 +376,7 @@ struct HomeConsole: View {
 
     private func sectionLabel(_ s: String) -> some View {
         Text(s)
-            .xFont(.system(size: 11, weight: .semibold))
+            .xFont(.system(.caption2, weight: .semibold))
             .foregroundStyle(XPalette.textTertiary)
             .textCase(.uppercase)
             .tracking(0.8)
