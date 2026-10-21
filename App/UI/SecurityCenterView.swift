@@ -473,235 +473,254 @@ struct SecurityAuditView: View {
 
     var body: some View { vkBody }
     var vkBody: some View {
-        List {
-            // 379 双流水分段
-            Section {
-                // 2026-10-13 run 61: 原写 `set: { withAnimation(XMotion.quick) { self.seg = $0 } }` ——
-                // 外层闭包参数隐式 ($0 只出现在**内层**闭包里), 编译器把它算成
-                //   "contextual type for closure argument list expects 2 arguments" 与
-                //   "expects 0 arguments, but 1 was used in closure body"。
-                // 给外层参数起名 newValue 后, 两层闭包各自明确, 歧义消失。
-                Picker("", selection: Binding(get: { self.seg }, set: { newValue in
-                    withAnimation(XMotion.quick) { self.seg = newValue }
-                })) {
-                    Text("管理操作").tag(0)
-                    Text("开门事件").tag(1)
-                }
-                .pickerStyle(.segmented)
-                ForEach(events, id: \.id) { e in
-                    auditRow(e)
-                }
-                if events.isEmpty {
-                    Text("暂无条目 — 增删改/导入会自动记入 (导出见敏感流水), 也可下方手动记一条")
-                        .xFont(.footnote)
-                        .foregroundStyle(XPalette.textSub)
-                }
-            } header: {
-                Text("双流水")   // 379 双流水
-            }
+        ZStack {
+            XPalette.canvas.ignoresSafeArea()
 
-            Section {
-                Button {
-                    let who = DB.store.getString(SecKey.sessionHow, "本机")
-                    AuditLog().append(seg == 0 ? .admin : .door, "记", target: "手动补记",
-                                      operator_: who, duress: DB.store.getBool(SecKey.sessionDuress, false))
-                    SecTick.bump()
-                    self.center.bump()
-                } label: {
-                    Label(manualEntryTitle, systemImage: "plus")
-                        .xFont(.subheadline, weight: .medium)
-                }
-                .frame(minHeight: XHit.min)
-            }
-
-            // 386 防篡改哈希链
-            Section {
-                Button {
-                    verifyMsg = verifyNow()
-                    self.center.bump()
-                } label: {
-                    Label("校验完整性", systemImage: "checkmark.shield")
-                        .xFont(.subheadline, weight: .medium)
-                }
-                .frame(minHeight: XHit.min)
-                if let m = verifyMsg {
-                    HStack(spacing: XSpace.xs) {
-                        Image(systemName: m.contains("完好") ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
-                            .font(.system(size: XIcon.sm, weight: .semibold))
-                            .foregroundStyle(m.contains("完好") ? XPalette.ok : XPalette.danger)
-                        Text(m)
-                            .xFont(.footnote)
-                            .foregroundStyle(m.contains("完好") ? XPalette.textSub : XPalette.danger)
-                            .lineLimit(2)
-                    }
-                }
-                Text("每条管理日志附前条 SHA-256, 逐链重算验证; 本地轻量口径, 篡改即断链")
-                    .xFont(.footnote)
-                    .foregroundStyle(XPalette.textSub)
-            } header: {
-                Text("防篡改")   // 386 防篡改
-            }
-
-            // 385 保留期策略
-            Section {
-                SecRow(title: "保留期", subtitle: retentionLabel, icon: "calendar") {
-                    Picker("", selection: Binding(
-                        get: { DB.store.getInt(SecKey.auditRetention, 0) },
-                        set: { DB.store.set(SecKey.auditRetention, $0); SecTick.bump() })
-                    ) {
-                        Text("3 个月").tag(3)
-                        Text("6 个月").tag(6)
-                        Text("12 个月").tag(12)
-                        Text("永久").tag(0)
-                    }
-                    .pickerStyle(.menu)
-                    .frame(minWidth: 84)
-                    .tint(XPalette.accentText)
-                }
-                if DB.store.getInt(SecKey.auditRetention, 0) > 0 {
-                    Button {
-                        // 385 到期清理是**物理删除**流水条目 (还要整段重封链) ⇒ 归入 296 只读闸与 383 sudo 那一族:
-                        // 只读模式下不做, 开关开着要先重输应用锁口令。
-                        guardedDestroy(app) {
-                            AuditLog().purgeExpired(months: DB.store.getInt(SecKey.auditRetention, 0))
-                            SecTick.bump()
-                            self.center.bump()
-                            app.showToast("已按保留期清理并留痕")
+            ScrollView {
+                VStack(spacing: XSpace.l) {
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            secLabel("双流水")
+                            // 2026-10-13 run 61: 原写 `set: { withAnimation(XMotion.quick) { self.seg = $0 } }` ——
+                            // 外层闭包参数隐式 ($0 只出现在**内层**闭包里), 编译器把它算成
+                            //   "contextual type for closure argument list expects 2 arguments" 与
+                            //   "expects 0 arguments, but 1 was used in closure body"。
+                            // 给外层参数起名 newValue 后, 两层闭包各自明确, 歧义消失。
+                            Picker("", selection: Binding(get: { self.seg }, set: { newValue in
+                                withAnimation(XMotion.quick) { self.seg = newValue }
+                            })) {
+                                Text("管理操作").tag(0)
+                                Text("开门事件").tag(1)
+                            }
+                            .pickerStyle(.segmented)
+                            ForEach(events, id: \.id) { e in
+                                auditRow(e)
+                            }
+                            if events.isEmpty {
+                                Text("暂无条目 — 增删改/导入会自动记入 (导出见敏感流水), 也可下方手动记一条")
+                                    .xFont(.footnote)
+                                    .foregroundStyle(XPalette.textSub)
+                            }
                         }
-                    } label: {
-                        Label("立即清理到期条目", systemImage: "clock.arrow.circlepath")
-                            .xFont(.subheadline, weight: .medium)
                     }
-                    .frame(minHeight: XHit.min)
-                }
-            } header: {
-                Text("保留期")   // 385 保留期
-            }
 
-            // 382 脱敏导出
-            Section {
-                Button {
-                    // 296 只读安全模式: 导出属于"把数据搬到 App 之外"那一族, 只读档下拦下
-                    guard SecurityPolicy.allows(.importExport) else {
-                        app.showToast(SecurityPolicy.denialMessage(.importExport))
-                        return
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            Button {
+                                let who = DB.store.getString(SecKey.sessionHow, "本机")
+                                AuditLog().append(seg == 0 ? .admin : .door, "记", target: "手动补记",
+                                                  operator_: who, duress: DB.store.getBool(SecKey.sessionDuress, false))
+                                SecTick.bump()
+                                self.center.bump()
+                            } label: {
+                                Label(manualEntryTitle, systemImage: "plus")
+                                    .xFont(.subheadline, weight: .medium)
+                            }
+                            .frame(minHeight: XHit.min)
+                        }
                     }
-                    exportPlaintext = false
-                    doExport("脱敏")
-                } label: {
-                    Label("导出审计 JSON (脱敏)", systemImage: "square.and.arrow.up")
-                        .xFont(.subheadline, weight: .medium)
-                }
-                .frame(minHeight: XHit.min)
-                Button {
-                    guard SecurityPolicy.allows(.importExport) else {
-                        app.showToast(SecurityPolicy.denialMessage(.importExport))
-                        return
-                    }
-                    // 勾选"含明文"需二次警告确认
-                    let alert = UIAlertController(title: "导出含明文",
-                                                  message: "明文口令字段将原样写入导出文件。确认要导出吗？",
-                                                  preferredStyle: .alert)
-                    alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-                    alert.addAction(UIAlertAction(title: "导出明文", style: .destructive) { _ in
-                        exportPlaintext = true
-                        doExport("含明文")
-                    })
-                    UIApplication.topViewController()?.present(alert, animated: true)
-                } label: {
-                    Label("导出含明文 (需确认)", systemImage: "eye")
-                        .xFont(.subheadline, weight: .medium)
-                }
-                .frame(minHeight: XHit.min)
-                .foregroundStyle(XPalette.warn)
-            } header: {
-                Text("脱敏导出")   // 382 脱敏导出
-            }
 
-            // 383 毁灭操作 sudo 口令
-            Section {
-                SecRow(title: "毁灭操作 sudo 口令",
-                       subtitle: SecurityPolicy.sudoRequired
-                                ? "已开: 三级销毁的第二级要重输本机密码, 清空回收站/到期清理/离职清除也先问这一道"
-                                : "已关: 上面这几处毁灭动作不再追问口令 (不建议)",
-                       icon: "person.crop.circle.badge.xmark") {
-                    XToggle("", isOn: Binding(
-                        get: { SecurityPolicy.sudoRequired },
-                        // 关掉开关顺手收回已发的那张券: 会话里"上一次验过"不该替下一次做主
-                        set: { DB.store.set(SecKey.sudoOn, $0); app.sudoTicket = nil; SecTick.bump() }))
-                        .labelsHidden()
-                }
-                if !DB.hasPasscode() {
-                    Text("本机没设应用锁密码 ⇒ 口令无从复核 ⇒ 毁灭动作按最严格解释停在门口。"   // 383 本机没设应用锁密码
-                         + "要在这台机器上销毁, 先设本机密码或把这枚开关关掉。")
-                        .xFont(.footnote)
-                        .foregroundStyle(XPalette.warn)
-                }
-            } header: {
-                Text("sudo 口令")   // 383 口令
-            }
-
-            // 388 敏感操作视图
-            Section {
-                let recent = SensitiveLedger().recent(limit: 5)
-                if recent.isEmpty {
-                    Text("暂无 — 查看/复制/导出明文动作由接线方记入 (查看密码、复制 OTP、导出备份)")
-                        .xFont(.footnote)
-                        .foregroundStyle(XPalette.textSub)
-                } else {
-                    ForEach(recent) { it in
-                        HStack(spacing: XSpace.xs) {
-                            Image(systemName: sensitiveIcon(it.kind))
-                                .font(.system(size: XIcon.xs, weight: .semibold))
-                                .foregroundStyle(XPalette.warn)
-                            Text("\(it.kind) · \(it.target)")
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            secLabel("防篡改")
+                            Button {
+                                verifyMsg = verifyNow()
+                                self.center.bump()
+                            } label: {
+                                Label("校验完整性", systemImage: "checkmark.shield")
+                                    .xFont(.subheadline, weight: .medium)
+                            }
+                            .frame(minHeight: XHit.min)
+                            if let m = verifyMsg {
+                                HStack(spacing: XSpace.xs) {
+                                    Image(systemName: m.contains("完好") ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
+                                        .font(.system(size: XIcon.sm, weight: .semibold))
+                                        .foregroundStyle(m.contains("完好") ? XPalette.ok : XPalette.danger)
+                                    Text(m)
+                                        .xFont(.footnote)
+                                        .foregroundStyle(m.contains("完好") ? XPalette.textSub : XPalette.danger)
+                                        .lineLimit(2)
+                                }
+                            }
+                            Text("每条管理日志附前条 SHA-256, 逐链重算验证; 本地轻量口径, 篡改即断链")
                                 .xFont(.footnote)
                                 .foregroundStyle(XPalette.textSub)
-                            Spacer()
-                            Text(SecFmt.dateStr(Double(it.id) / 1000))
-                                .xFont(.caption)
-                                .foregroundStyle(XPalette.textSub)
                         }
                     }
-                }
-            } header: {
-                Text("敏感操作视图")   // 388 敏感操作视图
-            }
 
-            // 953 快捷指令执行日志: 独立分区 (原先把意图流水混在 388 里, 每次 Siri 调用都记,
-            // 会把"最近 5 条"整段挤成意图日志)。被冷却拦下的尝试也留痕 —— 那是风暴的样子。
-            Section {
-                let intents = SensitiveLedger().intentItems(limit: 10)
-                if intents.isEmpty {
-                    Text("暂无 — 六条快捷指令意图每次执行都会记到这里 (被冷却拦下的也留痕)")
-                        .xFont(.footnote)
-                        .foregroundStyle(XPalette.textSub)
-                } else {
-                    ForEach(intents) { it in
-                        HStack(spacing: XSpace.xs) {
-                            Image(systemName: "command")
-                                .font(.system(size: XIcon.xs, weight: .semibold))
-                                .foregroundStyle(XPalette.accentText)
-                            Text(String(it.kind.dropFirst("intent·".count)) + " · " + it.target)
-                                .xFont(.footnote)
-                                .foregroundStyle(XPalette.textSub)
-                            Spacer()
-                            Text(SecFmt.dateStr(Double(it.id) / 1000))
-                                .xFont(.caption)
-                                .foregroundStyle(XPalette.textSub)
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            secLabel("保留期")
+                            SecRow(title: "保留期", subtitle: retentionLabel, icon: "calendar") {
+                                Picker("", selection: Binding(
+                                    get: { DB.store.getInt(SecKey.auditRetention, 0) },
+                                    set: { DB.store.set(SecKey.auditRetention, $0); SecTick.bump() })
+                                ) {
+                                    Text("3 个月").tag(3)
+                                    Text("6 个月").tag(6)
+                                    Text("12 个月").tag(12)
+                                    Text("永久").tag(0)
+                                }
+                                .pickerStyle(.menu)
+                                .frame(minWidth: 84)
+                                .tint(XPalette.accentText)
+                            }
+                            if DB.store.getInt(SecKey.auditRetention, 0) > 0 {
+                                Button {
+                                    // 385 到期清理是**物理删除**流水条目 (还要整段重封链) ⇒ 归入 296 只读闸与 383 sudo 那一族:
+                                    // 只读模式下不做, 开关开着要先重输应用锁口令。
+                                    guardedDestroy(app) {
+                                        AuditLog().purgeExpired(months: DB.store.getInt(SecKey.auditRetention, 0))
+                                        SecTick.bump()
+                                        self.center.bump()
+                                        app.showToast("已按保留期清理并留痕")
+                                    }
+                                } label: {
+                                    Label("立即清理到期条目", systemImage: "clock.arrow.circlepath")
+                                        .xFont(.subheadline, weight: .medium)
+                                }
+                                .frame(minHeight: XHit.min)
+                            }
                         }
                     }
+
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            secLabel("脱敏导出")
+                            Button {
+                                // 296 只读安全模式: 导出属于"把数据搬到 App 之外"那一族, 只读档下拦下
+                                guard SecurityPolicy.allows(.importExport) else {
+                                    app.showToast(SecurityPolicy.denialMessage(.importExport))
+                                    return
+                                }
+                                exportPlaintext = false
+                                doExport("脱敏")
+                            } label: {
+                                Label("导出审计 JSON (脱敏)", systemImage: "square.and.arrow.up")
+                                    .xFont(.subheadline, weight: .medium)
+                            }
+                            .frame(minHeight: XHit.min)
+                            Button {
+                                guard SecurityPolicy.allows(.importExport) else {
+                                    app.showToast(SecurityPolicy.denialMessage(.importExport))
+                                    return
+                                }
+                                // 勾选"含明文"需二次警告确认
+                                let alert = UIAlertController(title: "导出含明文",
+                                                              message: "明文口令字段将原样写入导出文件。确认要导出吗？",
+                                                              preferredStyle: .alert)
+                                alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+                                alert.addAction(UIAlertAction(title: "导出明文", style: .destructive) { _ in
+                                    exportPlaintext = true
+                                    doExport("含明文")
+                                })
+                                UIApplication.topViewController()?.present(alert, animated: true)
+                            } label: {
+                                Label("导出含明文 (需确认)", systemImage: "eye")
+                                    .xFont(.subheadline, weight: .medium)
+                            }
+                            .frame(minHeight: XHit.min)
+                            .foregroundStyle(XPalette.warn)
+                        }
+                    }
+
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            secLabel("sudo 口令")
+                            SecRow(title: "毁灭操作 sudo 口令",
+                                   subtitle: SecurityPolicy.sudoRequired
+                                            ? "已开: 三级销毁的第二级要重输本机密码, 清空回收站/到期清理/离职清除也先问这一道"
+                                            : "已关: 上面这几处毁灭动作不再追问口令 (不建议)",
+                                   icon: "person.crop.circle.badge.xmark") {
+                                XToggle("", isOn: Binding(
+                                    get: { SecurityPolicy.sudoRequired },
+                                    // 关掉开关顺手收回已发的那张券: 会话里"上一次验过"不该替下一次做主
+                                    set: { DB.store.set(SecKey.sudoOn, $0); app.sudoTicket = nil; SecTick.bump() }))
+                                    .labelsHidden()
+                            }
+                            if !DB.hasPasscode() {
+                                Text("本机没设应用锁密码 ⇒ 口令无从复核 ⇒ 毁灭动作按最严格解释停在门口。"   // 383 本机没设应用锁密码
+                                     + "要在这台机器上销毁, 先设本机密码或把这枚开关关掉。")
+                                    .xFont(.footnote)
+                                    .foregroundStyle(XPalette.warn)
+                            }
+                        }
+                    }
+
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            secLabel("敏感操作视图")
+                            let recent = SensitiveLedger().recent(limit: 5)
+                            if recent.isEmpty {
+                                Text("暂无 — 查看/复制/导出明文动作由接线方记入 (查看密码、复制 OTP、导出备份)")
+                                    .xFont(.footnote)
+                                    .foregroundStyle(XPalette.textSub)
+                            } else {
+                                ForEach(recent) { it in
+                                    HStack(spacing: XSpace.xs) {
+                                        Image(systemName: sensitiveIcon(it.kind))
+                                            .font(.system(size: XIcon.xs, weight: .semibold))
+                                            .foregroundStyle(XPalette.warn)
+                                        Text("\(it.kind) · \(it.target)")
+                                            .xFont(.footnote)
+                                            .foregroundStyle(XPalette.textSub)
+                                        Spacer()
+                                        Text(SecFmt.dateStr(Double(it.id) / 1000))
+                                            .xFont(.caption)
+                                            .foregroundStyle(XPalette.textSub)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            secLabel("快捷指令执行")
+                            let intents = SensitiveLedger().intentItems(limit: 10)
+                            if intents.isEmpty {
+                                Text("暂无 — 六条快捷指令意图每次执行都会记到这里 (被冷却拦下的也留痕)")
+                                    .xFont(.footnote)
+                                    .foregroundStyle(XPalette.textSub)
+                            } else {
+                                ForEach(intents) { it in
+                                    HStack(spacing: XSpace.xs) {
+                                        Image(systemName: "command")
+                                            .font(.system(size: XIcon.xs, weight: .semibold))
+                                            .foregroundStyle(XPalette.accentText)
+                                        Text(String(it.kind.dropFirst("intent·".count)) + " · " + it.target)
+                                            .xFont(.footnote)
+                                            .foregroundStyle(XPalette.textSub)
+                                        Spacer()
+                                        Text(SecFmt.dateStr(Double(it.id) / 1000))
+                                            .xFont(.caption)
+                                            .foregroundStyle(XPalette.textSub)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                 }
-            } header: {
-                Text("快捷指令执行")   // 953 快捷指令执行
+                .padding(.horizontal, XSpace.gutter)
+                .padding(.vertical, XSpace.l)
             }
+            .scrollIndicators(.hidden)
         }
-        .xList()
-        .xScreen()
         .navigationTitle("审计流水")
+        .navigationBarTitleDisplayMode(.inline)
         .onReceive(Timer.publish(every: 2, on: .main, in: .common).autoconnect()) { _ in
             self.center.bump()
         }
+    }
+
+    /// 卡片内的小标题
+    private func secLabel(_ text: String) -> some View {
+        Text(text)
+            .xFont(.caption, weight: .semibold)
+            .foregroundStyle(XPalette.textTertiary)
+            .textCase(.uppercase)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // ---------- 派生 ----------
