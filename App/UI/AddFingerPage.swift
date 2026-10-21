@@ -320,7 +320,10 @@ struct AddFingerPage: View {
                     .font(.system(size: XMetric.decorIcon(76), weight: .light))
                     .foregroundStyle(XPalette.ok)
             }
-            .transition(.scale(scale: 0.8).combined(with: .opacity))
+            // 180pt 的圆环从 80% 放大，是本页位移最大的动画 ——
+            // reduceMotion 下只保留淡入，不做缩放。
+            .transition(reduceMotion ? .opacity
+                                    : .scale(scale: 0.8).combined(with: .opacity))
 
             Text("添加成功")
                 .xFont(.title2, weight: .semibold)
