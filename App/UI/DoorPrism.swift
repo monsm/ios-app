@@ -68,21 +68,24 @@ struct DoorPrism<B: View, D: View, F: View>: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                if reduceMotion {
-                    // ── 降级: 不做 3D，只交叉淡入 ──
-                    // 前庭敏感用户依赖这条路径，行为必须完整可用
-                    Group {
-                        switch face {
-                        case .b: faceB()
-                        case .d: faceD()
-                        case .f: faceF()
-                        }
-                    }
-                    .transition(.opacity)
-                    .animation(XMotion.soft, value: face)
-                } else {
-                    prismBody(width: geo.size.width)
-                }
+                // ═══ reduceMotion: 保留三棱柱，只去掉动画 ═══
+                //
+                // 用户要求: "减弱动态不动三棱柱"。
+                // 意思是**三棱柱本身要保留**，只是不要动画。
+                //
+                // 我第一版写成"降级为交叉淡入" —— 那是错的:
+                //   · 三棱柱消失了，变成普通的多页面切换
+                //   · .transition(.opacity) + .animation(XMotion.soft)
+                //     **本身也是动画**，与"不动"矛盾
+                //
+                // 正确做法: 三棱柱照常渲染，但
+                //   · 不做旋转过渡（face 直接跳）
+                //   · 不做缩放呼吸（breathScale 恒为 1）
+                //   · 不做拖拽跟手（手势仍可用，但松手直接跳面）
+                //
+                // 这样前庭敏感用户看到的仍是三棱柱的**静态侧面**，
+                // 而不是会转动的物体 —— 视觉结构不变，动效归零。
+                prismBody(width: geo.size.width)
 
                 // ── 边缘热区（左右各一条）──
                 HStack(spacing: 0) {
@@ -229,7 +232,8 @@ struct DoorPrism<B: View, D: View, F: View>: View {
     /// turn=0 时停在新面 —— 一次动画连贯走完，无跳变。
     private var containerAngle: Double {
         let base = -FaceAngle.current(face)
-        // 手势优先；未拖拽时由 turn 接管（turn=1 是起点，0 是终点）
+        // reduceMotion: 只显示当前面的正面视角，不随拖拽/过渡转动
+        guard !reduceMotion else { return base }
         let offset: CGFloat = abs(drag) > 0.001 ? drag : (turn * turnSign)
         return base - Double(offset * 120)
     }
@@ -310,7 +314,9 @@ struct DoorPrism<B: View, D: View, F: View>: View {
                         if abs(p) > DoorGeometry.flipThreshold {
                             onStep(p > 0 ? -1 : 1)
                         }
-                        withAnimation(XMotion.soft) { drag = 0 }
+                        // reduceMotion: 回弹也是动画，直接归零
+                        if reduceMotion { drag = 0 }
+                        else { withAnimation(XMotion.soft) { drag = 0 } }
                         lastTick = -1
                     }
             )
@@ -350,6 +356,13 @@ struct DoorPrism<B: View, D: View, F: View>: View {
         let n = order.count
         let next = ((i + direction) % n + n) % n
         XHaptics.trigger.impactOccurred()
+
+        // reduceMotion: 直接跳面，不做旋转过渡
+        if reduceMotion {
+            face = order[next]
+            turn = 0
+            return
+        }
 
         // 立即换面，turn 从 1 降到 0
         turnSign = direction > 0 ? 1 : -1
