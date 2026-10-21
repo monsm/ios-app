@@ -52,7 +52,7 @@ struct MePage: View {
             .padding(.bottom, XSpace.xxl)
         }
         .background(XPalette.canvas)
-        .navigationTitle("这台手机")
+        .navigationTitle("本机设置")
         .navigationBarTitleDisplayMode(.large)
     }
 

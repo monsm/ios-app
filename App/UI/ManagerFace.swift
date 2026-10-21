@@ -129,7 +129,7 @@ struct ManagerFace: View {
                 (.backup, "备份恢复", "导出 / 导入 / 校验", "externaldrive.badge.timemachine"),
                 (.export, "导出中心", "PDF / CSV / 分享", "square.and.arrow.up"),
                 (.appearance, "外观工作室", "主题 / 强调色 / 密度", "paintpalette"),
-                (.me, "关于我", "个人与设备信息", "person.crop.circle"),
+                (.me, "本机设置", "应用锁 / 备份 / 外观 / 关于", "person.crop.circle"),
             ])
         }
     }
@@ -256,11 +256,11 @@ enum ManagerRoute: String, Hashable, Identifiable {
 // 谁用它就定义在谁那里。移的时候连带把 DoorRoot 里的副本删了，
 // 结果两边都没有，swiftlint 报"仅出现 2 次且未声明"才发现。
 enum ManagerGroup: String, CaseIterable, Identifiable {
-    case ledger = "台账"
+    case ledger = "钥匙"
     case devices = "设备"
     case members = "成员"
     case security = "安全"
-    case backupLook = "备份外观"
+    case backupLook = "数据与外观"
 
     var id: String { rawValue }
 
@@ -281,7 +281,7 @@ enum ManagerGroup: String, CaseIterable, Identifiable {
             let n = DB.keychains().reduce(0) { acc, kc in
                 acc + DB.listPwds(kc.mac).count + DB.listFps(kc.mac).count
             }
-            return n > 0 ? "\(n) 份凭证" : "还没有凭证"
+            return n > 0 ? "\(n) 项钥匙" : "还没有钥匙"
         case .devices:
             let n = DB.keychains().count
             return n > 0 ? "\(n) 把锁" : "还没有门锁"

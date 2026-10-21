@@ -184,6 +184,12 @@ const checks = [
     return p.includes('archiveOldLogs()') && p.includes('PageTrace.clear()') &&
            p.includes('kf_diag_log_retention') && p.includes('kf_diag_ops_on');
   }],
+  ['分组名不用行话', () => {
+    // 「台账」「备份外观」是工程词，与页面标题（钥匙管理 / 数据与外观）不一致。
+    const m = CODE.get('ManagerFace.swift') || '';
+    return m.includes('case ledger = "钥匙"') && m.includes('case backupLook = "数据与外观"') &&
+           !m.includes('"台账"') && !m.includes('"备份外观"');
+  }],
 ];
 
 let pass = 0;
