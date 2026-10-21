@@ -693,12 +693,20 @@ struct HomeConsole: View {
             // 这次开门刚刚发生，主界面上的"今日开门 / 分时柱图"必须立刻变。
             // 不 bump 的话要等下一次别的原因触发重绘才更新，用户会以为没开成。
             SecTick.bump()
-            // 刚开过锁，连接是热的 —— 顺手把电量/锁态拉新，成本很低。
-            // 注意：回前台时**不要**这样做（见 scenePhase 处的说明），
-            // 每次回 App 都唤一次门锁既耗电也不符合用户预期。
-            await app.refreshStatusQuietly()
+            // ═══ 反馈先于刷新 ═══
+            //
+            // 这里原来先 await refreshStatusQuietly() 再 XHaptics.success()。
+            // 那个刷新要真的连 BLE 读状态，连接不好时可能几秒才返回 ——
+            // 于是用户已经把门打开了，界面却迟迟不给成功反馈。
+            // 用户的反馈不能等一个"可选的"后台刷新：先给触觉与状态，
+            // 刷新丢到后台去做，失败也不影响这次开锁的结论。
             XHaptics.success()
             scheduleSettle(after: 0.9)
+            Task { @MainActor in
+                // 刚开过锁，连接是热的，顺手把电量/锁态拉新。
+                // 注意：回前台时**不要**这样做（见 scenePhase 处的说明）。
+                await app.refreshStatusQuietly()
+            }
         } catch {
             failure = humanMessage(error)
             phase = .failed
