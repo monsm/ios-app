@@ -82,8 +82,16 @@ const checks = [
   ['外观页不是 StudioPage', () => !inCode('ManagerFace.swift', 'case .appearance:     StudioPage()')],
   ['配对中禁止下滑关闭', () => inCode('AddLockPage.swift', 'interactiveDismissDisabled(flow == .pairing || flow == .naming)')],
   ['关掉弹层也会回滚配对', () => /onDisappear \{[\s\S]{0,240}?rollback\(reason: ""\)/.test(CODE.get('AddLockPage.swift') || '')],
-  ['写入中禁止下滑关闭（>=4 个视图）', () =>
-    FILES.filter(f => (CODE.get(path.basename(f))||'').includes('interactiveDismissDisabled(busy)')).length >= 4],
+  ['写入中禁止下滑关闭（>=5 处）', () => {
+    // ⚠ 按**出现次数**算，不是文件数：CredentialStudio / BackupStudio 各有两个视图，
+    //   第一版按文件数比较，把 5 处误算成 3，导致这条断言自己误报。
+    let n = 0;
+    for (const f of FILES) {
+      const s = CODE.get(path.basename(f)) || '';
+      n += (s.match(/interactiveDismissDisabled\(busy\)/g) || []).length;
+    }
+    return n >= 5;
+  }],
 ];
 
 let pass = 0;

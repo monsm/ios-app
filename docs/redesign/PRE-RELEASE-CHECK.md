@@ -240,3 +240,48 @@ HIG 的 motion 页给的是原则而非数值。挑了两条能机械验证的�
 
 现在 7 个令牌（quick / standard / soft / exit / summon / doorReveal / chargeReset）
 **全部有调用**，`dampingFraction` 全在 0.85–1.0 —— 整组动效没有一处过冲。
+
+---
+
+# 追加：modality 审计（2026-10-22）
+
+## 结构上没有「App 里的 App」
+
+HIG：
+> *"Avoid creating a modal experience that feels like an app within your app. Presenting a hierarchy of views within a modal task can make people forget how to retrace their steps."*
+
+扫了 23 处 `.sheet` / `.fullScreenCover`：**0 处**在弹层里装多级跳转。
+（其中 5 处有 `NavigationStack`，但那只是为了让弹层有标题栏与工具栏，里面没有 NavigationLink。）
+
+## 但发现一个真问题：配对中下滑关闭不回滚
+
+`AddLockPage` 是一个**会真的改设备状态**的多步任务：
+`pair()` 之后门锁端已经换过密钥，本机这边只有 `@State` 里的 `pairedKC`。
+
+而 `interactiveDismissDisabled` **全仓 0 处**，`onDisappear` 只取消了扫描任务。
+后果：**用户在配对进行中下滑关闭 → 锁被配上了、App 里没有记录**，
+既控制不了它，重新配对还可能被「已经添加过」挡住。
+
+修复：
+- `.interactiveDismissDisabled(flow == .pairing || flow == .naming)` —— 这两个阶段会改设备状态
+- `onDisappear` 兜底：只要还在这两个阶段就 `rollback`
+
+## 顺带把同类风险也堵了
+
+另外 5 个**写入类弹层**（AddKeyPage / ExportWizardView / RestoreWizardView /
+TempCodeStudio / FpStudio）在 `busy` 期间禁止下滑关闭 ——
+否则操作可能已经发到设备，用户却拿不到结果、也看不到失败原因。
+
+`OtpStudio` **没有 busy 状态**，所以没加（加了会编译失败）。
+
+## 这次改动中我自己犯的错
+
+第一版用**文件级**匹配插 `.interactiveDismissDisabled`，插到了文件里**第一个**
+`navigationTitle` 上——而那个属于另一个视图，该视图没有 `busy`。
+**三处会编译失败。**
+
+用一个「插入后回查所在 struct 是否真的声明了 busy」的脚本抓出来，撤掉重插。
+现在 6 处全部作用域正确。
+
+**教训**：批量改代码时，"改到了"和"改对地方了"是两件事。
+写完立刻回查作用域，比等 CI 报错便宜得多。
