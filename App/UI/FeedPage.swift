@@ -42,7 +42,7 @@ struct FeedPage: View {
             } else {
                 ScrollView {
                     VStack(spacing: XSpace.m) {
-                        headerBar
+                        headerBar.xScrollLift()
                         LazyVStack(spacing: XSpace.s) {
                             ForEach(displayRows) { r in
                                 feedRow(r)

@@ -48,10 +48,10 @@ struct AddKeyPage: View {
 
             ScrollView {
                 VStack(spacing: XSpace.xl) {
-                    passwordStage
-                    validitySection
-                    ownerSection
-                    actionSection
+                    passwordStage.xScrollLift()
+                    validitySection.xScrollLift()
+                    ownerSection.xScrollLift()
+                    actionSection.xScrollLift()
                 }
                 .padding(.horizontal, XSpace.gutter)
                 .padding(.vertical, XSpace.l)

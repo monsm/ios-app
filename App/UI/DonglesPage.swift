@@ -32,14 +32,14 @@ struct DonglesPage: View {
 
             ScrollView {
                 VStack(spacing: XSpace.l) {
-                    headerCard
+                    headerCard.xScrollLift()
 
                     if app.current == nil {
-                        noLockBanner
+                        noLockBanner.xScrollLift()
                     }
 
                     if dongles.isEmpty {
-                        emptyState
+                        emptyState.xScrollLift()
                     } else {
                         ForEach(dongles) { d in
                             dongleCard(d)

@@ -51,12 +51,12 @@ struct AddFingerPage: View {
             ScrollView {
                 VStack(spacing: XSpace.xl) {
                     if doneBatch != nil {
-                        successStage
+                        successStage.xScrollLift()
                     } else {
-                        ownerPicker
-                        fingerprintStage
-                        if !error.isEmpty { errorBanner }
-                        actionArea
+                        ownerPicker.xScrollLift()
+                        fingerprintStage.xScrollLift()
+                        if !error.isEmpty { errorBanner.xScrollLift() }
+                        actionArea.xScrollLift()
                     }
                 }
                 .padding(.horizontal, XSpace.gutter)
