@@ -106,15 +106,20 @@ struct HomeConsole: View {
                 }
                 .scrollIndicators(.hidden)
                 .refreshable {
-                    // 数据是现算的，bump 一次让 body 重算即可
+                    // 下拉是**用户显式要求刷新**，所以这里允许主动连门锁拉实时状态。
                     SecTick.bump()
-                    try? await Task.sleep(for: .milliseconds(180))
+                    await app.refreshStatusQuietly(manual: true)
                 }
             }
             .navigationBarHidden(true)
             .onChange(of: scenePhase) { _, phase in
-                // 从后台回来时数据可能已经过期（别处开过门、改了成员）。
-                // 回前台就重算一次，成本只是一次 body 求值。
+                // 回前台只重算**本地**数据（别处开过门、成员变动都可能让统计过期），
+                // 成本只是一次 DB 扫描。
+                //
+                // 这里刻意**不**调 refreshStatusQuietly：那个方法会真的建立 BLE
+                // 连接去读实时状态。每次切回 App 都唤醒一次门锁，既费电也不符合
+                // 用户预期（他可能只是回个微信）。要拉实时状态有下拉刷新这条
+                // 显式路径。
                 if phase == .active { SecTick.bump() }
             }
             .onChange(of: ticker.tick) { _, _ in recompute() }
@@ -574,6 +579,10 @@ struct HomeConsole: View {
             // 这次开门刚刚发生，主界面上的"今日开门 / 分时柱图"必须立刻变。
             // 不 bump 的话要等下一次别的原因触发重绘才更新，用户会以为没开成。
             SecTick.bump()
+            // 刚开过锁，连接是热的 —— 顺手把电量/锁态拉新，成本很低。
+            // 注意：回前台时**不要**这样做（见 scenePhase 处的说明），
+            // 每次回 App 都唤一次门锁既耗电也不符合用户预期。
+            await app.refreshStatusQuietly()
             XHaptics.success()
             scheduleSettle(after: 0.9)
         } catch {
