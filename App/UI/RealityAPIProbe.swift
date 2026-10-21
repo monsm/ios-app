@@ -104,27 +104,27 @@ enum ProbeBlock3_Material {
 }
 
 // ───────────────────────────────────────────────────────────────────────
-// 区块 4 · 实体层级与变换               【待 run #443 验证】
+// 区块 4 · 实体层级与变换       【✓ 已由 XLockBlade 在 run #458 验证】
 // ───────────────────────────────────────────────────────────────────────
 @available(iOS 18.0, *)
 enum ProbeBlock4_Entity {
     static func probe() throws {
         let root = Entity()
         root.name = "root"
-        root.scale = SIMD3<Float>(repeating: 0.01)          // ← 待验
+        root.scale = SIMD3<Float>(repeating: 0.01)          // ✓ XLockBlade 用它做 mm→m 缩放
 
         let mesh = MeshResource.generateSphere(radius: 0.1)
         let mat = SimpleMaterial(color: .gray, isMetallic: true)
         let child = ModelEntity(mesh: mesh, materials: [mat])
         child.name = "child"
-        child.position = SIMD3<Float>(0, 0, 0)              // ← 待验
+        child.position = SIMD3<Float>(0, 0, 0)              // ✓ XLockBlade 用它定位零件
         child.orientation = simd_quatf(angle: .pi / 2, axis: [1, 0, 0])
         root.addChild(child)
 
         // 查找与向下转型
-        _ = root.findEntity(named: "child")                  // ← 待验
+        _ = root.findEntity(named: "child")                  // ✓ XLockBlade.applyState 用它找 accent/sensor
         if let e = root.findEntity(named: "child") as? ModelEntity {
-            e.model?.materials = [mat]                       // ← 待验
+            e.model?.materials = [mat]                       // ✓ XLockBlade.applyState 用它换状态色
         }
 
         // RealityViewContent 的实体枚举
