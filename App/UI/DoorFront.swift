@@ -87,9 +87,18 @@ struct DoorFront: View {
     }
 
     var body: some View {
+        // 纵向节奏 —— 用「Spacer 个数」做权重, 不用 minLength + maxHeight 封顶。
+        //
+        // 两条踩过的坑:
+        //   1. Spacer 一旦被 .frame(maxHeight:) 封顶, VStack 就失去"谁吃剩余空间",
+        //      布局退化成依赖系统兜底 —— 上下各留一大片空白 (渲染验证时整屏 40% 是空的);
+        //   2. SwiftUI 里**多个 Spacer 是均分的**, 没有"权重"参数。要 2:1:1 就放 2+1+1 个,
+        //      不是写三个 Spacer 再加 maxHeight 去凑。
+        //
+        // 底部不留 Spacer: 按钮用固定内边距贴住安全区, 免得又出现一大块空白。
         VStack(spacing: 0) {
-            // ── 顶部: 锁名 + 翻面按钮 ──
-            HStack {
+            // ── 顶部: 锁名 ──
+            HStack(alignment: .firstTextBaseline) {
                 Text(lockName)
                     .xFont(.headline)
                     .foregroundStyle(XPalette.text)
@@ -98,47 +107,50 @@ struct DoorFront: View {
             .padding(.horizontal, XSpace.gutter)
             .padding(.top, XSpace.s)
 
-            Spacer(minLength: XSpace.lockFace)
+            // 锁体上方: 2 份
+            Spacer(minLength: XSpace.l)
+            Spacer(minLength: 0)
 
-            // ── 中部: 锁体 ──
+            // ── 中部: 锁体 (视觉主角) ──
             ZStack {
-                // 呼吸光晕
                 Circle()
                     .fill(RadialGradient(
                         colors: [XPalette.accent.opacity(reduceMotion ? 0.12 : (breathe ? 0.16 : 0.08)), .clear],
                         center: .center, startRadius: 0,
-                        endRadius: DoorGeometry.plateDiameter(screenWidth: UIScreen.main.bounds.width) * 0.9))
-                    .frame(width: DoorGeometry.plateDiameter(screenWidth: UIScreen.main.bounds.width) * 1.8)
+                        endRadius: plateDiameter * 0.9))
+                    .frame(width: plateDiameter * 1.8)
                     .animation(reduceMotion ? nil : .easeInOut(duration: 2.6).repeatForever(autoreverses: true), value: breathe)
 
                 LockPlate(
                     charge: charge,
                     isOpen: lastKnownOpen && stage == .idle,
                     isFailed: failureText != nil,
-                    diameter: DoorGeometry.plateDiameter(screenWidth: UIScreen.main.bounds.width))
+                    diameter: plateDiameter)
             }
             .frame(maxWidth: .infinity)
 
+            // 锁体 ↔ 状态: 1 份
             Spacer(minLength: XSpace.l)
 
             // ── 状态行 ──
             VStack(spacing: XSpace.xs) {
                 Text(statusLine)
-                    .xFont(.title3, weight: .medium)
+                    .xFont(.title2, weight: .medium)
                     .foregroundStyle(XPalette.text)
                     .contentTransition(.numericText())
                     .animation(XMotion.quick, value: statusLine)
 
                 if let sub = subLine {
                     Text(sub)
-                        .xFont(.footnote)
+                        .xFont(.subheadline)
                         .foregroundStyle(XPalette.textSub)
                 }
             }
             .multilineTextAlignment(.center)
             .padding(.horizontal, XSpace.gutter)
 
-            Spacer(minLength: XSpace.xl)
+            // 状态 ↔ 按钮: 1 份
+            Spacer(minLength: XSpace.l)
 
             // ── 按住开锁 ──
             holdButton
@@ -151,11 +163,34 @@ struct DoorFront: View {
                     .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
 
-            Spacer(minLength: XSpace.xl)
+            // 底部固定内边距 (不占 Spacer)
+            Color.clear.frame(height: XSpace.xl)
         }
         .onAppear { if !reduceMotion { breathe = true } }
         .animation(XMotion.soft, value: stage)
         .animation(XMotion.soft, value: failureText)
+    }
+
+    /// 锁体直径: 屏幕宽 58% 夹在 180...280。
+    /// 它是整屏唯一的主体物 —— 太小会让上下留白显得像"没加载完"。
+    private var plateDiameter: CGFloat {
+        let w = UIScreen.main.bounds.width
+        return min(max(w * 0.58, 180), 280)
+    }
+
+    /// 锁体直径: 屏幕宽 58% 夹在 180...280。
+    /// 它是整屏唯一的主体物 —— 太小会让上下留白显得像"没加载完"。
+    private var plateDiameter: CGFloat {
+        let w = UIScreen.main.bounds.width
+        return min(max(w * 0.58, 180), 280)
+    }
+
+    /// 锁体直径: 屏幕宽 52% 夹在 160...260。
+    /// 渲染验证后上抬到 0.58 / 上限 280 —— 它是整屏唯一的主体物,
+    /// 太小会让上下留白显得像"没加载完"。
+    private var plateDiameter: CGFloat {
+        let w = UIScreen.main.bounds.width
+        return min(max(w * 0.58, 180), 280)
     }
 
     // ── 状态文案 ──

@@ -167,7 +167,8 @@ struct MaintenanceView: View {
 
     // ---------- 1028 保养历史过滤 (1014 事件) ----------
     private var historySection: some View {
-        XPanel(kind: .group) {
+        let all = BatteryCare.events(mac)
+        return XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 secLabel("保养历史")
                 if all.isEmpty {
