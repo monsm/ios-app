@@ -9,18 +9,18 @@ import UIKit
 struct MechCounter: View {
     let value: Int
     var body: some View {
-        HStack(spacing: DS.Space.xs) {
+        HStack(spacing: XSpace.xs) {
             ForEach(Array(String(value).enumerated()), id: \.offset) { _, ch in
                 Text(String(ch))
                     .vkFont(.subheadline, weight: .semibold)
                     .monospacedDigit()
-                    .foregroundStyle(DS.Palette.text)
+                    .foregroundStyle(XPalette.text)
                     .frame(width: 22)
                     // @layout-allow VK豁免 刻度点: 22pt 宽的控制零件，不是容器
-                    .background(DS.Palette.surfaceAlt, in: RoundedRectangle(cornerRadius: 5, style: .continuous))
+                    .background(XPalette.surfaceAlt, in: RoundedRectangle(cornerRadius: 5, style: .continuous))
                     .overlay(
                         RoundedRectangle(cornerRadius: 5, style: .continuous)
-                            .strokeBorder(DS.Palette.hairline, lineWidth: 0.5)
+                            .strokeBorder(XPalette.hairline, lineWidth: 0.5)
                     )
             }
         }
@@ -66,7 +66,7 @@ struct DefendView: View {
                         Image(systemName: "info.circle").accessibilityHidden(true)
                     }
                     .vkFont(.footnote)
-                    .foregroundStyle(DS.Palette.textSub)
+                    .foregroundStyle(XPalette.textSub)
                 }
             }
             Section {
@@ -199,11 +199,11 @@ struct SafemodeIntroView: View {
                     if app.status == nil {
                         Text("还没读到锁状态 —— 先在设备页读一次锁信息，这里才会出现切换按钮。")
                             .vkFont(.footnote)
-                            .foregroundStyle(DS.Palette.textSub)
+                            .foregroundStyle(XPalette.textSub)
                     } else if app.status?.verifyMode == 1 {
                         Text("当前已是 B 模式（双验）。本 App 不提供改回 A 模式的入口。")
                             .vkFont(.footnote)
-                            .foregroundStyle(DS.Palette.ok)
+                            .foregroundStyle(XPalette.ok)
                     } else {
                         Button(switching ? "切换中…" : "切换到 B 模式（双验，更严）(cmd 20)") {
                             confirmDestructive("切换到 B 模式（双验）",
@@ -215,9 +215,9 @@ struct SafemodeIntroView: View {
                             }
                         }
                         .vkFont(.subheadline, weight: .medium)
-                        .foregroundStyle(DS.Palette.accentText)
+                        .foregroundStyle(XPalette.accentText)
                         .disabled(switching)
-                        .frame(minHeight: DS.Hit.min)
+                        .frame(minHeight: XHit.min)
                     }
                 }
             }

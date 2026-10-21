@@ -66,7 +66,7 @@ struct BackupView: View {
     private var exportSection: some View {
         Section("全量备份") {
             Text("导出全部门锁、钥匙、密码台账与家人档案为一整段文本 (含敏感密钥, 请妥善保管)。")
-                .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
+                .vkFont(.caption).foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             BusyButton(title: "生成备份文本", systemImage: "doc.text", isBusy: false) {
                 Milestones.recordBackup()   // 980 备份卫士
@@ -77,37 +77,37 @@ struct BackupView: View {
             // 822 从未备份的信封: 没有备份时这页最该说的不是"怎么导出"，而是"现在一个都没有"。
             // 文案不写"建议每周一次"这种本 App 没有依据的规范；给的是**已发生的事实**与下一步动作。
             if Milestones.lastBackupAt == nil {
-                HStack(alignment: .top, spacing: DS.Space.s) {
+                HStack(alignment: .top, spacing: XSpace.s) {
                     Image(systemName: "envelope")
-                        .font(.system(size: DS.Icon.md))
-                        .foregroundStyle(DS.Palette.accentText)
-                    VStack(alignment: .leading, spacing: DS.Space.xxs) {
+                        .font(.system(size: XIcon.md))
+                        .foregroundStyle(XPalette.accentText)
+                    VStack(alignment: .leading, spacing: XSpace.xxs) {
                         Text("还没有备份").vkFont(.subheadline, weight: .medium)   // 822 还没有备份
                         Text("本机从未生成过备份文本，也没有上传成功记录。手机丢失或重装即不可恢复。")
-                            .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
+                            .vkFont(.caption).foregroundStyle(XPalette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
                 .accessibilityElement(children: .combine)
             } else if let at = Milestones.lastBackupAt {
-                VStack(alignment: .leading, spacing: DS.Space.xxs) {
+                VStack(alignment: .leading, spacing: XSpace.xxs) {
                     Text("上次备份 " + at.formatted(date: .abbreviated, time: .shortened))   // 822 上次备份
-                        .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
+                        .vkFont(.caption).foregroundStyle(XPalette.textSub)
                     // 822 建议备份时间: 读「备份工作室」的节奏档 (198 的 kf_bk_cadence, 本处为它的读方),
                     // 到期与否按上次备份时刻实算; 节奏为「仅手动」时不建议 —— 没有节奏就没有"到期"这一说。
                     if let tip = Self.backupDueTip(cadence: BackupStudio.cadence, last: at) {
-                        Text(tip).vkFont(.caption).foregroundStyle(DS.Palette.textSub)
+                        Text(tip).vkFont(.caption).foregroundStyle(XPalette.textSub)
                     }
                     // 193 体积预估: 本次预计 vs 上次实际 (备份工作室同样一行, 这里补全量导出入口的对照)
                     if let est = BackupStudio.estimateBytes() {
-                        Text(BackupStudio.sizeText(est)).vkFont(.caption).foregroundStyle(DS.Palette.textSub)
+                        Text(BackupStudio.sizeText(est)).vkFont(.caption).foregroundStyle(XPalette.textSub)
                     }
                 }
             }
             if !exportText.isEmpty {
-                VStack(alignment: .leading, spacing: DS.Space.s) {
+                VStack(alignment: .leading, spacing: XSpace.s) {
                     Text("共 \(exportText.count) 字符")
-                        .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
+                        .vkFont(.caption).foregroundStyle(XPalette.textSub)
                     Text(exportText)
                         .vkFont(.caption.monospaced())
                         .lineLimit(8).truncationMode(.tail)
@@ -123,7 +123,7 @@ struct BackupView: View {
     private var importSection: some View {
         Section("导入恢复") {
             Text("粘贴备份文本后导入。相同设备将覆盖, 其它设备保留 (门锁无需重置)。")
-                .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
+                .vkFont(.caption).foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             TextField("粘贴备份文本", text: $importText, axis: .vertical)
                 .vkFont(.caption.monospaced())
@@ -139,7 +139,7 @@ struct BackupView: View {
                 }
             } label: {
                 Label("从剪贴板粘贴", systemImage: "doc.on.clipboard")
-                    .frame(minHeight: DS.Hit.min)
+                    .frame(minHeight: XHit.min)
             }
             .disabled(busy || importText.isEmpty)
             Button("导入", role: .destructive) { confirmImport() } // 覆盖同名设备, 属破坏性动作
@@ -206,12 +206,12 @@ struct BackupView: View {
             } label: {
                 Label("打开备份工作室", systemImage: "wrench.and.scissors")
                     .vkFont(.subheadline, weight: .semibold)
-                    .foregroundStyle(DS.Palette.accentText)
+                    .foregroundStyle(XPalette.accentText)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .frame(minHeight: DS.Hit.min)
+                    .frame(minHeight: XHit.min)
             }
             Text("导出向导 · 恢复预演 · 完整性信任。")
-                .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
+                .vkFont(.caption).foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }

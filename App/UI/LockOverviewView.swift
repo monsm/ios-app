@@ -24,12 +24,12 @@ struct LockOverviewView: View {
     var vkBody: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: DS.Space.m) {
+                VStack(spacing: XSpace.m) {
                     // 2026-10-15 走查: `loaded` 这一位在 .task 里置真、**全文件没有任何一处读它** ⇒
                     // 有锁的用户首帧拿到的是 `usages = []`，于是先闪一屏"还没有门锁 / 添加第二把门锁后…"，
                     // 下一拍数据到了再换成对比卡。空态要分"还没读"与"真的没有"两档。
                     if !loaded {
-                        ProgressView().padding(DS.Space.xl)
+                        ProgressView().padding(XSpace.xl)
                     } else if usages.isEmpty {
                         Card {
                             EmptyState(systemImage: "lock.square.stack",
@@ -47,7 +47,7 @@ struct LockOverviewView: View {
                         firmwareCard.staggered(6)       // 784 + 769
                     }
                 }
-                .padding(.vertical, DS.Space.m)
+                .padding(.vertical, XSpace.m)
             }
             .dsScreenBackground()
             .navigationTitle("全部锁总览")
@@ -65,15 +65,15 @@ struct LockOverviewView: View {
     // ---------- 787 对比结论一句话 ----------
     private var summaryCard: some View {
         Card {
-            HStack(alignment: .top, spacing: DS.Space.s) {
+            HStack(alignment: .top, spacing: XSpace.s) {
                 Image(systemName: "text.quote")
-                    .font(.system(size: DS.Icon.sm, weight: .semibold))
-                    .foregroundStyle(DS.Palette.accentText)
+                    .font(.system(size: XIcon.sm, weight: .semibold))
+                    .foregroundStyle(XPalette.accentText)
                     .padding(.top, 2)
                     .accessibilityHidden(true)
                 Text(LockStats.summary(usages))
                     .vkFont(.subheadline)
-                    .foregroundStyle(DS.Palette.text)
+                    .foregroundStyle(XPalette.text)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .accessibilityElement(children: .combine)
@@ -92,35 +92,35 @@ struct LockOverviewView: View {
         let list = LockStats.maintenance(usages)
         if !list.isEmpty {
             Card(tint: .warn) {
-                VStack(alignment: .leading, spacing: DS.Space.s) {
+                VStack(alignment: .leading, spacing: XSpace.s) {
                     SectionTitle(text: "待维护", count: list.count)
                     ForEach(list) { item in
                         Button {
                             alarmTarget = AlarmTarget(mac: item.usage.mac)   // 768: 直达该锁告警流
                         } label: {
-                            HStack(spacing: DS.Space.s) {
+                            HStack(spacing: XSpace.s) {
                                 Image(systemName: "wrench.and.screwdriver.fill")
-                                    .font(.system(size: DS.Icon.sm, weight: .semibold))
-                                    .foregroundStyle(DS.Palette.warn)
+                                    .font(.system(size: XIcon.sm, weight: .semibold))
+                                    .foregroundStyle(XPalette.warn)
                                     .accessibilityHidden(true)
-                                VStack(alignment: .leading, spacing: DS.Space.xxs) {
+                                VStack(alignment: .leading, spacing: XSpace.xxs) {
                                     Text(item.usage.name)
                                         .vkFont(.subheadline)
-                                        .foregroundStyle(DS.Palette.text)
+                                        .foregroundStyle(XPalette.text)
                                         .lineLimit(1)
                                         .minimumScaleFactor(0.85)
                                     Text(item.reasons.joined(separator: " · "))
                                         .vkFont(.caption)
-                                        .foregroundStyle(DS.Palette.warn)
+                                        .foregroundStyle(XPalette.warn)
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
                                 Spacer(minLength: 0)
                                 Image(systemName: "chevron.right")
-                                    .font(.system(size: DS.Icon.xs, weight: .semibold))
-                                    .foregroundStyle(DS.Palette.textSub)
+                                    .font(.system(size: XIcon.xs, weight: .semibold))
+                                    .foregroundStyle(XPalette.textSub)
                                     .accessibilityHidden(true)
                             }
-                            .frame(minHeight: DS.Hit.min)
+                            .frame(minHeight: XHit.min)
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(PressableButtonStyle())
@@ -145,38 +145,38 @@ struct LockOverviewView: View {
         let withSignal = usages.filter { LinkSense.rssiFor($0.mac) != nil }
         if withSignal.isEmpty {
             Card {
-                VStack(alignment: .leading, spacing: DS.Space.s) {
+                VStack(alignment: .leading, spacing: XSpace.s) {
                     SectionTitle(text: "信号", count: usages.count)
                     Text("还没扫到任何锁的蓝牙广播 — 到设备页点一次刷新或靠近门锁, 信号格即现。")
                         .vkFont(.footnote)
-                        .foregroundStyle(DS.Palette.textSub)
+                        .foregroundStyle(XPalette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
         } else {
             Card {
-                VStack(alignment: .leading, spacing: DS.Space.s) {
+                VStack(alignment: .leading, spacing: XSpace.s) {
                     SectionTitle(text: "信号预览", count: withSignal.count)
                     ForEach(withSignal) { u in
                         let lvl = LinkSense.rssiLevel(LinkSense.rssiFor(u.mac))
-                        HStack(spacing: DS.Space.s) {
+                        HStack(spacing: XSpace.s) {
                             Text(u.name)
                                 .vkFont(.subheadline)
-                                .foregroundStyle(DS.Palette.text)
+                                .foregroundStyle(XPalette.text)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
                             Spacer(minLength: 0)
                             Text(LinkSense.rssiLabel(lvl))
                                 .vkFont(.caption2)
-                                .foregroundStyle(DS.Palette.textSub)
-                            RSSIBars(level: lvl, tint: lvl >= 3 ? DS.Palette.ok : DS.Palette.warn)
+                                .foregroundStyle(XPalette.textSub)
+                            RSSIBars(level: lvl, tint: lvl >= 3 ? XPalette.ok : XPalette.warn)
                         }
                         .accessibilityElement(children: .combine)
                         .accessibilityLabel("\(u.name) 信号" + LinkSense.rssiLabel(lvl))
                     }
                     Text("信号格来自最近一次广播扫描 · 切换前先看看哪把锁在范围内。")   // 71 信号格来自最近一次广
                         .vkFont(.caption2)
-                        .foregroundStyle(DS.Palette.textSub)
+                        .foregroundStyle(XPalette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -187,29 +187,29 @@ struct LockOverviewView: View {
     // ---------- 773 凭证容量水位 ----------
     private var capacityCard: some View {
         Card {
-            VStack(alignment: .leading, spacing: DS.Space.s) {
+            VStack(alignment: .leading, spacing: XSpace.s) {
                 SectionTitle(text: "凭证容量", count: usages.count)
                 ForEach(usages) { u in
                     let util = max(utilization(u), 0)
-                    VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                        HStack(spacing: DS.Space.s) {
+                    VStack(alignment: .leading, spacing: XSpace.xxs) {
+                        HStack(spacing: XSpace.s) {
                             Text(u.name)
                                 .vkFont(.caption)
-                                .foregroundStyle(DS.Palette.text)
+                                .foregroundStyle(XPalette.text)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
-                            Spacer(minLength: DS.Space.s)
+                            Spacer(minLength: XSpace.s)
                             Text(capText(u))
                                 .vkFont(.caption2)
                                 .monospacedDigit()
-                                .foregroundStyle(util >= 0.85 ? DS.Palette.warn : DS.Palette.textSub)
+                                .foregroundStyle(util >= 0.85 ? XPalette.warn : XPalette.textSub)
                         }
                         if hasKnownCap(u) {
                             GeometryReader { geo in
                                 ZStack(alignment: .leading) {
-                                    Capsule().fill(DS.Palette.surfaceAlt)
+                                    Capsule().fill(XPalette.surfaceAlt)
                                     Capsule()
-                                        .fill(util >= 0.85 ? DS.Palette.warn : DS.Palette.accent)
+                                        .fill(util >= 0.85 ? XPalette.warn : XPalette.accent)
                                         .frame(width: geo.size.width * CGFloat(min(util, 1)))
                                 }
                             }
@@ -219,10 +219,10 @@ struct LockOverviewView: View {
                         if util >= 0.85, hasKnownCap(u) {
                             Text("接近满载, 建议清理过期凭证")
                                 .vkFont(.caption2)
-                                .foregroundStyle(DS.Palette.warn)
+                                .foregroundStyle(XPalette.warn)
                         }
                     }
-                    .padding(.vertical, DS.Space.xxs)
+                    .padding(.vertical, XSpace.xxs)
                     .accessibilityElement(children: .combine)
                     .accessibilityLabel("\(u.name) \(capText(u))")
                 }
@@ -251,37 +251,37 @@ struct LockOverviewView: View {
     private var firmwareCard: some View {
         let lag = LockStats.fwLag(usages)
         return Card {
-            VStack(alignment: .leading, spacing: DS.Space.s) {
+            VStack(alignment: .leading, spacing: XSpace.s) {
                 SectionTitle(text: "固件对照", count: usages.count)
                 ForEach(usages) { u in
-                    HStack(spacing: DS.Space.s) {
+                    HStack(spacing: XSpace.s) {
                         Image(systemName: "memorychip")
-                            .font(.system(size: DS.Icon.sm))
-                            .foregroundStyle(lag.lagging.contains(u.mac) ? DS.Palette.warn : DS.Palette.textSub)
+                            .font(.system(size: XIcon.sm))
+                            .foregroundStyle(lag.lagging.contains(u.mac) ? XPalette.warn : XPalette.textSub)
                             .accessibilityHidden(true)
-                        VStack(alignment: .leading, spacing: DS.Space.xxs) {
+                        VStack(alignment: .leading, spacing: XSpace.xxs) {
                             Text(u.name)
                                 .vkFont(.caption)
-                                .foregroundStyle(DS.Palette.text)
+                                .foregroundStyle(XPalette.text)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
                             // 769 绑定时间标注
                             Text(boundText(u))
                                 .vkFont(.caption2)
-                                .foregroundStyle(DS.Palette.textSub)
+                                .foregroundStyle(XPalette.textSub)
                         }
-                        Spacer(minLength: DS.Space.s)
+                        Spacer(minLength: XSpace.s)
                         Text(u.fw.isEmpty ? "未读到" : "v" + u.fw)
                             .vkFont(.caption)
                             .monospacedDigit()
-                            .foregroundStyle(lag.lagging.contains(u.mac) ? DS.Palette.warn : DS.Palette.text)
+                            .foregroundStyle(lag.lagging.contains(u.mac) ? XPalette.warn : XPalette.text)
                         if lag.lagging.contains(u.mac) {
                             StatusPill(text: "旧版本", systemImage: "arrow.down.circle", tone: .warn)
                         } else if PidMap.canDeviceUpgrade(pidOf(u.mac)) {
                             StatusPill(text: "可本地升级", systemImage: "arrow.up.circle", tone: .ok)
                         }
                     }
-                    .frame(minHeight: DS.Hit.min)
+                    .frame(minHeight: XHit.min)
                     .accessibilityElement(children: .combine)
                     .accessibilityLabel("\(u.name), 固件 \(u.fw.isEmpty ? "未读到" : u.fw)\(lag.lagging.contains(u.mac) ? ", 落后于本机最新" : "")")
                 }

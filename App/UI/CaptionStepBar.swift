@@ -15,7 +15,7 @@ struct CaptionStepBar: View {
         }
     }
     private var captionRow: some View {
-        HStack(spacing: DS.Space.xs) {
+        HStack(spacing: XSpace.xs) {
             ForEach(0..<3, id: \.self) { i in
                 captionStep(i)
             }
@@ -28,13 +28,13 @@ struct CaptionStepBar: View {
     private func captionStep(_ i: Int) -> some View {
         let done = (phase > i + 1) || unlockState == .success
         let active = phase == i + 1 && !done
-        HStack(spacing: DS.Space.xs) {
+        HStack(spacing: XSpace.xs) {
             Image(systemName: done ? "checkmark.circle.fill" : (active ? "ellipsis.circle" : "circle"))
-                .font(.system(size: DS.Icon.xs, weight: .semibold))
+                .font(.system(size: XIcon.xs, weight: .semibold))
             Text(captionName(i))
                 .lineLimit(1)
         }
-        .foregroundStyle(done ? DS.Palette.ok : (active ? DS.Palette.accentText : DS.Palette.textSub))
+        .foregroundStyle(done ? XPalette.ok : (active ? XPalette.accentText : XPalette.textSub))
         .opacity(done || active ? 1 : 0.55)
         .accessibilityHidden(true)   // 组合朗读已含全部三步, 单步不重复
     }

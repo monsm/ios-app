@@ -345,16 +345,16 @@ struct ExportWizardView: View {
     var body: some View { vkBody.destined(.exportWizard) }
     var vkBody: some View {
         NavigationStack {
-            VStack(spacing: DS.Space.m) {
+            VStack(spacing: XSpace.m) {
                 // 步骤指示条
-                HStack(spacing: DS.Space.xs) {
+                HStack(spacing: XSpace.xs) {
                     ForEach(0..<4, id: \.self) { i in
                         Capsule()
-                            .fill(i <= step ? DS.Palette.accentText : DS.Palette.hairline)
+                            .fill(i <= step ? XPalette.accentText : XPalette.hairline)
                             .frame(width: i == step ? 24 : 10, height: 6)
                     }
                 }
-                .padding(.top, DS.Space.s)
+                .padding(.top, XSpace.s)
                 Group {
                     switch step {
                     case 0: zoneStep
@@ -364,12 +364,12 @@ struct ExportWizardView: View {
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                HStack(spacing: DS.Space.m) {
+                HStack(spacing: XSpace.m) {
                     if step > 0 {
-                        Button("上一步") { withAnimation(DS.Motion.standard) { step -= 1 } }
+                        Button("上一步") { withAnimation(XMotion.standard) { step -= 1 } }
                             .vkFont(.subheadline)
-                            .foregroundStyle(DS.Palette.textSub)
-                            .frame(minHeight: DS.Hit.min)
+                            .foregroundStyle(XPalette.textSub)
+                            .frame(minHeight: XHit.min)
                     }
                     if step < 3 {
                         Button(step == 2 ? "导出" : "下一步") { advance() }
@@ -381,7 +381,7 @@ struct ExportWizardView: View {
                     }
                 }
             }
-            .padding(.horizontal, DS.Space.gutter)
+            .padding(.horizontal, XSpace.gutter)
             .navigationTitle(stepTitles[step])
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("取消") { dismiss() } } }
         }
@@ -390,7 +390,7 @@ struct ExportWizardView: View {
     // ---------- 第 0 步: 407 分区勾选 (实时条数) + 181 OTP 开关 ----------
     private var zoneStep: some View {
         let counts = BackupStudio.zoneCounts()
-        return VStack(alignment: .leading, spacing: DS.Space.s) {
+        return VStack(alignment: .leading, spacing: XSpace.s) {
             zoneToggle("设备", counts["设备"] ?? 0, $zones.devices,
                        "门锁钥匙串 + BLE 直连参数")   // 441 门锁钥匙串
             zoneToggle("凭证", counts["凭证"] ?? 0, $zones.credentials,
@@ -409,69 +409,69 @@ struct ExportWizardView: View {
             if useVolumes, let vols = BackupStudio.volumes(zones: zones, encrypt: nil) {
                 Text("记录区超阈值, 将拆为 \(vols.count) 卷: 基础卷 + 逐年记录卷, 各卷可独立恢复。")   // 410 记录区超阈值
                     .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.textSub)
+                    .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
         }
     }
     private func zoneToggle(_ title: String, _ n: Int, _ on: Binding<Bool>, _ sub: String, unit: String = "条") -> some View {
-        VStack(alignment: .leading, spacing: DS.Space.xxs) {
+        VStack(alignment: .leading, spacing: XSpace.xxs) {
             VariantToggle(isOn: on) {
-                HStack(spacing: DS.Space.s) {
+                HStack(spacing: XSpace.s) {
                     Text(title)
                         .vkFont(.subheadline, weight: .medium)
-                        .foregroundStyle(DS.Palette.text)
-                    Text("\(n) \(unit)").vkFont(.caption).foregroundStyle(DS.Palette.textSub)
+                        .foregroundStyle(XPalette.text)
+                    Text("\(n) \(unit)").vkFont(.caption).foregroundStyle(XPalette.textSub)
                     Spacer(minLength: 0)
                 }
             }
-            .frame(minHeight: DS.Hit.min, alignment: .center)
+            .frame(minHeight: XHit.min, alignment: .center)
             Text(sub)
                 .vkFont(.caption2)
-                .foregroundStyle(DS.Palette.textSub)
+                .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(DS.Space.s)
-        .variantPlate(DS.Palette.surfaceAlt, .tile)
+        .padding(XSpace.s)
+        .variantPlate(XPalette.surfaceAlt, .tile)
         .accessibilityElement(children: .combine)
     }
 
     // ---------- 第 1 步: 408 口令两遍 (纯数字/过短只提醒不拦截) ----------
     private var passwordStep: some View {
-        VStack(alignment: .leading, spacing: DS.Space.m) {
+        VStack(alignment: .leading, spacing: XSpace.m) {
             Text("两遍输入加密口令。可留空 = 不加密 (明文 canonical, 与小程序互通)。")
                 .vkFont(.caption)
-                .foregroundStyle(DS.Palette.textSub)
+                .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             SecureField("口令", text: $pw)
                 .vkFont(.body)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
-                .padding(DS.Space.s)
+                .padding(XSpace.s)
                 // @layout-allow VK豁免 控件可识别性: SecureField 的底衬：去掉它，屏幕上冒出一个没有任何边界的输入框
-                .background(DS.Palette.surfaceAlt, in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
+                .background(XPalette.surfaceAlt, in: RoundedRectangle(cornerRadius: XRadius.control, style: .continuous))
             SecureField("再输一遍", text: $pw2)   // 408 再输一遍
                 .vkFont(.body)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
-                .padding(DS.Space.s)
+                .padding(XSpace.s)
                 // @layout-allow VK豁免 控件可识别性: SecureField 的底衬：去掉它，屏幕上冒出一个没有任何边界的输入框
-                .background(DS.Palette.surfaceAlt, in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
+                .background(XPalette.surfaceAlt, in: RoundedRectangle(cornerRadius: XRadius.control, style: .continuous))
             if !pw.isEmpty && pw != pw2 {
                 Text("两次输入不一致")
                     .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.danger)
+                    .foregroundStyle(XPalette.danger)
             } else if !pw.isEmpty && DB.verifyPasscode(pw) {
                 // 549 口令复用检测: 备份口令与应用锁密码相同 → 提示分开设置
                 Text("此口令与应用锁密码相同 — 建议两者分开设置。")   // 549 此口令与应用锁密码相
                     .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.warn)
+                    .foregroundStyle(XPalette.warn)
                     .fixedSize(horizontal: false, vertical: true)
             } else if !pw.isEmpty && (pw.count < 8 || pw.allSatisfy(\.isNumber)) {
                 Text("纯数字或过短口令偏弱 — 不拦截, 仅提醒。")   // 408 纯数字或过短口令偏弱
                     .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.warn)
+                    .foregroundStyle(XPalette.warn)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
@@ -480,38 +480,38 @@ struct ExportWizardView: View {
 
     // ---------- 第 2 步: 412/431 体检 + 清理联动 + 439 真导出进度 ----------
     private var healthStep: some View {
-        VStack(alignment: .leading, spacing: DS.Space.m) {
+        VStack(alignment: .leading, spacing: XSpace.m) {
             Text("导出前体检: 统计摘要与问题清单。")   // 412 导出前体检
                 .vkFont(.subheadline, weight: .semibold)
-                .foregroundStyle(DS.Palette.text)
+                .foregroundStyle(XPalette.text)
             // 439 大号百分比 + 分卷序号: 与换机迁移的新机导入页同一对读数, 双机肉眼对齐
             if exporting {
-                VStack(alignment: .leading, spacing: DS.Space.xs) {
+                VStack(alignment: .leading, spacing: XSpace.xs) {
                     Text("\(exportPct)%")
                         .vkFont(.largeTitle, weight: .heavy)
-                        .foregroundStyle(DS.Palette.text)
+                        .foregroundStyle(XPalette.text)
                         .monospacedDigit()
                     Text(exportVol == 0 ? "组包与加密中…" : "分卷 \(exportVol)/\(exportVolTotal)")
                         .vkFont(.caption)
-                        .foregroundStyle(DS.Palette.textSub)
+                        .foregroundStyle(XPalette.textSub)
                     ProgressView(value: Double(exportPct), total: 100)
-                        .tint(DS.Palette.accentText)
+                        .tint(XPalette.accentText)
                 }
             }
             let rows = BackupStudio.preExportHealth()
             if rows.isEmpty {
                 Label("数据健康, 可直接导出", systemImage: "checkmark.seal")
                     .vkFont(.subheadline)
-                    .foregroundStyle(DS.Palette.ok)
+                    .foregroundStyle(XPalette.ok)
             } else {
                 ForEach(rows) { h in
-                    HStack(alignment: .top, spacing: DS.Space.s) {
+                    HStack(alignment: .top, spacing: XSpace.s) {
                         Text(h.label)
                             .vkFont(.subheadline, weight: .medium)
-                            .foregroundStyle(DS.Palette.warn)
+                            .foregroundStyle(XPalette.warn)
                         Text(h.text)
                             .vkFont(.caption)
-                            .foregroundStyle(DS.Palette.textSub)
+                            .foregroundStyle(XPalette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -526,54 +526,54 @@ struct ExportWizardView: View {
 
     // ---------- 第 3 步: 413 完成即分享 + 411 二维码搬运 + 508 写入回执 ----------
     private var doneStep: some View {
-        VStack(alignment: .leading, spacing: DS.Space.m) {
+        VStack(alignment: .leading, spacing: XSpace.m) {
             // 508 写入回执: 对勾浮出
             if !doneText.isEmpty {
-                HStack(spacing: DS.Space.s) {
+                HStack(spacing: XSpace.s) {
                     Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: DS.Icon.xl))
-                        .foregroundStyle(DS.Palette.ok)
+                        .font(.system(size: XIcon.xl))
+                        .foregroundStyle(XPalette.ok)
                         .transition(.scale(scale: 0.9).combined(with: .opacity))
                         .accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: DS.Space.xs) {
+                    VStack(alignment: .leading, spacing: XSpace.xs) {
                         Text("已写入本机")   // 508 已写入本机
                             .vkFont(.headline)
-                            .foregroundStyle(DS.Palette.text)
+                            .foregroundStyle(XPalette.text)
                         Text(doneText)
                             .vkFont(.caption)
-                            .foregroundStyle(DS.Palette.textSub)
+                            .foregroundStyle(XPalette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     Spacer(minLength: 0)
                 }
-                .animation(DS.Motion.standard, value: doneText.isEmpty)
+                .animation(XMotion.standard, value: doneText.isEmpty)
             }
             // 413 完成即分享 (ShareLink 系统面板 + 存储到文件快捷); 410 分卷时每卷各一枚
             ForEach(doneURLs, id: \.self) { url in
                 ShareLink(item: url, preview: SharePreview("离线锁管家备份")) {
                     Label(url.lastPathComponent, systemImage: "square.and.arrow.up")
                         .vkFont(.caption)
-                        .foregroundStyle(DS.Palette.accentText)
+                        .foregroundStyle(XPalette.accentText)
                 }
             }
             // 411 二维码搬运: 只出**口令信封**, 不再出明文 canonical (P0, 2026-10-20)。
             // 接收端把扫到的原文交给 parsePreview(password:), 与加密备份走同一条解密链。
             if !useVolumes {
-                VStack(alignment: .leading, spacing: DS.Space.s) {
+                VStack(alignment: .leading, spacing: XSpace.s) {
                     Text("凭证二维码(加密): 另一台手机打开 备份工作室→换机迁移→扫码, 输入同一口令才能导入; 全程无网络。")   // 411 凭证二维码(加密)
                         .vkFont(.caption)
-                        .foregroundStyle(DS.Palette.textSub)
+                        .foregroundStyle(XPalette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                     if let q = qrPayload, let img = BackupStudio.qrImage(q) {
                         ShareLink(item: UIImageShareItem(img), preview: SharePreview("凭证二维码"))
                         Text("这张码本身是口令信封: 截到码也打不开。但口令请当面或走另一条渠道, 不要和码一起发。")
                             .vkFont(.caption2)
-                            .foregroundStyle(DS.Palette.warn)
+                            .foregroundStyle(XPalette.warn)
                             .fixedSize(horizontal: false, vertical: true)
                     } else {
                         Text(qrMsg.isEmpty ? "要用二维码搬运, 先设一个二维码口令 (至少 6 位)。" : qrMsg)
                             .vkFont(.caption2)
-                            .foregroundStyle(qrMsg.isEmpty ? DS.Palette.textSub : DS.Palette.warn)
+                            .foregroundStyle(qrMsg.isEmpty ? XPalette.textSub : XPalette.warn)
                             .fixedSize(horizontal: false, vertical: true)
                         SecureField("二维码口令", text: $qrPass)
                             .vkFont(.caption)
@@ -590,18 +590,18 @@ struct ExportWizardView: View {
                             }
                         }
                         .vkFont(.caption, weight: .semibold)
-                        .foregroundStyle(DS.Palette.accentText)
-                        .frame(minHeight: DS.Hit.min)
+                        .foregroundStyle(XPalette.accentText)
+                        .frame(minHeight: XHit.min)
                         .disabled(qrPass.count < 6)
                     }
                 }
             }
             // 440 增量补传 (旧机侧): 新机对账报"缺的锁"后, 在旧机只把缺的锁重新打包
             if !DB.keychains().isEmpty {
-                VStack(alignment: .leading, spacing: DS.Space.xs) {
+                VStack(alignment: .leading, spacing: XSpace.xs) {
                     Text("增量补传: 勾选要补的锁, 生成增量小包 (不含记录卷), 传到新机再走一次导入。")   // 440 增量补传
                         .vkFont(.caption)
-                        .foregroundStyle(DS.Palette.textSub)
+                        .foregroundStyle(XPalette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                     ForEach(DB.keychains(), id: \.mac) { kc in
                         Button {
@@ -611,40 +611,40 @@ struct ExportWizardView: View {
                                 incSel.insert(kc.mac)
                             }
                         } label: {
-                            HStack(spacing: DS.Space.s) {
+                            HStack(spacing: XSpace.s) {
                                 Image(systemName: incSel.contains(kc.mac) ? "checkmark.circle.fill" : "circle")
-                                    .font(.system(size: DS.Icon.sm))
-                                    .foregroundStyle(incSel.contains(kc.mac) ? DS.Palette.ok : DS.Palette.textSub)
+                                    .font(.system(size: XIcon.sm))
+                                    .foregroundStyle(incSel.contains(kc.mac) ? XPalette.ok : XPalette.textSub)
                                     .accessibilityHidden(true)
                                 Text(LockArchive.displayName(kc))
                                     .vkFont(.subheadline)
-                                    .foregroundStyle(DS.Palette.text)
+                                    .foregroundStyle(XPalette.text)
                                     .lineLimit(1)
                                 Spacer(minLength: 0)
                                 Text("\(DB.ledger(kc.mac).pwds.count + DB.ledger(kc.mac).fps.count) 条")
                                     .vkFont(.caption)
-                                    .foregroundStyle(DS.Palette.textSub)
+                                    .foregroundStyle(XPalette.textSub)
                             }
-                            .frame(minHeight: DS.Hit.min)
+                            .frame(minHeight: XHit.min)
                         }
                         .buttonStyle(.plain)
                     }
                     Button("生成增量小包 (已勾 \(incSel.count) 把锁)") { makeIncremental() }
                         .vkFont(.subheadline)
-                        .foregroundStyle(DS.Palette.accentText)
-                        .frame(minHeight: DS.Hit.min)
+                        .foregroundStyle(XPalette.accentText)
+                        .frame(minHeight: XHit.min)
                         .disabled(incSel.isEmpty)
                     if let u = incURL {
                         ShareLink(item: u, preview: SharePreview("离线锁管家增量包")) {
                             Text("分享 \(u.lastPathComponent)")
                                 .vkFont(.caption)
-                                .foregroundStyle(DS.Palette.accentText)
+                                .foregroundStyle(XPalette.accentText)
                         }
                     }
                     if !incMsg.isEmpty {
                         Text(incMsg)
                             .vkFont(.caption2)
-                            .foregroundStyle(DS.Palette.textSub)
+                            .foregroundStyle(XPalette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -741,10 +741,10 @@ struct ExportWizardView: View {
             Milestones.recordBackup()
             app.evaluateAchievements()
             UINotificationFeedbackGenerator().notificationOccurred(.success)
-            DS.Haptics.tick.impactOccurred()
+            XHaptics.tick.impactOccurred()
             exporting = false
             busy = false
-            withAnimation(DS.Motion.standard) { step = 3 }
+            withAnimation(XMotion.standard) { step = 3 }
         }
     }
 
@@ -793,7 +793,7 @@ struct RestoreWizardView: View {
     var body: some View { vkBody.destined(.restoreWizard) }
     var vkBody: some View {
         NavigationStack {
-            VStack(spacing: DS.Space.m) {
+            VStack(spacing: XSpace.m) {
                 if !done, preview == nil {
                     inputStep
                 } else if done {
@@ -806,7 +806,7 @@ struct RestoreWizardView: View {
                 }
                 Spacer(minLength: 0)
             }
-            .padding(DS.Space.l)
+            .padding(XSpace.l)
             .navigationTitle("恢复向导")
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("关闭") { dismiss() } } }
         }
@@ -814,11 +814,11 @@ struct RestoreWizardView: View {
 
     // ---------- 417 预演: 先解析展示"将影响什么"再执行 ----------
     private var inputStep: some View {
-        VStack(alignment: .leading, spacing: DS.Space.m) {
+        VStack(alignment: .leading, spacing: XSpace.m) {
             // 449 粘贴备份文本
             Text("粘贴备份文本 (可加密或明文 canonical)。预演会先展示影响面, 确认后才执行。")   // 417 粘贴备份文本
                 .vkFont(.caption)
-                .foregroundStyle(DS.Palette.textSub)
+                .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             TextField("粘贴备份", text: $text, axis: .vertical)
                 .vkFont(.caption.monospaced())
@@ -851,38 +851,38 @@ struct RestoreWizardView: View {
     }
     /// 453 分层失败卡: 把三层里实际没过的那层与建议摆在原地
     private func layerCard(_ e: String) -> some View {
-        VStack(alignment: .leading, spacing: DS.Space.xs) {
+        VStack(alignment: .leading, spacing: XSpace.xs) {
             Label("解析/执行未通过", systemImage: "exclamationmark.triangle")   // 453 解析
                 .vkFont(.subheadline, weight: .medium)
-                .foregroundStyle(DS.Palette.warn)
+                .foregroundStyle(XPalette.warn)
             Text(e)
                 .vkFont(.caption)
-                .foregroundStyle(DS.Palette.textSub)
+                .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(DS.Space.m)
-        .variantCallout(DS.Palette.warn, .tile, wash: 0.06)
+        .padding(XSpace.m)
+        .variantCallout(XPalette.warn, .tile, wash: 0.06)
     }
 
     // ---------- 418 三策略 + 419 冲突裁决 + 427 分区反选 + 424 升级链 + 453 分层 + 434 短码 ----------
     private func previewStep(_ p: BackupStudio.Preview) -> some View {
-        VStack(alignment: .leading, spacing: DS.Space.m) {
+        VStack(alignment: .leading, spacing: XSpace.m) {
             Label(p.source, systemImage: "arrow.left.arrow.right")
                 .vkFont(.subheadline)
-                .foregroundStyle(DS.Palette.accentText)
+                .foregroundStyle(XPalette.accentText)
                 .fixedSize(horizontal: false, vertical: true)
             // 424 升级链: 逐级列出将要走的步骤 (执行侧 upgradeChain 同顺序同条数)
             let steps = BackupStudio.upgradeSteps(from: p.schema)
             if !steps.isEmpty {
-                VStack(alignment: .leading, spacing: DS.Space.xxs) {
+                VStack(alignment: .leading, spacing: XSpace.xxs) {
                     Label("旧 schema 自动升级链: v\(p.schema) → v5, \(steps.count) 级", systemImage: "arrow.up.circle")   // 424 自动升级链
                         .vkFont(.caption)
-                        .foregroundStyle(DS.Palette.warn)
+                        .foregroundStyle(XPalette.warn)
                     ForEach(steps) { s in
                         Text("v\(s.from) → v\(s.to): \(s.note)")
                             .vkFont(.caption2)
-                            .foregroundStyle(DS.Palette.textSub)
+                            .foregroundStyle(XPalette.textSub)
                     }
                 }
                 .fixedSize(horizontal: false, vertical: true)
@@ -892,30 +892,30 @@ struct RestoreWizardView: View {
             case .ok:
                 Label("文件三层检查: 口令层已解 · 文件头已认 · 内容哈希一致", systemImage: "checkmark.seal")   // 453 文件三层检查
                     .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.ok)
+                    .foregroundStyle(XPalette.ok)
             case .absent:
                 Label("该备份没有校验和字段 (旧包/人工编辑) — 按兼容放行, 内容被改过时无法预警",   // 453 该备份没有校验和字段
                       systemImage: "exclamationmark.triangle")
                     .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.warn)
+                    .foregroundStyle(XPalette.warn)
                     .fixedSize(horizontal: false, vertical: true)
             case .mismatch:
                 Label("内容哈希不一致 — 已在解析时拦下", systemImage: "xmark.seal")   // 453 内容哈希不一致
                     .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.danger)
+                    .foregroundStyle(XPalette.danger)
             }
             // 分区条数 + 影响清单
             ForEach(p.zones, id: \.self) { z in
                 Label(z, systemImage: "square.stack")
                     .vkFont(.subheadline)
-                    .foregroundStyle(DS.Palette.text)
+                    .foregroundStyle(XPalette.text)
             }
             // 419 冲突裁决: 逐条选新版/旧版, 支持整批
             if !conflicts.isEmpty {
                 conflictCard
             }
             // 427 分区反选
-            HStack(spacing: DS.Space.s) {
+            HStack(spacing: XSpace.s) {
                 zoneChip("设备", $zones.devices)
                 zoneChip("凭证", $zones.credentials)
                 zoneChip("记录", $zones.records)
@@ -932,23 +932,23 @@ struct RestoreWizardView: View {
             .pickerStyle(.segmented)
             Text(strategyHint(strategy))
                 .vkFont(.caption)
-                .foregroundStyle(DS.Palette.textSub)
+                .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             // 418: 量级预估行 (包内条数 + 同 ID 冲突数), 选策略前先知道规模
             Text("预估: 本包 \(p.pwdCount) 密码/\(p.fpCount) 指纹, 同 ID 冲突 \(conflicts.count) 条")   // 418 预估
                 .vkFont(.caption)
-                .foregroundStyle(DS.Palette.textSub)
+                .foregroundStyle(XPalette.textSub)
             // 421 恢复回滚点说明
             Label("执行前自动打本地快照, 24h 内可撤销",   // 421 执行前自动打本地快照
                   systemImage: "arrow.uturn.left")
                 .vkFont(.caption)
-                .foregroundStyle(DS.Palette.textSub)
+                .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             // 193 备份体积预估: 本次预计字节与上次备份对比
             if let est = BackupStudio.estimateBytes() {
                 Label(BackupStudio.sizeText(est), systemImage: "square.and.arrow.down")
                     .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.textSub)
+                    .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
             // 456 只读副本浏览: 打开备份内容看一眼, 不写主库 (锁列表 + 随机抽 5 条记录)
@@ -956,19 +956,19 @@ struct RestoreWizardView: View {
                 .vkFont(.caption)
             if roView, let b = bundle {
                 ForEach(b.devices, id: \.mac) { d in
-                    HStack(spacing: DS.Space.s) {
+                    HStack(spacing: XSpace.s) {
                         Image(systemName: "lock.fill")
                             .vkFont(.caption2)
-                            .foregroundStyle(DS.Palette.textSub)
+                            .foregroundStyle(XPalette.textSub)
                             .accessibilityHidden(true)
                         Text(LockArchive.displayName(d.kc))
                             .vkFont(.caption)
-                            .foregroundStyle(DS.Palette.text)
+                            .foregroundStyle(XPalette.text)
                             .lineLimit(1)
                         Spacer(minLength: 0)
                         Text("\((d.ledger?.pwds.count ?? 0) + (d.ledger?.fps.count ?? 0)) 条凭证 · \(d.meta == nil ? "无运行参数" : "含运行参数")")
                             .vkFont(.caption2)
-                            .foregroundStyle(DS.Palette.textSub)
+                            .foregroundStyle(XPalette.textSub)
                     }
                 }
             }
@@ -976,7 +976,7 @@ struct RestoreWizardView: View {
                 ForEach(Array(lines.enumerated()), id: \.offset) { _, ln in
                     Text(ln)
                         .vkFont(.caption.monospaced())
-                        .foregroundStyle(DS.Palette.textSub)
+                        .foregroundStyle(XPalette.textSub)
                         .lineLimit(2)
                         .truncationMode(.middle)
                 }
@@ -1025,37 +1025,37 @@ struct RestoreWizardView: View {
         }
     }
     private var conflictCard: some View {
-        VStack(alignment: .leading, spacing: DS.Space.s) {
+        VStack(alignment: .leading, spacing: XSpace.s) {
             Label("\(conflicts.count) 条同 ID 冲突 — 逐条选保留哪边",   // 419 条同
                   systemImage: "arrow.triangle.2.circlepath")
                 .vkFont(.subheadline, weight: .medium)
-                .foregroundStyle(DS.Palette.warn)
+                .foregroundStyle(XPalette.warn)
                 .fixedSize(horizontal: false, vertical: true)
-            HStack(spacing: DS.Space.s) {
+            HStack(spacing: XSpace.s) {
                 Button("整批取备份") { conflicts.forEach { conflictChoice[$0.id] = true } }
                     .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.accentText)
-                    .frame(minHeight: DS.Hit.min)
+                    .foregroundStyle(XPalette.accentText)
+                    .frame(minHeight: XHit.min)
                 Button("整批取本机") { conflicts.forEach { conflictChoice[$0.id] = false } }
                     .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .frame(minHeight: DS.Hit.min)
+                    .foregroundStyle(XPalette.textSub)
+                    .frame(minHeight: XHit.min)
             }
             ForEach(conflicts) { c in
-                HStack(spacing: DS.Space.xs) {
+                HStack(spacing: XSpace.xs) {
                     Text("\(c.kind) #\(c.alias) · \(String(c.mac.prefix(6)))")
                         .vkFont(.caption)
-                        .foregroundStyle(DS.Palette.text)
+                        .foregroundStyle(XPalette.text)
                         .lineLimit(1)
                     Spacer(minLength: 0)
                     sideChip(c.id, false, "本机")
                     sideChip(c.id, true, "备份")
                 }
-                .frame(minHeight: DS.Hit.min)
+                .frame(minHeight: XHit.min)
             }
         }
-        .padding(DS.Space.m)
-        .variantCallout(DS.Palette.warn, .tile, wash: 0.06)
+        .padding(XSpace.m)
+        .variantCallout(XPalette.warn, .tile, wash: 0.06)
     }
     /// 419 逐条裁决芯片: 左边本机, 右边备份; 点哪边保留哪边
     private func sideChip(_ id: String, _ backupSide: Bool, _ label: String) -> some View {
@@ -1064,13 +1064,13 @@ struct RestoreWizardView: View {
             conflictChoice[id] = backupSide
         }
         .vkFont(.caption2, weight: .medium)
-        .foregroundStyle(on ? DS.Palette.accentText : DS.Palette.textSub)
-        .padding(.horizontal, DS.Space.xs)
+        .foregroundStyle(on ? XPalette.accentText : XPalette.textSub)
+        .padding(.horizontal, XSpace.xs)
         .frame(minHeight: 30)
-        .background(on ? DS.Palette.accentText.opacity(0.12) : DS.Palette.surfaceAlt, in: Capsule())
+        .background(on ? XPalette.accentText.opacity(0.12) : XPalette.surfaceAlt, in: Capsule())
         // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 没有 minHeight (< 44)。
         // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
-        .frame(minHeight: DS.Hit.min)
+        .frame(minHeight: XHit.min)
         .contentShape(Rectangle())
     }
     private func zoneChip(_ title: String, _ on: Binding<Bool>) -> some View {
@@ -1079,10 +1079,10 @@ struct RestoreWizardView: View {
         } label: {
             Text(title)
                 .vkFont(.caption, weight: .medium)
-                .foregroundStyle(on.wrappedValue ? DS.Palette.accentText : DS.Palette.textSub)
-                .padding(.horizontal, DS.Space.s)
-                .frame(minHeight: DS.Hit.min)
-                .background(on.wrappedValue ? DS.Palette.accentText.opacity(0.1) : DS.Palette.surfaceAlt,
+                .foregroundStyle(on.wrappedValue ? XPalette.accentText : XPalette.textSub)
+                .padding(.horizontal, XSpace.s)
+                .frame(minHeight: XHit.min)
+                .background(on.wrappedValue ? XPalette.accentText.opacity(0.1) : XPalette.surfaceAlt,
                             in: Capsule())
         }
         .buttonStyle(.plain)
@@ -1090,83 +1090,83 @@ struct RestoreWizardView: View {
 
     // ---------- 425 差异报告 + 444 迁移后核对表 ----------
     private func reportStep(_ rows: [BackupStudio.DiffRow]) -> some View {
-        VStack(alignment: .leading, spacing: DS.Space.m) {
+        VStack(alignment: .leading, spacing: XSpace.m) {
             Label("恢复完成 · 差异报告", systemImage: "checkmark.seal")   // 425 恢复完成
                 .vkFont(.headline)
-                .foregroundStyle(DS.Palette.ok)
+                .foregroundStyle(XPalette.ok)
             // 425 三数: 来自 restore 返回值的真实处置数 (旧报告只有 备份X/本机Y)
-            HStack(spacing: DS.Space.l) {
-                countChip("新增", impN, DS.Palette.ok)
-                countChip("覆盖", ovN, DS.Palette.accentText)
-                countChip("跳过", skN, DS.Palette.warn)
+            HStack(spacing: XSpace.l) {
+                countChip("新增", impN, XPalette.ok)
+                countChip("覆盖", ovN, XPalette.accentText)
+                countChip("跳过", skN, XPalette.warn)
             }
             ForEach(rows) { r in
-                HStack(spacing: DS.Space.s) {
+                HStack(spacing: XSpace.s) {
                     // 444 核对表: 一致打勾, 不一致给提醒 (旧文案说"已打勾"但从未画过勾)
                     Image(systemName: r.a == r.b ? "checkmark.circle.fill" : "exclamationmark.circle")
-                        .font(.system(size: DS.Icon.sm))
-                        .foregroundStyle(r.a == r.b ? DS.Palette.ok : DS.Palette.warn)
+                        .font(.system(size: XIcon.sm))
+                        .foregroundStyle(r.a == r.b ? XPalette.ok : XPalette.warn)
                         .accessibilityHidden(true)
-                    Text(r.label).vkFont(.subheadline).foregroundStyle(DS.Palette.text)
+                    Text(r.label).vkFont(.subheadline).foregroundStyle(XPalette.text)
                     Spacer(minLength: 0)
                     Text("备份 \(r.a) / 本机 \(r.b)")
                         .vkFont(.caption)
-                        .foregroundStyle(DS.Palette.textSub)
+                        .foregroundStyle(XPalette.textSub)
                 }
-                .frame(minHeight: DS.Hit.min)
+                .frame(minHeight: XHit.min)
             }
             // 417 记录时间域: 备份内记录跨度 (trace 行首 16 字符 = yyyy-MM-dd HH:mm), 只读快照
             if let t = preview?.previewTrace, !t.isEmpty {
                 Text("记录时间域: \(t.first?.prefix(16) ?? "") ~ \(t.last?.prefix(16) ?? "")")   // 417 界面文案
                     .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.textSub)
+                    .foregroundStyle(XPalette.textSub)
             }
             // 425 展开: 逐锁对账 — 备份里每把锁 vs 本机现况, 缺的锁点名
             if let b = bundle, !b.devices.isEmpty {
                 DisclosureGroup {
                     ForEach(BackupStudio.lockDiffRows(b)) { d in
-                        HStack(spacing: DS.Space.s) {
+                        HStack(spacing: XSpace.s) {
                             Image(systemName: d.ok ? "checkmark.circle.fill" : "exclamationmark.circle")
-                                .font(.system(size: DS.Icon.xs))
-                                .foregroundStyle(d.ok ? DS.Palette.ok : DS.Palette.warn)
+                                .font(.system(size: XIcon.xs))
+                                .foregroundStyle(d.ok ? XPalette.ok : XPalette.warn)
                                 .accessibilityHidden(true)
                             Text(d.label)
                                 .vkFont(.caption)
-                                .foregroundStyle(DS.Palette.text)
+                                .foregroundStyle(XPalette.text)
                                 .lineLimit(1)
                             Spacer(minLength: 0)
                             Text("备份 \(d.backup) / 本机 \(d.local) · \(d.note)")
                                 .vkFont(.caption2)
-                                .foregroundStyle(DS.Palette.textSub)
+                                .foregroundStyle(XPalette.textSub)
                                 .lineLimit(1)
                         }
                     }
                 } label: {
                     Text("逐锁对账 (\(b.devices.count) 把)")
                         .vkFont(.caption, weight: .medium)
-                        .foregroundStyle(DS.Palette.text)
+                        .foregroundStyle(XPalette.text)
                 }
             }
             // 444 迁移后核对表
             Text("核对表: 对勾 = 该项备份与本机条数一致; 缺的锁可到旧机「导出向导→完成页」用增量补传只勾缺的锁重打小包。")   // 444 核对表
                 .vkFont(.caption)
-                .foregroundStyle(DS.Palette.textSub)
+                .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             Button("完成") { dismiss() }
                 .buttonStyle(PrimaryActionStyle())
         }
     }
     private func countChip(_ label: String, _ n: Int, _ tint: Color) -> some View {
-        VStack(spacing: DS.Space.xxs) {
+        VStack(spacing: XSpace.xxs) {
             Text("\(n)")
                 .vkFont(.title3, weight: .semibold)
                 .foregroundStyle(tint)
                 .monospacedDigit()
             Text(label)
                 .vkFont(.caption2)
-                .foregroundStyle(DS.Palette.textSub)
+                .foregroundStyle(XPalette.textSub)
         }
-        .frame(minWidth: 56, minHeight: DS.Hit.min)
+        .frame(minWidth: 56, minHeight: XHit.min)
     }
 
     /// 包3/112 换机恢复后立起验证向导 (与既有 BackupView 同口径; 实体与迁移导入共用 armFirstChecks)

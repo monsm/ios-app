@@ -24,14 +24,14 @@ struct ShareToAndroidView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: DS.Space.l) {
+                VStack(spacing: XSpace.l) {
                     if let qr {
                         Image(uiImage: qr)
                             .interpolation(.none)          // 二维码放大必须硬边, 插值会糊掉模块
                             .resizable()
                             .scaledToFit()
                             .frame(maxWidth: 260)
-                            .padding(DS.Space.m)
+                            .padding(XSpace.m)
                             // 二维码的静区必须是白的, 且**不要圆角**: 这一块刻意不跟随明暗主题,
                             // 否则深色下扫不出来; 圆角会切掉三个定位角上的静区, 反而更难认。
                             .background(Color.white)
@@ -40,15 +40,15 @@ struct ShareToAndroidView: View {
                         VStack(spacing: 2) {
                             Text(title)
                                 .vkFont(.headline)
-                                .foregroundStyle(DS.Palette.text)
+                                .foregroundStyle(XPalette.text)
                             Text(macText)
                                 .vkFont(.caption)
-                                .foregroundStyle(DS.Palette.textSub)
+                                .foregroundStyle(XPalette.textSub)
                         }
 
                         Text("在安卓 App 里点「扫码添加」扫这张码。导入之后, 点一下开锁和靠近开锁都不再需要它。")
                             .vkFont(.footnote)
-                            .foregroundStyle(DS.Palette.textSub)
+                            .foregroundStyle(XPalette.textSub)
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
 
@@ -59,10 +59,10 @@ struct ShareToAndroidView: View {
                             Image(systemName: "exclamationmark.shield.fill").accessibilityHidden(true)
                         }
                         .vkFont(.caption)
-                        .foregroundStyle(DS.Palette.warn)
-                        .padding(DS.Space.s)
+                        .foregroundStyle(XPalette.warn)
+                        .padding(XSpace.s)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .variantCallout(DS.Palette.warn, .control, wash: 0.10)
+                        .variantCallout(XPalette.warn, .control, wash: 0.10)
 
                         ShareLink(item: Image(uiImage: qr),
                                   preview: SharePreview(title + " 的开锁二维码", image: Image(uiImage: qr))) {
@@ -71,17 +71,17 @@ struct ShareToAndroidView: View {
                         .buttonStyle(PrimaryActionStyle(fullWidth: true))
                     } else {
                         Image(systemName: "qrcode")
-                            .font(.system(size: DS.Icon.xl))
-                            .foregroundStyle(DS.Palette.textSub)
+                            .font(.system(size: XIcon.xl))
+                            .foregroundStyle(XPalette.textSub)
                             .accessibilityHidden(true)
                         Text(failed.isEmpty ? "正在生成…" : failed)
                             .vkFont(.footnote)
-                            .foregroundStyle(failed.isEmpty ? DS.Palette.textSub : DS.Palette.danger)
+                            .foregroundStyle(failed.isEmpty ? XPalette.textSub : XPalette.danger)
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
-                .padding(DS.Space.l)
+                .padding(XSpace.l)
             }
             .navigationTitle("分享给安卓")
             .navigationBarTitleDisplayMode(.inline)

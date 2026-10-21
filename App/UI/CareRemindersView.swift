@@ -20,7 +20,7 @@ struct CareRemindersView: View {
                 // 1044 消费点如实列名 (原句"各页面的空态"是超售): 设备页/记录页空态直挂,
                 // 引导空态卡 (设置门锁空态、成就陈列架、维护历史、诊断日志) 经 GuidedEmptyView 消费。
                 Text("这句便签已贴在这几处空态旁: 设备页、记录页, 以及走引导空态卡的页面 (设置门锁空态、成就陈列架、维护历史、诊断日志)。未接入的空态不会偷偷显示, 后续批次补。")
-                    .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
+                    .vkFont(.caption).foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
@@ -44,12 +44,12 @@ struct CareRemindersView: View {
                         Task { await CareReminders.reschedule() }
                     }))
                 ForEach(DB.members()) { m in
-                    HStack(spacing: DS.Space.s) {
+                    HStack(spacing: XSpace.s) {
                         Text(m.name)
-                        Spacer(minLength: DS.Space.m)
+                        Spacer(minLength: XSpace.m)
                         Text(Milestones.memberBirthdays()[m.id] ?? "未填写")
                             .foregroundStyle(Milestones.memberBirthdays()[m.id] == nil
-                                             ? DS.Palette.textSub : DS.Palette.text)
+                                             ? XPalette.textSub : XPalette.text)
                             .monospacedDigit()
                     }
                 }

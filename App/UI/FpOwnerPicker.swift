@@ -17,17 +17,17 @@ struct FpOwnerPicker: View {
     private var members: [Member] { DB.members() }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: DS.Space.xs) {
+        VStack(alignment: .leading, spacing: XSpace.xs) {
             Text("先选归属, 再录入")   // 317 先选归属
                 .vkFont(.footnote, weight: .semibold)
-                .foregroundStyle(DS.Palette.text)
+                .foregroundStyle(XPalette.text)
             ForEach(members) { m in
                 row(m)
             }
             if members.isEmpty {
                 Text("这把锁还没有成员 — 直接建一个, 这枚指纹就记在他名下。")   // 317 还没有成员
                     .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.warn)
+                    .foregroundStyle(XPalette.warn)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Button {
@@ -36,8 +36,8 @@ struct FpOwnerPicker: View {
                 Label(members.isEmpty ? "新增归属" : "新增一位成员", systemImage: "person.badge.plus")
             }
             .vkFont(.caption, weight: .medium)
-            .foregroundStyle(DS.Palette.accentText)
-            .frame(minHeight: DS.Hit.min)
+            .foregroundStyle(XPalette.accentText)
+            .frame(minHeight: XHit.min)
             .contentShape(Rectangle())
             .buttonStyle(.plain)
         }
@@ -64,28 +64,28 @@ struct FpOwnerPicker: View {
         let selTag: String = owner == m.id ? ", 已选" : ""
         Button {
             owner = m.id
-            DS.Haptics.tick.impactOccurred()
+            XHaptics.tick.impactOccurred()
         } label: {
-            HStack(spacing: DS.Space.xs) {
+            HStack(spacing: XSpace.xs) {
                 Circle()
                     .fill(memberColor(m.color))
                     .frame(width: 10, height: 10)
                     .accessibilityHidden(true)
                 Text(m.name)
                     .vkFont(.subheadline)
-                    .foregroundStyle(DS.Palette.text)
+                    .foregroundStyle(XPalette.text)
                 Spacer(minLength: 0)
                 Text(cntTag)
                     .vkFont(.caption2)
-                    .foregroundStyle(cnt == 0 ? DS.Palette.warn : DS.Palette.textSub)
+                    .foregroundStyle(cnt == 0 ? XPalette.warn : XPalette.textSub)
                     .lineLimit(1)
                 if owner == m.id {
                     Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: DS.Icon.sm, weight: .medium))
-                        .foregroundStyle(DS.Palette.accentText)
+                        .font(.system(size: XIcon.sm, weight: .medium))
+                        .foregroundStyle(XPalette.accentText)
                 }
             }
-            .frame(minHeight: DS.Hit.min)
+            .frame(minHeight: XHit.min)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -94,7 +94,7 @@ struct FpOwnerPicker: View {
 
     /// 成员色是 "#RRGGBB" 字符串 (与成员中心头像同源); 解析失败回落到次级文本色, 不假装有颜色。
     private func memberColor(_ hex: String) -> Color {
-        guard hex.hasPrefix("#"), let v = UInt32(hex.dropFirst(), radix: 16) else { return DS.Palette.textSub }
+        guard hex.hasPrefix("#"), let v = UInt32(hex.dropFirst(), radix: 16) else { return XPalette.textSub }
         return Color(hex: v)
     }
 
@@ -111,6 +111,6 @@ struct FpOwnerPicker: View {
         }
         owner = m.id
         newName = ""
-        DS.Haptics.tick.impactOccurred()
+        XHaptics.tick.impactOccurred()
     }
 }

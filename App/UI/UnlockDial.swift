@@ -26,7 +26,7 @@ enum UnlockPrefs {
 // ================= 呼吸环 =================
 // 独立成视图, 而不是 UnlockDial body 里的内联 Circle, 原因有二:
 //   1. 属性争用 — 呼吸环用 repeatForever 驱动 scaleEffect/opacity, 而 UnlockDial
-//      整棵子树挂着 .animation(DS.Motion.standard, value: state) 也驱动同一批属性,
+//      整棵子树挂着 .animation(XMotion.standard, value: state) 也驱动同一批属性,
 //      状态一变两层动画会互相覆盖。这里用 .transaction 切断隐式继承。
 //   2. 减少动效不等于取消动效 — 开启"减少动效"时改为保留一圈静态指示,
 //      只是不再循环, 而不是整个消失(消失 = 用户不知道程序在跑)。
@@ -48,7 +48,7 @@ private struct UnlockPulseRing: View {
 
     var body: some View {
         Circle()
-            .strokeBorder(DS.Palette.accent.opacity(0.45), lineWidth: 2)
+            .strokeBorder(XPalette.accent.opacity(0.45), lineWidth: 2)
             .frame(width: diameter, height: diameter)
             .scaleEffect(breathe ? 1.0 : 0.86)
             .opacity(breathe ? 0 : 0.9)
@@ -106,7 +106,7 @@ private struct ChargeTicks: View {
         ZStack {
             ForEach(0..<ticks, id: \.self) { i in
                 Capsule()
-                    .fill(i < count ? DS.Palette.accentText : DS.Palette.hairline)
+                    .fill(i < count ? XPalette.accentText : XPalette.hairline)
                     .frame(width: 2.5, height: 9)
                     .offset(y: -(diameter / 2 + 15))
                     .rotationEffect(.degrees(Double(i) * 360 / Double(ticks)))
@@ -114,11 +114,11 @@ private struct ChargeTicks: View {
         }
         .allowsHitTesting(false)
         .accessibilityHidden(true)
-        .animation(DS.Motion.quick, value: count)
+        .animation(XMotion.quick, value: count)
         .onChange(of: count) { _, c in
             // 逐格点亮配逐格触感: 只在"多亮一格"时记，回退不记 (旋转过头再退回来不该啪啪响)。
             // 触感只用 DS.Haptics 现成的两档 (tick/trigger)，不新造生成器类型。
-            if c > lit { DS.Haptics.tick.impactOccurred() }
+            if c > lit { XHaptics.tick.impactOccurred() }
             lit = c
         }
     }
@@ -146,12 +146,12 @@ private struct DrillTrace: View {
             if !swipeTrace {
                 Text(UnlockPrefs.gestureHint)
                     .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .padding(DS.Space.s)
-                    .variantPlate(DS.Palette.surfaceAlt, .capsule)
+                    .foregroundStyle(XPalette.textSub)
+                    .padding(XSpace.s)
+                    .variantPlate(XPalette.surfaceAlt, .capsule)
             } else {
                 Capsule()
-                    .fill(LinearGradient(colors: [DS.Palette.accentText.opacity(0.75), .clear],
+                    .fill(LinearGradient(colors: [XPalette.accentText.opacity(0.75), .clear],
                                          startPoint: .bottom, endPoint: .top))
                     .frame(width: 8, height: diameter * 0.42)
                     .offset(y: slide ? -diameter * 0.26 : diameter * 0.16)
@@ -162,7 +162,7 @@ private struct DrillTrace: View {
                     }
                 Image(systemName: "chevron.up")
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(DS.Palette.accentText.opacity(0.85))
+                    .foregroundStyle(XPalette.accentText.opacity(0.85))
                     .offset(y: -diameter * 0.3)
             }
         }
@@ -179,20 +179,20 @@ private struct PhaseBar: View {
     var width: CGFloat
 
     var body: some View {
-        HStack(spacing: DS.Space.xs) {
+        HStack(spacing: XSpace.xs) {
             ForEach(1...3, id: \.self) { i in
                 Capsule()
-                    .fill(i <= phase ? tint : DS.Palette.hairline)
+                    .fill(i <= phase ? tint : XPalette.hairline)
                     .frame(maxWidth: .infinity)
                     .frame(height: 3)
             }
         }
         .frame(width: width)
-        .animation(DS.Motion.quick, value: phase)
-        .animation(DS.Motion.quick, value: slow)
+        .animation(XMotion.quick, value: phase)
+        .animation(XMotion.quick, value: slow)
         .accessibilityHidden(true)
     }
-    private var tint: Color { slow ? DS.Palette.warn : DS.Palette.accentText }
+    private var tint: Color { slow ? XPalette.warn : XPalette.accentText }
 }
 
 // 开锁主控 — App 的唯一高频操作 (包1: 手势收敛后的最终形态)。
@@ -272,7 +272,7 @@ struct UnlockDial: View {
     // 走查清单在 docs/A11Y-FREQUENCY.md + tools/dynamictype.js (静态闸门) —— 不另做一套"大字模式"。
     // 859: 字号 ≥1.5 时圆盘缩到 128pt, 保证大字号下整盘仍在屏内可完成按住手势
     // (手势判定半径按 dial 比例算, 缩小后触发面积同步收窄, 不会留出点不到的死区)
-    private var dial: CGFloat { AXFlags.axStackLayout ? 128 : DS.Metric.dial }
+    private var dial: CGFloat { AXFlags.axStackLayout ? 128 : XMetric.dial }
     // --- 包15 无障碍 ---
     // 875 按住时长跟随 (⚠ 系统"按住持续时间"无读取 API, 自定滑杆 0.4–1.6s, 默认 0.9 与包1 对齐)
     private var holdDuration: Double { AXPrefs.holdDuration }
@@ -333,10 +333,10 @@ struct UnlockDial: View {
     }
     /// 242 角落状态点: 灰=未连接/蓝牙关, 品牌色=握手中, 绿=就绪 — Hero 卡滚出屏幕也不丢信息
     private var dotColor: Color {
-        if !bleReady { return DS.Palette.textSub }
-        if connected { return DS.Palette.ok }
-        if isBusy { return DS.Palette.accent }
-        return DS.Palette.textSub
+        if !bleReady { return XPalette.textSub }
+        if connected { return XPalette.ok }
+        if isBusy { return XPalette.accent }
+        return XPalette.textSub
     }
     /// 90 连续失败: 中心切换为信号搜索符号循环动效
     private var searching: Bool {
@@ -345,7 +345,7 @@ struct UnlockDial: View {
     }
 
     var body: some View {
-        VStack(spacing: DS.Space.m) {
+        VStack(spacing: XSpace.m) {
             ZStack {
                 // 呼吸光晕: 径向渐变模拟柔光, 只动 scale/opacity (比动画阴影便宜得多);
                 // 让主控"活着", 站在门口余光也知道该按哪里 (248: 夜间降峰值)
@@ -362,13 +362,13 @@ struct UnlockDial: View {
                     }
                 // 静态外环: 给主控一个"表盘"的结构感, 也让呼吸环的扩散有参照
                 Circle()
-                    .strokeBorder(DS.Palette.hairline, lineWidth: 1)
+                    .strokeBorder(XPalette.hairline, lineWidth: 1)
                     .frame(width: dial + 16, height: dial + 16)
                     .allowsHitTesting(false)
                 // 成功冲击波: 一次性扩散, 罕见时刻才配得的庆祝 (reduceMotion 下不出现)
                 if shock {
                     Circle()
-                        .strokeBorder(DS.Palette.ok.opacity(0.55), lineWidth: 2.5)
+                        .strokeBorder(XPalette.ok.opacity(0.55), lineWidth: 2.5)
                         .frame(width: dial, height: dial)
                         .scaleEffect(shock ? 1.5 : 1)
                         .opacity(shock ? 0 : 0.85)
@@ -406,7 +406,7 @@ struct UnlockDial: View {
                 // 2 环形进度: 按住时在盘外沿填充
                 Circle()
                     .trim(from: 0, to: holdProgress)
-                    .stroke(DS.Palette.accentText.opacity(0.9),
+                    .stroke(XPalette.accentText.opacity(0.9),
                             style: StrokeStyle(lineWidth: 4, lineCap: .round))
                     .frame(width: dial + 20, height: dial + 20)
                     .rotationEffect(.degrees(-90))
@@ -415,7 +415,7 @@ struct UnlockDial: View {
                 // 62 围栏已解锁的虚线提示环
                 if armed {
                     Circle()
-                        .strokeBorder(DS.Palette.ok.opacity(0.75),
+                        .strokeBorder(XPalette.ok.opacity(0.75),
                                       style: StrokeStyle(lineWidth: 2, dash: [4, 4]))
                         .frame(width: dial + 20, height: dial + 20)
                         .allowsHitTesting(false)
@@ -425,7 +425,7 @@ struct UnlockDial: View {
                 Circle()
                     .frame(width: 10, height: 10)
                     .foregroundStyle(dotColor)
-                    .overlay(Circle().strokeBorder(DS.heroFg.opacity(0.65), lineWidth: 1))
+                    .overlay(Circle().strokeBorder(XPalette.onAccent.opacity(0.65), lineWidth: 1))
                     .offset(x: dial * 0.44, y: -dial * 0.44)
                     .accessibilityHidden(true)
                 // 59 手势演练层: 首进设备 Tab 浮现，任何一次真实手势即永久收起。
@@ -448,7 +448,7 @@ struct UnlockDial: View {
             if let retryText {
                 Text(retryText)
                     .vkFont(.footnote, weight: .medium)
-                    .foregroundStyle(DS.Palette.accentText)
+                    .foregroundStyle(XPalette.accentText)
                     .transition(.opacity)
             } else if let detail {
                 Text(detail)
@@ -456,16 +456,16 @@ struct UnlockDial: View {
                     .foregroundStyle(detailTone)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
-                    .padding(.horizontal, DS.Space.l)
+                    .padding(.horizontal, XSpace.l)
                     .transition(.opacity)
             }
             // 62 围栏开启但未解锁时的教学一句
             if fenceRequired, !armed, !isBusy, bleReady, state == .idle {
                 Text("误触围栏开启中: 先从圆盘边缘拖到中心, 再执行开锁手势")
                     .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.textSub)
+                    .foregroundStyle(XPalette.textSub)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, DS.Space.xl)
+                    .padding(.horizontal, XSpace.xl)
                     .transition(.opacity)
             }
             // 129 极限距离提示: 最近一次 RSSI 逼近 93 信号围栏下限时, 第一次手势只提示不发出
@@ -474,16 +474,16 @@ struct UnlockDial: View {
                      ? "已暂缓这一次: 离门锁再走近一步, 然后重新按住圆盘"   // 129 界面文案
                      : "信号偏弱, 走近一步再开更稳")   // 129 信号偏弱
                     .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.warn)
+                    .foregroundStyle(XPalette.warn)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, DS.Space.xl)
+                    .padding(.horizontal, XSpace.xl)
                     .transition(.opacity)
             }
         }
-        .animation(DS.Motion.standard, value: state)
-        .animation(DS.Motion.soft, value: armed)
-        .animation(DS.Motion.soft, value: weakNudge)
-        .animation(DS.Motion.soft, value: drill)
+        .animation(XMotion.standard, value: state)
+        .animation(XMotion.soft, value: armed)
+        .animation(XMotion.soft, value: weakNudge)
+        .animation(XMotion.soft, value: drill)
         // 59 演练层只在"从没真手势过"时浮现一次
         .onAppear { drill = !DB.store.getBool("kf_dial_drill_seen") }
         // 系统级触觉反馈: 跟随"减少触感"系统开关, 也省掉手动生成器
@@ -506,13 +506,13 @@ struct UnlockDial: View {
             guard case .connecting = state else { return }
             guard !(CareSchedule.quietOn && CareSchedule.isQuietHour()) else { return }
             while !Task.isCancelled {
-                DS.Haptics.tick.impactOccurred()
+                XHaptics.tick.impactOccurred()
                 try? await Task.sleep(for: .milliseconds(130))
                 // `try?` 把 CancellationError 咽成一个 nil 继续往下走 ⇒ 取消如果落在这 130ms 里,
                 // 第二记触感照样会震, 而这一刻正是"结果回来"的那一瞬 (成功/失败触感同帧叠加),
                 // 用户摸到的是"门开了还多一跳"。必须显式判一次再收尾。
                 guard !Task.isCancelled else { break }
-                DS.Haptics.tick.impactOccurred()
+                XHaptics.tick.impactOccurred()
                 try? await Task.sleep(for: .milliseconds(950))
             }
         }
@@ -540,7 +540,7 @@ struct UnlockDial: View {
             withAnimation(.easeOut(duration: 0.75)) { shock = true }
             Task {
                 try? await Task.sleep(for: .seconds(0.9))
-                withAnimation(DS.Motion.soft) { pop = false; shock = false }
+                withAnimation(XMotion.soft) { pop = false; shock = false }
             }
         }
     }
@@ -555,7 +555,7 @@ struct UnlockDial: View {
     }
 
     /// 52/58 连点计数: 数满 tapsNeeded 下才发指令。
-    /// 渐强触感按 IDEA-BANK 原句 —— 前若干下只给"收到"的轻触，最后一下单换中档 (`DS.Haptics.trigger`)，
+    /// 渐强触感按 IDEA-BANK 原句 —— 前若干下只给"收到"的轻触，最后一下单换中档 (`XHaptics.trigger`)，
     /// 让"还差几下"在手指上可数，而不是在屏幕上多写一行字。
     private func registerTap() {
         tapReset?.cancel()
@@ -563,11 +563,11 @@ struct UnlockDial: View {
         dismissDrill()
         if tapStreak >= tapsNeeded {
             tapStreak = 0
-            DS.Haptics.trigger.impactOccurred()
+            XHaptics.trigger.impactOccurred()
             fire()
             return
         }
-        DS.Haptics.tick.impactOccurred()
+        XHaptics.tick.impactOccurred()
         tapReset = Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(700))
             guard !Task.isCancelled else { return }
@@ -619,7 +619,7 @@ struct UnlockDial: View {
                 if fenceRequired, !armed {
                     if !startInside, insideFence(g.location) {
                         armed = true
-                        DS.Haptics.tick.impactOccurred()
+                        XHaptics.tick.impactOccurred()
                         Task { @MainActor in
                             try? await Task.sleep(for: .seconds(4))
                             armed = false
@@ -636,7 +636,7 @@ struct UnlockDial: View {
                         firedThisTouch = false
                         chargeProgress = 0
                         chargeAngle = polarAngle(g.location)
-                        DS.Haptics.tick.impactOccurred()
+                        XHaptics.tick.impactOccurred()
                     } else {
                         stepCharge(g.location)
                     }
@@ -648,7 +648,7 @@ struct UnlockDial: View {
                     swipePeakUp = 0
                     pressStart = Date()
                     if holdConfirmOn, gestureMode == "hold" {
-                        DS.Haptics.tick.impactOccurred()   // 3 双段触感 · 第一段 (落手)
+                        XHaptics.tick.impactOccurred()   // 3 双段触感 · 第一段 (落手)
                         beginHold()
                     }
                 }
@@ -667,7 +667,7 @@ struct UnlockDial: View {
                 // 56: 指令已发出 (开锁中) 轻点圆盘 = 撤销等待/重试链 (0.8s 窗口由 AppState 判定)
                 if isBusy {
                     if case .opening = state, moved < 12 {
-                        DS.Haptics.tick.impactOccurred()
+                        XHaptics.tick.impactOccurred()
                         action()
                     }
                     return
@@ -676,7 +676,7 @@ struct UnlockDial: View {
                 // 52 松手没转满 = 充能整段作废 (进度回零，不留"看着像充了一半"的假象)
                 if gestureMode == "charge" {
                     pressing = false
-                    withAnimation(DS.Motion.soft) { chargeProgress = 0 }
+                    withAnimation(XMotion.soft) { chargeProgress = 0 }
                     return
                 }
                 // 53/58 连点档: 位移 <12pt 且停留 <0.25s 算一下轻点，数满 tapsNeeded 才发；
@@ -734,7 +734,7 @@ struct UnlockDial: View {
                 let marks = Int(p / 0.33)
                 if marks > ticked, p < 1 {
                     ticked = marks
-                    DS.Haptics.tick.impactOccurred()   // 22 进度触感刻度
+                    XHaptics.tick.impactOccurred()   // 22 进度触感刻度
                 }
                 if p >= 1 { break }
                 try? await Task.sleep(for: .milliseconds(16))
@@ -765,7 +765,7 @@ struct UnlockDial: View {
             holdProgress = 0
             swipeReady = false
             stopHold()
-            DS.Haptics.trigger.impactOccurred()   // 129 暂缓那一次给一下中等触感，不额外引入生成器
+            XHaptics.trigger.impactOccurred()   // 129 暂缓那一次给一下中等触感，不额外引入生成器
             return
         }
         weakNudge = false
@@ -775,15 +775,15 @@ struct UnlockDial: View {
         armed = false
         holdProgress = 0
         swipeReady = false
-        DS.Haptics.trigger.impactOccurred()   // 3 双段触感 · 第二段 (确认)
+        XHaptics.trigger.impactOccurred()   // 3 双段触感 · 第二段 (确认)
         action()
     }
 
     /// 失败态用 danger 色。单独抽出来避免在 View 体内对 enum 做相等比较
     /// (复杂三元表达式在大型 body 里会拖慢类型检查, 且在 SDK 26 上曾导致重载解析失败)
     private var detailTone: Color {
-        if case .failed = state { return DS.Palette.danger }
-        return DS.Palette.textSub
+        if case .failed = state { return XPalette.danger }
+        return XPalette.textSub
     }
 
     /// idle/连接/开锁中走品牌渐变, 上面必须是纯白 (两端 ≥4.5:1);
@@ -791,18 +791,18 @@ struct UnlockDial: View {
     private var contentColor: Color {
         switch state {
         // 反转模式 (863) 下 hero 底会降级成近白, 前景必须随之下沉为墨色
-        case .idle, .connecting, .opening: return DS.heroFg
-        default: return DS.Palette.onAccent
+        case .idle, .connecting, .opening: return XPalette.onAccent
+        default: return XPalette.onAccent
         }
     }
 
     /// 光晕颜色随状态走, 让"开锁成功"在视觉上也亮一下
     private var dialGlow: Color {
         switch state {
-        case .idle, .connecting, .opening: return DS.Palette.accent
-        case .success: return DS.Palette.ok
-        case .doubleVerify: return DS.Palette.warn
-        case .failed: return DS.Palette.danger
+        case .idle, .connecting, .opening: return XPalette.accent
+        case .success: return XPalette.ok
+        case .doubleVerify: return XPalette.warn
+        case .failed: return XPalette.danger
         }
     }
 
@@ -827,7 +827,7 @@ struct UnlockDial: View {
     /// 圆盘按钮的标签 (从 body 内联的 Button label 里抽出 —— 巨型表达式报 type-check 超时)
     @ViewBuilder
     private func dialButtonLabel() -> some View {
-        VStack(spacing: DS.Space.s) {
+        VStack(spacing: XSpace.s) {
             dialIcon()
             Text(title)
                 .vkFont(.headline)
@@ -843,7 +843,7 @@ struct UnlockDial: View {
         // 顶部内高光: 一层"玻璃厚度" (248: 夜间降峰值)
         .overlay {
             Circle()
-                .fill(LinearGradient(colors: [DS.heroFg.opacity(0.20 * dim), .clear],
+                .fill(LinearGradient(colors: [XPalette.onAccent.opacity(0.20 * dim), .clear],
                                      startPoint: .top, endPoint: .center))
                 .allowsHitTesting(false)
         }
@@ -864,7 +864,7 @@ struct UnlockDial: View {
         // 245 蓝牙关: 整盘置灰 —— 此时 state 多半还是 idle (靛蓝), 盘面看着能点而 action 里的
         // guard 挡着不动, 灰面让"不可用"先于点按可见。无专门 disabled 灰度令牌, 用现有两色组合。
         if !bleReady {
-            return AnyShapeStyle(LinearGradient(colors: [DS.Palette.surfaceAltBase, DS.Palette.hairline],
+            return AnyShapeStyle(LinearGradient(colors: [XPalette.surfaceAltBase, XPalette.hairline],
                                                 startPoint: .top, endPoint: .bottom))
         }
         switch state {
@@ -875,10 +875,10 @@ struct UnlockDial: View {
         }
         let base: Color
         switch state {
-        case .success: base = DS.Palette.ok
-        case .doubleVerify: base = DS.Palette.warn
-        case .failed: base = DS.Palette.danger
-        default: base = DS.Palette.accent
+        case .success: base = XPalette.ok
+        case .doubleVerify: base = XPalette.warn
+        case .failed: base = XPalette.danger
+        default: base = XPalette.accent
         }
         return AnyShapeStyle(LinearGradient(colors: [base.opacity(0.86), base],
                                             startPoint: .topLeading, endPoint: .bottomTrailing))

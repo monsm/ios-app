@@ -57,7 +57,7 @@ struct IconPicker: View {
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
-        .background(DS.Palette.canvas)
+        .background(XPalette.canvas)
         .navigationTitle("App 图标")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -67,30 +67,30 @@ struct IconPicker: View {
         // "标题在左、图排在右的一行"改成"标题在上、图排自适应换行"的两段式。
         // 用 LazyVGrid(adaptive) 而不是横向 ScrollView: 后者会把后几款藏在滚动区外,
         // 用户不知道自己有九款可选 —— 换肤这种"看一眼才想换"的界面不该先藏起来。
-        VStack(alignment: .leading, spacing: DS.Space.s) {
+        VStack(alignment: .leading, spacing: XSpace.s) {
             Text("App 图标")
                 .vkFont(.body)
-                .foregroundStyle(DS.Palette.text)
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 48), spacing: DS.Space.m)],
-                      alignment: .leading, spacing: DS.Space.m) {
+                .foregroundStyle(XPalette.text)
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 48), spacing: XSpace.m)],
+                      alignment: .leading, spacing: XSpace.m) {
                 ForEach(iconOptions) { opt in
                     Button { setIcon(opt.id) } label: {
                         ZStack(alignment: .bottomTrailing) {
-                            RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous)
+                            RoundedRectangle(cornerRadius: XRadius.control, style: .continuous)
                                 .fill(LinearGradient(colors: opt.bg, startPoint: .topLeading, endPoint: .bottomTrailing))
                                 .frame(width: 48, height: 48)
                                 .overlay(
                                     Image(systemName: opt.glyph)
                                         .font(.system(size: 24, weight: .medium))
-                                        .foregroundStyle(DS.heroFg)
+                                        .foregroundStyle(XPalette.onAccent)
                                 )
                             if currentIcon == opt.id {
                                 Image(systemName: "checkmark.circle.fill")
                                     .font(.system(size: 14, weight: .semibold))
-                                    // onSem 而非 .white: 角标底是 DS.Palette.ok, 它在深色档是浅绿 4ADE80,
+                                    // onSem 而非 .white: 角标底是 XPalette.ok, 它在深色档是浅绿 4ADE80,
                                     // 纯白压上去只有 1.74:1 (机检断言在 tools/contrast.js)。
                                     // 两层符号 (勾/圆盘) 谁吃第一色未实测, 已进验收单 — 两种顺序这里都可读。
-                                    .foregroundStyle(DS.Palette.onSem, DS.Palette.ok)
+                                    .foregroundStyle(XPalette.onSem, XPalette.ok)
                                     .offset(x: 4, y: 4)
                             }
                         }
@@ -101,7 +101,7 @@ struct IconPicker: View {
             }
         }
         .vkFont(.body)
-        .foregroundStyle(DS.Palette.text)
+        .foregroundStyle(XPalette.text)
     }
 
     private func setIcon(_ name: String?) {

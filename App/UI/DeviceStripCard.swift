@@ -30,16 +30,16 @@ struct BatteryStripCard: View {
             return a.u.name < b.u.name
         }
         return Card {
-            VStack(alignment: .leading, spacing: DS.Space.s) {
+            VStack(alignment: .leading, spacing: XSpace.s) {
                 SectionTitle(text: "电量", count: usages.count)
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: DS.Space.s) {
+                    HStack(spacing: XSpace.s) {
                         ForEach(Array(sorted.enumerated()), id: \.offset) { _, item in
                             let u = item.u
                             let t = BatteryCare.tier(item.pct)
-                            VStack(spacing: DS.Space.xxs) {
+                            VStack(spacing: XSpace.xxs) {
                                 Image(systemName: t.icon)
-                                    .font(.system(size: DS.Icon.lg, weight: .medium))
+                                    .font(.system(size: XIcon.lg, weight: .medium))
                                     .foregroundStyle(t.tone.color)
                                     .accessibilityHidden(true)
                                 // 写法走 BatteryCare.faceText —— 这条 ">80% / --" 的规则设备页那侧同一份,
@@ -48,17 +48,17 @@ struct BatteryStripCard: View {
                                 Text(BatteryCare.faceText(item.pct))
                                     .vkFont(.caption2, weight: .medium)
                                     .monospacedDigit()
-                                    .foregroundStyle(DS.Palette.text)
+                                    .foregroundStyle(XPalette.text)
                                 Text(u.name)
                                     .vkFont(.caption2)
-                                    .foregroundStyle(DS.Palette.textSub)
+                                    .foregroundStyle(XPalette.textSub)
                                     .lineLimit(1)
                                     .minimumScaleFactor(0.8)
                             }
-                            .padding(.horizontal, DS.Space.xs)
-                            .padding(.vertical, DS.Space.xs)
+                            .padding(.horizontal, XSpace.xs)
+                            .padding(.vertical, XSpace.xs)
                             .frame(width: 68)
-                            .variantPlate(DS.Palette.surfaceAlt, .tile)
+                            .variantPlate(XPalette.surfaceAlt, .tile)
                             .accessibilityElement(children: .combine)
                             .accessibilityLabel("\(u.name) 电量 \(item.pct < 0 ? "未知" : "\(item.pct)%")")
                         }
@@ -66,7 +66,7 @@ struct BatteryStripCard: View {
                 }
                 Text("趋势曲线积累中 — 每次连接门锁自动记录一个电量采样点, 存满约一周后可看走势; 换电池指引见锁详情。")
                     .vkFont(.caption2)
-                    .foregroundStyle(DS.Palette.textSub)
+                    .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }

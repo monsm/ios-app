@@ -125,11 +125,11 @@ struct MaintenanceView: View {
         Section {
             LabeledRow("上次保养", care.lastCareAt > 0 ? daysAgoText(care.lastCareAt) : "还没记过")
             if care.lastCareAt > 0 {
-                VStack(alignment: .leading, spacing: DS.Space.xxs) {
+                VStack(alignment: .leading, spacing: XSpace.xxs) {
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
-                            Capsule().fill(DS.Palette.surfaceAlt)
-                            Capsule().fill(careDue ? DS.Palette.warn : DS.Palette.accent)
+                            Capsule().fill(XPalette.surfaceAlt)
+                            Capsule().fill(careDue ? XPalette.warn : XPalette.accent)
                                 .frame(width: geo.size.width * CGFloat(min(elapsedDays / Double(periodDays), 1)))
                         }
                     }
@@ -139,14 +139,14 @@ struct MaintenanceView: View {
                          ? "已满 \(periodDays) 天, 建议安排一次保养"
                          : "周期 \(periodDays) 天 · 已过 \(Int(elapsedDays)) 天" + (periodDays == 60 ? " · 高频使用自动缩短" : ""))
                         .vkFont(.caption2)
-                        .foregroundStyle(careDue ? DS.Palette.warn : DS.Palette.textSub)
+                        .foregroundStyle(careDue ? XPalette.warn : XPalette.textSub)
                 }
                 .accessibilityElement(children: .combine)
             }
             Button { showChecklist = true } label: {
                 Label(care.lastCareAt > 0 ? "再做一次五项保养" : "开始五项保养", systemImage: "checklist")
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .frame(minHeight: DS.Hit.min)
+                    .frame(minHeight: XHit.min)
                     .contentShape(Rectangle())
             }
             .buttonStyle(PressableButtonStyle())
@@ -174,18 +174,18 @@ struct MaintenanceView: View {
                     .listRowInsets(EdgeInsets())
             }
             ForEach(Array(all.prefix(5).enumerated()), id: \.offset) { _, e in
-                HStack(spacing: DS.Space.s) {
+                HStack(spacing: XSpace.s) {
                     Image(systemName: e.kind == "battery" ? "battery.100" : "checkmark.seal")
-                        .font(.system(size: DS.Icon.sm, weight: .medium))
-                        .foregroundStyle(e.kind == "battery" ? DS.Palette.ok : DS.Palette.accentText)
+                        .font(.system(size: XIcon.sm, weight: .medium))
+                        .foregroundStyle(e.kind == "battery" ? XPalette.ok : XPalette.accentText)
                         .accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: DS.Space.xxs) {
+                    VStack(alignment: .leading, spacing: XSpace.xxs) {
                         Text(e.kind == "battery" ? "更换电池" : "保养完成")
                             .vkFont(.subheadline)
-                            .foregroundStyle(DS.Palette.text)
+                            .foregroundStyle(XPalette.text)
                         Text(e.note + " · " + daysAgoText(e.ts))
                             .vkFont(.caption2)
-                            .foregroundStyle(DS.Palette.textSub)
+                            .foregroundStyle(XPalette.textSub)
                     }
                     Spacer(minLength: 0)
                 }
@@ -200,7 +200,7 @@ struct MaintenanceView: View {
                 } label: {
                     Label("到记录页查看全部 (保养过滤)", systemImage: "line.3.horizontal.decrease.circle")
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .frame(minHeight: DS.Hit.min)
+                        .frame(minHeight: XHit.min)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(PressableButtonStyle())
@@ -215,7 +215,7 @@ struct MaintenanceView: View {
         Section {
             NavigationLink { BatterySwapGuideView() } label: {
                 Label("换电池图文指引", systemImage: "battery.100")
-                    .frame(minHeight: DS.Hit.min)
+                    .frame(minHeight: XHit.min)
             }
             LabeledRow("上次换电",
                        meta.batteryChangedAt > 0 ? daysAgoText(meta.batteryChangedAt * 1000) : "未记录 (见电池档案)")
@@ -226,10 +226,10 @@ struct MaintenanceView: View {
                                ? daysAgoText(care.chargeAt) + (care.chargeLenMin > 0 ? " · \(care.chargeLenMin) 分钟" : "")
                                : "未记录")
                     // 2026-10-18 设计审核: 可点行补 44pt 最小触达 (ui-ux-pro-max)
-                    .frame(maxWidth: .infinity, minHeight: DS.Hit.min, alignment: .leading)
+                    .frame(maxWidth: .infinity, minHeight: XHit.min, alignment: .leading)
                     .contentShape(Rectangle())
             }
-            .foregroundStyle(DS.Palette.text)
+            .foregroundStyle(XPalette.text)
             VariantToggle("每年换电池提醒", isOn: $yearlyOn)
             if yearlyOn {
                 DatePicker("提醒日期", selection: $yearlyDate, displayedComponents: .date)
@@ -252,12 +252,12 @@ struct MaintenanceView: View {
                 s.ekeyCheckAt = Date().timeIntervalSince1970 * 1000
                 BatteryCare.saveCare(mac, s)
                 care = s
-                DS.Haptics.tick.impactOccurred()
+                XHaptics.tick.impactOccurred()
                 app.showToast("已打卡 — 下次半年检会重新起算")
             } label: {
                 Label("确认应急钥匙还在 · 打卡", systemImage: "key.fill")
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .frame(minHeight: DS.Hit.min)
+                    .frame(minHeight: XHit.min)
                     .contentShape(Rectangle())
             }
             .buttonStyle(PressableButtonStyle())
@@ -306,30 +306,30 @@ struct BatterySwapGuideView: View {
         Form {
             Section {
                 ForEach(Array(steps.enumerated()), id: \.offset) { i, s in
-                    HStack(alignment: .top, spacing: DS.Space.s) {
+                    HStack(alignment: .top, spacing: XSpace.s) {
                         Text("\(i + 1)")
                             .vkFont(.caption, weight: .semibold)
                             .monospacedDigit()
-                            .foregroundStyle(DS.Palette.onAccent)
+                            .foregroundStyle(XPalette.onAccent)
                             .frame(width: 22, height: 22)
-                            .background(DS.Palette.accent, in: Circle())
+                            .background(XPalette.accent, in: Circle())
                             .accessibilityHidden(true)
                         Image(systemName: s.icon)
-                            .font(.system(size: DS.Icon.md, weight: .medium))
-                            .foregroundStyle(DS.Palette.accentText)
+                            .font(.system(size: XIcon.md, weight: .medium))
+                            .foregroundStyle(XPalette.accentText)
                             .frame(width: 30)
                             .accessibilityHidden(true)
-                        VStack(alignment: .leading, spacing: DS.Space.xxs) {
+                        VStack(alignment: .leading, spacing: XSpace.xxs) {
                             Text(s.title)
                                 .vkFont(.subheadline, weight: .medium)
-                                .foregroundStyle(DS.Palette.text)
+                                .foregroundStyle(XPalette.text)
                             Text(s.detail)
                                 .vkFont(.caption)
-                                .foregroundStyle(DS.Palette.textSub)
+                                .foregroundStyle(XPalette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     }
-                    .padding(.vertical, DS.Space.xxs)
+                    .padding(.vertical, XSpace.xxs)
                     .accessibilityElement(children: .combine)
                     .accessibilityLabel("第 \(i + 1) 步: \(s.title), \(s.detail)")
                 }
@@ -342,7 +342,7 @@ struct BatterySwapGuideView: View {
                 BusyButton(title: "已换新", systemImage: "checkmark", isBusy: false) { swap() }
                 NavigationLink { SyncTimeView() } label: {
                     Label("去校准门锁时间", systemImage: "clock.arrow.circlepath")
-                        .frame(minHeight: DS.Hit.min)
+                        .frame(minHeight: XHit.min)
                 }
             } footer: {
                 Text("「已换新」会写入换电记录、复位低电提醒武装位, 并在电池档案记下今天。")
@@ -387,22 +387,22 @@ struct CareChecklistView: View {
                 Section {
                     ForEach(Array(items.enumerated()), id: \.offset) { i, it in
                         Button { checks[i].toggle() } label: {
-                            HStack(spacing: DS.Space.s) {
+                            HStack(spacing: XSpace.s) {
                                 Image(systemName: checks[i] ? "checkmark.circle.fill" : "circle")
-                                    .font(.system(size: DS.Icon.sm, weight: .semibold))
-                                    .foregroundStyle(checks[i] ? DS.Palette.ok : DS.Palette.textSub)
+                                    .font(.system(size: XIcon.sm, weight: .semibold))
+                                    .foregroundStyle(checks[i] ? XPalette.ok : XPalette.textSub)
                                     .accessibilityHidden(true)
                                 Image(systemName: it.icon)
-                                    .font(.system(size: DS.Icon.sm, weight: .medium))
-                                    .foregroundStyle(DS.Palette.accentText)
+                                    .font(.system(size: XIcon.sm, weight: .medium))
+                                    .foregroundStyle(XPalette.accentText)
                                     .frame(width: 24)
                                     .accessibilityHidden(true)
                                 Text(it.label)
                                     .vkFont(.subheadline)
-                                    .foregroundStyle(DS.Palette.text)
+                                    .foregroundStyle(XPalette.text)
                                 Spacer(minLength: 0)
                             }
-                            .frame(minHeight: DS.Hit.min)
+                            .frame(minHeight: XHit.min)
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(PressableButtonStyle())

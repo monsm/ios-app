@@ -21,11 +21,11 @@ struct SyncTimeView: View {
                 if app.current != nil {
                     Text("将手机时间同步到门锁内 (cmd 0E)。校准前会先读锁钟并补偿偏差。")
                         .vkFont(.footnote)
-                        .foregroundStyle(DS.Palette.textSub)
+                        .foregroundStyle(XPalette.textSub)
                     LabeledRow("锁钟", app.status?.lockTime.map { ProtoTime.localStr($0) } ?? "—")
                     LabeledRow("手机时间", DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .medium))
                 } else {
-                    Text("请先在设备页选择一把门锁").foregroundStyle(DS.Palette.textSub)
+                    Text("请先在设备页选择一把门锁").foregroundStyle(XPalette.textSub)
                 }
             } header: {
                 Text("同步时间")
@@ -85,12 +85,12 @@ struct LabeledRow: View {
     var value: String
     init(_ label: String, _ value: String) { self.label = label; self.value = value }
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {
+        HStack(alignment: .firstTextBaseline, spacing: XSpace.s) {
             // 668: 这类"中文标签 + 英文缩写/数字"的行最容易看出中西文挤在一起, 统一走排版加距 (不插字符)
-            cjkSpaced(label).foregroundStyle(DS.Palette.textSub)
-            Spacer(minLength: DS.Space.m)
+            cjkSpaced(label).foregroundStyle(XPalette.textSub)
+            Spacer(minLength: XSpace.m)
             cjkSpaced(value)
-                .foregroundStyle(DS.Palette.text)
+                .foregroundStyle(XPalette.text)
                 .multilineTextAlignment(.trailing)
                 .lineLimit(2) // MAC/时间等长值换行而不是溢出
                 .fixedSize(horizontal: false, vertical: true)

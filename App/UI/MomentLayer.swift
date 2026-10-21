@@ -18,6 +18,6 @@ struct MomentLayer: ViewModifier {
                         .transition(.opacity.combined(with: .scale(scale: 0.96)))
                 }
             }
-            .animation(DS.Motion.soft, value: app.moment)
+            .animation(XMotion.soft, value: app.moment)
     }
 }

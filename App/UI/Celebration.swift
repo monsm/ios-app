@@ -27,45 +27,45 @@ struct MomentCardView: View {
             Color.black.opacity(0.42)
                 .ignoresSafeArea()
                 .accessibilityHidden(true)
-            VStack(spacing: DS.Space.l) {
+            VStack(spacing: XSpace.l) {
                 // 徽章圆座: 玻璃感 + 品牌渐变
                 ZStack {
                     Circle()
-                        .fill(DS.heroFg.opacity(0.16))
+                        .fill(XPalette.onAccent.opacity(0.16))
                         .frame(width: 96, height: 96)
                     Image(systemName: moment.icon)
                         .font(.system(size: 40, weight: .medium))
-                        .foregroundStyle(DS.heroFg)
+                        .foregroundStyle(XPalette.onAccent)
                 }
                 .accessibilityHidden(true)
 
-                VStack(spacing: DS.Space.s) {
+                VStack(spacing: XSpace.s) {
                     Text(moment.title)
                         .vkFont(.title3, weight: .semibold)
-                        .foregroundStyle(DS.heroFg)
+                        .foregroundStyle(XPalette.onAccent)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
                     Text(moment.subtitle)
                         .vkFont(.footnote)
-                        .foregroundStyle(DS.heroFg.opacity(0.88))
+                        .foregroundStyle(XPalette.onAccent.opacity(0.88))
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 Text("轻点任意处继续")
                     .vkFont(.caption2)
-                    .foregroundStyle(DS.heroFg.opacity(0.62))
+                    .foregroundStyle(XPalette.onAccent.opacity(0.62))
             }
-            .padding(DS.Space.xl)
+            .padding(XSpace.xl)
             .frame(maxWidth: 340)
-            .background(DS.heroGradientSafe, in: RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous))
-            .shadow(color: DS.Palette.accent.opacity(0.35), radius: 26, y: 12)
-            .padding(.horizontal, DS.Space.xl)
+            .background(DS.heroGradientSafe, in: RoundedRectangle(cornerRadius: XRadius.card, style: .continuous))
+            .shadow(color: XPalette.accent.opacity(0.35), radius: 26, y: 12)
+            .padding(.horizontal, XSpace.xl)
             .scaleEffect(shown || reduceMotion ? 1 : 0.94)
             .opacity(shown ? 1 : 0)
         }
         .contentShape(Rectangle())
         .onTapGesture(perform: onDismiss)
-        .onAppear { withAnimation(DS.Motion.standard) { shown = true } }
+        .onAppear { withAnimation(XMotion.standard) { shown = true } }
         // 防滞留: 无人点击也自动收起, 回到正常使用流。
         // 2026-10-15 走查: 这条原先写在 .onAppear 里的裸 `Task {}` 有两个坑 ——
         //   ① 用户提前轻点关掉这张后, 那个计时器仍在跑, 5.4s 到点再调一次 onDismiss;
