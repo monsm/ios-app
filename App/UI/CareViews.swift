@@ -46,10 +46,10 @@ struct MaintenanceView: View {
 
             ScrollView {
                 VStack(spacing: XSpace.l) {
-            carePeriodSection      // 1013/1015
-            historySection         // 1028/1014
-            swapSection            // 116/118/1012
-            ekeySection            // 1025
+                    carePeriodSection
+                    historySection
+                    swapSection
+                    ekeySection
                 }
                 .padding(.horizontal, XSpace.gutter)
                 .padding(.vertical, XSpace.l)
@@ -57,15 +57,10 @@ struct MaintenanceView: View {
             .scrollIndicators(.hidden)
         }
         .navigationTitle("维护与保养")
-        .xList()
-        .xScreen()
+        .navigationBarTitleDisplayMode(.inline)
         .onAppear { if !loaded { loaded = true; reload() } }
-        // 2026-10-15 走查 §7.4-3: `care` 是 @State 快照、只在上面那一句里读一次，而同一页的 `mac` /
-        // `meta` / `opens30d` / `periodDays` 全是**实时**跟着 `app.current` 走的。这一页既被设置页 push、
-        // 也被 sheet 里的 `DeviceInfoView` push (父层没有 `CredentialsView().id(currentMac)` 那种身份包装，
-        // 全仓只有凭证页与记录页有)，所以换锁而页面不退时：上次保养/进度条还是 A 锁的，场所/周期已是 B 锁的，
-        // 打卡写的还是 B —— 同屏两把锁。补一条换锁重取，形状照本仓已有的两处先例
-        // (`DeviceHomeView` / `RecordsView` 的 `.onChange(of: app.currentMac)`)，不另造第三套。
+        // 换锁重取: care 是 @State 快照, 而 mac/meta/opens30d/periodDays
+        // 全是实时跟着 app.current 走的 —— 不重取就会出现"同屏两把锁"。
         .onChange(of: app.currentMac) { _, _ in reload() }
         .sheet(isPresented: $showChecklist) { CareChecklistView { reload() } }
         .onChange(of: yearlyOn) { _, _ in saveYearly() }
@@ -176,42 +171,47 @@ struct MaintenanceView: View {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 secLabel("保养历史")
                 if all.isEmpty {
-                    XEmptyState(systemImage: "checkmark.seal",
-                                 title: "还没有保养记录",
-                                 message: "五项清单走一遍就会在这里落下第一条; 换电完成后走「换电关怀」里的图文指引。",
-                                 actionTitle: "开始五项保养",
-                                 action: { showChecklist = true })
+                // 包14 空态族消费点 (815 双按钮 / 841 小管家默认开 / 1044 便签):
+                // 旧版只有一句"还没有保养或换电记录" —— 现在空态直接给出那件能做的事:
+                // 主动作打开五项清单 (与下方 1015 按钮同一个 sheet, 不另起流程)。
+                XGuidedEmptyView(systemImage: "checkmark.seal",
+                title: "还没有保养记录",
+                message: "五项清单走一遍就会在这里落下第一条; 换电完成后走「换电关怀」里的图文指引。",
+                actionTitle: "开始五项保养",
+                action: { showChecklist = true })
+                .listRowInsets(EdgeInsets())
+                }
                 ForEach(Array(all.prefix(5).enumerated()), id: \.offset) { _, e in
-                    HStack(spacing: XSpace.s) {
-                        Image(systemName: e.kind == "battery" ? "battery.100" : "checkmark.seal")
-                            .font(.system(size: XIcon.sm, weight: .medium))
-                            .foregroundStyle(e.kind == "battery" ? XPalette.ok : XPalette.accentText)
-                            .accessibilityHidden(true)
-                        VStack(alignment: .leading, spacing: XSpace.xxs) {
-                            Text(e.kind == "battery" ? "更换电池" : "保养完成")
-                                .xFont(.subheadline)
-                                .foregroundStyle(XPalette.text)
-                            Text(e.note + " · " + daysAgoText(e.ts))
-                                .xFont(.caption2)
-                                .foregroundStyle(XPalette.textSub)
-                        }
-                        Spacer(minLength: 0)
-                    }
-                    .accessibilityElement(children: .combine)
+                HStack(spacing: XSpace.s) {
+                Image(systemName: e.kind == "battery" ? "battery.100" : "checkmark.seal")
+                .font(.system(size: XIcon.sm, weight: .medium))
+                .foregroundStyle(e.kind == "battery" ? XPalette.ok : XPalette.accentText)
+                .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: XSpace.xxs) {
+                Text(e.kind == "battery" ? "更换电池" : "保养完成")
+                .xFont(.subheadline)
+                .foregroundStyle(XPalette.text)
+                Text(e.note + " · " + daysAgoText(e.ts))
+                .xFont(.caption2)
+                .foregroundStyle(XPalette.textSub)
+                }
+                Spacer(minLength: 0)
+                }
+                .accessibilityElement(children: .combine)
                 }
                 if !all.isEmpty {
-                    Button {
-                        app.pendingRecordsFilter = "__care"
-                        app.requestRoute(.records)
-                        // 先落点再收摊：sheet 不收，切过去的 Tab 就在它底下
-                        dismiss()
-                    } label: {
-                        Label("到记录页查看全部 (保养过滤)", systemImage: "line.3.horizontal.decrease.circle")
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .frame(minHeight: XHit.min)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(PressableButtonStyle())
+                Button {
+                app.pendingRecordsFilter = "__care"
+                app.requestRoute(.records)
+                // 先落点再收摊：sheet 不收，切过去的 Tab 就在它底下 (见本页上方那条注释)
+                dismiss()
+                } label: {
+                Label("到记录页查看全部 (保养过滤)", systemImage: "line.3.horizontal.decrease.circle")
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(minHeight: XHit.min)
+                .contentShape(Rectangle())
+                }
+                .buttonStyle(PressableButtonStyle())
                 }
             }
         }
@@ -281,14 +281,6 @@ struct MaintenanceView: View {
         }
     }
 
-
-    private func secLabel(_ text: String) -> some View {
-        Text(text)
-            .xFont(.caption, weight: .semibold)
-            .foregroundStyle(XPalette.textTertiary)
-            .textCase(.uppercase)
-            .frame(maxWidth: .infinity, alignment: .leading)
-    }
 }
 
 
@@ -329,57 +321,60 @@ struct BatterySwapGuideView: View {
 
             ScrollView {
                 VStack(spacing: XSpace.l) {
-            XPanel(kind: .group) {
-                VStack(alignment: .leading, spacing: XSpace.m) {
-                    secLabel("换电步骤")
-                    ForEach(Array(steps.enumerated()), id: \.offset) { i, s in
-                        HStack(alignment: .top, spacing: XSpace.s) {
-                            Text("\(i + 1)")
-                                .xFont(.caption, weight: .semibold)
-                                .monospacedDigit()
-                                .foregroundStyle(XPalette.onAccent)
-                                .frame(width: 22, height: 22)
-                                .background(XPalette.accent, in: Circle())
-                                .accessibilityHidden(true)
-                            Image(systemName: s.icon)
-                                .font(.system(size: XIcon.md, weight: .medium))
-                                .foregroundStyle(XPalette.accentText)
-                                .frame(width: 30)
-                                .accessibilityHidden(true)
-                            VStack(alignment: .leading, spacing: XSpace.xxs) {
-                                Text(s.title)
-                                    .xFont(.subheadline, weight: .medium)
-                                    .foregroundStyle(XPalette.text)
-                                Text(s.detail)
-                                    .xFont(.caption)
-                                    .foregroundStyle(XPalette.textSub)
-                                    .fixedSize(horizontal: false, vertical: true)
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            secLabel("换电步骤")
+                            ForEach(Array(steps.enumerated()), id: \.offset) { i, s in
+                                HStack(alignment: .top, spacing: XSpace.s) {
+                                    Text("\(i + 1)")
+                                        .xFont(.caption, weight: .semibold)
+                                        .monospacedDigit()
+                                        .foregroundStyle(XPalette.onAccent)
+                                        .frame(width: 22, height: 22)
+                                        .background(XPalette.accent, in: Circle())
+                                        .accessibilityHidden(true)
+                                    Image(systemName: s.icon)
+                                        .font(.system(size: XIcon.md, weight: .medium))
+                                        .foregroundStyle(XPalette.accentText)
+                                        .frame(width: 30)
+                                        .accessibilityHidden(true)
+                                    VStack(alignment: .leading, spacing: XSpace.xxs) {
+                                        Text(s.title)
+                                            .xFont(.subheadline, weight: .medium)
+                                            .foregroundStyle(XPalette.text)
+                                        Text(s.detail)
+                                            .xFont(.caption)
+                                            .foregroundStyle(XPalette.textSub)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                    }
+                                }
+                                .padding(.vertical, XSpace.xxs)
+                                .accessibilityElement(children: .combine)
+                                .accessibilityLabel("第 \(i + 1) 步: \(s.title), \(s.detail)")
                             }
+                            Text("全程只动电池 — 不需要重置门锁, 也不需要重新配网。")
+                                .xFont(.caption2)
+                                .foregroundStyle(XPalette.textSub)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
-                        .padding(.vertical, XSpace.xxs)
-                        .accessibilityElement(children: .combine)
-                        .accessibilityLabel("第 \(i + 1) 步: \(s.title), \(s.detail)")
                     }
-                    Text("全程只动电池 — 不需要重置门锁, 也不需要重新配网。")
-                        .xFont(.caption2)
-                        .foregroundStyle(XPalette.textSub)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-            XPanel(kind: .group) {
-                VStack(alignment: .leading, spacing: XSpace.m) {
-                    XBusyButton(title: "已换新", systemImage: "checkmark", busy: false) { swap() }
-                    NavigationLink { SyncTimeView() } label: {
-                        Label("去校准门锁时间", systemImage: "clock.arrow.circlepath")
-                            .frame(minHeight: XHit.min)
+
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            XBusyButton(title: "已换新", systemImage: "checkmark", busy: false) { swap() }
+                            NavigationLink { SyncTimeView() } label: {
+                                Label("去校准门锁时间", systemImage: "clock.arrow.circlepath")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .frame(minHeight: XHit.min)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            Text("「已换新」会写入换电记录、复位低电提醒武装位, 并在电池档案记下今天。")
+                                .xFont(.caption2)
+                                .foregroundStyle(XPalette.textSub)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
                     }
-                    Text("「已换新」会写入换电记录、复位低电提醒武装位, 并在电池档案记下今天。")
-                        .xFont(.caption2)
-                        .foregroundStyle(XPalette.textSub)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                }
-            }
                 }
                 .padding(.horizontal, XSpace.gutter)
                 .padding(.vertical, XSpace.l)
@@ -387,8 +382,15 @@ struct BatterySwapGuideView: View {
             .scrollIndicators(.hidden)
         }
         .navigationTitle("换电指引")
-        .xList()
-        .xScreen()
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func secLabel(_ text: String) -> some View {
+        Text(text)
+            .xFont(.caption, weight: .semibold)
+            .foregroundStyle(XPalette.textTertiary)
+            .textCase(.uppercase)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     /// 118 换电复位基线: 电池档案 + 采样基线 + 通知武装位 + 1014 事件, 一次到位
@@ -401,14 +403,6 @@ struct BatterySwapGuideView: View {
         app.showToast("已换新 · 基线与提醒已复位")
         app.evaluateAchievements()   // 1039 续航管家徽章结算
         dismiss()
-    }
-
-    private func secLabel(_ text: String) -> some View {
-        Text(text)
-            .xFont(.caption, weight: .semibold)
-            .foregroundStyle(XPalette.textTertiary)
-            .textCase(.uppercase)
-            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -428,66 +422,69 @@ struct CareChecklistView: View {
     ]
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                XPalette.canvas.ignoresSafeArea()
+        ZStack {
+            XPalette.canvas.ignoresSafeArea()
 
-                ScrollView {
-                    VStack(spacing: XSpace.l) {
-                XPanel(kind: .group) {
-                    VStack(alignment: .leading, spacing: XSpace.m) {
-                        secLabel("五项清单")
-                        ForEach(Array(items.enumerated()), id: \.offset) { i, it in
-                            Button { checks[i].toggle() } label: {
-                                HStack(spacing: XSpace.s) {
-                                    Image(systemName: checks[i] ? "checkmark.circle.fill" : "circle")
-                                        .font(.system(size: XIcon.sm, weight: .semibold))
-                                        .foregroundStyle(checks[i] ? XPalette.ok : XPalette.textSub)
-                                        .accessibilityHidden(true)
-                                    Image(systemName: it.icon)
-                                        .font(.system(size: XIcon.sm, weight: .medium))
-                                        .foregroundStyle(XPalette.accentText)
-                                        .frame(width: 24)
-                                        .accessibilityHidden(true)
-                                    Text(it.label)
-                                        .xFont(.subheadline)
-                                        .foregroundStyle(XPalette.text)
-                                    Spacer(minLength: 0)
+            ScrollView {
+                VStack(spacing: XSpace.l) {
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            secLabel("五项清单")
+                            ForEach(Array(items.enumerated()), id: \.offset) { i, it in
+                                Button { checks[i].toggle() } label: {
+                                    HStack(spacing: XSpace.s) {
+                                        Image(systemName: checks[i] ? "checkmark.circle.fill" : "circle")
+                                            .font(.system(size: XIcon.sm, weight: .semibold))
+                                            .foregroundStyle(checks[i] ? XPalette.ok : XPalette.textSub)
+                                            .accessibilityHidden(true)
+                                        Image(systemName: it.icon)
+                                            .font(.system(size: XIcon.sm, weight: .medium))
+                                            .foregroundStyle(XPalette.accentText)
+                                            .frame(width: 24)
+                                            .accessibilityHidden(true)
+                                        Text(it.label)
+                                            .xFont(.subheadline)
+                                            .foregroundStyle(XPalette.text)
+                                        Spacer(minLength: 0)
+                                    }
+                                    .frame(minHeight: XHit.min)
+                                    .contentShape(Rectangle())
                                 }
-                                .frame(minHeight: XHit.min)
-                                .contentShape(Rectangle())
+                                .buttonStyle(.plain)
+                                .accessibilityLabel(it.label)
+                                .accessibilityAddTraits(checks[i] ? [.isSelected] : [])
                             }
-                            .buttonStyle(PressableButtonStyle())
-                            .accessibilityLabel(it.label)
-                            .accessibilityAddTraits(checks[i] ? [.isSelected] : [])
+                            Text("逐项确认后才能完成保养 — 汽车保养手册的严谨, 用在门上一样合适。")
+                                .xFont(.caption2)
+                                .foregroundStyle(XPalette.textSub)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
-                        Text("逐项确认后才能完成保养 — 汽车保养手册的严谨, 用在门上一样合适。")
-                            .xFont(.caption2)
-                            .foregroundStyle(XPalette.textSub)
-                            .fixedSize(horizontal: false, vertical: true)
                     }
-                }
-                XPanel(kind: .group) {
-                    VStack(alignment: .leading, spacing: XSpace.m) {
-                        XBusyButton(title: "完成保养",
-                                   systemImage: "checkmark.seal",
-                                   busy: false) {
-                            complete()
-                        }
-                        .disabled(!checks.allSatisfy({ $0 }))
+
+                    XBusyButton(title: "完成保养",
+                                systemImage: "checkmark.seal",
+                                busy: false) {
+                        complete()
                     }
+                    .disabled(!checks.allSatisfy({ $0 }))
+                    .opacity(checks.allSatisfy({ $0 }) ? 1 : 0.5)
                 }
-                    }
-                    .padding(.horizontal, XSpace.gutter)
-                    .padding(.vertical, XSpace.l)
-                }
-                .scrollIndicators(.hidden)
+                .padding(.horizontal, XSpace.gutter)
+                .padding(.vertical, XSpace.l)
             }
-            .navigationTitle("锁体保养")
-            .xList()
-            .xScreen()
-            .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("取消") { dismiss() } } }
+            .scrollIndicators(.hidden)
         }
+        .navigationTitle("锁体保养")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar { ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } } }
+    }
+
+    private func secLabel(_ text: String) -> some View {
+        Text(text)
+            .xFont(.caption, weight: .semibold)
+            .foregroundStyle(XPalette.textTertiary)
+            .textCase(.uppercase)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func complete() {
@@ -504,13 +501,5 @@ struct CareChecklistView: View {
         app.evaluateAchievements()                       // 1030 爱洁之家徽章结算
         onDone()
         dismiss()
-    }
-
-    private func secLabel(_ text: String) -> some View {
-        Text(text)
-            .xFont(.caption, weight: .semibold)
-            .foregroundStyle(XPalette.textTertiary)
-            .textCase(.uppercase)
-            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
