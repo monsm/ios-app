@@ -166,3 +166,36 @@ MemberExitWizard / AlarmCenterView 的 Section 重构、IconPicker 的 List→Sc
 
 - **用户真机确认观感** —— 验收标准第三条，只有用户能做
 - `z = -0.35*narrow` 的字面实现 —— SwiftUI 无 API，已用 `anchorZ` 等价实现并记录
+
+## 功能缺口已补齐（本轮）
+
+### 「本地备份文件」列表 —— 实现完成
+
+`BackupStudio.swift` 的章节注释（原第 310 行）下面终于有视图了。
+
+| 层 | 内容 |
+|---|---|
+| 探针 | `RealityAPIProbe.swift` 区块 7（`FileManager` 枚举/元数据）—— **CI `39588049606` SUCCESS** |
+| 数据 | `BackupStudio.algoNote(for:)` / `LocalBackupFile` / `localFiles()` / `deleteLocalFile(_:)` |
+| 视图 | `LocalBackupFilesSection`（文件名 · 大小 · 时间 · 算法参数 · 删除）|
+| 挂载 | `BackupStudioView` 的 `cadenceCard` 之后 |
+
+**CI `39589380471` = SUCCESS**（HEAD `ca7e0bc`）。
+
+### 顺带激活的死代码
+
+`AlgoNote` / `jsonStr` / `jsonNum` 原本**全仓零调用**，
+现在由 `algoNote(for:)` 使用，「435 逐文件算法标注」终于落地。
+
+### CI 抓到的两个错误（已在提交里修掉）
+
+1. `main actor-isolated static property 'filePrefix' can not be referenced from a nonisolated context`
+   —— `enum BackupStudio` 是 `@MainActor`，嵌套 struct 的 `shortName` 是非隔离上下文。
+   修法：`nonisolated static let filePrefix`（与既有 `dir` 同处理）。
+2. `swiftlint` 疑似臆造符号 `FileHandle` —— 全仓只此一处、不在前缀白名单。
+   已加白并注明理由（`read(upToCount:)` 是唯一只读文件头、不把整份备份读进内存的做法）。
+
+## 仍未验证
+
+- 真机：文件枚举在真实沙盒的行为、删除后刷新、空目录空态
+- 真实加密信封的 `alg` / `kdf` / `iter` JSON 键名（需一份真实备份文件）
