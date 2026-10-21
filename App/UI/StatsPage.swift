@@ -44,6 +44,9 @@ struct StatsPage: View {
                         degradedCard(m).xScrollLift()
                     } else {
                         safetyCard(m).xScrollLift()
+                        paretoCard(m)
+                        daypartCard(m)
+                        firstOpenCard(m)
                         rhythmCard(m).xScrollLift()
                         trendCard(m).xScrollLift()
                     }
@@ -69,6 +72,153 @@ struct StatsPage: View {
     // ═══════════════════════════════════════════════════════
     // MARK: - ① 安全吗
     // ═══════════════════════════════════════════════════════
+
+    // ── 凭证分布（pareto）──
+    //
+    // 回答"哪种方式在开门" —— 指纹多还是密码多。
+    // Pareto 数据早已算好（含累计百分比），但页面从没用过。
+    @ViewBuilder
+    private func paretoCard(_ m: StatsKit.StatModel) -> some View {
+        let rows = m.pareto
+        if !rows.isEmpty {
+            XPanel {
+                VStack(alignment: .leading, spacing: XSpace.m) {
+                    Text("怎么开的门")
+                        .xFont(.subheadline, weight: .medium)
+                        .foregroundStyle(XPalette.textSub)
+
+                    let peak = max(rows.map { $0.count }.max() ?? 1, 1)
+                    ForEach(Array(rows.enumerated()), id: \.offset) { _, r in
+                        HStack(spacing: XSpace.s) {
+                            Text(r.label)
+                                .xFont(.caption)
+                                .foregroundStyle(XPalette.text)
+                                .frame(width: 52, alignment: .leading)
+                            // 横条
+                            GeometryReader { geo in
+                                ZStack(alignment: .leading) {
+                                    RoundedRectangle(cornerRadius: 3, style: .continuous)
+                                        .fill(XPalette.surfaceAlt)
+                                    RoundedRectangle(cornerRadius: 3, style: .continuous)
+                                        .fill(kindColor(r.kind))
+                                        .frame(width: Swift.max(4, geo.size.width * CGFloat(r.count) / CGFloat(peak)))
+                                }
+                            }
+                            .frame(height: 10)
+                            Text(String(r.count))
+                                .xFont(.caption2.monospacedDigit())
+                                .foregroundStyle(XPalette.textSub)
+                                .frame(width: 30, alignment: .trailing)
+                            Text(String(format: "%.0f%%", r.pct))
+                                .xFont(.caption2.monospacedDigit())
+                                .foregroundStyle(XPalette.textTertiary)
+                                .frame(width: 32, alignment: .trailing)
+                        }
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel(r.label + " " + String(r.count) + " 次")
+                    }
+                }
+            }
+            .xScrollLift()
+        }
+    }
+
+    /// 凭证类型色 —— 复用设计系统令牌
+    private func kindColor(_ kind: String) -> Color {
+        switch kind {
+        case "fp": return XPalette.accent
+        case "pwd": return XPalette.ok
+        case "temp": return XPalette.warn
+        case "key": return XPalette.textSub
+        default: return XPalette.textTertiary
+        }
+    }
+
+    // ── 一天分段（dayparts）──
+    //
+    // 比"24 小时逐时"更易读: 早上 / 中午 / 傍晚 / 深夜。
+    // dayparts 已算好（含时段跨度文案），从没用过。
+    @ViewBuilder
+    private func daypartCard(_ m: StatsKit.StatModel) -> some View {
+        let parts = m.dayparts
+        if m.daypartTotal > 0 {
+            XPanel {
+                VStack(alignment: .leading, spacing: XSpace.m) {
+                    Text("一天里什么时候最忙")
+                        .xFont(.subheadline, weight: .medium)
+                        .foregroundStyle(XPalette.textSub)
+
+                    ForEach(Array(parts.enumerated()), id: \.offset) { _, p in
+                        HStack(spacing: XSpace.s) {
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(p.name)
+                                    .xFont(.caption, weight: .medium)
+                                    .foregroundStyle(XPalette.text)
+                                Text(p.span)
+                                    .xFont(.caption2)
+                                    .foregroundStyle(XPalette.textTertiary)
+                            }
+                            .frame(width: 66, alignment: .leading)
+                            GeometryReader { geo in
+                                ZStack(alignment: .leading) {
+                                    RoundedRectangle(cornerRadius: 3, style: .continuous)
+                                        .fill(XPalette.surfaceAlt)
+                                    RoundedRectangle(cornerRadius: 3, style: .continuous)
+                                        .fill(XPalette.accent.opacity(0.75))
+                                        .frame(width: Swift.max(4, geo.size.width * CGFloat(p.opens) / CGFloat(max(m.daypartTotal, 1))))
+                                }
+                            }
+                            .frame(height: 10)
+                            Text(String(p.opens))
+                                .xFont(.caption2.monospacedDigit())
+                                .foregroundStyle(XPalette.textSub)
+                                .frame(width: 30, alignment: .trailing)
+                        }
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel(p.name + " " + p.span + " " + String(p.opens) + " 次")
+                    }
+                }
+            }
+            .xScrollLift()
+        }
+    }
+
+    // ── 工作日出门时间（workdayFirstOpenMedian）──
+    //
+    // "通常几点出门" —— 这是生活习惯的指纹。
+    // workdayFirstOpenMedian 已算好，从没用过。
+    @ViewBuilder
+    private func firstOpenCard(_ m: StatsKit.StatModel) -> some View {
+        if let med = m.workdayFirstOpenMedian {
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: XSpace.m) {
+                    Text("工作日出门")
+                        .xFont(.subheadline, weight: .medium)
+                        .foregroundStyle(XPalette.textSub)
+                    HStack(alignment: .firstTextBaseline, spacing: XSpace.s) {
+                        Text(med.timeStr)
+                            .xFont(.title2, weight: .semibold)
+                            .foregroundStyle(XPalette.accent)
+                            .monospacedDigit()
+                        Text("通常第一次开门")
+                            .xFont(.caption)
+                            .foregroundStyle(XPalette.textSub)
+                        Spacer(minLength: 0)
+                    }
+                    if let spread = m.firstOpenHourSpread {
+                        Text("最早 " + hourText(spread.earliest) + " · 最晚 " + hourText(spread.latest))
+                            .xFont(.caption2)
+                            .foregroundStyle(XPalette.textTertiary)
+                    }
+                }
+            }
+            .xScrollLift()
+        }
+    }
+
+    private func hourText(_ h: Int) -> String {
+        String(format: "%02d:00", h)
+    }
 
     private func safetyCard(_ m: StatsKit.StatModel) -> some View {
         let rate = m.opensTotal > 0 ? Double(m.alarmsTotal) / Double(m.opensTotal) : 0
