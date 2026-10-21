@@ -36,11 +36,21 @@ struct EventsPage: View {
     @State private var search = ""
     @State private var searchActive = false
     @State private var alarmOnly = false
+    /// 筛选视图（用户自己存下来的查询条件）与最近搜索。
+    /// 这两份数据一直有读写 API，但全仓没有任何界面入口 —— 属于"功能存在、够不着"。
+    @State private var namedViews: [RecordSearch.NamedView] = []
+    @State private var recentSearches: [String] = []
+    @State private var saveName = ""
+    @State private var showSaveDialog = false
 
     private var mac: String { app.currentMac }
 
     var body: some View {
-        Group {
+        VStack(spacing: 0) {
+            if loaded && !(namedViews.isEmpty && recentSearches.isEmpty) {
+                savedChips
+            }
+            Group {
             if !loaded {
                 ScrollView {
                     XSkeleton(blocks: 3, blockHeight: 84)
@@ -50,6 +60,7 @@ struct EventsPage: View {
                 emptyState
             } else {
                 eventList
+            }
             }
         }
         .background(XPalette.canvas)
@@ -74,11 +85,34 @@ struct EventsPage: View {
                     XToggle("只看告警", isOn: $alarmOnly)
                     Divider().overlay(XPalette.hairline)
                     Button("刷新") { load() }
+                    Divider().overlay(XPalette.hairline)
+                    Button("存为筛选视图") {
+                        saveName = search
+                        showSaveDialog = true
+                    }
+                    .disabled(search.trimmingCharacters(in: .whitespaces).isEmpty)
+                    if !recentSearches.isEmpty {
+                        Button("清空最近搜索", role: .destructive) {
+                            RecordSearch.clearHistory()
+                            recentSearches = []
+                        }
+                    }
                 } label: {
                     Image(systemName: "line.3.horizontal.decrease.circle")
                 }
                 .accessibilityLabel("筛选")
             }
+        }
+        .onSubmit(of: .search) {
+            RecordSearch.pushHistory(search)
+            recentSearches = RecordSearch.history()
+        }
+        .alert("存为筛选视图", isPresented: $showSaveDialog) {
+            TextField("名字，例如「本周指纹」", text: $saveName)
+            Button("保存") { saveView() }
+            Button("取消", role: .cancel) { }
+        } message: {
+            Text("保存后可以一键回到这组筛选条件。")
         }
         .task { if !loaded { load() } }
         .refreshable { load() }
@@ -91,6 +125,8 @@ struct EventsPage: View {
     private func load() {
         let macs = mac.isEmpty ? DB.keychains().map { $0.mac } : [mac]
         recs = RecordSearch.buildRecs(macs: macs)
+        namedViews = RecordSearch.namedViews()
+        recentSearches = RecordSearch.history()
         loaded = true
     }
 
@@ -110,6 +146,88 @@ struct EventsPage: View {
         return RecordSearch.search(recs: out,
                                    query: RecordSearch.Query.parse(raw),
                                    filters: filters)
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // MARK: - 筛选视图 / 最近搜索
+    // ═══════════════════════════════════════════════════════
+
+    /// 横向胶囊条：左边是用户存下来的筛选视图，右边是最近搜过的词。
+    ///
+    /// 为什么要做这一条：`RecordSearch` 里 saveNamedView / namedViews /
+    /// pushHistory / history 一整套读写都在，但界面上从来没有入口 ——
+    /// 用户每次都要重新敲一遍同样的条件。功能在，就是够不着。
+    private var savedChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: XSpace.s) {
+                ForEach(namedViews) { v in
+                    Button {
+                        search = v.text
+                        alarmOnly = v.filters.alarmOnly
+                        XHaptics.tick.impactOccurred()
+                    } label: {
+                        chipLabel(v.name, glyph: "bookmark.fill", tone: XPalette.accentText)
+                    }
+                    .buttonStyle(.plain)
+                    .contextMenu {
+                        Button(role: .destructive) {
+                            RecordSearch.deleteNamedView(v.name)
+                            namedViews = RecordSearch.namedViews()
+                        } label: { Label("删除这个视图", systemImage: "trash") }
+                    }
+                    .accessibilityLabel("筛选视图 \(v.name)")
+                }
+                ForEach(recentSearches, id: \.self) { q in
+                    Button {
+                        search = q
+                        XHaptics.tick.impactOccurred()
+                    } label: {
+                        chipLabel(q, glyph: "clock.arrow.circlepath", tone: XPalette.textSub)
+                    }
+                    .buttonStyle(.plain)
+                    .contextMenu {
+                        Button(role: .destructive) {
+                            RecordSearch.removeHistory(q)
+                            recentSearches = RecordSearch.history()
+                        } label: { Label("从最近搜索里移除", systemImage: "trash") }
+                    }
+                    .accessibilityLabel("最近搜索 \(q)")
+                }
+            }
+            .padding(.horizontal, XSpace.gutter)
+            .padding(.vertical, XSpace.s)
+        }
+        .scrollIndicators(.hidden)
+    }
+
+    private func chipLabel(_ text: String, glyph: String, tone: Color) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: glyph)
+                .font(.system(size: XIcon.xs, weight: .semibold))
+                .accessibilityHidden(true)
+            Text(text)
+                .xFont(.system(.caption, weight: .medium))
+                .lineLimit(1)
+        }
+        .foregroundStyle(tone)
+        .padding(.horizontal, XSpace.m)
+        .padding(.vertical, 7)
+        .xPlate(XPalette.surface, .capsule)
+    }
+
+    private func saveView() {
+        let name = saveName.trimmingCharacters(in: .whitespaces)
+        guard !name.isEmpty else { return }
+        var f = RecordSearch.QueryFilters()
+        f.alarmOnly = alarmOnly
+        RecordSearch.saveNamedView(name: name,
+                                   text: search.trimmingCharacters(in: .whitespaces),
+                                   filters: f,
+                                   scopeAll: mac.isEmpty)
+        namedViews = RecordSearch.namedViews()
+        showSaveDialog = false
+        XHaptics.success()
+        app.showToast("已保存筛选视图「\(name)」")
     }
 
     /// 按天分组 (今天在最上)
