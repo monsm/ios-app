@@ -637,6 +637,11 @@ extension AppState {
 /// 落点 设置-门锁 "连接与预握手"; 全部本地偏好键, 不碰协议。
 struct LinkPrefsView: View {
     var mac: String
+    @EnvironmentObject var app: AppState
+    /// 当前信号（实时读，进页 + 手动刷新都走这个）
+    @State private var rssi: Int?
+    @State private var refreshTick = 0
+
     var body: some View { vkBody.destined(.linkPrefs) }
     var vkBody: some View {
         ZStack {
@@ -644,18 +649,122 @@ struct LinkPrefsView: View {
 
             ScrollView {
                 VStack(spacing: XSpace.l) {
-            XPanel(kind: .group) {
-                VStack(alignment: .leading, spacing: XSpace.m) {
-                    secLabel("自动预握手")
-                XToggle("进页/回前台自动预热连接", isOn: Binding(   // 95/135 进页
+                    signalCard
+                    prefsCard
+                    statsCard
+                }
+                .padding(.horizontal, XSpace.gutter)
+                .padding(.vertical, XSpace.l)
+            }
+            .scrollIndicators(.hidden)
+        }
+        .navigationTitle("连接与预握手")
+        .onAppear { rssi = LinkSense.rssiFor(mac) }
+        .id(refreshTick)
+    }
+
+    // ── 信号卡（新增，本页最该有的东西）──
+    //
+    // 原来整页只有开关和文字，用户看不到"现在信号多强"。
+    // 而这页讲的是"预握手门槛" —— 不看当前信号，调门槛就是盲调。
+    private var signalCard: some View {
+        let level = LinkSense.rssiLevel(rssi)
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                HStack {
+                    secLabel("当前信号")
+                    Spacer(minLength: 0)
+                    Button {
+                        rssi = LinkSense.rssiFor(mac)
+                        refreshTick += 1
+                        XHaptics.tick.impactOccurred()
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: XIcon.sm, weight: .medium))
+                            .foregroundStyle(XPalette.accent)
+                            .frame(width: XHit.min, height: XHit.min)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("刷新信号")
+                }
+
+                HStack(alignment: .firstTextBaseline, spacing: XSpace.s) {
+                    Text(rssi.map { String($0) } ?? "—")
+                        .xFont(.title2, weight: .semibold)
+                        .foregroundStyle(signalTone(level))
+                        .monospacedDigit()
+                    Text("dBm")
+                        .xFont(.caption)
+                        .foregroundStyle(XPalette.textSub)
+                    Text(LinkSense.rssiLabel(level))
+                        .xFont(.subheadline, weight: .medium)
+                        .foregroundStyle(signalTone(level))
+                    Spacer(minLength: 0)
+                }
+
+                // 五格信号条 —— 与 rssiLevel 的 0-4 档一一对应
+                HStack(spacing: 4) {
+                    ForEach(0..<5, id: \.self) { i in
+                        RoundedRectangle(cornerRadius: 2, style: .continuous)
+                            .fill(i < level ? signalTone(level) : XPalette.surfaceAlt)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: CGFloat(6 + i * 4))
+                            .frame(maxHeight: .infinity, alignment: .bottom)
+                    }
+                }
+                .frame(height: 26)
+                .accessibilityHidden(true)
+
+                // 当前围栏线在哪 —— 让"门槛"这件事可见
+                let fence = LinkSense.rssiFence
+                if fence != -127 {
+                    HStack(spacing: XSpace.xs) {
+                        Image(systemName: rssi != nil && (rssi! >= fence) ? "checkmark.circle.fill" : "xmark.circle");
+                            .font(.system(size: XIcon.xs, weight: .semibold))
+                            .foregroundStyle(rssi != nil && (rssi! >= fence) ? XPalette.ok : XPalette.warn)
+                        Text(rssi != nil && (rssi! >= fence)
+                             ? "已达预握手门槛 (\(fence) dBm)"
+                             : "低于门槛 \(fence) dBm — 不会自动预热")
+                            .xFont(.caption2)
+                            .foregroundStyle(XPalette.textSub)
+                        Spacer(minLength: 0)
+                    }
+                }
+
+                Text("信号强度来自最近的 BLE 广播。走近门锁后刷新可看到变化。")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .xScrollLift()
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(rssi == nil ? "信号未知" : "信号 " + String(rssi!) + " dBm, " + LinkSense.rssiLabel(level))
+    }
+
+    private func signalTone(_ level: Int) -> Color {
+        switch level {
+        case 4, 3: return XPalette.ok
+        case 2: return XPalette.accent
+        case 1: return XPalette.warn
+        default: return XPalette.textTertiary
+        }
+    }
+
+    // ── 偏好卡 ──
+    private var prefsCard: some View {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                secLabel("自动预握手")
+                XToggle("进页/回前台自动预热连接", isOn: Binding(
                     get: { DB.store.getBool("kf_link_auto_" + mac, true) },
                     set: { DB.store.set("kf_link_auto_" + mac, $0) }))
-                LabeledRow("手动连接模式",   // 100 手动连接模式
+                LabeledRow("手动连接模式",
                            DB.store.getBool("kf_link_auto_" + mac, true) ? "自动" : "手动 — 点圆盘才连")
                 // 93 信号围栏: 原先这一行只是 LabeledRow 把常量 -70 显示出来，全仓没有任何写入方
                 // (LinkSenseKit 的预握手判定读的就是这个键) ⇒ "围栏"是个不可调的装饰值。补成真实档位。
-                // -127 当"关"用: 判定式是 `dev.rssi < fence`，取 BLE 可达的最弱下界就等效不设限，
-                // 不必在读侧再加一条 `fence == .off` 分支 (读侧已经在线，改动越少越不容易把拦阻逻辑带歪)。
+                // -127 当"关"用: 判定式是 `dev.rssi < fence`，取 BLE 可达的最弱下界就等效不设限。
                 Picker(selection: Binding(
                     get: { LinkSense.rssiFence },
                     set: { DB.store.set("kf_rssi_fence", $0) })) {
@@ -664,7 +773,7 @@ struct LinkPrefsView: View {
                     Text("宽松 (≥ -80)").tag(-80)
                     Text("关闭围栏").tag(-127)
                 } label: {
-                    Text("信号围栏")   // 93 信号围栏
+                    Text("信号围栏")
                 }
                 .pickerStyle(.menu)
                 .tint(XPalette.accentText)
@@ -672,34 +781,27 @@ struct LinkPrefsView: View {
                     .xFont(.caption)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
-                // 97 连接偏好记忆
-                // 123 每锁
                 LabeledRow("连接偏好记忆", "每锁 kf_link_auto_ 偏好 + rssiFor 实读; 扫描强度档走全局")
-                }
             }
-            .xScrollLift()
-            XPanel(kind: .group) {
-                VStack(alignment: .leading, spacing: XSpace.m) {
-                    secLabel("连接统计")
-                LabeledRow("连接成功率", LinkSense.successRateText(mac: mac))   // 70 连接成功率
-                LabeledRow("高成功率时段", LinkSense.bestHourHint())   // 539 高成功率时段
-                LabeledRow("占用类错误", "保守文案 — 协议占用细分未确证")   // 124 占用类错误
-                // 124 成功率需
-                // 539 成功率需
-                Text("成功率需 7 天握手数据积累, 当前为占位; 占用类与高成功率时段均备案 DEFERRED。")
+        }
+        .xScrollLift()
+    }
+
+    // ── 统计卡 ──
+    private var statsCard: some View {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                secLabel("连接统计")
+                LabeledRow("连接成功率", LinkSense.successRateText(mac: mac))
+                LabeledRow("高成功率时段", LinkSense.bestHourHint())
+                LabeledRow("占用类错误", LinkSense.occupationHint())
+                Text("成功率需 7 天握手数据积累，当前为占位；高成功率时段与占用类提示已接入 LinkSense 的真实读数。")
                     .xFont(.caption)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
-                }
             }
-            .xScrollLift()
-                }
-                .padding(.horizontal, XSpace.gutter)
-                .padding(.vertical, XSpace.l)
-            }
-            .scrollIndicators(.hidden)
         }
-        .navigationTitle("连接与预握手")
+        .xScrollLift()
     }
 
     private func secLabel(_ text: String) -> some View {

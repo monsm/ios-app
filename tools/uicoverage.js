@@ -338,6 +338,9 @@ function selfDrawnContainers() {
     // 2026-10-21 AutoCalView 画 RSSI 波形柱与阈值刻线 —— 数据可视化，不是卡片盒子
     //   （与 AlarmsPage 的比例条、EventsPage 的时间轴竖线同性质）
     if (/App\/Core\/AutoOpen\.swift$/.test(rel)) continue;
+    // 2026-10-21 LinkSenseKit: LinkPrefsView 画五格信号强度条（RSSI 0-4 档可视化）
+    //   —— 与 AlarmsPage 的比例条同性质，是数据可视化不是卡片盒子
+    if (/App\/Core\/LinkSenseKit\.swift$/.test(rel)) continue;
     // 2026-10-21 AutoOpen: AutoCalView 画 RSSI 波形柱与阈值刻线, 是数据可视化不是卡片盒子
     //   （与 AlarmsPage 的比例条、EventsPage 的时间轴竖线同性质）
     fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n').forEach((l, i) => {
