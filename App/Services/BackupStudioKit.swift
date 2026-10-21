@@ -1094,7 +1094,7 @@ enum BackupStudio {
     /// 430 滚动保留: 远端只留最近 N 份, 按名字 (带日期戳) 排序
     /// 本 App 自己写出来的备份文件名 (409 命名 = `锁管家_<锁名>_<yyyy-MM-dd-HHmm>_全量[_卷N].enc`)。
     /// 只有这个名字族才允许被滚动保留删掉 —— 见 `pruneRemote` 上方那段。
-    static let filePrefix = "锁管家_"
+    nonisolated static let filePrefix = "锁管家_"   // nonisolated: LocalBackupFile.shortName(嵌套 struct, 非隔离) 要读它
     static func isOurBackup(_ name: String) -> Bool {
         // 不含 "/" 是关键：带斜杠的是子目录里的东西 (Depth: 1 之后本不该出现，但服务端不守约也不能删)
         name.hasPrefix(filePrefix) && name.hasSuffix(".enc") && !name.contains("/")
