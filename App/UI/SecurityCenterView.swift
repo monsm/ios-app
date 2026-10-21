@@ -1394,3 +1394,19 @@ struct SecRow<Trailing: View>: View {
 enum SecTick {
     static func bump() { SecTickCenter.shared.bump() }
 }
+
+
+// ---------- 主入口 ----------
+// 审计流水的时间戳格式 (原 SecurityLockConfigView.dateStr 的落点: 那个页随应用锁一起删了,
+// 但 SecurityAuditView 还在用它, 所以搬成一个独立的小工具, 不复制第二份格式串)。
+enum SecFmt {
+    private static let fmt: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MM-dd HH:mm"
+        f.locale = Locale(identifier: "en_US_POSIX")
+        return f
+    }()
+    static func dateStr(_ t: Double) -> String {
+        fmt.string(from: Date(timeIntervalSince1970: t))
+    }
+}
