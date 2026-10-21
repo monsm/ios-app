@@ -124,8 +124,8 @@ struct StudioPage: View {
             switch self {
             case .pwd:  return XPalette.accent
             case .temp: return XPalette.warn
-            case .fp:   return Color(hex: 0x2AA6A6)
-            case .otp:  return Color(hex: 0x8060C8)
+            case .fp:   return XPalette.kindFp
+            case .otp:  return XPalette.kindOtp
             }
         }
     }

@@ -79,6 +79,16 @@ enum XPalette {
     static var accentText: Color { Color.adaptive(0x8F5A28, 0xE8A05C) }
     static var onAccent: Color { Color.adaptive(0xFFFFFF, 0x0A0A0B) }
 
+    // ── 凭证工坊的四类色 ──
+    //
+    // 这四色原本写在 StudioPage 里当 Color(hex:)，而 Color(hex:) 不区分明暗 ——
+    // 同一个 teal 在浅色底上只有 2.96:1 (低于 WCAG 非文字 3:1)，深色底却是 6.11:1。
+    // 现在按档给两份值: 浅色用更深的同色相，深色保持原样。
+    /// 指纹 (青)
+    static var kindFp: Color { Color.adaptive(0x0E7C7C, 0x2AA6A6) }
+    /// OTP (紫)
+    static var kindOtp: Color { Color.adaptive(0x5B3FA0, 0x8060C8) }
+
     // ── 语义 ──
     static var ok: Color { Color.adaptive(0x1B7F4D, 0x3DD68C) }
     static var warn: Color { Color.adaptive(0xB45309, 0xF5A524) }
