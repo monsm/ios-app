@@ -20,6 +20,10 @@ struct DiagnosticsPage: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var copied = false
+    /// 处置动作之后要重新读一遍 DB —— 这些数据都是计算属性，靠它触发重算。
+    @State private var revision = 0
+    @State private var retention = DB.store.getString("kf_diag_log_retention")
+    @State private var opsOn = DiagOps.isOn()
 
     private var selfChecks: [SelfCheckLine] { SelfCheck.run() }
     private var health: [String] { DataHealth.integrity() }
@@ -27,12 +31,14 @@ struct DiagnosticsPage: View {
     var body: some View {
         ScrollView {
             VStack(spacing: XSpace.l) {
+                let _ = revision
                 selfCheckCard
                 healthCard
                 stabilityCard
                 opsCard
                 bleCard
                 retentionCard
+                actionsCard
             }
             .padding(.horizontal, XSpace.gutter)
             .padding(.vertical, XSpace.l)
@@ -221,6 +227,121 @@ struct DiagnosticsPage: View {
                         detail: days == nil ? "永久保留（不自动清理）" : "只保留最近 \(days!) 天")
             }
         }
+    }
+
+    // ── 处置 ──────────────────────────────────────────────
+    //
+    // 诊断页原来只有"看"。但 DiagKit 里这几个动作本来就存在，
+    // 只是没有任何入口 —— 尤其 archiveOldLogs：它只在启动时被调用，
+    // 且要先打开 kf_diag_autoarchive（默认关）—— 等于这个功能默认不存在。
+    private var actionsCard: some View {
+        XPanel(kind: .group, padding: 0) {
+            VStack(spacing: 0) {
+                header("处置", tone: XPalette.textTertiary)
+
+                actionRow(icon: "archivebox", title: "归档一年前的旧日志",
+                          detail: "把超期记录移入归档区，缓存只留近期") {
+                    let n = DataHealth.archiveOldLogs()
+                    XHaptics.success()
+                    app.showToast(n > 0 ? "已归档 \(n) 条旧日志" : "没有需要归档的旧日志")
+                    revision &+= 1
+                }
+
+                XHairline(inset: XSpace.card)
+
+                // 日志保留期：三档，按当前值打勾
+                VStack(alignment: .leading, spacing: XSpace.s) {
+                    Text("日志保留期")
+                        .xFont(.system(.footnote, weight: .medium))
+                        .foregroundStyle(XPalette.text)
+                    HStack(spacing: XSpace.s) {
+                        retentionChip("全部", "")
+                        retentionChip("365 天", "365")
+                        retentionChip("90 天", "90")
+                        Spacer(minLength: 0)
+                    }
+                }
+                .padding(.horizontal, XSpace.card)
+                .padding(.vertical, XSpace.m)
+
+                XHairline(inset: XSpace.card)
+
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("记录最近操作").xFont(.system(.footnote)).foregroundStyle(XPalette.text)
+                        Text("关闭后不再往本机写操作流水")
+                            .xFont(.system(.caption2)).foregroundStyle(XPalette.textSub)
+                    }
+                    Spacer(minLength: XSpace.s)
+                    XToggle(isOn: Binding(
+                        get: { opsOn },
+                        set: { v in
+                            opsOn = v
+                            DB.store.set("kf_diag_ops_on", v)
+                            XHaptics.tick.impactOccurred()
+                        })) { EmptyView() }
+                }
+                .padding(.horizontal, XSpace.card)
+                .frame(minHeight: XHit.min)
+
+                XHairline(inset: XSpace.card)
+
+                actionRow(icon: "clock.arrow.circlepath", title: "清空页面耗时记录",
+                          detail: "只清采样数据，不影响任何业务", danger: false) {
+                    PageTrace.clear()
+                    XHaptics.success()
+                    app.showToast("页面耗时记录已清空")
+                    revision &+= 1
+                }
+            }
+        }
+    }
+
+    private func retentionChip(_ label: String, _ value: String) -> some View {
+        Button {
+            retention = value
+            DB.store.set("kf_diag_log_retention", value)
+            XHaptics.tick.impactOccurred()
+            revision &+= 1
+        } label: {
+            Text(label)
+                .xFont(.system(.caption, weight: retention == value ? .semibold : .regular))
+                .foregroundStyle(retention == value ? XPalette.onAccent : XPalette.textSub)
+                .padding(.horizontal, XSpace.m)
+                .padding(.vertical, 6)
+                .xPlate(retention == value ? XPalette.accent : XPalette.surfaceAlt, .capsule)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label + (retention == value ? "，当前" : ""))
+    }
+
+    private func actionRow(icon: String, title: String, detail: String, danger: Bool = false,
+                           action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: XSpace.s) {
+                Image(systemName: icon)
+                    .font(.system(size: XIcon.sm, weight: .medium))
+                    .foregroundStyle(danger ? XPalette.danger : XPalette.accentText)
+                    .frame(width: 22)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title).xFont(.system(.footnote)).foregroundStyle(XPalette.text)
+                    Text(detail).xFont(.system(.caption2)).foregroundStyle(XPalette.textSub)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: XIcon.xs, weight: .semibold))
+                    .foregroundStyle(XPalette.textTertiary)
+                    .accessibilityHidden(true)
+            }
+            .padding(.horizontal, XSpace.card)
+            .padding(.vertical, XSpace.s)
+            .frame(minHeight: XHit.min)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(title + "，" + detail)
     }
 
     // ── 构件 ──────────────────────────────────────────────

@@ -177,6 +177,13 @@ const checks = [
     const d = CODE.get('DiagKit.swift') || '';
     return d.includes('list.count > 200') && d.includes('list.count > 300');
   }],
+  ['诊断页可处置（不只读）', () => {
+    // DiagKit 里的清理动作原来没有任何入口：archiveOldLogs 只在启动时跑，
+    // 且要先开 kf_diag_autoarchive（默认关）—— 等于默认不存在。
+    const p = RAW.get('DiagnosticsPage.swift') || '';
+    return p.includes('archiveOldLogs()') && p.includes('PageTrace.clear()') &&
+           p.includes('kf_diag_log_retention') && p.includes('kf_diag_ops_on');
+  }],
 ];
 
 let pass = 0;
