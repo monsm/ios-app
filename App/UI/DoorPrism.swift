@@ -129,14 +129,21 @@ struct DoorPrism<B: View, D: View, F: View>: View {
     /// 屏幕宽度 × 0.9 × 0.2887（见 prismApothem），这个参数就用不上了。
     /// 死参数会让人误以为它还有作用，所以删掉。
     private func prismBody(width: CGFloat) -> some View {
-        ZStack {
-            prismFace(.b, width: width)
-            prismFace(.d, width: width)
-            prismFace(.f, width: width)
+        // ═══ 内切圆必须按「面宽」算，不是按容器宽 ═══
+        //
+        // 原来三处都传 width（容器全宽），但 ZStack 之后又加了 4% 水平 padding
+        // ⇒ 实际面宽只有 0.92·width，而 A 是按 width 算的（大了 8.7%）。
+        // 后果是三个面相对棱柱偏大，转到中间时重叠过多、边缘也对不上。
+        // 先算出留边后的真实面宽，所有几何都用它。
+        let inner = width * 0.92
+        return ZStack {
+            prismFace(.b, width: inner)
+            prismFace(.d, width: inner)
+            prismFace(.f, width: inner)
             // 三条竖棱（角上），静止时给出棱柱的体积感
-            prismEdge(60, width: width)
-            prismEdge(180, width: width)
-            prismEdge(300, width: width)
+            prismEdge(60, width: inner)
+            prismEdge(180, width: inner)
+            prismEdge(300, width: inner)
         }
         // ═══ 留边：让画布在棱柱四周可见 ═══
         //
