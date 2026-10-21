@@ -87,8 +87,29 @@ struct SecurityPage: View {
         }
     }
 
+    /// 应用锁是否开启（安全页最该显示的一件事，原来没有）
+    private var appLocked: Bool { DB.store.getBool("kf_applock") }
+
+    /// 上次备份距今是否够新（14 天内算新）
+    private var backupDays: Int {
+        let ms = DB.store.getInt("kf_bk_last_export", 0)
+        guard ms > 0 else { return -1 }
+        return Int((Date().timeIntervalSince1970 * 1000 - Double(ms)) / 86_400_000)
+    }
+    private var backupFresh: Bool { backupDays >= 0 && backupDays <= 14 }
+    private var backupDetail: String {
+        if backupDays < 0 { return "从未" }
+        if backupDays == 0 { return "今天" }
+        return String(backupDays) + " 天前"
+    }
+
+    /// 总状态 —— 必须与下面五盏灯一致
+    ///
+    /// 加了「应用锁 / 备份」两盏灯之后，这里也要把它们算进来，
+    /// 否则会出现"顶部说全部通过、下面显示应用锁未开启"的自相矛盾。
     private var overallTone: XToneColor {
-        if !risks.isEmpty || auditBroken || !selfCheckIssues.isEmpty { return .warn }
+        if !risks.isEmpty || auditBroken || !selfCheckIssues.isEmpty
+            || !appLocked || !backupFresh { return .warn }
         return .ok
     }
 
@@ -97,11 +118,13 @@ struct SecurityPage: View {
     }
 
     private var overallDetail: String {
-        if overallTone == .ok { return "凭证 / 审计链 / 数据完整性 全部通过" }
+        if overallTone == .ok { return "凭证 / 审计链 / 数据完整性 / 应用锁 / 备份 全部通过" }
         var parts: [String] = []
         if !risks.isEmpty { parts.append("\(risks.count) 项凭证风险") }
         if auditBroken { parts.append("审计链断裂") }
         if !selfCheckIssues.isEmpty { parts.append("\(selfCheckIssues.count) 项数据异常") }
+        if !appLocked { parts.append("应用锁未开启") }
+        if !backupFresh { parts.append(backupDays < 0 ? "从未备份" : "备份 \(backupDays) 天前") }
         return parts.joined(separator: " · ")
     }
 
