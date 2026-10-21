@@ -34,9 +34,23 @@ struct LocksPage: View {
     @State private var locks: [Keychain] = []
     @State private var editMode: EditMode = .inactive
     @State private var shareTarget: Keychain?
+    @State private var showAdd = false
 
     var body: some View {
         List {
+            if locks.isEmpty {
+                // 空状态：0 把锁时只剩一行"0 把锁"是没用的界面。
+                // 告诉用户下一步做什么，并直接给出入口。
+                Section {
+                    XEmptyState(systemImage: "lock.slash",
+                                title: "还没有门锁",
+                                message: "配对之后，这里会列出你所有的门锁，\n顺序就是启动时默认选中的顺序。",
+                                actionTitle: "去配对",
+                                action: { showAdd = true })
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                }
+            }
             Section {
                 ForEach(locks) { kc in
                     lockRow(kc)
@@ -80,6 +94,11 @@ struct LocksPage: View {
         .sheet(item: $shareTarget) { kc in
             ShareToAndroidView(kc: kc)
                 .environmentObject(app)
+        }
+        .sheet(isPresented: $showAdd) {
+            NavigationStack {
+                AddLockPage().environmentObject(app)
+            }
         }
     }
 
@@ -168,8 +187,22 @@ struct LocksPage: View {
             }
             .tint(XPalette.ok)
         }
+        // ⚠ 这里不能只写名字。
+        // .accessibilityElement(children: .combine) 之后再给 .accessibilityLabel，
+        // 会**完全覆盖**合并出来的内容 —— 电量百分比和锁态对 VoiceOver 用户直接丢失。
+        // 所以显式把这一行看得见的信息都读出来。
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(LockArchive.displayName(kc) + (isCurrent ? ", 当前锁" : ""))
+        .accessibilityLabel(accessibilityRowLabel(kc, snap: snap, isCurrent: isCurrent))
+    }
+
+    /// 一行里**看得见**的信息，VoiceOver 也要能听到。
+    /// 顺序按信息重要度：名称 → 是否当前 → 锁态 → 电量。
+    private func accessibilityRowLabel(_ kc: Keychain, snap: StatusSnapshotData?, isCurrent: Bool) -> String {
+        var parts: [String] = [LockArchive.displayName(kc)]
+        if isCurrent { parts.append("当前锁") }
+        if let rc = snap?.rc { parts.append(lockStateText(rc)) }
+        if let p = snap?.powerLevel, p >= 0 { parts.append("电量 \(p)%") }
+        return parts.joined(separator: "，")
     }
 
     /// 电量图标
