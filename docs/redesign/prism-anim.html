@@ -1897,6 +1897,7 @@ function buildPrism() {
 
 // 缓动函数
 const easeInOutCubic = (t) => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
+const easeInOutSine = (t) => -(Math.cos(Math.PI * t) - 1) / 2;
 const easeInOutQuint = (t) => t < 0.5 ? 16*t*t*t*t*t : 1 - Math.pow(-2*t+2, 5)/2;
 const easeOutBack = (t) => { const c1=1.70158, c3=c1+1; return 1 + c3*Math.pow(t-1,3) + c1*Math.pow(t-1,2); };
 const easeOutElastic = (t) => {
@@ -1952,14 +1953,32 @@ function animB(prism, from, to, t) {
 // 而不是"被强行缩小"。这是利用几何本身，比 A/B 都自然。
 function animC(prism, from, to, t) {
   const d = angleDelta(from, to);
-  const e = easeInOutQuint(t);
-  prism.rotation.y = -FACE_ANGLE[from] - d * e;
-  // 缩放在 t=0.5 处最小；同时在这个点棱朝向观察者
-  // 用 |cos| 形状: 转到 60° 时 cos(60°)=0.5，棱朝向观察者
-  const dip = Math.sin(Math.PI * t);   // 0→1→0
-  prism.scale.setScalar(1 - 0.22 * Math.pow(dip, 1.4));
-  // 同时轻微沿 Z 推远（配合透视，更像"退后一步再看"）
-  prism.position.z = -0.35 * dip;
+  // 用 easeInOutSine 而非 Quint ——
+  // Quint 是五次方，前 25% 几乎不动（只转 1.9°），
+  // 而缩放凹陷同时已到 71%，看起来像"先缩一下，然后才开始转"。
+  // Sine 在 t=0.25 已转 17.6°，与凹陷同步得多。
+  const e = easeInOutSine(t);
+  const rotY = -FACE_ANGLE[from] - d * e;
+  prism.rotation.y = rotY;
+
+  // ★ 缩放的正确推导方式: 不要再各用一条曲线。
+  //   三棱柱在任何角度下的「可见宽度」正比于 |cos(相对棱的角度)|。
+  //   所以直接用**当前朝向**算宽度收缩，缩放就与旋转天然同步 ——
+  //   这不是"人为加一个凹陷"，而是"三棱柱转过来时确实变窄了"。
+  //
+  //   棱在面法线偏移 60° 处。faceBase 是起始面的法线方向，
+  //   相对棱的角度 = rotY - faceBase - 60°。
+  //   棱相对起始面法线的相位偏 +60°。
+  const faceBase = -FACE_ANGLE[from];
+  const relToEdge = (rotY - faceBase) + Math.PI / 3;
+  // |cos| 的取值: 面正对时 = 0.5（因为三面均分 120°，相邻棱在 ±60°），
+  //              棱正对时 = 1.0
+  // 所以必须归一化 (|cos| - 0.5) / 0.5 才得到 [0,1]。
+  // —— 这一条我第一版写错了（直接用 |cos|），导致 t=0 时缩放就是 0.90，
+  //    循环起点会跳变。归一化后 t=0/1 都严格回到 0。
+  const narrow = (Math.abs(Math.cos(relToEdge)) - 0.5) / 0.5;
+  prism.scale.setScalar(1 - 0.20 * narrow);
+  prism.position.z = -0.35 * narrow;
 }
 
 // ── D 棱先立起 ─────────────────────────────────────────────────
