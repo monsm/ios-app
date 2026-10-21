@@ -79,21 +79,66 @@ struct FeedPage: View {
     // ═══════════════════════════════════════════════════════
 
     private var headerBar: some View {
-        let alarmCount = rows.filter { $0.warn }.count
-        return HStack(spacing: XSpace.m) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("\(displayRows.count) 条动态")
-                    .xFont(.headline)
-                    .foregroundStyle(XPalette.text)
-                if alarmCount > 0 {
-                    Text("\(alarmCount) 条告警")
-                        .xFont(.caption)
-                        .foregroundStyle(XPalette.warn)
+        let total = displayRows.count
+        let alarmCount = displayRows.filter { $0.warn }.count
+        let normalCount = total - alarmCount
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                HStack(alignment: .firstTextBaseline, spacing: XSpace.xs) {
+                    Text("\(total)")
+                        .xFont(.title2, weight: .semibold, design: .rounded).monospacedDigit()
+                        .foregroundStyle(XPalette.text)
+                    Text("条动态")
+                        .xFont(.footnote)
+                        .foregroundStyle(XPalette.textSub)
+                    Spacer(minLength: 0)
+                    if filterAlarm {
+                        XStatusPill(text: "只看告警", tone: .warn, systemImage: "line.3.horizontal.decrease.circle")
+                    }
+                }
+
+                // 告警占比横条 —— 一眼看出这一屏里有多少是坏事
+                if total > 0 {
+                    GeometryReader { geo in
+                        HStack(spacing: 2) {
+                            if normalCount > 0 {
+                                RoundedRectangle(cornerRadius: 3, style: .continuous)
+                                    .fill(XPalette.accent.opacity(0.45))
+                                    .frame(width: max(geo.size.width * CGFloat(normalCount) / CGFloat(total) - 2, 3))
+                            }
+                            if alarmCount > 0 {
+                                RoundedRectangle(cornerRadius: 3, style: .continuous)
+                                    .fill(XPalette.warn)
+                                    .frame(width: max(geo.size.width * CGFloat(alarmCount) / CGFloat(total) - 2, 3))
+                            }
+                        }
+                    }
+                    .frame(height: 6)
+                    .accessibilityHidden(true)
+
+                    HStack(spacing: XSpace.l) {
+                        legend("常规", normalCount, XPalette.accent.opacity(0.45))
+                        legend("告警", alarmCount, XPalette.warn)
+                        Spacer(minLength: 0)
+                    }
                 }
             }
-            Spacer()
         }
-        .padding(.bottom, XSpace.xs)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(total) 条动态, 其中 \(alarmCount) 条告警")
+    }
+
+    private func legend(_ label: String, _ n: Int, _ color: Color) -> some View {
+        HStack(spacing: XSpace.xs) {
+            Circle()
+                .fill(color)
+                .frame(width: 7, height: 7)
+                .accessibilityHidden(true)
+            Text("\(label) \(n)")
+                .xFont(.caption, weight: .medium)
+                .foregroundStyle(n > 0 ? XPalette.text : XPalette.textTertiary)
+                .monospacedDigit()
+        }
     }
 
     // ═══════════════════════════════════════════════════════
