@@ -200,3 +200,60 @@ enum ProbeBlock5_Nesting {
         _ = G.Inner()        // ✓
     }
 }
+
+// ───────────────────────────────────────────────────────────────────────
+// 区块 7 · 导出目录枚举与文件元数据      【待验证 → 本地备份文件列表用】
+// ───────────────────────────────────────────────────────────────────────
+//
+// 「本地备份文件」列表（BackupStudio.swift:310 只有章节注释、视图不存在）
+// 需要四个 Foundation 能力:
+//   1. 找 Documents 目录
+//   2. 枚举其中的文件（不递归）
+//   3. 读每个文件的创建时间 / 修改时间 / 大小
+//   4. 删除文件
+//
+// 本仓纪律是「新 API 先进探针，让 CI 验签名，再写视图层」。
+// 这一块就是给备份文件列表铺路。
+enum ProbeBlock7_FileEnumeration {
+    static func probe() throws {
+        // 1. Documents 目录
+        let docs = FileManager.default.urls(
+            for: .documentDirectory,
+            in: .userDomainMask)
+        guard let dir = docs.first else { return }
+
+        // 2. 枚举（不递归，跳过隐藏文件）
+        let files = try FileManager.default.contentsOfDirectory(
+            at: dir,
+            includingPropertiesForKeys: [
+                .creationDateKey,
+                .contentModificationDateKey,
+                .fileSizeKey,
+                .isRegularFileKey,
+            ],
+            options: [.skipsHiddenFiles])
+
+        // 3. 读元数据
+        for url in files {
+            let vals = try url.resourceValues(forKeys: [
+                .creationDateKey,
+                .contentModificationDateKey,
+                .fileSizeKey,
+                .isRegularFileKey,
+            ])
+            _ = vals.isRegularFile ?? false
+            _ = vals.creationDate
+            _ = vals.contentModificationDate
+            _ = vals.fileSize ?? 0
+            _ = url.lastPathComponent
+            _ = url.pathExtension
+        }
+
+        // 4. 拼接路径（删除/写入都要）
+        let probeURL = dir.appendingPathComponent("probe.txt")
+        _ = probeURL.absoluteString
+
+        // 删除只在真实流程里做，这里不碰磁盘:
+        // try FileManager.default.removeItem(at: probeURL)
+    }
+}
