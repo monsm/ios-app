@@ -178,21 +178,6 @@ struct DoorFront: View {
         return min(max(w * 0.58, 180), 280)
     }
 
-    /// 锁体直径: 屏幕宽 58% 夹在 180...280。
-    /// 它是整屏唯一的主体物 —— 太小会让上下留白显得像"没加载完"。
-    private var plateDiameter: CGFloat {
-        let w = UIScreen.main.bounds.width
-        return min(max(w * 0.58, 180), 280)
-    }
-
-    /// 锁体直径: 屏幕宽 52% 夹在 160...260。
-    /// 渲染验证后上抬到 0.58 / 上限 280 —— 它是整屏唯一的主体物,
-    /// 太小会让上下留白显得像"没加载完"。
-    private var plateDiameter: CGFloat {
-        let w = UIScreen.main.bounds.width
-        return min(max(w * 0.58, 180), 280)
-    }
-
     // ── 状态文案 ──
     private var statusLine: String {
         if let failureText { return failureText }
