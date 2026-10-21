@@ -48,6 +48,10 @@ struct HomeConsole: View {
     @EnvironmentObject private var app: AppState
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var typeSize
+    /// 全局刷新中心。开门成功、从后台回前台、安全设置变动都会 bump 它。
+    /// 没有这个观察，本页的"今日开门 / 分时柱图 / 成员"在开门之后**不会更新** ——
+    /// 因为数据是在 body 里现算的，而 SwiftUI 只在状态变化时重算 body。
+    @ObservedObject private var ticker = SecTickCenter.shared
 
     @State private var phase: UnlockPhase = .idle
     @State private var progress: CGFloat = 0
@@ -57,6 +61,17 @@ struct HomeConsole: View {
     @State private var settlingTask: Task<Void, Never>?
     @State private var managerGroup: ManagerGroup?
     @State private var appeared = false
+
+    // ── 当日统计缓存 ──
+    //
+    // 原来 hourCounts 是个计算属性，而 opensToday / dayChart / firstOpenText / digest
+    // 各自都会调它 —— 一次渲染要**完整扫四遍日志**。加上刷新机制之后
+    // （ticker bump、下拉刷新、回前台）这个代价会被放大。
+    // 改成：一次扫描写入缓存，渲染时只读。
+    @State private var hourCounts: [Int] = Array(repeating: 0, count: 24)
+    @State private var memberStats: [MemberStat] = []
+
+    @Environment(\.scenePhase) private var scenePhase
 
     private var mac: String { app.currentMac }
 
@@ -90,9 +105,21 @@ struct HomeConsole: View {
                     .opacity(appeared ? 1 : 0)
                 }
                 .scrollIndicators(.hidden)
+                .refreshable {
+                    // 数据是现算的，bump 一次让 body 重算即可
+                    SecTick.bump()
+                    try? await Task.sleep(for: .milliseconds(180))
+                }
             }
             .navigationBarHidden(true)
+            .onChange(of: scenePhase) { _, phase in
+                // 从后台回来时数据可能已经过期（别处开过门、改了成员）。
+                // 回前台就重算一次，成本只是一次 body 求值。
+                if phase == .active { SecTick.bump() }
+            }
+            .onChange(of: ticker.tick) { _, _ in recompute() }
             .onAppear {
+                recompute()
                 guard !appeared else { return }
                 if reduceMotion { appeared = true }
                 else { withAnimation(.easeOut(duration: 0.28)) { appeared = true } }
@@ -409,7 +436,7 @@ struct HomeConsole: View {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 sectionLabel("成员")
                 ScrollView(.horizontal) {
-                    HStack(spacing: XSpace.s) { ForEach(rows, id: \.id) { memberChip($0) } }
+                    HStack(spacing: XSpace.s) { ForEach(rows) { memberChip($0) } }
                         .padding(.vertical, 1)
                 }
                 .scrollIndicators(.hidden)
@@ -417,7 +444,7 @@ struct HomeConsole: View {
         }
     }
 
-    private func memberChip(_ r: (id: String, name: String, n: Int)) -> some View {
+    private func memberChip(_ r: MemberStat) -> some View {
         HStack(spacing: XSpace.s) {
             Text(String(r.name.prefix(1)))
                 .xFont(.system(.subheadline, weight: .semibold))
@@ -429,7 +456,7 @@ struct HomeConsole: View {
                     .xFont(.system(.footnote, weight: .medium))
                     .foregroundStyle(XPalette.text)
                     .lineLimit(1)
-                Text("近 30 天 \(r.n) 次")
+                Text("近 30 天 \(r.opens30) 次")
                     .xFont(.system(.caption2).monospacedDigit())
                     .foregroundStyle(XPalette.textTertiary)
             }
@@ -439,7 +466,7 @@ struct HomeConsole: View {
         .padding(.vertical, 5)
         .xPlate(XPalette.surface, .capsule)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(r.name)，近 30 天 \(r.n) 次")
+        .accessibilityLabel("\(r.name)，近 30 天 \(r.opens30) 次")
     }
 
     // ─────────────────────────────────────────── ⑧ 管理入口
@@ -544,6 +571,9 @@ struct HomeConsole: View {
             try await app.lock.ensureConnected(mac: mac)
             _ = try await app.lock.unlock(mac: mac)
             phase = .unlocked
+            // 这次开门刚刚发生，主界面上的"今日开门 / 分时柱图"必须立刻变。
+            // 不 bump 的话要等下一次别的原因触发重绘才更新，用户会以为没开成。
+            SecTick.bump()
             XHaptics.success()
             scheduleSettle(after: 0.9)
         } catch {
@@ -641,33 +671,37 @@ struct HomeConsole: View {
 
     private var opensToday: Int { hourCounts.reduce(0, +) }
 
-    private var hourCounts: [Int] {
-        guard !mac.isEmpty else { return Array(repeating: 0, count: 24) }
+    /// 一次扫描重建全部当日统计。只由 onAppear / ticker / 下拉刷新触发。
+    private func recompute() {
+        guard !mac.isEmpty else {
+            hourCounts = Array(repeating: 0, count: 24)
+            memberStats = []
+            return
+        }
         let today = StatsKit.dayKey(Date())
-        var out = Array(repeating: 0, count: 24)
         let cal = WeekCal.gregorian
+        var counts = Array(repeating: 0, count: 24)
         for l in DB.readLogs(mac) where StatsKit.openTypes.contains(l.type) {
             guard l.lockTimeStr.hasPrefix(today) else { continue }
             let d = Date(timeIntervalSince1970: ZKProtocol.protoSecondsToUnix(l.lockTime))
             let h = cal.component(.hour, from: d)
-            if h >= 0 && h < 24 { out[h] += 1 }
+            if h >= 0 && h < 24 { counts[h] += 1 }
         }
-        return out
+        hourCounts = counts
+        memberStats = DB.members().compactMap { m in
+            let a = MemberHub.activity(m.id)
+            guard a.opens30 > 0 else { return nil }
+            return MemberStat(id: m.id, name: MemberHub.display(m), opens30: a.opens30)
+        }
+        .sorted { $0.opens30 > $1.opens30 }
+        .prefix(6)
+        .map { $0 }
     }
 
     /// 成员活跃 —— 协议日志没有凭证身份字段（CAPABILITY §3），
     /// 所以归属只能到"约"级。这里用 MemberHub 的 30 天统计，
     /// 并在无障碍标签里如实说"近 30 天"，不假装是今日。
-    private var memberRows: [(id: String, name: String, n: Int)] {
-        DB.members().compactMap { m in
-            let a = MemberHub.activity(m.id)
-            guard a.opens30 > 0 else { return nil }
-            return (m.id, MemberHub.display(m), a.opens30)
-        }
-        .sorted { $0.2 > $1.2 }
-        .prefix(6)
-        .map { $0 }
-    }
+    private var memberRows: [MemberStat] { memberStats }
 
     private var firstOpenText: String {
         let c = hourCounts
@@ -739,4 +773,17 @@ extension ManagerGroup {
         case .settings: return .backupLook
         }
     }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// MARK: - 成员统计行
+// ═══════════════════════════════════════════════════════════════════════
+// 用具名类型而不是三元组：三元组在 ForEach 里要靠 \.id 手工标 identity，
+// 字段名 (id, name, n) 也没有语义 —— n 是什么？opens30 才是它真正的含义。
+struct MemberStat: Identifiable, Equatable {
+    let id: String
+    let name: String
+    /// 近 30 天开门次数。协议日志没有凭证身份字段，所以只能到"约"级，
+    /// 界面上必须写明"近 30 天"，不能写成"今天"。
+    let opens30: Int
 }
