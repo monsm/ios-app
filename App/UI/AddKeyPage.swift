@@ -344,7 +344,7 @@ struct AddKeyPage: View {
             .disabled(!pwdOK || busy)
 
             Text("请将手机靠近门锁 · 添加成功后密码会登记到本机台账")
-                .xFont(.caption2)
+                .xFont(.footnote)
                 .foregroundStyle(XPalette.textSub)
                 .multilineTextAlignment(.center)
         }

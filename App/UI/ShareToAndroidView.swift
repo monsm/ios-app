@@ -58,7 +58,7 @@ struct ShareToAndroidView: View {
                         } icon: {
                             Image(systemName: "exclamationmark.shield.fill").accessibilityHidden(true)
                         }
-                        .xFont(.caption)
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.warn)
                         .padding(XSpace.s)
                         .frame(maxWidth: .infinity, alignment: .leading)

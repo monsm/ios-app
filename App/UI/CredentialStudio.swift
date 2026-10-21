@@ -719,7 +719,7 @@ struct TempCodeStudio: View {
                         } icon: {
                             Image(systemName: "arrow.left.arrow.right")
                         }
-                        .xFont(.caption)
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.warn)
                     }
                     // 330 装修黄条
@@ -903,7 +903,7 @@ struct TempCodeStudio: View {
                     } icon: {
                         Image(systemName: "checkmark.seal.fill")
                     }
-                    .xFont(.caption)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.ok)
                     .frame(maxWidth: .infinity)
                     .padding(XSpace.s)
@@ -1531,7 +1531,7 @@ struct OtpStudio: View {
                     .frame(minHeight: XHit.min)
                     .tint(XPalette.accentText)
                     Text("独立口令按锁存档 (kf_cotp_t_) —— 备份也按锁导出, 换一把锁就是另一组口令。")
-                        .xFont(.caption2)
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -1547,7 +1547,7 @@ struct OtpStudio: View {
                     secLabel("锁端 ZOTP (30 分钟时窗)")
                     WindowBar(totalSec: 1800, label: "337 时窗细条 · 末 5 秒转橙轻震 (⚠ 锁端分钟级, 约)")
                     Text("每 30 分钟更换; 生成前请校准门锁时间, 偏差 >180 秒锁侧校验失败。")
-                        .xFont(.caption2)
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -1601,7 +1601,7 @@ struct OtpStudio: View {
                 .buttonStyle(.plain)
                 if showManual { manualForm() }
                 Text("组尾实话: 这些口令不经过门锁、也不进锁端协议, 但存的键带锁的 MAC (kf_cotp_t_) —— 因为备份按锁导出。")
-                    .xFont(.caption2)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -1615,7 +1615,7 @@ struct OtpStudio: View {
                 secLabel("静态备份码")
                 if codes.isEmpty {
                     Text("还没有静态码。它不走锁端、不随时间变化, 适合抄在纸上应急。")
-                        .xFont(.caption2)
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 } else {
@@ -1819,7 +1819,7 @@ struct OtpStudio: View {
             .foregroundStyle(XPalette.accentText)
             .frame(minHeight: XHit.min)
             Text("算法与周期按你选的这几档算 (RFC 6238 常用档); 锁端 ZOTP 仍走分钟级, 两者互不相干。")   // 337 算法与周期按你选的这
-                .xFont(.caption2)
+                .xFont(.footnote)
                 .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }

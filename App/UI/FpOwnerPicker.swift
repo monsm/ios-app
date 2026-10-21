@@ -26,7 +26,7 @@ struct FpOwnerPicker: View {
             }
             if members.isEmpty {
                 Text("这把锁还没有成员 — 直接建一个, 这枚指纹就记在他名下。")   // 317 还没有成员
-                    .xFont(.caption)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.warn)
                     .fixedSize(horizontal: false, vertical: true)
             }

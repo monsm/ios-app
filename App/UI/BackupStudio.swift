@@ -110,7 +110,7 @@ struct BackupStudioView: View {
     private var freshnessBanner: some View {
         HStack(spacing: XSpace.s) {
             Text("距上次备份已 \(BackupStudio.daysSinceLastExport()) 天")   // 429 距上次备份已
-                .xFont(.caption)
+                .xFont(.footnote)
                 .foregroundStyle(XPalette.warn)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
@@ -357,7 +357,7 @@ struct LocalBackupFilesSection: View {
                 }
 
                 Text("只列本 App 生成的备份（文件名以「锁管家_」开头）。目录里其它文件不列也不删。")
-                    .xFont(.caption2)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -548,7 +548,7 @@ struct ExportWizardView: View {
                 .onChange(of: otpToggle) { _, on in DB.store.set("kf_bk_otp", on) }
             if useVolumes, let vols = BackupStudio.volumes(zones: zones, encrypt: nil) {
                 Text("记录区超阈值, 将拆为 \(vols.count) 卷: 基础卷 + 逐年记录卷, 各卷可独立恢复。")   // 410 记录区超阈值
-                    .xFont(.caption)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -581,7 +581,7 @@ struct ExportWizardView: View {
     private var passwordStep: some View {
         VStack(alignment: .leading, spacing: XSpace.m) {
             Text("两遍输入加密口令。可留空 = 不加密 (明文 canonical, 与小程序互通)。")
-                .xFont(.caption)
+                .xFont(.footnote)
                 .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             SecureField("口令", text: $pw)
@@ -701,13 +701,13 @@ struct ExportWizardView: View {
             if !useVolumes {
                 VStack(alignment: .leading, spacing: XSpace.s) {
                     Text("凭证二维码(加密): 另一台手机打开 备份工作室→换机迁移→扫码, 输入同一口令才能导入; 全程无网络。")   // 411 凭证二维码(加密)
-                        .xFont(.caption)
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                     if let q = qrPayload, let img = BackupStudio.qrImage(q) {
                         ShareLink(item: UIImageShareItem(img), preview: SharePreview("凭证二维码"))
                         Text("这张码本身是口令信封: 截到码也打不开。但口令请当面或走另一条渠道, 不要和码一起发。")
-                            .xFont(.caption2)
+                            .xFont(.footnote)
                             .foregroundStyle(XPalette.warn)
                             .fixedSize(horizontal: false, vertical: true)
                     } else {
@@ -740,7 +740,7 @@ struct ExportWizardView: View {
             if !DB.keychains().isEmpty {
                 VStack(alignment: .leading, spacing: XSpace.xs) {
                     Text("增量补传: 勾选要补的锁, 生成增量小包 (不含记录卷), 传到新机再走一次导入。")   // 440 增量补传
-                        .xFont(.caption)
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                     ForEach(DB.keychains(), id: \.mac) { kc in
@@ -762,7 +762,7 @@ struct ExportWizardView: View {
                                     .lineLimit(1)
                                 Spacer(minLength: 0)
                                 Text("\(DB.ledger(kc.mac).pwds.count + DB.ledger(kc.mac).fps.count) 条")
-                                    .xFont(.caption)
+                                    .xFont(.footnote)
                                     .foregroundStyle(XPalette.textSub)
                             }
                             .frame(minHeight: XHit.min)
@@ -777,7 +777,7 @@ struct ExportWizardView: View {
                     if let u = incURL {
                         ShareLink(item: u, preview: SharePreview("离线锁管家增量包")) {
                             Text("分享 \(u.lastPathComponent)")
-                                .xFont(.caption)
+                                .xFont(.footnote)
                                 .foregroundStyle(XPalette.accentText)
                         }
                     }
@@ -959,7 +959,7 @@ struct RestoreWizardView: View {
         VStack(alignment: .leading, spacing: XSpace.m) {
             // 449 粘贴备份文本
             Text("粘贴备份文本 (可加密或明文 canonical)。预演会先展示影响面, 确认后才执行。")   // 417 粘贴备份文本
-                .xFont(.caption)
+                .xFont(.footnote)
                 .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             TextField("粘贴备份", text: $text, axis: .vertical)
@@ -1023,7 +1023,7 @@ struct RestoreWizardView: View {
                         .foregroundStyle(XPalette.warn)
                     ForEach(steps) { s in
                         Text("v\(s.from) → v\(s.to): \(s.note)")
-                            .xFont(.caption2)
+                            .xFont(.footnote)
                             .foregroundStyle(XPalette.textSub)
                     }
                 }
@@ -1078,7 +1078,7 @@ struct RestoreWizardView: View {
                 .fixedSize(horizontal: false, vertical: true)
             // 418: 量级预估行 (包内条数 + 同 ID 冲突数), 选策略前先知道规模
             Text("预估: 本包 \(p.pwdCount) 密码/\(p.fpCount) 指纹, 同 ID 冲突 \(conflicts.count) 条")   // 418 预估
-                .xFont(.caption)
+                .xFont(.footnote)
                 .foregroundStyle(XPalette.textSub)
             // 421 恢复回滚点说明
             Label("执行前自动打本地快照, 24h 内可撤销",   // 421 执行前自动打本地快照
@@ -1186,7 +1186,7 @@ struct RestoreWizardView: View {
             ForEach(conflicts) { c in
                 HStack(spacing: XSpace.xs) {
                     Text("\(c.kind) #\(c.alias) · \(String(c.mac.prefix(6)))")
-                        .xFont(.caption)
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.text)
                         .lineLimit(1)
                     Spacer(minLength: 0)
@@ -1278,20 +1278,20 @@ struct RestoreWizardView: View {
                                 .lineLimit(1)
                             Spacer(minLength: 0)
                             Text("备份 \(d.backup) / 本机 \(d.local) · \(d.note)")
-                                .xFont(.caption2)
+                                .xFont(.footnote)
                                 .foregroundStyle(XPalette.textSub)
                                 .lineLimit(1)
                         }
                     }
                 } label: {
                     Text("逐锁对账 (\(b.devices.count) 把)")
-                        .xFont(.caption, weight: .medium)
+                        .xFont(.footnote, weight: .medium)
                         .foregroundStyle(XPalette.text)
                 }
             }
             // 444 迁移后核对表
             Text("核对表: 对勾 = 该项备份与本机条数一致; 缺的锁可到旧机「导出向导→完成页」用增量补传只勾缺的锁重打小包。")   // 444 核对表
-                .xFont(.caption)
+                .xFont(.footnote)
                 .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             Button("完成") { dismiss() }

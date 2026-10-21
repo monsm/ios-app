@@ -202,7 +202,7 @@ struct FirmwarePage: View {
                     .xFont(.footnote)
                 if !tickBackup {
                     Text("上次备份: \(lastBackupText) — 建议先到「备份」页导出一份")
-                        .xFont(.caption2)
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.warn)
                 }
 

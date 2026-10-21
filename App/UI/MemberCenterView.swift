@@ -538,7 +538,7 @@ struct MemberWizardView: View {
                             TextField("6~8 位数字 (下发到当前锁)", text: $pwd)
                                 .keyboardType(.numberPad)
                             Text("归属自动记为 TA; 不建也行, 稍后在凭证页添加。")
-                                .xFont(.caption)
+                                .xFont(.footnote)
                                 .foregroundStyle(XPalette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -887,7 +887,7 @@ struct MemberArchivedView: View {
                                             .xFont(.caption)
                                             .foregroundStyle(XPalette.textSub)
                                         Text("归档中 · 只从成员列表与成员统计里收起; 记录页仍能筛到 TA, 凭证页也仍列 TA 名下凭证 —— 归档不许挡撤权入口。")
-                                            .xFont(.caption)
+                                            .xFont(.footnote)
                                             .foregroundStyle(XPalette.textSub)
                                             .fixedSize(horizontal: false, vertical: true)
                                     }

@@ -189,7 +189,7 @@ struct SecurityPeekView: View {
                                 .tint(XPalette.accentText)
                             }
                             Text("加密凭证包与交接包不走这条：那是密文，且你要粘进聊天工具，定时清掉只会打断交接。")
-                                .xFont(.caption2)
+                                .xFont(.footnote)
                                 .foregroundStyle(XPalette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }

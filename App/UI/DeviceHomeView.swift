@@ -96,7 +96,7 @@ struct SyncTimeView: View {
                 }
 
                 Text("校准会把手机时间写进锁内 (cmd 0E)。偏差为正是锁慢，为负是锁快。")
-                    .xFont(.caption2)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }

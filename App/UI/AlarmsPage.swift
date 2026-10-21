@@ -111,7 +111,7 @@ struct AlarmsPage: View {
                         .xFont(.title3, weight: .semibold)
                         .foregroundStyle(XPalette.text)
                     Text("\(shortTime(top.timeStr)) · \(top.lockName) · 未处理")
-                        .xFont(.caption)
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.textSub)
                 }
 
@@ -348,7 +348,7 @@ struct AlarmsPage: View {
                         .lineLimit(1)
                 }
                 Text("\(shortTime(rec.timeStr)) · \(rec.lockName)")
-                    .xFont(.caption)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
             }
 

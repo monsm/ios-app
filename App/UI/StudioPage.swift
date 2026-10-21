@@ -223,7 +223,7 @@ struct StudioPage: View {
                 .foregroundStyle(XPalette.textTertiary)
                 .accessibilityHidden(true)
             Text("密码与指纹需现场靠近门锁下发; 临时码与 OTP 为本地台账管理, 锁端语义未定义的一次性/周期按时间窗推断 (标「约」)。")
-                .xFont(.caption2)
+                .xFont(.footnote)
                 .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)

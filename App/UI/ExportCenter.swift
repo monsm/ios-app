@@ -1766,7 +1766,7 @@ struct ExportCenterView: View {
             VStack(alignment: .leading, spacing: XSpace.m) {
             XToggle("脱敏导出", isOn: $redact)   // 548 脱敏导出
             Text("脱敏与格式独立: 关时 JSON 含原始 hex、日志不掩码; 开时 JSON 的 hex 列留空、日志导出把连续数字掩码。")
-                .xFont(.caption)
+                .xFont(.footnote)
                 .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             }
@@ -1936,7 +1936,7 @@ struct ExportCenterView: View {
                             .frame(maxHeight: 80)
                             .clipped()
                         Text("第 \(i + 1)/\(item.images.count) 张")
-                            .xFont(.caption)
+                            .xFont(.footnote)
                             .foregroundStyle(XPalette.textSub)
                         Spacer(minLength: 0)
                     }
@@ -1966,7 +1966,7 @@ struct ExportCenterView: View {
                 shareButton(item)
             }
             Text("分享/打印/存照片都会让数据离开本机; 生成本身纯本地。")
-                .xFont(.caption)
+                .xFont(.footnote)
                 .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             }
@@ -2101,7 +2101,7 @@ struct ExportCenterView: View {
         if item.kind == "eml" {
             // .eml 走复制文本 (系统邮件应用可读), 不进分享面板
             Text("邮件模板请直接复制内容, 粘贴进系统邮件或备忘录手动发送。")
-                .xFont(.caption)
+                .xFont(.footnote)
                 .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         } else if item.kind == "csv" {

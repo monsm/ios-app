@@ -75,7 +75,7 @@ struct BackupView: View {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 secLabel("全量备份")
                 Text("导出全部门锁、钥匙、密码台账与家人档案为一整段文本 (含敏感密钥, 请妥善保管)。")
-                    .xFont(.caption).foregroundStyle(XPalette.textSub)
+                    .xFont(.footnote).foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 XBusyButton(title: "生成备份文本", systemImage: "doc.text", busy: false) {
                     Milestones.recordBackup()   // 980 备份卫士
@@ -93,7 +93,7 @@ struct BackupView: View {
                         VStack(alignment: .leading, spacing: XSpace.xxs) {
                             Text("还没有备份").xFont(.subheadline, weight: .medium)   // 822 还没有备份
                             Text("本机从未生成过备份文本，也没有上传成功记录。手机丢失或重装即不可恢复。")
-                                .xFont(.caption).foregroundStyle(XPalette.textSub)
+                                .xFont(.footnote).foregroundStyle(XPalette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     }
@@ -135,7 +135,7 @@ struct BackupView: View {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 secLabel("导入恢复")
                 Text("粘贴备份文本后导入。相同设备将覆盖, 其它设备保留 (门锁无需重置)。")
-                    .xFont(.caption).foregroundStyle(XPalette.textSub)
+                    .xFont(.footnote).foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 TextField("粘贴备份文本", text: $importText, axis: .vertical)
                     .xFont(.caption.monospaced())

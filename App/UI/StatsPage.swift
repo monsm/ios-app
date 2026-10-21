@@ -287,7 +287,7 @@ struct StatsPage: View {
 
                 if let peak = buckets.max(by: { $0.opens < $1.opens }), peak.opens > 0 {
                     Text("最常在 \(Int(peak.hour)) 时开门")
-                        .xFont(.caption)
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.textSub)
                 }
             }

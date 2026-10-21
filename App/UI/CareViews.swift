@@ -245,7 +245,7 @@ struct MaintenanceView: View {
                 DatePicker("提醒日期", selection: $yearlyDate, displayedComponents: .date)
                 }
                 Text("年度提醒在选定日期上午 10 点送达 (本地通知, 白天送达)。")
-                    .xFont(.caption2)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -275,7 +275,7 @@ struct MaintenanceView: View {
                 }
                 .buttonStyle(PressableButtonStyle())
                 Text("像消防演练一样每半年确认一次应急钥匙的位置与可用性。")
-                    .xFont(.caption2)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -410,7 +410,7 @@ struct BatterySwapGuideView: View {
                                 .accessibilityLabel("第 \(i + 1) 步: \(s.title), \(s.detail)")
                             }
                             Text("全程只动电池 — 不需要重置门锁, 也不需要重新配网。")
-                                .xFont(.caption2)
+                                .xFont(.footnote)
                                 .foregroundStyle(XPalette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -428,7 +428,7 @@ struct BatterySwapGuideView: View {
                             }
                             .buttonStyle(.plain)
                             Text("「已换新」会写入换电记录、复位低电提醒武装位, 并在电池档案记下今天。")
-                                .xFont(.caption2)
+                                .xFont(.footnote)
                                 .foregroundStyle(XPalette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -520,7 +520,7 @@ struct CareChecklistView: View {
                                 .accessibilityAddTraits(checks[i] ? [.isSelected] : [])
                             }
                             Text("逐项确认后才能完成保养 — 汽车保养手册的严谨, 用在门上一样合适。")
-                                .xFont(.caption2)
+                                .xFont(.footnote)
                                 .foregroundStyle(XPalette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }

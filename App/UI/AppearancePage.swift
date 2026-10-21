@@ -114,7 +114,7 @@ struct AppearancePage: View {
                     }
                 }
                 Text("只换按钮、开锁环、当前小时这些地方的颜色。正文始终是正文的颜色，不会因此变得看不清。")
-                    .xFont(.system(.caption2))
+                    .xFont(.system(.footnote))
                     .foregroundStyle(XPalette.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
             }

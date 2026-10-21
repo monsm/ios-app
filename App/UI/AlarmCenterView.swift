@@ -159,7 +159,7 @@ struct AlarmCenterView: View {
                     Text("防撬：锁体被撬动或拆离时锁端自己记的一条, 与试错无关。")
                     Text("关于「胁迫」：锁端日志类型表里没有这一类, 本 App 不虚构一个查不到的类型。")
                 }
-                .xFont(.caption)
+                .xFont(.footnote)
                 .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.vertical, XSpace.xxs)
@@ -331,7 +331,7 @@ struct AlarmCenterView: View {
                         .foregroundStyle(XPalette.warn)
                 }
                 Text("本机日志时间窗的启发式合并 —— 协议没有多锁联动语义, 不假装有; 逐条处置仍在下面各自的行里。")
-                    .xFont(.caption2).foregroundStyle(XPalette.textSub)
+                    .xFont(.footnote).foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -403,7 +403,7 @@ struct AlarmCenterView: View {
             if isFolded {
                 // 729: 同锁同类 24 小时内已标过「误报」→ 本行按疑似同类误报折叠灰显 (仍可展开处置)
                 Text("疑似同类误报 — 同锁同类型 24 小时内已标过「误报」, 本行折叠灰显")   // 729 疑似同类误报
-                    .xFont(.caption2)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -723,7 +723,7 @@ struct AlarmCenterView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             Text("红色为告警当日; 前后 7 天为本地日志统计 (约)")
-                .xFont(.caption2)
+                .xFont(.footnote)
                 .foregroundStyle(XPalette.textSub)
                 // 2026-10-14 布局审计 R2: 图例在 1.75 字号档估宽 407pt > 343pt，lineLimit(1) 会把
                 // "前后 7 天为本地日志统计"整段切没 —— 那是这条图例唯一致歉口径 (数据是本机统计)。
@@ -805,7 +805,7 @@ struct AlarmCenterView: View {
                     }
                     if today > 0 {
                         Text("上面每条即锁端记录的锁定级事件; 其不带凭证槽位 ⇒ 涉事凭证无法归属 (依赖协议失败明细)。")   // 569 上面每条即锁端记录的
-                            .xFont(.caption)
+                            .xFont(.footnote)
                             .foregroundStyle(XPalette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -830,7 +830,7 @@ struct AlarmCenterView: View {
                             .lineLimit(1)
                     }
                     Text("处置打点后, 这里会出现「告警发生 → 确认处置」间隔分布。现在还没有留痕样本。")
-                        .xFont(.caption)
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -854,7 +854,7 @@ struct AlarmCenterView: View {
                         .lineLimit(1)
                 }
                 Text("间隔分布图需「告警发生时刻」与「处置时刻」成对积累后绘制 (占位)。")
-                    .xFont(.caption2)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }

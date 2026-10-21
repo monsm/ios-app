@@ -236,6 +236,22 @@ const checks = [
     }
     return bad === 0;
   }],
+  ['说明性长句不用小字号', () => {
+    // 25 字以上的说明段落用 caption(12pt)/caption2(11pt) 排，读起来吃力。
+    // 实测全仓曾有 95 处，已把 57 处 caption/caption2 提到 footnote。
+    let bad = 0;
+    for (const f of FILES) {
+      const lines = (CODE.get(path.basename(f)) || '').split('\n');
+      lines.forEach((t, i) => {
+        if (!/\.xFont\(\.(?:system\()?\.?caption2?\b/.test(t)) return;
+        for (let k = i - 1; k >= Math.max(0, i - 6); k--) {
+          if (/\.xFont\(/.test(lines[k])) break;
+          if (/Text\("([^"]{25,})"\)/.test(lines[k])) { bad++; break; }
+        }
+      });
+    }
+    return bad === 0;
+  }],
 ];
 
 let pass = 0;

@@ -90,7 +90,7 @@ struct CareRemindersView: View {
                     .background(XPalette.surfaceSunken,
                                 in: RoundedRectangle(cornerRadius: XRadius.min, style: .continuous))
                 Text("这句便签已贴在这几处空态旁: 设备页、记录页, 以及走引导空态卡的页面 (设置门锁空态、成就陈列架、维护历史、诊断日志)。未接入的空态不会偷偷显示。")
-                    .xFont(.caption2)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -156,7 +156,7 @@ struct CareRemindersView: View {
                     .accessibilityLabel(m.name + (md.isEmpty ? " 未填写生日" : " 生日 " + md + ", " + countdownText(days)))
                 }
                 Text("生日在 设置-成员管理-补全信息 里填写 (格式 MM-dd)。提醒通过本地通知送达, 全程离线, 不依赖任何服务器。")
-                    .xFont(.caption2)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
