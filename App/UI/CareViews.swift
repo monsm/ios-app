@@ -176,12 +176,11 @@ struct MaintenanceView: View {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 secLabel("保养历史")
                 if all.isEmpty {
-                    XGuidedEmptyView(systemImage: "checkmark.seal",
-                                    title: "还没有保养记录",
-                                    message: "五项清单走一遍就会在这里落下第一条; 换电完成后走「换电关怀」里的图文指引。",
-                                    actionTitle: "开始五项保养",
-                                    action: { showChecklist = true })
-                }
+                    XEmptyState(systemImage: "checkmark.seal",
+                                 title: "还没有保养记录",
+                                 message: "五项清单走一遍就会在这里落下第一条; 换电完成后走「换电关怀」里的图文指引。",
+                                 actionTitle: "开始五项保养",
+                                 action: { showChecklist = true })
                 ForEach(Array(all.prefix(5).enumerated()), id: \.offset) { _, e in
                     HStack(spacing: XSpace.s) {
                         Image(systemName: e.kind == "battery" ? "battery.100" : "checkmark.seal")
@@ -374,12 +373,11 @@ struct BatterySwapGuideView: View {
                         Label("去校准门锁时间", systemImage: "clock.arrow.circlepath")
                             .frame(minHeight: XHit.min)
                     }
-                    } footer: {
-                    Text("「已换新」会写入换电记录、复位低电提醒武装位, 并在电池档案记下今天。")
                     Text("「已换新」会写入换电记录、复位低电提醒武装位, 并在电池档案记下今天。")
                         .xFont(.caption2)
                         .foregroundStyle(XPalette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
+                }
                 }
             }
                 }
