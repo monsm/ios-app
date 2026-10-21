@@ -151,6 +151,9 @@ jobs:
 
       - name: 旧设计系统零残留 (legacyguard)
         run: node tools/legacyguard.js
+
+      - name: '组件签名 (apisig: xFont 只收 (Font, weight:) / 四个组件的参数名与真实声明对账; 判据每次从 Components.swift 现读)'
+        run: node tools/apisig.js
       - name: '选用镜像里最新的 Xcode (最新 iOS SDK)'
         run: |
           # 镜像里同时装了 27.0/27.1/27.2, 默认可能是旧的 —— 显式挑版本号最大的那个,
