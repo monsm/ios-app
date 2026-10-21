@@ -242,10 +242,24 @@ private struct PeopleLens: View {
         model.memberBubbles(days: 30)
     }
 
+    /// 每人逐日次数 —— 用来画活跃热力条
+    private var daily: [(id: String, name: String, perDay: [String: Int])] {
+        model.memberDaily(days: 30)
+    }
+
+    /// 近 30 天在家时长代理（首末开门间隔求和）
+    private var homeHours30: Int {
+        let now = Date()
+        return model.homeProxyHours(from: now.addingTimeInterval(-30 * 86400), to: now)
+    }
+
     var body: some View {
         VStack(spacing: XSpace.l) {
             today
+            homeHoursCard
             ranking
+            if !daily.isEmpty { activityStrip }
+            kindOwnerCard
             if !bubbles.isEmpty { bubbleRow }
         }
     }
@@ -286,6 +300,145 @@ private struct PeopleLens: View {
     }
 
     // 30 天排行
+    // ── 近 30 天在家时长（StatModel.homeProxyHours）──
+    //
+    // 这是「人的数据」里唯一带**时间累积**语义的指标:
+    // 逐日首末开门间隔求和 —— 有人开门到有人再开门之间的跨度，
+    // 作为"家里有人"的代理。协议没有在场传感器（CAPABILITY §5），
+    // 所以只能代理，不能声称是真实在家时长。
+    private var homeHoursCard: some View {
+        XPanel(kind: .group) {
+            HStack(spacing: XSpace.m) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("近 30 天")
+                        .xFont(.caption)
+                        .foregroundStyle(XPalette.textSub)
+                    HStack(alignment: .firstTextBaseline, spacing: 3) {
+                        Text(String(homeHours30))
+                            .xFont(.title2, weight: .semibold)
+                            .foregroundStyle(XPalette.accent)
+                            .monospacedDigit()
+                        Text("小时")
+                            .xFont(.caption)
+                            .foregroundStyle(XPalette.textSub)
+                    }
+                    Text("家里有人的时间（代理值）")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textTertiary)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "house.fill")
+                    .font(.system(size: XIcon.lg, weight: .medium))
+                    .foregroundStyle(XPalette.accent.opacity(0.35))
+                    .accessibilityHidden(true)
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("近 30 天家里有人的时间约 " + String(homeHours30) + " 小时")
+    }
+
+    // ── 成员活跃热力条（StatModel.memberDaily）──
+    //
+    // 每人一行 30 格，格子越亮表示当天开门越多。
+    // 比"总次数排行"多一层信息: 能看出**节奏**（天天来 vs 集中几天）。
+    private var activityStrip: some View {
+        XPanel {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                Text("近 30 天 · 谁哪天来过")
+                    .xFont(.footnote, weight: .medium)
+                    .foregroundStyle(XPalette.textSub)
+
+                ForEach(daily, id: \.id) { row in
+                    let days = sortedDays
+                    let peak = max(1, row.perDay.values.max() ?? 1)
+                    HStack(spacing: XSpace.s) {
+                        Text(row.name)
+                            .xFont(.caption2)
+                            .foregroundStyle(XPalette.textSub)
+                            .frame(width: 46, alignment: .leading)
+                            .lineLimit(1)
+                        HStack(spacing: 1.5) {
+                            ForEach(days, id: \.self) { d in
+                                let n = row.perDay[d] ?? 0
+                                RoundedRectangle(cornerRadius: 1.5, style: .continuous)
+                                    .fill(n == 0
+                                          ? XPalette.surfaceAlt
+                                          : memberColor(row.id).opacity(0.25 + 0.75 * Double(n) / Double(peak)))
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 14)
+                            }
+                        }
+                        .frame(height: 14)
+                    }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(row.name + " 近 30 天活跃热力")
+                }
+            }
+        }
+    }
+
+    /// 30 个日键（升序），热力条的横轴
+    private var sortedDays: [String] {
+        var keys = Set<String>()
+        for row in daily { keys.formUnion(row.perDay.keys) }
+        return Array(keys.sorted().suffix(30))
+    }
+
+    // ── 凭证类型 × 成员（StatModel.kindOwnerBreakdown）──
+    //
+    // 回答"谁在用哪种方式开门": 指纹 / 密码 / 临时码 / 钥匙。
+    // 这与 memberCounts 的正交信息: 那个是"谁开得多"，这个是"用什么开"。
+    private var kindOwnerCard: some View {
+        let breakdown = model.kindOwnerBreakdown()
+        let kinds = ["fp", "pwd", "temp", "key"].filter { !(breakdown[$0] ?? []).isEmpty }
+        return Group {
+            if !kinds.isEmpty {
+                XPanel {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        Text("谁用什么开门")
+                            .xFont(.footnote, weight: .medium)
+                            .foregroundStyle(XPalette.textSub)
+
+                        ForEach(kinds, id: \.self) { kind in
+                            let rows = breakdown[kind] ?? []
+                            HStack(spacing: XSpace.s) {
+                                Text(kindWord(kind))
+                                    .xFont(.caption2)
+                                    .foregroundStyle(XPalette.textTertiary)
+                                    .frame(width: 40, alignment: .leading)
+                                Text(topNames(rows))
+                                    .xFont(.caption)
+                                    .foregroundStyle(XPalette.text)
+                                    .lineLimit(1)
+                                Spacer(minLength: 0)
+                                Text(String(rows.reduce(0) { $0 + $1.n }))
+                                    .xFont(.caption2.monospacedDigit())
+                                    .foregroundStyle(XPalette.textSub)
+                            }
+                            .accessibilityElement(children: .combine)
+                            .accessibilityLabel(kindWord(kind) + " " + topNames(rows))
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// 凭证类型的中文名
+    ///
+    /// 键来自 StatsKit.kindOrder() = ["fp", "pwd", "temp", "key"]，
+    /// 中文映射走 StatsKit.kindWords() —— 不在这里另写一套。
+    private func kindWord(_ k: String) -> String {
+        StatsKit.kindWords()[k] ?? k
+    }
+
+    /// 前两位成员的名字，多于两人时加"等"
+    private func topNames(_ rows: [(id: String, name: String, n: Int)]) -> String {
+        let top = rows.prefix(2).map { $0.name }
+        if rows.count > 2 { return top.joined(separator: "、") + " 等" }
+        return top.joined(separator: "、")
+    }
+
     private var ranking: some View {
         XPanel {
             VStack(alignment: .leading, spacing: XSpace.m) {
