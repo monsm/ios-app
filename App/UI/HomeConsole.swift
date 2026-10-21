@@ -57,7 +57,6 @@ struct HomeConsole: View {
     @State private var progress: CGFloat = 0
     @State private var pressing = false
     @State private var failure: String?
-    @State private var chargeTask: Task<Void, Never>?
     @State private var settlingTask: Task<Void, Never>?
     @State private var managerGroup: ManagerGroup?
     @State private var appeared = false
@@ -121,7 +120,13 @@ struct HomeConsole: View {
                 // 连接去读实时状态。每次切回 App 都唤醒一次门锁，既费电也不符合
                 // 用户预期（他可能只是回个微信）。要拉实时状态有下拉刷新这条
                 // 显式路径。
-                if phase == .active { SecTick.bump() }
+                if phase == .active {
+                    SecTick.bump()
+                } else {
+                    // 切走就放弃蓄力。否则那个 1.05s 的 Task 会在后台睡完，
+                    // 然后真的发出一次 BLE 开锁 —— 用户只是去回了个微信。
+                    abortCharge()
+                }
             }
             .onChange(of: ticker.tick) { _, _ in recompute() }
             .onAppear {
@@ -130,7 +135,12 @@ struct HomeConsole: View {
                 if reduceMotion { appeared = true }
                 else { withAnimation(.easeOut(duration: 0.28)) { appeared = true } }
             }
-            .onDisappear { chargeTask?.cancel(); settlingTask?.cancel() }
+            .onDisappear {
+                // 视图消失同样要中止，不能只 cancel Task：
+                // 不把 pressing/phase 复位，下次回到这一页会停留在一个假的"蓄力中"。
+                abortCharge()
+                settlingTask?.cancel()
+            }
             // ═══ 深链兼容 ═══
             //
             // 删掉 DoorRoot 之后，requestRoute(.settings) 这类编程式跳转
@@ -365,11 +375,22 @@ struct HomeConsole: View {
             .animation(reduceMotion ? nil : .easeOut(duration: 0.14), value: pressing)
             .animation(reduceMotion ? nil : .easeInOut(duration: 0.34), value: phase)
             .contentShape(Circle())
-            .gesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { _ in beginPress() }
-                    .onEnded { _ in endPress() }
-            )
+            // ═══ 按住开锁：用平台的手势，不手搓定时器 ═══
+            //
+            // 之前是 DragGesture(minimumDistance: 0) + 一个 sleep(1.05s) 的 Task。
+            // 那个写法有一个我 cover 不住的安全洞：手势被系统取消时（来电、弹窗、
+            // 视图被移除）onEnded 不一定触发，pressing 会停在 true，
+            // 定时器睡完就真的发出一次开锁 —— 用户没按完，门开了。
+            //
+            // onLongPressGesture 的完成回调由 SwiftUI 保证：只有**按住满 minimumDuration
+            // 且期间没有被取消**才会调 perform。这就是"按住开锁"该用的原语。
+            //
+            // onPressingChanged 只负责视觉（缩放、进度、触觉），不再承担正确性。
+            .onLongPressGesture(minimumDuration: chargeDuration, maximumDistance: 44) {
+                Task { await performUnlock() }
+            } onPressingChanged: { down in
+                if down { beginPress() } else { endPress() }
+            }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("开锁")
             .accessibilityHint("按住直到进度环充满")
@@ -616,21 +637,29 @@ struct HomeConsole: View {
         // 现在：一次 withAnimation 交给 Core Animation 线性插值，进度条是
         // 渲染进程自己跑的，主线程只负责在终点判定完成。这是"动画"和
         // "定时器"该分开的地方 —— 混在一起就是业余做法的典型症状。
+        // 视觉进度：交给 Core Animation 线性插值。
+        // 完成时机由 onLongPressGesture 的 minimumDuration 决定，两者用同一个
+        // chargeDuration 常量，所以进度环填满的瞬间正好就是完成判定点。
         withAnimation(.linear(duration: chargeDuration)) { progress = 1 }
+    }
 
-        chargeTask?.cancel()
-        chargeTask = Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(Int(chargeDuration * 1000)))
-            guard !Task.isCancelled else { return }
-            await performUnlock()
+    /// 中止蓄力 —— 供"切到后台 / 视图消失 / 手势被打断"共用。
+    /// 与 endPress 的区别：endPress 是用户松手（正常路径），
+    /// abortCharge 是外部原因导致的放弃（安全路径），两者都不能留下未清理的 Task。
+    private func abortCharge() {
+        // onLongPressGesture 自己会在被打断时回调 onPressingChanged(false)，
+        // 但如果视图直接消失，那个回调也可能不来 —— 所以这里仍要能兜住。
+        guard pressing || phase == .charging else { return }
+        pressing = false
+        if phase == .charging {
+            phase = .idle
+            withAnimation(reduceMotion ? nil : XMotion.chargeReset) { progress = 0 }
         }
     }
 
     private func endPress() {
         guard pressing else { return }
         pressing = false
-        chargeTask?.cancel()
-        chargeTask = nil
         // ⚠ 这里不能用 progress < 1 判断"没充满"。
         // withAnimation(.linear) 会**立刻**把 progress 状态置为 1，动画只负责
         // 中间的插值渲染。所以中途松手时 progress 其实已经是 1，
@@ -643,8 +672,6 @@ struct HomeConsole: View {
     }
 
     private func performUnlock() async {
-        chargeTask?.cancel()
-        chargeTask = nil
         withAnimation(XMotion.soft) { progress = 1 }
         do {
             guard !mac.isEmpty else { throw DFUError.msg("请先在「设备」里选择门锁") }
