@@ -525,6 +525,11 @@ struct AutoCalView: View {
     @EnvironmentObject var app: AppState
     @State private var calibrating = false
     @State private var collected = 0
+    /// 采集过程中的 RSSI 样本（画实时波形用）
+    ///
+    /// 原来只显示"采集中 (N 样本)"，用户看不到信号强弱趋势 ——
+    /// 而这 30 秒的唯一意义就是让用户知道"我现在离得够近吗"。
+    @State private var samples: [Int] = []
 
     var body: some View { vkBody.destined(.autoCal) }
     var vkBody: some View {
@@ -533,35 +538,9 @@ struct AutoCalView: View {
 
             ScrollView {
                 VStack(spacing: XSpace.l) {
-            XPanel(kind: .group) {
-                VStack(alignment: .leading, spacing: XSpace.m) {
-                    secLabel("距离标定 (F3)")
-                if let c = AutoOpen.autocal(mac) {
-                    LabeledRow("当前 P95 基准", "RSSI \(c.rssiP95)")
-                    LabeledRow("武装线 / 解除线 (回差)",
-                               "\(AutoOpenKit.armThreshold(base: c.rssiP95)) / \(AutoOpenKit.disarmThreshold(base: c.rssiP95))")
-                } else {
-                    LabeledRow("当前基准", "未标定 — 未标定则 F3 门不过")
-                }
-                XBusyButton(title: calibrating ? "采集中 (\(collected) 样本)" : "重新标定",
-                           systemImage: "dot.radiowaves.left.and.right",
-                           busy: calibrating) {
-                    Task { await run() }
-                }
-                Text("静止走近门锁一次, 采 30 秒 RSSI 取 P95 作为武装基准。回差: 越过武装线才武装, 掉回 0.5×基准才解除, 防门口抖动误触发。")
-                    .xFont(.caption2)
-                    .foregroundStyle(XPalette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-            .xScrollLift()
-            XPanel(kind: .group) {
-                VStack(alignment: .leading, spacing: XSpace.m) {
-                    secLabel("标定数据")
-                Button("清除标定", role: .destructive) { AutoOpen.removeAutocal(mac) }
-                }
-            }
-            .xScrollLift()
+                    signalCard
+                    thresholdCard
+                    dataCard
                 }
                 .padding(.horizontal, XSpace.gutter)
                 .padding(.vertical, XSpace.l)
@@ -571,30 +550,206 @@ struct AutoCalView: View {
         .navigationTitle("距离标定")
     }
 
+    // ── 信号卡：实时波形 + 采集进度 ──
+    //
+    // 采集时画实时 RSSI 波形（越靠右越近）；
+    // 未采集时画"当前基准 vs 武装线/解除线"的阈值区间。
+    private var signalCard: some View {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                HStack {
+                    secLabel("距离标定 (F3)")
+                    Spacer(minLength: 0)
+                    if calibrating {
+                        Text("\(collected) / 30s")
+                            .xFont(.caption2.monospacedDigit())
+                            .foregroundStyle(XPalette.accent)
+                    }
+                }
+
+                if calibrating || !samples.isEmpty {
+                    rssiWaveform
+                } else {
+                    thresholdBar
+                }
+
+                XBusyButton(title: calibrating ? "采集中…" : "重新标定",
+                            systemImage: "dot.radiowaves.left.and.right",
+                            busy: calibrating) {
+                    Task { await run() }
+                }
+
+                Text("静止走近门锁一次, 采 30 秒 RSSI 取 P95 作为武装基准。"
+                     + "回差: 越过武装线才武装, 掉回 0.5×基准 才解除, 防门口抖动误触。")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .xScrollLift()
+    }
+
+    // ── 实时 RSSI 波形 ──
+    //
+    // 每根柱 = 一次采样。高度归一化到样本区间，
+    // 柱子的"高低"就是"离门锁远近" —— 用户能据此调整站位。
+    private var rssiWaveform: some View {
+        let lo = (samples.min() ?? -90) - 3
+        let hi = (samples.max() ?? -30) + 3
+        let span = max(1, hi - lo)
+        return VStack(alignment: .leading, spacing: XSpace.xs) {
+            HStack(alignment: .bottom, spacing: 2) {
+                ForEach(Array(samples.enumerated()), id: \.offset) { _, v in
+                    let frac = Double(v - lo) / Double(span)
+                    RoundedRectangle(cornerRadius: 1, style: .continuous)
+                        .fill(XPalette.accent.opacity(0.35 + 0.65 * frac))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: max(3, 44 * frac))
+                }
+                if samples.isEmpty {
+                    Text("等待第一个样本…")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textTertiary)
+                }
+            }
+            .frame(height: 46)
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            HStack {
+                Text("远 \(hi) dBm")
+                Spacer(minLength: 0)
+                if let last = samples.last {
+                    Text("当前 \(last) dBm")
+                        .foregroundStyle(XPalette.accent)
+                }
+                Spacer(minLength: 0)
+                Text("近 \(lo) dBm")
+            }
+            .xFont(.caption2)
+            .foregroundStyle(XPalette.textTertiary)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("信号采样 \(samples.count) 个, 最新 " + String(samples.last ?? 0) + " dBm")
+    }
+
+    // ── 阈值区间可视化 ──
+    //
+    // 把"武装线 / 解除线"画成一条带刻度的横条，
+    // 当前基准落在哪一目了然 —— 比两行文字 LabeledRow 直观。
+    private var thresholdBar: some View {
+        let cal = AutoOpen.autocal(mac)
+        let base = cal?.rssiP95 ?? AutoOpenKit.fallbackBase
+        let arm = AutoOpenKit.armThreshold(base: base)
+        let disarm = AutoOpenKit.disarmThreshold(base: base)
+        // 画布范围：解除线到武装线各留 15 dBm 余量
+        let lo = min(disarm, arm) - 15
+        let hi = max(disarm, arm) + 15
+        let span = max(1, hi - lo)
+        let armX = Double(arm - lo) / Double(span)
+        let disarmX = Double(disarm - lo) / Double(span)
+        return VStack(alignment: .leading, spacing: XSpace.xs) {
+            GeometryReader { geo in
+                let w = geo.size.width
+                ZStack(alignment: .leading) {
+                    // 底条
+                    Capsule().fill(XPalette.surfaceAlt)
+                    // 武装区间（解除线 → 武装线）
+                    Capsule()
+                        .fill(XPalette.accent.opacity(0.25))
+                        .frame(width: max(2, w * abs(armX - disarmX)))
+                        .offset(x: w * min(armX, disarmX))
+                    // 武装线
+                    Rectangle().fill(XPalette.accent)
+                        .frame(width: 1.5)
+                        .offset(x: w * armX)
+                    // 解除线
+                    Rectangle().fill(XPalette.textTertiary)
+                        .frame(width: 1.5)
+                        .offset(x: w * disarmX)
+                }
+            }
+            .frame(height: 14)
+
+            HStack {
+                Text("解除 \(disarm)")
+                Spacer(minLength: 0)
+                Text("武装 \(arm)")
+            }
+            .xFont(.caption2)
+            .foregroundStyle(XPalette.textTertiary)
+
+            HStack(spacing: XSpace.xs) {
+                Label(cal == nil ? "未标定 — F3 门不过" : "P95 基准 \(base) dBm",
+                      systemImage: cal == nil ? "exclamationmark.triangle" : "checkmark.circle")
+                    .xFont(.caption)
+                    .foregroundStyle(cal == nil ? XPalette.warn : XPalette.ok)
+                Spacer(minLength: 0)
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(cal == nil ? "未标定" : "武装线 " + String(arm) + ", 解除线 " + String(disarm))
+    }
+
+    // ── 数据卡：标定时间 + 清除 ──
+    private var dataCard: some View {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                secLabel("标定数据")
+                if let c = AutoOpen.autocal(mac) {
+                    LabeledRow("标定时刻", atLabel(c.at))
+                    LabeledRow("P95 基准", "RSSI \(c.rssiP95)")
+                } else {
+                    LabeledRow("状态", "从未标定")
+                }
+                Button("清除标定", role: .destructive) {
+                    AutoOpen.removeAutocal(mac)
+                    samples = []
+                    app.showToast("标定已清除")
+                }
+                .disabled(AutoOpen.autocal(mac) == nil)
+            }
+        }
+        .xScrollLift()
+    }
+
+    private func atLabel(_ at: Double) -> String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.calendar = WeekCal.gregorian
+        f.dateFormat = "MM-dd HH:mm"
+        return f.string(from: Date(timeIntervalSince1970: at))
+    }
+
     private func run() async {
         guard !calibrating else { return }
         calibrating = true
         collected = 0
+        samples = []
         defer { calibrating = false }
-        var samples: [Int] = []
+        var acc: [Int] = []
         let t0 = Date()
         while Date().timeIntervalSince(t0) < 30 {
             do {
                 let dev = try await LinkSense.shared.scan(mac: mac, timeoutMs: 2500)
                 if let r = dev?.rssi {
-                    samples.append(r)
-                    collected = samples.count
+                    acc.append(r)
+                    collected = acc.count
+                    samples = acc          // 实时更新波形
                     LinkSense.saveRssi(mac: mac, rssi: r)
                 }
             } catch {}
             try? await Task.sleep(for: .milliseconds(500))
         }
-        if let p = AutoOpenKit.p95(samples) {
+        if let p = AutoOpenKit.p95(acc) {
             AutoOpen.saveAutocal(mac, AutoOpen.AutoCal(rssiP95: p, at: Date().timeIntervalSince1970))
             app.showToast("标定完成: P95 RSSI \(p)")
+            XHaptics.success()
         } else {
             app.showToast("样本不足, 请走近门锁再试")
         }
+        // 采集结束后保留波形 2 秒再清，让用户看到结果
+        try? await Task.sleep(for: .seconds(2))
+        if !calibrating { samples = [] }
     }
 
     private func secLabel(_ text: String) -> some View {
