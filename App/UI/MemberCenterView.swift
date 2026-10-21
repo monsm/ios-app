@@ -510,7 +510,7 @@ struct MemberWizardView: View {
                     VStack(spacing: XSpace.l) {
                 XPanel(kind: .group) {
                     VStack(alignment: .leading, spacing: XSpace.m) {
-                        secLabel("步骤 \(step + 1)/3 · ")
+                        secLabel("步骤 \(step + 1)/3 · " + steps[step])
                     switch step {
                     case 0:
                         TextField("称呼 (汉字/英文/数字, 上限 20)", text: $name)
@@ -651,6 +651,14 @@ struct MemberWizardView: View {
                 app.showToast("建档成功, 建码失败: " + error.localizedDescription)
             }
         }
+    }
+
+    private func secLabel(_ text: String) -> some View {
+        Text(text)
+            .xFont(.caption, weight: .semibold)
+            .foregroundStyle(XPalette.textTertiary)
+            .textCase(.uppercase)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

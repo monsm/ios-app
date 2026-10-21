@@ -1964,7 +1964,6 @@ struct ExportCenterView: View {
                 }
                 shareButton(item)
             }
-        } footer: {
             Text("分享/打印/存照片都会让数据离开本机; 生成本身纯本地。")
                 .xFont(.caption)
                 .foregroundStyle(XPalette.textSub)

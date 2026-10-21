@@ -175,7 +175,6 @@ struct MaintenanceView: View {
                 message: "五项清单走一遍就会在这里落下第一条; 换电完成后走「换电关怀」里的图文指引。",
                 actionTitle: "开始五项保养",
                 action: { showChecklist = true })
-                .listRowInsets(EdgeInsets())
                 }
                 ForEach(Array(all.prefix(5).enumerated()), id: \.offset) { _, e in
                 HStack(spacing: XSpace.s) {

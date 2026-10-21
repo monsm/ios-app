@@ -33,9 +33,7 @@ struct SyncTimeView: View {
                 } else {
                     Text("请先在设备页选择一把门锁").foregroundStyle(XPalette.textSub)
                 }
-            } header: {
-                Text("同步时间")
-                }
+            }
             }
             XPanel(kind: .group) {
                 VStack(alignment: .leading, spacing: XSpace.m) {
