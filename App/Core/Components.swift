@@ -1376,3 +1376,43 @@ struct XSkeleton: View {
         )
     }
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// MARK: - 偏差刻度条
+// ═══════════════════════════════════════════════════════════════════
+//
+// 一根居中刻度条：中心 = 0，向左/向右表示正负偏差。
+// 用于「锁钟偏差」这类"差多少"的量 —— 一行数字看不出严重程度，
+// 一根条能。
+//
+// 放在 Components 里而不是页面里：它是形状定义，属于设计系统。
+struct XSkewBar: View {
+    /// 偏差值（秒）。正负决定方向
+    let value: Int64
+    /// 刻度封顶值 —— 超过它条子满格，但调用方仍显示真实数字
+    var cap: Double = 300
+    /// 判定色：准 / 提醒 / 警告
+    var tone: Color
+
+    var body: some View {
+        GeometryReader { geo in
+            let w = geo.size.width
+            let clamped = Swift.min(Double(Swift.abs(value)) / Swift.max(cap, 1), 1.0)
+            let half = clamped / 2
+            ZStack(alignment: .leading) {
+                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                    .fill(XPalette.surfaceAlt)
+                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                    .fill(tone.opacity(0.55))
+                    .frame(width: Swift.max(2, w * half))
+                    .offset(x: value >= 0 ? w / 2 : w / 2 - w * half)
+                Rectangle()
+                    .fill(XPalette.textTertiary)
+                    .frame(width: 1)
+                    .offset(x: w / 2)
+            }
+        }
+        .frame(height: 10)
+        .accessibilityHidden(true)
+    }
+}

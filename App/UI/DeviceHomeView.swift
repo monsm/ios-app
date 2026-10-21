@@ -14,6 +14,16 @@ struct SyncTimeView: View {
 
     private var resultTone: XToneColor { failed ? .danger : .ok }
 
+    /// 锁钟与手机钟的偏差（秒）。nil = 拿不到锁钟
+    ///
+    /// 这是本页唯一有信息量的数字 —— 校准的意义就是消掉它。
+    /// 原来只显示两行时间文字，用户无法判断"差多少"。
+    private var skewSeconds: Int64? {
+        guard let lt = app.status?.lockTime, lt > 0 else { return nil }
+        let lockUnix = Int64(ZKProtocol.protoSecondsToUnix(lt))
+        return Int64(Date().timeIntervalSince1970) - lockUnix
+    }
+
     var body: some View { vkBody.destined(.syncTime) }
     var vkBody: some View {
         ZStack {
@@ -21,45 +31,21 @@ struct SyncTimeView: View {
 
             ScrollView {
                 VStack(spacing: XSpace.l) {
-                    XPanel(kind: .group) {
-                        VStack(alignment: .leading, spacing: XSpace.m) {
-                            secLabel("同步时间")
-                            if app.current != nil {
-                                Text("将手机时间同步到门锁内 (cmd 0E)。校准前会先读锁钟并补偿偏差。")
-                                    .xFont(.footnote)
-                                    .foregroundStyle(XPalette.textSub)
-                                    .fixedSize(horizontal: false, vertical: true)
-                                LabeledRow("锁钟", app.status?.lockTime.map { ProtoTime.localStr($0) } ?? "—")
-                                LabeledRow("手机时间", DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .medium))
-                            } else {
+                    if app.current != nil {
+                        skewCard
+                        clockCard
+                    } else {
+                        XPanel(kind: .group) {
+                            VStack(alignment: .leading, spacing: XSpace.m) {
+                                secLabel("同步时间")
                                 Text("请先在设备页选择一把门锁")
                                     .xFont(.footnote)
                                     .foregroundStyle(XPalette.textSub)
                             }
                         }
+                        .xScrollLift()
                     }
-                    .xScrollLift()
-
-                    XPanel(kind: .group) {
-                        VStack(alignment: .leading, spacing: XSpace.m) {
-                            XBusyButton(title: "将手机时间同步到锁内",
-                                        systemImage: "clock.arrow.circlepath",
-                                        busy: busy) {
-                                Task { await run() }
-                            }
-                            .disabled(app.current == nil)
-                            if !result.isEmpty {
-                                Label(result, systemImage: failed ? "xmark.octagon.fill" : "checkmark.circle.fill")
-                                    .xFont(.footnote)
-                                    .foregroundStyle(resultTone.color)
-                            }
-                            Text("请将手机靠近门锁 · 请确保手机时间准确")
-                                .xFont(.caption2)
-                                .foregroundStyle(XPalette.textSub)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                    }
-                    .xScrollLift()
+                    actionCard
                 }
                 .padding(.horizontal, XSpace.gutter)
                 .padding(.vertical, XSpace.l)
@@ -70,6 +56,116 @@ struct SyncTimeView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
+    // ── 偏差卡（核心信息）──
+    //
+    // 用一根居中刻度条表示偏差: 中心 = 0 秒，左右各代表偏快/偏慢。
+    // 阈值: |skew| <= 5 视为准（绿）；<= 60 提醒（黄）；否则警告（红）。
+    // 超过 300 秒时刻度条封顶，但文字仍显示真实值。
+    private var skewCard: some View {
+        let skew = skewSeconds
+        let absSkew = abs(skew ?? 0)
+        let tone: Color = skew == nil ? XPalette.textTertiary
+            : (absSkew <= 5 ? XPalette.ok : (absSkew <= 60 ? XPalette.warn : XPalette.danger))
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                secLabel("锁钟偏差")
+
+                HStack(alignment: .firstTextBaseline, spacing: XSpace.xs) {
+                    Text(skewText(skew))
+                        .xFont(.title2, weight: .semibold)
+                        .foregroundStyle(tone)
+                        .monospacedDigit()
+                    Text(skewWord(skew))
+                        .xFont(.caption)
+                        .foregroundStyle(XPalette.textSub)
+                    Spacer(minLength: 0)
+                }
+
+                if let s = skew {
+                    skewBar(s)
+                } else {
+                    Text("还没有读到锁钟 —— 靠近门锁后下拉刷新")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textTertiary)
+                }
+
+                Text("校准会把手机时间写进锁内 (cmd 0E)。偏差为正是锁慢，为负是锁快。")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .xScrollLift()
+    }
+
+    /// 偏差刻度条：中心 0，向左偏快、向右偏慢
+    /// 偏差刻度条：中心 0，向左偏快、向右偏慢
+    ///
+    /// 用 Rectangle + cornerRadius 而非 Capsule ——
+    /// 轨道与填充都是矩形圆角，与设计系统的 xPlate 同族。
+    /// 偏差刻度条 —— 用设计系统的 XSkewBar（形状定义在 Components 里）
+    private func skewBar(_ skew: Int64) -> some View {
+        let absSkew = abs(skew)
+        let tone: Color = absSkew <= 5 ? XPalette.ok
+            : (absSkew <= 60 ? XPalette.warn : XPalette.danger)
+        return XSkewBar(value: skew, tone: tone)
+    }
+
+    private func skewText(_ skew: Int64?) -> String {
+        guard let s = skew else { return "—" }
+        if s == 0 { return "0 秒" }
+        return (s > 0 ? "+" : "") + String(s) + " 秒"
+    }
+
+    private func skewWord(_ skew: Int64?) -> String {
+        guard let s = skew else { return "" }
+        let absS = abs(s)
+        if absS <= 5 { return "准" }
+        if absS < 60 { return s > 0 ? "锁慢" : "锁快" }
+        if absS < 3600 { return (s > 0 ? "锁慢 " : "锁快 ") + String(absS / 60) + " 分" }
+        return (s > 0 ? "锁慢 " : "锁快 ") + String(absS / 3600) + " 小时"
+    }
+
+    // ── 两侧时钟对照 ──
+    private var clockCard: some View {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                secLabel("对照")
+                LabeledRow("锁内时钟",
+                           app.status?.lockTime.map { ProtoTime.localStr($0) } ?? "—")
+                LabeledRow("手机时间",
+                           DateFormatter.localizedString(from: Date(),
+                                                         dateStyle: .medium,
+                                                         timeStyle: .medium))
+            }
+        }
+        .xScrollLift()
+    }
+
+    // ── 动作卡 ──
+    private var actionCard: some View {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                XBusyButton(title: "将手机时间同步到锁内",
+                            systemImage: "clock.arrow.circlepath",
+                            busy: busy) {
+                    Task { await run() }
+                }
+                .disabled(app.current == nil)
+                if !result.isEmpty {
+                    Label(result, systemImage: failed ? "xmark.octagon.fill" : "checkmark.circle.fill")
+                        .xFont(.footnote)
+                        .foregroundStyle(resultTone.color)
+                }
+                Text("请将手机靠近门锁 · 请确保手机时间准确")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .xScrollLift()
+    }
+
     private func run() async {
         busy = true
         failed = false
@@ -78,22 +174,20 @@ struct SyncTimeView: View {
         // 于是"在这个锁的页面点校时，19/0E 命令发向上次连过的那把锁"。入口钉住 + 非空才走。
         let m = app.currentMac
         guard !m.isEmpty else {
-            busy = false
-            failed = true
-            result = "未选择门锁"
+            busy = false; failed = true; result = "未选择门锁"
             app.showToast("未选择门锁")
             return
         }
         do {
             try await app.lock.ensureConnected(mac: m)
-            // 留存口径：校时这一步本机**不落任何数** —— 记录的时间戳本来就来自锁端回包 (lockTimeStr)，
-            // 与手机钟无关；把它抄一份进本机反而造出第二个"现在是几点"。AutoOpen 那条自动校时走 audit (0E 双确认)。
+            // 留存口径：校时这一步本机不落任何数 —— 记录的时间戳本来就来自锁端回包 (lockTimeStr)。
             try await app.lock.syncTime()
             result = "同步成功"
+            XHaptics.success()
             app.showToast("时间已同步")
         } catch {
             failed = true
-            result = "同步失败：\(error.localizedDescription)"
+            result = "同步失败：" + error.localizedDescription
         }
         busy = false
     }
