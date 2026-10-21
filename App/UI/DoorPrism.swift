@@ -189,53 +189,51 @@ struct DoorPrism<B: View, D: View, F: View>: View {
     ///
     /// anchorZ 这个参数全仓此前从未用过，已由探针区块 6（run #475）验证签名。
     private func prismFace(_ f: DoorFace, width: CGFloat) -> some View {
-        // 面的总朝向 = 它自己在棱柱上的角度 + 容器整体转角
+        let A = prismApothem(width)
         let theta = FaceAngle.current(f) + containerAngle
+        let rad = theta * .pi / 180
+        // ═══ 显式几何: x / z / 深度缩放全部自己算 ═══
+        //
+        // 上一版靠 rotation3DEffect 的 anchorZ + perspective 让 SwiftUI 去算透视。
+        // 但 `perspective` 的确切语义（m34 = -p/S 里 S 是什么）没有文档，
+        // 我按原型反算出 0.85，仍然只能"赌一把"。
+        //
+        // 这一版改成:
+        //   ① rotation3DEffect 只做**朝向**（anchor 在视图中心、不传 anchorZ/perspective）
+        //      此时透视对它没有作用（旋转轴过中心），前缩就是 cos(θ) —— 完全确定
+        //   ② 面中心的位置 (x, z) 按棱柱几何直接算
+        //   ③ 近大远小用 scaleEffect(D/(D-z)) 自己算
+        //
+        // 这样每个量都可验算，不依赖任何未文档化的行为。
+        let z = A * cos(rad)              // 面中心的 z（>0 朝观察者）
+        let x = A * sin(rad)              // 面中心的 x
+        let D = A * prismCameraDistance   // 相机距离（pt）
+        let depthScale = D / (D - z)      // 近大远小
         return faceView(f)
-            // ═══ 让它读成「一块立起来的板」═══
-            //
-            // 原型里每个面是 1.42×2.1 的平面，四周有金属框、
-            // 相机 5.2 单位外看 → 棱柱只占视口 67%×70%，
-            // 四周留出背景，所以一眼就能看出"这是一块板在转"。
-            // 而 Swift 版每个面铺满全屏 —— 再正确的 3D 变换也看不出来，
-            // 因为屏幕上没有任何「棱柱的轮廓」。
-            //
-            // 这里给每个面圆角裁切 + 玻璃描边 + 投影，
-            // 配合 prismBody 的留边，做出"板浮在画布上"的读法。
+            // 让它读成「一块立起来的板」
             .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: 30, style: .continuous)
                     .strokeBorder(XPalette.hairline, lineWidth: 1)
             }
             .shadow(color: .black.opacity(0.30), radius: 22, x: 0, y: 16)
-            // 绕「中心后方 apothem」的轴旋转 — 同时完成朝向与定位
-            .rotation3DEffect(.degrees(theta), axis: (x: 0, y: 1, z: 0),
-                              anchor: .center,
-                              anchorZ: -prismApothem(width),
-                              perspective: prismPerspective)
-            // 背面的面隐藏（否则会穿透前面的面看到它）
+            // ① 只做朝向 —— 轴过视图中心，透视不参与，前缩 = cos(θ)
+            .rotation3DEffect(.degrees(theta), axis: (x: 0, y: 1, z: 0), anchor: .center)
+            // ③ 近大远小
+            .scaleEffect(depthScale)
+            // ② 摆到棱柱上的位置
+            .offset(x: x)
             .opacity(faceVisibility(f))
     }
 
-    /// 透视强度 —— 原来写的是 0，那是「不立体」的根因
+    /// 相机距离 = 10.4 × 内切圆半径
     ///
-    /// ═══ 0.85 是怎么算出来的（不是拍的）═══
-    ///
-    /// 判据: 三棱柱转到 120° 时，背面比正面**小多少**。
-    /// 原型的相机 fov 32°、距离 5.2、内切圆 0.5:
-    ///   前脸 z=+0.5 → 距相机 4.70
-    ///   背面 z=-0.25 → 距相机 5.45
-    ///   大小比 4.70/5.45 = 0.862 → 背面小 **13.8%**
-    ///
-    /// SwiftUI 侧 `m34 = -perspective / S`，Δz = 1.5A（A=内切圆半径）:
-    ///   w = 1 + 1.5A·perspective/S，大小比 = 1/w
-    ///   A=101pt、S≈800pt 代入:
-    ///     perspective 0.55 → 背面小  9.5%   ← 原来这值，**太弱，所以还是显得平**
-    ///     perspective 0.85 → 背面小 13.9%   ← 与原型 13.8% 基本重合
-    ///     perspective 1.00 → 背面小 16.0%
-    ///
-    /// 取 **0.85**。
-    private var prismPerspective: CGFloat { 0.85 }
+    /// 由原型的比例反算: 相机 z=5.2、内切圆 0.5 → D/A = 10.4。
+    /// 这个比值决定「近大远小」的强度 —— 代入后
+    /// 前脸(z=+A) 与 120° 面(z=-0.5A) 的大小比 =
+    ///   (D+A)/(D-0.5A) = 11.4/9.9 = 0.868，与 three.js 的 0.862 一致。
+    private var prismCameraDistance: CGFloat { 10.4 }
+
 
 
     /// 三棱柱的竖棱 —— 静止时唯一能读出「体积」的东西
@@ -251,19 +249,20 @@ struct DoorPrism<B: View, D: View, F: View>: View {
     /// 角上的点是外接圆 R = 2A，而原型取 0.866R = 1.732A。
     private func prismEdge(_ baseDeg: Double, width: CGFloat) -> some View {
         let A = prismApothem(width)
-        let D = A * 1.732
+        let R = A * 1.732                     // 角点半径（原型 0.866·R，R=2A）
+        let D = A * prismCameraDistance
         let theta = baseDeg + containerAngle
-        // 角点在世界的 z 正比于 cos(θ)；> 0 才在棱柱前侧
-        let facing = cos(theta * .pi / 180)
+        let rad = theta * .pi / 180
+        let z = R * cos(rad)
+        let x = R * sin(rad)
+        let depthScale = D / (D - z)
+        // 角点在棱柱前侧才画；cos > 0 即朝观察者
+        let facing = cos(rad)
         return Capsule()
             .fill(XPalette.textTertiary.opacity(0.55))
-            // 高度撑满：原型里棱高 = H_PRISM×1.02 ≈ 面高，
-            // 这里让它在 ZStack 里吃满可用高度，与面同高。
             .frame(width: 5)
-            .rotation3DEffect(.degrees(theta), axis: (x: 0, y: 1, z: 0),
-                              anchor: .center,
-                              anchorZ: -D,
-                              perspective: prismPerspective)
+            .scaleEffect(depthScale)
+            .offset(x: x)
             .frame(maxHeight: .infinity)
             .opacity(facing > 0 ? min(1, facing * 1.6) : 0)
             .accessibilityHidden(true)
