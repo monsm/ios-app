@@ -41,6 +41,7 @@ struct DevicePage: View {
             VStack(spacing: XSpace.l) {
                 identityCard.xScrollLift()
                 attentionCard.xScrollLift()
+                capacityCard
                 metricsRow.xScrollLift()
                 detailSection.xScrollLift()
                 recentSection.xScrollLift()
@@ -218,6 +219,78 @@ struct DevicePage: View {
     // ═══════════════════════════════════════════════════════
     // MARK: - ③ 关键指标行
     // ═══════════════════════════════════════════════════════
+
+    // ── 容量占用格子表 ──
+    //
+    // 协议真实返回 pwdInfoCapacity / pwdStock / fpInfoCapacity / fpStock
+    // (StatusParser 0x25/0x28)。这是全 App 唯一揭示"锁的物理限额"的数据，
+    // 原来只显示成两个数字 —— 用户看不出"还剩几个坑位"。
+    //
+    // 格子表把容量变成可数的东西:
+    //   已占用 → 实色格；剩余 → 凹陷虚线格
+    //   一行小字: "还可录 3 枚指纹"
+    private var capacityCard: some View {
+        let pwdCap = snap?.pwdInfoCapacity ?? 0
+        let fpCap = snap?.fpInfoCapacity ?? 0
+        let pwdLeft = snap?.pwdStock ?? 0
+        let fpLeft = snap?.fpStock ?? 0
+        // 容量未知（0）时整卡隐去 —— 不画一个空壳
+        return Group {
+            if pwdCap > 0 || fpCap > 0 {
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("锁内容量")
+                        if pwdCap > 0 {
+                            capacityRow(label: "密码", cap: pwdCap, left: pwdLeft, icon: "number.square")
+                        }
+                        if fpCap > 0 {
+                            capacityRow(label: "指纹", cap: fpCap, left: fpLeft, icon: "touchid")
+                        }
+                    }
+                }
+                .xScrollLift()
+            }
+        }
+    }
+
+    /// 一行容量格子 + 结论文字
+    private func capacityRow(label: String, cap: Int, left: Int, icon: String) -> some View {
+        let used = max(0, cap - left)
+        let tone: Color = left == 0 ? XPalette.danger
+            : (left <= 1 ? XPalette.warn : XPalette.textSub)
+        return VStack(alignment: .leading, spacing: XSpace.xs) {
+            HStack(spacing: XSpace.s) {
+                Label(label, systemImage: icon)
+                    .xFont(.caption, weight: .medium)
+                    .foregroundStyle(XPalette.textSub)
+                Spacer(minLength: 0)
+                Text("\(used) / \(cap)")
+                    .xFont(.caption.monospacedDigit())
+                    .foregroundStyle(XPalette.textTertiary)
+            }
+            // 格子条：已占用实色，剩余凹陷
+            HStack(spacing: 3) {
+                ForEach(0..<cap, id: \.self) { i in
+                    RoundedRectangle(cornerRadius: 2, style: .continuous)
+                        .fill(i < used ? XPalette.accent.opacity(0.75) : XPalette.surfaceAlt)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 14)
+                        .overlay {
+                            if i >= used {
+                                RoundedRectangle(cornerRadius: 2, style: .continuous)
+                                    .strokeBorder(XPalette.hairline, style: StrokeStyle(lineWidth: 1, dash: [2, 2]))
+                            }
+                        }
+                }
+            }
+            .frame(height: 14)
+            Text(left == 0 ? "已满 —— 新增前请先删除一条" : "还可录 " + String(left) + (label == "指纹" ? " 枚" : " 条"))
+                .xFont(.caption2)
+                .foregroundStyle(tone)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(label + " 已用 " + String(used) + " 共 " + String(cap) + ", " + (left == 0 ? "已满" : "剩余 " + String(left)))
+    }
 
     private var metricsRow: some View {
         HStack(spacing: XSpace.s) {
