@@ -368,6 +368,25 @@ struct SecurityPeekView: View {
     }
 
     /// 卡片内的小标题
+    /// 防窥状态摘要：三态而不是一句标语
+    private var peekSummary: (glyph: String, tone: Color, title: String, detail: String) {
+        let n = SecurityPeekView.activeCount()
+        let total = PeekItem.all.count
+        if n == 0 {
+            return ("exclamationmark.shield", XPalette.warn,
+                    "防窥全部关闭",
+                    "轻点下方任意一项即可开启。至少建议打开「切后台即糊」与「常驻水印」。")
+        }
+        if n >= total {
+            return ("checkmark.shield.fill", XPalette.ok,
+                    "防窥全部开启",
+                    "\(total) 项防护同时生效，切后台、分享、访客通道都有遮蔽。")
+        }
+        return ("shield.lefthalf.filled", XPalette.accentText,
+                "已启用 \(n) / \(total) 项防窥",
+                "还有 \(total - n) 项未开启，轻点下方对应一行即可补上。")
+    }
+
     private func secLabel(_ text: String) -> some View {
         Text(text)
             .xFont(.caption, weight: .semibold)
@@ -545,6 +564,7 @@ struct SecurityAuditView: View {
                             if let m = verifyMsg {
                                 HStack(spacing: XSpace.xs) {
                                     Image(systemName: m.contains("完好") ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
+                                        .accessibilityHidden(true)
                                         .font(.system(size: XIcon.sm, weight: .semibold))
                                         .foregroundStyle(m.contains("完好") ? XPalette.ok : XPalette.danger)
                                     Text(m)
@@ -674,6 +694,7 @@ struct SecurityAuditView: View {
                                 ForEach(recent) { it in
                                     HStack(spacing: XSpace.xs) {
                                         Image(systemName: sensitiveIcon(it.kind))
+                                            .accessibilityHidden(true)
                                             .font(.system(size: XIcon.xs, weight: .semibold))
                                             .foregroundStyle(XPalette.warn)
                                         Text("\(it.kind) · \(it.target)")
@@ -702,6 +723,7 @@ struct SecurityAuditView: View {
                                 ForEach(intents) { it in
                                     HStack(spacing: XSpace.xs) {
                                         Image(systemName: "command")
+                                            .accessibilityHidden(true)
                                             .font(.system(size: XIcon.xs, weight: .semibold))
                                             .foregroundStyle(XPalette.accentText)
                                         Text(String(it.kind.dropFirst("intent·".count)) + " · " + it.target)
@@ -768,6 +790,7 @@ struct SecurityAuditView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: XSpace.xs) {
                 Image(systemName: e.cat == .door ? "door.open.fill" : "gearshape.fill")
+                    .accessibilityHidden(true)
                     .font(.system(size: XIcon.xs, weight: .semibold))
                     .foregroundStyle(e.duress ? XPalette.warn : XPalette.accentText)
                 Text("\(e.action) \(e.target)")
@@ -778,6 +801,7 @@ struct SecurityAuditView: View {
                     .xFont(.caption)
                     .foregroundStyle(XPalette.textSub)
                 Image(systemName: "chevron.down")
+                    .accessibilityHidden(true)
                     .font(.system(size: XIcon.xs, weight: .semibold))
                     .foregroundStyle(XPalette.textSub)
                     .rotationEffect(.degrees(expanded == e.id ? 180 : 0))
@@ -819,6 +843,7 @@ struct SecurityAuditView: View {
                     }
                     HStack(spacing: XSpace.xs) {
                         Image(systemName: "person.crop.circle")
+                            .accessibilityHidden(true)
                             .font(.system(size: XIcon.xs, weight: .medium))
                             .foregroundStyle(XPalette.textSub)
                         Text("操作者: \(e.operator_)")
@@ -897,6 +922,7 @@ struct SecurityDestroyView: View {
                             secLabel("备份闸")
                             HStack(spacing: XSpace.s) {
                                 Image(systemName: DestroyKit.backupGatePass ? "checkmark.shield.fill" : "exclamationmark.shield")
+                                    .accessibilityHidden(true)
                                     .font(.system(size: XIcon.sm, weight: .semibold))
                                     .foregroundStyle(DestroyKit.backupGatePass ? XPalette.ok : XPalette.danger)
                                 VStack(alignment: .leading, spacing: 2) {
@@ -967,6 +993,7 @@ struct SecurityDestroyView: View {
                                 if let msg = residueMsg {
                                     HStack(spacing: XSpace.xs) {
                                         Image(systemName: msg.contains("零残留") ? "checkmark.seal.fill" : "magnifyingglass")
+                                            .accessibilityHidden(true)
                                             .font(.system(size: XIcon.sm, weight: .semibold))
                                             .foregroundStyle(msg.contains("零残留") ? XPalette.ok : XPalette.danger)
                                         Text(msg)
@@ -1008,6 +1035,7 @@ struct SecurityDestroyView: View {
                                 ForEach(members) { m in
                                     HStack(spacing: XSpace.s) {
                                         Image(systemName: "person.crop.circle")
+                                            .accessibilityHidden(true)
                                             .font(.system(size: XIcon.sm, weight: .medium))
                                             .foregroundStyle(memberColor(m))
                                         VStack(alignment: .leading, spacing: 2) {
@@ -1133,6 +1161,7 @@ struct SecurityDestroyView: View {
         if !hit.isEmpty {
             HStack(spacing: XSpace.xs) {
                 Image(systemName: "exclamationmark.bubble")
+                    .accessibilityHidden(true)
                     .font(.system(size: XIcon.sm, weight: .semibold))
                     .foregroundStyle(XPalette.warn)
                 Text("示例: 口令 1234 已出现在 " + hit.joined(separator: "、"))
@@ -1359,23 +1388,34 @@ struct PrivacyDashboard: View {
 
             ScrollView {
                 VStack(spacing: XSpace.l) {
+            // ── 状态摘要 ──
+            //
+            // 原来是一句固定文案「当前启用 N 项防窥」+ 一串功能名词，
+            // 不管 0 项还是全开都长一个样 —— 那不是状态，那是标语。
+            //
+            // 现在按启用数分三态：一项没开 / 部分开启 / 全部开启，
+            // 各给不同的语气色和下一步指引。配置页的"空状态"就是
+            // "一项都没开"，用户需要知道这件事有风险、以及怎么开。
             XPanel(kind: .group) {
-                VStack(alignment: .leading, spacing: XSpace.m) {
                 HStack(spacing: XSpace.s) {
-                    Image(systemName: "eye.slash")
+                    Image(systemName: peekSummary.glyph)
                         .font(.system(size: XIcon.lg, weight: .medium))
-                        .foregroundStyle(XPalette.accentText)
+                        .foregroundStyle(peekSummary.tone)
+                        .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("当前启用 \(SecurityPeekView.activeCount()) 项防窥")
+                        Text(peekSummary.title)
                             .xFont(.subheadline, weight: .semibold)
-                        Text("遮蔽 / 背景 / 限时 / 挡片 / 分享 / 访客 / 水印 全状态一目了然")
+                            .foregroundStyle(XPalette.text)
+                        Text(peekSummary.detail)
                             .xFont(.footnote)
                             .foregroundStyle(XPalette.textSub)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
                 .frame(minHeight: XHit.min)
-                }
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(peekSummary.title + "。" + peekSummary.detail)
             XPanel(kind: .group) {
                 VStack(alignment: .leading, spacing: XSpace.m) {
                     secLabel("逐项状态 (轻点即切换)")
@@ -1384,6 +1424,7 @@ struct PrivacyDashboard: View {
                         Image(systemName: item.on ? "checkmark.circle.fill" : "circle")
                             .font(.system(size: XIcon.sm, weight: .semibold))
                             .foregroundStyle(item.on ? XPalette.ok : XPalette.textSub)
+                            .accessibilityHidden(true)
                         Text(item.name)
                             .xFont(.subheadline)
                         Spacer()
@@ -1393,16 +1434,22 @@ struct PrivacyDashboard: View {
                     }
                     .frame(minHeight: XHit.min)
                     .contentShape(Rectangle())
+                    // ═══ 这一行必须对 VoiceOver 可用 ═══
+                    //
+                    // 原来只有 onTapGesture：视觉上能点，但 VoiceOver 用户既听不出
+                    // 这是个开关、也点不动 —— 等于安全设置对一部分人直接不可达。
+                    // 一个"只能靠手势"的自定义控件是无障碍缺陷，不是风格选择。
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(item.name)
+                    .accessibilityValue(item.on ? "已启用" : "未启用")
+                    .accessibilityAddTraits(.isButton)
+                    .accessibilityAction {
+                        // 与点按走完全同一条写侧，不另开分支
+                        togglePeek(item, app: app, center: center)
+                        XHaptics.tick.impactOccurred()
+                    }
                     .onTapGesture {
-                        // 377: 这一格翻的是同一枚访客通道键, 必须走 setGuestChannel 那唯一一条写侧 ——
-                        // 只落键的话仪表盘就留下一条"翻了开关但主 TabView 没收"的侧门 (与防窥页那枚 Toggle 不同轨)
-                        if item.key == SecKey.guestOn {
-                            setGuestChannel(!item.on, app: app)
-                        } else {
-                            DB.store.set(item.key, !item.on)
-                        }
-                        SecTick.bump()
-                        self.center.bump()
+                        togglePeek(item, app: app, center: center)
                     }
                 }
                 }
@@ -1437,6 +1484,24 @@ struct PrivacyDashboard: View {
             .foregroundStyle(XPalette.textTertiary)
             .textCase(.uppercase)
             .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// 逐项开关的唯一写侧。
+    ///
+    /// 点按手势与 VoiceOver 的 accessibilityAction 都调它 —— 两条输入路径
+    /// 必须落到同一份实现，否则日后改了一边就会出现"看得见的人有效、
+    /// 用读屏的人无效"这种最难发现的错。
+    ///
+    /// 377 备注: 访客通道这一格翻的是同一枚键，必须走 setGuestChannel，
+    /// 只落键会留下"翻了开关但主 TabView 没收"的侧门。
+    private func togglePeek(_ item: PeekItem, app: AppState, center: SecTickCenter) {
+        if item.key == SecKey.guestOn {
+            setGuestChannel(!item.on, app: app)
+        } else {
+            DB.store.set(item.key, !item.on)
+        }
+        SecTick.bump()
+        center.bump()
     }
 }
 

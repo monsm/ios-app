@@ -840,6 +840,7 @@ struct MemberArchivedView: View {
                         XPanel(kind: .group) {
                             VStack(spacing: XSpace.s) {
                                 Image(systemName: "archivebox")
+                                    .accessibilityHidden(true)
                                     .font(.system(size: XMetric.decorIcon(44), weight: .light))
                                     .foregroundStyle(XPalette.textTertiary)
                                     .accessibilityHidden(true)
