@@ -263,6 +263,14 @@ struct HomeConsole: View {
         return n > 0 ? n : nil
     }
 
+    /// 未处理告警横跨几天。
+    /// 只在确实有告警时才去数（alarmCount 为 nil 时本值不参与渲染）。
+    private var alarmSpanDays: Int {
+        let macs = DB.keychains().map { $0.mac }
+        guard !macs.isEmpty else { return 0 }
+        return RecordSearch.unhandledAlarmDays(macs: macs).count
+    }
+
     private func noticeRow(_ n: CriticalNotice) -> some View {
         let isAlarm: Bool
         let glyph: String
@@ -272,7 +280,11 @@ struct HomeConsole: View {
         case .alarms(let c):
             isAlarm = true
             glyph = "exclamationmark.shield.fill"
-            text = "有 \(c) 条告警还没处理"
+            // 只说"有 N 条"信息量不够：3 天各 1 条和 1 天 3 条是完全不同的处境。
+            // 补上涉及天数，用户才知道这是"某天出了点事"还是"一直在被忽略"。
+            text = alarmSpanDays > 1
+                ? "有 \(c) 条告警还没处理 · 跨 \(alarmSpanDays) 天"
+                : "有 \(c) 条告警还没处理"
             tone = XPalette.danger
         case .lowBattery(let p):
             isAlarm = false
