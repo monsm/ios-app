@@ -581,6 +581,7 @@ struct XFlowLayout: Layout {
 // MARK: - 文本与开关语法 (X 系统自带, 2026-10-21 从 VariantGrammar 迁出)
 // ═══════════════════════════════════════════════════════════
 
+@MainActor
 extension View {
     /// 行内排版的**唯一入口**。
     ///
@@ -661,6 +662,7 @@ enum XPlateShape {
     }
 }
 
+@MainActor
 extension View {
     /// 底衬 (替代 variantPlate)
     func xPlate(_ style: Color, _ shape: XPlateShape, edge: Color? = nil) -> some View {
@@ -745,6 +747,7 @@ struct XDestinedModifier: ViewModifier {
     func body(content: Content) -> some View { content }
 }
 
+@MainActor
 extension View {
     func destined(_ d: Destination) -> some View {
         modifier(XDestinedModifier(destination: d))
@@ -779,6 +782,7 @@ struct XStaggeredAppear: ViewModifier {
     }
 }
 
+@MainActor
 extension View {
     /// 入场编排: index 决定出场次序 (0 起, 每档 50ms)
     func staggered(_ index: Int) -> some View {
