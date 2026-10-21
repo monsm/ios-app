@@ -69,6 +69,16 @@ struct AddLockPage: View {
                 }
             }
         }
+        // ═══ 配对中不许下滑关闭 ═══
+        //
+        // HIG modality：「弹层任务要简单、短」。而配对是一个**会真的写设备**的
+        // 多步任务：pair() 之后门锁端已经换过密钥，本机这边却只有 @State 里的 pairedKC。
+        // 下滑关闭不会走 rollback —— 结果是：锁被配上了、App 里没有记录，
+        // 用户既控制不了它，重新配对还可能被「已经添加过」挡住。
+        //
+        // 所以：配对 / 命名这两个"已开始改设备状态"的阶段禁止交互式关闭；
+        // 想让用户退出，引导走「关闭」按钮（它会先 rollback）。
+        .interactiveDismissDisabled(flow == .pairing || flow == .naming)
         .navigationTitle("添加设备")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -104,7 +114,12 @@ struct AddLockPage: View {
                 scanTask = Task { await scan() }
             }
         }
-        .onDisappear { scanTask?.cancel() }
+        .onDisappear {
+            scanTask?.cancel()
+            // 兜底：即使因为别的原因（被系统回收、外层容器被移除）离开了，
+            // 只要还处在"已开始改设备状态"的阶段，就把本机这边的残留清掉。
+            if flow == .pairing || flow == .naming { rollback(reason: "") }
+        }
     }
 
     // ═══════════════════════════════════════════════════════

@@ -520,6 +520,8 @@ struct ExportWizardView: View {
                 }
             }
             .padding(.horizontal, XSpace.gutter)
+            // 写入进行中不允许下滑关闭。
+            .interactiveDismissDisabled(busy)
             .navigationTitle(stepTitles[step])
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("取消") { dismiss() } } }
         }
@@ -945,6 +947,8 @@ struct RestoreWizardView: View {
                 Spacer(minLength: 0)
             }
             .padding(XSpace.l)
+            // 写入进行中不允许下滑关闭。
+            .interactiveDismissDisabled(busy)
             .navigationTitle("恢复向导")
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("关闭") { dismiss() } } }
         }

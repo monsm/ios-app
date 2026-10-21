@@ -58,6 +58,9 @@ struct AddKeyPage: View {
                 .padding(.vertical, XSpace.l)
             }
         }
+        // 写入进行中不允许下滑关闭：操作可能已经发到设备，
+        // 关掉会让用户拿不到结果，也看不到失败原因。
+        .interactiveDismissDisabled(busy)
         .navigationTitle("添加密码")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { focused = true }

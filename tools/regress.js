@@ -80,6 +80,10 @@ const checks = [
   ['空柱有可见基线', () => inCode('HomeConsole.swift', 'return XPalette.hairline')],
   ['录入成功环有降级', () => inCode('AddFingerPage.swift', 'reduceMotion ? .opacity')],
   ['外观页不是 StudioPage', () => !inCode('ManagerFace.swift', 'case .appearance:     StudioPage()')],
+  ['配对中禁止下滑关闭', () => inCode('AddLockPage.swift', 'interactiveDismissDisabled(flow == .pairing || flow == .naming)')],
+  ['关掉弹层也会回滚配对', () => /onDisappear \{[\s\S]{0,240}?rollback\(reason: ""\)/.test(CODE.get('AddLockPage.swift') || '')],
+  ['写入中禁止下滑关闭（>=4 个视图）', () =>
+    FILES.filter(f => (CODE.get(path.basename(f))||'').includes('interactiveDismissDisabled(busy)')).length >= 4],
 ];
 
 let pass = 0;

@@ -534,6 +534,8 @@ struct TempCodeStudio: View {
         NavigationStack {
             if result == nil { addForm } else { doneCard }
         }
+        // 写入进行中不允许下滑关闭。
+        .interactiveDismissDisabled(busy)
         .navigationTitle(result != nil && MemberHub.elderMode ? "口述卡" : "临时码")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("关闭") { dismiss() } } }
@@ -1106,6 +1108,8 @@ struct FpStudio: View {
                 .axBottomAnchor()   // 870
             }
         }
+        // 写入进行中不允许下滑关闭。
+        .interactiveDismissDisabled(busy)
         .navigationTitle("录入指纹")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("关闭") { dismiss() } } }
