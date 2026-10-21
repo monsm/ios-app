@@ -134,21 +134,17 @@ struct DoorPrism<B: View, D: View, F: View>: View {
             prismFace(.d, width: width)
             prismFace(.f, width: width)
         }
+        // ═══ 留边：让画布在棱柱四周可见 ═══
+        //
+        // 原型里棱柱只占视口 67%×70%（相机 5.2 / 半径 1.0 / fov 32°），
+        // 四周是背景。铺满全屏的话没有任何轮廓可看，3D 就白做了。
+        // 这里留 4% 水平、3% 垂直 —— 比原型的 16% 保守，
+        // 因为 Swift 版的面是真实页面（底部导航/工具栏要贴边），
+        // 裁太多会把页面布局挤坏。
+        .padding(.horizontal, width * 0.04)
+        .padding(.vertical, width * 0.03)
         // ── 侧面呼吸: 缩放由**当前朝向**推导 ──
         .scaleEffect(breathScale)
-        // ═══════════════════════════════════════════════════════════
-        // 这里原来还有一行 .projectionEffect(containerProjection)。
-        // **它是「黑屏 + 不立体」的根因，已删除。**
-        //
-        // 原因: ProjectionTransform(CATransform3D) 只取矩阵的 3×3 部分，
-        // 而透视项 m34 在**第 4 列**——直接被丢掉。剩下的 3×3 是一个
-        // 绕 Y 轴的旋转矩阵，被当成 2D 投影变换去作用时，
-        // 第三列（sin, 0, cos）变成了「w 的分母系数」，
-        // 于是整个视图被逐像素除以一个随 x 变化的量 ——
-        // 结果是扭曲/移出屏幕，表现出来就是黑屏。
-        //
-        // 真正的 3D 只能靠每个面自己的 rotation3DEffect（见 prismFace）。
-        // ═══════════════════════════════════════════════════════════
     }
 
 
@@ -190,12 +186,24 @@ struct DoorPrism<B: View, D: View, F: View>: View {
     /// anchorZ 这个参数全仓此前从未用过，已由探针区块 6（run #475）验证签名。
     private func prismFace(_ f: DoorFace, width: CGFloat) -> some View {
         // 面的总朝向 = 它自己在棱柱上的角度 + 容器整体转角
-        //
-        // 原来只传了 FaceAngle.current(f)，容器转角靠 projectionEffect 施加。
-        // projectionEffect 删掉之后，容器转角必须**合并到这里**，
-        // 否则面根本不会随着拖拽/翻页转动 —— 这正是「切不动」的一半原因。
         let theta = FaceAngle.current(f) + containerAngle
         return faceView(f)
+            // ═══ 让它读成「一块立起来的板」═══
+            //
+            // 原型里每个面是 1.42×2.1 的平面，四周有金属框、
+            // 相机 5.2 单位外看 → 棱柱只占视口 67%×70%，
+            // 四周留出背景，所以一眼就能看出"这是一块板在转"。
+            // 而 Swift 版每个面铺满全屏 —— 再正确的 3D 变换也看不出来，
+            // 因为屏幕上没有任何「棱柱的轮廓」。
+            //
+            // 这里给每个面圆角裁切 + 玻璃描边 + 投影，
+            // 配合 prismBody 的留边，做出"板浮在画布上"的读法。
+            .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 30, style: .continuous)
+                    .strokeBorder(XPalette.hairline, lineWidth: 1)
+            }
+            .shadow(color: .black.opacity(0.30), radius: 22, x: 0, y: 16)
             // 绕「中心后方 apothem」的轴旋转 — 同时完成朝向与定位
             .rotation3DEffect(.degrees(theta), axis: (x: 0, y: 1, z: 0),
                               anchor: .center,

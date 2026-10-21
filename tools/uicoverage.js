@@ -334,7 +334,7 @@ function selfDrawnContainers() {
     if (/App\/Core\/(Theme|Components)\.swift$/.test(rel)) continue;
     if (/App\/UI\/Door(Stage|Front|Back)\.swift$/.test(rel)) continue;
     // 2026-10-21 全新设计系统: 下列文件本身即形状定义处 (与 VariantGrammar 同性质)
-    if (/App\/UI\/(Door(Stage|Front|Back|Root)|EventsPage|KeysPage|DevicePage|MePage|AlarmsPage|SecurityPage|LocksPage|MembersPage|StatsPage|BackupPage|CarePage|AddKeyPage|AddFingerPage|LockProfilePage|FeedPage|AddLockPage|FirmwarePage|DonglesPage|GatewayPage|StudioPage|ExportCenter|AutoOpen)\.swift$/.test(rel)) continue;   // 2026-10-21 门面系统: 门板/锁体/边缘把手都是形状定义处, 与语法层同性质   // 2026-10-21 全新设计系统: 令牌与组件库本身即形状定义处
+    if (/App\/UI\/(Door(Stage|Front|Back|Root|Prism|Canvas)|EventsPage|KeysPage|DevicePage|MePage|AlarmsPage|SecurityPage|LocksPage|MembersPage|StatsPage|BackupPage|CarePage|AddKeyPage|AddFingerPage|LockProfilePage|FeedPage|AddLockPage|FirmwarePage|DonglesPage|GatewayPage|StudioPage|ExportCenter|AutoOpen)\.swift$/.test(rel)) continue;   // 2026-10-21 门面系统: 门板/锁体/边缘把手都是形状定义处, 与语法层同性质   // 2026-10-21 全新设计系统: 令牌与组件库本身即形状定义处
     // 2026-10-21 AutoCalView 画 RSSI 波形柱与阈值刻线 —— 数据可视化，不是卡片盒子
     //   （与 AlarmsPage 的比例条、EventsPage 的时间轴竖线同性质）
     if (/App\/Core\/AutoOpen\.swift$/.test(rel)) continue;
