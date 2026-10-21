@@ -55,7 +55,12 @@ enum XPalette {
     /// 次级文字 (对比度 ≥4.5:1)
     static var textSub: Color { Color.adaptive(0x5A5A66, 0xA0A0AC) }
     /// 三级文字 (仅用于 ≥15pt)
-    static var textTertiary: Color { Color.adaptive(0x72727C, 0x888892) }
+    // 浅色分支的 textTertiary / ok / warn 比原值更深一档：
+    // 原来 0x72727C 在 surfaceSunken 上只有 3.97:1，**满色**就低于正文的 4.5:1
+    //（不是叠透明度的问题，是令牌本身不达标）。
+    // 现 0x666670 / 0x197748 / 0xA94E08 在四种背景上最差分别为 4.73 / 4.64 / 4.63。
+    // 深色分支不动 —— 那边原值最差 4.68，本来就够。
+    static var textTertiary: Color { Color.adaptive(0x666670, 0x888892) }
 
     // ── 强调: 铜 (锁芯黄铜), 可被 kf_accent 覆盖 ──
     /// 六套可选强调色。空键 = 默认铜。
@@ -90,8 +95,8 @@ enum XPalette {
     static var kindOtp: Color { Color.adaptive(0x5B3FA0, 0x8060C8) }
 
     // ── 语义 ──
-    static var ok: Color { Color.adaptive(0x1B7F4D, 0x3DD68C) }
-    static var warn: Color { Color.adaptive(0xB45309, 0xF5A524) }
+    static var ok: Color { Color.adaptive(0x197748, 0x3DD68C) }
+    static var warn: Color { Color.adaptive(0xA94E08, 0xF5A524) }
     static var danger: Color { Color.adaptive(0xB3261E, 0xFF6B6B) }
 
 }
