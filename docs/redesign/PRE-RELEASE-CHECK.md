@@ -164,3 +164,49 @@
 第二版**剔除整行注释**再匹配，两条都通过了。
 
 **又一次同一个教训**：断言写错方向，会让我去"修"正确的东西。
+
+---
+
+# 追加：对照 Apple HIG 的条款审计（2026-10-22）
+
+用 `apple-design` 技能里的 124 页 HIG 原文，逐条对照本 App，找出**属于明确条款**的问题。
+
+## 查了三条可机械验证的
+
+### 1. `color.md › Best practices`
+> "Avoid relying **solely on color** to differentiate between objects, indicate interactivity, or communicate essential information."
+
+扫了全 App 所有 `XPalette.ok/warn/danger/accentText` 的填充与外框，找「前后 6 行内既无文字也无图标」的纯色块：15 处。
+逐个看上下文，**全部合规**：
+
+| 位置 | 实际用途 |
+|---|---|
+| `FeedPage:120` 堆叠条 | 装饰条，已 `.accessibilityHidden(true)`，条数另有文字统计 |
+| `GatewayPage:181` 步骤点 | 同色点，颜色不承担区分职责；步骤文字在旁边 |
+| `SecurityCenterView:1069` | 是**文字按钮**，文字本身承载语义，颜色只是强调 |
+| 其余 `accentText` | 都是链接/图标，语义由文字或形状承担 |
+
+### 2. `feedback.md › Best practices`
+> "Make sure all feedback is accessible. When you use multiple ways to provide feedback... color, text, sound, and haptics"
+
+本 App 的 `XHaptics` 覆盖：开锁成功/失败、录入每按一次、保存、删除、长按释放……关键动作都有触觉通道，且都配了 toast 或状态文字。
+
+### 3. `accessibility.md`（装饰图标应隐藏，功能性图标应有标签）
+全 App **154 个 `Image(systemName:)`**，其中在按钮内、且 16 行内既无 `accessibilityLabel` 也无 `accessibilityHidden` 也无 `Text` 的：**1 处**。
+
+核实那 1 处（`CredentialStudio:1128` 铃铛）→ 它其实是 `Label { Text(...) } icon: { Image(...) }`，
+**Label 会自动合并图标与文字朗读**，图标是装饰。**实际缺口 0 处。**
+
+## 结论
+
+这三条 HIG 明确条款，本 App **已经合规**。
+
+这一轮没有产出代码改动 —— 但这是**有价值的负结果**：
+它说明前面几轮在无障碍、对比度、反馈通道上做的功课是有效的，
+而不是"改了 40 轮但无一处对得上标准"。
+
+## 下次审计该查别的条款
+
+这三条已覆盖，重复查是浪费。还没对照过的：`motion.md`（转场时长与曲线）、
+`lists-and-tables.md`（行高与可点区域）、`modals.md`/`sheets.md`（何时用弹层还是推入）、
+`onboarding.md`（首次使用）。
