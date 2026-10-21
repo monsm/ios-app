@@ -750,3 +750,38 @@ extension View {
         modifier(XDestinedModifier(destination: d))
     }
 }
+
+
+// ═══════════════════════════════════════════════════════════
+// MARK: - 入场编排 (2026-10-21 从已删的 DesignSystem.swift 迁入)
+// ═══════════════════════════════════════════════════════════
+
+/// 首屏卡片按序浮起 (每次会话只播一次): 纯 transform/opacity, stagger 50ms;
+/// reduceMotion 下退化为纯淡入。惊喜预算只花在"罕见时刻"(应用启动), 高频路径不动。
+struct XStaggeredAppear: ViewModifier {
+    let index: Int
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var shown = false
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(shown ? 1 : 0)
+            .offset(y: shown || reduceMotion ? 0 : 14)
+            .onAppear {
+                guard !shown else { return }
+                let delay = Double(index) * 0.05
+                if reduceMotion {
+                    withAnimation(.easeOut(duration: 0.2).delay(delay)) { shown = true }
+                } else {
+                    withAnimation(.spring(response: 0.45, dampingFraction: 0.9).delay(delay)) { shown = true }
+                }
+            }
+    }
+}
+
+extension View {
+    /// 入场编排: index 决定出场次序 (0 起, 每档 50ms)
+    func staggered(_ index: Int) -> some View {
+        modifier(XStaggeredAppear(index: index))
+    }
+}
