@@ -1279,10 +1279,14 @@ struct XScrollLift: ViewModifier {
         if reduceMotion {
             content
         } else {
-            content.scrollTransition(.interactive, axis: .vertical) { effect in
+            // scrollTransition 的闭包签名是 (content, phase) -> some VisualEffect ——
+            // 两个参数, 第二个 ScrollTransitionPhase 才有 .value (-1…0…1)。
+            // 原来写成单参数 `effect in effect.scaleEffect(... effect.value)` ——
+            // effect 是 EmptyVisualEffect, 根本没有 .value, 编译直接失败。
+            content.scrollTransition(.interactive, axis: .vertical) { effect, phase in
                 effect
-                    .scaleEffect(1 - 0.03 * abs(effect.value))
-                    .opacity(1 - 0.28 * abs(effect.value))
+                    .scaleEffect(1 - 0.03 * abs(phase.value))
+                    .opacity(1 - 0.28 * abs(phase.value))
             }
         }
     }
