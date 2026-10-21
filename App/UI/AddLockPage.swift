@@ -493,6 +493,12 @@ struct AddLockPage: View {
     private func scan() async {
         guard !scanning, flow == .scan else { return }
         scanning = true
+        // defer 而不是在函数末尾写一行：这一层里有 Task.isCancelled 的 break
+        // 和 sleep 的 catch-break，将来再加一个提前 return 就可能漏掉复位。
+        defer {
+            scanning = false
+            BLEService.shared.stopScan()
+        }
         pairError = ""
         devices.removeAll()
         do {
@@ -512,8 +518,6 @@ struct AddLockPage: View {
         } catch {
             app.showToast(ErrorText.human(error))
         }
-        BLEService.shared.stopScan()
-        scanning = false
     }
 
     private func scoreAdv(_ d: BLEAdvDevice) -> Int {

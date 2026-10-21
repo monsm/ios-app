@@ -536,3 +536,39 @@ Button(syncing ? "同步中…" : "从门锁同步日志") { syncLogs() }
 
 扫了全仓菜单里的「进行中」类文案：**只有这一处**。
 其余异步反馈都在正文里，用户看得见。
+
+---
+
+# 追加：失败后界面会不会卡住（2026-10-22）
+
+查全仓 24 处「忙碌标志置 true」有没有配对的复位。
+
+## 结论：都能复位，但两处的写法经不起将来的一次改动
+
+| 位置 | 原来 | 风险 |
+|---|---|---|
+| `BackupStudio.exportNow()` | 在 2 个出口各手写一次 `busy=false; exporting=false` | 加一个提前 `return` 就永久卡住 |
+| `AddLockPage.scan()` | 函数末尾写一行 `scanning=false` | 同上（它内部已有 2 个 `break` 和 1 个 `catch`）|
+
+两处都改成 `defer { … = false }`：
+
+```swift
+Task {
+    defer { busy = false; exporting = false }
+    ...
+    if written.isEmpty {
+        app.showToast("导出失败: 没有写出任何文件")
+        return        // defer 会复位
+    }
+```
+
+**这不是 bug 修复，是把「记得复位」变成「不可能忘记」。**
+
+## 一个合理例外
+
+`ExportCenter` 的 `running` 在 `Task` + `MainActor.run` 里复位，且函数开头是
+`guard let self else { return }` —— self 已释放时标志无处可卡，属于正确写法，保留。
+
+## 规矩
+
+忙碌标志一律用 `defer` 复位。已进回归检查。

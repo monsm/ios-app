@@ -825,6 +825,16 @@ struct ExportWizardView: View {
         let name = BackupStudio.fileName()
         let crypt = pw.isEmpty ? nil : pw
         Task {
+            // ═══ 用 defer 复位，而不是在每个出口手写一遍 ═══
+            //
+            // 原来 863/885 两处各写了一次 busy=false + exporting=false。
+            // 两条路径都覆盖到了，但这种写法**经不起将来的一次提前 return** ——
+            // 加一行 return 而漏写复位，导出按钮就永久不可点，用户只能杀进程。
+            // defer 让"离开这个作用域一定复位"成为结构保证，而不是记性问题。
+            defer {
+                busy = false
+                exporting = false
+            }
             if cleanFirst { _ = BackupStudio.cleanExpired() }
             // 439 阶段 1 (真实工作): 组包 — 410 分卷与加密都发生在这里
             let vols = useVolumes ? BackupStudio.volumes(zones: zones, encrypt: crypt) : nil
@@ -860,10 +870,8 @@ struct ExportWizardView: View {
                 try? await Task.sleep(for: .milliseconds(80))
             }
             if written.isEmpty {
-                exporting = false
-                busy = false
                 app.showToast("导出失败: 没有写出任何文件")
-                return
+                return        // defer 会复位
             }
             doneURLs = written
             doneText = vols == nil
@@ -882,9 +890,8 @@ struct ExportWizardView: View {
             app.evaluateAchievements()
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             XHaptics.tick.impactOccurred()
-            exporting = false
-            busy = false
             withAnimation(XMotion.standard) { step = 3 }
+            // busy / exporting 由上面的 defer 统一复位
         }
     }
 

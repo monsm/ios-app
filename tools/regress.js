@@ -375,6 +375,27 @@ const checks = [
     const e = CODE.get('EventsPage.swift') || '';
     return e.includes('正在从门锁同步') && e.includes('ProgressView().controlSize(.small)');
   }],
+  ['忙碌标志用 defer 复位', () => {
+    // 手工在每个出口写一遍 flag = false，经不起将来的一次提前 return ——
+    // 漏一次，按钮就永久不可点，用户只能杀进程。
+    // defer 让"离开作用域一定复位"成为结构保证。
+    // 例外：ExportCenter 的状态在 Task + MainActor.run 里复位，
+    // 且 self 已释放时标志无处可卡，属于合理写法。
+    const allow = ['ExportCenter.swift'];
+    let bad = 0;
+    for (const f of FILES) {
+      const base = path.basename(f);
+      if (allow.includes(base)) continue;
+      const lines = (CODE.get(base) || '').split('\n');
+      lines.forEach((t, i) => {
+        const m = t.match(/^\s*(\w*(?:busy|syncing|running|loading|working|saving|exporting|scanning)\w*)\s*=\s*true/);
+        if (!m) return;
+        const win = lines.slice(i, i + 40).join('\n');
+        if (!new RegExp('defer\\s*\\{[^}]*' + m[1] + '\\s*=\\s*false').test(win)) bad++;
+      });
+    }
+    return bad === 0;
+  }],
 ];
 
 let pass = 0;
