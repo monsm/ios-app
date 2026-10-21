@@ -346,7 +346,11 @@ const checks = [
       for (const m of body.matchAll(/showToast\("((?:[^"\\]|\\.){2,60})"\)/g)) {
         const s = m[1];
         if (!/失败|错误|无法|不可/.test(s)) continue;
-        if (/[:：—，]/.test(s)) continue;
+        // 半角逗号也要算：本仓文案里 , 与 ，混用（例如「没有 MAC, 无法配对」）。
+        // 第一版只认全角，把三条本来合规的提示报成了问题。
+        if (/[:：—,，]/.test(s)) continue;
+        if (/或/.test(s)) continue;                    // "读取失败或格式不对" —— 或已给出原因
+        if (/稍后|可改用|请|到「/.test(s)) continue;    // 已给出下一步
         if (allowed.some(a => s.includes(a))) continue;
         if (s.includes('失败记录')) continue;   // "已清除失败记录"是成功提示
         bad++;
