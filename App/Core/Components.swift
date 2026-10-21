@@ -21,8 +21,9 @@ import UIKit
 /// 容器档位 —— X 系统自带, 不依赖旧 VK 语法层
 enum XContainerKind {
     case group      // 一组相关读数/设置 (pad 16)
-    case inset      // 嵌在别的东西里面的小格 (pad 8)
-    case hero       // 首屏主角那一块 (pad 16 + 更宽描边)
+    case hero       // 首屏主角那一块 (pad 20 + 更宽描边 + 阴影)
+    // 已删 case inset: 与 .tile 同因 —— 全仓零使用。
+    // 留着会让读的人以为"有个更紧凑的档位可选"，实际选中只是把 padding 改成 8。
     // 已删 case tile: 它与 .group 拿到完全相同的 padding, 全仓零使用。
     // 留着会让读的人以为"有个更紧凑的档位可选", 实际选中也没变化。
 }
@@ -66,9 +67,18 @@ struct XPanel<Content: View>: View {
     var padding: CGFloat? = nil
     @ViewBuilder var content: () -> Content
 
+    /// 内边距是**层级信号**：留白越多，越像主角。
+    ///
+    /// 原来 hero 和 group 都是 16 —— 主角卡和普通卡只差阴影与描边，
+    /// 而阴影在深色模式下几乎不可见（同仓 PressableButtonStyle 的注释也写过这点）。
+    /// 于是"首屏主角那一块"在视觉上并不更像主角。
+    /// hero 多给 4pt：卡片整体大一圈，眼睛先落上去，再往下读。
     private var pad: CGFloat {
         if let padding { return padding }
-        return kind == .inset ? XSpace.s : XSpace.card
+        switch kind {
+        case .hero:  return XSpace.card + 4      // 20
+        case .group: return XSpace.card          // 16
+        }
     }
 
     private var edgeColor: Color {

@@ -212,6 +212,14 @@ const checks = [
     }
     return bad === 0;
   }],
+  ['hero 卡比 group 卡更有呼吸感', () => {
+    // 原先 hero 与 group 内边距都是 16，只差阴影和描边；
+    // 而阴影在深色模式下几乎不可见，于是"主角卡"并不更像主角。
+    // 另外 inset 零使用，已删（与早先删掉的 tile 同因）。
+    const c = CODE.get('Components.swift') || '';
+    return c.includes('case .hero:  return XSpace.card + 4') &&
+           !/case inset/.test(c.split('enum XContainerKind')[1]?.split('}')[0] || 'case inset');
+  }],
 ];
 
 let pass = 0;
