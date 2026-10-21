@@ -399,6 +399,16 @@ const checks = [
     }
     return bad === 0;
   }],
+  ['新增凭证后提示去验证', () => {
+    // 门锁 App 里"没试过的密码等于不存在的密码"。
+    // 录指纹流程早就说了「请用新指纹开一次锁, 确认可用」，
+    // 而加密码这条更常做的路径只报一句"添加成功"就关掉了。
+    const k = CODE.get('AddKeyPage.swift') || '';
+    const f = CODE.get('CredentialStudio.swift') || '';
+    return k.includes('请用这串密码开一次锁，确认可用') &&
+           k.includes('请用它在门锁上开一次，确认可用') &&
+           f.includes('请用新指纹开一次锁');
+  }],
 ];
 
 let pass = 0;

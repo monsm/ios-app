@@ -404,7 +404,13 @@ struct AddKeyPage: View {
             CredentialOrg.snapshot(kc.mac, kind: "pwd", key: alias, pwd: rec, fp: nil, note: "新增")
 
             XHaptics.success()
-            app.showToast(temp ? "临时密码已下发 (别名 #\(alias))" : "添加成功 (别名 #\(alias))")
+            // 录指纹那条流程会说「请用新指纹开一次锁, 确认可用」——
+            // 加密码是**更常做**的动作，却只报一句"添加成功"就关掉了。
+            // 没试过的密码等于不存在的密码：用户以为加好了，真到门口才发现不行。
+            // 这里把同一句提醒补上，和指纹流程对齐。
+            app.showToast(temp
+                ? "临时密码已下发 (别名 #\(alias)) — 请用它在门锁上开一次，确认可用"
+                : "添加成功 (别名 #\(alias)) — 请用这串密码开一次锁，确认可用")
             dismiss()
         } catch {
             XHaptics.failure()
