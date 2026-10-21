@@ -210,13 +210,13 @@ struct MePage: View {
                     subtitle: "生日 / 公告板",
                     showsChevron: true)
             }
-            NavigationLink { KeychainHWView().environmentObject(app) } label: {
+            NavigationLink { DonglesPage().environmentObject(app) } label: {
                 XRow(
                     systemImage: "key.horizontal",
                     title: "蓝牙钥匙串",
                     showsChevron: true)
             }
-            NavigationLink { GatewayView().environmentObject(app) } label: {
+            NavigationLink { GatewayPage().environmentObject(app) } label: {
                 XRow(
                     systemImage: "antenna.radiowaves.left.and.right",
                     title: "智能网关",
