@@ -197,6 +197,21 @@ const checks = [
     return !h.includes('VStack(spacing: XSpace.xxl) {') &&
            h.includes('VStack(spacing: XSpace.l) {');
   }],
+  ['XRow 副标题不超过 16 字', () => {
+    // XRow 的 subtitle 是 lineLimit(1)：超过单行容量就被截断，等于说明白写。
+    // 26 个调用点里曾有 7 处超长（其中 3 处是我自己加的）。
+    let bad = 0;
+    for (const f of FILES) {
+      const lines = (RAW.get(path.basename(f)) || '').split(/\r?\n/);
+      lines.forEach((t, i) => {
+        if (!/XRow\(/.test(t)) return;
+        const win = lines.slice(i, i + 9).join('\n');
+        const m = win.match(/subtitle:\s*"([^"]*)"/);
+        if (m && [...m[1]].length > 16) bad++;
+      });
+    }
+    return bad === 0;
+  }],
 ];
 
 let pass = 0;

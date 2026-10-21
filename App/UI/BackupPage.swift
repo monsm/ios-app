@@ -385,7 +385,7 @@ struct BackupPage: View {
             XRow(
                 systemImage: "wrench.and.screwdriver",
                 title: "备份工作室",
-                subtitle: "导出向导 / 恢复预演 / 完整性校验",
+                subtitle: "导出 / 恢复 / 校验",
                 showsChevron: true
             ) {
                 showStudio = true

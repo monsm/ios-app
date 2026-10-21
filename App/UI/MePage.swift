@@ -155,7 +155,7 @@ struct MePage: View {
                 XRow(
                     systemImage: "eye.slash",
                     title: "隐私与伪装",
-                    subtitle: "偷窥模式 / 伪装 / 访客通道",
+                    subtitle: "偷窥模式 / 伪装 / 访客",
                     showsChevron: true)
             }
             // ═══ 诊断与自检 ═══
@@ -167,7 +167,7 @@ struct MePage: View {
                 XRow(
                     systemImage: "stethoscope",
                     title: "诊断与自检",
-                    subtitle: "自检 / 数据健康 / 启动耗时 / 蓝牙记录",
+                    subtitle: "自检 · 数据健康 · 启动耗时",
                     showsChevron: true)
             }
             caption("这一组动的是本机数据与访问权限, 改动前会二次确认。")
@@ -190,7 +190,7 @@ struct MePage: View {
                 XRow(
                     systemImage: "lock.square",
                     title: "这台锁",
-                    subtitle: "容量 / 固件 / 信号 / 最近开门",
+                    subtitle: "容量 / 固件 / 信号",
                     showsChevron: true)
             }
             NavigationLink { LocksPage().environmentObject(app) } label: {
@@ -218,7 +218,7 @@ struct MePage: View {
                 XRow(
                     systemImage: "slider.horizontal.3",
                     title: "开锁偏好",
-                    subtitle: "按住确认 / 围栏 / 提示音",
+                    subtitle: "按住确认 / 围栏",
                     showsChevron: true)
             }
             NavigationLink { AutoCalView(mac: mac).environmentObject(app) } label: {
@@ -273,7 +273,7 @@ struct MePage: View {
                 XRow(
                     systemImage: "list.bullet.rectangle",
                     title: "事件记录",
-                    subtitle: "按天浏览 · 搜索筛选 · 从门锁同步",
+                    subtitle: "按天浏览 · 搜索 · 同步",
                     showsChevron: true)
             }
             NavigationLink { FeedPage().environmentObject(app) } label: {
@@ -317,7 +317,7 @@ struct MePage: View {
         XPanel {
             NavigationLink { IconPicker().environmentObject(app) } label: {
                 XRow(systemImage: "app.badge", title: "App 图标",
-                     subtitle: "锁环 / 钥匙 / 盾牌 等 9 款", showsChevron: true)
+                     subtitle: "9 款可选", showsChevron: true)
             }
             NavigationLink { FirmwarePage().environmentObject(app) } label: {
                 XRow(
