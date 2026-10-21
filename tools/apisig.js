@@ -321,55 +321,74 @@ if (bareDividers.length > 0) {
 }
 
 
-// ── 6c. Theme.swift 里零使用的 static let 令牌 ──────────────────────
-// 由来: 加 XOpacity 时声明了 5 档, 但 edge / dim 一开始零使用 ——
-// 声明了不用的令牌比没有更坏: 读的人以为"有这一档可选", 选中也没变化。
-// (XContainerKind.tile 就是同一个毛病, 那次是在 Components.swift)
+// ── 6c. Theme.swift 里零使用的公共 static 成员 ─────────────────────
+// 由来: 加 XOpacity 时声明了 5 档, 但 edge / dim 一开始零使用。
+// 后来全量审计又挖出 13 个: 兼容旧名别名 3 / 未接的动效 4 / 未用的渐变 2 /
+// 触感 1 / 间距 1 / 指标 2 —— 全是"声明了但没人用"。
+//
+// 判据:
+//   · 只查 **非 private** 的 static var/let/func (private 是内部助手, 不在此列)
+//   · 全仓统计引用, 同时认 ".name" 与裸 "name" 两种写法
+//     (裸写法很关键: 删前核对时 XGradient.doorSurface 就是靠裸写法
+//      才发现它被 hero 引用着, 只看 .name 会误判成死代码)
+//   · Theme.swift 内部引用也算数 (一个令牌给另一个令牌用是正常的)
 const THEME = path.join(ROOT, 'App', 'Core', 'Theme.swift');
 let theme = '';
 try { theme = fs.readFileSync(THEME, 'utf8'); } catch (e) {}
 
 const deadTokens = [];
+// 声明行判据放在块外 —— 自检块也要用
+const declRe = /^    static (?:var|let|func) (\w+)/;
 if (theme) {
-  // 只查 "static let X: Double = ..." 这种纯数值令牌 (颜色/间距/CGFloat 都有用途差异, 不在此列)
-  const tokenRe = /^    static let (\w+): Double = ([\d.]+)/gm;
-  let m;
-  while ((m = tokenRe.exec(theme))) {
-    const name = m[1];
-    // 全仓引用计数 (排除 Theme.swift 自身定义)
-    let n = 0;
+  const themeLines = theme.split('\n');
+  const names = [];
+  for (const line of themeLines) {
+    const m = line.match(declRe);
+    if (m) {                       // private 的不进来
+      if (/^    private /.test(line)) continue;
+      names.push(m[1]);
+    }
+  }
+  for (const name of names) {
+    // Theme 内部引用 (排除声明行本身)
+    let internal = 0;
+    for (const line of themeLines) {
+      if (declRe.test(line) && new RegExp('(?:var|let|func) ' + name + '\\b').test(line)) continue;
+      const hits = line.match(new RegExp('\\b' + name + '\\b', 'g'));
+      if (hits) internal += hits.length;
+    }
+    // 外部引用
+    let external = 0;
     for (const f of files) {
       if (/Theme\.swift$/.test(f)) continue;
-      const hits = fs.readFileSync(f, 'utf8').match(new RegExp('\\b' + name + '\\b', 'g'));
-      if (hits) n += hits.length;
+      const src = fs.readFileSync(f, 'utf8');
+      const hits = src.match(new RegExp('\\b' + name + '\\b', 'g'));
+      if (hits) external += hits.length;
     }
-    // 也查 "XOpacity.xxx" 这种带枚举前缀的写法
-    for (const f of files) {
-      if (/Theme\.swift$/.test(f)) continue;
-      const hits = fs.readFileSync(f, 'utf8').match(new RegExp('XOpacity\\.' + name + '\\b', 'g'));
-      if (hits) n += hits.length;
-    }
-    if (n === 0) deadTokens.push(name + ' = ' + m[2]);
+    if (internal === 0 && external === 0) deadTokens.push(name);
   }
 }
 // 自检: 人造一个零使用令牌, 确认能抓到
 {
-  const fakeTheme = theme + '\n    static let __selfTestToken: Double = 0.77\n';
-  const re = /^    static let (\w+): Double = ([\d.]+)/gm;
-  const found = [];
-  let m2;
-  while ((m2 = re.exec(fakeTheme))) {
-    if (m2[1] !== '__selfTestToken') continue;
-    let n = 0;
-    for (const f of files) {
-      if (/Theme\.swift$/.test(f)) continue;
-      const hits = fs.readFileSync(f, 'utf8').match(new RegExp('\\b' + m2[1] + '\\b', 'g'));
-      if (hits) n += hits.length;
-    }
-    if (n === 0) found.push(m2[1]);
+  const probe = '__selfTestDeadToken';
+  const fakeTheme = theme + '\n    static var ' + probe + ': Int { 0 }\n';
+  const fakeNames = [];
+  for (const line of fakeTheme.split('\n')) {
+    const m = line.match(declRe);
+    if (m && !/^    private /.test(line)) fakeNames.push(m[1]);
   }
-  if (!found.includes('__selfTestToken')) {
-    console.error('✗ 自检失败: 令牌死代码检测抓不到人造的零使用令牌');
+  if (!fakeNames.includes(probe)) {
+    console.error('✗ 自检失败: 令牌声明解析抓不到人造令牌');
+    process.exit(1);
+  }
+  let seen = 0;
+  for (const f of files) {
+    if (/Theme\.swift$/.test(f)) continue;
+    const hits = fs.readFileSync(f, 'utf8').match(new RegExp('\\b' + probe + '\\b', 'g'));
+    if (hits) seen += hits.length;
+  }
+  if (seen > 0) {
+    console.error('✗ 自检失败: 人造令牌居然"被引用"了, 判据已失效');
     process.exit(1);
   }
 }

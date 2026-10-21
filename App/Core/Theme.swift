@@ -180,7 +180,6 @@ enum XMetric {
         let v = DB.store.getInt("kf_dial_size", 200)
         return CGFloat(min(max(v, 120), 280))
     }
-    static var rowMinH: CGFloat { 44 }
     static var tlGap: CGFloat { XSpace.m }
     static var emptyMascot: Bool { !Milestones.plainMode }
 
