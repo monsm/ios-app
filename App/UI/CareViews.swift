@@ -438,6 +438,12 @@ struct CareChecklistView: View {
 
             ScrollView {
                 VStack(spacing: XSpace.l) {
+                    // 保养台账 —— 这张卡原来不存在。
+                    //
+                    // 清单页只让用户打勾，但**不告诉他上次是什么时候保养的**。
+                    // 而三件事早就算好了：lastCareAt / carePeriodDays / ekeyCheckAt，
+                    // 全在 BatteryCare.CareState 里，只是一个都没接到界面。
+                    careLedgerCard
                     XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
                             secLabel("五项清单")
@@ -489,6 +495,76 @@ struct CareChecklistView: View {
         .navigationTitle("锁体保养")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } } }
+    }
+
+    /// 保养台账：上次 / 周期 / 到期 / 应急钥匙
+    private var careLedgerCard: some View {
+        let mac = app.current?.mac ?? ""
+        let state = BatteryCare.care(mac)
+        let opens30 = DB.readLogs(mac).filter { StatsKit.openTypes.contains($0.type) }.count
+        let period = BatteryCare.carePeriodDays(opens30d: opens30)
+        let lastMs = state.lastCareAt
+        let daysSince: Int = lastMs > 0
+            ? Int((Date().timeIntervalSince1970 * 1000 - lastMs) / 86_400_000)
+            : -1
+        let daysLeft = daysSince < 0 ? -1 : max(0, period - daysSince)
+        let dueTone: Color = daysLeft < 0 ? XPalette.textTertiary
+            : (daysLeft == 0 ? XPalette.danger : (daysLeft <= 14 ? XPalette.warn : XPalette.ok))
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                secLabel("保养周期")
+                HStack(alignment: .firstTextBaseline, spacing: XSpace.s) {
+                    Text(daysLeft < 0 ? "—" : String(daysLeft))
+                        .xFont(.title2, weight: .semibold)
+                        .foregroundStyle(dueTone)
+                        .monospacedDigit()
+                    Text(daysLeft < 0 ? "还没保养过" : "天后该保养")
+                        .xFont(.caption)
+                        .foregroundStyle(dueTone)
+                    Spacer(minLength: 0)
+                    Text("周期 " + String(period) + " 天")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textTertiary)
+                }
+                if daysSince >= 0 {
+                    ledgerRow("上次保养", String(daysSince) + " 天前")
+                }
+                // 应急钥匙半年检 —— CareState.ekeyCheckAt 一直没显示
+                if state.ekeyCheckAt > 0 {
+                    let ekDays = Int((Date().timeIntervalSince1970 * 1000 - state.ekeyCheckAt) / 86_400_000)
+                    ledgerRow("应急钥匙检视", String(ekDays) + " 天前")
+                } else {
+                    ledgerRow("应急钥匙检视", "从未记录")
+                }
+                // 指纹头是否需要清洁 —— BatteryCare.fpCleanNeeded 一直没显示
+                if BatteryCare.fpCleanNeeded(mac) {
+                    HStack(spacing: XSpace.xs) {
+                        Image(systemName: "touchid")
+                            .font(.system(size: XIcon.xs, weight: .semibold))
+                            .foregroundStyle(XPalette.warn)
+                        Text("指纹头可能需清洁")
+                            .xFont(.caption2)
+                            .foregroundStyle(XPalette.warn)
+                        Spacer(minLength: 0)
+                    }
+                }
+            }
+        }
+        .xScrollLift()
+    }
+
+    private func ledgerRow(_ label: String, _ value: String) -> some View {
+        HStack(spacing: XSpace.s) {
+            Text(label)
+                .xFont(.caption)
+                .foregroundStyle(XPalette.textTertiary)
+            Spacer(minLength: 0)
+            Text(value)
+                .xFont(.caption.monospacedDigit())
+                .foregroundStyle(XPalette.textSub)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(label + " " + value)
     }
 
     private func secLabel(_ text: String) -> some View {
