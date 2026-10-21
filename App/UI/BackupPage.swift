@@ -21,6 +21,7 @@
 //
 
 import SwiftUI
+import UniformTypeIdentifiers
 import UIKit
 
 /// 备份页
@@ -31,6 +32,14 @@ struct BackupPage: View {
     @State private var importText = ""
     @State private var busy = false
     @State private var showImport = false
+    /// 文件选择器（方案 a: iCloud / 本地文件）
+    ///
+    /// 原来的导入只支持「粘贴文本」—— 用户得先把文件内容复制出来。
+    /// 文件选择器让「从 iCloud 云盘 / 我的 iPhone 里选一个 .json」成为一条路径。
+    ///
+    /// 与粘贴共用同一个解析入口（confirmRestore 的 JSONDecoder），
+    /// 不另写一套解析 —— 两条路径最终都产出 BackupBundle。
+    @State private var showFilePicker = false
     @State private var showStudio = false
     @State private var pendingRestore: BackupBundle?
 
@@ -50,6 +59,18 @@ struct BackupPage: View {
         .navigationBarTitleDisplayMode(.large)
         .sheet(isPresented: $showImport) {
             importSheet
+        }
+        // 方案 a: 文件选择器（iCloud 云盘 / 本地）
+        //
+        // allowedContentTypes 用 .json 与 .data 两种:
+        //   .json  正常备份文件
+        //   .data  兜底（有些网盘会把 .json 存成 application/octet-stream）
+        //
+        // allowsMultipleSelection: false —— 备份是单文件，多选没有语义。
+        .fileImporter(isPresented: $showFilePicker,
+                      allowedContentTypes: [.json, .data],
+                      allowsMultipleSelection: false) { result in
+            handleFileImport(result)
         }
         .sheet(isPresented: $showStudio) {
             BackupStudioView().environmentObject(app)
@@ -180,11 +201,22 @@ struct BackupPage: View {
                 Text("恢复")
                     .xFont(.subheadline, weight: .medium)
                     .foregroundStyle(XPalette.text)
-                Text("粘贴之前导出的备份文本。相同设备会被覆盖, 其它设备保留。")
+                Text("从 iCloud 云盘 / 我的 iPhone 里选备份文件，或直接粘贴备份文本。相同设备会被覆盖, 其它设备保留。")
                     .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
 
+                // 方案 a: 文件选择器（主路径）
+                Button {
+                    showFilePicker = true
+                    XHaptics.tick.impactOccurred()
+                } label: {
+                    Label("从文件导入", systemImage: "folder")
+                }
+                .buttonStyle(XSecondaryButtonStyle())
+                .accessibilityHint("打开文件选择器，从 iCloud 云盘或本机选备份文件")
+
+                // 粘贴（保留 —— 从聊天工具收到备份文本时更直接）
                 Button {
                     showImport = true
                 } label: {
@@ -253,6 +285,36 @@ struct BackupPage: View {
         showImport = false
     }
 
+    /// 文件选择器的结果处理
+    ///
+    /// 要点:
+    ///   · fileImporter 给的是**临时可访问 URL**，必须 startAccessingSecurityScopedResource
+    ///     否则 read 会失败（这是 iOS 沙盒规则，不是可选步骤）
+    ///   · 与粘贴路径共用同一个 JSONDecoder 入口 —— 两条路产出同一个 BackupBundle
+    ///   · 任何失败都给 toast，不静默
+    private func handleFileImport(_ result: Result<[URL], Error>) {
+        switch result {
+        case .success(let urls):
+            guard let url = urls.first else { return }
+            let scoped = url.startAccessingSecurityScopedResource()
+            defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+
+            do {
+                let data = try Data(contentsOf: url)
+                let bundle = try JSONDecoder().decode(BackupBundle.self, from: data)
+                pendingRestore = bundle
+                XHaptics.tick.impactOccurred()
+            } catch {
+                app.showToast("文件读取失败或格式不对")
+            }
+
+        case .failure(let error):
+            // 用户取消不报错（NSUserCancelledError）
+            if (error as NSError).code != NSUserCancelledError {
+                app.showToast("没能打开文件")
+            }
+        }
+    }
     private func applyRestore(_ bundle: BackupBundle) {
         let r = BackupKit.restoreAll(bundle)
         app.loadDevices()
