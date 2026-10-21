@@ -57,6 +57,10 @@ struct HomeConsole: View {
     @State private var progress: CGFloat = 0
     @State private var pressing = false
     @State private var failure: String?
+    /// 开锁进行中标志 —— 同步置位，用作重入闸门。
+    /// 只靠 phase 判断挡不住并发：performUnlock 里第一个 await 之前 phase 还是
+    /// .charging，此时第二次调用能顺利通过 phase 检查，于是两次 BLE 开锁并发执行。
+    @State private var isUnlocking = false
     @State private var settlingTask: Task<Void, Never>?
     @State private var managerGroup: ManagerGroup?
     @State private var appeared = false
@@ -387,7 +391,7 @@ struct HomeConsole: View {
             //
             // onPressingChanged 只负责视觉（缩放、进度、触觉），不再承担正确性。
             .onLongPressGesture(minimumDuration: chargeDuration, maximumDistance: 44) {
-                Task { await performUnlock() }
+                Task { @MainActor in await performUnlock() }
             } onPressingChanged: { down in
                 if down { beginPress() } else { endPress() }
             }
@@ -395,7 +399,7 @@ struct HomeConsole: View {
             .accessibilityLabel("开锁")
             .accessibilityHint("按住直到进度环充满")
             .accessibilityAddTraits(.isButton)
-            .accessibilityAction { Task { await performUnlock() } }
+            .accessibilityAction { Task { @MainActor in await performUnlock() } }
 
             // 一行说明：电量 / 上次 / 失败原因 —— 同一位置不跳
             Group {
@@ -671,7 +675,15 @@ struct HomeConsole: View {
         }
     }
 
+    @MainActor
     private func performUnlock() async {
+        // 重入闸门：必须在**任何 await 之前**同步置位。
+        // VoiceOver 的 accessibilityAction 是独立入口，用户连点两次就能绕过
+        // 长按手势的天然节流，两次 open 并发打到锁上不是我们想要的。
+        guard !isUnlocking else { return }
+        isUnlocking = true
+        defer { isUnlocking = false }
+
         withAnimation(XMotion.soft) { progress = 1 }
         do {
             guard !mac.isEmpty else { throw DFUError.msg("请先在「设备」里选择门锁") }
