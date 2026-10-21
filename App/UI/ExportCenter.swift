@@ -1508,59 +1508,216 @@ struct ExportCenterView: View {
 
     var body: some View { vkBody.destined(.exportCenter) }
     var vkBody: some View {
-        NavigationStack {
-            Form {
-                scopeSection
-                colsSection
-                redactSection
-                actionList
-                if progress.running { progressSection }
-                if !progress.failed.isEmpty {
-                    Section {
-                        Label(progress.failed, systemImage: "xmark.circle")
-                            .vkFont(.subheadline)
-                            .foregroundStyle(DS.Palette.danger)
-                        Text(progress.failed == "生成失败" ? "多为记录为空或空间不足, 重试或稍后再试。" : "已停止生成, 数据未离开本机。")
-                            .vkFont(.caption)
-                            .foregroundStyle(DS.Palette.textSub)
-                            .fixedSize(horizontal: false, vertical: true)
-                        // 719 重试: 重放上次起点的闭包 (取消不重试 —— 取消是用户的决定, 不是失败)
-                        if progress.failed != "已取消" {
-                            Button("重试") { progress.retry() }   // 719 重试
-                                .vkFont(.subheadline)
-                                .foregroundStyle(DS.Palette.accentText)
-                                .frame(minHeight: DS.Hit.min)
-                                .contentShape(Rectangle())
-                        }
+        ZStack {
+            XPalette.canvas.ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: XSpace.l) {
+                    // 范围与列选择
+                    scopeCard
+                    // 动作分组: 文件导出 / 卡片与长图 / 打印
+                    fileActionsCard
+                    imageActionsCard
+                    printActionsCard
+                    // 进度 / 失败 / 完成 / 校验
+                    if progress.running { progressSection }
+                    if !progress.failed.isEmpty { failedCard }
+                    if let item = progress.done {
+                        doneSection(item)
+                            .animation(XMotion.standard, value: lastSuccess)
                     }
+                    verifySection
+                    if !lastPath.isEmpty { pathSection }
                 }
-                if let item = progress.done { doneSection(item).animation(DS.Motion.standard, value: lastSuccess) }
-                // 710 校验二维码区: 出码 + 扫码核对, 与上面的导出动作同页 (报告落点页)
-                verifySection
-                if !lastPath.isEmpty { pathSection }
+                .padding(.horizontal, XSpace.gutter)
+                .padding(.vertical, XSpace.l)
             }
-            .navigationTitle("导出与分享")
-            .variantList()
-            .dsScreenBackground()
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) { Button("关闭") { dismiss() } }
-            }
-            .fullScreenCover(isPresented: $showQL) {
-                if let u = quickLook { QLPreviewView(url: u) }
-            }
-            // 710 扫码核对的相机侧: 独立 sheet (与 411/522 两处同一制式), 载荷原文交回 runVerify
-            .sheet(isPresented: $showVerifyScan) {
-                ReportScanSheet { runVerify($0) }
-            }
-            // 686: 可选日期进页时算一次 (读本地缓存日志; 不在 Form 热路径里现算)
-            .onAppear {
-                loadDayOptions()
-                loadVerifyCode()          // 710
-            }
-            // 710: 范围一改, 指纹与二维码就重算一次 (口径跟着范围走, 旧结论随之作废)
-            .onChange(of: range) { _, _ in loadVerifyCode() }
+        }
+        .navigationTitle("导出与分享")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) { Button("关闭") { dismiss() } }
+        }
+        .fullScreenCover(isPresented: $showQL) {
+            if let u = quickLook { QLPreviewView(url: u) }
+        }
+        .sheet(isPresented: $showVerifyScan) {
+            ReportScanSheet { runVerify($0) }
+        }
+        .onAppear {
+            loadDayOptions()
+            loadVerifyCode()
+        }
+        .onChange(of: range) { _, _ in loadVerifyCode() }
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // MARK: - 范围卡 (包住原有 scope/cols/redact 三段)
+    // ═══════════════════════════════════════════════════════
+
+    private var scopeCard: some View {
+        VStack(spacing: XSpace.m) {
+            XPanel(kind: .group) { scopeSection }
+            XPanel(kind: .group) { colsSection }
+            XPanel(kind: .group) { redactSection }
         }
     }
+
+    // ═══════════════════════════════════════════════════════
+    // MARK: - 三组动作卡 (包住原 actionList 的每一段)
+    // ═══════════════════════════════════════════════════════
+
+    private var fileActionsCard: some View {
+        XPanel(kind: .group) {
+            VStack(spacing: XSpace.s) {
+                actionButton("CSV 标准导出", "tablecells", "表格软件可直接打开") { startCSV() }
+                actionButton("原始 JSON + hex", "curlybraces", "含锁端原始报文, 供开发核对") { startJSON() }
+                actionButton("月度 PDF 报告", "doc.text", "排版好的可打印报告") { startPDF() }
+                logFormatRow
+                actionButton("用系统邮件发送", "envelope.open", "附件与 CSV 同源") { sendByMail() }
+                actionButton("邮件模板 .eml", "envelope", "复制到邮件客户端") { startEML() }
+            }
+        }
+    }
+
+    private var logFormatRow: some View {
+        VStack(alignment: .leading, spacing: XSpace.xs) {
+            Text("运行日志")
+                .vkFont(.footnote, weight: .medium)
+                .foregroundStyle(XPalette.text)
+            HStack(spacing: XSpace.s) {
+                Picker("", selection: $logFormat) {
+                    Text("CSV").tag("csv")
+                    Text("JSON").tag("json")
+                    Text("纯文本").tag("txt")
+                }
+                .pickerStyle(.segmented)
+                Button("生成") { startRunLog() }
+                    .buttonStyle(XSecondaryButtonStyle())
+                    .frame(width: 80)
+            }
+        }
+        .padding(.vertical, XSpace.xs)
+    }
+
+    private var imageActionsCard: some View {
+        XPanel(kind: .group) {
+            VStack(spacing: XSpace.s) {
+                if !dayOpts.isEmpty {
+                    HStack {
+                        Text("导出哪一天")
+                            .vkFont(.footnote)
+                            .foregroundStyle(XPalette.textSub)
+                        Spacer()
+                        Picker("", selection: $dayPick) {
+                            Text("最新一天").tag("")
+                            ForEach(dayOpts, id: \.self) { d in Text(d).tag(d) }
+                        }
+                        .pickerStyle(.menu)
+                    }
+                }
+                actionButton("单日长图", "photo.on.rectangle.angled", "一天的全部记录拼成长图") { startDayImages() }
+                actionButton("告警分享卡", "exclamationmark.bubble", "9:16 卡片, 只含这一条告警") { startAlarmCard() }
+                actionButton("告警事实单页", "doc.text.magnifyingglass", "与物业沟通用的 PDF") { startAlarmFactSheet() }
+
+                VStack(alignment: .leading, spacing: XSpace.xs) {
+                    SecureField("加密口令 (至少 6 位)", text: $zipPw)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .vkFont(.footnote)
+                        .padding(XSpace.s)
+                        .background(XPalette.surfaceSunken,
+                                    in: RoundedRectangle(cornerRadius: XRadius.min, style: .continuous))
+                    Button {
+                        startEncryptedZip()
+                    } label: {
+                        Label("加密压缩导出", systemImage: "lock.doc")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(XSecondaryButtonStyle())
+                    .disabled(zipPw.trimmingCharacters(in: .whitespaces).count < 6)
+                    .opacity(zipPw.trimmingCharacters(in: .whitespaces).count < 6 ? 0.5 : 1)
+                }
+                .padding(.top, XSpace.xs)
+            }
+        }
+    }
+
+    private var printActionsCard: some View {
+        XPanel(kind: .group) {
+            VStack(spacing: XSpace.s) {
+                actionButton("打印月度记录", "printer", "走系统打印") { printMonthly() }
+                actionButton("告警一页纸", "doc.text.magnifyingglass", "单条告警的打印版") { printOnePager() }
+                actionButton("口述卡打印", "person.text.rectangle", "给不会用手机的人看的卡") { printOralCard() }
+            }
+        }
+    }
+
+    private func actionButton(_ title: String, _ icon: String, _ sub: String,
+                              _ act: @escaping () -> Void) -> some View {
+        Button {
+            XHaptics.tick.impactOccurred()
+            act()
+        } label: {
+            HStack(spacing: XSpace.m) {
+                Image(systemName: icon)
+                    .font(.system(size: XIcon.sm, weight: .medium))
+                    .foregroundStyle(XPalette.accentText)
+                    .frame(width: 32, height: 32)
+                    .background(XPalette.accent.opacity(0.12),
+                                in: RoundedRectangle(cornerRadius: XRadius.min, style: .continuous))
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(title)
+                        .vkFont(.subheadline)
+                        .foregroundStyle(XPalette.text)
+                    Text(sub)
+                        .vkFont(.caption2)
+                        .foregroundStyle(XPalette.textSub)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: XIcon.xs, weight: .semibold))
+                    .foregroundStyle(XPalette.textTertiary)
+                    .accessibilityHidden(true)
+            }
+            .frame(minHeight: XHit.min)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(progress.running)
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // MARK: - 失败卡
+    // ═══════════════════════════════════════════════════════
+
+    private var failedCard: some View {
+        XPanel(kind: .group, tone: .danger) {
+            VStack(alignment: .leading, spacing: XSpace.s) {
+                HStack(spacing: XSpace.s) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: XIcon.sm, weight: .medium))
+                        .foregroundStyle(XPalette.danger)
+                    Text(progress.failed)
+                        .vkFont(.subheadline, weight: .medium)
+                        .foregroundStyle(XPalette.text)
+                }
+                Text(progress.failed == "生成失败"
+                     ? "多为记录为空或空间不足, 重试或稍后再试。"
+                     : "已停止生成, 数据未离开本机。")
+                    .vkFont(.caption)
+                    .foregroundStyle(XPalette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
+                if progress.failed != "已取消" {
+                    Button("重试") { progress.retry() }
+                        .buttonStyle(XSecondaryButtonStyle())
+                }
+            }
+        }
+    }
+
 
     private func loadDayOptions() {
         guard dayOpts.isEmpty else { return }
