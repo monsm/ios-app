@@ -345,12 +345,62 @@ def render_keysrows():
 
     return save(img, "keysrows")
 
+def render_alarmseverity():
+    """AlarmsPage — 严重度概览 + 告警行"""
+    W, H = 402, 300
+    img = new_canvas(W, H)
+    dr = ImageDraw.Draw(img, "RGBA")
+
+    # 概览卡
+    px, py_, pw = S(16), S(16), S(370)
+    ch = S(96)
+    panel(img, px, py_, pw, ch)
+    lv3, lv2, lv1 = 3, 5, 4
+    total = lv3+lv2+lv1
+    bx, by = px+S(16), py_+S(18)
+    bw = pw - S(32)
+    x = bx
+    for n, col in [(lv3, DANGER), (lv2, WARN), (lv1, (int(WARN[0]*0.55), int(WARN[1]*0.55), int(WARN[2]*0.55)))]:
+        if n == 0: continue
+        seg_w = (bw - S(4)) * n / total
+        dr.rounded_rectangle([x, by, x+seg_w, by+S(8)], S(4), fill=col+(255,))
+        x += seg_w + S(2)
+    # 三级读数
+    iy = by + S(26)
+    ix = bx
+    for lab, n, col in [("严重", lv3, DANGER), ("警告", lv2, WARN), ("提示", lv1, (int(WARN[0]*0.55), int(WARN[1]*0.55), int(WARN[2]*0.55)))]:
+        dr.ellipse([ix, iy+S(2), ix+S(7), iy+S(9)], fill=col+(255,))
+        t = f"{lab} {n}"
+        dr.text((ix+S(12), iy), t, font=F(11), fill=(TEXT if n>0 else TEXT_TERT))
+        ix += S(78)
+
+    # 告警行 ×3
+    rows = [
+        ("防撬告警", "14:32 · 家门", DANGER),
+        ("试错锁定", "11:08 · 家门", WARN),
+        ("低电量", "09:15 · 家门", (int(WARN[0]*0.55), int(WARN[1]*0.55), int(WARN[2]*0.55))),
+    ]
+    ry = py_ + ch + S(16)
+    for name, sub, col in rows:
+        dr.rounded_rectangle([px, ry, px+pw, ry+S(52)], S(12), fill=SURFACE+(255,))
+        dr.rounded_rectangle([px+S(2), ry+S(8), px+S(5), ry+S(44)], S(2), fill=col+(255,))
+        # 三角图标
+        text(dr, (px+S(16), ry+S(10)), "!", 12, col)
+        text(dr, (px+S(34), ry+S(8)), name, 14, TEXT)
+        text(dr, (px+S(34), ry+S(26)), sub, 10, TEXT_SUB)
+        # 勾选按钮
+        dr.ellipse([px+pw-S(40), ry+S(14), px+pw-S(16), ry+S(38)], outline=ACCENT+(255,), width=2)
+        ry += S(56)
+
+    return save(img, "alarmseverity")
+
 RENDERERS = {
     "codering": render_code_ring,
     "alarmchart": render_alarm_chart,
     "dayclock": render_dayclock,
     "battery": render_battery,
     "keysrows": render_keysrows,
+    "alarmseverity": render_alarmseverity,
 }
 
 

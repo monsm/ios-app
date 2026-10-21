@@ -84,6 +84,14 @@ struct AlarmsPage: View {
         List {
             if !alarms.isEmpty {
                 Section {
+                    severityOverview
+                }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: XSpace.s, trailing: 0))
+            }
+
+            if !alarms.isEmpty {
+                Section {
                     ForEach(alarms) { rec in
                         alarmRow(rec, handled: false)
                     }
@@ -115,6 +123,74 @@ struct AlarmsPage: View {
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
         .background(XPalette.canvas)
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // MARK: - 严重度概览
+    // ═══════════════════════════════════════════════════════
+
+    /// 待处理告警按三级严重度分布。
+    ///
+    /// 告警页最该先回答的是"有多严重", 而不是"有几条"。
+    /// 原来只有每行左边一根 3pt 色条, 要一行行看才拼得出全貌;
+    /// 这里用一条比例横条把三级一次说完, 数字跟在后面。
+    private var severityOverview: some View {
+        let lv3 = alarms.filter { AlarmMeta.level($0.type) == 3 }.count
+        let lv2 = alarms.filter { AlarmMeta.level($0.type) == 2 }.count
+        let lv1 = alarms.count - lv3 - lv2
+        let total = max(alarms.count, 1)
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                // 比例条
+                GeometryReader { geo in
+                    HStack(spacing: 2) {
+                        if lv3 > 0 {
+                            segment(width: geo.size.width * CGFloat(lv3) / CGFloat(total),
+                                    color: XPalette.danger)
+                        }
+                        if lv2 > 0 {
+                            segment(width: geo.size.width * CGFloat(lv2) / CGFloat(total),
+                                    color: XPalette.warn)
+                        }
+                        if lv1 > 0 {
+                            segment(width: geo.size.width * CGFloat(lv1) / CGFloat(total),
+                                    color: XPalette.warn.opacity(0.55))
+                        }
+                    }
+                }
+                .frame(height: 8)
+                .accessibilityHidden(true)
+
+                // 三级读数
+                HStack(spacing: XSpace.l) {
+                    severityItem("严重", lv3, XPalette.danger)
+                    severityItem("警告", lv2, XPalette.warn)
+                    severityItem("提示", lv1, XPalette.warn.opacity(0.55))
+                    Spacer(minLength: 0)
+                }
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("待处理告警 \(alarms.count) 条, 严重 \(lv3), 警告 \(lv2), 提示 \(lv1)")
+    }
+
+    private func segment(width: CGFloat, color: Color) -> some View {
+        RoundedRectangle(cornerRadius: 4, style: .continuous)
+            .fill(color)
+            .frame(width: max(width - 2, 3))
+    }
+
+    private func severityItem(_ label: String, _ n: Int, _ color: Color) -> some View {
+        HStack(spacing: XSpace.xs) {
+            Circle()
+                .fill(color)
+                .frame(width: 7, height: 7)
+                .accessibilityHidden(true)
+            Text("\(label) \(n)")
+                .xFont(.caption, weight: .medium)
+                .foregroundStyle(n > 0 ? XPalette.text : XPalette.textTertiary)
+                .monospacedDigit()
+        }
     }
 
     private func alarmRow(_ rec: Rec, handled: Bool) -> some View {
@@ -164,20 +240,10 @@ struct AlarmsPage: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: XSpace.m) {
-            Image(systemName: "checkmark.shield")
-                .font(.system(size: XIcon.xl, weight: .light))
-                .foregroundStyle(XPalette.ok)
-                .accessibilityHidden(true)
-            Text("没有告警")
-                .xFont(.headline)
-                .foregroundStyle(XPalette.text)
-            Text("所有记录都正常")
-                .xFont(.subheadline)
-                .foregroundStyle(XPalette.textSub)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(XSpace.xl)
+        XEmptyState(systemImage: "checkmark.shield",
+                    title: "没有告警",
+                    message: "所有记录都正常。")
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // ═══════════════════════════════════════════════════════
