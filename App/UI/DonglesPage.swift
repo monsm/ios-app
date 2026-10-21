@@ -198,6 +198,22 @@ struct DonglesPage: View {
                     }
                 }
             }
+
+            // 时间戳台账 —— Dongle 里有三个时间字段，但卡片从没显示过。
+            //
+            // lastSeenAt 尤其重要: 钥匙串是电池设备，长期没被看到
+            // 意味着可能没电/丢在包里/离得太远。现在只有"已配钥匙"一个状态。
+            VStack(spacing: XSpace.xs) {
+                if !d.lastSeenAt.isEmpty {
+                    timestampRow("最近看到", d.lastSeenAt, tone: .neutral)
+                }
+                if !d.lastKeyAt.isEmpty {
+                    timestampRow("上次写钥匙", d.lastKeyAt, tone: .neutral)
+                }
+                if !d.boundAt.isEmpty {
+                    timestampRow("绑定时间", d.boundAt, tone: .neutral)
+                }
+            }
         }
         .padding(XSpace.card)
         .background(
@@ -208,6 +224,21 @@ struct DonglesPage: View {
                         .strokeBorder(hasKey ? XPalette.accent.opacity(0.3) : XPalette.hairline,
                                       lineWidth: 1))
         )
+    }
+
+    /// 一行时间戳（右对齐，低调）
+    private func timestampRow(_ label: String, _ value: String, tone: XToneColor) -> some View {
+        HStack(spacing: XSpace.s) {
+            Text(label)
+                .xFont(.caption2)
+                .foregroundStyle(XPalette.textTertiary)
+            Spacer(minLength: 0)
+            Text(value)
+                .xFont(.caption2.monospacedDigit())
+                .foregroundStyle(tone == .neutral ? XPalette.textSub : tone.color)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(label + " " + value)
     }
 
     private func readPair(_ label: String, _ value: String) -> some View {
