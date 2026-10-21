@@ -451,6 +451,23 @@ struct MemberDetail360View: View {
     }
 
     /// 卡片内的小标题
+    /// 归档成员的事实行（凭证数 / 常用锁 / 紧急联系）
+    private func archivedFact(_ m: Member, ext: MemberExt) -> String {
+        var parts: [String] = []
+        let macs = DB.keychains().map { $0.mac }
+        let pwds = macs.reduce(0) { acc, mac in
+            acc + DB.listPwds(mac).filter { $0.owner == m.id }.count
+        }
+        let fps = macs.reduce(0) { acc, mac in
+            acc + DB.listFps(mac).filter { $0.owner == m.id }.count
+        }
+        if pwds + fps > 0 { parts.append("\(pwds) 密码 · \(fps) 指纹") }
+        else { parts.append("名下无凭证") }
+        if !ext.commonLocks.isEmpty { parts.append("\(ext.commonLocks.count) 把常用锁") }
+        if !ext.emergency.isEmpty { parts.append("有紧急联系") }
+        return parts.joined(separator: " · ")
+    }
+
     private func secLabel(_ text: String) -> some View {
         Text(text)
             .xFont(.caption, weight: .semibold)
@@ -802,10 +819,34 @@ struct MemberArchivedView: View {
                         ForEach(archived) { m in
                             XPanel(kind: .group) {
                                 HStack(spacing: XSpace.m) {
+                                    // ext 在 VStack 作用域声明 —— archivedFact 也要用它。
+                                    // 最初写在里面那个 HStack 里，archivedFact 就取不到了。
+                                    let ext = MemberHub.ext(m.id)
                                     VStack(alignment: .leading, spacing: XSpace.xxs) {
-                                        Text(MemberHub.display(m))
-                                            .xFont(.subheadline, weight: .medium)
-                                            .foregroundStyle(XPalette.text)
+                                        HStack(spacing: XSpace.xs) {
+                                            Text(MemberHub.display(m))
+                                                .xFont(.subheadline, weight: .medium)
+                                                .foregroundStyle(XPalette.text)
+                                            // 角色与分组 —— MemberExt 里有，归档列表从没显示。
+                                            // 恢复前得知道这人原本是什么身份。
+                                            Text(MemberHub.roleLabel(ext.role))
+                                                .xFont(.caption2)
+                                                .foregroundStyle(XPalette.textTertiary)
+                                            if !ext.groupTag.isEmpty {
+                                                Text(ext.groupTag)
+                                                    .xFont(.caption2)
+                                                    .foregroundStyle(XPalette.textTertiary)
+                                            }
+                                            if ext.proxy || ext.emergencyAdmin {
+                                                Text(ext.emergencyAdmin ? "紧急管理员" : "代管")
+                                                    .xFont(.caption2, weight: .semibold)
+                                                    .foregroundStyle(XPalette.warn)
+                                            }
+                                        }
+                                        // 名下凭证数与常用锁 —— 恢复决策的主要依据
+                                        Text(archivedFact(m, ext: ext))
+                                            .xFont(.caption)
+                                            .foregroundStyle(XPalette.textSub)
                                         Text("归档中 · 只从成员列表与成员统计里收起; 记录页仍能筛到 TA, 凭证页也仍列 TA 名下凭证 —— 归档不许挡撤权入口。")
                                             .xFont(.caption)
                                             .foregroundStyle(XPalette.textSub)
