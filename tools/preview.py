@@ -1,0 +1,208 @@
+#!/usr/bin/env python3
+"""
+渲染验证工具 —— 把 SwiftUI 组件按真实参数画成 PNG, 用眼睛看。
+
+为什么需要它:
+    21 道静态闸门查的是语法 / 令牌 / 对比度 / 括号平衡,
+    查不出「码值压到环线上」「刻度被容器裁掉」「整屏 40% 是空白」这类
+    几何与构图问题。这些只有画出来才看得见。
+
+    已经靠它抓到 4 个真缺陷:
+      1. XCodeRing: 56pt 码值压环线 (8 位时直接穿过)
+      2. DoorFront: Spacer + maxHeight 导致布局退化, 整屏 40% 空白
+      3. AlarmCenter: 柱状图容器 56 < 内容 58, 刻度被裁且撞下一行
+      4. DoorFront: 锁体直径 52% 在 402pt 屏上偏小, 主体撑不起整屏
+
+用法:
+    python tools/preview.py <组件名>
+    python tools/preview.py --list
+
+输出到 docs/redesign/preview/<组件名>.png
+
+注意: 这是**近似渲染**, 不是 SwiftUI 真机截图。
+    - 字体用 Noto Sans SC 代替 SF Pro / SF Rounded
+    - 渐变、blur、blendMode 都是近似
+    - 布局按 SwiftUI 的 VStack/HStack 规则手工推算
+    用途是查构图与几何是否合理, 不是校验像素级还原。
+"""
+
+import sys
+import os
+import math
+from PIL import Image, ImageDraw, ImageFont
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUT_DIR = os.path.join(ROOT, "docs", "redesign", "preview")
+
+# ── 设计令牌 (与 App/Core/Theme.swift 的 XPalette 对齐, 取 dark 档) ──
+CANVAS      = (10, 10, 11)
+SURFACE     = (22, 22, 24)
+SURFACE_ALT = (31, 31, 34)
+SUNKEN      = (18, 18, 20)
+HAIRLINE    = (50, 50, 54)
+TEXT        = (245, 245, 247)
+TEXT_SUB    = (160, 160, 172)
+TEXT_TERT   = (136, 136, 146)
+ACCENT      = (217, 139, 69)
+ACCENT_TXT  = (232, 160, 92)
+ON_ACCENT   = (10, 10, 11)
+OK          = (61, 214, 140)
+WARN        = (245, 165, 36)
+DANGER      = (255, 107, 107)
+SPECULAR    = (200, 200, 212)
+
+CJK = r"C:\Windows\Fonts\NotoSansSC-VF.ttf"
+SCALE = 2   # 2x 渲染
+
+def F(size):
+    return ImageFont.truetype(CJK, int(size * SCALE))
+
+def S(v):
+    return int(v * SCALE)
+
+def new_canvas(w_pt, h_pt, bg=CANVAS):
+    return Image.new("RGB", (S(w_pt), S(h_pt)), bg)
+
+def rounded(dr, box, r, fill=None, outline=None, width=1):
+    dr.rounded_rectangle(box, S(r), fill=fill, outline=outline, width=width)
+
+def panel(img, x, y, w, h, r=16, fill=SURFACE, edge=None):
+    dr = ImageDraw.Draw(img, "RGBA")
+    rounded(dr, [x, y, x + w, y + h], r, fill=fill + (255,))
+    if edge:
+        rounded(dr, [x, y, x + w, y + h], r, outline=edge + (255,), width=1)
+
+def text(dr, pos, s, size, color=TEXT, bold=False):
+    dr.text((pos[0], pos[1]), s, font=F(size), fill=color)
+
+def text_center(dr, cx, y, s, size, color=TEXT):
+    f = F(size)
+    bb = dr.textbbox((0, 0), s, font=f)
+    dr.text((cx - (bb[2] - bb[0]) // 2, y), s, font=f, fill=color)
+
+def sec_label(dr, x, y, s, size=11):
+    text(dr, (x, y), s, size, TEXT_TERT)
+
+def save(img, name):
+    os.makedirs(OUT_DIR, exist_ok=True)
+    path = os.path.join(OUT_DIR, name + ".png")
+    img.save(path)
+    print("saved:", path, img.size)
+    return path
+
+
+# ═══════════════════════════════════════════════════════════════
+# 组件渲染器
+# ═══════════════════════════════════════════════════════════════
+
+def render_code_ring():
+    """XCodeRing — OTP 时效大卡三种状态"""
+    W, H = 1240, 640
+    img = new_canvas(W, H)
+    dr = ImageDraw.Draw(img, "RGBA")
+    text(dr, (S(13), S(9)), "XCodeRing — OTP 页时效大卡", 10, TEXT)
+
+    CARD_W, CARD_H = 384, 512
+    def card(x0, y0, fraction, secs, warn, code, label, nxt):
+        tint = WARN if warn else ACCENT
+        c = Image.new("RGBA", (S(CARD_W), S(CARD_H)), (0, 0, 0, 0))
+        cd = ImageDraw.Draw(c, "RGBA")
+        rounded(cd, [0, 0, S(CARD_W) - 1, S(CARD_H) - 1], 16, fill=SURFACE + (255,))
+        g = Image.new("RGBA", c.size, (0, 0, 0, 0))
+        gd = ImageDraw.Draw(g)
+        ccx, ccy = S(CARD_W) // 2, S(250)
+        maxr = S(175)
+        for rr in range(maxr, 0, -3):
+            a = int((0.10 + 0.10 * fraction) * 255 * (1 - rr / maxr) ** 1.5)
+            gd.ellipse([ccx - rr, ccy - rr, ccx + rr, ccy + rr], fill=tint + (a,))
+        c = Image.alpha_composite(c, g)
+        cd = ImageDraw.Draw(c, "RGBA")
+        rounded(cd, [0, 0, S(CARD_W) - 1, S(CARD_H) - 1], 16, outline=tint + (60,), width=1)
+        text(cd, (S(24), S(22)), label, 16)
+        text(cd, (S(CARD_W - 56), S(24)), "30s", 13, TEXT_TERT)
+
+        R_OUT, lw = S(140), S(11)
+        cd.ellipse([ccx - R_OUT, ccy - R_OUT, ccx + R_OUT, ccy + R_OUT],
+                   outline=HAIRLINE + (150,), width=lw)
+        if fraction > 0.001:
+            start, end = -90, -90 + 360 * fraction
+            cd.arc([ccx - R_OUT, ccy - R_OUT, ccx + R_OUT, ccy + R_OUT],
+                   start=start, end=end, fill=tint + (255,), width=lw)
+            a = math.radians(end)
+            px, py = ccx + R_OUT * math.cos(a), ccy + R_OUT * math.sin(a)
+            dotr = lw * 0.62
+            for sc, al in [(2.1, 60), (1.0, 255)]:
+                rr = dotr * sc
+                cd.ellipse([px - rr, py - rr, px + rr, py + rr], fill=tint + (al,))
+
+        n = len(code.replace(" ", ""))
+        cs = 56 if n <= 6 else (50 if n == 7 else 44)
+        cf = F(cs)
+        bb = cd.textbbox((0, 0), code, font=cf)
+        cd.text((S(CARD_W) // 2 - (bb[2] - bb[0]) // 2, ccy - S(40)), code, font=cf, fill=TEXT)
+        text_center(cd, S(CARD_W) // 2, ccy + S(66), f"{secs} 秒后刷新", 13,
+                    WARN if warn else TEXT_TERT)
+        text(cd, (S(24), S(CARD_H - 58)), "下一个", 12, TEXT_TERT)
+        text(cd, (S(80), S(CARD_H - 60)), nxt, 15, TEXT_SUB)
+        img.paste(c, (S(x0), S(y0)), c)
+
+    card(24, 64, 0.83, 25, False, "483 921", "家门 · 登录码", "512 004")
+    card(430, 64, 0.42, 13, False, "771 268", "工作台 · 二次验证", "338 190")
+    card(836, 64, 0.13, 4, True, "902 415", "保险箱 · 应急", "664 072")
+    return save(img, "codering")
+
+
+def render_alarm_chart():
+    """AlarmCenter — 24 小时柱状分布"""
+    W, H = 402, 232
+    img = new_canvas(W, H)
+    dr = ImageDraw.Draw(img, "RGBA")
+    panel(img, S(16), S(14), S(370), S(204))
+    sec_label(dr, S(32), S(28), "24 小时回放")
+
+    counts = [0,0,1,0,2,3,1,0,1,2,4,2,1,0,2,5,3,2,1,1,0,2,3,1]
+    peak = max(counts)
+    base_y = S(174)
+    x0, step = S(32), S(338) / 24
+    sel = 15
+    for h in range(24):
+        c = counts[h]
+        hgt = S(3) if c == 0 else S(10 + 34 * (c / peak))
+        wid = S(7) if h == sel else S(3.5)
+        x = x0 + h * step + step / 2
+        col = ACCENT if h == sel else WARN
+        al = 255 if h == sel else 184
+        rounded(dr, [x - wid, base_y - hgt, x + wid, base_y], 2,
+                fill=(col + (al,)) if c > 0 else (SURFACE_ALT + (255,)))
+        if c > 0:
+            dr.ellipse([x - S(1.7), base_y - hgt - S(3.2), x + S(1.7), base_y - hgt - S(0.2)],
+                       fill=(ON_ACCENT if h == sel else DANGER) + (255,))
+        if h % 6 == 0 or h == sel:
+            text_center(dr, x, base_y + S(6), str(h), 8,
+                        ACCENT_TXT if h == sel else TEXT_TERT)
+    text(dr, (S(32), S(198)), "点某一小时，只看那一时段前后事件", 11, TEXT_SUB)
+    return save(img, "alarmchart")
+
+
+RENDERERS = {
+    "codering": render_code_ring,
+    "alarmchart": render_alarm_chart,
+}
+
+
+def main():
+    if len(sys.argv) < 2 or sys.argv[1] in ("--list", "-l"):
+        print("可用组件:")
+        for k in RENDERERS:
+            print("  " + k)
+        return
+    for name in sys.argv[1:]:
+        fn = RENDERERS.get(name)
+        if not fn:
+            print(f"未知组件: {name} (用 --list 看清单)")
+            continue
+        fn()
+
+
+if __name__ == "__main__":
+    main()
