@@ -167,6 +167,16 @@ const checks = [
     const p = RAW.get('DiagnosticsPage.swift') || '';
     return !p.includes('scanOrphans()');
   }],
+  ['异常退出提示会自动过期', () => {
+    // kf_crash_arch_pending 原来只被设 true，全仓没有一处清回 false ——
+    // 一次异常之后诊断页永远显示"上次是异常退出"，哪怕之后正常用了几个月。
+    const d = CODE.get('DiagKit.swift') || '';
+    return /set\("kf_crash_arch_pending", false\)/.test(d);
+  }],
+  ['蓝牙遥测有上限', () => {
+    const d = CODE.get('DiagKit.swift') || '';
+    return d.includes('list.count > 200') && d.includes('list.count > 300');
+  }],
 ];
 
 let pass = 0;

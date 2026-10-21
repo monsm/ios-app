@@ -126,9 +126,11 @@ struct DiagnosticsPage: View {
         return XPanel(kind: .group, padding: 0) {
             VStack(spacing: 0) {
                 header("稳定性", tone: crashed ? XPalette.warn : XPalette.ok)
+                // 这里说"最近"，不说"上次"：pending 现在会在下一次正常启动时自动清掉，
+                // 而档案里可能还留着多次历史 —— 说"上次"会让人以为是刚才那次。
                 itemRow(icon: crashed ? "bolt.trianglebadge.exclamationmark.fill" : "checkmark.circle.fill",
                         tone: crashed ? XPalette.warn : XPalette.ok,
-                        title: crashed ? "上次是异常退出" : "上次正常退出",
+                        title: crashed ? "最近有一次异常退出" : "最近一次是正常退出",
                         detail: crashed ? "不是崩溃上报，只是本机记录到会话没有正常结束" : nil)
                 XHairline(inset: XSpace.card)
                 itemRow(icon: startup > 800 ? "clock.badge.exclamationmark" : "clock",
@@ -268,7 +270,7 @@ struct DiagnosticsPage: View {
         for l in selfChecks { out.append("· \(l.name)：\(l.ok ? "通过" : "异常") — \(l.detail)") }
         if !health.isEmpty { out.append("数据健康："); health.forEach { out.append("· " + $0) } }
         out.append("启动 \(String(format: "%.0f", StartupTrace.totalMs)) ms")
-        out.append(CrashGuard.pendingAbnormal ? "上次异常退出" : "上次正常退出")
+        out.append(CrashGuard.pendingAbnormal ? "最近有一次异常退出" : "最近一次正常退出")
         out.append("日志 \(DiagLogs.all().count) 条")
         return out.joined(separator: "\n")
     }

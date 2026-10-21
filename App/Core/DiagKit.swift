@@ -325,6 +325,15 @@ enum CrashGuard {
         let flagged = DB.store.getBool(marker)
         if !flagged {
             DB.store.set(marker, true)   // 本次会话开始打标记
+            // ⚠ kf_crash_arch_pending 原来只被设 true，**全仓没有一处清回 false** ——
+            // 一次异常退出之后，诊断页会永远显示"上次是异常退出"，
+            // 而实际上后面可能已经正常用了几个月。
+            //
+            // 走到这里说明**上次是正常退出的**，那条提示已经过了它该在的时刻。
+            // 档案本身保留（archList 里还有历史），只是不再声称"上次"。
+            if DB.store.getBool("kf_crash_arch_pending") {
+                DB.store.set("kf_crash_arch_pending", false)
+            }
             return
         }
         let prevDur = DB.store.get(lastDur, Double.self) ?? 0
