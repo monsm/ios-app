@@ -978,10 +978,10 @@ struct TempCodeStudio: View {
                 DB.addPwd(kc.mac, rec)
                 CredentialOrg.snapshot(kc.mac, kind: "pwd", key: alias, pwd: rec, fp: nil, note: "新增临时码")
                 last = rec
-                app.showToast("第 \(i + 1)/\(max(batchCount, 1)) 张已下发 (别名 #\(alias))")
+                app.showToast("第 \(i + 1)/\(max(batchCount, 1)) 张已写入门锁 (编号 #\(alias))")
             } catch {
                 failed += 1
-                app.showToast("第 \(i + 1) 张下发失败: \(error.localizedDescription)")   // 178 张下发失败
+                app.showToast("第 \(i + 1) 张写入失败: \(error.localizedDescription)")   // 178 张下发失败
             }
         }
         if let r = last {
@@ -989,7 +989,7 @@ struct TempCodeStudio: View {
             // 整条批量链都用入口捕获的 kc.mac，这一行原先落到**活读**的 mac:
             // 批量下发以十秒计，中途当前锁被改掉就会清掉另一把锁的草稿 (tools/macpin.js 抓到的)
             CredentialOrg.clearDraft(kc.mac)
-            if failed > 0 { app.showToast("批量完成, \(failed) 张失败, 稍后可在凭证页重试") }
+            if failed > 0 { app.showToast("批量完成, \(failed) 张失败, 稍后可在钥匙页重试") }
         }
     }
 }
@@ -1345,7 +1345,7 @@ struct FpStudio: View {
             if step == 0 {
                 Button("下一步: 录入") {
                     guard owner != nil || DB.members().isEmpty else {
-                        app.showToast("先选归属成员")   // 317 先选归属成员
+                        app.showToast("先选这把钥匙属于谁")   // 317 先选归属成员
                         XHaptics.trigger.impactOccurred()
                         return
                     }
@@ -1394,7 +1394,7 @@ struct FpStudio: View {
                 DB.delFp(em, f.batch)
                 CredentialOrg.enqueue(em, kind: "del_fp", title: "删除旧指纹批次 \(f.batch)", fp: f)   // 319 删除旧指纹批次
             }
-            app.showToast("旧指纹已移入回收站 (备注/归属保留)")
+            app.showToast("旧指纹已移入回收站 (备注和归属信息保留)")
         }
         withAnimation(XMotion.standard) { step = 3 }
     }

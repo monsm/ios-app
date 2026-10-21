@@ -66,7 +66,7 @@ struct StudioPage: View {
                 .padding(.vertical, XSpace.l)
             }
         }
-        .navigationTitle("凭证工坊")
+        .navigationTitle("钥匙工坊")
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
             if !embedded {

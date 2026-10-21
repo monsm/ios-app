@@ -39,7 +39,7 @@ struct CredentialBinView: View {
                     XPanel(kind: .group) {
                         XEmptyState(systemImage: "trash.slash",
                                     title: "回收站是空的",
-                                    message: "删除或停用的凭证会在这里保留 \(retainDays) 天，可以放回原位。")
+                                    message: "删除或停用的钥匙会在这里保留 \(retainDays) 天，可以放回原位。")
                     }
                 } else {
                     retentionCard
@@ -52,7 +52,7 @@ struct CredentialBinView: View {
             .padding(.vertical, XSpace.l)
         }
         .background(XPalette.canvas)
-        .navigationTitle("凭证回收站")
+        .navigationTitle("回收站")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { reload() }
         .alert("恢复结果", isPresented: Binding(get: { lastMessage != nil },
@@ -194,14 +194,14 @@ struct CredentialBinView: View {
         if item.state == CredQueueState.failed.rawValue {
             return "上次下发失败（第 \(max(1, item.attempt)) 次）— 连上门锁后会自动重试"
         }
-        return "等待连接门锁后下发"
+        return "等待连接门锁后发出"
     }
 
     private var pendingOnlyCard: some View {
         XPanel(kind: .group) {
             XEmptyState(systemImage: "clock.arrow.circlepath",
                         title: "回收站是空的",
-                        message: "但还有 \(pending.count) 条撤销在等门锁确认。连上锁后会自动下发。")
+                        message: "但还有 \(pending.count) 条撤销在等门锁确认。连上锁后会自动发出去。")
         }
     }
 

@@ -183,11 +183,11 @@ struct SafemodeIntroView: View {
                 XHaptics.success()
             } else {
                 app.lock.log("warn", "cmd18 已下发但回读 soundVolumn 与预期不符 —— 视为未生效")
-                app.showToast("命令已下发，但回读显示未生效 —— 请重读锁信息再试")
+                app.showToast("设置已发送，但门锁回报的还是旧值 —— 请重读一次锁信息再试")
             }
         } catch {
             app.lock.log("warn", "切换静音失败 (cmd18): \(error.localizedDescription)")
-            app.showToast("切换失败：命令没有成功下发")
+            app.showToast("切换失败：设置没有成功发到门锁")
         }
     }
 
@@ -207,7 +207,7 @@ struct SafemodeIntroView: View {
                 app.showToast("已切到 B 模式（双验），锁状态已回读确认")
             } else {
                 app.lock.log("warn", "cmd20 已下发但回读 verifyMode 仍不是 B —— 视为未生效 (不报成功)")
-                app.showToast("命令已下发，但回读显示未生效 —— 请重读锁信息再试一次")
+                app.showToast("设置已发送，但门锁回报的还是旧值 —— 请重读一次锁信息")
             }
         } catch {
             app.lock.log("warn", "切换安全模式失败 (cmd20): \(error.localizedDescription)")

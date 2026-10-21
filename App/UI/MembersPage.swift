@@ -180,7 +180,7 @@ struct MembersPage: View {
                     UnclaimedClaimView().environmentObject(app)
                 } label: {
                     XRow(systemImage: "questionmark.circle", title: "匿名认领",
-                         subtitle: "无归属的凭证可认领给成员", showsChevron: true)
+                         subtitle: "还没分配给家人的钥匙可以认领", showsChevron: true)
                         .padding(.horizontal, XSpace.card)
                         .padding(.vertical, XSpace.s)
                 }
@@ -204,7 +204,7 @@ struct MembersPage: View {
         XPanel(kind: .group, padding: 0) {
             XEmptyState(systemImage: "person.2",
                         title: "还没有成员",
-                        message: "添加第一位家人, 之后可以为 TA 分配凭证与查看开门记录。",
+                        message: "添加第一位家人, 之后可以把钥匙分给 TA，也能看到 TA 的开门记录。",
                         actionTitle: "添加成员",
                         action: { showWizard = true })
         }

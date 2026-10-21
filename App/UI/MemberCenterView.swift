@@ -1207,7 +1207,7 @@ struct UnclaimedClaimView: View {
             }
             .scrollIndicators(.hidden)
         }
-        .navigationTitle("认领未归属")
+        .navigationTitle("认领还没分配的钥匙")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .cancellationAction) { Button("完成") { dismiss() } } }
     }
@@ -1413,7 +1413,7 @@ struct MemberExitWizard: View {
                         VStack(alignment: .leading, spacing: XSpace.m) {
                         Button {
                             if !items.isEmpty && !allDecided {
-                                app.showToast("先把每条凭证选一种处置")
+                                app.showToast("先把每把钥匙选一种处置方式")
                                 return
                             }
                             var e = MemberHub.ext(memberID)
