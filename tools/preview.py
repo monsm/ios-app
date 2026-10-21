@@ -394,6 +394,31 @@ def render_alarmseverity():
 
     return save(img, "alarmseverity")
 
+def render_cyclering():
+    """XCycleRing — 周期进度环三态"""
+    W, H = 402, 200
+    img = new_canvas(W, H)
+    dr = ImageDraw.Draw(img, "RGBA")
+
+    cases = [(30, 60, "30", "天后", OK), (12, 60, "12", "天后", OK), (65, 60, "该做", "保养", WARN)]
+    x = S(16)
+    for elapsed, period, head, cap, tint in cases:
+        cx = x + S(48)
+        cy = H // 2
+        R_OUT = S(44)
+        lw = max(S(6), int(R_OUT*0.08))
+        r = R_OUT - lw//2 - 1
+        dr.ellipse([cx-r, cy-r, cx+r, cy+r], outline=HAIRLINE+(128,), width=lw)
+        frac = min(elapsed/period, 1.0)
+        if frac > 0.001:
+            dr.arc([cx-r, cy-r, cx+r, cy+r], -90, -90+360*frac, fill=tint+(255,), width=lw)
+        # 圆心
+        text_center(dr, cx, cy-S(9), head, 15, TEXT)
+        text_center(dr, cx, cy+S(8), cap, 7, tint)
+        x += S(126)
+
+    return save(img, "cyclering")
+
 RENDERERS = {
     "codering": render_code_ring,
     "alarmchart": render_alarm_chart,
@@ -401,6 +426,7 @@ RENDERERS = {
     "battery": render_battery,
     "keysrows": render_keysrows,
     "alarmseverity": render_alarmseverity,
+    "cyclering": render_cyclering,
 }
 
 

@@ -60,21 +60,31 @@ struct CarePage: View {
 
     private var periodCard: some View {
         let days = daysUntilCare
+        let period = care.lastCareAt > 0 ? BatteryCare.carePeriodDays(opens30d: 0) : 0
+        let elapsed = care.lastCareAt > 0 ? (period - days) : 0
+        // 周期环: "还剩多少"是一个进程量, 环比文字更直观。
+        // 弧走的是「已过去多少」而不是「还剩多少」—— 走得越满越该动手。
         return XPanel(kind: .hero, tone: days <= 0 ? .warn : .ok) {
-            VStack(alignment: .leading, spacing: XSpace.s) {
-                HStack(spacing: XSpace.s) {
-                    Image(systemName: days <= 0 ? "exclamationmark.circle.fill" : "checkmark.circle.fill")
-                        .font(.system(size: XIcon.lg, weight: .medium))
-                        .foregroundStyle(days <= 0 ? XPalette.warn : XPalette.ok)
-                        .accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                HStack(alignment: .center, spacing: XSpace.l) {
+                    XCycleRing(
+                        elapsed: elapsed,
+                        period: max(period, 1),
+                        headline: care.lastCareAt > 0 ? (days > 0 ? "\(days)" : "该做") : "—",
+                        caption: care.lastCareAt > 0 ? (days > 0 ? "天后" : "保养") : "未记录",
+                        size: 104)
+
+                    VStack(alignment: .leading, spacing: XSpace.xs) {
                         Text(periodTitle(days))
                             .xFont(.title3, weight: .semibold)
                             .foregroundStyle(XPalette.text)
+                            .fixedSize(horizontal: false, vertical: true)
                         Text(periodDetail(days))
                             .xFont(.footnote)
                             .foregroundStyle(XPalette.textSub)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
                 if days <= 0 {

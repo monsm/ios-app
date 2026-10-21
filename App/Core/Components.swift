@@ -1076,3 +1076,110 @@ struct XBatteryGauge: View {
         return "充足"
     }
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// MARK: - XCycleRing — 周期进度环
+// ═══════════════════════════════════════════════════════════════════════
+//
+// 用于「还剩 N 天该做某事」这一类语义: 保养周期、耗材更换、证书到期。
+// 与 XBatteryGauge 的区别在于它表达的是**时间进程**而不是**容量余量**,
+// 所以弧是"已过去多少"而不是"还剩多少" —— 弧走得越满越该动手。
+//
+// 画法:
+//   · 360° 整圈, 从 12 点顺时针;
+//   · 底弧极淡, 前景弧 = 已过去的比例;
+//   · 圆心: 大字天数 + 小字说明;
+//   · 超过周期时整环变 warn 色并轻微脉冲 (reduceMotion 时不脉冲)。
+struct XCycleRing: View {
+    /// 已过去的天数 (可为负 = 还没开始)
+    let elapsed: Int
+    /// 总周期天数
+    let period: Int
+    /// 圆心大字 (调用方给, 比如 "3" 或 "该做了")
+    let headline: String
+    /// 圆心小字
+    let caption: String
+    var size: CGFloat = 128
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var shown: Double = 0
+    @State private var pulse = false
+
+    private var frac: Double {
+        guard period > 0 else { return 1 }
+        return min(max(Double(elapsed) / Double(period), 0), 1)
+    }
+    private var overdue: Bool { elapsed >= period }
+    private var tint: Color {
+        if overdue { return XPalette.warn }
+        if frac > 0.8 { return XPalette.warn }
+        return XPalette.ok
+    }
+
+    var body: some View {
+        ZStack {
+            Canvas { ctx, sz in
+                let side = min(sz.width, sz.height)
+                let rect = CGRect(x: (sz.width - side) / 2,
+                                  y: (sz.height - side) / 2,
+                                  width: side, height: side)
+                let c = CGPoint(x: rect.midX, y: rect.midY)
+                let lw = max(6, side * 0.08)
+                let r = side / 2 - lw / 2 - 1
+
+                var track = Path()
+                track.addEllipse(in: CGRect(x: c.x - r, y: c.y - r,
+                                            width: r * 2, height: r * 2))
+                ctx.stroke(track,
+                           with: .color(XPalette.hairline.opacity(0.5)),
+                           lineWidth: lw)
+
+                guard shown > 0.001 else { return }
+                var arc = Path()
+                arc.addArc(center: c, radius: r,
+                           startAngle: .degrees(-90),
+                           endAngle: .degrees(-90 + 360 * shown),
+                           clockwise: false)
+                ctx.stroke(arc,
+                           with: .color(tint),
+                           style: StrokeStyle(lineWidth: lw, lineCap: .round))
+            }
+            .accessibilityHidden(true)
+
+            VStack(spacing: 1) {
+                Text(headline)
+                    .xFont(.system(size: size * 0.22, weight: .semibold, design: .rounded).monospacedDigit())
+                    .foregroundStyle(XPalette.text)
+                    .minimumScaleFactor(0.5)
+                    .lineLimit(1)
+                Text(caption)
+                    .xFont(.system(size: max(8, size * 0.062)))
+                    .foregroundStyle(tint)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
+            .padding(.horizontal, XSpace.m)
+        }
+        .frame(width: size, height: size)
+        .scaleEffect(pulse ? 1.03 : 1)
+        .onAppear {
+            if reduceMotion { shown = frac }
+            else { withAnimation(XMotion.doorReveal) { shown = frac } }
+            startPulse()
+        }
+        .onChange(of: frac) { _, v in
+            if reduceMotion { shown = v }
+            else { withAnimation(XMotion.standard) { shown = v } }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(headline), \(caption)")
+    }
+
+    /// 超期时轻微脉冲提醒; reduceMotion 与未超期都不启动
+    private func startPulse() {
+        guard overdue, !reduceMotion else { return }
+        withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) {
+            pulse = true
+        }
+    }
+}
