@@ -36,6 +36,7 @@ struct SafemodeIntroView: View {
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                         }
+                        .xScrollLift()
                     } else {
                         XPanel(kind: .group) {
                             VStack(alignment: .leading, spacing: XSpace.m) {
@@ -83,6 +84,7 @@ struct SafemodeIntroView: View {
                                 }
                             }
                         }
+                        .xScrollLift()
                     }
                 }
                 .padding(.horizontal, XSpace.gutter)

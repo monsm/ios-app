@@ -21,37 +21,45 @@ struct SyncTimeView: View {
 
             ScrollView {
                 VStack(spacing: XSpace.l) {
-            XPanel(kind: .group) {
-                VStack(alignment: .leading, spacing: XSpace.m) {
-                    secLabel("同步时间")
-                if app.current != nil {
-                    Text("将手机时间同步到门锁内 (cmd 0E)。校准前会先读锁钟并补偿偏差。")
-                        .xFont(.footnote)
-                        .foregroundStyle(XPalette.textSub)
-                    LabeledRow("锁钟", app.status?.lockTime.map { ProtoTime.localStr($0) } ?? "—")
-                    LabeledRow("手机时间", DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .medium))
-                } else {
-                    Text("请先在设备页选择一把门锁").foregroundStyle(XPalette.textSub)
-                }
-            }
-            }
-            XPanel(kind: .group) {
-                VStack(alignment: .leading, spacing: XSpace.m) {
-                XBusyButton(title: "将手机时间同步到锁内",
-                            systemImage: "clock.arrow.circlepath",
-                            busy: busy) {
-                    Task { await run() }
-                }
-                .disabled(app.current == nil)
-                if !result.isEmpty {
-                    Label(result, systemImage: failed ? "xmark.octagon.fill" : "checkmark.circle.fill")
-                        .xFont(.footnote)
-                        .foregroundStyle(resultTone.color)
-                }
-                Text("请将手机靠近门锁 · 请确保手机时间准确")
-                    .xFont(.caption2)
-                    .foregroundStyle(XPalette.textSub)
-            }
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            secLabel("同步时间")
+                            if app.current != nil {
+                                Text("将手机时间同步到门锁内 (cmd 0E)。校准前会先读锁钟并补偿偏差。")
+                                    .xFont(.footnote)
+                                    .foregroundStyle(XPalette.textSub)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                LabeledRow("锁钟", app.status?.lockTime.map { ProtoTime.localStr($0) } ?? "—")
+                                LabeledRow("手机时间", DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .medium))
+                            } else {
+                                Text("请先在设备页选择一把门锁")
+                                    .xFont(.footnote)
+                                    .foregroundStyle(XPalette.textSub)
+                            }
+                        }
+                    }
+                    .xScrollLift()
+
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            XBusyButton(title: "将手机时间同步到锁内",
+                                        systemImage: "clock.arrow.circlepath",
+                                        busy: busy) {
+                                Task { await run() }
+                            }
+                            .disabled(app.current == nil)
+                            if !result.isEmpty {
+                                Label(result, systemImage: failed ? "xmark.octagon.fill" : "checkmark.circle.fill")
+                                    .xFont(.footnote)
+                                    .foregroundStyle(resultTone.color)
+                            }
+                            Text("请将手机靠近门锁 · 请确保手机时间准确")
+                                .xFont(.caption2)
+                                .foregroundStyle(XPalette.textSub)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    .xScrollLift()
                 }
                 .padding(.horizontal, XSpace.gutter)
                 .padding(.vertical, XSpace.l)
@@ -59,9 +67,7 @@ struct SyncTimeView: View {
             .scrollIndicators(.hidden)
         }
         .navigationTitle("同步时间")
-        .xList()
-        .xScreen()
-    }
+        .navigationBarTitleDisplayMode(.inline)
     }
 
     private func run() async {
