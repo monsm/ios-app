@@ -190,7 +190,6 @@ struct ManagerFace: View {
         case .export:         ExportCenterView(mac: app.currentMac)
                                   .environmentObject(app)
         case .appearance:     StudioPage()
-        case .settings:       StudioPage()
         case .me:             MePage()
         }
     }
