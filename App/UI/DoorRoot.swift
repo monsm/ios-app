@@ -37,7 +37,19 @@ struct DoorRoot: View {
     @EnvironmentObject private var app: AppState
 
     /// 门是否翻到里面
-    @State private var flipped = false
+    /// 当前面（BDF 三棱柱）。
+    ///
+    /// 取代旧的 `flipped: Bool` —— 那只能表达两面。
+    /// 为了让旧代码（requestRoute / Tab 映射）继续能用，
+    /// 下面保留一个 `flipped` 计算属性做兼容。
+    @State private var face: DoorFace = .d
+
+    /// 兼容层: 旧代码用 `flipped` 表示"是否在门里"。
+    /// 映射: D（就近，即门外/锁面）= false，B/F（域内页面）= true
+    private var flipped: Bool {
+        get { face != .d }
+        nonmutating set { face = newValue ? .b : .d }
+    }
     /// 连接阶段
     @State private var stage: LinkStage = .idle
     /// 充能进度
@@ -58,13 +70,18 @@ struct DoorRoot: View {
     private let holdThreshold: TimeInterval = 0.6
 
     var body: some View {
-        DoorStage(flipped: $flipped) {
+        DoorPrism(face: $face) {
+            // B 管家台
+            managerFace
+        } faceD: {
+            // D 就近 —— 门 + 锁
             frontContent
-        } back: {
-            backContent
+        } faceF: {
+            // F 仪表 —— 锁数据 + 人的数据
+            dashboardFace
         }
         .background(XPalette.canvas)
-        .onChange(of: flipped) { _, _ in
+        .onChange(of: face) { _, _ in
             // 翻面时清理开锁状态
             cancelCharge()
         }
@@ -72,7 +89,7 @@ struct DoorRoot: View {
         // 这里把它翻译成门里对应的域, 保证跨页跳转不断链。
         .onChange(of: app.tabSelection) { _, newValue in
             if let domain = domainForTab(newValue) {
-                flipped = true
+                face = .b
                 if navPath.last != domain {
                     navPath = [domain]
                 }
@@ -81,7 +98,7 @@ struct DoorRoot: View {
         .onAppear {
             // 冷启动若已带 Tab 意图, 直接进对应域
             if let domain = domainForTab(app.tabSelection) {
-                flipped = true
+                face = .b
                 navPath = [domain]
             }
         }
@@ -99,7 +116,7 @@ struct DoorRoot: View {
             onPressChanged: handlePress
         )
         .overlay(alignment: .topTrailing) {
-            DoorFlipButton(flipped: $flipped)
+            DoorFlipButton(face: $face)
                 .padding(.trailing, XSpace.s)
                 .padding(.top, XSpace.s)
         }
@@ -108,12 +125,58 @@ struct DoorRoot: View {
     // ── 门里 ──
     private var backContent: some View {
         NavigationStack(path: $navPath) {
-            DoorBack(flipped: $flipped) { domain in
+            DoorBack(face: $face) { domain in
                 enter(domain)
             }
             .navigationDestination(for: DoorDomain.self) { domain in
                 domainDestination(domain)
             }
+        }
+    }
+
+    // ── B 管家台（占位，M4 会做底部液态玻璃分组）──
+    //
+    // 现在先用一个最小的入口列表把三棱柱跑通，
+    // M4 才做 5 组液态玻璃导航。这样 M3 可以独立验证。
+    private var managerFace: some View {
+        NavigationStack(path: $navPath) {
+            ScrollView {
+                VStack(spacing: XSpace.m) {
+                    ForEach(ManagerGroup.allCases) { g in
+                        XPanel {
+                            XRow(systemImage: g.systemImage, title: g.rawValue,
+                                 subtitle: g.summary, showsChevron: true) {
+                                // M4 接真实分组页
+                            }
+                        }
+                    }
+                }
+                .padding(XSpace.gutter)
+            }
+            .background(XPalette.canvas)
+            .navigationTitle("管家台")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+
+    // ── F 仪表（占位，M4 会做锁数据 + 人的数据可视化）──
+    private var dashboardFace: some View {
+        NavigationStack(path: $navPath) {
+            ScrollView {
+                VStack(spacing: XSpace.l) {
+                    Text("仪表")
+                        .xFont(.title2, weight: .semibold)
+                        .foregroundStyle(XPalette.text)
+                    Text("锁的数据 + 人的数据 —— M4 实现")
+                        .xFont(.footnote)
+                        .foregroundStyle(XPalette.textSub)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(XSpace.xxl)
+            }
+            .background(XPalette.canvas)
+            .navigationTitle("仪表")
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
 
@@ -298,5 +361,55 @@ struct DoorRoot: View {
     private var lastKnownOpen: Bool {
         guard let rec = app.recentRecords(count: 1).first else { return false }
         return !rec.text.isEmpty
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// MARK: - B 管家台分组
+// ═══════════════════════════════════════════════════════════════════════
+//
+// 21 个设置类页面塞进一个面会变成"入口列表"，又回到普通 App 的样子。
+// 所以分 5 组，M4 会用底部液态玻璃 Tab 切换。
+//
+// 现在（M3）先用最简单的列表把三棱柱跑通 —— 让 M3 可以独立验证，
+// 不用等 M4 的导航做完。
+enum ManagerGroup: String, CaseIterable, Identifiable {
+    case ledger = "台账"
+    case devices = "设备"
+    case members = "成员"
+    case security = "安全"
+    case backupLook = "备份外观"
+
+    var id: String { rawValue }
+
+    var systemImage: String {
+        switch self {
+        case .ledger: return "key.horizontal"
+        case .devices: return "iphone.gen3"
+        case .members: return "person.2"
+        case .security: return "lock.shield"
+        case .backupLook: return "externaldrive.badge.timemachine"
+        }
+    }
+
+    /// 每组的动态摘要 —— 与 DoorDomain.summary 同口径：必须显示真实数字
+    var summary: String {
+        switch self {
+        case .ledger:
+            let n = DB.keychains().reduce(0) { acc, kc in
+                acc + DB.listPwds(kc.mac).count + DB.listFps(kc.mac).count
+            }
+            return n > 0 ? "\(n) 份凭证" : "还没有凭证"
+        case .devices:
+            let n = DB.keychains().count
+            return n > 0 ? "\(n) 把锁" : "还没有门锁"
+        case .members:
+            let n = MemberHub.all().count
+            return n > 0 ? "\(n) 位成员" : "还没有成员"
+        case .security:
+            return DB.store.getBool("kf_applock") ? "应用锁已开" : "应用锁未开"
+        case .backupLook:
+            return "备份 · 导出 · 外观"
+        }
     }
 }

@@ -291,152 +291,6 @@ struct ShakeEffect: GeometryEffect {
     }
 }
 
-// ═══════════════════════════════════════════════════════════
-// MARK: - 门面主视图
-// ═══════════════════════════════════════════════════════════
-
-/// 门面 —— 首屏唯一内容。
-///
-/// 结构: 三层视差
-///   Layer 1 (背景): 光晕, 旋转最慢
-///   Layer 2 (中景): 门板, 标准速度
-///   Layer 3 (前景): 锁体 + 文字, 旋转最快
-struct DoorStage<Front: View, Back: View>: View {
-    @Binding var flipped: Bool
-
-    /// 门外内容
-    @ViewBuilder var front: () -> Front
-    /// 门里内容
-    @ViewBuilder var back: () -> Back
-
-    /// 手势拖拽进度 0...1 (0=门外, 1=门里)
-    @State private var dragProgress: CGFloat = 0
-    @State private var isDragging = false
-    @State private var hapticTickAt: Int = -1
-
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    /// 当前翻转角度
-    private var angle: Double {
-        let base = flipped ? 1.0 : 0.0
-        let p = isDragging ? dragProgress : base
-        return p * DoorGeometry.flipAngle
-    }
-
-    var body: some View {
-        GeometryReader { geo in
-            ZStack {
-                if reduceMotion {
-                    // ── 真降级: 不挂 rotation3DEffect ──
-                    // 只做交叉淡入 + 微缩放, 空间隐喻消失但内容可读
-                    ZStack {
-                        front()
-                            .opacity(flipped ? 0 : 1)
-                            .scaleEffect(flipped ? 0.98 : 1)
-                        back()
-                            .opacity(flipped ? 1 : 0)
-                            .scaleEffect(flipped ? 1 : 0.98)
-                    }
-                    .animation(XMotion.soft, value: flipped)
-                } else {
-                    // ── 真 3D: 三层视差 ──
-                    ZStack {
-                        // Layer 1: 背景光晕 (最慢)
-                        RadialGradient(
-                            colors: [XPalette.accent.opacity(0.08), .clear],
-                            center: .center, startRadius: 0, endRadius: geo.size.width * 0.8)
-                            .rotation3DEffect(
-                                .degrees(angle * 0.6),
-                                axis: (x: 0, y: 1, z: 0),
-                                anchor: .leading,
-                                perspective: DoorGeometry.perspective)
-                            .allowsHitTesting(false)
-
-                        // Layer 2 + 3: 门板与内容
-                        ZStack {
-                            // 正面
-                            front()
-                                .opacity(frontfaceOpacity(angle: angle))
-                                .allowsHitTesting(!flipped && !isDragging)
-                                .accessibilityHidden(flipped)
-
-                            // 背面 (预旋转 180° 防镜像)
-                            back()
-                                .opacity(backfaceOpacity(angle: angle))
-                                .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
-                                .allowsHitTesting(flipped && !isDragging)
-                                .accessibilityHidden(!flipped)
-                        }
-                        .rotation3DEffect(
-                            .degrees(angle),
-                            axis: (x: 0, y: 1, z: 0),
-                            anchor: .leading,
-                            perspective: DoorGeometry.perspective)
-                    }
-                }
-            }
-            .overlay(alignment: .leading) {
-                // 左边缘手势热区 (仅增强, 不是唯一入口)
-                if !reduceMotion {
-                    Color.clear
-                        .frame(width: DoorGeometry.edgeGrabWidth)
-                        .contentShape(Rectangle())
-                        .gesture(edgeDrag(width: geo.size.width))
-                        .accessibilityHidden(true)
-                }
-            }
-            .overlay(alignment: .leading) {
-                // 边缘视觉把手 (细光条, 暗示可拖)
-                if !flipped && !isDragging {
-                    LinearGradient(
-                        colors: [.clear, XPalette.accent.opacity(0.18), .clear],
-                        startPoint: .top, endPoint: .bottom)
-                        .frame(width: 2)
-                        .padding(.vertical, 120)
-                        .allowsHitTesting(false)
-                        .transition(.opacity)
-                }
-            }
-        }
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel(flipped ? "门里" : "门外")
-    }
-
-    // ── 边缘牵引手势 ──
-    private func edgeDrag(width: CGFloat) -> some Gesture {
-        DragGesture(minimumDistance: 4, coordinateSpace: .local)
-            .onChanged { g in
-                if !isDragging { isDragging = true }
-                let p = min(max(g.translation.width / (width * 0.7), 0), 1)
-                dragProgress = flipped ? 1 - p : p
-                // 每过 25% 给一次 tick
-                let tick = Int(dragProgress * 4)
-                if tick != hapticTickAt {
-                    hapticTickAt = tick
-                    XHaptics.tick.impactOccurred()
-                }
-            }
-            .onEnded { g in
-                let p = min(max(g.translation.width / (width * 0.7), 0), 1)
-                let target = flipped ? 1 - p : p
-                isDragging = false
-                hapticTickAt = -1
-                if target > DoorGeometry.flipThreshold {
-                    withAnimation(XMotion.doorSwing) {
-                        flipped = true
-                        dragProgress = 1
-                    }
-                    XHaptics.trigger.impactOccurred()
-                    UIAccessibility.post(notification: .screenChanged,
-                                         argument: flipped ? "门里" : "门外")
-                } else {
-                    withAnimation(XMotion.doorSwing) {
-                        dragProgress = flipped ? 1 : 0
-                    }
-                }
-            }
-    }
-}
 
 // ═══════════════════════════════════════════════════════════
 // MARK: - 翻面按钮 (无障碍唯一入口)
@@ -444,27 +298,33 @@ struct DoorStage<Front: View, Back: View>: View {
 
 /// 翻面按钮 —— VoiceOver 用户的可达路径。
 /// 手势只是增强, 这个按钮才是"必须存在"的入口。
+/// 三棱柱的面切换按钮。
+///
+/// 取代旧的 DoorFlipButton —— 那个只能翻转正反两面。
+/// 现在每次点前进一个面（B → D → F → B），
+/// 与边缘手势的步进量一致。
 struct DoorFlipButton: View {
-    @Binding var flipped: Bool
+    @Binding var face: DoorFace
 
     var body: some View {
         Button {
-            withAnimation(XMotion.doorSwing) {
-                flipped.toggle()
-            }
+            let order = DoorFace.order
+            guard let i = order.firstIndex(of: face) else { return }
+            let next = order[(i + 1) % order.count]
+            withAnimation(XMotion.doorSwing) { face = next }
             XHaptics.trigger.impactOccurred()
-            UIAccessibility.post(notification: .screenChanged,
-                                 argument: flipped ? "门里" : "门外")
+            UIAccessibility.post(notification: .screenChanged, argument: next.rawValue)
         } label: {
-            Image(systemName: flipped ? "door.left.hand.open" : "door.left.hand.closed")
+            Image(systemName: face.systemImage)
                 .font(.system(size: XIcon.md, weight: .medium))
                 .foregroundStyle(XPalette.textSub)
                 .frame(width: XHit.min, height: XHit.min)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(flipped ? "返回门外" : "进入门里")
-        .accessibilityHint("切换门的正反面")
+        .accessibilityLabel("切换到下一个面")
+        .accessibilityValue(face.rawValue)
+        .accessibilityHint("管家台、就近、仪表 三面循环")
         .accessibilityAddTraits(.isButton)
     }
 }

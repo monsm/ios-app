@@ -77,7 +77,7 @@ enum DoorDomain: String, CaseIterable, Identifiable {
 /// 门里 —— 首屏背面
 struct DoorBack: View {
     @EnvironmentObject private var app: AppState
-    @Binding var flipped: Bool
+    @Binding var face: DoorFace
 
     /// 点某个域 → 进入该域
     var onEnter: (DoorDomain) -> Void
@@ -90,7 +90,7 @@ struct DoorBack: View {
                     .xFont(.headline)
                     .foregroundStyle(XPalette.text)
                 Spacer()
-                DoorFlipButton(flipped: $flipped)
+                DoorFlipButton(face: $face)
             }
             .padding(.horizontal, XSpace.gutter)
             .padding(.top, XSpace.s)
