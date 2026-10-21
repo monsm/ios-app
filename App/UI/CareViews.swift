@@ -169,8 +169,8 @@ struct MaintenanceView: View {
                 XGuidedEmptyView(systemImage: "checkmark.seal",
                                 title: "还没有保养记录",
                                 message: "五项清单走一遍就会在这里落下第一条; 换电完成后走「换电关怀」里的图文指引。",
-                                primaryTitle: "开始五项保养",
-                                primary: { showChecklist = true })
+                                actionTitle: "开始五项保养",
+                                action: { showChecklist = true })
                     .listRowInsets(EdgeInsets())
             }
             ForEach(Array(all.prefix(5).enumerated()), id: \.offset) { _, e in
@@ -417,10 +417,10 @@ struct CareChecklistView: View {
                 Section {
                     XBusyButton(title: "完成保养",
                                systemImage: "checkmark.seal",
-                               busy: false,
-                               disabled: !checks.allSatisfy({ $0 })) {
+                               busy: false) {
                         complete()
                     }
+                    .disabled(!checks.allSatisfy({ $0 }))
                 }
             }
             .navigationTitle("锁体保养")

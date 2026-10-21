@@ -896,12 +896,10 @@ struct SecurityDestroyView: View {
                             .autocorrectionDisabled()
                             .frame(minHeight: XHit.min)
                     }
-                    XBusyButton(title: "销毁全部数据",
-                                busy: destroying,
-                                disabled: !(ack && sudoSatisfied
-                                           && typedWord.trimmingCharacters(in: .whitespaces) == "销毁")) {
+                    XBusyButton(title: "销毁全部数据", busy: destroying) {
                         runDestroy()
                     }
+                    .disabled(!(ack && sudoSatisfied && typedWord.trimmingCharacters(in: .whitespaces) == "销毁"))
                     if let rep = destroyReport {
                         Text(rep)
                             .xFont(.footnote)

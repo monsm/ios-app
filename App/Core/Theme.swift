@@ -415,3 +415,24 @@ enum XAppearance {
     /// App 内高对比皮肤：与系统「增加对比度」并联
     @MainActor static var highContrast: Bool { AXFlags.highContrast || DB.store.getBool("kf_hc") }
 }
+
+
+// ═══════════════════════════════════════════════════════════
+// MARK: - 色彩基元 (2026-10-21 从已删的 DesignSystem.swift 迁入)
+// ═══════════════════════════════════════════════════════════
+
+extension Color {
+    init(hex: UInt32) {
+        self.init(.sRGB,
+                  red: Double((hex >> 16) & 0xff) / 255,
+                  green: Double((hex >> 8) & 0xff) / 255,
+                  blue: Double(hex & 0xff) / 255)
+    }
+
+    /// 明暗自适应色。light / dark 为 6 位 RGB 十六进制
+    static func adaptive(_ light: UInt32, _ dark: UInt32) -> Color {
+        Color(UIColor { tc in
+            tc.userInterfaceStyle == .dark ? UIColor(Color(hex: dark)) : UIColor(Color(hex: light))
+        })
+    }
+}

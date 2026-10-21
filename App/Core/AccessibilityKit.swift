@@ -127,50 +127,7 @@ enum AXPrefs {
 // Palette.text, 于是浅色档下 ink 压近黑端 = 1.06:1, 深色档下近白字压近白端 = 1.01:1 ——
 // 降级渐变自己把字吃掉了, 12 个 heroGradientSafe 消费点全中。一条渐变只能配一种前景色,
 // 所以两端必须**同侧** (都浅或都深), 由 Color.adaptive 跟着明暗走; 这四组比值已进 tools/contrast.js 断言。
-private extension Color {
-    static let invHeroTop    = Color.adaptive(0xF5F7FB, 0x11161F)
-    static let invHeroBottom = Color.adaptive(0xE7EBF3, 0x05070B)
-}
 
-extension DS {
-    /// 226 降透明实测: hero 面退纯色 (取品牌渐变暗端 heroB; 863 反转档取降级暗端)。
-    /// 选暗端的理由: 纯色只有一层底可兜, 而纯白压 heroB 的比值已在 tools/contrast.js C 段机检 (≥4.5:1),
-    /// 卡内纹理/柔光/黑纱叠上去只会更稳; 前景色仍由 heroFg 给, 这里只换底, 不动 863 的反转判定。
-    @MainActor static var heroSolid: Color { AXFlags.invertColors ? Color.invHeroBottom : Palette.themed("heroB") }
-
-    /// 226+863 hero 面唯一出口 (沿用旧名 heroGradientSafe, 12 个消费点不用挨个改):
-    /// 降透明 → 纯色 (226); 反转色 → 中性降级渐变 (863); 常规 → 品牌渐变。
-    /// 之所以做成 ShapeStyle.resolve(in:) 而不是静态判断: 环境只有渲染时可知, 消费点各自读一遍旗标
-    /// 迟早在某个页面上漂开 —— 收在这一处, 主控卡/开锁盘/成就卡/导出卡/帮助页/引导页同帧一起换。
-    struct HeroSurface: ShapeStyle {
-        func resolve(in environment: EnvironmentValues) -> AnyShapeStyle {
-            // 判据全部取自 EnvironmentValues, 不读 UIAccessibility 全局: resolve 是渲染期回调,
-            // 而系统旗标在 Swift 6 下属于主 actor。环境里本来就有同样三个值 (降透明/增强对比/反转),
-            // 走环境既没有隔离问题, 也保证同一次渲染里所有令牌看到的是同一份环境。
-            // App 内的 kf_hc 皮肤不是系统状态, 直接读偏好 (Store 线程安全, 不涉及隔离)。
-            let flat = environment.accessibilityReduceTransparency
-                || environment.colorSchemeContrast == .increased
-                || DB.store.getBool("kf_hc")
-            if flat {
-                let base = environment.accessibilityInvertColors ? Color.invHeroBottom : Palette.themed("heroB")
-                return AnyShapeStyle(base)
-            }
-            if environment.accessibilityInvertColors { return AnyShapeStyle(heroInvertGradient) }
-            return AnyShapeStyle(XGradient.hero)
-        }
-    }
-    /// 863 反转降级渐变 (两端**同侧**: 浅档中性浅、深档中性深; 文字用 heroFg) — HeroSurface 的 863 分支
-    static var heroInvertGradient: LinearGradient {
-        LinearGradient(colors: [Color.invHeroTop, Color.invHeroBottom],
-                       startPoint: .top, endPoint: .bottom)
-    }
-    /// 226 降透明档的卡片描边色: 与 heroFg 同源 (常规档白、反转档 text), 压在同侧纯色底上边界可辨
-    @MainActor static var heroSolidStroke: Color { heroFg.opacity(0.30) }
-
-    static var heroGradientSafe: HeroSurface { HeroSurface() }
-    /// 压在 hero 面上的前景色: 常规 = 纯白 (机检六套主题两端 ≥4.5:1); 反转 = 与降级底同侧的 text
-    @MainActor static var heroFg: Color { AXFlags.invertColors ? Palette.text : .white }
-}
 
 // ---------- 朗读词表 (880): accessibilityLabel 统一走这里, 审计口径 = 本文件 ----------
 enum AXTerms {
