@@ -147,6 +147,12 @@ struct DoorPrism<B: View, D: View, F: View>: View {
         // 裁太多会把页面布局挤坏。
         .padding(.horizontal, width * 0.04)
         .padding(.vertical, width * 0.03)
+        // ═══ 投影放在整层，不放在每个面上 ═══
+        // .shadow 作用在 rotation3DEffect 过的视图上时，
+        // 某些 iOS 版本会把它离屏栅格化，结果是内容整个不显示（黑屏的另一个来源）。
+        // 移到合成层 + compositingGroup，风险最小。
+        .compositingGroup()
+        .shadow(color: .black.opacity(0.35), radius: 26, x: 0, y: 20)
         // ── 侧面呼吸: 缩放由**当前朝向**推导 ──
         .scaleEffect(breathScale)
     }
@@ -216,7 +222,6 @@ struct DoorPrism<B: View, D: View, F: View>: View {
                 RoundedRectangle(cornerRadius: 30, style: .continuous)
                     .strokeBorder(XPalette.hairline, lineWidth: 1)
             }
-            .shadow(color: .black.opacity(0.30), radius: 22, x: 0, y: 16)
             // ① 只做朝向 —— 轴过视图中心，透视不参与，前缩 = cos(θ)
             .rotation3DEffect(.degrees(theta), axis: (x: 0, y: 1, z: 0), anchor: .center)
             // ③ 近大远小
