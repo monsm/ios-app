@@ -485,6 +485,11 @@ struct SecurityAuditView: View {
                     XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
                             secLabel("双流水")
+                            // 两条流水各有多少条 —— 原来只能滚到底数，没有总数。
+                            // 一次 load() 同时算两边，不重复读链。
+                            let allAudit = AuditLog().load()
+                            let adminN = allAudit.filter { $0.cat == .admin }.count
+                            let doorN = allAudit.filter { $0.cat == .door }.count
                             // 2026-10-13 run 61: 原写 `set: { withAnimation(XMotion.quick) { self.seg = $0 } }` ——
                             // 外层闭包参数隐式 ($0 只出现在**内层**闭包里), 编译器把它算成
                             //   "contextual type for closure argument list expects 2 arguments" 与
@@ -493,8 +498,8 @@ struct SecurityAuditView: View {
                             Picker("", selection: Binding(get: { self.seg }, set: { newValue in
                                 withAnimation(XMotion.quick) { self.seg = newValue }
                             })) {
-                                Text("管理操作").tag(0)
-                                Text("开门事件").tag(1)
+                                Text("管理操作 " + String(adminN)).tag(0)
+                                Text("开门事件 " + String(doorN)).tag(1)
                             }
                             .pickerStyle(.segmented)
                             ForEach(events, id: \.id) { e in
