@@ -105,73 +105,74 @@ struct MemberDetail360View: View {
         let hintNone = "选法: 「设置 → 成员管理」里长按这一位成员的行 →「授予徽章」(那份菜单列的是本机已点亮的徽章), 选中的那枚就画在本成员头像的右下角。"
         let hintSome = "角标已画在本成员头像的右下角, 图形就是这枚徽章自己的那枚符号。改选或撤下: 「设置 → 成员管理」里长按这一位成员的行 →「授予徽章」, 同一菜单里有「移除角标」。"
         let cornerHint = corner == nil ? hintNone : hintSome
-        return Section {
-            VStack(alignment: .leading, spacing: XSpace.s) {
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                secLabel("档案")
+                VStack(alignment: .leading, spacing: XSpace.s) {
                 HStack(spacing: XSpace.s) {
-                    MemberAvatar(member: m, size: 44)
-                    VStack(alignment: .leading, spacing: XSpace.xxs) {
-                        Text(MemberHub.display(m))
-                            .xFont(.title3, weight: .semibold)
-                            .foregroundStyle(XPalette.text)
-                        Text(MemberHub.roleLabel(e.role) + (m.relation.isEmpty ? "" : " · " + m.relation))
-                            .xFont(.caption)
-                            .foregroundStyle(XPalette.textSub)
-                    }
-                    Spacer(minLength: 0)
-                    XStatusPill(text: "名下 \(a.owns) 条", tone: .accent, systemImage: "key.fill")
+                MemberAvatar(member: m, size: 44)
+                VStack(alignment: .leading, spacing: XSpace.xxs) {
+                Text(MemberHub.display(m))
+                .xFont(.title3, weight: .semibold)
+                .foregroundStyle(XPalette.text)
+                Text(MemberHub.roleLabel(e.role) + (m.relation.isEmpty ? "" : " · " + m.relation))
+                .xFont(.caption)
+                .foregroundStyle(XPalette.textSub)
+                }
+                Spacer(minLength: 0)
+                XStatusPill(text: "名下 \(a.owns) 条", tone: .accent, systemImage: "key.fill")
                 }
                 // 465 紧急联系行 (纯本地)
                 LabeledContent("紧急联系") {   // 465 紧急联系
-                    Text(e.emergency.isEmpty ? "未填" : e.emergency)
-                        .xFont(.subheadline)
-                        .foregroundStyle(XPalette.textSub)
+                Text(e.emergency.isEmpty ? "未填" : e.emergency)
+                .xFont(.subheadline)
+                .foregroundStyle(XPalette.textSub)
                 }
                 // 464 常用锁
                 if !e.commonLocks.isEmpty {
-                    LabeledContent("常用锁") {   // 464 常用锁
-                        let names = e.commonLocks.map { LockArchive.displayName(DB.keychain($0) ?? Keychain(mac: $0, skey: "")) }
-                        Text(names.joined(separator: "、"))
-                            .xFont(.subheadline)
-                            .foregroundStyle(XPalette.textSub)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
-                    }
+                LabeledContent("常用锁") {   // 464 常用锁
+                let names = e.commonLocks.map { LockArchive.displayName(DB.keychain($0) ?? Keychain(mac: $0, skey: "")) }
+                Text(names.joined(separator: "、"))
+                .xFont(.subheadline)
+                .foregroundStyle(XPalette.textSub)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                }
                 }
                 // 485/1017/653 生日行 (Milestones 已有数据与提前一天通知, 只接线不重做)
                 if let bd = Milestones.memberBirthdays()[m.id] {
-                    LabeledContent("生日") {   // 485 生日
-                        Text(bd + " · 提前一天提醒")
-                            .xFont(.subheadline)
-                            .foregroundStyle(XPalette.textSub)
-                    }
+                LabeledContent("生日") {   // 485 生日
+                Text(bd + " · 提前一天提醒")
+                .xFont(.subheadline)
+                .foregroundStyle(XPalette.textSub)
+                }
                 }
                 // 994 角标行: 只报 kf_member_badge 里真实存下的那一枚 —— 已选就报徽章名,
                 // 那一位还没挑的照实读作"未选角标", 两种状态都是本机台账的原话。
                 LabeledContent("角标") {   // 994 角标
-                    Text(corner.map { "已选「\($0.title)」" } ?? "未选角标")
-                        .xFont(.subheadline)
-                        .foregroundStyle(corner == nil ? XPalette.textSub : XPalette.text)
+                Text(corner.map { "已选「\($0.title)」" } ?? "未选角标")
+                .xFont(.subheadline)
+                .foregroundStyle(corner == nil ? XPalette.textSub : XPalette.text)
                 }
                 // 994 指路行: 选与撤的真实入口在「设置 → 成员管理」那张列表的长按菜单里
                 // (「授予徽章」子菜单 +「移除角标」), 这一页只报状态并把人指到那个真实入口 ——
                 // 徽章选择器全 App 保持一处实现, 两处写迟早一处改了另一处走偏。
                 // 文案随状态分两路: 已选的说"改选/撤下", 未选的说"怎么挑", 各自只说自己那一份。
                 Text(cornerHint)
-                    .xFont(.caption)
-                    .foregroundStyle(XPalette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
+                .xFont(.caption)
+                .foregroundStyle(XPalette.textSub)
+                .fixedSize(horizontal: false, vertical: true)
                 // 480 孩子码关怀文案 (家长视角)
                 if !e.careText.isEmpty {
-                    LabeledContent("关怀语") {   // 480 关怀语
-                        Text(e.careText)
-                            .xFont(.subheadline)
-                            .foregroundStyle(XPalette.accentText)
-                    }
+                LabeledContent("关怀语") {   // 480 关怀语
+                Text(e.careText)
+                .xFont(.subheadline)
+                .foregroundStyle(XPalette.accentText)
                 }
+                }
+                }
+                .accessibilityElement(children: .combine)
             }
-            .accessibilityElement(children: .combine)
-        } header: {
-            Text("档案")
         }
     }
 
@@ -189,95 +190,99 @@ struct MemberDetail360View: View {
                 credLines.append("「" + f.name + "」")
             }
         }
-        return Section {
-            Text("密码 \(pwdCount) 条 · 指纹 \(fpCount) 条 · 未归属转未分配不在此列")   // 261 密码
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                secLabel("名下凭证")
+                Text("密码 \(pwdCount) 条 · 指纹 \(fpCount) 条 · 未归属转未分配不在此列")   // 261 密码
                 .xFont(.subheadline)
                 .foregroundStyle(XPalette.text)
-            // 261 清单本体: 只有计数没有名目时, 用户没法核对"名下到底有哪几把"
-            ForEach(Array(credLines.enumerated()), id: \.offset) { _, line in
+                // 261 清单本体: 只有计数没有名目时, 用户没法核对"名下到底有哪几把"
+                ForEach(Array(credLines.enumerated()), id: \.offset) { _, line in
                 Text(line)
-                    .xFont(.caption)
-                    .foregroundStyle(XPalette.textSub)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                .xFont(.caption)
+                .foregroundStyle(XPalette.textSub)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .foregroundStyle(XPalette.accentText)
             }
-            .buttonStyle(PlainButtonStyle())
-            .foregroundStyle(XPalette.accentText)
-        } header: {
-            Text("名下凭证")   // 261 名下凭证
         }
     }
 
     // ---------- 459 最近开门摘录 (⚠台账推断, 带"约") ----------
     private func excerptSection(_ m: Member) -> some View {
         let rows = MemberHub.recentExcerpts(m.id, 10)
-        return Section {
-            ForEach(Array(rows.enumerated()), id: \.offset) { _, r in
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                secLabel("最近开门 (约)")
+                ForEach(Array(rows.enumerated()), id: \.offset) { _, r in
                 HStack(spacing: XSpace.s) {
-                    Text(String(r.time.prefix(10)))
-                        .xFont(.caption.monospacedDigit())
-                        .foregroundStyle(XPalette.textSub)
-                    Text(r.text)
-                        .xFont(.subheadline)
-                        .foregroundStyle(XPalette.text)
-                    Spacer(minLength: 0)
-                    Text("约")
-                        .xFont(.caption2)
-                        .foregroundStyle(XPalette.textSub)
+                Text(String(r.time.prefix(10)))
+                .xFont(.caption.monospacedDigit())
+                .foregroundStyle(XPalette.textSub)
+                Text(r.text)
+                .xFont(.subheadline)
+                .foregroundStyle(XPalette.text)
+                Spacer(minLength: 0)
+                Text("约")
+                .xFont(.caption2)
+                .foregroundStyle(XPalette.textSub)
                 }
                 .accessibilityElement(children: .combine)
-            }
-            if rows.isEmpty {
+                }
+                if rows.isEmpty {
                 Text("还没有可证明归属的开门记录 (台账积累中, 属正常)。")
-                    .xFont(.footnote)
-                    .foregroundStyle(XPalette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
+                .xFont(.footnote)
+                .foregroundStyle(XPalette.textSub)
+                .fixedSize(horizontal: false, vertical: true)
+                }
             }
-        } header: {
-            Text("最近开门 (约)")
         }
     }
 
     // ---------- 367 停用动态 (读敏感流水里归属本成员的那几条; 不新建存储、不新建键) ----------
     private func feedSection(_ m: Member) -> some View {
         let rows = SensitiveLedger().memberItems(m.id)
-        return Section {
-            ForEach(Array(rows.enumerated()), id: \.offset) { _, r in
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                secLabel("凭证停用动态")
+                ForEach(Array(rows.enumerated()), id: \.offset) { _, r in
                 HStack(spacing: XSpace.s) {
-                    Text(SensitiveLedger.stamp(r))
-                        .xFont(.caption.monospacedDigit())
-                        .foregroundStyle(XPalette.textSub)
-                    VStack(alignment: .leading, spacing: XSpace.xxs) {
-                        Text(r.kind).xFont(.subheadline)
-                        Text(r.target).xFont(.caption).foregroundStyle(XPalette.textSub)
-                    }
-                    Spacer(minLength: 0)
+                Text(SensitiveLedger.stamp(r))
+                .xFont(.caption.monospacedDigit())
+                .foregroundStyle(XPalette.textSub)
+                VStack(alignment: .leading, spacing: XSpace.xxs) {
+                Text(r.kind).xFont(.subheadline)
+                Text(r.target).xFont(.caption).foregroundStyle(XPalette.textSub)
+                }
+                Spacer(minLength: 0)
                 }
                 .accessibilityElement(children: .combine)
-            }
-            if rows.isEmpty {
+                }
+                if rows.isEmpty {
                 Text("还没有停用记录。停用凭证时勾「写入该成员动态」才会写进这里；不勾只在敏感操作流水里留一条汇总，不落到个人档案。")   // 367 还没有停用记录
-                    .xFont(.footnote)
-                    .foregroundStyle(XPalette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
+                .xFont(.footnote)
+                .foregroundStyle(XPalette.textSub)
+                .fixedSize(horizontal: false, vertical: true)
+                }
             }
-        } header: {
-            Text("凭证停用动态")   // 367 凭证停用动态
         }
     }
 
     // ---------- 473 授权来源统计 ----------
     private func sourceSection(_ m: Member) -> some View {
         let s = MemberHub.sourceCounts(m.id)
-        return Section {
-            HStack(spacing: XSpace.m) {
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                secLabel("授权来源")
+                HStack(spacing: XSpace.m) {
                 sourceCell("创建", s.created)
                 sourceCell("移交", s.moved)
                 sourceCell("恢复", s.restored)
+                }
+                .accessibilityElement(children: .combine)
             }
-            .accessibilityElement(children: .combine)
-        } header: {
-            Text("授权来源")   // 473 授权来源
         }
     }
     private func sourceCell(_ label: String, _ n: Int) -> some View {
@@ -299,33 +304,34 @@ struct MemberDetail360View: View {
     // ---------- 家庭场景 (481/468/469/480/484/475) ----------
     private func sceneSection(_ m: Member) -> some View {
         let role = MemberHub.ext(m.id).role
-        return Section {
-            // 470 这一档真收 UI 的地方之一: 「管凭证」为禁用的角色 (访客) 不出现这枚代管开关,
-            // 并且把"为什么这里少了一枚"写在原地 —— 收起来却不说明, 就是本仓反复犯的无声忽略。
-            if MemberHub.permAllows(role, "管凭证") {
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                secLabel("家庭场景")
+                // 470 这一档真收 UI 的地方之一: 「管凭证」为禁用的角色 (访客) 不出现这枚代管开关,
+                // 并且把"为什么这里少了一枚"写在原地 —— 收起来却不说明, 就是本仓反复犯的无声忽略。
+                if MemberHub.permAllows(role, "管凭证") {
                 XToggle("由我代管 (TA 名下凭证被单条停用时, 便签补一句 管理员代操作)", isOn: Binding(
-                    get: { MemberHub.ext(m.id).proxy },
-                    set: { v in
-                        var ext = MemberHub.ext(m.id); ext.proxy = v
-                        MemberHub.saveExt(m.id, ext)
-                        onChanged()
-                    }))
+                get: { MemberHub.ext(m.id).proxy },
+                set: { v in
+                var ext = MemberHub.ext(m.id); ext.proxy = v
+                MemberHub.saveExt(m.id, ext)
+                onChanged()
+                }))
                 .fixedSize(horizontal: false, vertical: true)
-            } else {
+                } else {
                 Text("角色是「" + MemberHub.roleLabel(role) + "」: 矩阵里「管凭证」为禁用, 所以这一档不给代管开关。")   // 468/470 矩阵里
-                    .xFont(.caption)
-                    .foregroundStyle(XPalette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            if MemberHub.proxyNames.contains(m.id) {
+                .xFont(.caption)
+                .foregroundStyle(XPalette.textSub)
+                .fixedSize(horizontal: false, vertical: true)
+                }
+                if MemberHub.proxyNames.contains(m.id) {
                 Text("代管中: 在凭证页对 TA 名下凭证做单条停用时, 那一行的停用便签会写上 管理员代操作; "   // 468 代管中
-                     + "家庭会议摘要也点名代管中的成员。锁端没有代操作这一位, 这句标注只落本机。")   // 482 家庭会议摘要
-                    .xFont(.caption)
-                    .foregroundStyle(XPalette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
+                + "家庭会议摘要也点名代管中的成员。锁端没有代操作这一位, 这句标注只落本机。")   // 482 家庭会议摘要
+                .xFont(.caption)
+                .foregroundStyle(XPalette.textSub)
+                .fixedSize(horizontal: false, vertical: true)
+                }
             }
-        } header: {
-            Text("家庭场景")
         }
     }
 
@@ -442,6 +448,15 @@ struct MemberDetail360View: View {
         })
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         UIApplication.topViewController()?.present(alert, animated: true)
+    }
+
+    /// 卡片内的小标题
+    private func secLabel(_ text: String) -> some View {
+        Text(text)
+            .xFont(.caption, weight: .semibold)
+            .foregroundStyle(XPalette.textTertiary)
+            .textCase(.uppercase)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
