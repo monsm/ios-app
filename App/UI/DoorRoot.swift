@@ -12,7 +12,7 @@
 //   ├─ 应用锁闸门 (LockGuard, 复用既有安全结构)
 //   └─ DoorStage (门面)
 //        ├─ 门外: DoorFront (锁体 + 连接进度 + 按住开锁)
-//        └─ 门里: DoorBack (四域入口)
+//        └─ 门里: 已由三棱柱取代 (B 管家台 / F 仪表)
 //
 //  四域 → 既有页面 (全部保留, 一个不删):
 //     钥匙 → CredentialsView / MemberCenterView
@@ -40,16 +40,9 @@ struct DoorRoot: View {
     /// 当前面（BDF 三棱柱）。
     ///
     /// 取代旧的 `flipped: Bool` —— 那只能表达两面。
-    /// 为了让旧代码（requestRoute / Tab 映射）继续能用，
-    /// 下面保留一个 `flipped` 计算属性做兼容。
+    /// 旧代码的 requestRoute / Tab 映射改走 faceForTab()（见下方），
+    /// 所以不再需要 flipped 兼容属性。
     @State private var face: DoorFace = .d
-
-    /// 兼容层: 旧代码用 `flipped` 表示"是否在门里"。
-    /// 映射: D（就近，即门外/锁面）= false，B/F（域内页面）= true
-    private var flipped: Bool {
-        get { face != .d }
-        nonmutating set { face = newValue ? .b : .d }
-    }
     /// 连接阶段
     @State private var stage: LinkStage = .idle
     /// 充能进度
@@ -60,7 +53,6 @@ struct DoorRoot: View {
     @State private var failureText: String?
 
     /// 门里的导航栈
-    @State private var navPath: [DoorDomain] = []
 
     /// 充能计时
     @State private var chargeTask: Task<Void, Never>?
@@ -87,20 +79,22 @@ struct DoorRoot: View {
         }
         // 旧 Tab 路由兼容: 别处仍调用 requestRoute(.credentials/.records/...),
         // 这里把它翻译成门里对应的域, 保证跨页跳转不断链。
+        // 旧 Tab 路由兼容: 别处仍调用 requestRoute(.credentials/.records/...)。
+        //
+        // 旧的四域（锁/凭证/记录/设置）→ 新的三面:
+        //   0 设备 → D 就近（门+锁）
+        //   1 凭证 → B 管家台 · 台账组
+        //   2 记录 → F 仪表
+        //   3 设置 → B 管家台 · 备份外观组
+        //
+        // 映射不到具体组时只切面 —— 比切错页面好。
         .onChange(of: app.tabSelection) { _, newValue in
-            if let domain = domainForTab(newValue) {
-                face = .b
-                if navPath.last != domain {
-                    navPath = [domain]
-                }
+            if let f = faceForTab(newValue) {
+                withAnimation(XMotion.soft) { face = f }
             }
         }
         .onAppear {
-            // 冷启动若已带 Tab 意图, 直接进对应域
-            if let domain = domainForTab(app.tabSelection) {
-                face = .b
-                navPath = [domain]
-            }
+            if let f = faceForTab(app.tabSelection) { face = f }
         }
     }
 
@@ -122,77 +116,16 @@ struct DoorRoot: View {
         }
     }
 
-    // ── 门里 ──
-    private var backContent: some View {
-        NavigationStack(path: $navPath) {
-            DoorBack(face: $face) { domain in
-                enter(domain)
-            }
-            .navigationDestination(for: DoorDomain.self) { domain in
-                domainDestination(domain)
-            }
-        }
-    }
-
-    // ── B 管家台（占位，M4 会做底部液态玻璃分组）──
-    //
-    // 现在先用一个最小的入口列表把三棱柱跑通，
-    // M4 才做 5 组液态玻璃导航。这样 M3 可以独立验证。
+    // ── B 管家台（底部液态玻璃分组，M4）──
     private var managerFace: some View {
-        NavigationStack(path: $navPath) {
-            ScrollView {
-                VStack(spacing: XSpace.m) {
-                    ForEach(ManagerGroup.allCases) { g in
-                        XPanel {
-                            XRow(systemImage: g.systemImage, title: g.rawValue,
-                                 subtitle: g.summary, showsChevron: true) {
-                                // M4 接真实分组页
-                            }
-                        }
-                    }
-                }
-                .padding(XSpace.gutter)
-            }
-            .background(XPalette.canvas)
-            .navigationTitle("管家台")
-            .navigationBarTitleDisplayMode(.inline)
-        }
+        ManagerFace()
+            .environmentObject(app)
     }
 
-    // ── F 仪表（占位，M4 会做锁数据 + 人的数据可视化）──
+    // ── F 仪表（锁数据 + 人的数据，M4）──
     private var dashboardFace: some View {
-        NavigationStack(path: $navPath) {
-            ScrollView {
-                VStack(spacing: XSpace.l) {
-                    Text("仪表")
-                        .xFont(.title2, weight: .semibold)
-                        .foregroundStyle(XPalette.text)
-                    Text("锁的数据 + 人的数据 —— M4 实现")
-                        .xFont(.footnote)
-                        .foregroundStyle(XPalette.textSub)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(XSpace.xxl)
-            }
-            .background(XPalette.canvas)
-            .navigationTitle("仪表")
-            .navigationBarTitleDisplayMode(.inline)
-        }
-    }
-
-    /// 四域各自的落地页
-    @ViewBuilder
-    private func domainDestination(_ domain: DoorDomain) -> some View {
-        switch domain {
-        case .lock:
-            DevicePage()
-        case .keys:
-            KeysPage()
-        case .events:
-            EventsPage()
-        case .device:
-            MePage()
-        }
+        DashboardFace()
+            .environmentObject(app)
     }
 
     // ═══════════════════════════════════════════════════════
@@ -303,41 +236,24 @@ struct DoorRoot: View {
     }
 
     // ═══════════════════════════════════════════════════════
-    // MARK: - 进入四域
+    // MARK: - Tab → 面（兼容旧路由）
     // ═══════════════════════════════════════════════════════
 
-    private func enter(_ domain: DoorDomain) {
-        // 377 访客门禁: 受限区未放开时, 凭证与设置两域必须走复核闸门。
-        let restricted: Set<DoorDomain> = [.keys, .device]
-        if app.guestAreaLocked && restricted.contains(domain) {
-            app.guestGateTarget = tabIndex(for: domain)
-            app.showGuestGate = true
-            return
-        }
-        // 门里直接推入新页面 (NavigationStack), 不再切旧 Tab
-        navPath.append(domain)
-    }
-
-    /// 旧 Tab 序号 → 门里域 (反向映射, 供 requestRoute 兼容)
-    private func domainForTab(_ index: Int) -> DoorDomain? {
+    /// 旧 Tab 序号 → BDF 三面。
+    ///
+    /// 全仓还有 40+ 处 requestRoute / tabSelection 调用
+    /// （深链、粘贴条、自检黄条、销毁前备份闸…），
+    /// 不能删 —— 只把「落到哪个面」重新映射。
+    private func faceForTab(_ index: Int) -> DoorFace? {
         switch index {
-        case 0: return .lock        // 设备
-        case 1: return .keys        // 凭证
-        case 2: return .events      // 记录
-        case 3: return .device      // 设置
+        case 0: return .d        // 设备 → 就近（门+锁）
+        case 1: return .b        // 凭证 → 管家台
+        case 2: return .f        // 记录 → 仪表
+        case 3: return .b        // 设置 → 管家台
         default: return nil
         }
     }
 
-    /// 四域 → 既有 Tab 序号 (与 mainTabView 的 value 一一对应)
-    private func tabIndex(for domain: DoorDomain) -> Int {
-        switch domain {
-        case .lock: return 0      // 设备
-        case .keys: return 1      // 凭证
-        case .events: return 2    // 记录
-        case .device: return 3    // 设置
-        }
-    }
 
     // ═══════════════════════════════════════════════════════
     // MARK: - 状态派生
@@ -361,55 +277,5 @@ struct DoorRoot: View {
     private var lastKnownOpen: Bool {
         guard let rec = app.recentRecords(count: 1).first else { return false }
         return !rec.text.isEmpty
-    }
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// MARK: - B 管家台分组
-// ═══════════════════════════════════════════════════════════════════════
-//
-// 21 个设置类页面塞进一个面会变成"入口列表"，又回到普通 App 的样子。
-// 所以分 5 组，M4 会用底部液态玻璃 Tab 切换。
-//
-// 现在（M3）先用最简单的列表把三棱柱跑通 —— 让 M3 可以独立验证，
-// 不用等 M4 的导航做完。
-enum ManagerGroup: String, CaseIterable, Identifiable {
-    case ledger = "台账"
-    case devices = "设备"
-    case members = "成员"
-    case security = "安全"
-    case backupLook = "备份外观"
-
-    var id: String { rawValue }
-
-    var systemImage: String {
-        switch self {
-        case .ledger: return "key.horizontal"
-        case .devices: return "iphone.gen3"
-        case .members: return "person.2"
-        case .security: return "lock.shield"
-        case .backupLook: return "externaldrive.badge.timemachine"
-        }
-    }
-
-    /// 每组的动态摘要 —— 与 DoorDomain.summary 同口径：必须显示真实数字
-    var summary: String {
-        switch self {
-        case .ledger:
-            let n = DB.keychains().reduce(0) { acc, kc in
-                acc + DB.listPwds(kc.mac).count + DB.listFps(kc.mac).count
-            }
-            return n > 0 ? "\(n) 份凭证" : "还没有凭证"
-        case .devices:
-            let n = DB.keychains().count
-            return n > 0 ? "\(n) 把锁" : "还没有门锁"
-        case .members:
-            let n = MemberHub.all().count
-            return n > 0 ? "\(n) 位成员" : "还没有成员"
-        case .security:
-            return DB.store.getBool("kf_applock") ? "应用锁已开" : "应用锁未开"
-        case .backupLook:
-            return "备份 · 导出 · 外观"
-        }
     }
 }
