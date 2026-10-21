@@ -1183,3 +1183,79 @@ struct XCycleRing: View {
         }
     }
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// MARK: - XStepBar — 带标题的步骤指示器
+// ═══════════════════════════════════════════════════════════════════════
+//
+// 多步向导最需要让人知道"我在第几步、还剩几步"。
+// 原来是一排 4 个胶囊 (当前那个变长), 能看出进度但看不出步骤名。
+//
+// 现在每步有: 序号圆点 / 标题 / 连接线。当前步铜色实心,
+// 已过步铜色描边带勾, 未到步灰色描边。
+//
+// 无障碍: 整条合成一个 label "第 2 步, 共 4 步, 设口令";
+// 逐个圆点念会让读屏用户听一串没有上下文的数字。
+struct XStepBar: View {
+    let titles: [String]
+    let current: Int
+    /// 已完成步显示勾 (向导用), 关闭时只显示序号
+    var marksDone: Bool = true
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(Array(titles.enumerated()), id: \.offset) { i, t in
+                dot(i)
+                Text(t)
+                    .xFont(.caption2, weight: i == current ? .semibold : .regular)
+                    .foregroundStyle(i == current ? XPalette.text
+                                     : (i < current ? XPalette.textSub : XPalette.textTertiary))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .padding(.leading, XSpace.xs)
+                    .accessibilityHidden(true)
+                if i < titles.count - 1 {
+                    Rectangle()
+                        .fill(i < current ? XPalette.accent.opacity(0.5) : XPalette.hairline)
+                        .frame(height: 1.5)
+                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, XSpace.xs)
+                        .accessibilityHidden(true)
+                }
+            }
+        }
+        .frame(minHeight: 32)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessText)
+    }
+
+    @ViewBuilder
+    private func dot(_ i: Int) -> some View {
+        ZStack {
+            Circle()
+                .fill(i == current ? XPalette.accent
+                      : (i < current ? XPalette.accent.opacity(0.16) : Color.clear))
+            Circle()
+                .strokeBorder(i <= current ? XPalette.accent : XPalette.hairline,
+                              lineWidth: i == current ? 0 : 1.5)
+            if marksDone && i < current {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(XPalette.accent)
+            } else {
+                Text("\(i + 1)")
+                    .xFont(.system(size: 12, weight: .semibold).monospacedDigit())
+                    .foregroundStyle(i == current ? XPalette.onAccent
+                                     : (i < current ? XPalette.accent : XPalette.textTertiary))
+            }
+        }
+        .frame(width: 26, height: 26)
+        .accessibilityHidden(true)
+    }
+
+    private var accessText: String {
+        let n = min(max(current, 0), max(titles.count - 1, 0))
+        let name = titles.isEmpty ? "" : titles[n]
+        return "第 \(n + 1) 步, 共 \(titles.count) 步, \(name)"
+    }
+}

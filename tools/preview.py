@@ -443,6 +443,53 @@ def render_seclamps():
 
     return save(img, "seclamps")
 
+def render_stepbar():
+    """XStepBar — 带标题的步骤指示器（三种进度）"""
+    W, H = 402, 260
+    img = new_canvas(W, H)
+    dr = ImageDraw.Draw(img, "RGBA")
+    titles = ["选分区", "设口令", "导出前体检", "完成"]
+    cases = [0, 1, 3]
+    y = S(20)
+    for cur in cases:
+        text(dr, (S(16), y), f"第 {cur+1} 步", 9, TEXT_TERT)
+        y += S(16)
+        x = S(16)
+        for i, t in enumerate(titles):
+            ACTIVE = (i == cur)
+            PAST = (i < cur)
+            # 圆点
+            cx = x + S(13)
+            cy = y + S(13)
+            if ACTIVE:
+                dr.ellipse([cx-S(13), cy-S(13), cx+S(13), cy+S(13)], fill=ACCENT+(255,))
+            elif PAST:
+                dr.ellipse([cx-S(13), cy-S(13), cx+S(13), cy+S(13)], fill=ACCENT+(41,))
+                dr.ellipse([cx-S(13), cy-S(13), cx+S(13), cy+S(13)], outline=ACCENT+(255,), width=2)
+            else:
+                dr.ellipse([cx-S(13), cy-S(13), cx+S(13), cy+S(13)], outline=HAIRLINE+(255,), width=2)
+            # 内容
+            if PAST:
+                text_center(dr, cx, cy-S(6), "v", 11, ACCENT)
+            else:
+                text_center(dr, cx, cy-S(7), str(i+1), 11, ON_ACCENT if ACTIVE else TEXT_TERT)
+            x += S(26) + S(4)
+            # 标题
+            col = TEXT if ACTIVE else (TEXT_SUB if PAST else TEXT_TERT)
+            dr.text((x, y + S(6)), t, font=F(9), fill=col)
+            x += S(len(t)*10 + 10)
+            # 连接线
+            if i < len(titles)-1:
+                lw_total = (W - S(32)) - x
+                line_len = S(16)
+                ly = cy
+                lc = ACCENT if PAST else HAIRLINE
+                dr.line([x+S(2), ly, x+S(2)+line_len, ly], fill=lc+(180,), width=2)
+                x += line_len + S(8)
+        y += S(56)
+
+    return save(img, "stepbar")
+
 RENDERERS = {
     "codering": render_code_ring,
     "alarmchart": render_alarm_chart,
@@ -452,6 +499,7 @@ RENDERERS = {
     "alarmseverity": render_alarmseverity,
     "cyclering": render_cyclering,
     "seclamps": render_seclamps,
+    "stepbar": render_stepbar,
 }
 
 

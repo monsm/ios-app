@@ -346,15 +346,11 @@ struct ExportWizardView: View {
     var vkBody: some View {
         NavigationStack {
             VStack(spacing: XSpace.m) {
-                // 步骤指示条
-                HStack(spacing: XSpace.xs) {
-                    ForEach(0..<4, id: \.self) { i in
-                        Capsule()
-                            .fill(i <= step ? XPalette.accentText : XPalette.hairline)
-                            .frame(width: i == step ? 24 : 10, height: 6)
-                    }
-                }
-                .padding(.top, XSpace.s)
+                // 步骤指示条 —— 原来是一排胶囊, 看不出步骤名。
+                // 换成带标题的 XStepBar: 序号 + 标题 + 连接线,
+                // 已过步显示勾, 当前步铜色实心。
+                XStepBar(titles: stepTitles, current: step)
+                    .padding(.top, XSpace.s)
                 Group {
                     switch step {
                     case 0: zoneStep
