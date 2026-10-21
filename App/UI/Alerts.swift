@@ -55,3 +55,33 @@ extension UIApplication {
     }
 }
 
+// ═══════════════════════════════════════════════════════════════════════
+// MARK: - 应用锁口令复核
+// ═══════════════════════════════════════════════════════════════════════
+/// 250: 同一把锁 30 秒内再次开锁要先复核应用锁口令。
+///
+/// 这条闸原来只写了 `showGate = true` 就 return —— 而**没有任何界面消费它**，
+/// 于是设了应用锁的用户连按两次开锁时：第二次什么都不发生，像按钮坏了。
+///
+/// 用 `UIAlertController` 而不是 `.alert`：SwiftUI 的 alert 装输入框在 iOS 上不可靠。
+@MainActor
+func promptPasscode(_ title: String,
+                    _ message: String,
+                    confirmTitle: String = "验证",
+                    onConfirm: @escaping @MainActor (String) -> Void,
+                    onCancel: (() -> Void)? = nil) {
+    let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+    alert.addTextField { tf in
+        tf.isSecureTextEntry = true
+        tf.placeholder = "应用锁口令"
+        tf.textContentType = .password
+        tf.autocapitalizationType = .none
+        tf.autocorrectionType = .no
+    }
+    alert.addAction(UIAlertAction(title: "取消", style: .cancel) { _ in onCancel?() })
+    alert.addAction(UIAlertAction(title: confirmTitle, style: .default) { _ in
+        let pw = alert.textFields?.first?.text ?? ""
+        onConfirm(pw)
+    })
+    UIApplication.topViewController()?.present(alert, animated: true)
+}

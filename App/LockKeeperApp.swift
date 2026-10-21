@@ -458,6 +458,16 @@ final class AppState: ObservableObject {
         startUnlock()
     }
 
+    /// 250 二次开锁闸：口令复核通过后放行（`showGate` 由 RootView 弹出提示并消费）。
+    func confirmGatePassed() {
+        showGate = false
+        startUnlock()
+    }
+    /// 250 二次开锁闸：用户取消复核。
+    func cancelGate() {
+        showGate = false
+    }
+
     func startUnlock() {
         // 296: 这一层还有两个不走 requestUnlock 的来源 —— 靠近自动开锁 (AutoOpen.swift:291)
         // 与 250 二次开锁闸放行后的重发。闸落在这里, 自动档就开不了"只读模式还能自己开门"这个口子。
@@ -1063,6 +1073,25 @@ struct RootView: View {
             // 280 起点: 只在采集开着时记时间戳 (关着就等于零成本)。深链/意图造成的切换同样会记一次,
             // 因为对用户而言那也是一次"页面打开"。
             PageTrace.markNav(to: new)
+        }
+        // ═══ 250 二次开锁闸 ═══
+        //
+        // 这一条原来只写 showGate = true 就 return，没有任何界面消费它 ——
+        // 设了应用锁的用户 30 秒内连按两次开锁，第二次什么都不发生，像按钮坏了。
+        // 现在真正弹出复核：口令对 → 放行并入队开锁；错 → 取消并说明原因。
+        .onChange(of: app.showGate) { _, need in
+            guard need else { return }
+            promptPasscode("再次开锁需要验证",
+                           "刚刚开过一次。30 秒内连续开锁要先复核应用锁口令。",
+                           onConfirm: { pw in
+                               if DB.verifyPasscode(pw) {
+                                   app.confirmGatePassed()
+                               } else {
+                                   app.cancelGate()
+                                   app.showToast("口令不对，这次开锁已取消")
+                               }
+                           },
+                           onCancel: { app.cancelGate() })
         }
         .onChange(of: app.appUnlocked) { _, unlocked in
             // 161: 先回上次停留位, 再落地挂起深链 (restoreLastTab 内部见 pendingRoute 就避让)

@@ -119,6 +119,12 @@ const checks = [
     const h = CODE.get('HomeConsole.swift') || '';
     return h.includes('showAddLock = true') && h.includes('.sheet(isPresented: $showAddLock)');
   }],
+  ['二次开锁闸真的会弹验证', () => {
+    const a = CODE.get('LockKeeperApp.swift') || '';
+    const al = CODE.get('Alerts.swift') || '';
+    return a.includes('onChange(of: app.showGate)') && al.includes('func promptPasscode') &&
+           a.includes('func confirmGatePassed') && a.includes('DB.verifyPasscode(pw)');
+  }],
 ];
 
 let pass = 0;
