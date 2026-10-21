@@ -25,10 +25,10 @@ struct AppearancePage: View {
     @State private var weekStart = DB.store.getString("kf_week_start")
 
     private let themes: [(id: String, label: String, note: String)] = [
-        ("", "跟随系统", "手机切到深色时一起变"),
+        ("", "跟随系统", "手机切到深色，App 也跟着变"),
         ("light", "浅色", "始终浅色"),
         ("dark", "深色", "始终深色"),
-        ("black", "纯黑", "AMOLED 省电，画布变成真正的黑"),
+        ("black", "纯黑", "屏幕底色变成真正的黑色，OLED 屏更省电"),
     ]
     private let accents: [(id: String, label: String, light: UInt32, dark: UInt32)] = [
         ("", "铜", 0x9C5A22, 0xD98B45),
@@ -113,7 +113,7 @@ struct AppearancePage: View {
                         .accessibilityLabel(a.label + (accent == a.id ? "，当前" : ""))
                     }
                 }
-                Text("品牌色只影响强调元素（开锁环、当前小时、可点的字），不改正文与背景的对比度。")
+                Text("只换按钮、开锁环、当前小时这些地方的颜色。正文始终是正文的颜色，不会因此变得看不清。")
                     .xFont(.system(.caption2))
                     .foregroundStyle(XPalette.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -125,11 +125,11 @@ struct AppearancePage: View {
     private var miscCard: some View {
         XPanel(kind: .group, padding: 0) {
             VStack(spacing: 0) {
-                header("可读性与周界")
+                header("看得清 / 每周从哪天算")
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("高对比").xFont(.system(.body)).foregroundStyle(XPalette.text)
-                        Text("与系统的「增加对比度」并联，任一开着就加强")
+                        Text("系统里开了「增加对比度」时，这里也会跟着加强")
                             .xFont(.system(.caption)).foregroundStyle(XPalette.textSub)
                     }
                     Spacer(minLength: XSpace.s)

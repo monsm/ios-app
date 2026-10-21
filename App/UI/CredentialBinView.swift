@@ -192,7 +192,7 @@ struct CredentialBinView: View {
 
     private func queueLine(_ item: CredQueueItem) -> String {
         if item.state == CredQueueState.failed.rawValue {
-            return "上次下发失败（第 \(max(1, item.attempt)) 次）— 连上门锁后会自动重试"
+            return "上次没发到门锁（第 \(max(1, item.attempt)) 次）— 连上门锁后会自动重试"
         }
         return "等待连接门锁后发出"
     }
@@ -201,7 +201,7 @@ struct CredentialBinView: View {
         XPanel(kind: .group) {
             XEmptyState(systemImage: "clock.arrow.circlepath",
                         title: "回收站是空的",
-                        message: "但还有 \(pending.count) 条撤销在等门锁确认。连上锁后会自动发出去。")
+                        message: "但还有 \(pending.count) 条撤销没发到门锁。连上锁后会自动发出去。")
         }
     }
 

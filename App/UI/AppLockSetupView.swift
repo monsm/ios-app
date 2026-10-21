@@ -57,7 +57,7 @@ struct AppLockSetupView: View {
             Button("关闭", role: .destructive) { turnOff() }
             Button("取消", role: .cancel) { }
         } message: {
-            Text("关闭后，本机凭证明文不再需要验证即可查看，毁灭类操作也无法再复核口令。")
+            Text("关闭后，谁拿起这台手机都能直接看到你保存的密码。彻底销毁这类操作也不会再要求你输一次口令。")
         }
     }
 
@@ -73,8 +73,8 @@ struct AppLockSetupView: View {
                     Text(on ? "应用锁已开启" : "应用锁未开启")
                         .xFont(.system(.headline, weight: .semibold))
                         .foregroundStyle(XPalette.text)
-                    Text(on ? "打开本 App 需要口令；凭证明文默认收起"
-                             : "现在任何人都能直接打开本 App 查看凭证明文")
+                    Text(on ? "每次打开 App 都要输口令；保存的密码默认不显示"
+                             : "现在谁拿起这台手机，都能直接看到你保存的密码")
                         .xFont(.system(.footnote))
                         .foregroundStyle(XPalette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
@@ -83,7 +83,7 @@ struct AppLockSetupView: View {
             }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(on ? "应用锁已开启" : "应用锁未开启，任何人可直接查看凭证明文")
+        .accessibilityLabel(on ? "应用锁已开启" : "应用锁未开启，谁都能直接看到保存的密码")
     }
 
     // ── ② 设置表单 ─────────────────────────────────────────
@@ -131,7 +131,7 @@ struct AppLockSetupView: View {
                             .foregroundStyle(XPalette.textSub)
                     }
                 }
-                Text("口令只保存摘要，不存明文。忘记后只能重装或从备份恢复。")
+                Text("我们只保存口令的一串校验值，不保存口令本身 —— 所以忘记后谁也找不回来，只能重装或从备份恢复。")
                     .xFont(.system(.caption2))
                     .foregroundStyle(XPalette.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -155,7 +155,7 @@ struct AppLockSetupView: View {
                 XHairline(inset: 0)
 
                 Button { confirmOff = true } label: {
-                    row(icon: "lock.open", title: "关闭应用锁", detail: "关闭后本机凭证不再受保护", tone: XPalette.danger)
+                    row(icon: "lock.open", title: "关闭应用锁", detail: "关闭后，这台手机里的密码不再受保护", tone: XPalette.danger)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("关闭应用锁")
@@ -185,9 +185,9 @@ struct AppLockSetupView: View {
         XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: XSpace.s) {
                 secLabel("它保护什么")
-                bullet("打开 App 需要口令；离机时别人拿不到凭证明文")
-                bullet("毁灭类操作（彻底销毁、离职清除）要用它复核一次")
-                bullet("口令摘要进备份；换机恢复后仍然认同一个口令")
+                bullet("要输口令才能打开 App；手机离手时别人看不到你的密码")
+                bullet("彻底销毁、离职清除这类动作，会要求你再输一次它")
+                bullet("口令的校验值会一起备份；换机恢复后仍然是同一个口令")
             }
         }
     }
