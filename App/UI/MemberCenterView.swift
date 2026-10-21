@@ -675,49 +675,61 @@ struct MergeMembersView: View {
     var body: some View { vkBody.destined(.mergeMembers) }
     var vkBody: some View {
         NavigationStack {
-            Form {
-                XPanel(kind: .group) {
-                    VStack(alignment: .leading, spacing: XSpace.m) {
-                        secLabel("主档 (保留)")
-                    HStack(spacing: XSpace.s) {
-                        MemberAvatar(member: primary, size: 28)
-                        Text(MemberHub.display(primary))
-                            .xFont(.subheadline)
-                            .foregroundStyle(XPalette.text)
-                        Spacer(minLength: 0)
-                    }
-                    }
-                }
-                XPanel(kind: .group) {
-                    VStack(alignment: .leading, spacing: XSpace.m) {
-                        secLabel("副档 (凭证将迁移至主档, 档案删除)")
-                    Picker("选择副档", selection: $secondaryID) {
-                        Text("请选择").tag(nil as String?)
-                        ForEach(secondaryCandidates) { m in
-                            Text(m.name + " · 名下 " + String(MemberHub.activity(m.id).owns) + " 条").tag(m.id as String?)
+            // M5 形态改造: Form → ScrollView + 卡片流
+            //
+            // 原来 Form 里套 XPanel —— 两层容器打架:
+            //   Form 自带 grouped 样式（行分隔、内边距、背景）
+            //   XPanel 又画一层卡片底 → 视觉上双层边框。
+            //
+            // 全仓其他页面都是 ScrollView + XPanel，这里统一。
+            ScrollView {
+                VStack(spacing: XSpace.l) {
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            secLabel("主档 (保留)")
+                        HStack(spacing: XSpace.s) {
+                            MemberAvatar(member: primary, size: 28)
+                            Text(MemberHub.display(primary))
+                                .xFont(.subheadline)
+                                .foregroundStyle(XPalette.text)
+                            Spacer(minLength: 0)
+                        }
                         }
                     }
-                    .pickerStyle(.inline)
-                    if secondaryID == nil {
-                        Text("没有同名成员。若只是称呼重复, 请在成员页重命名其一。")
-                            .xFont(.footnote)
-                            .foregroundStyle(XPalette.textSub)
-                            .fixedSize(horizontal: false, vertical: true)
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            secLabel("副档 (凭证将迁移至主档, 档案删除)")
+                        Picker("选择副档", selection: $secondaryID) {
+                            Text("请选择").tag(nil as String?)
+                            ForEach(secondaryCandidates) { m in
+                                Text(m.name + " · 名下 " + String(MemberHub.activity(m.id).owns) + " 条").tag(m.id as String?)
+                            }
+                        }
+                        .pickerStyle(.inline)
+                        if secondaryID == nil {
+                            Text("没有同名成员。若只是称呼重复, 请在成员页重命名其一。")
+                                .xFont(.footnote)
+                                .foregroundStyle(XPalette.textSub)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        }
                     }
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                        Button { doMerge() } label: {
+                            Text("执行合并")
+                                .frame(maxWidth: .infinity)
+                                .frame(minHeight: XHit.min)
+                        }
+                        .buttonStyle(XPrimaryButtonStyle())
+                        .disabled(secondaryID == nil)
+                        }
                     }
                 }
-                XPanel(kind: .group) {
-                    VStack(alignment: .leading, spacing: XSpace.m) {
-                    Button { doMerge() } label: {
-                        Text("执行合并")
-                            .frame(maxWidth: .infinity)
-                            .frame(minHeight: XHit.min)
-                    }
-                    .buttonStyle(XPrimaryButtonStyle())
-                    .disabled(secondaryID == nil)
-                    }
-                }
+                .padding(.horizontal, XSpace.gutter)
+                .padding(.vertical, XSpace.l)
             }
+            .background(XPalette.canvas)
             .navigationTitle("重复合并")   // 462 重复合并
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("取消") { dismiss() } } }
@@ -841,48 +853,54 @@ struct MemberFamilySettingsView: View {
     var body: some View { vkBody.destined(.memberFamilySettings) }
     var vkBody: some View {
         NavigationStack {
-            Form {
-                // 479/486 长辈模式的两个落点都写在下面那段话里: 479 = 凭证页大字高对比 (凭证页行上),
-                // 486 = 临时码完成页收成口述卡 (CredentialStudio.doneCard)。开关本身只写 MemberHub.elderMode。
-                XPanel(kind: .group) {
-                    VStack(alignment: .leading, spacing: XSpace.m) {
-                        secLabel("长辈模式")
-                    XToggle("长辈模式 (凭证页大字高对比、只留密码/指纹两组 · 临时码完成页收成口述卡)", isOn: $elder)
-                        .fixedSize(horizontal: false, vertical: true)
-                    if elder {
-                        Text("凭证页: 分段只留 全部/密码/指纹, 批量与导出入口收起, 组尾那条过期清理也不出现; "
-                             + "凭证行标题升到标题级、副行升到正文档, 副行文字改用主文本色 —— 大字与高对比就落在这两处。"   // 479 凭证行标题升到标题级
-                             + "这一档只动凭证页与临时码完成页, 其它页面不跟着变。")
-                            .xFont(.caption)
-                            .foregroundStyle(XPalette.textSub)
+            // M5: Form → ScrollView（与全仓其他页面统一）
+            ScrollView {
+                VStack(spacing: XSpace.l) {
+                    // 479/486 长辈模式的两个落点都写在下面那段话里: 479 = 凭证页大字高对比 (凭证页行上),
+                    // 486 = 临时码完成页收成口述卡 (CredentialStudio.doneCard)。开关本身只写 MemberHub.elderMode。
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            secLabel("长辈模式")
+                        XToggle("长辈模式 (凭证页大字高对比、只留密码/指纹两组 · 临时码完成页收成口述卡)", isOn: $elder)
                             .fixedSize(horizontal: false, vertical: true)
-                        Text("临时码完成页: 开这一档后完成页只留大字号口述卡 + 一枚大「完成」, "   // 486 临时码完成页
-                             // 329 一句话口令
-                             // 333 一句话口令
-                             + "一句话口令 / 首用回执 / 再发一张 那几段收起并在原地说明; 页标题也切到「口述卡」。")
-                            .xFont(.caption)
-                            .foregroundStyle(XPalette.textSub)
-                            .fixedSize(horizontal: false, vertical: true)
+                        if elder {
+                            Text("凭证页: 分段只留 全部/密码/指纹, 批量与导出入口收起, 组尾那条过期清理也不出现; "
+                                 + "凭证行标题升到标题级、副行升到正文档, 副行文字改用主文本色 —— 大字与高对比就落在这两处。"   // 479 凭证行标题升到标题级
+                                 + "这一档只动凭证页与临时码完成页, 其它页面不跟着变。")
+                                .xFont(.caption)
+                                .foregroundStyle(XPalette.textSub)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Text("临时码完成页: 开这一档后完成页只留大字号口述卡 + 一枚大「完成」, "   // 486 临时码完成页
+                                 // 329 一句话口令
+                                 // 333 一句话口令
+                                 + "一句话口令 / 首用回执 / 再发一张 那几段收起并在原地说明; 页标题也切到「口述卡」。")
+                                .xFont(.caption)
+                                .foregroundStyle(XPalette.textSub)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        }
                     }
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            secLabel("隐私浏览")
+                        XToggle("隐私浏览 (限时 10 分钟: 写隐私时段标记, 本页回显剩余时间)", isOn: $privacy)
+                            .fixedSize(horizontal: false, vertical: true)
+                        if privacy {
+                            Text(privacyLeft > 0
+                                 ? "剩余 \(privacyLeft) 秒后自动关闭"
+                                 : "开启后 10 分钟自动关闭; 当前只写隐私时段标记并在本页回显, 不改统计口径")   // 794 开启后
+                                .xFont(.caption)
+                                .monospacedDigit()
+                                .foregroundStyle(XPalette.textSub)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        }
                     }
                 }
-                XPanel(kind: .group) {
-                    VStack(alignment: .leading, spacing: XSpace.m) {
-                        secLabel("隐私浏览")
-                    XToggle("隐私浏览 (限时 10 分钟: 写隐私时段标记, 本页回显剩余时间)", isOn: $privacy)
-                        .fixedSize(horizontal: false, vertical: true)
-                    if privacy {
-                        Text(privacyLeft > 0
-                             ? "剩余 \(privacyLeft) 秒后自动关闭"
-                             : "开启后 10 分钟自动关闭; 当前只写隐私时段标记并在本页回显, 不改统计口径")   // 794 开启后
-                            .xFont(.caption)
-                            .monospacedDigit()
-                            .foregroundStyle(XPalette.textSub)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    }
-                }
+                .padding(.horizontal, XSpace.gutter)
+                .padding(.vertical, XSpace.l)
             }
+            .background(XPalette.canvas)
             .navigationTitle("家庭设置")
             .toolbar { ToolbarItem(placement: .navigationBarLeading) {
                 Button("保存") {
@@ -1182,59 +1200,65 @@ struct MemberExitWizard: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                if items.isEmpty {
-                    Section {
-                        Text("该成员名下没有台账凭证, 直接归档即可。")   // 460/795 该成员名下没有台账凭
-                            .xFont(.footnote)
-                            .foregroundStyle(XPalette.textSub)
-                    }
-                } else {
-                    Section {
-                        ForEach(items) { it in
-                            HStack(spacing: XSpace.s) {
-                                Text(it.label)
-                                    .xFont(.subheadline)
-                                    .foregroundStyle(XPalette.text)
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.8)
-                                Spacer(minLength: 0)
-                                Menu {
-                                    Button("移交他人") { decide(it, "move") }
-                                    Button("停用 (入回收站)") { decide(it, "delete") }
-                                    Button("保留原样") { decide(it, "keep") }
-                                } label: {
-                                    XStatusPill(text: optionLabel(decisions[it.id]), tone: decisions[it.id] == nil ? .neutral : .accent, systemImage: "ellipsis.circle")
+            // M5: Form → ScrollView（与全仓其他页面统一）
+            ScrollView {
+                VStack(spacing: XSpace.l) {
+                    if items.isEmpty {
+                        Section {
+                            Text("该成员名下没有台账凭证, 直接归档即可。")   // 460/795 该成员名下没有台账凭
+                                .xFont(.footnote)
+                                .foregroundStyle(XPalette.textSub)
+                        }
+                    } else {
+                        Section {
+                            ForEach(items) { it in
+                                HStack(spacing: XSpace.s) {
+                                    Text(it.label)
+                                        .xFont(.subheadline)
+                                        .foregroundStyle(XPalette.text)
+                                        .lineLimit(1)
+                                        .minimumScaleFactor(0.8)
+                                    Spacer(minLength: 0)
+                                    Menu {
+                                        Button("移交他人") { decide(it, "move") }
+                                        Button("停用 (入回收站)") { decide(it, "delete") }
+                                        Button("保留原样") { decide(it, "keep") }
+                                    } label: {
+                                        XStatusPill(text: optionLabel(decisions[it.id]), tone: decisions[it.id] == nil ? .neutral : .accent, systemImage: "ellipsis.circle")
+                                    }
                                 }
+                                .frame(minHeight: XHit.min)
                             }
-                            .frame(minHeight: XHit.min)
+                        } header: {
+                            Text("逐条处置 (保留/移交/停用)")   // 474 逐条处置
                         }
-                    } header: {
-                        Text("逐条处置 (保留/移交/停用)")   // 474 逐条处置
+                    }
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                        Button {
+                            if !items.isEmpty && !allDecided {
+                                app.showToast("先把每条凭证选一种处置")
+                                return
+                            }
+                            var e = MemberHub.ext(memberID)
+                            e.archived = true
+                            MemberHub.saveExt(memberID, e)
+                            onDone()
+                            app.showToast("已归档, 历史记录保留")   // 460/795 已归档
+                            dismiss()
+                        } label: {
+                            Text("归档并执行")
+                                .frame(maxWidth: .infinity)
+                                .frame(minHeight: XHit.min)
+                        }
+                        .buttonStyle(XDestructiveButtonStyle())
+                        }
                     }
                 }
-                XPanel(kind: .group) {
-                    VStack(alignment: .leading, spacing: XSpace.m) {
-                    Button {
-                        if !items.isEmpty && !allDecided {
-                            app.showToast("先把每条凭证选一种处置")
-                            return
-                        }
-                        var e = MemberHub.ext(memberID)
-                        e.archived = true
-                        MemberHub.saveExt(memberID, e)
-                        onDone()
-                        app.showToast("已归档, 历史记录保留")   // 460/795 已归档
-                        dismiss()
-                    } label: {
-                        Text("归档并执行")
-                            .frame(maxWidth: .infinity)
-                            .frame(minHeight: XHit.min)
-                    }
-                    .buttonStyle(XDestructiveButtonStyle())
-                    }
-                }
+                .padding(.horizontal, XSpace.gutter)
+                .padding(.vertical, XSpace.l)
             }
+            .background(XPalette.canvas)
             .navigationTitle("退出处置向导")   // 474 退出处置向导
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("取消") { dismiss() } } }
