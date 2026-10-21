@@ -71,7 +71,13 @@
 `pressing` 会停在 true，定时器睡完就真的发出一次开锁 —— 用户没按完，门开了。
 `onLongPressGesture` 的完成回调由 SwiftUI 保证「按住满时长且未取消」。
 
-另外：切后台 / 视图消失一律 `abortCharge()`。不允许在后台完成开锁。
+另外两条：
+
+- 切后台 / 视图消失一律 `abortCharge()`。不允许在后台完成开锁。
+- `performUnlock()` 有**重入闸门**（`isUnlocking`，在第一个 await 之前同步置位）。
+  只靠 `phase` 判断挡不住：`performUnlock` 进入 await 时 `phase` 还是 `.charging`，
+  此时 VoiceOver 的 `accessibilityAction` 走的是独立入口，连点两次就能让
+  两次 BLE 开锁并发打到锁上。长按手势有天然节流，无障碍入口没有。
 
 ## 六、数据口径（不许编）
 
@@ -123,3 +129,15 @@
 
 凭证的另外两档是通的：停用、彻底删除（`DB.delPwd`）。归档不是被替代，是做了一半。
 代码里已在 `CredentialOrg.setArchived` 上写明，避免后来者以为功能可用。
+
+## 十二、已核实安全的数据通路
+
+这几条专门查过，结论是**干净的**，写下来免得以后重复怀疑：
+
+| 通路 | 结论 |
+|---|---|
+| 恢复 / 导入 | 都有确认对话框（"恢复会覆盖同名设备"、"合并后不可撤销"、导出明文警告）|
+| 删除成员 | `Store.swift` 会把该成员名下凭证的 `owner` 置空，不留悬空引用 |
+| 删除凭证 | 关系是单向的（`pwd.owner → member.id`），删凭证不会产生孤儿 |
+| `DB.addPwd` / `addFp` | 先 `removeAll` 同 key 再 append —— 是 upsert，不会出现同 alias 两条 |
+| 隐藏门锁 | **曾经不可恢复**，已补"已隐藏"区（见第十一章同法）|
