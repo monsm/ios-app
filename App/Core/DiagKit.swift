@@ -242,7 +242,7 @@ enum DiagLogs {
         }
         var text: String {
             switch kind {
-            case .pwd(let a): return "凭证 #\(a)"
+            case .pwd(let a): return "钥匙 #\(a)"
             case .fp(let b): return "指纹 批次\(b)"
             case .member(let id): return DB.member(id)?.name ?? "成员"   // kind 存的是内部 id, 不能直接当标签
             case .mac(let m): return String(m.prefix(6))
@@ -429,7 +429,7 @@ enum DataHealth {
             pwdOrph += l.pwds.filter { $0.owner.map { !memberIds.contains($0) } ?? false }.count
             fpOrph += l.fps.filter { $0.owner.map { !memberIds.contains($0) } ?? false }.count
         }
-        if pwdOrph > 0 { out.append("\(pwdOrph) 条密码凭证指向已删除成员 (留作无主记录)") }
+        if pwdOrph > 0 { out.append("\(pwdOrph) 条密码钥匙指向已删除成员 (留作无主记录)") }
         if fpOrph > 0 { out.append("\(fpOrph) 组指纹指向已删除成员 (留作无主记录)") }
         let kcs = Set(DB.keychains().map { $0.mac })
         for k in DB.store.keys() where k.hasPrefix("kf_logcache_") {
@@ -544,7 +544,7 @@ enum PageTrace {
     static func name(forTab tab: Int) -> String {
         switch tab {
         case 0: return "设备"
-        case 1: return "凭证"
+        case 1: return "钥匙"
         case 2: return "记录"
         case 3: return "设置"
         default: return ""

@@ -66,13 +66,13 @@ enum MemberHub {
     static func permRows(_ role: String) -> [(name: String, allowed: Bool)] {
         switch role {
         case "main":
-            return [(name: "看记录", allowed: true), (name: "管凭证", allowed: true), (name: "导出", allowed: true),
+            return [(name: "看记录", allowed: true), (name: "管钥匙", allowed: true), (name: "导出", allowed: true),
                     (name: "备份", allowed: true), (name: "成员管理", allowed: true)]
         case "guest":
-            return [(name: "看记录", allowed: false), (name: "管凭证", allowed: false), (name: "导出", allowed: false),
+            return [(name: "看记录", allowed: false), (name: "管钥匙", allowed: false), (name: "导出", allowed: false),
                     (name: "备份", allowed: false), (name: "成员管理", allowed: false)]
         default:
-            return [(name: "看记录", allowed: true), (name: "管凭证", allowed: true), (name: "导出", allowed: false),
+            return [(name: "看记录", allowed: true), (name: "管钥匙", allowed: true), (name: "导出", allowed: false),
                     (name: "备份", allowed: false), (name: "成员管理", allowed: false)]
         }
     }
@@ -301,7 +301,7 @@ enum MemberHub {
     }
 
     // ---------- 479/486 长辈模式 (本机布局档) ----------
-    /// 479 这一档真实改的是**凭证页**那一族: 分段只留 全部/密码/指纹 (CredentialsView 分段胶囊)、
+    /// 479 这一档真实改的是**钥匙页**那一族: 分段只留 全部/密码/指纹 (CredentialsView 分段胶囊)、
     /// 隐藏批量与导出入口、组尾那条过期清理按钮不出现, 行内字号升到语义标题/正文档并把次文本换成主文本色
     /// (大字与高对比都在 CredentialsView 的 rowTitleFont / rowSubFont / rowSubColor 三处消费, 字号全走语义档,
     /// 不写 .system(size:) —— 那一档不跟随 Dynamic Type)。

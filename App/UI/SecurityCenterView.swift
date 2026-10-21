@@ -112,7 +112,7 @@ func guardedDestroy(_ app: AppState, _ action: @escaping () -> Void) {
 func setGuestChannel(_ on: Bool, app: AppState) {
     DB.store.set(SecKey.guestOn, on)
     app.revokeSessionGrants()
-    app.showToast(on ? "访客通道已生效: 已回到设备页, 想进凭证与设置要用面容/指纹确认"   // 377 访客通道已生效
+    app.showToast(on ? "访客通道已生效: 已回到设备页, 想进钥匙与设置要用面容/指纹确认"   // 377 访客通道已生效
                       : "访客通道已关闭: 四页照常, 本次会话内不再复核")   // 377 访客通道已关闭
 }
 
@@ -188,7 +188,7 @@ struct SecurityPeekView: View {
                                 .frame(minWidth: 110)
                                 .tint(XPalette.accentText)
                             }
-                            Text("加密凭证包与交接包不走这条：那是密文，且你要粘进聊天工具，定时清掉只会打断交接。")
+                            Text("加密钥匙包与交接包不走这条：那是密文，且你要粘进聊天工具，定时清掉只会打断交接。")
                                 .xFont(.footnote)
                                 .foregroundStyle(XPalette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -261,7 +261,7 @@ struct SecurityPeekView: View {
                             }
                             SecRow(title: "访客通道",
                                    subtitle: SecurityPolicy.guestActive
-                                            ? "已开: 主界面只挂 设备/记录 两页, 进 凭证/设置 要先重输密码"
+                                            ? "已开: 主界面只挂 设备/记录 两页, 进 钥匙/设置 要先重输密码"
                                             : "关: 四页照常。打开即生效 (会先把受限的那两页收起)",
                                    icon: "person.crop.circle.badge.questionmark") {
                                 XToggle("", isOn: guestSwitch)
@@ -1016,7 +1016,7 @@ struct SecurityDestroyView: View {
                                 .contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
-                            .accessibilityLabel("查看回收站，可恢复已删除的凭证")
+                            .accessibilityLabel("查看回收站，可恢复已删除的钥匙")
 
                             XHairline(inset: 0)
                             HStack(spacing: XSpace.s) {
@@ -1050,7 +1050,7 @@ struct SecurityDestroyView: View {
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text(m.name)
                                                 .xFont(.subheadline)
-                                            Text("名下凭证入归档, 记录保留并标“已离开”")
+                                            Text("名下钥匙入归档, 记录保留并标“已离开”")
                                                 .xFont(.footnote)
                                                 .foregroundStyle(XPalette.textSub)
                                         }
@@ -1093,7 +1093,7 @@ struct SecurityDestroyView: View {
                             if SecurityPolicy.readOnly {
                                 Text("已接线的拦点: 开锁 (圆盘 / 手势 / 靠近自动开 / 二次开锁重发)、销毁全族 (三级销毁、清空回收站、"
                                      + "到期清理、离职清除)、审计导出与含明文导出。"
-                                     + "还没接上的: 添加与改造凭证、网关配网、固件升级 —— 那几处的执行点在服务层与配网/升级那几个页面, "
+                                     + "还没接上的: 添加与改造钥匙、网关配网、固件升级 —— 那几处的执行点在服务层与配网/升级那几个页面, "
                                      + "闸装到之前, 开着这枚开关不等于全 App 只读。")
                                     .xFont(.footnote)
                                     .foregroundStyle(XPalette.warn)

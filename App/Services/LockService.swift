@@ -475,10 +475,10 @@ final class LockService: ObservableObject {
             cred = kc.ekey                                     // 配网时已签发
         } else {
             let pin = pinDec ?? kc.pins.first
-            guard let pin, !pin.isEmpty else { throw BLEErrorX.msg("无 PIN 可用: 需要 ekey 或 PIN 才能签发开锁凭证") }
+            guard let pin, !pin.isEmpty else { throw BLEErrorX.msg("无 PIN 可用: 需要 ekey 或 PIN 才能签发开锁钥匙") }
             cred = ZKCmdBuilder.buildEkeyOpen(kc.skey.lowercased(), kc.mac.lowercased(), pin)
         }
-        guard !cred.isEmpty else { throw BLEErrorX.msg("开锁凭证为空 (ekey/PIN 签发失败), 已中止下发") }
+        guard !cred.isEmpty else { throw BLEErrorX.msg("开锁钥匙为空 (ekey/PIN 签发失败), 已中止下发") }
         let r = try await exec(ZKCmdBuilder.cmd04Open(cred, klv01Hex: "0000"), retries: 2)
         return r.rc  // 0 成功; 22 双验继续
     }
@@ -561,7 +561,7 @@ final class LockService: ObservableObject {
             // 那一帧而照样过 execOk ⇒ **屏上说已删除，密码在锁里还活着**。
             // 拿不到编号就是没确认到编号。本文件对"响应缺关键字段"的既有口径是抛错而不是给默认值
             // (见上面 01 无令牌那条)，这里同一条。
-            throw BLEErrorX.msg("锁已接受写入，但没有回凭证编号 (0A 响应缺 KLV#04) — 这条密码本机不登记，请到锁内记录核对或重加")
+            throw BLEErrorX.msg("锁已接受写入，但没有回钥匙编号 (0A 响应缺 KLV#04) — 这条密码本机不登记，请到锁内记录核对或重加")
         }
         // 第二步: 0B 设置有效期 (App 两步链)
         do {
@@ -569,8 +569,8 @@ final class LockService: ObservableObject {
         } catch {
             log("warn", "0B 设置有效期失败(不影响添加): \(error.localizedDescription)")
         }
-        // 543: 实体标记写成"凭证#N", 与 DiagKit.entities 的识别词表同一口径
-        log("info", "凭证#\(alias) 已添加 (0A+0B)")
+        // 543: 实体标记写成"钥匙#N", 与 DiagKit.entities 的识别词表同一口径
+        log("info", "钥匙#\(alias) 已添加 (0A+0B)")
         return alias
     }
     @discardableResult
@@ -586,7 +586,7 @@ final class LockService: ObservableObject {
         let (m, sk) = try keys()
         let r = try await execOk(try ZKCmdBuilder.cmd0ASyncPwd(m, sk, delAlias: alias, addPwd: pwd, validFrom: validFrom, validTo: validTo))
         let got = aliasFrom(r) ?? alias
-        log("info", "凭证#\(alias) 已改写" + (got == alias ? "" : ", 锁端新编号 凭证#\(got) (0A 删旧+加新)"))
+        log("info", "钥匙#\(alias) 已改写" + (got == alias ? "" : ", 锁端新编号 钥匙#\(got) (0A 删旧+加新)"))
         return got
     }
     func pwdDelete(_ alias: Int) async throws {
@@ -600,7 +600,7 @@ final class LockService: ObservableObject {
         }
         let (m, sk) = try keys()
         try await execOk(try ZKCmdBuilder.cmd0ASyncPwd(m, sk, delAlias: alias))
-        log("info", "凭证#\(alias) 已删除 (0A)")
+        log("info", "钥匙#\(alias) 已删除 (0A)")
     }
     func pwdClear() async throws {
         let (m, sk) = try keys()
@@ -609,7 +609,7 @@ final class LockService: ObservableObject {
     func pwdExpire(_ alias: Int, _ from: String, _ to: String) async throws {
         let (m, sk) = try keys()
         try await execOk(ZKCmdBuilder.cmd0BSyncPwdExpire(m, sk, alias, from, to))
-        log("info", "凭证#\(alias) 有效期已设置 (0B)")
+        log("info", "钥匙#\(alias) 有效期已设置 (0B)")
     }
 
     // ---------- 指纹 ----------

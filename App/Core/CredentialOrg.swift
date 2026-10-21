@@ -42,7 +42,7 @@ enum CredBinSource: Int, Codable, CaseIterable {
         case .batch: return "批量清理"
         case .expired: return "过期清理"
         case .rererecord: return "重录替代"
-        // 452: 诊断页"隔离无主凭证"这一支 —— 来源单列一档, 用户看得见它是被谁收走的
+        // 452: 诊断页"隔离无主钥匙"这一支 —— 来源单列一档, 用户看得见它是被谁收走的
         case .orphan: return "无主隔离"
         }
     }
@@ -64,7 +64,7 @@ struct CredBinEntry: Codable, Identifiable {
     var text: String {
         if let p = pwd { return "密码 #\(p.alias)" + (p.temp ? " (一次性)" : "") }
         if let f = fp { return "指纹「\(f.name)」" }
-        return "凭证"
+        return "钥匙"
     }
     var sourceName: String { CredBinSource(rawValue: source)?.label ?? "手动删除" }
 }
@@ -525,7 +525,7 @@ enum CredentialOrg {
         switch item.kind {
         case "del_pwd":
             guard let p = item.pwd, p.alias != 0 else {
-                throw BLEErrorX.msg("队列项缺少密码别名 (\(item.title))，已中止下发 — 请重新选择该凭证")
+                throw BLEErrorX.msg("队列项缺少密码别名 (\(item.title))，已中止下发 — 请重新选择该钥匙")
             }
             // 留存口径：本机台账在停用那一刻就删了 (disablePwd)，这一步只负责把命令发出去
             try await lock.pwdDelete(p.alias)
@@ -776,7 +776,7 @@ enum CredentialOrg {
                         title: "密码临期", body: "\(name) 距到期还有 2 小时。")
         }
         addCalendar(id: id + ".t0", date: to, title: "已到期",
-                    body: "\(name) 到期了, 锁端到这个时刻后不再放行这条凭证。")
+                    body: "\(name) 到期了, 锁端到这个时刻后不再放行这项钥匙。")
     }
 
     /// 930 凭证 Tab 角标: 近 7 日内到期的条数。
@@ -807,7 +807,7 @@ enum CredentialOrg {
         // 等于"账单说要扣钱但没人扣"。改成 catch 里写 os 日志 (authFail/log 之外唯一可见出口)。
         Task {
             do { try await UNUserNotificationCenter.current().add(req) }
-            catch { CredentialOrg.notifyLog.error("凭证通知排期失败 id=\(id, privacy: .public) err=\(String(describing: error), privacy: .public)") }
+            catch { CredentialOrg.notifyLog.error("钥匙通知排期失败 id=\(id, privacy: .public) err=\(String(describing: error), privacy: .public)") }
         }
     }
     /// App 内 2 小时档: 到期前 2 小时且开了 h2 的条 (设备 Tab Hero 卡下插提醒行)
@@ -837,7 +837,7 @@ enum CredentialOrg {
         let expired = DB.listPwds(mac).filter { pwdState($0) == 2 && !isArchived(mac, "pwd", $0.alias) }.count
         if expired > 0 {
             out.append(Advice(id: "expired", title: "过期 \(expired) 条",
-                              sub: "已过期凭证待清理或续期", icon: "clock.arrow.circlepath", action: "expired"))
+                              sub: "已过期钥匙待清理或续期", icon: "clock.arrow.circlepath", action: "expired"))
         }
         var values: [String: [LedgerPwd]] = [:]
         for p in DB.listPwds(mac) where p.pwd != nil && !isArchived(mac, "pwd", p.alias) { values[p.pwd!, default: []].append(p) }
@@ -849,7 +849,7 @@ enum CredentialOrg {
         let noowner = DB.listPwds(mac).filter { $0.owner == nil && !isArchived(mac, "pwd", $0.alias) }.count
         if noowner > 0 {
             out.append(Advice(id: "noowner", title: "无归属 \(noowner) 条",
-                              sub: "未指定成员的凭证, 建议移交或停用", icon: "person.slash", action: "noowner"))
+                              sub: "未指定成员的钥匙, 建议移交或停用", icon: "person.slash", action: "noowner"))
         }
         let binN = bin(mac).count
         if binN > 0 {
@@ -1040,8 +1040,8 @@ enum CredentialOrg {
         comps.day = 1
         comps.hour = 9
         let c = UNMutableNotificationContent()
-        c.title = "月度凭证清理"
-        c.body = "上月有过期凭证待处理, 到「凭证」点「整理」一键清理。"
+        c.title = "月度钥匙清理"
+        c.body = "上月有过期钥匙待处理, 到「钥匙」点「整理」一键清理。"
         let req = UNNotificationRequest(identifier: "c6.monthly", content: c,
                                         trigger: UNCalendarNotificationTrigger(dateMatching: comps, repeats: true))
         Task {
@@ -1065,7 +1065,7 @@ enum CredentialOrg {
            let alias = Int(parts[3].dropFirst(1)), alias > 0, !parts[2].isEmpty {
             return .locatePwd(mac: parts[2], alias: alias)
         }
-        if id == "c6.monthly" { return .panel("organize") }   // 文案就写着"到「凭证」点「整理」"
+        if id == "c6.monthly" { return .panel("organize") }   // 文案就写着"到「钥匙」点「整理」"
         return nil
     }
     /// 366/1013 通知落地 (此前 handleNotificationAction 零调用 = 点通知什么也不发生)。
@@ -1150,7 +1150,7 @@ enum CredentialOrg {
             let v = (p.pwd ?? "").trimmingCharacters(in: .whitespaces)
             if v.count >= 4, let dup = byValue[v], dup.count > 1 {
                 out.append(PwdRisk(kind: "同值", mac: mac, alias: p.alias, lockName: lock,
-                                   detail: "与另外 \(dup.count - 1) 条凭证同值"))
+                                   detail: "与另外 \(dup.count - 1) 项钥匙同值"))
             }
             if let age = pwdAgeDays(p), age > maxAgeDays {
                 out.append(PwdRisk(kind: "超期", mac: mac, alias: p.alias, lockName: lock,
@@ -1266,7 +1266,7 @@ enum CredentialOrg {
     }
     /// 临时凭证: 只算落在它自己时间窗内的开门 (时间窗就是它唯一的归属依据)。
     /// 长期凭证: 日志无法指认是哪条密码开的门, 只能给"这把锁最近一次开门" —— 同锁各条数值相同,
-    /// 所以调用方拿到它只能当锁级参考, 不能当成"这条凭证被用过"。
+    /// 所以调用方拿到它只能当锁级参考, 不能当成"这项钥匙被用过"。
     private static func lastUse(of p: LedgerPwd, opens: [Double]) -> Double? {
         if p.temp {
             guard let f = parseLocal(p.from), let to = parseLocal(p.to) else { return nil }
@@ -1287,7 +1287,7 @@ enum CredentialOrg {
     static func fpAlarmLogCount(_ mac: String) -> Int {
         DB.readLogs(mac).filter { $0.type == 13 }.count
     }
-    /// 326/335 计次退役与用量刻度: 锁端**无计次字段**, 所以这里数的是"这条凭证自己的时间窗里
+    /// 326/335 计次退役与用量刻度: 锁端**无计次字段**, 所以这里数的是"这项钥匙自己的时间窗里
     /// 本地开门日志 (type4) 有几条" —— 不是锁报过的用量, 也不保证每一条都真用它开过门
     /// (CAPABILITY §3: 日志无凭证身份字段)。UI 小字与这句同一口径: 按本地开门日志时间窗推断。
     static func usageCount(_ mac: String, p: LedgerPwd) -> Int {

@@ -155,7 +155,7 @@ struct BackupPage: View {
 
     private var backupHint: String {
         let d = daysSinceBackup
-        if d < 0 { return "备份包含全部凭证与设置, 全程离线加密。" }
+        if d < 0 { return "备份包含全部钥匙与设置, 全程离线加密。" }
         if d <= 7 { return "备份状态良好。" }
         if d <= 30 { return "建议尽快再备份一次。" }
         return "已经很久没备份了, 建议现在备份。"

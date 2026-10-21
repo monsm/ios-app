@@ -439,7 +439,7 @@ struct AddLockPage: View {
                         .foregroundStyle(XPalette.textTertiary)
                         .textCase(.uppercase)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                    nextRow(icon: "touchid", text: "在「钥匙」里录一枚指纹或密码 —— 不给凭证，锁认不出你")
+                    nextRow(icon: "touchid", text: "在「钥匙」里录一枚指纹或密码 —— 不给钥匙，锁认不出你")
                     nextRow(icon: "arrow.down.circle", text: "在「事件记录」里同步一次开门历史 —— 统计与归属都从这里来")
                     nextRow(icon: "lock.open", text: "回门厅按住开锁环试一次 —— 确认这把锁真的能开")
                 }

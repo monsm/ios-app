@@ -414,8 +414,8 @@ enum Milestones {
         Badge(id: "owl", cat: .guardDuty, title: "夜猫子", detail: "单月凌晨 0-6 点开门 5 次", icon: "moon.zzz.fill", rarity: .rare, hidden: true),
         Badge(id: "heart1000", cat: .guardDuty, title: "千次心跳", detail: "累计开锁 1000 次", icon: "heart.fill", rarity: .epic, hidden: true),
         // 整理
-        Badge(id: "owner", cat: .organize, title: "各就各位", detail: "把一条凭证归属到成员", icon: "person.crop.circle.badge.checkmark", rarity: .common, hidden: false),
-        Badge(id: "tidy10", cat: .organize, title: "整理大师", detail: "累计整理凭证 10 次", icon: "checklist", rarity: .rare, hidden: false),
+        Badge(id: "owner", cat: .organize, title: "各就各位", detail: "把一项钥匙归属到成员", icon: "person.crop.circle.badge.checkmark", rarity: .common, hidden: false),
+        Badge(id: "tidy10", cat: .organize, title: "整理大师", detail: "累计整理钥匙 10 次", icon: "checklist", rarity: .rare, hidden: false),
         Badge(id: "week1", cat: .organize, title: "周目标星", detail: "达成一次每周整理目标", icon: "star.fill", rarity: .common, hidden: false),
         // 探索
         Badge(id: "days90", cat: .explore, title: "老友记", detail: "陪伴这个家 90 天", icon: "leaf.fill", rarity: .rare, hidden: false),
@@ -425,7 +425,7 @@ enum Milestones {
         Badge(id: "batt2", cat: .butler, title: "续航管家", detail: "完成 2 次换电池", icon: "battery.100.bolt", rarity: .common, hidden: false),
         Badge(id: "clean3", cat: .butler, title: "爱洁之家", detail: "连续 3 个月完成锁体保养", icon: "checkmark.seal", rarity: .rare, hidden: false),
         // 995: 入伙与 owner 同判据 (归属即入伙完成), 语义入口不同
-        Badge(id: "join1", cat: .organize, title: "入伙", detail: "新成员入伙并录下第一条归属凭证", icon: "person.badge.plus", rarity: .common, hidden: false),
+        Badge(id: "join1", cat: .organize, title: "入伙", detail: "新成员入伙并录下第一条归属钥匙", icon: "person.badge.plus", rarity: .common, hidden: false),
     ]
     static func badge(_ id: String) -> Badge? { definitions.first { $0.id == id } }
 
@@ -510,7 +510,7 @@ enum Milestones {
         case "owner": return s.ownedCred
         // 995 原句是两条: **新成员添加后生成欢迎卡**引导首录凭证，完成才点亮"入伙"。
         // 2026-10-15 走查(第一次记这条时): 判据与上面 "owner" 完全相同 (`ownedCred`) ⇒ 给一条旧凭证指归属，
-        // 两枚徽章一起亮，而屏上写的是"新成员入伙并录下第一条归属凭证"。**没有把文案降到判据的高度**。
+        // 两枚徽章一起亮，而屏上写的是"新成员入伙并录下第一条归属钥匙"。**没有把文案降到判据的高度**。
         // 同日续查: 当时写的卡点"真判据要成员建档时刻，那是数据面要补的字段"**是错的** ——
         // `Member.at` 已在 `DB.addMember` 里写、`fromDict` 读回（迁移旧账为 0），所以"新成员"这一半现在就能判，
         // 判据换成 `joinedWithCred`（本 App 建的档 + 名下真有归属凭证，且不含演示锁）。

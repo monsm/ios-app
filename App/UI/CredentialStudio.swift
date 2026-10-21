@@ -659,7 +659,7 @@ struct TempCodeStudio: View {
                     if !dups.isEmpty {
                         // 304 查看即跳: 不再只给一句"建议换一组", 真把同值那条的详情打开
                         HStack(spacing: XSpace.xs) {
-                            Label("本锁已有 \(dups.count) 条同值凭证, 建议换一组", systemImage: "plus.slash.minus")   // 304 本锁已有
+                            Label("本锁已有 \(dups.count) 条同值钥匙, 建议换一组", systemImage: "plus.slash.minus")   // 304 本锁已有
                                 .xFont(.caption)
                                 .foregroundStyle(XPalette.warn)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -1014,7 +1014,7 @@ func fpDoubleSignCheck(mac: String, batch: Int, confirmTitle: String, action: @e
         // 最后一枚但本机翻不出任何在用密码时 (双签在形式上无法完成) 也落到这一支 —— 那恰恰是最贵的一种：
         // 无密码可核对 == 删完这人既没指纹也没密码，所以后果必须单独说一句。
         let lastWarn = need
-            ? "这是该成员名下最后一枚可用指纹，且本机没有在用的密码可双签；删掉后此人两种凭证都没了，只能本人到锁前重录。"   // 324 这是该成员名下最后一
+            ? "这是该成员名下最后一枚可用指纹，且本机没有在用的密码可双签；删掉后此人两种钥匙都没了，只能本人到锁前重录。"   // 324 这是该成员名下最后一
             : ""
         confirmDestructive("删除指纹「\(f.name)」",
                            lastWarn + "锁端这条立即作废，不可撤销；本机回收站 \(CredentialOrg.reclaimDays()) 天内找回的是名称/备注/归属这条档案，" +

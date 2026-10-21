@@ -151,7 +151,7 @@ struct MembersPage: View {
                     }
                 }
 
-                Text("点一位成员可看名下凭证、授权来源与最近活动。")
+                Text("点一位成员可看名下钥匙、授权来源与最近活动。")
                     .xFont(.caption2)
                     .foregroundStyle(XPalette.textTertiary)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -312,7 +312,7 @@ struct MembersPage: View {
 
     private func accessibilityText(_ m: Member, role: String, total: Int, act: MemberHub.Activity, allowed: Int, permTotal: Int) -> String {
         var parts = [MemberHub.display(m), MemberHub.roleLabel(role)]
-        if total > 0 { parts.append(String(total) + " 份凭证") }
+        if total > 0 { parts.append(String(total) + " 项钥匙") }
         if act.opens30 > 0 { parts.append("近 30 天 " + String(act.opens30) + " 次") }
         parts.append("权限 " + String(allowed) + " / " + String(permTotal))
         return parts.joined(separator: "，")
@@ -323,7 +323,7 @@ struct MembersPage: View {
         let roleName = MemberHub.roleLabel(role)
         if !roleName.isEmpty { parts.append(roleName) }
         if !m.relation.isEmpty { parts.append(m.relation) }
-        if total == 0 { parts.append("无凭证") }
+        if total == 0 { parts.append("无钥匙") }
         return parts.joined(separator: " · ")
     }
 

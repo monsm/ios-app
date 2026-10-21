@@ -27,7 +27,7 @@ enum SettingsGroup: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .daily: return "开门日常"
-        case .keys: return "凭证与成员"
+        case .keys: return "钥匙与成员"
         case .data: return "数据与安全"
         case .look: return "外观与辅助"
         case .help: return "帮助与关于"

@@ -101,7 +101,7 @@ enum ZKCmdBuilder {
         return ZKCmd(name: "04 开锁", cmd: 0x04, hex: ZKProtocol.buildFrame(0x04, klv, header: 8))
     }
     // pin → LE 4B hex (数字或已是 8 hex 皆可 — JS pinToLE 双兼容)
-    // 旧写法解析失败时回落 "00000000": 那是一个**合法 PIN 值**, 于是"读不到的凭证"会被签成
+    // 旧写法解析失败时回落 "00000000": 那是一个**合法 PIN 值**, 于是"读不到的钥匙"会被签成
     // 一条 pin=0 的 ekey 发给锁 —— 既可能是错误凭证, 也会在锁端留下一次真实开锁尝试。改为显式失败。
     static func pinToLEOrNil(_ pin: String) -> String? {
         var h = pin.trimmingCharacters(in: .whitespaces).lowercased()

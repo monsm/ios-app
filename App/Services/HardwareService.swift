@@ -230,7 +230,7 @@ final class HardwareService: ObservableObject {
         // 旧写法 `lock.pins.first ?? "1"`: PIN 池为空时**回落到 PIN "1"** 去签发硬件钥匙凭证 ——
         // 写进dongle 的是一条人人猜得到的凭证, 而流程显示"写入成功"。缺 PIN 必须直接拒绝。
         guard let pin = lock.pins.first, !pin.isEmpty else {
-            throw BLEErrorX.msg("该锁的钥匙串没有 PIN 池, 无法为硬件钥匙签发凭证 (已拒绝, 不回落默认 PIN)")
+            throw BLEErrorX.msg("该锁的钥匙串没有 PIN 池, 无法为硬件钥匙签发钥匙 (已拒绝, 不回落默认 PIN)")
         }
         let ekey = ZKCmdBuilder.buildEkeyOpen(lock.skey.lowercased(), lock.mac.lowercased(), pin,
                                              validFromSec: vf, validToSec: vt, trackId: trackId)

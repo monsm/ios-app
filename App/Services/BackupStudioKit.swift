@@ -343,7 +343,7 @@ enum BackupStudio {
             let l = DB.ledger(kc.mac)
             pw += l.pwds.count; fp += l.fps.count
         }
-        out["凭证"] = pw + fp
+        out["钥匙"] = pw + fp
         // 2026-10-15 走查: 原先这里报 `DB.keychains().count` 并把界面文案写成"锁端日志缓存 (按锁约) 份缓存",
         // 两头都不对 —— 锁端日志缓存 (`kf_logcache_`) **从不进包** (BackupKit 全文零命中)，而这一档真正裁的是
         // `globals.trace` 那**一份**本机记录写入轨迹 (见下方 `if !z.records` 那两条)。勾掉它不会让日志消失,
@@ -469,7 +469,7 @@ enum BackupStudio {
         }
         if noOwner > 0 {
             rows.append(.init(label: "无归属",
-                              text: "\(noOwner) 条凭证未指定成员, 恢复后仍需认领"))   // 412 条凭证未指定成员
+                              text: "\(noOwner) 项钥匙未指定成员, 恢复后仍需认领"))   // 412 条凭证未指定成员
         }
         if daysSinceLastExport() >= 14 {
             rows.append(.init(label: "数据陈旧",
@@ -533,7 +533,7 @@ enum BackupStudio {
         }
         var headText = BackupCanonical.exportText(head)
         if let pw = encrypt { headText = (try? CryptoBox.encryptText(headText, password: pw)) ?? "" }
-        out.append(Volume(index: 0, label: "基础卷 · 设备/凭证/设置", text: headText))
+        out.append(Volume(index: 0, label: "基础卷 · 设备/钥匙/设置", text: headText))
         for (y, lines) in perYear.sorted(by: { $0.key > $1.key }) {
             var v = b
             v.globals = v.globals.map {
@@ -613,7 +613,7 @@ enum BackupStudio {
         if !m.devices.isEmpty { zones.append("设备 \(m.devices.count)") }
         var p = 0, f = 0
         for d in m.devices { p += d.ledger?.pwds.count ?? 0; f += d.ledger?.fps.count ?? 0 }
-        if p + f > 0 { zones.append("凭证 \(p + f)") }
+        if p + f > 0 { zones.append("钥匙 \(p + f)") }
         if let ms = m.members, !ms.isEmpty { zones.append("成员 \(ms.count)") }
         if m.globals?.trace?.lines?.isEmpty == false { zones.append("记录") }
         let sample = (m.globals?.trace?.lines ?? []).shuffled().prefix(5).count
@@ -910,13 +910,13 @@ enum BackupStudio {
     static func compare(_ bundle: BackupBundle, _ current: BackupBundle) -> [DiffRow] {
         func tally(_ x: BackupBundle) -> [String: Int] {
             var m: [String: Int] = ["设备": x.devices.count]
-            m["凭证"] = x.devices.reduce(0) { $0 + ($1.ledger?.pwds.count ?? 0) + ($1.ledger?.fps.count ?? 0) }
+            m["钥匙"] = x.devices.reduce(0) { $0 + ($1.ledger?.pwds.count ?? 0) + ($1.ledger?.fps.count ?? 0) }
             m["成员"] = x.members?.count ?? 0
             m["记录"] = x.globals?.trace?.lines?.count ?? 0
             return m
         }
         let ta = tally(bundle), tb = tally(current)
-        return ["设备", "凭证", "成员", "记录"].map {
+        return ["设备", "钥匙", "成员", "记录"].map {
             DiffRow(label: $0, a: ta[$0] ?? 0, b: tb[$0] ?? 0)
         }
     }
@@ -942,7 +942,7 @@ enum BackupStudio {
             let l = DB.ledger(mac)
             let lp = l.pwds.count + l.fps.count
             out.append(LockDiff(id: mac, label: LockArchive.displayName(kc), backup: bp, local: lp,
-                                note: bp > lp ? "本机少 \(bp - lp) 条凭证" : "已一致"))
+                                note: bp > lp ? "本机少 \(bp - lp) 项钥匙" : "已一致"))
         }
         return out
     }

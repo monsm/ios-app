@@ -304,7 +304,7 @@ enum BatterySwapGuide {
             ("battery.100", "备好同型号新电池", modelHint),
             ("wrench.and.screwdriver", "拆下电池盖板", "一般在室内面板, 不需要拆卸整锁"),
             ("arrow.triangle.2.circlepath", "整组换新", "不要新旧电池混用, 触点对准弹簧"),
-            ("clock.arrow.circlepath", "换电后校准门锁时间", "临时密码与时间窗凭证依赖锁钟"),
+            ("clock.arrow.circlepath", "换电后校准门锁时间", "临时密码与时间窗钥匙依赖锁钟"),
             ("checkmark.seal", "点下方「已换新」复位", "基线与低电提醒一并重置"),
         ]
     }

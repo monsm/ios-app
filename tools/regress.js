@@ -323,6 +323,18 @@ const checks = [
     return k.includes('回收站 \\(CredentialOrg.reclaimDays())') &&
            !d.includes('留在回收站');
   }],
+  ['用户可见文案不再出现「凭证」', () => {
+    // 同一个核心名词两个叫法：页面标题是「钥匙管理」，里面按钮写「添加凭证」。
+    // 第 30 轮只改了 17 处，实际有 125 处 —— 现在清零。
+    let bad = 0;
+    for (const f of FILES) {
+      const body = CODE.get(path.basename(f)) || '';
+      for (const m of body.matchAll(/"((?:[^"\\]|\\.)*)"/g)) {
+        if (m[1].includes('凭证')) bad++;
+      }
+    }
+    return bad === 0;
+  }],
 ];
 
 let pass = 0;

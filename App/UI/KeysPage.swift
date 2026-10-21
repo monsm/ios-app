@@ -85,11 +85,11 @@ struct KeysPage: View {
                 } label: {
                     Image(systemName: "plus")
                 }
-                .accessibilityLabel("添加凭证")
+                .accessibilityLabel("添加钥匙")
             }
         }
         .confirmationDialog(
-            "删除这份凭证？",
+            "删除这项钥匙？",
             isPresented: Binding(get: { confirmDelete != nil }, set: { if !$0 { confirmDelete = nil } }),
             titleVisibility: .visible,
             presenting: confirmDelete
@@ -259,9 +259,9 @@ struct KeysPage: View {
     private var emptyCard: some View {
         XPanel(kind: .group, padding: 0) {
             XEmptyState(systemImage: "key.slash",
-                        title: search.isEmpty ? "还没有凭证" : "没有匹配的凭证",
+                        title: search.isEmpty ? "还没有钥匙" : "没有匹配的钥匙",
                         message: search.isEmpty ? "添加第一份授权, 之后会按类型分组显示。" : "换个关键词试试。",
-                        actionTitle: search.isEmpty ? "添加凭证" : nil,
+                        actionTitle: search.isEmpty ? "添加钥匙" : nil,
                         action: search.isEmpty ? { showAdd = true } : nil)
         }
     }

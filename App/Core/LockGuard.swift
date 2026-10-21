@@ -96,7 +96,7 @@ enum LockAction {
     var denial: String {
         switch self {
         case .unlock: return "只读安全模式已开: 开锁已停用, 要开门请先关掉这枚开关"   // 296 只读安全模式已开
-        case .writeCredential: return "只读安全模式已开: 凭证写入已停用"   // 296 只读安全模式已开
+        case .writeCredential: return "只读安全模式已开: 钥匙写入已停用"   // 296 只读安全模式已开
         case .provision: return "只读安全模式已开: 配网/换钥已停用 (含网关配网)"   // 296 只读安全模式已开
         case .dfu: return "只读安全模式已开: 固件升级已停用"   // 296 只读安全模式已开
         case .configure: return "只读安全模式已开: 校时/布防/音量等锁端设置已停用"   // 296 只读安全模式已开

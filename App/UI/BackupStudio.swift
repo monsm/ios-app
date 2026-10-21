@@ -300,7 +300,7 @@ extension BackupStudio.Channel {
     var hint: String {
         switch self {
         case .file: return "旧机导出 .enc 后经数据线/隔空投送/云盘传到本机, 这里粘贴或从「文件」选择接收"   // 438 旧机导出
-        case .qr: return "仅凭证小包 (口令信封): 旧机导出页生成二维码, 本页相机扫码 + 同一口令导入, 全程无网络"   // 411/438 仅凭证小包 (口令信封)
+        case .qr: return "仅钥匙小包 (口令信封): 旧机导出页生成二维码, 本页相机扫码 + 同一口令导入, 全程无网络"   // 411/438 仅凭证小包 (口令信封)
         case .webdav: return "坚果云/自配 WebDAV: 读远端列表 → 下载 → 解析入库, 两台机不见面也能迁"   // 422/423 坚果云
         }
     }
@@ -533,7 +533,7 @@ struct ExportWizardView: View {
         return VStack(alignment: .leading, spacing: XSpace.s) {
             zoneToggle("设备", counts["设备"] ?? 0, $zones.devices,
                        "门锁钥匙串 + BLE 直连参数")   // 441 门锁钥匙串
-            zoneToggle("凭证", counts["凭证"] ?? 0, $zones.credentials,
+            zoneToggle("钥匙", counts["钥匙"] ?? 0, $zones.credentials,
                        "密码与指纹台账")
             zoneToggle("记录", counts["记录"] ?? 0, $zones.records,
                        // 2026-10-15 走查: 原文案「锁端日志缓存 (按锁约) · N 份缓存」两头都是假的 ——
@@ -700,12 +700,12 @@ struct ExportWizardView: View {
             // 接收端把扫到的原文交给 parsePreview(password:), 与加密备份走同一条解密链。
             if !useVolumes {
                 VStack(alignment: .leading, spacing: XSpace.s) {
-                    Text("凭证二维码(加密): 另一台手机打开 备份工作室→换机迁移→扫码, 输入同一口令才能导入; 全程无网络。")   // 411 凭证二维码(加密)
+                    Text("钥匙二维码(加密): 另一台手机打开 备份工作室→换机迁移→扫码, 输入同一口令才能导入; 全程无网络。")   // 411 凭证二维码(加密)
                         .xFont(.footnote)
                         .foregroundStyle(XPalette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                     if let q = qrPayload, let img = BackupStudio.qrImage(q) {
-                        ShareLink(item: UIImageShareItem(img), preview: SharePreview("凭证二维码"))
+                        ShareLink(item: UIImageShareItem(img), preview: SharePreview("钥匙二维码"))
                         Text("这张码本身是口令信封: 截到码也打不开。但口令请当面或走另一条渠道, 不要和码一起发。")
                             .xFont(.footnote)
                             .foregroundStyle(XPalette.warn)
@@ -726,7 +726,7 @@ struct ExportWizardView: View {
                                 qrPayload = q
                                 qrMsg = ""
                             } else {
-                                qrMsg = "凭证太多或生成失败, 一张二维码装不下 — 请用文件通道。"
+                                qrMsg = "钥匙太多或生成失败, 一张二维码装不下 — 请用文件通道。"
                             }
                         }
                         .xFont(.caption, weight: .semibold)
@@ -853,7 +853,7 @@ struct ExportWizardView: View {
                     BackupStudio.markExportSize(text)   // 193: 单卷导出记尺寸, 下次预估行对比用
                     // 只有用户已经设了导出/备份口令才自动出码; 没设就留空, 由完成页要求单独输入。
                     qrPayload = pw.isEmpty ? nil : BackupStudio.credentialQRPayload(password: pw)
-                    qrMsg = (pw.isEmpty || qrPayload != nil) ? "" : "凭证太多, 一张二维码装不下 — 请用文件通道。"
+                    qrMsg = (pw.isEmpty || qrPayload != nil) ? "" : "钥匙太多, 一张二维码装不下 — 请用文件通道。"
                 }
                 exportVol = 1
                 exportPct = 100
@@ -1059,7 +1059,7 @@ struct RestoreWizardView: View {
             // 427 分区反选
             HStack(spacing: XSpace.s) {
                 zoneChip("设备", $zones.devices)
-                zoneChip("凭证", $zones.credentials)
+                zoneChip("钥匙", $zones.credentials)
                 zoneChip("记录", $zones.records)
                 zoneChip("设置", $zones.settings)
             }
@@ -1108,7 +1108,7 @@ struct RestoreWizardView: View {
                             .foregroundStyle(XPalette.text)
                             .lineLimit(1)
                         Spacer(minLength: 0)
-                        Text("\((d.ledger?.pwds.count ?? 0) + (d.ledger?.fps.count ?? 0)) 条凭证 · \(d.meta == nil ? "无运行参数" : "含运行参数")")
+                        Text("\((d.ledger?.pwds.count ?? 0) + (d.ledger?.fps.count ?? 0)) 项钥匙 · \(d.meta == nil ? "无运行参数" : "含运行参数")")
                             .xFont(.caption2)
                             .foregroundStyle(XPalette.textSub)
                     }
@@ -1161,7 +1161,7 @@ struct RestoreWizardView: View {
     }
     private func strategyHint(_ s: BackupStudio.MergeStrategy) -> String {
         switch s {
-        case .overwrite: return "同名设备/凭证一律以备份为准, 本机改动丢失。"
+        case .overwrite: return "同名设备/钥匙一律以备份为准, 本机改动丢失。"
         case .merge: return "同名合并, 冲突逐条裁决 (默认取备份), 其余保留。"
         case .missing: return "只补本机没有的设备与成员, 既有内容不动。"
         }

@@ -79,7 +79,7 @@ struct SecurityPage: View {
 
                 // 三盏灯
                 HStack(spacing: XSpace.l) {
-                    lamp("凭证", ok: risks.isEmpty, detail: risks.isEmpty ? "无风险" : "\(risks.count) 项")
+                    lamp("钥匙", ok: risks.isEmpty, detail: risks.isEmpty ? "无风险" : "\(risks.count) 项")
                     lamp("审计链", ok: !auditBroken, detail: auditBroken ? "断裂" : "完整")
                     lamp("数据", ok: selfCheckIssues.isEmpty, detail: selfCheckIssues.isEmpty ? "正常" : "\(selfCheckIssues.count) 项")
                 }
@@ -118,9 +118,9 @@ struct SecurityPage: View {
     }
 
     private var overallDetail: String {
-        if overallTone == .ok { return "凭证 / 审计链 / 数据完整性 / 应用锁 / 备份 全部通过" }
+        if overallTone == .ok { return "钥匙 / 审计链 / 数据完整性 / 应用锁 / 备份 全部通过" }
         var parts: [String] = []
-        if !risks.isEmpty { parts.append("\(risks.count) 项凭证风险") }
+        if !risks.isEmpty { parts.append("\(risks.count) 项钥匙风险") }
         if auditBroken { parts.append("审计链断裂") }
         if !selfCheckIssues.isEmpty { parts.append("\(selfCheckIssues.count) 项数据异常") }
         if !appLocked { parts.append("应用锁未开启") }

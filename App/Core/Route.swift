@@ -50,7 +50,7 @@ enum Route: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .device: return "设备"
-        case .credentials: return "凭证"
+        case .credentials: return "钥匙"
         case .records: return "记录"
         case .settings: return "设置"
         }

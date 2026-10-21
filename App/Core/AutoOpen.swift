@@ -166,7 +166,7 @@ enum AutoOpenKit {
 
     // ---------- 0E 双确认 (rc=3 自愈校时): 30s < |偏差| < 24h 才写; ≥24h 仅 NTP 对表一致时放宽到 48h ----------
     /// phoneProto = 手机协议秒, lockProto = 锁协议秒 (03 #04), ntpConfirmed = 有网且 NTP 对表偏差 < 5min。
-    /// 防"把错手机时间写进锁 → 全凭证时间窗集体错乱"自伤 DoS。
+    /// 防"把错手机时间写进锁 → 全钥匙时间窗集体错乱"自伤 DoS。
     static func dualTimeSync(phoneProto: Int64, lockProto: Int64, ntpConfirmed: Bool) -> Bool {
         let dev = abs(phoneProto - lockProto)
         if dev < 30 { return false }           // 偏差在容差内, 无需写 (rc=3 走既有刷令牌路径)
@@ -475,7 +475,7 @@ final class AutoOpenController {
             case 5:
                 // G3 times 语义未确证: 只提示, 不自动重签 (方案 §3.3 前置实验未过前保持保守)
                 AutoOpen.audit(mac, "rc=5 次数用完 — 提示联系主人换钥, 不自动重签")
-                app.showToast("凭证次数用完 (rc=5) — 请联系主人换钥, 不自动重签")
+                app.showToast("钥匙次数用完 (rc=5) — 请联系主人换钥, 不自动重签")
             case 25:
                 AutoOpen.audit(mac, "rc=25 锁正忙, 拒绝自动开锁")
             case 26:

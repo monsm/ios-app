@@ -59,7 +59,7 @@ final class AppState: ObservableObject {
     // 加这一位让启动块幂等 (AppState 是引用类型, 不受视图换身份影响)。
     var launchBootstrapped = false
     // ---------- 236/377 访客通道 / 383 毁灭复核: 两枚会话级授权位 ----------
-    /// 377: 访客通道开着时主 TabView 只挂 设备/记录; 这一位记"本会话是否已重输口令放开 凭证/设置"。
+    /// 377: 访客通道开着时主 TabView 只挂 设备/记录; 这一位记"本会话是否已重输口令放开 钥匙/设置"。
     /// 刻意是内存态而不是存储键 —— 落盘就等于"退出不用再输密码", 与开关原话相反。
     @Published var guestAreaUnlocked = false
     /// 377: 复核完成后要落到的 Tab (nil = 只放开受限区, 不指定落点)
@@ -71,7 +71,7 @@ final class AppState: ObservableObject {
     /// 377 被收起来的那两个 Tab 号 (与下面 TabView 里的 value 一一对应: 1 凭证 / 3 设置)。
     /// 236 与本条同行为一 (DEFERRED 舍弃表: 访客模式并入 377): 原句「只看设备 Tab / 进凭证要密码 /
     /// 退出需密码 / 落点应用锁」全部落在本通道; 只拦 凭证/设置 两页, 记录页不含凭证本体照常可看,
-    /// 界面文字也只写"凭证与设置", 不夸口拦记录。
+    /// 界面文字也只写"钥匙与设置", 不夸口拦记录。
     ///
     /// 2026-10-16 C1: 值改为**从 Route.guestBlocked 派生**，不再手写 `[1, 3]`。
     /// 原来这张字面量集合是"同一个量的第二次计算"（判据的另一半在视图里按序号摘除层级），
@@ -112,7 +112,7 @@ final class AppState: ObservableObject {
     }
     // ---------- 377 访客通道: 受限 Tab 的唯一走位口 ----------
     /// 受控跳转都汇到这里: 目标是被收起来的 Tab 且本会话没重输过口令, 就把既有应用锁页拉起来而不是切过去。
-    /// 深链、粘贴条的"回凭证页"、自检黄条的"去诊断"这些编程式跳转原本直接写 tabSelection,
+    /// 深链、粘贴条的"回钥匙页"、自检黄条的"去诊断"这些编程式跳转原本直接写 tabSelection,
     /// 不并到这条口上就会留成绕过访客限制的侧门。
     /// 换页的**唯一漏斗**。377 访客闸也只在这里判一次。
     func requestRoute(_ r: Route) {
@@ -130,7 +130,7 @@ final class AppState: ObservableObject {
         guard let r = Route.from(tab: t) else { return }
         requestRoute(r)
     }
-    /// 377: 底部那颗"凭证与设置"胶囊 —— 只放开受限区, 不指定落点
+    /// 377: 底部那颗"钥匙与设置"胶囊 —— 只放开受限区, 不指定落点
     func openGuestGate() {
         guestGateTarget = nil
         showGuestGate = true
@@ -277,7 +277,7 @@ final class AppState: ObservableObject {
     @Published var pendingRecordsFilter: String?
     // 包2/136 补充: 跨页跳回 — 记录/告警入口点"跳回设备页定位该锁"时, 落点即选中并提示
     @Published var pendingJumpLock: String?
-    // 包9/577 详情跳凭证: 记录/告警详情"来源凭证"→ 凭证 Tab 定位该条并高亮 (值 = "pwd:<alias>" / "fp:<batch>", mac 另存)
+    // 包9/577 详情跳凭证: 记录/告警详情"来源钥匙"→ 凭证 Tab 定位该条并高亮 (值 = "pwd:<alias>" / "fp:<batch>", mac 另存)
     @Published var pendingCredNav: String?
     @Published var pendingCredNavMac: String?
     /// 366/1013 通知点按 → 凭证 Tab 的对应面板。与 pendingCredNav (577 定位到单条凭证) 是两回事。
@@ -1211,7 +1211,7 @@ struct RootView: View {
                     withAnimation(XMotion.standard) { app.refreshPasteSuggestion() }
                 }
             } else {
-                Button("回凭证页") {
+                Button("回钥匙页") {
                     ClipboardCare.dismissSuggestion()
                     app.requestRoute(.credentials)   // 377: 访客通道开着时这条快捷条同样不能白切进去
                     withAnimation(XMotion.standard) { app.pasteSuggestion = nil }

@@ -95,7 +95,7 @@ struct ShareToAndroidView: View {
         guard qr == nil else { return }
         guard let p = AndroidPair.payload(kc) else {
             // 没有 ekey 也没有可用的 PIN/skey = 这把锁本机签不出开锁凭证, 如实说, 不生成一张假码
-            failed = "这把锁在本机没有可用的开锁凭证 (ekey 与 PIN 都缺), 无法分享。请先在本机开一次锁, 或重新配网。"
+            failed = "这把锁在本机没有可用的开锁钥匙 (ekey 与 PIN 都缺), 无法分享。请先在本机开一次锁, 或重新配网。"
             return
         }
         payload = p

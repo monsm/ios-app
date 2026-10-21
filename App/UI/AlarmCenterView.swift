@@ -804,7 +804,7 @@ struct AlarmCenterView: View {
                             .lineLimit(1)
                     }
                     if today > 0 {
-                        Text("上面每条即锁端记录的锁定级事件; 其不带凭证槽位 ⇒ 涉事凭证无法归属 (依赖协议失败明细)。")   // 569 上面每条即锁端记录的
+                        Text("上面每条即锁端记录的锁定级事件; 其不带钥匙槽位 ⇒ 涉事钥匙无法归属 (依赖协议失败明细)。")   // 569 上面每条即锁端记录的
                             .xFont(.footnote)
                             .foregroundStyle(XPalette.textSub)
                             .fixedSize(horizontal: false, vertical: true)

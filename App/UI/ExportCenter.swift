@@ -84,7 +84,7 @@ enum CSVKit {
 
 // 721 双语列头: 中文主列头 + 英文 code 注释行 (便于脚本二次处理)
 enum ExportHeaders {
-    static let zh = ["时间", "类型", "成员", "告警", "凭证", "原始hex"]
+    static let zh = ["时间", "类型", "成员", "告警", "钥匙", "原始hex"]
     static let en = ["time", "type", "member", "alarm", "cred", "hex"]
 }
 
@@ -859,7 +859,7 @@ enum ExportKit {
         // 704 占比: 分母用同段 opens; who 集合(成员非空)与 opens 集合(凭证词非空)口径略有差 ⇒ 带「约」。
         out.append("本期开门 \(opens) 次" + (who.isEmpty ? "" : "，最活跃: 约 \(who)（占比约 \(whoN * 100 / max(opens, 1))%）"))
         out.append("告警 \(alarms) 条" + (alarms == 0 ? "，记录安静" : "（见置前章节）"))
-        out.append("凭证变动 \(cred) 条（版本历史台账口径）")
+        out.append("钥匙变动 \(cred) 条（版本历史台账口径）")
         return out
     }
 
@@ -1395,14 +1395,14 @@ enum ReportVerify {
                                title: "一致: 本机数据与这份码对得上", lines: lines, at: now)
             }
             if sameRows {
-                lines.append("行数: 双方都是 " + String(local.rows) + " 行, 摘要不同 ⇒ 变的是行内容本身 (成员改名、凭证增删引起的归属变化这类)。")
+                lines.append("行数: 双方都是 " + String(local.rows) + " 行, 摘要不同 ⇒ 变的是行内容本身 (成员改名、钥匙增删引起的归属变化这类)。")
             } else {
                 let diff = local.rows - scanned.rows
                 lines.append("行数: 码上 " + String(scanned.rows) + " 行, 本机 " + String(local.rows) + " 行 (本机"
                              + (diff > 0 ? "多出 " + String(diff) : "少了 " + String(-diff)) + " 行)。")
             }
             lines.append("摘要: 码上 " + scanned.digest + " , 本机 " + local.digest + "。")
-            lines.append("本机数据在导出之后又变了才会走到这一态: 新增或删除记录、改成员名、增删凭证都会改变重算结果。")
+            lines.append("本机数据在导出之后又变了才会走到这一态: 新增或删除记录、改成员名、增删钥匙都会改变重算结果。")
             lines.append("核对的两端是「这份码」与「本机当前数据」; 分享出去的报告文件已不在本机, 它的真伪不在核对范围。")
             return Verdict(tone: .warn, icon: "exclamationmark.triangle.fill",
                            title: "不一致: 本机数据与这份码对不上", lines: lines, at: now)

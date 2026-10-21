@@ -192,7 +192,7 @@ struct MemberDetail360View: View {
         }
         return XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: XSpace.m) {
-                secLabel("名下凭证")
+                secLabel("名下钥匙")
                 Text("密码 \(pwdCount) 条 · 指纹 \(fpCount) 条 · 未归属转未分配不在此列")   // 261 密码
                 .xFont(.subheadline)
                 .foregroundStyle(XPalette.text)
@@ -246,7 +246,7 @@ struct MemberDetail360View: View {
         let rows = SensitiveLedger().memberItems(m.id)
         return XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: XSpace.m) {
-                secLabel("凭证停用动态")
+                secLabel("钥匙停用动态")
                 ForEach(Array(rows.enumerated()), id: \.offset) { _, r in
                 HStack(spacing: XSpace.s) {
                 Text(SensitiveLedger.stamp(r))
@@ -261,7 +261,7 @@ struct MemberDetail360View: View {
                 .accessibilityElement(children: .combine)
                 }
                 if rows.isEmpty {
-                Text("还没有停用记录。停用凭证时勾「写入该成员动态」才会写进这里；不勾只在敏感操作流水里留一条汇总，不落到个人档案。")   // 367 还没有停用记录
+                Text("还没有停用记录。停用钥匙时勾「写入该成员动态」才会写进这里；不勾只在敏感操作流水里留一条汇总，不落到个人档案。")   // 367 还没有停用记录
                 .xFont(.footnote)
                 .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -309,8 +309,8 @@ struct MemberDetail360View: View {
                 secLabel("家庭场景")
                 // 470 这一档真收 UI 的地方之一: 「管凭证」为禁用的角色 (访客) 不出现这枚代管开关,
                 // 并且把"为什么这里少了一枚"写在原地 —— 收起来却不说明, 就是本仓反复犯的无声忽略。
-                if MemberHub.permAllows(role, "管凭证") {
-                XToggle("由我代管 (TA 名下凭证被单条停用时, 便签补一句 管理员代操作)", isOn: Binding(
+                if MemberHub.permAllows(role, "管钥匙") {
+                XToggle("由我代管 (TA 名下钥匙被单条停用时, 便签补一句 管理员代操作)", isOn: Binding(
                 get: { MemberHub.ext(m.id).proxy },
                 set: { v in
                 var ext = MemberHub.ext(m.id); ext.proxy = v
@@ -319,13 +319,13 @@ struct MemberDetail360View: View {
                 }))
                 .fixedSize(horizontal: false, vertical: true)
                 } else {
-                Text("角色是「" + MemberHub.roleLabel(role) + "」: 矩阵里「管凭证」为禁用, 所以这一档不给代管开关。")   // 468/470 矩阵里
+                Text("角色是「" + MemberHub.roleLabel(role) + "」: 矩阵里「管钥匙」为禁用, 所以这一档不给代管开关。")   // 468/470 矩阵里
                 .xFont(.caption)
                 .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
                 }
                 if MemberHub.proxyNames.contains(m.id) {
-                Text("代管中: 在凭证页对 TA 名下凭证做单条停用时, 那一行的停用便签会写上 管理员代操作; "   // 468 代管中
+                Text("代管中: 在钥匙页对 TA 名下钥匙做单条停用时, 那一行的停用便签会写上 管理员代操作; "   // 468 代管中
                 + "家庭会议摘要也点名代管中的成员。锁端没有代操作这一位, 这句标注只落本机。")   // 482 家庭会议摘要
                 .xFont(.caption)
                 .foregroundStyle(XPalette.textSub)
@@ -345,7 +345,7 @@ struct MemberDetail360View: View {
         switch r {
         case "main": scene = "通常是房子主人：这台机器上的所有事都归 Ta"
         case "guest": scene = "通常是访客/钟点工：名下仍可以有临时码 (那是锁端的事)，本机这边不给代管、也不给指成紧急管理员"   // 470 通常是访客
-        default: scene = "通常是家人：日常开门与补凭证够用，导出与备份不给"
+        default: scene = "通常是家人：日常开门与补钥匙够用，导出与备份不给"
         }
         // 2026-10-13 run 60: 原来把两个 `isEmpty ? … : joined(…)` 三元直接拼进 Text 的字符串里,
         // 整个 roleExample 体报 "unable to type-check this expression in reasonable time"。
@@ -423,11 +423,11 @@ struct MemberDetail360View: View {
     private func confirmDelete(_ m: Member) {
         let preview = CredentialOrg.memberCredentialPreview(m.id)
         let msg = preview.isEmpty
-            ? "确定要删除「" + m.name + "」吗? TA 名下没有台账凭证。"
-            : "删除「" + m.name + "」后, 名下 " + String(preview.count) + " 条凭证将转为未分配并入回收站 (可整组还原):\n"
+            ? "确定要删除「" + m.name + "」吗? TA 名下没有台账钥匙。"
+            : "删除「" + m.name + "」后, 名下 " + String(preview.count) + " 项钥匙将转为未分配并入回收站 (可整组还原):\n"
               + preview.prefix(5).joined(separator: "\n") + (preview.count > 5 ? "\n…" : "")
               + "\n\n· 只移除档案: 只动本机台账, 锁里那些指纹与密码不会被收回, TA 仍能开门。\n"
-              + "· 连锁端一起收回: 这些凭证会排上锁端删除, 到场连接后真正失效。"
+              + "· 连锁端一起收回: 这些钥匙会排上锁端删除, 到场连接后真正失效。"
               + "指纹一旦在锁端删掉就无法远程补录, 只能本人到锁前重录 —— 还原时对指纹只剩本机记录。"
         let alert = UIAlertController(title: "删除成员", message: msg, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "只移除档案", style: .default) { _ in
@@ -444,7 +444,7 @@ struct MemberDetail360View: View {
             DB.removeMember(m.id)
             onChanged()
             app.showToast(queued > 0 ? "已删除并入回收站 · 已排 \(queued) 条锁端删除 (连接门锁后生效)"
-                                      : "已删除并入回收站 (名下没有可收回的凭证)")
+                                      : "已删除并入回收站 (名下没有可收回的钥匙)")
         })
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         UIApplication.topViewController()?.present(alert, animated: true)
@@ -475,7 +475,7 @@ struct MemberWizardView: View {
     @State private var busy = false
     @State private var newID: String?
 
-    private var steps: [String] { ["称呼与代号", "角色与备注", "初始凭证"] }
+    private var steps: [String] { ["称呼与代号", "角色与备注", "初始钥匙"] }
     private var canNext: Bool {
         switch step {
         case 0: return !name.trimmingCharacters(in: .whitespaces).isEmpty
@@ -537,13 +537,13 @@ struct MemberWizardView: View {
                         if makePwd {
                             TextField("6~8 位数字 (下发到当前锁)", text: $pwd)
                                 .keyboardType(.numberPad)
-                            Text("归属自动记为 TA; 不建也行, 稍后在凭证页添加。")
+                            Text("归属自动记为 TA; 不建也行, 稍后在钥匙页添加。")
                                 .xFont(.footnote)
                                 .foregroundStyle(XPalette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         // 463: 建档流程内直达指纹录入 (与临时码同格), 录完回凭证页可指归属
-                        NavigationLink("录指纹后到凭证页指归属") { AddFingerPage() }   // 463 录指纹后到凭证页指归
+                        NavigationLink("录指纹后到钥匙页指归属") { AddFingerPage() }   // 463 录指纹后到凭证页指归
                             .xFont(.footnote)
                     }
                     }
@@ -698,7 +698,7 @@ struct MergeMembersView: View {
                     }
                     XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
-                            secLabel("副档 (凭证将迁移至主档, 档案删除)")
+                            secLabel("副档 (钥匙将迁移至主档, 档案删除)")
                         Picker("选择副档", selection: $secondaryID) {
                             Text("请选择").tag(nil as String?)
                             ForEach(secondaryCandidates) { m in
@@ -766,7 +766,7 @@ struct MergeMembersView: View {
                     .xFont(.caption, weight: .semibold)
                     .foregroundStyle(XPalette.textTertiary)
                     .textCase(.uppercase)
-                factRow("迁移凭证", String(fromPwd) + " 密码 · " + String(fromFp) + " 指纹")
+                factRow("迁移钥匙", String(fromPwd) + " 密码 · " + String(fromFp) + " 指纹")
                 factRow("主档合并后", String(toPwd + fromPwd) + " 密码 · " + String(toFp + fromFp) + " 指纹")
                 factRow("副档档案", "删除（历史记录保留）")
                 Text("合并后不可撤销。")
@@ -805,7 +805,7 @@ struct MergeMembersView: View {
         MemberHub.reassignClaims(from: sid, to: primary.id)   // 462
         DB.removeMember(sid)
         onDone()
-        app.showToast("已合并, 迁移 \(moved) 条凭证至「" + primary.name + "」")
+        app.showToast("已合并, 迁移 \(moved) 项钥匙至「" + primary.name + "」")
         dismiss()
     }
 
@@ -886,7 +886,7 @@ struct MemberArchivedView: View {
                                         Text(archivedFact(m, ext: ext))
                                             .xFont(.caption)
                                             .foregroundStyle(XPalette.textSub)
-                                        Text("归档中 · 只从成员列表与成员统计里收起; 记录页仍能筛到 TA, 凭证页也仍列 TA 名下凭证 —— 归档不许挡撤权入口。")
+                                        Text("归档中 · 只从成员列表与成员统计里收起; 记录页仍能筛到 TA, 钥匙页也仍列 TA 名下钥匙 —— 归档不许挡撤权入口。")
                                             .xFont(.footnote)
                                             .foregroundStyle(XPalette.textSub)
                                             .fixedSize(horizontal: false, vertical: true)
@@ -926,7 +926,7 @@ struct MemberArchivedView: View {
             acc + DB.listFps(mac).filter { $0.owner == m.id }.count
         }
         if pwds + fps > 0 { parts.append("\(pwds) 密码 · \(fps) 指纹") }
-        else { parts.append("名下无凭证") }
+        else { parts.append("名下无钥匙") }
         if !ext.commonLocks.isEmpty { parts.append("\(ext.commonLocks.count) 把常用锁") }
         if !ext.emergency.isEmpty { parts.append("有紧急联系") }
         return parts.joined(separator: " · ")
@@ -957,12 +957,12 @@ struct MemberFamilySettingsView: View {
                     XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
                             secLabel("长辈模式")
-                        XToggle("长辈模式 (凭证页大字高对比、只留密码/指纹两组 · 临时码完成页收成口述卡)", isOn: $elder)
+                        XToggle("长辈模式 (钥匙页大字高对比、只留密码/指纹两组 · 临时码完成页收成口述卡)", isOn: $elder)
                             .fixedSize(horizontal: false, vertical: true)
                         if elder {
-                            Text("凭证页: 分段只留 全部/密码/指纹, 批量与导出入口收起, 组尾那条过期清理也不出现; "
-                                 + "凭证行标题升到标题级、副行升到正文档, 副行文字改用主文本色 —— 大字与高对比就落在这两处。"   // 479 凭证行标题升到标题级
-                                 + "这一档只动凭证页与临时码完成页, 其它页面不跟着变。")
+                            Text("钥匙页: 分段只留 全部/密码/指纹, 批量与导出入口收起, 组尾那条过期清理也不出现; "
+                                 + "钥匙行标题升到标题级、副行升到正文档, 副行文字改用主文本色 —— 大字与高对比就落在这两处。"   // 479 凭证行标题升到标题级
+                                 + "这一档只动钥匙页与临时码完成页, 其它页面不跟着变。")
                                 .xFont(.caption)
                                 .foregroundStyle(XPalette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -1376,7 +1376,7 @@ struct MemberExitWizard: View {
                 VStack(spacing: XSpace.l) {
                     if items.isEmpty {
                         Group {   // M5 遗留: Section 在 List 外没有视觉容器
-                            Text("该成员名下没有台账凭证, 直接归档即可。")   // 460/795 该成员名下没有台账凭
+                            Text("该成员名下没有台账钥匙, 直接归档即可。")   // 460/795 该成员名下没有台账凭
                                 .xFont(.footnote)
                                 .foregroundStyle(XPalette.textSub)
                         }
