@@ -107,44 +107,59 @@ struct StatsPage: View {
 
     private func rhythmCard(_ m: StatsKit.StatModel) -> some View {
         let buckets = StatsKit.hourBuckets(m.logs)
+        let hs = m.hourStats
         return XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 Text("一天里的开门分布")
                     .xFont(.subheadline, weight: .medium)
                     .foregroundStyle(XPalette.textSub)
 
-                Chart {
-                    ForEach(buckets) { b in
-                        BarMark(
-                            x: .value("小时", Int(b.hour)),
-                            y: .value("次数", b.opens)
-                        )
-                        .foregroundStyle(XPalette.accent.gradient)
-                        .cornerRadius(2)
-                    }
-                }
-                .chartXAxis {
-                    AxisMarks(values: [0, 6, 12, 18, 23]) { v in
-                        AxisValueLabel {
-                            if let h = v.as(Int.self) {
-                                Text("\(h)时")
-                                    .xFont(.caption2)
-                                    .foregroundStyle(XPalette.textSub)
-                            }
+                // 极坐标时钟 —— 一天本来就是圆的, 形状自己会说话。
+                // 柱状图那条腿留作"看不清圆盘"时的退路: 两者数据同源 (hourStats),
+                // 时钟讲形状, 柱状图给精确读数。
+                HStack(alignment: .center, spacing: XSpace.m) {
+                    XDayClock(hours: hs, size: 156)
+
+                    VStack(alignment: .leading, spacing: XSpace.xs) {
+                        if let peak = hs.max(by: { $0.opens < $1.opens }), peak.opens > 0 {
+                            stat("\(Int(peak.hour)) 时", "\(peak.opens) 次", "最集中的一小时")
+                        }
+                        let quiet = hs.filter { $0.opens == 0 }.count
+                        if quiet > 0 {
+                            stat("\(quiet) 个", "小时无人开门", "安静的时段")
+                        }
+                        let alarmN = hs.reduce(0) { $0 + $1.alarms }
+                        if alarmN > 0 {
+                            stat("\(alarmN) 条", "告警", "红点标出的小时")
                         }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .chartYAxis(.hidden)
-                .frame(height: 120)
-                .accessibilityLabel("一天里的开门分布")
 
                 if let peak = buckets.max(by: { $0.opens < $1.opens }), peak.opens > 0 {
-                    Text("最常在 \(peak.hour) 时开门")
+                    Text("最常在 \(Int(peak.hour)) 时开门")
                         .xFont(.caption)
                         .foregroundStyle(XPalette.textSub)
                 }
             }
         }
+    }
+
+    /// 右侧读数小块
+    private func stat(_ value: String, _ label: String, _ note: String) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(value)
+                .xFont(.subheadline, weight: .semibold)
+                .foregroundStyle(XPalette.text)
+            Text(label)
+                .xFont(.caption2)
+                .foregroundStyle(XPalette.textSub)
+            Text(note)
+                .xFont(.caption2)
+                .foregroundStyle(XPalette.textTertiary)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // ═══════════════════════════════════════════════════════

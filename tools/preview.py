@@ -184,9 +184,72 @@ def render_alarm_chart():
     return save(img, "alarmchart")
 
 
+def render_dayclock():
+    """XDayClock — 24 小时极坐标时钟"""
+    W, H = 402, 260
+    img = new_canvas(W, H)
+    dr = ImageDraw.Draw(img, "RGBA")
+    panel(img, S(16), S(14), S(370), S(232))
+    sec_label(dr, S(32), S(28), "一天里的开门分布")
+
+    # 模拟 24 小时分布: 早晚两个峰
+    opens = [0,0,0,0,0,0,1,4,7,3,2,2,3,2,2,3,5,9,12,8,4,2,1,0]
+    alarms = [0]*24; alarms[7]=1; alarms[17]=1
+    peak = max(opens)
+    total = sum(opens)
+
+    cx = S(16) + S(12) + S(78)
+    cy = S(14) + S(232) // 2
+    R_OUT = S(78)
+    R_IN = R_OUT * 0.42
+
+    def pt(r, deg):
+        a = math.radians(deg)
+        return (cx + r*math.cos(a), cy + r*math.sin(a))
+
+    # 刻度
+    for h in range(24):
+        ang = -90 + h/24*360
+        major = h % 6 == 0
+        r0 = R_OUT - (S(8) if major else S(4))
+        dr.line([pt(r0,ang), pt(R_OUT,ang)],
+                fill=HAIRLINE + ((230 if major else 115),),
+                width=(2 if major else 1))
+    # 内圈
+    dr.ellipse([cx-R_IN, cy-R_IN, cx+R_IN, cy+R_IN], fill=SURFACE_ALT+(140,))
+    # 辐条
+    lw = max(3, int(S(168*0.022)))
+    for h in range(24):
+        if opens[h] == 0: continue
+        ang = -90 + h/24*360
+        frac = opens[h]/peak
+        ln = (R_OUT - R_IN - S(10)) * frac
+        night = (h >= 22 or h < 6)
+        col = ACCENT if not night else (int(ACCENT[0]*0.65), int(ACCENT[1]*0.65), int(ACCENT[2]*0.65))
+        dr.line([pt(R_IN+S(2),ang), pt(R_IN+S(2)+ln,ang)], fill=col+(255,), width=lw)
+        if alarms[h] > 0:
+            tx, ty = pt(R_IN+S(2)+ln+S(7), ang)
+            dr.ellipse([tx-S(2.6),ty-S(2.6),tx+S(2.6),ty+S(2.6)], fill=DANGER+(255,))
+
+    # 圆心
+    text_center(dr, cx, cy-S(10), str(total), 21, TEXT)
+    text_center(dr, cx, cy+S(14), "次开门", 7, TEXT_TERT)
+
+    # 右侧读数
+    rx = S(16) + S(12) + S(156) + S(12)
+    ry = S(70)
+    for val, lab, note in [("12 时","9 次","最集中的一小时"), ("1 个","小时无人开门","安静的时段"), ("2 条","告警","红点标出的小时")]:
+        text(dr, (rx, ry), val, 14)
+        text(dr, (rx, ry+S(20)), lab, 11, TEXT_SUB)
+        text(dr, (rx, ry+S(36)), note, 10, TEXT_TERT)
+        ry += S(62)
+
+    return save(img, "dayclock")
+
 RENDERERS = {
     "codering": render_code_ring,
     "alarmchart": render_alarm_chart,
+    "dayclock": render_dayclock,
 }
 
 

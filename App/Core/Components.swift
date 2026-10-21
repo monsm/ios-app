@@ -817,3 +817,134 @@ struct XCodeRing: View {
         return "\(label), 当前码 \(code), 下一码 \(nextCode), \(secs) 秒后刷新"
     }
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// MARK: - XDayClock — 24 小时节律极坐标时钟
+// ═══════════════════════════════════════════════════════════════════════
+//
+// 为什么用时钟而不是柱状图:
+//   一天本来就是圆的。24 根柱子排成一条线, 读者要在脑子里把它折回圆形
+//   才能看出"早晚两个峰"这种形状; 直接画成圆盘, 形状自己就跳出来了。
+//   (HIG charting-data: 图表类型要贴合数据的形状)
+//
+// 画法:
+//   · 12 点在顶端 (正午朝上, 午夜朝下), 顺时针走 —— 与挂钟一致;
+//   · 每一小时一根从内圈向外的辐条, 长度 = 该小时开门次数占峰值比例;
+//   · 有告警的小时在辐条外端点一个红点;
+//   · 圆心放总次数, 让整张图有一个读数锚点。
+//
+// 无障碍: 整图 accessibilityElement(children: .ignore), 语义由一个朗读串给全。
+// Canvas 画出来的东西 VoiceOver 读不到, 不补这一层等于对读屏用户完全不可用。
+struct XDayClock: View {
+    let hours: [StatsKit.HourStat]
+    var size: CGFloat = 240
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var appeared = false
+
+    private var peak: Int { max(hours.map { $0.opens }.max() ?? 0, 1) }
+    private var total: Int { hours.reduce(0) { $0 + $1.opens } }
+    private var alarmHours: [Int] {
+        hours.filter { $0.alarms > 0 }.map { Int($0.hour) }.sorted()
+    }
+
+    var body: some View {
+        ZStack {
+            Canvas { ctx, sz in
+                let side = min(sz.width, sz.height)
+                let rect = CGRect(x: (sz.width - side) / 2,
+                                  y: (sz.height - side) / 2,
+                                  width: side, height: side)
+                let c = CGPoint(x: rect.midX, y: rect.midY)
+                let outer = rect.width / 2 - 4
+                let inner = outer * 0.42
+
+                // 1. 刻度环: 24 个短划, 每 6 格长一点
+                for h in 0..<24 {
+                    let ang = Self.angle(hour: h)
+                    let isMajor = h % 6 == 0
+                    let r0 = outer - (isMajor ? 8 : 4)
+                    let r1 = outer
+                    var tick = Path()
+                    tick.move(to: Self.point(c, r0, ang))
+                    tick.addLine(to: Self.point(c, r1, ang))
+                    ctx.stroke(tick,
+                               with: .color(XPalette.hairline.opacity(isMajor ? 0.9 : 0.45)),
+                               lineWidth: isMajor ? 1.6 : 1)
+                }
+
+                // 2. 内圈底盘
+                var base = Path()
+                base.addEllipse(in: CGRect(x: c.x - inner, y: c.y - inner,
+                                           width: inner * 2, height: inner * 2))
+                ctx.fill(base, with: .color(XPalette.surfaceAlt.opacity(0.55)))
+
+                // 3. 辐条
+                let grow = appeared ? 1.0 : 0.0
+                for st in hours {
+                    let h = Int(st.hour)
+                    let frac = Double(st.opens) / Double(peak)
+                    guard frac > 0.001 else { continue }
+                    let ang = Self.angle(hour: h)
+                    let len = (outer - inner - 10) * frac * grow
+                    var bar = Path()
+                    bar.move(to: Self.point(c, inner + 2, ang))
+                    bar.addLine(to: Self.point(c, inner + 2 + len, ang))
+                    let isNight = h >= 22 || h < 6
+                    ctx.stroke(bar,
+                               with: .color(isNight ? XPalette.accent.opacity(0.65) : XPalette.accent),
+                               style: StrokeStyle(lineWidth: max(3, side * 0.022),
+                                                  lineCap: .round))
+
+                    if st.alarms > 0 {
+                        let tip = Self.point(c, inner + 2 + len + 7, ang)
+                        var dot = Path()
+                        dot.addEllipse(in: CGRect(x: tip.x - 2.6, y: tip.y - 2.6,
+                                                  width: 5.2, height: 5.2))
+                        ctx.fill(dot, with: .color(XPalette.danger))
+                    }
+                }
+            }
+            .accessibilityHidden(true)
+
+            // 圆心读数
+            VStack(spacing: 1) {
+                Text("\(total)")
+                    .xFont(.system(size: size * 0.13, weight: .semibold, design: .rounded).monospacedDigit())
+                    .foregroundStyle(XPalette.text)
+                    .contentTransition(.numericText())
+                Text("次开门")
+                    .xFont(.system(size: max(8, size * 0.040)))
+                    .foregroundStyle(XPalette.textTertiary)
+            }
+        }
+        .frame(width: size, height: size)
+        .onAppear {
+            if reduceMotion { appeared = true }
+            else { withAnimation(XMotion.doorReveal) { appeared = true } }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessText)
+    }
+
+    // 12 点在顶端、顺时针: 角度 = -90 + h/24*360
+    private static func angle(hour: Int) -> Double {
+        -90.0 + (Double(hour) / 24.0) * 360.0
+    }
+
+    private static func point(_ c: CGPoint, _ r: Double, _ deg: Double) -> CGPoint {
+        let a = deg * .pi / 180
+        return CGPoint(x: c.x + r * cos(a), y: c.y + r * sin(a))
+    }
+
+    private var accessText: String {
+        guard total > 0 else { return "24 小时开门分布, 暂无数据" }
+        let top = hours.max { $0.opens < $1.opens }
+        var s = "24 小时开门分布, 共 \(total) 次"
+        if let t = top, t.opens > 0 { s += ", 最集中在 \(t.hour) 时 (\(t.opens) 次)" }
+        if !alarmHours.isEmpty {
+            s += ", 有告警的小时: " + alarmHours.map { "\($0)" }.joined(separator: "、")
+        }
+        return s
+    }
+}
