@@ -23,7 +23,7 @@ import SwiftUI
 struct CredentialBinView: View {
     @EnvironmentObject private var app: AppState
 
-    @State private var entries: [CredentialOrg.CredBinEntry] = []
+    @State private var entries: [CredBinEntry] = []
     @State private var lastMessage: String?
 
     private var mac: String { app.currentMac }
@@ -91,7 +91,7 @@ struct CredentialBinView: View {
         }
     }
 
-    private func row(_ e: CredentialOrg.CredBinEntry) -> some View {
+    private func row(_ e: CredBinEntry) -> some View {
         HStack(spacing: XSpace.m) {
             Image(systemName: e.fp != nil ? "touchid" : "key.fill")
                 .font(.system(size: XIcon.sm, weight: .medium))
@@ -137,7 +137,7 @@ struct CredentialBinView: View {
             .sorted { $0.at > $1.at }
     }
 
-    private func restore(_ e: CredentialOrg.CredBinEntry) {
+    private func restore(_ e: CredBinEntry) {
         // 用 hard: false —— 主路径是"刚删完就后悔"，此时锁端删除多半还在队列里。
         // 若其实已经真删，undoRemove 返回的文字会如实说明，本页原样展示。
         let msg = CredentialOrg.undoRemove(mac, entry: e, hard: false)

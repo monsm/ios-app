@@ -85,7 +85,9 @@ for (const f of allSwift()) {
   const rel = path.relative(ROOT, f).split(path.sep).join('/');
   lines.forEach((line, i) => {
     if (/^\s*\/\//.test(line)) return;
-    for (const m of line.matchAll(/\b([A-Z][A-Za-z0-9_]*)\.([a-z_][A-Za-z0-9_]*)/g)) {
+    // 成员名允许大写开头：内嵌类型（如 CredentialOrg.CredBinEntry）也是成员。
+    // 只匹配小写会漏掉这一类 —— CI 就是这么报出 'CredBinEntry' is not a member type 的。
+    for (const m of line.matchAll(/\b([A-Z][A-Za-z0-9_]*)\.([A-Za-z_][A-Za-z0-9_]*)/g)) {
       const [_, type, member] = m;
       if (type === 'Self') continue;
       if (!typeNames.has(type)) continue;        // 不是本仓类型（Foundation / SwiftUI）
@@ -97,7 +99,14 @@ for (const f of allSwift()) {
       // 而 RecordSearch.note（真实属于 RecordOverlay）会被抓住。
       const ownedBy = [];
       for (const [tn, ms] of members) if (ms.has(member)) ownedBy.push(tn);
-      if (!ownedBy.length) continue;
+      if (!ownedBy.length) {
+        // 没有哪个类型把 member 声明成自己的成员 —— 但如果 member 本身
+        // 就是一个**已知类型**，说明有人把顶层类型当成了嵌套类型：
+        //   CredentialOrg.CredBinEntry   ← CredBinEntry 其实是顶层
+        // 这一条是 CI 报出来的，而工具第一版因为降噪过滤把它跳过了。
+        if (typeNames.has(member)) ownedBy.push('(顶层类型 ' + member + ')');
+        else continue;
+      }
       // 常见非成员访问：init、枚举 case 的 rawValue 等由编译器合成
       if (['init', 'self', 'Type', 'self'].includes(member)) continue;
       problems.push({ file: rel, line: i + 1, type, member, owners: ownedBy, text: line.trim().slice(0, 90) });
