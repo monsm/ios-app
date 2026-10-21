@@ -66,7 +66,9 @@ struct XLockBlade: View {
         // 建模用 mm，缩到场景
         g.scale = .init(repeating: 0.01)
 
-        let G = BladeGeometry.self
+        // 用 typealias 而不是 let G = X.self ——
+        // 后者拿到的是元类型实例，G.P3 这种嵌套类型访问不到。
+        typealias G = BladeGeometry
         let depth = G.depth
 
         // 1 主锁体
@@ -150,7 +152,8 @@ struct XLockBlade: View {
                 color: Self.dark, metallic: false, roughness: 0.62)
 
         // 8 传感器钢托（椭圆：圆柱 X 拉伸 + Y 放大 1.30）
-        let baseMesh = MeshResource.generateCylinder(height: 0.36, radius: 4.6, radialSegments: 48)
+        // generateCylinder 没有段数参数（CI 报 extra argument 'radialSegments'）
+        let baseMesh = MeshResource.generateCylinder(height: 0.36, radius: 4.6)
         let base = ModelEntity(mesh: baseMesh,
                                materials: [BladeMesh.material(color: Self.steel, metallic: true, roughness: 0.18)])
         base.name = "sensorBase"
@@ -160,7 +163,7 @@ struct XLockBlade: View {
         g.addChild(base)
 
         // 9 传感器镜片（状态色打这里）
-        let lensMesh = MeshResource.generateCylinder(height: 0.20, radius: 3.55, radialSegments: 48)
+        let lensMesh = MeshResource.generateCylinder(height: 0.20, radius: 3.55)
         let lensMat = BladeMesh.material(color: Self.dark, metallic: false, roughness: 0.10)
         let lens = ModelEntity(mesh: lensMesh, materials: [lensMat])
         lens.name = "sensor"
@@ -176,10 +179,10 @@ struct XLockBlade: View {
                      color: UIColor, metallic: Bool, roughness: Float,
                      emissive: Float = 0) throws {
         guard let mesh = try BladeMesh.build(from: tris) else { return }
-        var mat = BladeMesh.material(color: color, metallic: metallic, roughness: roughness)
-        if emissive > 0 {
-            mat.emissiveColor = color
-        }
+        // SimpleMaterial 没有 emissiveColor（CI 报 no member 'emissiveColor'）。
+        // 自发光的视觉效果改由「颜色本身更亮」近似 —— 见 brighten() 的说明。
+        let c = emissive > 0 ? BladeGeometry.brighten(color, by: emissive) : color
+        let mat = BladeMesh.material(color: c, metallic: metallic, roughness: roughness)
         let e = ModelEntity(mesh: mesh, materials: [mat])
         e.name = name
         parent.addChild(e)
@@ -187,21 +190,21 @@ struct XLockBlade: View {
 
     // ── 状态着色 ──────────────────────────────────────────────────
 
+    // SimpleMaterial 没有 emissiveColor，所以"发光"用**更亮的颜色**近似。
+    // 这不是真正的自发光（暗环境下不会自己亮），但在深色 UI 里视觉差别不大。
+    // 若以后真要发光，得换 PhysicallyBasedMaterial —— 那是另一个 API 面，需再探针一次。
     private func applyState(to root: Entity) {
         let t = tint
         if let accent = root.findEntity(named: "accent") as? ModelEntity {
             var m = SimpleMaterial(color: t, isMetallic: true)
             m.roughness = .float(0.34)
-            m.emissiveColor = t
             accent.model?.materials = [m]
         }
         if let sensor = root.findEntity(named: "sensor") as? ModelEntity {
-            var m = SimpleMaterial(color: isFailed ? UIColor(XPalette.danger) : Self.dark,
-                                   isMetallic: false)
+            let base = isFailed ? UIColor(XPalette.danger) : Self.dark
+            let c = charge > 0.01 ? BladeGeometry.brighten(t, by: 0.55) : base
+            var m = SimpleMaterial(color: c, isMetallic: false)
             m.roughness = .float(0.10)
-            if charge > 0.01 {
-                m.emissiveColor = t
-            }
             sensor.model?.materials = [m]
         }
     }

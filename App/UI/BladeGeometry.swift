@@ -274,6 +274,20 @@ enum BladeGeometry {
     }
 }
 
+extension BladeGeometry {
+    /// 把颜色提亮（用于近似"自发光" —— SimpleMaterial 没有 emissiveColor）。
+    /// by: 0 = 原色, 1 = 全白
+    static func brighten(_ color: UIColor, by amount: Float) -> UIColor {
+        var r: CGFloat = 0, gr: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        guard color.getRed(&r, green: &gr, blue: &b, alpha: &a) else { return color }
+        let t = CGFloat(Swift.min(Swift.max(amount, 0), 1))
+        return UIColor(red: r + (1 - r) * t,
+                       green: gr + (1 - gr) * t,
+                       blue: b + (1 - b) * t,
+                       alpha: a)
+    }
+}
+
 extension Float {
     /// asin 的安全版: 输入超界时钳到 [-1, 1]，避免 NaN
     var clampedAsin: Float {
