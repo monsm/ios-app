@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>锁体三方案对比 — A / B / C</title>
+<style>
+  :root{
+    --canvas:#0A0A0B; --surface:#161618; --surface-alt:#1F1F22; --sunken:#121214;
+    --hair:#323236; --hair-strong:#3A3A40;
+    --text:#F5F5F7; --sub:#A0A0AC; --tert:#888892;
+    --accent:#D98B45; --accent-text:#E8A05C; --ok:#3DD68C; --warn:#F5A524; --danger:#FF6B6B;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--canvas); color:var(--text);
+    font:400 15px/1.6 -apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding:28px 24px 60px;
+  }
+  header{max-width:1320px;margin:0 auto 26px}
+  h1{font-size:26px;font-weight:600;letter-spacing:-.02em;margin-bottom:8px}
+  h1 .num{color:var(--accent);font-variant-numeric:tabular-nums}
+  .lead{color:var(--sub);font-size:14px;max-width:840px}
+  .lead strong{color:var(--text);font-weight:600}
+
+  /* 状态控制 */
+  .states{
+    max-width:1320px;margin:22px auto 26px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;
+    padding:14px 16px;background:var(--surface);border:1px solid var(--hair);border-radius:14px;
+  }
+  .states .lbl{font-size:12px;color:var(--tert);margin-right:6px;letter-spacing:.06em;text-transform:uppercase}
+  .states button{
+    font:inherit;font-size:13px;font-weight:500;color:var(--sub);
+    background:var(--surface-alt);border:1px solid transparent;
+    padding:8px 16px;border-radius:9px;cursor:pointer;
+    transition:all .18s cubic-bezier(.4,0,.2,1);
+  }
+  .states button:hover{color:var(--text);background:#26262A}
+  .states button[aria-pressed="true"]{
+    color:#0A0A0B;background:var(--accent);font-weight:600;
+  }
+  .states .hint{margin-left:auto;font-size:12px;color:var(--tert)}
+
+  /* 三栏 */
+  .grid{
+    max-width:1320px;margin:0 auto;
+    display:grid;grid-template-columns:repeat(3,1fr);gap:20px;
+  }
+  @media(max-width:1080px){.grid{grid-template-columns:1fr}}
+  .col{
+    background:var(--surface);border:1px solid var(--hair);border-radius:18px;
+    overflow:hidden;display:flex;flex-direction:column;
+    transition:border-color .25s;
+  }
+  .col.pick{border-color:var(--accent)}
+  .col-head{padding:18px 20px 14px;border-bottom:1px solid var(--hair)}
+  .tag{
+    display:inline-block;font-size:11px;font-weight:700;letter-spacing:.1em;
+    padding:3px 9px;border-radius:6px;margin-bottom:9px;
+  }
+  .tag.a{background:rgba(217,139,69,.16);color:var(--accent-text)}
+  .tag.b{background:rgba(61,214,140,.14);color:var(--ok)}
+  .tag.c{background:rgba(245,165,36,.14);color:var(--warn)}
+  .col-head h2{font-size:17px;font-weight:600;margin-bottom:5px;letter-spacing:-.01em}
+  .col-head p{font-size:12.5px;color:var(--sub);line-height:1.55}
+
+  .stage{position:relative;height:340px;background:radial-gradient(ellipse at 50% 42%,#191A1D 0%,#0C0C0E 72%)}
+  .stage canvas{display:block;width:100%;height:100%}
+  .stage .badge{
+    position:absolute;left:12px;top:12px;font-size:10.5px;letter-spacing:.06em;
+    color:var(--tert);background:rgba(10,10,11,.72);border:1px solid var(--hair);
+    padding:3px 8px;border-radius:6px;backdrop-filter:blur(8px);
+  }
+  .stage .drag{
+    position:absolute;right:12px;bottom:10px;font-size:10.5px;color:var(--tert);
+    opacity:.75;pointer-events:none;
+  }
+  .meta{padding:16px 20px 20px;display:flex;flex-direction:column;gap:10px;flex:1}
+  .row{display:flex;gap:9px;font-size:12.5px;line-height:1.5}
+  .row .k{flex:0 0 44px;font-weight:600;font-size:11px;letter-spacing:.05em;padding-top:1px}
+  .row .k.good{color:var(--ok)}
+  .row .k.bad{color:var(--danger)}
+  .row .k.cost{color:var(--warn)}
+  .row .v{color:var(--sub);flex:1}
+  .row .v b{color:var(--text);font-weight:500}
+  .verdict{
+    margin-top:auto;padding-top:12px;border-top:1px solid var(--hair);
+    font-size:12px;color:var(--tert);line-height:1.55;
+  }
+  .verdict b{color:var(--accent-text);font-weight:600}
+
+  footer{max-width:1320px;margin:30px auto 0;padding:18px 20px;
+    background:var(--sunken);border:1px solid var(--hair);border-radius:14px;
+    font-size:12.5px;color:var(--sub);line-height:1.7}
+  footer b{color:var(--text);font-weight:600}
+  footer code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;
+    background:var(--surface-alt);padding:1px 5px;border-radius:4px;color:var(--accent-text)}
+  .err{color:var(--danger);font-family:ui-monospace,monospace;font-size:12px;padding:16px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>锁体三方案 · <span class="num">A / B / C</span> 实机对比</h1>
+  <p class="lead">
+    三个都是<strong>可交互的真 3D</strong>（拖拽旋转）。共用同一套状态与配色，
+    所以你能公平比较<strong>材质质感</strong>与<strong>细节密度</strong>的差别。
+  </p>
+</header>
+
+<div class="states">
+  <span class="lbl">状态</span>
+  <button data-mode="locked"   aria-pressed="true">已锁</button>
+  <button data-mode="charge"   aria-pressed="false">按住充能</button>
+  <button data-mode="open"     aria-pressed="false">已开</button>
+  <button data-mode="deadbolt" aria-pressed="false">反锁</button>
+  <button data-mode="fail"     aria-pressed="false">失败</button>
+  <span class="hint">拖拽任意模型旋转 · 滚轮缩放</span>
+</div>
+
+<div id="loadfail" style="display:none;max-width:1320px;margin:0 auto 20px;
+  padding:18px 20px;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.35);
+  border-radius:14px;font-size:13px;color:#FF6B6B;line-height:1.7">
+  <b>3D 引擎没能加载</b><br>
+  <span class="msg" style="color:#A0A0AC"></span><br>
+  <span style="color:#888892;font-size:12px">
+    这个页面从 unpkg.com 拉 three.js。如果你的网络访问不了它，模型区会空着。<br>
+    可以：① 换个网络重试 ② 或告诉我，我把 three.js 内联成离线单文件（会大 700KB）。
+  </span>
+</div>
+
+<div class="grid">
+
+  <section class="col" data-kind="A">
+    <div class="col-head">
+      <span class="tag a">方案 A</span>
+      <h2>纯代码几何</h2>
+      <p>用 <code>MeshResource.generateCylinder</code> 拼出来的抽象锁体。四层同心圆柱，无贴图、无模型文件。</p>
+    </div>
+    <div class="stage"><div class="badge">真实渲染</div><div class="drag">拖拽旋转</div></div>
+    <div class="meta">
+      <div class="row"><span class="k good">优势</span><span class="v">零资源零体积；配色直接吃 <b>XPalette 令牌</b>；CI 一定能编译</span></div>
+      <div class="row"><span class="k bad">短板</span><span class="v">只是<b>「像锁」</b>，不是「锁」。没有键位、没有指纹头、没有螺钉</span></div>
+      <div class="row"><span class="k cost">成本</span><span class="v">已写完（<b>127 行</b>），等 CI 验编译</span></div>
+      <div class="verdict">如果用 <b>A</b>，首屏会变成一块有厚度的金属圆盘 —— 比现在的 2D 圆环强，但谈不上「真实锁体」。</div>
+    </div>
+  </section>
+
+  <section class="col" data-kind="B">
+    <div class="col-head">
+      <span class="tag b">方案 B</span>
+      <h2>真 3D 模型（usdz）</h2>
+      <p>下面这个是<strong>用程序化细节模拟</strong>「如果有一份建模精良的 usdz」会是什么样：键位、指纹头、螺钉、倒角全都有。</p>
+    </div>
+    <div class="stage"><div class="badge">模拟 usdz</div><div class="drag">拖拽旋转</div></div>
+    <div class="meta">
+      <div class="row"><span class="k good">优势</span><span class="v">真正的「真实锁体」。细节密度是 A 的十几倍</span></div>
+      <div class="row"><span class="k bad">短板</span><span class="v">仓库<b>零 3D 资源</b>；我不能建模，也无法在真机验证 usdz 外观</span></div>
+      <div class="row"><span class="k cost">成本</span><span class="v">模型 1–10 MB；首帧加载空窗；光照要调否则像塑料</span></div>
+      <div class="verdict">选 <b>B</b> 需要你提供 <code>.usdz</code> 文件。我无法凭空生成 —— 硬上等于把无法验证的依赖塞进交付物。</div>
+    </div>
+  </section>
+
+  <section class="col" data-kind="C">
+    <div class="col-head">
+      <span class="tag c">方案 C</span>
+      <h2>照片贴图 + 视差</h2>
+      <p>用一张<strong>真实锁体照片</strong>做素材，再用分层视差造出厚度感。注意：转动时边缘会露出「它是平的」。</p>
+    </div>
+    <div class="stage"><div class="badge">模拟照片</div><div class="drag">拖拽旋转</div></div>
+    <div class="meta">
+      <div class="row"><span class="k good">优势</span><span class="v">最像真锁 —— 因为它<b>本来就是真锁的样子</b>。零模型管线</span></div>
+      <div class="row"><span class="k bad">短板</span><span class="v"><b>大角度会露馅</b>：它是平的，没有真正的厚度与侧面</span></div>
+      <div class="row"><span class="k cost">成本</span><span class="v">需要一张好照片；<code>rotation3DEffect</code> 仓库已在用</span></div>
+      <div class="verdict">选 <b>C</b> 最省事也最快见效。适合「锁体只在一个固定角度展示、不做大幅翻转」的场景。</div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <b>三者的真实关系：</b>
+  A 是「几何够用」，B 是「资源到位才可能」，C 是「照片替代几何」。<br>
+  <b>我的建议是 A → C → B 的递进：</b>先把 A 接进首屏（能被 CI 验证、能立刻看到），
+  如果你觉得不够真实，再换 C（只需一张照片），最后才考虑 B（需要建模资源）。<br>
+  因为 <b>A 和 C 的交互层是同一套</b>（状态、充能、反锁角），换方案只换「外观数据源」，不动交互逻辑。
+</footer>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+// ── 加载守门：CDN 不通时给出明确原因，而不是白屏 ──
+window.__demoReady = false;
+setTimeout(() => {
+  if (!window.__demoReady) {
+    const box = document.getElementById('loadfail');
+    if (box) box.style.display = 'block';
+  }
+}, 6000);
+
+let THREE, OrbitControls, RoomEnvironment;
+try {
+  THREE = await import('three');
+  ({ OrbitControls } = await import('three/addons/controls/OrbitControls.js'));
+  ({ RoomEnvironment } = await import('three/addons/environments/RoomEnvironment.js'));
+} catch (e) {
+  const box = document.getElementById('loadfail');
+  if (box) {
+    box.style.display = 'block';
+    box.querySelector('.msg').textContent = 'three.js 加载失败：' + (e && e.message ? e.message : e);
+  }
+  throw e;
+}
+
+const C = {
+  surface:  0x161618,
+  sunken:   0x121214,
+  accent:   0xD98B45,
+  accentHi: 0xE8A05C,
+  ok:       0x3DD68C,
+  warn:     0xF5A524,
+  danger:   0xFF6B6B,
+  textSub:  0xA0A0AC,
+  metal:    0x9AA0A8,
+  darkMetal:0x4A4E55,
+};
+
+const STATE = { mode: 'locked', charge: 0 };
+const pickTint = () => ({
+  locked:   C.accent,
+  charge:   C.accentHi,
+  open:     C.ok,
+  deadbolt: C.warn,
+  fail:     C.danger,
+}[STATE.mode]);
+
+// ── 通用：建场景 ───────────────────────────────────────────────
+function buildStage(host){
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+  host.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+  const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 100);
+  camera.position.set(0, 0, 3.0);
+
+  // 主光：左上前方，制造金属的高光带
+  const key = new THREE.DirectionalLight(0xffffff, 2.6);
+  key.position.set(-2.2, 3.0, 3.2);
+  scene.add(key);
+  // 补光：右下，压住暗部
+  const fill = new THREE.DirectionalLight(0xBFC6D4, 0.7);
+  fill.position.set(2.6, -1.4, 1.6);
+  scene.add(fill);
+  // 轮廓光：背后，让边缘亮起来
+  const rim = new THREE.DirectionalLight(0xE8A05C, 1.2);
+  rim.position.set(0.6, 1.2, -3.0);
+  scene.add(rim);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.22));
+
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.enablePan = false;
+  controls.minDistance = 1.9;
+  controls.maxDistance = 4.4;
+  controls.minPolarAngle = Math.PI * 0.28;
+  controls.maxPolarAngle = Math.PI * 0.72;
+  controls.autoRotate = true;
+  controls.autoRotateSpeed = 0.7;
+  controls.addEventListener('start', () => { controls.autoRotate = false; });
+
+  return { renderer, scene, camera, controls };
+}
+
+function fit(stage){
+  const { renderer, camera, host } = stage;
+  const w = stage.host.clientWidth, h = stage.host.clientHeight;
+  if (w === 0 || h === 0) return;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+
+// ── 方案 A：纯几何 ─────────────────────────────────────────────
+function buildA(){
+  const g = new THREE.Group();
+
+  const plate = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.5, 0.5, 0.13, 96, 1, false),
+    new THREE.MeshStandardMaterial({ color: C.sunken, metalness: 0.92, roughness: 0.36 })
+  );
+  plate.rotation.x = Math.PI / 2;
+  g.add(plate);
+
+  const ring = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.545, 0.545, 0.15, 96, 1, false),
+    new THREE.MeshStandardMaterial({ color: C.accent, metalness: 0.95, roughness: 0.2 })
+  );
+  ring.rotation.x = Math.PI / 2;
+  ring.position.z = -0.015;
+  g.add(ring);
+
+  const hub = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.165, 0.165, 0.21, 64, 1, false),
+    new THREE.MeshStandardMaterial({ color: C.textSub, metalness: 0.95, roughness: 0.28 })
+  );
+  hub.rotation.x = Math.PI / 2;
+  hub.position.z = 0.075;
+  g.add(hub);
+
+  return { group: g, ring, hub, chargeRing: null };
+}
+
+// ── 方案 B：模拟 usdz（高细节程序化） ──────────────────────────
+function buildB(){
+  const g = new THREE.Group();
+
+  const metal = (color, rough, metal = 0.96) =>
+    new THREE.MeshStandardMaterial({ color, metalness: metal, roughness: rough });
+
+  // 底盘（带一点倒角感：用两段圆柱）
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.505, 0.515, 0.10, 96), metal(C.sunken, 0.42));
+  base.rotation.x = Math.PI / 2;
+  g.add(base);
+
+  const bevel = new THREE.Mesh(new THREE.CylinderGeometry(0.497, 0.505, 0.025, 96), metal(0x2A2C30, 0.30));
+  bevel.rotation.x = Math.PI / 2;
+  bevel.position.z = 0.055;
+  g.add(bevel);
+
+  // 外圈（品牌色）
+  const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.548, 0.552, 0.14, 96), metal(C.accent, 0.17));
+  ring.rotation.x = Math.PI / 2;
+  ring.position.z = -0.012;
+  g.add(ring);
+
+  // 内嵌凹槽（深色，让键位浮起来）
+  const recess = new THREE.Mesh(new THREE.CylinderGeometry(0.415, 0.415, 0.02, 96), metal(0x0E0F11, 0.55, 0.4));
+  recess.rotation.x = Math.PI / 2;
+  recess.position.z = 0.055;
+  g.add(recess);
+
+  // 键位：3×4 小圆角块
+  const keyMat = metal(0x30333A, 0.35);
+  const keyHi  = metal(0x44484F, 0.28);
+  for (let r = 0; r < 4; r++){
+    for (let c = 0; c < 3; c++){
+      const kx = (c - 1) * 0.115;
+      const ky = (1.5 - r) * 0.098;
+      const isCenter = (r === 3 && c === 1);
+      const k = new THREE.Mesh(new THREE.BoxGeometry(0.088, 0.078, 0.022, 1, 1, 1), isCenter ? keyHi : keyMat);
+      k.position.set(kx, ky, 0.072);
+      k.userData.isKey = true;
+      g.add(k);
+    }
+  }
+
+  // 指纹头：环形凹槽 + 深色盘
+  const fpRing = new THREE.Mesh(new THREE.TorusGeometry(0.105, 0.014, 16, 48), metal(C.accentHi, 0.22));
+  fpRing.position.z = 0.070;
+  g.add(fpRing);
+
+  const fpDisc = new THREE.Mesh(new THREE.CylinderGeometry(0.092, 0.092, 0.016, 64), metal(0x0A0B0D, 0.62, 0.3));
+  fpDisc.rotation.x = Math.PI / 2;
+  fpDisc.position.z = 0.066;
+  g.add(fpDisc);
+
+  // 指纹头里的同心环（细节）
+  for (let i = 1; i <= 3; i++){
+    const t = new THREE.Mesh(new THREE.TorusGeometry(0.092 * i / 4, 0.0035, 8, 40), metal(0x1C1F24, 0.5, 0.5));
+    t.position.z = 0.074;
+    g.add(t);
+  }
+
+  // 四颗螺钉
+  const screwMat = metal(0x5A5F67, 0.30);
+  for (let i = 0; i < 4; i++){
+    const a = Math.PI / 4 + i * Math.PI / 2;
+    const s = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.030, 0.020, 24), screwMat);
+    s.rotation.x = Math.PI / 2;
+    s.position.set(Math.cos(a) * 0.468, Math.sin(a) * 0.468, 0.062);
+    g.add(s);
+    // 十字槽
+    const slot1 = new THREE.Mesh(new THREE.BoxGeometry(0.040, 0.007, 0.006), metal(0x202327, 0.6, 0.4));
+    slot1.position.copy(s.position).setZ(0.073);
+    g.add(slot1);
+    const slot2 = slot1.clone();
+    slot2.rotation.z = Math.PI / 2;
+    g.add(slot2);
+  }
+
+  // 中心转轴
+  const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.10, 0.19, 64), metal(C.textSub, 0.24));
+  hub.rotation.x = Math.PI / 2;
+  hub.position.z = 0.085;
+  g.add(hub);
+
+  // 转轴上的示位槽（反锁时转 90°）
+  const mark = new THREE.Mesh(new THREE.BoxGeometry(0.135, 0.016, 0.010), metal(C.accentHi, 0.20));
+  mark.position.z = 0.115;
+  hub.add(mark);
+  mark.position.set(0, 0.055, 0.020);
+
+  return { group: g, ring, hub, chargeRing: null };
+}
+
+// ── 方案 C：照片贴图 + 视差 ────────────────────────────────────
+function makeLockPhotoTexture(){
+  const S = 1024;
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = S;
+  const x = cv.getContext('2d');
+  const cx = S / 2, cy = S / 2;
+
+  // 拉丝金属底
+  const bg = x.createRadialGradient(cx * 0.72, cy * 0.68, S * 0.05, cx, cy, S * 0.52);
+  bg.addColorStop(0, '#3A3D43');
+  bg.addColorStop(0.55, '#23262A');
+  bg.addColorStop(1, '#141518');
+  x.fillStyle = bg;
+  x.beginPath(); x.arc(cx, cy, S * 0.5, 0, Math.PI * 2); x.fill();
+
+  // 放射状拉丝
+  x.save();
+  x.beginPath(); x.arc(cx, cy, S * 0.5, 0, Math.PI * 2); x.clip();
+  for (let i = 0; i < 2400; i++){
+    const a = Math.random() * Math.PI * 2;
+    const r0 = S * 0.10 + Math.random() * S * 0.24;
+    const r1 = r0 + 30 + Math.random() * S * 0.16;
+    x.strokeStyle = 'rgba(255,255,255,' + (Math.random() * 0.045) + ')';
+    x.lineWidth = 0.6 + Math.random() * 1.1;
+    x.beginPath();
+    x.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0);
+    x.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1);
+    x.stroke();
+  }
+  x.restore();
+
+  // 外圈（品牌铜）
+  const rg = x.createLinearGradient(0, cy - S * 0.5, 0, cy + S * 0.5);
+  rg.addColorStop(0, '#B8763A');
+  rg.addColorStop(0.28, '#E8A05C');
+  rg.addColorStop(0.52, '#D98B45');
+  rg.addColorStop(0.78, '#9A5F2A');
+  rg.addColorStop(1, '#C4813F');
+  x.strokeStyle = rg;
+  x.lineWidth = S * 0.055;
+  x.beginPath(); x.arc(cx, cy, S * 0.455, 0, Math.PI * 2); x.stroke();
+
+  // 内凹槽
+  x.fillStyle = '#0C0D0F';
+  x.beginPath(); x.arc(cx, cy, S * 0.375, 0, Math.PI * 2); x.fill();
+
+  // 键位 3×4（带轻微立体投影）
+  const keyW = S * 0.072, keyH = S * 0.062, gapX = S * 0.098, gapY = S * 0.082;
+  for (let r = 0; r < 4; r++){
+    for (let c = 0; c < 3; c++){
+      const kx = cx + (c - 1) * gapX;
+      const ky = cy + (1.5 - r) * gapY;
+      x.fillStyle = 'rgba(0,0,0,.55)';
+      roundRect(x, kx - keyW / 2 + 2, ky - keyH / 2 + 3, keyW, keyH, S * 0.012);
+      x.fill();
+      const kg = x.createLinearGradient(0, ky - keyH / 2, 0, ky + keyH / 2);
+      kg.addColorStop(0, '#43474E');
+      kg.addColorStop(1, '#24272B');
+      x.fillStyle = kg;
+      roundRect(x, kx - keyW / 2, ky - keyH / 2, keyW, keyH, S * 0.012);
+      x.fill();
+      x.strokeStyle = 'rgba(255,255,255,.07)';
+      x.lineWidth = 1.2;
+      roundRect(x, kx - keyW / 2, ky - keyH / 2, keyW, keyH, S * 0.012);
+      x.stroke();
+    }
+  }
+
+  // 指纹头
+  const fpR = S * 0.075;
+  const fpg = x.createRadialGradient(cx - fpR * 0.3, cy - fpR * 0.35, fpR * 0.1, cx, cy - S * 0.245, fpR);
+  fpg.addColorStop(0, '#1E2126');
+  fpg.addColorStop(1, '#07080A');
+  x.fillStyle = fpg;
+  x.beginPath(); x.arc(cx, cy - S * 0.245, fpR, 0, Math.PI * 2); x.fill();
+  x.strokeStyle = 'rgba(232,160,92,.55)';
+  x.lineWidth = S * 0.007;
+  x.beginPath(); x.arc(cx, cy - S * 0.245, fpR, 0, Math.PI * 2); x.stroke();
+  for (let i = 1; i <= 4; i++){
+    x.strokeStyle = 'rgba(255,255,255,.055)';
+    x.lineWidth = 1.6;
+    x.beginPath(); x.arc(cx, cy - S * 0.245, fpR * i / 5.2, 0, Math.PI * 2); x.stroke();
+  }
+
+  // 四颗螺钉
+  for (let i = 0; i < 4; i++){
+    const a = Math.PI / 4 + i * Math.PI / 2;
+    const sx = cx + Math.cos(a) * S * 0.405;
+    const sy = cy + Math.sin(a) * S * 0.405;
+    const sr = S * 0.017;
+    const sg = x.createRadialGradient(sx - sr * 0.3, sy - sr * 0.3, 1, sx, sy, sr);
+    sg.addColorStop(0, '#6E747C');
+    sg.addColorStop(1, '#2C3036');
+    x.fillStyle = sg;
+    x.beginPath(); x.arc(sx, sy, sr, 0, Math.PI * 2); x.fill();
+    x.strokeStyle = '#1A1D21';
+    x.lineWidth = 2;
+    x.beginPath(); x.moveTo(sx - sr * 0.6, sy); x.lineTo(sx + sr * 0.6, sy); x.stroke();
+    x.beginPath(); x.moveTo(sx, sy - sr * 0.6); x.lineTo(sx, sy + sr * 0.6); x.stroke();
+  }
+
+  // 全局高光（模拟顶光反射）
+  const hl = x.createLinearGradient(cx - S * 0.5, cy - S * 0.5, cx + S * 0.12, cy + S * 0.12);
+  hl.addColorStop(0, 'rgba(255,255,255,.10)');
+  hl.addColorStop(0.35, 'rgba(255,255,255,.03)');
+  hl.addColorStop(1, 'rgba(255,255,255,0)');
+  x.fillStyle = hl;
+  x.beginPath(); x.arc(cx, cy, S * 0.5, 0, Math.PI * 2); x.fill();
+
+  const tex = new THREE.CanvasTexture(cv);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 8;
+  return tex;
+}
+
+function roundRect(x, l, t, w, h, r){
+  x.beginPath();
+  x.moveTo(l + r, t);
+  x.arcTo(l + w, t, l + w, t + h, r);
+  x.arcTo(l + w, t + h, l, t + h, r);
+  x.arcTo(l, t + h, l, t, r);
+  x.arcTo(l, t, l + w, t, r);
+  x.closePath();
+}
+
+function buildC(){
+  const g = new THREE.Group();
+  const tex = makeLockPhotoTexture();
+
+  // 底层：照片贴图（真正的"锁面"）
+  const photo = new THREE.Mesh(
+    new THREE.CircleGeometry(0.5, 128),
+    new THREE.MeshStandardMaterial({
+      map: tex, metalness: 0.55, roughness: 0.38,
+      color: 0xffffff,
+    })
+  );
+  photo.position.z = 0.02;
+  g.add(photo);
+
+  // 边缘厚度条（让它不是纸片）
+  const edge = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.5, 0.5, 0.075, 128, 1, true),
+    new THREE.MeshStandardMaterial({ color: 0x1A1B1E, metalness: 0.94, roughness: 0.34, side: THREE.DoubleSide })
+  );
+  edge.rotation.x = Math.PI / 2;
+  edge.position.z = -0.018;
+  g.add(edge);
+
+  const back = new THREE.Mesh(
+    new THREE.CircleGeometry(0.5, 96),
+    new THREE.MeshStandardMaterial({ color: 0x101113, metalness: 0.9, roughness: 0.45 })
+  );
+  back.position.z = -0.056;
+  back.rotation.y = Math.PI;
+  g.add(back);
+
+  // 视差层：中心圆盘，随视角轻微偏移（造假厚度）
+  const paraTex = makeParallaxTexture();
+  const para = new THREE.Mesh(
+    new THREE.CircleGeometry(0.30, 96),
+    new THREE.MeshStandardMaterial({ map: paraTex, metalness: 0.6, roughness: 0.4, transparent: true })
+  );
+  para.position.z = 0.055;
+  g.add(para);
+
+  // 反锁示位（转轴）
+  const hub = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.085, 0.085, 0.055, 64),
+    new THREE.MeshStandardMaterial({ color: C.textSub, metalness: 0.95, roughness: 0.26 })
+  );
+  hub.rotation.x = Math.PI / 2;
+  hub.position.z = 0.075;
+  g.add(hub);
+  const mark = new THREE.Mesh(new THREE.BoxGeometry(0.115, 0.014, 0.008),
+    new THREE.MeshStandardMaterial({ color: C.accentHi, metalness: 0.9, roughness: 0.2 }));
+  mark.position.set(0, 0.048, 0.035);
+  hub.add(mark);
+
+  return { group: g, ring: photo, hub, chargeRing: null, parallax: para, photoMat: photo.material };
+}
+
+function makeParallaxTexture(){
+  const S = 512;
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = S;
+  const x = cv.getContext('2d');
+  const cx = S / 2, cy = S / 2;
+  x.clearRect(0, 0, S, S);
+  // 透明中心 + 极淡边缘，用来做"内圈浮起"的错觉
+  const g = x.createRadialGradient(cx, cy, S * 0.10, cx, cy, S * 0.5);
+  g.addColorStop(0, 'rgba(255,255,255,0)');
+  g.addColorStop(0.72, 'rgba(255,255,255,0.02)');
+  g.addColorStop(0.93, 'rgba(0,0,0,0.28)');
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  x.fillStyle = g;
+  x.beginPath(); x.arc(cx, cy, S * 0.5, 0, Math.PI * 2); x.fill();
+  const t = new THREE.CanvasTexture(cv);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+// ── 充能环（A/B 共用） ────────────────────────────────────────
+// 充能环：一次建满圆环，之后只改 material 的透明度与 dash 偏移 ——
+// **不重建几何体**。原来每帧 dispose()+new TorusGeometry 在 60fps 下会 GC 抖动，
+// 而"丝滑"恰恰是这个方案要证明的东西。
+function makeChargeRing(radius){
+  const geo = new THREE.TorusGeometry(radius, 0.013, 12, 200, Math.PI * 2);
+  const mat = new THREE.MeshStandardMaterial({
+    color: C.accentHi, metalness: 0.5, roughness: 0.3,
+    emissive: new THREE.Color(C.accentHi), emissiveIntensity: 0.75,
+    transparent: true, opacity: 1
+  });
+  const m = new THREE.Mesh(geo, mat);
+  m.position.z = 0.10;
+  m.rotation.z = Math.PI / 2;
+  // 用 geometry 的 drawRange 截取"已充能"那段顶点，不重建
+  m.userData.fullCount = geo.index ? geo.index.count : 0;
+  return m;
+}
+
+// ── 组装三栏 ──────────────────────────────────────────────────
+const stages = [];
+
+document.querySelectorAll('.col').forEach((col) => {
+  const kind = col.dataset.kind;
+  const host = col.querySelector('.stage');
+  const s = buildStage({ host });
+  s.host = host;
+
+  let built;
+  if (kind === 'A') built = buildA();
+  else if (kind === 'B') built = buildB();
+  else built = buildC();
+
+  s.built = built;
+  s.group = built.group;
+  s.scene.add(built.group);
+
+  if (kind !== 'C') {
+    const cr = makeChargeRing(kind === 'A' ? 0.50 : 0.478);
+    cr.visible = false;
+    built.group.add(cr);
+    built.chargeRing = cr;
+  }
+
+  const G = built.group;
+  // 整体倾斜：纯正视看不到圆柱侧面，厚度白做
+  G.rotation.x = -0.16;
+
+  s.kind = kind;
+  stages.push(s);
+});
+
+// ── 状态 → 视觉 ────────────────────────────────────────────────
+function applyState(){
+  const tint = pickTint();
+  const dead = STATE.mode === 'deadbolt';
+
+  for (const s of stages){
+    const b = s.built;
+    const tgt = new THREE.Color(tint);
+
+    if (s.kind === 'C'){
+      // C：改照片色调 + 高光
+      if (b.photoMat){
+        b.photoMat.color.copy(tgt).lerp(new THREE.Color(0xffffff), 0.72);
+        b.photoMat.emissive = new THREE.Color(tint).multiplyScalar(STATE.mode === 'fail' ? 0.18 : 0.07);
+        b.photoMat.emissiveIntensity = 1;
+      }
+    } else {
+      // A/B：外环换色
+      if (b.ring?.material){
+        b.ring.material.color.copy(tgt);
+        b.ring.material.emissive = new THREE.Color(tint)
+          .multiplyScalar(STATE.mode === 'open' ? 0.30 : (STATE.mode === 'fail' ? 0.26 : 0.10));
+        b.ring.material.emissiveIntensity = 1;
+      }
+    }
+
+    // 卡死的示位：反锁时转轴转 90°
+    if (b.hub){
+      const targetZ = dead ? Math.PI / 2 : 0;
+      b.hub.userData.targetRotZ = targetZ;
+    }
+
+    // 充能环
+  }
+}
+
+// 充能环的轻量更新：只为它跑，不碰材质与颜色
+function updateChargeRings(){
+  for (const s of stages){
+    const b = s.built;
+    if (!b.chargeRing) continue;
+    const show = STATE.mode === 'charge' && STATE.charge > 0.004;
+    b.chargeRing.visible = show;
+    if (show){
+      const full = b.chargeRing.userData.fullCount || 0;
+      b.chargeRing.geometry.setDrawRange(0, Math.max(6, Math.floor(full * STATE.charge)));
+    }
+  }
+}
+
+// ── 状态按钮 ──────────────────────────────────────────────────
+document.querySelectorAll('.states button').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.states button').forEach(b => b.setAttribute('aria-pressed', 'false'));
+    btn.setAttribute('aria-pressed', 'true');
+    STATE.mode = btn.dataset.mode;
+    if (STATE.mode === 'charge') STATE.charge = 0;
+    applyState();          // 重：材质/颜色/示位
+    updateChargeRings();   // 轻：充能环显隐
+  });
+});
+
+// ── 主循环 ───────────────────────────────────────────────────
+const clock = new THREE.Clock();
+let chargeDir = 1;
+
+function tick(){
+  const dt = Math.min(clock.getDelta(), 0.05);
+
+  // 充能动画（0 → 1 → 0 往复，模拟"按住"
+  if (STATE.mode === 'charge'){
+    STATE.charge += chargeDir * dt * 0.55;
+    if (STATE.charge >= 1){ STATE.charge = 1; chargeDir = -1; }
+    if (STATE.charge <= 0){ STATE.charge = 0; chargeDir = 1; }
+    updateChargeRings();   // 轻量：只动 drawRange，不重算材质
+  }
+
+  for (const s of stages){
+    fit(s);
+
+    // 转轴缓动
+    const hub = s.built.hub;
+    if (hub){
+      const tgt = hub.userData.targetRotZ ?? 0;
+      hub.rotation.z += (tgt - hub.rotation.z) * Math.min(1, dt * 9);
+    }
+
+    // C 的视差：随相机方位角偏移
+    if (s.kind === 'C' && s.built.parallax){
+      const az = Math.atan2(s.camera.position.x, s.camera.position.z);
+      s.built.parallax.position.x = -az * 0.085;
+      s.built.parallax.position.y = 0.012 * Math.sin(az * 2.2);
+    }
+
+    s.controls.update();
+    s.renderer.render(s.scene, s.camera);
+  }
+
+  requestAnimationFrame(tick);
+}
+
+applyState();
+window.__demoReady = true;
+const loadBox = document.getElementById('loadfail');
+if (loadBox) loadBox.style.display = 'none';
+requestAnimationFrame(tick);
+
+window.addEventListener('resize', () => { for (const s of stages) fit(s); });
+</script>
+</body>
+</html>
