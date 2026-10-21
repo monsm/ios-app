@@ -38,7 +38,7 @@ struct EventsPage: View {
     @State private var alarmOnly = false
     /// 筛选视图（用户自己存下来的查询条件）与最近搜索。
     /// 这两份数据一直有读写 API，但全仓没有任何界面入口 —— 属于"功能存在、够不着"。
-    @State private var namedViews: [RecordSearch.NamedView] = []
+    @State private var namedViews: [NamedView] = []
     @State private var recentSearches: [String] = []
     @State private var saveName = ""
     /// 正在编辑备注的事件 / 草稿文本。
@@ -173,7 +173,7 @@ struct EventsPage: View {
         // 但此前**零调用** —— 这一页用的是四字段 substring，把那些能力全浪费了。
         // 空查询时 Query.parse 产生空 must/not，search 直接返回全部，
         // 所以"搜索框一空就把记录隐藏"这种反向故障不会发生（已核对实现）。
-        var filters = RecordSearch.QueryFilters()
+        var filters = QueryFilters()
         filters.alarmOnly = alarmOnly
         return RecordSearch.search(recs: out,
                                    query: RecordSearch.Query.parse(raw),
@@ -297,7 +297,7 @@ struct EventsPage: View {
 
     private func commitNote() {
         guard let rec = noteTarget else { return }
-        RecordSearch.setNote(rec.mac, rec.key, noteDraft)
+        RecordOverlay.setNote(rec.mac, rec.key, noteDraft)
         noteTarget = nil
         noteDraft = ""
         XHaptics.success()
@@ -306,7 +306,7 @@ struct EventsPage: View {
     private func saveView() {
         let name = saveName.trimmingCharacters(in: .whitespaces)
         guard !name.isEmpty else { return }
-        var f = RecordSearch.QueryFilters()
+        var f = QueryFilters()
         f.alarmOnly = alarmOnly
         RecordSearch.saveNamedView(name: name,
                                    text: search.trimmingCharacters(in: .whitespaces),
@@ -456,7 +456,7 @@ struct EventsPage: View {
     private func timelineRow(_ rec: Rec) -> some View {
         // 备注只读一次：原来在显示、菜单、无障碍标签里各调一次
         // RecordSearch.note，每行就是 5 次 DB 读取。列表滚动时这很浪费。
-        let savedNote = RecordSearch.note(rec.mac, rec.key)
+        let savedNote = RecordOverlay.note(rec.mac, rec.key)
         return HStack(alignment: .top, spacing: XSpace.m) {
             // 时间
             Text(shortTime(rec.timeStr))
@@ -534,7 +534,7 @@ struct EventsPage: View {
             }
             if !savedNote.isEmpty {
                 Button(role: .destructive) {
-                    RecordSearch.setNote(rec.mac, rec.key, "")
+                    RecordOverlay.setNote(rec.mac, rec.key, "")
                     XHaptics.trigger.impactOccurred()
                 } label: { Label("删除备注", systemImage: "trash") }
             }
