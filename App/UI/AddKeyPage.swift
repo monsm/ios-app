@@ -133,7 +133,7 @@ struct AddKeyPage: View {
 
         return ZStack {
             RoundedRectangle(cornerRadius: XRadius.min, style: .continuous)
-                .fill(filled ? XPalette.accent.opacity(0.14) : XPalette.surfaceSunken)
+                .fill(filled ? XPalette.accent.opacity(XOpacity.badge) : XPalette.surfaceSunken)
                 .frame(width: 36, height: 52)
                 .overlay(
                     RoundedRectangle(cornerRadius: XRadius.min, style: .continuous)

@@ -1226,7 +1226,7 @@ struct FpStudio: View {
                                 .foregroundStyle(name == sug ? XPalette.onAccent : XPalette.accentText)
                                 .padding(.horizontal, XSpace.s)
                                 .padding(.vertical, 4)
-                                .background(name == sug ? XPalette.accent : XPalette.accentText.opacity(0.10), in: Capsule())
+                                .background(name == sug ? XPalette.accent : XPalette.accentText.opacity(XOpacity.wash), in: Capsule())
                                 .frame(minHeight: XHit.min)
                                 .contentShape(Rectangle())
                         }

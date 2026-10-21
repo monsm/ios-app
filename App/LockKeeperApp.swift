@@ -1155,7 +1155,7 @@ struct RootView: View {
         .foregroundStyle(XPalette.warn)
         .padding(.horizontal, XSpace.l)
         .padding(.vertical, XSpace.s)
-        .background(XPalette.warn.opacity(0.14))
+        .background(XPalette.warn.opacity(XOpacity.badge))
     }
 
     /// 344 粘贴建议条 —— 2026-10-13 run 63 从 body 内联块抽出: 该表达式报 type-check 超时。
@@ -1202,7 +1202,7 @@ struct RootView: View {
         .foregroundStyle(XPalette.accentText)
         .padding(.horizontal, XSpace.l)
         .padding(.vertical, XSpace.s)
-        .background(XPalette.accent.opacity(0.12))
+        .background(XPalette.accent.opacity(XOpacity.badge))
         .transition(.move(edge: .top).combined(with: .opacity))
     }
 

@@ -1655,7 +1655,7 @@ struct ExportCenterView: View {
                     .font(.system(size: XIcon.sm, weight: .medium))
                     .foregroundStyle(XPalette.accentText)
                     .frame(width: 32, height: 32)
-                    .background(XPalette.accent.opacity(0.12),
+                    .background(XPalette.accent.opacity(XOpacity.badge),
                                 in: RoundedRectangle(cornerRadius: XRadius.min, style: .continuous))
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 1) {

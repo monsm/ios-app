@@ -105,7 +105,7 @@ struct LockProfilePage: View {
                 .fill(XPalette.surface)
                 .overlay(
                     RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
-                        .strokeBorder(tint.opacity(0.35), lineWidth: 1))
+                        .strokeBorder(tint.opacity(XOpacity.edge), lineWidth: 1))
         )
         .accessibilityElement(children: .combine)
         .accessibilityLabel("预览: \(trimmed.isEmpty ? "未命名" : trimmed), \(place.isEmpty ? "未填场所" : place)")

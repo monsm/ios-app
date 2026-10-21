@@ -70,7 +70,7 @@ struct GatewayPage: View {
             VStack(spacing: XSpace.m) {
                 ZStack {
                     Circle()
-                        .fill(XPalette.warn.opacity(0.12))
+                        .fill(XPalette.warn.opacity(XOpacity.badge))
                         .frame(width: 96, height: 96)
                     Image(systemName: "light.beacon.max")
                         .font(.system(size: XMetric.decorIcon(40), weight: .light))
@@ -212,7 +212,7 @@ struct GatewayPage: View {
                         Spacer(minLength: 0)
                     }
                     .padding(XSpace.s)
-                    .background(XPalette.danger.opacity(0.10),
+                    .background(XPalette.danger.opacity(XOpacity.wash),
                                 in: RoundedRectangle(cornerRadius: XRadius.min, style: .continuous))
                 }
             }
@@ -230,7 +230,7 @@ struct GatewayPage: View {
             HStack(spacing: XSpace.s) {
                 ZStack {
                     Circle()
-                        .fill(online ? XPalette.ok.opacity(0.15) : XPalette.textTertiary.opacity(0.12))
+                        .fill(online ? XPalette.ok.opacity(XOpacity.glow) : XPalette.textTertiary.opacity(XOpacity.badge))
                         .frame(width: 40, height: 40)
                     Image(systemName: online ? "wifi" : "wifi.slash")
                         .font(.system(size: XIcon.sm, weight: .medium))

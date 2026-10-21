@@ -469,7 +469,7 @@ struct AlarmCenterView: View {
         }
         .background {
             RoundedRectangle(cornerRadius: XRadius.tile, style: .continuous)
-                .fill(tone.opacity(0.08))   // 738 浅底 (danger/warn 派生 8%, 不硬编码)
+                .fill(tone.opacity(XOpacity.wash))   // 738 浅底 (danger/warn 派生 8%, 不硬编码)
                 .padding(.vertical, XSpace.xs)
         }
         .contentShape(Rectangle())

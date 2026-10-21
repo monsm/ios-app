@@ -244,7 +244,7 @@ struct AddLockPage: View {
                     .font(.system(size: XIcon.md, weight: .medium))
                     .foregroundStyle(XPalette.accentText)
                     .frame(width: 44, height: 44)
-                    .background(XPalette.accent.opacity(0.12), in: Circle())
+                    .background(XPalette.accent.opacity(XOpacity.badge), in: Circle())
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(d.name.isEmpty ? "未知设备" : d.name)
@@ -345,7 +345,7 @@ struct AddLockPage: View {
         VStack(spacing: XSpace.l) {
             ZStack {
                 Circle()
-                    .fill(XPalette.ok.opacity(0.12))
+                    .fill(XPalette.ok.opacity(XOpacity.badge))
                     .frame(width: 120, height: 120)
                 Image(systemName: "checkmark")
                     .font(.system(size: XMetric.decorIcon(48), weight: .light))
@@ -428,7 +428,7 @@ struct AddLockPage: View {
             Spacer(minLength: 0)
         }
         .padding(XSpace.card)
-        .background(XPalette.danger.opacity(0.10),
+        .background(XPalette.danger.opacity(XOpacity.wash),
                     in: RoundedRectangle(cornerRadius: XRadius.control, style: .continuous))
     }
 

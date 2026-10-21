@@ -124,7 +124,7 @@ struct SecurityPage: View {
                     .frame(width: 12, height: 12)
                 // 内圈高光 (让灯有体积)
                 Circle()
-                    .fill(XPalette.specular.opacity(0.55))
+                    .fill(XPalette.specular.opacity(XOpacity.track))
                     .frame(width: 4, height: 4)
                     .offset(x: -2, y: -2)
             }

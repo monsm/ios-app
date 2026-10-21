@@ -65,7 +65,7 @@ struct DonglesPage: View {
                 HStack(spacing: XSpace.m) {
                     ZStack {
                         Circle()
-                            .fill(XPalette.accent.opacity(0.12))
+                            .fill(XPalette.accent.opacity(XOpacity.badge))
                             .frame(width: 56, height: 56)
                         Image(systemName: "key.horizontal.fill")
                             .font(.system(size: XMetric.decorIcon(24), weight: .medium))
@@ -107,7 +107,7 @@ struct DonglesPage: View {
             Spacer(minLength: 0)
         }
         .padding(XSpace.card)
-        .background(XPalette.warn.opacity(0.10),
+        .background(XPalette.warn.opacity(XOpacity.wash),
                     in: RoundedRectangle(cornerRadius: XRadius.control, style: .continuous))
     }
 

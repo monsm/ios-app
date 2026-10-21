@@ -166,8 +166,8 @@ enum XOpacity {
     static let glow: Double = 0.16
     /// 描边: 卡片 tone 描边
     static let edge: Double = 0.35
-    /// 禁用/次要内容
-    static let dim: Double = 0.55
+    /// 淡底环: 仪表盘的底弧、内圈高光这类"有但不抢眼"的线
+    static let track: Double = 0.55
 }
 
 enum XIcon {

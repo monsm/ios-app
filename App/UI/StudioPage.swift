@@ -145,7 +145,7 @@ struct StudioPage: View {
                     .font(.system(size: XIcon.md, weight: .semibold))
                     .foregroundStyle(k.tint)
                     .frame(width: 44, height: 44)
-                    .background(k.tint.opacity(0.14), in: Circle())
+                    .background(k.tint.opacity(XOpacity.badge), in: Circle())
                     .accessibilityHidden(true)
 
                 Spacer(minLength: 0)

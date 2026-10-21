@@ -250,7 +250,7 @@ struct AddFingerPage: View {
             Spacer(minLength: 0)
         }
         .padding(XSpace.card)
-        .background(XPalette.danger.opacity(0.10),
+        .background(XPalette.danger.opacity(XOpacity.wash),
                     in: RoundedRectangle(cornerRadius: XRadius.control, style: .continuous))
     }
 
@@ -262,7 +262,7 @@ struct AddFingerPage: View {
         VStack(spacing: XSpace.l) {
             ZStack {
                 Circle()
-                    .fill(XPalette.ok.opacity(0.12))
+                    .fill(XPalette.ok.opacity(XOpacity.badge))
                     .frame(width: 180, height: 180)
                 Image(systemName: "checkmark")
                     .font(.system(size: XMetric.decorIcon(76), weight: .light))

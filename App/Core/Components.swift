@@ -88,7 +88,7 @@ struct XPanel<Content: View>: View {
         }
         .overlay(
             RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
-                .strokeBorder(tone == .neutral ? XPalette.hairline : tone.color.opacity(0.35), lineWidth: 1)
+                .strokeBorder(tone == .neutral ? XPalette.hairline : tone.color.opacity(XOpacity.edge), lineWidth: 1)
         )
     }
 }
@@ -133,7 +133,7 @@ struct XStatusPill: View {
         .foregroundStyle(tone.color)
         .padding(.horizontal, XSpace.s)
         .padding(.vertical, XSpace.xxs + 1)
-        .background(tone.color.opacity(0.12), in: Capsule())
+        .background(tone.color.opacity(XOpacity.badge), in: Capsule())
         .overlay(Capsule().strokeBorder(tone.color.opacity(0.24), lineWidth: 1))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(tone.label): \(text)")
@@ -362,7 +362,7 @@ struct XRow: View {
             if let systemImage {
                 ZStack {
                     RoundedRectangle(cornerRadius: XRadius.min, style: .continuous)
-                        .fill((tone == .neutral ? XPalette.textSub : tone.color).opacity(0.12))
+                        .fill((tone == .neutral ? XPalette.textSub : tone.color).opacity(XOpacity.badge))
                     Image(systemName: systemImage)
                         .xFont(.system(size: XIcon.sm, weight: .semibold))
                         .foregroundStyle(tone == .neutral ? XPalette.textSub : tone.color)
@@ -671,7 +671,7 @@ struct XCodeRing: View {
                 var track = Path()
                 track.addEllipse(in: ring)
                 ctx.stroke(track,
-                           with: .color(XPalette.hairline.opacity(0.55)),
+                           with: .color(XPalette.hairline.opacity(XOpacity.track)),
                            lineWidth: lw)
 
                 // 2) 进度环: 从 12 点起顺时针, 长度 = 剩余比例
@@ -965,7 +965,7 @@ struct XBatteryGauge: View {
                              endAngle: .degrees(startAngle + sweepAngle),
                              clockwise: false)
                 ctx.stroke(track,
-                           with: .color(XPalette.hairline.opacity(0.55)),
+                           with: .color(XPalette.hairline.opacity(XOpacity.track)),
                            style: StrokeStyle(lineWidth: lw, lineCap: .round))
 
                 // 前景弧

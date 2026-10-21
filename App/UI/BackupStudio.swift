@@ -94,7 +94,7 @@ struct BackupStudioView: View {
                         .foregroundStyle(XPalette.danger)
                         .frame(maxWidth: .infinity)
                         .frame(minHeight: XHit.min)
-                        .background(XPalette.danger.opacity(0.09),
+                        .background(XPalette.danger.opacity(XOpacity.wash),
                                     in: RoundedRectangle(cornerRadius: XRadius.control, style: .continuous))
                 }
             }
@@ -1061,7 +1061,7 @@ struct RestoreWizardView: View {
         .foregroundStyle(on ? XPalette.accentText : XPalette.textSub)
         .padding(.horizontal, XSpace.xs)
         .frame(minHeight: 30)
-        .background(on ? XPalette.accentText.opacity(0.12) : XPalette.surfaceAlt, in: Capsule())
+        .background(on ? XPalette.accentText.opacity(XOpacity.badge) : XPalette.surfaceAlt, in: Capsule())
         // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 没有 minHeight (< 44)。
         // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
         .frame(minHeight: XHit.min)

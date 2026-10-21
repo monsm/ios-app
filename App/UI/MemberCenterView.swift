@@ -50,7 +50,7 @@ struct MemberDetail360View: View {
                             .padding(XSpace.card)
                             .background(
                                 RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
-                                    .fill(XPalette.accent.opacity(0.08))
+                                    .fill(XPalette.accent.opacity(XOpacity.wash))
                                     .overlay(
                                         RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
                                             .strokeBorder(XPalette.accent.opacity(0.25), lineWidth: 1))
@@ -1123,7 +1123,7 @@ struct MemberAvatar: View {
         // 994 a11y: 有角标时在头像标签尾部并读"角标 <徽章名>", 无角标时标签与改动前逐字相同。
         return ZStack {
             Circle()
-                .fill(base.opacity(0.14))
+                .fill(base.opacity(XOpacity.badge))
             Circle()
                 .strokeBorder(base.opacity(0.5), lineWidth: 1)
             if !e.emoji.isEmpty {
