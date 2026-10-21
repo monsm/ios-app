@@ -419,6 +419,12 @@ const checks = [
            ls.includes('self.app?.showToast') &&
            bin.includes('sense.lastReceipt');
   }],
+  ['门厅成员卡可直达成员详情', () => {
+    // 成员卡原来只展示：想看某人权限要 管理→成员→选人 三步。
+    // 而卡上已经写着他的名字和今天的次数 —— 点它是最自然的意图。
+    const h = CODE.get('HomeConsole.swift') || '';
+    return h.includes('memberSheetID') && h.includes('MemberDetail360View(memberID: id)');
+  }],
 ];
 
 let pass = 0;

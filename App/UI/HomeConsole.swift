@@ -67,6 +67,11 @@ struct HomeConsole: View {
     /// 原来这里走 managerGroup = .devices —— 用户先看到一张**管理面板**，
     /// 还得自己再找一次「添加门锁」。首启最关键的一步不该有多余一跳。
     @State private var showAddLock = false
+    /// 门厅成员卡的直达目标。
+    /// 原来成员卡是纯展示：想看某个人的权限，
+    /// 要 管理 → 成员 → 选人 三步，才到成员详情。
+    /// 而门厅上那张卡已经写了他的名字和今天的次数 —— 点它是最自然的意图。
+    @State private var memberSheetID: String?
     @State private var appeared = false
 
     // ── 当日统计缓存 ──
@@ -180,6 +185,15 @@ struct HomeConsole: View {
             }
             .sheet(isPresented: $showAddLock) {
                 AddLockPage().environmentObject(app)
+            }
+            .sheet(isPresented: Binding(get: { memberSheetID != nil },
+                                       set: { if !$0 { memberSheetID = nil } })) {
+                if let id = memberSheetID {
+                    NavigationStack {
+                        MemberDetail360View(memberID: id)
+                            .environmentObject(app)
+                    }
+                }
             }
         }
     }
@@ -624,6 +638,19 @@ struct HomeConsole: View {
     }
 
     private func memberChip(_ r: MemberStat) -> some View {
+        Button {
+            XHaptics.tick.impactOccurred()
+            memberSheetID = r.id
+        } label: {
+            memberChipBody(r)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(r.today > 0
+            ? "\(r.name)，今天 \(r.today) 次，轻点查看他的钥匙"
+            : "\(r.name)，近 30 天 \(r.opens30) 次，轻点查看他的钥匙")
+    }
+
+    private func memberChipBody(_ r: MemberStat) -> some View {
         HStack(spacing: XSpace.s) {
             Text(String(r.name.prefix(1)))
                 .xFont(.system(.subheadline, weight: .semibold))
@@ -644,10 +671,9 @@ struct HomeConsole: View {
         .padding(.trailing, 12)
         .padding(.vertical, 5)
         .xPlate(XPalette.surface, .capsule)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(r.today > 0
-            ? "\(r.name)，今天 \(r.today) 次"
-            : "\(r.name)，近 30 天 \(r.opens30) 次")
+        // 无障碍标签由外层 Button 统一给出（含"轻点查看"的动作提示）——
+        // 这里再挂一次会和它重复，VoiceOver 会念两遍。
+        .accessibilityHidden(true)
     }
 
     // ─────────────────────────────────────────── ⑧ 管理入口
