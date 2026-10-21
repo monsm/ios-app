@@ -554,12 +554,14 @@ struct AutoCalView: View {
                     .fixedSize(horizontal: false, vertical: true)
                 }
             }
+            .xScrollLift()
             XPanel(kind: .group) {
                 VStack(alignment: .leading, spacing: XSpace.m) {
                     secLabel("标定数据")
                 Button("清除标定", role: .destructive) { AutoOpen.removeAutocal(mac) }
                 }
             }
+            .xScrollLift()
                 }
                 .padding(.horizontal, XSpace.gutter)
                 .padding(.vertical, XSpace.l)
@@ -567,8 +569,6 @@ struct AutoCalView: View {
             .scrollIndicators(.hidden)
         }
         .navigationTitle("距离标定")
-        .xList()
-        .xScreen()
     }
 
     private func run() async {

@@ -677,6 +677,7 @@ struct LinkPrefsView: View {
                 LabeledRow("连接偏好记忆", "每锁 kf_link_auto_ 偏好 + rssiFor 实读; 扫描强度档走全局")
                 }
             }
+            .xScrollLift()
             XPanel(kind: .group) {
                 VStack(alignment: .leading, spacing: XSpace.m) {
                     secLabel("连接统计")
@@ -691,6 +692,7 @@ struct LinkPrefsView: View {
                     .fixedSize(horizontal: false, vertical: true)
                 }
             }
+            .xScrollLift()
                 }
                 .padding(.horizontal, XSpace.gutter)
                 .padding(.vertical, XSpace.l)
@@ -698,8 +700,6 @@ struct LinkPrefsView: View {
             .scrollIndicators(.hidden)
         }
         .navigationTitle("连接与预握手")
-        .xList()
-        .xScreen()
     }
 
     private func secLabel(_ text: String) -> some View {
