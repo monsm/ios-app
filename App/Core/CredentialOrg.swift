@@ -711,6 +711,19 @@ enum CredentialOrg {
     static func archived(_ mac: String) -> Set<Int> {
         Set(DB.get([Int].self, archKey(mac)) ?? [])
     }
+    /// ⚠ 当前**没有任何调用方** —— 归档这一档只有读侧，没有写侧。
+    ///
+    /// 现状（已核实）：`isArchived` 在全仓 15 处被用作过滤条件，
+    /// 但把 id 写进归档集合的唯一入口就是这个 `setArchived`，而它一次都没被调用。
+    /// 结果是归档集合恒为空、那 15 处过滤全部是空操作。
+    ///
+    /// 凭证另外两档是通的：停用（`MemberCenterView` 的停用记录）与彻底删除
+    /// （`DB.delPwd`）。所以归档不是被替代，而是**做了一半**。
+    ///
+    /// 要接通它需要：在凭证行上给一个"归档/取消归档"动作，
+    /// 并在台账列表里加一个"已归档"分区 —— 与 LocksPage 的"已隐藏"区同构。
+    /// 在没有那层 UI 之前，保留本函数是为了让意图留在代码里；
+    /// **不要**以为这个功能现在是可用的。
     static func setArchived(_ mac: String, _ kind: String, _ key: Int, _ on: Bool) {
         var s = archived(mac)
         let id = kind == "pwd" ? key : 100000 + key   // 指纹段偏移, 与星标同一约定
