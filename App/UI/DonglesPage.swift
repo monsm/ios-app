@@ -222,7 +222,7 @@ struct DonglesPage: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func keyCountText(_ st: DongleStatus) -> String {
+    private func keyCountText(_ st: DongleStat) -> String {
         // 两侧独立解析 (KLV#24/#25 各默认 -1), "读到存量没读到上限" 是正常回字
         if st.ekeyCount < 0 { return "—" }
         if st.ekeyAmount < 0 { return "\(st.ekeyCount) / —" }
