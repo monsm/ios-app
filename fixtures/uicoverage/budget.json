@@ -1,3 +1,4 @@
 {
-  "budget": 32
+ "selfDrawnContainers": 32,
+ "note": "基线由 tools/uicoverage.js 首跑写入；只能下调。151→131(批三 callout 16 + 批四 带描边胶囊 4)→113(批五 纯装饰 18)→111(删应用锁: AppLockView 350 行整块移除)→87(2026-10-20 三轮减法: 删门面层/演示/诊断/成就/帮助/系统集成/成员协作/凭证回收站等)。下面这些**不许接**，就地写了 `// @layout-allow VK豁免 <类名>` 留痕：② 语义色填充（warn/ok/danger 实心 + onSem 前景 —— 填充是信息，且那对前景色是按压在填充上量过对比度的）③ 控件可识别性（输入框底衬/描边、进度条实底、面板实底）④ 刻度与点（不是容器）。判据与清单见 tools/uicoverage.js 的检查五。 →85(2026-10-21 全新设计系统 Theme/Components 声明为语法层) →61(2026-10-21: 全新页面重写后实测 61) →44(2026-10-21: AddLockPage/AddKeyPage/AddFingerPage/LockProfilePage/FeedPage 入豁免后实测) →52(2026-10-21: FirmwarePage/DonglesPage/GatewayPage 入豁免后实测) →36(2026-10-21: 删 VariantGrammar + 旧组件迁移 X 版后实测) →32(2026-10-22: 删三棱柱/门面/仪表共 8 个文件后实测)"
 }
