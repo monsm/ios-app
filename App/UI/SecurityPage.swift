@@ -247,6 +247,16 @@ struct SecurityPage: View {
     private var actionsCard: some View {
         XPanel(kind: .group, padding: 0) {
             VStack(spacing: 0) {
+                // 应用锁必须是这一页的第一条:
+                // 后面三条(防窥/审计/销毁)全都建立在"本机已经被锁住"之上。
+                // 之前这一条根本不存在 —— kf_applock 只被读、从未被写，
+                // 于是整个安全页恒报「应用锁未开启」，毁灭动作也复核不了口令。
+                actionRow(icon: DB.hasPasscode() ? "lock.shield.fill" : "lock.open",
+                          title: "应用锁",
+                          detail: DB.hasPasscode() ? "已开启 · 修改或关闭" : "未开启 · 现在设置") {
+                    AppLockSetupView().environmentObject(app)
+                }
+                XHairline(inset: XSpace.card)
                 actionRow(icon: "eye.slash", title: "防窥与遮蔽",
                           detail: "后台即糊 / 限时可见 / 水印") {
                     SecurityPeekView().environmentObject(app)
