@@ -1999,6 +1999,7 @@ const ANIMS = {
   F: { name: "弹性过冲", desc: "弹簧曲线，到位后过冲回弹", fn: animF },
 };
 
+export { ANIMS, buildPrism, FACES };
 </script>
 <script type="module">const boot=document.getElementById('boot');
 function setBoot(m,e){if(!boot)return;boot.textContent=m||'';boot.style.display=m?'block':'none';if(e)boot.classList.add('err');else boot.classList.remove('err');}
