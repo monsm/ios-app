@@ -230,8 +230,10 @@ struct DevicePage: View {
     //   已占用 → 实色格；剩余 → 凹陷虚线格
     //   一行小字: "还可录 3 枚指纹"
     private var capacityCard: some View {
-        let pwdCap = snap?.pwdInfoCapacity ?? 0
-        let fpCap = snap?.fpInfoCapacity ?? 0
+        // StatusSnapshotData 的真实字段是 pwdCap / fpCap (**可选 Int**)，
+        // 不是 pwdInfoCapacity / fpInfoCapacity —— 后者在 StatusParser 的另一个结构上。
+        let pwdCap = snap?.pwdCap ?? 0
+        let fpCap = snap?.fpCap ?? 0
         let pwdLeft = snap?.pwdStock ?? 0
         let fpLeft = snap?.fpStock ?? 0
         // 容量未知（0）时整卡隐去 —— 不画一个空壳

@@ -78,8 +78,8 @@ struct BackupPage: View {
         // defaultFilename 用带日期的名字 —— 多次备份不会互相覆盖，
         // 用户也能一眼看出是哪天的。
         .fileExporter(isPresented: $showFileExporter,
-                      document: BackupFile(text: exportText),
-                      contentType: .json,
+                      item: BackupFile(text: exportText),
+                      contentTypes: [.json],
                       defaultFilename: backupFilename) { result in
             if case .success = result {
                 // 落盘时更新"上次备份"时间 —— 与 generateBackup 同口径

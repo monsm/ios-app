@@ -438,7 +438,7 @@ private struct PeopleLens: View {
     /// 教训: StatsKit.swift 里缩进 4 的是 enum 直接成员（静态），
     ///       缩进 8 的在 StatModel 内（实例）。
     private func kindWord(_ k: String) -> String {
-        model.kindWords()[k] ?? k
+        StatsKit.StatModel.kindWords()[k] ?? k
     }
 
     /// 前两位成员的名字，多于两人时加"等"
