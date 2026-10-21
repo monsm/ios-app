@@ -23,7 +23,6 @@ struct DiagnosticsPage: View {
 
     private var selfChecks: [SelfCheckLine] { SelfCheck.run() }
     private var health: [String] { DataHealth.integrity() }
-    private var orphans: [String] { DataHealth.scanOrphans() }
 
     var body: some View {
         ScrollView {
@@ -104,8 +103,8 @@ struct DiagnosticsPage: View {
     private var healthCard: some View {
         XPanel(kind: .group, padding: 0) {
             VStack(spacing: 0) {
-                header("数据健康", tone: health.isEmpty && orphans.isEmpty ? XPalette.ok : XPalette.warn)
-                if health.isEmpty && orphans.isEmpty {
+                header("数据健康", tone: health.isEmpty ? XPalette.ok : XPalette.warn)
+                if health.isEmpty {
                     itemRow(icon: "checkmark.circle.fill", tone: XPalette.ok,
                             title: "没有发现数据问题",
                             detail: "数据键都能解析，也没有孤立文件")
@@ -114,13 +113,7 @@ struct DiagnosticsPage: View {
                         itemRow(icon: "exclamationmark.triangle.fill", tone: XPalette.warn,
                                 title: s, detail: nil)
                     }
-                    ForEach(Array(orphans.prefix(6).enumerated()), id: \.offset) { _, s in
-                        itemRow(icon: "shippingbox", tone: XPalette.textSub, title: s, detail: nil)
-                    }
-                    if orphans.count > 6 {
-                        itemRow(icon: "ellipsis", tone: XPalette.textTertiary,
-                                title: "另有 \(orphans.count - 6) 项孤立数据", detail: nil)
-                    }
+                    // （孤儿数据已在上面 health 里以"孤儿数据: …"的形式列出）
                 }
             }
         }
@@ -274,7 +267,6 @@ struct DiagnosticsPage: View {
         out.append(SelfCheck.summary(selfChecks))
         for l in selfChecks { out.append("· \(l.name)：\(l.ok ? "通过" : "异常") — \(l.detail)") }
         if !health.isEmpty { out.append("数据健康："); health.forEach { out.append("· " + $0) } }
-        if !orphans.isEmpty { out.append("孤立数据 \(orphans.count) 项") }
         out.append("启动 \(String(format: "%.0f", StartupTrace.totalMs)) ms")
         out.append(CrashGuard.pendingAbnormal ? "上次异常退出" : "上次正常退出")
         out.append("日志 \(DiagLogs.all().count) 条")

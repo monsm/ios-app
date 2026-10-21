@@ -155,6 +155,18 @@ const checks = [
     const d = RAW.get('DiagnosticsPage.swift') || '';
     return d.length > 0 && !d.includes('DiagKit.');
   }],
+  ['体检不把合法空串算成残留', () => {
+    // kf_theme / kf_accent / kf_week_start 的 "" 是合法值（跟随系统 / 默认色）。
+    // 之前 integrity() 把所有空串都算"空键残留"，正常机器每次体检都报 3 条异常。
+    const d = CODE.get('DiagKit.swift') || '';
+    return d.includes('emptyMeansDefault') &&
+           d.includes('!DataHealth.emptyMeansDefault.contains(k)');
+  }],
+  ['诊断页不重复列孤儿数据', () => {
+    // integrity() 内部已调 scanOrphans() 并拼成一行，页面再列一次就是重复。
+    const p = RAW.get('DiagnosticsPage.swift') || '';
+    return !p.includes('scanOrphans()');
+  }],
 ];
 
 let pass = 0;

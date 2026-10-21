@@ -375,6 +375,9 @@ enum DataHealth {
         return String(format: "%.0f KB", Double(bytes) / 1_000)
     }
     /// 750 完整性 (等价 PRAGMA integrity_check): JSON 回环 + 台账计数核对
+    /// 这些键存空串表示"默认/跟随系统"，不是空残留。
+    static let emptyMeansDefault: Set<String> = ["kf_theme", "kf_accent", "kf_week_start"]
+
     static func integrity() -> [String] {
         var out: [String] = []
         let rep = UserDefaults.standard.dictionaryRepresentation()
@@ -388,7 +391,13 @@ enum DataHealth {
                 // 真机报告 2026-10-17: 体检报"58 个数据键无法解析", 且按天递增 (19→24→49→52→54→58) ——
                 // 递增的不是损坏, 是用户当天新存的标量键。这是体检自己误报, 不是数据坏了。
                 if (try? JSONSerialization.jsonObject(with: d, options: [.fragmentsAllowed])) == nil { badJson += 1 }
-            } else if let s = v as? String, s.isEmpty {
+            } else if let s = v as? String, s.isEmpty, !DataHealth.emptyMeansDefault.contains(k) {
+                // ⚠ 空串不一定是"残留"。下面这几个键的 "" 是**合法值**：
+                //   kf_theme ""      = 跟随系统
+                //   kf_accent ""     = 默认铜色
+                //   kf_week_start "" = 跟随系统
+                // 把它们算成残留，会让一台完全正常的机器每次体检都报
+                // "发现 3 个空键残留" —— 和之前 badJson 把标量键算成"写入被截断"是同一类错。
                 emptyStale += 1
             }
         }
