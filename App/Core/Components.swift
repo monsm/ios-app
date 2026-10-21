@@ -581,7 +581,6 @@ struct XFlowLayout: Layout {
 // MARK: - 文本与开关语法 (X 系统自带, 2026-10-21 从 VariantGrammar 迁出)
 // ═══════════════════════════════════════════════════════════
 
-@MainActor
 extension View {
     /// 行内排版的**唯一入口**。
     ///
@@ -590,24 +589,24 @@ extension View {
     /// AX 档位放大由系统负责。
     ///
     /// ⚠ 图标尺寸不在此列: `Image(systemName:).font(.system(size:))` 是刻意写死的。
-    func xFont(_ base: Font, weight: Font.Weight? = nil) -> some View {
+    nonisolated func xFont(_ base: Font, weight: Font.Weight? = nil) -> some View {
         self.font(base).fontWeight(weight)
     }
 
     /// 列表底色透明 —— 让 XPalette.canvas 从下面透上来。
     /// 与旧 `variantList()` 逐字等价 (旧实现只有 `scrollContentBackground(.hidden)`)。
-    func xList() -> some View {
+    nonisolated func xList() -> some View {
         self.scrollContentBackground(.hidden)
     }
 
     /// 页面底色。与旧 `dsScreenBackground()` 的区别: 新系统用纯色画布,
     /// 不用网格渐变 —— 彩色网格会与铜色 accent 打架。
-    func xScreen() -> some View {
+    nonisolated func xScreen() -> some View {
         self.background(XPalette.canvas.ignoresSafeArea())
     }
 
     /// 底衬。与旧 `variantPlate(style, shape)` 等价, 形状走 XRadius。
-    func xPlate(_ style: Color, _ radius: CGFloat = XRadius.control) -> some View {
+    nonisolated func xPlate(_ style: Color, _ radius: CGFloat = XRadius.control) -> some View {
         self.background(style, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
     }
 }
@@ -662,10 +661,9 @@ enum XPlateShape {
     }
 }
 
-@MainActor
 extension View {
     /// 底衬 (替代 variantPlate)
-    func xPlate(_ style: Color, _ shape: XPlateShape, edge: Color? = nil) -> some View {
+    nonisolated func xPlate(_ style: Color, _ shape: XPlateShape, edge: Color? = nil) -> some View {
         let base = self.background(style, in: shape.shape)
         return Group {
             if let edge { base.overlay { shape.edge(edge, 0.5) } }
@@ -674,7 +672,7 @@ extension View {
     }
 
     /// 语义色底的提示块 (替代 variantCallout)
-    func xCallout(_ tone: Color, _ shape: XPlateShape, wash: Double) -> some View {
+    nonisolated func xCallout(_ tone: Color, _ shape: XPlateShape, wash: Double) -> some View {
         self.background(tone.opacity(wash), in: shape.shape)
     }
 }
@@ -747,7 +745,6 @@ struct XDestinedModifier: ViewModifier {
     func body(content: Content) -> some View { content }
 }
 
-@MainActor
 extension View {
     func destined(_ d: Destination) -> some View {
         modifier(XDestinedModifier(destination: d))
@@ -782,10 +779,9 @@ struct XStaggeredAppear: ViewModifier {
     }
 }
 
-@MainActor
 extension View {
     /// 入场编排: index 决定出场次序 (0 起, 每档 50ms)
-    func staggered(_ index: Int) -> some View {
+    nonisolated func staggered(_ index: Int) -> some View {
         modifier(XStaggeredAppear(index: index))
     }
 }
