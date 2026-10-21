@@ -149,7 +149,7 @@ struct DonglesPage: View {
                     Button("读取状态") { Task { await readStatus(d) } }
                     Button("给当前门锁写入钥匙") { confirmWriteKey(d) }
                     Button("查询全部钥匙") { Task { await listKeys(d) } }
-                    Divider()
+                    Divider().overlay(XPalette.hairline)
                     Button("删除本锁钥匙", role: .destructive) { confirmDeleteKey(d) }
                     Button("删除记录", role: .destructive) { removeRecord(d) }
                 } label: {

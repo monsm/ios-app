@@ -253,7 +253,7 @@ struct GatewayPage: View {
                 Menu {
                     Button("刷新状态") { Task { await refresh(g) } }
                     Button("重启网关") { confirmReboot(g) }
-                    Divider()
+                    Divider().overlay(XPalette.hairline)
                     Button("删除记录", role: .destructive) { removeGateway(g) }
                 } label: {
                     Image(systemName: "ellipsis.circle")

@@ -70,7 +70,7 @@ struct EventsPage: View {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     XToggle("只看告警", isOn: $alarmOnly)
-                    Divider()
+                    Divider().overlay(XPalette.hairline)
                     Button("刷新") { load() }
                 } label: {
                     Image(systemName: "line.3.horizontal.decrease.circle")
