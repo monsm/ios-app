@@ -653,6 +653,17 @@ struct XCodeRing: View {
     }
     private var fraction: Double { remaining / Double(max(period, 1)) }
 
+    /// 码值字号: 按位数自适应, 保证永远留得下环内径的余量。
+    /// 6 位 → 56pt, 7 位 → 50pt, 8 位 → 44pt。
+    private var codePointSize: CGFloat {
+        let n = max(code.count, masked ? 7 : 6)
+        switch n {
+        case ...6:  return 56
+        case 7:     return 50
+        default:    return 44
+        }
+    }
+
     /// 末 5 秒转橙: 这是"该换了"的唯一视觉信号
     private var ringTint: Color {
         remaining <= 5 ? XPalette.warn : XPalette.accent
@@ -742,7 +753,11 @@ struct XCodeRing: View {
             // 码值本体: 56pt 等宽圆体 + 数字滚动过渡
             VStack(spacing: XSpace.xxs) {
                 Text(masked ? "••• •••" : code)
-                    .xFont(.system(size: 56, weight: .semibold, design: .rounded).monospacedDigit())
+                    // 字号按位数自适应 —— 这是渲染验证查出来的:
+                    // 6 位 + 空格在 56pt 下约 235pt 宽, 而环内径约 254pt,
+                    // 8 位 (TOTP 允许) 在 56pt 下是 269pt, 会直接压到环线上。
+                    // 与其靠 minimumScaleFactor 事后缩, 不如一开始就选对字号。
+                    .xFont(.system(size: codePointSize, weight: .semibold, design: .rounded).monospacedDigit())
                     .foregroundStyle(masked ? XPalette.textSub : XPalette.text)
                     .contentTransition(.numericText())
                     .animation(XMotion.quick, value: code)
@@ -757,7 +772,7 @@ struct XCodeRing: View {
             .padding(.horizontal, XSpace.m)
         }
         .aspectRatio(1, contentMode: .fit)
-        .frame(maxWidth: 260)
+        .frame(maxWidth: 280)
     }
 
     // ── 下一码: 次级信息, 不抢主角 ───────────────────────────────────
