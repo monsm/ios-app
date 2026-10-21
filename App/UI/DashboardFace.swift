@@ -104,9 +104,11 @@ struct DashboardFace: View {
             }
         }
         .padding(4)
-        // 复用 axGlass(.capsule) —— 内部就是 glassEffect(.regular)，
-        // 且有降低透明度/高对比的完整降级
-        .axGlass(19)
+        // 用 axGlassCapsule() 而不是 axGlass(19):
+        //   · 内部选中态是 Capsule()，外层若用圆角矩形，形状不一致
+        //   · 19 < 23（总高 46 的一半），画出来是圆角矩形而非胶囊
+        //   · AccessibilityKit 里胶囊与圆角是两个通道，形状族只在一处枚举
+        .axGlassCapsule()
         .padding(.top, XSpace.s)
     }
 }
