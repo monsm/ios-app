@@ -992,6 +992,32 @@ struct SecurityDestroyView: View {
                     XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
                             secLabel("回收站")
+                            // 这一条是补的：界面到处承诺「可还原」「N 天内可找回」，
+                            // 但 undoRemove 全仓零调用 —— 没有任何页面能真的放回去。
+                            NavigationLink {
+                                CredentialBinView().environmentObject(app)
+                            } label: {
+                                HStack(spacing: XSpace.s) {
+                                    Image(systemName: "arrow.uturn.backward.circle")
+                                        .font(.system(size: XIcon.sm, weight: .medium))
+                                        .foregroundStyle(XPalette.accentText)
+                                        .accessibilityHidden(true)
+                                    Text("查看回收站（可恢复）")
+                                        .xFont(.subheadline, weight: .medium)
+                                        .foregroundStyle(XPalette.text)
+                                    Spacer(minLength: 0)
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: XIcon.xs, weight: .semibold))
+                                        .foregroundStyle(XPalette.textTertiary)
+                                        .accessibilityHidden(true)
+                                }
+                                .frame(minHeight: XHit.min)
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("查看回收站，可恢复已删除的凭证")
+
+                            XHairline(inset: 0)
                             HStack(spacing: XSpace.s) {
                                 Text("清空回收站 (\(trashCount) 项)")
                                     .xFont(.subheadline, weight: .medium)
