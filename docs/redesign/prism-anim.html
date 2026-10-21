@@ -2033,99 +2033,121 @@ async function main(){
   const tU=blob(ts),oU=blob(os),rU=blob(rs),sU=blob(ss);
   const im=document.createElement('script');im.type='importmap';
   im.textContent=JSON.stringify({imports:{three:tU}});document.head.appendChild(im);
-  let THREE,OC,RE,S;
-  try{THREE=await import(tU);OC=(await import(oU)).OrbitControls;RE=(await import(rU)).RoomEnvironment;S=await import(sU);}
+  let THREE,S;
+  try{THREE=await import(tU);S=await import(sU);}
   catch(e){setBoot('3D 引擎失败: '+(e&&e.message?e.message:String(e)),true);console.error(e);return;}
-  setBoot('');run(THREE,OC,RE,S);
+  setBoot('');run(THREE,S);
 }
-function run(THREE,OC,RE,S){
-  const {ANIMS,buildPrism,FACES}=S;
+function run(THREE,S){
+  const {ANIMS,buildPrism}=S;
   const keys=Object.keys(ANIMS);
 
-  function makeStage(host){
-    const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
-    renderer.toneMapping=THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure=1.05;
-    host.appendChild(renderer.domElement);
+  // ═══════════════════════════════════════════════════════════════
+  // 单 canvas 分区渲染
+  // ═══════════════════════════════════════════════════════════════
+  // 原来: 6 个 <canvas>，每个一个 WebGLRenderer + 一次 PMREM 预过滤。
+  //       浏览器同时 6 个 WebGL 上下文，帧率掉到个位数，
+  //       再叠加 dt 钳制 → 动画看起来"比蜗牛还慢"。
+  // 现在: 1 个 canvas，用 scissor + viewport 切成 6 块轮流渲染。
+  //       1 个上下文，6 次轻量 render，帧率回到 60。
+  const grid=document.getElementById('grid');
+  // 隐藏原来的 6 个 stage 占位，改成一个覆盖层 canvas
+  const canv=document.createElement('canvas');
+  canv.id='gl';
+  canv.style.cssText='position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:5;';
+  document.body.appendChild(canv);
+  // 让 stage 只保留边框与标题（背景透明）
+  document.querySelectorAll('.stage').forEach(function(st){
+    st.style.background='transparent';
+  });
+
+  const renderer=new THREE.WebGLRenderer({canvas:canv,antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure=1.05;
+  renderer.setScissorTest(true);
+  renderer.autoClear=false;
+
+  const hosts=[].slice.call(document.querySelectorAll('.stage'));
+  const stages=hosts.map(function(host){
+    const key=host.dataset.anim;
     const scene=new THREE.Scene();
-    const pm=new THREE.PMREMGenerator(renderer);
-    scene.environment=pm.fromScene(new RE(),0.04).texture;
     const cam=new THREE.PerspectiveCamera(32,1,0.1,60);
     cam.position.set(0,0,5.2);
     const k=new THREE.DirectionalLight(0xfff4e8,3.0);k.position.set(-3,4,5);scene.add(k);
     const f=new THREE.DirectionalLight(0xb8c8dc,0.6);f.position.set(3,-2,3);scene.add(f);
     const rim=new THREE.DirectionalLight(0xe8a05c,1.0);rim.position.set(1,2,-4);scene.add(rim);
-    scene.add(new THREE.AmbientLight(0xffffff,0.22));
-    const ctl=new OC(cam,renderer.domElement);
-    ctl.enableDamping=true;ctl.dampingFactor=0.08;ctl.enablePan=false;
-    ctl.minDistance=3.2;ctl.maxDistance=8.5;
-    ctl.enableRotate=false;
-    return {renderer,scene,camera:cam,controls:ctl,host};
-  }
-
-  const stages=[];
-  const hosts=document.querySelectorAll('.stage');
-  for(let i=0;i<hosts.length;i++){
-    const host=hosts[i];
-    const key=host.dataset.anim;
-    const s=makeStage(host);
+    scene.add(new THREE.AmbientLight(0xffffff,0.28));
+    // 一点点环境反射感：用半球光代替 PMREM
+    const hemi=new THREE.HemisphereLight(0xdfe8f2,0x1a1a1e,0.45);scene.add(hemi);
     const p=buildPrism();
-    s.prism=p.group;s.faces=p.faces;s.key=key;s.anim=ANIMS[key];
-    s.scene.add(p.group);
-    // 起始面 = 1 (就近 D)，最能看出换面
-    s.from=1;s.to=2;s.t=0;s.hold=0;
-    stages.push(s);
-  }
+    scene.add(p.group);
+    return {host:host,scene:scene,camera:cam,prism:p.group,anim:ANIMS[key],
+            from:1,to:2,t:0,hold:0};
+  });
 
-  function fit(s){
-    const w=s.host.clientWidth,h=s.host.clientHeight;
-    if(!w||!h)return;
-    s.renderer.setSize(w,h,false);
-    s.camera.aspect=w/h;s.camera.updateProjectionMatrix();
-  }
-
-  // 每个格子自己跑循环: 停 0.9s → 播 1.1s → 换下一面
   let SPEED=window.__SPEED||1.8;
-  const BASE_DUR=620, BASE_HOLD=220;
-  const getDUR=()=>BASE_DUR/SPEED, getHOLD=()=>BASE_HOLD/SPEED;
-  function step(s,dt){
-    if(s.hold>0){ s.hold-=dt; return; }
-    s.t += dt/getDUR();
-    if(s.t>=1){
-      s.t=0;s.hold=getHOLD();
-      s.from=s.to;s.to=(s.to+1)%3;
-      s.anim.fn(s.prism,s.from,s.from,0);
+  window.__setSpeed=function(v){SPEED=v;};
+  const BASE_DUR=620, BASE_HOLD=260;
+
+  function step(st,dt){
+    if(st.hold>0){ st.hold-=dt; return; }
+    st.t += dt/(BASE_DUR/SPEED/1000);
+    if(st.t>=1){
+      st.t=0; st.hold=BASE_HOLD/SPEED/1000;
+      st.from=st.to; st.to=(st.to+1)%3;
+      st.anim.fn(st.prism,st.from,st.from,0);
       return;
     }
-    s.anim.fn(s.prism,s.from,s.to,s.t);
+    st.anim.fn(st.prism,st.from,st.to,st.t);
   }
 
-  window.__setSpeed = function(v){ SPEED = v; };
+  // FPS 统计
+  let frames=0, fpsT=0, fps=0;
+  const fpsEl=document.createElement('div');
+  fpsEl.style.cssText='position:fixed;right:14px;bottom:12px;font:600 11px/1 ui-monospace,monospace;'+
+    'color:#888892;background:rgba(10,10,11,.8);border:1px solid #323236;padding:5px 8px;border-radius:6px;z-index:20';
+  fpsEl.textContent='— fps';
+  document.body.appendChild(fpsEl);
+
   let last=performance.now();
   function tick(now){
-    const dt=Math.min((now-last)/1000,0.05);last=now;
+    const rawDt=(now-last)/1000; last=now;
+    // dt 上限放到 0.25s：容忍低帧率，同时防止切回标签页时大跳
+    const dt=Math.min(rawDt,0.25);
+
+    frames++; fpsT+=rawDt;
+    if(fpsT>=0.5){ fps=Math.round(frames/fpsT); frames=0; fpsT=0; fpsEl.textContent=fps+' fps'; }
+
+    const W=renderer.domElement.clientWidth;
+    const H=renderer.domElement.clientHeight;
+    renderer.setSize(W,H,false);
+    renderer.clear();
+
     for(let i=0;i<stages.length;i++){
-      const s=stages[i];
-      fit(s);
-      step(s,dt);
-      s.controls.update();
-      s.renderer.render(s.scene,s.camera);
+      const st=stages[i];
+      step(st,dt);
+      const r=st.host.getBoundingClientRect();
+      if(r.bottom<0||r.top>window.innerHeight||r.width<2||r.height<2) continue;
+      // WebGL 的 y 轴朝上
+      const x=r.left, y=window.innerHeight-r.bottom;
+      renderer.setViewport(x,y,r.width,r.height);
+      renderer.setScissor(x,y,r.width,r.height);
+      renderer.clearDepth();
+      st.camera.aspect=r.width/r.height;
+      st.camera.updateProjectionMatrix();
+      renderer.render(st.scene,st.camera);
     }
     requestAnimationFrame(tick);
   }
-  for(let i=0;i<stages.length;i++)fit(stages[i]);
   requestAnimationFrame(tick);
-  window.addEventListener('resize',function(){for(let i=0;i<stages.length;i++)fit(stages[i]);});
 }
-// 速度切换
 document.querySelectorAll('.speed button').forEach(function(b){
-  b.addEventListener('click', function(){
+  b.addEventListener('click',function(){
     document.querySelectorAll('.speed button').forEach(function(x){x.setAttribute('aria-pressed','false');});
     b.setAttribute('aria-pressed','true');
-    window.__SPEED = parseFloat(b.dataset.speed) || 1.8;
-    // 通知所有 stage
-    if (window.__setSpeed) window.__setSpeed(window.__SPEED);
+    window.__SPEED=parseFloat(b.dataset.speed)||1.8;
+    if(window.__setSpeed)window.__setSpeed(window.__SPEED);
   });
 });
 main().catch(function(e){setBoot('启动失败: '+(e&&e.message?e.message:String(e)),true);console.error(e);});</script>
