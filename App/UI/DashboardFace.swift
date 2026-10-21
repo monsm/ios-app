@@ -116,6 +116,10 @@ struct DashboardFace: View {
 // ═══════════════════════════════════════════════════════════════════════
 private struct LockLens: View {
     let model: StatsKit.StatModel
+    /// StatsPage 依赖 AppState —— 这里必须显式接，
+    /// LockLens 是独立 struct，不继承 DashboardFace 的环境。
+    /// （第一版我直接写 .environmentObject(app)，CI 报 cannot find 'app' in scope）
+    @EnvironmentObject private var app: AppState
 
     var body: some View {
         VStack(spacing: XSpace.l) {

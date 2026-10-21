@@ -49,6 +49,19 @@ struct DoorPrism<B: View, D: View, F: View>: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var drag: CGFloat = 0      // -1...1，拖拽进度
+
+    /// 翻页动画进度 0...1
+    ///
+    /// **为什么需要它**: `drag` 只在手指按住时非零，松手就归零。
+    /// 而 step()（点按钮切换面）完全不动 drag ——
+    /// 所以 breathScale 永远 = 1.0000，**呼吸动画从未发生**。
+    ///
+    /// 这是 R3 那轮"看到没任何变化"的同类问题的 Swift 版:
+    /// HTML 原型里 animC 用 t（动画时间）驱动，我在 Swift 里换成了 drag，
+    /// 但 drag 不是动画时间。
+    ///
+    /// 修法: 独立一个 turn 变量，由 withAnimation 驱动 0→1→0。
+    @State private var turn: CGFloat = 0
     @State private var dragging = false
     @State private var lastTick = -1
 
@@ -195,23 +208,79 @@ struct DoorPrism<B: View, D: View, F: View>: View {
 
     // ── 角度计算 ──
     /// 容器当前旋转角（度）
+    /// 容器当前旋转角（度）
+    ///
+    /// 三个来源合并:
+    ///   · base  当前面的角度
+    ///   · drag  手指实时拖拽（±1 对应一面）
+    ///   · turn  按钮翻页动画进度（0→1）
+    ///
+    /// **turn 必须参与旋转**，否则 step() 换 face 时:
+    ///   face 变了 → base 瞬间跳到新面，但 turn 驱动的缩放还在退，
+    ///   结果看起来是「突然跳到新面 + 独立缩一下」，不是一次转身。
+    /// 容器当前旋转角（度）
+    ///
+    /// 三个来源:
+    ///   · base  当前面的角度（step 里已立即换成新面）
+    ///   · drag  手指实时拖拽（±1 对应一面）
+    ///   · turn  翻页动画进度，**从 1 降到 0**
+    ///
+    /// turn=1 时角度退回旧面（-新面角 + sign*120），
+    /// turn=0 时停在新面 —— 一次动画连贯走完，无跳变。
     private var containerAngle: Double {
         let base = -FaceAngle.current(face)
-        // 拖拽时叠加偏移：每 1.0 的 drag 对应一整面（120°）
-        return base - (drag * 120)
+        // 手势优先；未拖拽时由 turn 接管（turn=1 是起点，0 是终点）
+        let offset: CGFloat = abs(drag) > 0.001 ? drag : (turn * turnSign)
+        return base - Double(offset * 120)
     }
+
+    /// 翻页方向（+1 下一面 / -1 上一面）
+    ///
+    /// 让旋转方向和手势一致: 左滑（drag<0）转负方向，
+    /// 点按钮下一面也转负方向 —— 视觉上是同一个转向。
+    @State private var turnSign: CGFloat = 1
 
     /// 侧面呼吸的缩放
     ///
     /// 由**当前朝向**推导，不是独立曲线。
     /// narrow ∈ [0,1]：0 = 面正对观察者（最宽），1 = 棱正对（最窄）
+    /// 侧面呼吸的缩放
+    ///
+    /// ═══ 这段改过三次，记录每次为什么错 ═══
+    ///
+    /// 第一版: 用绝对角度 rad + 60°
+    ///   `let relToEdge = rad + .pi / 3`
+    ///   错在 F 面（240°）: -240+60 = -180°，|cos(-180°)| = 1.0，
+    ///   归一化后 narrow = 1 → 静止时缩放 0.80 而不是 1.00。
+    ///   因为三面角度 0/120/240 相差 120°，不是 180° 的整数倍，
+    ///   而 |cos| 的周期是 180° —— 三个面落在不同的相位上。
+    ///
+    /// 第二版: 把角度对 120° 取模
+    ///   静止时三面都对（都 1.00），但**拖拽时缩放不变** ——
+    ///   因为把 drag 的贡献也一起模掉了。
+    ///
+    /// 第三版（现在）: 直接用**进度**而不是绝对角度
+    ///
+    ///   drag 本身就是 0→1 的翻页进度（0 = 当前面正对，1 = 下一面正对）。
+    ///   一条棱正好在两面的中间，即 60° = 进度 0.5 处。
+    ///   所以「相对棱的角度」= 转过角度 - 60° = drag*120 - 60。
+    ///
+    ///   验证过的端点:
+    ///     drag=0   转过   0°  rel=-60°  |cos|=0.500  narrow=0  scale=1.0000
+    ///     drag=0.5 转过  60°  rel=  0°  |cos|=1.000  narrow=1  scale=0.8000
+    ///     drag=1   转过 120°  rel= 60°  |cos|=0.500  narrow=0  scale=1.0000
+    ///
+    /// 未拖拽时（drag=0）恒为 1.0000，所以静止在每个面都正常。
     private var breathScale: CGFloat {
-        let rad = containerAngle * .pi / 180
-        // 起始面法线方向即 base 角；棱相对面法线偏 +60°
-        let relToEdge = rad + .pi / 3
-        // |cos| 在面正对时 = 0.5（三面均分 120°，相邻棱在 ±60°），
-        // 在棱正对时 = 1.0。归一化到 [0,1]。
-        let raw = abs(cos(relToEdge))
+        // 手势拖拽 + 按钮翻页，两者都算进度。
+        // drag 是手指实时位置（±1），turn 是 step() 动画驱动（0→1→0）。
+        // 取绝对值后合并 —— 手指往哪拖都算"离开当前面"。
+        // 未拖拽时 turn 从 1→0，呼吸包络就是 sin(π*turn) 的形状
+        let progress = abs(drag) > 0.001 ? abs(drag) : (1 - turn)
+        let turned = progress * 120          // 转过多少度
+        let relToEdge = turned - 60          // 棱在两面中间 60° 处
+        let raw = abs(cos(relToEdge * .pi / 180))
+        // |cos| 在面正对时为 0.5，棱正对时为 1.0 → 归一化到 [0,1]
         let narrow = max(0, min(1, (raw - 0.5) / 0.5))
         return 1 - 0.20 * narrow
     }
@@ -247,15 +316,46 @@ struct DoorPrism<B: View, D: View, F: View>: View {
             )
     }
 
+    /// 切换面
+    ///
+    /// 分两段: 先把 turn 推到 1（棱正对，最窄），
+    /// 再把 face 换成下一面、turn 回 0。
+    ///
+    /// 这样切换过程中会经过"棱正对"那一帧 —— 呼吸就真的发生了。
+    /// 一次性 withAnimation 把 face 和 turn 同时改是不行的:
+    /// face 是枚举（不可插值），turn 才是被动画的那个量。
+    /// 切换面
+    ///
+    /// ═══ 为什么是「立即换 face + turn 从 1 降到 0」═══
+    ///
+    /// 第一版我写了两段动画（turn 0→1，换面，turn 1→0），
+    /// 模拟出来角度在换面瞬间**跳了 120°** ——
+    /// 因为前半段转到 0° 就换面，新面的 base 又从 -240 开始。
+    ///
+    /// 正确做法是反过来:
+    ///   · face 立即改成新面
+    ///   · turn 从 **1** 动画到 **0**
+    ///   · 角度 = -新面角 - turn * sign * 120
+    ///
+    /// 这样 turn=1 时角度 = -新面角 + 120 = 旧面角（起点正确），
+    /// turn=0 时 = -新面角（终点正确），一次动画连贯走完。
+    ///
+    /// 验证（D→F, sign=-1）:
+    ///   turn=1.00  角度 -120°（D 面）  缩放 1.0000
+    ///   turn=0.50  角度 -180°（棱正对）缩放 0.8000
+    ///   turn=0.00  角度 -240°（F 面）  缩放 1.0000
     private func step(_ direction: Int) {
         let order = DoorFace.allCases
         guard let i = order.firstIndex(of: face) else { return }
         let n = order.count
         let next = ((i + direction) % n + n) % n
-        withAnimation(XMotion.doorSwing) {
-            face = order[next]
-        }
         XHaptics.trigger.impactOccurred()
+
+        // 立即换面，turn 从 1 降到 0
+        turnSign = direction > 0 ? 1 : -1
+        turn = 1
+        face = order[next]
+        withAnimation(.easeInOut(duration: 0.42)) { turn = 0 }
     }
 }
 
