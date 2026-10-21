@@ -110,44 +110,20 @@ struct DoorBack: View {
     }
 
     private func domainRow(_ domain: DoorDomain) -> some View {
-        Button {
-            XHaptics.tick.impactOccurred()
-            onEnter(domain)
-        } label: {
-            HStack(spacing: XSpace.m) {
-                Image(systemName: domain.systemImage)
-                    .font(.system(size: XIcon.md, weight: .medium))
-                    .foregroundStyle(XPalette.accentText)
-                    .frame(width: 32)
-                    .accessibilityHidden(true)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(domain.rawValue)
-                        .xFont(.body, weight: .medium)
-                        .foregroundStyle(XPalette.text)
-                    Text(domain.summary)
-                        .xFont(.caption)
-                        .foregroundStyle(XPalette.textSub)
-                }
-
-                Spacer(minLength: XSpace.s)
-
-                Image(systemName: "chevron.right")
-                    .font(.system(size: XIcon.xs, weight: .semibold))
-                    .foregroundStyle(XPalette.textTertiary)
-                    .accessibilityHidden(true)
+        // 用 XPanel + XRow, 不再手写卡片 ——
+        // 改之前这行是手搓的 surface + hairline + chevron, 拿不到设计系统
+        // 后续给 XRow 加的图标徽章、状态过渡它也全都吃不到,
+        // 而「门里」是翻转之后第一眼看到的内容, 最该与全 App 一致。
+        XPanel(kind: .group) {
+            XRow(
+                systemImage: domain.systemImage,
+                title: domain.rawValue,
+                subtitle: domain.summary,
+                showsChevron: true
+            ) {
+                XHaptics.tick.impactOccurred()
+                onEnter(domain)
             }
-            .padding(XSpace.l)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(XPalette.surface, in: RoundedRectangle(cornerRadius: XRadius.card, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
-                    .strokeBorder(XPalette.hairline, lineWidth: 1)
-            )
         }
-        .buttonStyle(.plain)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(domain.rawValue), \(domain.summary)")
-        .accessibilityAddTraits(.isButton)
     }
 }
