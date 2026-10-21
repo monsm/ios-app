@@ -236,6 +236,21 @@ struct MePage: View {
                     subtitle: "CSV / 报告",
                     showsChevron: true)
             }
+            // ═══ 事件记录 ═══
+            //
+            // EventsPage 是**功能更全**的记录页：按天分组的时间线、查询引擎
+            //（+必须词 / -排除词 / 时间短语）、命名筛选视图、最近搜索、
+            // 事件备注、失败记录清除、以及"从门锁同步日志"——
+            // 但它**全仓零引用**，没有任何入口。上面那个"动态消息"是更简单的卡片流。
+            //
+            // 两个都在：动态消息看"最近发生了什么"，事件记录做"翻旧账/查证据"。
+            NavigationLink { EventsPage().environmentObject(app) } label: {
+                XRow(
+                    systemImage: "list.bullet.rectangle",
+                    title: "事件记录",
+                    subtitle: "按天浏览 · 搜索筛选 · 从门锁同步",
+                    showsChevron: true)
+            }
             NavigationLink { FeedPage().environmentObject(app) } label: {
                 XRow(
                     systemImage: "bell",
