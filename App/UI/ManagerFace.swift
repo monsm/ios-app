@@ -63,7 +63,15 @@ struct ManagerFace: View {
                         .fontWeight(.medium)
                 }
             }
-            .navigationDestination(for: ManagerRoute.self) { r in
+            // ═══ 消费"带落点名过来"的跳转 ═══
+        //
+        // pendingSettingsFocus 是别人在跳转前写下的"到了之后开哪一屏"：
+        //   · 通知「已生成本机还原点」→ backup
+        //   · 销毁前备份闸的"先去备份" → backup
+        // 这三处写入的注释都写着"由设置页收到即开并清空"，
+        // 但三域合并成单一面板之后消费端丢了 —— 写了没人读，等于跳了个寂寞。
+        .onAppear { consumePendingFocus() }
+        .navigationDestination(for: ManagerRoute.self) { r in
                 routeDestination(r)
             }
         }
@@ -179,6 +187,16 @@ struct ManagerFace: View {
 
     // ── 路由落地 ──
     @ViewBuilder
+    /// 把 pendingSettingsFocus 翻译成真正要推入的页面，并立刻清空（只消费一次）。
+    private func consumePendingFocus() {
+        guard let f = app.pendingSettingsFocus else { return }
+        app.pendingSettingsFocus = nil
+        switch f {
+        case "backup": path = [.backup]
+        default: break        // 认不出的落点名不做猜测，留在原地
+        }
+    }
+
     private func routeDestination(_ r: ManagerRoute) -> some View {
         switch r {
         case .keys:           KeysPage()

@@ -125,6 +125,14 @@ const checks = [
     return a.includes('onChange(of: app.showGate)') && al.includes('func promptPasscode') &&
            a.includes('func confirmGatePassed') && a.includes('DB.verifyPasscode(pw)');
   }],
+  ['pendingSettingsFocus 有消费端', () => {
+    const m = CODE.get('ManagerFace.swift') || '';
+    return m.includes('consumePendingFocus') && m.includes('path = [.backup]');
+  }],
+  ['不再承诺不存在的「设置-诊断」', () => {
+    const a = CODE.get('LockKeeperApp.swift') || '';
+    return !a.includes('详见「设置-诊断」') && !a.includes('pendingSettingsFocus = "diag"');
+  }],
 ];
 
 let pass = 0;

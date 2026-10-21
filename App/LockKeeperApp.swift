@@ -1099,7 +1099,8 @@ struct RootView: View {
                 app.restoreLastTab(); app.applyPendingRoute()
                 // 397 解锁后跑一次本机库体自检 (纯本地读, 不碰 BLE); 只在异常时出声
                 let bad = app.runSelfCheck397()
-                if bad > 0 { app.showToast("本机自检发现 \(bad) 项异常，详见「设置-诊断」") }   // 397 本机自检发现
+                // 397 本机自检发现 —— 原来写"详见「设置-诊断」"，而那个页面不存在。
+            if bad > 0 { app.showToast("本机自检发现 \(bad) 项异常") }
             } else {
                 // 377/383: 锁重新落下 (手动锁 / 393 到点自动锁) 就把会话级授权一起收回 ——
                 // 访客区的放开与 sudo 券说的都是"这一次解锁验过", 锁都落了还认旧账就等于没拦。
@@ -1166,10 +1167,11 @@ struct RootView: View {
                 .accessibilityHidden(true)
             Text(w).xFont(.caption).fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
-            Button("去诊断") {
-                // 2026-10-15 走查 §4.3: 与 NoticeBudget 那条同病 —— 按钮说"去诊断", 原来只把人放到
-                // 设置页根上。带落点名, 由设置页直接开诊断面。
-                app.pendingSettingsFocus = "diag"
+            Button("打开设置") {
+                // 这里原来写 pendingSettingsFocus = "diag" 并声称"由设置页直接开诊断面" ——
+                // 但**全仓没有任何诊断页**（DiagKit 只有数据，没有任何界面消费它）。
+                // 承诺一个不存在的落点，比不给入口更糟：用户以为点进去能看到问题清单。
+                // 现在如实：按钮就是打开管理面板，不带假落点名。
                 app.requestRoute(.settings)
             }   // 377: 访客通道开着时先复核, 不白切
                 .xFont(.caption, weight: .medium)
