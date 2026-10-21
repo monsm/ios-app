@@ -1114,6 +1114,27 @@ struct FpStudio: View {
             .xCallout(XPalette.warn, .control, wash: 0.10)
         }
         // 317 归属先行: 选择器自带"空态就地新建" —— 一个成员都没有时直接弹新增, 不再把人赶去成员中心。
+        // 完整容量 —— 原来只有"仅剩 1 枚"这一个极端提示，
+        // 用户看不到锁里总共能录几枚、还剩几枚。
+        // 数据来自 StatusSnapshotData.fpCap / fpStock（协议 0x28 真实返回）
+        // 与 AddFingerPage 的容量卡同口径。
+        if let snap = DB.readStatus(mac), let cap = snap.fpCap, cap > 0 {
+            let left = snap.fpStock
+            let used = max(0, cap - left)
+            Label {
+                Text(left == 0
+                     ? "指纹库存已满 — 新增前请先删一枚"
+                     : "还可录 " + String(left) + " 枚 · 已用 " + String(used) + " / " + String(cap))
+                    .fixedSize(horizontal: false, vertical: true)
+            } icon: {
+                Image(systemName: "touchid")
+            }
+            .xFont(.caption)
+            .foregroundStyle(left == 0 ? XPalette.warn : XPalette.textSub)
+            .padding(.horizontal, XSpace.s)
+            .padding(.vertical, 4)
+            .xCallout(XPalette.hairline, .control, wash: 0.06)
+        }
         FpOwnerPicker(mac: mac, owner: $owner)
             .card()
     }
