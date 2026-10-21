@@ -246,7 +246,6 @@ enum XMotion {
     static var quick: Animation {
         switch tier {
         case "calm": return .easeOut(duration: 0.10)
-        case "lively": return .spring(response: 0.22, dampingFraction: 0.68)
         default: return .spring(response: 0.22, dampingFraction: 0.9)
         }
     }
@@ -255,7 +254,6 @@ enum XMotion {
     static var standard: Animation {
         switch tier {
         case "calm": return .easeInOut(duration: 0.16)
-        case "lively": return .spring(response: 0.45, dampingFraction: 0.68)
         default: return .spring(response: 0.4, dampingFraction: 0.85)
         }
     }
@@ -264,7 +262,6 @@ enum XMotion {
     static var soft: Animation {
         switch tier {
         case "calm": return .easeInOut(duration: 0.12)
-        case "lively": return .easeInOut(duration: 0.34)
         default: return .easeInOut(duration: 0.25)
         }
     }
@@ -273,7 +270,6 @@ enum XMotion {
     static var exit: Animation {
         switch tier {
         case "calm": return .easeOut(duration: 0.08)
-        case "lively": return .easeOut(duration: 0.20)
         default: return .easeOut(duration: 0.15)
         }
     }

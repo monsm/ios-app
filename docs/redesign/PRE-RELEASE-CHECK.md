@@ -210,3 +210,33 @@
 这三条已覆盖，重复查是浪费。还没对照过的：`motion.md`（转场时长与曲线）、
 `lists-and-tables.md`（行高与可点区域）、`modals.md`/`sheets.md`（何时用弹层还是推入）、
 `onboarding.md`（首次使用）。
+
+---
+
+# 追加：`motion.md` 审计（2026-10-22）
+
+HIG 的 motion 页给的是原则而非数值。挑了两条能机械验证的：
+
+## 「高频交互上不要加动画」
+
+> *"In apps, generally avoid adding motion to UI interactions that occur frequently."*
+
+扫 `.animation(..., value: X)` 里 X 属于输入/搜索/滚动/焦点类状态的：**仅 1 处**
+（`BackupStudio:687`，且那是**完成态**，不是高频）。
+
+## 「让人能取消动效，别让人等动画放完」
+
+- 开锁环 1.05s 是**蓄力手势**（按住才充能，松手即 `abortCharge` 归零），不是装饰动画
+- 所有 `XMotion` 令牌时长 0.08–0.70s，无阻塞式等待
+
+## 顺带发现的死代码：`lively` 档
+
+`XMotion.tier` 只返回 `"calm"` 或 `"standard"` —— **`"lively"` 四个分支永远走不到**，
+没有任何开关能切过去。而那一档的 `dampingFraction: 0.68` 会**过冲/回弹**，
+与本 App「金属刚性、无回弹」的设定冲突。
+
+**已删除该档**，注释改为两档。理由写在了代码里：
+> 需要"更有活力"的观感时，改 standard 的时长，而不是加回弹。
+
+现在 7 个令牌（quick / standard / soft / exit / summon / doorReveal / chargeReset）
+**全部有调用**，`dampingFraction` 全在 0.85–1.0 —— 整组动效没有一处过冲。
