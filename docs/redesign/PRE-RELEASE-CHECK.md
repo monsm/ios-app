@@ -68,10 +68,12 @@
 
 ### `rendercontrast.js` —— 实际对比度
 - **查**：令牌 × 透明度 × 背景 合成后的对比度；`--scan` 反查代码里实际用到的组合
-- **不查**：多层半透明叠加（如 surface 上叠 surfaceAlt 再叠 opacity）
+- **`--stack`**：算**两层背景** —— 同色相淡底板 + 同色文字（告警行、胶囊）。
+  实测 0.10–0.12 的板安全（6.06–8.07:1），0.35 会掉到 3.26–4.34（那是描边档，上面不该压文字）
+- **不查**：三层及以上叠加；渐变内部的局部对比度
 - **判据**：文字 4.5:1、信息性图形 3:1、装饰/网格线约 1.4:1
 - **豁免**：`// @contrast-allow <理由>`，**豁免必须写明理由**
-- `node tools/rendercontrast.js` / `node tools/rendercontrast.js --scan`
+- `node tools/rendercontrast.js`（矩阵）/ `--scan`（反查代码）/ `--stack`（两层叠加）
 
 ### `cilog.js` —— 从 CI 取真实报错
 - **查**：失败 job 日志里的 `error:` 行（文件:行:列 + 编译器原话）

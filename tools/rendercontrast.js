@@ -114,6 +114,38 @@ if (process.argv.includes('--scan')) {
   process.exit(0);
 }
 
+// ══════════════════════════════════════════════════════════════
+// --stack：**两层背景**（淡色底板 + 上面的文字）
+// ══════════════════════════════════════════════════════════════
+// 单层扫描的盲区：界面里常见「同色相淡底 + 同色文字」，
+// 例如告警行用 warn×0.12 做底板、文字也是 warn —— 同色相叠在一起，
+// 对比度比直接压在原背景上低一截。这里专门算这种。
+if (process.argv.includes('--stack')) {
+  const bgs = [['surface', DARK.surface], ['surfaceAlt', DARK.surfaceAlt]];
+  const toks = [['warn', DARK.warn], ['danger', DARK.danger], ['ok', DARK.ok], ['accentText', DARK.accentText]];
+  const alphas = [0.10, 0.12, 0.35];
+  console.log('同色相文字压在**同色淡底板**上（底板叠在背景上，文字再压上去）\n');
+  console.log('组合'.padEnd(46) + '对比度   判定');
+  console.log('-'.repeat(72));
+  let bad = 0;
+  for (const [tn, tv] of toks) {
+    for (const [bn, bv] of bgs) {
+      for (const a of alphas) {
+        const plate = blend(tv, bv, a);
+        const c = contrast(tv, plate);
+        const label = tn + ' on (' + bn + ' ← ' + tn + '×' + a + ')';
+        const mark = c < 3 ? '✗ 低于 3:1' : (c < 4.5 ? '⚠ 低于 4.5' : '✓');
+        if (c < 4.5) { console.log(label.padEnd(46) + c.toFixed(2).padStart(6) + '   ' + mark); bad++; }
+      }
+    }
+  }
+  if (!bad) console.log('（没有低于 4.5 的组合）');
+  console.log('-'.repeat(72));
+  console.log('低于 4.5: ' + bad + ' 处。注意：淡板越厚，同色文字越糟；');
+  console.log('0.10–0.12 通常安全（6–8:1），0.35 会掉到 3.3–4.3（那是描边的档，上面不该压文字）。');
+  process.exit(0);
+}
+
 let fails = 0;
 console.log('深色模式 · 合成后的实际对比度（文字需 ≥4.5:1，信息性图形 ≥3:1）');
 console.log('');
