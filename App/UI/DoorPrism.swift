@@ -380,7 +380,19 @@ struct DoorPrism<B: View, D: View, F: View>: View {
         // reduceMotion: 只显示当前面的正面视角，不随拖拽/过渡转动
         guard !reduceMotion else { return base }
         let offset: CGFloat = abs(drag) > 0.001 ? drag : (turn * turnSign)
-        return base - Double(offset * 120)
+        // ═══ 这里原来是 base − offset·120，**符号反了** ═══
+        //
+        // 上面那段注释写的就是「-新面角 + sign*120」（加号），
+        // 但代码写成了减号 —— 注释与实现不一致。
+        //
+        // 后果（验算过）:
+        //   B→D 时 turn=1 应显示 B，实际显示 **F**；
+        //   过渡中应显示 B+D，实际显示 D+F。
+        //   也就是动画从**错误的那一面**开始 —— 这就是"无法正常切换"的根因。
+        //
+        // 另外拖拽预览也会跟着错: 向左拖本该把 D 带进来，
+        // 减号却把 F 带进来，与松手后真正跳去的 D 不一致 → 视觉跳变。
+        return base + Double(offset * 120)
     }
 
     /// 翻页方向（+1 下一面 / -1 上一面）
