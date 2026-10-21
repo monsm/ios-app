@@ -48,6 +48,7 @@ struct EventsPage: View {
     @State private var noteTarget: Rec?
     @State private var noteDraft = ""
     /// 正在从门锁拉日志
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var syncing = false
     /// 同步详情 —— 只在"结果不对劲"时弹出，让用户能截给我看卡在哪一步。
     @State private var syncDetail: String?
@@ -77,6 +78,33 @@ struct EventsPage: View {
         .navigationTitle("事件")
         .navigationBarTitleDisplayMode(.large)
         .searchable(text: $search, isPresented: $searchActive, prompt: "搜索事件")
+        // ═══ 同步时的可见指示 ═══
+        //
+        // 同步入口在**菜单里**：点一下菜单就关闭了，所以 `Button(syncing ? "同步中…" : …)`
+        // 这句文案用户**永远看不到**。而跨页拉日志要好几秒（最多 12 页 BLE 往返），
+        // 期间屏幕上什么都没有 —— 用户会以为按钮没生效，于是再点一次。
+        //
+        // 这里给一条非阻塞的常驻指示：不挡点击、不弹窗，只是让"正在发生"可见。
+        .overlay(alignment: .top) {
+            if syncing {
+                HStack(spacing: XSpace.s) {
+                    ProgressView().controlSize(.small)
+                    Text("正在从门锁同步…")
+                        .xFont(.system(.footnote, weight: .medium))
+                        .foregroundStyle(XPalette.text)
+                }
+                .padding(.horizontal, XSpace.l)
+                .padding(.vertical, XSpace.s)
+                .xPlate(XPalette.surface, .capsule)
+                .overlay(Capsule().strokeBorder(XPalette.hairline, lineWidth: 1))
+                .padding(.top, XSpace.s)
+                .allowsHitTesting(false)
+                .transition(.opacity)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("正在从门锁同步日志")
+            }
+        }
+        .animation(reduceMotion ? nil : XMotion.soft, value: syncing)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink { StatsPage().environmentObject(app) } label: {

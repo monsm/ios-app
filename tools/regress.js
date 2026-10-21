@@ -367,6 +367,14 @@ const checks = [
     const need = ['AlarmsPage.swift', 'EventsPage.swift', 'StatsPage.swift'];
     return need.every(f => (CODE.get(f) || '').includes('XSkeleton'));
   }],
+  ['长操作有可见的进行中指示', () => {
+    // 菜单里的按钮点完菜单就关了，"同步中…"这句文案用户永远看不到。
+    // 首启路径上的长等待各自都有反馈：
+    //   配对 = 步骤脊梁 / 录指纹 = 进度环 / 开门 = 相位 / 固件 = 圆环+三段
+    // 只有事件页同步原来是静默的，已补常驻指示。
+    const e = CODE.get('EventsPage.swift') || '';
+    return e.includes('正在从门锁同步') && e.includes('ProgressView().controlSize(.small)');
+  }],
 ];
 
 let pass = 0;
