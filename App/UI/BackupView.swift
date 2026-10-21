@@ -37,9 +37,9 @@ struct BackupView: View {
 
             ScrollView {
                 VStack(spacing: XSpace.l) {
-                    exportSection
-                    importSection
-                    studioSection
+                    exportSection.xScrollLift()
+                    importSection.xScrollLift()
+                    studioSection.xScrollLift()
                 }
                 .padding(.horizontal, XSpace.gutter)
                 .padding(.vertical, XSpace.l)

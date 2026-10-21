@@ -38,16 +38,16 @@ struct GatewayPage: View {
             ScrollView {
                 VStack(spacing: XSpace.l) {
                     if !confirmed {
-                        stepOneCard
+                        stepOneCard.xScrollLift()
                     } else {
-                        stepTwoCard
-                        if !steps.isEmpty || !error.isEmpty { progressCard }
+                        stepTwoCard.xScrollLift()
+                        if !steps.isEmpty || !error.isEmpty { progressCard.xScrollLift() }
                     }
 
                     if !gateways.isEmpty {
-                        ForEach(gateways) { g in gatewayCard(g) }
+                        ForEach(gateways) { g in gatewayCard(g).xScrollLift() }
                     } else {
-                        emptyState
+                        emptyState.xScrollLift()
                     }
                 }
                 .padding(.horizontal, XSpace.gutter)

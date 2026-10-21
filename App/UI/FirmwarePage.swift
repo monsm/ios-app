@@ -78,17 +78,17 @@ struct FirmwarePage: View {
             ScrollView {
                 VStack(spacing: XSpace.l) {
                     if running {
-                        upgradeStage
+                        upgradeStage.xScrollLift()
                     } else if failed {
-                        failedStage
+                        failedStage.xScrollLift()
                     } else {
-                        versionCard
-                        if let fw { packageCard(fw) }
-                        checklistCard
-                        actionCard
-                        if !queueSel.isEmpty || !queueOutcomes.isEmpty { queueCard }
+                        versionCard.xScrollLift()
+                        if let fw { packageCard(fw).xScrollLift() }
+                        checklistCard.xScrollLift()
+                        actionCard.xScrollLift()
+                        if !queueSel.isEmpty || !queueOutcomes.isEmpty { queueCard.xScrollLift() }
                     }
-                    historyCard
+                    historyCard.xScrollLift()
                 }
                 .padding(.horizontal, XSpace.gutter)
                 .padding(.vertical, XSpace.l)

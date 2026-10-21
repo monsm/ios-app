@@ -14,9 +14,9 @@ struct CareRemindersView: View {
 
             ScrollView {
                 VStack(spacing: XSpace.l) {
-                    bulletinCard
-                    annivCard
-                    bdayCard
+                    bulletinCard.xScrollLift()
+                    annivCard.xScrollLift()
+                    bdayCard.xScrollLift()
                 }
                 .padding(.horizontal, XSpace.gutter)
                 .padding(.vertical, XSpace.l)
