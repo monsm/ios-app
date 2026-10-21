@@ -154,7 +154,7 @@ struct BackupView: View {
                 }
                 .disabled(importText.isEmpty)
                 Button("导入", role: .destructive) { confirmImport() } // 覆盖同名设备, 属破坏性动作
-                    .disabled(busy || importText.isEmpty)
+                    .disabled(importText.isEmpty)
             }
         }
     }
