@@ -168,6 +168,19 @@ struct MePage: View {
 
     private var lockSection: some View {
         XPanel {
+            // ═══ 这台锁 ═══
+            //
+            // DevicePage 是 435 行的三层递进重写（身份 → 需要你处理的 → 折叠明细），
+            // 但**全仓零引用** —— 做好了没接进导航。
+            // 它有几项 HomeConsole 没有的内容：锁内容量占用、固件版本、
+            // 信号格、最近开门明细。
+            NavigationLink { DevicePage().environmentObject(app) } label: {
+                XRow(
+                    systemImage: "lock.square",
+                    title: "这台锁",
+                    subtitle: "容量 / 固件 / 信号 / 最近开门",
+                    showsChevron: true)
+            }
             NavigationLink { LocksPage().environmentObject(app) } label: {
                 XRow(
                     systemImage: "square.stack.3d.up",
