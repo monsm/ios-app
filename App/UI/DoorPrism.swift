@@ -211,7 +211,13 @@ struct DoorPrism<B: View, D: View, F: View>: View {
         //   ③ 近大远小用 scaleEffect(D/(D-z)) 自己算
         //
         // 这样每个量都可验算，不依赖任何未文档化的行为。
-        let z = A * cos(rad)              // 面中心的 z（>0 朝观察者）
+        // ★ 规格里的 z = -0.35·narrow 终于能实现了
+        //   （之前靠 SwiftUI 的 rotation3DEffect，没有 z 平移可用）
+        //   单位换算: 原型以 R=1.0 为单位，而 A = R/2，
+        //   所以 0.35 个 R = 0.7 个 A → zShift = -0.7·A·narrow
+        //   把整组棱柱沿 z 后退，深度缩放会自然把它算进去。
+        let zShift = -A * 0.7 * breathNarrow
+        let z = A * cos(rad) + zShift     // 面中心的 z（>0 朝观察者）
         let x = A * sin(rad)              // 面中心的 x
         let D = A * prismCameraDistance   // 相机距离（pt）
         let depthScale = D / (D - z)      // 近大远小
@@ -394,22 +400,27 @@ struct DoorPrism<B: View, D: View, F: View>: View {
     ///     drag=1   转过 120°  rel= 60°  |cos|=0.500  narrow=0  scale=1.0000
     ///
     /// 未拖拽时（drag=0）恒为 1.0000，所以静止在每个面都正常。
-    private var breathScale: CGFloat {
-        // reduceMotion: 不做呼吸，恒为原始大小
+    private var breathNarrow: CGFloat {
+        // reduceMotion: 不做呼吸，恒为 0
         //
         // 这条 guard 上一轮被一次替换操作覆盖掉了 —— 回归检查时发现。
-        guard !reduceMotion else { return 1.0 }
+        guard !reduceMotion else { return 0 }
         // 手势拖拽 + 按钮翻页，两者都算进度。
-        // drag 是手指实时位置（±1），turn 是 step() 动画驱动（0→1→0）。
-        // 取绝对值后合并 —— 手指往哪拖都算"离开当前面"。
-        // 未拖拽时 turn 从 1→0，呼吸包络就是 sin(π*turn) 的形状
         let progress = abs(drag) > 0.001 ? abs(drag) : (1 - turn)
         let turned = progress * 120          // 转过多少度
         let relToEdge = turned - 60          // 棱在两面中间 60° 处
         let raw = abs(cos(relToEdge * .pi / 180))
         // |cos| 在面正对时为 0.5，棱正对时为 1.0 → 归一化到 [0,1]
-        let narrow = max(0, min(1, (raw - 0.5) / 0.5))
-        return 1 - 0.20 * narrow
+        return max(0, min(1, (raw - 0.5) / 0.5))
+    }
+
+    /// 侧面呼吸的缩放 —— 由**当前朝向**推导，不是独立曲线
+    ///
+    /// narrow ∈ [0,1]：0 = 面正对（最宽），1 = 棱正对（最窄）
+    /// scale = 1 - 0.20·narrow（规格原式）
+    private var breathScale: CGFloat {
+        guard !reduceMotion else { return 1.0 }
+        return 1 - 0.20 * breathNarrow
     }
 
 
