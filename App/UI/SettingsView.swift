@@ -12,7 +12,9 @@ import UIKit
 struct SafemodeIntroView: View {
     var mode = "safe"
     @EnvironmentObject var app: AppState
-    @State private var switching = false      // 拍板 #2: cmd20 下发中, 防止连点重复改锁端策略
+    @State private var switching = false
+    /// 静音下发中（防止连点）
+    @State private var silentBusy = false      // 拍板 #2: cmd20 下发中, 防止连点重复改锁端策略
     private var isOtp: Bool { mode == "otp" }
 
     var body: some View { vkBody.destined(.safemodeIntro) }
@@ -120,6 +122,20 @@ struct SafemodeIntroView: View {
                               on: st.broadcastMode == 1)
                     switchRow("临时密码", st.tempPwdMode == 1 ? "开启" : "关闭",
                               on: st.tempPwdMode == 1)
+                    XHairline(inset: 0)
+                    // ═══ 静音（可改）═══
+                    //
+                    // cmd18 与状态字段 soundVolumn 用的是**同一个字节**
+                    //（0=有声 / 1=静音），所以这个开关可以安全地双向绑定。
+                    //
+                    // 上面三行只读：广播模式与临时密码目前没有可改的入口
+                    //（cmd19 对应的状态位是否就是 tempPwdMode 无法确认，故不接）；
+                    // 自动落锁与防拆报警连"当前值"都读不到，写盲更不该做。
+                    XToggle("静音模式", isOn: Binding(
+                        get: { st.soundVolumn == 1 },
+                        set: { on in Task { await setSilentMode(on) } }))
+                        .disabled(silentBusy)
+                        .xFont(.caption)
                 }
             }
             .xScrollLift()
@@ -146,6 +162,33 @@ struct SafemodeIntroView: View {
             .foregroundStyle(XPalette.textTertiary)
             .textCase(.uppercase)
             .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// 静音开关下发。
+    ///
+    /// 与 cmd20 同一套口径（拍板 #2）：**rc=0 只说明锁收了命令，不代表真的改了**。
+    /// 所以下发后必须回读 soundVolumn，读到的和用户想要的不一致就如实说不生效，
+    /// 而不是先把 UI 翻过去再让用户以为成了。
+    private func setSilentMode(_ on: Bool) async {
+        guard !silentBusy else { return }
+        silentBusy = true
+        defer { silentBusy = false }
+        do {
+            try await app.lock.setSilent(on)
+            await app.refreshStatusQuietly(manual: true)
+            let now = (app.status?.soundVolumn == 1)
+            if now == on {
+                app.lock.log("warn", "静音已切换为 \(on ? "静音" : "有声") (cmd18, 回读确认)")
+                app.showToast(on ? "已切到静音" : "已恢复提示音")
+                XHaptics.success()
+            } else {
+                app.lock.log("warn", "cmd18 已下发但回读 soundVolumn 与预期不符 —— 视为未生效")
+                app.showToast("命令已下发，但回读显示未生效 —— 请重读锁信息再试")
+            }
+        } catch {
+            app.lock.log("warn", "切换静音失败 (cmd18): \(error.localizedDescription)")
+            app.showToast("切换失败：命令没有成功下发")
+        }
     }
 
     /// 拍板 #2: 下发 cmd20 后**必须回读校验** —— rc=0 只说明锁收了命令, 不代表验证策略真的改了。
