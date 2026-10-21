@@ -539,7 +539,6 @@ struct AutoCalView: View {
             ScrollView {
                 VStack(spacing: XSpace.l) {
                     signalCard
-                    thresholdCard
                     dataCard
                 }
                 .padding(.horizontal, XSpace.gutter)
