@@ -32,11 +32,11 @@ struct SyncTimeView: View {
             }
             Section {
                 XBusyButton(title: "将手机时间同步到锁内",
-                           systemImage: "clock.arrow.circlepath",
-                           busy: busy,
-                           disabled: app.current == nil) {
+                            systemImage: "clock.arrow.circlepath",
+                            busy: busy) {
                     Task { await run() }
                 }
+                .disabled(app.current == nil)
                 if !result.isEmpty {
                     Label(result, systemImage: failed ? "xmark.octagon.fill" : "checkmark.circle.fill")
                         .xFont(.footnote)

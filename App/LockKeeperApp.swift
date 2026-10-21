@@ -1431,7 +1431,8 @@ struct Card<Content: View>: View {
         // `.legacy` 分支是原来这段 body 逐字搬过去的，见 VariantGrammar.swift 的 VK.card。
         // 传 tintWash 而不是 tint 本体：0.14 这个叠底浓度是"玻璃时代"定下来的，
         // 它的理由写在下面 tintWash 的注释里，两套新界面各自决定怎么用这个语义色。
-        VK().card(tint: tint == nil ? nil : tintWash) { content }
+        // 2026-10-21: VK 语法层已删 → 用 XPanel（它自带容器档位 + 描边，不自绘）
+        XPanel(kind: .group) { content }
     }
 }
 struct SectionTitle: View {
@@ -1440,7 +1441,18 @@ struct SectionTitle: View {
     var body: some View {
         // 2026-10-16: 形状交给当前变体决定 (VK.sectionTitle)，21 处调用一次跟着两套走。
         // legacy 分支是这里原来的实现逐字搬过去的，见 VariantGrammar.swift。
-        VK().sectionTitle(text: text, count: count)
+        HStack(spacing: XSpace.xs) {
+            Text(text)
+                .xFont(.subheadline, weight: .semibold)
+                .foregroundStyle(XPalette.text)
+            if let count {
+                Text("\(count)")
+                    .xFont(.caption)
+                    .foregroundStyle(XPalette.textSub)
+                    .monospacedDigit()
+            }
+            Spacer(minLength: 0)
+        }
     }
 }
 

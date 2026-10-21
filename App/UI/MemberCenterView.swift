@@ -118,7 +118,7 @@ struct MemberDetail360View: View {
                             .foregroundStyle(XPalette.textSub)
                     }
                     Spacer(minLength: 0)
-                    XStatusPill(text: "名下 \(a.owns) 条", systemImage: "key.fill", tone: .accent)
+                    XStatusPill(text: "名下 \(a.owns) 条", tone: .accent, systemImage: "key.fill")
                 }
                 // 465 紧急联系行 (纯本地)
                 LabeledContent("紧急联系") {   // 465 紧急联系
@@ -885,7 +885,7 @@ struct UnclaimedClaimView: View {
                                     .foregroundStyle(XPalette.textSub)
                                     .fixedSize(horizontal: false, vertical: true)
                                 Spacer(minLength: 0)
-                                XStatusPill(text: "待认领", systemImage: "questionmark.circle", tone: .neutral)
+                                XStatusPill(text: "待认领", tone: .neutral, systemImage: "questionmark.circle")
                             }
                             Picker("认领给", selection: Binding(
                                 get: { selMember[r.key] ?? "" },
@@ -1109,9 +1109,7 @@ struct MemberExitWizard: View {
                                     Button("停用 (入回收站)") { decide(it, "delete") }
                                     Button("保留原样") { decide(it, "keep") }
                                 } label: {
-                                    XStatusPill(text: optionLabel(decisions[it.id]),
-                                                systemImage: "ellipsis.circle",
-                                                tone: decisions[it.id] == nil ? .neutral : .accent)
+                                    XStatusPill(text: optionLabel(decisions[it.id]), tone: decisions[it.id] == nil ? .neutral : .accent, systemImage: "ellipsis.circle")
                                 }
                             }
                             .frame(minHeight: XHit.min)

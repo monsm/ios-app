@@ -276,9 +276,9 @@ struct LockOverviewView: View {
                             .monospacedDigit()
                             .foregroundStyle(lag.lagging.contains(u.mac) ? XPalette.warn : XPalette.text)
                         if lag.lagging.contains(u.mac) {
-                            XStatusPill(text: "旧版本", systemImage: "arrow.down.circle", tone: .warn)
+                            XStatusPill(text: "旧版本", tone: .warn, systemImage: "arrow.down.circle")
                         } else if PidMap.canDeviceUpgrade(pidOf(u.mac)) {
-                            XStatusPill(text: "可本地升级", systemImage: "arrow.up.circle", tone: .ok)
+                            XStatusPill(text: "可本地升级", tone: .ok, systemImage: "arrow.up.circle")
                         }
                     }
                     .frame(minHeight: XHit.min)

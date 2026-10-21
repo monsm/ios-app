@@ -1037,7 +1037,7 @@ struct PwdStudio: View {
                     .foregroundStyle(XPalette.text)
                 VStack(alignment: .leading, spacing: XSpace.xs) {
                     HStack(spacing: XSpace.s) {
-                        XStatusPill(text: kind == 0 ? "长期密码" : "临时码", systemImage: kind == 0 ? "infinity" : "clock", tone: .accent)
+                        XStatusPill(text: kind == 0 ? "长期密码" : "临时码", tone: .accent, systemImage: kind == 0 ? "infinity" : "clock")
                         Text(CredentialOrg.ownerName(owner))
                             .xFont(.caption, weight: .medium)
                             .foregroundStyle(XPalette.text)

@@ -2085,7 +2085,7 @@ struct ExportCenterView: View {
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            XStatusPill(text: "核对于 " + v.at, systemImage: v.icon, tone: v.tone)
+            XStatusPill(text: "核对于 " + v.at, tone: v.tone, systemImage: v.icon)
         }
         .accessibilityElement(children: .combine)
     }
