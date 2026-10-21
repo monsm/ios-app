@@ -1504,20 +1504,21 @@ struct ExportCenterView: View {
             ScrollView {
                 VStack(spacing: XSpace.l) {
                     // 范围与列选择
-                    scopeCard
+                    scopeCard.xScrollLift()
                     // 动作分组: 文件导出 / 卡片与长图 / 打印
-                    fileActionsCard
-                    imageActionsCard
-                    printActionsCard
+                    fileActionsCard.xScrollLift()
+                    imageActionsCard.xScrollLift()
+                    printActionsCard.xScrollLift()
                     // 进度 / 失败 / 完成 / 校验
-                    if progress.running { progressSection }
-                    if !progress.failed.isEmpty { failedCard }
+                    if progress.running { progressSection.xScrollLift() }
+                    if !progress.failed.isEmpty { failedCard.xScrollLift() }
                     if let item = progress.done {
                         doneSection(item)
                             .animation(XMotion.standard, value: lastSuccess)
+                            .xScrollLift()
                     }
-                    verifySection
-                    if !lastPath.isEmpty { pathSection }
+                    verifySection.xScrollLift()
+                    if !lastPath.isEmpty { pathSection.xScrollLift() }
                 }
                 .padding(.horizontal, XSpace.gutter)
                 .padding(.vertical, XSpace.l)

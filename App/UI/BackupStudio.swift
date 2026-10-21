@@ -18,15 +18,13 @@ struct BackupStudioView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: XSpace.l) {
-                    trustHeader
-                    actionCards
-                    cadenceCard
+                    trustHeader.xScrollLift()
+                    actionCards.xScrollLift()
+                    cadenceCard.xScrollLift()
                 }
                 .padding(.vertical, XSpace.m)
             }
             .navigationTitle("备份工作室")
-            .xList()
-            .xScreen()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
             .sheet(isPresented: $showExport) { ExportWizardView() }
             .sheet(isPresented: $showRestore) { RestoreWizardView() }
