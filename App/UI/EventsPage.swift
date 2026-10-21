@@ -126,41 +126,61 @@ struct EventsPage: View {
     // ═══════════════════════════════════════════════════════
 
     private var eventList: some View {
-        List {
-            ForEach(grouped, id: \.day) { group in
-                Section {
-                    ForEach(group.items) { rec in
-                        eventRow(rec)
-                    }
-                } header: {
-                    // 组头带当天统计 —— 原来只有"今天/昨天", 看不出那天忙不忙、
-                    // 有没有告警。一行小字把这个信息补上, 不用点进任何地方。
-                    HStack(spacing: XSpace.xs) {
-                        Text(dayLabel(group.day))
-                            .xFont(.footnote, weight: .medium)
-                            .foregroundStyle(XPalette.textSub)
-                        Text("\(group.items.count) 条")
-                            .xFont(.caption2.monospacedDigit())
-                            .foregroundStyle(XPalette.textTertiary)
-                        let alarms = group.items.filter { $0.alarm }.count
-                        if alarms > 0 {
-                            HStack(spacing: 2) {
-                                Image(systemName: "exclamationmark.triangle.fill")
-                                    .font(.system(size: 8, weight: .semibold))
-                                Text("\(alarms)")
-                                    .xFont(.caption2.monospacedDigit())
+        // M5 重做: List(plain) + Section → ScrollView + 每日一张 XPanel
+        //
+        // 组头统计（当天条数 + 告警数）**完整保留** ——
+        // 那段注释说得很清楚: "原来只有今天/昨天，看不出那天忙不忙、
+        // 有没有告警。一行小字把这个信息补上"。这是真实信息，不是装饰。
+        ScrollView {
+            LazyVStack(spacing: XSpace.m) {
+                ForEach(grouped, id: \.day) { group in
+                    XPanel(kind: .group, padding: 0) {
+                        VStack(spacing: 0) {
+                            dayHeader(group)
+                            ForEach(Array(group.items.enumerated()), id: \.element.id) { idx, rec in
+                                eventRow(rec)
+                                if idx < group.items.count - 1 {
+                                    Divider().overlay(XPalette.hairline)
+                                        .padding(.leading, XSpace.card + 28 + XSpace.s)
+                                }
                             }
-                            .foregroundStyle(XPalette.warn)
                         }
-                        Spacer(minLength: 0)
                     }
-                    .textCase(nil)
                 }
             }
+            .padding(.horizontal, XSpace.gutter)
+            .padding(.top, XSpace.s)
+            .padding(.bottom, XSpace.xxl)
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
         .background(XPalette.canvas)
+    }
+
+    /// 当日组头 —— 日期 + 条数 + 告警数
+    ///
+    /// 与原来 Section header 完全同口径，只是换了个容器。
+    private func dayHeader(_ group: (day: String, items: [Rec])) -> some View {
+        HStack(spacing: XSpace.xs) {
+            Text(dayLabel(group.day))
+                .xFont(.footnote, weight: .medium)
+                .foregroundStyle(XPalette.textSub)
+            Text("\(group.items.count) 条")
+                .xFont(.caption2.monospacedDigit())
+                .foregroundStyle(XPalette.textTertiary)
+            let alarms = group.items.filter { $0.alarm }.count
+            if alarms > 0 {
+                HStack(spacing: 2) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 8, weight: .semibold))
+                    Text("\(alarms)")
+                        .xFont(.caption2.monospacedDigit())
+                }
+                .foregroundStyle(XPalette.warn)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, XSpace.card)
+        .padding(.top, XSpace.m)
+        .padding(.bottom, XSpace.s)
     }
 
     private func eventRow(_ rec: Rec) -> some View {

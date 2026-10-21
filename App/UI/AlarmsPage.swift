@@ -83,48 +83,84 @@ struct AlarmsPage: View {
     // ═══════════════════════════════════════════════════════
 
     private var alarmList: some View {
-        List {
-            if !alarms.isEmpty {
-                Section {
+        // M5 重做: List + Section → ScrollView + XPanel 卡片流
+        //
+        // 组头信息（"N 条待处理" / "已处理"）保留为卡内小标题 ——
+        // 那是用户扫读时的锚点，不能丢。
+        ScrollView {
+            VStack(spacing: XSpace.l) {
+                if !alarms.isEmpty {
                     severityOverview
+                        .padding(.top, XSpace.s)
                 }
-                .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: XSpace.s, trailing: 0))
-            }
 
-            if !alarms.isEmpty {
-                Section {
-                    ForEach(alarms) { rec in
-                        alarmRow(rec, handled: false)
-                    }
-                } header: {
-                    Text("\(alarms.count) 条待处理")
-                }
-            }
-
-            if !handled.isEmpty {
-                Section {
-                    if showHandled {
-                        ForEach(handled) { rec in
-                            alarmRow(rec, handled: true)
-                        }
-                    } else {
-                        Button {
-                            withAnimation(XMotion.soft) { showHandled = true }
-                        } label: {
-                            Text("显示 \(handled.count) 条已处理")
-                                .xFont(.footnote)
-                                .foregroundStyle(XPalette.textSub)
+                if !alarms.isEmpty {
+                    XPanel(kind: .group, padding: 0) {
+                        VStack(spacing: 0) {
+                            groupHeader("\(alarms.count) 条待处理", tone: XPalette.warn)
+                            ForEach(Array(alarms.enumerated()), id: \.element.id) { idx, rec in
+                                alarmRow(rec, handled: false)
+                                if idx < alarms.count - 1 {
+                                    Divider().overlay(XPalette.hairline)
+                                        .padding(.leading, XSpace.card + 28 + XSpace.s)
+                                }
+                            }
                         }
                     }
-                } header: {
-                    Text("已处理")
+                }
+
+                if !handled.isEmpty {
+                    XPanel(kind: .group, padding: 0) {
+                        VStack(spacing: 0) {
+                            groupHeader("已处理 \(handled.count)", tone: XPalette.textSub)
+                            if showHandled {
+                                ForEach(Array(handled.enumerated()), id: \.element.id) { idx, rec in
+                                    alarmRow(rec, handled: true)
+                                    if idx < handled.count - 1 {
+                                        Divider().overlay(XPalette.hairline)
+                                            .padding(.leading, XSpace.card + 28 + XSpace.s)
+                                    }
+                                }
+                            } else {
+                                Button {
+                                    withAnimation(XMotion.soft) { showHandled = true }
+                                } label: {
+                                    HStack {
+                                        Text("显示 \(handled.count) 条已处理")
+                                            .xFont(.footnote)
+                                            .foregroundStyle(XPalette.textSub)
+                                        Spacer(minLength: 0)
+                                        Image(systemName: "chevron.down")
+                                            .font(.system(size: XIcon.xs, weight: .semibold))
+                                            .foregroundStyle(XPalette.textTertiary)
+                                    }
+                                    .padding(.horizontal, XSpace.card)
+                                    .frame(minHeight: XHit.min)
+                                    .contentShape(Rectangle())
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
                 }
             }
+            .padding(.horizontal, XSpace.gutter)
+            .padding(.bottom, XSpace.xxl)
         }
-        .listStyle(.insetGrouped)
-        .scrollContentBackground(.hidden)
         .background(XPalette.canvas)
+    }
+
+    /// 卡内组头 —— 取代原来 Section 的 header
+    private func groupHeader(_ text: String, tone: Color) -> some View {
+        HStack {
+            Text(text)
+                .xFont(.caption, weight: .medium)
+                .foregroundStyle(tone)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, XSpace.card)
+        .padding(.top, XSpace.m)
+        .padding(.bottom, XSpace.s)
     }
 
     // ═══════════════════════════════════════════════════════
