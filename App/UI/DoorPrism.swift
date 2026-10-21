@@ -97,7 +97,13 @@ struct DoorPrism<B: View, D: View, F: View>: View {
                         step(direction)
                     }
                 }
-                .allowsHitTesting(!dragging)
+                // ═══ 这里原来有一行 .allowsHitTesting(!dragging) —— 已删 ═══
+                //
+                // 它是个自锁 bug: .onChanged 第一帧就把 dragging 置 true，
+                // 而这一行随即让整个热区**不再接收触摸** → SwiftUI 取消手势 →
+                // 拖到一半就断，松手时 .onEnded 也不一定来。
+                //
+                // 「切不动」的直接原因就是这个。热区必须始终可点。
             }
         }
     }
@@ -339,6 +345,11 @@ struct DoorPrism<B: View, D: View, F: View>: View {
 
 
     // ── 手势 ──
+    /// 边缘拖拽热区
+    ///
+    /// 归一化除数从 160 改成 120 —— 热区只有 24pt 宽，
+    /// 原本要拖 80pt 才翻面，手指很容易在 24pt 的边缘条里先滑出去。
+    /// 120 对应 60pt 翻面，与 iOS 的「轻扫」手感接近。
     private func edgeZone(width: CGFloat, onStep: @escaping (Int) -> Void) -> some View {
         Color.clear
             .frame(width: width)
@@ -347,7 +358,7 @@ struct DoorPrism<B: View, D: View, F: View>: View {
                 DragGesture(minimumDistance: 4, coordinateSpace: .local)
                     .onChanged { g in
                         dragging = true
-                        let p = g.translation.width / 160
+                        let p = g.translation.width / 120
                         drag = max(-1, min(1, p))
                         // 每跨过 1/3 给一次轻震
                         let tick = Int(drag * 3)
@@ -358,7 +369,7 @@ struct DoorPrism<B: View, D: View, F: View>: View {
                     }
                     .onEnded { g in
                         dragging = false
-                        let p = g.translation.width / 160
+                        let p = g.translation.width / 120
                         if abs(p) > DoorGeometry.flipThreshold {
                             onStep(p > 0 ? -1 : 1)
                         }
