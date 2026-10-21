@@ -559,11 +559,21 @@ struct HomeConsole: View {
         .accessibilityLabel("今日分时开门，共 \(opensToday) 次，最早 \(firstOpenText)")
     }
 
+    /// 分时柱的配色 —— 按**实测对比度**定的，不是凭感觉。
+    ///
+    /// 深色模式下把令牌叠透明度后，实际对比度会掉得比想象快：
+    ///   textSub×0.5  = 2.68 : 1   ✗ 低于 WCAG 对信息性图形的 3:1
+    ///   textSub×0.6  = 3.32 : 1   ✓
+    ///   accent×0.55  = 3.35 : 1   ✓
+    ///   surfaceAlt   = 1.10 : 1   ✗ 空柱几乎看不见，图就不像图
+    ///   hairline     = 1.42 : 1   ✓ 作为"基线"可读（图表网格线同档）
+    ///
+    /// 柱子是**传达数据**的图形，所以要过 3:1；空柱只是基线，按网格线处理。
     private func barTone(hour: Int, count: Int, peak: Int, now: Int) -> Color {
         if hour == now { return XPalette.accent }
         if count == peak && count > 0 { return XPalette.accent.opacity(0.55) }
-        if count > 0 { return XPalette.textSub.opacity(0.5) }
-        return XPalette.surfaceAlt
+        if count > 0 { return XPalette.textSub.opacity(0.6) }
+        return XPalette.hairline
     }
 
     // ─────────────────────────────────────────── ⑦ 成员
