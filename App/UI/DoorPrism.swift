@@ -227,7 +227,9 @@ struct DoorPrism<B: View, D: View, F: View>: View {
         let z = A * cos(rad) + zShift     // 面中心的 z（>0 朝观察者）
         let x = A * sin(rad)              // 面中心的 x
         let D = A * prismCameraDistance   // 相机距离（pt）
-        let depthScale = D / (D - z)      // 近大远小
+        // 兜底: 若 A 或 D 退化成 0，depthScale 会是 NaN/Inf → 视图消失
+        let denom = D - z
+        let depthScale: CGFloat = (denom.isFinite && denom > 0.001) ? D / denom : 1
         return faceView(f)
             // 让它读成「一块立起来的板」
             .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
@@ -273,7 +275,8 @@ struct DoorPrism<B: View, D: View, F: View>: View {
         let rad = theta * .pi / 180
         let z = R * cos(rad)
         let x = R * sin(rad)
-        let depthScale = D / (D - z)
+        let denomE = D - z
+        let depthScale: CGFloat = (denomE.isFinite && denomE > 0.001) ? D / denomE : 1
         // 角点在棱柱前侧才画；cos > 0 即朝观察者
         let facing = cos(rad)
         return Capsule()
@@ -296,6 +299,12 @@ struct DoorPrism<B: View, D: View, F: View>: View {
     /// 且在多窗口/分屏下拿到的不一定是本视图的宽度；
     /// 万一返回 0，anchorZ 就是 0，三个面全叠在圆心 ——
     /// 三棱柱直接消失。宽度从 GeometryReader 传进来。
+    ///
+    /// ═══ 必须防 0 ═══
+    /// 首帧布局时 GeometryReader 的 width 可能是 0，而
+    /// depthScale = D/(D−z)、D = 10.4·A ⇒ A=0 时 D=0、z=0 ⇒ **0/0 = NaN**
+    /// ⇒ 视图不渲染（又一个"黑屏"的来源）。
+    /// 这里给一个下限，宁可第一帧略小也不要 NaN。
     private func prismApothem(_ width: CGFloat) -> CGFloat {
         // ═══ 这里原来多乘了一个 0.9，是个真的几何错误 ═══
         //
@@ -307,7 +316,7 @@ struct DoorPrism<B: View, D: View, F: View>: View {
         // 用数值模拟验算过:
         //   0.9 系数  → θ=60° 空隙 17.4pt ✗
         //   正确系数 → θ=60° 重叠  7.6pt ✓（角上重叠，读作一条棱）
-        width * 0.2887
+        max(width, 1) * 0.2887
     }
 
     /// 某个面当前是否朝向观察者
