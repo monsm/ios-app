@@ -50,7 +50,7 @@
 
 `tools/preview.py` 就是补这个盲区的（见下）。
 
-## 二、组件清单（24 个）
+## 二、组件清单（26 个）
 
 ### 基础
 - `XPanel` — 卡片容器（hero/group/flat 三式）
@@ -70,6 +70,7 @@
 - `XCycleRing` — 周期进度环
 
 ### 布局与动效
+- `XSkeleton` — 首屏骨架屏（3 块错开高度 + 流光，reduceMotion 时静态）
 - `XStepBar` — 多步向导指示器
 - `XScrollLift` — 卡片滚动连续形变
 - `XStaggeredAppear` — 交错入场
@@ -90,6 +91,7 @@
 | `XMotion` | 四档（quick/standard/soft/exit）+ 门面专用（doorSwing/lightLeak/doorReveal） |
 | `XGradient` | 门面底色 / 门缝透光 / 锁面金属环 |
 | `XHaptics` | tick/trigger/soft/rigid + success/warning/failure |
+| `XOpacity` | wash 0.10 / badge 0.12 / glow 0.16 / edge 0.35 / track 0.55 |
 | `XAppearance` | isAMOLED / highContrast |
 
 标 `nonisolated` 的：`xFont` / `xList` / `xScreen` / `xPlate` / `xCallout` / `staggered` / `xScrollLift`。
@@ -125,6 +127,36 @@
 判据**从 Components.swift 现读**，不手抄第二份。
 带 4 条自检（2 正控 / 2 反控）—— 写这道闸门时自检抓出了我自己的两个 bug。
 
+## 四点五、XPanel 三档容器的真实差异
+
+| kind | padding | 底 | 描边 | 阴影 |
+|---|---|---|---|---|
+| `.group` | 16 | surface | hairline | 无 |
+| `.inset` | 8 | surface | hairline | 无 |
+| `.hero` | 16 | surface + **铜色洗染 3%** + **顶部微光 5.5%** | **hairlineStrong** | black 22% / r12 / y4 |
+
+**教训**：改之前 `.hero` 与 `.group` 是**像素级相同**的（padding 都是 16，tone 默认 neutral ⇒ 描边也一样）。
+而全仓 7 处 `kind: .hero` 里有 5 处不传 tone ——
+设备/固件/网关/加密狗/安全 五个主页面的首卡，与同屏普通卡没有任何视觉差别。
+所谓"主角卡"只是个名字。这类"声明了但没生效"的东西，静态闸门查不出来，
+只有把两个分支并排渲染才能看见。
+
+## 四点六、Dynamic Type 的两条口径
+
+Canvas 组件里的文字不能走语义字号（`.title2` 等）——
+它们要和旁边的环/弧保持比例，语义字号在 AX 下会跳档，一跳就与图形位置错开。
+
+所以有两个缩放函数，上限都是 1.35×：
+
+| 函数 | 用途 | 例 |
+|---|---|---|
+| `XMetric.decorIcon(N)` | 装饰图标 | 空态吉祥物、成功对勾 |
+| `XMetric.dataText(N)` | 数据文字 | OTP 码、电量百分数、天数、步骤序号 |
+
+`dynamictype` 闸门会放行被这两个函数包裹的 `.system(size:)`，
+未包裹的固定字号一律报错（这条判据是 2026-10-21 补的 —— 之前只匹配 `.font(`，
+漏了本仓统一用的 `.xFont(`，导致 12 处 Canvas 文字一直绿着）。
+
 ## 五、这一轮修复的真实缺陷
 
 | 缺陷 | 性质 |
@@ -134,3 +166,8 @@
 | `DoorFront` 的 `repeatForever` 无 reduceMotion 守卫 | HIG motion.md 违规 |
 | `FeedPage` 的 `xFont` 传 design 参数 | Xcode 才报，已固化成 apisig 闸门 |
 | `DeviceHomeView` 残留 `.xList()`/`.xScreen()` | 旧 List 形态修饰符，在 ScrollView 上无作用 |
+| **`XPanel` 的 `.hero` 与 `.group` 像素级相同** | 5 张主页面首卡从来没"主"过 |
+| **`dynamictype` 闸门只匹配 `.font(`，漏了 `.xFont(`** | 12 处 Canvas 文字不随 AX 字号放大 |
+| **`XHeroCard` 的 `flair` 参数声明了但 body 里从未使用** | 死参数，且 body 传的是默认 `.group` |
+| **`XMetric.isNightDim` 孤立** | 服务的旧圆盘已删，夜间暗化功能等于不存在 |
+| 14 个零使用令牌 | `canvasBase` 等旧名别名 / 未接的动效 / 未用的渐变 |
