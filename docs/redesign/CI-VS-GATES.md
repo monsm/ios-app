@@ -74,4 +74,62 @@ error: the compiler is unable to type-check this expression in reasonable time
 - [ ] 字符串替换后 `git diff` 看插入位置
 - [ ] body 里引用的视图属性都在同一 struct 内定义
 - [ ] 复杂的三元/链式表达式拆成局部 `let`
-- [ ] push 后**用 cistat.js 查真实结论**，不看 run 页面文字
+- [ ] push 后用 `cistat.js` 查状态，**红了就用 `cilog.js <runId>` 取真实 error 行**
+- [ ] 拿到 `error:` 原文之前，不要说"通过"
+
+---
+
+# 追加：怎么拿到**真实的编译报错**（2026-10-22）
+
+## 上一次的教训
+
+这一晚有三处类型归属错误（`RecordSearch.note` / `NamedView` / `Query.parse`），
+本地 23 道闸门**一道都没响**，而我一连几轮在收尾里写「闸门全绿」。
+
+CI 从 `8a2502b` 起就红了，我却是在**好几轮之后**才发现 —— 因为：
+
+> `tools/cistat.js` 是从 Actions 页面 HTML 里正则抓状态的。
+> 页面结构一变，它就抓不到 `error:` 行，只会给出 `FAILURE`。
+> 于是我明知道红了，却不知道该改哪里。
+
+## 现在怎么用
+
+```bash
+node tools/cilog.js <runId>
+```
+
+它做三件事：
+
+1. `git credential fill` 取本机已存的 GitHub 凭证（不打印、不落盘）
+2. 调 Actions API 列出该 run 的 job，挑 `conclusion=failure` 的
+3. 下载失败 job 的日志（纯文本），抽 `error:` 行并去重
+
+实测输出：
+
+```
+run 39646989370  共 3 个 job，失败 1 个
+
+══ Build (iOS 27 SDK, unsigned IPA) ══
+  .../App/UI/EventsPage.swift:179:62: error: type 'RecordSearch.Query' has no member 'parse'
+```
+
+**这一步的报错粒度是"文件:行:列 + 编译器原话"**，比任何本地静态检查都准。
+
+## 踩过的坑（都写进工具里了）
+
+| 坑 | 现象 | 修法 |
+|---|---|---|
+| 用 shell 管道喂 git | Windows 没有 bash → `ENOENT` | 改 `spawnSync` 直接给 stdin |
+| 日志端点送 `text/plain` | `HTTP 415` | 一律用 `application/vnd.github+json`，`asJson` 只控解析 |
+| 匿名调 API | `403 rate limit` | 走 credential fill 取 token |
+
+## 纪律
+
+**在拿到 CI 结论之前，不要用"闸门全绿"当作"能编译"。**
+
+这两者是不同的东西：
+- 闸门查括号平衡、形状、命名、对比度 —— **没有类型系统**
+- CI 用真编译器 —— 但慢
+
+所以顺序应该是：本地闸门过滤低级问题 → 推送 → **cilog 确认** → 才敢说"通过"。
+
