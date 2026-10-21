@@ -12,7 +12,7 @@ struct LockKeeperApp: App {
         WindowGroup {
             RootView()
                 .environmentObject(app)
-                .tint(DS.Palette.accent)
+                .tint(XPalette.accent)
         }
     }
 }
@@ -20,9 +20,9 @@ struct LockKeeperApp: App {
 // ---------- 主题 (JS utils/theme.js: kf_theme) ----------
 // 颜色统一取自设计系统 DesignSystem.swift, 页面不再各自定义颜色
 enum Theme {
-    static var accent: Color { DS.Palette.accentText }
-    static var warn: Color { DS.Palette.warn }
-    static var ok: Color { DS.Palette.ok }
+    static var accent: Color { XPalette.accentText }
+    static var warn: Color { XPalette.warn }
+    static var ok: Color { XPalette.ok }
     static var isLight: Bool {
         DB.store.getString("kf_theme") == "light"
     }
@@ -186,7 +186,7 @@ final class AppState: ObservableObject {
             guestGateTarget = nil
             return
         }
-        withAnimation(DS.Motion.standard) { appUnlocked = true }
+        withAnimation(XMotion.standard) { appUnlocked = true }
     }
     // ---------- 161 应用锁秒进: 验证通过后回到上次停留的 Tab ----------
     static let lastTabKey = "kf_last_tab"
@@ -426,7 +426,7 @@ final class AppState: ObservableObject {
         Task { @MainActor in
             try? await Task.sleep(nanoseconds: stay)
             if toast == msg {
-                withAnimation(.easeIn(duration: DS.Duration.quick)) { toast = nil } // idea 211 时长令牌
+                withAnimation(.easeIn(duration: 0.2)) { toast = nil } // idea 211 时长令牌
             }
         }
     }
@@ -593,7 +593,7 @@ final class AppState: ObservableObject {
     // 21 主题切换 crossfade: 统一入口 = 写存储键 → withAnimation 播 crossfade → 种子驱动 RootView .id 重建
     private func applyAppearance(_ mutate: () -> Void) {
         mutate()
-        withAnimation(DS.Motion.soft) { appearanceSeed &+= 1 }
+        withAnimation(XMotion.soft) { appearanceSeed &+= 1 }
     }
     /// 外观模式: ""/light/dark/black
     func setTheme(_ key: String) {
@@ -715,7 +715,7 @@ final class AppState: ObservableObject {
         if moment == nil { advanceMoment() }
     }
     func advanceMoment() {
-        withAnimation(DS.Motion.soft) { moment = momentQueue.isEmpty ? nil : momentQueue.removeFirst() }
+        withAnimation(XMotion.soft) { moment = momentQueue.isEmpty ? nil : momentQueue.removeFirst() }
     }
     /// 成就结算 (开锁/备份/整理/打卡后调用): 音效(996)/本地通知(986)/时刻卡或 toast
     func evaluateAchievements() {
@@ -869,10 +869,10 @@ final class AppState: ObservableObject {
     }
     /// Hero 卡一句话 (1000 晚归欢迎语), 8 秒后自行淡出
     private func publishHomeMoment(_ text: String) {
-        withAnimation(DS.Motion.soft) { homeMoment = text }
+        withAnimation(XMotion.soft) { homeMoment = text }
         Task { @MainActor in
             try? await Task.sleep(nanoseconds: 8_000_000_000)
-            if homeMoment == text { withAnimation(DS.Motion.exit) { homeMoment = nil } }
+            if homeMoment == text { withAnimation(XMotion.exit) { homeMoment = nil } }
         }
     }
 
@@ -1046,7 +1046,7 @@ struct RootView: View {
         // 显式字重的文本 (凭证名/开关标签) 才跟着加粗。关档时给 .regular 而不是留空:
         // 两档都显式, 不依赖系统默认推断 (LegibilityWeight.bold 的官方语义就是 "force Accessibility Bold")。
         .environment(\.legibilityWeight, AXFlags.boldText ? .bold : .regular)
-        .animation(DS.Motion.soft, value: app.appUnlocked)
+        .animation(XMotion.soft, value: app.appUnlocked)
         // 378 常驻水印: 全局对角重复层 (安全中心页内那份保留不动, 那里是设置项自己的预览)。
         // 读一下 tick 使开关拨动后整层重算; hitTesting/朗读屏蔽在 SecurityWatermark 内部已带。
         .overlay {
@@ -1113,34 +1113,34 @@ struct RootView: View {
     /// 汇总胶囊: 屏上只留一条提醒，其余收在这儿。数字如实是被压掉的条数，不含屏上那条。
     private func ambientOverflowChip(_ n: Int) -> some View {
         Button {
-            DS.Haptics.tick.impactOccurred()
+            XHaptics.tick.impactOccurred()
             app.showAmbientList = true
         } label: {
-            HStack(spacing: DS.Space.xs) {
+            HStack(spacing: XSpace.xs) {
                 Image(systemName: "bell.badge")
-                    .font(.system(size: DS.Icon.xs))
+                    .font(.system(size: XIcon.xs))
                     .accessibilityHidden(true)
                 Text("还有 \(n) 条提醒")
                     .vkFont(.caption2)
                 Image(systemName: "chevron.right")
-                    .font(.system(size: DS.Icon.xs))
+                    .font(.system(size: XIcon.xs))
                     .accessibilityHidden(true)
             }
-            .foregroundStyle(DS.Palette.textSub)
-            .padding(.horizontal, DS.Space.s)
-            .padding(.vertical, DS.Space.xs)
-            .variantPlate(DS.Palette.surfaceAlt, .capsule)
+            .foregroundStyle(XPalette.textSub)
+            .padding(.horizontal, XSpace.s)
+            .padding(.vertical, XSpace.xs)
+            .variantPlate(XPalette.surfaceAlt, .capsule)
             .frame(maxWidth: .infinity, alignment: .trailing)
-            .frame(minHeight: DS.Hit.min)
+            .frame(minHeight: XHit.min)
         }
         .buttonStyle(PressableButtonStyle())
         .accessibilityLabel("屏上只留了一条提醒，另有 \(n) 条被收起，轻点逐条查看")
     }
 
     private func selfCheckBanner(_ w: String) -> some View {
-        HStack(spacing: DS.Space.xs) {
+        HStack(spacing: XSpace.xs) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: DS.Icon.sm, weight: .semibold))
+                .font(.system(size: XIcon.sm, weight: .semibold))
                 .accessibilityHidden(true)
             Text(w).vkFont(.caption).fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
@@ -1152,18 +1152,18 @@ struct RootView: View {
             }   // 377: 访客通道开着时先复核, 不白切
                 .vkFont(.caption, weight: .medium)
         }
-        .foregroundStyle(DS.Palette.warn)
-        .padding(.horizontal, DS.Space.l)
-        .padding(.vertical, DS.Space.s)
-        .background(DS.Palette.warn.opacity(0.14))
+        .foregroundStyle(XPalette.warn)
+        .padding(.horizontal, XSpace.l)
+        .padding(.vertical, XSpace.s)
+        .background(XPalette.warn.opacity(0.14))
     }
 
     /// 344 粘贴建议条 —— 2026-10-13 run 63 从 body 内联块抽出: 该表达式报 type-check 超时。
     @ViewBuilder
     private func pasteSuggestionBar(_ s: ClipboardCare.Suggestion) -> some View {
-        HStack(spacing: DS.Space.xs) {
+        HStack(spacing: XSpace.xs) {
             Image(systemName: "doc.on.clipboard")
-                .font(.system(size: DS.Icon.sm))
+                .font(.system(size: XIcon.sm))
                 .accessibilityHidden(true)
             Group {
                 switch s.stage {
@@ -1175,34 +1175,34 @@ struct RootView: View {
             }
             .vkFont(.caption)
             .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: DS.Space.xs)
+            Spacer(minLength: XSpace.xs)
             if case .waiting = s.stage {
                 // 517 立即清除: 走 ClipboardCare.clearNow() (唯一出口), 不在这里直接写 pasteboard
                 Button("立即清除") {   // 517 立即清除
                     ClipboardCare.clearNow()
-                    withAnimation(DS.Motion.standard) { app.pasteSuggestion = nil }
+                    withAnimation(XMotion.standard) { app.pasteSuggestion = nil }
                 }
                 Button("再复制一次") {
                     ClipboardCare.recopy()
-                    withAnimation(DS.Motion.standard) { app.refreshPasteSuggestion() }
+                    withAnimation(XMotion.standard) { app.refreshPasteSuggestion() }
                 }
             } else {
                 Button("回凭证页") {
                     ClipboardCare.dismissSuggestion()
                     app.requestRoute(.credentials)   // 377: 访客通道开着时这条快捷条同样不能白切进去
-                    withAnimation(DS.Motion.standard) { app.pasteSuggestion = nil }
+                    withAnimation(XMotion.standard) { app.pasteSuggestion = nil }
                 }
             }
             Button("知道了") {
                 ClipboardCare.dismissSuggestion()
-                withAnimation(DS.Motion.standard) { app.pasteSuggestion = nil }
+                withAnimation(XMotion.standard) { app.pasteSuggestion = nil }
             }
         }
         .vkFont(.caption, weight: .medium)
-        .foregroundStyle(DS.Palette.accentText)
-        .padding(.horizontal, DS.Space.l)
-        .padding(.vertical, DS.Space.s)
-        .background(DS.Palette.accent.opacity(0.12))
+        .foregroundStyle(XPalette.accentText)
+        .padding(.horizontal, XSpace.l)
+        .padding(.vertical, XSpace.s)
+        .background(XPalette.accent.opacity(0.12))
         .transition(.move(edge: .top).combined(with: .opacity))
     }
 
@@ -1210,17 +1210,17 @@ struct RootView: View {
     /// 巨型 body 里这一段报 "unable to type-check this expression in reasonable time"。
     @ViewBuilder
     private func writeReceiptView(_ r: String) -> some View {
-        HStack(spacing: DS.Space.xs) {
+        HStack(spacing: XSpace.xs) {
             Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: DS.Icon.md))
-                .foregroundStyle(DS.Palette.ok)
+                .font(.system(size: XIcon.md))
+                .foregroundStyle(XPalette.ok)
                 .accessibilityHidden(true)
             Text(r)
                 .vkFont(.caption, weight: .medium)
-                .foregroundStyle(DS.Palette.text)
+                .foregroundStyle(XPalette.text)
         }
-        .padding(.horizontal, DS.Space.l)
-        .padding(.vertical, DS.Space.s)
+        .padding(.horizontal, XSpace.l)
+        .padding(.vertical, XSpace.s)
         // 2026-10-14 材质统一: 悬浮回执条从实底改液态玻璃 (与 ToastView 同一条 axGlass 通道)。
         // 它是浮在内容之上的一层, 正是折射底该起作用的位置; 描边不加 —— 玻璃自带边缘高光。
         .axGlassCapsule()
@@ -1299,18 +1299,18 @@ struct ToastView: View {
     var body: some View {
         Text(text)
             .vkFont(.footnote, weight: .medium)
-            .foregroundStyle(DS.Palette.text)
+            .foregroundStyle(XPalette.text)
             .lineLimit(3)
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
-            .padding(.horizontal, DS.Space.l)
-            .padding(.vertical, DS.Space.s + 2)
+            .padding(.horizontal, XSpace.l)
+            .padding(.vertical, XSpace.s + 2)
             .frame(maxWidth: 420)
             // 玻璃层自带深浅色适配与背景折射, 不需要再叠一层描边
-            .axGlass(DS.Radius.control)
+            .axGlass(XRadius.control)
             .shadow(color: .black.opacity(0.18), radius: 16, y: 6)
-            .padding(.horizontal, DS.Space.xl)
-            .padding(.top, DS.Space.xs)
+            .padding(.horizontal, XSpace.xl)
+            .padding(.top, XSpace.xs)
             .accessibilityAddTraits(.isStaticText)
     }
 }
@@ -1323,30 +1323,30 @@ struct GuestReauthGate: View {
     @State private var busy = false
     @State private var note = "用面容/指纹确认是你本人后, 放开凭证与设置两页"
     var body: some View {
-        VStack(spacing: DS.Space.m) {
+        VStack(spacing: XSpace.m) {
             Image(systemName: "faceid")
                 .font(.system(size: 44))
-                .foregroundStyle(DS.Palette.accentText)
+                .foregroundStyle(XPalette.accentText)
                 .accessibilityHidden(true)
             Text("凭证与设置已收起")
                 .vkFont(.headline)
             Text(note)
                 .vkFont(.footnote)
-                .foregroundStyle(DS.Palette.textSub)
+                .foregroundStyle(XPalette.textSub)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
             Button {
                 Task { await verify() }
             } label: {
                 Text(busy ? "验证中…" : "验证")
-                    .frame(maxWidth: .infinity, minHeight: DS.Hit.min)
+                    .frame(maxWidth: .infinity, minHeight: XHit.min)
             }
             .buttonStyle(.borderedProminent)
             .disabled(busy)
             Button("取消") { app.showGuestGate = false }
-                .frame(minHeight: DS.Hit.min)
+                .frame(minHeight: XHit.min)
         }
-        .padding(DS.Space.l)
+        .padding(XSpace.l)
         .task { await verify() }
     }
     private func verify() async {
@@ -1367,7 +1367,7 @@ struct PressFeedback: ButtonStyle {
             .scaleEffect(configuration.isPressed ? 0.96 : 1)
             .shadow(color: .black.opacity(configuration.isPressed ? 0.16 : 0), radius: 7, y: 3)
             .opacity(configuration.isPressed ? 0.9 : 1)
-            .animation(DS.Motion.quick, value: configuration.isPressed)
+            .animation(XMotion.quick, value: configuration.isPressed)
     }
 }
 
