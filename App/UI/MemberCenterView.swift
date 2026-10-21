@@ -503,8 +503,14 @@ struct MemberWizardView: View {
     var body: some View { vkBody.destined(.memberWizard) }
     var vkBody: some View {
         NavigationStack {
-            Form {
-                Section("步骤 \(step + 1)/3 · " + steps[step]) {
+            ZStack {
+                XPalette.canvas.ignoresSafeArea()
+
+                ScrollView {
+                    VStack(spacing: XSpace.l) {
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("步骤 \(step + 1)/3 · ")
                     switch step {
                     case 0:
                         TextField("称呼 (汉字/英文/数字, 上限 20)", text: $name)
@@ -540,6 +546,7 @@ struct MemberWizardView: View {
                         NavigationLink("录指纹后到凭证页指归属") { AddFingerPage() }   // 463 录指纹后到凭证页指归
                             .xFont(.footnote)
                     }
+                    }
                 }
                 if step < 2 {
                     Section {
@@ -570,6 +577,11 @@ struct MemberWizardView: View {
                         .disabled(!canNext || busy)
                     }
                 }
+                    }
+                    .padding(.horizontal, XSpace.gutter)
+                    .padding(.vertical, XSpace.l)
+                }
+                .scrollIndicators(.hidden)
             }
             .navigationTitle("建档向导")   // 463 建档向导
             .navigationBarTitleDisplayMode(.inline)
@@ -658,7 +670,9 @@ struct MergeMembersView: View {
     var vkBody: some View {
         NavigationStack {
             Form {
-                Section("主档 (保留)") {
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("主档 (保留)")
                     HStack(spacing: XSpace.s) {
                         MemberAvatar(member: primary, size: 28)
                         Text(MemberHub.display(primary))
@@ -666,8 +680,11 @@ struct MergeMembersView: View {
                             .foregroundStyle(XPalette.text)
                         Spacer(minLength: 0)
                     }
+                    }
                 }
-                Section("副档 (凭证将迁移至主档, 档案删除)") {
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("副档 (凭证将迁移至主档, 档案删除)")
                     Picker("选择副档", selection: $secondaryID) {
                         Text("请选择").tag(nil as String?)
                         ForEach(secondaryCandidates) { m in
@@ -681,8 +698,10 @@ struct MergeMembersView: View {
                             .foregroundStyle(XPalette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
+                    }
                 }
-                Section {
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
                     Button { doMerge() } label: {
                         Text("执行合并")
                             .frame(maxWidth: .infinity)
@@ -690,6 +709,7 @@ struct MergeMembersView: View {
                     }
                     .buttonStyle(XPrimaryButtonStyle())
                     .disabled(secondaryID == nil)
+                    }
                 }
             }
             .navigationTitle("重复合并")   // 462 重复合并
@@ -812,7 +832,9 @@ struct MemberFamilySettingsView: View {
             Form {
                 // 479/486 长辈模式的两个落点都写在下面那段话里: 479 = 凭证页大字高对比 (凭证页行上),
                 // 486 = 临时码完成页收成口述卡 (CredentialStudio.doneCard)。开关本身只写 MemberHub.elderMode。
-                Section("长辈模式") {   // 479/486 长辈模式
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("长辈模式")
                     XToggle("长辈模式 (凭证页大字高对比、只留密码/指纹两组 · 临时码完成页收成口述卡)", isOn: $elder)
                         .fixedSize(horizontal: false, vertical: true)
                     if elder {
@@ -830,8 +852,11 @@ struct MemberFamilySettingsView: View {
                             .foregroundStyle(XPalette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
+                    }
                 }
-                Section("隐私浏览") {   // 794 隐私浏览
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("隐私浏览")
                     XToggle("隐私浏览 (限时 10 分钟: 写隐私时段标记, 本页回显剩余时间)", isOn: $privacy)
                         .fixedSize(horizontal: false, vertical: true)
                     if privacy {
@@ -842,6 +867,7 @@ struct MemberFamilySettingsView: View {
                             .monospacedDigit()
                             .foregroundStyle(XPalette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
+                    }
                     }
                 }
             }
@@ -1168,7 +1194,8 @@ struct MemberExitWizard: View {
                         Text("逐条处置 (保留/移交/停用)")   // 474 逐条处置
                     }
                 }
-                Section {
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
                     Button {
                         if !items.isEmpty && !allDecided {
                             app.showToast("先把每条凭证选一种处置")
@@ -1186,6 +1213,7 @@ struct MemberExitWizard: View {
                             .frame(minHeight: XHit.min)
                     }
                     .buttonStyle(XDestructiveButtonStyle())
+                    }
                 }
             }
             .navigationTitle("退出处置向导")   // 474 退出处置向导

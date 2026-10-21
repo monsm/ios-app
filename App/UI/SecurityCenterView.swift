@@ -1330,8 +1330,13 @@ struct PrivacyDashboard: View {
     @ObservedObject private var center = SecTickCenter.shared
 
     var body: some View {
-        List {
-            Section {
+        ZStack {
+            XPalette.canvas.ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: XSpace.l) {
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: XSpace.m) {
                 HStack(spacing: XSpace.s) {
                     Image(systemName: "eye.slash")
                         .font(.system(size: XIcon.lg, weight: .medium))
@@ -1345,8 +1350,11 @@ struct PrivacyDashboard: View {
                     }
                 }
                 .frame(minHeight: XHit.min)
+                }
             }
-            Section("逐项状态 (轻点即切换)") {
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: XSpace.m) {
+                    secLabel("逐项状态 (轻点即切换)")
                 ForEach(PeekItem.all) { item in
                     HStack(spacing: XSpace.s) {
                         Image(systemName: item.on ? "checkmark.circle.fill" : "circle")
@@ -1373,7 +1381,13 @@ struct PrivacyDashboard: View {
                         self.center.bump()
                     }
                 }
+                }
             }
+                }
+                .padding(.horizontal, XSpace.gutter)
+                .padding(.vertical, XSpace.l)
+            }
+            .scrollIndicators(.hidden)
         }
         .xList()
         .xScreen()
