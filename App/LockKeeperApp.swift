@@ -203,7 +203,6 @@ final class AppState: ObservableObject {
         tabSelection = guestAreaLocked && Self.guestBlockedTabs.contains(t) ? 0 : t
     }
     // 包14: 首启引导完成/跳过的会话内标记 (OnboardingView 触发, 驱动 RootView 切主界面)
-    @Published var onboardingFinished = false
     // 包18: Hero 一句话 (1000 晚归) / 连续失败 (1003) / 一次性时刻卡队列 (24/992/1010/1021/1050)
     @Published var homeMoment: String?
     @Published var failStreak = 0
@@ -286,26 +285,19 @@ final class AppState: ObservableObject {
     @Published var pendingCredPanel: String?
     /// 358 整理建议 → 凭证页多选预勾选: 建议行点按带过来要勾的密码 alias 表。
     /// 与 pendingCredPanel (到了开哪个面板) 是两回事 —— 这个负责"进了多选先勾好哪些", 同 pendingRecordKey 族只存会话态。
-    @Published var pendingCredSelect: [Int]?
     // 包9/582 图表下钻: 统计页成员条 → 记录 Tab 按该成员过滤
-    @Published var pendingRecordsMember: String?
     /// 817 成员示例格直达建档: 记录页空态/过滤条的「添加成员」→ 成员中心到达即弹建档向导。
     /// 与 pendingRecordsMember 同类: 只负责"到了那页之后做什么", 落地仍走同一个 Tab 门禁。
-    @Published var pendingMemberAdd = false
     /// 317 指纹工坊无成员直达: "request"=已请人建档; 建完改写为新成员 id, FpStudio 取走预选
     @Published var pendingFpOwner: String?
     /// 585 记录引用深链: `kf://records?k=<行键>` 带回来的**行内定位键**。
     /// 与 pendingCredNav (577) 同类: 只负责"到了那页之后定位哪条"，落地仍走同一个 Tab 门禁 ——
     /// 查询参数不是第二条入口，锁着的时候和 pendingRoute 一起挂起。
-    @Published var pendingRecordKey: String?
     /// 586 当天全景: 详情卡"查看当天全部"带过去的**日键** (yyyy-MM-dd)。记录页收到后只保留那一天的组
     /// (是收窄显示范围，不是改筛选条件 —— 与 580 翻页用的是同一套"别悄悄改用户的过滤"的口径)。
-    @Published var pendingRecordsDay: String?
     /// 583 结果定位高亮: 深链/当天全景落地后要闪一下的那一行。与 pendingRecordKey 成对使用。
-    @Published var pendingFlashKey: String?
     /// 563 搜索词快照回填: 从告警详情"搜这类记录"带过去的**词** (到达后可再编辑再执行)。
     /// 只带一个字符串而不是带着一整套筛选: 回填的意义是"接着人话往下查"，把面板整个改掉会让人找不到自己刚才在哪。
-    @Published var pendingSearch: String?
     /// 587 低电告警 → 这台锁的诊断: 记录详情带过去的**mac**。设置 Tab 收到后先把 current 切到该锁
     /// 再推诊断页 —— 原写法只置 tabSelection=3, 全仓无消费方, 按钮等于没落点。
     /// 1013 保养到期通知 → 这台锁的维护与保养页: 通知层只带 mac 进来 (m4.care.<mac>),
@@ -313,7 +305,6 @@ final class AppState: ObservableObject {
     @Published var pendingCare: String?
     /// 801 引导末卡"去连接真锁": 置真后设备页挂载即拉起添加设备弹层
     /// (旧写法只切 tab, 落点靠用户自己在设备页再找入口, 不等于"直达 BLE 扫描页")
-    @Published var pendingAddDevice = false
     /// 2026-10-15 走查: 设置 Tab **栈内**子页的"去设置…"落点。
     /// 起因: 安全中心里的两枚按钮 (`SecurityLockConfigView` 的"去「设置」把本机密码重设为纯数字"、
     /// `SecurityDestroyView` 销毁前备份闸的"先去备份") 动作都写着 `app.tabSelection = 3` ——

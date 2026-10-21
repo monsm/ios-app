@@ -184,6 +184,50 @@ toggleStar ─┬─> setStar
 所以它属于"被更强方案替代的死代码"，不是"没接上的能力"。
 **保留**（未来若出现"无密码可验但仍需强确认"的场景会用到），但如果一直不用，可以删。
 
+## 九、`@Published` 里"写了没人读"的跳转意图（2026-10-22）
+
+扫了全部 81 个 `@Published`，按「声明 / 写入 / 读取」三类计数。
+	extbf{34 个从未被读}。其中 `pending*` 这一组最危险：
+
+它们看起来是「解锁后要去哪儿」的意图载体，实际上 `applyPendingRoute()` **只消费两个**：
+
+```swift
+func applyPendingRoute() {
+    if let m = pendingMac, appUnlocked && !decoyMode { pendingMac = nil; select(m) }
+    guard let r = pendingRoute else { return }
+    pendingRoute = nil
+    if appUnlocked && !decoyMode { requestRoute(r) }
+}
+```
+
+``pendingRecordsFilter / pendingJumpLock / pendingCredNav / pendingCredPanel /
+pendingCare / pendingSettingsFocus`` 等：**写了，没人读**。
+三域合并成单一控制台之后，导航改走 `managerGroup` / `requestRoute`，
+这一批是旧 Router 的残留 —— 设了等于没设。
+
+### 已删（只有声明，零读零写，删除零风险）
+
+`onboardingFinished`、`pendingCredSelect`、`pendingRecordsMember`、
+`pendingMemberAdd`、`pendingRecordKey`、`pendingRecordsDay`、
+`pendingFlashKey`、`pendingSearch`、`pendingAddDevice`（9 个）
+
+### 保留但标记（有写入、零读取）
+
+`pendingRecordsFilter`、`pendingJumpLock`、`pendingCredNav`、`pendingCredNavMac`、
+`pendingCredPanel`、`pendingCare`、`pendingSettingsFocus`、`showGuestGate`、
+`showGate`、`homeMoment`、`failStreak`、`retryAttempt`、`revalidating`、
+`connectSource`、`lastReceipt`、`lastError`、`dongleState`、`gatewayState` 等。
+
+**这些暂不删**，因为它们是"某处设了意图、界面还没接"的半成品，
+而不是纯粹的噪声；删掉会丢失"这里本来想做什么"的信息。
+但如果一直不接，它们和死代码没有区别。
+
+### 这类问题比 `@State` 更隐蔽
+
+`@State` 是局部的，不读就是本页没反应。
+`@Published` 是跨视图共享的**真相**——它声明在那里，读代码的人会以为
+"设置了它，别处就会响应"。结果是：设置了，哪儿都不响。
+
 ## 处理原则
 
 **不批量删除。** 理由：
