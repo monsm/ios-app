@@ -369,24 +369,6 @@ struct SecurityPeekView: View {
 
     /// 卡片内的小标题
     /// 防窥状态摘要：三态而不是一句标语
-    private var peekSummary: (glyph: String, tone: Color, title: String, detail: String) {
-        let n = SecurityPeekView.activeCount()
-        let total = PeekItem.all.count
-        if n == 0 {
-            return ("exclamationmark.shield", XPalette.warn,
-                    "防窥全部关闭",
-                    "轻点下方任意一项即可开启。至少建议打开「切后台即糊」与「常驻水印」。")
-        }
-        if n >= total {
-            return ("checkmark.shield.fill", XPalette.ok,
-                    "防窥全部开启",
-                    "\(total) 项防护同时生效，切后台、分享、访客通道都有遮蔽。")
-        }
-        return ("shield.lefthalf.filled", XPalette.accentText,
-                "已启用 \(n) / \(total) 项防窥",
-                "还有 \(total - n) 项未开启，轻点下方对应一行即可补上。")
-    }
-
     private func secLabel(_ text: String) -> some View {
         Text(text)
             .xFont(.caption, weight: .semibold)
@@ -1476,6 +1458,24 @@ struct PrivacyDashboard: View {
              PeekItem(key: SecKey.guestOn, name: "访客通道", on: SecurityPolicy.guestActive),
              PeekItem(key: SecKey.watermarkOn, name: "常驻水印", on: DB.store.getBool(SecKey.watermarkOn, false))]
         }
+    }
+
+    private var peekSummary: (glyph: String, tone: Color, title: String, detail: String) {
+        let n = SecurityPeekView.activeCount()
+        let total = PeekItem.all.count
+        if n == 0 {
+            return ("exclamationmark.shield", XPalette.warn,
+                    "防窥全部关闭",
+                    "轻点下方任意一项即可开启。至少建议打开「切后台即糊」与「常驻水印」。")
+        }
+        if n >= total {
+            return ("checkmark.shield.fill", XPalette.ok,
+                    "防窥全部开启",
+                    "\(total) 项防护同时生效，切后台、分享、访客通道都有遮蔽。")
+        }
+        return ("shield.lefthalf.filled", XPalette.accentText,
+                "已启用 \(n) / \(total) 项防窥",
+                "还有 \(total - n) 项未开启，轻点下方对应一行即可补上。")
     }
 
     private func secLabel(_ text: String) -> some View {
