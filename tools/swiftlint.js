@@ -88,6 +88,15 @@ const SYS_NAMES = new Set(['Slider','Stepper','Bundle','LazyVStack','LazyVGrid',
 // 且文档自己的示例正是 `LongPressGesture(minimumDuration: 3)`。全仓只出现 2 次 (一次代码一次注释)
 // ⇒ 撞上本检查的误报形态。加白**不等于**证明逃生口按 3 秒真的落锁 —— 那仍要真机核对 (交接书 §7.9 卡 9)。
 'LongPressGesture',
+  // 真实锁体 3D (RealityKit)。这是本仓第一次引入 RealityKit ——
+  // 上一轮探针已用 CI 证明 **Model3D 在 iOS 上不可用** (visionOS 专属):
+  //   error: 'Model3D' is unavailable in iOS
+  // 所以 iOS 只有 RealityView 一条路, 下面这些是它的核心类型, 全仓各只出现 1–2 次,
+  // 正好落进本检查的误报形态 (与 WidgetKit / ActivityKit 那几批同理)。
+  //
+  // 加白**不等于**证明 3D 用法正确 —— 那只有编译器与真机能定论。
+  'RealityView', 'ModelEntity', 'SimpleMaterial', 'MeshResource',
+  'Entity', 'RealityViewContent', 'RealityViewCamera',
 // 77/939/941 开锁实时活动 (ActivityKit, iOS 16.1 起) 与 826 聚光教练用到的 SwiftUI 布局/绘制类型。
 // 全仓各只出现 1 次, 正好落进本检查的误报形态; 与上面几批同理: **加白不等于证明用法正确** ——
 // 真机验证在 docs/VERIFY-CHECKLIST.md (实时活动那条与聚光教练那条)。
