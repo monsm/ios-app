@@ -164,154 +164,162 @@ struct SecurityPeekView: View {
 
     var body: some View { vkBody }
     var vkBody: some View {
-        List {
-            // 405 剪贴板自清: 口令/OTP 复制到剪贴板后延时清除。
-            // 只有"内容仍是当时那一串"才清 (见 ClipboardCare), 免得把用户后来复制的东西删掉。
-            Section {
-                SecRow(title: "剪贴板自动清除",   // 405 剪贴板自动清除
-                       subtitle: ClipboardCare.autoClearOn
-                            ? "复制口令后 \(ClipboardCare.ttl) 秒清除；只对口令与 OTP 生效"
-                            : "已关闭 —— 口令会一直留在系统剪贴板里",
-                       icon: "doc.on.doc") {
-                    Picker("", selection: Binding(
-                        get: { ClipboardCare.ttl },
-                        set: { ClipboardCare.setTTL($0) })) {
-                        Text("关闭").tag(0)
-                        Text("30 秒").tag(30)
-                        Text("60 秒").tag(60)
-                        Text("5 分钟").tag(300)
-                    }
-                    .pickerStyle(.menu)
-                    .frame(minWidth: 110)
-                    .tint(XPalette.accentText)
-                }
-            } footer: {
-                Text("加密凭证包与交接包不走这条：那是密文，且你要粘进聊天工具，定时清掉只会打断交接。")
-                    .xFont(.caption2).foregroundStyle(XPalette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            // 369 遮蔽样式自选
-            Section {
-                // 2026-10-15 走查: 标题原为「列表遮蔽样式」, 但真实作用点是**凭证详情页的逐位显示格**
-                // (唯一消费者是 CredentialStudio 的逐位行) —— 凭证列表行压根不显示码值,
-                // 这一点连下面 stars 档的副标题自己都写着 ("列表行不显码值")。标题与作用点不符, 改准。
-                SecRow(title: "码值遮蔽样式", subtitle: maskStyleLabel, icon: "mask") {
-                    Picker("", selection: bindingString(SecKey.maskStyle)) {
-                        Text("圆点打码").tag("")
-                        Text("星号打码").tag("stars")
-                        Text("保留末 4 位").tag("tail4")
-                    }
-                    .pickerStyle(.menu)
-                    .frame(minWidth: 110)
-                    .tint(XPalette.accentText)
-                }
-            } header: {
-                Text("遮蔽样式")   // 369 遮蔽样式
-            }
+        ZStack {
+            XPalette.canvas.ignoresSafeArea()
 
-            // 36 隐私仪表盘
-            Section {
-                NavigationLink { PrivacyDashboard() } label: {
-                    SecRow(title: "隐私仪表盘",
-                           subtitle: "\(Self.activeCount()) 项防窥已启用",
-                           icon: "gauge.with.needle") { EmptyView() }
-                }
-            } header: {
-                Text("隐私总览")   // 36 隐私总览
-            }
-
-            Section {
-                // 371 切后台即糊
-                SecRow(title: "切后台即糊",
-                       subtitle: bgBlurLabel,
-                       icon: "rectangle.fill.and.rectangle") {
-                    XToggle("", isOn: bindingBool(SecKey.bgBlurOn, false))
-                        .labelsHidden()
-                }
-                // 373 限时可见
-                SecRow(title: "限时可见",
-                       subtitle: timedRevealLabel, icon: "timer") {
-                    Picker("", selection: bindingInt(SecKey.timedReveal, 0)) {
-                        Text("关").tag(0)
-                        Text("10 秒").tag(10)
-                        Text("30 秒").tag(30)
-                        Text("60 秒").tag(60)
-                    }
-                    .pickerStyle(.menu)
-                    .frame(minWidth: 84)
-                    .tint(XPalette.accentText)
-                }
-                // 375 磨砂挡片演示
-                frostedDemoRow
-                // 376 分享遮半
-                SecRow(title: "分享遮半",
-                       subtitle: SecurityPolicy.shareHalf
-                                ? "已开: 码值在完成页与详情卡上默认遮半, 点「完整显示」才露全值; 复制与分享跟随屏上显示"
-                                : "关: 码值原样显示",
-                       icon: "square.and.arrow.up") {
-                    XToggle("", isOn: bindingBool(SecKey.shareHalfOn, true))
-                        .labelsHidden()
-                }
-                // 377 访客通道: 判据口 SecurityPolicy.guestActive, 消费点在主 TabView (LockKeeperApp.swift)
-                SecRow(title: "访客通道",
-                       subtitle: SecurityPolicy.guestActive
-                                ? "已开: 主界面只挂 设备/记录 两页, 进 凭证/设置 要先重输密码"
-                                : "关: 四页照常。打开即生效 (会先把受限的那两页收起)",
-                       icon: "person.crop.circle.badge.questionmark") {
-                    XToggle("", isOn: guestSwitch)
-                        .labelsHidden()
-                }
-                if SecurityPolicy.guestActive {
-                    SecRow(title: "访客隐藏敏感成员",
-                           subtitle: SecurityPolicy.hideSensitiveInGuest
-                                    ? "已开但筛不出东西: 成员档案里没有敏感标记位, 判据口已就位等数据侧"
-                                    : "关: 成员名单照原样给访客",
-                           icon: "person.slash") {
-                        XToggle("", isOn: bindingBool(SecKey.sensitiveOnly, false))
-                            .labelsHidden()
-                    }
-                }
-            } header: {
-                Text("背景与限时")   // 371/373/375/376/377 背景与限时
-            }
-
-            Section {
-                // 378 常驻水印 (截图加扰降级案)
-                SecRow(title: "常驻水印",
-                       subtitle: DB.store.getBool(SecKey.watermarkOn, false)
-                                ? "全页对角重复 App 名+日期"
-                                : "关闭 (截图加扰降级为常驻水印)",
-                       icon: "watermark") {
-                    XToggle("", isOn: bindingBool(SecKey.watermarkOn, false))
-                        .labelsHidden()
-                }
-                if DB.store.getBool(SecKey.watermarkOn, false) {
-                    SecRow(title: "水印文案",
-                           subtitle: DB.store.getString(SecKey.watermarkTxt).isEmpty ? "默认: App 名 + 当日日期" : DB.store.getString(SecKey.watermarkTxt),
-                           icon: "textformat") {
-                        Button("自定义") {
-                            let alert = UIAlertController(title: "水印文案", message: "留空 = 默认", preferredStyle: .alert)
-                            alert.addTextField { $0.text = DB.store.getString(SecKey.watermarkTxt) }
-                            alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-                            alert.addAction(UIAlertAction(title: "保存", style: .default) { _ in
-                                DB.store.set(SecKey.watermarkTxt, alert.textFields?[0].text ?? "")
-                                SecTick.bump()
-                            })
-                            UIApplication.topViewController()?.present(alert, animated: true)
+            ScrollView {
+                VStack(spacing: XSpace.l) {
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            SecRow(title: "剪贴板自动清除",
+                                   subtitle: ClipboardCare.autoClearOn
+                                        ? "复制口令后 \(ClipboardCare.ttl) 秒清除；只对口令与 OTP 生效"
+                                        : "已关闭 —— 口令会一直留在系统剪贴板里",
+                                   icon: "doc.on.doc") {
+                                Picker("", selection: Binding(
+                                    get: { ClipboardCare.ttl },
+                                    set: { ClipboardCare.setTTL($0) })) {
+                                    Text("关闭").tag(0)
+                                    Text("30 秒").tag(30)
+                                    Text("60 秒").tag(60)
+                                    Text("5 分钟").tag(300)
+                                }
+                                .pickerStyle(.menu)
+                                .frame(minWidth: 110)
+                                .tint(XPalette.accentText)
+                            }
+                            Text("加密凭证包与交接包不走这条：那是密文，且你要粘进聊天工具，定时清掉只会打断交接。")
+                                .xFont(.caption2)
+                                .foregroundStyle(XPalette.textSub)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
-                        .xFont(.footnote, weight: .medium)
-                        .foregroundStyle(XPalette.accentText)
-                        .frame(minHeight: XHit.min)
+                    }
+
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            secLabel("遮蔽样式")
+                            SecRow(title: "码值遮蔽样式", subtitle: maskStyleLabel, icon: "mask") {
+                                Picker("", selection: bindingString(SecKey.maskStyle)) {
+                                    Text("圆点打码").tag("")
+                                    Text("星号打码").tag("stars")
+                                    Text("保留末 4 位").tag("tail4")
+                                }
+                                .pickerStyle(.menu)
+                                .frame(minWidth: 110)
+                                .tint(XPalette.accentText)
+                            }
+                        }
+                    }
+
+                    NavigationLink { PrivacyDashboard() } label: {
+                        XPanel(kind: .group) {
+                            VStack(alignment: .leading, spacing: XSpace.m) {
+                                secLabel("隐私总览")
+                                HStack(spacing: XSpace.s) {
+                                    SecRow(title: "隐私仪表盘",
+                                           subtitle: "\(Self.activeCount()) 项防窥已启用",
+                                           icon: "gauge.with.needle") { EmptyView() }
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: XIcon.xs, weight: .semibold))
+                                        .foregroundStyle(XPalette.textTertiary)
+                                        .accessibilityHidden(true)
+                                }
+                            }
+                        }
+                    }
+                    .buttonStyle(.plain)
+
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            secLabel("背景与限时")
+                            SecRow(title: "切后台即糊", subtitle: bgBlurLabel,
+                                   icon: "rectangle.fill.and.rectangle") {
+                                XToggle("", isOn: bindingBool(SecKey.bgBlurOn, false))
+                                    .labelsHidden()
+                            }
+                            SecRow(title: "限时可见", subtitle: timedRevealLabel, icon: "timer") {
+                                Picker("", selection: bindingInt(SecKey.timedReveal, 0)) {
+                                    Text("关").tag(0)
+                                    Text("10 秒").tag(10)
+                                    Text("30 秒").tag(30)
+                                    Text("60 秒").tag(60)
+                                }
+                                .pickerStyle(.menu)
+                                .frame(minWidth: 84)
+                                .tint(XPalette.accentText)
+                            }
+                            frostedDemoRow
+                            SecRow(title: "分享遮半",
+                                   subtitle: SecurityPolicy.shareHalf
+                                            ? "已开: 码值在完成页与详情卡上默认遮半, 点「完整显示」才露全值; 复制与分享跟随屏上显示"
+                                            : "关: 码值原样显示",
+                                   icon: "square.and.arrow.up") {
+                                XToggle("", isOn: bindingBool(SecKey.shareHalfOn, true))
+                                    .labelsHidden()
+                            }
+                            SecRow(title: "访客通道",
+                                   subtitle: SecurityPolicy.guestActive
+                                            ? "已开: 主界面只挂 设备/记录 两页, 进 凭证/设置 要先重输密码"
+                                            : "关: 四页照常。打开即生效 (会先把受限的那两页收起)",
+                                   icon: "person.crop.circle.badge.questionmark") {
+                                XToggle("", isOn: guestSwitch)
+                                    .labelsHidden()
+                            }
+                            if SecurityPolicy.guestActive {
+                                SecRow(title: "访客隐藏敏感成员",
+                                       subtitle: SecurityPolicy.hideSensitiveInGuest
+                                                ? "已开但筛不出东西: 成员档案里没有敏感标记位, 判据口已就位等数据侧"
+                                                : "关: 成员名单照原样给访客",
+                                       icon: "person.slash") {
+                                    XToggle("", isOn: bindingBool(SecKey.sensitiveOnly, false))
+                                        .labelsHidden()
+                                }
+                            }
+                        }
+                    }
+
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            secLabel("水印")
+                            SecRow(title: "常驻水印",
+                                   subtitle: DB.store.getBool(SecKey.watermarkOn, false)
+                                            ? "全页对角重复 App 名+日期"
+                                            : "关闭 (截图加扰降级为常驻水印)",
+                                   icon: "watermark") {
+                                XToggle("", isOn: bindingBool(SecKey.watermarkOn, false))
+                                    .labelsHidden()
+                            }
+                            if DB.store.getBool(SecKey.watermarkOn, false) {
+                                SecRow(title: "水印文案",
+                                       subtitle: DB.store.getString(SecKey.watermarkTxt).isEmpty
+                                                ? "默认: App 名 + 当日日期"
+                                                : DB.store.getString(SecKey.watermarkTxt),
+                                       icon: "textformat") {
+                                    Button("自定义") {
+                                        let alert = UIAlertController(title: "水印文案", message: "留空 = 默认", preferredStyle: .alert)
+                                        alert.addTextField { $0.text = DB.store.getString(SecKey.watermarkTxt) }
+                                        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+                                        alert.addAction(UIAlertAction(title: "保存", style: .default) { _ in
+                                            DB.store.set(SecKey.watermarkTxt, alert.textFields?[0].text ?? "")
+                                            SecTick.bump()
+                                        })
+                                        UIApplication.topViewController()?.present(alert, animated: true)
+                                    }
+                                    .xFont(.footnote, weight: .medium)
+                                    .foregroundStyle(XPalette.accentText)
+                                    .frame(minHeight: XHit.min)
+                                }
+                            }
+                        }
                     }
                 }
-            } header: {
-                Text("水印")   // 378 水印
+                .padding(.horizontal, XSpace.gutter)
+                .padding(.vertical, XSpace.l)
             }
+            .scrollIndicators(.hidden)
         }
-        .xList()
-        .xScreen()
         .navigationTitle("防窥与遮蔽")
-        // 371 本地糊屏: 切后台即刻整屏糊, 回前台若已解锁则恢复清晰, 否则先过应用锁
+        .navigationBarTitleDisplayMode(.inline)
         .onChange(of: scenePhase) { _, phase in
             let on = DB.store.getBool(SecKey.bgBlurOn, false)
             switch phase {
@@ -343,9 +351,9 @@ struct SecurityPeekView: View {
                 .transition(.opacity)
             }
         }
-        // 373 限时可见驱动: 到期自动收遮蔽 (挡片演示区)
         .onReceive(Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()) { now in
-            if DB.store.getInt(SecKey.timedReveal, 0) > 0, self.revealUntil > 0, now.timeIntervalSince1970 >= self.revealUntil {
+            if DB.store.getInt(SecKey.timedReveal, 0) > 0, self.revealUntil > 0,
+               now.timeIntervalSince1970 >= self.revealUntil {
                 withAnimation(XMotion.standard) {
                     self.revealUntil = 0
                     self.frosted = true
@@ -353,6 +361,15 @@ struct SecurityPeekView: View {
             }
             self.center.bump()
         }
+    }
+
+    /// 卡片内的小标题
+    private func secLabel(_ text: String) -> some View {
+        Text(text)
+            .xFont(.caption, weight: .semibold)
+            .foregroundStyle(XPalette.textTertiary)
+            .textCase(.uppercase)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // ---------- 派生文案 ----------
