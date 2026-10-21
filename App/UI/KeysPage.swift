@@ -97,7 +97,12 @@ struct KeysPage: View {
             Button("删除", role: .destructive) { performDelete(row) }
             Button("取消", role: .cancel) { confirmDelete = nil }
         } message: { row in
-            Text("「\(row.title)」会从本机台账移除，并从门锁上撤销对应的密码/指纹。\n撤销命令会排队等待门锁连接，断网也不会丢。")
+            // 三件事必须在按下"删除"之前说清：
+            //   ① 本机会删；② 锁端也会撤销（且断网不丢）；③ **可以找回**。
+            // 第三条原来漏了 —— 用户在最有顾虑的那一刻，不知道自己还有退路。
+            Text("「\(row.title)」会从本机台账移除，并从门锁上撤销对应的密码/指纹。\n"
+                 + "撤销命令会排队等待门锁连接，断网也不会丢。\n"
+                 + "本机这条会留在回收站 \(CredentialOrg.reclaimDays()) 天，期间可以恢复。")
         }
         .sheet(isPresented: $showAdd) {
             NavigationStack {

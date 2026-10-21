@@ -314,6 +314,15 @@ const checks = [
            bin.includes('systemImage: "trash.slash"') &&
            sec.includes('Label("立即清理到期条目", systemImage: "trash.slash")');
   }],
+  ['删除确认告知可找回', () => {
+    // 删除凭证是可恢复的（进回收站 N 天），但确认框原来只讲"会删、会撤销"，
+    // 没讲"可以找回" —— 用户在最有顾虑的那一刻不知道自己还有退路。
+    // 反过来：真正不可恢复的（删本锁钥匙 / 删记录）不该假称能找回。
+    const k = CODE.get('KeysPage.swift') || '';
+    const d = CODE.get('DonglesPage.swift') || '';
+    return k.includes('回收站 \\(CredentialOrg.reclaimDays())') &&
+           !d.includes('留在回收站');
+  }],
 ];
 
 let pass = 0;
