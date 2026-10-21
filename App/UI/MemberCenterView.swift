@@ -1067,7 +1067,15 @@ struct UnclaimedClaimView: View {
                 VStack(spacing: XSpace.l) {
                     XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
-                            secLabel("未归属记录认领")
+                            HStack(spacing: XSpace.s) {
+                                secLabel("未归属记录认领")
+                                Spacer(minLength: 0)
+                                if !unclaimed.isEmpty {
+                                    Text(String(unclaimed.count) + " 条")
+                                        .xFont(.caption.monospacedDigit())
+                                        .foregroundStyle(XPalette.textTertiary)
+                                }
+                            }
 
                             // 性能: 认领 Picker 数据源提到行循环外只取一次
                             // (≤20 行 × M 成员的 ext 解码)
@@ -1079,6 +1087,14 @@ struct UnclaimedClaimView: View {
                                     .foregroundStyle(XPalette.textSub)
                                     .fixedSize(horizontal: false, vertical: true)
                             } else {
+                                if unclaimed.count > 20 {
+                                    // 原来 prefix(20) 是**静默截断** —— 有 50 条时用户只看到 20 条，
+                                    // 而且不知道还有 30 条。这里明说。
+                                    Text("共 " + String(unclaimed.count) + " 条未归属，这里显示最近 20 条；认领后会继续出现。")
+                                        .xFont(.caption2)
+                                        .foregroundStyle(XPalette.warn)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
                                 ForEach(unclaimed.prefix(20)) { r in
                                     VStack(alignment: .leading, spacing: XSpace.xs) {
                                         HStack(spacing: XSpace.s) {
@@ -1091,6 +1107,16 @@ struct UnclaimedClaimView: View {
                                                 .fixedSize(horizontal: false, vertical: true)
                                             Spacer(minLength: 0)
                                             XStatusPill(text: "待认领", tone: .neutral, systemImage: "questionmark.circle")
+                                        }
+                                        // 同日未归属条数 —— 帮助判断"那天是谁在家"。
+                                        // 单条孤立记录很难认，但"同一天有 4 条未归属"就明显得多。
+                                        let sameDay = unclaimed.filter {
+                                            String($0.time.prefix(10)) == String(r.time.prefix(10))
+                                        }.count
+                                        if sameDay > 1 {
+                                            Text("当天还有 " + String(sameDay - 1) + " 条未归属")
+                                                .xFont(.caption2)
+                                                .foregroundStyle(XPalette.textTertiary)
                                         }
                                         Picker("认领给", selection: Binding(
                                             get: { selMember[r.key] ?? "" },
