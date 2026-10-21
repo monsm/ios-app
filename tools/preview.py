@@ -652,6 +652,48 @@ def render_skeleton():
     return save(img, "skeleton")
 
 
+def render_tiles():
+    """XMetricTile + XStatusPill + XEmptyState — 三个基础组件的形状"""
+    W, H = 402, 400
+    img = new_canvas(W, H)
+    dr = ImageDraw.Draw(img, "RGBA")
+
+    # ── XMetricTile × 3 (surfaceAlt 底, 半径 tile 14, pad 14) ──
+    text(dr, (S(16), S(8)), "XMetricTile — surfaceAlt + XRadius.tile + pad 14", 9, TEXT_TERT)
+    tiles = [("1.2%", "告警率", WARN, "@"), ("0", "有告警的天", OK, "#"), ("84", "总开门", TEXT_SUB, "o")]
+    tw = (W - S(32) - S(24)) // 3
+    for i, (val, lab, tone, icon) in enumerate(tiles):
+        x0 = S(16) + i*(tw + S(12))
+        y0 = S(26)
+        th = S(84)
+        dr.rounded_rectangle([x0, y0, x0+tw, y0+th], S(14), fill=SURFACE_ALT+(255,))
+        text(dr, (x0+S(14), y0+S(14)), icon, 11, tone)
+        text(dr, (x0+S(14), y0+S(34)), val, 20, TEXT)
+        text(dr, (x0+S(14), y0+S(62)), lab, 9, TEXT_SUB)
+
+    # ── XStatusPill × 4 (胶囊, pad h8/v3, tone 12% 底 + 24% 描边) ──
+    text(dr, (S(16), S(128)), "XStatusPill — tone 12% 底 / 24% 描边 / caption 文字", 9, TEXT_TERT)
+    pills = [("已连接", OK), ("连接中", ACCENT), ("未连接", TEXT_SUB), ("注意", WARN)]
+    px = S(16)
+    py_ = S(146)
+    for label, tone in pills:
+        pw = S(len(label)*15 + 30)
+        dr.rounded_rectangle([px, py_, px+pw, py_+S(24)], S(12), fill=tone+(31,))
+        dr.rounded_rectangle([px, py_, px+pw, py_+S(24)], S(12), outline=tone+(61,), width=1)
+        text(dr, (px+S(10), py_+S(5)), label, 10, tone)
+        px += pw + S(8)
+
+    # ── XEmptyState (pad 24, 图标 44, headline + subheadline) ──
+    text(dr, (S(16), S(196)), "XEmptyState — pad 24 / 图标 44 / 标题 headline + 说明 subheadline", 9, TEXT_TERT)
+    y0 = S(214)
+    text_center(dr, W//2, y0+S(6), "o", 22, TEXT_TERT)
+    text_center(dr, W//2, y0+S(46), "还没有凭证", 14, TEXT)
+    text_center(dr, W//2, y0+S(70), "点右上角 + 添加第一份授权。", 11, TEXT_SUB)
+    dr.rounded_rectangle([S(16), y0, W-S(16), y0+S(112)], S(16), outline=HAIRLINE+(60,), width=1)
+
+    return save(img, "tiles")
+
+
 RENDERERS = {
     "codering": render_code_ring,
     "alarmchart": render_alarm_chart,
@@ -666,6 +708,7 @@ RENDERERS = {
     "buttons": render_buttons,
     "panels": render_panels,
     "skeleton": render_skeleton,
+    "tiles": render_tiles,
 }
 
 
