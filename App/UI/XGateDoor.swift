@@ -34,11 +34,46 @@ struct XGateDoor: View {
     @State private var breathe = false
 
     /// 门的显示宽度：屏幕宽 × 0.92（留一点边给门框阴影）
+    /// 门在屏幕上实际占的尺寸
+    ///
+    /// ═══ 这里踩过一个坑 ═══
+    ///
+    /// 第一版:
+    ///   doorWidth  = 屏宽 × 0.92            → 393×0.92 = 361.6pt
+    ///   doorHeight = doorWidth × 2300/1050  → 361.6×2.19 = 792pt
+    ///   Image().aspectRatio(...).frame(width:height:)
+    ///
+    /// 问题: iPhone 15 Pro 屏高 852pt，扣掉状态栏与安全区约 93pt，
+    ///       可用高度 759pt < 门高 792pt —— 超出 33pt。
+    ///
+    /// 而且 .aspectRatio() 写在 .frame() 之前会被固定 frame 覆盖，
+    /// 所以 aspectRatio 根本没起作用。
+    ///
+    /// 修法: 按「宽和高哪个先到边」取小，保证整扇门可见。
     private var doorWidth: CGFloat {
-        UIScreen.main.bounds.width * 0.92
+        let byWidth = UIScreen.main.bounds.width * 0.92
+        let byHeight = availableHeight * (GateMetrics.doorW / GateMetrics.doorH)
+        return min(byWidth, byHeight)
     }
     private var doorHeight: CGFloat {
         doorWidth * GateMetrics.doorH / GateMetrics.doorW
+    }
+
+    /// 屏幕可用高度
+    ///
+    /// ═══ 为什么只留 120pt 而不是 340pt ═══
+    ///
+    /// 第一版我扣掉 340pt（顶部信息 100 + 底部按钮 240），
+    /// 结果 iPhone 15 上门只剩 234pt 宽 —— 屏宽的 60%，明显偏小。
+    /// 而且真实比例的锁只有 13.4pt，低于 18pt 下限被放大 34%，比例失真。
+    ///
+    /// 但 D 域的设计意图是「**门占满整屏，信息浮在门面上**」——
+    /// 锁名、状态、按住开锁都是 overlay，压在门上面，不占门的空间。
+    ///
+    /// 所以只留 120pt（状态栏 + 底部安全区）。
+    /// 门宽 334pt、锁 19.1pt > 18pt 下限 —— 比例不再失真。
+    private var availableHeight: CGFloat {
+        max(320, UIScreen.main.bounds.height - 120)
     }
     /// 锁在「未放大」时的显示边长（取门宽的 5.7%，但下限 18pt 保证能点中）
     private var lockSide: CGFloat {
@@ -67,8 +102,11 @@ struct XGateDoor: View {
             // ── 门 ──
             Image(uiImage: GateFaceTexture.image(tint: UIColor(tint)))
                 .resizable()
-                .aspectRatio(GateMetrics.doorW / GateMetrics.doorH, contentMode: .fit)
+                // 不写 .aspectRatio —— doorWidth/doorHeight 已经是
+                // 精确的 1050:2300 比例（见上面的计算），再写一层
+                // aspectRatio 反而会和固定 frame 打架。
                 .frame(width: doorWidth, height: doorHeight)
+                .clipped()
                 .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
                 // 门在地面上的接触阴影（让它有重量）
                 .shadow(color: .black.opacity(0.55), radius: 26, y: 14)
