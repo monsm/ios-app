@@ -490,6 +490,54 @@ def render_stepbar():
 
     return save(img, "stepbar")
 
+def render_xrows():
+    """XRow — 图标徽章版（before / after）"""
+    W, H = 402, 340
+    img = new_canvas(W, H)
+    dr = ImageDraw.Draw(img, "RGBA")
+
+    rows = [
+        ("*", "本机数据保护", "应用锁 / 审计 / 销毁", "已开启", OK),
+        ("o", "隐私与伪装", "偷窥模式 / 伪装 / 访客通道", None, TEXT_SUB),
+        ("#", "设备管理", "排序 / 分组 / 批量", "3 把", TEXT_SUB),
+        ("^", "校准门锁时间", None, None, TEXT_SUB),
+        ("~", "备份与恢复", "全量导出 / 导入", "3 天前", TEXT_SUB),
+        ("!", "检查固件更新", None, "V5.2.9", WARN),
+    ]
+
+    # AFTER (带徽章)
+    text(dr, (S(16), S(10)), "AFTER  图标徽章 28pt + 12% 同色底", 10, TEXT)
+    y = S(30)
+    for icon, title, sub, val, tone in rows:
+        # 徽章
+        dr.rounded_rectangle([S(16), y+S(8), S(16)+S(28), y+S(8)+S(28)], S(8), fill=tone+(31,))
+        text_center(dr, S(16)+S(14), y+S(13), icon, 12, tone)
+        # 文字
+        text(dr, (S(16)+S(40), y+S(11)), title, 14, TEXT)
+        if sub: text(dr, (S(16)+S(40), y+S(30)), sub, 10, TEXT_SUB)
+        # 值
+        if val:
+            bb = dr.textbbox((0,0), val, font=F(12))
+            dr.text((W-S(40)-(bb[2]-bb[0]), y+S(16)), val, font=F(12), fill=TEXT_SUB)
+        # chevron
+        text(dr, (W-S(28), y+S(15)), ">", 10, TEXT_TERT)
+        y += S(44)
+
+    # BEFORE (无徽章)
+    text(dr, (S(16), y+S(10)), "BEFORE  图标裸放, 无底色", 10, TEXT)
+    y += S(30)
+    for icon, title, sub, val, tone in rows[:3]:
+        text(dr, (S(16)+S(10), y+S(11)), icon, 11, tone)
+        text(dr, (S(16)+S(40), y+S(11)), title, 14, TEXT)
+        if sub: text(dr, (S(16)+S(40), y+S(30)), sub, 10, TEXT_SUB)
+        if val:
+            bb = dr.textbbox((0,0), val, font=F(12))
+            dr.text((W-S(40)-(bb[2]-bb[0]), y+S(16)), val, font=F(12), fill=TEXT_SUB)
+        text(dr, (W-S(28), y+S(15)), ">", 10, TEXT_TERT)
+        y += S(44)
+
+    return save(img, "xrows")
+
 RENDERERS = {
     "codering": render_code_ring,
     "alarmchart": render_alarm_chart,
@@ -500,6 +548,7 @@ RENDERERS = {
     "cyclering": render_cyclering,
     "seclamps": render_seclamps,
     "stepbar": render_stepbar,
+    "xrows": render_xrows,
 }
 
 

@@ -335,12 +335,22 @@ struct XRow: View {
 
     var body: some View {
         let content = HStack(spacing: XSpace.m) {
+            // 图标徽章: 28pt 圆角底 + 图标。
+            //
+            // 原来图标裸放在行首, 与文字同一灰度 —— 一屏十几行长得一模一样,
+            // 眼睛没有落点。加一层 12% 同色底之后, 每行左侧形成一列色点,
+            // 扫读时先认位置再认字, 这是列表可读性的基本盘。
+            // tone 仍沿用 XToneColor (neutral 走 textSub), 不新增配色维度。
             if let systemImage {
-                Image(systemName: systemImage)
-                    .xFont(.system(size: XIcon.sm, weight: .medium))
-                    .foregroundStyle(tone == .neutral ? XPalette.textSub : tone.color)
-                    .frame(width: XIcon.lg, alignment: .center)
-                    .accessibilityHidden(true)
+                ZStack {
+                    RoundedRectangle(cornerRadius: XRadius.min, style: .continuous)
+                        .fill((tone == .neutral ? XPalette.textSub : tone.color).opacity(0.12))
+                    Image(systemName: systemImage)
+                        .xFont(.system(size: XIcon.sm, weight: .semibold))
+                        .foregroundStyle(tone == .neutral ? XPalette.textSub : tone.color)
+                }
+                .frame(width: 28, height: 28)
+                .accessibilityHidden(true)
             }
 
             VStack(alignment: .leading, spacing: 2) {
