@@ -32,15 +32,23 @@ struct BackupView: View {
     var embedded: Bool = false
 
     private var listContent: some View {
-        List {
-            exportSection
-            importSection
-            studioSection
+        ZStack {
+            XPalette.canvas.ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: XSpace.l) {
+                    exportSection
+                    importSection
+                    studioSection
+                }
+                .padding(.horizontal, XSpace.gutter)
+                .padding(.vertical, XSpace.l)
+            }
+            .scrollIndicators(.hidden)
         }
         .navigationTitle("备份与恢复")
-        .xList()
-        .xScreen()
-        .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar { ToolbarItem(placement: .cancellationAction) { Button("完成") { dismiss() } } }
     }
 
     var body: some View { vkBody }
@@ -64,86 +72,92 @@ struct BackupView: View {
 
     // ---------- 全量备份 ----------
     private var exportSection: some View {
-        Section("全量备份") {
-            Text("导出全部门锁、钥匙、密码台账与家人档案为一整段文本 (含敏感密钥, 请妥善保管)。")
-                .xFont(.caption).foregroundStyle(XPalette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
-            XBusyButton(title: "生成备份文本", systemImage: "doc.text", busy: false) {
-                Milestones.recordBackup()   // 980 备份卫士
-                exportText = BackupCanonical.exportText(BackupKit.collectAll())
-                BackupStudio.markExportSize(exportText)   // 193: 记本次尺寸, 下次预估行对比用
-                app.evaluateAchievements()
-            }
-            // 822 从未备份的信封: 没有备份时这页最该说的不是"怎么导出"，而是"现在一个都没有"。
-            // 文案不写"建议每周一次"这种本 App 没有依据的规范；给的是**已发生的事实**与下一步动作。
-            if Milestones.lastBackupAt == nil {
-                HStack(alignment: .top, spacing: XSpace.s) {
-                    Image(systemName: "envelope")
-                        .font(.system(size: XIcon.md))
-                        .foregroundStyle(XPalette.accentText)
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                secLabel("全量备份")
+                Text("导出全部门锁、钥匙、密码台账与家人档案为一整段文本 (含敏感密钥, 请妥善保管)。")
+                    .xFont(.caption).foregroundStyle(XPalette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
+                XBusyButton(title: "生成备份文本", systemImage: "doc.text", busy: false) {
+                    Milestones.recordBackup()   // 980 备份卫士
+                    exportText = BackupCanonical.exportText(BackupKit.collectAll())
+                    BackupStudio.markExportSize(exportText)   // 193: 记本次尺寸, 下次预估行对比用
+                    app.evaluateAchievements()
+                }
+                // 822 从未备份的信封: 没有备份时这页最该说的不是"怎么导出"，而是"现在一个都没有"。
+                // 文案不写"建议每周一次"这种本 App 没有依据的规范；给的是**已发生的事实**与下一步动作。
+                if Milestones.lastBackupAt == nil {
+                    HStack(alignment: .top, spacing: XSpace.s) {
+                        Image(systemName: "envelope")
+                            .font(.system(size: XIcon.md))
+                            .foregroundStyle(XPalette.accentText)
+                        VStack(alignment: .leading, spacing: XSpace.xxs) {
+                            Text("还没有备份").xFont(.subheadline, weight: .medium)   // 822 还没有备份
+                            Text("本机从未生成过备份文本，也没有上传成功记录。手机丢失或重装即不可恢复。")
+                                .xFont(.caption).foregroundStyle(XPalette.textSub)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    .accessibilityElement(children: .combine)
+                } else if let at = Milestones.lastBackupAt {
                     VStack(alignment: .leading, spacing: XSpace.xxs) {
-                        Text("还没有备份").xFont(.subheadline, weight: .medium)   // 822 还没有备份
-                        Text("本机从未生成过备份文本，也没有上传成功记录。手机丢失或重装即不可恢复。")
+                        Text("上次备份 " + at.formatted(date: .abbreviated, time: .shortened))   // 822 上次备份
                             .xFont(.caption).foregroundStyle(XPalette.textSub)
-                            .fixedSize(horizontal: false, vertical: true)
+                        // 822 建议备份时间: 读「备份工作室」的节奏档 (198 的 kf_bk_cadence, 本处为它的读方),
+                        // 到期与否按上次备份时刻实算; 节奏为「仅手动」时不建议 —— 没有节奏就没有"到期"这一说。
+                        if let tip = Self.backupDueTip(cadence: BackupStudio.cadence, last: at) {
+                            Text(tip).xFont(.caption).foregroundStyle(XPalette.textSub)
+                        }
+                        // 193 体积预估: 本次预计 vs 上次实际 (备份工作室同样一行, 这里补全量导出入口的对照)
+                        if let est = BackupStudio.estimateBytes() {
+                            Text(BackupStudio.sizeText(est)).xFont(.caption).foregroundStyle(XPalette.textSub)
+                        }
                     }
                 }
-                .accessibilityElement(children: .combine)
-            } else if let at = Milestones.lastBackupAt {
-                VStack(alignment: .leading, spacing: XSpace.xxs) {
-                    Text("上次备份 " + at.formatted(date: .abbreviated, time: .shortened))   // 822 上次备份
-                        .xFont(.caption).foregroundStyle(XPalette.textSub)
-                    // 822 建议备份时间: 读「备份工作室」的节奏档 (198 的 kf_bk_cadence, 本处为它的读方),
-                    // 到期与否按上次备份时刻实算; 节奏为「仅手动」时不建议 —— 没有节奏就没有"到期"这一说。
-                    if let tip = Self.backupDueTip(cadence: BackupStudio.cadence, last: at) {
-                        Text(tip).xFont(.caption).foregroundStyle(XPalette.textSub)
+                if !exportText.isEmpty {
+                    VStack(alignment: .leading, spacing: XSpace.s) {
+                        Text("共 \(exportText.count) 字符")
+                            .xFont(.caption).foregroundStyle(XPalette.textSub)
+                        Text(exportText)
+                            .xFont(.caption.monospaced())
+                            .lineLimit(8).truncationMode(.tail)
+                            .textSelection(.enabled) // 也可手动复制
+                        ShareLink(item: exportText, preview: SharePreview("离线锁管家备份"))
                     }
-                    // 193 体积预估: 本次预计 vs 上次实际 (备份工作室同样一行, 这里补全量导出入口的对照)
-                    if let est = BackupStudio.estimateBytes() {
-                        Text(BackupStudio.sizeText(est)).xFont(.caption).foregroundStyle(XPalette.textSub)
-                    }
+                    .accessibilityElement(children: .contain)
                 }
-            }
-            if !exportText.isEmpty {
-                VStack(alignment: .leading, spacing: XSpace.s) {
-                    Text("共 \(exportText.count) 字符")
-                        .xFont(.caption).foregroundStyle(XPalette.textSub)
-                    Text(exportText)
-                        .xFont(.caption.monospaced())
-                        .lineLimit(8).truncationMode(.tail)
-                        .textSelection(.enabled) // 也可手动复制
-                    ShareLink(item: exportText, preview: SharePreview("离线锁管家备份"))
-                }
-                .accessibilityElement(children: .contain)
             }
         }
     }
 
     // ---------- 导入恢复 ----------
     private var importSection: some View {
-        Section("导入恢复") {
-            Text("粘贴备份文本后导入。相同设备将覆盖, 其它设备保留 (门锁无需重置)。")
-                .xFont(.caption).foregroundStyle(XPalette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
-            TextField("粘贴备份文本", text: $importText, axis: .vertical)
-                .xFont(.caption.monospaced())
-                .lineLimit(3...6)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .disabled(busy)
-            Button {
-                if let s = UIPasteboard.general.string, !s.isEmpty {
-                    importText = s
-                } else {
-                    app.showToast("剪贴板是空的")
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                secLabel("导入恢复")
+                Text("粘贴备份文本后导入。相同设备将覆盖, 其它设备保留 (门锁无需重置)。")
+                    .xFont(.caption).foregroundStyle(XPalette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
+                TextField("粘贴备份文本", text: $importText, axis: .vertical)
+                    .xFont(.caption.monospaced())
+                    .lineLimit(3...6)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .disabled(busy)
+                Button {
+                    if let s = UIPasteboard.general.string, !s.isEmpty {
+                        importText = s
+                    } else {
+                        app.showToast("剪贴板是空的")
+                    }
+                } label: {
+                    Label("从剪贴板粘贴", systemImage: "doc.on.clipboard")
+                        .frame(minHeight: XHit.min)
                 }
-            } label: {
-                Label("从剪贴板粘贴", systemImage: "doc.on.clipboard")
-                    .frame(minHeight: XHit.min)
-            }
-            .disabled(busy || importText.isEmpty)
-            Button("导入", role: .destructive) { confirmImport() } // 覆盖同名设备, 属破坏性动作
                 .disabled(busy || importText.isEmpty)
+                Button("导入", role: .destructive) { confirmImport() } // 覆盖同名设备, 属破坏性动作
+                    .disabled(busy || importText.isEmpty)
+            }
         }
     }
 
@@ -200,19 +214,22 @@ struct BackupView: View {
 
     // ---------- 包8: 备份工作室入口 (导出向导/恢复) ----------
     private var studioSection: some View {
-        Section("备份工作室") {
-            Button {
-                showStudio = true
-            } label: {
-                Label("打开备份工作室", systemImage: "wrench.and.scissors")
-                    .xFont(.subheadline, weight: .semibold)
-                    .foregroundStyle(XPalette.accentText)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .frame(minHeight: XHit.min)
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                secLabel("备份工作室")
+                Button {
+                    showStudio = true
+                } label: {
+                    Label("打开备份工作室", systemImage: "wrench.and.scissors")
+                        .xFont(.subheadline, weight: .semibold)
+                        .foregroundStyle(XPalette.accentText)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .frame(minHeight: XHit.min)
+                }
+                Text("导出向导 · 恢复预演 · 完整性信任。")
+                    .xFont(.caption).foregroundStyle(XPalette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            Text("导出向导 · 恢复预演 · 完整性信任。")
-                .xFont(.caption).foregroundStyle(XPalette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
@@ -243,5 +260,13 @@ struct BackupView: View {
         let due = last.addingTimeInterval(TimeInterval(days) * 86_400)
         if due <= Date() { return "按当前的\(label)节奏, 已经到该再备份一次的时候了" }   // 822 按当前的
         return "按当前的\(label)节奏, 建议 " + due.formatted(date: .abbreviated, time: .shortened) + " 前再备一次"   // 822 前再备一次
+    }
+
+    private func secLabel(_ text: String) -> some View {
+        Text(text)
+            .xFont(.caption, weight: .semibold)
+            .foregroundStyle(XPalette.textTertiary)
+            .textCase(.uppercase)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
