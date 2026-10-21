@@ -57,8 +57,6 @@ final class SecTickCenter: ObservableObject {
     @Published private(set) var tick = 0
     func bump() { tick &+= 1 }
 }
-@MainActor
-
 // ---------- 383 毁灭动作的前置复核 (sudo) ----------
 /// 383 口令复核的唯一落地: 判据口验 (SecurityPolicy.sudoTicket) + 验不过按 389/392 那条既有失败通道记一笔。
 /// 副作用如实写在这里: sudo 输错与主锁屏输错共用同一条连败计数与冷却, 因为试的是同一把口令 ——
@@ -164,7 +162,7 @@ struct SecurityPeekView: View {
     // 375 磨砂挡片: 长按移开, 松手复位
     @State private var frosted = true
 
-    var body: some View { vkBody.destined(.securityPeek) }
+    var body: some View { vkBody }
     var vkBody: some View {
         List {
             // 405 剪贴板自清: 口令/OTP 复制到剪贴板后延时清除。
@@ -456,7 +454,7 @@ struct SecurityAuditView: View {
     @State private var verifyMsg: String?
     @State private var exportPlaintext = false
 
-    var body: some View { vkBody.destined(.securityAudit) }
+    var body: some View { vkBody }
     var vkBody: some View {
         List {
             // 379 双流水分段
@@ -834,7 +832,7 @@ struct SecurityDestroyView: View {
     // 401/406 残留复核
     @State private var residueMsg: String?
 
-    var body: some View { vkBody.destined(.securityDestroy) }
+    var body: some View { vkBody }
     var vkBody: some View {
         List {
             // 400 销毁前备份闸
@@ -1349,4 +1347,50 @@ struct PrivacyDashboard: View {
              PeekItem(key: SecKey.watermarkOn, name: "常驻水印", on: DB.store.getBool(SecKey.watermarkOn, false))]
         }
     }
+}
+
+
+// ---------- 通用行组件 (触达 ≥44pt, 颜色只走 DS 令牌) ----------
+struct SecRow<Trailing: View>: View {
+    private let title: String
+    private let subtitle: String
+    private let icon: String
+    private let iconTone: ToneColor
+    private let trailing: Trailing
+
+    init(title: String, subtitle: String = "", icon: String = "circle.fill",
+         iconTone: ToneColor = .neutral, @ViewBuilder trailing: () -> Trailing) {
+        self.title = title
+        self.subtitle = subtitle
+        self.icon = icon
+        self.iconTone = iconTone
+        self.trailing = trailing()
+    }
+
+    var body: some View {
+        HStack(spacing: DS.Space.s) {
+            Image(systemName: icon)
+                .font(.system(size: DS.Icon.sm, weight: .medium))
+                .foregroundStyle(iconTone.color)
+                .frame(width: DS.Icon.md, height: DS.Icon.md)
+            VStack(alignment: .leading, spacing: DS.Space.xxs) {
+                Text(title)
+                    .vkFont(.subheadline, weight: .medium)
+                if !subtitle.isEmpty {
+                    Text(subtitle)
+                        .vkFont(.footnote)
+                        .foregroundStyle(DS.Palette.textSub)
+                }
+            }
+            Spacer(minLength: DS.Space.s)
+            trailing
+        }
+        .frame(minHeight: DS.Hit.min)
+        .contentShape(Rectangle())
+    }
+}
+
+
+enum SecTick {
+    static func bump() { SecTickCenter.shared.bump() }
 }
