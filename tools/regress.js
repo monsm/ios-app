@@ -358,6 +358,15 @@ const checks = [
     }
     return bad === 0;
   }],
+  ['异步列表页保留三态（骨架/空/内容）', () => {
+    // 全仓只有三页异步加载列表：告警、事件、统计。
+    // 它们必须同时有"加载中骨架"与"空态"，否则加载期间会显示一片空白
+    // （或更糟：显示"还没有…"，那是一句不真实的话）。
+    // 其余 8 个有空态的页面都读本地同步数据（DB.keychains / members / bin…），
+    // 不存在加载窗口，因此不需要骨架 —— 这是有意的区分，不是遗漏。
+    const need = ['AlarmsPage.swift', 'EventsPage.swift', 'StatsPage.swift'];
+    return need.every(f => (CODE.get(f) || '').includes('XSkeleton'));
+  }],
 ];
 
 let pass = 0;
