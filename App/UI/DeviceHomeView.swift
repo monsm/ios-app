@@ -16,8 +16,14 @@ struct SyncTimeView: View {
 
     var body: some View { vkBody.destined(.syncTime) }
     var vkBody: some View {
-        Form {
-            Section {
+        ZStack {
+            XPalette.canvas.ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: XSpace.l) {
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: XSpace.m) {
+                    secLabel("同步时间")
                 if app.current != nil {
                     Text("将手机时间同步到门锁内 (cmd 0E)。校准前会先读锁钟并补偿偏差。")
                         .xFont(.footnote)
@@ -29,8 +35,10 @@ struct SyncTimeView: View {
                 }
             } header: {
                 Text("同步时间")
+                }
             }
-            Section {
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: XSpace.m) {
                 XBusyButton(title: "将手机时间同步到锁内",
                             systemImage: "clock.arrow.circlepath",
                             busy: busy) {
@@ -44,7 +52,16 @@ struct SyncTimeView: View {
                 }
             } footer: {
                 Text("请将手机靠近门锁 · 请确保手机时间准确")
+                    Text("请将手机靠近门锁 · 请确保手机时间准确")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textSub)
+                }
             }
+                }
+                .padding(.horizontal, XSpace.gutter)
+                .padding(.vertical, XSpace.l)
+            }
+            .scrollIndicators(.hidden)
         }
         .navigationTitle("同步时间")
         .xList()
@@ -78,6 +95,14 @@ struct SyncTimeView: View {
         }
         busy = false
     }
+
+    private func secLabel(_ text: String) -> some View {
+        Text(text)
+            .xFont(.caption, weight: .semibold)
+            .foregroundStyle(XPalette.textTertiary)
+            .textCase(.uppercase)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
 }
 
 struct LabeledRow: View {
@@ -101,4 +126,3 @@ struct LabeledRow: View {
     }
 }
 
-

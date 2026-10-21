@@ -17,53 +17,89 @@ struct SafemodeIntroView: View {
 
     var body: some View { vkBody.destined(.safemodeIntro) }
     var vkBody: some View {
-        Form {
-            if isOtp {
-                Section("临时密码 (ZOTP) 介绍") {
-                    Text("ZOTP 是临时开锁密码：6 位数字密码，每 30 分钟更换一次，同一窗口内最多 99 个。").xFont(.footnote)
-                    Text("生成前请先校准门锁时间 (0E)，否则手机与锁时间窗不同步会导致密码不匹配。").xFont(.footnote)
-                }
-            } else {
-                Section("门锁的安全模式介绍") {
-                    Text("门锁的安全模式分为A模式和B模式").xFont(.subheadline)
-                    Text("A模式：只需要单一方式（密码／指纹／手机）验证通过就可以开锁").xFont(.footnote)
-                    Text("B模式：需要用两种不同方式（指纹+密码／指纹+手机／手机+密码）组合验证通过才可开锁").xFont(.footnote)
-                }
-                Section("怎么设置门锁的安全模式？") {
-                    Text("当前模式在「锁信息名片」(设备页) 读取后显示。本 App 只给变严的方向 (A→B)；"
-                         + "要放宽回 A 模式请在门锁键盘上操作或联系管理员。").xFont(.footnote)
-                    // 拍板 #2 (第六十六批): 给切换入口, 但只允许更严方向。
-                    // 不给 B→A 的理由写在这: 放宽验证会让"两种组合验证"这条既有保护一指之间消失,
-                    // 而锁端不记录是谁改的 —— 本机审计只会留下一条无法解释的降级。
-                    if app.status == nil {
-                        Text("还没读到锁状态 —— 先在设备页读一次锁信息，这里才会出现切换按钮。")
-                            .xFont(.footnote)
-                            .foregroundStyle(XPalette.textSub)
-                    } else if app.status?.verifyMode == 1 {
-                        Text("当前已是 B 模式（双验）。本 App 不提供改回 A 模式的入口。")
-                            .xFont(.footnote)
-                            .foregroundStyle(XPalette.ok)
-                    } else {
-                        Button(switching ? "切换中…" : "切换到 B 模式（双验，更严）(cmd 20)") {
-                            confirmDestructive("切换到 B 模式（双验）",
-                                "锁端将要求两种不同方式组合验证才能开锁 (cmd 20)。这一步会改变锁的验证策略："
-                                + "切换后请先实测一次组合方式能开锁，再让其他人使用。本 App 不提供改回 A 模式的入口。",
-                                confirmTitle: "切到 B 模式") {
-                                switching = true
-                                Task { await switchToDoubleVerify() }
+        ZStack {
+            XPalette.canvas.ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: XSpace.l) {
+                    if isOtp {
+                        XPanel(kind: .group) {
+                            VStack(alignment: .leading, spacing: XSpace.m) {
+                                secLabel("临时密码 (ZOTP) 介绍")
+                                Text("ZOTP 是临时开锁密码：6 位数字密码，每 30 分钟更换一次，同一窗口内最多 99 个。")
+                                    .xFont(.footnote)
+                                    .foregroundStyle(XPalette.text)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                Text("生成前请先校准门锁时间 (0E)，否则手机与锁时间窗不同步会导致密码不匹配。")
+                                    .xFont(.footnote)
+                                    .foregroundStyle(XPalette.text)
+                                    .fixedSize(horizontal: false, vertical: true)
                             }
                         }
-                        .xFont(.subheadline, weight: .medium)
-                        .foregroundStyle(XPalette.accentText)
-                        .disabled(switching)
-                        .frame(minHeight: XHit.min)
+                    } else {
+                        XPanel(kind: .group) {
+                            VStack(alignment: .leading, spacing: XSpace.m) {
+                                secLabel("门锁的安全模式介绍")
+                                Text("门锁的安全模式分为 A 模式和 B 模式")
+                                    .xFont(.subheadline, weight: .medium)
+                                    .foregroundStyle(XPalette.text)
+                                Text("A 模式：只需要单一方式（密码／指纹／手机）验证通过就可以开锁")
+                                    .xFont(.footnote)
+                                    .foregroundStyle(XPalette.textSub)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                Text("B 模式：需要用两种不同方式（指纹+密码／指纹+手机／手机+密码）组合验证通过才可开锁")
+                                    .xFont(.footnote)
+                                    .foregroundStyle(XPalette.textSub)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+
+                        XPanel(kind: .group) {
+                            VStack(alignment: .leading, spacing: XSpace.m) {
+                                secLabel("怎么设置")
+                                Text("当前模式在「锁信息名片」(设备页) 读取后显示。本 App 只给变严的方向 (A→B)；要放宽回 A 模式请在门锁键盘上操作或联系管理员。")
+                                    .xFont(.footnote)
+                                    .foregroundStyle(XPalette.textSub)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                if app.status == nil {
+                                    Text("还没读到锁状态 —— 先在设备页读一次锁信息，这里才会出现切换按钮。")
+                                        .xFont(.footnote)
+                                        .foregroundStyle(XPalette.textSub)
+                                } else if app.status?.verifyMode == 1 {
+                                    Text("当前已是 B 模式（双验）。本 App 不提供改回 A 模式的入口。")
+                                        .xFont(.footnote)
+                                        .foregroundStyle(XPalette.ok)
+                                } else {
+                                    Button(switching ? "切换中…" : "切换到 B 模式（双验，更严）(cmd 20)") {
+                                        confirmDestructive("切换到 B 模式（双验）",
+                                            "锁端将要求两种不同方式组合验证才能开锁 (cmd 20)。这一步会改变锁的验证策略：切换后请先实测一次组合方式能开锁，再让其他人使用。本 App 不提供改回 A 模式的入口。",
+                                            confirmTitle: "切到 B 模式") {
+                                            switching = true
+                                            Task { await switchToDoubleVerify() }
+                                        }
+                                    }
+                                    .buttonStyle(XSecondaryButtonStyle())
+                                    .disabled(switching)
+                                }
+                            }
+                        }
                     }
                 }
+                .padding(.horizontal, XSpace.gutter)
+                .padding(.vertical, XSpace.l)
             }
+            .scrollIndicators(.hidden)
         }
         .navigationTitle(isOtp ? "临时密码介绍" : "安全模式说明")
-        .xList()
-        .xScreen()
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func secLabel(_ text: String) -> some View {
+        Text(text)
+            .xFont(.caption, weight: .semibold)
+            .foregroundStyle(XPalette.textTertiary)
+            .textCase(.uppercase)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     /// 拍板 #2: 下发 cmd20 后**必须回读校验** —— rc=0 只说明锁收了命令, 不代表验证策略真的改了。

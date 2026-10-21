@@ -528,8 +528,14 @@ struct AutoCalView: View {
 
     var body: some View { vkBody.destined(.autoCal) }
     var vkBody: some View {
-        Form {
-            Section {
+        ZStack {
+            XPalette.canvas.ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: XSpace.l) {
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: XSpace.m) {
+                    secLabel("距离标定 (F3)")
                 if let c = AutoOpen.autocal(mac) {
                     LabeledRow("当前 P95 基准", "RSSI \(c.rssiP95)")
                     LabeledRow("武装线 / 解除线 (回差)",
@@ -549,10 +555,22 @@ struct AutoCalView: View {
                     .xFont(.caption)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
+                    Text("静止走近门锁一次, 采 30 秒 RSSI 取 P95 作为武装基准。回差: 越过武装线才武装, 掉回 0.5×基准才解除, 防门口抖动误触发。")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textSub)
+                }
             }
-            Section("标定数据") {
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: XSpace.m) {
+                    secLabel("标定数据")
                 Button("清除标定", role: .destructive) { AutoOpen.removeAutocal(mac) }
+                }
             }
+                }
+                .padding(.horizontal, XSpace.gutter)
+                .padding(.vertical, XSpace.l)
+            }
+            .scrollIndicators(.hidden)
         }
         .navigationTitle("距离标定")
         .xList()
@@ -583,6 +601,14 @@ struct AutoCalView: View {
         } else {
             app.showToast("样本不足, 请走近门锁再试")
         }
+    }
+
+    private func secLabel(_ text: String) -> some View {
+        Text(text)
+            .xFont(.caption, weight: .semibold)
+            .foregroundStyle(XPalette.textTertiary)
+            .textCase(.uppercase)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

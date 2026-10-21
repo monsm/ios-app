@@ -639,8 +639,14 @@ struct LinkPrefsView: View {
     var mac: String
     var body: some View { vkBody.destined(.linkPrefs) }
     var vkBody: some View {
-        Form {
-            Section("自动预握手") {
+        ZStack {
+            XPalette.canvas.ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: XSpace.l) {
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: XSpace.m) {
+                    secLabel("自动预握手")
                 XToggle("进页/回前台自动预热连接", isOn: Binding(   // 95/135 进页
                     get: { DB.store.getBool("kf_link_auto_" + mac, true) },
                     set: { DB.store.set("kf_link_auto_" + mac, $0) }))
@@ -669,8 +675,11 @@ struct LinkPrefsView: View {
                 // 97 连接偏好记忆
                 // 123 每锁
                 LabeledRow("连接偏好记忆", "每锁 kf_link_auto_ 偏好 + rssiFor 实读; 扫描强度档走全局")
+                }
             }
-            Section("连接统计") {
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: XSpace.m) {
+                    secLabel("连接统计")
                 LabeledRow("连接成功率", LinkSense.successRateText(mac: mac))   // 70 连接成功率
                 LabeledRow("高成功率时段", LinkSense.bestHourHint())   // 539 高成功率时段
                 LabeledRow("占用类错误", "保守文案 — 协议占用细分未确证")   // 124 占用类错误
@@ -680,11 +689,25 @@ struct LinkPrefsView: View {
                     .xFont(.caption)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
+                }
             }
+                }
+                .padding(.horizontal, XSpace.gutter)
+                .padding(.vertical, XSpace.l)
+            }
+            .scrollIndicators(.hidden)
         }
         .navigationTitle("连接与预握手")
         .xList()
         .xScreen()
+    }
+
+    private func secLabel(_ text: String) -> some View {
+        Text(text)
+            .xFont(.caption, weight: .semibold)
+            .foregroundStyle(XPalette.textTertiary)
+            .textCase(.uppercase)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
