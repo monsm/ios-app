@@ -238,8 +238,10 @@ struct KeysPage: View {
         }
         confirmDelete = nil
         XHaptics.trigger.impactOccurred()
+        // 提示必须**指向核对的地方** —— 否则"已排队"这三个字对用户是没有着落的：
+        // 他不知道发出去没有、失败了没有、要去哪里看。回收站页现在有队列卡。
         app.showToast(n > 0
-            ? "已删除「\(row.title)」，并已排队从门锁上撤销"
+            ? "已删除「\(row.title)」—— 锁端撤销已排队，可在「安全 → 回收站」核对"
             : "「\(row.title)」未找到或已删除")
         refresh()
     }
