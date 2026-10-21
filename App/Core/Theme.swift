@@ -115,11 +115,7 @@ enum XRadius {
     static var card: CGFloat { r(16) }
     static var control: CGFloat { r(12) }
     static var tile: CGFloat { r(14) }
-    /// 锁面圆环
-    static var dial: CGFloat { r(999) }
     static var min: CGFloat { r(8) }
-    static var rowMinH: CGFloat { r(12) }
-    static var tlGap: CGFloat { r(10) }
 }
 
 /// 触达尺寸
@@ -130,8 +126,6 @@ enum XHit {
     static let dial: CGFloat = 200
     static let rowMinH: CGFloat = 44
     static let tlGap: CGFloat = 10
-    static let emptyMascot: CGFloat = 96
-    static let heroTexture: CGFloat = 120
 }
 
 /// 图标尺寸
@@ -156,7 +150,6 @@ enum XMetric {
     static var tlGap: CGFloat { XSpace.m }
     static var emptyMascot: Bool { !Milestones.plainMode }
     static var heroTexture: String { "" }
-    static var digitDesign: Font.Design { .rounded }
 
     /// 装饰性大图标随辅助功能字号适度放大 (HIG typography: 承载信息的图标
     /// 在字号变大时也要跟着变大 —— 上限 1.35 倍, 再大就会顶破版面)。
