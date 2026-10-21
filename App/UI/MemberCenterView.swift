@@ -1374,13 +1374,15 @@ struct MemberExitWizard: View {
             ScrollView {
                 VStack(spacing: XSpace.l) {
                     if items.isEmpty {
-                        Section {
+                        // M5 迁移遗留: Section 在 ScrollView 里没有视觉容器，改用 XPanel 与全仓统一
+                        XPanel(kind: .group) {
                             Text("该成员名下没有台账凭证, 直接归档即可。")   // 460/795 该成员名下没有台账凭
                                 .xFont(.footnote)
                                 .foregroundStyle(XPalette.textSub)
                         }
                     } else {
-                        Section {
+                        // M5 迁移遗留: Section 在 ScrollView 里没有视觉容器，改用 XPanel 与全仓统一
+                        XPanel(kind: .group) {
                             ForEach(items) { it in
                                 HStack(spacing: XSpace.s) {
                                     Text(it.label)

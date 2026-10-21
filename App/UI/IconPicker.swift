@@ -48,18 +48,43 @@ struct IconPicker: View {
     }
 
     var body: some View {
-        List {
-            Section {
-                iconPickerRow
-            } footer: {
-                Text("预览块底色与生成的图标位图逐字相同。")
+        // M5 迁移遗留: 这页还用 List + .listStyle(.insetGrouped)。
+        // 全仓 30 处用 XPanel、只有 LocksPage 故意留 List（它要 swipeActions + onMove）。
+        // 这页没有行操作，一并换成 ScrollView + XPanel。
+        ZStack {
+            XPalette.canvas.ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: XSpace.l) {
+                    XPanel(kind: .group) {
+                        iconPickerRow
+                    }
+                    // 当前图标名 —— 原来只有勾选角标，看不出这一款叫什么
+                    Text(currentIconName)
+                        .xFont(.caption)
+                        .foregroundStyle(XPalette.textSub)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Text("预览块底色与生成的图标位图逐字相同。")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textTertiary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.horizontal, XSpace.gutter)
+                .padding(.vertical, XSpace.l)
             }
+            .scrollIndicators(.hidden)
         }
-        .listStyle(.insetGrouped)
-        .scrollContentBackground(.hidden)
-        .background(XPalette.canvas)
         .navigationTitle("App 图标")
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    /// 当前图标名
+    private var currentIconName: String {
+        if let id = currentIcon, let opt = iconOptions.first(where: { $0.id == id }) {
+            return "当前: " + opt.name
+        }
+        return "当前: 默认图标"
     }
 
     private var iconPickerRow: some View {
