@@ -315,7 +315,8 @@ struct AlarmCenterView: View {
         // 731: 多锁短窗低电合并卡 (只在这一屏顶部出现一次, 逐条处置仍在下面各自的行里)
         let cluster = lowBatteryCluster
         if !cluster.isEmpty {
-            Section {
+            // M5 迁移遗留修: Section 在 List 外没有视觉容器，改成透明 Group
+            Group {
                 DisclosureGroup {
                     ForEach(Array(cluster.enumerated()), id: \.offset) { _, e in
                         HStack(spacing: XSpace.s) {
@@ -340,7 +341,8 @@ struct AlarmCenterView: View {
         }
         let older = stream.filter { isOlder($0) }
         if !older.isEmpty {
-            Section {
+            // M5 迁移遗留修: Section 在 List 外没有视觉容器，改成透明 Group
+            Group {
                 if showOlder {
                     ForEach(older) { r in alarmSection(r, folded: folded) }
                 } else {
@@ -803,7 +805,8 @@ struct AlarmCenterView: View {
     private var responseCard: some View {
         let samples = RecordSearch.dispositions().values
         if samples.isEmpty {
-            Section {
+            // M5 迁移遗留修: Section 在 List 外没有视觉容器，改成透明 Group
+            Group {
                 VStack(alignment: .leading, spacing: XSpace.xs) {
                     HStack(spacing: XSpace.s) {
                         Image(systemName: "hourglass").font(.system(size: XIcon.sm)).foregroundStyle(XPalette.textSub).accessibilityHidden(true)

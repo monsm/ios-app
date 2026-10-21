@@ -549,7 +549,8 @@ struct MemberWizardView: View {
                     }
                 }
                 if step < 2 {
-                    Section {
+                    // M5 迁移遗留修: Section 在 List 外没有视觉容器，改成透明 Group
+                    Group {
                         Button {
                             guard canNext else { return }
                             if step == 0, newID == nil {
@@ -569,7 +570,8 @@ struct MemberWizardView: View {
                         .buttonStyle(PlainButtonStyle())
                     }
                 } else {
-                    Section {
+                    // M5 迁移遗留修: Section 在 List 外没有视觉容器，改成透明 Group
+                    Group {
                         XBusyButton(title: busy ? "处理中…" : "完成建档",
                                     systemImage: "checkmark.seal", busy: busy) {
                             submit()
