@@ -204,65 +204,44 @@ struct DoorPrism<B: View, D: View, F: View>: View {
     private func prismFace(_ f: DoorFace, width: CGFloat) -> some View {
         let A = prismApothem(width)
         let theta = FaceAngle.current(f) + containerAngle
-        let rad = theta * .pi / 180
-        // ═══ 显式几何: x / z / 深度缩放全部自己算 ═══
-        //
-        // 上一版靠 rotation3DEffect 的 anchorZ + perspective 让 SwiftUI 去算透视。
-        // 但 `perspective` 的确切语义（m34 = -p/S 里 S 是什么）没有文档，
-        // 我按原型反算出 0.85，仍然只能"赌一把"。
-        //
-        // 这一版改成:
-        //   ① rotation3DEffect 只做**朝向**（anchor 在视图中心、不传 anchorZ/perspective）
-        //      此时透视对它没有作用（旋转轴过中心），前缩就是 cos(θ) —— 完全确定
-        //   ② 面中心的位置 (x, z) 按棱柱几何直接算
-        //   ③ 近大远小用 scaleEffect(D/(D-z)) 自己算
-        //
-        // 这样每个量都可验算，不依赖任何未文档化的行为。
-        // ★ 规格里的 z = -0.35·narrow 终于能实现了
-        //   （之前靠 SwiftUI 的 rotation3DEffect，没有 z 平移可用）
-        //   单位换算: 原型以 R=1.0 为单位，而 A = R/2，
-        //   所以 0.35 个 R = 0.7 个 A → zShift = -0.7·A·narrow
-        //   把整组棱柱沿 z 后退，深度缩放会自然把它算进去。
-        let zShift = -A * 0.7 * breathNarrow
-        let z = A * cos(rad) + zShift     // 面中心的 z（>0 朝观察者）
-        let x = A * sin(rad)              // 面中心的 x
-        let D = A * prismCameraDistance   // 相机距离（pt）
-        // 兜底: 若 A 或 D 退化成 0，depthScale 会是 NaN/Inf → 视图消失
-        let denom = D - z
-        let depthScale: CGFloat = (denom.isFinite && denom > 0.001) ? D / denom : 1
         return faceView(f)
-            // 让它读成「一块立起来的板」
             .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
-            // ═══ 金属边框 —— 与 HTML 原型对齐的关键 ═══
-            //
-            // 原型每面四周有 0.035 宽的亮金属条（BoxGeometry, metalness 0.9,
-            // color 0x2A2C30 受光后呈亮灰）。**这是整块面板读成「实体」的主要来源**：
-            // 没有它，再正确的 3D 变换也只是一个圆角卡片。
-            //
-            // 原来这里是 strokeBorder(XPalette.hairline, lineWidth: 1) ——
-            // 1pt 的细线在深色底上几乎看不见，等于没有边框。
             .overlay {
+                // 金属边框 —— 与原型 BoxGeometry 亮金属条对齐
                 RoundedRectangle(cornerRadius: 30, style: .continuous)
                     .strokeBorder(
                         LinearGradient(
                             colors: [
-                                Color(hex: 0xC8CCD4),   // 顶部受光：亮
-                                Color(hex: 0x8A8E96),   // 中部
-                                Color(hex: 0x5C6068),   // 底部背光：暗
+                                Color(hex: 0xC8CCD4),
+                                Color(hex: 0x8A8E96),
+                                Color(hex: 0x5C6068),
                             ],
                             startPoint: .top, endPoint: .bottom),
                         lineWidth: 5)
             }
-            // ① 只做朝向 —— 轴过视图中心，透视不参与，前缩 = cos(θ)
-            // ③ 近大远小
-            // 前缩 + 近大远小 —— 纯 2D 变换，行为完全确定
-            .scaleEffect(x: max(0.001, abs(cos(rad)) * depthScale),
-                         y: depthScale,
-                         anchor: .center)
-            // ② 摆到棱柱上的位置
-            .offset(x: x)
+            // ═══ 透视旋转 —— 梯形畸变的唯一来源 ═══
+            //
+            // 上一版我为了避难把 rotation3DEffect 删掉、改成 scaleEffect(x:y:)。
+            // 那是错的：纯 2D 缩放只能得到**矩形**，而原型每个面都是**梯形**
+            //（近边比远边高）。用离线渲染并排对比后一眼就看出来了 ——
+            // 矩形 vs 梯形，就是「像平面卡片」和「像真棱柱」的全部差别。
+            //
+            // anchorZ = -A：把旋转轴放到中心后方 A 处，
+            // 视图于是绕该轴转 θ，同时获得**朝向**与**棱柱上的位置**。
+            // perspective = 0.90：SwiftUI 的相机距离 ≈ 视图高 / perspective，
+            // 而原型相机距离 D = 10.4·A = 937pt、屏高 844pt ⇒ 0.90。
+            .rotation3DEffect(.degrees(theta), axis: (x: 0, y: 1, z: 0),
+                              anchor: .center,
+                              anchorZ: -A,
+                              perspective: prismPerspective)
             .opacity(faceVisibility(f))
     }
+
+    /// 透视强度 —— SwiftUI 的相机距离 ≈ 视图高 / perspective
+    ///
+    /// 原型: 相机 5.2 世界单位、屏高对应 2.98 单位 ⇒ 相机距离 = 5.2/2.98 屏高
+    /// 本侧: D = 10.4·A，屏高 844pt ⇒ perspective = 844 / D ≈ 0.90
+    private var prismPerspective: CGFloat { 0.90 }
 
     /// 相机距离 = 10.4 × 内切圆半径
     ///
