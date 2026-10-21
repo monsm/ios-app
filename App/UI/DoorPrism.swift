@@ -85,7 +85,7 @@ struct DoorPrism<B: View, D: View, F: View>: View {
                 //
                 // 这样前庭敏感用户看到的仍是三棱柱的**静态侧面**，
                 // 而不是会转动的物体 —— 视觉结构不变，动效归零。
-                prismBody(width: geo.size.width)
+                prismBody
 
                 // ── 边缘热区（左右各一条）──
                 HStack(spacing: 0) {
@@ -117,7 +117,12 @@ struct DoorPrism<B: View, D: View, F: View>: View {
     // 而 CATransform3D 的 **m34 就是透视项**（m34 = -1/观察距离）。
     // 这两点合起来才能做出真正的棱柱透视 —— SwiftUI 没有 offset(z:)，
     // 靠普通的 offset 永远做不出 z 方向位移。
-    private func prismBody(width: CGFloat) -> some View {
+    /// 三棱柱主体
+    ///
+    /// 早期版本接收 width 参数用来算 apothem，但后来 apothem 改成了
+    /// 屏幕宽度 × 0.9 × 0.2887（见 prismApothem），这个参数就用不上了。
+    /// 死参数会让人误以为它还有作用，所以删掉。
+    private var prismBody: some View {
         ZStack {
             prismFace(.b)
             prismFace(.d)
