@@ -228,7 +228,7 @@ struct AlarmCenterView: View {
                             }
                         }
                         .padding(.horizontal, XSpace.xxs)
-                        .frame(height: 56, alignment: .bottom)
+                        .frame(height: 64, alignment: .bottom)
                     }
                 }
 
@@ -287,7 +287,7 @@ struct AlarmCenterView: View {
                             .accessibilityHidden(true)
                     }
                 }
-                .frame(height: 46, alignment: .bottom)
+                .frame(height: 44, alignment: .bottom)
 
                 Text(h % 6 == 0 ? "\(h)" : "")
                     .xFont(.system(size: 8, weight: .medium).monospacedDigit())
