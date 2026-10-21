@@ -320,15 +320,75 @@ if (bareDividers.length > 0) {
   }
 }
 
+
+// ── 6c. Theme.swift 里零使用的 static let 令牌 ──────────────────────
+// 由来: 加 XOpacity 时声明了 5 档, 但 edge / dim 一开始零使用 ——
+// 声明了不用的令牌比没有更坏: 读的人以为"有这一档可选", 选中也没变化。
+// (XContainerKind.tile 就是同一个毛病, 那次是在 Components.swift)
+const THEME = path.join(ROOT, 'App', 'Core', 'Theme.swift');
+let theme = '';
+try { theme = fs.readFileSync(THEME, 'utf8'); } catch (e) {}
+
+const deadTokens = [];
+if (theme) {
+  // 只查 "static let X: Double = ..." 这种纯数值令牌 (颜色/间距/CGFloat 都有用途差异, 不在此列)
+  const tokenRe = /^    static let (\w+): Double = ([\d.]+)/gm;
+  let m;
+  while ((m = tokenRe.exec(theme))) {
+    const name = m[1];
+    // 全仓引用计数 (排除 Theme.swift 自身定义)
+    let n = 0;
+    for (const f of files) {
+      if (/Theme\.swift$/.test(f)) continue;
+      const hits = fs.readFileSync(f, 'utf8').match(new RegExp('\\b' + name + '\\b', 'g'));
+      if (hits) n += hits.length;
+    }
+    // 也查 "XOpacity.xxx" 这种带枚举前缀的写法
+    for (const f of files) {
+      if (/Theme\.swift$/.test(f)) continue;
+      const hits = fs.readFileSync(f, 'utf8').match(new RegExp('XOpacity\\.' + name + '\\b', 'g'));
+      if (hits) n += hits.length;
+    }
+    if (n === 0) deadTokens.push(name + ' = ' + m[2]);
+  }
+}
+// 自检: 人造一个零使用令牌, 确认能抓到
+{
+  const fakeTheme = theme + '\n    static let __selfTestToken: Double = 0.77\n';
+  const re = /^    static let (\w+): Double = ([\d.]+)/gm;
+  const found = [];
+  let m2;
+  while ((m2 = re.exec(fakeTheme))) {
+    if (m2[1] !== '__selfTestToken') continue;
+    let n = 0;
+    for (const f of files) {
+      if (/Theme\.swift$/.test(f)) continue;
+      const hits = fs.readFileSync(f, 'utf8').match(new RegExp('\\b' + m2[1] + '\\b', 'g'));
+      if (hits) n += hits.length;
+    }
+    if (n === 0) found.push(m2[1]);
+  }
+  if (!found.includes('__selfTestToken')) {
+    console.error('✗ 自检失败: 令牌死代码检测抓不到人造的零使用令牌');
+    process.exit(1);
+  }
+}
+if (deadTokens.length > 0) {
+  for (const d of deadTokens) {
+    console.error('Theme.swift: 令牌 ' + d + ' 全仓零使用 —— 删掉, 或接上使用方');
+  }
+}
+
 // ── 7. 输出 ───────────────────────────────────────────────────────
-if (allProblems.length === 0 && deadCode.length === 0 && bareDividers.length === 0) {
-  console.log('组件签名 / 死代码 / 裸 Divider 检查 ✓ (' + files.length + ' 文件, '
-    + Object.keys(structDefs).length + ' 组件签名, ' + libTypes.length + ' 类型查引用, '
-    + '自检 ' + (probes.length + 2) + '/' + (probes.length + 2) + ')');
+if (allProblems.length === 0 && deadCode.length === 0 && bareDividers.length === 0 && deadTokens.length === 0) {
+  console.log('签名 / 死代码 / 裸 Divider / 零用令牌 ✓ (' + files.length + ' 文件, '
+    + Object.keys(structDefs).length + ' 组件签名, ' + libTypes.length + ' 类型 + 令牌查引用, '
+    + '自检 ' + (probes.length + 3) + '/' + (probes.length + 3) + ')');
   process.exit(0);
 }
 for (const p of allProblems) console.error(p.rel + ':' + p.line + ': ' + p.msg);
 if (allProblems.length > 0) console.error('✗ 组件签名 ' + allProblems.length + ' 处不符');
 if (deadCode.length > 0) console.error('✗ 死代码 ' + deadCode.length + ' 处');
 if (bareDividers.length > 0) console.error('✗ 裸 Divider ' + bareDividers.length + ' 处');
+if (deadTokens.length > 0) console.error('✗ 零使用令牌 ' + deadTokens.length + ' 处');
 process.exit(1);
