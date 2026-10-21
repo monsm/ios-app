@@ -108,35 +108,19 @@ struct DoorFront: View {
     }
 
     var body: some View {
-        // 纵向节奏 —— 用「Spacer 个数」做权重, 不用 minLength + maxHeight 封顶。
+        // D 域: 门占满整屏，信息浮在门面上。
         //
-        // 两条踩过的坑:
-        //   1. Spacer 一旦被 .frame(maxHeight:) 封顶, VStack 就失去"谁吃剩余空间",
-        //      布局退化成依赖系统兜底 —— 上下各留一大片空白 (渲染验证时整屏 40% 是空的);
-        //   2. SwiftUI 里**多个 Spacer 是均分的**, 没有"权重"参数。要 2:1:1 就放 2+1+1 个,
-        //      不是写三个 Spacer 再加 maxHeight 去凑。
+        // 按设计纪律: **信息越少越好**（我们还有 F 仪表）。
+        // 只留 4 项: 锁名 / 门+锁 / 状态 / 电量。
+        // 快速操作、固件入口、开门记录全部归 B 或 F。
         //
-        // 底部不留 Spacer: 按钮用固定内边距贴住安全区, 免得又出现一大块空白。
-        VStack(spacing: 0) {
-            // ── 顶部: 锁名 ──
-            HStack(alignment: .firstTextBaseline) {
-                Text(lockName)
-                    .xFont(.headline)
-                    .foregroundStyle(XPalette.text)
-                Spacer()
-            }
-            .padding(.horizontal, XSpace.gutter)
-            .padding(.top, XSpace.s)
+        // 原来的布局用 Spacer 分三段（锁体上方 2 份、下方 1 份），
+        // 那是为了在小锁体上撑出构图。现在门本身占满屏幕，
+        // 不需要 Spacer 撑 —— 直接用 overlay 把信息浮在门上。
+        ZStack {
+            XPalette.canvas.ignoresSafeArea()
 
-            // 锁体上方: 2 份
-            Spacer(minLength: XSpace.l)
-            Spacer(minLength: 0)
-
-            // ── 中部: 整扇门 + 锁（真实比例，点锁放大）──
-            //
-            // 改自原来那块"圆形光晕 + LockPlate"：
-            // 现在是完整的一扇入户门，锁按真实比例嵌在门面上。
-            // 触摸放大聚焦的逻辑在 XGateDoor 内部。
+            // ── 门（占满，含锁）──
             if use3DGate {
                 XGateDoor(
                     isOpen: lastKnownOpen && stage == .idle,
@@ -159,46 +143,93 @@ struct DoorFront: View {
                 .frame(maxWidth: .infinity)
             }
 
-            // 锁体 ↔ 状态: 1 份
-            Spacer(minLength: XSpace.l)
-
-            // ── 状态行 ──
-            VStack(spacing: XSpace.xs) {
-                Text(statusLine)
-                    .xFont(.title2, weight: .medium)
-                    .foregroundStyle(XPalette.text)
-                    .contentTransition(.numericText())
-                    .animation(XMotion.quick, value: statusLine)
-
-                if let sub = subLine {
-                    Text(sub)
-                        .xFont(.subheadline)
-                        .foregroundStyle(XPalette.textSub)
+            // ── 浮在门上的信息（4 项，不占门的位置）──
+            VStack(spacing: 0) {
+                // ① 锁名 + 电量
+                HStack(alignment: .firstTextBaseline, spacing: XSpace.s) {
+                    Text(lockName)
+                        .xFont(.headline)
+                        .foregroundStyle(XPalette.text)
+                    Spacer(minLength: 0)
+                    batteryChip
                 }
-            }
-            .multilineTextAlignment(.center)
-            .padding(.horizontal, XSpace.gutter)
-
-            // 状态 ↔ 按钮: 1 份
-            Spacer(minLength: XSpace.l)
-
-            // ── 按住开锁 ──
-            holdButton
                 .padding(.horizontal, XSpace.gutter)
+                .padding(.top, XSpace.s)
 
-            // ── 连接进度 ──
-            if stage != .idle && stage != .ready {
-                linkProgress
-                    .padding(.top, XSpace.l)
-                    .transition(.opacity.combined(with: .move(edge: .bottom)))
+                Spacer(minLength: 0)
+
+                // ② 状态 + ③ 按住开锁
+                VStack(spacing: XSpace.m) {
+                    VStack(spacing: XSpace.xs) {
+                        Text(statusLine)
+                            .xFont(.title3, weight: .medium)
+                            .foregroundStyle(XPalette.text)
+                            .contentTransition(.numericText())
+                            .animation(XMotion.quick, value: statusLine)
+                        if let sub = subLine {
+                            Text(sub)
+                                .xFont(.footnote)
+                                .foregroundStyle(XPalette.textSub)
+                        }
+                    }
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, XSpace.gutter)
+
+                    holdButton
+                        .padding(.horizontal, XSpace.gutter)
+
+                    if stage != .idle && stage != .ready {
+                        linkProgress
+                            .transition(.opacity.combined(with: .move(edge: .bottom)))
+                    }
+                }
+                .padding(.bottom, XSpace.xl)
             }
-
-            // 底部固定内边距 (不占 Spacer)
-            Color.clear.frame(height: XSpace.xl)
+        }
+        // 门面在顶部/底部会露出画布色 —— 用一层渐变让它自然过渡
+        .overlay(alignment: .top) {
+            LinearGradient(colors: [XPalette.canvas.opacity(0.92), .clear],
+                           startPoint: .top, endPoint: .bottom)
+                .frame(height: 92)
+                .allowsHitTesting(false)
+        }
+        .overlay(alignment: .bottom) {
+            LinearGradient(colors: [.clear, XPalette.canvas.opacity(0.96)],
+                           startPoint: .top, endPoint: .bottom)
+                .frame(height: 190)
+                .allowsHitTesting(false)
         }
         .onAppear { if !reduceMotion { breathe = true } }
         .animation(XMotion.soft, value: stage)
         .animation(XMotion.soft, value: failureText)
+    }
+
+    // ── 电量小胶囊（< 20% 才醒目）──
+    @ViewBuilder
+    private var batteryChip: some View {
+        let p = app.status?.powerLevel ?? -1
+        if p >= 0 {
+            HStack(spacing: 4) {
+                Image(systemName: batterySymbol(p))
+                    .font(.system(size: XIcon.xs, weight: .medium))
+                Text("\(p)%")
+                    .xFont(.caption2, weight: .medium)
+            }
+            .foregroundStyle(p <= 20 ? XPalette.warn : XPalette.textSub)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(Capsule().fill(XPalette.surface.opacity(0.72)))
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("电量 \(p)%")
+        }
+    }
+
+    private func batterySymbol(_ p: Int) -> String {
+        if p <= 10 { return "battery.0percent" }
+        if p <= 25 { return "battery.25percent" }
+        if p <= 50 { return "battery.50percent" }
+        if p <= 75 { return "battery.75percent" }
+        return "battery.100percent"
     }
 
     /// 锁体直径: 屏幕宽 58% 夹在 180...280。

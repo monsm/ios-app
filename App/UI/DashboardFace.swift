@@ -163,8 +163,9 @@ private struct LockLens: View {
                 Text("一天里什么时候在用")
                     .xFont(.footnote, weight: .medium)
                     .foregroundStyle(XPalette.textSub)
-                XDayClock(hours: model.hourStats.map { $0.opens })
-                    .frame(height: 200)
+                // XDayClock 内部用固定 size 画（默认 240），
+                // 外面再套 .frame(height:) 会让内容溢出 —— 直接传 size。
+                XDayClock(hours: model.hourStats, size: 200)
             }
         }
     }
