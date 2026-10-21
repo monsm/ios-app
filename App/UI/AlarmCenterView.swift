@@ -202,52 +202,102 @@ struct AlarmCenterView: View {
     /// 730 24 小时回放刻度: 横向 0-23 时 scrubber, 选中小时过滤下方流
     @ViewBuilder
     private var replayRuler: some View {
-        if scrubHour >= 0 || stream.contains(where: { $0.timeStr.hasPrefix(StatsKit.dayKey(Date())) }) {
-            Section("24 小时回放") {   // 730 小时回放
-                VStack(spacing: XSpace.xs) {
+        // 730 24 小时回放 —— 改成卡片 + 真正的柱状分布图。
+        //
+        // 原来是一排 9/14pt 宽的矩形, 只能看出"这根有告警 / 那根没有";
+        // 看不出密度 (有几条)、也看不出时段形状。
+        // 现在每根柱子的高度 = 该小时的告警条数 (归一化到 44pt),
+        // 有告警的柱子顶端点一个红点, 选中的柱子整根铜色并加一圈底衬。
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                secLabel("24 小时回放")
+
+                let counts = hourCounts
+                let peak = max(counts.max() ?? 0, 1)
+
+                if counts.reduce(0, +) == 0 {
+                    Text("今天还没有告警。柱子高度代表该小时的条数。")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textSub)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else {
                     ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 2) {
+                        HStack(alignment: .bottom, spacing: 3) {
                             ForEach(0..<24, id: \.self) { h in
-                                let has = stream.contains { isHour($0, h) }
-                                let on = scrubHour == h
-                                Button {
-                                    scrubHour = on ? -1 : h
-                                    RecordSearch.setReplayHour(scrubHour)
-                                } label: {
-                                    Rectangle()
-                                        .fill(on ? XPalette.accent : (has ? XPalette.warn.opacity(0.75) : XPalette.surfaceAlt))
-                                        .frame(width: has ? 14 : 9, height: on ? 44 : 28)
-                                        .overlay(alignment: .top) {
-                                            if has {
-                                                Circle().fill(XPalette.danger).frame(width: 4, height: 4).offset(y: 3)
-                                                    .accessibilityHidden(true)
-                                            }
-                                        }
-                                        .accessibilityLabel("\(h) 时" + (has ? ", 有告警" : ""))
-                                }
-                                .buttonStyle(.plain)
+                                hourBar(h, count: counts[h], peak: peak)
                             }
                         }
-                        .padding(.horizontal, XSpace.xs)
-                    }
-                    HStack(spacing: XSpace.s) {
-                        Text(scrubHour >= 0 ? "只看 \(scrubHour) 时前后事件" : "点下方某一小时，只看那一时段前后事件")
-                            .xFont(.caption)
-                            .foregroundStyle(XPalette.textSub)
-                            .lineLimit(1)
-                        if scrubHour >= 0 {
-                            Button("清除刻度") { scrubHour = -1; RecordSearch.setReplayHour(-1) }
-                                .xFont(.caption, weight: .medium)
-                                .foregroundStyle(XPalette.accentText)
-                                .frame(minHeight: XHit.min)
-                                .contentShape(Rectangle())
-                        }
-                        Spacer(minLength: 0)
+                        .padding(.horizontal, XSpace.xxs)
+                        .frame(height: 56, alignment: .bottom)
                     }
                 }
-                .padding(.vertical, XSpace.xs)
+
+                HStack(spacing: XSpace.s) {
+                    Text(scrubHour >= 0 ? "只看 \(scrubHour) 时前后事件" : "点某一小时，只看那一时段前后事件")
+                        .xFont(.caption)
+                        .foregroundStyle(XPalette.textSub)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                    if scrubHour >= 0 {
+                        Button("清除刻度") { scrubHour = -1; RecordSearch.setReplayHour(-1) }
+                            .xFont(.caption, weight: .medium)
+                            .foregroundStyle(XPalette.accentText)
+                            .frame(minHeight: XHit.min)
+                            .contentShape(Rectangle())
+                    }
+                    Spacer(minLength: 0)
+                }
             }
         }
+    }
+
+    /// 每小时告警条数 (下标 = 小时)
+    private var hourCounts: [Int] {
+        var out = [Int](repeating: 0, count: 24)
+        for ev in stream {
+            for h in 0..<24 where isHour(ev, h) {
+                out[h] += 1
+                break
+            }
+        }
+        return out
+    }
+
+    /// 单根柱子: 高度按条数归一化, 空小时留一条极淡的基线
+    private func hourBar(_ h: Int, count: Int, peak: Int) -> some View {
+        let on = scrubHour == h
+        let frac = Double(count) / Double(peak)
+        let hgt = count == 0 ? 3.0 : (10.0 + 34.0 * frac)
+        return Button {
+            scrubHour = on ? -1 : h
+            RecordSearch.setReplayHour(scrubHour)
+            if scrubHour >= 0 { XHaptics.tick.impactOccurred() }
+        } label: {
+            VStack(spacing: 2) {
+                ZStack(alignment: .top) {
+                    RoundedRectangle(cornerRadius: 2, style: .continuous)
+                        .fill(on ? XPalette.accent
+                              : (count > 0 ? XPalette.warn.opacity(0.72) : XPalette.surfaceAlt))
+                        .frame(width: on ? 14 : 9, height: hgt)
+                    if count > 0 {
+                        Circle()
+                            .fill(on ? XPalette.onAccent : XPalette.danger)
+                            .frame(width: 3.5, height: 3.5)
+                            .offset(y: -1)
+                            .accessibilityHidden(true)
+                    }
+                }
+                .frame(height: 46, alignment: .bottom)
+
+                Text(h % 6 == 0 ? "\(h)" : "")
+                    .xFont(.system(size: 8, weight: .medium).monospacedDigit())
+                    .foregroundStyle(on ? XPalette.accentText : XPalette.textTertiary)
+                    .frame(width: on ? 16 : 10)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(h) 时" + (count > 0 ? ", \(count) 条告警" : ", 无告警"))
     }
     // 「今天」的日 key 不再有本地第二份写法：`StatsKit.dayKey` 是唯一口径 (第一百五十八批 §10.30)，
     // 此前这里另抄了一份 DateFormatter —— 值恰好相同，但那份副本正是"改一处就漂"的那一类。
