@@ -832,7 +832,33 @@ enum StatsKit {
         }
 
         /// 625 凭证归属子段: 窗口内按 凭证类×成员 的可证明归属计数 (台账推断"约"级; 归属不出时不进)
-        func kindOwnerBreakdown() -> [String: [(id: String, name: String, n: Int)]] {
+        /// 今日各成员开门次数 —— **一次归因**给出全部人。
+    ///
+    /// `memberTodayCount(id:)` 每问一个人就要重跑一遍 Attribution.classify，
+    /// 有 N 个成员就是 N 次全量归因。主界面每刷新一次都要这个数，
+    /// 所以在归因层只跑一遍、再按 who 汇总。
+    ///
+    /// 归因口径与 `memberTodayCount` 完全一致（同一个 startOfDay、同一个 classify），
+    /// 不新造第二套判据。
+    func todayMemberCounts() -> [(id: String, name: String, n: Int)] {
+        let start = startOfDay(Date())
+        let recent = logsInWindow().filter { openTypes.contains($0.type) && (dateOf($0) ?? .distantPast) >= start }
+        guard !recent.isEmpty else { return [] }
+        let cls = Attribution.classify(
+            logs: recent.map { LogEntry(type: $0.type, typeName: $0.typeName, idx: $0.idxRaw, idxRaw: $0.idxRaw,
+                                        lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr, body: "") },
+            pwds: DB.listPwds(mac), fps: DB.listFps(mac),
+            status: DB.readStatus(mac).map { ($0.fpStock, $0.pwdStock, $0.lockTime) })
+        var per: [String: Int] = [:]
+        for c in cls {
+            guard let who = c.who else { continue }
+            per[who, default: 0] += 1
+        }
+        return per.map { (id: $0.key, name: DB.member($0.key)?.name ?? "成员", n: $0.value) }
+            .sorted { $0.n > $1.n }
+    }
+
+    func kindOwnerBreakdown() -> [String: [(id: String, name: String, n: Int)]] {
             let cls = Attribution.classify(
                 logs: logsInWindow().map { LogEntry(type: $0.type, typeName: $0.typeName, idx: $0.idxRaw, idxRaw: $0.idxRaw,
                                                     lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr, body: "") },

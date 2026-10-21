@@ -457,8 +457,8 @@ struct HomeConsole: View {
         return layout {
             metric(value: String(opensToday), label: "今日开门")
             if !typeSize.isAccessibilitySize { metricDivider }
-            // 口径是近 30 天，不是"现在在家"—— 标签必须诚实
-            metric(value: String(memberRows.count), label: "常用成员")
+            // 归因引擎能算出今天是谁开的，所以这里可以诚实地写「今日成员」
+            metric(value: String(todayPeople), label: "今日成员")
             if !typeSize.isAccessibilitySize { metricDivider }
             metric(value: firstOpenText, label: "最早开门")
         }
@@ -561,7 +561,7 @@ struct HomeConsole: View {
                     .xFont(.system(.footnote, weight: .medium))
                     .foregroundStyle(XPalette.text)
                     .lineLimit(1)
-                Text("近 30 天 \(r.opens30) 次")
+                Text(r.today > 0 ? "今天 \(r.today) 次" : "近 30 天 \(r.opens30) 次")
                     .xFont(.system(.caption2).monospacedDigit())
                     .foregroundStyle(XPalette.textTertiary)
             }
@@ -571,7 +571,9 @@ struct HomeConsole: View {
         .padding(.vertical, 5)
         .xPlate(XPalette.surface, .capsule)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(r.name)，近 30 天 \(r.opens30) 次")
+        .accessibilityLabel(r.today > 0
+            ? "\(r.name)，今天 \(r.today) 次"
+            : "\(r.name)，近 30 天 \(r.opens30) 次")
     }
 
     // ─────────────────────────────────────────── ⑧ 管理入口
@@ -777,11 +779,10 @@ struct HomeConsole: View {
     /// 所以两件事分开说，各自标明时间口径。
     private var digest: String {
         let n = opensToday
-        let people = memberRows.count
-        if n == 0 && people == 0 { return "今天还没有开门记录" }
-        if n == 0 { return "今天还没开过门 · 近 30 天 \(people) 人用过" }
+        let people = todayPeople
+        if n == 0 { return "今天还没有开门记录" }
         if people == 0 { return "今天开过 \(n) 次" }
-        return "今天开过 \(n) 次 · 近 30 天 \(people) 人用过"
+        return "今天 \(people) 人开过 \(n) 次"
     }
 
     private var footnote: String {
@@ -802,6 +803,9 @@ struct HomeConsole: View {
 
     private var opensToday: Int { hourCounts.reduce(0, +) }
 
+    /// 今天有开门记录的人数 —— 归因引擎的结果，不是 30 天代理
+    private var todayPeople: Int { memberStats.filter { $0.today > 0 }.count }
+
     /// 一次扫描重建全部当日统计。只由 onAppear / ticker / 下拉刷新触发。
     private func recompute() {
         guard !mac.isEmpty else {
@@ -819,12 +823,27 @@ struct HomeConsole: View {
             if h >= 0 && h < 24 { counts[h] += 1 }
         }
         hourCounts = counts
+
+        // ═══ 成员统计走归因引擎，不再用 30 天代理 ═══
+        //
+        // 之前这里用 MemberHub.activity(m.id).opens30 当代理，于是界面只能写
+        // "近 30 天 N 次"，而"今天"是算不出来的。
+        // 实际上仓里有 Attribution.classify：它用凭证库存与索引**推断**每条日志
+        // 属于谁，所以「今天谁开过几次」是真能算出来的（口径与
+        // StatsKit.memberTodayCount(id:) 一致）。
+        // 主界面要的是今天，就用今天的数，不再拿 30 天冒充。
+        let model = StatsKit.build(mac: mac, week: 7, window: 30)
+        var todayByID: [String: Int] = [:]
+        for r in model.todayMemberCounts() { todayByID[r.id] = r.n }
+        var monthByID: [String: Int] = [:]
+        for r in model.memberCounts(days: 30) { monthByID[r.id] = r.approx }
         memberStats = DB.members().compactMap { m in
-            let a = MemberHub.activity(m.id)
-            guard a.opens30 > 0 else { return nil }
-            return MemberStat(id: m.id, name: MemberHub.display(m), opens30: a.opens30)
+            let t = todayByID[m.id] ?? 0
+            let mo = monthByID[m.id] ?? 0
+            guard t > 0 || mo > 0 else { return nil }
+            return MemberStat(id: m.id, name: MemberHub.display(m), today: t, opens30: mo)
         }
-        .sorted { $0.opens30 > $1.opens30 }
+        .sorted { ($0.today, $0.opens30) > ($1.today, $1.opens30) }
         .prefix(6)
         .map { $0 }
     }
@@ -914,7 +933,10 @@ extension ManagerGroup {
 struct MemberStat: Identifiable, Equatable {
     let id: String
     let name: String
-    /// 近 30 天开门次数。协议日志没有凭证身份字段，所以只能到"约"级，
-    /// 界面上必须写明"近 30 天"，不能写成"今天"。
+    /// **今日**开门次数 —— 来自 Attribution.classify 的归因结果（协议日志本身没有
+    /// 凭证身份字段，是归因引擎用凭证库存/索引推出来的），口径与
+    /// StatsKit.memberTodayCount(id:) 完全一致。
+    let today: Int
+    /// 近 30 天次数，作为次要信息
     let opens30: Int
 }
