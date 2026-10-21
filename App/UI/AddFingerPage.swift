@@ -53,6 +53,7 @@ struct AddFingerPage: View {
                     if doneBatch != nil {
                         successStage.xScrollLift()
                     } else {
+                        capacityCard
                         ownerPicker.xScrollLift()
                         fingerprintStage.xScrollLift()
                         if !error.isEmpty { errorBanner.xScrollLift() }
@@ -161,6 +162,37 @@ struct AddFingerPage: View {
     // MARK: - 归属
     // ═══════════════════════════════════════════════════════
 
+    /// 指纹容量卡 —— 协议真实返回 fpStock / fpInfoCapacity，
+    /// 录入前必须知道"还剩几个坑位"，否则录到一半才报满。
+    @ViewBuilder
+    private var capacityCard: some View {
+        let mac = app.currentMac
+        let snap = DB.readStatus(mac)
+        let cap = snap?.fpCap ?? 0
+        let left = snap?.fpStock ?? -1
+        if cap > 0, left >= 0 {
+            let used = max(0, cap - left)
+            let full = left == 0
+            XPanel(kind: .group, tone: full ? .warn : .neutral) {
+                VStack(alignment: .leading, spacing: XSpace.xs) {
+                    HStack(spacing: XSpace.s) {
+                        Image(systemName: "touchid")
+                            .font(.system(size: XIcon.sm, weight: .medium))
+                            .foregroundStyle(full ? XPalette.warn : XPalette.textSub)
+                        Text(full ? "指纹库存已满" : "还可录 " + String(left) + " 枚")
+                            .xFont(.footnote, weight: .medium)
+                            .foregroundStyle(full ? XPalette.warn : XPalette.textSub)
+                        Spacer(minLength: 0)
+                        Text(String(used) + " / " + String(cap))
+                            .xFont(.caption2.monospacedDigit())
+                            .foregroundStyle(XPalette.textTertiary)
+                    }
+                }
+            }
+            .xScrollLift()
+        }
+    }
+
     private var ownerPicker: some View {
         XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: XSpace.m) {
@@ -190,22 +222,42 @@ struct AddFingerPage: View {
 
     private func ownerChip(_ id: String?, _ label: String) -> some View {
         let selected = owner == id
+        // 该成员名下已有几枚指纹 —— 录入前该知道，
+        // 避免同一个人重复录同一根手指（这页最常见的误操作）。
+        let existing: Int = {
+            guard let id else { return 0 }
+            let mac = app.currentMac
+            guard !mac.isEmpty else { return 0 }
+            return DB.listFps(mac).filter { $0.owner == id }.count
+        }()
         return Button {
             owner = id
             XHaptics.tick.impactOccurred()
         } label: {
-            Text(label)
-                .xFont(.footnote, weight: selected ? .semibold : .regular)
-                .foregroundStyle(selected ? XPalette.onAccent : XPalette.text)
-                .padding(.horizontal, XSpace.m)
-                .padding(.vertical, XSpace.s)
-                .background(Capsule().fill(selected ? XPalette.accent : XPalette.surfaceAlt))
-                .overlay { Capsule().strokeBorder(selected ? .clear : XPalette.hairline, lineWidth: 1) }
+            HStack(spacing: 4) {
+                Text(label)
+                    .xFont(.footnote, weight: selected ? .semibold : .regular)
+                    .foregroundStyle(selected ? XPalette.onAccent : XPalette.text)
+                if existing > 0 {
+                    Text(String(existing))
+                        .xFont(.caption2.monospacedDigit(), weight: .semibold)
+                        .foregroundStyle(selected
+                                         ? XPalette.onAccent.opacity(0.8)
+                                         : XPalette.textTertiary)
+                }
+            }
+            .padding(.horizontal, XSpace.m)
+            .padding(.vertical, XSpace.s)
+            .background(Capsule().fill(selected ? XPalette.accent : XPalette.surfaceAlt))
+            .overlay {
+                Capsule().strokeBorder(selected ? .clear : XPalette.hairline, lineWidth: 1)
+            }
         }
         .buttonStyle(.plain)
         .animation(XMotion.quick, value: selected)
+        .accessibilityLabel(label
+                            + (existing > 0 ? "，已有 " + String(existing) + " 枚指纹" : ""))
     }
-
     // ═══════════════════════════════════════════════════════
     // MARK: - 动作
     // ═══════════════════════════════════════════════════════
