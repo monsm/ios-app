@@ -1,0 +1,219 @@
+<!DOCTYPE html><html lang="zh"><head><meta charset="utf-8">
+<title>M5 五页形态对照</title>
+<style>
+:root{--canvas:#0A0A0B;--surface:#161618;--surfaceAlt:#1F1F22;--hairline:#323236;
+--text:#F5F5F7;--textSub:#A0A0AC;--textTer:#888892;--accent:#D98B45;
+--ok:#3DD68C;--warn:#E8A05C;--danger:#FF6B5A;
+--fp:#2AA6A6;--pwd:#9C7BE8;--temp:#E8B84B;
+--rc:16px;--rt:14px;--rm:8px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#000;color:var(--text);font:400 15px/1.45 -apple-system,"PingFang SC",system-ui,sans-serif;
+display:flex;gap:26px;padding:26px;overflow-x:auto;align-items:flex-start}
+.phone{width:393px;flex:0 0 393px;background:var(--canvas);border-radius:44px;
+border:1px solid #2a2a2e;overflow:hidden;height:852px;display:flex;flex-direction:column;position:relative}
+.cap{position:absolute;top:0;left:0;right:0;text-align:center;font-size:10px;color:#666;padding:6px;z-index:9}
+.st{height:56px;flex:0 0 56px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font-size:13px;font-weight:600}
+.bd{flex:1;overflow-y:auto;overflow-x:hidden}
+.bd::-webkit-scrollbar{width:0}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:6px 16px 4px}
+.nav h1{font-size:29px;font-weight:700;letter-spacing:-.4px}
+.panel{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--rc);overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;padding:13px 16px;min-height:52px}
+.ic{width:28px;height:28px;border-radius:var(--rm);display:grid;place-items:center;flex:0 0 28px;font-size:13px}
+.ttl{font-size:15px}
+.sub{font-size:12px;color:var(--textSub);margin-top:1px}
+.val{font-size:14px;color:var(--textSub);margin-left:auto}
+.chev{color:#4a4a52;margin-left:auto;font-size:13px}
+.sep{height:1px;background:var(--hairline);margin-left:56px}
+.gt{font-size:12px;font-weight:600;color:var(--textSub);padding:14px 16px 8px}
+.cap2{font-size:11px;color:var(--textTer);padding:10px 16px 14px;line-height:1.4}
+.seg{display:flex;gap:2px;padding:4px;border-radius:999px;background:rgba(255,255,255,.06);
+backdrop-filter:blur(20px) saturate(180%);border:1px solid rgba(255,255,255,.09);margin:10px 16px}
+.seg button{flex:1;background:none;border:0;color:var(--textSub);font:inherit;font-size:12px;
+padding:8px 4px;border-radius:999px;cursor:pointer;line-height:1.25}
+.seg button.on{background:rgba(217,139,69,.2);color:var(--text);font-weight:600}
+.seg b{display:block;font-size:15px;font-weight:600;margin-top:2px}
+.wrap{padding:0 16px}
+.gap{height:16px}.gapm{height:12px}
+/* 内容不足一屏时，底部用渐隐收尾，而不是硬黑洞 */
+.bd{background:linear-gradient(to bottom,var(--canvas) 0%,var(--canvas) 82%,#0d0d0f 100%)}
+/* 时间轴竖线：父容器必须有高度，所以给 padding-bottom 撑住 */
+.tl{position:relative;padding-left:26px}
+.tl::before{content:'';position:absolute;left:7px;top:6px;bottom:10px;width:1px;background:var(--hairline)}
+/* 折叠行最小高度 */
+.fold{min-height:52px}
+</style></head><body>
+<div class="phone"><div class="cap">① 凭证 KeysPage — 密度优先（HIG: 文本用列表）</div>
+<div class="st"><span>9:41</span><span>▮▮▮</span></div>
+<div class="bd"><div class="nav"><h1>钥匙</h1></div>
+  <div class="seg"><button class="on">全部<b>12</b></button><button>密码<b>7</b></button><button>指纹<b>3</b></button><button>临时<b>2</b></button></div>
+  <div class="wrap"><div class="panel" style="border-color:#4a3a24;background:#1a1512">
+  <div class="row" style="padding:11px 16px"><div class="ic" style="background:rgba(232,160,92,.15);color:var(--warn)">⏱</div><div><div class="ttl" style="font-size:14px">大门主密码</div><div class="sub" style="color:var(--warn)">3 天后到期</div></div></div></div>
+  <div class="gapm"></div><div class="panel"><div class="row" style="padding:10px 16px;min-height:46px"><div class="ic" style="background:var(--pwd)26;color:var(--pwd)">⚿</div><div><div class="ttl" style="font-size:14px">大门主密码</div><div class="sub">常驻 · 我的 iPhone</div></div><div class="chev">›</div></div><div class="sep" style="margin-left:44px"></div><div class="row" style="padding:10px 16px;min-height:46px"><div class="ic" style="background:var(--pwd)26;color:var(--pwd)">⚿</div><div><div class="ttl" style="font-size:14px">保洁阿姨</div><div class="sub">到期 11-30</div></div><div class="chev">›</div></div><div class="sep" style="margin-left:44px"></div><div class="row" style="padding:10px 16px;min-height:46px"><div class="ic" style="background:var(--fp)26;color:var(--fp)">◎</div><div><div class="ttl" style="font-size:14px">我的右手拇指</div><div class="sub">指纹 · 0 号位</div></div><div class="chev">›</div></div><div class="sep" style="margin-left:44px"></div><div class="row" style="padding:10px 16px;min-height:46px"><div class="ic" style="background:var(--fp)26;color:var(--fp)">◎</div><div><div class="ttl" style="font-size:14px">老婆右手拇指</div><div class="sub">指纹 · 1 号位</div></div><div class="chev">›</div></div><div class="sep" style="margin-left:44px"></div><div class="row" style="padding:10px 16px;min-height:46px"><div class="ic" style="background:var(--temp)26;color:var(--temp)">#</div><div><div class="ttl" style="font-size:14px">快递专用</div><div class="sub">一次性 · 已用过</div></div><div class="chev">›</div></div><div class="sep" style="margin-left:44px"></div><div class="row" style="padding:10px 16px;min-height:46px"><div class="ic" style="background:var(--temp)26;color:var(--temp)">#</div><div><div class="ttl" style="font-size:14px">临时访客码</div><div class="sub">到期 11-25</div></div><div class="chev">›</div></div><div class="sep" style="margin-left:44px"></div><div class="row" style="padding:10px 16px;min-height:46px"><div class="ic" style="background:var(--pwd)26;color:var(--pwd)">⚿</div><div><div class="ttl" style="font-size:14px">车库后门</div><div class="sub">常驻 · 我的 iPhone</div></div><div class="chev">›</div></div><div class="sep" style="margin-left:44px"></div><div class="row" style="padding:10px 16px;min-height:46px"><div class="ic" style="background:var(--fp)26;color:var(--fp)">◎</div><div><div class="ttl" style="font-size:14px">妈妈左手</div><div class="sub">指纹 · 2 号位</div></div><div class="chev">›</div></div><div class="sep" style="margin-left:44px"></div><div class="row" style="padding:10px 16px;min-height:46px"><div class="ic" style="background:var(--pwd)26;color:var(--pwd)">⚿</div><div><div class="ttl" style="font-size:14px">小哥送水</div><div class="sub">一次性</div></div><div class="chev">›</div></div><div class="sep" style="margin-left:44px"></div><div class="row" style="padding:10px 16px;min-height:46px"><div class="ic" style="background:var(--pwd)26;color:var(--pwd)">⚿</div><div><div class="ttl" style="font-size:14px">备用主码</div><div class="sub">常驻 · iPad</div></div><div class="chev">›</div></div></div>
+<div class="cap2">12 份生效 · 每行 46pt，一屏 14 条</div></div><div class="gap"></div></div></div>
+<div class="phone"><div class="cap">② 成员 MembersPage — 头像主导（认人靠脸）</div>
+<div class="st"><span>9:41</span><span>▮▮▮</span></div>
+<div class="bd"><div class="nav"><h1>成员</h1></div>
+   <div style="padding:8px 16px 4px;font-size:12px;font-weight:600;color:var(--textSub)">4 位成员</div>
+   <div style="display:flex;gap:14px;overflow-x:auto;padding:12px 16px 6px"><div style="flex:0 0 68px;text-align:center">
+   <div style="width:64px;height:64px;border-radius:50%;background:#D98B4522;border:2px solid #D98B45;display:grid;place-items:center;font-size:24px;font-weight:600;color:#D98B45">我</div>
+   <div style="font-size:13px;margin-top:6px;font-weight:500">我</div>
+   <div style="font-size:10px;color:var(--textTer)">主锁</div></div><div style="flex:0 0 68px;text-align:center">
+   <div style="width:64px;height:64px;border-radius:50%;background:#E8A05C22;border:2px solid #E8A05C;display:grid;place-items:center;font-size:24px;font-weight:600;color:#E8A05C">老</div>
+   <div style="font-size:13px;margin-top:6px;font-weight:500">老婆</div>
+   <div style="font-size:10px;color:var(--textTer)">成员</div></div><div style="flex:0 0 68px;text-align:center">
+   <div style="width:64px;height:64px;border-radius:50%;background:#2AA6A622;border:2px solid #2AA6A6;display:grid;place-items:center;font-size:24px;font-weight:600;color:#2AA6A6">妈</div>
+   <div style="font-size:13px;margin-top:6px;font-weight:500">妈妈</div>
+   <div style="font-size:10px;color:var(--textTer)">成员</div></div><div style="flex:0 0 68px;text-align:center">
+   <div style="width:64px;height:64px;border-radius:50%;background:#9C7BE822;border:2px solid #9C7BE8;display:grid;place-items:center;font-size:24px;font-weight:600;color:#9C7BE8">阿</div>
+   <div style="font-size:13px;margin-top:6px;font-weight:500">阿姨</div>
+   <div style="font-size:10px;color:var(--textTer)">访客</div></div></div>
+   <div class="wrap"><div class="gapm"></div><div class="panel" style="margin-bottom:10px"><div class="row" style="padding:14px 16px">
+   <div style="width:44px;height:44px;border-radius:50%;background:#D98B4522;display:grid;place-items:center;font-size:18px;font-weight:600;color:#D98B45;flex:0 0 44px">我</div>
+   <div style="flex:1"><div class="ttl" style="font-weight:500">我</div><div class="sub">主锁 · 名下 3 份凭证</div></div>
+   <div style="text-align:right"><div style="font-size:17px;font-weight:600;color:var(--accent)">18</div><div style="font-size:10px;color:var(--textTer)">本周开门</div></div>
+   </div></div><div class="panel" style="margin-bottom:10px"><div class="row" style="padding:14px 16px">
+   <div style="width:44px;height:44px;border-radius:50%;background:#E8A05C22;display:grid;place-items:center;font-size:18px;font-weight:600;color:#E8A05C;flex:0 0 44px">老</div>
+   <div style="flex:1"><div class="ttl" style="font-weight:500">老婆</div><div class="sub">成员 · 名下 3 份凭证</div></div>
+   <div style="text-align:right"><div style="font-size:17px;font-weight:600;color:var(--accent)">12</div><div style="font-size:10px;color:var(--textTer)">本周开门</div></div>
+   </div></div><div class="panel" style="margin-bottom:10px"><div class="row" style="padding:14px 16px">
+   <div style="width:44px;height:44px;border-radius:50%;background:#2AA6A622;display:grid;place-items:center;font-size:18px;font-weight:600;color:#2AA6A6;flex:0 0 44px">妈</div>
+   <div style="flex:1"><div class="ttl" style="font-weight:500">妈妈</div><div class="sub">成员 · 名下 3 份凭证</div></div>
+   <div style="text-align:right"><div style="font-size:17px;font-weight:600;color:var(--accent)">7</div><div style="font-size:10px;color:var(--textTer)">本周开门</div></div>
+   </div></div><div class="panel" style="margin-bottom:10px"><div class="row" style="padding:14px 16px">
+   <div style="width:44px;height:44px;border-radius:50%;background:#9C7BE822;display:grid;place-items:center;font-size:18px;font-weight:600;color:#9C7BE8;flex:0 0 44px">阿</div>
+   <div style="flex:1"><div class="ttl" style="font-weight:500">阿姨</div><div class="sub">访客 · 名下 3 份凭证</div></div>
+   <div style="text-align:right"><div style="font-size:17px;font-weight:600;color:var(--accent)">3</div><div style="font-size:10px;color:var(--textTer)">本周开门</div></div>
+   </div></div>
+  <div class="gt" style="padding-left:0">更多</div>
+  <div class="panel">
+    <div class="row"><div class="ic" style="background:rgba(160,160,172,.15);color:var(--textSub)">▤</div><div style="flex:1"><div class="ttl">归档成员</div><div class="sub">已归档的成员可恢复</div></div><div class="chev">›</div></div>
+    <div class="sep"></div>
+    <div class="row"><div class="ic" style="background:rgba(160,160,172,.15);color:var(--textSub)">?</div><div style="flex:1"><div class="ttl">匿名认领</div><div class="sub">无归属的凭证可认领</div></div><div class="chev">›</div></div>
+    <div class="sep"></div>
+    <div class="row"><div class="ic" style="background:rgba(160,160,172,.15);color:var(--textSub)">◉</div><div style="flex:1"><div class="ttl">家庭设置</div><div class="sub">长辈模式 / 隐私浏览</div></div><div class="chev">›</div></div>
+  </div></div><div class="gap"></div></div></div>
+<div class="phone"><div class="cap">③ 事件 EventsPage — 时间轴（时间关系是核心）</div>
+<div class="st"><span>9:41</span><span>▮▮▮</span></div>
+<div class="bd"><div class="nav"><h1>事件</h1></div><div style="padding:0 16px"><div style="display:flex;align-items:baseline;gap:8px;padding:16px 0 10px">
+   <span style="font-size:13px;font-weight:600;color:var(--textSub)">今天</span>
+   <span style="font-size:11px;color:var(--textTer)">8 条</span>
+   <span style="font-size:11px;color:var(--warn)">▲ 2 告警</span></div>
+   <div class="tl">
+   <div style="position:relative;padding:0 0 18px">
+     <div style="position:absolute;left:-23px;top:5px;width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px var(--canvas)"></div>
+     <div style="display:flex;align-items:baseline;gap:8px">
+     <span style="font-size:11px;color:var(--textTer);font-variant-numeric:tabular-nums;flex:0 0 38px">09:12</span>
+     <span style="font-size:14px;font-weight:500">我</span>
+     <span style="font-size:13px;color:var(--textSub)">指纹开锁</span></div>
+     
+     </div><div style="position:relative;padding:0 0 18px">
+     <div style="position:absolute;left:-23px;top:5px;width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px var(--canvas)"></div>
+     <div style="display:flex;align-items:baseline;gap:8px">
+     <span style="font-size:11px;color:var(--textTer);font-variant-numeric:tabular-nums;flex:0 0 38px">08:47</span>
+     <span style="font-size:14px;font-weight:500">妈妈</span>
+     <span style="font-size:13px;color:var(--textSub)">密码开锁</span></div>
+     
+     </div><div style="position:relative;padding:0 0 18px">
+     <div style="position:absolute;left:-23px;top:5px;width:9px;height:9px;border-radius:50%;background:var(--danger);box-shadow:0 0 0 3px var(--canvas)"></div>
+     <div style="display:flex;align-items:baseline;gap:8px">
+     <span style="font-size:11px;color:var(--textTer);font-variant-numeric:tabular-nums;flex:0 0 38px">07:31</span>
+     <span style="font-size:14px;font-weight:500">—</span>
+     <span style="font-size:13px;color:var(--textSub)">门被撬动</span></div>
+     <div style="margin-left:46px;margin-top:5px;display:inline-block;font-size:11px;color:var(--danger);background:var(--danger)1a;padding:2px 8px;border-radius:6px">告警</div>
+     </div></div><div style="display:flex;align-items:baseline;gap:8px;padding:16px 0 10px">
+   <span style="font-size:13px;font-weight:600;color:var(--textSub)">昨天</span>
+   <span style="font-size:11px;color:var(--textTer)">14 条</span>
+   </div>
+   <div class="tl">
+   <div style="position:relative;padding:0 0 18px">
+     <div style="position:absolute;left:-23px;top:5px;width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px var(--canvas)"></div>
+     <div style="display:flex;align-items:baseline;gap:8px">
+     <span style="font-size:11px;color:var(--textTer);font-variant-numeric:tabular-nums;flex:0 0 38px">21:05</span>
+     <span style="font-size:14px;font-weight:500">老婆</span>
+     <span style="font-size:13px;color:var(--textSub)">指纹开锁</span></div>
+     
+     </div><div style="position:relative;padding:0 0 18px">
+     <div style="position:absolute;left:-23px;top:5px;width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px var(--canvas)"></div>
+     <div style="display:flex;align-items:baseline;gap:8px">
+     <span style="font-size:11px;color:var(--textTer);font-variant-numeric:tabular-nums;flex:0 0 38px">18:22</span>
+     <span style="font-size:14px;font-weight:500">阿姨</span>
+     <span style="font-size:13px;color:var(--textSub)">临时码开锁</span></div>
+     
+     </div></div>
+  <div style="display:flex;align-items:baseline;gap:8px;padding:16px 0 10px">
+    <span style="font-size:13px;font-weight:600;color:var(--textSub)">11月18日</span>
+    <span style="font-size:11px;color:var(--textTer)">11 条</span></div>
+  <div class="tl">
+    <div style="position:relative;padding:0 0 18px">
+      <div style="position:absolute;left:-23px;top:5px;width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px var(--canvas)"></div>
+      <div style="display:flex;align-items:baseline;gap:8px">
+        <span style="font-size:11px;color:var(--textTer);font-variant-numeric:tabular-nums;flex:0 0 38px">22:40</span>
+        <span style="font-size:14px;font-weight:500">我</span>
+        <span style="font-size:13px;color:var(--textSub)">指纹开锁</span></div></div>
+    <div style="position:relative;padding:0 0 18px">
+      <div style="position:absolute;left:-23px;top:5px;width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px var(--canvas)"></div>
+      <div style="display:flex;align-items:baseline;gap:8px">
+        <span style="font-size:11px;color:var(--textTer);font-variant-numeric:tabular-nums;flex:0 0 38px">07:15</span>
+        <span style="font-size:14px;font-weight:500">妈妈</span>
+        <span style="font-size:13px;color:var(--textSub)">密码开锁</span></div></div>
+  </div></div><div class="gap"></div></div></div>
+<div class="phone"><div class="cap">④ 告警 AlarmsPage — 紧迫感（时间压力 + 分级）</div>
+<div class="st"><span>9:41</span><span>▮▮▮</span></div>
+<div class="bd"><div class="nav"><h1 style="color:var(--danger)">告警</h1></div>
+   <div style="margin:8px 16px;padding:16px;border-radius:var(--rc);background:linear-gradient(135deg,#3a1512,#25100e);border:1px solid #6b2a22">
+     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+       <span style="font-size:11px;font-weight:700;color:#FF8F80;background:rgba(255,107,90,.18);padding:3px 8px;border-radius:6px">严重</span>
+       <span style="font-size:11px;color:#FF8F80">已持续 2 小时 14 分</span></div>
+     <div style="font-size:17px;font-weight:600;margin-bottom:4px">门被撬动</div>
+     <div style="font-size:12px;color:#c99">今天 07:31 · 大门 · 未处理</div>
+     <div style="display:flex;gap:10px;margin-top:14px">
+       <button style="flex:1;padding:11px;border:0;border-radius:10px;background:#FF6B5A;color:#fff;font:inherit;font-weight:600;font-size:14px">知道了</button>
+       <button style="flex:1;padding:11px;border:1px solid #6b2a22;border-radius:10px;background:none;color:#FF8F80;font:inherit;font-size:14px">查看详情</button></div>
+   </div>
+   <div class="wrap"><div class="gapm"></div><div class="panel" style="margin-bottom:10px;border-left:3px solid var(--warn)"><div class="row" style="padding:14px 16px">
+   <div style="flex:1"><div style="font-size:15px;font-weight:500">电量低</div><div class="sub">3 天前 · 剩余 12%</div></div>
+   <div style="font-size:11px;color:var(--warn);font-weight:600">中</div></div></div><div class="panel" style="margin-bottom:10px;border-left:3px solid var(--textTer)"><div class="row" style="padding:14px 16px">
+   <div style="flex:1"><div style="font-size:15px;font-weight:500">多次密码错误</div><div class="sub">5 天前 · 4 次</div></div>
+   <div style="font-size:11px;color:var(--textTer);font-weight:600">低</div></div></div>
+   <div class="panel">
+     <div class="row" style="padding:14px 16px"><div style="flex:1"><div style="font-size:15px;font-weight:500;color:var(--textSub)">电量恢复</div><div class="sub">11月19日 · 已换电池</div></div><div style="font-size:11px;color:var(--ok)">已处理</div></div>
+     <div class="sep"></div>
+     <div class="row" style="padding:14px 16px"><div style="flex:1"><div style="font-size:15px;font-weight:500;color:var(--textSub)">密码试错</div><div class="sub">11月17日 · 已确认本人</div></div><div style="font-size:11px;color:var(--ok)">已处理</div></div>
+     <div class="sep"></div>
+     <div class="row fold" style="padding:14px 16px;color:var(--textSub)"><span style="font-size:14px">还有 4 条</span><span class="chev" style="font-size:11px">展开 ›</span></div>
+   </div></div>
+   <div class="gap"></div></div></div>
+<div class="phone"><div class="cap">⑤ 关于我 MePage — 大数字仪表（概览优先）</div>
+<div class="st"><span>9:41</span><span>▮▮▮</span></div>
+<div class="bd"><div class="nav"><h1>这台手机</h1></div>
+   <div style="display:flex;gap:10px;padding:12px 16px"><div style="flex:1;min-height:76px;display:flex;flex-direction:column;justify-content:center;padding:14px 12px;border-radius:var(--rt);background:var(--surface);border:1px solid var(--hairline)">
+   <div style="font-size:22px;font-weight:700;color:var(--ok);letter-spacing:-.5px">已锁</div>
+   <div style="font-size:11px;color:var(--textTer);margin-top:2px">应用锁</div></div><div style="flex:1;min-height:76px;display:flex;flex-direction:column;justify-content:center;padding:14px 12px;border-radius:var(--rt);background:var(--surface);border:1px solid var(--hairline)">
+   <div style="font-size:22px;font-weight:700;color:var(--warn);letter-spacing:-.5px">3</div>
+   <div style="font-size:11px;color:var(--textTer);margin-top:2px">待处理</div></div><div style="flex:1;min-height:76px;display:flex;flex-direction:column;justify-content:center;padding:14px 12px;border-radius:var(--rt);background:var(--surface);border:1px solid var(--hairline)">
+   <div style="font-size:22px;font-weight:700;color:var(--accent);letter-spacing:-.5px">今天</div>
+   <div style="font-size:11px;color:var(--textTer);margin-top:2px">上次备份</div></div></div>
+   <div class="wrap">
+     <div class="gt">本机保护</div>
+     <div class="panel">
+       <div class="row"><div class="ic" style="background:rgba(61,214,140,.15);color:var(--ok)">🔒</div><div style="flex:1"><div class="ttl">本机数据保护</div></div><div class="val">已开启</div><div class="chev">›</div></div>
+       <div class="sep"></div>
+       <div class="row"><div class="ic" style="background:rgba(160,160,172,.15);color:var(--textSub)">👁</div><div style="flex:1"><div class="ttl">隐私与伪装</div></div><div class="chev">›</div></div>
+     </div>
+     <div class="cap2">这一组动的是本机数据与访问权限, 改动前会二次确认。</div>
+     <div class="gt">数据</div>
+     <div class="panel">
+       <div class="row"><div class="ic" style="background:rgba(217,139,69,.15);color:var(--accent)">⛁</div><div style="flex:1"><div class="ttl">备份与恢复</div></div><div class="val">今天</div><div class="chev">›</div></div>
+       <div class="sep"></div>
+       <div class="row"><div class="ic" style="background:rgba(217,139,69,.15);color:var(--accent)">↗</div><div style="flex:1"><div class="ttl">导出中心</div></div><div class="chev">›</div></div>
+     </div>
+     <div class="cap2">全程离线: 备份只写本机文件, 不上传任何服务器。</div>
+     <div class="gt">关于与偏好</div>
+     <div class="panel">
+       <div class="row"><div class="ic" style="background:rgba(160,160,172,.15);color:var(--textSub)">⚙</div><div style="flex:1"><div class="ttl">设置</div></div><div class="chev">›</div></div>
+       <div class="sep"></div>
+       <div class="row"><div class="ic" style="background:rgba(160,160,172,.15);color:var(--textSub)">ⓘ</div><div style="flex:1"><div class="ttl">关于</div></div><div class="val">v2.4.0</div><div class="chev">›</div></div>
+     </div>
+   </div><div class="gap"></div></div></div>
+</body></html>
