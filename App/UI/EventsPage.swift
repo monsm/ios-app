@@ -131,9 +131,28 @@ struct EventsPage: View {
                         eventRow(rec)
                     }
                 } header: {
-                    Text(dayLabel(group.day))
-                        .xFont(.footnote, weight: .medium)
-                        .foregroundStyle(XPalette.textSub)
+                    // 组头带当天统计 —— 原来只有"今天/昨天", 看不出那天忙不忙、
+                    // 有没有告警。一行小字把这个信息补上, 不用点进任何地方。
+                    HStack(spacing: XSpace.xs) {
+                        Text(dayLabel(group.day))
+                            .xFont(.footnote, weight: .medium)
+                            .foregroundStyle(XPalette.textSub)
+                        Text("\(group.items.count) 条")
+                            .xFont(.caption2.monospacedDigit())
+                            .foregroundStyle(XPalette.textTertiary)
+                        let alarms = group.items.filter { $0.alarm }.count
+                        if alarms > 0 {
+                            HStack(spacing: 2) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .font(.system(size: 8, weight: .semibold))
+                                Text("\(alarms)")
+                                    .xFont(.caption2.monospacedDigit())
+                            }
+                            .foregroundStyle(XPalette.warn)
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    .textCase(nil)
                 }
             }
         }
@@ -186,20 +205,10 @@ struct EventsPage: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: XSpace.m) {
-            Image(systemName: "list.bullet.rectangle")
-                .font(.system(size: XIcon.xl, weight: .light))
-                .foregroundStyle(XPalette.textTertiary)
-                .accessibilityHidden(true)
-            Text(search.isEmpty ? "还没有记录" : "没有匹配的事件")
-                .xFont(.headline)
-                .foregroundStyle(XPalette.text)
-            Text(search.isEmpty ? "连上锁后读取门锁日志" : "换个关键词试试")
-                .xFont(.subheadline)
-                .foregroundStyle(XPalette.textSub)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(XSpace.xl)
+        XEmptyState(systemImage: "list.bullet.rectangle",
+                    title: search.isEmpty ? "还没有记录" : "没有匹配的事件",
+                    message: search.isEmpty ? "连上锁后读取门锁日志。" : "换个关键词试试。")
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // ═══════════════════════════════════════════════════════
