@@ -548,16 +548,10 @@ struct AutoCalView: View {
                            busy: calibrating) {
                     Task { await run() }
                 }
-            } header: {
-                Text("距离标定 (F3)")
-            } footer: {
                 Text("静止走近门锁一次, 采 30 秒 RSSI 取 P95 作为武装基准。回差: 越过武装线才武装, 掉回 0.5×基准才解除, 防门口抖动误触发。")
-                    .xFont(.caption)
+                    .xFont(.caption2)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
-                    Text("静止走近门锁一次, 采 30 秒 RSSI 取 P95 作为武装基准。回差: 越过武装线才武装, 掉回 0.5×基准才解除, 防门口抖动误触发。")
-                        .xFont(.caption2)
-                        .foregroundStyle(XPalette.textSub)
                 }
             }
             XPanel(kind: .group) {

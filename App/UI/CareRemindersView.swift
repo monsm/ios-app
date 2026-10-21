@@ -14,29 +14,55 @@ struct CareRemindersView: View {
 
             ScrollView {
                 VStack(spacing: XSpace.l) {
-            XPanel(kind: .group) {
-                VStack(alignment: .leading, spacing: XSpace.m) {
-                    secLabel("家庭公告板")
-                TextField("写一句常驻家里的话", text: $bulletin)
-                    .submitLabel(.done)
-                    .onSubmit { Milestones.bulletin = bulletin.trimmingCharacters(in: .whitespacesAndNewlines) }
-            } header: {
-                Text("家庭公告板")
-            } footer: {
-                // 1044 消费点如实列名 (原句"各页面的空态"是超售): 设备页/记录页空态直挂,
-                // 引导空态卡 (设置门锁空态、成就陈列架、维护历史、诊断日志) 经 GuidedEmptyView 消费。
-                Text("这句便签已贴在这几处空态旁: 设备页、记录页, 以及走引导空态卡的页面 (设置门锁空态、成就陈列架、维护历史、诊断日志)。未接入的空态不会偷偷显示, 后续批次补。")
-                    .xFont(.caption).foregroundStyle(XPalette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-                    Text("这句便签已贴在这几处空态旁: 设备页、记录页, 以及走引导空态卡的页面 (设置门锁空态、成就陈列架、维护历史、诊断日志)。未接入的空态不会偷偷显示, 后续批次补。")
-                        .xFont(.caption2)
-                        .foregroundStyle(XPalette.textSub)
+                    bulletinCard
+                    annivCard
+                    bdayCard
                 }
+                .padding(.horizontal, XSpace.gutter)
+                .padding(.vertical, XSpace.l)
             }
+            .scrollIndicators(.hidden)
+        }
+        .navigationTitle("关怀提醒")
+        .navigationBarTitleDisplayMode(.inline)
+        .onDisappear {
+            Milestones.bulletin = bulletin.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+    }
 
-            XPanel(kind: .group) {
-                VStack(alignment: .leading, spacing: XSpace.m) {
-                    secLabel("纪念日")
+    // ═══════════════════════════════════════════════════════
+    // MARK: - 家庭公告板
+    // ═══════════════════════════════════════════════════════
+
+    private var bulletinCard: some View {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                secLabel("家庭公告板")
+                TextField("写一句常驻家里的话", text: $bulletin)
+                    .xFont(.body)
+                    .submitLabel(.done)
+                    .onSubmit {
+                        Milestones.bulletin = bulletin.trimmingCharacters(in: .whitespacesAndNewlines)
+                    }
+                    .padding(XSpace.s)
+                    .background(XPalette.surfaceSunken,
+                                in: RoundedRectangle(cornerRadius: XRadius.min, style: .continuous))
+                Text("这句便签已贴在这几处空态旁: 设备页、记录页, 以及走引导空态卡的页面 (设置门锁空态、成就陈列架、维护历史、诊断日志)。未接入的空态不会偷偷显示。")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // MARK: - 纪念日
+    // ═══════════════════════════════════════════════════════
+
+    private var annivCard: some View {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                secLabel("纪念日")
                 LabeledRow("结缘日", Milestones.bondDay.isEmpty ? "添加门锁后自动记录" : Milestones.bondDay)
                 XToggle("结缘纪念日提醒", isOn: Binding(
                     get: { CareReminders.annivOn },
@@ -44,14 +70,18 @@ struct CareRemindersView: View {
                         DB.store.set("kf_care_anniv", on)
                         Task { await CareReminders.reschedule() }
                     }))
-            } header: {
-                Text("纪念日")
-                }
             }
+        }
+    }
 
-            XPanel(kind: .group) {
-                VStack(alignment: .leading, spacing: XSpace.m) {
-                    secLabel("成员生日")
+    // ═══════════════════════════════════════════════════════
+    // MARK: - 成员生日
+    // ═══════════════════════════════════════════════════════
+
+    private var bdayCard: some View {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                secLabel("成员生日")
                 XToggle("成员生日提醒 (提前一天)", isOn: Binding(
                     get: { CareReminders.bdayOn },
                     set: { on in
@@ -61,32 +91,21 @@ struct CareRemindersView: View {
                 ForEach(DB.members()) { m in
                     HStack(spacing: XSpace.s) {
                         Text(m.name)
+                            .xFont(.subheadline)
+                            .foregroundStyle(XPalette.text)
                         Spacer(minLength: XSpace.m)
                         Text(Milestones.memberBirthdays()[m.id] ?? "未填写")
+                            .xFont(.subheadline.monospacedDigit())
                             .foregroundStyle(Milestones.memberBirthdays()[m.id] == nil
                                              ? XPalette.textSub : XPalette.text)
-                            .monospacedDigit()
                     }
                 }
-            } header: {
-                Text("成员生日")
-            } footer: {
                 Text("生日在 设置-成员管理-补全信息 里填写 (格式 MM-dd)。提醒通过本地通知送达, 全程离线, 不依赖任何服务器。")
-                    Text("生日在 设置-成员管理-补全信息 里填写 (格式 MM-dd)。提醒通过本地通知送达, 全程离线, 不依赖任何服务器。")
-                        .xFont(.caption2)
-                        .foregroundStyle(XPalette.textSub)
-                }
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-                }
-                .padding(.horizontal, XSpace.gutter)
-                .padding(.vertical, XSpace.l)
-            }
-            .scrollIndicators(.hidden)
         }
-        .navigationTitle("关怀提醒")
-        .xList()
-        .xScreen()
-        .onDisappear { Milestones.bulletin = bulletin.trimmingCharacters(in: .whitespacesAndNewlines) }
     }
 
     private func secLabel(_ text: String) -> some View {
