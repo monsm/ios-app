@@ -40,6 +40,12 @@ struct BackupPage: View {
     /// 与粘贴共用同一个解析入口（confirmRestore 的 JSONDecoder），
     /// 不另写一套解析 —— 两条路径最终都产出 BackupBundle。
     @State private var showFilePicker = false
+    /// 导出文件选择器（存到 iCloud / 本机）
+    ///
+    /// 与导入对称: 导入能选文件，导出也该能存文件。
+    /// 原来只有「复制到剪贴板」—— 那是给聊天工具用的，
+    /// 但备份的正常去处是「存到 iCloud 云盘 / 我的 iPhone」。
+    @State private var showFileExporter = false
     @State private var showStudio = false
     @State private var pendingRestore: BackupBundle?
 
@@ -67,6 +73,25 @@ struct BackupPage: View {
         //   .data  兜底（有些网盘会把 .json 存成 application/octet-stream）
         //
         // allowsMultipleSelection: false —— 备份是单文件，多选没有语义。
+        // 导出: 存文件到 iCloud / 本机（与导入对称）
+        //
+        // defaultFilename 用带日期的名字 —— 多次备份不会互相覆盖，
+        // 用户也能一眼看出是哪天的。
+        .fileExporter(isPresented: $showFileExporter,
+                      document: BackupFile(text: exportText),
+                      contentType: .json,
+                      defaultFilename: backupFilename) { result in
+            if case .success = result {
+                // 落盘时更新"上次备份"时间 —— 与 generateBackup 同口径
+                DB.store.set("kf_bk_last_export", Int(Date().timeIntervalSince1970 * 1000))
+                XHaptics.success()
+                app.showToast("已保存到文件")
+            } else if case .failure(let e) = result {
+                if (e as NSError).code != NSUserCancelledError {
+                    app.showToast("保存失败")
+                }
+            }
+        }
         .fileImporter(isPresented: $showFilePicker,
                       allowedContentTypes: [.json, .data],
                       allowsMultipleSelection: false) { result in
@@ -154,26 +179,52 @@ struct BackupPage: View {
                 Text("导出")
                     .xFont(.subheadline, weight: .medium)
                     .foregroundStyle(XPalette.text)
-                Text("生成一份加密备份文本, 复制到安全的地方。")
+                Text("生成一份备份, 存到 iCloud 云盘 / 我的 iPhone，或复制成文本。")
                     .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
 
                 XBusyButton(
-                    title: exportText.isEmpty ? "生成备份" : "复制备份文本",
-                    systemImage: exportText.isEmpty ? "doc.badge.plus" : "doc.on.doc",
+                    title: exportText.isEmpty ? "生成备份" : "重新生成",
+                    systemImage: exportText.isEmpty ? "doc.badge.plus" : "arrow.clockwise",
                     busy: busy,
-                    style: .primary
+                    style: exportText.isEmpty ? .primary : .secondary
                 ) {
-                    if exportText.isEmpty {
-                        generateBackup()
-                    } else {
+                    generateBackup()
+                }
+
+                // 生成之后才出现两条导出路径 —— 没生成时点它们没有内容可存
+                if !exportText.isEmpty {
+                    // 主路径: 存文件（iCloud / 本机），与导入的 fileImporter 对称
+                    Button {
+                        showFileExporter = true
+                        XHaptics.tick.impactOccurred()
+                    } label: {
+                        Label("保存到文件", systemImage: "folder.badge.plus")
+                    }
+                    .buttonStyle(XPrimaryButtonStyle())
+                    .accessibilityHint("存到 iCloud 云盘或本机")
+
+                    // 次路径: 复制文本（从聊天工具发给另一台设备时更直接）
+                    Button {
                         UIPasteboard.general.string = exportText
                         app.showToast("备份文本已复制")
+                    } label: {
+                        Label("复制备份文本", systemImage: "doc.on.doc")
                     }
+                    .buttonStyle(XSecondaryButtonStyle())
                 }
             }
         }
+    }
+
+    /// 导出文件名 —— 带日期，多次备份不互相覆盖
+    private var backupFilename: String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.calendar = WeekCal.gregorian
+        f.dateFormat = "yyyyMMdd-HHmm"
+        return "锁管家备份-\(f.string(from: Date()))"
     }
 
     private func generateBackup() {
@@ -340,5 +391,23 @@ struct BackupPage: View {
                 showStudio = true
             }
         }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// MARK: - 备份文件（导出用）
+// ═══════════════════════════════════════════════════════════════════════
+//
+// 用 Transferable + DataRepresentation 而不是 FileDocument ——
+// ExportCenter 里已经有 5 个同款（ExportCSVFile / ExportJSONFile / …），
+// 复用已验证的模式，不引入第二套文件表示。
+struct BackupFile: Transferable {
+    let text: String
+
+    static var transferRepresentation: some TransferRepresentation {
+        DataRepresentation(exportedContentType: UTType.json) { file in
+            Data(file.text.utf8)
+        }
+        .suggestedFileName { _ in "备份.json" }
     }
 }

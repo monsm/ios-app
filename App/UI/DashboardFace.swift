@@ -426,10 +426,19 @@ private struct PeopleLens: View {
 
     /// 凭证类型的中文名
     ///
-    /// 键来自 StatsKit.kindOrder() = ["fp", "pwd", "temp", "key"]，
-    /// 中文映射走 StatsKit.kindWords() —— 不在这里另写一套。
+    /// ═══ 又一次踩了同一个坑 ═══
+    ///
+    /// 我写 StatsKit.kindWords()，run #481 报:
+    ///   type 'StatsKit' has no member 'kindWords'
+    ///
+    /// 原因: kindWords 的缩进是 8，它在 StatsKit 内部的 **struct StatModel** 里，
+    /// 是实例方法，不是 StatsKit 的静态方法。
+    ///
+    /// 这和之前 memberCounts 那次是**同一个错误**（那次也是缩进 8）。
+    /// 教训: StatsKit.swift 里缩进 4 的是 enum 直接成员（静态），
+    ///       缩进 8 的在 StatModel 内（实例）。
     private func kindWord(_ k: String) -> String {
-        StatsKit.kindWords()[k] ?? k
+        model.kindWords()[k] ?? k
     }
 
     /// 前两位成员的名字，多于两人时加"等"
