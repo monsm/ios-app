@@ -103,3 +103,29 @@
 
 见最新 run（`node tools/cistat.js`）。本地 23 道闸门全绿。
 > ⚠ 本地闸门是文本级检查，**不等于**能编译 —— 见 [CI-VS-GATES.md](CI-VS-GATES.md)。
+
+## 迁移遗留清理（本轮）
+
+逐页核验「核验为已丰富」的那批页面时，发现了 **4 类 Form→ScrollView 迁移遗留**：
+
+| 遗留 | 位置 | 处理 |
+|---|---|---|
+| 裸 `Section` 装在 `ScrollView` 里（List 外无视觉容器，是死包装）| `MemberExitWizard` ×2 | 改成 `XPanel(kind: .group)` |
+| 同上 | `AlarmCenterView` ×3 | 改成透明 `Group`（外观不变，构造变正确）|
+| 同上 | `MemberWizardView` ×2 | 改成透明 `Group` |
+| `List` + `.listStyle(.insetGrouped)`（全仓 33 个文件用 XPanel，List 只剩 1 处）| `IconPicker` | 换成 `ScrollView` + `XPanel` 并补「当前图标名」|
+
+### 为什么 `Section` 在 List 外是错的
+
+`Section` 是 `List`/`Form` 的行分组容器。在 `ScrollView` 里它**不产生任何视觉容器**，
+只是把子视图原样透出 —— 写它与写 `Group` 等价，但会让读者以为这里有分组语义。
+
+### `LocksPage` 的 `List` 要保留
+
+`LocksPage.swift:39` 的 `List` 是**故意的**：它需要 `.swipeActions` + `.onMove`，
+`ScrollView` 给不了。这是全仓唯一合法的 `List`。
+
+### 相关闸门
+
+`swiftshape` 的 R8/R9 只查 `Section("标题")` 带 footer 的写法，**查不出 List 外的裸 Section**。
+这批是逐页阅读时人工发现的 —— 说明闸门覆盖不到"容器语义错位"。
