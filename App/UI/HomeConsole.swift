@@ -12,12 +12,13 @@ import SwiftUI
 //   ① 站在门口，要进去 ② 想知道今天家里发生了什么。
 //   所以：开锁动作占据唯一的「主视觉焦点」，数据是第二层，管理是第三层。
 //
-// 【构图】一屏五段，纵向节奏 28pt：
+// 【构图】纵向节奏 28pt，主路径五段 + 一个空状态：
 //   ① 页眉（时间 + 连接态）—— 20pt 高，不抢焦点
-//   ② 门的身份 + 一句摘要 —— 建立"这是哪把锁"
-//   ③ 开锁环 220pt —— 视觉中心，落在拇指舒适区
-//   ④ 三个指标 / 今日柱图 / 成员 —— 一眼看懂今天
-//   ⑤ 五个管理入口 —— soft 边界，不诱导
+//   ② 空状态 —— 未配对门锁时唯一的出口（去配对）
+//   ③ 门的身份 + 一句摘要 —— 建立"这是哪把锁"
+//   ④ 开锁环 220pt —— 视觉中心，落在拇指舒适区
+//   ⑤ 三个指标 / ⑥ 今日柱图 / ⑦ 成员 —— 一眼看懂今天
+//   ⑧ 五个管理入口 —— soft 边界，不诱导
 //
 // 【排版】四级 + 数字层（全部走 .xFont，不裸写 .font）
 //   锁名        26pt bold
@@ -69,11 +70,18 @@ struct HomeConsole: View {
                 ScrollView {
                     VStack(spacing: XSpace.xxl) {
                         masthead
-                        identity
-                        unlockStage
-                        metricsRow
-                        todaySection
-                        memberSection
+                        if mac.isEmpty {
+                            // ── 空状态 ──
+                            // 没有门锁时，把一屏的 0 和按不动的环摆出来是最没用的界面。
+                            // 这里只留一件事：告诉你下一步做什么。
+                            noLockState
+                        } else {
+                            identity
+                            unlockStage
+                            metricsRow
+                            todaySection
+                            memberSection
+                        }
                         manageSection
                     }
                     .padding(.horizontal, XSpace.gutter)
@@ -115,7 +123,40 @@ struct HomeConsole: View {
         .frame(height: 20)
     }
 
-    // ─────────────────────────────────────────── ② 门的身份
+    // ─────────────────────────────────────────── ② 空状态
+    private var noLockState: some View {
+        VStack(spacing: XSpace.l) {
+            Image(systemName: "lock.slash")
+                .font(.system(size: 44, weight: .light))
+                .foregroundStyle(XPalette.textTertiary)
+                .accessibilityHidden(true)
+            VStack(spacing: XSpace.xs) {
+                Text("还没有门锁")
+                    .xFont(.system(.title3, weight: .semibold))
+                    .foregroundStyle(XPalette.text)
+                Text("配对之后，这里会变成你每天的开门台")
+                    .xFont(.system(.footnote))
+                    .foregroundStyle(XPalette.textTertiary)
+                    .multilineTextAlignment(.center)
+            }
+            Button {
+                XHaptics.tick.impactOccurred()
+                managerGroup = .devices
+            } label: {
+                Text("去配对门锁")
+                    .xFont(.system(.subheadline, weight: .semibold))
+                    .foregroundStyle(XPalette.onAccent)
+                    .padding(.horizontal, XSpace.xl)
+                    .padding(.vertical, XSpace.m)
+                    .xPlate(XPalette.accent, .capsule)
+            }
+            .buttonStyle(PressableScaleStyle())
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, XSpace.xxl)
+    }
+
+    // ─────────────────────────────────────────── ③ 门的身份
     private var identity: some View {
         VStack(alignment: .leading, spacing: XSpace.xs) {
             Text(lockName)
@@ -132,7 +173,7 @@ struct HomeConsole: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // ─────────────────────────────────────────── ③ 开锁环
+    // ─────────────────────────────────────────── ④ 开锁环
     private var unlockStage: some View {
         VStack(spacing: XSpace.l) {
             ZStack {
@@ -245,7 +286,7 @@ struct HomeConsole: View {
         }
     }
 
-    // ─────────────────────────────────────────── ④ 三指标
+    // ─────────────────────────────────────────── ⑤ 三指标
     // 无障碍字号下，三列横排会挤到每列不足 60pt —— 改为纵向堆叠。
     // 这不是"降级"，是让内容本身换一种排法，字号不缩。
     private var metricsRow: some View {
@@ -285,7 +326,7 @@ struct HomeConsole: View {
             .accessibilityHidden(true)
     }
 
-    // ─────────────────────────────────────────── ⑤ 今天
+    // ─────────────────────────────────────────── ⑥ 今天
     private var todaySection: some View {
         VStack(alignment: .leading, spacing: XSpace.m) {
             sectionLabel("今天")
@@ -330,7 +371,7 @@ struct HomeConsole: View {
         return XPalette.surfaceAlt
     }
 
-    // ─────────────────────────────────────────── ⑥ 成员
+    // ─────────────────────────────────────────── ⑦ 成员
     @ViewBuilder
     private var memberSection: some View {
         let rows = memberRows
@@ -371,7 +412,7 @@ struct HomeConsole: View {
         .accessibilityLabel("\(r.name)，近 30 天 \(r.n) 次")
     }
 
-    // ─────────────────────────────────────────── ⑦ 管理入口
+    // ─────────────────────────────────────────── ⑧ 管理入口
     private var manageSection: some View {
         VStack(alignment: .leading, spacing: XSpace.m) {
             sectionLabel("管理")
@@ -476,11 +517,37 @@ struct HomeConsole: View {
             XHaptics.success()
             scheduleSettle(after: 0.9)
         } catch {
-            failure = error.localizedDescription
+            failure = humanMessage(error)
             phase = .failed
             XHaptics.trigger.impactOccurred()
             scheduleSettle(after: 2.0)
         }
+    }
+
+    /// 把底层错误翻成"下一步该做什么"。
+    ///
+    /// 直接抛 localizedDescription 等于把协议层的技术名词丢到用户脸上
+    ///（"无钥匙串 skey"、"handshake timeout"），既不解释也不指路。
+    /// 这里按可恢复性分三类：能自己解决的 / 需要去别处处理的 / 只能重试的。
+    private func humanMessage(_ e: Error) -> String {
+        let raw = e.localizedDescription
+        let low = raw.lowercased()
+        if low.contains("timeout") || raw.contains("超时") {
+            return "门锁没响应 · 靠近一点再试"
+        }
+        if low.contains("disconnect") || raw.contains("未连接") || raw.contains("断开") {
+            return "与门锁断开 · 请回到门边"
+        }
+        if raw.contains("钥匙串") || low.contains("skey") || raw.contains("未配对") {
+            return "本机没有这把锁的钥匙 · 去「设备」重新配对"
+        }
+        if raw.contains("密码") || low.contains("pin") {
+            return "密码不对"
+        }
+        if raw.contains("电量") || low.contains("battery") {
+            return "门锁电量不足"
+        }
+        return raw.isEmpty ? "开锁失败 · 请重试" : raw
     }
 
     private func scheduleSettle(after seconds: Double) {
