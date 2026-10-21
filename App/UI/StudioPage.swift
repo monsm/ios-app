@@ -123,7 +123,7 @@ struct StudioPage: View {
         var tint: Color {
             switch self {
             case .pwd:  return XPalette.accent
-            case .temp: return XPalette.warn
+            case .temp: return XPalette.kindTemp
             case .fp:   return XPalette.kindFp
             case .otp:  return XPalette.kindOtp
             }

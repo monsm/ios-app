@@ -447,19 +447,25 @@ struct EventsPage: View {
     ///
     /// 竖线由外层 VStack 的背景画，不在这里画 ——
     /// 否则每个节点各画一段，接缝处会断。
-    /// 时间轴节点颜色 —— 与凭证类型色一致
+    /// 时间轴节点颜色 —— 与钥匙工坊四张卡一致
     ///
-    /// 告警优先（红），保养次之（青），其余按凭证类型：
-    ///   fp 青 / pwd 紫 / temp 黄 / key 蓝 / 未知 绿
+    /// 告警优先（红），保养次之（橙 = 需要注意），其余按凭证类型：
+    ///   pwd 铜 / temp 金 / fp 青 / key 紫 / 未知 灰
+    ///
+    /// ⚠ 原来 `care` 与 `temp` **都返回 warn** —— 同一屏里一个颜色两个含义，
+    /// 用户只看看不出是保养事件还是临时码事件。而且注释写的是
+    /// "fp 青 / pwd 紫 / temp 黄 / key 蓝 / 未知 绿"，代码里却是
+    /// pwd 灰 / key 绿 / 未知 也绿 —— 注释描述了一套从未实现的配色。
+    /// 现在按工坊的四类色落地，未知用灰（不是绿：未知不等于正常）。
     private func nodeColor(_ rec: Rec) -> Color {
         if rec.alarm { return XPalette.danger }
         if rec.care { return XPalette.warn }
         switch rec.kind {
-        case "fp": return XPalette.kindFp
-        case "pwd": return XPalette.textSub
-        case "temp": return XPalette.warn
-        case "key": return XPalette.ok
-        default: return XPalette.ok
+        case "fp":   return XPalette.kindFp
+        case "pwd":  return XPalette.accent
+        case "temp": return XPalette.kindTemp
+        case "key":  return XPalette.kindOtp
+        default:     return XPalette.textSub
         }
     }
 

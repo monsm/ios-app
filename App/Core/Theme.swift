@@ -91,6 +91,16 @@ enum XPalette {
     // 现在按档给两份值: 浅色用更深的同色相，深色保持原样。
     /// 指纹 (青)
     static var kindFp: Color { Color.adaptive(0x0E7C7C, 0x2AA6A6) }
+    /// 临时码 (金)
+    ///
+    /// 原来临时码借用 `warn`(橙)，而 warn 同时表示"需要注意/告警" ——
+    /// 同一个颜色两个含义，正是 color.md 里点名要避免的：
+    ///   "Avoid using the same color to mean different things."
+    /// 而且 EventsPage 里 `care` 和 `temp` 两类事件**同时**返回 warn，屏幕上无法区分。
+    ///
+    /// 金与 warn 的橙红拉开了明显色相距离（R-G 差 29 vs 97），
+    /// 两模式对比度 4.90 : 1（浅色）/ 10.22 : 1（深色）。
+    static var kindTemp: Color { Color.adaptive(0x8A6D1F, 0xE0C060) }
     /// OTP (紫)
     static var kindOtp: Color { Color.adaptive(0x5B3FA0, 0x8060C8) }
 

@@ -278,6 +278,17 @@ const checks = [
     }
     return dead === 0;
   }],
+  ['同一颜色不表示两种含义', () => {
+    // color.md: "Avoid using the same color to mean different things."
+    // 原来临时码借用 warn（告警橙），而 EventsPage 里 care 和 temp 两类事件都返回 warn ——
+    // 同一屏一个颜色两个含义。已新增 XPalette.kindTemp（金）并落地到工坊与事件页。
+    const t = CODE.get('Theme.swift') || '';
+    const s = CODE.get('StudioPage.swift') || '';
+    const e = CODE.get('EventsPage.swift') || '';
+    return t.includes('static var kindTemp') &&
+           s.includes('case .temp: return XPalette.kindTemp') &&
+           e.includes('case "temp": return XPalette.kindTemp');
+  }],
 ];
 
 let pass = 0;
