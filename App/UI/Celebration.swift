@@ -57,7 +57,7 @@ struct MomentCardView: View {
             }
             .padding(XSpace.xl)
             .frame(maxWidth: 340)
-            .background(DS.heroGradientSafe, in: RoundedRectangle(cornerRadius: XRadius.card, style: .continuous))
+            .background(XGradient.hero, in: RoundedRectangle(cornerRadius: XRadius.card, style: .continuous))
             .shadow(color: XPalette.accent.opacity(0.35), radius: 26, y: 12)
             .padding(.horizontal, XSpace.xl)
             .scaleEffect(shown || reduceMotion ? 1 : 0.94)

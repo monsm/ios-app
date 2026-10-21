@@ -617,7 +617,7 @@ final class AppState: ObservableObject {
     }
     /// 909 Hero 参考指标位 (电量不参与)
     func setHeroStats(_ ids: [String]) {
-        applyAppearance { DS.HeroStats.setVisible(ids) }
+        applyAppearance { XHeroStats.setVisible(ids) }
     }
     /// 最近开门条数 (idea 910): 3/5/10
     func setRecentCount(_ n: Int) {

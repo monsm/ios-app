@@ -747,7 +747,7 @@ struct LinkPill: View {
         .padding(.horizontal, XSpace.s + 2)
         .padding(.vertical, XSpace.xs + 1)
         // 底板用压暗的黑纱而不是同色洗底: 白字压白洗底实测只有 3.09~3.31:1 (对比 tools/contrast.js E4)
-        .background(DS.heroPlate, in: Capsule())
+        .background(XPalette.surfaceSunken, in: Capsule())
         .overlay(Capsule().strokeBorder(tint.opacity(0.38), lineWidth: 0.5))
         .fixedSize(horizontal: true, vertical: false)
         .accessibilityElement(children: .combine)
@@ -780,9 +780,9 @@ struct LinkPill: View {
     }
     private var tint: Color {
         switch state {
-        case .ready: return DS.heroTint(Color(hex: 0xBBF7D0))
-        case .connecting: return DS.heroFg.opacity(0.9)
-        default: return DS.heroFg.opacity(0.75)
+        case .ready: return Color(hex: 0xBBF7D0)
+        case .connecting: return XPalette.onAccent.opacity(0.9)
+        default: return XPalette.onAccent.opacity(0.75)
         }
     }
     private var accessibilityText: String {
@@ -798,10 +798,10 @@ struct ConnectMsBadge: View {
             Label(String(ms) + "ms", systemImage: "stopwatch")
                 .xFont(.caption2, weight: .medium)
                 // 淡黄/纯白都必须坐在压暗底板上: 裸压主题渐变最亮端实测只有 3.95:1 与 3.89:1
-                .foregroundStyle(ms >= 2000 ? DS.heroTint(Color(hex: 0xFFE9A8)) : DS.heroFg.opacity(0.85))
+                .foregroundStyle(ms >= 2000 ? Color(hex: 0xFFE9A8) : XPalette.onAccent.opacity(0.85))
                 .padding(.horizontal, XSpace.s)
                 .padding(.vertical, 2)
-                .background(DS.heroPlate, in: Capsule())
+                .background(XPalette.surfaceSunken, in: Capsule())
                 .accessibilityLabel("最近一次连接耗时 " + String(ms) + " 毫秒")
         }
     }

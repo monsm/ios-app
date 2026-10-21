@@ -282,7 +282,7 @@ struct UnlockDial: View {
         return hypot(p.x - c.x, p.y - c.y) <= dial * 0.39
     }
     /// 夜间降亮度 (idea 248): 22 点后装饰光效降峰值
-    private var dim: CGFloat { DS.isNightDim ? 0.55 : 1 }
+    private var dim: CGFloat { XMetric.isNightDim ? 0.55 : 1 }
 
     private var isBusy: Bool {
         state == .connecting || state == .opening
@@ -869,7 +869,7 @@ struct UnlockDial: View {
         }
         switch state {
         case .idle, .connecting, .opening:
-            return AnyShapeStyle(DS.heroGradientSafe)
+            return AnyShapeStyle(XGradient.hero)
         default:
             break
         }

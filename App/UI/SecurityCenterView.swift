@@ -319,7 +319,7 @@ struct SecurityPeekView: View {
                 withAnimation(XMotion.quick) { bgBlurred = on }
             case .active:
                 let clear = !DB.hasPasscode() || app.appUnlocked
-                withAnimation(clear ? .easeOut(duration: DS.Duration.standard) : .none) {
+                withAnimation(clear ? .easeOut(duration: 0.32) : .none) {
                     bgBlurred = on && !clear
                 }
             default: break

@@ -304,7 +304,7 @@ struct AddFingerPage: View {
             let ps = try await app.lock.fpStart(times: total, onPress: { p in
                 self.presses.append(p)
                 // 手指在锁上时看不到屏幕: 每次按压给轻触感 + 涟漪
-                DS.Haptics.tick.impactOccurred()
+                XHaptics.tick.impactOccurred()
                 self.ripple = false
                 DispatchQueue.main.async { self.ripple = true }
             })

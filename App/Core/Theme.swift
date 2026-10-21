@@ -32,7 +32,7 @@ import UIKit
 enum XPalette {
     // ── 中性灰阶 (12 档) ──
     /// 画布最底 (纯黑, AMOLED 友好)
-    static var canvas: Color { DS.Appearance.isAMOLED ? .black : Color.adaptive(0xF5F5F7, 0x0A0A0B) }
+    static var canvas: Color { XAppearance.isAMOLED ? .black : Color.adaptive(0xF5F5F7, 0x0A0A0B) }
     /// 主表面 (卡片/面板)
     static var surface: Color { Color.adaptive(0xFFFFFF, 0x161618) }
     /// 次表面 (内嵌区块)
@@ -41,7 +41,7 @@ enum XPalette {
     static var surfaceSunken: Color { Color.adaptive(0xEAEAEF, 0x121214) }
 
     // ── 描边 ──
-    static var hairline: Color { Color.adaptive(0xE2E2E8, 0x2A2A2E) }
+    static var hairline: Color { Color.adaptive(0xD8D8DE, 0x323236) }
     static var hairlineStrong: Color { Color.adaptive(0xC8C8D0, 0x3A3A40) }
 
     // ── 文字 ──
@@ -50,10 +50,27 @@ enum XPalette {
     /// 次级文字 (对比度 ≥4.5:1)
     static var textSub: Color { Color.adaptive(0x5A5A66, 0xA0A0AC) }
     /// 三级文字 (仅用于 ≥15pt)
-    static var textTertiary: Color { Color.adaptive(0x8A8A96, 0x707078) }
+    static var textTertiary: Color { Color.adaptive(0x72727C, 0x888892) }
 
-    // ── 强调: 铜 (锁芯黄铜) ──
-    static var accent: Color { Color.adaptive(0x9C5A22, 0xD98B45) }
+    // ── 强调: 铜 (锁芯黄铜), 可被 kf_accent 覆盖 ──
+    /// 六套可选强调色。空键 = 默认铜。
+    /// 保留这条链的理由: 备份包里带 kf_accent, 恢复后不该"看着没恢复";
+    /// 且未来若要给用户换色, 只需接 UI, 不用再改令牌求值路径。
+    private static var accentOverride: (light: UInt32, dark: UInt32)? {
+        switch DB.store.getString("kf_accent") {
+        case "indigo":   return (0x4F46E5, 0x818CF8)
+        case "forest":   return (0x15803D, 0x4ADE80)
+        case "amber":    return (0xB45309, 0xFBBF24)
+        case "graphite": return (0x3F3F46, 0xA1A1AA)
+        case "rose":     return (0xBE123C, 0xFB7185)
+        case "aurora":   return (0x0E7490, 0x22D3EE)
+        default:         return nil
+        }
+    }
+    static var accent: Color {
+        if let o = accentOverride { return Color.adaptive(o.light, o.dark) }
+        return Color.adaptive(0x9C5A22, 0xD98B45)
+    }
     static var accentText: Color { Color.adaptive(0x8F5A28, 0xE8A05C) }
     static var onAccent: Color { Color.adaptive(0xFFFFFF, 0x0A0A0B) }
 
@@ -144,6 +161,12 @@ enum XMetric {
     /// 装饰性大图标随辅助功能字号适度放大 (HIG typography: 承载信息的图标
     /// 在字号变大时也要跟着变大 —— 上限 1.35 倍, 再大就会顶破版面)。
     /// 纯装饰图形 (空态吉祥物 / 成功对勾) 也走这一档, 免得两套口径。
+    /// 夜间暗化 (22:00–06:00) —— 圆盘等强光界面用
+    static var isNightDim: Bool {
+        let h = WeekCal.gregorian.component(.hour, from: Date())
+        return h >= 22 || h < 6
+    }
+
     static func decorIcon(_ base: CGFloat) -> CGFloat {
         let size = AXFlags.typeSizeSnapshot
         let scale: CGFloat
@@ -380,3 +403,15 @@ enum XGradient {
 // MARK: - 兼容层 (底层代码依赖的旧 API)
 // ═══════════════════════════════════════════════════════════
 
+
+
+// ═══════════════════════════════════════════════════════════
+// MARK: - 外观开关 (2026-10-21 从 DS.Appearance 迁出)
+// ═══════════════════════════════════════════════════════════
+
+enum XAppearance {
+    /// AMOLED 纯黑 (kf_theme == "black")
+    static var isAMOLED: Bool { DB.store.getString("kf_theme") == "black" }
+    /// App 内高对比皮肤：与系统「增加对比度」并联
+    @MainActor static var highContrast: Bool { AXFlags.highContrast || DB.store.getBool("kf_hc") }
+}

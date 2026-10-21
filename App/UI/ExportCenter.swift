@@ -687,8 +687,8 @@ enum ExportKit {
         let pdf = renderer.pdfData { ctx in
             // ---- 页 1: 矢量封面 (696 渐变封条 + 统计区间 + 生成时间, 无图片资源) ----
             let cg = ctx.cgContext
-            let heroA = UIColor(DS.Palette.themed("heroA"))
-            let heroB = UIColor(DS.Palette.themed("heroB"))
+            let heroA = UIColor(XPalette.accent)
+            let heroB = UIColor(XPalette.accentText)
             PDFText.gradient(cg, CGRect(x: 0, y: 0, width: 595, height: 150), [heroA, heroB])
             PDFText.line(cg, "离线锁管家", font: .semibold, size: 24, x: 36, y: 34, color: coverInk, pageW: 595)
             // 封面上的副信息不再用 withAlphaComponent 稀释白字: 白@0.85 裸压主题渐变最亮端实测只有
@@ -1114,7 +1114,7 @@ enum ExportKit {
         return UIGraphicsImageRenderer(size: CGSize(width: w, height: h), format: fmt).image { ctx in
             let cg = ctx.cgContext
             PDFText.gradient(cg, CGRect(x: 0, y: 0, width: w, height: h),
-                             [UIColor(DS.Palette.themed("heroA")), UIColor(DS.Palette.themed("heroB"))])
+                             [UIColor(XPalette.accent), UIColor(XPalette.accentText)])
             PDFText.line(cg, "离线锁管家", font: .semibold, size: w * 0.1, x: w * 0.1, y: w * 0.1, color: .white, pageW: w)
             PDFText.line(cg, item.title, font: .regular, size: w * 0.08, x: w * 0.1, y: w * 0.24, color: .white, pageW: w)
             PDFText.line(cg, item.shaLabel, font: .regular, size: w * 0.06, x: w * 0.1, y: h - w * 0.14, color: .white, pageW: w)
@@ -1140,7 +1140,7 @@ enum ExportKit {
             cg.fill(CGRect(x: 0, y: 0, width: w, height: h))
             if top > 0 {
                 PDFText.gradient(cg, CGRect(x: 0, y: 0, width: w, height: headH),
-                                 [UIColor(DS.Palette.themed("heroA")), UIColor(DS.Palette.themed("heroB"))])
+                                 [UIColor(XPalette.accent), UIColor(XPalette.accentText)])
                 // 686 的原话是"单张发出去看不出锁名/日期": 日期有了, 锁名也必须真的画上去 ——
                 // 上面那行 lockName 此前算完就丢了 (编译器只在告警里提了一句 unused)。
                 let sub = day + " · " + lockName + " · 离线锁管家" + (first ? "" : " (续)")
@@ -1449,7 +1449,7 @@ struct AlarmShareCardView: View {
         }
         .padding(XSpace.xl)
         .frame(width: 360, height: 640, alignment: .top)   // 9:16
-        .background(DS.heroGradientSafe, in: RoundedRectangle(cornerRadius: XRadius.card, style: .continuous))
+        .background(XGradient.hero, in: RoundedRectangle(cornerRadius: XRadius.card, style: .continuous))
     }
 }
 
@@ -1477,7 +1477,7 @@ struct RecordShareCardView: View {
         }
         .padding(XSpace.xl)
         .frame(width: 360, height: 640, alignment: .top)
-        .background(DS.heroGradientSafe, in: RoundedRectangle(cornerRadius: XRadius.card, style: .continuous))
+        .background(XGradient.hero, in: RoundedRectangle(cornerRadius: XRadius.card, style: .continuous))
     }
 }
 

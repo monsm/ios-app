@@ -281,7 +281,7 @@ enum BackupKit {
             let v = DB.store.getString(key)
             return allowed.contains(v) ? v : nil
         }
-        let stats = DS.HeroStats.visible
+        let stats = XHeroStats.visible
         let recent = DB.store.getInt("kf_recent_count", 5)
         // 2026-10-20 (Q15 减法): density/radius/rowH/tlGap/motion/heroTex 六档已从产品中删除。
         // 字段**保留在 schema 里**(旧包/小程序仍可能带这些键, 删字段会破坏 Codable 兼容),
@@ -301,7 +301,7 @@ enum BackupKit {
             festive: DB.store.has("kf_festive") ? DB.store.getBool("kf_festive") : nil,
             plain: DB.store.has("kf_plain") ? DB.store.getBool("kf_plain") : nil,
             recentCount: [3, 5, 10].contains(recent) ? recent : nil,
-            heroStats: stats.count == DS.HeroStats.all.count ? nil : Array(stats).sorted())
+            heroStats: stats.count == XHeroStats.all.count ? nil : Array(stats).sorted())
     }
     /// D-36 收集设备组织 (顺序 / 分组 / 分组折叠 / 隐藏)。
     /// 四项全空就整段不带 (缺字段 = 恢复时不动本机); groups 按 mac 排序, 同一份数据两次导出得到同一 canonical。
@@ -375,7 +375,7 @@ enum BackupKit {
         if let n = a.recentCount, [3, 5, 10].contains(n) { DB.store.set("kf_recent_count", n) }
         if let stats = a.heroStats {
             // 白名单外的项丢掉; 全空由 DS.HeroStats 自己回退全开 (不留一张没有指标的光板卡)
-            DB.store.set("kf_hero_stats", DS.HeroStats.all.filter { stats.contains($0) })
+            DB.store.set("kf_hero_stats", XHeroStats.all.filter { stats.contains($0) })
         }
     }
     @discardableResult

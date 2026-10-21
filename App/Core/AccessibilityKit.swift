@@ -155,8 +155,8 @@ extension DS {
                 let base = environment.accessibilityInvertColors ? Color.invHeroBottom : Palette.themed("heroB")
                 return AnyShapeStyle(base)
             }
-            if environment.accessibilityInvertColors { return AnyShapeStyle(DS.heroInvertGradient) }
-            return AnyShapeStyle(Gradient.hero)
+            if environment.accessibilityInvertColors { return AnyShapeStyle(heroInvertGradient) }
+            return AnyShapeStyle(XGradient.hero)
         }
     }
     /// 863 反转降级渐变 (两端**同侧**: 浅档中性浅、深档中性深; 文字用 heroFg) — HeroSurface 的 863 分支
@@ -388,7 +388,7 @@ private struct GlassModifier: ViewModifier {
     func body(content: Content) -> some View {
         // 读系统旗标 (比 AXFlags 静态读更稳, 随环境更新); 降低透明度时降为实底
         // 862: 增强对比 (系统或 App 内 kf_hc) 同样降实底 —— 半透明叠字在高对比模式下属实底色
-        if reduceTransparency || DS.Appearance.highContrast {
+        if reduceTransparency || XAppearance.highContrast {
             switch shape {
             case .rect(let r):
                 let s = RoundedRectangle(cornerRadius: r, style: .continuous)
