@@ -103,7 +103,7 @@ struct AlarmsPage: View {
                             withAnimation(XMotion.soft) { showHandled = true }
                         } label: {
                             Text("显示 \(handled.count) 条已处理")
-                                .vkFont(.footnote)
+                                .xFont(.footnote)
                                 .foregroundStyle(XPalette.textSub)
                         }
                     }
@@ -132,12 +132,12 @@ struct AlarmsPage: View {
                         .foregroundStyle(levelColor(rec).opacity(handled ? 0.5 : 1))
                         .accessibilityHidden(true)
                     Text(rec.typeName.isEmpty ? "告警" : rec.typeName)
-                        .vkFont(.body, weight: handled ? .regular : .medium)
+                        .xFont(.body, weight: handled ? .regular : .medium)
                         .foregroundStyle(handled ? XPalette.textSub : XPalette.text)
                         .lineLimit(1)
                 }
                 Text("\(shortTime(rec.timeStr)) · \(rec.lockName)")
-                    .vkFont(.caption)
+                    .xFont(.caption)
                     .foregroundStyle(XPalette.textSub)
             }
 
@@ -170,10 +170,10 @@ struct AlarmsPage: View {
                 .foregroundStyle(XPalette.ok)
                 .accessibilityHidden(true)
             Text("没有告警")
-                .vkFont(.headline)
+                .xFont(.headline)
                 .foregroundStyle(XPalette.text)
             Text("所有记录都正常")
-                .vkFont(.subheadline)
+                .xFont(.subheadline)
                 .foregroundStyle(XPalette.textSub)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

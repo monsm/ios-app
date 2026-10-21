@@ -80,30 +80,30 @@ struct AmbientOverflowSheet: View {
 
     @ViewBuilder
     private func row(_ a: Ambient) -> some View {
-        VStack(alignment: .leading, spacing: DS.Space.xs) {
-            HStack(alignment: .top, spacing: DS.Space.xs) {
+        VStack(alignment: .leading, spacing: XSpace.xs) {
+            HStack(alignment: .top, spacing: XSpace.xs) {
                 Image(systemName: a.icon)
-                    .font(.system(size: DS.Icon.sm))
-                    .foregroundStyle(DS.Palette.textSub)
+                    .font(.system(size: XIcon.sm))
+                    .foregroundStyle(XPalette.textSub)
                     .accessibilityHidden(true)
                 Text(AmbientCopy.text(a, app: app))
-                    .vkFont(.subheadline)
+                    .xFont(.subheadline)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            HStack(spacing: DS.Space.s) {
+            HStack(spacing: XSpace.s) {
                 ForEach(AmbientCopy.actions(a, app: app)) { act in
                     Button(act.title) { act.run() }
-                        .vkFont(.caption, weight: .medium)
+                        .xFont(.caption, weight: .medium)
                         .buttonStyle(.bordered)
-                        .frame(minHeight: DS.Hit.min - DS.Space.m)
+                        .frame(minHeight: XHit.min - XSpace.m)
                         // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 没有 minHeight (< 44)。
                         // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
-                        .frame(minHeight: DS.Hit.min)
+                        .frame(minHeight: XHit.min)
                         .contentShape(Rectangle())
                 }
             }
         }
-        .padding(.vertical, DS.Space.xs)
+        .padding(.vertical, XSpace.xs)
     }
 }
 
@@ -146,11 +146,11 @@ enum AmbientCopy {
                 return [
                     Action(id: "clear", title: "立即清除") {   // 517: 唯一出口是 clearNow()，不直接写 pasteboard
                         ClipboardCare.clearNow()
-                        withAnimation(DS.Motion.standard) { app.pasteSuggestion = nil }
+                        withAnimation(XMotion.standard) { app.pasteSuggestion = nil }
                     },
                     Action(id: "ok", title: "知道了") {
                         ClipboardCare.dismissSuggestion()
-                        withAnimation(DS.Motion.standard) { app.pasteSuggestion = nil }
+                        withAnimation(XMotion.standard) { app.pasteSuggestion = nil }
                     },
                 ]
             }
@@ -158,11 +158,11 @@ enum AmbientCopy {
                 Action(id: "cred", title: "回凭证页") {
                     ClipboardCare.dismissSuggestion()
                     app.requestRoute(.credentials)
-                    withAnimation(DS.Motion.standard) { app.pasteSuggestion = nil }
+                    withAnimation(XMotion.standard) { app.pasteSuggestion = nil }
                 },
                 Action(id: "ok", title: "知道了") {
                     ClipboardCare.dismissSuggestion()
-                    withAnimation(DS.Motion.standard) { app.pasteSuggestion = nil }
+                    withAnimation(XMotion.standard) { app.pasteSuggestion = nil }
                 },
             ]
         case .firstUseCapsule:

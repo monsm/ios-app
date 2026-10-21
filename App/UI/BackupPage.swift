@@ -79,10 +79,10 @@ struct BackupPage: View {
                         .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(lastBackupText)
-                            .vkFont(.title3, weight: .semibold)
+                            .xFont(.title3, weight: .semibold)
                             .foregroundStyle(XPalette.text)
                         Text(backupHint)
-                            .vkFont(.footnote)
+                            .xFont(.footnote)
                             .foregroundStyle(XPalette.textSub)
                     }
                 }
@@ -131,10 +131,10 @@ struct BackupPage: View {
         XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 Text("导出")
-                    .vkFont(.subheadline, weight: .medium)
+                    .xFont(.subheadline, weight: .medium)
                     .foregroundStyle(XPalette.text)
                 Text("生成一份加密备份文本, 复制到安全的地方。")
-                    .vkFont(.footnote)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
 
@@ -178,10 +178,10 @@ struct BackupPage: View {
         XPanel(kind: .group, tone: .warn) {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 Text("恢复")
-                    .vkFont(.subheadline, weight: .medium)
+                    .xFont(.subheadline, weight: .medium)
                     .foregroundStyle(XPalette.text)
                 Text("粘贴之前导出的备份文本。相同设备会被覆盖, 其它设备保留。")
-                    .vkFont(.footnote)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
 
@@ -199,7 +199,7 @@ struct BackupPage: View {
         NavigationStack {
             VStack(spacing: XSpace.l) {
                 TextEditor(text: $importText)
-                    .vkFont(.footnote.monospaced())
+                    .xFont(.footnote.monospaced())
                     .scrollContentBackground(.hidden)
                     .background(XPalette.surfaceSunken,
                                 in: RoundedRectangle(cornerRadius: XRadius.control, style: .continuous))
@@ -207,7 +207,7 @@ struct BackupPage: View {
                     .overlay(alignment: .topLeading) {
                         if importText.isEmpty {
                             Text("在此粘贴备份文本")
-                                .vkFont(.footnote)
+                                .xFont(.footnote)
                                 .foregroundStyle(XPalette.textTertiary)
                                 .padding(XSpace.s)
                                 .allowsHitTesting(false)

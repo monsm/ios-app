@@ -537,17 +537,17 @@ struct AutoCalView: View {
                 } else {
                     LabeledRow("当前基准", "未标定 — 未标定则 F3 门不过")
                 }
-                BusyButton(title: calibrating ? "采集中 (\(collected) 样本)" : "重新标定",
+                XBusyButton(title: calibrating ? "采集中 (\(collected) 样本)" : "重新标定",
                            systemImage: "dot.radiowaves.left.and.right",
-                           isBusy: calibrating) {
+                           busy: calibrating) {
                     Task { await run() }
                 }
             } header: {
                 Text("距离标定 (F3)")
             } footer: {
                 Text("静止走近门锁一次, 采 30 秒 RSSI 取 P95 作为武装基准。回差: 越过武装线才武装, 掉回 0.5×基准才解除, 防门口抖动误触发。")
-                    .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.textSub)
+                    .xFont(.caption)
+                    .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Section("标定数据") {
@@ -555,8 +555,8 @@ struct AutoCalView: View {
             }
         }
         .navigationTitle("距离标定")
-        .variantList()
-        .dsScreenBackground()
+        .xList()
+        .xScreen()
     }
 
     private func run() async {
@@ -591,7 +591,7 @@ struct AutoOpenSection: View {
     var mac: String
     var body: some View {
         Section {
-            VariantToggle("走近自动开门", isOn: Binding(
+            XToggle("走近自动开门", isOn: Binding(
                 get: { AutoOpen.on },
                 set: { AutoOpen.on = $0 }))
             if AutoOpen.on {
@@ -599,7 +599,7 @@ struct AutoOpenSection: View {
                 // 为什么默认开: 自动开锁时手机可能还在口袋里, 声音是唯一的"门开了"信号。
                 // 为什么与手动那枚「成功提示音」分开: 手动是主动按的(看得见 toast),
                 // 自动是被动触发的(可能看不到), 两者需求不同 —— 并成一枚只能服务一半人。
-                VariantToggle("自动开锁成功音", isOn: Binding(
+                XToggle("自动开锁成功音", isOn: Binding(
                     get: { AlertTone.autoUnlockOn },
                     set: { DB.store.set("kf_auto_unlock_sound", $0) }))
                 Picker("面容确认", selection: Binding(
@@ -610,8 +610,8 @@ struct AutoOpenSection: View {
                 }
                 .pickerStyle(.menu)
                 Text(AutoOpen.riskDisclosure)
-                    .vkFont(.footnote)
-                    .foregroundStyle(DS.Palette.warn)
+                    .xFont(.footnote)
+                    .foregroundStyle(XPalette.warn)
                     .fixedSize(horizontal: false, vertical: true)
                 NavigationLink("距离标定 (走近多近才算到)") { AutoCalView(mac: mac) }
                 // 门是 fail-closed 的, 拒开又是静默的 —— 用户在门口等半天只知道"没开"。
@@ -620,12 +620,12 @@ struct AutoOpenSection: View {
                 if let r = AutoOpen.lastReject(mac) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("上一次没自动开：\(r.reason)")
-                            .vkFont(.footnote)
+                            .xFont(.footnote)
                         Text(r.at)
-                            .vkFont(.caption2)
-                            .foregroundStyle(DS.Palette.textSub)
+                            .xFont(.caption2)
+                            .foregroundStyle(XPalette.textSub)
                     }
-                    .foregroundStyle(DS.Palette.warn)
+                    .foregroundStyle(XPalette.warn)
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityElement(children: .combine)
                 }
@@ -634,8 +634,8 @@ struct AutoOpenSection: View {
             Text("靠近自动开锁")
         } footer: {
             Text("仅 App 在前台且门不在布防时段生效; 布防时段与防拆事件自动关闭自动开锁。睡觉场景请确认布防时段覆盖夜间。")
-                .vkFont(.caption)
-                .foregroundStyle(DS.Palette.textSub)
+                .xFont(.caption)
+                .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }

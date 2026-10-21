@@ -69,10 +69,10 @@ struct CarePage: View {
                         .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(periodTitle(days))
-                            .vkFont(.title3, weight: .semibold)
+                            .xFont(.title3, weight: .semibold)
                             .foregroundStyle(XPalette.text)
                         Text(periodDetail(days))
-                            .vkFont(.footnote)
+                            .xFont(.footnote)
                             .foregroundStyle(XPalette.textSub)
                     }
                 }
@@ -180,10 +180,10 @@ struct CarePage: View {
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(todo.title)
-                    .vkFont(.body)
+                    .xFont(.body)
                     .foregroundStyle(XPalette.text)
                 Text(todo.detail)
-                    .vkFont(.caption)
+                    .xFont(.caption)
                     .foregroundStyle(todo.tone == .ok ? XPalette.ok : XPalette.textSub)
             }
             Spacer(minLength: 0)

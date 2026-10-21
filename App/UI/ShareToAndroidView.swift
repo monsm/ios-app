@@ -39,15 +39,15 @@ struct ShareToAndroidView: View {
 
                         VStack(spacing: 2) {
                             Text(title)
-                                .vkFont(.headline)
+                                .xFont(.headline)
                                 .foregroundStyle(XPalette.text)
                             Text(macText)
-                                .vkFont(.caption)
+                                .xFont(.caption)
                                 .foregroundStyle(XPalette.textSub)
                         }
 
                         Text("在安卓 App 里点「扫码添加」扫这张码。导入之后, 点一下开锁和靠近开锁都不再需要它。")
-                            .vkFont(.footnote)
+                            .xFont(.footnote)
                             .foregroundStyle(XPalette.textSub)
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
@@ -58,24 +58,24 @@ struct ShareToAndroidView: View {
                         } icon: {
                             Image(systemName: "exclamationmark.shield.fill").accessibilityHidden(true)
                         }
-                        .vkFont(.caption)
+                        .xFont(.caption)
                         .foregroundStyle(XPalette.warn)
                         .padding(XSpace.s)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .variantCallout(XPalette.warn, .control, wash: 0.10)
+                        .xCallout(XPalette.warn, .control, wash: 0.10)
 
                         ShareLink(item: Image(uiImage: qr),
                                   preview: SharePreview(title + " 的开锁二维码", image: Image(uiImage: qr))) {
                             Label("分享二维码", systemImage: "square.and.arrow.up")
                         }
-                        .buttonStyle(PrimaryActionStyle(fullWidth: true))
+                        .buttonStyle(XPrimaryButtonStyle(fullWidth: true))
                     } else {
                         Image(systemName: "qrcode")
                             .font(.system(size: XIcon.xl))
                             .foregroundStyle(XPalette.textSub)
                             .accessibilityHidden(true)
                         Text(failed.isEmpty ? "正在生成…" : failed)
-                            .vkFont(.footnote)
+                            .xFont(.footnote)
                             .foregroundStyle(failed.isEmpty ? XPalette.textSub : XPalette.danger)
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)

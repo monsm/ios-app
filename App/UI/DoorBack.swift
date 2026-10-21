@@ -87,7 +87,7 @@ struct DoorBack: View {
             // ── 顶部 ──
             HStack {
                 Text("门里")
-                    .vkFont(.headline)
+                    .xFont(.headline)
                     .foregroundStyle(XPalette.text)
                 Spacer()
                 DoorFlipButton(flipped: $flipped)
@@ -123,10 +123,10 @@ struct DoorBack: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(domain.rawValue)
-                        .vkFont(.body, weight: .medium)
+                        .xFont(.body, weight: .medium)
                         .foregroundStyle(XPalette.text)
                     Text(domain.summary)
-                        .vkFont(.caption)
+                        .xFont(.caption)
                         .foregroundStyle(XPalette.textSub)
                 }
 

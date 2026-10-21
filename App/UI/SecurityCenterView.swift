@@ -120,12 +120,12 @@ func setGuestChannel(_ on: Bool, app: AppState) {
 struct SecurityWatermark: View {
     var seed: String
     /// 水印是画在 `Canvas` 里的 `Text`：`GraphicsContext.draw` 收 `Text`，**不收 `some View`**，
-    /// 所以这里不能写 `.vkFont(...)`（它返回的是 `some View`），改取排版语法的
+    /// 所以这里不能写 `.xFont(...)`（它返回的是 `some View`），改取排版语法的
     /// `Font` 结果——`VKTypography.font(...)` 与 `.vkFont` 是**同一个实现处**。
     var body: some View {
         Canvas { ctx, size in
             let tile: CGFloat = 120
-            let stampFont = VKTypography.font(.caption2, weight: nil)
+            let stampFont = Font.caption2
             let stamp = seed.isEmpty ? "离线锁管家 \(Date().formatted(.dateTime.year().month().day()))" : seed
             var row = 0
             var y: CGFloat = -tile / 3
@@ -136,7 +136,7 @@ struct SecurityWatermark: View {
                     t.translateBy(x: x, y: y)
                     t.rotate(by: .degrees(-18))
                     t.opacity = 0.05   // 装饰层: 只留潜意识, 不破正文对比度 (颜色仍取 text 令牌的动态色)
-                    t.draw(Text(stamp).font(stampFont).foregroundColor(XPalette.text), at: .zero)
+                    t.draw(Text(stamp).font(stampFont).foregroundStyle(XPalette.text), at: .zero)
                     x += tile
                 }
                 y += tile / 1.6
@@ -187,7 +187,7 @@ struct SecurityPeekView: View {
                 }
             } footer: {
                 Text("加密凭证包与交接包不走这条：那是密文，且你要粘进聊天工具，定时清掉只会打断交接。")
-                    .vkFont(.caption2).foregroundStyle(XPalette.textSub)
+                    .xFont(.caption2).foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
             // 369 遮蔽样式自选
@@ -225,7 +225,7 @@ struct SecurityPeekView: View {
                 SecRow(title: "切后台即糊",
                        subtitle: bgBlurLabel,
                        icon: "rectangle.fill.and.rectangle") {
-                    VariantToggle("", isOn: bindingBool(SecKey.bgBlurOn, false))
+                    XToggle("", isOn: bindingBool(SecKey.bgBlurOn, false))
                         .labelsHidden()
                 }
                 // 373 限时可见
@@ -249,7 +249,7 @@ struct SecurityPeekView: View {
                                 ? "已开: 码值在完成页与详情卡上默认遮半, 点「完整显示」才露全值; 复制与分享跟随屏上显示"
                                 : "关: 码值原样显示",
                        icon: "square.and.arrow.up") {
-                    VariantToggle("", isOn: bindingBool(SecKey.shareHalfOn, true))
+                    XToggle("", isOn: bindingBool(SecKey.shareHalfOn, true))
                         .labelsHidden()
                 }
                 // 377 访客通道: 判据口 SecurityPolicy.guestActive, 消费点在主 TabView (LockKeeperApp.swift)
@@ -258,7 +258,7 @@ struct SecurityPeekView: View {
                                 ? "已开: 主界面只挂 设备/记录 两页, 进 凭证/设置 要先重输密码"
                                 : "关: 四页照常。打开即生效 (会先把受限的那两页收起)",
                        icon: "person.crop.circle.badge.questionmark") {
-                    VariantToggle("", isOn: guestSwitch)
+                    XToggle("", isOn: guestSwitch)
                         .labelsHidden()
                 }
                 if SecurityPolicy.guestActive {
@@ -267,7 +267,7 @@ struct SecurityPeekView: View {
                                     ? "已开但筛不出东西: 成员档案里没有敏感标记位, 判据口已就位等数据侧"
                                     : "关: 成员名单照原样给访客",
                            icon: "person.slash") {
-                        VariantToggle("", isOn: bindingBool(SecKey.sensitiveOnly, false))
+                        XToggle("", isOn: bindingBool(SecKey.sensitiveOnly, false))
                             .labelsHidden()
                     }
                 }
@@ -282,7 +282,7 @@ struct SecurityPeekView: View {
                                 ? "全页对角重复 App 名+日期"
                                 : "关闭 (截图加扰降级为常驻水印)",
                        icon: "watermark") {
-                    VariantToggle("", isOn: bindingBool(SecKey.watermarkOn, false))
+                    XToggle("", isOn: bindingBool(SecKey.watermarkOn, false))
                         .labelsHidden()
                 }
                 if DB.store.getBool(SecKey.watermarkOn, false) {
@@ -299,7 +299,7 @@ struct SecurityPeekView: View {
                             })
                             UIApplication.topViewController()?.present(alert, animated: true)
                         }
-                        .vkFont(.footnote, weight: .medium)
+                        .xFont(.footnote, weight: .medium)
                         .foregroundStyle(XPalette.accentText)
                         .frame(minHeight: XHit.min)
                     }
@@ -308,8 +308,8 @@ struct SecurityPeekView: View {
                 Text("水印")   // 378 水印
             }
         }
-        .variantList()
-        .dsScreenBackground()
+        .xList()
+        .xScreen()
         .navigationTitle("防窥与遮蔽")
         // 371 本地糊屏: 切后台即刻整屏糊, 回前台若已解锁则恢复清晰, 否则先过应用锁
         .onChange(of: scenePhase) { _, phase in
@@ -334,7 +334,7 @@ struct SecurityPeekView: View {
                             .font(.system(size: XIcon.xl, weight: .medium))
                             .foregroundStyle(XPalette.accentText)
                         Text("已切后台 — 回前台过应用锁后恢复清晰")
-                            .vkFont(.footnote)
+                            .xFont(.footnote)
                             .foregroundStyle(XPalette.textSub)
                             .multilineTextAlignment(.center)
                     }
@@ -381,7 +381,7 @@ struct SecurityPeekView: View {
         SecRow(title: "磨砂挡片",
                subtitle: DB.store.getBool(SecKey.frostedOn, false) ? "OTP 行常驻磨砂, 长按暂时移开" : "关闭",
                icon: "square.fill.on.square") {
-            VariantToggle("", isOn: bindingBool(SecKey.frostedOn, false))
+            XToggle("", isOn: bindingBool(SecKey.frostedOn, false))
                 .labelsHidden()
         }
         .overlay(alignment: .leading) {
@@ -394,7 +394,7 @@ struct SecurityPeekView: View {
     @ViewBuilder
     private var frostedPlate: some View {
         Text("0 4 8 2 1  ·  OTP (长按查看)")
-            .vkFont(.title3, weight: .semibold)
+            .xFont(.title3, weight: .semibold)
             .monospaced()
             .padding(.horizontal, XSpace.l)
             .padding(.vertical, XSpace.m)
@@ -476,7 +476,7 @@ struct SecurityAuditView: View {
                 }
                 if events.isEmpty {
                     Text("暂无条目 — 增删改/导入会自动记入 (导出见敏感流水), 也可下方手动记一条")
-                        .vkFont(.footnote)
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.textSub)
                 }
             } header: {
@@ -492,7 +492,7 @@ struct SecurityAuditView: View {
                     self.center.bump()
                 } label: {
                     Label(manualEntryTitle, systemImage: "plus")
-                        .vkFont(.subheadline, weight: .medium)
+                        .xFont(.subheadline, weight: .medium)
                 }
                 .frame(minHeight: XHit.min)
             }
@@ -504,7 +504,7 @@ struct SecurityAuditView: View {
                     self.center.bump()
                 } label: {
                     Label("校验完整性", systemImage: "checkmark.shield")
-                        .vkFont(.subheadline, weight: .medium)
+                        .xFont(.subheadline, weight: .medium)
                 }
                 .frame(minHeight: XHit.min)
                 if let m = verifyMsg {
@@ -513,13 +513,13 @@ struct SecurityAuditView: View {
                             .font(.system(size: XIcon.sm, weight: .semibold))
                             .foregroundStyle(m.contains("完好") ? XPalette.ok : XPalette.danger)
                         Text(m)
-                            .vkFont(.footnote)
+                            .xFont(.footnote)
                             .foregroundStyle(m.contains("完好") ? XPalette.textSub : XPalette.danger)
                             .lineLimit(2)
                     }
                 }
                 Text("每条管理日志附前条 SHA-256, 逐链重算验证; 本地轻量口径, 篡改即断链")
-                    .vkFont(.footnote)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
             } header: {
                 Text("防篡改")   // 386 防篡改
@@ -553,7 +553,7 @@ struct SecurityAuditView: View {
                         }
                     } label: {
                         Label("立即清理到期条目", systemImage: "clock.arrow.circlepath")
-                            .vkFont(.subheadline, weight: .medium)
+                            .xFont(.subheadline, weight: .medium)
                     }
                     .frame(minHeight: XHit.min)
                 }
@@ -573,7 +573,7 @@ struct SecurityAuditView: View {
                     doExport("脱敏")
                 } label: {
                     Label("导出审计 JSON (脱敏)", systemImage: "square.and.arrow.up")
-                        .vkFont(.subheadline, weight: .medium)
+                        .xFont(.subheadline, weight: .medium)
                 }
                 .frame(minHeight: XHit.min)
                 Button {
@@ -593,7 +593,7 @@ struct SecurityAuditView: View {
                     UIApplication.topViewController()?.present(alert, animated: true)
                 } label: {
                     Label("导出含明文 (需确认)", systemImage: "eye")
-                        .vkFont(.subheadline, weight: .medium)
+                        .xFont(.subheadline, weight: .medium)
                 }
                 .frame(minHeight: XHit.min)
                 .foregroundStyle(XPalette.warn)
@@ -608,7 +608,7 @@ struct SecurityAuditView: View {
                                 ? "已开: 三级销毁的第二级要重输本机密码, 清空回收站/到期清理/离职清除也先问这一道"
                                 : "已关: 上面这几处毁灭动作不再追问口令 (不建议)",
                        icon: "person.crop.circle.badge.xmark") {
-                    VariantToggle("", isOn: Binding(
+                    XToggle("", isOn: Binding(
                         get: { SecurityPolicy.sudoRequired },
                         // 关掉开关顺手收回已发的那张券: 会话里"上一次验过"不该替下一次做主
                         set: { DB.store.set(SecKey.sudoOn, $0); app.sudoTicket = nil; SecTick.bump() }))
@@ -617,7 +617,7 @@ struct SecurityAuditView: View {
                 if !DB.hasPasscode() {
                     Text("本机没设应用锁密码 ⇒ 口令无从复核 ⇒ 毁灭动作按最严格解释停在门口。"   // 383 本机没设应用锁密码
                          + "要在这台机器上销毁, 先设本机密码或把这枚开关关掉。")
-                        .vkFont(.footnote)
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.warn)
                 }
             } header: {
@@ -629,7 +629,7 @@ struct SecurityAuditView: View {
                 let recent = SensitiveLedger().recent(limit: 5)
                 if recent.isEmpty {
                     Text("暂无 — 查看/复制/导出明文动作由接线方记入 (查看密码、复制 OTP、导出备份)")
-                        .vkFont(.footnote)
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.textSub)
                 } else {
                     ForEach(recent) { it in
@@ -638,11 +638,11 @@ struct SecurityAuditView: View {
                                 .font(.system(size: XIcon.xs, weight: .semibold))
                                 .foregroundStyle(XPalette.warn)
                             Text("\(it.kind) · \(it.target)")
-                                .vkFont(.footnote)
+                                .xFont(.footnote)
                                 .foregroundStyle(XPalette.textSub)
                             Spacer()
                             Text(SecFmt.dateStr(Double(it.id) / 1000))
-                                .vkFont(.caption)
+                                .xFont(.caption)
                                 .foregroundStyle(XPalette.textSub)
                         }
                     }
@@ -657,7 +657,7 @@ struct SecurityAuditView: View {
                 let intents = SensitiveLedger().intentItems(limit: 10)
                 if intents.isEmpty {
                     Text("暂无 — 六条快捷指令意图每次执行都会记到这里 (被冷却拦下的也留痕)")
-                        .vkFont(.footnote)
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.textSub)
                 } else {
                     ForEach(intents) { it in
@@ -666,11 +666,11 @@ struct SecurityAuditView: View {
                                 .font(.system(size: XIcon.xs, weight: .semibold))
                                 .foregroundStyle(XPalette.accentText)
                             Text(String(it.kind.dropFirst("intent·".count)) + " · " + it.target)
-                                .vkFont(.footnote)
+                                .xFont(.footnote)
                                 .foregroundStyle(XPalette.textSub)
                             Spacer()
                             Text(SecFmt.dateStr(Double(it.id) / 1000))
-                                .vkFont(.caption)
+                                .xFont(.caption)
                                 .foregroundStyle(XPalette.textSub)
                         }
                     }
@@ -679,8 +679,8 @@ struct SecurityAuditView: View {
                 Text("快捷指令执行")   // 953 快捷指令执行
             }
         }
-        .variantList()
-        .dsScreenBackground()
+        .xList()
+        .xScreen()
         .navigationTitle("审计流水")
         .onReceive(Timer.publish(every: 2, on: .main, in: .common).autoconnect()) { _ in
             self.center.bump()
@@ -718,11 +718,11 @@ struct SecurityAuditView: View {
                     .font(.system(size: XIcon.xs, weight: .semibold))
                     .foregroundStyle(e.duress ? XPalette.warn : XPalette.accentText)
                 Text("\(e.action) \(e.target)")
-                    .vkFont(.subheadline)
+                    .xFont(.subheadline)
                     .lineLimit(1)
                 Spacer()
                 Text(SecFmt.dateStr(e.ts))
-                    .vkFont(.caption)
+                    .xFont(.caption)
                     .foregroundStyle(XPalette.textSub)
                 Image(systemName: "chevron.down")
                     .font(.system(size: XIcon.xs, weight: .semibold))
@@ -740,7 +740,7 @@ struct SecurityAuditView: View {
                     .frame(height: 3)
                     .padding(.top, XSpace.xxs)
                 Text("胁迫会话产生")   // 391 胁迫会话产生
-                    .vkFont(.caption)
+                    .xFont(.caption)
                     .foregroundStyle(XPalette.warn)
                     .padding(.top, XSpace.xxs)
             }
@@ -751,17 +751,17 @@ struct SecurityAuditView: View {
                         let vals = e.diff[field] ?? []
                         HStack(spacing: XSpace.xxs) {
                             Text(field)
-                                .vkFont(.caption, weight: .medium)
+                                .xFont(.caption, weight: .medium)
                                 .foregroundStyle(XPalette.textSub)
                             Text((vals.first ?? "") + " → " + (vals.count > 1 ? vals[1] : "∅"))
-                                .vkFont(.caption.monospaced())
+                                .xFont(.caption.monospaced())
                                 .foregroundStyle(XPalette.text)
                                 .lineLimit(2)
                         }
                     }
                     if e.diff.isEmpty {
                         Text("无字段变更")
-                            .vkFont(.caption)
+                            .xFont(.caption)
                             .foregroundStyle(XPalette.textSub)
                     }
                     HStack(spacing: XSpace.xs) {
@@ -769,10 +769,10 @@ struct SecurityAuditView: View {
                             .font(.system(size: XIcon.xs, weight: .medium))
                             .foregroundStyle(XPalette.textSub)
                         Text("操作者: \(e.operator_)")
-                            .vkFont(.caption)
+                            .xFont(.caption)
                             .foregroundStyle(XPalette.textSub)
                         Text(String(e.hash.prefix(12)) + "…")
-                            .vkFont(.caption.monospaced())
+                            .xFont(.caption.monospaced())
                             .foregroundStyle(XPalette.textSub)
                             .frame(maxWidth: .infinity, alignment: .trailing)
                     }
@@ -843,9 +843,9 @@ struct SecurityDestroyView: View {
                         .foregroundStyle(DestroyKit.backupGatePass ? XPalette.ok : XPalette.danger)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("销毁前备份闸")
-                            .vkFont(.subheadline, weight: .medium)
+                            .xFont(.subheadline, weight: .medium)
                         Text(backupGateLine)
-                            .vkFont(.footnote)
+                            .xFont(.footnote)
                             .foregroundStyle(DestroyKit.backupGatePass ? XPalette.textSub : XPalette.danger)
                     }
                     Spacer()
@@ -859,12 +859,12 @@ struct SecurityDestroyView: View {
             // 第二级归 383 管: 开关开着才问, 关着就如实显示"本级已跳过"
             Section {
                 VStack(alignment: .leading, spacing: XSpace.s) {
-                    VariantToggle(isOn: $ack) {
+                    XToggle(isOn: $ack) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("我理解销毁不可恢复")
-                                .vkFont(.subheadline)
+                                .xFont(.subheadline)
                             Text("删除+随机覆写全部本地缓存 (钥匙串/台账/日志/审计)")
-                                .vkFont(.footnote)
+                                .xFont(.footnote)
                                 .foregroundStyle(XPalette.textSub)
                         }
                     }
@@ -876,17 +876,17 @@ struct SecurityDestroyView: View {
                                 SecureField("重输应用锁密码", text: $sudoInput)
                                     .textFieldStyle(.roundedBorder)
                                 Button("验证") { verifySudo() }
-                                    .vkFont(.subheadline, weight: .medium)
+                                    .xFont(.subheadline, weight: .medium)
                                     .foregroundStyle(XPalette.accentText)
                                     .frame(minHeight: XHit.min)
                             }
                         } else if app.sudoTicket != nil {
                             Label("sudo 验证通过", systemImage: "checkmark.seal.fill")
-                                .vkFont(.footnote)
+                                .xFont(.footnote)
                                 .foregroundStyle(XPalette.ok)
                         } else {
                             Label("销毁前重输口令的开关关着: 本级跳过, 不再追问口令", systemImage: "exclamationmark.triangle")
-                                .vkFont(.footnote)
+                                .xFont(.footnote)
                                 .foregroundStyle(XPalette.warn)
                         }
                     }
@@ -896,15 +896,15 @@ struct SecurityDestroyView: View {
                             .autocorrectionDisabled()
                             .frame(minHeight: XHit.min)
                     }
-                    BusyButton(title: "销毁全部数据",
-                                isBusy: destroying,
+                    XBusyButton(title: "销毁全部数据",
+                                busy: destroying,
                                 disabled: !(ack && sudoSatisfied
                                            && typedWord.trimmingCharacters(in: .whitespaces) == "销毁")) {
                         runDestroy()
                     }
                     if let rep = destroyReport {
                         Text(rep)
-                            .vkFont(.footnote)
+                            .xFont(.footnote)
                             .foregroundStyle(XPalette.textSub)
                             .lineLimit(4)
                     }
@@ -914,7 +914,7 @@ struct SecurityDestroyView: View {
                                 .font(.system(size: XIcon.sm, weight: .semibold))
                                 .foregroundStyle(msg.contains("零残留") ? XPalette.ok : XPalette.danger)
                             Text(msg)
-                                .vkFont(.footnote)
+                                .xFont(.footnote)
                                 .foregroundStyle(msg.contains("零残留") ? XPalette.ok : XPalette.danger)
                         }
                     }
@@ -930,10 +930,10 @@ struct SecurityDestroyView: View {
             Section {
                 HStack(spacing: XSpace.s) {
                     Text("清空回收站 (\(trashCount) 项)")
-                        .vkFont(.subheadline, weight: .medium)
+                        .xFont(.subheadline, weight: .medium)
                     Spacer()
                     Text("长按 2 秒释放, 松手取消")
-                        .vkFont(.footnote)
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.textSub)
                 }
                 holdClearControl
@@ -946,7 +946,7 @@ struct SecurityDestroyView: View {
                 let members = Offboard.members()
                 if members.isEmpty {
                     Text("尚无成员档案 — 在 设置 → 家人与钥匙 添加后可在此“清除并归档”")
-                        .vkFont(.footnote)
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.textSub)
                 } else {
                     ForEach(members) { m in
@@ -956,9 +956,9 @@ struct SecurityDestroyView: View {
                                 .foregroundStyle(memberColor(m))
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(m.name)
-                                    .vkFont(.subheadline)
+                                    .xFont(.subheadline)
                                 Text("名下凭证入归档, 记录保留并标“已离开”")
-                                    .vkFont(.footnote)
+                                    .xFont(.footnote)
                                     .foregroundStyle(XPalette.textSub)
                             }
                             Spacer()
@@ -973,7 +973,7 @@ struct SecurityDestroyView: View {
                                     self.center.bump()
                                 }
                             }
-                            .vkFont(.footnote, weight: .medium)
+                            .xFont(.footnote, weight: .medium)
                             .foregroundStyle(XPalette.danger)
                             .frame(minHeight: XHit.min)
                         }
@@ -991,7 +991,7 @@ struct SecurityDestroyView: View {
                                 ? "已启用: 圆盘开锁、销毁与清空、审计导出与到期清理一律拦下"
                                 : "关闭 (异常时手动打开)",
                        icon: "power") {
-                    VariantToggle("", isOn: Binding(
+                    XToggle("", isOn: Binding(
                         get: { SecurityPolicy.readOnly },
                         set: { DB.store.set(SecKey.safeModeOn, $0); SecTick.bump() }))
                         .labelsHidden()
@@ -1001,7 +1001,7 @@ struct SecurityDestroyView: View {
                          + "到期清理、离职清除)、审计导出与含明文导出。"
                          + "还没接上的: 添加与改造凭证、网关配网、固件升级 —— 那几处的执行点在服务层与配网/升级那几个页面, "
                          + "闸装到之前, 开着这枚开关不等于全 App 只读。")
-                        .vkFont(.footnote)
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.warn)
                 }
             } header: {
@@ -1013,7 +1013,7 @@ struct SecurityDestroyView: View {
                 SecRow(title: "口令复用检测",
                        subtitle: DB.store.getBool(SecKey.pwdReuseOn, true) ? "加密码时与存量比对提示" : "关闭",
                        icon: "arrow.triangle.2.circlepath") {
-                    VariantToggle("", isOn: Binding(
+                    XToggle("", isOn: Binding(
                         get: { DB.store.getBool(SecKey.pwdReuseOn, true) },
                         set: { DB.store.set(SecKey.pwdReuseOn, $0); SecTick.bump() }))
                         .labelsHidden()
@@ -1028,7 +1028,7 @@ struct SecurityDestroyView: View {
                 SecRow(title: "保存密码二次输入",   // 521 保存密码二次输入
                        subtitle: DB.store.getBool("kf_scred_2nd", true) ? "密码保存前需重输一遍码值核对" : "关闭",
                        icon: "lock.rotationgauge") {
-                    VariantToggle("", isOn: Binding(
+                    XToggle("", isOn: Binding(
                         get: { DB.store.getBool("kf_scred_2nd", true) },
                         set: { DB.store.set("kf_scred_2nd", $0); SecTick.bump() }))
                         .labelsHidden()
@@ -1037,8 +1037,8 @@ struct SecurityDestroyView: View {
                 Text("密码保存")   // 521 密码保存
             }
         }
-        .variantList()
-        .dsScreenBackground()
+        .xList()
+        .xScreen()
         .navigationTitle("销毁与应急")
         .onReceive(Timer.publish(every: 2, on: .main, in: .common).autoconnect()) { _ in
             self.center.bump()
@@ -1065,13 +1065,13 @@ struct SecurityDestroyView: View {
                     .font(.system(size: XIcon.sm, weight: .semibold))
                     .foregroundStyle(XPalette.warn)
                 Text("示例: 口令 1234 已出现在 " + hit.joined(separator: "、"))
-                    .vkFont(.footnote)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.warn)
                     .lineLimit(2)
             }
         } else {
             Text("新增口令与本机锁内存量口令 / 应用锁密码比对, 命中即提示“建议分开设置” (加密码处接线, 读现有 listPwds)。")
-                .vkFont(.footnote)
+                .xFont(.footnote)
                 .foregroundStyle(XPalette.textSub)
         }
     }
@@ -1087,7 +1087,7 @@ struct SecurityDestroyView: View {
                 .fill(XPalette.danger.opacity(holdProgress >= 1 ? 0.85 : 0.35))
                 .frame(width: holdProgress * 200, height: XHit.min)
             Text(holdProgress >= 1 ? "松开即清空" : "按住")
-                .vkFont(.footnote, weight: .medium)
+                .xFont(.footnote, weight: .medium)
                 // 满格时底是 danger.opacity(0.85) 压在 surfaceAlt 上的合成色: 深色档纯白压上去只有
                 // 3.51:1 (合成算法与比值都在 tools/contrast.js), 所以走随明暗换向的 onSem。
                 .foregroundStyle(holdProgress >= 1 ? XPalette.onAccent : XPalette.danger)
@@ -1291,9 +1291,9 @@ struct PrivacyDashboard: View {
                         .foregroundStyle(XPalette.accentText)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("当前启用 \(SecurityPeekView.activeCount()) 项防窥")
-                            .vkFont(.subheadline, weight: .semibold)
+                            .xFont(.subheadline, weight: .semibold)
                         Text("遮蔽 / 背景 / 限时 / 挡片 / 分享 / 访客 / 水印 全状态一目了然")
-                            .vkFont(.footnote)
+                            .xFont(.footnote)
                             .foregroundStyle(XPalette.textSub)
                     }
                 }
@@ -1306,10 +1306,10 @@ struct PrivacyDashboard: View {
                             .font(.system(size: XIcon.sm, weight: .semibold))
                             .foregroundStyle(item.on ? XPalette.ok : XPalette.textSub)
                         Text(item.name)
-                            .vkFont(.subheadline)
+                            .xFont(.subheadline)
                         Spacer()
                         Text(item.on ? "已启用" : "未启用")
-                            .vkFont(.footnote)
+                            .xFont(.footnote)
                             .foregroundStyle(XPalette.textSub)
                     }
                     .frame(minHeight: XHit.min)
@@ -1328,8 +1328,8 @@ struct PrivacyDashboard: View {
                 }
             }
         }
-        .variantList()
-        .dsScreenBackground()
+        .xList()
+        .xScreen()
         .navigationTitle("隐私仪表盘")
     }
 
@@ -1355,11 +1355,11 @@ struct SecRow<Trailing: View>: View {
     private let title: String
     private let subtitle: String
     private let icon: String
-    private let iconTone: ToneColor
+    private let iconTone: XToneColor
     private let trailing: Trailing
 
     init(title: String, subtitle: String = "", icon: String = "circle.fill",
-         iconTone: ToneColor = .neutral, @ViewBuilder trailing: () -> Trailing) {
+         iconTone: XToneColor = .neutral, @ViewBuilder trailing: () -> Trailing) {
         self.title = title
         self.subtitle = subtitle
         self.icon = icon
@@ -1375,10 +1375,10 @@ struct SecRow<Trailing: View>: View {
                 .frame(width: XIcon.md, height: XIcon.md)
             VStack(alignment: .leading, spacing: XSpace.xxs) {
                 Text(title)
-                    .vkFont(.subheadline, weight: .medium)
+                    .xFont(.subheadline, weight: .medium)
                 if !subtitle.isEmpty {
                     Text(subtitle)
-                        .vkFont(.footnote)
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.textSub)
                 }
             }

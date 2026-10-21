@@ -59,7 +59,7 @@ struct FeedPage: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
-                    VariantToggle("只看告警", isOn: $filterAlarm)
+                    XToggle("只看告警", isOn: $filterAlarm)
                 } label: {
                     Image(systemName: "line.3.horizontal.decrease.circle")
                 }
@@ -83,11 +83,11 @@ struct FeedPage: View {
         return HStack(spacing: XSpace.m) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("\(displayRows.count) 条动态")
-                    .vkFont(.headline)
+                    .xFont(.headline)
                     .foregroundStyle(XPalette.text)
                 if alarmCount > 0 {
                     Text("\(alarmCount) 条告警")
-                        .vkFont(.caption)
+                        .xFont(.caption)
                         .foregroundStyle(XPalette.warn)
                 }
             }
@@ -118,18 +118,18 @@ struct FeedPage: View {
                                 .accessibilityHidden(true)
                         }
                         Text(r.text)
-                            .vkFont(.body, weight: r.warn ? .medium : .regular)
+                            .xFont(.body, weight: r.warn ? .medium : .regular)
                             .foregroundStyle(XPalette.text)
                             .lineLimit(2)
                     }
                     HStack(spacing: XSpace.xs) {
                         Text(r.time)
-                            .vkFont(.caption.monospacedDigit())
+                            .xFont(.caption.monospacedDigit())
                             .foregroundStyle(XPalette.textSub)
                         Text("·")
                             .foregroundStyle(XPalette.textTertiary)
                         Text(r.lockName)
-                            .vkFont(.caption)
+                            .xFont(.caption)
                             .foregroundStyle(XPalette.textSub)
                             .lineLimit(1)
                     }
@@ -165,10 +165,10 @@ struct FeedPage: View {
                 .foregroundStyle(XPalette.textTertiary)
                 .accessibilityHidden(true)
             Text("还没有动态")
-                .vkFont(.title3, weight: .semibold)
+                .xFont(.title3, weight: .semibold)
                 .foregroundStyle(XPalette.text)
             Text("连接门锁读取记录后, 这里会汇总全部门锁的开门与告警事件。")
-                .vkFont(.subheadline)
+                .xFont(.subheadline)
                 .foregroundStyle(XPalette.textSub)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)

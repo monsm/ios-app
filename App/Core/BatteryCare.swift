@@ -72,7 +72,7 @@ enum BatteryCare {
     // 这一档表就是"档位映射说明"的数据源，界面上展示原值 + 映射，**不标毫伏**，不虚构精度。
     struct Tier {
         let icon: String
-        let tone: ToneColor
+        let tone: XToneColor
         let label: String
         let severe: Bool   // 120 低电视觉降级档 (≤20%): 关流光、压亮度、动效令牌降 calm
     }

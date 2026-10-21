@@ -18,6 +18,14 @@ import UIKit
 // ═══════════════════════════════════════════════════════════
 
 /// 语义色调 —— 让组件不直接依赖具体颜色, 便于统一降级
+/// 容器档位 —— X 系统自带, 不依赖旧 VK 语法层
+enum XContainerKind {
+    case group      // 一组相关读数/设置
+    case tile       // 可点的一次性入口
+    case inset      // 嵌在别的东西里面的小格
+    case hero       // 首屏主角那一块
+}
+
 enum XToneColor {
     case neutral, accent, ok, warn, danger
 
@@ -51,7 +59,7 @@ enum XToneColor {
 /// 与旧 Card 的区别: 不用阴影, 用**描边 + 底色差**表达层次。
 /// 阴影在深色模式会糊成一团, 描边在任何模式下都清晰。
 struct XPanel<Content: View>: View {
-    var kind: ContainerKind = .group
+    var kind: XContainerKind = .group
     var tone: XToneColor = .neutral
     /// 0 = 用 VK 语法层的默认内边距; >0 = 显式覆盖 (用于自带内边距的列表)
     var padding: CGFloat? = nil
@@ -66,7 +74,14 @@ struct XPanel<Content: View>: View {
                     .background(XPalette.surface,
                                 in: RoundedRectangle(cornerRadius: XRadius.card, style: .continuous))
             } else {
-                VK.current.container(kind) { content() }
+                // X 系统自带容器: 按档位给内边距, 统一 XRadius.card 圆角与 surface 底
+                let pad: CGFloat = kind == .inset ? XSpace.s
+                    : (kind == .hero ? XSpace.l : XSpace.card)
+                content()
+                    .padding(pad)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(XPalette.surface,
+                                in: RoundedRectangle(cornerRadius: XRadius.card, style: .continuous))
             }
         }
         .overlay(
@@ -114,11 +129,11 @@ struct XStatusPill: View {
         HStack(spacing: XSpace.xs) {
             if let systemImage {
                 Image(systemName: systemImage)
-                    .vkFont(.system(size: XIcon.xs, weight: .semibold))
+                    .xFont(.system(size: XIcon.xs, weight: .semibold))
                     .accessibilityHidden(true)
             }
             Text(text)
-                .vkFont(.caption, weight: .medium)
+                .xFont(.caption, weight: .medium)
         }
         .foregroundStyle(tone.color)
         .padding(.horizontal, XSpace.s)
@@ -141,18 +156,18 @@ struct XMetricTile: View {
         VStack(alignment: .leading, spacing: XSpace.xs) {
             if let systemImage {
                 Image(systemName: systemImage)
-                    .vkFont(.system(size: XIcon.sm, weight: .medium))
+                    .xFont(.system(size: XIcon.sm, weight: .medium))
                     .foregroundStyle(tone.color)
                     .accessibilityHidden(true)
             }
             Text(value)
-                .vkFont(.title2, weight: .semibold)
+                .xFont(.title2, weight: .semibold)
                 .monospacedDigit()
                 .foregroundStyle(XPalette.text)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
             Text(label)
-                .vkFont(.caption)
+                .xFont(.caption)
                 .foregroundStyle(XPalette.textSub)
                 .lineLimit(2)
         }
@@ -179,16 +194,16 @@ struct XEmptyState: View {
     var body: some View {
         VStack(spacing: XSpace.l) {
             Image(systemName: systemImage)
-                .vkFont(.system(size: XIcon.xl, weight: .light))
+                .xFont(.system(size: XIcon.xl, weight: .light))
                 .foregroundStyle(XPalette.textTertiary)
                 .accessibilityHidden(true)
 
             VStack(spacing: XSpace.s) {
                 Text(title)
-                    .vkFont(.headline)
+                    .xFont(.headline)
                     .foregroundStyle(XPalette.text)
                 Text(message)
-                    .vkFont(.subheadline)
+                    .xFont(.subheadline)
                     .foregroundStyle(XPalette.textSub)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
@@ -214,16 +229,16 @@ struct XErrorState: View {
     var body: some View {
         VStack(spacing: XSpace.l) {
             Image(systemName: "exclamationmark.triangle")
-                .vkFont(.system(size: XIcon.xl, weight: .light))
+                .xFont(.system(size: XIcon.xl, weight: .light))
                 .foregroundStyle(XPalette.danger)
                 .accessibilityHidden(true)
 
             VStack(spacing: XSpace.s) {
                 Text(title)
-                    .vkFont(.headline)
+                    .xFont(.headline)
                     .foregroundStyle(XPalette.text)
                 Text(message)
-                    .vkFont(.subheadline)
+                    .xFont(.subheadline)
                     .foregroundStyle(XPalette.textSub)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
@@ -248,7 +263,7 @@ struct XLoadingState: View {
             ProgressView()
                 .controlSize(.large)
             Text(message)
-                .vkFont(.subheadline)
+                .xFont(.subheadline)
                 .foregroundStyle(XPalette.textSub)
         }
         .padding(XSpace.xxl)
@@ -268,7 +283,7 @@ struct XPrimaryButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .vkFont(.body, weight: .semibold)
+            .xFont(.body, weight: .semibold)
             .foregroundStyle(XPalette.onAccent)
             .frame(maxWidth: fullWidth ? .infinity : nil)
             .frame(minHeight: XHit.min)
@@ -289,7 +304,7 @@ struct XSecondaryButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .vkFont(.body, weight: .medium)
+            .xFont(.body, weight: .medium)
             .foregroundStyle(XPalette.accentText)
             .frame(maxWidth: fullWidth ? .infinity : nil)
             .frame(minHeight: XHit.min)
@@ -312,7 +327,7 @@ struct XDestructiveButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .vkFont(.body, weight: .semibold)
+            .xFont(.body, weight: .semibold)
             .foregroundStyle(XPalette.danger)
             .frame(maxWidth: fullWidth ? .infinity : nil)
             .frame(minHeight: XHit.min)
@@ -386,7 +401,7 @@ struct XRow: View {
         let content = HStack(spacing: XSpace.m) {
             if let systemImage {
                 Image(systemName: systemImage)
-                    .vkFont(.system(size: XIcon.sm, weight: .medium))
+                    .xFont(.system(size: XIcon.sm, weight: .medium))
                     .foregroundStyle(tone == .neutral ? XPalette.textSub : tone.color)
                     .frame(width: XIcon.lg, alignment: .center)
                     .accessibilityHidden(true)
@@ -394,12 +409,12 @@ struct XRow: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .vkFont(.body)
+                    .xFont(.body)
                     .foregroundStyle(XPalette.text)
                     .lineLimit(1)
                 if let subtitle {
                     Text(subtitle)
-                        .vkFont(.caption)
+                        .xFont(.caption)
                         .foregroundStyle(XPalette.textSub)
                         .lineLimit(1)
                 }
@@ -409,7 +424,7 @@ struct XRow: View {
 
             if let value {
                 Text(value)
-                    .vkFont(.subheadline)
+                    .xFont(.subheadline)
                     .foregroundStyle(XPalette.textSub)
                     .monospacedDigit()
                     .lineLimit(1)
@@ -417,7 +432,7 @@ struct XRow: View {
 
             if showsChevron {
                 Image(systemName: "chevron.right")
-                    .vkFont(.system(size: XIcon.xs, weight: .semibold))
+                    .xFont(.system(size: XIcon.xs, weight: .semibold))
                     .foregroundStyle(XPalette.textTertiary)
                     .accessibilityHidden(true)
             }
@@ -485,12 +500,12 @@ struct XGuidedEmptyView: View {
                     ForEach(Array(steps.enumerated()), id: \.offset) { i, s in
                         HStack(alignment: .top, spacing: XSpace.s) {
                             Text("\(i + 1)")
-                                .vkFont(.caption, weight: .semibold)
+                                .xFont(.caption, weight: .semibold)
                                 .foregroundStyle(XPalette.accent)
                                 .frame(width: 20, height: 20)
                                 .background(XPalette.accent.opacity(0.12), in: Circle())
                             Text(s)
-                                .vkFont(.subheadline)
+                                .xFont(.subheadline)
                                 .foregroundStyle(XPalette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -558,5 +573,180 @@ struct XFlowLayout: Layout {
             x += s.width + spacing
             rowH = max(rowH, s.height)
         }
+    }
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// MARK: - 文本与开关语法 (X 系统自带, 2026-10-21 从 VariantGrammar 迁出)
+// ═══════════════════════════════════════════════════════════
+
+extension View {
+    /// 行内排版的**唯一入口**。
+    ///
+    /// 与旧 `vkFont` 逐字等价: `.font(base)` + 可选 `.fontWeight`。
+    /// 字形尺寸仍走系统 Dynamic Type (因为 base 是 `.body`/`.caption` 这类语义字号),
+    /// AX 档位放大由系统负责。
+    ///
+    /// ⚠ 图标尺寸不在此列: `Image(systemName:).font(.system(size:))` 是刻意写死的。
+    func xFont(_ base: Font, weight: Font.Weight? = nil) -> some View {
+        self.font(base).fontWeight(weight)
+    }
+
+    /// 列表底色透明 —— 让 XPalette.canvas 从下面透上来。
+    /// 与旧 `variantList()` 逐字等价 (旧实现只有 `scrollContentBackground(.hidden)`)。
+    func xList() -> some View {
+        self.scrollContentBackground(.hidden)
+    }
+
+    /// 页面底色。与旧 `dsScreenBackground()` 的区别: 新系统用纯色画布,
+    /// 不用网格渐变 —— 彩色网格会与铜色 accent 打架。
+    func xScreen() -> some View {
+        self.background(XPalette.canvas.ignoresSafeArea())
+    }
+
+    /// 底衬。与旧 `variantPlate(style, shape)` 等价, 形状走 XRadius。
+    func xPlate(_ style: Color, _ radius: CGFloat = XRadius.control) -> some View {
+        self.background(style, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// MARK: - XToggle (替代 VariantToggle)
+// ═══════════════════════════════════════════════════════════
+
+/// 开关的唯一入口 —— 与旧 `VariantToggle` 等价 (系统 .switch 样式 + 主色 tint)。
+/// 三个重载逐一对照 Toggle 自己的声明: 字面量 / String 表达式 / 自定标签。
+func XToggle(_ titleKey: LocalizedStringKey, isOn: Binding<Bool>) -> some View {
+    Toggle(titleKey, isOn: isOn).toggleStyle(.switch).tint(XPalette.accent)
+}
+
+func XToggle<S: StringProtocol>(_ title: S, isOn: Binding<Bool>) -> some View {
+    Toggle(title, isOn: isOn).toggleStyle(.switch).tint(XPalette.accent)
+}
+
+func XToggle(isOn: Binding<Bool>, @ViewBuilder label: () -> some View) -> some View {
+    Toggle(isOn: isOn, label: label).toggleStyle(.switch).tint(XPalette.accent)
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// MARK: - 形状档与底衬 (2026-10-21 从 VariantGrammar 迁出)
+// ═══════════════════════════════════════════════════════════
+
+/// 底衬形状档 —— X 系统自带
+enum XPlateShape {
+    case capsule        // 信息胶囊
+    case tile           // 瓦片
+    case control        // 控件 / 内嵌格
+    case iconBadge      // 图标角标
+
+    var shape: AnyShape {
+        switch self {
+        case .capsule:   return AnyShape(Capsule())
+        case .tile:      return AnyShape(RoundedRectangle(cornerRadius: XRadius.tile, style: .continuous))
+        case .control:   return AnyShape(RoundedRectangle(cornerRadius: XRadius.control, style: .continuous))
+        case .iconBadge: return AnyShape(RoundedRectangle(cornerRadius: XSpace.s, style: .continuous))
+        }
+    }
+
+    /// 描边 (strokeBorder 只长在 InsettableShape 上, AnyShape 擦掉了那个能力, 所以单列一份)
+    func edge(_ color: Color, _ lineWidth: CGFloat) -> AnyView {
+        switch self {
+        case .capsule:   return AnyView(Capsule().strokeBorder(color, lineWidth: lineWidth))
+        case .tile:      return AnyView(RoundedRectangle(cornerRadius: XRadius.tile, style: .continuous).strokeBorder(color, lineWidth: lineWidth))
+        case .control:   return AnyView(RoundedRectangle(cornerRadius: XRadius.control, style: .continuous).strokeBorder(color, lineWidth: lineWidth))
+        case .iconBadge: return AnyView(RoundedRectangle(cornerRadius: XSpace.s, style: .continuous).strokeBorder(color, lineWidth: lineWidth))
+        }
+    }
+}
+
+extension View {
+    /// 底衬 (替代 variantPlate)
+    func xPlate(_ style: Color, _ shape: XPlateShape, edge: Color? = nil) -> some View {
+        let base = self.background(style, in: shape.shape)
+        return Group {
+            if let edge { base.overlay { shape.edge(edge, 0.5) } }
+            else { base }
+        }
+    }
+
+    /// 语义色底的提示块 (替代 variantCallout)
+    func xCallout(_ tone: Color, _ shape: XPlateShape, wash: Double) -> some View {
+        self.background(tone.opacity(wash), in: shape.shape)
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// MARK: - 按钮外观 (2026-10-21 从 VK 迁出)
+// ═══════════════════════════════════════════════════════════
+
+enum XActionChrome {
+    @ViewBuilder
+    static func primary<Label: View>(fullWidth: Bool, pressed: Bool,
+                                     @ViewBuilder _ label: () -> Label) -> some View {
+        label()
+            .xFont(.headline)
+            .foregroundStyle(XPalette.onAccent)
+            .padding(.vertical, XSpace.m + 2)
+            .padding(.horizontal, XSpace.l)
+            .frame(maxWidth: fullWidth ? .infinity : nil)
+            .frame(minHeight: XHit.min + 6)
+            .background(XGradient.button,
+                        in: RoundedRectangle(cornerRadius: XRadius.control, style: .continuous))
+            .shadow(color: XPalette.accent.opacity(0.26), radius: 12, y: 5)
+            .opacity(pressed ? 0.9 : 1)
+            .scaleEffect(pressed ? 0.98 : 1)
+            .animation(XMotion.quick, value: pressed)
+    }
+
+    @ViewBuilder
+    static func secondary<Label: View>(fullWidth: Bool, pressed: Bool, tint: Color,
+                                       @ViewBuilder _ label: () -> Label) -> some View {
+        label()
+            .xFont(.subheadline, weight: .semibold)
+            .foregroundStyle(XPalette.accentText)
+            .padding(.vertical, XSpace.s + 2)
+            .padding(.horizontal, XSpace.l)
+            .frame(maxWidth: fullWidth ? .infinity : nil)
+            .frame(minHeight: XHit.min)
+            .background(tint.opacity(pressed ? 0.16 : 0.09),
+                        in: RoundedRectangle(cornerRadius: XRadius.control, style: .continuous))
+            .scaleEffect(pressed ? 0.985 : 1)
+            .animation(XMotion.quick, value: pressed)
+    }
+
+    @ViewBuilder
+    static func destructive<Label: View>(pressed: Bool,
+                                         @ViewBuilder _ label: () -> Label) -> some View {
+        label()
+            .xFont(.subheadline, weight: .semibold)
+            .foregroundStyle(XPalette.danger)
+            .padding(.vertical, XSpace.s + 2)
+            .padding(.horizontal, XSpace.l)
+            .frame(maxWidth: .infinity)
+            .frame(minHeight: XHit.min)
+            .background(XPalette.danger.opacity(pressed ? 0.16 : 0.09),
+                        in: RoundedRectangle(cornerRadius: XRadius.control, style: .continuous))
+            .animation(XMotion.quick, value: pressed)
+    }
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// MARK: - 目的地标记 (2026-10-21 从 VariantGrammar 迁出)
+// ═══════════════════════════════════════════════════════════
+
+/// 挂上目的地标记 —— **纯台账用, 零视觉作用**。
+/// tools/destmap.js 扫 `.destined(.` 来建 Destination 枚举与缝覆盖率台账,
+/// tools/uicoverage.js 拿它做漂移检查。所以这个 marker 必须留着, 但它不该做任何事。
+struct XDestinedModifier: ViewModifier {
+    let destination: Destination
+    func body(content: Content) -> some View { content }
+}
+
+extension View {
+    func destined(_ d: Destination) -> some View {
+        modifier(XDestinedModifier(destination: d))
     }
 }

@@ -100,7 +100,7 @@ struct LocksPage: View {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: XSpace.xs) {
                     Text(LockArchive.displayName(kc))
-                        .vkFont(.body)
+                        .xFont(.body)
                         .foregroundStyle(XPalette.text)
                         .lineLimit(1)
                     if isCurrent {
@@ -108,7 +108,7 @@ struct LocksPage: View {
                     }
                 }
                 Text(subtitle(kc, snap))
-                    .vkFont(.caption)
+                    .xFont(.caption)
                     .foregroundStyle(XPalette.textSub)
                     .lineLimit(1)
             }

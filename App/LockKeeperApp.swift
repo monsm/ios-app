@@ -655,7 +655,7 @@ final class AppState: ObservableObject {
         //   `kf_ax_dwell`（除滑杆与演示文字外**没有任何行为消费者**）、
         //   `kf_font_scale`（档位变 = 全树布局尺寸变，UIKit-backed 的 List 行不换身份能否重取档位，本机无证据）、
         //   `kf_form_bottom`（`defaultScrollAnchor` 的语义是"首次布局时的锚点"，偏好变了而不换布局身份能否把已存在的 List 重新锚底，未知）、
-        //   `kf_lefty`（`HeroCard` 不观察 app，且值不从父层传入、没有传参链可追，只能指望级联 —— 无证据可证死也无证据可证活）。
+        //   `kf_lefty`（`XHeroCard` 不观察 app，且值不从父层传入、没有传参链可追，只能指望级联 —— 无证据可证死也无证据可证活）。
         // 这一条要真收口，得等一次真机：把四枚逐一试"拨完不退出页面，值是否即时生效"。
         "kf_ax_bigotp", "kf_ax_bigpreview", "kf_ax_captions", "kf_ax_doublehaptic",
         "kf_ax_gray", "kf_ax_hold", "kf_bigtile", "kf_dial_size",
@@ -1121,7 +1121,7 @@ struct RootView: View {
                     .font(.system(size: XIcon.xs))
                     .accessibilityHidden(true)
                 Text("还有 \(n) 条提醒")
-                    .vkFont(.caption2)
+                    .xFont(.caption2)
                 Image(systemName: "chevron.right")
                     .font(.system(size: XIcon.xs))
                     .accessibilityHidden(true)
@@ -1129,7 +1129,7 @@ struct RootView: View {
             .foregroundStyle(XPalette.textSub)
             .padding(.horizontal, XSpace.s)
             .padding(.vertical, XSpace.xs)
-            .variantPlate(XPalette.surfaceAlt, .capsule)
+            .xPlate(XPalette.surfaceAlt, .capsule)
             .frame(maxWidth: .infinity, alignment: .trailing)
             .frame(minHeight: XHit.min)
         }
@@ -1142,7 +1142,7 @@ struct RootView: View {
             Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: XIcon.sm, weight: .semibold))
                 .accessibilityHidden(true)
-            Text(w).vkFont(.caption).fixedSize(horizontal: false, vertical: true)
+            Text(w).xFont(.caption).fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
             Button("去诊断") {
                 // 2026-10-15 走查 §4.3: 与 NoticeBudget 那条同病 —— 按钮说"去诊断", 原来只把人放到
@@ -1150,7 +1150,7 @@ struct RootView: View {
                 app.pendingSettingsFocus = "diag"
                 app.requestRoute(.settings)
             }   // 377: 访客通道开着时先复核, 不白切
-                .vkFont(.caption, weight: .medium)
+                .xFont(.caption, weight: .medium)
         }
         .foregroundStyle(XPalette.warn)
         .padding(.horizontal, XSpace.l)
@@ -1173,7 +1173,7 @@ struct RootView: View {
                     Text("刚复制的「\(s.label)」到点已自动清除")
                 }
             }
-            .vkFont(.caption)
+            .xFont(.caption)
             .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: XSpace.xs)
             if case .waiting = s.stage {
@@ -1198,7 +1198,7 @@ struct RootView: View {
                 withAnimation(XMotion.standard) { app.pasteSuggestion = nil }
             }
         }
-        .vkFont(.caption, weight: .medium)
+        .xFont(.caption, weight: .medium)
         .foregroundStyle(XPalette.accentText)
         .padding(.horizontal, XSpace.l)
         .padding(.vertical, XSpace.s)
@@ -1216,7 +1216,7 @@ struct RootView: View {
                 .foregroundStyle(XPalette.ok)
                 .accessibilityHidden(true)
             Text(r)
-                .vkFont(.caption, weight: .medium)
+                .xFont(.caption, weight: .medium)
                 .foregroundStyle(XPalette.text)
         }
         .padding(.horizontal, XSpace.l)
@@ -1298,7 +1298,7 @@ struct ToastView: View {
     var text: String
     var body: some View {
         Text(text)
-            .vkFont(.footnote, weight: .medium)
+            .xFont(.footnote, weight: .medium)
             .foregroundStyle(XPalette.text)
             .lineLimit(3)
             .multilineTextAlignment(.center)
@@ -1329,9 +1329,9 @@ struct GuestReauthGate: View {
                 .foregroundStyle(XPalette.accentText)
                 .accessibilityHidden(true)
             Text("凭证与设置已收起")
-                .vkFont(.headline)
+                .xFont(.headline)
             Text(note)
-                .vkFont(.footnote)
+                .xFont(.footnote)
                 .foregroundStyle(XPalette.textSub)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
@@ -1414,13 +1414,13 @@ extension Color {
 }
 
 struct Card<Content: View>: View {
-    var tint: ToneColor?
+    var tint: XToneColor?
     var content: Content
-    init(tint: ToneColor? = nil, @ViewBuilder content: () -> Content) {
+    init(tint: XToneColor? = nil, @ViewBuilder content: () -> Content) {
         self.tint = tint
         self.content = content()
     }
-    /// 语义色叠底 (低电/告警的 ToneColor)。实底时代是 0.08；改玻璃后提到 0.14 ——
+    /// 语义色叠底 (低电/告警的 XToneColor)。实底时代是 0.08；改玻璃后提到 0.14 ——
     /// 染色要同时压住自身与身后折射的底色，沿用 0.08 会让"这张卡是告警色"这件事失色。
     private var tintWash: Color {
         tint.map { $0.color.opacity(0.14) } ?? .clear

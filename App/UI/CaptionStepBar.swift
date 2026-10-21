@@ -20,7 +20,7 @@ struct CaptionStepBar: View {
                 captionStep(i)
             }
         }
-        .vkFont(.caption)
+        .xFont(.caption)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(captionText)
     }

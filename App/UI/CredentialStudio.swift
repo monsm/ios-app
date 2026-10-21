@@ -194,7 +194,7 @@ struct StepDots: View {
                     .frame(width: 7, height: 7)
             }
             Text("第 \(index + 1)/\(total) 步" + (labels.indices.contains(index) ? " · \(labels[index])" : ""))
-                .vkFont(.caption)
+                .xFont(.caption)
                 .foregroundStyle(XPalette.textSub)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
@@ -261,7 +261,7 @@ struct MaskedDigits: View {
                     XHaptics.tick.impactOccurred()
                 } label: {
                     Text(shown)
-                        .vkFont(digitFont)
+                        .xFont(digitFont)
                         .foregroundStyle(on ? XPalette.text : XPalette.textSub)
                         .frame(width: big ? 36 : 30)
                         .frame(minHeight: XHit.min)
@@ -321,26 +321,26 @@ struct PwdDiffView: View {
                 let ch = changed.contains(i + 1)
                 HStack(spacing: XSpace.s) {
                     Text(a)
-                        .vkFont(.title3.monospacedDigit(), weight: .semibold)
+                        .xFont(.title3.monospacedDigit(), weight: .semibold)
                         .foregroundStyle(XPalette.textSub)
                         .frame(width: 28)
                     Image(systemName: "arrow.right")
                         .font(.system(size: XIcon.xs, weight: .semibold))
                         .foregroundStyle(ch ? XPalette.accentText : XPalette.hairline)
                     Text(b)
-                        .vkFont(.title3.monospacedDigit(), weight: .semibold)
+                        .xFont(.title3.monospacedDigit(), weight: .semibold)
                         .foregroundStyle(ch ? XPalette.accentText : XPalette.text)
                         .frame(width: 28)
                     if ch {
                         Text("第 \(i + 1) 位")
-                            .vkFont(.caption2)
+                            .xFont(.caption2)
                             .foregroundStyle(XPalette.accentText)
                     }
                 }
             }
             if changed.isEmpty {
                 Text("新旧值完全一致, 未做任何改动")
-                    .vkFont(.caption)
+                    .xFont(.caption)
                     .foregroundStyle(XPalette.textSub)
             }
         }
@@ -370,13 +370,13 @@ struct WindowBar: View {
             .animation(XMotion.exit, value: remaining(now))
             HStack(spacing: XSpace.xs) {
                 Text(label)
-                    .vkFont(.caption2)
+                    .xFont(.caption2)
                     .foregroundStyle(XPalette.textSub)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                 Spacer(minLength: 0)
                 Text("剩约 \(remaining(now)) 秒")
-                    .vkFont(.caption2)
+                    .xFont(.caption2)
                     .monospacedDigit()
                     .foregroundStyle(XPalette.textSub)
                     .lineLimit(1)
@@ -406,24 +406,24 @@ struct CodeBigCard: View {
     var body: some View {
         VStack(spacing: XSpace.s) {
             Text(title)
-                .vkFont(.subheadline, weight: .semibold)
+                .xFont(.subheadline, weight: .semibold)
                 .foregroundStyle(XPalette.textSub)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
             Text(revealed ? code : SecurityPolicy.halfMasked(code))
-                .vkFont(.system(.largeTitle, design: .rounded).monospacedDigit(), weight: .semibold)
+                .xFont(.system(.largeTitle, design: .rounded).monospacedDigit(), weight: .semibold)
                 .foregroundStyle(XPalette.text)
                 .textSelection(.enabled)
                 // 370: 口述卡这一路也接贴近复蔽 (卡片在屏期间才开监听)
                 .proximityRemask { revealed = false }
             Text(window)
-                .vkFont(.footnote)
+                .xFont(.footnote)
                 .foregroundStyle(XPalette.textSub)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
             if !note.isEmpty {
                 Text(note)
-                    .vkFont(.caption)
+                    .xFont(.caption)
                     .foregroundStyle(XPalette.textSub)
                     .lineLimit(2)
             }
@@ -436,7 +436,7 @@ struct CodeBigCard: View {
                           systemImage: revealed ? "eye.slash" : "eye")
                 }
                 .buttonStyle(.bordered)
-                .vkFont(.caption)
+                .xFont(.caption)
                 .frame(minHeight: XHit.min)
                 .accessibilityLabel(revealed ? "重新遮挡码值" : "完整显示码值")
                 Button {
@@ -446,20 +446,20 @@ struct CodeBigCard: View {
                     Label("复制", systemImage: "doc.on.doc")
                 }
                 .buttonStyle(.bordered)
-                .vkFont(.caption)
+                .xFont(.caption)
                 .frame(minHeight: XHit.min)
                 .accessibilityLabel("复制码值")
                 ShareLink(item: shareText) {
                     Label("分享口述卡", systemImage: "square.and.arrow.up")
                 }
                 .buttonStyle(.bordered)
-                .vkFont(.caption)
+                .xFont(.caption)
                 .frame(minHeight: XHit.min)
                 .accessibilityLabel("分享口述卡")
             }
             let foot = extraFoot.isEmpty ? "大字号方便对准锁键盘输入; 本卡含密码, 拍照或分享后注意保管。" : extraFoot
             Text(foot)
-                .vkFont(.caption2)
+                .xFont(.caption2)
                 .foregroundStyle(XPalette.textSub)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
@@ -626,11 +626,11 @@ struct PwdStudio: View {
     private func draftBar(_ d: CredentialOrg.StudioDraft) -> some View {
         HStack(spacing: XSpace.s) {
             Label("上次填到第 \(d.step + 1) 步, 继续?", systemImage: "arrow.triangle.branch")
-                .vkFont(.caption)
+                .xFont(.caption)
                 .foregroundStyle(XPalette.warn)
             Spacer(minLength: 0)
             Button("继续") { restoreDraft(d); showDraftBar = false }
-                .vkFont(.caption, weight: .medium)
+                .xFont(.caption, weight: .medium)
                 .foregroundStyle(XPalette.accentText)
                 .frame(minHeight: XHit.min)
                 .contentShape(Rectangle())
@@ -639,7 +639,7 @@ struct PwdStudio: View {
                 showDraftBar = false
             } label: {
                 Text("丢弃")
-                    .vkFont(.caption)
+                    .xFont(.caption)
                     .foregroundStyle(XPalette.textSub)
                     .frame(minHeight: XHit.min)
                     .contentShape(Rectangle())
@@ -647,7 +647,7 @@ struct PwdStudio: View {
         }
         .padding(.horizontal, XSpace.s)
         .padding(.vertical, XSpace.xs)
-        .variantCallout(XPalette.warn, .control, wash: 0.10)
+        .xCallout(XPalette.warn, .control, wash: 0.10)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("草稿续填: 上次填到第 \(d.step + 1) 步, 点继续可回填")   // 518 草稿续填
     }
@@ -671,7 +671,7 @@ struct PwdStudio: View {
             act()
         } label: {
             Text(t)
-                .vkFont(.footnote, weight: .medium)
+                .xFont(.footnote, weight: .medium)
                 .foregroundStyle(on ? XPalette.onAccent : XPalette.textSub)
                 .padding(.horizontal, XSpace.s + 2)
                 .padding(.vertical, XSpace.s)
@@ -685,7 +685,7 @@ struct PwdStudio: View {
     private var ownerCard: some View {
         VStack(alignment: .leading, spacing: XSpace.xs) {
             Text("归属成员")
-                .vkFont(.footnote, weight: .semibold)
+                .xFont(.footnote, weight: .semibold)
                 .foregroundStyle(errorField == "owner" ? XPalette.danger : XPalette.text)
             ForEach(DB.members()) { m in
                 Button {
@@ -695,7 +695,7 @@ struct PwdStudio: View {
                 } label: {
                     HStack(spacing: XSpace.s) {
                         Text(m.name)
-                            .vkFont(.subheadline)
+                            .xFont(.subheadline)
                             .foregroundStyle(XPalette.text)
                         Spacer(minLength: 0)
                         if owner == m.id {
@@ -712,7 +712,7 @@ struct PwdStudio: View {
             }
             if DB.members().isEmpty {
                 Text("还没有成员。可先选「未归属」, 稍后在成员中心补归属。")
-                    .vkFont(.caption)
+                    .xFont(.caption)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -729,11 +729,11 @@ struct PwdStudio: View {
         VStack(alignment: .leading, spacing: XSpace.xs) {
             HStack(spacing: XSpace.s) {
                 Text("码值")
-                    .vkFont(.footnote, weight: .semibold)
+                    .xFont(.footnote, weight: .semibold)
                     .foregroundStyle(errorField == "value" ? XPalette.danger : XPalette.text)
                 Spacer(minLength: 0)
                 Text("6~8 位数字")
-                    .vkFont(.caption2)
+                    .xFont(.caption2)
                     .foregroundStyle(XPalette.textSub)
             }
             if !pwd.isEmpty {
@@ -742,7 +742,7 @@ struct PwdStudio: View {
             }
             TextField("", text: $pwd, prompt: Text("输入 6~8 位数字"))   // 516 输入
                 .keyboardType(.numberPad)
-                .vkFont(.title3.monospacedDigit(), weight: .semibold)
+                .xFont(.title3.monospacedDigit(), weight: .semibold)
                 .frame(minHeight: XHit.min)
                 .autocorrectionDisabled()
                 .onChange(of: pwd) { _, _ in
@@ -752,21 +752,21 @@ struct PwdStudio: View {
             if clipSource {
                 HStack(spacing: XSpace.xs) {
                     Label("来自剪贴板 · 已识别为候选码", systemImage: "doc.on.clipboard")   // 301 来自剪贴板
-                        .vkFont(.caption)
+                        .xFont(.caption)
                         .foregroundStyle(XPalette.warn)
                     Spacer(minLength: 0)
                     Button("清除") {
                         pwd = ""
                         clipSource = false
                     }
-                    .vkFont(.caption, weight: .medium)
+                    .xFont(.caption, weight: .medium)
                     .foregroundStyle(XPalette.accentText)
                     .frame(minHeight: XHit.min)
                     .contentShape(Rectangle())
                 }
                 .padding(.horizontal, XSpace.s)
                 .padding(.vertical, 4)
-                .variantCallout(XPalette.warn, .control, wash: 0.10)
+                .xCallout(XPalette.warn, .control, wash: 0.10)
                 .accessibilityLabel("码值来自剪贴板, 点清除可移除")
             }
             HStack(spacing: XSpace.s) {
@@ -776,7 +776,7 @@ struct PwdStudio: View {
                         clipSource = false
                         XHaptics.tick.impactOccurred()
                     }
-                    .vkFont(.caption, weight: .medium)
+                    .xFont(.caption, weight: .medium)
                     .buttonStyle(.bordered)
                     .frame(minHeight: XHit.min)
                     .accessibilityLabel("本地生成 \(n) 位随机密码")   // 173 本地生成
@@ -794,7 +794,7 @@ struct PwdStudio: View {
                         }
                     }
                     Text(s.hint)
-                        .vkFont(.caption2)
+                        .xFont(.caption2)
                         .foregroundStyle(s.score <= 1 ? XPalette.warn : XPalette.textSub)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
@@ -811,14 +811,14 @@ struct PwdStudio: View {
                 Label("其它 \(others.count) 把锁上也有同值: " + others.prefix(3).joined(separator: "、")
                     + (others.count > 3 ? " 等" : ""),   // 304 界面文案
                       systemImage: "lock.rectangle.stack")
-                    .vkFont(.caption)
+                    .xFont(.caption)
                     .foregroundStyle(XPalette.warn)
                     .fixedSize(horizontal: false, vertical: true)
             }
             if !dups.isEmpty {
                 HStack(spacing: XSpace.xs) {
                     Label("本锁已有 \(dups.count) 条同值凭证", systemImage: "plus.slash.minus")   // 304 本锁已有
-                        .vkFont(.caption)
+                        .xFont(.caption)
                         .foregroundStyle(XPalette.warn)
                     Spacer(minLength: 0)
                     Button("查看") {
@@ -828,19 +828,19 @@ struct PwdStudio: View {
                         app.requestRoute(.credentials)   // 2026-10-15 走查: 与全仓跨 Tab 跳转统一走 requestRoute (访客门禁那一口)
                         if !embedded { dismiss() }
                     }
-                    .vkFont(.caption, weight: .medium)
+                    .xFont(.caption, weight: .medium)
                     .foregroundStyle(XPalette.accentText)
                     .frame(minHeight: XHit.min)
                     .contentShape(Rectangle())
                 }
                 .padding(.horizontal, XSpace.s)
                 .padding(.vertical, 4)
-                .variantCallout(XPalette.warn, .control, wash: 0.10)
+                .xCallout(XPalette.warn, .control, wash: 0.10)
                 .accessibilityElement(children: .combine)
             }
             if let c = pwdOK ? CredentialOrg.prefixConflict(mac, pwd, excluding: editAlias ?? -1).first : nil {
                 Text("与「\(CredentialOrg.displayPwd(c))」前 4 位相同, 口头易混淆。")   // 314 位相同
-                    .vkFont(.caption)
+                    .xFont(.caption)
                     .foregroundStyle(XPalette.warn)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -849,7 +849,7 @@ struct PwdStudio: View {
             } label: {
                 Label("扫一扫取号", systemImage: "qrcode.viewfinder")   // 522 扫一扫取号
             }
-            .vkFont(.caption, weight: .medium)
+            .xFont(.caption, weight: .medium)
             .foregroundStyle(XPalette.accentText)
             .frame(minHeight: XHit.min)
             .contentShape(Rectangle())
@@ -876,7 +876,7 @@ struct PwdStudio: View {
                 VStack(alignment: .leading, spacing: XSpace.xs) {
                     HStack(spacing: XSpace.xs) {
                         Text("有效期 (临时码)")
-                            .vkFont(.footnote, weight: .semibold)
+                            .xFont(.footnote, weight: .semibold)
                             .foregroundStyle(errorField == "period" ? XPalette.danger : XPalette.text)
                         // 828 字段旁问号 (Stripe Dashboard 那一形态): 展开的是**这表单真遵守的**四条口径,
                         // 不是通用科普。刻意不做 `.popover`：弹窗锚点在这台机型上看不见也点不着，
@@ -907,7 +907,7 @@ struct PwdStudio: View {
                             Text("生效与到期是写给门锁的两个时刻，门锁用它自己的钟比对 —— 锁钟不准，码会提前或延后失效。")
                             Text("改有效期要重新下发到锁才生效；只改本机台账不算。")
                         }
-                        .vkFont(.caption)
+                        .xFont(.caption)
                         .foregroundStyle(XPalette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.vertical, XSpace.xs)
@@ -933,7 +933,7 @@ struct PwdStudio: View {
                 VStack(alignment: .leading, spacing: XSpace.xs) {
                     Text("长期密码无到期点; 老旧巡检会在详情页提示「添加满 180 天」那一条 —— "   // 305 长期密码无到期点
                          + "台账只有添加时刻, 那句说的是这条加了多久, 不是这个值多久没换过。")
-                        .vkFont(.caption)
+                        .xFont(.caption)
                         .foregroundStyle(XPalette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -941,21 +941,21 @@ struct PwdStudio: View {
             }
             VStack(alignment: .leading, spacing: XSpace.xs) {
                 Text("备注 (给谁·哪扇门·用多久)")
-                    .vkFont(.footnote, weight: .semibold)
+                    .xFont(.footnote, weight: .semibold)
                     .foregroundStyle(XPalette.text)
                 // 312 常用短语条: 点按追加到备注末尾 (不是替换), 空备注时直接填
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: XSpace.xs) {
-                        Text("常用短语").vkFont(.caption2).foregroundStyle(XPalette.textSub)   // 312 常用短语
+                        Text("常用短语").xFont(.caption2).foregroundStyle(XPalette.textSub)   // 312 常用短语
                         ForEach(["仅白天", "勿外传", "长期有效"], id: \.self) { p in
                             Button(p) {
                                 note = note.isEmpty ? p : note + " · " + p
                                 XHaptics.tick.impactOccurred()
                             }
-                            .vkFont(.caption)
+                            .xFont(.caption)
                             .foregroundStyle(XPalette.accentText)
                             .padding(.horizontal, XSpace.s).padding(.vertical, XSpace.xs)
-                            .variantPlate(XPalette.surfaceAlt, .capsule)
+                            .xPlate(XPalette.surfaceAlt, .capsule)
                             .frame(minHeight: XHit.min - XSpace.xs)
                             .contentShape(Rectangle())
                             .accessibilityLabel("追加短语 \(p)")
@@ -969,13 +969,13 @@ struct PwdStudio: View {
                 }
                 TextField("如: 钟点工·大门·仅上午场", text: $note,   // 523 钟点工
                           prompt: Text("给谁 · 哪扇门 · 用多久"))
-                    .vkFont(.subheadline)
+                    .xFont(.subheadline)
                     .frame(minHeight: XHit.min)
                     .autocorrectionDisabled()
                 // 开关必须常驻: 旧写法用 if useTemplate 包住自己的 Toggle,
                 // 一旦用户关掉, 这一行就消失了, 本次会话再也开不回来
-                VariantToggle("备注自动补命名模板 (谁-哪里-何时)", isOn: $useTemplate)
-                    .vkFont(.footnote)
+                XToggle("备注自动补命名模板 (谁-哪里-何时)", isOn: $useTemplate)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -990,11 +990,11 @@ struct PwdStudio: View {
             XHaptics.tick.impactOccurred()
         } label: {
             Text(t)
-                .vkFont(.caption, weight: .medium)
+                .xFont(.caption, weight: .medium)
                 .foregroundStyle(XPalette.accentText)
                 .padding(.horizontal, XSpace.s)
                 .padding(.vertical, 4)
-                .variantPlate(XPalette.accentText.opacity(0.10), .capsule)
+                .xPlate(XPalette.accentText.opacity(0.10), .capsule)
                 .frame(minHeight: XHit.min)
                 .contentShape(Rectangle())
         }
@@ -1008,7 +1008,7 @@ struct PwdStudio: View {
     }
     private func durationLabel(_ d: Date, prefix: String) -> some View {
         Text(prefix + d.formatted(.dateTime.month().day().hour().minute()))
-            .vkFont(.footnote)
+            .xFont(.footnote)
             .foregroundStyle(XPalette.text)
             .lineLimit(1)
             .minimumScaleFactor(0.8)
@@ -1021,32 +1021,32 @@ struct PwdStudio: View {
             if let e = editing, let old = e.pwd, !old.isEmpty {
                 VStack(alignment: .leading, spacing: XSpace.s) {
                     Text("新旧对照 (上旧只读 / 下新)")
-                        .vkFont(.footnote, weight: .semibold)
+                        .xFont(.footnote, weight: .semibold)
                         .foregroundStyle(XPalette.text)
                     PwdDiffView(old: old, new: pwd.isEmpty ? old : pwd)
                         .card()
                     Text("改动位共 \(CredentialOrg.digitDiff(old: old, new: pwd.isEmpty ? old : pwd).count) 处 (逐位高亮, 确认后才落库)。")
-                        .vkFont(.caption)
+                        .xFont(.caption)
                         .foregroundStyle(XPalette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
             VStack(alignment: .leading, spacing: XSpace.xs) {
                 Text("即将\(editing == nil ? "添加" : "改造")的凭证")
-                    .vkFont(.footnote, weight: .semibold)
+                    .xFont(.footnote, weight: .semibold)
                     .foregroundStyle(XPalette.text)
                 VStack(alignment: .leading, spacing: XSpace.xs) {
                     HStack(spacing: XSpace.s) {
-                        StatusPill(text: kind == 0 ? "长期密码" : "临时码", systemImage: kind == 0 ? "infinity" : "clock", tone: .accent)
+                        XStatusPill(text: kind == 0 ? "长期密码" : "临时码", systemImage: kind == 0 ? "infinity" : "clock", tone: .accent)
                         Text(CredentialOrg.ownerName(owner))
-                            .vkFont(.caption, weight: .medium)
+                            .xFont(.caption, weight: .medium)
                             .foregroundStyle(XPalette.text)
                             .lineLimit(1)
                     }
                     MaskedDigits(value: pwd, big: true)
                     if kind == 1 {
                         Text("\(from.formatted(.dateTime.month().day().hour().minute())) ~ \(to.formatted(.dateTime.month().day().hour().minute())) 生效")
-                            .vkFont(.caption)
+                            .xFont(.caption)
                             .foregroundStyle(XPalette.textSub)
                             // 2026-10-14 布局审计 R2: 两个"月日 时分"+ 尾巴"生效"在 375pt 宽 / 大字号档
                             // 估宽 371pt > 可分配 343pt，lineLimit(1) 会把尾巴切掉 —— 而那半句正是
@@ -1059,7 +1059,7 @@ struct PwdStudio: View {
                     }
                     if !note.isEmpty {
                         Text(note)
-                            .vkFont(.caption)
+                            .xFont(.caption)
                             .foregroundStyle(XPalette.textSub)
                             .lineLimit(2)
                     }
@@ -1068,7 +1068,7 @@ struct PwdStudio: View {
             }
             if busy {
                 ProgressView("正在下发到门锁…")
-                    .vkFont(.caption)
+                    .xFont(.caption)
                     .foregroundStyle(XPalette.textSub)
                     .frame(maxWidth: .infinity)
                     .frame(minHeight: XHit.min)
@@ -1078,7 +1078,7 @@ struct PwdStudio: View {
                     HStack(spacing: XSpace.xs) {
                         TextField("重输一遍码值", text: $confirmPwd)   // 521 重输一遍码值
                             .keyboardType(.numberPad)
-                            .vkFont(.subheadline.monospaced())
+                            .xFont(.subheadline.monospaced())
                             .autocorrectionDisabled()
                         if !confirmPwd.isEmpty, confirmPwd != pwd {
                             Image(systemName: "xmark.circle.fill")
@@ -1091,7 +1091,7 @@ struct PwdStudio: View {
                         }
                     }
                     .padding(XSpace.s)
-                    .variantPlate(XPalette.surfaceAlt, .control)
+                    .xPlate(XPalette.surfaceAlt, .control)
                 }
                 // 541 替代: 原句是下发前的乐观锁提示 ("此锁配置上次同步于 X, 建议到场核对后重试")。
                 // 锁端没有配置序号字段, 所以这把尺只到本机台账 (365 队列里最后一条"已下发"的时刻),
@@ -1100,22 +1100,22 @@ struct PwdStudio: View {
                     let days = Int((Date().timeIntervalSince1970 - at / 1000) / 86400)
                     Text("此锁上次成功下发: " + (days <= 0 ? "今天" : "\(days) 天前")
                          + " (本机台账时刻, 不是锁端真值; 若中途有别人动过这把锁, 以到场核对为准)")   // 541 上次成功下发时刻口径
-                        .vkFont(.caption2)
+                        .xFont(.caption2)
                         .foregroundStyle(XPalette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 } else {
                     Text("本机台账里还没有这把锁的成功下发记录 —— 这条提示只说本机台账, 不代表锁端没被配过。")   // 541 本机台账里还没有这把
-                        .vkFont(.caption2)
+                        .xFont(.caption2)
                         .foregroundStyle(XPalette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                BusyButton(title: editing == nil ? "下发密码" : "保存改造", systemImage: "key.fill", isBusy: busy) {
+                XBusyButton(title: editing == nil ? "下发密码" : "保存改造", systemImage: "key.fill", busy: busy) {
                     Task { await submit() }
                 }
                 .disabled(DB.store.getBool("kf_scred_2nd", true) && confirmPwd != pwd)
             }
             Text("请将手机靠近门锁; 成功后登记到本机台账并留一档版本快照。")   // 487 请将手机靠近门锁
-                .vkFont(.caption2)
+                .xFont(.caption2)
                 .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -1128,7 +1128,7 @@ struct PwdStudio: View {
                 Button("上一步") {
                     withAnimation(XMotion.quick) { step -= 1 }
                 }
-                .vkFont(.subheadline, weight: .medium)
+                .xFont(.subheadline, weight: .medium)
                 .foregroundStyle(XPalette.textSub)
                 .frame(minHeight: XHit.min)
                 .contentShape(Rectangle())
@@ -1161,8 +1161,8 @@ struct PwdStudio: View {
                     withAnimation(XMotion.quick) { step += 1; errorField = "" }
                     XHaptics.tick.impactOccurred()
                 }
-                .vkFont(.subheadline, weight: .semibold)
-                .buttonStyle(PrimaryActionStyle(fullWidth: false))
+                .xFont(.subheadline, weight: .semibold)
+                .buttonStyle(XPrimaryButtonStyle(fullWidth: false))
             }
         }
         .frame(maxWidth: .infinity)
@@ -1278,11 +1278,11 @@ struct PwdStudio: View {
 
     private func errorLine(_ s: String) -> some View {
         Label {
-            Text(s).vkFont(.caption).fixedSize(horizontal: false, vertical: true)
+            Text(s).xFont(.caption).fixedSize(horizontal: false, vertical: true)
         } icon: {
             Image(systemName: "exclamationmark.circle.fill").font(.system(size: XIcon.sm, weight: .medium))
         }
-        .vkFont(.caption)
+        .xFont(.caption)
         .foregroundStyle(XPalette.danger)
         .accessibilityLabel(s)
     }
@@ -1332,7 +1332,7 @@ struct TempCodeStudio: View {
                 // 325 五场景预设
                 VStack(alignment: .leading, spacing: XSpace.xs) {
                     Text("场景预设 (选中即套默认时长与备注)")
-                        .vkFont(.footnote, weight: .semibold)
+                        .xFont(.footnote, weight: .semibold)
                         .foregroundStyle(XPalette.text)
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: XSpace.xs)], spacing: XSpace.xs) {
                         ForEach(StudioTools.scenes) { s in
@@ -1346,11 +1346,11 @@ struct TempCodeStudio: View {
                 VStack(alignment: .leading, spacing: XSpace.xs) {
                     HStack(spacing: XSpace.s) {
                         Text("码值 (6~8 位数字)")
-                            .vkFont(.footnote, weight: .semibold)
+                            .xFont(.footnote, weight: .semibold)
                             .foregroundStyle(XPalette.text)
                         Spacer(minLength: 0)
                         Text(pwdOK ? "✓ 位数合规" : "6~8 位数字")
-                            .vkFont(.caption2)
+                            .xFont(.caption2)
                             .foregroundStyle(pwdOK ? XPalette.ok : XPalette.textSub)
                             .lineLimit(1)
                     }
@@ -1359,24 +1359,24 @@ struct TempCodeStudio: View {
                     }
                     TextField("输入码值, 或点「生成」", text: $pwd, prompt: Text("输入 6~8 位数字"))   // 516 输入
                         .keyboardType(.numberPad)
-                        .vkFont(.title3.monospacedDigit(), weight: .semibold)
+                        .xFont(.title3.monospacedDigit(), weight: .semibold)
                         .frame(minHeight: XHit.min)
                         .autocorrectionDisabled()
                     if clipSource {
                         HStack(spacing: XSpace.xs) {
                             Label("来自剪贴板 · 已识别为候选码", systemImage: "doc.on.clipboard")   // 301 来自剪贴板
-                                .vkFont(.caption)
+                                .xFont(.caption)
                                 .foregroundStyle(XPalette.warn)
                             Spacer(minLength: 0)
                             Button("清除") { pwd = ""; clipSource = false }
-                                .vkFont(.caption, weight: .medium)
+                                .xFont(.caption, weight: .medium)
                                 .foregroundStyle(XPalette.accentText)
                                 .frame(minHeight: XHit.min)
                                 .contentShape(Rectangle())
                         }
                         .padding(.horizontal, XSpace.s)
                         .padding(.vertical, 4)
-                        .variantCallout(XPalette.warn, .control, wash: 0.10)
+                        .xCallout(XPalette.warn, .control, wash: 0.10)
                         .accessibilityLabel("码值来自剪贴板, 点清除可移除")
                     }
                     HStack(spacing: XSpace.xs) {
@@ -1384,12 +1384,12 @@ struct TempCodeStudio: View {
                             pwd = StudioTools.genDigits(6)
                             clipSource = false
                         }
-                        .vkFont(.caption, weight: .medium)
+                        .xFont(.caption, weight: .medium)
                         .buttonStyle(.bordered)
                         .frame(minHeight: XHit.min)
                         .accessibilityLabel("本地生成 6 位随机码")   // 173 本地生成
                         Button("扫一扫") { showScan = true }   // 522 扫一扫
-                            .vkFont(.caption, weight: .medium)
+                            .xFont(.caption, weight: .medium)
                             .buttonStyle(.bordered)
                             .frame(minHeight: XHit.min)
                             .accessibilityLabel("相机识别印刷码")   // 522 相机识别印刷码
@@ -1398,11 +1398,11 @@ struct TempCodeStudio: View {
                     // 178 批量临时码 (锁端无批量命令, 走既有 0A 逐条, 失败逐条报)
                     HStack(spacing: XSpace.xs) {
                         Text("一次生成")   // 178 一次生成
-                            .vkFont(.caption)
+                            .xFont(.caption)
                             .foregroundStyle(XPalette.textSub)
                         ForEach([1, 2, 3, 5], id: \.self) { n in
                             Button(String(n)) { batchCount = n }
-                                .vkFont(.caption.weight(batchCount == n ? .semibold : .medium))
+                                .xFont(.caption.weight(batchCount == n ? .semibold : .medium))
                                 .buttonStyle(.bordered)
                                 .frame(minHeight: XHit.min)
                                 .accessibilityLabel("批量 \(n) 张")   // 178 批量
@@ -1415,7 +1415,7 @@ struct TempCodeStudio: View {
                     if !others.isEmpty {
                         Label("其它 \(others.count) 把锁上也有同值: " + others.prefix(3).joined(separator: "、")
                             + (others.count > 3 ? " 等" : ""), systemImage: "lock.rectangle.stack")   // 304 界面文案
-                            .vkFont(.caption)
+                            .xFont(.caption)
                             .foregroundStyle(XPalette.warn)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -1423,7 +1423,7 @@ struct TempCodeStudio: View {
                         // 304 查看即跳: 不再只给一句"建议换一组", 真把同值那条的详情打开
                         HStack(spacing: XSpace.xs) {
                             Label("本锁已有 \(dups.count) 条同值凭证, 建议换一组", systemImage: "plus.slash.minus")   // 304 本锁已有
-                                .vkFont(.caption)
+                                .xFont(.caption)
                                 .foregroundStyle(XPalette.warn)
                                 .fixedSize(horizontal: false, vertical: true)
                             Spacer(minLength: 0)
@@ -1433,7 +1433,7 @@ struct TempCodeStudio: View {
                                 app.requestRoute(.credentials)   // 2026-10-15 走查: 同上, 统一走 requestRoute
                                 dismiss()
                             }
-                            .vkFont(.caption, weight: .medium)
+                            .xFont(.caption, weight: .medium)
                             .foregroundStyle(XPalette.accentText)
                             .frame(minHeight: XHit.min)
                             .contentShape(Rectangle())
@@ -1445,7 +1445,7 @@ struct TempCodeStudio: View {
                 // 时段 (520 快捷 + 327 重叠 + 330 装修黄条)
                 VStack(alignment: .leading, spacing: XSpace.xs) {
                     Text("生效时段")
-                        .vkFont(.footnote, weight: .semibold)
+                        .xFont(.footnote, weight: .semibold)
                         .foregroundStyle(XPalette.text)
                     HStack(spacing: XSpace.xs) {
                         quickPill("1 小时") { from = Date(); to = Date().addingTimeInterval(3600) }
@@ -1455,15 +1455,15 @@ struct TempCodeStudio: View {
                     }
                     HStack(spacing: XSpace.s) {
                         Text(isoShort(from, prefix: "生效 "))
-                            .vkFont(.footnote)
+                            .xFont(.footnote)
                             .foregroundStyle(XPalette.text)
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
                         Text("→")
-                            .vkFont(.footnote)
+                            .xFont(.footnote)
                             .foregroundStyle(XPalette.textSub)
                         Text(isoShort(to, prefix: "到期 "))
-                            .vkFont(.footnote)
+                            .xFont(.footnote)
                             .foregroundStyle(XPalette.text)
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
@@ -1471,7 +1471,7 @@ struct TempCodeStudio: View {
                     }
                     if to <= from {
                         Label("到期需晚于生效", systemImage: "exclamationmark.circle.fill")   // 519 到期需晚于生效
-                            .vkFont(.caption)
+                            .xFont(.caption)
                             .foregroundStyle(XPalette.danger)
                     }
                     // 327 租期重叠检测
@@ -1482,13 +1482,13 @@ struct TempCodeStudio: View {
                         } icon: {
                             Image(systemName: "arrow.left.arrow.right")
                         }
-                        .vkFont(.caption)
+                        .xFont(.caption)
                         .foregroundStyle(XPalette.warn)
                     }
                     // 330 装修黄条
                     if scene == "reno" {
                         Label("长期工场景: 详情页挂「施工中」黄条, 建议 30 天内复查一次", systemImage: "paintbrush")   // 330 长期工场景
-                            .vkFont(.caption)
+                            .xFont(.caption)
                             .foregroundStyle(XPalette.warn)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -1498,7 +1498,7 @@ struct TempCodeStudio: View {
                 // 归属与备注 (317 归属先行 + 179 占位)
                 VStack(alignment: .leading, spacing: XSpace.xs) {
                     Text("归属与备注")
-                        .vkFont(.footnote, weight: .semibold)
+                        .xFont(.footnote, weight: .semibold)
                         .foregroundStyle(XPalette.text)
                     ForEach(DB.members()) { m in
                         Button {
@@ -1506,7 +1506,7 @@ struct TempCodeStudio: View {
                         } label: {
                             HStack(spacing: XSpace.s) {
                                 Text(m.name)
-                                    .vkFont(.subheadline)
+                                    .xFont(.subheadline)
                                     .foregroundStyle(XPalette.text)
                                 Spacer(minLength: 0)
                                 if owner == m.id {
@@ -1523,19 +1523,19 @@ struct TempCodeStudio: View {
                     }
                     TextField("给谁 · 哪扇门 · 用多久 (可长按调听写)", text: $note,
                               prompt: Text(scene.isEmpty ? "如: 钟点工·大门·仅上午场" : sceneNote))
-                        .vkFont(.subheadline)
+                        .xFont(.subheadline)
                         .frame(minHeight: XHit.min)
                         .autocorrectionDisabled()
                 }
                 .card()
 
-                BusyButton(title: batchCount > 1 ? "下发 \(batchCount) 张" : "下发临时码",   // 178 下发
-                           systemImage: "clock.badge.chevron.right", isBusy: busy) {
+                XBusyButton(title: batchCount > 1 ? "下发 \(batchCount) 张" : "下发临时码",   // 178 下发
+                           systemImage: "clock.badge.chevron.right", busy: busy) {
                     Task { await submitBatch() }
                 }
                 .disabled(!pwdOK || to <= from)
                 Text("请将手机靠近门锁; 批量走既有 0A 逐条下发, 锁端无批量命令, 失败逐条报。")   // 178 请将手机靠近门锁
-                    .vkFont(.caption2)
+                    .xFont(.caption2)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -1556,10 +1556,10 @@ struct TempCodeStudio: View {
         } label: {
             VStack(alignment: .leading, spacing: 2) {
                 Text(s.name)
-                    .vkFont(.footnote, weight: .semibold)
+                    .xFont(.footnote, weight: .semibold)
                     .lineLimit(1)
                 Text(s.hint)
-                    .vkFont(.caption2)
+                    .xFont(.caption2)
                     .foregroundStyle(XPalette.textSub)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
@@ -1583,11 +1583,11 @@ struct TempCodeStudio: View {
             XHaptics.tick.impactOccurred()
         } label: {
             Text(t)
-                .vkFont(.caption, weight: .medium)
+                .xFont(.caption, weight: .medium)
                 .foregroundStyle(XPalette.accentText)
                 .padding(.horizontal, XSpace.s)
                 .padding(.vertical, 4)
-                .variantPlate(XPalette.accentText.opacity(0.10), .capsule)
+                .xPlate(XPalette.accentText.opacity(0.10), .capsule)
                 .frame(minHeight: XHit.min)
                 .contentShape(Rectangle())
         }
@@ -1607,12 +1607,12 @@ struct TempCodeStudio: View {
                     // 486 代际完成页切换: 长辈模式下完成页默认形态 = 口述卡 (页标题也切到「口述卡」) + 一枚大「完成」;
                     // 329/333/再发一张 是常规形态的入口, 这一档收起来并在原地说明 —— 收了不吭声就是本仓反复犯的无声忽略。
                     Button("完成") { dismiss() }
-                        .buttonStyle(PrimaryActionStyle())
+                        .buttonStyle(XPrimaryButtonStyle())
                     // 329 常规模式这里还有
                     // 333 常规模式这里还有
                     // 486 常规模式这里还有
                     Text("常规模式这里还有 一句话口令 / 首用回执 / 再发一张 — 长辈模式下不显示。")
-                        .vkFont(.caption2)
+                        .xFont(.caption2)
                         .foregroundStyle(XPalette.textSub)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
@@ -1626,10 +1626,10 @@ struct TempCodeStudio: View {
                     } label: {
                         VStack(spacing: XSpace.xs) {
                             Text("生成一句话口令")   // 329 生成一句话口令
-                                .vkFont(.footnote, weight: .semibold)
+                                .xFont(.footnote, weight: .semibold)
                                 .foregroundStyle(XPalette.accentText)
                             Text("“" + text + "”")
-                                .vkFont(.caption)
+                                .xFont(.caption)
                                 .foregroundStyle(XPalette.textSub)
                                 .lineLimit(2)
                                 .multilineTextAlignment(.center)
@@ -1639,7 +1639,7 @@ struct TempCodeStudio: View {
                         .frame(minHeight: XHit.min + 8)
                         .contentShape(Rectangle())
                         .padding(.vertical, XSpace.s)
-                        .variantPlate(XPalette.surfaceAlt, .control)
+                        .xPlate(XPalette.surfaceAlt, .control)
                     }
                     .buttonStyle(.plain)
                     .padding(.horizontal, XSpace.gutter)
@@ -1647,12 +1647,12 @@ struct TempCodeStudio: View {
                     // 329 分享面板: 系统分享单 (与 405 复制同源明文, 发给家人用)
                     ShareLink(item: text) {
                         Label("分享一句话口令", systemImage: "square.and.arrow.up")   // 329 分享一句话口令
-                            .vkFont(.footnote, weight: .medium)
+                            .xFont(.footnote, weight: .medium)
                             .foregroundStyle(XPalette.accentText)
                             .frame(maxWidth: .infinity)
                             .frame(minHeight: XHit.min)
                             .padding(.vertical, XSpace.s)
-                            .variantPlate(XPalette.surfaceAlt, .control)
+                            .xPlate(XPalette.surfaceAlt, .control)
                     }
                     .buttonStyle(.plain)
                     .padding(.horizontal, XSpace.gutter)
@@ -1666,11 +1666,11 @@ struct TempCodeStudio: View {
                     } icon: {
                         Image(systemName: "checkmark.seal.fill")
                     }
-                    .vkFont(.caption)
+                    .xFont(.caption)
                     .foregroundStyle(XPalette.ok)
                     .frame(maxWidth: .infinity)
                     .padding(XSpace.s)
-                    .variantCallout(XPalette.ok, .control, wash: 0.08)
+                    .xCallout(XPalette.ok, .control, wash: 0.08)
                     .padding(.horizontal, XSpace.gutter)
                 } else if result != nil, !MemberHub.elderMode {   // 原来绑了 r 却从没读过
                     Label {
@@ -1679,11 +1679,11 @@ struct TempCodeStudio: View {
                     } icon: {
                         Image(systemName: "hourglass")
                     }
-                    .vkFont(.caption)
+                    .xFont(.caption)
                     .foregroundStyle(XPalette.textSub)
                     .frame(maxWidth: .infinity)
                     .padding(XSpace.s)
-                    .variantPlate(XPalette.surfaceAlt, .control)
+                    .xPlate(XPalette.surfaceAlt, .control)
                     .padding(.horizontal, XSpace.gutter)
                 }
                 if !MemberHub.elderMode {
@@ -1692,7 +1692,7 @@ struct TempCodeStudio: View {
                         pwd = StudioTools.genDigits(6)
                         note = ""
                     }
-                    .buttonStyle(SecondaryActionStyle(fullWidth: false))
+                    .buttonStyle(XSecondaryButtonStyle(fullWidth: false))
                 }
             }
             .padding(.vertical, XSpace.l)
@@ -1892,11 +1892,11 @@ struct FpStudio: View {
             } icon: {
                 Image(systemName: "bell.badge")
             }
-            .vkFont(.caption)
+            .xFont(.caption)
             .foregroundStyle(XPalette.warn)
             .padding(.horizontal, XSpace.s)
             .padding(.vertical, 4)
-            .variantCallout(XPalette.warn, .control, wash: 0.10)
+            .xCallout(XPalette.warn, .control, wash: 0.10)
         }
         // 317 归属先行: 选择器自带"空态就地新建" —— 一个成员都没有时直接弹新增, 不再把人赶去成员中心。
         FpOwnerPicker(mac: mac, owner: $owner)
@@ -1905,10 +1905,10 @@ struct FpStudio: View {
 
     // ---------- 41 沉浸式录入 (复用 Achievement 的 hero 渐变聚焦语言 + 大圆点) ----------
     private var immersive: some View {
-        HeroCard {
+        XHeroCard {
             VStack(spacing: XSpace.xl) {
                 Text(progressText)
-                    .vkFont(.headline)
+                    .xFont(.headline)
                     .foregroundStyle(XPalette.onAccent)
                 VStack(spacing: XSpace.s) {
                     ProgressView(value: Double(min(presses.count, 8)), total: 8)
@@ -1924,7 +1924,7 @@ struct FpStudio: View {
                     .accessibilityHidden(true)
                 }
                 Text("请选好的手指按在门锁指纹头上, 抬起, 重复 8 次")   // 41 请选好的手指按在门锁
-                    .vkFont(.footnote)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.onAccent)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
@@ -1934,7 +1934,7 @@ struct FpStudio: View {
                     } icon: {
                         Image(systemName: "exclamationmark.triangle.fill").accessibilityHidden(true)
                     }
-                    .vkFont(.caption)
+                    .xFont(.caption)
                     .foregroundStyle(XPalette.onAccent)
                     .multilineTextAlignment(.center)
                 }
@@ -1944,7 +1944,7 @@ struct FpStudio: View {
                         error = ""
                     } label: {
                         Text("重置进度")
-                            .vkFont(.footnote, weight: .medium)
+                            .xFont(.footnote, weight: .medium)
                             .foregroundStyle(XPalette.onAccent)
                             .frame(minHeight: XHit.min)
                             .contentShape(Rectangle())
@@ -1963,7 +1963,7 @@ struct FpStudio: View {
                             }
                             Text(busy ? "录入中…" : "开始录入")
                         }
-                        .vkFont(.headline)
+                        .xFont(.headline)
                         .foregroundStyle(XPalette.onAccent)
                         .padding(.horizontal, XSpace.l)
                         .padding(.vertical, XSpace.s + 2)
@@ -1995,7 +1995,7 @@ struct FpStudio: View {
     private var step2: some View {
         VStack(alignment: .leading, spacing: XSpace.xs) {
             Text("命名 (点按建议填入)")
-                .vkFont(.footnote, weight: .semibold)
+                .xFont(.footnote, weight: .semibold)
                 .foregroundStyle(XPalette.text)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: XSpace.xs) {
@@ -2005,7 +2005,7 @@ struct FpStudio: View {
                             XHaptics.tick.impactOccurred()
                         } label: {
                             Text(sug)
-                                .vkFont(.caption, weight: .medium)
+                                .xFont(.caption, weight: .medium)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
                                 .foregroundStyle(name == sug ? XPalette.onAccent : XPalette.accentText)
@@ -2023,16 +2023,16 @@ struct FpStudio: View {
                 .padding(.horizontal, XSpace.xs)
             }
             TextField("自定义名称", text: $name, prompt: Text("如: 妈妈·左手食指"))
-                .vkFont(.subheadline)
+                .xFont(.subheadline)
                 .frame(minHeight: XHit.min)
                 .autocorrectionDisabled()
             TextField("备注", text: $note, prompt: Text("仅本机留存"))   // 179 备注
-                .vkFont(.subheadline)
+                .xFont(.subheadline)
                 .frame(minHeight: XHit.min)
             // 319 重录继承: 同成员已有指纹 → 成功后旧指纹入回收站 (保留原备注/归属, 来源"重录替代")
             if !sameOwnerFps.isEmpty {
-                VariantToggle("该成员已有 \(sameOwnerFps.count) 枚指纹, 录入成功后将旧指纹移入回收站 (重录继承, 保留原备注/归属)", isOn: $replaceOld)
-                    .vkFont(.caption)
+                XToggle("该成员已有 \(sameOwnerFps.count) 枚指纹, 录入成功后将旧指纹移入回收站 (重录继承, 保留原备注/归属)", isOn: $replaceOld)
+                    .xFont(.caption)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -2055,17 +2055,17 @@ struct FpStudio: View {
                 .foregroundStyle(XPalette.ok)
                 .accessibilityHidden(true)
             Text("已登记为「\(name.isEmpty ? fallbackName : name)」")
-                .vkFont(.headline)
+                .xFont(.headline)
                 .foregroundStyle(XPalette.text)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
             Text("请用新指纹开一次锁, 确认可用。" + (replaceOld ? " 旧指纹已移入回收站。" : ""))   // 319 旧指纹已移入回收站
-                .vkFont(.footnote)
+                .xFont(.footnote)
                 .foregroundStyle(XPalette.textSub)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
             Button("完成") { dismiss() }
-                .buttonStyle(PrimaryActionStyle(fullWidth: false))
+                .buttonStyle(XPrimaryButtonStyle(fullWidth: false))
             Spacer(minLength: 0)
         }
         .padding(XSpace.l)
@@ -2080,7 +2080,7 @@ struct FpStudio: View {
                 Button("上一步") {
                     withAnimation(XMotion.quick) { step -= 1 }
                 }
-                .vkFont(.subheadline, weight: .medium)
+                .xFont(.subheadline, weight: .medium)
                 .foregroundStyle(XPalette.textSub)
                 .frame(minHeight: XHit.min)
                 .contentShape(Rectangle())
@@ -2096,13 +2096,13 @@ struct FpStudio: View {
                     withAnimation(XMotion.quick) { step = 1 }
                     XHaptics.tick.impactOccurred()
                 }
-                .vkFont(.subheadline, weight: .semibold)
-                .buttonStyle(PrimaryActionStyle(fullWidth: false))
+                .xFont(.subheadline, weight: .semibold)
+                .buttonStyle(XPrimaryButtonStyle(fullWidth: false))
             }
             if step == 2 {
                 Button("保存登记") { saveAndClose() }
-                    .vkFont(.subheadline, weight: .semibold)
-                    .buttonStyle(PrimaryActionStyle(fullWidth: false))
+                    .xFont(.subheadline, weight: .semibold)
+                    .buttonStyle(XPrimaryButtonStyle(fullWidth: false))
             }
         }
         .frame(maxWidth: .infinity)
@@ -2244,7 +2244,7 @@ struct OtpStudio: View {
                         .pickerStyle(.menu)
                         .frame(minHeight: XHit.min)
                         Text("独立口令按锁存档 (kf_cotp_t_) —— 备份也按锁导出, 换一把锁就是另一组口令。")
-                            .vkFont(.caption2)
+                            .xFont(.caption2)
                             .foregroundStyle(XPalette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -2255,7 +2255,7 @@ struct OtpStudio: View {
                         VStack(spacing: XSpace.xs) {
                             WindowBar(totalSec: 1800, label: "337 时窗细条 · 末 5 秒转橙轻震 (⚠ 锁端分钟级, 约)")
                             Text("每 30 分钟更换; 生成前请校准门锁时间, 偏差 >180 秒锁侧校验失败。")
-                                .vkFont(.caption2)
+                                .xFont(.caption2)
                                 .foregroundStyle(XPalette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -2266,7 +2266,7 @@ struct OtpStudio: View {
                     let list = CredentialOrg.totpEntries(otpMac)   // 339: 按选择的目标锁取组
                     if list.isEmpty {
                         Text("还没有独立口令。粘贴 otpauth:// 文本导入, 或手工添加。口令本身跟门锁协议无关 (手机自己算), 但它按当前这把锁存档 —— 换锁就是另一组。")   // 341 还没有独立口令
-                            .vkFont(.caption)
+                            .xFont(.caption)
                             .foregroundStyle(XPalette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -2278,7 +2278,7 @@ struct OtpStudio: View {
                     } label: {
                         Label("导入 otpauth:// 文本", systemImage: "square.and.arrow.down")   // 341 导入
                     }
-                    .vkFont(.subheadline)
+                    .xFont(.subheadline)
                     .foregroundStyle(XPalette.accentText)
                     // 341 手工添加整段: 名称 / Base32 密钥 / 算法 / 周期 / 位数, 错误行与导入那条各走各的
                     Button {
@@ -2290,14 +2290,14 @@ struct OtpStudio: View {
                         // 341 手工添加
                         Label(showManual ? "收起手工添加" : "手工添加", systemImage: "keyboard")
                     }
-                    .vkFont(.subheadline)
+                    .xFont(.subheadline)
                     .foregroundStyle(XPalette.accentText)
                     if showManual { manualForm() }
                 } header: {
                     Text("独立口令 (与锁协议无关 · 按当前锁存档)")
                 } footer: {
                     Text("组尾实话: 这些口令不经过门锁、也不进锁端协议, 但存的键带锁的 MAC (kf_cotp_t_) —— 因为备份按锁导出。换一把锁, 这一组就换成另一把锁的那一组。")
-                        .vkFont(.caption2)
+                        .xFont(.caption2)
                         .foregroundStyle(XPalette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -2313,7 +2313,7 @@ struct OtpStudio: View {
                         staticRow(c)
                     }
                     TextField("备注 (给谁/干什么)", text: $noteDraft, prompt: Text("仅本机留存"))
-                        .vkFont(.subheadline)
+                        .xFont(.subheadline)
                         .frame(minHeight: XHit.min)
                     Button {
                         let name = "备份码 " + String(codes.count + 1)
@@ -2326,13 +2326,13 @@ struct OtpStudio: View {
                     } label: {
                         Label("生成 8 位静态码", systemImage: "plus")
                     }
-                    .vkFont(.subheadline)
+                    .xFont(.subheadline)
                     .foregroundStyle(XPalette.accentText)
                                     }
             }
             .navigationTitle("OTP 与口令")
-            .variantList()
-            .dsScreenBackground()
+            .xList()
+            .xScreen()
             .axBottomAnchor()   // 870
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("关闭") { dismiss() } } }
             .onReceive(timer) { t in tick = t }
@@ -2341,13 +2341,13 @@ struct OtpStudio: View {
                     Form {
                         Section("粘贴 otpauth 文本") {   // 341 粘贴
                             TextField("otpauth://totp/…?secret=…", text: $importUri, axis: .vertical)
-                                .vkFont(.footnote)
+                                .xFont(.footnote)
                                 .autocorrectionDisabled()
                         }
                         if !importErr.isEmpty {
                             Section {
                                 Label(importErr, systemImage: "exclamationmark.circle")
-                                    .vkFont(.caption)
+                                    .xFont(.caption)
                                     .foregroundStyle(XPalette.danger)
                             }
                         }
@@ -2369,7 +2369,7 @@ struct OtpStudio: View {
                                     importErr = "导入失败: " + f.rawValue + "; 缺什么就补什么, 或直接关掉这里改用手工添加"   // 341 导入失败
                                 }
                             }
-                            .vkFont(.subheadline, weight: .medium)
+                            .xFont(.subheadline, weight: .medium)
                         }
                     }
                     .navigationTitle("导入 otpauth")   // 341 导入
@@ -2389,11 +2389,11 @@ struct OtpStudio: View {
     private func manualForm() -> some View {
         VStack(alignment: .leading, spacing: XSpace.xs) {
             TextField("名称", text: $manualName, prompt: Text("如: 验证器·登录码 (留空按密钥尾段命名)"))
-                .vkFont(.subheadline)
+                .xFont(.subheadline)
                 .frame(minHeight: XHit.min)
                 .autocorrectionDisabled()
             TextField("Base32 密钥", text: $manualSecret, prompt: Text("验证器里那串 A-Z 与 2-7"))
-                .vkFont(.footnote.monospaced())
+                .xFont(.footnote.monospaced())
                 .frame(minHeight: XHit.min)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.characters)
@@ -2404,7 +2404,7 @@ struct OtpStudio: View {
                     Text(a).tag(a)
                 }
             }
-            .vkFont(.caption)
+            .xFont(.caption)
             HStack(spacing: XSpace.xs) {
                 // @layout-allow 触达托管 Picker: 控件本体高度由系统渲染, 我们撑 frame 只会多出一片点不动的死区。
                 // 上机复测: 用拇指点这一行的上下边缘, 看打不打得开 (打得开=系统已给够 44, 这条可以销)
@@ -2421,10 +2421,10 @@ struct OtpStudio: View {
                     }
                 }
             }
-            .vkFont(.caption)
+            .xFont(.caption)
             if !manualErr.isEmpty {
                 Label(manualErr, systemImage: "exclamationmark.circle.fill")
-                    .vkFont(.caption)
+                    .xFont(.caption)
                     .foregroundStyle(XPalette.danger)
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityLabel(manualErr)
@@ -2434,11 +2434,11 @@ struct OtpStudio: View {
             } label: {
                 Label("保存这条独立口令", systemImage: "plus.circle")
             }
-            .vkFont(.subheadline, weight: .medium)
+            .xFont(.subheadline, weight: .medium)
             .foregroundStyle(XPalette.accentText)
             .frame(minHeight: XHit.min)
             Text("算法与周期按你选的这几档算 (RFC 6238 常用档); 锁端 ZOTP 仍走分钟级, 两者互不相干。")   // 337 算法与周期按你选的这
-                .vkFont(.caption2)
+                .xFont(.caption2)
                 .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -2481,7 +2481,7 @@ struct OtpStudio: View {
         return VStack(alignment: .leading, spacing: XSpace.xs) {
             HStack(spacing: XSpace.s) {
                 Text(e.name)
-                    .vkFont(.subheadline, weight: .semibold)
+                    .xFont(.subheadline, weight: .semibold)
                     .foregroundStyle(XPalette.text)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
@@ -2494,14 +2494,14 @@ struct OtpStudio: View {
                 } label: {
                     HStack(spacing: XSpace.xs) {
                         Text(cap.recording ? "已隐去" : now)   // 374 已隐去
-                            .vkFont(.title3.monospacedDigit(), weight: .semibold)
+                            .xFont(.title3.monospacedDigit(), weight: .semibold)
                             .foregroundStyle(XPalette.text)
                             .textSelection(.enabled)
                         Text("↓")
-                            .vkFont(.caption)
+                            .xFont(.caption)
                             .foregroundStyle(XPalette.textSub)
                         Text(cap.recording ? "已隐去" : next)   // 374 已隐去
-                            .vkFont(.title3.monospacedDigit(), weight: .semibold)
+                            .xFont(.title3.monospacedDigit(), weight: .semibold)
                             .foregroundStyle(XPalette.textSub)
                     }
                     .padding(.horizontal, XSpace.xs)
@@ -2519,7 +2519,7 @@ struct OtpStudio: View {
                 } label: {
                     Label("复制", systemImage: "doc.on.doc")
                 }
-                .vkFont(.caption, weight: .medium)
+                .xFont(.caption, weight: .medium)
                 .buttonStyle(.bordered)
                 .frame(minHeight: XHit.min)
                 Spacer(minLength: 0)
@@ -2529,7 +2529,7 @@ struct OtpStudio: View {
                 } label: {
                     Label("移除", systemImage: "trash")
                 }
-                .vkFont(.caption, weight: .medium)
+                .xFont(.caption, weight: .medium)
                 .buttonStyle(.bordered)
                 .frame(minHeight: XHit.min)
                 .accessibilityLabel("移除独立口令 \(e.name)")
@@ -2546,19 +2546,19 @@ struct OtpStudio: View {
         VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: XSpace.s) {
                 Text((c.used ? "已用 · " : "") + c.name)
-                    .vkFont(.subheadline, weight: .semibold)
+                    .xFont(.subheadline, weight: .semibold)
                     .foregroundStyle(c.used ? XPalette.textSub : XPalette.text)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                 Spacer(minLength: 0)
                 Text(c.code)
-                    .vkFont(.title3.monospacedDigit(), weight: .semibold)
+                    .xFont(.title3.monospacedDigit(), weight: .semibold)
                     .foregroundStyle(c.used ? XPalette.textSub : XPalette.text)
                     .textSelection(.enabled)
             }
             if !c.note.isEmpty {
                 Text(c.note)
-                    .vkFont(.caption2)
+                    .xFont(.caption2)
                     .foregroundStyle(XPalette.textSub)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
@@ -2571,7 +2571,7 @@ struct OtpStudio: View {
                 } label: {
                     Label(c.used ? "撤销已用" : "标记已用", systemImage: c.used ? "arrow.uturn.left" : "checkmark")
                 }
-                .vkFont(.caption, weight: .medium)
+                .xFont(.caption, weight: .medium)
                 .buttonStyle(.bordered)
                 .frame(minHeight: XHit.min)
                 Spacer(minLength: 0)
@@ -2580,7 +2580,7 @@ struct OtpStudio: View {
                 } label: {
                     Label("删除", systemImage: "trash")
                 }
-                .vkFont(.caption, weight: .medium)
+                .xFont(.caption, weight: .medium)
                 .buttonStyle(.bordered)
                 .frame(minHeight: XHit.min)
                 .accessibilityLabel("删除静态码 \(c.name)")

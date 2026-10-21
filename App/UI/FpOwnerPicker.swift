@@ -19,14 +19,14 @@ struct FpOwnerPicker: View {
     var body: some View {
         VStack(alignment: .leading, spacing: XSpace.xs) {
             Text("先选归属, 再录入")   // 317 先选归属
-                .vkFont(.footnote, weight: .semibold)
+                .xFont(.footnote, weight: .semibold)
                 .foregroundStyle(XPalette.text)
             ForEach(members) { m in
                 row(m)
             }
             if members.isEmpty {
                 Text("这把锁还没有成员 — 直接建一个, 这枚指纹就记在他名下。")   // 317 还没有成员
-                    .vkFont(.caption)
+                    .xFont(.caption)
                     .foregroundStyle(XPalette.warn)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -35,7 +35,7 @@ struct FpOwnerPicker: View {
             } label: {
                 Label(members.isEmpty ? "新增归属" : "新增一位成员", systemImage: "person.badge.plus")
             }
-            .vkFont(.caption, weight: .medium)
+            .xFont(.caption, weight: .medium)
             .foregroundStyle(XPalette.accentText)
             .frame(minHeight: XHit.min)
             .contentShape(Rectangle())
@@ -72,11 +72,11 @@ struct FpOwnerPicker: View {
                     .frame(width: 10, height: 10)
                     .accessibilityHidden(true)
                 Text(m.name)
-                    .vkFont(.subheadline)
+                    .xFont(.subheadline)
                     .foregroundStyle(XPalette.text)
                 Spacer(minLength: 0)
                 Text(cntTag)
-                    .vkFont(.caption2)
+                    .xFont(.caption2)
                     .foregroundStyle(cnt == 0 ? XPalette.warn : XPalette.textSub)
                     .lineLimit(1)
                 if owner == m.id {

@@ -75,10 +75,10 @@ struct DonglesPage: View {
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text("随身开门")
-                            .vkFont(.headline)
+                            .xFont(.headline)
                             .foregroundStyle(XPalette.text)
                         Text("钥匙串靠近门锁即可开门, 不用掏手机")
-                            .vkFont(.footnote)
+                            .xFont(.footnote)
                             .foregroundStyle(XPalette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -101,7 +101,7 @@ struct DonglesPage: View {
                 .foregroundStyle(XPalette.warn)
                 .accessibilityHidden(true)
             Text("尚未配对门锁 — 写入钥匙前需先配对门锁。")
-                .vkFont(.footnote)
+                .xFont(.footnote)
                 .foregroundStyle(XPalette.warn)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
@@ -132,10 +132,10 @@ struct DonglesPage: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(d.name.isEmpty ? "钥匙串" : d.name)
-                        .vkFont(.body, weight: .medium)
+                        .xFont(.body, weight: .medium)
                         .foregroundStyle(XPalette.text)
                     Text(dongleDisplay(d.mac))
-                        .vkFont(.caption.monospaced())
+                        .xFont(.caption.monospaced())
                         .foregroundStyle(XPalette.textSub)
                 }
 
@@ -185,7 +185,7 @@ struct DonglesPage: View {
                         .frame(height: 6)
 
                         Text(st.power < 0 ? "—" : "\(st.power)%")
-                            .vkFont(.caption.monospacedDigit())
+                            .xFont(.caption.monospacedDigit())
                             .foregroundStyle(XPalette.textSub)
                             .frame(width: 40, alignment: .trailing)
                     }
@@ -213,10 +213,10 @@ struct DonglesPage: View {
     private func readPair(_ label: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 1) {
             Text(label)
-                .vkFont(.caption2)
+                .xFont(.caption2)
                 .foregroundStyle(XPalette.textTertiary)
             Text(value)
-                .vkFont(.caption.monospacedDigit())
+                .xFont(.caption.monospacedDigit())
                 .foregroundStyle(XPalette.text)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -255,10 +255,10 @@ struct DonglesPage: View {
                 .foregroundStyle(XPalette.textTertiary)
                 .accessibilityHidden(true)
             Text("还没有钥匙串")
-                .vkFont(.title3, weight: .semibold)
+                .xFont(.title3, weight: .semibold)
                 .foregroundStyle(XPalette.text)
             Text("上电后点上方「搜索钥匙串」即可添加")
-                .vkFont(.subheadline)
+                .xFont(.subheadline)
                 .foregroundStyle(XPalette.textSub)
                 .multilineTextAlignment(.center)
             Button("搜索钥匙串") { Task { await scan() } }

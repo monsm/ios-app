@@ -892,11 +892,11 @@ enum StatsKit {
         // ---------- 图表色 (只走 DS 语义令牌, 631 深浅模式由令牌自动切换) ----------
         static func kindColor(_ kind: String) -> Color {
             switch kind {
-            case "fp": return DS.Palette.accent
-            case "pwd": return DS.Palette.ok
-            case "temp": return DS.Palette.warn
-            case "key": return DS.Palette.textSub
-            default: return DS.Palette.danger
+            case "fp": return XPalette.accent
+            case "pwd": return XPalette.ok
+            case "temp": return XPalette.warn
+            case "key": return XPalette.textSub
+            default: return XPalette.danger
             }
         }
         static func kindWords() -> [String: String] {
@@ -923,7 +923,7 @@ enum StatsKit {
 
         /// 成员色 (612 成员水平条 / 成员小结): 按序号在 DS 令牌间轮转 — 颜色只走令牌, 不硬编码 hex
         static func memberColors() -> [Color] {
-            [DS.Palette.accent, DS.Palette.ok, DS.Palette.warn, DS.Palette.danger, DS.Palette.accentText, DS.Palette.textSub]
+            [XPalette.accent, XPalette.ok, XPalette.warn, XPalette.danger, XPalette.accentText, XPalette.textSub]
         }
         static func memberColor(_ index: Int) -> Color {
             memberColors()[index % memberColors().count]

@@ -12,7 +12,7 @@ struct MechCounter: View {
         HStack(spacing: XSpace.xs) {
             ForEach(Array(String(value).enumerated()), id: \.offset) { _, ch in
                 Text(String(ch))
-                    .vkFont(.subheadline, weight: .semibold)
+                    .xFont(.subheadline, weight: .semibold)
                     .monospacedDigit()
                     .foregroundStyle(XPalette.text)
                     .frame(width: 22)
@@ -65,15 +65,15 @@ struct DefendView: View {
                     } icon: {
                         Image(systemName: "info.circle").accessibilityHidden(true)
                     }
-                    .vkFont(.footnote)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
                 }
             }
             Section {
                 // BusyButton 自带 minHeight 与忙碌态, 避免 Text↔ProgressView 互换导致行高抖动
-                BusyButton(title: mode == 0 ? "确认撤防" : "确认布防",
+                XBusyButton(title: mode == 0 ? "确认撤防" : "确认布防",
                            systemImage: "shield.lefthalf.filled",
-                           isBusy: busy) {
+                           busy: busy) {
                     Task { await apply() }
                 }
             } footer: {
@@ -82,8 +82,8 @@ struct DefendView: View {
             }
         }
         .navigationTitle("一键布防")
-        .variantList()
-        .dsScreenBackground()
+        .xList()
+        .xScreen()
     }
 
     private func apply() async {
@@ -146,14 +146,14 @@ struct TailgateView: View {
                 Text("门锁默认使用蓝牙钥匙、密码、指纹等电控方式开锁，等待6秒后会自动上锁。您可以根据您的使用习惯设置等待时长，防止坏人利用等待时间尾随入室。")
             }
             Section {
-                BusyButton(title: "设置", systemImage: "timer", isBusy: busy) {
+                XBusyButton(title: "设置", systemImage: "timer", busy: busy) {
                     Task { await run() }
                 }
             }
         }
         .navigationTitle("防尾随入室")
-        .variantList()
-        .dsScreenBackground()
+        .xList()
+        .xScreen()
     }
 
     private func run() async {
@@ -181,28 +181,28 @@ struct SafemodeIntroView: View {
         Form {
             if isOtp {
                 Section("临时密码 (ZOTP) 介绍") {
-                    Text("ZOTP 是临时开锁密码：6 位数字密码，每 30 分钟更换一次，同一窗口内最多 99 个。").vkFont(.footnote)
-                    Text("生成前请先校准门锁时间 (0E)，否则手机与锁时间窗不同步会导致密码不匹配。").vkFont(.footnote)
+                    Text("ZOTP 是临时开锁密码：6 位数字密码，每 30 分钟更换一次，同一窗口内最多 99 个。").xFont(.footnote)
+                    Text("生成前请先校准门锁时间 (0E)，否则手机与锁时间窗不同步会导致密码不匹配。").xFont(.footnote)
                 }
             } else {
                 Section("门锁的安全模式介绍") {
-                    Text("门锁的安全模式分为A模式和B模式").vkFont(.subheadline)
-                    Text("A模式：只需要单一方式（密码／指纹／手机）验证通过就可以开锁").vkFont(.footnote)
-                    Text("B模式：需要用两种不同方式（指纹+密码／指纹+手机／手机+密码）组合验证通过才可开锁").vkFont(.footnote)
+                    Text("门锁的安全模式分为A模式和B模式").xFont(.subheadline)
+                    Text("A模式：只需要单一方式（密码／指纹／手机）验证通过就可以开锁").xFont(.footnote)
+                    Text("B模式：需要用两种不同方式（指纹+密码／指纹+手机／手机+密码）组合验证通过才可开锁").xFont(.footnote)
                 }
                 Section("怎么设置门锁的安全模式？") {
                     Text("当前模式在「锁信息名片」(设备页) 读取后显示。本 App 只给变严的方向 (A→B)；"
-                         + "要放宽回 A 模式请在门锁键盘上操作或联系管理员。").vkFont(.footnote)
+                         + "要放宽回 A 模式请在门锁键盘上操作或联系管理员。").xFont(.footnote)
                     // 拍板 #2 (第六十六批): 给切换入口, 但只允许更严方向。
                     // 不给 B→A 的理由写在这: 放宽验证会让"两种组合验证"这条既有保护一指之间消失,
                     // 而锁端不记录是谁改的 —— 本机审计只会留下一条无法解释的降级。
                     if app.status == nil {
                         Text("还没读到锁状态 —— 先在设备页读一次锁信息，这里才会出现切换按钮。")
-                            .vkFont(.footnote)
+                            .xFont(.footnote)
                             .foregroundStyle(XPalette.textSub)
                     } else if app.status?.verifyMode == 1 {
                         Text("当前已是 B 模式（双验）。本 App 不提供改回 A 模式的入口。")
-                            .vkFont(.footnote)
+                            .xFont(.footnote)
                             .foregroundStyle(XPalette.ok)
                     } else {
                         Button(switching ? "切换中…" : "切换到 B 模式（双验，更严）(cmd 20)") {
@@ -214,7 +214,7 @@ struct SafemodeIntroView: View {
                                 Task { await switchToDoubleVerify() }
                             }
                         }
-                        .vkFont(.subheadline, weight: .medium)
+                        .xFont(.subheadline, weight: .medium)
                         .foregroundStyle(XPalette.accentText)
                         .disabled(switching)
                         .frame(minHeight: XHit.min)
@@ -223,8 +223,8 @@ struct SafemodeIntroView: View {
             }
         }
         .navigationTitle(isOtp ? "临时密码介绍" : "安全模式说明")
-        .variantList()
-        .dsScreenBackground()
+        .xList()
+        .xScreen()
     }
 
     /// 拍板 #2: 下发 cmd20 后**必须回读校验** —— rc=0 只说明锁收了命令, 不代表验证策略真的改了。

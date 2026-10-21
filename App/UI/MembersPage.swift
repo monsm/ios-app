@@ -102,18 +102,18 @@ struct MembersPage: View {
                 .frame(width: 36, height: 36)
                 .overlay(
                     Text(String(MemberHub.display(m).prefix(1)))
-                        .vkFont(.subheadline, weight: .semibold)
+                        .xFont(.subheadline, weight: .semibold)
                         .foregroundStyle(XPalette.onAccent)
                 )
                 .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(MemberHub.display(m))
-                    .vkFont(.body)
+                    .xFont(.body)
                     .foregroundStyle(XPalette.text)
                     .lineLimit(1)
                 Text(subtitle(m, role: role, total: total))
-                    .vkFont(.caption)
+                    .xFont(.caption)
                     .foregroundStyle(XPalette.textSub)
                     .lineLimit(1)
             }
@@ -122,7 +122,7 @@ struct MembersPage: View {
 
             if total > 0 {
                 Text("\(total)")
-                    .vkFont(.subheadline.monospacedDigit())
+                    .xFont(.subheadline.monospacedDigit())
                     .foregroundStyle(XPalette.textSub)
             }
         }
@@ -177,10 +177,10 @@ struct MembersPage: View {
                     .foregroundStyle(XPalette.textTertiary)
                     .accessibilityHidden(true)
                 Text("还没有成员")
-                    .vkFont(.headline)
+                    .xFont(.headline)
                     .foregroundStyle(XPalette.text)
                 Text("点右上角 + 添加第一位家人")
-                    .vkFont(.subheadline)
+                    .xFont(.subheadline)
                     .foregroundStyle(XPalette.textSub)
             }
             .frame(maxWidth: .infinity)

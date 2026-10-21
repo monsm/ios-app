@@ -61,12 +61,12 @@ struct SettingsGroupChips: View {
         // App 图标选择器上写下的原则相悖 (SettingsView 里那条: 横向 ScrollView "会把后几款
         // 藏在滚动区外, 用户不知道自己有九款可选")。改用 FlowLayout 按宽度换行铺开:
         // 六枚全在屏上, 片形 (贴字胶囊) 一点没变。
-        FlowLayout(spacing: DS.Space.s) {
+        XFlowLayout(spacing: XSpace.s) {
             chip(nil, "全部", "square.grid.2x2")
             ForEach(SettingsGroup.allCases) { g in chip(g, g.title, g.icon) }
         }
-        .padding(.horizontal, DS.Space.gutter)
-        .padding(.vertical, DS.Space.xs)
+        .padding(.horizontal, XSpace.gutter)
+        .padding(.vertical, XSpace.xs)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("设置分区筛选，当前\(selection?.title ?? "全部")")
     }
@@ -75,20 +75,20 @@ struct SettingsGroupChips: View {
     private func chip(_ g: SettingsGroup?, _ title: String, _ icon: String) -> some View {
         let on = selection == g
         Button {
-            DS.Haptics.tick.impactOccurred()
-            withAnimation(DS.Motion.quick) { selection = g }
+            XHaptics.tick.impactOccurred()
+            withAnimation(XMotion.quick) { selection = g }
         } label: {
-            HStack(spacing: DS.Space.xs) {
+            HStack(spacing: XSpace.xs) {
                 Image(systemName: on ? "checkmark.circle.fill" : icon)
-                    .font(.system(size: DS.Icon.xs))
+                    .font(.system(size: XIcon.xs))
                     .accessibilityHidden(true)
                 Text(title)
-                    .vkFont(.footnote.weight(on ? .semibold : .regular))
+                    .xFont(.footnote.weight(on ? .semibold : .regular))
             }
-            .foregroundStyle(on ? DS.Palette.accentText : DS.Palette.text)
-            .padding(.horizontal, DS.Space.m)
-            .frame(minHeight: DS.Hit.min)
-            .background(on ? DS.Palette.accent.opacity(0.14) : DS.Palette.surfaceAlt, in: Capsule())
+            .foregroundStyle(on ? XPalette.accentText : XPalette.text)
+            .padding(.horizontal, XSpace.m)
+            .frame(minHeight: XHit.min)
+            .background(on ? XPalette.accent.opacity(0.14) : XPalette.surfaceAlt, in: Capsule())
         }
         .buttonStyle(PressableButtonStyle())
         .accessibilityAddTraits(on ? .isSelected : [])

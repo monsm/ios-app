@@ -3,11 +3,11 @@
 // 降级链: reduceMotion / 素颜模式(1046) → 不播粒子, 时刻卡保留内容与静态亮起;
 // 24 首次完成庆祝 = 本文件的"一次性时刻"通道 (礼花 + 时刻卡)，不新造一套庆祝视图:
 // 庆祝层各写一份的话，reduceMotion 与素颜模式的降级就得在每个新入口重记一遍 (本仓那两条是硬约束)。
-// 时刻卡复用 HeroCard 的渐变视觉语言与既有触感 (idea 24/992/1010/1021/1050 等一次性时刻)。
+// 时刻卡复用 XHeroCard 的渐变视觉语言与既有触感 (idea 24/992/1010/1021/1050 等一次性时刻)。
 import SwiftUI
 
 
-// ---------- 一次性时刻卡 (复用 HeroCard 视觉语言) ----------
+// ---------- 一次性时刻卡 (复用 XHeroCard 视觉语言) ----------
 struct Moment: Identifiable, Equatable {
     let id: String
     let icon: String
@@ -41,18 +41,18 @@ struct MomentCardView: View {
 
                 VStack(spacing: XSpace.s) {
                     Text(moment.title)
-                        .vkFont(.title3, weight: .semibold)
+                        .xFont(.title3, weight: .semibold)
                         .foregroundStyle(XPalette.onAccent)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
                     Text(moment.subtitle)
-                        .vkFont(.footnote)
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.onAccent.opacity(0.88))
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 Text("轻点任意处继续")
-                    .vkFont(.caption2)
+                    .xFont(.caption2)
                     .foregroundStyle(XPalette.onAccent.opacity(0.62))
             }
             .padding(XSpace.xl)

@@ -202,10 +202,10 @@ struct KeysPage: View {
                         .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(p.note.isEmpty ? "密码 #\(p.alias)" : p.note)
-                            .vkFont(.subheadline, weight: .medium)
+                            .xFont(.subheadline, weight: .medium)
                             .foregroundStyle(XPalette.text)
                         Text(CredentialOrg.expiryLabel(p.to))
-                            .vkFont(.caption)
+                            .xFont(.caption)
                             .foregroundStyle(XPalette.warn)
                     }
                     Spacer(minLength: 0)
@@ -256,12 +256,12 @@ struct KeysPage: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(row.title)
-                    .vkFont(.body)
+                    .xFont(.body)
                     .foregroundStyle(XPalette.text)
                     .lineLimit(1)
                 if let s = row.subtitle {
                     Text(s)
-                        .vkFont(.caption)
+                        .xFont(.caption)
                         .foregroundStyle(XPalette.textSub)
                         .lineLimit(1)
                 }
@@ -292,10 +292,10 @@ struct KeysPage: View {
                     .foregroundStyle(XPalette.textTertiary)
                     .accessibilityHidden(true)
                 Text(search.isEmpty ? "还没有凭证" : "没有匹配的凭证")
-                    .vkFont(.headline)
+                    .xFont(.headline)
                     .foregroundStyle(XPalette.text)
                 Text(search.isEmpty ? "点右上角 + 添加第一份授权" : "换个关键词试试")
-                    .vkFont(.subheadline)
+                    .xFont(.subheadline)
                     .foregroundStyle(XPalette.textSub)
             }
             .frame(maxWidth: .infinity)

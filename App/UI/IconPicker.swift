@@ -69,7 +69,7 @@ struct IconPicker: View {
         // 用户不知道自己有九款可选 —— 换肤这种"看一眼才想换"的界面不该先藏起来。
         VStack(alignment: .leading, spacing: XSpace.s) {
             Text("App 图标")
-                .vkFont(.body)
+                .xFont(.body)
                 .foregroundStyle(XPalette.text)
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 48), spacing: XSpace.m)],
                       alignment: .leading, spacing: XSpace.m) {
@@ -100,7 +100,7 @@ struct IconPicker: View {
                 }
             }
         }
-        .vkFont(.body)
+        .xFont(.body)
         .foregroundStyle(XPalette.text)
     }
 

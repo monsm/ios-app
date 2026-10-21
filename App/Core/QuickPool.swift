@@ -167,7 +167,7 @@ struct QuickTileEditorSheet: View {
             List {
                 Section("快捷操作格") {   // 905 快捷操作格
                     ForEach(QuickPool.all) { a in
-                        VariantToggle(a.label, isOn: Binding(
+                        XToggle(a.label, isOn: Binding(
                             get: { QuickPool.selected.contains(a) },
                             set: { on in
                                 var ids = QuickPool.selected.map { $0.id }
@@ -180,7 +180,7 @@ struct QuickTileEditorSheet: View {
                     }
                 }
                 Section("常用排前") {   // 1047 常用排前
-                    VariantToggle("常用动作排到前面", isOn: Binding(
+                    XToggle("常用动作排到前面", isOn: Binding(
                         get: { QuickPool.smartFirst },
                         set: { v in
                             QuickPool.setSmartFirst(v)
@@ -188,7 +188,7 @@ struct QuickTileEditorSheet: View {
                             app.bumpAppearanceForLayout()
                         }))
                     Text("没动过开关时: 静默记点击次数, 满 30 天首格自动推荐最常用的那格; 关掉即停止记录并清空。")
-                        .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
+                        .xFont(.caption2).foregroundStyle(XPalette.textSub)
                 }
             }
             .navigationTitle("编辑快捷操作格")

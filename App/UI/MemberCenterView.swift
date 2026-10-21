@@ -42,7 +42,7 @@ struct MemberDetail360View: View {
                                     .foregroundStyle(XPalette.accentText)
                                     .accessibilityHidden(true)
                                 Text(line)
-                                    .vkFont(.footnote)
+                                    .xFont(.footnote)
                                     .foregroundStyle(XPalette.text)
                                     .fixedSize(horizontal: false, vertical: true)
                                 Spacer(minLength: 0)
@@ -87,7 +87,7 @@ struct MemberDetail360View: View {
             .sheet(isPresented: $showExitWizard) { MemberExitWizard(memberID: m.id, onDone: { onChanged() }) }
             .id(tick)
         } else {
-            EmptyState(systemImage: "person.slash",
+            XEmptyState(systemImage: "person.slash",
                        title: "成员不存在",
                        message: "档案可能已被删除或合并。")
                 .frame(maxWidth: .infinity)
@@ -111,19 +111,19 @@ struct MemberDetail360View: View {
                     MemberAvatar(member: m, size: 44)
                     VStack(alignment: .leading, spacing: XSpace.xxs) {
                         Text(MemberHub.display(m))
-                            .vkFont(.title3, weight: .semibold)
+                            .xFont(.title3, weight: .semibold)
                             .foregroundStyle(XPalette.text)
                         Text(MemberHub.roleLabel(e.role) + (m.relation.isEmpty ? "" : " · " + m.relation))
-                            .vkFont(.caption)
+                            .xFont(.caption)
                             .foregroundStyle(XPalette.textSub)
                     }
                     Spacer(minLength: 0)
-                    StatusPill(text: "名下 \(a.owns) 条", systemImage: "key.fill", tone: .accent)
+                    XStatusPill(text: "名下 \(a.owns) 条", systemImage: "key.fill", tone: .accent)
                 }
                 // 465 紧急联系行 (纯本地)
                 LabeledContent("紧急联系") {   // 465 紧急联系
                     Text(e.emergency.isEmpty ? "未填" : e.emergency)
-                        .vkFont(.subheadline)
+                        .xFont(.subheadline)
                         .foregroundStyle(XPalette.textSub)
                 }
                 // 464 常用锁
@@ -131,7 +131,7 @@ struct MemberDetail360View: View {
                     LabeledContent("常用锁") {   // 464 常用锁
                         let names = e.commonLocks.map { LockArchive.displayName(DB.keychain($0) ?? Keychain(mac: $0, skey: "")) }
                         Text(names.joined(separator: "、"))
-                            .vkFont(.subheadline)
+                            .xFont(.subheadline)
                             .foregroundStyle(XPalette.textSub)
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
@@ -141,7 +141,7 @@ struct MemberDetail360View: View {
                 if let bd = Milestones.memberBirthdays()[m.id] {
                     LabeledContent("生日") {   // 485 生日
                         Text(bd + " · 提前一天提醒")
-                            .vkFont(.subheadline)
+                            .xFont(.subheadline)
                             .foregroundStyle(XPalette.textSub)
                     }
                 }
@@ -149,7 +149,7 @@ struct MemberDetail360View: View {
                 // 那一位还没挑的照实读作"未选角标", 两种状态都是本机台账的原话。
                 LabeledContent("角标") {   // 994 角标
                     Text(corner.map { "已选「\($0.title)」" } ?? "未选角标")
-                        .vkFont(.subheadline)
+                        .xFont(.subheadline)
                         .foregroundStyle(corner == nil ? XPalette.textSub : XPalette.text)
                 }
                 // 994 指路行: 选与撤的真实入口在「设置 → 成员管理」那张列表的长按菜单里
@@ -157,14 +157,14 @@ struct MemberDetail360View: View {
                 // 徽章选择器全 App 保持一处实现, 两处写迟早一处改了另一处走偏。
                 // 文案随状态分两路: 已选的说"改选/撤下", 未选的说"怎么挑", 各自只说自己那一份。
                 Text(cornerHint)
-                    .vkFont(.caption)
+                    .xFont(.caption)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 // 480 孩子码关怀文案 (家长视角)
                 if !e.careText.isEmpty {
                     LabeledContent("关怀语") {   // 480 关怀语
                         Text(e.careText)
-                            .vkFont(.subheadline)
+                            .xFont(.subheadline)
                             .foregroundStyle(XPalette.accentText)
                     }
                 }
@@ -191,12 +191,12 @@ struct MemberDetail360View: View {
         }
         return Section {
             Text("密码 \(pwdCount) 条 · 指纹 \(fpCount) 条 · 未归属转未分配不在此列")   // 261 密码
-                .vkFont(.subheadline)
+                .xFont(.subheadline)
                 .foregroundStyle(XPalette.text)
             // 261 清单本体: 只有计数没有名目时, 用户没法核对"名下到底有哪几把"
             ForEach(Array(credLines.enumerated()), id: \.offset) { _, line in
                 Text(line)
-                    .vkFont(.caption)
+                    .xFont(.caption)
                     .foregroundStyle(XPalette.textSub)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
@@ -215,21 +215,21 @@ struct MemberDetail360View: View {
             ForEach(Array(rows.enumerated()), id: \.offset) { _, r in
                 HStack(spacing: XSpace.s) {
                     Text(String(r.time.prefix(10)))
-                        .vkFont(.caption.monospacedDigit())
+                        .xFont(.caption.monospacedDigit())
                         .foregroundStyle(XPalette.textSub)
                     Text(r.text)
-                        .vkFont(.subheadline)
+                        .xFont(.subheadline)
                         .foregroundStyle(XPalette.text)
                     Spacer(minLength: 0)
                     Text("约")
-                        .vkFont(.caption2)
+                        .xFont(.caption2)
                         .foregroundStyle(XPalette.textSub)
                 }
                 .accessibilityElement(children: .combine)
             }
             if rows.isEmpty {
                 Text("还没有可证明归属的开门记录 (台账积累中, 属正常)。")
-                    .vkFont(.footnote)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -245,11 +245,11 @@ struct MemberDetail360View: View {
             ForEach(Array(rows.enumerated()), id: \.offset) { _, r in
                 HStack(spacing: XSpace.s) {
                     Text(SensitiveLedger.stamp(r))
-                        .vkFont(.caption.monospacedDigit())
+                        .xFont(.caption.monospacedDigit())
                         .foregroundStyle(XPalette.textSub)
                     VStack(alignment: .leading, spacing: XSpace.xxs) {
-                        Text(r.kind).vkFont(.subheadline)
-                        Text(r.target).vkFont(.caption).foregroundStyle(XPalette.textSub)
+                        Text(r.kind).xFont(.subheadline)
+                        Text(r.target).xFont(.caption).foregroundStyle(XPalette.textSub)
                     }
                     Spacer(minLength: 0)
                 }
@@ -257,7 +257,7 @@ struct MemberDetail360View: View {
             }
             if rows.isEmpty {
                 Text("还没有停用记录。停用凭证时勾「写入该成员动态」才会写进这里；不勾只在敏感操作流水里留一条汇总，不落到个人档案。")   // 367 还没有停用记录
-                    .vkFont(.footnote)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -283,16 +283,16 @@ struct MemberDetail360View: View {
     private func sourceCell(_ label: String, _ n: Int) -> some View {
         VStack(spacing: XSpace.xs) {
             Text(String(n))
-                .vkFont(.title3, weight: .semibold)
+                .xFont(.title3, weight: .semibold)
                 .monospacedDigit()
                 .foregroundStyle(XPalette.accentText)
             Text(label)
-                .vkFont(.caption2)
+                .xFont(.caption2)
                 .foregroundStyle(XPalette.textSub)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, XSpace.s)
-        .variantPlate(XPalette.surfaceAlt, .control)
+        .xPlate(XPalette.surfaceAlt, .control)
     }
 
 
@@ -303,7 +303,7 @@ struct MemberDetail360View: View {
             // 470 这一档真收 UI 的地方之一: 「管凭证」为禁用的角色 (访客) 不出现这枚代管开关,
             // 并且把"为什么这里少了一枚"写在原地 —— 收起来却不说明, 就是本仓反复犯的无声忽略。
             if MemberHub.permAllows(role, "管凭证") {
-                VariantToggle("由我代管 (TA 名下凭证被单条停用时, 便签补一句 管理员代操作)", isOn: Binding(
+                XToggle("由我代管 (TA 名下凭证被单条停用时, 便签补一句 管理员代操作)", isOn: Binding(
                     get: { MemberHub.ext(m.id).proxy },
                     set: { v in
                         var ext = MemberHub.ext(m.id); ext.proxy = v
@@ -313,14 +313,14 @@ struct MemberDetail360View: View {
                 .fixedSize(horizontal: false, vertical: true)
             } else {
                 Text("角色是「" + MemberHub.roleLabel(role) + "」: 矩阵里「管凭证」为禁用, 所以这一档不给代管开关。")   // 468/470 矩阵里
-                    .vkFont(.caption)
+                    .xFont(.caption)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
             if MemberHub.proxyNames.contains(m.id) {
                 Text("代管中: 在凭证页对 TA 名下凭证做单条停用时, 那一行的停用便签会写上 管理员代操作; "   // 468 代管中
                      + "家庭会议摘要也点名代管中的成员。锁端没有代操作这一位, 这句标注只落本机。")   // 482 家庭会议摘要
-                    .vkFont(.caption)
+                    .xFont(.caption)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -348,14 +348,14 @@ struct MemberDetail360View: View {
         let cantText: String = cant.isEmpty ? "没有" : cant.joined(separator: "、")
         return VStack(alignment: .leading, spacing: XSpace.xxs) {
             Text(MemberHub.roleLabel(r) + (r == current ? " · 当前所选" : ""))
-                .vkFont(.caption, weight: .semibold)
+                .xFont(.caption, weight: .semibold)
                 .foregroundStyle(r == current ? XPalette.accentText : XPalette.text)
             Text("能：" + canText + "　不能：" + cantText)
-                .vkFont(.caption2)
+                .xFont(.caption2)
                 .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             Text(scene)
-                .vkFont(.caption2)
+                .xFont(.caption2)
                 .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -511,19 +511,19 @@ struct MemberWizardView: View {
                         TextField("备注名 (记录条目显示 称呼（备注）)", text: $remark)
                             .autocorrectionDisabled()
                     default:
-                        VariantToggle("顺路建 10 分钟临时码 (末步)", isOn: $makePwd)
+                        XToggle("顺路建 10 分钟临时码 (末步)", isOn: $makePwd)
                             .fixedSize(horizontal: false, vertical: true)
                         if makePwd {
                             TextField("6~8 位数字 (下发到当前锁)", text: $pwd)
                                 .keyboardType(.numberPad)
                             Text("归属自动记为 TA; 不建也行, 稍后在凭证页添加。")
-                                .vkFont(.caption)
+                                .xFont(.caption)
                                 .foregroundStyle(XPalette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         // 463: 建档流程内直达指纹录入 (与临时码同格), 录完回凭证页可指归属
                         NavigationLink("录指纹后到凭证页指归属") { AddFingerPage() }   // 463 录指纹后到凭证页指归
-                            .vkFont(.footnote)
+                            .xFont(.footnote)
                     }
                 }
                 if step < 2 {
@@ -539,7 +539,7 @@ struct MemberWizardView: View {
                             XHaptics.tick.impactOccurred()
                         } label: {
                             Text("下一步")
-                                .vkFont(.subheadline, weight: .medium)
+                                .xFont(.subheadline, weight: .medium)
                                 .foregroundStyle(XPalette.accentText)
                                 .frame(maxWidth: .infinity, alignment: .trailing)
                                 .frame(minHeight: XHit.min)
@@ -548,8 +548,8 @@ struct MemberWizardView: View {
                     }
                 } else {
                     Section {
-                        BusyButton(title: busy ? "处理中…" : "完成建档",
-                                    systemImage: "checkmark.seal", isBusy: busy) {
+                        XBusyButton(title: busy ? "处理中…" : "完成建档",
+                                    systemImage: "checkmark.seal", busy: busy) {
                             submit()
                         }
                         .disabled(!canNext || busy)
@@ -558,8 +558,8 @@ struct MemberWizardView: View {
             }
             .navigationTitle("建档向导")   // 463 建档向导
             .navigationBarTitleDisplayMode(.inline)
-            .variantList()
-            .dsScreenBackground()
+            .xList()
+            .xScreen()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("取消") { dismiss() } } }
             .axBottomAnchor()   // 870
         }
@@ -647,7 +647,7 @@ struct MergeMembersView: View {
                     HStack(spacing: XSpace.s) {
                         MemberAvatar(member: primary, size: 28)
                         Text(MemberHub.display(primary))
-                            .vkFont(.subheadline)
+                            .xFont(.subheadline)
                             .foregroundStyle(XPalette.text)
                         Spacer(minLength: 0)
                     }
@@ -662,7 +662,7 @@ struct MergeMembersView: View {
                     .pickerStyle(.inline)
                     if secondaryID == nil {
                         Text("没有同名成员。若只是称呼重复, 请在成员页重命名其一。")
-                            .vkFont(.footnote)
+                            .xFont(.footnote)
                             .foregroundStyle(XPalette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -673,14 +673,14 @@ struct MergeMembersView: View {
                             .frame(maxWidth: .infinity)
                             .frame(minHeight: XHit.min)
                     }
-                    .buttonStyle(PrimaryActionStyle())
+                    .buttonStyle(XPrimaryButtonStyle())
                     .disabled(secondaryID == nil)
                 }
             }
             .navigationTitle("重复合并")   // 462 重复合并
             .navigationBarTitleDisplayMode(.inline)
-            .variantList()
-            .dsScreenBackground()
+            .xList()
+            .xScreen()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("取消") { dismiss() } } }
         }
     }
@@ -728,17 +728,17 @@ struct MemberArchivedView: View {
                             tick += 1
                             onRestored()
                         }
-                        .buttonStyle(SecondaryActionStyle(fullWidth: false))
+                        .buttonStyle(XSecondaryButtonStyle(fullWidth: false))
                         .frame(minHeight: XHit.min)
                         .contentShape(Rectangle())
                     } label: {
                         VStack(alignment: .leading, spacing: XSpace.xxs) {
                             Text(MemberHub.display(m))
-                                .vkFont(.subheadline)
+                                .xFont(.subheadline)
                                 .foregroundStyle(XPalette.text)
                             Text("归档中 · 只从成员列表与成员统计里收起; 记录页仍能筛到 TA, "
                                  + "凭证页也仍列 TA 名下凭证 —— 归档不许挡撤权入口。")   // 460/795 凭证页也仍列
-                                .vkFont(.caption)
+                                .xFont(.caption)
                                 .foregroundStyle(XPalette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -746,14 +746,14 @@ struct MemberArchivedView: View {
                 }
                 if archived.isEmpty {
                     Text("归档列表为空 — 成员归档后历史不蒸发。")   // 795 归档列表为空
-                        .vkFont(.footnote)
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.textSub)
                 }
             }
             .navigationTitle("归档成员")   // 460/795 归档成员
             .navigationBarTitleDisplayMode(.inline)
-            .variantList()
-            .dsScreenBackground()
+            .xList()
+            .xScreen()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
             .id(tick)
         }
@@ -779,32 +779,32 @@ struct MemberFamilySettingsView: View {
                 // 479/486 长辈模式的两个落点都写在下面那段话里: 479 = 凭证页大字高对比 (凭证页行上),
                 // 486 = 临时码完成页收成口述卡 (CredentialStudio.doneCard)。开关本身只写 MemberHub.elderMode。
                 Section("长辈模式") {   // 479/486 长辈模式
-                    VariantToggle("长辈模式 (凭证页大字高对比、只留密码/指纹两组 · 临时码完成页收成口述卡)", isOn: $elder)
+                    XToggle("长辈模式 (凭证页大字高对比、只留密码/指纹两组 · 临时码完成页收成口述卡)", isOn: $elder)
                         .fixedSize(horizontal: false, vertical: true)
                     if elder {
                         Text("凭证页: 分段只留 全部/密码/指纹, 批量与导出入口收起, 组尾那条过期清理也不出现; "
                              + "凭证行标题升到标题级、副行升到正文档, 副行文字改用主文本色 —— 大字与高对比就落在这两处。"   // 479 凭证行标题升到标题级
                              + "这一档只动凭证页与临时码完成页, 其它页面不跟着变。")
-                            .vkFont(.caption)
+                            .xFont(.caption)
                             .foregroundStyle(XPalette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                         Text("临时码完成页: 开这一档后完成页只留大字号口述卡 + 一枚大「完成」, "   // 486 临时码完成页
                              // 329 一句话口令
                              // 333 一句话口令
                              + "一句话口令 / 首用回执 / 再发一张 那几段收起并在原地说明; 页标题也切到「口述卡」。")
-                            .vkFont(.caption)
+                            .xFont(.caption)
                             .foregroundStyle(XPalette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
                 Section("隐私浏览") {   // 794 隐私浏览
-                    VariantToggle("隐私浏览 (限时 10 分钟: 写隐私时段标记, 本页回显剩余时间)", isOn: $privacy)
+                    XToggle("隐私浏览 (限时 10 分钟: 写隐私时段标记, 本页回显剩余时间)", isOn: $privacy)
                         .fixedSize(horizontal: false, vertical: true)
                     if privacy {
                         Text(privacyLeft > 0
                              ? "剩余 \(privacyLeft) 秒后自动关闭"
                              : "开启后 10 分钟自动关闭; 当前只写隐私时段标记并在本页回显, 不改统计口径")   // 794 开启后
-                            .vkFont(.caption)
+                            .xFont(.caption)
                             .monospacedDigit()
                             .foregroundStyle(XPalette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
@@ -812,8 +812,8 @@ struct MemberFamilySettingsView: View {
                 }
             }
             .navigationTitle("家庭设置")
-            .variantList()
-            .dsScreenBackground()
+            .xList()
+            .xScreen()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) {
                 Button("保存") {
                     MemberHub.setElderMode(elder)
@@ -878,14 +878,14 @@ struct UnclaimedClaimView: View {
                         VStack(alignment: .leading, spacing: XSpace.xs) {
                             HStack(spacing: XSpace.s) {
                                 Text(String(r.time.prefix(16)))
-                                    .vkFont(.caption.monospacedDigit())
+                                    .xFont(.caption.monospacedDigit())
                                     .foregroundStyle(XPalette.textSub)
                                 Text(r.kindWord + " (未归属, 台账推断)")
-                                    .vkFont(.subheadline)
+                                    .xFont(.subheadline)
                                     .foregroundStyle(XPalette.textSub)
                                     .fixedSize(horizontal: false, vertical: true)
                                 Spacer(minLength: 0)
-                                StatusPill(text: "待认领", systemImage: "questionmark.circle", tone: .neutral)
+                                XStatusPill(text: "待认领", systemImage: "questionmark.circle", tone: .neutral)
                             }
                             Picker("认领给", selection: Binding(
                                 get: { selMember[r.key] ?? "" },
@@ -900,7 +900,7 @@ struct UnclaimedClaimView: View {
                     }
                     if unclaimed.isEmpty {
                         Text("没有未归属的开门记录 (归属只算可证明的, 推不出就进这里认领)。")
-                            .vkFont(.footnote)
+                            .xFont(.footnote)
                             .foregroundStyle(XPalette.textSub)
                     }
                 } header: {
@@ -918,7 +918,7 @@ struct UnclaimedClaimView: View {
                         dismiss()
                     } label: {
                         Label("认领所选 (\(selMember.count))", systemImage: "checkmark.seal")
-                            .vkFont(.subheadline)
+                            .xFont(.subheadline)
                             .foregroundStyle(XPalette.accentText)
                             .frame(maxWidth: .infinity)
                             .frame(minHeight: XHit.min)
@@ -930,8 +930,8 @@ struct UnclaimedClaimView: View {
             }
             .navigationTitle("认领未归属")   // 791 认领未归属
             .navigationBarTitleDisplayMode(.inline)
-            .variantList()
-            .dsScreenBackground()
+            .xList()
+            .xScreen()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
         }
     }
@@ -1033,14 +1033,14 @@ struct MemberAvatar: View {
                 .strokeBorder(base.opacity(0.5), lineWidth: 1)
             if !e.emoji.isEmpty {
                 Text(e.emoji)
-                    .vkFont(.title3)
+                    .xFont(.title3)
             } else if member.id == MemberHub.visitorId {
                 Image(systemName: "person.badge.clock")
                     .font(.system(size: size * 0.42))
                     .foregroundStyle(base)
             } else {
                 Text(ch.isEmpty ? "员" : ch)
-                    .vkFont(.headline)
+                    .xFont(.headline)
                     .foregroundStyle(base)
             }
         }
@@ -1091,7 +1091,7 @@ struct MemberExitWizard: View {
                 if items.isEmpty {
                     Section {
                         Text("该成员名下没有台账凭证, 直接归档即可。")   // 460/795 该成员名下没有台账凭
-                            .vkFont(.footnote)
+                            .xFont(.footnote)
                             .foregroundStyle(XPalette.textSub)
                     }
                 } else {
@@ -1099,7 +1099,7 @@ struct MemberExitWizard: View {
                         ForEach(items) { it in
                             HStack(spacing: XSpace.s) {
                                 Text(it.label)
-                                    .vkFont(.subheadline)
+                                    .xFont(.subheadline)
                                     .foregroundStyle(XPalette.text)
                                     .lineLimit(1)
                                     .minimumScaleFactor(0.8)
@@ -1109,7 +1109,7 @@ struct MemberExitWizard: View {
                                     Button("停用 (入回收站)") { decide(it, "delete") }
                                     Button("保留原样") { decide(it, "keep") }
                                 } label: {
-                                    StatusPill(text: optionLabel(decisions[it.id]),
+                                    XStatusPill(text: optionLabel(decisions[it.id]),
                                                 systemImage: "ellipsis.circle",
                                                 tone: decisions[it.id] == nil ? .neutral : .accent)
                                 }
@@ -1137,13 +1137,13 @@ struct MemberExitWizard: View {
                             .frame(maxWidth: .infinity)
                             .frame(minHeight: XHit.min)
                     }
-                    .buttonStyle(DestructiveActionStyle())
+                    .buttonStyle(XDestructiveButtonStyle())
                 }
             }
             .navigationTitle("退出处置向导")   // 474 退出处置向导
             .navigationBarTitleDisplayMode(.inline)
-            .variantList()
-            .dsScreenBackground()
+            .xList()
+            .xScreen()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("取消") { dismiss() } } }
             // 474 候选移接人多于一个时不许替用户抓第一个: 弹确认框让用户自己选目标
             .confirmationDialog("移交给谁", isPresented: Binding(   // 474 移交给谁

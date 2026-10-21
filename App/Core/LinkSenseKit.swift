@@ -159,7 +159,7 @@ final class LinkSense: ObservableObject {
             // 也不改上面那条单锁链的任何判断 (它仍然只决定当前锁要不要预热)。
             if !Task.isCancelled { await preconnectOthers() }
             if dev.rssi >= -55, let host = AppState.hostRef, !(CareSchedule.quietOn && CareSchedule.isQuietHour()) {   // 99 近场轻提醒 (274 免扰时段静默)
-                Task { @MainActor in DS.Haptics.tick.impactOccurred() }
+                Task { @MainActor in XHaptics.tick.impactOccurred() }
                 host.showToast("锁就在附近, 已就绪")   // 99 锁就在附近
             }
             BleTelemetry.recordAttempt(mac: mac, ok: true, reason: "预握手 \(ms)ms")
@@ -641,7 +641,7 @@ struct LinkPrefsView: View {
     var vkBody: some View {
         Form {
             Section("自动预握手") {
-                VariantToggle("进页/回前台自动预热连接", isOn: Binding(   // 95/135 进页
+                XToggle("进页/回前台自动预热连接", isOn: Binding(   // 95/135 进页
                     get: { DB.store.getBool("kf_link_auto_" + mac, true) },
                     set: { DB.store.set("kf_link_auto_" + mac, $0) }))
                 LabeledRow("手动连接模式",   // 100 手动连接模式
@@ -661,10 +661,10 @@ struct LinkPrefsView: View {
                     Text("信号围栏")   // 93 信号围栏
                 }
                 .pickerStyle(.menu)
-                .tint(DS.Palette.accentText)
+                .tint(XPalette.accentText)
                 Text("RSSI 达标才预热, 低信号不浪费电量。只影响自动预握手的启动门槛；手动点圆盘、靠近自动开锁 (AUTOOPEN) 的判定不受这一档约束。")
-                    .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.textSub)
+                    .xFont(.caption)
+                    .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 // 97 连接偏好记忆
                 // 123 每锁
@@ -677,26 +677,26 @@ struct LinkPrefsView: View {
                 // 124 成功率需
                 // 539 成功率需
                 Text("成功率需 7 天握手数据积累, 当前为占位; 占用类与高成功率时段均备案 DEFERRED。")
-                    .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.textSub)
+                    .xFont(.caption)
+                    .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
         .navigationTitle("连接与预握手")
-        .variantList()
-        .dsScreenBackground()
+        .xList()
+        .xScreen()
     }
 }
 
 /// 63/71 RSSI 四格信号条 (形状 + 档位文字双通道, 颜色不单独承载信息)。
 struct RSSIBars: View {
     var level: Int                 // 0-4
-    var tint: Color = DS.Palette.accentText
+    var tint: Color = XPalette.accentText
     var body: some View {
         HStack(spacing: 2) {
             ForEach(0..<4, id: \.self) { i in
                 RoundedRectangle(cornerRadius: 1)
-                    .fill(i < level ? tint : DS.Palette.hairline)
+                    .fill(i < level ? tint : XPalette.hairline)
                     .frame(width: 3, height: CGFloat(i + 1) + 3)
             }
         }
@@ -725,27 +725,27 @@ struct LinkPill: View {
     var rssi: Int? = nil
     var source: String = ""
     var body: some View {
-        HStack(spacing: DS.Space.xs) {
+        HStack(spacing: XSpace.xs) {
             Image(systemName: icon)
-                .font(.system(size: DS.Icon.xs, weight: .semibold))
+                .font(.system(size: XIcon.xs, weight: .semibold))
             // 228 色觉冗余: 三态不能只靠颜色 + 链路圈的虚实来分 —— 色觉障碍下 fill/dashed 几乎同形，
             // 而本 App 还有一个"灰阶预览"开关 (AXFlags.grayPreview)，那一档里 tint 整条通道直接归零。
             // 所以补一枚语义符号 (✓ / ⏳ / ✗) 当第三通道: 形状自己就说清状态。
             Image(systemName: redundancyIcon)
-                .font(.system(size: DS.Icon.xs, weight: .bold))
+                .font(.system(size: XIcon.xs, weight: .bold))
                 .accessibilityHidden(true)   // 文案与 accessibilityLabel 已经报了状态，符号不重复朗读
             Text(text)
-                .vkFont(.caption, weight: .medium)
+                .xFont(.caption, weight: .medium)
                 .lineLimit(1)
             // 98 冷热标识: 已连接时标注来源 — 预热/回连("已预热") vs 用户触发的即连, 解释快慢差异
             if state == .ready, source != "" {
                 Text(source)
-                    .vkFont(.caption2, weight: .medium)
+                    .xFont(.caption2, weight: .medium)
             }
         }
         .foregroundStyle(tint)
-        .padding(.horizontal, DS.Space.s + 2)
-        .padding(.vertical, DS.Space.xs + 1)
+        .padding(.horizontal, XSpace.s + 2)
+        .padding(.vertical, XSpace.xs + 1)
         // 底板用压暗的黑纱而不是同色洗底: 白字压白洗底实测只有 3.09~3.31:1 (对比 tools/contrast.js E4)
         .background(DS.heroPlate, in: Capsule())
         .overlay(Capsule().strokeBorder(tint.opacity(0.38), lineWidth: 0.5))
@@ -796,10 +796,10 @@ struct ConnectMsBadge: View {
     var body: some View {
         if let ms {
             Label(String(ms) + "ms", systemImage: "stopwatch")
-                .vkFont(.caption2, weight: .medium)
+                .xFont(.caption2, weight: .medium)
                 // 淡黄/纯白都必须坐在压暗底板上: 裸压主题渐变最亮端实测只有 3.95:1 与 3.89:1
                 .foregroundStyle(ms >= 2000 ? DS.heroTint(Color(hex: 0xFFE9A8)) : DS.heroFg.opacity(0.85))
-                .padding(.horizontal, DS.Space.s)
+                .padding(.horizontal, XSpace.s)
                 .padding(.vertical, 2)
                 .background(DS.heroPlate, in: Capsule())
                 .accessibilityLabel("最近一次连接耗时 " + String(ms) + " 毫秒")
@@ -812,7 +812,7 @@ struct ReconnectDots: View {
     var attempt: Int
     var nextWait: Int
     var body: some View {
-        HStack(spacing: DS.Space.xs) {
+        HStack(spacing: XSpace.xs) {
             ForEach(0..<5, id: \.self) { i in
                 Circle()
                     .fill(fill(i))
@@ -821,17 +821,17 @@ struct ReconnectDots: View {
             }
             Text(attempt > 0 ? "回连第 \(attempt) 轮 · 下一轮等 \(nextWait) 秒"
                  : "失联后自动回连 (5/15/30/60/90 秒)")
-                .vkFont(.caption2)
-                .foregroundStyle(DS.Palette.textSub)
+                .xFont(.caption2)
+                .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("回连节律 " + (attempt > 0 ? "第 \(attempt) 轮, 下一轮等 \(nextWait) 秒" : "待命"))
     }
     private func fill(_ i: Int) -> Color {
-        if attempt > 0 && i < attempt { return DS.Palette.accent }
-        if attempt > 0 && i == attempt - 1 { return DS.Palette.warn }
-        return DS.Palette.hairline
+        if attempt > 0 && i < attempt { return XPalette.accent }
+        if attempt > 0 && i == attempt - 1 { return XPalette.warn }
+        return XPalette.hairline
     }
 }
 
@@ -842,35 +842,35 @@ struct BLEStrip: View {
     var detail: String?
     var action: () -> Void
     var body: some View {
-        HStack(spacing: DS.Space.xs) {
+        HStack(spacing: XSpace.xs) {
             Image(systemName: stIcon)
-                .font(.system(size: DS.Icon.xs, weight: .semibold))
+                .font(.system(size: XIcon.xs, weight: .semibold))
                 .foregroundStyle(stTint)
                 .accessibilityHidden(true)
             Text(stText)
-                .vkFont(.caption2, weight: .medium)
-                .foregroundStyle(DS.Palette.textSub)
+                .xFont(.caption2, weight: .medium)
+                .foregroundStyle(XPalette.textSub)
                 .lineLimit(1)
             if let detail {
                 Text(detail)
-                    .vkFont(.caption2)
-                    .foregroundStyle(DS.Palette.textSub)
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textSub)
                     .lineLimit(1)
             }
             Spacer(minLength: 0)
             Button(action: action) {
                 Label(title, systemImage: "lock.fill")
-                    .vkFont(.caption2, weight: .medium)
+                    .xFont(.caption2, weight: .medium)
             }
             .buttonStyle(.plain)
-            .foregroundStyle(DS.Palette.accentText)
-            .frame(minHeight: DS.Hit.min)
+            .foregroundStyle(XPalette.accentText)
+            .frame(minHeight: XHit.min)
             .contentShape(Rectangle())
         }
-        .padding(.horizontal, DS.Space.gutter)
-        .padding(.top, DS.Space.xs)
+        .padding(.horizontal, XSpace.gutter)
+        .padding(.top, XSpace.xs)
         .frame(minHeight: 28)
-        .background(DS.Palette.surfaceAlt.opacity(0.6))
+        .background(XPalette.surfaceAlt.opacity(0.6))
         .overlay(alignment: .bottom) {
             Rectangle().fill(stTint).frame(height: 2)
                 .accessibilityHidden(true)
@@ -892,9 +892,9 @@ struct BLEStrip: View {
     }
     private var stTint: Color {
         switch state {
-        case .ready: return DS.Palette.ok
-        case .connecting: return DS.Palette.warn
-        default: return DS.Palette.textSub
+        case .ready: return XPalette.ok
+        case .connecting: return XPalette.warn
+        default: return XPalette.textSub
         }
     }
     private var stText: String {
@@ -911,24 +911,24 @@ struct BLEOffBanner: View {
     var onOpen: () -> Void
     var body: some View {
         Button(action: onOpen) {
-            HStack(spacing: DS.Space.s) {
+            HStack(spacing: XSpace.s) {
                 Image(systemName: "antenna.radiowaves.left.and.right.slash")
-                    .font(.system(size: DS.Icon.sm, weight: .semibold))
-                    .foregroundStyle(DS.Palette.warn)
+                    .font(.system(size: XIcon.sm, weight: .semibold))
+                    .foregroundStyle(XPalette.warn)
                     .accessibilityHidden(true)
                 Text("蓝牙已关闭 — 打开系统蓝牙后, 门锁才能被唤醒")
-                    .vkFont(.footnote)
-                    .foregroundStyle(DS.Palette.text)
+                    .xFont(.footnote)
+                    .foregroundStyle(XPalette.text)
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
                 Label("去开启", systemImage: "chevron.right")
-                    .vkFont(.footnote, weight: .medium)
-                    .foregroundStyle(DS.Palette.accentText)
+                    .xFont(.footnote, weight: .medium)
+                    .foregroundStyle(XPalette.accentText)
             }
-            .padding(.horizontal, DS.Space.l)
-            .padding(.vertical, DS.Space.s + 2)
-            .variantCallout(DS.Palette.warn, .control, wash: 0.12)
-            .frame(minHeight: DS.Hit.min)
+            .padding(.horizontal, XSpace.l)
+            .padding(.vertical, XSpace.s + 2)
+            .xCallout(XPalette.warn, .control, wash: 0.12)
+            .frame(minHeight: XHit.min)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

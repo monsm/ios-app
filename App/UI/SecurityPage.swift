@@ -67,10 +67,10 @@ struct SecurityPage: View {
                         .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(overallTitle)
-                            .vkFont(.title3, weight: .semibold)
+                            .xFont(.title3, weight: .semibold)
                             .foregroundStyle(XPalette.text)
                         Text(overallDetail)
-                            .vkFont(.footnote)
+                            .xFont(.footnote)
                             .foregroundStyle(XPalette.textSub)
                     }
                 }
@@ -112,10 +112,10 @@ struct SecurityPage: View {
                 .frame(width: 8, height: 8)
                 .accessibilityHidden(true)
             Text(label)
-                .vkFont(.caption2)
+                .xFont(.caption2)
                 .foregroundStyle(XPalette.textSub)
             Text(detail)
-                .vkFont(.caption2, weight: .medium)
+                .xFont(.caption2, weight: .medium)
                 .foregroundStyle(ok ? XPalette.ok : XPalette.warn)
         }
         .frame(maxWidth: .infinity)
@@ -131,7 +131,7 @@ struct SecurityPage: View {
         XPanel(kind: .group, tone: .warn) {
             VStack(alignment: .leading, spacing: XSpace.s) {
                 Text("需要处理")
-                    .vkFont(.subheadline, weight: .medium)
+                    .xFont(.subheadline, weight: .medium)
                     .foregroundStyle(XPalette.text)
 
                 if !risks.isEmpty {
@@ -144,10 +144,10 @@ struct SecurityPage: View {
                                 .accessibilityHidden(true)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("\(r.kind) · \(r.lockName) #\(r.alias)")
-                                    .vkFont(.footnote, weight: .medium)
+                                    .xFont(.footnote, weight: .medium)
                                     .foregroundStyle(XPalette.text)
                                 Text(r.detail)
-                                    .vkFont(.caption)
+                                    .xFont(.caption)
                                     .foregroundStyle(XPalette.textSub)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
@@ -176,10 +176,10 @@ struct SecurityPage: View {
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .vkFont(.footnote, weight: .medium)
+                    .xFont(.footnote, weight: .medium)
                     .foregroundStyle(XPalette.text)
                 Text(detail)
-                    .vkFont(.caption)
+                    .xFont(.caption)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -232,10 +232,10 @@ struct SecurityPage: View {
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .vkFont(.body)
+                        .xFont(.body)
                         .foregroundStyle(danger ? XPalette.danger : XPalette.text)
                     Text(detail)
-                        .vkFont(.caption)
+                        .xFont(.caption)
                         .foregroundStyle(XPalette.textSub)
                 }
                 Spacer(minLength: XSpace.s)

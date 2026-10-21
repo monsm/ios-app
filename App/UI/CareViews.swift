@@ -48,8 +48,8 @@ struct MaintenanceView: View {
             ekeySection            // 1025
         }
         .navigationTitle("维护与保养")
-        .variantList()
-        .dsScreenBackground()
+        .xList()
+        .xScreen()
         .onAppear { if !loaded { loaded = true; reload() } }
         // 2026-10-15 走查 §7.4-3: `care` 是 @State 快照、只在上面那一句里读一次，而同一页的 `mac` /
         // `meta` / `opens30d` / `periodDays` 全是**实时**跟着 `app.current` 走的。这一页既被设置页 push、
@@ -138,7 +138,7 @@ struct MaintenanceView: View {
                     Text(careDue
                          ? "已满 \(periodDays) 天, 建议安排一次保养"
                          : "周期 \(periodDays) 天 · 已过 \(Int(elapsedDays)) 天" + (periodDays == 60 ? " · 高频使用自动缩短" : ""))
-                        .vkFont(.caption2)
+                        .xFont(.caption2)
                         .foregroundStyle(careDue ? XPalette.warn : XPalette.textSub)
                 }
                 .accessibilityElement(children: .combine)
@@ -166,7 +166,7 @@ struct MaintenanceView: View {
                 // 包14 空态族消费点 (815 双按钮 / 841 小管家默认开 / 1044 便签):
                 // 旧版只有一句"还没有保养或换电记录" —— 现在空态直接给出那件能做的事:
                 // 主动作打开五项清单 (与下方 1015 按钮同一个 sheet, 不另起流程)。
-                GuidedEmptyView(systemImage: "checkmark.seal",
+                XGuidedEmptyView(systemImage: "checkmark.seal",
                                 title: "还没有保养记录",
                                 message: "五项清单走一遍就会在这里落下第一条; 换电完成后走「换电关怀」里的图文指引。",
                                 primaryTitle: "开始五项保养",
@@ -181,10 +181,10 @@ struct MaintenanceView: View {
                         .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: XSpace.xxs) {
                         Text(e.kind == "battery" ? "更换电池" : "保养完成")
-                            .vkFont(.subheadline)
+                            .xFont(.subheadline)
                             .foregroundStyle(XPalette.text)
                         Text(e.note + " · " + daysAgoText(e.ts))
-                            .vkFont(.caption2)
+                            .xFont(.caption2)
                             .foregroundStyle(XPalette.textSub)
                     }
                     Spacer(minLength: 0)
@@ -230,7 +230,7 @@ struct MaintenanceView: View {
                     .contentShape(Rectangle())
             }
             .foregroundStyle(XPalette.text)
-            VariantToggle("每年换电池提醒", isOn: $yearlyOn)
+            XToggle("每年换电池提醒", isOn: $yearlyOn)
             if yearlyOn {
                 DatePicker("提醒日期", selection: $yearlyDate, displayedComponents: .date)
             }
@@ -244,7 +244,7 @@ struct MaintenanceView: View {
     // ---------- 1025 应急钥匙半年检 ----------
     private var ekeySection: some View {
         Section {
-            VariantToggle("应急钥匙半年检提醒", isOn: $ekeyOn)
+            XToggle("应急钥匙半年检提醒", isOn: $ekeyOn)
                 .onChange(of: ekeyOn) { _, _ in saveEkey() }
             LabeledRow("上次打卡", care.ekeyCheckAt > 0 ? daysAgoText(care.ekeyCheckAt) : "未打卡")
             Button {
@@ -308,7 +308,7 @@ struct BatterySwapGuideView: View {
                 ForEach(Array(steps.enumerated()), id: \.offset) { i, s in
                     HStack(alignment: .top, spacing: XSpace.s) {
                         Text("\(i + 1)")
-                            .vkFont(.caption, weight: .semibold)
+                            .xFont(.caption, weight: .semibold)
                             .monospacedDigit()
                             .foregroundStyle(XPalette.onAccent)
                             .frame(width: 22, height: 22)
@@ -321,10 +321,10 @@ struct BatterySwapGuideView: View {
                             .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: XSpace.xxs) {
                             Text(s.title)
-                                .vkFont(.subheadline, weight: .medium)
+                                .xFont(.subheadline, weight: .medium)
                                 .foregroundStyle(XPalette.text)
                             Text(s.detail)
-                                .vkFont(.caption)
+                                .xFont(.caption)
                                 .foregroundStyle(XPalette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -339,7 +339,7 @@ struct BatterySwapGuideView: View {
                 Text("全程只动电池 — 不需要重置门锁, 也不需要重新配网。")
             }
             Section {
-                BusyButton(title: "已换新", systemImage: "checkmark", isBusy: false) { swap() }
+                XBusyButton(title: "已换新", systemImage: "checkmark", busy: false) { swap() }
                 NavigationLink { SyncTimeView() } label: {
                     Label("去校准门锁时间", systemImage: "clock.arrow.circlepath")
                         .frame(minHeight: XHit.min)
@@ -349,8 +349,8 @@ struct BatterySwapGuideView: View {
             }
         }
         .navigationTitle("换电指引")
-        .variantList()
-        .dsScreenBackground()
+        .xList()
+        .xScreen()
     }
 
     /// 118 换电复位基线: 电池档案 + 采样基线 + 通知武装位 + 1014 事件, 一次到位
@@ -398,7 +398,7 @@ struct CareChecklistView: View {
                                     .frame(width: 24)
                                     .accessibilityHidden(true)
                                 Text(it.label)
-                                    .vkFont(.subheadline)
+                                    .xFont(.subheadline)
                                     .foregroundStyle(XPalette.text)
                                 Spacer(minLength: 0)
                             }
@@ -415,17 +415,17 @@ struct CareChecklistView: View {
                     Text("逐项确认后才能完成保养 — 汽车保养手册的严谨, 用在门上一样合适。")
                 }
                 Section {
-                    BusyButton(title: "完成保养",
+                    XBusyButton(title: "完成保养",
                                systemImage: "checkmark.seal",
-                               isBusy: false,
+                               busy: false,
                                disabled: !checks.allSatisfy({ $0 })) {
                         complete()
                     }
                 }
             }
             .navigationTitle("锁体保养")
-            .variantList()
-            .dsScreenBackground()
+            .xList()
+            .xScreen()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("取消") { dismiss() } } }
         }
     }

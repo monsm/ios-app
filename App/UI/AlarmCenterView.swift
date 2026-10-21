@@ -122,15 +122,15 @@ struct AlarmCenterView: View {
     private var streamHeader: some View {
         Section {
             HStack(spacing: XSpace.s) {
-                VariantToggle(isOn: $unhandledOnly) {
+                XToggle(isOn: $unhandledOnly) {
                     Text("未处理优先")
-                        .vkFont(.subheadline, weight: .medium)
+                        .xFont(.subheadline, weight: .medium)
                         .foregroundStyle(XPalette.text)
                 }
                 .tint(XPalette.accent)
                 Spacer(minLength: 0)
                 Text(streamNote)
-                    .vkFont(.caption)
+                    .xFont(.caption)
                     .foregroundStyle(streamNote == "已全部处置" ? XPalette.ok : XPalette.textSub)
                     .lineLimit(1)
             }
@@ -158,13 +158,13 @@ struct AlarmCenterView: View {
                     Text("防撬：锁体被撬动或拆离时锁端自己记的一条, 与试错无关。")
                     Text("关于「胁迫」：锁端日志类型表里没有这一类, 本 App 不虚构一个查不到的类型。")
                 }
-                .vkFont(.caption)
+                .xFont(.caption)
                 .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.vertical, XSpace.xxs)
             } label: {
                 Text("这些告警是什么")   // 744 这些告警是什么
-                    .vkFont(.subheadline, weight: .medium)
+                    .xFont(.subheadline, weight: .medium)
                     .foregroundStyle(XPalette.accentText)
                     .frame(minHeight: XHit.min)
             }
@@ -183,7 +183,7 @@ struct AlarmCenterView: View {
                     Circle().fill(RecordSearch.toneColor(for: t)).frame(width: 6, height: 6).accessibilityHidden(true)
                 }
                 Text(name)
-                    .vkFont(.subheadline, weight: .medium)
+                    .xFont(.subheadline, weight: .medium)
                     .lineLimit(1)
             }
             .padding(.horizontal, 12)
@@ -232,12 +232,12 @@ struct AlarmCenterView: View {
                     }
                     HStack(spacing: XSpace.s) {
                         Text(scrubHour >= 0 ? "只看 \(scrubHour) 时前后事件" : "点下方某一小时，只看那一时段前后事件")
-                            .vkFont(.caption)
+                            .xFont(.caption)
                             .foregroundStyle(XPalette.textSub)
                             .lineLimit(1)
                         if scrubHour >= 0 {
                             Button("清除刻度") { scrubHour = -1; RecordSearch.setReplayHour(-1) }
-                                .vkFont(.caption, weight: .medium)
+                                .xFont(.caption, weight: .medium)
                                 .foregroundStyle(XPalette.accentText)
                                 .frame(minHeight: XHit.min)
                                 .contentShape(Rectangle())
@@ -269,19 +269,19 @@ struct AlarmCenterView: View {
                 DisclosureGroup {
                     ForEach(Array(cluster.enumerated()), id: \.offset) { _, e in
                         HStack(spacing: XSpace.s) {
-                            Text(e.lock).vkFont(.caption).foregroundStyle(XPalette.text)
+                            Text(e.lock).xFont(.caption).foregroundStyle(XPalette.text)
                                 .lineLimit(1).minimumScaleFactor(0.8)
                             Spacer(minLength: 0)
-                            Text(e.time).vkFont(.caption2.monospacedDigit()).foregroundStyle(XPalette.textSub)
+                            Text(e.time).xFont(.caption2.monospacedDigit()).foregroundStyle(XPalette.textSub)
                         }
                     }
                 } label: {
                     Label("\(cluster.count) 把锁在 30 分钟内先后报低电", systemImage: "battery.25percent")   // 731 把锁在
-                        .vkFont(.footnote, weight: .medium)
+                        .xFont(.footnote, weight: .medium)
                         .foregroundStyle(XPalette.warn)
                 }
                 Text("本机日志时间窗的启发式合并 —— 协议没有多锁联动语义, 不假装有; 逐条处置仍在下面各自的行里。")
-                    .vkFont(.caption2).foregroundStyle(XPalette.textSub)
+                    .xFont(.caption2).foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -298,7 +298,7 @@ struct AlarmCenterView: View {
                         showOlder = true
                     } label: {
                         Label("展开这 \(older.count) 条 (最早 \(String(older.map { $0.timeStr.prefix(10) }.min() ?? "—"))", systemImage: "arrow.down.circle")
-                            .vkFont(.footnote)
+                            .xFont(.footnote)
                             .foregroundStyle(XPalette.accentText)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .frame(minHeight: XHit.min)
@@ -314,7 +314,7 @@ struct AlarmCenterView: View {
                     Spacer(minLength: 0)
                     if showOlder {
                         Button("收起") { showOlder = false }
-                            .vkFont(.caption2)
+                            .xFont(.caption2)
                             .foregroundStyle(XPalette.accentText)
                     }
                 }
@@ -353,7 +353,7 @@ struct AlarmCenterView: View {
             if isFolded {
                 // 729: 同锁同类 24 小时内已标过「误报」→ 本行按疑似同类误报折叠灰显 (仍可展开处置)
                 Text("疑似同类误报 — 同锁同类型 24 小时内已标过「误报」, 本行折叠灰显")   // 729 疑似同类误报
-                    .vkFont(.caption2)
+                    .xFont(.caption2)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -362,13 +362,13 @@ struct AlarmCenterView: View {
         } header: {
             HStack(spacing: XSpace.xs) {
                 Text(r.timeStr.isEmpty ? r.typeName : String(r.timeStr.prefix(16)))
-                    .vkFont(.caption, weight: .medium)
+                    .xFont(.caption, weight: .medium)
                     .foregroundStyle(XPalette.textSub)
                     .lineLimit(1)
                 Spacer(minLength: 0)
                 if macs.count > 1 {
                     Text(r.lockName)   // 770 跨锁前缀标签
-                        .vkFont(.caption2)
+                        .xFont(.caption2)
                         .foregroundStyle(XPalette.accentText)
                         .lineLimit(1)
                 }
@@ -394,17 +394,17 @@ struct AlarmCenterView: View {
                     .accessibilityLabel(AlarmMeta.levelName(r.type))
                 VStack(alignment: .leading, spacing: 2) {
                     Text(RecordSearch.alarmTitle(r))
-                        .vkFont(.subheadline, weight: .medium)
+                        .xFont(.subheadline, weight: .medium)
                         .foregroundStyle(XPalette.text)
                         .lineLimit(1)
                     HStack(spacing: XSpace.xs) {
                         Text(AlarmWords.phrase(r.type))
-                            .vkFont(.caption)
+                            .xFont(.caption)
                             .foregroundStyle(XPalette.textSub)
                             .lineLimit(1)
                         if let d = disp {
                             Text(d.verdict + " · " + d.atLabel())
-                                .vkFont(.caption)
+                                .xFont(.caption)
                                 .foregroundStyle(XPalette.ok)
                                 .lineLimit(1)
                         }
@@ -448,7 +448,7 @@ struct AlarmCenterView: View {
         // 首个实参也要写标签 ⇒ "missing argument label 'action:' in call"。
         Button(action: action) {
             Text(title)
-                .vkFont(.caption, weight: .medium)
+                .xFont(.caption, weight: .medium)
                 .foregroundStyle(on ? XPalette.accentText : XPalette.textSub)
                 .padding(.horizontal, XSpace.s)
                 .padding(.vertical, XSpace.xs + 1)
@@ -471,7 +471,7 @@ struct AlarmCenterView: View {
         if before.isEmpty && after.isEmpty {
             Section("前后事件") {
                 Text("前后 10 分钟内没有其他记录 — 孤立事件。")
-                    .vkFont(.footnote)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
             }
         } else {
@@ -489,18 +489,18 @@ struct AlarmCenterView: View {
     private func contextRow(_ r: Rec, tag: String) -> some View {
         HStack(spacing: XSpace.s) {
             Text(tag)
-                .vkFont(.caption2, weight: .medium)
+                .xFont(.caption2, weight: .medium)
                 .foregroundStyle(tag == "事件" ? XPalette.danger : XPalette.textSub)
                 .frame(width: 30, alignment: .center)
                 .lineLimit(1)
             let who = MemberHub.aliasName(r.whoId) ?? r.whoName
             Text((who?.isEmpty ?? true) ? r.typeName : who! + " · " + r.typeName)
-                .vkFont(.footnote)
+                .xFont(.footnote)
                 .foregroundStyle(XPalette.text)
                 .lineLimit(1)
             Spacer(minLength: 0)
             Text(r.timeStr.isEmpty ? "--:--" : String(r.timeStr.dropFirst(11).prefix(5)))
-                .vkFont(.caption.monospacedDigit())
+                .xFont(.caption.monospacedDigit())
                 .foregroundStyle(XPalette.textSub)
                 .lineLimit(1)
         }
@@ -522,7 +522,7 @@ struct AlarmCenterView: View {
                 Text(same.lastStr.isEmpty
                      ? "该锁第 \(same.total) 次\(r.typeName)"
                      : "该锁第 \(same.total) 次\(r.typeName), 上次 " + String(same.lastStr.dropFirst(5).prefix(11)))
-                    .vkFont(.footnote)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
                     .lineLimit(1)
             }
@@ -534,7 +534,7 @@ struct AlarmCenterView: View {
             if r.type == 7 {
                 VStack(alignment: .leading, spacing: XSpace.xs) {
                     Text("防撬检查清单")   // 727 防撬检查清单
-                        .vkFont(.caption, weight: .medium)
+                        .xFont(.caption, weight: .medium)
                         .foregroundStyle(XPalette.textSub)
                     ForEach(Array(RecordSearch.tamperChecks.enumerated()), id: \.offset) { i, item in
                         let on = RecordSearch.checkState(dkey)[i]
@@ -548,7 +548,7 @@ struct AlarmCenterView: View {
                                     .foregroundStyle(on ? XPalette.ok : XPalette.textSub)
                                     .accessibilityHidden(true)
                                 Text(item)
-                                    .vkFont(.footnote)
+                                    .xFont(.footnote)
                                     .foregroundStyle(on ? XPalette.textSub : XPalette.text)
                                     .lineLimit(1)
                                 Spacer(minLength: 0)
@@ -570,15 +570,15 @@ struct AlarmCenterView: View {
                     ForEach(Array(BatterySwapGuide.steps(modelHint: hint).enumerated()), id: \.offset) { i, s in
                         HStack(alignment: .top, spacing: XSpace.s) {
                             Text("\(i + 1)")
-                                .vkFont(.caption2, weight: .semibold)
+                                .xFont(.caption2, weight: .semibold)
                                 .monospacedDigit()
                                 .foregroundStyle(XPalette.onAccent)
                                 .frame(width: 18, height: 18)
                                 .background(XPalette.accent, in: Circle())
                                 .accessibilityHidden(true)
                             VStack(alignment: .leading, spacing: XSpace.xxs) {
-                                Text(s.title).vkFont(.footnote, weight: .medium).foregroundStyle(XPalette.text)
-                                Text(s.detail).vkFont(.caption2).foregroundStyle(XPalette.textSub)
+                                Text(s.title).xFont(.footnote, weight: .medium).foregroundStyle(XPalette.text)
+                                Text(s.detail).xFont(.caption2).foregroundStyle(XPalette.textSub)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                             Spacer(minLength: 0)
@@ -587,13 +587,13 @@ struct AlarmCenterView: View {
                     }
                     NavigationLink { BatterySwapGuideView() } label: {
                         Label("打开完整换电指引", systemImage: "arrow.right.circle")
-                            .vkFont(.footnote)
+                            .xFont(.footnote)
                             .foregroundStyle(XPalette.accentText)
                             .frame(minHeight: XHit.min)
                     }
                 } label: {
                     Label("换电注意事项", systemImage: "battery.25percent")   // 728 换电注意事项
-                        .vkFont(.caption, weight: .medium)
+                        .xFont(.caption, weight: .medium)
                         .foregroundStyle(XPalette.textSub)
                 }
             }
@@ -607,14 +607,14 @@ struct AlarmCenterView: View {
             if disp != nil {
                 HStack(spacing: XSpace.s) {
                     Text("留痕: " + disp!.verdict + " · " + disp!.atLabel())
-                        .vkFont(.caption)
+                        .xFont(.caption)
                         .foregroundStyle(XPalette.ok)
                         .lineLimit(1)
                     Button("恢复为未处理") {   // 739 恢复为未处理
                         RecordSearch.undoDisposition(key: dkey)
                         tick += 1
                     }
-                    .vkFont(.caption, weight: .medium)
+                    .xFont(.caption, weight: .medium)
                     .foregroundStyle(XPalette.accentText)
                     .frame(minHeight: XHit.min)
                     .contentShape(Rectangle())
@@ -636,7 +636,7 @@ struct AlarmCenterView: View {
             markDone(key, verdict)
         } label: {
             Text(on ? verdict + " ✓" : verdict)
-                .vkFont(.caption, weight: .medium)
+                .xFont(.caption, weight: .medium)
                 .foregroundStyle(on ? (danger ? XPalette.danger : XPalette.accentText) : XPalette.textSub)
                 .padding(.horizontal, XSpace.s)
                 .padding(.vertical, XSpace.xs + 1)
@@ -655,7 +655,7 @@ struct AlarmCenterView: View {
         let maxC = days.map(\.count).max() ?? 1
         return VStack(alignment: .leading, spacing: XSpace.xs) {
             Text("前后 7 天开门量 (判断试探迹象, 约)")   // 747 前后 7 天开门量
-                .vkFont(.caption, weight: .medium)
+                .xFont(.caption, weight: .medium)
                 .foregroundStyle(XPalette.textSub)
             HStack(alignment: .bottom, spacing: XSpace.xs) {
                 // 2026-10-13 run 63: DayOpen 不是 Identifiable ⇒ ForEach 要显式 id:。
@@ -665,7 +665,7 @@ struct AlarmCenterView: View {
                             .fill(d.isAlertDay ? XPalette.danger : XPalette.accent.opacity(0.65))
                             .frame(width: 10, height: max(4, CGFloat(d.count) / CGFloat(max(maxC, 1)) * 56))
                         Text(String(d.key.suffix(5)))
-                            .vkFont(.caption2)
+                            .xFont(.caption2)
                             .foregroundStyle(d.isAlertDay ? XPalette.danger : XPalette.textSub)
                             .lineLimit(1)
                     }
@@ -673,7 +673,7 @@ struct AlarmCenterView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             Text("红色为告警当日; 前后 7 天为本地日志统计 (约)")
-                .vkFont(.caption2)
+                .xFont(.caption2)
                 .foregroundStyle(XPalette.textSub)
                 // 2026-10-14 布局审计 R2: 图例在 1.75 字号档估宽 407pt > 343pt，lineLimit(1) 会把
                 // "前后 7 天为本地日志统计"整段切没 —— 那是这条图例唯一致歉口径 (数据是本机统计)。
@@ -701,12 +701,12 @@ struct AlarmCenterView: View {
                     HStack(spacing: XSpace.s) {
                         Image(systemName: "key.zarrowpath").font(.system(size: XIcon.sm)).foregroundStyle(XPalette.warn).accessibilityHidden(true)
                         Text("今日试错告警 \(today) 次")
-                            .vkFont(.footnote, weight: .medium)
+                            .xFont(.footnote, weight: .medium)
                             .foregroundStyle(XPalette.text)
                             .lineLimit(1)
                         Spacer(minLength: 0)
                         Text("?")
-                            .vkFont(.footnote, weight: .semibold)
+                            .xFont(.footnote, weight: .semibold)
                             .foregroundStyle(XPalette.textSub)
                             .lineLimit(1)
                     }
@@ -714,12 +714,12 @@ struct AlarmCenterView: View {
                     ForEach(events.prefix(5)) { e in
                         HStack(spacing: XSpace.xs) {
                             Text(e.timeStr.isEmpty ? "时间未知" : String(e.timeStr.dropFirst(5)))
-                                .vkFont(.caption.monospacedDigit())
+                                .xFont(.caption.monospacedDigit())
                                 .foregroundStyle(XPalette.textSub)
                                 .lineLimit(1)
                             if macs.count > 1 {
                                 Text(e.lockName)
-                                    .vkFont(.caption2)
+                                    .xFont(.caption2)
                                     .foregroundStyle(XPalette.accentText)
                                     .lineLimit(1)
                             }
@@ -728,12 +728,12 @@ struct AlarmCenterView: View {
                     }
                     if today > 5 {
                         Text("仅列最近 5 次, 今日共 \(today) 次")
-                            .vkFont(.caption2)
+                            .xFont(.caption2)
                             .foregroundStyle(XPalette.textSub)
                     }
                     if kbFreeze > 0 {
                         Text("锁端键盘冻结标志为开 (试错锁定可能生效中)")
-                            .vkFont(.caption)
+                            .xFont(.caption)
                             .foregroundStyle(XPalette.warn)
                             // 2026-10-14 布局审计 R2: 这条是安全提示, 括号里"试错锁定可能生效中"不能整段被切 ——
                             // 切掉之后只剩"冻结标志为开", 用户读不出跟自己有没有关系。允许两行。
@@ -743,13 +743,13 @@ struct AlarmCenterView: View {
                     }
                     if kbErr > 0 {
                         Text("锁端键盘错误计数为 " + String(kbErr) + " (语义未确证, 仅供参考)")
-                            .vkFont(.caption)
+                            .xFont(.caption)
                             .foregroundStyle(XPalette.textSub)
                             .lineLimit(1)
                     }
                     if today > 0 {
                         Text("上面每条即锁端记录的锁定级事件; 其不带凭证槽位 ⇒ 涉事凭证无法归属 (依赖协议失败明细)。")   // 569 上面每条即锁端记录的
-                            .vkFont(.caption)
+                            .xFont(.caption)
                             .foregroundStyle(XPalette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -769,12 +769,12 @@ struct AlarmCenterView: View {
                     HStack(spacing: XSpace.s) {
                         Image(systemName: "hourglass").font(.system(size: XIcon.sm)).foregroundStyle(XPalette.textSub).accessibilityHidden(true)
                         Text("响应时长分布")   // 742 响应时长分布
-                            .vkFont(.footnote, weight: .medium)
+                            .xFont(.footnote, weight: .medium)
                             .foregroundStyle(XPalette.text)
                             .lineLimit(1)
                     }
                     Text("处置打点后, 这里会出现「告警发生 → 确认处置」间隔分布。现在还没有留痕样本。")
-                        .vkFont(.caption)
+                        .xFont(.caption)
                         .foregroundStyle(XPalette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -786,12 +786,12 @@ struct AlarmCenterView: View {
                 // 同一秒内可有多条留痕 → at 不保证唯一, 用 enumerated 的 offset 作身份
                 ForEach(Array(samples.sorted { $0.at > $1.at }.prefix(10).enumerated()), id: \.offset) { _, d in
                     Text("· " + d.atLabel() + " 处置「" + d.verdict + "」")
-                        .vkFont(.caption)
+                        .xFont(.caption)
                         .foregroundStyle(XPalette.textSub)
                         .lineLimit(1)
                 }
                 Text("间隔分布图需「告警发生时刻」与「处置时刻」成对积累后绘制 (占位)。")
-                    .vkFont(.caption2)
+                    .xFont(.caption2)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }

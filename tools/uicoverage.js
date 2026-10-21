@@ -165,7 +165,7 @@ function selfTest() {
     'struct BareFontNeg: View {',
     '  var body: some View {',
     '    // 历史写法: Text("a").font(.caption)',
-    '    Text("b").vkFont(.caption)          // 原来写 .font(.caption)',
+    '    Text("b").xFont(.caption)          // 原来写 .font(.caption)',
     '    Image(systemName: "lock").font(.system(size: DS.Icon.sm, weight: .medium))',
     '    let gf = VKTypography.font(.caption2, weight: nil)',
     '    ctx.draw(Text(stamp).font(gf), at: .zero)',
@@ -230,7 +230,7 @@ function bareToggles() {
   const files = readSwiftFiles('App').concat(readSwiftFiles('Widget'), readSwiftFiles('Shared'));
   for (const f of files) {
     const rel = f.replace(/\\/g, '/');
-    if (rel === 'App/Core/VariantGrammar.swift') continue;   // 语法层自己当然在建真 Toggle
+    if (rel === 'App/Core/Components.swift') continue;   // 语法层自己当然在建真 Toggle
     const src = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n');
     const lines = src.replace(/\r\n/g, '\n').split('\n');
 
@@ -255,7 +255,11 @@ function scanBareFont(text) {
   // 豁免⑤ 的材料 (2026-10-16, run 115 打样): 本文件里 `let X = VKTypography.font(...)` 绑过的名字,\n  // 出现在 `.font(X)` 里就不算裸写 —— 字号/字重/字族仍出自同一个实现处。
   // 为什么会需要它: `Canvas` 里 `GraphicsContext.draw` 收 `Text`、收不了 `some View`,
   // 那一行写不了 `.vkFont(...)`(SecurityWatermark 是唯一一处)。
-  const grammarFonts = new Set([...text.matchAll(/let\s+(\w+)\s*=\s*VKTypography\.font\(/g)].map((m) => m[1]));
+  // 豁免⑤ 的材料: 本文件里绑成 `let X = Font.xxx` 或 `let X = VKTypography.font(...)` 的名字,
+  // 出现在 `.font(X)` 里就不算裸写 —— Canvas 的 GraphicsContext.draw 收 Text 不收 some View,
+  // 那一行写不了 .xFont(...)。
+  const grammarFonts = new Set(
+    [...text.matchAll(/let\s+(\w+)\s*(?::\s*Font)?\s*=\s*(?:VKTypography\.font\(|Font\.)/g)].map((m) => m[1]));
   text.split('\n').forEach((l, i) => {
     if (/^\s*\/\//.test(l)) return;          // 整行注释：历史引述（本仓注释里大量出现旧写法）
     const code = l.replace(/\/\/.*$/, '');   // 行尾注释剥掉再判
@@ -277,7 +281,7 @@ function bareFonts() {
   const files = readSwiftFiles('App');      // 不含 Widget（独立 target，看不到语法层）
   for (const f of files) {
     const rel = f.replace(/\\/g, '/');
-    if (rel === 'App/Core/VariantGrammar.swift') continue;
+    if (rel === 'App/Core/Components.swift') continue;
     const src = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n');
     const lines = src.replace(/\r\n/g, '\n').split('\n');
 
@@ -412,21 +416,21 @@ function main() {
   const bt = bareToggles();
   console.log('');
   if (bt.length) {
-    console.log(`检查七 · 裸写 Toggle(...): ${bt.length} 处 (改法: VariantToggle("标题", isOn: $x)，形状由 VK 下发)`);
+    console.log(`检查七 · 裸写 Toggle(...): ${bt.length} 处 (改法: XToggle("标题", isOn: $x)，形状由 X 语法层下发)`);
     bt.slice(0, 10).forEach((x) => console.log('  - ' + x));
     if (bt.length > 10) console.log(`  … 其余 ${bt.length - 10} 处`);
   } else {
-    console.log('检查七 · 裸写 Toggle(...): 零命中 (开关的形状只从 VariantToggleStyle 一处来)');
+    console.log('检查七 · 裸写 Toggle(...): 零命中 (开关的形状只从 XToggle 一处来)');
   }
 
   const bf = bareFonts();
   console.log('');
   if (bf.length) {
-    console.log(`检查八 · 裸写文本 .font(...): ${bf.length} 处 —— 行内排版只有 vkFont 一个入口，且它统一接管字号/字重/字族`);
+    console.log(`检查八 · 裸写文本 .font(...): ${bf.length} 处 —— 行内排版只有 xFont 一个入口，且它统一接管字号/字重/字族`);
     bf.slice(0, 10).forEach((x) => console.log('  - ' + x));
     if (bf.length > 10) console.log(`  … 其余 ${bf.length - 10} 处`);
   } else {
-    console.log('检查八 · 裸写文本 .font(...): 零命中 (行内排版只从 vkFont 一处来；图标尺寸与语法层本身按既定口径豁免)');
+    console.log('检查八 · 裸写文本 .font(...): 零命中 (行内排版只从 xFont 一处来；图标尺寸与语法层本身按既定口径豁免)');
   }
 
   const sd = selfDrawnContainers();

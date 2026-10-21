@@ -1,7 +1,7 @@
 // ================= 无障碍与操作辅助核心 (包15) =================
 // 五块能力单一读点: 系统旗标 (增强对比/反转/降透明/VO) + App 偏好 (kf_ax_*/kf_dbltap_guard 等)
 // 降级纪律: 所有降级分支只读这里的旗标与令牌, 页面不各自查系统开关。
-//   · 颜色只经 DS 令牌 (DS.Palette.hairline/textSub 已内置增强对比映射, 862)
+//   · 颜色只经 DS 令牌 (XPalette.hairline/textSub 已内置增强对比映射, 862)
 //   · 动效频率核查表见 docs/A11Y-FREQUENCY.md (882, 全部 ≤3Hz)
 //   · ⚠ 降级备案: 869/875 自定滑杆 / 877 设备生物识别门控 / 163 横屏锁定提示 — 见 docs/DEFERRED.md 包15 节
 import SwiftUI
@@ -392,14 +392,14 @@ private struct GlassModifier: ViewModifier {
             switch shape {
             case .rect(let r):
                 let s = RoundedRectangle(cornerRadius: r, style: .continuous)
-                content.background(DS.Palette.surface, in: s)
-                    .overlay(s.strokeBorder(DS.Palette.hairlineStrong, lineWidth: 0.5))
+                content.background(XPalette.surface, in: s)
+                    .overlay(s.strokeBorder(XPalette.hairlineStrong, lineWidth: 0.5))
             case .circle:
-                content.background(DS.Palette.surface, in: Circle())
-                    .overlay(Circle().strokeBorder(DS.Palette.hairlineStrong, lineWidth: 0.5))
+                content.background(XPalette.surface, in: Circle())
+                    .overlay(Circle().strokeBorder(XPalette.hairlineStrong, lineWidth: 0.5))
             case .capsule:
-                content.variantPlate(DS.Palette.surface, .capsule)
-                    .overlay(Capsule().strokeBorder(DS.Palette.hairlineStrong, lineWidth: 0.5))
+                content.xPlate(XPalette.surface, .capsule)
+                    .overlay(Capsule().strokeBorder(XPalette.hairlineStrong, lineWidth: 0.5))
             }
         } else {
             switch shape {

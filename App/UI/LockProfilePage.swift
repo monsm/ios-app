@@ -86,14 +86,14 @@ struct LockProfilePage: View {
 
             VStack(spacing: XSpace.xxs) {
                 Text(trimmed.isEmpty ? "未命名" : trimmed)
-                    .vkFont(.title, weight: .semibold)
+                    .xFont(.title, weight: .semibold)
                     .foregroundStyle(XPalette.text)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
 
                 Text(place.trimmingCharacters(in: .whitespaces).isEmpty
                      ? "未填场所" : place)
-                    .vkFont(.subheadline)
+                    .xFont(.subheadline)
                     .foregroundStyle(XPalette.textSub)
                     .lineLimit(1)
             }
@@ -126,10 +126,10 @@ struct LockProfilePage: View {
 
                 VStack(alignment: .leading, spacing: XSpace.xs) {
                     Text("备注")
-                        .vkFont(.caption)
+                        .xFont(.caption)
                         .foregroundStyle(XPalette.textSub)
                     TextField("换电历史 / 安装细节 / 门锁脾气…", text: $note, axis: .vertical)
-                        .vkFont(.body)
+                        .xFont(.body)
                         .lineLimit(2...5)
                         .padding(XSpace.s)
                         .background(XPalette.surfaceSunken,
@@ -142,10 +142,10 @@ struct LockProfilePage: View {
     private func field(_ label: String, text: Binding<String>, placeholder: String) -> some View {
         VStack(alignment: .leading, spacing: XSpace.xs) {
             Text(label)
-                .vkFont(.caption)
+                .xFont(.caption)
                 .foregroundStyle(XPalette.textSub)
             TextField(placeholder, text: text)
-                .vkFont(.body)
+                .xFont(.body)
                 .autocorrectionDisabled()
                 .padding(XSpace.s)
                 .background(XPalette.surfaceSunken,
@@ -160,7 +160,7 @@ struct LockProfilePage: View {
                 .foregroundStyle(XPalette.accentText)
                 .accessibilityHidden(true)
             Text(text)
-                .vkFont(.subheadline, weight: .medium)
+                .xFont(.subheadline, weight: .medium)
                 .foregroundStyle(XPalette.text)
             Spacer()
         }
@@ -194,7 +194,7 @@ struct LockProfilePage: View {
                                             : XPalette.surfaceAlt)
                                     )
                                 Text(s.label)
-                                    .vkFont(.caption2)
+                                    .xFont(.caption2)
                                     .foregroundStyle(selected ? XPalette.text : XPalette.textSub)
                                     .lineLimit(1)
                             }
@@ -253,28 +253,28 @@ struct LockProfilePage: View {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 sectionTitle("更多", icon: "ellipsis.circle")
 
-                VariantToggle("在翻页里隐藏这把锁", isOn: Binding(
+                XToggle("在翻页里隐藏这把锁", isOn: Binding(
                     get: { LockArchive.isHidden(mac) },
                     set: { LockArchive.setHidden(mac, $0) }))
-                    .vkFont(.footnote)
+                    .xFont(.footnote)
 
                 VStack(alignment: .leading, spacing: XSpace.xs) {
                     Text("电池型号")
-                        .vkFont(.caption)
+                        .xFont(.caption)
                         .foregroundStyle(XPalette.textSub)
                     TextField("如 CR2032", text: $batteryModel)
-                        .vkFont(.body)
+                        .xFont(.body)
                         .padding(XSpace.s)
                         .background(XPalette.surfaceSunken,
                                     in: RoundedRectangle(cornerRadius: XRadius.min, style: .continuous))
                 }
 
-                VariantToggle("记录换电日期", isOn: $batteryHasDate)
-                    .vkFont(.footnote)
+                XToggle("记录换电日期", isOn: $batteryHasDate)
+                    .xFont(.footnote)
 
                 if batteryHasDate {
                     DatePicker("换电日期", selection: $batteryDate, displayedComponents: .date)
-                        .vkFont(.subheadline)
+                        .xFont(.subheadline)
                 }
             }
         }

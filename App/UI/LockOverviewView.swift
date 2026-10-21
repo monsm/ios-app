@@ -32,7 +32,7 @@ struct LockOverviewView: View {
                         ProgressView().padding(XSpace.xl)
                     } else if usages.isEmpty {
                         Card {
-                            EmptyState(systemImage: "lock.square.stack",
+                            XEmptyState(systemImage: "lock.square.stack",
                                        title: "还没有门锁",
                                        message: "添加第二把门锁后, 这里会给出活跃度、告警率与固件版本的多锁对比。")
                         }
@@ -49,7 +49,7 @@ struct LockOverviewView: View {
                 }
                 .padding(.vertical, XSpace.m)
             }
-            .dsScreenBackground()
+            .xScreen()
             .navigationTitle("全部锁总览")
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
             .task {
@@ -72,7 +72,7 @@ struct LockOverviewView: View {
                     .padding(.top, 2)
                     .accessibilityHidden(true)
                 Text(LockStats.summary(usages))
-                    .vkFont(.subheadline)
+                    .xFont(.subheadline)
                     .foregroundStyle(XPalette.text)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -105,12 +105,12 @@ struct LockOverviewView: View {
                                     .accessibilityHidden(true)
                                 VStack(alignment: .leading, spacing: XSpace.xxs) {
                                     Text(item.usage.name)
-                                        .vkFont(.subheadline)
+                                        .xFont(.subheadline)
                                         .foregroundStyle(XPalette.text)
                                         .lineLimit(1)
                                         .minimumScaleFactor(0.85)
                                     Text(item.reasons.joined(separator: " · "))
-                                        .vkFont(.caption)
+                                        .xFont(.caption)
                                         .foregroundStyle(XPalette.warn)
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
@@ -148,7 +148,7 @@ struct LockOverviewView: View {
                 VStack(alignment: .leading, spacing: XSpace.s) {
                     SectionTitle(text: "信号", count: usages.count)
                     Text("还没扫到任何锁的蓝牙广播 — 到设备页点一次刷新或靠近门锁, 信号格即现。")
-                        .vkFont(.footnote)
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -161,13 +161,13 @@ struct LockOverviewView: View {
                         let lvl = LinkSense.rssiLevel(LinkSense.rssiFor(u.mac))
                         HStack(spacing: XSpace.s) {
                             Text(u.name)
-                                .vkFont(.subheadline)
+                                .xFont(.subheadline)
                                 .foregroundStyle(XPalette.text)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
                             Spacer(minLength: 0)
                             Text(LinkSense.rssiLabel(lvl))
-                                .vkFont(.caption2)
+                                .xFont(.caption2)
                                 .foregroundStyle(XPalette.textSub)
                             RSSIBars(level: lvl, tint: lvl >= 3 ? XPalette.ok : XPalette.warn)
                         }
@@ -175,7 +175,7 @@ struct LockOverviewView: View {
                         .accessibilityLabel("\(u.name) 信号" + LinkSense.rssiLabel(lvl))
                     }
                     Text("信号格来自最近一次广播扫描 · 切换前先看看哪把锁在范围内。")   // 71 信号格来自最近一次广
-                        .vkFont(.caption2)
+                        .xFont(.caption2)
                         .foregroundStyle(XPalette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -194,13 +194,13 @@ struct LockOverviewView: View {
                     VStack(alignment: .leading, spacing: XSpace.xxs) {
                         HStack(spacing: XSpace.s) {
                             Text(u.name)
-                                .vkFont(.caption)
+                                .xFont(.caption)
                                 .foregroundStyle(XPalette.text)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
                             Spacer(minLength: XSpace.s)
                             Text(capText(u))
-                                .vkFont(.caption2)
+                                .xFont(.caption2)
                                 .monospacedDigit()
                                 .foregroundStyle(util >= 0.85 ? XPalette.warn : XPalette.textSub)
                         }
@@ -218,7 +218,7 @@ struct LockOverviewView: View {
                         }
                         if util >= 0.85, hasKnownCap(u) {
                             Text("接近满载, 建议清理过期凭证")
-                                .vkFont(.caption2)
+                                .xFont(.caption2)
                                 .foregroundStyle(XPalette.warn)
                         }
                     }
@@ -261,24 +261,24 @@ struct LockOverviewView: View {
                             .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: XSpace.xxs) {
                             Text(u.name)
-                                .vkFont(.caption)
+                                .xFont(.caption)
                                 .foregroundStyle(XPalette.text)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
                             // 769 绑定时间标注
                             Text(boundText(u))
-                                .vkFont(.caption2)
+                                .xFont(.caption2)
                                 .foregroundStyle(XPalette.textSub)
                         }
                         Spacer(minLength: XSpace.s)
                         Text(u.fw.isEmpty ? "未读到" : "v" + u.fw)
-                            .vkFont(.caption)
+                            .xFont(.caption)
                             .monospacedDigit()
                             .foregroundStyle(lag.lagging.contains(u.mac) ? XPalette.warn : XPalette.text)
                         if lag.lagging.contains(u.mac) {
-                            StatusPill(text: "旧版本", systemImage: "arrow.down.circle", tone: .warn)
+                            XStatusPill(text: "旧版本", systemImage: "arrow.down.circle", tone: .warn)
                         } else if PidMap.canDeviceUpgrade(pidOf(u.mac)) {
-                            StatusPill(text: "可本地升级", systemImage: "arrow.up.circle", tone: .ok)
+                            XStatusPill(text: "可本地升级", systemImage: "arrow.up.circle", tone: .ok)
                         }
                     }
                     .frame(minHeight: XHit.min)

@@ -20,13 +20,13 @@ struct CareRemindersView: View {
                 // 1044 消费点如实列名 (原句"各页面的空态"是超售): 设备页/记录页空态直挂,
                 // 引导空态卡 (设置门锁空态、成就陈列架、维护历史、诊断日志) 经 GuidedEmptyView 消费。
                 Text("这句便签已贴在这几处空态旁: 设备页、记录页, 以及走引导空态卡的页面 (设置门锁空态、成就陈列架、维护历史、诊断日志)。未接入的空态不会偷偷显示, 后续批次补。")
-                    .vkFont(.caption).foregroundStyle(XPalette.textSub)
+                    .xFont(.caption).foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             Section {
                 LabeledRow("结缘日", Milestones.bondDay.isEmpty ? "添加门锁后自动记录" : Milestones.bondDay)
-                VariantToggle("结缘纪念日提醒", isOn: Binding(
+                XToggle("结缘纪念日提醒", isOn: Binding(
                     get: { CareReminders.annivOn },
                     set: { on in
                         DB.store.set("kf_care_anniv", on)
@@ -37,7 +37,7 @@ struct CareRemindersView: View {
             }
 
             Section {
-                VariantToggle("成员生日提醒 (提前一天)", isOn: Binding(
+                XToggle("成员生日提醒 (提前一天)", isOn: Binding(
                     get: { CareReminders.bdayOn },
                     set: { on in
                         DB.store.set("kf_care_bday", on)
@@ -60,8 +60,8 @@ struct CareRemindersView: View {
             }
         }
         .navigationTitle("关怀提醒")
-        .variantList()
-        .dsScreenBackground()
+        .xList()
+        .xScreen()
         .onDisappear { Milestones.bulletin = bulletin.trimmingCharacters(in: .whitespacesAndNewlines) }
     }
 }

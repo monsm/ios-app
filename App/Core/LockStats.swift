@@ -220,11 +220,11 @@ enum LockArchive {
     ]
     static func swatchColor(_ key: String) -> Color {
         switch key {
-        case "ok": return DS.Palette.ok
-        case "warn": return DS.Palette.warn
-        case "danger": return DS.Palette.danger
-        case "neutral": return DS.Palette.textSub
-        default: return DS.Palette.accent   // 空 = 跟随品牌主题
+        case "ok": return XPalette.ok
+        case "warn": return XPalette.warn
+        case "danger": return XPalette.danger
+        case "neutral": return XPalette.textSub
+        default: return XPalette.accent   // 空 = 跟随品牌主题
         }
     }
     // 105 符号: 与场所语义呼应的一小组, 全部为系统基础符号

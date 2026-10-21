@@ -61,7 +61,7 @@ func mdText(_ s: String) -> Text {
 /// 与 `LazyVGrid` 的分工: 网格会把每格拉成等宽 (胶囊形状变了), 这里保留子视图的**固有宽度**,
 /// 只负责在放不下时换行 —— 胶囊还是贴着字的那种胶囊。
 struct FlowLayout: Layout {
-    var spacing: CGFloat = DS.Space.s
+    var spacing: CGFloat = XSpace.s
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         let maxWidth = proposal.width ?? .infinity
@@ -139,7 +139,7 @@ enum DS {
         /// 凭证行最小高度: 2026-10-20 (Q15 减法) 两档已删除, 恒为 44 (原"紧凑"档)。
         static var rowMinH: CGFloat { 44 }
         /// 时间线行距: 2026-10-20 (Q15 减法) 三档已删除, 恒为标准 (Space.m)。
-        static var tlGap: CGFloat { DS.Space.m }
+        static var tlGap: CGFloat { XSpace.m }
         /// 903 空态装饰图形: 复用**已有的** 素颜模式 (kf_plain)，不另立新键。
         /// 理由就写在调用点：一个 App 里同时存在"关庆祝"和"关插画"两个语义重叠开关，
         /// 用户只会记住其中一个，而记住的那个会变成"切了没反应"。
@@ -733,6 +733,8 @@ extension View {
     }
 }
 
+
+extension View {
 /// 首屏卡片按序浮起 (每次会话只播一次): 纯 transform/opacity, stagger 50ms;
 /// reduceMotion 下退化为纯淡入。惊喜预算只花在"罕见时刻"(应用启动), 高频路径不动。
 private struct StaggeredAppear: ViewModifier {
@@ -756,7 +758,6 @@ private struct StaggeredAppear: ViewModifier {
     }
 }
 
-extension View {
     /// 入场编排: index 决定出场次序 (0 起, 每档 50ms)
     func staggered(_ index: Int) -> some View {
         modifier(StaggeredAppear(index: index))
@@ -768,29 +769,15 @@ enum ToneColor {
     case neutral, accent, ok, warn, danger
     var color: Color {
         switch self {
-        case .neutral: return DS.Palette.textSub
-        case .accent:  return DS.Palette.accentText
-        case .ok:      return DS.Palette.ok
-        case .warn:    return DS.Palette.warn
-        case .danger:  return DS.Palette.danger
+        case .neutral: return XPalette.textSub
+        case .accent:  return XPalette.accentText
+        case .ok:      return XPalette.ok
+        case .warn:    return XPalette.warn
+        case .danger:  return XPalette.danger
         }
     }
 }
 
-// ---------- 基础组件 ----------
-
-/// 状态胶囊: 底色恒为中性 surfaceAlt, 语义由图标形状 + 图标颜色双通道表达
-/// (颜色不作为唯一信息载体), 因此文字对比度始终达标。
-struct StatusPill: View {
-    let text: String
-    let systemImage: String
-    var tone: ToneColor = .neutral
-
-    var body: some View {
-        // 2026-10-16 晚：变体删掉后只有一套形状（见 VariantGrammar.swift 的 statusPill）。
-        VK().statusPill(text: text, systemImage: systemImage, tone: tone.color)
-    }
-}
 
 /// hero 面上的底板与压纱 (第八十三批): 可读性靠**压暗**背景, 不靠洗白背景。
 /// 原来的玻璃做法是"同色低透明度洗底 + 白字", 前景与底板朝同一方向漂, 实测白字掉到 3.51~3.88:1
@@ -808,383 +795,4 @@ extension DS {
     /// 863 反转档与 heroFg 同源降级为 text —— 淡色压中性浅底只有 1 点几比, 会整个消失。
         @MainActor static func heroTint(_ light: Color) -> Color { AXFlags.invertColors ? Palette.text : light }
 }
-
-/// 玻璃胶囊 (hero 渐变上的专属变体): 压暗底板 + heroFg 字。
-/// 只在 HeroCard 内部使用 — 语义仍由图标形状 + tint 双通道表达。
-/// 默认前景与 HeroStat 同源走 DS.heroFg (第八十一批)：写死 .white 会在反转色模式下
-/// 撞上 863 降级后的浅色 hero，变成白字压白底。
-struct HeroPill: View {
-    let text: String
-    let systemImage: String
-    var tint: Color = DS.heroFg
-
-    var body: some View {
-        HStack(spacing: DS.Space.xs) {
-            Image(systemName: systemImage)
-                .font(.system(size: DS.Icon.xs, weight: .semibold))
-            Text(text)
-                .vkFont(.caption, weight: .medium)
-                .lineLimit(1)
-        }
-        .foregroundStyle(tint)
-        .padding(.horizontal, DS.Space.s + 2)
-        .padding(.vertical, DS.Space.xs + 1)
-        .background(DS.heroPlate, in: Capsule())
-        .overlay(Capsule().strokeBorder(tint.opacity(0.38), lineWidth: 0.5))
-        .fixedSize(horizontal: true, vertical: false)
-    }
-}
-
-/// 指标块: 图标 + 名称 + 数值, 用于电量 / 固件 / 锁钟这类并列读数。
-/// `emphasized` 用来拉开数据层级 — 三块读数若同级, 用户看不出哪个才是关键。
-struct MetricTile: View {
-    let systemImage: String
-    let label: String
-    let value: String
-    var tone: ToneColor = .neutral
-    var emphasized: Bool = true
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: DS.Space.xs) {
-            HStack(spacing: DS.Space.xs) {
-                Image(systemName: systemImage)
-                    .font(.system(size: DS.Icon.sm, weight: .medium))
-                    .foregroundStyle(tone.color)
-                Text(label)
-                    .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .lineLimit(1)
-            }
-            Text(value)
-                .vkFont(emphasized ? .subheadline.weight(.semibold) : .subheadline)
-                .foregroundStyle(emphasized ? DS.Palette.text : DS.Palette.textSub)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-                // 苹方数字是比例宽度: 9%→10% 会让整块宽度跳动, 必须等宽
-                // 663 等宽数字 (原句"财经数字排版"): 读数换值时字宽不跳，与 207 的逐位滚动是一对 ——
-                // 滚动负责"看见变化"，等宽负责"变化时布局不抖"。
-                .monospacedDigit()
-                .fontDesign(DS.Metric.digitDesign)   // 902 数字字体两档: 圆体/默认体走令牌 (设置-外观可切), 中文自动回退苹方
-                // 207 电量数字滚动 = 这一处 contentTransition(.numericText()): 读数换值时逐位滚过去而不是硬跳。
-                // 902 那批撤过"全 App 数字字体"，这里保留**点状**采用 —— 只有会变数的读数才需要它。
-                .contentTransition(.numericText())   // 电量变化时数字滚动而不是硬跳
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, DS.Space.m)
-        .padding(.vertical, DS.Space.s + 2)
-        .variantPlate(DS.Palette.surfaceAlt, .tile)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(label) \(value)")
-    }
-}
-
-/// hero 渐变上的指标块: 前景走 DS.heroFg + 压暗玻璃底 (DS.heroPlate), 是 MetricTile 的主控卡变体。
-/// 数值恒为 heroFg (常规=纯白, 叠层机检 E4 在底板上 ≥7.39:1；反转=随明暗的 text)，标签作辅助视觉
-/// (≥5.40:1, 无障碍由 accessibilityLabel 合并朗读)。
-/// 第八十一批把这里的三处硬编码 `.white` 换成 heroFg；第八十三批再把洗白底板换成压暗底板 ——
-/// 前者防的是 863 降级后的中性浅面 (`DS.heroGradientSafe`) 把白字吞掉，
-/// 后者防的是"白字 + 白@0.14 洗底"两头朝同一方向漂，实测只剩 3.74:1。写死白色等于把 863 的护栏绕过去。
-struct HeroStat: View {
-    let systemImage: String
-    let label: String
-    let value: String
-    var emphasized: Bool = true
-    /// 语义警示 (如低电量) 时染图标; nil 用常规 heroFg
-    var tint: Color? = nil
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: DS.Space.xxs) {
-            HStack(spacing: DS.Space.xs) {
-                Image(systemName: systemImage)
-                    .font(.system(size: DS.Icon.sm, weight: .medium))
-                    .foregroundStyle(tint ?? DS.heroFg.opacity(0.85))
-                Text(label)
-                    .vkFont(.caption2, weight: .medium)
-                    .foregroundStyle(DS.heroFg.opacity(0.8))
-                    .lineLimit(1)
-            }
-            Text(value)
-                .vkFont(emphasized ? .subheadline.weight(.semibold) : .subheadline)
-                .foregroundStyle(DS.heroFg)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-                // 663 等宽数字 (原句"财经数字排版"): 读数换值时字宽不跳，与 207 的逐位滚动是一对 ——
-                // 滚动负责"看见变化"，等宽负责"变化时布局不抖"。
-                .monospacedDigit()
-                .fontDesign(DS.Metric.digitDesign)   // 902 数字字体两档: 与 MetricTile 同一令牌, 一处切换两处同步 (中文自动回退苹方)
-                .contentTransition(.numericText())
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, DS.Space.m)
-        .padding(.vertical, DS.Space.s + 2)
-        .background(DS.heroPlate, in: RoundedRectangle(cornerRadius: DS.Radius.tile, style: .continuous))
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(label) \(value)")
-    }
-}
-
-/// 主控卡: 页面唯一的品牌渐变面, 用光效和投影把视觉权重压在最重要的信息上。
-/// 深浅色共用同一套渐变与白色文字；卡内叠层 (渐变→纹理→柔光→heroScrim) 之后白正文实测 ≥5.11:1
-/// (六套主题 × 明暗 × 最亮端 + 节日色, 机检 tools/contrast.js E4)。
-struct HeroCard<Content: View>: View {
-    var flair: Bool
-    @ViewBuilder var content: Content
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency   // 226: 纯色底 + 描边
-    @State private var drift = false
-    /// `flair` (idea 999): 史诗徽章点亮后 7 天的一圈流光边, 素颜模式不显示
-    init(flair: Bool = false, @ViewBuilder content: () -> Content) {
-        self.flair = flair
-        self.content = content()
-    }
-
-    var body: some View {
-        content
-            .frame(maxWidth: .infinity, alignment: .leading)
-            // 229 左手模式: Hero 卡本体镜像 —— 与 DeviceHomeView 的 barSide(工具条两侧对调)/快捷格 reversed
-            // 同一档 (AXPrefs.lefty)。只翻卡内排列方向, 不动卡外页面结构; 未开左手模式时是恒等值。
-            .environment(\.layoutDirection, AXPrefs.lefty ? .rightToLeft : .leftToRight)
-            .padding(DS.Space.l + DS.Space.xs)
-            .background {
-                ZStack(alignment: .topTrailing) {
-                    // 863 反转保护 + 226 降透明: hero 底的两种降级 (中性渐变 / 纯色) 都收在 DS.heroGradientSafe
-                    RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous)
-                        .fill(DS.heroGradientSafe)
-                    // 889 Hero 纹理三档 (kf_hero_tex)：纯矢量，不引入任何图片资源
-                    // (本 App 除 App 图标外零位图，与 Celebration.swift 的礼花同源都走 Canvas 自绘)。
-                    // 透明度钉在 0.05–0.09 之间 —— 纹理压在 hero 渐变上，而渐变上永远有纯白正文 (≥4.7:1)；
-                    // 再高就会把白字的局部对比拉下来，那是把"好看"换来"看不清"。
-                    DS.HeroTexture(kind: DS.Metric.heroTexture)
-                        .clipShape(RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous))
-                    // 右上一团柔光: 给渐变一个"光源", 缓慢漂移 (±8pt / 9s) 让它活过来,
-                    // 慢到只剩"页面在呼吸"的潜意识感受; reduceMotion 时静止
-                    Circle()
-                        .fill(DS.heroGlow)
-                        .frame(width: 170, height: 170)
-                        .blur(radius: 42)
-                        // 248: 22 点后光源与圆盘同档降峰值
-                        .opacity(DS.isNightDim ? 0.55 : 1)
-                        .offset(x: drift ? 54 : 46, y: drift ? -51 : -44)
-                    // 整幅薄黑纱压在渐变+柔光之上 (第八十三批): 最亮 hero 端上纯白正文只有 4.75~4.80:1,
-                    // 光斑再把局部亮度抬上去就掉出 4.5。纱在上、光在下 ⇒ 光斑处实测仍 ≥5.16:1,
-                    // 观感上只是"渐变更深了一档", 光源感保留。
-                    RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous)
-                        .fill(DS.heroScrim)
-                }
-            }
-            .clipShape(RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous))
-            .overlay {
-                if flair { HeroFlairBorder() }
-                // 226 降透明: 渐变退纯色后补一圈描边, 找回卡片边界 (色走 heroSolidStroke, 反转档自动跟随)
-                if reduceTransparency {
-                    RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous)
-                        .strokeBorder(DS.heroSolidStroke, lineWidth: 1)
-                }
-            }
-            .shadow(color: DS.Palette.accent.opacity(0.30), radius: 18, y: 10)
-            .padding(.horizontal, DS.Space.gutter)
-            .onAppear {
-                guard !reduceMotion else { return }
-                withAnimation(.easeInOut(duration: 9).repeatForever(autoreverses: true)) { drift = true }
-            }
-    }
-}
-
-/// 999 流光边: 品牌渐变描边缓慢呼吸; reduceMotion 时静态常亮
-private struct HeroFlairBorder: View {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var glow = false
-    var body: some View {
-        RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous)
-            .strokeBorder(LinearGradient(colors: [DS.Palette.themed("heroA"), DS.heroFg, DS.Palette.themed("heroB")],
-                                         startPoint: .topLeading, endPoint: .bottomTrailing),
-                          lineWidth: 1.5)
-            .opacity(glow ? 0.9 : 0.45)
-            .allowsHitTesting(false)
-            .accessibilityHidden(true)
-            .onAppear {
-                guard !reduceMotion else { glow = true; return }
-                withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) { glow = true }
-            }
-    }
-}
-
-/// 空状态: 复用系统 ContentUnavailableView, 图标 + 说明 + 主动作三件套齐全,
-/// 避免用户停在无路可走的页面上; 也能自动跟随系统深浅色与动态字体。
-struct EmptyState: View {
-    let systemImage: String
-    let title: String
-    let message: String
-    var actionTitle: String = ""
-    var action: (() -> Void)?
-
-    init(systemImage: String, title: String, message: String) {
-        self.systemImage = systemImage
-        self.title = title
-        self.message = message
-    }
-
-    init(systemImage: String, title: String, message: String, actionTitle: String, action: @escaping () -> Void) {
-        self.systemImage = systemImage
-        self.title = title
-        self.message = message
-        self.actionTitle = actionTitle
-        self.action = action
-    }
-
-    var body: some View {
-        ContentUnavailableView {
-            Label(title, systemImage: systemImage)
-        } description: {
-            Text(message)
-        } actions: {
-            if !actionTitle.isEmpty, let action {
-                Button(actionTitle, action: action)
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-            }
-        }
-        .padding(.vertical, DS.Space.l)
-        .padding(.horizontal, DS.Space.l)
-    }
-}
-
-/// 空态皆引导 (包14: 814 进度点 / 815 双按钮 / 808 示例铺底 / 834 演示链接 / 841 小管家 / 1044 便签):
-/// 空态卡 = 顶部"第 N/M 步"进度圆点 + 小管家顶饰 + 主/次双按钮 + 可选"看 30 秒演示"文字链 + 公告板便签。
-/// 默认值口径 (本轮包14 缺陷整改): mascot 默认开 —— 841 原句是"贯穿**全部**空态"，关掉走素颜模式 (kf_plain) 统一闸；
-/// showDemoLink 默认开 —— 演示链出不出现由 demoAction 决定 (调用方给了动作就上屏，没给就没有)，
-/// 而不是由一个全仓没人置真的旗标决定 (旧写法: showDemoLink 默认 false 且零处置真 ⇒ 834 从未渲染)。
-struct GuidedEmptyView: View {
-    let systemImage: String
-    let title: String
-    let message: String
-    var step: Int = 0                 // 814 当前引导阶段 (0 = 不显示进度点; >0 显示在空态**顶部**, 与原句一致)
-    var stepTotal: Int = 3            // 814 引导总步数 (连锁→录凭证→开门, 与 801 三卡导览同口径)
-    var primaryTitle: String = ""     // 815 主动作
-    var primary: (() -> Void)?
-    var secondaryTitle: String = ""   // 815 次按钮
-    var secondary: (() -> Void)?
-    var showDemoLink: Bool = true     // 834 30 秒演示链接; 传了 demoAction 才可能上屏, 不想要时显式传 false
-    var demoAction: (() -> Void)?
-    var mascot: Bool = true           // 841 小管家顶饰 (素颜模式整体熄灭, 见 DS.Metric.emptyMascot)
-
-    // 自定义 init(systemImage:title:message:) 会顶掉编译器合成的 memberwise init, 于是 step/双按钮/
-    // 演示链/小管家 这族带默认值的参数一个都传不进去 —— 整族成了装饰。删掉它, 用合成 init:
-    // 三个 let 必填, 其余 var 自动带默认值 (调用方按声明顺序选着传)。
-    var body: some View {
-        VStack(spacing: DS.Space.m) {
-            // 814 进度圆点在**顶部** (原句"各 Tab 空态顶部"): 先告诉用户走到哪一步, 再摆内容与动作
-            if step > 0 {
-                HStack(spacing: DS.Space.xs) {
-                    ForEach(0..<stepTotal, id: \.self) { i in
-                        Circle()
-                            .fill(i < step ? DS.Palette.accent : DS.Palette.hairline)
-                            .frame(width: 7, height: 7)
-                    }
-                    Text("第 \(step)/\(stepTotal) 步")
-                        .vkFont(.caption)
-                        .foregroundStyle(DS.Palette.textSub)
-                }
-                .accessibilityLabel("引导阶段 第 \(step) 步, 共 \(stepTotal) 步")
-            }
-            ContentUnavailableView {
-                Label(title, systemImage: systemImage)
-            } description: {
-                Text(message)
-            }
-            if !primaryTitle.isEmpty, let primary {
-                Button(primaryTitle, action: primary)
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-            }
-            if !secondaryTitle.isEmpty, let secondary {
-                Button(secondaryTitle, action: secondary)
-                    .buttonStyle(.bordered)
-                    .controlSize(.large)
-            }
-            // 1044 家庭公告板: 便签也进引导空态 (此前只有设备页/记录页两处直挂, 组件本身不认它)
-            if !Milestones.bulletin.isEmpty {
-                Label("公告: " + Milestones.bulletin, systemImage: "pin.fill")
-                    .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.accentText)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            if let demoAction, showDemoLink {
-                Button("看看它如何工作 (30 秒演示)") { demoAction() }
-                    .vkFont(.footnote, weight: .medium)
-                    .foregroundStyle(DS.Palette.accentText)
-                    .frame(minHeight: DS.Hit.min)
-                    .accessibilityHint("打开演示锁, 完整走一遍添加与开锁")
-            }
-        }
-        .padding(.vertical, DS.Space.l)
-        .padding(.horizontal, DS.Space.l)
-    }
-}
-
-/// 主行动按钮样式: 品牌渐变填充 + 光晕投影, 统一圆角 / 最小高度 50pt。
-/// 文字压渐变两端均 ≥4.5:1 — 浅色白字压 btnA/btnB (hero 同值),
-/// 深色近黑字压 accentText→accent 区间 (包1 修复: 旧深色复用 hero 暗端仅 ~2.4:1)。
-/// 机检: tools/contrast.js 断言表 D 节 (3 主题 × 明暗/纯黑 × 渐变两端)。
-struct PrimaryActionStyle: ButtonStyle {
-    var fullWidth: Bool = true
-    func makeBody(configuration: Configuration) -> some View {
-        // 2026-10-16 P1 批二: 外形交给语法层 (一处定义、两套各一份)，本结构只负责把 Button 的
-        // 状态 (pressed / fullWidth) 递下去。legacy 分支是原实现的**逐字**拷贝 ⇒ 现行界面零变化。
-        // 改这里等于同时改全仓 29 处主按钮 —— 这就是选它当杠杆的理由。
-        VK.current.primaryActionChrome(fullWidth: fullWidth, pressed: configuration.isPressed) {
-            configuration.label
-        }
-    }
-}
-
-/// 次级按钮样式 (描边)
-struct SecondaryActionStyle: ButtonStyle {
-    var fullWidth: Bool = true
-    /// 底色染料的来源。默认就是原来那个 `accentText` —— 传参只是为了不改 legacy 像素。
-    var tint: Color = DS.Palette.accentText
-    func makeBody(configuration: Configuration) -> some View {
-        // 2026-10-16 P1 批二: 同 PrimaryActionStyle，外形交给语法层。
-        VK.current.secondaryActionChrome(fullWidth: fullWidth, pressed: configuration.isPressed, tint: tint) {
-            configuration.label
-        }
-    }
-}
-
-/// 破坏性按钮样式 (红字描边)
-struct DestructiveActionStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        // 2026-10-16 P1 批二: 同 PrimaryActionStyle，外形交给语法层。
-        VK.current.destructiveActionChrome(pressed: configuration.isPressed) {
-            configuration.label
-        }
-    }
-}
-
-/// 忙碌态按钮: 自动显示菊花并禁用, 杜绝重复触发
-struct BusyButton: View {
-    let title: String
-    var systemImage: String?
-    var isBusy: Bool
-    var disabled: Bool = false
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: DS.Space.s) {
-                if isBusy {
-                    ProgressView().controlSize(.small)
-                } else if let systemImage {
-                    Image(systemName: systemImage).font(.system(size: DS.Icon.sm, weight: .semibold))
-                }
-                Text(isBusy ? "处理中…" : title)
-            }
-        }
-        .buttonStyle(PrimaryActionStyle())
-        .disabled(isBusy || disabled)
-        // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 16.5pt (< 44)。
-        // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
-        .frame(minHeight: DS.Hit.min)
-        .contentShape(Rectangle())
-    }
-}
+

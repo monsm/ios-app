@@ -140,10 +140,10 @@ struct FirmwarePage: View {
     private func versionPill(_ label: String, _ value: String, tone: XToneColor) -> some View {
         VStack(spacing: XSpace.xxs) {
             Text(label)
-                .vkFont(.caption2)
+                .xFont(.caption2)
                 .foregroundStyle(XPalette.textSub)
             Text(value)
-                .vkFont(.title3, weight: .semibold)
+                .xFont(.title3, weight: .semibold)
                 .monospacedDigit()
                 .foregroundStyle(tone == .neutral ? XPalette.text : tone.color)
         }
@@ -171,13 +171,13 @@ struct FirmwarePage: View {
                         .foregroundStyle(XPalette.accentText)
                         .accessibilityHidden(true)
                     Text(p.sourceName)
-                        .vkFont(.body, weight: .medium)
+                        .xFont(.body, weight: .medium)
                         .foregroundStyle(XPalette.text)
                         .lineLimit(1)
                     Spacer()
                 }
                 Text("\(sizeText(p.binSize + p.datSize))\(p.version.map { " · v\($0)" } ?? "")")
-                    .vkFont(.caption)
+                    .xFont(.caption)
                     .foregroundStyle(XPalette.textSub)
             }
         }
@@ -199,16 +199,16 @@ struct FirmwarePage: View {
                          title: "蓝牙已开启",
                          detail: bleSvc.isPoweredOn ? "已就绪" : "请在系统设置里打开蓝牙")
 
-                VariantToggle("已生成升级前备份", isOn: $tickBackup)
-                    .vkFont(.footnote)
+                XToggle("已生成升级前备份", isOn: $tickBackup)
+                    .xFont(.footnote)
                 if !tickBackup {
                     Text("上次备份: \(lastBackupText) — 建议先到「备份」页导出一份")
-                        .vkFont(.caption2)
+                        .xFont(.caption2)
                         .foregroundStyle(XPalette.warn)
                 }
 
-                VariantToggle("时间充足, 不会中途离开", isOn: $tickTime)
-                    .vkFont(.footnote)
+                XToggle("时间充足, 不会中途离开", isOn: $tickTime)
+                    .xFont(.footnote)
             }
         }
     }
@@ -221,10 +221,10 @@ struct FirmwarePage: View {
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
                 Text(title)
-                    .vkFont(.footnote, weight: .medium)
+                    .xFont(.footnote, weight: .medium)
                     .foregroundStyle(XPalette.text)
                 Text(detail)
-                    .vkFont(.caption2)
+                    .xFont(.caption2)
                     .foregroundStyle(ok ? XPalette.textSub : XPalette.danger)
             }
             Spacer(minLength: 0)
@@ -240,7 +240,7 @@ struct FirmwarePage: View {
                 .foregroundStyle(XPalette.accentText)
                 .accessibilityHidden(true)
             Text(text)
-                .vkFont(.subheadline, weight: .medium)
+                .xFont(.subheadline, weight: .medium)
                 .foregroundStyle(XPalette.text)
             Spacer()
         }
@@ -269,7 +269,7 @@ struct FirmwarePage: View {
 
             if !checklistOk {
                 Text("请先完成上方全部检查项, 并选择固件包")
-                    .vkFont(.caption2)
+                    .xFont(.caption2)
                     .foregroundStyle(XPalette.textSub)
                     .multilineTextAlignment(.center)
             }
@@ -324,11 +324,11 @@ struct FirmwarePage: View {
 
                 VStack(spacing: 2) {
                     Text("\(Int(pct))%")
-                        .vkFont(.title, weight: .semibold)
+                        .xFont(.title, weight: .semibold)
                         .monospacedDigit()
                         .foregroundStyle(XPalette.text)
                     Text(stageName)
-                        .vkFont(.caption)
+                        .xFont(.caption)
                         .foregroundStyle(XPalette.textSub)
                 }
             }
@@ -352,18 +352,18 @@ struct FirmwarePage: View {
             HStack(spacing: XSpace.l) {
                 if !remainText.isEmpty {
                     Text(remainText)
-                        .vkFont(.footnote.monospacedDigit())
+                        .xFont(.footnote.monospacedDigit())
                         .foregroundStyle(XPalette.textSub)
                 }
                 if rate > 0 {
                     Text(String(format: "%.1f %%/s", rate))
-                        .vkFont(.footnote.monospacedDigit())
+                        .xFont(.footnote.monospacedDigit())
                         .foregroundStyle(XPalette.textTertiary)
                 }
             }
 
             Text("升级中请勿锁屏或离开本页")
-                .vkFont(.footnote)
+                .xFont(.footnote)
                 .foregroundStyle(XPalette.warn)
                 .multilineTextAlignment(.center)
         }
@@ -399,7 +399,7 @@ struct FirmwarePage: View {
                     }
                 )
             Text(label)
-                .vkFont(.caption2, weight: current ? .semibold : .regular)
+                .xFont(.caption2, weight: current ? .semibold : .regular)
                 .foregroundStyle(done || current ? XPalette.text : XPalette.textTertiary)
         }
     }
@@ -415,10 +415,10 @@ struct FirmwarePage: View {
                     .font(.system(size: XMetric.decorIcon(48), weight: .light))
                     .foregroundStyle(XPalette.danger)
                 Text("升级失败")
-                    .vkFont(.headline)
+                    .xFont(.headline)
                     .foregroundStyle(XPalette.text)
                 Text(failReason.isEmpty ? "未提供原因" : failReason)
-                    .vkFont(.footnote)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
@@ -443,7 +443,7 @@ struct FirmwarePage: View {
                 sectionTitle("批量结果", icon: "square.stack.3d.up")
                 if !queueNote.isEmpty {
                     Text(queueNote)
-                        .vkFont(.footnote)
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.text)
                 }
                 ForEach(Array(queueOutcomes.enumerated()), id: \.offset) { _, o in
@@ -452,12 +452,12 @@ struct FirmwarePage: View {
                             .font(.system(size: XIcon.xs, weight: .medium))
                             .foregroundStyle(o.ok ? XPalette.ok : XPalette.danger)
                         Text(o.mac)
-                            .vkFont(.caption.monospaced())
+                            .xFont(.caption.monospaced())
                             .foregroundStyle(XPalette.textSub)
                         Spacer(minLength: 0)
                         if !o.ok, !o.note.isEmpty {
                             Text(o.note)
-                                .vkFont(.caption2)
+                                .xFont(.caption2)
                                 .foregroundStyle(XPalette.danger)
                                 .lineLimit(1)
                         }
@@ -485,10 +485,10 @@ struct FirmwarePage: View {
                                     .foregroundStyle(r.ok ? XPalette.ok : XPalette.danger)
                                 VStack(alignment: .leading, spacing: 1) {
                                     Text("\(r.from.isEmpty ? "—" : r.from) → \(r.to)")
-                                        .vkFont(.caption.monospaced())
+                                        .xFont(.caption.monospaced())
                                         .foregroundStyle(XPalette.text)
                                     Text(dateShort(r.at))
-                                        .vkFont(.caption2)
+                                        .xFont(.caption2)
                                         .foregroundStyle(XPalette.textTertiary)
                                 }
                                 Spacer(minLength: 0)

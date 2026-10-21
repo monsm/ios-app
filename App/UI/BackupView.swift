@@ -38,8 +38,8 @@ struct BackupView: View {
             studioSection
         }
         .navigationTitle("备份与恢复")
-        .variantList()
-        .dsScreenBackground()
+        .xList()
+        .xScreen()
         .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
     }
 
@@ -66,9 +66,9 @@ struct BackupView: View {
     private var exportSection: some View {
         Section("全量备份") {
             Text("导出全部门锁、钥匙、密码台账与家人档案为一整段文本 (含敏感密钥, 请妥善保管)。")
-                .vkFont(.caption).foregroundStyle(XPalette.textSub)
+                .xFont(.caption).foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
-            BusyButton(title: "生成备份文本", systemImage: "doc.text", isBusy: false) {
+            XBusyButton(title: "生成备份文本", systemImage: "doc.text", busy: false) {
                 Milestones.recordBackup()   // 980 备份卫士
                 exportText = BackupCanonical.exportText(BackupKit.collectAll())
                 BackupStudio.markExportSize(exportText)   // 193: 记本次尺寸, 下次预估行对比用
@@ -82,9 +82,9 @@ struct BackupView: View {
                         .font(.system(size: XIcon.md))
                         .foregroundStyle(XPalette.accentText)
                     VStack(alignment: .leading, spacing: XSpace.xxs) {
-                        Text("还没有备份").vkFont(.subheadline, weight: .medium)   // 822 还没有备份
+                        Text("还没有备份").xFont(.subheadline, weight: .medium)   // 822 还没有备份
                         Text("本机从未生成过备份文本，也没有上传成功记录。手机丢失或重装即不可恢复。")
-                            .vkFont(.caption).foregroundStyle(XPalette.textSub)
+                            .xFont(.caption).foregroundStyle(XPalette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -92,24 +92,24 @@ struct BackupView: View {
             } else if let at = Milestones.lastBackupAt {
                 VStack(alignment: .leading, spacing: XSpace.xxs) {
                     Text("上次备份 " + at.formatted(date: .abbreviated, time: .shortened))   // 822 上次备份
-                        .vkFont(.caption).foregroundStyle(XPalette.textSub)
+                        .xFont(.caption).foregroundStyle(XPalette.textSub)
                     // 822 建议备份时间: 读「备份工作室」的节奏档 (198 的 kf_bk_cadence, 本处为它的读方),
                     // 到期与否按上次备份时刻实算; 节奏为「仅手动」时不建议 —— 没有节奏就没有"到期"这一说。
                     if let tip = Self.backupDueTip(cadence: BackupStudio.cadence, last: at) {
-                        Text(tip).vkFont(.caption).foregroundStyle(XPalette.textSub)
+                        Text(tip).xFont(.caption).foregroundStyle(XPalette.textSub)
                     }
                     // 193 体积预估: 本次预计 vs 上次实际 (备份工作室同样一行, 这里补全量导出入口的对照)
                     if let est = BackupStudio.estimateBytes() {
-                        Text(BackupStudio.sizeText(est)).vkFont(.caption).foregroundStyle(XPalette.textSub)
+                        Text(BackupStudio.sizeText(est)).xFont(.caption).foregroundStyle(XPalette.textSub)
                     }
                 }
             }
             if !exportText.isEmpty {
                 VStack(alignment: .leading, spacing: XSpace.s) {
                     Text("共 \(exportText.count) 字符")
-                        .vkFont(.caption).foregroundStyle(XPalette.textSub)
+                        .xFont(.caption).foregroundStyle(XPalette.textSub)
                     Text(exportText)
-                        .vkFont(.caption.monospaced())
+                        .xFont(.caption.monospaced())
                         .lineLimit(8).truncationMode(.tail)
                         .textSelection(.enabled) // 也可手动复制
                     ShareLink(item: exportText, preview: SharePreview("离线锁管家备份"))
@@ -123,10 +123,10 @@ struct BackupView: View {
     private var importSection: some View {
         Section("导入恢复") {
             Text("粘贴备份文本后导入。相同设备将覆盖, 其它设备保留 (门锁无需重置)。")
-                .vkFont(.caption).foregroundStyle(XPalette.textSub)
+                .xFont(.caption).foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             TextField("粘贴备份文本", text: $importText, axis: .vertical)
-                .vkFont(.caption.monospaced())
+                .xFont(.caption.monospaced())
                 .lineLimit(3...6)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
@@ -205,13 +205,13 @@ struct BackupView: View {
                 showStudio = true
             } label: {
                 Label("打开备份工作室", systemImage: "wrench.and.scissors")
-                    .vkFont(.subheadline, weight: .semibold)
+                    .xFont(.subheadline, weight: .semibold)
                     .foregroundStyle(XPalette.accentText)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .frame(minHeight: XHit.min)
             }
             Text("导出向导 · 恢复预演 · 完整性信任。")
-                .vkFont(.caption).foregroundStyle(XPalette.textSub)
+                .xFont(.caption).foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }

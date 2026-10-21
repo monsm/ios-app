@@ -87,7 +87,7 @@ struct DoorFront: View {
             // ── 顶部: 锁名 + 翻面按钮 ──
             HStack {
                 Text(lockName)
-                    .vkFont(.headline)
+                    .xFont(.headline)
                     .foregroundStyle(XPalette.text)
                 Spacer()
             }
@@ -120,14 +120,14 @@ struct DoorFront: View {
             // ── 状态行 ──
             VStack(spacing: XSpace.xs) {
                 Text(statusLine)
-                    .vkFont(.title3, weight: .medium)
+                    .xFont(.title3, weight: .medium)
                     .foregroundStyle(XPalette.text)
                     .contentTransition(.numericText())
                     .animation(XMotion.quick, value: statusLine)
 
                 if let sub = subLine {
                     Text(sub)
-                        .vkFont(.footnote)
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.textSub)
                 }
             }
@@ -196,7 +196,7 @@ struct DoorFront: View {
                 Image(systemName: isPressing ? "lock.open.fill" : "hand.tap.fill")
                     .font(.system(size: XIcon.sm, weight: .medium))
                 Text(isPressing ? "继续按住…" : "按住开锁")
-                    .vkFont(.body, weight: .semibold)
+                    .xFont(.body, weight: .semibold)
             }
             .foregroundStyle(isPressing ? XPalette.accentText : XPalette.text)
         }
@@ -228,7 +228,7 @@ struct DoorFront: View {
             .padding(.horizontal, XSpace.xl)
 
             Text(stage.label)
-                .vkFont(.caption)
+                .xFont(.caption)
                 .foregroundStyle(XPalette.textSub)
         }
         .accessibilityElement(children: .combine)

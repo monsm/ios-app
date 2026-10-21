@@ -139,12 +139,12 @@ struct AddLockPage: View {
                                 .foregroundStyle(XPalette.onAccent)
                         } else {
                             Text("\(i + 1)")
-                                .vkFont(.caption, weight: .semibold)
+                                .xFont(.caption, weight: .semibold)
                                 .foregroundStyle(current ? XPalette.accentText : XPalette.textTertiary)
                         }
                     }
                     Text(stepNames[i])
-                        .vkFont(.caption2, weight: current ? .semibold : .regular)
+                        .xFont(.caption2, weight: current ? .semibold : .regular)
                         .foregroundStyle(done ? XPalette.text
                                          : (current ? XPalette.accentText : XPalette.textTertiary))
                 }
@@ -191,12 +191,12 @@ struct AddLockPage: View {
             .accessibilityHidden(true)
 
             Text(scanning ? "正在搜索门锁…" : (devices.isEmpty ? "附近没有发现门锁" : "发现 \(devices.count) 把锁"))
-                .vkFont(.headline)
+                .xFont(.headline)
                 .foregroundStyle(XPalette.text)
                 .contentTransition(.opacity)
 
             Text("请让门锁上电, 并靠近手机 1 米内")
-                .vkFont(.footnote)
+                .xFont(.footnote)
                 .foregroundStyle(XPalette.textSub)
                 .multilineTextAlignment(.center)
 
@@ -248,11 +248,11 @@ struct AddLockPage: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(d.name.isEmpty ? "未知设备" : d.name)
-                        .vkFont(.body, weight: .medium)
+                        .xFont(.body, weight: .medium)
                         .foregroundStyle(XPalette.text)
                         .lineLimit(1)
                     Text(lockMac == nil ? "广播无 MAC" : display)
-                        .vkFont(.caption.monospaced())
+                        .xFont(.caption.monospaced())
                         .foregroundStyle(XPalette.textSub)
                 }
 
@@ -304,11 +304,11 @@ struct AddLockPage: View {
                 .padding(.top, XSpace.xl)
 
             Text(step == 1 ? "正在校验门锁…" : "正在初始化…")
-                .vkFont(.headline)
+                .xFont(.headline)
                 .foregroundStyle(XPalette.text)
 
             Text("请保持手机靠近门锁, 不要锁屏")
-                .vkFont(.footnote)
+                .xFont(.footnote)
                 .foregroundStyle(XPalette.textSub)
 
             // 7 步日志
@@ -319,7 +319,7 @@ struct AddLockPage: View {
                             .font(.system(size: XIcon.xs, weight: .bold))
                             .foregroundStyle(XPalette.ok)
                         Text(s)
-                            .vkFont(.caption.monospaced())
+                            .xFont(.caption.monospaced())
                             .foregroundStyle(XPalette.textSub)
                         Spacer(minLength: 0)
                     }
@@ -354,11 +354,11 @@ struct AddLockPage: View {
             .padding(.top, XSpace.l)
 
             Text("配网成功")
-                .vkFont(.title2, weight: .semibold)
+                .xFont(.title2, weight: .semibold)
                 .foregroundStyle(XPalette.text)
 
             Text("给这把锁起个名字, 方便以后区分")
-                .vkFont(.footnote)
+                .xFont(.footnote)
                 .foregroundStyle(XPalette.textSub)
 
             XPanel(kind: .group) {
@@ -380,10 +380,10 @@ struct AddLockPage: View {
     private func labeledField(_ label: String, text: Binding<String>, placeholder: String) -> some View {
         VStack(alignment: .leading, spacing: XSpace.xs) {
             Text(label)
-                .vkFont(.caption)
+                .xFont(.caption)
                 .foregroundStyle(XPalette.textSub)
             TextField(placeholder, text: text)
-                .vkFont(.body)
+                .xFont(.body)
                 .autocorrectionDisabled()
                 .padding(XSpace.s)
                 .background(XPalette.surfaceSunken,
@@ -403,11 +403,11 @@ struct AddLockPage: View {
                 .padding(.top, XSpace.xxl)
 
             Text("已添加")
-                .vkFont(.title, weight: .semibold)
+                .xFont(.title, weight: .semibold)
                 .foregroundStyle(XPalette.text)
 
             Text(nickname)
-                .vkFont(.subheadline)
+                .xFont(.subheadline)
                 .foregroundStyle(XPalette.textSub)
 
             Button("完成") { dismiss() }
@@ -422,7 +422,7 @@ struct AddLockPage: View {
                 .font(.system(size: XIcon.sm, weight: .semibold))
                 .foregroundStyle(XPalette.danger)
             Text(pairError)
-                .vkFont(.footnote)
+                .xFont(.footnote)
                 .foregroundStyle(XPalette.danger)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)

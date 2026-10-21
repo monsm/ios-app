@@ -117,7 +117,7 @@ struct AddKeyPage: View {
                 Image(systemName: pwdOK ? "checkmark.circle.fill" : "info.circle")
                     .font(.system(size: XIcon.xs, weight: .semibold))
                 Text(pwdHint)
-                    .vkFont(.footnote)
+                    .xFont(.footnote)
             }
             .foregroundStyle(pwdOK ? XPalette.accentText : XPalette.textSub)
             .animation(XMotion.quick, value: pwdOK)
@@ -145,7 +145,7 @@ struct AddKeyPage: View {
 
             if filled {
                 Text(ch)
-                    .vkFont(.title, weight: .semibold)
+                    .xFont(.title, weight: .semibold)
                     .monospacedDigit()
                     .foregroundStyle(XPalette.accentText)
                     .transition(.asymmetric(
@@ -184,7 +184,7 @@ struct AddKeyPage: View {
                         .foregroundStyle(XPalette.accentText)
                         .accessibilityHidden(true)
                     Text("有效期")
-                        .vkFont(.subheadline, weight: .medium)
+                        .xFont(.subheadline, weight: .medium)
                         .foregroundStyle(XPalette.text)
                     Spacer()
                 }
@@ -198,9 +198,9 @@ struct AddKeyPage: View {
                 if !permanent {
                     VStack(spacing: XSpace.s) {
                         DatePicker("生效", selection: $fromDate, displayedComponents: .date)
-                            .vkFont(.subheadline)
+                            .xFont(.subheadline)
                         DatePicker("到期", selection: $toDate, displayedComponents: .date)
-                            .vkFont(.subheadline)
+                            .xFont(.subheadline)
                     }
                     .transition(.opacity.combined(with: .move(edge: .top)))
                 }
@@ -222,7 +222,7 @@ struct AddKeyPage: View {
                         .foregroundStyle(XPalette.accentText)
                         .accessibilityHidden(true)
                     Text("归属")
-                        .vkFont(.subheadline, weight: .medium)
+                        .xFont(.subheadline, weight: .medium)
                         .foregroundStyle(XPalette.text)
                     Spacer()
                 }
@@ -238,8 +238,8 @@ struct AddKeyPage: View {
                 }
                 .scrollIndicators(.hidden)
 
-                VariantToggle("备注自动填命名模板", isOn: $useTemplate)
-                    .vkFont(.footnote)
+                XToggle("备注自动填命名模板", isOn: $useTemplate)
+                    .xFont(.footnote)
             }
         }
     }
@@ -251,7 +251,7 @@ struct AddKeyPage: View {
             XHaptics.tick.impactOccurred()
         } label: {
             Text(label)
-                .vkFont(.footnote, weight: selected ? .semibold : .regular)
+                .xFont(.footnote, weight: selected ? .semibold : .regular)
                 .foregroundStyle(selected ? XPalette.onAccent : XPalette.text)
                 .padding(.horizontal, XSpace.m)
                 .padding(.vertical, XSpace.s)
@@ -294,7 +294,7 @@ struct AddKeyPage: View {
             .disabled(!pwdOK || busy)
 
             Text("请将手机靠近门锁 · 添加成功后密码会登记到本机台账")
-                .vkFont(.caption2)
+                .xFont(.caption2)
                 .foregroundStyle(XPalette.textSub)
                 .multilineTextAlignment(.center)
         }

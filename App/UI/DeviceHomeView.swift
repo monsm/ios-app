@@ -12,7 +12,7 @@ struct SyncTimeView: View {
     @State private var result = ""
     @State private var failed = false
 
-    private var resultTone: ToneColor { failed ? .danger : .ok }
+    private var resultTone: XToneColor { failed ? .danger : .ok }
 
     var body: some View { vkBody.destined(.syncTime) }
     var vkBody: some View {
@@ -20,7 +20,7 @@ struct SyncTimeView: View {
             Section {
                 if app.current != nil {
                     Text("将手机时间同步到门锁内 (cmd 0E)。校准前会先读锁钟并补偿偏差。")
-                        .vkFont(.footnote)
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.textSub)
                     LabeledRow("锁钟", app.status?.lockTime.map { ProtoTime.localStr($0) } ?? "—")
                     LabeledRow("手机时间", DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .medium))
@@ -31,15 +31,15 @@ struct SyncTimeView: View {
                 Text("同步时间")
             }
             Section {
-                BusyButton(title: "将手机时间同步到锁内",
+                XBusyButton(title: "将手机时间同步到锁内",
                            systemImage: "clock.arrow.circlepath",
-                           isBusy: busy,
+                           busy: busy,
                            disabled: app.current == nil) {
                     Task { await run() }
                 }
                 if !result.isEmpty {
                     Label(result, systemImage: failed ? "xmark.octagon.fill" : "checkmark.circle.fill")
-                        .vkFont(.footnote)
+                        .xFont(.footnote)
                         .foregroundStyle(resultTone.color)
                 }
             } footer: {
@@ -47,8 +47,8 @@ struct SyncTimeView: View {
             }
         }
         .navigationTitle("同步时间")
-        .variantList()
-        .dsScreenBackground()
+        .xList()
+        .xScreen()
     }
 
     private func run() async {
@@ -95,7 +95,7 @@ struct LabeledRow: View {
                 .lineLimit(2) // MAC/时间等长值换行而不是溢出
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .vkFont(.subheadline)
+        .xFont(.subheadline)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label) \(value)")
     }

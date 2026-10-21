@@ -79,23 +79,23 @@ struct GatewayPage: View {
                 .accessibilityHidden(true)
 
                 Text("先把网关重置")
-                    .vkFont(.title3, weight: .semibold)
+                    .xFont(.title3, weight: .semibold)
                     .foregroundStyle(XPalette.text)
 
                 Text("接通电源 → 长捅重置孔约 5 秒 → 等待指示灯变成橙色")
-                    .vkFont(.footnote)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Divider().overlay(XPalette.hairline)
 
-                VariantToggle("指示灯已变成橙色", isOn: $confirmed)
-                    .vkFont(.body)
+                XToggle("指示灯已变成橙色", isOn: $confirmed)
+                    .xFont(.body)
 
                 if !confirmed {
                     Text("勾选后进入下一步")
-                        .vkFont(.caption2)
+                        .xFont(.caption2)
                         .foregroundStyle(XPalette.textTertiary)
                 }
             }
@@ -116,14 +116,14 @@ struct GatewayPage: View {
                         .foregroundStyle(XPalette.accentText)
                         .accessibilityHidden(true)
                     Text("配置 WiFi")
-                        .vkFont(.subheadline, weight: .medium)
+                        .xFont(.subheadline, weight: .medium)
                         .foregroundStyle(XPalette.text)
                     Spacer()
                     Button {
                         withAnimation(XMotion.soft) { confirmed = false }
                     } label: {
                         Text("上一步")
-                            .vkFont(.caption)
+                            .xFont(.caption)
                             .foregroundStyle(XPalette.accentText)
                     }
                     .disabled(running)
@@ -146,7 +146,7 @@ struct GatewayPage: View {
     private func field(_ label: String, text: Binding<String>, placeholder: String, secure: Bool) -> some View {
         VStack(alignment: .leading, spacing: XSpace.xs) {
             Text(label)
-                .vkFont(.caption)
+                .xFont(.caption)
                 .foregroundStyle(XPalette.textSub)
             Group {
                 if secure {
@@ -156,7 +156,7 @@ struct GatewayPage: View {
                         .textInputAutocapitalization(.never)
                 }
             }
-            .vkFont(.body)
+            .xFont(.body)
             .autocorrectionDisabled()
             .padding(XSpace.s)
             .background(XPalette.surfaceSunken,
@@ -172,7 +172,7 @@ struct GatewayPage: View {
         XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: XSpace.s) {
                 Text("配网进度")
-                    .vkFont(.subheadline, weight: .medium)
+                    .xFont(.subheadline, weight: .medium)
                     .foregroundStyle(XPalette.textSub)
 
                 ForEach(Array(steps.enumerated()), id: \.offset) { i, s in
@@ -191,7 +191,7 @@ struct GatewayPage: View {
                         .padding(.top, 5)
 
                         Text(s)
-                            .vkFont(.caption.monospaced())
+                            .xFont(.caption.monospaced())
                             .foregroundStyle(XPalette.text)
                             .fixedSize(horizontal: false, vertical: true)
 
@@ -206,7 +206,7 @@ struct GatewayPage: View {
                             .font(.system(size: XIcon.xs, weight: .semibold))
                             .foregroundStyle(XPalette.danger)
                         Text(error)
-                            .vkFont(.caption)
+                            .xFont(.caption)
                             .foregroundStyle(XPalette.danger)
                             .fixedSize(horizontal: false, vertical: true)
                         Spacer(minLength: 0)
@@ -241,10 +241,10 @@ struct GatewayPage: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(g.name.isEmpty ? "智能网关" : g.name)
-                        .vkFont(.body, weight: .medium)
+                        .xFont(.body, weight: .medium)
                         .foregroundStyle(XPalette.text)
                     Text(online ? "已联网" : "未联网")
-                        .vkFont(.caption)
+                        .xFont(.caption)
                         .foregroundStyle(online ? XPalette.ok : XPalette.textSub)
                 }
 
@@ -285,10 +285,10 @@ struct GatewayPage: View {
     private func readPair(_ label: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 1) {
             Text(label)
-                .vkFont(.caption2)
+                .xFont(.caption2)
                 .foregroundStyle(XPalette.textTertiary)
             Text(value)
-                .vkFont(.caption.monospaced())
+                .xFont(.caption.monospaced())
                 .foregroundStyle(XPalette.text)
                 .lineLimit(1)
         }
@@ -302,10 +302,10 @@ struct GatewayPage: View {
                 .foregroundStyle(XPalette.textTertiary)
                 .accessibilityHidden(true)
             Text("还没有添加网关")
-                .vkFont(.headline)
+                .xFont(.headline)
                 .foregroundStyle(XPalette.text)
             Text("先在上方重置网关并勾选指示灯状态, 再回来配网")
-                .vkFont(.footnote)
+                .xFont(.footnote)
                 .foregroundStyle(XPalette.textSub)
                 .multilineTextAlignment(.center)
         }

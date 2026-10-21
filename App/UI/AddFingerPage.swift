@@ -124,7 +124,7 @@ struct AddFingerPage: View {
                 VStack {
                     Spacer()
                     Text("\(min(presses.count, total)) / \(total)")
-                        .vkFont(.title3, weight: .semibold)
+                        .xFont(.title3, weight: .semibold)
                         .monospacedDigit()
                         .foregroundStyle(presses.isEmpty ? XPalette.textSub : XPalette.accentText)
                         .offset(y: 120)
@@ -138,13 +138,13 @@ struct AddFingerPage: View {
 
             VStack(spacing: XSpace.xs) {
                 Text(progressText)
-                    .vkFont(.headline)
+                    .xFont(.headline)
                     .foregroundStyle(XPalette.text)
                     .contentTransition(.opacity)
                     .animation(XMotion.soft, value: presses.count)
 
                 Text("将手指按在门锁指纹头上, 重复 8 次")
-                    .vkFont(.footnote)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
                     .multilineTextAlignment(.center)
             }
@@ -170,7 +170,7 @@ struct AddFingerPage: View {
                         .foregroundStyle(XPalette.accentText)
                         .accessibilityHidden(true)
                     Text("这枚指纹属于谁")
-                        .vkFont(.subheadline, weight: .medium)
+                        .xFont(.subheadline, weight: .medium)
                         .foregroundStyle(XPalette.text)
                     Spacer()
                 }
@@ -195,7 +195,7 @@ struct AddFingerPage: View {
             XHaptics.tick.impactOccurred()
         } label: {
             Text(label)
-                .vkFont(.footnote, weight: selected ? .semibold : .regular)
+                .xFont(.footnote, weight: selected ? .semibold : .regular)
                 .foregroundStyle(selected ? XPalette.onAccent : XPalette.text)
                 .padding(.horizontal, XSpace.m)
                 .padding(.vertical, XSpace.s)
@@ -214,7 +214,7 @@ struct AddFingerPage: View {
         VStack(spacing: XSpace.m) {
             if busy {
                 Text("正在与门锁通信…")
-                    .vkFont(.footnote)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
             }
 
@@ -231,7 +231,7 @@ struct AddFingerPage: View {
 
             if owner == nil {
                 Text("请先选择归属再录入")
-                    .vkFont(.caption2)
+                    .xFont(.caption2)
                     .foregroundStyle(XPalette.warn)
             }
         }
@@ -244,7 +244,7 @@ struct AddFingerPage: View {
                 .foregroundStyle(XPalette.danger)
                 .accessibilityHidden(true)
             Text(error)
-                .vkFont(.footnote)
+                .xFont(.footnote)
                 .foregroundStyle(XPalette.danger)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
@@ -271,11 +271,11 @@ struct AddFingerPage: View {
             .transition(.scale(scale: 0.8).combined(with: .opacity))
 
             Text("添加成功")
-                .vkFont(.title2, weight: .semibold)
+                .xFont(.title2, weight: .semibold)
                 .foregroundStyle(XPalette.text)
 
             Text("请用这枚新指纹开一次锁, 确认它能用")
-                .vkFont(.footnote)
+                .xFont(.footnote)
                 .foregroundStyle(XPalette.textSub)
                 .multilineTextAlignment(.center)
 

@@ -77,7 +77,7 @@ struct StatsPage: View {
         return XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 Text("安全")
-                    .vkFont(.subheadline, weight: .medium)
+                    .xFont(.subheadline, weight: .medium)
                     .foregroundStyle(XPalette.textSub)
 
                 HStack(spacing: XSpace.l) {
@@ -110,7 +110,7 @@ struct StatsPage: View {
         return XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 Text("一天里的开门分布")
-                    .vkFont(.subheadline, weight: .medium)
+                    .xFont(.subheadline, weight: .medium)
                     .foregroundStyle(XPalette.textSub)
 
                 Chart {
@@ -128,7 +128,7 @@ struct StatsPage: View {
                         AxisValueLabel {
                             if let h = v.as(Int.self) {
                                 Text("\(h)时")
-                                    .vkFont(.caption2)
+                                    .xFont(.caption2)
                                     .foregroundStyle(XPalette.textSub)
                             }
                         }
@@ -140,7 +140,7 @@ struct StatsPage: View {
 
                 if let peak = buckets.max(by: { $0.opens < $1.opens }), peak.opens > 0 {
                     Text("最常在 \(peak.hour) 时开门")
-                        .vkFont(.caption)
+                        .xFont(.caption)
                         .foregroundStyle(XPalette.textSub)
                 }
             }
@@ -156,7 +156,7 @@ struct StatsPage: View {
         return XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 Text("近 14 天")
-                    .vkFont(.subheadline, weight: .medium)
+                    .xFont(.subheadline, weight: .medium)
                     .foregroundStyle(XPalette.textSub)
 
                 Chart {
@@ -196,10 +196,10 @@ struct StatsPage: View {
                     .foregroundStyle(XPalette.textTertiary)
                     .accessibilityHidden(true)
                 Text("样本不足")
-                    .vkFont(.headline)
+                    .xFont(.headline)
                     .foregroundStyle(XPalette.text)
                 Text(degradedDetail(m))
-                    .vkFont(.footnote)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)

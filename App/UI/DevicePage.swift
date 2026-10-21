@@ -64,7 +64,7 @@ struct DevicePage: View {
                 // 锁名 + 连接状态
                 HStack(alignment: .firstTextBaseline, spacing: XSpace.s) {
                     Text(kc.map { LockArchive.displayName($0) } ?? "未选择门锁")
-                        .vkFont(.title2, weight: .semibold)
+                        .xFont(.title2, weight: .semibold)
                         .foregroundStyle(XPalette.text)
                         .lineLimit(1)
 
@@ -76,7 +76,7 @@ struct DevicePage: View {
                 // 连接详情
                 if let detail = connectionDetail {
                     Text(detail)
-                        .vkFont(.footnote)
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.textSub)
                 }
 
@@ -135,11 +135,11 @@ struct DevicePage: View {
     private func readingItem(value: String, label: String, tone: XToneColor) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(value)
-                .vkFont(.title3, weight: .semibold)
+                .xFont(.title3, weight: .semibold)
                 .monospacedDigit()
                 .foregroundStyle(tone == .neutral ? XPalette.text : tone.color)
             Text(label)
-                .vkFont(.caption2)
+                .xFont(.caption2)
                 .foregroundStyle(XPalette.textSub)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -166,10 +166,10 @@ struct DevicePage: View {
                                 .accessibilityHidden(true)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(item.title)
-                                    .vkFont(.subheadline, weight: .medium)
+                                    .xFont(.subheadline, weight: .medium)
                                     .foregroundStyle(XPalette.text)
                                 Text(item.detail)
-                                    .vkFont(.caption)
+                                    .xFont(.caption)
                                     .foregroundStyle(XPalette.textSub)
                             }
                             Spacer(minLength: 0)
@@ -245,7 +245,7 @@ struct DevicePage: View {
                 } label: {
                     HStack {
                         Text("明细")
-                            .vkFont(.subheadline, weight: .medium)
+                            .xFont(.subheadline, weight: .medium)
                             .foregroundStyle(XPalette.text)
                         Spacer()
                         Image(systemName: "chevron.down")
@@ -278,11 +278,11 @@ struct DevicePage: View {
     private func detailRow(_ label: String, _ value: String) -> some View {
         HStack {
             Text(label)
-                .vkFont(.footnote)
+                .xFont(.footnote)
                 .foregroundStyle(XPalette.textSub)
             Spacer()
             Text(value)
-                .vkFont(.footnote.monospacedDigit())
+                .xFont(.footnote.monospacedDigit())
                 .foregroundStyle(XPalette.text)
                 .lineLimit(1)
         }
@@ -300,7 +300,7 @@ struct DevicePage: View {
         if !records.isEmpty {
             VStack(alignment: .leading, spacing: XSpace.s) {
                 Text("最近")
-                    .vkFont(.subheadline, weight: .medium)
+                    .xFont(.subheadline, weight: .medium)
                     .foregroundStyle(XPalette.textSub)
                     .padding(.leading, XSpace.xs)
 
@@ -313,7 +313,7 @@ struct DevicePage: View {
                                     .frame(width: 6, height: 6)
                                     .accessibilityHidden(true)
                                 Text(r.text)
-                                    .vkFont(.footnote)
+                                    .xFont(.footnote)
                                     .foregroundStyle(XPalette.text)
                                     .lineLimit(1)
                                 Spacer(minLength: 0)

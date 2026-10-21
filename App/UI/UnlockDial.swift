@@ -145,10 +145,10 @@ private struct DrillTrace: View {
         ZStack {
             if !swipeTrace {
                 Text(UnlockPrefs.gestureHint)
-                    .vkFont(.caption)
+                    .xFont(.caption)
                     .foregroundStyle(XPalette.textSub)
                     .padding(XSpace.s)
-                    .variantPlate(XPalette.surfaceAlt, .capsule)
+                    .xPlate(XPalette.surfaceAlt, .capsule)
             } else {
                 Capsule()
                     .fill(LinearGradient(colors: [XPalette.accentText.opacity(0.75), .clear],
@@ -287,7 +287,7 @@ struct UnlockDial: View {
     private var isBusy: Bool {
         state == .connecting || state == .opening
     }
-    private var tone: ToneColor {
+    private var tone: XToneColor {
         switch state {
         case .idle, .connecting, .opening: return .accent
         case .success: return .ok
@@ -441,18 +441,18 @@ struct UnlockDial: View {
             // 89 握手超 4 秒: 细条转橙 + 允许提前取消
             if slowConnect, isBusy {
                 Button("取消等待", action: cancelAction)
-                    .buttonStyle(SecondaryActionStyle(fullWidth: false))
+                    .buttonStyle(XSecondaryButtonStyle(fullWidth: false))
                     .transition(.opacity)
             }
             // 85 退避节奏文案优先; 其次状态详情
             if let retryText {
                 Text(retryText)
-                    .vkFont(.footnote, weight: .medium)
+                    .xFont(.footnote, weight: .medium)
                     .foregroundStyle(XPalette.accentText)
                     .transition(.opacity)
             } else if let detail {
                 Text(detail)
-                    .vkFont(.footnote)
+                    .xFont(.footnote)
                     .foregroundStyle(detailTone)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
@@ -462,7 +462,7 @@ struct UnlockDial: View {
             // 62 围栏开启但未解锁时的教学一句
             if fenceRequired, !armed, !isBusy, bleReady, state == .idle {
                 Text("误触围栏开启中: 先从圆盘边缘拖到中心, 再执行开锁手势")
-                    .vkFont(.caption)
+                    .xFont(.caption)
                     .foregroundStyle(XPalette.textSub)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, XSpace.xl)
@@ -473,7 +473,7 @@ struct UnlockDial: View {
                 Text(weakNudge
                      ? "已暂缓这一次: 离门锁再走近一步, 然后重新按住圆盘"   // 129 界面文案
                      : "信号偏弱, 走近一步再开更稳")   // 129 信号偏弱
-                    .vkFont(.caption)
+                    .xFont(.caption)
                     .foregroundStyle(XPalette.warn)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, XSpace.xl)
@@ -830,7 +830,7 @@ struct UnlockDial: View {
         VStack(spacing: XSpace.s) {
             dialIcon()
             Text(title)
-                .vkFont(.headline)
+                .xFont(.headline)
                 .foregroundStyle(contentColor)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)

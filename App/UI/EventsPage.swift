@@ -69,7 +69,7 @@ struct EventsPage: View {
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
-                    VariantToggle("只看告警", isOn: $alarmOnly)
+                    XToggle("只看告警", isOn: $alarmOnly)
                     Divider()
                     Button("刷新") { load() }
                 } label: {
@@ -132,7 +132,7 @@ struct EventsPage: View {
                     }
                 } header: {
                     Text(dayLabel(group.day))
-                        .vkFont(.footnote, weight: .medium)
+                        .xFont(.footnote, weight: .medium)
                         .foregroundStyle(XPalette.textSub)
                 }
             }
@@ -152,7 +152,7 @@ struct EventsPage: View {
 
             // 时间
             Text(shortTime(rec.timeStr))
-                .vkFont(.caption.monospacedDigit())
+                .xFont(.caption.monospacedDigit())
                 .foregroundStyle(XPalette.textSub)
                 .frame(width: 46, alignment: .trailing)
 
@@ -166,13 +166,13 @@ struct EventsPage: View {
                             .accessibilityHidden(true)
                     }
                     Text(verbText(rec))
-                        .vkFont(.body)
+                        .xFont(.body)
                         .foregroundStyle(XPalette.text)
                         .lineLimit(2)
                 }
                 if let sub = subText(rec) {
                     Text(sub)
-                        .vkFont(.caption)
+                        .xFont(.caption)
                         .foregroundStyle(XPalette.textSub)
                         .lineLimit(1)
                 }
@@ -192,10 +192,10 @@ struct EventsPage: View {
                 .foregroundStyle(XPalette.textTertiary)
                 .accessibilityHidden(true)
             Text(search.isEmpty ? "还没有记录" : "没有匹配的事件")
-                .vkFont(.headline)
+                .xFont(.headline)
                 .foregroundStyle(XPalette.text)
             Text(search.isEmpty ? "连上锁后读取门锁日志" : "换个关键词试试")
-                .vkFont(.subheadline)
+                .xFont(.subheadline)
                 .foregroundStyle(XPalette.textSub)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
