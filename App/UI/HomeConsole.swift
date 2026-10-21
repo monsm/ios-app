@@ -136,18 +136,50 @@ struct HomeConsole: View {
     private var unlockStage: some View {
         VStack(spacing: XSpace.l) {
             ZStack {
-                // 静息轨道 —— 必须在未按下时也可见，否则用户不知道这里能按
+                // ── 静息轨道 ──
+                // 必须未按下时也可见，否则用户不知道这里能按。
+                // 上缘压一条极淡的暗线 ⇒ 读成"凹进去的槽"，而不是一个圆环贴纸。
                 Circle()
                     .strokeBorder(XPalette.surfaceAlt, lineWidth: 7)
+                    .overlay {
+                        Circle()
+                            .strokeBorder(XPalette.canvas.opacity(0.55), lineWidth: 1)
+                            .blur(radius: 1.5)
+                            .offset(y: 1)
+                            .mask(Circle().strokeBorder(XPalette.surfaceAlt, lineWidth: 7))
+                    }
 
-                // 蓄力弧
+                // ── 蓄力弧 ──
+                // 用角度渐变而不是纯色：起点是深铜、头部是亮铜 ——
+                // 视觉上读成"能量从起点推到了头部"，纯色弧读不出方向。
                 Circle()
                     .trim(from: 0, to: max(0.0001, progress))
-                    .stroke(phase.arcTone,
-                            style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                    .stroke(
+                        AngularGradient(
+                            colors: [phase.arcTone.opacity(0.35),
+                                     phase.arcTone.opacity(0.75),
+                                     phase.arcTone],
+                            center: .center,
+                            startAngle: .degrees(-90),
+                            endAngle: .degrees(270)),
+                        style: StrokeStyle(lineWidth: 7, lineCap: .round))
                     .rotationEffect(.degrees(-90))
                     .shadow(color: phase.arcTone.opacity(reduceMotion ? 0 : (progress > 0.01 ? 0.45 : 0)),
                             radius: 16)
+
+                // ── 蓄力时的柔光 ──
+                // 只在真正蓄力时出现，静息与结果态都没有 —— 让"正在发生"有独立语汇。
+                if phase == .charging && !reduceMotion {
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [XPalette.accent.opacity(0.16), .clear],
+                                center: .center,
+                                startRadius: 60,
+                                endRadius: 120))
+                        .allowsHitTesting(false)
+                        .transition(.opacity)
+                }
 
                 // 中心：图标 + 手势提示
                 VStack(spacing: XSpace.xs) {
