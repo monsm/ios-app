@@ -110,6 +110,11 @@ const checks = [
     }
     return bad === 0;
   }],
+  ['区分「蓝牙关着」与「没有权限」', () => {
+    const a = CODE.get('LinkSenseKit.swift') || '';
+    const r = CODE.get('LockKeeperApp.swift') || '';
+    return a.includes('btDenied') && a.includes('var denied: Bool = false') && r.includes('BLEOffBanner(denied:');
+  }],
 ];
 
 let pass = 0;

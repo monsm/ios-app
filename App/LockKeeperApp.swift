@@ -930,7 +930,9 @@ struct RootView: View {
         VStack(spacing: 0) {
             // 包2/69 蓝牙直通条: 系统蓝牙关闭时全 App 顶部提示 (深链系统设置不可用 → 指引文案)
             if !LinkSense.shared.btOn {
-                BLEOffBanner { LinkSense.shared.openBluetoothSettings() }
+                BLEOffBanner(denied: LinkSense.shared.btDenied) {
+                    LinkSense.shared.openBluetoothSettings()
+                }
             }
             // 包8/448 启动自检黄条: 库体哈希与上次快照不一致 → 设备 Tab 顶部黄条 "去诊断"
             // 乱源治理第 2 批: 它不再无条件挂 —— 闲时提醒同屏只留一条, 由 app.ambientTop 说了算
