@@ -309,6 +309,10 @@ struct DoorPrism<B: View, D: View, F: View>: View {
     ///
     /// 未拖拽时（drag=0）恒为 1.0000，所以静止在每个面都正常。
     private var breathScale: CGFloat {
+        // reduceMotion: 不做呼吸，恒为原始大小
+        //
+        // 这条 guard 上一轮被一次替换操作覆盖掉了 —— 回归检查时发现。
+        guard !reduceMotion else { return 1.0 }
         // 手势拖拽 + 按钮翻页，两者都算进度。
         // drag 是手指实时位置（±1），turn 是 step() 动画驱动（0→1→0）。
         // 取绝对值后合并 —— 手指往哪拖都算"离开当前面"。
