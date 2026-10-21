@@ -1090,7 +1090,7 @@ struct SecurityDestroyView: View {
                 .vkFont(.footnote, weight: .medium)
                 // 满格时底是 danger.opacity(0.85) 压在 surfaceAlt 上的合成色: 深色档纯白压上去只有
                 // 3.51:1 (合成算法与比值都在 tools/contrast.js), 所以走随明暗换向的 onSem。
-                .foregroundStyle(holdProgress >= 1 ? XPalette.onSem : XPalette.danger)
+                .foregroundStyle(holdProgress >= 1 ? XPalette.onAccent : XPalette.danger)
                 .frame(width: 200, height: XHit.min)
         }
         .frame(width: 200, height: XHit.min)
@@ -1392,7 +1392,7 @@ struct SecRow<Trailing: View>: View {
 
 
 enum SecTick {
-    static func bump() { SecTickCenter.shared.bump() }
+    @MainActor static func bump() { SecTickCenter.shared.bump() }
 }
 
 

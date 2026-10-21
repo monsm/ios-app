@@ -90,7 +90,7 @@ struct IconPicker: View {
                                     // onSem 而非 .white: 角标底是 XPalette.ok, 它在深色档是浅绿 4ADE80,
                                     // 纯白压上去只有 1.74:1 (机检断言在 tools/contrast.js)。
                                     // 两层符号 (勾/圆盘) 谁吃第一色未实测, 已进验收单 — 两种顺序这里都可读。
-                                    .foregroundStyle(XPalette.onSem, XPalette.ok)
+                                    .foregroundStyle(XPalette.onAccent, XPalette.ok)
                                     .offset(x: 4, y: 4)
                             }
                         }
