@@ -36,6 +36,8 @@ struct LocksPage: View {
     @State private var shareTarget: Keychain?
     @State private var showAdd = false
     @State private var hiddenLocks: [Keychain] = []
+    /// 待确认解绑的门锁。解绑会删除本机保存的密钥，不可撤销。
+    @State private var confirmUnpair: Keychain?
 
     var body: some View {
         List {
@@ -137,6 +139,17 @@ struct LocksPage: View {
         // onDismiss 必须重载：配对成功后本页的 locks 是 @State 缓存，
         // 父视图的 onAppear 不会因为 sheet 关闭而重新触发 ——
         // 不加这一句，刚配好的门锁不会出现在列表里。
+        .confirmationDialog(
+            "解除绑定？",
+            isPresented: Binding(get: { confirmUnpair != nil }, set: { if !$0 { confirmUnpair = nil } }),
+            titleVisibility: .visible,
+            presenting: confirmUnpair
+        ) { kc in
+            Button("解除绑定", role: .destructive) { unpair(kc) }
+            Button("取消", role: .cancel) { confirmUnpair = nil }
+        } message: { kc in
+            Text("将从本机删除「\(LockArchive.displayName(kc))」的密钥与全部本机设置，不可撤销。\n门锁里的密码/指纹不受影响 —— 要删那些得连上锁单独操作。")
+        }
         .sheet(isPresented: $showAdd, onDismiss: { reload() }) {
             NavigationStack {
                 AddLockPage().environmentObject(app)
@@ -228,6 +241,19 @@ struct LocksPage: View {
                 Label("分享给安卓", systemImage: "qrcode")
             }
             .tint(XPalette.ok)
+            // ═══ 解除绑定 ═══
+            //
+            // DB.removeDevice 是一份写得很完整的解绑实现（清钥匙串、待配对记录、
+            // 每锁键族、全局指针、顺序表并交棒默认锁），但**全仓零调用**，
+            // 也没有别的解绑路径 —— 等于一旦配对就再也删不掉。
+            // 卖手机、搬家换锁之后，那把锁的密钥会永远留在本机。
+            Button {
+                confirmUnpair = kc
+                XHaptics.tick.impactOccurred()
+            } label: {
+                Label("解除绑定", systemImage: "trash.slash")
+            }
+            .tint(XPalette.danger)
         }
         // ⚠ 这里不能只写名字。
         // .accessibilityElement(children: .combine) 之后再给 .accessibilityLabel，
@@ -296,6 +322,22 @@ struct LocksPage: View {
     // ═══════════════════════════════════════════════════════
     // MARK: - 数据
     // ═══════════════════════════════════════════════════════
+
+    /// 解绑一台门锁。
+    ///
+    /// 只清本机这一侧：钥匙串、待配对记录、每锁键族、全局指针都删掉，
+    /// 锁端真正的凭证（密码/指纹）不受影响 —— 这一点必须在确认文案里说清，
+    /// 否则用户会以为"解绑 = 锁上那些也删了"，从而把一把还带着自己指纹的锁卖掉。
+    private func unpair(_ kc: Keychain) {
+        let name = LockArchive.displayName(kc)
+        DB.removeDevice(kc.mac)
+        // 解绑的是当前锁 → 让 AppState 重新指一把，否则整机还盯着一个不存在的 mac
+        if app.currentMac == kc.mac { app.loadDevices() }
+        confirmUnpair = nil
+        reload()
+        XHaptics.trigger.impactOccurred()
+        app.showToast("已解除绑定「\(name)」")
+    }
 
     private func reload() {
         let all = DB.keychains()
