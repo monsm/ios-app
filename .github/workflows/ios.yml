@@ -148,6 +148,9 @@ jobs:
           node tools/destmap.js
           node tools/uicoverage.js
 
+
+      - name: 旧设计系统零残留 (legacyguard)
+        run: node tools/legacyguard.js
       - name: '选用镜像里最新的 Xcode (最新 iOS SDK)'
         run: |
           # 镜像里同时装了 27.0/27.1/27.2, 默认可能是旧的 —— 显式挑版本号最大的那个,
