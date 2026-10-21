@@ -221,16 +221,20 @@ struct KeysPage: View {
     private var segmentPicker: some View {
         Section {
             Picker("类型", selection: $seg) {
-                Text("全部").tag(0)
-                Text("密码").tag(1)
-                Text("指纹").tag(2)
-                Text("临时码").tag(3)
+                // 带数量 —— 原来只有类型名, 用户要先点进去才知道有幾份。
+                Text("全部 \(rows.count)").tag(0)
+                Text("密码 \(pwdCount)").tag(1)
+                Text("指纹 \(fps.count)").tag(2)
+                Text("临时码 \(tempCount)").tag(3)
             }
             .pickerStyle(.segmented)
             .listRowBackground(Color.clear)
             .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: XSpace.s, trailing: 0))
         }
     }
+
+    private var pwdCount: Int { pwds.filter { !$0.temp }.count }
+    private var tempCount: Int { pwds.filter { $0.temp }.count }
 
     @ViewBuilder
     private var credentialRows: some View {
@@ -247,12 +251,18 @@ struct KeysPage: View {
 
     private func keyRow(_ row: KeyRow) -> some View {
         HStack(spacing: XSpace.m) {
-            // 类型图标
-            Image(systemName: iconFor(row.kind))
-                .font(.system(size: XIcon.sm, weight: .medium))
-                .foregroundStyle(XPalette.accentText)
-                .frame(width: 24)
-                .accessibilityHidden(true)
+            // 类型徽章: 底色 + 图标随类型变色。
+            // 原来三种凭证共用同一个铜色图标, 扫一眼分不出是密码还是指纹;
+            // 有底色之后, 一列里按颜色就能分组读。
+            ZStack {
+                RoundedRectangle(cornerRadius: XRadius.min, style: .continuous)
+                    .fill(kindTint(row.kind).opacity(0.14))
+                Image(systemName: iconFor(row.kind))
+                    .font(.system(size: XIcon.sm, weight: .semibold))
+                    .foregroundStyle(kindTint(row.kind))
+            }
+            .frame(width: 32, height: 32)
+            .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(row.title)
@@ -273,7 +283,24 @@ struct KeysPage: View {
         }
         .padding(.vertical, XSpace.xxs)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(row.title), \(row.stateLabel)")
+        .accessibilityLabel("\(kindWord(row.kind)) \(row.title), \(row.stateLabel)")
+    }
+
+    /// 类型配色: 密码铜 / 指纹绿 / 临时码橙 —— 与 StatsKit 的 kindColor 同一套语义
+    private func kindTint(_ kind: Int) -> Color {
+        switch kind {
+        case 0: return XPalette.accent
+        case 1: return XPalette.ok
+        default: return XPalette.warn
+        }
+    }
+
+    private func kindWord(_ kind: Int) -> String {
+        switch kind {
+        case 0: return "密码"
+        case 1: return "指纹"
+        default: return "临时码"
+        }
     }
 
     private func iconFor(_ kind: Int) -> String {

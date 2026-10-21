@@ -299,11 +299,58 @@ def render_battery():
 
     return save(img, "battery")
 
+def render_keysrows():
+    """KeysPage — 类型徽章 + 带数量的分段选择器"""
+    W, H = 402, 300
+    img = new_canvas(W, H)
+    dr = ImageDraw.Draw(img, "RGBA")
+
+    # 分段选择器
+    segs = [("全部 7", True), ("密码 4", False), ("指纹 2", False), ("临时码 1", False)]
+    x = S(16); y = S(16)
+    total_w = W - S(32)
+    seg_w = total_w / 4
+    dr.rounded_rectangle([x, y, x+total_w, y+S(32)], S(9), fill=SURFACE_ALT+(255,))
+    for i, (lab, on) in enumerate(segs):
+        sx = x + i*seg_w
+        if on:
+            dr.rounded_rectangle([sx+S(2), y+S(2), sx+seg_w-S(2), y+S(30)], S(7), fill=SURFACE+(255,))
+        text_center(dr, sx+seg_w/2, y+S(9), lab, 10, TEXT if on else TEXT_SUB)
+
+    # 凭证行 (小卡片列表)
+    rows = [
+        (0, "家门主密码", "妈妈 · 30 天后到期", "进行中", OK),
+        (0, "保洁阿姨临时", "王阿姨 · 明天到期", "进行中", OK),
+        (0, "备用密码", "未归属", "已排期", TEXT_SUB),
+        (1, "爸爸左手拇指", "爸爸", "有效", OK),
+        (2, "访客一次性", "快递", "进行中", OK),
+        (0, "旧密码 (已停用)", "未归属", "已过期", DANGER),
+        (1, "奶奶右手食指", "奶奶", "有效", OK),
+    ]
+    kinds = {0: ("$", ACCENT), 1: ("o", OK), 2: ("*", WARN)}
+    ry = y + S(44)
+    for kind, title, sub, state, tone in rows:
+        icon, tint = kinds[kind]
+        # 徽章
+        dr.rounded_rectangle([S(20), ry, S(20)+S(32), ry+S(32)], S(8), fill=tint+(36,))
+        text_center(dr, S(20)+S(16), ry+S(8), icon, 14, tint)
+        # 文本
+        text(dr, (S(64), ry), title, 14, TEXT)
+        text(dr, (S(64), ry+S(20)), sub, 10, TEXT_SUB)
+        # 状态胶囊
+        pill_w = S(len(state)*11 + 14)
+        dr.rounded_rectangle([W-S(20)-pill_w, ry+S(8), W-S(20), ry+S(26)], S(9), fill=tone+(28,))
+        text_center(dr, W-S(20)-pill_w/2, ry+S(11), state, 9, tone)
+        ry += S(38)
+
+    return save(img, "keysrows")
+
 RENDERERS = {
     "codering": render_code_ring,
     "alarmchart": render_alarm_chart,
     "dayclock": render_dayclock,
     "battery": render_battery,
+    "keysrows": render_keysrows,
 }
 
 
