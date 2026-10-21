@@ -40,18 +40,26 @@ struct KeysPage: View {
     private var mac: String { app.currentMac }
 
     var body: some View {
-        List {
-            if !expiringItems.isEmpty {
-                expiringSection
+        // M5 重做: List → 卡片流 + 液态玻璃分段
+        //
+        // 原来用 List(.insetGrouped) + Section —— 那是系统默认长相，
+        // 与 B 域"液态玻璃分组"的语言不搭。现在改成:
+        //   · 顶部浮动液态玻璃分段（复用 axGlassCapsule）
+        //   · 每组一张 XPanel，组内行用 XRow
+        //   · 到期预警单独一张卡，放最上面
+        //
+        // 数据逻辑一行没动 —— 只换呈现。
+        ScrollView {
+            VStack(spacing: XSpace.l) {
+                if !expiringItems.isEmpty { expiringCard }
+                segmentBar
+                credentialCard
+                if rows.isEmpty { emptyCard }
             }
-            segmentPicker
-            credentialRows
-            if rows.isEmpty {
-                emptySection
-            }
+            .padding(.horizontal, XSpace.gutter)
+            .padding(.top, XSpace.s)
+            .padding(.bottom, XSpace.xxl)
         }
-        .listStyle(.insetGrouped)
-        .scrollContentBackground(.hidden)
         .background(XPalette.canvas)
         .navigationTitle("钥匙")
         .navigationBarTitleDisplayMode(.large)
@@ -80,6 +88,130 @@ struct KeysPage: View {
             }
         }
         .id(refreshTick)
+    }
+
+    // ── 到期预警卡 ──
+    private var expiringCard: some View {
+        XPanel(tone: .warn) {
+            VStack(alignment: .leading, spacing: XSpace.s) {
+                HStack(spacing: XSpace.xs) {
+                    Image(systemName: "clock.badge.exclamationmark")
+                        .font(.system(size: XIcon.sm, weight: .medium))
+                        .foregroundStyle(XPalette.warn)
+                    Text("\(expiringItems.count) 份即将到期")
+                        .xFont(.footnote, weight: .semibold)
+                        .foregroundStyle(XPalette.warn)
+                    Spacer(minLength: 0)
+                }
+                ForEach(expiringItems.prefix(3), id: \.alias) { p in
+                    HStack(spacing: XSpace.s) {
+                        Text(p.note.isEmpty ? "密码 #\(p.alias)" : p.note)
+                            .xFont(.subheadline)
+                            .foregroundStyle(XPalette.text)
+                            .lineLimit(1)
+                        Spacer(minLength: XSpace.s)
+                        Text(CredentialOrg.expiryLabel(p.to))
+                            .xFont(.caption2)
+                            .foregroundStyle(XPalette.warn)
+                    }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("\(p.note) 即将到期, \(CredentialOrg.expiryLabel(p.to))")
+                }
+            }
+        }
+    }
+
+    // ── 液态玻璃分段 ──
+    private var segmentBar: some View {
+        HStack(spacing: 2) {
+            ForEach(Array(Seg.allCases), id: \.self) { s in
+                let n = countFor(s)
+                Button {
+                    withAnimation(XMotion.soft) { seg = s.rawValue }
+                    XHaptics.tick.impactOccurred()
+                } label: {
+                    VStack(spacing: 1) {
+                        Text(s.title)
+                            .xFont(.caption, weight: seg == s.rawValue ? .semibold : .regular)
+                        Text("\(n)")
+                            .xFont(.caption2)
+                    }
+                    .foregroundStyle(seg == s.rawValue ? XPalette.text : XPalette.textSub)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 44)
+                    .background {
+                        if seg == s.rawValue {
+                            Capsule().fill(XPalette.accent.opacity(XOpacity.badge))
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("\(s.title) \(n) 份")
+                .accessibilityAddTraits(seg == s.rawValue ? [.isSelected] : [])
+            }
+        }
+        .padding(4)
+        .axGlassCapsule()
+    }
+
+    private enum Seg: Int, CaseIterable {
+        case all = 0, pwd = 1, fp = 2, temp = 3
+        var title: String {
+            switch self {
+            case .all: return "全部"
+            case .pwd: return "密码"
+            case .fp: return "指纹"
+            case .temp: return "临时码"
+            }
+        }
+    }
+
+    private func countFor(_ s: Seg) -> Int {
+        switch s {
+        case .all: return rows.count
+        case .pwd: return pwdCount
+        case .fp: return fps.count
+        case .temp: return tempCount
+        }
+    }
+
+    // ── 凭证卡 ──
+    @ViewBuilder
+    private var credentialCard: some View {
+        if !rows.isEmpty {
+            XPanel(kind: .group, padding: 0) {
+                VStack(spacing: 0) {
+                    HStack {
+                        Text("\(rows.count) 份生效")
+                            .xFont(.caption, weight: .medium)
+                            .foregroundStyle(XPalette.textSub)
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.horizontal, XSpace.card)
+                    .padding(.top, XSpace.m)
+                    .padding(.bottom, XSpace.s)
+
+                    ForEach(Array(rows.enumerated()), id: \.element.id) { idx, row in
+                        keyRow(row)
+                        if idx < rows.count - 1 {
+                            Divider().overlay(XPalette.hairline)
+                                .padding(.leading, XSpace.card + 28 + XSpace.m)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // ── 空态卡 ──
+    private var emptyCard: some View {
+        XPanel(kind: .group, padding: 0) {
+            XEmptyState(systemImage: "key.slash",
+                        title: search.isEmpty ? "还没有凭证" : "没有匹配的凭证",
+                        message: search.isEmpty ? "添加第一份授权, 之后会按类型分组显示。" : "换个关键词试试。",
+                        actionTitle: search.isEmpty ? "添加凭证" : nil,
+                        action: search.isEmpty ? { showAdd = true } : nil)
+        }
     }
 
     // ═══════════════════════════════════════════════════════
@@ -192,62 +324,12 @@ struct KeysPage: View {
     // MARK: - 视图
     // ═══════════════════════════════════════════════════════
 
-    private var expiringSection: some View {
-        Section {
-            ForEach(expiringItems.prefix(3), id: \.alias) { p in
-                HStack(spacing: XSpace.s) {
-                    Image(systemName: "clock.badge.exclamationmark")
-                        .font(.system(size: XIcon.sm, weight: .medium))
-                        .foregroundStyle(XPalette.warn)
-                        .accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(p.note.isEmpty ? "密码 #\(p.alias)" : p.note)
-                            .xFont(.subheadline, weight: .medium)
-                            .foregroundStyle(XPalette.text)
-                        Text(CredentialOrg.expiryLabel(p.to))
-                            .xFont(.caption)
-                            .foregroundStyle(XPalette.warn)
-                    }
-                    Spacer(minLength: 0)
-                }
-                .accessibilityElement(children: .combine)
-                .accessibilityLabel("\(p.note) 即将到期, \(CredentialOrg.expiryLabel(p.to))")
-            }
-        } header: {
-            Text("\(expiringItems.count) 份即将到期")
-        }
-    }
 
-    private var segmentPicker: some View {
-        Section {
-            Picker("类型", selection: $seg) {
-                // 带数量 —— 原来只有类型名, 用户要先点进去才知道有幾份。
-                Text("全部 \(rows.count)").tag(0)
-                Text("密码 \(pwdCount)").tag(1)
-                Text("指纹 \(fps.count)").tag(2)
-                Text("临时码 \(tempCount)").tag(3)
-            }
-            .pickerStyle(.segmented)
-            .listRowBackground(Color.clear)
-            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: XSpace.s, trailing: 0))
-        }
-    }
 
     private var pwdCount: Int { pwds.filter { !$0.temp }.count }
     private var tempCount: Int { pwds.filter { $0.temp }.count }
 
     @ViewBuilder
-    private var credentialRows: some View {
-        if !rows.isEmpty {
-            Section {
-                ForEach(rows) { row in
-                    keyRow(row)
-                }
-            } header: {
-                Text("\(rows.count) 份生效")
-            }
-        }
-    }
 
     private func keyRow(_ row: KeyRow) -> some View {
         HStack(spacing: XSpace.m) {
@@ -311,16 +393,4 @@ struct KeysPage: View {
         }
     }
 
-    private var emptySection: some View {
-        Section {
-            // 空态给按钮, 不再让人自己去找右上角的 +。
-            // 搜索无结果时不给 (那时候"添加"不是用户想要的, 清搜索才是)。
-            XEmptyState(systemImage: "key.slash",
-                        title: search.isEmpty ? "还没有凭证" : "没有匹配的凭证",
-                        message: search.isEmpty ? "添加第一份授权, 之后会按类型分组显示。" : "换个关键词试试。",
-                        actionTitle: search.isEmpty ? "添加凭证" : nil,
-                        action: search.isEmpty ? { showAdd = true } : nil)
-                .listRowBackground(Color.clear)
-        }
-    }
 }

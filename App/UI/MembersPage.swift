@@ -37,16 +37,23 @@ struct MembersPage: View {
     private var mac: String { app.currentMac }
 
     var body: some View {
-        List {
-            if members.isEmpty {
-                emptySection
-            } else {
-                rosterSection
+        // M5 重做: List → 卡片流
+        //
+        // 与 KeysPage 同一套语言: XPanel 分组 + 组内行 + 液态玻璃只在需要时用。
+        // 数据逻辑（reload / members / mac）一行没动。
+        ScrollView {
+            VStack(spacing: XSpace.l) {
+                if members.isEmpty {
+                    emptyCard
+                } else {
+                    rosterCard
+                }
+                secondaryCard
             }
-            secondarySection
+            .padding(.horizontal, XSpace.gutter)
+            .padding(.top, XSpace.s)
+            .padding(.bottom, XSpace.xxl)
         }
-        .listStyle(.insetGrouped)
-        .scrollContentBackground(.hidden)
         .background(XPalette.canvas)
         .navigationTitle("成员")
         .navigationBarTitleDisplayMode(.large)
@@ -69,26 +76,97 @@ struct MembersPage: View {
         .id(refreshTick)
     }
 
+    // ── 成员卡 ──
+    private var rosterCard: some View {
+        XPanel(kind: .group, padding: 0) {
+            VStack(spacing: 0) {
+                HStack {
+                    Text("\(members.count) 位成员")
+                        .xFont(.caption, weight: .medium)
+                        .foregroundStyle(XPalette.textSub)
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, XSpace.card)
+                .padding(.top, XSpace.m)
+                .padding(.bottom, XSpace.s)
+
+                ForEach(Array(members.enumerated()), id: \.element.id) { idx, m in
+                    NavigationLink {
+                        MemberDetail360View(memberID: m.id)
+                            .environmentObject(app)
+                    } label: {
+                        memberRow(m)
+                    }
+                    .buttonStyle(.plain)
+                    if idx < members.count - 1 {
+                        Divider().overlay(XPalette.hairline)
+                            .padding(.leading, XSpace.card + 40 + XSpace.m)
+                    }
+                }
+
+                Text("点一位成员可看名下凭证、授权来源与最近活动。")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, XSpace.card)
+                    .padding(.top, XSpace.s)
+                    .padding(.bottom, XSpace.m)
+            }
+        }
+    }
+
+    // ── 其余入口卡 ──
+    private var secondaryCard: some View {
+        XPanel(kind: .group, padding: 0) {
+            VStack(spacing: 0) {
+                NavigationLink {
+                    MemberArchivedView().environmentObject(app)
+                } label: {
+                    XRow(systemImage: "archivebox", title: "归档成员",
+                         subtitle: "已归档的成员可恢复", showsChevron: true)
+                        .padding(.horizontal, XSpace.card)
+                        .padding(.vertical, XSpace.s)
+                }
+                .buttonStyle(.plain)
+                Divider().overlay(XPalette.hairline).padding(.leading, XSpace.card + 40)
+                NavigationLink {
+                    UnclaimedClaimView().environmentObject(app)
+                } label: {
+                    XRow(systemImage: "questionmark.circle", title: "匿名认领",
+                         subtitle: "无归属的凭证可认领给成员", showsChevron: true)
+                        .padding(.horizontal, XSpace.card)
+                        .padding(.vertical, XSpace.s)
+                }
+                .buttonStyle(.plain)
+                Divider().overlay(XPalette.hairline).padding(.leading, XSpace.card + 40)
+                NavigationLink {
+                    MemberFamilySettingsView().environmentObject(app)
+                } label: {
+                    XRow(systemImage: "person.3", title: "家庭设置",
+                         subtitle: "长辈模式 / 隐私浏览", showsChevron: true)
+                        .padding(.horizontal, XSpace.card)
+                        .padding(.vertical, XSpace.s)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    // ── 空态卡 ──
+    private var emptyCard: some View {
+        XPanel(kind: .group, padding: 0) {
+            XEmptyState(systemImage: "person.2",
+                        title: "还没有成员",
+                        message: "添加第一位家人, 之后可以为 TA 分配凭证与查看开门记录。",
+                        actionTitle: "添加成员",
+                        action: { showWizard = true })
+        }
+    }
+
     // ═══════════════════════════════════════════════════════
     // MARK: - 名册
     // ═══════════════════════════════════════════════════════
 
-    private var rosterSection: some View {
-        Section {
-            ForEach(members) { m in
-                NavigationLink {
-                    MemberDetail360View(memberID: m.id)
-                        .environmentObject(app)
-                } label: {
-                    memberRow(m)
-                }
-            }
-        } header: {
-            Text("\(members.count) 位成员")
-        } footer: {
-            Text("点一位成员可看名下凭证、授权来源与最近活动。")
-        }
-    }
 
     private func memberRow(_ m: Member) -> some View {
         let pwdCount = DB.listPwds(mac).filter { $0.owner == m.id }.count
@@ -144,42 +222,7 @@ struct MembersPage: View {
     // MARK: - 次要入口
     // ═══════════════════════════════════════════════════════
 
-    private var secondarySection: some View {
-        Section {
-            NavigationLink {
-                MemberArchivedView().environmentObject(app)
-            } label: {
-                XRow(systemImage: "archivebox", title: "归档成员",
-                     subtitle: "已归档的成员可恢复", showsChevron: true)
-            }
-            NavigationLink {
-                UnclaimedClaimView().environmentObject(app)
-            } label: {
-                XRow(systemImage: "questionmark.circle", title: "匿名认领",
-                     subtitle: "无归属的凭证可认领给成员", showsChevron: true)
-            }
-            NavigationLink {
-                MemberFamilySettingsView().environmentObject(app)
-            } label: {
-                XRow(systemImage: "person.3", title: "家庭设置",
-                     subtitle: "长辈模式 / 隐私浏览", showsChevron: true)
-            }
-        } header: {
-            Text("更多")
-        }
-    }
 
-    private var emptySection: some View {
-        Section {
-            // 空态直接给建档入口 —— 成员建档是三步向导, 值得在这里一键开始
-            XEmptyState(systemImage: "person.2",
-                        title: "还没有成员",
-                        message: "添加第一位家人, 之后可以为 TA 分配凭证与查看开门记录。",
-                        actionTitle: "添加成员",
-                        action: { showWizard = true })
-                .listRowBackground(Color.clear)
-        }
-    }
 
     // ═══════════════════════════════════════════════════════
     // MARK: - 数据
