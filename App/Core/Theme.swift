@@ -94,10 +94,6 @@ enum XPalette {
     static var warn: Color { Color.adaptive(0xB45309, 0xF5A524) }
     static var danger: Color { Color.adaptive(0xB3261E, 0xFF6B6B) }
 
-    // ── 兼容旧名 (底层代码在用) ──
-    static var canvasBase: Color { canvas }
-    static var surfaceBase: Color { surface }
-    static var surfaceAltBase: Color { surfaceAlt }
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -121,8 +117,6 @@ enum XSpace {
     static var control: CGFloat { d(12) }
     /// 磁贴内边距
     static var tile: CGFloat { d(14) }
-    /// 锁面留白 (远离一切)
-    static var lockFace: CGFloat { d(56) }
 }
 
 /// 圆角。门锁 App 的圆角偏小 (金属感), 不用 iOS 默认的大圆角。
@@ -139,7 +133,6 @@ enum XHit {
     static let min: CGFloat = 44
     /// 锁面主控
     static let dial: CGFloat = 200
-    static let rowMinH: CGFloat = 44
     static let tlGap: CGFloat = 10
 }
 
@@ -190,7 +183,6 @@ enum XMetric {
     static var rowMinH: CGFloat { 44 }
     static var tlGap: CGFloat { XSpace.m }
     static var emptyMascot: Bool { !Milestones.plainMode }
-    static var heroTexture: String { "" }
 
     /// 装饰性大图标随辅助功能字号适度放大 (HIG typography: 承载信息的图标
     /// 在字号变大时也要跟着变大 —— 上限 1.35 倍, 再大就会顶破版面)。
@@ -298,12 +290,6 @@ enum XMotion {
         default: return .spring(response: 0.35, dampingFraction: 1.0)
         }
     }
-    static var fling: Animation {
-        switch tier {
-        case "calm": return .easeOut(duration: 0.12)
-        default: return .spring(response: 0.35, dampingFraction: 0.82)
-        }
-    }
 
     // ── 门面层 (全新) ──
     //
@@ -319,13 +305,6 @@ enum XMotion {
         }
     }
 
-    /// 中缝透光 (先于门转动 340ms)
-    static var lightLeak: Animation {
-        switch tier {
-        case "calm": return .easeOut(duration: 0.10)
-        default: return .easeOut(duration: 0.42)
-        }
-    }
 
     /// 门后内容入场
     static var doorReveal: Animation {
@@ -335,13 +314,6 @@ enum XMotion {
         }
     }
 
-    /// 锁体字形闭环/开环
-    static var glyphSwap: Animation {
-        switch tier {
-        case "calm": return .easeOut(duration: 0.12)
-        default: return .easeOut(duration: 0.26)
-        }
-    }
 
     /// 充能松手回零
     static var chargeReset: Animation {
@@ -351,13 +323,6 @@ enum XMotion {
         }
     }
 
-    /// 三层视差的延迟错峰
-    static func parallaxDelay(_ layer: Int) -> Double {
-        switch tier {
-        case "calm": return 0
-        default: return Double(layer) * 0.04
-        }
-    }
 }
 
 
@@ -380,7 +345,6 @@ enum XHaptics {
     static let tick = UIImpactFeedbackGenerator(style: .light)
     static let trigger = UIImpactFeedbackGenerator(style: .medium)
     static let soft = UIImpactFeedbackGenerator(style: .soft)
-    static let rigid = UIImpactFeedbackGenerator(style: .rigid)
 
     /// 成功 (完成一件事)
     static func success() { UINotificationFeedbackGenerator().notificationOccurred(.success) }
@@ -411,15 +375,6 @@ enum XGradient {
             startPoint: .top, endPoint: .bottom)
     }
 
-    /// 门缝透光
-    static var seamLight: LinearGradient {
-        LinearGradient(
-            colors: [.clear,
-                     Color(hex: 0xFFE4B6).opacity(0.90),
-                     Color(hex: 0xFFECC4).opacity(0.95),
-                     .clear],
-            startPoint: .top, endPoint: .bottom)
-    }
 
     /// 锁面金属环
     static var lockRing: AngularGradient {
@@ -436,10 +391,6 @@ enum XGradient {
 
     // ── 兼容旧名 ──
     static var hero: LinearGradient { doorSurface }
-    static var button: LinearGradient {
-        LinearGradient(colors: [XPalette.accent, XPalette.accent.opacity(0.85)],
-                       startPoint: .top, endPoint: .bottom)
-    }
 }
 
 // ═══════════════════════════════════════════════════════════

@@ -180,6 +180,16 @@ struct LockPlate: View {
     private var ringW: CGFloat { diameter * 0.035 }
     private var chargeW: CGFloat { diameter * 0.045 }
 
+    /// 夜间暗化系数 (22:00–06:00)。
+    ///
+    /// 门锁 App 最高频的使用场景之一就是夜里回家开锁 ——
+    /// 而整屏最亮的东西是一圈银白金属环, 在黑暗的楼道里相当刺眼。
+    /// XMetric.isNightDim 这个令牌早就有, 但旧圆盘删掉之后一直没接上。
+    ///
+    /// 只压**装饰层** (金属环 + 光扫)。充能环与中心字形不压:
+    /// 那两个承载功能信息 (充能进度 / 开锁状态), 暗化等于降低可读性。
+    private var nightDim: Double { XMetric.isNightDim ? 0.72 : 1.0 }
+
     var body: some View {
         ZStack {
             // ── 1. 外环 (金属渐变) + 绕圈高光 ─────────────────────
@@ -188,6 +198,7 @@ struct LockPlate: View {
             // 这是"黄铜锁芯在灯下转动"的那点活气 —— 不加这一层, 整个锁面是死的。
             Circle()
                 .strokeBorder(XGradient.lockRing, lineWidth: ringW)
+                .opacity(nightDim)
                 .frame(width: diameter, height: diameter)
 
             if !reduceMotion {
@@ -208,6 +219,7 @@ struct LockPlate: View {
                     )
                     .frame(width: diameter, height: diameter)
                     .blendMode(.plusLighter)
+                    .opacity(nightDim)
                     .accessibilityHidden(true)
             }
 
