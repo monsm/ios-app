@@ -183,15 +183,6 @@ enum XMetric {
     static var tlGap: CGFloat { XSpace.m }
     static var emptyMascot: Bool { !Milestones.plainMode }
 
-    /// 装饰性大图标随辅助功能字号适度放大 (HIG typography: 承载信息的图标
-    /// 在字号变大时也要跟着变大 —— 上限 1.35 倍, 再大就会顶破版面)。
-    /// 纯装饰图形 (空态吉祥物 / 成功对勾) 也走这一档, 免得两套口径。
-    /// 夜间暗化 (22:00–06:00) —— 圆盘等强光界面用
-    static var isNightDim: Bool {
-        let h = WeekCal.gregorian.component(.hour, from: Date())
-        return h >= 22 || h < 6
-    }
-
     /// Canvas 组件内的**数据文字**按 AX 字号放大。
     ///
     /// 为什么单独开一个而不是直接用 decorIcon:
@@ -290,21 +281,6 @@ enum XMotion {
         }
     }
 
-    // ── 门面层 (全新) ──
-    //
-    //  门的翻转必须用**单调 timingCurve**, 不能用 spring。
-    //  原因: 180° 翻转中, spring 即使 damping 1.0 也可能因 response 与初速度过冲,
-    //  越过 90° 会露出镜像背面。timingCurve 单调, 绝不越过终点。
-    //
-    /// 门板旋转 (0→180°)
-    static var doorSwing: Animation {
-        switch tier {
-        case "calm": return .easeOut(duration: 0.12)
-        default: return .timingCurve(0.22, 0.76, 0.03, 1, duration: 0.82)
-        }
-    }
-
-
     /// 门后内容入场
     static var doorReveal: Animation {
         switch tier {
@@ -374,19 +350,6 @@ enum XGradient {
             startPoint: .top, endPoint: .bottom)
     }
 
-
-    /// 锁面金属环
-    static var lockRing: AngularGradient {
-        AngularGradient(
-            colors: [
-                Color.adaptive(0xC0C0C8, 0x3A3A42),
-                Color.adaptive(0x8A8A96, 0x6A6A74),
-                Color.adaptive(0xE0E0E8, 0x2A2A30),
-                Color.adaptive(0x8A8A96, 0x6A6A74),
-                Color.adaptive(0xC0C0C8, 0x3A3A42)
-            ],
-            center: .center)
-    }
 
     // ── 兼容旧名 ──
     static var hero: LinearGradient { doorSurface }

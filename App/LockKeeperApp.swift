@@ -961,7 +961,7 @@ struct RootView: View {
     /// 主界面的顶部横幅/时刻卡/启动 task/前后台钩子 —— 同上, 继续拆
     @ViewBuilder
     private var mainTabsChrome: some View {
-        DoorRoot()
+        HomeConsole()
         .safeAreaInset(edge: .top, spacing: 0) {
             topBanners
         }

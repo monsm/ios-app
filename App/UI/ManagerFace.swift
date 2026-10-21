@@ -25,6 +25,11 @@ import SwiftUI
 struct ManagerFace: View {
     @EnvironmentObject private var app: AppState
     @State private var group: ManagerGroup = .ledger
+
+    /// 从门厅带一个分组进来（门厅的「管理」按钮点哪个组就开哪个组）
+    init(initialGroup: ManagerGroup = .ledger) {
+        _group = State(initialValue: initialGroup)
+    }
     @State private var path: [ManagerRoute] = []
 
     var body: some View {
