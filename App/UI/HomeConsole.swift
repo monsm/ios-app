@@ -90,7 +90,15 @@ struct HomeConsole: View {
             ZStack {
                 XPalette.canvas.ignoresSafeArea()
                 ScrollView {
-                    VStack(spacing: XSpace.xxl) {
+                    // ═══ 间距要有层级，不能一律 32pt ═══
+                    //
+                    // 原来整页 8 个区块等距（xxl = 32pt）。等距意味着**没有层级**：
+                    // 身份卡和开锁环是"同一把锁"的两件事，三指标/今天/成员是
+                    // "同类数据"，而它们之间的距离和跨簇一样远 —— 眼睛读不出分组。
+                    //
+                    // 现在按接近性原理分两簇：簇内 16，簇间 24（16 + 8 的额外留白）。
+                    // 这是最省力的专业感来源：不改任何组件，只改间距。
+                    VStack(spacing: XSpace.l) {
                         masthead
                         if mac.isEmpty {
                             // ── 空状态 ──
@@ -98,14 +106,22 @@ struct HomeConsole: View {
                             // 这里只留一件事：告诉你下一步做什么。
                             noLockState
                         } else {
-                            identity
-                            if let notice = criticalNotice { noticeRow(notice) }
-                            unlockStage
-                            metricsRow
-                            todaySection
-                            memberSection
+                            // 簇一：这一把锁（身份 → 待处理 → 开锁）
+                            VStack(spacing: XSpace.l) {
+                                identity
+                                if let notice = criticalNotice { noticeRow(notice) }
+                                unlockStage
+                            }
+                            // 簇二：今天的数据（指标 → 分时 → 成员）
+                            VStack(spacing: XSpace.l) {
+                                metricsRow
+                                todaySection
+                                memberSection
+                            }
+                            .padding(.top, XSpace.s)   // 簇间 16 + 8 = 24
                         }
                         manageSection
+                            .padding(.top, XSpace.s)
                     }
                     .padding(.horizontal, XSpace.gutter)
                     .padding(.top, XSpace.xs)

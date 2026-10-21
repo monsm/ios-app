@@ -190,6 +190,13 @@ const checks = [
     return m.includes('case ledger = "钥匙"') && m.includes('case backupLook = "数据与外观"') &&
            !m.includes('"台账"') && !m.includes('"备份外观"');
   }],
+  ['门厅间距有层级（不再一律 32pt）', () => {
+    // 8 个区块等距 32pt = 没有层级：同一把锁的两件事和跨簇一样远。
+    // 改为簇内 16、簇间 24。
+    const h = CODE.get('HomeConsole.swift') || '';
+    return !h.includes('VStack(spacing: XSpace.xxl) {') &&
+           h.includes('VStack(spacing: XSpace.l) {');
+  }],
 ];
 
 let pass = 0;
