@@ -135,6 +135,8 @@ struct AlarmsPage: View {
             .padding(XSpace.card)
             .background {
                 RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
+                    // @contrast-allow 告警卡的淡红**底衬**，不是信息图形；
+                    //   告警本身由图标与文字承担（那两者都是满色）。
                     .fill(XPalette.danger.opacity(0.10))
                     .overlay(
                         RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)

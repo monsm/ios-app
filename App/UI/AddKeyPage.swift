@@ -183,6 +183,7 @@ struct AddKeyPage: View {
             } else if !optional {
                 // 必填位: 一个小点占位
                 Circle()
+                    // @contrast-allow 4pt 占位小点，纯装饰；有数字时会被替换掉。
                     .fill(XPalette.textTertiary.opacity(0.4))
                     .frame(width: 4, height: 4)
             }

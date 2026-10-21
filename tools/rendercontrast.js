@@ -38,6 +38,82 @@ const BGS = ['canvas', 'surface', 'surfaceAlt', 'surfaceSunken'];
 const OPS = [1, 0.9, 0.85, 0.8, 0.7, 0.6, 0.55, 0.5, 0.4];
 const TEXT_TOKENS = ['text', 'textSub', 'textTertiary', 'accentText', 'ok', 'warn', 'danger'];
 
+// ══════════════════════════════════════════════════════════════
+// --scan：反查代码里**实际用到的**组合，而不是穷举矩阵
+// ══════════════════════════════════════════════════════════════
+// 穷举表只能告诉我"哪些组合不达标"，但界面里到底用了哪些、
+// 用在文字还是装饰上，得回到代码里看。
+if (process.argv.includes('--scan')) {
+  const fsx = require('fs');
+  const px = require('path');
+  const ROOT = px.resolve(__dirname, '..');
+  const walk = d => {
+    const out = [];
+    for (const e of fsx.readdirSync(d, { withFileTypes: true })) {
+      const p = px.join(d, e.name);
+      if (e.isDirectory()) { if (e.name[0] !== '.') out.push(...walk(p)); }
+      else if (e.name.endsWith('.swift')) out.push(p);
+    }
+    return out;
+  };
+  const files = walk(px.join(ROOT, 'App'));
+  const rows = [];
+  for (const f of files) {
+    const lines = fsx.readFileSync(f, 'utf8').split('\n');
+    lines.forEach((t, i) => {
+      if (/^\s*\/\//.test(t)) return;
+      // 与仓里已有的 @layout-allow 同形：就地写明为什么这个低对比度是合理的。
+      // 豁免不是"放过"，是**留下判断依据**；没有依据的仍然会被报出来。
+      // 标注写在上一行（跟在 .fill 后面会破坏链式调用），所以这里回看一行。
+      // 标注可能是多行注释块，所以回看 3 行。
+      const recent = [t, lines[i - 1] || '', lines[i - 2] || '', lines[i - 3] || ''].join('\n');
+      if (/@contrast-allow/.test(recent)) return;
+      const m = t.match(/XPalette\.(textSub|textTertiary|accentText|ok|warn|danger|text)\.opacity\(([0-9.]+)\)/);
+      if (!m) return;
+      const tok = m[1], a = parseFloat(m[2]);
+      if (a >= 1) return;
+      const isText = /foregroundStyle|foregroundColor/.test(t);
+      // ⚠ 不能把 fill / strokeBorder / background / shadow 一律当"信息图形"。
+      //   界面里绝大多数低透明度用法是**底衬 / 描边 / 光晕**：
+      //     .fill(danger.opacity(0.10))        告警行的淡红底
+      //     .strokeBorder(ok.opacity(0.3))     卡片描边
+      //     .shadow(color: ok.opacity(0.4))    光晕
+      //   这些不承载信息（信息在图标与文字里），套 3:1 只会制造假警报。
+      //   只有**数据标记**（图表柱、状态点）才受 3:1 约束。
+      const kind = isText ? 'text'
+        : /shadow\(/.test(t) ? 'glow'
+        : /strokeBorder|stroke\(/.test(t) ? 'border'
+        : /background\(/.test(t) ? 'surface'
+        : /fill\(/.test(t) ? 'fill' : 'other';
+      let worst = 99, worstBg = '';
+      for (const bg of BGS) {
+        const c = contrast(blend(DARK[tok], DARK[bg], a), DARK[bg]);
+        if (c < worst) { worst = c; worstBg = bg; }
+      }
+      // 只有 text 与 fill（数据标记候选）才判定；其余仅列出供参考
+      const judged = kind === 'text' || kind === 'fill';
+      const need = kind === 'text' ? 4.5 : 3.0;
+      rows.push({ file: px.basename(f), line: i + 1, tok, a, kind, worst, worstBg, need,
+                  bad: judged && worst < need, text: t.trim().slice(0, 62) });
+    });
+  }
+  rows.sort((x, y) => x.worst - y.worst);
+  console.log('代码里实际用到的「令牌 × 透明度」组合：' + rows.length + ' 处\n');
+  console.log('对比度  用途  组合                    位置');
+  console.log('-'.repeat(96));
+  const label = { text: '文字', fill: '填充', border: '描边', glow: '光晕', surface: '底衬', other: '其他' };
+  for (const r of rows) {
+    const mark = r.bad ? '✗' : (r.kind === 'text' || r.kind === 'fill' ? '✓' : '—');
+    console.log(r.worst.toFixed(2).padStart(6) + '  ' + label[r.kind] + '  ' + mark + '  ' +
+      (r.tok + '×' + r.a).padEnd(22) + r.file + ':' + r.line);
+    if (r.bad) console.log('        ' + r.text + '   （最差背景 ' + r.worstBg + '，需要 ' + r.need + '）');
+  }
+  const badRows = rows.filter(r => r.bad);
+  console.log('-'.repeat(96));
+  console.log('不达标: ' + badRows.length + ' / ' + rows.length);
+  process.exit(0);
+}
+
 let fails = 0;
 console.log('深色模式 · 合成后的实际对比度（文字需 ≥4.5:1，信息性图形 ≥3:1）');
 console.log('');

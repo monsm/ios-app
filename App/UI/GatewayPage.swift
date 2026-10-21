@@ -182,6 +182,8 @@ struct GatewayPage: View {
                                 .frame(width: 8, height: 8)
                             if i < steps.count - 1 {
                                 Rectangle()
+                                    // @contrast-allow 步骤之间的 1.5pt 连接线，装饰；
+                                    //   步骤状态由上方那个实心 ok 圆点承担。
                                     .fill(XPalette.ok.opacity(0.3))
                                     .frame(width: 1.5)
                             }
