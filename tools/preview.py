@@ -568,6 +568,41 @@ def render_buttons():
     text(dr, (S(16), S(12)), "主按钮 (顶部高光) / 次按钮 / 危险按钮", 10, TEXT_TERT)
     return save(img, "buttons")
 
+def render_panels():
+    """XPanel — 三档 (group / hero / inset) + tone 描边"""
+    W, H = 402, 420
+    img = new_canvas(W, H)
+    dr = ImageDraw.Draw(img, "RGBA")
+
+    def panel(y, h, kind, tone=None, title="", sub=""):
+        pad = S(8) if kind == "inset" else (S(16) if kind == "hero" else S(16))
+        x0, x1 = S(16), W-S(16)
+        r = S(16)
+        dr.rounded_rectangle([x0, y, x1, y+h], r, fill=SURFACE+(255,))
+        edge = HAIRLINE if tone is None else tone
+        alpha = 255 if tone is None else 89
+        dr.rounded_rectangle([x0, y, x1, y+h], r, outline=edge + (alpha,), width=1)
+        if title:
+            text(dr, (x0+pad, y+pad), title, 13)
+        if sub:
+            text(dr, (x0+pad, y+pad+S(20)), sub, 10, TEXT_SUB)
+        # 内容示意线
+        cy = y + pad + S(46)
+        while cy < y+h-pad-S(8):
+            dr.rounded_rectangle([x0+pad, cy, x1-pad, cy+S(6)], S(3), fill=SURFACE_ALT+(255,))
+            cy += S(14)
+
+    text(dr, (S(16), S(8)), "XPanel .group  (pad 16, radius 16, hairline)", 9, TEXT_TERT)
+    panel(S(24), S(120), "group", None, "分组卡", "pad 16 · XRadius.card")
+
+    text(dr, (S(16), S(154)), "XPanel .hero  (pad 16, tone .warn 描边 35%)", 9, TEXT_TERT)
+    panel(S(170), S(110), "hero", WARN, "首屏主角卡", "tone 描边 0.35 不透明度")
+
+    text(dr, (S(16), S(290)), "XPanel .inset  (pad 8)", 9, TEXT_TERT)
+    panel(S(306), S(86), "inset", None, "内嵌小格", "pad 8 · 同 radius")
+
+    return save(img, "panels")
+
 RENDERERS = {
     "codering": render_code_ring,
     "alarmchart": render_alarm_chart,
@@ -580,6 +615,7 @@ RENDERERS = {
     "stepbar": render_stepbar,
     "xrows": render_xrows,
     "buttons": render_buttons,
+    "panels": render_panels,
 }
 
 

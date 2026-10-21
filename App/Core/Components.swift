@@ -20,10 +20,11 @@ import UIKit
 /// 语义色调 —— 让组件不直接依赖具体颜色, 便于统一降级
 /// 容器档位 —— X 系统自带, 不依赖旧 VK 语法层
 enum XContainerKind {
-    case group      // 一组相关读数/设置
-    case tile       // 可点的一次性入口
-    case inset      // 嵌在别的东西里面的小格
-    case hero       // 首屏主角那一块
+    case group      // 一组相关读数/设置 (pad 16)
+    case inset      // 嵌在别的东西里面的小格 (pad 8)
+    case hero       // 首屏主角那一块 (pad 16 + 更宽描边)
+    // 已删 case tile: 它与 .group 拿到完全相同的 padding, 全仓零使用。
+    // 留着会让读的人以为"有个更紧凑的档位可选", 实际选中也没变化。
 }
 
 enum XToneColor {
@@ -75,8 +76,9 @@ struct XPanel<Content: View>: View {
                                 in: RoundedRectangle(cornerRadius: XRadius.card, style: .continuous))
             } else {
                 // X 系统自带容器: 按档位给内边距, 统一 XRadius.card 圆角与 surface 底
-                let pad: CGFloat = kind == .inset ? XSpace.s
-                    : (kind == .hero ? XSpace.l : XSpace.card)
+                // 三档 padding: inset 8 / group 16 / hero 16
+                // (hero 与 group 同 padding, 差别在描边宽度与色彩 —— 见 XPanel 的 overlay)
+                let pad: CGFloat = kind == .inset ? XSpace.s : XSpace.card
                 content()
                     .padding(pad)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -431,41 +433,6 @@ struct XHeroCard<Content: View>: View {
 
 
 /// 旧 GuidedEmptyView
-struct XGuidedEmptyView: View {
-    var systemImage: String
-    var title: String
-    var message: String
-    var steps: [String] = []
-    var actionTitle: String? = nil
-    var action: (() -> Void)? = nil
-
-    var body: some View {
-        VStack(spacing: XSpace.l) {
-            XEmptyState(systemImage: systemImage, title: title, message: message,
-                       actionTitle: actionTitle, action: action)
-            if !steps.isEmpty {
-                VStack(alignment: .leading, spacing: XSpace.s) {
-                    ForEach(Array(steps.enumerated()), id: \.offset) { i, s in
-                        HStack(alignment: .top, spacing: XSpace.s) {
-                            Text("\(i + 1)")
-                                .xFont(.caption, weight: .semibold)
-                                .foregroundStyle(XPalette.accent)
-                                .frame(width: 20, height: 20)
-                                .background(XPalette.accent.opacity(0.12), in: Circle())
-                            Text(s)
-                                .xFont(.subheadline)
-                                .foregroundStyle(XPalette.textSub)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                    }
-                }
-                .padding(XSpace.l)
-                .background(XPalette.surfaceAlt, in: RoundedRectangle(cornerRadius: XRadius.card, style: .continuous))
-            }
-        }
-        .padding(XSpace.l)
-    }
-}
 
 
 /// 旧 HeroStats 命名空间 (Core 层读写它的可见性)
@@ -608,43 +575,8 @@ extension View {
 
 
 // ═══════════════════════════════════════════════════════════
-// MARK: - 入场编排 (2026-10-21 从已删的 DesignSystem.swift 迁入)
-// ═══════════════════════════════════════════════════════════
-
-/// 首屏卡片按序浮起 (每次会话只播一次): 纯 transform/opacity, stagger 50ms;
-/// reduceMotion 下退化为纯淡入。惊喜预算只花在"罕见时刻"(应用启动), 高频路径不动。
-struct XStaggeredAppear: ViewModifier {
-    let index: Int
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var shown = false
-
-    func body(content: Content) -> some View {
-        content
-            .opacity(shown ? 1 : 0)
-            .offset(y: shown || reduceMotion ? 0 : 14)
-            .onAppear {
-                guard !shown else { return }
-                let delay = Double(index) * 0.05
-                if reduceMotion {
-                    withAnimation(.easeOut(duration: 0.2).delay(delay)) { shown = true }
-                } else {
-                    withAnimation(.spring(response: 0.45, dampingFraction: 0.9).delay(delay)) { shown = true }
-                }
-            }
-    }
-}
-
-extension View {
-    /// 入场编排: index 决定出场次序 (0 起, 每档 50ms)
-    nonisolated func staggered(_ index: Int) -> some View {
-        modifier(XStaggeredAppear(index: index))
-    }
-}
-
-
-// ═══════════════════════════════════════════════════════════════════════
 // MARK: - XCodeRing — 时效码大卡 (TOTP 主角)
-// ═══════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
 //
 // 设计依据 (apple-design / motion.md):
 //   "Add motion purposefully, supporting the experience without
