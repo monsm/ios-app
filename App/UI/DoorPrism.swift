@@ -238,9 +238,11 @@ struct DoorPrism<B: View, D: View, F: View>: View {
                     .strokeBorder(XPalette.hairline, lineWidth: 1)
             }
             // ① 只做朝向 —— 轴过视图中心，透视不参与，前缩 = cos(θ)
-            .rotation3DEffect(.degrees(theta), axis: (x: 0, y: 1, z: 0), anchor: .center)
             // ③ 近大远小
-            .scaleEffect(depthScale)
+            // 前缩 + 近大远小 —— 纯 2D 变换，行为完全确定
+            .scaleEffect(x: max(0.001, abs(cos(rad)) * depthScale),
+                         y: depthScale,
+                         anchor: .center)
             // ② 摆到棱柱上的位置
             .offset(x: x)
             .opacity(faceVisibility(f))
