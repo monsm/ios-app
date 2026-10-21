@@ -56,7 +56,7 @@ struct HomeConsole: View {
     @State private var phase: UnlockPhase = .idle
     @State private var progress: CGFloat = 0
     @State private var pressing = false
-    @State private var failure: String?
+    @State private var failure: UnlockFailure?
     /// 开锁进行中标志 —— 同步置位，用作重入闸门。
     /// 只靠 phase 判断挡不住并发：performUnlock 里第一个 await 之前 phase 还是
     /// .charging，此时第二次调用能顺利通过 phase 检查，于是两次 BLE 开锁并发执行。
@@ -413,20 +413,41 @@ struct HomeConsole: View {
             .accessibilityAddTraits(.isButton)
             .accessibilityAction { Task { @MainActor in await performUnlock() } }
 
-            // 一行说明：电量 / 上次 / 失败原因 —— 同一位置不跳
+            // 电量 / 上次 / 失败原因 —— 同一位置不跳
             Group {
                 if let f = failure {
-                    Label(f, systemImage: "exclamationmark.triangle.fill")
-                        .foregroundStyle(XPalette.warn)
+                    VStack(spacing: XSpace.xs) {
+                        Label(f.text, systemImage: "exclamationmark.triangle.fill")
+                            .foregroundStyle(XPalette.warn)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                        // 有去处就给入口。之前文案写着"去「设备」重新配对"，
+                        // 界面上却没有那个按钮 —— 用户读到了建议还得自己找路。
+                        if let g = f.group {
+                            Button {
+                                XHaptics.tick.impactOccurred()
+                                managerGroup = g
+                            } label: {
+                                Text("去「\(g.rawValue)」处理")
+                                    .xFont(.system(.caption, weight: .medium))
+                                    .foregroundStyle(XPalette.accentText)
+                                    .padding(.horizontal, XSpace.m)
+                                    .padding(.vertical, 4)
+                                    .xPlate(XPalette.accent.opacity(0.12), .capsule)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("去(g.rawValue)处理这个开锁失败")
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
                 } else {
                     Text(footnote)
                         .foregroundStyle(XPalette.textTertiary)
+                        .lineLimit(1)
                 }
             }
             .xFont(.system(.footnote))
-            .lineLimit(1)
-            .minimumScaleFactor(0.8)
-            .frame(height: 18)
+            .frame(minHeight: 18)
             .animation(reduceMotion ? nil : XMotion.soft, value: failure)
         }
     }
@@ -637,7 +658,7 @@ struct HomeConsole: View {
         // 还没选门锁时，按下去只会得到一个技术性报错。
         // 更好的做法：环本身提示"先选门锁"，并且不进入蓄力。
         guard !mac.isEmpty else {
-            failure = "先在「设备」里选择门锁"
+            failure = UnlockFailure("先在「设备」里选择门锁", .devices)
             return
         }
         guard phase == .idle || phase == .failed else { return }
@@ -734,25 +755,29 @@ struct HomeConsole: View {
     /// 直接抛 localizedDescription 等于把协议层的技术名词丢到用户脸上
     ///（"无钥匙串 skey"、"handshake timeout"），既不解释也不指路。
     /// 这里按可恢复性分三类：能自己解决的 / 需要去别处处理的 / 只能重试的。
-    private func humanMessage(_ e: Error) -> String {
+    /// 把底层错误翻成「下一步做什么」，并且**能跳过去的就给出入口**。
+    ///
+    /// 之前只返回一句话：文案写着"去「设备」重新配对"，界面上却没有那个入口 ——
+    /// 用户读到了建议，但还得自己找路。失败态真正缺的是可点的下一步。
+    private func humanMessage(_ e: Error) -> UnlockFailure {
         let raw = e.localizedDescription
         let low = raw.lowercased()
         if low.contains("timeout") || raw.contains("超时") {
-            return "门锁没响应 · 靠近一点再试"
+            return UnlockFailure("门锁没响应 · 靠近一点再按一次", nil)
         }
         if low.contains("disconnect") || raw.contains("未连接") || raw.contains("断开") {
-            return "与门锁断开 · 请回到门边"
+            return UnlockFailure("与门锁断开 · 请回到门边再按", nil)
         }
         if raw.contains("钥匙串") || low.contains("skey") || raw.contains("未配对") {
-            return "本机没有这把锁的钥匙 · 去「设备」重新配对"
+            return UnlockFailure("本机没有这把锁的钥匙", .devices)
         }
         if raw.contains("密码") || low.contains("pin") {
-            return "密码不对"
+            return UnlockFailure("密码不对", .ledger)
         }
         if raw.contains("电量") || low.contains("battery") {
-            return "门锁电量不足"
+            return UnlockFailure("门锁电量不足", .devices)
         }
-        return raw.isEmpty ? "开锁失败 · 请重试" : raw
+        return UnlockFailure(raw.isEmpty ? "开锁失败 · 请再按一次" : raw, nil)
     }
 
     private func scheduleSettle(after seconds: Double) {
@@ -951,4 +976,19 @@ struct MemberStat: Identifiable, Equatable {
     let today: Int
     /// 近 30 天次数，作为次要信息
     let opens30: Int
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// MARK: - 开锁失败
+// ═══════════════════════════════════════════════════════════════════════
+/// 失败不只是"一句话"，还包含**能去哪儿处理**。
+/// 没有 group 的失败（超时 / 断开）只能重试；有的（缺钥匙 / 电量低）可以直接跳过去。
+struct UnlockFailure: Equatable {
+    let text: String
+    let group: ManagerGroup?
+
+    init(_ text: String, _ group: ManagerGroup?) {
+        self.text = text
+        self.group = group
+    }
 }
