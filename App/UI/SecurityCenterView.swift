@@ -870,213 +870,226 @@ struct SecurityDestroyView: View {
 
     var body: some View { vkBody }
     var vkBody: some View {
-        List {
-            // 400 销毁前备份闸
-            Section {
-                HStack(spacing: XSpace.s) {
-                    Image(systemName: DestroyKit.backupGatePass ? "checkmark.shield.fill" : "exclamationmark.shield")
-                        .font(.system(size: XIcon.sm, weight: .semibold))
-                        .foregroundStyle(DestroyKit.backupGatePass ? XPalette.ok : XPalette.danger)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("销毁前备份闸")
-                            .xFont(.subheadline, weight: .medium)
-                        Text(backupGateLine)
-                            .xFont(.footnote)
-                            .foregroundStyle(DestroyKit.backupGatePass ? XPalette.textSub : XPalette.danger)
-                    }
-                    Spacer()
-                }
-                .frame(minHeight: XHit.min)
-            } header: {
-                Text("备份闸")   // 400 备份闸
-            }
+        ZStack {
+            XPalette.canvas.ignoresSafeArea()
 
-            // 399 三级销毁: 勾选理解项 → 输应用锁密码 → 键入"销毁"二字
-            // 第二级归 383 管: 开关开着才问, 关着就如实显示"本级已跳过"
-            Section {
-                VStack(alignment: .leading, spacing: XSpace.s) {
-                    XToggle(isOn: $ack) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("我理解销毁不可恢复")
-                                .xFont(.subheadline)
-                            Text("删除+随机覆写全部本地缓存 (钥匙串/台账/日志/审计)")
-                                .xFont(.footnote)
-                                .foregroundStyle(XPalette.textSub)
-                        }
-                    }
-                    .tint(XPalette.accent)
-                    if ack {
-                        // 第二级: sudo 重输应用锁密码 (383)
-                        if SecurityPolicy.sudoRequired, app.sudoTicket == nil {
+            ScrollView {
+                VStack(spacing: XSpace.l) {
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            secLabel("备份闸")
                             HStack(spacing: XSpace.s) {
-                                SecureField("重输应用锁密码", text: $sudoInput)
-                                    .textFieldStyle(.roundedBorder)
-                                Button("验证") { verifySudo() }
-                                    .xFont(.subheadline, weight: .medium)
-                                    .foregroundStyle(XPalette.accentText)
-                                    .frame(minHeight: XHit.min)
+                                Image(systemName: DestroyKit.backupGatePass ? "checkmark.shield.fill" : "exclamationmark.shield")
+                                    .font(.system(size: XIcon.sm, weight: .semibold))
+                                    .foregroundStyle(DestroyKit.backupGatePass ? XPalette.ok : XPalette.danger)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("销毁前备份闸")
+                                        .xFont(.subheadline, weight: .medium)
+                                    Text(backupGateLine)
+                                        .xFont(.footnote)
+                                        .foregroundStyle(DestroyKit.backupGatePass ? XPalette.textSub : XPalette.danger)
+                                }
+                                Spacer()
                             }
-                        } else if app.sudoTicket != nil {
-                            Label("sudo 验证通过", systemImage: "checkmark.seal.fill")
-                                .xFont(.footnote)
-                                .foregroundStyle(XPalette.ok)
-                        } else {
-                            Label("销毁前重输口令的开关关着: 本级跳过, 不再追问口令", systemImage: "exclamationmark.triangle")
-                                .xFont(.footnote)
-                                .foregroundStyle(XPalette.warn)
-                        }
-                    }
-                    if ack && sudoSatisfied {
-                        // 第三级: 键入"销毁"二字
-                        TextField("键入 销毁 二字以继续", text: $typedWord)
-                            .autocorrectionDisabled()
                             .frame(minHeight: XHit.min)
-                    }
-                    XBusyButton(title: "销毁全部数据", busy: destroying) {
-                        runDestroy()
-                    }
-                    .disabled(!(ack && sudoSatisfied && typedWord.trimmingCharacters(in: .whitespaces) == "销毁"))
-                    if let rep = destroyReport {
-                        Text(rep)
-                            .xFont(.footnote)
-                            .foregroundStyle(XPalette.textSub)
-                            .lineLimit(4)
-                    }
-                    if let msg = residueMsg {
-                        HStack(spacing: XSpace.xs) {
-                            Image(systemName: msg.contains("零残留") ? "checkmark.seal.fill" : "magnifyingglass")
-                                .font(.system(size: XIcon.sm, weight: .semibold))
-                                .foregroundStyle(msg.contains("零残留") ? XPalette.ok : XPalette.danger)
-                            Text(msg)
-                                .xFont(.footnote)
-                                .foregroundStyle(msg.contains("零残留") ? XPalette.ok : XPalette.danger)
                         }
                     }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            } header: {
-                Text("三级销毁")   // 399/401/406 三级销毁
-            } footer: {
-                Text("覆写 3 轮 · 随机 256–4208 字节/键; 残留全文检查零命中才显示“销毁完成”。")
-            }
 
-            // 403 按住 2 秒清空回收站
-            Section {
-                HStack(spacing: XSpace.s) {
-                    Text("清空回收站 (\(trashCount) 项)")
-                        .xFont(.subheadline, weight: .medium)
-                    Spacer()
-                    Text("长按 2 秒释放, 松手取消")
-                        .xFont(.footnote)
-                        .foregroundStyle(XPalette.textSub)
-                }
-                holdClearControl
-            } header: {
-                Text("回收站")   // 403 回收站
-            }
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            secLabel("三级销毁")
+                            VStack(alignment: .leading, spacing: XSpace.s) {
+                                XToggle(isOn: $ack) {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("我理解销毁不可恢复")
+                                            .xFont(.subheadline)
+                                        Text("删除+随机覆写全部本地缓存 (钥匙串/台账/日志/审计)")
+                                            .xFont(.footnote)
+                                            .foregroundStyle(XPalette.textSub)
+                                    }
+                                }
+                                .tint(XPalette.accent)
+                                if ack {
+                                    // 第二级: sudo 重输应用锁密码 (383)
+                                    if SecurityPolicy.sudoRequired, app.sudoTicket == nil {
+                                        HStack(spacing: XSpace.s) {
+                                            SecureField("重输应用锁密码", text: $sudoInput)
+                                                .textFieldStyle(.roundedBorder)
+                                            Button("验证") { verifySudo() }
+                                                .xFont(.subheadline, weight: .medium)
+                                                .foregroundStyle(XPalette.accentText)
+                                                .frame(minHeight: XHit.min)
+                                        }
+                                    } else if app.sudoTicket != nil {
+                                        Label("sudo 验证通过", systemImage: "checkmark.seal.fill")
+                                            .xFont(.footnote)
+                                            .foregroundStyle(XPalette.ok)
+                                    } else {
+                                        Label("销毁前重输口令的开关关着: 本级跳过, 不再追问口令", systemImage: "exclamationmark.triangle")
+                                            .xFont(.footnote)
+                                            .foregroundStyle(XPalette.warn)
+                                    }
+                                }
+                                if ack && sudoSatisfied {
+                                    // 第三级: 键入"销毁"二字
+                                    TextField("键入 销毁 二字以继续", text: $typedWord)
+                                        .autocorrectionDisabled()
+                                        .frame(minHeight: XHit.min)
+                                }
+                                XBusyButton(title: "销毁全部数据", busy: destroying) {
+                                    runDestroy()
+                                }
+                                .disabled(!(ack && sudoSatisfied && typedWord.trimmingCharacters(in: .whitespaces) == "销毁"))
+                                if let rep = destroyReport {
+                                    Text(rep)
+                                        .xFont(.footnote)
+                                        .foregroundStyle(XPalette.textSub)
+                                        .lineLimit(4)
+                                }
+                                if let msg = residueMsg {
+                                    HStack(spacing: XSpace.xs) {
+                                        Image(systemName: msg.contains("零残留") ? "checkmark.seal.fill" : "magnifyingglass")
+                                            .font(.system(size: XIcon.sm, weight: .semibold))
+                                            .foregroundStyle(msg.contains("零残留") ? XPalette.ok : XPalette.danger)
+                                        Text(msg)
+                                            .xFont(.footnote)
+                                            .foregroundStyle(msg.contains("零残留") ? XPalette.ok : XPalette.danger)
+                                    }
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                    }
 
-            // 402 离职清除
-            Section {
-                let members = Offboard.members()
-                if members.isEmpty {
-                    Text("尚无成员档案 — 在 设置 → 家人与钥匙 添加后可在此“清除并归档”")
-                        .xFont(.footnote)
-                        .foregroundStyle(XPalette.textSub)
-                } else {
-                    ForEach(members) { m in
-                        HStack(spacing: XSpace.s) {
-                            Image(systemName: "person.crop.circle")
-                                .font(.system(size: XIcon.sm, weight: .medium))
-                                .foregroundStyle(memberColor(m))
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(m.name)
-                                    .xFont(.subheadline)
-                                Text("名下凭证入归档, 记录保留并标“已离开”")
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            secLabel("回收站")
+                            HStack(spacing: XSpace.s) {
+                                Text("清空回收站 (\(trashCount) 项)")
+                                    .xFont(.subheadline, weight: .medium)
+                                Spacer()
+                                Text("长按 2 秒释放, 松手取消")
                                     .xFont(.footnote)
                                     .foregroundStyle(XPalette.textSub)
                             }
-                            Spacer()
-                            Button("清除") {
-                                // 402 离职清除: 名下凭证从台账整段搬走 (不可一键还原) ⇒ 归销毁族, 过 296 + 383 两道闸
-                                guardedDestroy(app) {
-                                    Offboard.markDeparted(m.id, name: m.name)
-                                    AuditLog().append(.admin, "离", target: m.name,
-                                                      duress: DB.store.getBool(SecKey.sessionDuress, false))
-                                    app.showToast("\(m.name) 已归档")
-                                    SecTick.bump()
-                                    self.center.bump()
+                            holdClearControl
+                        }
+                    }
+
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            secLabel("离职清除")
+                            let members = Offboard.members()
+                            if members.isEmpty {
+                                Text("尚无成员档案 — 在 设置 → 家人与钥匙 添加后可在此“清除并归档”")
+                                    .xFont(.footnote)
+                                    .foregroundStyle(XPalette.textSub)
+                            } else {
+                                ForEach(members) { m in
+                                    HStack(spacing: XSpace.s) {
+                                        Image(systemName: "person.crop.circle")
+                                            .font(.system(size: XIcon.sm, weight: .medium))
+                                            .foregroundStyle(memberColor(m))
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(m.name)
+                                                .xFont(.subheadline)
+                                            Text("名下凭证入归档, 记录保留并标“已离开”")
+                                                .xFont(.footnote)
+                                                .foregroundStyle(XPalette.textSub)
+                                        }
+                                        Spacer()
+                                        Button("清除") {
+                                            // 402 离职清除: 名下凭证从台账整段搬走 (不可一键还原) ⇒ 归销毁族, 过 296 + 383 两道闸
+                                            guardedDestroy(app) {
+                                                Offboard.markDeparted(m.id, name: m.name)
+                                                AuditLog().append(.admin, "离", target: m.name,
+                                                                  duress: DB.store.getBool(SecKey.sessionDuress, false))
+                                                app.showToast("\(m.name) 已归档")
+                                                SecTick.bump()
+                                                self.center.bump()
+                                            }
+                                        }
+                                        .xFont(.footnote, weight: .medium)
+                                        .foregroundStyle(XPalette.danger)
+                                        .frame(minHeight: XHit.min)
+                                    }
+                                    .frame(minHeight: XHit.min)
                                 }
                             }
-                            .xFont(.footnote, weight: .medium)
-                            .foregroundStyle(XPalette.danger)
-                            .frame(minHeight: XHit.min)
                         }
-                        .frame(minHeight: XHit.min)
                     }
-                }
-            } header: {
-                Text("离职清除")   // 402 离职清除
-            }
 
-            // 296 安全模式
-            Section {
-                SecRow(title: "只读安全模式",
-                       subtitle: SecurityPolicy.readOnly
-                                ? "已启用: 圆盘开锁、销毁与清空、审计导出与到期清理一律拦下"
-                                : "关闭 (异常时手动打开)",
-                       icon: "power") {
-                    XToggle("", isOn: Binding(
-                        get: { SecurityPolicy.readOnly },
-                        set: { DB.store.set(SecKey.safeModeOn, $0); SecTick.bump() }))
-                        .labelsHidden()
-                }
-                if SecurityPolicy.readOnly {
-                    Text("已接线的拦点: 开锁 (圆盘 / 手势 / 靠近自动开 / 二次开锁重发)、销毁全族 (三级销毁、清空回收站、"
-                         + "到期清理、离职清除)、审计导出与含明文导出。"
-                         + "还没接上的: 添加与改造凭证、网关配网、固件升级 —— 那几处的执行点在服务层与配网/升级那几个页面, "
-                         + "闸装到之前, 开着这枚开关不等于全 App 只读。")
-                        .xFont(.footnote)
-                        .foregroundStyle(XPalette.warn)
-                }
-            } header: {
-                Text("安全模式")   // 296 安全模式
-            }
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            secLabel("安全模式")
+                            SecRow(title: "只读安全模式",
+                                   subtitle: SecurityPolicy.readOnly
+                                            ? "已启用: 圆盘开锁、销毁与清空、审计导出与到期清理一律拦下"
+                                            : "关闭 (异常时手动打开)",
+                                   icon: "power") {
+                                XToggle("", isOn: Binding(
+                                    get: { SecurityPolicy.readOnly },
+                                    set: { DB.store.set(SecKey.safeModeOn, $0); SecTick.bump() }))
+                                    .labelsHidden()
+                            }
+                            if SecurityPolicy.readOnly {
+                                Text("已接线的拦点: 开锁 (圆盘 / 手势 / 靠近自动开 / 二次开锁重发)、销毁全族 (三级销毁、清空回收站、"
+                                     + "到期清理、离职清除)、审计导出与含明文导出。"
+                                     + "还没接上的: 添加与改造凭证、网关配网、固件升级 —— 那几处的执行点在服务层与配网/升级那几个页面, "
+                                     + "闸装到之前, 开着这枚开关不等于全 App 只读。")
+                                    .xFont(.footnote)
+                                    .foregroundStyle(XPalette.warn)
+                            }
+                        }
+                    }
 
-            // 549 口令复用检测
-            Section {
-                SecRow(title: "口令复用检测",
-                       subtitle: DB.store.getBool(SecKey.pwdReuseOn, true) ? "加密码时与存量比对提示" : "关闭",
-                       icon: "arrow.triangle.2.circlepath") {
-                    XToggle("", isOn: Binding(
-                        get: { DB.store.getBool(SecKey.pwdReuseOn, true) },
-                        set: { DB.store.set(SecKey.pwdReuseOn, $0); SecTick.bump() }))
-                        .labelsHidden()
-                }
-                reuseDemoRow
-            } header: {
-                Text("口令复用")   // 549 口令复用
-            }
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            secLabel("口令复用")
+                            SecRow(title: "口令复用检测",
+                                   subtitle: DB.store.getBool(SecKey.pwdReuseOn, true) ? "加密码时与存量比对提示" : "关闭",
+                                   icon: "arrow.triangle.2.circlepath") {
+                                XToggle("", isOn: Binding(
+                                    get: { DB.store.getBool(SecKey.pwdReuseOn, true) },
+                                    set: { DB.store.set(SecKey.pwdReuseOn, $0); SecTick.bump() }))
+                                    .labelsHidden()
+                            }
+                            reuseDemoRow
+                        }
+                    }
 
-            // 521 二次输入确认开关 (密码保存前重输码值)
-            Section {
-                SecRow(title: "保存密码二次输入",   // 521 保存密码二次输入
-                       subtitle: DB.store.getBool("kf_scred_2nd", true) ? "密码保存前需重输一遍码值核对" : "关闭",
-                       icon: "lock.rotationgauge") {
-                    XToggle("", isOn: Binding(
-                        get: { DB.store.getBool("kf_scred_2nd", true) },
-                        set: { DB.store.set("kf_scred_2nd", $0); SecTick.bump() }))
-                        .labelsHidden()
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            secLabel("密码保存")
+                            SecRow(title: "保存密码二次输入",   // 521 保存密码二次输入
+                                   subtitle: DB.store.getBool("kf_scred_2nd", true) ? "密码保存前需重输一遍码值核对" : "关闭",
+                                   icon: "lock.rotationgauge") {
+                                XToggle("", isOn: Binding(
+                                    get: { DB.store.getBool("kf_scred_2nd", true) },
+                                    set: { DB.store.set("kf_scred_2nd", $0); SecTick.bump() }))
+                                    .labelsHidden()
+                            }
+                        }
+                    }
+
                 }
-            } header: {
-                Text("密码保存")   // 521 密码保存
+                .padding(.horizontal, XSpace.gutter)
+                .padding(.vertical, XSpace.l)
             }
+            .scrollIndicators(.hidden)
         }
-        .xList()
-        .xScreen()
         .navigationTitle("销毁与应急")
         .onReceive(Timer.publish(every: 2, on: .main, in: .common).autoconnect()) { _ in
             self.center.bump()
         }
+    }
+
+    private func secLabel(_ text: String) -> some View {
+        Text(text)
+            .xFont(.caption, weight: .semibold)
+            .foregroundStyle(XPalette.textTertiary)
+            .textCase(.uppercase)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // ---------- 派生 ----------
