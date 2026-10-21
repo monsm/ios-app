@@ -173,15 +173,16 @@ struct SyncTimeView: View {
 
     private func run() async {
         busy = true
+        defer { busy = false }
         failed = false
         result = ""
         // 第八十八批: 校时页原先不先绑锁就直接 syncTime (服务层按自己的 curMac 取钥)，
         // 于是"在这个锁的页面点校时，19/0E 命令发向上次连过的那把锁"。入口钉住 + 非空才走。
         let m = app.currentMac
         guard !m.isEmpty else {
-            busy = false; failed = true; result = "未选择门锁"
+            failed = true; result = "未选择门锁"
             app.showToast("未选择门锁")
-            return
+            return          // defer 会复位
         }
         do {
             try await app.lock.ensureConnected(mac: m)
@@ -194,7 +195,6 @@ struct SyncTimeView: View {
             failed = true
             result = "同步失败：" + error.localizedDescription
         }
-        busy = false
     }
 
     private func secLabel(_ text: String) -> some View {

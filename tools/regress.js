@@ -385,6 +385,9 @@ const checks = [
     let bad = 0;
     for (const f of FILES) {
       const base = path.basename(f);
+      // 只查 UI 层：服务层的 scanning 由超时定时器与委托回调驱动
+      // （BLEService.stopScanInternal 由 scanTimer 调），不是手动复位。
+      if (!/(^|\/)UI\/[^/]+\.swift$/.test(f)) continue;
       if (allow.includes(base)) continue;
       const lines = (CODE.get(base) || '').split('\n');
       lines.forEach((t, i) => {
