@@ -97,16 +97,19 @@ struct EventsPage: View {
     private var filtered: [Rec] {
         var out = recs
         if alarmOnly { out = out.filter { $0.alarm } }
-        let q = search.trimmingCharacters(in: .whitespaces)
-        if !q.isEmpty {
-            out = out.filter { r in
-                r.typeName.localizedCaseInsensitiveContains(q)
-                    || (r.whoName ?? "").localizedCaseInsensitiveContains(q)
-                    || r.cred.localizedCaseInsensitiveContains(q)
-                    || r.timeStr.localizedCaseInsensitiveContains(q)
-            }
-        }
-        return out
+        let raw = search.trimmingCharacters(in: .whitespaces)
+        guard !raw.isEmpty else { return out }
+        // ═══ 用仓里已经写好的查询引擎，不再自己手搓 substring ═══
+        //
+        // RecordSearch.search 支持「+必须词 / -排除词 / 时间短语 / 成员 / 凭证维度」，
+        // 但此前**零调用** —— 这一页用的是四字段 substring，把那些能力全浪费了。
+        // 空查询时 Query.parse 产生空 must/not，search 直接返回全部，
+        // 所以"搜索框一空就把记录隐藏"这种反向故障不会发生（已核对实现）。
+        var filters = RecordSearch.QueryFilters()
+        filters.alarmOnly = alarmOnly
+        return RecordSearch.search(recs: out,
+                                   query: RecordSearch.Query.parse(raw),
+                                   filters: filters)
     }
 
     /// 按天分组 (今天在最上)
