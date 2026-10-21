@@ -34,6 +34,48 @@ struct CareRemindersView: View {
     // MARK: - 家庭公告板
     // ═══════════════════════════════════════════════════════
 
+    /// 距离某个 MM-dd 还有几天（0 = 今天，-1 = 日期无效）
+    ///
+    /// 原来只显示 "MM-dd"，用户得自己算。而这个页面存在的意义
+    /// 就是"提醒"，提醒的第一要义是**还剩多久**。
+    private func daysUntil(_ md: String) -> Int {
+        let parts = md.split(separator: "-")
+        guard parts.count == 2,
+              let mo = Int(parts[0]), let dy = Int(parts[1]),
+              (1...12).contains(mo), (1...31).contains(dy) else { return -1 }
+        let cal = WeekCal.gregorian
+        let now = Date()
+        var comps = cal.dateComponents([.year], from: now)
+        comps.month = mo
+        comps.day = dy
+        comps.hour = 0; comps.minute = 0; comps.second = 0
+        guard var target = cal.date(from: comps) else { return -1 }
+        // 今年的已过 → 算明年
+        if target < cal.startOfDay(for: now) {
+            comps.year = (comps.year ?? 0) + 1
+            guard let next = cal.date(from: comps) else { return -1 }
+            target = next
+        }
+        return cal.dateComponents([.day], from: cal.startOfDay(for: now), to: target).day ?? -1
+    }
+
+    /// 倒计时文案
+    private func countdownText(_ days: Int) -> String {
+        if days < 0 { return "未填写" }
+        if days == 0 { return "今天" }
+        if days == 1 { return "明天" }
+        if days <= 30 { return "\(days) 天后" }
+        return "\(days) 天后"
+    }
+
+    /// 倒计时配色：今天/明天高亮，30 天内提醒，其余低调
+    private func countdownTone(_ days: Int) -> Color {
+        if days < 0 { return XPalette.textTertiary }
+        if days <= 1 { return XPalette.accent }
+        if days <= 30 { return XPalette.warn }
+        return XPalette.textSub
+    }
+
     private var bulletinCard: some View {
         XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: XSpace.m) {
@@ -88,17 +130,30 @@ struct CareRemindersView: View {
                         DB.store.set("kf_care_bday", on)
                         Task { await CareReminders.reschedule() }
                     }))
-                ForEach(DB.members()) { m in
+                // 按"还有几天"排序 —— 最近要过生日的排最上面
+                let rows = DB.members().map { m -> (Member, String, Int) in
+                    let md = Milestones.memberBirthdays()[m.id] ?? ""
+                    return (m, md, md.isEmpty ? 9999 : daysUntil(md))
+                }.sorted { $0.2 < $1.2 }
+
+                ForEach(rows, id: \.0.id) { (m, md, days) in
                     HStack(spacing: XSpace.s) {
                         Text(m.name)
                             .xFont(.subheadline)
                             .foregroundStyle(XPalette.text)
                         Spacer(minLength: XSpace.m)
-                        Text(Milestones.memberBirthdays()[m.id] ?? "未填写")
+                        if !md.isEmpty {
+                            Text(md)
+                                .xFont(.caption.monospacedDigit())
+                                .foregroundStyle(XPalette.textTertiary)
+                        }
+                        Text(countdownText(days))
                             .xFont(.subheadline.monospacedDigit())
-                            .foregroundStyle(Milestones.memberBirthdays()[m.id] == nil
-                                             ? XPalette.textSub : XPalette.text)
+                            .foregroundStyle(countdownTone(days))
+                            .frame(minWidth: 56, alignment: .trailing)
                     }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel(m.name + (md.isEmpty ? " 未填写生日" : " 生日 " + md + ", " + countdownText(days)))
                 }
                 Text("生日在 设置-成员管理-补全信息 里填写 (格式 MM-dd)。提醒通过本地通知送达, 全程离线, 不依赖任何服务器。")
                     .xFont(.caption2)
