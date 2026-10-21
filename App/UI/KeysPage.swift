@@ -34,7 +34,6 @@ struct KeysPage: View {
     @State private var seg: Int = 0          // 0 全部 / 1 密码 / 2 指纹 / 3 临时码
     @State private var search = ""
     @State private var searchActive = false
-    @State private var refreshTick = 0
     @State private var showAdd = false
 
     private var mac: String { app.currentMac }
@@ -87,7 +86,6 @@ struct KeysPage: View {
                     .environmentObject(app)
             }
         }
-        .id(refreshTick)
     }
 
     // ── 到期预警卡 ──

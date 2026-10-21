@@ -29,7 +29,6 @@ struct GatewayPage: View {
     @State private var steps: [String] = []
     @State private var error = ""
     @State private var gateways: [Gateway] = []
-    @State private var refreshTick = 0
 
     var body: some View {
         ZStack {
@@ -58,7 +57,6 @@ struct GatewayPage: View {
         .navigationTitle("智能网关")
         .navigationBarTitleDisplayMode(.inline)
         .task { reload() }
-        .id(refreshTick)
     }
 
     // ═══════════════════════════════════════════════════════

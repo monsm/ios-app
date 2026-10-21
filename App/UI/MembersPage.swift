@@ -32,7 +32,6 @@ struct MembersPage: View {
 
     @State private var members: [Member] = []
     @State private var showWizard = false
-    @State private var refreshTick = 0
 
     private var mac: String { app.currentMac }
 
@@ -70,12 +69,13 @@ struct MembersPage: View {
                 .accessibilityLabel("新增成员")
             }
         }
-        .sheet(isPresented: $showWizard) {
+        // onDismiss 必须重载：members 是 @State 缓存，只靠 onAppear 的话
+        // 新建成员后关闭 sheet 列表不会变 —— 用户会以为没建成。
+        .sheet(isPresented: $showWizard, onDismiss: { reload() }) {
             MemberWizardView()
                 .environmentObject(app)
         }
         .onAppear { reload() }
-        .id(refreshTick)
     }
 
     // ── 成员卡 ──
