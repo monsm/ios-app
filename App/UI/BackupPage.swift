@@ -267,18 +267,16 @@ struct BackupPage: View {
     // ═══════════════════════════════════════════════════════
 
     private var studioRow: some View {
-        Button {
-            showStudio = true
-        } label: {
+        // XRow 自带 action 参数 (内部就是 Button), 不需要外层 Button + 手搓背景
+        XPanel(kind: .group) {
             XRow(
                 systemImage: "wrench.and.screwdriver",
                 title: "备份工作室",
                 subtitle: "导出向导 / 恢复预演 / 完整性校验",
-                showsChevron: true)
-            .padding(XSpace.card)
-            .background(XPalette.surface,
-                        in: RoundedRectangle(cornerRadius: XRadius.card, style: .continuous))
+                showsChevron: true
+            ) {
+                showStudio = true
+            }
         }
-        .buttonStyle(.plain)
     }
 }

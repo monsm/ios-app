@@ -203,13 +203,13 @@ struct StatsPage: View {
     // ═══════════════════════════════════════════════════════
 
     private func degradedCard(_ m: StatsKit.StatModel) -> some View {
-        XEmptyState(systemImage: "chart.bar.doc.horizontal",
-                    title: "样本不足",
-                    message: degradedDetail(m))
-            .background(
-                RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
-                    .fill(XPalette.surface)
-            )
+        // 用 XPanel(padding: 0) 而不是手搓 surface 底:
+        // XEmptyState 自带 XSpace.xl 内边距, 外面再套默认 16 会变成 40。
+        XPanel(kind: .group, padding: 0) {
+            XEmptyState(systemImage: "chart.bar.doc.horizontal",
+                        title: "样本不足",
+                        message: degradedDetail(m))
+        }
     }
 
     private func degradedDetail(_ m: StatsKit.StatModel) -> String {

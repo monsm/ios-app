@@ -207,16 +207,14 @@ struct CarePage: View {
     // ═══════════════════════════════════════════════════════
 
     private var historyRow: some View {
-        Button {
-            showHistory = true
-        } label: {
+        // XRow 自带 action 参数 (内部就是 Button), 不再手搓 surface 底。
+        // .sheet 必须留在外面 —— 它不属于被替换的那层样式。
+        XPanel(kind: .group) {
             XRow(systemImage: "clock.arrow.circlepath", title: "保养历史",
-                 subtitle: "查看做过的保养记录", showsChevron: true)
-            .padding(XSpace.card)
-            .background(XPalette.surface,
-                        in: RoundedRectangle(cornerRadius: XRadius.card, style: .continuous))
+                 subtitle: "查看做过的保养记录", showsChevron: true) {
+                showHistory = true
+            }
         }
-        .buttonStyle(.plain)
         .sheet(isPresented: $showHistory) {
             NavigationStack {
                 MaintenanceView()
