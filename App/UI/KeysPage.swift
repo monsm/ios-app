@@ -97,7 +97,7 @@ struct KeysPage: View {
             Button("删除", role: .destructive) { performDelete(row) }
             Button("取消", role: .cancel) { confirmDelete = nil }
         } message: { row in
-            Text("「\(row.title)」会从本机台账移除。门锁里的对应凭证不会被这条操作删除，需要单独在锁上停用。")
+            Text("「\(row.title)」会从本机台账移除，并从门锁上撤销对应的密码/指纹。\n撤销命令会排队等待门锁连接，断网也不会丢。")
         }
         .sheet(isPresented: $showAdd) {
             NavigationStack {
@@ -220,19 +220,27 @@ struct KeysPage: View {
         }
     }
 
-    /// 删除一份凭证。
+    /// 删除一份凭证 —— **本机台账与门锁两端一起撤**。
     ///
-    /// 只动本机台账，不动锁内数据 —— 这一点必须在确认文案里说清楚，
-    /// 否则用户会以为"删了台账 = 锁上的指纹也删了"。
+    /// ⚠ 这里原来调的是 DB.delPwd / DB.delFp，那**只删本机台账**，
+    /// 锁上那条密码/指纹仍然有效。对门锁来说这是最危险的假安全感：
+    /// 用户以为权限收回了，实际上拿着那张卡依然能开门。
+    ///
+    /// 正确路径是 CredentialOrg.batchDisable：它先删本机台账，
+    /// 再把 del_pwd / del_fp 入队，等连上锁时由 LinkSenseKit 下发。
+    /// 断网也不会丢 —— 队列会等下一次连接。
     private func performDelete(_ row: KeyRow) {
+        let n: Int
         if row.kindTag == "fp" {
-            DB.delFp(mac, row.key)
+            n = CredentialOrg.batchDisable(mac, pwdAliases: [], fpBatches: [row.key])
         } else {
-            DB.delPwd(mac, row.key)
+            n = CredentialOrg.batchDisable(mac, pwdAliases: [row.key], fpBatches: [])
         }
         confirmDelete = nil
         XHaptics.trigger.impactOccurred()
-        app.showToast("已从本机台账删除「\(row.title)」")
+        app.showToast(n > 0
+            ? "已删除「\(row.title)」，并已排队从门锁上撤销"
+            : "「\(row.title)」未找到或已删除")
         refresh()
     }
 
