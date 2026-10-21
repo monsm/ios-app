@@ -68,7 +68,7 @@ struct KeysPage: View {
             .padding(.bottom, XSpace.xxl)
         }
         .background(XPalette.canvas)
-        .navigationTitle("钥匙")
+        .navigationTitle("钥匙管理")
         .navigationBarTitleDisplayMode(.large)
         .searchable(text: $search, isPresented: $searchActive, prompt: "搜索名称 / 备注 / 归属")
         .toolbar {

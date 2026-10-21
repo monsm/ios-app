@@ -90,7 +90,7 @@ struct ManagerFace: View {
         switch group {
         case .ledger:
             rows([
-                (.keys, "凭证管理", "密码 / 指纹 / 临时码", "key.horizontal"),
+                (.keys, "钥匙管理", "密码 / 指纹 / 临时码", "key.horizontal"),
                 (.fingerprints, "指纹", "录入与管理", "touchid"),
                 (.tempCodes, "临时密码", "一次性 / 周期", "clock.badge.checkmark"),
             ])
@@ -106,7 +106,7 @@ struct ManagerFace: View {
             rows([
                 (.members, "成员", "家人与角色", "person.2"),
                 (.memberWizard, "添加成员", "三步向导", "person.badge.plus"),
-                (.mergeMembers, "合并重复", "整理成员档案", "arrow.triangle.merge"),
+                (.mergeMembers, "合并成员", "先选一位作为主档案, 再挑要并入的", "arrow.triangle.merge"),
                 (.archivedMembers, "已归档", "查看归档成员", "archivebox"),
             ])
         case .security:

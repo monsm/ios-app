@@ -118,7 +118,7 @@ struct LocksPage: View {
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
         .background(XPalette.canvas)
-        .navigationTitle("设备管理")
+        .navigationTitle("门锁管理")
         .environment(\.editMode, $editMode)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
