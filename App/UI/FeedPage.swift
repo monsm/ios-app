@@ -86,7 +86,7 @@ struct FeedPage: View {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 HStack(alignment: .firstTextBaseline, spacing: XSpace.xs) {
                     Text("\(total)")
-                        .xFont(.title2, weight: .semibold, design: .rounded).monospacedDigit()
+                        .xFont(.system(.title2, design: .rounded).monospacedDigit(), weight: .semibold)
                         .foregroundStyle(XPalette.text)
                     Text("条动态")
                         .xFont(.footnote)
