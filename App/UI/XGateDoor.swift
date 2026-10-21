@@ -106,16 +106,39 @@ struct XGateDoor: View {
                 // 精确的 1050:2300 比例（见上面的计算），再写一层
                 // aspectRatio 反而会和固定 frame 打架。
                 .frame(width: doorWidth, height: doorHeight)
-                .clipped()
+                // 只用 clipShape —— 它自带裁剪。
+                // 前面再写 .clipped() 是两步裁剪（两次离屏渲染），
+                // 而且 .clipped() 裁成矩形后 clipShape 再裁圆角，纯浪费。
                 .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
                 // 门在地面上的接触阴影（让它有重量）
                 .shadow(color: .black.opacity(0.55), radius: 26, y: 14)
                 .overlay(alignment: .center) {
-                    lockOverlay
+                    // 放大时先把周围压暗，再叠锁 ——
+                    // 遮罩必须在 scaleEffect 之外，否则会跟着锁放大。
+                    ZStack {
+                        if lockFocused {
+                            Color.black.opacity(0.35)
+                                .ignoresSafeArea()
+                                .transition(.opacity)
+                        }
+                        lockOverlay
+                    }
                 }
                 // 点门面（非锁）→ 归位
                 .contentShape(Rectangle())
                 .onTapGesture { if lockFocused { withAnimation { lockFocused = false } } }
+        }
+        // 全屏归位热区 —— 放大时铺满整屏，点任何地方都能退回去。
+        // 注意 layers: 它在 ZStack 之上，但只在 lockFocused 时可交互，
+        // 所以不会挡住平时的门面点击。
+        .overlay {
+            if lockFocused {
+                Color.clear
+                    .contentShape(Rectangle())
+                    .onTapGesture { withAnimation { lockFocused = false } }
+                    .accessibilityLabel("归位")
+                    .accessibilityAddTraits(.isButton)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
@@ -143,15 +166,10 @@ struct XGateDoor: View {
             // 点击反馈必须在 0.4s 内完成，否则感觉"点下去没反应"。
             // （XMotion.gate 是我第一版凭空写的，全仓没有这个成员。）
             .animation(reduceMotion ? nil : XMotion.soft, value: lockFocused)
-            // 放大时压暗周围门面，强化"聚焦"
-            .background {
-                if lockFocused {
-                    Color.black.opacity(0.35)
-                        .ignoresSafeArea()
-                        .onTapGesture { withAnimation { lockFocused = false } }
-                        .transition(.opacity)
-                }
-            }
+            // 遮罩已移到 body 的 ZStack 顶层（见下）。
+            // 原来挂在这里是错的 —— .background 是对「已 scale 的视图」加背景，
+            // 会跟着放大 3.2 倍，只有锁周围一小块被压暗，
+            // 而且「点其他位置归位」的热区也只在那一小块 —— 根本点不到。
             // 触点热区: 真实比例下锁只有 19pt 宽，直接点很难中。
             // 用 overlay 叠一层 44×44 透明区域接手势 ——
             // **不能用 .frame(minWidth:) 撑**，那会把锁体本身拉成正方形。
