@@ -121,11 +121,7 @@ struct DoorFront: View {
                     .frame(width: plateDiameter * 1.8)
                     .animation(reduceMotion ? nil : .easeInOut(duration: 2.6).repeatForever(autoreverses: true), value: breathe)
 
-                LockPlate(
-                    charge: charge,
-                    isOpen: lastKnownOpen && stage == .idle,
-                    isFailed: failureText != nil,
-                    diameter: plateDiameter)
+                lockSurface
             }
             .frame(maxWidth: .infinity)
 
@@ -173,6 +169,28 @@ struct DoorFront: View {
 
     /// 锁体直径: 屏幕宽 58% 夹在 180...280。
     /// 它是整屏唯一的主体物 —— 太小会让上下留白显得像"没加载完"。
+    /// 锁面 —— 3D 或 2D，由 kf_use_3d_lock 决定。
+    ///
+    /// 两者接收完全相同的状态输入，所以切换开关不会改变任何行为语义，
+    /// 只改变渲染方式。这是"可回退"的前提。
+    @ViewBuilder
+    private var lockSurface: some View {
+        if use3DLock {
+            XLockBlade(
+                isOpen: lastKnownOpen && stage == .idle,
+                isFailed: failureText != nil,
+                isDeadbolted: isDeadbolted,
+                charge: charge,
+                diameter: plateDiameter)
+        } else {
+            LockPlate(
+                charge: charge,
+                isOpen: lastKnownOpen && stage == .idle,
+                isFailed: failureText != nil,
+                diameter: plateDiameter)
+        }
+    }
+
     private var plateDiameter: CGFloat {
         let w = UIScreen.main.bounds.width
         return min(max(w * 0.58, 180), 280)
