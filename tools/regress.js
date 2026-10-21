@@ -133,6 +133,13 @@ const checks = [
     const a = CODE.get('LockKeeperApp.swift') || '';
     return !a.includes('详见「设置-诊断」') && !a.includes('pendingSettingsFocus = "diag"');
   }],
+  ['routeDestination 保留 @ViewBuilder', () => {
+    // 多分支返回不同 View 类型的函数必须带 @ViewBuilder。
+    // 本轮插新函数时把它挤到了别的函数头上，CI 报
+    // "branches have mismatching types 'KeysPage' and 'MembersPage'"。
+    const m = RAW.get('ManagerFace.swift') || '';
+    return /@ViewBuilder\s*\n\s*private func routeDestination/.test(m);
+  }],
 ];
 
 let pass = 0;

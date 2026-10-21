@@ -186,8 +186,6 @@ struct ManagerFace: View {
     }
 
     // ── 路由落地 ──
-    @ViewBuilder
-    /// 把 pendingSettingsFocus 翻译成真正要推入的页面，并立刻清空（只消费一次）。
     private func consumePendingFocus() {
         guard let f = app.pendingSettingsFocus else { return }
         app.pendingSettingsFocus = nil
@@ -197,6 +195,7 @@ struct ManagerFace: View {
         }
     }
 
+    @ViewBuilder
     private func routeDestination(_ r: ManagerRoute) -> some View {
         switch r {
         case .keys:           KeysPage()
