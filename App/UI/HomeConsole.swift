@@ -196,10 +196,16 @@ struct HomeConsole: View {
                     .accessibilityLabel("现在 \(clockText(ctx.date))")
             }
             Spacer(minLength: 0)
+            // ═══ 层级纠正 ═══
+            //
+            // 这一行是"现在能不能开门"——全屏最该一眼看到的状态。
+            // 而它原来用 caption(12pt)，左边那个时钟却是 subheadline(15pt)。
+            // 装饰比功能更醒目，是层级颠倒（layout.md：按相对重要性排序）。
+            // 把它提到 footnote(13pt) 并加粗；时钟保持原样（它是"仪表"气质的锚点）。
             HStack(spacing: 5) {
                 Circle().fill(phase.tone).frame(width: 6, height: 6)
                 Text(phase.label)
-                    .xFont(.system(.caption, weight: .medium))
+                    .xFont(.system(.footnote, weight: .semibold))
                     .foregroundStyle(phase.tone)
             }
             .accessibilityElement(children: .combine)

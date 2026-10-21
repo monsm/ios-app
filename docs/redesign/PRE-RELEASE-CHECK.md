@@ -320,3 +320,52 @@ iOS 上这种重复不算错误（系统「设置」也这样），但它带来�
 
 **要真正解决需要合并成一个面** —— 那是结构级改动，风险远大于收益。
 本轮只把命名统一，不动结构。
+
+---
+
+# 追加：门厅结构 versus 外部基准（2026-10-22）
+
+## 外部基准在本会话不可用
+
+- **UIZZE**（`ui-radar` 技能的数据源）：`uizze.com` 解析到非公网地址，被网络策略拦下
+- **web_search**：无 API key
+
+按 `ui-radar` 自己的原则 —— *"If nothing useful appears, say so and stop"* ——
+**不编造参考物**。所以本轮改用**手头可引用的权威来源**：Apple HIG 原文。
+
+## HIG 依据
+
+> `layout.md › Best practices`
+> **Order content by relative importance.** ... place the most important items [first]
+>
+> **Use progressive disclosure.** An interface with too much content and too many
+> choices makes it harder to find information quickly.
+
+## 逐个核对，三项结论
+
+### 1. 顺序：站得住，不改
+
+门厅顺序 = 页眉 → 身份（锁名）→ 今日摘要 → 开锁环 → 三指标 → 分时图 → 成员 → 管理。
+
+「先知道是哪把锁、它今天什么状态，再开门」是合理的。**HIG 要求按重要性排序，
+并没有要求"动作必须在第一位"。**
+
+### 2. 今日摘要不是重复，不改
+
+`digest`（"今天 N 人开过 M 次"）与下方 `todaySection` 一度被我怀疑重复。
+核实：`todaySection` 只有分时图表，**没有文字摘要**。所以 digest 是那句"一眼看到多少次"
+的文字版，不重复。
+
+### 3. 时钟保留，但纠正了一处层级
+
+页眉里"装饰性的时钟 15pt"比"能不能开门的连接状态 12pt"更醒目 —— **重要性倒置**。
+已把连接状态提到 `footnote`(13pt) + semibold。
+
+时钟本身保留：它是这次重写刻意做的「仪表气质」锚点，不是冗余错误。
+
+## 顺带排除的性能疑虑
+
+`recompute()` 由 `SecTickCenter` 驱动，而它是 **事件驱动**（`bump()`），
+不是定时轮询 —— 不会每秒扫一遍日志。
+
+**本轮结论：门厅结构不需要改。** 这是"查了、没问题"，不是"没查"。
