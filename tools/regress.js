@@ -254,6 +254,12 @@ const checks = [
     }
     return bad === 0;
   }],
+  ['入场曲线不是"为已删界面标定的时长"', () => {
+    // doorReveal 原名"门后内容入场"，0.70s 是三棱柱时代整屏揭示的尺度。
+    // 三棱柱删掉后它只剩小组件在用，收短到 0.45s。
+    const t = CODE.get('Theme.swift') || '';
+    return t.includes('duration: 0.45') && !t.includes('duration: 0.70');
+  }],
 ];
 
 let pass = 0;

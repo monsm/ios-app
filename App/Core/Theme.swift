@@ -282,11 +282,16 @@ enum XMotion {
         }
     }
 
-    /// 门后内容入场
+    /// 元件入场 / 数值归位（头像、仪表、进度环）。
+    ///
+    /// 原名"门后内容入场"：三棱柱时代指整屏揭示，0.70s 是按那个尺度标的。
+    /// 三棱柱删掉之后，这个曲线只剩小组件在用 —— 40pt 的头像等 0.7 秒才站稳，
+    /// 而 iOS 标准过渡是 0.25–0.35s，0.70s 是它的 2 倍多（motion.md: "aim for brevity"）。
+    /// 收短到 0.45s：仍是"落定"而非"弹出"，但不会让人等。
     static var doorReveal: Animation {
         switch tier {
         case "calm": return .easeOut(duration: 0.20)
-        default: return .timingCurve(0.22, 0.76, 0.03, 1, duration: 0.70)
+        default: return .timingCurve(0.22, 0.76, 0.03, 1, duration: 0.45)
         }
     }
 
