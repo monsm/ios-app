@@ -36,9 +36,9 @@ struct CarePage: View {
     var body: some View {
         ScrollView {
             VStack(spacing: XSpace.l) {
-                periodCard
-                todoCard
-                historyRow
+                periodCard.xScrollLift()
+                todoCard.xScrollLift()
+                historyRow.xScrollLift()
             }
             .padding(.horizontal, XSpace.gutter)
             .padding(.vertical, XSpace.l)

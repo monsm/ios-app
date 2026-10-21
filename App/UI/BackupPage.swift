@@ -37,10 +37,10 @@ struct BackupPage: View {
     var body: some View {
         ScrollView {
             VStack(spacing: XSpace.l) {
-                statusCard
-                exportCard
-                importCard
-                studioRow
+                statusCard.xScrollLift()
+                exportCard.xScrollLift()
+                importCard.xScrollLift()
+                studioRow.xScrollLift()
             }
             .padding(.horizontal, XSpace.gutter)
             .padding(.vertical, XSpace.l)

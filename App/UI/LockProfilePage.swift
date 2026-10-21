@@ -43,12 +43,12 @@ struct LockProfilePage: View {
 
             ScrollView {
                 VStack(spacing: XSpace.xl) {
-                    plaque
-                    identitySection
-                    symbolSection
-                    colorSection
-                    moreSection
-                    saveButton
+                    plaque.xScrollLift()
+                    identitySection.xScrollLift()
+                    symbolSection.xScrollLift()
+                    colorSection.xScrollLift()
+                    moreSection.xScrollLift()
+                    saveButton.xScrollLift()
                 }
                 .padding(.horizontal, XSpace.gutter)
                 .padding(.vertical, XSpace.l)

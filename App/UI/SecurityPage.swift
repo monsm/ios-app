@@ -39,11 +39,11 @@ struct SecurityPage: View {
     var body: some View {
         ScrollView {
             VStack(spacing: XSpace.l) {
-                statusCard
+                statusCard.xScrollLift()
                 if !risks.isEmpty || auditBroken || !selfCheckIssues.isEmpty {
-                    riskCard
+                    riskCard.xScrollLift()
                 }
-                actionsCard
+                actionsCard.xScrollLift()
             }
             .padding(.horizontal, XSpace.gutter)
             .padding(.vertical, XSpace.l)
