@@ -3,9 +3,4 @@
 // 数据源全部是既有本地表 (日志缓存/台账/快照/钥匙串), 统计逻辑在 App/Core/LockStats.swift。
 import SwiftUI
 
-/// 768/778 下钻目标: 用 Identifiable 包一层 mac 给 .sheet(item:) 用
-private struct AlarmTarget: Identifiable {
-    let mac: String
-    var id: String { mac }
-}
 

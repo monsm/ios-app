@@ -91,18 +91,6 @@ struct XPanel<Content: View>: View {
     }
 }
 
-/// 内嵌区块 —— 面板里的次级分区, 用底色下沉表达
-struct XInset<Content: View>: View {
-    var padding: CGFloat = XSpace.control
-    @ViewBuilder var content: () -> Content
-
-    var body: some View {
-        content()
-            .padding(padding)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(XPalette.surfaceAlt, in: RoundedRectangle(cornerRadius: XRadius.control, style: .continuous))
-    }
-}
 
 /// 分隔线
 struct XHairline: View {
@@ -219,59 +207,7 @@ struct XEmptyState: View {
     }
 }
 
-/// 错误态 —— 与空态同构, 但用 danger 色调 + 重试
-struct XErrorState: View {
-    var title: String
-    var message: String
-    var retryTitle: String = "重试"
-    var retry: (() -> Void)? = nil
 
-    var body: some View {
-        VStack(spacing: XSpace.l) {
-            Image(systemName: "exclamationmark.triangle")
-                .xFont(.system(size: XIcon.xl, weight: .light))
-                .foregroundStyle(XPalette.danger)
-                .accessibilityHidden(true)
-
-            VStack(spacing: XSpace.s) {
-                Text(title)
-                    .xFont(.headline)
-                    .foregroundStyle(XPalette.text)
-                Text(message)
-                    .xFont(.subheadline)
-                    .foregroundStyle(XPalette.textSub)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            if let retry {
-                Button(retryTitle, action: retry)
-                    .buttonStyle(XSecondaryButtonStyle())
-            }
-        }
-        .padding(XSpace.xl)
-        .frame(maxWidth: .infinity)
-    }
-}
-
-/// 加载态 —— 统一形状
-struct XLoadingState: View {
-    var message: String = "正在读取…"
-
-    var body: some View {
-        VStack(spacing: XSpace.m) {
-            ProgressView()
-                .controlSize(.large)
-            Text(message)
-                .xFont(.subheadline)
-                .foregroundStyle(XPalette.textSub)
-        }
-        .padding(XSpace.xxl)
-        .frame(maxWidth: .infinity)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(message)
-    }
-}
 
 // ═══════════════════════════════════════════════════════════
 // MARK: - 按钮
@@ -465,22 +401,7 @@ struct XHeroCard<Content: View>: View {
     }
 }
 
-/// 旧 HeroStat
-struct XHeroStat: View {
-    var id: String
-    var label: String
-    var value: String
-    var body: some View { XMetricTile(value: value, label: label) }
-}
 
-/// 旧 HeroPill
-struct XHeroPill: View {
-    var text: String
-    var systemImage: String? = nil
-    var body: some View {
-        XStatusPill(text: text, tone: .accent, systemImage: systemImage)
-    }
-}
 
 /// 旧 GuidedEmptyView
 struct XGuidedEmptyView: View {
@@ -519,10 +440,6 @@ struct XGuidedEmptyView: View {
     }
 }
 
-/// 旧 HeroTexture —— 新设计里材质由 DoorSurface 承担, 这里保留空实现
-struct XHeroTexture: View {
-    var body: some View { Color.clear }
-}
 
 /// 旧 HeroStats 命名空间 (Core 层读写它的可见性)
 enum XHeroStats {
@@ -536,45 +453,6 @@ enum XHeroStats {
     }
 }
 
-/// 旧 XFlowLayout(Core 层在用)
-struct XFlowLayout: Layout {
-    var spacing: CGFloat = XSpace.s
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let maxWidth = proposal.width ?? .infinity
-        var rows: [CGFloat] = [0]
-        var rowHeights: [CGFloat] = [0]
-        for sv in subviews {
-            let s = sv.sizeThatFits(.unspecified)
-            if rows[rows.count - 1] + s.width + (rows[rows.count - 1] > 0 ? spacing : 0) > maxWidth {
-                rows.append(s.width)
-                rowHeights.append(s.height)
-            } else {
-                rows[rows.count - 1] += s.width + (rows[rows.count - 1] > 0 ? spacing : 0)
-                rowHeights[rowHeights.count - 1] = max(rowHeights[rowHeights.count - 1], s.height)
-            }
-        }
-        let h = rowHeights.reduce(0, +) + spacing * CGFloat(max(0, rowHeights.count - 1))
-        return CGSize(width: maxWidth == .infinity ? rows.max() ?? 0 : maxWidth, height: h)
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        var x = bounds.minX
-        var y = bounds.minY
-        var rowH: CGFloat = 0
-        for sv in subviews {
-            let s = sv.sizeThatFits(.unspecified)
-            if x + s.width > bounds.maxX && x > bounds.minX {
-                x = bounds.minX
-                y += rowH + spacing
-                rowH = 0
-            }
-            sv.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(s))
-            x += s.width + spacing
-            rowH = max(rowH, s.height)
-        }
-    }
-}
 
 
 // ═══════════════════════════════════════════════════════════
@@ -681,56 +559,6 @@ extension View {
 // MARK: - 按钮外观 (2026-10-21 从 VK 迁出)
 // ═══════════════════════════════════════════════════════════
 
-enum XActionChrome {
-    @ViewBuilder
-    static func primary<Label: View>(fullWidth: Bool, pressed: Bool,
-                                     @ViewBuilder _ label: () -> Label) -> some View {
-        label()
-            .xFont(.headline)
-            .foregroundStyle(XPalette.onAccent)
-            .padding(.vertical, XSpace.m + 2)
-            .padding(.horizontal, XSpace.l)
-            .frame(maxWidth: fullWidth ? .infinity : nil)
-            .frame(minHeight: XHit.min + 6)
-            .background(XGradient.button,
-                        in: RoundedRectangle(cornerRadius: XRadius.control, style: .continuous))
-            .shadow(color: XPalette.accent.opacity(0.26), radius: 12, y: 5)
-            .opacity(pressed ? 0.9 : 1)
-            .scaleEffect(pressed ? 0.98 : 1)
-            .animation(XMotion.quick, value: pressed)
-    }
-
-    @ViewBuilder
-    static func secondary<Label: View>(fullWidth: Bool, pressed: Bool, tint: Color,
-                                       @ViewBuilder _ label: () -> Label) -> some View {
-        label()
-            .xFont(.subheadline, weight: .semibold)
-            .foregroundStyle(XPalette.accentText)
-            .padding(.vertical, XSpace.s + 2)
-            .padding(.horizontal, XSpace.l)
-            .frame(maxWidth: fullWidth ? .infinity : nil)
-            .frame(minHeight: XHit.min)
-            .background(tint.opacity(pressed ? 0.16 : 0.09),
-                        in: RoundedRectangle(cornerRadius: XRadius.control, style: .continuous))
-            .scaleEffect(pressed ? 0.985 : 1)
-            .animation(XMotion.quick, value: pressed)
-    }
-
-    @ViewBuilder
-    static func destructive<Label: View>(pressed: Bool,
-                                         @ViewBuilder _ label: () -> Label) -> some View {
-        label()
-            .xFont(.subheadline, weight: .semibold)
-            .foregroundStyle(XPalette.danger)
-            .padding(.vertical, XSpace.s + 2)
-            .padding(.horizontal, XSpace.l)
-            .frame(maxWidth: .infinity)
-            .frame(minHeight: XHit.min)
-            .background(XPalette.danger.opacity(pressed ? 0.16 : 0.09),
-                        in: RoundedRectangle(cornerRadius: XRadius.control, style: .continuous))
-            .animation(XMotion.quick, value: pressed)
-    }
-}
 
 
 // ═══════════════════════════════════════════════════════════

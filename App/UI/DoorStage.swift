@@ -147,81 +147,12 @@ func frontfaceOpacity(angle: Double) -> Double {
 // MARK: - 门板材质 (纯程序化, 零位图)
 // ═══════════════════════════════════════════════════════════
 
-/// 金属门板 —— 三停渐变 + 高光 + 细噪点
-struct DoorMaterial: View {
-    var angle: Double = 0   // 用于高光随角度移动
 
-    var body: some View {
-        ZStack {
-            // 底色: 上暗 → 中亮 → 下暗 (模拟顶光)
-            XGradient.doorSurface
-
-            // 高光带 (随角度横向移动, 模拟反光扫过)
-            GeometryReader { geo in
-                LinearGradient(
-                    colors: [.clear, Color.white.opacity(0.07), .clear],
-                    startPoint: .leading, endPoint: .trailing)
-                    .frame(width: geo.size.width * 0.42)
-                    .offset(x: geo.size.width * (0.12 + CGFloat(angle / 180) * 0.5))
-                    .blendMode(.plusLighter)
-            }
-            .allowsHitTesting(false)
-
-            // 细噪点 (固定种子, 不闪)
-            GrainOverlay()
-                .opacity(0.045)
-                .blendMode(.overlay)
-                .allowsHitTesting(false)
-        }
-    }
-}
-
-/// 程序化噪点 —— 固定种子, 每次重建都一样
-private struct GrainOverlay: View {
-    var body: some View {
-        Canvas { ctx, size in
-            var seed: UInt64 = 0x9E3779B97F4A7C15
-            func next() -> Double {
-                seed = seed &* 6364136223846793005 &+ 1442695040888963407
-                return Double((seed >> 33) & 0xFFFF) / 65535.0
-            }
-            let step: CGFloat = 3
-            var y: CGFloat = 0
-            while y < size.height {
-                var x: CGFloat = 0
-                while x < size.width {
-                    let v = next()
-                    if v > 0.72 {
-                        let r = CGRect(x: x, y: y, width: 1, height: 1)
-                        ctx.fill(Path(r), with: .color(.white.opacity(v * 0.5)))
-                    }
-                    x += step
-                }
-                y += step
-            }
-        }
-    }
-}
 
 // ═══════════════════════════════════════════════════════════
 // MARK: - 门缝透光
 // ═══════════════════════════════════════════════════════════
 
-/// 中缝透光 —— 先于门转动亮起 (340ms 先行)
-struct SeamLight: View {
-    /// 0...1
-    var intensity: Double
-
-    var body: some View {
-        Rectangle()
-            .fill(XGradient.seamLight)
-            .frame(width: 2 + intensity * 6)
-            .shadow(color: Color(hex: 0xFFCE8A).opacity(0.42 * intensity), radius: 22 * intensity)
-            .opacity(intensity)
-            .blur(radius: (1 - intensity) * 3)
-            .allowsHitTesting(false)
-    }
-}
 
 // ═══════════════════════════════════════════════════════════
 // MARK: - 锁体

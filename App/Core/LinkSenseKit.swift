@@ -688,21 +688,6 @@ struct LinkPrefsView: View {
     }
 }
 
-/// 63/71 RSSI 四格信号条 (形状 + 档位文字双通道, 颜色不单独承载信息)。
-struct RSSIBars: View {
-    var level: Int                 // 0-4
-    var tint: Color = XPalette.accentText
-    var body: some View {
-        HStack(spacing: 2) {
-            ForEach(0..<4, id: \.self) { i in
-                RoundedRectangle(cornerRadius: 1)
-                    .fill(i < level ? tint : XPalette.hairline)
-                    .frame(width: 3, height: CGFloat(i + 1) + 3)
-            }
-        }
-        .accessibilityLabel("信号" + LinkSense.rssiLabel(level))
-    }
-}
 extension LinkSense {
     /// RSSI 档位: -55 满 / -65 近 / -75 中 / -85 远
     static func rssiLevel(_ rssi: Int?) -> Int {
@@ -718,122 +703,8 @@ extension LinkSense {
     }
 }
 
-/// 64 三态链路胶囊 (hero 渐变专用白字变体): 已连接(绿)/握手中(白+转)/未连接(灰白)。
-struct LinkPill: View {
-    var state: LinkState
-    var connectMs: Int? = nil
-    var rssi: Int? = nil
-    var source: String = ""
-    var body: some View {
-        HStack(spacing: XSpace.xs) {
-            Image(systemName: icon)
-                .font(.system(size: XIcon.xs, weight: .semibold))
-            // 228 色觉冗余: 三态不能只靠颜色 + 链路圈的虚实来分 —— 色觉障碍下 fill/dashed 几乎同形，
-            // 而本 App 还有一个"灰阶预览"开关 (AXFlags.grayPreview)，那一档里 tint 整条通道直接归零。
-            // 所以补一枚语义符号 (✓ / ⏳ / ✗) 当第三通道: 形状自己就说清状态。
-            Image(systemName: redundancyIcon)
-                .font(.system(size: XIcon.xs, weight: .bold))
-                .accessibilityHidden(true)   // 文案与 accessibilityLabel 已经报了状态，符号不重复朗读
-            Text(text)
-                .xFont(.caption, weight: .medium)
-                .lineLimit(1)
-            // 98 冷热标识: 已连接时标注来源 — 预热/回连("已预热") vs 用户触发的即连, 解释快慢差异
-            if state == .ready, source != "" {
-                Text(source)
-                    .xFont(.caption2, weight: .medium)
-            }
-        }
-        .foregroundStyle(tint)
-        .padding(.horizontal, XSpace.s + 2)
-        .padding(.vertical, XSpace.xs + 1)
-        // 底板用压暗的黑纱而不是同色洗底: 白字压白洗底实测只有 3.09~3.31:1 (对比 tools/contrast.js E4)
-        .background(XPalette.surfaceSunken, in: Capsule())
-        .overlay(Capsule().strokeBorder(tint.opacity(0.38), lineWidth: 0.5))
-        .fixedSize(horizontal: true, vertical: false)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(accessibilityText)
-    }
-    private var icon: String {
-        switch state {
-        case .ready: return "link.circle.fill"
-        case .connecting: return "arrow.triangle.2.circlepath"
-        default: return "link.circle.dashed"
-        }
-    }
-    /// 228 的第二通道: 对勾=就绪、沙漏=握手中、叉=未连接。
-    /// 刻意选**跨文化都读得懂**的三个符号，而不是三个不同样式的链路图标 ——
-    /// 后者的差别正是这里要冗余掉的那个差别。
-    private var redundancyIcon: String {
-        switch state {
-        case .ready: return "checkmark"
-        case .connecting: return "hourglass"
-        default: return "xmark"
-        }
-    }
-    // 68 拟人状态文案: "门锁在线，随时可开"
-    private var text: String {
-        switch state {
-        case .ready: return "门锁在线, 随时可开"
-        case .connecting: return "正在敲门…"
-        default: return "未连接"
-        }
-    }
-    private var tint: Color {
-        switch state {
-        case .ready: return Color(hex: 0xBBF7D0)
-        case .connecting: return XPalette.onAccent.opacity(0.9)
-        default: return XPalette.onAccent.opacity(0.75)
-        }
-    }
-    private var accessibilityText: String {
-        text + (rssi.map { " 信号" + LinkSense.rssiLabel(LinkSense.rssiLevel($0)) } ?? "")
-    }
-}
 
-/// 67 握手耗时标签 (hero 上的胶囊): 最近一次连接 ms, 超 2 秒标黄。
-struct ConnectMsBadge: View {
-    var ms: Int?
-    var body: some View {
-        if let ms {
-            Label(String(ms) + "ms", systemImage: "stopwatch")
-                .xFont(.caption2, weight: .medium)
-                // 淡黄/纯白都必须坐在压暗底板上: 裸压主题渐变最亮端实测只有 3.95:1 与 3.89:1
-                .foregroundStyle(ms >= 2000 ? Color(hex: 0xFFE9A8) : XPalette.onAccent.opacity(0.85))
-                .padding(.horizontal, XSpace.s)
-                .padding(.vertical, 2)
-                .background(XPalette.surfaceSunken, in: Capsule())
-                .accessibilityLabel("最近一次连接耗时 " + String(ms) + " 毫秒")
-        }
-    }
-}
 
-/// 126 回连节律点阵: 5/15/30/60/90 五轮, 高亮当前轮; 0 轮时整排灰 = 待命。
-struct ReconnectDots: View {
-    var attempt: Int
-    var nextWait: Int
-    var body: some View {
-        HStack(spacing: XSpace.xs) {
-            ForEach(0..<5, id: \.self) { i in
-                Circle()
-                    .fill(fill(i))
-                    .frame(width: 7, height: 7)
-                    .accessibilityHidden(true)
-            }
-            Text(attempt > 0 ? "回连第 \(attempt) 轮 · 下一轮等 \(nextWait) 秒"
-                 : "失联后自动回连 (5/15/30/60/90 秒)")
-                .xFont(.caption2)
-                .foregroundStyle(XPalette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("回连节律 " + (attempt > 0 ? "第 \(attempt) 轮, 下一轮等 \(nextWait) 秒" : "待命"))
-    }
-    private func fill(_ i: Int) -> Color {
-        if attempt > 0 && i < attempt { return XPalette.accent }
-        if attempt > 0 && i == attempt - 1 { return XPalette.warn }
-        return XPalette.hairline
-    }
-}
 
 /// 136 跨页全局 BLE 状态细条: 非设备 Tab 顶部 2pt 语义细线 + 状态行, 点按跳回设备页。
 struct BLEStrip: View {

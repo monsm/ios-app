@@ -304,12 +304,6 @@ enum XMotion {
     }
 }
 
-/// 时长 (兼容旧 API)
-enum XDuration {
-    static var quick: Double { 0.18 }
-    static var standard: Double { 0.30 }
-    static var slow: Double { 0.52 }
-}
 
 // ═══════════════════════════════════════════════════════════
 // MARK: - 触感

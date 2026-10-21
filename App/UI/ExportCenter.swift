@@ -256,16 +256,6 @@ struct ExportImageFile: Transferable {
         .suggestedFileName { $0.nameOverride ?? $0.item.fileName }
     }
 }
-/// 718 单条记录卡分享: UIImage 本身不满足 Transferable, 而"分享这一条"不值得为它造一个完整 ExportItem
-/// (ExportItem 带 sha/文件名规范/预览那套是导出中心的事)。PNG 而不是 JPEG: 卡上是锐利文字与数字。
-struct RecordCardImage: Transferable {
-    let image: UIImage
-    let fileName: String
-    static var transferRepresentation: some TransferRepresentation {
-        DataRepresentation(exportedContentType: .png) { $0.image.pngData() ?? Data() }
-            .suggestedFileName { $0.fileName }
-    }
-}
 struct ExportTextFile: Transferable {
     let item: ExportItem
     static var transferRepresentation: some TransferRepresentation {

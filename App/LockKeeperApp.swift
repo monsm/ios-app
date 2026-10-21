@@ -1315,51 +1315,6 @@ struct ToastView: View {
     }
 }
 
-// ---------- 377 访客受限区复核 (2026-10-17 拍板 A: 只走面容/指纹, 不再有本机密码) ----------
-/// 原承载体是 AppLockView 的口令键盘。启动门禁删掉后, 口令这个凭据在本机已不存在,
-/// 复核只剩生物识别一条路 —— 所以这里是一个**只做一件事**的小页, 不重建第二个解锁面。
-struct GuestReauthGate: View {
-    @EnvironmentObject var app: AppState
-    @State private var busy = false
-    @State private var note = "用面容/指纹确认是你本人后, 放开凭证与设置两页"
-    var body: some View {
-        VStack(spacing: XSpace.m) {
-            Image(systemName: "faceid")
-                .font(.system(size: 44))
-                .foregroundStyle(XPalette.accentText)
-                .accessibilityHidden(true)
-            Text("凭证与设置已收起")
-                .xFont(.headline)
-            Text(note)
-                .xFont(.footnote)
-                .foregroundStyle(XPalette.textSub)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-            Button {
-                Task { await verify() }
-            } label: {
-                Text(busy ? "验证中…" : "验证")
-                    .frame(maxWidth: .infinity, minHeight: XHit.min)
-            }
-            .buttonStyle(.borderedProminent)
-            .disabled(busy)
-            Button("取消") { app.showGuestGate = false }
-                .frame(minHeight: XHit.min)
-        }
-        .padding(XSpace.l)
-        .task { await verify() }
-    }
-    private func verify() async {
-        guard !busy else { return }
-        busy = true
-        defer { busy = false }
-        if await AuthKit.verifyBiometricAsync(reason: "放开凭证与设置") {
-            app.commitUnlock(reauth: true)
-        } else {
-            note = "未通过面容/指纹确认, 这两页仍收着"
-        }
-    }
-}
 
 struct PressFeedback: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {

@@ -133,37 +133,7 @@ enum AlarmWords {
     static let failPhrase = "本次开锁未成功, 请留意原因"
 }
 
-/// 674 通勤时段标签: 工作日 7-9 / 17-19 实时计算, 无需积累
-enum CommuteLabel {
-    static func tag(date: Date, hour: Int) -> String? {
-        // 原写法用 `Calendar(identifier: .chinese)` 取 weekday, 而它的注释写"周一=2, 周日=7"、代码却排除 1 和 7 ——
-        // 口径自相矛盾, 且农历历法的 weekday 归属并不是这里要的东西。上一批改成了裸的
-        // `Calendar(identifier: .gregorian)`，但 Apple 对 `init(identifier:)` 的**默认时区没有任何文档承诺**
-        // (那份 JSON 只有 declarations + parameters)，拿一个未约定的时区算"周几"，
-        // 与调用方按当前时区算出的 `hour` 可能在午夜两侧差一天 (§10.31)。
-        // 现在只认 `StatsKit.weekdayIndex` 那一份周序 (1=周一…7=周日，历法与时区都已在 WeekCal 钉死)。
-        guard StatsKit.weekdayIndex(date) <= 5 else { return nil }   // 1~5 = 周一~周五
-        if (7...9).contains(hour) { return "通勤" }
-        if (17...19).contains(hour) { return "通勤" }
-        return nil
-    }
-}
 
-/// 658 自然时段词: 清晨/上午/午前/午间/下午/傍晚/晚间/深夜 (组头与行级小字共用)
-enum TimeWord {
-    static func word(_ hour: Int) -> String {
-        switch hour {
-        case 0..<5: return "清晨"
-        case 5..<9: return "上午"
-        case 9..<11: return "午前"
-        case 11..<13: return "午间"
-        case 13..<17: return "下午"
-        case 17..<19: return "傍晚"
-        case 19..<23: return "晚间"
-        default: return "深夜"
-        }
-    }
-}
 
 /// 655 动词化日志文案 (统一动词表: "张三 用 指纹 开了门", 告警/操作各用各的动词)
 enum RecordVerbs {

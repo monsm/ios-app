@@ -6,38 +6,3 @@
 // 全程走系统本地语音，不联网、不采集、不录音 (CONSTRAINTS 的离线口径)。
 import AVFoundation
 
-enum Speech {
-    /// 唯一的合成器实例 —— 由一把锁持有, 而不是裸 static let。
-    /// AVSpeechSynthesizer 不是 Sendable, 裸 static let 在 Swift 6 下判"非隔离全局共享可变状态";
-    /// 而它**确实是**共享可变状态 (isSpeaking / speak / stop 必须看同一份, 否则两句话会叠音)。
-    /// 上锁 = 让原语保证互斥, 不是把检查关掉。朗读是低频动作, 一次锁的开销在听感上不可测。
-    private static let synth = Locked(AVSpeechSynthesizer())
-
-    /// 中文朗读。`rate` 默认 0.5：系统档位里 0.5 是"清楚但不赶"的一档，逐位报码那种要更慢。
-    /// 开口前先 stop 掉上一句 —— 老人跟着抄一串叠音的密码，比不念更糟。
-    @discardableResult
-    static func zh(_ text: String, rate: Float = 0.5) -> Bool {
-        let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !t.isEmpty else { return false }
-        let u = AVSpeechUtterance(string: t)
-        u.voice = AVSpeechSynthesisVoice(language: "zh-CN")
-        u.rate = rate
-        synth.withLock { s in
-            if s.isSpeaking { s.stopSpeaking(at: .immediate) }
-            s.speak(u)
-        }
-        return true
-    }
-
-    /// 309 逐位中文报码 (让对方同步抄写)。非数字一律跳过而不是念成"某"—— 念错了比不念更难查。
-    static func digits(_ s: String) {
-        let zhDigits = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九"]
-        let spelled = s.compactMap { ch -> String? in
-            guard let d = ch.wholeNumberValue, d >= 0, d <= 9 else { return nil }
-            return zhDigits[d]
-        }
-        guard !spelled.isEmpty else { return }
-        _ = zh("密码逐位: " + spelled.joined(separator: "、") + "。", rate: 0.35)
-    }
-
-}
