@@ -278,7 +278,9 @@ struct DoorPrism<B: View, D: View, F: View>: View {
         let facing = cos(rad)
         return Capsule()
             .fill(XPalette.textTertiary.opacity(0.55))
-            .frame(width: 5)
+            // 原型里棱是半径 0.022 的圆柱（R=1.0）→ 直径 2.2% 棱柱宽，
+            // 换算到 359pt 面宽约 8pt。原来写 5pt 太细，几乎看不见。
+            .frame(width: 8)
             .scaleEffect(depthScale)
             .offset(x: x)
             .frame(maxHeight: .infinity)
