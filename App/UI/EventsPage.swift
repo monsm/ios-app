@@ -176,7 +176,7 @@ struct EventsPage: View {
         var filters = QueryFilters()
         filters.alarmOnly = alarmOnly
         return RecordSearch.search(recs: out,
-                                   query: RecordSearch.Query.parse(raw),
+                                   query: RecordSearch.parse(raw),
                                    filters: filters)
     }
 
