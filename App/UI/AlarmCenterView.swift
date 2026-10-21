@@ -290,7 +290,7 @@ struct AlarmCenterView: View {
                 .frame(height: 44, alignment: .bottom)
 
                 Text(h % 6 == 0 ? "\(h)" : "")
-                    .xFont(.system(size: 8, weight: .medium).monospacedDigit())
+                    .xFont(.system(size: XMetric.dataText(8), weight: .medium).monospacedDigit())
                     .foregroundStyle(on ? XPalette.accentText : XPalette.textTertiary)
                     .frame(width: on ? 16 : 10)
             }

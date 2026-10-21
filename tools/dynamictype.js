@@ -45,12 +45,23 @@ for (const file of SWIFT_FILES) {
     const ctx = lines.slice(Math.max(0, i - 3), i + 1).join(String.fromCharCode(10));
 
     // 规则 1
-    if (/\.font\(\s*\.system\(size:/.test(text)
+    //
+    // 2026-10-21 修: 原来只匹配 .font(.system(size:, 漏掉了 .xFont( ——
+    // 而本仓 Text 全部走 xFont (内部就是 .font + .fontWeight),
+    // 于是这条规则对新代码完全不生效, Canvas 里 12 处固定字号一直绿着。
+    //
+    // 放行"已经做了缩放"的写法:
+    //   .xFont(.system(size: XMetric.dataText(N)))   ← 按 AX 字号放大
+    //   .xFont(.system(size: XMetric.decorIcon(N)))  ← 装饰图标
+    const FIXED_FONT_RE = /\.(?:x)?[fF]ont\(\s*\.system\(size:/;
+    const SCALED_RE = /XMetric\.(?:dataText|decorIcon)\(/;
+    if (FIXED_FONT_RE.test(text)
+        && !SCALED_RE.test(text)
         && !/Image\(systemName:/.test(ctx)
         && !/icon:/.test(text)) {
       findings.push({
         file, line: i + 1, rule: 'DynamicType',
-        msg: 'Text 使用 .system(size:) — 该写法不参与 Dynamic Type 缩放, AX 字号下文字不会变大。改用语义字号 (.footnote/.subheadline/…) 或 .imageScale()'
+        msg: 'Text 用 .font/.xFont(.system(size:)) 且未做 AX 缩放 — AX 字号下字不会变大。改用语义字号, 或 Canvas 器皿文字包 XMetric.dataText(N)'
       });
     }
 
@@ -93,6 +104,31 @@ for (const file of SWIFT_FILES) {
 }
 
 // ---- 汇总 ----
+
+// ---- 自检: 证明规则 1 真的能抓到 (2026-10-21 加) ----
+// 由来: 规则 1 原来只匹配 .font(, 漏了 .xFont(, 于是 Canvas 里 12 处
+// 固定字号一直是绿的。闸门不会报错的闸门等于没有闸门。
+{
+  const probes = [
+    { src: 'Text("x").xFont(.system(size: 12))', bad: true,  why: 'xFont 固定字号' },
+    { src: 'Text("x").xFont(.system(size: XMetric.dataText(12)))', bad: false, why: '已做 AX 缩放' },
+    { src: 'Text("x").xFont(.footnote)', bad: false, why: '语义字号' },
+    { src: 'Image(systemName: "a").xFont(.system(size: 12))', bad: false, why: '图标尺寸' },
+  ];
+  const FIXED = /\.(?:x)?[fF]ont\(\s*\.system\(size:/;
+  const SCALED = /XMetric\.(?:dataText|decorIcon)\(/;
+  let bad = 0;
+  for (const p of probes) {
+    const isIcon = /Image\(systemName:/.test(p.src);
+    const catched = FIXED.test(p.src) && !SCALED.test(p.src) && !isIcon;
+    if (catched !== p.bad) {
+      console.error('✗ 自检失败: ' + p.why + ' (期望 ' + p.bad + ', 实际 ' + catched + ')');
+      bad++;
+    }
+  }
+  if (bad > 0) { console.error('✗ dynamictype 闸门自检不通过, 判据已失效'); process.exit(1); }
+}
+
 const byRule = {};
 for (const f of findings) (byRule[f.rule] ||= []).push(f);
 
@@ -109,5 +145,4 @@ for (const [rule, list] of Object.entries(byRule)) {
   }
   console.log('');
 }
-console.error('✗ 静态检查未通过');
-process.exit(1);
+console.error('✗ 静态检查未通过');

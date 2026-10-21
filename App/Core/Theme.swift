@@ -201,6 +201,21 @@ enum XMetric {
         return h >= 22 || h < 6
     }
 
+    /// Canvas 组件内的**数据文字**按 AX 字号放大。
+    ///
+    /// 为什么单独开一个而不是直接用 decorIcon:
+    ///   decorIcon 是给装饰图标的 (空态吉祥物、成功对勾), 上限 1.35;
+    ///   数据文字 (OTP 码 / 电量百分数 / 天数) 是**承载信息**的,
+    ///   放大需求比装饰更刚性, 但同样受限于环形/方形器皿的固定尺寸,
+    ///   所以上限一样取 1.35 —— 再多就会溢出器皿, 反而更难读。
+    ///
+    /// 这类文字不能走语义字号 (.title/.body):
+    ///   它们要和旁边的 Canvas 图形保持比例, 语义字号在 AX 下会跳档,
+    ///   一跳就与环/弧的位置错开。
+    static func dataText(_ base: CGFloat) -> CGFloat {
+        decorIcon(base)
+    }
+
     static func decorIcon(_ base: CGFloat) -> CGFloat {
         let size = AXFlags.typeSizeSnapshot
         let scale: CGFloat

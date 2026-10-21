@@ -716,7 +716,7 @@ struct XCodeRing: View {
                     // 6 位 + 空格在 56pt 下约 235pt 宽, 而环内径约 254pt,
                     // 8 位 (TOTP 允许) 在 56pt 下是 269pt, 会直接压到环线上。
                     // 与其靠 minimumScaleFactor 事后缩, 不如一开始就选对字号。
-                    .xFont(.system(size: codePointSize, weight: .semibold, design: .rounded).monospacedDigit())
+                    .xFont(.system(size: XMetric.dataText(CGFloat(codePointSize)), weight: .semibold, design: .rounded).monospacedDigit())
                     .foregroundStyle(masked ? XPalette.textSub : XPalette.text)
                     .contentTransition(.numericText())
                     .animation(XMotion.quick, value: code)
@@ -869,11 +869,11 @@ struct XDayClock: View {
             // 圆心读数
             VStack(spacing: 1) {
                 Text("\(total)")
-                    .xFont(.system(size: size * 0.13, weight: .semibold, design: .rounded).monospacedDigit())
+                    .xFont(.system(size: XMetric.dataText(size * 0.13), weight: .semibold, design: .rounded).monospacedDigit())
                     .foregroundStyle(XPalette.text)
                     .contentTransition(.numericText())
                 Text("次开门")
-                    .xFont(.system(size: max(8, size * 0.040)))
+                    .xFont(.system(size: XMetric.dataText(max(8, size * 0.040))))
                     .foregroundStyle(XPalette.textTertiary)
             }
         }
@@ -996,22 +996,22 @@ struct XBatteryGauge: View {
                 if let l = level {
                     HStack(alignment: .firstTextBaseline, spacing: 0) {
                         Text("\(l)")
-                            .xFont(.system(size: size * 0.28, weight: .semibold, design: .rounded).monospacedDigit())
+                            .xFont(.system(size: XMetric.dataText(size * 0.28), weight: .semibold, design: .rounded).monospacedDigit())
                             .foregroundStyle(XPalette.text)
                             .contentTransition(.numericText())
                         Text("%")
-                            .xFont(.system(size: size * 0.13, weight: .medium, design: .rounded))
+                            .xFont(.system(size: XMetric.dataText(size * 0.13), weight: .medium, design: .rounded))
                             .foregroundStyle(XPalette.textSub)
                     }
                     Text(statusWord)
-                        .xFont(.system(size: max(9, size * 0.072), weight: .medium))
+                        .xFont(.system(size: XMetric.dataText(max(9, size * 0.072)), weight: .medium))
                         .foregroundStyle(tint)
                 } else {
                     Text("—")
-                        .xFont(.system(size: size * 0.26, weight: .semibold, design: .rounded))
+                        .xFont(.system(size: XMetric.dataText(size * 0.26), weight: .semibold, design: .rounded))
                         .foregroundStyle(XPalette.textTertiary)
                     Text("未读到")
-                        .xFont(.system(size: max(9, size * 0.072)))
+                        .xFont(.system(size: XMetric.dataText(max(9, size * 0.072))))
                         .foregroundStyle(XPalette.textTertiary)
                 }
             }
@@ -1107,12 +1107,12 @@ struct XCycleRing: View {
 
             VStack(spacing: 1) {
                 Text(headline)
-                    .xFont(.system(size: size * 0.22, weight: .semibold, design: .rounded).monospacedDigit())
+                    .xFont(.system(size: XMetric.dataText(size * 0.22), weight: .semibold, design: .rounded).monospacedDigit())
                     .foregroundStyle(XPalette.text)
                     .minimumScaleFactor(0.5)
                     .lineLimit(1)
                 Text(caption)
-                    .xFont(.system(size: max(8, size * 0.062)))
+                    .xFont(.system(size: XMetric.dataText(max(8, size * 0.062))))
                     .foregroundStyle(tint)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
@@ -1203,7 +1203,7 @@ struct XStepBar: View {
                     .foregroundStyle(XPalette.accent)
             } else {
                 Text("\(i + 1)")
-                    .xFont(.system(size: 12, weight: .semibold).monospacedDigit())
+                    .xFont(.system(size: XMetric.dataText(12), weight: .semibold).monospacedDigit())
                     .foregroundStyle(i == current ? XPalette.onAccent
                                      : (i < current ? XPalette.accent : XPalette.textTertiary))
             }
