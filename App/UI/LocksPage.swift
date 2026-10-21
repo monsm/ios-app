@@ -114,6 +114,28 @@ struct LocksPage: View {
             }
 
             Spacer(minLength: 0)
+
+            // 右侧状态簇 —— 电量与锁态
+            //
+            // 原来电量只混在副标题文字里（"电量 12%"），
+            // 低电量没有任何视觉区分，用户扫一眼看不出来哪把锁该换电池。
+            // 锁态 (rc) 也从没在这一行出现过。
+            VStack(alignment: .trailing, spacing: 2) {
+                if let p = snap?.powerLevel, p >= 0 {
+                    HStack(spacing: 2) {
+                        Image(systemName: batteryIcon(p))
+                            .font(.system(size: XIcon.xs, weight: .medium))
+                        Text(String(p) + "%")
+                            .xFont(.caption2.monospacedDigit())
+                    }
+                    .foregroundStyle(batteryTone(p))
+                }
+                if let rc = snap?.rc {
+                    Text(lockStateText(rc))
+                        .xFont(.caption2)
+                        .foregroundStyle(lockStateTone(rc))
+                }
+            }
         }
         .padding(.vertical, XSpace.xxs)
         .contentShape(Rectangle())
@@ -150,13 +172,49 @@ struct LocksPage: View {
         .accessibilityLabel(LockArchive.displayName(kc) + (isCurrent ? ", 当前锁" : ""))
     }
 
+    /// 电量图标
+    private func batteryIcon(_ p: Int) -> String {
+        if p <= 10 { return "battery.0" }
+        if p <= 25 { return "battery.25" }
+        if p <= 50 { return "battery.50" }
+        if p <= 75 { return "battery.75" }
+        return "battery.100" }
+    /// 电量配色 —— 低电量必须醒目
+    private func batteryTone(_ p: Int) -> Color {
+        if p <= 20 { return XPalette.danger }
+        if p <= 40 { return XPalette.warn }
+        return XPalette.textSub
+    }
+    /// 锁态文案（来自 StatusSnapshotData.rc，与门面同一口径）
+    private func lockStateText(_ rc: Int) -> String {
+        switch rc {
+        case 0: return "已锁"
+        case 21, 27: return "反锁"
+        case 25: return "忙碌"
+        case 26: return "防拆"
+        default: return "状态 " + String(rc)
+        }
+    }
+    private func lockStateTone(_ rc: Int) -> Color {
+        switch rc {
+        case 0: return XPalette.ok
+        case 21, 27: return XPalette.warn
+        case 25, 26: return XPalette.danger
+        default: return XPalette.textTertiary
+        }
+    }
+
     private func subtitle(_ kc: Keychain, _ snap: StatusSnapshotData?) -> String {
         var parts: [String] = []
-        if let p = snap?.powerLevel, p >= 0 { parts.append("电量 \(p)%") }
+        // 型号 —— Keychain.pidName 一直有，但列表从没显示过
+        if !kc.pidName.isEmpty { parts.append(kc.pidName) }
         if let f = snap?.firmware, !f.isEmpty { parts.append("固件 \(f)") }
+        // 凭证拆分显示 —— 原来只有总数，看不出构成
         let pwds = DB.listPwds(kc.mac).count
         let fps = DB.listFps(kc.mac).count
-        if pwds + fps > 0 { parts.append("\(pwds + fps) 份凭证") }
+        if pwds + fps > 0 { parts.append("\(pwds) 密码 · \(fps) 指纹") }
+        // 配对时间 —— Keychain.pairedAt 从没显示过
+        if !kc.pairedAt.isEmpty { parts.append("配对于 " + kc.pairedAt) }
         return parts.isEmpty ? "未连接过" : parts.joined(separator: " · ")
     }
 
