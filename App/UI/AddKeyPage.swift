@@ -48,6 +48,7 @@ struct AddKeyPage: View {
 
             ScrollView {
                 VStack(spacing: XSpace.xl) {
+                    capacityCard
                     passwordStage.xScrollLift()
                     validitySection.xScrollLift()
                     ownerSection.xScrollLift()
@@ -73,6 +74,34 @@ struct AddKeyPage: View {
     // ═══════════════════════════════════════════════════════
     // MARK: - 密码舞台 (视觉主角)
     // ═══════════════════════════════════════════════════════
+
+    /// 密码容量卡 —— 协议真实返回 pwdStock / pwdCap，
+    /// 但这一页从没显示过"还剩几个坑位"，用户会录到一半才被拒。
+    @ViewBuilder
+    private var capacityCard: some View {
+        let snap = DB.readStatus(app.currentMac)
+        let cap = snap?.pwdCap ?? 0
+        let left = snap?.pwdStock ?? -1
+        if cap > 0, left >= 0 {
+            let used = max(0, cap - left)
+            let full = left == 0
+            XPanel(kind: .group, tone: full ? .warn : .neutral) {
+                HStack(spacing: XSpace.s) {
+                    Image(systemName: "number.square")
+                        .font(.system(size: XIcon.sm, weight: .medium))
+                        .foregroundStyle(full ? XPalette.warn : XPalette.textSub)
+                    Text(full ? "密码库存已满" : "还可录 " + String(left) + " 条")
+                        .xFont(.footnote, weight: .medium)
+                        .foregroundStyle(full ? XPalette.warn : XPalette.textSub)
+                    Spacer(minLength: 0)
+                    Text(String(used) + " / " + String(cap))
+                        .xFont(.caption2.monospacedDigit())
+                        .foregroundStyle(XPalette.textTertiary)
+                }
+            }
+            .xScrollLift()
+        }
+    }
 
     private var passwordStage: some View {
         VStack(spacing: XSpace.l) {
@@ -246,26 +275,43 @@ struct AddKeyPage: View {
 
     private func ownerChip(_ id: String?, _ label: String) -> some View {
         let selected = owner == id
+        // 该成员名下已有几条密码 —— 录入前该知道，避免给同一个人重复建一条
+        let existing: Int = {
+            guard let id else { return 0 }
+            let mac = app.currentMac
+            guard !mac.isEmpty else { return 0 }
+            return DB.listPwds(mac).filter { $0.owner == id && !$0.temp }.count
+        }()
         return Button {
             owner = id
             XHaptics.tick.impactOccurred()
         } label: {
-            Text(label)
-                .xFont(.footnote, weight: selected ? .semibold : .regular)
-                .foregroundStyle(selected ? XPalette.onAccent : XPalette.text)
-                .padding(.horizontal, XSpace.m)
-                .padding(.vertical, XSpace.s)
-                .background(
-                    Capsule().fill(selected ? XPalette.accent : XPalette.surfaceAlt)
-                )
-                .overlay(
-                    Capsule().strokeBorder(
-                        selected ? .clear : XPalette.hairline, lineWidth: 1)
-                )
+            HStack(spacing: 4) {
+                Text(label)
+                    .xFont(.footnote, weight: selected ? .semibold : .regular)
+                    .foregroundStyle(selected ? XPalette.onAccent : XPalette.text)
+                if existing > 0 {
+                    Text(String(existing))
+                        .xFont(.caption2.monospacedDigit(), weight: .semibold)
+                        .foregroundStyle(selected
+                                         ? XPalette.onAccent.opacity(0.8)
+                                         : XPalette.textTertiary)
+                }
+            }
+            .padding(.horizontal, XSpace.m)
+            .padding(.vertical, XSpace.s)
+            .background(
+                Capsule().fill(selected ? XPalette.accent : XPalette.surfaceAlt)
+            )
+            .overlay(
+                Capsule().strokeBorder(
+                    selected ? .clear : XPalette.hairline, lineWidth: 1)
+            )
         }
         .buttonStyle(.plain)
         .animation(XMotion.quick, value: selected)
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
+        .accessibilityLabel(label + (existing > 0 ? "，已有 " + String(existing) + " 条密码" : ""))
     }
 
     // ═══════════════════════════════════════════════════════
