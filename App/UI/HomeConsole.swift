@@ -250,9 +250,13 @@ struct HomeConsole: View {
                 }
             }
             .frame(width: 220, height: 220)
-            .scaleEffect(pressing && !reduceMotion ? 0.97 : 1)
-            .animation(reduceMotion ? nil : .spring(response: 0.28, dampingFraction: 0.7),
-                       value: pressing)
+            // 按压缩放：0.97、140ms、纯缓出。
+            // 这里刻意**不用 spring** —— 门锁是金属，金属不弹。
+            // 动效规范里金属材质是「时长 ×1.2、0% 回弹」；带阻尼的 spring
+            // 会给一个刚体加上橡皮的手感，和产品是矛盾的。
+            .scaleEffect(ringScale)
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.14), value: pressing)
+            .animation(reduceMotion ? nil : .easeInOut(duration: 0.34), value: phase)
             .contentShape(Circle())
             .gesture(
                 DragGesture(minimumDistance: 0)
@@ -280,6 +284,16 @@ struct HomeConsole: View {
             .minimumScaleFactor(0.8)
             .frame(height: 18)
             .animation(reduceMotion ? nil : XMotion.soft, value: failure)
+        }
+    }
+
+    /// 环的缩放：按下 0.97，成功时 1.03 的短脉冲（300–400ms 档），其余为 1
+    private var ringScale: CGFloat {
+        if pressing { return 0.97 }
+        switch phase {
+        case .unlocked: return 1.03
+        case .failed: return 0.99
+        default: return 1
         }
     }
 
@@ -705,8 +719,8 @@ struct PressableScaleStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.96 : 1)
-            .animation(.spring(response: 0.24, dampingFraction: 0.72),
-                       value: configuration.isPressed)
+            // 金属不弹：纯缓出 120ms（按钮反馈 120–180ms 档的下限，要"立刻"）
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }
 }
 
