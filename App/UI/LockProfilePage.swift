@@ -97,6 +97,11 @@ struct LockProfilePage: View {
                     .foregroundStyle(XPalette.textSub)
                     .lineLimit(1)
             }
+
+            // 状态条 —— 锁档案页只管身份（名字/场所/图标/配色），
+            // 但用户在这里最想确认的是"这把锁现在什么状况"。
+            // 三个实时读数（电量 / 锁态 / 固件）挤在一行，不抢身份卡的视觉重心。
+            statusStrip
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, XSpace.xl)
@@ -114,6 +119,57 @@ struct LockProfilePage: View {
     // ═══════════════════════════════════════════════════════
     // MARK: - 身份
     // ═══════════════════════════════════════════════════════
+
+    /// 实时状态条（电量 / 锁态 / 固件 / 凭证容量）
+    ///
+    /// 数据来自 DB.readStatus —— 本页原来完全没读实时状态。
+    @ViewBuilder
+    private var statusStrip: some View {
+        let snap = DB.readStatus(mac)
+        let hasAny = (snap?.powerLevel ?? -1) >= 0
+            || !(snap?.firmware ?? "").isEmpty
+        if hasAny {
+            HStack(spacing: XSpace.s) {
+                if let p = snap?.powerLevel, p >= 0 {
+                    statusChip("battery.75", String(p) + "%",
+                               tone: p <= 20 ? XPalette.danger : (p <= 40 ? XPalette.warn : XPalette.textSub))
+                }
+                if let rc = snap?.rc {
+                    statusChip(rc == 0 ? "lock.fill" : "lock.open", lockStateText(rc),
+                               tone: rc == 0 ? XPalette.ok : XPalette.warn)
+                }
+                if let f = snap?.firmware, !f.isEmpty {
+                    statusChip("cpu", f, tone: XPalette.textSub)
+                }
+                Spacer(minLength: 0)
+            }
+            .accessibilityElement(children: .combine)
+        }
+    }
+
+    private func statusChip(_ icon: String, _ text: String, tone: Color) -> some View {
+        HStack(spacing: 3) {
+            Image(systemName: icon)
+                .font(.system(size: 9, weight: .medium))
+            Text(text)
+                .xFont(.caption2.monospacedDigit())
+        }
+        .foregroundStyle(tone)
+        .padding(.horizontal, 7)
+        .padding(.vertical, 3)
+        .background(Capsule().fill(XPalette.surfaceAlt))
+    }
+
+    /// 锁态文案（与 LocksPage / 门面同口径）
+    private func lockStateText(_ rc: Int) -> String {
+        switch rc {
+        case 0: return "已锁"
+        case 21, 27: return "反锁"
+        case 25: return "忙碌"
+        case 26: return "防拆"
+        default: return "状态 " + String(rc)
+        }
+    }
 
     private var identitySection: some View {
         XPanel(kind: .group) {
