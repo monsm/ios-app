@@ -88,7 +88,8 @@ struct BackupPage: View {
                 app.showToast("已保存到文件")
             } else if case .failure(let e) = result {
                 if (e as NSError).code != NSUserCancelledError {
-                    app.showToast("保存失败")
+                    // 错误对象就在手边，别只报"保存失败" —— 用户没法据此做任何事。
+                    app.showToast("保存失败：" + ErrorText.human(e))
                 }
             }
         }
@@ -231,9 +232,16 @@ struct BackupPage: View {
         busy = true
         defer { busy = false }
         let payload = BackupKit.collectAll()
-        guard let data = try? JSONEncoder().encode(payload),
-              let text = String(data: data, encoding: .utf8) else {
-            app.showToast("备份生成失败")
+        // 原来写 try? 把错误吞掉了，只报"备份生成失败" —— 三种失败原因长得一样。
+        let data: Data
+        do {
+            data = try JSONEncoder().encode(payload)
+        } catch {
+            app.showToast("备份生成失败：" + ErrorText.human(error))
+            return
+        }
+        guard let text = String(data: data, encoding: .utf8) else {
+            app.showToast("备份生成失败：编码后的内容不是有效文本")
             return
         }
         exportText = text

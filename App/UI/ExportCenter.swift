@@ -2423,7 +2423,8 @@ struct ExportCenterView: View {
 
     private func openQL(_ item: ExportItem) {
         guard let url = item.writeLocal() else {
-            app.showToast("无法生成预览文件")
+            // writeLocal 只返回 nil，拿不到具体原因 —— 那就给下一步，别只说"无法"。
+            app.showToast("无法生成预览文件 — 可改用「导出」直接保存到文件")
             return
         }
         quickLook = url

@@ -335,6 +335,25 @@ const checks = [
     }
     return bad === 0;
   }],
+  ['失败提示要给出原因或下一步', () => {
+    // "保存失败" 四个字，用户没法据此做任何事。
+    // 逐字检查：含 失败/错误/无法 的 toast 里，必须有冒号/破折号/逗号带出的原因，
+    // 或者"下一步"（可改用…）。纯粹的状态词不算。
+    const allowed = ['不能为空', '不能为', '拒绝执行'];
+    let bad = 0;
+    for (const f of FILES) {
+      const body = CODE.get(path.basename(f)) || '';
+      for (const m of body.matchAll(/showToast\("((?:[^"\\]|\\.){2,60})"\)/g)) {
+        const s = m[1];
+        if (!/失败|错误|无法|不可/.test(s)) continue;
+        if (/[:：—，]/.test(s)) continue;
+        if (allowed.some(a => s.includes(a))) continue;
+        if (s.includes('失败记录')) continue;   // "已清除失败记录"是成功提示
+        bad++;
+      }
+    }
+    return bad === 0;
+  }],
 ];
 
 let pass = 0;
