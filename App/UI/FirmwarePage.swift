@@ -268,7 +268,7 @@ struct FirmwarePage: View {
 
             if !checklistOk {
                 Text("请先完成上方全部检查项, 并选择固件包")
-                    .xFont(.caption2)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
                     .multilineTextAlignment(.center)
             }

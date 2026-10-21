@@ -772,7 +772,7 @@ struct TempCodeStudio: View {
                 }
                 .disabled(!pwdOK || to <= from)
                 Text("请将手机靠近门锁; 批量走既有 0A 逐条下发, 锁端无批量命令, 失败逐条报。")   // 178 请将手机靠近门锁
-                    .xFont(.caption2)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -849,7 +849,7 @@ struct TempCodeStudio: View {
                     // 333 常规模式这里还有
                     // 486 常规模式这里还有
                     Text("常规模式这里还有 一句话口令 / 首用回执 / 再发一张 — 长辈模式下不显示。")
-                        .xFont(.caption2)
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.textSub)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)

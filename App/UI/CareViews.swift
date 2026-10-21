@@ -157,7 +157,7 @@ struct MaintenanceView: View {
                 }
                 .buttonStyle(PressableButtonStyle())
                 Text("五项: 滑轨 / 锁舌 / 电池触点 / 指纹头 / 应急钥匙。完成即写入记录, 可在记录页按「保养」过滤。")
-                    .xFont(.caption2)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }

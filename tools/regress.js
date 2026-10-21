@@ -220,6 +220,22 @@ const checks = [
     return c.includes('case .hero:  return XSpace.card + 4') &&
            !/case inset/.test(c.split('enum XContainerKind')[1]?.split('}')[0] || 'case inset');
   }],
+  ['按钮文字不小于 footnote', () => {
+    // caption2 是 11pt，叠上 minimumScaleFactor 会到 8pt 左右；
+    // 可点元素的文字太小，用户得凑近才看得清该点哪里。
+    let bad = 0;
+    for (const f of FILES) {
+      const lines = (CODE.get(path.basename(f)) || '').split('\n');
+      lines.forEach((t, i) => {
+        if (!/\.xFont\(\.(?:system\()?\.?caption2/.test(t)) return;
+        for (let k = i; k >= Math.max(0, i - 8); k--) {
+          if (/Button\s*[\{\(]/.test(lines[k])) { bad++; break; }
+          if (/^\s*(VStack|HStack|ZStack|var |func |struct )/.test(lines[k])) break;
+        }
+      });
+    }
+    return bad === 0;
+  }],
 ];
 
 let pass = 0;

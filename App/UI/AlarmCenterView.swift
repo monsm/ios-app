@@ -348,7 +348,7 @@ struct AlarmCenterView: View {
                         Spacer(minLength: 0)
                         if showOlder {
                             Button("收起") { showOlder = false }
-                                .xFont(.caption2)
+                                .xFont(.footnote)
                                 .foregroundStyle(XPalette.accentText)
                         }
                     }

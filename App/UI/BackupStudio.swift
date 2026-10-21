@@ -1205,7 +1205,7 @@ struct RestoreWizardView: View {
         return Button(label) {
             conflictChoice[id] = backupSide
         }
-        .xFont(.caption2, weight: .medium)
+        .xFont(.footnote, weight: .medium)
         .foregroundStyle(on ? XPalette.accentText : XPalette.textSub)
         .padding(.horizontal, XSpace.xs)
         .frame(minHeight: 30)

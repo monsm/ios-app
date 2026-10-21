@@ -451,8 +451,10 @@ struct HomeConsole: View {
                                 XHaptics.tick.impactOccurred()
                                 managerGroup = g
                             } label: {
+                                // 失败态的唯一出路，是**动作**不是注释 —— 用 caption（12pt）
+                                // 太小了，用户得凑近才看得清该点哪里。
                                 Text("去「\(g.rawValue)」处理")
-                                    .xFont(.system(.caption, weight: .medium))
+                                    .xFont(.system(.subheadline, weight: .medium))
                                     .foregroundStyle(XPalette.accentText)
                                     .padding(.horizontal, XSpace.m)
                                     .padding(.vertical, 4)
@@ -657,11 +659,14 @@ struct HomeConsole: View {
                             Image(systemName: g.systemImage)
                                 .font(.system(size: 19, weight: .medium))
                                 .foregroundStyle(XPalette.accentText)
+                            // 管理网格的标签是可点区域的一部分。
+                            // 原来 caption2(11pt) × 0.75 ≈ 8pt —— 用户得凑近才看得清点哪里。
+                            // 提到 footnote(13pt)，缩放下限放到 0.9（最差 11.7pt）。
                             Text(g.rawValue)
-                                .xFont(.system(.caption2, weight: .medium))
+                                .xFont(.system(.footnote, weight: .medium))
                                 .foregroundStyle(XPalette.textSub)
                                 .lineLimit(1)
-                                .minimumScaleFactor(0.75)
+                                .minimumScaleFactor(0.9)
                         }
                         .frame(maxWidth: .infinity)
                         .frame(height: 62)

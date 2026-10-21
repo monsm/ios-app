@@ -132,7 +132,7 @@ struct AppLockSetupView: View {
                     }
                 }
                 Text("我们只保存口令的一串校验值，不保存口令本身 —— 所以忘记后谁也找不回来，只能重装或从备份恢复。")
-                    .xFont(.system(.caption2))
+                    .xFont(.system(.footnote))
                     .foregroundStyle(XPalette.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
             }

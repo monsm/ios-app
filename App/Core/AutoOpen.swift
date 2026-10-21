@@ -580,7 +580,7 @@ struct AutoCalView: View {
 
                 Text("静止走近门锁一次, 采 30 秒 RSSI 取 P95 作为武装基准。"
                      + "回差: 越过武装线才武装, 掉回 0.5×基准 才解除, 防门口抖动误触。")
-                    .xFont(.caption2)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }

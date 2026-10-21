@@ -867,7 +867,7 @@ struct BLEStrip: View {
             Spacer(minLength: 0)
             Button(action: action) {
                 Label(title, systemImage: "lock.fill")
-                    .xFont(.caption2, weight: .medium)
+                    .xFont(.footnote, weight: .medium)
             }
             .buttonStyle(.plain)
             .foregroundStyle(XPalette.accentText)
