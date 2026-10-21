@@ -80,6 +80,12 @@ struct SyncTimeView: View {
                         .foregroundStyle(XPalette.textSub)
                     Spacer(minLength: 0)
                 }
+                // 一个"−12 秒"的裸数字对上读屏是没有上下文的。
+                // 把标签、数值、方向合成一句完整的话。
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(skew == nil
+                    ? "锁钟偏差，尚未读到"
+                    : "锁钟偏差 \(skewText(skew))，\(skewWord(skew))")
 
                 if let s = skew {
                     skewBar(s)
@@ -98,12 +104,11 @@ struct SyncTimeView: View {
         .xScrollLift()
     }
 
-    /// 偏差刻度条：中心 0，向左偏快、向右偏慢
-    /// 偏差刻度条：中心 0，向左偏快、向右偏慢
+    /// 偏差刻度条：中心 0，向左偏快、向右偏慢。
+    /// 用设计系统的 XSkewBar（形状定义在 Components 里，
+    /// 不在页面里手搓 Rectangle + cornerRadius）。
     ///
-    /// 用 Rectangle + cornerRadius 而非 Capsule ——
-    /// 轨道与填充都是矩形圆角，与设计系统的 xPlate 同族。
-    /// 偏差刻度条 —— 用设计系统的 XSkewBar（形状定义在 Components 里）
+    /// 注：这一段注释此前被复制粘贴了三次，属于编辑残留，已合并。
     private func skewBar(_ skew: Int64) -> some View {
         let absSkew = abs(skew)
         let tone: Color = absSkew <= 5 ? XPalette.ok
