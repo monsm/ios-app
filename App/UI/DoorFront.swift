@@ -127,7 +127,7 @@ struct DoorFront: View {
                     isFailed: failureText != nil,
                     isDeadbolted: isDeadbolted,
                     charge: charge,
-                    tint: isFailed ? XPalette.danger : (lastKnownOpen && stage == .idle ? XPalette.ok : XPalette.accent))
+                    tint: failureText != nil ? XPalette.danger : (lastKnownOpen && stage == .idle ? XPalette.ok : XPalette.accent))
             } else {
                 ZStack {
                     Circle()

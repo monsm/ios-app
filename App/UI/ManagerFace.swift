@@ -177,14 +177,18 @@ struct ManagerFace: View {
         case .syncTime:       SyncTimeView()
         case .members:        MembersPage()
         case .memberWizard:   MemberWizardView()
-        case .mergeMembers:   MergeMembersView()
+        // MergeMembersView 需要 primary: Member（它是 sheet 里的视图，
+        // 从一条具体成员发起合并）。路由层拿不到那个 Member，
+        // 所以落到成员列表 —— 在那儿选人再合并。
+        case .mergeMembers:   MembersPage()
         case .archivedMembers: MemberArchivedView()
         case .securityCenter: PrivacyDashboard()
         case .securityAudit:  SecurityAuditView()
         case .securityDestroy: SecurityDestroyView()
         case .safemode:       SafemodeIntroView()
         case .backup:         BackupPage()
-        case .export:         ExportCenterView()
+        case .export:         ExportCenterView(mac: app.currentMac)
+                                  .environmentObject(app)
         case .appearance:     StudioPage()
         case .settings:       StudioPage()
         case .me:             MePage()
