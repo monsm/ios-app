@@ -67,7 +67,9 @@ struct CredentialBinView: View {
     private var retentionCard: some View {
         XPanel(kind: .group) {
             HStack(spacing: XSpace.s) {
-                Image(systemName: "clock.arrow.circlepath")
+                // 这是回收站，图标就该是垃圾桶。原来用 clock.arrow.circlepath（时钟+回溯），
+                // 那是「时间同步 / 保养历史」的语义 —— 同一个图标在两处表示两种完全无关的东西。
+                Image(systemName: "trash")
                     .font(.system(size: XIcon.md, weight: .medium))
                     .foregroundStyle(XPalette.accentText)
                     .accessibilityHidden(true)
@@ -199,7 +201,7 @@ struct CredentialBinView: View {
 
     private var pendingOnlyCard: some View {
         XPanel(kind: .group) {
-            XEmptyState(systemImage: "clock.arrow.circlepath",
+            XEmptyState(systemImage: "trash.slash",
                         title: "回收站是空的",
                         message: "但还有 \(pending.count) 条撤销没发到门锁。连上锁后会自动发出去。")
         }

@@ -590,7 +590,8 @@ struct SecurityAuditView: View {
                                         app.showToast("已按保留期清理并留痕")
                                     }
                                 } label: {
-                                    Label("立即清理到期条目", systemImage: "clock.arrow.circlepath")
+                                    // 清理到期条目是"删"，不是"改时间"。
+                        Label("立即清理到期条目", systemImage: "trash.slash")
                                         .xFont(.subheadline, weight: .medium)
                                 }
                                 .frame(minHeight: XHit.min)

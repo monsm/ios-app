@@ -303,6 +303,13 @@ const checks = [
     const keys = ['fp', 'pwd', 'temp'];
     return keys.every(k => ev[k] && st[k] && ev[k] === st[k]);
   }],
+  ['回收站不用时间图标', () => {
+    // clock.arrow.circlepath 的语义是"时间同步 / 历史"，
+    // 而它曾同时用于"回收站是空的""立即清理到期条目" —— 图标语义冲突。
+    const bin = CODE.get('CredentialBinView.swift') || '';
+    return bin.includes('systemName: "trash"') && bin.includes('systemImage: "trash.slash"') &&
+           !bin.includes('clock.arrow.circlepath');
+  }],
 ];
 
 let pass = 0;
