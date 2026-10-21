@@ -58,13 +58,33 @@ for (const f of allSwift()) {
       const name = tm[2];
       typeNames.add(name);
       if (!members.has(name)) members.set(name, new Set());
+      // ⚠ 嵌套类型必须同时登记为父类型的成员。
+      //   第一版漏了这一步，于是 StatsKit.HourStat / AuditEvent.Category /
+      //   AutoOpen.AutoCal / BLEService.ScanProfile 这类**合法**引用
+      //   全被当成"顶层类型误用"，噪声 130 条里大半是它。
+      if (stack.length) {
+        const parent = stack[stack.length - 1];
+        if (depth === parent.depth + 1) members.get(parent.name).add(name);
+      }
       stack.push({ name, depth });
     } else if (stack.length) {
       // 成员声明：必须正好在当前类型体内一层
       const mm = code.match(MEMBER_RE);
       if (mm && stack.length) {
         const cur = stack[stack.length - 1];
-        if (depth === cur.depth + 1) members.get(cur.name).add(mm[2]);
+        if (depth === cur.depth + 1) {
+          members.get(cur.name).add(mm[2]);
+          // ⚠ 枚举 case 可以一行写多个：
+          //     case pending = 0, done = 1, failed = 2
+          //   第一版只取第一个名字，于是 done / failed 全成了假阳性。
+          if (mm[1] === 'case') {
+            const rest = code.slice(code.indexOf('case') + 4);
+            for (const part of rest.split(',')) {
+              const n = part.trim().match(/^([A-Za-z_]\w*)/);
+              if (n) members.get(cur.name).add(n[1]);
+            }
+          }
+        }
       }
     }
 
