@@ -303,12 +303,16 @@ const checks = [
     const keys = ['fp', 'pwd', 'temp'];
     return keys.every(k => ev[k] && st[k] && ev[k] === st[k]);
   }],
-  ['回收站不用时间图标', () => {
-    // clock.arrow.circlepath 的语义是"时间同步 / 历史"，
-    // 而它曾同时用于"回收站是空的""立即清理到期条目" —— 图标语义冲突。
+  ['回收站用垃圾桶图标', () => {
+    // clock.arrow.circlepath 的语义是"时间同步 / 历史"，曾同时用于
+    // "回收站是空的""立即清理到期条目" —— 语义冲突。
+    // 注意：排队项"等待门锁确认"用时钟图标是**对的**（等待），所以这里只断言正向，
+    // 不做"整个文件不许出现时钟"的否定 —— 第一版就是这么写宽的，自己误报了一次。
     const bin = CODE.get('CredentialBinView.swift') || '';
-    return bin.includes('systemName: "trash"') && bin.includes('systemImage: "trash.slash"') &&
-           !bin.includes('clock.arrow.circlepath');
+    const sec = CODE.get('SecurityCenterView.swift') || '';
+    return bin.includes('systemName: "trash"') &&
+           bin.includes('systemImage: "trash.slash"') &&
+           sec.includes('Label("立即清理到期条目", systemImage: "trash.slash")');
   }],
 ];
 
