@@ -313,9 +313,13 @@ struct KeysPage: View {
 
     private var emptySection: some View {
         Section {
+            // 空态给按钮, 不再让人自己去找右上角的 +。
+            // 搜索无结果时不给 (那时候"添加"不是用户想要的, 清搜索才是)。
             XEmptyState(systemImage: "key.slash",
                         title: search.isEmpty ? "还没有凭证" : "没有匹配的凭证",
-                        message: search.isEmpty ? "点右上角 + 添加第一份授权。" : "换个关键词试试。")
+                        message: search.isEmpty ? "添加第一份授权, 之后会按类型分组显示。" : "换个关键词试试。",
+                        actionTitle: search.isEmpty ? "添加凭证" : nil,
+                        action: search.isEmpty ? { showAdd = true } : nil)
                 .listRowBackground(Color.clear)
         }
     }

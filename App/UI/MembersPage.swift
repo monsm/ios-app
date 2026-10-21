@@ -171,9 +171,12 @@ struct MembersPage: View {
 
     private var emptySection: some View {
         Section {
+            // 空态直接给建档入口 —— 成员建档是三步向导, 值得在这里一键开始
             XEmptyState(systemImage: "person.2",
                         title: "还没有成员",
-                        message: "点右上角 + 添加第一位家人。")
+                        message: "添加第一位家人, 之后可以为 TA 分配凭证与查看开门记录。",
+                        actionTitle: "添加成员",
+                        action: { showWizard = true })
                 .listRowBackground(Color.clear)
         }
     }
