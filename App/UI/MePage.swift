@@ -35,15 +35,22 @@ struct MePage: View {
     private var mac: String { app.currentMac }
 
     var body: some View {
-        List {
-            statusSummary
-            protectionSection
-            lockSection
-            dataSection
-            aboutSection
+        // M5 重做: List + Section → ScrollView + XPanel 卡片流
+        //
+        // 五个 Section 的内容一行没动（都是 XRow / summaryTile），
+        // 只把外壳换成 XPanel，header/footer 转成卡片底部 caption。
+        ScrollView {
+            VStack(spacing: XSpace.l) {
+                statusSummary
+                protectionSection
+                lockSection
+                dataSection
+                aboutSection
+            }
+            .padding(.horizontal, XSpace.gutter)
+            .padding(.top, XSpace.s)
+            .padding(.bottom, XSpace.xxl)
         }
-        .listStyle(.insetGrouped)
-        .scrollContentBackground(.hidden)
         .background(XPalette.canvas)
         .navigationTitle("这台手机")
         .navigationBarTitleDisplayMode(.large)
@@ -69,7 +76,7 @@ struct MePage: View {
             : -1
         let locks = DB.keychains().count
 
-        return Section {
+        return XPanel {
             HStack(spacing: XSpace.s) {
                 summaryTile(
                     icon: locked ? "lock.shield.fill" : "lock.open",
@@ -128,7 +135,7 @@ struct MePage: View {
     // ═══════════════════════════════════════════════════════
 
     private var protectionSection: some View {
-        Section {
+        XPanel {
             NavigationLink { SecurityPage().environmentObject(app) } label: {
                 XRow(
                     systemImage: "lock.shield",
@@ -145,10 +152,7 @@ struct MePage: View {
                     subtitle: "偷窥模式 / 伪装 / 访客通道",
                     showsChevron: true)
             }
-        } header: {
-            Text("本机保护")
-        } footer: {
-            Text("这一组动的是本机数据与访问权限, 改动前会二次确认。")
+            caption("这一组动的是本机数据与访问权限, 改动前会二次确认。")
         }
     }
 
@@ -157,7 +161,7 @@ struct MePage: View {
     // ═══════════════════════════════════════════════════════
 
     private var lockSection: some View {
-        Section {
+        XPanel {
             NavigationLink { LocksPage().environmentObject(app) } label: {
                 XRow(
                     systemImage: "square.stack.3d.up",
@@ -201,8 +205,7 @@ struct MePage: View {
                     title: "门锁安全模式",
                     showsChevron: true)
             }
-        } header: {
-            Text("这台锁")
+            caption("这台锁")
         }
     }
 
@@ -211,7 +214,7 @@ struct MePage: View {
     // ═══════════════════════════════════════════════════════
 
     private var dataSection: some View {
-        Section {
+        XPanel {
             NavigationLink { BackupPage().environmentObject(app) } label: {
                 XRow(
                     systemImage: "externaldrive",
@@ -234,11 +237,16 @@ struct MePage: View {
                     value: messageBadge,
                     showsChevron: true)
             }
-        } header: {
-            Text("数据")
-        } footer: {
-            Text("全程离线: 备份只写本机文件, 不上传任何服务器。")
+            caption("全程离线: 备份只写本机文件, 不上传任何服务器。")
         }
+    }
+
+    /// 卡片底部说明 —— 取代原来 Section 的 header/footer
+    private func caption(_ text: String) -> some View {
+        Text(text)
+            .xFont(.caption2)
+            .foregroundStyle(XPalette.textTertiary)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var backupAgeText: String {
@@ -260,7 +268,7 @@ struct MePage: View {
     // ═══════════════════════════════════════════════════════
 
     private var aboutSection: some View {
-        Section {
+        XPanel {
             NavigationLink { IconPicker().environmentObject(app) } label: {
                 XRow(systemImage: "app.badge", title: "App 图标",
                      subtitle: "锁环 / 钥匙 / 盾牌 等 9 款", showsChevron: true)
@@ -297,8 +305,7 @@ struct MePage: View {
                     title: "智能网关",
                     showsChevron: true)
             }
-        } header: {
-            Text("关于与偏好")
+            caption("关于与偏好")
         }
     }
 }
