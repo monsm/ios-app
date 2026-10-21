@@ -136,9 +136,9 @@ enum XRadius {
 enum XHit {
     /// HIG 最小触达
     static let min: CGFloat = 44
-    /// 锁面主控
-    static let dial: CGFloat = 200
-    static let tlGap: CGFloat = 10
+    // 已删 dial(200) 与 tlGap(10)：都是三棱柱"锁面主控/刃锁"时代的尺寸，
+    // 那两个界面已不存在，全仓零引用。留在 XHit 里最误导 ——
+    // 这个命名空间的语义是"触达尺寸"，而 dial=200 根本不是触达尺寸。
 }
 
 /// 图标尺寸
@@ -180,13 +180,14 @@ enum XIcon {
 
 /// 度量
 enum XMetric {
-    static var dial: CGFloat {
-        // 尊重用户的锁面尺寸偏好 (既有设置项)
-        let v = DB.store.getInt("kf_dial_size", 200)
-        return CGFloat(min(max(v, 120), 280))
-    }
-    static var tlGap: CGFloat { XSpace.m }
-    static var emptyMascot: Bool { !Milestones.plainMode }
+    // 已删三个成员（2026-10-22）：
+    //   · dial      —— 圆盘尺寸。零调用，且它读的 kf_dial_size 全仓没有写入方
+    //                  （"既有设置项"在三棱柱重写时已经没了），永远返回 200。
+    //   · tlGap     —— 零调用。
+    //   · emptyMascot —— 零调用（空态吉祥物那条分支也已不存在）。
+    //
+    // 留着它们会让人以为"锁面尺寸"这个设置还活着。死常量比死函数更误导：
+    // 函数至少还能跳过去看出没被调用，常量只会在有人读 Theme.swift 时骗他一次。
 
     /// Canvas 组件内的**数据文字**按 AX 字号放大。
     ///

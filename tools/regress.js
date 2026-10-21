@@ -260,6 +260,24 @@ const checks = [
     const t = CODE.get('Theme.swift') || '';
     return t.includes('duration: 0.45') && !t.includes('duration: 0.70');
   }],
+  ['设计令牌没有零引用成员', () => {
+    // XMetric.dial / tlGap / emptyMascot、XHit.dial / tlGap 都是三棱柱"锁面"时代的尺寸，
+    // 界面删了但常量留着 —— 死常量比死函数更误导：它会让读 Theme.swift 的人
+    // 以为那些设置还活着。
+    const theme = RAW.get('Theme.swift') || '';
+    const allCode = [...CODE.values()].join('\n');
+    let dead = 0;
+    for (const name of ['XIcon', 'XRadius', 'XOpacity', 'XHit', 'XSpace', 'XMotion', 'XMetric']) {
+      const start = theme.indexOf('enum ' + name);
+      if (start < 0) continue;
+      const seg = theme.slice(start, start + 2600);
+      for (const m of seg.matchAll(/static (?:var|func|let) (\w+)/g)) {
+        const n = (allCode.match(new RegExp('\\b' + m[1] + '\\b', 'g')) || []).length;
+        if (n <= 1) dead++;
+      }
+    }
+    return dead === 0;
+  }],
 ];
 
 let pass = 0;
