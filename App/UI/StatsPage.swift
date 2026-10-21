@@ -123,14 +123,20 @@ struct StatsPage: View {
         }
     }
 
-    /// 凭证类型色 —— 复用设计系统令牌
+    /// 凭证类型色 —— 与「钥匙工坊」四张卡、事件页时间线**同一套**。
+    ///
+    /// ⚠ 这里原来是第三个版本：指纹用铜、密码用绿、临时码用橙、key 用灰。
+    /// 而工坊是 铜/青/金/紫、事件页是 铜/青/金/紫 —— 同一个凭证类型
+    /// 在三个页面是三种颜色。用户跨页看统计时，颜色不但没帮忙，反而在误导。
+    ///
+    /// 现在三处统一：pwd 铜 / fp 青 / temp 金 / key 紫 / 未知 灰。
     private func kindColor(_ kind: String) -> Color {
         switch kind {
-        case "fp": return XPalette.accent
-        case "pwd": return XPalette.ok
-        case "temp": return XPalette.warn
-        case "key": return XPalette.textSub
-        default: return XPalette.textTertiary
+        case "fp":   return XPalette.kindFp
+        case "pwd":  return XPalette.accent
+        case "temp": return XPalette.kindTemp
+        case "key":  return XPalette.kindOtp
+        default:     return XPalette.textSub
         }
     }
 

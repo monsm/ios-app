@@ -289,6 +289,20 @@ const checks = [
            s.includes('case .temp: return XPalette.kindTemp') &&
            e.includes('case "temp": return XPalette.kindTemp');
   }],
+  ['同一凭证类型跨页同色', () => {
+    // 同一个概念在工坊 / 事件页 / 统计页必须是同一套颜色。
+    // 曾经有三套：StatsPage 指纹用铜、密码用绿、临时码用橙。
+    const pick = (file, pat) => {
+      const s = CODE.get(file) || '';
+      const out = {};
+      for (const m of s.matchAll(pat)) out[m[1]] = m[2];
+      return out;
+    };
+    const ev = pick('EventsPage.swift', /case "(fp|pwd|temp|key)":\s*return XPalette\.(\w+)/g);
+    const st = pick('StatsPage.swift', /case "(fp|pwd|temp|key)":\s*return XPalette\.(\w+)/g);
+    const keys = ['fp', 'pwd', 'temp'];
+    return keys.every(k => ev[k] && st[k] && ev[k] === st[k]);
+  }],
 ];
 
 let pass = 0;
