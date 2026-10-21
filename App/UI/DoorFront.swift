@@ -78,6 +78,10 @@ struct DoorFront: View {
 
     @State private var breathe = false
 
+    /// 减弱动态: 关掉呼吸光晕的无限循环 (motion.md: "Make motion optional")。
+    /// 状态信息仍然由状态行与锁面字形表达, 不依赖这段动画。
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     private var lockName: String {
         app.current.map { LockArchive.displayName($0) } ?? "门"
     }
@@ -101,11 +105,11 @@ struct DoorFront: View {
                 // 呼吸光晕
                 Circle()
                     .fill(RadialGradient(
-                        colors: [XPalette.accent.opacity(breathe ? 0.16 : 0.08), .clear],
+                        colors: [XPalette.accent.opacity(reduceMotion ? 0.12 : (breathe ? 0.16 : 0.08)), .clear],
                         center: .center, startRadius: 0,
                         endRadius: DoorGeometry.plateDiameter(screenWidth: UIScreen.main.bounds.width) * 0.9))
                     .frame(width: DoorGeometry.plateDiameter(screenWidth: UIScreen.main.bounds.width) * 1.8)
-                    .animation(.easeInOut(duration: 2.6).repeatForever(autoreverses: true), value: breathe)
+                    .animation(reduceMotion ? nil : .easeInOut(duration: 2.6).repeatForever(autoreverses: true), value: breathe)
 
                 LockPlate(
                     charge: charge,
@@ -149,7 +153,7 @@ struct DoorFront: View {
 
             Spacer(minLength: XSpace.xl)
         }
-        .onAppear { breathe = true }
+        .onAppear { if !reduceMotion { breathe = true } }
         .animation(XMotion.soft, value: stage)
         .animation(XMotion.soft, value: failureText)
     }
@@ -175,6 +179,7 @@ struct DoorFront: View {
     // ── 按住按钮 ──
     private var holdButton: some View {
         ZStack {
+            // ── 底板 ──────────────────────────────────────────────
             RoundedRectangle(cornerRadius: XRadius.control, style: .continuous)
                 .fill(XPalette.surface)
                 .overlay(
@@ -184,24 +189,56 @@ struct DoorFront: View {
                             lineWidth: isPressing ? 2 : 1)
                 )
 
-            // 充能填充
-            GeometryReader { geo in
-                RoundedRectangle(cornerRadius: XRadius.control, style: .continuous)
-                    .fill(XPalette.accent.opacity(0.14))
-                    .frame(width: geo.size.width * charge)
-            }
-            .clipShape(RoundedRectangle(cornerRadius: XRadius.control, style: .continuous))
+            // ── 充能: 底部光带 + 内发光 ───────────────────────────
+            //
+            // 光带从左侧生长, 末端带一团软光 —— 比整块半透明填充更能读出"进度",
+            // 因为它有一个明确的边界在动。charge 是连续的 (DragGesture 驱动), 不跳格。
+            if charge > 0.001 {
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: XRadius.control, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [XPalette.accent.opacity(0.10),
+                                             XPalette.accent.opacity(0.26)],
+                                    startPoint: .leading, endPoint: .trailing)
+                            )
+                            .frame(width: geo.size.width * charge)
 
+                        // 末端软光
+                        Circle()
+                            .fill(XPalette.accent.opacity(0.55))
+                            .frame(width: 26, height: 26)
+                            .blur(radius: 11)
+                            .offset(x: max(0, geo.size.width * charge - 13))
+                    }
+                }
+                .clipShape(RoundedRectangle(cornerRadius: XRadius.control, style: .continuous))
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+            }
+
+            // ── 文案与百分比 ──────────────────────────────────────
             HStack(spacing: XSpace.s) {
                 Image(systemName: isPressing ? "lock.open.fill" : "hand.tap.fill")
                     .font(.system(size: XIcon.sm, weight: .medium))
                 Text(isPressing ? "继续按住…" : "按住开锁")
                     .xFont(.body, weight: .semibold)
+                if charge > 0.01 {
+                    Text("\(Int(charge * 100))%")
+                        .xFont(.footnote.monospacedDigit(), weight: .medium)
+                        .foregroundStyle(XPalette.accentText)
+                        .contentTransition(.numericText())
+                        .transition(.opacity)
+                }
             }
             .foregroundStyle(isPressing ? XPalette.accentText : XPalette.text)
+            .animation(XMotion.quick, value: charge > 0.01)
         }
         .frame(height: 56)
         .contentShape(Rectangle())
+        .scaleEffect(isPressing ? 0.985 : 1)
+        .animation(XMotion.quick, value: isPressing)
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { _ in if !isPressing { onPressChanged(true) } }

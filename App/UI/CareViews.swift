@@ -171,47 +171,47 @@ struct MaintenanceView: View {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 secLabel("保养历史")
                 if all.isEmpty {
-                // 包14 空态族消费点 (815 双按钮 / 841 小管家默认开 / 1044 便签):
-                // 旧版只有一句"还没有保养或换电记录" —— 现在空态直接给出那件能做的事:
-                // 主动作打开五项清单 (与下方 1015 按钮同一个 sheet, 不另起流程)。
-                XGuidedEmptyView(systemImage: "checkmark.seal",
-                title: "还没有保养记录",
-                message: "五项清单走一遍就会在这里落下第一条; 换电完成后走「换电关怀」里的图文指引。",
-                actionTitle: "开始五项保养",
-                action: { showChecklist = true })
-                .listRowInsets(EdgeInsets())
+                    // 包14 空态族消费点 (815 双按钮 / 841 小管家默认开 / 1044 便签):
+                    // 空态直接给出那件能做的事 —— 主动作打开五项清单。
+                    XEmptyState(systemImage: "checkmark.seal",
+                                title: "还没有保养记录",
+                                message: "五项清单走一遍就会在这里落下第一条; 换电完成后走「换电关怀」里的图文指引。",
+                                actionTitle: "开始五项保养",
+                                action: { showChecklist = true })
                 }
                 ForEach(Array(all.prefix(5).enumerated()), id: \.offset) { _, e in
-                HStack(spacing: XSpace.s) {
-                Image(systemName: e.kind == "battery" ? "battery.100" : "checkmark.seal")
-                .font(.system(size: XIcon.sm, weight: .medium))
-                .foregroundStyle(e.kind == "battery" ? XPalette.ok : XPalette.accentText)
-                .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: XSpace.xxs) {
-                Text(e.kind == "battery" ? "更换电池" : "保养完成")
-                .xFont(.subheadline)
-                .foregroundStyle(XPalette.text)
-                Text(e.note + " · " + daysAgoText(e.ts))
-                .xFont(.caption2)
-                .foregroundStyle(XPalette.textSub)
-                }
-                Spacer(minLength: 0)
-                }
-                .accessibilityElement(children: .combine)
+                    HStack(spacing: XSpace.s) {
+                        Image(systemName: e.kind == "battery" ? "battery.100" : "checkmark.seal")
+                            .font(.system(size: XIcon.sm, weight: .medium))
+                            .foregroundStyle(e.kind == "battery" ? XPalette.ok : XPalette.accentText)
+                            .accessibilityHidden(true)
+                        VStack(alignment: .leading, spacing: XSpace.xxs) {
+                            Text(e.kind == "battery" ? "更换电池" : "保养完成")
+                                .xFont(.subheadline)
+                                .foregroundStyle(XPalette.text)
+                            Text(e.note + " · " + daysAgoText(e.ts))
+                                .xFont(.caption2)
+                                .foregroundStyle(XPalette.textSub)
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    .accessibilityElement(children: .combine)
                 }
                 if !all.isEmpty {
-                Button {
-                app.pendingRecordsFilter = "__care"
-                app.requestRoute(.records)
-                // 先落点再收摊：sheet 不收，切过去的 Tab 就在它底下 (见本页上方那条注释)
-                dismiss()
-                } label: {
-                Label("到记录页查看全部 (保养过滤)", systemImage: "line.3.horizontal.decrease.circle")
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .frame(minHeight: XHit.min)
-                .contentShape(Rectangle())
-                }
-                .buttonStyle(PressableButtonStyle())
+                    Button {
+                        app.pendingRecordsFilter = "__care"
+                        app.requestRoute(.records)
+                        // 先落点再收摊：sheet 不收，切过去的 Tab 就在它底下
+                        dismiss()
+                    } label: {
+                        Label("到记录页查看全部 (保养过滤)", systemImage: "line.3.horizontal.decrease.circle")
+                            .xFont(.subheadline, weight: .medium)
+                            .foregroundStyle(XPalette.accentText)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .frame(minHeight: XHit.min)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
                 }
             }
         }

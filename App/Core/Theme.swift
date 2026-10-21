@@ -47,6 +47,11 @@ enum XPalette {
     // ── 文字 ──
     /// 正文 (对比度 ≥7:1)
     static var text: Color { Color.adaptive(0x0A0A0B, 0xF5F5F7) }
+    /// 高光 (金属/玻璃上的镜面反射点)。
+    /// 单独开一枚而不是复用 onAccent: 白天要的是纯白镜面反光, 夜间要的是
+    /// 一层压得住暗底的冷光 —— 两者取值方向相反, 复用会有一头失真。
+    static var specular: Color { Color.adaptive(0xFFFFFF, 0xC8C8D4) }
+
     /// 次级文字 (对比度 ≥4.5:1)
     static var textSub: Color { Color.adaptive(0x5A5A66, 0xA0A0AC) }
     /// 三级文字 (仅用于 ≥15pt)

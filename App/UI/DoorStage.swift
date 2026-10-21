@@ -169,25 +169,70 @@ struct LockPlate: View {
     /// 直径
     var diameter: CGFloat
 
-    @State private var breathe: CGFloat = 0
+    /// 减弱动态: 关掉光扫与呼吸, 保留状态切换 (motion.md:
+    /// "Make motion optional" —— 运动不能是传达信息的唯一方式)
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// 光扫相位 (金属环上一道高光绕圈)
+    @State private var sweep: Double = 0
+    /// 开锁脉冲 (0→1, 一次性)
+    @State private var burst: CGFloat = 0
+
+    private var ringW: CGFloat { diameter * 0.035 }
+    private var chargeW: CGFloat { diameter * 0.045 }
 
     var body: some View {
         ZStack {
-            // 外环 (金属渐变)
+            // ── 1. 外环 (金属渐变) + 绕圈高光 ─────────────────────
+            //
+            // 高光用 AngularGradient 做一段窄的亮弧, 叠在金属环上绕圈转。
+            // 这是"黄铜锁芯在灯下转动"的那点活气 —— 不加这一层, 整个锁面是死的。
             Circle()
-                .strokeBorder(XGradient.lockRing, lineWidth: diameter * 0.035)
+                .strokeBorder(XGradient.lockRing, lineWidth: ringW)
                 .frame(width: diameter, height: diameter)
 
-            // 充能环 (铜色, 从 12 点顺时针)
+            if !reduceMotion {
+                Circle()
+                    .strokeBorder(
+                        AngularGradient(
+                            stops: [
+                                .init(color: .clear, location: 0.00),
+                                .init(color: .clear, location: 0.62),
+                                .init(color: XPalette.accent.opacity(0.85), location: 0.78),
+                                .init(color: XPalette.specular.opacity(0.55), location: 0.82),
+                                .init(color: XPalette.accent.opacity(0.85), location: 0.86),
+                                .init(color: .clear, location: 0.94),
+                                .init(color: .clear, location: 1.00)
+                            ],
+                            center: .center,
+                            angle: .degrees(sweep))
+                    )
+                    .frame(width: diameter, height: diameter)
+                    .blendMode(.plusLighter)
+                    .accessibilityHidden(true)
+            }
+
+            // ── 2. 充能环: 描边 + 外发光 ──────────────────────────
+            //
+            // 两层同一路径: 底下那层粗而虚 (glow), 上面那层细而实。
+            // 直接把 shadow 挂在 stroke 上在低端机会掉帧, 分层画更稳。
+            if charge > 0.001 {
+                Circle()
+                    .trim(from: 0, to: charge)
+                    .stroke(XPalette.accent.opacity(0.35),
+                            style: StrokeStyle(lineWidth: chargeW * 2.4, lineCap: .round))
+                    .frame(width: diameter, height: diameter)
+                    .rotationEffect(.degrees(-90))
+                    .blur(radius: chargeW * 1.6)
+                    .accessibilityHidden(true)
+            }
             Circle()
                 .trim(from: 0, to: charge)
                 .stroke(XPalette.accent,
-                        style: StrokeStyle(lineWidth: diameter * 0.045, lineCap: .round))
+                        style: StrokeStyle(lineWidth: chargeW, lineCap: .round))
                 .frame(width: diameter, height: diameter)
                 .rotationEffect(.degrees(-90))
-                .shadow(color: XPalette.accent.opacity(charge > 0 ? 0.5 : 0), radius: 12)
 
-            // 内圈 (凹槽)
+            // ── 3. 内圈 (凹槽) ────────────────────────────────────
             Circle()
                 .fill(XPalette.surfaceSunken)
                 .frame(width: diameter * 0.72, height: diameter * 0.72)
@@ -196,7 +241,17 @@ struct LockPlate: View {
                         .frame(width: diameter * 0.72, height: diameter * 0.72)
                 )
 
-            // 中心字形
+            // ── 4. 开锁脉冲: 一圈扩散出去的光 ─────────────────────
+            if burst > 0.001 {
+                Circle()
+                    .stroke(XPalette.ok.opacity(Double(1 - burst) * 0.7),
+                            lineWidth: 2 + burst * 3)
+                    .frame(width: diameter * (1 + burst * 0.35),
+                           height: diameter * (1 + burst * 0.35))
+                    .accessibilityHidden(true)
+            }
+
+            // ── 5. 中心字形 ──────────────────────────────────────
             Image(systemName: glyphName)
                 .font(.system(size: diameter * 0.28, weight: .light))
                 .foregroundStyle(glyphColor)
@@ -207,6 +262,30 @@ struct LockPlate: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(isOpen ? "门已开" : "门已锁")
         .accessibilityValue(charge > 0 ? "充能 \(Int(charge * 100))%" : "")
+        .onAppear { startSweep() }
+        .onChange(of: reduceMotion) { _, _ in startSweep() }
+        .onChange(of: isOpen) { _, nowOpen in
+            guard nowOpen, !reduceMotion else { return }
+            withAnimation(.easeOut(duration: 0.55)) { burst = 1 }
+            Task {
+                try? await Task.sleep(for: .milliseconds(600))
+                burst = 0
+            }
+        }
+    }
+
+    /// 金属环高光绕圈。reduceMotion 时**不启动** ——
+    /// motion.md 明确要求 "Make motion optional", 且无限循环动画是
+    /// 晕动症用户最主要的不适来源。
+    private func startSweep() {
+        guard !reduceMotion else {
+            sweep = 0
+            return
+        }
+        sweep = 0
+        withAnimation(.linear(duration: 5.5).repeatForever(autoreverses: false)) {
+            sweep = 360
+        }
     }
 
     private var glyphName: String {
