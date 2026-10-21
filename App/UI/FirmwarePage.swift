@@ -37,7 +37,6 @@ struct FirmwarePage: View {
     @State private var remainText = ""
     @State private var tickBackup = false
     @State private var tickTime = false
-    @State private var showLeave = false
     @State private var verifyText = ""
     @State private var verified = false
     @State private var lastProg: (pct: Double, at: TimeInterval)? = nil

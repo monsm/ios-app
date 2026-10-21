@@ -38,8 +38,6 @@ struct DoorRoot: View {
 
     /// 门是否翻到里面
     @State private var flipped = false
-    /// 门相位
-    @State private var phase: DoorPhase = .closed
     /// 连接阶段
     @State private var stage: LinkStage = .idle
     /// 充能进度
@@ -55,13 +53,12 @@ struct DoorRoot: View {
     /// 充能计时
     @State private var chargeTask: Task<Void, Never>?
     /// 连接阶段计时
-    @State private var stageTask: Task<Void, Never>?
 
     /// 按住触发开锁的阈值
     private let holdThreshold: TimeInterval = 0.6
 
     var body: some View {
-        DoorStage(flipped: $flipped, phase: $phase) {
+        DoorStage(flipped: $flipped) {
             frontContent
         } back: {
             backContent
@@ -193,7 +190,6 @@ struct DoorRoot: View {
     private func performUnlock() async {
         XHaptics.trigger.impactOccurred()
         withAnimation(XMotion.soft) {
-            phase = .unlocking
             stage = .scanning
         }
 
@@ -216,14 +212,12 @@ struct DoorRoot: View {
         await MainActor.run {
             if case .success = app.unlockState {
                 withAnimation(XMotion.doorSwing) {
-                    phase = .open
                     stage = .ready
                 }
                 XHaptics.success()
             } else {
                 let msg = "开锁失败"
                 withAnimation(XMotion.soft) {
-                    phase = .failed(msg)
                     stage = .idle
                     failureText = msg
                     charge = 0

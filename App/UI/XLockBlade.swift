@@ -30,7 +30,6 @@ struct XLockBlade: View {
     var charge: CGFloat
     var diameter: CGFloat
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// 状态色
     private var tint: UIColor {

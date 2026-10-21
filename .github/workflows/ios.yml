@@ -55,6 +55,8 @@ jobs:
         run: |
           node tools/swiftcheck.js
           node tools/swiftlint.js
+
+          node tools/declcheck.js
           node tools/contrast.js
           node tools/dynamictype.js
 

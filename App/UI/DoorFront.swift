@@ -76,6 +76,27 @@ struct DoorFront: View {
     /// 按住回调
     var onPressChanged: (Bool) -> Void
 
+    /// ── 两个 3D 开关（本仓此前从未有过功能开关，@AppStorage 数量 = 0）──
+    ///
+    /// 为什么是**两个**而不是一个: 它们是两个独立的风险面。
+    ///   kf_use_3d_lock  只把锁换成 3D（门还是原背景）
+    ///   kf_use_3d_gate  连门一起换成真实比例的入户门
+    ///
+    /// 分开的好处: 门的效果不好时可以只关门、保留 3D 锁。
+    ///
+    /// 都默认开 —— XLockBlade 三层已由 CI 编译通过（run #443），
+    /// 而"没人看过真机"这个风险由开关兜底。
+    @AppStorage("kf_use_3d_lock") private var use3DLock = true
+    @AppStorage("kf_use_3d_gate") private var use3DGate = true
+
+    /// 锁是否处于反锁 / 布防状态（协议 rc 21 / 27）。
+    ///
+    /// 现有 LockPlate 只有三态（已锁/已开/失败），
+    /// 刃锁体的转轴需要第四态，所以从 app.status 读。
+    private var isDeadbolted: Bool {
+        app.status?.rc == 21 || app.status?.rc == 27
+    }
+
     @State private var breathe = false
 
     /// 减弱动态: 关掉呼吸光晕的无限循环 (motion.md: "Make motion optional")。
@@ -111,19 +132,32 @@ struct DoorFront: View {
             Spacer(minLength: XSpace.l)
             Spacer(minLength: 0)
 
-            // ── 中部: 锁体 (视觉主角) ──
-            ZStack {
-                Circle()
-                    .fill(RadialGradient(
-                        colors: [XPalette.accent.opacity(reduceMotion ? 0.12 : (breathe ? 0.16 : 0.08)), .clear],
-                        center: .center, startRadius: 0,
-                        endRadius: plateDiameter * 0.9))
-                    .frame(width: plateDiameter * 1.8)
-                    .animation(reduceMotion ? nil : .easeInOut(duration: 2.6).repeatForever(autoreverses: true), value: breathe)
+            // ── 中部: 整扇门 + 锁（真实比例，点锁放大）──
+            //
+            // 改自原来那块"圆形光晕 + LockPlate"：
+            // 现在是完整的一扇入户门，锁按真实比例嵌在门面上。
+            // 触摸放大聚焦的逻辑在 XGateDoor 内部。
+            if use3DGate {
+                XGateDoor(
+                    isOpen: lastKnownOpen && stage == .idle,
+                    isFailed: failureText != nil,
+                    isDeadbolted: isDeadbolted,
+                    charge: charge,
+                    tint: isFailed ? XPalette.danger : (lastKnownOpen && stage == .idle ? XPalette.ok : XPalette.accent))
+            } else {
+                ZStack {
+                    Circle()
+                        .fill(RadialGradient(
+                            colors: [XPalette.accent.opacity(reduceMotion ? 0.12 : (breathe ? 0.16 : 0.06)), .clear],
+                            center: .center, startRadius: 0,
+                            endRadius: plateDiameter * 0.9))
+                        .frame(width: plateDiameter * 1.8)
+                        .animation(reduceMotion ? nil : .easeInOut(duration: 2.6).repeatForever(autoreverses: true), value: breathe)
 
-                lockSurface
+                    lockSurface
+                }
+                .frame(maxWidth: .infinity)
             }
-            .frame(maxWidth: .infinity)
 
             // 锁体 ↔ 状态: 1 份
             Spacer(minLength: XSpace.l)

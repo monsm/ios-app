@@ -293,7 +293,6 @@ private enum GlassShape {
 private struct GlassModifier: ViewModifier {
     let shape: GlassShape
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
-    @Environment(\.colorScheme) private var scheme
 
     // 为什么这里是两个 switch 而不是一枚擦除器: CI run #90 报
     // `value of type 'AnyShape' has no member 'strokeBorder'` —— SwiftUI 只有 AnyShape (只擦 Shape),

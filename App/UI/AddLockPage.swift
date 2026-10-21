@@ -37,7 +37,6 @@ struct AddLockPage: View {
     @State private var nickname = ""
     @State private var place = ""
     @State private var dupMac: (name: String, mac: String)?
-    @State private var probingId: String?
 
     @State private var pulse = false
     @State private var scanTask: Task<Void, Never>?

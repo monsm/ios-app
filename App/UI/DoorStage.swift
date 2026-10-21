@@ -45,37 +45,6 @@ import UIKit
 // MARK: - 相位状态机
 // ═══════════════════════════════════════════════════════════
 
-/// 门的相位 —— 唯一真相, 禁止在视图里再算一套
-enum DoorPhase: Equatable {
-    /// 关着 (默认)
-    case closed
-    /// 充能中 (按住开锁, p 为 0...1 连续量)
-    case charging(CGFloat)
-    /// 正在开锁 (已下发指令, 等回执)
-    case unlocking
-    /// 已开 (门开了, 等待翻面或回关)
-    case open
-    /// 翻面中 (p 为 0...1, 0=门外 1=门里)
-    case flipping(CGFloat)
-    /// 失败 (门一个像素都不动, 只抖动)
-    case failed(String)
-
-    var isCharging: Bool { if case .charging = self { return true }; return false }
-    var isFailed: Bool { if case .failed = self { return true }; return false }
-    var isFlipping: Bool { if case .flipping = self { return true }; return false }
-
-    /// 充能进度 (0...1)
-    var chargeProgress: CGFloat {
-        if case .charging(let p) = self { return p }
-        return 0
-    }
-
-    /// 翻面进度 (0...1)
-    var flipProgress: CGFloat {
-        if case .flipping(let p) = self { return p }
-        return 0
-    }
-}
 
 // ═══════════════════════════════════════════════════════════
 // MARK: - 几何
@@ -334,7 +303,6 @@ struct ShakeEffect: GeometryEffect {
 ///   Layer 3 (前景): 锁体 + 文字, 旋转最快
 struct DoorStage<Front: View, Back: View>: View {
     @Binding var flipped: Bool
-    @Binding var phase: DoorPhase
 
     /// 门外内容
     @ViewBuilder var front: () -> Front
