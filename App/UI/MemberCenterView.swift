@@ -549,8 +549,7 @@ struct MemberWizardView: View {
                     }
                 }
                 if step < 2 {
-                    // M5 迁移遗留修: Section 在 List 外没有视觉容器，改成透明 Group
-                    Group {
+                    Group {   // M5 遗留: Section 在 List 外没有视觉容器
                         Button {
                             guard canNext else { return }
                             if step == 0, newID == nil {
@@ -570,8 +569,7 @@ struct MemberWizardView: View {
                         .buttonStyle(PlainButtonStyle())
                     }
                 } else {
-                    // M5 迁移遗留修: Section 在 List 外没有视觉容器，改成透明 Group
-                    Group {
+                    Group {   // M5 遗留: Section 在 List 外没有视觉容器
                         XBusyButton(title: busy ? "处理中…" : "完成建档",
                                     systemImage: "checkmark.seal", busy: busy) {
                             submit()
@@ -1376,15 +1374,20 @@ struct MemberExitWizard: View {
             ScrollView {
                 VStack(spacing: XSpace.l) {
                     if items.isEmpty {
-                        // M5 迁移遗留: Section 在 ScrollView 里没有视觉容器，改用 XPanel 与全仓统一
-                        XPanel(kind: .group) {
+                        Group {   // M5 遗留: Section 在 List 外没有视觉容器
                             Text("该成员名下没有台账凭证, 直接归档即可。")   // 460/795 该成员名下没有台账凭
                                 .xFont(.footnote)
                                 .foregroundStyle(XPalette.textSub)
                         }
                     } else {
-                        // M5 迁移遗留: Section 在 ScrollView 里没有视觉容器，改用 XPanel 与全仓统一
-                        XPanel(kind: .group) {
+                        // M5 迁移遗留: Section 在 ScrollView 里没有视觉容器；
+                        // 它原来的 header: 参数改成 VStack 里的第一行。
+                        VStack(alignment: .leading, spacing: XSpace.xs) {
+                            Text("逐条处置 (保留/移交/停用)")   // 474 逐条处置
+                                .xFont(.caption, weight: .semibold)
+                                .foregroundStyle(XPalette.textTertiary)
+                                .textCase(.uppercase)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                             ForEach(items) { it in
                                 HStack(spacing: XSpace.s) {
                                     Text(it.label)
@@ -1403,8 +1406,6 @@ struct MemberExitWizard: View {
                                 }
                                 .frame(minHeight: XHit.min)
                             }
-                        } header: {
-                            Text("逐条处置 (保留/移交/停用)")   // 474 逐条处置
                         }
                     }
                     XPanel(kind: .group) {
