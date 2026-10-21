@@ -46,10 +46,10 @@ struct MaintenanceView: View {
 
             ScrollView {
                 VStack(spacing: XSpace.l) {
-                    carePeriodSection
-                    historySection
-                    swapSection
-                    ekeySection
+                    carePeriodSection.xScrollLift()
+                    historySection.xScrollLift()
+                    swapSection.xScrollLift()
+                    ekeySection.xScrollLift()
                 }
                 .padding(.horizontal, XSpace.gutter)
                 .padding(.vertical, XSpace.l)
@@ -367,6 +367,7 @@ struct BatterySwapGuideView: View {
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     }
+                    .xScrollLift()
 
                     XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
@@ -384,6 +385,7 @@ struct BatterySwapGuideView: View {
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     }
+                    .xScrollLift()
                 }
                 .padding(.horizontal, XSpace.gutter)
                 .padding(.vertical, XSpace.l)
@@ -469,6 +471,7 @@ struct CareChecklistView: View {
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     }
+                    .xScrollLift()
 
                     XBusyButton(title: "完成保养",
                                 systemImage: "checkmark.seal",

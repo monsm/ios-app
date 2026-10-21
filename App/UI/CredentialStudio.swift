@@ -1452,10 +1452,10 @@ struct OtpStudio: View {
 
                 ScrollView {
                     VStack(spacing: XSpace.l) {
-                        targetLockCard
-                        zotpCard
+                        targetLockCard.xScrollLift()
+                        zotpCard.xScrollLift()
                         totpGroup
-                        staticCard
+                        staticCard.xScrollLift()
                     }
                     .padding(.horizontal, XSpace.gutter)
                     .padding(.vertical, XSpace.l)
@@ -1671,6 +1671,7 @@ struct OtpStudio: View {
                                                 in: RoundedRectangle(cornerRadius: XRadius.min, style: .continuous))
                             }
                         }
+                        .xScrollLift()
                         if !importErr.isEmpty {
                             XPanel(kind: .group) {
                                 Label(importErr, systemImage: "exclamationmark.circle")

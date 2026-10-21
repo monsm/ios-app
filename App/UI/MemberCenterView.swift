@@ -1002,6 +1002,7 @@ struct UnclaimedClaimView: View {
                             }
                         }
                     }
+                    .xScrollLift()
 
                     XBusyButton(title: "认领所选 (\(selMember.count))",
                                 systemImage: "checkmark.seal",

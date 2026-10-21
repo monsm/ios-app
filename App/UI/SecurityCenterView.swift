@@ -194,6 +194,7 @@ struct SecurityPeekView: View {
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     }
+                    .xScrollLift()
 
                     XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
@@ -210,6 +211,7 @@ struct SecurityPeekView: View {
                             }
                         }
                     }
+                    .xScrollLift()
 
                     NavigationLink { PrivacyDashboard() } label: {
                         XPanel(kind: .group) {
@@ -277,6 +279,7 @@ struct SecurityPeekView: View {
                             }
                         }
                     }
+                    .xScrollLift()
 
                     XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
@@ -312,6 +315,7 @@ struct SecurityPeekView: View {
                             }
                         }
                     }
+                    .xScrollLift()
                 }
                 .padding(.horizontal, XSpace.gutter)
                 .padding(.vertical, XSpace.l)
@@ -503,6 +507,7 @@ struct SecurityAuditView: View {
                             }
                         }
                     }
+                    .xScrollLift()
 
                     XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
@@ -519,6 +524,7 @@ struct SecurityAuditView: View {
                             .frame(minHeight: XHit.min)
                         }
                     }
+                    .xScrollLift()
 
                     XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
@@ -547,6 +553,7 @@ struct SecurityAuditView: View {
                                 .foregroundStyle(XPalette.textSub)
                         }
                     }
+                    .xScrollLift()
 
                     XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
@@ -583,6 +590,7 @@ struct SecurityAuditView: View {
                             }
                         }
                     }
+                    .xScrollLift()
 
                     XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
@@ -623,6 +631,7 @@ struct SecurityAuditView: View {
                             .foregroundStyle(XPalette.warn)
                         }
                     }
+                    .xScrollLift()
 
                     XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
@@ -646,6 +655,7 @@ struct SecurityAuditView: View {
                             }
                         }
                     }
+                    .xScrollLift()
 
                     XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
@@ -673,6 +683,7 @@ struct SecurityAuditView: View {
                             }
                         }
                     }
+                    .xScrollLift()
 
                     XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
@@ -700,6 +711,7 @@ struct SecurityAuditView: View {
                             }
                         }
                     }
+                    .xScrollLift()
 
                 }
                 .padding(.horizontal, XSpace.gutter)
@@ -894,6 +906,7 @@ struct SecurityDestroyView: View {
                             .frame(minHeight: XHit.min)
                         }
                     }
+                    .xScrollLift()
 
                     XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
@@ -960,6 +973,7 @@ struct SecurityDestroyView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
                     }
+                    .xScrollLift()
 
                     XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
@@ -975,6 +989,7 @@ struct SecurityDestroyView: View {
                             holdClearControl
                         }
                     }
+                    .xScrollLift()
 
                     XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
@@ -1018,6 +1033,7 @@ struct SecurityDestroyView: View {
                             }
                         }
                     }
+                    .xScrollLift()
 
                     XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
@@ -1042,6 +1058,7 @@ struct SecurityDestroyView: View {
                             }
                         }
                     }
+                    .xScrollLift()
 
                     XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
@@ -1057,6 +1074,7 @@ struct SecurityDestroyView: View {
                             reuseDemoRow
                         }
                     }
+                    .xScrollLift()
 
                     XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
@@ -1071,6 +1089,7 @@ struct SecurityDestroyView: View {
                             }
                         }
                     }
+                    .xScrollLift()
 
                 }
                 .padding(.horizontal, XSpace.gutter)
