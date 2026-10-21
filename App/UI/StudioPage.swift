@@ -130,6 +130,26 @@ struct StudioPage: View {
         }
     }
 
+    /// 各类凭证的实时数量
+    ///
+    /// 四宫格原来只写"密码 / 临时码 / 指纹 / OTP"四个词，
+    /// 但**不显示有多少** —— 用户得点进去才知道。
+    /// DB 早就有数据，只是没接。
+    private func count(_ k: Kind) -> Int {
+        let mac = app.currentMac
+        guard !mac.isEmpty else { return 0 }
+        // fp / otp 复用 CredentialOrg.typeCounts（口径与凭证页一致）；
+        // pwd / temp 要自己分 —— 因为 typeCounts.pwd 是**含临时码**的总数，
+        // 而这里的「密码」卡只算常驻密码。两卡相加才等于 pwds.count。
+        let t = CredentialOrg.typeCounts(mac)
+        switch k {
+        case .pwd:  return DB.listPwds(mac).filter { !$0.temp }.count
+        case .temp: return DB.listPwds(mac).filter { $0.temp }.count
+        case .fp:   return t.fp
+        case .otp:  return t.otp
+        }
+    }
+
     private func card(_ k: Kind) -> some View {
         Button {
             XHaptics.trigger.impactOccurred()
@@ -150,10 +170,18 @@ struct StudioPage: View {
 
                 Spacer(minLength: 0)
 
-                Text(k.title)
-                    .xFont(.title3, weight: .semibold)
-                    .foregroundStyle(XPalette.text)
-                    .lineLimit(1)
+                HStack(alignment: .firstTextBaseline, spacing: XSpace.xs) {
+                    Text(k.title)
+                        .xFont(.title3, weight: .semibold)
+                        .foregroundStyle(XPalette.text)
+                        .lineLimit(1)
+                    // 实时数量 —— 一眼知道这一类有多少条
+                    let n = count(k)
+                    Text(String(n))
+                        .xFont(.caption.monospacedDigit(), weight: .semibold)
+                        .foregroundStyle(n > 0 ? k.tint : XPalette.textTertiary)
+                    Spacer(minLength: 0)
+                }
 
                 Text(k.sub)
                     .xFont(.caption2)
