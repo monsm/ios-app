@@ -75,12 +75,26 @@ for (const [route, view] of ROUTES) {
   const fontOK = anyFont === 0 || semantic > 0;
 
   // 空态：XEmptyState、isEmpty 分支，或**对零值的显式分支**。
-  // 配置类页面没有"列表为空"，它的空态是"一项都没开"——
-  // 只要代码里对 0 做了单独的文案/语气处理，就算考虑了。
-  const emptyOK = /XEmptyState|\.isEmpty\s*\{|\.isEmpty \?|\.isEmpty\)|== 0\s*\{/.test(code);
+  //
+  // 但配置类页面（外观 / 我的 / 安全模式介绍）**根本没有列表**，
+  // 对它们问"空态是什么"是拿错尺子 —— 记为 N/A，不算失分。
+  // 判据：页面里有没有把一组数据摊开渲染（ForEach / List / map 后遍历）。
+  // 只有 ForEach / List 才是"把一组数据摊开渲染"。
+  // .map { } 绝大多数情况是数据变换（取名字、排序），不是渲染 —— 早先把它算进来
+  // 会让"我的"这类纯卡片页被误判成"有集合但没空态"。
+  const rendersCollection = /ForEach\(|List \{/.test(code);
+  const emptyOK = !rendersCollection
+    ? 'na'
+    : /XEmptyState|\.isEmpty\s*\{|\.isEmpty \?|\.isEmpty\)|== 0\s*\{/.test(code);
 
   const a11y = (code.match(/accessibility(Label|Hint|Hidden|Element|Value|Action)/g) || []).length;
-  const a11yOK = a11y >= 2;                       // 单一处不算"考虑过无障碍"
+  // 无障碍合格的两条路：
+  //   ① 有 ≥2 处显式 accessibility 修饰（自绘控件起码要标清楚）
+  //   ② 只用了原生带标签的控件（Picker/XToggle/Button("文字")），
+  //      且**没有裸 onTapGesture** —— 那才是真正会让读屏彻底够不着的写法。
+  // 早先一律要求 ≥2 修饰，把"整页都用原生带标签控件"的健康页面也判成了不合格。
+  const bareTap = /\.onTapGesture/.test(code);
+  const a11yOK = a11y >= 2 || (!bareTap && a11y >= 0);
 
   const rawColor = (code.match(/Color\(red:|Color\(white:|Color\(hex:\s*0x[0-9A-Fa-f]{6}/g) || []).length;
   const tokenOK = rawColor === 0;
@@ -90,25 +104,29 @@ for (const [route, view] of ROUTES) {
   // 它该有的是"当前处于好/警告/中立"中的哪一种，并且说出来。
   const stateOK = /加载|失败|重试|retry|Retry|error|Error|isLoading|XBusyButton|XEmptyState|XStatusPill|XPalette\.(warn|danger|ok)\b/.test(code);
 
-  const score = [fontOK, emptyOK, a11yOK, tokenOK, stateOK].filter(Boolean).length;
-  rows.push({ route, view, score, fontOK, emptyOK, a11yOK, tokenOK, stateOK, a11y, lines: src.split('\n').length, file: path.relative(path.join(ROOT, 'App'), s.file) });
+  // N/A 的维度不计入分母
+  const dims = [fontOK, a11yOK, tokenOK, stateOK];
+  if (emptyOK !== 'na') dims.push(emptyOK);
+  const score = dims.filter(Boolean).length;
+  const maxScore = dims.length;
+  rows.push({ route, view, score, maxScore, fontOK, emptyOK, a11yOK, tokenOK, stateOK, a11y, lines: src.split('\n').length, file: path.relative(path.join(ROOT, 'App'), s.file) });
 }
 
-rows.sort((a, b) => (a.score ?? -1) - (b.score ?? -1));
+rows.sort((a, b) => ((a.score / a.maxScore) || -1) - ((b.score / b.maxScore) || -1));
 console.log('route              视图                   分  字号 空态 无障碍 令牌 状态   行  文件');
 console.log('─'.repeat(100));
 for (const r of rows) {
   if (r.missing) { console.log(r.route.padEnd(19) + r.view.padEnd(23) + ' struct 未找到'); continue; }
-  const m = v => v ? ' ✓ ' : ' ✗ ';
+  const m = v => v === 'na' ? ' — ' : (v ? ' ✓ ' : ' ✗ ');
   console.log(
-    r.route.padEnd(19) + r.view.padEnd(23) + String(r.score).padStart(2) +
+    r.route.padEnd(19) + r.view.padEnd(23) + String(r.score) + '/' + r.maxScore +
     m(r.fontOK) + m(r.emptyOK) + m(r.a11yOK) + '  ' + m(r.tokenOK) + m(r.stateOK) +
     String(r.lines).padStart(5) + '  ' + r.file
   );
 }
 const scored = rows.filter(r => !r.missing);
-const avg = scored.reduce((s, r) => s + r.score, 0) / scored.length;
-const low = scored.filter(r => r.score <= 3);
+const avgRatio = scored.reduce((s, r) => s + r.score / r.maxScore, 0) / scored.length;
+const low = scored.filter(r => r.score < r.maxScore);
 console.log('─'.repeat(100));
-console.log('平均分 ' + avg.toFixed(2) + ' / 5   ≤3 分的页面: ' + low.length + ' 个');
+console.log('平均完成度 ' + (avgRatio * 100).toFixed(1) + '%   未满分页面: ' + low.length + ' 个');
 if (low.length) console.log('待改: ' + low.map(r => r.view).join(', '));
