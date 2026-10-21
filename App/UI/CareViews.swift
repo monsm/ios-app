@@ -273,6 +273,14 @@ struct MaintenanceView: View {
         }
     }
 
+
+    private func secLabel(_ text: String) -> some View {
+        Text(text)
+            .xFont(.caption, weight: .semibold)
+            .foregroundStyle(XPalette.textTertiary)
+            .textCase(.uppercase)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
 }
 
 
@@ -378,6 +386,14 @@ struct BatterySwapGuideView: View {
         app.evaluateAchievements()   // 1039 续航管家徽章结算
         dismiss()
     }
+
+    private func secLabel(_ text: String) -> some View {
+        Text(text)
+            .xFont(.caption, weight: .semibold)
+            .foregroundStyle(XPalette.textTertiary)
+            .textCase(.uppercase)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
 }
 
 
@@ -463,5 +479,13 @@ struct CareChecklistView: View {
         app.evaluateAchievements()                       // 1030 爱洁之家徽章结算
         onDone()
         dismiss()
+    }
+
+    private func secLabel(_ text: String) -> some View {
+        Text(text)
+            .xFont(.caption, weight: .semibold)
+            .foregroundStyle(XPalette.textTertiary)
+            .textCase(.uppercase)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
