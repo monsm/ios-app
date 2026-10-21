@@ -120,7 +120,8 @@ struct AlarmCenterView: View {
     /// 734 队列状态行 + 723 类型过滤 chips
     @ViewBuilder
     private var streamHeader: some View {
-        Section {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
             HStack(spacing: XSpace.s) {
                 XToggle(isOn: $unhandledOnly) {
                     Text("未处理优先")
@@ -168,8 +169,7 @@ struct AlarmCenterView: View {
                     .foregroundStyle(XPalette.accentText)
                     .frame(minHeight: XHit.min)
             }
-        } header: {
-            Text(unhandledOnly ? "未处理队列" : "全部告警 (含已处置)")   // 734 未处理队列
+            }
         }
     }
     private func levelChip(_ t: Int, _ name: String) -> some View {
@@ -330,7 +330,8 @@ struct AlarmCenterView: View {
     @ViewBuilder
     private func alarmSection(_ r: Rec, folded: Set<String>) -> some View {
         let isFolded = folded.contains(r.mac + "#" + r.key)
-        Section {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
             alarmRow(r)
                 // 743 逐条滑动处置: 收件箱清零的快捷路径 —— 与行内胶囊写同一份 kf_rdispo 留痕,
                 // 不是另一套状态。首按钮"已处理"允许一滑到底直接生效 (误触可走 739 恢复为未处理)。
@@ -359,19 +360,6 @@ struct AlarmCenterView: View {
             }
             if openContextKey == r.id { contextSection(r) }
             if openDetailKey == r.id { detailSection(r) }
-        } header: {
-            HStack(spacing: XSpace.xs) {
-                Text(r.timeStr.isEmpty ? r.typeName : String(r.timeStr.prefix(16)))
-                    .xFont(.caption, weight: .medium)
-                    .foregroundStyle(XPalette.textSub)
-                    .lineLimit(1)
-                Spacer(minLength: 0)
-                if macs.count > 1 {
-                    Text(r.lockName)   // 770 跨锁前缀标签
-                        .xFont(.caption2)
-                        .foregroundStyle(XPalette.accentText)
-                        .lineLimit(1)
-                }
             }
         }
     }
@@ -515,7 +503,9 @@ struct AlarmCenterView: View {
         let dkey = r.mac + "#" + r.key
         let disp = RecordSearch.disposition(key: dkey)
         let same = RecordSearch.sameTypeCount(mac: r.mac, type: r.type, exceptKey: r.key)
-        Section {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                secLabel("处置与留痕")
             // 741 同类告警计数
             HStack(spacing: XSpace.s) {
                 Image(systemName: "list.number").font(.system(size: XIcon.sm)).foregroundStyle(XPalette.textSub).accessibilityHidden(true)
@@ -621,8 +611,7 @@ struct AlarmCenterView: View {
                     Spacer(minLength: 0)
                 }
             }
-        } header: {
-            Text("处置与留痕")   // 726 处置与留痕
+            }
         }
     }
     /// 726/743 处置落点 (行内胶囊与滑动共用): 写留痕 + 触发刷新
@@ -796,6 +785,14 @@ struct AlarmCenterView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+    }
+
+    private func secLabel(_ text: String) -> some View {
+        Text(text)
+            .xFont(.caption, weight: .semibold)
+            .foregroundStyle(XPalette.textTertiary)
+            .textCase(.uppercase)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
