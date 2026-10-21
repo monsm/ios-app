@@ -991,6 +991,9 @@ struct MemberFamilySettingsView: View {
                         }
                         }
                     }
+                    // 家庭协作实况 —— 家庭设置页原来只有两个开关，
+                    // 但 MemberHub 里早就备好了「谁在代管」与「关怀到期」两份数据。
+                    familyStatusCard
                 }
                 .padding(.horizontal, XSpace.gutter)
                 .padding(.vertical, XSpace.l)
@@ -1006,6 +1009,52 @@ struct MemberFamilySettingsView: View {
             } }
             .onAppear {
                 privacyLeft = max(0, Int(MemberHub.privacyUntilSec - Date().timeIntervalSince1970))
+            }
+        }
+    }
+
+    /// 家庭协作实况：代管名单 + 关怀到期
+    ///
+    /// 这两份数据都在 MemberHub 里算好了，但从没有页面展示过:
+    ///   · proxyNames   谁有代管权限（家庭协作的核心信息）
+    ///   · careDue      3 天内到期的临时码（关怀提醒）
+    private var familyStatusCard: some View {
+        let mac = app.currentMac
+        let proxies: [String] = MemberHub.proxyNames.compactMap { id in
+            DB.member(id).map { MemberHub.display($0) }
+        }.sorted()
+        let due = mac.isEmpty ? [] : MemberHub.careDue(mac)
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                secLabel("家庭协作")
+                HStack(spacing: XSpace.s) {
+                    Text("代管中")
+                        .xFont(.caption)
+                        .foregroundStyle(XPalette.textTertiary)
+                    Spacer(minLength: 0)
+                    Text(proxies.isEmpty ? "无人代管" : proxies.joined(separator: "、"))
+                        .xFont(.caption)
+                        .foregroundStyle(proxies.isEmpty ? XPalette.textSub : XPalette.warn)
+                }
+                .accessibilityElement(children: .combine)
+                if !due.isEmpty {
+                    ForEach(due, id: \.member.id) { c in
+                        HStack(spacing: XSpace.s) {
+                            Image(systemName: "clock.badge.exclamationmark")
+                                .font(.system(size: XIcon.xs, weight: .semibold))
+                                .foregroundStyle(XPalette.warn)
+                            Text(MemberHub.display(c.member) + " 的临时码 " + String(c.days) + " 天后到期")
+                                .xFont(.caption)
+                                .foregroundStyle(XPalette.warn)
+                            Spacer(minLength: 0)
+                        }
+                        .accessibilityElement(children: .combine)
+                    }
+                } else {
+                    Text("3 天内没有临时码到期")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textTertiary)
+                }
             }
         }
     }
