@@ -510,17 +510,7 @@ extension View {
         self.font(base).fontWeight(weight)
     }
 
-    /// 列表底色透明 —— 让 XPalette.canvas 从下面透上来。
-    /// 与旧 `variantList()` 逐字等价 (旧实现只有 `scrollContentBackground(.hidden)`)。
-    nonisolated func xList() -> some View {
-        self.scrollContentBackground(.hidden)
-    }
 
-    /// 页面底色。与旧 `dsScreenBackground()` 的区别: 新系统用纯色画布,
-    /// 不用网格渐变 —— 彩色网格会与铜色 accent 打架。
-    nonisolated func xScreen() -> some View {
-        self.background(XPalette.canvas.ignoresSafeArea())
-    }
 
     /// 底衬。与旧 `variantPlate(style, shape)` 等价, 形状走 XRadius。
     nonisolated func xPlate(_ style: Color, _ radius: CGFloat = XRadius.control) -> some View {

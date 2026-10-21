@@ -398,9 +398,53 @@ if (deadTokens.length > 0) {
   }
 }
 
+
+// ── 6d. 零调用的 View 扩方法 ────────────────────────────────────────
+// 由来: 把全仓 30 处 .xList()/.xScreen() 删掉之后, 方法定义本身还在,
+// 于是变成了 0 调用的死方法。这和死令牌是同一个病, 只是载体不同。
+//
+// 只查 Components.swift 里 `nonisolated func xXxx()` / `func xXxx(` 形式
+// (本仓的样式扩方法统一 x/ax 前缀), 全仓统计 ".name" 调用次数。
+const deadExtensions = [];
+{
+  const EXT_RE = /^\s*(?:nonisolated )?func (x[A-Z]\w*|ax[A-Z]\w*)\(/gm;
+  let m;
+  const seen = new Set();
+  while ((m = EXT_RE.exec(lib))) {
+    const name = m[1];
+    if (seen.has(name)) continue;
+    seen.add(name);
+    let calls = 0;
+    for (const f of files) {
+      const src = fs.readFileSync(f, 'utf8');
+      const hits = src.match(new RegExp('\\.' + name + '\\b', 'g'));
+      if (hits) calls += hits.length;
+    }
+    if (calls === 0) deadExtensions.push(name);
+  }
+}
+// 自检: 人造一个零调用扩方法名, 确认能抓到
+{
+  const probe = 'xSelfTestDeadExtension';
+  let calls = 0;
+  for (const f of files) {
+    const hits = fs.readFileSync(f, 'utf8').match(new RegExp('\\.' + probe + '\\b', 'g'));
+    if (hits) calls += hits.length;
+  }
+  if (calls !== 0) {
+    console.error('✗ 自检失败: 人造扩方法居然"被调用"了');
+    process.exit(1);
+  }
+}
+if (deadExtensions.length > 0) {
+  for (const d of deadExtensions) {
+    console.error('Components.swift: 扩方法 .' + d + '() 全仓零调用 —— 删掉');
+  }
+}
+
 // ── 7. 输出 ───────────────────────────────────────────────────────
-if (allProblems.length === 0 && deadCode.length === 0 && bareDividers.length === 0 && deadTokens.length === 0) {
-  console.log('签名 / 死代码 / 裸 Divider / 零用令牌 ✓ (' + files.length + ' 文件, '
+if (allProblems.length === 0 && deadCode.length === 0 && bareDividers.length === 0 && deadTokens.length === 0 && deadExtensions.length === 0) {
+  console.log('签名 / 死代码 / 裸Divider / 零用令牌 / 零调扩方法 ✓ (' + files.length + ' 文件, '
     + Object.keys(structDefs).length + ' 组件签名, ' + libTypes.length + ' 类型 + 令牌查引用, '
     + '自检 ' + (probes.length + 3) + '/' + (probes.length + 3) + ')');
   process.exit(0);
@@ -410,4 +454,5 @@ if (allProblems.length > 0) console.error('✗ 组件签名 ' + allProblems.leng
 if (deadCode.length > 0) console.error('✗ 死代码 ' + deadCode.length + ' 处');
 if (bareDividers.length > 0) console.error('✗ 裸 Divider ' + bareDividers.length + ' 处');
 if (deadTokens.length > 0) console.error('✗ 零使用令牌 ' + deadTokens.length + ' 处');
+if (deadExtensions.length > 0) console.error('✗ 零调用扩方法 ' + deadExtensions.length + ' 处');
 process.exit(1);
