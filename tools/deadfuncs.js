@@ -77,6 +77,61 @@ for (const d of decls) {
 }
 
 rows.sort((a, b) => a.file.localeCompare(b.file));
+
+// ══════════════════════════════════════════════════════════════════
+// 第二段：有读无写 —— 最高风险的一类死函数
+// ══════════════════════════════════════════════════════════════════
+//
+// 普通的死函数只是"没用上"。但下面这种是**功能看着有、实际改不了**：
+//
+//   读侧 isArchived 被 15 处用作过滤条件，写侧 setArchived 零调用
+//   → 过滤永远按"未归档"算，用户却以为归档是存在的
+//
+//   读侧 hasPasscode / verifyPasscode 到处在用，写侧 setPasscode 零调用
+//   → 应用锁永远开不了（这个是真发生过的，整块安全功能不可达）
+//
+// 判据：零调用的 setXxx / toggleXxx / markXxx / removeXxx / clearXxx / deleteXxx，
+//       去找同名的读侧 isXxx / hasXxx / getXxx / xxx（首字母小写）。
+//       读侧存在且被调用过 → 标记为"有读无写"。
+//
+// 这类必须逐个人工判断：可能只是 API 冗余，也可能是一整块功能够不着。
+
+const allNames = new Set(decls.map(d => d.name));
+function calledCount(name) {
+  let n = 0;
+  for (const { rel, text } of allSources) {
+    const ls = text.split('\n');
+    ls.forEach((l, i) => { if (l.includes(name + '(')) n++; });
+  }
+  return n;
+}
+
+const WRITE_PREFIX = ['set', 'toggle', 'mark', 'remove', 'clear', 'delete', 'save', 'push'];
+const pairs = [];
+for (const d of rows) {
+  const pre = WRITE_PREFIX.find(p => d.name.startsWith(p) && d.name.length > p.length + 1);
+  if (!pre) continue;
+  const base = d.name.slice(pre.length);
+  const lower = base[0].toLowerCase() + base.slice(1);
+  const readCandidates = ['is' + base, 'has' + base, 'get' + base, lower, base];
+  const readers = readCandidates.filter(rc => rc !== d.name && allNames.has(rc) && calledCount(rc) > 0);
+  if (readers.length) pairs.push({ ...d, readers });
+}
+
+if (pairs.length) {
+  console.log('');
+  console.log('═'.repeat(96));
+  console.log('⚠ 有读无写：写函数零调用，但同名读函数在被使用 —— 功能可能整块够不着');
+  console.log('═'.repeat(96));
+  for (const p of pairs) {
+    console.log(p.file.padEnd(40) + p.name.padEnd(28) + '读侧在用: ' + p.readers.join(' / '));
+  }
+  console.log('');
+  console.log('这类要逐个判断：是 API 冗余，还是一整块功能没有入口。');
+} else {
+  console.log('');
+  console.log('✓ 没有发现「有读无写」的成对函数');
+}
 console.log('扫描 ' + decls.length + ' 个函数声明   零调用 ' + rows.length + ' 个');
 console.log('-'.repeat(96));
 console.log('file'.padEnd(46) + 'func'.padEnd(32) + 'line'.padStart(5));

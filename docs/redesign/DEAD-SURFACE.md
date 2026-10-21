@@ -87,6 +87,33 @@ toggleStar ─┬─> setStar
 误报率高。**接进告警会造成狼来了效应，让用户忽略真告警。**
 宁可不用，也不要一个会叫错的警报。
 
+## 六、工具新增：自动找「有读无写」
+
+`tools/deadfuncs.js` 现在会额外报一类最危险的死函数：
+
+> **读侧在用、写侧零调用** —— 界面上有这个值，但用户改不了。
+
+判据：零调用的 `setXxx` / `toggleXxx` / `markXxx` / `removeXxx` / `clearXxx` / `deleteXxx`，
+去配对同名的读侧 `isXxx` / `hasXxx` / `getXxx` / `xxx`。读侧存在且被调用过 → 报出来。
+
+**这个模式已经造成过两个整块不可达的功能**（应用锁、门锁解绑），所以值得自动化。
+
+### 当前报出的 9 对（已逐个判断）
+
+| 写函数 | 读侧 | 判断 |
+|---|---|---|
+| `Store.clearFailEvents` | `failEvents` | **真缺口** —— 开门失败事件会一直累积，清不掉 |
+| `CredentialOrg.setEarlyExpireMin` | `earlyExpireMin` | **真缺口** —— 「提前多久提醒过期」写死默认值 |
+| `CredentialOrg.setSeq` | `seq` | **真缺口** —— 排序序号读得到设不了 |
+| `RecordSearch.setNote` | `note` | **真缺口** —— 事件备注读得到写不了 |
+| `CredentialOrg.saveAlert` | `alert` | 待判断 |
+| `CredentialOrg.saveSmartLists` | `smartLists` | 待判断（智能列表面板没有）|
+| `CredentialOrg.saveDraft` | `draft` | 假阳性 —— `draft()` 只有声明，读侧也是死的 |
+| `CredentialOrg.pushSearchHistory` / `removeSearchHistory` | `searchHistory` | 自闭环 —— 只被自己读，整块死码（与 EventsPage 用的 `RecordSearch.pushHistory` 是两套）|
+
+**工具只负责指出候选，判断仍要人做。** 上表就是"工具输出 ≠ 结论"的例子：
+9 条里 4 条真缺口、1 条假阳性、2 条自闭环、2 条待判断。
+
 ## 处理原则
 
 **不批量删除。** 理由：
