@@ -128,9 +128,13 @@ enum ProbeBlock4_Entity {
         }
 
         // RealityViewContent 的实体枚举
-        _ = { (content: RealityViewContent) in
-            _ = content.entities.first(where: { $0.name == "root" })   // ← 待验
-        }
+        //
+        // ✗ 不能显式写 RealityViewContent —— run #444 报
+        //   cannot find type 'RealityViewContent' in scope
+        // 这个类型名不在公开作用域里。正确做法是让它从闭包参数**自动推断**，
+        // 见区块 1 的 RealityView { content in ... }（那里 content 的类型是推断出来的）。
+        // 实测 XLockBlade 里 content.entities.first(where:) 编译通过（run #443 SUCCESS）——
+        // 说明只要不显式标注类型名，这个用法是合法的。
     }
 }
 
