@@ -256,7 +256,7 @@ struct KeysPage: View {
             // 有底色之后, 一列里按颜色就能分组读。
             ZStack {
                 RoundedRectangle(cornerRadius: XRadius.min, style: .continuous)
-                    .fill(kindTint(row.kind).opacity(0.14))
+                    .fill(kindTint(row.kind).opacity(XOpacity.badge))
                 Image(systemName: iconFor(row.kind))
                     .font(.system(size: XIcon.sm, weight: .semibold))
                     .foregroundStyle(kindTint(row.kind))

@@ -116,7 +116,7 @@ struct SecurityPage: View {
             ZStack {
                 // 外圈柔光
                 Circle()
-                    .fill(tone.opacity(0.16))
+                    .fill(tone.opacity(XOpacity.glow))
                     .frame(width: 30, height: 30)
                 // 灯体
                 Circle()

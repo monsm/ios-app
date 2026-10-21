@@ -1193,7 +1193,7 @@ struct XStepBar: View {
         ZStack {
             Circle()
                 .fill(i == current ? XPalette.accent
-                      : (i < current ? XPalette.accent.opacity(0.16) : Color.clear))
+                      : (i < current ? XPalette.accent.opacity(XOpacity.glow) : Color.clear))
             Circle()
                 .strokeBorder(i <= current ? XPalette.accent : XPalette.hairline,
                               lineWidth: i == current ? 0 : 1.5)

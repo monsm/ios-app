@@ -102,7 +102,7 @@ struct MePage: View {
         VStack(spacing: XSpace.xs) {
             ZStack {
                 Circle()
-                    .fill(tone.opacity(0.13))
+                    .fill(tone.opacity(XOpacity.badge))
                     .frame(width: 34, height: 34)
                 Image(systemName: icon)
                     .font(.system(size: XIcon.sm, weight: .semibold))
