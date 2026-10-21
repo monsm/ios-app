@@ -126,26 +126,14 @@ struct EventsPage: View {
     // ═══════════════════════════════════════════════════════
 
     private var eventList: some View {
-        // M5 重做: List(plain) + Section → ScrollView + 每日一张 XPanel
+        // 真时间轴 —— 不是卡片堆。
         //
-        // 组头统计（当天条数 + 告警数）**完整保留** ——
-        // 那段注释说得很清楚: "原来只有今天/昨天，看不出那天忙不忙、
-        // 有没有告警。一行小字把这个信息补上"。这是真实信息，不是装饰。
+        // 竖线由每组的 .overlay(alignment: .leading) 画一条通长线，
+        // 这样组内所有节点共用一条线，节点之间不会断。
         ScrollView {
-            LazyVStack(spacing: XSpace.m) {
+            LazyVStack(alignment: .leading, spacing: 0) {
                 ForEach(grouped, id: \.day) { group in
-                    XPanel(kind: .group, padding: 0) {
-                        VStack(spacing: 0) {
-                            dayHeader(group)
-                            ForEach(Array(group.items.enumerated()), id: \.element.id) { idx, rec in
-                                eventRow(rec)
-                                if idx < group.items.count - 1 {
-                                    Divider().overlay(XPalette.hairline)
-                                        .padding(.leading, XSpace.card + 28 + XSpace.s)
-                                }
-                            }
-                        }
-                    }
+                    daySection(group)
                 }
             }
             .padding(.horizontal, XSpace.gutter)
@@ -153,6 +141,31 @@ struct EventsPage: View {
             .padding(.bottom, XSpace.xxl)
         }
         .background(XPalette.canvas)
+    }
+
+    /// 一天一组：日期头 + 时间轴
+    private func daySection(_ group: (day: String, items: [Rec])) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            dayHeader(group)
+
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(Array(group.items.enumerated()), id: \.element.id) { idx, rec in
+                    timelineRow(rec)
+                }
+            }
+            // 竖线：画在所有节点左侧，从第一个节点到最后一行
+            // 位置 = 时间列宽 42 + 间距 12 + 圆点半径 4.5
+            .overlay(alignment: .topLeading) {
+                Rectangle()
+                    .fill(XPalette.hairline)
+                    .frame(width: 1)
+                    .padding(.leading, 42 + XSpace.m + 4)
+                    .padding(.top, 6)
+                    .padding(.bottom, XSpace.l)
+                    .accessibilityHidden(true)
+            }
+        }
+        .padding(.bottom, XSpace.s)
     }
 
     /// 当日组头 —— 日期 + 条数 + 告警数
@@ -178,38 +191,55 @@ struct EventsPage: View {
             }
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, XSpace.card)
         .padding(.top, XSpace.m)
-        .padding(.bottom, XSpace.s)
+        .padding(.bottom, XSpace.m)
     }
 
-    private func eventRow(_ rec: Rec) -> some View {
-        HStack(spacing: XSpace.m) {
-            // 告警色条 (色 + 图标双通道, 不只靠颜色)
-            RoundedRectangle(cornerRadius: 2)
-                .fill(rec.alarm ? XPalette.warn : Color.clear)
-                .frame(width: 3)
-                .accessibilityHidden(true)
-
+    /// 时间轴上的一个节点
+    ///
+    /// 与原来的卡片行不同 —— 这是**真时间轴**:
+    ///   左侧: 时间（等宽数字，右对齐）
+    ///   中间: 竖线 + 节点圆点（告警红 / 正常绿）
+    ///   右侧: 事件内容
+    ///
+    /// 竖线由外层 VStack 的背景画，不在这里画 ——
+    /// 否则每个节点各画一段，接缝处会断。
+    private func timelineRow(_ rec: Rec) -> some View {
+        HStack(alignment: .top, spacing: XSpace.m) {
             // 时间
             Text(shortTime(rec.timeStr))
                 .xFont(.caption.monospacedDigit())
-                .foregroundStyle(XPalette.textSub)
-                .frame(width: 46, alignment: .trailing)
+                .foregroundStyle(XPalette.textTertiary)
+                .frame(width: 42, alignment: .trailing)
+                .padding(.top, 3)
 
-            // 事件
-            VStack(alignment: .leading, spacing: 2) {
+            // 节点圆点（竖线由父级画）
+            Circle()
+                .fill(rec.alarm ? XPalette.danger : XPalette.ok)
+                .frame(width: 9, height: 9)
+                .overlay(
+                    Circle().stroke(XPalette.canvas, lineWidth: 3)
+                )
+                .padding(.top, 6)
+                .accessibilityHidden(true)
+
+            // 内容
+            VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: XSpace.xs) {
-                    if rec.alarm {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.system(size: XIcon.xs, weight: .semibold))
-                            .foregroundStyle(XPalette.warn)
-                            .accessibilityHidden(true)
-                    }
                     Text(verbText(rec))
                         .xFont(.body)
                         .foregroundStyle(XPalette.text)
                         .lineLimit(2)
+                    if rec.alarm {
+                        Text("告警")
+                            .xFont(.caption2, weight: .semibold)
+                            .foregroundStyle(XPalette.danger)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(
+                                Capsule().fill(XPalette.danger.opacity(0.16))
+                            )
+                    }
                 }
                 if let sub = subText(rec) {
                     Text(sub)
@@ -221,7 +251,7 @@ struct EventsPage: View {
 
             Spacer(minLength: 0)
         }
-        .padding(.vertical, XSpace.xxs)
+        .padding(.bottom, XSpace.l)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityText(rec))
     }

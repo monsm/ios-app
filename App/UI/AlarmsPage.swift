@@ -82,6 +82,92 @@ struct AlarmsPage: View {
     // MARK: - 视图
     // ═══════════════════════════════════════════════════════
 
+    // ── 主告警卡（仅当有紧急级未处理告警）──
+    //
+    // M5 形态: 告警页的核心是**紧迫感**，不是清单。
+    // 所以把最紧急的一条从列表里提出来，占整块，
+    // 并显示"已持续多久"—— 时间压力是紧迫感的来源。
+    @ViewBuilder
+    private var primaryAlarm: some View {
+        if let top = alarms.first(where: { AlarmMeta.level($0.type) == 3 }) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                HStack(spacing: XSpace.s) {
+                    Text(AlarmMeta.levelName(top.type))
+                        .xFont(.caption2, weight: .bold)
+                        .foregroundStyle(XPalette.onAccent)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Capsule().fill(XPalette.danger))
+                    if let dur = elapsedText(top) {
+                        Text("已持续 \(dur)")
+                            .xFont(.caption)
+                            .foregroundStyle(XPalette.danger)
+                    }
+                    Spacer(minLength: 0)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(top.typeName.isEmpty ? "告警" : top.typeName)
+                        .xFont(.title3, weight: .semibold)
+                        .foregroundStyle(XPalette.text)
+                    Text("\(shortTime(top.timeStr)) · \(top.lockName) · 未处理")
+                        .xFont(.caption)
+                        .foregroundStyle(XPalette.textSub)
+                }
+
+                HStack(spacing: XSpace.s) {
+                    Button {
+                        markHandled(top)
+                        XHaptics.trigger.impactOccurred()
+                    } label: {
+                        Text("知道了")
+                            .xFont(.subheadline, weight: .semibold)
+                            .foregroundStyle(XPalette.onAccent)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 42)
+                            .background(RoundedRectangle(cornerRadius: XRadius.control, style: .continuous)
+                                .fill(XPalette.danger))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("标记已知悉")
+                }
+            }
+            .padding(XSpace.card)
+            .background {
+                RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
+                    .fill(XPalette.danger.opacity(0.10))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
+                            .strokeBorder(XPalette.danger.opacity(0.35), lineWidth: 1)
+                    )
+            }
+        }
+    }
+
+    /// 告警已持续多久
+    ///
+    /// 解析 timeStr 得到时刻，算到现在的差值。
+    /// 解析失败返回 nil —— 不硬编造一个数字。
+    /// 告警已持续多久
+    ///
+    /// 复用 RecordSearch.dateOf(Rec) —— 它已经把 timeStr 解析成 Date
+    /// 并钉了公历 (WeekCal.gregorian)。
+    /// 自己再写一遍 DateFormatter 会被 lint 拦下（我第一版就是这样）。
+    /// 解析失败返回 nil —— 不硬编造一个数字。
+    private func elapsedText(_ rec: Rec) -> String? {
+        guard let d = RecordSearch.dateOf(rec) else { return nil }
+        return humanize(Date().timeIntervalSince(d))
+    }
+
+    private func humanize(_ sec: TimeInterval) -> String? {
+        guard sec > 60 else { return nil }
+        let m = Int(sec / 60)
+        if m < 60 { return "\(m) 分钟" }
+        let h = m / 60
+        if h < 24 { return "\(h) 小时 \(m % 60) 分" }
+        return "\(h / 24) 天"
+    }
+
     private var alarmList: some View {
         // M5 重做: List + Section → ScrollView + XPanel 卡片流
         //
@@ -93,6 +179,9 @@ struct AlarmsPage: View {
                     severityOverview
                         .padding(.top, XSpace.s)
                 }
+
+                // 主告警：最高级未处理告警占整块 —— 紧迫感的核心
+                primaryAlarm
 
                 if !alarms.isEmpty {
                     XPanel(kind: .group, padding: 0) {
