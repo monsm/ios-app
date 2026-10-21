@@ -204,6 +204,46 @@ struct EventsPage: View {
     ///
     /// 竖线由外层 VStack 的背景画，不在这里画 ——
     /// 否则每个节点各画一段，接缝处会断。
+    /// 时间轴节点颜色 —— 与凭证类型色一致
+    ///
+    /// 告警优先（红），保养次之（青），其余按凭证类型：
+    ///   fp 青 / pwd 紫 / temp 黄 / key 蓝 / 未知 绿
+    private func nodeColor(_ rec: Rec) -> Color {
+        if rec.alarm { return XPalette.danger }
+        if rec.care { return XPalette.warn }
+        switch rec.kind {
+        case "fp": return XPalette.kindFp
+        case "pwd": return XPalette.textSub
+        case "temp": return XPalette.warn
+        case "key": return XPalette.ok
+        default: return XPalette.ok
+        }
+    }
+
+    /// 事件类型短标签（时间轴右侧用）
+    private func kindTag(_ rec: Rec) -> String? {
+        if rec.alarm { return "告警" }
+        if rec.care { return "保养" }
+        switch rec.kind {
+        case "fp": return "指纹"
+        case "pwd": return "密码"
+        case "temp": return "临时码"
+        case "key": return "钥匙"
+        default: return nil
+        }
+    }
+
+    /// 归属可信度 —— Rec.provable 是 "temp"/"unique"
+    ///
+    /// 这个字段一直存在但时间轴没用。它说明"这条记录归属到某人"是靠什么推的:
+    ///   unique → 唯一凭证，归属可信
+    ///   temp   → 临时码，可能多人共用，只能"约"
+    private func provableNote(_ rec: Rec) -> String? {
+        guard let p = rec.provable, !p.isEmpty else { return nil }
+        if p == "unique" { return nil }   // 可信就不打扰
+        return "归属约"
+    }
+
     private func timelineRow(_ rec: Rec) -> some View {
         HStack(alignment: .top, spacing: XSpace.m) {
             // 时间
@@ -214,8 +254,12 @@ struct EventsPage: View {
                 .padding(.top, 3)
 
             // 节点圆点（竖线由父级画）
+            //
+            // 原来只有两色（告警红 / 正常绿），但事件有 5 类 ——
+            // 时间轴上完全看不出"这是指纹开的还是密码开的"。
+            // 现在按 kind 着色，与凭证页的类型色一致。
             Circle()
-                .fill(rec.alarm ? XPalette.danger : XPalette.ok)
+                .fill(nodeColor(rec))
                 .frame(width: 9, height: 9)
                 .overlay(
                     Circle().stroke(XPalette.canvas, lineWidth: 3)
@@ -230,15 +274,22 @@ struct EventsPage: View {
                         .xFont(.body)
                         .foregroundStyle(XPalette.text)
                         .lineLimit(2)
-                    if rec.alarm {
-                        Text("告警")
+                    // 类型标签：现在所有事件都有，不只告警
+                    if let tag = kindTag(rec) {
+                        Text(tag)
                             .xFont(.caption2, weight: .semibold)
-                            .foregroundStyle(XPalette.danger)
+                            .foregroundStyle(nodeColor(rec))
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
                             .background(
-                                Capsule().fill(XPalette.danger.opacity(0.16))
+                                Capsule().fill(nodeColor(rec).opacity(0.16))
                             )
+                    }
+                    // 归属可信度：只有不可信时才提示
+                    if let note = provableNote(rec) {
+                        Text(note)
+                            .xFont(.caption2)
+                            .foregroundStyle(XPalette.textTertiary)
                     }
                 }
                 if let sub = subText(rec) {

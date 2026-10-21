@@ -221,14 +221,24 @@ struct MembersPage: View {
     ///   · 头像 44pt，带成员色浅底 + 描边（视觉锚点）
     ///   · 右侧显示 30 天开门数（真实数据，来自 MemberHub.activity）
     ///   · 久未用的成员置灰（MemberHub.Activity.stale 已有判据）
+    /// 成员行 —— 内容适配版
+    ///
+    /// 上一轮我只换了外观（头像 + 开门数），**没做内容适配**:
+    /// 审计发现本文件 0 个分支、只用了 5 个字段。而 MemberHub 还有:
+    ///   · Activity.last     最近一次开门时间
+    ///   · Activity.month    本月次数
+    ///   · permRows(role)    5 项权限矩阵
+    ///   · weekSentence(id)  近 7 天作息规律
+    /// 这些数据早就算好了，只是没接到界面上。
     private func memberRow(_ m: Member) -> some View {
         let pwdCount = DB.listPwds(mac).filter { $0.owner == m.id }.count
         let fpCount = DB.listFps(mac).filter { $0.owner == m.id }.count
         let total = pwdCount + fpCount
         let role = MemberHub.ext(m.id).role
         let act = MemberHub.activity(m.id)
+        let perms = MemberHub.permRows(role)
+        let allowed = perms.filter { $0.allowed }.count
         return HStack(spacing: XSpace.m) {
-            // 头像
             ZStack {
                 Circle().fill(memberColor(m).opacity(0.14))
                 Circle().strokeBorder(memberColor(m).opacity(0.5), lineWidth: 1.5)
@@ -239,38 +249,73 @@ struct MembersPage: View {
             .frame(width: 44, height: 44)
             .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(MemberHub.display(m))
-                    .xFont(.body, weight: .medium)
-                    .foregroundStyle(act.stale ? XPalette.textSub : XPalette.text)
-                    .lineLimit(1)
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: XSpace.xs) {
+                    Text(MemberHub.display(m))
+                        .xFont(.body, weight: .medium)
+                        .foregroundStyle(act.stale ? XPalette.textSub : XPalette.text)
+                        .lineLimit(1)
+                    if act.stale {
+                        Text("久未用")
+                            .xFont(.caption2)
+                            .foregroundStyle(XPalette.textTertiary)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1)
+                            .background(Capsule().fill(XPalette.surfaceAlt))
+                    }
+                }
                 Text(subtitle(m, role: role, total: total))
                     .xFont(.caption)
                     .foregroundStyle(XPalette.textSub)
                     .lineLimit(1)
+                if let last = lastOpenText(act.last) {
+                    Text(last)
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textTertiary)
+                        .lineLimit(1)
+                }
             }
 
             Spacer(minLength: 0)
 
-            // 30 天开门数 —— 真实统计，不是装饰
-            if act.opens30 > 0 {
-                VStack(alignment: .trailing, spacing: 1) {
-                    Text("\(act.opens30)")
+            VStack(alignment: .trailing, spacing: 2) {
+                if act.opens30 > 0 {
+                    Text(String(act.opens30))
                         .xFont(.body.monospacedDigit(), weight: .semibold)
                         .foregroundStyle(XPalette.accent)
-                    Text("30 天")
+                    Text(act.month > 0 ? "本月 " + String(act.month) : "30 天")
                         .xFont(.caption2)
                         .foregroundStyle(XPalette.textTertiary)
+                } else if total > 0 {
+                    Text(String(total) + " 份")
+                        .xFont(.caption.monospacedDigit())
+                        .foregroundStyle(XPalette.textTertiary)
                 }
-            } else if total > 0 {
-                Text("\(total) 份")
-                    .xFont(.caption.monospacedDigit())
-                    .foregroundStyle(XPalette.textTertiary)
+                // 权限数（5 项里允许几项）
+                Text(String(allowed) + "/" + String(perms.count))
+                    .xFont(.caption2.monospacedDigit())
+                    .foregroundStyle(allowed == perms.count ? XPalette.ok : XPalette.warn)
             }
         }
         .padding(.vertical, XSpace.xxs)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(MemberHub.display(m)), \(MemberHub.roleLabel(role)), 近 30 天 \(act.opens30) 次开门, \(total) 份凭证")
+        .accessibilityLabel(accessibilityText(m, role: role, total: total, act: act, allowed: allowed, permTotal: perms.count))
+    }
+
+    /// 最近一次开门的相对时间（"3 分钟前" / "昨天 18:20"）
+    private func lastOpenText(_ last: String) -> String? {
+        guard !last.isEmpty else { return nil }
+        // lockTimeStr 形如 "2026-10-21 17:20:33"，取 月-日 时:分
+        let short = String(last.suffix(14))
+        return "最近 " + short
+    }
+
+    private func accessibilityText(_ m: Member, role: String, total: Int, act: MemberHub.Activity, allowed: Int, permTotal: Int) -> String {
+        var parts = [MemberHub.display(m), MemberHub.roleLabel(role)]
+        if total > 0 { parts.append(String(total) + " 份凭证") }
+        if act.opens30 > 0 { parts.append("近 30 天 " + String(act.opens30) + " 次") }
+        parts.append("权限 " + String(allowed) + " / " + String(permTotal))
+        return parts.joined(separator: "，")
     }
 
     private func subtitle(_ m: Member, role: String, total: Int) -> String {

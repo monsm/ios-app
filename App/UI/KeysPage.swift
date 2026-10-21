@@ -329,7 +329,28 @@ struct KeysPage: View {
     private var pwdCount: Int { pwds.filter { !$0.temp }.count }
     private var tempCount: Int { pwds.filter { $0.temp }.count }
 
-    @ViewBuilder
+    /// 副标题 + 归属合成一行
+    ///
+    /// 顺序: 归属在前（"妈妈 · 常驻 · 我的 iPhone"）——
+    /// 扫读时先认人，再看属性。
+    /// 无障碍标签：类型 + 标题 + 归属 + 状态
+    private func accessibilityLine(_ row: KeyRow) -> String {
+        var parts = [kindWord(row.kind), row.title]
+        if let o = row.owner, !o.isEmpty, let m = DB.member(o) { parts.append("归属 " + m.name) }
+        parts.append(row.stateLabel)
+        return parts.joined(separator: "，")
+    }
+
+    private func detailLine(_ row: KeyRow) -> String? {
+        var parts: [String] = []
+        if let o = row.owner, !o.isEmpty, let m = DB.member(o) {
+            parts.append(m.name)
+        }
+        if let sub = row.subtitle, !sub.isEmpty {
+            parts.append(sub)
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
 
     private func keyRow(_ row: KeyRow) -> some View {
         HStack(spacing: XSpace.m) {
@@ -351,8 +372,10 @@ struct KeysPage: View {
                     .xFont(.body)
                     .foregroundStyle(XPalette.text)
                     .lineLimit(1)
-                if let s = row.subtitle {
-                    Text(s)
+                // 归属 + 副标题合一行 —— owner 字段一直有，但 keyRow 从没用过。
+                // 凭证页最该知道"这把钥匙给了谁"，原来只能点进去看。
+                if let line = detailLine(row) {
+                    Text(line)
                         .xFont(.caption)
                         .foregroundStyle(XPalette.textSub)
                         .lineLimit(1)
@@ -365,7 +388,7 @@ struct KeysPage: View {
         }
         .padding(.vertical, XSpace.xxs)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(kindWord(row.kind)) \(row.title), \(row.stateLabel)")
+        .accessibilityLabel(accessibilityLine(row))
     }
 
     /// 类型配色: 密码铜 / 指纹绿 / 临时码橙 —— 与 StatsKit 的 kindColor 同一套语义
