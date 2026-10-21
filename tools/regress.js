@@ -115,6 +115,10 @@ const checks = [
     const r = CODE.get('LockKeeperApp.swift') || '';
     return a.includes('btDenied') && a.includes('var denied: Bool = false') && r.includes('BLEOffBanner(denied:');
   }],
+  ['首启空态直达配对页（不经管理面板）', () => {
+    const h = CODE.get('HomeConsole.swift') || '';
+    return h.includes('showAddLock = true') && h.includes('.sheet(isPresented: $showAddLock)');
+  }],
 ];
 
 let pass = 0;

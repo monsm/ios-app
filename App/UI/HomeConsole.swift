@@ -63,6 +63,10 @@ struct HomeConsole: View {
     @State private var isUnlocking = false
     @State private var settlingTask: Task<Void, Never>?
     @State private var managerGroup: ManagerGroup?
+    /// 首启用：一把锁都没有时，直接开配对页。
+    /// 原来这里走 managerGroup = .devices —— 用户先看到一张**管理面板**，
+    /// 还得自己再找一次「添加门锁」。首启最关键的一步不该有多余一跳。
+    @State private var showAddLock = false
     @State private var appeared = false
 
     // ── 当日统计缓存 ──
@@ -158,6 +162,9 @@ struct HomeConsole: View {
             .sheet(item: $managerGroup) { g in
                 ManagerFace(initialGroup: g).environmentObject(app)
             }
+            .sheet(isPresented: $showAddLock) {
+                AddLockPage().environmentObject(app)
+            }
         }
     }
 
@@ -203,7 +210,7 @@ struct HomeConsole: View {
             }
             Button {
                 XHaptics.tick.impactOccurred()
-                managerGroup = .devices
+                showAddLock = true
             } label: {
                 Text("去配对门锁")
                     .xFont(.system(.subheadline, weight: .semibold))
