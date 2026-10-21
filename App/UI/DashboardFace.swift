@@ -157,15 +157,43 @@ private struct LockLens: View {
     }
 
     // 24 小时环
+    /// 小时分布（门面版）—— 比 StatsPage 的小，因为这里只是速览
+    ///
+    /// 与 StatsPage.rhythmCard 的关系:
+    ///   · 那一页有 156pt 时钟 + 柱状图读数 + 告警率 + 14 天折线（深度分析）
+    ///   · 这里只给 176pt 时钟 + 「看完整数据」入口（快速浏览）
+    ///
+    /// 两个页面各司其职，不重复实现同一份深度内容。
     private var hourRing: some View {
         XPanel {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 Text("一天里什么时候在用")
                     .xFont(.footnote, weight: .medium)
                     .foregroundStyle(XPalette.textSub)
+
                 // XDayClock 内部用固定 size 画（默认 240），
                 // 外面再套 .frame(height:) 会让内容溢出 —— 直接传 size。
-                XDayClock(hours: model.hourStats, size: 200)
+                XDayClock(hours: model.hourStats, size: 176)
+                    .frame(maxWidth: .infinity)
+
+                NavigationLink {
+                    // StatsPage 依赖 AppState（读 app.currentMac）
+                    StatsPage().environmentObject(app)
+                } label: {
+                    HStack(spacing: 4) {
+                        Text("告警率 · 14 天趋势 · 完整分析")
+                            .xFont(.caption)
+                            .foregroundStyle(XPalette.accent)
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: XIcon.xs, weight: .semibold))
+                            .foregroundStyle(XPalette.accent)
+                        Spacer(minLength: 0)
+                    }
+                    .frame(minHeight: XHit.min)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("查看完整统计")
             }
         }
     }
