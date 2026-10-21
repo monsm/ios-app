@@ -101,34 +101,40 @@ struct MePage: View {
             }
             .padding(.vertical, XSpace.xs)
         }
-        .listRowBackground(Color.clear)
-        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: XSpace.s, trailing: 0))
     }
 
+    /// 一个大数字指标 —— 数值在前，标签在后
+    ///
+    /// 与原来相比（M5 形态改造）:
+    ///   · 去掉 34pt 图标圆 —— 它占了近一半高度却只传达"这是哪一项"
+    ///   · 数值从 subheadline 提到 title2 —— 一眼看到的是数，不是装饰
+    ///   · 高度统一 76pt，四张卡并排不会高低不齐
     private func summaryTile(icon: String, value: String, label: String, tone: Color) -> some View {
-        VStack(spacing: XSpace.xs) {
-            ZStack {
-                Circle()
-                    .fill(tone.opacity(XOpacity.badge))
-                    .frame(width: 34, height: 34)
-                Image(systemName: icon)
-                    .font(.system(size: XIcon.sm, weight: .semibold))
-                    .foregroundStyle(tone)
-            }
-            .accessibilityHidden(true)
+        VStack(alignment: .leading, spacing: 2) {
             Text(value)
-                .xFont(.subheadline, weight: .semibold)
-                .foregroundStyle(XPalette.text)
+                .xFont(.title2, weight: .bold)
+                .foregroundStyle(tone)
                 .monospacedDigit()
                 .lineLimit(1)
-                .minimumScaleFactor(0.7)
-            Text(label)
-                .xFont(.caption2)
-                .foregroundStyle(XPalette.textTertiary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
+                .minimumScaleFactor(0.55)
+            HStack(spacing: 3) {
+                Image(systemName: icon)
+                    .font(.system(size: 9, weight: .semibold))
+                    .accessibilityHidden(true)
+                Text(label)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+            }
+            .xFont(.caption2)
+            .foregroundStyle(XPalette.textTertiary)
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
+        .padding(.horizontal, XSpace.m)
+        .padding(.vertical, XSpace.s)
+        .background {
+            RoundedRectangle(cornerRadius: XRadius.tile, style: .continuous)
+                .fill(XPalette.surfaceAlt.opacity(0.6))
+        }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label): \(value)")
     }

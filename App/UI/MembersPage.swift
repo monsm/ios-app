@@ -46,6 +46,8 @@ struct MembersPage: View {
                 if members.isEmpty {
                     emptyCard
                 } else {
+                    // 先头像带（认人），再卡片（看细节）
+                    avatarStrip
                     rosterCard
                 }
                 secondaryCard
@@ -77,6 +79,51 @@ struct MembersPage: View {
     }
 
     // ── 成员卡 ──
+    // ── 横向大头像条 ──
+    //
+    // M5 形态: 成员页的识别锚点是**脸**，不是文字行。
+    // 所以顶部先给一条横向头像带 —— 一眼认全家人，
+    // 下面的卡片再给细节。
+    private var avatarStrip: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: XSpace.l) {
+                ForEach(members) { m in
+                    NavigationLink {
+                        MemberDetail360View(memberID: m.id)
+                            .environmentObject(app)
+                    } label: {
+                        VStack(spacing: XSpace.xs) {
+                            ZStack {
+                                Circle()
+                                    .fill(memberColor(m).opacity(0.14))
+                                Circle()
+                                    .strokeBorder(memberColor(m), lineWidth: 2)
+                                Text(String(MemberHub.display(m).prefix(1)))
+                                    .xFont(.title2, weight: .semibold)
+                                    .foregroundStyle(memberColor(m))
+                            }
+                            .frame(width: 64, height: 64)
+
+                            Text(MemberHub.display(m))
+                                .xFont(.footnote, weight: .medium)
+                                .foregroundStyle(XPalette.text)
+                                .lineLimit(1)
+
+                            Text(MemberHub.roleLabel(MemberHub.ext(m.id).role))
+                                .xFont(.caption2)
+                                .foregroundStyle(XPalette.textTertiary)
+                        }
+                        .frame(width: 68)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("\(MemberHub.display(m)), \(MemberHub.roleLabel(MemberHub.ext(m.id).role))")
+                }
+            }
+            .padding(.horizontal, XSpace.gutter)
+        }
+    }
+
     private var rosterCard: some View {
         XPanel(kind: .group, padding: 0) {
             VStack(spacing: 0) {
@@ -168,27 +215,34 @@ struct MembersPage: View {
     // ═══════════════════════════════════════════════════════
 
 
+    /// 成员行 —— 头像主导
+    ///
+    /// 与原来 36pt 圆点 + 纯文字相比:
+    ///   · 头像 44pt，带成员色浅底 + 描边（视觉锚点）
+    ///   · 右侧显示 30 天开门数（真实数据，来自 MemberHub.activity）
+    ///   · 久未用的成员置灰（MemberHub.Activity.stale 已有判据）
     private func memberRow(_ m: Member) -> some View {
         let pwdCount = DB.listPwds(mac).filter { $0.owner == m.id }.count
         let fpCount = DB.listFps(mac).filter { $0.owner == m.id }.count
         let total = pwdCount + fpCount
         let role = MemberHub.ext(m.id).role
+        let act = MemberHub.activity(m.id)
         return HStack(spacing: XSpace.m) {
-            // 头像色点 (成员色)
-            Circle()
-                .fill(memberColor(m))
-                .frame(width: 36, height: 36)
-                .overlay(
-                    Text(String(MemberHub.display(m).prefix(1)))
-                        .xFont(.subheadline, weight: .semibold)
-                        .foregroundStyle(XPalette.onAccent)
-                )
-                .accessibilityHidden(true)
+            // 头像
+            ZStack {
+                Circle().fill(memberColor(m).opacity(0.14))
+                Circle().strokeBorder(memberColor(m).opacity(0.5), lineWidth: 1.5)
+                Text(String(MemberHub.display(m).prefix(1)))
+                    .xFont(.headline, weight: .semibold)
+                    .foregroundStyle(memberColor(m))
+            }
+            .frame(width: 44, height: 44)
+            .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(MemberHub.display(m))
-                    .xFont(.body)
-                    .foregroundStyle(XPalette.text)
+                    .xFont(.body, weight: .medium)
+                    .foregroundStyle(act.stale ? XPalette.textSub : XPalette.text)
                     .lineLimit(1)
                 Text(subtitle(m, role: role, total: total))
                     .xFont(.caption)
@@ -198,15 +252,25 @@ struct MembersPage: View {
 
             Spacer(minLength: 0)
 
-            if total > 0 {
-                Text("\(total)")
-                    .xFont(.subheadline.monospacedDigit())
-                    .foregroundStyle(XPalette.textSub)
+            // 30 天开门数 —— 真实统计，不是装饰
+            if act.opens30 > 0 {
+                VStack(alignment: .trailing, spacing: 1) {
+                    Text("\(act.opens30)")
+                        .xFont(.body.monospacedDigit(), weight: .semibold)
+                        .foregroundStyle(XPalette.accent)
+                    Text("30 天")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textTertiary)
+                }
+            } else if total > 0 {
+                Text("\(total) 份")
+                    .xFont(.caption.monospacedDigit())
+                    .foregroundStyle(XPalette.textTertiary)
             }
         }
         .padding(.vertical, XSpace.xxs)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(MemberHub.display(m)), \(MemberHub.roleLabel(role)), \(total) 份凭证")
+        .accessibilityLabel("\(MemberHub.display(m)), \(MemberHub.roleLabel(role)), 近 30 天 \(act.opens30) 次开门, \(total) 份凭证")
     }
 
     private func subtitle(_ m: Member, role: String, total: Int) -> String {
