@@ -323,7 +323,7 @@ struct EventsPage: View {
                 }
             } catch {
                 trace.append("✗ 失败: \(error.localizedDescription)")
-                app.showToast("同步失败：\(error.localizedDescription)")
+                app.showToast("同步失败：" + ErrorText.human(error))
                 syncDetail = trace.joined(separator: "\n")
             }
         }
@@ -583,9 +583,17 @@ struct EventsPage: View {
     }
 
     private var emptyState: some View {
+        // 空态是用户第一次看到这一页的样子，也是最需要"下一步"的地方。
+        // 原来写的是"连上锁后读取门锁日志"——被动语态，而且读日志这件事
+        // 界面上并没有按钮（我后来补的「从门锁同步」在筛选菜单里，很深的角落）。
+        // 把这个动作直接放到空态上：这是唯一能让这页有内容的方式。
         XEmptyState(systemImage: "list.bullet.rectangle",
                     title: search.isEmpty ? "还没有记录" : "没有匹配的事件",
-                    message: search.isEmpty ? "连上锁后读取门锁日志。" : "换个关键词试试。")
+                    message: search.isEmpty
+                        ? "本机还没有从门锁读过日志。连上门锁后点下面同步一次，之后按天浏览。"
+                        : "换个关键词试试；也可以清掉搜索回到全部记录。",
+                    actionTitle: search.isEmpty ? (syncing ? "同步中…" : "从门锁同步日志") : "清空搜索",
+                    action: search.isEmpty ? { syncLogs() } : { search = "" })
             .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 

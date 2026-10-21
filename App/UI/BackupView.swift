@@ -198,7 +198,7 @@ struct BackupView: View {
             importText = ""
         } catch {
             // 口令错误 / 内容被改过 (453) / 不是备份 —— 一律不写库
-            app.showToast("导入被拦下: \(error.localizedDescription)")
+            app.showToast("导入被拦下: " + ErrorText.human(error))
         }
     }
 

@@ -404,7 +404,7 @@ struct AddKeyPage: View {
             dismiss()
         } catch {
             XHaptics.failure()
-            app.showToast("添加失败: \(error.localizedDescription)")
+            app.showToast("添加失败: " + ErrorText.human(error))
         }
     }
 }

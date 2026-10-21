@@ -345,7 +345,7 @@ struct DonglesPage: View {
         busy = true
         defer { busy = false }
         do { _ = try await HardwareService.shared.scanForDongle() }
-        catch { app.showToast(error.localizedDescription) }
+        catch { app.showToast(ErrorText.human(error)) }
         reload()
     }
 
@@ -354,7 +354,7 @@ struct DonglesPage: View {
         busy = true
         defer { busy = false }
         do { _ = try await HardwareService.shared.readDongleState(mac: d.mac) }
-        catch { app.showToast(error.localizedDescription) }
+        catch { app.showToast(ErrorText.human(error)) }
         reload()
     }
 
@@ -370,7 +370,7 @@ struct DonglesPage: View {
             app.showToast("设置成功: 该钥匙串现已开启「\(app.displayName)」")
         } catch {
             XHaptics.failure()
-            app.showToast("失败: \(error.localizedDescription)")
+            app.showToast("失败: " + ErrorText.human(error))
         }
         reload()
     }
@@ -386,7 +386,7 @@ struct DonglesPage: View {
             app.showToast("已删除该门锁的钥匙")
         } catch {
             XHaptics.failure()
-            app.showToast("失败: \(error.localizedDescription)")
+            app.showToast("失败: " + ErrorText.human(error))
         }
         reload()
     }
@@ -399,7 +399,7 @@ struct DonglesPage: View {
             let macs = try await HardwareService.shared.dongleKeys(dongleMac: d.mac, lockMac: nil)
             app.showToast(macs.isEmpty ? "没有查询到钥匙" : "共 \(macs.count) 把钥匙")
         } catch {
-            app.showToast("失败: \(error.localizedDescription)")
+            app.showToast("失败: " + ErrorText.human(error))
         }
         reload()
     }

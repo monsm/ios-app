@@ -495,7 +495,7 @@ struct AddLockPage: View {
                 do { try await Task.sleep(nanoseconds: 400_000_000) } catch { break }
             }
         } catch {
-            app.showToast(error.localizedDescription)
+            app.showToast(ErrorText.human(error))
         }
         BLEService.shared.stopScan()
         scanning = false

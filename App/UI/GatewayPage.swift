@@ -414,7 +414,7 @@ struct GatewayPage: View {
         running = true
         defer { running = false }
         do { _ = try await HardwareService.shared.readGatewayState(mac: g.mac) }
-        catch { app.showToast(error.localizedDescription) }
+        catch { app.showToast(ErrorText.human(error)) }
         reload()
     }
 
@@ -428,7 +428,7 @@ struct GatewayPage: View {
             app.showToast("重启成功")
         } catch {
             XHaptics.failure()
-            app.showToast("重启失败: \(error.localizedDescription)")
+            app.showToast("重启失败: " + ErrorText.human(error))
         }
         reload()
     }

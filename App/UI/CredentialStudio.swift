@@ -981,7 +981,7 @@ struct TempCodeStudio: View {
                 app.showToast("第 \(i + 1)/\(max(batchCount, 1)) 张已写入门锁 (编号 #\(alias))")
             } catch {
                 failed += 1
-                app.showToast("第 \(i + 1) 张写入失败: \(error.localizedDescription)")   // 178 张下发失败
+                app.showToast("第 \(i + 1) 张写入失败: " + ErrorText.human(error))   // 178 张下发失败
             }
         }
         if let r = last {

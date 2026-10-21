@@ -527,7 +527,7 @@ struct FirmwarePage: View {
                                  size: parsed.binSize + parsed.datSize)
             app.showToast("固件包已解析" + (parsed.version.map { " · v\($0)" } ?? ""))
         } catch {
-            app.showToast("固件包无法识别: \(error.localizedDescription)")
+            app.showToast("固件包无法识别: " + ErrorText.human(error))
         }
     }
 

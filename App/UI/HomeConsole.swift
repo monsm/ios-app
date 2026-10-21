@@ -760,7 +760,9 @@ struct HomeConsole: View {
     /// 之前只返回一句话：文案写着"去「设备」重新配对"，界面上却没有那个入口 ——
     /// 用户读到了建议，但还得自己找路。失败态真正缺的是可点的下一步。
     private func humanMessage(_ e: Error) -> UnlockFailure {
+        // 文案统一走 ErrorText，避免首页和别处各有一套翻译、日后漂移。
         let raw = e.localizedDescription
+        let human = ErrorText.human(e)
         let low = raw.lowercased()
         if low.contains("timeout") || raw.contains("超时") {
             return UnlockFailure("门锁没响应 · 靠近一点再按一次", nil)
@@ -777,7 +779,7 @@ struct HomeConsole: View {
         if raw.contains("电量") || low.contains("battery") {
             return UnlockFailure("门锁电量不足", .devices)
         }
-        return UnlockFailure(raw.isEmpty ? "开锁失败 · 请再按一次" : raw, nil)
+        return UnlockFailure(human, nil)
     }
 
     private func scheduleSettle(after seconds: Double) {

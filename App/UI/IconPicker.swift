@@ -139,7 +139,7 @@ struct IconPicker: View {
             // 所以跳一次主 actor 再写 —— 不是 assumeIsolated 赌线程。
             Task { @MainActor in
                 if let error {
-                    app.showToast("更换失败: \(error.localizedDescription)")
+                    app.showToast("更换失败: " + ErrorText.human(error))
                 } else {
                     currentIcon = name
                 }
