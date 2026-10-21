@@ -46,6 +46,8 @@ struct EventsPage: View {
     /// 但事件行既不显示也不允许编辑 —— 又一个"存得进去、看不见"的功能。
     @State private var noteTarget: Rec?
     @State private var noteDraft = ""
+    /// 正在从门锁拉日志
+    @State private var syncing = false
     @State private var showSaveDialog = false
 
     private var mac: String { app.currentMac }
@@ -90,6 +92,16 @@ struct EventsPage: View {
                     XToggle("只看告警", isOn: $alarmOnly)
                     Divider().overlay(XPalette.hairline)
                     Button("刷新") { load() }
+                    // ═══ 从门锁同步日志 ═══
+                    //
+                    // 这一页读的 DB.readLogs 底层是 kf_logcache_<mac>，
+                    // 而**没有任何代码往里面写过**：
+                    //   · LockService.getLogs（拉取）零调用
+                    //   · Store.writeLogs（存储）零调用
+                    // 两者本来是一对搭档，两头都没接上。
+                    // 结果是事件页、统计、今日开门全跑在一个永远为空的缓存上。
+                    Button(syncing ? "同步中…" : "从门锁同步日志") { syncLogs() }
+                        .disabled(syncing || mac.isEmpty)
                     Divider().overlay(XPalette.hairline)
                     Button("存为筛选视图") {
                         saveName = search
@@ -243,6 +255,44 @@ struct EventsPage: View {
         load()
         XHaptics.trigger.impactOccurred()
         app.showToast("已清除失败记录")
+    }
+
+    /// 从门锁分页拉取事件历史并写入本地缓存。
+    ///
+    /// 这是 DB.writeLogs 与 LockService.getLogs 的唯一接线处 ——
+    /// 在此之前两者都只有定义、没人调用，所以本地日志缓存从来是空的。
+    ///
+    /// 分页约定：按 surplus（锁回报的"还剩多少条"）判断结束，
+    /// startIdx 每次按本页实际条数前进。上限 12 页 —— 宁可少拉也不能
+    /// 因为协议回包异常而无限循环把界面卡住。
+    private func syncLogs() {
+        guard !syncing, !mac.isEmpty else { return }
+        syncing = true
+        Task { @MainActor in
+            defer { syncing = false }
+            do {
+                try await app.lock.ensureConnected(mac: mac)
+                var start: UInt32 = 0
+                var collected: [LogEntry] = []
+                for _ in 0..<12 {
+                    let page = try await app.lock.getLogs(startIdx: start, pageSize: 20)
+                    if page.logs.isEmpty { break }
+                    collected += page.logs
+                    start += UInt32(page.logs.count)
+                    if let surplus = page.surplus, surplus <= 0 { break }
+                }
+                if collected.isEmpty {
+                    app.showToast("门锁里没有可读的事件")
+                } else {
+                    DB.writeLogs(mac, collected)
+                    load()
+                    XHaptics.success()
+                    app.showToast("已同步 \(collected.count) 条事件")
+                }
+            } catch {
+                app.showToast("同步失败：\(error.localizedDescription)")
+            }
+        }
     }
 
     private func commitNote() {
