@@ -191,6 +191,7 @@ struct ManagerFace: View {
         app.pendingSettingsFocus = nil
         switch f {
         case "backup": path = [.backup]
+        case "diag": path = [.diagnostics]
         default: break        // 认不出的落点名不做猜测，留在原地
         }
     }
@@ -224,6 +225,7 @@ struct ManagerFace: View {
             //   与「外观工作室 · 主题 / 强调色 / 密度」毫无关系。
             //   菜单名与实际页面不符，同时外观相关的 4 个 setter 全都没有入口。
             case .appearance:     AppearancePage()
+            case .diagnostics:    DiagnosticsPage()
         case .me:             MePage()
         }
     }
@@ -241,6 +243,7 @@ enum ManagerRoute: String, Hashable, Identifiable {
     case members, memberWizard, mergeMembers, archivedMembers
     case securityCenter, securityAudit, securityDestroy, safemode
     case backup, export, appearance, me
+    case diagnostics
 
     var id: String { rawValue }
 }

@@ -129,9 +129,17 @@ const checks = [
     const m = CODE.get('ManagerFace.swift') || '';
     return m.includes('consumePendingFocus') && m.includes('path = [.backup]');
   }],
-  ['不再承诺不存在的「设置-诊断」', () => {
-    const a = CODE.get('LockKeeperApp.swift') || '';
-    return !a.includes('详见「设置-诊断」') && !a.includes('pendingSettingsFocus = "diag"');
+  ['诊断页存在并被三处入口消费', () => {
+    // 上一轮这条断言的写法是"不要承诺不存在的诊断页"（当时确实没有）。
+    // 现在 DiagnosticsPage 补上了，断言反过来：必须存在、必须接线、三处入口都要通。
+    const d = CODE.get('DiagnosticsPage.swift') || '';
+    const m = CODE.get('ManagerFace.swift') || '';
+    const me = CODE.get('MePage.swift') || '';
+    const app = CODE.get('LockKeeperApp.swift') || '';
+    return !!d && m.includes('case .diagnostics:    DiagnosticsPage()') &&
+           m.includes('case "diag": path = [.diagnostics]') &&
+           me.includes('DiagnosticsPage()') &&
+           app.includes('pendingSettingsFocus = "diag"');
   }],
   ['routeDestination 保留 @ViewBuilder', () => {
     // 多分支返回不同 View 类型的函数必须带 @ViewBuilder。

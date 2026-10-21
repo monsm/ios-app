@@ -158,6 +158,18 @@ struct MePage: View {
                     subtitle: "偷窥模式 / 伪装 / 访客通道",
                     showsChevron: true)
             }
+            // ═══ 诊断与自检 ═══
+            //
+            // DiagKit 有 642 行采集器（自检 / 数据健康 / 异常退出 / 启动耗时 /
+            // 最近操作 / 蓝牙遥测 / 日志保留），这一屏之前**不存在**，
+            // 采集的数据没有任何地方显示。
+            NavigationLink { DiagnosticsPage().environmentObject(app) } label: {
+                XRow(
+                    systemImage: "stethoscope",
+                    title: "诊断与自检",
+                    subtitle: "自检 / 数据健康 / 启动耗时 / 蓝牙记录",
+                    showsChevron: true)
+            }
             caption("这一组动的是本机数据与访问权限, 改动前会二次确认。")
         }
     }
