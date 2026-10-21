@@ -241,6 +241,11 @@ final class LinkSense: ObservableObject {
         }
         lastReceipt = done
         receiptShownAt = Date()
+        // 主动播报一次：这条链可能从早上排到晚上，用户不一定正开着回收站页。
+        // 不播报的话，"撤销到底生效没有"这个问题在成功的那一刻依然没有答案。
+        self.app?.showToast(failed > 0
+            ? "已向门锁发出 \(done) 项变更，另有 \(failed) 项失败（可在回收站查看）"
+            : "已向门锁发出 \(done) 项变更")
         lockSvc.log("info", "\(from)自动补发 \(done) 项变更" + (failed > 0 ? ", 失败 \(failed) 项" : ""))
         if done > 0 { MaintenanceLog.record("\(from)自动补发 \(done) 项") }   // 387 维护回执
         BleTelemetry.recordEvent("补发成功 \(done) 项", ok: true)

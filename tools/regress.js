@@ -409,6 +409,16 @@ const checks = [
            k.includes('请用它在门锁上开一次，确认可用') &&
            f.includes('请用新指纹开一次锁');
   }],
+  ['队列下发成功会告诉用户', () => {
+    // 撤销链可能从早上排到晚上：下令 → 入队 → 等连上锁 → 真正下发。
+    // 而"下发成功"这个信号（lastReceipt）原来写了没人读 —— 最长的一条链，
+    // 最后一个环节是静默的。现在两处消费：回收站回执卡 + 主动播报。
+    const ls = CODE.get('LinkSenseKit.swift') || '';
+    const bin = CODE.get('CredentialBinView.swift') || '';
+    return ls.includes('lastReceipt = done') &&
+           ls.includes('self.app?.showToast') &&
+           bin.includes('sense.lastReceipt');
+  }],
 ];
 
 let pass = 0;

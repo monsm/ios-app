@@ -22,6 +22,10 @@ import SwiftUI
 // 不在界面上替它做美化 —— 它比我能写的更准确。
 struct CredentialBinView: View {
     @EnvironmentObject private var app: AppState
+    /// 队列真正下发成功时会写 lastReceipt —— 但全仓没有一处读它（第 50 轮扫出来的"有写无读"）。
+    /// 而它是这条最长异步链**唯一的结果信号**：早上下令撤销、晚上回家连上锁、下发成功，
+    /// 然后什么都没告诉用户。这里把它显出来，闭环才算合上。
+    @ObservedObject private var sense = LinkSense.shared
 
     @State private var entries: [CredBinEntry] = []
     @State private var lastMessage: String?
@@ -43,6 +47,7 @@ struct CredentialBinView: View {
                     }
                 } else {
                     retentionCard
+                    if receiptVisible { receiptCard }
                     if !pending.isEmpty { pendingCard }
                     listCard
                 }
@@ -134,6 +139,30 @@ struct CredentialBinView: View {
         f.calendar = WeekCal.gregorian
         f.dateFormat = "M-d HH:mm"
         return f.string(from: d)
+    }
+
+    // ── 刚刚发出去的回执 ───────────────────────────────────
+    //
+    // 只在"最近 5 分钟内刚发生过下发"时出现 —— 不是常驻状态，是一条确认。
+    private var receiptVisible: Bool {
+        sense.lastReceipt > 0 && Date().timeIntervalSince(sense.receiptShownAt) < 300
+    }
+
+    private var receiptCard: some View {
+        XPanel(kind: .group) {
+            HStack(spacing: XSpace.s) {
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.system(size: XIcon.sm, weight: .semibold))
+                    .foregroundStyle(XPalette.ok)
+                    .accessibilityHidden(true)
+                Text("刚刚已向门锁发出 \(sense.lastReceipt) 项变更")
+                    .xFont(.system(.footnote, weight: .medium))
+                    .foregroundStyle(XPalette.text)
+                Spacer(minLength: 0)
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("刚刚已向门锁发出 \(sense.lastReceipt) 项变更，撤销或变更已生效")
+        }
     }
 
     // ── 等待门锁确认的撤销 ─────────────────────────────────
