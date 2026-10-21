@@ -419,6 +419,30 @@ def render_cyclering():
 
     return save(img, "cyclering")
 
+def render_seclamps():
+    """SecurityPage — 三盏状态灯（带光环）"""
+    W, H = 402, 220
+    img = new_canvas(W, H)
+    dr = ImageDraw.Draw(img, "RGBA")
+    panel(img, S(16), S(14), S(370), S(192))
+    text(dr, (S(32), S(28)), "本机数据正常", 16)
+    text(dr, (S(32), S(50)), "凭证 / 审计链 / 数据完整性 全部通过", 10, TEXT_SUB)
+    dr.line([S(32), S(72), S(370), S(72)], fill=HAIRLINE+(255,), width=1)
+
+    lamps = [("凭证", "无风险", True), ("审计链", "完整", True), ("数据", "2 项", False)]
+    cx0 = S(16) + S(370)/6
+    for k, (lab, det, ok) in enumerate(lamps):
+        tone = OK if ok else WARN
+        cx = cx0 + k*(S(370)/3)
+        cy = S(14) + S(120)
+        dr.ellipse([cx-S(15), cy-S(15), cx+S(15), cy+S(15)], fill=tone+(41,))
+        dr.ellipse([cx-S(6), cy-S(6), cx+S(6), cy+S(6)], fill=tone+(255,))
+        dr.ellipse([cx-S(3), cy-S(3), cx-S(1), cy-S(1)], fill=SPECULAR+(140,))
+        text_center(dr, cx, cy+S(22), lab, 9, TEXT_SUB)
+        text_center(dr, cx, cy+S(38), det, 9, tone)
+
+    return save(img, "seclamps")
+
 RENDERERS = {
     "codering": render_code_ring,
     "alarmchart": render_alarm_chart,
@@ -427,6 +451,7 @@ RENDERERS = {
     "keysrows": render_keysrows,
     "alarmseverity": render_alarmseverity,
     "cyclering": render_cyclering,
+    "seclamps": render_seclamps,
 }
 
 

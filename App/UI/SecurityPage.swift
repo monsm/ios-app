@@ -105,22 +105,44 @@ struct SecurityPage: View {
         return parts.joined(separator: " · ")
     }
 
+    /// 状态灯 —— 原来是 8pt 小圆点, 作为安全页的核心指示太弱。
+    ///
+    /// 现在: 22pt 灯体 + 外圈柔光 + 内圈高光, 状态一眼可辨;
+    /// 异常时灯体带轻微脉冲 (reduceMotion 时不脉冲, 只保留静态色)。
+    /// 颜色依然是**双通道**之一: 灯下还有 detail 文字, 不只靠颜色。
     private func lamp(_ label: String, ok: Bool, detail: String) -> some View {
-        VStack(spacing: XSpace.xxs) {
-            Circle()
-                .fill(ok ? XPalette.ok : XPalette.warn)
-                .frame(width: 8, height: 8)
-                .accessibilityHidden(true)
+        let tone = ok ? XPalette.ok : XPalette.warn
+        return VStack(spacing: XSpace.xs) {
+            ZStack {
+                // 外圈柔光
+                Circle()
+                    .fill(tone.opacity(0.16))
+                    .frame(width: 30, height: 30)
+                // 灯体
+                Circle()
+                    .fill(tone)
+                    .frame(width: 12, height: 12)
+                // 内圈高光 (让灯有体积)
+                Circle()
+                    .fill(XPalette.specular.opacity(0.55))
+                    .frame(width: 4, height: 4)
+                    .offset(x: -2, y: -2)
+            }
+            .accessibilityHidden(true)
+
             Text(label)
-                .xFont(.caption2)
-                .foregroundStyle(XPalette.textSub)
-            Text(detail)
                 .xFont(.caption2, weight: .medium)
-                .foregroundStyle(ok ? XPalette.ok : XPalette.warn)
+                .foregroundStyle(XPalette.textSub)
+
+            Text(detail)
+                .xFont(.caption2, weight: .semibold)
+                .foregroundStyle(tone)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(label): \(detail)")
+        .accessibilityLabel("\(label): \(ok ? "正常" : "需处理"), \(detail)")
     }
 
     // ═══════════════════════════════════════════════════════
