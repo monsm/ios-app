@@ -133,6 +133,10 @@ struct DoorPrism<B: View, D: View, F: View>: View {
             prismFace(.b, width: width)
             prismFace(.d, width: width)
             prismFace(.f, width: width)
+            // 三条竖棱（角上），静止时给出棱柱的体积感
+            prismEdge(60, width: width)
+            prismEdge(180, width: width)
+            prismEdge(300, width: width)
         }
         // ═══ 留边：让画布在棱柱四周可见 ═══
         //
@@ -221,6 +225,34 @@ struct DoorPrism<B: View, D: View, F: View>: View {
     /// 所以取 0.55 —— 与原型观感最接近。
     private var prismPerspective: CGFloat { 0.55 }
 
+
+    /// 三棱柱的竖棱 —— 静止时唯一能读出「体积」的东西
+    ///
+    /// 原型里 `buildPrism` 除了三个面，还放了 3 根圆柱当「骨」:
+    ///   radius = R · sin(60°) = 0.866 R，角度 = 面法线 + 60°
+    /// 它们让静止画面不只是一块平面 —— 两侧的棱告诉人「这东西有厚度」。
+    ///
+    /// Swift 版之前**完全没有**这个，所以即便 3D 变换正确，
+    /// 静止时看到的也只是一个圆角卡片。
+    ///
+    /// 半径换算: 面法线到中心的距离是 A（内切圆），
+    /// 角上的点是外接圆 R = 2A，而原型取 0.866R = 1.732A。
+    private func prismEdge(_ baseDeg: Double, width: CGFloat) -> some View {
+        let A = prismApothem(width)
+        let D = A * 1.732
+        let theta = baseDeg + containerAngle
+        // 角点在世界的 z 正比于 cos(θ)；> 0 才在棱柱前侧
+        let facing = cos(theta * .pi / 180)
+        return Capsule()
+            .fill(XPalette.textTertiary.opacity(0.55))
+            .frame(width: 5, height: width * 1.42)
+            .rotation3DEffect(.degrees(theta), axis: (x: 0, y: 1, z: 0),
+                              anchor: .center,
+                              anchorZ: -D,
+                              perspective: prismPerspective)
+            .opacity(facing > 0 ? min(1, facing * 1.6) : 0)
+            .accessibilityHidden(true)
+    }
     /// 内切圆半径（pt）
     ///
     /// 正三棱柱边长 s 的内切圆半径 = s / (2√3) ≈ 0.2887 s。
