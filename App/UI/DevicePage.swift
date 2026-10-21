@@ -133,6 +133,15 @@ struct DevicePage: View {
 
 
     /// 带图标的余量读数 (电量已独立成仪表环, 这里只剩两个余量)
+    /// 卡片小标题（本文件原来没有这个辅助，capacityCard 用了才补）
+    private func secLabel(_ text: String) -> some View {
+        Text(text)
+            .xFont(.caption, weight: .semibold)
+            .foregroundStyle(XPalette.textTertiary)
+            .textCase(.uppercase)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
     private func readingItem2(value: String, label: String, icon: String) -> some View {
         HStack(spacing: XSpace.s) {
             Image(systemName: icon)

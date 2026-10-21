@@ -718,12 +718,16 @@ struct LinkPrefsView: View {
 
                 // 当前围栏线在哪 —— 让"门槛"这件事可见
                 let fence = LinkSense.rssiFence
+                // 把 `rssi != nil && (rssi! >= fence)` 抽成一个 Bool ——
+                // 这个带强制解包的三元在同一个 view 里重复了三次，
+                // 类型检查器超时 (CI: unable to type-check this expression in reasonable time)。
+                let meetsFence: Bool = rssi.map { $0 >= fence } ?? false
                 if fence != -127 {
                     HStack(spacing: XSpace.xs) {
-                        Image(systemName: rssi != nil && (rssi! >= fence) ? "checkmark.circle.fill" : "xmark.circle");
+                        Image(systemName: meetsFence ? "checkmark.circle.fill" : "xmark.circle")
                             .font(.system(size: XIcon.xs, weight: .semibold))
-                            .foregroundStyle(rssi != nil && (rssi! >= fence) ? XPalette.ok : XPalette.warn)
-                        Text(rssi != nil && (rssi! >= fence)
+                            .foregroundStyle(meetsFence ? XPalette.ok : XPalette.warn)
+                        Text(meetsFence
                              ? "已达预握手门槛 (\(fence) dBm)"
                              : "低于门槛 \(fence) dBm — 不会自动预热")
                             .xFont(.caption2)

@@ -450,23 +450,6 @@ struct MemberDetail360View: View {
         UIApplication.topViewController()?.present(alert, animated: true)
     }
 
-    /// 卡片内的小标题
-    /// 归档成员的事实行（凭证数 / 常用锁 / 紧急联系）
-    private func archivedFact(_ m: Member, ext: MemberExt) -> String {
-        var parts: [String] = []
-        let macs = DB.keychains().map { $0.mac }
-        let pwds = macs.reduce(0) { acc, mac in
-            acc + DB.listPwds(mac).filter { $0.owner == m.id }.count
-        }
-        let fps = macs.reduce(0) { acc, mac in
-            acc + DB.listFps(mac).filter { $0.owner == m.id }.count
-        }
-        if pwds + fps > 0 { parts.append("\(pwds) 密码 · \(fps) 指纹") }
-        else { parts.append("名下无凭证") }
-        if !ext.commonLocks.isEmpty { parts.append("\(ext.commonLocks.count) 把常用锁") }
-        if !ext.emergency.isEmpty { parts.append("有紧急联系") }
-        return parts.joined(separator: " · ")
-    }
 
     private func secLabel(_ text: String) -> some View {
         Text(text)
@@ -932,6 +915,22 @@ struct MemberArchivedView: View {
         .toolbar { ToolbarItem(placement: .cancellationAction) { Button("完成") { dismiss() } } }
         .id(tick)
     }
+    private func archivedFact(_ m: Member, ext: MemberExt) -> String {
+        var parts: [String] = []
+        let macs = DB.keychains().map { $0.mac }
+        let pwds = macs.reduce(0) { acc, mac in
+            acc + DB.listPwds(mac).filter { $0.owner == m.id }.count
+        }
+        let fps = macs.reduce(0) { acc, mac in
+            acc + DB.listFps(mac).filter { $0.owner == m.id }.count
+        }
+        if pwds + fps > 0 { parts.append("\(pwds) 密码 · \(fps) 指纹") }
+        else { parts.append("名下无凭证") }
+        if !ext.commonLocks.isEmpty { parts.append("\(ext.commonLocks.count) 把常用锁") }
+        if !ext.emergency.isEmpty { parts.append("有紧急联系") }
+        return parts.joined(separator: " · ")
+    }
+
 }
 
 
