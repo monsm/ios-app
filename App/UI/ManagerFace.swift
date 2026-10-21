@@ -203,7 +203,10 @@ struct ManagerFace: View {
         case .backup:         BackupPage()
         case .export:         ExportCenterView(mac: app.currentMac)
                                   .environmentObject(app)
-        case .appearance:     StudioPage()
+        // ⚠ 这里原来指向 StudioPage —— 而 StudioPage 是「钥匙工坊」（密码/临时/指纹/OTP），
+            //   与「外观工作室 · 主题 / 强调色 / 密度」毫无关系。
+            //   菜单名与实际页面不符，同时外观相关的 4 个 setter 全都没有入口。
+            case .appearance:     AppearancePage()
         case .me:             MePage()
         }
     }
