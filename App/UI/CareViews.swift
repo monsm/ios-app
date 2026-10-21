@@ -167,46 +167,43 @@ struct MaintenanceView: View {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 secLabel("保养历史")
                 if all.isEmpty {
-                // 包14 空态族消费点 (815 双按钮 / 841 小管家默认开 / 1044 便签):
-                // 旧版只有一句"还没有保养或换电记录" —— 现在空态直接给出那件能做的事:
-                // 主动作打开五项清单 (与下方 1015 按钮同一个 sheet, 不另起流程)。
-                XGuidedEmptyView(systemImage: "checkmark.seal",
-                title: "还没有保养记录",
-                message: "五项清单走一遍就会在这里落下第一条; 换电完成后走「换电关怀」里的图文指引。",
-                actionTitle: "开始五项保养",
-                action: { showChecklist = true })
+                    XGuidedEmptyView(systemImage: "checkmark.seal",
+                                    title: "还没有保养记录",
+                                    message: "五项清单走一遍就会在这里落下第一条; 换电完成后走「换电关怀」里的图文指引。",
+                                    actionTitle: "开始五项保养",
+                                    action: { showChecklist = true })
                 }
                 ForEach(Array(all.prefix(5).enumerated()), id: \.offset) { _, e in
-                HStack(spacing: XSpace.s) {
-                Image(systemName: e.kind == "battery" ? "battery.100" : "checkmark.seal")
-                .font(.system(size: XIcon.sm, weight: .medium))
-                .foregroundStyle(e.kind == "battery" ? XPalette.ok : XPalette.accentText)
-                .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: XSpace.xxs) {
-                Text(e.kind == "battery" ? "更换电池" : "保养完成")
-                .xFont(.subheadline)
-                .foregroundStyle(XPalette.text)
-                Text(e.note + " · " + daysAgoText(e.ts))
-                .xFont(.caption2)
-                .foregroundStyle(XPalette.textSub)
-                }
-                Spacer(minLength: 0)
-                }
-                .accessibilityElement(children: .combine)
+                    HStack(spacing: XSpace.s) {
+                        Image(systemName: e.kind == "battery" ? "battery.100" : "checkmark.seal")
+                            .font(.system(size: XIcon.sm, weight: .medium))
+                            .foregroundStyle(e.kind == "battery" ? XPalette.ok : XPalette.accentText)
+                            .accessibilityHidden(true)
+                        VStack(alignment: .leading, spacing: XSpace.xxs) {
+                            Text(e.kind == "battery" ? "更换电池" : "保养完成")
+                                .xFont(.subheadline)
+                                .foregroundStyle(XPalette.text)
+                            Text(e.note + " · " + daysAgoText(e.ts))
+                                .xFont(.caption2)
+                                .foregroundStyle(XPalette.textSub)
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    .accessibilityElement(children: .combine)
                 }
                 if !all.isEmpty {
-                Button {
-                app.pendingRecordsFilter = "__care"
-                app.requestRoute(.records)
-                // 先落点再收摊：sheet 不收，切过去的 Tab 就在它底下 (见本页上方那条注释)
-                dismiss()
-                } label: {
-                Label("到记录页查看全部 (保养过滤)", systemImage: "line.3.horizontal.decrease.circle")
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .frame(minHeight: XHit.min)
-                .contentShape(Rectangle())
-                }
-                .buttonStyle(PressableButtonStyle())
+                    Button {
+                        app.pendingRecordsFilter = "__care"
+                        app.requestRoute(.records)
+                        // 先落点再收摊：sheet 不收，切过去的 Tab 就在它底下
+                        dismiss()
+                    } label: {
+                        Label("到记录页查看全部 (保养过滤)", systemImage: "line.3.horizontal.decrease.circle")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .frame(minHeight: XHit.min)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(PressableButtonStyle())
                 }
             }
         }
@@ -276,14 +273,6 @@ struct MaintenanceView: View {
         }
     }
 
-
-    private func secLabel(_ text: String) -> some View {
-        Text(text)
-            .xFont(.caption, weight: .semibold)
-            .foregroundStyle(XPalette.textTertiary)
-            .textCase(.uppercase)
-            .frame(maxWidth: .infinity, alignment: .leading)
-    }
 }
 
 
@@ -320,48 +309,57 @@ struct BatterySwapGuideView: View {
     var body: some View { vkBody.destined(.batterySwapGuide) }
     var vkBody: some View {
         Form {
-            Section {
-                ForEach(Array(steps.enumerated()), id: \.offset) { i, s in
-                    HStack(alignment: .top, spacing: XSpace.s) {
-                        Text("\(i + 1)")
-                            .xFont(.caption, weight: .semibold)
-                            .monospacedDigit()
-                            .foregroundStyle(XPalette.onAccent)
-                            .frame(width: 22, height: 22)
-                            .background(XPalette.accent, in: Circle())
-                            .accessibilityHidden(true)
-                        Image(systemName: s.icon)
-                            .font(.system(size: XIcon.md, weight: .medium))
-                            .foregroundStyle(XPalette.accentText)
-                            .frame(width: 30)
-                            .accessibilityHidden(true)
-                        VStack(alignment: .leading, spacing: XSpace.xxs) {
-                            Text(s.title)
-                                .xFont(.subheadline, weight: .medium)
-                                .foregroundStyle(XPalette.text)
-                            Text(s.detail)
-                                .xFont(.caption)
-                                .foregroundStyle(XPalette.textSub)
-                                .fixedSize(horizontal: false, vertical: true)
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: XSpace.m) {
+                    secLabel("换电步骤")
+                    ForEach(Array(steps.enumerated()), id: \.offset) { i, s in
+                        HStack(alignment: .top, spacing: XSpace.s) {
+                            Text("\(i + 1)")
+                                .xFont(.caption, weight: .semibold)
+                                .monospacedDigit()
+                                .foregroundStyle(XPalette.onAccent)
+                                .frame(width: 22, height: 22)
+                                .background(XPalette.accent, in: Circle())
+                                .accessibilityHidden(true)
+                            Image(systemName: s.icon)
+                                .font(.system(size: XIcon.md, weight: .medium))
+                                .foregroundStyle(XPalette.accentText)
+                                .frame(width: 30)
+                                .accessibilityHidden(true)
+                            VStack(alignment: .leading, spacing: XSpace.xxs) {
+                                Text(s.title)
+                                    .xFont(.subheadline, weight: .medium)
+                                    .foregroundStyle(XPalette.text)
+                                Text(s.detail)
+                                    .xFont(.caption)
+                                    .foregroundStyle(XPalette.textSub)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
                         }
+                        .padding(.vertical, XSpace.xxs)
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel("第 \(i + 1) 步: \(s.title), \(s.detail)")
                     }
-                    .padding(.vertical, XSpace.xxs)
-                    .accessibilityElement(children: .combine)
-                    .accessibilityLabel("第 \(i + 1) 步: \(s.title), \(s.detail)")
+                    Text("全程只动电池 — 不需要重置门锁, 也不需要重新配网。")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textSub)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-            } header: {
-                Text("换电步骤")
-            } footer: {
-                Text("全程只动电池 — 不需要重置门锁, 也不需要重新配网。")
             }
-            Section {
-                XBusyButton(title: "已换新", systemImage: "checkmark", busy: false) { swap() }
-                NavigationLink { SyncTimeView() } label: {
-                    Label("去校准门锁时间", systemImage: "clock.arrow.circlepath")
-                        .frame(minHeight: XHit.min)
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: XSpace.m) {
+                    XBusyButton(title: "已换新", systemImage: "checkmark", busy: false) { swap() }
+                    NavigationLink { SyncTimeView() } label: {
+                        Label("去校准门锁时间", systemImage: "clock.arrow.circlepath")
+                            .frame(minHeight: XHit.min)
+                    }
+                    } footer: {
+                    Text("「已换新」会写入换电记录、复位低电提醒武装位, 并在电池档案记下今天。")
+                    Text("「已换新」会写入换电记录、复位低电提醒武装位, 并在电池档案记下今天。")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textSub)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-            } footer: {
-                Text("「已换新」会写入换电记录、复位低电提醒武装位, 并在电池档案记下今天。")
             }
         }
         .navigationTitle("换电指引")
@@ -400,43 +398,48 @@ struct CareChecklistView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section {
-                    ForEach(Array(items.enumerated()), id: \.offset) { i, it in
-                        Button { checks[i].toggle() } label: {
-                            HStack(spacing: XSpace.s) {
-                                Image(systemName: checks[i] ? "checkmark.circle.fill" : "circle")
-                                    .font(.system(size: XIcon.sm, weight: .semibold))
-                                    .foregroundStyle(checks[i] ? XPalette.ok : XPalette.textSub)
-                                    .accessibilityHidden(true)
-                                Image(systemName: it.icon)
-                                    .font(.system(size: XIcon.sm, weight: .medium))
-                                    .foregroundStyle(XPalette.accentText)
-                                    .frame(width: 24)
-                                    .accessibilityHidden(true)
-                                Text(it.label)
-                                    .xFont(.subheadline)
-                                    .foregroundStyle(XPalette.text)
-                                Spacer(minLength: 0)
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("五项清单")
+                        ForEach(Array(items.enumerated()), id: \.offset) { i, it in
+                            Button { checks[i].toggle() } label: {
+                                HStack(spacing: XSpace.s) {
+                                    Image(systemName: checks[i] ? "checkmark.circle.fill" : "circle")
+                                        .font(.system(size: XIcon.sm, weight: .semibold))
+                                        .foregroundStyle(checks[i] ? XPalette.ok : XPalette.textSub)
+                                        .accessibilityHidden(true)
+                                    Image(systemName: it.icon)
+                                        .font(.system(size: XIcon.sm, weight: .medium))
+                                        .foregroundStyle(XPalette.accentText)
+                                        .frame(width: 24)
+                                        .accessibilityHidden(true)
+                                    Text(it.label)
+                                        .xFont(.subheadline)
+                                        .foregroundStyle(XPalette.text)
+                                    Spacer(minLength: 0)
+                                }
+                                .frame(minHeight: XHit.min)
+                                .contentShape(Rectangle())
                             }
-                            .frame(minHeight: XHit.min)
-                            .contentShape(Rectangle())
+                            .buttonStyle(PressableButtonStyle())
+                            .accessibilityLabel(it.label)
+                            .accessibilityAddTraits(checks[i] ? [.isSelected] : [])
                         }
-                        .buttonStyle(PressableButtonStyle())
-                        .accessibilityLabel(it.label)
-                        .accessibilityAddTraits(checks[i] ? [.isSelected] : [])
+                        Text("逐项确认后才能完成保养 — 汽车保养手册的严谨, 用在门上一样合适。")
+                            .xFont(.caption2)
+                            .foregroundStyle(XPalette.textSub)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
-                } header: {
-                    Text("五项清单")
-                } footer: {
-                    Text("逐项确认后才能完成保养 — 汽车保养手册的严谨, 用在门上一样合适。")
                 }
-                Section {
-                    XBusyButton(title: "完成保养",
-                               systemImage: "checkmark.seal",
-                               busy: false) {
-                        complete()
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        XBusyButton(title: "完成保养",
+                                   systemImage: "checkmark.seal",
+                                   busy: false) {
+                            complete()
+                        }
+                        .disabled(!checks.allSatisfy({ $0 }))
                     }
-                    .disabled(!checks.allSatisfy({ $0 }))
                 }
             }
             .navigationTitle("锁体保养")

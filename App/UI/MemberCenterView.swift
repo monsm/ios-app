@@ -745,6 +745,14 @@ struct MergeMembersView: View {
         app.showToast("已合并, 迁移 \(moved) 条凭证至「" + primary.name + "」")
         dismiss()
     }
+
+    private func secLabel(_ text: String) -> some View {
+        Text(text)
+            .xFont(.caption, weight: .semibold)
+            .foregroundStyle(XPalette.textTertiary)
+            .textCase(.uppercase)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
 }
 
 
@@ -893,6 +901,14 @@ struct MemberFamilySettingsView: View {
                 privacyLeft = max(0, Int(MemberHub.privacyUntilSec - Date().timeIntervalSince1970))
             }
         }
+    }
+
+    private func secLabel(_ text: String) -> some View {
+        Text(text)
+            .xFont(.caption, weight: .semibold)
+            .foregroundStyle(XPalette.textTertiary)
+            .textCase(.uppercase)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

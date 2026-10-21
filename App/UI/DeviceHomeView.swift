@@ -48,12 +48,9 @@ struct SyncTimeView: View {
                         .xFont(.footnote)
                         .foregroundStyle(resultTone.color)
                 }
-            } footer: {
                 Text("请将手机靠近门锁 · 请确保手机时间准确")
-                    Text("请将手机靠近门锁 · 请确保手机时间准确")
-                        .xFont(.caption2)
-                        .foregroundStyle(XPalette.textSub)
-                }
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textSub)
             }
                 }
                 .padding(.horizontal, XSpace.gutter)
@@ -64,6 +61,7 @@ struct SyncTimeView: View {
         .navigationTitle("同步时间")
         .xList()
         .xScreen()
+    }
     }
 
     private func run() async {
