@@ -1196,6 +1196,85 @@ enum BackupStudio {
     /// 明文包 (BackupBundle 直接写盘, 没有信封) 单独一档: 混进"未能识别"会让人以为文件坏了。
     enum AlgoNote: Equatable { case envelope(String), plain, unknown }
 
+    /// 435 读单个备份文件的算法参数
+    ///
+    /// 只读文件头 8KB，不解密、不要口令。认不出就说「未能识别」——
+    /// 绝不回落到工作室首页那枚徽章（那是"当前代码用的算法"，不是这一份的参数）。
+    static func algoNote(for url: URL) -> AlgoNote {
+        guard let h = try? FileHandle(forReadingFrom: url) else { return .unknown }
+        defer { try? h.close() }
+        guard let data = try? h.read(upToCount: 8192), !data.isEmpty,
+              let head = String(data: data, encoding: .utf8) else { return .unknown }
+        if looksEncrypted(head) {
+            // jsonStr 的 marker 要带上值的**开引号**，否则会把开引号当结束位置返回空串
+            let alg = jsonStr(head, "\"alg\":\"") ?? ""
+            let kdf = jsonStr(head, "\"kdf\":\"") ?? ""
+            let iter = jsonNum(head, "\"iter\":") ?? 0
+            var parts: [String] = []
+            if !alg.isEmpty { parts.append(alg) }
+            if !kdf.isEmpty, kdf != alg { parts.append(kdf) }
+            if iter > 0 { parts.append(String(iter) + " 轮") }
+            return .envelope(parts.isEmpty ? "加密信封" : parts.joined(separator: " · "))
+        }
+        if head.hasPrefix("{") { return .plain }
+        return .unknown
+    }
+
+    /// 本机导出目录里的一份备份文件
+    struct LocalBackupFile: Identifiable {
+        var id: String { name }
+        let name: String
+        let url: URL
+        let bytes: Int
+        let createdAt: Date?
+        let modifiedAt: Date?
+        let algo: AlgoNote
+        /// 去掉「锁管家_」前缀与 .enc 后缀的可读名
+        var shortName: String {
+            var s = name
+            // 用限定名 —— 嵌套 struct 里对**外层类型 static 成员**的非限定引用不可靠，
+            // 编译器可能报 "cannot find 'filePrefix' in scope"。
+            let p = BackupStudio.filePrefix
+            if s.hasPrefix(p) { s = String(s.dropFirst(p.count)) }
+            if s.hasSuffix(".enc") { s = String(s.dropLast(4)) }
+            return s
+        }
+    }
+
+    /// 列出本机导出目录里的备份文件
+    ///
+    /// 只认自家名字族（`isOurBackup`），与 `pruneLocal` 同口径 ——
+    /// 目录里别的文件一律不列也不删。
+    static func localFiles() -> [LocalBackupFile] {
+        let fm = FileManager.default
+        let keys: [URLResourceKey] = [.creationDateKey, .contentModificationDateKey, .fileSizeKey]
+        let all = (try? fm.contentsOfDirectory(
+            at: dir,
+            includingPropertiesForKeys: keys,
+            options: [.skipsHiddenFiles])) ?? []
+        return all
+            .filter { isOurBackup($0.lastPathComponent) }
+            .map { u -> LocalBackupFile in
+                let v = try? u.resourceValues(forKeys: Set(keys))
+                return LocalBackupFile(
+                    name: u.lastPathComponent,
+                    url: u,
+                    bytes: v?.fileSize ?? 0,
+                    createdAt: v?.creationDate,
+                    modifiedAt: v?.contentModificationDate,
+                    algo: algoNote(for: u))
+            }
+            .sorted { ($0.modifiedAt ?? .distantPast) > ($1.modifiedAt ?? .distantPast) }
+    }
+
+    /// 删除一份本机备份（列表页左滑用）
+    /// 只删自家名字族，与 pruneLocal 同纪律。
+    @discardableResult
+    static func deleteLocalFile(_ name: String) -> Bool {
+        guard isOurBackup(name) else { return false }
+        return (try? FileManager.default.removeItem(at: dir.appendingPathComponent(name))) != nil
+    }
+
     // ================= 511 数据事件 (导出/恢复/迁移) =================
     /// 事件带名字: 旧实现收 `_ label: String` 却只存毫秒, 列表只能显示"备份事件 #N" ——
     /// 参数像有能力、实际什么都不记, 是本仓反复出现的"命名即承诺"缺陷类, 这里把名字真存下来。

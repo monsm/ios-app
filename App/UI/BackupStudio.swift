@@ -21,6 +21,10 @@ struct BackupStudioView: View {
                     trustHeader.xScrollLift()
                     actionCards.xScrollLift()
                     cadenceCard.xScrollLift()
+                    // 本地备份文件列表 —— 原来只有章节注释、视图不存在（435/436/454/511）
+                    LocalBackupFilesSection()
+                        .environmentObject(app)
+                        .xScrollLift()
                 }
                 .padding(.vertical, XSpace.m)
             }
@@ -308,6 +312,146 @@ extension BackupStudio.Channel {
 /// (拿到原文 → 上层 417/453 解密解析入库), 调用形态逐字复用 522 的那一处, 不做任何猜改。
 
 // ================= 本地备份文件 (434/436/454/511) =================
+//
+// 这个章节原来**只有注释、视图不存在**（两行空行后直接是「导出向导」）。
+// 而数据层早就齐了:
+//   · `BackupStudio.dir` / `filePrefix` / `isOurBackup`
+//   · `pruneLocal(keep:)` 已经在枚举这个目录
+//   · `AlgoNote` + `jsonStr`/`jsonNum` 写好了但**零调用**
+// 这个视图把三者接起来：列出本机备份、逐文件标算法参数、可左滑删除。
+
+struct LocalBackupFilesSection: View {
+    @EnvironmentObject var app: AppState
+    @State private var files: [BackupStudio.LocalBackupFile] = []
+
+    var body: some View {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                HStack(spacing: XSpace.s) {
+                    Text("本地备份文件")
+                        .xFont(.caption, weight: .semibold)
+                        .foregroundStyle(XPalette.textTertiary)
+                        .textCase(.uppercase)
+                    Spacer(minLength: 0)
+                    if !files.isEmpty {
+                        Text(String(files.count) + " 份")
+                            .xFont(.caption2.monospacedDigit())
+                            .foregroundStyle(XPalette.textTertiary)
+                    }
+                }
+
+                if files.isEmpty {
+                    Text("还没有本地备份文件。导出一份后会出现在这里。")
+                        .xFont(.caption)
+                        .foregroundStyle(XPalette.textSub)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else {
+                    VStack(spacing: 0) {
+                        ForEach(files) { f in
+                            row(f)
+                            if f.id != files.last?.id {
+                                XHairline(inset: XSpace.card)
+                            }
+                        }
+                    }
+                }
+
+                Text("只列本 App 生成的备份（文件名以「锁管家_」开头）。目录里其它文件不列也不删。")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .task { reload() }
+    }
+
+    private func row(_ f: BackupStudio.LocalBackupFile) -> some View {
+        HStack(spacing: XSpace.s) {
+            Image(systemName: "doc.zipper")
+                .font(.system(size: XIcon.sm, weight: .medium))
+                .foregroundStyle(XPalette.accentText)
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(f.shortName)
+                    .xFont(.subheadline)
+                    .foregroundStyle(XPalette.text)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                HStack(spacing: XSpace.xs) {
+                    Text(sizeLabel(f.bytes))
+                        .xFont(.caption2.monospacedDigit())
+                        .foregroundStyle(XPalette.textTertiary)
+                    Text("·")
+                        .foregroundStyle(XPalette.textTertiary)
+                    Text(dateLabel(f.modifiedAt ?? f.createdAt))
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textTertiary)
+                    Text("·")
+                        .foregroundStyle(XPalette.textTertiary)
+                    algoChip(f.algo)
+                }
+                .lineLimit(1)
+            }
+
+            Spacer(minLength: 0)
+
+            Button {
+                XHaptics.trigger.impactOccurred()
+                _ = BackupStudio.deleteLocalFile(f.name)
+                reload()
+                app.showToast("已删除这份备份")
+            } label: {
+                Image(systemName: "trash")
+                    .font(.system(size: XIcon.sm, weight: .medium))
+                    .foregroundStyle(XPalette.danger)
+                    .frame(width: XHit.min, height: XHit.min)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("删除 " + f.shortName)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(f.shortName + "，" + sizeLabel(f.bytes) + "，" + algoText(f.algo))
+    }
+
+    private func algoChip(_ note: BackupStudio.AlgoNote) -> some View {
+        Text(algoText(note))
+            .xFont(.caption2)
+            .foregroundStyle(note == .plain ? XPalette.warn : XPalette.textSub)
+    }
+
+    private func algoText(_ note: BackupStudio.AlgoNote) -> String {
+        switch note {
+        case .envelope(let s): return s
+        case .plain: return "明文包"
+        case .unknown: return "未能识别"
+        }
+    }
+
+    private func sizeLabel(_ b: Int) -> String {
+        if b <= 0 { return "—" }
+        if b < 1024 { return String(b) + " B" }
+        if b < 1024 * 1024 { return String(format: "%.1f KB", Double(b) / 1024) }
+        return String(format: "%.1f MB", Double(b) / 1024 / 1024)
+    }
+
+    /// "M-d HH:mm" —— 不用 DateFormatter
+    ///
+    /// 闸门要求 DateFormatter 必须钉 en_US_POSIX（非公历历法下 M-d 会算出异 era 年份）。
+    /// 这里直接走 WeekCal.gregorian 取分量手工拼，历法来源唯一，也不需要 locale。
+    private func dateLabel(_ d: Date?) -> String {
+        guard let d else { return "—" }
+        let c = WeekCal.gregorian.dateComponents([.month, .day, .hour, .minute], from: d)
+        return String(format: "%d-%02d %02d:%02d",
+                      c.month ?? 0, c.day ?? 0, c.hour ?? 0, c.minute ?? 0)
+    }
+
+    private func reload() {
+        files = BackupStudio.localFiles()
+    }
+}
+
 
 
 // ================= 导出向导 (407-413) =================
