@@ -226,6 +226,12 @@ struct GatewayPage: View {
 
     private func gatewayCard(_ g: Gateway) -> some View {
         let online = g.netState == 1
+        // netState 是三态: -1 未知 / 1 在线 / 其他 离线。
+        // 原来只分"在线/未联网"，把"从未读到过状态"也说成"未联网"——
+        // 那是猜的。现在分开说。
+        let known = g.netState >= 0
+        let stateText = !known ? "状态未知" : (online ? "已联网" : "未联网")
+        let stateTone: Color = !known ? XPalette.textTertiary : (online ? XPalette.ok : XPalette.textSub)
         return VStack(alignment: .leading, spacing: XSpace.m) {
             HStack(spacing: XSpace.s) {
                 ZStack {
@@ -243,9 +249,9 @@ struct GatewayPage: View {
                     Text(g.name.isEmpty ? "智能网关" : g.name)
                         .xFont(.body, weight: .medium)
                         .foregroundStyle(XPalette.text)
-                    Text(online ? "已联网" : "未联网")
+                    Text(stateText)
                         .xFont(.caption)
-                        .foregroundStyle(online ? XPalette.ok : XPalette.textSub)
+                        .foregroundStyle(stateTone)
                 }
 
                 Spacer(minLength: 0)
@@ -266,9 +272,30 @@ struct GatewayPage: View {
                 .accessibilityLabel("更多操作")
             }
 
+            // 读数 2×2 —— Gateway 有 14 个字段，原来只显示 2 个。
+            //
+            // wifiIP 是排障关键: 网关掉线时，用户能拿这个 IP 去路由器里找它。
+            // lastWifi 用来判断"是不是换了网络"。
             HStack(spacing: XSpace.m) {
                 readPair("ROM", g.romVer.isEmpty ? "—" : g.romVer)
                 readPair("WiFi", g.ssid.isEmpty ? "—" : g.ssid)
+            }
+            HStack(spacing: XSpace.m) {
+                readPair("局域网 IP", g.wifiIP.isEmpty ? "—" : g.wifiIP)
+                readPair("上次 WiFi", g.lastWifi.isEmpty ? "—" : g.lastWifi)
+            }
+
+            // 时间戳 —— 配网时间与绑定时
+            VStack(spacing: XSpace.xs) {
+                if !g.provisionedAt.isEmpty {
+                    timestampRow("配网时间", g.provisionedAt)
+                }
+                if !g.boundAt.isEmpty {
+                    timestampRow("绑定时间", g.boundAt)
+                }
+                if !g.eCtrlVer.isEmpty {
+                    timestampRow("电控版本", g.eCtrlVer)
+                }
             }
         }
         .padding(XSpace.card)
@@ -280,6 +307,21 @@ struct GatewayPage: View {
                         .strokeBorder(online ? XPalette.ok.opacity(0.3) : XPalette.hairline,
                                       lineWidth: 1))
         )
+    }
+
+    /// 一行时间戳/版本（低调，右对齐）
+    private func timestampRow(_ label: String, _ value: String) -> some View {
+        HStack(spacing: XSpace.s) {
+            Text(label)
+                .xFont(.caption2)
+                .foregroundStyle(XPalette.textTertiary)
+            Spacer(minLength: 0)
+            Text(value)
+                .xFont(.caption2.monospacedDigit())
+                .foregroundStyle(XPalette.textSub)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(label + " " + value)
     }
 
     private func readPair(_ label: String, _ value: String) -> some View {
