@@ -731,6 +731,11 @@ struct MergeMembersView: View {
                         }
                         }
                     }
+                    // 迁移预览 —— 合并是破坏性操作（副档档案会被删除），
+                    // 但界面原来不告诉你"会发生什么"。现在把迁移前后说清楚。
+                    if let sid = secondaryID {
+                        migrationPreview(from: sid)
+                    }
                     XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
                         Button { doMerge() } label: {
@@ -751,6 +756,56 @@ struct MergeMembersView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("取消") { dismiss() } } }
         }
+    }
+
+    /// 迁移预览：副档 → 主档 会发生什么
+    ///
+    /// 现有 doMerge 只搬 pwds 与 fps 两类，并把认领记录改到主档。
+    /// 这里如实按同一口径统计，不夸大也不漏。
+    @ViewBuilder
+    private func migrationPreview(from sid: String) -> some View {
+        let macs = DB.keychains().map { $0.mac }
+        let fromPwd = macs.reduce(0) { acc, mac in
+            acc + DB.listPwds(mac).filter { $0.owner == sid }.count
+        }
+        let fromFp = macs.reduce(0) { acc, mac in
+            acc + DB.listFps(mac).filter { $0.owner == sid }.count
+        }
+        let toPwd = macs.reduce(0) { acc, mac in
+            acc + DB.listPwds(mac).filter { $0.owner == primary.id }.count
+        }
+        let toFp = macs.reduce(0) { acc, mac in
+            acc + DB.listFps(mac).filter { $0.owner == primary.id }.count
+        }
+        XPanel(kind: .group, tone: .warn) {
+            VStack(alignment: .leading, spacing: XSpace.s) {
+                Text("会发生什么")
+                    .xFont(.caption, weight: .semibold)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .textCase(.uppercase)
+                factRow("迁移凭证", String(fromPwd) + " 密码 · " + String(fromFp) + " 指纹")
+                factRow("主档合并后", String(toPwd + fromPwd) + " 密码 · " + String(toFp + fromFp) + " 指纹")
+                factRow("副档档案", "删除（历史记录保留）")
+                Text("合并后不可撤销。")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.warn)
+            }
+        }
+    }
+
+    private func factRow(_ label: String, _ value: String) -> some View {
+        HStack(alignment: .top, spacing: XSpace.s) {
+            Text(label)
+                .xFont(.caption)
+                .foregroundStyle(XPalette.textTertiary)
+                .frame(width: 76, alignment: .leading)
+            Text(value)
+                .xFont(.caption)
+                .foregroundStyle(XPalette.text)
+            Spacer(minLength: 0)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(label + " " + value)
     }
 
     private func doMerge() {

@@ -315,6 +315,51 @@ struct BatterySwapGuideView: View {
     @Environment(\.dismiss) private var dismiss
 
     private var mac: String { app.current?.mac ?? "" }
+    /// 当前电量 + 上次换电 + 记录按钮
+    @ViewBuilder
+    private var batteryNowCard: some View {
+        let snap = DB.readStatus(mac)
+        let pct = BatteryCare.displayPct(mac, snapshot: snap?.powerLevel ?? -1)
+        let low = BatteryCare.isLow(pct)
+        let lastSwap = BatteryCare.events(mac).last(where: { $0.kind == "battery" })
+        let days: Int = lastSwap.map {
+            Int((Date().timeIntervalSince1970 * 1000 - $0.ts) / 86_400_000)
+        } ?? -1
+        XPanel(kind: .hero, tone: low ? .warn : .ok) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                HStack(alignment: .firstTextBaseline, spacing: XSpace.s) {
+                    Text(pct >= 0 ? String(pct) + "%" : "—")
+                        .xFont(.title2, weight: .semibold)
+                        .foregroundStyle(low ? XPalette.warn : XPalette.ok)
+                        .monospacedDigit()
+                    Text(low ? "电量偏低，建议尽快更换" : "电量充足")
+                        .xFont(.footnote)
+                        .foregroundStyle(low ? XPalette.warn : XPalette.textSub)
+                    Spacer(minLength: 0)
+                }
+                if days >= 0 {
+                    Text("上次换电 " + String(days) + " 天前")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textTertiary)
+                } else {
+                    Text("还没有换电记录 —— 换好后点下面记录一次")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textTertiary)
+                }
+                Button {
+                    BatteryCare.recordBatterySwap(mac)
+                    XHaptics.success()
+                    app.showToast("已记录换电")
+                } label: {
+                    Label("我换好了", systemImage: "checkmark.seal")
+                }
+                .buttonStyle(XSecondaryButtonStyle())
+                .disabled(mac.isEmpty)
+            }
+        }
+        .xScrollLift()
+    }
+
     private var modelHint: String {
         let m = LockArchive.meta(mac).batteryModel
         return m.isEmpty ? "型号见锁信息名片-电池档案" : "已记型号: \(m)"
@@ -330,6 +375,9 @@ struct BatterySwapGuideView: View {
 
             ScrollView {
                 VStack(spacing: XSpace.l) {
+                    // 当前电量卡 —— 换电指南却不显示电量，是最大的缺口。
+                    // 用户点进来就是想知道"是不是真该换了"。
+                    batteryNowCard
                     XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
                             secLabel("换电步骤")
