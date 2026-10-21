@@ -113,6 +113,16 @@ for (const mode of ['light', 'dark']) {
   ]) {
     push(mode, fg, bg, 4.5, why, base[fg][mode], base[bg][mode]);
   }
+
+  // XMetricTile 的真实组合: 底是 surfaceAlt, 标签用 textSub, 图标用 tone.color。
+  // 之前只断言了 text 在 surfaceAlt 上 —— 而这张磁贴根本没有 text。
+  push(mode, 'textSub', 'surfaceAlt', 4.5,
+       '次级文字在次表面上 (XMetricTile 标签)', base.textSub[mode], base.surfaceAlt[mode]);
+  for (const sem of ['ok', 'warn', 'danger']) {
+    // 图标属于非文本, 阈值 3:1 (WCAG 1.4.11)
+    push(mode, sem, 'surfaceAlt', 3.0,
+         `${sem} 图标在次表面上 (XMetricTile 图标, 非文本)`, base[sem][mode], base.surfaceAlt[mode]);
+  }
   // 语义色文字压在底上
   for (const sem of ['ok', 'warn', 'danger']) {
     push(mode, sem, 'canvas', 4.5, `${sem} 语义文案在页面底`, base[sem][mode], base.canvas[mode]);
