@@ -39,11 +39,11 @@ struct DevicePage: View {
     var body: some View {
         ScrollView {
             VStack(spacing: XSpace.l) {
-                identityCard
-                attentionCard
-                metricsRow
-                detailSection
-                recentSection
+                identityCard.xScrollLift()
+                attentionCard.xScrollLift()
+                metricsRow.xScrollLift()
+                detailSection.xScrollLift()
+                recentSection.xScrollLift()
             }
             .padding(.horizontal, XSpace.gutter)
             .padding(.vertical, XSpace.l)

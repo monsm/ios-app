@@ -41,11 +41,11 @@ struct StatsPage: View {
             VStack(spacing: XSpace.l) {
                 if let m = model {
                     if m.isDegraded {
-                        degradedCard(m)
+                        degradedCard(m).xScrollLift()
                     } else {
-                        safetyCard(m)
-                        rhythmCard(m)
-                        trendCard(m)
+                        safetyCard(m).xScrollLift()
+                        rhythmCard(m).xScrollLift()
+                        trendCard(m).xScrollLift()
                     }
                 } else if !loaded {
                     ProgressView().controlSize(.large)

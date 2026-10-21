@@ -1286,3 +1286,45 @@ struct XStepBar: View {
         return "第 \(n + 1) 步, 共 \(titles.count) 步, \(name)"
     }
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// MARK: - XScrollLift — 卡片滚动时的连续形变
+// ═══════════════════════════════════════════════════════════════════════
+//
+// iOS 17 的 scrollTransition 让"进出视口边缘"成为一个可映射的连续量。
+// 用它给纵向卡片列表加两层微变化:
+//   · 接近边缘 → 轻微缩小 (0.97) + 降低不透明度 (0.72)
+//   · 进入中心 → 恢复 1.0 / 1.0
+//
+// 为什么值得做:
+//   卡片列表滚动时, 原来所有卡片都是刚性平移 —— 边缘那几张"啪"地出现。
+//   加了过渡之后, 视线会被自然带向屏幕中部, 眼睛不需要在硬边界上重新对焦。
+//
+// 幅度刻意保守: scale 只到 0.97, opacity 只到 0.72。
+//   再大就成了"每张卡都在呼吸", 那是炫技, 不是可读性。
+//
+// 无障碍: reduceMotion 时什么都不做 —— 滚动中的连续缩放是最容易
+//   引起前庭不适的效果之一, 这条必须给退路。
+struct XScrollLift: ViewModifier {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        if reduceMotion {
+            content
+        } else {
+            content.scrollTransition(.interactive, axis: .vertical) { effect in
+                effect
+                    .scaleEffect(1 - 0.03 * abs(effect.value))
+                    .opacity(1 - 0.28 * abs(effect.value))
+            }
+        }
+    }
+}
+
+extension View {
+    /// 纵向滚动列表里给卡片加"进出边缘连续形变"。
+    /// 只给卡片用, 不要给整块 ScrollView 用。
+    nonisolated func xScrollLift() -> some View {
+        modifier(XScrollLift())
+    }
+}
