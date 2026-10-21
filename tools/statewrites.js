@@ -45,6 +45,9 @@ function isWrite(line, name) {
       if (before === '$' || before === '&') return true;
       let rest = line.slice(i + name.length).replace(/^ /, '');
       if (rest.startsWith('=') && rest[1] !== '=') return true;
+      // 复合赋值。注意 Swift 的溢出包装版本 &+= / &-= —— 本仓 SecTickCenter 就用 &+=，
+      // 漏掉它会把 refreshToken 误报成「从不写入」（这次是工具自己抓到了自己）。
+      if (rest[0] === '&') rest = rest.slice(1).replace(/^ /, '');
       if (rest.startsWith('+=') || rest.startsWith('-=') || rest.startsWith('*=') || rest.startsWith('/=')) return true;
       if (rest[0] === '[') {
         const close = rest.indexOf(']');

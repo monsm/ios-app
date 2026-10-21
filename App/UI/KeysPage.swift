@@ -38,6 +38,14 @@ struct KeysPage: View {
 
     private var mac: String { app.currentMac }
 
+    @State private var confirmDelete: KeyRow?
+    /// 写入侧改完后的重算开关。
+    ///
+    /// ⚠ 这个名字换掉了原来的 refreshTick —— 那个变量声明了、挂了 .id()，
+    /// 但全仓没有一处给它 +1，于是"刷新"从不发生（已在本会话中清除）。
+    /// 这里每一次写入都必须真的递增，否则就是同一个坑再来一次。
+    @State private var refreshToken = 0
+
     var body: some View {
         // M5 重做: List → 卡片流 + 液态玻璃分段
         //
@@ -79,6 +87,17 @@ struct KeysPage: View {
                 }
                 .accessibilityLabel("添加凭证")
             }
+        }
+        .confirmationDialog(
+            "删除这份凭证？",
+            isPresented: Binding(get: { confirmDelete != nil }, set: { if !$0 { confirmDelete = nil } }),
+            titleVisibility: .visible,
+            presenting: confirmDelete
+        ) { row in
+            Button("删除", role: .destructive) { performDelete(row) }
+            Button("取消", role: .cancel) { confirmDelete = nil }
+        } message: { row in
+            Text("「\(row.title)」会从本机台账移除。门锁里的对应凭证不会被这条操作删除，需要单独在锁上停用。")
         }
         .sheet(isPresented: $showAdd) {
             NavigationStack {
@@ -201,6 +220,26 @@ struct KeysPage: View {
         }
     }
 
+    /// 删除一份凭证。
+    ///
+    /// 只动本机台账，不动锁内数据 —— 这一点必须在确认文案里说清楚，
+    /// 否则用户会以为"删了台账 = 锁上的指纹也删了"。
+    private func performDelete(_ row: KeyRow) {
+        if row.kindTag == "fp" {
+            DB.delFp(mac, row.key)
+        } else {
+            DB.delPwd(mac, row.key)
+        }
+        confirmDelete = nil
+        XHaptics.trigger.impactOccurred()
+        app.showToast("已从本机台账删除「\(row.title)」")
+        refresh()
+    }
+
+    /// 写入侧改完必须让本页重算 —— rows 是计算属性，
+    /// 但 View 需要一次状态变化才会重新求值。
+    private func refresh() { refreshToken &+= 1 }
+
     // ── 空态卡 ──
     private var emptyCard: some View {
         XPanel(kind: .group, padding: 0) {
@@ -245,6 +284,10 @@ struct KeysPage: View {
 
     private struct KeyRow: Identifiable {
         let id: String
+        /// 底层键：密码/临时码是 alias，指纹是 batch
+        let key: Int
+        /// CredentialOrg 的写入侧口径："pwd" / "fp"
+        let kindTag: String
         let title: String
         let subtitle: String?
         let stateLabel: String
@@ -260,6 +303,8 @@ struct KeysPage: View {
                 let state = CredentialOrg.pwdState(p)
                 return KeyRow(
                     id: "p\(p.alias)",
+                    key: p.alias,
+                    kindTag: "pwd",
                     title: p.note.isEmpty ? "密码 #\(p.alias)" : p.note,
                     subtitle: subtitleFor(p),
                     stateLabel: CredentialOrg.stateLabel(state),
@@ -273,6 +318,8 @@ struct KeysPage: View {
                 let state = CredentialOrg.pwdState(p)
                 return KeyRow(
                     id: "t\(p.alias)",
+                    key: p.alias,
+                    kindTag: "pwd",
                     title: p.note.isEmpty ? "临时码 #\(p.alias)" : p.note,
                     subtitle: subtitleFor(p),
                     stateLabel: CredentialOrg.stateLabel(state),
@@ -285,6 +332,8 @@ struct KeysPage: View {
             out += fps.map { f in
                 KeyRow(
                     id: "f\(f.batch)",
+                    key: f.batch,
+                    kindTag: "fp",
                     title: f.name.isEmpty ? "指纹 #\(f.batch)" : f.name,
                     subtitle: f.note.isEmpty ? nil : f.note,
                     stateLabel: "有效",
@@ -385,8 +434,46 @@ struct KeysPage: View {
             XStatusPill(text: row.stateLabel, tone: row.stateTone)
         }
         .padding(.vertical, XSpace.xxs)
+        .contentShape(Rectangle())
+        // ═══ 行级动作 ═══
+        //
+        // 这一页原来**完全没有行交互** —— 没有详情页、没有点击、没有滑动。
+        // 凭证列表是纯只读展示，于是 CredentialOrg 里那一整套写入 API
+        //（星标 / 归档 / 停用便签 / 批量）全都没有入口，42 个函数零调用。
+        //
+        // 在补出完整详情页之前，先用长按菜单把这些**已经实现好**的能力接上：
+        // 不需要新造界面，也不假装有详情页。
+        .contextMenu {
+            Button {
+                CredentialOrg.toggleStar(mac, row.kindTag, row.key)
+                XHaptics.tick.impactOccurred()
+                refresh()
+            } label: {
+                Label(CredentialOrg.isStarred(mac, row.kindTag, row.key) ? "取消置顶" : "置顶",
+                      systemImage: CredentialOrg.isStarred(mac, row.kindTag, row.key) ? "star.slash" : "star")
+            }
+
+            Button {
+                let on = !CredentialOrg.isArchived(mac, row.kindTag, row.key)
+                CredentialOrg.setArchived(mac, row.kindTag, row.key, on)
+                XHaptics.tick.impactOccurred()
+                refresh()
+            } label: {
+                Label(CredentialOrg.isArchived(mac, row.kindTag, row.key) ? "取消归档" : "归档",
+                      systemImage: "archivebox")
+            }
+
+            Button(role: .destructive) {
+                confirmDelete = row
+            } label: {
+                Label("删除", systemImage: "trash")
+            }
+        }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityLine(row))
+        .accessibilityAction(named: "置顶或取消置顶") {
+            CredentialOrg.toggleStar(mac, row.kindTag, row.key)
+        }
     }
 
     /// 类型配色: 密码铜 / 指纹绿 / 临时码橙 —— 与 StatsKit 的 kindColor 同一套语义
