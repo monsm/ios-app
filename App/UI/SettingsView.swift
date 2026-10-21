@@ -38,6 +38,10 @@ struct SafemodeIntroView: View {
                         }
                         .xScrollLift()
                     } else {
+                        // 锁端开关实况 —— StatusParser 解析了 broadcastMode / tempPwdMode,
+                        // 但全仓界面从未显示过这两个位。
+                        // 它们和 verifyMode 同属 KLV 0x08 的 securityLevel 位域, 是锁的真实策略。
+                        lockSwitchCard
                         XPanel(kind: .group) {
                             VStack(alignment: .leading, spacing: XSpace.m) {
                                 secLabel("门锁的安全模式介绍")
@@ -94,6 +98,46 @@ struct SafemodeIntroView: View {
         }
         .navigationTitle(isOtp ? "临时密码介绍" : "安全模式说明")
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    /// 锁端三个开关的实况（KLV 0x08 的 securityLevel 位域）
+    ///
+    /// bit0 = verifyMode（A/B 验证）
+    /// bit1 = broadcastMode（广播）
+    /// bit2 = tempPwdMode（临时密码）
+    ///
+    /// 三个位都在 StatusParser 里解析好了，但界面只显示过 verifyMode，
+    /// 另外两个位从未出现在任何页面上。
+    @ViewBuilder
+    private var lockSwitchCard: some View {
+        if let st = app.status {
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: XSpace.s) {
+                    secLabel("锁端开关实况")
+                    switchRow("验证方式", st.verifyMode == 1 ? "B · 双验" : "A · 单验",
+                              on: st.verifyMode == 1)
+                    switchRow("广播模式", st.broadcastMode == 1 ? "开启" : "关闭",
+                              on: st.broadcastMode == 1)
+                    switchRow("临时密码", st.tempPwdMode == 1 ? "开启" : "关闭",
+                              on: st.tempPwdMode == 1)
+                }
+            }
+            .xScrollLift()
+        }
+    }
+
+    private func switchRow(_ label: String, _ value: String, on: Bool) -> some View {
+        HStack(spacing: XSpace.s) {
+            Text(label)
+                .xFont(.caption)
+                .foregroundStyle(XPalette.textTertiary)
+            Spacer(minLength: 0)
+            Text(value)
+                .xFont(.caption.monospacedDigit())
+                .foregroundStyle(on ? XPalette.ok : XPalette.textSub)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(label + " " + value)
     }
 
     private func secLabel(_ text: String) -> some View {
