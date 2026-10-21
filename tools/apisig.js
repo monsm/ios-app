@@ -188,11 +188,115 @@ for (const pr of probes) {
 }
 if (probeFail > 0) { console.error('✗ 闸门自检不通过, 判据已失效'); process.exit(1); }
 
-// ── 5. 输出 ───────────────────────────────────────────────────────
-if (allProblems.length === 0) {
-  console.log('组件签名检查 ✓ (' + files.length + ' 文件, ' + Object.keys(structDefs).length + ' 组件, 自检 ' + probes.length + '/' + probes.length + ')');
+
+// ── 6. 死代码: 定义了但全仓零使用的 X 组件 ──────────────────────────
+// 这一节是在清掉 4 处死代码 (XGuidedEmptyView / XStaggeredAppear /
+// staggered() / XContainerKind.tile) 之后加的 —— 那 4 处都是
+// "组件被替换掉, 旧的那个忘了删", 单看代码完全正常, 只有统计使用次数才发现。
+//
+// 判据:
+//   · 对 Components.swift 里每个 struct/enum X* 类型, 统计全仓引用次数
+//   · 减去它自己定义处那 1 次, 再减去同文件内的引用 (lib 内部互相用)
+//   · 结果为 0 → 死代码
+//   · 例外: 有 @ViewBuilder / modifier / extension View 方法名与之对应的
+//     (如 XScrollLift 通过 .xScrollLift() 用、XPlateShape 通过 .xPlate() 用),
+//     这些按"小写去 X 前缀"再查一次
+//
+// 允许名单: 正在开发中的组件可以临时登记, 但每加一条都应该问自己
+//   "它到底是还没接上, 还是已经不需要了"。
+const DEAD_ALLOW = new Set([
+  // (空) —— 当前没有豁免项
+]);
+
+const libTypes = [];
+{
+  const re = /^(?:struct|enum) (X\w+)/gm;
+  let m;
+  while ((m = re.exec(lib))) libTypes.push(m[1]);
+}
+
+function countOutside(name) {
+  // 全仓 (排除 Components.swift 自身的定义与内部引用)
+  let n = 0;
+  for (const f of files) {
+    if (/Components\.swift$/.test(f)) continue;
+    const src = fs.readFileSync(f, 'utf8');
+    const hits = src.match(new RegExp('\\b' + name + '\\b', 'g'));
+    if (hits) n += hits.length;
+  }
+  return n;
+}
+
+function countMethodForm(name) {
+  // XScrollLift → .xScrollLift()   XPlateShape → .xPlate(
+  const base = name.replace(/^X/, '');
+  const camel = base.charAt(0).toLowerCase() + base.slice(1);
+  const patterns = [
+    '.' + camel + '\\(',
+    '.' + camel + '\\)?\\s',
+  ];
+  let n = 0;
+  for (const f of files) {
+    const src = fs.readFileSync(f, 'utf8');
+    for (const p of patterns) {
+      const hits = src.match(new RegExp(p, 'g'));
+      if (hits) n += hits.length;
+    }
+  }
+  return n;
+}
+
+const deadCode = [];
+for (const ty of libTypes) {
+  if (DEAD_ALLOW.has(ty)) continue;
+  const outside = countOutside(ty);
+  if (outside > 0) continue;
+  // 检查方法调用形式 (XScrollLift → .xScrollLift())
+  const asMethod = countMethodForm(ty);
+  if (asMethod > 0) continue;
+  // 检查它在库内是否被别的类型引用 (如 XContainerKind 被 XPanel 用)
+  const inLib = (lib.match(new RegExp('\\b' + ty + '\\b', 'g')) || []).length;
+  if (inLib > 1) continue;          // 库内互用, 不算死
+  deadCode.push(ty);
+}
+
+// 自检: 造一个必然"零外部引用"的假类型名, 确认检测逻辑活着
+{
+  const probe = 'X__SelfTestDeadProbe__';
+  const fakeLib = lib + '\nstruct ' + probe + ' { }\n';
+  const fakeTypes = [...fakeLib.matchAll(/^(?:struct|enum) (X\w+)/gm)].map(m => m[1]);
+  const found = fakeTypes.filter(ty => {
+    if (DEAD_ALLOW.has(ty)) return false;
+    let out = 0;
+    for (const f of files) {
+      if (/Components\.swift$/.test(f)) continue;
+      const hits = fs.readFileSync(f, 'utf8').match(new RegExp('\\b' + ty + '\\b', 'g'));
+      if (hits) out += hits.length;
+    }
+    if (out > 0) return false;
+    if (countMethodForm(ty) > 0) return false;
+    const inLib = (fakeLib.match(new RegExp('\\b' + ty + '\\b', 'g')) || []).length;
+    return inLib <= 1;
+  });
+  if (!found.includes(probe)) {
+    console.error('✗ 自检失败: 死代码检测抓不到人造的零引用类型');
+    process.exit(1);
+  }
+}
+
+if (deadCode.length > 0) {
+  for (const d of deadCode) {
+    console.error('Components.swift: 死代码 ' + d + ' (全仓零引用) —— 删掉, 或加进 DEAD_ALLOW 并写清为什么留着');
+  }
+}
+
+// ── 7. 输出 ───────────────────────────────────────────────────────
+if (allProblems.length === 0 && deadCode.length === 0) {
+  console.log('组件签名 + 死代码检查 ✓ (' + files.length + ' 文件, ' + Object.keys(structDefs).length + ' 组件, '
+    + libTypes.length + ' 类型, 自检 ' + (probes.length + 1) + '/' + (probes.length + 1) + ')');
   process.exit(0);
 }
 for (const p of allProblems) console.error(p.rel + ':' + p.line + ': ' + p.msg);
-console.error('✗ 组件签名 ' + allProblems.length + ' 处不符');
+if (allProblems.length > 0) console.error('✗ 组件签名 ' + allProblems.length + ' 处不符');
+if (deadCode.length > 0) console.error('✗ 死代码 ' + deadCode.length + ' 处');
 process.exit(1);
