@@ -159,6 +159,8 @@ struct AlarmsPage: View {
                     }
                 }
                 .frame(height: 8)
+                .animation(XMotion.standard, value: alarms.count)   // 标记已处理后比例条平滑收缩
+                .animation(XMotion.standard, value: alarms.count)   // 标记已处理后比例条平滑收缩
                 .accessibilityHidden(true)
 
                 // 三级读数
@@ -190,6 +192,8 @@ struct AlarmsPage: View {
                 .xFont(.caption, weight: .medium)
                 .foregroundStyle(n > 0 ? XPalette.text : XPalette.textTertiary)
                 .monospacedDigit()
+                .contentTransition(.numericText())   // 标记已处理后数字滚动
+                .contentTransition(.numericText())   // 标记已处理后数字滚动
         }
     }
 
