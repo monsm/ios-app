@@ -385,22 +385,34 @@ struct HomeConsole: View {
 
     // ─────────────────────────────────────────── 交互
     private func beginPress() {
+        // 还没选门锁时，按下去只会得到一个技术性报错。
+        // 更好的做法：环本身提示"先选门锁"，并且不进入蓄力。
+        guard !mac.isEmpty else {
+            failure = "先在「设备」里选择门锁"
+            return
+        }
         guard phase == .idle || phase == .failed else { return }
         if pressing { return }
         pressing = true
         failure = nil
         phase = .charging
         XHaptics.tick.impactOccurred()
+
+        // ═══ 蓄力动画 ═══
+        //
+        // 上一版用一个 16ms 的循环自己推进 progress —— 等于每秒 62 次
+        // 触发 SwiftUI 重算视图（Circle.trim + 阴影 + 文字），主线程压力大且掉帧。
+        //
+        // 现在：一次 withAnimation 交给 Core Animation 线性插值，进度条是
+        // 渲染进程自己跑的，主线程只负责在终点判定完成。这是"动画"和
+        // "定时器"该分开的地方 —— 混在一起就是业余做法的典型症状。
+        withAnimation(.linear(duration: chargeDuration)) { progress = 1 }
+
         chargeTask?.cancel()
         chargeTask = Task { @MainActor in
-            let tick = 0.016
-            let inc = CGFloat(tick / chargeDuration)
-            while !Task.isCancelled && progress < 1 {
-                try? await Task.sleep(for: .milliseconds(16))
-                if Task.isCancelled { return }
-                progress = min(1, progress + inc)
-            }
-            if progress >= 1 { await performUnlock() }
+            try? await Task.sleep(for: .milliseconds(Int(chargeDuration * 1000)))
+            guard !Task.isCancelled else { return }
+            await performUnlock()
         }
     }
 
@@ -409,9 +421,13 @@ struct HomeConsole: View {
         pressing = false
         chargeTask?.cancel()
         chargeTask = nil
-        if progress < 1 && phase == .charging {
+        // ⚠ 这里不能用 progress < 1 判断"没充满"。
+        // withAnimation(.linear) 会**立刻**把 progress 状态置为 1，动画只负责
+        // 中间的插值渲染。所以中途松手时 progress 其实已经是 1，
+        // 用 progress 判断会让"松手回零"这条路径永远走不到。
+        // 正确判据是 phase：只有还停在 .charging 才算没完成。
+        if phase == .charging {
             phase = .idle
-            // 用设计系统里语义正确的"充能松手回零"缓动，而不是就地写一个 easeOut
             withAnimation(reduceMotion ? nil : XMotion.chargeReset) { progress = 0 }
         }
     }
