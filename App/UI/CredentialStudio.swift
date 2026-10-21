@@ -1447,154 +1447,274 @@ struct OtpStudio: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                // 339 用于哪把锁: 独立口令按锁存档, 这里显式选一次 (只多锁时出现)
-                if DB.keychains().count > 1 {
-                    Section("用于哪把锁") {   // 339 用于哪把锁
-                        Picker("", selection: Binding(get: { otpMac }, set: { targetMac = $0 })) {
-                            ForEach(DB.keychains(), id: \.mac) { kc in
-                                Text(LockArchive.displayName(kc)).tag(kc.mac)
-                            }
-                        }
-                        .pickerStyle(.menu)
-                        .frame(minHeight: XHit.min)
-                        Text("独立口令按锁存档 (kf_cotp_t_) —— 备份也按锁导出, 换一把锁就是另一组口令。")
-                            .xFont(.caption2)
-                            .foregroundStyle(XPalette.textSub)
-                            .fixedSize(horizontal: false, vertical: true)
+            ZStack {
+                XPalette.canvas.ignoresSafeArea()
+
+                ScrollView {
+                    VStack(spacing: XSpace.l) {
+                        targetLockCard
+                        zotpCard
+                        totpGroup
+                        staticCard
                     }
+                    .padding(.horizontal, XSpace.gutter)
+                    .padding(.vertical, XSpace.l)
                 }
-                // 锁端 ZOTP 时窗 (⚠ 锁端为分钟级, 细条为本地时钟推断标"约")
-                if DB.otpStatus(mac)?.on == true {
-                    Section("锁端 ZOTP (30 分钟时窗)") {
-                        VStack(spacing: XSpace.xs) {
-                            WindowBar(totalSec: 1800, label: "337 时窗细条 · 末 5 秒转橙轻震 (⚠ 锁端分钟级, 约)")
-                            Text("每 30 分钟更换; 生成前请校准门锁时间, 偏差 >180 秒锁侧校验失败。")
-                                .xFont(.caption2)
-                                .foregroundStyle(XPalette.textSub)
-                                .fixedSize(horizontal: false, vertical: true)
+                .scrollIndicators(.hidden)
+            }
+            .navigationTitle("OTP 与口令")
+            .navigationBarTitleDisplayMode(.inline)
+            .axBottomAnchor()
+            .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("关闭") { dismiss() } } }
+            .onReceive(timer) { t in tick = t }
+            .sheet(isPresented: $importing) { importSheet }
+        }
+    }
+
+    @ViewBuilder
+    private var targetLockCard: some View {
+        if DB.keychains().count > 1 {
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: XSpace.m) {
+                    secLabel("用于哪把锁")
+                    Picker("", selection: Binding(get: { otpMac }, set: { targetMac = $0 })) {
+                        ForEach(DB.keychains(), id: \.mac) { kc in
+                            Text(LockArchive.displayName(kc)).tag(kc.mac)
                         }
                     }
-                }
-                // 343 独立口令组: 口令与锁协议无关, 但**按当前锁存档** —— 小字照实写, 不再说"与锁无关"就完事
-                Section {
-                    let list = CredentialOrg.totpEntries(otpMac)   // 339: 按选择的目标锁取组
-                    if list.isEmpty {
-                        Text("还没有独立口令。粘贴 otpauth:// 文本导入, 或手工添加。口令本身跟门锁协议无关 (手机自己算), 但它按当前这把锁存档 —— 换锁就是另一组。")   // 341 还没有独立口令
-                            .xFont(.caption)
-                            .foregroundStyle(XPalette.textSub)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    ForEach(list) { e in
-                        totpRow(e)
-                    }
-                    Button {
-                        importing = true
-                    } label: {
-                        Label("导入 otpauth:// 文本", systemImage: "square.and.arrow.down")   // 341 导入
-                    }
-                    .xFont(.subheadline)
-                    .foregroundStyle(XPalette.accentText)
-                    // 341 手工添加整段: 名称 / Base32 密钥 / 算法 / 周期 / 位数, 错误行与导入那条各走各的
-                    Button {
-                        showManual.toggle()
-                        if !showManual { manualErr = "" }
-                        XHaptics.tick.impactOccurred()
-                    } label: {
-                        // 341 收起手工添加
-                        // 341 手工添加
-                        Label(showManual ? "收起手工添加" : "手工添加", systemImage: "keyboard")
-                    }
-                    .xFont(.subheadline)
-                    .foregroundStyle(XPalette.accentText)
-                    if showManual { manualForm() }
-                } header: {
-                    Text("独立口令 (与锁协议无关 · 按当前锁存档)")
-                } footer: {
-                    Text("组尾实话: 这些口令不经过门锁、也不进锁端协议, 但存的键带锁的 MAC (kf_cotp_t_) —— 因为备份按锁导出。换一把锁, 这一组就换成另一把锁的那一组。")
+                    .pickerStyle(.menu)
+                    .frame(minHeight: XHit.min)
+                    .tint(XPalette.accentText)
+                    Text("独立口令按锁存档 (kf_cotp_t_) —— 备份也按锁导出, 换一把锁就是另一组口令。")
                         .xFont(.caption2)
                         .foregroundStyle(XPalette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                // 346 静态备份码: 本地生成一次性静态码, 不走锁端, 随备份导出
-                Section("静态备份码") {   // 346 静态备份码
-                    // 2026-10-13 对抗式点击审计: 原写 `staticCodes(mac)` 而写入用 `addStaticCode(otpMac, …)`
-                    // —— 读的是**当前锁**、写的是 Picker 选的**目标锁**。用户路径: OTP 与口令页 →
-                    // 「用于哪把锁 (339)」Picker 改选另一把锁 → 点「生成 8 位静态码」→
-                    // 新码写进目标锁, 当前列表不显示 (切回目标锁才出现), 而编号 `codes.count + 1`
-                    // 还是按当前锁的数量算的 ⇒ 编号也可能重名。读取改成语入一致的 otpMac。
-                    let codes = CredentialOrg.staticCodes(otpMac)
-                    ForEach(codes) { c in
-                        staticRow(c)
-                    }
-                    TextField("备注 (给谁/干什么)", text: $noteDraft, prompt: Text("仅本机留存"))
-                        .xFont(.subheadline)
-                        .frame(minHeight: XHit.min)
-                    Button {
-                        let name = "备份码 " + String(codes.count + 1)
-                        CredentialOrg.addStaticCode(otpMac, CredentialOrg.StaticCode(
-                            id: UUID().uuidString, name: name,
-                            code: StudioTools.genDigits(8), note: noteDraft, used: false,
-                            at: Date().timeIntervalSince1970))
-                        noteDraft = ""
-                        app.showToast("已生成 8 位静态备份码")   // 346 已生成
-                    } label: {
-                        Label("生成 8 位静态码", systemImage: "plus")
-                    }
-                    .xFont(.subheadline)
-                    .foregroundStyle(XPalette.accentText)
-                                    }
             }
-            .navigationTitle("OTP 与口令")
-            .xList()
-            .xScreen()
-            .axBottomAnchor()   // 870
-            .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("关闭") { dismiss() } } }
-            .onReceive(timer) { t in tick = t }
-            .sheet(isPresented: $importing) {
-                NavigationStack {
-                    Form {
-                        Section("粘贴 otpauth 文本") {   // 341 粘贴
-                            TextField("otpauth://totp/…?secret=…", text: $importUri, axis: .vertical)
-                                .xFont(.footnote)
-                                .autocorrectionDisabled()
-                        }
-                        if !importErr.isEmpty {
-                            Section {
-                                Label(importErr, systemImage: "exclamationmark.circle")
-                                    .xFont(.caption)
-                                    .foregroundStyle(XPalette.danger)
-                            }
-                        }
-                        Section {
-                            Button("导入") {
-                                switch StudioTools.parseOtpAuth(importUri) {
-                                case .success(let r):
-                                    CredentialOrg.addTotp(otpMac, CredentialOrg.TOTPEntry(
-                                        id: UUID().uuidString, name: r.name, secret: r.secret,
-                                        algo: r.algo, period: r.period, digits: r.digits,
-                                        at: Date().timeIntervalSince1970))
-                                    // 341: 补了默认值就必须点名补了哪几项 —— 只报"已导入"是把替用户做的决定藏起来。
-                                    let tail = r.defaulted.isEmpty ? "" : "; 这条 uri 没写, 按默认补了: " + r.defaulted.joined(separator: ", ")
-                                    app.showToast("已导入「\(r.name)」(\(r.algo)·\(r.digits)位·\(r.period)s)" + tail + " (按当前锁存档)")
-                                    importUri = ""
-                                    importErr = ""
-                                    importing = false
-                                case .failure(let f):
-                                    importErr = "导入失败: " + f.rawValue + "; 缺什么就补什么, 或直接关掉这里改用手工添加"   // 341 导入失败
-                                }
-                            }
-                            .xFont(.subheadline, weight: .medium)
-                        }
-                    }
-                    .navigationTitle("导入 otpauth")   // 341 导入
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar { ToolbarItem(placement: .cancellationAction) {
-                        Button("关闭") { importing = false }
-                    } }
+        }
+    }
+
+    @ViewBuilder
+    private var zotpCard: some View {
+        if DB.otpStatus(mac)?.on == true {
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: XSpace.m) {
+                    secLabel("锁端 ZOTP (30 分钟时窗)")
+                    WindowBar(totalSec: 1800, label: "337 时窗细条 · 末 5 秒转橙轻震 (⚠ 锁端分钟级, 约)")
+                    Text("每 30 分钟更换; 生成前请校准门锁时间, 偏差 >180 秒锁侧校验失败。")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textSub)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
         }
+    }
+
+    @ViewBuilder
+    private var totpGroup: some View {
+        let list = CredentialOrg.totpEntries(otpMac)
+        if list.isEmpty {
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: XSpace.m) {
+                    secLabel("独立口令")
+                    XEmptyState(systemImage: "clock.badge.questionmark",
+                                title: "还没有独立口令",
+                                message: "粘贴 otpauth:// 文本导入, 或手工添加。口令本身跟门锁协议无关, 但它按当前这把锁存档。")
+                }
+            }
+        } else {
+            ForEach(list) { e in
+                totpCard(e)
+            }
+        }
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                secLabel("导入与添加")
+                Button {
+                    importing = true
+                } label: {
+                    Label("导入 otpauth:// 文本", systemImage: "square.and.arrow.down")
+                        .xFont(.subheadline, weight: .medium)
+                        .foregroundStyle(XPalette.accentText)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .frame(minHeight: XHit.min)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                Button {
+                    showManual.toggle()
+                    if !showManual { manualErr = "" }
+                    XHaptics.tick.impactOccurred()
+                } label: {
+                    Label(showManual ? "收起手工添加" : "手工添加", systemImage: "keyboard")
+                        .xFont(.subheadline, weight: .medium)
+                        .foregroundStyle(XPalette.accentText)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .frame(minHeight: XHit.min)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                if showManual { manualForm() }
+                Text("组尾实话: 这些口令不经过门锁、也不进锁端协议, 但存的键带锁的 MAC (kf_cotp_t_) —— 因为备份按锁导出。")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private var staticCard: some View {
+        let codes = CredentialOrg.staticCodes(otpMac)
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                secLabel("静态备份码")
+                if codes.isEmpty {
+                    Text("还没有静态码。它不走锁端、不随时间变化, 适合抄在纸上应急。")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textSub)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else {
+                    ForEach(codes) { c in
+                        staticRow(c)
+                    }
+                }
+                TextField("备注 (给谁/干什么)", text: $noteDraft, prompt: Text("仅本机留存"))
+                    .xFont(.subheadline)
+                    .frame(minHeight: XHit.min)
+                    .padding(XSpace.s)
+                    .background(XPalette.surfaceSunken,
+                                in: RoundedRectangle(cornerRadius: XRadius.min, style: .continuous))
+                Button {
+                    let name = "备份码 " + String(codes.count + 1)
+                    CredentialOrg.addStaticCode(otpMac, CredentialOrg.StaticCode(
+                        id: UUID().uuidString, name: name,
+                        code: StudioTools.genDigits(8), note: noteDraft, used: false,
+                        at: Date().timeIntervalSince1970))
+                    noteDraft = ""
+                    app.showToast("已生成 8 位静态备份码")
+                } label: {
+                    Label("生成 8 位静态码", systemImage: "plus")
+                        .xFont(.subheadline, weight: .medium)
+                        .foregroundStyle(XPalette.accentText)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .frame(minHeight: XHit.min)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private func totpCard(_ e: CredentialOrg.TOTPEntry) -> some View {
+        let nowCode = StudioTools.totp(e, offset: 0)
+        let nextCode = StudioTools.totp(e, offset: 1)
+        return VStack(spacing: XSpace.s) {
+            Button {
+                ClipboardCare.copySecret(nowCode, via: "独立 TOTP")
+                XHaptics.tick.impactOccurred()
+                app.showToast("已复制当前码")
+            } label: {
+                XCodeRing(code: nowCode,
+                          nextCode: nextCode,
+                          label: e.name,
+                          period: e.period > 0 ? e.period : 30,
+                          now: tick,
+                          masked: cap.recording)
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("轻点复制当前码")
+            HStack(spacing: XSpace.s) {
+                Button {
+                    ClipboardCare.copySecret(nowCode, via: "独立 TOTP")
+                    app.showToast("已复制当前码")
+                } label: {
+                    Label("复制", systemImage: "doc.on.doc")
+                        .xFont(.caption, weight: .medium)
+                }
+                .buttonStyle(XSecondaryButtonStyle(fullWidth: false))
+                .frame(minHeight: XHit.min)
+                Text(CredentialOrg.totpParams(e))
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                Spacer(minLength: 0)
+                Button(role: .destructive) {
+                    CredentialOrg.removeTotp(otpMac, e.id)
+                    app.showToast("已移除「\(e.name)」")
+                } label: {
+                    Label("移除", systemImage: "trash")
+                        .xFont(.caption, weight: .medium)
+                }
+                .buttonStyle(XDestructiveButtonStyle(fullWidth: false))
+                .frame(minHeight: XHit.min)
+                .accessibilityLabel("移除独立口令 \(e.name)")
+            }
+        }
+    }
+
+    private var importSheet: some View {
+        NavigationStack {
+            ZStack {
+                XPalette.canvas.ignoresSafeArea()
+                ScrollView {
+                    VStack(spacing: XSpace.l) {
+                        XPanel(kind: .group) {
+                            VStack(alignment: .leading, spacing: XSpace.m) {
+                                secLabel("粘贴 otpauth 文本")
+                                TextField("otpauth://totp/…?secret=…", text: $importUri, axis: .vertical)
+                                    .xFont(.footnote)
+                                    .autocorrectionDisabled()
+                                    .lineLimit(3...6)
+                                    .padding(XSpace.s)
+                                    .background(XPalette.surfaceSunken,
+                                                in: RoundedRectangle(cornerRadius: XRadius.min, style: .continuous))
+                            }
+                        }
+                        if !importErr.isEmpty {
+                            XPanel(kind: .group) {
+                                Label(importErr, systemImage: "exclamationmark.circle")
+                                    .xFont(.caption)
+                                    .foregroundStyle(XPalette.danger)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                        XBusyButton(title: "导入", systemImage: "square.and.arrow.down", busy: false) {
+                            switch StudioTools.parseOtpAuth(importUri) {
+                            case .success(let r):
+                                CredentialOrg.addTotp(otpMac, CredentialOrg.TOTPEntry(
+                                    id: UUID().uuidString, name: r.name, secret: r.secret,
+                                    algo: r.algo, period: r.period, digits: r.digits,
+                                    at: Date().timeIntervalSince1970))
+                                let tail = r.defaulted.isEmpty ? "" : "; 按默认补了: " + r.defaulted.joined(separator: "/")
+                                app.showToast("已导入「\(r.name)」" + tail)
+                                importUri = ""
+                                importErr = ""
+                                importing = false
+                            case .failure(let f):
+                                importErr = "导入失败: " + f.rawValue
+                            }
+                        }
+                    }
+                    .padding(.horizontal, XSpace.gutter)
+                    .padding(.vertical, XSpace.l)
+                }
+                .scrollIndicators(.hidden)
+            }
+            .navigationTitle("导入 otpauth")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) {
+                Button("关闭") { importing = false }
+            } }
+        }
+    }
+
+    private func secLabel(_ text: String) -> some View {
+        Text(text)
+            .xFont(.caption, weight: .semibold)
+            .foregroundStyle(XPalette.textTertiary)
+            .textCase(.uppercase)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // ---------- 341 手工添加整段 (名称 / Base32 密钥 / 算法 / 周期 / 位数) ----------

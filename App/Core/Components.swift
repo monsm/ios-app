@@ -613,3 +613,192 @@ extension View {
         modifier(XStaggeredAppear(index: index))
     }
 }
+
+
+// ═══════════════════════════════════════════════════════════════════════
+// MARK: - XCodeRing — 时效码大卡 (TOTP 主角)
+// ═══════════════════════════════════════════════════════════════════════
+//
+// 设计依据 (apple-design / motion.md):
+//   "Add motion purposefully, supporting the experience without
+//    overshadowing it." —— 这里的运动不是装饰: 环的收缩**就是**倒计时本身。
+//
+// 为什么用 Canvas 画环而不是 Circle().trim():
+//   1. trim + stroke 在每秒重绘时会重新走一遍图层合成, 而 Canvas 是单次绘制,
+//      60fps 下 CPU 占用低一个量级 (本页 tick 每秒本来就要重算 TOTP);
+//   2. Canvas 能在同一帧里把「底环 + 进度环 + 末端光点」画成一个整体,
+//      不会出现三者各自动画、彼此错位的观感问题;
+//   3. 末端光点用 Canvas 的 fill(Path) 画, 比叠一个 Circle().blur() 省一层离屏。
+//
+// 无障碍 (accessibility.md / typography.md):
+//   - 装饰环 accessibilityHidden(true), 语义全靠 accessibilityLabel 给全码与剩余秒;
+//   - 数字用 .monospacedDigit(), 每秒变化时宽度不跳 (HIG: "avoid layout jitter");
+//   - 减弱动态时环不脉冲, 只做位移动画 (AXFlags.reduceMotionSnapshot)。
+struct XCodeRing: View {
+    let code: String
+    let nextCode: String
+    let label: String
+    let period: Int
+    /// 每秒由父级推一次 (父级已有 tick 定时器, 这里不另起)
+    let now: Date
+    /// 录制中 (屏录/截图) 时隐去真值 —— 与 totpRow 原口径一致
+    var masked: Bool = false
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var remaining: Double {
+        let p = Double(max(period, 1))
+        let t = now.timeIntervalSince1970
+        return max(0, p - t.truncatingRemainder(dividingBy: p))
+    }
+    private var fraction: Double { remaining / Double(max(period, 1)) }
+
+    /// 末 5 秒转橙: 这是"该换了"的唯一视觉信号
+    private var ringTint: Color {
+        remaining <= 5 ? XPalette.warn : XPalette.accent
+    }
+
+    var body: some View {
+        VStack(spacing: XSpace.l) {
+            header
+            ringWithCode
+            nextLine
+        }
+        .padding(XSpace.l)
+        .background(plate)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessLabel)
+    }
+
+    // ── 标题行: 名称 + 参数 ──────────────────────────────────────────
+    private var header: some View {
+        HStack(alignment: .firstTextBaseline, spacing: XSpace.s) {
+            Text(label)
+                .xFont(.subheadline, weight: .semibold)
+                .foregroundStyle(XPalette.text)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+            Spacer(minLength: 0)
+            Text("\(max(period, 1))s")
+                .xFont(.caption2.monospacedDigit())
+                .foregroundStyle(XPalette.textTertiary)
+        }
+    }
+
+    // ── 环 + 码: 视觉主体 ────────────────────────────────────────────
+    private var ringWithCode: some View {
+        ZStack {
+            Canvas { ctx, size in
+                let side = min(size.width, size.height)
+                let rect = CGRect(
+                    x: (size.width - side) / 2,
+                    y: (size.height - side) / 2,
+                    width: side, height: side)
+                let lw = max(6, side * 0.045)
+                let ring = rect.insetBy(dx: lw / 2, dy: lw / 2)
+
+                // 1) 底环: 极淡, 只交代"还有一圈"
+                var track = Path()
+                track.addEllipse(in: ring)
+                ctx.stroke(track,
+                           with: .color(XPalette.hairline.opacity(0.55)),
+                           lineWidth: lw)
+
+                // 2) 进度环: 从 12 点起顺时针, 长度 = 剩余比例
+                let sweep = fraction
+                guard sweep > 0.001 else { return }
+                var arc = Path()
+                arc.addArc(
+                    center: CGPoint(x: rect.midX, y: rect.midY),
+                    radius: ring.width / 2,
+                    startAngle: .degrees(-90),
+                    endAngle: .degrees(-90 + 360 * sweep),
+                    clockwise: false)
+                ctx.stroke(arc,
+                           with: .color(ringTint),
+                           style: StrokeStyle(lineWidth: lw, lineCap: .round))
+
+                // 3) 末端光点: 让"还有这么多"有个明确的端点
+                let a = (-90.0 + 360 * sweep) * .pi / 180
+                let center = CGPoint(x: rect.midX, y: rect.midY)
+                let r = ring.width / 2
+                let dot = CGPoint(
+                    x: center.x + r * cos(a),
+                    y: center.y + r * sin(a))
+                let dotR = lw * 0.62
+                var halo = Path()
+                halo.addEllipse(in: CGRect(
+                    x: dot.x - dotR * 2.1, y: dot.y - dotR * 2.1,
+                    width: dotR * 4.2, height: dotR * 4.2))
+                ctx.fill(halo, with: .color(ringTint.opacity(0.22)))
+                var core = Path()
+                core.addEllipse(in: CGRect(
+                    x: dot.x - dotR, y: dot.y - dotR,
+                    width: dotR * 2, height: dotR * 2))
+                ctx.fill(core, with: .color(ringTint))
+            }
+            .accessibilityHidden(true)
+
+            // 码值本体: 56pt 等宽圆体 + 数字滚动过渡
+            VStack(spacing: XSpace.xxs) {
+                Text(masked ? "••• •••" : code)
+                    .xFont(.system(size: 56, weight: .semibold, design: .rounded).monospacedDigit())
+                    .foregroundStyle(masked ? XPalette.textSub : XPalette.text)
+                    .contentTransition(.numericText())
+                    .animation(XMotion.quick, value: code)
+                    .minimumScaleFactor(0.5)
+                    .lineLimit(1)
+                    .textSelection(.enabled)
+                Text("\(Int(ceil(remaining))) 秒后刷新")
+                    .xFont(.caption2.monospacedDigit())
+                    .foregroundStyle(remaining <= 5 ? XPalette.warn : XPalette.textTertiary)
+                    .contentTransition(.numericText())
+            }
+            .padding(.horizontal, XSpace.m)
+        }
+        .aspectRatio(1, contentMode: .fit)
+        .frame(maxWidth: 260)
+    }
+
+    // ── 下一码: 次级信息, 不抢主角 ───────────────────────────────────
+    private var nextLine: some View {
+        HStack(spacing: XSpace.xs) {
+            Text("下一个")
+                .xFont(.caption2)
+                .foregroundStyle(XPalette.textTertiary)
+            Text(masked ? "••• •••" : nextCode)
+                .xFont(.footnote.monospacedDigit(), weight: .medium)
+                .foregroundStyle(XPalette.textSub)
+            Spacer(minLength: 0)
+        }
+    }
+
+    // ── 底板: 铜色微光从中心透出, 越接近归零越弱 ─────────────────────
+    private var plate: some View {
+        RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
+            .fill(XPalette.surface)
+            .overlay(
+                RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                ringTint.opacity(0.10 + 0.10 * fraction),
+                                Color.clear
+                            ],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 160)
+                    )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
+                    .strokeBorder(ringTint.opacity(0.22), lineWidth: 1)
+            )
+    }
+
+    private var accessLabel: String {
+        let secs = Int(ceil(remaining))
+        if masked { return "\(label), 已隐去, \(secs) 秒后刷新" }
+        return "\(label), 当前码 \(code), 下一码 \(nextCode), \(secs) 秒后刷新"
+    }
+}
