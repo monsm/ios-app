@@ -139,6 +139,48 @@ enum ProbeBlock4_Entity {
 }
 
 // ───────────────────────────────────────────────────────────────────────
+// 区块 6 · rotation3DEffect 的 anchorZ（z 方向位移）  【待 verify】
+// ───────────────────────────────────────────────────────────────────────
+//
+// 需求: 三棱柱的三个面必须**在 z 方向错开**（不只是左右平移）。
+//   face b: z = +apothem（最近）
+//   face d: z = -apothem/2
+//   face f: z = -apothem/2
+//
+// SwiftUI 的限制（已确认）:
+//   · .offset(x:y:) 没有 z 参数
+//   · ProjectionTransform 只取 CATransform3D 的 3x3，做不了平移
+//   · transformEffect 收 CGAffineTransform（2D）
+//
+// 唯一可能: rotation3DEffect 的 anchorZ —— 它是「旋转轴在 z 上的位置」，
+// 相当于把视图沿 z 平移（因为视图绕一个 z 偏移的轴旋转后，
+// 若 angle=0，视图位置会跟着 anchorZ 平移）。
+//
+// 但全仓从未用过这个参数，**不能凭记忆写**。
+// 这条探针就是要确认: `anchorZ:` 这个标签名是否正确。
+@available(iOS 18.0, *)
+enum ProbeBlock6_AnchorZ {
+    static func probe() -> some View {
+        Text("probe")
+            .rotation3DEffect(
+                .degrees(0),
+                axis: (x: 0, y: 1, z: 0),
+                anchor: .center,
+                anchorZ: 12.0,          // ← 待验证: 这个标签名对不对
+                perspective: 0)
+    }
+    static func probeSimplified() -> some View {
+        // 退路: 不写 anchorZ 的原始签名（已知可用）
+        Text("probe")
+            .rotation3DEffect(
+                .degrees(0),
+                axis: (x: 0, y: 1, z: 0),
+                anchor: .center,
+                perspective: 0)
+    }
+}
+
+// ───────────────────────────────────────────────────────────────────────
 // 区块 5 · typealias vs .self 访问嵌套类型   【run #442 FAILURE → 结论在此】
 // ───────────────────────────────────────────────────────────────────────
 //
