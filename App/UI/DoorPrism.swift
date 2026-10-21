@@ -85,7 +85,7 @@ struct DoorPrism<B: View, D: View, F: View>: View {
                 //
                 // 这样前庭敏感用户看到的仍是三棱柱的**静态侧面**，
                 // 而不是会转动的物体 —— 视觉结构不变，动效归零。
-                prismBody
+                prismBody(width: geo.size.width)
 
                 // ── 边缘热区（左右各一条）──
                 HStack(spacing: 0) {
@@ -122,35 +122,29 @@ struct DoorPrism<B: View, D: View, F: View>: View {
     /// 早期版本接收 width 参数用来算 apothem，但后来 apothem 改成了
     /// 屏幕宽度 × 0.9 × 0.2887（见 prismApothem），这个参数就用不上了。
     /// 死参数会让人误以为它还有作用，所以删掉。
-    private var prismBody: some View {
+    private func prismBody(width: CGFloat) -> some View {
         ZStack {
-            prismFace(.b)
-            prismFace(.d)
-            prismFace(.f)
+            prismFace(.b, width: width)
+            prismFace(.d, width: width)
+            prismFace(.f, width: width)
         }
         // ── 侧面呼吸: 缩放由**当前朝向**推导 ──
-        //
-        // 这是「C 侧面呼吸」的核心。三棱柱转到 60° 时一条棱正对观察者，
-        // 投影确实最窄 —— 缩放最小值放在那一瞬间，
-        // 观众会把缩小的原因归给"它转过来了"，而不是"它被缩小了"。
-        //
-        // breathScale 内部算 |cos| 并归一化，公式见其注释。
         .scaleEffect(breathScale)
-        // 容器旋转 + 透视（这是整个棱柱的「转」）
-        .projectionEffect(containerProjection)
+        // ═══════════════════════════════════════════════════════════
+        // 这里原来还有一行 .projectionEffect(containerProjection)。
+        // **它是「黑屏 + 不立体」的根因，已删除。**
+        //
+        // 原因: ProjectionTransform(CATransform3D) 只取矩阵的 3×3 部分，
+        // 而透视项 m34 在**第 4 列**——直接被丢掉。剩下的 3×3 是一个
+        // 绕 Y 轴的旋转矩阵，被当成 2D 投影变换去作用时，
+        // 第三列（sin, 0, cos）变成了「w 的分母系数」，
+        // 于是整个视图被逐像素除以一个随 x 变化的量 ——
+        // 结果是扭曲/移出屏幕，表现出来就是黑屏。
+        //
+        // 真正的 3D 只能靠每个面自己的 rotation3DEffect（见 prismFace）。
+        // ═══════════════════════════════════════════════════════════
     }
 
-    /// 容器投影：透视 × 绕 Y 轴旋转
-    ///
-    /// CATransform3D 的 m34 是透视项，取 -1/观察距离。
-    /// 观察距离取 1200pt —— 相当于 1.2 米外看一个 400pt 宽的东西，
-    /// 与人看手机的距离量级相近，透视强度自然。
-    private var containerProjection: ProjectionTransform {
-        var t = CATransform3DIdentity
-        t.m34 = -1.0 / 1200.0
-        t = CATransform3DRotate(t, containerAngle * .pi / 180, 0, 1, 0)
-        return ProjectionTransform(t)
-    }
 
     /// 一个棱柱面：摆到它在棱柱上的位置
     ///
@@ -188,25 +182,42 @@ struct DoorPrism<B: View, D: View, F: View>: View {
     ///     θ=240°  → (-88,  -51)  ✓
     ///
     /// anchorZ 这个参数全仓此前从未用过，已由探针区块 6（run #475）验证签名。
-    private func prismFace(_ f: DoorFace) -> some View {
-        let theta = FaceAngle.current(f)
+    private func prismFace(_ f: DoorFace, width: CGFloat) -> some View {
+        // 面的总朝向 = 它自己在棱柱上的角度 + 容器整体转角
+        //
+        // 原来只传了 FaceAngle.current(f)，容器转角靠 projectionEffect 施加。
+        // projectionEffect 删掉之后，容器转角必须**合并到这里**，
+        // 否则面根本不会随着拖拽/翻页转动 —— 这正是「切不动」的一半原因。
+        let theta = FaceAngle.current(f) + containerAngle
         return faceView(f)
             // 绕「中心后方 apothem」的轴旋转 — 同时完成朝向与定位
             .rotation3DEffect(.degrees(theta), axis: (x: 0, y: 1, z: 0),
                               anchor: .center,
-                              anchorZ: -prismApothem,
-                              perspective: 0)
+                              anchorZ: -prismApothem(width),
+                              perspective: prismPerspective)
             // 背面的面隐藏（否则会穿透前面的面看到它）
             .opacity(faceVisibility(f))
     }
 
-    /// 内切圆半径（相对于面宽度）
+    /// 透视强度 —— 原来写的是 0，那是「不立体」的根因
     ///
-    /// 这里需要一个绝对量而不是相对屏幕宽的比例 ——
-    /// 因为 offset 的单位是 pt。用 GeometryReader 拿不到，
-    /// 所以按屏幕宽度估。三棱柱面宽约等于屏宽的 0.9。
-    private var prismApothem: CGFloat {
-        UIScreen.main.bounds.width * 0.9 * 0.2887
+    /// SwiftUI 的 `perspective` 是相对消失点: 0 = 正交（完全没有近大远小），
+    /// 1 是默认值。html 原型用的 three.js 相机是 fov 32°，
+    /// 换算成「以视图尺寸为单位的相机距离」≈ 1/(0.5/tan(16°)) ≈ 0.57，
+    /// 所以取 0.55 —— 与原型观感最接近。
+    private var prismPerspective: CGFloat { 0.55 }
+
+    /// 内切圆半径（pt）
+    ///
+    /// 正三棱柱边长 s 的内切圆半径 = s / (2√3) ≈ 0.2887 s。
+    /// 面宽取「可用宽度的 0.9」，与原型 R_PRISM*1.42 的比例感一致。
+    ///
+    /// **不再用 UIScreen.main.bounds** —— 它在 iOS 26+ 已废弃，
+    /// 且在多窗口/分屏下拿到的不一定是本视图的宽度；
+    /// 万一返回 0，anchorZ 就是 0，三个面全叠在圆心 ——
+    /// 三棱柱直接消失。宽度从 GeometryReader 传进来。
+    private func prismApothem(_ width: CGFloat) -> CGFloat {
+        width * 0.9 * 0.2887
     }
 
     /// 某个面当前是否朝向观察者
