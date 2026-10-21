@@ -245,11 +245,14 @@ struct DoorPrism<B: View, D: View, F: View>: View {
         let facing = cos(theta * .pi / 180)
         return Capsule()
             .fill(XPalette.textTertiary.opacity(0.55))
-            .frame(width: 5, height: width * 1.42)
+            // 高度撑满：原型里棱高 = H_PRISM×1.02 ≈ 面高，
+            // 这里让它在 ZStack 里吃满可用高度，与面同高。
+            .frame(width: 5)
             .rotation3DEffect(.degrees(theta), axis: (x: 0, y: 1, z: 0),
                               anchor: .center,
                               anchorZ: -D,
                               perspective: prismPerspective)
+            .frame(maxHeight: .infinity)
             .opacity(facing > 0 ? min(1, facing * 1.6) : 0)
             .accessibilityHidden(true)
     }
