@@ -43,9 +43,18 @@ struct FeedPage: View {
                 ScrollView {
                     VStack(spacing: XSpace.m) {
                         headerBar.xScrollLift()
-                        LazyVStack(spacing: XSpace.s) {
-                            ForEach(displayRows) { r in
-                                feedRow(r)
+                        // 按天分组 —— 原来是一长条平铺，看不出"这是今天的还是上周的"。
+                        // 动态页的核心是"最近发生了什么"，日期是最基本的坐标系。
+                        LazyVStack(spacing: XSpace.m, pinnedViews: []) {
+                            ForEach(groupedDays, id: \.day) { g in
+                                VStack(alignment: .leading, spacing: XSpace.xs) {
+                                    dayHeader(g.day, count: g.rows.count, alarms: g.rows.filter { $0.warn }.count)
+                                    VStack(spacing: XSpace.s) {
+                                        ForEach(g.rows) { r in
+                                            feedRow(r)
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -227,6 +236,60 @@ struct FeedPage: View {
     // ═══════════════════════════════════════════════════════
     // MARK: - 数据
     // ═══════════════════════════════════════════════════════
+
+    /// 按天分组（保持 displayRows 的降序）
+    private var groupedDays: [(day: String, rows: [FeedRow])] {
+        var order: [String] = []
+        var map: [String: [FeedRow]] = [:]
+        for r in displayRows {
+            let day = String(r.time.prefix(10))
+            if map[day] == nil { order.append(day); map[day] = [] }
+            map[day]?.append(r)
+        }
+        return order.map { ($0, map[$0] ?? []) }
+    }
+
+    /// 日期头：今天 / 昨天 / 具体日期 + 条数 + 告警数
+    private func dayHeader(_ day: String, count: Int, alarms: Int) -> some View {
+        HStack(spacing: XSpace.xs) {
+            Text(dayLabel(day))
+                .xFont(.footnote, weight: .semibold)
+                .foregroundStyle(XPalette.textSub)
+            Text(String(count) + " 条")
+                .xFont(.caption2.monospacedDigit())
+                .foregroundStyle(XPalette.textTertiary)
+            if alarms > 0 {
+                HStack(spacing: 2) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 8, weight: .semibold))
+                    Text(String(alarms))
+                        .xFont(.caption2.monospacedDigit())
+                }
+                .foregroundStyle(XPalette.warn)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.leading, 2)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(dayLabel(day) + " " + String(count) + " 条, " + String(alarms) + " 条告警")
+    }
+
+    /// "yyyy-MM-dd" → 今天 / 昨天 / M 月 d 日
+    private func dayLabel(_ day: String) -> String {
+        let fmt = DateFormatter()
+        fmt.locale = Locale(identifier: "en_US_POSIX")
+        fmt.calendar = WeekCal.gregorian
+        fmt.dateFormat = "yyyy-MM-dd"
+        guard let d = fmt.date(from: day) else { return day }
+        let cal = WeekCal.gregorian
+        if cal.isDateInToday(d) { return "今天" }
+        if cal.isDateInYesterday(d) { return "昨天" }
+        let out = DateFormatter()
+        out.locale = Locale(identifier: "zh_CN")
+        out.calendar = WeekCal.gregorian
+        out.dateFormat = "M 月 d 日"
+        return out.string(from: d)
+    }
 
     private var displayRows: [FeedRow] {
         filterAlarm ? rows.filter { $0.warn } : rows

@@ -60,7 +60,12 @@ struct CarePage: View {
 
     private var periodCard: some View {
         let days = daysUntilCare
-        let period = care.lastCareAt > 0 ? BatteryCare.carePeriodDays(opens30d: 0) : 0
+        // 之前这里写的是 carePeriodDays(opens30d: 0) —— **硬编码 0**。
+        // 后果: 高频锁（30 天 ≥60 次开门）本该 60 天保养一次，
+        // 但界面永远按 90 天算，通知却在第 60 天来催。两边对不上。
+        // 现在读真实开门数，与 BatteryCare 的调度同源。
+        let opens30 = DB.readLogs(mac).filter { StatsKit.openTypes.contains($0.type) }.count
+        let period = care.lastCareAt > 0 ? BatteryCare.carePeriodDays(opens30d: opens30) : 0
         let elapsed = care.lastCareAt > 0 ? (period - days) : 0
         // 周期环: "还剩多少"是一个进程量, 环比文字更直观。
         // 弧走的是「已过去多少」而不是「还剩多少」—— 走得越满越该动手。
@@ -137,6 +142,13 @@ struct CarePage: View {
                     XHairline(inset: XSpace.card)
                 }
                 todoRow(cleanTodo)
+                // 应急钥匙半年检 —— CareState 里有 ekeyCheckAt / ekeyRemindOn，
+                // 但这一页从来没有对应条目。半年没看过应急钥匙，
+                // 真到断电那天才发现钥匙找不到。
+                if ekeyTodoNeeded {
+                    XHairline(inset: XSpace.card)
+                    todoRow(ekeyTodo)
+                }
                 if let yearly = yearlyTodo {
                     XHairline(inset: XSpace.card)
                     todoRow(yearly)
@@ -179,6 +191,26 @@ struct CarePage: View {
         guard !care.yearlyBattDay.isEmpty else { return nil }
         return Todo(icon: "calendar", title: "年度换电提醒",
                     detail: "已设为每年 \(care.yearlyBattDay)", tone: .neutral)
+    }
+
+    /// 应急钥匙是否需要检视（半年一次）
+    private var ekeyTodoNeeded: Bool {
+        guard care.ekeyRemindOn else { return false }
+        if care.ekeyCheckAt <= 0 { return true }   // 从没记过 → 该做
+        let days = Int((Date().timeIntervalSince1970 * 1000 - care.ekeyCheckAt) / 86_400_000)
+        return days >= 180
+    }
+
+    private var ekeyTodo: Todo {
+        let days: Int = care.ekeyCheckAt > 0
+            ? Int((Date().timeIntervalSince1970 * 1000 - care.ekeyCheckAt) / 86_400_000)
+            : -1
+        return Todo(
+            icon: "key.fill",
+            title: "确认应急钥匙位置",
+            detail: days < 0 ? "从未记录 — 半年该检一次"
+                             : "已 \(days) 天未检视（建议每 180 天）",
+            tone: days < 0 || days >= 180 ? .warn : .neutral)
     }
 
     private func todoRow(_ todo: Todo) -> some View {
