@@ -82,20 +82,24 @@ struct DevicePage: View {
 
                 Divider().overlay(XPalette.hairline)
 
-                // 三个关键读数
-                HStack(spacing: XSpace.l) {
-                    readingItem(
-                        value: snap.map { "\($0.powerLevel)%" } ?? "—",
-                        label: "电量",
-                        tone: batteryTone)
-                    readingItem(
-                        value: snap.map { "\($0.pwdStock)" } ?? "—",
-                        label: "密码余量",
-                        tone: .neutral)
-                    readingItem(
-                        value: snap.map { "\($0.fpStock)" } ?? "—",
-                        label: "指纹余量",
-                        tone: .neutral)
+                // 电量仪表环 + 两个余量读数
+                //
+                // 电量原来是三个并排数字里的一个, 看不出"还剩多少余量";
+                // 弧形能。余量类读数 (密码/指纹) 没有"耗尽感", 保持数字形态。
+                HStack(alignment: .center, spacing: XSpace.l) {
+                    XBatteryGauge(level: snap?.powerLevel, size: 116)
+                
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        readingItem2(
+                            value: snap.map { "\($0.pwdStock)" } ?? "—",
+                            label: "密码余量",
+                            icon: "number.square")
+                        readingItem2(
+                            value: snap.map { "\($0.fpStock)" } ?? "—",
+                            label: "指纹余量",
+                            icon: "touchid")
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
         }
@@ -125,24 +129,27 @@ struct DevicePage: View {
         return nil
     }
 
-    private var batteryTone: XToneColor {
-        guard let p = snap?.powerLevel else { return .neutral }
-        if p <= 10 { return .danger }
-        if p <= 20 { return .warn }
-        return .ok
-    }
 
-    private func readingItem(value: String, label: String, tone: XToneColor) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(value)
-                .xFont(.title3, weight: .semibold)
-                .monospacedDigit()
-                .foregroundStyle(tone == .neutral ? XPalette.text : tone.color)
-            Text(label)
-                .xFont(.caption2)
-                .foregroundStyle(XPalette.textSub)
+
+    /// 带图标的余量读数 (电量已独立成仪表环, 这里只剩两个余量)
+    private func readingItem2(value: String, label: String, icon: String) -> some View {
+        HStack(spacing: XSpace.s) {
+            Image(systemName: icon)
+                .font(.system(size: XIcon.sm, weight: .medium))
+                .foregroundStyle(XPalette.textTertiary)
+                .frame(width: 20)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(value)
+                    .xFont(.headline, weight: .semibold)
+                    .monospacedDigit()
+                    .foregroundStyle(XPalette.text)
+                Text(label)
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textSub)
+            }
+            Spacer(minLength: 0)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label): \(value)")
     }

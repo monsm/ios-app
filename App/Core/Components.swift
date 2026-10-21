@@ -948,3 +948,131 @@ struct XDayClock: View {
         return s
     }
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// MARK: - XBatteryGauge — 电量仪表环
+// ═══════════════════════════════════════════════════════════════════════
+//
+// 门锁电量是这台设备唯一会"耗尽"的资源, 而它原来只是一个 78% 的数字。
+// 数字看不出"还剩多少余量", 弧形看得出。
+//
+// 画法:
+//   · 270° 开口弧 (底部留口, 像汽车油表), 从左侧 7:30 起顺时针;
+//   · 底弧极淡, 前景弧按电量走, 三档变色: >20% 正常 / 11-20% 警告 / <=10% 危险;
+//   · 弧末端一个圆点, 让"还剩多少"有个明确的边界;
+//   · 圆心放百分数 + 下方一行状态词。
+//
+// 无障碍: 弧 accessibilityHidden, 语义由一个 label 给全 ——
+// Canvas 的图形 VoiceOver 读不到, 不补这层等于没有。
+struct XBatteryGauge: View {
+    /// 0...100, nil = 还没读到
+    let level: Int?
+    var size: CGFloat = 132
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var shown: Double = 0
+
+    private var frac: Double {
+        guard let l = level else { return 0 }
+        return min(max(Double(l) / 100.0, 0), 1)
+    }
+
+    private var tint: Color {
+        guard let l = level else { return XPalette.textTertiary }
+        if l <= 10 { return XPalette.danger }
+        if l <= 20 { return XPalette.warn }
+        return XPalette.ok
+    }
+
+    /// 开口弧: 从左下 135° 起, 顺时针扫 270°
+    private let startAngle: Double = 135
+    private let sweepAngle: Double = 270
+
+    var body: some View {
+        ZStack {
+            Canvas { ctx, sz in
+                let side = min(sz.width, sz.height)
+                let rect = CGRect(x: (sz.width - side) / 2,
+                                  y: (sz.height - side) / 2,
+                                  width: side, height: side)
+                let c = CGPoint(x: rect.midX, y: rect.midY)
+                let lw = max(7, side * 0.085)
+                let r = side / 2 - lw / 2 - 1
+
+                // 底弧
+                var track = Path()
+                track.addArc(center: c, radius: r,
+                             startAngle: .degrees(startAngle),
+                             endAngle: .degrees(startAngle + sweepAngle),
+                             clockwise: false)
+                ctx.stroke(track,
+                           with: .color(XPalette.hairline.opacity(0.55)),
+                           style: StrokeStyle(lineWidth: lw, lineCap: .round))
+
+                // 前景弧
+                guard shown > 0.001 else { return }
+                let end = startAngle + sweepAngle * shown
+                var arc = Path()
+                arc.addArc(center: c, radius: r,
+                           startAngle: .degrees(startAngle),
+                           endAngle: .degrees(end),
+                           clockwise: false)
+                ctx.stroke(arc,
+                           with: .color(tint),
+                           style: StrokeStyle(lineWidth: lw, lineCap: .round))
+
+                // 末端圆点
+                let a = end * .pi / 180
+                let tip = CGPoint(x: c.x + r * cos(a), y: c.y + r * sin(a))
+                let dr = lw * 0.42
+                var dot = Path()
+                dot.addEllipse(in: CGRect(x: tip.x - dr, y: tip.y - dr,
+                                          width: dr * 2, height: dr * 2))
+                ctx.fill(dot, with: .color(tint))
+            }
+            .accessibilityHidden(true)
+
+            // 圆心读数
+            VStack(spacing: 0) {
+                if let l = level {
+                    HStack(alignment: .firstTextBaseline, spacing: 0) {
+                        Text("\(l)")
+                            .xFont(.system(size: size * 0.28, weight: .semibold, design: .rounded).monospacedDigit())
+                            .foregroundStyle(XPalette.text)
+                            .contentTransition(.numericText())
+                        Text("%")
+                            .xFont(.system(size: size * 0.13, weight: .medium, design: .rounded))
+                            .foregroundStyle(XPalette.textSub)
+                    }
+                    Text(statusWord)
+                        .xFont(.system(size: max(9, size * 0.072), weight: .medium))
+                        .foregroundStyle(tint)
+                } else {
+                    Text("—")
+                        .xFont(.system(size: size * 0.26, weight: .semibold, design: .rounded))
+                        .foregroundStyle(XPalette.textTertiary)
+                    Text("未读到")
+                        .xFont(.system(size: max(9, size * 0.072)))
+                        .foregroundStyle(XPalette.textTertiary)
+                }
+            }
+        }
+        .frame(width: size, height: size)
+        .onAppear { animateTo(frac) }
+        .onChange(of: frac) { _, v in animateTo(v) }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(level.map { "电量 \($0)%, \(statusWord)" } ?? "电量未读到")
+    }
+
+    private func animateTo(_ v: Double) {
+        if reduceMotion { shown = v }
+        else { withAnimation(XMotion.doorReveal) { shown = v } }
+    }
+
+    private var statusWord: String {
+        guard let l = level else { return "未读到" }
+        if l <= 10 { return "需要换电池" }
+        if l <= 20 { return "偏低" }
+        return "充足"
+    }
+}

@@ -246,10 +246,64 @@ def render_dayclock():
 
     return save(img, "dayclock")
 
+def render_battery():
+    """XBatteryGauge — 电量仪表环三档"""
+    W, H = 402, 200
+    img = new_canvas(W, H)
+    dr = ImageDraw.Draw(img, "RGBA")
+    panel(img, S(16), S(14), S(370), S(172))
+    text(dr, (S(32), S(28)), "家门", 16)
+    text(dr, (S(32), S(48)), "握手耗时 320ms · 信号 -58 dBm", 10, TEXT_SUB)
+
+    cx = S(16) + S(12) + S(58)
+    cy = S(14) + S(172) // 2 + S(6)
+    R_OUT = S(50)
+    lw = max(S(7), int(R_OUT*0.085))
+    r = R_OUT - lw//2 - 1
+    START, SWEEP = 135, 270
+
+    def pt(rad, deg):
+        a = math.radians(deg)
+        return (cx + rad*math.cos(a), cy + rad*math.sin(a))
+
+    # 三档演示用一个, 取 78%
+    level = 78
+    frac = level/100
+    tint = OK if level > 20 else (WARN if level > 10 else DANGER)
+    # 底弧
+    dr.arc([cx-r, cy-r, cx+r, cy+r], START, START+SWEEP, fill=HAIRLINE+(140,), width=lw)
+    # 前景
+    dr.arc([cx-r, cy-r, cx+r, cy+r], START, START+SWEEP*frac, fill=tint+(255,), width=lw)
+    # 末端点
+    ex, ey = pt(r, START+SWEEP*frac)
+    drr = lw*0.42
+    dr.ellipse([ex-drr,ey-drr,ex+drr,ey+drr], fill=tint+(255,))
+    # 圆心
+    f1 = F(16); f2 = F(8)
+    bb1 = dr.textbbox((0,0),str(level),font=f1)
+    bb2 = dr.textbbox((0,0),"%",font=f2)
+    tw = (bb1[2]-bb1[0]) + (bb2[2]-bb2[0])
+    x0 = cx - tw//2
+    dr.text((x0, cy-S(11)), str(level), font=f1, fill=TEXT)
+    dr.text((x0 + (bb1[2]-bb1[0]), cy-S(3)), "%", font=f2, fill=TEXT_SUB)
+    text_center(dr, cx, cy+S(8), "充足", 8, tint)
+
+    # 右侧两个余量
+    rx = S(16) + S(12) + S(116) + S(16)
+    ry = S(14) + S(46)
+    for icon_ch, val, lab in [("#", "3", "密码余量"), ("@", "2", "指纹余量")]:
+        text(dr, (rx, ry), icon_ch, 10, TEXT_TERT)
+        text(dr, (rx+S(18), ry-S(2)), val, 14, TEXT)
+        text(dr, (rx+S(18), ry+S(16)), lab, 9, TEXT_SUB)
+        ry += S(54)
+
+    return save(img, "battery")
+
 RENDERERS = {
     "codering": render_code_ring,
     "alarmchart": render_alarm_chart,
     "dayclock": render_dayclock,
+    "battery": render_battery,
 }
 
 
