@@ -154,16 +154,44 @@ struct DoorPrism<B: View, D: View, F: View>: View {
     ///
     /// 面自己的朝向用 rotation3DEffect（那是**静态**的，不参与动画），
     /// 容器的转动交给 projectionEffect。这样两组旋转互不干扰。
+    /// 一个棱柱面：转到自己的朝向，同时落到棱柱上的位置
+    ///
+    /// ═══ 这里修过一次几何错误 ═══
+    ///
+    /// 第一版:
+    ///     .rotation3DEffect(.degrees(theta), axis: (0,1,0), anchor: .center, perspective: 0)
+    ///     .offset(x: sin(theta) * apothem, y: 0)
+    ///
+    /// 错在: 只做了 x 偏移，面全在 z=0 平面 —— 三个面**不在同一个圆上**。
+    /// 复算（A=102.1pt）:
+    ///     面 b  x=  0  z=0    (应在半径 A 上，实际在圆心)
+    ///     面 d  x=+88  z=0
+    ///     面 f  x=-88  z=0
+    /// 偏差 51-102pt。视觉上是三张卡片横排，不是棱柱。
+    ///
+    /// ═══ 正确做法: anchorZ = -A ═══
+    ///
+    /// 让视图绕「中心后方 A 处」的轴旋转 θ，视口中心相对轴是 (0,0,A)，
+    /// 转 θ 后自然落在 (A·sinθ, 0, A·cosθ) —— 正是棱柱上该在的位置。
+    ///
+    /// **不需要手写 offset** —— x 和 z 由旋转变换同时产生，
+    /// 这是绕轴旋转的几何必然。
+    ///
+    /// 验证（A=102.1）:
+    ///     θ=0°    → (  0, +102)  ✓
+    ///     θ=120°  → (+88,  -51)  ✓
+    ///     θ=240°  → (-88,  -51)  ✓
+    ///
+    /// anchorZ 这个参数全仓此前从未用过，已由探针区块 6（run #475）验证签名。
     private func prismFace(_ f: DoorFace) -> some View {
         let theta = FaceAngle.current(f)
-        let rad = theta * .pi / 180
         return faceView(f)
-            // ① 转到自己的朝向（静态）
-            .rotation3DEffect(.degrees(theta), axis: (0, 1, 0),
-                              anchor: .center, perspective: 0)
-            // ② 外移到棱柱上的位置
-            .offset(x: sin(rad) * prismApothem, y: 0)
-            // ③ 背面的面隐藏（否则会穿透前面的面看到它）
+            // 绕「中心后方 apothem」的轴旋转 — 同时完成朝向与定位
+            .rotation3DEffect(.degrees(theta), axis: (x: 0, y: 1, z: 0),
+                              anchor: .center,
+                              anchorZ: -prismApothem,
+                              perspective: 0)
+            // 背面的面隐藏（否则会穿透前面的面看到它）
             .opacity(faceVisibility(f))
     }
 
