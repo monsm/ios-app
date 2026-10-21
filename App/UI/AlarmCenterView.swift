@@ -36,18 +36,28 @@ struct AlarmCenterView: View {
     var embedded: Bool = false
 
     private var listContent: some View {
-        List {
-            streamHeader
-            replayRuler   // 730
-            alarmList
-            trialCard     // 737 试错累计
-            responseCard   // 742 响应时长 (占位)
+        ZStack {
+            XPalette.canvas.ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: XSpace.l) {
+                    // 底部横向留白: 各子块内部仍是 List/Section 形状的旧实现,
+                    // 这里只负责把它们放进新的纵向节奏里, 不改各块的内部结构。
+                    streamHeader
+                    replayRuler       // 730 24 小时回放刻度
+                    alarmList         // 734 队列 + 723 类型过滤
+                    trialCard         // 737 试错累计
+                    responseCard      // 742 响应时长
+                }
+                .padding(.horizontal, XSpace.gutter)
+                .padding(.vertical, XSpace.l)
+            }
+            .scrollIndicators(.hidden)
         }
         .navigationTitle(centerTitle)
-        .variantList()
-        .dsScreenBackground()
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .cancellationAction) {
                 Button("完成") { dismiss() }
             }
         }
