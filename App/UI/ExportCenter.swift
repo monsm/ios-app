@@ -1718,7 +1718,8 @@ struct ExportCenterView: View {
     // 718 分享范围明示: 入口处文案明示"文件将离开本机"
     @ViewBuilder
     private var scopeSection: some View {
-        Section {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
             Picker("范围", selection: rangeBinding) {   // 701 范围
                 Text("当月").tag(ExportRange.month)
                 Text("全部记录").tag(ExportRange.all)
@@ -1739,6 +1740,7 @@ struct ExportCenterView: View {
                 .xFont(.footnote)
                 .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
     private var rangeBinding: Binding<ExportRange> {
@@ -1746,33 +1748,34 @@ struct ExportCenterView: View {
     }
 
     private var colsSection: some View {
-        Section {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                secLabel("列选择")
             ForEach(0..<6, id: \.self) { i in
                 XToggle(ExportHeaders.zh[i], isOn: Binding(
                     get: { cols.get(i) },
                     set: { cols.set(i, $0); ExportCols.save(cols) }))
             }
-        } header: {
-            Text("列选择")   // 690 列选择
-        } footer: {
-            Text("勾选即含; 凭证/原始hex 列默认不含, 上次选择会沿用。")
-                .xFont(.caption)
+            }
         }
     }
 
     private var redactSection: some View {
-        Section {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
             XToggle("脱敏导出", isOn: $redact)   // 548 脱敏导出
             Text("脱敏与格式独立: 关时 JSON 含原始 hex、日志不掩码; 开时 JSON 的 hex 列留空、日志导出把连续数字掩码。")
                 .xFont(.caption)
                 .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 
     @ViewBuilder
     private var actionList: some View {
-        Section {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
             Button { startCSV() } label: { Label("CSV 标准导出", systemImage: "tablecells") }   // 683 标准导出
             Button { startJSON() } label: { Label("原始 JSON + hex", systemImage: "curlybraces") }   // 684 原始
             Button { startPDF() } label: { Label("月度 PDF 报告", systemImage: "doc.text") }   // 685 月度
@@ -1796,9 +1799,11 @@ struct ExportCenterView: View {
             // 703 直发: 配置了邮箱就走系统邮件 (附件与 CSV 导出同源); canSendMail=false 时回退 .eml 模板
             Button { sendByMail() } label: { Label("用系统邮件发送", systemImage: "envelope.open") }   // 703 用系统邮件发送
             Button { startEML() } label: { Label("邮件模板 .eml", systemImage: "envelope") }   // 703 邮件模板
+            }
         }
         .disabled(progress.running)
-        Section {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
             // 686 导出哪一天: 默认"最新一天" (与旧行为一致), 换日重导; 选项=有记录的最近 14 天
             if !dayOpts.isEmpty {
                 Picker("导出哪一天", selection: $dayPick) {   // 686 导出哪一天
@@ -1821,6 +1826,7 @@ struct ExportCenterView: View {
             Button { printMonthly() } label: { Label("打印月度记录", systemImage: "printer") }   // 687/701 打印月度记录
             Button { printOnePager() } label: { Label("告警一页纸", systemImage: "doc.text.magnifyingglass") }   // 717 告警一页纸
             Button { printOralCard() } label: { Label("口述卡打印", systemImage: "person.text.rectangle") }   // 478 口述卡打印
+            }
         }
         .disabled(progress.running)
     }
@@ -1873,7 +1879,8 @@ struct ExportCenterView: View {
 
     @ViewBuilder
     private var progressSection: some View {
-        Section {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
             HStack(spacing: XSpace.s) {
                 ProgressView()
                 Text(progress.step.isEmpty ? "处理中…" : progress.step)
@@ -1887,13 +1894,15 @@ struct ExportCenterView: View {
                     .frame(minHeight: XHit.min)
                     .contentShape(Rectangle())
             }
+            }
         }
     }
 
     // 719 导出完成反馈: 成功触感 + 路径; 失败说明原因
     @ViewBuilder
     private func doneSection(_ item: ExportItem) -> some View {
-        Section {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
             if lastSuccess {
                 Label(item.fileName, systemImage: "checkmark.circle.fill")
                     .xFont(.subheadline)
@@ -1960,6 +1969,7 @@ struct ExportCenterView: View {
                 .xFont(.caption)
                 .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 
@@ -1983,7 +1993,9 @@ struct ExportCenterView: View {
 
     @ViewBuilder
     private var verifySection: some View {
-        Section {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                secLabel("报告校验二维码")
             if let c = verifyCode {
                 if c.rows == 0 {
                     XEmptyState(systemImage: "qrcode.viewfinder",
@@ -2052,13 +2064,7 @@ struct ExportCenterView: View {
                     .xFont(.caption)
                     .foregroundStyle(XPalette.textSub)
             }
-        } header: {
-            Text("报告校验二维码")   // 710 报告校验二维码
-        } footer: {
-            Text("摘要口径 (逐行六字段): 时间 / 类型 / 成员 / 是否告警 / 凭证词 / 锁端行键; 行序按报告两章出场序 (告警章在前、明细章在后)。"
-                 + "原始 hex、级别字样、处置结论、生成时间与列选择都在口径之外 ⇒ 换勾选不改指纹。"
-                 + "相机之外没有任何权限申请, 出图与比对全在本机, 不联网。")
-                .xFont(.caption2)
+            }
         }
     }
 
@@ -2081,10 +2087,12 @@ struct ExportCenterView: View {
     }
 
     private var pathSection: some View {
-        Section {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
             LabeledContent("文件位置", value: lastPath)   // 719 文件位置
                 .xFont(.caption)
                 .textSelection(.enabled)
+            }
         }
     }
     /// 708 按 kind 走系统 UTType 的 ShareLink 表示; 709 卡片 = sharePreview (渐变封面图)。
@@ -2426,6 +2434,14 @@ struct ExportCenterView: View {
     nonisolated private func stampTag() -> String {
         let f = DateFormatter(); f.dateFormat = "yyyyMM"; f.timeZone = .current; f.locale = Locale(identifier: "en_US_POSIX")
         return f.string(from: Date())
+    }
+
+    private func secLabel(_ text: String) -> some View {
+        Text(text)
+            .xFont(.caption, weight: .semibold)
+            .foregroundStyle(XPalette.textTertiary)
+            .textCase(.uppercase)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
