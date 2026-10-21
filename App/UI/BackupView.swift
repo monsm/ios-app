@@ -16,7 +16,6 @@ struct BackupView: View {
     /// 刚改的凭据被静默覆盖 (第一百六十六批 §10.38)。读写穿透后没有"旧快照"这个东西。
     /// 加密口令**不入库**，所以它仍是 `@State`（每次输入、用完即弃）。
     /// 输入框直写本机存储：与工坊那页共用一份真相，谁改完另一页立刻读到新值。
-    @State private var busy = false
     @State private var pendingRestore: BackupBundle?
     /// 云端已下载但尚未经用户确认的备份包 (nil = 无待确认的恢复)
 
@@ -143,7 +142,6 @@ struct BackupView: View {
                     .lineLimit(3...6)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
-                    .disabled(busy)
                 Button {
                     if let s = UIPasteboard.general.string, !s.isEmpty {
                         importText = s
@@ -154,7 +152,7 @@ struct BackupView: View {
                     Label("从剪贴板粘贴", systemImage: "doc.on.clipboard")
                         .frame(minHeight: XHit.min)
                 }
-                .disabled(busy || importText.isEmpty)
+                .disabled(importText.isEmpty)
                 Button("导入", role: .destructive) { confirmImport() } // 覆盖同名设备, 属破坏性动作
                     .disabled(busy || importText.isEmpty)
             }
@@ -167,7 +165,9 @@ struct BackupView: View {
     // ---------- 本地导入 ----------
     private func confirmImport() {
         guard !importText.isEmpty else { app.showToast("请先粘贴备份文本"); return }
-        guard !busy else { return }
+        // 原来这里有一句 guard !busy —— 但 busy 从来没有被置位过，
+        // 因为导出与导入都是**全同步**实现（collectAll / parsePreview + restoreAll）。
+        // 它暗示了一个并不存在的异步窗口，留着只会让后来者以为这里有并发保护。
         // 2026-10-13 对抗式排查: 补一句**应用锁口令可能被替换**。
         // BackupKit.restoreAll 会把包内 globals.passcode 写回 kf_passcode (换机迁移要靠它),
         // 但"导入一份旧备份"同样会让应用锁口令**回滚到旧值** —— 抢到手机的人用旧口令就能进。
