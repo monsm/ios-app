@@ -1408,8 +1408,6 @@ struct PrivacyDashboard: View {
             }
             .scrollIndicators(.hidden)
         }
-        .xList()
-        .xScreen()
         .navigationTitle("隐私仪表盘")
     }
 

@@ -585,8 +585,6 @@ struct MemberWizardView: View {
             }
             .navigationTitle("建档向导")   // 463 建档向导
             .navigationBarTitleDisplayMode(.inline)
-            .xList()
-            .xScreen()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("取消") { dismiss() } } }
             .axBottomAnchor()   // 870
         }
@@ -722,8 +720,6 @@ struct MergeMembersView: View {
             }
             .navigationTitle("重复合并")   // 462 重复合并
             .navigationBarTitleDisplayMode(.inline)
-            .xList()
-            .xScreen()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("取消") { dismiss() } } }
         }
     }
@@ -888,8 +884,6 @@ struct MemberFamilySettingsView: View {
                 }
             }
             .navigationTitle("家庭设置")
-            .xList()
-            .xScreen()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) {
                 Button("保存") {
                     MemberHub.setElderMode(elder)
@@ -1243,8 +1237,6 @@ struct MemberExitWizard: View {
             }
             .navigationTitle("退出处置向导")   // 474 退出处置向导
             .navigationBarTitleDisplayMode(.inline)
-            .xList()
-            .xScreen()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("取消") { dismiss() } } }
             // 474 候选移接人多于一个时不许替用户抓第一个: 弹确认框让用户自己选目标
             .confirmationDialog("移交给谁", isPresented: Binding(   // 474 移交给谁
