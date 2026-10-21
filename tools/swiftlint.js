@@ -97,6 +97,9 @@ const SYS_NAMES = new Set(['Slider','Stepper','Bundle','LazyVStack','LazyVGrid',
   // 加白**不等于**证明 3D 用法正确 —— 那只有编译器与真机能定论。
   'RealityView', 'ModelEntity', 'SimpleMaterial', 'MeshResource',
   'Entity', 'RealityViewContent', 'RealityViewCamera',
+  // 3D 锁体的组件/变换类型。同样: 加白只管本地静态闸门不误报,
+  // 名字写错只有 CI 能发现。
+  'ModelComponent', 'Transform',
 // 77/939/941 开锁实时活动 (ActivityKit, iOS 16.1 起) 与 826 聚光教练用到的 SwiftUI 布局/绘制类型。
 // 全仓各只出现 1 次, 正好落进本检查的误报形态; 与上面几批同理: **加白不等于证明用法正确** ——
 // 真机验证在 docs/VERIFY-CHECKLIST.md (实时活动那条与聚光教练那条)。
