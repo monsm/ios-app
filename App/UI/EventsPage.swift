@@ -26,6 +26,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 /// 记录页 —— 门里「事件」
 struct EventsPage: View {
@@ -48,6 +49,8 @@ struct EventsPage: View {
     @State private var noteDraft = ""
     /// 正在从门锁拉日志
     @State private var syncing = false
+    /// 同步详情 —— 只在"结果不对劲"时弹出，让用户能截给我看卡在哪一步。
+    @State private var syncDetail: String?
     @State private var showSaveDialog = false
 
     private var mac: String { app.currentMac }
@@ -131,6 +134,16 @@ struct EventsPage: View {
         .onSubmit(of: .search) {
             RecordSearch.pushHistory(search)
             recentSearches = RecordSearch.history()
+        }
+        .alert("同步详情", isPresented: Binding(get: { syncDetail != nil },
+                                              set: { if !$0 { syncDetail = nil } })) {
+            Button("复制") {
+                UIPasteboard.general.string = syncDetail ?? ""
+                syncDetail = nil
+            }
+            Button("关闭", role: .cancel) { syncDetail = nil }
+        } message: {
+            Text(syncDetail ?? "")
         }
         .alert("事件备注", isPresented: Binding(get: { noteTarget != nil }, set: { if !$0 { noteTarget = nil } })) {
             TextField("最多 60 字", text: $noteDraft)
@@ -270,27 +283,48 @@ struct EventsPage: View {
         syncing = true
         Task { @MainActor in
             defer { syncing = false }
+            var trace: [String] = []
+            let before = DB.readLogs(mac).count
+            trace.append("本机缓存原有 \(before) 条")
             do {
+                trace.append("① 连接门锁…")
                 try await app.lock.ensureConnected(mac: mac)
+                trace.append("① 已连接")
+
                 var start: UInt32 = 0
                 var collected: [LogEntry] = []
-                for _ in 0..<12 {
-                    let page = try await app.lock.getLogs(startIdx: start, pageSize: 20)
-                    if page.logs.isEmpty { break }
-                    collected += page.logs
-                    start += UInt32(page.logs.count)
-                    if let surplus = page.surplus, surplus <= 0 { break }
+                for page in 1...12 {
+                    let r = try await app.lock.getLogs(startIdx: start, pageSize: 20)
+                    let surplusText = r.surplus.map(String.init) ?? "nil"
+                    trace.append("② 第\(page)页 start=\(start) 返回\(r.logs.count)条 surplus=\(surplusText)")
+                    if r.logs.isEmpty { break }
+                    collected += r.logs
+                    start += UInt32(r.logs.count)
+                    if let sp = r.surplus, sp <= 0 { break }
                 }
+                trace.append("③ 合计拉取 \(collected.count) 条")
+
+                DB.writeLogs(mac, collected)
+                let after = DB.readLogs(mac).count
+                trace.append("④ 写入后本机缓存 \(before) → \(after) 条")
+                load()
+
                 if collected.isEmpty {
+                    // 锁里说"没有事件"和"协议没对上"在界面上长得一样，
+                    // 所以这里把 trace 摊开，用户截一张图就能定位。
                     app.showToast("门锁里没有可读的事件")
+                    syncDetail = trace.joined(separator: "\n")
+                } else if after <= before {
+                    app.showToast("拉到 \(collected.count) 条，但本机没有新增")
+                    syncDetail = trace.joined(separator: "\n")
                 } else {
-                    DB.writeLogs(mac, collected)
-                    load()
                     XHaptics.success()
-                    app.showToast("已同步 \(collected.count) 条事件")
+                    app.showToast("已同步 \(collected.count) 条（新增 \(after - before) 条）")
                 }
             } catch {
+                trace.append("✗ 失败: \(error.localizedDescription)")
                 app.showToast("同步失败：\(error.localizedDescription)")
+                syncDetail = trace.joined(separator: "\n")
             }
         }
     }
