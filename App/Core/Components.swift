@@ -116,12 +116,17 @@ struct XStatusPill: View {
     var body: some View {
         HStack(spacing: XSpace.xs) {
             if let systemImage {
+                // 状态胶囊在状态切换时会换图标 (已连接 → 未连接、达标 → 待处理…)。
+                // symbolEffect(.replace) 让新旧字形做一次变形过渡, 而不是硬切。
+                // reduceMotion 由系统自动降级 (SF Symbols 的 replace 会退化成淡入淡出)。
                 Image(systemName: systemImage)
                     .xFont(.system(size: XIcon.xs, weight: .semibold))
+                    .contentTransition(.symbolEffect(.replace))
                     .accessibilityHidden(true)
             }
             Text(text)
                 .xFont(.caption, weight: .medium)
+                .contentTransition(.opacity)
         }
         .foregroundStyle(tone.color)
         .padding(.horizontal, XSpace.s)
@@ -374,6 +379,7 @@ struct XRow: View {
                     .foregroundStyle(XPalette.textSub)
                     .monospacedDigit()
                     .lineLimit(1)
+                    .contentTransition(.numericText())   // 备份天数 / 门锁数变化时做数字滚动
             }
 
             if showsChevron {
