@@ -401,6 +401,15 @@ enum RecordSearch {
     /// 写入一律夹到 0...23 —— 键位是 UserDefaults, 手改或导入可能塞进越界值, 判定函数不再做"回落合法值"的静默纠错。
     static var nightFrom: Int { clamp23(DB.store.getInt("kf_night_from", 22)) }
     static var nightTo: Int { clamp23(DB.store.getInt("kf_night_to", 6)) }
+    // ⚠ 这三个 setter 目前**没有任何调用方**，全仓也没有对应界面。
+    //   · nightFrom / nightTo 的读侧是活的：StatsKit 用它判定「深夜开门」
+    //   · holidayExtendOn 的读侧也是活的：节假日自动延长结束时刻
+    //   所以这套配置功能完整，只是用户改不了 —— 永远停在默认 22:00–06:00。
+    //
+    //   对夜班用户来说「深夜」不是 22 点，这是真实缺口。接通方式：
+    //   在 MePage 数据区加一个子页（夜间时段 / 节假日延长），调这三个 setter，
+    //   并把 nightWindowDegenerate 的告警一并显示。
+    //   那一页出现之前，不要以为这个功能可配置。
     static func setNightFrom(_ h: Int) { DB.store.set("kf_night_from", clamp23(h)) }
     static func setNightTo(_ h: Int) { DB.store.set("kf_night_to", clamp23(h)) }
     static func setHolidayExtend(_ on: Bool) { DB.store.set("kf_holiday_extend", on) }
