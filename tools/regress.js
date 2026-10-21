@@ -92,6 +92,24 @@ const checks = [
     }
     return n >= 5;
   }],
+  ['可点行/按钮不低于 44pt', () => {
+    // HIG accessibility.md: iOS 控件默认 44×44，最小 28×28。
+    // 只查"按钮标签自己写死的高度"，装饰点与行内图标不算。
+    let bad = 0;
+    for (const f of FILES) {
+      const lines = (RAW.get(path.basename(f)) || '').split('\n');
+      lines.forEach((t, i) => {
+        if (/^\s*\/\//.test(t)) return;
+        const m = t.match(/\.frame\(height:\s*([0-9.]+)\)/);
+        if (!m) return;
+        const h = parseFloat(m[1]);
+        if (h >= 44 || h < 30) return;
+        const win = lines.slice(Math.max(0, i - 14), i + 3).join('\n');
+        if (/Button\s*[\{\(]/.test(win)) bad++;
+      });
+    }
+    return bad === 0;
+  }],
 ];
 
 let pass = 0;

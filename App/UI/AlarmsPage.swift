@@ -124,7 +124,9 @@ struct AlarmsPage: View {
                             .xFont(.subheadline, weight: .semibold)
                             .foregroundStyle(XPalette.onAccent)
                             .frame(maxWidth: .infinity)
-                            .frame(height: 42)
+                            // HIG accessibility.md: iOS 控件默认尺寸 44×44，最小 28×28。
+                            // 这里原来写死 42，差 2pt；改用令牌，日后调整只改一处。
+                            .frame(height: XHit.min)
                             .background(RoundedRectangle(cornerRadius: XRadius.control, style: .continuous)
                                 .fill(XPalette.danger))
                     }
