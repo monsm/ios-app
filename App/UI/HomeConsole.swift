@@ -92,6 +92,7 @@ struct HomeConsole: View {
                             noLockState
                         } else {
                             identity
+                            if let notice = criticalNotice { noticeRow(notice) }
                             unlockStage
                             metricsRow
                             todaySection
@@ -218,6 +219,80 @@ struct HomeConsole: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // ─────────────────────────────────────────── ③.5 关键状态
+    //
+    // 低电量和未处理告警是"现在就得知道"的事，原来只混在环下方那行 13pt 的
+    // 小字里（"电量 12% · 上次 08:12 · 已上锁"）—— 那是**埋没**，不是提示。
+    //
+    // 这里把它们提到开锁环正上方、独立一条。位置固定、颜色固定，
+    // 一眼扫得到；没有问题时整条不占位，不制造噪音。
+    //
+    // 刻意不挂到全局 topBanners：那套是"全 App 级闲时提醒"（自检/粘贴建议），
+    // 而低电量是这把锁自己的事，应该出现在它自己的控制台上。
+    private enum CriticalNotice {
+        case lowBattery(Int)
+        case alarms(Int)
+    }
+
+    private var criticalNotice: CriticalNotice? {
+        if let n = alarmCount, n > 0 { return .alarms(n) }
+        if let p = app.status?.powerLevel, p >= 0, p <= 20 { return .lowBattery(p) }
+        return nil
+    }
+
+    private var alarmCount: Int? {
+        let macs = DB.keychains().map { $0.mac }
+        guard !macs.isEmpty else { return nil }
+        let n = RecordSearch.unhandledAlarmCount(macs: macs)
+        return n > 0 ? n : nil
+    }
+
+    private func noticeRow(_ n: CriticalNotice) -> some View {
+        let isAlarm: Bool
+        let glyph: String
+        let text: String
+        let tone: Color
+        switch n {
+        case .alarms(let c):
+            isAlarm = true
+            glyph = "exclamationmark.shield.fill"
+            text = "有 \(c) 条告警还没处理"
+            tone = XPalette.danger
+        case .lowBattery(let p):
+            isAlarm = false
+            glyph = "battery.25"
+            text = "门锁电量 \(p)%，该换电池了"
+            tone = XPalette.warn
+        }
+        return Button {
+            XHaptics.tick.impactOccurred()
+            managerGroup = isAlarm ? .security : .devices
+        } label: {
+            HStack(spacing: XSpace.s) {
+                Image(systemName: glyph)
+                    .font(.system(size: XIcon.sm, weight: .semibold))
+                    .accessibilityHidden(true)
+                Text(text)
+                    .xFont(.system(.footnote, weight: .medium))
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                Spacer(minLength: XSpace.xs)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: XIcon.xs, weight: .semibold))
+                    .accessibilityHidden(true)
+            }
+            .foregroundStyle(tone)
+            .padding(.horizontal, XSpace.m)
+            .padding(.vertical, XSpace.m)
+            .frame(maxWidth: .infinity, minHeight: XHit.min, alignment: .leading)
+            // ⚠ 三参数重载要的是 XPlateShape，不是 CGFloat 圆角 —— 传错会直接编译失败
+            .xPlate(tone.opacity(0.12), .control, edge: tone.opacity(0.35))
+        }
+        .buttonStyle(PressableScaleStyle())
+        .accessibilityLabel(text)
+        .accessibilityHint(isAlarm ? "打开安全中心" : "打开设备管理")
     }
 
     // ─────────────────────────────────────────── ④ 开锁环
