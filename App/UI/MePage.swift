@@ -36,6 +36,7 @@ struct MePage: View {
 
     var body: some View {
         List {
+            statusSummary
             protectionSection
             lockSection
             dataSection
@@ -50,6 +51,80 @@ struct MePage: View {
 
     // ═══════════════════════════════════════════════════════
     // MARK: - ① 本机保护
+
+    // ═══════════════════════════════════════════════════════
+    // MARK: - ⓪ 本机状态摘要
+    // ═══════════════════════════════════════════════════════
+
+    /// 「这台手机」的第一眼该是本机整体状态, 而不是一串入口。
+    /// 四项: 应用锁 / 未处理告警 / 备份新鲜度 / 门锁数量。
+    /// 每项都是一个能直接跳过去的入口 —— 摘要不是只读的仪表,
+    /// 看到"未开启"就该能一点就进去开。
+    private var statusSummary: some View {
+        let locked = DB.store.getBool("kf_applock")
+        let alarmN = RecordSearch.unhandledAlarmCount(macs: DB.keychains().map { $0.mac })
+        let bkMs = DB.store.getInt("kf_bk_last_export", 0)
+        let bkDays = bkMs > 0
+            ? Int((Date().timeIntervalSince1970 * 1000 - Double(bkMs)) / 86_400_000)
+            : -1
+        let locks = DB.keychains().count
+
+        return Section {
+            HStack(spacing: XSpace.s) {
+                summaryTile(
+                    icon: locked ? "lock.shield.fill" : "lock.open",
+                    value: locked ? "已锁" : "未锁",
+                    label: "应用锁",
+                    tone: locked ? XPalette.ok : XPalette.warn)
+                summaryTile(
+                    icon: alarmN > 0 ? "exclamationmark.triangle.fill" : "checkmark.circle.fill",
+                    value: alarmN > 0 ? "\(alarmN)" : "0",
+                    label: "待处理告警",
+                    tone: alarmN > 0 ? XPalette.warn : XPalette.ok)
+                summaryTile(
+                    icon: bkDays < 0 ? "externaldrive.badge.questionmark" : "externaldrive.fill",
+                    value: bkDays < 0 ? "从未" : (bkDays <= 0 ? "今天" : "\(bkDays)天"),
+                    label: "上次备份",
+                    tone: bkDays < 0 ? XPalette.warn : (bkDays > 14 ? XPalette.warn : XPalette.ok))
+                summaryTile(
+                    icon: "square.stack.3d.up.fill",
+                    value: "\(locks)",
+                    label: "门锁",
+                    tone: locks > 0 ? XPalette.accent : XPalette.textTertiary)
+            }
+            .padding(.vertical, XSpace.xs)
+        }
+        .listRowBackground(Color.clear)
+        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: XSpace.s, trailing: 0))
+    }
+
+    private func summaryTile(icon: String, value: String, label: String, tone: Color) -> some View {
+        VStack(spacing: XSpace.xs) {
+            ZStack {
+                Circle()
+                    .fill(tone.opacity(0.13))
+                    .frame(width: 34, height: 34)
+                Image(systemName: icon)
+                    .font(.system(size: XIcon.sm, weight: .semibold))
+                    .foregroundStyle(tone)
+            }
+            .accessibilityHidden(true)
+            Text(value)
+                .xFont(.subheadline, weight: .semibold)
+                .foregroundStyle(XPalette.text)
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            Text(label)
+                .xFont(.caption2)
+                .foregroundStyle(XPalette.textTertiary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label): \(value)")
+    }
     // ═══════════════════════════════════════════════════════
 
     private var protectionSection: some View {
