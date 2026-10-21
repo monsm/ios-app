@@ -24,6 +24,7 @@ import SwiftUI
 // 底部 Tab 是**域内导航**，不参与三棱柱旋转。
 struct ManagerFace: View {
     @EnvironmentObject private var app: AppState
+    @Environment(\.dismiss) private var dismiss
     @State private var group: ManagerGroup = .ledger
 
     /// 从门厅带一个分组进来（门厅的「管理」按钮点哪个组就开哪个组）
@@ -54,6 +55,14 @@ struct ManagerFace: View {
             }
             .navigationTitle("管家台")
             .navigationBarTitleDisplayMode(.inline)
+            // 作为 sheet 弹出时，必须有一个看得见的出口。
+            // 只靠下滑关闭对不熟悉手势的人等于没有出口。
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("完成") { dismiss() }
+                        .fontWeight(.medium)
+                }
+            }
             .navigationDestination(for: ManagerRoute.self) { r in
                 routeDestination(r)
             }

@@ -98,6 +98,16 @@ struct HomeConsole: View {
                 else { withAnimation(.easeOut(duration: 0.28)) { appeared = true } }
             }
             .onDisappear { chargeTask?.cancel(); settlingTask?.cancel() }
+            // ═══ 深链兼容 ═══
+            //
+            // 删掉 DoorRoot 之后，requestRoute(.settings) 这类编程式跳转
+            // 只会把 tabSelection 改掉，却没人接 —— 等于所有深链、快捷指令、
+            // 通知点进来的落点全失效。这里把原来的 4 个 Tab 号映射成 5 个管理组，
+            // 让旧漏斗继续有落点（纵深页面本身没删，仍在 ManagerFace 里）。
+            .onChange(of: app.tabSelection) { _, t in
+                guard let r = Route.from(tab: t) else { return }
+                managerGroup = ManagerGroup.forRoute(r)
+            }
             .sheet(item: $managerGroup) { g in
                 ManagerFace(initialGroup: g).environmentObject(app)
             }
@@ -107,9 +117,14 @@ struct HomeConsole: View {
     // ─────────────────────────────────────────── ① 页眉
     private var masthead: some View {
         HStack {
-            Text(clockText)
-                .xFont(.system(.subheadline, design: .rounded, weight: .medium).monospacedDigit())
-                .foregroundStyle(XPalette.textSub)
+            // 用 TimelineView 每分钟重算一次 —— 直接写 Text(clockText) 只在
+            // 别的状态变化触发重绘时才更新，时钟会停在打开那一刻。
+            TimelineView(.periodic(from: .now, by: 30)) { ctx in
+                Text(clockText(ctx.date))
+                    .xFont(.system(.subheadline, design: .rounded, weight: .medium).monospacedDigit())
+                    .foregroundStyle(XPalette.textSub)
+                    .accessibilityLabel("现在 \(clockText(ctx.date))")
+            }
             Spacer(minLength: 0)
             HStack(spacing: 5) {
                 Circle().fill(phase.tone).frame(width: 6, height: 6)
@@ -568,8 +583,8 @@ struct HomeConsole: View {
     }
 
     // ─────────────────────────────────────────── 数据
-    private var clockText: String {
-        let c = WeekCal.gregorian.dateComponents([.hour, .minute], from: Date())
+    private func clockText(_ date: Date) -> String {
+        let c = WeekCal.gregorian.dateComponents([.hour, .minute], from: date)
         return String(format: "%02d:%02d", c.hour ?? 0, c.minute ?? 0)
     }
 
@@ -685,5 +700,22 @@ struct PressableScaleStyle: ButtonStyle {
             .scaleEffect(configuration.isPressed ? 0.96 : 1)
             .animation(.spring(response: 0.24, dampingFraction: 0.72),
                        value: configuration.isPressed)
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// MARK: - 旧 Tab → 新管理组
+// ═══════════════════════════════════════════════════════════════════════
+extension ManagerGroup {
+    /// 单一界面之后，原来的 4 个顶层 Tab 不再存在，但它们的入口
+    ///（深链 kf://settings、摇一摇遁走、粘贴条回凭证页…）仍在调用
+    /// requestRoute。为了让这些入口还有落点，把 Tab 映射到最接近的管理组。
+    static func forRoute(_ r: Route) -> ManagerGroup {
+        switch r {
+        case .device: return .devices
+        case .credentials: return .ledger
+        case .records: return .ledger
+        case .settings: return .backupLook
+        }
     }
 }
