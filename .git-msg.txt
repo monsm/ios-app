@@ -1,0 +1,19 @@
+fix(api): 按 swiftui-pro api.md 修正 4 处软弃用 API
+
+依据 references/api.md 的硬规则:
+- "Never concatenate Text values" → FirmwarePage 的 Text(...) + (...) 改纯插值
+- "showsIndicators: false" → scrollIndicators(.hidden)
+  (AddFingerPage / AddKeyPage 两处成员横向胶囊)
+- "overlay 收到视图时用构建闭包而非软弃用的视图参数重载"
+  → AddFingerPage 的 .overlay(Capsule()) 改 .overlay { Capsule() }
+
+未采纳的 4 条经逐条核实为误报:
+- AddLockPage:85 confirmationDialog(isPresented: Binding(get:set:)) 是系统 API
+  要求的绑定形状, 数据源为 @State 元组可选值, 无可投影父属性
+- AddLockPage:141 Text("\\(i + 1)") 本身即插值, 规则扫描误命中
+- StatsPage:123 .cornerRadius(2) 是 Charts BarMark 的角半径修饰符,
+  不是 View.cornerRadius, clipShape 那族规则不适用
+- DoorStage/DoorFront 的 GeometryReader 用于 3D 翻页所需的尺寸与透视锚点,
+  属规则明确列出的例外
+
+闸门: 20/20 全绿。

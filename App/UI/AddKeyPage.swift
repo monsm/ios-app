@@ -228,7 +228,7 @@ struct AddKeyPage: View {
                 }
 
                 // 成员横向胶囊
-                ScrollView(.horizontal, showsIndicators: false) {
+                ScrollView(.horizontal) {
                     HStack(spacing: XSpace.s) {
                         ownerChip(nil, "未归属")
                         ForEach(DB.members()) { m in
@@ -236,6 +236,7 @@ struct AddKeyPage: View {
                         }
                     }
                 }
+                .scrollIndicators(.hidden)
 
                 VariantToggle("备注自动填命名模板", isOn: $useTemplate)
                     .vkFont(.footnote)

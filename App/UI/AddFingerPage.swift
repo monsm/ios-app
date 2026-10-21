@@ -175,7 +175,7 @@ struct AddFingerPage: View {
                     Spacer()
                 }
 
-                ScrollView(.horizontal, showsIndicators: false) {
+                ScrollView(.horizontal) {
                     HStack(spacing: XSpace.s) {
                         ownerChip(nil, "未归属")
                         ForEach(DB.members()) { m in
@@ -183,6 +183,7 @@ struct AddFingerPage: View {
                         }
                     }
                 }
+                .scrollIndicators(.hidden)
             }
         }
     }
@@ -199,7 +200,7 @@ struct AddFingerPage: View {
                 .padding(.horizontal, XSpace.m)
                 .padding(.vertical, XSpace.s)
                 .background(Capsule().fill(selected ? XPalette.accent : XPalette.surfaceAlt))
-                .overlay(Capsule().strokeBorder(selected ? .clear : XPalette.hairline, lineWidth: 1))
+                .overlay { Capsule().strokeBorder(selected ? .clear : XPalette.hairline, lineWidth: 1) }
         }
         .buttonStyle(.plain)
         .animation(XMotion.quick, value: selected)

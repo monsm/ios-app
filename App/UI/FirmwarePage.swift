@@ -176,7 +176,7 @@ struct FirmwarePage: View {
                         .lineLimit(1)
                     Spacer()
                 }
-                Text("\(sizeText(p.binSize + p.datSize))" + (p.version.map { " · v\($0)" } ?? ""))
+                Text("\(sizeText(p.binSize + p.datSize))\(p.version.map { " · v\($0)" } ?? "")")
                     .vkFont(.caption)
                     .foregroundStyle(XPalette.textSub)
             }
