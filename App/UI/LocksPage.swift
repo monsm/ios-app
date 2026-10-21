@@ -35,6 +35,7 @@ struct LocksPage: View {
     @State private var editMode: EditMode = .inactive
     @State private var shareTarget: Keychain?
     @State private var showAdd = false
+    @State private var hiddenLocks: [Keychain] = []
 
     var body: some View {
         List {
@@ -72,6 +73,44 @@ struct LocksPage: View {
                 Text("\(locks.count) 把锁")
             } footer: {
                 Text("顺序就是启动时默认选中的顺序。左滑可隐藏, 长按可拖动排序。")
+            }
+
+            // ═══ 已隐藏 ═══
+            //
+            // 没有这一段的话，"左滑隐藏"是不可逆的：
+            // 隐藏的锁被 reload() 过滤掉了，而唯一能改 isHidden 的
+            // LockProfilePage 只编辑 app.currentMac（当前锁）——
+            // 于是那把锁在界面里彻底消失，既不能选、也不能改凭证、更无法恢复。
+            // 门锁 App 里"把一把锁弄没了"是严重问题，所以这里必须留出口。
+            if !hiddenLocks.isEmpty {
+                Section {
+                    ForEach(hiddenLocks) { kc in
+                        HStack(spacing: XSpace.m) {
+                            Image(systemName: "eye.slash")
+                                .font(.system(size: XIcon.sm, weight: .medium))
+                                .foregroundStyle(XPalette.textTertiary)
+                                .accessibilityHidden(true)
+                            Text(LockArchive.displayName(kc))
+                                .xFont(.subheadline)
+                                .foregroundStyle(XPalette.textSub)
+                                .lineLimit(1)
+                            Spacer(minLength: XSpace.s)
+                            Button("取消隐藏") {
+                                LockArchive.setHidden(kc.mac, false)
+                                reload()
+                                XHaptics.tick.impactOccurred()
+                            }
+                            .xFont(.footnote, weight: .medium)
+                            .foregroundStyle(XPalette.accentText)
+                            .accessibilityLabel("取消隐藏 " + LockArchive.displayName(kc))
+                        }
+                        .frame(minHeight: XHit.min)
+                    }
+                } header: {
+                    Text("已隐藏 \(hiddenLocks.count) 把")
+                } footer: {
+                    Text("隐藏的锁不出现在上面的列表里，但数据仍在。点「取消隐藏」就可以放回来。")
+                }
             }
         }
         .listStyle(.insetGrouped)
@@ -256,7 +295,9 @@ struct LocksPage: View {
     // ═══════════════════════════════════════════════════════
 
     private func reload() {
-        locks = DB.keychains().filter { !LockArchive.isHidden($0.mac) }
+        let all = DB.keychains()
+        locks = all.filter { !LockArchive.isHidden($0.mac) }
+        hiddenLocks = all.filter { LockArchive.isHidden($0.mac) }
     }
 
     private func persistOrder() {
