@@ -148,6 +148,13 @@ const checks = [
     const m = RAW.get('ManagerFace.swift') || '';
     return /@ViewBuilder\s*\n\s*private func routeDestination/.test(m);
   }],
+  ['诊断页用顶层类型名（DiagKit 不是类型）', () => {
+    // CI 报过 "cannot find type 'DiagKit' in scope" —— 文件叫 DiagKit.swift，
+    // 但里面全是顶层 enum（SelfCheck / DataHealth / BleTelemetry …），
+    // 并没有一个叫 DiagKit 的命名空间类型。
+    const d = RAW.get('DiagnosticsPage.swift') || '';
+    return d.length > 0 && !d.includes('DiagKit.');
+  }],
 ];
 
 let pass = 0;

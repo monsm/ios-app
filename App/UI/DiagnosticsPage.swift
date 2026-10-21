@@ -5,7 +5,7 @@ import SwiftUI
 // ═══════════════════════════════════════════════════════════════════════
 //
 // 这一屏补的是一个**计划内、但丢了**的界面：
-// `App/Core/DiagKit.swift` 有 642 行、十来组采集器（自检 / 数据健康 / 异常退出 /
+// `App/Core/swift` 有 642 行、十来组采集器（自检 / 数据健康 / 异常退出 /
 // 启动耗时 / 最近操作 / 蓝牙遥测 / 日志保留 / 页面耗时），
 // 而全仓 UI **零消费** —— 采了半天没有任何地方显示。
 //
@@ -21,9 +21,9 @@ struct DiagnosticsPage: View {
 
     @State private var copied = false
 
-    private var selfChecks: [DiagKit.SelfCheckLine] { DiagKit.SelfCheck.run() }
-    private var health: [String] { DiagKit.DataHealth.integrity() }
-    private var orphans: [String] { DiagKit.DataHealth.scanOrphans() }
+    private var selfChecks: [SelfCheckLine] { SelfCheck.run() }
+    private var health: [String] { DataHealth.integrity() }
+    private var orphans: [String] { DataHealth.scanOrphans() }
 
     var body: some View {
         ScrollView {
@@ -66,7 +66,7 @@ struct DiagnosticsPage: View {
                         .font(.system(size: XIcon.md, weight: .semibold))
                         .foregroundStyle(bad == 0 ? XPalette.ok : XPalette.warn)
                         .accessibilityHidden(true)
-                    Text(DiagKit.SelfCheck.summary(lines))
+                    Text(SelfCheck.summary(lines))
                         .xFont(.system(.subheadline, weight: .medium))
                         .foregroundStyle(XPalette.text)
                     Spacer(minLength: 0)
@@ -128,8 +128,8 @@ struct DiagnosticsPage: View {
 
     // ── 稳定性 ────────────────────────────────────────────
     private var stabilityCard: some View {
-        let startup = DiagKit.StartupTrace.totalMs
-        let crashed = DiagKit.CrashGuard.pendingAbnormal
+        let startup = StartupTrace.totalMs
+        let crashed = CrashGuard.pendingAbnormal
         return XPanel(kind: .group, padding: 0) {
             VStack(spacing: 0) {
                 header("稳定性", tone: crashed ? XPalette.warn : XPalette.ok)
@@ -142,7 +142,7 @@ struct DiagnosticsPage: View {
                         tone: startup > 800 ? XPalette.warn : XPalette.textSub,
                         title: String(format: "本次启动 %.0f ms", startup),
                         detail: startup > 800 ? "超过 800ms 预算，冷启动可能偏慢" : "在 800ms 预算内")
-                let arch = DiagKit.CrashGuard.archList()
+                let arch = CrashGuard.archList()
                 if !arch.isEmpty {
                     XHairline(inset: XSpace.card)
                     itemRow(icon: "archivebox", tone: XPalette.textSub,
@@ -155,7 +155,7 @@ struct DiagnosticsPage: View {
 
     // ── 最近操作 ──────────────────────────────────────────
     private var opsCard: some View {
-        let ops = DiagKit.DiagOps.list()
+        let ops = DiagOps.list()
         return XPanel(kind: .group, padding: 0) {
             VStack(spacing: 0) {
                 header("最近操作", tone: XPalette.textTertiary)
@@ -188,8 +188,8 @@ struct DiagnosticsPage: View {
 
     // ── 蓝牙 ──────────────────────────────────────────────
     private var bleCard: some View {
-        let ev = DiagKit.BleTelemetry.events
-        let bad = DiagKit.BleTelemetry.attempts.filter { !$0.ok }
+        let ev = BleTelemetry.events
+        let bad = BleTelemetry.attempts.filter { !$0.ok }
         return XPanel(kind: .group, padding: 0) {
             VStack(spacing: 0) {
                 header("蓝牙", tone: bad.isEmpty ? XPalette.ok : XPalette.warn)
@@ -216,8 +216,8 @@ struct DiagnosticsPage: View {
 
     // ── 日志保留 ──────────────────────────────────────────
     private var retentionCard: some View {
-        let days = DiagKit.DiagLogs.retentionDays
-        let n = DiagKit.DiagLogs.all().count
+        let days = DiagLogs.retentionDays
+        let n = DiagLogs.all().count
         return XPanel(kind: .group, padding: 0) {
             VStack(spacing: 0) {
                 header("日志", tone: XPalette.textTertiary)
@@ -271,13 +271,13 @@ struct DiagnosticsPage: View {
     /// 复制成一段可粘贴的纯文本 —— 用户要反馈问题时，这是最有用的东西。
     private func fullReport() -> String {
         var out: [String] = ["— 诊断 —"]
-        out.append(DiagKit.SelfCheck.summary(selfChecks))
+        out.append(SelfCheck.summary(selfChecks))
         for l in selfChecks { out.append("· \(l.name)：\(l.ok ? "通过" : "异常") — \(l.detail)") }
         if !health.isEmpty { out.append("数据健康："); health.forEach { out.append("· " + $0) } }
         if !orphans.isEmpty { out.append("孤立数据 \(orphans.count) 项") }
-        out.append("启动 \(String(format: "%.0f", DiagKit.StartupTrace.totalMs)) ms")
-        out.append(DiagKit.CrashGuard.pendingAbnormal ? "上次异常退出" : "上次正常退出")
-        out.append("日志 \(DiagKit.DiagLogs.all().count) 条")
+        out.append("启动 \(String(format: "%.0f", StartupTrace.totalMs)) ms")
+        out.append(CrashGuard.pendingAbnormal ? "上次异常退出" : "上次正常退出")
+        out.append("日志 \(DiagLogs.all().count) 条")
         return out.joined(separator: "\n")
     }
 }
