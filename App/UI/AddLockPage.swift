@@ -409,10 +409,49 @@ struct AddLockPage: View {
                 .xFont(.subheadline)
                 .foregroundStyle(XPalette.textSub)
 
+            // ═══ 接下来 ═══
+            //
+            // 这里原来是"对勾 + 已添加 + 完成"就结束了。
+            // 但配对成功只是把锁**登记**进来 —— 没录指纹、没加密码、
+            // 也还没同步过一次开门历史。用户点"完成"回到原页面，
+            // 很可能以为已经装好了，然后第一次按门锁发现打不开。
+            //
+            // 所以把"接下来该做什么"写在这里：不是教程，是三件具体的事。
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: XSpace.m) {
+                    Text("接下来")
+                        .xFont(.caption, weight: .semibold)
+                        .foregroundStyle(XPalette.textTertiary)
+                        .textCase(.uppercase)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    nextRow(icon: "touchid", text: "在「钥匙」里录一枚指纹或密码 —— 不给凭证，锁认不出你")
+                    nextRow(icon: "arrow.down.circle", text: "在「事件记录」里同步一次开门历史 —— 统计与归属都从这里来")
+                    nextRow(icon: "lock.open", text: "回门厅按住开锁环试一次 —— 确认这把锁真的能开")
+                }
+            }
+            .padding(.top, XSpace.s)
+
             Button("完成") { dismiss() }
                 .buttonStyle(XPrimaryButtonStyle(fullWidth: false))
-                .padding(.top, XSpace.l)
+                .padding(.top, XSpace.s)
         }
+    }
+
+    private func nextRow(icon: String, text: String) -> some View {
+        HStack(alignment: .top, spacing: XSpace.s) {
+            Image(systemName: icon)
+                .font(.system(size: XIcon.sm, weight: .medium))
+                .foregroundStyle(XPalette.accentText)
+                .frame(width: 22)
+                .accessibilityHidden(true)
+            Text(text)
+                .xFont(.system(.footnote))
+                .foregroundStyle(XPalette.textSub)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(text)
     }
 
     private var errorBanner: some View {
