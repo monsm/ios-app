@@ -544,6 +544,26 @@ struct TempCodeStudio: View {
     private var addForm: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: XSpace.l) {
+                // 容量提示 —— 临时码与常驻密码**共用同一份库存**（协议 0x25 pwdStock），
+                // 原来这页完全不显示还剩几个坑位，用户会填完表单才被锁端拒绝。
+                if let snap = DB.readStatus(mac), let cap = snap.pwdCap, cap > 0 {
+                    let left = snap.pwdStock
+                    let used = max(0, cap - left)
+                    Label {
+                        Text(left == 0
+                             ? "密码库存已满 — 临时码也占同一个池子，请先删一条"
+                             : "还可建 " + String(left) + " 个 · 已用 " + String(used) + " / " + String(cap))
+                            .fixedSize(horizontal: false, vertical: true)
+                    } icon: {
+                        Image(systemName: "number.square")
+                    }
+                    .xFont(.caption)
+                    .foregroundStyle(left == 0 ? XPalette.warn : XPalette.textSub)
+                    .padding(.horizontal, XSpace.s)
+                    .padding(.vertical, 4)
+                    .xCallout(left == 0 ? XPalette.warn : XPalette.hairline, .control, wash: left == 0 ? 0.10 : 0.06)
+                }
+
                 // 325 五场景预设
                 VStack(alignment: .leading, spacing: XSpace.xs) {
                     Text("场景预设 (选中即套默认时长与备注)")
