@@ -744,7 +744,7 @@ struct LinkPrefsView: View {
                 }
 
                 Text("信号强度来自最近的 BLE 广播。走近门锁后刷新可看到变化。")
-                    .xFont(.caption2)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -789,7 +789,7 @@ struct LinkPrefsView: View {
                 .pickerStyle(.menu)
                 .tint(XPalette.accentText)
                 Text("RSSI 达标才预热, 低信号不浪费电量。只影响自动预握手的启动门槛；手动点圆盘、靠近自动开锁 (AUTOOPEN) 的判定不受这一档约束。")
-                    .xFont(.caption)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 LabeledRow("连接偏好记忆", "每锁 kf_link_auto_ 偏好 + rssiFor 实读; 扫描强度档走全局")
@@ -807,7 +807,7 @@ struct LinkPrefsView: View {
                 LabeledRow("高成功率时段", LinkSense.bestHourHint())
                 LabeledRow("占用类错误", LinkSense.occupationHint())
                 Text("成功率需 7 天握手数据积累，当前为占位；高成功率时段与占用类提示已接入 LinkSense 的真实读数。")
-                    .xFont(.caption)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }

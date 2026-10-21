@@ -246,7 +246,9 @@ const checks = [
         if (!/\.xFont\(\.(?:system\()?\.?caption2?\b/.test(t)) return;
         for (let k = i - 1; k >= Math.max(0, i - 6); k--) {
           if (/\.xFont\(/.test(lines[k])) break;
-          if (/Text\("([^"]{25,})"\)/.test(lines[k])) { bad++; break; }
+          // 含 \(插值) 的模板串源码长、渲染短（如 "\\(n) 秒后刷新"），不算长句。
+          const tm = lines[k].match(/Text\("([^"]{25,})"\)/);
+          if (tm && !tm[1].includes('\\(')) { bad++; break; }
         }
       });
     }
