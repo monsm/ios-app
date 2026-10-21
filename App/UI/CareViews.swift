@@ -41,11 +41,20 @@ struct MaintenanceView: View {
 
     var body: some View { vkBody.destined(.maintenance) }
     var vkBody: some View {
-        Form {
+        ZStack {
+            XPalette.canvas.ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: XSpace.l) {
             carePeriodSection      // 1013/1015
             historySection         // 1028/1014
             swapSection            // 116/118/1012
             ekeySection            // 1025
+                }
+                .padding(.horizontal, XSpace.gutter)
+                .padding(.vertical, XSpace.l)
+            }
+            .scrollIndicators(.hidden)
         }
         .navigationTitle("维护与保养")
         .xList()
@@ -316,7 +325,11 @@ struct BatterySwapGuideView: View {
 
     var body: some View { vkBody.destined(.batterySwapGuide) }
     var vkBody: some View {
-        Form {
+        ZStack {
+            XPalette.canvas.ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: XSpace.l) {
             XPanel(kind: .group) {
                 VStack(alignment: .leading, spacing: XSpace.m) {
                     secLabel("换电步骤")
@@ -369,6 +382,11 @@ struct BatterySwapGuideView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
+                }
+                .padding(.horizontal, XSpace.gutter)
+                .padding(.vertical, XSpace.l)
+            }
+            .scrollIndicators(.hidden)
         }
         .navigationTitle("换电指引")
         .xList()
@@ -413,7 +431,11 @@ struct CareChecklistView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
+            ZStack {
+                XPalette.canvas.ignoresSafeArea()
+
+                ScrollView {
+                    VStack(spacing: XSpace.l) {
                 XPanel(kind: .group) {
                     VStack(alignment: .leading, spacing: XSpace.m) {
                         secLabel("五项清单")
@@ -457,6 +479,11 @@ struct CareChecklistView: View {
                         .disabled(!checks.allSatisfy({ $0 }))
                     }
                 }
+                    }
+                    .padding(.horizontal, XSpace.gutter)
+                    .padding(.vertical, XSpace.l)
+                }
+                .scrollIndicators(.hidden)
             }
             .navigationTitle("锁体保养")
             .xList()
