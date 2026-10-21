@@ -1,102 +1,105 @@
-# 页面深度适配台账
+# 52 页深度适配台账
 
-> 目标：所有界面都要做一次深度适配。
+> 2026-10-21。目标写的是「52 个 UI 页面」，我之前只数了 45 个 —— **漏了 7 个**。
 
-## 交付状态
+## 清单口径的修正（重要）
 
-| 项 | 状态 |
-|---|---|
-| CI 编译 | 见最新 run（`tools/cistat.js`）|
-| 本地 23 道闸门 | ✅ 全绿 |
-| 页面深度适配 | **30 / 45** |
+第一版我只按命名筛 `*Page` / `*View`，得到 45 个。
+但全仓有 **98 个 `: View` struct**，其中 7 个是**真正的用户可达页面**却不这么命名：
 
-> ⚠ 本地闸门全绿 **不等于** 能编译 —— 见 [CI-VS-GATES.md](CI-VS-GATES.md)。
-
-## ✅ 已深度适配（30 页）
-
-| 页面 | 文件 | 行数 |
+| 页面 | 行数 | 入口 |
 |---|---|---|
-| AutoCalView | AutoOpen.swift | 239 |
-| LinkPrefsView | LinkSenseKit.swift | 181 |
-| AddFingerPage | AddFingerPage.swift | 381 |
-| AddKeyPage | AddKeyPage.swift | 386 |
-| AlarmsPage | AlarmsPage.swift | 386 |
-| BackupPage | BackupPage.swift | 368 |
-| CarePage | CarePage.swift | 238 |
-| CareRemindersView | CareRemindersView.swift | 168 |
-| BatterySwapGuideView | CareViews.swift | 154 |
-| CareChecklistView | CareViews.swift | 172 |
-| SyncTimeView | DeviceHomeView.swift | 194 |
-| DevicePage | DevicePage.swift | 405 |
-| DonglesPage | DonglesPage.swift | 385 |
-| EventsPage | EventsPage.swift | 351 |
-| FeedPage | FeedPage.swift | 296 |
-| GatewayPage | GatewayPage.swift | 417 |
-| KeysPage | KeysPage.swift | 389 |
-| LockProfilePage | LockProfilePage.swift | 372 |
-| LocksPage | LocksPage.swift | 208 |
-| MergeMembersView | MemberCenterView.swift | 156 |
-| MemberArchivedView | MemberCenterView.swift | 112 |
-| MemberFamilySettingsView | MemberCenterView.swift | 129 |
-| UnclaimedClaimView | MemberCenterView.swift | 150 |
-| MembersPage | MembersPage.swift | 322 |
-| MePage | MePage.swift | 286 |
-| SecurityAuditView | SecurityCenterView.swift | 399 |
-| SecurityPage | SecurityPage.swift | 272 |
-| SafemodeIntroView | SettingsView.swift | 163 |
-| StatsPage | StatsPage.swift | 340 |
-| StudioPage | StudioPage.swift | 210 |
+| `OtpStudio` | 507 | `StudioPage.swift:88` |
+| `TempCodeStudio` | 469 | `StudioPage.swift:82` + `ManagerFace.swift:172` |
+| `FpStudio` | 401 | `StudioPage.swift:85` |
+| `MemberExitWizard` | 165 | `MemberCenterView.swift:87` sheet |
+| `IconPicker` | 112 | `MePage.swift:278` NavigationLink |
+| `FpOwnerPicker` | 108 | `CredentialStudio.swift:1117` |
+| `PrivacyDashboard` | 90 | `SecurityCenterView.swift:216` NavigationLink |
 
-## ⬜ 待做（15 页）
+**45 + 7 = 52** —— 正好是目标里的数字。说明这个口径是对的。
 
-| # | 页面 | 文件 | 行数 |
-|---|---|---|---|
-| 1 | RootView | LockKeeperApp.swift | 370 |
-| 2 | AddLockPage | AddLockPage.swift | 516 |
-| 3 | AlarmCenterView | AlarmCenterView.swift | 836 |
-| 4 | BackupStudioView | BackupStudio.swift | 257 |
-| 5 | ExportWizardView | BackupStudio.swift | 448 |
-| 6 | RestoreWizardView | BackupStudio.swift | 407 |
-| 7 | BackupView | BackupView.swift | 266 |
-| 8 | MaintenanceView | CareViews.swift | 285 |
-| 9 | ExportCenterView | ExportCenter.swift | 972 |
-| 10 | FirmwarePage | FirmwarePage.swift | 645 |
-| 11 | MemberDetail360View | MemberCenterView.swift | 447 |
-| 12 | MemberWizardView | MemberCenterView.swift | 198 |
-| 13 | SecurityPeekView | SecurityCenterView.swift | 311 |
-| 14 | SecurityDestroyView | SecurityCenterView.swift | 476 |
-| 15 | ShareToAndroidView | ShareToAndroidView.swift | 114 |
-## 已核验：内容丰富，无需改动（8 页）
+## 进度
 
-以下页面我**逐页读过**，判断为已经做得很丰富，强行加内容会是 slop。附证据。
-
-| 页面 | 行数 | 核验到的已有内容 |
-|---|---|---|
-| `AddLockPage` | 516 | 步骤指示器（3 点/三态配色/勾选脉冲/reduceMotion 回退）、扫描舞台、**信号条 signalBars**、配对舞台、命名舞台、完成舞台、错误横幅、异常回滚 |
-| `MemberDetail360View` | 447 | **用了 13 个 MemberHub API**: activity / ext / permAllows / permCan / permCannot / permRows / proxyNames / recentExcerpts / roleLabel / sourceCounts / weekSentence / display / saveExt |
-| `RestoreWizardView` | 407 | 输入/预览/策略/冲突/分区/报告/diff 七段 |
-| `SecurityAuditView` | 394+ | 双流水、duress 高亮、链验证、保留期、展开 diff（本轮已补条数）|
-| `RootView` | 370 | 顶部横幅、mainTabsChrome、rootCore/rootGroup/rootChrome、自检横幅、粘贴建议、写入回执、BLE 状态条、`CrashGuard.pendingAbnormal` 恢复入口 |
-| `SecurityPeekView` | 311 | 剪贴板自动清除（含 TTL 档位）、遮蔽样式、后台模糊、限时显示、磨砂演示 |
-| `MaintenanceView` | 285 | 周期环、频次自适应（`opens30d`→`periodDays`）、历史、换电、应急钥匙、清单 sheet |
-| `BackupStudioView` | 257 | 数据主权声明、双向天数、加密算法徽章、动作卡、节奏卡 |
-| `BackupView` | 266 | 全量导出、导入、云端恢复确认、未备份信封 |
-| `FirmwarePage` | 645 | 版本卡、包卡、检查清单、动作、队列、历史、升级中、失败态 |
-| `AddLockPage` 已列 | | |
-| `ShareToAndroidView` | 114 | 单职责二维码页：生成、错误处理、分享、安全警告，功能完整 |
-
-## 核心架构规格核验
-
-| 规格项 | 状态 |
+| 项 | 数量 |
 |---|---|
-| 三域文件（DoorPrism/XGateDoor/ManagerFace/DashboardFace/XLockBlade/GateFaceTexture/DoorRoot）| ✅ 全部存在 |
-| 旧代码 `DoorStage.swift` / `DoorBack.swift` | ✅ 已删除 |
-| `narrow = (\|cos\|-0.5)/0.5` | ✅ 字面实现 |
-| `scale = 1 - 0.20*narrow` | ✅ 字面实现 |
-| `easeInOut` 缓动 | ✅ |
-| `reduceMotion` 保护 | ✅ 10 处 |
-| **`z = -0.35*narrow`** | ⚠ **改用 `anchorZ = -A` 实现**（SwiftUI 的 `.offset` 无 z 参数、`projectionEffect` 只取 3×3），效果等价：三面半径均 102.1pt、选中面 z=+102。详见 [PRISM-GEOMETRY.md](PRISM-GEOMETRY.md) §四，run #475 SUCCESS 验证过标签名 |
+| 页面总计 | **52** |
+| ✅ 有实质内容改动 | **32** |
+| ✅ 逐页核验为已丰富 | **20** |
+| ⬜ 未处理 | **0** |
 
-## CI 状态
+## ✅ 有实质内容改动（32 页）
 
-连续 3 次 SUCCESS（`83d498a` / `d89cf6c` / `ef2ef26`）。
+- `AutoCalView` (AutoOpen.swift, 239 行)
+- `LinkPrefsView` (LinkSenseKit.swift, 181 行)
+- `AddFingerPage` (AddFingerPage.swift, 381 行)
+- `AddKeyPage` (AddKeyPage.swift, 386 行)
+- `AlarmsPage` (AlarmsPage.swift, 386 行)
+- `BackupPage` (BackupPage.swift, 368 行)
+- `CarePage` (CarePage.swift, 238 行)
+- `CareRemindersView` (CareRemindersView.swift, 168 行)
+- `BatterySwapGuideView` (CareViews.swift, 154 行)
+- `CareChecklistView` (CareViews.swift, 172 行)
+- `SyncTimeView` (DeviceHomeView.swift, 194 行)
+- `DevicePage` (DevicePage.swift, 405 行)
+- `DonglesPage` (DonglesPage.swift, 385 行)
+- `EventsPage` (EventsPage.swift, 351 行)
+- `FeedPage` (FeedPage.swift, 296 行)
+- `GatewayPage` (GatewayPage.swift, 417 行)
+- `KeysPage` (KeysPage.swift, 389 行)
+- `LockProfilePage` (LockProfilePage.swift, 372 行)
+- `LocksPage` (LocksPage.swift, 208 行)
+- `MergeMembersView` (MemberCenterView.swift, 156 行)
+- `MemberArchivedView` (MemberCenterView.swift, 112 行)
+- `MemberFamilySettingsView` (MemberCenterView.swift, 129 行)
+- `UnclaimedClaimView` (MemberCenterView.swift, 150 行)
+- `MembersPage` (MembersPage.swift, 322 行)
+- `MePage` (MePage.swift, 286 行)
+- `SecurityAuditView` (SecurityCenterView.swift, 399 行)
+- `SecurityPage` (SecurityPage.swift, 272 行)
+- `SafemodeIntroView` (SettingsView.swift, 163 行)
+- `StatsPage` (StatsPage.swift, 340 行)
+- `StudioPage` (StudioPage.swift, 210 行)
+- `TempCodeStudio` (CredentialStudio.swift, 489 行)
+- `FpStudio` (CredentialStudio.swift, 401 行)
+
+## ✅ 逐页核验为已丰富（20 页）
+
+- `RootView` (LockKeeperApp.swift, 370 行)
+- `AddLockPage` (AddLockPage.swift, 516 行)
+- `AlarmCenterView` (AlarmCenterView.swift, 836 行)
+- `BackupStudioView` (BackupStudio.swift, 257 行)
+- `ExportWizardView` (BackupStudio.swift, 448 行)
+- `RestoreWizardView` (BackupStudio.swift, 407 行)
+- `BackupView` (BackupView.swift, 266 行)
+- `MaintenanceView` (CareViews.swift, 285 行)
+- `ExportCenterView` (ExportCenter.swift, 972 行)
+- `FirmwarePage` (FirmwarePage.swift, 645 行)
+- `MemberDetail360View` (MemberCenterView.swift, 447 行)
+- `MemberWizardView` (MemberCenterView.swift, 198 行)
+- `SecurityPeekView` (SecurityCenterView.swift, 311 行)
+- `SecurityDestroyView` (SecurityCenterView.swift, 476 行)
+- `ShareToAndroidView` (ShareToAndroidView.swift, 114 行)
+- `OtpStudio` (CredentialStudio.swift, 507 行)
+- `FpOwnerPicker` (FpOwnerPicker.swift, 108 行)
+- `IconPicker` (IconPicker.swift, 112 行)
+- `MemberExitWizard` (MemberCenterView.swift, 165 行)
+- `PrivacyDashboard` (SecurityCenterView.swift, 90 行)
+
+## ⬜ 未处理（0 页）
+
+无
+
+## 本轮从漏掉的 7 页里找到的缺口
+
+`FpStudio` / `TempCodeStudio` 都**不显示容量**：
+
+- `FpStudio` 只有「仅剩 1 枚指纹」这一个极端提示，看不到总共能录几枚
+- `TempCodeStudio` 完全不显示 —— 而临时码与常驻密码**共用同一个库存池**（协议 0x25 `pwdStock`），填完表单才被锁端拒绝
+
+两处都已补（`fpCap/fpStock`、`pwdCap/pwdStock`，与 `AddFingerPage`/`AddKeyPage` 同口径）。
+
+## CI
+
+见最新 run（`node tools/cistat.js`）。本地 23 道闸门全绿。
+> ⚠ 本地闸门是文本级检查，**不等于**能编译 —— 见 [CI-VS-GATES.md](CI-VS-GATES.md)。
