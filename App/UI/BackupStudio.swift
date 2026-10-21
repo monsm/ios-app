@@ -17,12 +17,12 @@ struct BackupStudioView: View {
     var vkBody: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: DS.Space.l) {
+                VStack(spacing: XSpace.l) {
                     trustHeader
                     actionCards
                     cadenceCard
                 }
-                .padding(.vertical, DS.Space.m)
+                .padding(.vertical, XSpace.m)
             }
             .navigationTitle("备份工作室")
             .variantList()
@@ -36,30 +36,30 @@ struct BackupStudioView: View {
     // ---------- 512 数据主权声明 (盾形 SF Symbol + 固定一句) + 509 双向天数行 ----------
     private var trustHeader: some View {
         Card(tint: .ok) {
-            HStack(spacing: DS.Space.m) {
+            HStack(spacing: XSpace.m) {
                 Image(systemName: "lock.shield")
-                    .font(.system(size: DS.Icon.lg, weight: .semibold))
-                    .foregroundStyle(DS.Palette.ok)
+                    .font(.system(size: XIcon.lg, weight: .semibold))
+                    .foregroundStyle(XPalette.ok)
                     .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: DS.Space.xs) {
+                VStack(alignment: .leading, spacing: XSpace.xs) {
                     Text("数据只存在这台 iPhone")   // 512 数据只存在这台
                         .vkFont(.headline)
-                        .foregroundStyle(DS.Palette.text)
-                    HStack(spacing: DS.Space.s) {
+                        .foregroundStyle(XPalette.text)
+                    HStack(spacing: XSpace.s) {
                         Label(daysText("上次导出", BackupStudio.daysSinceLastExport()),
                               systemImage: "square.and.arrow.up")
                         Label(daysText("上次导入", BackupStudio.daysSinceLastImport()),
                               systemImage: "square.and.arrow.down")
                     }
                     .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.textSub)
+                    .foregroundStyle(XPalette.textSub)
                     .accessibilityElement(children: .combine)
                     // 37 备份加密徽章 (Proton): 算法参数外露, 换算法后旧文件各自标注
                     Label("AES-128-CBC + HMAC-SHA256 · PBKDF2 60000 轮 — 徽章是「当前代码」用的算法; "   // 37 AES
                           + "每份旧备份自己的参数在「本地备份文件」列表逐文件标注",   // 435 每份旧备份自己的参数
                           systemImage: "lock.shield.fill")
                         .vkFont(.caption2)
-                        .foregroundStyle(DS.Palette.ok)
+                        .foregroundStyle(XPalette.ok)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -72,7 +72,7 @@ struct BackupStudioView: View {
             if let w = BackupStudio.selfCheckWarning {
                 Label(w, systemImage: "exclamationmark.triangle")
                     .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.warn)
+                    .foregroundStyle(XPalette.warn)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -93,11 +93,11 @@ struct BackupStudioView: View {
                 } label: {
                     Label("撤销本次恢复 (24h 内)", systemImage: "arrow.uturn.left")
                         .vkFont(.subheadline)
-                        .foregroundStyle(DS.Palette.danger)
+                        .foregroundStyle(XPalette.danger)
                         .frame(maxWidth: .infinity)
-                        .frame(minHeight: DS.Hit.min)
-                        .background(DS.Palette.danger.opacity(0.09),
-                                    in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
+                        .frame(minHeight: XHit.min)
+                        .background(XPalette.danger.opacity(0.09),
+                                    in: RoundedRectangle(cornerRadius: XRadius.control, style: .continuous))
                 }
             }
         }
@@ -106,63 +106,63 @@ struct BackupStudioView: View {
         d < 0 ? "\(label) 暂无" : (d == 0 ? "\(label) 今日" : "\(label) \(d) 天前")
     }
     private var freshnessBanner: some View {
-        HStack(spacing: DS.Space.s) {
+        HStack(spacing: XSpace.s) {
             Text("距上次备份已 \(BackupStudio.daysSinceLastExport()) 天")   // 429 距上次备份已
                 .vkFont(.caption)
-                .foregroundStyle(DS.Palette.warn)
+                .foregroundStyle(XPalette.warn)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
             Button("立即备份") { showExport = true }
                 .vkFont(.caption, weight: .semibold)
-                .foregroundStyle(DS.Palette.accentText)
-                .frame(minHeight: DS.Hit.min)
+                .foregroundStyle(XPalette.accentText)
+                .frame(minHeight: XHit.min)
         }
-        .padding(.top, DS.Space.s)
+        .padding(.top, XSpace.s)
     }
 
     // ---------- 五大动作卡 (触达 ≥44pt) ----------
     private var actionCards: some View {
-        VStack(spacing: DS.Space.s) {
+        VStack(spacing: XSpace.s) {
             studioRow(title: "导出向导", sub: "分区勾选 · 口令 · 自描述命名 · 二维码搬运",
-                      icon: "tray.and.arrow.up", tint: DS.Palette.accentText) { showExport = true }
+                      icon: "tray.and.arrow.up", tint: XPalette.accentText) { showExport = true }
             studioRow(title: "恢复向导", sub: "预演 · 三策略 · 冲突裁决 · 回滚点",
-                      icon: "tray.and.arrow.down", tint: DS.Palette.warn) { showRestore = true }
+                      icon: "tray.and.arrow.down", tint: XPalette.warn) { showRestore = true }
         }
     }
     private func studioRow(title: String, sub: String, icon: String, tint: Color,
                            action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: DS.Space.m) {
+            HStack(spacing: XSpace.m) {
                 Image(systemName: icon)
-                    .font(.system(size: DS.Icon.md, weight: .medium))
+                    .font(.system(size: XIcon.md, weight: .medium))
                     .foregroundStyle(tint)
                     .frame(width: 30)
                     .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: DS.Space.xxs) {
+                VStack(alignment: .leading, spacing: XSpace.xxs) {
                     Text(title)
                         .vkFont(.subheadline, weight: .semibold)
-                        .foregroundStyle(DS.Palette.text)
+                        .foregroundStyle(XPalette.text)
                     Text(sub)
                         .vkFont(.caption)
-                        .foregroundStyle(DS.Palette.textSub)
+                        .foregroundStyle(XPalette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                Spacer(minLength: DS.Space.s)
+                Spacer(minLength: XSpace.s)
                 Image(systemName: "chevron.right")
-                    .font(.system(size: DS.Icon.xs))
-                    .foregroundStyle(DS.Palette.textSub)
+                    .font(.system(size: XIcon.xs))
+                    .foregroundStyle(XPalette.textSub)
                     .accessibilityHidden(true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .frame(minHeight: DS.Hit.min)
-            .padding(DS.Space.l)
+            .frame(minHeight: XHit.min)
+            .padding(XSpace.l)
             // 2026-10-14 材质统一: 通道入口行是坐在页面底上的面板 (它下面就是 gutter)，与同页
             // 三选一卡、预演分段块同材质。这处原本写成两行 `.background(surface,\n in: …)`，
             // 单行正则扫不到 —— 现在信 AST 那条 R6，不信 grep。
-            .axGlass(DS.Radius.card)
+            .axGlass(XRadius.card)
         }
         .buttonStyle(.plain)
-        .padding(.horizontal, DS.Space.gutter)
+        .padding(.horizontal, XSpace.gutter)
         .accessibilityElement(children: .combine)
     }
 
@@ -196,34 +196,34 @@ struct BackupStudioView: View {
             // 那件事此前只在导出完成的那句回执里说 —— 事后说清 ≠ 事前说清, 开关上手那一刻就得写明。
             Text("只清理本 App 生成的备份文件 (文件名以「锁管家_」开头那族)，目录里的其它文件与子目录一律不动；0 = 不限。同一档也用于本机导出目录的轮换 (每次成功导出之后)。")
                 .vkFont(.footnote)
-                .foregroundStyle(DS.Palette.textSub)
+                .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             // 713 固定导出目录: 用安全作用域书签记住用户选的文件夹, 之后每次导出都落那里 ——
             // 没设过时回落 App 缓存目录 (系统可能清理), 所以这里把两种落点都写清。
             let _ = dirTick
-            HStack(spacing: DS.Space.s) {
-                VStack(alignment: .leading, spacing: DS.Space.xxs) {
+            HStack(spacing: XSpace.s) {
+                VStack(alignment: .leading, spacing: XSpace.xxs) {
                     Text("导出目录")   // 713 导出目录
                         .vkFont(.subheadline, weight: .medium)
                     Text(ExportDir.name.isEmpty
                          ? "未设置 — 导出落在 App 缓存目录 (系统可能清理)"
                          : "已固定: \(ExportDir.name)")
                         .vkFont(.footnote)
-                        .foregroundStyle(DS.Palette.textSub)
+                        .foregroundStyle(XPalette.textSub)
                 }
                 Spacer(minLength: 0)
                 Button(ExportDir.name.isEmpty ? "选择" : "更换") { showDirPicker = true }
                     .vkFont(.footnote)
-                    .foregroundStyle(DS.Palette.accentText)
-                    .frame(minHeight: DS.Hit.min)
+                    .foregroundStyle(XPalette.accentText)
+                    .frame(minHeight: XHit.min)
                 if !ExportDir.name.isEmpty {
                     Button("清除") { ExportDir.clear(); dirTick += 1 }
                         .vkFont(.footnote)
-                        .foregroundStyle(DS.Palette.danger)
-                        .frame(minHeight: DS.Hit.min)
+                        .foregroundStyle(XPalette.danger)
+                        .frame(minHeight: XHit.min)
                 }
             }
-            .frame(minHeight: DS.Hit.min)
+            .frame(minHeight: XHit.min)
             .fileImporter(isPresented: $showDirPicker, allowedContentTypes: [.folder]) { r in
                 if case .success(let u) = r { ExportDir.set(u); dirTick += 1 }
             }
@@ -255,7 +255,7 @@ struct BackupStudioView: View {
             if DB.store.getBool("kf_bk_bgtask") {
                 Text(BackupStudio.chargeBackupNote)
                     .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.textSub)
+                    .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -268,6 +268,49 @@ struct BackupStudioView: View {
 }
 
 // ---------- 445/446 旧机顶部卡: 中断事务 → 退役引导 → 已退役存档 ----------
+
+
+// UIImage 分享包装 (411 QR 分享出去给相机扫码接收方)
+struct UIImageShareItem: Transferable {
+    let image: UIImage
+    static var transferRepresentation: some TransferRepresentation {
+        DataRepresentation(exportedContentType: .png) { item in
+            item.image.pngData() ?? Data()
+        }
+    }
+    init(_ image: UIImage) { self.image = image }
+}
+
+
+// ================= WebDAV 工作室 (197/198/237/422/423/430/436) =================
+
+
+
+
+extension BackupStudio.Channel {
+    var icon: String {
+        switch self {
+        case .file: return "doc.on.clipboard"
+        case .qr: return "qrcode"
+        case .webdav: return "externaldrive.badge.wireless"
+        }
+    }
+    var hint: String {
+        switch self {
+        case .file: return "旧机导出 .enc 后经数据线/隔空投送/云盘传到本机, 这里粘贴或从「文件」选择接收"   // 438 旧机导出
+        case .qr: return "仅凭证小包 (口令信封): 旧机导出页生成二维码, 本页相机扫码 + 同一口令导入, 全程无网络"   // 411/438 仅凭证小包 (口令信封)
+        case .webdav: return "坚果云/自配 WebDAV: 读远端列表 → 下载 → 解析入库, 两台机不见面也能迁"   // 422/423 坚果云
+        }
+    }
+}
+
+/// 411 扫码接收端 (新机侧): 扫旧机 导出向导 完成页的凭证二维码 → 原文交给换机迁移接收队列。
+/// ⚠ CredentialStudio.swift 里 DataScannerView 的调用形状禁止改写 — 它已挂在 docs/API-VERIFY.md:
+/// 「撞不到 Apple 文档、形状高度可疑、在编译器看过之前不许凭记忆重写」。本页只接接收侧流程
+/// (拿到原文 → 上层 417/453 解密解析入库), 调用形态逐字复用 522 的那一处, 不做任何猜改。
+
+// ================= 本地备份文件 (434/436/454/511) =================
+
 
 // ================= 导出向导 (407-413) =================
 struct ExportWizardView: View {
@@ -723,16 +766,6 @@ struct ExportWizardView: View {
     }
 }
 
-// UIImage 分享包装 (411 QR 分享出去给相机扫码接收方)
-struct UIImageShareItem: Transferable {
-    let image: UIImage
-    static var transferRepresentation: some TransferRepresentation {
-        DataRepresentation(exportedContentType: .png) { item in
-            item.image.pngData() ?? Data()
-        }
-    }
-    init(_ image: UIImage) { self.image = image }
-}
 
 // ================= 恢复向导 (417-427) =================
 struct RestoreWizardView: View {
@@ -1142,32 +1175,3 @@ struct RestoreWizardView: View {
         BackupStudio.armFirstChecks()
     }
 }
-
-// ================= WebDAV 工作室 (197/198/237/422/423/430/436) =================
-
-
-
-
-extension BackupStudio.Channel {
-    var icon: String {
-        switch self {
-        case .file: return "doc.on.clipboard"
-        case .qr: return "qrcode"
-        case .webdav: return "externaldrive.badge.wireless"
-        }
-    }
-    var hint: String {
-        switch self {
-        case .file: return "旧机导出 .enc 后经数据线/隔空投送/云盘传到本机, 这里粘贴或从「文件」选择接收"   // 438 旧机导出
-        case .qr: return "仅凭证小包 (口令信封): 旧机导出页生成二维码, 本页相机扫码 + 同一口令导入, 全程无网络"   // 411/438 仅凭证小包 (口令信封)
-        case .webdav: return "坚果云/自配 WebDAV: 读远端列表 → 下载 → 解析入库, 两台机不见面也能迁"   // 422/423 坚果云
-        }
-    }
-}
-
-/// 411 扫码接收端 (新机侧): 扫旧机 导出向导 完成页的凭证二维码 → 原文交给换机迁移接收队列。
-/// ⚠ CredentialStudio.swift 里 DataScannerView 的调用形状禁止改写 — 它已挂在 docs/API-VERIFY.md:
-/// 「撞不到 Apple 文档、形状高度可疑、在编译器看过之前不许凭记忆重写」。本页只接接收侧流程
-/// (拿到原文 → 上层 417/453 解密解析入库), 调用形态逐字复用 522 的那一处, 不做任何猜改。
-
-// ================= 本地备份文件 (434/436/454/511) =================
