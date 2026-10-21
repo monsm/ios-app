@@ -311,7 +311,8 @@ struct HomeConsole: View {
         return layout {
             metric(value: String(opensToday), label: "今日开门")
             if !typeSize.isAccessibilitySize { metricDivider }
-            metric(value: String(memberRows.count), label: "在家成员")
+            // 口径是近 30 天，不是"现在在家"—— 标签必须诚实
+            metric(value: String(memberRows.count), label: "常用成员")
             if !typeSize.isAccessibilitySize { metricDivider }
             metric(value: firstOpenText, label: "最早开门")
         }
@@ -414,7 +415,7 @@ struct HomeConsole: View {
                     .xFont(.system(.footnote, weight: .medium))
                     .foregroundStyle(XPalette.text)
                     .lineLimit(1)
-                Text("\(r.n) 次")
+                Text("近 30 天 \(r.n) 次")
                     .xFont(.system(.caption2).monospacedDigit())
                     .foregroundStyle(XPalette.textTertiary)
             }
@@ -593,13 +594,19 @@ struct HomeConsole: View {
         return LockArchive.displayName(kc)
     }
 
-    /// 一句摘要 —— 页面上第二重要的信息
+    /// 一句摘要 —— 页面上第二重要的信息。
+    ///
+    /// ⚠ 这里不能写"今天 N 人开过"：协议日志里**没有凭证身份字段**
+    ///（CAPABILITY §3），"今天几个人开的"这件事在本机根本算不出来。
+    /// 成员数是近 30 天的统计，把它塞进"今天"就是在编数据。
+    /// 所以两件事分开说，各自标明时间口径。
     private var digest: String {
         let n = opensToday
         let people = memberRows.count
-        if n == 0 { return "今天还没有开门记录" }
+        if n == 0 && people == 0 { return "今天还没有开门记录" }
+        if n == 0 { return "今天还没开过门 · 近 30 天 \(people) 人用过" }
         if people == 0 { return "今天开过 \(n) 次" }
-        return "今天 \(people) 人开过 \(n) 次"
+        return "今天开过 \(n) 次 · 近 30 天 \(people) 人用过"
     }
 
     private var footnote: String {
