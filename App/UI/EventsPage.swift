@@ -41,6 +41,11 @@ struct EventsPage: View {
     @State private var namedViews: [RecordSearch.NamedView] = []
     @State private var recentSearches: [String] = []
     @State private var saveName = ""
+    /// 正在编辑备注的事件 / 草稿文本。
+    /// 备注的读写 API（RecordSearch.note / setNote）一直都在，
+    /// 但事件行既不显示也不允许编辑 —— 又一个"存得进去、看不见"的功能。
+    @State private var noteTarget: Rec?
+    @State private var noteDraft = ""
     @State private var showSaveDialog = false
 
     private var mac: String { app.currentMac }
@@ -97,6 +102,14 @@ struct EventsPage: View {
                             recentSearches = []
                         }
                     }
+                    // ═══ 清除失败记录 ═══
+                    //
+                    // 开门失败记录会被 recordFailEvent 持续写入（LockKeeperApp 里
+                    // 每次开锁失败都记一条），并合并进这一页的事件流。
+                    // 但清除它的 DB.clearFailEvents **零调用** —— 也就是说这些记录
+                    // 只进不出，用户没有任何办法让它们消失。
+                    // 失败记录含时间与地点线索，属于"我不想要它一直留着"的那类数据。
+                    Button("清除失败记录", role: .destructive) { clearFailLog() }
                 } label: {
                     Image(systemName: "line.3.horizontal.decrease.circle")
                 }
@@ -106,6 +119,13 @@ struct EventsPage: View {
         .onSubmit(of: .search) {
             RecordSearch.pushHistory(search)
             recentSearches = RecordSearch.history()
+        }
+        .alert("事件备注", isPresented: Binding(get: { noteTarget != nil }, set: { if !$0 { noteTarget = nil } })) {
+            TextField("最多 60 字", text: $noteDraft)
+            Button("保存") { commitNote() }
+            Button("取消", role: .cancel) { noteTarget = nil }
+        } message: {
+            Text("这句备注只存在本机，方便你自己记住这条记录是怎么回事。")
         }
         .alert("存为筛选视图", isPresented: $showSaveDialog) {
             TextField("名字，例如「本周指纹」", text: $saveName)
@@ -213,6 +233,24 @@ struct EventsPage: View {
         .padding(.horizontal, XSpace.m)
         .padding(.vertical, 7)
         .xPlate(XPalette.surface, .capsule)
+    }
+
+    /// 清掉本机所有门锁的「开门失败」记录。
+    /// 与"清空最近搜索"同属本页的数据清理，放在同一处才发现得了。
+    private func clearFailLog() {
+        let macs = mac.isEmpty ? DB.keychains().map { $0.mac } : [mac]
+        for m in macs { DB.clearFailEvents(m) }
+        load()
+        XHaptics.trigger.impactOccurred()
+        app.showToast("已清除失败记录")
+    }
+
+    private func commitNote() {
+        guard let rec = noteTarget else { return }
+        RecordSearch.setNote(rec.mac, rec.key, noteDraft)
+        noteTarget = nil
+        noteDraft = ""
+        XHaptics.success()
     }
 
     private func saveView() {
@@ -366,7 +404,10 @@ struct EventsPage: View {
     }
 
     private func timelineRow(_ rec: Rec) -> some View {
-        HStack(alignment: .top, spacing: XSpace.m) {
+        // 备注只读一次：原来在显示、菜单、无障碍标签里各调一次
+        // RecordSearch.note，每行就是 5 次 DB 读取。列表滚动时这很浪费。
+        let savedNote = RecordSearch.note(rec.mac, rec.key)
+        return HStack(alignment: .top, spacing: XSpace.m) {
             // 时间
             Text(shortTime(rec.timeStr))
                 .xFont(.caption.monospacedDigit())
@@ -419,13 +460,42 @@ struct EventsPage: View {
                         .foregroundStyle(XPalette.textSub)
                         .lineLimit(1)
                 }
+                if !savedNote.isEmpty {
+                    Label(savedNote, systemImage: "text.bubble")
+                        .xFont(.system(.caption2))
+                        .foregroundStyle(XPalette.accentText)
+                        .lineLimit(2)
+                }
             }
 
             Spacer(minLength: 0)
         }
         .padding(.bottom, XSpace.l)
+        .contentShape(Rectangle())
+        // 长按给这条事件写一句备注（60 字上限，写库在 RecordSearch.setNote）
+        .contextMenu {
+            Button {
+                noteDraft = savedNote
+                noteTarget = rec
+                XHaptics.tick.impactOccurred()
+            } label: {
+                Label(savedNote.isEmpty ? "添加备注" : "编辑备注",
+                      systemImage: "text.bubble")
+            }
+            if !savedNote.isEmpty {
+                Button(role: .destructive) {
+                    RecordSearch.setNote(rec.mac, rec.key, "")
+                    XHaptics.trigger.impactOccurred()
+                } label: { Label("删除备注", systemImage: "trash") }
+            }
+        }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(accessibilityText(rec))
+        .accessibilityLabel(accessibilityText(rec)
+            + (savedNote.isEmpty ? "" : "，备注 " + savedNote))
+        .accessibilityAction(named: "添加或编辑备注") {
+            noteDraft = savedNote
+            noteTarget = rec
+        }
     }
 
     private var emptyState: some View {
