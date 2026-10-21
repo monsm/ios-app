@@ -717,46 +717,65 @@ struct MemberArchivedView: View {
 
     var body: some View { vkBody.destined(.memberArchived) }
     var vkBody: some View {
-        NavigationStack {
-            List {
-                ForEach(archived) { m in
-                    LabeledContent {
-                        Button("恢复") {
-                            var e = MemberHub.ext(m.id)
-                            e.archived = false
-                            MemberHub.saveExt(m.id, e)
-                            tick += 1
-                            onRestored()
+        ZStack {
+            XPalette.canvas.ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: XSpace.l) {
+                    if archived.isEmpty {
+                        XPanel(kind: .group) {
+                            VStack(spacing: XSpace.s) {
+                                Image(systemName: "archivebox")
+                                    .font(.system(size: XMetric.decorIcon(44), weight: .light))
+                                    .foregroundStyle(XPalette.textTertiary)
+                                    .accessibilityHidden(true)
+                                Text("归档列表为空")
+                                    .xFont(.subheadline, weight: .medium)
+                                    .foregroundStyle(XPalette.text)
+                                Text("成员归档后历史不蒸发。")
+                                    .xFont(.footnote)
+                                    .foregroundStyle(XPalette.textSub)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, XSpace.l)
                         }
-                        .buttonStyle(XSecondaryButtonStyle(fullWidth: false))
-                        .frame(minHeight: XHit.min)
-                        .contentShape(Rectangle())
-                    } label: {
-                        VStack(alignment: .leading, spacing: XSpace.xxs) {
-                            Text(MemberHub.display(m))
-                                .xFont(.subheadline)
-                                .foregroundStyle(XPalette.text)
-                            Text("归档中 · 只从成员列表与成员统计里收起; 记录页仍能筛到 TA, "
-                                 + "凭证页也仍列 TA 名下凭证 —— 归档不许挡撤权入口。")   // 460/795 凭证页也仍列
-                                .xFont(.caption)
-                                .foregroundStyle(XPalette.textSub)
-                                .fixedSize(horizontal: false, vertical: true)
+                    } else {
+                        ForEach(archived) { m in
+                            XPanel(kind: .group) {
+                                HStack(spacing: XSpace.m) {
+                                    VStack(alignment: .leading, spacing: XSpace.xxs) {
+                                        Text(MemberHub.display(m))
+                                            .xFont(.subheadline, weight: .medium)
+                                            .foregroundStyle(XPalette.text)
+                                        Text("归档中 · 只从成员列表与成员统计里收起; 记录页仍能筛到 TA, 凭证页也仍列 TA 名下凭证 —— 归档不许挡撤权入口。")
+                                            .xFont(.caption)
+                                            .foregroundStyle(XPalette.textSub)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                    }
+                                    Spacer(minLength: XSpace.s)
+                                    Button("恢复") {
+                                        var e = MemberHub.ext(m.id)
+                                        e.archived = false
+                                        MemberHub.saveExt(m.id, e)
+                                        tick += 1
+                                        onRestored()
+                                    }
+                                    .buttonStyle(XSecondaryButtonStyle(fullWidth: false))
+                                    .frame(minHeight: XHit.min)
+                                }
+                            }
                         }
                     }
                 }
-                if archived.isEmpty {
-                    Text("归档列表为空 — 成员归档后历史不蒸发。")   // 795 归档列表为空
-                        .xFont(.footnote)
-                        .foregroundStyle(XPalette.textSub)
-                }
+                .padding(.horizontal, XSpace.gutter)
+                .padding(.vertical, XSpace.l)
             }
-            .navigationTitle("归档成员")   // 460/795 归档成员
-            .navigationBarTitleDisplayMode(.inline)
-            .xList()
-            .xScreen()
-            .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
-            .id(tick)
+            .scrollIndicators(.hidden)
         }
+        .navigationTitle("归档成员")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar { ToolbarItem(placement: .cancellationAction) { Button("完成") { dismiss() } } }
+        .id(tick)
     }
 }
 
@@ -868,46 +887,60 @@ struct UnclaimedClaimView: View {
 
     var body: some View { vkBody.destined(.unclaimedClaim) }
     var vkBody: some View {
-        NavigationStack {
-            List {
-                Section {
-                    // 2026-10-15 走查 (性能): 认领 Picker 数据源在行内, 每行各取一次成员归档集
-                    // (≤20 行 × M 成员的 ext 解码) — 提到行循环外只取一次, 行为不变。
-                    let claimArch = MemberHub.archivedIDs()
-                    ForEach(unclaimed.prefix(20)) { r in
-                        VStack(alignment: .leading, spacing: XSpace.xs) {
-                            HStack(spacing: XSpace.s) {
-                                Text(String(r.time.prefix(16)))
-                                    .xFont(.caption.monospacedDigit())
-                                    .foregroundStyle(XPalette.textSub)
-                                Text(r.kindWord + " (未归属, 台账推断)")
-                                    .xFont(.subheadline)
+        ZStack {
+            XPalette.canvas.ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: XSpace.l) {
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            secLabel("未归属记录认领")
+
+                            // 性能: 认领 Picker 数据源提到行循环外只取一次
+                            // (≤20 行 × M 成员的 ext 解码)
+                            let claimArch = MemberHub.archivedIDs()
+
+                            if unclaimed.isEmpty {
+                                Text("没有未归属的开门记录 (归属只算可证明的, 推不出就进这里认领)。")
+                                    .xFont(.footnote)
                                     .foregroundStyle(XPalette.textSub)
                                     .fixedSize(horizontal: false, vertical: true)
-                                Spacer(minLength: 0)
-                                XStatusPill(text: "待认领", tone: .neutral, systemImage: "questionmark.circle")
-                            }
-                            Picker("认领给", selection: Binding(
-                                get: { selMember[r.key] ?? "" },
-                                set: { selMember[r.key] = $0 })
-                            ) {
-                                ForEach(DB.members().filter { !claimArch.contains($0.id) }) { m in
-                                    Text(MemberHub.display(m)).tag(m.id)
+                            } else {
+                                ForEach(unclaimed.prefix(20)) { r in
+                                    VStack(alignment: .leading, spacing: XSpace.xs) {
+                                        HStack(spacing: XSpace.s) {
+                                            Text(String(r.time.prefix(16)))
+                                                .xFont(.caption.monospacedDigit())
+                                                .foregroundStyle(XPalette.textSub)
+                                            Text(r.kindWord + " (未归属, 台账推断)")
+                                                .xFont(.subheadline)
+                                                .foregroundStyle(XPalette.textSub)
+                                                .fixedSize(horizontal: false, vertical: true)
+                                            Spacer(minLength: 0)
+                                            XStatusPill(text: "待认领", tone: .neutral, systemImage: "questionmark.circle")
+                                        }
+                                        Picker("认领给", selection: Binding(
+                                            get: { selMember[r.key] ?? "" },
+                                            set: { selMember[r.key] = $0 })
+                                        ) {
+                                            ForEach(DB.members().filter { !claimArch.contains($0.id) }) { m in
+                                                Text(MemberHub.display(m)).tag(m.id)
+                                            }
+                                        }
+                                        .pickerStyle(.menu)
+                                        .tint(XPalette.accentText)
+                                    }
+                                    if r.key != unclaimed.prefix(20).last?.key {
+                                        Divider().overlay(XPalette.hairline)
+                                    }
                                 }
                             }
-                            .pickerStyle(.menu)
                         }
                     }
-                    if unclaimed.isEmpty {
-                        Text("没有未归属的开门记录 (归属只算可证明的, 推不出就进这里认领)。")
-                            .xFont(.footnote)
-                            .foregroundStyle(XPalette.textSub)
-                    }
-                } header: {
-                    Text("未归属记录认领")   // 791 未归属记录认领
-                }
-                Section {
-                    Button {
+
+                    XBusyButton(title: "认领所选 (\(selMember.count))",
+                                systemImage: "checkmark.seal",
+                                busy: false, style: .primary) {
                         var n = 0
                         for (k, mid) in selMember {
                             MemberHub.claim(mac, logKey: k, memberId: mid)
@@ -916,24 +949,26 @@ struct UnclaimedClaimView: View {
                         app.showToast("已认领 \(n) 条 (本机覆盖层, 不改锁端数据)")
                         selMember = [:]
                         dismiss()
-                    } label: {
-                        Label("认领所选 (\(selMember.count))", systemImage: "checkmark.seal")
-                            .xFont(.subheadline)
-                            .foregroundStyle(XPalette.accentText)
-                            .frame(maxWidth: .infinity)
-                            .frame(minHeight: XHit.min)
-                            .contentShape(Rectangle())
                     }
-                    .buttonStyle(PlainButtonStyle())
                     .disabled(selMember.isEmpty)
+                    .opacity(selMember.isEmpty ? 0.5 : 1)
                 }
+                .padding(.horizontal, XSpace.gutter)
+                .padding(.vertical, XSpace.l)
             }
-            .navigationTitle("认领未归属")   // 791 认领未归属
-            .navigationBarTitleDisplayMode(.inline)
-            .xList()
-            .xScreen()
-            .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
+            .scrollIndicators(.hidden)
         }
+        .navigationTitle("认领未归属")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar { ToolbarItem(placement: .cancellationAction) { Button("完成") { dismiss() } } }
+    }
+
+    private func secLabel(_ text: String) -> some View {
+        Text(text)
+            .xFont(.caption, weight: .semibold)
+            .foregroundStyle(XPalette.textTertiary)
+            .textCase(.uppercase)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
