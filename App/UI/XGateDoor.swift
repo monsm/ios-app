@@ -133,8 +133,9 @@ struct XGateDoor: View {
             isFailed: isFailed,
             isDeadbolted: isDeadbolted,
             charge: charge,
-            diameter: lockHeight)
-            .frame(width: lockSide, height: lockHeight)
+            size: CGSize(width: lockSide, height: lockHeight))
+            // 不再加 .frame —— XLockBlade 内部已经按 size 定了尺寸。
+            // 外面再写一次会让 offset 的定位基准变成两层，位置算不准。
             .offset(x: lockOffsetX, y: lockOffsetY)
             // 放大聚焦: 只放大锁，门不动
             .scaleEffect(lockFocused ? 3.2 : 1.0, anchor: .center)
@@ -151,12 +152,17 @@ struct XGateDoor: View {
                         .transition(.opacity)
                 }
             }
-            // 触点热区放大到 44pt（真实比例下锁只有 20pt，太小点不中）
-            .contentShape(Rectangle())
-            .frame(minWidth: XHit.min, minHeight: XHit.min)
-            .onTapGesture {
-                XHaptics.tick.impactOccurred()
-                withAnimation { lockFocused.toggle() }
+            // 触点热区: 真实比例下锁只有 19pt 宽，直接点很难中。
+            // 用 overlay 叠一层 44×44 透明区域接手势 ——
+            // **不能用 .frame(minWidth:) 撑**，那会把锁体本身拉成正方形。
+            .overlay {
+                Color.clear
+                    .frame(width: XHit.min, height: XHit.min)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        XHaptics.tick.impactOccurred()
+                        withAnimation { lockFocused.toggle() }
+                    }
             }
             // 默认时的呼吸光（保留旧 LockPlate 的氛围）
             .shadow(color: XPalette.accent.opacity(reduceMotion ? 0.10 : (breathe ? 0.18 : 0.06)),

@@ -28,7 +28,17 @@ struct XLockBlade: View {
     var isFailed: Bool
     var isDeadbolted: Bool
     var charge: CGFloat
-    var diameter: CGFloat
+    /// 锁体在屏幕上的尺寸（**不是正方形**）
+    ///
+    /// ═══ 这里踩过一个坑 ═══
+    ///
+    /// 第一版参数叫 diameter: CGFloat，用 .frame(width:height:) 正方形画。
+    /// 但刃锁体是 60 × 300 mm —— **宽高比 1:5 的细长条**。
+    /// 正方形显示会把宽度拉伸 5 倍，锁体彻底变形。
+    ///
+    /// （这是"圆形锁"的遗留命名: 旧 LockPlate 确实是圆的，
+    ///   换成刃之后形状变了，接口没跟着改。）
+    var size: CGSize
 
 
     /// 状态色
@@ -52,7 +62,7 @@ struct XLockBlade: View {
             guard let root = content.entities.first(where: { $0.name == "bladeRoot" }) else { return }
             applyState(to: root)
         }
-        .frame(width: diameter, height: diameter)
+        .frame(width: size.width, height: size.height)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityText)
     }

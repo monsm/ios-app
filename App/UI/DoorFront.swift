@@ -241,12 +241,15 @@ struct DoorFront: View {
     @ViewBuilder
     private var lockSurface: some View {
         if use3DLock {
+            // 刃锁体是 60×300mm（1:5），不能塞进正方形 frame。
+            // 这里按 plateDiameter 定高度，宽度按真实比例反算。
             XLockBlade(
                 isOpen: lastKnownOpen && stage == .idle,
                 isFailed: failureText != nil,
                 isDeadbolted: isDeadbolted,
                 charge: charge,
-                diameter: plateDiameter)
+                size: CGSize(width: plateDiameter * (60.0 / 300.0),
+                             height: plateDiameter))
         } else {
             LockPlate(
                 charge: charge,
