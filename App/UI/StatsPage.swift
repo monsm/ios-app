@@ -204,24 +204,13 @@ struct StatsPage: View {
     // ═══════════════════════════════════════════════════════
 
     private func degradedCard(_ m: StatsKit.StatModel) -> some View {
-        XPanel(kind: .group) {
-            VStack(spacing: XSpace.s) {
-                Image(systemName: "chart.bar.doc.horizontal")
-                    .font(.system(size: XIcon.lg, weight: .light))
-                    .foregroundStyle(XPalette.textTertiary)
-                    .accessibilityHidden(true)
-                Text("样本不足")
-                    .xFont(.headline)
-                    .foregroundStyle(XPalette.text)
-                Text(degradedDetail(m))
-                    .xFont(.footnote)
-                    .foregroundStyle(XPalette.textSub)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, XSpace.l)
-        }
+        XEmptyState(systemImage: "chart.bar.doc.horizontal",
+                    title: "样本不足",
+                    message: degradedDetail(m))
+            .background(
+                RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
+                    .fill(XPalette.surface)
+            )
     }
 
     private func degradedDetail(_ m: StatsKit.StatModel) -> String {

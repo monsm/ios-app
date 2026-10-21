@@ -171,21 +171,10 @@ struct MembersPage: View {
 
     private var emptySection: some View {
         Section {
-            VStack(spacing: XSpace.m) {
-                Image(systemName: "person.2")
-                    .font(.system(size: XIcon.xl, weight: .light))
-                    .foregroundStyle(XPalette.textTertiary)
-                    .accessibilityHidden(true)
-                Text("还没有成员")
-                    .xFont(.headline)
-                    .foregroundStyle(XPalette.text)
-                Text("点右上角 + 添加第一位家人")
-                    .xFont(.subheadline)
-                    .foregroundStyle(XPalette.textSub)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, XSpace.xxl)
-            .listRowBackground(Color.clear)
+            XEmptyState(systemImage: "person.2",
+                        title: "还没有成员",
+                        message: "点右上角 + 添加第一位家人。")
+                .listRowBackground(Color.clear)
         }
     }
 

@@ -313,21 +313,10 @@ struct KeysPage: View {
 
     private var emptySection: some View {
         Section {
-            VStack(spacing: XSpace.m) {
-                Image(systemName: "key.slash")
-                    .font(.system(size: XIcon.xl, weight: .light))
-                    .foregroundStyle(XPalette.textTertiary)
-                    .accessibilityHidden(true)
-                Text(search.isEmpty ? "还没有凭证" : "没有匹配的凭证")
-                    .xFont(.headline)
-                    .foregroundStyle(XPalette.text)
-                Text(search.isEmpty ? "点右上角 + 添加第一份授权" : "换个关键词试试")
-                    .xFont(.subheadline)
-                    .foregroundStyle(XPalette.textSub)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, XSpace.xxl)
-            .listRowBackground(Color.clear)
+            XEmptyState(systemImage: "key.slash",
+                        title: search.isEmpty ? "还没有凭证" : "没有匹配的凭证",
+                        message: search.isEmpty ? "点右上角 + 添加第一份授权。" : "换个关键词试试。")
+                .listRowBackground(Color.clear)
         }
     }
 }
