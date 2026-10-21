@@ -233,9 +233,25 @@ struct DoorPrism<B: View, D: View, F: View>: View {
         return faceView(f)
             // 让它读成「一块立起来的板」
             .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
+            // ═══ 金属边框 —— 与 HTML 原型对齐的关键 ═══
+            //
+            // 原型每面四周有 0.035 宽的亮金属条（BoxGeometry, metalness 0.9,
+            // color 0x2A2C30 受光后呈亮灰）。**这是整块面板读成「实体」的主要来源**：
+            // 没有它，再正确的 3D 变换也只是一个圆角卡片。
+            //
+            // 原来这里是 strokeBorder(XPalette.hairline, lineWidth: 1) ——
+            // 1pt 的细线在深色底上几乎看不见，等于没有边框。
             .overlay {
                 RoundedRectangle(cornerRadius: 30, style: .continuous)
-                    .strokeBorder(XPalette.hairline, lineWidth: 1)
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: [
+                                Color(hex: 0xC8CCD4),   // 顶部受光：亮
+                                Color(hex: 0x8A8E96),   // 中部
+                                Color(hex: 0x5C6068),   // 底部背光：暗
+                            ],
+                            startPoint: .top, endPoint: .bottom),
+                        lineWidth: 5)
             }
             // ① 只做朝向 —— 轴过视图中心，透视不参与，前缩 = cos(θ)
             // ③ 近大远小
