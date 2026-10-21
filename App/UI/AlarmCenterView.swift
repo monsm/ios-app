@@ -315,7 +315,6 @@ struct AlarmCenterView: View {
         // 731: 多锁短窗低电合并卡 (只在这一屏顶部出现一次, 逐条处置仍在下面各自的行里)
         let cluster = lowBatteryCluster
         if !cluster.isEmpty {
-            // M5 迁移遗留修: Section 在 List 外没有视觉容器，改成透明 Group
             Group {
                 DisclosureGroup {
                     ForEach(Array(cluster.enumerated()), id: \.offset) { _, e in
@@ -341,8 +340,18 @@ struct AlarmCenterView: View {
         }
         let older = stream.filter { isOlder($0) }
         if !older.isEmpty {
-            // M5 迁移遗留修: Section 在 List 外没有视觉容器，改成透明 Group
-            Group {
+            VStack(alignment: .leading, spacing: XSpace.xs) {
+                    HStack(spacing: XSpace.xs) {
+                        // 682 更早
+                        // 682 更早
+                        Text(showOlder ? "更早 · 超 30 天仍未处置" : "更早 · 超 30 天仍未处置 \(older.count) 条")
+                        Spacer(minLength: 0)
+                        if showOlder {
+                            Button("收起") { showOlder = false }
+                                .xFont(.caption2)
+                                .foregroundStyle(XPalette.accentText)
+                        }
+                    }
                 if showOlder {
                     ForEach(older) { r in alarmSection(r, folded: folded) }
                 } else {
@@ -357,18 +366,6 @@ struct AlarmCenterView: View {
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(PressableButtonStyle())
-                }
-            } header: {
-                HStack(spacing: XSpace.xs) {
-                    // 682 更早
-                    // 682 更早
-                    Text(showOlder ? "更早 · 超 30 天仍未处置" : "更早 · 超 30 天仍未处置 \(older.count) 条")
-                    Spacer(minLength: 0)
-                    if showOlder {
-                        Button("收起") { showOlder = false }
-                            .xFont(.caption2)
-                            .foregroundStyle(XPalette.accentText)
-                    }
                 }
             }
         }
@@ -509,13 +506,25 @@ struct AlarmCenterView: View {
     private func contextSection(_ r: Rec) -> some View {
         let (before, after) = RecordSearch.context(mac: r.mac, aroundKey: r.key)
         if before.isEmpty && after.isEmpty {
-            Section("前后事件") {
+            VStack(alignment: .leading, spacing: XSpace.xs) {
+                // M5 迁移遗留: Section 在 ScrollView 里没有视觉容器；标题改成 VStack 里的一行。
+                Text("前后事件")
+                    .xFont(.caption, weight: .semibold)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .textCase(.uppercase)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 Text("前后 10 分钟内没有其他记录 — 孤立事件。")
                     .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
             }
         } else {
-            Section("前后 10 分钟 · 同锁") {   // 736 前后
+            VStack(alignment: .leading, spacing: XSpace.xs) {
+                // M5 迁移遗留: Section 在 ScrollView 里没有视觉容器；标题改成 VStack 里的一行。
+                Text("前后 10 分钟 · 同锁")
+                    .xFont(.caption, weight: .semibold)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .textCase(.uppercase)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 ForEach(Array(before.enumerated()), id: \.offset) { _, x in
                     contextRow(x, tag: "前")
                 }
@@ -737,7 +746,13 @@ struct AlarmCenterView: View {
         let kbErr = liveHere ? (app.status?.keyboardErrCount ?? 0) : 0
         let kbFreeze = liveHere ? (app.status?.keyboardFreeze ?? 0) : 0
         if today > 0 || kbErr > 0 || kbFreeze > 0 {
-            Section("试错累计 (待核)") {   // 737 试错累计 (⚠ keyboardErrCount 语义未证实, 标题原来用"?"担着)
+            VStack(alignment: .leading, spacing: XSpace.xs) {
+                // M5 迁移遗留: Section 在 ScrollView 里没有视觉容器；标题改成 VStack 里的一行。
+                Text("试错累计 (待核)")
+                    .xFont(.caption, weight: .semibold)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .textCase(.uppercase)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 VStack(alignment: .leading, spacing: XSpace.xs) {
                     HStack(spacing: XSpace.s) {
                         Image(systemName: "key.zarrowpath").font(.system(size: XIcon.sm)).foregroundStyle(XPalette.warn).accessibilityHidden(true)
@@ -805,7 +820,6 @@ struct AlarmCenterView: View {
     private var responseCard: some View {
         let samples = RecordSearch.dispositions().values
         if samples.isEmpty {
-            // M5 迁移遗留修: Section 在 List 外没有视觉容器，改成透明 Group
             Group {
                 VStack(alignment: .leading, spacing: XSpace.xs) {
                     HStack(spacing: XSpace.s) {
@@ -823,7 +837,14 @@ struct AlarmCenterView: View {
                 .padding(.vertical, XSpace.xs)
             }
         } else {
-            Section("响应时长 (已有 " + String(samples.count) + " 条留痕)") {   // 742 响应时长
+            VStack(alignment: .leading, spacing: XSpace.xs) {
+                // M5 迁移遗留: Section 在 ScrollView 里没有视觉容器；
+                // 原来的标题字符串改成 VStack 里的一行。
+                Text("响应时长 (已有 " + String(samples.count) + " 条留痕)")   // 742 响应时长
+                    .xFont(.caption, weight: .semibold)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .textCase(.uppercase)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 // Disposition 非 Identifiable (只 at/verdict), 单参 ForEach 编译不过;
                 // 同一秒内可有多条留痕 → at 不保证唯一, 用 enumerated 的 offset 作身份
                 ForEach(Array(samples.sorted { $0.at > $1.at }.prefix(10).enumerated()), id: \.offset) { _, d in
