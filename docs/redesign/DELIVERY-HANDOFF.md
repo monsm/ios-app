@@ -103,3 +103,88 @@ faceView(f)
 - [CI-VS-GATES.md](CI-VS-GATES.md) —— 本地闸门 ≠ 能编译
 - [PAGE-ADAPT-LEDGER.md](PAGE-ADAPT-LEDGER.md) —— 52 页台账
 - [SECTION-MIGRATION-LESSON.md](SECTION-MIGRATION-LESSON.md) —— Section 迁移三坑
+
+
+---
+
+# 补充：最终形态（第 58-59 轮再改）
+
+上面的 11 个修复之后，又发现并修了**第 12 个**，并把架构简化了一步。
+
+## 第 12 个：`containerAngle` 符号反了
+
+```swift
+// 注释写的是：turn=1 时角度退回旧面（-新面角 + sign*120）
+// 代码写的是：base - Double(offset * 120)      ← 减号
+```
+
+**注释与实现不一致。** 验算 B→D：
+
+| turn | 原式 `base−offset·120` | 应显示 | 实际 |
+|---|---|---|---|
+| 1（起点）| −240 | **B** | **F** ✗ |
+| 0.5 | −180 | B→D 过渡 | D+F ✗ |
+| 0 | −120 | D | D ✓ |
+
+**动画从错误的那一面开始** → 这就是「无法正常切换」。
+
+修正后四个方向全部正确：
+
+```
+b→d: 起点 b ✓ 终点 d ✓
+d→f: 起点 d ✓ 终点 f ✓
+f→b: 起点 f ✓ 终点 b ✓
+b→f: 起点 b ✓ 终点 f ✓
+```
+
+## 架构简化：去掉全部 3D API
+
+三棱柱在同一时刻只有一个面可见，投影轮廓就是一个矩形：
+
+```
+宽 = |cos θ| · W · depthScale
+高 = depthScale · H
+```
+
+`scaleEffect(x:y:)` 精确给出同一形状，**不需要 `rotation3DEffect`**。
+
+最终变换链：
+
+```swift
+faceView(f)
+    .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
+    .scaleEffect(x: max(0.001, abs(cos(rad)) * depthScale),
+                 y: depthScale,
+                 anchor: .center)
+    .offset(x: x)
+    .opacity(faceVisibility(f))
+```
+
+**零 3D API。** 全部是最基础的 `scaleEffect` / `offset` / `opacity` / `clipShape`，
+渲染行为完全确定，不再依赖任何未文档化的 SwiftUI 3D 行为。
+
+`DoorPrism.swift` 里 `rotation3DEffect` **只剩注释**（7 处，全是历史记录）。
+
+## 累计修复：12 个
+
+| # | 问题 | 发现方式 |
+|---|---|---|
+| 1-2 | 丢 `m34`（黑屏）、`perspective: 0` | 矩阵/文档 |
+| 3-4 | 转角没传给面、热区自锁 | 代码追踪 |
+| 5-7 | 铺满全屏、缺竖棱、竖棱太细 | 读原型 |
+| 8 | `UIScreen.main` 废弃 | API 检查 |
+| 9-10 | 内切圆多乘 0.9、按容器宽算 | 数值模拟 |
+| 11 | `width=0 → NaN → 视图丢弃` | 边界分析 |
+| **12** | **`containerAngle` 符号反了** | **转场验算表** |
+
+## 最终验证矩阵
+
+| 项 | 结果 |
+|---|---|
+| 正面/120° 大小比 | 0.8624 = three.js 原型 |
+| θ=60° 面交界 | 重叠 9pt（原空隙 17.4pt）|
+| 四个转场方向 | 起点/终点全部正确 |
+| 转场 narrow / scale | 0→1→0 / 1→0.8→1 = 规格 |
+| 角点半径 | 1.732A = 面半宽，精确相等 |
+| 3D API 数量 | **0** |
+| 本地闸门 | 23 道全绿 |
