@@ -230,8 +230,19 @@ struct XPrimaryButtonStyle: ButtonStyle {
             .frame(minHeight: XHit.min)
             .padding(.horizontal, XSpace.l)
             .background(
+                // 纯色填充之上压一层竖向渐变 (上亮下暗) ——
+                // 一点点的深度差就能让按钮从"贴纸"变成"实体"。
+                // 渐变幅度刻意很小 (0.10 → 0.00), 在深色模式下也看不出色块分界。
                 RoundedRectangle(cornerRadius: XRadius.control, style: .continuous)
                     .fill(XPalette.accent)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: XRadius.control, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [XPalette.specular.opacity(0.10), .clear],
+                                    startPoint: .top, endPoint: .bottom)
+                            )
+                    )
                     .opacity(configuration.isPressed ? 0.82 : 1)
             )
             .scaleEffect(configuration.isPressed ? 0.98 : 1)

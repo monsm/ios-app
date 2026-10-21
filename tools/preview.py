@@ -538,6 +538,36 @@ def render_xrows():
 
     return save(img, "xrows")
 
+def render_buttons():
+    """按钮三式 + 主按钮顶部高光"""
+    W, H = 402, 300
+    img = new_canvas(W, H)
+    dr = ImageDraw.Draw(img, "RGBA")
+
+    def btn(y, label, fill, text_col, gradient=False, stroke=None):
+        x0, x1 = S(16), W-S(16)
+        h = S(48)
+        r = S(12)
+        # 底
+        dr.rounded_rectangle([x0, y, x1, y+h], r, fill=fill)
+        # 顶部高光 (竖向渐变 0.10 → 0)
+        if gradient:
+            for i in range(h):
+                a = int(0.10 * 255 * (1 - i/h)**1.2)
+                dr.rounded_rectangle([x0, y+i, x1, y+i+1], 0, fill=SPECULAR+(a,))
+            # 把四角重新圆一下
+            dr.rounded_rectangle([x0, y, x1, y+h], r, outline=None)
+        if stroke:
+            dr.rounded_rectangle([x0, y, x1, y+h], r, outline=stroke, width=1)
+        text_center(dr, (x0+x1)//2, y+h//2-S(9), label, 15, text_col)
+
+    btn(S(30), "按住开锁", ACCENT+(255,), ON_ACCENT, gradient=True)
+    btn(S(96), "换电指引", (0,0,0,0), ACCENT_TXT, stroke=ACCENT+(128,))
+    btn(S(162), "彻底删除", DANGER+(26,), DANGER)
+
+    text(dr, (S(16), S(12)), "主按钮 (顶部高光) / 次按钮 / 危险按钮", 10, TEXT_TERT)
+    return save(img, "buttons")
+
 RENDERERS = {
     "codering": render_code_ring,
     "alarmchart": render_alarm_chart,
@@ -549,6 +579,7 @@ RENDERERS = {
     "seclamps": render_seclamps,
     "stepbar": render_stepbar,
     "xrows": render_xrows,
+    "buttons": render_buttons,
 }
 
 
