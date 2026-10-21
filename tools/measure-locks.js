@@ -149,6 +149,9 @@ for (const f of files) {
         if (o.children) o.children.forEach(visit);
       };
       visit(obj);
+      // highlight 必须在 build() **之后**读 ——
+      // 有的设计把 highlight 对象声明在模块顶层，build() 运行时才把网格挂上去。
+      // 在 build() 之前读，永远读到 null，会把好东西误判成"缺失"。
       const hl = d.highlight ? Object.keys(d.highlight).filter((k) => d.highlight[k]) : [];
       rows.push({ file: f, name: d.name || d.id, meshes: meshes, tris: tris, maxSeg: maxSeg, hl: hl });
       ok++;
