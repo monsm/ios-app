@@ -1305,3 +1305,80 @@ extension View {
         modifier(XScrollLift())
     }
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// MARK: - XSkeleton — 首屏骨架屏
+// ═══════════════════════════════════════════════════════════════════════
+//
+// 为什么需要:  三个列表页 (告警/记录/统计) 初次加载时只显示一个居中转圈,
+// 画布是空的 —— 从"点进去"到"看到内容"之间有一段纯空白, 末了内容"啪"地铺满。
+// 骨架屏把这段时间变成"内容正在成形", 视觉上连续得多。
+//
+// 形状对得上才有用: 骨架的块数/高度/圆角照最终卡片的节奏排,
+// 不能是三个等宽横条 (那样内容一进来还是跳)。
+//
+// reduceMotion: 关掉流光扫动, 只留静态占位块。
+// 流光是最容易让前庭敏感的人不适的效果之一, 这条必须给退路。
+struct XSkeleton: View {
+    /// 占位块的数量 (按目标页面的卡片数给)
+    var blocks: Int = 3
+    /// 每块高度
+    var blockHeight: CGFloat = 108
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var sweep: CGFloat = -1
+
+    var body: some View {
+        VStack(spacing: XSpace.l) {
+            ForEach(0..<blocks, id: \.self) { i in
+                block(index: i)
+            }
+        }
+        .padding(.horizontal, XSpace.gutter)
+        .padding(.vertical, XSpace.l)
+        .onAppear {
+            guard !reduceMotion else { return }
+            withAnimation(.linear(duration: 1.4).repeatForever(autoreverses: false)) {
+                sweep = 2
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("正在加载")
+        .accessibilityAddTraits(.updatesFrequently)
+    }
+
+    @ViewBuilder
+    private func block(index: Int) -> some View {
+        // 每块内部的高度错开一点, 看起来像"不同的内容", 不像三个一样的条
+        let innerHeights: [CGFloat] = index % 2 == 0 ? [14, 10] : [10, 14, 10]
+        VStack(alignment: .leading, spacing: XSpace.s) {
+            ForEach(Array(innerHeights.enumerated()), id: \.offset) { _, h in
+                RoundedRectangle(cornerRadius: 4, style: .continuous)
+                    .fill(XPalette.surfaceAlt)
+                    .frame(height: h)
+                    .frame(maxWidth: h > 12 ? 180 : .infinity, alignment: .leading)
+            }
+        }
+        .padding(XSpace.card)
+        .frame(maxWidth: .infinity, minHeight: blockHeight, alignment: .topLeading)
+        .background(
+            RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
+                .fill(XPalette.surface)
+        )
+        .overlay(
+            // 流光: 一条窄的高光从左扫到右
+            GeometryReader { geo in
+                if !reduceMotion {
+                    LinearGradient(
+                        colors: [.clear, XPalette.specular.opacity(0.06), .clear],
+                        startPoint: .leading, endPoint: .trailing)
+                        .frame(width: geo.size.width * 0.45)
+                        .offset(x: geo.size.width * sweep)
+                }
+            }
+            .clipShape(RoundedRectangle(cornerRadius: XRadius.card, style: .continuous))
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+        )
+    }
+}

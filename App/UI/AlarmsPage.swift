@@ -36,8 +36,10 @@ struct AlarmsPage: View {
     var body: some View {
         Group {
             if !loaded {
-                ProgressView().controlSize(.large)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                ScrollView {
+                    XSkeleton(blocks: 3, blockHeight: 96)
+                }
+                .scrollDisabled(true)
             } else if alarms.isEmpty && handled.isEmpty {
                 emptyState
             } else {

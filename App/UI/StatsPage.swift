@@ -48,8 +48,7 @@ struct StatsPage: View {
                         trendCard(m).xScrollLift()
                     }
                 } else if !loaded {
-                    ProgressView().controlSize(.large)
-                        .padding(XSpace.xxl)
+                    XSkeleton(blocks: 3, blockHeight: 132)
                 }
             }
             .padding(.horizontal, XSpace.gutter)

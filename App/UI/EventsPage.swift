@@ -42,8 +42,10 @@ struct EventsPage: View {
     var body: some View {
         Group {
             if !loaded {
-                ProgressView().controlSize(.large)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                ScrollView {
+                    XSkeleton(blocks: 3, blockHeight: 84)
+                }
+                .scrollDisabled(true)
             } else if filtered.isEmpty {
                 emptyState
             } else {

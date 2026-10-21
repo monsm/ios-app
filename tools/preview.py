@@ -621,6 +621,37 @@ def render_panels():
     return save(img, "panels")
 
 
+def render_skeleton():
+    """XSkeleton — 首屏骨架屏"""
+    W, H = 402, 400
+    img = new_canvas(W, H)
+    dr = ImageDraw.Draw(img, "RGBA")
+    text(dr, (S(16), S(10)), "XSkeleton — 3 块 · 错开内部高度 · 流光扫过", 9, TEXT_TERT)
+
+    y = S(30)
+    for i in range(3):
+        block_h = S(108)
+        x0, x1 = S(16), W-S(16)
+        dr.rounded_rectangle([x0, y, x1, y+block_h], S(16), fill=SURFACE+(255,))
+        # 内部占位条
+        inner = [14, 10] if i % 2 == 0 else [10, 14, 10]
+        cy = y + S(16)
+        for hh in inner:
+            w = S(180) if hh > 12 else (x1-x0-S(32))
+            dr.rounded_rectangle([x0+S(16), cy, x0+S(16)+w, cy+S(hh)], S(4), fill=SURFACE_ALT+(255,))
+            cy += S(hh) + S(8)
+        # 流光 (右侧 1/3 处示意)
+        sx = x0 + (x1-x0)*0.62
+        sw = (x1-x0)*0.45
+        for k in range(int(sw)):
+            a = int(0.06*255*(1-abs(k/sw-0.5)*2))
+            if a<=0: continue
+            dr.rounded_rectangle([sx+k, y+S(1), sx+k+1, y+block_h-S(1)], 0, fill=SPECULAR+(a,))
+        y += block_h + S(16)
+
+    return save(img, "skeleton")
+
+
 RENDERERS = {
     "codering": render_code_ring,
     "alarmchart": render_alarm_chart,
@@ -634,6 +665,7 @@ RENDERERS = {
     "xrows": render_xrows,
     "buttons": render_buttons,
     "panels": render_panels,
+    "skeleton": render_skeleton,
 }
 
 
