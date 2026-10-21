@@ -122,149 +122,158 @@ struct MaintenanceView: View {
 
     // ---------- 1013 90 天周期 + 1015 五项入口 ----------
     private var carePeriodSection: some View {
-        Section {
-            LabeledRow("上次保养", care.lastCareAt > 0 ? daysAgoText(care.lastCareAt) : "还没记过")
-            if care.lastCareAt > 0 {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                secLabel("保养周期")
+                LabeledRow("上次保养", care.lastCareAt > 0 ? daysAgoText(care.lastCareAt) : "还没记过")
+                if care.lastCareAt > 0 {
                 VStack(alignment: .leading, spacing: XSpace.xxs) {
-                    GeometryReader { geo in
-                        ZStack(alignment: .leading) {
-                            Capsule().fill(XPalette.surfaceAlt)
-                            Capsule().fill(careDue ? XPalette.warn : XPalette.accent)
-                                .frame(width: geo.size.width * CGFloat(min(elapsedDays / Double(periodDays), 1)))
-                        }
-                    }
-                    .frame(height: 6)
-                    .accessibilityHidden(true)
-                    Text(careDue
-                         ? "已满 \(periodDays) 天, 建议安排一次保养"
-                         : "周期 \(periodDays) 天 · 已过 \(Int(elapsedDays)) 天" + (periodDays == 60 ? " · 高频使用自动缩短" : ""))
-                        .xFont(.caption2)
-                        .foregroundStyle(careDue ? XPalette.warn : XPalette.textSub)
+                GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                Capsule().fill(XPalette.surfaceAlt)
+                Capsule().fill(careDue ? XPalette.warn : XPalette.accent)
+                .frame(width: geo.size.width * CGFloat(min(elapsedDays / Double(periodDays), 1)))
+                }
+                }
+                .frame(height: 6)
+                .accessibilityHidden(true)
+                Text(careDue
+                ? "已满 \(periodDays) 天, 建议安排一次保养"
+                : "周期 \(periodDays) 天 · 已过 \(Int(elapsedDays)) 天" + (periodDays == 60 ? " · 高频使用自动缩短" : ""))
+                .xFont(.caption2)
+                .foregroundStyle(careDue ? XPalette.warn : XPalette.textSub)
                 }
                 .accessibilityElement(children: .combine)
-            }
-            Button { showChecklist = true } label: {
+                }
+                Button { showChecklist = true } label: {
                 Label(care.lastCareAt > 0 ? "再做一次五项保养" : "开始五项保养", systemImage: "checklist")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .frame(minHeight: XHit.min)
-                    .contentShape(Rectangle())
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(minHeight: XHit.min)
+                .contentShape(Rectangle())
+                }
+                .buttonStyle(PressableButtonStyle())
+                Text("五项: 滑轨 / 锁舌 / 电池触点 / 指纹头 / 应急钥匙。完成即写入记录, 可在记录页按「保养」过滤。")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .buttonStyle(PressableButtonStyle())
-        } header: {
-            Text("保养周期")
-        } footer: {
-            Text("五项: 滑轨 / 锁舌 / 电池触点 / 指纹头 / 应急钥匙。完成即写入记录, 可在记录页按「保养」过滤。")
         }
     }
 
 
     // ---------- 1028 保养历史过滤 (1014 事件) ----------
     private var historySection: some View {
-        let all = BatteryCare.events(mac)
-        return Section {
-            if all.isEmpty {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                secLabel("保养历史")
+                if all.isEmpty {
                 // 包14 空态族消费点 (815 双按钮 / 841 小管家默认开 / 1044 便签):
                 // 旧版只有一句"还没有保养或换电记录" —— 现在空态直接给出那件能做的事:
                 // 主动作打开五项清单 (与下方 1015 按钮同一个 sheet, 不另起流程)。
                 XGuidedEmptyView(systemImage: "checkmark.seal",
-                                title: "还没有保养记录",
-                                message: "五项清单走一遍就会在这里落下第一条; 换电完成后走「换电关怀」里的图文指引。",
-                                actionTitle: "开始五项保养",
-                                action: { showChecklist = true })
-                    .listRowInsets(EdgeInsets())
-            }
-            ForEach(Array(all.prefix(5).enumerated()), id: \.offset) { _, e in
+                title: "还没有保养记录",
+                message: "五项清单走一遍就会在这里落下第一条; 换电完成后走「换电关怀」里的图文指引。",
+                actionTitle: "开始五项保养",
+                action: { showChecklist = true })
+                .listRowInsets(EdgeInsets())
+                }
+                ForEach(Array(all.prefix(5).enumerated()), id: \.offset) { _, e in
                 HStack(spacing: XSpace.s) {
-                    Image(systemName: e.kind == "battery" ? "battery.100" : "checkmark.seal")
-                        .font(.system(size: XIcon.sm, weight: .medium))
-                        .foregroundStyle(e.kind == "battery" ? XPalette.ok : XPalette.accentText)
-                        .accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: XSpace.xxs) {
-                        Text(e.kind == "battery" ? "更换电池" : "保养完成")
-                            .xFont(.subheadline)
-                            .foregroundStyle(XPalette.text)
-                        Text(e.note + " · " + daysAgoText(e.ts))
-                            .xFont(.caption2)
-                            .foregroundStyle(XPalette.textSub)
-                    }
-                    Spacer(minLength: 0)
+                Image(systemName: e.kind == "battery" ? "battery.100" : "checkmark.seal")
+                .font(.system(size: XIcon.sm, weight: .medium))
+                .foregroundStyle(e.kind == "battery" ? XPalette.ok : XPalette.accentText)
+                .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: XSpace.xxs) {
+                Text(e.kind == "battery" ? "更换电池" : "保养完成")
+                .xFont(.subheadline)
+                .foregroundStyle(XPalette.text)
+                Text(e.note + " · " + daysAgoText(e.ts))
+                .xFont(.caption2)
+                .foregroundStyle(XPalette.textSub)
+                }
+                Spacer(minLength: 0)
                 }
                 .accessibilityElement(children: .combine)
-            }
-            if !all.isEmpty {
+                }
+                if !all.isEmpty {
                 Button {
-                    app.pendingRecordsFilter = "__care"
-                    app.requestRoute(.records)
-                    // 先落点再收摊：sheet 不收，切过去的 Tab 就在它底下 (见本页上方那条注释)
-                    dismiss()
+                app.pendingRecordsFilter = "__care"
+                app.requestRoute(.records)
+                // 先落点再收摊：sheet 不收，切过去的 Tab 就在它底下 (见本页上方那条注释)
+                dismiss()
                 } label: {
-                    Label("到记录页查看全部 (保养过滤)", systemImage: "line.3.horizontal.decrease.circle")
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .frame(minHeight: XHit.min)
-                        .contentShape(Rectangle())
+                Label("到记录页查看全部 (保养过滤)", systemImage: "line.3.horizontal.decrease.circle")
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(minHeight: XHit.min)
+                .contentShape(Rectangle())
                 }
                 .buttonStyle(PressableButtonStyle())
+                }
             }
-        } header: {
-            Text("保养历史")
         }
     }
 
     // ---------- 116/118 换电 + 1012 年度提醒 ----------
     private var swapSection: some View {
-        Section {
-            NavigationLink { BatterySwapGuideView() } label: {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                secLabel("换电关怀")
+                NavigationLink { BatterySwapGuideView() } label: {
                 Label("换电池图文指引", systemImage: "battery.100")
-                    .frame(minHeight: XHit.min)
-            }
-            LabeledRow("上次换电",
-                       meta.batteryChangedAt > 0 ? daysAgoText(meta.batteryChangedAt * 1000) : "未记录 (见电池档案)")
-            // 1034 充电记录: 可充电型号记充电日期与时长 (纯本机台账, 与协议无关)
-            Button { markCharge() } label: {
+                .frame(minHeight: XHit.min)
+                }
+                LabeledRow("上次换电",
+                meta.batteryChangedAt > 0 ? daysAgoText(meta.batteryChangedAt * 1000) : "未记录 (见电池档案)")
+                // 1034 充电记录: 可充电型号记充电日期与时长 (纯本机台账, 与协议无关)
+                Button { markCharge() } label: {
                 LabeledRow("上次充电 (可充电型号)",
-                           care.chargeAt > 0
-                               ? daysAgoText(care.chargeAt) + (care.chargeLenMin > 0 ? " · \(care.chargeLenMin) 分钟" : "")
-                               : "未记录")
-                    // 2026-10-18 设计审核: 可点行补 44pt 最小触达 (ui-ux-pro-max)
-                    .frame(maxWidth: .infinity, minHeight: XHit.min, alignment: .leading)
-                    .contentShape(Rectangle())
-            }
-            .foregroundStyle(XPalette.text)
-            XToggle("每年换电池提醒", isOn: $yearlyOn)
-            if yearlyOn {
+                care.chargeAt > 0
+                ? daysAgoText(care.chargeAt) + (care.chargeLenMin > 0 ? " · \(care.chargeLenMin) 分钟" : "")
+                : "未记录")
+                // 2026-10-18 设计审核: 可点行补 44pt 最小触达 (ui-ux-pro-max)
+                .frame(maxWidth: .infinity, minHeight: XHit.min, alignment: .leading)
+                .contentShape(Rectangle())
+                }
+                .foregroundStyle(XPalette.text)
+                XToggle("每年换电池提醒", isOn: $yearlyOn)
+                if yearlyOn {
                 DatePicker("提醒日期", selection: $yearlyDate, displayedComponents: .date)
+                }
+                Text("年度提醒在选定日期上午 10 点送达 (本地通知, 白天送达)。")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-        } header: {
-            Text("换电关怀")
-        } footer: {
-            Text("年度提醒在选定日期上午 10 点送达 (本地通知, 白天送达)。")
         }
     }
 
     // ---------- 1025 应急钥匙半年检 ----------
     private var ekeySection: some View {
-        Section {
-            XToggle("应急钥匙半年检提醒", isOn: $ekeyOn)
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                secLabel("应急钥匙")
+                XToggle("应急钥匙半年检提醒", isOn: $ekeyOn)
                 .onChange(of: ekeyOn) { _, _ in saveEkey() }
-            LabeledRow("上次打卡", care.ekeyCheckAt > 0 ? daysAgoText(care.ekeyCheckAt) : "未打卡")
-            Button {
+                LabeledRow("上次打卡", care.ekeyCheckAt > 0 ? daysAgoText(care.ekeyCheckAt) : "未打卡")
+                Button {
                 var s = BatteryCare.care(mac)
                 s.ekeyCheckAt = Date().timeIntervalSince1970 * 1000
                 BatteryCare.saveCare(mac, s)
                 care = s
                 XHaptics.tick.impactOccurred()
                 app.showToast("已打卡 — 下次半年检会重新起算")
-            } label: {
+                } label: {
                 Label("确认应急钥匙还在 · 打卡", systemImage: "key.fill")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .frame(minHeight: XHit.min)
-                    .contentShape(Rectangle())
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(minHeight: XHit.min)
+                .contentShape(Rectangle())
+                }
+                .buttonStyle(PressableButtonStyle())
+                Text("像消防演练一样每半年确认一次应急钥匙的位置与可用性。")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .buttonStyle(PressableButtonStyle())
-        } header: {
-            Text("应急钥匙")
-        } footer: {
-            Text("像消防演练一样每半年确认一次应急钥匙的位置与可用性。")
         }
     }
 
