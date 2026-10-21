@@ -129,3 +129,40 @@
 
 `swiftshape` 的 R8/R9 只查 `Section("标题")` 带 footer 的写法，**查不出 List 外的裸 Section**。
 这批是逐页阅读时人工发现的 —— 说明闸门覆盖不到"容器语义错位"。
+
+## 最终状态（本轮更新）
+
+### CI
+
+| run | 提交 | 结论 |
+|---|---|---|
+| `39586996380` | `85d79d5` AlarmCenterView 7 处 Section | ✅ **SUCCESS** |
+| 之后 | `4fc437c` | 仅文档，0 个 Swift 改动 |
+
+**这个 SUCCESS 覆盖了全部近期改动**：FpStudio / TempCodeStudio 容量卡、
+MemberExitWizard / AlarmCenterView 的 Section 重构、IconPicker 的 List→ScrollView。
+
+### 52 页覆盖
+
+| 项 | 数量 |
+|---|---|
+| 页面总计 | 52 |
+| 有实质内容改动 | 34 |
+| 逐页核验为已丰富 | 18 |
+| 未处理 | 0 |
+
+### 容器一致性
+
+全仓裸 `Section` 已清零，只剩 `LocksPage.swift:40`（在 `List` 内，需要 `.swipeActions` + `.onMove`）。
+全仓 `List` 也只剩这一处。
+
+### 已记录的 3 个问题
+
+1. [KNOWN-GAP-BACKUP-FILES.md](KNOWN-GAP-BACKUP-FILES.md) —— 「本地备份文件」列表只有章节注释没有实现
+2. [CI-VS-GATES.md](CI-VS-GATES.md) —— 本地闸门是文本级检查，不等于能编译
+3. [SECTION-MIGRATION-LESSON.md](SECTION-MIGRATION-LESSON.md) —— Section 迁移的三个坑（header/footer、CRLF、带标题形式）
+
+### 仍未做到的
+
+- **用户真机确认观感** —— 验收标准第三条，只有用户能做
+- `z = -0.35*narrow` 的字面实现 —— SwiftUI 无 API，已用 `anchorZ` 等价实现并记录
