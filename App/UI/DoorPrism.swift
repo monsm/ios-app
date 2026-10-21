@@ -135,7 +135,7 @@ struct DoorPrism<B: View, D: View, F: View>: View {
         // ⇒ 实际面宽只有 0.92·width，而 A 是按 width 算的（大了 8.7%）。
         // 后果是三个面相对棱柱偏大，转到中间时重叠过多、边缘也对不上。
         // 先算出留边后的真实面宽，所有几何都用它。
-        let inner = width * 0.92
+        let inner = width * 0.80
         return ZStack {
             prismFace(.b, width: inner)
             prismFace(.d, width: inner)
@@ -152,7 +152,7 @@ struct DoorPrism<B: View, D: View, F: View>: View {
         // 这里留 4% 水平、3% 垂直 —— 比原型的 16% 保守，
         // 因为 Swift 版的面是真实页面（底部导航/工具栏要贴边），
         // 裁太多会把页面布局挤坏。
-        .padding(.horizontal, width * 0.04)
+        .padding(.horizontal, width * 0.10)
         .padding(.vertical, width * 0.03)
         // ═══ 投影放在整层，不放在每个面上 ═══
         // .shadow 作用在 rotation3DEffect 过的视图上时，
@@ -282,7 +282,8 @@ struct DoorPrism<B: View, D: View, F: View>: View {
         // 角点在棱柱前侧才画；cos > 0 即朝观察者
         let facing = cos(rad)
         return Capsule()
-            .fill(XPalette.textTertiary.opacity(0.55))
+            // 原型里棱是金属圆柱，比页面底色亮得多；0.55 的 textTertiary 太暗看不出
+            .fill(XPalette.textSub.opacity(0.9))
             // 原型里棱是半径 0.022 的圆柱（R=1.0）→ 直径 2.2% 棱柱宽，
             // 换算到 359pt 面宽约 8pt。原来写 5pt 太细，几乎看不见。
             .frame(width: 8)
