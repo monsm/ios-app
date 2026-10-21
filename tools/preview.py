@@ -39,7 +39,8 @@ CANVAS      = (10, 10, 11)
 SURFACE     = (22, 22, 24)
 SURFACE_ALT = (31, 31, 34)
 SUNKEN      = (18, 18, 20)
-HAIRLINE    = (50, 50, 54)
+HAIRLINE    = (50, 50, 54)   # XPalette.hairline dark 0x323236
+HAIRSTRONG  = (58, 58, 64)   # XPalette.hairlineStrong dark 0x3A3A40
 TEXT        = (245, 245, 247)
 TEXT_SUB    = (160, 160, 172)
 TEXT_TERT   = (136, 136, 146)
@@ -569,39 +570,56 @@ def render_buttons():
     return save(img, "buttons")
 
 def render_panels():
-    """XPanel — 三档 (group / hero / inset) + tone 描边"""
-    W, H = 402, 420
+    """XPanel — group vs hero (改前像素相同 / 改后有区分)"""
+    W, H = 402, 460
     img = new_canvas(W, H)
     dr = ImageDraw.Draw(img, "RGBA")
 
-    def panel(y, h, kind, tone=None, title="", sub=""):
-        pad = S(8) if kind == "inset" else (S(16) if kind == "hero" else S(16))
-        x0, x1 = S(16), W-S(16)
+    def plate(x0, y, w, h, kind, tone=None, label="", sub=""):
         r = S(16)
-        dr.rounded_rectangle([x0, y, x1, y+h], r, fill=SURFACE+(255,))
-        edge = HAIRLINE if tone is None else tone
-        alpha = 255 if tone is None else 89
-        dr.rounded_rectangle([x0, y, x1, y+h], r, outline=edge + (alpha,), width=1)
-        if title:
-            text(dr, (x0+pad, y+pad), title, 13)
-        if sub:
-            text(dr, (x0+pad, y+pad+S(20)), sub, 10, TEXT_SUB)
-        # 内容示意线
-        cy = y + pad + S(46)
-        while cy < y+h-pad-S(8):
-            dr.rounded_rectangle([x0+pad, cy, x1-pad, cy+S(6)], S(3), fill=SURFACE_ALT+(255,))
-            cy += S(14)
+        # 底
+        dr.rounded_rectangle([x0, y, x0+w, y+h], r, fill=SURFACE+(255,))
+        if kind == "hero":
+            # ① 品牌色微洗染 3%
+            dr.rounded_rectangle([x0, y, x0+w, y+h], r, fill=ACCENT+(8,))
+            # ② 顶部微光 (specular 5.5% → clear)
+            for i in range(int(h*0.55)):
+                a = int(0.055 * 255 * (1 - i/(h*0.55))**1.3)
+                if a <= 0: break
+                dr.rounded_rectangle([x0, y+i, x0+w, y+i+1], 0, fill=SPECULAR+(a,))
+            dr.rounded_rectangle([x0, y, x0+w, y+h], r, outline=HAIRSTRONG+(255,), width=1)
+        else:
+            edge = HAIRLINE if tone is None else tone
+            alpha = 255 if tone is None else 89
+            dr.rounded_rectangle([x0, y, x0+w, y+h], r, outline=edge+(alpha,), width=1)
+        pad = S(16)
+        if label: text(dr, (x0+pad, y+pad), label, 13)
+        if sub:   text(dr, (x0+pad, y+pad+S(20)), sub, 10, TEXT_SUB)
 
-    text(dr, (S(16), S(8)), "XPanel .group  (pad 16, radius 16, hairline)", 9, TEXT_TERT)
-    panel(S(24), S(120), "group", None, "分组卡", "pad 16 · XRadius.card")
+    # BEFORE: 两者完全相同
+    text(dr, (S(16), S(8)), "BEFORE  group 与 hero 像素级相同（kind 只影响 padding）", 9, TEXT_TERT)
+    plate(S(16), S(24),  W-S(32), S(70), "group", None, "普通分组卡", "hairline 描边")
+    plate(S(16), S(102), W-S(32), S(70), "hero",  None, "所谓「主角卡」", "改前与上面完全一样")
 
-    text(dr, (S(16), S(154)), "XPanel .hero  (pad 16, tone .warn 描边 35%)", 9, TEXT_TERT)
-    panel(S(170), S(110), "hero", WARN, "首屏主角卡", "tone 描边 0.35 不透明度")
-
-    text(dr, (S(16), S(290)), "XPanel .inset  (pad 8)", 9, TEXT_TERT)
-    panel(S(306), S(86), "inset", None, "内嵌小格", "pad 8 · 同 radius")
+    # AFTER: hero 有顶部微光 + hairlineStrong + 外投影
+    text(dr, (S(16), S(190)), "AFTER  hero = 铜色洗染 3% + 顶部微光 5.5% + hairlineStrong + 外投影", 9, TEXT_TERT)
+    plate(S(16), S(206), W-S(32), S(80), "group", None, "普通分组卡", "hairline 描边")
+    # hero with shadow
+    sh = Image.new('RGBA', img.size, (0,0,0,0))
+    sd = ImageDraw.Draw(sh)
+    for i in range(S(12), 0, -1):
+        a = int(0.22 * 255 * (1 - i/S(12))**1.8 * 0.35)
+        sd.rounded_rectangle([S(16)-i, S(300)-i+4, W-S(16)+i, S(300)+S(80)+i+4], S(16), fill=(0,0,0,a))
+    img2 = Image.alpha_composite(img.convert('RGBA'), sh).convert('RGB')
+    img.paste(img2, (0,0))
+    dr = ImageDraw.Draw(img, "RGBA")
+    plate(S(16), S(300), W-S(32), S(80), "hero", None, "主角卡", "现在看得出是主角")
+    text(dr, (S(16), S(392)), "硬事实：7 处 kind:.hero 里有 5 处不传 tone ——", 9, TEXT_TERT)
+    text(dr, (S(16), S(406)), "改之前那 5 张卡（设备/固件/网关/加密狗/安全页首卡）", 9, TEXT_TERT)
+    text(dr, (S(16), S(420)), "与同屏普通卡没有任何视觉差别。", 9, TEXT_TERT)
 
     return save(img, "panels")
+
 
 RENDERERS = {
     "codering": render_code_ring,

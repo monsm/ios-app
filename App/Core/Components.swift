@@ -66,30 +66,59 @@ struct XPanel<Content: View>: View {
     var padding: CGFloat? = nil
     @ViewBuilder var content: () -> Content
 
+    private var pad: CGFloat {
+        if let padding { return padding }
+        return kind == .inset ? XSpace.s : XSpace.card
+    }
+
+    private var edgeColor: Color {
+        if tone != .neutral { return tone.color.opacity(XOpacity.edge) }
+        // hero 用更实的描边 —— 它要在同屏一堆 group 卡里第一个被看见
+        return kind == .hero ? XPalette.hairlineStrong : XPalette.hairline
+    }
+
     var body: some View {
-        Group {
-            if let padding {
-                content()
-                    .padding(padding)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(XPalette.surface,
-                                in: RoundedRectangle(cornerRadius: XRadius.card, style: .continuous))
-            } else {
-                // X 系统自带容器: 按档位给内边距, 统一 XRadius.card 圆角与 surface 底
-                // 三档 padding: inset 8 / group 16 / hero 16
-                // (hero 与 group 同 padding, 差别在描边宽度与色彩 —— 见 XPanel 的 overlay)
-                let pad: CGFloat = kind == .inset ? XSpace.s : XSpace.card
-                content()
-                    .padding(pad)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(XPalette.surface,
-                                in: RoundedRectangle(cornerRadius: XRadius.card, style: .continuous))
-            }
+        content()
+            .padding(pad)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(plate)
+            .overlay(
+                RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
+                    .strokeBorder(edgeColor, lineWidth: 1)
+            )
+            // hero 额外一层极轻的外投影: 不同尺寸/不同底色的卡并排时,
+            // 光靠描边分不出主次, 一点阴影就够了。
+            .shadow(color: kind == .hero ? Color.black.opacity(0.22) : .clear,
+                    radius: kind == .hero ? 12 : 0,
+                    y: kind == .hero ? 4 : 0)
+    }
+
+    /// 卡片底: group/inset 是纯 surface; hero 多一层顶部微光。
+    ///
+    /// 为什么 hero 需要这一层:  5 个主页面 (设备/固件/网关/加密狗/安全) 的
+    /// 首卡都是 kind: .hero 且不传 tone —— 改之前它们与普通 .group 卡
+    /// **像素级完全相同**, 所谓"主角卡"只是个名字。
+    @ViewBuilder
+    private var plate: some View {
+        let shape = RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
+        if kind == .hero {
+            shape
+                .fill(XPalette.surface)
+                // ① 品牌色微洗染: 让 hero 与普通卡"同一块底但不同温度"。
+                //    3% 是刻意压低的 —— 这 5 张卡里有 4 张是状态卡 (备份/网关/固件/安全),
+                //    洗染太重会跟它们自己的 warn/ok 语义色打架。
+                .overlay(shape.fill(XPalette.accent.opacity(0.030)))
+                // ② 顶部微光: 给一层"光从上面来"的体积感
+                .overlay(
+                    shape.fill(
+                        LinearGradient(
+                            colors: [XPalette.specular.opacity(0.055), .clear],
+                            startPoint: .top, endPoint: .bottom)
+                    )
+                )
+        } else {
+            shape.fill(XPalette.surface)
         }
-        .overlay(
-            RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
-                .strokeBorder(tone == .neutral ? XPalette.hairline : tone.color.opacity(XOpacity.edge), lineWidth: 1)
-        )
     }
 }
 
@@ -307,13 +336,24 @@ struct XBusyButton: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: XSpace.s) {
-                if busy {
-                    ProgressView().controlSize(.small)
+                // 状态位: 忙碌时转圈, 空闲时显示图标。
+                // 原来两态是硬切 —— 点下去图标"啪"地消失、转圈"啪"地出现。
+                // ZStack + opacity 让两者交叠淡入淡出, 中间不会有一帧什么都没有。
+                ZStack {
+                    if let systemImage {
+                        Image(systemName: systemImage)
+                            .opacity(busy ? 0 : 1)
+                    }
+                    ProgressView()
+                        .controlSize(.small)
                         .tint(style == .primary ? XPalette.onAccent : XPalette.accentText)
-                } else if let systemImage {
-                    Image(systemName: systemImage)
+                        .opacity(busy ? 1 : 0)
                 }
+                .frame(width: 20, height: 20)
+                .animation(XMotion.quick, value: busy)
+
                 Text(title)
+                    .contentTransition(.opacity)
             }
         }
         .buttonStyle(AnyButtonStyle(style))
@@ -421,12 +461,17 @@ struct XRow: View {
 // ═══════════════════════════════════════════════════════════
 
 /// 旧 HeroCard 的替代 —— 新设计里不再有"英雄卡", 用 Panel 替代
+/// 首屏主角卡 —— 就是 XPanel(kind: .hero) 的语义别名。
+///
+/// 修: 原来 body 写的是 `XPanel { content() }` (默认 kind: .group),
+/// 而 .hero 在当时与 .group 像素级相同 —— 所以这个类型一直是个空壳。
+/// 现在两个问题都修了: XPanel 的 .hero 有独立视觉, 这里也真的传 .hero。
+/// 同时删掉从未被使用也从未生效的 `flair` 参数。
 struct XHeroCard<Content: View>: View {
-    var flair: Bool = false
     @ViewBuilder var content: () -> Content
 
     var body: some View {
-        XPanel { content() }
+        XPanel(kind: .hero) { content() }
     }
 }
 
