@@ -14,7 +14,7 @@ import LocalAuthentication
 /// 代价为零: 读它的只有视图与设计令牌, 两者本来就在主 actor。
 @MainActor
 enum AXFlags {
-    /// 862 增强对比: hairline/textSub 加深一档的触发条件 (DS.Palette 内部消费)
+    /// 862 增强对比: hairline/textSub 加深一档的触发条件 (XPalette 内部消费)
     /// ⚠ 2026-10-13 run 57 打脸: 此前写 `UIAccessibility.accessibilityDisplayShouldIncreaseContrast` ——
     /// UIKit **没有**这个成员。Apple 文档 (UIAccessibility「Capabilities」清单) 里 "Increase Contrast" 的官方读法
     /// 是 `isDarkerSystemColorsEnabled` (iOS 8+, static var)。此前注释还理直气壮写"长期稳定的系统 API",
@@ -28,7 +28,7 @@ enum AXFlags {
     /// 根视图按这一档设 legibilityWeight —— 显式字重的文本 (凭证名/开关标签) 才会跟着加粗;
     /// 系统默认只对系统字体的正文自动加粗, 自定义字重的那一族不会变。
     static var boldText: Bool { UIAccessibility.isBoldTextEnabled }
-    /// 899 减弱动态效果: 动效令牌 (DS.Motion) 的强制降档条件。
+    /// 899 减弱动态效果: 动效令牌 (XMotion) 的强制降档条件。
     /// 视图里已经在用 `@Environment(\.accessibilityReduceMotion)` 的那 11 处不受影响 ——
     /// 这里是**非视图**代码 (令牌层) 的唯一读点，两边判据是同一个系统开关。
     /// Apple 文档: `static var isReduceMotionEnabled: Bool { get }` (iOS 8+), 是**属性** (无括号)。
@@ -47,14 +47,14 @@ enum AXFlags {
         return [0.8, 1.0, 1.25, 1.5, 1.75].contains(v) ? v : 1.0
     }
     // ---------- 非隔离读点 (只给动效令牌) ----------
-    /// `DS.Motion` 的令牌要在**非隔离**处求值 (ButtonStyle / ToggleStyle 的 makeBody 都不是主 actor),
+    /// `XMotion` 的令牌要在**非隔离**处求值 (ButtonStyle / ToggleStyle 的 makeBody 都不是主 actor),
     /// 而系统"减弱动态效果"是主 actor 旗标。这里留一份"最近一次在主 actor 上读到的值":
     /// 值本身进 Locked, 读写都不越界 —— 不是 unsafe, 也不是 assumeIsolated。
     /// 刷新点 = 启动 + 每次回前台: 改这个系统开关**必须先离开 App 去设置**, 回来一定经过
     /// scenePhase .active, 所以不会读到过期值。
     nonisolated static let reduceMotionBox = Locked(false)
     nonisolated static var reduceMotionSnapshot: Bool { reduceMotionBox.withLock { $0 } }
-    /// 同一手法给 Dynamic Type 档位留一份非隔离快照 —— `XMetric.decorIcon` 与 `DS.Motion`
+    /// 同一手法给 Dynamic Type 档位留一份非隔离快照 —— `XMetric.decorIcon` 与 `XMotion`
     /// 一样要在 ButtonStyle / 非主 actor 的构图代码里求值, 而 typeSize() 读的是主 actor 旗标。
     /// 刷新点与 reduceMotionBox 相同 (启动 + 回前台), 理由也一样: 改字号必须先离开 App。
     nonisolated static let typeSizeBox = Locked(DynamicTypeSize.large)

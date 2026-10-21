@@ -1063,7 +1063,7 @@ struct MemberAvatar: View {
         guard let bid = Milestones.memberBadges()[member.id] else { return nil }
         return Milestones.badge(bid)   // 双保险与 RecordsView 门神榜同一条判据: 总表里查得到的那一枚才落到角标位
     }
-    /// 994 角标字号随头像档位, 只取 DS.Icon 现成档位 (xs 13 / sm 16 / md 20), 不自造字号:
+    /// 994 角标字号随头像档位, 只取 XIcon 现成档位 (xs 13 / sm 16 / md 20), 不自造字号:
     /// 22–26 小头像走 xs, 28–39 标准行头像走 sm, 40 以上 (详情页 44) 走 md。
     private var cornerGlyph: CGFloat {
         if size >= 40 { return XIcon.md }

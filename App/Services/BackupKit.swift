@@ -374,7 +374,7 @@ enum BackupKit {
         if let v = a.plain { DB.store.set("kf_plain", v) }
         if let n = a.recentCount, [3, 5, 10].contains(n) { DB.store.set("kf_recent_count", n) }
         if let stats = a.heroStats {
-            // 白名单外的项丢掉; 全空由 DS.HeroStats 自己回退全开 (不留一张没有指标的光板卡)
+            // 白名单外的项丢掉; 全空由 XHeroStats 自己回退全开 (不留一张没有指标的光板卡)
             DB.store.set("kf_hero_stats", XHeroStats.all.filter { stats.contains($0) })
         }
     }
