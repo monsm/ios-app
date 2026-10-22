@@ -496,10 +496,12 @@ struct SecurityAuditView: View {
                             //   "contextual type for closure argument list expects 2 arguments" 与
                             //   "expects 0 arguments, but 1 was used in closure body"。
                             // 给外层参数起名 newValue 后, 两层闭包各自明确, 歧义消失。
-        // 规范 §7.3：统一走 XSegmented（形态 B）
-        XSegmented(items: [0, 1],
-                   title: { $0 == 0 ? "管理操作 " + String(adminN) : "开门事件 " + String(doorN) },
-                   selection: Binding(get: { self.seg }, set: { withAnimation(XMotion.quick) { self.seg = $0 } }))
+        // 规范 §7.3：统一走 XSegmented（形态 B）。
+        //
+        // 原先把三元 + 字符串拼接写在 title 闭包里，编译器报
+        // 「unable to type-check this expression in reasonable time」——
+        // 闭包内的字符串拼接让泛型推导爆炸。抽成具名方法就没事了。
+                            XSegmented(items: [0, 1], title: auditSegTitle, selection: auditSegBinding)
                             ForEach(events, id: \.id) { e in
                                 auditRow(e)
                             }
@@ -870,6 +872,16 @@ struct SecurityAuditView: View {
         }
         host?.present(vc, animated: true)
     }
+
+    /// 审计分段的两段标题 —— 抽成方法而不是写在闭包里（见上方注释）。
+    private func auditSegTitle(_ i: Int) -> String {
+        i == 0 ? "管理操作 " + String(adminN) : "开门事件 " + String(doorN)
+    }
+
+    private var auditSegBinding: Binding<Int> {
+        Binding(get: { self.seg }, set: { v in withAnimation(XMotion.quick) { self.seg = v } })
+    }
+
 }
 
 // ================================================================

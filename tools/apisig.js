@@ -455,6 +455,42 @@ if (deadExtensions.length > 0) {
   }
 }
 
+// ── 6a. xFont 实参必须是 XText case（否则编译器会去试另一个重载）──
+//
+// CI 实证：`.xFont(.caption2.monospacedDigit())` 的实参是 **Font 值**，不是 XText case。
+// 它在改名 xFontExact 之后没有匹配的重载，编译器于是陷入类型推导，
+// 报的是「unable to type-check this expression in reasonable time」——
+// 一条看起来像性能问题的**真编译错误**。
+//
+// 更糟的是：我上一轮的校验正则用了 \b，`.caption2.` 的 word boundary 让 68 处全部混过，
+// 于是得出「851 处全部 XText」的假结论。这条判据改用**严格形状**：
+// 实参去掉空白后必须恰好是 `.case` 后接 `,` 或结尾。
+{
+  const XT = 'displayNumber|display|largeTitle|title2|title3|headline|body|subheadline|footnote|caption2|caption';
+  const validArg = new RegExp('^\\.(' + XT + ')(,|$)');
+  const bad = [];
+  for (const f of files) {
+    const src = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n');
+    for (const mm of src.matchAll(/\.xFont\(/g)) {
+      const start = mm.index + 7;
+      let depth = 1, i = start;
+      while (i < src.length && depth > 0) {
+        if (src[i] === '(') depth++; else if (src[i] === ')') depth--;
+        i++;
+      }
+      const arg = src.slice(start, i - 1).replace(/\s+/g, '');
+      if (!validArg.test(arg)) {
+        bad.push(path.relative(ROOT, f) + ':' + (src.slice(0, start).split('\n').length) + '  ' + arg.slice(0, 40));
+      }
+    }
+  }
+  if (bad.length) {
+    for (const b of bad.slice(0, 12)) console.error('  ' + b);
+    console.error('✗ .xFont 实参不是 XText case ' + bad.length + ' 处 —— 传 Font 值请用 xFontExact（否则重载不匹配、编译器类型推导超时）');
+    process.exit(1);
+  }
+  console.log('xFont 实参形状 ✓ 全部是 XText case（Font 值一律走 xFontExact）');
+}
 // ── 6b. xFontExact 预算 ───────────────────────────────────────────
 //
 // 规范 §4.2 的字阶是唯一的排版入口（XText）。xFontExact 是显式字号的逃生门，

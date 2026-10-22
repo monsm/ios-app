@@ -1212,6 +1212,10 @@ struct XCycleRing: View {
     let headline: String
     /// 圆心小字
     let caption: String
+    /// 读屏用的**自然语句**（规范 §13.5 的格式：「睡眠分数 53，共 7 小时 42 分」）。
+    ///
+    /// 不给时退化成「值，标签」—— 那是兜底，不是好文案。
+    var a11yText: String? = nil
     var size: CGFloat = 128
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
