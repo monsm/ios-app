@@ -477,6 +477,13 @@ const checks = [
     const app = CODE.get('LockKeeperApp.swift') || '';
     return app.includes('DB.hydrateMacOrders()');
   }],
+  ['设密码时提示它够不够难猜', () => {
+    // StudioTools.pwdStrength 实现完整零调用。全同数字(111111)与顺子(123456)
+    // 正是家里设门锁密码最常见的两种错误，也是试错者最先试的两种。
+    // 挂在 AddKeyPage 的提示行上：密码一变成"可用"，就说它是弱是强。
+    const k = CODE.get('AddKeyPage.swift') || '';
+    return k.includes('StudioTools.pwdStrength(pwd)') && k.includes('private var pwdWeak');
+  }],
 ];
 
 let pass = 0;

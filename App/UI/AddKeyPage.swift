@@ -146,12 +146,14 @@ struct AddKeyPage: View {
 
             // 提示行
             HStack(spacing: XSpace.xs) {
-                Image(systemName: pwdOK ? "checkmark.circle.fill" : "info.circle")
+                Image(systemName: pwdWeak ? "exclamationmark.triangle.fill"
+                                        : (pwdOK ? "checkmark.circle.fill" : "info.circle"))
                     .font(.system(size: XIcon.xs, weight: .semibold))
                 Text(pwdHint)
                     .xFont(.footnote)
             }
-            .foregroundStyle(pwdOK ? XPalette.accentText : XPalette.textSub)
+            .foregroundStyle(pwdWeak ? XPalette.warn
+                                     : (pwdOK ? XPalette.accentText : XPalette.textSub))
             .animation(XMotion.quick, value: pwdOK)
         }
     }
@@ -200,8 +202,18 @@ struct AddKeyPage: View {
     private var pwdHint: String {
         if pwd.isEmpty { return "6~8 位数字, 在门锁键盘上输入" }
         if !pwdOK { return "还需 \(6 - pwd.count) 位" }
+        // 密码已经能用了 —— 这时最该说的不是"还能再输两位"，而是"它够不够难猜"。
+        // StudioTools.pwdStrength 实现完整却零调用：全同数字(111111)与顺子(123456)
+        // 正是家里设门锁密码最常见的两种错误，也是试错者最先试的两种。
+        let st = StudioTools.pwdStrength(pwd)
+        if !st.hint.isEmpty { return st.hint }
         if pwd.count < 8 { return "已可添加, 也可以继续输入到 8 位" }
         return "已满 8 位"
+    }
+
+    /// 密码可用但不够难猜 —— 提示行改用警示色，否则"全部同数字"会显示成通过色。
+    private var pwdWeak: Bool {
+        pwdOK && !StudioTools.pwdStrength(pwd).hint.isEmpty
     }
 
     // ═══════════════════════════════════════════════════════
