@@ -399,7 +399,18 @@ jobs:
         working-directory: android-app
         run: |
           set -o pipefail
-          gradle assembleDebug --no-daemon --stacktrace --console=plain 2>&1 | tee build.log
+          if gradle assembleDebug --no-daemon --stacktrace --console=plain 2>&1 | tee build.log; then
+            exit 0
+          fi
+          # 2026-10-23：实证本 job 连红多次而 annotations 一条 Kotlin 错误都没有 ——
+          # 说明失败不在 Kotlin 编译阶段（没有 e: 行），而是在 Gradle 配置/依赖阶段。
+          # 诊断必须写在**同一个 step 内**：分离的 if: failure() 步骤里 echo 的 annotation
+          # 实测没有附着上来，等于白写。这里用 if/then 保证一定执行到。
+          echo "::error::Android 构建失败 —— 下面是从 build.log 里摘出的证据"
+          grep -nE 'FAILURE:|What went wrong|^e: |^w: .*error|error:|Caused by|Could not|> Task .*FAILED' build.log \
+            | head -40 | while IFS= read -r L; do echo "::error::${L}"; done || true
+          tail -n 40 build.log | while IFS= read -r L; do echo "::error::tail| ${L}"; done || true
+          exit 1
 
       - name: 核对编译号 = 注入的时刻
         working-directory: android-app
