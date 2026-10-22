@@ -1,4 +1,46 @@
-# v10「一扇门」重设计 · 交付包索引
+# docs/redesign 索引
+
+> ## ⚠️ 这个目录里有两代文档，先看清楚你在读哪一代
+>
+> | 代 | 文档 | 状态 |
+> |---|---|---|
+> | **一代**（v10 / BDF 三棱柱）| `BDF-*` `PART0–7` `DECISIONS` `MASTER-PLAN` `PRISM-*` `AUDIT-*` `EVIDENCE-*` `M5-SHAPE-AUDIT` `PAGE-ADAPT-LEDGER` `LOCK-3D-RESEARCH` | **已放弃**（见下）|
+> | **二代**（现行）| `SINGLE-CONSOLE` `DESIGN-DECISIONS` `DEAD-SURFACE` `PRE-RELEASE-CHECK` `CI-VS-GATES` `DESIGN-SYSTEM-V2` `KNOWN-GAP-BACKUP-FILES` `SECTION-MIGRATION-LESSON` `REFACTOR-STATUS` `FEATURE-BRAINSTORM` | **现行** |
+>
+> **一代为什么被放弃**：三棱柱要求用户先理解一个隐喻才能开门。
+> 产品方原话：「放弃吧 只留下一个界面，删掉门面和仪表，相关功能合并进剩余的」。
+> 一代文档**保留不删** —— 里面的 76 项功能清单、闸门矩阵、对抗审核记录仍然是有效参考，
+> 只是「三棱柱/门面」这个形态被否掉了。
+>
+> **要干活，从下面「二代」那一节开始读。**
+
+---
+
+## 二代（现行）：从这里开始
+
+| 顺序 | 文件 | 读它是为了 |
+|---|---|---|
+| 1 | **`SINGLE-CONSOLE.md`** | 现在的界面是什么结构、为什么这么定（设计契约）|
+| 2 | **`DESIGN-DECISIONS.md`** | 22 条决定的**依据、取舍、以及什么时候该推翻** |
+| 3 | **`DEAD-SURFACE.md`** | 零调用 API 的**处置总表**（该接/不接/为什么）|
+| 4 | **`PRE-RELEASE-CHECK.md`** | 每个工具的有效范围 + 各轮审计结论 + **哪些结论必须由人验证** |
+| 5 | **`CI-VS-GATES.md`** | 闸门全绿 ≠ 能编译。一次误报的完整记录 |
+| 6 | `DESIGN-SYSTEM-V2.md` | 26 个组件、令牌、Dynamic Type 两条口径 |
+| — | `KNOWN-GAP-BACKUP-FILES.md` | 一个具体缺口的实现记录（含仍未验证的部分）|
+| — | `SECTION-MIGRATION-LESSON.md` | 三个坑：`Section` 带 header/footer、CRLF、正则漏匹配 |
+| — | `REFACTOR-STATUS.md` | 重构进度与诚实清单（哪些没做完）|
+| — | `FEATURE-BRAINSTORM.md` | 15 条功能点的「价值 ÷ 成本」排序 |
+
+**二代的读法建议**：先读 `SINGLE-CONSOLE` 知道屏幕长什么样，
+再读 `DESIGN-DECISIONS` 知道为什么，然后 `DEAD-SURFACE` 知道哪些坑不用再踩。
+
+**最该信的一句**（来自 `PRE-RELEASE-CHECK`）：
+> 视觉观感、真机手感、动画效果、协议行为 —— **这四件事本会话没有任何一项被验证过**。
+> 所有判断来自代码结构、状态机推演、数值计算，以及 CI 的编译结论。
+
+---
+
+# 附：v10「一扇门」重设计 · 交付包索引（一代，已放弃）
 
 > **给实施 AI 的第一句话**：这套文档是**可执行规格**，不是灵感稿。
 > 每个数值都是验收值，每条「不许」都有反例。遇到歧义先查裁决表，再查 `DECISIONS.md`。
