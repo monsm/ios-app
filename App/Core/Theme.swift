@@ -546,10 +546,22 @@ enum XGradient {
                        startPoint: .topLeading, endPoint: .bottomTrailing)
     }
 
-    /// 环后辉光 —— 范式 3.5 glowBlue: 半径 <=160pt, 透明度 0.35, 不得外溢
+    /// 环后辉光 —— 范式 §3.5 的 `glowBlue`：**透明度 0.35**，半径 ≤160pt。
+    /// 用在**小元素**上（环背光、指示灯「它在亮」）。
     static func glow(_ color: Color) -> RadialGradient {
         RadialGradient(colors: [color.opacity(0.35), .clear],
                        center: .center, startRadius: 0, endRadius: 120)
+    }
+
+    /// 环境光溢出 —— 范式 §7.12 AmbientGlow：**透明度 0.12–0.20**，半径 200–320，一屏 ≤2 处。
+    ///
+    /// 为什么不能与 `glow` 共用一个函数：两者是**两个不同的量**。
+    /// §3.5 的环后辉光是 0.35（那是主视觉的光）；§7.12 的环境光只有 0.12–0.20（只做氛围）。
+    /// 混用会出两种错：要么环不够亮，要么整页发灰。
+    /// 本仓门厅一度两者叠加 —— 0.35 的渐变再乘 `.opacity(0.12)`，实际只剩 4%，几乎看不见。
+    static func ambient(_ color: Color) -> RadialGradient {
+        RadialGradient(colors: [color.opacity(0.16), .clear],
+                       center: .center, startRadius: 0, endRadius: 160)
     }
 
 }

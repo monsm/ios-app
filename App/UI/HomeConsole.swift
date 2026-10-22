@@ -541,10 +541,14 @@ struct HomeConsole: View {
                 //
                 // 旧实现只在"蓄力中"给光，静息时整屏是全死的黑；
                 // 而范式要求的是**常驻**的一层极淡辉光，让环"浮"在黑画布上。
+                // 用 `XGradient.ambient`（0.16 已烘进渐变）—— 原来这里是
+                // `.fill(XGradient.glow(...))` 再叠一层 `.opacity(0.12)`：
+                // glow 自带 0.35，乘 0.12 只剩 **4%**，几乎看不见。
+                // 那是把 §3.5 的环后辉光（0.35）当成了 §7.12 的环境光（0.12–0.20）来用。
                 Circle()
-                    .fill(XGradient.glow(phase.arcTone))
+                    .fill(XGradient.ambient(phase.arcTone))
                     .frame(width: 300, height: 300)
-                    .opacity(reduceMotion ? 0.10 : (phase == .charging ? 0.20 : 0.12))
+                    .opacity(reduceMotion ? 0.6 : (phase == .charging ? 1.0 : 0.75))
                     .blur(radius: 40)
                     .allowsHitTesting(false)
                     .transition(.opacity)

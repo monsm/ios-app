@@ -265,6 +265,19 @@ const projectProblems = [];
   const literals = (themeSrc2.match(/= 56\b/g) || []).length;
   if (literals > 1) projectProblems.push('56 这个数在 Theme.swift 出现了 ' + literals + ' 次 —— 应当只有 DSFont.displayNumber 一处');
 }
+
+{
+  // 规范里「辉光」是**两个不同的量**：
+  //   §3.5 glowBlue       —— 环后辉光，透明度 **0.35**，半径 ≤160，用小元素
+  //   §7.12 AmbientGlow   —— 环境光溢出，透明度 **0.12–0.20**，半径 200–320，一屏 ≤2 处
+  // 混用会出两种错：环不够亮，或整页发灰。本仓门厅曾把两者叠加（0.35×0.12=4%）。
+  const th = fs.readFileSync(path.join(ROOT, 'App/Core/Theme.swift'), 'utf8');
+  const glowFn = /static func glow\(_ color: Color\) -> RadialGradient \{([\s\S]*?)\n    \}/.exec(th);
+  const ambFn = /static func ambient\(_ color: Color\) -> RadialGradient \{([\s\S]*?)\n    \}/.exec(th);
+  if (!glowFn) projectProblems.push('XGradient.glow 不见了 —— 规范 §3.5 需要一个 0.35 的环后辉光');
+  else if (!/color\.opacity\(0\.35\)/.test(glowFn[1])) projectProblems.push('XGradient.glow 不是 0.35 —— 规范 §3.5 glowBlue 就是这个值');
+  if (!ambFn) projectProblems.push('XGradient.ambient 不见了 —— 规范 §7.12 需要一个 0.12–0.20 的环境光');
+  else if (!/color\.opacity\(0\.(1[2-9]|20)\)/.test(ambFn[1])) projectProblems.push('XGradient.ambient 不在 0.12–0.20 —— 规范 §7.12 给的就是这个区间');}
 {
   const appSrc = fs.readFileSync(path.join(ROOT, 'App/LockKeeperApp.swift'), 'utf8');
   // 规范 §10：图标渲染用 .hierarchical。缺了就是全仓图标跑在 .monochrome 上（单层平涂）。
