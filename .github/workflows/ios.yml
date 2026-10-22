@@ -399,7 +399,7 @@ jobs:
         working-directory: android-app
         run: |
           set -o pipefail
-          gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log
+          gradle assembleDebug --no-daemon --stacktrace --console=plain 2>&1 | tee build.log
 
       - name: 核对编译号 = 注入的时刻
         working-directory: android-app
@@ -470,6 +470,17 @@ jobs:
             echo "## Android 编译错误"
             grep -E "^e: |^w: .*error|error:" build.log | head -60 || echo "(build.log 里没有 e: 行)"
           } >> "$GITHUB_STEP_SUMMARY"
+          # 2026-10-23 补：实证 build.log 里**一条 e: 都没有**时，annotations 是空的，
+          # 等于「只知道红了、读不到为什么」——和 run#188 同一个坑，只是换了个层级
+          # （那次是 Kotlin 编译错误，这次是 Gradle 配置阶段失败，不产生 e: 行）。
+          # 所以：一条 e: 都没有时，把 gradle 的「What went wrong」和日志尾巴直接抛成注解。
+          if ! grep -qE '^e: ' build.log 2>/dev/null; then
+            echo "::error::build.log 里没有 Kotlin e: 行 —— 失败发生在 Gradle 配置/依赖阶段，下面是证据"
+            grep -nE 'What went wrong|FAILURE:|Could not|error:|Caused by' build.log 2>/dev/null | head -25 | while IFS= read -r L; do
+              echo "::error::${L}"
+            done || true
+            tail -n 25 build.log 2>/dev/null | while IFS= read -r L; do echo "::error::tail| ${L}"; done || true
+          fi
 
       - name: 上传 APK
         uses: actions/upload-artifact@v7
