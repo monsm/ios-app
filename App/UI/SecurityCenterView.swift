@@ -164,165 +164,157 @@ struct SecurityPeekView: View {
 
     var body: some View { vkBody }
     var vkBody: some View {
-        ZStack {
-            XPalette.canvas.ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: XSpace.section) {
-                    XPanel(kind: .group) {
-                        VStack(alignment: .leading, spacing: XSpace.m) {
-                            SecRow(title: "剪贴板自动清除",
-                                   subtitle: ClipboardCare.autoClearOn
-                                        ? "复制口令后 \(ClipboardCare.ttl) 秒清除；只对口令与 OTP 生效"
-                                        : "已关闭 —— 口令会一直留在系统剪贴板里",
-                                   icon: "doc.on.doc") {
-                                Picker("", selection: Binding(
-                                    get: { ClipboardCare.ttl },
-                                    set: { ClipboardCare.setTTL($0) })) {
-                                    Text("关闭").tag(0)
-                                    Text("30 秒").tag(30)
-                                    Text("60 秒").tag(60)
-                                    Text("5 分钟").tag(300)
-                                }
-                                .pickerStyle(.menu)
-                                .frame(minWidth: 110)
-                                .tint(XPalette.accentText)
+            // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+            XScreen("防窥与遮蔽", style: .inline) {
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        SecRow(title: "剪贴板自动清除",
+                               subtitle: ClipboardCare.autoClearOn
+                                    ? "复制口令后 \(ClipboardCare.ttl) 秒清除；只对口令与 OTP 生效"
+                                    : "已关闭 —— 口令会一直留在系统剪贴板里",
+                               icon: "doc.on.doc") {
+                            Picker("", selection: Binding(
+                                get: { ClipboardCare.ttl },
+                                set: { ClipboardCare.setTTL($0) })) {
+                                Text("关闭").tag(0)
+                                Text("30 秒").tag(30)
+                                Text("60 秒").tag(60)
+                                Text("5 分钟").tag(300)
                             }
-                            Text("加密钥匙包与交接包不走这条：那是密文，且你要粘进聊天工具，定时清掉只会打断交接。")
-                                .xFont(.footnote)
-                                .foregroundStyle(XPalette.textSub)
-                                .fixedSize(horizontal: false, vertical: true)
+                            .pickerStyle(.menu)
+                            .frame(minWidth: 110)
+                            .tint(XPalette.accentText)
                         }
+                        Text("加密钥匙包与交接包不走这条：那是密文，且你要粘进聊天工具，定时清掉只会打断交接。")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textSub)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
-                    .xScrollLift()
-
-                    XPanel(kind: .group) {
-                        VStack(alignment: .leading, spacing: XSpace.m) {
-                            secLabel("遮蔽样式")
-                            SecRow(title: "码值遮蔽样式", subtitle: maskStyleLabel, icon: "mask") {
-                                Picker("", selection: bindingString(SecKey.maskStyle)) {
-                                    Text("圆点打码").tag("")
-                                    Text("星号打码").tag("stars")
-                                    Text("保留末 4 位").tag("tail4")
-                                }
-                                .pickerStyle(.menu)
-                                .frame(minWidth: 110)
-                                .tint(XPalette.accentText)
-                            }
-                        }
-                    }
-                    .xScrollLift()
-
-                    NavigationLink { PrivacyDashboard() } label: {
-                        XPanel(kind: .group) {
-                            VStack(alignment: .leading, spacing: XSpace.m) {
-                                secLabel("隐私总览")
-                                HStack(spacing: XSpace.s) {
-                                    SecRow(title: "隐私仪表盘",
-                                           subtitle: "\(Self.activeCount()) 项防窥已启用",
-                                           icon: "gauge.with.needle") { EmptyView() }
-                                    Image(systemName: "chevron.right")
-                                        .font(.system(size: XIcon.xs, weight: .semibold))
-                                        .foregroundStyle(XPalette.textTertiary)
-                                        .accessibilityHidden(true)
-                                }
-                            }
-                        }
-                    }
-                    .buttonStyle(.plain)
-
-                    XPanel(kind: .group) {
-                        VStack(alignment: .leading, spacing: XSpace.m) {
-                            secLabel("背景与限时")
-                            SecRow(title: "切后台即糊", subtitle: bgBlurLabel,
-                                   icon: "rectangle.fill.and.rectangle") {
-                                XToggle("", isOn: bindingBool(SecKey.bgBlurOn, false))
-                                    .labelsHidden()
-                            }
-                            SecRow(title: "限时可见", subtitle: timedRevealLabel, icon: "timer") {
-                                Picker("", selection: bindingInt(SecKey.timedReveal, 0)) {
-                                    Text("关").tag(0)
-                                    Text("10 秒").tag(10)
-                                    Text("30 秒").tag(30)
-                                    Text("60 秒").tag(60)
-                                }
-                                .pickerStyle(.menu)
-                                .frame(minWidth: 84)
-                                .tint(XPalette.accentText)
-                            }
-                            frostedDemoRow
-                            SecRow(title: "分享遮半",
-                                   subtitle: SecurityPolicy.shareHalf
-                                            ? "已开: 码值在完成页与详情卡上默认遮半, 点「完整显示」才露全值; 复制与分享跟随屏上显示"
-                                            : "关: 码值原样显示",
-                                   icon: "square.and.arrow.up") {
-                                XToggle("", isOn: bindingBool(SecKey.shareHalfOn, true))
-                                    .labelsHidden()
-                            }
-                            SecRow(title: "访客通道",
-                                   subtitle: SecurityPolicy.guestActive
-                                            ? "已开: 主界面只挂 设备/记录 两页, 进 钥匙/设置 要先重输密码"
-                                            : "关: 四页照常。打开即生效 (会先把受限的那两页收起)",
-                                   icon: "person.crop.circle.badge.questionmark") {
-                                XToggle("", isOn: guestSwitch)
-                                    .labelsHidden()
-                            }
-                            if SecurityPolicy.guestActive {
-                                SecRow(title: "访客隐藏敏感成员",
-                                       subtitle: SecurityPolicy.hideSensitiveInGuest
-                                                ? "已开但筛不出东西: 成员档案里没有敏感标记位, 判据口已就位等数据侧"
-                                                : "关: 成员名单照原样给访客",
-                                       icon: "person.slash") {
-                                    XToggle("", isOn: bindingBool(SecKey.sensitiveOnly, false))
-                                        .labelsHidden()
-                                }
-                            }
-                        }
-                    }
-                    .xScrollLift()
-
-                    XPanel(kind: .group) {
-                        VStack(alignment: .leading, spacing: XSpace.m) {
-                            secLabel("水印")
-                            SecRow(title: "常驻水印",
-                                   subtitle: DB.store.getBool(SecKey.watermarkOn, false)
-                                            ? "全页对角重复 App 名+日期"
-                                            : "关闭 (截图加扰降级为常驻水印)",
-                                   icon: "watermark") {
-                                XToggle("", isOn: bindingBool(SecKey.watermarkOn, false))
-                                    .labelsHidden()
-                            }
-                            if DB.store.getBool(SecKey.watermarkOn, false) {
-                                SecRow(title: "水印文案",
-                                       subtitle: DB.store.getString(SecKey.watermarkTxt).isEmpty
-                                                ? "默认: App 名 + 当日日期"
-                                                : DB.store.getString(SecKey.watermarkTxt),
-                                       icon: "textformat") {
-                                    Button("自定义") {
-                                        let alert = UIAlertController(title: "水印文案", message: "留空 = 默认", preferredStyle: .alert)
-                                        alert.addTextField { $0.text = DB.store.getString(SecKey.watermarkTxt) }
-                                        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-                                        alert.addAction(UIAlertAction(title: "保存", style: .default) { _ in
-                                            DB.store.set(SecKey.watermarkTxt, alert.textFields?[0].text ?? "")
-                                            SecTick.bump()
-                                        })
-                                        UIApplication.topViewController()?.present(alert, animated: true)
-                                    }
-                                    .xFont(.footnote, weight: .medium)
-                                    .foregroundStyle(XPalette.accentText)
-                                    .frame(minHeight: XHit.min)
-                                }
-                            }
-                        }
-                    }
-                    .xScrollLift()
                 }
-                .padding(.horizontal, XSpace.gutter)
-                .padding(.vertical, XSpace.l)
+                .xScrollLift()
+
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("遮蔽样式")
+                        SecRow(title: "码值遮蔽样式", subtitle: maskStyleLabel, icon: "mask") {
+                            Picker("", selection: bindingString(SecKey.maskStyle)) {
+                                Text("圆点打码").tag("")
+                                Text("星号打码").tag("stars")
+                                Text("保留末 4 位").tag("tail4")
+                            }
+                            .pickerStyle(.menu)
+                            .frame(minWidth: 110)
+                            .tint(XPalette.accentText)
+                        }
+                    }
+                }
+                .xScrollLift()
+
+                NavigationLink { PrivacyDashboard() } label: {
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            secLabel("隐私总览")
+                            HStack(spacing: XSpace.s) {
+                                SecRow(title: "隐私仪表盘",
+                                       subtitle: "\(Self.activeCount()) 项防窥已启用",
+                                       icon: "gauge.with.needle") { EmptyView() }
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: XIcon.xs, weight: .semibold))
+                                    .foregroundStyle(XPalette.textTertiary)
+                                    .accessibilityHidden(true)
+                            }
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
+
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("背景与限时")
+                        SecRow(title: "切后台即糊", subtitle: bgBlurLabel,
+                               icon: "rectangle.fill.and.rectangle") {
+                            XToggle("", isOn: bindingBool(SecKey.bgBlurOn, false))
+                                .labelsHidden()
+                        }
+                        SecRow(title: "限时可见", subtitle: timedRevealLabel, icon: "timer") {
+                            Picker("", selection: bindingInt(SecKey.timedReveal, 0)) {
+                                Text("关").tag(0)
+                                Text("10 秒").tag(10)
+                                Text("30 秒").tag(30)
+                                Text("60 秒").tag(60)
+                            }
+                            .pickerStyle(.menu)
+                            .frame(minWidth: 84)
+                            .tint(XPalette.accentText)
+                        }
+                        frostedDemoRow
+                        SecRow(title: "分享遮半",
+                               subtitle: SecurityPolicy.shareHalf
+                                        ? "已开: 码值在完成页与详情卡上默认遮半, 点「完整显示」才露全值; 复制与分享跟随屏上显示"
+                                        : "关: 码值原样显示",
+                               icon: "square.and.arrow.up") {
+                            XToggle("", isOn: bindingBool(SecKey.shareHalfOn, true))
+                                .labelsHidden()
+                        }
+                        SecRow(title: "访客通道",
+                               subtitle: SecurityPolicy.guestActive
+                                        ? "已开: 主界面只挂 设备/记录 两页, 进 钥匙/设置 要先重输密码"
+                                        : "关: 四页照常。打开即生效 (会先把受限的那两页收起)",
+                               icon: "person.crop.circle.badge.questionmark") {
+                            XToggle("", isOn: guestSwitch)
+                                .labelsHidden()
+                        }
+                        if SecurityPolicy.guestActive {
+                            SecRow(title: "访客隐藏敏感成员",
+                                   subtitle: SecurityPolicy.hideSensitiveInGuest
+                                            ? "已开但筛不出东西: 成员档案里没有敏感标记位, 判据口已就位等数据侧"
+                                            : "关: 成员名单照原样给访客",
+                                   icon: "person.slash") {
+                                XToggle("", isOn: bindingBool(SecKey.sensitiveOnly, false))
+                                    .labelsHidden()
+                            }
+                        }
+                    }
+                }
+                .xScrollLift()
+
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("水印")
+                        SecRow(title: "常驻水印",
+                               subtitle: DB.store.getBool(SecKey.watermarkOn, false)
+                                        ? "全页对角重复 App 名+日期"
+                                        : "关闭 (截图加扰降级为常驻水印)",
+                               icon: "watermark") {
+                            XToggle("", isOn: bindingBool(SecKey.watermarkOn, false))
+                                .labelsHidden()
+                        }
+                        if DB.store.getBool(SecKey.watermarkOn, false) {
+                            SecRow(title: "水印文案",
+                                   subtitle: DB.store.getString(SecKey.watermarkTxt).isEmpty
+                                            ? "默认: App 名 + 当日日期"
+                                            : DB.store.getString(SecKey.watermarkTxt),
+                                   icon: "textformat") {
+                                Button("自定义") {
+                                    let alert = UIAlertController(title: "水印文案", message: "留空 = 默认", preferredStyle: .alert)
+                                    alert.addTextField { $0.text = DB.store.getString(SecKey.watermarkTxt) }
+                                    alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+                                    alert.addAction(UIAlertAction(title: "保存", style: .default) { _ in
+                                        DB.store.set(SecKey.watermarkTxt, alert.textFields?[0].text ?? "")
+                                        SecTick.bump()
+                                    })
+                                    UIApplication.topViewController()?.present(alert, animated: true)
+                                }
+                                .xFont(.footnote, weight: .medium)
+                                .foregroundStyle(XPalette.accentText)
+                                .frame(minHeight: XHit.min)
+                            }
+                        }
+                    }
+                }
+                .xScrollLift()
             }
-            .scrollIndicators(.hidden)
-        }
-        .navigationTitle("防窥与遮蔽")
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: scenePhase) { _, phase in
             let on = DB.store.getBool(SecKey.bgBlurOn, false)
@@ -481,259 +473,251 @@ struct SecurityAuditView: View {
 
     var body: some View { vkBody }
     var vkBody: some View {
-        ZStack {
-            XPalette.canvas.ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: XSpace.section) {
-                    XPanel(kind: .group) {
-                        VStack(alignment: .leading, spacing: XSpace.m) {
-                            secLabel("双流水")
-                            // 两条流水各有多少条 —— 原来只能滚到底数，没有总数。
-                            // 一次 load() 同时算两边，不重复读链。
-                            let allAudit = AuditLog().load()
-                            let adminN = allAudit.filter { $0.cat == .admin }.count
-                            let doorN = allAudit.filter { $0.cat == .door }.count
-                            // 2026-10-13 run 61: 原写 `set: { withAnimation(XMotion.quick) { self.seg = $0 } }` ——
-                            // 外层闭包参数隐式 ($0 只出现在**内层**闭包里), 编译器把它算成
-                            //   "contextual type for closure argument list expects 2 arguments" 与
-                            //   "expects 0 arguments, but 1 was used in closure body"。
-                            // 给外层参数起名 newValue 后, 两层闭包各自明确, 歧义消失。
+            // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+            XScreen("审计流水", style: .inline) {
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("双流水")
+                        // 两条流水各有多少条 —— 原来只能滚到底数，没有总数。
+                        // 一次 load() 同时算两边，不重复读链。
+                        let allAudit = AuditLog().load()
+                        let adminN = allAudit.filter { $0.cat == .admin }.count
+                        let doorN = allAudit.filter { $0.cat == .door }.count
+                        // 2026-10-13 run 61: 原写 `set: { withAnimation(XMotion.quick) { self.seg = $0 } }` ——
+                        // 外层闭包参数隐式 ($0 只出现在**内层**闭包里), 编译器把它算成
+                        //   "contextual type for closure argument list expects 2 arguments" 与
+                        //   "expects 0 arguments, but 1 was used in closure body"。
+                        // 给外层参数起名 newValue 后, 两层闭包各自明确, 歧义消失。
         // 规范 §7.3：统一走 XSegmented（形态 B）。
         //
         // 原先把三元 + 字符串拼接写在 title 闭包里，编译器报
         // 「unable to type-check this expression in reasonable time」——
         // 闭包内的字符串拼接让泛型推导爆炸。抽成具名方法就没事了。
-                            XSegmented(items: [0, 1],
-                                       title: { i in auditSegTitle(i, adminN: adminN, doorN: doorN) },
-                                       selection: auditSegBinding)
-                            ForEach(events, id: \.id) { e in
-                                auditRow(e)
-                            }
-                            if events.isEmpty {
-                                Text("暂无条目 — 增删改/导入会自动记入 (导出见敏感流水), 也可下方手动记一条")
-                                    .xFont(.footnote)
-                                    .foregroundStyle(XPalette.textSub)
-                            }
+                        XSegmented(items: [0, 1],
+                                   title: { i in auditSegTitle(i, adminN: adminN, doorN: doorN) },
+                                   selection: auditSegBinding)
+                        ForEach(events, id: \.id) { e in
+                            auditRow(e)
                         }
-                    }
-                    .xScrollLift()
-
-                    XPanel(kind: .group) {
-                        VStack(alignment: .leading, spacing: XSpace.m) {
-                            Button {
-                                let who = DB.store.getString(SecKey.sessionHow, "本机")
-                                AuditLog().append(seg == 0 ? .admin : .door, "记", target: "手动补记",
-                                                  operator_: who, duress: DB.store.getBool(SecKey.sessionDuress, false))
-                                SecTick.bump()
-                                self.center.bump()
-                            } label: {
-                                Label(manualEntryTitle, systemImage: "plus")
-                                    .xFont(.subheadline, weight: .medium)
-                            }
-                            .frame(minHeight: XHit.min)
-                        }
-                    }
-                    .xScrollLift()
-
-                    XPanel(kind: .group) {
-                        VStack(alignment: .leading, spacing: XSpace.m) {
-                            secLabel("防篡改")
-                            Button {
-                                verifyMsg = verifyNow()
-                                self.center.bump()
-                            } label: {
-                                Label("校验完整性", systemImage: "checkmark.shield")
-                                    .xFont(.subheadline, weight: .medium)
-                            }
-                            .frame(minHeight: XHit.min)
-                            if let m = verifyMsg {
-                                HStack(spacing: XSpace.xs) {
-                                    Image(systemName: m.contains("完好") ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
-                                        .accessibilityHidden(true)
-                                        .font(.system(size: XIcon.sm, weight: .semibold))
-                                        .foregroundStyle(m.contains("完好") ? XPalette.ok : XPalette.danger)
-                                    Text(m)
-                                        .xFont(.footnote)
-                                        .foregroundStyle(m.contains("完好") ? XPalette.textSub : XPalette.danger)
-                                        .lineLimit(2)
-                                }
-                            }
-                            Text("每条管理日志附前条 SHA-256, 逐链重算验证; 本地轻量口径, 篡改即断链")
+                        if events.isEmpty {
+                            Text("暂无条目 — 增删改/导入会自动记入 (导出见敏感流水), 也可下方手动记一条")
                                 .xFont(.footnote)
                                 .foregroundStyle(XPalette.textSub)
                         }
                     }
-                    .xScrollLift()
-
-                    XPanel(kind: .group) {
-                        VStack(alignment: .leading, spacing: XSpace.m) {
-                            secLabel("保留期")
-                            SecRow(title: "保留期", subtitle: retentionLabel, icon: "calendar") {
-                                Picker("", selection: Binding(
-                                    get: { DB.store.getInt(SecKey.auditRetention, 0) },
-                                    set: { DB.store.set(SecKey.auditRetention, $0); SecTick.bump() })
-                                ) {
-                                    Text("3 个月").tag(3)
-                                    Text("6 个月").tag(6)
-                                    Text("12 个月").tag(12)
-                                    Text("永久").tag(0)
-                                }
-                                .pickerStyle(.menu)
-                                .frame(minWidth: 84)
-                                .tint(XPalette.accentText)
-                            }
-                            if DB.store.getInt(SecKey.auditRetention, 0) > 0 {
-                                Button {
-                                    // 385 到期清理是**物理删除**流水条目 (还要整段重封链) ⇒ 归入 296 只读闸与 383 sudo 那一族:
-                                    // 只读模式下不做, 开关开着要先重输应用锁口令。
-                                    guardedDestroy(app) {
-                                        AuditLog().purgeExpired(months: DB.store.getInt(SecKey.auditRetention, 0))
-                                        SecTick.bump()
-                                        self.center.bump()
-                                        app.showToast("已按保留期清理并留痕", tone: .done)
-                                    }
-                                } label: {
-                                    // 清理到期条目是"删"，不是"改时间"。
-                        Label("立即清理到期条目", systemImage: "trash.slash")
-                                        .xFont(.subheadline, weight: .medium)
-                                }
-                                .frame(minHeight: XHit.min)
-                            }
-                        }
-                    }
-                    .xScrollLift()
-
-                    XPanel(kind: .group) {
-                        VStack(alignment: .leading, spacing: XSpace.m) {
-                            secLabel("脱敏导出")
-                            Button {
-                                // 296 只读安全模式: 导出属于"把数据搬到 App 之外"那一族, 只读档下拦下
-                                guard SecurityPolicy.allows(.importExport) else {
-                                    app.showToast(SecurityPolicy.denialMessage(.importExport))
-                                    return
-                                }
-                                exportPlaintext = false
-                                doExport("脱敏")
-                            } label: {
-                                Label("导出审计 JSON (脱敏)", systemImage: "square.and.arrow.up")
-                                    .xFont(.subheadline, weight: .medium)
-                            }
-                            .frame(minHeight: XHit.min)
-                            Button {
-                                guard SecurityPolicy.allows(.importExport) else {
-                                    app.showToast(SecurityPolicy.denialMessage(.importExport))
-                                    return
-                                }
-                                // 勾选"含明文"需二次警告确认
-                                let alert = UIAlertController(title: "导出含明文",
-                                                              message: "明文口令字段将原样写入导出文件。确认要导出吗？",
-                                                              preferredStyle: .alert)
-                                alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-                                alert.addAction(UIAlertAction(title: "导出明文", style: .destructive) { _ in
-                                    exportPlaintext = true
-                                    doExport("含明文")
-                                })
-                                UIApplication.topViewController()?.present(alert, animated: true)
-                            } label: {
-                                Label("导出含明文 (需确认)", systemImage: "eye")
-                                    .xFont(.subheadline, weight: .medium)
-                            }
-                            .frame(minHeight: XHit.min)
-                            .foregroundStyle(XPalette.warn)
-                        }
-                    }
-                    .xScrollLift()
-
-                    XPanel(kind: .group) {
-                        VStack(alignment: .leading, spacing: XSpace.m) {
-                            secLabel("sudo 口令")
-                            SecRow(title: "毁灭操作 sudo 口令",
-                                   subtitle: SecurityPolicy.sudoRequired
-                                            ? "已开: 三级销毁的第二级要重输本机密码, 清空回收站/到期清理/离职清除也先问这一道"
-                                            : "已关: 上面这几处毁灭动作不再追问口令 (不建议)",
-                                   icon: "person.crop.circle.badge.xmark") {
-                                XToggle("", isOn: Binding(
-                                    get: { SecurityPolicy.sudoRequired },
-                                    // 关掉开关顺手收回已发的那张券: 会话里"上一次验过"不该替下一次做主
-                                    set: { DB.store.set(SecKey.sudoOn, $0); app.sudoTicket = nil; SecTick.bump() }))
-                                    .labelsHidden()
-                            }
-                            if !DB.hasPasscode() {
-                                Text("本机没设应用锁密码 ⇒ 口令无从复核 ⇒ 毁灭动作按最严格解释停在门口。"   // 383 本机没设应用锁密码
-                                     + "要在这台机器上销毁, 先设本机密码或把这枚开关关掉。")
-                                    .xFont(.footnote)
-                                    .foregroundStyle(XPalette.warn)
-                            }
-                        }
-                    }
-                    .xScrollLift()
-
-                    XPanel(kind: .group) {
-                        VStack(alignment: .leading, spacing: XSpace.m) {
-                            secLabel("敏感操作视图")
-                            let recent = SensitiveLedger().recent(limit: 5)
-                            if recent.isEmpty {
-                                Text("暂无 — 查看/复制/导出明文动作由接线方记入 (查看密码、复制 OTP、导出备份)")
-                                    .xFont(.footnote)
-                                    .foregroundStyle(XPalette.textSub)
-                            } else {
-                                ForEach(recent) { it in
-                                    HStack(spacing: XSpace.xs) {
-                                        Image(systemName: sensitiveIcon(it.kind))
-                                            .accessibilityHidden(true)
-                                            .font(.system(size: XIcon.xs, weight: .semibold))
-                                            .foregroundStyle(XPalette.warn)
-                                        Text("\(it.kind) · \(it.target)")
-                                            .xFont(.footnote)
-                                            .foregroundStyle(XPalette.textSub)
-                                        Spacer()
-                                        Text(SecFmt.dateStr(Double(it.id) / 1000))
-                                            .xFont(.caption)
-                                            .foregroundStyle(XPalette.textSub)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    .xScrollLift()
-
-                    XPanel(kind: .group) {
-                        VStack(alignment: .leading, spacing: XSpace.m) {
-                            secLabel("快捷指令执行")
-                            let intents = SensitiveLedger().intentItems(limit: 10)
-                            if intents.isEmpty {
-                                Text("暂无 — 六条快捷指令意图每次执行都会记到这里 (被冷却拦下的也留痕)")
-                                    .xFont(.footnote)
-                                    .foregroundStyle(XPalette.textSub)
-                            } else {
-                                ForEach(intents) { it in
-                                    HStack(spacing: XSpace.xs) {
-                                        Image(systemName: "command")
-                                            .accessibilityHidden(true)
-                                            .font(.system(size: XIcon.xs, weight: .semibold))
-                                            .foregroundStyle(XPalette.accentText)
-                                        Text(String(it.kind.dropFirst("intent·".count)) + " · " + it.target)
-                                            .xFont(.footnote)
-                                            .foregroundStyle(XPalette.textSub)
-                                        Spacer()
-                                        Text(SecFmt.dateStr(Double(it.id) / 1000))
-                                            .xFont(.caption)
-                                            .foregroundStyle(XPalette.textSub)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    .xScrollLift()
-
                 }
-                .padding(.horizontal, XSpace.gutter)
-                .padding(.vertical, XSpace.l)
+                .xScrollLift()
+
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        Button {
+                            let who = DB.store.getString(SecKey.sessionHow, "本机")
+                            AuditLog().append(seg == 0 ? .admin : .door, "记", target: "手动补记",
+                                              operator_: who, duress: DB.store.getBool(SecKey.sessionDuress, false))
+                            SecTick.bump()
+                            self.center.bump()
+                        } label: {
+                            Label(manualEntryTitle, systemImage: "plus")
+                                .xFont(.subheadline, weight: .medium)
+                        }
+                        .frame(minHeight: XHit.min)
+                    }
+                }
+                .xScrollLift()
+
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("防篡改")
+                        Button {
+                            verifyMsg = verifyNow()
+                            self.center.bump()
+                        } label: {
+                            Label("校验完整性", systemImage: "checkmark.shield")
+                                .xFont(.subheadline, weight: .medium)
+                        }
+                        .frame(minHeight: XHit.min)
+                        if let m = verifyMsg {
+                            HStack(spacing: XSpace.xs) {
+                                Image(systemName: m.contains("完好") ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
+                                    .accessibilityHidden(true)
+                                    .font(.system(size: XIcon.sm, weight: .semibold))
+                                    .foregroundStyle(m.contains("完好") ? XPalette.ok : XPalette.danger)
+                                Text(m)
+                                    .xFont(.footnote)
+                                    .foregroundStyle(m.contains("完好") ? XPalette.textSub : XPalette.danger)
+                                    .lineLimit(2)
+                            }
+                        }
+                        Text("每条管理日志附前条 SHA-256, 逐链重算验证; 本地轻量口径, 篡改即断链")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textSub)
+                    }
+                }
+                .xScrollLift()
+
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("保留期")
+                        SecRow(title: "保留期", subtitle: retentionLabel, icon: "calendar") {
+                            Picker("", selection: Binding(
+                                get: { DB.store.getInt(SecKey.auditRetention, 0) },
+                                set: { DB.store.set(SecKey.auditRetention, $0); SecTick.bump() })
+                            ) {
+                                Text("3 个月").tag(3)
+                                Text("6 个月").tag(6)
+                                Text("12 个月").tag(12)
+                                Text("永久").tag(0)
+                            }
+                            .pickerStyle(.menu)
+                            .frame(minWidth: 84)
+                            .tint(XPalette.accentText)
+                        }
+                        if DB.store.getInt(SecKey.auditRetention, 0) > 0 {
+                            Button {
+                                // 385 到期清理是**物理删除**流水条目 (还要整段重封链) ⇒ 归入 296 只读闸与 383 sudo 那一族:
+                                // 只读模式下不做, 开关开着要先重输应用锁口令。
+                                guardedDestroy(app) {
+                                    AuditLog().purgeExpired(months: DB.store.getInt(SecKey.auditRetention, 0))
+                                    SecTick.bump()
+                                    self.center.bump()
+                                    app.showToast("已按保留期清理并留痕", tone: .done)
+                                }
+                            } label: {
+                                // 清理到期条目是"删"，不是"改时间"。
+                    Label("立即清理到期条目", systemImage: "trash.slash")
+                                    .xFont(.subheadline, weight: .medium)
+                            }
+                            .frame(minHeight: XHit.min)
+                        }
+                    }
+                }
+                .xScrollLift()
+
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("脱敏导出")
+                        Button {
+                            // 296 只读安全模式: 导出属于"把数据搬到 App 之外"那一族, 只读档下拦下
+                            guard SecurityPolicy.allows(.importExport) else {
+                                app.showToast(SecurityPolicy.denialMessage(.importExport))
+                                return
+                            }
+                            exportPlaintext = false
+                            doExport("脱敏")
+                        } label: {
+                            Label("导出审计 JSON (脱敏)", systemImage: "square.and.arrow.up")
+                                .xFont(.subheadline, weight: .medium)
+                        }
+                        .frame(minHeight: XHit.min)
+                        Button {
+                            guard SecurityPolicy.allows(.importExport) else {
+                                app.showToast(SecurityPolicy.denialMessage(.importExport))
+                                return
+                            }
+                            // 勾选"含明文"需二次警告确认
+                            let alert = UIAlertController(title: "导出含明文",
+                                                          message: "明文口令字段将原样写入导出文件。确认要导出吗？",
+                                                          preferredStyle: .alert)
+                            alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+                            alert.addAction(UIAlertAction(title: "导出明文", style: .destructive) { _ in
+                                exportPlaintext = true
+                                doExport("含明文")
+                            })
+                            UIApplication.topViewController()?.present(alert, animated: true)
+                        } label: {
+                            Label("导出含明文 (需确认)", systemImage: "eye")
+                                .xFont(.subheadline, weight: .medium)
+                        }
+                        .frame(minHeight: XHit.min)
+                        .foregroundStyle(XPalette.warn)
+                    }
+                }
+                .xScrollLift()
+
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("sudo 口令")
+                        SecRow(title: "毁灭操作 sudo 口令",
+                               subtitle: SecurityPolicy.sudoRequired
+                                        ? "已开: 三级销毁的第二级要重输本机密码, 清空回收站/到期清理/离职清除也先问这一道"
+                                        : "已关: 上面这几处毁灭动作不再追问口令 (不建议)",
+                               icon: "person.crop.circle.badge.xmark") {
+                            XToggle("", isOn: Binding(
+                                get: { SecurityPolicy.sudoRequired },
+                                // 关掉开关顺手收回已发的那张券: 会话里"上一次验过"不该替下一次做主
+                                set: { DB.store.set(SecKey.sudoOn, $0); app.sudoTicket = nil; SecTick.bump() }))
+                                .labelsHidden()
+                        }
+                        if !DB.hasPasscode() {
+                            Text("本机没设应用锁密码 ⇒ 口令无从复核 ⇒ 毁灭动作按最严格解释停在门口。"   // 383 本机没设应用锁密码
+                                 + "要在这台机器上销毁, 先设本机密码或把这枚开关关掉。")
+                                .xFont(.footnote)
+                                .foregroundStyle(XPalette.warn)
+                        }
+                    }
+                }
+                .xScrollLift()
+
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("敏感操作视图")
+                        let recent = SensitiveLedger().recent(limit: 5)
+                        if recent.isEmpty {
+                            Text("暂无 — 查看/复制/导出明文动作由接线方记入 (查看密码、复制 OTP、导出备份)")
+                                .xFont(.footnote)
+                                .foregroundStyle(XPalette.textSub)
+                        } else {
+                            ForEach(recent) { it in
+                                HStack(spacing: XSpace.xs) {
+                                    Image(systemName: sensitiveIcon(it.kind))
+                                        .accessibilityHidden(true)
+                                        .font(.system(size: XIcon.xs, weight: .semibold))
+                                        .foregroundStyle(XPalette.warn)
+                                    Text("\(it.kind) · \(it.target)")
+                                        .xFont(.footnote)
+                                        .foregroundStyle(XPalette.textSub)
+                                    Spacer()
+                                    Text(SecFmt.dateStr(Double(it.id) / 1000))
+                                        .xFont(.caption)
+                                        .foregroundStyle(XPalette.textSub)
+                                }
+                            }
+                        }
+                    }
+                }
+                .xScrollLift()
+
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("快捷指令执行")
+                        let intents = SensitiveLedger().intentItems(limit: 10)
+                        if intents.isEmpty {
+                            Text("暂无 — 六条快捷指令意图每次执行都会记到这里 (被冷却拦下的也留痕)")
+                                .xFont(.footnote)
+                                .foregroundStyle(XPalette.textSub)
+                        } else {
+                            ForEach(intents) { it in
+                                HStack(spacing: XSpace.xs) {
+                                    Image(systemName: "command")
+                                        .accessibilityHidden(true)
+                                        .font(.system(size: XIcon.xs, weight: .semibold))
+                                        .foregroundStyle(XPalette.accentText)
+                                    Text(String(it.kind.dropFirst("intent·".count)) + " · " + it.target)
+                                        .xFont(.footnote)
+                                        .foregroundStyle(XPalette.textSub)
+                                    Spacer()
+                                    Text(SecFmt.dateStr(Double(it.id) / 1000))
+                                        .xFont(.caption)
+                                        .foregroundStyle(XPalette.textSub)
+                                }
+                            }
+                        }
+                    }
+                }
+                .xScrollLift()
+
             }
-            .scrollIndicators(.hidden)
-        }
-        .navigationTitle("审计流水")
         .navigationBarTitleDisplayMode(.inline)
         .onReceive(Timer.publish(every: 2, on: .main, in: .common).autoconnect()) { _ in
             self.center.bump()
@@ -910,251 +894,243 @@ struct SecurityDestroyView: View {
 
     var body: some View { vkBody }
     var vkBody: some View {
-        ZStack {
-            XPalette.canvas.ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: XSpace.section) {
-                    XPanel(kind: .group) {
-                        VStack(alignment: .leading, spacing: XSpace.m) {
-                            secLabel("备份闸")
-                            HStack(spacing: XSpace.s) {
-                                Image(systemName: DestroyKit.backupGatePass ? "checkmark.shield.fill" : "exclamationmark.shield")
-                                    .accessibilityHidden(true)
-                                    .font(.system(size: XIcon.sm, weight: .semibold))
-                                    .foregroundStyle(DestroyKit.backupGatePass ? XPalette.ok : XPalette.danger)
+            // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+            XScreen("销毁与应急", style: .inline) {
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("备份闸")
+                        HStack(spacing: XSpace.s) {
+                            Image(systemName: DestroyKit.backupGatePass ? "checkmark.shield.fill" : "exclamationmark.shield")
+                                .accessibilityHidden(true)
+                                .font(.system(size: XIcon.sm, weight: .semibold))
+                                .foregroundStyle(DestroyKit.backupGatePass ? XPalette.ok : XPalette.danger)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("销毁前备份闸")
+                                    .xFont(.subheadline, weight: .medium)
+                                Text(backupGateLine)
+                                    .xFont(.footnote)
+                                    .foregroundStyle(DestroyKit.backupGatePass ? XPalette.textSub : XPalette.danger)
+                            }
+                            Spacer()
+                        }
+                        .frame(minHeight: XHit.min)
+                    }
+                }
+                .xScrollLift()
+
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("三级销毁")
+                        VStack(alignment: .leading, spacing: XSpace.s) {
+                            XToggle(isOn: $ack) {
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text("销毁前备份闸")
-                                        .xFont(.subheadline, weight: .medium)
-                                    Text(backupGateLine)
+                                    Text("我理解销毁不可恢复")
+                                        .xFont(.subheadline)
+                                    Text("删除+随机覆写全部本地缓存 (钥匙串/台账/日志/审计)")
                                         .xFont(.footnote)
-                                        .foregroundStyle(DestroyKit.backupGatePass ? XPalette.textSub : XPalette.danger)
+                                        .foregroundStyle(XPalette.textSub)
                                 }
-                                Spacer()
+                            }
+                            .tint(XPalette.accent)
+                            if ack {
+                                // 第二级: sudo 重输应用锁密码 (383)
+                                if SecurityPolicy.sudoRequired, app.sudoTicket == nil {
+                                    HStack(spacing: XSpace.s) {
+                                        SecureField("重输应用锁密码", text: $sudoInput)
+                                            .textFieldStyle(.roundedBorder)
+                                        Button("验证") { verifySudo() }
+                                            .xFont(.subheadline, weight: .medium)
+                                            .foregroundStyle(XPalette.accentText)
+                                            .frame(minHeight: XHit.min)
+                                    }
+                                } else if app.sudoTicket != nil {
+                                    Label("sudo 验证通过", systemImage: "checkmark.seal.fill")
+                                        .xFont(.footnote)
+                                        .foregroundStyle(XPalette.ok)
+                                } else {
+                                    Label("销毁前重输口令的开关关着: 本级跳过, 不再追问口令", systemImage: "exclamationmark.triangle")
+                                        .xFont(.footnote)
+                                        .foregroundStyle(XPalette.warn)
+                                }
+                            }
+                            if ack && sudoSatisfied {
+                                // 第三级: 键入"销毁"二字
+                                TextField("键入 销毁 二字以继续", text: $typedWord)
+                                    .autocorrectionDisabled()
+                                    .frame(minHeight: XHit.min)
+                            }
+                            XBusyButton(title: "销毁全部数据", busy: destroying) {
+                                runDestroy()
+                            }
+                            .disabled(!(ack && sudoSatisfied && typedWord.trimmingCharacters(in: .whitespaces) == "销毁"))
+                            if let rep = destroyReport {
+                                Text(rep)
+                                    .xFont(.footnote)
+                                    .foregroundStyle(XPalette.textSub)
+                                    .lineLimit(4)
+                            }
+                            if let msg = residueMsg {
+                                HStack(spacing: XSpace.xs) {
+                                    Image(systemName: msg.contains("零残留") ? "checkmark.seal.fill" : "magnifyingglass")
+                                        .accessibilityHidden(true)
+                                        .font(.system(size: XIcon.sm, weight: .semibold))
+                                        .foregroundStyle(msg.contains("零残留") ? XPalette.ok : XPalette.danger)
+                                    Text(msg)
+                                        .xFont(.footnote)
+                                        .foregroundStyle(msg.contains("零残留") ? XPalette.ok : XPalette.danger)
+                                }
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+                .xScrollLift()
+
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("回收站")
+                        // 这一条是补的：界面到处承诺「可还原」「N 天内可找回」，
+                        // 但 undoRemove 全仓零调用 —— 没有任何页面能真的放回去。
+                        NavigationLink {
+                            CredentialBinView().environmentObject(app).trackScreen("回收站")
+                        } label: {
+                            HStack(spacing: XSpace.s) {
+                                Image(systemName: "arrow.uturn.backward.circle")
+                                    .font(.system(size: XIcon.sm, weight: .medium))
+                                    .foregroundStyle(XPalette.accentText)
+                                    .accessibilityHidden(true)
+                                Text("查看回收站（可恢复）")
+                                    .xFont(.subheadline, weight: .medium)
+                                    .foregroundStyle(XPalette.text)
+                                Spacer(minLength: 0)
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: XIcon.xs, weight: .semibold))
+                                    .foregroundStyle(XPalette.textTertiary)
+                                    .accessibilityHidden(true)
                             }
                             .frame(minHeight: XHit.min)
+                            .contentShape(Rectangle())
                         }
-                    }
-                    .xScrollLift()
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("查看回收站，可恢复已删除的钥匙")
 
-                    XPanel(kind: .group) {
-                        VStack(alignment: .leading, spacing: XSpace.m) {
-                            secLabel("三级销毁")
-                            VStack(alignment: .leading, spacing: XSpace.s) {
-                                XToggle(isOn: $ack) {
+                        XHairline(inset: 0)
+                        HStack(spacing: XSpace.s) {
+                            Text("清空回收站 (\(trashCount) 项)")
+                                .xFont(.subheadline, weight: .medium)
+                            Spacer()
+                            Text("长按 2 秒释放, 松手取消")
+                                .xFont(.footnote)
+                                .foregroundStyle(XPalette.textSub)
+                        }
+                        holdClearControl
+                    }
+                }
+                .xScrollLift()
+
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("离职清除")
+                        let members = Offboard.members()
+                        if members.isEmpty {
+                            Text("尚无成员档案 — 在 设置 → 家人与钥匙 添加后可在此“清除并归档”")
+                                .xFont(.footnote)
+                                .foregroundStyle(XPalette.textSub)
+                        } else {
+                            ForEach(members) { m in
+                                HStack(spacing: XSpace.s) {
+                                    Image(systemName: "person.crop.circle")
+                                        .accessibilityHidden(true)
+                                        .font(.system(size: XIcon.sm, weight: .medium))
+                                        .foregroundStyle(memberColor(m))
                                     VStack(alignment: .leading, spacing: 2) {
-                                        Text("我理解销毁不可恢复")
+                                        Text(m.name)
                                             .xFont(.subheadline)
-                                        Text("删除+随机覆写全部本地缓存 (钥匙串/台账/日志/审计)")
+                                        Text("名下钥匙入归档, 记录保留并标“已离开”")
                                             .xFont(.footnote)
                                             .foregroundStyle(XPalette.textSub)
                                     }
-                                }
-                                .tint(XPalette.accent)
-                                if ack {
-                                    // 第二级: sudo 重输应用锁密码 (383)
-                                    if SecurityPolicy.sudoRequired, app.sudoTicket == nil {
-                                        HStack(spacing: XSpace.s) {
-                                            SecureField("重输应用锁密码", text: $sudoInput)
-                                                .textFieldStyle(.roundedBorder)
-                                            Button("验证") { verifySudo() }
-                                                .xFont(.subheadline, weight: .medium)
-                                                .foregroundStyle(XPalette.accentText)
-                                                .frame(minHeight: XHit.min)
+                                    Spacer()
+                                    Button("清除") {
+                                        // 402 离职清除: 名下凭证从台账整段搬走 (不可一键还原) ⇒ 归销毁族, 过 296 + 383 两道闸
+                                        guardedDestroy(app) {
+                                            Offboard.markDeparted(m.id, name: m.name)
+                                            AuditLog().append(.admin, "离", target: m.name,
+                                                              duress: DB.store.getBool(SecKey.sessionDuress, false))
+                                            app.showToast("\(m.name) 已归档")
+                                            SecTick.bump()
+                                            self.center.bump()
                                         }
-                                    } else if app.sudoTicket != nil {
-                                        Label("sudo 验证通过", systemImage: "checkmark.seal.fill")
-                                            .xFont(.footnote)
-                                            .foregroundStyle(XPalette.ok)
-                                    } else {
-                                        Label("销毁前重输口令的开关关着: 本级跳过, 不再追问口令", systemImage: "exclamationmark.triangle")
-                                            .xFont(.footnote)
-                                            .foregroundStyle(XPalette.warn)
                                     }
-                                }
-                                if ack && sudoSatisfied {
-                                    // 第三级: 键入"销毁"二字
-                                    TextField("键入 销毁 二字以继续", text: $typedWord)
-                                        .autocorrectionDisabled()
-                                        .frame(minHeight: XHit.min)
-                                }
-                                XBusyButton(title: "销毁全部数据", busy: destroying) {
-                                    runDestroy()
-                                }
-                                .disabled(!(ack && sudoSatisfied && typedWord.trimmingCharacters(in: .whitespaces) == "销毁"))
-                                if let rep = destroyReport {
-                                    Text(rep)
-                                        .xFont(.footnote)
-                                        .foregroundStyle(XPalette.textSub)
-                                        .lineLimit(4)
-                                }
-                                if let msg = residueMsg {
-                                    HStack(spacing: XSpace.xs) {
-                                        Image(systemName: msg.contains("零残留") ? "checkmark.seal.fill" : "magnifyingglass")
-                                            .accessibilityHidden(true)
-                                            .font(.system(size: XIcon.sm, weight: .semibold))
-                                            .foregroundStyle(msg.contains("零残留") ? XPalette.ok : XPalette.danger)
-                                        Text(msg)
-                                            .xFont(.footnote)
-                                            .foregroundStyle(msg.contains("零残留") ? XPalette.ok : XPalette.danger)
-                                    }
-                                }
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                    }
-                    .xScrollLift()
-
-                    XPanel(kind: .group) {
-                        VStack(alignment: .leading, spacing: XSpace.m) {
-                            secLabel("回收站")
-                            // 这一条是补的：界面到处承诺「可还原」「N 天内可找回」，
-                            // 但 undoRemove 全仓零调用 —— 没有任何页面能真的放回去。
-                            NavigationLink {
-                                CredentialBinView().environmentObject(app).trackScreen("回收站")
-                            } label: {
-                                HStack(spacing: XSpace.s) {
-                                    Image(systemName: "arrow.uturn.backward.circle")
-                                        .font(.system(size: XIcon.sm, weight: .medium))
-                                        .foregroundStyle(XPalette.accentText)
-                                        .accessibilityHidden(true)
-                                    Text("查看回收站（可恢复）")
-                                        .xFont(.subheadline, weight: .medium)
-                                        .foregroundStyle(XPalette.text)
-                                    Spacer(minLength: 0)
-                                    Image(systemName: "chevron.right")
-                                        .font(.system(size: XIcon.xs, weight: .semibold))
-                                        .foregroundStyle(XPalette.textTertiary)
-                                        .accessibilityHidden(true)
-                                }
-                                .frame(minHeight: XHit.min)
-                                .contentShape(Rectangle())
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("查看回收站，可恢复已删除的钥匙")
-
-                            XHairline(inset: 0)
-                            HStack(spacing: XSpace.s) {
-                                Text("清空回收站 (\(trashCount) 项)")
-                                    .xFont(.subheadline, weight: .medium)
-                                Spacer()
-                                Text("长按 2 秒释放, 松手取消")
-                                    .xFont(.footnote)
-                                    .foregroundStyle(XPalette.textSub)
-                            }
-                            holdClearControl
-                        }
-                    }
-                    .xScrollLift()
-
-                    XPanel(kind: .group) {
-                        VStack(alignment: .leading, spacing: XSpace.m) {
-                            secLabel("离职清除")
-                            let members = Offboard.members()
-                            if members.isEmpty {
-                                Text("尚无成员档案 — 在 设置 → 家人与钥匙 添加后可在此“清除并归档”")
-                                    .xFont(.footnote)
-                                    .foregroundStyle(XPalette.textSub)
-                            } else {
-                                ForEach(members) { m in
-                                    HStack(spacing: XSpace.s) {
-                                        Image(systemName: "person.crop.circle")
-                                            .accessibilityHidden(true)
-                                            .font(.system(size: XIcon.sm, weight: .medium))
-                                            .foregroundStyle(memberColor(m))
-                                        VStack(alignment: .leading, spacing: 2) {
-                                            Text(m.name)
-                                                .xFont(.subheadline)
-                                            Text("名下钥匙入归档, 记录保留并标“已离开”")
-                                                .xFont(.footnote)
-                                                .foregroundStyle(XPalette.textSub)
-                                        }
-                                        Spacer()
-                                        Button("清除") {
-                                            // 402 离职清除: 名下凭证从台账整段搬走 (不可一键还原) ⇒ 归销毁族, 过 296 + 383 两道闸
-                                            guardedDestroy(app) {
-                                                Offboard.markDeparted(m.id, name: m.name)
-                                                AuditLog().append(.admin, "离", target: m.name,
-                                                                  duress: DB.store.getBool(SecKey.sessionDuress, false))
-                                                app.showToast("\(m.name) 已归档")
-                                                SecTick.bump()
-                                                self.center.bump()
-                                            }
-                                        }
-                                        .xFont(.footnote, weight: .medium)
-                                        .foregroundStyle(XPalette.danger)
-                                        .frame(minHeight: XHit.min)
-                                    }
+                                    .xFont(.footnote, weight: .medium)
+                                    .foregroundStyle(XPalette.danger)
                                     .frame(minHeight: XHit.min)
                                 }
+                                .frame(minHeight: XHit.min)
                             }
                         }
                     }
-                    .xScrollLift()
-
-                    XPanel(kind: .group) {
-                        VStack(alignment: .leading, spacing: XSpace.m) {
-                            secLabel("安全模式")
-                            SecRow(title: "只读安全模式",
-                                   subtitle: SecurityPolicy.readOnly
-                                            ? "已启用: 圆盘开锁、销毁与清空、审计导出与到期清理一律拦下"
-                                            : "关闭 (异常时手动打开)",
-                                   icon: "power") {
-                                XToggle("", isOn: Binding(
-                                    get: { SecurityPolicy.readOnly },
-                                    set: { DB.store.set(SecKey.safeModeOn, $0); SecTick.bump() }))
-                                    .labelsHidden()
-                            }
-                            if SecurityPolicy.readOnly {
-                                Text("已接线的拦点: 开锁 (圆盘 / 手势 / 靠近自动开 / 二次开锁重发)、销毁全族 (三级销毁、清空回收站、"
-                                     + "到期清理、离职清除)、审计导出与含明文导出。"
-                                     + "还没接上的: 添加与改造钥匙、网关配网、固件升级 —— 那几处的执行点在服务层与配网/升级那几个页面, "
-                                     + "闸装到之前, 开着这枚开关不等于全 App 只读。")
-                                    .xFont(.footnote)
-                                    .foregroundStyle(XPalette.warn)
-                            }
-                        }
-                    }
-                    .xScrollLift()
-
-                    XPanel(kind: .group) {
-                        VStack(alignment: .leading, spacing: XSpace.m) {
-                            secLabel("口令复用")
-                            SecRow(title: "口令复用检测",
-                                   subtitle: DB.store.getBool(SecKey.pwdReuseOn, true) ? "加密码时与存量比对提示" : "关闭",
-                                   icon: "arrow.triangle.2.circlepath") {
-                                XToggle("", isOn: Binding(
-                                    get: { DB.store.getBool(SecKey.pwdReuseOn, true) },
-                                    set: { DB.store.set(SecKey.pwdReuseOn, $0); SecTick.bump() }))
-                                    .labelsHidden()
-                            }
-                            reuseDemoRow
-                        }
-                    }
-                    .xScrollLift()
-
-                    XPanel(kind: .group) {
-                        VStack(alignment: .leading, spacing: XSpace.m) {
-                            secLabel("密码保存")
-                            SecRow(title: "保存密码二次输入",   // 521 保存密码二次输入
-                                   subtitle: DB.store.getBool("kf_scred_2nd", true) ? "密码保存前需重输一遍码值核对" : "关闭",
-                                   icon: "lock.rotationgauge") {
-                                XToggle("", isOn: Binding(
-                                    get: { DB.store.getBool("kf_scred_2nd", true) },
-                                    set: { DB.store.set("kf_scred_2nd", $0); SecTick.bump() }))
-                                    .labelsHidden()
-                            }
-                        }
-                    }
-                    .xScrollLift()
-
                 }
-                .padding(.horizontal, XSpace.gutter)
-                .padding(.vertical, XSpace.l)
+                .xScrollLift()
+
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("安全模式")
+                        SecRow(title: "只读安全模式",
+                               subtitle: SecurityPolicy.readOnly
+                                        ? "已启用: 圆盘开锁、销毁与清空、审计导出与到期清理一律拦下"
+                                        : "关闭 (异常时手动打开)",
+                               icon: "power") {
+                            XToggle("", isOn: Binding(
+                                get: { SecurityPolicy.readOnly },
+                                set: { DB.store.set(SecKey.safeModeOn, $0); SecTick.bump() }))
+                                .labelsHidden()
+                        }
+                        if SecurityPolicy.readOnly {
+                            Text("已接线的拦点: 开锁 (圆盘 / 手势 / 靠近自动开 / 二次开锁重发)、销毁全族 (三级销毁、清空回收站、"
+                                 + "到期清理、离职清除)、审计导出与含明文导出。"
+                                 + "还没接上的: 添加与改造钥匙、网关配网、固件升级 —— 那几处的执行点在服务层与配网/升级那几个页面, "
+                                 + "闸装到之前, 开着这枚开关不等于全 App 只读。")
+                                .xFont(.footnote)
+                                .foregroundStyle(XPalette.warn)
+                        }
+                    }
+                }
+                .xScrollLift()
+
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("口令复用")
+                        SecRow(title: "口令复用检测",
+                               subtitle: DB.store.getBool(SecKey.pwdReuseOn, true) ? "加密码时与存量比对提示" : "关闭",
+                               icon: "arrow.triangle.2.circlepath") {
+                            XToggle("", isOn: Binding(
+                                get: { DB.store.getBool(SecKey.pwdReuseOn, true) },
+                                set: { DB.store.set(SecKey.pwdReuseOn, $0); SecTick.bump() }))
+                                .labelsHidden()
+                        }
+                        reuseDemoRow
+                    }
+                }
+                .xScrollLift()
+
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("密码保存")
+                        SecRow(title: "保存密码二次输入",   // 521 保存密码二次输入
+                               subtitle: DB.store.getBool("kf_scred_2nd", true) ? "密码保存前需重输一遍码值核对" : "关闭",
+                               icon: "lock.rotationgauge") {
+                            XToggle("", isOn: Binding(
+                                get: { DB.store.getBool("kf_scred_2nd", true) },
+                                set: { DB.store.set("kf_scred_2nd", $0); SecTick.bump() }))
+                                .labelsHidden()
+                        }
+                    }
+                }
+                .xScrollLift()
+
             }
-            .scrollIndicators(.hidden)
-        }
-        .navigationTitle("销毁与应急")
         .onReceive(Timer.publish(every: 2, on: .main, in: .common).autoconnect()) { _ in
             self.center.bump()
         }

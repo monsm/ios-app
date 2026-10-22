@@ -41,20 +41,15 @@ struct MaintenanceView: View {
         ZStack {
             XPalette.canvas.ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: XSpace.section) {
-                    carePeriodSection.xScrollLift()
-                    historySection.xScrollLift()
-                    swapSection.xScrollLift()
-                    ekeySection.xScrollLift()
-                }
-                .padding(.horizontal, XSpace.gutter)
-                .padding(.vertical, XSpace.l)
+            // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+            XScreen("维护与保养", style: .inline) {
+                carePeriodSection.xScrollLift()
+                historySection.xScrollLift()
+                swapSection.xScrollLift()
+                ekeySection.xScrollLift()
             }
             .scrollIndicators(.hidden)
         }
-        .navigationTitle("维护与保养")
-        .navigationBarTitleDisplayMode(.inline)
         .onAppear { if !loaded { loaded = true; reload() } }
         // 换锁重取: care 是 @State 快照, 而 mac/meta/opens30d/periodDays
         // 全是实时跟着 app.current 走的 —— 不重取就会出现"同屏两把锁"。
@@ -370,75 +365,70 @@ struct BatterySwapGuideView: View {
         ZStack {
             XPalette.canvas.ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: XSpace.section) {
-                    // 当前电量卡 —— 换电指南却不显示电量，是最大的缺口。
-                    // 用户点进来就是想知道"是不是真该换了"。
-                    batteryNowCard
-                    XPanel(kind: .group) {
-                        VStack(alignment: .leading, spacing: XSpace.m) {
-                            secLabel("换电步骤")
-                            ForEach(Array(steps.enumerated()), id: \.offset) { i, s in
-                                HStack(alignment: .top, spacing: XSpace.s) {
-                                    Text("\(i + 1)")
-                                        .xFont(.caption, weight: .semibold)
-                                        .monospacedDigit()
-                                        .foregroundStyle(XPalette.onAccent)
-                                        .frame(width: 22, height: 22)
-                                        .background(XPalette.accent, in: Circle())
-                                        .accessibilityHidden(true)
-                                    Image(systemName: s.icon)
-                                        .font(.system(size: XIcon.md, weight: .medium))
-                                        .foregroundStyle(XPalette.accentText)
-                                        .frame(width: 30)
-                                        .accessibilityHidden(true)
-                                    VStack(alignment: .leading, spacing: XSpace.xxs) {
-                                        Text(s.title)
-                                            .xFont(.subheadline, weight: .medium)
-                                            .foregroundStyle(XPalette.text)
-                                        Text(s.detail)
-                                            .xFont(.caption)
-                                            .foregroundStyle(XPalette.textSub)
-                                            .fixedSize(horizontal: false, vertical: true)
-                                    }
+            // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+            XScreen("换电指引", style: .inline) {
+                // 当前电量卡 —— 换电指南却不显示电量，是最大的缺口。
+                // 用户点进来就是想知道"是不是真该换了"。
+                batteryNowCard
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("换电步骤")
+                        ForEach(Array(steps.enumerated()), id: \.offset) { i, s in
+                            HStack(alignment: .top, spacing: XSpace.s) {
+                                Text("\(i + 1)")
+                                .xFont(.caption, weight: .semibold)
+                                .monospacedDigit()
+                                .foregroundStyle(XPalette.onAccent)
+                                .frame(width: 22, height: 22)
+                                .background(XPalette.accent, in: Circle())
+                                .accessibilityHidden(true)
+                                Image(systemName: s.icon)
+                                .font(.system(size: XIcon.md, weight: .medium))
+                                .foregroundStyle(XPalette.accentText)
+                                .frame(width: 30)
+                                .accessibilityHidden(true)
+                                VStack(alignment: .leading, spacing: XSpace.xxs) {
+                                    Text(s.title)
+                                    .xFont(.subheadline, weight: .medium)
+                                    .foregroundStyle(XPalette.text)
+                                    Text(s.detail)
+                                    .xFont(.caption)
+                                    .foregroundStyle(XPalette.textSub)
+                                    .fixedSize(horizontal: false, vertical: true)
                                 }
-                                .padding(.vertical, XSpace.xxs)
-                                .accessibilityElement(children: .combine)
-                                .accessibilityLabel("第 \(i + 1) 步: \(s.title), \(s.detail)")
                             }
-                            Text("全程只动电池 — 不需要重置门锁, 也不需要重新配网。")
-                                .xFont(.footnote)
-                                .foregroundStyle(XPalette.textSub)
-                                .fixedSize(horizontal: false, vertical: true)
+                            .padding(.vertical, XSpace.xxs)
+                            .accessibilityElement(children: .combine)
+                            .accessibilityLabel("第 \(i + 1) 步: \(s.title), \(s.detail)")
                         }
+                        Text("全程只动电池 — 不需要重置门锁, 也不需要重新配网。")
+                        .xFont(.footnote)
+                        .foregroundStyle(XPalette.textSub)
+                        .fixedSize(horizontal: false, vertical: true)
                     }
-                    .xScrollLift()
-
-                    XPanel(kind: .group) {
-                        VStack(alignment: .leading, spacing: XSpace.m) {
-                            XBusyButton(title: "已换新", systemImage: "checkmark", busy: false) { swap() }
-                            NavigationLink { SyncTimeView() } label: {
-                                Label("去校准门锁时间", systemImage: "clock.arrow.circlepath")
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .frame(minHeight: XHit.min)
-                                    .contentShape(Rectangle())
-                            }
-                            .buttonStyle(.plain)
-                            Text("「已换新」会写入换电记录、复位低电提醒武装位, 并在电池档案记下今天。")
-                                .xFont(.footnote)
-                                .foregroundStyle(XPalette.textSub)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                    }
-                    .xScrollLift()
                 }
-                .padding(.horizontal, XSpace.gutter)
-                .padding(.vertical, XSpace.l)
+                .xScrollLift()
+    
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        XBusyButton(title: "已换新", systemImage: "checkmark", busy: false) { swap() }
+                        NavigationLink { SyncTimeView() } label: {
+                            Label("去校准门锁时间", systemImage: "clock.arrow.circlepath")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .frame(minHeight: XHit.min)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        Text("「已换新」会写入换电记录、复位低电提醒武装位, 并在电池档案记下今天。")
+                        .xFont(.footnote)
+                        .foregroundStyle(XPalette.textSub)
+                        .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .xScrollLift()
             }
             .scrollIndicators(.hidden)
         }
-        .navigationTitle("换电指引")
-        .navigationBarTitleDisplayMode(.inline)
     }
 
     private func secLabel(_ text: String) -> some View {
@@ -481,64 +471,59 @@ struct CareChecklistView: View {
         ZStack {
             XPalette.canvas.ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: XSpace.section) {
-                    // 保养台账 —— 这张卡原来不存在。
-                    //
-                    // 清单页只让用户打勾，但**不告诉他上次是什么时候保养的**。
-                    // 而三件事早就算好了：lastCareAt / carePeriodDays / ekeyCheckAt，
-                    // 全在 BatteryCare.CareState 里，只是一个都没接到界面。
-                    careLedgerCard
-                    XPanel(kind: .group) {
-                        VStack(alignment: .leading, spacing: XSpace.m) {
-                            secLabel("五项清单")
-                            ForEach(Array(items.enumerated()), id: \.offset) { i, it in
-                                Button { checks[i].toggle() } label: {
-                                    HStack(spacing: XSpace.s) {
-                                        Image(systemName: checks[i] ? "checkmark.circle.fill" : "circle")
-                                            .font(.system(size: XIcon.sm, weight: .semibold))
-                                            .foregroundStyle(checks[i] ? XPalette.ok : XPalette.textSub)
-                                            .accessibilityHidden(true)
-                                        Image(systemName: it.icon)
-                                            .font(.system(size: XIcon.sm, weight: .medium))
-                                            .foregroundStyle(XPalette.accentText)
-                                            .frame(width: 24)
-                                            .accessibilityHidden(true)
-                                        Text(it.label)
-                                            .xFont(.subheadline)
-                                            .foregroundStyle(XPalette.text)
-                                        Spacer(minLength: 0)
-                                    }
-                                    .frame(minHeight: XHit.min)
-                                    .contentShape(Rectangle())
+            // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+            XScreen("锁体保养", style: .inline) {
+                // 保养台账 —— 这张卡原来不存在。
+                //
+                // 清单页只让用户打勾，但**不告诉他上次是什么时候保养的**。
+                // 而三件事早就算好了：lastCareAt / carePeriodDays / ekeyCheckAt，
+                // 全在 BatteryCare.CareState 里，只是一个都没接到界面。
+                careLedgerCard
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("五项清单")
+                        ForEach(Array(items.enumerated()), id: \.offset) { i, it in
+                            Button { checks[i].toggle() } label: {
+                                HStack(spacing: XSpace.s) {
+                                    Image(systemName: checks[i] ? "checkmark.circle.fill" : "circle")
+                                    .font(.system(size: XIcon.sm, weight: .semibold))
+                                    .foregroundStyle(checks[i] ? XPalette.ok : XPalette.textSub)
+                                    .accessibilityHidden(true)
+                                    Image(systemName: it.icon)
+                                    .font(.system(size: XIcon.sm, weight: .medium))
+                                    .foregroundStyle(XPalette.accentText)
+                                    .frame(width: 24)
+                                    .accessibilityHidden(true)
+                                    Text(it.label)
+                                    .xFont(.subheadline)
+                                    .foregroundStyle(XPalette.text)
+                                    Spacer(minLength: 0)
                                 }
-                                .buttonStyle(.plain)
-                                .accessibilityLabel(it.label)
-                                .accessibilityAddTraits(checks[i] ? [.isSelected] : [])
+                                .frame(minHeight: XHit.min)
+                                .contentShape(Rectangle())
                             }
-                            Text("逐项确认后才能完成保养 — 汽车保养手册的严谨, 用在门上一样合适。")
-                                .xFont(.footnote)
-                                .foregroundStyle(XPalette.textSub)
-                                .fixedSize(horizontal: false, vertical: true)
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(it.label)
+                            .accessibilityAddTraits(checks[i] ? [.isSelected] : [])
                         }
+                        Text("逐项确认后才能完成保养 — 汽车保养手册的严谨, 用在门上一样合适。")
+                        .xFont(.footnote)
+                        .foregroundStyle(XPalette.textSub)
+                        .fixedSize(horizontal: false, vertical: true)
                     }
-                    .xScrollLift()
-
-                    XBusyButton(title: "完成保养",
-                                systemImage: "checkmark.seal",
-                                busy: false) {
-                        complete()
-                    }
-                    .disabled(!checks.allSatisfy({ $0 }))
-                    .opacity(checks.allSatisfy({ $0 }) ? 1 : 0.5)
                 }
-                .padding(.horizontal, XSpace.gutter)
-                .padding(.vertical, XSpace.l)
+                .xScrollLift()
+    
+                XBusyButton(title: "完成保养",
+                systemImage: "checkmark.seal",
+                busy: false) {
+                    complete()
+                }
+                .disabled(!checks.allSatisfy({ $0 }))
+                .opacity(checks.allSatisfy({ $0 }) ? 1 : 0.5)
             }
             .scrollIndicators(.hidden)
         }
-        .navigationTitle("锁体保养")
-        .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } } }
     }
 

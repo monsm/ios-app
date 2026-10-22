@@ -16,19 +16,16 @@ struct BackupStudioView: View {
     var body: some View { vkBody.destined(.backupStudio) }
     var vkBody: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: XSpace.section) {
-                    trustHeader.xScrollLift()
-                    actionCards.xScrollLift()
-                    cadenceCard.xScrollLift()
-                    // 本地备份文件列表 —— 原来只有章节注释、视图不存在（435/436/454/511）
-                    LocalBackupFilesSection()
-                        .environmentObject(app)
-                        .xScrollLift()
-                }
-                .padding(.vertical, XSpace.m)
+            // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+            XScreen("备份工作室", style: .inline) {
+                trustHeader.xScrollLift()
+                actionCards.xScrollLift()
+                cadenceCard.xScrollLift()
+                // 本地备份文件列表 —— 原来只有章节注释、视图不存在（435/436/454/511）
+                LocalBackupFilesSection()
+                    .environmentObject(app)
+                    .xScrollLift()
             }
-            .navigationTitle("备份工作室")
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
             .sheet(isPresented: $showExport) { ExportWizardView() }
             .sheet(isPresented: $showRestore) { RestoreWizardView() }

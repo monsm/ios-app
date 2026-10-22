@@ -32,45 +32,40 @@ struct MemberDetail360View: View {
             ZStack {
                 XPalette.canvas.ignoresSafeArea()
 
-                ScrollView {
-                    VStack(spacing: XSpace.section) {
-                        // 一周小结 (原有 weekSentence, 只在有内容时出)
-                        if let line = MemberHub.weekSentence(m.id) {
-                            HStack(spacing: XSpace.s) {
-                                Image(systemName: "calendar.badge.clock")
-                                    .font(.system(size: XIcon.sm, weight: .medium))
-                                    .foregroundStyle(XPalette.accentText)
-                                    .accessibilityHidden(true)
-                                Text(line)
-                                    .xFont(.footnote)
-                                    .foregroundStyle(XPalette.text)
-                                    .fixedSize(horizontal: false, vertical: true)
-                                Spacer(minLength: 0)
-                            }
-                            .padding(XSpace.card)
-                            .background(
-                                RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
-                                    .fill(XPalette.accent.opacity(XOpacity.wash))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
-                                            .strokeBorder(XPalette.accent.opacity(0.25), lineWidth: 1))
-                            )
+                // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+                XScreen(MemberHub.display(m), style: .inline) {
+                    // 一周小结 (原有 weekSentence, 只在有内容时出)
+                    if let line = MemberHub.weekSentence(m.id) {
+                        HStack(spacing: XSpace.s) {
+                            Image(systemName: "calendar.badge.clock")
+                            .font(.system(size: XIcon.sm, weight: .medium))
+                            .foregroundStyle(XPalette.accentText)
+                            .accessibilityHidden(true)
+                            Text(line)
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.text)
+                            .fixedSize(horizontal: false, vertical: true)
+                            Spacer(minLength: 0)
                         }
-                        // 6 个原有区块: 内部仍是 List/Section 形状, 这里只负责纵向节奏
-                        archiveSection(m)
-                        credsSection(m)
-                        excerptSection(m)
-                        feedSection(m)
-                        sourceSection(m)
-                        sceneSection(m)
+                        .padding(XSpace.card)
+                        .background(
+                        RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
+                        .fill(XPalette.accent.opacity(XOpacity.wash))
+                        .overlay(
+                        RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
+                        .strokeBorder(XPalette.accent.opacity(0.25), lineWidth: 1))
+                        )
                     }
-                    .padding(.horizontal, XSpace.gutter)
-                    .padding(.vertical, XSpace.l)
+                    // 6 个原有区块: 内部仍是 List/Section 形状, 这里只负责纵向节奏
+                    archiveSection(m)
+                    credsSection(m)
+                    excerptSection(m)
+                    feedSection(m)
+                    sourceSection(m)
+                    sceneSection(m)
                 }
                 .scrollIndicators(.hidden)
             }
-            .navigationTitle(MemberHub.display(m))
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     Button("补全档案 (关系/电话/生日/代号/分组/便签)") { editProfile(m); onChanged() }
@@ -525,85 +520,80 @@ struct MemberWizardView: View {
             ZStack {
                 XPalette.canvas.ignoresSafeArea()
 
-                ScrollView {
-                    VStack(spacing: XSpace.section) {
-                XPanel(kind: .group) {
-                    VStack(alignment: .leading, spacing: XSpace.m) {
-                        secLabel("步骤 \(step + 1)/3 · " + steps[step])
-                    switch step {
-                    case 0:
-                        TextField("称呼 (汉字/英文/数字, 上限 20)", text: $name)
-                            .autocorrectionDisabled()
-                        Picker("emoji 代号", selection: $emoji) {   // 916 代号
-                            ForEach(["", "🐻", "🐱", "🐸", "🐙", "🦊", "🐧", "🐯"], id: \.self) { e in
-                                Text(e.isEmpty ? "默认首字" : e).tag(e)
-                            }
-                        }
-                        .pickerStyle(.menu)
-                    case 1:
-                        Picker("角色", selection: $role) {   // 458/470 角色
-                            // 副标题现算, 不手写第二份"这档能干什么" —— 那张表只有 MemberHub.permRows 一处定义
-                            ForEach(MemberHub.roles, id: \.self) { r in
-                                Text(MemberHub.roleLabel(r) + " (" + rolePickHint(r) + ")").tag(r)
-                            }
-                        }
-                        .pickerStyle(.inline)
-                        TextField("备注名 (记录条目显示 称呼（备注）)", text: $remark)
-                            .autocorrectionDisabled()
-                    default:
-                        XToggle("顺路建 10 分钟临时码 (末步)", isOn: $makePwd)
-                            .fixedSize(horizontal: false, vertical: true)
-                        if makePwd {
-                            TextField("6~8 位数字 (下发到当前锁)", text: $pwd)
-                                .keyboardType(.numberPad)
-                            Text("归属自动记为 TA; 不建也行, 稍后在钥匙页添加。")
-                                .xFont(.footnote)
-                                .foregroundStyle(XPalette.textSub)
+                // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+                XScreen("建档向导", style: .inline) {
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            secLabel("步骤 \(step + 1)/3 · " + steps[step])
+                            switch step {
+                                case 0:
+                                TextField("称呼 (汉字/英文/数字, 上限 20)", text: $name)
+                                .autocorrectionDisabled()
+                                Picker("emoji 代号", selection: $emoji) {   // 916 代号
+                                    ForEach(["", "🐻", "🐱", "🐸", "🐙", "🦊", "🐧", "🐯"], id: \.self) { e in
+                                        Text(e.isEmpty ? "默认首字" : e).tag(e)
+                                    }
+                                }
+                                .pickerStyle(.menu)
+                                case 1:
+                                Picker("角色", selection: $role) {   // 458/470 角色
+                                    // 副标题现算, 不手写第二份"这档能干什么" —— 那张表只有 MemberHub.permRows 一处定义
+                                    ForEach(MemberHub.roles, id: \.self) { r in
+                                        Text(MemberHub.roleLabel(r) + " (" + rolePickHint(r) + ")").tag(r)
+                                    }
+                                }
+                                .pickerStyle(.inline)
+                                TextField("备注名 (记录条目显示 称呼（备注）)", text: $remark)
+                                .autocorrectionDisabled()
+                                default:
+                                XToggle("顺路建 10 分钟临时码 (末步)", isOn: $makePwd)
                                 .fixedSize(horizontal: false, vertical: true)
-                        }
-                        // 463: 建档流程内直达指纹录入 (与临时码同格), 录完回凭证页可指归属
-                        NavigationLink("录指纹后到钥匙页指归属") { AddFingerPage() }   // 463 录指纹后到凭证页指归
-                            .xFont(.footnote)
-                    }
-                    }
-                }
-                if step < 2 {
-                    Group {   // M5 遗留: Section 在 List 外没有视觉容器
-                        Button {
-                            guard canNext else { return }
-                            if step == 0, newID == nil {
-                                newID = createMember()
-                                // 2026-10-14: 建档失败 (重名/空名) 不能推进 —— 否则用户走到末步才被踢出, 输入全废。
-                                guard newID != nil else { return }
+                                if makePwd {
+                                    TextField("6~8 位数字 (下发到当前锁)", text: $pwd)
+                                    .keyboardType(.numberPad)
+                                    Text("归属自动记为 TA; 不建也行, 稍后在钥匙页添加。")
+                                    .xFont(.footnote)
+                                    .foregroundStyle(XPalette.textSub)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                }
+                                // 463: 建档流程内直达指纹录入 (与临时码同格), 录完回凭证页可指归属
+                                NavigationLink("录指纹后到钥匙页指归属") { AddFingerPage() }   // 463 录指纹后到凭证页指归
+                                .xFont(.footnote)
                             }
-                            step += 1
-                            XHaptics.tick.impactOccurred()
-                        } label: {
-                            Text("下一步")
+                        }
+                    }
+                    if step < 2 {
+                        Group {   // M5 遗留: Section 在 List 外没有视觉容器
+                            Button {
+                                guard canNext else { return }
+                                if step == 0, newID == nil {
+                                    newID = createMember()
+                                    // 2026-10-14: 建档失败 (重名/空名) 不能推进 —— 否则用户走到末步才被踢出, 输入全废。
+                                    guard newID != nil else { return }
+                                }
+                                step += 1
+                                XHaptics.tick.impactOccurred()
+                            } label: {
+                                Text("下一步")
                                 .xFont(.subheadline, weight: .medium)
                                 .foregroundStyle(XPalette.accentText)
                                 .frame(maxWidth: .infinity, alignment: .trailing)
                                 .frame(minHeight: XHit.min)
+                            }
+                            .buttonStyle(PlainButtonStyle())
                         }
-                        .buttonStyle(PlainButtonStyle())
-                    }
-                } else {
-                    Group {   // M5 遗留: Section 在 List 外没有视觉容器
-                        XBusyButton(title: busy ? "处理中…" : "完成建档",
-                                    systemImage: "checkmark.seal", busy: busy) {
-                            submit()
+                    } else {
+                        Group {   // M5 遗留: Section 在 List 外没有视觉容器
+                            XBusyButton(title: busy ? "处理中…" : "完成建档",
+                            systemImage: "checkmark.seal", busy: busy) {
+                                submit()
+                            }
+                            .disabled(!canNext || busy)
                         }
-                        .disabled(!canNext || busy)
                     }
-                }
-                    }
-                    .padding(.horizontal, XSpace.gutter)
-                    .padding(.vertical, XSpace.l)
                 }
                 .scrollIndicators(.hidden)
             }
-            .navigationTitle("建档向导")   // 463 建档向导
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("取消") { dismiss() } } }
             .axBottomAnchor()   // 870
         }
@@ -701,23 +691,23 @@ struct MergeMembersView: View {
             //   XPanel 又画一层卡片底 → 视觉上双层边框。
             //
             // 全仓其他页面都是 ScrollView + XPanel，这里统一。
-            ScrollView {
-                VStack(spacing: XSpace.section) {
-                    XPanel(kind: .group) {
-                        VStack(alignment: .leading, spacing: XSpace.m) {
-                            secLabel("主档 (保留)")
+            // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+            XScreen("重复合并", style: .inline) {
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("主档 (保留)")
                         HStack(spacing: XSpace.s) {
                             MemberAvatar(member: primary, size: 28)
                             Text(MemberHub.display(primary))
-                                .xFont(.subheadline)
-                                .foregroundStyle(XPalette.text)
+                            .xFont(.subheadline)
+                            .foregroundStyle(XPalette.text)
                             Spacer(minLength: 0)
                         }
-                        }
                     }
-                    XPanel(kind: .group) {
-                        VStack(alignment: .leading, spacing: XSpace.m) {
-                            secLabel("副档 (钥匙将迁移至主档, 档案删除)")
+                }
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("副档 (钥匙将迁移至主档, 档案删除)")
                         Picker("选择副档", selection: $secondaryID) {
                             Text("请选择").tag(nil as String?)
                             ForEach(secondaryCandidates) { m in
@@ -727,35 +717,29 @@ struct MergeMembersView: View {
                         .pickerStyle(.inline)
                         if secondaryID == nil {
                             Text("没有同名成员。若只是称呼重复, 请在成员页重命名其一。")
-                                .xFont(.footnote)
-                                .foregroundStyle(XPalette.textSub)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                        }
-                    }
-                    // 迁移预览 —— 合并是破坏性操作（副档档案会被删除），
-                    // 但界面原来不告诉你"会发生什么"。现在把迁移前后说清楚。
-                    if let sid = secondaryID {
-                        migrationPreview(from: sid)
-                    }
-                    XPanel(kind: .group) {
-                        VStack(alignment: .leading, spacing: XSpace.m) {
-                        Button { doMerge() } label: {
-                            Text("执行合并")
-                                .frame(maxWidth: .infinity)
-                                .frame(minHeight: XHit.min)
-                        }
-                        .buttonStyle(XPrimaryButtonStyle())
-                        .disabled(secondaryID == nil)
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textSub)
+                            .fixedSize(horizontal: false, vertical: true)
                         }
                     }
                 }
-                .padding(.horizontal, XSpace.gutter)
-                .padding(.vertical, XSpace.l)
+                // 迁移预览 —— 合并是破坏性操作（副档档案会被删除），
+                // 但界面原来不告诉你"会发生什么"。现在把迁移前后说清楚。
+                if let sid = secondaryID {
+                    migrationPreview(from: sid)
+                }
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        Button { doMerge() } label: {
+                            Text("执行合并")
+                            .frame(maxWidth: .infinity)
+                            .frame(minHeight: XHit.min)
+                        }
+                        .buttonStyle(XPrimaryButtonStyle())
+                        .disabled(secondaryID == nil)
+                    }
+                }
             }
-            .background(XPalette.canvas)
-            .navigationTitle("重复合并")   // 462 重复合并
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("取消") { dismiss() } } }
         }
     }
@@ -853,85 +837,80 @@ struct MemberArchivedView: View {
         ZStack {
             XPalette.canvas.ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: XSpace.section) {
-                    if archived.isEmpty {
+            // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+            XScreen("归档成员", style: .inline) {
+                if archived.isEmpty {
+                    XPanel(kind: .group) {
+                        VStack(spacing: XSpace.s) {
+                            Image(systemName: "archivebox")
+                            .accessibilityHidden(true)
+                            .font(.system(size: XMetric.decorIcon(44), weight: .light))
+                            .foregroundStyle(XPalette.textTertiary)
+                            .accessibilityHidden(true)
+                            Text("归档列表为空")
+                            .xFont(.subheadline, weight: .medium)
+                            .foregroundStyle(XPalette.text)
+                            Text("成员归档后历史不蒸发。")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textSub)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, XSpace.l)
+                    }
+                } else {
+                    ForEach(archived) { m in
                         XPanel(kind: .group) {
-                            VStack(spacing: XSpace.s) {
-                                Image(systemName: "archivebox")
-                                    .accessibilityHidden(true)
-                                    .font(.system(size: XMetric.decorIcon(44), weight: .light))
-                                    .foregroundStyle(XPalette.textTertiary)
-                                    .accessibilityHidden(true)
-                                Text("归档列表为空")
-                                    .xFont(.subheadline, weight: .medium)
-                                    .foregroundStyle(XPalette.text)
-                                Text("成员归档后历史不蒸发。")
+                            HStack(spacing: XSpace.m) {
+                                // ext 在 VStack 作用域声明 —— archivedFact 也要用它。
+                                // 最初写在里面那个 HStack 里，archivedFact 就取不到了。
+                                let ext = MemberHub.ext(m.id)
+                                VStack(alignment: .leading, spacing: XSpace.xxs) {
+                                    HStack(spacing: XSpace.xs) {
+                                        Text(MemberHub.display(m))
+                                        .xFont(.subheadline, weight: .medium)
+                                        .foregroundStyle(XPalette.text)
+                                        // 角色与分组 —— MemberExt 里有，归档列表从没显示。
+                                        // 恢复前得知道这人原本是什么身份。
+                                        Text(MemberHub.roleLabel(ext.role))
+                                        .xFont(.caption2)
+                                        .foregroundStyle(XPalette.textSub)
+                                        if !ext.groupTag.isEmpty {
+                                            Text(ext.groupTag)
+                                            .xFont(.caption2)
+                                            .foregroundStyle(XPalette.textSub)
+                                        }
+                                        if ext.proxy || ext.emergencyAdmin {
+                                            Text(ext.emergencyAdmin ? "紧急管理员" : "代管")
+                                            .xFont(.caption2, weight: .semibold)
+                                            .foregroundStyle(XPalette.warn)
+                                        }
+                                    }
+                                    // 名下凭证数与常用锁 —— 恢复决策的主要依据
+                                    Text(archivedFact(m, ext: ext))
+                                    .xFont(.caption)
+                                    .foregroundStyle(XPalette.textSub)
+                                    Text("归档中 · 只从成员列表与成员统计里收起; 记录页仍能筛到 TA, 钥匙页也仍列 TA 名下钥匙 —— 归档不许挡撤权入口。")
                                     .xFont(.footnote)
                                     .foregroundStyle(XPalette.textSub)
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, XSpace.l)
-                        }
-                    } else {
-                        ForEach(archived) { m in
-                            XPanel(kind: .group) {
-                                HStack(spacing: XSpace.m) {
-                                    // ext 在 VStack 作用域声明 —— archivedFact 也要用它。
-                                    // 最初写在里面那个 HStack 里，archivedFact 就取不到了。
-                                    let ext = MemberHub.ext(m.id)
-                                    VStack(alignment: .leading, spacing: XSpace.xxs) {
-                                        HStack(spacing: XSpace.xs) {
-                                            Text(MemberHub.display(m))
-                                                .xFont(.subheadline, weight: .medium)
-                                                .foregroundStyle(XPalette.text)
-                                            // 角色与分组 —— MemberExt 里有，归档列表从没显示。
-                                            // 恢复前得知道这人原本是什么身份。
-                                            Text(MemberHub.roleLabel(ext.role))
-                                                .xFont(.caption2)
-                                                .foregroundStyle(XPalette.textSub)
-                                            if !ext.groupTag.isEmpty {
-                                                Text(ext.groupTag)
-                                                    .xFont(.caption2)
-                                                    .foregroundStyle(XPalette.textSub)
-                                            }
-                                            if ext.proxy || ext.emergencyAdmin {
-                                                Text(ext.emergencyAdmin ? "紧急管理员" : "代管")
-                                                    .xFont(.caption2, weight: .semibold)
-                                                    .foregroundStyle(XPalette.warn)
-                                            }
-                                        }
-                                        // 名下凭证数与常用锁 —— 恢复决策的主要依据
-                                        Text(archivedFact(m, ext: ext))
-                                            .xFont(.caption)
-                                            .foregroundStyle(XPalette.textSub)
-                                        Text("归档中 · 只从成员列表与成员统计里收起; 记录页仍能筛到 TA, 钥匙页也仍列 TA 名下钥匙 —— 归档不许挡撤权入口。")
-                                            .xFont(.footnote)
-                                            .foregroundStyle(XPalette.textSub)
-                                            .fixedSize(horizontal: false, vertical: true)
-                                    }
-                                    Spacer(minLength: XSpace.s)
-                                    Button("恢复") {
-                                        var e = MemberHub.ext(m.id)
-                                        e.archived = false
-                                        MemberHub.saveExt(m.id, e)
-                                        tick += 1
-                                        onRestored()
-                                    }
-                                    .buttonStyle(XSecondaryButtonStyle(fullWidth: false))
-                                    .frame(minHeight: XHit.min)
+                                    .fixedSize(horizontal: false, vertical: true)
                                 }
+                                Spacer(minLength: XSpace.s)
+                                Button("恢复") {
+                                    var e = MemberHub.ext(m.id)
+                                    e.archived = false
+                                    MemberHub.saveExt(m.id, e)
+                                    tick += 1
+                                    onRestored()
+                                }
+                                .buttonStyle(XSecondaryButtonStyle(fullWidth: false))
+                                .frame(minHeight: XHit.min)
                             }
                         }
                     }
                 }
-                .padding(.horizontal, XSpace.gutter)
-                .padding(.vertical, XSpace.l)
             }
             .scrollIndicators(.hidden)
         }
-        .navigationTitle("归档成员")
-        .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .cancellationAction) { Button("完成") { dismiss() } } }
         .id(tick)
     }
@@ -1131,103 +1110,98 @@ struct UnclaimedClaimView: View {
         ZStack {
             XPalette.canvas.ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: XSpace.section) {
-                    XPanel(kind: .group) {
-                        VStack(alignment: .leading, spacing: XSpace.m) {
-                            HStack(spacing: XSpace.s) {
-                                secLabel("未归属记录认领")
-                                Spacer(minLength: 0)
-                                if !unclaimed.isEmpty {
-                                    Text(String(unclaimed.count) + " 条")
+            // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+            XScreen("认领还没分配的钥匙", style: .inline) {
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        HStack(spacing: XSpace.s) {
+                            secLabel("未归属记录认领")
+                            Spacer(minLength: 0)
+                            if !unclaimed.isEmpty {
+                                Text(String(unclaimed.count) + " 条")
+                                .xFontExact(.caption.monospacedDigit())
+                                .foregroundStyle(XPalette.textSub)
+                            }
+                        }
+    
+                        // 性能: 认领 Picker 数据源提到行循环外只取一次
+                        // (≤20 行 × M 成员的 ext 解码)
+                        let claimArch = MemberHub.archivedIDs()
+    
+                        if unclaimed.isEmpty {
+                            Text("没有未归属的开门记录 (归属只算可证明的, 推不出就进这里认领)。")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textSub)
+                            .fixedSize(horizontal: false, vertical: true)
+                        } else {
+                            if unclaimed.count > 20 {
+                                // 原来 prefix(20) 是**静默截断** —— 有 50 条时用户只看到 20 条，
+                                // 而且不知道还有 30 条。这里明说。
+                                Text("共 " + String(unclaimed.count) + " 条未归属，这里显示最近 20 条；认领后会继续出现。")
+                                .xFont(.caption2)
+                                .foregroundStyle(XPalette.warn)
+                                .fixedSize(horizontal: false, vertical: true)
+                            }
+                            ForEach(unclaimed.prefix(20)) { r in
+                                VStack(alignment: .leading, spacing: XSpace.xs) {
+                                    HStack(spacing: XSpace.s) {
+                                        Text(String(r.time.prefix(16)))
                                         .xFontExact(.caption.monospacedDigit())
                                         .foregroundStyle(XPalette.textSub)
-                                }
-                            }
-
-                            // 性能: 认领 Picker 数据源提到行循环外只取一次
-                            // (≤20 行 × M 成员的 ext 解码)
-                            let claimArch = MemberHub.archivedIDs()
-
-                            if unclaimed.isEmpty {
-                                Text("没有未归属的开门记录 (归属只算可证明的, 推不出就进这里认领)。")
-                                    .xFont(.footnote)
-                                    .foregroundStyle(XPalette.textSub)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            } else {
-                                if unclaimed.count > 20 {
-                                    // 原来 prefix(20) 是**静默截断** —— 有 50 条时用户只看到 20 条，
-                                    // 而且不知道还有 30 条。这里明说。
-                                    Text("共 " + String(unclaimed.count) + " 条未归属，这里显示最近 20 条；认领后会继续出现。")
-                                        .xFont(.caption2)
-                                        .foregroundStyle(XPalette.warn)
+                                        Text(r.kindWord + " (未归属, 台账推断)")
+                                        .xFont(.subheadline)
+                                        .foregroundStyle(XPalette.textSub)
                                         .fixedSize(horizontal: false, vertical: true)
+                                        Spacer(minLength: 0)
+                                        XStatusPill(text: "待认领", tone: .neutral, systemImage: "questionmark.circle")
+                                    }
+                                    // 同日未归属条数 —— 帮助判断"那天是谁在家"。
+                                    // 单条孤立记录很难认，但"同一天有 4 条未归属"就明显得多。
+                                    let sameDay = unclaimed.filter {
+                                        String($0.time.prefix(10)) == String(r.time.prefix(10))
+                                    }.count
+                                    if sameDay > 1 {
+                                        Text("当天还有 " + String(sameDay - 1) + " 条未归属")
+                                        .xFont(.caption2)
+                                        .foregroundStyle(XPalette.textSub)
+                                    }
+                                    Picker("认领给", selection: Binding(
+                                    get: { selMember[r.key] ?? "" },
+                                    set: { selMember[r.key] = $0 })
+                                    ) {
+                                        ForEach(DB.members().filter { !claimArch.contains($0.id) }) { m in
+                                            Text(MemberHub.display(m)).tag(m.id)
+                                        }
+                                    }
+                                    .pickerStyle(.menu)
+                                    .tint(XPalette.accentText)
                                 }
-                                ForEach(unclaimed.prefix(20)) { r in
-                                    VStack(alignment: .leading, spacing: XSpace.xs) {
-                                        HStack(spacing: XSpace.s) {
-                                            Text(String(r.time.prefix(16)))
-                                                .xFontExact(.caption.monospacedDigit())
-                                                .foregroundStyle(XPalette.textSub)
-                                            Text(r.kindWord + " (未归属, 台账推断)")
-                                                .xFont(.subheadline)
-                                                .foregroundStyle(XPalette.textSub)
-                                                .fixedSize(horizontal: false, vertical: true)
-                                            Spacer(minLength: 0)
-                                            XStatusPill(text: "待认领", tone: .neutral, systemImage: "questionmark.circle")
-                                        }
-                                        // 同日未归属条数 —— 帮助判断"那天是谁在家"。
-                                        // 单条孤立记录很难认，但"同一天有 4 条未归属"就明显得多。
-                                        let sameDay = unclaimed.filter {
-                                            String($0.time.prefix(10)) == String(r.time.prefix(10))
-                                        }.count
-                                        if sameDay > 1 {
-                                            Text("当天还有 " + String(sameDay - 1) + " 条未归属")
-                                                .xFont(.caption2)
-                                                .foregroundStyle(XPalette.textSub)
-                                        }
-                                        Picker("认领给", selection: Binding(
-                                            get: { selMember[r.key] ?? "" },
-                                            set: { selMember[r.key] = $0 })
-                                        ) {
-                                            ForEach(DB.members().filter { !claimArch.contains($0.id) }) { m in
-                                                Text(MemberHub.display(m)).tag(m.id)
-                                            }
-                                        }
-                                        .pickerStyle(.menu)
-                                        .tint(XPalette.accentText)
-                                    }
-                                    if r.key != unclaimed.prefix(20).last?.key {
-                                        Divider().overlay(XPalette.hairline)
-                                    }
+                                if r.key != unclaimed.prefix(20).last?.key {
+                                    Divider().overlay(XPalette.hairline)
                                 }
                             }
                         }
                     }
-                    .xScrollLift()
-
-                    XBusyButton(title: "认领所选 (\(selMember.count))",
-                                systemImage: "checkmark.seal",
-                                busy: false, style: .primary) {
-                        var n = 0
-                        for (k, mid) in selMember {
-                            MemberHub.claim(mac, logKey: k, memberId: mid)
-                            n += 1
-                        }
-                        app.showToast("已认领 \(n) 条 (本机覆盖层, 不改锁端数据)")
-                        selMember = [:]
-                        dismiss()
-                    }
-                    .disabled(selMember.isEmpty)
-                    .opacity(selMember.isEmpty ? 0.5 : 1)
                 }
-                .padding(.horizontal, XSpace.gutter)
-                .padding(.vertical, XSpace.l)
+                .xScrollLift()
+    
+                XBusyButton(title: "认领所选 (\(selMember.count))",
+                systemImage: "checkmark.seal",
+                busy: false, style: .primary) {
+                    var n = 0
+                    for (k, mid) in selMember {
+                        MemberHub.claim(mac, logKey: k, memberId: mid)
+                        n += 1
+                    }
+                    app.showToast("已认领 \(n) 条 (本机覆盖层, 不改锁端数据)")
+                    selMember = [:]
+                    dismiss()
+                }
+                .disabled(selMember.isEmpty)
+                .opacity(selMember.isEmpty ? 0.5 : 1)
             }
             .scrollIndicators(.hidden)
         }
-        .navigationTitle("认领还没分配的钥匙")
-        .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .cancellationAction) { Button("完成") { dismiss() } } }
     }
 
@@ -1390,45 +1364,45 @@ struct MemberExitWizard: View {
     var body: some View {
         NavigationStack {
             // M5: Form → ScrollView（与全仓其他页面统一）
-            ScrollView {
-                VStack(spacing: XSpace.section) {
-                    if items.isEmpty {
-                        Group {   // M5 遗留: Section 在 List 外没有视觉容器
-                            Text("该成员名下没有台账钥匙, 直接归档即可。")   // 460/795 该成员名下没有台账凭
-                                .xFont(.footnote)
-                                .foregroundStyle(XPalette.textSub)
-                        }
-                    } else {
-                        // M5 迁移遗留: Section 在 ScrollView 里没有视觉容器；
-                        // 它原来的 header: 参数改成 VStack 里的第一行。
-                        VStack(alignment: .leading, spacing: XSpace.xs) {
-                            Text("逐条处置 (保留/移交/停用)")   // 474 逐条处置
-                                .xFont(.caption, weight: .semibold)
-                                .foregroundStyle(XPalette.textTertiary)
-                                .textCase(.uppercase)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            ForEach(items) { it in
-                                HStack(spacing: XSpace.s) {
-                                    Text(it.label)
-                                        .xFont(.subheadline)
-                                        .foregroundStyle(XPalette.text)
-                                        .lineLimit(1)
-                                        .minimumScaleFactor(0.8)
-                                    Spacer(minLength: 0)
-                                    Menu {
-                                        Button("移交他人") { decide(it, "move") }
-                                        Button("停用 (入回收站)") { decide(it, "delete") }
-                                        Button("保留原样") { decide(it, "keep") }
-                                    } label: {
-                                        XStatusPill(text: optionLabel(decisions[it.id]), tone: decisions[it.id] == nil ? .neutral : .accent, systemImage: "ellipsis.circle")
-                                    }
+            // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+            XScreen("退出处置向导", style: .inline) {
+                if items.isEmpty {
+                    Group {   // M5 遗留: Section 在 List 外没有视觉容器
+                        Text("该成员名下没有台账钥匙, 直接归档即可。")   // 460/795 该成员名下没有台账凭
+                        .xFont(.footnote)
+                        .foregroundStyle(XPalette.textSub)
+                    }
+                } else {
+                    // M5 迁移遗留: Section 在 ScrollView 里没有视觉容器；
+                    // 它原来的 header: 参数改成 VStack 里的第一行。
+                    VStack(alignment: .leading, spacing: XSpace.xs) {
+                        Text("逐条处置 (保留/移交/停用)")   // 474 逐条处置
+                        .xFont(.caption, weight: .semibold)
+                        .foregroundStyle(XPalette.textTertiary)
+                        .textCase(.uppercase)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        ForEach(items) { it in
+                            HStack(spacing: XSpace.s) {
+                                Text(it.label)
+                                .xFont(.subheadline)
+                                .foregroundStyle(XPalette.text)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                                Spacer(minLength: 0)
+                                Menu {
+                                    Button("移交他人") { decide(it, "move") }
+                                    Button("停用 (入回收站)") { decide(it, "delete") }
+                                    Button("保留原样") { decide(it, "keep") }
+                                } label: {
+                                    XStatusPill(text: optionLabel(decisions[it.id]), tone: decisions[it.id] == nil ? .neutral : .accent, systemImage: "ellipsis.circle")
                                 }
-                                .frame(minHeight: XHit.min)
                             }
+                            .frame(minHeight: XHit.min)
                         }
                     }
-                    XPanel(kind: .group) {
-                        VStack(alignment: .leading, spacing: XSpace.m) {
+                }
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
                         Button {
                             if !items.isEmpty && !allDecided {
                                 app.showToast("先把每把钥匙选一种处置方式")
@@ -1442,19 +1416,13 @@ struct MemberExitWizard: View {
                             dismiss()
                         } label: {
                             Text("归档并执行")
-                                .frame(maxWidth: .infinity)
-                                .frame(minHeight: XHit.min)
+                            .frame(maxWidth: .infinity)
+                            .frame(minHeight: XHit.min)
                         }
                         .buttonStyle(XDestructiveButtonStyle())
-                        }
                     }
                 }
-                .padding(.horizontal, XSpace.gutter)
-                .padding(.vertical, XSpace.l)
             }
-            .background(XPalette.canvas)
-            .navigationTitle("退出处置向导")   // 474 退出处置向导
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("取消") { dismiss() } } }
             // 474 候选移接人多于一个时不许替用户抓第一个: 弹确认框让用户自己选目标
             .confirmationDialog("移交给谁", isPresented: Binding(   // 474 移交给谁

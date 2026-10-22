@@ -1504,20 +1504,15 @@ struct OtpStudio: View {
             ZStack {
                 XPalette.canvas.ignoresSafeArea()
 
-                ScrollView {
-                    VStack(spacing: XSpace.section) {
-                        targetLockCard.xScrollLift()
-                        zotpCard.xScrollLift()
-                        totpGroup
-                        staticCard.xScrollLift()
-                    }
-                    .padding(.horizontal, XSpace.gutter)
-                    .padding(.vertical, XSpace.l)
+                // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+                XScreen("OTP 与口令", style: .inline) {
+                    targetLockCard.xScrollLift()
+                    zotpCard.xScrollLift()
+                    totpGroup
+                    staticCard.xScrollLift()
                 }
                 .scrollIndicators(.hidden)
             }
-            .navigationTitle("OTP 与口令")
-            .navigationBarTitleDisplayMode(.inline)
             .axBottomAnchor()
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("关闭") { dismiss() } } }
             .onReceive(timer) { t in tick = t }
@@ -1716,53 +1711,48 @@ struct OtpStudio: View {
         NavigationStack {
             ZStack {
                 XPalette.canvas.ignoresSafeArea()
-                ScrollView {
-                    VStack(spacing: XSpace.section) {
-                        XPanel(kind: .group) {
-                            VStack(alignment: .leading, spacing: XSpace.m) {
-                                secLabel("粘贴 otpauth 文本")
-                                TextField("otpauth://totp/…?secret=…", text: $importUri, axis: .vertical)
-                                    .xFont(.footnote)
-                                    .autocorrectionDisabled()
-                                    .lineLimit(3...6)
-                                    .padding(XSpace.s)
-                                    .background(XPalette.surfaceSunken,
-                                                in: RoundedRectangle(cornerRadius: XRadius.min, style: .continuous))
-                            }
-                        }
-                        .xScrollLift()
-                        if !importErr.isEmpty {
-                            XPanel(kind: .group) {
-                                Label(importErr, systemImage: "exclamationmark.circle")
-                                    .xFont(.caption)
-                                    .foregroundStyle(XPalette.danger)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
-                        }
-                        XBusyButton(title: "导入", systemImage: "square.and.arrow.down", busy: false) {
-                            switch StudioTools.parseOtpAuth(importUri) {
-                            case .success(let r):
-                                CredentialOrg.addTotp(otpMac, CredentialOrg.TOTPEntry(
-                                    id: UUID().uuidString, name: r.name, secret: r.secret,
-                                    algo: r.algo, period: r.period, digits: r.digits,
-                                    at: Date().timeIntervalSince1970))
-                                let tail = r.defaulted.isEmpty ? "" : "; 按默认补了: " + r.defaulted.joined(separator: "/")
-                                app.showToast("已导入「\(r.name)」" + tail, tone: .done)
-                                importUri = ""
-                                importErr = ""
-                                importing = false
-                            case .failure(let f):
-                                importErr = "导入失败: " + f.rawValue
-                            }
+                // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+                XScreen("导入 otpauth", style: .inline) {
+                    XPanel(kind: .group) {
+                        VStack(alignment: .leading, spacing: XSpace.m) {
+                            secLabel("粘贴 otpauth 文本")
+                            TextField("otpauth://totp/…?secret=…", text: $importUri, axis: .vertical)
+                            .xFont(.footnote)
+                            .autocorrectionDisabled()
+                            .lineLimit(3...6)
+                            .padding(XSpace.s)
+                            .background(XPalette.surfaceSunken,
+                            in: RoundedRectangle(cornerRadius: XRadius.min, style: .continuous))
                         }
                     }
-                    .padding(.horizontal, XSpace.gutter)
-                    .padding(.vertical, XSpace.l)
+                    .xScrollLift()
+                    if !importErr.isEmpty {
+                        XPanel(kind: .group) {
+                            Label(importErr, systemImage: "exclamationmark.circle")
+                            .xFont(.caption)
+                            .foregroundStyle(XPalette.danger)
+                            .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    XBusyButton(title: "导入", systemImage: "square.and.arrow.down", busy: false) {
+                        switch StudioTools.parseOtpAuth(importUri) {
+                            case .success(let r):
+                            CredentialOrg.addTotp(otpMac, CredentialOrg.TOTPEntry(
+                            id: UUID().uuidString, name: r.name, secret: r.secret,
+                            algo: r.algo, period: r.period, digits: r.digits,
+                            at: Date().timeIntervalSince1970))
+                            let tail = r.defaulted.isEmpty ? "" : "; 按默认补了: " + r.defaulted.joined(separator: "/")
+                            app.showToast("已导入「\(r.name)」" + tail, tone: .done)
+                            importUri = ""
+                            importErr = ""
+                            importing = false
+                            case .failure(let f):
+                            importErr = "导入失败: " + f.rawValue
+                        }
+                    }
                 }
                 .scrollIndicators(.hidden)
             }
-            .navigationTitle("导入 otpauth")
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) {
                 Button("关闭") { importing = false }
             } }
