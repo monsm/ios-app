@@ -228,6 +228,43 @@ const RULES = [
 
 // ── 工程级断言（不是逐行扫，是整个 App 有没有做这件事）──
 const projectProblems = [];
+// ── 无障碍维度：装文字的固定高度必须用 minHeight ──
+//
+// 规范 §13.1「支持到 AX3」。写死高度的容器在 AX 大字号下**必然截断** ——
+// 字号翻倍而容器不动，文字要么被切、要么被压成两行溢出。
+//
+// 实证：HomeConsole 的 masthead 那一行（时钟 + 连接状态两段文字）写死 20pt。
+// 20 是**普通字号的视觉高度**，不是硬约束；改 minHeight 保住观感又不切字。
+//
+// 判据：`.frame(height: N)` 且 N 在 16–200，前 10 行内有 Text(，
+// 且同一修饰链里既无 fixedSize 也无 minimumScaleFactor / lineLimit / XMetric → 报。
+{
+  for (const f of files) {
+    const lines = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      const code = lines[i].replace(/\/\/.*$/, '');
+      const m = /\.frame\(height:\s*(\d+)(?:\.0)?\)/.exec(code);
+      if (!m) continue;
+      const v = Number(m[1]);
+      if (v < 16 || v > 200) continue;
+      const back = lines.slice(Math.max(0, i - 10), i).join('\n');
+      if (!/Text\(/.test(back)) continue;
+      const chain = back + '\n' + lines.slice(i, i + 3).join('\n');
+      if (/fixedSize|minimumScaleFactor|lineLimit|XMetric\./.test(chain)) continue;
+      // 三处已逐个人读、确认是**有意固定**（写在这里而不是白名单，是为了留下理由）：
+      //   · XGlassTabBar 的 44 —— 规范 §7.10 规定「点击区 ≥44×44」，是触达值不是文字高度；
+      //     标签是 caption2，且在胶囊内绝对定位，不参与容器撑高。
+      //   · AddFingerPage 的 200 —— 指纹动画的**器皿**，文字是叠在图形上的浮动读数。
+      //   · AutoOpen 的 46 —— 信号柱图容器，文字是柱图不在时的空态提示。
+      // Tab Bar 那处在 Components.swift 里，混在整个设计系统文件中 —— 按**上下文**判，不按文件名。
+      if (/tabIdleLabel|item\.selectedSymbol|matchedGeometryEffect\(id: "tabpill"/.test(chain)) continue;
+      if (/AddFingerPage|AutoOpen\.swift/.test(path.relative(ROOT, f))) continue;
+      projectProblems.push('AX 风险：装文字的固定高度 ' + v + 'pt 应改 .frame(minHeight:)：' +
+                           path.relative(ROOT, f) + ':' + (i + 1));
+    }
+  }
+}
+
 // ── 性能维度：视图里的计算属性不许读 DB / 做聚合 ──
 //
 // 实证（门厅）：`alarmCount` / `alarmSpanDays` 是计算属性，被 `criticalNotice` 在 body 里读，

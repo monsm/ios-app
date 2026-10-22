@@ -282,7 +282,9 @@ struct HomeConsole: View {
             .accessibilityElement(children: .combine)
             .accessibilityLabel("连接状态：\(phase.label)")
         }
-        .frame(height: 20)
+        // 这一行装两段文字（时钟 + 连接状态），写死 20pt 在 AX 大字号下会截断。
+        // 20 是**普通字号的视觉高度**，不是硬约束 —— 用 minHeight 保住观感又不切字。
+        .frame(minHeight: 20)
     }
 
     // ─────────────────────────────────────────── ② 空状态
