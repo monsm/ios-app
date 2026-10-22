@@ -48,12 +48,13 @@ struct BackupPage: View {
     @State private var showFileExporter = false
     @State private var showStudio = false
     @State private var pendingRestore: BackupBundle?
-    /// 等待呈现的备份包（选择器关闭后再转成 pendingRestore）
-    @State private var pickedBundle: BackupBundle?
 
     var body: some View {
         ScrollView {
             VStack(spacing: XSpace.l) {
+                if let b = pendingRestore {
+                    restoreConfirmCard(b)
+                }
                 statusCard.xScrollLift()
                 exportCard.xScrollLift()
                 importCard.xScrollLift()
@@ -106,23 +107,10 @@ struct BackupPage: View {
             BackupStudioView().environmentObject(app)
         }
         // 选择器收起后再呈现确认框 —— 见 handleFileImport 里的说明。
-        .onChange(of: showFilePicker) { _, showing in
-            guard !showing, let b = pickedBundle else { return }
-            pickedBundle = nil
-            // 留一帧给上层模态真正消失，否则仍可能被丢掉。
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                pendingRestore = b
-            }
-        }
-        .confirmationDialog("恢复会覆盖同名设备", isPresented: Binding(
-            get: { pendingRestore != nil },
-            set: { if !$0 { pendingRestore = nil } }
-        )) {
-            Button("确认恢复", role: .destructive) {
-                if let b = pendingRestore { applyRestore(b) }
-            }
-            Button("取消", role: .cancel) { pendingRestore = nil }
-        }
+
+        // 确认改成**页内卡片**（见 body 顶部 restoreConfirmCard）。
+        // 原来用 .confirmationDialog：文件选择器刚关就弹——两层模态套着，
+        // SwiftUI 会把第二层丢掉，表现成"选了文件什么都没发生"。
     }
 
     // ═══════════════════════════════════════════════════════
@@ -270,6 +258,48 @@ struct BackupPage: View {
     // MARK: - 导入
     // ═══════════════════════════════════════════════════════
 
+    /// 页内恢复确认。
+    ///
+    /// 为什么不做成弹窗：文件选择器与它的确认框是**两层连续模态**，
+    /// SwiftUI 在上一层还没消失时会丢掉下一层 —— 用户看到的就是"选了没反应"。
+    /// 页内卡片没有这个问题，而且选完文件后信息就在眼前，不必再弹一次。
+    private func restoreConfirmCard(_ b: BackupBundle) -> some View {
+        XPanel(kind: .group, tone: .warn) {
+            VStack(alignment: .leading, spacing: XSpace.s) {
+                Text("确认恢复这份备份？")
+                    .xFont(.subheadline, weight: .medium)
+                    .foregroundStyle(XPalette.text)
+                let memberCount = b.members?.count ?? 0
+                Text("备份时间 \(b.at) · \(b.devices.count) 台设备"
+                     + (memberCount == 0 ? "" : " · \(memberCount) 位成员"))
+                    .xFont(.footnote)
+                    .foregroundStyle(XPalette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("相同设备会被覆盖, 其它设备保留。这一步会写库, 不可撤销。")
+                    .xFont(.footnote)
+                    .foregroundStyle(XPalette.warn)
+                    .fixedSize(horizontal: false, vertical: true)
+                HStack(spacing: XSpace.s) {
+                    Button {
+                        pendingRestore = nil
+                        XHaptics.tick.impactOccurred()
+                    } label: {
+                        Label("取消", systemImage: "xmark")
+                    }
+                    .buttonStyle(XSecondaryButtonStyle())
+
+                    Button {
+                        applyRestore(b)
+                        pendingRestore = nil
+                    } label: {
+                        Label("确认恢复", systemImage: "arrow.down.doc.fill")
+                    }
+                    .buttonStyle(XPrimaryButtonStyle())
+                }
+            }
+        }
+    }
+
     private var importCard: some View {
         XPanel(kind: .group, tone: .warn) {
             VStack(alignment: .leading, spacing: XSpace.m) {
@@ -409,7 +439,7 @@ struct BackupPage: View {
     private func applyParsed(text: String, password: String?) {
         do {
             let (_, bundle) = try BackupStudio.parsePreview(text: text, password: password)
-            pickedBundle = bundle
+            pendingRestore = bundle
             XHaptics.tick.impactOccurred()
         } catch {
             app.showToast("导入被拦下: " + ErrorText.human(error))

@@ -599,6 +599,14 @@ const checks = [
            p.includes('contentTypes: [.data]') &&
            p.includes('exportedContentType: UTType.data');
   }],
+  ['备份恢复确认不再压在两层模态上', () => {
+    // 文件选择器刚关就弹 .confirmationDialog = 两层连续模态，SwiftUI 会丢掉第二层。
+    // 改成页内卡片：选完文件信息就在眼前，确认与取消都在同一屏。
+    const p = CODE.get('BackupPage.swift') || '';
+    return p.includes('restoreConfirmCard(b)') &&
+           p.includes('private func restoreConfirmCard(') &&
+           !p.includes('.confirmationDialog("恢复会覆盖同名设备"');
+  }],
 ];
 
 let pass = 0;
