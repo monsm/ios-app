@@ -24,8 +24,9 @@
 | 2 | **`DESIGN-DECISIONS.md`** | 22 条决定的**依据、取舍、以及什么时候该推翻** |
 | 3 | **`DEAD-SURFACE.md`** | 零调用 API 的**处置总表**（该接/不接/为什么）|
 | 4 | **`PRE-RELEASE-CHECK.md`** | 每个工具的有效范围 + 各轮审计结论 + **哪些结论必须由人验证** |
-| 5 | **`CI-VS-GATES.md`** | 闸门全绿 ≠ 能编译。一次误报的完整记录 |
-| 6 | `DESIGN-SYSTEM-V2.md` | 26 个组件、令牌、Dynamic Type 两条口径 |
+| 5 | **`MANUAL-ACCEPTANCE.md`** | **人工验收表**：哪 12 件事没有任何机器能替你确认，怎么验、什么算过 |
+| 6 | **`CI-VS-GATES.md`** | 闸门全绿 ≠ 能编译。一次误报的完整记录 |
+| 7 | `DESIGN-SYSTEM-V2.md` | 26 个组件、令牌、Dynamic Type 两条口径 |
 | — | `KNOWN-GAP-BACKUP-FILES.md` | 一个具体缺口的实现记录（含仍未验证的部分）|
 | — | `SECTION-MIGRATION-LESSON.md` | 三个坑：`Section` 带 header/footer、CRLF、正则漏匹配 |
 | — | `REFACTOR-STATUS.md` | 重构进度与诚实清单（哪些没做完）|
