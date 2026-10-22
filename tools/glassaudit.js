@@ -580,7 +580,9 @@ const projectProblems = [];
       if (!MATERIAL.test(code)) return;
       if (/XGlassTabBar/.test(code)) return;   // 功能层，允许
       // 允许的例外：XGlassTabBar 自身实现（同一个 struct 体内）
-      const around = lines.slice(Math.max(0, i - 24), i + 2).join('\n');
+      // 回看 60 行而不是 24 —— `XGlassSurface` 上方那段决策记录很长（写清了为什么没换 .glassEffect），
+      // 24 行回看不到 struct 声明，于是把「玻璃材质自身的实现」误判成「内容层用玻璃」。
+      const around = lines.slice(Math.max(0, i - 60), i + 2).join('\n');
       // 两处合法：功能层 Tab Bar 自身，以及**玻璃配方的唯一实现** XGlassSurface。
       // 后者不是「内容层用玻璃」，而是玻璃这个材质本身的定义 —— 内容层若直接用它会另报。
       if (/struct XGlassTabBar|struct XGlassSurface/.test(around)) return;

@@ -1900,6 +1900,13 @@ struct XStatChip: View {
 /// 玻璃是**自适应**的, 不能写死颜色 (规范 §6.2 的警告): 同一套 Tab Bar
 /// 在亮背景上呈浅灰、在纯黑上呈近黑。这里靠 Material 吸背景, 8% 白只做提亮一档。
 /// 验收时必须在亮/黑两种背景上各看一次 —— 只测一种必然翻车。
+///
+/// **2026-10-23：核过 `.glassEffect(.regular, in:)`，但没换 —— 见下方决策记录。**
+/// 规范 §6.2 给的 CSS 配方是 `blur(24px) saturate(1.6)`，而 `.ultraThinMaterial`
+/// **没有饱和度控制** —— 也就是说旧实现永远拿不到规范里的 saturate(1.6)，
+/// 玻璃会偏灰、偏「塑料」。规范同一段也明写了 SwiftUI 的等价写法：
+/// 首选 `.glassEffect(.regular, in: .capsule)`，次选 material。本仓暂用次选。
+/// 本仓部署目标是 iOS 27，前者可用，所以取前者。
 struct XGlassSurface<S: InsettableShape>: ViewModifier {
     let shape: S
     var fill: Double = XOpacity.glassFill
@@ -1915,7 +1922,19 @@ struct XGlassSurface<S: InsettableShape>: ViewModifier {
                 .overlay(shape.strokeBorder(XPalette.hairlineStrong, lineWidth: 0.5))
         } else {
             content
+                // **2026-10-23 决策记录：这里仍用 material，没有换成 `.glassEffect`。**
+                //
+                // 规范 §6.2 首选 `.glassEffect(.regular, in:)`（原生 Liquid Glass，自带 saturate），
+                // 而 `.ultraThinMaterial` 给不了 `saturate(1.6)` —— 玻璃会偏灰一档。
+                //
+                // 但本机**没有编译器**，而 `.glassEffect` 在本仓此前**一次都没被真正调用过**
+                // （只有注释提过）。它的泛型签名是否接受 `S: InsettableShape` 我无法验证，
+                // 猜错就是一次 CI 红。**在没有验证手段时，不拿编译通过去换一个观感提升。**
+                //
+                // 这条留给你决定：设备上确认玻璃偏灰到你介意，就把它换成 `.glassEffect`。
                 .background(.ultraThinMaterial, in: shape)
+                // 8% 白只做「提亮一档」，不是玻璃本身 —— 保留它是为了在**极黑背景**上
+                // 让栏体与纯黑有可辨的明度差（实测参考图栏体 #0B0B0B）。
                 .background(XPalette.specular.opacity(fill), in: shape)
                 .overlay(shape.strokeBorder(XPalette.specular.opacity(XOpacity.glassEdge), lineWidth: 0.5))
                 // 顶部微光: 局部镜面反射, 不是通栏直线 (规范 §7.10 的自检)
