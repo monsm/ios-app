@@ -50,6 +50,8 @@ struct DevicePage: View {
             .padding(.vertical, XSpace.l)
         }
         .background(XPalette.canvas)
+        .task { refreshDerived() }
+        .onChange(of: snap?.firmware) { _, _ in refreshDerived() }
         .navigationTitle("这台锁")
         .navigationBarTitleDisplayMode(.large)
         .refreshable { await refresh() }
@@ -327,6 +329,31 @@ struct DevicePage: View {
     // MARK: - ④ 明细 (折叠)
     // ═══════════════════════════════════════════════════════
 
+    /// 派生数据快照 —— 原来这三个都是**计算属性**，每次 body 求值都重算：
+    ///   · fwLagNote → LockStats.usage() 遍历所有钥匙串并读状态
+    ///   · bigDrops  → BatteryCare.bigDropDays() 读全部电量采样
+    ///   · fwNotes   → 再算一次 fwSince
+    /// 本页有容量条、明细、最近开门等多处状态变化，滚动一下就会触发多次全量读 ——
+    /// 真机上表现为进入卡顿、严重时被看门狗杀掉（看起来就是"闪退"）。
+    @State private var fwLagLatest = ""
+    @State private var fwLagIsBehind = false
+    @State private var fwSinceDays: Int?
+    @State private var bigDropRows: [(day: String, from: Int, to: Int, drop: Int)] = []
+
+    /// 本机这把锁的派生数据，进入时算一次。
+    private func refreshDerived() {
+        let (latest, lagging) = LockStats.fwLag(LockStats.usage())
+        fwLagLatest = latest
+        fwLagIsBehind = !latest.isEmpty && lagging.contains(mac)
+        if let fw = snap?.firmware, !fw.isEmpty, let since = BatteryCare.fwSince(mac, fw: fw) {
+            let days = Int((Date().timeIntervalSince1970 * 1000 - since.at) / 86_400_000)
+            fwSinceDays = days >= 1 ? days : nil
+        } else {
+            fwSinceDays = nil
+        }
+        bigDropRows = mac.isEmpty ? [] : BatteryCare.bigDropDays(mac)
+    }
+
     /// 固件行下方的注记：落后提示 + 这版用了多久。
     ///
     /// 两条都是"本机自己算得出来"的事实，不猜锁端：
@@ -336,12 +363,8 @@ struct DevicePage: View {
     /// fwSince 首次调用会落一条记录（幂等、不走 @Published，不会触发重绘循环）。
     private var fwNotes: String? {
         var parts: [String] = []
-        if let lag = fwLagNote { parts.append(lag) }
-        if let fw = snap?.firmware, !fw.isEmpty,
-           let since = BatteryCare.fwSince(mac, fw: fw) {
-            let days = Int((Date().timeIntervalSince1970 * 1000 - since.at) / 86_400_000)
-            if days >= 1 { parts.append("这版已用 \(days) 天") }
-        }
+        if fwLagIsBehind, !fwLagLatest.isEmpty { parts.append("落后 (本机最新 \(fwLagLatest))") }
+        if let d = fwSinceDays { parts.append("这版已用 \(d) 天") }
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 
@@ -349,17 +372,10 @@ struct DevicePage: View {
     /// LockStats.fwLag 写好了却零调用 —— 而"固件落后"对门锁用户是实际有用的信息
     ///（新固件通常修的是开锁成功率与防拆逻辑）。
     /// 只在本机有多把锁、且确实比最新那把旧时才有话说；单锁用户不显示。
-    private var fwLagNote: String? {
-        guard !mac.isEmpty else { return nil }
-        let (latest, lagging) = LockStats.fwLag(LockStats.usage())
-        guard !latest.isEmpty, lagging.contains(mac) else { return nil }
-        return "落后 (本机最新 \(latest))"
-    }
+
 
     /// 近 30 天里单日掉电超过 20% 的日子（最多列 3 条）。
-    private var bigDrops: [(day: String, from: Int, to: Int, drop: Int)] {
-        mac.isEmpty ? [] : BatteryCare.bigDropDays(mac)
-    }
+
 
     private var detailSection: some View {
         XPanel(kind: .group) {
@@ -395,8 +411,8 @@ struct DevicePage: View {
                         // 1040 单日掉电观察一直被实现、从未被显示。
                         // 它只对"当天至少读到过两次电量"的日子成立（只用真实两个点相减，
                         // 不拟合不外推）—— 所以没数据显示是正常的，别写成"电池健康"之类的结论。
-                        if !bigDrops.isEmpty {
-                            detailRow("单日掉电 >20%", bigDrops.prefix(3)
+                        if !bigDropRows.isEmpty {
+                            detailRow("单日掉电 >20%", bigDropRows.prefix(3)
                                 .map { "\($0.day.suffix(5)) −\($0.drop)%" }
                                 .joined(separator: " · "))
                         }

@@ -533,6 +533,15 @@ const checks = [
     // 并标出本次新建的文件（从没人看过，优先验）。
     return fs.existsSync(path.join(__dirname, '..', 'tools', 'visualreview.js'));
   }],
+  ['重活不在 body 里跑', () => {
+    // 真机上"进去就闪退"的一种成因：进入时在 body 里跑全库体检/全量读，
+    // 主线程被拖住 → 看门狗杀进程 → 看起来就是闪退。
+    // 诊断页与设备页都改成 .task 里算一次、存 @State。
+    const d = CODE.get('DiagnosticsPage.swift') || '';
+    const v = CODE.get('DevicePage.swift') || '';
+    return d.includes('private func refresh()') && d.includes('.task { refresh() }') &&
+           v.includes('private func refreshDerived()') && v.includes('.task { refreshDerived() }');
+  }],
 ];
 
 let pass = 0;
