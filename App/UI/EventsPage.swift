@@ -45,6 +45,13 @@ struct EventsPage: View {
     /// 但**全仓 UI 一次都没调过 load/save**：用户设了"只看告警"，离开再回来就回到全部。
     /// 这里把它接上。
     @State private var filters = QueryFilters()
+    /// 过滤结果快照。
+    ///
+    /// 原来它是**计算属性**：每次 body 求值都重跑一遍 decode + parse + search。
+    /// 这一页有同步遮罩、备注弹窗、命名视图、保存对话框等多个状态，
+    /// 任何一个变化都会触发一次全量重算 —— 记录多的时候这就是主线程卡顿的来源。
+    /// 现在只在 recs / 搜索词 / 只看告警 / 小时过滤变化时重算。
+    @State private var filtered: [Rec] = []
     @State private var loaded = false
     @State private var search = ""
     @State private var searchActive = false
@@ -90,6 +97,9 @@ struct EventsPage: View {
             }
         }
         .background(XPalette.canvas)
+        .onChange(of: search) { _, _ in filtered = computeFiltered() }
+        .onChange(of: alarmOnly) { _, _ in filtered = computeFiltered() }
+        .onChange(of: hourFilter) { _, _ in filtered = computeFiltered() }
         .navigationTitle("事件")
         .navigationBarTitleDisplayMode(.large)
         .searchable(text: $search, isPresented: $searchActive, prompt: "搜索事件")
@@ -226,6 +236,7 @@ struct EventsPage: View {
         filters = QueryFilters.load(mac: mac)
         alarmOnly = filters.alarmOnly
         recs = RecordSearch.buildRecs(macs: macs)
+        filtered = computeFiltered()
         namedViews = RecordSearch.namedViews()
         recentSearches = RecordSearch.history()
         loaded = true
@@ -238,7 +249,7 @@ struct EventsPage: View {
         return WeekCal.gregorian.component(.hour, from: d)
     }
 
-    private var filtered: [Rec] {
+    private func computeFiltered() -> [Rec] {
         var out = recs
         if alarmOnly { out = out.filter { $0.alarm } }
         // 小时过滤放在提前 return 之前 —— 搜索为空时它同样要生效。

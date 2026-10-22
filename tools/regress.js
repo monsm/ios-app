@@ -565,6 +565,14 @@ const checks = [
     const m = CODE.get('ManagerFace.swift') || '';
     return m.includes('routeDestination(r).trackScreen(');
   }],
+  ['事件页过滤结果不再每帧重算', () => {
+    // EventsPage 原本全仓零引用，是本会话接进「本机设置」的。
+    // 它的 filtered 原是计算属性：每次 body 求值都 decode + parse + search 一遍，
+    // 而这一页有同步遮罩/备注弹窗/命名视图/保存对话框多个状态 —— 记录多时就是主线程卡顿来源。
+    const e = CODE.get('EventsPage.swift') || '';
+    return e.includes('@State private var filtered: [Rec] = []') &&
+           e.includes('private func computeFiltered() -> [Rec]');
+  }],
 ];
 
 let pass = 0;
