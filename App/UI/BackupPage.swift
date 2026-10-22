@@ -147,8 +147,8 @@ struct BackupPage: View {
         return Int((Date().timeIntervalSince1970 * 1000 - Double(lastBackupMs)) / 86_400_000)
     }
 
-    /// 文案唯一实现在 BackupStudioKit.lastBackupText（原来这里与 FirmwarePage 各写一份）。
-    private var lastBackupText: String { BackupStudioKit.lastBackupText }
+    /// 文案唯一实现在 BackupStudio.lastBackupText（原来这里与 FirmwarePage 各写一份）。
+    private var lastBackupText: String { BackupStudio.lastBackupText }
 
     private var backupHint: String {
         let d = daysSinceBackup

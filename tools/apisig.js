@@ -455,6 +455,41 @@ if (deadExtensions.length > 0) {
   }
 }
 
+// ── 5z. 不许把「文件名」当「类型名」用 ──
+//
+// 实证（本会话两次）：`BackupStudioKit.swift` 里的类型叫 `BackupStudio`，
+// 我写了 `BackupStudioKit.xxx`。CI 报 cannot find in scope，而本地闸门全绿 ——
+// 符号判据（5a）只查 X 前缀，这个不是。
+//
+// 判据：引用的标识符**等于某个 .swift 的 basename**，但全仓没有任何声明。
+{
+  const FILE_BASENAMES = new Set(files.map(function (f) { return path.basename(f, '.swift'); }));
+  const DECLARED = new Set();
+  for (const f of files) {
+    const src = fs.readFileSync(f, 'utf8');
+    for (const m of src.matchAll(/(?:struct|class|enum|protocol|extension|typealias)[ ]+(\w+)/g)) DECLARED.add(m[1]);
+  }
+  const bad = new Map();
+  for (const f of files) {
+    const lines = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n');
+    lines.forEach(function (raw, i) {
+      const code = raw.replace(/\/\/.*$/, '');
+      if (code.trim().startsWith('///')) return;
+      for (const m of code.matchAll(/\b([A-Z]\w{3,})[ ]*[.:]/g)) {
+        const name = m[1];
+        if (!FILE_BASENAMES.has(name)) continue;
+        if (DECLARED.has(name)) continue;
+        if (!bad.has(name)) bad.set(name, path.relative(ROOT, f) + ':' + (i + 1));
+      }
+    });
+  }
+  if (bad.size) {
+    for (const entry of bad) console.error('  ' + entry[0] + '  <- ' + entry[1] + ' (file name, not a type)');
+    console.error('x 把文件名当类型名用了 —— CI 会报 cannot find in scope');
+    process.exit(1);
+  }
+  console.log('文件名/类型名 ok 没有把 .swift 文件名当类型');
+}
 // ── 5a. 引用的符号必须有声明（编译期错误，静态可抓）──
 //
 // CI 实证过两类：

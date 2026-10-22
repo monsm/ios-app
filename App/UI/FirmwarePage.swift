@@ -63,9 +63,9 @@ struct FirmwarePage: View {
     }
     private var battOk: Bool { battPct > 30 }
     private var checklistOk: Bool { battOk && bleSvc.isPoweredOn && tickBackup && tickTime }
-    /// 文案唯一实现在 BackupStudioKit.lastBackupText。
+    /// 文案唯一实现在 BackupStudio.lastBackupText。
     /// 这里原来自己读 `kf_backup_hist` 且措辞更短（没有「昨天」），同一件事两种说法。
-    private var lastBackupText: String { BackupStudioKit.lastBackupText }
+    private var lastBackupText: String { BackupStudio.lastBackupText }
 
     var body: some View {
         ZStack {
