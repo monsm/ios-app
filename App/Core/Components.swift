@@ -1946,7 +1946,7 @@ struct XGlassTabBar: View {
                                 .xFont(.caption2, weight: on ? .semibold : .regular)
                         }
                         // 图标与标签**同时**变语义色
-                        .foregroundStyle(on ? item.tint : XPalette.specular.opacity(XOpacity.tabIdle))
+                        .foregroundStyle(on ? item.tint : XPalette.tabIdleLabel)
                     }
                     .frame(maxWidth: .infinity)
                     .frame(height: 44)

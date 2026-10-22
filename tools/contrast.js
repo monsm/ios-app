@@ -187,6 +187,32 @@ for (const mode of ['dark']) {
     push(mode, sem, 'canvas', 4.5, `${sem} 语义文案在页面底`, base[sem][mode], col('canvas'));
     push(mode, sem, 'surface', 4.5, `${sem} 语义文案在卡片上`, base[sem][mode], col('surface'));
   }
+  // ── 玻璃复合之后的对比度（规范 §6.2 / G1）──
+  //
+  // 本仓的玻璃 = **背景 + specular@8%**，它没有自己的颜色 ——
+  // 于是「玻璃上的文字对比度」取决于玻璃压在什么上面：纯黑 / 卡片 / 次表面，三个结果都不一样。
+  //
+  // 之前所有断言的底色都是令牌本身，**从没算过合成之后的底**。实证：
+  // Tab Bar 未选中标签用 specular@0.55 时，压在次表面上只有 **3.49:1** ——
+  // 而它是一枚 11pt 的标签，需要在 4.5 以上。
+  {
+    const SPEC = 0xC8C8D4;
+    const IDLE = { hex: 0xEBEBF5, a: 0.60 };
+    const blendOn = (fgHex, a, bgHex) => {
+      const R = Math.round(a * ((fgHex >> 16) & 255) + (1 - a) * ((bgHex >> 16) & 255));
+      const G = Math.round(a * ((fgHex >> 8) & 255) + (1 - a) * ((bgHex >> 8) & 255));
+      const B = Math.round(a * (fgHex & 255) + (1 - a) * (bgHex & 255));
+      return (R << 16) | (G << 8) | B;
+    };
+    for (const under of ['canvas', 'surface', 'surfaceAlt']) {
+      const underHex = col(under);
+      const glass = blendOn(SPEC, 0.08, underHex);
+      const label = blendOn(IDLE.hex, IDLE.a, glass);
+      push('dark', 'tabIdleLabel', 'glass(' + under + ')', 4.5,
+           'Tab Bar 未选中标签压在玻璃上，玻璃底下是 ' + under +
+           ' —— §7.10 给 0.55，但 0.55 在次表面上只有 4.46，故取 0.60', label, glass);
+    }
+  }
   // 分隔线
   for (const bg of ['canvas', 'surface']) {
     // 分隔线：规范没有给对比度阈值。§2 只钉了值 rgba(255,255,255,0.08)。

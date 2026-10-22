@@ -92,7 +92,18 @@ enum XPalette {
     static var segOn: Color { Color.white }
     static var segOff: Color { Color.white.opacity(0.5) }
 
-    // ── 描边 ──
+    /// Tab Bar **未选中**的图标与标签色 —— 规范 §7.10：「透明底 + 白图标白标签（`rgba(235,235,245,0.55)`）」。
+    ///
+    /// 2026-10-23 修正两处：
+    ///   ① 颜色原来用 `specular`(#C8C8D4) —— 那是偏冷的灰。规范给的是 **#EBEBF5**（偏白的冷调）。
+    ///   ② 0.55 在**次表面**底上只有 **4.46:1**，差 0.04 不到 §13.2 的 4.5。
+    ///
+    /// 所以透明度取 **0.60**（最小幅度提高）：黑 6.31 / 卡 5.55 / 次表面 5.03，三底全过。
+    /// 这是「规范内部冲突」的一处：§7.10 给 0.55，§13.2 要 4.5，两者在次表面上不能同时满足 ——
+    /// 取可读下限（那是硬要求），并把 5% 的观感偏差记在这里。
+    static var tabIdleLabel: Color { Color(hex: 0xEBEBF5).opacity(0.60) }
+
+    // ── 描边 ──    // ── 描边 ──
     /// 分隔线 / 卡片描边 —— **规范原文就是半透明白**，不是实色。
     ///
     /// §2 的令牌表：`separator | rgba(255,255,255,0.08) | 0.5pt 分隔线 | 卡内全宽`
@@ -348,8 +359,8 @@ enum XOpacity {
     static let glassEdge: Double = 0.12
     /// Tab Bar 选中胶囊 —— **比栏体更亮**, 不是更暗。范式最容易搞反的一处。
     static let tabSelected: Double = 0.10
-    /// 未选中 Tab 图标与标签
-    static let tabIdle: Double = 0.55
+    // tabIdle 已删：未选中标签改走 `XPalette.tabIdleLabel`（规范 §7.10 的 #EBEBF5 + 0.60）。
+    // 那个 0.55 的旧值在次表面上只有 4.46:1 —— 差 0.04 不到 §13.2 的 4.5，所以不再作为令牌存在。
 }
 
 /// 度量
