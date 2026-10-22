@@ -25,13 +25,23 @@ struct DiagnosticsPage: View {
     @State private var retention = DB.store.getString("kf_diag_log_retention")
     @State private var opsOn = DiagOps.isOn()
 
-    private var selfChecks: [SelfCheckLine] { SelfCheck.run() }
-    private var health: [String] { DataHealth.integrity() }
+    /// ⚠ 这些原来都是**计算属性**：每次 body 求值都重算一遍。
+    /// 而 `SelfCheck.run()` 会走全库指纹 + 审计链重算，`integrity()` 会遍历
+    /// UserDefaults 的每个键，`gapDays` 会对每把锁读一遍日志。
+    /// 这一页有 6 张卡，滚动一下就会触发多次全量体检 —— 真机上表现为卡顿甚至闪退。
+    /// 改成"进入时算一次，动作后重算"（revision 变更时刷新）。
+    @State private var selfChecks: [SelfCheckLine] = []
+    @State private var health: [String] = []
     /// 451 空洞日期检测：日志覆盖区间内整天没有任何条目的日期。
     /// 这个函数一直零调用 —— 而"数据健康"这一块正好是它的位置。
     /// 它只报**两侧都有数据**的内部空洞（首尾没数据不算缺口），所以不会把"刚装上还没记录"报成问题。
-    private var gapDays: [String] {
-        DB.keychains().flatMap { DataHealth.gapDays(mac: $0.mac) }
+    @State private var gapDays: [String] = []
+
+    /// 体检一次，写进 @State（body 里只读）。
+    private func refresh() {
+        selfChecks = SelfCheck.run()
+        health = DataHealth.integrity()
+        gapDays = DB.keychains().flatMap { DataHealth.gapDays(mac: $0.mac) }
     }
 
     var body: some View {
@@ -50,6 +60,8 @@ struct DiagnosticsPage: View {
             .padding(.vertical, XSpace.l)
         }
         .background(XPalette.canvas)
+        .task { refresh() }
+        .onChange(of: revision) { _, _ in refresh() }
         .navigationTitle("诊断与自检")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

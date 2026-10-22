@@ -48,6 +48,8 @@ struct BackupPage: View {
     @State private var showFileExporter = false
     @State private var showStudio = false
     @State private var pendingRestore: BackupBundle?
+    /// 等待呈现的备份包（选择器关闭后再转成 pendingRestore）
+    @State private var pickedBundle: BackupBundle?
 
     var body: some View {
         ScrollView {
@@ -100,6 +102,15 @@ struct BackupPage: View {
         }
         .sheet(isPresented: $showStudio) {
             BackupStudioView().environmentObject(app)
+        }
+        // 选择器收起后再呈现确认框 —— 见 handleFileImport 里的说明。
+        .onChange(of: showFilePicker) { _, showing in
+            guard !showing, let b = pickedBundle else { return }
+            pickedBundle = nil
+            // 留一帧给上层模态真正消失，否则仍可能被丢掉。
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                pendingRestore = b
+            }
         }
         .confirmationDialog("恢复会覆盖同名设备", isPresented: Binding(
             get: { pendingRestore != nil },
@@ -361,7 +372,14 @@ struct BackupPage: View {
             do {
                 let data = try Data(contentsOf: url)
                 let bundle = try JSONDecoder().decode(BackupBundle.self, from: data)
-                pendingRestore = bundle
+                // ⚠ 不能在这里直接 pendingRestore = bundle。
+                //
+                // 这个回调发生在**系统文件选择器还在关闭**的过程中，而 pendingRestore
+                // 要驱动的是一个 .confirmationDialog —— SwiftUI 在上一层模态没消失前
+                // 不会弹新的模态，于是确认框被静默丢掉：用户点了文件，界面**没有任何反应**。
+                //
+                // 先存起来，等选择器真正收起（showFilePicker 变 false）再呈现。
+                pickedBundle = bundle
                 XHaptics.tick.impactOccurred()
             } catch {
                 app.showToast("文件读取失败或格式不对")
