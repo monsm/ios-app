@@ -453,6 +453,21 @@ const checks = [
     const v = CODE.get('DevicePage.swift') || '';
     return d.includes('DataHealth.gapDays') && v.includes('BatteryCare.bigDropDays');
   }],
+  ['明文密钥迁移会在启动时跑', () => {
+    // migrateSecretsToKeychain 把旧 plist 里明文的 skey/bkey/ekey 搬进系统 Keychain
+    // 并抹掉明文，注释写着"启动时调一次" —— 而它全仓零调用。
+    // 后果：旧格式的明文密钥会一直躺在 UserDefaults 里（可被备份提取）。
+    const app = CODE.get('LockKeeperApp.swift') || '';
+    const store = CODE.get('Store.swift') || '';
+    return store.includes('static func migrateSecretsToKeychain') &&
+           app.includes('DB.migrateSecretsToKeychain()');
+  }],
+  ['凭证备注创建后可以改', () => {
+    // 创建时能写备注，创建之后改不了 —— setPwdNote / setFpNote 写好了零调用，
+    // 打错一个字只能删了重建。
+    const k = CODE.get('KeysPage.swift') || '';
+    return k.includes('DB.setPwdNote(') && k.includes('DB.setFpNote(') && k.includes('func promptText');
+  }],
 ];
 
 let pass = 0;

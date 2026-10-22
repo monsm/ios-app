@@ -733,6 +733,17 @@ final class AppState: ObservableObject {
     }
     /// 启动结算: 跨年烟花(1021) / 安装周年卡(1050) / VoiceOver 记录(1049) / 成就补结算
     func onLaunch() {
+        // ═══ 明文密钥迁移 ═══
+        //
+        // 2026-10-14 的一次性迁移：把旧 plist 里明文的 skey/bkey/ekey 搬进系统 Keychain，
+        // 并从 plist 抹掉。**幂等**（没有明文字段时不动），注释写着"启动时调一次"。
+        //
+        // 而它全仓零调用。后果：只要本机还留着旧格式的明文密钥，
+        // 它们就会一直躺在 UserDefaults 里（可被备份提取），永远不会进 Keychain。
+        //
+        // 实现本身很谨慎：**只有 Keychain 里确实有值（原本就有或本次写成功）才抹掉明文**，
+        // 否则"首次解锁前的后台启动"会写失败 + 抹明文 = 永久丢密钥。这里原样调用即可。
+        DB.migrateSecretsToKeychain()
         Milestones.bootstrap()
         // 963 每晚状态确认通知: 启动这一趟负责把排期对齐当前开关 (开关/免扰/台账任一变化都要重排)。
         // 授权沿用 CareSchedule 那一份请求口, 不弹第二个系统授权框。

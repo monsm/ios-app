@@ -85,3 +85,27 @@ func promptPasscode(_ title: String,
     })
     UIApplication.topViewController()?.present(alert, animated: true)
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// MARK: - 单行文本输入
+// ═══════════════════════════════════════════════════════════════════════
+/// 改备注/改名这类"一个字段"的编辑，不该为它做一整屏。
+/// 用 UIAlertController 而不是 SwiftUI 的 .alert —— 后者装输入框在 iOS 上不可靠。
+@MainActor
+func promptText(_ title: String,
+                _ message: String,
+                placeholder: String = "",
+                initial: String = "",
+                confirmTitle: String = "保存",
+                onConfirm: @escaping @MainActor (String) -> Void) {
+    let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+    alert.addTextField { tf in
+        tf.text = initial
+        tf.placeholder = placeholder
+    }
+    alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+    alert.addAction(UIAlertAction(title: confirmTitle, style: .default) { _ in
+        onConfirm((alert.textFields?.first?.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines))
+    })
+    UIApplication.topViewController()?.present(alert, animated: true)
+}

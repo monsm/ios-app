@@ -234,6 +234,27 @@ struct KeysPage: View {
     /// 正确路径是 CredentialOrg.batchDisable：它先删本机台账，
     /// 再把 del_pwd / del_fp 入队，等连上锁时由 LinkSenseKit 下发。
     /// 断网也不会丢 —— 队列会等下一次连接。
+    /// 改一条凭证的备注。密码按 alias 定位、指纹按 batch 定位。
+    private func editNote(_ row: KeyRow) {
+        let current: String
+        if row.kindTag == "fp" {
+            current = DB.ledger(mac).fps.first { $0.batch == row.key }?.note ?? ""
+        } else {
+            current = DB.ledger(mac).pwds.first { $0.alias == row.key }?.note ?? ""
+        }
+        promptText("编辑备注", "「\(row.title)」——只存本机，不上传。",
+                   placeholder: "例如：给谁、什么时候用", initial: current) { text in
+            if row.kindTag == "fp" {
+                DB.setFpNote(mac, row.key, text)
+            } else {
+                DB.setPwdNote(mac, row.key, text)
+            }
+            XHaptics.success()
+            app.showToast(text.isEmpty ? "备注已清空" : "备注已保存")
+            refresh()
+        }
+    }
+
     private func performDelete(_ row: KeyRow) {
         let n: Int
         if row.kindTag == "fp" {
@@ -476,6 +497,16 @@ struct KeysPage: View {
             } label: {
                 Label(CredentialOrg.isArchived(mac, row.kindTag, row.key) ? "取消归档" : "归档",
                       systemImage: "archivebox")
+            }
+
+            // ═══ 编辑备注 ═══
+            //
+            // 创建时能写备注（AddKeyPage 与工坊都有备注框），但**创建之后改不了** ——
+            // DB.setPwdNote / DB.setFpNote 写好了却零调用。打错一个字只能删了重建。
+            Button {
+                editNote(row)
+            } label: {
+                Label("编辑备注", systemImage: "text.bubble")
             }
 
             Button(role: .destructive) {

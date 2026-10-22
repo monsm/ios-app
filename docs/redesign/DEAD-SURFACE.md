@@ -321,3 +321,38 @@ static func expiringSoonCount(macs: [String], within days: Int = 7) -> Int
 
 **这两条注释是原作者写的。我接界面时原样守住了它们** —— 一个函数被冷落两年，
 它注释里那些"不做什么"的约定仍然是有效的。
+
+## 76 个的归类与处置（第 84 轮）
+
+按「用户会在什么时候需要它」分类：
+
+| 类别 | 例子 | 处置 |
+|---|---|---|
+| **应该自动跑** | `migrateSecretsToKeychain` / `recordTap` / `pinToFront` | 接进操作流程，不给按钮 |
+| **缺编辑能力** | `setPwdNote` / `setFpNote` / `renameFp` / `rePwd` | 接进已有右键菜单 |
+| **缺展示位** | `gapDays` / `bigDropDays` / `expiringSoonCount` | 接到已有区块（已做 3 个）|
+| **需要新屏** | `batchExtend` / `batchTransfer` / `smartSet` | 暂不接 —— 会显著增加界面复杂度 |
+| **被撤功能** | `outOfWindow` / `confirmDestructiveTyped` | 保留但不接 |
+
+### 本轮修的两个
+
+#### 1. `DB.migrateSecretsToKeychain` —— 明文密钥可能一直没搬进 Keychain
+
+```swift
+/// 2026-10-14 一次性迁移: 把旧 plist 里明文的 skey/bkey/ekey 搬进系统 Keychain,
+/// 并从 plist 抹掉。幂等 (没有明文字段时不动), **启动时调一次**。
+```
+
+它全仓零调用。后果：只要本机还留着旧格式的明文密钥，
+它们就会一直躺在 UserDefaults 里（可被备份提取），永远不会进 Keychain。
+
+实现本身很谨慎 —— **只有 Keychain 里确实有值才抹掉明文**，
+避免"首次解锁前的后台启动"写失败 + 抹明文 = 永久丢密钥。
+已原样接进 `onLaunch()` 的第一行。
+
+#### 2. 凭证备注**创建后改不了**
+
+创建时能写（AddKeyPage 与工坊都有备注框），创建之后没有入口 ——
+`DB.setPwdNote` / `DB.setFpNote` 写好了零调用。打错一个字只能删了重建。
+
+已接到钥匙页右键菜单「编辑备注」，用单行输入弹窗（改一个字段不该做一整屏）。
