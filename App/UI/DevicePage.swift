@@ -422,7 +422,7 @@ struct DevicePage: View {
             }
             if let note {
                 Text(note)
-                    .xFont(.system(.caption2))
+                    .xFont(.system(.footnote))
                     .foregroundStyle(XPalette.warn)
                     .frame(maxWidth: .infinity, alignment: .trailing)
                     .fixedSize(horizontal: false, vertical: true)

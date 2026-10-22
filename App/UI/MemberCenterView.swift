@@ -327,7 +327,7 @@ struct MemberDetail360View: View {
                 if MemberHub.proxyNames.contains(m.id) {
                 Text("代管中: 在钥匙页对 TA 名下钥匙做单条停用时, 那一行的停用便签会写上 管理员代操作; "   // 468 代管中
                 + "家庭会议摘要也点名代管中的成员。锁端没有代操作这一位, 这句标注只落本机。")   // 482 家庭会议摘要
-                .xFont(.caption)
+                .xFont(.footnote)
                 .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
                 }
@@ -977,14 +977,14 @@ struct MemberFamilySettingsView: View {
                             Text("钥匙页: 分段只留 全部/密码/指纹, 批量与导出入口收起, 组尾那条过期清理也不出现; "
                                  + "钥匙行标题升到标题级、副行升到正文档, 副行文字改用主文本色 —— 大字与高对比就落在这两处。"   // 479 凭证行标题升到标题级
                                  + "这一档只动钥匙页与临时码完成页, 其它页面不跟着变。")
-                                .xFont(.caption)
+                                .xFont(.footnote)
                                 .foregroundStyle(XPalette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                             Text("临时码完成页: 开这一档后完成页只留大字号口述卡 + 一枚大「完成」, "   // 486 临时码完成页
                                  // 329 一句话口令
                                  // 333 一句话口令
                                  + "一句话口令 / 首用回执 / 再发一张 那几段收起并在原地说明; 页标题也切到「口述卡」。")
-                                .xFont(.caption)
+                                .xFont(.footnote)
                                 .foregroundStyle(XPalette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }

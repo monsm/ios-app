@@ -160,7 +160,7 @@ struct AddKeyPage: View {
                         Image(systemName: "text.magnifyingglass")
                             .font(.system(size: XIcon.xs, weight: .semibold))
                         Text(clash)
-                            .xFont(.system(.caption))
+                            .xFont(.system(.footnote))
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .foregroundStyle(XPalette.warn)
