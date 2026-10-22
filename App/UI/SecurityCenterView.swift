@@ -996,7 +996,7 @@ struct SecurityDestroyView: View {
                             // 这一条是补的：界面到处承诺「可还原」「N 天内可找回」，
                             // 但 undoRemove 全仓零调用 —— 没有任何页面能真的放回去。
                             NavigationLink {
-                                CredentialBinView().environmentObject(app)
+                                CredentialBinView().environmentObject(app).trackScreen("回收站")
                             } label: {
                                 HStack(spacing: XSpace.s) {
                                     Image(systemName: "arrow.uturn.backward.circle")

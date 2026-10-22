@@ -763,9 +763,13 @@ final class AppState: ObservableObject {
         if CrashGuard.pendingAbnormal, let top = CrashGuard.archList().first,
            !Milestones.onceDone("crash758_" + top) {
             Milestones.markOnce("crash758_" + top)
+            // 把"崩在哪一页"直接写在卡片上 —— 如果崩的正是诊断页，
+            // 让用户"进去核对"等于请他再崩一次。
+            // 不承诺"进去不会再崩" —— 那是保证不了的事。
+            let where_ = CrashGuard.lastScreen.isEmpty ? "(未记录)" : CrashGuard.lastScreen
             enqueueMoment(Moment(id: "crash758", icon: "exclamationmark.triangle",
                                  title: "上次是异常退出",
-                                 subtitle: "时长与最后操作存在诊断页「异常退出档案」里, 进去可以核对。"))   // 758 时长与最后操作存在诊
+                                 subtitle: "崩在「" + where_ + "」, 完整档案在诊断页「异常退出档案」。"))
         }
         // 385 保留期到期: 启动时自动物理删除 + 重封链 + 留清理记录 (此前只靠安全中心手动按钮才会碰它);
         // months=0 (永久) 时 purgeExpired 内部直接返回, 无须另判。

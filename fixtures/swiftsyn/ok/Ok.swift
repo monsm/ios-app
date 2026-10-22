@@ -60,3 +60,10 @@ struct OkSyn: View {
 let ml = """
 // 交接信里有 $ 与 \(count) 和逗号, 都在字符串里
 """
+
+// S5 反控：合法的中文收尾，不该开火。
+func s5Ok() -> String {
+    let a = "全部同数字, 易被猜出"
+    let b = a + "，请换一个"
+    return b.count > 0 ? "已保存" : "未保存"
+}

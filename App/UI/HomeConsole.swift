@@ -186,7 +186,7 @@ struct HomeConsole: View {
                 managerGroup = ManagerGroup.forRoute(r)
             }
             .sheet(item: $managerGroup) { g in
-                ManagerFace(initialGroup: g).environmentObject(app)
+                ManagerFace(initialGroup: g).environmentObject(app).trackScreen("管理面板")
             }
             .sheet(isPresented: $showAddLock) {
                 AddLockPage().environmentObject(app)

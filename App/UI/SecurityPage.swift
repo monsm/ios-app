@@ -254,7 +254,7 @@ struct SecurityPage: View {
                 actionRow(icon: DB.hasPasscode() ? "lock.shield.fill" : "lock.open",
                           title: "应用锁",
                           detail: DB.hasPasscode() ? "已开启 · 修改或关闭" : "未开启 · 现在设置") {
-                    AppLockSetupView().environmentObject(app)
+                    AppLockSetupView().environmentObject(app).trackScreen("应用锁")
                 }
                 XHairline(inset: XSpace.card)
                 actionRow(icon: "eye.slash", title: "防窥与遮蔽",

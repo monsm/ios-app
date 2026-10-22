@@ -335,6 +335,15 @@ enum DiagFlags {
 enum CrashGuard {
     static let marker = "kf_crash_marker"
     static let lastDur = "kf_last_session"
+    /// 最后打开的界面。真机闪退时，这是唯一能告诉我们"崩在哪"的线索 ——
+    /// 静态分析查了多轮都没定位，所以让 App 自己记下来。
+    static let lastScreenKey = "kf_last_screen"
+
+    /// 进入一个界面时调用（幂等，值没变就不写盘）。
+    static func markScreen(_ name: String) {
+        if DB.store.getString(lastScreenKey) != name { DB.store.set(lastScreenKey, name) }
+    }
+    static var lastScreen: String { DB.store.getString(lastScreenKey) }
     /// 启动调用: 若上次没走正常退出路径 (进后台未被杀死时标记应为 false), 记异常档案
     static func checkAbnormalExit() {
         let flagged = DB.store.getBool(marker)

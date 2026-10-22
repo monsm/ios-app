@@ -187,6 +187,26 @@ function s4(mask, raw) {
   return hits;
 }
 
+// S5 语句结束后跟了中文。
+// 起因：第一百零一轮我改一行 subtitle 时，replace 只换了前半段，
+// 旧行的尾巴 "长与最后操作存在诊" 被拼到了新行 "))" 后面。
+// 那一行**括号仍然平衡** —— swiftcheck/swiftshape/swiftsyn 全绿，CI 才会红。
+// 判据：行尾是中文 + 引号数为偶（不在字符串里）+ 中文前面紧邻 ) ] } 之一。
+function s5(mask, lines) {
+  const out = [];
+  lines.forEach((raw, i) => {
+    if (mask[i]) return;
+    const t = raw.replace(/\s+$/, '');
+    if (!t) return;
+    if (!/[\u4e00-\u9fa5]$/.test(t)) return;
+    const q = (t.replace(/\\"/g, '').match(/"/g) || []).length;
+    if (q % 2 !== 0) return;
+    if (!/[\)\]\}][\u4e00-\u9fa5]/.test(t)) return;
+    out.push((i + 1) + ' S5 语句结束后跟了中文 (丢字/拼接事故): ' + t.trim().slice(0, 80));
+  });
+  return out;
+}
+
 function run(root) {
   const out = [];
   for (const f of swiftFiles(root)) {
@@ -196,6 +216,7 @@ function run(root) {
     for (const h of s2(mask, lines)) out.push(f + ':' + h);
     for (const h of s3(mask, lines)) out.push(f + ':' + h);
     for (const h of s4(mask, lines)) out.push(f + ':' + h);
+    for (const h of s5(mask, lines)) out.push(f + ':' + h);
   }
   return out;
 }
@@ -208,6 +229,7 @@ function selftest() {
   const shouldNot = run(path.join(dir, 'ok'));
   const n1 = count(shouldFire, 'S1'), n2 = count(shouldFire, 'S2');
   const n3 = count(shouldFire, 'S3'), n4 = count(shouldFire, 'S4');
+  const n5 = count(shouldFire, 'S5');
   // fire/: S1 三条 (where 后逗号两种形态 + 序列里的逗号), S2 两条 (`} items: [` 与 `} b: 2)`),
   // S3 两条 (括号里与行尾), S4 两条 (@escaping 与 @Sendable)
   if (n1 !== 3 || n2 !== 2 || n3 !== 2 || n4 !== 2) {
@@ -238,5 +260,5 @@ else {
     process.exit(1);
   }
   console.log('Swift 语法形状机检 ✓ (S1 for-in 头逗号 / S2 带标签尾随闭包后接非花括号 / '
-    + 'S3 裸美元符 / S4 参数名后属性缺冒号 — 零命中)');
+    + 'S3 裸美元符 / S4 参数名后属性缺冒号 / S5 语句后跟中文 — 零命中)');
 }

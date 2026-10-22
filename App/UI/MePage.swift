@@ -163,7 +163,7 @@ struct MePage: View {
             // DiagKit 有 642 行采集器（自检 / 数据健康 / 异常退出 / 启动耗时 /
             // 最近操作 / 蓝牙遥测 / 日志保留），这一屏之前**不存在**，
             // 采集的数据没有任何地方显示。
-            NavigationLink { DiagnosticsPage().environmentObject(app) } label: {
+            NavigationLink { DiagnosticsPage().environmentObject(app).trackScreen("诊断与自检") } label: {
                 XRow(
                     systemImage: "stethoscope",
                     title: "诊断与自检",
@@ -186,7 +186,7 @@ struct MePage: View {
             // 但**全仓零引用** —— 做好了没接进导航。
             // 它有几项 HomeConsole 没有的内容：锁内容量占用、固件版本、
             // 信号格、最近开门明细。
-            NavigationLink { DevicePage().environmentObject(app) } label: {
+            NavigationLink { DevicePage().environmentObject(app).trackScreen("这台锁") } label: {
                 XRow(
                     systemImage: "lock.square",
                     title: "这台锁",
