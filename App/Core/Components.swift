@@ -256,24 +256,13 @@ struct XMetricTile: View {
                     .foregroundStyle(tone.color)
                     .accessibilityHidden(true)
             }
-            // §7.16 单位排版 + §7.18 数字溢出：两者都只在这一处实现。
-            HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text(XMetric.display(value))
-                    // §7.18 按**位数**降档，不是靠 minimumScaleFactor 硬缩 ——
-                    // 后者会让同一列里两个数字大小不一，读起来像排版错误。
-                    // 也不做 scaleEffect：它不改布局，数字会压在相邻元素上。
-                    .xFontScaled(.title2, scale: XMetric.overflowScale(digits: XMetric.digitCount(value)),
-                                 weight: .semibold)
-                    .monospacedDigit()
-                    .foregroundStyle(XPalette.text)
-                    .lineLimit(1)
-                if let unit {
-                    Text(unit)
-                        .xFont(.title2.unitStyle, weight: .semibold)   // 同字重、档位 70%
-                        .foregroundStyle(XPalette.text)                // **同色**，不是灰
-                        .lineLimit(1)
-                }
-            }
+            // §7.16 单位排版走 XValueUnit（全仓唯一实现）；§7.18 的按位数降档在这里套一层。
+            XValueUnit(
+                value: XMetric.display(value),
+                unit: unit,
+                style: .title2,
+                weight: .semibold,
+                scale: XMetric.overflowScale(digits: XMetric.digitCount(value)))
             .minimumScaleFactor(0.7)
                 // 数值变化做滚动数字 (规范 11.1 的 numberRoll: easeInOut 0.25s)。
                 // 磁贴里的读数是会变的 (告警率 / 天数 / 总次数), 硬切会让眼睛追不上。
@@ -1528,6 +1517,48 @@ struct XSegmented<T: Hashable>: View {
         .frame(height: 36)
         .animation(XMotion.standard, value: selection)
         .sensoryFeedback(.selection, trigger: selection)
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// MARK: - 数值 + 单位（规范 §7.16）
+// ═══════════════════════════════════════════════════════════
+
+/// 数值带单位 —— 全仓**唯一**实现。
+///
+/// 规范 §7.16 的五条：
+///   颜色 **与数值同色**（不是灰）· 字号 **数值的 70%** · 字重同 · 中间空一格 · 基线对齐
+///
+/// 给的反例正是本仓原来的写法：`Text("\(days) 天")` ——
+/// 单位与数值同一个字号、同一个颜色，"天" 和 "53" 一样大，
+/// 数字于是读不成「一整块」。
+///
+/// 70% 落到档位上会偏（见 XText.unitStyle 的偏差表），但方向是对的：
+/// 单位**必须**比数值小一档且同色，绝不能靠改灰来区分主次。
+struct XValueUnit: View {
+    var value: String
+    var unit: String?
+    var style: XText
+    var weight: Font.Weight? = nil
+    var color: Color = XPalette.text
+    /// §7.18 的按位数降档系数（1.0 / 0.82 / 0.65）。
+    var scale: CGFloat = 1
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 3) {
+            Text(value)
+                .xFontScaled(style, scale: scale, weight: weight)
+                .monospacedDigit()
+                .foregroundStyle(color)
+                .lineLimit(1)
+            if let unit {
+                Text(unit)
+                    .xFont(style.unitStyle, weight: weight)
+                    .foregroundStyle(color)   // §7.16：同色，不是灰
+                    .lineLimit(1)
+            }
+        }
+        .accessibilityElement(children: .combine)
     }
 }
 

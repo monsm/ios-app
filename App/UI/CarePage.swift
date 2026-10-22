@@ -92,9 +92,13 @@ struct CarePage: View {
                         Text(days > 0 ? "距离下次" : "状态")
                             .xFont(.footnote)
                             .foregroundStyle(XPalette.textSub)
-                        Text(days > 0 ? "\(days) 天" : (care.lastCareAt > 0 ? "该做" : "未记录"))
-                            .xFont(.body, weight: .semibold, design: .rounded)
-                            .foregroundStyle(XPalette.text)
+                        // §7.16：单位不能与数值同大。原来写作 "\(days) 天" —— 一个字号一个颜色，
+                        // "天" 和数字一样大，数字读不成一整块。拆成数值 + 单位两段。
+                        XValueUnit(
+                            value: days > 0 ? "\(days)" : (care.lastCareAt > 0 ? "该做" : "未记录"),
+                            unit: days > 0 ? "天" : nil,
+                            style: .body,
+                            weight: .semibold)
                     }
                     Spacer(minLength: 0)
                     // 右侧槽：环 104pt（规范给 84 或更大），垂直居中。

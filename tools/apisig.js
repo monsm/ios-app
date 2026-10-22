@@ -532,7 +532,12 @@ if (deadExtensions.length > 0) {
   //   `XText.unitStyle`（规范 §7.16 的单位档，返回 XText）。
   // 白名单是**封闭**的：新增成员必须先证明它返回 XText，再往这里加。
   const XT_MEMBERS = 'unitStyle';
-  const validArg = new RegExp('^\\.(' + XT + ')(\\.(' + XT_MEMBERS + '))?(,|$)');
+  // 两种合法形状：
+  //   `.case`                    —— 常量档
+  //   `.case.unitStyle`          —— 常量档的单位档
+  //   `某XText变量.unitStyle`    —— 变量档的单位档（XValueUnit 就是这种）
+  const validArg = new RegExp(
+    '^(\\.(' + XT + ')|[a-z][A-Za-z0-9_]*)(\\.(' + XT_MEMBERS + '))?(,|$)');
   const bad = [];
   for (const f of files) {
     const src = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n');

@@ -118,21 +118,15 @@ struct MePage: View {
     private func summaryTile(icon: String, value: String, label: String, tone: Color,
                              unit: String? = nil) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            HStack(alignment: .firstTextBaseline, spacing: 3) {
-                Text(XMetric.display(value))
-                    .xFontScaled(.title2, scale: XMetric.overflowScale(digits: XMetric.digitCount(value)),
-                                 weight: .bold)
-                    .foregroundStyle(tone)
-                    .monospacedDigit()
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.55)
-                if let unit {
-                    Text(unit)
-                        .xFont(.title2.unitStyle, weight: .bold)
-                        .foregroundStyle(tone)     // §7.16：**与数值同色**，不是灰
-                        .lineLimit(1)
-                }
-            }
+            // §7.16 走 XValueUnit（全仓唯一实现），§7.18 的降档系数一并传入。
+            XValueUnit(
+                value: XMetric.display(value),
+                unit: unit,
+                style: .title2,
+                weight: .bold,
+                color: tone,
+                scale: XMetric.overflowScale(digits: XMetric.digitCount(value)))
+            .minimumScaleFactor(0.55)
             HStack(spacing: 3) {
                 // 规范 §10：图标最小 12pt（原 9pt 低于档位下限）。
                 Image(systemName: icon)

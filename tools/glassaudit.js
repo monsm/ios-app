@@ -229,6 +229,36 @@ const RULES = [
 // ── 工程级断言（不是逐行扫，是整个 App 有没有做这件事）──
 const projectProblems = [];
 {
+  // 规范 §7.16：单位与数值**同色但小一档**。
+  // 最典型的反例就是把单位拼进同一个字符串 —— 那样单位必然拿到数值的字号。
+  // 只在**指标级**字号上判（title2 及以上）：句子里的「3 天」是正文，不归这条管。
+  const METRIC = /xFont(Exact|Scaled)?\(\s*\.(title2|title3|largeTitle|display|displayNumber|headline)/;
+  // 只判「整条文本基本就是 数值+单位」的情形。
+  // 「发现 3 把锁」是**句子**（单位是句子成分），不是指标排版 —— 不能一锅端。
+  // 判法：取第一段字面量，把插值整段挖掉；剩下的若正好是一个单位，才是「拼接单位」。
+  const UNITS = ['天','次','把','个','条','分钟','小时','秒','份','枚','位','%','cal','min','hrs'];
+  const gluedLiteral = (code) => {
+    const q = /"([^"]*)"/.exec(code);
+    if (!q) return null;
+    if (!q[1].includes('\(')) return null;          // 没有插值 → 不是拼接
+    const rest = q[1].replace(/\\\([^)]*\)/g, '').trim();
+    return UNITS.includes(rest) ? rest : null;
+  };
+  for (const f of files) {
+    const srcLines = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n');
+    srcLines.forEach((raw, i) => {
+      const code = raw.replace(/\/\/.*$/, '');
+      if (code.trim().startsWith('///')) return;
+      const unit = gluedLiteral(code);
+      if (unit === null) return;
+      const win = srcLines.slice(i, i + 4).join('\n');
+      if (!METRIC.test(win)) return;
+      projectProblems.push('§7.16 指标级单位被拼进数值字符串（应走 XValueUnit）：' +
+                           path.relative(ROOT, f) + ':' + (i + 1) + '  ' + raw.trim().slice(0, 60));
+    });
+  }
+}
+{
   // 规范 §7.18 数字溢出的四个档位是**确定值**（按位数，不按字符数）。
   // 这类比例错了肉眼读不出来 —— 只有把数字放到 8 位以上才看得见，而界面里极少出现。
   const th = fs.readFileSync(path.join(ROOT, 'App/Core/Theme.swift'), 'utf8');

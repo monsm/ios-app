@@ -624,10 +624,10 @@ struct ExportWizardView: View {
             // 439 大号百分比 + 分卷序号: 与换机迁移的新机导入页同一对读数, 双机肉眼对齐
             if exporting {
                 VStack(alignment: .leading, spacing: XSpace.xs) {
-                    Text("\(exportPct)%")
-                        .xFont(.largeTitle, weight: .heavy)
-                        .foregroundStyle(XPalette.text)
-                        .monospacedDigit()
+                    // §7.16：`%` 是单位，不能与数值同大。原来是 "\(exportPct)%" 一整串 ——
+                    // 百分号会和数字一样大，读数读不成一整块。
+                    XValueUnit(value: XMetric.display(exportPct), unit: "%",
+                               style: .largeTitle, weight: .heavy)
                     Text(exportVol == 0 ? "组包与加密中…" : "分卷 \(exportVol)/\(exportVolTotal)")
                         .xFont(.caption)
                         .foregroundStyle(XPalette.textSub)
