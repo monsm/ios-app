@@ -228,6 +228,46 @@ const RULES = [
 
 // ── 工程级断言（不是逐行扫，是整个 App 有没有做这件事）──
 const projectProblems = [];
+// ── 流程维度：异步动作必须有在途状态 ──
+//
+// 本会话逐个核过 27 处 `Task { await X() }`：
+//   · 20 处在函数里自己 guard（`guard !busy` / `guard let x, !running` / `guard !silentBusy`）
+//   · 其余靠调用点 `.disabled(state)`（`SettingsView` 的 switching 就是这种）
+//   · 底层还有 `LockService` 的「已有命令」兜底，不会真的并发下发
+// 结论是当时**没有缺口**，但形状要守住：一个异步动作如果连在途状态都没有，
+//
+// 剩下 5 条线索已逐条人读，都是**被保护但形式不同**：
+//   · `AddLockPage.pair`   `guard flow == .scan else { return }` —— 状态机挡重入
+//   · `runUnlock`          `unlockTask?.cancel()` + phase 状态机 + LockService「已有命令」兜底
+//   · `refreshStatusQuietly` 静默刷新，本就不该有 UI 状态
+//   · `AddLockPage.scan` ×2  同上，靠 flow 状态机
+// 所以「线索」不等于「问题」—— 这条判据只负责把可疑形状摆出来，不判失败。
+// 双击就会真的执行两次（磁贴/按钮不会自己变灰）。
+//
+// 判据：`Task { await X() }` 的 X，函数体里必须有「设置某个状态 + defer 复位」或显式 guard。
+{
+  const offenders = [];
+  for (const f of files) {
+    const src = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n');
+    src.split('\n').forEach(function (raw, i) {
+      const code = raw.replace(/\/\/.*$/, '');
+      const m = /Task\s*\{\s*await\s+(\w+)\(/.exec(code);
+      if (!m) return;
+      const fn = m[1];
+      const dm = new RegExp('func ' + fn + '\\([^)]*\\)[^{]*\\{').exec(src);
+      if (!dm) return;
+      const body = src.slice(dm.index, dm.index + 900);
+      const hasState = /\bdefer\b[^\n]*\b(false|nil)\b/.test(body) || /guard\b[^\n]*!(busy|running|inFlight|working|loading|switching|silentBusy)/.test(body);
+      if (hasState) return;
+      offenders.push(path.relative(ROOT, f) + ':' + (i + 1) + '  ' + fn);
+    });
+  }
+  if (offenders.length) {
+    for (const o of offenders) console.log('  [线索] ' + o);
+  }
+  console.log('异步在途状态 ' + (offenders.length ? ('线索 ' + offenders.length + ' 条（不判失败，需人读）') : '✓'));
+}
+
 // ── 流程维度：破坏性动作必须在确认框里，确认词不许含糊 ──
 //
 // 规范反复强调「说清要删什么」，本仓也有一批写得很好的确认（KeysPage 那条把
