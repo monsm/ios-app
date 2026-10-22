@@ -39,6 +39,11 @@ const iosPal = /enum XPalette \{([\s\S]*?)\n\}/.exec(iosFull);
 const iosSrc = iosPal ? iosPal[1] : iosFull;
 const ios = {};
 // 规范 §13.4：只做深色。令牌为单值 Color(hex:)；hairline 是规范原文的半透明白。
+// 2026-10-23：令牌改回**深浅双值**（App 只跟随系统，不提供配色选择）。
+// 对账仍比**深色档** —— 那是规范给的实测值，也是 Android 侧镜像的那一档。
+for (const m of iosSrc.matchAll(/static var (\w+): Color \{ Color\.adaptive\(0x[0-9A-Fa-f]{6}, (0x[0-9A-Fa-f]{6})\) \}/g)) {
+  ios[m[1]] = { dark: norm(m[2]) };
+}
 for (const m of iosSrc.matchAll(/static var (\w+): Color \{ Color\(hex: (0x[0-9A-Fa-f]{6})\) \}/g)) {
   ios[m[1]] = { dark: norm(m[2]) };
 }
@@ -46,8 +51,8 @@ for (const m of iosSrc.matchAll(/static var (\w+): Color \{ Color\.white\.opacit
   ios[m[1]] = { dark: 'rgba(255,255,255,' + m[2] + ')' };
 }
 // 两个不是 Color.adaptive 形式的手写令牌
-if (/static var canvas: Color \{ Color\(hex: 0x000000\) \}/.test(iosSrc)) ios.canvas = { dark: '0x000000' };
-if (/return Color\(hex: 0xD98B45\)/.test(iosSrc)) ios.accent = { dark: '0xD98B45' };
+if (/static var canvas: Color \{ Color\.adaptive\(0x[0-9A-Fa-f]{6}, 0x000000\) \}/.test(iosSrc)) ios.canvas = { dark: '0x000000' };
+if (/static var accent: Color \{ Color\.adaptive\(0x[0-9A-Fa-f]{6}, 0xD98B45\) \}/.test(iosSrc)) ios.accent = { dark: '0xD98B45' };
 
 // ---- Android ----
 const ktSrc = fs.readFileSync(KT, 'utf8');

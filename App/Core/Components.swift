@@ -93,11 +93,21 @@ struct XPanel<Content: View>: View {
         kind == .hero ? XRadius.cardLg : XRadius.card
     }
 
-    private var edgeColor: Color {
-        if tone != .neutral { return tone.color.opacity(XOpacity.edge) }
-        // group 卡在纯黑上只有 1.26:1 的明度差, 必须有一条能看见的描边;
-        // hero 用更实的一档 —— 它要在同屏一堆 group 卡里第一个被看见。
-        return kind == .hero ? XPalette.hairlineStrong : XPalette.hairline
+    /// 卡片描边。
+    ///
+    /// **2026-10-23 按参考图改：默认 0。**
+    ///
+    /// 我之前给每张卡描了 1pt（理由是「group 卡在纯黑上只有 1.26:1 的明度差」）。
+    /// 但参考图 3/图 6 里的卡片**一条边都没有** —— 它们只靠 `#1C1C1E` 与纯黑的
+    /// 明度差分分层，那正是规范 §6.3「应用体卡片靠**明度差分**」的原话。
+    ///
+    /// 描边会让卡片读成「贴上去的一块玻璃片」，而参考图读的是「一块实心的板」。
+    /// 这是**形态差别**，不是粗细差别。
+    ///
+    /// 保留的唯一例外：带语义色的卡（tone != neutral）—— 那圈淡色边是
+    /// 「这张卡在说某件事」的信号，不是分层手段。
+    private var edgeColor: Color? {
+        tone != .neutral ? tone.color.opacity(XOpacity.edge) : nil
     }
 
     var body: some View {
@@ -105,10 +115,12 @@ struct XPanel<Content: View>: View {
             .padding(pad)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(plate)
-            .overlay(
-                RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .strokeBorder(edgeColor, lineWidth: 1)
-            )
+            .overlay {
+                if let edgeColor {
+                    RoundedRectangle(cornerRadius: radius, style: .continuous)
+                        .strokeBorder(edgeColor, lineWidth: 1)
+                }
+            }
             // 卡片**零投影** (规范 6.3 明令)。这里刻意不写 .shadow ——
             // 不是忘了, 是黑底上投影只会把卡片边缘糊成一圈脏灰。
     }

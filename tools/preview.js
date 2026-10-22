@@ -28,10 +28,14 @@ const ROOT = path.resolve(__dirname, '..');
 const theme = fs.readFileSync(path.join(ROOT, 'App/Core/Theme.swift'), 'utf8');
 
 // ---------- 令牌解析 (唯一来源: Theme.swift) ----------
-// 规范 §13.4：只做深色。令牌为单值 Color(hex:)；hairline 是规范原文的半透明白。
+// 2026-10-23：令牌改回**深浅双值**（App 只跟随系统，不提供配色选择）。
+// 预览渲染**深色档** —— 那是规范的实测基准，也是这个复刻器一直在验的那一档。
 const COLORS = {};
-for (const m of theme.matchAll(/static var (\w+): Color \{ Color\(hex: 0x([0-9A-Fa-f]{6})\) \}/g)) {
+for (const m of theme.matchAll(/static var (\w+): Color \{ Color\.adaptive\(0x[0-9A-Fa-f]{6}, 0x([0-9A-Fa-f]{6})\) \}/g)) {
   COLORS[m[1]] = { dark: '#' + m[2] };
+}
+for (const m of theme.matchAll(/static var (\w+): Color \{ Color\(hex: 0x([0-9A-Fa-f]{6})\) \}/g)) {
+  if (!COLORS[m[1]]) COLORS[m[1]] = { dark: '#' + m[2] };
 }
 // 半透明令牌：按底色合成（预览里主要压在卡片/画布上）
 const ALPHA = {};
@@ -40,6 +44,7 @@ for (const m of theme.matchAll(/static var (\w+): Color \{ Color\.white\.opacity
 }
 if (!COLORS.canvas) COLORS.canvas = { dark: '#000000' };
 if (!COLORS.accent) COLORS.accent = { dark: '#D98B45' };
+if (!COLORS.accentText) COLORS.accentText = { dark: '#E8A05C' };
 
 const SP = {};
 for (const m of theme.matchAll(/static var (\w+): CGFloat \{ d\((\d+(?:\.\d+)?)\) \}/g)) SP[m[1]] = +m[2];

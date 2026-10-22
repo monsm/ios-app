@@ -54,16 +54,16 @@ enum XPalette {
     // ── 画布 ──
     /// 画布最底。**深色档是纯黑 #000000** —— 这是范式的第一条总则:
     /// "黑色是画布, 不是背景色"。旧值 0x0A0A0B 是深灰, 会让整屏发灰、卡片浮不起来。
-    static var canvas: Color { Color(hex: 0x000000) }
+    static var canvas: Color { Color.adaptive(0xF2F2F7, 0x000000) }
 
     /// 标准卡片。深色档 **#1C1C1E** (范式 3.1 实测值), 圆角 24 (XRadius.card)。
     /// 旧值 0x161618 太暗, 与画布只差 8 个色阶 —— 卡片在纯黑上几乎看不见边界。
-    static var surface: Color { Color(hex: 0x1C1C1E) }
+    static var surface: Color { Color.adaptive(0xFFFFFF, 0x1C1C1E) }
     /// 卡内次级块 (卡里再分块的底)。深色档 #24242A。
-    static var surfaceAlt: Color { Color(hex: 0x24242A) }
+    static var surfaceAlt: Color { Color.adaptive(0xEFEFF4, 0x24242A) }
     /// 第三表面 —— 输入框底、图表容器。深色档 #101012, **比画布亮、比卡片暗**,
     /// 是"凹陷"的那一档 (范式 3.1 surfaceSunken)。
-    static var surfaceSunken: Color { Color(hex: 0x101012) }
+    static var surfaceSunken: Color { Color.adaptive(0xE5E5EA, 0x101012) }
     // surfaceChip(#232326) 已删：规范 §7.2 给顶部胶囊的是 **chipGradient**（渐变），
     // 不是实色。这个令牌一直是纯色、且被判据抓到「零使用」—— 说明它本来就不该存在。
 
@@ -116,20 +116,20 @@ enum XPalette {
     /// 已改回规范写法。tools/contrast.js 会把 8% 白按各底色合成后再算对比度。
     static var hairline: Color { Color.white.opacity(0.08) }
     /// 强调描边 —— 选中/危险两处, 或玻璃的实色退路。
-    static var hairlineStrong: Color { Color(hex: 0x4A4A52) }
+    static var hairlineStrong: Color { Color.adaptive(0xC6C6C8, 0x4A4A52) }
 
     // ── 文字 (深色档对比度实测, 见 docs/GLASS/TOKENS.md 第 4 节) ──
     /// 正文 / 主数字。深色档纯白 —— 21.0:1 on 纯黑, 17.0:1 on 卡片。
-    static var text: Color { Color(hex: 0xFFFFFF) }
+    static var text: Color { Color.adaptive(0x000000, 0xFFFFFF) }
     /// 高光 (金属/玻璃上的镜面反射点)。白天纯白镜面, 夜间冷光 —— 两者取值方向相反, 不复用。
-    static var specular: Color { Color(hex: 0xC8C8D4) }
+    static var specular: Color { Color.adaptive(0x3C3C43, 0xC8C8D4) }
     /// 次级文字。深色档 #8D8D93 —— 6.36:1 on 黑, 5.16:1 on 卡片, 全部过 AA。
     ///
     /// 规范 §13.4「必须实现 Increase Contrast：二级灰提至 #A8A8AE，分隔线提至 0.16 白」。
     /// 这不是一条建议 —— 系统「增加对比度」开着时, 二级灰必须**明显**更亮,
     /// 否则那个开关在界面上等于没效果。快照读的是 AXFlags 的非隔离副本 (令牌不在主 actor 上)。
     // 机器可读: tools/contrast.js 按下面这行的形状解析 (常态值)。
-    static var textSub: Color { Color(hex: 0x8D8D93) }
+    static var textSub: Color { Color.adaptive(0x3C3C43, 0x8D8D93) }
     /// 三级文字 —— 规范 §3.3 原值：`#6A6A6E`（`#EBEBF5`@45%），on 黑 **3.90:1**，
     /// 用途一栏写的是「仅 ≥17pt 或 Bold」。
     ///
@@ -140,7 +140,7 @@ enum XPalette {
     /// 曾经还试过提到 `#8A8A92` 求"全部过 4.5:1" —— 那更错：它与 textSub(#8D8D93) 的
     /// 亮度只差 0.0116，两级文字成了同一个灰，层级直接塌掉。
     /// **层级靠对比度差异建立，不是靠都达标。**
-    static var textTertiary: Color { Color(hex: 0x6A6A6E) }
+    static var textTertiary: Color { Color.adaptive(0x8A8A8E, 0x6A6A6E) }
     /// 二维码静区 —— **唯一一个不跟随主题的白**。
     ///
     /// 它不是界面表面, 是给摄像头读的图形: ISO/IEC 18004 要求二维码四周留白色静区,
@@ -148,57 +148,36 @@ enum XPalette {
     /// 用具名令牌而不用字面量, 是为了让它出现在 grep 里时能一眼看出「这是有理由的」。
     static var qrQuietZone: Color { Color.white }
 
-    // ── 强调: 铜 (锁芯黄铜), 可被 kf_accent 覆盖 ──
-    /// 七套可选强调色。空键 = 默认铜。
-    /// 保留这条链的理由: 备份包里带 kf_accent, 恢复后不该"看着没恢复";
-    /// 且未来若要给用户换色, 只需接 UI, 不用再改令牌求值路径。
-    ///
-    /// 2026-10-22: 六套备选色的**深色档值一个没改** —— 它们是候选强调色, 各自
-    /// 与本仓 onAccent 的组合已由 tools/contrast.js 逐套断言 (实测最低 6.35:1)。
-    private static var accentOverride: UInt32? {
-        switch DB.store.getString("kf_accent") {
-        case "indigo":   return 0x818CF8
-        case "forest":   return 0x4ADE80
-        case "amber":    return 0xFBBF24
-        case "graphite": return 0xA1A1AA
-        case "rose":     return 0xFB7185
-        case "aurora":   return 0x22D3EE
-        default:         return nil
-        }
-    }
-    /// 主行动色 (按钮填充、开锁弧、当前小时)。
-    static var accent: Color {
-        // 规范 §3.4 允许用户换强调色（本仓 kf_accent 那七套），但换的是**强调色**，
-        // 不是明暗。明暗已按 §13.4 固定为深色。
-        if let o = accentOverride { return Color(hex: o) }
-        return Color(hex: 0xD98B45)
-    }
-    /// 强调**文字** (不是填充)。深色档比 accent 再亮一档, 因为要用在小字上。
-    static var accentText: Color { Color(hex: 0xE8A05C) }
-    /// 压在强调填充上的前景。
-    ///
-    /// 深色档是**近黑墨色**而不是白 —— 这是算出来的, 不是审美:
-    /// 铜 #D98B45 已经足够亮, 白字压上去只有 2.2:1; 墨色 #14100A 压上去 6.97:1。
-    /// 浅色档的铜被压深到 #9C5A22, 反过来必须用白字 (5.39:1)。
-    static var onAccent: Color { Color(hex: 0x14100A) }
+    // ── 强调: 铜 (锁芯黄铜) ──
+    //
+    // 2026-10-23 用户裁定：**App 不提供配色选择**。
+    // 所以 `kf_accent` 那七套可选色的整条链（DB 读 + switch + override）已删除。
+    // 主题现在只跟随系统深浅，不再依赖存储层 —— 那本身就是一处不该有的耦合：
+    // 一个 nonisolated 静态色属性去读 DB，既慢又让主题层依赖数据层。
+    static var accent: Color { Color.adaptive(0x8F5218, 0xD98B45) }
+    /// 强调色的**文字档** —— 比 accent 亮/深一档，专供「只有文字没有底」的场合
+    /// （卡头链接、可点文本）。与 accent 分开是因为文字要过 4.5，填充只要 3.0。
+    static var accentText: Color { Color.adaptive(0xA05E20, 0xE8A05C) }
+    /// 强调色上的前景。
+    static var onAccent: Color { Color.adaptive(0xFFFFFF, 0x14100A) }
 
     // ── 凭证工坊的四类色 ──
     //
     // 这四色按档给两份值: 浅色用更深的同色相, 深色保持原样。
     /// 指纹 (青)
-    static var kindFp: Color { Color(hex: 0x2AA6A6) }
+    static var kindFp: Color { Color.adaptive(0x1A7A7A, 0x2AA6A6) }
     /// 临时码 (金) —— 不借 warn 的橙, 同一个颜色两个含义是 HIG 点名要避免的。
-    static var kindTemp: Color { Color(hex: 0xE0C060) }
+    static var kindTemp: Color { Color.adaptive(0x8A6A10, 0xE0C060) }
     /// OTP (紫)
-    static var kindOtp: Color { Color(hex: 0x8060C8) }
+    static var kindOtp: Color { Color.adaptive(0x5A3F9C, 0x8060C8) }
 
     // ── 语义 ──
     /// 成功 / 正向 / 已连接。深色档即范式 accentGreen #30D158 (10.39:1 on 黑)。
-    static var ok: Color { Color(hex: 0x30D158) }
+    static var ok: Color { Color.adaptive(0x147A35, 0x30D158) }
     /// 警示 / 待机。深色档即范式 accentOrange #FF9F0A (10.22:1 on 黑)。
     /// 浅色档 0xA94E08 → 0x9A4708: 旧值在 surfaceSunken 上只有 4.15:1,
     /// 而 warn 文案是会出现在输入框底上的 (表单错误行)。四个底现在最差 4.79:1。
-    static var warn: Color { Color(hex: 0xFF9F0A) }
+    static var warn: Color { Color.adaptive(0xB25000, 0xFF9F0A) }
     /// 告警 / 失败。深色档即范式 accentRed #FF3B30 (5.92:1 on 黑)。
     /// 告警 / 失败 —— 规范 §3.4 的 `accentRed`：**#FF3B30**（on `#1C1C1E` 4.80:1）。
     ///
@@ -208,7 +187,7 @@ enum XPalette {
     ///   ① XMetricTile 的**图标**（非文本，门槛 3:1，4.35 过）
     ///   ② 一处 12pt 说明文字（已改成 text，红色语义交给进度条本身承担）
     /// 也就是说：把令牌改成非规范值，去迁就一个我自己造的用法。
-    static var danger: Color { Color(hex: 0xFF3B30) }
+    static var danger: Color { Color.adaptive(0xD70015, 0xFF3B30) }
 }
 
 // ═══════════════════════════════════════════════════════════

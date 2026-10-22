@@ -656,10 +656,9 @@ final class AppState: ObservableObject {
             themeSeed = key
         }
     }
-    /// 品牌主题: indigo/forest/amber
-    func setAccent(_ key: String) {
-        applyAppearance { DB.store.set("kf_accent", key) }
-    }
+    // 2026-10-23 用户裁定：**App 不提供配色选择**，只跟随系统的深色/浅色。
+    // 原 setAccent（写 kf_accent）已删 —— 主题层也不再读这个键。
+    // 备份包里的 kf_accent 字段保留只为向后兼容（读侧不再消费）。
     /// 893 App 内高对比皮肤: 与系统"增加对比度"并联，任一开着就加强
     func setHighContrast(_ v: Bool) {
         applyAppearance { DB.store.set("kf_hc", v) }
@@ -1000,8 +999,12 @@ struct RootView: View {
     @State private var handshakeDoneAway = false
     @Environment(\.scenePhase) private var scenePhase
     // 读取 themeSeed: 设置页切换主题时立即重建配色
-    // 规范 §13.4：应用体只做深色。不再读用户设置，钉死 .dark。
-    private var colorScheme: ColorScheme { .dark }
+    // 2026-10-23 用户裁定：**App 不提供配色选择，只跟随系统的深色/浅色**。
+    // 所以这里读环境里的 colorScheme，而不是钉死 .dark。
+    // （此前按规范 §13.4「只做深色」钉死，并移除了 App 内明暗切换 —— 那两点仍然成立：
+    //   App 里没有切换器，只是跟随系统。）
+    @Environment(\.colorScheme) private var systemColorScheme
+    private var colorScheme: ColorScheme { systemColorScheme }
 
     /// 顶部横幅栈 (演示/BLE/自检/粘贴建议/toast/写入回执) —— 从 body 内联的 safeAreaInset
     /// 里抽出: 该表达式报 type-check 超时。
@@ -1209,7 +1212,6 @@ struct RootView: View {
             if (old == .connecting || old == .opening), new == .success { handshakeDoneAway = true }
         }
         .sensoryFeedback(.selection, trigger: app.tabSelection)   // Tab 切换的轻触感
-        .preferredColorScheme(.dark)
         // 规范 §10：图标**渲染方式**是 `.hierarchical`，双色用 `.palette`。
         //
         // 全仓此前 **0 处**设过 symbolRenderingMode —— 也就是所有 SF Symbols

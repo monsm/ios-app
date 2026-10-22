@@ -35,6 +35,26 @@ enum ExportRange: Hashable {
         case .member(let id): return "仅 " + (DB.member(id)?.name ?? id)
         }
     }
+
+    /// 分段控件用的短标题 —— `label` 是给文件名与页面标题的（带「仅」字），
+    /// 塞进 36pt 高的胶囊会挤，所以另给一套短的。
+    var title: String {
+        switch self {
+        case .all: return "全部记录"
+        case .month: return "当月"
+        case .day: return "最新单日"
+        case .alarms: return "仅告警"
+        case .member: return "成员"
+        }
+    }
+
+    var isMember: Bool {
+        if case .member = self { return true }
+        return false
+    }
+
+    /// 固定四档 —— 成员档是动态项，走单独的菜单入口（见 `scopeSection`）。
+    static let fixedCases: [ExportRange] = [.month, .all, .alarms, .day]
 }
 
 // 690 列选择: 上次选择沿用到 kf_cred_export_cols (690 原意)
@@ -1719,19 +1739,32 @@ struct ExportCenterView: View {
     private var scopeSection: some View {
         XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: XSpace.m) {
-            Picker("范围", selection: rangeBinding) {   // 701 范围
-                Text("当月").tag(ExportRange.month)
-                Text("全部记录").tag(ExportRange.all)
-                Text("仅告警").tag(ExportRange.alarms)
-                // 701: 暴露既有 .day 档 (原句要自定义日期; 最小形态先给"最新单日" +
-                // 686 的「导出哪一天」选择器)。两者并不相通: .day 恒导最新一天 (filtered 不读 dayPick),
-                // 686 选择器只驱动"单日长图"这一条出口且只列近 14 天 —— 别并成"任意单日"一句
-                Text("最新单日").tag(ExportRange.day)
-                ForEach(DB.members(), id: \.id) { m in
-                    Text("仅 " + m.name).tag(ExportRange.member(m.id))
+            // 2026-10-23 实战截图发现：`.pickerStyle(.inline)` 放在 XPanel 里**破了** ——
+            // 四个选项（当月 / 全部记录 / 仅告警 / 最新单日）的文字叠在一起，
+            // 因为 inline 样式是「展开的列表」，而这里的容器没有给它足够高度。
+            //
+            // 改用规范 §7.3 的形态 B（胶囊分段）。但 member 档是**动态项**（按成员数），
+            // 分段控件只适合固定项，所以：常用四档走 XSegmented，成员档另用一个菜单入口。
+            XSegmented(items: ExportRange.fixedCases, title: { $0.title },
+                       selection: Binding(get: { rangeBinding.wrappedValue.isMember ? .month : rangeBinding.wrappedValue },
+                                          set: { rangeBinding.wrappedValue = $0 }))
+            if !DB.members().isEmpty {
+                Menu {
+                    ForEach(DB.members(), id: \.id) { m in
+                        Button("仅 " + m.name) { rangeBinding.wrappedValue = .member(m.id) }
+                    }
+                } label: {
+                    HStack(spacing: XSpace.xs) {
+                        Text(rangeBinding.wrappedValue.isMember ? rangeBinding.wrappedValue.title : "只看某个成员")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.accentText)
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.system(size: XIcon.xs, weight: .semibold))
+                            .foregroundStyle(XPalette.textSub)
+                    }
+                    .frame(minHeight: XHit.min)
                 }
             }
-            .pickerStyle(.inline)
             // 2026-10-14 走查: 这里原来挂着 `.disabled(false)` —— 空修饰符, 既不会解除任何上级禁用
             // (SwiftUI 的 disabled 是沿树向下传播的, 子级写 false 压不住祖先的 true), 也不改任何行为。
             // 删掉, 免得下一个读代码的人以为"这里本来有个禁用条件, 后来被关掉了"。

@@ -462,8 +462,14 @@ struct HomeConsole: View {
     /// 整圆只是「一个圈」。本 App 的开锁环是一个**进度量**（今天开过几次门），
     /// 与图 5 的 Health Age 环同构，所以采用它的形态。
     private var heroRingGap: Double { 60 }
-    /// 弧的起始角（从 12 点顺时针的角度数）。缺口居中在底部 ⇒ 起点 = 180° + 30° = 210°。
-    private var heroRingStartDeg: Double { 180 + heroRingGap / 2 }
+    /// 弧的起始角。
+    ///
+    /// **角度基准是 SwiftUI 的 `Circle().trim`**：0° 在**3 点**，顺时针为正。
+    /// （第一版我按「12 点为 0°」算成 210°，结果缺口开到了左上方 —— 基准错了。）
+    ///
+    /// 缺口居中在底部（6 点 = 90°），宽 60° ⇒ 缺口从 60° 到 120°（也就是 5 点到 7 点）。
+    /// 所以**弧从 120° 起，扫 300°** 回到 60°。
+    private var heroRingStartDeg: Double { 90 + heroRingGap / 2 }
     /// 弧覆盖的角度（整圆 360 减去缺口）。
     private var heroRingSweepDeg: Double { 360 - heroRingGap }
     /// 游标在环带上的位置：从 12 点顺时针走 progress 圈。
@@ -471,7 +477,8 @@ struct HomeConsole: View {
     private var cursorOffset: CGSize {
         let r = (heroRingSize - heroRingWidth) / 2
         // 从弧的**起点**（不是 12 点）沿着 sweep 走 progress —— 有缺口之后起点是 210°。
-        let deg = heroRingStartDeg + heroRingSweepDeg * Double(min(max(progress, 0), 1)) - 90
+        // trim 的 0° 就是 3 点，与 cos/sin 的基准一致 —— 不需要再 -90。
+        let deg = heroRingStartDeg + heroRingSweepDeg * Double(min(max(progress, 0), 1))
         let rad = deg * .pi / 180
         return CGSize(width: r * CGFloat(cos(rad)), height: r * CGFloat(sin(rad)))
     }
@@ -523,8 +530,8 @@ struct HomeConsole: View {
                                      phase.arcTone.opacity(0.75),
                                      phase.arcTone],
                             center: .center,
-                            startAngle: .degrees(heroRingStartDeg - 90),
-                            endAngle: .degrees(heroRingStartDeg + heroRingSweepDeg - 90)),
+                            startAngle: .degrees(heroRingStartDeg),
+                            endAngle: .degrees(heroRingStartDeg + heroRingSweepDeg)),
                         style: StrokeStyle(lineWidth: heroRingWidth, lineCap: .round))
                     // 规范 7.8 通用自检: 环**不得有投影，只用辉光**。
                     // 原来这圈 16pt 的同色投影是想让蓄力弧"亮起来" ——

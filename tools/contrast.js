@@ -58,8 +58,14 @@ const block = paletteBlock[1];
 // 半透明色**按底色现场合成**后再算对比度 —— 半透明本来就该这样算。
 const base = {};
 let m;
+// 2026-10-23：令牌改回**深浅双值**（用户裁定：App 不提供配色选择，只跟随系统）。
+// 所以解析器要认 `Color.adaptive(0xLLLLLL, 0xDDDDDD)` 这种形状。
+// 深色值仍按原口径断言；浅色值另起一轮断言（见文件末尾的 light 段）。
+for (const mm of block.matchAll(/static var (\w+): Color \{ Color\.adaptive\(0x([0-9a-fA-F]{6}), 0x([0-9a-fA-F]{6})\) \}/g)) {
+  base[mm[1]] = { light: parseInt(mm[2], 16), dark: parseInt(mm[3], 16) };
+}
 for (const mm of block.matchAll(/static var (\w+): Color \{ Color\(hex: 0x([0-9a-fA-F]{6})\) \}/g)) {
-  base[mm[1]] = { dark: parseInt(mm[2], 16) };
+  if (!base[mm[1]]) base[mm[1]] = { dark: parseInt(mm[2], 16) };
 }
 for (const mm of block.matchAll(/static var (\w+): Color \{ Color\.white\.opacity\(([0-9.]+)\) \}/g)) {
   base[mm[1]] = { rgba: [255, 255, 255, parseFloat(mm[2])] };
@@ -77,6 +83,7 @@ if (!base.accent) {
 function col(name, bgName) {
   const tok = base[name];
   if (!tok) return null;
+  // 双值令牌：默认取 dark（旧口径不变），浅色档断言直接传 hex 所以不走这里
   if (tok.dark != null) return tok.dark;
   const [r, g, b, a] = tok.rgba;
   const bg = bgName && base[bgName] && base[bgName].dark != null ? base[bgName].dark : 0x000000;
@@ -221,6 +228,31 @@ for (const mode of ['dark']) {
     INFO.push('hairline on ' + bg + ': ' + CR(col('hairline', bg), col(bg)).toFixed(2) + ':1');
   }
 
+  // ── 浅色档：同一批组合再跑一遍 ──
+  //
+  // 2026-10-23 用户裁定：App 不提供配色选择，只跟随系统深浅。
+  // 于是浅色档从「不存在」变成了「另一半用户会看到的界面」—— 必须有断言。
+  // 深色值一个都没动（规范值锁定仍在跑），这里补的是浅色那一半。
+  {
+    const mode = 'light';
+    const pairs = [
+      ['text', 'canvas', '正文在页面底'],
+      ['text', 'surface', '正文在卡片上'],
+      ['text', 'surfaceAlt', '正文在次表面上'],
+      ['textSub', 'canvas', '次级文字在页面底'],
+      ['textSub', 'surface', '次级文字在卡片上'],
+      ['textSub', 'surfaceAlt', '次级文字在次表面上'],
+    ];
+    for (const [fg, bg, why] of pairs) {
+      if (!base[fg] || !base[bg] || base[fg].light == null) continue;
+      push(mode, fg, bg, 4.5, why + '（浅色档）', base[fg].light, base[bg].light);
+    }
+    for (const sem of ['ok', 'warn', 'danger', 'accentText']) {
+      if (!base[sem] || base[sem].light == null) continue;
+      push(mode, sem, 'surface', 4.5, sem + ' 语义文案在卡片上（浅色档）', base[sem].light, base.surface.light);
+      push(mode, sem, 'canvas', 4.5, sem + ' 语义文案在页面底（浅色档）', base[sem].light, base.canvas.light);
+    }
+  }
   // 三级文字: 规范 §3.3 单列一档 —— textTertiary #6A6A6E / 3.90:1 / 仅 >=17pt 或 Bold。
   // 它属 3.0 档，不能塞进上面的 4.5 循环（那会把层级抹平，历史教训）。
   // 规范 §3.3 只给了**on 黑**这一个数（3.90:1）。所以断言也只验这一处 ——

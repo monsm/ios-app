@@ -13,26 +13,17 @@ import SwiftUI
 //   · 连带后果：XAppearance.isAMOLED（kf_theme == "black"）永远是 false，
 //     "纯黑省电"这条分支在真机上从来到不了。
 //
-// 基础设施其实都齐了：XPalette.accent 已读 kf_accent 支持 6 套品牌色，
+// 2026-10-23 用户裁定：**App 不提供配色选择**，只跟随系统的深色/浅色。
+// 原「品牌色」七选一已整个删除，主题层也不再读 kf_accent。
 // lockKeeperApp.scheme(for:) 已读 kf_theme 支持 4 档。缺的只是这一页。
 struct AppearancePage: View {
     @EnvironmentObject private var app: AppState
     @Environment(\.colorScheme) private var scheme
 
-    @State private var accent = DB.store.getString("kf_accent")
     @State private var hc = DB.store.getBool("kf_hc")
     @State private var weekStart = DB.store.getString("kf_week_start")
 
     // 规范 §13.4：只做深色，不提供明暗切换。所以强调色只剩一栏（深色档值）。
-    private let accents: [(id: String, label: String, value: UInt32)] = [
-        ("", "铜", 0xD98B45),
-        ("indigo", "靛蓝", 0x818CF8),
-        ("forest", "森林", 0x4ADE80),
-        ("amber", "琥珀", 0xFBBF24),
-        ("graphite", "石墨", 0xA1A1AA),
-        ("rose", "玫瑰", 0xFB7185),
-        ("aurora", "极光", 0x22D3EE),
-    ]
     private let weekStarts: [(id: String, label: String)] = [
         ("", "跟随系统"), ("mon", "周一"), ("sun", "周日"), ("sat", "周六"),
     ]
@@ -40,7 +31,6 @@ struct AppearancePage: View {
     var body: some View {
         ScrollView {
             VStack(spacing: XSpace.section) {
-                accentCard
                 miscCard
             }
             .padding(.horizontal, XSpace.gutter)
@@ -51,53 +41,6 @@ struct AppearancePage: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    // ── 品牌色 ─────────────────────────────────────────────
-    private var accentCard: some View {
-        XPanel(kind: .group) {
-            VStack(alignment: .leading, spacing: XSpace.m) {
-                Text("品牌色")
-                    .xFont(.caption, weight: .semibold)
-                    .foregroundStyle(XPalette.textTertiary)
-                    .textCase(.uppercase)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 64), spacing: XSpace.m)],
-                          spacing: XSpace.m) {
-                    ForEach(accents, id: \.id) { a in
-                        Button {
-                            accent = a.id
-                            app.setAccent(a.id)
-                            XHaptics.tick.impactOccurred()
-                        } label: {
-                            VStack(spacing: 6) {
-                                Circle()
-                                    .fill(Color(hex: a.value))
-                                    .frame(width: 34, height: 34)
-                                    .overlay {
-                                        if accent == a.id {
-                                            Circle()
-                                                .strokeBorder(XPalette.text, lineWidth: 2)
-                                                .frame(width: 44, height: 44)
-                                        }
-                                    }
-                                    .frame(width: 44, height: 44)
-                                Text(a.label)
-                                    .xFont(.caption2, weight: accent == a.id ? .semibold : .regular)
-                                    .foregroundStyle(accent == a.id ? XPalette.text : XPalette.textSub)
-                            }
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(a.label + (accent == a.id ? "，当前" : ""))
-                    }
-                }
-                Text("只换按钮、开锁环、当前小时这些地方的颜色。正文始终是正文的颜色，不会因此变得看不清。")
-                    .xFont(.footnote)
-                    .foregroundStyle(XPalette.textTertiary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
-
-    // ── 高对比 / 周起始日 ──────────────────────────────────
     private var miscCard: some View {
         XPanel(kind: .group, padding: 0) {
             VStack(spacing: 0) {
