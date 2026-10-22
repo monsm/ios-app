@@ -228,6 +228,33 @@ const RULES = [
 
 // ── 工程级断言（不是逐行扫，是整个 App 有没有做这件事）──
 const projectProblems = [];
+// ── 触达维度：视觉高度 != 命中区 ──
+//
+// 规范两处同时要：§7.20.3 的次要按钮「视觉 32pt」，§13 的触达「≥44pt」。
+// 两个数都要满足 —— 按钮本体画 32，外层用 minHeight 把命中区撑到 44。
+//
+// 实证：我自己写的 `XInlineError` 重试按钮只写了 `.frame(height: 32)`，
+// 视觉对、触达只有 32 —— 属于「按规范画了，却按不下去」。
+// 这条判据写完时全仓 0 命中，说明其它地方都是对的，只有那处是新的。
+{
+  for (const f of files) {
+    const lines = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      const code = lines[i].replace(/\/\/.*$/, '');
+      const m = /\.frame\(height:\s*(\d+)\)/.exec(code);
+      if (!m) continue;
+      const v = Number(m[1]);
+      if (v >= 44 || v < 20) continue;
+      const back = lines.slice(Math.max(0, i - 12), i).join('\n');
+      if (!/\bButton\s*[({]|\bNavigationLink\s*[({]/.test(back)) continue;
+      const chain = back + '\n' + code + '\n' + lines.slice(i + 1, i + 5).join('\n');
+      if (/XHit\.min/.test(chain)) continue;
+      projectProblems.push('按钮视觉高 ' + v + 'pt 但缺 44pt 触达（加 .frame(minHeight: XHit.min) + contentShape）：' +
+                           path.relative(ROOT, f) + ':' + (i + 1));
+    }
+  }
+}
+
 // ── 流程维度：异步动作必须有在途状态 ──
 //
 // 本会话逐个核过 27 处 `Task { await X() }`：

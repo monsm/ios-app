@@ -1637,10 +1637,15 @@ struct XInlineError: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             if let retry {
-                // §7.20.3 给的是 32pt 高的次要按钮。
+                // §7.20.3 给的是 **32pt 高的视觉**；而 §13 要求触达 ≥44。
+                // 两个数都要满足：按钮本体画 32，外层用 padding 把命中区撑到 44。
+                // 2026-10-23：这一版原来只有 `.frame(height: 32)` —— 视觉对、触达只有 32，
+                // 属于「按规范画了，却按不下去」。
                 Button(retryTitle, action: retry)
                     .buttonStyle(XSecondaryButtonStyle())
                     .frame(height: 32)
+                    .frame(minHeight: XHit.min)
+                    .contentShape(Rectangle())
                     .accessibilityHint("重新执行刚才失败的那一步")
             }
         }
