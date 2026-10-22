@@ -551,6 +551,14 @@ const checks = [
                 'FeedPage.swift','HomeConsole.swift','MemberCenterView.swift'];
     return ui.every(f => !(CODE.get(f) || '').includes('DB.readLogs('));
   }],
+  ['删日志缓存一定作废热点缓存', () => {
+    // 界面读改走 HotCache 之后，"删了底层但不作废缓存"就会让界面显示已删日志。
+    // 两个绕开写入口的删除点：DB.cacheWritable 与 LockKeySpace.purge。
+    const s = CODE.get('Store.swift') || '';
+    const k = CODE.get('LockKeySpace.swift') || '';
+    return s.includes('HotCache.invalidate(mac)   // 删了底层就得作废缓存') &&
+           k.includes('HotCache.invalidate(m)');
+  }],
 ];
 
 let pass = 0;

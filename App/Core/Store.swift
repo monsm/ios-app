@@ -678,6 +678,7 @@ enum DB {
         guard keychain(mac) != nil else {
             // 已经存在的话顺手拿掉: 它就是孤儿本身, 留着只会让体检一直报。
             store.remove("kf_logcache_" + mac)
+            HotCache.invalidate(mac)   // 删了底层就得作废缓存，否则界面还拿得到
             return false
         }
         return true

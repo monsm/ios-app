@@ -63,5 +63,9 @@ enum LockKeySpace {
             for k in DB.store.keys() where k.hasPrefix(full) { DB.store.remove(k) }
         }
         for k in DB.store.keys() where owns(k, m) { DB.store.remove(k) }
+        // 逐锁键里包含 kf_logcache_<mac>。这里的删除绕开了 DB 的写入口，
+        // 所以必须**显式**作废热点缓存 —— 否则删掉一把锁之后，
+        // 界面按那个 mac 读日志仍会拿到缓存里的旧数组（第一百零三批接通缓存时发现）。
+        HotCache.invalidate(m)
     }
 }
