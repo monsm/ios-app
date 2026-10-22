@@ -189,18 +189,18 @@ struct HomeConsole: View {
                 ManagerFace(initialGroup: g).environmentObject(app).trackScreen("管理面板")
             }
             .sheet(isPresented: $showAddLock) {
-                AddLockPage().environmentObject(app)
+                AddLockPage().environmentObject(app).trackScreen("配对门锁")
             }
             .sheet(isPresented: Binding(get: { hourSheet != nil },
                                        set: { if !$0 { hourSheet = nil } })) {
                 if let h = hourSheet {
                     NavigationStack {
-                        EventsPage(initialHour: h).environmentObject(app)
+                        EventsPage(initialHour: h).environmentObject(app).trackScreen("事件·某小时")
                     }
                 }
             }
             .sheet(isPresented: $showEvents) {
-                NavigationStack { EventsPage().environmentObject(app) }
+                NavigationStack { EventsPage().environmentObject(app).trackScreen("事件记录") }
             }
             .sheet(isPresented: Binding(get: { memberSheetID != nil },
                                        set: { if !$0 { memberSheetID = nil } })) {
@@ -208,6 +208,7 @@ struct HomeConsole: View {
                     NavigationStack {
                         MemberDetail360View(memberID: id)
                             .environmentObject(app)
+                            .trackScreen("成员详情")
                     }
                 }
             }

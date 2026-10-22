@@ -573,6 +573,13 @@ const checks = [
     return e.includes('@State private var filtered: [Rec] = []') &&
            e.includes('private func computeFiltered() -> [Rec]');
   }],
+  ['弹层页面也留面包屑', () => {
+    // 推开层的崩溃原来只会显示"门厅"，看不出是哪个弹层。
+    // 门厅的 4 个弹层（管理 / 配对 / 事件 / 成员详情）与事件页都要标。
+    const h = CODE.get('HomeConsole.swift') || '';
+    return h.includes('trackScreen("管理面板")') && h.includes('trackScreen("配对门锁")') &&
+           h.includes('trackScreen("事件·某小时")') && h.includes('trackScreen("成员详情")');
+  }],
 ];
 
 let pass = 0;
