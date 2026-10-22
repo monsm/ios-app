@@ -93,6 +93,15 @@ struct HomeConsole: View {
     // 改成：一次扫描写入缓存，渲染时只读。
     @State private var hourCounts: [Int] = Array(repeating: 0, count: 24)
     @State private var memberStats: [MemberStat] = []
+    /// 未处理告警数与跨天数 —— **缓存**，不放在计算属性里。
+    ///
+    /// 2026-10-23：原来它们是计算属性，而 `criticalNotice` 在 body 里读它 ——
+    /// 于是**每次重渲染都会** `DB.keychains()` + 全量扫一遍所有锁的日志，
+    /// 有告警时还要再扫一遍数跨天。ticker 一跳就是一次。
+    /// 同文件里 hourCounts / memberStats / expiringCount 早就走缓存了，这两项是漏网的。
+    @State private var alarmCountCache: Int? = nil
+    @State private var alarmSpanCache = 0
+    @State private var lastOpenClockCache: String? = nil
 
     @Environment(\.scenePhase) private var scenePhase
 
@@ -359,20 +368,12 @@ struct HomeConsole: View {
         return nil
     }
 
-    private var alarmCount: Int? {
-        let macs = DB.keychains().map { $0.mac }
-        guard !macs.isEmpty else { return nil }
-        let n = RecordSearch.unhandledAlarmCount(macs: macs)
-        return n > 0 ? n : nil
-    }
+    /// 读 recompute() 的缓存 —— 不要恢复成计算属性（见上面那段说明）。
+    private var alarmCount: Int? { alarmCountCache }
 
     /// 未处理告警横跨几天。
     /// 只在确实有告警时才去数（alarmCount 为 nil 时本值不参与渲染）。
-    private var alarmSpanDays: Int {
-        let macs = DB.keychains().map { $0.mac }
-        guard !macs.isEmpty else { return 0 }
-        return RecordSearch.unhandledAlarmDays(macs: macs).count
-    }
+    private var alarmSpanDays: Int { alarmSpanCache }
 
     private func noticeRow(_ n: CriticalNotice) -> some View {
         let isAlarm: Bool
@@ -1151,13 +1152,8 @@ struct HomeConsole: View {
         return parts.isEmpty ? "靠近门锁即可连接" : parts.joined(separator: " · ")
     }
 
-    private var lastOpenClock: String? {
-        guard !mac.isEmpty else { return nil }
-        let logs = HotCache.recent(mac).filter { StatsKit.openTypes.contains($0.type) }
-        guard let last = logs.max(by: { $0.lockTime < $1.lockTime }) else { return nil }
-        let s = last.lockTimeStr
-        return s.count >= 16 ? String(s.suffix(5)) : nil
-    }
+    /// 读 recompute() 的缓存 —— 原来这里每次重渲染都 `HotCache.recent(mac)` 全扫一遍。
+    private var lastOpenClock: String? { lastOpenClockCache }
 
     private var opensToday: Int { hourCounts.reduce(0, +) }
 
@@ -1182,6 +1178,18 @@ struct HomeConsole: View {
         }
         hourCounts = counts
         expiringCount = CredentialOrg.expiringSoonCount(macs: [mac], within: 7)
+        // 告警两项也在这里算一次（见上面 alarmCountCache 的说明）。
+        let allMacs = DB.keychains().map { $0.mac }
+        let n = allMacs.isEmpty ? 0 : RecordSearch.unhandledAlarmCount(macs: allMacs)
+        alarmCountCache = n > 0 ? n : nil
+        alarmSpanCache = n > 0 ? RecordSearch.unhandledAlarmDays(macs: allMacs).count : 0
+        // 最近一次开门的时刻也在这里算（原来每次重渲染都全扫一遍）。
+        let logs = HotCache.recent(mac).filter { StatsKit.openTypes.contains($0.type) }
+        if let last = logs.max(by: { $0.lockTime < $1.lockTime }), last.lockTimeStr.count >= 16 {
+            lastOpenClockCache = String(last.lockTimeStr.suffix(5))
+        } else {
+            lastOpenClockCache = nil
+        }
 
         // ═══ 成员统计走归因引擎，不再用 30 天代理 ═══
         //

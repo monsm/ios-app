@@ -228,6 +228,45 @@ const RULES = [
 
 // ── 工程级断言（不是逐行扫，是整个 App 有没有做这件事）──
 const projectProblems = [];
+// ── 性能维度：视图里的计算属性不许读 DB / 做聚合 ──
+//
+// 实证（门厅）：`alarmCount` / `alarmSpanDays` 是计算属性，被 `criticalNotice` 在 body 里读，
+// 于是**每次重渲染**都 `DB.keychains()` + 全量扫所有锁日志；有告警时再扫一遍数跨天。
+// 而 `ticker` 一跳就是一次重渲染。
+// 同文件里 hourCounts / memberStats / expiringCount 早就走 @State 缓存了，这两项是漏网的。
+//
+// 判据只报线索：`private var xxx { ... }` 这种**无参计算属性**（不是 func、不是 some View）
+// 体内出现 DB / 聚合调用 → 列出来，人读决定是否该缓存。
+// 「some View」不算 —— 视图构建体天然随渲染重算，那是 SwiftUI 的模型。
+{
+  const HEAVY = /DB\.store\.(keychains|readLogs|readStatus)|LockStats\.usage\(\)|RecordSearch\.(unhandledAlarmCount|unhandledAlarmDays|alarmStream)\(|HotCache\.recent\(/;
+  const clues = [];
+  for (const f of files) {
+    const src = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n');
+    const lines = src.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      const m = /^    private var (\w+): (?!some View)([\w\[\]?.]+) \{/.exec(lines[i]);
+      if (!m) continue;
+      // 单行属性（`private var x: Int { expr }`）要看整行，否则扫块会越界到下一个属性。
+      const openedAndClosed = (lines[i].split('{').length - 1) === (lines[i].split('}').length - 1);
+      let body;
+      if (openedAndClosed) {
+        body = lines[i];
+      } else {
+        let e = i + 1;
+        while (e < lines.length && !(lines[e] === '    }')) e++;
+        body = lines.slice(i + 1, e).join('\n');
+      }
+      if (!HEAVY.test(body)) continue;
+      clues.push(path.relative(ROOT, f) + ':' + (i + 1) + '  ' + m[1]);
+    }
+  }
+  if (clues.length) {
+    for (const c of clues) console.log('  [线索] 计算属性里读 DB: ' + c);
+  }
+  console.log('视图计算属性读 DB ' + (clues.length ? ('线索 ' + clues.length + ' 条（不判失败，需人读）') : '✓'));
+}
+
 // ── 触达维度：视觉高度 != 命中区 ──
 //
 // 规范两处同时要：§7.20.3 的次要按钮「视觉 32pt」，§13 的触达「≥44pt」。
