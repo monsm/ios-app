@@ -815,7 +815,7 @@ struct HomeConsole: View {
             headerAction: { showEvents = true },
             footer: "今天 \(opensToday) 次开门，其中 \(todayPeople) 位成员参与。柱高是该小时的开门次数。"
         ) {
-            XStatSection().first() {
+            XStatSection(isFirst: true) {
                 dayChart
             }
             XStatSection {

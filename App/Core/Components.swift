@@ -275,20 +275,21 @@ struct XStatCard<Content: View>: View {
 /// }
 /// ```
 struct XStatSection<Content: View>: View {
-    /// 第一段不画上方的线。**由调用方写 `.first()` 显式声明**，
-    /// 而不是靠"数你是第几个" —— SwiftUI 的 ViewBuilder 在编译期展开，
-    /// 运行时拿不到兄弟节点的序号，任何"自动判断"都只能是猜。
+    /// 第一段不画上方的线。
+    ///
+    /// **2026-10-23 改设计**：原来想用 `XStatSection().first() { … }` —— 编译不过。
+    /// `.first()` 返回的是一个**值**，尾随闭包没有位置可挂（content 是初始化器参数）。
+    /// 所以改成初始化器参数：`XStatSection(isFirst: true) { … }`。
+    /// 代价是调用点要写 7 个字符，好处是它就是一个普通结构体，没有任何魔法。
     var isFirst: Bool = false
     @ViewBuilder var content: () -> Content
-
-    func first() -> XStatSection<Content> { var s = self; s.isFirst = true; return s }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if !isFirst {
                 XHairline()
                     .padding(.top, 14)          // 值 → 线 14
-                Spacer().frame(height: 12)      // 线 → 下一组 12
+                Color.clear.frame(height: 12)   // 线 → 下一组 12
             }
             content()
         }

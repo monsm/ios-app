@@ -88,7 +88,7 @@ struct CarePage: View {
             headerAction: { showHistory = true },
             footer: periodDetail(days)
         ) {
-            XStatSection().first() {
+            XStatSection(isFirst: true) {
                 VStack(alignment: .leading, spacing: XSpace.m) {
                     Text(periodTitle(days))
                         .xFont(.title3, weight: .bold)
