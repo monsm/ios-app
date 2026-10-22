@@ -215,8 +215,6 @@ struct XHairline: View {
 /// 页面只负责「有哪些卡」，骨架、背景、标题、对齐线全归这里。
 struct XScreen<Content: View>: View {
     var title: String
-    /// 标题下方的一行说明（Body 16 / 60% 灰，规范 §5.3）。
-    var subtitle: String? = nil
     /// 标题样式。
     ///   · `.large`  —— 一级页面：页内画 LargeTitle 30/Bold（规范 §5.3）
     ///   · `.inline` —— 二级页面：标题交给导航栏，页内不画标题块
