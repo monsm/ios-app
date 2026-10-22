@@ -37,11 +37,11 @@ struct BackupStudioView: View {
 
     // ---------- 512 数据主权声明 (盾形 SF Symbol + 固定一句) + 509 双向天数行 ----------
     private var trustHeader: some View {
-        Card(tint: .ok) {
+        Card(tint: .neutral) {   // 同上：卡体不染 ok，让 warn/danger 成为这张卡唯一的强调
             HStack(spacing: XSpace.m) {
                 Image(systemName: "lock.shield")
                     .font(.system(size: XIcon.lg, weight: .semibold))
-                    .foregroundStyle(XPalette.ok)
+                    .foregroundStyle(XPalette.textSub)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: XSpace.xs) {
                     Text("数据只存在这台 iPhone")   // 512 数据只存在这台
@@ -61,7 +61,7 @@ struct BackupStudioView: View {
                           + "每份旧备份自己的参数在「本地备份文件」列表逐文件标注",   // 435 每份旧备份自己的参数
                           systemImage: "lock.shield.fill")
                         .xFont(.caption2)
-                        .foregroundStyle(XPalette.ok)
+                        .foregroundStyle(XPalette.textSub)   // 常驻事实，不占强调色名额（§14-#10）
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
