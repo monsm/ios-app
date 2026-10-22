@@ -760,6 +760,21 @@ struct HomeConsole: View {
                 // 非当前时段为该色 25% 不透明度, 当前时段满色。
                 // 旧写法是 3pt 间距的圆角胶囊柱 —— 那是"卡片柱", 不是发丝线,
                 // 24 根排在一起像一排小药丸, 读不出"密度", 只读出"很多块"。
+                ZStack(alignment: .bottom) {
+                    // 规范 §9-3「网格允许：虚线网格（≤6 条，10% 白）+ 水平参考线（≤2 条）」。
+                    // 这里给 5 条竖向虚线，对齐下面的 0/6/12/18/24 刻度 ——
+                    // 没有网格时，46pt 高的柱子悬在纯黑上，读者判断不出"这根大概多高"。
+                    HStack(spacing: 0) {
+                        ForEach(0..<5, id: \.self) { k in
+                            Rectangle()
+                                .fill(XPalette.specular.opacity(0.10))
+                                .frame(width: 1)
+                                .frame(maxWidth: .infinity, alignment: k == 0 ? .leading : (k == 4 ? .trailing : .center))
+                        }
+                    }
+                    .frame(height: 46)
+                    .accessibilityHidden(true)
+
                 HStack(alignment: .bottom, spacing: 0) {
                     ForEach(0..<24, id: \.self) { h in
                         let c = counts[h]
@@ -769,6 +784,7 @@ struct HomeConsole: View {
                             .frame(height: max(1, 46 * CGFloat(c) / CGFloat(peak)))
                             .frame(height: 46, alignment: .bottom)
                     }
+                }
                 }
                 .contentShape(Rectangle())
                 .gesture(SpatialTapGesture().onEnded { v in

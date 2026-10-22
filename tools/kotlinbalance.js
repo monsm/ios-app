@@ -121,3 +121,27 @@ if (fail > 0) {
   process.exit(1);
 }
 console.log(files.length + ' 个 Kotlin 文件括号配平 ✓ (这**不证明**能编译 —— 本机无 kotlinc)');
+
+// ── 二、字号必须走 Type 令牌（规范 §4.2）───────────────────────────────
+//
+// 本端此前把字号散写在调用点，于是出现了 `15.sp` —— 那正是规范点名批评的
+// HIG subheadline 默认值（规范已下修成 14）。iOS 侧 766 处已全部收到 XText，
+// 本端现在也补了 Type 令牌，这条判据防它退回去。
+{
+  const SPEC = new Set([11, 12, 14, 16, 18, 19, 30, 36, 56]);   // §4.2 的十档
+  const bad = [];
+  for (const f of files) {
+    const lines = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n');
+    lines.forEach((l, i) => {
+      const m = /fontSize\s*=\s*([0-9]+(?:\.[0-9]+)?)\.sp/.exec(l);
+      if (!m) return;
+      if (!SPEC.has(parseFloat(m[1]))) bad.push(path.relative(ROOT, f) + ':' + (i + 1) + '  ' + m[1] + 'sp 不在 §4.2 档位上');
+    });
+  }
+  if (bad.length) {
+    for (const b of bad) console.error('  ' + b);
+    console.error('✗ Android 字号有 ' + bad.length + ' 处不在规范 §4.2 档位上');
+    process.exit(1);
+  }
+}
+console.log('Android 字号全部落在 §4.2 档位上 ✓');

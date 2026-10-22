@@ -381,7 +381,7 @@ private fun KfApp(unlocker: BleUnlocker) {
                         status.contains("成功") || status.startsWith("已开锁") -> colors.ok
                         else -> colors.text
                     },
-                    fontSize = 15.sp,
+                    fontSize = Type.subhead,
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center
                 )
@@ -423,7 +423,7 @@ private fun KfApp(unlocker: BleUnlocker) {
                     Text(
                         text = detail,
                         color = colors.textTertiary,
-                        fontSize = 11.sp,
+                        fontSize = Type.caption,
                         fontFamily = FontFamily.Monospace,
                         textAlign = TextAlign.Center,
                         lineHeight = 15.sp,
@@ -604,7 +604,7 @@ private fun Header(lock: LockInfo?) {
         Text(
             text = lock?.name ?: "离线锁钥匙",
             color = colors.text,
-            fontSize = 30.sp,
+            fontSize = Type.largeTitle,
             fontWeight = FontWeight.Bold,
             letterSpacing = (-0.4).sp,
             textAlign = TextAlign.Center,
@@ -617,7 +617,7 @@ private fun Header(lock: LockInfo?) {
             Text(
                 text = lock.macText,
                 color = colors.textTertiary,
-                fontSize = 12.sp,
+                fontSize = Type.footnote,
                 fontFamily = FontFamily.Monospace,
                 letterSpacing = 1.sp,
             )
@@ -788,7 +788,7 @@ private fun UnlockDial(busy: Boolean, onClick: () -> Unit) {
                 Text(
                     text = if (busy) "开锁中" else "轻点开锁",
                     color = colors.textSub,
-                    fontSize = 12.sp,
+                    fontSize = Type.footnote,
                 )
             }
         }
@@ -821,12 +821,12 @@ private fun EmptyState(onScan: () -> Unit) {
         }
         Spacer(Modifier.height(10.dp))
         // 范式 12: 空态标题说**原因**, 不说状态。旧句「还没有绑定门锁」是状态。
-        Text("本机还没有钥匙", color = colors.textSub, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+        Text("本机还没有钥匙", color = colors.textSub, fontSize = Type.subhead, fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.height(4.dp))
         Text(
             "在 iOS 端「设置 → 门锁 → 分享给安卓」生成二维码，扫一次即可导入。",
             color = colors.textTertiary,
-            fontSize = 12.sp,
+            fontSize = Type.footnote,
             textAlign = TextAlign.Center,
             lineHeight = 18.sp
         )
@@ -858,14 +858,14 @@ private fun SignalMetric(armed: Boolean, rssi: Int?, proximity: Boolean, modifie
     ) {
         Box(Modifier.size(8.dp).clip(CircleShape).background(dot))
         Spacer(Modifier.width(KfTokens.Space.s))
-        Text("信号", color = colors.textSub, fontSize = 14.sp)
+        Text("信号", color = colors.textSub, fontSize = Type.subhead)
         Spacer(Modifier.weight(1f))
-        Text(value, color = colors.text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+        Text(value, color = colors.text, fontSize = Type.subhead, fontWeight = FontWeight.SemiBold)
         if (rssi != null) {
             Spacer(Modifier.width(KfTokens.Space.s))
             // dBm 是**工程量**, 不是用户语言 —— iOS 只把它放在设备明细页 (DevicePage.swift:124,317)。
             // 这里保留是因为本端没有明细页, 但压到 11sp caption 档、textTertiary, 不抢主角。
-            Text("${rssi} dBm", color = colors.textTertiary, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
+            Text("${rssi} dBm", color = colors.textTertiary, fontSize = Type.caption, fontFamily = FontFamily.Monospace)
         }
     }
 }
@@ -903,25 +903,25 @@ private fun SettingsCard(
     ) {
         // 卡头: 14 Regular 灰 + 右侧关闭 (范式 7.6 的卡头是灰色链接, 不是白色粗体标题)
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-            Text("门锁设置", color = colors.textSub, fontSize = 14.sp, modifier = Modifier.weight(1f))
+            Text("门锁设置", color = colors.textSub, fontSize = Type.subhead, modifier = Modifier.weight(1f))
             TextButton(
                 onClick = onClose,
                 modifier = Modifier.heightIn(min = KfTokens.Hit.min)
             ) {
-                Text("完成", color = colors.accentText, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                Text("完成", color = colors.accentText, fontSize = Type.subhead, fontWeight = FontWeight.SemiBold)
             }
         }
 
         Spacer(Modifier.height(6.dp))
 
         // 标题 19 Bold 白 (范式 7.6 标题档)
-        Text("靠近自动开锁", color = colors.text, fontSize = 19.sp, fontWeight = FontWeight.Bold)
+        Text("靠近自动开锁", color = colors.text, fontSize = Type.title2, fontWeight = FontWeight.Bold)
 
         Spacer(Modifier.height(KfTokens.Space.m))
 
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             // 标签 12 Regular textSub (范式 7.6 标签档)
-            Text("当前状态", color = colors.textSub, fontSize = 12.sp, modifier = Modifier.weight(1f))
+            Text("当前状态", color = colors.textSub, fontSize = Type.footnote, modifier = Modifier.weight(1f))
             Switch(
                 checked = on,
                 onCheckedChange = onToggle,
@@ -943,13 +943,13 @@ private fun SettingsCard(
         // 文案里的数值一律从 AutoOpenKit 取: 写死数字的注释/文案, 在阈值改动那天就变成假话。
         Text(
             "开着它: 手机解了锁、App 在前台时, 靠近到 " + AutoOpenKit.BASE + " dBm 以内会自动开一次。",
-            color = colors.textTertiary, fontSize = 12.sp, lineHeight = 18.sp,
+            color = colors.textTertiary, fontSize = Type.footnote, lineHeight = 18.sp,
         )
         Spacer(Modifier.height(KfTokens.Space.xs))
         Text(
             "一次靠近只开一次: 要走开让信号掉到 " + AutoOpenKit.disarmThreshold() +
                 " dBm 以下, 隔 6 秒后再靠近才会再开。",
-            color = colors.textTertiary, fontSize = 12.sp, lineHeight = 18.sp,
+            color = colors.textTertiary, fontSize = Type.footnote, lineHeight = 18.sp,
         )
 
         Spacer(Modifier.height(KfTokens.Space.m))
@@ -973,7 +973,7 @@ private fun SettingsCard(
                     .padding(end = KfTokens.Space.s),
                 contentAlignment = Alignment.Center,
             ) {
-                Text("重新扫码绑定", color = colors.accentText, fontSize = 15.sp)
+                Text("重新扫码绑定", color = colors.accentText, fontSize = Type.subhead)
             }
             Box(
                 Modifier
@@ -981,7 +981,7 @@ private fun SettingsCard(
                     .clickable { onUnbind() },
                 contentAlignment = Alignment.Center,
             ) {
-                Text("解绑", color = colors.danger, fontSize = 15.sp)
+                Text("解绑", color = colors.danger, fontSize = Type.subhead)
             }
         }
     }
@@ -1061,7 +1061,7 @@ private fun PrimaryButton(text: String, onClick: () -> Unit) {
             .padding(horizontal = KfTokens.Space.l),
         contentAlignment = Alignment.Center
     ) {
-        Text(text, color = colors.onAccent, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+        Text(text, color = colors.onAccent, fontSize = Type.headline, fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -1121,9 +1121,9 @@ private fun AirTagLayer(
                 top = KfTokens.Space.pageTop + KfTokens.Space.l
             )
         ) {
-            Text("正在查找", color = colors.text.copy(alpha = 0.85f), fontSize = 14.sp, fontWeight = FontWeight.Medium)
+            Text("正在查找", color = colors.text.copy(alpha = 0.85f), fontSize = Type.subhead, fontWeight = FontWeight.Medium)
             Spacer(Modifier.height(2.dp))
-            Text(name, color = colors.text, fontSize = 30.sp, fontWeight = FontWeight.Bold, letterSpacing = (-0.4).sp)
+            Text(name, color = colors.text, fontSize = Type.largeTitle, fontWeight = FontWeight.Bold, letterSpacing = (-0.4).sp)
         }
         // 中央: 空心箭头 (随信号从下往上灌绿, 满绿=可开)。300dp 保留 —— 它是这一屏的主角。
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -1146,11 +1146,11 @@ private fun AirTagLayer(
                 .align(Alignment.BottomStart)
                 .padding(start = KfTokens.Space.section, bottom = 116.dp)
         ) {
-            Text(tier, color = colors.text, fontSize = 36.sp, fontWeight = FontWeight.Bold, letterSpacing = (-0.6).sp)
+            Text(tier, color = colors.text, fontSize = Type.display, fontWeight = FontWeight.Bold, letterSpacing = (-0.6).sp)
             Text(
                 directionLabel(bearing),
                 color = colors.text.copy(alpha = 0.92f),
-                fontSize = 19.sp,
+                fontSize = Type.title2,
                 fontWeight = FontWeight.Bold
             )
         }

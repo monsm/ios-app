@@ -124,6 +124,55 @@ if (verbose) {
   console.log('');
 }
 
+// ── 二、数值令牌对账（尺寸 / 间距 / 圆角）────────────────────────────
+//
+// 第一版只对账**颜色**。而两端还有一整套数值令牌（图标尺寸、间距、圆角），
+// 它们同样约定「逐值同源」，却没有任何判据在看。
+// 实证：iOS 按规范 §10 把 XIcon.lg 从 26 改成 28 之后，Android 仍是 26 ——
+// 同一个令牌两端不同值，而所有闸门全绿。
+const IOS_SPACE = Object.fromEntries([...iosFull.matchAll(/static var (\w+): CGFloat \{ d\((\d+(?:\.\d+)?)\) \}/g)].map((m) => [m[1], +m[2]]));
+const IOS_RADIUS = Object.fromEntries([...iosFull.matchAll(/static var (\w+): CGFloat \{ r\((\d+(?:\.\d+)?)\) \}/g)].map((m) => [m[1], +m[2]]));
+const IOS_ICON = (() => {
+  const sec = iosFull.slice(iosFull.indexOf('enum XIcon'));
+  return Object.fromEntries([...sec.matchAll(/static let (\w+): CGFloat = (\d+(?:\.\d+)?)/g)].map((m) => [m[1], +m[2]]));
+})();
+const KT_NUM = {};
+for (const mm of ktSrc.matchAll(/val (\w+) = (\d+(?:\.\d+)?)\.dp/g)) KT_NUM[mm[1]] = +mm[2];
+
+// Android 的 object 分段（Space / Radius / Icon）
+// ⚠ 注意：ktSrc 读的是 **KfTheme.kt（颜色）**。数值令牌（Space/Radius/Icon）在
+// **Tokens.kt** —— 两个文件、两套东西。第一版我拿 ktSrc 去扫 object，扫到的是空气，
+// 于是这条判据以「0 个同名成员」全绿通过。判据自己必须先指对文件。
+const TOKENS_KT = path.join(ROOT, 'android-app', 'app', 'src', 'main', 'java', 'com', 'aapk', 'kfkey', 'Tokens.kt');
+const numSrc = fs.existsSync(TOKENS_KT) ? fs.readFileSync(TOKENS_KT, 'utf8') : '';
+if (!numSrc) { console.error('✗ tokendrift: 找不到 Tokens.kt，数值令牌对账无法进行'); process.exit(1); }
+const ktObj = (name) => {
+  const m = new RegExp('object ' + name + ' \\{([\\s\\S]*?)\\n    \\}').exec(numSrc);
+  if (!m) return {};
+  return Object.fromEntries([...m[1].matchAll(/val (\w+) = (\d+(?:\.\d+)?)\.dp/g)].map((x) => [x[1], +x[2]]));
+};
+const KT_SPACE = ktObj('Space');
+const KT_RADIUS = ktObj('Radius');
+const KT_ICON = ktObj('Icon');
+
+const numBad = [];
+const cmp = (label, iosMap, ktMap, omitOk) => {
+  for (const [k, v] of Object.entries(iosMap)) {
+    if (!(k in ktMap)) continue;           // Android 没声明的由「故意不镜像」那段管
+    if (ktMap[k] !== v) numBad.push(label + '.' + k + ': iOS=' + v + ' Android=' + ktMap[k]);
+  }
+};
+cmp('Space', IOS_SPACE, KT_SPACE);
+cmp('Radius', IOS_RADIUS, KT_RADIUS);
+cmp('Icon', IOS_ICON, KT_ICON);
+if (numBad.length) {
+  for (const b of numBad) console.error('  ' + b);
+  console.error('✗ 数值令牌漂移 ' + numBad.length + ' 处 —— 两端约定逐值同源');
+  process.exit(1);
+}
+
+const numCount = Object.keys(KT_SPACE).length + Object.keys(KT_RADIUS).length + Object.keys(KT_ICON).length;
+console.log('数值令牌对账 ✓ ' + numCount + ' 个同名成员与 iOS 逐值相同（Space / Radius / Icon）');
 const matched = rows.filter((r) => r.status === 'ok').length;
 if (failed > 0) {
   for (const r of rows.filter((x) => x.status !== 'ok' && !x.status.startsWith('omitted'))) {
