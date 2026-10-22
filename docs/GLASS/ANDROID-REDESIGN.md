@@ -224,3 +224,26 @@ colors.X 引用 vs KfColors 声明                          -> 18 声明 / 18 �
 ```
 
 **A8 断言为什么没红**：改动全部落在 `MainActivity.kt` **第 334 行之后**。前 333 行里那八处被正则锁住的形状（`armed = AutoOpenKit.rssiSample(prevArmed = armed, rssi = r)`、`if (!armed) { fired = false; prewarmStarted = false }`、`if (!armed || fired) return`、`AutoOpenKit.coolReady(lastAuto, now)`、`LaunchedEffect(proximity, lock?.mac, busy, warming, foreground)`、`if (!proximity || busy || warming || !foreground) return@LaunchedEffect`、`unlocker.release()`、`unlocker.prewarm(`）逐字节未变。
+
+---
+
+## 复核 (2026-10-23)：Android 侧已核项清单
+
+| 维度 | 结论 |
+|---|---|
+| 颜色令牌 | 16 字段与 iOS `XPalette` 逐值相同（`tokendrift` 机检）|
+| 数值令牌 | Space / Radius / Icon **13 个同名成员逐值相同** |
+| 字阶 | `Type` 11 档与 iOS `XText` 逐值同源（caption2 与 caption 合并为一档，规范里同为 11）|
+| 间距使用 | 页边距 `gutter` / 区块 `section` / 页顶 `pageTop` 全走令牌；**零硬编码同值 dp** |
+| 触达 | `KfTokens.Hit.min = 48.dp`（Android 最小触达）；扫全仓可点元素，**无 <48dp** |
+| 破坏性操作 | 解绑走 AlertDialog，正文说清三件事（本机会删什么 / 无法找回 / 锁本体不受影响）|
+| 空态 | `EmptyState` 有图标+标题+说明+动作 |
+| 深色单模 | 无浅色档，`KfTheme(dark:)` 参数保留但不生效（§13.4）|
+
+### 仍缺 / 待定
+
+| 项 | 状态 |
+|---|---|
+| 玻璃浮层 | Compose 无等价 `.ultraThinMaterial`；手搓模糊在半透明浮层上会糊。**待你拍板** |
+| 96dp 扫码取景框 | 规范 §7.17 给 28pt 图标，但本端它是**可点的主操作**。**待你拍板** |
+| 骨架屏 | 本端数据全在本地同步读，没有「加载中」这一段 —— 不适用 |
