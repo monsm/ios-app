@@ -369,6 +369,47 @@ enum XMetric {
         decorIcon(base)
     }
 
+    // ── 规范 §7.18 数字溢出 ──
+    //
+    // 「数字长度不可控（百万级步数、累计卡路里），必须有降级规则」。
+    // 按**位数**算，不按字符数：`12,458,902` 是 9 位数字（10 个字符），落在 8–9 档。
+    //
+    //   ≤7      正常
+    //   8–9     ×0.82
+    //   10–11   ×0.65
+    //   >11     缩写 12.4M / 1.2B（保留一位小数）
+    static func digitCount(_ s: String) -> Int {
+        s.reduce(0) { $0 + (($1.isNumber) ? 1 : 0) }
+    }
+
+    static func overflowScale(digits: Int) -> CGFloat {
+        if digits <= 7 { return 1.0 }
+        if digits <= 9 { return 0.82 }
+        if digits <= 11 { return 0.65 }
+        return 0.65   // 超过 11 位先交给 abbreviate 缩写，缩写后再按本档
+    }
+
+    /// >11 位缩写。12_458_902 → "12.5M"；1_200_000_000 → "1.2B"。
+    static func abbreviate(_ n: Int) -> String {
+        let d = abs(n)
+        if d >= 1_000_000_000 { return String(format: "%.1fB", Double(n) / 1_000_000_000) }
+        if d >= 1_000_000 { return String(format: "%.1fM", Double(n) / 1_000_000) }
+        return String(n)
+    }
+
+    /// 一次算完：位数超 11 才缩写，其余原样返回。
+    static func display(_ n: Int) -> String {
+        digitCount(String(abs(n))) > 11 ? abbreviate(n) : String(n)
+    }
+
+    /// 字符串重载 —— 指标值多半是已格式化好的字符串（"1,234" / "从未" / "6"）。
+    /// 只有**纯数字且位数超 11** 才缩写；带逗号或非数字的一律原样返回，
+    /// 否则会把 "从未" 送进 parse 得到 0。
+    static func display(_ s: String) -> String {
+        let bare = s.replacingOccurrences(of: ",", with: "")
+        guard !bare.isEmpty, bare.allSatisfy({ $0.isNumber }), let n = Int(bare) else { return s }
+        return digitCount(bare) > 11 ? abbreviate(n) : s
+    }
     static func decorIcon(_ base: CGFloat) -> CGFloat {
         let size = AXFlags.typeSizeSnapshot
         let scale: CGFloat
@@ -714,6 +755,39 @@ enum XText: Sendable {
     }
 
     /// Dynamic Type 的缩放基准 —— 取最接近的系统档，这样 AX 档放大比例是系统惯例值。
+    /// 单位用的字号档 —— 规范 §7.16「单位字号是数值的 **70%**（不是 60%）」。
+    ///
+    /// **规范内部冲突**：§7.16 要求「数值 × 0.70」，而 §4.2 把字号收成了 10 个离散档位。
+    /// 两者不能同时满足 —— 真的乘 0.70 会造出 13.3 / 25.2 这种不在档位上的数。
+    ///
+    /// 取舍：**服从 §4.2 的档位**（它是实测表，且有 tdconfig 的校准方法），
+    /// 取最近的下一档。实测落点与偏差如实列出：
+    ///
+    ///   displayNumber 56 → 36   64%   ✓ 接近
+    ///   display       36 → 19   53%   ✗ 偏小（36 与 19 之间没有档位）
+    ///   largeTitle    30 → 19   63%   ✓ 接近
+    ///   title2        19 → 14   74%   ✓
+    ///   title3        18 → 12   67%   ✓
+    ///   headline/body 16 → 11   69%   ✓
+    ///   subheadline   14 → 11   79%   ~
+    ///   footnote      12 → 11   92%   ✗ 偏大（12 之下只有 11）
+    ///   caption       11 → 11  100%   ✗ 无法再小
+    ///
+    /// 也就是说：**在 11pt 以下、以及 36pt 附近，这条规则无法忠实执行**。
+    /// 那不是实现偷懒 —— 是两份规范在那些点上没有交集，取字号表是更保守的一侧。
+    var unitStyle: XText {
+        switch self {
+        case .displayNumber: return .display
+        case .display: return .title2
+        case .largeTitle: return .title2
+        case .title2: return .subheadline
+        case .title3: return .footnote
+        case .headline, .body: return .caption
+        case .subheadline: return .caption
+        case .footnote: return .caption
+        case .caption, .caption2: return .caption2
+        }
+    }
     var relativeTo: Font.TextStyle {
         switch self {
         case .displayNumber, .display, .largeTitle: return .largeTitle

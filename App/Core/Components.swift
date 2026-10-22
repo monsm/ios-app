@@ -242,6 +242,11 @@ struct XMetricTile: View {
     var label: String
     var tone: XToneColor = .neutral
     var systemImage: String? = nil
+    /// 单位 —— 规范 §7.16：与数值**同色**、**档位的 70%**、同字重、中间空一格、基线对齐。
+    ///
+    /// 为什么不做成「把单位拼进 value 字符串」：那样单位会拿到数值的字号与颜色。
+    /// 规范给的反例正是这个 —— `665/750` 粉 + `CAL` 灰、或 `CAL` 与数字同大。
+    var unit: String? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: XSpace.xs) {
@@ -251,12 +256,25 @@ struct XMetricTile: View {
                     .foregroundStyle(tone.color)
                     .accessibilityHidden(true)
             }
-            Text(value)
-                .xFont(.title2, weight: .semibold)
-                .monospacedDigit()
-                .foregroundStyle(XPalette.text)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
+            // §7.16 单位排版 + §7.18 数字溢出：两者都只在这一处实现。
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text(XMetric.display(value))
+                    // §7.18 按**位数**降档，不是靠 minimumScaleFactor 硬缩 ——
+                    // 后者会让同一列里两个数字大小不一，读起来像排版错误。
+                    // 也不做 scaleEffect：它不改布局，数字会压在相邻元素上。
+                    .xFontScaled(.title2, scale: XMetric.overflowScale(digits: XMetric.digitCount(value)),
+                                 weight: .semibold)
+                    .monospacedDigit()
+                    .foregroundStyle(XPalette.text)
+                    .lineLimit(1)
+                if let unit {
+                    Text(unit)
+                        .xFont(.title2.unitStyle, weight: .semibold)   // 同字重、档位 70%
+                        .foregroundStyle(XPalette.text)                // **同色**，不是灰
+                        .lineLimit(1)
+                }
+            }
+            .minimumScaleFactor(0.7)
                 // 数值变化做滚动数字 (规范 11.1 的 numberRoll: easeInOut 0.25s)。
                 // 磁贴里的读数是会变的 (告警率 / 天数 / 总次数), 硬切会让眼睛追不上。
                 .contentTransition(.numericText())
@@ -577,14 +595,17 @@ struct XTextModifier: ViewModifier {
     let style: XText
     let weightOverride: Font.Weight?
     let design: Font.Design
+    /// §7.18 数字溢出的降档系数（1.0 / 0.82 / 0.65）。只由 xFontScaled 传。
+    var factor: CGFloat = 1
 
     @ScaledMetric private var scaled: CGFloat
     @Environment(\.dynamicTypeSize) private var typeSize
 
-    init(style: XText, weightOverride: Font.Weight?, design: Font.Design = .default) {
+    init(style: XText, weightOverride: Font.Weight?, design: Font.Design = .default, factor: CGFloat = 1) {
         self.style = style
         self.weightOverride = weightOverride
         self.design = design
+        self.factor = factor
         _scaled = ScaledMetric(wrappedValue: style.size, relativeTo: style.relativeTo)
     }
 
@@ -593,6 +614,7 @@ struct XTextModifier: ViewModifier {
     /// displayNumber 装在**固定尺寸**的环里 —— 跟着 Dynamic Type 放大会把数字顶出环外。
     /// 所以它走另一条路：不放大，AX 档反而降到规范给的 44。
     private var finalSize: CGFloat {
+        if factor != 1 { return (style == .displayNumber ? min(scaled, DSFont.displayNumber) : scaled) * factor }
         guard style == .displayNumber else { return scaled }
         return typeSize.isAccessibilitySize ? 44 : min(scaled, DSFont.displayNumber)
     }
@@ -634,6 +656,16 @@ extension View {
         self.background(style, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
     }
 }
+    /// §7.18 数字溢出的降档入口 —— 与 `xFont` **同一个字号源**，只是整体乘一个系数。
+    ///
+    /// 为什么不直接用 `minimumScaleFactor`：那是「放不下才缩」，缩出来的比例逐条不同，
+    /// 同一列两个数字会一大一小，读起来像排版错误。§7.18 给的是**按位数分档**的确定值。
+    ///
+    /// 也不直接用 `xFontExact(.system(size:))`：那会绕过字号表，等于在字阶之外又开一条路。
+    func xFontScaled(_ style: XText, scale: CGFloat,
+                     weight: Font.Weight? = nil, design: Font.Design = .default) -> some View {
+        modifier(XTextModifier(style: style, weightOverride: weight, design: design, factor: scale))
+    }
 
 // ═══════════════════════════════════════════════════════════
 // MARK: - XToggle (替代 VariantToggle)

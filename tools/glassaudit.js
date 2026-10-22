@@ -229,6 +229,20 @@ const RULES = [
 // ── 工程级断言（不是逐行扫，是整个 App 有没有做这件事）──
 const projectProblems = [];
 {
+  // 规范 §7.18 数字溢出的四个档位是**确定值**（按位数，不按字符数）。
+  // 这类比例错了肉眼读不出来 —— 只有把数字放到 8 位以上才看得见，而界面里极少出现。
+  const th = fs.readFileSync(path.join(ROOT, 'App/Core/Theme.swift'), 'utf8');
+  const oc = /static func overflowScale\(digits: Int\) -> CGFloat \{([\s\S]*?)\n    \}/.exec(th);
+  if (!oc) projectProblems.push('XMetric.overflowScale 不见了 —— 规范 §7.18 要求按位数降档');
+  else {
+    const body = oc[1];
+    if (!/if digits <= 7 \{ return 1\.0 \}/.test(body)) projectProblems.push('§7.18：≤7 位应为 1.0');
+    if (!/if digits <= 9 \{ return 0\.82 \}/.test(body)) projectProblems.push('§7.18：8–9 位应为 0.82');
+    if (!/if digits <= 11 \{ return 0\.65 \}/.test(body)) projectProblems.push('§7.18：10–11 位应为 0.65');
+  }
+  if (!/static func abbreviate\(_ n: Int\) -> String/.test(th)) projectProblems.push('§7.18：>11 位必须有 M/B 缩写');
+}
+{
   // 规范 §7.3 自检：「同一产品内**只用一种**，不得混用」。
   // 本仓此前三种并存：系统 .pickerStyle(.segmented)（4 处）、KeysPage 手搓的
   // glass+accent 洗底、以及别处各自写的。已统一为 XSegmented（形态 B）。

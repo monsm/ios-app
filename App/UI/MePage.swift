@@ -92,9 +92,11 @@ struct MePage: View {
                     tone: alarmN > 0 ? XPalette.warn : XPalette.ok)
                 summaryTile(
                     icon: bkDays < 0 ? "externaldrive.badge.questionmark" : "externaldrive.fill",
-                    value: bkDays < 0 ? "从未" : (bkDays <= 0 ? "今天" : "\(bkDays)天"),
+                    // §7.16：单位不拼进数值字符串 —— 拼进去单位会拿到数值的字号与颜色。
+                    value: bkDays < 0 ? "从未" : (bkDays <= 0 ? "今天" : "\(bkDays)"),
                     label: "上次备份",
-                    tone: bkDays < 0 ? XPalette.warn : (bkDays > 14 ? XPalette.warn : XPalette.ok))
+                    tone: bkDays < 0 ? XPalette.warn : (bkDays > 14 ? XPalette.warn : XPalette.ok),
+                    unit: bkDays > 0 ? "天" : nil)
                 summaryTile(
                     icon: "square.stack.3d.up.fill",
                     value: "\(locks)",
@@ -111,14 +113,26 @@ struct MePage: View {
     ///   · 去掉 34pt 图标圆 —— 它占了近一半高度却只传达"这是哪一项"
     ///   · 数值从 subheadline 提到 title2 —— 一眼看到的是数，不是装饰
     ///   · 高度统一 76pt，四张卡并排不会高低不齐
-    private func summaryTile(icon: String, value: String, label: String, tone: Color) -> some View {
+    /// `unit` 走规范 §7.16：与数值**同色**（= tone）、单位档 = 数值档的 70%、基线对齐。
+    /// 以前是 "\(值)天" 拼成一个串 —— 那样单位会跟数值一样大、一样色，规范给的反例正是这个。
+    private func summaryTile(icon: String, value: String, label: String, tone: Color,
+                             unit: String? = nil) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(value)
-                .xFont(.title2, weight: .bold)
-                .foregroundStyle(tone)
-                .monospacedDigit()
-                .lineLimit(1)
-                .minimumScaleFactor(0.55)
+            HStack(alignment: .firstTextBaseline, spacing: 3) {
+                Text(XMetric.display(value))
+                    .xFontScaled(.title2, scale: XMetric.overflowScale(digits: XMetric.digitCount(value)),
+                                 weight: .bold)
+                    .foregroundStyle(tone)
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.55)
+                if let unit {
+                    Text(unit)
+                        .xFont(.title2.unitStyle, weight: .bold)
+                        .foregroundStyle(tone)     // §7.16：**与数值同色**，不是灰
+                        .lineLimit(1)
+                }
+            }
             HStack(spacing: 3) {
                 // 规范 §10：图标最小 12pt（原 9pt 低于档位下限）。
                 Image(systemName: icon)

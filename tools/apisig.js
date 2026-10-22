@@ -528,7 +528,11 @@ if (deadExtensions.length > 0) {
 // 实参去掉空白后必须恰好是 `.case` 后接 `,` 或结尾。
 {
   const XT = 'displayNumber|display|largeTitle|title2|title3|headline|body|subheadline|footnote|caption2|caption';
-  const validArg = new RegExp('^\\.(' + XT + ')(,|$)');
+  // 除裸 case 外，还允许「已知返回 XText 的成员」——目前只有一个：
+  //   `XText.unitStyle`（规范 §7.16 的单位档，返回 XText）。
+  // 白名单是**封闭**的：新增成员必须先证明它返回 XText，再往这里加。
+  const XT_MEMBERS = 'unitStyle';
+  const validArg = new RegExp('^\\.(' + XT + ')(\\.(' + XT_MEMBERS + '))?(,|$)');
   const bad = [];
   for (const f of files) {
     const src = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n');
