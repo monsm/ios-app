@@ -506,7 +506,9 @@ const checks = [
     // LockStats.fwLag 写好了零调用。新固件通常修的是开锁成功率与防拆逻辑，
     // "这把锁落后于本机最新那把"是用户该知道的信息。
     const v = CODE.get('DevicePage.swift') || '';
-    return v.includes('LockStats.fwLag') && v.includes('fwLagNote');
+    // 第 100 轮把 fwLagNote 计算属性改成 refreshDerived() 里的快照（body 里不跑全库读），
+    // 断言跟着改：查"还算不算 fwLag、还提不提示落后"，而不是某个中间变量名。
+    return v.includes('LockStats.fwLag') && v.includes('fwLagIsBehind');
   }],
   ['固件行同时说清落后与服役时长', () => {
     // fwLag 是跨锁对照，fwSince 是本机首次读到该版本的时刻（不冒充出厂时间）。
