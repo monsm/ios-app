@@ -508,6 +508,12 @@ const checks = [
     const v = CODE.get('DevicePage.swift') || '';
     return v.includes('BatteryCare.fwSince(') && v.includes('fwNotes');
   }],
+  ['设密码时提示前缀撞车', () => {
+    // prefixConflict 零调用。它不是安全检查，是口头沟通检查：
+    // 家里说"1234 开头那个"，两条都 1234 开头时谁都会拿错。
+    const k = CODE.get('AddKeyPage.swift') || '';
+    return k.includes('CredentialOrg.prefixConflict(') && k.includes('prefixClash');
+  }],
 ];
 
 let pass = 0;

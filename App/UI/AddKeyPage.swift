@@ -144,16 +144,28 @@ struct AddKeyPage: View {
                     if filtered.count > 0 { XHaptics.tick.impactOccurred() }
                 }
 
-            // 提示行
-            HStack(spacing: XSpace.xs) {
-                Image(systemName: pwdWeak ? "exclamationmark.triangle.fill"
-                                        : (pwdOK ? "checkmark.circle.fill" : "info.circle"))
-                    .font(.system(size: XIcon.xs, weight: .semibold))
-                Text(pwdHint)
-                    .xFont(.footnote)
+            // 提示行（最多两行：强度 / 前缀冲突）
+            VStack(alignment: .leading, spacing: XSpace.xs) {
+                HStack(spacing: XSpace.xs) {
+                    Image(systemName: pwdWeak ? "exclamationmark.triangle.fill"
+                                            : (pwdOK ? "checkmark.circle.fill" : "info.circle"))
+                        .font(.system(size: XIcon.xs, weight: .semibold))
+                    Text(pwdHint)
+                        .xFont(.footnote)
+                }
+                .foregroundStyle(pwdWeak ? XPalette.warn
+                                         : (pwdOK ? XPalette.accentText : XPalette.textSub))
+                if let clash = prefixClash {
+                    HStack(spacing: XSpace.xs) {
+                        Image(systemName: "text.magnifyingglass")
+                            .font(.system(size: XIcon.xs, weight: .semibold))
+                        Text(clash)
+                            .xFont(.system(.caption))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .foregroundStyle(XPalette.warn)
+                }
             }
-            .foregroundStyle(pwdWeak ? XPalette.warn
-                                     : (pwdOK ? XPalette.accentText : XPalette.textSub))
             .animation(XMotion.quick, value: pwdOK)
         }
     }
@@ -209,6 +221,18 @@ struct AddKeyPage: View {
         if !st.hint.isEmpty { return st.hint }
         if pwd.count < 8 { return "已可添加, 也可以继续输入到 8 位" }
         return "已满 8 位"
+    }
+
+    /// 314 前缀混淆：同锁内其它密码前 4 位相同。
+    ///
+    /// 这不是安全检查，是**口头说清楚的检查** —— 家里说"1234 开头那个"，
+    /// 如果有两条都是 1234 开头，谁都会拿错。函数写好了零调用。
+    private var prefixClash: String? {
+        guard pwd.count >= 4, let kc = app.current else { return nil }
+        let hits = CredentialOrg.prefixConflict(kc.mac, pwd, excluding: -1)
+        guard let first = hits.first else { return nil }
+        let who = first.note.isEmpty ? "密码 #\(first.alias)" : first.note
+        return "前 4 位与「\(who)」相同 — 口头说「\(pwd.prefix(4)) 那个」容易拿错"
     }
 
     /// 密码可用但不够难猜 —— 提示行改用警示色，否则"全部同数字"会显示成通过色。

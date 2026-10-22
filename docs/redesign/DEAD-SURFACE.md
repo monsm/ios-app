@@ -470,7 +470,6 @@ static func pwdStrength(_ v: String) -> (score: Int, hint: String)
 | `observed` | FirmwareHistory.swift | 7 |
 | `pendingMigrationTxn` | BackupStudioKit.swift | 5 |
 | `pinToFront` | LockStats.swift | 8 |
-| `prefixConflict` | CredentialOrg.swift | 5 |
 | `purgeNow` | CredentialOrg.swift | 5 |
 | `pushSearchHistory` | CredentialOrg.swift | 5 |
 | `recordOrganize` | Milestones.swift | 13 |
@@ -562,6 +561,7 @@ static func pwdStrength(_ v: String) -> (score: Int, hint: String)
 | `renameMember` | 89 | 成员编辑表单补上「称呼」字段（原先 10 个字段唯独没有名字）|
 | `fwLag` | 90 | 设备页固件行提示「落后（本机最新 x）」（仅多锁且确实落后时）|
 | `fwSince` | 91 | 设备页固件行提示「这版已用 N 天」（自本机首次读到该版本起算）|
+| `prefixConflict` | 92 | 设密码时提示「前 4 位与 X 相同，口头说容易拿错」|
 
 ## 一个数字
 
@@ -642,3 +642,41 @@ static func pwdStrength(_ v: String) -> (score: Int, hint: String)
 两个簇属于后者。
 
 **教训**：看到"计算函数零调用"，先往上问一句"它的输入从哪来"。
+
+### 第 92 轮：批量验输入源
+
+对剩余 19 个「缺展示位」逐个查了数据来源：
+
+| 函数 | 输入 | 前提成立？ |
+|---|---|---|
+| `usageCount` / `recentUseCount` / `fpUseCount30d` / `openCountInWindow` | `DB.readLogs` | ✓ 日志存在 |
+| `monthDeadlines` / `dayDeadlines` | `DB.listPwds` + 有效期 | ✓ |
+| `damageDays` / `mergedRecentOpens` | `DB.readLogs` | ✓ |
+| `maintenance` | `DB.readStatus` | ✓ |
+| `sampleTimeText` / `lastSessionLine` | `DB.store` | ✓ |
+| `springFestiveRange` / `nextWindow` | `WeekCal.gregorian` | ✓（纯计算）|
+| `compact` / `naturalSentence` / `isIdleLock` / `recentAlarmMacs` | 纯计算 / 入参 | ✓ |
+
+**全部前提成立** —— 和上一轮那两个死簇不同，这些是真·缺展示位。
+
+### 接上的：`prefixConflict`
+
+```swift
+/// 314 前缀混淆: 同锁内其它密码前 4 位相同, 口头易混淆
+static func prefixConflict(_ mac: String, _ value: String, excluding: Int) -> [LedgerPwd]
+```
+
+它**不是安全检查，是口头沟通检查**：家里说「1234 开头那个」，如果有两条都是 1234 开头，谁都会拿错。
+
+已接到设密码处（和强度提示同一行）：
+> ⚠ 前 4 位与「车库门」相同 — 口头说「1234 那个」容易拿错
+
+### 剩下的 18 个：卡在"放哪里"而不是"能不能接"
+
+它们都有数据、都能算，缺的是**一个界面决定**：
+- `usageCount` 要放「约用过 N 次」—— 但钥匙页每行的副标题已经占了，加第二行会挤
+- `monthDeadlines` 与已在显示的「N 份即将到期」高度重叠
+- `compact` / `naturalSentence` 是统计页的措辞工具，要先决定统计页的呈现方式
+
+**这些不是接线问题，是设计问题。** 需要先想清楚界面长什么样，再动手——
+而本轮条件（看不到渲染结果）不适合做这种决定。记在这里，交给有屏幕的人。
