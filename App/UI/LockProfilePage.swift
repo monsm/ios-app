@@ -68,22 +68,26 @@ struct LockProfilePage: View {
         let tint = LockArchive.swatchColor(colorKey)
         return VStack(spacing: XSpace.m) {
             ZStack {
+                // 圆盘只在**用符号时**出现 —— 3D 图自带体积与落地影，
+                // 底下再垫一个 96pt 的彩色圆盘，盘边会从图的外缘露出来，
+                // 读成「图没对齐」而不是「锁放在圆盘上」。
+                if !symbol.isEmpty {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [tint.opacity(0.9), tint.opacity(0.6)],
+                                startPoint: .topLeading, endPoint: .bottomTrailing))
+                        .frame(width: 96, height: 96)
+                }
+                // 规范 7.8 通用自检: 环/圆盘**不得有投影，只用辉光**。
+                // 这是全页的视觉主角 (锁牌), 18pt 的彩色投影在纯黑上会糊成一圈
+                // 与主题色同色的脏边; 换成 radial 辉光才是「它在发光」。
+                // 辉光独立于圆盘 —— 3D 图态下只有辉光没有盘。
                 Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [tint.opacity(0.9), tint.opacity(0.6)],
-                            startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .frame(width: 96, height: 96)
-                    // 规范 7.8 通用自检: 环/圆盘**不得有投影，只用辉光**。
-                    // 这是全页的视觉主角 (锁牌), 18pt 的彩色投影在纯黑上会糊成一圈
-                    // 与主题色同色的脏边; 换成 radial 辉光才是"它在发光"。
-                    .overlay(
-                        Circle()
-                            .fill(XGradient.glow(tint))
-                            .frame(width: 150, height: 150)
-                            .blur(radius: 18)
-                            .allowsHitTesting(false)
-                    )
+                    .fill(XGradient.glow(tint))
+                    .frame(width: 168, height: 168)
+                    .blur(radius: 22)
+                    .allowsHitTesting(false)
 
                 // ── 主视觉：3D 锁具渲染图（默认符号时）/ SF Symbol（用户选了别的符号时）──
                 //
@@ -99,8 +103,8 @@ struct LockProfilePage: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 150, height: 150)
-                        // 圆盘直径 96，图 150 —— 图是**带落地影的立体件**，
-                        // 比圆盘大一圈才能让影落在盘外，而不是被裁在盘里。
+                        // 150pt：图带落地影，比 96 的盘大一圈。默认态不画盘，
+                        // 所以这 150 是它对整行的占位高度，也是辉光的内切尺寸。
                         .offset(y: -6)
                         .contentTransition(.opacity)
                 } else {
