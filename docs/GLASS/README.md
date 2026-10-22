@@ -2962,7 +2962,57 @@ BackupStudioKit.swift  →  类型其实叫 BackupStudio
 | CI | **全绿**（run 20f92d2）|
 | 闸门 | 23 道全绿 |
 | 新增判据 | 视觉高度与命中区分离检查 |
-## 53. 一句话交接
+
+---
+
+## 53. 第四十五轮：门厅每次重渲染都在全量扫日志
+
+继续找未覆盖的维度：**性能**。
+
+### 53.1 问题
+
+`HomeConsole` 里 `alarmCount` / `alarmSpanDays` / `lastOpenClock` 是计算属性，
+而 `criticalNotice` 与 `todaySection` 在 body 里读它们。于是**每次重渲染**都要：
+
+```
+DB.keychains()                            解码钥匙列表
+RecordSearch.unhandledAlarmCount(macs:)   扫所有锁的全部日志
+有告警时再扫一遍数跨天
+HotCache.recent(mac)                      再扫一遍找最近开门
+```
+
+而这一页挂着 **ticker**（`SecTick` 一跳就是一次重渲染）。
+
+### 53.2 讽刺的地方
+
+同一个文件里 `hourCounts` / `memberStats` / `expiringCount` **早就走 @State 缓存了**，
+`recompute()` 的注释还写着「一次扫描重建全部当日统计」——
+
+> **而这三项是漏网的**：它们在同一页、同一个函数旁边，只是写成了计算属性。
+
+### 53.3 修法
+
+五项全部进 `recompute()` 的缓存，计算属性只读缓存不做事。
+
+### 53.4 判据（只报线索）
+
+视图文件里「无参计算属性」的体内出现 DB/聚合调用 → 列出来人读。
+`some View` 不算（视图构建体天然随渲染重算，那是 SwiftUI 的模型）。
+
+9 条线索：门厅 3 条已修；其余 6 条在**非 ticker 页面**
+（`AlarmCenterView` / `DevicePage` / `FeedPage` / `MemberCenterView` / `MePage`）——
+改动风险大于收益，留在线索里不硬改。
+
+### 53.5 判据自己也修了一次
+
+第一版把 `opensToday: Int { hourCounts.reduce(0, +) }` 这种**单行属性**判成「读 DB」——
+因为块扫描从属性行往下找 `    }`，单行属性没有，就越界读到了下一个属性。
+
+### 53.6 一个环境限制
+
+GitHub API **限流**了（未认证每小时 60 次）—— 这一轮的 CI 结论暂时取不到。
+推送已成功，CI 会照常在服务端跑；下次轮询恢复后再确认。
+## 54. 一句话交接
 
 **视觉层：脱胎换骨。结构层：一针都没多缝。**
 
