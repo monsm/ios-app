@@ -281,15 +281,8 @@ struct LocksPage: View {
     /// 于是**读不到电量时反而显示成告警色**。tier 的 `..<0` 分支给 neutral。
     private func batteryTone(_ p: Int) -> Color { BatteryCare.tier(p).tone.color }
     /// 锁态文案（来自 StatusSnapshotData.rc，与门面同一口径）
-    private func lockStateText(_ rc: Int) -> String {
-        switch rc {
-        case 0: return "已锁"
-        case 21, 27: return "反锁"
-        case 25: return "忙碌"
-        case 26: return "防拆"
-        default: return "状态 " + String(rc)
-        }
-    }
+    /// 锁态文案的唯一实现在 StatusParser（rc 是协议语义，不属于某个页面）。
+    private func lockStateText(_ rc: Int) -> String { StatusParser.lockStateText(rc) }
     private func lockStateTone(_ rc: Int) -> Color {
         switch rc {
         case 0: return XPalette.ok

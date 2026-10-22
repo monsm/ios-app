@@ -83,6 +83,20 @@ enum BackupStudio {
         guard let ms = DB.store.get(Double.self, "kf_bk_last_import") else { return -1 }
         return TimeFormat.daysSince(ms: ms)
     }
+    /// 「上次备份」的**唯一文案实现**。
+    ///
+    /// 2026-10-23：本仓曾有两份，措辞与数据源都不同 ——
+    ///   · `BackupPage`：读 `kf_bk_last_export`，措辞「今天备份过 / 昨天备份过 / N 天前备份过」
+    ///   · `FirmwarePage`：读 `kf_backup_hist.last`，措辞「今天备过 / N 天前」，**没有「昨天」**
+    /// 于是同一件事在两个屏幕上说法不同，数据源还可能不同步。
+    /// 现在数据源统一走 `lastExportMs`（时间线），措辞取更完整的那一份。
+    static var lastBackupText: String {
+        guard let ms = lastExportMs else { return "从未备份" }
+        let d = TimeFormat.daysSince(ms: ms)
+        if d <= 0 { return "今天备份过" }
+        if d == 1 { return "昨天备份过" }
+        return "\(d) 天前备份过"
+    }
     static func markImported() { DB.store.set("kf_bk_last_import", Date().timeIntervalSince1970 * 1000) }
 
     /// 198: 档位落地为本地通知提醒 (不做后台静默写); manual 不排期, 换档即重排

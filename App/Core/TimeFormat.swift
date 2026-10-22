@@ -45,6 +45,16 @@ enum TimeFormat {
 
     /// 把源串里**已经存在**的 `HH:mm` 或 `HH:mm:ss` 段按设置改写；识别不出时刻段时原样返回。
     /// 不做时区换算: 源串是锁端/本机记下的墙上时钟，换一次就与锁端键盘上的数字不一致了。
+    /// 从 `yyyy-MM-dd HH:mm:ss` 里截出 `HH:mm`。**唯一实现**。
+    ///
+    /// 2026-10-23：这段在 `AlarmsPage` 与 `EventsPage` 里各写了一遍（连注释都一样）。
+    /// 它不涉及时制改写（那是上面的 `clock`），只是取时刻段，所以单独一支。
+    static func shortClock(_ full: String) -> String {
+        guard full.count >= 16 else { return full }
+        let start = full.index(full.startIndex, offsetBy: 11)
+        let end = full.index(full.startIndex, offsetBy: 16)
+        return String(full[start..<end])
+    }
     static func clock(_ raw: String) -> String {
         let parts = raw.split(separator: " ", omittingEmptySubsequences: true)
         let tail = parts.last.map(String.init) ?? raw

@@ -63,12 +63,9 @@ struct FirmwarePage: View {
     }
     private var battOk: Bool { battPct > 30 }
     private var checklistOk: Bool { battOk && bleSvc.isPoweredOn && tickBackup && tickTime }
-    private var lastBackupText: String {
-        let hist = DB.store.get([Double].self, "kf_backup_hist") ?? []
-        guard let last = hist.last else { return "从未备份" }
-        let d = Int(Date().timeIntervalSince1970 * 1000 - last) / 86_400_000
-        return d <= 0 ? "今天备过" : "\(d) 天前"
-    }
+    /// 文案唯一实现在 BackupStudioKit.lastBackupText。
+    /// 这里原来自己读 `kf_backup_hist` 且措辞更短（没有「昨天」），同一件事两种说法。
+    private var lastBackupText: String { BackupStudioKit.lastBackupText }
 
     var body: some View {
         ZStack {

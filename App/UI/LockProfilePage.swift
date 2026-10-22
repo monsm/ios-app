@@ -172,15 +172,8 @@ struct LockProfilePage: View {
     }
 
     /// 锁态文案（与 LocksPage / 门面同口径）
-    private func lockStateText(_ rc: Int) -> String {
-        switch rc {
-        case 0: return "已锁"
-        case 21, 27: return "反锁"
-        case 25: return "忙碌"
-        case 26: return "防拆"
-        default: return "状态 " + String(rc)
-        }
-    }
+    /// 锁态文案的唯一实现在 StatusParser（rc 是协议语义，不属于某个页面）。
+    private func lockStateText(_ rc: Int) -> String { StatusParser.lockStateText(rc) }
 
     private var identitySection: some View {
         XPanel(kind: .group) {

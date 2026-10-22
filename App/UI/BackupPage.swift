@@ -147,13 +147,8 @@ struct BackupPage: View {
         return Int((Date().timeIntervalSince1970 * 1000 - Double(lastBackupMs)) / 86_400_000)
     }
 
-    private var lastBackupText: String {
-        let d = daysSinceBackup
-        if d < 0 { return "从未备份" }
-        if d == 0 { return "今天备份过" }
-        if d == 1 { return "昨天备份过" }
-        return "\(d) 天前备份过"
-    }
+    /// 文案唯一实现在 BackupStudioKit.lastBackupText（原来这里与 FirmwarePage 各写一份）。
+    private var lastBackupText: String { BackupStudioKit.lastBackupText }
 
     private var backupHint: String {
         let d = daysSinceBackup

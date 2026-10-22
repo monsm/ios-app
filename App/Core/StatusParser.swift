@@ -163,6 +163,20 @@ enum StatusParser {
 
     // idea 84 (包1): 高频失败码的人话直读 — rcMessage 回答"是什么", 这里补"该怎么办"。
     // 纯文案层映射, 不新增/不改动任何协议命令; 未命中的码回落 rcMessage。
+    /// 锁态文案（rc → 人话）。**唯一实现**。
+    ///
+    /// 2026-10-23：这段在 `LocksPage` 与 `LockProfilePage` 里**逐字重复**过一份 ——
+    /// 两处都是 9 行相同的 switch。锁态是协议语义（rc 的含义只由协议决定），
+    /// 所以归属在这里，不是某个页面。
+    static func lockStateText(_ rc: Int) -> String {
+        switch rc {
+        case 0: return "已锁"
+        case 21, 27: return "反锁"
+        case 25: return "忙碌"
+        case 26: return "防拆"
+        default: return "状态 " + String(rc)
+        }
+    }
     static func rcHint(_ rc: Int) -> String? {
         switch rc {
         case 1, 11: return "通讯受干扰, 请靠近门锁再试一次"

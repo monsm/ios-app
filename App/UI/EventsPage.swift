@@ -789,13 +789,8 @@ struct EventsPage: View {
         return s
     }
 
-    private func shortTime(_ full: String) -> String {
-        // "yyyy-MM-dd HH:mm:ss" -> "HH:mm"
-        guard full.count >= 16 else { return full }
-        let start = full.index(full.startIndex, offsetBy: 11)
-        let end = full.index(full.startIndex, offsetBy: 16)
-        return String(full[start..<end])
-    }
+    /// 时刻截取的唯一实现在 TimeFormat.shortClock。
+    private func shortTime(_ full: String) -> String { TimeFormat.shortClock(full) }
 
     private func dayLabel(_ day: String) -> String {
         let fmt = DateFormatter()

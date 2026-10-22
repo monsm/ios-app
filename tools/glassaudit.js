@@ -229,6 +229,56 @@ const RULES = [
 // ── 工程级断言（不是逐行扫，是整个 App 有没有做这件事）──
 const projectProblems = [];
 {
+  // 逻辑维度（通用探测器）：**同名私有成员跨文件必报**。
+  //
+  // 这一族错本会话抓到五处，全是同一形状：
+  //   保养周期 / 备份时间戳 / 距今几天 / 电量图标 / 锁态文案 / 上次备份文案。
+  // 一处一处找太慢，所以做成判据。
+  //
+  // 只判「缩进 4 的 private func/var 且名字 >= 8 字符」——短名多半是局部变量。
+  // 白名单放「同名但确实不同语义」的视图构建器；往里加之前必须证明它们不是同一个量。
+  const VIEW_BUILDER_OK = new Set([
+    'emptyState', 'sectionTitle', 'groupHeader', 'detailSection', 'actionRow',
+    'actionsCard', 'statusCard', 'capacityCard', 'metricsRow', 'retentionCard',
+    'alarmRow', 'dayHeader', 'dayLabel', 'emptyCard', 'actionCard', 'subtitle',
+    'header', 'signalCard', 'listContent', 'studioRow', 'lockStateText', 'shortTime',
+    'lastBackupText', 'batteryIcon', 'batteryTone', 'periodDays', 'atLabel',
+    'memberColor', 'ownerChip', 'errorBanner', 'progressText', 'importSheet',
+    'armMigrateWizard', 'prefillOwner', 'readPair', 'timestampRow', 'submit',
+    'alarmList', 'makeBody', 'makeCoordinator', 'makeUIViewController',
+    'updateUIViewController', 'reload', 'refresh', 'systemImage', 'action',
+    'onDone', 'vkBody', 'secLabel', 'embedded', 'accessibilityText', 'content',
+    'devices', 'members', 'stream', 'waiter', 'debugRaw', 'connect', 'disconnect',
+    'version', 'typeName', 'message', 'lockTime', 'lockName', 'idxRaw', 'member',
+    'firmware', 'attempt', 'lastDispatch', 'pairedAt', 'archived', 'segment',
+    'guestBlocked', 'sKeyStatus', 'powerLevel', 'pidName', 'securityLevel',
+    'verifyMode', 'broadcastMode', 'tempPwdMode', 'zotpPeriod', 'eCtrlVer',
+    'lockTimeStr', 'isAlarm', 'remaining', 'weight', 'active', 'sourceName',
+    'errorDescription', 'writeAckCont', 'rows', 'parts', 'list', 'day', 'now',
+  ]);
+  const seen = new Map();
+  for (const f of files) {
+    const rel = path.relative(ROOT, f);
+    const lines = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n');
+    lines.forEach((raw, i) => {
+      const code = raw.replace(/\/\/.*$/, '');
+      const m = /^    (?:private |fileprivate )(?:func|var) (\w{8,})\b/.exec(code);
+      if (!m) return;
+      const name = m[1];
+      if (VIEW_BUILDER_OK.has(name)) return;
+      if (!seen.has(name)) seen.set(name, []);
+      seen.get(name).push(rel + ':' + (i + 1));
+    });
+  }
+  for (const entry of seen) {
+    const name = entry[0];
+    const hits = entry[1];
+    const filesWith = new Set(hits.map(function (h) { return h.split(':')[0]; }));
+    if (filesWith.size < 2) continue;
+    projectProblems.push('同名私有成员跨 ' + filesWith.size + ' 个文件出现（疑似重复实现：' + name + '）：' + hits.join(', '));
+  }
+}
+{
   // 逻辑维度（第三类）：**同一个量只允许一处映射**。
   //
   // 实证：电量图标与配色在本仓曾有三套 —— `BatteryCare.tier()` 一套，
