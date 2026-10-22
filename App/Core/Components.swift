@@ -350,11 +350,18 @@ struct XStatCard<Content: View>: View {
                 }
                 content()
                 if let footer {
-                    // 页脚上方的线由**最后一段**负责（XStatSection 的段间线）。
-                    // 这里不再画第二条 —— 两条线挨在一起会读成一条粗线，而不是两段的分界。
-                    // 规范 §7.6：页脚注释是 **12 Regular**，行高 **1.6**。
-                    // XText 的 12 档是 footnote（caption 是 11）。此前这里写 caption，
-                    // 比规范小一档；行高 1.6 → 12 × 1.6 = 19.2，行距补 7.2。
+                    // 规范 §7.6 的卡内解剖图里，页脚上方**有一条线**：
+                    //
+                    //   │ ──────────────────────────────── │
+                    //   │ Reading a book or listening...   │  ← 页脚注释
+                    //   └──────────────────────────────────┘
+                    //
+                    // 我上一版判断「这条线由最后一段负责」—— 错的。
+                    // 段间线是「两段内容之间」，页脚线是「内容与注释之间」，语义不同。
+                    // 而且段间线不会出现在最后一段之后（XStatSection 只画在自己前面）。
+                    XHairline()
+                        .padding(.top, 14)   // 值 → 线 14
+                    // §7.6：页脚注释 12 Regular / 行高 1.6 / 距线 12。
                     Text(footer)
                         .xFont(.footnote)
                         .foregroundStyle(XPalette.textSub)
