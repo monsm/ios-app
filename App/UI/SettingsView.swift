@@ -19,87 +19,76 @@ struct SafemodeIntroView: View {
 
     var body: some View { vkBody.destined(.safemodeIntro) }
     var vkBody: some View {
-        ZStack {
-            XPalette.canvas.ignoresSafeArea()
-
-            ScrollView {
-                VStack(spacing: XSpace.section) {
-                    if isOtp {
-                        XPanel(kind: .group) {
-                            VStack(alignment: .leading, spacing: XSpace.m) {
-                                secLabel("临时密码 (ZOTP) 介绍")
-                                Text("ZOTP 是临时开锁密码：6 位数字密码，每 30 分钟更换一次，同一窗口内最多 99 个。")
-                                    .xFont(.footnote)
-                                    .foregroundStyle(XPalette.text)
-                                    .fixedSize(horizontal: false, vertical: true)
-                                Text("生成前请先校准门锁时间 (0E)，否则手机与锁时间窗不同步会导致密码不匹配。")
-                                    .xFont(.footnote)
-                                    .foregroundStyle(XPalette.text)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
-                        }
-                        .xScrollLift()
-                    } else {
-                        // 锁端开关实况 —— StatusParser 解析了 broadcastMode / tempPwdMode,
-                        // 但全仓界面从未显示过这两个位。
-                        // 它们和 verifyMode 同属 KLV 0x08 的 securityLevel 位域, 是锁的真实策略。
-                        lockSwitchCard
-                        XPanel(kind: .group) {
-                            VStack(alignment: .leading, spacing: XSpace.m) {
-                                secLabel("门锁的安全模式介绍")
-                                Text("门锁的安全模式分为 A 模式和 B 模式")
-                                    .xFont(.subheadline, weight: .medium)
-                                    .foregroundStyle(XPalette.text)
-                                Text("A 模式：只需要单一方式（密码／指纹／手机）验证通过就可以开锁")
-                                    .xFont(.footnote)
-                                    .foregroundStyle(XPalette.textSub)
-                                    .fixedSize(horizontal: false, vertical: true)
-                                Text("B 模式：需要用两种不同方式（指纹+密码／指纹+手机／手机+密码）组合验证通过才可开锁")
-                                    .xFont(.footnote)
-                                    .foregroundStyle(XPalette.textSub)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
-                        }
-
-                        XPanel(kind: .group) {
-                            VStack(alignment: .leading, spacing: XSpace.m) {
-                                secLabel("怎么设置")
-                                Text("当前模式在「锁信息名片」(设备页) 读取后显示。本 App 只给变严的方向 (A→B)；要放宽回 A 模式请在门锁键盘上操作或联系管理员。")
-                                    .xFont(.footnote)
-                                    .foregroundStyle(XPalette.textSub)
-                                    .fixedSize(horizontal: false, vertical: true)
-                                if app.status == nil {
-                                    Text("还没读到锁状态 —— 先在设备页读一次锁信息，这里才会出现切换按钮。")
-                                        .xFont(.footnote)
-                                        .foregroundStyle(XPalette.textSub)
-                                } else if app.status?.verifyMode == 1 {
-                                    Text("当前已是 B 模式（双验）。本 App 不提供改回 A 模式的入口。")
-                                        .xFont(.footnote)
-                                        .foregroundStyle(XPalette.ok)
-                                } else {
-                                    Button(switching ? "切换中…" : "切换到 B 模式（双验，更严）(cmd 20)") {
-                                        confirmDestructive("切换到 B 模式（双验）",
-                                            "锁端将要求两种不同方式组合验证才能开锁 (cmd 20)。这一步会改变锁的验证策略：切换后请先实测一次组合方式能开锁，再让其他人使用。本 App 不提供改回 A 模式的入口。",
-                                            confirmTitle: "切到 B 模式") {
-                                            switching = true
-                                            Task { await switchToDoubleVerify() }
-                                        }
-                                    }
-                                    .buttonStyle(XSecondaryButtonStyle())
-                                    .disabled(switching)
-                                }
-                            }
-                        }
-                        .xScrollLift()
+        XScreen(isOtp ? "临时密码介绍" : "安全模式说明", style: .inline) {
+            if isOtp {
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("临时密码 (ZOTP) 介绍")
+                        Text("ZOTP 是临时开锁密码：6 位数字密码，每 30 分钟更换一次，同一窗口内最多 99 个。")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.text)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text("生成前请先校准门锁时间 (0E)，否则手机与锁时间窗不同步会导致密码不匹配。")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.text)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
-                .padding(.horizontal, XSpace.gutter)
-                .padding(.vertical, XSpace.l)
+                .xScrollLift()
+            } else {
+                // 锁端开关实况 —— StatusParser 解析了 broadcastMode / tempPwdMode,
+                // 但全仓界面从未显示过这两个位。
+                // 它们和 verifyMode 同属 KLV 0x08 的 securityLevel 位域, 是锁的真实策略。
+                lockSwitchCard
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("门锁的安全模式介绍")
+                        Text("门锁的安全模式分为 A 模式和 B 模式")
+                            .xFont(.subheadline, weight: .medium)
+                            .foregroundStyle(XPalette.text)
+                        Text("A 模式：只需要单一方式（密码／指纹／手机）验证通过就可以开锁")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textSub)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text("B 模式：需要用两种不同方式（指纹+密码／指纹+手机／手机+密码）组合验证通过才可开锁")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textSub)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("怎么设置")
+                        Text("当前模式在「锁信息名片」(设备页) 读取后显示。本 App 只给变严的方向 (A→B)；要放宽回 A 模式请在门锁键盘上操作或联系管理员。")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textSub)
+                            .fixedSize(horizontal: false, vertical: true)
+                        if app.status == nil {
+                            Text("还没读到锁状态 —— 先在设备页读一次锁信息，这里才会出现切换按钮。")
+                                .xFont(.footnote)
+                                .foregroundStyle(XPalette.textSub)
+                        } else if app.status?.verifyMode == 1 {
+                            Text("当前已是 B 模式（双验）。本 App 不提供改回 A 模式的入口。")
+                                .xFont(.footnote)
+                                .foregroundStyle(XPalette.ok)
+                        } else {
+                            Button(switching ? "切换中…" : "切换到 B 模式（双验，更严）(cmd 20)") {
+                                confirmDestructive("切换到 B 模式（双验）",
+                                    "锁端将要求两种不同方式组合验证才能开锁 (cmd 20)。这一步会改变锁的验证策略：切换后请先实测一次组合方式能开锁，再让其他人使用。本 App 不提供改回 A 模式的入口。",
+                                    confirmTitle: "切到 B 模式") {
+                                    switching = true
+                                    Task { await switchToDoubleVerify() }
+                                }
+                            }
+                            .buttonStyle(XSecondaryButtonStyle())
+                            .disabled(switching)
+                        }
+                    }
+                }
+                .xScrollLift()
             }
-            .scrollIndicators(.hidden)
         }
-        .navigationTitle(isOtp ? "临时密码介绍" : "安全模式说明")
-        .navigationBarTitleDisplayMode(.inline)
     }
 
     /// 锁端三个开关的实况（KLV 0x08 的 securityLevel 位域）

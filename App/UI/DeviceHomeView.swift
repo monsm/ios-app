@@ -26,34 +26,23 @@ struct SyncTimeView: View {
 
     var body: some View { vkBody.destined(.syncTime) }
     var vkBody: some View {
-        ZStack {
-            XPalette.canvas.ignoresSafeArea()
-
-            ScrollView {
-                VStack(spacing: XSpace.section) {
-                    if app.current != nil {
-                        skewCard
-                        clockCard
-                    } else {
-                        XPanel(kind: .group) {
-                            VStack(alignment: .leading, spacing: XSpace.m) {
-                                secLabel("同步时间")
-                                Text("请先在设备页选择一把门锁")
-                                    .xFont(.footnote)
-                                    .foregroundStyle(XPalette.textSub)
-                            }
-                        }
-                        .xScrollLift()
+        XScreen("同步时间", style: .inline) {
+            if app.current != nil {
+                skewCard
+                clockCard
+            } else {
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("同步时间")
+                        Text("请先在设备页选择一把门锁")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textSub)
                     }
-                    actionCard
                 }
-                .padding(.horizontal, XSpace.gutter)
-                .padding(.vertical, XSpace.l)
+                .xScrollLift()
             }
-            .scrollIndicators(.hidden)
+            actionCard
         }
-        .navigationTitle("同步时间")
-        .navigationBarTitleDisplayMode(.inline)
     }
 
     // ── 偏差卡（核心信息）──

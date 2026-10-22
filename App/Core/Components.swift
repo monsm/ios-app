@@ -217,24 +217,32 @@ struct XScreen<Content: View>: View {
     var title: String
     /// 标题下方的一行说明（Body 16 / 60% 灰，规范 §5.3）。
     var subtitle: String? = nil
-    /// 是否显示大标题。列表类页面常把标题交给导航栏。
-    var showsTitle: Bool = true
+    /// 标题样式。
+    ///   · `.large`  —— 一级页面：页内画 LargeTitle 30/Bold（规范 §5.3）
+    ///   · `.inline` —— 二级页面：标题交给导航栏，页内不画标题块
+    ///
+    /// 为什么要分：本仓 53 个页面里 39 个用 inline、12 个用 large，
+    /// 但**两者都在手写自己的顶部留白**。样式是骨架的一部分，不该由页面各自决定。
+    enum Style { case large, inline }
+    var style: Style = .large
+    /// 一级页面的副标题（Body 16 / 60% 灰）。`.inline` 时忽略。
+    var subtitle: String? = nil
     @ViewBuilder var content: () -> Content
 
     init(_ title: String,
          subtitle: String? = nil,
-         showsTitle: Bool = true,
+         style: Style = .large,
          @ViewBuilder content: @escaping () -> Content) {
         self.title = title
         self.subtitle = subtitle
-        self.showsTitle = showsTitle
+        self.style = style
         self.content = content
     }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                if showsTitle {
+                if style == .large {
                     // 48pt 标题块：LargeTitle 30/Bold + 可选 Body 16/60% 灰。
                     VStack(alignment: .leading, spacing: XSpace.xs) {
                         Text(title)
@@ -269,7 +277,8 @@ struct XScreen<Content: View>: View {
         }
         .background(XPalette.canvas)
         .navigationTitle(title)
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(style == .large ? .large : .inline)
+        .scrollIndicators(.hidden)
     }
 }
 

@@ -56,28 +56,21 @@ struct KeysPage: View {
         //   · 到期预警单独一张卡，放最上面
         //
         // 数据逻辑一行没动 —— 只换呈现。
-        ScrollView {
-            // 规范 5.3 骨架: 页边距 14 / 区块 28 / 卡行 8。
-            // 三个数的语义各不相同 —— 旧实现一律 XSpace.l(16), 于是
-            // "分段条"与"第一张卡"、以及"卡与卡"之间的距离完全一样,
-            // 眼睛读不出哪是控件、哪是内容。
+        // 2026-10-23：改用 XScreen。
+        //
+        // 改前这段手写骨架 + 三行注释解释「为什么 14 / 28 / 8 各不相同」——
+        // 那个解释是对的，但它本该写在**组件里一次**，而不是在每个页面重讲一遍。
+        // 现在 XScreen 给骨架，本页只声明「有哪几块」。
+        XScreen("钥匙管理") {
+            if !expiringItems.isEmpty { expiringCard }
             VStack(spacing: XSpace.section) {
-                if !expiringItems.isEmpty { expiringCard }
-                VStack(spacing: XSpace.section) {
-                    segmentBar
-                    VStack(spacing: XSpace.rowGap) {
-                        credentialCard
-                        if rows.isEmpty { emptyCard }
-                    }
+                segmentBar
+                VStack(spacing: XSpace.rowGap) {
+                    credentialCard
+                    if rows.isEmpty { emptyCard }
                 }
             }
-            .padding(.horizontal, XSpace.gutter)
-            .padding(.top, XSpace.m)
-            .padding(.bottom, XSpace.xxl)
         }
-        .background(XPalette.canvas)
-        .navigationTitle("钥匙管理")
-        .navigationBarTitleDisplayMode(.large)
         .searchable(text: $search, isPresented: $searchActive, prompt: "搜索名称 / 备注 / 归属")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
