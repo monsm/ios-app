@@ -559,6 +559,12 @@ const checks = [
     return s.includes('HotCache.invalidate(mac)   // 删了底层就得作废缓存') &&
            k.includes('HotCache.invalidate(m)');
   }],
+  ['管理面板每条路由都留面包屑', () => {
+    // 崩在哪一页只能靠 App 自己记。管理面板 20 条路由都从同一个
+    // navigationDestination 分发，在那里挂一次即可覆盖全部。
+    const m = CODE.get('ManagerFace.swift') || '';
+    return m.includes('routeDestination(r).trackScreen(');
+  }],
 ];
 
 let pass = 0;

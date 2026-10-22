@@ -72,7 +72,8 @@ struct ManagerFace: View {
         // 但三域合并成单一面板之后消费端丢了 —— 写了没人读，等于跳了个寂寞。
         .onAppear { consumePendingFocus() }
         .navigationDestination(for: ManagerRoute.self) { r in
-                routeDestination(r)
+                // 面包屑精确到分组路由：崩在这 20 条里的哪一条，重启后能直接看到名字。
+                routeDestination(r).trackScreen("管理·\(r)")
             }
         }
     }
