@@ -245,7 +245,7 @@ struct BackupPage: View {
             return
         }
         guard let text = String(data: data, encoding: .utf8) else {
-            app.showToast("备份生成失败：编码后的内容不是有效文本")
+            app.showToast("备份生成失败：编码后的内容不是有效文本 · 可能有一条损坏记录，请先跑一次「数据体检」再备份")
             return
         }
         exportText = text

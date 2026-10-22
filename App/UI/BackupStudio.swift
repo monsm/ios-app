@@ -89,7 +89,7 @@ struct BackupStudioView: View {
                             UINotificationFeedbackGenerator().notificationOccurred(.success)
                             app.showToast("已撤销本次恢复")   // 421 已撤销本次恢复
                         } else {
-                            app.showToast("撤销失败: 快照不可读")
+                            app.showToast("撤销失败: 快照不可读 · 旧快照可能已被清理，可重新生成一次备份")
                         }
                     }
                 } label: {
@@ -867,7 +867,7 @@ struct ExportWizardView: View {
                 try? await Task.sleep(for: .milliseconds(80))
             }
             if written.isEmpty {
-                app.showToast("导出失败: 没有写出任何文件")
+                app.showToast("导出失败: 没有写出任何文件 · 请检查目标目录是否可写，或改用「分享」直接送出")
                 return        // defer 会复位
             }
             doneURLs = written

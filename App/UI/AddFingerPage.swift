@@ -405,7 +405,10 @@ struct AddFingerPage: View {
             XHaptics.success()
             doneBatch = UInt32(batch)
         } catch {
-            self.error = error.localizedDescription
+            // J5：错误面必须说人话。原来这里直抛 error.localizedDescription ——
+        // 蓝牙层给的是 "write failed" / "response timeout" 这类工程术语，
+        // 既没说什么坏了、也没说怎么办（`ErrorText` 就是为这个写的，19 处在用，这三处漏了）。
+        self.error = ErrorText.human(error)
             XHaptics.failure()
         }
     }

@@ -211,7 +211,7 @@ struct SafemodeIntroView: View {
             }
         } catch {
             app.lock.log("warn", "切换安全模式失败 (cmd20): \(error.localizedDescription)")
-            app.showToast("切换失败：命令没有成功下发，锁仍按原模式验证")
+            app.showToast("切换失败：命令没有成功下发，锁仍按原模式验证 · 请靠近门锁后重试")
         }
     }
 }

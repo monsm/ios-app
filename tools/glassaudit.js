@@ -229,6 +229,28 @@ const RULES = [
 // ── 工程级断言（不是逐行扫，是整个 App 有没有做这件事）──
 const projectProblems = [];
 {
+  // 规范 J5 / §7.20.3：错误态要说清「什么坏了 + 怎么办」。
+  // 系统给的 localizedDescription 是工程术语（"write failed" / "response timeout" / CBError 6），
+  // 两条都不满足。本仓有 `ErrorText.human` 专门做这件事（19 处在用）——
+  // 实证有三处漏了，直接抛原文。
+  //
+  // 只判**送到界面**的那些（赋给 error / 进 showToast / 进 Text）；
+  // 写日志与审计的不判 —— 日志里要的是原文。
+  const FACING = /(?:showToast\(|Text\(|self\.error\s*=|\berror\s*=|\berr\s*=)/;
+  for (const f of files) {
+    const lines = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n');
+    lines.forEach((raw, i) => {
+      const code = raw.replace(/\/\/.*$/, '');
+      if (code.trim().startsWith('///')) return;
+      if (!/localizedDescription/.test(code)) return;
+      if (!FACING.test(code)) return;
+      if (/ErrorText\.human|log\(|audit\(|recordAttempt|recordFailure/.test(code)) return;
+      projectProblems.push('J5 错误面直抛系统原文（应过 ErrorText.human）：' +
+                           path.relative(ROOT, f) + ':' + (i + 1) + '  ' + raw.trim().slice(0, 60));
+    });
+  }
+}
+{
   // 规范 J6：部分数据时**保留卡片结构**，缺失项显示占位，而不是把整行藏掉。
   //
   // 判法：`if <cond> { ... XRow(...) }` 这种「条件成立才出行、没有 else 兜底」的形态；

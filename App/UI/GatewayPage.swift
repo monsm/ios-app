@@ -405,7 +405,10 @@ struct GatewayPage: View {
             XHaptics.success()
             app.showToast("配网指令已被网关接受 · 正在用「\(sentWifi)」重连, 联网状态稍后在下方列表复核")
         } catch {
-            self.error = error.localizedDescription
+            // J5：错误面必须说人话。原来这里直抛 error.localizedDescription ——
+            // 蓝牙层给的是 "write failed" / "response timeout" 这类工程术语，
+            // 既没说什么坏了、也没说怎么办（`ErrorText` 就是为这个写的，19 处在用，这三处漏了）。
+            self.error = ErrorText.human(error)
             XHaptics.failure()
         }
         reload()
