@@ -74,6 +74,8 @@ struct HomeConsole: View {
     @State private var memberSheetID: String?
     /// 分时图点选的小时 → 打开事件页并按该小时筛选。
     @State private var hourSheet: Int?
+    /// 近 7 日到期的条数。recompute 里算一次 —— 它要遍历所有密码，不能每帧重算。
+    @State private var expiringCount = 0
     @State private var showEvents = false
     @State private var appeared = false
 
@@ -305,11 +307,17 @@ struct HomeConsole: View {
     private enum CriticalNotice {
         case lowBattery(Int)
         case alarms(Int)
+        /// 930 的「近 7 日到期条数」原本是**凭证 Tab 的角标**。
+        /// Tab 栏在单控制台重构时删掉了，这个数就没有去处了 ——
+        /// 函数还在（`CredentialOrg.expiringSoonCount`），零调用。
+        /// 门厅的关键提示正好是它的新家。
+        case expiring(Int)
     }
 
     private var criticalNotice: CriticalNotice? {
         if let n = alarmCount, n > 0 { return .alarms(n) }
         if let p = app.status?.powerLevel, p >= 0, p <= 20 { return .lowBattery(p) }
+        if expiringCount > 0 { return .expiring(expiringCount) }
         return nil
     }
 
@@ -348,10 +356,16 @@ struct HomeConsole: View {
             glyph = "battery.25"
             text = "门锁电量 \(p)%，该换电池了"
             tone = XPalette.warn
+        case .expiring(let c):
+            isAlarm = false
+            glyph = "clock.badge.exclamationmark"
+            text = "有 \(c) 项钥匙将在 7 天内到期"
+            tone = XPalette.warn
         }
         return Button {
             XHaptics.tick.impactOccurred()
-            managerGroup = isAlarm ? .security : .devices
+            if case .expiring = n { managerGroup = .ledger }
+            else { managerGroup = isAlarm ? .security : .devices }
         } label: {
             HStack(spacing: XSpace.s) {
                 Image(systemName: glyph)
@@ -375,7 +389,10 @@ struct HomeConsole: View {
         }
         .buttonStyle(PressableScaleStyle())
         .accessibilityLabel(text)
-        .accessibilityHint(isAlarm ? "打开安全中心" : "打开设备管理")
+        .accessibilityHint({
+            if case .expiring = n { return "打开钥匙列表" }
+            return isAlarm ? "打开安全中心" : "打开设备管理"
+        }())
     }
 
     // ─────────────────────────────────────────── ④ 开锁环
@@ -963,6 +980,7 @@ struct HomeConsole: View {
             if h >= 0 && h < 24 { counts[h] += 1 }
         }
         hourCounts = counts
+        expiringCount = CredentialOrg.expiringSoonCount(macs: [mac], within: 7)
 
         // ═══ 成员统计走归因引擎，不再用 30 天代理 ═══
         //

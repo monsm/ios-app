@@ -440,6 +440,12 @@ const checks = [
     const e = CODE.get('EventsPage.swift') || '';
     return e.includes('QueryFilters.load(mac: mac)') && e.includes('filters.save(mac: mac)');
   }],
+  ['即将到期的钥匙在门厅可见', () => {
+    // expiringSoonCount 的注释写着"凭证 Tab 角标"，而 Tab 栏在单控制台重构时删了 ——
+    // 函数还在（零调用），数就没了去处。门厅关键提示是它的新家。
+    const h = CODE.get('HomeConsole.swift') || '';
+    return h.includes('CredentialOrg.expiringSoonCount') && h.includes('case expiring(Int)');
+  }],
 ];
 
 let pass = 0;
