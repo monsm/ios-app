@@ -327,6 +327,24 @@ struct DevicePage: View {
     // MARK: - ④ 明细 (折叠)
     // ═══════════════════════════════════════════════════════
 
+    /// 固件行下方的注记：落后提示 + 这版用了多久。
+    ///
+    /// 两条都是"本机自己算得出来"的事实，不猜锁端：
+    ///   · fwLag  —— 与我这把之外最新的那把比（单锁时不显示）
+    ///   · fwSince —— 本机**首次读到该版本**的时刻起算，不冒充出厂时间
+    ///
+    /// fwSince 首次调用会落一条记录（幂等、不走 @Published，不会触发重绘循环）。
+    private var fwNotes: String? {
+        var parts: [String] = []
+        if let lag = fwLagNote { parts.append(lag) }
+        if let fw = snap?.firmware, !fw.isEmpty,
+           let since = BatteryCare.fwSince(mac, fw: fw) {
+            let days = Int((Date().timeIntervalSince1970 * 1000 - since.at) / 86_400_000)
+            if days >= 1 { parts.append("这版已用 \(days) 天") }
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
+
     /// 784 固件对照：这把锁的版本是否落后于本机最新的一把。
     /// LockStats.fwLag 写好了却零调用 —— 而"固件落后"对门锁用户是实际有用的信息
     ///（新固件通常修的是开锁成功率与防拆逻辑）。

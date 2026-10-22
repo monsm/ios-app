@@ -493,7 +493,6 @@ static func pwdStrength(_ v: String) -> (score: Int, hint: String)
 | `duePins` | BackupStudioKit.swift | 15 |
 | `earlyExpiryNote` | CredentialOrg.swift | 8 |
 | `fpUseCount30d` | CredentialOrg.swift | 7 |
-| `fwSince` | BatteryCare.swift | 7 |
 | `inferredLastUseMap` | CredentialOrg.swift | 9 |
 | `isAlarm` | RecordSearch.swift | 6 |
 | `isIdleLock` | StatsKit.swift | 11 |
@@ -562,6 +561,7 @@ static func pwdStrength(_ v: String) -> (score: Int, hint: String)
 | `renameFp` | 88 | 钥匙页右键「改个名字」（锁端无名称字段，纯本机）|
 | `renameMember` | 89 | 成员编辑表单补上「称呼」字段（原先 10 个字段唯独没有名字）|
 | `fwLag` | 90 | 设备页固件行提示「落后（本机最新 x）」（仅多锁且确实落后时）|
+| `fwSince` | 91 | 设备页固件行提示「这版已用 N 天」（自本机首次读到该版本起算）|
 
 ## 一个数字
 
@@ -608,3 +608,37 @@ static func pwdStrength(_ v: String) -> (score: Int, hint: String)
 
 我原以为它只是"没地方显示"。核实后发现它的前提（`earlyExpireMin > 0`）永远不成立 ——
 **它显示的是"设过提前量才有意义"的信息**。所以它属于上面那个功能簇，不属于「缺展示位」。
+
+### 第 91 轮：「缺展示位」里混进了两个死功能簇
+
+我原以为这一类都是"数据有、地方没有"。逐个查前提条件后发现**不全是**。
+
+#### 簇一：本机提前失效（第 90 轮已记）
+
+`setEarlyExpireMin` 零调用 → `earlyExpireMin` 永远 0 → `listCountdown` / `earlyExpiryNote` 永远走不到。
+
+#### 簇二：备份复核日
+
+| 环节 | 函数 | 状态 |
+|---|---|---|
+| 入口 | 无 | **`kf_bk_pin` 全仓没有写入方** |
+| 读 | `pins()` | 永远返回空字典 |
+| 算 | `duePins()` | 永远返回空数组 |
+| 显示 | `pinLabel` / `pinDayText` | 永远走不到 |
+| 消除 | `markPinSeen` | 零调用 |
+
+整个功能**入口就死了**。
+
+### 分类需要再拆一层
+
+「缺展示位」这个标签不够精确。真正的分法：
+
+| 子类 | 判据 | 处置 |
+|---|---|---|
+| **有数据没地方放** | 输入来自日志/用户操作，都已存在 | 接展示位 |
+| **整条链都断了** | 依赖的 setter 或存储键没有写入方 | 归入死功能簇，**不接** |
+
+本轮接的 `fwSince` 属于前者（它自己首次读到就落记录，自给自足）。
+两个簇属于后者。
+
+**教训**：看到"计算函数零调用"，先往上问一句"它的输入从哪来"。

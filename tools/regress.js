@@ -502,6 +502,12 @@ const checks = [
     const v = CODE.get('DevicePage.swift') || '';
     return v.includes('LockStats.fwLag') && v.includes('fwLagNote');
   }],
+  ['固件行同时说清落后与服役时长', () => {
+    // fwLag 是跨锁对照，fwSince 是本机首次读到该版本的时刻（不冒充出厂时间）。
+    // 两条都是本机算得出来的事实，合在固件行下面一行。
+    const v = CODE.get('DevicePage.swift') || '';
+    return v.includes('BatteryCare.fwSince(') && v.includes('fwNotes');
+  }],
 ];
 
 let pass = 0;
