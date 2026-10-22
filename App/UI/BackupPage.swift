@@ -275,7 +275,9 @@ struct BackupPage: View {
                     .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("相同设备会被覆盖, 其它设备保留。这一步会写库, 不可撤销。")
+                // "相同设备会被覆盖"这句话不够 —— saveLedger 是**整表覆盖**，
+                // 所以备份里没包含的钥匙也不会保留。不写明就是骗人。
+                Text("该设备的钥匙会**以备份为准**：备份里没有的不会保留。其它设备不受影响。这一步会写库，不可撤销。")
                     .xFont(.footnote)
                     .foregroundStyle(XPalette.warn)
                     .fixedSize(horizontal: false, vertical: true)
@@ -450,7 +452,12 @@ struct BackupPage: View {
         app.loadDevices()
         if bundle.globals?.appearance != nil { app.reloadAppearance() }
         XHaptics.success()
-        app.showToast("恢复完成: 新增 \(r.imported), 覆盖 \(r.overwritten)")
+        // restoreAll 会**静默跳过** "MAC 不合法 / 没有钥匙材料" 的设备，
+        // 而它只返回新增与覆盖两个数 —— 只报这两个，用户会以为全都恢复了。
+        // 差多少就说明多少。
+        let skipped = bundle.devices.count - (r.imported + r.overwritten)
+        app.showToast("恢复完成: 新增 \(r.imported), 覆盖 \(r.overwritten)"
+                       + (skipped > 0 ? " · \(skipped) 台被跳过 (缺钥匙材料)" : ""))
         pendingRestore = nil
     }
 

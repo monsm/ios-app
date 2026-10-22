@@ -607,6 +607,14 @@ const checks = [
            p.includes('private func restoreConfirmCard(') &&
            !p.includes('.confirmationDialog("恢复会覆盖同名设备"');
   }],
+  ['恢复前说清覆盖后果并如实报跳过', () => {
+    // saveLedger 是**整表覆盖** —— 备份里没包含的钥匙不会保留。
+    // 只说"相同设备会被覆盖"不够，用户会以为本地多出来的钥匙还在。
+    // 另外 restoreAll 会静默跳过 MAC 不合法/缺钥匙材料的设备，只报新增+覆盖会让人以为全恢复了。
+    const p = CODE.get('BackupPage.swift') || '';
+    return p.includes('以备份为准') && p.includes('let skipped = bundle.devices.count') &&
+           p.includes('台被跳过');
+  }],
 ];
 
 let pass = 0;
