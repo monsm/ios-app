@@ -731,7 +731,10 @@ struct HomeConsole: View {
                     Spacer(minLength: 0)
                 }
                 dayChart
-                XHairline(verticalPadding: 14)
+                // §7.6：值/图 → 分隔线 **14pt**（净距），分隔线 → 下一组 **12pt**。
+                // 原来传 verticalPadding: 14 = 线上下各补 14，再叠容器 12 → 26/26。
+                XHairline()
+                    .padding(.top, 2)
                 VStack(alignment: .leading, spacing: XSpace.xxs) {
                     Text("最早一次")
                         .xFont(.caption)

@@ -228,6 +228,26 @@ const RULES = [
 
 // ── 工程级断言（不是逐行扫，是整个 App 有没有做这件事）──
 const projectProblems = [];
+{
+  // 规范 §7.6 的「内部纵向节奏」六个数：卡头→标题 6 / 标题→标签 12 / 标签→值 2 /
+  // 值→分隔线 14 / 分隔线→下一组 12 / 页脚上方 12。
+  //
+  // 实证错误：分隔线传 `verticalPadding: 14` —— 那是**线上下各补 14**，再叠容器 12，
+  // 净距成了 26；而规范给的 14 是**净距**。这类错肉眼只觉得「有点松」，量不出来。
+  for (const f of files) {
+    const lines = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n');
+    lines.forEach((raw, i) => {
+      const code = raw.replace(/\/\/.*$/, '');
+      const m = /XHairline\(verticalPadding:\s*([0-9.]+)\)/.exec(code);
+      if (!m) return;
+      const v = Number(m[1]);
+      if (v === 0) return;
+      projectProblems.push('§7.6 分隔线间距写成了 verticalPadding: ' + v +
+                           '（那是线上下各补 ' + v + '，会与容器间距叠加）；净距请用 .padding(.top, 2)：' +
+                           path.relative(ROOT, f) + ':' + (i + 1));
+    });
+  }
+}
 
 // §5.3 的「页边距 14」**没有做成断言** —— 判不了。
 //

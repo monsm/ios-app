@@ -397,9 +397,29 @@ enum XMetric {
         return String(n)
     }
 
-    /// 一次算完：位数超 11 才缩写，其余原样返回。
+    /// 千分位分组 —— 规范 E4「千分位逗号」。
+    ///
+    /// 不用 NumberFormatter：那条路依赖 locale，同一个值在不同系统区域下会变成
+    /// "12.458.902"，而这里的读数是**技术数据**（次数/天数），不该跟随用户区域。
+    /// 也正好与 §7.18 的口径一致 ——「按**位数**算，不按字符数：12,458,902 是 9 位数字」，
+    /// 那句话默认了显示里带逗号。
+    static func grouped(_ n: Int) -> String {
+        let neg = n < 0
+        var digits = Array(String(abs(n)))
+        var out: [Character] = []
+        while let c = digits.popLast() {
+            out.append(c)
+            if !digits.isEmpty && (out.count - out.filter { $0 == "," }.count) % 3 == 0 {
+                out.append(",")
+            }
+        }
+        if neg { out.append("-") }
+        return String(out.reversed())
+    }
+
+    /// 一次算完：>11 位缩写，其余加千分位。负数原样带符号。
     static func display(_ n: Int) -> String {
-        digitCount(String(abs(n))) > 11 ? abbreviate(n) : String(n)
+        digitCount(String(abs(n))) > 11 ? abbreviate(n) : grouped(n)
     }
 
     /// 字符串重载 —— 指标值多半是已格式化好的字符串（"1,234" / "从未" / "6"）。
@@ -408,7 +428,8 @@ enum XMetric {
     static func display(_ s: String) -> String {
         let bare = s.replacingOccurrences(of: ",", with: "")
         guard !bare.isEmpty, bare.allSatisfy({ $0.isNumber }), let n = Int(bare) else { return s }
-        return digitCount(bare) > 11 ? abbreviate(n) : s
+        // 纯数字串：>11 位缩写，其余补千分位（E4）。已经带逗号的也会被重新分组，不会叠。
+        return digitCount(bare) > 11 ? abbreviate(n) : grouped(n)
     }
     static func decorIcon(_ base: CGFloat) -> CGFloat {
         let size = AXFlags.typeSizeSnapshot

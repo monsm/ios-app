@@ -84,7 +84,8 @@ struct CarePage: View {
                     .xFont(.title3, weight: .bold)
                     .foregroundStyle(XPalette.text)
                     .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, -XSpace.s)      // 卡头自带 44 命中高，这里收回 6pt 的墨迹间距
+                    // §7.6「卡头 → 标题 6pt」。VStack 给了 12，这里收回 6 → 净 6。
+                    .padding(.top, -6)
 
                 HStack(alignment: .center, spacing: XSpace.m) {
                     // 左列：标签 13 灰 → 值 16 Semibold 白（标签在上、值在下，§7.2/§7.6 一致）
@@ -115,7 +116,12 @@ struct CarePage: View {
                         size: 104)
                 }
 
-                XHairline(verticalPadding: 14)
+                // §7.6 内部纵向节奏：**值 → 分隔线 14pt**、**分隔线 → 下一组 12pt**。
+                // 原来传 verticalPadding: 14 —— 那是线的上下各补 14，再叠上 VStack 的 12，
+                // 实际成了 26 / 26，比规范松了近一倍。
+                // 现在线自身不补白，只在上方补 2：12+2 = 14（上），12+0 = 12（下）。
+                XHairline()
+                    .padding(.top, 2)
 
                 Text(periodDetail(days))
                     .xFont(.caption)

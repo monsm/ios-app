@@ -136,12 +136,15 @@ struct XPanel<Content: View>: View {
 struct XHairline: View {
     /// 水平内缩。默认 0 = 卡内全宽（规范要求的形态）。
     var inset: CGFloat = 0
-    /// 上下留白。**默认 0** —— 因为本仓 23 处调用全是「列表行分隔线」，
-    /// 行自己的 .padding(.vertical) 已经给了留白，分隔线再补就会把行撑高。
+    /// 上下留白。**默认 0** —— 因为绝大多数调用是「列表行分隔线」，
+    /// 行自己的 `.padding(.vertical)` 已经给了留白，分隔线再补就会把行撑高。
     ///
-    /// 规范 §7.6 那张「内部纵向节奏」表（值→分隔线 14pt）针对的是
-    /// **多段指标卡**（Sleep / Duration / Bedtime 那种）。本 App 没有这种卡 ——
-    /// 所以这个参数保留、默认不用，需要时显式传 14。
+    /// **2026-10-23 更正**：这里原来写着「本 App 没有多段指标卡 —— 所以这个参数保留、默认不用」。
+    /// 那是假的：`CarePage.periodCard` 与 `HomeConsole.todaySection` 都是多段卡，而且都在传 14。
+    /// 更要紧的是**传 14 也是错的** —— 规范 §7.6 的节奏表是「值→线 **14pt**」这个**净距**，
+    /// 不是「线上下各补 14」。线补 14 再叠容器 12，净距成了 26，比规范松近一倍。
+    ///
+    /// 正确用法（见 CarePage.periodCard）：线不补白，用 `.padding(.top, 2)` 补足上方净距。
     var verticalPadding: CGFloat = 0
 
     var body: some View {
