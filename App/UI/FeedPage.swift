@@ -301,7 +301,7 @@ struct FeedPage: View {
             let devName = kc.name.isEmpty
                 ? PidMap.productName(kc.pid) + " …" + kc.mac.suffix(4)
                 : kc.name
-            for l in DB.readLogs(kc.mac) {
+            for l in HotCache.recent(kc.mac) {
                 let warn = StatsKit.alarmTypes.contains(l.type)
                 out.append(FeedRow(
                     id: kc.mac + "#\(l.idxRaw)",

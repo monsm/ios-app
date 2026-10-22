@@ -952,7 +952,7 @@ struct HomeConsole: View {
 
     private var lastOpenClock: String? {
         guard !mac.isEmpty else { return nil }
-        let logs = DB.readLogs(mac).filter { StatsKit.openTypes.contains($0.type) }
+        let logs = HotCache.recent(mac).filter { StatsKit.openTypes.contains($0.type) }
         guard let last = logs.max(by: { $0.lockTime < $1.lockTime }) else { return nil }
         let s = last.lockTimeStr
         return s.count >= 16 ? String(s.suffix(5)) : nil
@@ -973,7 +973,7 @@ struct HomeConsole: View {
         let today = StatsKit.dayKey(Date())
         let cal = WeekCal.gregorian
         var counts = Array(repeating: 0, count: 24)
-        for l in DB.readLogs(mac) where StatsKit.openTypes.contains(l.type) {
+        for l in HotCache.recent(mac) where StatsKit.openTypes.contains(l.type) {
             guard l.lockTimeStr.hasPrefix(today) else { continue }
             let d = Date(timeIntervalSince1970: ZKProtocol.protoSecondsToUnix(l.lockTime))
             let h = cal.component(.hour, from: d)

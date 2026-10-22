@@ -395,7 +395,7 @@ enum ExportKit {
     // ---------- 数据源 (只读既有表) ----------
     /// 锁日志缓存 → 导出行 (member 列只有 Attribution 可证明归属才填)
     static func records(mac: String) -> [ExportRecord] {
-        let cached = DB.readLogs(mac)
+        let cached = HotCache.recent(mac)
         let entries = cached.map { LogEntry(type: $0.type, typeName: $0.typeName, idx: $0.idxRaw,
                                             idxRaw: $0.idxRaw, lockTime: $0.lockTime,
                                             lockTimeStr: $0.lockTimeStr, body: "") }
@@ -538,7 +538,7 @@ enum ExportKit {
     // 诊断原始收发日志 (kf_diag_logs, 需开"记录原始收发 hex"); 脱敏时留空不导出。
     static func rawJSON(mac: String, recs: [ExportRecord], redactHex: Bool) -> Data {
         var typeIdx = [String: Int]()
-        for l in DB.readLogs(mac) { typeIdx[l.typeName] = l.type }
+        for l in HotCache.recent(mac) { typeIdx[l.typeName] = l.type }
         let rows: [[String: Any]] = recs.map { r in
             [
                 "time": r.time,
@@ -698,7 +698,7 @@ enum ExportKit {
                 var y: CGFloat = 192
                 for m in allMacs {
                     let n = DB.keychain(m).map { $0.name.isEmpty ? LockArchive.displayName($0) : $0.name } ?? m
-                    let cnt = String(DB.readLogs(m).count)
+                    let cnt = String(HotCache.recent(m).count)
                     PDFText.line(cg, "· " + n + " (mac " + String(m.suffix(4)) + ") 缓存 " + cnt + " 条",
                                  font: .regular, size: 10, x: 44, y: y, color: .darkGray, pageW: 595)
                     y += 16

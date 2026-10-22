@@ -549,7 +549,7 @@ struct CareChecklistView: View {
     private var careLedgerCard: some View {
         let mac = app.current?.mac ?? ""
         let state = BatteryCare.care(mac)
-        let opens30 = DB.readLogs(mac).filter { StatsKit.openTypes.contains($0.type) }.count
+        let opens30 = HotCache.recent(mac).filter { StatsKit.openTypes.contains($0.type) }.count
         let period = BatteryCare.carePeriodDays(opens30d: opens30)
         let lastMs = state.lastCareAt
         let daysSince: Int = lastMs > 0

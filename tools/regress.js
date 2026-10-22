@@ -544,6 +544,13 @@ const checks = [
     return d.includes('private func refresh()') && d.includes('.task { refresh() }') &&
            v.includes('private func refreshDerived()') && v.includes('.task { refreshDerived() }');
   }],
+  ['界面读日志走热点缓存', () => {
+    // HotCache.recent 有缓存、有失效策略，却零调用；每个页面都用 DB.readLogs
+    // 每次重绘重新解码整份日志 —— 多页在计算属性里调用，滚动就反复解码。
+    const ui = ['CarePage.swift','CareViews.swift','EventsPage.swift','ExportCenter.swift',
+                'FeedPage.swift','HomeConsole.swift','MemberCenterView.swift'];
+    return ui.every(f => !(CODE.get(f) || '').includes('DB.readLogs('));
+  }],
 ];
 
 let pass = 0;

@@ -349,7 +349,7 @@ struct EventsPage: View {
         Task { @MainActor in
             defer { syncing = false }
             var trace: [String] = []
-            let before = DB.readLogs(mac).count
+            let before = HotCache.recent(mac).count
             trace.append("本机缓存原有 \(before) 条")
             do {
                 trace.append("① 连接门锁…")
@@ -370,7 +370,7 @@ struct EventsPage: View {
                 trace.append("③ 合计拉取 \(collected.count) 条")
 
                 DB.writeLogs(mac, collected)
-                let after = DB.readLogs(mac).count
+                let after = HotCache.recent(mac).count
                 trace.append("④ 写入后本机缓存 \(before) → \(after) 条")
                 load()
 

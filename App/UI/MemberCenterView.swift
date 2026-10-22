@@ -1104,7 +1104,7 @@ struct UnclaimedClaimView: View {
     private var unclaimed: [Row] {
         var out = [Row]()
         for kc in DB.keychains() where kc.mac == mac {
-            let logs = DB.readLogs(kc.mac).filter { StatsKit.openTypes.contains($0.type) }
+            let logs = HotCache.recent(kc.mac).filter { StatsKit.openTypes.contains($0.type) }
             let status = DB.readStatus(kc.mac)
             let rows = Attribution.classify(
                 logs: logs.map { LogEntry(type: $0.type, typeName: $0.typeName, idx: $0.idxRaw, idxRaw: $0.idxRaw,

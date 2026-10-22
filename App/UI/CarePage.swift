@@ -64,7 +64,7 @@ struct CarePage: View {
         // 后果: 高频锁（30 天 ≥60 次开门）本该 60 天保养一次，
         // 但界面永远按 90 天算，通知却在第 60 天来催。两边对不上。
         // 现在读真实开门数，与 BatteryCare 的调度同源。
-        let opens30 = DB.readLogs(mac).filter { StatsKit.openTypes.contains($0.type) }.count
+        let opens30 = HotCache.recent(mac).filter { StatsKit.openTypes.contains($0.type) }.count
         let period = care.lastCareAt > 0 ? BatteryCare.carePeriodDays(opens30d: opens30) : 0
         let elapsed = care.lastCareAt > 0 ? (period - days) : 0
         // 周期环: "还剩多少"是一个进程量, 环比文字更直观。

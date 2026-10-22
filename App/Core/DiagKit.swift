@@ -107,7 +107,10 @@ enum HotCache {
     static func invalidate(_ mac: String) { lock.withLock { $0.store[mac] = nil } }
     static func recent(_ mac: String) -> [CachedLog] {
         lock.withLock { h -> [CachedLog] in
-            if mac == h.currentMac, let v = h.store[mac] { return v }
+            // 原来只在 mac == currentMac 时命中缓存 —— 多锁用户读**别的锁**每次都全量解码，
+            // 而那条路径恰恰是"切换设备"时最常走的。命中条件只看有没有值，
+            // 新鲜度由写入口的 invalidate 保证（Store 里两处写入口都调了）。
+            if let v = h.store[mac] { return v }
             let v = DB.readLogs(mac)
             h.store[mac] = v
             return v
