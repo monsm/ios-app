@@ -198,6 +198,10 @@ function s5(mask, lines) {
     if (mask[i]) return;
     const t = raw.replace(/\s+$/, '');
     if (!t) return;
+    // ⚠ maskFile 只掩多行字符串，**不掩 // 注释** —— 第一版因此把
+    // TimeFormat.swift:5 的一句注释里「…，同一条记录会在」判成事故，直接把 CI 弄红了。
+    // 注释天然以中文收尾，本检查对它毫无意义。
+    if (/^\s*\/\//.test(t)) return;
     if (!/[\u4e00-\u9fa5]$/.test(t)) return;
     const q = (t.replace(/\\"/g, '').match(/"/g) || []).length;
     if (q % 2 !== 0) return;
