@@ -90,6 +90,10 @@ internal val KfDarkColors = KfColors(
 // 它不属于「浅色档」，它是**唯一的一条**色板通道，删不得。
 internal val LocalKfColors = staticCompositionLocalOf { KfDarkColors }
 
+// 2026-10-23 第二处：我把 LocalKfColors 插在了 `@Composable` 与 `fun` **之间**，
+// 注解于是不再附着在函数上，报「Functions which invoke @Composable functions must be
+// marked with @Composable」。注解必须紧贴函数签名。
+@Composable
 internal fun KfTheme(
     // 参数保留（调用点不必改），但**不再生效**：规范 §13.4 不允许 App 内明暗切换。
     @Suppress("UNUSED_PARAMETER") dark: Boolean = true,

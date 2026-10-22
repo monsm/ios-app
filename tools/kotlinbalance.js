@@ -138,6 +138,48 @@ console.log(files.length + ' 个 Kotlin 文件括号配平 ✓ (这**不证明**
       if (!SPEC.has(parseFloat(m[1]))) bad.push(path.relative(ROOT, f) + ':' + (i + 1) + '  ' + m[1] + 'sp 不在 §4.2 档位上');
     });
   }
+  // 注解必须紧贴函数签名 —— 实证：我把 LocalKfColors 插在 `@Composable` 与 `fun` 之间，
+  // 注解就不再附着，报「Functions which invoke @Composable functions must be marked with
+  // the @Composable annotation」。判据：凡是参数里出现 `@Composable` 或体内调
+  // CompositionLocalProvider 的函数，紧邻上一行（跳过空行）必须是 @Composable。
+  const annotBad = [];
+  for (const f of walk(SRC)) {
+    const lines = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n');
+    lines.forEach((l, i) => {
+      if (!/^\s*(internal |private |public )?fun \w+\(/.test(l)) return;
+      // 看这个函数签名（到闭合括号为止）里有没有 @Composable 参数
+      // 用**括号深度**切签名：默认值里也有括号（@Suppress(...)、() -> Unit），
+      // 靠正则找「) 后面跟 {」会被 `dark: Boolean = true` 里的 `=` 骗到。
+      let sig = '', k = i, depth = 0, closed = false;
+      while (k < lines.length && k < i + 14) {
+        const L = lines[k];
+        sig += L;
+        for (const ch of L) { if (ch === '(') depth++; else if (ch === ')') depth--; }
+        if (depth <= 0 && k > i - 1 && /\bfun\b/.test(sig)) {
+          // 签名闭合：这一行 `)` 之后必须是 `{` 或 `:` 才算块状函数
+          const after = L.slice(L.lastIndexOf(')') + 1);
+          if (/^\s*(\{|:)/.test(after)) closed = true;
+          break;
+        }
+        k++;
+      }
+      if (!closed) return;   // 表达式函数 / 单行签名，不归这条判据管
+      const bodyHasProvider = lines.slice(k, Math.min(k + 4, lines.length)).some((x) => /CompositionLocalProvider/.test(x));      if (!/@Composable/.test(sig) && !bodyHasProvider) return;
+      if (/^\s*@Composable/.test(l)) return;
+      // 往上找最近的非空行
+      let up = i - 1;
+      while (up >= 0 && lines[up].trim() === '') up--;
+      if (up >= 0 && /^\s*@Composable/.test(lines[up])) return;
+      annotBad.push(path.relative(ROOT, f) + ':' + (i + 1) + '  ' + l.trim().slice(0, 50));
+    });
+  }
+  if (annotBad.length) {
+    for (const b of annotBad.slice(0, 6)) console.error('  ' + b);
+    console.error('✗ 有 ' + annotBad.length + ' 个 @Composable 函数缺注解（或注解被注释行隔开）');
+    process.exitCode = 1;
+  } else {
+    console.log('Composable 注解 ✓ 都紧贴函数签名');
+  }
   if (bad.length) {
     for (const b of bad) console.error('  ' + b);
     console.error('✗ Android 字号有 ' + bad.length + ' 处不在规范 §4.2 档位上');
