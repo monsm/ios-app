@@ -493,7 +493,6 @@ static func pwdStrength(_ v: String) -> (score: Int, hint: String)
 | `duePins` | BackupStudioKit.swift | 15 |
 | `earlyExpiryNote` | CredentialOrg.swift | 8 |
 | `fpUseCount30d` | CredentialOrg.swift | 7 |
-| `fwLag` | LockStats.swift | 8 |
 | `fwSince` | BatteryCare.swift | 7 |
 | `inferredLastUseMap` | CredentialOrg.swift | 9 |
 | `isAlarm` | RecordSearch.swift | 6 |
@@ -562,6 +561,7 @@ static func pwdStrength(_ v: String) -> (score: Int, hint: String)
 | `pwdStrength` | 86 | 设密码时就地提示弱口令 |
 | `renameFp` | 88 | 钥匙页右键「改个名字」（锁端无名称字段，纯本机）|
 | `renameMember` | 89 | 成员编辑表单补上「称呼」字段（原先 10 个字段唯独没有名字）|
+| `fwLag` | 90 | 设备页固件行提示「落后（本机最新 x）」（仅多锁且确实落后时）|
 
 ## 一个数字
 
@@ -584,3 +584,27 @@ static func pwdStrength(_ v: String) -> (score: Int, hint: String)
 **空输入不覆盖** —— 用户清空一个必填字段不该把称呼抹掉。
 
 顺序也核对过：`MemberHub.saveExt` 写的是扩展表 `extKey`，与主表 `kf_members` 互不覆盖。
+
+### 第 90 轮：一个完整功能，三层全死
+
+「本机提前失效提醒」——用户想让某个临时码在自己这边先过期（比锁端早几分钟），
+这样客人还没走远，码就已经不能用了。
+
+| 层 | 函数 | 状态 |
+|---|---|---|
+| **入口** | `setEarlyExpireMin` | **零调用 —— 没有任何界面能设它** |
+| 计算 | `earlyExpireMin` / `effectiveExpiry` | 永远读到 0，退回锁端有效期 |
+| **显示** | `listCountdown` / `earlyExpiryNote` | 永远走不到「本机提前」那个分支 |
+
+三层都是死的，所以整个功能对用户不存在。
+
+**我没有接它。** 原因：要接得先造一屏让用户按凭证设提前量，
+再把它接进清单的倒计时（`listCountdown` 有四五种分支文案）。
+那是新功能级改动，而不是"补一个展示位"。
+
+记在这里，写清楚缺的是**入口**，不是显示。
+
+### 顺便：`listCountdown` 不是缺展示位
+
+我原以为它只是"没地方显示"。核实后发现它的前提（`earlyExpireMin > 0`）永远不成立 ——
+**它显示的是"设过提前量才有意义"的信息**。所以它属于上面那个功能簇，不属于「缺展示位」。

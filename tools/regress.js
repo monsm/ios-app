@@ -496,6 +496,12 @@ const checks = [
     const m = CODE.get('MemberCenterView.swift') || '';
     return m.includes('DB.renameMember(') && m.includes('field("称呼 (必填)"');
   }],
+  ['固件落后会在设备页提示', () => {
+    // LockStats.fwLag 写好了零调用。新固件通常修的是开锁成功率与防拆逻辑，
+    // "这把锁落后于本机最新那把"是用户该知道的信息。
+    const v = CODE.get('DevicePage.swift') || '';
+    return v.includes('LockStats.fwLag') && v.includes('fwLagNote');
+  }],
 ];
 
 let pass = 0;

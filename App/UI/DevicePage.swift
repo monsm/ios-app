@@ -327,6 +327,17 @@ struct DevicePage: View {
     // MARK: - ④ 明细 (折叠)
     // ═══════════════════════════════════════════════════════
 
+    /// 784 固件对照：这把锁的版本是否落后于本机最新的一把。
+    /// LockStats.fwLag 写好了却零调用 —— 而"固件落后"对门锁用户是实际有用的信息
+    ///（新固件通常修的是开锁成功率与防拆逻辑）。
+    /// 只在本机有多把锁、且确实比最新那把旧时才有话说；单锁用户不显示。
+    private var fwLagNote: String? {
+        guard !mac.isEmpty else { return nil }
+        let (latest, lagging) = LockStats.fwLag(LockStats.usage())
+        guard !latest.isEmpty, lagging.contains(mac) else { return nil }
+        return "落后 (本机最新 \(latest))"
+    }
+
     /// 近 30 天里单日掉电超过 20% 的日子（最多列 3 条）。
     private var bigDrops: [(day: String, from: Int, to: Int, drop: Int)] {
         mac.isEmpty ? [] : BatteryCare.bigDropDays(mac)
@@ -379,19 +390,29 @@ struct DevicePage: View {
         }
     }
 
-    private func detailRow(_ label: String, _ value: String) -> some View {
-        HStack {
-            Text(label)
-                .xFont(.footnote)
-                .foregroundStyle(XPalette.textSub)
-            Spacer()
-            Text(value)
-                .xFont(.footnote.monospacedDigit())
-                .foregroundStyle(XPalette.text)
-                .lineLimit(1)
+    private func detailRow(_ label: String, _ value: String, note: String? = nil) -> some View {
+        VStack(alignment: .trailing, spacing: 2) {
+            HStack {
+                Text(label)
+                    .xFont(.footnote)
+                    .foregroundStyle(XPalette.textSub)
+                Spacer()
+                Text(value)
+                    .xFont(.footnote.monospacedDigit())
+                    .foregroundStyle(XPalette.text)
+                    .lineLimit(1)
+            }
+            if let note {
+                Text(note)
+                    .xFont(.system(.caption2))
+                    .foregroundStyle(XPalette.warn)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
         .padding(.vertical, XSpace.xs)
         .accessibilityElement(children: .combine)
+        .accessibilityLabel(note.map { "\(label)：\(value)，\($0)" } ?? "\(label)：\(value)")
     }
 
     // ═══════════════════════════════════════════════════════
