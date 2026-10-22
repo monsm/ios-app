@@ -74,12 +74,14 @@ enum BackupStudio {
     static var lastExportMs: Double? { (DB.store.get([Double].self, "kf_backup_hist") ?? []).last }
     static func daysSinceLastExport() -> Int {
         guard let ms = lastExportMs else { return -1 }
-        return Int(Date().timeIntervalSince1970 / 86400) - Int(ms / 1000 / 86400)
+        // 「距今几天」走唯一算法（TimeFormat.daysSince）—— 原来是纪元日号相减，
+        // 与 MePage / BackupPage 的 ms 除法在跨零点时差一天。
+        return TimeFormat.daysSince(ms: ms)
     }
     /// 509 双向天数行: 上次导入距今
     static func daysSinceLastImport() -> Int {
         guard let ms = DB.store.get(Double.self, "kf_bk_last_import") else { return -1 }
-        return Int(Date().timeIntervalSince1970 / 86400) - Int(ms / 1000 / 86400)
+        return TimeFormat.daysSince(ms: ms)
     }
     static func markImported() { DB.store.set("kf_bk_last_import", Date().timeIntervalSince1970 * 1000) }
 

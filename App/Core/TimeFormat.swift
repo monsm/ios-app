@@ -91,6 +91,20 @@ enum TimeFormat {
     /// 那是不存在的 API：`date(bySetting:value:of:)` 要的 `Calendar.Component` 只有 `.hour` 与 `.minute`
     /// 两档 (机检依据 = Apple 文档 Foundation/Calendar/Component 的全部 case 列表)，而且 case 不能带参数；
     /// `.hourAndMinute` 只在 `DatePicker(displayedComponents:)` 那一侧合法。这一句在 CI 上是编译失败。
+    /// 「距今几天」的**唯一算法**。
+    ///
+    /// 2026-10-23：本仓此前有两种写法，同一个时间戳会差 1 天 ——
+    ///   · 多数地方：`Int((nowMs - ms) / 86_400_000)` —— 按**经过的 24 小时段**算；
+    ///   · `BackupStudioKit`：`Int(now/86400) - Int(ms/86400)` —— 按**纪元日号**相减。
+    /// 跨零点时两者答案不同（23:00 与次日 01:00 相差 2 小时：前者 0 天、后者 1 天）。
+    ///
+    /// 取前者：用户问「上次多久以前」时想的是**经过多久**，不是翻了几次日历。
+    /// 负数（未来时间/时钟回拨）一律归 0，不返回负天数。
+    static func daysSince(ms: Double) -> Int {
+        guard ms > 0 else { return -1 }
+        let d = Int((Date().timeIntervalSince1970 * 1000 - ms) / 86_400_000)
+        return max(0, d)
+    }
     static func dayEnd(_ now: Date = Date()) -> Date {
         WeekCal.gregorian.date(bySettingHour: 23, minute: 59, second: 0, of: now)
             ?? now.addingTimeInterval(86400)

@@ -88,7 +88,7 @@ struct BackupPage: View {
                       defaultFilename: backupFilename) { result in
             if case .success = result {
                 // 落盘时更新"上次备份"时间 —— 与 generateBackup 同口径
-                DB.store.set("kf_bk_last_export", Int(Date().timeIntervalSince1970 * 1000))
+                Milestones.recordBackup()
                 // 触感已由 showToast(tone:) 统一发出 —— 这里再调一次会震两下
                 app.showToast("已保存到文件", tone: .done)
             } else if case .failure(let e) = result {
@@ -249,7 +249,7 @@ struct BackupPage: View {
             return
         }
         exportText = text
-        DB.store.set("kf_bk_last_export", Int(Date().timeIntervalSince1970 * 1000))
+        Milestones.recordBackup()
         XHaptics.success()
         app.showToast("备份已生成, 点一次复制")
     }

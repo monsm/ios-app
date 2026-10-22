@@ -219,10 +219,16 @@ enum Milestones {
     // ---------- 980/997 备份历史 (上传成功 / 生成本地备份文本 各记一次) ----------
     @MainActor
     static func recordBackup() {
+        let nowMs = Date().timeIntervalSince1970 * 1000
         var h = DB.store.get([Double].self, "kf_backup_hist") ?? []
-        h.append(Date().timeIntervalSince1970 * 1000)
+        h.append(nowMs)
         if h.count > 60 { h.removeFirst(h.count - 60) }
         DB.store.setCodable("kf_backup_hist", h)
+        // 2026-10-23 修「两个上次导出」：这里原来只写时间线 `kf_backup_hist`，
+        // 而 BackupPage / MePage / SecurityPage 读的是另一份 `kf_bk_last_export` ——
+        // **两条导出路径各写各的**，于是「上次导出」在不同屏幕上给出不同答案，而且两边都可能过期。
+        // 现在这一个函数同时写两份，它是「备份发生过」的**唯一写点**。
+        DB.store.set("kf_bk_last_export", Int(nowMs))
         // 448: 备份发生点 = 自检基线更新点 (导出/上传/还原点全覆盖; 自检本身绝不回写)
         BackupStudio.markBackupBaseline()
     }

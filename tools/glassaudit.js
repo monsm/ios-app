@@ -229,6 +229,34 @@ const RULES = [
 // ── 工程级断言（不是逐行扫，是整个 App 有没有做这件事）──
 const projectProblems = [];
 {
+  // 逻辑维度：**同一个量只允许一个算法 / 一个写点**。
+  //
+  // 实证两类（都是本会话真抓到的）：
+  //  ① 备份时间戳有两个 key —— `kf_backup_hist` 与 `kf_bk_last_export`，
+  //     两条导出路径各写各的，于是「上次导出」在不同屏幕给出不同答案；
+  //  ② 「距今几天」有两种算法 —— ms 除法 vs 纪元日号相减，跨零点差一天。
+  //
+  // 判据：① `kf_bk_last_export` 只许在 Milestones.recordBackup 里写；
+  //      ② 不许再用 `Int(... / 86400) - Int(... / 86400)` 那种日号相减写法。
+  for (const f of files) {
+    const rel = path.relative(ROOT, f);
+    const lines = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n');
+    lines.forEach((raw, i) => {
+      const code = raw.replace(/\/\/.*$/, '');
+      if (/DB\.store\.set\("kf_bk_last_export"/.test(code) && !/Milestones\.swift$/.test(rel)) {
+        projectProblems.push('同一个量两个写点：`kf_bk_last_export` 只许由 Milestones.recordBackup 写' +
+                             '（这样时间线与该 key 才不会漂）：' + rel + ':' + (i + 1));
+      }
+      // 纪元日号相减的特征：两个 "/ 86400" 出现在同一个减式里。
+      // 不能用带 [^)]* 的正则 —— 那个类会被 Date( 的首个 ) 截断。
+      if ((code.match(/\/\s*86400\b/g) || []).length >= 2) {
+        projectProblems.push('「距今几天」有第二套算法（纪元日号相减）—— 请用 TimeFormat.daysSince(ms:)：' +
+                             rel + ':' + (i + 1));
+      }
+    });
+  }
+}
+{
   // 逻辑维度：**同一个量只能有一个算法**。
   //
   // 实证：保养周期档（近 30 天开门 ≥60 次的锁 60 天、否则 90 天）在本仓有**三条读法**：
