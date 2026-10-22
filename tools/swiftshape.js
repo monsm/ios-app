@@ -784,8 +784,46 @@ else {
     console.log(bad.join('\n'));
     process.exit(1);
   }
+// ── R13: 缩进 4 的成员声明不可能出现在深度 0 ──
+//
+// 实证（2026-10-23 CI）：我把 `func xFontScaled(...)` 插到了 `extension View { }` 的
+// **闭括号之后**，编译器报「cannot find 'modifier' in scope」——
+// `modifier` 是 View 协议的方法，裸函数里当然找不到。
+//
+// 判据比「extension 内外」更简单也更准：**全局花括号深度为 0 的行，只允许列 0 的声明**。
+// 一个 4 空格缩进的 func/var/let 出现在深度 0，说明它上面的块已经关了 —— 它越界了。
+// 这类错在源码里看着极正常（缩进对、括号平衡、名字对），只有编译器知道它越界。
+{
+  const r13 = r13Check();
+  if (r13 > 0) { console.log('✗ R13 有 ' + r13 + ' 处缩进成员出现在深度 0（应被某个 extension / struct 包住）'); process.exit(1); }
+}
+}
+
   console.log('Swift 形状机检 ✓ (R1/R1b 缺 @ViewBuilder / R2 属性挂到值类型 / R4 调用点参数标签对不上 / '
     + 'R5 实参个数对不上 / R6 视图函数缺返回类型 / R7 重复挂 @ViewBuilder / '
     + 'R8 Section("标题") 带 footer / R9 Section(isExpanded:) 带 footer / '
     + 'R10 frame 次序 / R11 as: 缺 .self / R12 View 扩展丢 self — 零命中; R3 合成 Codable 雷区 ' + r3Count() + ' 个, 基线 ' + R3_BASELINE + ' 个)');
+
+
+function r13Check() {
+  let n = 0;
+  for (const f of swiftFiles(path.join(__dirname, '..', 'App'))) {
+    const L = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n');
+    let depth = 0;
+    L.forEach((ln, i) => {
+      const code = ln.replace(/\/\/.*$/, '');
+      const before = depth;
+      let inStr = false, prev = '';
+      for (const ch of code) {
+        if (ch === '"' && prev !== '\\') inStr = !inStr;
+        if (!inStr) { if (ch === '{') depth++; else if (ch === '}') depth--; }
+        prev = ch;
+      }
+      if (before === 0 && /^    (func|var|let) /.test(code)) {
+        n++;
+        if (n <= 6) console.log('R13 越界成员 (' + path.relative(path.join(__dirname, '..'), f) + ':' + (i + 1) + '): ' + ln.trim().slice(0, 60));
+      }
+    });
+  }
+  return n;
 }

@@ -655,7 +655,7 @@ extension View {
     nonisolated func xPlate(_ style: Color, _ radius: CGFloat = XRadius.control) -> some View {
         self.background(style, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
     }
-}
+
     /// §7.18 数字溢出的降档入口 —— 与 `xFont` **同一个字号源**，只是整体乘一个系数。
     ///
     /// 为什么不直接用 `minimumScaleFactor`：那是「放不下才缩」，缩出来的比例逐条不同，
@@ -666,6 +666,7 @@ extension View {
                      weight: Font.Weight? = nil, design: Font.Design = .default) -> some View {
         modifier(XTextModifier(style: style, weightOverride: weight, design: design, factor: scale))
     }
+}
 
 // ═══════════════════════════════════════════════════════════
 // MARK: - XToggle (替代 VariantToggle)
