@@ -228,6 +228,27 @@ const RULES = [
 
 // ── 工程级断言（不是逐行扫，是整个 App 有没有做这件事）──
 const projectProblems = [];
+// ── 页面骨架必须走 XScreen ──
+//
+// 实证：53 个 UI 文件里 38 个有 ScrollView，而顶部留白有 **12 种写法** ——
+// 14 个「没有」、8 个 XSpace.m、若干 .s/.l/.xxl、3 个裸写 6/5/3。
+// 那不是审美分歧，是同一条规范被 38 次独立重猜。
+//
+// 判据：页面级 `ScrollView { VStack(spacing: XSpace.section) … }` 且
+// 同文件没有 XScreen → 报。只报这一种形状（最常见的那种），
+// 其余形状（List/Form/嵌套）判不了，不误伤。
+{
+  for (const f of files) {
+    if (!f.includes(path.join('App', 'UI'))) continue;
+    const src = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n');
+    if (/XScreen\(/.test(src)) continue;
+    const m = /ScrollView\s*\{\s*\n\s*VStack\(spacing:\s*XSpace\.section\)\s*\{/.exec(src);
+    if (!m) continue;
+    projectProblems.push('页面骨架手写：' + path.relative(ROOT, f) +
+                         ' 有 ScrollView + VStack(section)，应改用 XScreen（规范 §5.3）');
+  }
+}
+
 // ── §7.6 多段卡的节奏不许手写 ──
 //
 // 规范把这件事说得最重的一句：

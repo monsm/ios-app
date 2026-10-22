@@ -34,28 +34,22 @@ struct GatewayPage: View {
         ZStack {
             XPalette.canvas.ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: XSpace.section) {
-                    if !confirmed {
-                        stepOneCard.xScrollLift()
-                    } else {
-                        stepTwoCard.xScrollLift()
-                        if !steps.isEmpty || !error.isEmpty { progressCard.xScrollLift() }
-                    }
+        // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+        XScreen("智能网关", style: .inline) {
+            if !confirmed {
+                stepOneCard.xScrollLift()
+            } else {
+                stepTwoCard.xScrollLift()
+                if !steps.isEmpty || !error.isEmpty { progressCard.xScrollLift() }
+            }
 
-                    if !gateways.isEmpty {
-                        ForEach(gateways) { g in gatewayCard(g).xScrollLift() }
-                    } else {
-                        emptyState.xScrollLift()
-                    }
-                }
-                .padding(.horizontal, XSpace.gutter)
-                .padding(.vertical, XSpace.l)
-                .animation(XMotion.soft, value: confirmed)
+            if !gateways.isEmpty {
+                ForEach(gateways) { g in gatewayCard(g).xScrollLift() }
+            } else {
+                emptyState.xScrollLift()
             }
         }
-        .navigationTitle("智能网关")
-        .navigationBarTitleDisplayMode(.inline)
+        }
         .task { reload() }
     }
 
