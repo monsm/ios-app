@@ -360,12 +360,12 @@ struct FirmwarePage: View {
             HStack(spacing: XSpace.l) {
                 if !remainText.isEmpty {
                     Text(remainText)
-                        .xFont(.footnote.monospacedDigit())
+                        .xFontExact(.footnote.monospacedDigit())
                         .foregroundStyle(XPalette.textSub)
                 }
                 if rate > 0 {
                     Text(String(format: "%.1f %%/s", rate))
-                        .xFont(.footnote.monospacedDigit())
+                        .xFontExact(.footnote.monospacedDigit())
                         .foregroundStyle(XPalette.textSub)
                 }
             }
@@ -461,7 +461,7 @@ struct FirmwarePage: View {
                             .font(.system(size: XIcon.xs, weight: .medium))
                             .foregroundStyle(o.ok ? XPalette.ok : XPalette.danger)
                         Text(o.mac)
-                            .xFont(.caption.monospaced())
+                            .xFontExact(.caption.monospaced())
                             .foregroundStyle(XPalette.textSub)
                         Spacer(minLength: 0)
                         if !o.ok, !o.note.isEmpty {
@@ -494,7 +494,7 @@ struct FirmwarePage: View {
                                     .foregroundStyle(r.ok ? XPalette.ok : XPalette.danger)
                                 VStack(alignment: .leading, spacing: 1) {
                                     Text("\(r.from.isEmpty ? "—" : r.from) → \(r.to)")
-                                        .xFont(.caption.monospaced())
+                                        .xFontExact(.caption.monospaced())
                                         .foregroundStyle(XPalette.text)
                                     Text(dateShort(r.at))
                                         .xFont(.caption2)

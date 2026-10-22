@@ -332,7 +332,7 @@ struct LocalBackupFilesSection: View {
                     Spacer(minLength: 0)
                     if !files.isEmpty {
                         Text(String(files.count) + " 份")
-                            .xFont(.caption2.monospacedDigit())
+                            .xFontExact(.caption2.monospacedDigit())
                             .foregroundStyle(XPalette.textSub)
                     }
                 }
@@ -377,7 +377,7 @@ struct LocalBackupFilesSection: View {
                     .minimumScaleFactor(0.8)
                 HStack(spacing: XSpace.xs) {
                     Text(sizeLabel(f.bytes))
-                        .xFont(.caption2.monospacedDigit())
+                        .xFontExact(.caption2.monospacedDigit())
                         .foregroundStyle(XPalette.textSub)
                     Text("·")
                         .foregroundStyle(XPalette.textSub)
@@ -967,7 +967,7 @@ struct RestoreWizardView: View {
                 .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             TextField("粘贴备份", text: $text, axis: .vertical)
-                .xFont(.caption.monospaced())
+                .xFontExact(.caption.monospaced())
                 .lineLimit(3...6)
                 .autocorrectionDisabled()
             SecureField("口令 (带加密的备份才需要)", text: $pw)
@@ -1118,7 +1118,7 @@ struct RestoreWizardView: View {
             if roView, let lines = p.previewTrace?.prefix(5), !lines.isEmpty {
                 ForEach(Array(lines.enumerated()), id: \.offset) { _, ln in
                     Text(ln)
-                        .xFont(.caption.monospaced())
+                        .xFontExact(.caption.monospaced())
                         .foregroundStyle(XPalette.textSub)
                         .lineLimit(2)
                         .truncationMode(.middle)

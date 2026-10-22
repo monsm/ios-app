@@ -286,7 +286,7 @@ struct DevicePage: View {
                     .foregroundStyle(XPalette.textSub)
                 Spacer(minLength: 0)
                 Text("\(used) / \(cap)")
-                    .xFont(.caption.monospacedDigit())
+                    .xFontExact(.caption.monospacedDigit())
                     .foregroundStyle(XPalette.textSub)
             }
             // 格子条：已占用实色，剩余凹陷
@@ -440,7 +440,7 @@ struct DevicePage: View {
                     .foregroundStyle(XPalette.textSub)
                 Spacer()
                 Text(value)
-                    .xFont(.footnote.monospacedDigit())
+                    .xFontExact(.footnote.monospacedDigit())
                     .foregroundStyle(XPalette.text)
                     .lineLimit(1)
             }

@@ -599,7 +599,7 @@ struct TempCodeStudio: View {
                     }
                     TextField("输入码值, 或点「生成」", text: $pwd, prompt: Text("输入 6~8 位数字"))   // 516 输入
                         .keyboardType(.numberPad)
-                        .xFont(.title3.monospacedDigit(), weight: .semibold)
+                        .xFontExact(.title3.monospacedDigit(), weight: .semibold)
                         .frame(minHeight: XHit.min)
                         .autocorrectionDisabled()
                     if clipSource {
@@ -642,7 +642,7 @@ struct TempCodeStudio: View {
                             .foregroundStyle(XPalette.textSub)
                         ForEach([1, 2, 3, 5], id: \.self) { n in
                             Button(String(n)) { batchCount = n }
-                                .xFont(.caption.weight(batchCount == n ? .semibold : .medium))
+                                .xFontExact(.caption.weight(batchCount == n ? .semibold : .medium))
                                 .buttonStyle(.bordered)
                                 .frame(minHeight: XHit.min)
                                 .accessibilityLabel("批量 \(n) 张")   // 178 批量
@@ -1777,7 +1777,7 @@ struct OtpStudio: View {
                 .frame(minHeight: XHit.min)
                 .autocorrectionDisabled()
             TextField("Base32 密钥", text: $manualSecret, prompt: Text("验证器里那串 A-Z 与 2-7"))
-                .xFont(.footnote.monospaced())
+                .xFontExact(.footnote.monospaced())
                 .frame(minHeight: XHit.min)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.characters)
@@ -1878,14 +1878,14 @@ struct OtpStudio: View {
                 } label: {
                     HStack(spacing: XSpace.xs) {
                         Text(cap.recording ? "已隐去" : now)   // 374 已隐去
-                            .xFont(.title3.monospacedDigit(), weight: .semibold)
+                            .xFontExact(.title3.monospacedDigit(), weight: .semibold)
                             .foregroundStyle(XPalette.text)
                             .textSelection(.enabled)
                         Text("↓")
                             .xFont(.caption)
                             .foregroundStyle(XPalette.textSub)
                         Text(cap.recording ? "已隐去" : next)   // 374 已隐去
-                            .xFont(.title3.monospacedDigit(), weight: .semibold)
+                            .xFontExact(.title3.monospacedDigit(), weight: .semibold)
                             .foregroundStyle(XPalette.textSub)
                     }
                     .padding(.horizontal, XSpace.xs)
@@ -1936,7 +1936,7 @@ struct OtpStudio: View {
                     .minimumScaleFactor(0.8)
                 Spacer(minLength: 0)
                 Text(c.code)
-                    .xFont(.title3.monospacedDigit(), weight: .semibold)
+                    .xFontExact(.title3.monospacedDigit(), weight: .semibold)
                     .foregroundStyle(c.used ? XPalette.textSub : XPalette.text)
                     .textSelection(.enabled)
             }

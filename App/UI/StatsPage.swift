@@ -138,11 +138,11 @@ struct StatsPage: View {
                             }
                             .frame(height: 10)
                             Text(String(r.count))
-                                .xFont(.caption2.monospacedDigit())
+                                .xFontExact(.caption2.monospacedDigit())
                                 .foregroundStyle(XPalette.textSub)
                                 .frame(width: 30, alignment: .trailing)
                             Text(String(format: "%.0f%%", r.pct))
-                                .xFont(.caption2.monospacedDigit())
+                                .xFontExact(.caption2.monospacedDigit())
                                 .foregroundStyle(XPalette.textSub)
                                 .frame(width: 32, alignment: .trailing)
                         }
@@ -208,7 +208,7 @@ struct StatsPage: View {
                             }
                             .frame(height: 10)
                             Text(String(p.opens))
-                                .xFont(.caption2.monospacedDigit())
+                                .xFontExact(.caption2.monospacedDigit())
                                 .foregroundStyle(XPalette.textSub)
                                 .frame(width: 30, alignment: .trailing)
                         }

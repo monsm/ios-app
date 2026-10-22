@@ -281,19 +281,19 @@ struct MembersPage: View {
             VStack(alignment: .trailing, spacing: 2) {
                 if act.opens30 > 0 {
                     Text(String(act.opens30))
-                        .xFont(.body.monospacedDigit(), weight: .semibold)
+                        .xFontExact(.body.monospacedDigit(), weight: .semibold)
                         .foregroundStyle(XPalette.accent)
                     Text(act.month > 0 ? "本月 " + String(act.month) : "30 天")
                         .xFont(.caption2)
                         .foregroundStyle(XPalette.textTertiary)
                 } else if total > 0 {
                     Text(String(total) + " 份")
-                        .xFont(.caption.monospacedDigit())
+                        .xFontExact(.caption.monospacedDigit())
                         .foregroundStyle(XPalette.textSub)
                 }
                 // 权限数（5 项里允许几项）
                 Text(String(allowed) + "/" + String(perms.count))
-                    .xFont(.caption2.monospacedDigit())
+                    .xFontExact(.caption2.monospacedDigit())
                     .foregroundStyle(allowed == perms.count ? XPalette.ok : XPalette.warn)
             }
         }

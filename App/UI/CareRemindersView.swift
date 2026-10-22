@@ -144,11 +144,11 @@ struct CareRemindersView: View {
                         Spacer(minLength: XSpace.m)
                         if !md.isEmpty {
                             Text(md)
-                                .xFont(.caption.monospacedDigit())
+                                .xFontExact(.caption.monospacedDigit())
                                 .foregroundStyle(XPalette.textSub)
                         }
                         Text(countdownText(days))
-                            .xFont(.subheadline.monospacedDigit())
+                            .xFontExact(.subheadline.monospacedDigit())
                             .foregroundStyle(countdownTone(days))
                             .frame(minWidth: 56, alignment: .trailing)
                     }

@@ -275,7 +275,7 @@ struct AddLockPage: View {
                         .foregroundStyle(XPalette.text)
                         .lineLimit(1)
                     Text(lockMac == nil ? "广播无 MAC" : display)
-                        .xFont(.caption.monospaced())
+                        .xFontExact(.caption.monospaced())
                         .foregroundStyle(XPalette.textSub)
                 }
 
@@ -342,7 +342,7 @@ struct AddLockPage: View {
                             .font(.system(size: XIcon.xs, weight: .bold))
                             .foregroundStyle(XPalette.ok)
                         Text(s)
-                            .xFont(.caption.monospaced())
+                            .xFontExact(.caption.monospaced())
                             .foregroundStyle(XPalette.textSub)
                         Spacer(minLength: 0)
                     }

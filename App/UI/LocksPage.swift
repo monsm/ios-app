@@ -200,7 +200,7 @@ struct LocksPage: View {
                         Image(systemName: batteryIcon(p))
                             .font(.system(size: XIcon.xs, weight: .medium))
                         Text(String(p) + "%")
-                            .xFont(.caption2.monospacedDigit())
+                            .xFontExact(.caption2.monospacedDigit())
                     }
                     .foregroundStyle(batteryTone(p))
                 }

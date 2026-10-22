@@ -222,7 +222,7 @@ struct MemberDetail360View: View {
                 ForEach(Array(rows.enumerated()), id: \.offset) { _, r in
                 HStack(spacing: XSpace.s) {
                 Text(String(r.time.prefix(10)))
-                .xFont(.caption.monospacedDigit())
+                .xFontExact(.caption.monospacedDigit())
                 .foregroundStyle(XPalette.textSub)
                 Text(r.text)
                 .xFont(.subheadline)
@@ -253,7 +253,7 @@ struct MemberDetail360View: View {
                 ForEach(Array(rows.enumerated()), id: \.offset) { _, r in
                 HStack(spacing: XSpace.s) {
                 Text(SensitiveLedger.stamp(r))
-                .xFont(.caption.monospacedDigit())
+                .xFontExact(.caption.monospacedDigit())
                 .foregroundStyle(XPalette.textSub)
                 VStack(alignment: .leading, spacing: XSpace.xxs) {
                 Text(r.kind).xFont(.subheadline)
@@ -1140,7 +1140,7 @@ struct UnclaimedClaimView: View {
                                 Spacer(minLength: 0)
                                 if !unclaimed.isEmpty {
                                     Text(String(unclaimed.count) + " 条")
-                                        .xFont(.caption.monospacedDigit())
+                                        .xFontExact(.caption.monospacedDigit())
                                         .foregroundStyle(XPalette.textSub)
                                 }
                             }
@@ -1167,7 +1167,7 @@ struct UnclaimedClaimView: View {
                                     VStack(alignment: .leading, spacing: XSpace.xs) {
                                         HStack(spacing: XSpace.s) {
                                             Text(String(r.time.prefix(16)))
-                                                .xFont(.caption.monospacedDigit())
+                                                .xFontExact(.caption.monospacedDigit())
                                                 .foregroundStyle(XPalette.textSub)
                                             Text(r.kindWord + " (未归属, 台账推断)")
                                                 .xFont(.subheadline)

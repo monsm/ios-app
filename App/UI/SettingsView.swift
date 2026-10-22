@@ -149,7 +149,7 @@ struct SafemodeIntroView: View {
                 .foregroundStyle(XPalette.textSub)
             Spacer(minLength: 0)
             Text(value)
-                .xFont(.caption.monospacedDigit())
+                .xFontExact(.caption.monospacedDigit())
                 .foregroundStyle(on ? XPalette.ok : XPalette.textSub)
         }
         .accessibilityElement(children: .combine)

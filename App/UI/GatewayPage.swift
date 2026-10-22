@@ -193,7 +193,7 @@ struct GatewayPage: View {
                         .padding(.top, 5)
 
                         Text(s)
-                            .xFont(.caption.monospaced())
+                            .xFontExact(.caption.monospaced())
                             .foregroundStyle(XPalette.text)
                             .fixedSize(horizontal: false, vertical: true)
 
@@ -315,7 +315,7 @@ struct GatewayPage: View {
                 .foregroundStyle(XPalette.textSub)
             Spacer(minLength: 0)
             Text(value)
-                .xFont(.caption2.monospacedDigit())
+                .xFontExact(.caption2.monospacedDigit())
                 .foregroundStyle(XPalette.textSub)
         }
         .accessibilityElement(children: .combine)
@@ -328,7 +328,7 @@ struct GatewayPage: View {
                 .xFont(.caption2)
                 .foregroundStyle(XPalette.textSub)
             Text(value)
-                .xFont(.caption.monospaced())
+                .xFontExact(.caption.monospaced())
                 .foregroundStyle(XPalette.text)
                 .lineLimit(1)
         }

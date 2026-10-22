@@ -359,10 +359,20 @@ jobs:
       # 令牌 → 渲染 → 像素 的闭环。断言用规范里钉死的常量, 不是从 Theme.swift 反读
       # (反读等于两边一起变, 探针永远绿 —— 第一版就是这么错的)。
       # 它只证明颜色链路没断, 不证明 SwiftUI 长这样。
-      - name: '预览渲染与令牌一致性 (preview: 无头 Edge 截图后逐像素比对, **深色档（规范 §13.4 只做深色）**; 判失败)'
+      - name: '预览渲染与令牌一致性 (preview: 逐像素比对令牌 → 渲染 → 像素；无浏览器则明确跳过)'
         run: |
+          # preview 依赖无头浏览器（本地工具）。GitHub runner 不自带 Chrome/Edge。
+          # 没有就**明确跳过并写明原因**，而不是让它以「缺 PNG」判失败 —— 那种红是环境问题。
+          # 另：`--light` 已按规范 §13.4（只做深色）停用，会 exit 1；这一行必须去掉。
+          BROWSER=""
+          for c in google-chrome chromium chromium-browser microsoft-edge; do
+            if command -v "$c" >/dev/null 2>&1; then BROWSER="$c"; break; fi
+          done
+          if [ -z "$BROWSER" ]; then
+            echo "::notice title=preview 跳过::runner 没有 Chrome/Edge；preview 是本地逐像素校验工具，请在开发机执行 node tools/preview.js --png && node tools/preview.js --check"
+            exit 0
+          fi
           node tools/preview.js --png
-          node tools/preview.js --png --light
           node tools/preview.js --check
 
       # 签名密钥指纹核对 (2026-10-18): 用户报"签名不一致, 不能覆盖安装"。

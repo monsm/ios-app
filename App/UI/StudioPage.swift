@@ -193,7 +193,7 @@ struct StudioPage: View {
                     // 实时数量 —— 一眼知道这一类有多少条
                     let n = count(k)
                     Text(String(n))
-                        .xFont(.caption.monospacedDigit(), weight: .semibold)
+                        .xFontExact(.caption.monospacedDigit(), weight: .semibold)
                         .foregroundStyle(n > 0 ? k.tint : XPalette.textTertiary)
                     Spacer(minLength: 0)
                 }

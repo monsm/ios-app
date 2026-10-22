@@ -188,7 +188,7 @@ struct FeedPage: View {
                     }
                     HStack(spacing: XSpace.xs) {
                         Text(r.time)
-                            .xFont(.caption.monospacedDigit())
+                            .xFontExact(.caption.monospacedDigit())
                             .foregroundStyle(XPalette.textSub)
                         Text("·")
                             .foregroundStyle(XPalette.textSub)
@@ -266,7 +266,7 @@ struct FeedPage: View {
                 .xFont(.footnote, weight: .semibold)
                 .foregroundStyle(XPalette.textSub)
             Text(String(count) + " 条")
-                .xFont(.caption2.monospacedDigit())
+                .xFontExact(.caption2.monospacedDigit())
                 .foregroundStyle(XPalette.textTertiary)
             if alarms > 0 {
                 HStack(spacing: 2) {
@@ -274,7 +274,7 @@ struct FeedPage: View {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.system(size: XIcon.xs, weight: .semibold))
                     Text(String(alarms))
-                        .xFont(.caption2.monospacedDigit())
+                        .xFontExact(.caption2.monospacedDigit())
                 }
                 .foregroundStyle(XPalette.warn)
             }

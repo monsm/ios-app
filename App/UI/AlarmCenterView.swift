@@ -322,7 +322,7 @@ struct AlarmCenterView: View {
                             Text(e.lock).xFont(.caption).foregroundStyle(XPalette.text)
                                 .lineLimit(1).minimumScaleFactor(0.8)
                             Spacer(minLength: 0)
-                            Text(e.time).xFont(.caption2.monospacedDigit()).foregroundStyle(XPalette.textSub)
+                            Text(e.time).xFontExact(.caption2.monospacedDigit()).foregroundStyle(XPalette.textSub)
                         }
                     }
                 } label: {
@@ -549,7 +549,7 @@ struct AlarmCenterView: View {
                 .lineLimit(1)
             Spacer(minLength: 0)
             Text(r.timeStr.isEmpty ? "--:--" : String(r.timeStr.dropFirst(11).prefix(5)))
-                .xFont(.caption.monospacedDigit())
+                .xFontExact(.caption.monospacedDigit())
                 .foregroundStyle(XPalette.textSub)
                 .lineLimit(1)
         }
@@ -770,7 +770,7 @@ struct AlarmCenterView: View {
                     ForEach(events.prefix(5)) { e in
                         HStack(spacing: XSpace.xs) {
                             Text(e.timeStr.isEmpty ? "时间未知" : String(e.timeStr.dropFirst(5)))
-                                .xFont(.caption.monospacedDigit())
+                                .xFontExact(.caption.monospacedDigit())
                                 .foregroundStyle(XPalette.textSub)
                                 .lineLimit(1)
                             if macs.count > 1 {

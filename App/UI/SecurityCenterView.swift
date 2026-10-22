@@ -811,7 +811,7 @@ struct SecurityAuditView: View {
                                 .xFont(.caption, weight: .medium)
                                 .foregroundStyle(XPalette.textSub)
                             Text((vals.first ?? "") + " → " + (vals.count > 1 ? vals[1] : "∅"))
-                                .xFont(.caption.monospaced())
+                                .xFontExact(.caption.monospaced())
                                 .foregroundStyle(XPalette.text)
                                 .lineLimit(2)
                         }
@@ -830,7 +830,7 @@ struct SecurityAuditView: View {
                             .xFont(.caption)
                             .foregroundStyle(XPalette.textSub)
                         Text(String(e.hash.prefix(12)) + "…")
-                            .xFont(.caption.monospaced())
+                            .xFontExact(.caption.monospaced())
                             .foregroundStyle(XPalette.textSub)
                             .frame(maxWidth: .infinity, alignment: .trailing)
                     }

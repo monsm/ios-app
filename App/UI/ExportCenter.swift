@@ -1916,14 +1916,14 @@ struct ExportCenterView: View {
             }
             if !item.previewText.isEmpty {
                 Text(item.previewText)
-                    .xFont(.caption.monospaced())
+                    .xFontExact(.caption.monospaced())
                     .foregroundStyle(XPalette.textSub)
                     .textSelection(.enabled)
                     .fixedSize(horizontal: false, vertical: true)
                     .lineLimit(8)
             }
             Text("SHA-256: " + item.sha256)
-                .xFont(.caption.monospaced())
+                .xFontExact(.caption.monospaced())
                 .foregroundStyle(XPalette.textSub)
                 .lineLimit(2)
             if !item.images.isEmpty {
@@ -2026,12 +2026,12 @@ struct ExportCenterView: View {
                     }
                     LabeledRow("行数", String(c.rows) + " 行")   // 710 行数
                     Text("摘要: " + c.digest)
-                        .xFont(.caption.monospaced())
+                        .xFontExact(.caption.monospaced())
                         .foregroundStyle(XPalette.textSub)
                         .textSelection(.enabled)
                         .fixedSize(horizontal: false, vertical: true)
                     Text(c.payload)
-                        .xFont(.caption.monospaced())
+                        .xFontExact(.caption.monospaced())
                         .foregroundStyle(XPalette.textSub)
                         .textSelection(.enabled)
                         .fixedSize(horizontal: false, vertical: true)

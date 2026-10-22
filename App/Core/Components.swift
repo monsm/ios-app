@@ -802,7 +802,7 @@ struct XCodeRing: View {
                 .minimumScaleFactor(0.75)
             Spacer(minLength: 0)
             Text("\(max(period, 1))s")
-                .xFont(.caption2.monospacedDigit())
+                .xFontExact(.caption2.monospacedDigit())
                 .foregroundStyle(XPalette.textSub)
         }
     }
@@ -876,7 +876,7 @@ struct XCodeRing: View {
                     .lineLimit(1)
                     .textSelection(.enabled)
                 Text("\(Int(ceil(remaining))) 秒后刷新")
-                    .xFont(.caption2.monospacedDigit())
+                    .xFontExact(.caption2.monospacedDigit())
                     .foregroundStyle(remaining <= 5 ? XPalette.warn : XPalette.textSub)
                     .contentTransition(.numericText())
             }
@@ -893,7 +893,7 @@ struct XCodeRing: View {
                 .xFont(.caption2)
                 .foregroundStyle(XPalette.textSub)
             Text(masked ? "••• •••" : nextCode)
-                .xFont(.footnote.monospacedDigit(), weight: .medium)
+                .xFontExact(.footnote.monospacedDigit(), weight: .medium)
                 .foregroundStyle(XPalette.textSub)
             Spacer(minLength: 0)
         }

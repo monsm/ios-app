@@ -142,7 +142,7 @@ struct DonglesPage: View {
                         .xFont(.body, weight: .medium)
                         .foregroundStyle(XPalette.text)
                     Text(dongleDisplay(d.mac))
-                        .xFont(.caption.monospaced())
+                        .xFontExact(.caption.monospaced())
                         .foregroundStyle(XPalette.textSub)
                 }
 
@@ -192,7 +192,7 @@ struct DonglesPage: View {
                         .frame(height: 6)
 
                         Text(st.power < 0 ? "—" : "\(st.power)%")
-                            .xFont(.caption.monospacedDigit())
+                            .xFontExact(.caption.monospacedDigit())
                             .foregroundStyle(XPalette.textSub)
                             .frame(width: 40, alignment: .trailing)
                     }
@@ -241,7 +241,7 @@ struct DonglesPage: View {
                 .foregroundStyle(XPalette.textSub)
             Spacer(minLength: 0)
             Text(value)
-                .xFont(.caption2.monospacedDigit())
+                .xFontExact(.caption2.monospacedDigit())
                 .foregroundStyle(tone == .neutral ? XPalette.textSub : tone.color)
         }
         .accessibilityElement(children: .combine)
@@ -254,7 +254,7 @@ struct DonglesPage: View {
                 .xFont(.caption2)
                 .foregroundStyle(XPalette.textSub)
             Text(value)
-                .xFont(.caption.monospacedDigit())
+                .xFontExact(.caption.monospacedDigit())
                 .foregroundStyle(XPalette.text)
         }
         .frame(maxWidth: .infinity, alignment: .leading)

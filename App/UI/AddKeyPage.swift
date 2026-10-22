@@ -98,7 +98,7 @@ struct AddKeyPage: View {
                         .foregroundStyle(full ? XPalette.warn : XPalette.textSub)
                     Spacer(minLength: 0)
                     Text(String(used) + " / " + String(cap))
-                        .xFont(.caption2.monospacedDigit())
+                        .xFontExact(.caption2.monospacedDigit())
                         .foregroundStyle(XPalette.textSub)
                 }
             }
@@ -333,7 +333,7 @@ struct AddKeyPage: View {
                     .foregroundStyle(selected ? XPalette.onAccent : XPalette.text)
                 if existing > 0 {
                     Text(String(existing))
-                        .xFont(.caption2.monospacedDigit(), weight: .semibold)
+                        .xFontExact(.caption2.monospacedDigit(), weight: .semibold)
                         .foregroundStyle(selected
                                          ? XPalette.onAccent.opacity(0.8)
                                          : XPalette.textTertiary)

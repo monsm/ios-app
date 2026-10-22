@@ -608,7 +608,7 @@ struct CareChecklistView: View {
                 .foregroundStyle(XPalette.textSub)
             Spacer(minLength: 0)
             Text(value)
-                .xFont(.caption.monospacedDigit())
+                .xFontExact(.caption.monospacedDigit())
                 .foregroundStyle(XPalette.textSub)
         }
         .accessibilityElement(children: .combine)

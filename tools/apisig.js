@@ -463,7 +463,13 @@ if (deadExtensions.length > 0) {
 {
   let n = 0;
   for (const f of files) n += (fs.readFileSync(f, 'utf8').match(/\.xFontExact\(/g) || []).length;
-  const BUDGET = 23;   // 2026-10-22 基线
+  // 2026-10-22 基线 23 → **91**。
+  // 涨的原因不是"又绕开字阶了"，而是**上一版判据漏了一整类调用**：
+  //   .xFont(.caption2.monospacedDigit()) —— 实参是 Font 值，不是 XText case。
+  //   my 校验正则用了 \b，".caption2." 的 word boundary 让它们全部混过了检查，
+  //   于是 851 处"全部 XText"的结论是假的；改名 xFontExact 后这些调用点直接编不过。
+  //   CI 的编译错误（AddFingerPage 类型检查超时）就是它们的表现。
+  const BUDGET = 91;   // 收紧型：只许变少
   if (n > BUDGET) {
     console.error('✗ xFontExact 用法 ' + n + ' 处，超过预算 ' + BUDGET + ' ——');
     console.error('  它是显式字号的逃生门，多了说明排版又在绕开规范 §4.2 的字阶。');

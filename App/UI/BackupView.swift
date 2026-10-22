@@ -118,7 +118,7 @@ struct BackupView: View {
                         Text("共 \(exportText.count) 字符")
                             .xFont(.caption).foregroundStyle(XPalette.textSub)
                         Text(exportText)
-                            .xFont(.caption.monospaced())
+                            .xFontExact(.caption.monospaced())
                             .lineLimit(8).truncationMode(.tail)
                             .textSelection(.enabled) // 也可手动复制
                         ShareLink(item: exportText, preview: SharePreview("离线锁管家备份"))
@@ -138,7 +138,7 @@ struct BackupView: View {
                     .xFont(.footnote).foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
                 TextField("粘贴备份文本", text: $importText, axis: .vertical)
-                    .xFont(.caption.monospaced())
+                    .xFontExact(.caption.monospaced())
                     .lineLimit(3...6)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()

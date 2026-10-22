@@ -344,7 +344,7 @@ struct BackupPage: View {
         NavigationStack {
             VStack(spacing: XSpace.l) {
                 TextEditor(text: $importText)
-                    .xFont(.footnote.monospaced())
+                    .xFontExact(.footnote.monospaced())
                     .scrollContentBackground(.hidden)
                     .background(XPalette.surfaceSunken,
                                 in: RoundedRectangle(cornerRadius: XRadius.control, style: .continuous))

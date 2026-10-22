@@ -531,7 +531,7 @@ struct EventsPage: View {
                 .xFont(.footnote, weight: .medium)
                 .foregroundStyle(XPalette.textSub)
             Text("\(group.items.count) 条")
-                .xFont(.caption2.monospacedDigit())
+                .xFontExact(.caption2.monospacedDigit())
                 .foregroundStyle(XPalette.textSub)
             let alarms = group.items.filter { $0.alarm }.count
             if alarms > 0 {
@@ -541,7 +541,7 @@ struct EventsPage: View {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.system(size: XIcon.xs, weight: .semibold))
                     Text("\(alarms)")
-                        .xFont(.caption2.monospacedDigit())
+                        .xFontExact(.caption2.monospacedDigit())
                 }
                 .foregroundStyle(XPalette.warn)
             }
@@ -613,7 +613,7 @@ struct EventsPage: View {
         return HStack(alignment: .top, spacing: XSpace.m) {
             // 时间
             Text(shortTime(rec.timeStr))
-                .xFont(.caption.monospacedDigit())
+                .xFontExact(.caption.monospacedDigit())
                 .foregroundStyle(XPalette.textSub)
                 .frame(width: 42, alignment: .trailing)
                 .padding(.top, 3)

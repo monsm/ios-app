@@ -561,7 +561,7 @@ struct AutoCalView: View {
                     Spacer(minLength: 0)
                     if calibrating {
                         Text("\(collected) / 30s")
-                            .xFont(.caption2.monospacedDigit())
+                            .xFontExact(.caption2.monospacedDigit())
                             .foregroundStyle(XPalette.accent)
                     }
                 }

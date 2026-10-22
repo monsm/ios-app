@@ -309,7 +309,10 @@ extension View {
 //     (二级/三级灰在深色档本就靠"半透明白"实现观感, 压实 = 提亮);
 //   · 分隔线加粗一档, 让它在纯黑画布上真的能看见。
 struct AXContrastModifier: ViewModifier {
-    @Environment(\.accessibilityContrast) private var contrast
+    // `\.accessibilityContrast` **不是 SwiftUI 的键** —— 编译报
+    // 「cannot infer key path type from context」。真正的键是 `\.colorSchemeContrast`，
+    // 类型 `ColorSchemeContrast`（.standard / .increased）。
+    @Environment(\.colorSchemeContrast) private var contrast
 
     func body(content: Content) -> some View {
         if contrast == .increased || XAppearance.highContrast {

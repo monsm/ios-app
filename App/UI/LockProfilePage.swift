@@ -163,7 +163,7 @@ struct LockProfilePage: View {
             Image(systemName: icon)
                 .font(.system(size: XIcon.xs, weight: .medium))
             Text(text)
-                .xFont(.caption2.monospacedDigit())
+                .xFontExact(.caption2.monospacedDigit())
         }
         .foregroundStyle(tone)
         .padding(.horizontal, 7)
