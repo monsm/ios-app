@@ -528,6 +528,11 @@ const checks = [
     const p = CODE.get('DiagnosticsPage.swift') || '';
     return d.includes('static func applyRetentionNow()') && p.includes('DiagLogs.applyRetentionNow()');
   }],
+  ['视觉改动可被人工定位', () => {
+    // 改了几十个界面文件，人工验收无从下手。工具把碰了字体/间距/颜色的行按界面列出来，
+    // 并标出本次新建的文件（从没人看过，优先验）。
+    return fs.existsSync(path.join(__dirname, '..', 'tools', 'visualreview.js'));
+  }],
 ];
 
 let pass = 0;
