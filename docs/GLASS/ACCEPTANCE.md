@@ -64,7 +64,7 @@
 | C4 | ⚠️ | 环型与语义匹配：本仓只有「圆形进度环」一族。三段分色与同心三环**已删除** —— 本 App 没有 Move/Exercise/Stand 数据，做了就是永久显示 0 的装饰环。见 `DEVIATIONS.md` §6。**另：第五轮补了 `XBreathing` —— 无限循环动画收成一处并切断隐式继承（DESIGN-SPEC §2.5），此前 5 处手写会与父层抢属性** |
 | C5 | ✅ 机检 | `DSRing.minStrokeLarge = 30`（锁死下限）、`DSRing.stroke(forDiameter:) = max(30, d*0.12)`；开锁环 220 → 线宽 30；`DSRing.cursor = 18` 且已接进 `HomeConsole` |
 | C6 | ✅ | 卡片头部灰色链接 + chevron：`XRow` 的 chevron 走 `textSub`。全仓**不存在**「卡头链接」（`Sleep ›`）形态 —— 本仓卡片用「整卡可点 + 行内 chevron」，所以谈不上混用 |
-| C7 | ⚠️ | StatCard 页脚注释槽位：本仓卡片没有统一的页脚注释槽，说明文字就近写在卡内。**结构性偏离，未改** |
+| C7 | ✅ | 2026-10-23：页脚注释按 §7.6 的 **12 Regular / 行高 1.6** 修正。原来两处多段卡（`CarePage.periodCard` / `HomeConsole.todaySection`）都是 caption(11) + lineSpacing 3 = 行高 **1.27**，页脚挤成一团、和正文抢注意力。现为 footnote(12) + lineSpacing 7（≈19.2）。**XPanel 仍不强制页脚槽** —— 需要页脚的卡自己写，但数值口径已统一。 |
 | C8 | ✅ 机检 | `XHit.min` 144 处；`tools/dynamictype.js` 规则 4 专查 <44pt 的可点区域，零命中 |
 | C9 | ✅ | 分段控件无指示条：`KeysPage.segmentBar` 是胶囊组，**无下划线/无 `height: 2` 指示条**（脚本扫过）。`matchedGeometryEffect` 只在 Tab Bar 微光胶囊用 1 处，是规范允许的位置 |
 
@@ -135,7 +135,7 @@
 | J2 | ❌ 不适用 | 设备样机 —— 无 |
 | J3 | ❌ 不适用 | 图像素材 —— 无 |
 | J4 | ✅ | 骨架屏 `XSkeleton`：块数/高度/圆角照最终卡片节奏，1.4s 流光，`reduceMotion` 下留静态占位 |
-| J5 | ✅ | 错误态三件套：`UnlockFailure` 按可恢复性分三类且给可点的去处；`XEmptyState` 带动作的出现 5 处、「重试」按钮 3 处。**未逐页核是否每个错误态都齐三件套**，但骨架已就位 |
+| J5 | ⚠️ | 2026-10-23 **把假绿降级**。原来挂 ✅，理由却写着「未逐页核是否每个错误态都齐三件套」—— **那不是通过，那是没核**。已补：`XInlineError` 现在支持 `retry` 与 `retryTitle`，AddFingerPage（重新录入）与 GatewayPage（重新配网）两处接上真实动作。**但全仓错误态仍未逐页核完**，所以只能是 ⚠️。 |
 | J6 | ⚠️ | 部分数据保留结构：`LabeledRow` 用 `—` 表示缺失且不隐藏行；`StatsPage.degradedCard` 保留卡结构给说明。未逐页核 |
 
 ## K. 字号（4 项）

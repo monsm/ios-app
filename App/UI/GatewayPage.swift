@@ -203,7 +203,9 @@ struct GatewayPage: View {
                 }
 
                 if !error.isEmpty {
-                    XInlineError(message: error)
+                    // J5 / §7.20.3：失败后可以直接重试这一步，不必让用户重新找入口。
+                    XInlineError(message: error, retry: { Task { await provision() } },
+                                 retryTitle: "重新配网")
                 }
             }
             .animation(XMotion.standard, value: steps.count)

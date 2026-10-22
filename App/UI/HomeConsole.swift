@@ -743,10 +743,11 @@ struct HomeConsole: View {
                         .xFont(.body, weight: .semibold, design: .rounded)
                         .foregroundStyle(XPalette.text)
                 }
+                // §7.6 页脚注释：**12 Regular / 行高 1.6**（原来是 caption 11 + 行距 3 = 1.27）。
                 Text("今天 \(opensToday) 次开门，其中 \(todayPeople) 位成员参与。柱高是该小时的开门次数。")
-                    .xFont(.caption)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
-                    .lineSpacing(3)
+                    .lineSpacing(7)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }

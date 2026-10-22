@@ -1579,24 +1579,41 @@ struct XValueUnit: View {
 /// 但 §4.2 明写已全线下修 13→12，§10 又给了固定七档（24 不在七档内，取最近的 22）。
 struct XInlineError: View {
     var message: String
+    /// 规范 §7.20.3 / J5：错误态要说清「什么坏了 + 怎么办」，**并且给出重试**。
+    ///
+    /// 2026-10-23 补：这一版原来只有图标 + 文案 —— 而验收表 J5 却挂着 ✅，
+    /// 理由是「骨架已就位，未逐页核是否齐三件套」。**那不是通过，那是没核。**
+    /// 现在把「怎么办」做进组件本身：给了 retry 就出按钮，没给就说明这个错误没有可重试的动作。
+    var retry: (() -> Void)? = nil
+    /// 重试按钮的文案。默认「重试」；动作不是「再试一次」时（比如「重新扫描」）由调用方给。
+    var retryTitle: String = "重试"
 
     var body: some View {
-        HStack(alignment: .top, spacing: XSpace.s) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: XIcon.xm, weight: .semibold))
-                .foregroundStyle(XPalette.danger)
-                .accessibilityHidden(true)
-            Text(message)
-                .xFont(.footnote)
-                .foregroundStyle(XPalette.danger)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
+        VStack(alignment: .leading, spacing: XSpace.s) {
+            HStack(alignment: .top, spacing: XSpace.s) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: XIcon.xm, weight: .semibold))
+                    .foregroundStyle(XPalette.danger)
+                    .accessibilityHidden(true)
+                Text(message)
+                    .xFont(.footnote)
+                    .foregroundStyle(XPalette.danger)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            if let retry {
+                // §7.20.3 给的是 32pt 高的次要按钮。
+                Button(retryTitle, action: retry)
+                    .buttonStyle(XSecondaryButtonStyle())
+                    .frame(height: 32)
+                    .accessibilityHint("重新执行刚才失败的那一步")
+            }
         }
         .padding(XSpace.m)
         .background(XPalette.danger.opacity(XOpacity.wash),
                     in: RoundedRectangle(cornerRadius: XRadius.control, style: .continuous))
         // 颜色不是唯一信号（§13.3）：图标形状 + 文案本身就说明了这是失败。
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .contain)
     }
 }
 

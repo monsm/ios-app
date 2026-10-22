@@ -303,7 +303,13 @@ struct AddFingerPage: View {
     }
 
     // 行内错误条统一走 XInlineError（此前这里、钥匙工坊、网关页各写了一遍，三处尺寸都不同）
-    private var errorBanner: some View { XInlineError(message: error) }
+    private var errorBanner: some View {
+        // J5 / §7.20.3：错误态要给「怎么办」。这里「怎么办」就是**再录一次** ——
+        // 指纹录入失败绝大多数是手指没放稳或中途抬起，重试是有意义的动作。
+        XInlineError(message: error, retry: {
+            enrollTask = Task { await start() }
+        }, retryTitle: "重新录入")
+    }
 
     // ═══════════════════════════════════════════════════════
     // MARK: - 成功

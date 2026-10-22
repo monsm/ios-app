@@ -123,10 +123,13 @@ struct CarePage: View {
                 XHairline()
                     .padding(.top, 2)
 
+                // §7.6 页脚注释：**12 Regular / 行高 1.6**。原来是 caption(11) + lineSpacing 3，
+                // 行高只有 1.27 —— 页脚读起来挤成一团，和正文抢注意力。
+                // 12 × 1.6 = 19.2，行距补 7（19.2 − 12 ≈ 7）。
                 Text(periodDetail(days))
-                    .xFont(.caption)
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
-                    .lineSpacing(3)
+                    .lineSpacing(7)
                     .fixedSize(horizontal: false, vertical: true)
 
                 if days <= 0 {
