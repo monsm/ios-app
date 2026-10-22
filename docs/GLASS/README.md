@@ -1575,7 +1575,60 @@ textTertiary / danger / warn / ok 十个。
 | 闸门 | 23 道全绿 |
 | 骨架屏 | 六项全部符规范 |
 | 错误条 | 卡片内的三处收成一个组件 |
-## 27. 一句话交接
+
+---
+
+## 27. 第十九轮：§13 无障碍（三条硬规则 + 一处 a11y 文案）
+
+### 27.1 「环不随字号缩放」——本来就对，现在有断言看着
+
+查下来 `XCycleRing` 与开锁大环都没有 `@ScaledMetric`，尺寸是固定值。
+**这条本来就是对的**。已补断言防止以后有人顺手给它加上。
+
+### 27.2 「AX3：displayNumber 允许降至 44pt」——本仓做反了
+
+`displayNumber` 走 `XText` + `@ScaledMetric`，也就是**跟着字号放大**。
+但它装在**固定尺寸的环里** —— 放大会把数字顶出环外。
+规范给的方向是反的：AX 档**降到 44**。已改：
+
+```swift
+private var finalSize: CGFloat {
+    guard style == .displayNumber else { return scaled }
+    return typeSize.isAccessibilitySize ? 44 : min(scaled, DSFont.displayNumber)
+}
+```
+
+### 27.3 一个数写了两处
+
+`DSFont.displayNumber = 56` 与 `XText.displayNumber → 56` 是**两个真相源**。
+已改成后者转发前者，并加断言：Theme.swift 里 `= 56` 只许出现一次。
+
+### 27.4 a11y 文案：逗号拼接不是一句话
+
+`XCycleRing` 的读屏标签原本是 headline 与 caption 用 ASCII 逗号拼起来，
+读出来是「53, 天后」。规范 §13.5 给的是**自然语句**：「睡眠分数 53，共 7 小时 42 分」。
+
+已加 `a11yText` 参数，调用方可给整句；没给时退化成「值，标签」并把逗号改全角（§12）。
+保养卡已传：「保养周期已用 100%，该做保养了」。
+
+### 27.5 §13.3 三条机检结果
+
+| 规则 | 结果 |
+|---|---|
+| 环旁必须有数字与标签 | 通过（headline + caption，且进 a11y 标签）|
+| 变化量必须有箭头 | 通过（全仓 43 处箭头：arrow.up / arrow.down / ↑ ↓）|
+| 选中 Tab 图标形状本身也变化 | 通过（selectedSymbol = symbol + .fill）|
+
+### 27.6 新增断言（各做过注入验证）
+
+| 断言 | 注入 |
+|---|---|
+| AX 档 displayNumber 必须降到 44 | 去掉三元 → 开火 |
+| displayNumber 必须封顶在 56 | 改成裸 scaled → 开火 |
+| Theme.swift 里 = 56 只许一处 | 第二处出现即失败 |
+
+23 道闸门全绿。
+## 28. 一句话交接
 
 **视觉层：脱胎换骨。结构层：一针都没多缝。**
 

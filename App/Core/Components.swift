@@ -579,6 +579,7 @@ struct XTextModifier: ViewModifier {
     let design: Font.Design
 
     @ScaledMetric private var scaled: CGFloat
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     init(style: XText, weightOverride: Font.Weight?, design: Font.Design = .default) {
         self.style = style
@@ -587,8 +588,17 @@ struct XTextModifier: ViewModifier {
         _scaled = ScaledMetric(wrappedValue: style.size, relativeTo: style.relativeTo)
     }
 
+    /// 规范 §13.1：「**环不随字号缩放**」「AX3：displayNumber **允许降至 44pt**」。
+    ///
+    /// displayNumber 装在**固定尺寸**的环里 —— 跟着 Dynamic Type 放大会把数字顶出环外。
+    /// 所以它走另一条路：不放大，AX 档反而降到规范给的 44。
+    private var finalSize: CGFloat {
+        guard style == .displayNumber else { return scaled }
+        return typeSize.isAccessibilitySize ? 44 : min(scaled, DSFont.displayNumber)
+    }
+
     func body(content: Content) -> some View {
-        content.font(.system(size: scaled, weight: weightOverride ?? style.weight, design: design).monospacedDigit())
+        content.font(.system(size: finalSize, weight: weightOverride ?? style.weight, design: design).monospacedDigit())
     }
 }
 extension View {
@@ -1275,7 +1285,10 @@ struct XCycleRing: View {
             else { withAnimation(XMotion.standard) { shown = v } }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(headline), \(caption)")
+        // 规范 §13.5 的 VoiceOver 格式是**自然语句**，不是把两个词用逗号拼起来：
+        //   「睡眠分数 53，共 7 小时 42 分」→ 读出来是一句话，不是一个值加一个标签。
+        // 调用方给 a11yText 就用它；没给就退化成「值，标签」，并注明这是兜底。
+        .accessibilityLabel(a11yText ?? "\(headline)，\(caption)")
         // 超期脉冲是无限循环 —— 切断隐式继承 (本仓 DESIGN-SPEC §2.5)。
         // 不做这一步时, 外层任何 animation 重算都会把这条循环曲线打断重来,
         // 表现为"呼吸偶尔卡一下", 而代码上完全看不出来。

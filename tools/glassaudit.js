@@ -247,6 +247,24 @@ const projectProblems = [];
     projectProblems.push('XSkeleton 的高光不是 rgba(255,255,255,0.06) —— 规范 §7.20.1');
   }
 }
+
+{
+  // 规范 §13.1：「环不随字号缩放」「AX3：displayNumber 允许降至 44pt」。
+  // displayNumber 装在固定尺寸的环里 —— 跟着 Dynamic Type 放大会把数字顶出环外。
+  const compSrc2 = fs.readFileSync(path.join(ROOT, 'App/Core/Components.swift'), 'utf8');
+  const mod = compSrc2.slice(compSrc2.indexOf('struct XTextModifier'));
+  const modBody = mod.slice(0, mod.indexOf('\n}\n') + 2);
+  if (!/typeSize\.isAccessibilitySize \? 44/.test(modBody)) {
+    projectProblems.push('XTextModifier 没有把 displayNumber 在 AX 档降到 44 —— 规范 §13.1');
+  }
+  if (!/min\(scaled, DSFont\.displayNumber\)/.test(modBody)) {
+    projectProblems.push('displayNumber 没有被封顶在 56 —— 固定尺寸的环里放大会顶出环外');
+  }
+  // 单一来源：56 只应在 DSFont 出现一次
+  const themeSrc2 = fs.readFileSync(path.join(ROOT, 'App/Core/Theme.swift'), 'utf8');
+  const literals = (themeSrc2.match(/= 56\b/g) || []).length;
+  if (literals > 1) projectProblems.push('56 这个数在 Theme.swift 出现了 ' + literals + ' 次 —— 应当只有 DSFont.displayNumber 一处');
+}
 {
   const appSrc = fs.readFileSync(path.join(ROOT, 'App/LockKeeperApp.swift'), 'utf8');
   // 规范 §10：图标渲染用 .hierarchical。缺了就是全仓图标跑在 .monochrome 上（单层平涂）。

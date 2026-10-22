@@ -652,7 +652,8 @@ enum XText: Sendable {
     /// 规范给的字号。**这是唯一真相源**，不许在调用点再写字面量。
     var size: CGFloat {
         switch self {
-        case .displayNumber: return 56
+        // 单一来源：56 只在 DSFont 写一次，这里转发。
+        case .displayNumber: return DSFont.displayNumber
         case .display:       return 36
         case .largeTitle:    return 30
         case .title2:        return 19

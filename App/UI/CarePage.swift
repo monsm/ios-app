@@ -108,6 +108,10 @@ struct CarePage: View {
                             ? "\(Int((Double(elapsed) / Double(max(period, 1)) * 100).rounded()))%"
                             : "—",
                         caption: care.lastCareAt > 0 ? "已用" : "未记录",
+                        // 规范 §13.5：读屏要读**一句话**，不是两个词用逗号拼起来。
+                        a11yText: care.lastCareAt > 0
+                            ? "保养周期已用 \(Int((Double(elapsed) / Double(max(period, 1)) * 100).rounded()))%，\(days > 0 ? "还剩 \(days) 天" : "该做保养了")"
+                            : "保养周期尚未记录",
                         size: 104)
                 }
 
