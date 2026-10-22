@@ -229,6 +229,31 @@ const RULES = [
 // ── 工程级断言（不是逐行扫，是整个 App 有没有做这件事）──
 const projectProblems = [];
 {
+  // 规范 J6：部分数据时**保留卡片结构**，缺失项显示占位，而不是把整行藏掉。
+  //
+  // 判法：`if <cond> { ... XRow(...) }` 这种「条件成立才出行、没有 else 兜底」的形态；
+  // 行一消失，用户就分不清「没有这项数据」和「这一项不存在」。
+  for (const f of files) {
+    const lines = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      const code = lines[i].replace(/\/\/.*$/, '');
+      if (!/^\s*if\b.*\{\s*$/.test(code)) continue;
+      const body = lines.slice(i + 1, i + 4).join('\n');
+      if (!/XRow\(|XLabeledRow\(/.test(body)) continue;
+      const indent = (code.match(/^\s*/) || [''])[0];
+      let hasElse = false;
+      for (let k = i + 2; k < Math.min(i + 18, lines.length); k++) {
+        if (new RegExp('^' + indent + '\\}\\s*else').test(lines[k])) { hasElse = true; break; }
+        if (new RegExp('^' + indent + '\\}').test(lines[k])) break;
+      }
+      if (!hasElse) {
+        projectProblems.push('J6 整行被条件隐藏且无占位兜底：' +
+                             path.relative(ROOT, f) + ':' + (i + 1) + '  ' + code.trim().slice(0, 50));
+      }
+    }
+  }
+}
+{
   // 规范 I8：负号用 **U+2212 −**，不是连字符 `-`。
   //
   // 只判**界面文案里紧跟数字的负号**（`Text("... -60")` / 字符串插值里的负数）。
