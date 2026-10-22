@@ -465,7 +465,7 @@ private fun KfApp(unlocker: BleUnlocker) {
                 Column(
                     Modifier
                         .fillMaxSize()
-                        .padding(vertical = 48.dp)
+                        .padding(vertical = KfTokens.Hit.min)
                         .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -820,7 +820,7 @@ private fun EmptyState(onScan: () -> Unit) {
         Spacer(Modifier.height(10.dp))
         // 范式 12: 空态标题说**原因**, 不说状态。旧句「还没有绑定门锁」是状态。
         Text("本机还没有钥匙", color = colors.textSub, fontSize = Type.subhead, fontWeight = FontWeight.SemiBold)
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(KfTokens.Space.xs))
         Text(
             "在 iOS 端「设置 → 门锁 → 分享给安卓」生成二维码，扫一次即可导入。",
             color = colors.textTertiary,

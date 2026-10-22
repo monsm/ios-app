@@ -179,6 +179,45 @@ console.log(files.length + ' 个 Kotlin 文件括号配平 ✓ (这**不证明**
     process.exitCode = 1;
   } else {
     console.log('Composable 注解 ✓ 都紧贴函数签名');
+// ── 间距上下文里不许硬编码与令牌同值的 dp ──
+//
+// 与 iOS 侧 XSpace 的作用相同：间距只有一个来源。
+// 实证：MainActivity 里 `Spacer(Modifier.height(4.dp))` / `padding(vertical = 48.dp)` ——
+// 两者分别等于 KfTokens.Space.xs 与 KfTokens.Hit.min，写在调用点就成了第二个来源。
+//
+// 只判**间距上下文**（Spacer 高度 / padding）：`.size(8.dp)` 是图标尺寸、
+// `24.dp.toPx()` 是长度计算，都不归这条管。
+{
+  const TOKEN_DP = { 4: 'Space.xs', 8: 'Space.s', 12: 'Space.m', 16: 'Space.l', 24: 'Space.xl',
+                     28: 'Space.section', 14: 'Space.gutter', 40: 'Space.pageTop', 48: 'Hit.min' };
+  const SPACING = [
+    /Spacer\(Modifier\.height\((\d+)\.dp\)\)/,
+    /Spacer\(Modifier\.width\((\d+)\.dp\)\)/,
+    /padding\([^)]*?[=,(]\s*(\d+)\.dp/
+  ];
+  const bad = [];
+  for (const f of walk(SRC)) {
+    const lines = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n');
+    lines.forEach((l, i) => {
+      const code = l.replace(/\/\/.*$/, '');
+      for (const re of SPACING) {
+        const m = re.exec(code);
+        if (!m) continue;
+        const tok = TOKEN_DP[Number(m[1])];
+        if (!tok) continue;
+        bad.push(path.relative(ROOT, f) + ':' + (i + 1) + '  硬编码 ' + m[1] + '.dp（= KfTokens.' + tok + '）');
+        break;
+      }
+    });
+  }
+  if (bad.length) {
+    for (const b of bad.slice(0, 8)) console.error('  ' + b);
+    console.error('✗ 有 ' + bad.length + ' 处间距硬编码了与令牌同值的 dp —— 间距只许有一个来源');
+    process.exitCode = 1;
+  } else {
+    console.log('间距令牌 ✓ 间距上下文没有与令牌同值的硬编码 dp');
+  }
+}
   }
   if (bad.length) {
     for (const b of bad) console.error('  ' + b);
