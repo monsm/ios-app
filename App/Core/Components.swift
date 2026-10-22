@@ -188,6 +188,102 @@ struct XHairline: View {
 ///
 /// 为什么单独做一个组件: 之前各页要么写死 title、要么干脆没有进去的门 ——
 /// 用户看到一张卡却不知道它可点。把它收成组件，'可进入'这件事才有一致的形状。
+// ═══════════════════════════════════════════════════════════
+// MARK: - 多段数据卡 (规范 §7.6 StatCard)
+// ═══════════════════════════════════════════════════════════
+
+/// 规范 §7.6 的 **StatCard**：一张卡里分成若干「段」，段间用 0.5pt 全宽分隔线。
+///
+/// 参考图 3 的两张主卡就是这个结构 —— 而本仓此前**没有这个组件**：
+/// 每个页面各自手写 `VStack + XHairline + padding`，于是每张卡的节奏都不一样。
+///
+/// 规范把这件事说得最重的一句是：
+/// > 执行者最容易漏的就是这张表：只给了内边距 16pt，元素之间全靠猜，做出来会「松一圈」。
+///
+/// 所以这个组件的存在意义就是**把那张表固化下来**，而不是每处再猜一次。
+///
+/// 内部纵向节奏（规范原文，全部是**净距**）：
+///
+/// | 段 | 间距 |
+/// |---|---|
+/// | 卡头 → 标题 | 6pt |
+/// | 标题 → 标签 | 12pt |
+/// | 标签 → 值 | 2pt |
+/// | 值 → 分隔线 | 14pt |
+/// | 分隔线 → 下一组 | 12pt |
+/// | 页脚上方 | 12pt |
+struct XStatCard<Content: View>: View {
+    /// 卡头（`Sleep ›`）。nil = 无卡头。
+    var headerTitle: String? = nil
+    var headerAction: (() -> Void)? = nil
+    /// 页脚注释。规范：12 Regular / textSecondary / **行高 1.6** / 距上 12pt。
+    var footer: String? = nil
+    @ViewBuilder var content: () -> Content
+
+    var body: some View {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: 0) {
+                if let headerTitle {
+                    if let headerAction {
+                        XCardLink(title: headerTitle, action: headerAction)
+                    } else {
+                        Text(headerTitle)
+                            .xFont(.subheadline)
+                            .foregroundStyle(XPalette.textSub)
+                            .frame(minHeight: XHit.min)
+                    }
+                    // 卡头 → 标题 6pt。XCardLink 的 minHeight 44 已经把行盒撑到 44，
+                    // 再给 6 会让墨迹间距变成 44+6，比规范的 6 大一个数量级 ——
+                    // 所以这里用负补偿把行盒的额外高度吃掉，只留 6 的墨迹距。
+                    Spacer().frame(height: 0)
+                }
+                content()
+                if let footer {
+                    XHairline()
+                        .padding(.top, 14)
+                    Text(footer)
+                        .xFont(.caption)
+                        .foregroundStyle(XPalette.textSub)
+                        .lineSpacing(XText.caption.size * 0.6)   // 行高 1.6
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.top, 12)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+        }
+    }
+}
+
+/// StatCard 里的一段。段与段之间**自动**插分隔线，节奏由 `XStatCard` 统一给。
+///
+/// 用法：
+/// ```
+/// XStatCard(headerTitle: "保养", footer: "…") {
+///     XStatSection { … }      // 第一段
+///     XStatSection { … }      // 第二段（前面自动有分隔线）
+/// }
+/// ```
+struct XStatSection<Content: View>: View {
+    /// 第一段不画上方的线。**由调用方写 `.first()` 显式声明**，
+    /// 而不是靠"数你是第几个" —— SwiftUI 的 ViewBuilder 在编译期展开，
+    /// 运行时拿不到兄弟节点的序号，任何"自动判断"都只能是猜。
+    var isFirst: Bool = false
+    @ViewBuilder var content: () -> Content
+
+    func first() -> XStatSection { var s = self; s.isFirst = true; return s }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if !isFirst {
+                XHairline()
+                    .padding(.top, 14)          // 值 → 线 14
+                Spacer().frame(height: 12)      // 线 → 下一组 12
+            }
+            content()
+        }
+    }
+}
+
 struct XCardLink: View {
     var title: String
     var action: () -> Void

@@ -806,21 +806,19 @@ struct HomeConsole: View {
     // ─────────────────────────────────────────── ⑥ 今天
     private var todaySection: some View {
         // 参考图里数据块**是卡**：§7.11 的「标题 ›」在顶 → 主内容 → §7.6 分隔线 → 页脚。
-        // 旧实现把分时图直接铺在黑画布上，读起来像页面装饰而不是一张能进去的卡。
-        XPanel(kind: .group) {
-            VStack(alignment: .leading, spacing: XSpace.m) {
-                // 每张卡只有**一枚**标题链接（参考图里就是这样的：左上 `Sleep ›`）。
-                // 之前我在右侧又加了一枚「全部记录」——两个入口指向同一个目的地，
-                // 读起来是噪音，不是信息。
-                HStack(alignment: .firstTextBaseline) {
-                    XCardLink(title: "今天") { showEvents = true }
-                    Spacer(minLength: 0)
-                }
+        //
+        // 2026-10-23：改用 `XStatCard`。这一张此前手写全套节奏
+        //（分隔线补 2 凑 14、页脚 lineSpacing 7 凑 1.6），每一处都要单独算。
+        // 现在节奏归组件管，这里只写「第一段放图，第二段放最早一次」。
+        XStatCard(
+            headerTitle: "今天",
+            headerAction: { showEvents = true },
+            footer: "今天 \(opensToday) 次开门，其中 \(todayPeople) 位成员参与。柱高是该小时的开门次数。"
+        ) {
+            XStatSection().first() {
                 dayChart
-                // §7.6：值/图 → 分隔线 **14pt**（净距），分隔线 → 下一组 **12pt**。
-                // 原来传 verticalPadding: 14 = 线上下各补 14，再叠容器 12 → 26/26。
-                XHairline()
-                    .padding(.top, 2)
+            }
+            XStatSection {
                 VStack(alignment: .leading, spacing: XSpace.xxs) {
                     Text("最早一次")
                         .xFont(.caption)
@@ -829,12 +827,6 @@ struct HomeConsole: View {
                         .xFont(.body, weight: .semibold, design: .rounded)
                         .foregroundStyle(XPalette.text)
                 }
-                // §7.6 页脚注释：**12 Regular / 行高 1.6**（原来是 caption 11 + 行距 3 = 1.27）。
-                Text("今天 \(opensToday) 次开门，其中 \(todayPeople) 位成员参与。柱高是该小时的开门次数。")
-                    .xFont(.footnote)
-                    .foregroundStyle(XPalette.textSub)
-                    .lineSpacing(7)
-                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }

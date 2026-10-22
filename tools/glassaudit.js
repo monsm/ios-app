@@ -228,6 +228,30 @@ const RULES = [
 
 // ── 工程级断言（不是逐行扫，是整个 App 有没有做这件事）──
 const projectProblems = [];
+// ── §7.6 多段卡的节奏不许手写 ──
+//
+// 规范把这件事说得最重的一句：
+//   「执行者最容易漏的就是这张表：只给了内边距 16pt，元素之间全靠猜，做出来会『松一圈』。」
+//
+// 实证：CarePage.periodCard 曾经手写全套 —— 卡头 → `.padding(.top, -6)` 收 6
+// → 分隔线 `.padding(.top, 2)` 凑 14 → 页脚 `lineSpacing(7)` 凑 1.6 行高。
+// 每一处都要单独算，算错一次就是「松一圈」。
+//
+// 现在节奏归 XStatCard / XStatSection 管。判据：
+// 出现 `XCardLink(title:` 且同文件内还有 `XHairline()` + 手写 lineSpacing → 报。
+{
+  for (const f of files) {
+    const src = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n');
+    if (!/XHairline\(\)/.test(src)) continue;
+    if (/XStatCard|XStatSection/.test(src)) continue;
+    // 手写多段卡：有分隔线 + 又有卡内标题链接，说明这张卡在自己排节奏
+    if (!/XCardLink\(title:/.test(src)) continue;
+    const n = (src.match(/XHairline\(\)/g) || []).length;
+    projectProblems.push('§7.6 多段卡节奏手写：' + path.relative(ROOT, f) +
+                         ' 有 ' + n + ' 处 XHairline 与 XCardLink，应改用 XStatCard / XStatSection');
+  }
+}
+
 // ── 无障碍维度：装文字的固定高度必须用 minHeight ──
 //
 // 规范 §13.1「支持到 AX3」。写死高度的容器在 AX 大字号下**必然截断** ——
