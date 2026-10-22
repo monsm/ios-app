@@ -234,6 +234,18 @@ struct KeysPage: View {
     /// 正确路径是 CredentialOrg.batchDisable：它先删本机台账，
     /// 再把 del_pwd / del_fp 入队，等连上锁时由 LinkSenseKit 下发。
     /// 断网也不会丢 —— 队列会等下一次连接。
+    /// 给指纹改名。锁端无名称字段，这个名字只存在本机台账。
+    private func renameFingerprint(_ row: KeyRow) {
+        let current = DB.ledger(mac).fps.first { $0.batch == row.key }?.name ?? ""
+        promptText("改个名字", "只存本机 —— 门锁里没有名称字段，你在这里写的名字不会传给任何设备。",
+                   placeholder: "例如：爸爸的右手食指", initial: current) { text in
+            DB.renameFp(mac, row.key, text)
+            XHaptics.success()
+            app.showToast(text.isEmpty ? "名字已清空" : "已改名为「\(text)」")
+            refresh()
+        }
+    }
+
     /// 改一条凭证的备注。密码按 alias 定位、指纹按 batch 定位。
     private func editNote(_ row: KeyRow) {
         let current: String
@@ -497,6 +509,20 @@ struct KeysPage: View {
             } label: {
                 Label(CredentialOrg.isArchived(mac, row.kindTag, row.key) ? "取消归档" : "归档",
                       systemImage: "archivebox")
+            }
+
+            // ═══ 改名字（只对指纹） ═══
+            //
+            // 指纹在锁端**没有名称字段**，名字是本机台账的展示字段 ——
+            // 所以改它不需要任何锁端动作，是纯本机编辑，安全。
+            // （对照：改密码内容 rePwd 就**不能**这么接 —— 本地一改，
+            //   记录显示新密码、锁里还是旧的，等于造一条骗人的记录。）
+            if row.kindTag == "fp" {
+                Button {
+                    renameFingerprint(row)
+                } label: {
+                    Label("改个名字", systemImage: "textformat")
+                }
             }
 
             // ═══ 编辑备注 ═══

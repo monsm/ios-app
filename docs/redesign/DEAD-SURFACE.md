@@ -441,10 +441,16 @@ static func pwdStrength(_ v: String) -> (score: Int, hint: String)
 
 | 函数 | 文件 | 行数 |
 |---|---|---|
-| `renameFp` | Store.swift | 5 |
 | `renameMember` | Store.swift | 5 |
 | `rePwd` | Store.swift | 5 |
 | `setFpAlarm` | Store.swift | 5 |
+
+> **`rePwd` 与 `setFpAlarm` 明确不接：**
+>
+> · `rePwd` 只改本地台账的 `pwd` 字段，**不写锁**。接了会造出一条"本地显示新密码、锁里还是旧的"的骗人记录。
+>   真要换密码必须走"锁端删旧 + 写新"的完整流程（工坊已有）。
+> · `setFpAlarm` 只影响比对标签与备份导出里的"预警指纹/普通"，**不配置锁端防拆**。
+>   接上去会让人以为开了一个安全开关，实际只是个标签 —— 正是本会话一直在清理的那种假开关。
 | `setMemberBadge` | Milestones.swift | 5 |
 | `setMemberBirthday` | Milestones.swift | 5 |
 
@@ -555,6 +561,7 @@ static func pwdStrength(_ v: String) -> (score: Int, hint: String)
 | `gapDays` | 83 | 诊断页「数据健康」|
 | `bigDropDays` | 83 | 设备页「明细」|
 | `pwdStrength` | 86 | 设密码时就地提示弱口令 |
+| `renameFp` | 88 | 钥匙页右键「改个名字」（锁端无名称字段，纯本机）|
 
 ## 一个数字
 

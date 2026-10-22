@@ -484,6 +484,12 @@ const checks = [
     const k = CODE.get('AddKeyPage.swift') || '';
     return k.includes('StudioTools.pwdStrength(pwd)') && k.includes('private var pwdWeak');
   }],
+  ['指纹可以改名，密码不能只改本地', () => {
+    // 指纹在锁端没有名称字段，名字是本机展示字段 —— 改名安全。
+    // 而 rePwd 只改本地台账的 pwd、不写锁，接了会造出"本地新、锁里旧"的骗人记录。
+    const k = CODE.get('KeysPage.swift') || '';
+    return k.includes('DB.renameFp(mac, row.key, text)') && !k.includes('DB.rePwd(');
+  }],
 ];
 
 let pass = 0;
