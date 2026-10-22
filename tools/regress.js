@@ -490,6 +490,12 @@ const checks = [
     const k = CODE.get('KeysPage.swift') || '';
     return k.includes('DB.renameFp(mac, row.key, text)') && !k.includes('DB.rePwd(');
   }],
+  ['成员可以改名', () => {
+    // 编辑表单有 10 个字段却唯独没有名字，DB.renameMember 零调用；
+    // 而两处文案承诺「请在成员页重命名其一」「可重命名」。
+    const m = CODE.get('MemberCenterView.swift') || '';
+    return m.includes('DB.renameMember(') && m.includes('field("称呼 (必填)"');
+  }],
 ];
 
 let pass = 0;

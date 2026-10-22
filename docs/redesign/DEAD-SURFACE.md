@@ -441,7 +441,6 @@ static func pwdStrength(_ v: String) -> (score: Int, hint: String)
 
 | 函数 | 文件 | 行数 |
 |---|---|---|
-| `renameMember` | Store.swift | 5 |
 | `rePwd` | Store.swift | 5 |
 | `setFpAlarm` | Store.swift | 5 |
 
@@ -562,6 +561,7 @@ static func pwdStrength(_ v: String) -> (score: Int, hint: String)
 | `bigDropDays` | 83 | 设备页「明细」|
 | `pwdStrength` | 86 | 设密码时就地提示弱口令 |
 | `renameFp` | 88 | 钥匙页右键「改个名字」（锁端无名称字段，纯本机）|
+| `renameMember` | 89 | 成员编辑表单补上「称呼」字段（原先 10 个字段唯独没有名字）|
 
 ## 一个数字
 
@@ -569,3 +569,18 @@ static func pwdStrength(_ v: String) -> (score: Int, hint: String)
 **27 个是欠一笔展示的债**、**25 个是流程里漏了一次调用**。
 
 剩下 14 个，**已判定不该接**。
+
+### 第 89 轮：成员改名 —— 两处文案承诺了一件做不到的事
+
+成员编辑表单有 **10 个字段**（关系 / 备注名 / 代号 / 紧急联系 / 便签 / 关怀文案 / 欢迎语 / 分组 / 常用锁…），
+**唯独没有名字**。而 `DB.renameMember` 写好了、零调用。
+
+于是这两句文案都是空话：
+
+- 「没有同名成员。若只是称呼重复, **请在成员页重命名其一**。」
+- 「已按建议命名「x」, **可重命名**」
+
+已把「称呼 (必填)」加进表单，保存时走 `DB.renameMember`（写 `kf_members` 的 name 字段）。
+**空输入不覆盖** —— 用户清空一个必填字段不该把称呼抹掉。
+
+顺序也核对过：`MemberHub.saveExt` 写的是扩展表 `extKey`，与主表 `kf_members` 互不覆盖。

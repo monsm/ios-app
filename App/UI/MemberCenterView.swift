@@ -384,6 +384,14 @@ struct MemberDetail360View: View {
             alert.addTextField { $0.placeholder = ph; $0.text = initial; $0.keyboardType = kb; $0.clearButtonMode = .whileEditing }
             return alert.textFields?.last ?? UITextField()
         }
+        // ═══ 称呼 ═══
+        //
+        // 这个表单有 10 个字段，**唯独没有名字** —— 成员建好之后改不了称呼。
+        // 而两处文案一直在承诺它：
+        //   · 「没有同名成员。若只是称呼重复, 请在成员页重命名其一。」
+        //   · 「已按建议命名「x」, 可重命名」
+        // DB.renameMember 写好了却零调用，所以这两句都是空话。
+        let fName = field("称呼 (必填)", m.name)
         let fRelation = field("与你的关系", m.relation)
         let fRemark = field("备注名", e.remark)   // 461 备注名
         let fEmoji = field("emoji 代号", e.emoji)   // 916 代号
@@ -408,6 +416,12 @@ struct MemberDetail360View: View {
             next.commonLocks = (fCommon.text ?? "")
                 .split(separator: ",").map { String($0).trimmingCharacters(in: .whitespaces) }
                 .filter { !$0.isEmpty }
+            // 名字走 DB.renameMember（它写 kf_members 的 name 字段）；
+            // 空输入不覆盖 —— 用户清空一个必填字段不该把称呼抹掉。
+            let newName = (fName.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            if !newName.isEmpty, newName != m.name {
+                DB.renameMember(m.id, newName)
+            }
             MemberHub.saveExt(m.id, next)
             DB.setMemberInfo(m.id, ["relation": fRelation.text ?? ""])
             onChanged()
