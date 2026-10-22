@@ -27,6 +27,12 @@ struct DiagnosticsPage: View {
 
     private var selfChecks: [SelfCheckLine] { SelfCheck.run() }
     private var health: [String] { DataHealth.integrity() }
+    /// 451 空洞日期检测：日志覆盖区间内整天没有任何条目的日期。
+    /// 这个函数一直零调用 —— 而"数据健康"这一块正好是它的位置。
+    /// 它只报**两侧都有数据**的内部空洞（首尾没数据不算缺口），所以不会把"刚装上还没记录"报成问题。
+    private var gapDays: [String] {
+        DB.keychains().flatMap { DataHealth.gapDays(mac: $0.mac) }
+    }
 
     var body: some View {
         ScrollView {
@@ -110,14 +116,20 @@ struct DiagnosticsPage: View {
         XPanel(kind: .group, padding: 0) {
             VStack(spacing: 0) {
                 header("数据健康", tone: health.isEmpty ? XPalette.ok : XPalette.warn)
-                if health.isEmpty {
+                if health.isEmpty && gapDays.isEmpty {
                     itemRow(icon: "checkmark.circle.fill", tone: XPalette.ok,
                             title: "没有发现数据问题",
-                            detail: "数据键都能解析，也没有孤立文件")
+                            detail: "数据键都能解析，也没有孤立文件或日志断档")
                 } else {
                     ForEach(Array(health.enumerated()), id: \.offset) { _, s in
                         itemRow(icon: "exclamationmark.triangle.fill", tone: XPalette.warn,
                                 title: s, detail: nil)
+                    }
+                    if !gapDays.isEmpty {
+                        itemRow(icon: "calendar.badge.exclamationmark", tone: XPalette.warn,
+                                title: "日志有 \(gapDays.count) 天没有记录",
+                                detail: gapDays.prefix(3).joined(separator: " · ")
+                                        + (gapDays.count > 3 ? " 等" : ""))
                     }
                     // （孤儿数据已在上面 health 里以"孤儿数据: …"的形式列出）
                 }

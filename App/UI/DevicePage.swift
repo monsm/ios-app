@@ -327,6 +327,11 @@ struct DevicePage: View {
     // MARK: - ④ 明细 (折叠)
     // ═══════════════════════════════════════════════════════
 
+    /// 近 30 天里单日掉电超过 20% 的日子（最多列 3 条）。
+    private var bigDrops: [(day: String, from: Int, to: Int, drop: Int)] {
+        mac.isEmpty ? [] : BatteryCare.bigDropDays(mac)
+    }
+
     private var detailSection: some View {
         XPanel(kind: .group) {
             VStack(spacing: 0) {
@@ -358,6 +363,14 @@ struct DevicePage: View {
                         detailRow("固件版本", snap?.firmware.isEmpty == false ? (snap?.firmware ?? "—") : "未知")
                         detailRow("安全等级", snap.map { "\($0.securityLevel)" } ?? "—")
                         detailRow("广播模式", snap.map { "\($0.broadcastMode)" } ?? "—")
+                        // 1040 单日掉电观察一直被实现、从未被显示。
+                        // 它只对"当天至少读到过两次电量"的日子成立（只用真实两个点相减，
+                        // 不拟合不外推）—— 所以没数据显示是正常的，别写成"电池健康"之类的结论。
+                        if !bigDrops.isEmpty {
+                            detailRow("单日掉电 >20%", bigDrops.prefix(3)
+                                .map { "\($0.day.suffix(5)) −\($0.drop)%" }
+                                .joined(separator: " · "))
+                        }
                     }
                     .padding(.top, XSpace.s)
                     .transition(.opacity.combined(with: .move(edge: .top)))

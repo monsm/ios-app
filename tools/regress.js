@@ -446,6 +446,13 @@ const checks = [
     const h = CODE.get('HomeConsole.swift') || '';
     return h.includes('CredentialOrg.expiringSoonCount') && h.includes('case expiring(Int)');
   }],
+  ['零调用的分析函数已接到展示位', () => {
+    // 这两个函数实现都在（gapDays 17 行 / bigDropDays 25 行），但从来没有调用方。
+    // 它们的展示位本来就有：诊断页的"数据健康"、设备页的"明细"。
+    const d = CODE.get('DiagnosticsPage.swift') || '';
+    const v = CODE.get('DevicePage.swift') || '';
+    return d.includes('DataHealth.gapDays') && v.includes('BatteryCare.bigDropDays');
+  }],
 ];
 
 let pass = 0;
