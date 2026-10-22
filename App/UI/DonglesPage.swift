@@ -194,7 +194,7 @@ struct DonglesPage: View {
                         Text(st.power < 0 ? "—" : "\(st.power)%")
                             .xFontExact(.caption.monospacedDigit())
                             .foregroundStyle(XPalette.textSub)
-                            .frame(width: 40, alignment: .trailing)
+                            .xScaledWidth(40, alignment: .trailing)
                     }
                     .accessibilityElement(children: .combine)
                     .accessibilityLabel("电量 \(st.power < 0 ? "未知" : "\(st.power)%")")

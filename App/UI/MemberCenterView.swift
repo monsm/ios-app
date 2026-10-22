@@ -800,7 +800,7 @@ struct MergeMembersView: View {
             Text(label)
                 .xFont(.caption)
                 .foregroundStyle(XPalette.textSub)
-                .frame(width: 76, alignment: .leading)
+                .xScaledWidth(76, alignment: .leading)
             Text(value)
                 .xFont(.caption)
                 .foregroundStyle(XPalette.text)

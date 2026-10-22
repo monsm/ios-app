@@ -113,7 +113,7 @@ struct MembersPage: View {
                                 .xFont(.caption2)
                                 .foregroundStyle(XPalette.textSub)
                         }
-                        .frame(width: 68)
+                        .xScaledWidth(68)
                     }
                     .buttonStyle(.plain)
                     .accessibilityElement(children: .combine)

@@ -615,7 +615,7 @@ struct EventsPage: View {
             Text(shortTime(rec.timeStr))
                 .xFontExact(.caption.monospacedDigit())
                 .foregroundStyle(XPalette.textSub)
-                .frame(width: 42, alignment: .trailing)
+                .xScaledWidth(42, alignment: .trailing)
                 .padding(.top, 3)
 
             // 节点圆点（竖线由父级画）

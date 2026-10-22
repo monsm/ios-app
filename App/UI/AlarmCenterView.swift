@@ -540,7 +540,7 @@ struct AlarmCenterView: View {
             Text(tag)
                 .xFont(.caption2, weight: .medium)
                 .foregroundStyle(tag == "事件" ? XPalette.danger : XPalette.textSub)
-                .frame(width: 30, alignment: .center)
+                .xScaledWidth(30, alignment: .center)
                 .lineLimit(1)
             let who = MemberHub.aliasName(r.whoId) ?? r.whoName
             Text((who?.isEmpty ?? true) ? r.typeName : who! + " · " + r.typeName)

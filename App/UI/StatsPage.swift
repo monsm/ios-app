@@ -125,7 +125,7 @@ struct StatsPage: View {
                             Text(r.label)
                                 .xFont(.caption)
                                 .foregroundStyle(XPalette.text)
-                                .frame(width: 52, alignment: .leading)
+                                .xScaledWidth(52, alignment: .leading)
                             // 横条
                             GeometryReader { geo in
                                 ZStack(alignment: .leading) {
@@ -140,11 +140,11 @@ struct StatsPage: View {
                             Text(String(r.count))
                                 .xFontExact(.caption2.monospacedDigit())
                                 .foregroundStyle(XPalette.textSub)
-                                .frame(width: 30, alignment: .trailing)
+                                .xScaledWidth(30, alignment: .trailing)
                             Text(String(format: "%.0f%%", r.pct))
                                 .xFontExact(.caption2.monospacedDigit())
                                 .foregroundStyle(XPalette.textSub)
-                                .frame(width: 32, alignment: .trailing)
+                                .xScaledWidth(32, alignment: .trailing)
                         }
                         .accessibilityElement(children: .combine)
                         .accessibilityLabel(r.label + " " + String(r.count) + " 次")
@@ -196,7 +196,7 @@ struct StatsPage: View {
                                     .xFont(.caption2)
                                     .foregroundStyle(XPalette.textSub)
                             }
-                            .frame(width: 66, alignment: .leading)
+                            .xScaledWidth(66, alignment: .leading)
                             GeometryReader { geo in
                                 ZStack(alignment: .leading) {
                                     RoundedRectangle(cornerRadius: 3, style: .continuous)
@@ -210,7 +210,7 @@ struct StatsPage: View {
                             Text(String(p.opens))
                                 .xFontExact(.caption2.monospacedDigit())
                                 .foregroundStyle(XPalette.textSub)
-                                .frame(width: 30, alignment: .trailing)
+                                .xScaledWidth(30, alignment: .trailing)
                         }
                         .accessibilityElement(children: .combine)
                         .accessibilityLabel(p.name + " " + p.span + " " + String(p.opens) + " 次")

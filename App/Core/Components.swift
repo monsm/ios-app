@@ -1524,6 +1524,41 @@ struct XSegmented<T: Hashable>: View {
 }
 
 // ═══════════════════════════════════════════════════════════
+// MARK: - 随字号缩放的固定列宽（规范 §13.1 / F3）
+// ═══════════════════════════════════════════════════════════
+
+/// 表格/图表里那些**写死的列宽**，在无障碍字号下必须跟着长。
+///
+/// 规范 §13.1：「支持到 AX3」。实证：本仓有 10 处 `Text(...).frame(width: 52)` 这类列宽 ——
+/// 普通字号下正好，但 AX3 时字号翻倍而列宽不动，标签就换行或截断，
+/// 整张表的行高与对齐一起垮掉。
+///
+/// 三种做法里选了这个：
+///   · 放宽列宽（不加约束）→ 列对不齐，图表失去可读性；
+///   · `minimumScaleFactor` → 把字缩小，等于**关掉了 Dynamic Type**，与 §13.1 相反；
+///   · **让列宽随字号一起缩** → 对齐保住、字也真的变大。取这个。
+struct XScaledFrame: ViewModifier {
+    @ScaledMetric private var w: CGFloat
+    private let alignment: Alignment
+
+    init(_ base: CGFloat, alignment: Alignment = .center) {
+        _w = ScaledMetric(wrappedValue: base, relativeTo: .caption)
+        self.alignment = alignment
+    }
+
+    func body(content: Content) -> some View {
+        content.frame(width: w, alignment: alignment)
+    }
+}
+
+extension View {
+    /// 固定列宽 —— 随 Dynamic Type 缩放。列宽写死的场合一律用它。
+    func xScaledWidth(_ base: CGFloat, alignment: Alignment = .center) -> some View {
+        modifier(XScaledFrame(base, alignment: alignment))
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
 // MARK: - 数值 + 单位（规范 §7.16）
 // ═══════════════════════════════════════════════════════════
 

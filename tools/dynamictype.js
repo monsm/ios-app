@@ -54,7 +54,12 @@ for (const file of SWIFT_FILES) {
     //   .xFont(.system(size: XMetric.dataText(N)))   ← 按 AX 字号放大
     //   .xFont(.system(size: XMetric.decorIcon(N)))  ← 装饰图标
     const FIXED_FONT_RE = /\.(?:x)?[fF]ont\(\s*\.system\(size:/;
-    const SCALED_RE = /XMetric\.(?:dataText|decorIcon)\(/;
+    // 2026-10-23 补：字体修饰器内部的一个包装里，`.system(size:)` 拿到的是
+    // `finalSize` —— 它由 `@ScaledMetric` 派生的 `scaled` 算出（并承载 §13.1 的
+    // displayNumber AX 降档）。判据按**名字**放行不够可靠，所以显式列出这两个：
+    //   scaled     @ScaledMetric 包装值
+    //   finalSize  XTextModifier 里算完的最终字号（含 AX 降档）
+    const SCALED_RE = /XMetric\.(?:dataText|decorIcon)\(|size:\s*(?:finalSize|scaled)\b/;
     if (FIXED_FONT_RE.test(text)
         && !SCALED_RE.test(text)
         && !/Image\(systemName:/.test(ctx)

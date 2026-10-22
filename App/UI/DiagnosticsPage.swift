@@ -193,7 +193,7 @@ struct DiagnosticsPage: View {
                             Text(o.t)
                                 .xFont(.caption2, design: .monospaced)
                                 .foregroundStyle(XPalette.textTertiary)
-                                .frame(width: 76, alignment: .leading)
+                                .xScaledWidth(76, alignment: .leading)
                             Text(o.label)
                                 .xFont(.caption)
                                 .foregroundStyle(XPalette.textSub)

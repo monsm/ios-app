@@ -229,6 +229,33 @@ const RULES = [
 // ── 工程级断言（不是逐行扫，是整个 App 有没有做这件事）──
 const projectProblems = [];
 {
+  // 规范 §13.1：「支持到 AX3」。
+  //
+  // 实证：本仓有 11 处 `Text(...).frame(width: 52)` 这类**写死的列宽** ——
+  // 普通字号下正好，AX3 时字号翻倍而列宽不动，标签就换行或截断，整张表一起垮。
+  // 已全部换成 `xScaledWidth(_:)`（列宽随 Dynamic Type 缩放，对齐与可读性都保住）。
+  //
+  // 判据（三条件同时成立才报，否则误报太多）：
+  //   ① `.frame(width: N` 且**没有 height**（有 height 的多半是图标/头像方框）；
+  //   ② N < 200（≥200 的是画布/预览面，不是文字列宽）；
+  //   ③ 紧邻前 5 行里有 `Text(` 且**没有** `Image(systemName`。
+  for (const f of files) {
+    const lines = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      const code = lines[i].replace(/\/\/.*$/, '');
+      const m = /\.frame\(width:\s*([0-9]+)\s*(,|\b)/.exec(code);
+      if (!m) continue;
+      if (/height:/.test(code)) continue;                       // ① 方框
+      if (Number(m[1]) >= 200) continue;                        // ② 画布
+      const back = lines.slice(Math.max(0, i - 5), i).join('\n');
+      if (!/Text\(/.test(back)) continue;                       // ③ 不是文字
+      if (/Image\(systemName/.test(back)) continue;
+      projectProblems.push('§13.1 文字上的固定列宽应走 xScaledWidth（AX3 会破版）：' +
+                           path.relative(ROOT, f) + ':' + (i + 1) + '  ' + code.trim().slice(0, 46));
+    }
+  }
+}
+{
   // 规范 §14-#6：**内容层不许用毛玻璃** —— 违反 HIG 两层模型（内容不透明 / 功能层玻璃）。
   //
   // 本仓唯一合法的玻璃是 `XGlassTabBar`（功能层）。实证有一处越界：
