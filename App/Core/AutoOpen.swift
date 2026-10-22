@@ -700,10 +700,16 @@ struct AutoCalView: View {
                 } else {
                     LabeledRow("状态", "从未标定")
                 }
-                Button("清除标定", role: .destructive) {
+            // 2026-10-23：原来一键直接清 —— 而标定是用户**拿着手机在门边来回走**才采出来的，清掉要重采。
+            // 破坏性动作必须问一句，并说清后果。
+            Button("清除标定", role: .destructive) {
+                confirmDestructive("清除标定数据？",
+                                   "标定是你在门边实测采出来的样本，清掉之后要重新走一遍才能恢复自动开锁的距离判断。",
+                                   confirmTitle: "清除标定") {
                     AutoOpen.removeAutocal(mac)
                     samples = []
                     app.showToast("标定已清除")
+                }
                 }
                 .disabled(AutoOpen.autocal(mac) == nil)
             }

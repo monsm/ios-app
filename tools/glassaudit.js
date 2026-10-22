@@ -228,6 +228,50 @@ const RULES = [
 
 // ── 工程级断言（不是逐行扫，是整个 App 有没有做这件事）──
 const projectProblems = [];
+// ── 流程维度：破坏性动作必须在确认框里，确认词不许含糊 ──
+//
+// 规范反复强调「说清要删什么」，本仓也有一批写得很好的确认（KeysPage 那条把
+// ① 本机会删 ② 锁端也会撤销 ③ 断网不丢 ④ 在哪恢复 四件事都在 message 里说全了）。
+// 判据只守住两条底线，不要求每处都写四句。
+{
+  const VAGUE_TITLE = /confirmTitle:\s*"(确定|确认|好的|好|OK|Ok|ok|是|Yes)"/;
+  for (const f of files) {
+    const lines = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n');
+    lines.forEach(function (raw, i) {
+      const code = raw.replace(/\/\/.*$/, '');
+      if (VAGUE_TITLE.test(code)) {
+        projectProblems.push('确认词含糊（应说清删的是什么，不是「确定」）：' +
+                             path.relative(ROOT, f) + ':' + (i + 1));
+      }
+      // destructive 按钮必须在 confirmationDialog / alert 里。
+      // 不能用固定行数回看 —— 有的对话框 message 很长，按钮在 40 行以外。
+      // 改成**向上找块起点**：遇到 confirmationDialog/alert 就算在框内；
+      // 遇到顶格的 struct/extension 或文件开头还没找到，就算不在。
+      if (!/role:\s*\.destructive/.test(code)) return;
+      let inConfirm = false;
+      for (let k = i - 1; k >= 0; k--) {
+        const up = lines[k].replace(/\/\/.*$/, '');
+        if (/confirmationDialog\(|\.alert\(/.test(up)) { inConfirm = true; break; }
+        // contextMenu 豁免：长按 + 选删除是**两步有意动作**，本仓 EventsPage 的注释也按这个口径论证过。
+        // `Menu` 不豁免 —— 点开菜单即到，接近普通按钮（DonglesPage / GatewayPage 都是这个形态，已补确认）。
+        if (/\.contextMenu\s*\{/.test(up)) { inConfirm = true; break; }
+        // swipeActions 且 `allowsFullSwipe: false` 也是两步（划开 → 再点）。
+        // 全滑即执行的那种（true）不豁免 —— 一划就没了。
+        if (/\.swipeActions\([^)]*allowsFullSwipe:\s*false/.test(up)) { inConfirm = true; break; }
+        if (/^(struct|extension|enum|final class|class) /.test(up)) break;
+        if (/^    (?:private )?(?:var|func) /.test(up)) break;
+      }
+      if (inConfirm) return;
+      // 第二种合法形态：按钮只是**触发**一个确认函数（按钮本身是红色调的入口）。
+      // 判据看同一行或紧随 3 行里有没有 confirm* 调用。
+      const win = lines.slice(i, i + 4).join('\n');
+      if (/\bconfirm[A-Z]\w*\(/.test(win)) return;
+      projectProblems.push('破坏性按钮不在确认框内（检查是否会误触即执行）：' +
+                           path.relative(ROOT, f) + ':' + (i + 1) + '  ' + raw.trim().slice(0, 50));
+    });
+  }
+}
+
 {
   // 逻辑维度（通用探测器）：**同名私有成员跨文件必报**。
   //

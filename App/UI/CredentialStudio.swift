@@ -1693,9 +1693,14 @@ struct OtpStudio: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                 Spacer(minLength: 0)
+                // 2026-10-23：原来一键直接移除 —— 验证器条目删掉就没了（密钥不在回收站里），必须问一句。
                 Button(role: .destructive) {
-                    CredentialOrg.removeTotp(otpMac, e.id)
-                    app.showToast("已移除「\(e.name)」", tone: .done)
+                    confirmDestructive("移除这个验证器？",
+                                       "移除后这个账户的验证码不再出现在本机，重新添加需要扫一次二维码或再输一次密钥。",
+                                       confirmTitle: "移除验证器") {
+                        CredentialOrg.removeTotp(otpMac, e.id)
+                        app.showToast("已移除「\(e.name)」", tone: .done)
+                    }
                 } label: {
                     Label("移除", systemImage: "trash")
                         .xFont(.caption, weight: .medium)
@@ -1913,9 +1918,14 @@ struct OtpStudio: View {
                 .buttonStyle(.bordered)
                 .frame(minHeight: XHit.min)
                 Spacer(minLength: 0)
+                // 2026-10-23：原来一键直接移除 —— 验证器条目删掉就没了（密钥不在回收站里），必须问一句。
                 Button(role: .destructive) {
-                    CredentialOrg.removeTotp(otpMac, e.id)   // 339: 与取组的锁保持一致
-                    app.showToast("已移除「\(e.name)」", tone: .done)
+                    confirmDestructive("移除这个验证器？",
+                                       "移除后这个账户的验证码不再出现在本机，重新添加需要扫一次二维码或再输一次密钥。",
+                                       confirmTitle: "移除验证器") {
+                        CredentialOrg.removeTotp(otpMac, e.id)   // 339: 与取组的锁保持一致
+                        app.showToast("已移除「\(e.name)」", tone: .done)
+                    }
                 } label: {
                     Label("移除", systemImage: "trash")
                 }
@@ -1965,8 +1975,13 @@ struct OtpStudio: View {
                 .buttonStyle(.bordered)
                 .frame(minHeight: XHit.min)
                 Spacer(minLength: 0)
+                // 2026-10-23：原来一键直接删除 —— 静态码删掉要重新生成并重新分发，必须问一句。
                 Button(role: .destructive) {
-                    CredentialOrg.removeStaticCode(mac, c.id)
+                    confirmDestructive("删除这个静态码？",
+                                       "删除后这个静态码不再出现在本机，需要用的时候要重新生成。",
+                                       confirmTitle: "删除静态码") {
+                        CredentialOrg.removeStaticCode(mac, c.id)
+                    }
                 } label: {
                     Label("删除", systemImage: "trash")
                 }

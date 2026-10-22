@@ -158,7 +158,13 @@ struct DonglesPage: View {
                     Button("查询全部钥匙") { Task { await listKeys(d) } }
                     Divider().overlay(XPalette.hairline)
                     Button("删除本锁钥匙", role: .destructive) { confirmDeleteKey(d) }
-                    Button("删除记录", role: .destructive) { removeRecord(d) }
+                    // 2026-10-23：这一条原来是**一键直接执行**（同级那条「删除本锁钥匙」走的是 confirmDeleteKey，它没有）。
+                    // 菜单里的破坏性条目更容易误触，必须问一句。
+                    Button("删除记录", role: .destructive) {
+                        confirmDestructive("删除这条网关记录？",
+                                           "只从本机列表移除这条记录，门锁上的设置不受影响。",
+                                           confirmTitle: "删除记录") { removeRecord(d) }
+                    }
                 } label: {
                     Image(systemName: "ellipsis.circle")
                         .font(.system(size: XIcon.md, weight: .medium))

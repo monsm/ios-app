@@ -260,7 +260,12 @@ struct GatewayPage: View {
                     Button("刷新状态") { Task { await refresh(g) } }
                     Button("重启网关") { confirmReboot(g) }
                     Divider().overlay(XPalette.hairline)
-                    Button("删除记录", role: .destructive) { removeGateway(g) }
+                    // 2026-10-23：与 DonglesPage 同形 —— 菜单里一键直接删，同级「重启网关」走的是 confirmReboot。
+                    Button("删除记录", role: .destructive) {
+                        confirmDestructive("删除这条网关记录？",
+                                           "只从本机列表移除，网关设备本身与它的配网设置不受影响。",
+                                           confirmTitle: "删除记录") { removeGateway(g) }
+                    }
                 } label: {
                     Image(systemName: "ellipsis.circle")
                         .font(.system(size: XIcon.md, weight: .medium))
