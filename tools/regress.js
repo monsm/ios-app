@@ -470,6 +470,13 @@ const checks = [
     // promptText 定义在 Alerts.swift，调用点在 KeysPage —— 第一版把两者写在同一个文件里查了。
     return k.includes('DB.setPwdNote(') && k.includes('DB.setFpNote(') && a.includes('func promptText');
   }],
+  ['启动时预热 MAC 字节序', () => {
+    // 协议层字节序在内存里，冷启动回到默认 .display。已配对的锁要等第一条命令失败、
+    // exec() 里的探针才换序重试并记住 —— 正确性有保障，但每次冷启动第一条命令
+    //（往往就是开锁）多一个来回。hydrateMacOrders 把它提前灌进去，原先零调用。
+    const app = CODE.get('LockKeeperApp.swift') || '';
+    return app.includes('DB.hydrateMacOrders()');
+  }],
 ];
 
 let pass = 0;

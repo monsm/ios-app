@@ -356,3 +356,31 @@ static func expiringSoonCount(macs: [String], within days: Int = 7) -> Int
 `DB.setPwdNote` / `DB.setFpNote` 写好了零调用。打错一个字只能删了重建。
 
 已接到钥匙页右键菜单「编辑备注」，用单行输入弹窗（改一个字段不该做一整屏）。
+
+### 第 85 轮：`hydrateMacOrders` —— 不是缺陷，是每次冷启动白付一个来回
+
+我原本怀疑它是"重启后 MAC 顺序丢失"的缺陷。查完发现**自愈路径确实存在**：
+
+```swift
+// LockService.exec(): 命令因字节序失败时换序重试，井把正确顺序落盘
+let used = ZKProtocol.macOrder(curMac)
+ZKProtocol.setMacOrder(curMac, other)   // 换一种再试
+DB.setMacOrder(curMac, other)           // 记住
+```
+
+所以**正确性没问题**。但代价是真的：协议层的字节序在**内存**里，冷启动后回到默认 `.display`；
+已配对的锁要等第一条命令失败一次，探针才会纠正它。而冷启动后的第一条命令**往往就是开锁**。
+
+`hydrateMacOrders` 就是把落盘的顺序提前灌进协议层（纯读，无写），
+它零调用 → 这个优化一直没生效。已接进 `onLaunch()`。
+
+**这一类要分清：**
+
+| 零调用意味着 | 例子 | 该不该接 |
+|---|---|---|
+| 功能缺失 | `setPwdNote`（备注改不了）| 接 |
+| 安全漏洞 | `migrateSecretsToKeychain` | 接 |
+| **只是少了优化** | `hydrateMacOrders` | 接，但不紧急 |
+| 被撤功能 | `outOfWindow` | 不接 |
+
+**接之前必须查清楚是哪种** —— 把"少了优化"当成"功能缺失"去大改，就是制造风险。
