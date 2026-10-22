@@ -277,7 +277,13 @@ struct BackupPage: View {
                     .fixedSize(horizontal: false, vertical: true)
                 // "相同设备会被覆盖"这句话不够 —— saveLedger 是**整表覆盖**，
                 // 所以备份里没包含的钥匙也不会保留。不写明就是骗人。
-                Text("该设备的钥匙会**以备份为准**：备份里没有的不会保留。其它设备不受影响。这一步会写库，不可撤销。")
+                Text("该设备的钥匙会**以备份为准**：备份里没有的不会保留。其它设备不受影响。")
+                    .xFont(.footnote)
+                    .foregroundStyle(XPalette.warn)
+                    .fixedSize(horizontal: false, vertical: true)
+                // 这一页只有"覆盖式"恢复。想保留本机新增的钥匙，得去工作室选「合并」——
+                // 不写明，用户会以为这里也能合并。
+                Text("想保留本机新增的钥匙，请用「备份工作室」的**合并**恢复。恢复前会自动留一个回滚点。")
                     .xFont(.footnote)
                     .foregroundStyle(XPalette.warn)
                     .fixedSize(horizontal: false, vertical: true)
@@ -448,6 +454,10 @@ struct BackupPage: View {
         }
     }
     private func applyRestore(_ bundle: BackupBundle) {
+        // 恢复前先留一个回滚点 —— 工作室的恢复流程一直这么做（421），
+        // 而这一页原来**直接 restoreAll**：整表覆盖且不可撤销。
+        // 同一个动作，两条路径一个可撤回一个不可撤回，没有道理。
+        let rollbackOk = BackupStudio.makeRollbackPoint()
         let r = BackupKit.restoreAll(bundle)
         app.loadDevices()
         if bundle.globals?.appearance != nil { app.reloadAppearance() }
@@ -457,7 +467,8 @@ struct BackupPage: View {
         // 差多少就说明多少。
         let skipped = bundle.devices.count - (r.imported + r.overwritten)
         app.showToast("恢复完成: 新增 \(r.imported), 覆盖 \(r.overwritten)"
-                       + (skipped > 0 ? " · \(skipped) 台被跳过 (缺钥匙材料)" : ""))
+                       + (skipped > 0 ? " · \(skipped) 台被跳过 (缺钥匙材料)" : "")
+                       + (rollbackOk ? " · 已留回滚点" : ""))
         pendingRestore = nil
     }
 

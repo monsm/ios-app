@@ -615,6 +615,12 @@ const checks = [
     return p.includes('以备份为准') && p.includes('let skipped = bundle.devices.count') &&
            p.includes('台被跳过');
   }],
+  ['简单恢复路径也留回滚点', () => {
+    // 工作室恢复前一直会 makeRollbackPoint（421），而备份页的简单路径直接 restoreAll ——
+    // 同一个动作，一条路径可撤回、一条不可。已补齐。
+    const p = CODE.get('BackupPage.swift') || '';
+    return p.includes('BackupStudio.makeRollbackPoint()') && p.includes('已留回滚点');
+  }],
 ];
 
 let pass = 0;
