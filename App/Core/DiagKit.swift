@@ -210,8 +210,23 @@ enum DiagLogs {
         }
         return list
     }
-    /// 751: 确认后**立即应用**保留策略 (与 append 的裁剪同一口径), 返回实际删掉的条数。
-    /// 原先只从下一次写入起生效 —— 切完看不到任何变化, "显示将删条数+二次确认"也就无从谈起。
+    /// 立即应用保留策略并落盘，返回实际删掉的条数。
+    ///
+    /// 751 的原始意图：用户切了保留期，就该**当场**看到条数变少。
+    /// 原先只有 append() 会裁剪，切换后要等下一次写日志才生效 —— 切完看不到任何变化。
+    /// （这段注释一度错位挂在 today() 上，那个"立即应用"的函数已经不存在了。）
+    @discardableResult
+    static func applyRetentionNow() -> Int {
+        guard let days = retentionDays else { return 0 }
+        let cs = localDay(WeekCal.shifted(Date(), days: -days))
+        var list = entries
+        let before = list.count
+        list = list.filter { $0.date >= cs }
+        let removed = before - list.count
+        if removed > 0 { DB.store.setCodable("kf_diag_logs", list) }
+        return removed
+    }
+
     @discardableResult
     static func today() -> [DiagLogEntry] {
         let d = localDay()

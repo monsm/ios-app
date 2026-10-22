@@ -313,7 +313,10 @@ struct DiagnosticsPage: View {
         Button {
             retention = value
             DB.store.set("kf_diag_log_retention", value)
+            // 当场生效：否则用户切完看不到任何变化，要等下次写日志才裁剪。
+            let removed = DiagLogs.applyRetentionNow()
             XHaptics.tick.impactOccurred()
+            if removed > 0 { app.showToast("已按新保留期删除 (removed) 条") }
             revision &+= 1
         } label: {
             Text(label)

@@ -520,6 +520,14 @@ const checks = [
     const k = CODE.get('AddKeyPage.swift') || '';
     return k.includes('CredentialOrg.prefixConflict(') && k.includes('prefixClash');
   }],
+  ['切换日志保留期会当场生效', () => {
+    // 注释写着"确认后立即应用保留策略，返回实际删掉的条数"，
+    // 但它错位挂在一个叫 today() 的函数上 —— 那个"立即应用"的函数早就不在了。
+    // 结果：用户切完保留期看不到任何变化，要等下次写日志才裁剪。
+    const d = CODE.get('DiagKit.swift') || '';
+    const p = CODE.get('DiagnosticsPage.swift') || '';
+    return d.includes('static func applyRetentionNow()') && p.includes('DiagLogs.applyRetentionNow()');
+  }],
 ];
 
 let pass = 0;
