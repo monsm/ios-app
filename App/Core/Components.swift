@@ -348,12 +348,15 @@ struct XStatCard<Content: View>: View {
                             .foregroundStyle(XPalette.textSub)
                             .frame(minHeight: XHit.min)
                     }
-                    // 卡头 → 第一段净 6pt。
+                    // 卡头 → 第一段净 **6pt**（§7.6「卡头 → 标题 6pt，实测墨迹间距 14px」）。
                     //
-                    // XCardLink 的 minHeight 44 是**触达**要求，不是视觉高度：
-                    // 它装的是 14pt 的一行字，44 的盒子里上下各有 (44−14)/2 = 15 的空白。
-                    // 所以视觉上墨迹距第一段已经是 15，规范要 6 ⇒ 再收 9。
-                    // 用负 padding 而不是负高度的 Spacer —— 负高度在 SwiftUI 里没有定义行为。
+                    // `XCardLink` 用 `minHeight: XHit.min(44)` 撑行盒来满足触达，
+                    // 但 44 里墨迹只占 14 —— 上下各空 15，所以视觉间距已经变成 15。
+                    // 这里补 −9 把它收回 6。
+                    //
+                    // 为什么不去改 XCardLink 让它不撑高：那条链接是卡里唯一的入口，
+                    // 触达不足等于整张卡进不去。**宁可这里算一次，也不牺牲触达。**
+                    // 数字怎么来的：6 − (44 − 14)/2 = 6 − 15 = **−9**。
                     Color.clear.frame(height: 0).padding(.top, -9)
                 }
                 content()
