@@ -229,6 +229,30 @@ const RULES = [
 // ── 工程级断言（不是逐行扫，是整个 App 有没有做这件事）──
 const projectProblems = [];
 {
+  // 规范 §14-#6：**内容层不许用毛玻璃** —— 违反 HIG 两层模型（内容不透明 / 功能层玻璃）。
+  //
+  // 本仓唯一合法的玻璃是 `XGlassTabBar`（功能层）。实证有一处越界：
+  // SecurityCenterView 的挡片用 .ultraThinMaterial 盖 OTP —— 既违反分层，
+  // 又没达成目的（那种材质故意透背景，秘密可能被部分读出）。
+  const MATERIAL = /\.(ultraThinMaterial|thinMaterial|regularMaterial|thickMaterial|ultraThickMaterial)\b/;
+  for (const f of files) {
+    const rel = path.relative(ROOT, f);
+    const lines = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n');
+    lines.forEach((raw, i) => {
+      const code = raw.replace(/\/\/.*$/, '');
+      if (!MATERIAL.test(code)) return;
+      if (/XGlassTabBar/.test(code)) return;   // 功能层，允许
+      // 允许的例外：XGlassTabBar 自身实现（同一个 struct 体内）
+      const around = lines.slice(Math.max(0, i - 24), i + 2).join('\n');
+      // 两处合法：功能层 Tab Bar 自身，以及**玻璃配方的唯一实现** XGlassSurface。
+      // 后者不是「内容层用玻璃」，而是玻璃这个材质本身的定义 —— 内容层若直接用它会另报。
+      if (/struct XGlassTabBar|struct XGlassSurface/.test(around)) return;
+      projectProblems.push('§14-#6 内容层用了毛玻璃（只许在功能层 / XGlassTabBar）：' +
+                           rel + ':' + (i + 1) + '  ' + raw.trim().slice(0, 50));
+    });
+  }
+}
+{
   // 规范 §14-#11：**11pt 以下字号命中即返工**（低于 iOS 最小可读字号）。
   //
   // 实证：环内文字的下限原为 max(8,…) / max(9,…)，在 104pt 的环里实际渲染出 8–9pt。

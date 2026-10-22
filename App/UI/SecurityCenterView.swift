@@ -421,7 +421,10 @@ struct SecurityPeekView: View {
             .padding(.horizontal, XSpace.l)
             .padding(.vertical, XSpace.m)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.ultraThinMaterial)
+            // 规范 §14-#6：**内容层不许用毛玻璃**（玻璃只属于功能层）。
+            // 而且这里用 ultraThinMaterial 还**没达成自己的目的** —— 那种材质是故意让背景透出来的，
+            // 底下的 OTP 可能被部分读出。挡秘密要用**实底**。
+            .background(XPalette.surfaceAlt)
             // 375 松手复位: pressing=false 时无条件合挡片 (timedReveal=0 下长按后也曾永开);
             // timedReveal>0 时定时器到点也收回同一状态, 两条路一个结局。
             .onLongPressGesture(minimumDuration: 0.5, maximumDistance: 50, pressing: { pressing in
