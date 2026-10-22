@@ -23,6 +23,7 @@ struct MaintenanceView: View {
     @State private var showChecklist = false
 
     private var mac: String { app.current?.mac ?? "" }
+    private var meta: LockMeta { LockArchive.meta(mac) }
     /// 1022 频次自适应: 高频使用锁 (近 30 天开门 ≥60 次) 周期缩到 60 天。
     ///
     /// 判据只有一处（`BatteryCare.carePeriodDays`），读法也只有一处（这里用带 `mac:` 的重载）。
