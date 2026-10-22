@@ -410,3 +410,155 @@ static func pwdStrength(_ v: String) -> (score: Int, hint: String)
 
 挂在 AddKeyPage 的提示行：密码一变成"可用"，就改说它弱不弱，并改用警示色
 （否则"全部同数字"会显示成通过色，等于在鼓励它）。
+
+---
+
+---
+
+# 附：零调用函数处置总表
+
+判据：`static func` + 零调用 + 实现 > 5 行，共 **72 个**。
+
+| 处置 | 数量 | 说明 |
+|---|---|---|
+| **缺编辑能力** | 6 | **真缺口**：setter 写好了但界面没有入口 —— 用户改不了 |
+| **应自动跑** | 25 | 本该在操作流程里自动执行，不该做成按钮 |
+| **缺展示位** | 27 | 信息有用，只缺一个显示位置（**不是缺陷，是欠一笔债**） |
+| **需要新屏** | 4 | 要新造一整屏或多选态，风险大于收益 —— **这是结论，不是待办** |
+| **仪式需求** | 6 | 需要特定场景（节气/问候/焦点序列）才触发 |
+| **协议底层** | 3 | 协议层探测/加解密工具，由上层封装调用 |
+| **不接（误报多）** | 1 | 判定逻辑不可靠，接了会制造假警报 |
+
+## 先说怎么用这张表
+
+- **不要**从上往下挨个接。先问：用户会在什么时候需要它？
+- 「需要新屏」是**已判定不值得做**的结论，不是待办清单。
+- 「缺编辑能力」是**真缺口**，优先级最高。
+- 「应自动跑」需要找到那个操作流程，把调用塞进去，而不是给用户一个按钮。
+- 表是活的：接一个就把它移到下面「已接上的」。
+
+## 缺编辑能力（6）
+
+| 函数 | 文件 | 行数 |
+|---|---|---|
+| `renameFp` | Store.swift | 5 |
+| `renameMember` | Store.swift | 5 |
+| `rePwd` | Store.swift | 5 |
+| `setFpAlarm` | Store.swift | 5 |
+| `setMemberBadge` | Milestones.swift | 5 |
+| `setMemberBirthday` | Milestones.swift | 5 |
+
+## 应自动跑（25）
+
+| 函数 | 文件 | 行数 |
+|---|---|---|
+| `canTailgate` | PidMap.swift | 5 |
+| `diff` | CredentialOrg.swift | 26 |
+| `digitDiff` | CredentialOrg.swift | 10 |
+| `exportPackage` | CredentialOrg.swift | 12 |
+| `lastApplyAt` | CredentialOrg.swift | 5 |
+| `markDisabled` | CredentialOrg.swift | 12 |
+| `markPinSeen` | BackupStudioKit.swift | 5 |
+| `markRecordsViewed` | Milestones.swift | 12 |
+| `namingTemplate` | CredentialOrg.swift | 11 |
+| `noteMigTxnDone` | BackupStudioKit.swift | 6 |
+| `observed` | FirmwareHistory.swift | 7 |
+| `pendingMigrationTxn` | BackupStudioKit.swift | 5 |
+| `pinToFront` | LockStats.swift | 8 |
+| `prefixConflict` | CredentialOrg.swift | 5 |
+| `purgeNow` | CredentialOrg.swift | 5 |
+| `pushSearchHistory` | CredentialOrg.swift | 5 |
+| `recordOrganize` | Milestones.swift | 13 |
+| `recordTap` | QuickPool.swift | 9 |
+| `reordered` | LockStats.swift | 11 |
+| `repeatTarget` | QuickPool.swift | 15 |
+| `rescueCode` | AuditChain.swift | 6 |
+| `scheduleAlerts` | CredentialOrg.swift | 33 |
+| `setSelected` | QuickPool.swift | 8 |
+| `tier` | BatteryCare.swift | 11 |
+| `writeRoster` | ExportCenter.swift | 11 |
+
+## 缺展示位（27）
+
+| 函数 | 文件 | 行数 |
+|---|---|---|
+| `compact` | StatsKit.swift | 7 |
+| `damageDays` | RecordSearch.swift | 10 |
+| `dayDeadlines` | CredentialOrg.swift | 7 |
+| `duePins` | BackupStudioKit.swift | 15 |
+| `earlyExpiryNote` | CredentialOrg.swift | 8 |
+| `fpUseCount30d` | CredentialOrg.swift | 7 |
+| `fwLag` | LockStats.swift | 8 |
+| `fwSince` | BatteryCare.swift | 7 |
+| `inferredLastUseMap` | CredentialOrg.swift | 9 |
+| `isAlarm` | RecordSearch.swift | 6 |
+| `isIdleLock` | StatsKit.swift | 11 |
+| `lastSessionLine` | DiagKit.swift | 11 |
+| `listCountdown` | CredentialOrg.swift | 15 |
+| `maintenance` | LockStats.swift | 17 |
+| `mergedRecentOpens` | RecordSearch.swift | 9 |
+| `monthDeadlines` | CredentialOrg.swift | 15 |
+| `naturalSentence` | StatsKit.swift | 6 |
+| `nextWindow` | ZOTP.swift | 9 |
+| `openCountInWindow` | CredentialOrg.swift | 8 |
+| `pinDayText` | BackupStudioKit.swift | 7 |
+| `pinLabel` | BackupStudioKit.swift | 5 |
+| `recentAlarmMacs` | LockStats.swift | 6 |
+| `recentUseCount` | CredentialOrg.swift | 19 |
+| `recordCard` | ExportCenter.swift | 6 |
+| `sampleTimeText` | LockStats.swift | 7 |
+| `springFestiveRange` | StatsKit.swift | 17 |
+| `usageCount` | CredentialOrg.swift | 8 |
+
+## 需要新屏（4）
+
+| 函数 | 文件 | 行数 |
+|---|---|---|
+| `batchExtend` | CredentialOrg.swift | 11 |
+| `batchPrefixNote` | CredentialOrg.swift | 12 |
+| `batchTransfer` | CredentialOrg.swift | 21 |
+| `smartSet` | CredentialOrg.swift | 17 |
+
+## 仪式需求（6）
+
+| 函数 | 文件 | 行数 |
+|---|---|---|
+| `checkInTonight` | Milestones.swift | 9 |
+| `launchPhrase` | Milestones.swift | 13 |
+| `liveFocusSequence` | AccessibilityKit.swift | 19 |
+| `newEntryHaptic` | AccessibilityKit.swift | 9 |
+| `solarTermHint` | Milestones.swift | 11 |
+| `solarTermToday` | Milestones.swift | 11 |
+
+## 协议底层（3）
+
+| 函数 | 文件 | 行数 |
+|---|---|---|
+| `buildEkeyShare` | ZKCmdBuilder.swift | 8 |
+| `decryptHex` | AESKit.swift | 16 |
+| `probeSimplified` | RealityAPIProbe.swift | 9 |
+
+## 不接（误报多）（1）
+
+| 函数 | 文件 | 行数 |
+|---|---|---|
+| `outOfWindow` | RecordSearch.swift | 21 |
+
+## 已接上的（本会话）
+
+| 函数 | 轮次 | 去处 |
+|---|---|---|
+| `migrateSecretsToKeychain` | 84 | 启动时把明文密钥迁进 Keychain（**安全漏洞**）|
+| `setPwdNote` / `setFpNote` | 84 | 钥匙页右键「编辑备注」|
+| `hydrateMacOrders` | 85 | 启动时预热 MAC 字节序（省一次来回）|
+| `expiringSoonCount` | 82 | 门厅关键提示「N 项 7 天内到期」|
+| `gapDays` | 83 | 诊断页「数据健康」|
+| `bigDropDays` | 83 | 设备页「明细」|
+| `pwdStrength` | 86 | 设密码时就地提示弱口令 |
+
+## 一个数字
+
+这 72 个里有 **6 个是真缺口**（用户改不了）、
+**27 个是欠一笔展示的债**、**25 个是流程里漏了一次调用**。
+
+剩下 14 个，**已判定不该接**。
