@@ -32,7 +32,12 @@ import UIKit
 struct EventsPage: View {
     @EnvironmentObject private var app: AppState
 
+    /// 从门厅分时图点进来时带上的小时（0–23）。nil = 不按小时筛。
+    var initialHour: Int? = nil
+
     @State private var recs: [Rec] = []
+    /// 当前小时过滤。点了分时图的某一根柱子就落到这一根上。
+    @State private var hourFilter: Int?
     @State private var loaded = false
     @State private var search = ""
     @State private var searchActive = false
@@ -58,6 +63,9 @@ struct EventsPage: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            if let h = hourFilter {
+                hourFilterBar(h)
+            }
             if loaded && !(namedViews.isEmpty && recentSearches.isEmpty) {
                 savedChips
             }
@@ -197,15 +205,27 @@ struct EventsPage: View {
 
     private func load() {
         let macs = mac.isEmpty ? DB.keychains().map { $0.mac } : [mac]
+        // 从门厅分时图点进来时，只在这一页首次加载时落到那一个小时；
+        // 用户之后手动"看全部"，再刷新也不会把它加回来。
+        if hourFilter == nil, let h = initialHour { hourFilter = h }
         recs = RecordSearch.buildRecs(macs: macs)
         namedViews = RecordSearch.namedViews()
         recentSearches = RecordSearch.history()
         loaded = true
     }
 
+    /// 与门厅分时图**同一套换算**（protoSecondsToUnix + WeekCal.gregorian），
+    /// 否则点了 14 点却筛出别的时段。
+    private func hourOf(_ r: Rec) -> Int {
+        let d = Date(timeIntervalSince1970: ZKProtocol.protoSecondsToUnix(r.lockTime))
+        return WeekCal.gregorian.component(.hour, from: d)
+    }
+
     private var filtered: [Rec] {
         var out = recs
         if alarmOnly { out = out.filter { $0.alarm } }
+        // 小时过滤放在提前 return 之前 —— 搜索为空时它同样要生效。
+        if let h = hourFilter { out = out.filter { hourOf($0) == h } }
         let raw = search.trimmingCharacters(in: .whitespaces)
         guard !raw.isEmpty else { return out }
         // ═══ 用仓里已经写好的查询引擎，不再自己手搓 substring ═══
@@ -614,6 +634,35 @@ struct EventsPage: View {
             noteDraft = savedNote
             noteTarget = rec
         }
+    }
+
+    /// 小时过滤的可见状态 + 一个撤掉的入口。
+    /// 不显示它的话，用户会看着"只有 3 条"以为记录丢了。
+    private func hourFilterBar(_ h: Int) -> some View {
+        HStack(spacing: XSpace.s) {
+            Image(systemName: "clock")
+                .font(.system(size: XIcon.sm, weight: .medium))
+                .foregroundStyle(XPalette.accentText)
+                .accessibilityHidden(true)
+            Text("只看今天 \(h):00 – \(h):59")
+                .xFont(.system(.footnote, weight: .medium))
+                .foregroundStyle(XPalette.text)
+            Spacer(minLength: 0)
+            Button {
+                hourFilter = nil
+                XHaptics.tick.impactOccurred()
+            } label: {
+                Label("看全部", systemImage: "xmark.circle.fill")
+                    .xFont(.system(.caption, weight: .medium))
+                    .foregroundStyle(XPalette.accentText)
+            }
+            .buttonStyle(.plain)
+            .frame(minHeight: XHit.min)
+            .accessibilityLabel("取消小时过滤，看今天全部记录")
+        }
+        .padding(.horizontal, XSpace.gutter)
+        .padding(.vertical, XSpace.xs)
+        .accessibilityElement(children: .combine)
     }
 
     private var emptyState: some View {

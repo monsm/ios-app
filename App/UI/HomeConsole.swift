@@ -72,6 +72,9 @@ struct HomeConsole: View {
     /// 要 管理 → 成员 → 选人 三步，才到成员详情。
     /// 而门厅上那张卡已经写了他的名字和今天的次数 —— 点它是最自然的意图。
     @State private var memberSheetID: String?
+    /// 分时图点选的小时 → 打开事件页并按该小时筛选。
+    @State private var hourSheet: Int?
+    @State private var showEvents = false
     @State private var appeared = false
 
     // ── 当日统计缓存 ──
@@ -185,6 +188,17 @@ struct HomeConsole: View {
             }
             .sheet(isPresented: $showAddLock) {
                 AddLockPage().environmentObject(app)
+            }
+            .sheet(isPresented: Binding(get: { hourSheet != nil },
+                                       set: { if !$0 { hourSheet = nil } })) {
+                if let h = hourSheet {
+                    NavigationStack {
+                        EventsPage(initialHour: h).environmentObject(app)
+                    }
+                }
+            }
+            .sheet(isPresented: $showEvents) {
+                NavigationStack { EventsPage().environmentObject(app) }
             }
             .sheet(isPresented: Binding(get: { memberSheetID != nil },
                                        set: { if !$0 { memberSheetID = nil } })) {
@@ -579,17 +593,31 @@ struct HomeConsole: View {
         let peak = max(counts.max() ?? 0, 1)
         let nowHour = WeekCal.gregorian.component(.hour, from: Date())
         return VStack(spacing: XSpace.xs) {
-            HStack(alignment: .bottom, spacing: 3) {
-                ForEach(0..<24, id: \.self) { h in
-                    let c = counts[h]
-                    Color.clear
-                        .frame(maxWidth: .infinity)
-                        .frame(height: max(3, 46 * CGFloat(c) / CGFloat(peak)))
-                        .xPlate(barTone(hour: h, count: c, peak: peak, now: nowHour), .capsule)
-                        .frame(height: 46, alignment: .bottom)
+            // ═══ 分时图可点 ═══
+            //
+            // 24 根柱子每根只有十几 pt 宽，**不能各自做按钮**（远低于 44pt 触达）。
+            // 改成整块图作为一个触达面，按 x 坐标换算落到哪一小时 ——
+            // 一块 46pt 高的区域，比 24 个小按钮既好点又诚实。
+            GeometryReader { geo in
+                HStack(alignment: .bottom, spacing: 3) {
+                    ForEach(0..<24, id: \.self) { h in
+                        let c = counts[h]
+                        Color.clear
+                            .frame(maxWidth: .infinity)
+                            .frame(height: max(3, 46 * CGFloat(c) / CGFloat(peak)))
+                            .xPlate(barTone(hour: h, count: c, peak: peak, now: nowHour), .capsule)
+                            .frame(height: 46, alignment: .bottom)
+                    }
                 }
+                .contentShape(Rectangle())
+                .gesture(SpatialTapGesture().onEnded { v in
+                    let w = max(geo.size.width, 1)
+                    let h = min(max(Int(v.location.x / w * 24), 0), 23)
+                    XHaptics.tick.impactOccurred()
+                    hourSheet = h
+                })
             }
-            .frame(height: 46, alignment: .bottom)
+            .frame(height: 46)
             HStack {
                 Text("0").frame(maxWidth: .infinity, alignment: .leading)
                 Text("6").frame(maxWidth: .infinity)
@@ -602,6 +630,9 @@ struct HomeConsole: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("今日分时开门，共 \(opensToday) 次，最早 \(firstOpenText)")
+        // VoiceOver 用户没有"按 x 坐标点"这回事，给一个等效动作：
+        // 直接看今天全部记录（小时过滤在那边还能再调）。
+        .accessibilityAction(named: "看今天的记录") { hourSheet = nil; showEvents = true }
     }
 
     /// 分时柱的配色 —— 按**实测对比度**定的，不是凭感觉。

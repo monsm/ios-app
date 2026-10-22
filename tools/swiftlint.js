@@ -82,6 +82,11 @@ const SYS_NAMES = new Set(['Slider','Stepper','Bundle','LazyVStack','LazyVGrid',
   // 无障碍字号下要把"三列横排"换成"纵向堆叠"，两种布局必须同一个返回类型，
   // AnyLayout 是 SwiftUI 给出的标准做法（iOS 16+）。
   'AnyLayout',
+  // 门厅分时图整块可点：24 根柱子每根十几 pt 宽，不能各自做按钮（远低于 44pt 触达），
+  // 只能整块触达 + 按 x 坐标换算落到哪一小时。SpatialTapGesture 是 SwiftUI 带位置信息的
+  // 标准点按手势（iOS 16+）。全仓 1 处，撞上本检查的误报形态。
+  // 加白不等于证明交互正确 —— 真机上"点第 14 根柱子会不会落到 14 点"仍待验。
+  'SpatialTapGesture',
   'VStackLayout',
   'HStackLayout','URL','URLSessionConfiguration','AngularGradient','AxisGridLine','AxisMarks','AxisValueLabel','BGAppRefreshTaskRequest','BGTaskScheduler','BGTaskType','ByteCountFormatter','CCKeyDerivationPBKDF','CCPBKDFAlgorithm','CCPseudoRandomAlgorithm','CMMotionManager','DispatchSource','DispatchTime','EdgeInsets','EmptyView','GlassEffectContainer','PDFDocument','PointMark','RadialGradient','Substring','SymmetricKey','TapGesture','TextEditor','TimelineView','URLResourceValues','UnicodeScalar','XCTAssertGreaterThan','XCTAssertLessThanOrEqual','XCTAssertNil','XCTAssertNotNil','XCTFail','XCTAssertEqual','XCTUnwrap','BarMark','LineMark','RuleMark','RectangleMark','Platter','VStack','HStack','LazyHStack','ContentUnavailableView','ToggleStyle','ButtonStyle','String', 'Int', 'Int64', 'Int32', 'UInt8', 'UInt16', 'UInt32', 'Double', 'Float', 'Bool', 'Array', 'Set', 'Dictionary', 'Optional', 'Result', 'Error', 'URL', 'Data', 'Date', 'Timer', 'Calendar', 'Locale', 'TimeZone', 'UUID', 'Any', 'AnyView', 'View', 'Text', 'Font', 'Color', 'Image', 'CGFloat', 'CGRect', 'CGPoint', 'CGSize', 'IndexPath', 'IndexSet', 'Character', 'Unicode', 'Comparable', 'Equatable', 'Codable', 'Decodable', 'Encodable', 'Identifiable', 'Hashable', 'Sendable', 'MainActor', 'Task', 'SwiftUI', 'Combine', 'Foundation', 'Security', 'CryptoKit', 'CommonCrypto', 'CoreBluetooth', 'Charts', 'UniformTypeIdentifiers', 'UserNotifications', 'ObjectiveC', 'Dispatch', 'UserDefaults', 'NotificationCenter', 'JSONEncoder', 'JSONDecoder', 'SHA256', 'Logger', 'Mirror', 'Swift',
 // WidgetKit (927 哑按钮扩展 target): 这些系统 API 在仓库里各只出现 1–2 次, 正好落进本检查的误报形态。

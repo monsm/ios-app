@@ -425,6 +425,15 @@ const checks = [
     const h = CODE.get('HomeConsole.swift') || '';
     return h.includes('memberSheetID') && h.includes('MemberDetail360View(memberID: id)');
   }],
+  ['分时图可点到对应小时的记录', () => {
+    // 用户看到"14 点有 3 次"，自然会想知道是谁。24 根柱子各自做按钮远低于 44pt，
+    // 所以整块图作触达面、按 x 换算小时，落到事件页并按该小时筛。
+    const e = CODE.get('EventsPage.swift') || '';
+    const h = CODE.get('HomeConsole.swift') || '';
+    return e.includes('var initialHour: Int? = nil') &&
+           e.includes('ZKProtocol.protoSecondsToUnix(r.lockTime)') &&
+           h.includes('EventsPage(initialHour: h)') && h.includes('SpatialTapGesture()');
+  }],
 ];
 
 let pass = 0;
