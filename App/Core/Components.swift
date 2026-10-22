@@ -213,6 +213,11 @@ struct XHairline: View {
 /// | 分隔线 → 下一组 | 12pt |
 /// | 页脚上方 | 12pt |
 struct XStatCard<Content: View>: View {
+    /// 卡型。规范 §7.6 的 StatCard 在参考图里是**普通卡**（group），
+    /// 但本仓的「保养」卡是页面主角，需要 hero 的 34 圆角 + 渐变底。
+    var kind: XContainerKind = .group
+    /// 语义色边（有警告时给 warn）。中性时不描边 —— §6.3 要求卡片靠明度差分分层。
+    var tone: XToneColor = .neutral
     /// 卡头（`Sleep ›`）。nil = 无卡头。
     var headerTitle: String? = nil
     var headerAction: (() -> Void)? = nil
@@ -221,7 +226,7 @@ struct XStatCard<Content: View>: View {
     @ViewBuilder var content: () -> Content
 
     var body: some View {
-        XPanel(kind: .group) {
+        XPanel(kind: kind, tone: tone) {
             VStack(alignment: .leading, spacing: 0) {
                 if let headerTitle {
                     if let headerAction {
@@ -232,19 +237,25 @@ struct XStatCard<Content: View>: View {
                             .foregroundStyle(XPalette.textSub)
                             .frame(minHeight: XHit.min)
                     }
-                    // 卡头 → 标题 6pt。XCardLink 的 minHeight 44 已经把行盒撑到 44，
-                    // 再给 6 会让墨迹间距变成 44+6，比规范的 6 大一个数量级 ——
-                    // 所以这里用负补偿把行盒的额外高度吃掉，只留 6 的墨迹距。
-                    Spacer().frame(height: 0)
+                    // 卡头 → 第一段净 6pt。
+                    //
+                    // XCardLink 的 minHeight 44 是**触达**要求，不是视觉高度：
+                    // 它装的是 14pt 的一行字，44 的盒子里上下各有 (44−14)/2 = 15 的空白。
+                    // 所以视觉上墨迹距第一段已经是 15，规范要 6 ⇒ 再收 9。
+                    // 用负 padding 而不是负高度的 Spacer —— 负高度在 SwiftUI 里没有定义行为。
+                    Color.clear.frame(height: 0).padding(.top, -9)
                 }
                 content()
                 if let footer {
-                    XHairline()
-                        .padding(.top, 14)
+                    // 页脚上方的线由**最后一段**负责（XStatSection 的段间线）。
+                    // 这里不再画第二条 —— 两条线挨在一起会读成一条粗线，而不是两段的分界。
+                    // 规范 §7.6：页脚注释是 **12 Regular**，行高 **1.6**。
+                    // XText 的 12 档是 footnote（caption 是 11）。此前这里写 caption，
+                    // 比规范小一档；行高 1.6 → 12 × 1.6 = 19.2，行距补 7.2。
                     Text(footer)
-                        .xFont(.caption)
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.textSub)
-                        .lineSpacing(XText.caption.size * 0.6)   // 行高 1.6
+                        .lineSpacing(XText.footnote.size * 0.6)
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.top, 12)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -270,7 +281,7 @@ struct XStatSection<Content: View>: View {
     var isFirst: Bool = false
     @ViewBuilder var content: () -> Content
 
-    func first() -> XStatSection { var s = self; s.isFirst = true; return s }
+    func first() -> XStatSection<Content> { var s = self; s.isFirst = true; return s }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
