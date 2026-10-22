@@ -466,7 +466,9 @@ const checks = [
     // 创建时能写备注，创建之后改不了 —— setPwdNote / setFpNote 写好了零调用，
     // 打错一个字只能删了重建。
     const k = CODE.get('KeysPage.swift') || '';
-    return k.includes('DB.setPwdNote(') && k.includes('DB.setFpNote(') && k.includes('func promptText');
+    const a = CODE.get('Alerts.swift') || '';
+    // promptText 定义在 Alerts.swift，调用点在 KeysPage —— 第一版把两者写在同一个文件里查了。
+    return k.includes('DB.setPwdNote(') && k.includes('DB.setFpNote(') && a.includes('func promptText');
   }],
 ];
 
