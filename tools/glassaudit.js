@@ -229,6 +229,27 @@ const RULES = [
 // ── 工程级断言（不是逐行扫，是整个 App 有没有做这件事）──
 const projectProblems = [];
 {
+  // 逻辑维度：**同一个量只能有一个算法**。
+  //
+  // 实证：保养周期档（近 30 天开门 ≥60 次的锁 60 天、否则 90 天）在本仓有**三条读法**：
+  //   · CarePage.daysUntilCare  写死 `opens30d: 0` → 永远 90 天（与同页卡片矛盾）
+  //   · CareViews 自己数 `HotCache.recent` → 不含测试标记过滤与协议时间窗
+  //   · BatteryCare(mac:) / 通知侧走 `LockStats.usage()` → 正确口径
+  // 已全部收敛到 `carePeriodDays(mac:)`。判据：`carePeriodDays(opens30d:` 只许出现在
+  // BatteryCare.swift 自身（定义 + 通知路径），其它文件用带 mac 的那个重载。
+  for (const f of files) {
+    const rel = path.relative(ROOT, f);
+    if (/BatteryCare\.swift$/.test(rel)) continue;
+    const lines = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n');
+    lines.forEach((raw, i) => {
+      const code = raw.replace(/\/\/.*$/, '');
+      if (!/carePeriodDays\(opens30d:/.test(code)) return;
+      projectProblems.push('同一个量两处算法：`carePeriodDays(opens30d:)` 只许在 BatteryCare.swift 内用，' +
+                           '其它地方请用 `carePeriodDays(mac:)`：' + rel + ':' + (i + 1));
+    });
+  }
+}
+{
   // 规范 §13.1：「支持到 AX3」。
   //
   // 实证：本仓有 11 处 `Text(...).frame(width: 52)` 这类**写死的列宽** ——

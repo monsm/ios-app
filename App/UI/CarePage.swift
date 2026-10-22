@@ -64,8 +64,9 @@ struct CarePage: View {
         // 后果: 高频锁（30 天 ≥60 次开门）本该 60 天保养一次，
         // 但界面永远按 90 天算，通知却在第 60 天来催。两边对不上。
         // 现在读真实开门数，与 BatteryCare 的调度同源。
-        let opens30 = HotCache.recent(mac).filter { StatsKit.openTypes.contains($0.type) }.count
-        let period = care.lastCareAt > 0 ? BatteryCare.carePeriodDays(opens30d: opens30) : 0
+        // 周期只从一个地方取（`BatteryCare.carePeriodDays(mac:)`）——
+        // 这里原来自己算一份 opens30，与 daysUntilCare 的算法不同源，两处会给出不同的天数。
+        let period = periodDays
         let elapsed = care.lastCareAt > 0 ? (period - days) : 0
         // 周期环: "还剩多少"是一个进程量, 环比文字更直观。
         // 弧走的是「已过去多少」而不是「还剩多少」—— 走得越满越该动手。
@@ -142,11 +143,22 @@ struct CarePage: View {
         }
     }
 
+    /// 距离下次保养还有几天。
+    ///
+    /// **2026-10-23 修一个同页自相矛盾的 bug**：这里原来写死 `carePeriodDays(opens30d: 0)`，
+    /// 也就是**永远按 90 天算**；而同一张卡片的 `periodCard` 用的是真实开门数（高频锁 60 天）。
+    /// 于是高频锁会看到「环已转满 100%（60 天到了）」，标题却还写着「N 天后该保养」（按 90 天算）——
+    /// 同一个数在一张卡上说两遍，而且两遍不一样。
+    ///
+    /// `BatteryCare.carePeriodDays(mac:)` 是那档口径的**唯一正确读法**（与通知侧同源）。
+    private var periodDays: Int {
+        care.lastCareAt > 0 ? BatteryCare.carePeriodDays(mac: mac) : 0
+    }
+
     private var daysUntilCare: Int {
         guard care.lastCareAt > 0 else { return 0 }
-        let period = BatteryCare.carePeriodDays(opens30d: 0)
         let elapsed = Int((Date().timeIntervalSince1970 * 1000 - care.lastCareAt) / 86_400_000)
-        return period - elapsed
+        return periodDays - elapsed
     }
 
     private func periodTitle(_ days: Int) -> String {

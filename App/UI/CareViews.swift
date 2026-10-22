@@ -23,15 +23,11 @@ struct MaintenanceView: View {
     @State private var showChecklist = false
 
     private var mac: String { app.current?.mac ?? "" }
-    private var meta: LockMeta { LockArchive.meta(mac) }
-    /// 1022 频次自适应: 高频使用锁 (近 30 天开门 ≥60 次) 保养周期自适应缩短到 60 天
-    private var opens30d: Int {
-        guard let u = LockStats.usage().first(where: { $0.mac == mac }) else { return 0 }
-        return u.opens30d
-    }
-    /// 1022 频次自适应: 高频使用锁 (近 30 天开门 ≥60 次) 保养周期自适应缩短到 60 天。
-    /// 判据本体在 `BatteryCare.carePeriodDays(opens30d:)` —— 通知侧与"保养已记录"那句 toast 都取同一处。
-    private var periodDays: Int { BatteryCare.carePeriodDays(opens30d: opens30d) }
+    /// 1022 频次自适应: 高频使用锁 (近 30 天开门 ≥60 次) 周期缩到 60 天。
+    ///
+    /// 判据只有一处（`BatteryCare.carePeriodDays`），读法也只有一处（这里用带 `mac:` 的重载）。
+    /// 2026-10-23：此处原来自己先算 `opens30d` 再传给另一重载 —— 值对，但两种调用形式会让人不确定哪条是正门。
+    private var periodDays: Int { BatteryCare.carePeriodDays(mac: mac) }
     /// 1013 周期已过天数 / 是否到期
     private var elapsedDays: Double {
         guard care.lastCareAt > 0 else { return 0 }
@@ -549,8 +545,10 @@ struct CareChecklistView: View {
     private var careLedgerCard: some View {
         let mac = app.current?.mac ?? ""
         let state = BatteryCare.care(mac)
-        let opens30 = HotCache.recent(mac).filter { StatsKit.openTypes.contains($0.type) }.count
-        let period = BatteryCare.carePeriodDays(opens30d: opens30)
+        // 周期只从一个地方取。这里原来自己数 `HotCache.recent(mac)` 的开门数 ——
+        // 那与 `LockStats.usage()` 是**两条读法**：后者还扣掉测试标记、按协议基准换算时间窗。
+        // 两个数不同就会让同一把锁在「周期档」上给出 60 / 90 两种答案。
+        let period = BatteryCare.carePeriodDays(mac: mac)
         let lastMs = state.lastCareAt
         let daysSince: Int = lastMs > 0
             ? Int((Date().timeIntervalSince1970 * 1000 - lastMs) / 86_400_000)
