@@ -68,22 +68,69 @@ for (const f of files) {
     //   不命中也不一定没问题(触达可能写在 Button 前)。
     //   真判据只能靠真机走查或 Swift 语法树 —— 那是本脚本做不到的, 不假装能做到。
     if (/\bButton\s*\{/.test(l)) {
-      const win = lines.slice(i, i + 8).join('\n');
-      if (!/DS\.Hit\.min|minHeight:\s*4[4-9]|frame\(width:\s*DS\.Hit|Capsule\(\)|RoundedRectangle/.test(win)) {
+      // 窗口 8 →「Button 之后到下一个声明」(上限 30): 触达常写在 label 里的第三四行,
+      // 8 行会漏(实测 AlarmsPage:119 的 XHit.min 在 :129 被误报成缺触达)。
+      let winEnd = Math.min(lines.length - 1, i + 30);
+      for (let k = i + 1; k < lines.length; k++) {
+        if (/^\s{0,8}(?:private |public |internal )?(?:func|var|let)\s/.test(lines[k])) { winEnd = k - 1; break; }
+      }
+      const win = lines.slice(i, winEnd + 1).join('\n');
+      // 2026-10-22: 原判据找 `DS.Hit.min` —— 而 DS 命名空间已于 2026-10-21 整份删除,
+      // 现役令牌是 XHit.min(全仓 133 处)。查一个不存在的符号, 报出的是 112 处假阳性。
+      // 另外两条也要认: ① X*ButtonStyle 内部已带 minHeight: XHit.min(调用点不该重复写);
+      //                 ② 显式 44 数值(外观页色板就是 .frame(width: 44, height: 44))。
+      const styled = /\.buttonStyle\(\s*(?:X(?:Primary|Secondary|Destructive)ButtonStyle|PressableScaleStyle|PressableButtonStyle|AnyButtonStyle)/.test(win);
+      const hasHit = /XHit\.min|DS\.Hit\.min|minWidth:\s*(?:X|DS)\.Hit|minHeight:\s*4[4-9]|minWidth:\s*4[4-9]|frame\(\s*(?:width|height):\s*4[4-9]|Capsule\(\)|RoundedRectangle|contentShape\(/.test(win);
+      // 还有一个高频形态: label 里调了本文件的辅助函数（row(...) / chipLabel(...)），
+      // 而触达写在**那个函数**里。此时窗口里看不到 XHit，但那不是缺口。
+      // 判据: 把本文件里所有「带 XHit.min / contentShape 的函数名」收集一遍，
+      // 只要 label 调用其中之一就算达标。
+      let helperHit = false;
+      if (!styled && !hasHit) {
+        const called = (win.match(/\b([a-zA-Z_][\w]*)\s*\(/g) || []).map((x) => x.replace(/\s*\($/, ''));
+        const body = lines.join('\n');
+        for (const name of new Set(called)) {
+          if (name.length < 3) continue;
+          // 窗口从 600 放宽到「函数体结束」：chipLabel 这类函数前面有大段注释,
+          // 600 字符装不下，于是明明写了 XHit.min 还是被报成缺口。
+          const fnRe = new RegExp('func\\s+' + name + '\\s*\\([^)]*\\)[^{]*\\{[\\s\\S]{0,1600}?(?:XHit\\.min|contentShape\\()');
+          if (fnRe.test(body)) { helperHit = true; break; }
+        }
+      }
+      // 还有一类不该判: 动作在系统容器里 —— ToolbarItem / contextMenu / swipeActions / Menu。
+      // 这些容器的行高与命中由系统给（菜单项 >=44、工具栏按钮 44、滑动操作整行高），
+      // 应用侧没有自己撑一个 44 这回事。
+      const up = lines.slice(Math.max(0, i - 40), i).join('\n');
+      const inSystemChrome = /(?:ToolbarItem|contextMenu|swipeActions|Menu)\s*[(\{]/.test(up);
+      if (!styled && !hasHit && !helperHit && !inSystemChrome) {
         hits.A.push(rel + ':' + ln + '  ' + l.trim().slice(0, 70));
       }
     }
     // B · 动画没用令牌 (散写 duration / easeInOut)
     // 令牌定义处自身当然会写 duration —— 那不是散写, 是**定义**。
-    const isTokenDef = rel === 'App/Core/DesignSystem.swift';
+    // 令牌定义处（现役是 Theme.swift / Components.swift；旧 DesignSystem.swift 已于 2026-10-21 删除）
+    const isTokenDef = /App\/Core\/(Theme|Components)\.swift$/.test(rel);
     if (!isTokenDef && /\.(easeInOut|easeOut|easeIn|linear)\(duration:|withAnimation\(\.(easeInOut|easeOut|easeIn)\(/.test(l)) {
       hits.B.push(rel + ':' + ln + '  ' + l.trim().slice(0, 70));
     }
 
     // C · 无限循环动画没切断隐式继承 (会与父层抢同一批属性)
     if (/repeatForever/.test(l)) {
+      // 2026-10-22: 原判据只看「这一行前后 6/10 行」。但无限循环的**切断点**
+      // 常在同一个 struct 的 body 上 —— 循环由 body 的属性驱动，而 withAnimation
+      // 写在 body 下面的私有方法里。那是正确写法，却因隔着几行注释被判成未切断。
+      // 现在两级判据：① 近邻窗口（快）② 同一 struct 体内出现过切断点（准）。
       const win = lines.slice(Math.max(0, i - 6), i + 10).join('\n');
-      if (!/transaction\s*\{\s*\$0\.animation = nil/.test(win)) {
+      const near = /transaction\s*\{\s*\$0\.animation = nil/.test(win);
+      let inStruct = false;
+      if (!near) {
+        let a = i;
+        while (a > 0 && !/^(?:private |public |internal )?struct\s+\w+/.test(lines[a])) a--;
+        let b = i;
+        while (b < lines.length - 1 && lines[b] !== '}') b++;
+        inStruct = /transaction\s*\{\s*\$0\.animation = nil/.test(lines.slice(a, b + 1).join('\n'));
+      }
+      if (!near && !inStruct) {
         hits.C.push(rel + ':' + ln + '  ' + l.trim().slice(0, 70));
       }
     }
@@ -95,7 +142,13 @@ for (const f of files) {
 
     // E · 手势回调里丢掉了位移值 (Apple Design §2: 必须 1:1 跟手)
     if (/\.onChanged\s*\{\s*_\s+in/.test(l)) {
-      hits.E.push(rel + ':' + ln + '  ' + l.trim().slice(0, 70));
+      // 销号 (与本仓 swiftlint 的「单位口径：」「方向口径：」同一手法):
+      // 按住-填充类确认闸 (如「按住 2 秒清空回收站」) 本来就不需要位移，
+      // 在附近写 `手势口径：<理由>` 即不再报。
+      const gNearby = lines.slice(Math.max(0, i - 6), i + 1).join('\n');
+      if (!/手势口径：/.test(gNearby)) {
+        hits.E.push(rel + ':' + ln + '  ' + l.trim().slice(0, 70));
+      }
     }
 
     // F · 固定时长的等待/动画用在可中断交互上

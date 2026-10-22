@@ -79,7 +79,7 @@ struct CredentialBinView: View {
                     .foregroundStyle(XPalette.accentText)
                     .accessibilityHidden(true)
                 Text("删除后保留 \(retainDays) 天。期间可以「恢复」放回原位；超过保留期会自动清理。")
-                    .xFont(.system(.footnote))
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -111,17 +111,17 @@ struct CredentialBinView: View {
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(e.text)
-                    .xFont(.system(.body))
+                    .xFont(.body)
                     .foregroundStyle(XPalette.text)
                     .lineLimit(1)
                 Text(e.sourceName + " · " + ageText(e.at))
-                    .xFont(.system(.caption))
+                    .xFont(.caption)
                     .foregroundStyle(XPalette.textSub)
                     .lineLimit(1)
             }
             Spacer(minLength: XSpace.s)
             Button("恢复") { restore(e) }
-                .xFont(.system(.footnote, weight: .medium))
+                .xFont(.footnote, weight: .medium)
                 .foregroundStyle(XPalette.accentText)
                 .padding(.vertical, XSpace.xs)
                 .accessibilityLabel("恢复 " + e.text)
@@ -156,7 +156,7 @@ struct CredentialBinView: View {
                     .foregroundStyle(XPalette.ok)
                     .accessibilityHidden(true)
                 Text("刚刚已向门锁发出 \(sense.lastReceipt) 项变更")
-                    .xFont(.system(.footnote, weight: .medium))
+                    .xFont(.footnote, weight: .medium)
                     .foregroundStyle(XPalette.text)
                 Spacer(minLength: 0)
             }
@@ -176,12 +176,12 @@ struct CredentialBinView: View {
             VStack(spacing: 0) {
                 HStack(spacing: XSpace.s) {
                     Text("等待门锁确认")
-                        .xFont(.system(.caption, weight: .semibold))
+                        .xFont(.caption, weight: .semibold)
                         .foregroundStyle(XPalette.textTertiary)
                         .textCase(.uppercase)
                     Spacer(minLength: 0)
                     Text("\(pending.count) 条")
-                        .xFont(.system(.caption, weight: .medium))
+                        .xFont(.caption, weight: .medium)
                         .foregroundStyle(XPalette.warn)
                 }
                 .padding(.horizontal, XSpace.card)
@@ -200,11 +200,11 @@ struct CredentialBinView: View {
                             .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(item.title)
-                                .xFont(.system(.footnote))
+                                .xFont(.footnote)
                                 .foregroundStyle(XPalette.text)
                                 .lineLimit(1)
                             Text(queueLine(item))
-                                .xFont(.system(.caption2))
+                                .xFont(.caption2)
                                 .foregroundStyle(XPalette.textSub)
                                 .lineLimit(1)
                         }

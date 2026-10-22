@@ -13,7 +13,7 @@ struct CareRemindersView: View {
             XPalette.canvas.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: XSpace.l) {
+                VStack(spacing: XSpace.section) {
                     bulletinCard.xScrollLift()
                     annivCard.xScrollLift()
                     bdayCard.xScrollLift()
@@ -145,7 +145,7 @@ struct CareRemindersView: View {
                         if !md.isEmpty {
                             Text(md)
                                 .xFont(.caption.monospacedDigit())
-                                .foregroundStyle(XPalette.textTertiary)
+                                .foregroundStyle(XPalette.textSub)
                         }
                         Text(countdownText(days))
                             .xFont(.subheadline.monospacedDigit())

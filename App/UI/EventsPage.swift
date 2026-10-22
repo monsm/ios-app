@@ -72,6 +72,8 @@ struct EventsPage: View {
     /// 同步详情 —— 只在"结果不对劲"时弹出，让用户能截给我看卡在哪一步。
     @State private var syncDetail: String?
     @State private var showSaveDialog = false
+    /// 待确认删除的筛选视图名（不可逆动作必须先问一句）
+    @State private var pendingDeleteView: String?
 
     private var mac: String { app.currentMac }
 
@@ -103,6 +105,23 @@ struct EventsPage: View {
         .navigationTitle("事件")
         .navigationBarTitleDisplayMode(.large)
         .searchable(text: $search, isPresented: $searchActive, prompt: "搜索事件")
+        // 删除筛选视图的二次确认。说清"删的是什么"——不是一个"确定吗"。
+        .confirmationDialog(
+            "删除这个筛选视图？",
+            isPresented: Binding(get: { pendingDeleteView != nil },
+                                 set: { if !$0 { pendingDeleteView = nil } }),
+            titleVisibility: .visible,
+            presenting: pendingDeleteView
+        ) { name in
+            Button("删除「\(name)」", role: .destructive) {
+                RecordSearch.deleteNamedView(name)
+                namedViews = RecordSearch.namedViews()
+                pendingDeleteView = nil
+            }
+            Button("取消", role: .cancel) { pendingDeleteView = nil }
+        } message: { _ in
+            Text("删掉的是这条保存下来的筛选条件，之后要重新设置一遍。\n已读到的事件记录不受影响。")
+        }
         // ═══ 同步时的可见指示 ═══
         //
         // 同步入口在**菜单里**：点一下菜单就关闭了，所以 `Button(syncing ? "同步中…" : …)`
@@ -112,16 +131,18 @@ struct EventsPage: View {
         // 这里给一条非阻塞的常驻指示：不挡点击、不弹窗，只是让"正在发生"可见。
         .overlay(alignment: .top) {
             if syncing {
+                // 浮层 = **功能层**, 所以这里用玻璃, 不用实底 (规范 §6.1 三层模型)。
+                // 旧写法是 surface 实底 + 一条描边 —— 那是卡片语汇, 贴在内容上方
+                // 会和它下面真正的内容卡抢同一种"物质感", 层次反而塌掉。
                 HStack(spacing: XSpace.s) {
                     ProgressView().controlSize(.small)
                     Text("正在从门锁同步…")
-                        .xFont(.system(.footnote, weight: .medium))
+                        .xFont(.footnote, weight: .medium)
                         .foregroundStyle(XPalette.text)
                 }
                 .padding(.horizontal, XSpace.l)
                 .padding(.vertical, XSpace.s)
-                .xPlate(XPalette.surface, .capsule)
-                .overlay(Capsule().strokeBorder(XPalette.hairline, lineWidth: 1))
+                .xGlass(in: Capsule())
                 .padding(.top, XSpace.s)
                 .allowsHitTesting(false)
                 .transition(.opacity)
@@ -291,12 +312,19 @@ struct EventsPage: View {
                     }
                     .buttonStyle(.plain)
                     .contextMenu {
+                        // 删除筛选视图是**不可逆**的（它只是一条存下来的条件，删了就没了），
+                        // 而它藏在长按菜单里 —— 长按 + 选删除，两个动作已经很不容易误触；
+                        // 但「不容易误触」不等于「不必问」：用户长按常常只是想看看菜单。
+                        // 本仓 D21 的四档递进里，这一档属于"取消 + 红色按钮 + 具体后果"。
                         Button(role: .destructive) {
-                            RecordSearch.deleteNamedView(v.name)
-                            namedViews = RecordSearch.namedViews()
+                            pendingDeleteView = v.name
                         } label: { Label("删除这个视图", systemImage: "trash") }
                     }
                     .accessibilityLabel("筛选视图 \(v.name)")
+                    // 长按菜单里有"删除这个视图"，而视觉上它只是一枚普通胶囊 ——
+                    // 读屏用户至少要知道这条能长按（视觉侧不改：这排胶囊本来就密，
+                    // 再加一枚省略号会把它们挤得更碎，代价大于收益）。
+                    .accessibilityHint("长按可删除这个筛选视图")
                 }
                 ForEach(recentSearches, id: \.self) { q in
                     Button {
@@ -313,6 +341,7 @@ struct EventsPage: View {
                         } label: { Label("从最近搜索里移除", systemImage: "trash") }
                     }
                     .accessibilityLabel("最近搜索 \(q)")
+                    .accessibilityHint("长按可从最近搜索里移除")
                 }
             }
             .padding(.horizontal, XSpace.gutter)
@@ -327,13 +356,18 @@ struct EventsPage: View {
                 .font(.system(size: XIcon.xs, weight: .semibold))
                 .accessibilityHidden(true)
             Text(text)
-                .xFont(.system(.caption, weight: .medium))
+                .xFont(.caption, weight: .medium)
                 .lineLimit(1)
         }
         .foregroundStyle(tone)
         .padding(.horizontal, XSpace.m)
         .padding(.vertical, 7)
         .xPlate(XPalette.surface, .capsule)
+        // 触达与视觉是**两个数**（规范 §7.7 对 MetricRow 的同一口径）：
+        // 这枚胶囊视觉高约 30pt（7+14+7），够看不够点。
+        // 不把它撑大（那会让这排胶囊挤成一团），而是**向下补透明命中区**到 44。
+        .frame(minHeight: XHit.min)
+        .contentShape(Rectangle())
     }
 
     /// 清掉本机所有门锁的「开门失败」记录。
@@ -343,7 +377,7 @@ struct EventsPage: View {
         for m in macs { DB.clearFailEvents(m) }
         load()
         XHaptics.trigger.impactOccurred()
-        app.showToast("已清除失败记录")
+        app.showToast("已清除失败记录", tone: .done)
     }
 
     /// 从门锁分页拉取事件历史并写入本地缓存。
@@ -388,18 +422,19 @@ struct EventsPage: View {
                 if collected.isEmpty {
                     // 锁里说"没有事件"和"协议没对上"在界面上长得一样，
                     // 所以这里把 trace 摊开，用户截一张图就能定位。
-                    app.showToast("门锁里没有可读的事件")
+                    app.showToast("门锁里没有可读的事件", tone: .caution)
                     syncDetail = trace.joined(separator: "\n")
                 } else if after <= before {
-                    app.showToast("拉到 \(collected.count) 条，但本机没有新增")
+                    app.showToast("拉到 \(collected.count) 条，但本机没有新增", tone: .caution)
                     syncDetail = trace.joined(separator: "\n")
                 } else {
-                    XHaptics.success()
-                    app.showToast("已同步 \(collected.count) 条（新增 \(after - before) 条）")
+                    // 触感已由 tone 统一发，这里不再手写一次（重复会震两下）
+                    app.showToast("已同步 \(collected.count) 条（新增 \(after - before) 条）", tone: .done)
                 }
             } catch {
                 trace.append("✗ 失败: \(error.localizedDescription)")
-                app.showToast("同步失败：" + ErrorText.human(error))
+                // 失败要说下一步：它就在菜单里那一条「从门锁同步日志」，再点一次就是重试。
+                app.showToast("同步失败：" + ErrorText.human(error) + "。可在菜单里再点一次「从门锁同步日志」重试", tone: .failed)
                 syncDetail = trace.joined(separator: "\n")
             }
         }
@@ -424,8 +459,8 @@ struct EventsPage: View {
                                    scopeAll: mac.isEmpty)
         namedViews = RecordSearch.namedViews()
         showSaveDialog = false
-        XHaptics.success()
-        app.showToast("已保存筛选视图「\(name)」")
+        // 触感已由 showToast(tone:) 统一发出 —— 这里再调一次会震两下
+        app.showToast("已保存筛选视图「\(name)」", tone: .done)
     }
 
     /// 按天分组 (今天在最上)
@@ -497,12 +532,14 @@ struct EventsPage: View {
                 .foregroundStyle(XPalette.textSub)
             Text("\(group.items.count) 条")
                 .xFont(.caption2.monospacedDigit())
-                .foregroundStyle(XPalette.textTertiary)
+                .foregroundStyle(XPalette.textSub)
             let alarms = group.items.filter { $0.alarm }.count
             if alarms > 0 {
                 HStack(spacing: 2) {
+                    // 规范 §10：图标最小 12pt。原 8pt 低于档位下限，
+                    // 在 3x 屏上只有 24 物理像素，告警三角几乎糊成一个点。
                     Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.system(size: 8, weight: .semibold))
+                        .font(.system(size: XIcon.xs, weight: .semibold))
                     Text("\(alarms)")
                         .xFont(.caption2.monospacedDigit())
                 }
@@ -577,7 +614,7 @@ struct EventsPage: View {
             // 时间
             Text(shortTime(rec.timeStr))
                 .xFont(.caption.monospacedDigit())
-                .foregroundStyle(XPalette.textTertiary)
+                .foregroundStyle(XPalette.textSub)
                 .frame(width: 42, alignment: .trailing)
                 .padding(.top, 3)
 
@@ -617,7 +654,7 @@ struct EventsPage: View {
                     if let note = provableNote(rec) {
                         Text(note)
                             .xFont(.caption2)
-                            .foregroundStyle(XPalette.textTertiary)
+                            .foregroundStyle(XPalette.textSub)
                     }
                 }
                 if let sub = subText(rec) {
@@ -628,7 +665,7 @@ struct EventsPage: View {
                 }
                 if !savedNote.isEmpty {
                     Label(savedNote, systemImage: "text.bubble")
-                        .xFont(.system(.caption2))
+                        .xFont(.caption2)
                         .foregroundStyle(XPalette.accentText)
                         .lineLimit(2)
                 }
@@ -658,6 +695,9 @@ struct EventsPage: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityText(rec)
             + (savedNote.isEmpty ? "" : "，备注 " + savedNote))
+        // 长按菜单里有"加/改备注"与"删备注"，视觉上这条只是一行事件 ——
+        // 不加 hint 的话读屏用户不会知道还能长按。
+        .accessibilityHint(savedNote.isEmpty ? "长按可添加备注" : "长按可编辑或删除备注")
         .accessibilityAction(named: "添加或编辑备注") {
             noteDraft = savedNote
             noteTarget = rec
@@ -673,7 +713,7 @@ struct EventsPage: View {
                 .foregroundStyle(XPalette.accentText)
                 .accessibilityHidden(true)
             Text("只看今天 \(h):00 – \(h):59")
-                .xFont(.system(.footnote, weight: .medium))
+                .xFont(.footnote, weight: .medium)
                 .foregroundStyle(XPalette.text)
             Spacer(minLength: 0)
             Button {
@@ -681,7 +721,7 @@ struct EventsPage: View {
                 XHaptics.tick.impactOccurred()
             } label: {
                 Label("看全部", systemImage: "xmark.circle.fill")
-                    .xFont(.system(.caption, weight: .medium))
+                    .xFont(.caption, weight: .medium)
                     .foregroundStyle(XPalette.accentText)
             }
             .buttonStyle(.plain)

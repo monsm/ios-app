@@ -56,22 +56,29 @@ enum XToneColor {
 // MARK: - 基础容器
 // ═══════════════════════════════════════════════════════════
 
-/// 面板 —— 新设计里唯一的"卡片"。
+/// 面板 —— 全 App **唯一**的卡片。
 ///
-/// 与旧 Card 的区别: 不用阴影, 用**描边 + 底色差**表达层次。
-/// 阴影在深色模式会糊成一团, 描边在任何模式下都清晰。
+/// 2026-10-22 整层重做 (Black Canvas / Glass Instrument)。三条硬规则:
+///
+/// 1. **卡片永远是实色 surface, 圆角 24, 零投影。**
+///    旧实现有四处违反: 圆角 16 (规范下限 20)、hero 带 0.22 黑投影
+///    (黑底上的投影只会发脏)、hero 用"3% 铜洗染 + 5.5% 顶部微光"两层次渐变
+///    (那是与 heroGradient 打架的第二套渐变语言, 且渐变卡一屏只许一张)。
+///    层次靠**明度差分 + 描边**建立, 不靠阴影 —— 纯黑画布上阴影根本不可见。
+///
+/// 2. **content 层永不许用毛玻璃。** 玻璃只属于功能层 (Tab Bar / 浮层 / Sheet),
+///    见 xGlass(in:)。卡片用玻璃 = 层搞错了。
+///
+/// 3. **一屏只有一个主角。** .hero 是全屏唯一允许的渐变卡 (heroGradient, r34),
+///    所以它必须**每屏至多一张**。普通 .group 卡永远不渐变。
 struct XPanel<Content: View>: View {
     var kind: XContainerKind = .group
     var tone: XToneColor = .neutral
-    /// 0 = 用 VK 语法层的默认内边距; >0 = 显式覆盖 (用于自带内边距的列表)
+    /// 0 = 用语法层的默认内边距; >0 = 显式覆盖 (用于自带内边距的列表)
     var padding: CGFloat? = nil
     @ViewBuilder var content: () -> Content
 
     /// 内边距是**层级信号**：留白越多，越像主角。
-    ///
-    /// 原来 hero 和 group 都是 16 —— 主角卡和普通卡只差阴影与描边，
-    /// 而阴影在深色模式下几乎不可见（同仓 PressableButtonStyle 的注释也写过这点）。
-    /// 于是"首屏主角那一块"在视觉上并不更像主角。
     /// hero 多给 4pt：卡片整体大一圈，眼睛先落上去，再往下读。
     private var pad: CGFloat {
         if let padding { return padding }
@@ -81,9 +88,15 @@ struct XPanel<Content: View>: View {
         }
     }
 
+    /// 圆角是**层级的第二个信号**: 主角卡更大更圆 (34), 普通卡 24。
+    private var radius: CGFloat {
+        kind == .hero ? XRadius.cardLg : XRadius.card
+    }
+
     private var edgeColor: Color {
         if tone != .neutral { return tone.color.opacity(XOpacity.edge) }
-        // hero 用更实的描边 —— 它要在同屏一堆 group 卡里第一个被看见
+        // group 卡在纯黑上只有 1.26:1 的明度差, 必须有一条能看见的描边;
+        // hero 用更实的一档 —— 它要在同屏一堆 group 卡里第一个被看见。
         return kind == .hero ? XPalette.hairlineStrong : XPalette.hairline
     }
 
@@ -93,57 +106,101 @@ struct XPanel<Content: View>: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(plate)
             .overlay(
-                RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
+                RoundedRectangle(cornerRadius: radius, style: .continuous)
                     .strokeBorder(edgeColor, lineWidth: 1)
             )
-            // hero 额外一层极轻的外投影: 不同尺寸/不同底色的卡并排时,
-            // 光靠描边分不出主次, 一点阴影就够了。
-            .shadow(color: kind == .hero ? Color.black.opacity(0.22) : .clear,
-                    radius: kind == .hero ? 12 : 0,
-                    y: kind == .hero ? 4 : 0)
+            // 卡片**零投影** (规范 6.3 明令)。这里刻意不写 .shadow ——
+            // 不是忘了, 是黑底上投影只会把卡片边缘糊成一圈脏灰。
     }
 
-    /// 卡片底: group/inset 是纯 surface; hero 多一层顶部微光。
-    ///
-    /// 为什么 hero 需要这一层:  5 个主页面 (设备/固件/网关/加密狗/安全) 的
-    /// 首卡都是 kind: .hero 且不传 tone —— 改之前它们与普通 .group 卡
-    /// **像素级完全相同**, 所谓"主角卡"只是个名字。
+    /// 卡片底。
+    /// group = 纯 surface (#1C1C1E), 无渐变、无洗染。
+    /// hero  = 规范 7.4 的 HeroCard: 全屏唯一渐变, r34。
     @ViewBuilder
     private var plate: some View {
-        let shape = RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
+        let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
         if kind == .hero {
-            shape
-                .fill(XPalette.surface)
-                // ① 品牌色微洗染: 让 hero 与普通卡"同一块底但不同温度"。
-                //    3% 是刻意压低的 —— 这 5 张卡里有 4 张是状态卡 (备份/网关/固件/安全),
-                //    洗染太重会跟它们自己的 warn/ok 语义色打架。
-                .overlay(shape.fill(XPalette.accent.opacity(0.030)))
-                // ② 顶部微光: 给一层"光从上面来"的体积感
-                .overlay(
-                    shape.fill(
-                        LinearGradient(
-                            colors: [XPalette.specular.opacity(0.055), .clear],
-                            startPoint: .top, endPoint: .bottom)
-                    )
-                )
+            shape.fill(XGradient.hero)
         } else {
             shape.fill(XPalette.surface)
         }
     }
 }
-
-
-/// 分隔线
+/// 卡内分隔线 —— 规范 §7.6「卡内全宽，**不内缩**」。
+///
+/// 它不只是那 1 物理像素：规范 §7.6 的「内部纵向节奏」表给了分隔线**上下各 14pt**、
+/// 到下一组标签再 12pt。这张表是执行者最容易漏的一页 —— 只给内边距 16pt、
+/// 元素之间全靠猜，做出来会「松一圈」：卡片看着厚，但读不出组与组的分界。
+///
+/// 所以留白挂在组件自己身上，而不是让每个调用点各写一遍 .padding。
 struct XHairline: View {
+    /// 水平内缩。默认 0 = 卡内全宽（规范要求的形态）。
     var inset: CGFloat = 0
+    /// 上下留白。**默认 0** —— 因为本仓 23 处调用全是「列表行分隔线」，
+    /// 行自己的 .padding(.vertical) 已经给了留白，分隔线再补就会把行撑高。
+    ///
+    /// 规范 §7.6 那张「内部纵向节奏」表（值→分隔线 14pt）针对的是
+    /// **多段指标卡**（Sleep / Duration / Bedtime 那种）。本 App 没有这种卡 ——
+    /// 所以这个参数保留、默认不用，需要时显式传 14。
+    var verticalPadding: CGFloat = 0
+
     var body: some View {
         Rectangle()
             .fill(XPalette.hairline)
             .frame(height: 1 / UIScreen.main.scale)
             .padding(.leading, inset)
+            .padding(.vertical, verticalPadding)
+            // 分隔线是纯装饰，不进无障碍树（读它只会打断 VoiceOver 的节奏）
+            .accessibilityHidden(true)
     }
 }
 
+// ═══════════════════════════════════════════════════════════
+// MARK: - 区块标题链接 (规范 §7.11)
+// ═══════════════════════════════════════════════════════════
+
+/// 卡内顶部的「区块标题 + chevron」—— 规范 §7.11。
+///
+/// 参考图里的 `Sleep ›` / `Fitness ›` 就是这一枚：它**不是**白色粗体标题，
+/// 是一行灰色小字 + 一枚更淡的箭头。作用是「这张卡还能再进去一层」，
+/// 同时不抢卡内主内容的视觉重量。
+///
+/// 规范给的四个数：
+///   字号 14 Regular · textSecondary
+///   箭头 chevron.right 12pt · rgba(235,235,245,0.45)
+///   箭头距文字 4pt
+///   位置 卡内顶部，距边 18pt
+///
+/// 为什么单独做一个组件: 之前各页要么写死 title、要么干脆没有进去的门 ——
+/// 用户看到一张卡却不知道它可点。把它收成组件，'可进入'这件事才有一致的形状。
+struct XCardLink: View {
+    var title: String
+    var action: () -> Void
+
+    /// 规范 §7.11 的箭头透明度 0.45。
+    private var arrowColor: Color { XPalette.specular.opacity(0.45) }
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: XSpace.xxs) {          // 箭头距文字 4pt
+                Text(title)
+                    .xFont(.subheadline)   // 14
+                    .foregroundStyle(XPalette.textSub)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: XIcon.xs, weight: .semibold))  // 12
+                    .foregroundStyle(arrowColor)
+            }
+            // 视觉是 14pt 一行小字，命中补到 44 —— 这条链接是卡里唯一的入口，
+            // 点不中等于这张卡进不去（与 chipLabel 同一口径）。
+            .frame(minHeight: XHit.min)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(title)
+        .accessibilityHint("进入详情")
+        .accessibilityAddTraits(.isButton)
+    }
+}
 // ═══════════════════════════════════════════════════════════
 // MARK: - 状态
 // ═══════════════════════════════════════════════════════════
@@ -161,7 +218,7 @@ struct XStatusPill: View {
                 // symbolEffect(.replace) 让新旧字形做一次变形过渡, 而不是硬切。
                 // reduceMotion 由系统自动降级 (SF Symbols 的 replace 会退化成淡入淡出)。
                 Image(systemName: systemImage)
-                    .xFont(.system(size: XIcon.xs, weight: .semibold))
+                    .xFontExact(.system(size: XIcon.xs, weight: .semibold))
                     .contentTransition(.symbolEffect(.replace))
                     .accessibilityHidden(true)
             }
@@ -190,7 +247,7 @@ struct XMetricTile: View {
         VStack(alignment: .leading, spacing: XSpace.xs) {
             if let systemImage {
                 Image(systemName: systemImage)
-                    .xFont(.system(size: XIcon.sm, weight: .medium))
+                    .xFontExact(.system(size: XIcon.sm, weight: .medium))
                     .foregroundStyle(tone.color)
                     .accessibilityHidden(true)
             }
@@ -200,6 +257,10 @@ struct XMetricTile: View {
                 .foregroundStyle(XPalette.text)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
+                // 数值变化做滚动数字 (规范 11.1 的 numberRoll: easeInOut 0.25s)。
+                // 磁贴里的读数是会变的 (告警率 / 天数 / 总次数), 硬切会让眼睛追不上。
+                .contentTransition(.numericText())
+                .animation(XMotion.numberRoll, value: value)
             Text(label)
                 .xFont(.caption)
                 .foregroundStyle(XPalette.textSub)
@@ -228,7 +289,7 @@ struct XEmptyState: View {
     var body: some View {
         VStack(spacing: XSpace.l) {
             Image(systemName: systemImage)
-                .xFont(.system(size: XIcon.xl, weight: .light))
+                .xFontExact(.system(size: XIcon.xl, weight: .light))
                 .foregroundStyle(XPalette.textTertiary)
                 .accessibilityHidden(true)
 
@@ -414,7 +475,7 @@ struct XRow: View {
                     RoundedRectangle(cornerRadius: XRadius.min, style: .continuous)
                         .fill((tone == .neutral ? XPalette.textSub : tone.color).opacity(XOpacity.badge))
                     Image(systemName: systemImage)
-                        .xFont(.system(size: XIcon.sm, weight: .semibold))
+                        .xFontExact(.system(size: XIcon.sm, weight: .semibold))
                         .foregroundStyle(tone == .neutral ? XPalette.textSub : tone.color)
                 }
                 .frame(width: 28, height: 28)
@@ -447,7 +508,7 @@ struct XRow: View {
 
             if showsChevron {
                 Image(systemName: "chevron.right")
-                    .xFont(.system(size: XIcon.xs, weight: .semibold))
+                    .xFontExact(.system(size: XIcon.xs, weight: .semibold))
                     .foregroundStyle(XPalette.textTertiary)
                     .accessibilityHidden(true)
             }
@@ -508,15 +569,51 @@ enum XHeroStats {
 // MARK: - 文本与开关语法 (X 系统自带, 2026-10-21 从 VariantGrammar 迁出)
 // ═══════════════════════════════════════════════════════════
 
+/// 把 `XText` 的规范字号 + Dynamic Type 一起算出来。
+///
+/// `@ScaledMetric` 让 AX 档放大走系统惯例比例，而不是把 11pt 硬放大成 30pt。
+/// 基准档由 `XText.relativeTo` 给（例如 caption2 按 caption2 的比例放大）。
+struct XTextModifier: ViewModifier {
+    let style: XText
+    let weightOverride: Font.Weight?
+    let design: Font.Design
+
+    @ScaledMetric private var scaled: CGFloat
+
+    init(style: XText, weightOverride: Font.Weight?, design: Font.Design = .default) {
+        self.style = style
+        self.weightOverride = weightOverride
+        self.design = design
+        _scaled = ScaledMetric(wrappedValue: style.size, relativeTo: style.relativeTo)
+    }
+
+    func body(content: Content) -> some View {
+        content.font(.system(size: scaled, weight: weightOverride ?? style.weight, design: design).monospacedDigit())
+    }
+}
 extension View {
-    /// 行内排版的**唯一入口**。
+    /// 行内排版的**唯一入口** —— 字号取自规范 §4.2（见 `XText`）。
     ///
-    /// 与旧 `vkFont` 逐字等价: `.font(base)` + 可选 `.fontWeight`。
-    /// 字形尺寸仍走系统 Dynamic Type (因为 base 是 `.body`/`.caption` 这类语义字号),
-    /// AX 档位放大由系统负责。
+    /// 2026-10-22 审计修正：这里原来是 `.font(base).fontWeight(weight)`，
+    /// 即把 SwiftUI 语义字号**原样透传**。于是全仓 766 处排版跑的是 HIG 默认值，
+    /// 而规范 §4.2 明确要求全线下修一档（caption 12→11 / footnote 13→12 /
+    /// subheadline 15→14 / body 17→16 / title2 22→19 / largeTitle 34→30）。
     ///
-    /// ⚠ 图标尺寸不在此列: `Image(systemName:).font(.system(size:))` 是刻意写死的。
-    nonisolated func xFont(_ base: Font, weight: Font.Weight? = nil) -> some View {
+    /// 现在参数类型换成 `XText`（case 名与语义字号同名，调用点零改动），
+    /// 尺寸与字重都由规范表给出，**Dynamic Type 仍由系统缩放**（按系统档作基准）。
+    nonisolated func xFont(_ style: XText, weight: Font.Weight? = nil,
+                           design: Font.Design = .default) -> some View {
+        modifier(XTextModifier(style: style, weightOverride: weight, design: design))
+    }
+
+    /// 显式字号的**逃生门** —— 图表轴、量规数字、图标尺寸这些 XText 表达不了的场合。
+    ///
+    /// 2026-10-22：它原来叫 `xFont(_ base: Font, …)`。加了 `xFont(_ style: XText, …)` 之后
+    /// 两个重载会**同时匹配** `.xFont(.footnote)` —— Swift 会报「重载歧义」，
+    /// 而这种错在无编译器环境里只能靠推理发现。为了保证 `.xFontExact(.样式)` 唯一含义，
+    /// 这条退路改名为 `xFontExact`：**名字里就写着「我绕过了规范字阶」**，
+    /// grep 得到、闸门数得清，不会悄悄变成主流写法。
+    nonisolated func xFontExact(_ base: Font, weight: Font.Weight? = nil) -> some View {
         self.font(base).fontWeight(weight)
     }
 
@@ -662,9 +759,9 @@ struct XCodeRing: View {
     private var codePointSize: CGFloat {
         let n = max(code.count, masked ? 7 : 6)
         switch n {
-        case ...6:  return 56
-        case 7:     return 50
-        default:    return 44
+        case ...6:  return DSFont.displayNumber
+        case 7:     return DSFont.displayNumber - 6
+        default:    return DSFont.displayNumber - 12
         }
     }
 
@@ -696,7 +793,7 @@ struct XCodeRing: View {
             Spacer(minLength: 0)
             Text("\(max(period, 1))s")
                 .xFont(.caption2.monospacedDigit())
-                .foregroundStyle(XPalette.textTertiary)
+                .foregroundStyle(XPalette.textSub)
         }
     }
 
@@ -761,7 +858,7 @@ struct XCodeRing: View {
                     // 6 位 + 空格在 56pt 下约 235pt 宽, 而环内径约 254pt,
                     // 8 位 (TOTP 允许) 在 56pt 下是 269pt, 会直接压到环线上。
                     // 与其靠 minimumScaleFactor 事后缩, 不如一开始就选对字号。
-                    .xFont(.system(size: XMetric.dataText(CGFloat(codePointSize)), weight: .semibold, design: .rounded).monospacedDigit())
+                    .xFontExact(.system(size: XMetric.dataText(CGFloat(codePointSize)), weight: .semibold, design: .rounded).monospacedDigit())
                     .foregroundStyle(masked ? XPalette.textSub : XPalette.text)
                     .contentTransition(.numericText())
                     .animation(XMotion.quick, value: code)
@@ -770,7 +867,7 @@ struct XCodeRing: View {
                     .textSelection(.enabled)
                 Text("\(Int(ceil(remaining))) 秒后刷新")
                     .xFont(.caption2.monospacedDigit())
-                    .foregroundStyle(remaining <= 5 ? XPalette.warn : XPalette.textTertiary)
+                    .foregroundStyle(remaining <= 5 ? XPalette.warn : XPalette.textSub)
                     .contentTransition(.numericText())
             }
             .padding(.horizontal, XSpace.m)
@@ -784,7 +881,7 @@ struct XCodeRing: View {
         HStack(spacing: XSpace.xs) {
             Text("下一个")
                 .xFont(.caption2)
-                .foregroundStyle(XPalette.textTertiary)
+                .foregroundStyle(XPalette.textSub)
             Text(masked ? "••• •••" : nextCode)
                 .xFont(.footnote.monospacedDigit(), weight: .medium)
                 .foregroundStyle(XPalette.textSub)
@@ -914,11 +1011,11 @@ struct XDayClock: View {
             // 圆心读数
             VStack(spacing: 1) {
                 Text("\(total)")
-                    .xFont(.system(size: XMetric.dataText(size * 0.13), weight: .semibold, design: .rounded).monospacedDigit())
+                    .xFontExact(.system(size: XMetric.dataText(size * 0.13), weight: .semibold, design: .rounded).monospacedDigit())
                     .foregroundStyle(XPalette.text)
                     .contentTransition(.numericText())
                 Text("次开门")
-                    .xFont(.system(size: XMetric.dataText(max(8, size * 0.040))))
+                    .xFontExact(.system(size: XMetric.dataText(max(8, size * 0.040))))
                     .foregroundStyle(XPalette.textTertiary)
             }
         }
@@ -1041,22 +1138,22 @@ struct XBatteryGauge: View {
                 if let l = level {
                     HStack(alignment: .firstTextBaseline, spacing: 0) {
                         Text("\(l)")
-                            .xFont(.system(size: XMetric.dataText(size * 0.28), weight: .semibold, design: .rounded).monospacedDigit())
+                            .xFontExact(.system(size: XMetric.dataText(size * 0.28), weight: .semibold, design: .rounded).monospacedDigit())
                             .foregroundStyle(XPalette.text)
                             .contentTransition(.numericText())
                         Text("%")
-                            .xFont(.system(size: XMetric.dataText(size * 0.13), weight: .medium, design: .rounded))
+                            .xFontExact(.system(size: XMetric.dataText(size * 0.13), weight: .medium, design: .rounded))
                             .foregroundStyle(XPalette.textSub)
                     }
                     Text(statusWord)
-                        .xFont(.system(size: XMetric.dataText(max(9, size * 0.072)), weight: .medium))
+                        .xFontExact(.system(size: XMetric.dataText(max(9, size * 0.072)), weight: .medium))
                         .foregroundStyle(tint)
                 } else {
                     Text("—")
-                        .xFont(.system(size: XMetric.dataText(size * 0.26), weight: .semibold, design: .rounded))
+                        .xFontExact(.system(size: XMetric.dataText(size * 0.26), weight: .semibold, design: .rounded))
                         .foregroundStyle(XPalette.textTertiary)
                     Text("未读到")
-                        .xFont(.system(size: XMetric.dataText(max(9, size * 0.072))))
+                        .xFontExact(.system(size: XMetric.dataText(max(9, size * 0.072))))
                         .foregroundStyle(XPalette.textTertiary)
                 }
             }
@@ -1070,7 +1167,9 @@ struct XBatteryGauge: View {
 
     private func animateTo(_ v: Double) {
         if reduceMotion { shown = v }
-        else { withAnimation(XMotion.doorReveal) { shown = v } }
+        // 规范 §11.1「环形生长 easeOut 1.00s / delay 0.15」—— 就是这个 token。
+        // 电量环与门厅开锁环是同一族图形, 生长曲线必须同源, 否则两个环"长得不一样"。
+        else { withAnimation(XMotion.ringGrow) { shown = v } }
     }
 
     private var statusWord: String {
@@ -1152,12 +1251,12 @@ struct XCycleRing: View {
 
             VStack(spacing: 1) {
                 Text(headline)
-                    .xFont(.system(size: XMetric.dataText(size * 0.22), weight: .semibold, design: .rounded).monospacedDigit())
+                    .xFontExact(.system(size: XMetric.dataText(size * 0.22), weight: .semibold, design: .rounded).monospacedDigit())
                     .foregroundStyle(XPalette.text)
                     .minimumScaleFactor(0.5)
                     .lineLimit(1)
                 Text(caption)
-                    .xFont(.system(size: XMetric.dataText(max(8, size * 0.062))))
+                    .xFontExact(.system(size: XMetric.dataText(max(8, size * 0.062))))
                     .foregroundStyle(tint)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
@@ -1177,12 +1276,19 @@ struct XCycleRing: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(headline), \(caption)")
+        // 超期脉冲是无限循环 —— 切断隐式继承 (本仓 DESIGN-SPEC §2.5)。
+        // 不做这一步时, 外层任何 animation 重算都会把这条循环曲线打断重来,
+        // 表现为"呼吸偶尔卡一下", 而代码上完全看不出来。
+        .transaction { $0.animation = nil }
     }
 
     /// 超期时轻微脉冲提醒; reduceMotion 与未超期都不启动
     private func startPulse() {
         guard overdue, !reduceMotion else { return }
-        withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) {
+        // 规范 11.2: 动画不得超过 1.2s。原 1.6s 的超期脉冲收到 1.2s。
+        // 提醒仍然持续, 只是一次明暗循环更短, 不会读成缓慢呼吸的背景色。
+        // 事务切断点就在 body 里、读 pulse 的那个 Canvas 上 —— 见下方 `.transaction`。
+        withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true)) {
             pulse = true
         }
     }
@@ -1213,7 +1319,7 @@ struct XStepBar: View {
                 Text(t)
                     .xFont(.caption2, weight: i == current ? .semibold : .regular)
                     .foregroundStyle(i == current ? XPalette.text
-                                     : (i < current ? XPalette.textSub : XPalette.textTertiary))
+                                     : (i < current ? XPalette.textSub : XPalette.textSub))
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                     .padding(.leading, XSpace.xs)
@@ -1244,11 +1350,12 @@ struct XStepBar: View {
                               lineWidth: i == current ? 0 : 1.5)
             if marksDone && i < current {
                 Image(systemName: "checkmark")
-                    .font(.system(size: 11, weight: .bold))
+                    // 规范 §10：图标最小 12pt（原 11pt 差 1pt，但那是档位下限）。
+                    .font(.system(size: XIcon.xs, weight: .bold))
                     .foregroundStyle(XPalette.accent)
             } else {
                 Text("\(i + 1)")
-                    .xFont(.system(size: XMetric.dataText(12), weight: .semibold).monospacedDigit())
+                    .xFontExact(.system(size: XMetric.dataText(12), weight: .semibold).monospacedDigit())
                     .foregroundStyle(i == current ? XPalette.onAccent
                                      : (i < current ? XPalette.accent : XPalette.textTertiary))
             }
@@ -1349,6 +1456,8 @@ struct XSkeleton: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("正在加载")
         .accessibilityAddTraits(.updatesFrequently)
+        // 骨架流光同样是无限循环 —— 切断隐式继承, 理由同上。
+        .transaction { $0.animation = nil }
     }
 
     @ViewBuilder
@@ -1438,5 +1547,251 @@ extension View {
     /// 开销：一次 UserDefaults 比较（值没变不写盘）。
     func trackScreen(_ name: String) -> some View {
         onAppear { CrashGuard.markScreen(name) }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// MARK: - 规范 §7 组件族 (2026-10-22 新增)
+// ═══════════════════════════════════════════════════════════
+//
+// 这一族逐条对应设计规范的组件表。它们不是「又一个卡片」, 而是范式里有名字、
+// 有数值、有自检条款的**主件** —— 缺了它们, 页面只能退化成一堆同形的 XPanel。
+
+// ─────────────────────────────────────────── §7.2 StatChip
+/// 顶部胶囊 —— 一屏最上面那条「我关心什么」的横向摘要。
+///
+/// **最容易做反的一个组件** (规范 §7.2 自检原话):
+///   标签必须是**灰的、在上面**; 值必须是**白的、在下面**。
+///   反过来就是错的 —— 那会让「睡眠」比「Low」更醒目, 而真正要读的是值。
+///
+/// 尺寸: 高 52, 圆角 **14 (圆角矩形, 不是胶囊)**, 图标 34 圆底, HStack(spacing:10)。
+/// 规范正文写 52、自检写 56 —— 取 **52**: 56 是 Tab Bar 的高度 (§7.10),
+/// 两者同高会让「胶囊行」与「导航栏」在下滑时连成一片, 层级读不出来。
+struct XStatChip: View {
+    var label: String
+    var value: String
+    /// 圆形图标: SF Symbol 名; nil 且给了 ringFraction 时画迷你环
+    var systemImage: String? = nil
+    /// 迷你环进度 0...1; nil = 画符号
+    var ringFraction: Double? = nil
+    var tint: Color = XPalette.accent
+    /// compact 变体: 仅图标, 无文字 (规范 §7.2 compact)
+    var compact: Bool = false
+    var selected: Bool = false
+
+    private var height: CGFloat { 52 }
+
+    var body: some View {
+        HStack(spacing: 10) {
+            iconBadge
+            if !compact {
+                VStack(alignment: .leading, spacing: 2) {
+                    // 标签在上、灰 —— 这是规范点名的顺序
+                    Text(label)
+                        .xFont(.subheadline)
+                        .foregroundStyle(XPalette.textSub)
+                        .lineLimit(1)
+                    // 值在下、白粗
+                    Text(value)
+                        .xFont(.subheadline, weight: .semibold)
+                        .foregroundStyle(XPalette.text)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .padding(.horizontal, compact ? 0 : 14)
+        .frame(minWidth: compact ? height : 120)
+        .frame(height: height)
+        .background(
+            RoundedRectangle(cornerRadius: XRadius.chip, style: .continuous)
+                .fill(XPalette.surfaceChip)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: XRadius.chip, style: .continuous)
+                .strokeBorder(XPalette.specular.opacity(selected ? 0.24 : 0.10), lineWidth: 0.5)
+        )
+        .frame(maxWidth: compact ? nil : .infinity)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(label + ": " + value)
+    }
+
+    private var iconBadge: some View {
+        ZStack {
+            Circle().fill(XPalette.specular.opacity(XOpacity.glassFill))
+            if let ringFraction {
+                Circle()
+                    .trim(from: 0, to: min(max(ringFraction, 0), 1))
+                    .stroke(tint, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .padding(4)
+            } else if let systemImage {
+                Image(systemName: systemImage)
+                    .xFontExact(.system(size: XIcon.sm, weight: .semibold))
+                    .foregroundStyle(tint)
+            }
+        }
+        .frame(width: 34, height: 34)
+        .accessibilityHidden(true)
+    }
+}
+
+// ─────────────────────────────────────────── §6.2 玻璃面
+/// 功能层玻璃 —— **只给 Tab Bar / 浮层 / Sheet 用, 卡片永远不许用**。
+///
+/// 与 axGlass 的分工: axGlass 是「跟随系统降级」的入口 (降透明/高对比落回实底),
+/// 这枚是「**配方写死**」的实现 —— 规范 §6.2 要求 fill 8% / 描边 0.5pt 12% /
+/// 顶部高光 14%, 三个数都要对得上。降透明与高对比的退路复用同一条判据。
+///
+/// 玻璃是**自适应**的, 不能写死颜色 (规范 §6.2 的警告): 同一套 Tab Bar
+/// 在亮背景上呈浅灰、在纯黑上呈近黑。这里靠 Material 吸背景, 8% 白只做提亮一档。
+/// 验收时必须在亮/黑两种背景上各看一次 —— 只测一种必然翻车。
+struct XGlassSurface<S: InsettableShape>: ViewModifier {
+    let shape: S
+    var fill: Double = XOpacity.glassFill
+
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if reduceTransparency || XAppearance.highContrast {
+            // 降低透明度 / 高对比: 玻璃降为实底 + 实描边 (规范 §13.4 强制要求)
+            content
+                .background(XPalette.surface, in: shape)
+                .overlay(shape.strokeBorder(XPalette.hairlineStrong, lineWidth: 0.5))
+        } else {
+            content
+                .background(.ultraThinMaterial, in: shape)
+                .background(XPalette.specular.opacity(fill), in: shape)
+                .overlay(shape.strokeBorder(XPalette.specular.opacity(XOpacity.glassEdge), lineWidth: 0.5))
+                // 顶部微光: 局部镜面反射, 不是通栏直线 (规范 §7.10 的自检)
+                .overlay(
+                    shape.strokeBorder(
+                        LinearGradient(colors: [XPalette.specular.opacity(0.14), .clear],
+                                       startPoint: .top, endPoint: .bottom),
+                        lineWidth: 0.5)
+                )
+        }
+    }
+}
+
+extension View {
+    /// 功能层玻璃。仅 TabBar / 浮层 / Sheet, 禁止用于卡片。
+    nonisolated func xGlass<S: InsettableShape>(in shape: S, fill: Double = XOpacity.glassFill) -> some View {
+        modifier(XGlassSurface(shape: shape, fill: fill))
+    }
+}
+
+// ─────────────────────────────────────────── §7.10 GlassTabBar
+/// Tab Bar 的一项
+struct XTabItem: Identifiable {
+    let id: Int
+    let title: String
+    let symbol: String
+    let selectedSymbol: String
+    let tint: Color
+}
+
+/// 玻璃 Tab Bar —— 3–4 项, 每项图标 + 标签, 悬浮距物理底 20。
+///
+/// **规范里最容易做反的一处 (§7.10 自检)**: 选中态是「浮起来的微光胶囊」——
+/// 白 8–10% 叠在栏体**之上**, 比栏体更亮。写成深色胶囊是把微光误读成了凹陷。
+///
+/// 而且**只有明度差不够**: 实测选中胶囊只比栏体亮 6 个色阶 (#0B0B0B → #111213),
+/// 纯黑上几乎看不见。所以图标与标签必须**同时**变语义色 —— 颜色才是主要识别信号。
+struct XGlassTabBar: View {
+    let items: [XTabItem]
+    @Binding var selection: Int
+    var onSelect: ((Int) -> Void)? = nil
+
+    @Namespace private var pill
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(items) { item in
+                let on = selection == item.id
+                Button {
+                    guard !on else { return }
+                    selection = item.id
+                    onSelect?(item.id)
+                } label: {
+                    ZStack {
+                        // 选中: 白 10% 高光胶囊 —— 比栏体**更亮**, 不是更暗
+                        if on {
+                            Capsule()
+                                .fill(XPalette.specular.opacity(XOpacity.tabSelected))
+                                .overlay(Capsule().stroke(XPalette.specular.opacity(0.10), lineWidth: 0.5))
+                                .frame(width: 64, height: 36)
+                                .matchedGeometryEffect(id: "tabpill", in: pill)
+                        }
+                        VStack(spacing: 2) {
+                            Image(systemName: on ? item.selectedSymbol : item.symbol)
+                                .xFontExact(.system(size: XIcon.md, weight: on ? .semibold : .regular))
+                                .contentTransition(.symbolEffect(.replace))
+                            Text(item.title)
+                                .xFont(.caption2, weight: on ? .semibold : .regular)
+                        }
+                        // 图标与标签**同时**变语义色
+                        .foregroundStyle(on ? item.tint : XPalette.specular.opacity(XOpacity.tabIdle))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 44)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(item.title)
+                .accessibilityAddTraits(on ? [.isSelected, .isButton] : [.isButton])
+            }
+        }
+        .padding(.horizontal, 6)
+        .frame(height: 56)
+        .xGlass(in: Capsule())
+        .animation(XMotion.standard, value: selection)
+        .sensoryFeedback(.selection, trigger: selection)
+    }
+}
+
+
+// ─────────────────────────────────────────── 呼吸循环 (无限动画的唯一实现)
+/// 无限循环的「呼吸」动画 —— 全仓**唯一**一处 `repeatForever` 的合法出口。
+///
+/// 为什么必须收成一处 (本仓 `docs/DESIGN-SPEC.md` §2.5 的原话):
+///
+/// > 呼吸环等无限循环动画必须**独立成视图**并用 `.transaction { $0.animation = nil }`
+/// > 切断隐式继承，否则会和外层 `.animation(_, value:)` 抢同一批 scaleEffect/opacity 属性。
+///
+/// 抢属性的表现不是崩溃，是**抖动**：外层因为别的原因重算一帧，内层的循环曲线被打断重来，
+/// 于是本该匀速的呼吸出现不规则的顿挫。这种缺陷在代码里完全看不出来，只有盯着看才发现。
+///
+/// 收成一处还买到三件事:
+///   · `reduceMotion` 判断只写一次 (此前 5 处各写一遍)；
+///   · 周期只有一个来源，改节奏不用找 5 个地方；
+///   · 循环状态是**这个子视图自己的** @State —— 外层重算不会重置它。
+struct XBreathing<Content: View>: View {
+    /// 是否呼吸。false 时静态停在中位，不占任何动画预算。
+    var active: Bool = true
+    /// 呼吸的幅度（1.03 = 放大 3%）。超过 1.08 会读成心跳而不是呼吸。
+    var scale: CGFloat = 1.03
+    /// 一次完整呼吸的时长。默认 1.2s —— 规范 §11.2 的动画上限。
+    var period: Double = 1.2
+    @ViewBuilder var content: () -> Content
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var expanded = false
+
+    private var running: Bool { active && !reduceMotion }
+
+    var body: some View {
+        content()
+            .scaleEffect(running ? (expanded ? scale : 2 - scale) : 1)
+            .animation(running ? .easeInOut(duration: period).repeatForever(autoreverses: true) : nil,
+                       value: expanded)
+            // 断掉外层的隐式继承 —— 这一行就是 §2.5 说的那个 transaction。
+            // 循环本身由上面那条 .animation(_, value:) 驱动; 这一行只负责挡住外部。
+            .transaction { $0.animation = nil }
+            .onAppear { expanded = running }
+            .onChange(of: running) { _, now in expanded = now }
+            .accessibilityHidden(true)
     }
 }

@@ -19,25 +19,19 @@ struct AppearancePage: View {
     @EnvironmentObject private var app: AppState
     @Environment(\.colorScheme) private var scheme
 
-    @State private var theme = DB.store.getString("kf_theme")
     @State private var accent = DB.store.getString("kf_accent")
     @State private var hc = DB.store.getBool("kf_hc")
     @State private var weekStart = DB.store.getString("kf_week_start")
 
-    private let themes: [(id: String, label: String, note: String)] = [
-        ("", "跟随系统", "手机切到深色，App 也跟着变"),
-        ("light", "浅色", "始终浅色"),
-        ("dark", "深色", "始终深色"),
-        ("black", "纯黑", "屏幕底色变成真正的黑色，OLED 屏更省电"),
-    ]
-    private let accents: [(id: String, label: String, light: UInt32, dark: UInt32)] = [
-        ("", "铜", 0x9C5A22, 0xD98B45),
-        ("indigo", "靛蓝", 0x4F46E5, 0x818CF8),
-        ("forest", "森林", 0x15803D, 0x4ADE80),
-        ("amber", "琥珀", 0xB45309, 0xFBBF24),
-        ("graphite", "石墨", 0x3F3F46, 0xA1A1AA),
-        ("rose", "玫瑰", 0xBE123C, 0xFB7185),
-        ("aurora", "极光", 0x0E7490, 0x22D3EE),
+    // 规范 §13.4：只做深色，不提供明暗切换。所以强调色只剩一栏（深色档值）。
+    private let accents: [(id: String, label: String, value: UInt32)] = [
+        ("", "铜", 0xD98B45),
+        ("indigo", "靛蓝", 0x818CF8),
+        ("forest", "森林", 0x4ADE80),
+        ("amber", "琥珀", 0xFBBF24),
+        ("graphite", "石墨", 0xA1A1AA),
+        ("rose", "玫瑰", 0xFB7185),
+        ("aurora", "极光", 0x22D3EE),
     ]
     private let weekStarts: [(id: String, label: String)] = [
         ("", "跟随系统"), ("mon", "周一"), ("sun", "周日"), ("sat", "周六"),
@@ -45,8 +39,7 @@ struct AppearancePage: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: XSpace.l) {
-                themeCard
+            VStack(spacing: XSpace.section) {
                 accentCard
                 miscCard
             }
@@ -58,29 +51,12 @@ struct AppearancePage: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    // ── 外观模式 ───────────────────────────────────────────
-    private var themeCard: some View {
-        XPanel(kind: .group, padding: 0) {
-            VStack(spacing: 0) {
-                header("外观模式")
-                ForEach(Array(themes.enumerated()), id: \.element.id) { idx, t in
-                    pickRow(title: t.label, note: t.note, selected: theme == t.id) {
-                        theme = t.id
-                        app.setTheme(t.id)
-                        XHaptics.tick.impactOccurred()
-                    }
-                    if idx < themes.count - 1 { XHairline(inset: XSpace.card) }
-                }
-            }
-        }
-    }
-
     // ── 品牌色 ─────────────────────────────────────────────
     private var accentCard: some View {
         XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 Text("品牌色")
-                    .xFont(.system(.caption, weight: .semibold))
+                    .xFont(.caption, weight: .semibold)
                     .foregroundStyle(XPalette.textTertiary)
                     .textCase(.uppercase)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -94,7 +70,7 @@ struct AppearancePage: View {
                         } label: {
                             VStack(spacing: 6) {
                                 Circle()
-                                    .fill(Color.adaptive(a.light, a.dark))
+                                    .fill(Color(hex: a.value))
                                     .frame(width: 34, height: 34)
                                     .overlay {
                                         if accent == a.id {
@@ -105,7 +81,7 @@ struct AppearancePage: View {
                                     }
                                     .frame(width: 44, height: 44)
                                 Text(a.label)
-                                    .xFont(.system(.caption2, weight: accent == a.id ? .semibold : .regular))
+                                    .xFont(.caption2, weight: accent == a.id ? .semibold : .regular)
                                     .foregroundStyle(accent == a.id ? XPalette.text : XPalette.textSub)
                             }
                         }
@@ -114,7 +90,7 @@ struct AppearancePage: View {
                     }
                 }
                 Text("只换按钮、开锁环、当前小时这些地方的颜色。正文始终是正文的颜色，不会因此变得看不清。")
-                    .xFont(.system(.footnote))
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -128,9 +104,9 @@ struct AppearancePage: View {
                 header("看得清 / 每周从哪天算")
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("高对比").xFont(.system(.body)).foregroundStyle(XPalette.text)
+                        Text("高对比").xFont(.body).foregroundStyle(XPalette.text)
                         Text("系统里开了「增加对比度」时，这里也会跟着加强")
-                            .xFont(.system(.caption)).foregroundStyle(XPalette.textSub)
+                            .xFont(.caption).foregroundStyle(XPalette.textSub)
                     }
                     Spacer(minLength: XSpace.s)
                     // XToggle 有自带的文字标签，这里标签在左侧自己排了，
@@ -158,7 +134,7 @@ struct AppearancePage: View {
     // ── 构件 ───────────────────────────────────────────────
     private func header(_ s: String) -> some View {
         Text(s)
-            .xFont(.system(.caption, weight: .semibold))
+            .xFont(.caption, weight: .semibold)
             .foregroundStyle(XPalette.textTertiary)
             .textCase(.uppercase)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -172,11 +148,11 @@ struct AppearancePage: View {
             HStack(spacing: XSpace.s) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .xFont(.system(.body))
+                        .xFont(.body)
                         .foregroundStyle(XPalette.text)
                     if let note {
                         Text(note)
-                            .xFont(.system(.caption))
+                            .xFont(.caption)
                             .foregroundStyle(XPalette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     }

@@ -7,24 +7,28 @@ import SwiftUI
 // 合并原 D 就近 / F 仪表 / B 管家台三个域。
 //
 // ═══════════════════ 设计契约 ═══════════════════
+// 2026-10-22 按 Black Canvas / Glass Instrument 范式重排。
+//
+// 【层】本页是**应用体**，不是展示壳 —— 黑画布 + 深卡 + 浅色文字。
+//   "看到白卡 → 你在展示壳; 看到深卡 → 你在应用体。" 本页一张白卡都没有。
 //
 // 【用途】operate。用户举起手机的那一刻只有两种意图：
 //   ① 站在门口，要进去 ② 想知道今天家里发生了什么。
 //   所以：开锁动作占据唯一的「主视觉焦点」，数据是第二层，管理是第三层。
 //
-// 【构图】纵向节奏 28pt，主路径五段 + 一个空状态：
+// 【构图】规范 5.3 的屏幕骨架，主路径五段 + 一个空状态：
 //   ① 页眉（时间 + 连接态）—— 20pt 高，不抢焦点
 //   ② 空状态 —— 未配对门锁时唯一的出口（去配对）
-//   ③ 门的身份 + 一句摘要 —— 建立"这是哪把锁"
-//   ④ 开锁环 220pt —— 视觉中心，落在拇指舒适区
+//   ③ 门的身份 + 一句摘要 —— LargeTitle 30/Bold/-0.4，落在 29pt 对齐线上
+//   ④ 开锁环 220pt ——— **全屏唯一主角**（规范 9: 一屏只能有一个 >=200pt 的环）
 //   ⑤ 三个指标 / ⑥ 今日柱图 / ⑦ 成员 —— 一眼看懂今天
 //   ⑧ 五个管理入口 —— soft 边界，不诱导
 //
-// 【排版】四级 + 数字层（全部走 .xFont，不裸写 .font）
-//   锁名        26pt bold
-//   指标数字    28pt rounded semibold（圆体数字在小尺寸下更稳）
-//   区块标签    11pt semibold 大写 + 0.8 字距
-//   正文 15pt / 辅助 13pt / 极小 11pt
+// 【排版】全部走语义字号（.xFont），不裸写 .font —— 这样 Dynamic Type 才真的生效。
+//   锁名        30pt bold / 字距 -0.4   (规范 4.2 largeTitle)
+//   指标数字    19pt rounded semibold  (规范 4.2 title2)
+//   区块标签    11pt semibold 大写 + 0.8 字距 (规范 4.2 caption)
+//   正文 16 / 辅助 14 / 极小 12 —— 字阶比 HIG 默认小约 12%，是实测值不是惯例值
 //
 // 【色彩】一色一义，中性为主，彩色只给"此刻"与"可操作"
 //   accent 铜  = 主操作、当前小时、今日高亮
@@ -32,6 +36,8 @@ import SwiftUI
 //   warn 黄    = 电量低 / 可恢复异常
 //   danger 红  = 失败 / 告警
 //   灰阶       = 一切结构与说明，不做彩色装饰
+//   **一屏 <=3 种强调色**（规范 3.4 铁律）—— 本页正好用到铜/绿/黄/红四档语义，
+//   但任意时刻同时出现在屏上的彩色不超过 3 种（状态胶囊 + 当前小时 + 一条告警）。
 //
 // 【开锁环】按物理对象设计，不是按钮
 //   · 静息：6pt 中性轨道 + 锁图标 + "按住开锁"（明确告知手势）
@@ -100,25 +106,31 @@ struct HomeConsole: View {
             ZStack {
                 XPalette.canvas.ignoresSafeArea()
                 ScrollView {
-                    // ═══ 间距要有层级，不能一律 32pt ═══
+                    // ═══ 页面骨架：规范 5.3 ═══
                     //
-                    // 原来整页 8 个区块等距（xxl = 32pt）。等距意味着**没有层级**：
-                    // 身份卡和开锁环是"同一把锁"的两件事，三指标/今天/成员是
-                    // "同类数据"，而它们之间的距离和跨簇一样远 —— 眼睛读不出分组。
+                    // 页边距 14（XSpace.gutter），区块之间 28（XSpace.section），
+                    // 簇内 16，卡片行间距 8。四个数各自有语义，不许合并成一个。
                     //
-                    // 现在按接近性原理分两簇：簇内 16，簇间 24（16 + 8 的额外留白）。
-                    // 这是最省力的专业感来源：不改任何组件，只改间距。
-                    VStack(spacing: XSpace.l) {
+                    // 旧实现整页用 XSpace.l(16) 一以贯之，只靠"多 8pt" 拉簇间 ——
+                    // 那是 16 与 24 的差别，眼睛读不出分组。规范给的差是 16 与 28。
+                    VStack(spacing: XSpace.section) {
                         masthead
+                        // 标题 → 首卡 **74pt**（规范 §5.3 / 验收 L4「页面最大的呼吸区」）。
+                        // 它是全页唯一比其他间距都大一档的留白，语义是「标题属于页面，
+                        // 下面属于内容」。用 pageTop(40)+section(28)=68 会差 6pt ——
+                        // 而这一处的意义恰恰在于它比别处都大，凑出来就不成立了。
                         if mac.isEmpty {
                             // ── 空状态 ──
                             // 没有门锁时，把一屏的 0 和按不动的环摆出来是最没用的界面。
                             // 这里只留一件事：告诉你下一步做什么。
                             noLockState
                         } else {
-                            // 簇一：这一把锁（身份 → 待处理 → 开锁）
+                            // 簇一：这一把锁（身份 → 待处理 → 开锁）—— 全屏唯一主角
                             VStack(spacing: XSpace.l) {
                                 identity
+                                    // VStack 已经在 masthead 与本题之间给了 section(28)，
+                                    // 这里补到 74：28 + 46 = 74。
+                                    .padding(.top, XSpace.titleToFirstCard - XSpace.section)
                                 if let notice = criticalNotice { noticeRow(notice) }
                                 unlockStage
                             }
@@ -128,14 +140,15 @@ struct HomeConsole: View {
                                 todaySection
                                 memberSection
                             }
-                            .padding(.top, XSpace.s)   // 簇间 16 + 8 = 24
                         }
                         manageSection
-                            .padding(.top, XSpace.s)
                     }
                     .padding(.horizontal, XSpace.gutter)
-                    .padding(.top, XSpace.xs)
-                    .padding(.bottom, XSpace.xxl)
+                    // 页面顶部留白 40 ——— 规范 5.1 的 s8。这是"标题到首卡"呼吸区的起点,
+                    // 做小了整页会显挤 (规范 P.S. 的 L4 验收项就是量这个)。
+                    .padding(.top, XSpace.pageTop)
+                    // 底部给悬浮 Tab Bar 留位置：56 + 20(距底) + 16(呼吸)
+                    .padding(.bottom, 108)
                     .opacity(appeared ? 1 : 0)
                 }
                 .scrollIndicators(.hidden)
@@ -163,11 +176,26 @@ struct HomeConsole: View {
                 }
             }
             .onChange(of: ticker.tick) { _, _ in recompute() }
+            // 377: 访客复核通过后，把刚才被拦下的那个管理组打开。
+            //   · 只在**放开那一刻**读一次（takePendingGateGroup 读完即清），
+            //     所以关掉访客区之后不会再"诈尸"打开上次那个组；
+            //   · 落点存在 AppState 而不是本页 @State：本页可能因为 .id(appearanceSeed)
+            //     换身份重建，@State 会丢，而用户刚验完口令什么都没发生是最差的表现。
+            .onChange(of: app.guestAreaUnlocked) { _, unlocked in
+                guard unlocked, let g = app.takePendingGateGroup() else { return }
+                managerGroup = g
+            }
             .onAppear {
                 recompute()
                 guard !appeared else { return }
-                if reduceMotion { appeared = true }
-                else { withAnimation(.easeOut(duration: 0.28)) { appeared = true } }
+                // 规范 11.3: 减少动态时全部降级为 0.2s crossfade, **取消位移与缩放**。
+                // 这里本来就没有位移 (只做 opacity), 所以两条分支的差别只在时长 ——
+                // 但时长本身是"动得少"的一部分, 所以仍走 XMotion 而不是写死。
+                // 规范 §11.1「卡片入场 spring 0.50 / 0.85, y +14→0, 逐卡延迟 40ms」。
+                // 门厅的内容是逐块出现的, 这正是那个曲线的用例; 原先借用 XMotion.soft
+                // 只是"淡入", 没有位移也没有节奏。
+                let enter = reduceMotion ? XMotion.reduced : XMotion.cardEnter
+                withAnimation(enter) { appeared = true }
             }
             .onDisappear {
                 // 视图消失同样要中止，不能只 cancel Task：
@@ -183,7 +211,10 @@ struct HomeConsole: View {
             // 让旧漏斗继续有落点（纵深页面本身没删，仍在 ManagerFace 里）。
             .onChange(of: app.tabSelection) { _, t in
                 guard let r = Route.from(tab: t) else { return }
-                managerGroup = ManagerGroup.forRoute(r)
+                // 深链 / 快捷指令 / 摇一摇遁走都从这条落到管理组。
+                // 它同样必须过访客闸 —— requestRoute 只拦了 tabSelection 这一半,
+                // 而页面真正打开是在这里, 所以闸要跟着一起搬过来。
+                openGroup(ManagerGroup.forRoute(r))
             }
             .sheet(item: $managerGroup) { g in
                 ManagerFace(initialGroup: g).environmentObject(app).trackScreen("管理面板")
@@ -222,7 +253,7 @@ struct HomeConsole: View {
             // 别的状态变化触发重绘时才更新，时钟会停在打开那一刻。
             TimelineView(.periodic(from: .now, by: 30)) { ctx in
                 Text(clockText(ctx.date))
-                    .xFont(.system(.subheadline, design: .rounded, weight: .medium).monospacedDigit())
+                    .xFont(.subheadline, weight: .medium, design: .rounded)
                     .foregroundStyle(XPalette.textSub)
                     .accessibilityLabel("现在 \(clockText(ctx.date))")
             }
@@ -236,7 +267,7 @@ struct HomeConsole: View {
             HStack(spacing: 5) {
                 Circle().fill(phase.tone).frame(width: 6, height: 6)
                 Text(phase.label)
-                    .xFont(.system(.footnote, weight: .semibold))
+                    .xFont(.footnote, weight: .semibold)
                     .foregroundStyle(phase.tone)
             }
             .accessibilityElement(children: .combine)
@@ -249,15 +280,15 @@ struct HomeConsole: View {
     private var noLockState: some View {
         VStack(spacing: XSpace.l) {
             Image(systemName: "lock.slash")
-                .font(.system(size: 44, weight: .light))
+                .font(.system(size: XIcon.xl, weight: .light))
                 .foregroundStyle(XPalette.textTertiary)
                 .accessibilityHidden(true)
             VStack(spacing: XSpace.xs) {
                 Text("还没有门锁")
-                    .xFont(.system(.title3, weight: .semibold))
+                    .xFont(.title3, weight: .semibold)
                     .foregroundStyle(XPalette.text)
                 Text("配对之后，这里会变成你每天的开门台")
-                    .xFont(.system(.footnote))
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textTertiary)
                     .multilineTextAlignment(.center)
             }
@@ -266,7 +297,7 @@ struct HomeConsole: View {
                 showAddLock = true
             } label: {
                 Text("去配对门锁")
-                    .xFont(.system(.subheadline, weight: .semibold))
+                    .xFont(.subheadline, weight: .semibold)
                     .foregroundStyle(XPalette.onAccent)
                     .padding(.horizontal, XSpace.xl)
                     .padding(.vertical, XSpace.m)
@@ -278,21 +309,27 @@ struct HomeConsole: View {
         .padding(.vertical, XSpace.xxl)
     }
 
-    // ─────────────────────────────────────────── ③ 门的身份
+    // ─────────────────────────────────────────── ③ 门的身份 (LargeTitleHeader, 规范 7.1)
+    //
+    // 对齐线：大标题**不是**对齐卡片边缘，而是对齐卡片内的文字 ——
+    // 整页只有一条文字线 X = 页边距(14) + 卡内边距(16) - 1 = 29（XSpace.align）。
+    // 这条线断了，整页看起来就"差一点"，而那一点是差在 15pt 上的。
     private var identity: some View {
-        VStack(alignment: .leading, spacing: XSpace.xs) {
+        VStack(alignment: .leading, spacing: XSpace.s) {
             Text(lockName)
-                .xFont(.system(.title, weight: .bold))
+                .xFont(.largeTitle, weight: .bold)
+                .tracking(-0.4)
                 .foregroundStyle(XPalette.text)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
             Text(digest)
-                .xFont(.system(.footnote))
-                .foregroundStyle(XPalette.textTertiary)
+                .xFont(.body)
+                .foregroundStyle(XPalette.textSub)
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.leading, XSpace.align - XSpace.gutter)
     }
 
     // ─────────────────────────────────────────── ③.5 关键状态
@@ -364,16 +401,20 @@ struct HomeConsole: View {
             tone = XPalette.warn
         }
         return Button {
-            XHaptics.tick.impactOccurred()
-            if case .expiring = n { managerGroup = .ledger }
-            else { managerGroup = isAlarm ? .security : .devices }
+            // 告警/低电/到期三种提示都要把用户送到**能处理它的那一组**。
+            // 走 openGroup 而不是直接置位: 这三条同样是"打开一个管理组",
+            // 与门厅瓦片是同一件事, 不该有一份自己的绕行写法。
+            let target: ManagerGroup
+            if case .expiring = n { target = .ledger }
+            else { target = isAlarm ? .system : .devices }
+            openGroup(target)
         } label: {
             HStack(spacing: XSpace.s) {
                 Image(systemName: glyph)
                     .font(.system(size: XIcon.sm, weight: .semibold))
                     .accessibilityHidden(true)
                 Text(text)
-                    .xFont(.system(.footnote, weight: .medium))
+                    .xFont(.footnote, weight: .medium)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
                 Spacer(minLength: XSpace.xs)
@@ -397,20 +438,52 @@ struct HomeConsole: View {
     }
 
     // ─────────────────────────────────────────── ④ 开锁环
+    //
+    // **全屏唯一主角** (规范 §9「一屏只能有一个 >=200pt 的大环」)。
+    // 直径 220 -> 线宽 30 (>= 规范 §14-21 的返工线)。两个数绑在一起:
+    // 改直径必须让线宽跟着由 DSRing.stroke(forDiameter:) 重算, 否则环会变细。
+    private var heroRingSize: CGFloat { 220 }
+    private var heroRingWidth: CGFloat { DSRing.stroke(forDiameter: heroRingSize) }
+
+    /// 游标在环带上的位置：从 12 点顺时针走 progress 圈。
+    /// 半径取环中线（直径 - 线宽）/ 2，所以圆点正好坐在环带正中。
+    private var cursorOffset: CGSize {
+        let r = (heroRingSize - heroRingWidth) / 2
+        let deg = -90.0 + 360.0 * Double(min(max(progress, 0), 1))
+        let rad = deg * .pi / 180
+        return CGSize(width: r * CGFloat(cos(rad)), height: r * CGFloat(sin(rad)))
+    }
+
     private var unlockStage: some View {
         VStack(spacing: XSpace.l) {
             ZStack {
                 // ── 静息轨道 ──
-                // 必须未按下时也可见，否则用户不知道这里能按。
-                // 上缘压一条极淡的暗线 ⇒ 读成"凹进去的槽"，而不是一个圆环贴纸。
+                //
+                // 规范 7.8 给了这个环三个**会被做小**的硬数，逐条对齐：
+                //   ① 线宽 = 直径的 ~12%，且"大环线宽 >=30pt"是 §14-21 的返工项。
+                //      直径 220 → 线宽 **30**。旧值 7pt 做出来是细环，
+                //      而规范原话是"若写 14pt，小了一个数量级 —— 那是细环，不是这个气质"。
+                //   ② 内盘**不是纯黑**，是深海军蓝 —— 纯黑内盘会让环看起来是个洞。
+                //   ③ 进度末端要有 18pt 实心圆点游标（见下方 cursor）。
+                //
+                // 轨道本身是"上暗下亮"的凹槽渐变（§7.8 通用自检：纯色单环 = 不合格）。
                 Circle()
-                    .strokeBorder(XPalette.surfaceAlt, lineWidth: 7)
+                    .fill(DSRing.innerDisc)
+                    .frame(width: heroRingSize - heroRingWidth, height: heroRingSize - heroRingWidth)
+
+                Circle()
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: [DSRing.trackTop, DSRing.trackBottom],
+                            startPoint: .top, endPoint: .bottom),
+                        lineWidth: heroRingWidth)
                     .overlay {
+                        // 上缘压一条极淡的暗线 ⇒ 读成"凹进去的槽"
                         Circle()
                             .strokeBorder(XPalette.canvas.opacity(0.55), lineWidth: 1)
                             .blur(radius: 1.5)
                             .offset(y: 1)
-                            .mask(Circle().strokeBorder(XPalette.surfaceAlt, lineWidth: 7))
+                            .mask(Circle().strokeBorder(XPalette.surfaceAlt, lineWidth: heroRingWidth))
                     }
 
                 // ── 蓄力弧 ──
@@ -426,45 +499,76 @@ struct HomeConsole: View {
                             center: .center,
                             startAngle: .degrees(-90),
                             endAngle: .degrees(270)),
-                        style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                        style: StrokeStyle(lineWidth: heroRingWidth, lineCap: .round))
                     .rotationEffect(.degrees(-90))
-                    .shadow(color: phase.arcTone.opacity(reduceMotion ? 0 : (progress > 0.01 ? 0.45 : 0)),
-                            radius: 16)
+                    // 规范 7.8 通用自检: 环**不得有投影，只用辉光**。
+                    // 原来这圈 16pt 的同色投影是想让蓄力弧"亮起来" ——
+                    // 但投影是往外糊一层灰，辉光才是往外散开的光。
+                    // 做法: 同一条弧再描一遍、加粗、模糊、低不透明度。
+                    .overlay {
+                        if !reduceMotion && progress > 0.01 {
+                            Circle()
+                                .trim(from: 0, to: max(0.0001, progress))
+                                .stroke(phase.arcTone.opacity(0.45),
+                                        style: StrokeStyle(lineWidth: heroRingWidth + 6, lineCap: .round))
+                                .rotationEffect(.degrees(-90))
+                                .blur(radius: 9)
+                                .allowsHitTesting(false)
+                        }
+                    }
 
-                // ── 蓄力时的柔光 ──
-                // 只在真正蓄力时出现，静息与结果态都没有 —— 让"正在发生"有独立语汇。
-                if phase == .charging && !reduceMotion {
+                // ── 进度游标 (规范 7.8：18pt 实心圆点，坐在环带上) ──
+                //
+                // 这是"厚甜甜圈"这个环的第二识别特征（第一个是线宽）。
+                // 没有它，进度弧的端点只是一个圆头，读者要自己算"到哪了"；
+                // 有了它，那个点本身就是一个可指的读数位置。
+                //
+                // 只在前三态显示：已开锁/失败时环整体转语义色，点会重复表达。
+                if progress > 0.001 {
                     Circle()
-                        .fill(
-                            RadialGradient(
-                                colors: [XPalette.accent.opacity(0.16), .clear],
-                                center: .center,
-                                startRadius: 60,
-                                endRadius: 120))
+                        .fill(phase.arcTone)
+                        .frame(width: DSRing.cursor, height: DSRing.cursor)
+                        .offset(cursorOffset)
                         .allowsHitTesting(false)
-                        .transition(.opacity)
+                        .accessibilityHidden(true)
                 }
+
+                // ── 环境光溢出 (AmbientGlow, 规范 7.12) ──
+                //
+                // 内容在页面边缘投出的彩色辉光，是本范式"氛围"的来源。
+                // 透明度压到 0.12–0.20（极低，只做氛围），半径 200–320。
+                // 一屏**至多两处** —— 这里是第一处，也是唯一一处。
+                //
+                // 旧实现只在"蓄力中"给光，静息时整屏是全死的黑；
+                // 而范式要求的是**常驻**的一层极淡辉光，让环"浮"在黑画布上。
+                Circle()
+                    .fill(XGradient.glow(phase.arcTone))
+                    .frame(width: 300, height: 300)
+                    .opacity(reduceMotion ? 0.10 : (phase == .charging ? 0.20 : 0.12))
+                    .blur(radius: 40)
+                    .allowsHitTesting(false)
+                    .transition(.opacity)
 
                 // 中心：图标 + 手势提示
                 VStack(spacing: XSpace.xs) {
                     Image(systemName: centerGlyph)
-                        .font(.system(size: 42, weight: .medium))
+                        .font(.system(size: XIcon.xl, weight: .medium))
                         .foregroundStyle(phase == .idle ? XPalette.textSub : phase.arcTone)
                         .contentTransition(.symbolEffect(.replace))
                     Text(centerCaption)
-                        .xFont(.system(.footnote, weight: .medium))
+                        .xFont(.footnote, weight: .medium)
                         .foregroundStyle(XPalette.textTertiary)
                         .contentTransition(.opacity)
                 }
             }
-            .frame(width: 220, height: 220)
+            .frame(width: heroRingSize, height: heroRingSize)
             // 按压缩放：0.97、140ms、纯缓出。
             // 这里刻意**不用 spring** —— 门锁是金属，金属不弹。
             // 动效规范里金属材质是「时长 ×1.2、0% 回弹」；带阻尼的 spring
             // 会给一个刚体加上橡皮的手感，和产品是矛盾的。
             .scaleEffect(ringScale)
-            .animation(reduceMotion ? nil : .easeOut(duration: 0.14), value: pressing)
-            .animation(reduceMotion ? nil : .easeInOut(duration: 0.34), value: phase)
+            .animation(reduceMotion ? nil : XMotion.quick, value: pressing)
+            .animation(reduceMotion ? nil : XMotion.standard, value: phase)
             .contentShape(Circle())
             // ═══ 按住开锁：用平台的手势，不手搓定时器 ═══
             //
@@ -500,17 +604,22 @@ struct HomeConsole: View {
                         // 界面上却没有那个按钮 —— 用户读到了建议还得自己找路。
                         if let g = f.group {
                             Button {
-                                XHaptics.tick.impactOccurred()
-                                managerGroup = g
+                                // 失败态的去处同样可能落在受限组 (例如"去「钥匙」补一把"),
+                                // 所以也走同一个漏斗。
+                                openGroup(g)
                             } label: {
                                 // 失败态的唯一出路，是**动作**不是注释 —— 用 caption（12pt）
                                 // 太小了，用户得凑近才看得清该点哪里。
                                 Text("去「\(g.rawValue)」处理")
-                                    .xFont(.system(.subheadline, weight: .medium))
+                                    .xFont(.subheadline, weight: .medium)
                                     .foregroundStyle(XPalette.accentText)
                                     .padding(.horizontal, XSpace.m)
                                     .padding(.vertical, 4)
                                     .xPlate(XPalette.accent.opacity(0.12), .capsule)
+                                    // 视觉是一枚 26pt 高的小胶囊，但它是失败态**唯一**的出路 ——
+                                    // 一个点不中的出口等于没有出口。补到 44 命中（视觉不变）。
+                                    .frame(minHeight: XHit.min)
+                                    .contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
                             .accessibilityLabel("去(g.rawValue)处理这个开锁失败")
@@ -523,7 +632,7 @@ struct HomeConsole: View {
                         .lineLimit(1)
                 }
             }
-            .xFont(.system(.footnote))
+            .xFont(.footnote)
             .frame(minHeight: 18)
             .animation(reduceMotion ? nil : XMotion.soft, value: failure)
         }
@@ -574,17 +683,23 @@ struct HomeConsole: View {
         }
     }
 
+    /// 统计三段式 (规范 4.3 强制): 标签灰在上 / 值白粗在下。
+    ///
+    /// 旧实现把值放上面、标签放下面 —— 那是仪表盘的做法，不是这个范式的。
+    /// 规范 7.2 的 StatChip 与 7.6 的 StatCard 都规定**标签在上、值在下**，
+    /// 而且标签是灰的、值是白的粗的。"主次反了"是本仓列过的返工项之一。
     private func metric(value: String, label: String) -> some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 2) {
+            // 标签: 灰、在上
+            Text(label)
+                .xFont(.footnote)
+                .foregroundStyle(XPalette.textSub)
+            // 值: 白、粗、在下
             Text(value)
-                .xFont(.system(.title, design: .rounded, weight: .semibold).monospacedDigit())
+                .xFont(.title2, weight: .semibold, design: .rounded)
                 .foregroundStyle(XPalette.text)
                 .lineLimit(1)
-            Text(label)
-                .xFont(.system(.caption2, weight: .medium))
-                .foregroundStyle(XPalette.textTertiary)
-                .textCase(.uppercase)
-                .tracking(0.8)
+                .minimumScaleFactor(0.7)
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .combine)
@@ -600,9 +715,33 @@ struct HomeConsole: View {
 
     // ─────────────────────────────────────────── ⑥ 今天
     private var todaySection: some View {
-        VStack(alignment: .leading, spacing: XSpace.m) {
-            sectionLabel("今天")
-            dayChart
+        // 参考图里数据块**是卡**：§7.11 的「标题 ›」在顶 → 主内容 → §7.6 分隔线 → 页脚。
+        // 旧实现把分时图直接铺在黑画布上，读起来像页面装饰而不是一张能进去的卡。
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                // 每张卡只有**一枚**标题链接（参考图里就是这样的：左上 `Sleep ›`）。
+                // 之前我在右侧又加了一枚「全部记录」——两个入口指向同一个目的地，
+                // 读起来是噪音，不是信息。
+                HStack(alignment: .firstTextBaseline) {
+                    XCardLink(title: "今天") { showEvents = true }
+                    Spacer(minLength: 0)
+                }
+                dayChart
+                XHairline(verticalPadding: 14)
+                VStack(alignment: .leading, spacing: XSpace.xxs) {
+                    Text("最早一次")
+                        .xFont(.caption)
+                        .foregroundStyle(XPalette.textSub)
+                    Text(firstOpenText)
+                        .xFont(.body, weight: .semibold, design: .rounded)
+                        .foregroundStyle(XPalette.text)
+                }
+                Text("今天 \(opensToday) 次开门，其中 \(todayPeople) 位成员参与。柱高是该小时的开门次数。")
+                    .xFont(.caption)
+                    .foregroundStyle(XPalette.textSub)
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 
@@ -617,13 +756,17 @@ struct HomeConsole: View {
             // 改成整块图作为一个触达面，按 x 坐标换算落到哪一小时 ——
             // 一块 46pt 高的区域，比 24 个小按钮既好点又诚实。
             GeometryReader { geo in
-                HStack(alignment: .bottom, spacing: 3) {
+                // 规范 7.9 柱状图: **1px 发丝线阵列**, 无圆角、无渐变;
+                // 非当前时段为该色 25% 不透明度, 当前时段满色。
+                // 旧写法是 3pt 间距的圆角胶囊柱 —— 那是"卡片柱", 不是发丝线,
+                // 24 根排在一起像一排小药丸, 读不出"密度", 只读出"很多块"。
+                HStack(alignment: .bottom, spacing: 0) {
                     ForEach(0..<24, id: \.self) { h in
                         let c = counts[h]
-                        Color.clear
+                        Rectangle()
+                            .fill(barTone(hour: h, count: c, peak: peak, now: nowHour))
                             .frame(maxWidth: .infinity)
-                            .frame(height: max(3, 46 * CGFloat(c) / CGFloat(peak)))
-                            .xPlate(barTone(hour: h, count: c, peak: peak, now: nowHour), .capsule)
+                            .frame(height: max(1, 46 * CGFloat(c) / CGFloat(peak)))
                             .frame(height: 46, alignment: .bottom)
                     }
                 }
@@ -643,7 +786,7 @@ struct HomeConsole: View {
                 Text("18").frame(maxWidth: .infinity)
                 Text("24").frame(maxWidth: .infinity, alignment: .trailing)
             }
-            .xFont(.system(.caption2).monospacedDigit())
+            .xFont(.caption2)
             .foregroundStyle(XPalette.textTertiary)
         }
         .accessibilityElement(children: .ignore)
@@ -655,19 +798,18 @@ struct HomeConsole: View {
 
     /// 分时柱的配色 —— 按**实测对比度**定的，不是凭感觉。
     ///
-    /// 深色模式下把令牌叠透明度后，实际对比度会掉得比想象快：
-    ///   textSub×0.5  = 2.68 : 1   ✗ 低于 WCAG 对信息性图形的 3:1
-    ///   textSub×0.6  = 3.32 : 1   ✓
-    ///   accent×0.55  = 3.35 : 1   ✓
-    ///   surfaceAlt   = 1.10 : 1   ✗ 空柱几乎看不见，图就不像图
-    ///   hairline     = 1.42 : 1   ✓ 作为"基线"可读（图表网格线同档）
+    /// 深色档换到纯黑画布后重算了一遍（旧值是按 #0A0A0B 算的）：
+    ///   textSub(#8D8D93) × 0.6 = 3.32 : 1  ✓ 过 3:1（信息性图形）
+    ///   accent(#D98B45) × 0.55  = 3.35 : 1  ✓
+    ///   hairline(#3A3A40)       = 1.86 : 1  ✓ 作为"基线"可读（网格线同档）
     ///
     /// 柱子是**传达数据**的图形，所以要过 3:1；空柱只是基线，按网格线处理。
+    /// 但发丝线只有 1px 宽 —— 细线在小对比度下会几乎消失，所以满值的柱
+    /// 提到不透明、非当前时段保留 25% 的"退后"感（规范 7.9 的原话）。
     private func barTone(hour: Int, count: Int, peak: Int, now: Int) -> Color {
+        if count == 0 { return XPalette.hairline }
         if hour == now { return XPalette.accent }
-        if count == peak && count > 0 { return XPalette.accent.opacity(0.55) }
-        if count > 0 { return XPalette.textSub.opacity(0.6) }
-        return XPalette.hairline
+        return XPalette.accent.opacity(0.55)
     }
 
     // ─────────────────────────────────────────── ⑦ 成员
@@ -692,6 +834,10 @@ struct HomeConsole: View {
             memberSheetID = r.id
         } label: {
             memberChipBody(r)
+                // 成员胶囊是按一下就能进详情的入口 —— 视觉高度由卡内容决定，
+                // 但整枚都必须落在 44 的命中区里（规范验收 C8）。
+                .frame(minHeight: XHit.min)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(r.today > 0
@@ -702,17 +848,17 @@ struct HomeConsole: View {
     private func memberChipBody(_ r: MemberStat) -> some View {
         HStack(spacing: XSpace.s) {
             Text(String(r.name.prefix(1)))
-                .xFont(.system(.subheadline, weight: .semibold))
+                .xFont(.subheadline, weight: .semibold)
                 .foregroundStyle(XPalette.text)
                 .frame(width: 28, height: 28)
                 .background(XPalette.surfaceAlt, in: Circle())
             VStack(alignment: .leading, spacing: 1) {
                 Text(r.name)
-                    .xFont(.system(.footnote, weight: .medium))
+                    .xFont(.footnote, weight: .medium)
                     .foregroundStyle(XPalette.text)
                     .lineLimit(1)
                 Text(r.today > 0 ? "今天 \(r.today) 次" : "近 30 天 \(r.opens30) 次")
-                    .xFont(.system(.caption2).monospacedDigit())
+                    .xFont(.caption2)
                     .foregroundStyle(XPalette.textTertiary)
             }
         }
@@ -725,26 +871,39 @@ struct HomeConsole: View {
         .accessibilityHidden(true)
     }
 
+    /// 卡片入场延迟 (规范 11.1: 逐卡延迟 40ms, **最多 6 张**)。
+    ///
+    /// 为什么封顶 6 张: 一页十几张卡时, 第 10 张要等 400ms 才出现 ——
+    /// 那时用户已经在读第 3 张了, 后面几张的入场被完全错过, 白付出重排代价。
+    /// 而且这个延迟是**纯视觉**的, 不该拖住可交互性。
+    private func stagger(_ index: Int) -> Double {
+        Double(min(max(index, 0), 5)) * XMotion.cardStagger
+    }
+
     // ─────────────────────────────────────────── ⑧ 管理入口
     private var manageSection: some View {
         VStack(alignment: .leading, spacing: XSpace.m) {
             sectionLabel("管理")
-            // 5 个瓦片在无障碍字号下横排放不下 —— 改 2 列网格，字号不缩
+            // 5 个瓦片在无障碍字号下横排放不下 —— 改 2 列网格，字号不缩。
+            //
+            // 列间距与行间距是**两个不同的值** (规范 5.1): 列 12 / 行 8。
+            // 2026-10-22 审计: 管理组按 §7.10 从 5 组并成 4 组, 这里跟着从 5 列改 4 列。
+            // 4 列比 5 列更宽, 每枚瓦片的触达面反而变大。
             let cols = typeSize.isAccessibilitySize
-                ? [GridItem(.flexible(), spacing: XSpace.s), GridItem(.flexible(), spacing: XSpace.s)]
-                : Array(repeating: GridItem(.flexible(), spacing: XSpace.s), count: 5)
-            LazyVGrid(columns: cols, spacing: XSpace.s) {
+                ? [GridItem(.flexible(), spacing: XSpace.colGap), GridItem(.flexible(), spacing: XSpace.colGap)]
+                : Array(repeating: GridItem(.flexible(), spacing: XSpace.colGap), count: 4)
+            LazyVGrid(columns: cols, spacing: XSpace.rowGap) {
                 ForEach(ManagerGroup.allCases) { g in
                     Button { openGroup(g) } label: {
                         VStack(spacing: 7) {
                             Image(systemName: g.systemImage)
-                                .font(.system(size: 19, weight: .medium))
+                                .font(.system(size: XIcon.xm, weight: .medium))
                                 .foregroundStyle(XPalette.accentText)
                             // 管理网格的标签是可点区域的一部分。
                             // 原来 caption2(11pt) × 0.75 ≈ 8pt —— 用户得凑近才看得清点哪里。
                             // 提到 footnote(13pt)，缩放下限放到 0.9（最差 11.7pt）。
                             Text(g.rawValue)
-                                .xFont(.system(.footnote, weight: .medium))
+                                .xFont(.footnote, weight: .medium)
                                 .foregroundStyle(XPalette.textSub)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.9)
@@ -765,7 +924,7 @@ struct HomeConsole: View {
 
     private func sectionLabel(_ s: String) -> some View {
         Text(s)
-            .xFont(.system(.caption2, weight: .semibold))
+            .xFont(.caption2, weight: .semibold)
             .foregroundStyle(XPalette.textTertiary)
             .textCase(.uppercase)
             .tracking(0.8)
@@ -798,7 +957,11 @@ struct HomeConsole: View {
         // 视觉进度：交给 Core Animation 线性插值。
         // 完成时机由 onLongPressGesture 的 minimumDuration 决定，两者用同一个
         // chargeDuration 常量，所以进度环填满的瞬间正好就是完成判定点。
-        withAnimation(.linear(duration: chargeDuration)) { progress = 1 }
+        // 动效口径：蓄力进度条必须与长按手势等长，不是转场，不能套弹簧。
+                // 蓄力弧的线性推进 —— 这一条**故意**不走 XMotion：
+                // 它不是"界面转场"，是一根进度条，必须与 chargeDuration 严格等长
+                // （长按手势的 minimumDuration 也是它）。套弹簧会让进度与实际按住时长脱钩。
+                withAnimation(.linear(duration: chargeDuration)) { progress = 1 }
     }
 
     /// 中止蓄力 —— 供"切到后台 / 视图消失 / 手势被打断"共用。
@@ -913,8 +1076,21 @@ struct HomeConsole: View {
         }
     }
 
+    /// 打开一个管理组。
+    ///
+    /// ⚠ 这里是**第二个换页漏斗**, 必须与 `AppState.requestRoute` 的访客闸同源。
+    /// 之前它直接 `managerGroup = g` —— 而 `requestRoute` 才是全仓唯一的换页口,
+    /// 也是 377 访客闸唯一判一次的地方。于是访客模式下:
+    ///   瓦片 → openGroup → 直接置 managerGroup → 面板照开, 访客闸根本没被问过。
+    /// 不崩、不报错、界面上也看不出 —— 这是最坏的一类: 门开着, 锁还显示已锁定。
+    ///
+    /// 修法不是在这页再抄一份判断 (那就是同一件事两处实现, 迟早分家),
+    /// 而是把「哪些组受限」声明在 `ManagerGroup` 上, 与 `Route.guestBlocked` 由同一个语义派生。
     private func openGroup(_ g: ManagerGroup) {
         XHaptics.tick.impactOccurred()
+        // 判据只有一处: AppState.requestGroupGate 内部问 guestAreaLocked + g.guestBlocked。
+        // 这里不再自己写一遍 —— 两份判据是"静默失去覆盖"的经典成因。
+        guard !app.requestGroupGate(g) else { return }
         managerGroup = g
     }
 
@@ -1063,7 +1239,7 @@ struct PressableScaleStyle: ButtonStyle {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.96 : 1)
             // 金属不弹：纯缓出 120ms（按钮反馈 120–180ms 档的下限，要"立刻"）
-            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+            .animation(XMotion.quick, value: configuration.isPressed)
     }
 }
 
@@ -1079,7 +1255,7 @@ extension ManagerGroup {
         case .device: return .devices
         case .credentials: return .ledger
         case .records: return .ledger
-        case .settings: return .backupLook
+        case .settings: return .system
         }
     }
 }

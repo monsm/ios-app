@@ -1,0 +1,309 @@
+#!/usr/bin/env node
+// tools/glassaudit.js — Black Canvas / Glass Instrument 范式符合度审计 (顾问级, 不判失败)
+//
+// 为什么需要它: 令牌层改对(14/24/#000000)不等于每个页面都照做了。
+// 一个页面可以有正确的 XSpace.gutter, 却仍然用 VStack(spacing: XSpace.l) 把所有块等距排开 ——
+// 那样分组层级读不出来, 而这项**没有任何现有闸门在看**。
+//
+// 判据全部来自 C:\\Users\\imons\\.agents\\skills\\ios-glass-design-spec\\references\\design-spec.md,
+// 只取能被静态代码形状判定的那些。判不了的不假装能判, 逐条列在文末。
+//
+// 用法: node tools/glassaudit.js            (报线索, 恒退出 0)
+//       node tools/glassaudit.js --strict   (有 FAIL 则 exit 1; 仅供人工蹲点用)
+'use strict';
+const fs = require('fs');
+const path = require('path');
+
+const ROOT = path.join(__dirname, '..');
+const APP = path.join(ROOT, 'App');
+
+function walk(dir, out = []) {
+  if (!fs.existsSync(dir)) return out;
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) walk(p, out);
+    else if (e.name.endsWith('.swift')) out.push(p);
+  }
+  return out;
+}
+const files = walk(APP);
+
+// ---- 规则表 ----
+const RULES = [
+  {
+    id: 'G1',
+    name: '页面底必须是 canvas',
+    why: '规范总则一: 黑色是画布。用 .background(Color(...)) 或 .background(.black) 直接写底 = 绕过令牌, 亮色档会变成纯黑。',
+    test: (line) => /\.background\(\s*(?:Color\.)?(?:black|white)\s*\)/.test(line),
+  },
+  {
+    id: 'G2',
+    name: '卡片不许有投影',
+    why: '规范 6.3 / 14-4: 应用体卡片零投影。黑底上的投影只会把边缘糊成脏灰。',
+    test: (line, ctx) => /\.shadow\(/.test(line) && /XPanel|XRadius\.card/.test(ctx),
+  },
+  {
+    id: 'G3',
+    name: '页面根 VStack 不该一律 16',
+    why: '规范 5.1 / 验收 L4: 区块之间 28 (XSpace.section)。全页等距 = 没有分组。' +
+         ' 判据: 一个 VStack(spacing: XSpace.l) 的**紧邻上下文**里既出现了 ScrollView 又出现了' +
+         ' padding(.horizontal, XSpace.gutter) —— 那就是"页面根容器"的形状，而不是卡内分组。',
+    test: (line, ctx) => /VStack\(spacing: XSpace\.l\)/.test(line) && /ScrollView/.test(ctx) && /padding\(\.horizontal, XSpace\.gutter\)/.test(ctx),
+  },
+  {
+    id: 'G4',
+    name: '卡片圆角落在 10–19 (低于规范下限)',
+    why: '规范 5.2 / 14-5: 卡片圆角 < 20pt 即返工。10–19 这一段最像"卡片但不是卡片"—— 通用后台风就是这么来的。' +
+         ' (cornerRadius 1–6 的多是进度条/图表刻度/分割块, 属于数据可视化, 不在本规则内。)',
+    test: (line) => /RoundedRectangle\(cornerRadius:\s*1[0-9]\b/.test(line),
+  },
+  {
+    id: 'G5',
+    name: '环不许有投影, 只许辉光',
+    why: '规范 7.8 通用自检: 环不得有投影。',
+    test: (line, ctx) => /\.shadow\(/.test(line) && /Circle\(\)|trim\(from:/.test(ctx),
+  },
+  {
+    id: 'G9',
+    name: '长按菜单没有告诉用户「能长按」',
+    why: '可发现性: 藏进 contextMenu 的动作在视觉上等于不存在。' +
+         ' 规范要求「看着就想点的东西必须真的能点，而且要看得出能点」。' +
+         ' 视觉侧可以权衡（有时加省略号反而更挤），但**读屏侧不能也不说** ——' +
+         ' 所以判据只强制一件事: 有 contextMenu 的元素必须带 accessibilityHint。' +
+         ' 已有 hint 的（比如「长按可置顶…」）就满足。',
+    test: (line, ctx) => {
+      if (!/\.contextMenu\s*\{/.test(line)) return false;
+      // 第二参在 G9 上是「从本行往后 42 行」的窗口（见主循环）。
+      const seg = ctx || line;
+      return !/accessibilityHint\(/.test(seg);
+    },
+  },
+  {
+    id: 'G8',
+    name: '成功/失败提示缺对应触感 (规范 §11.4)',
+    why: '规范 §11.4 的触感表: 目标达成 → .success, 失败 → .error。' +
+         ' 而 showToast 此前**不带触感**, 于是全仓 30 处「报了成功、手上没动静」——' +
+         ' 不是谁忘了, 是接口没给形状。现在 showToast 有 tone 参数, 这条闸门防它退回去。' +
+         ' 判据: 文案是"已…/成功…/失败…"却写成 tone: .plain(或没写)。' +
+         ' 「已复制」这类**纯告知**本来就该是 plain, 不在本规则内。',
+    test: (line, ctx) => {
+      if (!/showToast\(/.test(line)) return false;
+      // 多行调用很常见（三元表达式 / 长文案折行）—— 只看这一行会把正确的判成缺 tone。
+      // 判据要用**调用所在的那一小段**：ctx 由主循环提供（前后各若干行）。
+      const seg = ctx || line;
+      // 纯告知白名单: 复制/切换/选中 这类不需要触感
+      if (/已复制|已切换|已选中|已展开|已收起/.test(line)) return false;
+      const isDone = /"(?:已(?:删除|生成|导入|保存|解除绑定|清除|标记|打卡|按|移)|设置成功|成功)/.test(line);
+      const isFail = /"(?:失败|错误)/.test(line);
+      if (!isDone && !isFail) return false;
+      // 这一**段**里必须带 tone
+      return !/tone:\s*\.(done|failed|caution)/.test(seg);
+    },
+  },
+  {
+    id: 'G14',
+    name: '纯色描边画环（规范 §14-9 命中即返工）',
+    why: '规范 §14-9 把「纯色（非渐变）描边画环」列进**命中即返工**，§7.8 的通用自检也写着' +
+         ' 「所有环必须渐变或分色，纯色单环 = 不合格」。理由：环的质感全靠渐变/分色，' +
+         ' 纯色描边读起来是一条粗线，不是一只环。' +
+         ' 本仓 FirmwarePage 的升级进度底环原来就是 .stroke(XPalette.hairline, lineWidth: 14) —— 纯色。' +
+         ' 判据：Circle() 用 .stroke/.strokeBorder 且 lineWidth >= 6（细描边是边框不是环），' +
+         ' 而颜色不是 Gradient 的，判线索。',
+    test: (line, ctx) => {
+      const seg = ctx || line;
+      if (!/Circle\(\)/.test(seg)) return false;
+      const m = /\.stroke(?:Border)?\([\s\S]{0,120}?lineWidth:\s*([0-9]+(?:\.[0-9]+)?)/.exec(seg);
+      if (!m) return false;
+      if (parseFloat(m[1]) < 6) return false;
+      // 这一段里出现任意 Gradient 就算渐变环
+      return !/LinearGradient|AngularGradient|RadialGradient|Gradient\(/.test(seg);
+    },
+  },
+  {
+    id: 'G13',
+    name: '出现投影（规范 §6.3 只允许两处）',
+    why: '规范 §6.3 的注脚写得很死：**黑底上唯一允许的阴影**是「设备样机底部 0 24px 48px」与' +
+         ' 「全屏 Sheet 边缘 0 -8px 32px」，并且「**卡片永远没有**」。' +
+         ' §14-4 把「给应用体卡片加投影」列进明令禁止。' +
+         ' 本仓曾用 .shadow 画过三处浮层投影 + 两处彩色辉光 —— 浮层那条直接违规（浮层是「玻璃 + 0.5pt 描边」），' +
+         ' 彩色辉光也改成径向渐变了（§7.8：发光用辉光不用投影）。现在全仓 .shadow() 归零。' +
+         ' 判据：出现 .shadow( 即判线索。若真需要设备样机/Sheet 边缘那两处，先在这里登记。',
+    test: (line) => /\.shadow\(/.test(line),
+  },
+  {
+    id: 'G12',
+    name: '图标垫了规范之外的圆形底',
+    why: '规范 §10「圆形底」写得很死：**StatChip 图标允许 34pt；列表图标允许 20pt；其余不加底**。' +
+         ' 本仓曾在 hero 卡里给图标垫 56pt / 96pt 的洗染圆底 —— 既不是 34 也不是 20。' +
+         ' 判法用**结构**而不是尺寸去认：`Circle()` 作为 ZStack 里的独立视图、紧跟着又一个 Image(systemName:)，' +
+         ' 才是「图标底」；写在 `.background(… in: Circle())` 里的那种是**序号徽章**（圆里是 Text 数字），不判。',
+    test: (line, ctx) => {
+      const m = /\.frame\(width:\s*([0-9]+),\s*height:\s*([0-9]+)\)/.exec(line);
+      if (!m) return false;
+      const w = +m[1];
+      if (w === 34 || w === 20) return false;   // 规范允许的两档
+      const seg = ctx || '';
+      const ls = seg.split('\n');
+      const at = ls.findIndex((l) => l.includes(line.trim()));
+      if (at < 0) return false;
+      // 往回 5 行内要有**独立的** Circle() 行（不是嵌在 background/in: 里）
+      const back = ls.slice(Math.max(0, at - 5), at);
+      const standalone = back.some((l) => /^\s*Circle\(\)\s*$/.test(l));
+      if (!standalone) return false;
+      // 往前 6 行内要有 Image(systemName:) —— ZStack 的另一个孩子
+      const fwd = ls.slice(at + 1, at + 7);
+      if (!fwd.some((l) => /Image\(systemName:/.test(l))) return false;
+      // 步骤节点：图标是圆的**状态标记**（完成的打勾），写在 .overlay 里，不是垫在下面的底。
+      if (ls.slice(at, at + 6).some((l) => /\.overlay\(/.test(l))) return false;
+      // 辉光不是底（§7.8 要求环/圆盘只用辉光）
+      if (ls.slice(at, at + 6).some((l) => /\.blur\(radius:/.test(l))) return false;
+      // moment 级（>=96pt）是整屏成功/庆祝大图，不是卡片内的图标底
+      if (w >= 96) return false;
+      return true;
+    },
+  },
+  {
+    id: 'G11',
+    name: '图标尺寸不在规范 §10 的七档上',
+    why: '规范 §10 给的图标尺寸是**固定七档**：12 / 13 / 17 / 20 / 22 / 28 / 34。' +
+         ' 本仓原来写的是 12/16/20/26/44/72 —— 其中 16 / 26 / 44 / 72 都不在档位上；' +
+         ' 另有 12 处调用点直接写死 14/19/24/40/42/44。' +
+         ' 中间值说明有人在按感觉调，而不是按系统。' +
+         ' 判据只认 XIcon.* 令牌或这七个数字。',
+    test: (line, ctx) => {
+      // 图标尺寸: Image(systemName:) 之后 .font(.system(size: N))
+      const seg = ctx || line;
+      if (!/Image\(systemName:|\bicon\b|glyph/.test(seg)) return false;
+      const m = /\.font\(\.system\(size:\s*([0-9.]+)/.exec(line);
+      if (!m) return false;
+      const v = parseFloat(m[1]);
+      const LADDER = [12, 13, 17, 20, 22, 28, 34];
+      return !LADDER.includes(v);
+    },
+  },
+  {
+    id: 'G10',
+    name: '排版绕过了规范字阶 (用了裸 .font 或 .xFont(.system(size:)))',
+    why: '规范 §4.2 的字阶全线下修过一档 (caption 12→11 / footnote 13→12 / subheadline 15→14 /' +
+         ' body 17→16 / title2 22→19 / largeTitle 34→30), 并明确写「原值直接套用了 HIG 默认值,' +
+         ' 从未对参考图测过」。本仓曾经 766 处排版全跑在 HIG 默认值上 —— 那正是规范点名批评的做法。' +
+         ' 现在字号唯一入口是 XText (see Theme.swift), 这条闸门防它退回去。' +
+         ' 例外: 图标尺寸 Image(systemName:).font(.system(size:)) 是刻意写死的, 不放行这里。',
+    test: (line, ctx) => {
+      // .xFontExact 是显式字号的逃生门 —— 数量由 tools/apisig.js 的预算看着，这里不判。
+      if (/\.xFontExact\(/.test(line)) return false;
+      const isSizeFont = /\.font\(\.system\(size:/.test(line) || /\.xFont\(\.system\(size:/.test(line);
+      if (!isSizeFont) return false;
+      // 图标尺寸是**刻意写死**的（规范 §10 七档），不算绕过字阶。
+      // 判据看上下文：这一段里有没有 Image(systemName:) 或 XIcon/XMetric 尺寸令牌。
+      const seg = ctx || line;
+      if (/Image\(systemName:|XIcon\.|XMetric\./.test(seg)) return false;
+      // 只有作用在文本上才判：上下文里得出现 Text(
+      return /Text\(/.test(seg);
+    },
+  },
+  {
+    id: 'G7',
+    name: '图标尺寸低于 12pt (规范 §10 的档位下限)',
+    why: '规范 §10 给的图标档位是 12 / 13 / 17 / 20 / 22 / 28 / 34，最小 12pt。' +
+         ' 写 8pt/9pt/11pt 在 3x 屏上只有 24–33 物理像素，符号会糊成一团 ——' +
+         ' 而这条没有任何其它闸门在看（dynamictype 只管文字字号与触达尺寸）。' +
+         ' 修法是换成 XIcon.xs(12) 或更大的档位，不是随手调个数字。',
+    test: (line) => {
+      // 只判 Image(systemName:) 后面紧跟的 .font(.system(size: N))，且 N < 12。
+      // 用 XMetric.dataText/decorIcon 包的属于刻度器皿，放行。
+      const m = line.match(/\.font\(\.system\(size:\s*([0-9.]+)/);
+      if (!m) return false;
+      const v = parseFloat(m[1]);
+      return v > 0 && v < 12;
+    },
+  },
+  {
+    id: 'G6',
+    name: '玻璃只许出现在功能层',
+    why: '规范总则二: 卡片/列表/内容容器永远不许用玻璃。xGlass 出现在 XPanel 内部 = 层搞错了。',
+    test: (line, ctx) => /\.xGlass\(|\.axGlass/.test(line) && /XPanel\s*\{/.test(ctx) && !/overlay|Toast|savedChips|segmentBar/.test(ctx),
+  },
+];
+
+// ── 工程级断言（不是逐行扫，是整个 App 有没有做这件事）──
+const projectProblems = [];
+{
+  const appSrc = fs.readFileSync(path.join(ROOT, 'App/LockKeeperApp.swift'), 'utf8');
+  // 规范 §10：图标渲染用 .hierarchical。缺了就是全仓图标跑在 .monochrome 上（单层平涂）。
+  if (!appSrc.includes('symbolRenderingMode, .hierarchical') &&
+      !appSrc.includes('.symbolRenderingMode(.hierarchical)')) {
+    projectProblems.push('根视图没有设 .symbolRenderingMode(.hierarchical) —— 规范 §10 要求图标按层次渲染');
+  }
+}
+
+const findings = [];
+for (const f of files) {
+  const rel = f.replace(/\\/g, '/').split('/App/').pop();
+  const lines = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n');
+  lines.forEach((raw, i) => {
+    const t = raw.trim();
+    if (t.startsWith('//') || t.startsWith('///')) return;
+    const code = raw.replace(/\/\/.*$/, '');
+    // 上下文窗口前后各看 14 行: 页面根容器的 ScrollView 在前、gutter 内边距在后,
+    // 只往前看会漏掉一半形状 —— 第一版就是这么漏的。
+    const ctx = lines.slice(Math.max(0, i - 14), Math.min(lines.length, i + 15)).join('\n');
+    // 前后各 6 行足够覆盖一个折行的调用（G8 用），又不至于把隔壁调用也卷进来。
+    const callCtx = lines.slice(Math.max(0, i - 2), Math.min(lines.length, i + 7)).join('\n');
+    // G9：hint 写在 contextMenu 之后，而菜单本身可能很长（KeysPage 那份列了六个动作
+    // + 大段注释，hint 落在 70 行开外）。固定窗口不管调到多少都会误伤 ——
+    // 改成**按函数边界**取：从 contextMenu 这一行扫到所在函数的收尾 `}`。
+    // 注意：hint 在**修饰符链**上、位于菜单闭合的 `}` **之后**，
+    // 所以不能用括号配平找终点（那样会停在菜单自己的 `}`，正好漏掉 hint）。
+    // 正确边界是「修饰符链结束处」= 遇到下一个声明（func/var/struct/…）就停。
+    let menuEnd = Math.min(lines.length - 1, i + 120);
+    for (let k = i + 1; k < lines.length; k++) {
+      if (/^\s{0,8}(?:private |public |internal |fileprivate )?(?:func|var|let|struct|enum|extension)\s/.test(lines[k])) {
+        menuEnd = k - 1;
+        break;
+      }
+    }
+    const menuCtx = lines.slice(i, menuEnd + 1).join('\n');
+    // G12 要往回看：判断这个 .frame 属于 Text 还是 Image（序号徽章 vs 图标底）
+    const discCtx = lines.slice(Math.max(0, i - 9), Math.min(lines.length, i + 5)).join('\n');
+    for (const r of RULES) {
+      if (r.test(code, r.id === 'G9' ? menuCtx : (r.id === 'G12' ? discCtx : callCtx))) findings.push({ rule: r.id, name: r.name, why: r.why, file: rel, line: i + 1, text: t.slice(0, 78) });
+    }
+  });
+}
+
+// ---- 汇总 ----
+const byRule = {};
+for (const f of findings) (byRule[f.rule] ||= []).push(f);
+
+console.log('Black Canvas / Glass Instrument 符合度审计 — 扫 ' + files.length + ' 个 .swift');
+console.log('');
+if (projectProblems.length) {
+  for (const q of projectProblems) console.error('  ✗ ' + q);
+  console.error('✗ 工程级断言不通过 ' + projectProblems.length + ' 处');
+  process.exit(1);
+}
+
+if (findings.length === 0) {
+  console.log('✓ 静态可判的六类全部通过');
+} else {
+  for (const r of RULES) {
+    const list = byRule[r.id];
+    if (!list || !list.length) continue;
+    console.log('── ' + r.id + ' ' + r.name + ' (' + list.length + ') ──');
+    console.log('   ' + r.why);
+    for (const f of list.slice(0, 12)) console.log('   ' + f.file + ':' + f.line + '  ' + f.text);
+    if (list.length > 12) console.log('   … 另 ' + (list.length - 12) + ' 处');
+    console.log('');
+  }
+}
+
+console.log('总计 ' + findings.length + ' 条线索。');
+console.log('');
+console.log('本工具**判不了**的 (不假装能判):');
+console.log('  · 一屏是否只有一个主角 (需要知道渲染顺序与可见性)');
+console.log('  · 玻璃在亮背景/黑背景下明度是否都合理 (需要真机截图)');
+console.log('  · 字号在 Dynamic Type 各档下是否破版 (需要模拟器)');
+console.log('  · 间距在屏幕上读起来是否有层级 (需要眼睛)');
+
+if (process.argv.includes('--strict') && findings.length > 0) process.exit(1);

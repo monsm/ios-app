@@ -92,10 +92,9 @@ struct FpOwnerPicker: View {
         .accessibilityLabel("归属 " + m.name + " " + cntTag + selTag)
     }
 
-    /// 成员色是 "#RRGGBB" 字符串 (与成员中心头像同源); 解析失败回落到次级文本色, 不假装有颜色。
+    /// 成员色解析 —— 实现收在 `Color.memberSwatch` 一处 (三处同名函数的回落值原本不一致)。
     private func memberColor(_ hex: String) -> Color {
-        guard hex.hasPrefix("#"), let v = UInt32(hex.dropFirst(), radix: 16) else { return XPalette.textSub }
-        return Color(hex: v)
+        Color.memberSwatch(hex, fallback: XPalette.textSub)
     }
 
     private func create() {

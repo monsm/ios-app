@@ -34,7 +34,9 @@ struct ShareToAndroidView: View {
                             .padding(XSpace.m)
                             // 二维码的静区必须是白的, 且**不要圆角**: 这一块刻意不跟随明暗主题,
                             // 否则深色下扫不出来; 圆角会切掉三个定位角上的静区, 反而更难认。
-                            .background(Color.white)
+                            // glass-audit:allow QR 不是界面表面 —— 它是给摄像头读的图形,
+                            //   白底是 ISO/IEC 18004 的静区要求, 不是"页面用了白卡"。
+                            .background(XPalette.qrQuietZone)
                             .accessibilityLabel("这把锁的开锁二维码")
 
                         VStack(spacing: 2) {

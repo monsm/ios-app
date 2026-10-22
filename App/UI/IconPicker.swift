@@ -21,6 +21,15 @@ struct IconPicker: View {
         let bg: [Color]
     }
 
+    /// ⚠ 这一组 `Color(hex:)` 是 **D1「只用 token，无硬编码色」的唯一合法例外**，理由两条：
+    ///
+    /// 1. 它们不是**界面色**，是**位图色**：每一款 App 图标 PNG 是用 `mkicon.js` 按这九个
+    ///    十六进制画出来的，预览块必须与真实位图**逐字相同** —— 换成令牌就等于让预览说假话。
+    /// 2. 它们要跨明暗两档**恒定**：图标是印在桌面上的，不随系统外观变色。
+    ///    令牌是 `adaptive` 的，套上去反而错。
+    ///
+    /// 机检由 `tools/contrast.js` 的 E6 节负责（从本文件解析这些底色，断言白符号 ≥4.5:1），
+    /// 所以"加了新图标忘了验对比度"这件事有闸门兜着。改色必须同时改 `_audit1012/mkicon.js`。
     private var iconOptions: [IconOption] {
         [
             IconOption(id: nil, name: "默认", glyph: "lock.fill",
@@ -66,12 +75,13 @@ struct IconPicker: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                     Text("预览块底色与生成的图标位图逐字相同。")
                         .xFont(.caption2)
-                        .foregroundStyle(XPalette.textTertiary)
+                        .foregroundStyle(XPalette.textSub)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .padding(.horizontal, XSpace.gutter)
-                .padding(.vertical, XSpace.l)
+                .padding(.top, XSpace.m)
+                .padding(.bottom, XSpace.xxl)
             }
             .scrollIndicators(.hidden)
         }
@@ -96,8 +106,8 @@ struct IconPicker: View {
             Text("App 图标")
                 .xFont(.body)
                 .foregroundStyle(XPalette.text)
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 48), spacing: XSpace.m)],
-                      alignment: .leading, spacing: XSpace.m) {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 48), spacing: XSpace.colGap)],
+                      alignment: .leading, spacing: XSpace.rowGap) {
                 ForEach(iconOptions) { opt in
                     Button { setIcon(opt.id) } label: {
                         ZStack(alignment: .bottomTrailing) {
@@ -106,12 +116,12 @@ struct IconPicker: View {
                                 .frame(width: 48, height: 48)
                                 .overlay(
                                     Image(systemName: opt.glyph)
-                                        .font(.system(size: 24, weight: .medium))
+                                        .font(.system(size: XIcon.xm, weight: .medium))
                                         .foregroundStyle(XPalette.onAccent)
                                 )
                             if currentIcon == opt.id {
                                 Image(systemName: "checkmark.circle.fill")
-                                    .font(.system(size: 14, weight: .semibold))
+                                    .font(.system(size: XIcon.xxs, weight: .semibold))
                                     // onSem 而非 .white: 角标底是 XPalette.ok, 它在深色档是浅绿 4ADE80,
                                     // 纯白压上去只有 1.74:1 (机检断言在 tools/contrast.js)。
                                     // 两层符号 (勾/圆盘) 谁吃第一色未实测, 已进验收单 — 两种顺序这里都可读。

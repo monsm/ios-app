@@ -92,7 +92,7 @@ struct SyncTimeView: View {
                 } else {
                     Text("还没有读到锁钟 —— 靠近门锁后下拉刷新")
                         .xFont(.caption2)
-                        .foregroundStyle(XPalette.textTertiary)
+                        .foregroundStyle(XPalette.textSub)
                 }
 
                 Text("校准会把手机时间写进锁内 (cmd 0E)。偏差为正是锁慢，为负是锁快。")
@@ -206,6 +206,15 @@ struct SyncTimeView: View {
     }
 }
 
+/// 标签 / 值 的读数行 —— 形状即规范的 §7.7 **MetricRow**。
+///
+/// 规范把这一行写成**两个数**, 并点名批评过把它们合成一个的写法:
+///   · **视觉行高 20pt** —— 14pt 字 / 行高 1.33。参考图里这是紧凑文本行, 不是 44pt 的行。
+///   · **触摸区 44pt** —— 只有需要点击时才存在, 且可重叠。
+///
+/// 本行**不可点**（它是读数, 不是入口）, 所以只执行第一个数:
+/// `minHeight: 20`。写 44 会让三行读数占 132pt, 而它本该占 60pt ——
+/// 那正是规范 §7.7 记的那个返工项。
 struct LabeledRow: View {
     var label: String
     var value: String
@@ -216,12 +225,16 @@ struct LabeledRow: View {
             cjkSpaced(label).foregroundStyle(XPalette.textSub)
             Spacer(minLength: XSpace.m)
             cjkSpaced(value)
+                // 规范 §4.3: 数字 tabular-nums, 否则值变化时整行宽度跳动。
+                .monospacedDigit()
                 .foregroundStyle(XPalette.text)
                 .multilineTextAlignment(.trailing)
                 .lineLimit(2) // MAC/时间等长值换行而不是溢出
                 .fixedSize(horizontal: false, vertical: true)
         }
         .xFont(.subheadline)
+        // 视觉行高 20（规范 §7.7 实测 19.6）。触摸区另计 —— 本行不可点, 不补 44。
+        .frame(minHeight: 20)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label) \(value)")
     }

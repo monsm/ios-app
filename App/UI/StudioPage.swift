@@ -32,10 +32,23 @@ struct StudioPage: View {
     @State private var showFp = false
     @State private var showOtp = false
 
-    private let columns = [
-        GridItem(.flexible(), spacing: XSpace.m),
-        GridItem(.flexible(), spacing: XSpace.m),
-    ]
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    /// 列间距 12 (`XSpace.colGap`)，与行间距 8 (`XSpace.rowGap`) 是两个不同的数。
+    /// 规范 §5.1 / 验收 L2 单列了这一项：合并成一个 token 会让纵向堆叠看起来比横向更松，
+    /// 而人眼读网格先读列距 —— 列距偏窄时四张卡会挤成一条。
+    ///
+    /// **规范 §13.1 AX1 规则：双列卡 → 单列。**
+    /// 四张能力卡各带标题 + 两行副标题，AX 字号下两列会把副标题压成竖排。
+    /// 这不是"降级"——是让同一份内容换一种排法，字号一点不缩。
+    private var columns: [GridItem] {
+        typeSize.isAccessibilitySize
+            ? [GridItem(.flexible(), spacing: XSpace.colGap)]
+            : [
+                GridItem(.flexible(), spacing: XSpace.colGap),
+                GridItem(.flexible(), spacing: XSpace.colGap),
+              ]
+    }
 
     var body: some View {
         Group {
@@ -52,8 +65,9 @@ struct StudioPage: View {
             XPalette.canvas.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: XSpace.l) {
-                    LazyVGrid(columns: columns, spacing: XSpace.m) {
+                VStack(spacing: XSpace.section) {
+                    // 双列网格: 列间距 12 / 行间距 8 (规范 §5.1 两个不同的数)。
+                    LazyVGrid(columns: columns, spacing: XSpace.rowGap) {
                         card(.pwd)
                         card(.temp)
                         card(.fp)
@@ -63,7 +77,8 @@ struct StudioPage: View {
                     footerNote
                 }
                 .padding(.horizontal, XSpace.gutter)
-                .padding(.vertical, XSpace.l)
+                .padding(.top, XSpace.pageTop)
+                .padding(.bottom, XSpace.xxl)
             }
         }
         .navigationTitle("钥匙工坊")

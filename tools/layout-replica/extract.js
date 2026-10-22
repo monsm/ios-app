@@ -82,12 +82,13 @@ function extract() {
   const res = { tabs: [], settings: [], device: [], quickAll: [], quickDefault: [], credentials: [], records: [] };
   // Tab 栏
   const lk = rd('App/LockKeeperApp.swift');
-  res.tabs = lk.filter((L) => /^\s*Tab\("/.test(L)).map((L) => {
-    const m = /Tab\("([^"]+)", systemImage: "([^"]+)"/.exec(L);
-    return m ? { title: m[1], icon: m[2] } : null;
-  }).filter(Boolean);
+  // 2026-10-22: 原内容源是四 Tab + CredentialsView/RecordsView/DeviceHomeView 的模块表 ——
+  // 那三代界面全部随单控制台重构删掉了, 于是这个复刻器连着一个月跑不起来。
+  // 现役结构: 门厅(HomeConsole) + 管理台(ManagerFace 5 组) + 各叶页。
+  // 复刻页要回答的是"真实界面的密度/层级对不对", 所以取**有真实字符串的那些块**。
+  res.tabs = [];   // 4 Tab 已删; 复刻页改为展示管理台的 5 个分组
 
-  // 通用: 一个文件里所有 xxxSection 属性
+  // 通用: 一个文件里所有 xxxSection 属性（原来的实现，我上一版误删了它）
   function sections(file, cap) {
     const lines = rd(file);
     const out = [];
@@ -98,19 +99,37 @@ function extract() {
       if (!range) return;
       let title = null;
       for (let k = range[0]; k <= range[1] && !title; k++) {
-        const s = /Section\("([^"]{2,26})"/.exec(lines[k]); if (s) title = clean(s[1]);
+        const t = /Section\("([^"]{2,26})"/.exec(lines[k]); if (t) title = clean(t[1]);
       }
       for (let k = range[0]; k <= range[1] && !title; k++) {
         if (!/\}\s*header:\s*\{/.test(lines[k])) continue;
         for (let j = k; j <= Math.min(k + 3, range[1]); j++) { const h = /Text\("([^"]{2,26})"\)/.exec(lines[j]); if (h) { title = clean(h[1]); break; } }
       }
-      out.push({ prop: m[1], src: `${path.basename(file)}:${i + 1}`, title: title || m[1], rows: labelsOf(lines, [range[0] + 1, range[1]], cap || 24) });
+      out.push({ prop: m[1], src: path.basename(file) + ':' + (i + 1), title: title || m[1], rows: labelsOf(lines, [range[0] + 1, range[1]], cap || 24) });
     });
     return out;
   }
-  res.settings = sections('App/UI/SettingsView.swift', 22);
-  res.credentials = sections('App/UI/CredentialsView.swift', 14);
-  res.records = sections('App/UI/RecordsView.swift', 14);
+
+  function sectionsOf(file, cap) { return sections(file, cap); }
+
+  // 管理台 5 组 (ManagerFace 的 rows([...]) 里的 (route, 标题, 副标题, 图标))
+  {
+    const mf = rd('App/UI/ManagerFace.swift').join(String.fromCharCode(10));
+    const groups = [];
+    const gm = /case \.(\w+):\s*\n\s*rows\(\[([\s\S]*?)\]\)/g;
+    let g;
+    while ((g = gm.exec(mf))) {
+      const rows = [];
+      for (const r of g[2].matchAll(/\(\s*\.(\w+),\s*"([^"]+)",\s*"([^"]+)",\s*"([^"]+)"\s*\)/g)) {
+        rows.push({ route: r[1], title: clean(r[2]), subtitle: clean(r[3]), icon: r[4] });
+      }
+      if (rows.length) groups.push({ prop: g[1], title: g[1], src: 'ManagerFace.swift', rows: rows.map(r => r.title) });
+    }
+    res.settings = groups.slice(0, 8);
+  }
+
+  res.credentials = sectionsOf('App/UI/KeysPage.swift', 14);
+  res.records = sectionsOf('App/UI/EventsPage.swift', 14);
 
   // 设备页: 按 body 里的出现顺序取模块, 每个模块再取自己的可见文字
   const dv = rd('App/UI/DeviceHomeView.swift');

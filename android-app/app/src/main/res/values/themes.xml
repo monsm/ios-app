@@ -1,9 +1,12 @@
 <resources>
-    <!-- 只有一个 Compose 界面: 主题只负责窗口底色与系统栏, 避免启动时白闪 -->
+    <!-- 只有一个 Compose 界面: 主题只负责窗口底色与系统栏, 避免启动时白闪。
+         2026-10-22 Glass 批: 底色从 #0A0C10 改成 #000000 ——
+         画布已经是纯黑 (KfDarkColors.canvas), 窗口底色不改就会在冷启动那一帧
+         闪一下深灰, 然后跳成纯黑。那不是"启动动画", 是两套底色对不上。 -->
     <style name="Theme.KfKey" parent="android:Theme.Material.NoActionBar">
-        <item name="android:windowBackground">#0A0C10</item>
-        <item name="android:statusBarColor">#0A0C10</item>
-        <item name="android:navigationBarColor">#0A0C10</item>
+        <item name="android:windowBackground">#000000</item>
+        <item name="android:statusBarColor">#000000</item>
+        <item name="android:navigationBarColor">#000000</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
     </style>

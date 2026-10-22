@@ -40,7 +40,7 @@ struct AlarmCenterView: View {
             XPalette.canvas.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: XSpace.l) {
+                VStack(spacing: XSpace.section) {
                     // 底部横向留白: 各子块内部仍是 List/Section 形状的旧实现,
                     // 这里只负责把它们放进新的纵向节奏里, 不改各块的内部结构。
                     streamHeader.xScrollLift()
@@ -290,7 +290,7 @@ struct AlarmCenterView: View {
                 .frame(height: 44, alignment: .bottom)
 
                 Text(h % 6 == 0 ? "\(h)" : "")
-                    .xFont(.system(size: XMetric.dataText(8), weight: .medium).monospacedDigit())
+                    .xFontExact(.system(size: XMetric.dataText(8), weight: .medium).monospacedDigit())
                     .foregroundStyle(on ? XPalette.accentText : XPalette.textTertiary)
                     .frame(width: on ? 16 : 10)
             }

@@ -34,7 +34,10 @@ const path = require('path');
 const { execFileSync } = require('child_process');
 
 const ENUM = path.join('App', 'Core', 'Destination.swift');
-const GRAMMAR = path.join('App', 'Core', 'VariantGrammar.swift');
+// 2026-10-22: 旧 `VariantGrammar.swift` 已于 2026-10-21 删除, 现役的形状定义处是
+// Components.swift (令牌与组件库本身)。常量名保留, 指向换掉 —— 否则这条豁免一直
+// 排除一个不存在的文件, 而真正该排除的那份没被排除。
+const GRAMMAR = path.join('App', 'Core', 'Components.swift');
 
 function readSwiftFiles(dir, out) {
   out = out || [];
@@ -363,6 +366,48 @@ function budgetCheck(cur) {
   return { msg: `检查五 · 自绘容器预算: ${cur} = 基线（未新增；接进 VK 后请下调基线）`, fail: false };
 }
 
+// ---------- 检查九：裸写 managerGroup（绕过访客闸） ----------
+//
+// 由来 (Glass 批): 单控制台之后门厅用 `managerGroup = g` 打开管理组, 而
+// `requestRoute` 才是全仓唯一的换页漏斗, 也是 377 访客闸唯一判一次的地方。
+// 于是访客模式下门厅 5 个瓦片直接把面板打开了 —— 不崩、不报错、界面上也看不出,
+// 正是 377 当初最担心的"静默失去覆盖"。
+//
+// 现在所有打开管理组的地方都走 `openGroup(_:)` → `AppState.requestGroupGate`,
+// 这一条防它回潮 (与本文件检查四"裸写 tabSelection"同一族)。
+//
+// 豁免两处:
+//   · `openGroup` 自己那一行 —— 它是判据通过后的落地;
+//   · `takePendingGateGroup` 消费后那一行 —— 复核通过后的落地, 已经过闸。
+function bareGateGroupWrites() {
+  const bad = [];
+  const files = readSwiftFiles('App');
+  for (const f of files) {
+    const rel = f.replace(/\\/g, '/');
+    const lines = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      const l = lines[i];
+      if (/^\s*\/\//.test(l)) continue;
+      const code = l.replace(/\/\/.*$/, '');
+      if (!/\bmanagerGroup\s*=\s*[A-Za-z.]/.test(code)) continue;
+      if (/\bvar\s+managerGroup\b/.test(code)) continue;              // 声明行
+      // 豁免只认两种确切的落地形状, 不按「附近有没有出现过 requestGroupGate」放行。
+      // 那个写法第一版试过: 在一个已经含 requestGroupGate 的 12 行窗口里再塞一行裸写,
+      // 会被一起放过 —— 注入探针实测 exit=0, 判据失效。
+      //
+      // 形状1: openGroup 内 —— 紧邻上一行是 guard !app.requestGroupGate(g) else { return }
+      // 形状2: takePendingGateGroup 消费 —— 上一行或上两行出现 takePendingGateGroup
+      const prev = (lines[i - 1] || '').replace(/\/\/.*$/, '');
+      const prev2 = (lines[i - 2] || '').replace(/\/\/.*$/, '');
+      const isGateLanding = /guard\s*!\s*(?:app\.)?requestGroupGate\(/.test(prev)
+        || /takePendingGateGroup\(/.test(prev) || /takePendingGateGroup\(/.test(prev2);
+      if (isGateLanding) continue;
+      bad.push(`${rel}:${i + 1}  ${code.trim().slice(0, 64)}`);
+    }
+  }
+  return bad;
+}
+
 function main() {
   const verbose = process.argv.includes('--verbose');
   const drift = [];
@@ -441,6 +486,16 @@ function main() {
     console.log('检查八 · 裸写文本 .font(...): 零命中 (行内排版只从 xFont 一处来；图标尺寸与语法层本身按既定口径豁免)');
   }
 
+  const mg = bareGateGroupWrites();
+  console.log('');
+  if (mg.length) {
+    console.log(`检查九 · 裸写 managerGroup (绕过访客闸): ${mg.length} 处 —— 门厅的瓦片/提醒/失败出口都必须走 openGroup`);
+    mg.slice(0, 10).forEach((x) => console.log('  - ' + x));
+    if (mg.length > 10) console.log(`  … 其余 ${mg.length - 10} 处`);
+  } else {
+    console.log('检查九 · 裸写 managerGroup: 零命中 (打开管理组只从 openGroup → requestGroupGate 一处)');
+  }
+
   const sd = selfDrawnContainers();
   const bud = budgetCheck(sd.n);
   console.log('');
@@ -455,7 +510,7 @@ function main() {
   if (sp.length) { sp.forEach((x) => console.log('!! ' + x)); }
   else console.log('尺子自检: 正控 4 (真缝 + 裸 requestTab 字面量 + 裸 Toggle + 裸 .font 两条) / 反控 4 (注释里的缝 + 注释里的 requestTab + VariantToggle/chipToggle + 注释/vkFont/图标尺寸) → 通过');
 
-  const fail = drift.length > 0 || sp.length > 0 || bw.length > 0 || br.length > 0 || bt.length > 0 || bf.length > 0 || bud.fail;
+  const fail = drift.length > 0 || sp.length > 0 || bw.length > 0 || br.length > 0 || bt.length > 0 || bf.length > 0 || bud.fail || mg.length > 0;
   console.log('');
   console.log(fail ? '结论: 判失败' : `结论: 通过 (覆盖 ${covered.length}/${cases.length}，迁移期不判失败)`);
   process.exit(fail ? 1 : 0);

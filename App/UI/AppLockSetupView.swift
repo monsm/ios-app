@@ -42,7 +42,7 @@ struct AppLockSetupView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: XSpace.l) {
+            VStack(spacing: XSpace.section) {
                 heroCard
                 if !on || editing { formCard } else { manageCard }
                 explainCard
@@ -71,11 +71,11 @@ struct AppLockSetupView: View {
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(on ? "应用锁已开启" : "应用锁未开启")
-                        .xFont(.system(.headline, weight: .semibold))
+                        .xFont(.headline, weight: .semibold)
                         .foregroundStyle(XPalette.text)
                     Text(on ? "每次打开 App 都要输口令；保存的密码默认不显示"
                              : "现在谁拿起这台手机，都能直接看到你保存的密码")
-                        .xFont(.system(.footnote))
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -93,30 +93,30 @@ struct AppLockSetupView: View {
                 secLabel(on ? "修改口令" : "设置口令")
                 SecureField("口令（至少 \(minLen) 位）", text: $pw)
                     .textContentType(.newPassword)
-                    .xFont(.system(.body))
+                    .xFont(.body)
                     .padding(XSpace.m)
                     .xPlate(XPalette.surfaceSunken, XRadius.control)
                 SecureField("再输一遍", text: $pw2)
                     .textContentType(.newPassword)
-                    .xFont(.system(.body))
+                    .xFont(.body)
                     .padding(XSpace.m)
                     .xPlate(XPalette.surfaceSunken, XRadius.control)
 
                 if let e = errorText {
                     Label(e, systemImage: "exclamationmark.circle.fill")
-                        .xFont(.system(.footnote))
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.warn)
                         .fixedSize(horizontal: false, vertical: true)
                 } else if !pw2.isEmpty && pw != pw2 {
                     Label("两遍输入不一致", systemImage: "exclamationmark.circle.fill")
-                        .xFont(.system(.footnote))
+                        .xFont(.footnote)
                         .foregroundStyle(XPalette.warn)
                 }
 
                 HStack(spacing: XSpace.s) {
                     Button(action: save) {
                         Text(on ? "保存新口令" : "启用应用锁")
-                            .xFont(.system(.subheadline, weight: .semibold))
+                            .xFont(.subheadline, weight: .semibold)
                             .foregroundStyle(XPalette.onAccent)
                             .frame(maxWidth: .infinity, minHeight: XHit.min)
                             .xPlate(canSave ? XPalette.accent : XPalette.surfaceAlt, .capsule)
@@ -127,12 +127,12 @@ struct AppLockSetupView: View {
 
                     if editing {
                         Button("取消") { editing = false; pw = ""; pw2 = ""; errorText = nil }
-                            .xFont(.system(.subheadline))
+                            .xFont(.subheadline)
                             .foregroundStyle(XPalette.textSub)
                     }
                 }
                 Text("我们只保存口令的一串校验值，不保存口令本身 —— 所以忘记后谁也找不回来，只能重装或从备份恢复。")
-                    .xFont(.system(.footnote))
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -171,8 +171,8 @@ struct AppLockSetupView: View {
                 .frame(width: 24)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
-                Text(title).xFont(.system(.body)).foregroundStyle(XPalette.text)
-                Text(detail).xFont(.system(.caption)).foregroundStyle(XPalette.textSub)
+                Text(title).xFont(.body).foregroundStyle(XPalette.text)
+                Text(detail).xFont(.caption).foregroundStyle(XPalette.textSub)
             }
             Spacer(minLength: 0)
         }
@@ -199,7 +199,7 @@ struct AppLockSetupView: View {
                 .foregroundStyle(XPalette.ok)
                 .accessibilityHidden(true)
             Text(s)
-                .xFont(.system(.footnote))
+                .xFont(.footnote)
                 .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -207,7 +207,7 @@ struct AppLockSetupView: View {
 
     private func secLabel(_ s: String) -> some View {
         Text(s)
-            .xFont(.system(.caption, weight: .semibold))
+            .xFont(.caption, weight: .semibold)
             .foregroundStyle(XPalette.textTertiary)
             .textCase(.uppercase)
             .frame(maxWidth: .infinity, alignment: .leading)

@@ -35,7 +35,7 @@ struct BackupView: View {
             XPalette.canvas.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: XSpace.l) {
+                VStack(spacing: XSpace.section) {
                     exportSection.xScrollLift()
                     importSection.xScrollLift()
                     studioSection.xScrollLift()

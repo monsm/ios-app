@@ -146,7 +146,7 @@ struct SafemodeIntroView: View {
         HStack(spacing: XSpace.s) {
             Text(label)
                 .xFont(.caption)
-                .foregroundStyle(XPalette.textTertiary)
+                .foregroundStyle(XPalette.textSub)
             Spacer(minLength: 0)
             Text(value)
                 .xFont(.caption.monospacedDigit())

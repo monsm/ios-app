@@ -23,20 +23,10 @@ enum Theme {
     static var accent: Color { XPalette.accentText }
     static var warn: Color { XPalette.warn }
     static var ok: Color { XPalette.ok }
-    static var isLight: Bool {
-        DB.store.getString("kf_theme") == "light"
-    }
-    // 跟随系统: 未设置时 nil; 设置过则固定。纯黑 (idea 30) 走深色语义, 表面由 Palette 覆盖为纯黑
-    static func scheme(for key: String) -> ColorScheme? {
-        switch key {
-        case "light": return .light
-        case "dark", "black": return .dark
-        default: return nil
-        }
-    }
-    static var scheme: ColorScheme? {
-        scheme(for: DB.store.getString("kf_theme"))
-    }
+    // 规范 §13.4「应用体：只做深色，不提供 App 内明暗切换」。
+    //
+    // 这里原来有 isLight / scheme(for:) / scheme 三件套，读 kf_theme 决定 .light / .dark。
+    // 它们是「App 内明暗切换」的实现本体 —— 与规范直接冲突，已整组删除。
 }
 
 // ---------- 全局状态 ----------
@@ -135,6 +125,36 @@ final class AppState: ObservableObject {
         guestGateTarget = nil
         showGuestGate = true
     }
+
+    // ---------- 377 访客通道 · 管理组这一支 ----------
+    //
+    // 单控制台之后, 门厅的 5 个瓦片走的是 `managerGroup = g` 这条路, 而不是
+    // requestRoute —— 于是 377 的闸**一次都没被问过**: 访客模式下面板照开,
+    // 「安全」「数据与外观」全都能进。这不会崩、不会报错、界面上也看不出,
+    // 是 377 当初最担心的那种"静默失去覆盖"。
+    //
+    // 这里补的是**同一条通道的另一半**: 受限组先拉起既有的应用锁复核页
+    // (不新造第二个解锁面), 复核通过后由 commitUnlock(reauth:) 落地。
+    /// 复核通过后要打开的管理组 (nil = 只放开受限区, 不指定落点)
+    @Published var guestGateGroup: ManagerGroup?
+
+    /// 门厅瓦片的入口。受限 → 拉复核页并记落点; 不受限 → 正常打开由调用方处理。
+    /// 返回 true 表示"已经交给门禁处理, 调用方不要再置 managerGroup"。
+    @discardableResult
+    func requestGroupGate(_ g: ManagerGroup) -> Bool {
+        guard guestAreaLocked, g.guestBlocked else { return false }
+        guestGateTarget = nil
+        guestGateGroup = g
+        showGuestGate = true
+        return true
+    }
+
+    /// 消费"复核通过后要开哪个组"。由门厅在 guestAreaUnlocked 变 true 时读一次。
+    func takePendingGateGroup() -> ManagerGroup? {
+        let g = guestGateGroup
+        guestGateGroup = nil
+        return g
+    }
     // ---------- 54/372 摇一摇: 一个传感器, 一条路由口 ----------
     /// 54: 设备页摇动 → 迷你开锁面板 (浮层).
     @Published var shakePanel = false
@@ -174,6 +194,9 @@ final class AppState: ObservableObject {
         sudoTicket = nil
         showGuestGate = false
         guestGateTarget = nil
+        // 挂起的"复核后要开哪个管理组"也要一起清 —— 不清的话, 用户锁屏前点了一次
+        // 受限瓦片、复核没做完就走了, 下次再放开访客区会**诈尸**打开那个组。
+        guestGateGroup = nil
         if Self.guestBlockedTabs.contains(tabSelection) { tabSelection = 0 }
     }
     /// 377: 应用锁通道验过之后的落地。常规门禁置 appUnlocked; 受限区复核只放开 Tab 并跳到用户要的那页。
@@ -184,6 +207,9 @@ final class AppState: ObservableObject {
             guestAreaUnlocked = true
             if let t = guestGateTarget { tabSelection = t }
             guestGateTarget = nil
+            // 注意: guestGateGroup **不在这里清** —— 它是给门厅消费的落点,
+            // 由 HomeConsole 在 guestAreaUnlocked 变化时 takePendingGateGroup() 读走。
+            // 在这里清就等于"验完口令什么都不发生"。
             return
         }
         withAnimation(XMotion.standard) { appUnlocked = true }
@@ -410,14 +436,41 @@ final class AppState: ObservableObject {
             if writeReceipt == msg { writeReceipt = nil }
         }
     }
-    func showToast(_ msg: String) {
+    /// Toast 的语义档 —— 决定**触感**，而不是决定颜色。
+    ///
+    /// 为什么需要这一层 (规范 §11.4 的触感表):
+    ///   · 「目标达成 → .success」—— 但「已复制」不叫目标达成。
+    ///   · 之前全仓 141 处 showToast 只有一处配了触感，其余**全靠调用方自己记得加** ——
+    ///     于是就出现了 30 处「报了成功、手上没动静」。那不是谁忘了，是**接口没给出正确形状**。
+    ///
+    /// 现在把触感挂在语义档上: 调用方选「这是一次完成 / 一次失败 / 一次普通告知」，
+    /// 触感由这里统一发。同一个语义全仓同一种手感 —— 这正是规范要的「语义绑定」。
+    enum ToastTone {
+        /// 一件事做成了（保存/删除/生成/导入完成）。配 success。
+        case done
+        /// 一件事没做成。配 error。
+        case failed
+        /// 需要用户注意，但不算失败（读不到、跳过、回落到别的路径）。配 warning。
+        case caution
+        /// 纯告知：复制、已切换、提示语。**不配触感** —— 加了我就要为每一次复制震一下，
+        /// 那是 overuse（本仓 tools/uxaudit.js 的 D 档专门盯这个）。
+        case plain
+    }
+
+    func showToast(_ msg: String, tone: ToastTone = .plain) {
+        switch tone {
+        case .done:    XHaptics.success()
+        case .failed:  XHaptics.failure()
+        case .caution: XHaptics.warning()
+        case .plain:   break
+        }
         withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { toast = msg }
         // 长文案多停留一会儿, 保证读得完
         let stay: UInt64 = msg.count > 20 ? 3_400_000_000 : 1_800_000_000
         Task { @MainActor in
             try? await Task.sleep(nanoseconds: stay)
             if toast == msg {
-                withAnimation(.easeIn(duration: 0.2)) { toast = nil } // idea 211 时长令牌
+                withAnimation(XMotion.exit) { toast = nil } // idea 211 时长令牌
             }
         }
     }
@@ -947,7 +1000,8 @@ struct RootView: View {
     @State private var handshakeDoneAway = false
     @Environment(\.scenePhase) private var scenePhase
     // 读取 themeSeed: 设置页切换主题时立即重建配色
-    private var colorScheme: ColorScheme? { Theme.scheme(for: app.themeSeed) }
+    // 规范 §13.4：应用体只做深色。不再读用户设置，钉死 .dark。
+    private var colorScheme: ColorScheme { .dark }
 
     /// 顶部横幅栈 (演示/BLE/自检/粘贴建议/toast/写入回执) —— 从 body 内联的 safeAreaInset
     /// 里抽出: 该表达式报 type-check 超时。
@@ -1074,6 +1128,9 @@ struct RootView: View {
         // 显式字重的文本 (凭证名/开关标签) 才跟着加粗。关档时给 .regular 而不是留空:
         // 两档都显式, 不依赖系统默认推断 (LegibilityWeight.bold 的官方语义就是 "force Accessibility Bold")。
         .environment(\.legibilityWeight, AXFlags.boldText ? .bold : .regular)
+        // 862 增强对比 (规范 §13.4): 全树的二级/三级灰与分隔线在此提一档。
+        // 挂在这一层而不是每个颜色里 —— 见 AXContrastModifier 的头注。
+        .axIncreaseContrast()
         .animation(XMotion.soft, value: app.appUnlocked)
         // 378 常驻水印: 全局对角重复层 (安全中心页内那份保留不动, 那里是设置项自己的预览)。
         // 读一下 tick 使开关拨动后整层重算; hitTesting/朗读屏蔽在 SecurityWatermark 内部已带。
@@ -1152,7 +1209,16 @@ struct RootView: View {
             if (old == .connecting || old == .opening), new == .success { handshakeDoneAway = true }
         }
         .sensoryFeedback(.selection, trigger: app.tabSelection)   // Tab 切换的轻触感
-        .preferredColorScheme(colorScheme)
+        .preferredColorScheme(.dark)
+        // 规范 §10：图标**渲染方式**是 `.hierarchical`，双色用 `.palette`。
+        //
+        // 全仓此前 **0 处**设过 symbolRenderingMode —— 也就是所有 SF Symbols
+        // 都跑在默认的 `.monochrome` 上：单层平涂。而 SF Symbols 本身是**多层**设计的，
+        // hierarchical 让它的内层自动降一档明度，图标立刻有体积感。
+        //
+        // 写在根上是因为 `symbolRenderingMode` 是 Environment 值，一处生效全树；
+        // 个别需要双色的地方仍可局部覆盖成 `.palette`。
+        .environment(\.symbolRenderingMode, .hierarchical)
     }
 
 
@@ -1273,7 +1339,8 @@ struct RootView: View {
         // 2026-10-14 材质统一: 悬浮回执条从实底改液态玻璃 (与 ToastView 同一条 axGlass 通道)。
         // 它是浮在内容之上的一层, 正是折射底该起作用的位置; 描边不加 —— 玻璃自带边缘高光。
         .axGlassCapsule()
-        .shadow(color: .cardElevation, radius: 8, y: 3)
+        // 规范 §6.3：浮层是「玻璃 + 0.5pt 描边」，**禁止投影**。
+        // 注脚更死：黑底上唯一允许的阴影是设备样机与全屏 Sheet 边缘，其余（含卡片）永远没有。
         .transition(.move(edge: .bottom).combined(with: .opacity))
         .allowsHitTesting(false)
     }
@@ -1357,7 +1424,7 @@ struct ToastView: View {
             .frame(maxWidth: 420)
             // 玻璃层自带深浅色适配与背景折射, 不需要再叠一层描边
             .axGlass(XRadius.control)
-            .shadow(color: .black.opacity(0.18), radius: 16, y: 6)
+            // 同上：浮层不叠投影（§6.3）。玻璃自带边缘高光，投影在黑底上只是脏边。
             .padding(.horizontal, XSpace.xl)
             .padding(.top, XSpace.xs)
             .accessibilityAddTraits(.isStaticText)
@@ -1369,7 +1436,8 @@ struct PressFeedback: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.96 : 1)
-            .shadow(color: .black.opacity(configuration.isPressed ? 0.16 : 0), radius: 7, y: 3)
+            // 按压反馈改成缩放（§11.1「按压缩放 easeOut 0.12s, scale 1→0.97」），不用投影。
+        .scaleEffect(configuration.isPressed ? 0.97 : 1)
             .opacity(configuration.isPressed ? 0.9 : 1)
             .animation(XMotion.quick, value: configuration.isPressed)
     }
@@ -1395,6 +1463,10 @@ struct PressableButtonStyle: PrimitiveButtonStyle {
                 configuration.trigger()
             } label: { configuration.label }
             .buttonStyle(PressFeedback())
+            // 触达口径：这是一层**透传包装**（把系统 ButtonStyle 的 configuration.label
+            // 原样接过来再套 PressFeedback），它自己不画按钮。命中由被包裹的 label 决定 ——
+            // 在这里写 minHeight 会把她所有按钮统一撑成 44，破坏既有布局。
+            .contentShape(Rectangle())
         }
     }
 }
@@ -1405,7 +1477,7 @@ struct PressableButtonStyle: PrimitiveButtonStyle {
 /// 阴影在深色模式下纯黑不可见, 故改用极淡的提亮。
 /// `tint` 给"需要处理"的卡混入语义色底 (8%), 让异常自带色温而不靠描边。
 // 2026-10-16: 从 `private` 放开成 internal —— 第二个消费点在 App/Core/VariantGrammar.swift 的
-// `card()`（新语法层的主表面，同一句 `.shadow(color: .cardElevation, radius: 12, y: 4)`）。
+// `card()`（新语法层的主表面）。**注意：卡片一律不加投影** —— 规范 §6.3 注脚写明黑底上只允许设备样机与 Sheet 边缘两处阴影。
 // **只此一处定义**是刻意的：另抄一份阴影色，两套变体迟早会在这一步上分家。
 extension Color {
     static var cardElevation: Color {

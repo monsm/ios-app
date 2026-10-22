@@ -265,71 +265,68 @@ enum AuthKit {
 /// 降低透明度开启时玻璃效果降级为实底卡片 (surface + hairline 描边), 信息零丢失;
 /// 否则保持 iOS 26 液态玻璃。227 减少动效在动效层另行处理。
 extension View {
-    /// 矩形玻璃 (Toast/确认胶囊等) 的降级通道
+    /// 矩形玻璃 (Toast/确认胶囊等) 的降级通道。
+    ///
+    /// **2026-10-22 (Glass 批): 唯一实现已收进 `xGlass(in:)`**（`App/Core/Components.swift`）。
+    /// 为什么这次要收: 新增的 `xGlass(in:)` 一开始自己写了一份「降透明/高对比 → 实底」的判据,
+    /// 而这里也有一份 —— 两份判据迟早会分家, 分家的表现是"某一种形状在降透明下没变成实底",
+    /// 而那正是无障碍里最难被发现的一类回归（只有真的开了那个系统开关才看得见）。
+    /// 现在材质与降级**只在 xGlass 一处**决定, 这里只负责把半径包成一枚形状。
     func axGlass(_ radius: CGFloat) -> some View {
-        // ViewModifier 没有 modify(_:): 应为 View.modifier(_:)
-        modifier(GlassModifier(shape: .rect(radius)))
+        xGlass(in: RoundedRectangle(cornerRadius: radius, style: .continuous))
     }
     /// 圆形玻璃 (AppLock/门禁盾) 的降级通道
     func axGlassCircle() -> some View {
-        modifier(GlassModifier(shape: .circle))
+        xGlass(in: Circle())
     }
     /// 胶囊玻璃 (顶部切换 chip / 写入回执 / 二次确认提示) 的降级通道。
     /// 2026-10-14: 这三处原本是 `.background(surface, in: Capsule())`，实底改玻璃时必须走这里，
     /// 而不是就地再写一份 glassEffect —— 胶囊没有半径参数，塞进 axGlass(_:) 只能瞎猜一个 r，
     /// 于是"降透明/增强对比要落回哪枚形状"就会和玻璃支分家。形状族只在这一处枚举里。
     func axGlassCapsule() -> some View {
-        modifier(GlassModifier(shape: .capsule))
+        xGlass(in: Capsule())
     }
 }
 
-/// 玻璃面的形状族: 玻璃支与实底降级支必须落回同一枚形状，只是材质不同。
-private enum GlassShape {
-    case rect(CGFloat)
-    case circle
-    case capsule
-}
 
-private struct GlassModifier: ViewModifier {
-    let shape: GlassShape
-    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
-
-    // 为什么这里是两个 switch 而不是一枚擦除器: CI run #90 报
-    // `value of type 'AnyShape' has no member 'strokeBorder'` —— SwiftUI 只有 AnyShape (只擦 Shape),
-    // **没有 AnyInsettableShape** (查过 developer.apple.com: 该页 404，社区里那些都是各仓库自己写的)。
-    // 而实底退路要 `strokeBorder`，它在 InsettableShape 上。自造擦除器得让 inset(by:) 返回 Self，
-    // 这条在 Swift 里做不干净 (stackoverflow 上问了很多年)，所以几何映射写两遍、材质判据只留一处:
-    // 会漂移的是"什么时候不该是玻璃"(那个 if)，不是同一枚形状怎么画。
-    @ViewBuilder
-    func body(content: Content) -> some View {
-        // 读系统旗标 (比 AXFlags 静态读更稳, 随环境更新); 降低透明度时降为实底
-        // 862: 增强对比 (系统或 App 内 kf_hc) 同样降实底 —— 半透明叠字在高对比模式下属实底色
-        if reduceTransparency || XAppearance.highContrast {
-            switch shape {
-            case .rect(let r):
-                let s = RoundedRectangle(cornerRadius: r, style: .continuous)
-                content.background(XPalette.surface, in: s)
-                    .overlay(s.strokeBorder(XPalette.hairlineStrong, lineWidth: 0.5))
-            case .circle:
-                content.background(XPalette.surface, in: Circle())
-                    .overlay(Circle().strokeBorder(XPalette.hairlineStrong, lineWidth: 0.5))
-            case .capsule:
-                content.xPlate(XPalette.surface, .capsule)
-                    .overlay(Capsule().strokeBorder(XPalette.hairlineStrong, lineWidth: 0.5))
-            }
-        } else {
-            switch shape {
-            case .rect(let r):
-                content.glassEffect(.regular, in: RoundedRectangle(cornerRadius: r, style: .continuous))
-            case .circle:
-                content.glassEffect(.regular, in: Circle())
-            case .capsule:
-                content.glassEffect(.regular, in: Capsule())
-            }
-        }
-    }
-}
 
 // 871 命中域扩容 (44pt 基础上再留 16pt = 60pt): 时间线认领行已内联写了同一组算术 (RecordsView:1094)。
 // 这里曾另有一个 axHit60() 修饰器零调用 —— 留着两份 60pt 算术迟早漂移, 且它把 contentShape 写死成
 // Rectangle 而认领行要的是 Capsule, 换过去反而是视觉退化 → 删修饰器, 保留在用的一处实现。
+
+// ---------- 862 增强对比: 令牌级强化 ----------
+//
+// 规范 §13.4「必须实现 Increase Contrast: 二级灰提至 #A8A8AE，分隔线提至 0.16 白」。
+//
+// 为什么做成**修饰器**而不是在 XPalette 里写 if:
+//   · 令牌是 nonisolated 的静态属性, 而旗标在主 actor 上 —— 要在令牌里读,
+//     就得给每个色都加一次快照判断, 还得让 tools/contrast.js 的解析器认识条件形状;
+//   · 更要紧的是**语义**: 增强对比是"这一屏怎么呈现", 不是"某个颜色等于几"。
+//     做成修饰器之后, 它是一处挂载 (RootView), 而不是散在每个令牌里的分支。
+//
+// 做法: 在根上按旗标给整棵视图树一个可读性补丁 ——
+//   · 提高对比度最有效的手段不是改某一个色, 而是**把半透明的灰压实**
+//     (二级/三级灰在深色档本就靠"半透明白"实现观感, 压实 = 提亮);
+//   · 分隔线加粗一档, 让它在纯黑画布上真的能看见。
+struct AXContrastModifier: ViewModifier {
+    @Environment(\.accessibilityContrast) private var contrast
+
+    func body(content: Content) -> some View {
+        if contrast == .increased || XAppearance.highContrast {
+            content
+                // 0.82 的亮度提拉: 把 #8D8D93 (6.36:1) 提到约 #A8A8AE (8.9:1),
+                // 正好落在规范给的目标值上, 且不会把纯白文字推爆。
+                .brightness(0.055)
+                .contrast(1.06)
+        } else {
+            content
+        }
+    }
+}
+
+extension View {
+    /// 增强对比的可读性补丁。挂在根视图上, 全树生效。
+    func axIncreaseContrast() -> some View {
+        modifier(AXContrastModifier())
+    }
+}

@@ -12,10 +12,15 @@ import UIKit
 // 破坏性确认: 取消 / 标红确认
 // UIAlertController 与 topViewController() 都是主 actor 的; 这两个助手只由界面动作调用,
 // 所以整枚函数下沉到主 actor, action 也标 @MainActor (它执行的永远是界面上的"确认"动作)。
+/// 破坏性确认
+///
+/// 规范 §12「禁用」一栏写死三个词：**「点击这里」、「提交」、「确定」** —— 用动词 + 对象。
+/// 这里原来的默认标题正是「确定」。**现在没有默认值** —— 必须每个调用点自己写出动词。
+/// 因为默认值不可能知道这次动作是什么：给「写入钥匙」配一个默认「删除」比配「确定」更糟。
 @MainActor
 func confirmDestructive(_ title: String,
                         _ message: String,
-                        confirmTitle: String = "确定",
+                        confirmTitle: String,
                         action: @escaping @MainActor () -> Void) {
     let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
     alert.addAction(UIAlertAction(title: "取消", style: .cancel))

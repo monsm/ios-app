@@ -63,14 +63,12 @@ struct DonglesPage: View {
         XPanel(kind: .hero) {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 HStack(spacing: XSpace.m) {
-                    ZStack {
-                        Circle()
-                            .fill(XPalette.accent.opacity(XOpacity.badge))
-                            .frame(width: 56, height: 56)
-                        Image(systemName: "key.horizontal.fill")
-                            .font(.system(size: XMetric.decorIcon(24), weight: .medium))
-                            .foregroundStyle(XPalette.accentText)
-                    }
+                    // 规范 §10「圆形底」：只允许 StatChip 图标 34pt、列表图标 20pt，**其余不加底**。
+                    // 这里原来是 56pt 的洗染圆底 —— 既不是 34 也不是 20，是我按感觉加的。
+                    // 去掉底之后图标直接落在 hero 渐变上：hero 卡本身就是「媒体」，不需要再垫一层。
+                    Image(systemName: "key.horizontal.fill")
+                        .font(.system(size: XIcon.lg, weight: .medium))
+                        .foregroundStyle(XPalette.accentText)
                     .accessibilityHidden(true)
 
                     VStack(alignment: .leading, spacing: 2) {
@@ -127,7 +125,16 @@ struct DonglesPage: View {
                     .background(
                         (hasKey ? XPalette.accent : XPalette.textTertiary).opacity(0.12),
                         in: Circle())
-                    .shadow(color: hasKey ? XPalette.accent.opacity(0.3) : .clear, radius: 8)
+                    // 规范 7.8: 圆形器皿上的"发光"要用**辉光**(radial), 不是投影。
+                    // 投影会在黑底上把这个图标压出一圈灰边, 而意图是"它在亮"。
+                    .overlay {
+                        if hasKey {
+                            Circle()
+                                .fill(XGradient.glow(XPalette.accent))
+                                .blur(radius: 10)
+                                .allowsHitTesting(false)
+                        }
+                    }
                     .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 2) {
@@ -231,7 +238,7 @@ struct DonglesPage: View {
         HStack(spacing: XSpace.s) {
             Text(label)
                 .xFont(.caption2)
-                .foregroundStyle(XPalette.textTertiary)
+                .foregroundStyle(XPalette.textSub)
             Spacer(minLength: 0)
             Text(value)
                 .xFont(.caption2.monospacedDigit())
@@ -245,7 +252,7 @@ struct DonglesPage: View {
         VStack(alignment: .leading, spacing: 1) {
             Text(label)
                 .xFont(.caption2)
-                .foregroundStyle(XPalette.textTertiary)
+                .foregroundStyle(XPalette.textSub)
             Text(value)
                 .xFont(.caption.monospacedDigit())
                 .foregroundStyle(XPalette.text)
@@ -366,11 +373,11 @@ struct DonglesPage: View {
         defer { busy = false }
         do {
             try await HardwareService.shared.writeDongleKey(dongleMac: d.mac, lock: kc, trackId: UInt32(0))
-            XHaptics.success()
-            app.showToast("设置成功: 该钥匙串现已开启「\(app.displayName)」")
+            // 触感已由 showToast(tone:) 统一发出 —— 这里再调一次会震两下
+            app.showToast("设置成功: 该钥匙串现已开启「\(app.displayName)」", tone: .done)
         } catch {
-            XHaptics.failure()
-            app.showToast("失败: " + ErrorText.human(error))
+            // 触感已由 showToast(tone:) 统一发出 —— 这里再调一次会震两下
+            app.showToast("失败: " + ErrorText.human(error), tone: .failed)
         }
         reload()
     }
@@ -382,11 +389,11 @@ struct DonglesPage: View {
         defer { busy = false }
         do {
             try await HardwareService.shared.deleteDongleKey(dongleMac: d.mac, lock: kc)
-            XHaptics.success()
-            app.showToast("已删除该门锁的钥匙")
+            // 触感已由 showToast(tone:) 统一发出 —— 这里再调一次会震两下
+            app.showToast("已删除该门锁的钥匙", tone: .done)
         } catch {
-            XHaptics.failure()
-            app.showToast("失败: " + ErrorText.human(error))
+            // 触感已由 showToast(tone:) 统一发出 —— 这里再调一次会震两下
+            app.showToast("失败: " + ErrorText.human(error), tone: .failed)
         }
         reload()
     }
@@ -399,7 +406,7 @@ struct DonglesPage: View {
             let macs = try await HardwareService.shared.dongleKeys(dongleMac: d.mac, lockMac: nil)
             app.showToast(macs.isEmpty ? "没有查询到钥匙" : "共 \(macs.count) 把钥匙")
         } catch {
-            app.showToast("失败: " + ErrorText.human(error))
+            app.showToast("失败: " + ErrorText.human(error), tone: .failed)
         }
         reload()
     }

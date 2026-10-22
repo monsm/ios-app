@@ -15,56 +15,78 @@ const ROOT = path.resolve(__dirname, '../..');
 const rd = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
 
 // ---------- 1. 令牌解析 ----------
-const ds = rd('App/Core/DesignSystem.swift');
-const num = (re) => { const m = re.exec(ds); return m ? parseFloat(m[1]) : null; };
+//
+// 2026-10-22: 原来读的是 `App/Core/DesignSystem.swift` —— 该文件已于 2026-10-21 整份删除,
+// 于是这个生成器**一跑就 ENOENT**, 整个视觉复刻链路断了一轮没人发现。
+// 现役令牌唯一真相源是 `App/Core/Theme.swift` 的 XPalette / XSpace / XRadius / XIcon / XHit / DSRing。
+// 判据: 改令牌来源后, 立刻跑一次这个脚本 —— 它崩了就是没接上。
+const themeSrc = rd('App/Core/Theme.swift');
+
+// 间距: XSpace 里的 d(N)
 const SPACE = {};
-for (const m of ds.matchAll(/static var (xxs|xs|s|m|l|xl|xxl|gutter): CGFloat \{ d\((\d+(?:\.\d+)?)\)/g)) SPACE[m[1]] = +m[2];
+for (const m of themeSrc.matchAll(/static var (\w+): CGFloat \{ d\((\d+(?:\.\d+)?)\) \}/g)) SPACE[m[1]] = +m[2];
+// 圆角: XRadius 里的 r(N)
 const RADIUS = {};
-for (const m of ds.matchAll(/static var (card|control|tile): CGFloat \{ r\((\d+(?:\.\d+)?)\)/g)) RADIUS[m[2] ? m[1] : m[1]] = +m[2];
+for (const m of themeSrc.matchAll(/static var (\w+): CGFloat \{ r\((\d+(?:\.\d+)?)\) \}/g)) RADIUS[m[1]] = +m[2];
+// 图标: XIcon 的 static let N: CGFloat = M
 const ICON = {};
-for (const m of ds.matchAll(/static let (xs|sm|md|lg|xl): CGFloat = (\d+)/g)) ICON[m[1]] = +m[2];
-const HIT = num(/enum Hit \{ static let min: CGFloat = (\d+)/);
-const DIALS = (ds.match(/CGFloat\(\[160, 176, 200\]\.contains/) ? [160, 176, 200] : null);
-const DIAL_DEF = num(/getInt\("kf_dial_size", (\d+)/);
+{
+  const sec = themeSrc.slice(themeSrc.indexOf("enum XIcon"), themeSrc.indexOf("enum XIcon") + 600);
+  for (const m of sec.matchAll(/static let (\w+): CGFloat = (\d+(?:\.\d+)?)/g)) ICON[m[1]] = +m[2];
+}
+// 触达: XHit.min
+const HIT = (() => { const m = /static let min: CGFloat = (\d+)/.exec(themeSrc); return m ? +m[1] : null; })();
+// 环: DSRing 的三个数（这是本轮新增的令牌族，复刻页要能看见它）
+const RING = {};
+{
+  const sec = themeSrc.slice(themeSrc.indexOf("enum DSRing"), themeSrc.indexOf("enum DSRing") + 900);
+  const cur = /static let cursor: CGFloat = (\d+)/.exec(sec);
+  const minStroke = /static let minStrokeLarge: CGFloat = (\d+)/.exec(sec);
+  if (cur) RING.cursor = +cur[1];
+  if (minStroke) RING.minStrokeLarge = +minStroke[1];
+}
+
+const DIALS = null;      // 圆盘档位随锁面层一起删除, 保留字段让模板不必改
+const DIAL_DEF = null;
 const DENSITY = { compact: 0.85, standard: 1.0, relaxed: 1.18 };
 const RK = { soft: 0.62, standard: 1.0, plump: 1.3 };
 
 // 自适应色: Color.adaptive(浅, 深)
+// 规范 §13.4：只做深色 —— 令牌已改为单值 Color(hex:)。
 const ADAPT = {};
-for (const m of ds.matchAll(/static let (\w+)\s*= Color\.adaptive\(0x([0-9A-Fa-f]{6}), 0x([0-9A-Fa-f]{6})\)/g)) {
-  ADAPT[m[1]] = { light: m[2].toUpperCase(), dark: m[3].toUpperCase() };
+for (const m of themeSrc.matchAll(/static var (\w+): Color \{ Color\(hex: 0x([0-9A-Fa-f]{6})\) \}/g)) {
+  ADAPT[m[1]] = { dark: m[2].toUpperCase() };
 }
-// 六套主题 × 明暗 × 角色 —— Swift 里是数组字面量 `[...]` 而不是字典 `{...}`，正则必须跟着形状走
-const THEMES = {};
-{
-  const tbl = /static let themeTable[^=]*= \[([\s\S]*?)\n    \];/.exec(ds) || /static let themeTable[^=]*= \[([\s\S]*)/.exec(ds);
-  if (tbl) {
-    const body = tbl[1];
-    const re = /"(\w+)":\s*\[\s*"light": \[([^\]]*)\],\s*"dark": \[([^\]]*)\]/g;
-    let m;
-    while ((m = re.exec(body))) {
-      const parse = (seg) => { const o = {}; for (const k of seg.matchAll(/"(\w+)": 0x([0-9A-Fa-f]{6})/g)) o[k[1]] = k[2].toUpperCase(); return o; };
-      THEMES[m[1]] = { light: parse(m[2]), dark: parse(m[3]) };
-    }
-  }
+// canvas 走 isAMOLED 三元分支, 正则抓不到 —— 单独补
+if (!ADAPT.canvas) {
+  const cm = /isAMOLED \? \.black : Color\.adaptive\(0x([0-9A-Fa-f]{6}), 0x([0-9A-Fa-f]{6})\)/.exec(themeSrc);
+  if (cm) ADAPT.canvas = { light: cm[1].toUpperCase(), dark: '000000' };
 }
-// heroFg / heroPlate / cardElevation (在别的文件里)
-const ak = rd('App/Core/AccessibilityKit.swift');
-const HERO_FG = /static var heroFg: Color \{[^}]*\? Palette\.text : (Color\.white|\.white)/.test(ak) ? '#FFFFFF' : null;
-const PLATE = /static var heroPlate: Color \{ Color\.black\.opacity\(([\d.]+)\)/.exec(ds);
-// 阴影: 源码顺序是 `== .dark ? white.withAlphaComponent(A) : black.withAlphaComponent(B)`
-// ⇒ 第一个捕获属于 dark, 第二个属于 light。上一版按"light,dark"贴标签, 明暗正好读反。
-const ELEV = /cardElevation[\s\S]{0,200}?== \.dark[\s\S]{0,120}?withAlphaComponent\(0\.(\d+)\)[\s\S]{0,120}?withAlphaComponent\(0\.(\d+)\)/.exec(rd('App/LockKeeperApp.swift'));
+// accent 带 kf_accent 覆盖分支
+if (!ADAPT.accent) {
+  const am = /static var accent: Color \{[\s\S]*?return Color\.adaptive\(0x([0-9A-Fa-f]{6}), 0x([0-9A-Fa-f]{6})\)/.exec(themeSrc);
+  if (am) ADAPT.accent = { light: am[1].toUpperCase(), dark: am[2].toUpperCase() };
+}
+
+// 主题: XPalette 只有一个默认强调色 + 六套备选 (accentOverride)。
+// 复刻页要的是"同一界面在六种强调色下的样子", 所以按 accentOverride 展开。
+const THEMES = { default: { light: {}, dark: {} } };
+let lastLight = (ADAPT.accent || {}).light, lastDark = (ADAPT.accent || {}).dark;
+for (const m of themeSrc.matchAll(/case "(\w+)":\s*return \(0x([0-9A-Fa-f]{6}), 0x([0-9A-Fa-f]{6})\)/g)) {
+  THEMES[m[1]] = { light: { accent: m[2].toUpperCase() }, dark: { accent: m[3].toUpperCase() } };
+}
+
+// hero 相关: 新设计里 hero 是 XGradient.hero, 不再有 heroFg/heroPlate 两个令牌
+const HERO_FG = '#FFFFFF';                     // 渐变卡上的文字一律浅色
+const PLATE = null;                            // 不再有黑纱层
 
 const missing = [];
 if (!Object.keys(SPACE).length) missing.push('Space');
 if (!Object.keys(RADIUS).length) missing.push('Radius');
 if (!Object.keys(ICON).length) missing.push('Icon');
-if (!Object.keys(THEMES).length) missing.push('themeTable');
 if (HIT == null) missing.push('Hit');
-if (!HERO_FG) missing.push('heroFg');
-if (!PLATE) missing.push('heroPlate');
-if (!DIALS) missing.push('dial 档位');
+if (!ADAPT.canvas) missing.push('canvas 色');
+if (!ADAPT.surface) missing.push('surface 色');
 
 // ---------- 2. 内容抽取 (与 extract.js 同一口径, 内联一份免得两处漂) ----------
 const E = require('./extract.js');
@@ -72,11 +94,12 @@ const content = E.extract();
 
 const out = {
   generated: new Date().toISOString().slice(0, 16).replace('T', ' '),
-  tokens: { SPACE, RADIUS, ICON, HIT, DIALS, DIAL_DEF, DENSITY, RK, ADAPT, THEMES, HERO_FG,
+  tokens: { SPACE, RADIUS, ICON, HIT, DIALS, DIAL_DEF, DENSITY, RK, ADAPT, THEMES, HERO_FG, RING,
     plate: PLATE ? +PLATE[1] : null,
-    // 捕获 1 = dark 分支, 捕获 2 = light 分支 (源码 ternary 的顺序就是先 dark)
-    elev: ELEV ? { dark: +('0.' + ELEV[1]), light: +('0.' + ELEV[2]) } : null },
-  missing, content,
+    // 新设计系统: 卡片零投影 (规范 §6.3), 没有 elevation 可解析。
+    elev: null },
+  missing,
+  content,
 };
 fs.writeFileSync(path.join(__dirname, 'tokens.json'), JSON.stringify(out, null, 1));
 if (missing.length) console.log('!! 没解析到:', missing.join(','));

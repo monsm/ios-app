@@ -336,7 +336,7 @@ struct LocalBackupFilesSection: View {
                     if !files.isEmpty {
                         Text(String(files.count) + " 份")
                             .xFont(.caption2.monospacedDigit())
-                            .foregroundStyle(XPalette.textTertiary)
+                            .foregroundStyle(XPalette.textSub)
                     }
                 }
 
@@ -358,7 +358,7 @@ struct LocalBackupFilesSection: View {
 
                 Text("只列本 App 生成的备份（文件名以「锁管家_」开头）。目录里其它文件不列也不删。")
                     .xFont(.footnote)
-                    .foregroundStyle(XPalette.textTertiary)
+                    .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -381,14 +381,14 @@ struct LocalBackupFilesSection: View {
                 HStack(spacing: XSpace.xs) {
                     Text(sizeLabel(f.bytes))
                         .xFont(.caption2.monospacedDigit())
-                        .foregroundStyle(XPalette.textTertiary)
+                        .foregroundStyle(XPalette.textSub)
                     Text("·")
-                        .foregroundStyle(XPalette.textTertiary)
+                        .foregroundStyle(XPalette.textSub)
                     Text(dateLabel(f.modifiedAt ?? f.createdAt))
                         .xFont(.caption2)
-                        .foregroundStyle(XPalette.textTertiary)
+                        .foregroundStyle(XPalette.textSub)
                     Text("·")
-                        .foregroundStyle(XPalette.textTertiary)
+                        .foregroundStyle(XPalette.textSub)
                     algoChip(f.algo)
                 }
                 .lineLimit(1)
@@ -400,7 +400,7 @@ struct LocalBackupFilesSection: View {
                 XHaptics.trigger.impactOccurred()
                 _ = BackupStudio.deleteLocalFile(f.name)
                 reload()
-                app.showToast("已删除这份备份")
+                app.showToast("已删除这份备份", tone: .done)
             } label: {
                 Image(systemName: "trash")
                     .font(.system(size: XIcon.sm, weight: .medium))

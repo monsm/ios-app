@@ -1,3 +1,5 @@
 <resources>
-    <color name="ic_bg">#0A0C10</color>
+    <!-- 自适应图标底板。保持与画布同色 (#000000) —— 图标在桌面上的"背景"
+         与 App 内的画布是同一个视觉世界的同一层。 -->
+    <color name="ic_bg">#000000</color>
 </resources>

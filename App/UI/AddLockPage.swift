@@ -56,7 +56,10 @@ struct AddLockPage: View {
                 }
 
                 ScrollView {
-                    VStack(spacing: XSpace.l) {
+                    // 配网向导是**一步一屏**: 每一步的内容是一整块, 不是若干同类卡片。
+                    // 所以这里用 section(28) 而不是 l(16) —— 步骤标题与步骤内容之间
+                    // 需要的是"换了一件事"的距离, 不是"下一张卡"的距离。
+                    VStack(spacing: XSpace.section) {
                         switch flow {
                         case .scan:    scanStage
                         case .pairing: pairingStage
@@ -142,10 +145,13 @@ struct AddLockPage: View {
                                     done || current ? XPalette.accent : XPalette.hairline,
                                     lineWidth: current ? 2 : 1)
                             )
+                            // 当前步骤的点做呼吸提示 —— 走 XBreathing 一处实现。
+                            // 外层 .scaleEffect + .animation 手写版会与步骤条的其它动画抢属性。
                             .scaleEffect(current && !reduceMotion && pulse ? 1.12 : 1.0)
-                            .animation(reduceMotion ? nil
-                                       : .easeInOut(duration: 1.4).repeatForever(autoreverses: true),
+                            .animation(reduceMotion || !current ? nil
+                                       : .easeInOut(duration: 1.2).repeatForever(autoreverses: true),
                                        value: pulse)
+                            .transaction { $0.animation = nil }
 
                         if done {
                             Image(systemName: "checkmark")
@@ -160,7 +166,7 @@ struct AddLockPage: View {
                     Text(stepNames[i])
                         .xFont(.caption2, weight: current ? .semibold : .regular)
                         .foregroundStyle(done ? XPalette.text
-                                         : (current ? XPalette.accentText : XPalette.textTertiary))
+                                         : (current ? XPalette.accentText : XPalette.textSub))
                 }
                 .frame(maxWidth: .infinity)
 
@@ -192,10 +198,13 @@ struct AddLockPage: View {
                         .frame(width: 80 + CGFloat(i) * 44, height: 80 + CGFloat(i) * 44)
                         .scaleEffect(reduceMotion ? 1 : (pulse ? 1.06 : 0.94))
                         .opacity(scanning ? 1 : 0.25)
-                        .animation(reduceMotion ? nil
-                                   : .easeInOut(duration: 1.8).repeatForever(autoreverses: true)
+                        .animation(reduceMotion || !scanning ? nil
+                                   : .easeInOut(duration: 1.2).repeatForever(autoreverses: true)
                                      .delay(Double(i) * 0.18),
                                    value: pulse)
+                        // 三圈错相位扩散 —— 无限循环, 必须切断隐式继承,
+                        // 否则外层的 .animation(pulse) 会与它抢 scaleEffect。
+                        .transaction { $0.animation = nil }
                 }
                 Image(systemName: "antenna.radiowaves.left.and.right")
                     .font(.system(size: XMetric.decorIcon(40), weight: .light))
@@ -417,7 +426,7 @@ struct AddLockPage: View {
                 .padding(.top, XSpace.xxl)
 
             Text("已添加")
-                .xFont(.title, weight: .semibold)
+                .xFont(.display, weight: .semibold)
                 .foregroundStyle(XPalette.text)
 
             Text(nickname)
@@ -460,7 +469,7 @@ struct AddLockPage: View {
                 .frame(width: 22)
                 .accessibilityHidden(true)
             Text(text)
-                .xFont(.system(.footnote))
+                .xFont(.footnote)
                 .foregroundStyle(XPalette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)

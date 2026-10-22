@@ -660,7 +660,7 @@ struct LinkPrefsView: View {
             XPalette.canvas.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: XSpace.l) {
+                VStack(spacing: XSpace.section) {
                     signalCard
                     prefsCard
                     statsCard
@@ -750,7 +750,7 @@ struct LinkPrefsView: View {
 
                 Text("信号强度来自最近的 BLE 广播。走近门锁后刷新可看到变化。")
                     .xFont(.footnote)
-                    .foregroundStyle(XPalette.textTertiary)
+                    .foregroundStyle(XPalette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }

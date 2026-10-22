@@ -261,7 +261,7 @@ struct MaskedDigits: View {
                     XHaptics.tick.impactOccurred()
                 } label: {
                     Text(shown)
-                        .xFont(digitFont)
+                        .xFontExact(digitFont)
                         .foregroundStyle(on ? XPalette.text : XPalette.textSub)
                         .frame(width: big ? 36 : 30)
                         .frame(minHeight: XHit.min)
@@ -371,7 +371,7 @@ struct CodeBigCard: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
             Text(revealed ? code : SecurityPolicy.halfMasked(code))
-                .xFont(.system(.largeTitle, design: .rounded).monospacedDigit(), weight: .semibold)
+                .xFont(.largeTitle, weight: .semibold, design: .rounded)
                 .foregroundStyle(XPalette.text)
                 .textSelection(.enabled)
                 // 370: 口述卡这一路也接贴近复蔽 (卡片在屏期间才开监听)
@@ -429,8 +429,10 @@ struct CodeBigCard: View {
         // 2026-10-14 材质统一: 口述卡与本页其余 13 块 .card() 同材质 (原先独此一块自带描边)。
         // 大字号密码在玻璃上仍读得清: glassEffect(.regular) 会自己压一层调暗底,
         // 而 226 降透明 / 862 增强对比下 axGlass 直接落回实底 —— 拍照那张最讲究可读的场合有退路。
+        // 规范 6.3: 浮层/卡片零投影。这张卡是**功能层玻璃**, 玻璃自带边缘高光,
+        // 再叠一层阴影只会让它在纯黑底上糊出一圈灰 —— 而它下面根本没有"别的表面"
+        // 需要被压下去。
         .axGlass(XRadius.card)
-        .shadow(color: XPalette.accent.opacity(0.14), radius: 10, y: 5)
         .padding(.horizontal, XSpace.gutter)
         .accessibilityElement(children: .combine)
     }
@@ -484,8 +486,9 @@ extension View {
     func card() -> some View {
         padding(XSpace.m + 2)
             .frame(maxWidth: .infinity, alignment: .leading)
+            // 规范 6.3: 零投影。这 13 处 .card() 全在向导页底上 (非卡中卡),
+            // 玻璃自带的边缘高光已经是层次信号。
             .axGlass(XRadius.card)
-            .shadow(color: XPalette.accent.opacity(0.08), radius: 8, y: 4)
     }
 }
 extension String {
@@ -1382,7 +1385,7 @@ struct FpStudio: View {
         DB.addFp(em, LedgerFp(batch: Int(b), name: finalName, at: Date().timeIntervalSince1970 * 1000,
                               note: note, src: "app", owner: owner, isAlarm: false))
         if name.isEmpty {
-            app.showToast("已按建议命名「\(finalName)」, 可重命名")   // 315/174 已按建议命名
+            app.showToast("已按建议命名「\(finalName)」, 可重命名", tone: .done)   // 315/174 已按建议命名
         }
         // 319 重录继承: 同成员旧指纹入回收站 (来源"重录替代") + 锁端删除入队
         if replaceOld {
@@ -1496,7 +1499,7 @@ struct OtpStudio: View {
                 XPalette.canvas.ignoresSafeArea()
 
                 ScrollView {
-                    VStack(spacing: XSpace.l) {
+                    VStack(spacing: XSpace.section) {
                         targetLockCard.xScrollLift()
                         zotpCard.xScrollLift()
                         totpGroup
@@ -1636,7 +1639,7 @@ struct OtpStudio: View {
                         code: StudioTools.genDigits(8), note: noteDraft, used: false,
                         at: Date().timeIntervalSince1970))
                     noteDraft = ""
-                    app.showToast("已生成 8 位静态备份码")
+                    app.showToast("已生成 8 位静态备份码", tone: .done)
                 } label: {
                     Label("生成 8 位静态码", systemImage: "plus")
                         .xFont(.subheadline, weight: .medium)
@@ -1680,13 +1683,13 @@ struct OtpStudio: View {
                 .frame(minHeight: XHit.min)
                 Text(CredentialOrg.totpParams(e))
                     .xFont(.caption2)
-                    .foregroundStyle(XPalette.textTertiary)
+                    .foregroundStyle(XPalette.textSub)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                 Spacer(minLength: 0)
                 Button(role: .destructive) {
                     CredentialOrg.removeTotp(otpMac, e.id)
-                    app.showToast("已移除「\(e.name)」")
+                    app.showToast("已移除「\(e.name)」", tone: .done)
                 } label: {
                     Label("移除", systemImage: "trash")
                         .xFont(.caption, weight: .medium)
@@ -1733,7 +1736,7 @@ struct OtpStudio: View {
                                     algo: r.algo, period: r.period, digits: r.digits,
                                     at: Date().timeIntervalSince1970))
                                 let tail = r.defaulted.isEmpty ? "" : "; 按默认补了: " + r.defaulted.joined(separator: "/")
-                                app.showToast("已导入「\(r.name)」" + tail)
+                                app.showToast("已导入「\(r.name)」" + tail, tone: .done)
                                 importUri = ""
                                 importErr = ""
                                 importing = false
@@ -1906,7 +1909,7 @@ struct OtpStudio: View {
                 Spacer(minLength: 0)
                 Button(role: .destructive) {
                     CredentialOrg.removeTotp(otpMac, e.id)   // 339: 与取组的锁保持一致
-                    app.showToast("已移除「\(e.name)」")
+                    app.showToast("已移除「\(e.name)」", tone: .done)
                 } label: {
                     Label("移除", systemImage: "trash")
                 }
@@ -1948,7 +1951,7 @@ struct OtpStudio: View {
                 Button {
                     var n = c; n.used = true
                     CredentialOrg.saveStaticCodes(mac, CredentialOrg.staticCodes(mac).map { $0.id == c.id ? n : $0 })
-                    app.showToast("已标记「\(c.name)」为已用")   // 346 已标记
+                    app.showToast("已标记「\(c.name)」为已用", tone: .done)   // 346 已标记
                 } label: {
                     Label(c.used ? "撤销已用" : "标记已用", systemImage: c.used ? "arrow.uturn.left" : "checkmark")
                 }

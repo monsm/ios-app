@@ -537,7 +537,7 @@ struct AutoCalView: View {
             XPalette.canvas.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: XSpace.l) {
+                VStack(spacing: XSpace.section) {
                     signalCard
                     dataCard
                 }
@@ -608,7 +608,7 @@ struct AutoCalView: View {
                 if samples.isEmpty {
                     Text("等待第一个样本…")
                         .xFont(.caption2)
-                        .foregroundStyle(XPalette.textTertiary)
+                        .foregroundStyle(XPalette.textSub)
                 }
             }
             .frame(height: 46)
@@ -625,7 +625,7 @@ struct AutoCalView: View {
                 Text("近 \(lo) dBm")
             }
             .xFont(.caption2)
-            .foregroundStyle(XPalette.textTertiary)
+            .foregroundStyle(XPalette.textSub)
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("信号采样 \(samples.count) 个, 最新 " + String(samples.last ?? 0) + " dBm")
@@ -675,7 +675,7 @@ struct AutoCalView: View {
                 Text("武装 \(arm)")
             }
             .xFont(.caption2)
-            .foregroundStyle(XPalette.textTertiary)
+            .foregroundStyle(XPalette.textSub)
 
             HStack(spacing: XSpace.xs) {
                 Label(cal == nil ? "未标定 — F3 门不过" : "P95 基准 \(base) dBm",

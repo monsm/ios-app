@@ -329,6 +329,11 @@ struct LocksPage: View {
     /// 锁端真正的凭证（密码/指纹）不受影响 —— 这一点必须在确认文案里说清，
     /// 否则用户会以为"解绑 = 锁上那些也删了"，从而把一把还带着自己指纹的锁卖掉。
     private func unpair(_ kc: Keychain) {
+        // 确认口径：调用方只从 `confirmUnpair` 这一条路进来 —— 见本文件顶部的
+        // .confirmationDialog(presenting: confirmUnpair)，那是一处**外层确认**：
+        // 按下「解除绑定」之前，弹窗已经写明"本机删密钥与全部设置、不可撤销、
+        // 门锁里的密码/指纹不受影响"三件事。所以本函数自己不再问第二遍
+        // （连问两次是另一种伤害：用户会开始无脑点确定）。
         let name = LockArchive.displayName(kc)
         DB.removeDevice(kc.mac)
         // 解绑的是当前锁 → 让 AppState 重新指一把，否则整机还盯着一个不存在的 mac
@@ -336,7 +341,7 @@ struct LocksPage: View {
         confirmUnpair = nil
         reload()
         XHaptics.trigger.impactOccurred()
-        app.showToast("已解除绑定「\(name)」")
+        app.showToast("已解除绑定「\(name)」", tone: .done)
     }
 
     private func reload() {

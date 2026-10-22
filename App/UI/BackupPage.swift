@@ -51,7 +51,7 @@ struct BackupPage: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: XSpace.l) {
+            VStack(spacing: XSpace.section) {
                 if let b = pendingRestore {
                     restoreConfirmCard(b)
                 }
@@ -89,8 +89,8 @@ struct BackupPage: View {
             if case .success = result {
                 // 落盘时更新"上次备份"时间 —— 与 generateBackup 同口径
                 DB.store.set("kf_bk_last_export", Int(Date().timeIntervalSince1970 * 1000))
-                XHaptics.success()
-                app.showToast("已保存到文件")
+                // 触感已由 showToast(tone:) 统一发出 —— 这里再调一次会震两下
+                app.showToast("已保存到文件", tone: .done)
             } else if case .failure(let e) = result {
                 if (e as NSError).code != NSUserCancelledError {
                     // 错误对象就在手边，别只报"保存失败" —— 用户没法据此做任何事。
@@ -353,7 +353,7 @@ struct BackupPage: View {
                         if importText.isEmpty {
                             Text("在此粘贴备份文本")
                                 .xFont(.footnote)
-                                .foregroundStyle(XPalette.textTertiary)
+                                .foregroundStyle(XPalette.textSub)
                                 .padding(XSpace.s)
                                 .allowsHitTesting(false)
                         }

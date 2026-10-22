@@ -34,7 +34,7 @@ struct MomentCardView: View {
                         .fill(XPalette.onAccent.opacity(0.16))
                         .frame(width: 96, height: 96)
                     Image(systemName: moment.icon)
-                        .font(.system(size: 40, weight: .medium))
+                        .font(.system(size: XIcon.xl, weight: .medium))
                         .foregroundStyle(XPalette.onAccent)
                 }
                 .accessibilityHidden(true)
@@ -58,7 +58,15 @@ struct MomentCardView: View {
             .padding(XSpace.xl)
             .frame(maxWidth: 340)
             .background(XGradient.hero, in: RoundedRectangle(cornerRadius: XRadius.card, style: .continuous))
-            .shadow(color: XPalette.accent.opacity(0.35), radius: 26, y: 12)
+            // 规范 6.3: 卡片零投影; 要"亮起来"用**辉光**(radial)而不是外投影。
+            // 这一层原来是一圈 26pt 的铜色阴影, 在纯黑上会读成"卡片下面的脏边",
+            // 而它想表达的是"这张卡在发光"—— 两件事形状不同。
+            .overlay(
+                RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
+                    .fill(XGradient.glow(XPalette.accent))
+                    .blur(radius: 24)
+                    .allowsHitTesting(false)
+            )
             .padding(.horizontal, XSpace.xl)
             .scaleEffect(shown || reduceMotion ? 1 : 0.94)
             .opacity(shown ? 1 : 0)

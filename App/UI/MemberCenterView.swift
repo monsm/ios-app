@@ -110,7 +110,10 @@ struct MemberDetail360View: View {
                 secLabel("档案")
                 VStack(alignment: .leading, spacing: XSpace.s) {
                 HStack(spacing: XSpace.s) {
-                MemberAvatar(member: m, size: 44)
+                // 规范 §10：「队徽/头像 | 圆形，**直径 28pt**，可含图像」。
+                // 原来这里写 44 —— 档案页的头像比列表大一圈，看起来更像主角，
+                // 但那是我按感觉定的；规范给的是单一尺寸。已改回 28。
+                MemberAvatar(member: m, size: 28)
                 VStack(alignment: .leading, spacing: XSpace.xxs) {
                 Text(MemberHub.display(m))
                 .xFont(.title3, weight: .semibold)
@@ -448,7 +451,7 @@ struct MemberDetail360View: View {
             for kc in DB.keychains() { CredentialOrg.cascadeBinMember(kc.mac, m.id) }
             DB.removeMember(m.id)
             onChanged()
-            app.showToast("已删除并入回收站")
+            app.showToast("已删除并入回收站", tone: .done)
         })
         alert.addAction(UIAlertAction(title: "连锁端一起收回", style: .destructive) { _ in
             // 排上队列的条数在闭包内取 (不改捕获的局部变量: handler 是 escaping 闭包)
@@ -458,7 +461,9 @@ struct MemberDetail360View: View {
             DB.removeMember(m.id)
             onChanged()
             app.showToast(queued > 0 ? "已删除并入回收站 · 已排 \(queued) 条锁端删除 (连接门锁后生效)"
-                                      : "已删除并入回收站 (名下没有可收回的钥匙)")
+                                      : "已删除并入回收站 (名下没有可收回的钥匙)",
+                          // 删除成员不可逆：报成功的同时给一次完成触感（规范 §11.4）。
+                          tone: .done)
         })
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         UIApplication.topViewController()?.present(alert, animated: true)
@@ -794,7 +799,7 @@ struct MergeMembersView: View {
         HStack(alignment: .top, spacing: XSpace.s) {
             Text(label)
                 .xFont(.caption)
-                .foregroundStyle(XPalette.textTertiary)
+                .foregroundStyle(XPalette.textSub)
                 .frame(width: 76, alignment: .leading)
             Text(value)
                 .xFont(.caption)
@@ -884,11 +889,11 @@ struct MemberArchivedView: View {
                                             // 恢复前得知道这人原本是什么身份。
                                             Text(MemberHub.roleLabel(ext.role))
                                                 .xFont(.caption2)
-                                                .foregroundStyle(XPalette.textTertiary)
+                                                .foregroundStyle(XPalette.textSub)
                                             if !ext.groupTag.isEmpty {
                                                 Text(ext.groupTag)
                                                     .xFont(.caption2)
-                                                    .foregroundStyle(XPalette.textTertiary)
+                                                    .foregroundStyle(XPalette.textSub)
                                             }
                                             if ext.proxy || ext.emergencyAdmin {
                                                 Text(ext.emergencyAdmin ? "紧急管理员" : "代管")
@@ -1045,7 +1050,7 @@ struct MemberFamilySettingsView: View {
                 HStack(spacing: XSpace.s) {
                     Text("代管中")
                         .xFont(.caption)
-                        .foregroundStyle(XPalette.textTertiary)
+                        .foregroundStyle(XPalette.textSub)
                     Spacer(minLength: 0)
                     Text(proxies.isEmpty ? "无人代管" : proxies.joined(separator: "、"))
                         .xFont(.caption)
@@ -1068,7 +1073,7 @@ struct MemberFamilySettingsView: View {
                 } else {
                     Text("3 天内没有临时码到期")
                         .xFont(.caption2)
-                        .foregroundStyle(XPalette.textTertiary)
+                        .foregroundStyle(XPalette.textSub)
                 }
             }
         }
@@ -1136,7 +1141,7 @@ struct UnclaimedClaimView: View {
                                 if !unclaimed.isEmpty {
                                     Text(String(unclaimed.count) + " 条")
                                         .xFont(.caption.monospacedDigit())
-                                        .foregroundStyle(XPalette.textTertiary)
+                                        .foregroundStyle(XPalette.textSub)
                                 }
                             }
 
@@ -1179,7 +1184,7 @@ struct UnclaimedClaimView: View {
                                         if sameDay > 1 {
                                             Text("当天还有 " + String(sameDay - 1) + " 条未归属")
                                                 .xFont(.caption2)
-                                                .foregroundStyle(XPalette.textTertiary)
+                                                .foregroundStyle(XPalette.textSub)
                                         }
                                         Picker("认领给", selection: Binding(
                                             get: { selMember[r.key] ?? "" },
@@ -1296,10 +1301,9 @@ struct MemberAvatar: View {
     /// 头像现在是 @ViewBuilder 的 body, 结果构建器里只允许产出视图的 `if`, 给局部变量赋值的那种裸 `if` 得搬出去。
     private var baseColor: Color {
         if let t = tint { return t }
-        if member.color.hasPrefix("#"), let v = UInt32(member.color.dropFirst(), radix: 16) {
-            return Color(hex: v)
-        }
-        return XPalette.accentText
+        // 解析收在 `Color.memberSwatch` 一处 —— 这里原本是第四份手写解析。
+        // 回落给 accentText: 头像位是「有身份」的位置, 与 MembersPage 同口径。
+        return Color.memberSwatch(member.color, fallback: XPalette.accentText)
     }
 
     // 994: body 改成 @ViewBuilder, 是为了让"只画头像本体"那条分支交回原样的头像链, 有角标时才在外面
@@ -1474,7 +1478,7 @@ struct MemberExitWizard: View {
         decisions[it.id] = "move"
         if it.kind == "pwd" { DB.setPwdOwner(it.mac, it.key, t.id) }
         else { DB.setFpOwner(it.mac, it.key, t.id) }
-        app.showToast("已移交至「" + MemberHub.display(t) + "」")
+        app.showToast("已移交至「" + MemberHub.display(t) + "」", tone: .done)
     }
 
     private func decide(_ it: Item, _ d: String) {

@@ -45,7 +45,7 @@ struct MaintenanceView: View {
             XPalette.canvas.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: XSpace.l) {
+                VStack(spacing: XSpace.section) {
                     carePeriodSection.xScrollLift()
                     historySection.xScrollLift()
                     swapSection.xScrollLift()
@@ -266,7 +266,7 @@ struct MaintenanceView: View {
                 BatteryCare.saveCare(mac, s)
                 care = s
                 XHaptics.tick.impactOccurred()
-                app.showToast("已打卡 — 下次半年检会重新起算")
+                app.showToast("已打卡 — 下次半年检会重新起算", tone: .done)
                 } label: {
                 Label("确认应急钥匙还在 · 打卡", systemImage: "key.fill")
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -340,11 +340,11 @@ struct BatterySwapGuideView: View {
                 if days >= 0 {
                     Text("上次换电 " + String(days) + " 天前")
                         .xFont(.caption2)
-                        .foregroundStyle(XPalette.textTertiary)
+                        .foregroundStyle(XPalette.textSub)
                 } else {
                     Text("还没有换电记录 —— 换好后点下面记录一次")
                         .xFont(.caption2)
-                        .foregroundStyle(XPalette.textTertiary)
+                        .foregroundStyle(XPalette.textSub)
                 }
                 Button {
                     BatteryCare.recordBatterySwap(mac)
@@ -572,7 +572,7 @@ struct CareChecklistView: View {
                     Spacer(minLength: 0)
                     Text("周期 " + String(period) + " 天")
                         .xFont(.caption2)
-                        .foregroundStyle(XPalette.textTertiary)
+                        .foregroundStyle(XPalette.textSub)
                 }
                 if daysSince >= 0 {
                     ledgerRow("上次保养", String(daysSince) + " 天前")
@@ -605,7 +605,7 @@ struct CareChecklistView: View {
         HStack(spacing: XSpace.s) {
             Text(label)
                 .xFont(.caption)
-                .foregroundStyle(XPalette.textTertiary)
+                .foregroundStyle(XPalette.textSub)
             Spacer(minLength: 0)
             Text(value)
                 .xFont(.caption.monospacedDigit())

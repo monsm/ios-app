@@ -41,7 +41,7 @@ struct MembersPage: View {
         // 与 KeysPage 同一套语言: XPanel 分组 + 组内行 + 液态玻璃只在需要时用。
         // 数据逻辑（reload / members / mac）一行没动。
         ScrollView {
-            VStack(spacing: XSpace.l) {
+            VStack(spacing: XSpace.section) {
                 if members.isEmpty {
                     emptyCard
                 } else {
@@ -111,7 +111,7 @@ struct MembersPage: View {
 
                             Text(MemberHub.roleLabel(MemberHub.ext(m.id).role))
                                 .xFont(.caption2)
-                                .foregroundStyle(XPalette.textTertiary)
+                                .foregroundStyle(XPalette.textSub)
                         }
                         .frame(width: 68)
                     }
@@ -153,7 +153,7 @@ struct MembersPage: View {
 
                 Text("点一位成员可看名下钥匙、授权来源与最近活动。")
                     .xFont(.caption2)
-                    .foregroundStyle(XPalette.textTertiary)
+                    .foregroundStyle(XPalette.textSub)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, XSpace.card)
                     .padding(.top, XSpace.s)
@@ -258,7 +258,7 @@ struct MembersPage: View {
                     if act.stale {
                         Text("久未用")
                             .xFont(.caption2)
-                            .foregroundStyle(XPalette.textTertiary)
+                            .foregroundStyle(XPalette.textSub)
                             .padding(.horizontal, 5)
                             .padding(.vertical, 1)
                             .background(Capsule().fill(XPalette.surfaceAlt))
@@ -271,7 +271,7 @@ struct MembersPage: View {
                 if let last = lastOpenText(act.last) {
                     Text(last)
                         .xFont(.caption2)
-                        .foregroundStyle(XPalette.textTertiary)
+                        .foregroundStyle(XPalette.textSub)
                         .lineLimit(1)
                 }
             }
@@ -289,7 +289,7 @@ struct MembersPage: View {
                 } else if total > 0 {
                     Text(String(total) + " 份")
                         .xFont(.caption.monospacedDigit())
-                        .foregroundStyle(XPalette.textTertiary)
+                        .foregroundStyle(XPalette.textSub)
                 }
                 // 权限数（5 项里允许几项）
                 Text(String(allowed) + "/" + String(perms.count))
@@ -337,12 +337,10 @@ struct MembersPage: View {
     // MARK: - 数据
     // ═══════════════════════════════════════════════════════
 
-    /// 成员建档色 (Member.color 是 "#RRGGBB" 字符串)
+    /// 成员建档色 —— 实现收在 `Color.memberSwatch` 一处。
+    /// 这里回落 `accent` 而不是 `textSub`: 头像位是「有身份」的位置, 给个强调色比给灰色诚实。
     private func memberColor(_ m: Member) -> Color {
-        if m.color.hasPrefix("#"), let v = UInt32(m.color.dropFirst(), radix: 16) {
-            return Color(hex: v)
-        }
-        return XPalette.accent
+        Color.memberSwatch(m.color, fallback: XPalette.accent)
     }
 
     private func reload() {

@@ -57,14 +57,22 @@ struct KeysPage: View {
         //
         // 数据逻辑一行没动 —— 只换呈现。
         ScrollView {
-            VStack(spacing: XSpace.l) {
+            // 规范 5.3 骨架: 页边距 14 / 区块 28 / 卡行 8。
+            // 三个数的语义各不相同 —— 旧实现一律 XSpace.l(16), 于是
+            // "分段条"与"第一张卡"、以及"卡与卡"之间的距离完全一样,
+            // 眼睛读不出哪是控件、哪是内容。
+            VStack(spacing: XSpace.section) {
                 if !expiringItems.isEmpty { expiringCard }
-                segmentBar
-                credentialCard
-                if rows.isEmpty { emptyCard }
+                VStack(spacing: XSpace.section) {
+                    segmentBar
+                    VStack(spacing: XSpace.rowGap) {
+                        credentialCard
+                        if rows.isEmpty { emptyCard }
+                    }
+                }
             }
             .padding(.horizontal, XSpace.gutter)
-            .padding(.top, XSpace.s)
+            .padding(.top, XSpace.m)
             .padding(.bottom, XSpace.xxl)
         }
         .background(XPalette.canvas)
@@ -100,9 +108,13 @@ struct KeysPage: View {
             // 三件事必须在按下"删除"之前说清：
             //   ① 本机会删；② 锁端也会撤销（且断网不丢）；③ **可以找回**。
             // 第三条原来漏了 —— 用户在最有顾虑的那一刻，不知道自己还有退路。
+            // 第 ④ 件事: **在哪恢复**。前三件说清了"会不会丢"，但不说在哪找回，
+            // 用户删完就只能自己找 —— 而回收站在「安全 → 销毁数据」里面，
+            // 那不是任何人会先去看的地方。承诺可恢复就必须把路指全。
             Text("「\(row.title)」会从本机台账移除，并从门锁上撤销对应的密码/指纹。\n"
                  + "撤销命令会排队等待门锁连接，断网也不会丢。\n"
-                 + "本机这条会留在回收站 \(CredentialOrg.reclaimDays()) 天，期间可以恢复。")
+                 + "本机这条会留在回收站 \(CredentialOrg.reclaimDays()) 天，期间可以恢复"
+                 + "（管理 → 安全 → 销毁数据 → 回收站）。")
         }
         .sheet(isPresented: $showAdd) {
             NavigationStack {
@@ -278,8 +290,14 @@ struct KeysPage: View {
         XHaptics.trigger.impactOccurred()
         // 提示必须**指向核对的地方** —— 否则"已排队"这三个字对用户是没有着落的：
         // 他不知道发出去没有、失败了没有、要去哪里看。回收站页现在有队列卡。
+        //
+        // ⚠ 文案必须与**真实路径**一致。回收站唯一的入口是：
+        //   管理面板 → 安全 → 销毁数据 → 回收站（SecurityCenterView 的 CredentialBinView）
+        // 也就是说它要经过「销毁数据」那一页 —— 原来这里只写「安全 → 回收站」，
+        // 少掉中间那一跳，用户按这句话找会停在"安全"组里翻不到回收站。
+        // 而这句话出现在**刚删完东西、最想找回**的那一刻，指错路的代价最高。
         app.showToast(n > 0
-            ? "已删除「\(row.title)」—— 锁端撤销已排队，可在「安全 → 回收站」核对"
+            ? "已删除「\(row.title)」—— 锁端撤销已排队；可在「安全 → 销毁数据 → 回收站」核对"
             : "「\(row.title)」未找到或已删除")
         refresh()
     }
@@ -541,10 +559,40 @@ struct KeysPage: View {
                 Label("删除", systemImage: "trash")
             }
         }
+        // ═══ 可发现性 ═══
+        //
+        // 这一行的六个动作全藏在长按菜单里 —— 视觉上它和一行只读文字没有区别。
+        // 规范（§7.15 的选型规则 / Anti-slop 那套可发现性口径）要求：
+        // **「看着就想点」的东西必须真的能点，而且要看得出能点。**
+        //
+        // 修法两条，都很便宜:
+        //   ① 行尾给一枚极淡的 "ellipsis" —— 它是 iOS 上"这里还有更多"的既定语汇,
+        //      而且不抢 XStatusPill 的位置（放在它右边 4pt）。
+        //   ② VoiceOver 把这六个动作**全部**挂上。之前只挂了一个"置顶"，
+        //      读屏用户根本不知道还能归档/改名/改备注。
+        .overlay(alignment: .trailing) {
+            Image(systemName: "ellipsis")
+                .font(.system(size: XIcon.xs, weight: .semibold))
+                .foregroundStyle(XPalette.textTertiary)
+                .padding(.trailing, -XSpace.s)
+                .accessibilityHidden(true)
+        }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityLine(row))
+        .accessibilityHint("长按可置顶、归档、改备注或删除")
         .accessibilityAction(named: "置顶或取消置顶") {
             CredentialOrg.toggleStar(mac, row.kindTag, row.key)
+        }
+        .accessibilityAction(named: "归档或取消归档") {
+            CredentialOrg.setArchived(mac, row.kindTag, row.key,
+                                      !CredentialOrg.isArchived(mac, row.kindTag, row.key))
+            refresh()
+        }
+        .accessibilityAction(named: "编辑备注") {
+            editNote(row)
+        }
+        .accessibilityAction(named: "删除") {
+            confirmDelete = row
         }
     }
 

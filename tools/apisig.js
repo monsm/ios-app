@@ -9,7 +9,7 @@
 //   CI 要 20 分钟才回话 —— 一轮下来只前进一小步。
 //
 //   这一道把「组件签名能静态判定的部分」提前到本地:
-//     · xFont 只收 (Font, weight:), 传 design:/size:/relativeTo: 都是错的
+//     · xFont 收 (XText, weight:, design:), 传 size:/relativeTo:/textStyle: 是错的（绕过规范字阶）
 //     · XStatusPill / XBusyButton / XMetricTile / XEmptyState 的参数名
 //
 // 判据全部来自 App/Core/Components.swift 的真实声明 —— 不是手抄的第二份。
@@ -90,7 +90,9 @@ for (const s of STRUCTS) {
 const files = walk(path.join(ROOT, 'App'));
 // xFont 的顶层实参里出现 design/size/relativeTo 才算错 ——
 // 嵌在 .system(...) 里的是合法写法, 不能只看"有没有出现过"。
-const XFONT_BAD_LABEL = /^(design|size|relativeTo|textStyle)$/;
+// 2026-10-22: xFont 的签名已扩为 (XText, weight:, design:) —— 为了让圆体也走规范字阶。
+// 所以 design 不再是错；size / relativeTo / textStyle 仍会绕过字阶，留着判。
+const XFONT_BAD_LABEL = /^(size|relativeTo|textStyle)$/;
 
 function badXFontArgs(src) {
   const out = [];
@@ -159,7 +161,7 @@ for (const f of files) {
   const rel = path.relative(ROOT, f);
   for (const b of badXFontArgs(src)) {
     allProblems.push({ rel: rel, line: b.line,
-      msg: 'xFont 顶层不能传 ' + b.label + ' (只收 ' + xfLabels.join(', ') + ') —— 圆体请写 .xFont(.system(size: N, design: .rounded), weight: .w)' });
+      msg: 'xFont 顶层不能传 ' + b.label + ' (只收 ' + xfLabels.join(', ') + ') —— 字号必须走 XText，不许绕开规范字阶' });
   }
   for (const nm of Object.keys(structDefs)) {
     for (const pr of checkStructArgs(nm, src)) {
@@ -170,8 +172,9 @@ for (const f of files) {
 
 // ── 4. 自检: 正控 / 反控 ───────────────────────────────────────────
 const probes = [
-  { src: '.xFont(.title2, weight: .semibold, design: .rounded)', bad: true,  why: 'xFont 传 design' },
-  { src: '.xFont(.system(.title2, design: .rounded), weight: .semibold)', bad: false, why: '合法圆体写法' },
+  { src: '.xFont(.title2, weight: .semibold, design: .rounded)', bad: false, why: '圆体走 XText（合法）' },
+  { src: '.xFont(.system(.title2, design: .rounded), weight: .semibold)', bad: false, why: '旧写法仍被接受' },
+  { src: '.xFont(.body, size: 17)', bad: true, why: 'xFont 传 size 绕开字阶' },
   { src: 'XStatusPill(text: "a", tone: .ok, systemImage: "x")', bad: false, why: 'XStatusPill 合法' },
   { src: 'XStatusPill(text: "a", image: "x")', bad: true, why: 'XStatusPill 错参数名' }
 ];
@@ -349,21 +352,31 @@ if (theme) {
       names.push(m[1]);
     }
   }
+  // 2026-10-22 (Glass 二批): 原判据把**注释里的提及**也算成引用。
+  // 实证: textQuaternary 的唯一"引用"是 Theme.swift 里一行写着它名字的注释,
+  // 于是它被判"在用" —— 而实际上没有任何一处把它当颜色用过。
+  // 一条能被自己文档喂饱的判据, 数出来的是"有多少处提到这个名字", 不是"有没有人用"。
+  // 现在两处统计都**先剥掉注释**: 整行注释与行尾注释都不算。
+  const stripComments = (line) => line.replace(/^\s*\/\/.*$/, '').replace(/\/\/.*$/, '');
   for (const name of names) {
-    // Theme 内部引用 (排除声明行本身)
     let internal = 0;
     for (const line of themeLines) {
       if (declRe.test(line) && new RegExp('(?:var|let|func) ' + name + '\\b').test(line)) continue;
-      const hits = line.match(new RegExp('\\b' + name + '\\b', 'g'));
+      const code = stripComments(line);
+      const hits = code.match(new RegExp('\\b' + name + '\\b', 'g'));
       if (hits) internal += hits.length;
     }
-    // 外部引用
     let external = 0;
     for (const f of files) {
       if (/Theme\.swift$/.test(f)) continue;
       const src = fs.readFileSync(f, 'utf8');
-      const hits = src.match(new RegExp('\\b' + name + '\\b', 'g'));
-      if (hits) external += hits.length;
+      let n = 0;
+      for (const line of src.split(/\r?\n/)) {
+        const code = stripComments(line);
+        const hits = code.match(new RegExp('\\b' + name + '\\b', 'g'));
+        if (hits) n += hits.length;
+      }
+      external += n;
     }
     if (internal === 0 && external === 0) deadTokens.push(name);
   }
@@ -440,6 +453,23 @@ if (deadExtensions.length > 0) {
   for (const d of deadExtensions) {
     console.error('Components.swift: 扩方法 .' + d + '() 全仓零调用 —— 删掉');
   }
+}
+
+// ── 6b. xFontExact 预算 ───────────────────────────────────────────
+//
+// 规范 §4.2 的字阶是唯一的排版入口（XText）。xFontExact 是显式字号的逃生门，
+// 用来写图表轴、量规数字那种 XText 表达不了的尺寸。
+// 风险是「慢慢变成主流写法」—— 设一个收紧型预算，只许变少。
+{
+  let n = 0;
+  for (const f of files) n += (fs.readFileSync(f, 'utf8').match(/\.xFontExact\(/g) || []).length;
+  const BUDGET = 23;   // 2026-10-22 基线
+  if (n > BUDGET) {
+    console.error('✗ xFontExact 用法 ' + n + ' 处，超过预算 ' + BUDGET + ' ——');
+    console.error('  它是显式字号的逃生门，多了说明排版又在绕开规范 §4.2 的字阶。');
+    process.exit(1);
+  }
+  console.log('xFontExact 预算 ✓ ' + n + '/' + BUDGET + ' 处（显式字号逃生门）');
 }
 
 // ── 7. 输出 ───────────────────────────────────────────────────────

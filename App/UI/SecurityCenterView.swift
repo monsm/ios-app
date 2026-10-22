@@ -120,7 +120,7 @@ func setGuestChannel(_ on: Bool, app: AppState) {
 struct SecurityWatermark: View {
     var seed: String
     /// 水印是画在 `Canvas` 里的 `Text`：`GraphicsContext.draw` 收 `Text`，**不收 `some View`**，
-    /// 所以这里不能写 `.xFont(...)`（它返回的是 `some View`），改取排版语法的
+    /// 所以这里不能写 `.xFontExact(...)`（它返回的是 `some View`），改取排版语法的
     /// `Font` 结果——`VKTypography.font(...)` 与 `.vkFont` 是**同一个实现处**。
     var body: some View {
         Canvas { ctx, size in
@@ -331,7 +331,7 @@ struct SecurityPeekView: View {
                 withAnimation(XMotion.quick) { bgBlurred = on }
             case .active:
                 let clear = !DB.hasPasscode() || app.appUnlocked
-                withAnimation(clear ? .easeOut(duration: 0.32) : .none) {
+                withAnimation(clear ? XMotion.standard : .none) {
                     bgBlurred = on && !clear
                 }
             default: break
@@ -587,7 +587,7 @@ struct SecurityAuditView: View {
                                         AuditLog().purgeExpired(months: DB.store.getInt(SecKey.auditRetention, 0))
                                         SecTick.bump()
                                         self.center.bump()
-                                        app.showToast("已按保留期清理并留痕")
+                                        app.showToast("已按保留期清理并留痕", tone: .done)
                                     }
                                 } label: {
                                     // 清理到期条目是"删"，不是"改时间"。
@@ -1205,6 +1205,10 @@ struct SecurityDestroyView: View {
         .frame(width: 200, height: XHit.min)
         .contentShape(RoundedRectangle(cornerRadius: XRadius.control, style: .continuous))
         .simultaneousGesture(
+            // 手势口径：这里**故意**丢掉 translation —— 它不是滑杆/拖拽，而是
+            // "按住 2 秒填充"的确认闸（清空回收站，不可逆）。位移不参与任何计算，
+            // 1:1 跟手在这里没有指称对象；真正反馈的是那条进度填充。
+            // DragGesture(minimumDistance: 0) 只是拿来拿"按下 / 松手"两个时刻。
             DragGesture(minimumDistance: 0)
                 .onChanged { _ in
                     if !pressing {
@@ -1370,10 +1374,7 @@ struct SecurityDestroyView: View {
     }
 
     private func memberColor(_ m: Member) -> Color {
-        var s = m.color
-        if s.hasPrefix("#") { s.removeFirst() }
-        let v = UInt32(s, radix: 16)
-        return v == nil ? XPalette.textSub : Color(hex: v!)
+        Color.memberSwatch(m.color, fallback: XPalette.textSub)
     }
 
     private static func dateStr(_ t: Double) -> String {

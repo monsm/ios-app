@@ -141,7 +141,7 @@ enum BackupStudio {
             // 带落点名, 设置页挂载即开「备份与恢复」。
             app.pendingSettingsFocus = "backup"
             app.requestRoute(.settings)
-            app.showToast("已生成本机还原点 — 口令加密备份与演练在「设置 · 备份」")   // 1018 已生成本机还原点
+            app.showToast("已生成本机还原点 — 口令加密备份与演练在「设置 · 备份」", tone: .done)   // 1018 已生成本机还原点
         } else {
             app.pendingRoute = .settings
         }

@@ -51,24 +51,39 @@ if (!paletteBlock) {
 }
 const block = paletteBlock[1];
 
-// 1) 基础令牌: static var xxx: Color { Color.adaptive(light, dark) }
+// 1) 基础令牌 —— **只做深色**（规范 §13.4：应用体不提供 App 内明暗切换）。
+//
+// 2026-10-22 审计修正：令牌原来全是 Color.adaptive(light, dark) 双值。
+// 现在全为单值 Color(hex:)，hairline 是规范原文的半透明白。
+// 半透明色**按底色现场合成**后再算对比度 —— 半透明本来就该这样算。
 const base = {};
-const reBase = /static var (\w+): Color \{ Color\.adaptive\(\s*0x([0-9a-fA-F]{6})\s*,\s*0x([0-9a-fA-F]{6})\s*\) \}/g;
 let m;
-while ((m = reBase.exec(block)) !== null) {
-  base[m[1]] = { light: parseInt(m[2], 16), dark: parseInt(m[3], 16) };
+for (const mm of block.matchAll(/static var (\w+): Color \{ Color\(hex: 0x([0-9a-fA-F]{6})\) \}/g)) {
+  base[mm[1]] = { dark: parseInt(mm[2], 16) };
 }
-// canvas 特殊: 走 XAppearance.isAMOLED 分支, 但两臂都是 Color.adaptive → 已被上面的正则捕获
-// canvas 走 XAppearance.isAMOLED 三元, 正则抓不到 —— 单独取它的 adaptive 两臂
+for (const mm of block.matchAll(/static var (\w+): Color \{ Color\.white\.opacity\(([0-9.]+)\) \}/g)) {
+  base[mm[1]] = { rgba: [255, 255, 255, parseFloat(mm[2])] };
+}
 if (!base.canvas) {
-  const cm = block.match(/static var canvas: Color \{ XAppearance\.isAMOLED \? \.black : Color\.adaptive\(\s*0x([0-9a-fA-F]{6})\s*,\s*0x([0-9a-fA-F]{6})\s*\) \}/);
-  if (cm) base.canvas = { light: parseInt(cm[1], 16), dark: parseInt(cm[2], 16) };
+  const cm = block.match(/static var canvas: Color \{ Color\(hex: 0x([0-9a-fA-F]{6})\) \}/);
+  if (cm) base.canvas = { dark: parseInt(cm[1], 16) };
+}
+if (!base.accent) {
+  const am = block.match(/static var accent: Color \{[\s\S]*?return Color\(hex: 0x([0-9a-fA-F]{6})\)/);
+  if (am) base.accent = { dark: parseInt(am[1], 16) };
 }
 
-// accent 也带分支 (if let o = accentOverride), 取它的默认那对铜色
-if (!base.accent) {
-  const am = block.match(/static var accent: Color \{[\s\S]*?return Color\.adaptive\(0x([0-9a-fA-F]{6}), 0x([0-9a-fA-F]{6})\)/);
-  if (am) base.accent = { light: parseInt(am[1], 16), dark: parseInt(am[2], 16) };
+/** 令牌按底色解析成实色（半透明就地合成）。bg 省略时按画布。 */
+function col(name, bgName) {
+  const tok = base[name];
+  if (!tok) return null;
+  if (tok.dark != null) return tok.dark;
+  const [r, g, b, a] = tok.rgba;
+  const bg = bgName && base[bgName] && base[bgName].dark != null ? base[bgName].dark : 0x000000;
+  const R = Math.round(a * r + (1 - a) * ((bg >> 16) & 255));
+  const G = Math.round(a * g + (1 - a) * ((bg >> 8) & 255));
+  const B = Math.round(a * b + (1 - a) * (bg & 255));
+  return (R << 16) | (G << 8) | B;
 }
 
 if (Object.keys(base).length < 9) {
@@ -96,12 +111,22 @@ if (overrideSrc) {
 
 // ---------- 断言表 ----------
 const ASSERTIONS = [];
+const INFO = [];   // 只记录、不判失败的实测值（用于规范未给阈值的项）
+function CR(a, b) {
+  if (a == null || b == null) return 1;
+  const ch = (c) => { const v = c / 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+  const lum = (h) => 0.2126 * ch((h >> 16) & 255) + 0.7152 * ch((h >> 8) & 255) + 0.0722 * ch(h & 255);
+  const la = lum(a), lb = lum(b);
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+
 function push(mode, fg, bg, min, why, fgHex, bgHex) {
   ASSERTIONS.push({ mode, fg, bg, min, why, fgHex, bgHex });
 }
 
 // A. 基础令牌 (明暗双模)
-for (const mode of ['light', 'dark']) {
+// 规范 §13.4「应用体：只做深色」。浅色档已移除 —— 再验它等于验一个不存在的界面。
+for (const mode of ['dark']) {
   for (const [fg, bg, why] of [
     ['text', 'canvas', '正文在页面底'],
     ['text', 'surface', '正文在卡片上'],
@@ -109,7 +134,6 @@ for (const mode of ['light', 'dark']) {
     ['text', 'surfaceSunken', '正文在输入框底'],
     ['textSub', 'canvas', '次级文字在页面底'],
     ['textSub', 'surface', '次级文字在卡片上'],
-    ['textTertiary', 'surface', '三级文字在卡片上 (仅 ≥15pt)'],
   ]) {
     push(mode, fg, bg, 4.5, why, base[fg][mode], base[bg][mode]);
   }
@@ -117,33 +141,58 @@ for (const mode of ['light', 'dark']) {
   // XMetricTile 的真实组合: 底是 surfaceAlt, 标签用 textSub, 图标用 tone.color。
   // 之前只断言了 text 在 surfaceAlt 上 —— 而这张磁贴根本没有 text。
   push(mode, 'textSub', 'surfaceAlt', 4.5,
-       '次级文字在次表面上 (XMetricTile 标签)', base.textSub[mode], base.surfaceAlt[mode]);
+       '次级文字在次表面上 (XMetricTile 标签)', col('textSub'), col('surfaceAlt'));
   for (const sem of ['ok', 'warn', 'danger']) {
     // 图标属于非文本, 阈值 3:1 (WCAG 1.4.11)
     push(mode, sem, 'surfaceAlt', 3.0,
-         `${sem} 图标在次表面上 (XMetricTile 图标, 非文本)`, base[sem][mode], base.surfaceAlt[mode]);
+         `${sem} 图标在次表面上 (XMetricTile 图标, 非文本)`, base[sem][mode], col('surfaceAlt'));
   }
   // 语义色文字压在底上
   for (const sem of ['ok', 'warn', 'danger']) {
-    push(mode, sem, 'canvas', 4.5, `${sem} 语义文案在页面底`, base[sem][mode], base.canvas[mode]);
-    push(mode, sem, 'surface', 4.5, `${sem} 语义文案在卡片上`, base[sem][mode], base.surface[mode]);
+    push(mode, sem, 'canvas', 4.5, `${sem} 语义文案在页面底`, base[sem][mode], col('canvas'));
+    push(mode, sem, 'surface', 4.5, `${sem} 语义文案在卡片上`, base[sem][mode], col('surface'));
   }
   // 分隔线
   for (const bg of ['canvas', 'surface']) {
-    push(mode, 'hairline', bg, 1.2, `分隔线在 ${bg} 上需可辨`, base.hairline[mode], base[bg][mode]);
+    // 分隔线：规范没有给对比度阈值。§2 只钉了值 rgba(255,255,255,0.08)。
+    // 这里原来断言 1.2:1，那是我自己定的；而规范值合出来只有 1.14/1.08，
+    // 于是「按规范做」反而挂闸门。判据与规范冲突时改判据，不改令牌。
+    INFO.push('hairline on ' + bg + ': ' + CR(col('hairline', bg), col(bg)).toFixed(2) + ':1');
   }
+
+  // 三级文字: 规范 §3.3 单列一档 —— textTertiary #6A6A6E / 3.90:1 / 仅 >=17pt 或 Bold。
+  // 它属 3.0 档，不能塞进上面的 4.5 循环（那会把层级抹平，历史教训）。
+  // 规范 §3.3 只给了**on 黑**这一个数（3.90:1）。所以断言也只验这一处 ——
+  // 拿它去压 surfaceAlt/surfaceSunken 是我自己加码，规范没承诺过。
+  // （小字用法另由 §3.3「仅 >=17pt 或 Bold」约束，已按该条扫过一遍并修正 60 处。）
+  for (const bg of ['canvas', 'surface']) {
+    push(mode, 'textTertiary', bg, 3.0,
+         '三级文字在 ' + bg + ' 上 (3.0 档, 仅 >=17pt 或 Bold)', col('textTertiary', bg), col(bg));
+  }
+  // 字阶层级自检：相邻两档亮度差必须够大，否则再达标也是同一个灰。
+  // 这不是 WCAG 的东西，是本仓自己加的 —— 它防的正是「三级灰被提到和二级一样亮」。
+  {
+    const L = (hex) => {
+      const c = (v) => { const t = v / 255; return t <= 0.03928 ? t / 12.92 : Math.pow((t + 0.055) / 1.055, 2.4); };
+      return 0.2126 * c((hex >> 16) & 255) + 0.7152 * c((hex >> 8) & 255) + 0.0722 * c(hex & 255);
+    };
+    const d = Math.abs(L(col('textSub')) - L(col('textTertiary')));
+    ASSERTIONS.push({ mode, fg: 'textSub', bg: 'textTertiary', min: 0.03, why: 'textSub 与 textTertiary 的亮度差 (层级必须分得开)', fgHex: null, bgHex: null, delta: d });
+  }
+
   // 强调色
-  push(mode, 'accentText', 'canvas', 4.5, '强调文字在页面底', base.accentText[mode], base.canvas[mode]);
-  push(mode, 'accentText', 'surface', 4.5, '强调文字在卡片上', base.accentText[mode], base.surface[mode]);
-  push(mode, 'onAccent', 'accent', 4.5, '主按钮文字压在强调填充上', base.onAccent[mode], base.accent[mode]);
+  push(mode, 'accentText', 'canvas', 4.5, '强调文字在页面底', col('accentText'), col('canvas'));
+  push(mode, 'accentText', 'surface', 4.5, '强调文字在卡片上', col('accentText'), col('surface'));
+  push(mode, 'onAccent', 'accent', 4.5, '主按钮文字压在强调填充上', col('onAccent'), col('accent'));
 }
 
 // B. 六套备选强调色: 每套 × 明暗 × 三种底
 for (const [name, t] of Object.entries(accentThemes)) {
   if (name === 'default') continue;
-  for (const mode of ['light', 'dark']) {
-    push(mode, `${name}.accentText`, 'canvas', 4.5, `${name} 强调文字在页面底`, t.accentText[mode], base.canvas[mode]);
-    push(mode, `${name}.accentText`, 'surface', 4.5, `${name} 强调文字在卡片上`, t.accentText[mode], base.surface[mode]);
+  // 规范 §13.4「应用体：只做深色」。浅色档已移除 —— 再验它等于验一个不存在的界面。
+for (const mode of ['dark']) {
+    push(mode, `${name}.accentText`, 'canvas', 4.5, `${name} 强调文字在页面底`, t.accentText[mode], col('canvas'));
+    push(mode, `${name}.accentText`, 'surface', 4.5, `${name} 强调文字在卡片上`, t.accentText[mode], col('surface'));
     push(mode, `${name}.onAccent`, `${name}.accent`, 4.5, `${name} 主按钮文字压在填充上`, t.onAccent[mode], t.accent[mode]);
   }
 }

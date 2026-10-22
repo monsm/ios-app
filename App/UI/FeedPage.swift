@@ -95,7 +95,7 @@ struct FeedPage: View {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 HStack(alignment: .firstTextBaseline, spacing: XSpace.xs) {
                     Text("\(total)")
-                        .xFont(.system(.title2, design: .rounded).monospacedDigit(), weight: .semibold)
+                        .xFont(.title2, weight: .semibold, design: .rounded)
                         .foregroundStyle(XPalette.text)
                     Text("条动态")
                         .xFont(.footnote)
@@ -145,7 +145,7 @@ struct FeedPage: View {
                 .accessibilityHidden(true)
             Text("\(label) \(n)")
                 .xFont(.caption, weight: .medium)
-                .foregroundStyle(n > 0 ? XPalette.text : XPalette.textTertiary)
+                .foregroundStyle(n > 0 ? XPalette.text : XPalette.textSub)
                 .monospacedDigit()
         }
     }
@@ -160,7 +160,17 @@ struct FeedPage: View {
             RoundedRectangle(cornerRadius: 2)
                 .fill(r.warn ? XPalette.warn : XPalette.accent.opacity(0.6))
                 .frame(width: 4)
-                .shadow(color: r.warn ? XPalette.warn.opacity(0.5) : .clear, radius: 6)
+                // 告警条的「亮」用**辉光**（径向渐变），不用投影 —— §6.3 注脚只允许两处阴影，
+                // 而 §7.8 把指示物的发光明确成辉光。竖条外侧垫一层同色径向光。
+                .background {
+                    if r.warn {
+                        Rectangle()
+                            .fill(XGradient.glow(XPalette.warn))
+                            .frame(width: 60)
+                            .blur(radius: 12)
+                            .allowsHitTesting(false)
+                    }
+                }
 
             HStack(spacing: XSpace.m) {
                 VStack(alignment: .leading, spacing: XSpace.xxs) {
@@ -181,7 +191,7 @@ struct FeedPage: View {
                             .xFont(.caption.monospacedDigit())
                             .foregroundStyle(XPalette.textSub)
                         Text("·")
-                            .foregroundStyle(XPalette.textTertiary)
+                            .foregroundStyle(XPalette.textSub)
                         Text(r.lockName)
                             .xFont(.caption)
                             .foregroundStyle(XPalette.textSub)
@@ -260,8 +270,9 @@ struct FeedPage: View {
                 .foregroundStyle(XPalette.textTertiary)
             if alarms > 0 {
                 HStack(spacing: 2) {
+                    // 规范 §10：图标最小 12pt（原 8pt 低于档位下限）。
                     Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.system(size: 8, weight: .semibold))
+                        .font(.system(size: XIcon.xs, weight: .semibold))
                     Text(String(alarms))
                         .xFont(.caption2.monospacedDigit())
                 }

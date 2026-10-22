@@ -75,7 +75,7 @@ struct FirmwarePage: View {
             XPalette.canvas.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: XSpace.l) {
+                VStack(spacing: XSpace.section) {
                     if running {
                         upgradeStage.xScrollLift()
                     } else if failed {
@@ -305,8 +305,17 @@ struct FirmwarePage: View {
         VStack(spacing: XSpace.l) {
             ZStack {
                 // 底环
+                //
+                // 规范 §14-9「纯色（非渐变）描边画环」是**命中即返工**的一条；
+                // §7.8 也写「所有环必须渐变或分色，纯色单环 = 不合格」。
+                // 这里原来是 .stroke(XPalette.hairline, lineWidth: 14) —— 纯色。
+                // 改成与开锁大环同一套凹槽渐变（DSRing.trackTop → trackBottom），
+                // 两处的「环」才是同一种材质。
                 Circle()
-                    .stroke(XPalette.hairline, lineWidth: 14)
+                    .strokeBorder(
+                        LinearGradient(colors: [DSRing.trackTop, DSRing.trackBottom],
+                                       startPoint: .top, endPoint: .bottom),
+                        lineWidth: 14)
                     .frame(width: 180, height: 180)
 
                 // 进度环
@@ -323,7 +332,7 @@ struct FirmwarePage: View {
 
                 VStack(spacing: 2) {
                     Text("\(Int(pct))%")
-                        .xFont(.title, weight: .semibold)
+                        .xFont(.display, weight: .semibold)
                         .monospacedDigit()
                         .foregroundStyle(XPalette.text)
                     Text(stageName)
@@ -357,7 +366,7 @@ struct FirmwarePage: View {
                 if rate > 0 {
                     Text(String(format: "%.1f %%/s", rate))
                         .xFont(.footnote.monospacedDigit())
-                        .foregroundStyle(XPalette.textTertiary)
+                        .foregroundStyle(XPalette.textSub)
                 }
             }
 
@@ -388,7 +397,8 @@ struct FirmwarePage: View {
                     Group {
                         if done {
                             Image(systemName: "checkmark")
-                                .font(.system(size: 11, weight: .bold))
+                                // 规范 §10：图标最小 12pt（原 11pt）。
+                                .font(.system(size: XIcon.xs, weight: .bold))
                                 .foregroundStyle(XPalette.onAccent)
                         } else {
                             Circle().strokeBorder(
@@ -399,7 +409,7 @@ struct FirmwarePage: View {
                 )
             Text(label)
                 .xFont(.caption2, weight: current ? .semibold : .regular)
-                .foregroundStyle(done || current ? XPalette.text : XPalette.textTertiary)
+                .foregroundStyle(done || current ? XPalette.text : XPalette.textSub)
         }
     }
 
@@ -488,7 +498,7 @@ struct FirmwarePage: View {
                                         .foregroundStyle(XPalette.text)
                                     Text(dateShort(r.at))
                                         .xFont(.caption2)
-                                        .foregroundStyle(XPalette.textTertiary)
+                                        .foregroundStyle(XPalette.textSub)
                                 }
                                 Spacer(minLength: 0)
                             }

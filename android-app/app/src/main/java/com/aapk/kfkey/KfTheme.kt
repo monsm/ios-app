@@ -20,60 +20,68 @@ import androidx.compose.ui.graphics.Color
  *   套进去会得到一堆"M3 默认感"的颜色, 与本仓暗色暖金基调打架。
  */
 internal data class KfColors(
-    val bgTop: Color,
-    val bgBottom: Color,
+    // ── 画布 ──
+    val canvas: Color,
+    // ── 表面三档 (范式 3.1) ──
     val surface: Color,
-    val ink: Color,
-    val inkSub: Color,
+    val surfaceAlt: Color,
+    val surfaceSunken: Color,
+    // ── 描边 ──
+    val hairline: Color,
+    val hairlineStrong: Color,
+    // ── 文字 ──
+    val text: Color,
+    val specular: Color,
+    val textSub: Color,
+    val textTertiary: Color,
+    // ── 强调 ──
     val accent: Color,
-    // 强调色上的前景色: 暗色档的暖金很亮, 用深墨字; 浅色档的暖金被压深, 必须用白字。
+    val accentText: Color,
     val onAccent: Color,
+    // ── 语义 ──
     val ok: Color,
-    val bad: Color
+    val warn: Color,
+    val danger: Color,
 )
 
-/** 暗色档 —— 沿用既有 Theme.kt 的取值, 一个都不改 (D14)。 */
+/**
+ * 只做深色 —— 规范 §13.4「应用体：只做深色，不提供 App 内明暗切换」。
+ *
+ * 2026-10-22 审计修正：上一版是 KfDarkColors + KfLightColors 双档、由 isSystemInDarkTheme() 切换。
+ * 那是「App 内明暗切换」的实现本体，与规范直接冲突 —— light 档已整块删除。
+ *
+ * 逐值对账 iOS 的 App/Core/Theme.swift XPalette（深色档），两端一致性由 tools/tokendrift.js 机检。
+ *
+ * 故意不镜像（本端没有对应界面，镜像过来就是死令牌）：
+ *   surfaceChip 无 StatChip 顶部胶囊行
+ *   kindFp      无 凭证工坊，无凭证三类语义
+ *   kindTemp    无 凭证工坊
+ *   kindOtp     无 凭证工坊
+ */
 internal val KfDarkColors = KfColors(
-    bgTop = Color(0xFF0A0C10),
-    bgBottom = Color(0xFF141A22),
-    surface = Color(0xFF161C24),
-    ink = Color(0xFFF3F6FA),
-    inkSub = Color(0xFF8B96A8),
-    accent = Color(0xFFE8B45C),
-    onAccent = Color(0xFF14181E),
-    ok = Color(0xFF6EE7A8),
-    bad = Color(0xFFF87171)
+    canvas = Color(0xFF000000),          // 范式 §2.1: 画布纯黑
+    surface = Color(0xFF1C1C1E),         // 范式 §2.2: 应用体卡片
+    surfaceAlt = Color(0xFF24242A),
+    surfaceSunken = Color(0xFF101012),
+    // 规范 §2 原文就是半透明白 rgba(255,255,255,0.08) —— 不是实色。0.08*255 = 20 = 0x14
+    hairline = Color(0x14FFFFFF),
+    hairlineStrong = Color(0xFF4A4A52),
+    text = Color(0xFFFFFFFF),
+    specular = Color(0xFFC8C8D4),
+    textSub = Color(0xFF8D8D93),
+    // 规范 §3.3: #6A6A6E, on 黑 3.90:1, 仅 >=17pt 或 Bold。
+    textTertiary = Color(0xFF6A6A6E),
+    accent = Color(0xFFD98B45),
+    accentText = Color(0xFFE8A05C),
+    onAccent = Color(0xFF14100A),
+    ok = Color(0xFF30D158),
+    warn = Color(0xFFFF9F0A),
+    danger = Color(0xFFFF4A40),
 )
-
-/**
- * 浅色档 —— 新做。
- * 底 #F5F3EF 暖白 (与 iOS 门面的 #F6F3ED 同族, 但**不是同一个值**: 各端保留自己的基调, D14),
- * 强调色取 #8F6119: 暖金在白底上要压到 4.5:1 才够。实测对比度 ——
- *   #E8B45C 对白底 1.90 (不够) / #B8862F 对白底 3.24 (不够) / **#8F6119 对白底 5.40, 对暖白底 4.96 (通过)**。
- */
-internal val KfLightColors = KfColors(
-    bgTop = Color(0xFFF7F5F1),
-    bgBottom = Color(0xFFEDE9E1),
-    surface = Color(0xFFFFFFFF),
-    ink = Color(0xFF17140F),
-    inkSub = Color(0xFF5C5245),
-    accent = Color(0xFF8F6119),
-    onAccent = Color(0xFFFFFFFF),
-    ok = Color(0xFF15803D),
-    bad = Color(0xFFB91C1C)
-)
-
-internal val LocalKfColors = staticCompositionLocalOf { KfDarkColors }
-
-/**
- * 包一层深浅双模。跟随系统; 将来要加 App 内三档开关 (跟随系统/亮/暗) 时,
- * 只需在这里加一个参数, 调用点不用动。
- */
-@Composable
 internal fun KfTheme(
-    dark: Boolean = isSystemInDarkTheme(),
+    // 参数保留（调用点不必改），但**不再生效**：规范 §13.4 不允许 App 内明暗切换。
+    @Suppress("UNUSED_PARAMETER") dark: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colors = if (dark) KfDarkColors else KfLightColors
-    CompositionLocalProvider(LocalKfColors provides colors, content = content)
+    CompositionLocalProvider(LocalKfColors provides KfDarkColors, content = content)
 }

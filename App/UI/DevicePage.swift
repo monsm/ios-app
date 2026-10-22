@@ -38,16 +38,24 @@ struct DevicePage: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: XSpace.l) {
-                identityCard.xScrollLift()
-                attentionCard.xScrollLift()
-                capacityCard
-                metricsRow.xScrollLift()
-                detailSection.xScrollLift()
-                recentSection.xScrollLift()
+            // 规范 5.3 骨架。注意 identityCard 是 kind: .hero —— 即全屏**唯一**的
+            // 渐变主视觉卡 (规范 §7.4 / §9「一屏一张渐变卡」)。
+            // 下面五块都必须是普通 .group, 不许再出现第二个 hero。
+            VStack(spacing: XSpace.section) {
+                VStack(spacing: XSpace.section) {
+                    identityCard.xScrollLift()
+                    attentionCard.xScrollLift()
+                    capacityCard
+                    metricsRow.xScrollLift()
+                }
+                VStack(spacing: XSpace.rowGap) {
+                    detailSection.xScrollLift()
+                    recentSection.xScrollLift()
+                }
             }
             .padding(.horizontal, XSpace.gutter)
-            .padding(.vertical, XSpace.l)
+            .padding(.top, XSpace.m)
+            .padding(.bottom, XSpace.xxl)
         }
         .background(XPalette.canvas)
         .task { refreshDerived() }
@@ -279,7 +287,7 @@ struct DevicePage: View {
                 Spacer(minLength: 0)
                 Text("\(used) / \(cap)")
                     .xFont(.caption.monospacedDigit())
-                    .foregroundStyle(XPalette.textTertiary)
+                    .foregroundStyle(XPalette.textSub)
             }
             // 格子条：已占用实色，剩余凹陷
             HStack(spacing: 3) {
@@ -438,7 +446,7 @@ struct DevicePage: View {
             }
             if let note {
                 Text(note)
-                    .xFont(.system(.footnote))
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.warn)
                     .frame(maxWidth: .infinity, alignment: .trailing)
                     .fixedSize(horizontal: false, vertical: true)

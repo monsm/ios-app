@@ -1777,9 +1777,11 @@ struct ExportCenterView: View {
     private var actionList: some View {
         XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: XSpace.m) {
-            Button { startCSV() } label: { Label("CSV 标准导出", systemImage: "tablecells") }   // 683 标准导出
-            Button { startJSON() } label: { Label("原始 JSON + hex", systemImage: "curlybraces") }   // 684 原始
-            Button { startPDF() } label: { Label("月度 PDF 报告", systemImage: "doc.text") }   // 685 月度
+            // 这三个是**唯一**的导出入口，此前是裸 Label 按钮：字高约 20pt，
+            // 点得中全凭运气。加 minHeight + contentShape 补到 44（视觉不变，只扩命中）。
+            Button { startCSV() } label: { Label("CSV 标准导出", systemImage: "tablecells").frame(minHeight: XHit.min).contentShape(Rectangle()) }   // 683 标准导出
+            Button { startJSON() } label: { Label("原始 JSON + hex", systemImage: "curlybraces").frame(minHeight: XHit.min).contentShape(Rectangle()) }   // 684 原始
+            Button { startPDF() } label: { Label("月度 PDF 报告", systemImage: "doc.text").frame(minHeight: XHit.min).contentShape(Rectangle()) }   // 685 月度
             VStack(alignment: .leading, spacing: XSpace.xs) {
                 Label("运行日志", systemImage: "text.alignleft")   // 548 运行日志
                     .xFont(.body)
@@ -1814,19 +1816,19 @@ struct ExportCenterView: View {
                 .pickerStyle(.menu)
                 .frame(minHeight: XHit.min)
             }
-            Button { startDayImages() } label: { Label("单日长图", systemImage: "photo.on.rectangle.angled") }   // 686/706 单日长图
-            Button { startAlarmCard() } label: { Label("告警分享卡", systemImage: "exclamationmark.bubble") }   // 688/718 告警分享卡
-            Button { startAlarmFactSheet() } label: { Label("告警事实单页 (PDF)", systemImage: "doc.text") }
+            Button { startDayImages() } label: { Label("单日长图", systemImage: "photo.on.rectangle.angled").frame(minHeight: XHit.min).contentShape(Rectangle()) }   // 686/706 单日长图
+            Button { startAlarmCard() } label: { Label("告警分享卡", systemImage: "exclamationmark.bubble").frame(minHeight: XHit.min).contentShape(Rectangle()) }   // 688/718 告警分享卡
+            Button { startAlarmFactSheet() } label: { Label("告警事实单页 (PDF)", systemImage: "doc.text").frame(minHeight: XHit.min).contentShape(Rectangle()) }
             // 691 加密压缩导出: 口令线下告知, 本机不留 (与备份包同一套信封)
             SecureField("加密口令 (至少 6 位)", text: $zipPw)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .xFont(.footnote)
-            Button { startEncryptedZip() } label: { Label("加密压缩导出", systemImage: "lock.doc") }   // 691 加密压缩导出
+            Button { startEncryptedZip() } label: { Label("加密压缩导出", systemImage: "lock.doc").frame(minHeight: XHit.min).contentShape(Rectangle()) }   // 691 加密压缩导出
                 .disabled(zipPw.trimmingCharacters(in: .whitespaces).count < 6)
-            Button { printMonthly() } label: { Label("打印月度记录", systemImage: "printer") }   // 687/701 打印月度记录
-            Button { printOnePager() } label: { Label("告警一页纸", systemImage: "doc.text.magnifyingglass") }   // 717 告警一页纸
-            Button { printOralCard() } label: { Label("口述卡打印", systemImage: "person.text.rectangle") }   // 478 口述卡打印
+            Button { printMonthly() } label: { Label("打印月度记录", systemImage: "printer").frame(minHeight: XHit.min).contentShape(Rectangle()) }   // 687/701 打印月度记录
+            Button { printOnePager() } label: { Label("告警一页纸", systemImage: "doc.text.magnifyingglass").frame(minHeight: XHit.min).contentShape(Rectangle()) }   // 717 告警一页纸
+            Button { printOralCard() } label: { Label("口述卡打印", systemImage: "person.text.rectangle").frame(minHeight: XHit.min).contentShape(Rectangle()) }   // 478 口述卡打印
             }
         }
         .disabled(progress.running)
@@ -2170,10 +2172,10 @@ struct ExportCenterView: View {
             if let url = item.writeLocal() {
                 lastPath = url.path
                 lastSuccess = true
-                app.showToast("已生成 \(item.fileName)")   // 719 已生成
+                app.showToast("已生成 \(item.fileName)", tone: .done)   // 719 已生成
             } else {
                 lastSuccess = true
-                app.showToast("已生成 \(item.fileName) — 但写入本地文件失败, 可直接分享")
+                app.showToast("已生成 \(item.fileName) — 但写入本地文件失败, 可直接分享", tone: .caution)
             }
         } else if !err.isEmpty {
             lastSuccess = false

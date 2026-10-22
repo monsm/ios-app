@@ -178,13 +178,15 @@ struct AlarmsPage: View {
         // 组头信息（"N 条待处理" / "已处理"）保留为卡内小标题 ——
         // 那是用户扫读时的锚点，不能丢。
         ScrollView {
-            VStack(spacing: XSpace.l) {
+            // 规范 5.3 骨架: 概览 / 主告警 / 列表 / 已处理 —— 四件事, 区块间距 28。
+            // 旧实现一律 16, 于是"最高级告警占整块"这个紧迫感设计被周围的等距稀释掉了。
+            VStack(spacing: XSpace.section) {
                 if !alarms.isEmpty {
                     severityOverview
-                        .padding(.top, XSpace.s)
                 }
 
-                // 主告警：最高级未处理告警占整块 —— 紧迫感的核心
+                // 主告警：最高级未处理告警占整块 —— 紧迫感的核心。
+                // 它是本页**唯一的主角**, 所以它不套在卡片列表里, 单独一块。
                 primaryAlarm
 
                 if !alarms.isEmpty {
@@ -238,6 +240,7 @@ struct AlarmsPage: View {
                 }
             }
             .padding(.horizontal, XSpace.gutter)
+            .padding(.top, XSpace.m)
             .padding(.bottom, XSpace.xxl)
         }
         .background(XPalette.canvas)
@@ -291,7 +294,6 @@ struct AlarmsPage: View {
                 }
                 .frame(height: 8)
                 .animation(XMotion.standard, value: alarms.count)   // 标记已处理后比例条平滑收缩
-                .animation(XMotion.standard, value: alarms.count)   // 标记已处理后比例条平滑收缩
                 .accessibilityHidden(true)
 
                 // 三级读数
@@ -321,7 +323,7 @@ struct AlarmsPage: View {
                 .accessibilityHidden(true)
             Text("\(label) \(n)")
                 .xFont(.caption, weight: .medium)
-                .foregroundStyle(n > 0 ? XPalette.text : XPalette.textTertiary)
+                .foregroundStyle(n > 0 ? XPalette.text : XPalette.textSub)
                 .monospacedDigit()
                 .contentTransition(.numericText())   // 标记已处理后数字滚动
                 .contentTransition(.numericText())   // 标记已处理后数字滚动

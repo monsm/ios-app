@@ -35,7 +35,7 @@ struct GatewayPage: View {
             XPalette.canvas.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: XSpace.l) {
+                VStack(spacing: XSpace.section) {
                     if !confirmed {
                         stepOneCard.xScrollLift()
                     } else {
@@ -66,15 +66,12 @@ struct GatewayPage: View {
     private var stepOneCard: some View {
         XPanel(kind: .hero) {
             VStack(spacing: XSpace.m) {
-                ZStack {
-                    Circle()
-                        .fill(XPalette.warn.opacity(XOpacity.badge))
-                        .frame(width: 96, height: 96)
-                    Image(systemName: "light.beacon.max")
-                        .font(.system(size: XMetric.decorIcon(40), weight: .light))
-                        .foregroundStyle(XPalette.warn)
-                }
-                .accessibilityHidden(true)
+                // 规范 §10「圆形底」：只允许 StatChip 34pt / 列表 20pt，**其余不加底**。
+                // 这里原来是 96pt 的洗染圆底 —— 档位外，已去掉。
+                Image(systemName: "light.beacon.max")
+                    .font(.system(size: XIcon.xl, weight: .light))
+                    .foregroundStyle(XPalette.warn)
+                    .accessibilityHidden(true)
 
                 Text("先把网关重置")
                     .xFont(.title3, weight: .semibold)
@@ -94,7 +91,7 @@ struct GatewayPage: View {
                 if !confirmed {
                     Text("勾选后进入下一步")
                         .xFont(.caption2)
-                        .foregroundStyle(XPalette.textTertiary)
+                        .foregroundStyle(XPalette.textSub)
                 }
             }
             .padding(.vertical, XSpace.s)
@@ -123,6 +120,11 @@ struct GatewayPage: View {
                         Text("上一步")
                             .xFont(.caption)
                             .foregroundStyle(XPalette.accentText)
+                            // 它是一个向导里的"退回"，点不中就一直卡在这一步。
+                            // 视觉仍是小字（它不该抢主按钮的位置），命中补到 44。
+                            .padding(.horizontal, XSpace.s)
+                            .frame(minHeight: XHit.min)
+                            .contentShape(Rectangle())
                     }
                     .disabled(running)
                 }
@@ -234,15 +236,23 @@ struct GatewayPage: View {
         let stateTone: Color = !known ? XPalette.textTertiary : (online ? XPalette.ok : XPalette.textSub)
         return VStack(alignment: .leading, spacing: XSpace.m) {
             HStack(spacing: XSpace.s) {
-                ZStack {
-                    Circle()
-                        .fill(online ? XPalette.ok.opacity(XOpacity.glow) : XPalette.textTertiary.opacity(XOpacity.badge))
-                        .frame(width: 40, height: 40)
-                    Image(systemName: online ? "wifi" : "wifi.slash")
-                        .font(.system(size: XIcon.sm, weight: .medium))
-                        .foregroundStyle(online ? XPalette.ok : XPalette.textTertiary)
+                // 规范 §10「圆形底」：只允许 StatChip 34 / 列表 20，其余不加底。
+                // 这里原来是 40pt 圆底 —— 不在档位内。状态靠**图标 + 颜色 + 文字**三路表达，
+                // 不需要再垫一层圆（§13.3「不靠颜色单独表意」，图标的形状本身就变了）。
+                Image(systemName: online ? "wifi" : "wifi.slash")
+                    .font(.system(size: XIcon.md, weight: .medium))
+                    .foregroundStyle(online ? XPalette.ok : XPalette.textTertiary)
+                // 规范 7.8: 圆形状态指示的「亮」用辉光, 不用投影 ——
+                // 投影在黑底上只会把这一团糊成一圈灰边。
+                .background {
+                    if online {
+                        Circle()
+                            .fill(XGradient.glow(XPalette.ok))
+                            .frame(width: 44, height: 44)
+                            .blur(radius: 8)
+                            .allowsHitTesting(false)
+                    }
                 }
-                .shadow(color: online ? XPalette.ok.opacity(0.4) : .clear, radius: 8)
                 .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 2) {
@@ -314,7 +324,7 @@ struct GatewayPage: View {
         HStack(spacing: XSpace.s) {
             Text(label)
                 .xFont(.caption2)
-                .foregroundStyle(XPalette.textTertiary)
+                .foregroundStyle(XPalette.textSub)
             Spacer(minLength: 0)
             Text(value)
                 .xFont(.caption2.monospacedDigit())
@@ -328,7 +338,7 @@ struct GatewayPage: View {
         VStack(alignment: .leading, spacing: 1) {
             Text(label)
                 .xFont(.caption2)
-                .foregroundStyle(XPalette.textTertiary)
+                .foregroundStyle(XPalette.textSub)
             Text(value)
                 .xFont(.caption.monospaced())
                 .foregroundStyle(XPalette.text)

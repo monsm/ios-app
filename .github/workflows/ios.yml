@@ -151,6 +151,9 @@ jobs:
           node tools/uicoverage.js
 
 
+      - name: 'Glass 范式符合度审计 (Black Canvas / Glass Instrument 六类静态可判项; 报线索不判失败)'
+        run: node tools/glassaudit.js
+
       - name: 旧设计系统零残留 (legacyguard)
         run: node tools/legacyguard.js
 
@@ -336,6 +339,31 @@ jobs:
       # (步骤名不含裸冒号, 与上面那条工作流自检的 grep 兼容。)
       - name: '安卓端字节面影子对拍 (KfProtocol/AutoOpenKit vs vendor JS + golden, 判失败)'
         run: node tools/kotlinshadow.js
+
+      # Glass 批新增。本地无 kotlinc/gradle/java, UI 层唯一能静态判的就是"结构还在不在"。
+      # 这条**不证明能编译** —— 它证明的是"改样式时没有当场把括号写断"。
+      # 与 swiftcheck 对 iOS 的角色相同, 只是晚了一整批才有: Android 侧此前连这一层都没有。
+      - name: '安卓端括号码平衡 (kotlinbalance: 跳过四种字符串形态与注释后配平; 判失败)'
+        run: node tools/kotlinbalance.js
+
+      # 两端令牌「逐值同源」这个约定此前只靠人记 —— 实证: Android 侧有三处值落后了整整一轮,
+      # 而它们不会崩、不会报错, 只是两端的同一个语义色不一样了。
+      - name: '两端设计令牌对账 (tokendrift: iOS XPalette 与 Android KfColors 逐值比对; 判失败)'
+        run: node tools/tokendrift.js
+
+      # 规范 §11.1 的动画清单是**封闭清单**（'只能用这些'）。参数写错手感觉不出来，
+      # 在没有编译器也没有真机时完全不可见 —— 所以把六条曲线逐参数锁在表上。
+      - name: '动效曲线与规范 §11.1 逐参数一致 (motionlock: 判失败)'
+        run: node tools/motionlock.js
+
+      # 令牌 → 渲染 → 像素 的闭环。断言用规范里钉死的常量, 不是从 Theme.swift 反读
+      # (反读等于两边一起变, 探针永远绿 —— 第一版就是这么错的)。
+      # 它只证明颜色链路没断, 不证明 SwiftUI 长这样。
+      - name: '预览渲染与令牌一致性 (preview: 无头 Edge 截图后逐像素比对, **深色档（规范 §13.4 只做深色）**; 判失败)'
+        run: |
+          node tools/preview.js --png
+          node tools/preview.js --png --light
+          node tools/preview.js --check
 
       # 签名密钥指纹核对 (2026-10-18): 用户报"签名不一致, 不能覆盖安装"。
       # 排查结论: keystore/kfkey.p12 自 c4a6a4d 起就随仓库走且从未被改过 (本地与 HEAD 的

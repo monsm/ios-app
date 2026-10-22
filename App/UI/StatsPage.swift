@@ -33,16 +33,23 @@ struct StatsPage: View {
 
     @State private var model: StatsKit.StatModel?
     @State private var loaded = false
+    /// 「怎么开的门」的明细在记录页 —— §7.11 的卡头链接需要一个真实目的地。
+    @State private var showEvents = false
+    @State private var showSecurity = false
 
     private var mac: String { app.currentMac }
 
     var body: some View {
         ScrollView {
-            VStack(spacing: XSpace.l) {
+            VStack(spacing: XSpace.section) {
                 if let m = model {
                     if m.isDegraded {
                         degradedCard(m).xScrollLift()
                     } else {
+                        // 顶部胶囊行 —— 规范 7.2「双列固定」: 2 个胶囊并排撑满,
+                        // 各占 (屏宽 - 28 - 8) / 2, **不滚动**。
+                        // 这是"一屏最上面那条我关心什么"的摘要, 它先行, 卡片跟后。
+                        chipRow(m)
                         safetyCard(m).xScrollLift()
                         paretoCard(m)
                         daypartCard(m)
@@ -55,12 +62,37 @@ struct StatsPage: View {
                 }
             }
             .padding(.horizontal, XSpace.gutter)
-            .padding(.vertical, XSpace.l)
+            .padding(.top, XSpace.m)
+            .padding(.bottom, 108)
         }
         .background(XPalette.canvas)
         .navigationTitle("统计")
         .navigationBarTitleDisplayMode(.large)
+        .sheet(isPresented: $showEvents) {
+            EventsPage().environmentObject(app)
+        }
+        .sheet(isPresented: $showSecurity) {
+            SecurityPage().environmentObject(app)
+        }
         .task { if !loaded { load() } }
+    }
+
+    /// 顶部胶囊行 (规范 7.2 双列固定形态)
+    ///
+    /// 标签在上、灰; 值在下、白 —— 主次不能反。两个胶囊共用同一条
+    /// 派生宽度公式 (屏宽 − 页边距×2 − 列间距) / 2, 不各写各的。
+    @ViewBuilder
+    private func chipRow(_ m: StatsKit.StatModel) -> some View {
+        HStack(spacing: XSpace.rowGap) {
+            XStatChip(label: "总开门",
+                      value: "\(m.opensTotal)",
+                      systemImage: "door.left.hand.open",
+                      tint: XPalette.accentText)
+            XStatChip(label: "告警",
+                      value: "\(m.alarmsTotal)",
+                      systemImage: "exclamationmark.triangle",
+                      tint: m.alarmsTotal > 0 ? XPalette.warn : XPalette.ok)
+        }
     }
 
     private func load() {
@@ -83,9 +115,9 @@ struct StatsPage: View {
         if !rows.isEmpty {
             XPanel {
                 VStack(alignment: .leading, spacing: XSpace.m) {
-                    Text("怎么开的门")
-                        .xFont(.subheadline, weight: .medium)
-                        .foregroundStyle(XPalette.textSub)
+                    // 规范 §7.11：卡内顶部的标题是**链接**（灰 14 + chevron），不是白粗标题。
+                    // 这张卡的数据出自「记录」页，点它能直接进去看明细 —— 之前没有这个入口。
+                    XCardLink(title: "怎么开的门") { showEvents = true }
 
                     let peak = max(rows.map { $0.count }.max() ?? 1, 1)
                     ForEach(Array(rows.enumerated()), id: \.offset) { _, r in
@@ -111,7 +143,7 @@ struct StatsPage: View {
                                 .frame(width: 30, alignment: .trailing)
                             Text(String(format: "%.0f%%", r.pct))
                                 .xFont(.caption2.monospacedDigit())
-                                .foregroundStyle(XPalette.textTertiary)
+                                .foregroundStyle(XPalette.textSub)
                                 .frame(width: 32, alignment: .trailing)
                         }
                         .accessibilityElement(children: .combine)
@@ -162,7 +194,7 @@ struct StatsPage: View {
                                     .foregroundStyle(XPalette.text)
                                 Text(p.span)
                                     .xFont(.caption2)
-                                    .foregroundStyle(XPalette.textTertiary)
+                                    .foregroundStyle(XPalette.textSub)
                             }
                             .frame(width: 66, alignment: .leading)
                             GeometryReader { geo in
@@ -214,7 +246,7 @@ struct StatsPage: View {
                     if let spread = m.firstOpenHourSpread {
                         Text("最早 " + hourText(spread.earliest) + " · 最晚 " + hourText(spread.latest))
                             .xFont(.caption2)
-                            .foregroundStyle(XPalette.textTertiary)
+                            .foregroundStyle(XPalette.textSub)
                     }
                 }
             }
@@ -231,9 +263,10 @@ struct StatsPage: View {
         let alarmDays = m.dailyPoints.filter { $0.alarms > 0 }.count
         return XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: XSpace.m) {
-                Text("安全")
-                    .xFont(.subheadline, weight: .medium)
-                    .foregroundStyle(XPalette.textSub)
+                // 这一处**有真去处**（安全中心），所以做成 §7.11 的卡头链接。
+                // 同页其余四个区块标题没有独立页面 —— 它们保持纯标签。
+                // 硬套链接会是假可供性：点了没反应比没有箭头更糟。
+                XCardLink(title: "安全") { showSecurity = true }
 
                 HStack(spacing: XSpace.l) {
                     XMetricTile(
@@ -311,7 +344,7 @@ struct StatsPage: View {
                 .foregroundStyle(XPalette.textSub)
             Text(note)
                 .xFont(.caption2)
-                .foregroundStyle(XPalette.textTertiary)
+                .foregroundStyle(XPalette.textSub)
                 .lineLimit(1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)

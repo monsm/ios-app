@@ -190,7 +190,7 @@ struct BackupBundle: Codable {
         /// 全部字段可选：缺字段 = 这次备份没带 = 恢复时不动本机，而不是"重置成默认"。
         var appearance: Appearance?
         struct Appearance: Codable {
-            var theme: String?        // kf_theme  ""/light/dark/black
+            var theme: String?        // kf_theme  §13.4 只做深色: 备份里只认 ""/dark/black
             var accent: String?       // kf_accent 六套品牌色之一
             var density: String?      // kf_density
             var radius: String?       // kf_radius (900)
@@ -308,7 +308,7 @@ enum BackupKit {
         // 字段**保留在 schema 里**(旧包/小程序仍可能带这些键, 删字段会破坏 Codable 兼容),
         // 但收集时一律传 nil —— 新备份不再携带这些已不存在的偏好。
         return BackupBundle.Globals.Appearance(
-            theme: enumVal("kf_theme", ["", "light", "dark", "black"]),
+            theme: enumVal("kf_theme", ["", "dark", "black"]),
             accent: enumVal("kf_accent", ["", "indigo", "forest", "amber", "graphite", "rose", "aurora"]),
             density: nil,
             radius: nil,
@@ -384,7 +384,7 @@ enum BackupKit {
             guard let v, allowed.contains(v) else { return }
             DB.store.set(key, v)
         }
-        set("kf_theme", a.theme, ["", "light", "dark", "black"])
+        set("kf_theme", a.theme, ["", "dark", "black"])
         set("kf_accent", a.accent, ["", "indigo", "forest", "amber", "graphite", "rose", "aurora"])
         set("kf_week_start", a.weekStart, ["", "mon", "sun", "sat"])
         // 2026-10-20 (Q15 减法): density/radius/rowH/tlGap/motion/heroTex 六档已删除。

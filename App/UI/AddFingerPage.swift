@@ -104,22 +104,35 @@ struct AddFingerPage: View {
                     .frame(width: 200, height: 200)
                     .scaleEffect(ripple ? 1.35 : 1.0)
                     .opacity(ripple ? 0 : 0.8)
-                    .animation(.easeOut(duration: 0.6), value: ripple)
+                    .animation(XMotion.standard, value: ripple)
 
                 // 中心指纹
-                Image(systemName: "touchid")
-                    .font(.system(size: XMetric.decorIcon(96), weight: .ultraLight))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: presses.isEmpty
-                                ? [XPalette.textTertiary, XPalette.textTertiary.opacity(0.6)]
-                                : [XPalette.accent, XPalette.accent.opacity(0.7)],
-                            startPoint: .top, endPoint: .bottom))
-                    .scaleEffect(reduceMotion ? 1 : (breathe ? 1.03 : 0.97))
-                    .animation(reduceMotion ? nil : .easeInOut(duration: 2.6).repeatForever(autoreverses: true),
-                               value: breathe)
-                    .shadow(color: presses.isEmpty ? .clear : XPalette.accent.opacity(0.4),
-                            radius: presses.isEmpty ? 0 : 20)
+                //
+                // 呼吸动画走 XBreathing 一处实现 —— 它自带 .transaction 切断隐式继承。
+                // 此前这里是一段手写 repeatForever：与外层 .animation 抢 scaleEffect，
+                // 表现为呼吸偶发顿挫（本仓 DESIGN-SPEC §2.5 记的就是这个坑）。
+                XBreathing(scale: 1.03) {
+                    Image(systemName: "touchid")
+                        .font(.system(size: XMetric.decorIcon(96), weight: .ultraLight))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: presses.isEmpty
+                                    ? [XPalette.textTertiary, XPalette.textTertiary.opacity(0.6)]
+                                    : [XPalette.accent, XPalette.accent.opacity(0.7)],
+                                startPoint: .top, endPoint: .bottom))
+                }
+                // 按下时「亮起来」用**辉光**，不用投影（规范 §6.3 注脚：黑底上唯一允许的阴影
+                // 只有设备样机与全屏 Sheet 边缘；§7.8 也把环/指示物的亮规定为辉光）。
+                // 辉光是径向渐变，投影是偏移的暗色 —— 在纯黑上后者只会把边缘糊脏。
+                .background {
+                    if !presses.isEmpty {
+                        Circle()
+                            .fill(XGradient.glow(XPalette.accent))
+                            .frame(width: 220, height: 220)
+                            .blur(radius: 24)
+                            .allowsHitTesting(false)
+                    }
+                }
 
                 // 计数
                 VStack {
@@ -185,7 +198,7 @@ struct AddFingerPage: View {
                         Spacer(minLength: 0)
                         Text(String(used) + " / " + String(cap))
                             .xFont(.caption2.monospacedDigit())
-                            .foregroundStyle(XPalette.textTertiary)
+                            .foregroundStyle(XPalette.textSub)
                     }
                 }
             }

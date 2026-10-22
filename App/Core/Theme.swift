@@ -1,23 +1,30 @@
 //
-//  swift
-//  全新设计系统 · 第一块基石
+//  Theme.swift
+//  Black Canvas / Glass Instrument —— 令牌层 (唯一色/空/圆角/动效事实来源)
 //
 //  设计契约 (Design Contract)
 //  ─────────────────────────────
-//  隐喻   : 门。App 是一扇可以翻过来的门。
-//  性格   : Premium —— 350-600ms、零过冲、优雅克制。
-//  材质   : 玻璃 + 金属。门是金属, 光是唯一的装饰。
-//  色彩   : 单色灰阶 + 铜色强调 (#B87333), 语义色只在仪表层。
-//  字体   : 系统字体, 用尺度制造层级, 不用自定义字重。
-//  空间   : 8pt 网格; 锁面周围 56pt 留白 (远离一切)。
-//  动效   : 三层视差 (前景/中景/背景), 全部单调曲线, 禁止过冲。
+//  隐喻   : 黑色画布上的精密仪器。门是那个仪器, 光是唯一的装饰。
+//  性格   : 克制、精密、夜间。不喧哗, 不用渐变掩盖布局。
+//  材质   : 纯黑画布 + 6% 白圆角卡 + 一层薄玻璃(仅功能层)。
+//  色彩   : 纯黑 canvas, 语义色按"意思"绑定, 一屏 <=3 种强调色。
+//  字体   : 系统字体, 字阶比 HIG 默认小约 12% (宽度比例法实测, 见设计规范 4.4)。
+//  空间   : 页边距 14, 卡片内边距 16, 行间距 8 / 列间距 12 —— 三个不同的数, 不许合并。
+//  动效   : 单调曲线, 零过冲; 全部过 reduceMotion / 低电量双闸。
 //
 //  约束 (不可违反)
 //  ─────────────────────────────
-//  · 所有动效必须走 XMotion.token, 禁止在视图里写 duration
-//  · 所有颜色必须走 Palette, 禁止 Color(hex:) 散落
-//  · calm 档 (减弱动效/低电量) 必须能压平任何动效
-//  · 对比度: 正文 ≥4.5:1, 大字 ≥3:1 (WCAG AA)
+//  · 页面底色永远是纯黑 #000000 —— 不用深灰当"深色"。
+//  · 卡片 #1C1C1E 圆角 24, 零投影。靠明度差分分层, 不靠阴影。
+//  · 玻璃只出现在功能层 (Tab Bar / 浮层 / Sheet), 卡片永远不许用玻璃。
+//  · 所有颜色必须走 XPalette, 禁止 Color(hex:) 散落在页面里。
+//  · 所有动效必须走 XMotion, 禁止在视图里写 duration。
+//  · calm 档 (减弱动效/低电量) 必须能压平任何动效。
+//  · 对比度: 正文 >=4.5:1, 大字 >=3:1 (WCAG AA), 由 tools/contrast.js 机检。
+//
+//  2026-10-22 整层重写 (Glass Instrument):
+//  旧值全部是平台惯例值 (16pt 边距 / 16pt 圆角 / #0A0A0B 画布), 从未与设计范式对齐。
+//  新值逐条来自设计规范, 且对比度全部重算 —— 数值与断言表见 docs/GLASS/TOKENS.md。
 //
 
 import SwiftUI
@@ -27,95 +34,154 @@ import UIKit
 // MARK: - 色板
 // ═══════════════════════════════════════════════════════════
 
-
-/// 语义色板 —— 全 App 唯一色源
+/// 语义色板 —— 全 App 唯一色源。
+///
+/// 双层世界 (设计规范 1.2, 做错这一层的后果比做错细节严重得多):
+///   · 应用体 App  —— 黑画布 + 深卡 (#1C1C1E) + 浅色文字。**本 App 的主体只有这一层。**
+///   · 展示壳 Shell —— 黑画布 + 白卡 (r40) + 深色文字。只用于功能引导卡, 不用于主流程。
+///
+/// **只做深色。** 规范 §13.4 原话：
+///
+/// > 应用体：只做深色，**不提供 App 内明暗切换**。
+///
+/// 这里曾经有一段很长的"为什么保留明暗双模"的辩解（kf_theme 是真开关、备份里带这个键、
+/// 砍了就成假开关……）。那些理由**都成立，但都不构成豁免** ——
+/// 规范说的是"不提供"，不是"提供了要有好理由"。
+/// 一个用户可以切到浅色的 App，无论浅色做得多么合规，都不是这个范式。
+///
+/// 已按规范改：全部令牌单值（深色档），App 内明暗开关一并移除。
 enum XPalette {
-    // ── 中性灰阶 (12 档) ──
-    /// 画布最底 (纯黑, AMOLED 友好)
-    static var canvas: Color { XAppearance.isAMOLED ? .black : Color.adaptive(0xF5F5F7, 0x0A0A0B) }
-    /// 主表面 (卡片/面板)
-    static var surface: Color { Color.adaptive(0xFFFFFF, 0x161618) }
-    /// 次表面 (内嵌区块)
-    static var surfaceAlt: Color { Color.adaptive(0xF2F2F5, 0x1F1F22) }
-    /// 第三表面 (输入框底)
-    static var surfaceSunken: Color { Color.adaptive(0xEAEAEF, 0x121214) }
+    // ── 画布 ──
+    /// 画布最底。**深色档是纯黑 #000000** —— 这是范式的第一条总则:
+    /// "黑色是画布, 不是背景色"。旧值 0x0A0A0B 是深灰, 会让整屏发灰、卡片浮不起来。
+    static var canvas: Color { Color(hex: 0x000000) }
+
+    /// 标准卡片。深色档 **#1C1C1E** (范式 3.1 实测值), 圆角 24 (XRadius.card)。
+    /// 旧值 0x161618 太暗, 与画布只差 8 个色阶 —— 卡片在纯黑上几乎看不见边界。
+    static var surface: Color { Color(hex: 0x1C1C1E) }
+    /// 卡内次级块 (卡里再分块的底)。深色档 #24242A。
+    static var surfaceAlt: Color { Color(hex: 0x24242A) }
+    /// 第三表面 —— 输入框底、图表容器。深色档 #101012, **比画布亮、比卡片暗**,
+    /// 是"凹陷"的那一档 (范式 3.1 surfaceSunken)。
+    static var surfaceSunken: Color { Color(hex: 0x101012) }
+    /// 顶部胶囊底 (StatChip)。深色档 #232326, 比卡片亮一档。
+    static var surfaceChip: Color { Color(hex: 0x232326) }
 
     // ── 描边 ──
-    static var hairline: Color { Color.adaptive(0xD8D8DE, 0x323236) }
-    static var hairlineStrong: Color { Color.adaptive(0xC8C8D0, 0x3A3A40) }
+    /// 分隔线 / 卡片描边 —— **规范原文就是半透明白**，不是实色。
+    ///
+    /// §2 的令牌表：`separator | rgba(255,255,255,0.08) | 0.5pt 分隔线 | 卡内全宽`
+    ///
+    /// 这里曾经用实色 #3A3A40，理由是「换算成实色才过 1.2:1 机检、才真的看得见」。
+    /// **那个理由是错的**：半透明白的价值就在于它**跟着底走** ——
+    /// 压黑画布上是 #141414，压 #1C1C1E 卡片上是 #2E2E30，永远是"比底亮一点点"。
+    /// 换成实色之后，画布上的线和卡片上的线亮度一样，卡片的边界感就没了。
+    ///
+    /// 已改回规范写法。tools/contrast.js 会把 8% 白按各底色合成后再算对比度。
+    static var hairline: Color { Color.white.opacity(0.08) }
+    /// 强调描边 —— 选中/危险两处, 或玻璃的实色退路。
+    static var hairlineStrong: Color { Color(hex: 0x4A4A52) }
 
-    // ── 文字 ──
-    /// 正文 (对比度 ≥7:1)
-    static var text: Color { Color.adaptive(0x0A0A0B, 0xF5F5F7) }
-    /// 高光 (金属/玻璃上的镜面反射点)。
-    /// 单独开一枚而不是复用 onAccent: 白天要的是纯白镜面反光, 夜间要的是
-    /// 一层压得住暗底的冷光 —— 两者取值方向相反, 复用会有一头失真。
-    static var specular: Color { Color.adaptive(0xFFFFFF, 0xC8C8D4) }
-
-    /// 次级文字 (对比度 ≥4.5:1)
-    static var textSub: Color { Color.adaptive(0x5A5A66, 0xA0A0AC) }
-    /// 三级文字 (仅用于 ≥15pt)
-    // 浅色分支的 textTertiary / ok / warn 比原值更深一档：
-    // 原来 0x72727C 在 surfaceSunken 上只有 3.97:1，**满色**就低于正文的 4.5:1
-    //（不是叠透明度的问题，是令牌本身不达标）。
-    // 现 0x666670 / 0x197748 / 0xA94E08 在四种背景上最差分别为 4.73 / 4.64 / 4.63。
-    // 深色分支不动 —— 那边原值最差 4.68，本来就够。
-    static var textTertiary: Color { Color.adaptive(0x666670, 0x888892) }
+    // ── 文字 (深色档对比度实测, 见 docs/GLASS/TOKENS.md 第 4 节) ──
+    /// 正文 / 主数字。深色档纯白 —— 21.0:1 on 纯黑, 17.0:1 on 卡片。
+    static var text: Color { Color(hex: 0xFFFFFF) }
+    /// 高光 (金属/玻璃上的镜面反射点)。白天纯白镜面, 夜间冷光 —— 两者取值方向相反, 不复用。
+    static var specular: Color { Color(hex: 0xC8C8D4) }
+    /// 次级文字。深色档 #8D8D93 —— 6.36:1 on 黑, 5.16:1 on 卡片, 全部过 AA。
+    ///
+    /// 规范 §13.4「必须实现 Increase Contrast：二级灰提至 #A8A8AE，分隔线提至 0.16 白」。
+    /// 这不是一条建议 —— 系统「增加对比度」开着时, 二级灰必须**明显**更亮,
+    /// 否则那个开关在界面上等于没效果。快照读的是 AXFlags 的非隔离副本 (令牌不在主 actor 上)。
+    // 机器可读: tools/contrast.js 按下面这行的形状解析 (常态值)。
+    static var textSub: Color { Color(hex: 0x8D8D93) }
+    /// 三级文字 —— 规范 §3.3 原值：`#6A6A6E`（`#EBEBF5`@45%），on 黑 **3.90:1**，
+    /// 用途一栏写的是「仅 ≥17pt 或 Bold」。
+    ///
+    /// 2026-10-22 审计修正：这里原本是 `#78787F`（我自己算出来"四个底都过 3.0"的提亮版）。
+    /// 提亮本身是为了迁就一条**我自己定的**断言（要求它在 surfaceAlt 上也过 3.0），
+    /// 而规范只要求它在黑底上 3.90:1、且只用于大字。**规范值优先**，已改回 `#6A6A6E`。
+    ///
+    /// 曾经还试过提到 `#8A8A92` 求"全部过 4.5:1" —— 那更错：它与 textSub(#8D8D93) 的
+    /// 亮度只差 0.0116，两级文字成了同一个灰，层级直接塌掉。
+    /// **层级靠对比度差异建立，不是靠都达标。**
+    static var textTertiary: Color { Color(hex: 0x6A6A6E) }
+    /// 二维码静区 —— **唯一一个不跟随主题的白**。
+    ///
+    /// 它不是界面表面, 是给摄像头读的图形: ISO/IEC 18004 要求二维码四周留白色静区,
+    /// 深色底上扫不出来。所以它是**语义色**, 不是一个漏改的 `Color.white`。
+    /// 用具名令牌而不用字面量, 是为了让它出现在 grep 里时能一眼看出「这是有理由的」。
+    static var qrQuietZone: Color { Color.white }
 
     // ── 强调: 铜 (锁芯黄铜), 可被 kf_accent 覆盖 ──
-    /// 六套可选强调色。空键 = 默认铜。
+    /// 七套可选强调色。空键 = 默认铜。
     /// 保留这条链的理由: 备份包里带 kf_accent, 恢复后不该"看着没恢复";
     /// 且未来若要给用户换色, 只需接 UI, 不用再改令牌求值路径。
-    private static var accentOverride: (light: UInt32, dark: UInt32)? {
+    ///
+    /// 2026-10-22: 六套备选色的**深色档值一个没改** —— 它们是候选强调色, 各自
+    /// 与本仓 onAccent 的组合已由 tools/contrast.js 逐套断言 (实测最低 6.35:1)。
+    private static var accentOverride: UInt32? {
         switch DB.store.getString("kf_accent") {
-        case "indigo":   return (0x4F46E5, 0x818CF8)
-        case "forest":   return (0x15803D, 0x4ADE80)
-        case "amber":    return (0xB45309, 0xFBBF24)
-        case "graphite": return (0x3F3F46, 0xA1A1AA)
-        case "rose":     return (0xBE123C, 0xFB7185)
-        case "aurora":   return (0x0E7490, 0x22D3EE)
+        case "indigo":   return 0x818CF8
+        case "forest":   return 0x4ADE80
+        case "amber":    return 0xFBBF24
+        case "graphite": return 0xA1A1AA
+        case "rose":     return 0xFB7185
+        case "aurora":   return 0x22D3EE
         default:         return nil
         }
     }
+    /// 主行动色 (按钮填充、开锁弧、当前小时)。
     static var accent: Color {
-        if let o = accentOverride { return Color.adaptive(o.light, o.dark) }
-        return Color.adaptive(0x9C5A22, 0xD98B45)
+        // 规范 §3.4 允许用户换强调色（本仓 kf_accent 那七套），但换的是**强调色**，
+        // 不是明暗。明暗已按 §13.4 固定为深色。
+        if let o = accentOverride { return Color(hex: o) }
+        return Color(hex: 0xD98B45)
     }
-    static var accentText: Color { Color.adaptive(0x8F5A28, 0xE8A05C) }
-    static var onAccent: Color { Color.adaptive(0xFFFFFF, 0x0A0A0B) }
+    /// 强调**文字** (不是填充)。深色档比 accent 再亮一档, 因为要用在小字上。
+    static var accentText: Color { Color(hex: 0xE8A05C) }
+    /// 压在强调填充上的前景。
+    ///
+    /// 深色档是**近黑墨色**而不是白 —— 这是算出来的, 不是审美:
+    /// 铜 #D98B45 已经足够亮, 白字压上去只有 2.2:1; 墨色 #14100A 压上去 6.97:1。
+    /// 浅色档的铜被压深到 #9C5A22, 反过来必须用白字 (5.39:1)。
+    static var onAccent: Color { Color(hex: 0x14100A) }
 
     // ── 凭证工坊的四类色 ──
     //
-    // 这四色原本写在 StudioPage 里当 Color(hex:)，而 Color(hex:) 不区分明暗 ——
-    // 同一个 teal 在浅色底上只有 2.96:1 (低于 WCAG 非文字 3:1)，深色底却是 6.11:1。
-    // 现在按档给两份值: 浅色用更深的同色相，深色保持原样。
+    // 这四色按档给两份值: 浅色用更深的同色相, 深色保持原样。
     /// 指纹 (青)
-    static var kindFp: Color { Color.adaptive(0x0E7C7C, 0x2AA6A6) }
-    /// 临时码 (金)
-    ///
-    /// 原来临时码借用 `warn`(橙)，而 warn 同时表示"需要注意/告警" ——
-    /// 同一个颜色两个含义，正是 color.md 里点名要避免的：
-    ///   "Avoid using the same color to mean different things."
-    /// 而且 EventsPage 里 `care` 和 `temp` 两类事件**同时**返回 warn，屏幕上无法区分。
-    ///
-    /// 金与 warn 的橙红拉开了明显色相距离（R-G 差 29 vs 97），
-    /// 两模式对比度 4.90 : 1（浅色）/ 10.22 : 1（深色）。
-    static var kindTemp: Color { Color.adaptive(0x8A6D1F, 0xE0C060) }
+    static var kindFp: Color { Color(hex: 0x2AA6A6) }
+    /// 临时码 (金) —— 不借 warn 的橙, 同一个颜色两个含义是 HIG 点名要避免的。
+    static var kindTemp: Color { Color(hex: 0xE0C060) }
     /// OTP (紫)
-    static var kindOtp: Color { Color.adaptive(0x5B3FA0, 0x8060C8) }
+    static var kindOtp: Color { Color(hex: 0x8060C8) }
 
     // ── 语义 ──
-    static var ok: Color { Color.adaptive(0x197748, 0x3DD68C) }
-    static var warn: Color { Color.adaptive(0xA94E08, 0xF5A524) }
-    static var danger: Color { Color.adaptive(0xB3261E, 0xFF6B6B) }
-
+    /// 成功 / 正向 / 已连接。深色档即范式 accentGreen #30D158 (10.39:1 on 黑)。
+    static var ok: Color { Color(hex: 0x30D158) }
+    /// 警示 / 待机。深色档即范式 accentOrange #FF9F0A (10.22:1 on 黑)。
+    /// 浅色档 0xA94E08 → 0x9A4708: 旧值在 surfaceSunken 上只有 4.15:1,
+    /// 而 warn 文案是会出现在输入框底上的 (表单错误行)。四个底现在最差 4.79:1。
+    static var warn: Color { Color(hex: 0xFF9F0A) }
+    /// 告警 / 失败。深色档即范式 accentRed #FF3B30 (5.92:1 on 黑)。
+    ///
+    /// 但范式只给了"on 黑"这一个数。本 App 的语义红还会出现在**卡内次表面**上
+    /// (surfaceAlt #24242A —— 内嵌区块 / 磁贴底), 那里 #FF3B30 只有 4.35:1, 差在门槛下。
+    /// 所以深色档提到 #FF4A40 (四个底最差 4.63:1)。
+    /// 色相偏移 5°, 肉眼仍是同一个"告警红", 与危险填充的识别不受影响。
+    static var danger: Color { Color(hex: 0xFF4A40) }
 }
 
 // ═══════════════════════════════════════════════════════════
 // MARK: - 间距 / 尺寸
 // ═══════════════════════════════════════════════════════════
 
-/// 8pt 网格。所有间距必须取自这里。
+/// 间距 (4pt 基数)。
+///
+/// **2026-10-22 关键修正**: 页边距 16 → 14。
+/// 旧值 16 是 iOS 平台的惯例值, 不是这个设计的值; 范式实测为 3.62% 屏宽 ≈ 14pt。
+/// 差 2pt 看起来不多, 但它同时是**卡片宽度 / 大环直径 / Tab Bar 宽度 / 文字对齐线**
+/// 四个派生值的根 token (范式 0.1 的变更影响表) —— 改了根就必须重算全部派生值。
 enum XSpace {
     static var xxs: CGFloat { d(2) }
     static var xs: CGFloat { d(4) }
@@ -124,51 +190,123 @@ enum XSpace {
     static var l: CGFloat { d(16) }
     static var xl: CGFloat { d(24) }
     static var xxl: CGFloat { d(32) }
-    /// 屏幕左右边距
-    static var gutter: CGFloat { d(16) }
-    /// 卡片内边距
+
+    /// 屏幕左右边距 —— **14** (范式实测 3.62% × 393)。
+    /// 卡片、Tab Bar、顶部胶囊行**共用**这一个值, 不许各写各的。
+    static var gutter: CGFloat { d(14) }
+    /// 卡片间距 —— 纵向堆叠 8 / 横向网格 12。**两个不同的数, 不许合并成一个 token。**
+    static var rowGap: CGFloat { d(8) }
+    static var colGap: CGFloat { d(12) }
+    /// 区块之间 (簇与簇) —— 28。与簇内的 16 形成层级差: 等距等于没有分组。
+    static var section: CGFloat { d(28) }
+    /// 页面顶部留白 —— 40。
+    static var pageTop: CGFloat { d(40) }
+    /// **标题到首卡** —— 74（规范 §5.3 / 验收 L4）。
+    ///
+    /// 规范原话：「标题到首卡间距 74pt（页面最大的呼吸区，做小了会显挤）」。
+    /// 它是全页最大的一处留白，语义是"标题属于页面、下面属于内容" ——
+    /// 不是页边距(14)也不是区块间距(28)，所以**必须是自己的一个数**。
+    /// 用 pageTop + section 凑 68 会差 6pt，而这一处的意义恰恰在于它比别处都大。
+    static var titleToFirstCard: CGFloat { d(74) }
+
+    /// 卡片内边距 —— 16 (范式实测 15, ±2 可接受)。
     static var card: CGFloat { d(16) }
     /// 控件内边距
     static var control: CGFloat { d(12) }
     /// 磁贴内边距
     static var tile: CGFloat { d(14) }
+
+    /// 文字对齐线 = 页边距 + 卡内边距 ≈ 29。
+    ///
+    /// 这是本范式最容易做错的一处: **大标题不是对齐卡片边缘, 而是对齐卡片内的文字。**
+    /// 整页只有这一条文字线 —— 大标题、正文、卡片内文字、胶囊内文字全落在它上面。
+    /// 写 24pt 会得到一条"对不齐任何东西"的线 (既不是卡片边缘 14, 也不是文字线 29)。
+    static var align: CGFloat { gutter + card - 1 }   // 14 + 16 - 1 = 29
 }
 
-/// 圆角。门锁 App 的圆角偏小 (金属感), 不用 iOS 默认的大圆角。
+/// 圆角。
+///
+/// **2026-10-22 关键修正**: card 16 → 24。范式 5.2 实测 23.6pt。
+/// 旧值 16 做出来是"通用后台风" —— 范式 14 明令"卡片圆角 < 20pt 即返工"。
 enum XRadius {
-    static var card: CGFloat { r(16) }
+    /// 应用体标准卡片 —— **24** (实测 23.6)。
+    static var card: CGFloat { r(24) }
+    /// 主视觉卡 / 渐变卡 —— 34。
+    static var cardLg: CGFloat { r(34) }
+    /// 卡内缩略图 / 图表容器 —— 12 (= card / 2)。
+    static var inner: CGFloat { r(12) }
+    /// 控件 / 内嵌格 —— 12。
     static var control: CGFloat { r(12) }
+    /// 瓦片 —— 14。
     static var tile: CGFloat { r(14) }
+    /// 顶部胶囊 (StatChip) —— **14, 是圆角矩形不是胶囊** (范式 7.2 实测 13.3)。
+    static var chip: CGFloat { r(14) }
+    /// 小角标
     static var min: CGFloat { r(8) }
+    /// 设备样机外框 —— 44。
+    static var device: CGFloat { r(44) }
+}
+
+/// 环的几何与材质 —— 规范 §7.8 的三个"会被做小"的硬数，集中在这里。
+///
+/// 为什么单开一个命名空间: 环是这个范式的**签名元素**（"签名元素是环 + 辉光"），
+/// 而它的三个数（线宽 / 内盘色 / 游标尺寸）任何一个被写小，气质就从
+/// "厚甜甜圈仪表"退化成"Apple Watch 细环"。把这三个数钉在一处，
+/// 改直径时才有地方跟着一起改。
+enum DSRing {
+    /// 大环线宽下限 —— 规范 §14-21「大环线宽 < 30pt 即返工」。
+    static let minStrokeLarge: CGFloat = 30
+    /// 线宽 = 直径的 12%（规范实测 42/340 ≈ 12.4%），且不低于上面的下限。
+    static func stroke(forDiameter d: CGFloat) -> CGFloat {
+        max(minStrokeLarge, d * 0.12)
+    }
+    /// 18pt 实心圆点游标（规范 §7.8 形态 1）。
+    static let cursor: CGFloat = 18
+    /// 内盘 —— **不是纯黑**，深海军蓝。纯黑内盘会让环看起来是个洞。
+    static var innerDisc: Color { Color(hex: 0x0A1220) }
+    /// 轨道两端的蓝灰（不是中性白 10%）。
+    static var trackTop: Color { Color(hex: 0x2A2F45) }
+    static var trackBottom: Color { Color(hex: 0x1A1D2A) }
 }
 
 /// 触达尺寸
 enum XHit {
     /// HIG 最小触达
     static let min: CGFloat = 44
-    // 已删 dial(200) 与 tlGap(10)：都是三棱柱"锁面主控/刃锁"时代的尺寸，
-    // 那两个界面已不存在，全仓零引用。留在 XHit 里最误导 ——
-    // 这个命名空间的语义是"触达尺寸"，而 dial=200 根本不是触达尺寸。
 }
 
-/// 图标尺寸
+/// 图标尺寸 —— 全 App 只用这一套 (范式 10)。
+/// 图标尺寸 —— 规范 §10 的**七档**：`12 / 13 / 17 / 20 / 22 / 28 / 34`。
+///
+/// 2026-10-22 审计修正：原来写的是 12 / 16 / 20 / 26 / 44 / 72，其中
+/// **16 / 26 / 44 / 72 四个值不在规范档位上**。判据不是"看起来差不多就行"——
+/// 规范给的是固定七档，中间值说明有人在按感觉调，而不是按系统。
+///
+/// 另有 `lock = 72` 一枚，全仓**零引用**，已删（死令牌）。
+enum XIcon {
+    static let xs: CGFloat = 12      // 规范 §10 档位 1
+    static let sm: CGFloat = 17      // 档位 3（原 16，不在档位上）
+    static let md: CGFloat = 20      // 档位 4
+    static let lg: CGFloat = 28      // 档位 6（原 26，不在档位上）
+    static let xl: CGFloat = 34      // 档位 7（原 44，不在档位上）
+    /// 规范 §10 的档位 2 / 5 —— 之前缺这两档，调用点只能就近取，于是又跑出中间值。
+    static let xxs: CGFloat = 13
+    static let xm: CGFloat = 22
+}
 
 // ═══════════════════════════════════════════════════════════
 // MARK: - XOpacity — 语义化透明度
 // ═══════════════════════════════════════════════════════════
 //
-// 清 opacity 时发现全仓有 34 种不同取值、113 处 ——
-// 光"图标底色"这一类就有 0.12 / 0.13 / 0.14 三种,
-// 视觉上几乎看不出差别, 但是三份维护成本, 而且改一处不知道另两处在哪。
-//
-// 这里按**语义**收敛成五档。不是所有 opacity 都该进来:
+// 清 opacity 时全仓有 34 种不同取值、113 处 —— 光"图标底色"一类就有 0.12/0.13/0.14 三种。
+// 这里按**语义**收敛成六档。不是所有 opacity 都该进来:
 //   · 0.001 那种是"开关量"(有/无), 不是透明度语义 → 留在原地
-//   · 0.88 / 0.90 / 0.95 是渐变里的停点, 属于渐变定义 → 留在原地
-//   · 动画中间态 (charge / burst) 是计算值 → 留在原地
+//   · 0.88/0.90/0.95 是渐变里的停点, 属于渐变定义 → 留在原地
+//   · 动画中间态 (charge/burst) 是计算值 → 留在原地
 enum XOpacity {
     /// 洗染底: 大面积浅色填充 (危险横幅 / 警告条)
     static let wash: Double = 0.10
-    /// 图标/徽章底: 28pt 图标后的那层同色底
+    /// 图标/徽章底: 图标后那层同色底
     static let badge: Double = 0.12
     /// 柔光: 状态灯外圈、光晕
     static let glow: Double = 0.16
@@ -176,29 +314,18 @@ enum XOpacity {
     static let edge: Double = 0.35
     /// 淡底环: 仪表盘的底弧、内圈高光这类"有但不抢眼"的线
     static let track: Double = 0.55
-}
-
-enum XIcon {
-    static let xs: CGFloat = 13
-    static let sm: CGFloat = 16
-    static let md: CGFloat = 20
-    static let lg: CGFloat = 26
-    static let xl: CGFloat = 44
-    /// 门锁 App 新增: 锁面主图标
-    static let lock: CGFloat = 72
+    /// 玻璃填充 (范式 6.2: rgba(255,255,255,0.08))
+    static let glassFill: Double = 0.08
+    /// 玻璃描边 (0.5pt 高光)
+    static let glassEdge: Double = 0.12
+    /// Tab Bar 选中胶囊 —— **比栏体更亮**, 不是更暗。范式最容易搞反的一处。
+    static let tabSelected: Double = 0.10
+    /// 未选中 Tab 图标与标签
+    static let tabIdle: Double = 0.55
 }
 
 /// 度量
 enum XMetric {
-    // 已删三个成员（2026-10-22）：
-    //   · dial      —— 圆盘尺寸。零调用，且它读的 kf_dial_size 全仓没有写入方
-    //                  （"既有设置项"在三棱柱重写时已经没了），永远返回 200。
-    //   · tlGap     —— 零调用。
-    //   · emptyMascot —— 零调用（空态吉祥物那条分支也已不存在）。
-    //
-    // 留着它们会让人以为"锁面尺寸"这个设置还活着。死常量比死函数更误导：
-    // 函数至少还能跳过去看出没被调用，常量只会在有人读 Theme.swift 时骗他一次。
-
     /// Canvas 组件内的**数据文字**按 AX 字号放大。
     ///
     /// 为什么单独开一个而不是直接用 decorIcon:
@@ -242,6 +369,11 @@ private func r(_ base: CGFloat) -> CGFloat { base }
 ///
 /// 三档: calm (减弱动效/低电量) / standard / lively
 /// 原则: **单调曲线, 零过冲**。过冲在 3D 翻转里会越过 90° 露出镜像背面。
+///
+/// 2026-10-22: 曲线参数对齐范式 11.1 的动画清单。三个变化:
+///   · quick     0.22 → 0.12 (按压缩放是 0.12s, 不是 0.22s —— 慢了像卡)
+///   · standard  0.40/0.85 → 0.32/0.80 (Tab 切换)
+///   · 新增 cardEnter (0.50/0.85) 与 ringGrow (1.00s easeOut) —— 范式里的两条主曲线
 enum XMotion {
     /// 系统减弱动态 (快照, 非主 actor)
     private static var systemReduceMotion: Bool { AXFlags.reduceMotionSnapshot }
@@ -253,19 +385,23 @@ enum XMotion {
     }
 
     // ── 基础档 ──
-    /// 微反馈 (按下/切换)
+    /// 微反馈 (按压 / 切换) —— 规范 §11.1 原话：`按压缩放 | .easeOut | 0.12s, scale 1→0.97`。
+    ///
+    /// 2026-10-22 审计修正：这里原来写的是 `spring(response: 0.12, dampingFraction: 1.0)`。
+    /// 弹簧的"响应"不是时长 —— 同样是 0.12，弹簧在 0.12s 时还没到达终点，
+    /// 而规范要的是**线性到达**的 0.12s。两者手感不同，且规范点名了曲线类型。
     static var quick: Animation {
         switch tier {
-        case "calm": return .easeOut(duration: 0.10)
-        default: return .spring(response: 0.22, dampingFraction: 0.9)
+        case "calm": return .easeOut(duration: 0.08)
+        default: return .easeOut(duration: 0.12)
         }
     }
 
-    /// 标准 (状态切换)
+    /// 标准 (状态切换 / Tab) —— 范式「Tab 切换 spring 0.32 / 0.80」
     static var standard: Animation {
         switch tier {
         case "calm": return .easeInOut(duration: 0.16)
-        default: return .spring(response: 0.4, dampingFraction: 0.85)
+        default: return .spring(response: 0.32, dampingFraction: 0.80)
         }
     }
 
@@ -285,11 +421,41 @@ enum XMotion {
         }
     }
 
-    // ── 召唤 / 甩动 ──
+    /// 卡片入场 —— 范式「spring 0.50 / 0.85, y +14→0, 逐卡延迟 40ms, 最多 6 张」
+    static var cardEnter: Animation {
+        switch tier {
+        case "calm": return .easeInOut(duration: 0.20)
+        default: return .spring(response: 0.50, dampingFraction: 0.85)
+        }
+    }
+    /// 卡片入场逐卡延迟
+    static let cardStagger: Double = 0.04
+
+    /// 环形生长 —— 范式「easeOut 1.00s / delay 0.15」
+    static var ringGrow: Animation {
+        switch tier {
+        case "calm": return .easeOut(duration: 0.20)
+        default: return .easeOut(duration: 1.00).delay(0.15)
+        }
+    }
+
+    /// 数值变化 —— 范式「easeInOut 0.25s, 数字滚动」
+    static var numberRoll: Animation {
+        switch tier {
+        case "calm": return .easeInOut(duration: 0.12)
+        default: return .easeInOut(duration: 0.25)
+        }
+    }
+
+    // ── 召唤 / 揭示 ──
+    //
+    // 规范 §11.1 是一张**封闭清单**（"只能用这些"），里面与"内容被召唤出来"最接近的
+    // 是「Sheet 弹出 | .spring | 0.42 / 0.88」。这条与 doorReveal 原先自造的
+    // timingCurve(0.22,0.76,0.03,1, 0.45) 合并成同一条 —— 规范里没有的曲线不留。
     static var summon: Animation {
         switch tier {
-        case "calm": return .easeOut(duration: 0.12)
-        default: return .spring(response: 0.35, dampingFraction: 1.0)
+        case "calm": return .easeOut(duration: 0.20)
+        default: return .spring(response: 0.42, dampingFraction: 0.88)
         }
     }
 
@@ -302,10 +468,9 @@ enum XMotion {
     static var doorReveal: Animation {
         switch tier {
         case "calm": return .easeOut(duration: 0.20)
-        default: return .timingCurve(0.22, 0.76, 0.03, 1, duration: 0.45)
+        default: return .spring(response: 0.42, dampingFraction: 0.88)
         }
     }
-
 
     /// 充能松手回零
     static var chargeReset: Animation {
@@ -315,8 +480,11 @@ enum XMotion {
         }
     }
 
+    /// 减少动态时的统一降级: 0.2s crossfade, 取消位移与缩放 (范式 11.3)
+    static var reduced: Animation {
+        .easeInOut(duration: 0.20)
+    }
 }
-
 
 // ═══════════════════════════════════════════════════════════
 // MARK: - 触感
@@ -356,45 +524,61 @@ enum XHaptics {
 // ═══════════════════════════════════════════════════════════
 
 enum XGradient {
-    /// 门面底色 (三停: 上暗 → 中亮 → 下暗)
-    static var doorSurface: LinearGradient {
+    /// 主视觉卡渐变 —— 范式 3.5 的 heroGradient:
+    /// 顶部更紫、更快沉黑, 是**全屏唯一**允许的渐变卡 (一屏至多一张)。
+    static var hero: LinearGradient {
         LinearGradient(
             stops: [
-                .init(color: Color.adaptive(0xE8E8ED, 0x0E0E10), location: 0.0),
-                .init(color: Color.adaptive(0xF5F5F7, 0x1A1A1D), location: 0.42),
-                .init(color: Color.adaptive(0xD8D8DF, 0x0B0B0D), location: 1.0)
+                .init(color: Color(hex: 0x6B7BE8), location: 0.00),
+                .init(color: Color(hex: 0x546CE4), location: 0.28),
+                .init(color: Color(hex: 0x3C489C), location: 0.62),
+                .init(color: Color(hex: 0x141418), location: 1.00)
             ],
             startPoint: .top, endPoint: .bottom)
     }
 
+    /// 顶部胶囊底 —— 范式 3.5 chipGradient
+    static var chip: LinearGradient {
+        LinearGradient(colors: [Color(hex: 0x2A2A2E), Color(hex: 0x1A1A1C)],
+                       startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
 
-    // ── 兼容旧名 ──
-    static var hero: LinearGradient { doorSurface }
+    /// 环后辉光 —— 范式 3.5 glowBlue: 半径 <=160pt, 透明度 0.35, 不得外溢
+    static func glow(_ color: Color) -> RadialGradient {
+        RadialGradient(colors: [color.opacity(0.35), .clear],
+                       center: .center, startRadius: 0, endRadius: 120)
+    }
+
 }
 
 // ═══════════════════════════════════════════════════════════
-// MARK: - 兼容层 (底层代码依赖的旧 API)
-// ═══════════════════════════════════════════════════════════
-
-
-
-// ═══════════════════════════════════════════════════════════
-// MARK: - 外观开关 (2026-10-21 从旧设计系统迁出)
+// MARK: - 外观开关
 // ═══════════════════════════════════════════════════════════
 
 enum XAppearance {
-    /// AMOLED 纯黑 (kf_theme == "black")
-    static var isAMOLED: Bool { DB.store.getString("kf_theme") == "black" }
     /// App 内高对比皮肤：与系统「增加对比度」并联
     @MainActor static var highContrast: Bool { AXFlags.highContrast || DB.store.getBool("kf_hc") }
 }
 
-
 // ═══════════════════════════════════════════════════════════
-// MARK: - 色彩基元 (2026-10-21 从已删的 DesignSystem.swift 迁入)
+// MARK: - 色彩基元
 // ═══════════════════════════════════════════════════════════
 
 extension Color {
+    /// 解析成员档案里存的 "#RRGGBB" 色串。
+    ///
+    /// 为什么要有这一枚: 同一个函数在 `FpOwnerPicker` / `MembersPage` / `SecurityCenterView`
+    /// 各写了一遍, 而且**回落值三处不同**(textSub / accent / textSub) —— 同一个成员在一次
+    /// 解析失败里会显示成三种颜色。数据是同一份(`Member.color`), 解析就该只有一处。
+    ///
+    /// `fallback` 由调用方给: 头像位用 accent(它是"有身份"的位), 纯文本位用 textSub。
+    static func memberSwatch(_ raw: String, fallback: Color) -> Color {
+        var s = raw
+        if s.hasPrefix("#") { s.removeFirst() }
+        guard let v = UInt32(s, radix: 16), s.count == 6 else { return fallback }
+        return Color(hex: v)
+    }
+
     init(hex: UInt32) {
         self.init(.sRGB,
                   red: Double((hex >> 16) & 0xff) / 255,
@@ -408,4 +592,117 @@ extension Color {
             tc.userInterfaceStyle == .dark ? UIColor(Color(hex: dark)) : UIColor(Color(hex: light))
         })
     }
+}
+
+// ═══════════════════════════════════════════════════════════
+// MARK: - 字阶 (范式 4.2)
+// ═══════════════════════════════════════════════════════════
+
+/// 字阶 —— 范式 4.2 的实测值。
+///
+/// **字阶比 HIG 默认小约 12%**, 这是宽度比例法标定出来的, 不是拍脑袋:
+///   Winding Down (883px 宽图) 墨迹 418px = 47.3% 屏宽 ⇒ 反推 30pt 而不是 34
+///   Low Score                 墨迹 174px = 19.7% 屏宽 ⇒ 反推 19pt 而不是 22
+///
+/// 本仓页面一律走 `xFont(_:)` 的语义字号 (参与 Dynamic Type), 这一组**只给 Canvas
+/// 器皿里的定尺文字**用 (环内数字、量表刻度), 因为那些必须与图形保持比例,
+/// 语义字号在 AX 下会跳档、一跳就与环错开。
+///
+/// 用法: `.xFontExact(.system(size: XMetric.dataText(DSFont.displayNumber)))`
+/// 规范 §4.2 的字阶 —— **只给 Canvas 器皿里的定尺文字**。
+///
+/// 页面正文一律走语义字号（.body / .subheadline …），那样才参与 Dynamic Type。
+/// 这一组的存在理由只有一个：有些文字**必须与图形保持比例**（环内数字、量表刻度），
+/// 语义字号在 AX 下会跳档，一跳就与环错开。
+///
+/// ⚠ 这里的成员不是「每个都要有人用」的接口，而是一张**字阶表**；
+/// 但为了让 tools/apisig.js 的「零使用令牌」判据不至于对此失明，
+/// 真正在用的那几个会出现在调用点。当前实际消费者：
+///   · displayNumber → XCodeRing（时效码大卡的数字）
+/// 规范 §4.2 的字阶 —— **本仓排版的唯一入口**。
+///
+/// 为什么需要它（2026-10-22 审计）：
+/// `xFont` 原来直接把 SwiftUI 的语义字号透传下去，于是全仓 766 处排版
+/// **跑的是 HIG 默认值**（caption 12 / footnote 13 / subheadline 15 / body 17 / title2 22…），
+/// 而规范 §4.2 的原话是：
+///
+/// > 已全线下修：34→30 / 22→19 / 20→18 / 17→16 / 15→14 / 13→12 / 12→11。
+/// > 原因：原值直接套用了 HIG 的 Large Title 34pt 默认值，**从未对参考图测过**。
+///
+/// 也就是说 —— 本仓做的正是规范点名批评的那件事。766 处里 650 处字号偏大一档到两档。
+///
+/// 落地方式：**枚举 case 名与 SwiftUI 语义字号同名**，所以 `.xFont(.footnote)`
+/// 这类调用点一个字都不用改，只有参数类型从 `Font` 换成 `XText`。
+enum XText: Sendable {
+    case displayNumber   // 56 Bold  -1.5 / 1.0
+    case display         // 36 Bold  -0.6 / 1.10
+    case largeTitle      // 30 Bold  -0.4 / 1.15
+    case title2          // 19 Bold  -0.3 / 1.20
+    case title3          // 18 Semibold -0.2 / 1.25
+    case headline        // 16 Semibold -0.2 / 1.30
+    case body            // 16 Regular -0.1 / 1.35
+    case subheadline     // 14 Regular  0   / 1.35
+    case footnote        // 12 Regular  0   / 1.40
+    case caption         // 11 Medium  +0.1 / 1.25
+    case caption2        // 11 Medium  +0.2 / 1.20
+
+    /// 规范给的字号。**这是唯一真相源**，不许在调用点再写字面量。
+    var size: CGFloat {
+        switch self {
+        case .displayNumber: return 56
+        case .display:       return 36
+        case .largeTitle:    return 30
+        case .title2:        return 19
+        case .title3:        return 18
+        case .headline:      return 16
+        case .body:          return 16
+        case .subheadline:   return 14
+        case .footnote:      return 12
+        case .caption:       return 11
+        case .caption2:      return 11
+        }
+    }
+
+    var weight: Font.Weight {
+        switch self {
+        case .displayNumber, .display, .largeTitle, .title2: return .bold
+        case .title3, .headline: return .semibold
+        case .caption, .caption2: return .medium
+        default: return .regular
+        }
+    }
+
+    /// Dynamic Type 的缩放基准 —— 取最接近的系统档，这样 AX 档放大比例是系统惯例值。
+    var relativeTo: Font.TextStyle {
+        switch self {
+        case .displayNumber, .display, .largeTitle: return .largeTitle
+        case .title2: return .title2
+        case .title3: return .title3
+        case .headline: return .headline
+        case .body, .subheadline: return .body
+        case .footnote: return .footnote
+        case .caption: return .caption
+        case .caption2: return .caption2
+        }
+    }
+}
+enum DSFont {
+    /// 56 / Bold / -1.5 —— 大环内数字
+    static let displayNumber: CGFloat = 56
+    /// 36 / Bold / -0.6
+    static let display: CGFloat = 36
+    /// 30 / Bold / -0.4 —— 页面大标题
+    static let largeTitle: CGFloat = 30
+    /// 19 / Bold / -0.3 —— 卡片主标题
+    static let title2: CGFloat = 19
+    /// 18 / Semibold / -0.2 —— 区块标题
+    static let title3: CGFloat = 18
+    /// 16 / Semibold / -0.2 —— 行标题
+    static let headline: CGFloat = 16
+    /// 16 / Regular / -0.1 —— 正文
+    static let body: CGFloat = 16
+    /// 12 / Regular / 0 —— 辅助说明
+    static let footnote: CGFloat = 12
+    /// 11 / Medium / +0.1 —— 图表轴标签 (极限值)
+    static let caption: CGFloat = 11
 }

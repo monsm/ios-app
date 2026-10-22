@@ -38,7 +38,8 @@ struct SecurityPage: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: XSpace.l) {
+            // 三块是三件事: 结论 / 风险 / 动作。区块间距 28。
+            VStack(spacing: XSpace.section) {
                 statusCard.xScrollLift()
                 if !risks.isEmpty || auditBroken || !selfCheckIssues.isEmpty {
                     riskCard.xScrollLift()
@@ -46,7 +47,8 @@ struct SecurityPage: View {
                 actionsCard.xScrollLift()
             }
             .padding(.horizontal, XSpace.gutter)
-            .padding(.vertical, XSpace.l)
+            .padding(.top, XSpace.m)
+            .padding(.bottom, XSpace.xxl)
         }
         .background(XPalette.canvas)
         .navigationTitle("本机保护")

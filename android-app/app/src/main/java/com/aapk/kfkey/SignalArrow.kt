@@ -135,12 +135,17 @@ fun SignalArrow(
     pitchDeg: Float = 0f,
     rollDeg: Float = 0f,
     sizeDp: Int = 260,
-    // 颜色由调用方从 LocalKfColors 显式传入: DrawScope 不是 Composable,
-    // 在这里读 LocalKfColors 编译不过 (Theme.kt:8 记过这次未采纳的尝试)。
-    okColor: Color = KfDarkColors.ok,
-    outlineColor: Color = Color.White,
+    // 颜色默认值**从主题解析**, 不再写死暗色档 (2026-10-22)。
+    // 旧写法是 okColor: Color = KfDarkColors.ok —— 浅色档下 S4 查找层的箭头仍拿暗色档的绿,
+    // 主题对它就失效了。传 null 表示"跟主题走"; 调用方若显式传色仍以传入值为准。
+    // DrawScope 里读不到 CompositionLocal, 所以在 Composable 作用域先解出来再往下传 —— 算法没动。
+    okColor: Color? = null,
+    outlineColor: Color? = null,
     modifier: Modifier = Modifier,
 ) {
+    val themeColors = LocalKfColors.current
+    val ok = okColor ?: themeColors.ok
+    val outline = outlineColor ?: themeColors.text
     val ctx = LocalContext.current
     val reduceMotion = remember(ctx) {
         runCatching {
@@ -178,7 +183,7 @@ fun SignalArrow(
             val cx = size.width / 2f
             val cy = size.height / 2f
             val len = size.minDimension * 0.62f
-            drawAirTagArrow(cx, cy, len, fill, armed, okColor, outlineColor)
+            drawAirTagArrow(cx, cy, len, fill, armed, ok, outline)
         }
     }
 }

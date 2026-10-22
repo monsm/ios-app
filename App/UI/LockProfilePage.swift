@@ -22,6 +22,7 @@ import UIKit
 struct LockProfilePage: View {
     @EnvironmentObject private var app: AppState
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     @State private var name = ""
     @State private var place = ""
@@ -73,7 +74,16 @@ struct LockProfilePage: View {
                             colors: [tint.opacity(0.9), tint.opacity(0.6)],
                             startPoint: .topLeading, endPoint: .bottomTrailing))
                     .frame(width: 96, height: 96)
-                    .shadow(color: tint.opacity(0.4), radius: 18)
+                    // 规范 7.8 通用自检: 环/圆盘**不得有投影，只用辉光**。
+                    // 这是全页的视觉主角 (锁牌), 18pt 的彩色投影在纯黑上会糊成一圈
+                    // 与主题色同色的脏边; 换成 radial 辉光才是"它在发光"。
+                    .overlay(
+                        Circle()
+                            .fill(XGradient.glow(tint))
+                            .frame(width: 150, height: 150)
+                            .blur(radius: 18)
+                            .allowsHitTesting(false)
+                    )
 
                 Image(systemName: symbol.isEmpty ? "lock.fill" : symbol)
                     .font(.system(size: XMetric.decorIcon(46), weight: .medium))
@@ -86,7 +96,7 @@ struct LockProfilePage: View {
 
             VStack(spacing: XSpace.xxs) {
                 Text(trimmed.isEmpty ? "未命名" : trimmed)
-                    .xFont(.title, weight: .semibold)
+                    .xFont(.display, weight: .semibold)
                     .foregroundStyle(XPalette.text)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
@@ -149,8 +159,9 @@ struct LockProfilePage: View {
 
     private func statusChip(_ icon: String, _ text: String, tone: Color) -> some View {
         HStack(spacing: 3) {
+            // 规范 §10：图标最小 12pt（原 9pt 低于档位下限）。
             Image(systemName: icon)
-                .font(.system(size: 9, weight: .medium))
+                .font(.system(size: XIcon.xs, weight: .medium))
             Text(text)
                 .xFont(.caption2.monospacedDigit())
         }
@@ -231,7 +242,11 @@ struct LockProfilePage: View {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 sectionTitle("符号", icon: "sparkles")
 
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: XSpace.s), count: 5),
+                // 规范 §13.1 AX1：多列网格 → 单列。5 列在无障碍字号下每格不足 40pt，
+                // 图标本身还在，但下面那行符号名会被压成竖排。
+                // 按 AX 档降列而不是缩字号 —— 缩字号等于拒绝放大。
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: XSpace.rowGap),
+                                         count: typeSize.isAccessibilitySize ? 3 : 5),
                           spacing: XSpace.m) {
                     ForEach(LockArchive.symbols) { s in
                         let selected = symbol == s.name
@@ -284,6 +299,10 @@ struct LockProfilePage: View {
                             Circle()
                                 .fill(LockArchive.swatchColor(s.key))
                                 .frame(width: selected ? 40 : 34, height: selected ? 40 : 34)
+                                // 色板圆点视觉最大 40pt（选中态），差 4pt。
+                                // 加透明外圈补到 44：圆点看着还是那么大，手指够得着。
+                                .frame(width: XHit.min, height: XHit.min)
+                                .contentShape(Circle())
                                 .overlay(
                                     Circle().strokeBorder(
                                         selected ? XPalette.text : XPalette.hairline,

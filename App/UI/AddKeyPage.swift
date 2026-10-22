@@ -99,7 +99,7 @@ struct AddKeyPage: View {
                     Spacer(minLength: 0)
                     Text(String(used) + " / " + String(cap))
                         .xFont(.caption2.monospacedDigit())
-                        .foregroundStyle(XPalette.textTertiary)
+                        .foregroundStyle(XPalette.textSub)
                 }
             }
             .xScrollLift()
@@ -126,7 +126,10 @@ struct AddKeyPage: View {
                                 lineWidth: pwdOK ? 2 : 1)
                     )
             )
-            .shadow(color: pwdOK ? XPalette.accent.opacity(0.25) : .clear, radius: 20)
+            // 规范 6.3: 应用体卡片**零投影**。原来这层 20pt 的铜色柔光是想让
+            // "密码够长"这个状态更醒目 —— 但那用不着一层投在卡片**外面**的光晕:
+            // 状态已经由 2pt 描边 + 颜色双通道表达了。
+            // 需要光的地方是环/仪表, 用 XGradient.glow; 卡片只许描边。
             .animation(XMotion.standard, value: pwdOK)
 
             // 隐藏的真输入框 (贴在屏外用系统键盘)
@@ -160,7 +163,7 @@ struct AddKeyPage: View {
                         Image(systemName: "text.magnifyingglass")
                             .font(.system(size: XIcon.xs, weight: .semibold))
                         Text(clash)
-                            .xFont(.system(.footnote))
+                            .xFont(.footnote)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .foregroundStyle(XPalette.warn)
@@ -191,7 +194,7 @@ struct AddKeyPage: View {
 
             if filled {
                 Text(ch)
-                    .xFont(.title, weight: .semibold)
+                    .xFont(.display, weight: .semibold)
                     .monospacedDigit()
                     .foregroundStyle(XPalette.accentText)
                     .transition(.asymmetric(

@@ -35,7 +35,7 @@ struct CarePage: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: XSpace.l) {
+            VStack(spacing: XSpace.section) {
                 periodCard.xScrollLift()
                 todoCard.xScrollLift()
                 historyRow.xScrollLift()
@@ -69,28 +69,55 @@ struct CarePage: View {
         let elapsed = care.lastCareAt > 0 ? (period - days) : 0
         // 周期环: "还剩多少"是一个进程量, 环比文字更直观。
         // 弧走的是「已过去多少」而不是「还剩多少」—— 走得越满越该动手。
+        // 规范 §7.6 StatCard 的卡内解剖（对照参考图里那张 Sleep 卡）：
+        //   卡头（14 灰 + chevron）→ 标题（19 Bold）→ 标签（13 灰）→ 值 + **右侧环槽**
+        //   → 分隔线 → 第二组 → 页脚注释。
+        //
+        // 旧实现是「环在左、文字在右」—— 那是图例的排法，不是数据卡。
+        // 规范把环放在**右侧槽**：左列是读的字，右列是扫的形状，眼睛先读标题再看进度。
         return XPanel(kind: .hero, tone: days <= 0 ? .warn : .ok) {
             VStack(alignment: .leading, spacing: XSpace.m) {
-                HStack(alignment: .center, spacing: XSpace.l) {
+                XCardLink(title: "保养") { showHistory = true }
+
+                // 标题 19 Bold（规范 §7.6 表：标题 → 标签 12pt）
+                Text(periodTitle(days))
+                    .xFont(.title3, weight: .bold)
+                    .foregroundStyle(XPalette.text)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, -XSpace.s)      // 卡头自带 44 命中高，这里收回 6pt 的墨迹间距
+
+                HStack(alignment: .center, spacing: XSpace.m) {
+                    // 左列：标签 13 灰 → 值 16 Semibold 白（标签在上、值在下，§7.2/§7.6 一致）
+                    VStack(alignment: .leading, spacing: XSpace.xxs) {
+                        Text(days > 0 ? "距离下次" : "状态")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textSub)
+                        Text(days > 0 ? "\(days) 天" : (care.lastCareAt > 0 ? "该做" : "未记录"))
+                            .xFont(.body, weight: .semibold, design: .rounded)
+                            .foregroundStyle(XPalette.text)
+                    }
+                    Spacer(minLength: 0)
+                    // 右侧槽：环 104pt（规范给 84 或更大），垂直居中。
+                    // 环心必须给**另一个量**：参考图里环心是 Score 53，而左边的值是 Duration 3h25m。
+                    // 之前我把环心也写成剩余天数 —— 于是同一张卡把同一个数字说了两遍。
+                    // 现在环心给「已用百分比」，左列给绝对值，两者互补而不是复读。
                     XCycleRing(
                         elapsed: elapsed,
                         period: max(period, 1),
-                        headline: care.lastCareAt > 0 ? (days > 0 ? "\(days)" : "该做") : "—",
-                        caption: care.lastCareAt > 0 ? (days > 0 ? "天后" : "保养") : "未记录",
+                        headline: care.lastCareAt > 0
+                            ? "\(Int((Double(elapsed) / Double(max(period, 1)) * 100).rounded()))%"
+                            : "—",
+                        caption: care.lastCareAt > 0 ? "已用" : "未记录",
                         size: 104)
-
-                    VStack(alignment: .leading, spacing: XSpace.xs) {
-                        Text(periodTitle(days))
-                            .xFont(.title3, weight: .semibold)
-                            .foregroundStyle(XPalette.text)
-                            .fixedSize(horizontal: false, vertical: true)
-                        Text(periodDetail(days))
-                            .xFont(.footnote)
-                            .foregroundStyle(XPalette.textSub)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
+
+                XHairline(verticalPadding: 14)
+
+                Text(periodDetail(days))
+                    .xFont(.caption)
+                    .foregroundStyle(XPalette.textSub)
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 if days <= 0 {
                     Button("记录本次保养") {

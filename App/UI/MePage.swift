@@ -40,7 +40,9 @@ struct MePage: View {
         // 五个 Section 的内容一行没动（都是 XRow / summaryTile），
         // 只把外壳换成 XPanel，header/footer 转成卡片底部 caption。
         ScrollView {
-            VStack(spacing: XSpace.l) {
+            // 规范 5.3 骨架: 区块之间 28 (section), 不是 16。
+            // 五个分组是五件不同的事, 等距会让它们读成一个长列表。
+            VStack(spacing: XSpace.section) {
                 statusSummary
                 protectionSection
                 lockSection
@@ -48,7 +50,7 @@ struct MePage: View {
                 aboutSection
             }
             .padding(.horizontal, XSpace.gutter)
-            .padding(.top, XSpace.s)
+            .padding(.top, XSpace.m)
             .padding(.bottom, XSpace.xxl)
         }
         .background(XPalette.canvas)
@@ -118,15 +120,16 @@ struct MePage: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.55)
             HStack(spacing: 3) {
+                // 规范 §10：图标最小 12pt（原 9pt 低于档位下限）。
                 Image(systemName: icon)
-                    .font(.system(size: 9, weight: .semibold))
+                    .font(.system(size: XIcon.xs, weight: .semibold))
                     .accessibilityHidden(true)
                 Text(label)
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
             }
             .xFont(.caption2)
-            .foregroundStyle(XPalette.textTertiary)
+            .foregroundStyle(XPalette.textSub)
         }
         .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
         .padding(.horizontal, XSpace.m)
@@ -151,11 +154,16 @@ struct MePage: View {
                     tone: DB.store.getBool("kf_applock") ? .ok : .warn,
                     showsChevron: true)
             }
-            NavigationLink { SecurityPage().environmentObject(app) } label: {
+            // ⚠ 这一条原来和上面那条**指向同一个 SecurityPage 根**，
+            // 于是「本机数据保护」和「隐私与伪装」点进去看到的是同一屏 ——
+            // 用户按标题预期找防窥/伪装，落到的是一张"安全吗"的总览卡。
+            // 现在直达真正承载这三件事的那一页（SecurityPeekView，
+            // 它正是 SecurityPage 里「防窥与遮蔽」那条的落点）。
+            NavigationLink { SecurityPeekView().environmentObject(app) } label: {
                 XRow(
                     systemImage: "eye.slash",
                     title: "隐私与伪装",
-                    subtitle: "偷窥模式 / 伪装 / 访客",
+                    subtitle: "后台即糊 / 限时可见 / 水印",
                     showsChevron: true)
             }
             // ═══ 诊断与自检 ═══
@@ -291,7 +299,7 @@ struct MePage: View {
     private func caption(_ text: String) -> some View {
         Text(text)
             .xFont(.caption2)
-            .foregroundStyle(XPalette.textTertiary)
+            .foregroundStyle(XPalette.textSub)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 

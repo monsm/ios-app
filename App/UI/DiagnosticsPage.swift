@@ -46,7 +46,7 @@ struct DiagnosticsPage: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: XSpace.l) {
+            VStack(spacing: XSpace.section) {
                 let _ = revision
                 selfCheckCard
                 healthCard
@@ -90,7 +90,7 @@ struct DiagnosticsPage: View {
                         .foregroundStyle(bad == 0 ? XPalette.ok : XPalette.warn)
                         .accessibilityHidden(true)
                     Text(SelfCheck.summary(lines))
-                        .xFont(.system(.subheadline, weight: .medium))
+                        .xFont(.subheadline, weight: .medium)
                         .foregroundStyle(XPalette.text)
                     Spacer(minLength: 0)
                 }
@@ -105,9 +105,9 @@ struct DiagnosticsPage: View {
                             .frame(width: 22)
                             .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(l.name).xFont(.system(.footnote, weight: .medium))
+                            Text(l.name).xFont(.footnote, weight: .medium)
                                 .foregroundStyle(XPalette.text)
-                            Text(l.detail).xFont(.system(.caption))
+                            Text(l.detail).xFont(.caption)
                                 .foregroundStyle(XPalette.textSub)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -191,11 +191,11 @@ struct DiagnosticsPage: View {
                     ForEach(Array(ops.prefix(10).enumerated()), id: \.offset) { idx, o in
                         HStack(spacing: XSpace.s) {
                             Text(o.t)
-                                .xFont(.system(.caption2, design: .monospaced))
+                                .xFont(.caption2, design: .monospaced)
                                 .foregroundStyle(XPalette.textTertiary)
                                 .frame(width: 76, alignment: .leading)
                             Text(o.label)
-                                .xFont(.system(.caption))
+                                .xFont(.caption)
                                 .foregroundStyle(XPalette.textSub)
                                 .lineLimit(1)
                             Spacer(minLength: 0)
@@ -276,7 +276,7 @@ struct DiagnosticsPage: View {
                 // 日志保留期：三档，按当前值打勾
                 VStack(alignment: .leading, spacing: XSpace.s) {
                     Text("日志保留期")
-                        .xFont(.system(.footnote, weight: .medium))
+                        .xFont(.footnote, weight: .medium)
                         .foregroundStyle(XPalette.text)
                     HStack(spacing: XSpace.s) {
                         retentionChip("全部", "")
@@ -292,9 +292,9 @@ struct DiagnosticsPage: View {
 
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("记录最近操作").xFont(.system(.footnote)).foregroundStyle(XPalette.text)
+                        Text("记录最近操作").xFont(.footnote).foregroundStyle(XPalette.text)
                         Text("关闭后不再往本机写操作流水")
-                            .xFont(.system(.caption2)).foregroundStyle(XPalette.textSub)
+                            .xFont(.caption2).foregroundStyle(XPalette.textSub)
                     }
                     Spacer(minLength: XSpace.s)
                     XToggle(isOn: Binding(
@@ -328,12 +328,16 @@ struct DiagnosticsPage: View {
             // 当场生效：否则用户切完看不到任何变化，要等下次写日志才裁剪。
             let removed = DiagLogs.applyRetentionNow()
             XHaptics.tick.impactOccurred()
-            if removed > 0 { app.showToast("已按新保留期删除 (removed) 条") }
+            if removed > 0 { app.showToast("已按新保留期删除 (removed) 条", tone: .done) }
             revision &+= 1
         } label: {
             Text(label)
-                .xFont(.system(.caption, weight: retention == value ? .semibold : .regular))
+                .xFont(.caption, weight: retention == value ? .semibold : .regular)
                 .foregroundStyle(retention == value ? XPalette.onAccent : XPalette.textSub)
+                // 保留期选择器是一排小胶囊，视觉约 26pt。它是**真的会点**的（切了当场生效），
+                // 所以命中补到 44（视觉不变）。
+                .frame(minHeight: XHit.min)
+                .contentShape(Rectangle())
                 .padding(.horizontal, XSpace.m)
                 .padding(.vertical, 6)
                 .xPlate(retention == value ? XPalette.accent : XPalette.surfaceAlt, .capsule)
@@ -352,8 +356,8 @@ struct DiagnosticsPage: View {
                     .frame(width: 22)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(title).xFont(.system(.footnote)).foregroundStyle(XPalette.text)
-                    Text(detail).xFont(.system(.caption2)).foregroundStyle(XPalette.textSub)
+                    Text(title).xFont(.footnote).foregroundStyle(XPalette.text)
+                    Text(detail).xFont(.caption2).foregroundStyle(XPalette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 0)
@@ -374,7 +378,7 @@ struct DiagnosticsPage: View {
     // ── 构件 ──────────────────────────────────────────────
     private func header(_ s: String, tone: Color) -> some View {
         Text(s)
-            .xFont(.system(.caption, weight: .semibold))
+            .xFont(.caption, weight: .semibold)
             .foregroundStyle(tone)
             .textCase(.uppercase)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -392,12 +396,12 @@ struct DiagnosticsPage: View {
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .xFont(.system(.footnote))
+                    .xFont(.footnote)
                     .foregroundStyle(XPalette.text)
                     .fixedSize(horizontal: false, vertical: true)
                 if let detail {
                     Text(detail)
-                        .xFont(.system(.caption))
+                        .xFont(.caption)
                         .foregroundStyle(XPalette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
