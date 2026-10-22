@@ -1199,7 +1199,9 @@ struct SecurityDestroyView: View {
                 .xFont(.footnote, weight: .medium)
                 // 满格时底是 danger.opacity(0.85) 压在 surfaceAlt 上的合成色: 深色档纯白压上去只有
                 // 3.51:1 (合成算法与比值都在 tools/contrast.js), 所以走随明暗换向的 onSem。
-                .foregroundStyle(holdProgress >= 1 ? XPalette.onAccent : XPalette.danger)
+                // 规范 §13.2：正文门槛 4.5:1。danger #FF3B30 压在 surfaceAlt 上只有 4.35 ——
+                // 所以**不拿它当小字**：未按住时用 text（白），红色语义由下面那条进度条承担。
+                .foregroundStyle(holdProgress >= 1 ? XPalette.onAccent : XPalette.text)
                 .frame(width: 200, height: XHit.min)
         }
         .frame(width: 200, height: XHit.min)

@@ -76,7 +76,7 @@ internal val KfDarkColors = KfColors(
     onAccent = Color(0xFF14100A),
     ok = Color(0xFF30D158),
     warn = Color(0xFFFF9F0A),
-    danger = Color(0xFFFF4A40),
+    danger = Color(0xFFFF3B30),   // 规范 §3.4 accentRed
 )
 internal fun KfTheme(
     // 参数保留（调用点不必改），但**不再生效**：规范 §13.4 不允许 App 内明暗切换。

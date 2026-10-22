@@ -109,6 +109,41 @@ if (overrideSrc) {
   }
 }
 
+// ---------- 规范值锁定 ----------
+//
+// 判据不能只验「对比度够不够」—— 还得验「令牌值是不是规范给的那一个」。
+// 本仓出过两次这种事故：danger 被从 #FF3B30 提到 #FF4A40（理由是迁就自造的用法），
+// textTertiary 被从 #6A6A6E 提到 #78787F（理由是迁就自加的断言）。
+// 两次都让对比度「更达标」，也都让界面离规范更远。
+const SPEC_VALUES = {
+  canvas: 0x000000,        // 规范 §2.1：画布纯黑
+  surface: 0x1C1C1E,       // 规范 §2.2：应用体卡片
+  surfaceAlt: 0x24242A,
+  surfaceSunken: 0x101012,
+  text: 0xFFFFFF,          // 规范 §3.3
+  textSub: 0x8D8D93,
+  textTertiary: 0x6A6A6E,
+  danger: 0xFF3B30,        // 规范 §3.4 accentRed
+  warn: 0xFF9F0A,          // 规范 §3.4 accentOrange
+  ok: 0x30D158,            // 规范 §3.4 accentGreen
+};
+{
+  const wrong = [];
+  for (const [name, want] of Object.entries(SPEC_VALUES)) {
+    const got = col(name);
+    if (got == null) { wrong.push(name + ': 令牌缺失'); continue; }
+    if (got !== want) {
+      wrong.push(name + ': 实为 #' + got.toString(16).toUpperCase().padStart(6, '0') +
+                  '，规范 #' + want.toString(16).toUpperCase().padStart(6, '0'));
+    }
+  }
+  if (wrong.length) {
+    for (const w of wrong) console.error('  ' + w);
+    console.error('✗ 有 ' + wrong.length + ' 个令牌值偏离规范 —— 判据与规范冲突时改判据，不该改令牌');
+    process.exit(1);
+  }
+  console.log('规范值锁定 ✓ ' + Object.keys(SPEC_VALUES).length + ' 个关键令牌逐值等于规范');
+}
 // ---------- 断言表 ----------
 const ASSERTIONS = [];
 const INFO = [];   // 只记录、不判失败的实测值（用于规范未给阈值的项）
