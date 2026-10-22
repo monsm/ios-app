@@ -34,18 +34,16 @@ struct CarePage: View {
     private var mac: String { app.currentMac }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: XSpace.section) {
-                periodCard.xScrollLift()
-                todoCard.xScrollLift()
-                historyRow.xScrollLift()
-            }
-            .padding(.horizontal, XSpace.gutter)
-            .padding(.vertical, XSpace.l)
+        // 2026-10-23：改用 XScreen（规范 §5.3 / §5.4 的骨架组件）。
+        //
+        // 改前这里是手写的：ScrollView + VStack(section) + padding(.horizontal, gutter)
+        // + padding(.vertical, .l)。四个页面各写各的版本 —— 顶部留白全仓有 12 种写法。
+        // 现在骨架归组件管，本页只声明「有哪几张卡」。
+        XScreen("维护与保养", subtitle: "机械件也该有保养记录") {
+            periodCard.xScrollLift()
+            todoCard.xScrollLift()
+            historyRow.xScrollLift()
         }
-        .background(XPalette.canvas)
-        .navigationTitle("维护与保养")
-        .navigationBarTitleDisplayMode(.large)
         .onAppear { if !loaded { reload() } }
     }
 

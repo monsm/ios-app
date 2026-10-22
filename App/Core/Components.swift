@@ -189,6 +189,91 @@ struct XHairline: View {
 /// 为什么单独做一个组件: 之前各页要么写死 title、要么干脆没有进去的门 ——
 /// 用户看到一张卡却不知道它可点。把它收成组件，'可进入'这件事才有一致的形状。
 // ═══════════════════════════════════════════════════════════
+// MARK: - 页面骨架 (规范 §5.3 / §5.4)
+// ═══════════════════════════════════════════════════════════
+
+/// **所有应用体页面都必须走这个骨架。**
+///
+/// 为什么要有它：规范 §5.3 把屏幕骨架定死了（页边距 14 / 标题到首卡 74 / 卡间 12），
+/// 但本仓 38 个滚动页面里，顶部留白出现了 **12 种不同写法** ——
+/// 从「没有」到 `XSpace.xxl`，还有裸写 `6` / `5` / `3` 的。
+///
+/// 这不是审美分歧，是**同一条规范被 38 次独立重猜**。
+/// 后果是跨页面滑动时，「标题下多少开始是内容」每次都不一样。
+///
+/// §5.4 还说了一件更严格的事：整页只有**一条**文字对齐线
+/// （`X = 页边距 14 + 卡内边距 15 ≈ 29`）。大标题、正文、卡内文字全部落在这条线上。
+/// 所以标题的 `.padding(.leading)` 不是 0，而是 `XSpace.align - XSpace.gutter`。
+///
+/// 用法：
+/// ```swift
+/// XScreen("维护与保养") {
+///     periodCard
+///     todoCard
+/// }
+/// ```
+/// 页面只负责「有哪些卡」，骨架、背景、标题、对齐线全归这里。
+struct XScreen<Content: View>: View {
+    var title: String
+    /// 标题下方的一行说明（Body 16 / 60% 灰，规范 §5.3）。
+    var subtitle: String? = nil
+    /// 是否显示大标题。列表类页面常把标题交给导航栏。
+    var showsTitle: Bool = true
+    @ViewBuilder var content: () -> Content
+
+    init(_ title: String,
+         subtitle: String? = nil,
+         showsTitle: Bool = true,
+         @ViewBuilder content: @escaping () -> Content) {
+        self.title = title
+        self.subtitle = subtitle
+        self.showsTitle = showsTitle
+        self.content = content
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                if showsTitle {
+                    // 48pt 标题块：LargeTitle 30/Bold + 可选 Body 16/60% 灰。
+                    VStack(alignment: .leading, spacing: XSpace.xs) {
+                        Text(title)
+                            .xFont(.largeTitle, weight: .bold)
+                            .tracking(-0.4)
+                            .foregroundStyle(XPalette.text)
+                            .fixedSize(horizontal: false, vertical: true)
+                        if let subtitle {
+                            Text(subtitle)
+                                .xFont(.body)
+                                .foregroundStyle(XPalette.textSub)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    // §5.4 对齐线：标题**不对齐卡片边缘**，对齐卡片内的文字。
+                    .padding(.leading, XSpace.align - XSpace.gutter)
+                    // §5.3：标题 → 首卡 **74pt**。这是全页最大的呼吸区，
+                    // 语义是「标题属于页面，下面属于内容」。凑成 68 就不成立了。
+                    .padding(.bottom, XSpace.titleToFirstCard - XSpace.pageTop)
+                }
+
+                VStack(alignment: .leading, spacing: XSpace.l) {
+                    content()
+                }
+            }
+            .padding(.horizontal, XSpace.gutter)
+            // §5.3：页顶 40。这是「标题到首卡」呼吸区的起点，做小了整页会显挤。
+            .padding(.top, XSpace.pageTop)
+            // 底部留白：浮动胶囊 56 + 距底 20 + 呼吸 24 = 100。
+            // 少给就会出现「最后一行被胶囊压住」，而那恰好是最下面那行。
+            .padding(.bottom, 100)
+        }
+        .background(XPalette.canvas)
+        .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.large)
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
 // MARK: - 多段数据卡 (规范 §7.6 StatCard)
 // ═══════════════════════════════════════════════════════════
 
