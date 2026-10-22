@@ -122,7 +122,53 @@ struct CarePage: View {
                     }
                 }
             }
+            // 第二段 —— 规范 §7.6 的卡内解剖是「线 → 第二组 → 线 → 页脚」。
+            // 参考图 3 的 Sleep 卡第二段是 Bedtime / 10:30 PM / Avg: 2:19 AM，
+            // 即「这一组读数背后的两个具体事实」。
+            // 本卡对应的是：上次保养是哪天、当前按多少天算。
+            XStatSection {
+                HStack(alignment: .top, spacing: XSpace.xl) {
+                    VStack(alignment: .leading, spacing: XSpace.xxs) {
+                        Text("上次保养")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textSub)
+                        Text(lastCareText)
+                            .xFont(.body, weight: .semibold, design: .rounded)
+                            .foregroundStyle(XPalette.text)
+                        Text("周期 \(periodDays > 0 ? periodDays : 90) 天")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textTertiary)
+                    }
+                    Spacer(minLength: 0)
+                    VStack(alignment: .trailing, spacing: XSpace.xxs) {
+                        Text("下次保养")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textSub)
+                        Text(nextCareText)
+                            .xFont(.body, weight: .semibold, design: .rounded)
+                            .foregroundStyle(XPalette.text)
+                    }
+                }
+            }
         }
+    }
+
+    /// 上次保养距今几天（第二段左列）。
+    ///
+    /// 用「距上次 N 天」而不是日期字符串 —— 本页已有这个惯例
+    /// （`cleanTodo` 的 detail 就是「距上次 \(days) 天」），两处必须同一个说法，
+    /// 否则同一张卡会同时说「2026-10-18」和「距上次 5 天」两件事。
+    private var lastCareText: String {
+        guard care.lastCareAt > 0 else { return "未记录" }
+        let d = TimeFormat.daysSince(ms: care.lastCareAt)
+        return d <= 0 ? "今天" : "\(d) 天前"
+    }
+    /// 下次保养还剩几天（第二段右列）—— 与左列互补，不是复读：
+    /// 左列回答「上次什么时候」，右列回答「下次什么时候该动手」。
+    private var nextCareText: String {
+        guard care.lastCareAt > 0 else { return "—" }
+        let d = daysUntilCare
+        return d > 0 ? "\(d) 天后" : "该做了"
     }
 
     /// 距离下次保养还有几天。
