@@ -71,27 +71,23 @@ struct FirmwarePage: View {
         ZStack {
             XPalette.canvas.ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: XSpace.section) {
-                    if running {
-                        upgradeStage.xScrollLift()
-                    } else if failed {
-                        failedStage.xScrollLift()
-                    } else {
-                        versionCard.xScrollLift()
-                        if let fw { packageCard(fw).xScrollLift() }
-                        checklistCard.xScrollLift()
-                        actionCard.xScrollLift()
-                        if !queueSel.isEmpty || !queueOutcomes.isEmpty { queueCard.xScrollLift() }
-                    }
-                    historyCard.xScrollLift()
+        // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+        // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
+        XScreen("固件升级", style: .inline) {
+                if running {
+                    upgradeStage.xScrollLift()
+                } else if failed {
+                    failedStage.xScrollLift()
+                } else {
+                    versionCard.xScrollLift()
+                    if let fw { packageCard(fw).xScrollLift() }
+                    checklistCard.xScrollLift()
+                    actionCard.xScrollLift()
+                    if !queueSel.isEmpty || !queueOutcomes.isEmpty { queueCard.xScrollLift() }
                 }
-                .padding(.horizontal, XSpace.gutter)
-                .padding(.vertical, XSpace.l)
-            }
+                historyCard.xScrollLift()
         }
-        .navigationTitle("固件升级")
-        .navigationBarTitleDisplayMode(.inline)
+        }
         .fileImporter(isPresented: $showPicker,
                       allowedContentTypes: [.zip, .data],
                       allowsMultipleSelection: false) { importZip($0) }

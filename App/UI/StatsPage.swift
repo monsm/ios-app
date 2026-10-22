@@ -40,34 +40,28 @@ struct StatsPage: View {
     private var mac: String { app.currentMac }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: XSpace.section) {
-                if let m = model {
-                    if m.isDegraded {
-                        degradedCard(m).xScrollLift()
-                    } else {
-                        // 顶部胶囊行 —— 规范 7.2「双列固定」: 2 个胶囊并排撑满,
-                        // 各占 (屏宽 - 28 - 8) / 2, **不滚动**。
-                        // 这是"一屏最上面那条我关心什么"的摘要, 它先行, 卡片跟后。
-                        chipRow(m)
-                        safetyCard(m).xScrollLift()
-                        paretoCard(m)
-                        daypartCard(m)
-                        firstOpenCard(m)
-                        rhythmCard(m).xScrollLift()
-                        trendCard(m).xScrollLift()
-                    }
-                } else if !loaded {
-                    XSkeleton(blocks: 3, blockHeight: 132)
+        // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+        // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
+        XScreen("统计") {
+            if let m = model {
+                if m.isDegraded {
+                    degradedCard(m).xScrollLift()
+                } else {
+                    // 顶部胶囊行 —— 规范 7.2「双列固定」: 2 个胶囊并排撑满,
+                    // 各占 (屏宽 - 28 - 8) / 2, **不滚动**。
+                    // 这是"一屏最上面那条我关心什么"的摘要, 它先行, 卡片跟后。
+                    chipRow(m)
+                    safetyCard(m).xScrollLift()
+                    paretoCard(m)
+                    daypartCard(m)
+                    firstOpenCard(m)
+                    rhythmCard(m).xScrollLift()
+                    trendCard(m).xScrollLift()
                 }
+            } else if !loaded {
+                XSkeleton(blocks: 3, blockHeight: 132)
             }
-            .padding(.horizontal, XSpace.gutter)
-            .padding(.top, XSpace.m)
-            .padding(.bottom, 108)
         }
-        .background(XPalette.canvas)
-        .navigationTitle("统计")
-        .navigationBarTitleDisplayMode(.large)
         .sheet(isPresented: $showEvents) {
             EventsPage().environmentObject(app)
         }

@@ -40,31 +40,27 @@ struct FeedPage: View {
             if rows.isEmpty {
                 emptyState
             } else {
-                ScrollView {
-                    VStack(spacing: XSpace.section) {
-                        headerBar.xScrollLift()
-                        // 按天分组 —— 原来是一长条平铺，看不出"这是今天的还是上周的"。
-                        // 动态页的核心是"最近发生了什么"，日期是最基本的坐标系。
-                        LazyVStack(spacing: XSpace.m, pinnedViews: []) {
-                            ForEach(groupedDays, id: \.day) { g in
-                                VStack(alignment: .leading, spacing: XSpace.xs) {
-                                    dayHeader(g.day, count: g.rows.count, alarms: g.rows.filter { $0.warn }.count)
-                                    VStack(spacing: XSpace.s) {
-                                        ForEach(g.rows) { r in
-                                            feedRow(r)
-                                        }
+        // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+        // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
+        XScreen("动态") {
+                    headerBar.xScrollLift()
+                    // 按天分组 —— 原来是一长条平铺，看不出"这是今天的还是上周的"。
+                    // 动态页的核心是"最近发生了什么"，日期是最基本的坐标系。
+                    LazyVStack(spacing: XSpace.m, pinnedViews: []) {
+                        ForEach(groupedDays, id: \.day) { g in
+                            VStack(alignment: .leading, spacing: XSpace.xs) {
+                                dayHeader(g.day, count: g.rows.count, alarms: g.rows.filter { $0.warn }.count)
+                                VStack(spacing: XSpace.s) {
+                                    ForEach(g.rows) { r in
+                                        feedRow(r)
                                     }
                                 }
                             }
                         }
                     }
-                    .padding(.horizontal, XSpace.gutter)
-                    .padding(.vertical, XSpace.l)
-                }
+        }
             }
         }
-        .navigationTitle("动态")
-        .navigationBarTitleDisplayMode(.large)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {

@@ -30,28 +30,24 @@ struct DonglesPage: View {
         ZStack {
             XPalette.canvas.ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: XSpace.section) {
-                    headerCard.xScrollLift()
+        // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+        // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
+        XScreen("蓝牙钥匙串", style: .inline) {
+                headerCard.xScrollLift()
 
-                    if app.current == nil {
-                        noLockBanner.xScrollLift()
-                    }
+                if app.current == nil {
+                    noLockBanner.xScrollLift()
+                }
 
-                    if dongles.isEmpty {
-                        emptyState.xScrollLift()
-                    } else {
-                        ForEach(dongles) { d in
-                            dongleCard(d)
-                        }
+                if dongles.isEmpty {
+                    emptyState.xScrollLift()
+                } else {
+                    ForEach(dongles) { d in
+                        dongleCard(d)
                     }
                 }
-                .padding(.horizontal, XSpace.gutter)
-                .padding(.vertical, XSpace.l)
-            }
         }
-        .navigationTitle("蓝牙钥匙串")
-        .navigationBarTitleDisplayMode(.inline)
+        }
         .task { reload() }
     }
 

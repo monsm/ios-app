@@ -42,21 +42,17 @@ struct LockProfilePage: View {
         ZStack {
             XPalette.canvas.ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: XSpace.section) {
-                    plaque.xScrollLift()
-                    identitySection.xScrollLift()
-                    symbolSection.xScrollLift()
-                    colorSection.xScrollLift()
-                    moreSection.xScrollLift()
-                    saveButton.xScrollLift()
-                }
-                .padding(.horizontal, XSpace.gutter)
-                .padding(.vertical, XSpace.l)
-            }
+        // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+        // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
+        XScreen("锁档案", style: .inline) {
+                plaque.xScrollLift()
+                identitySection.xScrollLift()
+                symbolSection.xScrollLift()
+                colorSection.xScrollLift()
+                moreSection.xScrollLift()
+                saveButton.xScrollLift()
         }
-        .navigationTitle("锁档案")
-        .navigationBarTitleDisplayMode(.inline)
+        }
         .onAppear { if !loaded { load() } }
     }
 

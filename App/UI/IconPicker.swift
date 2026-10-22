@@ -63,30 +63,25 @@ struct IconPicker: View {
         ZStack {
             XPalette.canvas.ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: XSpace.section) {
-                    XPanel(kind: .group) {
-                        iconPickerRow
-                    }
-                    // 当前图标名 —— 原来只有勾选角标，看不出这一款叫什么
-                    Text(currentIconName)
-                        .xFont(.caption)
-                        .foregroundStyle(XPalette.textSub)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    Text("预览块底色与生成的图标位图逐字相同。")
-                        .xFont(.caption2)
-                        .foregroundStyle(XPalette.textSub)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .fixedSize(horizontal: false, vertical: true)
+        // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+        // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
+        XScreen("App 图标", style: .inline) {
+                XPanel(kind: .group) {
+                    iconPickerRow
                 }
-                .padding(.horizontal, XSpace.gutter)
-                .padding(.top, XSpace.m)
-                .padding(.bottom, XSpace.xxl)
-            }
+                // 当前图标名 —— 原来只有勾选角标，看不出这一款叫什么
+                Text(currentIconName)
+                    .xFont(.caption)
+                    .foregroundStyle(XPalette.textSub)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Text("预览块底色与生成的图标位图逐字相同。")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textSub)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .fixedSize(horizontal: false, vertical: true)
+        }
             .scrollIndicators(.hidden)
         }
-        .navigationTitle("App 图标")
-        .navigationBarTitleDisplayMode(.inline)
     }
 
     /// 当前图标名

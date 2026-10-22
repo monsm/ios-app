@@ -40,24 +40,18 @@ struct MembersPage: View {
         //
         // 与 KeysPage 同一套语言: XPanel 分组 + 组内行 + 液态玻璃只在需要时用。
         // 数据逻辑（reload / members / mac）一行没动。
-        ScrollView {
-            VStack(spacing: XSpace.section) {
-                if members.isEmpty {
-                    emptyCard
-                } else {
-                    // 先头像带（认人），再卡片（看细节）
-                    avatarStrip
-                    rosterCard
-                }
-                secondaryCard
+        // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+        // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
+        XScreen("成员") {
+            if members.isEmpty {
+                emptyCard
+            } else {
+                // 先头像带（认人），再卡片（看细节）
+                avatarStrip
+                rosterCard
             }
-            .padding(.horizontal, XSpace.gutter)
-            .padding(.top, XSpace.s)
-            .padding(.bottom, XSpace.xxl)
+            secondaryCard
         }
-        .background(XPalette.canvas)
-        .navigationTitle("成员")
-        .navigationBarTitleDisplayMode(.large)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {

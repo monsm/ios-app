@@ -37,31 +37,22 @@ struct DevicePage: View {
     private var sense: LinkSense { LinkSense.shared }
 
     var body: some View {
-        ScrollView {
-            // 规范 5.3 骨架。注意 identityCard 是 kind: .hero —— 即全屏**唯一**的
-            // 渐变主视觉卡 (规范 §7.4 / §9「一屏一张渐变卡」)。
-            // 下面五块都必须是普通 .group, 不许再出现第二个 hero。
+        // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+        // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
+        XScreen("这台锁") {
             VStack(spacing: XSpace.section) {
-                VStack(spacing: XSpace.section) {
-                    identityCard.xScrollLift()
-                    attentionCard.xScrollLift()
-                    capacityCard
-                    metricsRow.xScrollLift()
-                }
-                VStack(spacing: XSpace.rowGap) {
-                    detailSection.xScrollLift()
-                    recentSection.xScrollLift()
-                }
+                identityCard.xScrollLift()
+                attentionCard.xScrollLift()
+                capacityCard
+                metricsRow.xScrollLift()
             }
-            .padding(.horizontal, XSpace.gutter)
-            .padding(.top, XSpace.m)
-            .padding(.bottom, XSpace.xxl)
+            VStack(spacing: XSpace.rowGap) {
+                detailSection.xScrollLift()
+                recentSection.xScrollLift()
+            }
         }
-        .background(XPalette.canvas)
         .task { refreshDerived() }
         .onChange(of: snap?.firmware) { _, _ in refreshDerived() }
-        .navigationTitle("这台锁")
-        .navigationBarTitleDisplayMode(.large)
         .refreshable { await refresh() }
     }
 

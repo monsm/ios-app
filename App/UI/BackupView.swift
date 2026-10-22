@@ -34,19 +34,15 @@ struct BackupView: View {
         ZStack {
             XPalette.canvas.ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: XSpace.section) {
-                    exportSection.xScrollLift()
-                    importSection.xScrollLift()
-                    studioSection.xScrollLift()
-                }
-                .padding(.horizontal, XSpace.gutter)
-                .padding(.vertical, XSpace.l)
-            }
+        // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+        // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
+        XScreen("备份与恢复", style: .inline) {
+                exportSection.xScrollLift()
+                importSection.xScrollLift()
+                studioSection.xScrollLift()
+        }
             .scrollIndicators(.hidden)
         }
-        .navigationTitle("备份与恢复")
-        .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .cancellationAction) { Button("完成") { dismiss() } } }
     }
 

@@ -49,21 +49,16 @@ struct ManagerFace: View {
                 //
                 // 96 的底部留白不是为了"好看": 浮动胶囊高 56 + 距底 8 + 32 的呼吸 = 96。
                 // 少给 8pt 就会出现"最后一行被胶囊压住", 而那恰好是最下面那行。
-                ScrollView {
-                    VStack(spacing: XSpace.section) {
-                        groupHeader
-                        groupContent
-                    }
-                    .padding(.horizontal, XSpace.gutter)
-                    .padding(.top, XSpace.pageTop)
-                    .padding(.bottom, 112)
-                }
+        // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+        // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
+        XScreen("管家台", style: .inline) {
+                    groupHeader
+                    groupContent
+        }
 
                 // ── 浮动液态玻璃分组条 ──
                 groupBar
             }
-            .navigationTitle("管家台")
-            .navigationBarTitleDisplayMode(.inline)
             // 作为 sheet 弹出时，必须有一个看得见的出口。
             // 只靠下滑关闭对不熟悉手势的人等于没有出口。
             .toolbar {

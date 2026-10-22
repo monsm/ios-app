@@ -45,25 +45,20 @@ struct DiagnosticsPage: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: XSpace.section) {
-                let _ = revision
-                selfCheckCard
-                healthCard
-                stabilityCard
-                opsCard
-                bleCard
-                retentionCard
-                actionsCard
-            }
-            .padding(.horizontal, XSpace.gutter)
-            .padding(.vertical, XSpace.l)
+        // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+        // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
+        XScreen("诊断与自检", style: .inline) {
+            let _ = revision
+            selfCheckCard
+            healthCard
+            stabilityCard
+            opsCard
+            bleCard
+            retentionCard
+            actionsCard
         }
-        .background(XPalette.canvas)
         .task { refresh() }
         .onChange(of: revision) { _, _ in refresh() }
-        .navigationTitle("诊断与自检")
-        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button(copied ? "已复制" : "复制") {

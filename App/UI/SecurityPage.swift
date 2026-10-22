@@ -37,22 +37,15 @@ struct SecurityPage: View {
     }
 
     var body: some View {
-        ScrollView {
-            // 三块是三件事: 结论 / 风险 / 动作。区块间距 28。
-            VStack(spacing: XSpace.section) {
-                statusCard.xScrollLift()
-                if !risks.isEmpty || auditBroken || !selfCheckIssues.isEmpty {
-                    riskCard.xScrollLift()
-                }
-                actionsCard.xScrollLift()
+        // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+        // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
+        XScreen("本机保护") {
+            statusCard.xScrollLift()
+            if !risks.isEmpty || auditBroken || !selfCheckIssues.isEmpty {
+                riskCard.xScrollLift()
             }
-            .padding(.horizontal, XSpace.gutter)
-            .padding(.top, XSpace.m)
-            .padding(.bottom, XSpace.xxl)
+            actionsCard.xScrollLift()
         }
-        .background(XPalette.canvas)
-        .navigationTitle("本机保护")
-        .navigationBarTitleDisplayMode(.large)
     }
 
     // ═══════════════════════════════════════════════════════

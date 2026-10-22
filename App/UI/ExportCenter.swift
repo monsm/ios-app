@@ -1521,31 +1521,27 @@ struct ExportCenterView: View {
         ZStack {
             XPalette.canvas.ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: XSpace.section) {
-                    // 范围与列选择
-                    scopeCard.xScrollLift()
-                    // 动作分组: 文件导出 / 卡片与长图 / 打印
-                    fileActionsCard.xScrollLift()
-                    imageActionsCard.xScrollLift()
-                    printActionsCard.xScrollLift()
-                    // 进度 / 失败 / 完成 / 校验
-                    if progress.running { progressSection.xScrollLift() }
-                    if !progress.failed.isEmpty { failedCard.xScrollLift() }
-                    if let item = progress.done {
-                        doneSection(item)
-                            .animation(XMotion.standard, value: lastSuccess)
-                            .xScrollLift()
-                    }
-                    verifySection.xScrollLift()
-                    if !lastPath.isEmpty { pathSection.xScrollLift() }
+        // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+        // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
+        XScreen("导出与分享", style: .inline) {
+                // 范围与列选择
+                scopeCard.xScrollLift()
+                // 动作分组: 文件导出 / 卡片与长图 / 打印
+                fileActionsCard.xScrollLift()
+                imageActionsCard.xScrollLift()
+                printActionsCard.xScrollLift()
+                // 进度 / 失败 / 完成 / 校验
+                if progress.running { progressSection.xScrollLift() }
+                if !progress.failed.isEmpty { failedCard.xScrollLift() }
+                if let item = progress.done {
+                    doneSection(item)
+                        .animation(XMotion.standard, value: lastSuccess)
+                        .xScrollLift()
                 }
-                .padding(.horizontal, XSpace.gutter)
-                .padding(.vertical, XSpace.l)
-            }
+                verifySection.xScrollLift()
+                if !lastPath.isEmpty { pathSection.xScrollLift() }
         }
-        .navigationTitle("导出与分享")
-        .navigationBarTitleDisplayMode(.inline)
+        }
         .toolbar {
             ToolbarItem(placement: .cancellationAction) { Button("关闭") { dismiss() } }
         }

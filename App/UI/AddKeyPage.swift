@@ -46,23 +46,19 @@ struct AddKeyPage: View {
         ZStack {
             XPalette.canvas.ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: XSpace.section) {
-                    capacityCard
-                    passwordStage.xScrollLift()
-                    validitySection.xScrollLift()
-                    ownerSection.xScrollLift()
-                    actionSection.xScrollLift()
-                }
-                .padding(.horizontal, XSpace.gutter)
-                .padding(.vertical, XSpace.l)
-            }
+        // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+        // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
+        XScreen("添加密码", style: .inline) {
+                capacityCard
+                passwordStage.xScrollLift()
+                validitySection.xScrollLift()
+                ownerSection.xScrollLift()
+                actionSection.xScrollLift()
+        }
         }
         // 写入进行中不允许下滑关闭：操作可能已经发到设备，
         // 关掉会让用户拿不到结果，也看不到失败原因。
         .interactiveDismissDisabled(busy)
-        .navigationTitle("添加密码")
-        .navigationBarTitleDisplayMode(.inline)
         .onAppear { focused = true }
         .confirmationDialog("下发 10 分钟临时密码?", isPresented: $showTempConfirm) {
             Button("下发", role: .destructive) {

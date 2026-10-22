@@ -64,25 +64,20 @@ struct StudioPage: View {
         ZStack {
             XPalette.canvas.ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: XSpace.section) {
-                    // 双列网格: 列间距 12 / 行间距 8 (规范 §5.1 两个不同的数)。
-                    LazyVGrid(columns: columns, spacing: XSpace.rowGap) {
-                        card(.pwd)
-                        card(.temp)
-                        card(.fp)
-                        card(.otp)
-                    }
-
-                    footerNote
+        // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+        // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
+        XScreen("钥匙工坊") {
+                // 双列网格: 列间距 12 / 行间距 8 (规范 §5.1 两个不同的数)。
+                LazyVGrid(columns: columns, spacing: XSpace.rowGap) {
+                    card(.pwd)
+                    card(.temp)
+                    card(.fp)
+                    card(.otp)
                 }
-                .padding(.horizontal, XSpace.gutter)
-                .padding(.top, XSpace.pageTop)
-                .padding(.bottom, XSpace.xxl)
-            }
+
+                footerNote
         }
-        .navigationTitle("钥匙工坊")
-        .navigationBarTitleDisplayMode(.large)
+        }
         .toolbar {
             if !embedded {
                 ToolbarItem(placement: .cancellationAction) {

@@ -29,16 +29,11 @@ struct AppearancePage: View {
     ]
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: XSpace.section) {
-                miscCard
-            }
-            .padding(.horizontal, XSpace.gutter)
-            .padding(.vertical, XSpace.l)
+        // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+        // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
+        XScreen("外观工作室", style: .inline) {
+            miscCard
         }
-        .background(XPalette.canvas)
-        .navigationTitle("外观工作室")
-        .navigationBarTitleDisplayMode(.inline)
     }
 
     private var miscCard: some View {

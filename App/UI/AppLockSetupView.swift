@@ -41,18 +41,13 @@ struct AppLockSetupView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: XSpace.section) {
-                heroCard
-                if !on || editing { formCard } else { manageCard }
-                explainCard
-            }
-            .padding(.horizontal, XSpace.gutter)
-            .padding(.vertical, XSpace.l)
+        // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+        // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
+        XScreen("应用锁", style: .inline) {
+            heroCard
+            if !on || editing { formCard } else { manageCard }
+            explainCard
         }
-        .background(XPalette.canvas)
-        .navigationTitle("应用锁")
-        .navigationBarTitleDisplayMode(.inline)
         .confirmationDialog("关闭应用锁？", isPresented: $confirmOff, titleVisibility: .visible) {
             Button("关闭", role: .destructive) { turnOff() }
             Button("取消", role: .cancel) { }

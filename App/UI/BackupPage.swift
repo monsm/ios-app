@@ -50,22 +50,17 @@ struct BackupPage: View {
     @State private var pendingRestore: BackupBundle?
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: XSpace.section) {
-                if let b = pendingRestore {
-                    restoreConfirmCard(b)
-                }
-                statusCard.xScrollLift()
-                exportCard.xScrollLift()
-                importCard.xScrollLift()
-                studioRow.xScrollLift()
+        // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+        // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
+        XScreen("备份与恢复") {
+            if let b = pendingRestore {
+                restoreConfirmCard(b)
             }
-            .padding(.horizontal, XSpace.gutter)
-            .padding(.vertical, XSpace.l)
+            statusCard.xScrollLift()
+            exportCard.xScrollLift()
+            importCard.xScrollLift()
+            studioRow.xScrollLift()
         }
-        .background(XPalette.canvas)
-        .navigationTitle("备份与恢复")
-        .navigationBarTitleDisplayMode(.large)
         .sheet(isPresented: $showImport) {
             importSheet
         }

@@ -37,28 +37,23 @@ struct CredentialBinView: View {
     private var retainDays: Int { CredentialOrg.reclaimDays() }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: XSpace.section) {
-                if entries.isEmpty {
-                    XPanel(kind: .group) {
-                        XEmptyState(systemImage: "trash.slash",
-                                    title: "回收站是空的",
-                                    message: "删除或停用的钥匙会在这里保留 \(retainDays) 天，可以放回原位。")
-                    }
-                } else {
-                    retentionCard
-                    if receiptVisible { receiptCard }
-                    if !pending.isEmpty { pendingCard }
-                    listCard
+        // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+        // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
+        XScreen("回收站", style: .inline) {
+            if entries.isEmpty {
+                XPanel(kind: .group) {
+                    XEmptyState(systemImage: "trash.slash",
+                                title: "回收站是空的",
+                                message: "删除或停用的钥匙会在这里保留 \(retainDays) 天，可以放回原位。")
                 }
-                if entries.isEmpty && !pending.isEmpty { pendingOnlyCard }
+            } else {
+                retentionCard
+                if receiptVisible { receiptCard }
+                if !pending.isEmpty { pendingCard }
+                listCard
             }
-            .padding(.horizontal, XSpace.gutter)
-            .padding(.vertical, XSpace.l)
+            if entries.isEmpty && !pending.isEmpty { pendingOnlyCard }
         }
-        .background(XPalette.canvas)
-        .navigationTitle("回收站")
-        .navigationBarTitleDisplayMode(.inline)
         .onAppear { reload() }
         .alert("恢复结果", isPresented: Binding(get: { lastMessage != nil },
                                                set: { if !$0 { lastMessage = nil } })) {

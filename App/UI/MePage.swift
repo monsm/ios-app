@@ -39,23 +39,15 @@ struct MePage: View {
         //
         // 五个 Section 的内容一行没动（都是 XRow / summaryTile），
         // 只把外壳换成 XPanel，header/footer 转成卡片底部 caption。
-        ScrollView {
-            // 规范 5.3 骨架: 区块之间 28 (section), 不是 16。
-            // 五个分组是五件不同的事, 等距会让它们读成一个长列表。
-            VStack(spacing: XSpace.section) {
-                statusSummary
-                protectionSection
-                lockSection
-                dataSection
-                aboutSection
-            }
-            .padding(.horizontal, XSpace.gutter)
-            .padding(.top, XSpace.m)
-            .padding(.bottom, XSpace.xxl)
+        // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+        // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
+        XScreen("本机设置") {
+            statusSummary
+            protectionSection
+            lockSection
+            dataSection
+            aboutSection
         }
-        .background(XPalette.canvas)
-        .navigationTitle("本机设置")
-        .navigationBarTitleDisplayMode(.large)
     }
 
     // ═══════════════════════════════════════════════════════

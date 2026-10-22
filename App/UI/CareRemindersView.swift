@@ -12,19 +12,15 @@ struct CareRemindersView: View {
         ZStack {
             XPalette.canvas.ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: XSpace.section) {
-                    bulletinCard.xScrollLift()
-                    annivCard.xScrollLift()
-                    bdayCard.xScrollLift()
-                }
-                .padding(.horizontal, XSpace.gutter)
-                .padding(.vertical, XSpace.l)
-            }
+        // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
+        // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
+        XScreen("关怀提醒", style: .inline) {
+                bulletinCard.xScrollLift()
+                annivCard.xScrollLift()
+                bdayCard.xScrollLift()
+        }
             .scrollIndicators(.hidden)
         }
-        .navigationTitle("关怀提醒")
-        .navigationBarTitleDisplayMode(.inline)
         .onDisappear {
             Milestones.bulletin = bulletin.trimmingCharacters(in: .whitespacesAndNewlines)
         }
