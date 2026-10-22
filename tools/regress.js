@@ -589,6 +589,16 @@ const checks = [
            p.includes('BackupStudio.parsePreview(') &&
            !p.includes('JSONDecoder().decode(BackupBundle');
   }],
+  ['备份导出与工作室同一套命名', () => {
+    // 两个导出出口原来不一致：工作室叫 锁管家_xxx_全量.enc；
+    // 备份页「存到文件」叫 锁管家备份-xxx.json。
+    // 于是从备份页导出的文件，工作室的 isOurBackup（要求前缀 锁管家_ 且 .enc）认不出来，
+    // 不进本地备份列表、不参与保留期清理。
+    const p = CODE.get('BackupPage.swift') || '';
+    return p.includes('return BackupStudio.fileName()') &&
+           p.includes('contentTypes: [.data]') &&
+           p.includes('exportedContentType: UTType.data');
+  }],
 ];
 
 let pass = 0;

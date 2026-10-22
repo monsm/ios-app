@@ -83,7 +83,7 @@ struct BackupPage: View {
         // 用户也能一眼看出是哪天的。
         .fileExporter(isPresented: $showFileExporter,
                       item: BackupFile(text: exportText),
-                      contentTypes: [.json],
+                      contentTypes: [.data],   // 不写 .json：那会把扩展名强行改成 .json，与工作室的 .enc 不一致
                       defaultFilename: backupFilename) { result in
             if case .success = result {
                 // 落盘时更新"上次备份"时间 —— 与 generateBackup 同口径
@@ -238,7 +238,10 @@ struct BackupPage: View {
         f.locale = Locale(identifier: "en_US_POSIX")
         f.calendar = WeekCal.gregorian
         f.dateFormat = "yyyyMMdd-HHmm"
-        return "锁管家备份-\(f.string(from: Date()))"
+        // 与工作室同一套命名（前导 "锁管家_" + 结尾 ".enc"）——
+        // 否则从这一页导出的文件，工作室的 isOurBackup 认不出来，
+        // 既不出现在本地备份列表里，也不参与保留期清理。
+        return BackupStudio.fileName()
     }
 
     private func generateBackup() {
@@ -451,9 +454,9 @@ struct BackupFile: Transferable {
     let text: String
 
     static var transferRepresentation: some TransferRepresentation {
-        DataRepresentation(exportedContentType: UTType.json) { file in
+        DataRepresentation(exportedContentType: UTType.data) { file in
             Data(file.text.utf8)
         }
-        .suggestedFileName { _ in "备份.json" }
+        .suggestedFileName { _ in "锁管家备份.enc" }
     }
 }
