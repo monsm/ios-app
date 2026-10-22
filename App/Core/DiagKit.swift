@@ -415,6 +415,15 @@ enum DataHealth {
         var out: [String] = []
         let rep = UserDefaults.standard.dictionaryRepresentation()
         var badJson = 0, emptyStale = 0
+        // ⚠ 这里的 "kf." 是**对的**，别看错。
+        //
+        // 调用方写的是 store.set("kf_theme", …)，而 Store.key() 会再补一个前缀
+        // (private func key(_ k: String) { "kf." + k })，所以 UserDefaults 里
+        // 真实键是 **"kf.kf_theme"** —— 双重前缀。
+        //
+        // 第一百零二批我一度把它"修"成 hasPrefix("kf_")，理由是"全仓 617 个键都用下划线"——
+        // 那是数**代码里的字符串字面量**，不是 UserDefaults 里的真实键。
+        // 差点把正确的代码改错，还写了一段指控不存在 bug 的注释。
         for (k, v) in rep where k.hasPrefix("kf.") {
             if let d = v as? Data {
                 // jsonObject 会抛且返回非可选: 旧写法缺 try 又与 nil 比较。
