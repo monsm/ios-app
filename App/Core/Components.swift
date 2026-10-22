@@ -240,6 +240,13 @@ struct XScreen<Content: View>: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
+                if style == .inline {
+                    // 二级页面：标题在导航栏，页内不再画标题块。
+                    // 但仍要一小段呼吸（8）—— 直接贴顶会让第一张卡看起来被导航栏压住。
+                    // 这个值不是猜的：§5.1 的 s3 = 8 是「卡片行间距」，二级页顶部
+                    // 用同一档，因为导航栏本身就是上一"行"。
+                    Color.clear.frame(height: XSpace.s)
+                }
                 if style == .large {
                     // 48pt 标题块：LargeTitle 30/Bold + 可选 Body 16/60% 灰。
                     VStack(alignment: .leading, spacing: XSpace.xs) {
@@ -262,7 +269,11 @@ struct XScreen<Content: View>: View {
                     .padding(.bottom, XSpace.titleToFirstCard - XSpace.pageTop)
                 }
 
-                VStack(alignment: .leading, spacing: XSpace.l) {
+                // §5.1：卡片**行**间距是 **8**（`s3`，实测 18px），
+                // 与列间距 12（`s3h`）是两个不同的值。
+                // 此前这里写 XSpace.l(16) —— **比规范松一倍**。
+                // 这就是为什么参考图看起来更紧凑：它的卡与卡之间只有 8。
+                VStack(alignment: .leading, spacing: XSpace.rowGap) {
                     content()
                 }
             }

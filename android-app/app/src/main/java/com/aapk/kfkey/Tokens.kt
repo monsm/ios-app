@@ -60,7 +60,7 @@ internal object KfTokens {
      */
     object Radius {
         /** 应用体标准卡片 **24** (范式 5.2 实测 23.6)。 = iOS XRadius.card (Theme.swift:208) */
-        val card = 24.dp
+        val card = 26.dp
         /** 控件 / 按钮 12。 = iOS XRadius.control (Theme.swift:214)。
          *  主按钮用这个而不是胶囊: iOS XPrimaryButtonStyle 用的是 XRadius.control
          *  (App/Core/Components.swift:277/280), 两端按钮同一个形状。 */
