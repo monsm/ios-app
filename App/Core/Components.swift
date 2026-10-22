@@ -1416,6 +1416,41 @@ extension View {
         modifier(XScrollLift())
     }
 }
+// ═══════════════════════════════════════════════════════════
+// MARK: - 行内错误条
+// ═══════════════════════════════════════════════════════════
+
+/// 行内错误条 —— 动作失败时压在内容里的一条，不是全屏错误页。
+///
+/// 规范 §7.20.3 给了错误态的语法：图标 + 一句话 + 出路。
+/// 本仓此前有三处各写了一遍，三处的图标尺寸（17 / 无 / 12）、字号（footnote / caption）、
+/// 内边距（16 / 无 / 8）、圆角（12 / — / 8）全不一样 —— 同一个语义几种长相。
+///
+/// 尺寸按**下修后**的档位取：§7.20.3 原文写 图标 24 / 说明 13，
+/// 但 §4.2 明写已全线下修 13→12，§10 又给了固定七档（24 不在七档内，取最近的 22）。
+struct XInlineError: View {
+    var message: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: XSpace.s) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: XIcon.xm, weight: .semibold))
+                .foregroundStyle(XPalette.danger)
+                .accessibilityHidden(true)
+            Text(message)
+                .xFont(.footnote)
+                .foregroundStyle(XPalette.danger)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(XSpace.m)
+        .background(XPalette.danger.opacity(XOpacity.wash),
+                    in: RoundedRectangle(cornerRadius: XRadius.control, style: .continuous))
+        // 颜色不是唯一信号（§13.3）：图标形状 + 文案本身就说明了这是失败。
+        .accessibilityElement(children: .combine)
+    }
+}
+
 
 // ═══════════════════════════════════════════════════════════════════════
 // MARK: - XSkeleton — 首屏骨架屏
@@ -1449,7 +1484,9 @@ struct XSkeleton: View {
         .padding(.vertical, XSpace.l)
         .onAppear {
             guard !reduceMotion else { return }
-            withAnimation(.linear(duration: 1.4).repeatForever(autoreverses: false)) {
+            // 规范 §7.20.1：微光是 **ease-in-out** 循环，周期 1.4s。
+            // 原来是 .linear —— 匀速扫光的观感是"机器在跑"，ease-in-out 才像"光掠过"。
+            withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: false)) {
                 sweep = 2
             }
         }
@@ -1458,6 +1495,9 @@ struct XSkeleton: View {
         .accessibilityAddTraits(.updatesFrequently)
         // 骨架流光同样是无限循环 —— 切断隐式继承, 理由同上。
         .transaction { $0.animation = nil }
+        // 规范 §7.20.1「消失：数据到达后 opacity 0.2s 淡出，不位移」。
+        // 只给透明度、不给位移 —— 内容是到了，不是滑进来的。
+        .transition(.opacity.animation(.easeOut(duration: 0.2)))
     }
 
     @ViewBuilder
@@ -1482,10 +1522,12 @@ struct XSkeleton: View {
             // 流光: 一条窄的高光从左扫到右
             GeometryReader { geo in
                 if !reduceMotion {
+                    // 规范 §7.20.1：高光宽 **30%**（不是 45%）、颜色 **rgba(255,255,255,0.06)**。
+                    // 原来写的是 specular(#C8C8D4) —— 那是一只偏冷的灰, 扫过时会把底色带偏。
                     LinearGradient(
-                        colors: [.clear, XPalette.specular.opacity(0.06), .clear],
+                        colors: [.clear, Color.white.opacity(0.06), .clear],
                         startPoint: .leading, endPoint: .trailing)
-                        .frame(width: geo.size.width * 0.45)
+                        .frame(width: geo.size.width * 0.30)
                         .offset(x: geo.size.width * sweep)
                 }
             }

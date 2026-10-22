@@ -302,22 +302,8 @@ struct AddFingerPage: View {
         }
     }
 
-    private var errorBanner: some View {
-        HStack(alignment: .top, spacing: XSpace.s) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: XIcon.sm, weight: .semibold))
-                .foregroundStyle(XPalette.danger)
-                .accessibilityHidden(true)
-            Text(error)
-                .xFont(.footnote)
-                .foregroundStyle(XPalette.danger)
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 0)
-        }
-        .padding(XSpace.card)
-        .background(XPalette.danger.opacity(XOpacity.wash),
-                    in: RoundedRectangle(cornerRadius: XRadius.control, style: .continuous))
-    }
+    // 行内错误条统一走 XInlineError（此前这里、钥匙工坊、网关页各写了一遍，三处尺寸都不同）
+    private var errorBanner: some View { XInlineError(message: error) }
 
     // ═══════════════════════════════════════════════════════
     // MARK: - 成功

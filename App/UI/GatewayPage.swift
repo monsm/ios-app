@@ -203,19 +203,7 @@ struct GatewayPage: View {
                 }
 
                 if !error.isEmpty {
-                    HStack(alignment: .top, spacing: XSpace.s) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.system(size: XIcon.xs, weight: .semibold))
-                            .foregroundStyle(XPalette.danger)
-                        Text(error)
-                            .xFont(.caption)
-                            .foregroundStyle(XPalette.danger)
-                            .fixedSize(horizontal: false, vertical: true)
-                        Spacer(minLength: 0)
-                    }
-                    .padding(XSpace.s)
-                    .background(XPalette.danger.opacity(XOpacity.wash),
-                                in: RoundedRectangle(cornerRadius: XRadius.min, style: .continuous))
+                    XInlineError(message: error)
                 }
             }
             .animation(XMotion.standard, value: steps.count)

@@ -229,6 +229,25 @@ const RULES = [
 // ── 工程级断言（不是逐行扫，是整个 App 有没有做这件事）──
 const projectProblems = [];
 {
+  // 规范 §7.20.1 骨架屏的四个数：周期 1.4s / ease-in-out / 高光宽 30% / 底色 #24242A。
+  // 「参数差一点看不出来」正是这种地方 —— 而 1.4s 还是规范内部打架的那条（§11.2 说 ≤1.2s）。
+  const compSrc = fs.readFileSync(path.join(ROOT, 'App/Core/Components.swift'), 'utf8');
+  // 取整个 struct（到下一个顶层 }），不是只取 body —— 流光在 private func block() 里，
+  // 第一版切到 @ViewBuilder 就停了，于是把「明明写对的值」判成错。
+  const skStart = compSrc.indexOf('struct XSkeleton');
+  const skRest = compSrc.slice(skStart);
+  const body = skRest.slice(0, skRest.indexOf('\n}\n') + 2);
+  if (!/\.easeInOut\(duration: 1\.4\)/.test(body)) {
+    projectProblems.push('XSkeleton 的微光不是 easeInOut(1.4) —— 规范 §7.20.1 要求 ease-in-out / 周期 1.4s');
+  }
+  if (!/geo\.size\.width \* 0\.30/.test(body)) {
+    projectProblems.push('XSkeleton 的高光宽度不是 30% —— 规范 §7.20.1');
+  }
+  if (!/Color\.white\.opacity\(0\.06\)/.test(body)) {
+    projectProblems.push('XSkeleton 的高光不是 rgba(255,255,255,0.06) —— 规范 §7.20.1');
+  }
+}
+{
   const appSrc = fs.readFileSync(path.join(ROOT, 'App/LockKeeperApp.swift'), 'utf8');
   // 规范 §10：图标渲染用 .hierarchical。缺了就是全仓图标跑在 .monochrome 上（单层平涂）。
   if (!appSrc.includes('symbolRenderingMode, .hierarchical') &&
