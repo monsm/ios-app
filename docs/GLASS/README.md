@@ -1746,7 +1746,65 @@ if (/^(kindFp|kindTemp|kindOtp|surfaceChip|qrQuietZone|textQuaternary|textFaint)
 | 闸门 | 23 道全绿 |
 | 分段控件 | 1 个实现，6 处调用 |
 | 令牌 | 23 项（16 相同 + 11 声明不镜像，其中 4 项为新声明）|
-## 30. 一句话交接
+
+---
+
+## 30. 第二十二轮：在线编译通过（CI 全绿）
+
+用户新增判据「**在线编译要通过**」。此前 30 多轮我都在写「0 行被编译」。
+去查 GitHub Actions：**两个平台都是红的**，而我的 23 道闸门全绿。
+
+### 30.1 五个真编译错误
+
+| # | 错误 | 根因 |
+|---|---|---|
+| 1 | `cannot infer key path type` × N | `@Environment(\.accessibilityContrast)` —— **这个键不存在**，正确是 `\.colorSchemeContrast` |
+| 2 | `unable to type-check in reasonable time` × 2 | 68 处 `.xFont(.caption2.monospacedDigit())` —— 实参是 **Font 值**，改名 `xFontExact` 后无匹配重载 |
+| 3 | `cannot find 'a11yText' in scope` | 参数声明没插入，只插了使用处 |
+| 4 | `cannot find 'adminN'/'doorN'` | 抽方法时没注意它是 **body 内的局部 let** |
+| 5 | Kotlin `Unresolved reference 'LocalKfColors'` | 删 `KfLightColors` 时把**唯一那条色板通道**一起删了 |
+| 6 | Kotlin `Expecting '"'` | 一次编辑把字符串里的 `\n` 写成了**真实换行** |
+| 7 | Kotlin `must be marked with @Composable` | 我把 `LocalKfColors` 插在了注解与 `fun` **之间** |
+
+### 30.2 最贵的一课：我的校验是假的
+
+「851 处 `.xFont` 全部走规范字阶」这个结论，是我自己算出来的 —— **算错了**。
+判据正则用了 `\b`，`.caption2.` 的 word boundary 让 68 处 Font 值全部混过检查。
+
+> 没有编译器时，**校验脚本的判据错误和代码错误一样致命** —— 而且它更隐蔽：它给的是绿色。
+
+同类问题还出现在：
+
+| 判据 | 错在哪 |
+|---|---|
+| `tokendrift` 的「已声明省略」 | 写死一串令牌名，新令牌即使声明了也认不出 |
+| `glassaudit` 的骨架屏断言 | 切片切到 `@ViewBuilder` 就停，把写对的值判成错 |
+| `kotlinbalance` 的注解判据 | 正则找「) 后跟 {」被默认值里的 `@Suppress(...) = true` 骗到 |
+
+### 30.3 诊断能力本身是关键路径
+
+Android 连红 4 次，注解里**一条 Kotlin 错误都没有**。
+原因：工作流只把 `^e: ` 行转成注解，而失败在 **Gradle 配置阶段**不产生 `e:` 行。
+
+试了两版放在独立 `if: failure()` 步骤里的诊断 —— **都没附着上来**。
+把诊断搬进 gradle 那一步、用 `if/then` 收尾之后，**一次就拿到了全部 `e:` 行**。
+
+> 「看不到错误」和「没有错误」是两件事。前者的代价是把一个真实编译错误拖了整整一轮。
+
+### 30.4 最终状态
+
+```
+Stamp 构建时刻            | success
+Build (Android 13+, APK)  | success
+Build (iOS 27 SDK, IPA)   | success
+```
+
+| | |
+|---|---|
+| CI | **全绿**（run c705a12）|
+| 闸门 | 23 道全绿 |
+| 新增判据 | 符号声明 / 令牌成员 / xFont 实参形状 / 字阶对账 / 色板通道 / 字符串未闭合 / Composable 注解 |
+## 31. 一句话交接
 
 **视觉层：脱胎换骨。结构层：一针都没多缝。**
 
