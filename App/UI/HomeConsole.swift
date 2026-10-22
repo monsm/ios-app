@@ -102,6 +102,7 @@ struct HomeConsole: View {
     @State private var alarmCountCache: Int? = nil
     @State private var alarmSpanCache = 0
     @State private var lastOpenClockCache: String? = nil
+    @State private var showRingInfo = false
 
     @Environment(\.scenePhase) private var scenePhase
 
@@ -239,7 +240,14 @@ struct HomeConsole: View {
                     }
                 }
             }
-            .sheet(isPresented: $showEvents) {
+            // 环的口径说明（§7.8 形态 1 的 info 按钮指向这里）
+        .alert("这个环是什么", isPresented: $showRingInfo) {
+            Button("知道了", role: .cancel) {}
+        } message: {
+            Text("环上的一圈是「今天开过几次门」：满圈是最近 30 天里最忙的那一天。\n"
+                 + "只统计开锁类事件，不含失败的尝试；自动开锁也算一次。")
+        }
+        .sheet(isPresented: $showEvents) {
                 NavigationStack { EventsPage().environmentObject(app).trackScreen("事件记录") }
             }
             .sheet(isPresented: Binding(get: { memberSheetID != nil },
@@ -448,11 +456,22 @@ struct HomeConsole: View {
     private var heroRingSize: CGFloat { 220 }
     private var heroRingWidth: CGFloat { DSRing.stroke(forDiameter: heroRingSize) }
 
+    /// 环的**开口角度**（规范 §7.8 形态 1）：「开口在底部，约 60°（从 5 点到 7 点），两端圆头」。
+    ///
+    /// 参考图 5 的那只大环就是这个形态 —— 缺口让环有「未完成」的张力，
+    /// 整圆只是「一个圈」。本 App 的开锁环是一个**进度量**（今天开过几次门），
+    /// 与图 5 的 Health Age 环同构，所以采用它的形态。
+    private var heroRingGap: Double { 60 }
+    /// 弧的起始角（从 12 点顺时针的角度数）。缺口居中在底部 ⇒ 起点 = 180° + 30° = 210°。
+    private var heroRingStartDeg: Double { 180 + heroRingGap / 2 }
+    /// 弧覆盖的角度（整圆 360 减去缺口）。
+    private var heroRingSweepDeg: Double { 360 - heroRingGap }
     /// 游标在环带上的位置：从 12 点顺时针走 progress 圈。
     /// 半径取环中线（直径 - 线宽）/ 2，所以圆点正好坐在环带正中。
     private var cursorOffset: CGSize {
         let r = (heroRingSize - heroRingWidth) / 2
-        let deg = -90.0 + 360.0 * Double(min(max(progress, 0), 1))
+        // 从弧的**起点**（不是 12 点）沿着 sweep 走 progress —— 有缺口之后起点是 210°。
+        let deg = heroRingStartDeg + heroRingSweepDeg * Double(min(max(progress, 0), 1)) - 90
         let rad = deg * .pi / 180
         return CGSize(width: r * CGFloat(cos(rad)), height: r * CGFloat(sin(rad)))
     }
@@ -474,12 +493,15 @@ struct HomeConsole: View {
                     .fill(DSRing.innerDisc)
                     .frame(width: heroRingSize - heroRingWidth, height: heroRingSize - heroRingWidth)
 
+                // 轨道也要留同一个缺口 —— 否则缺口处会露出一条轨道，
+                // 读成「环断了一节」而不是「环张开了口」。
                 Circle()
-                    .strokeBorder(
+                    .trim(from: heroRingStartDeg / 360, to: (heroRingStartDeg + heroRingSweepDeg) / 360)
+                    .stroke(
                         LinearGradient(
                             colors: [DSRing.trackTop, DSRing.trackBottom],
                             startPoint: .top, endPoint: .bottom),
-                        lineWidth: heroRingWidth)
+                        style: StrokeStyle(lineWidth: heroRingWidth, lineCap: .round))
                     .overlay {
                         // 上缘压一条极淡的暗线 ⇒ 读成"凹进去的槽"
                         Circle()
@@ -493,17 +515,17 @@ struct HomeConsole: View {
                 // 用角度渐变而不是纯色：起点是深铜、头部是亮铜 ——
                 // 视觉上读成"能量从起点推到了头部"，纯色弧读不出方向。
                 Circle()
-                    .trim(from: 0, to: max(0.0001, progress))
+                    .trim(from: heroRingStartDeg / 360,
+                          to: (heroRingStartDeg + heroRingSweepDeg * max(0.0001, progress)) / 360)
                     .stroke(
                         AngularGradient(
                             colors: [phase.arcTone.opacity(0.35),
                                      phase.arcTone.opacity(0.75),
                                      phase.arcTone],
                             center: .center,
-                            startAngle: .degrees(-90),
-                            endAngle: .degrees(270)),
+                            startAngle: .degrees(heroRingStartDeg - 90),
+                            endAngle: .degrees(heroRingStartDeg + heroRingSweepDeg - 90)),
                         style: StrokeStyle(lineWidth: heroRingWidth, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
                     // 规范 7.8 通用自检: 环**不得有投影，只用辉光**。
                     // 原来这圈 16pt 的同色投影是想让蓄力弧"亮起来" ——
                     // 但投影是往外糊一层灰，辉光才是往外散开的光。
@@ -511,10 +533,10 @@ struct HomeConsole: View {
                     .overlay {
                         if !reduceMotion && progress > 0.01 {
                             Circle()
-                                .trim(from: 0, to: max(0.0001, progress))
+                                .trim(from: heroRingStartDeg / 360,
+                                      to: (heroRingStartDeg + heroRingSweepDeg * max(0.0001, progress)) / 360)
                                 .stroke(phase.arcTone.opacity(0.45),
                                         style: StrokeStyle(lineWidth: heroRingWidth + 6, lineCap: .round))
-                                .rotationEffect(.degrees(-90))
                                 .blur(radius: 9)
                                 .allowsHitTesting(false)
                         }
@@ -536,6 +558,32 @@ struct HomeConsole: View {
                         .accessibilityHidden(true)
                 }
 
+                // ── 右上角 info 按钮（规范 §7.8 形态 1 的「附属」项）──
+                //
+                // 参考图 5 那只大环右上角就有一枚 20pt 的 ⓘ。它的作用不是装饰：
+                // 大环是个抽象读数时，旁边需要一个「这是什么」的入口。
+                // 本 App 的环是「今天开过几次门」，讲清楚口径（含自动开锁、只算开锁类事件）
+                // 比让它自己猜更有用。
+                VStack {
+                    HStack {
+                        Spacer(minLength: 0)
+                        Button {
+                            showRingInfo = true
+                        } label: {
+                            Image(systemName: "info")
+                                .font(.system(size: XIcon.xs, weight: .semibold))
+                                .foregroundStyle(XPalette.textSub)
+                                .frame(width: 20, height: 20)
+                                .background(XPalette.specular.opacity(0.12), in: Circle())
+                                // 视觉 20pt，命中补到 44（§13）
+                                .frame(width: XHit.min, height: XHit.min)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("这个环是什么")
+                    }
+                    Spacer(minLength: 0)
+                }
                 // ── 环境光溢出 (AmbientGlow, 规范 7.12) ──
                 //
                 // 内容在页面边缘投出的彩色辉光，是本范式"氛围"的来源。
