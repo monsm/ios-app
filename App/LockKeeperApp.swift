@@ -1218,7 +1218,10 @@ struct RootView: View {
         //
         // 写在根上是因为 `symbolRenderingMode` 是 Environment 值，一处生效全树；
         // 个别需要双色的地方仍可局部覆盖成 `.palette`。
-        .environment(\.symbolRenderingMode, .hierarchical)
+        // 用**修饰器**而不是环境键：`.symbolRenderingMode(_:)` 是确定存在的 View 修饰器，
+        // 而 `\.symbolRenderingMode` 这个环境键我没有把握（上一轮就因为写了个不存在的
+        // `\.accessibilityContrast` 让 CI 编译失败）。能用确定的写法就别赌。
+        .symbolRenderingMode(.hierarchical)
     }
 
 

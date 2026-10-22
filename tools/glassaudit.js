@@ -305,8 +305,7 @@ const projectProblems = [];
 {
   const appSrc = fs.readFileSync(path.join(ROOT, 'App/LockKeeperApp.swift'), 'utf8');
   // 规范 §10：图标渲染用 .hierarchical。缺了就是全仓图标跑在 .monochrome 上（单层平涂）。
-  if (!appSrc.includes('symbolRenderingMode, .hierarchical') &&
-      !appSrc.includes('.symbolRenderingMode(.hierarchical)')) {
+  if (!appSrc.includes('.symbolRenderingMode(.hierarchical)')) {
     projectProblems.push('根视图没有设 .symbolRenderingMode(.hierarchical) —— 规范 §10 要求图标按层次渲染');
   }
 }

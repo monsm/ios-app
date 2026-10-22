@@ -1457,6 +1457,10 @@ struct XSegmented<T: Hashable>: View {
 
     var body: some View {
         HStack(spacing: 0) {
+            // 元组元素 key path 是合法的（见 App/Core/LockStats.swift:134 的查证记录：
+            // Swift 诊断表里没有 "key path cannot refer to tuple element" 这条）。
+            // 真正会编译不过的是**单参 ForEach**：那版初始化器要求元素 Identifiable，
+            // 而元组不能遵循协议 —— 所以这里显式给 id:。
             ForEach(Array(items.enumerated()), id: \.element) { _, item in
                 let on = item == selection
                 Button {

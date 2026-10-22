@@ -455,6 +455,67 @@ if (deadExtensions.length > 0) {
   }
 }
 
+// ── 5a. 引用的符号必须有声明（编译期错误，静态可抓）──
+//
+// CI 实证过两类：
+//   · `@Environment(\.accessibilityContrast)` —— 键不存在（正确是 \.colorSchemeContrast）；
+//   · `a11yText` 只加了使用处、参数声明没插进去 —— cannot find in scope。
+// 这两类都能在推 CI 之前抓出来，只要一条判据：**引用的名字必须在某处声明过**。
+//
+// 注意必须**先剥注释**：本仓有大段注释在讨论这些符号（比如 LockStats 解释元组 key path），
+// 不剥就会把注释里的提及当成引用 —— 那条错误的判据我在其他闸门里已经犯过一次。
+{
+  const strip = (l) => l.replace(/\/\/.*$/, '');
+  const declSet = new Set();
+  for (const f of files) {
+    const src = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n');
+    for (const m of src.matchAll(/(?:struct|class|enum|extension|protocol)\s+(\w+)/g)) declSet.add(m[1]);
+    for (const m of src.matchAll(/^\s*(?:internal |private |public |fileprivate )?(?:func|let|var)\s+(\w+)/gm)) declSet.add(m[1]);
+    for (const m of src.matchAll(/static\s+(?:var|let|func)\s+(\w+)/g)) declSet.add(m[1]);
+    for (const m of src.matchAll(/case\s+(\w+)/g)) declSet.add(m[1]);
+  }
+  const undef = new Map();
+  for (const f of files) {
+    const lines = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n');
+    lines.forEach((raw, i) => {
+      const code = strip(raw);
+      for (const m of code.matchAll(/\b(X[A-Z]\w+)\b/g)) {
+        const n = m[1];
+        if (/^XML|^XCTest/.test(n)) continue;
+        if (declSet.has(n)) continue;
+        if (!undef.has(n)) undef.set(n, path.relative(ROOT, f) + ':' + (i + 1));
+      }
+    });
+  }
+  if (undef.size) {
+    for (const [n, where] of [...undef].slice(0, 12)) console.error('  ' + n + '  ← ' + where);
+    console.error('✗ 有 ' + undef.size + ' 个 X 前缀符号被引用但没有任何声明 —— 这是编译期错误');
+    process.exit(1);
+  }
+  // 成员级：命名空间令牌（XPalette.xxx / XGradient.xxx / …）也必须真的存在 ——
+  // 删一个令牌却漏改引用，就是这一类编译错误（本仓删 surfaceChip 时差点踩到）。
+  const NSS = ['XPalette','XGradient','DSRing','DSFont','XSpace','XRadius','XIcon','XHit','XOpacity','XMetric','XMotion','XText'];
+  const memberMissing = new Map();
+  for (const f of files) {
+    const lines = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n');
+    lines.forEach((raw, i) => {
+      const code = strip(raw);
+      for (const ns of NSS) {
+        for (const m of code.matchAll(new RegExp('\\b' + ns + '\\.(\\w+)', 'g'))) {
+          if (declSet.has(m[1])) continue;
+          const k = ns + '.' + m[1];
+          if (!memberMissing.has(k)) memberMissing.set(k, path.relative(ROOT, f) + ':' + (i + 1));
+        }
+      }
+    });
+  }
+  if (memberMissing.size) {
+    for (const [n, where] of [...memberMissing].slice(0, 12)) console.error('  ' + n + '  ← ' + where);
+    console.error('✗ 有 ' + memberMissing.size + ' 个令牌成员被引用但没声明 —— 删令牌时漏改引用');
+    process.exit(1);
+  }
+  console.log('符号声明 ✓ 所有被引用的 X 前缀符号都能找到声明');
+}
 // ── 6a. xFont 实参必须是 XText case（否则编译器会去试另一个重载）──
 //
 // CI 实证：`.xFont(.caption2.monospacedDigit())` 的实参是 **Font 值**，不是 XText case。
