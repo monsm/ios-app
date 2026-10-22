@@ -1839,7 +1839,10 @@ struct XStatChip: View {
     var compact: Bool = false
     var selected: Bool = false
 
-    private var height: CGFloat { 52 }
+    /// 规范 §7.2 自检原文：**「高度必须是 56pt。若写 72，是把两行文字想大了。」**
+    /// 我此前写的 52 是按表格那一行取的，而表格与自检打架 —— 自检是**结论**，表格是**过程**，
+    /// 且参考图量出来是 56。取 56。
+    private var height: CGFloat { 56 }
 
     var body: some View {
         HStack(spacing: 10) {
@@ -1868,11 +1871,13 @@ struct XStatChip: View {
             // 规范 §7.2：背景是 **chipGradient**（渐变），不是实色。
             // 本仓原来用 XPalette.surfaceChip(#232326) 纯色 —— 而 XGradient.chip 早就定义好了、
             // 一处没用上。纯色胶囊在深卡上读起来是「贴上去的一块」，渐变才有「顶面受光」的厚度。
-            RoundedRectangle(cornerRadius: XRadius.chip, style: .continuous)
+            // 规范 §7.2：**r = 22**（表与自检都写 22）。XRadius.chip 是 14 —— 那是「圆角矩形」
+                // 而非真胶囊；参考图里的芯片圆角接近半高（56/2=28 的上限），22 是对的。
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .fill(XGradient.chip)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: XRadius.chip, style: .continuous)
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .strokeBorder(XPalette.specular.opacity(selected ? 0.24 : 0.10), lineWidth: 0.5)
         )
         .frame(maxWidth: compact ? nil : .infinity)

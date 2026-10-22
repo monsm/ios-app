@@ -85,10 +85,30 @@ struct LockProfilePage: View {
                             .allowsHitTesting(false)
                     )
 
-                Image(systemName: symbol.isEmpty ? "lock.fill" : symbol)
-                    .font(.system(size: XMetric.decorIcon(46), weight: .medium))
-                    .foregroundStyle(XPalette.onAccent)
-                    .contentTransition(.symbolEffect(.replace))
+                // ── 主视觉：3D 锁具渲染图（默认符号时）/ SF Symbol（用户选了别的符号时）──
+                //
+                // 规范 §6.4.3 要求「主体亮度高于卡片底色 >=3 档」且**背景透明**。
+                // 这张图是 three.js 在无头 Edge 里渲的（tools/prism/lock.html）：
+                // 深钛锁体 + 铜色锁芯，左上方单一主光，抠成透明底，1x/2x/3x 同源。
+                //
+                // 为什么只在默认符号时用：用户能从七个符号里挑（家/楼栋/车库/办公/钥匙/
+                // 布防/侧门）。挑了「车库」却还显示一把锁，那是把功能吃了。
+                // 所以 —— 默认态给主视觉，选了别的符号就回到符号。
+                if symbol.isEmpty {
+                    Image("LockHero")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 150, height: 150)
+                        // 圆盘直径 96，图 150 —— 图是**带落地影的立体件**，
+                        // 比圆盘大一圈才能让影落在盘外，而不是被裁在盘里。
+                        .offset(y: -6)
+                        .contentTransition(.opacity)
+                } else {
+                    Image(systemName: symbol)
+                        .font(.system(size: XMetric.decorIcon(46), weight: .medium))
+                        .foregroundStyle(XPalette.onAccent)
+                        .contentTransition(.symbolEffect(.replace))
+                }
             }
             .animation(XMotion.summon, value: symbol)
             .animation(XMotion.summon, value: colorKey)

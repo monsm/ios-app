@@ -264,36 +264,64 @@ struct HomeConsole: View {
     }
 
     // ─────────────────────────────────────────── ① 页眉
+    /// 顶部**芯片行** —— 规范 §7.2 StatChip，参考图 3 的形态。
+    ///
+    /// 2026-10-23 按参考图重做。原来这一行是「时钟 + 一个圆的连接状态」，
+    /// 而图 3 那一排是**四枚胶囊**：每枚「圆形图标 + 灰标签 + 白值」。
+    /// 那不只是排布差别 —— 胶囊本身就是「一屏有几个读数」的声明。
+    ///
+    /// 本 App 的四个读数（按「现在最该知道」排序）：
+    ///   连接状态 / 电量 / 今日开门 / 待处理。
+    /// 时钟退到最右侧（它仍在，但不再占一整行的左端）。
     private var masthead: some View {
-        HStack {
-            // 用 TimelineView 每分钟重算一次 —— 直接写 Text(clockText) 只在
-            // 别的状态变化触发重绘时才更新，时钟会停在打开那一刻。
+        HStack(spacing: XSpace.s) {
+            chip(.link)
+            chip(.battery)
+            chip(.today)
+            chip(.alerts)
+            Spacer(minLength: 0)
             TimelineView(.periodic(from: .now, by: 30)) { ctx in
                 Text(clockText(ctx.date))
-                    .xFont(.subheadline, weight: .medium, design: .rounded)
-                    .foregroundStyle(XPalette.textSub)
+                    .xFont(.caption, weight: .medium, design: .rounded)
+                    .foregroundStyle(XPalette.textTertiary)
                     .accessibilityLabel("现在 \(clockText(ctx.date))")
             }
-            Spacer(minLength: 0)
-            // ═══ 层级纠正 ═══
-            //
-            // 这一行是"现在能不能开门"——全屏最该一眼看到的状态。
-            // 而它原来用 caption(12pt)，左边那个时钟却是 subheadline(15pt)。
-            // 装饰比功能更醒目，是层级颠倒（layout.md：按相对重要性排序）。
-            // 把它提到 footnote(13pt) 并加粗；时钟保持原样（它是"仪表"气质的锚点）。
-            HStack(spacing: 5) {
-                Circle().fill(phase.tone).frame(width: 6, height: 6)
-                Text(phase.label)
-                    .xFont(.footnote, weight: .semibold)
-                    .foregroundStyle(phase.tone)
-            }
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel("连接状态：\(phase.label)")
         }
-        // 这一行装两段文字（时钟 + 连接状态），写死 20pt 在 AX 大字号下会截断。
-        // 20 是**普通字号的视觉高度**，不是硬约束 —— 用 minHeight 保住观感又不切字。
-        .frame(minHeight: 20)
     }
+
+    private enum MastChip { case link, battery, today, alerts }
+
+    /// 四枚芯片的内容。`compact` 只保留图标 —— 屏宽不够时用它（§7.2 compact 变体）。
+    @ViewBuilder
+    private func chip(_ k: MastChip) -> some View {
+        switch k {
+        case .link:
+            XStatChip(label: "连接", value: phase.label,
+                      systemImage: app.status != nil ? "link" : "link.badge.plus",
+                      tint: phase.tone)
+        case .battery:
+            if let p = app.status?.powerLevel, p >= 0 {
+                XStatChip(label: "电量", value: "\(p)%",
+                          systemImage: BatteryCare.icon(p),
+                          tint: BatteryCare.tier(p).tone.color)
+            } else {
+                XStatChip(label: "电量", value: "—", systemImage: "battery.0", tint: XPalette.textSub)
+            }
+        case .today:
+            XStatChip(label: "今日", value: "\(opensToday) 次",
+                      systemImage: "door.left.hand.open", tint: XPalette.accentText)
+        case .alerts:
+            if let n = alarmCount {
+                XStatChip(label: "待处理", value: "\(n)",
+                          systemImage: "exclamationmark.triangle.fill", tint: XPalette.danger)
+            } else {
+                XStatChip(label: "待处理", value: "无",
+                          systemImage: "checkmark.shield", tint: XPalette.ok)
+            }
+        }
+    }
+
+    // ─────────────────────────────────────────── ② 空状态
 
     // ─────────────────────────────────────────── ② 空状态
     private var noLockState: some View {

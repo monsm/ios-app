@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><style>
+html,body{margin:0;background:#1C1C1E;overflow:hidden}
+canvas{display:block}
+</style></head>
+<body>
+<script type="importmap">{"imports":{"three":"./three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+
+// 锁具主视觉 —— 规范 §6.4.3
+//   透明底 / 单一主光从左上方 / 主体比 #1C1C1E 亮 >=3 档 / 自带落地影 / 无文字
+const W = 1024, H = 1024;
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setSize(W, H);
+renderer.setPixelRatio(1);
+renderer.setClearColor(0x000000, 0);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(32, 1, 1, 100);
+cam.position.set(0, 1.2, 7.4);
+cam.lookAt(0, 0.05, 0);
+
+// ── 光：左上方主光 + 右后补光 + 底部微弱反弹 ──
+const key = new THREE.DirectionalLight(0xffffff, 3.1);
+key.position.set(-3.4, 5.0, 4.2);
+scene.add(key);
+const fill = new THREE.DirectionalLight(0xc9d4ff, 0.85);
+fill.position.set(4.2, 1.4, 2.0);
+scene.add(fill);
+const rim = new THREE.DirectionalLight(0xffffff, 1.4);
+rim.position.set(0.6, -1.2, -5.0);
+scene.add(rim);
+scene.add(new THREE.AmbientLight(0x8892A0, 0.85));
+// 没有 envMap 的金属材质会算成一团黑 —— 用三个方向光 + 强环境光模拟工作室布光。
+const top = new THREE.DirectionalLight(0xffffff, 1.9); top.position.set(0, 6, 1); scene.add(top);
+const left = new THREE.DirectionalLight(0xDCE6FF, 1.15); left.position.set(-5, 2, 3); scene.add(left);
+
+// ── 材质：拉丝不锈钢锁体 + 铜色锁芯（§3.4 语义色）──
+const steel = new THREE.MeshStandardMaterial({ color: 0x565C68, metalness: 0.86, roughness: 0.30, envMapIntensity: 1.1 });
+const steelDark = new THREE.MeshStandardMaterial({ color: 0x6A7280, metalness: 0.84, roughness: 0.28 });
+const brass = new THREE.MeshStandardMaterial({ color: 0xC08A4A, metalness: 0.80, roughness: 0.22 });
+const holeMat = new THREE.MeshStandardMaterial({ color: 0x0A0A0C, metalness: 0.2, roughness: 0.9 });
+
+const lock = new THREE.Group();
+
+// 锁体：圆角方板
+const bodyShape = new THREE.Shape();
+const bw = 1.42, bh = 1.86, br = 0.30;
+bodyShape.moveTo(-bw/2 + br, -bh/2);
+bodyShape.lineTo(bw/2 - br, -bh/2);
+bodyShape.quadraticCurveTo(bw/2, -bh/2, bw/2, -bh/2 + br);
+bodyShape.lineTo(bw/2, bh/2 - br);
+bodyShape.quadraticCurveTo(bw/2, bh/2, bw/2 - br, bh/2);
+bodyShape.lineTo(-bw/2 + br, bh/2);
+bodyShape.quadraticCurveTo(-bw/2, bh/2, -bw/2, bh/2 - br);
+bodyShape.lineTo(-bw/2, -bh/2 + br);
+bodyShape.quadraticCurveTo(-bw/2, -bh/2, -bw/2 + br, -bh/2);
+const bodyGeo = new THREE.ExtrudeGeometry(bodyShape, { depth: 0.42, bevelEnabled: true, bevelThickness: 0.075, bevelSize: 0.075, bevelSegments: 6, curveSegments: 24 });
+bodyGeo.center();
+const body = new THREE.Mesh(bodyGeo, steel);
+body.position.y = -0.18;
+lock.add(body);
+
+// 锁芯座（铜色圆盘）
+const bossGeo = new THREE.CylinderGeometry(0.46, 0.46, 0.20, 64);
+const boss = new THREE.Mesh(bossGeo, brass);
+boss.rotation.x = Math.PI / 2;
+boss.position.set(0, -0.22, 0.29);
+lock.add(boss);
+
+// 钥孔
+const khGeo = new THREE.CylinderGeometry(0.085, 0.085, 0.10, 24);
+const kh = new THREE.Mesh(khGeo, holeMat);
+kh.rotation.x = Math.PI / 2;
+kh.position.set(0, -0.30, 0.395);
+lock.add(kh);
+const slotGeo = new THREE.BoxGeometry(0.055, 0.20, 0.10);
+const slot = new THREE.Mesh(slotGeo, holeMat);
+slot.position.set(0, -0.39, 0.395);
+lock.add(slot);
+
+// 锁梁：半圆环 + 两条直腿
+const shR = 0.62, shT = 0.20;
+const shackle = new THREE.Group();
+const arcGeo = new THREE.TorusGeometry(shR, shT / 2, 24, 64, Math.PI);
+const arc = new THREE.Mesh(arcGeo, steelDark);
+arc.position.set(0, 0.72, 0);
+shackle.add(arc);
+for (const sx of [-1, 1]) {
+  const legGeo = new THREE.CylinderGeometry(shT / 2, shT / 2, 0.52, 24);
+  const leg = new THREE.Mesh(legGeo, steelDark);
+  leg.position.set(sx * shR, 0.46, 0);
+  shackle.add(leg);
+}
+lock.add(shackle);
+
+// 面板细节：一颗内六角螺钉
+const screwGeo = new THREE.CylinderGeometry(0.075, 0.075, 0.05, 6);
+const screw = new THREE.Mesh(screwGeo, steelDark);
+screw.rotation.x = Math.PI / 2;
+screw.position.set(0, 0.62, 0.28);
+lock.add(screw);
+
+lock.rotation.y = -0.30;
+lock.rotation.x = 0.06;
+scene.add(lock);
+
+renderer.render(scene, cam);
+
+// 导出 PNG（透明底）
+window.__png = renderer.domElement.toDataURL('image/png');
+const pre = document.createElement('pre');
+pre.id = 'b64';
+pre.textContent = window.__png.split(',')[1];
+document.body.appendChild(pre);
+document.title = 'READY';
+</script>
+</body></html>
