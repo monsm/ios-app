@@ -148,7 +148,7 @@ struct LocksPage: View {
             Button("解除绑定", role: .destructive) { unpair(kc) }
             Button("取消", role: .cancel) { confirmUnpair = nil }
         } message: { kc in
-            Text("将从本机删除「\(LockArchive.displayName(kc))」的密钥与全部本机设置，不可撤销。\n门锁里的密码/指纹不受影响 —— 要删那些得连上锁单独操作。")
+            Text("将从本机删除「\(LockArchive.displayName(kc))」的钥匙与全部本机设置，不可撤销。\n门锁里的密码/指纹不受影响 —— 要删那些得连上锁单独操作。")
         }
         .sheet(isPresented: $showAdd, onDismiss: { reload() }) {
             NavigationStack {

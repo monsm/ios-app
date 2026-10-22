@@ -665,7 +665,7 @@ struct MemberWizardView: View {
                 CredentialOrg.snapshot(kc.mac, kind: "pwd", key: alias, pwd: rec, fp: nil, note: "新增临时码")
                 app.showToast("已建档并给 TA 建了 10 分钟临时码")
             } catch {
-                app.showToast("建档成功，但密钥没生成 · 成员已保留，可在成员页重新生成: " + ErrorText.human(error))
+                app.showToast("建档成功，但钥匙没生成 · 成员已保留，可在成员页重新生成: " + ErrorText.human(error))
             }
         }
     }
