@@ -144,4 +144,39 @@ console.log(files.length + ' 个 Kotlin 文件括号配平 ✓ (这**不证明**
     process.exit(1);
   }
 }
+// ── 编译期错误的两类静态可判形态 ──
+//
+// 实证（2026-10-23 CI）：删 KfLightColors 时把**同一条 LocalKfColors 声明也删了**，
+// 报 Unresolved reference；另一处是我的一次编辑把 Kotlin 字符串里的 `\n` 写成了真实换行，
+// 报 Syntax error: Expecting '"'. 两条都不是设计问题，却让整包编不出来。
+{
+  const kf = fs.readFileSync(path.join(ROOT, 'android-app/app/src/main/java/com/aapk/kfkey/KfTheme.kt'), 'utf8');
+  if (!/val LocalKfColors\s*=/.test(kf)) {
+    console.error('✗ KfTheme.kt 里没有 LocalKfColors 声明 —— 它是唯一的色板通道，删了全端 Unresolved reference');
+    process.exitCode = 1;
+  } else {
+    console.log('色板通道 ✓ LocalKfColors 声明存在');
+  }
+
+  // 字符串字面量里的真实换行（不是 \n 转义）在同一条语句里出现 = 语法错误。
+  const bad = [];
+  for (const f of walk(SRC)) {
+    const lines = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n');
+    let inRaw = false;
+    lines.forEach((l, i) => {
+      const code = l.replace(/\/\/.*$/, '');
+      if (/"""/.test(code)) { const n = (code.match(/"""/g) || []).length; if (n % 2 === 1) inRaw = !inRaw; return; }
+      if (inRaw) return;
+      const q = (code.match(/(?<!\\)"/g) || []).length;
+      if (q % 2 === 1) bad.push(path.relative(ROOT, f) + ':' + (i + 1) + '  ' + l.trim().slice(0, 60));
+    });
+  }
+  if (bad.length) {
+    for (const b of bad.slice(0, 8)) console.error('  ' + b);
+    console.error('✗ 有 ' + bad.length + ' 行字符串未闭合 —— 多半是把 \\n 写成了真实换行');
+    process.exitCode = 1;
+  } else {
+    console.log('字符串字面量 ✓ 没有未闭合行');
+  }
+}
 console.log('Android 字号全部落在 §4.2 档位上 ✓');

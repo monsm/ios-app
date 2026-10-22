@@ -83,6 +83,13 @@ internal val KfDarkColors = KfColors(
     warn = Color(0xFFFF9F0A),
     danger = Color(0xFFFF3B30),   // 规范 §3.4 accentRed
 )
+// 主题色板的 CompositionLocal。
+//
+// 2026-10-23 编译错误修复：删 KfLightColors 那一整块时，把这条**声明本身**也一起删掉了 ——
+// 于是 KfTheme 与 MainActivity 全部报 `Unresolved reference 'LocalKfColors'`。
+// 它不属于「浅色档」，它是**唯一的一条**色板通道，删不得。
+internal val LocalKfColors = staticCompositionLocalOf { KfDarkColors }
+
 internal fun KfTheme(
     // 参数保留（调用点不必改），但**不再生效**：规范 §13.4 不允许 App 内明暗切换。
     @Suppress("UNUSED_PARAMETER") dark: Boolean = true,
