@@ -1099,13 +1099,16 @@ struct FpStudio: View {
                 immersive
             } else {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: XSpace.l) {
+                    // 规范 §5.3：区块之间 28（不是 16）；页边距 14（不是 16）。
+                    // 这里原来两个数都是 l(16) —— 区块分不出组，且页边距比规范宽 2pt。
+                    VStack(alignment: .leading, spacing: XSpace.section) {
                         StepDots(total: 4, index: step, labels: ["归属", "录入", "命名", "回执"])
                         if step == 0 { step0 }
                         if step == 2 { step2 }
                         navBar
                     }
-                    .padding(XSpace.l)
+                    .padding(.horizontal, XSpace.gutter)
+                    .padding(.vertical, XSpace.l)
                 }
                 .background(XPalette.canvas.ignoresSafeArea())
                 .axBottomAnchor()   // 870

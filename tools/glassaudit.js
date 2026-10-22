@@ -228,6 +228,17 @@ const RULES = [
 
 // ── 工程级断言（不是逐行扫，是整个 App 有没有做这件事）──
 const projectProblems = [];
+
+// §5.3 的「页边距 14」**没有做成断言** —— 判不了。
+//
+// 原因：`.padding(.horizontal, XSpace.x)` 在同一棵视图树里既可能是**页面页边距**，
+// 也可能是**卡片自己的内边距**（规范只约束前者）。要分开就必须知道「哪一个是页面的最外层容器」，
+// 而那是 AST 信息，靠行扫描只能猜。试过一版按 navigationTitle 圈定页面 body —— 依然误报，
+// 因为页面 body 里还有嵌套的卡片。
+//
+// 留了两条人读的实证修正（都改在源码里，注释写明理由）：
+//   · FpStudio：`.padding(XSpace.l)` 四边 16 → 横向 XSpace.gutter(14)
+//   · ShareToAndroidView：原来没有横向页边距，内容贴边 → 补 XSpace.gutter
 {
   // 规范 §5.3：页边距 14 / **区块之间 28** / 簇内 16 / 卡片行距 8。
   // 四个数各自有语义。只靠「比簇内多 8pt」拉簇间是无效的 —— 16 与 24 的差别眼睛读不出分组，
@@ -439,7 +450,7 @@ if (findings.length === 0) {
 console.log('总计 ' + findings.length + ' 条线索。');
 console.log('');
 console.log('本工具**判不了**的 (不假装能判):');
-console.log('  · 一屏是否只有一个主角 (需要知道渲染顺序与可见性)');
+console.log('  · §5.3 的页边距 14 是「页面最外层容器」的内边距，同行扫描分不清它与卡片内边距');
 console.log('  · 玻璃在亮背景/黑背景下明度是否都合理 (需要真机截图)');
 console.log('  · 字号在 Dynamic Type 各档下是否破版 (需要模拟器)');
 console.log('  · 间距在屏幕上读起来是否有层级 (需要眼睛)');

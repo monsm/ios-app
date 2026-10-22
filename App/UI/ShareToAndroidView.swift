@@ -83,7 +83,11 @@ struct ShareToAndroidView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
-                .padding(XSpace.l)
+                // 规范 §5.3：页边距 14（XSpace.gutter），区块之间 28（上面那个 VStack 已对）。
+                // 这里原来是 .padding(XSpace.l) —— 四边都 16，页边距比规范宽 2pt，
+                // 而垂直方向其实该由内层各自给。
+                .padding(.horizontal, XSpace.gutter)
+                .padding(.vertical, XSpace.l)
             }
             .navigationTitle("分享给安卓")
             .navigationBarTitleDisplayMode(.inline)
