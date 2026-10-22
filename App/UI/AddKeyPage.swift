@@ -261,11 +261,9 @@ struct AddKeyPage: View {
                     Spacer()
                 }
 
-                Picker("", selection: $permanent) {
-                    Text("永久").tag(true)
-                    Text("自定义").tag(false)
-                }
-                .pickerStyle(.segmented)
+            // 规范 §7.3：同一产品内只用一种分段形态。
+            XSegmented(items: [true, false], title: { $0 ? "永久" : "自定义" },
+                       selection: $permanent)
 
                 if !permanent {
                     VStack(spacing: XSpace.s) {

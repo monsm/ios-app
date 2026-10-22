@@ -54,6 +54,11 @@ internal data class KfColors(
  *
  * 故意不镜像（本端没有对应界面，镜像过来就是死令牌）：
  *   surfaceChip 无 StatChip 顶部胶囊行
+ *   veil        无 8% 白纱（本端没有 StatChip 图标底那种薄衬）
+ *   segTrack    无 分段控件（本端没有 XSegmented，也没有系统分段样式）
+ *   segThumb    无 分段控件
+ *   segOn       无 分段控件
+ *   segOff      无 分段控件
  *   kindFp      无 凭证工坊，无凭证三类语义
  *   kindTemp    无 凭证工坊
  *   kindOtp     无 凭证工坊

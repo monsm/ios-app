@@ -91,7 +91,11 @@ for (const line of ktSrc.split(/\r?\n/).slice(0, 80)) {
   // 判据不该因为排版习惯而失明 (第一版只认带空格的, 结果三条声明没被认出来)。
   if (!/不镜像|没有|无/.test(line)) continue;
   for (const m of line.matchAll(/\b([a-z][A-Za-z0-9]{3,})\b/g)) {
-    if (/^(kindFp|kindTemp|kindOtp|surfaceChip|qrQuietZone|textQuaternary|textFaint)$/.test(m[1])) omitted.add(m[1]);
+    // 2026-10-22：原来这里是一串**写死的令牌名**（kindFp|surfaceChip|...）。
+    // 于是新增的令牌（veil / segTrack / …）即使已在文件头声明「无 X」也认不出来 ——
+    // 判据只认识「我上次想到的那几个」。
+    // 改成：只要这行**确实在声明省略理由**（含「无」/「不镜像」）且形似令牌名，就收。
+    omitted.add(m[1]);
   }
 }
 

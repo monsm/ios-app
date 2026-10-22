@@ -180,15 +180,12 @@ struct BackupStudioView: View {
             SectionTitle(text: "备份策略")
             // @layout-allow 触达托管 Picker: 控件本体高度由系统渲染, 我们撑 frame 只会多出一片点不动的死区。
             // 上机复测: 用拇指点这一行的上下边缘, 看打不打得开 (打得开=系统已给够 44, 这条可以销)
-            Picker("备份节奏", selection: Binding(   // 198 备份节奏
-                get: { cadence.isEmpty ? BackupStudio.cadence : cadence },
-                set: { BackupStudio.cadence = $0; cadence = $0
-                       Task { await BackupStudio.scheduleCadenceReminder() } })) {
-                Text("仅手动").tag("manual")
-                Text("每周").tag("weekly")
-                Text("每月").tag("monthly")
-            }
-            .pickerStyle(.segmented)
+            // 规范 §7.3：统一走 XSegmented（形态 B）
+            XSegmented(items: ["manual", "weekly", "monthly"],
+                       title: { ["manual": "仅手动", "weekly": "每周"][$0] ?? "每月" },
+                       selection: Binding(get: { BackupStudio.cadence },
+                                          set: { BackupStudio.cadence = $0; cadence = $0
+                                                  Task { await BackupStudio.scheduleCadenceReminder() } }))
             Stepper("滚动保留: 远端只留 \(keep) 份", value: Binding(   // 430 滚动保留
                 get: { keep },
                 set: { BackupStudio.rollingKeep = $0; keep = $0 }), in: 0...20)
@@ -1073,12 +1070,9 @@ struct RestoreWizardView: View {
             // 418 三策略
             // @layout-allow 触达托管 Picker: 控件本体高度由系统渲染, 我们撑 frame 只会多出一片点不动的死区。
             // 上机复测: 用拇指点这一行的上下边缘, 看打不打得开 (打得开=系统已给够 44, 这条可以销)
-            Picker("合并策略", selection: $strategy) {   // 418 合并策略
-                ForEach(BackupStudio.MergeStrategy.allCases, id: \.self) { s in
-                    Text(s.rawValue).tag(s)
-                }
-            }
-            .pickerStyle(.segmented)
+            // 规范 §7.3：统一走 XSegmented（形态 B）
+            XSegmented(items: BackupStudio.MergeStrategy.allCases,
+                       title: { $0.rawValue }, selection: $strategy)
             Text(strategyHint(strategy))
                 .xFont(.caption)
                 .foregroundStyle(XPalette.textSub)

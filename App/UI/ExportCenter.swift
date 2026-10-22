@@ -1577,12 +1577,10 @@ struct ExportCenterView: View {
                 .xFont(.footnote, weight: .medium)
                 .foregroundStyle(XPalette.text)
             HStack(spacing: XSpace.s) {
-                Picker("", selection: $logFormat) {
-                    Text("CSV").tag("csv")
-                    Text("JSON").tag("json")
-                    Text("纯文本").tag("txt")
-                }
-                .pickerStyle(.segmented)
+                // 规范 §7.3：统一走 XSegmented（形态 B）
+                XSegmented(items: ["csv", "json", "txt"],
+                           title: { ["csv": "CSV", "json": "JSON"][$0] ?? "纯文本" },
+                           selection: $logFormat)
                 Button("生成") { startRunLog() }
                     .buttonStyle(XSecondaryButtonStyle())
                     .frame(width: 80)

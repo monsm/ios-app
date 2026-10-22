@@ -229,6 +229,30 @@ const RULES = [
 // ── 工程级断言（不是逐行扫，是整个 App 有没有做这件事）──
 const projectProblems = [];
 {
+  // 规范 §7.3 自检：「同一产品内**只用一种**，不得混用」。
+  // 本仓此前三种并存：系统 .pickerStyle(.segmented)（4 处）、KeysPage 手搓的
+  // glass+accent 洗底、以及别处各自写的。已统一为 XSegmented（形态 B）。
+  const files = [];
+  (function walk(d) {
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      const q = path.join(d, e.name);
+      if (e.isDirectory()) walk(q);
+      else if (q.endsWith('.swift')) files.push(q);
+    }
+  })(path.join(ROOT, 'App'));
+  const offenders = [];
+  for (const f of files) {
+    const lines = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n');
+    lines.forEach((l, i) => {
+      if (l.trim().startsWith('//') || l.trim().startsWith('///')) return;
+      if (/\.pickerStyle\(\.segmented\)/.test(l)) offenders.push(path.relative(ROOT, f) + ':' + (i + 1));
+    });
+  }
+  if (offenders.length) {
+    projectProblems.push('仍有 ' + offenders.length + ' 处系统分段控件没换成 XSegmented（§7.3 同一产品只用一种）：' + offenders.join(', '));
+  }
+}
+{
   // 规范 §7.20.1 骨架屏的四个数：周期 1.4s / ease-in-out / 高光宽 30% / 底色 #24242A。
   // 「参数差一点看不出来」正是这种地方 —— 而 1.4s 还是规范内部打架的那条（§11.2 说 ≤1.2s）。
   const compSrc = fs.readFileSync(path.join(ROOT, 'App/Core/Components.swift'), 'utf8');

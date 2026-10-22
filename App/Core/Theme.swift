@@ -64,8 +64,33 @@ enum XPalette {
     /// 第三表面 —— 输入框底、图表容器。深色档 #101012, **比画布亮、比卡片暗**,
     /// 是"凹陷"的那一档 (范式 3.1 surfaceSunken)。
     static var surfaceSunken: Color { Color(hex: 0x101012) }
-    /// 顶部胶囊底 (StatChip)。深色档 #232326, 比卡片亮一档。
-    static var surfaceChip: Color { Color(hex: 0x232326) }
+    // surfaceChip(#232326) 已删：规范 §7.2 给顶部胶囊的是 **chipGradient**（渐变），
+    // 不是实色。这个令牌一直是纯色、且被判据抓到「零使用」—— 说明它本来就不该存在。
+
+    /// **白纱** —— 纯白 8%，压在深色表面上的那层薄底。
+    ///
+    /// 规范里这个 8% 白出现在两处：§7.2 的 StatChip 图标底、§6.2 的玻璃提亮档。
+    /// 它必须是**纯白**而不是 `specular`(#C8C8D4) —— 后者是偏冷的灰，
+    /// 压上去会把图标底色带偏一档。
+    ///
+    /// 做成令牌而不是就地写 `Color.white.opacity(0.08)`：
+    /// `tools/swiftlint.js` 禁止写死纯白前景（它会随明暗/主题该翻转）—— 那条规则的意图是
+    /// 「白要有出处」，不是「不许白」。给它一个名字，就既守规则又表达角色。
+    static var veil: Color { Color.white.opacity(0.08) }
+
+    // ── 分段控件 (规范 §7.3 形态 B 的四个白) ──
+    //
+    //   容器底   rgba(255,255,255,0.06)
+    //   选中块   rgba(255,255,255,0.18)
+    //   选中字   #FFFFFF
+    //   未选字   rgba(255,255,255,0.5)
+    //
+    // 这四个数都是规范给的，且都在**同一只控件**里 —— 所以集中在这里，
+    // 而不是让 XSegmented 里散落四个 Color.white.opacity(...)。
+    static var segTrack: Color { Color.white.opacity(0.06) }
+    static var segThumb: Color { Color.white.opacity(0.18) }
+    static var segOn: Color { Color.white }
+    static var segOff: Color { Color.white.opacity(0.5) }
 
     // ── 描边 ──
     /// 分隔线 / 卡片描边 —— **规范原文就是半透明白**，不是实色。

@@ -155,38 +155,18 @@ struct KeysPage: View {
         }
     }
 
-    // ── 液态玻璃分段 ──
+    // ── 分段（规范 §7.3 形态 B，全仓唯一实现）──
+    //
+    // 原来是手搓的 axGlassCapsule + 选中项 accent 洗底 —— 而 §7.3/§7.10 都点名：
+    // 选中块应当是 rgba(255,255,255,0.18) 的**白色**块，不是语义色洗底。
+    // 语义色留给「当前状态」，不留给「你选了什么」。
     private var segmentBar: some View {
-        HStack(spacing: 2) {
-            ForEach(Array(Seg.allCases), id: \.self) { s in
-                let n = countFor(s)
-                Button {
-                    withAnimation(XMotion.soft) { seg = s.rawValue }
-                    XHaptics.tick.impactOccurred()
-                } label: {
-                    VStack(spacing: 1) {
-                        Text(s.title)
-                            .xFont(.caption, weight: seg == s.rawValue ? .semibold : .regular)
-                        Text("\(n)")
-                            .xFont(.caption2)
-                    }
-                    .foregroundStyle(seg == s.rawValue ? XPalette.text : XPalette.textSub)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 44)
-                    .background {
-                        if seg == s.rawValue {
-                            Capsule().fill(XPalette.accent.opacity(XOpacity.badge))
-                        }
-                    }
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("\(s.title) \(n) 份")
-                .accessibilityAddTraits(seg == s.rawValue ? [.isSelected] : [])
-            }
-        }
-        .padding(4)
-        .axGlassCapsule()
+        XSegmented(items: Seg.allCases, title: { $0.title }, selection: Binding(
+            get: { Seg(rawValue: seg) ?? .all },
+            set: { seg = $0.rawValue }
+        ))
     }
+
 
     private enum Seg: Int, CaseIterable {
         case all = 0, pwd = 1, fp = 2, temp = 3

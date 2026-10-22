@@ -1430,6 +1430,67 @@ extension View {
     }
 }
 // ═══════════════════════════════════════════════════════════
+// MARK: - 分段控件（规范 §7.3 形态 B）
+// ═══════════════════════════════════════════════════════════
+
+/// 分段控件 —— 全仓**唯一**实现，对应规范 §7.3 的「形态 B · 胶囊式」。
+///
+/// 为什么要收成一个：§7.3 的自检是「**同一产品内只用一种，不得混用**」。
+/// 本仓此前有三种：`.pickerStyle(.segmented)`（4 处，系统样式 —— 背景是
+/// `tertiarySystemFill`，既不是规范的 0.06 也不是 0.18）、KeysPage 手搓的
+/// 「axGlassCapsule + accent 洗底」（accent 洗底正是 §7.10 点名做错的那类）、
+/// 以及别处各自写的。三种形态并存 = 三种视觉语言。
+///
+/// 规范给的数：
+///   容器 `rgba(255,255,255,0.06)` · 高 **36** · r=999 · pad **2**
+///   选中块 `rgba(255,255,255,0.18)` + **白字 Semibold**
+struct XSegmented<T: Hashable>: View {
+    var items: [T]
+    var title: (T) -> String
+    @Binding var selection: T
+
+    @Namespace private var pill
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(Array(items.enumerated()), id: \.element) { _, item in
+                let on = item == selection
+                Button {
+                    guard !on else { return }
+                    withAnimation(XMotion.standard) { selection = item }
+                    XHaptics.tick.impactOccurred()
+                } label: {
+                    ZStack {
+                        if on {
+                            // 选中块 rgba(255,255,255,0.18) —— 规范给的数，不是 accent 洗底
+                            Capsule()
+                                .fill(XPalette.segThumb)
+                                .matchedGeometryEffect(id: "seg", in: pill)
+                        }
+                        Text(title(item))
+                            .xFont(.subheadline, weight: on ? .semibold : .regular)
+                            .foregroundStyle(on ? XPalette.segOn : XPalette.segOff)
+                            .lineLimit(1)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 32)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(title(item))
+                .accessibilityAddTraits(on ? [.isSelected, .isButton] : [.isButton])
+            }
+        }
+        .padding(2)
+        .background(Capsule().fill(XPalette.segTrack))
+        // 容器高 36 = 32 的块 + 上下各 2 的 pad
+        .frame(height: 36)
+        .animation(XMotion.standard, value: selection)
+        .sensoryFeedback(.selection, trigger: selection)
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
 // MARK: - 行内错误条
 // ═══════════════════════════════════════════════════════════
 
@@ -1660,8 +1721,11 @@ struct XStatChip: View {
         .frame(minWidth: compact ? height : 120)
         .frame(height: height)
         .background(
+            // 规范 §7.2：背景是 **chipGradient**（渐变），不是实色。
+            // 本仓原来用 XPalette.surfaceChip(#232326) 纯色 —— 而 XGradient.chip 早就定义好了、
+            // 一处没用上。纯色胶囊在深卡上读起来是「贴上去的一块」，渐变才有「顶面受光」的厚度。
             RoundedRectangle(cornerRadius: XRadius.chip, style: .continuous)
-                .fill(XPalette.surfaceChip)
+                .fill(XGradient.chip)
         )
         .overlay(
             RoundedRectangle(cornerRadius: XRadius.chip, style: .continuous)
@@ -1674,7 +1738,9 @@ struct XStatChip: View {
 
     private var iconBadge: some View {
         ZStack {
-            Circle().fill(XPalette.specular.opacity(XOpacity.glassFill))
+            // 规范 §7.2：图标底色是 **rgba(255,255,255,0.08)**（纯白 8%）。
+            // 原来用 specular(#C8C8D4) —— 那是一只偏冷的灰, 与规范给的纯白不是同一个颜色。
+            Circle().fill(XPalette.veil)
             if let ringFraction {
                 Circle()
                     .trim(from: 0, to: min(max(ringFraction, 0), 1))

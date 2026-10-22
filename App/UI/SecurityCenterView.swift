@@ -496,13 +496,10 @@ struct SecurityAuditView: View {
                             //   "contextual type for closure argument list expects 2 arguments" 与
                             //   "expects 0 arguments, but 1 was used in closure body"。
                             // 给外层参数起名 newValue 后, 两层闭包各自明确, 歧义消失。
-                            Picker("", selection: Binding(get: { self.seg }, set: { newValue in
-                                withAnimation(XMotion.quick) { self.seg = newValue }
-                            })) {
-                                Text("管理操作 " + String(adminN)).tag(0)
-                                Text("开门事件 " + String(doorN)).tag(1)
-                            }
-                            .pickerStyle(.segmented)
+        // 规范 §7.3：统一走 XSegmented（形态 B）
+        XSegmented(items: [0, 1],
+                   title: { $0 == 0 ? "管理操作 " + String(adminN) : "开门事件 " + String(doorN) },
+                   selection: Binding(get: { self.seg }, set: { withAnimation(XMotion.quick) { self.seg = $0 } }))
                             ForEach(events, id: \.id) { e in
                                 auditRow(e)
                             }
