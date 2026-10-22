@@ -267,20 +267,12 @@ struct DonglesPage: View {
         return "\(st.ekeyCount) / \(st.ekeyAmount)"
     }
 
-    private func batteryIcon(_ p: Int) -> String {
-        if p < 0 { return "battery.0" }
-        if p <= 10 { return "battery.25" }
-        if p <= 50 { return "battery.50" }
-        if p <= 90 { return "battery.75" }
-        return "battery.100"
-    }
+    /// 图标映射只有一处（BatteryCare.tier）—— 这里原来自己一套阈值，
+    /// 结果 p=5 显示 25% 图标、p=85 还停在 75% 图标。
+    private func batteryIcon(_ p: Int) -> String { BatteryCare.icon(p) }
 
-    private func batteryTone(_ p: Int) -> XToneColor {
-        if p < 0 { return .neutral }
-        if p <= 20 { return .danger }
-        if p <= 40 { return .warn }
-        return .ok
-    }
+    /// 配色映射也只有一处（BatteryCare.tier）—— 这原是第二套阈值（20/40），与 tier 的 10/20/35/60 不同。
+    private func batteryTone(_ p: Int) -> XToneColor { BatteryCare.tier(p).tone }
 
     // ═══════════════════════════════════════════════════════
     // MARK: - 空态

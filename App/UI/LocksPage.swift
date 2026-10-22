@@ -273,19 +273,13 @@ struct LocksPage: View {
         return parts.joined(separator: "，")
     }
 
-    /// 电量图标
-    private func batteryIcon(_ p: Int) -> String {
-        if p <= 10 { return "battery.0" }
-        if p <= 25 { return "battery.25" }
-        if p <= 50 { return "battery.50" }
-        if p <= 75 { return "battery.75" }
-        return "battery.100" }
+    /// 电量图标 —— 映射只有一处（BatteryCare.tier）。这里原来是第二套阈值。
+    private func batteryIcon(_ p: Int) -> String { BatteryCare.icon(p) }
     /// 电量配色 —— 低电量必须醒目
-    private func batteryTone(_ p: Int) -> Color {
-        if p <= 20 { return XPalette.danger }
-        if p <= 40 { return XPalette.warn }
-        return XPalette.textSub
-    }
+    /// 配色映射只有一处（BatteryCare.tier）。
+    /// 这里原来没处理「电量未知（-1）」—— 负值落进 `<=20 -> danger`，
+    /// 于是**读不到电量时反而显示成告警色**。tier 的 `..<0` 分支给 neutral。
+    private func batteryTone(_ p: Int) -> Color { BatteryCare.tier(p).tone.color }
     /// 锁态文案（来自 StatusSnapshotData.rc，与门面同一口径）
     private func lockStateText(_ rc: Int) -> String {
         switch rc {

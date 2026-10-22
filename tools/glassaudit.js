@@ -229,6 +229,30 @@ const RULES = [
 // ── 工程级断言（不是逐行扫，是整个 App 有没有做这件事）──
 const projectProblems = [];
 {
+  // 逻辑维度（第三类）：**同一个量只允许一处映射**。
+  //
+  // 实证：电量图标与配色在本仓曾有三套 —— `BatteryCare.tier()` 一套，
+  // DonglesPage / LocksPage 各自一套，阈值与图标都不同。
+  // p=5 时三处分别给 battery.0percent / battery.25 / battery.0；
+  // p=85 时 DonglesPage 还停在 75% 图标；
+  // LocksPage 的配色没处理「未知(-1)」，读不到电量反而显示成告警色。
+  //
+  // 判据：`battery.N` / `battery.Npercent` 字面量只许出现在 BatteryCare.swift。
+  for (const f of files) {
+    const rel = path.relative(ROOT, f);
+    if (/BatteryCare\.swift$/.test(rel)) continue;
+    const lines = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n');
+    lines.forEach((raw, i) => {
+      const code = raw.replace(/\/\/.*$/, '');
+      // 只判「按电量返回图标」的**映射**，不判静态装饰图标（Label(systemImage: "battery.100") 是文案配图）。
+      if (!/return\s+"battery\./.test(code)) return;
+      if (/BatteryCare\.icon|BatteryCare\.tier/.test(code)) return;
+      projectProblems.push('电量图标映射只许在 BatteryCare（tier/icon）里定义：' +
+                           rel + ':' + (i + 1) + '  ' + raw.trim().slice(0, 50));
+    });
+  }
+}
+{
   // 逻辑维度：**同一个量只允许一个算法 / 一个写点**。
   //
   // 实证两类（都是本会话真抓到的）：

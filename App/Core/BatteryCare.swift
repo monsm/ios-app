@@ -87,6 +87,13 @@ enum BatteryCare {
         default:       return Tier(icon: "battery.100percent", tone: .ok, label: "满", severe: false)
         }
     }
+    /// 电量图标的**唯一映射**。
+    ///
+    /// 2026-10-23：本仓曾有三套 —— `tier()` 一套，`DonglesPage` 与 `LocksPage` 各自一套，
+    /// 阈值与图标都不同。实证 p=5 时三处分别给 `battery.0percent` / `battery.25` / `battery.0`：
+    /// **同一格电量，两个屏幕显示不同图标**；p=85 时 Dongles 还在显示 75% 的图标。
+    /// 统一走 `tier()`（它同时给出配色与文案，是最完整的一处）。
+    static func icon(_ pct: Int) -> String { tier(pct).icon }
     /// 1004 喂电提醒判定 (≤20%; 与 287 的可调横幅阈值互相独立)
     static func isLow(_ pct: Int) -> Bool { (0...20).contains(pct) }
 
