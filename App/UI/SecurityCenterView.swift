@@ -501,7 +501,9 @@ struct SecurityAuditView: View {
         // 原先把三元 + 字符串拼接写在 title 闭包里，编译器报
         // 「unable to type-check this expression in reasonable time」——
         // 闭包内的字符串拼接让泛型推导爆炸。抽成具名方法就没事了。
-                            XSegmented(items: [0, 1], title: auditSegTitle, selection: auditSegBinding)
+                            XSegmented(items: [0, 1],
+                                       title: { i in auditSegTitle(i, adminN: adminN, doorN: doorN) },
+                                       selection: auditSegBinding)
                             ForEach(events, id: \.id) { e in
                                 auditRow(e)
                             }
@@ -874,7 +876,8 @@ struct SecurityAuditView: View {
     }
 
     /// 审计分段的两段标题 —— 抽成方法而不是写在闭包里（见上方注释）。
-    private func auditSegTitle(_ i: Int) -> String {
+    /// adminN / doorN 是 body 里的局部 let，方法看不见 —— 必须由调用方传进来。
+    private func auditSegTitle(_ i: Int, adminN: Int, doorN: Int) -> String {
         i == 0 ? "管理操作 " + String(adminN) : "开门事件 " + String(doorN)
     }
 

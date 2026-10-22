@@ -177,6 +177,47 @@ if (numBad.length) {
 
 const numCount = Object.keys(KT_SPACE).length + Object.keys(KT_RADIUS).length + Object.keys(KT_ICON).length;
 console.log('数值令牌对账 ✓ ' + numCount + ' 个同名成员与 iOS 逐值相同（Space / Radius / Icon）');
+
+// ── 一·五、字阶对账（iOS XText ↔ Android Type）──
+//
+// 两端都声称「字阶同源」，但此前没有任何判据在看。实证：Android 曾经出现 4 处 15.sp
+// （HIG subheadline 的默认值），而规范 §4.2 已把它下修成 14。
+//
+// 名字有一处不同：iOS 叫 subheadline，Android 叫 subhead —— 是同一档（14）。
+{
+  const xtBlock = /enum XText[^{]*\{([\s\S]*?)\n\}/.exec(iosFull);
+  const iosType = {};
+  if (xtBlock) {
+    // case .xxx: return 56  /  case .displayNumber: return DSFont.displayNumber
+    for (const m of xtBlock[1].matchAll(/case \.(\w+):\s*return (\d+(?:\.\d+)?)/g)) iosType[m[1]] = +m[2];
+    // 转发到 DSFont 的那一档
+    for (const m of xtBlock[1].matchAll(/case \.(\w+):\s*return DSFont\.(\w+)/g)) {
+      const dm = new RegExp('static let ' + m[2] + ': CGFloat = (\\d+(?:\\.\\d+)?)').exec(iosFull);
+      if (dm) iosType[m[1]] = +dm[1];
+    }
+  }
+  const ktType = {};
+  const tp = /object Type \{([\s\S]*?)\n\}/.exec(numSrc);
+  if (tp) for (const m of tp[1].matchAll(/val (\w+) = (\d+(?:\.\d+)?)\.sp/g)) ktType[m[1]] = +m[2];
+  // 两端命名/分档的两处差异，都是有依据的：
+  //   subheadline ↔ subhead —— 同一档（14），只是名字不同；
+  //   caption2    →  caption  —— 规范 §4.2 里 caption 与 caption2 **都是 11pt**，
+  //                             只差字距（+0.1 / +0.2）。Android 的 Type 令牌不带字距，
+  //                             所以两档合并成一档是正确的，不是漏了一层。
+  const NAME_MAP = { subheadline: 'subhead', caption2: 'caption' };
+  const typeBad = [];
+  for (const [iosName, size] of Object.entries(iosType)) {
+    const ktName = NAME_MAP[iosName] || iosName;
+    if (!(ktName in ktType)) { typeBad.push(iosName + ': Android 端没有对应档（' + ktName + '）'); continue; }
+    if (ktType[ktName] !== size) typeBad.push(iosName + ': iOS ' + size + 'sp vs Android ' + ktType[ktName] + 'sp');
+  }
+  if (typeBad.length) {
+    for (const b of typeBad) console.error('  ' + b);
+    console.error('✗ 字阶漂移 ' + typeBad.length + ' 处 —— 两端同一档必须同值');
+    process.exit(1);
+  }
+  console.log('字阶对账 ✓ ' + Object.keys(iosType).length + ' 档两端同值（XText ↔ Type）');
+}
 const matched = rows.filter((r) => r.status === 'ok').length;
 if (failed > 0) {
   for (const r of rows.filter((x) => x.status !== 'ok' && !x.status.startsWith('omitted'))) {
