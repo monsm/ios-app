@@ -1050,7 +1050,7 @@ struct XDayClock: View {
                     .foregroundStyle(XPalette.text)
                     .contentTransition(.numericText())
                 Text("次开门")
-                    .xFontExact(.system(size: XMetric.dataText(max(8, size * 0.040))))
+                    .xFontExact(.system(size: XMetric.dataText(max(11, size * 0.040))))
                     .foregroundStyle(XPalette.textTertiary)
             }
         }
@@ -1181,14 +1181,14 @@ struct XBatteryGauge: View {
                             .foregroundStyle(XPalette.textSub)
                     }
                     Text(statusWord)
-                        .xFontExact(.system(size: XMetric.dataText(max(9, size * 0.072)), weight: .medium))
+                        .xFontExact(.system(size: XMetric.dataText(max(11, size * 0.072)), weight: .medium))
                         .foregroundStyle(tint)
                 } else {
                     Text("—")
                         .xFontExact(.system(size: XMetric.dataText(size * 0.26), weight: .semibold, design: .rounded))
                         .foregroundStyle(XPalette.textTertiary)
                     Text("未读到")
-                        .xFontExact(.system(size: XMetric.dataText(max(9, size * 0.072))))
+                        .xFontExact(.system(size: XMetric.dataText(max(11, size * 0.072))))
                         .foregroundStyle(XPalette.textTertiary)
                 }
             }
@@ -1295,7 +1295,7 @@ struct XCycleRing: View {
                     .minimumScaleFactor(0.5)
                     .lineLimit(1)
                 Text(caption)
-                    .xFontExact(.system(size: XMetric.dataText(max(8, size * 0.062))))
+                    .xFontExact(.system(size: XMetric.dataText(max(11, size * 0.062))))
                     .foregroundStyle(tint)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)

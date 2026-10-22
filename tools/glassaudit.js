@@ -229,6 +229,33 @@ const RULES = [
 // ── 工程级断言（不是逐行扫，是整个 App 有没有做这件事）──
 const projectProblems = [];
 {
+  // 规范 §14-#11：**11pt 以下字号命中即返工**（低于 iOS 最小可读字号）。
+  //
+  // 实证：环内文字的下限原为 max(8,…) / max(9,…)，在 104pt 的环里实际渲染出 8–9pt。
+  // 这类错在源码里看不出来 —— 那一行写的是 max(9, size * 0.072)，看着像个合理的下限，
+  // 但它随环直径收缩，小环就破了可读下限。
+  //
+  // 判法两条：① `.system(size: <字面量>)` 里的字面量不得 < 11；
+  //          ② `max(<字面量>, …)` 用作字号下限时，字面量不得 < 11。
+  for (const f of files) {
+    const lines = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n');
+    lines.forEach((raw, i) => {
+      const code = raw.replace(/\/\/.*$/, '');
+      if (code.trim().startsWith('///')) return;
+      let bad = null;
+      const lit = /\.system\(size:\s*([0-9]+(?:\.[0-9]+)?)/.exec(code);
+      if (lit && Number(lit[1]) < 11) bad = '字号字面量 ' + lit[1];
+      if (!bad) {
+        const fl = /XMetric\.(?:dataText|decorIcon)\(max\(([0-9.]+),/.exec(code);
+        if (fl && Number(fl[1]) < 11) bad = '字号下限 ' + fl[1];
+      }
+      if (!bad) return;
+      projectProblems.push('§14-#11 ' + bad + ' 低于 11pt 可读下限：' +
+                           path.relative(ROOT, f) + ':' + (i + 1));
+    });
+  }
+}
+{
   // 规范 J5 / §7.20.3：错误态要说清「什么坏了 + 怎么办」。
   // 系统给的 localizedDescription 是工程术语（"write failed" / "response timeout" / CBError 6），
   // 两条都不满足。本仓有 `ErrorText.human` 专门做这件事（19 处在用）——
