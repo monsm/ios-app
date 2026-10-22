@@ -104,14 +104,10 @@ struct CarePage: View {
                     XCycleRing(
                         elapsed: elapsed,
                         period: max(period, 1),
-                        headline: care.lastCareAt > 0
-                            ? "\(Int((Double(elapsed) / Double(max(period, 1)) * 100).rounded()))%"
-                            : "—",
+                        headline: careRingPct(elapsed: elapsed, period: period),
                         caption: care.lastCareAt > 0 ? "已用" : "未记录",
                         // 规范 §13.5：读屏要读**一句话**，不是两个词用逗号拼起来。
-                        a11yText: care.lastCareAt > 0
-                            ? "保养周期已用 \(Int((Double(elapsed) / Double(max(period, 1)) * 100).rounded()))%，\(days > 0 ? "还剩 \(days) 天" : "该做保养了")"
-                            : "保养周期尚未记录",
+                        a11yText: careRingA11y(days: days, elapsed: elapsed, period: period),
                         size: 104)
                 }
 
@@ -292,5 +288,26 @@ struct CarePage: View {
             }
         }
     }
+
+    /// 保养环的读屏文案。
+    ///
+    /// 抽成方法而不是写在调用点：那个表达式是「三元 + 字符串插值 + 算术 + 内层三元」，
+    /// 而 CI 已在**同一个文件**抓到两次「unable to type-check this expression」。
+    /// 这类嵌套在本地看不出问题，编译才炸 —— 提前拆平。
+    private func careRingA11y(days: Int, elapsed: Int, period: Int) -> String {
+        guard care.lastCareAt > 0 else { return "保养周期尚未记录" }
+        let pct = Int((Double(elapsed) / Double(max(period, 1)) * 100).rounded())
+        let tail = days > 0 ? "还剩 \(days) 天" : "该做保养了"
+        return "保养周期已用 \(pct)%，\(tail)"
+    }
+
+
+    /// 环心的百分比（未记录时给 em dash）。同 careRingA11y，为拆平表达式而抽出。
+    private func careRingPct(elapsed: Int, period: Int) -> String {
+        guard care.lastCareAt > 0 else { return "—" }
+        let pct = Int((Double(elapsed) / Double(max(period, 1)) * 100).rounded())
+        return "\(pct)%"
+    }
+
 }
 
