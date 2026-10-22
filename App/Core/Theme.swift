@@ -392,9 +392,12 @@ enum XMetric {
     /// >11 位缩写。12_458_902 → "12.5M"；1_200_000_000 → "1.2B"。
     static func abbreviate(_ n: Int) -> String {
         let d = abs(n)
-        if d >= 1_000_000_000 { return String(format: "%.1fB", Double(n) / 1_000_000_000) }
-        if d >= 1_000_000 { return String(format: "%.1fM", Double(n) / 1_000_000) }
-        return String(n)
+        let body: String
+        if d >= 1_000_000_000 { body = String(format: "%.1fB", Double(d) / 1_000_000_000) }
+        else if d >= 1_000_000 { body = String(format: "%.1fM", Double(d) / 1_000_000) }
+        else { body = String(d) }
+        // 规范 I8：负号是 U+2212，不是连字符。
+        return n < 0 ? String(minusSign) + body : body
     }
 
     /// 千分位分组 —— 规范 E4「千分位逗号」。
@@ -403,6 +406,10 @@ enum XMetric {
     /// "12.458.902"，而这里的读数是**技术数据**（次数/天数），不该跟随用户区域。
     /// 也正好与 §7.18 的口径一致 ——「按**位数**算，不按字符数：12,458,902 是 9 位数字」，
     /// 那句话默认了显示里带逗号。
+    /// 负号用 **U+2212 减号**，不是连字符 `-`（规范 I8）。
+    /// 连字符在数字语境里偏窄偏上，与等宽数字并排时基线看着像错的。
+    static let minusSign: Character = "−"
+
     static func grouped(_ n: Int) -> String {
         let neg = n < 0
         var digits = Array(String(abs(n)))
@@ -413,7 +420,7 @@ enum XMetric {
                 out.append(",")
             }
         }
-        if neg { out.append("-") }
+        if neg { out.append(minusSign) }
         return String(out.reversed())
     }
 

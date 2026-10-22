@@ -784,9 +784,9 @@ struct LinkPrefsView: View {
                 Picker(selection: Binding(
                     get: { LinkSense.rssiFence },
                     set: { DB.store.set("kf_rssi_fence", $0) })) {
-                    Text("严格 (≥ -60)").tag(-60)
-                    Text("标准 (≥ -70)").tag(-70)
-                    Text("宽松 (≥ -80)").tag(-80)
+                    Text("严格 (≥ −60)").tag(-60)
+                    Text("标准 (≥ −70)").tag(-70)
+                    Text("宽松 (≥ −80)").tag(-80)
                     Text("关闭围栏").tag(-127)
                 } label: {
                     Text("信号围栏")

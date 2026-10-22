@@ -229,6 +229,29 @@ const RULES = [
 // ── 工程级断言（不是逐行扫，是整个 App 有没有做这件事）──
 const projectProblems = [];
 {
+  // 规范 I8：负号用 **U+2212 −**，不是连字符 `-`。
+  //
+  // 只判**界面文案里紧跟数字的负号**（`Text("... -60")` / 字符串插值里的负数）。
+  // 日期 `2026-01-01`、`SHA-256`、`AES-128-CBC`、`A-Z`、`2-7` 这些连字符不是负号，不能一锅端 ——
+  // 所以判法是「连字符 + 数字，且**前面不是数字**」（日期中间那种前面是数字，排除）。
+  const NEG_IN_TEXT = /"[^"]*(?:^|[^0-9\w])-(\d)/;
+  for (const f of files) {
+    const lines = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n');
+    lines.forEach((raw, i) => {
+      const code = raw.replace(/\/\/.*$/, '');
+      // 只看界面文案：含 Text( 或 accessibilityLabel( 的字面量
+      if (!/Text\(|accessibilityLabel\(|accessibilityValue\(/.test(code)) return;
+      const lit = /"([^"]*)"/.exec(code);
+      if (!lit) return;
+      if (!NEG_IN_TEXT.test(lit[0])) return;
+      // 排除看起来像日期/版本号的（YYYY-MM-DD 或 X-Y 且两侧都是数字）
+      if (/\d-\d/.test(lit[1])) return;
+      projectProblems.push('I8 负号应为 U+2212 −，这里用了连字符：' +
+                           path.relative(ROOT, f) + ':' + (i + 1) + '  ' + lit[1].slice(0, 30));
+    });
+  }
+}
+{
   // 规范 §7.6 的「内部纵向节奏」六个数：卡头→标题 6 / 标题→标签 12 / 标签→值 2 /
   // 值→分隔线 14 / 分隔线→下一组 12 / 页脚上方 12。
   //
