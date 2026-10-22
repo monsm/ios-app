@@ -229,13 +229,15 @@ struct AddKeyPage: View {
     /// 314 前缀混淆：同锁内其它密码前 4 位相同。
     ///
     /// 这不是安全检查，是**口头说清楚的检查** —— 家里说"1234 开头那个"，
-    /// 如果有两条都是 1234 开头，谁都会拿错。函数写好了零调用。
+    /// 如果有两条都是 1234 开头，谁都会拿错。
     private var prefixClash: String? {
         guard pwd.count >= 4, let kc = app.current else { return nil }
         let hits = CredentialOrg.prefixConflict(kc.mac, pwd, excluding: -1)
         guard let first = hits.first else { return nil }
         let who = first.note.isEmpty ? "密码 #\(first.alias)" : first.note
-        return "前 4 位与「\(who)」相同 — 口头说「\(pwd.prefix(4)) 那个」容易拿错"
+        // 不回显口令前缀：用户刚敲完，告诉他「前 4 位是 1234」没有任何新信息，
+        // 却把秘密的 4 位明文留在屏幕上（肩窥即可见）。说清「与谁撞了」就够了。
+        return "前 4 位与「\(who)」相同 — 口头区分时容易拿错，建议改一位"
     }
 
     /// 密码可用但不够难猜 —— 提示行改用警示色，否则"全部同数字"会显示成通过色。
