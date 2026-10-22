@@ -43,7 +43,7 @@ struct LockProfilePage: View {
             XPalette.canvas.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: XSpace.xl) {
+                VStack(spacing: XSpace.section) {
                     plaque.xScrollLift()
                     identitySection.xScrollLift()
                     symbolSection.xScrollLift()

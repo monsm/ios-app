@@ -64,7 +64,7 @@ struct IconPicker: View {
             XPalette.canvas.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: XSpace.l) {
+                VStack(spacing: XSpace.section) {
                     XPanel(kind: .group) {
                         iconPickerRow
                     }

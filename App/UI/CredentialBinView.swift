@@ -38,7 +38,7 @@ struct CredentialBinView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: XSpace.l) {
+            VStack(spacing: XSpace.section) {
                 if entries.isEmpty {
                     XPanel(kind: .group) {
                         XEmptyState(systemImage: "trash.slash",

@@ -41,7 +41,7 @@ struct FeedPage: View {
                 emptyState
             } else {
                 ScrollView {
-                    VStack(spacing: XSpace.m) {
+                    VStack(spacing: XSpace.section) {
                         headerBar.xScrollLift()
                         // 按天分组 —— 原来是一长条平铺，看不出"这是今天的还是上周的"。
                         // 动态页的核心是"最近发生了什么"，日期是最基本的坐标系。

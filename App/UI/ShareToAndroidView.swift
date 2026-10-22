@@ -24,7 +24,7 @@ struct ShareToAndroidView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: XSpace.l) {
+                VStack(spacing: XSpace.section) {
                     if let qr {
                         Image(uiImage: qr)
                             .interpolation(.none)          // 二维码放大必须硬边, 插值会糊掉模块

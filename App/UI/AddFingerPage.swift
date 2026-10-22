@@ -49,7 +49,7 @@ struct AddFingerPage: View {
             XPalette.canvas.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: XSpace.xl) {
+                VStack(spacing: XSpace.section) {
                     if doneBatch != nil {
                         successStage.xScrollLift()
                     } else {

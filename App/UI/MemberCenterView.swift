@@ -33,7 +33,7 @@ struct MemberDetail360View: View {
                 XPalette.canvas.ignoresSafeArea()
 
                 ScrollView {
-                    VStack(spacing: XSpace.l) {
+                    VStack(spacing: XSpace.section) {
                         // 一周小结 (原有 weekSentence, 只在有内容时出)
                         if let line = MemberHub.weekSentence(m.id) {
                             HStack(spacing: XSpace.s) {
@@ -526,7 +526,7 @@ struct MemberWizardView: View {
                 XPalette.canvas.ignoresSafeArea()
 
                 ScrollView {
-                    VStack(spacing: XSpace.l) {
+                    VStack(spacing: XSpace.section) {
                 XPanel(kind: .group) {
                     VStack(alignment: .leading, spacing: XSpace.m) {
                         secLabel("步骤 \(step + 1)/3 · " + steps[step])
@@ -702,7 +702,7 @@ struct MergeMembersView: View {
             //
             // 全仓其他页面都是 ScrollView + XPanel，这里统一。
             ScrollView {
-                VStack(spacing: XSpace.l) {
+                VStack(spacing: XSpace.section) {
                     XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
                             secLabel("主档 (保留)")
@@ -854,7 +854,7 @@ struct MemberArchivedView: View {
             XPalette.canvas.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: XSpace.l) {
+                VStack(spacing: XSpace.section) {
                     if archived.isEmpty {
                         XPanel(kind: .group) {
                             VStack(spacing: XSpace.s) {
@@ -970,7 +970,7 @@ struct MemberFamilySettingsView: View {
         NavigationStack {
             // M5: Form → ScrollView（与全仓其他页面统一）
             ScrollView {
-                VStack(spacing: XSpace.l) {
+                VStack(spacing: XSpace.section) {
                     // 479/486 长辈模式的两个落点都写在下面那段话里: 479 = 凭证页大字高对比 (凭证页行上),
                     // 486 = 临时码完成页收成口述卡 (CredentialStudio.doneCard)。开关本身只写 MemberHub.elderMode。
                     XPanel(kind: .group) {
@@ -1132,7 +1132,7 @@ struct UnclaimedClaimView: View {
             XPalette.canvas.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: XSpace.l) {
+                VStack(spacing: XSpace.section) {
                     XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
                             HStack(spacing: XSpace.s) {
@@ -1391,7 +1391,7 @@ struct MemberExitWizard: View {
         NavigationStack {
             // M5: Form → ScrollView（与全仓其他页面统一）
             ScrollView {
-                VStack(spacing: XSpace.l) {
+                VStack(spacing: XSpace.section) {
                     if items.isEmpty {
                         Group {   // M5 遗留: Section 在 List 外没有视觉容器
                             Text("该成员名下没有台账钥匙, 直接归档即可。")   // 460/795 该成员名下没有台账凭

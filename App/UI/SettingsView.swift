@@ -23,7 +23,7 @@ struct SafemodeIntroView: View {
             XPalette.canvas.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: XSpace.l) {
+                VStack(spacing: XSpace.section) {
                     if isOtp {
                         XPanel(kind: .group) {
                             VStack(alignment: .leading, spacing: XSpace.m) {

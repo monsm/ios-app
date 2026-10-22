@@ -229,6 +229,27 @@ const RULES = [
 // ── 工程级断言（不是逐行扫，是整个 App 有没有做这件事）──
 const projectProblems = [];
 {
+  // 规范 §5.3：页边距 14 / **区块之间 28** / 簇内 16 / 卡片行距 8。
+  // 四个数各自有语义。只靠「比簇内多 8pt」拉簇间是无效的 —— 16 与 24 的差别眼睛读不出分组，
+  // 规范给的差是 16 与 28。本仓实证：27 个页面的根 VStack 用了 l(16) 或 xl(24)。
+  //
+  // 判据：`ScrollView` 紧跟的 `VStack(spacing:)` 是页面内容的区块容器，只许 section。
+  // 不判 LazyVStack / VStack(spacing: 0)：那两种是「行容器」，行距另有规定。
+  const BAD_ROOT = /ScrollView(?:\([^)]*\))?\s*\{\s*\n\s*VStack\(spacing: XSpace\.(?!section)\w+\)/;
+  for (const f of files) {
+    const lines = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n');
+    for (let i = 0; i < lines.length - 2; i++) {
+      if (!/ScrollView(?:\([^)]*\))?\s*\{\s*$/.test(lines[i].replace(/\/\/.*$/, ''))) continue;
+      const next = (lines[i + 1] || '').replace(/\/\/.*$/, '');
+      const m = /VStack\(spacing: XSpace\.(\w+)\)/.exec(next);
+      if (!m) continue;
+      if (m[1] === 'section') continue;
+      projectProblems.push('§5.3 页面根 VStack 的区块间距应为 XSpace.section(28)，实为 ' + m[1] +
+                           '：' + path.relative(ROOT, f) + ':' + (i + 2));
+    }
+  }
+}
+{
   // 规范 §7.16：单位与数值**同色但小一档**。
   // 最典型的反例就是把单位拼进同一个字符串 —— 那样单位必然拿到数值的字号。
   // 只在**指标级**字号上判（title2 及以上）：句子里的「3 天」是正文，不归这条管。

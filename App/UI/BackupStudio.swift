@@ -17,7 +17,7 @@ struct BackupStudioView: View {
     var vkBody: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: XSpace.l) {
+                VStack(spacing: XSpace.section) {
                     trustHeader.xScrollLift()
                     actionCards.xScrollLift()
                     cadenceCard.xScrollLift()

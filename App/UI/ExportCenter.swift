@@ -1502,7 +1502,7 @@ struct ExportCenterView: View {
             XPalette.canvas.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: XSpace.l) {
+                VStack(spacing: XSpace.section) {
                     // 范围与列选择
                     scopeCard.xScrollLift()
                     // 动作分组: 文件导出 / 卡片与长图 / 打印

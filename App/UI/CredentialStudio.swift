@@ -838,7 +838,7 @@ struct TempCodeStudio: View {
     // ---------- 完成页: 172/328 大字口述卡 + 329 一句话 + 333 首用回执 (⚠ 按时间推断标"约") ----------
     private var doneCard: some View {
         ScrollView {
-            VStack(spacing: XSpace.l) {
+            VStack(spacing: XSpace.section) {
                 CodeBigCard(title: "\(lockName) · 临时码", code: result?.pwd ?? pwd,
                             window: "\(isoShort(from)) ~ \(isoShort(to)) 生效",
                             note: note,
@@ -1706,7 +1706,7 @@ struct OtpStudio: View {
             ZStack {
                 XPalette.canvas.ignoresSafeArea()
                 ScrollView {
-                    VStack(spacing: XSpace.l) {
+                    VStack(spacing: XSpace.section) {
                         XPanel(kind: .group) {
                             VStack(alignment: .leading, spacing: XSpace.m) {
                                 secLabel("粘贴 otpauth 文本")

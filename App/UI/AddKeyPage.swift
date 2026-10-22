@@ -47,7 +47,7 @@ struct AddKeyPage: View {
             XPalette.canvas.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: XSpace.xl) {
+                VStack(spacing: XSpace.section) {
                     capacityCard
                     passwordStage.xScrollLift()
                     validitySection.xScrollLift()

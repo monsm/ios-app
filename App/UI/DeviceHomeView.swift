@@ -30,7 +30,7 @@ struct SyncTimeView: View {
             XPalette.canvas.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: XSpace.l) {
+                VStack(spacing: XSpace.section) {
                     if app.current != nil {
                         skewCard
                         clockCard

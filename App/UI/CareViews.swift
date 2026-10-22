@@ -374,7 +374,7 @@ struct BatterySwapGuideView: View {
             XPalette.canvas.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: XSpace.l) {
+                VStack(spacing: XSpace.section) {
                     // 当前电量卡 —— 换电指南却不显示电量，是最大的缺口。
                     // 用户点进来就是想知道"是不是真该换了"。
                     batteryNowCard
@@ -485,7 +485,7 @@ struct CareChecklistView: View {
             XPalette.canvas.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: XSpace.l) {
+                VStack(spacing: XSpace.section) {
                     // 保养台账 —— 这张卡原来不存在。
                     //
                     // 清单页只让用户打勾，但**不告诉他上次是什么时候保养的**。

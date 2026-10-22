@@ -168,7 +168,7 @@ struct SecurityPeekView: View {
             XPalette.canvas.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: XSpace.l) {
+                VStack(spacing: XSpace.section) {
                     XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
                             SecRow(title: "剪贴板自动清除",
@@ -482,7 +482,7 @@ struct SecurityAuditView: View {
             XPalette.canvas.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: XSpace.l) {
+                VStack(spacing: XSpace.section) {
                     XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
                             secLabel("双流水")
@@ -911,7 +911,7 @@ struct SecurityDestroyView: View {
             XPalette.canvas.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: XSpace.l) {
+                VStack(spacing: XSpace.section) {
                     XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
                             secLabel("备份闸")
@@ -1411,7 +1411,7 @@ struct PrivacyDashboard: View {
             XPalette.canvas.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: XSpace.l) {
+                VStack(spacing: XSpace.section) {
             // ── 状态摘要 ──
             //
             // 原来是一句固定文案「当前启用 N 项防窥」+ 一串功能名词，

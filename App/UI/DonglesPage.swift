@@ -31,7 +31,7 @@ struct DonglesPage: View {
             XPalette.canvas.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: XSpace.l) {
+                VStack(spacing: XSpace.section) {
                     headerCard.xScrollLift()
 
                     if app.current == nil {
