@@ -434,6 +434,12 @@ const checks = [
            e.includes('ZKProtocol.protoSecondsToUnix(r.lockTime)') &&
            h.includes('EventsPage(initialHour: h)') && h.includes('SpatialTapGesture()');
   }],
+  ['过滤组合会被记住', () => {
+    // RecordSearch 里 QueryFilters 的存取写得很完整（含三种开场策略，注释标到 560/908），
+    // 但全仓 UI 一次都没调过 load/save —— 用户设了"只看告警"，离开再回来就回到全部。
+    const e = CODE.get('EventsPage.swift') || '';
+    return e.includes('QueryFilters.load(mac: mac)') && e.includes('filters.save(mac: mac)');
+  }],
 ];
 
 let pass = 0;

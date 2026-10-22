@@ -38,6 +38,13 @@ struct EventsPage: View {
     @State private var recs: [Rec] = []
     /// 当前小时过滤。点了分时图的某一根柱子就落到这一根上。
     @State private var hourFilter: Int?
+    /// 过滤组合（当前只有"只看告警"这一位，但 QueryFilters 支持更多）。
+    ///
+    /// 这套存取在 RecordSearch 里写得很完整 —— 含 kf_filter_default 三种开场策略
+    /// （记住上次 / 每次空白 / 默认只看告警），注释一路标到 560/908。
+    /// 但**全仓 UI 一次都没调过 load/save**：用户设了"只看告警"，离开再回来就回到全部。
+    /// 这里把它接上。
+    @State private var filters = QueryFilters()
     @State private var loaded = false
     @State private var search = ""
     @State private var searchActive = false
@@ -128,7 +135,14 @@ struct EventsPage: View {
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
-                    XToggle("只看告警", isOn: $alarmOnly)
+                    XToggle("只看告警", isOn: Binding(
+                        get: { alarmOnly },
+                        set: { v in
+                            alarmOnly = v
+                            filters.alarmOnly = v
+                            filters.save(mac: mac)      // 记住这次选择
+                            XHaptics.tick.impactOccurred()
+                        }))
                     Divider().overlay(XPalette.hairline)
                     Button("刷新") { load() }
                     // ═══ 从门锁同步日志 ═══
@@ -208,6 +222,9 @@ struct EventsPage: View {
         // 从门厅分时图点进来时，只在这一页首次加载时落到那一个小时；
         // 用户之后手动"看全部"，再刷新也不会把它加回来。
         if hourFilter == nil, let h = initialHour { hourFilter = h }
+        // 读回上次的过滤组合（受 kf_filter_default 策略控制）
+        filters = QueryFilters.load(mac: mac)
+        alarmOnly = filters.alarmOnly
         recs = RecordSearch.buildRecs(macs: macs)
         namedViews = RecordSearch.namedViews()
         recentSearches = RecordSearch.history()
@@ -234,11 +251,11 @@ struct EventsPage: View {
         // 但此前**零调用** —— 这一页用的是四字段 substring，把那些能力全浪费了。
         // 空查询时 Query.parse 产生空 must/not，search 直接返回全部，
         // 所以"搜索框一空就把记录隐藏"这种反向故障不会发生（已核对实现）。
-        var filters = QueryFilters()
-        filters.alarmOnly = alarmOnly
+        var f = filters
+        f.alarmOnly = alarmOnly
         return RecordSearch.search(recs: out,
                                    query: RecordSearch.parse(raw),
-                                   filters: filters)
+                                   filters: f)
     }
 
     // ═══════════════════════════════════════════════════════
