@@ -580,6 +580,15 @@ const checks = [
     return h.includes('trackScreen("管理面板")') && h.includes('trackScreen("配对门锁")') &&
            h.includes('trackScreen("事件·某小时")') && h.includes('trackScreen("成员详情")');
   }],
+  ['备份导入走唯一入口且能选中 .enc', () => {
+    // 本 App 导出的是 .enc；原来的选择器限 [.json, .data]，文件是灰的选了没反应；
+    // 且裸 JSONDecoder 解不开加密内容。两条导入路径（文件 / 粘贴）都必须走 parsePreview。
+    const p = CODE.get('BackupPage.swift') || '';
+    return p.includes('allowedContentTypes: [.item]') &&
+           p.includes('BackupStudio.needsPassword(') &&
+           p.includes('BackupStudio.parsePreview(') &&
+           !p.includes('JSONDecoder().decode(BackupBundle');
+  }],
 ];
 
 let pass = 0;

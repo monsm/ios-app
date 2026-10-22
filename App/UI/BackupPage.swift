@@ -35,9 +35,9 @@ struct BackupPage: View {
     /// 文件选择器（方案 a: iCloud / 本地文件）
     ///
     /// 原来的导入只支持「粘贴文本」—— 用户得先把文件内容复制出来。
-    /// 文件选择器让「从 iCloud 云盘 / 我的 iPhone 里选一个 .json」成为一条路径。
+    /// 文件选择器让「从 iCloud 云盘 / 我的 iPhone 里选一份备份」成为一条路径。
     ///
-    /// 与粘贴共用同一个解析入口（confirmRestore 的 JSONDecoder），
+    /// 与粘贴共用同一个入口：`applyParsed` → `BackupStudio.parsePreview`，
     /// 不另写一套解析 —— 两条路径最终都产出 BackupBundle。
     @State private var showFilePicker = false
     /// 导出文件选择器（存到 iCloud / 本机）
@@ -70,9 +70,11 @@ struct BackupPage: View {
         }
         // 方案 a: 文件选择器（iCloud 云盘 / 本地）
         //
-        // allowedContentTypes 用 .json 与 .data 两种:
-        //   .json  正常备份文件
-        //   .data  兜底（有些网盘会把 .json 存成 application/octet-stream）
+        // allowedContentTypes 用 .item（任意文件）:
+        //   本 App 导出的备份是 `.enc` 文件，系统不认识这个扩展名 ——
+        //   限 .json/.data 时它在选择器里是**灰的**，用户点了不选中，
+        //   表现成"弹了选择器但选不动"。内容正确性由 parsePreview 把关，
+        //   不靠文件类型筛。
         //
         // allowsMultipleSelection: false —— 备份是单文件，多选没有语义。
         // 导出: 存文件到 iCloud / 本机（与导入对称）
@@ -96,7 +98,7 @@ struct BackupPage: View {
             }
         }
         .fileImporter(isPresented: $showFilePicker,
-                      allowedContentTypes: [.json, .data],
+                      allowedContentTypes: [.item],   // 备份文件是 .enc —— 之前限 .json/.data，系统把它判成未知类型直接灰掉，点了不选中
                       allowsMultipleSelection: false) { result in
             handleFileImport(result)
         }
@@ -346,13 +348,18 @@ struct BackupPage: View {
     }
 
     private func confirmRestore() {
-        guard let data = importText.data(using: .utf8),
-              let bundle = try? JSONDecoder().decode(BackupBundle.self, from: data) else {
-            app.showToast("备份文本格式不对")
-            return
-        }
-        pendingRestore = bundle
+        let text = importText
         showImport = false
+        // 与文件导入走**同一个入口**（parsePreview）。原先这里裸 JSONDecoder，
+        // 于是"把加密备份的内容粘贴进来"永远失败 —— 而界面上根本没说过只收明文。
+        if BackupStudio.needsPassword(text) {
+            promptSecret("这份备份设了口令", "输入导出时设置的口令才能解开。",
+                         placeholder: "备份口令") { pw in
+                applyParsed(text: text, password: pw.isEmpty ? nil : pw)
+            }
+        } else {
+            applyParsed(text: text, password: nil)
+        }
     }
 
     /// 文件选择器的结果处理
@@ -360,7 +367,7 @@ struct BackupPage: View {
     /// 要点:
     ///   · fileImporter 给的是**临时可访问 URL**，必须 startAccessingSecurityScopedResource
     ///     否则 read 会失败（这是 iOS 沙盒规则，不是可选步骤）
-    ///   · 与粘贴路径共用同一个 JSONDecoder 入口 —— 两条路产出同一个 BackupBundle
+    ///   · 与粘贴路径共用同一个入口 `applyParsed` → `parsePreview` —— 两条路产出同一个 BackupBundle
     ///   · 任何失败都给 toast，不静默
     private func handleFileImport(_ result: Result<[URL], Error>) {
         switch result {
@@ -369,20 +376,22 @@ struct BackupPage: View {
             let scoped = url.startAccessingSecurityScopedResource()
             defer { if scoped { url.stopAccessingSecurityScopedResource() } }
 
-            do {
-                let data = try Data(contentsOf: url)
-                let bundle = try JSONDecoder().decode(BackupBundle.self, from: data)
-                // ⚠ 不能在这里直接 pendingRestore = bundle。
-                //
-                // 这个回调发生在**系统文件选择器还在关闭**的过程中，而 pendingRestore
-                // 要驱动的是一个 .confirmationDialog —— SwiftUI 在上一层模态没消失前
-                // 不会弹新的模态，于是确认框被静默丢掉：用户点了文件，界面**没有任何反应**。
-                //
-                // 先存起来，等选择器真正收起（showFilePicker 变 false）再呈现。
-                pickedBundle = bundle
-                XHaptics.tick.impactOccurred()
-            } catch {
-                app.showToast("文件读取失败或格式不对")
+            // ⚠ 不能直接 JSONDecoder 解 —— 本 App 导出的备份是 **.enc 加密文本**，
+            // 裸解必然失败，用户看到的就是"选了文件但什么都没发生"。
+            // 正确入口只有一个：BackupStudio.parsePreview（剥注释头 → 解密 → 校验哈希 → schema 检查）。
+            guard let text = try? String(contentsOf: url, encoding: .utf8), !text.isEmpty else {
+                app.showToast("这个文件读不出文本内容 · 备份文件是文本格式")
+                return
+            }
+
+            if BackupStudio.needsPassword(text) {
+                // 加密备份必须先问口令。取消就是取消，不猜。
+                promptSecret("这份备份设了口令", "输入导出时设置的口令才能解开。",
+                             placeholder: "备份口令") { pw in
+                    applyParsed(text: text, password: pw.isEmpty ? nil : pw)
+                }
+            } else {
+                applyParsed(text: text, password: nil)
             }
 
         case .failure(let error):
@@ -390,6 +399,17 @@ struct BackupPage: View {
             if (error as NSError).code != NSUserCancelledError {
                 app.showToast("没能打开文件")
             }
+        }
+    }
+
+    /// 解析并挂到待确认。任何一步不过（口令/哈希/schema）都不写库。
+    private func applyParsed(text: String, password: String?) {
+        do {
+            let (_, bundle) = try BackupStudio.parsePreview(text: text, password: password)
+            pickedBundle = bundle
+            XHaptics.tick.impactOccurred()
+        } catch {
+            app.showToast("导入被拦下: " + ErrorText.human(error))
         }
     }
     private func applyRestore(_ bundle: BackupBundle) {

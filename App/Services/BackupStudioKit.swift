@@ -658,6 +658,13 @@ enum BackupStudio {
         guard idx > 0 else { return s }
         return lines[idx...].joined(separator: "\n")
     }
+    /// 界面侧判断"这份备份要不要口令"的唯一入口。
+    /// 内部两步（剥注释头 → 判断是否加密）都是 private，不该让每个调用点各抄一遍 ——
+    /// 抄错的后果是"明明加密的备份不问口令，或者不加密的白问一次"。
+    static func needsPassword(_ text: String) -> Bool {
+        looksEncrypted(stripCommentHeader(text))
+    }
+
     private static func looksEncrypted(_ s: String) -> Bool {
         // 449: 魔数加宽为**信封全键** (v/alg/kdf/ivHex/macHex/cHex 齐) —— 原先只凭 "{"+"cHex"
         // 两个片段, 任何碰巧含这两个片的文本都会被拖进解密层, 报出"此备份带口令"这种指错方向的错。

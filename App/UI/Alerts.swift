@@ -109,3 +109,28 @@ func promptText(_ title: String,
     })
     UIApplication.topViewController()?.present(alert, animated: true)
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// MARK: - 口令输入（备份口令这类，不是应用锁口令）
+// ═══════════════════════════════════════════════════════════════════════
+/// 与 `promptPasscode` 的区别：那个占位符写死了「应用锁口令」，
+/// 拿它问备份口令会让人以为要输应用锁 —— 两件事不能混。
+@MainActor
+func promptSecret(_ title: String,
+                  _ message: String,
+                  placeholder: String,
+                  confirmTitle: String = "继续",
+                  onConfirm: @escaping @MainActor (String) -> Void) {
+    let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+    alert.addTextField { tf in
+        tf.isSecureTextEntry = true
+        tf.placeholder = placeholder
+        tf.autocapitalizationType = .none
+        tf.autocorrectionType = .no
+    }
+    alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+    alert.addAction(UIAlertAction(title: confirmTitle, style: .default) { _ in
+        onConfirm(alert.textFields?.first?.text ?? "")
+    })
+    UIApplication.topViewController()?.present(alert, animated: true)
+}
