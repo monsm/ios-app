@@ -57,7 +57,7 @@
 | 03-devices | DevicePage.swift | ✅ 图5 双列 MetricCard（握手/信号 44px + 迷你环）+ 固件降为小字 | ✅ |
 | 20-locks | LocksPage.swift | ✅ 行内电量 11pt → 17pt 粗 + 语义色 + 锁态胶囊（图4 大数字位）；List 结构保留（拖动排序/滑动删除是真实交互）| ✅ |
 | 21-lock-profile | LockProfilePage.swift | ✅ 图5 双列 MetricCard（44px 电量 + 环 / 固件大字 + cpu 位）| ✅ |
-| 22-firmware | FirmwarePage.swift | 图2 卡解剖 | ⬜ |
+| 22-firmware | FirmwarePage.swift | ✅ 版本对照改图2 双角色卡（44px 版本号 + 角色 + 说明），对比胶囊独立成卡 | ✅ |
 | 23-gateway | GatewayPage.swift | 图4 分步条 | ⬜ |
 | 24-dongles | DonglesPage.swift | ✅ hero 加图5 44px「N 把已配对」+ 环（0 把时给下一步指引）| ✅ |
 | 25-synctime | SyncTimeView | ✅ 偏差 19pt → 44px + 同色光晕（图1 语言）| ✅ |
@@ -79,7 +79,7 @@
 |---|---|---|---|
 | 05-system | MePage.swift | ✅ 图5 主角读数行（44px 待办数 + 渐变环）+ 四瓦片入口保留 | ✅ |
 | 40-security | SecurityPage.swift | ✅ 44px 风险数 + 健康度环（0 风险→绿环）+ 三盏灯保留 | ✅ |
-| 41-applock | AppLockSetupView.swift | 图2 卡解剖 | ⬜ |
+| 41-applock | AppLockSetupView.swift | ✅ HERO 改图5「44px 0/1 已启用 + 环心锁图标」（开启时满环转绿）| ✅ |
 | 42-peek | SecurityCenterView.PrivacyDashboard | ✅ 图2 大数字（44px 已开项）+ 带中心数的环 + 三态语气色 | ✅ |
 | 43-privacy-dash | 同上（42/43 同屏）| ✅ 与 42-peek 同一实现 | ✅ |
 | 44-audit | SecurityCenterView.SecurityAuditView | ✅ 行改图4 节奏（时间在左/图标块/主文/状态胶囊/chevron）| ✅ |

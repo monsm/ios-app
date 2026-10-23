@@ -109,37 +109,53 @@ struct FirmwarePage: View {
     // MARK: - 版本对照
     // ═══════════════════════════════════════════════════════
 
+    /// 六图改造 (2026-10-23): 版本对照改**图 2 的双角色卡**（44px 版本号 + 说明）。
+    ///
+    /// 图 2 Winding Down 的对比永远是两张等宽卡、各带一个大字（A 单一 / B 组合）。
+    /// 之前这里是两个 18pt 的 pill 夹一个箭头 —— 版本号是这页的主角，
+    /// 18pt 让它看起来像"辅注"。提到 44px 之后，"当前 / 目标"才是可比较的两个对象。
     private var versionCard: some View {
-        XPanel(kind: .hero) {
-            VStack(spacing: XSpace.m) {
-                HStack(spacing: XSpace.l) {
-                    versionPill("当前", curFw.isEmpty ? "—" : curFw, tone: .neutral)
-                    Image(systemName: "arrow.right")
-                        .font(.system(size: XIcon.sm, weight: .semibold))
-                        .foregroundStyle(XPalette.textTertiary)
-                        .accessibilityHidden(true)
-                    versionPill("目标", fw?.version ?? "未选包",
-                                tone: fw?.version == nil ? .neutral : .accent)
-                }
-
-                if let tag = compareTag {
-                    XStatusPill(text: tag.text, tone: tag.tone)
+        VStack(spacing: XSpace.s) {
+            HStack(spacing: XSpace.s) {
+                versionRoleCard("当前", curFw.isEmpty ? "—" : curFw, note: "锁里现在跑的", tone: XPalette.text)
+                versionRoleCard("目标", fw?.version ?? "未选",
+                                note: fw?.version == nil ? "先选一个升级包" : "准备刷进去的",
+                                tone: fw?.version == nil ? XPalette.textTertiary : XPalette.accentText)
+            }
+            if let tag = compareTag {
+                XPanel(kind: .group) {
+                    HStack(spacing: XSpace.s) {
+                        XStatusPill(text: tag.text, tone: tag.tone)
+                        Spacer(minLength: 0)
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: XIcon.sm, weight: .semibold))
+                            .foregroundStyle(XPalette.textTertiary)
+                    }
                 }
             }
         }
     }
 
-    private func versionPill(_ label: String, _ value: String, tone: XToneColor) -> some View {
-        VStack(spacing: XSpace.xxs) {
-            Text(label)
-                .xFont(.caption2)
-                .foregroundStyle(XPalette.textSub)
-            Text(value)
-                .xFont(.title3, weight: .semibold)
-                .monospacedDigit()
-                .foregroundStyle(tone == .neutral ? XPalette.text : tone.color)
+    /// 图 2 的双角色卡：44px 版本号 + 角色 + 一行说明
+    private func versionRoleCard(_ label: String, _ value: String,
+                                 note: String, tone: Color) -> some View {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(label)
+                    .xFont(.caption)
+                    .foregroundStyle(XPalette.textTertiary)
+                Text(value)
+                    .font(.system(size: XMetric.dataText(DSFont.hero), weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(tone)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                Text(note)
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
-        .frame(maxWidth: .infinity)
     }
 
     private var compareTag: (text: String, tone: XToneColor)? {

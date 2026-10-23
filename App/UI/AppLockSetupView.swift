@@ -57,24 +57,51 @@ struct AppLockSetupView: View {
     }
 
     // ── ① 状态 ─────────────────────────────────────────────
+    /// 六图改造 (2026-10-23): HERO 改**图 5 的「44px 数字 + 环」**。
+    ///
+    /// 应用锁只有开/关两个状态，但"开没开"这件事值得做成一个**读数**而不是一行字：
+    /// 图 5 的第一张卡永远是「一个量 + 一枚环」。这里量是「1/1 或 0/1 已启用」，
+    /// 环在开启时满格转绿 —— 与安全页、防窥页保持同一套语言。
     private var heroCard: some View {
-        XPanel(kind: .hero) {
-            HStack(spacing: XSpace.m) {
-                Image(systemName: on ? "lock.shield.fill" : "lock.open")
-                    .font(.system(size: 34, weight: .medium))
-                    .foregroundStyle(on ? XPalette.ok : XPalette.warn)
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(on ? "应用锁已开启" : "应用锁未开启")
-                        .xFont(.headline, weight: .semibold)
-                        .foregroundStyle(XPalette.text)
-                    Text(on ? "每次打开 App 都要输口令；保存的密码默认不显示"
-                             : "现在谁拿起这台手机，都能直接看到你保存的密码")
-                        .xFont(.footnote)
-                        .foregroundStyle(XPalette.textSub)
-                        .fixedSize(horizontal: false, vertical: true)
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack {
+                    Text("应用锁")
+                        .xFont(.subheadline)
+                        .foregroundStyle(XPalette.textTertiary)
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(XPalette.textTertiary.opacity(0.6))
                 }
-                Spacer(minLength: 0)
+                HStack(alignment: .center, spacing: XSpace.l) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        XHeroNumber(
+                            text: on ? "1" : "0",
+                            unit: "已启用",
+                            color: on ? XPalette.ok : XPalette.warn)
+                        Text(on ? "每次打开 App 都要输口令；保存的密码默认不显示"
+                                 : "现在谁拿起这台手机，都能直接看到你保存的密码")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 4)
+                    XGradientDial(
+                        size: 76,
+                        progress: on ? 1 : 0.02,
+                        widthRatio: 0.13,
+                        showsCursor: false,
+                        showsTick: false,
+                        gradient: on ? XGradient.dialOK : XGradient.dial
+                    ) {
+                        Image(systemName: on ? "lock.shield.fill" : "lock.open")
+                            .font(.system(size: 22, weight: .medium))
+                            .foregroundStyle(on ? XPalette.ok : XPalette.warn)
+                    }
+                    .accessibilityHidden(true)
+                }
+                .padding(.top, 8)
             }
         }
         .accessibilityElement(children: .combine)
