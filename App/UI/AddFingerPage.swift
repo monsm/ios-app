@@ -223,6 +223,22 @@ struct AddFingerPage: View {
                     }
                     .padding(.top, 8)
                     XHairline().padding(.vertical, 12)
+                    // HTML「指纹库存」卡的两列：上次录入 / 建议补录
+                    HStack(alignment: .top, spacing: XSpace.s) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("上次录入").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                            Text(lastEnrollText).xFont(.footnote, weight: .semibold)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("建议补录").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                            Text(left > 0 ? "\(left) 枚可录" : "先删一枚")
+                                .xFont(.footnote, weight: .semibold)
+                                .foregroundStyle(left > 0 ? XPalette.text : XPalette.warn)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .padding(.bottom, 10)
                     Text("三环是「已用 / 可录 / 余量」—— 环心是门锁能存的指纹总数。")
                         .xFont(.caption2)
                         .foregroundStyle(XPalette.textTertiary)
@@ -231,6 +247,21 @@ struct AddFingerPage: View {
             }
             .xScrollLift()
         }
+    }
+
+    /// 上次录入时间（HTML「指纹库存」卡的一列）
+    /// LedgerFp.at 是 **epoch 毫秒**（Store.swift 明确注释），所以 /1000 才是秒
+    private var lastEnrollText: String {
+        let mac = app.currentMac
+        guard let last = DB.listFps(mac).max(by: { $0.at < $1.at }) else { return "还没录过" }
+        // 不裸建 DateFormatter（历法/时区会漂）：用 WeekCal 取分量再拼
+        let d = Date(timeIntervalSince1970: last.at / 1000)
+        let cal = WeekCal.gregorian
+        let mo = cal.component(.month, from: d)
+        let dy = cal.component(.day, from: d)
+        let hh = cal.component(.hour, from: d)
+        let mm = cal.component(.minute, from: d)
+        return String(format: "%02d-%02d %02d:%02d", mo, dy, hh, mm)
     }
 
     private var ownerPicker: some View {

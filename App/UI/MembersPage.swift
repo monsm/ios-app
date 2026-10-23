@@ -128,9 +128,6 @@ struct MembersPage: View {
                 HStack(alignment: .firstTextBaseline) {
                     XHeroNumber(text: String(members.count), unit: "位成员")
                     Spacer(minLength: 0)
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(XPalette.textTertiary.opacity(0.6))
                 }
                 .padding(.horizontal, XSpace.card)
                 .padding(.top, XSpace.m)

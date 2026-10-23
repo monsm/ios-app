@@ -68,6 +68,29 @@
 | 使用记录（本月使用/最后使用 两列 + 页脚）| ✅ |
 | 操作 | ✅ 星标 + 停用（走确认框）|
 
+
+### 11-fingerprint ✅
+| HTML 卡 | Swift 对位 | 处理 |
+|---|---|---|
+| 锁内容量 | capacityCard | ✅ |
+| 指纹库存（**上次录入 / 建议补录** 两列 + 页脚）| capacityCard | ✅ **补两列 + lastEnrollText** |
+| 录入指纹 / 命名 / 已登记 | fingerprintStage / ownerPicker | ✅ 已有 |
+
+**顺带修的单位坑**：`LedgerFp.at` 是 epoch **毫秒**，我一开始按秒算（会显示 1970 年）。已按 Store.swift 的注释 ÷1000。
+
+---
+
+## 专题：虚假可点暗示（问题②的根因之一）
+
+**发现**：我前几轮为了对齐 HTML 的「卡头 + chevron」解剖，在 12 张卡的卡头画了装饰性 chevron，
+**但没有接任何动作** —— 用户看到箭头会去点，点了没反应。
+
+**处理**：全部删除（HTML 的 cardlink 有目标才带箭头；这些卡没有详情页，画箭头就是撒谎）：
+AppLockSetupView / BackupPage / CarePage / CareRemindersView / DiagnosticsPage×2 / ExportCenter / FeedPage / KeysPage / MembersPage / SecurityPage / StatsPage 共 **12 处**。
+
+**判据留存**：`entrygate.js` 的 E1 已在「带 chevron ⇒ 必须有动作」，但只查 `XRow(showsChevron:)`，
+查不到手绘 Image(chevron)。已在本轮人工清理干净。
+
 ---
 
 ## 已审

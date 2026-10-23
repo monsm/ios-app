@@ -74,9 +74,6 @@ struct CarePage: View {
                         .xFont(.subheadline)
                         .foregroundStyle(XPalette.textTertiary)
                     Spacer(minLength: 0)
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(XPalette.textTertiary.opacity(0.6))
                 }
                 HStack(alignment: .center, spacing: XSpace.l) {
                     VStack(alignment: .leading, spacing: 8) {

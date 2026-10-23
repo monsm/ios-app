@@ -293,9 +293,6 @@ struct StatsPage: View {
                         .xFont(.subheadline)
                         .foregroundStyle(XPalette.textTertiary)
                     Spacer(minLength: 0)
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(XPalette.textTertiary.opacity(0.6))
                 }
                 XActivityRings(
                     size: 116,
