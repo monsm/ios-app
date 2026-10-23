@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}</style></head><body>
+<script type="importmap">{"imports":{"three":"./three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+// Apple Watch 表盘 —— 图 6 的 New Watch Faces
+// 技术要点：多层半透明彩色平面 + 高斯模糊 + 圆角遮罩 + 屏幕高光
+const W = 512, H = 512;
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setSize(W, H); renderer.setPixelRatio(1); renderer.setClearColor(0x000000, 0);
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.1;
+document.body.appendChild(renderer.domElement);
+
+// 用 2D canvas 画表盘（比 3D 更适合这种平面图形）
+const cv = document.createElement('canvas');
+cv.width = cv.height = 1024;
+const ctx = cv.getContext('2d');
+
+// 背景：深紫到黑
+const bg = ctx.createLinearGradient(0, 0, 0, 1024);
+bg.addColorStop(0, '#3A2A5C');
+bg.addColorStop(0.5, '#1A1228');
+bg.addColorStop(1, '#08060E');
+ctx.fillStyle = bg;
+ctx.fillRect(0, 0, 1024, 1024);
+
+// 多层柔和色块（图 6 的流体感）
+const blobs = [
+  { x: 380, y: 340, r: 220, c: 'rgba(255,110,180,0.75)', b: 90 },
+  { x: 620, y: 420, r: 190, c: 'rgba(120,90,255,0.70)', b: 80 },
+  { x: 480, y: 620, r: 240, c: 'rgba(80,200,255,0.62)', b: 100 },
+  { x: 700, y: 620, r: 160, c: 'rgba(255,180,90,0.55)', b: 70 },
+  { x: 300, y: 560, r: 140, c: 'rgba(180,120,255,0.55)', b: 60 },
+  { x: 600, y: 260, r: 120, c: 'rgba(255,255,255,0.28)', b: 50 },
+];
+ctx.filter = 'blur(0px)';
+for (const b of blobs) {
+  const g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
+  g.addColorStop(0, b.c);
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// 细微噪点（真实屏幕的质感）
+const noise = ctx.getImageData(0, 0, 1024, 1024);
+for (let i = 0; i < noise.data.length; i += 4) {
+  const n = (Math.random() - 0.5) * 8;
+  noise.data[i] += n; noise.data[i+1] += n; noise.data[i+2] += n;
+}
+ctx.putImageData(noise, 0, 0);
+
+// 顶部高光（玻璃反射）
+const gloss = ctx.createLinearGradient(0, 0, 0, 500);
+gloss.addColorStop(0, 'rgba(255,255,255,0.22)');
+gloss.addColorStop(1, 'rgba(255,255,255,0)');
+ctx.fillStyle = gloss;
+ctx.fillRect(0, 0, 1024, 500);
+
+document.body.appendChild(cv);
+// 缩放到 512 输出
+cv.style.width = '512px'; cv.style.height = '512px';
+document.body.style.position = 'relative';
+const canvas3d = document.querySelector('canvas');
+canvas3d.style.display = 'none';
+// 用 2D canvas 作为最终图像
+cv.style.position = 'absolute'; cv.style.left = '0'; cv.style.top = '0';
+document.title = 'READY';
+</script></body></html>

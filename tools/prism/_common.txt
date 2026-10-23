@@ -1,0 +1,32 @@
+
+// ══ 产品摄影级质感（所有素材共用）══
+// 三件套：程序化环境贴图 + 拉丝法线 + 软阴影
+function buildEnv(renderer, scene) {
+  const es = new THREE.Scene();
+  es.add(new THREE.Mesh(new THREE.BoxGeometry(30,30,30),
+    new THREE.MeshBasicMaterial({ color: 0x14161C, side: THREE.BackSide })));
+  const mk = (w,h,c,p) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w,h),
+    new THREE.MeshBasicMaterial({color:c})); m.position.set(...p); m.lookAt(0,0,0); es.add(m); };
+  mk(12,12,0xFFFFFF,[-9,10,8]); mk(8,14,0x8FA8FF,[11,2,4]);
+  const tp = new THREE.Mesh(new THREE.PlaneGeometry(20,3), new THREE.MeshBasicMaterial({color:0xE8F0FF}));
+  tp.position.set(0,14,0); tp.rotation.x = Math.PI/2; es.add(tp);
+  const pm = new THREE.PMREMGenerator(renderer); pm.compileEquirectangularShader();
+  scene.environment = pm.fromScene(es, 0.04).texture;
+}
+function brushedNormal(size, s) {
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  const ctx = c.getContext('2d'); const im = ctx.createImageData(size, size);
+  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+    const n = Math.sin(y*3.7 + Math.sin(x*0.11)*2.1)*0.5
+            + Math.sin(y*11.3 + x*0.03)*0.3 + Math.sin(y*23.1)*0.2;
+    const i = (y*size+x)*4;
+    im.data[i] = 128+n*s*127; im.data[i+1] = 128; im.data[i+2] = 255; im.data[i+3] = 255;
+  }
+  ctx.putImageData(im, 0, 0);
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(2,2); return t;
+}
+function softShadowSetup(renderer) {
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+}

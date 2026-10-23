@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}</style></head><body>
+<script type="importmap">{"imports":{"three":"./three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+const W = 256, H = 256;
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setSize(W, H); renderer.setPixelRatio(1); renderer.setClearColor(0x000000, 0);
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.18;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(28, 1, 0.1, 100);
+cam.position.set(0, 0.6, 8.2); cam.lookAt(0, 0, 0);
+const key = new THREE.DirectionalLight(0xffffff, 3.0); key.position.set(-3.4, 4.8, 4.4); scene.add(key);
+const fill = new THREE.DirectionalLight(0xC8D8FF, 0.95); fill.position.set(3.8, 1.2, 2.2); scene.add(fill);
+const rim = new THREE.DirectionalLight(0xffffff, 1.5); rim.position.set(0.6, -1.0, -4.6); scene.add(rim);
+scene.add(new THREE.AmbientLight(0x8894A6, 0.9));
+
+// ── 程序化环境贴图：没有 HDR 文件也能给金属真实反射 ──
+// 做法：建一个内壁带亮斑的立方体房间，用 PMREMGenerator 预卷积成 envMap
+const envScene = new THREE.Scene();
+const roomGeo = new THREE.BoxGeometry(30, 30, 30);
+const roomMat = new THREE.MeshBasicMaterial({ color: 0x14161C, side: THREE.BackSide });
+envScene.add(new THREE.Mesh(roomGeo, roomMat));
+// 左上方主光板（与 scene 的主光方向一致）
+const panel1 = new THREE.Mesh(new THREE.PlaneGeometry(12, 12),
+  new THREE.MeshBasicMaterial({ color: 0xFFFFFF }));
+panel1.position.set(-9, 10, 8); panel1.lookAt(0,0,0); envScene.add(panel1);
+// 右侧补光板（冷色）
+const panel2 = new THREE.Mesh(new THREE.PlaneGeometry(8, 14),
+  new THREE.MeshBasicMaterial({ color: 0x8FA8FF }));
+panel2.position.set(11, 2, 4); panel2.lookAt(0,0,0); envScene.add(panel2);
+// 顶部长条（模拟天花板灯）
+const panel3 = new THREE.Mesh(new THREE.PlaneGeometry(20, 3),
+  new THREE.MeshBasicMaterial({ color: 0xE8F0FF }));
+panel3.position.set(0, 14, 0); panel3.rotation.x = Math.PI/2; envScene.add(panel3);
+// 底部微光（模拟桌面反弹）
+const panel4 = new THREE.Mesh(new THREE.PlaneGeometry(16, 16),
+  new THREE.MeshBasicMaterial({ color: 0x2A2E38 }));
+panel4.position.set(0, -14, 0); panel4.rotation.x = -Math.PI/2; envScene.add(panel4);
+
+const pmrem = new THREE.PMREMGenerator(renderer);
+pmrem.compileEquirectangularShader();
+const envRT = pmrem.fromScene(envScene, 0.04);
+scene.environment = envRT.texture;
+const top = new THREE.DirectionalLight(0xffffff, 1.8); top.position.set(0, 6, 1.2); scene.add(top);
+
+const g = new THREE.Group();
+g.rotation.y = 0.6;
+// 锁体：圆角方块（正面）
+// ── 程序化拉丝法线贴图：金属质感的关键 ──
+// 生成 256x256 的横向噪声法线图（拉丝方向水平）
+function brushedNormal(size, strength) {
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const ctx = c.getContext('2d');
+  const img = ctx.createImageData(size, size);
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      // 横向条纹：y 方向高频，x 方向低频
+      const n = Math.sin(y * 3.7 + Math.sin(x*0.11)*2.1) * 0.5
+              + Math.sin(y * 11.3 + x*0.03) * 0.3
+              + Math.sin(y * 23.1) * 0.2;
+      const dx = n * strength;
+      const i = (y*size + x)*4;
+      img.data[i]   = 128 + dx*127;   // 法线 x
+      img.data[i+1] = 128;
+      img.data[i+2] = 255;            // 法线 z（朝外）
+      img.data[i+3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(3, 3);
+  return tex;
+}
+const bodyNormal = brushedNormal(256, 0.35);
+const bodyMat = new THREE.MeshStandardMaterial({
+  color: 0x585E6A, metalness: 0.92, roughness: 0.18,
+  normalMap: bodyNormal, normalScale: new THREE.Vector2(0.75, 0.75),
+  envMapIntensity: 1.65
+});
+const body = new THREE.Mesh(new THREE.BoxGeometry(2.0, 2.6, 0.52), bodyMat);
+g.add(body);
+// 锁芯（铜色圆盘）
+const brass = new THREE.MeshStandardMaterial({ color: 0xC08A4A, metalness: 0.85, roughness: 0.22 });
+const core = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.58, 48), brass);
+core.rotation.x = Math.PI/2; core.position.z = 0.02; g.add(core);
+// 钥匙孔
+const hole = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.10, 0.62, 24),
+  new THREE.MeshStandardMaterial({ color: 0x0A0A0C, metalness: 0.1, roughness: 0.95 }));
+hole.rotation.x = Math.PI/2; hole.position.z = 0.04; g.add(hole);
+// 上方把手横条
+const bar = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.16, 0.2), bodyMat);
+bar.position.set(0, 0.95, 0.30); g.add(bar);
+// 底边亮条
+const edge = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.06, 0.06),
+  new THREE.MeshStandardMaterial({ color: 0xD9A05C, metalness: 0.9, roughness: 0.2 }));
+edge.position.set(0, -1.15, 0.27); g.add(edge);
+
+g.scale.setScalar(0.92);
+scene.add(g);
+renderer.render(scene, cam);
+requestAnimationFrame(() => { renderer.render(scene, cam); document.title='READY'; });
+</script></body></html>

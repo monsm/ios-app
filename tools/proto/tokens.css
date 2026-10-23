@@ -627,3 +627,183 @@ body{background:#0A0A0C;font-family:-apple-system,"SF Pro Text","PingFang SC",sa
   background:rgba(255,255,255,.10); color:#FFF; font-size:14px; font-weight:600;
   display:inline-flex; align-items:center; text-decoration:none;
 }
+
+
+/* ══════════════════════════════════════════════════════════════
+   精致度升级 —— 对齐参考图 1/2/3 的材质与空间
+
+   参考图的卡不是纯色块。它在纯黑上有三个极微弱的信号：
+     ① 顶部比底部亮 2 个色阶（受光面）
+     ② 边缘 0.5px 内描边（边界感，不是投影）
+     ③ 整体比画布亮 1.23 倍（分层）
+   三者叠加才读成"一块有厚度的玻璃"。少任何一个就变成纸片。
+   ══════════════════════════════════════════════════════════════ */
+.card:not([style*="background"]){
+  background:linear-gradient(180deg,#232327 0%,#1C1C1E 26%,#1A1A1C 100%) !important;
+  box-shadow:
+    inset 0 .5px 0 rgba(255,255,255,.055),
+    inset 0 0 0 .5px rgba(255,255,255,.028),
+    0 1px 3px rgba(0,0,0,.28) !important;
+}
+
+/* ── 画布：径向渐变（参考图的"黑"不是平涂）──────────────
+   中心偏上一团极微弱的蓝灰（图1 #0A0F1E / 图2 #0C0A12），四周收深。
+   平涂的黑是印刷黑；径向的黑是夜。 */
+.phone{
+  background:radial-gradient(ellipse 130% 85% at 50% 6%, #0D1220 0%, #08090F 38%, #000000 100%) !important;
+}
+.statusbar{ background:transparent !important }
+.navbar{
+  background:linear-gradient(180deg,rgba(8,10,18,.90) 0%,rgba(8,10,18,.58) 62%,transparent 100%) !important;
+  backdrop-filter:blur(16px);
+}
+
+/* ── 环：渐变 + 微光晕（管体感）──────────────────────── */
+/* 给描边加 drop-shadow，读成"在发光"而不是"画了条线" */
+svg circle[stroke^="url(#g"]{
+  filter:drop-shadow(0 0 3px rgba(255,255,255,.10));
+}
+
+/* ── 大字：同色微光晕 ──────────────────────────────── */
+/* 参考图里 -4.7 的蓝不是平涂，边缘有极弱的同色辉光 */
+[style*="font-variant-numeric:tabular-nums"]{
+  text-shadow:0 0 18px currentColor;
+}
+
+/* ── 浅色下这些都不要 ──────────────────────────────── */
+[data-theme="light"] .card{
+  background:#FFFFFF !important;
+  box-shadow:0 0 0 .5px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.03) !important;
+}
+[data-theme="light"] .phone{ background:#F2F2F7 !important }
+[data-theme="light"] .navbar{ background:rgba(242,242,247,.86) !important }
+[data-theme="light"] [style*="font-variant-numeric:tabular-nums"]{ text-shadow:none }
+[data-theme="light"] svg circle[stroke^="url(#g"]{ filter:none }
+
+
+/* ══ HERO 卡豁免顶光覆盖 ══ */
+/* HERO 卡自带渐变背景（紫/蓝/铜），不能被我加的顶光渐变盖掉 */
+.card[style*="linear-gradient"]{
+  background:initial;
+  box-shadow:
+    inset 0 .5px 0 rgba(255,255,255,.10),
+    0 2px 12px rgba(0,0,0,.30) !important;
+}
+.card[style*="linear-gradient(160deg"],
+.card[style*="linear-gradient(180deg"]{
+  background:var(--kf-grad, none);
+}
+/* 用属性选择器恢复内联渐变：让内联样式优先 */
+.card[style*="background:linear-gradient"]{ background:revert-layer }
+
+
+/* ══ 渐变 HERO 卡：覆盖顶光 ══ */
+.card.grad-hero{
+  background:linear-gradient(160deg,#6E6BF0 0%,#4A48C8 55%,#33308F 100%) !important;
+  box-shadow:
+    inset 0 .5px 0 rgba(255,255,255,.16),
+    0 2px 14px rgba(60,56,190,.34) !important;
+}
+.card.grad-hero.grad-warn{ background:linear-gradient(160deg,#F0A030 0%,#C87820 55%,#8F5510 100%) !important }
+.card.grad-hero.grad-ok{ background:linear-gradient(160deg,#3AD16A 0%,#2AA050 55%,#1A7038 100%) !important }
+.card.grad-hero.grad-cyan{ background:linear-gradient(160deg,#2ED8D0 0%,#20A8A0 55%,#147870 100%) !important }
+.card.grad-hero.grad-rose{ background:linear-gradient(160deg,#F04070 0%,#C02850 55%,#8F1838 100%) !important }
+
+/* sp74 已废弃：历史上是状态栏占位，现改为 0 */
+.sp74{display:none !important}
+
+
+/* ══════════════════════════════════════════════════════════════
+   配色比例校准 —— 对齐参考图的 76/18/6
+   ──────────────────────────────────────────────────────────────
+   实测差异：
+     参考图 1：深 76% / 中 18% / 亮 6%
+     我的平均：深 68% / 中 26% / 亮 4%
+   中灰过多 = 画面发灰、不够高级。亮色过少 = 没有"跳"的地方。
+
+   三处收紧：
+     ① 卡片底从 #1C1C1E 压到 #191919（减少中灰面积）
+     ② 次级文字从 #8D8D93 提亮到 #A0A0A8（拉开与深底的对比）
+     ③ 语义色提饱和（亮色更跳）
+   ══════════════════════════════════════════════════════════════ */
+:root{
+  --surface:#191919;
+  --surface-alt:#202022;
+  --text-sub:#A0A0A8;
+  --text-tert:#6E6E76;
+  --ok:#2FD65C;
+  --warn:#FFA31A;
+  --danger:#FF3B30;
+  --accent-text:#F0A050;
+}
+
+/* 卡片顶光随之收紧 */
+.card:not([style*="background"]){
+  background:linear-gradient(180deg,#202020 0%,#191919 26%,#171717 100%) !important;
+  box-shadow:
+    inset 0 .5px 0 rgba(255,255,255,.06),
+    inset 0 0 0 .5px rgba(255,255,255,.03),
+    0 1px 3px rgba(0,0,0,.32) !important;
+}
+/* 画布再压深一点 */
+.phone{
+  background:radial-gradient(ellipse 130% 85% at 50% 6%, #0A0E1A 0%, #06070C 38%, #000000 100%) !important;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   参考图规格全局校准（图 2 实测值 @390）
+   ──────────────────────────────────────────────────────────────
+   卡内边距 18 / 卡圆角 26 / 卡头 14 灰 + chevron
+   卡标题 19 粗白 / label 12 灰 / value 16 白
+   分隔线 0.5pt / 页脚 12 灰 行高 1.6
+   ══════════════════════════════════════════════════════════════ */
+:root{
+  --card-pad:18px;
+  --r-card:26px;
+  --row-gap:12px;
+}
+.cardlink{
+  font-size:14px;color:#8D8D93;font-weight:400;
+  display:flex;align-items:center;gap:5px;margin-bottom:10px;
+  letter-spacing:.1px;
+}
+.cardlink .ch{color:#5A5A62}
+.ctitle{font-size:19px;font-weight:700;color:#FFF;line-height:1.25;letter-spacing:-.2px}
+.clabel{font-size:12px;color:#8A8A90;font-weight:400;margin-top:12px;letter-spacing:.1px}
+.cvalue{font-size:16px;font-weight:600;color:#FFF;margin-top:3px;
+  font-variant-numeric:tabular-nums;letter-spacing:-.1px}
+.sep{height:1px;background:rgba(255,255,255,.075);margin:16px 0}
+.footer{font-size:12px;color:#7A7A82;line-height:1.6;margin-top:14px}
+
+/* 数据行（图 2 的彩色点行）*/
+.drow{display:flex;align-items:center;gap:9px;margin-top:9px}
+.drow .dot{width:5.5px;height:5.5px;border-radius:50%;flex:0 0 auto}
+.drow .dv{font-size:15px;font-weight:600;color:#FFF;font-variant-numeric:tabular-nums}
+.drow .du{font-size:13px;font-weight:400;color:#8A8A90}
+
+/* 列表行 */
+.rw{display:flex;align-items:center;gap:12px;padding:14px 0;text-decoration:none;
+  color:inherit;-webkit-tap-highlight-color:transparent}
+.rw .tt{font-size:16px;font-weight:500;color:#FFF;line-height:1.25}
+.rw .sb{font-size:12px;color:#8A8A90;margin-top:3px;line-height:1.35}
+.rw .ch{color:#4A4A52;flex:0 0 auto}
+.rw .ic{width:20px;height:20px;flex:0 0 auto;display:flex;align-items:center;justify-content:center}
+
+/* 徽章 */
+.badge{font-size:11px;font-weight:600;padding:2px 7px;border-radius:999px;flex:0 0 auto}
+.badge.ok{color:#2FD65C;background:rgba(47,214,92,.13)}
+.badge.warn{color:#FFA31A;background:rgba(255,163,26,.13)}
+.badge.dgr{color:#FF453A;background:rgba(255,69,58,.13)}
+.badge.blue{color:#4FC3FF;background:rgba(79,195,255,.13)}
+
+/* 两列 */
+.cols{display:flex;gap:16px}
+.cols > div{flex:1}
+
+/* 进度条：细而暗（参考图没有亮条）*/
+.bar{height:5px;border-radius:3px;background:rgba(255,255,255,.07);overflow:hidden}
+.bar > i{display:block;height:5px;border-radius:3px}
+
+/* 数字统一 tabular */
+[style*="font-variant-numeric"]{font-variant-numeric:tabular-nums}

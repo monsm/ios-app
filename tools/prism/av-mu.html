@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}</style></head><body>
+<script type="importmap">{"imports":{"three":"./three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+const W = 256, H = 256;
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setSize(W, H); renderer.setPixelRatio(1); renderer.setClearColor(0x000000, 0);
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.15;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
+cam.position.set(0, 0.7, 8.6); cam.lookAt(0, -0.28, 0);
+const key = new THREE.DirectionalLight(0xffffff, 2.6); key.position.set(-3.0, 4.4, 4.6); scene.add(key);
+const fill = new THREE.DirectionalLight(0xC8D8FF, 1.1); fill.position.set(3.6, 1.0, 2.4); scene.add(fill);
+const rim = new THREE.DirectionalLight(0xffffff, 1.2); rim.position.set(0.4, -0.6, -4.4); scene.add(rim);
+scene.add(new THREE.AmbientLight(0x8894A6, 0.85));
+
+// ══ 程序化环境贴图（所有素材共用）══
+const envScene = new THREE.Scene();
+envScene.add(new THREE.Mesh(new THREE.BoxGeometry(30,30,30),
+  new THREE.MeshBasicMaterial({ color: 0x14161C, side: THREE.BackSide })));
+const mkPanel = (w,h,color,pos,rot) => {
+  const p = new THREE.Mesh(new THREE.PlaneGeometry(w,h), new THREE.MeshBasicMaterial({color}));
+  p.position.set(...pos); if(rot) p.rotation.set(...rot); p.lookAt(0,0,0); envScene.add(p);
+};
+mkPanel(12,12,0xFFFFFF,[-9,10,8]);
+mkPanel(8,14,0x8FA8FF,[11,2,4]);
+const topP = new THREE.Mesh(new THREE.PlaneGeometry(20,3), new THREE.MeshBasicMaterial({color:0xE8F0FF}));
+topP.position.set(0,14,0); topP.rotation.x = Math.PI/2; envScene.add(topP);
+const botP = new THREE.Mesh(new THREE.PlaneGeometry(16,16), new THREE.MeshBasicMaterial({color:0x2A2E38}));
+botP.position.set(0,-14,0); botP.rotation.x = -Math.PI/2; envScene.add(botP);
+const pmrem = new THREE.PMREMGenerator(renderer);
+pmrem.compileEquirectangularShader();
+scene.environment = pmrem.fromScene(envScene, 0.04).texture;
+
+// ══ 程序化拉丝法线贴图 ══
+function brushedNormal(size, strength) {
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  const ctx = c.getContext('2d'); const img = ctx.createImageData(size, size);
+  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+    const n = Math.sin(y*3.7 + Math.sin(x*0.11)*2.1)*0.5
+            + Math.sin(y*11.3 + x*0.03)*0.3 + Math.sin(y*23.1)*0.2;
+    const i = (y*size+x)*4;
+    img.data[i] = 128 + n*strength*127; img.data[i+1] = 128; img.data[i+2] = 255; img.data[i+3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(3,3);
+  return t;
+}
+const NORMAL = brushedNormal(256, 0.35);
+
+
+// 半身像剪影：头球 + 肩部旋转体
+const skin = new THREE.MeshPhysicalMaterial({ color: 0x0ADBD8, roughness: 0.42, metalness: 0.06, clearcoat: 0.35, clearcoatRoughness: 0.4 });
+const head = new THREE.Mesh(new THREE.SphereGeometry(1.0, 64, 48), skin);
+head.scale.set(1, 1.06, 0.94); head.position.y = 0.35; scene.add(head);
+
+// 肩：用 LatheGeometry 做柔和的斜肩
+const pts = [];
+for (let i = 0; i <= 20; i++) {
+  const t = i/20;
+  const r = 0.48 + Math.pow(t, 0.62) * 1.05;
+  const y = -0.32 - Math.pow(t, 1.5) * 1.15;
+  pts.push(new THREE.Vector2(r, y));
+}
+const shoulder = new THREE.Mesh(new THREE.LatheGeometry(pts, 64), skin);
+scene.add(shoulder);
+
+// 颈部过渡
+const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.30, 0.34, 0.45, 32), skin);
+neck.position.y = -0.35; scene.add(neck);
+
+renderer.render(scene, cam);
+requestAnimationFrame(() => { renderer.render(scene, cam); document.title='READY'; });
+</script></body></html>

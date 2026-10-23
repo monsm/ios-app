@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}</style></head><body>
+<script type="importmap">{"imports":{"three":"./three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+const W = 512, H = 512;
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setSize(W, H); renderer.setPixelRatio(1); renderer.setClearColor(0x000000, 0);
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.22;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(28, 1, 0.1, 100);
+cam.position.set(0, 0.85, 8.4); cam.lookAt(0, 0, 0);
+
+// 主光带阴影（接触阴影的关键）
+const key = new THREE.DirectionalLight(0xffffff, 3.2);
+key.position.set(-3.2, 4.6, 4.8); key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+key.shadow.camera.left = -4; key.shadow.camera.right = 4;
+key.shadow.camera.top = 4; key.shadow.camera.bottom = -4;
+key.shadow.radius = 4; key.shadow.blurSamples = 12;
+key.shadow.bias = -0.0005;
+scene.add(key);
+const fill = new THREE.DirectionalLight(0xC8D8FF, 0.95); fill.position.set(3.8, 1.2, 2.4); scene.add(fill);
+const rim = new THREE.DirectionalLight(0xFFF0E0, 1.7); rim.position.set(0.4, -1.2, -4.6); scene.add(rim);
+scene.add(new THREE.AmbientLight(0x8894A6, 0.85));
+
+// 环境贴图
+const envScene = new THREE.Scene();
+envScene.add(new THREE.Mesh(new THREE.BoxGeometry(30,30,30), new THREE.MeshBasicMaterial({ color: 0x14161C, side: THREE.BackSide })));
+const mk = (w,h,c,p) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w,h), new THREE.MeshBasicMaterial({color:c})); m.position.set(...p); m.lookAt(0,0,0); envScene.add(m); };
+mk(12,12,0xFFFFFF,[-9,10,8]); mk(8,14,0x8FA8FF,[11,2,4]);
+const tp = new THREE.Mesh(new THREE.PlaneGeometry(20,3), new THREE.MeshBasicMaterial({color:0xE8F0FF}));
+tp.position.set(0,14,0); tp.rotation.x = Math.PI/2; envScene.add(tp);
+const pmrem = new THREE.PMREMGenerator(renderer);
+pmrem.compileEquirectangularShader();
+scene.environment = pmrem.fromScene(envScene, 0.04).texture;
+
+// 拉丝法线
+function brushed(size, s) {
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  const ctx = c.getContext('2d'); const im = ctx.createImageData(size, size);
+  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+    const n = Math.sin(y*3.7 + Math.sin(x*0.11)*2.1)*0.5 + Math.sin(y*11.3 + x*0.03)*0.3 + Math.sin(y*23.1)*0.2;
+    const i = (y*size+x)*4;
+    im.data[i] = 128+n*s*127; im.data[i+1] = 128; im.data[i+2] = 255; im.data[i+3] = 255;
+  }
+  ctx.putImageData(im, 0, 0);
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(2,2); return t;
+}
+const N = brushed(256, 0.32);
+
+// 奖牌
+const gold  = new THREE.MeshStandardMaterial({ color: 0xD9A05C, metalness: 0.94, roughness: 0.20, envMapIntensity: 1.5, normalMap: N, normalScale: new THREE.Vector2(0.4,0.4) });
+const goldD = new THREE.MeshStandardMaterial({ color: 0x9A6E38, metalness: 0.90, roughness: 0.32, envMapIntensity: 1.3 });
+const silver= new THREE.MeshStandardMaterial({ color: 0xC8CEDA, metalness: 0.96, roughness: 0.14, envMapIntensity: 1.7, normalMap: N, normalScale: new THREE.Vector2(0.3,0.3) });
+const center= new THREE.MeshStandardMaterial({ color: 0xF2D9B0, metalness: 0.80, roughness: 0.10, envMapIntensity: 1.6 });
+
+const g = new THREE.Group();
+const outer = new THREE.Mesh(new THREE.CylinderGeometry(2.05, 2.05, 0.30, 96), gold);
+outer.rotation.x = Math.PI/2; outer.castShadow = true; g.add(outer);
+const og = new THREE.Mesh(new THREE.TorusGeometry(1.76, 0.075, 24, 96), goldD);
+og.position.z = 0.16; og.castShadow = true; g.add(og);
+const mid = new THREE.Mesh(new THREE.CylinderGeometry(1.62, 1.62, 0.36, 96), silver);
+mid.rotation.x = Math.PI/2; mid.position.z = 0.06; mid.castShadow = true; g.add(mid);
+const mr = new THREE.Mesh(new THREE.TorusGeometry(1.46, 0.055, 20, 96), gold);
+mr.position.z = 0.24; mr.castShadow = true; g.add(mr);
+const inner = new THREE.Mesh(new THREE.SphereGeometry(0.95, 64, 48), center);
+inner.scale.z = 0.42; inner.position.z = 0.16; inner.castShadow = true; g.add(inner);
+
+g.position.y = 0.05; g.scale.setScalar(0.80);
+scene.add(g);
+
+// 承接平面（让阴影有地方落）
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(20,20),
+  new THREE.ShadowMaterial({ opacity: 0.45 }));
+floor.rotation.x = -Math.PI/2; floor.position.y = -1.72; floor.receiveShadow = true;
+scene.add(floor);
+
+renderer.render(scene, cam);
+requestAnimationFrame(() => { renderer.render(scene, cam); document.title='READY'; });
+</script></body></html>

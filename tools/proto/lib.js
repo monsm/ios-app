@@ -68,19 +68,27 @@ const donut = (size, segs, center='') => {
 };
 
 // 同心三环（§7.8 形态3）
-const tripleRing = (size, a=0.62, b=0.55, c=0.5) => {
-  const C=size/2;
-  const R1=C-size*0.075, R2=C-size*0.235, R3=C-size*0.395;
-  const W1=size*0.117, W2=size*0.108, W3=size*0.10;
-  const g=(r,w,col,p)=>{
-    const circ=2*Math.PI*r;
-    return `<circle cx="${C}" cy="${C}" r="${r}" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="${w}"/>`+
-           `<circle cx="${C}" cy="${C}" r="${r}" fill="none" stroke="${col}" stroke-width="${w}" stroke-linecap="round" stroke-dasharray="${circ*p} ${circ}" transform="rotate(-84 ${C} ${C})"/>`;
+const tripleRing = (size, a=0.62, b=0.55, c=0.5, center='') => {
+  // 图 2 的卡内三环：细环（线宽 ≈ size×0.045），间隙明显，中心可放数字
+  const C = size/2;
+  const W = size * 0.045;                     // 细环
+  const R1 = C - W*0.5 - size*0.012;          // 外
+  const R2 = R1 - W - size*0.055;             // 中
+  const R3 = R2 - W - size*0.055;             // 内
+  const g = (r, col, p) => {
+    const circ = 2*Math.PI*r;
+    return `<circle cx="${C}" cy="${C}" r="${r}" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="${W}"/>` +
+           `<circle cx="${C}" cy="${C}" r="${r}" fill="none" stroke="${col}" stroke-width="${W}" stroke-linecap="round" ` +
+           `stroke-dasharray="${(circ*p).toFixed(1)} ${circ.toFixed(1)}" transform="rotate(-90 ${C} ${C})"/>`;
   };
-  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">` +
-    g(R1,W1,'#F11B51',a) + g(R2,W2,'#3CDE02',b) + g(R3,W3,'#0ADBD8',c) +
-    `<circle cx="${C}" cy="${C-R1}" r="${size*0.058}" fill="#000"/>
-     <text x="${C}" y="${C-R1+size*0.022}" text-anchor="middle" font-size="${size*0.075}" fill="#FFF" font-family="system-ui">→</text></svg>`;
+  const inner = center
+    ? `<circle cx="${C}" cy="${C}" r="${(R3-W*1.6).toFixed(1)}" fill="#0A0A0C"/>` +
+      `<text x="${C}" y="${C}" text-anchor="middle" dominant-baseline="central" ` +
+      `font-size="${(size*0.22).toFixed(0)}" font-weight="700" fill="#FFF" ` +
+      `font-family="system-ui,-apple-system" style="font-variant-numeric:tabular-nums">${center}</text>`
+    : '';
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="flex:0 0 auto">` +
+    g(R1,'#F11B51',a) + g(R2,'#3CDE02',b) + g(R3,'#0ADBD8',c) + inner + `</svg>`;
 };
 
 // 页面壳

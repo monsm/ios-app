@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}</style></head><body>
+<script type="importmap">{"imports":{"three":"./three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+const W = 256, H = 256;
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setSize(W, H); renderer.setPixelRatio(1); renderer.setClearColor(0x000000, 0);
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.18;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(28, 1, 0.1, 100);
+cam.position.set(0, 0.6, 8.2); cam.lookAt(0, 0, 0);
+const key = new THREE.DirectionalLight(0xffffff, 3.0); key.position.set(-3.4, 4.8, 4.4); scene.add(key);
+const fill = new THREE.DirectionalLight(0xC8D8FF, 0.95); fill.position.set(3.8, 1.2, 2.2); scene.add(fill);
+const rim = new THREE.DirectionalLight(0xffffff, 1.5); rim.position.set(0.6, -1.0, -4.6); scene.add(rim);
+scene.add(new THREE.AmbientLight(0x8894A6, 0.9));
+
+// ══ 程序化环境贴图（所有素材共用）══
+const envScene = new THREE.Scene();
+envScene.add(new THREE.Mesh(new THREE.BoxGeometry(30,30,30),
+  new THREE.MeshBasicMaterial({ color: 0x14161C, side: THREE.BackSide })));
+const mkPanel = (w,h,color,pos,rot) => {
+  const p = new THREE.Mesh(new THREE.PlaneGeometry(w,h), new THREE.MeshBasicMaterial({color}));
+  p.position.set(...pos); if(rot) p.rotation.set(...rot); p.lookAt(0,0,0); envScene.add(p);
+};
+mkPanel(12,12,0xFFFFFF,[-9,10,8]);
+mkPanel(8,14,0x8FA8FF,[11,2,4]);
+const topP = new THREE.Mesh(new THREE.PlaneGeometry(20,3), new THREE.MeshBasicMaterial({color:0xE8F0FF}));
+topP.position.set(0,14,0); topP.rotation.x = Math.PI/2; envScene.add(topP);
+const botP = new THREE.Mesh(new THREE.PlaneGeometry(16,16), new THREE.MeshBasicMaterial({color:0x2A2E38}));
+botP.position.set(0,-14,0); botP.rotation.x = -Math.PI/2; envScene.add(botP);
+const pmrem = new THREE.PMREMGenerator(renderer);
+pmrem.compileEquirectangularShader();
+scene.environment = pmrem.fromScene(envScene, 0.04).texture;
+
+// ══ 程序化拉丝法线贴图 ══
+function brushedNormal(size, strength) {
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  const ctx = c.getContext('2d'); const img = ctx.createImageData(size, size);
+  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+    const n = Math.sin(y*3.7 + Math.sin(x*0.11)*2.1)*0.5
+            + Math.sin(y*11.3 + x*0.03)*0.3 + Math.sin(y*23.1)*0.2;
+    const i = (y*size+x)*4;
+    img.data[i] = 128 + n*strength*127; img.data[i+1] = 128; img.data[i+2] = 255; img.data[i+3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(3,3);
+  return t;
+}
+const NORMAL = brushedNormal(256, 0.35);
+
+const top = new THREE.DirectionalLight(0xffffff, 1.8); top.position.set(0, 6, 1.2); scene.add(top);
+
+const g = new THREE.Group();
+g.rotation.y = 1.35;
+// 锁体：圆角方块（正面）
+const bodyMat = new THREE.MeshStandardMaterial({ color: 0x585E6A, metalness: 0.82, roughness: 0.28 , envMapIntensity: 1.3 });
+const body = new THREE.Mesh(new THREE.BoxGeometry(2.0, 2.6, 0.52), bodyMat);
+g.add(body);
+// 锁芯（铜色圆盘）
+const brass = new THREE.MeshStandardMaterial({ color: 0xC08A4A, metalness: 0.85, roughness: 0.22 , envMapIntensity: 1.3 });
+const core = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.58, 48), brass);
+core.rotation.x = Math.PI/2; core.position.z = 0.02; g.add(core);
+// 钥匙孔
+const hole = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.10, 0.62, 24),
+  new THREE.MeshStandardMaterial({ color: 0x0A0A0C, metalness: 0.1, roughness: 0.95 , envMapIntensity: 1.3 }));
+hole.rotation.x = Math.PI/2; hole.position.z = 0.04; g.add(hole);
+// 上方把手横条
+const bar = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.16, 0.2), bodyMat);
+bar.position.set(0, 0.95, 0.30); g.add(bar);
+// 底边亮条
+const edge = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.06, 0.06),
+  new THREE.MeshStandardMaterial({ color: 0xD9A05C, metalness: 0.9, roughness: 0.2 , envMapIntensity: 1.3 }));
+edge.position.set(0, -1.15, 0.27); g.add(edge);
+
+g.scale.setScalar(0.92);
+scene.add(g);
+renderer.render(scene, cam);
+requestAnimationFrame(() => { renderer.render(scene, cam); document.title='READY'; });
+</script></body></html>

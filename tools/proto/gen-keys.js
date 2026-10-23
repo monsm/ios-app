@@ -66,10 +66,7 @@ fs.writeFileSync(D+'02-keys.html', L.page('钥匙', `
   <!-- 卡 1：图 2 的完整解剖（卡头→标题→label→value→分隔线→第二组→页脚）-->
   <div class="card" style="margin-top:12px">
     <div class="cardlink">本周到期<span class="ch">${sv('chevron')}</span></div>
-    <div style="display:flex;justify-content:center;margin:8px 0 -2px">
-      <img src="img/key-render-192.png" alt="" style="width:104px;height:104px;
-        filter:drop-shadow(0 12px 24px rgba(0,0,0,.6))">
-    </div>
+    
     <div class="ctitle">2 项即将到期</div>
     <div class="clabel" style="margin-top:14px">总计</div>
     <div class="cvalue" style="margin-top:2px">13 项</div>
@@ -93,7 +90,7 @@ fs.writeFileSync(D+'02-keys.html', L.page('钥匙', `
         <div class="drow"><span class="dot" style="background:#0ADBD8"></span>
           <span class="dv">0<span class="du">/5 个临时码</span></span></div>
       </div>
-      ${triple(101)}
+      ${triple(101, .27, .80, .0, '8')}
     </div>
     <div class="sep"></div>
     <div class="cols">
