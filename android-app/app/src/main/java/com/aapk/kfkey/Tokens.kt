@@ -112,46 +112,6 @@ internal object KfTokens {
         /** 28dp —— 齿轮本体画布（规范 §10 档位 6）。 = iOS XIcon.lg */
         val lg = 28.dp
     }
-}
-
-/**
- * 字阶 —— 规范 §4.2，与 iOS 的 `XText` (App/Core/Theme.swift) 逐值同源。
- *
- * 为什么现在才补：本端此前把字号散写在调用点，于是出现了 `15.sp` ——
- * 那正是规范点名批评的 HIG `subheadline` 默认值（规范已下修成 14）。
- * iOS 侧 766 处排版全部收到 `XText` 之后，本端也补一个，两边才谈得上“同源”。
- *
- * 规范原话：**已全线下修 34→30 / 22→19 / 20→18 / 17→16 / 15→14 / 13→12 / 12→11**。
- * 所以这里的数**不是** Compose 的 `Typography` 默认值，是规范实测值。
- */
-object Type {
-    /** 56 Bold -1.5 —— 大环内数字 */
-    val displayNumber = 56.sp
-    /** 36 Bold -0.6 */
-    val display = 36.sp
-    /** 30 Bold -0.4 —— 页面大标题 */
-    val largeTitle = 30.sp
-    /** 19 Bold -0.3 —— 卡片主标题 */
-    val title2 = 19.sp
-    /** 18 Semibold -0.2 —— 区块标题 */
-    val title3 = 18.sp
-    /** 16 Semibold -0.2 —— 行标题 */
-    val headline = 16.sp
-    /** 16 Regular -0.1 —— 正文 */
-    val body = 16.sp
-    /** 14 Regular 0 —— 卡片副标题、卡头链接 */
-    val subhead = 14.sp
-    /** 12 Regular 0 —— 辅助说明 */
-    val footnote = 12.sp
-    /** 11 Medium +0.1 —— 图表轴标签（极限值） */
-    val caption = 11.sp
-
-    // ── 六图范式补档 (2026-10-23, 与 iOS DSFont 同源) ──
-    /** 44 Bold -1.4 —— **MetricCard 主角数字**（图 5 的 13,818 / 6.58MI） */
-    val hero = 44.sp
-    /** 13 Regular 0 —— 卡内副文（之前借 footnote 12 会偏挤） */
-    val small = 13.sp
-
 
     // ═══════════════════════════════════════════════════════════
     // MARK: - 六图范式补档 (2026-10-23 与 iOS Theme.swift 同源)
@@ -213,6 +173,47 @@ object Type {
             0.55f to Color(0xFF30D158),
             1.00f to Color(0xFF7CE89A),
         )
+
+
+}
+
+/**
+ * 字阶 —— 规范 §4.2，与 iOS 的 `XText` (App/Core/Theme.swift) 逐值同源。
+ *
+ * 为什么现在才补：本端此前把字号散写在调用点，于是出现了 `15.sp` ——
+ * 那正是规范点名批评的 HIG `subheadline` 默认值（规范已下修成 14）。
+ * iOS 侧 766 处排版全部收到 `XText` 之后，本端也补一个，两边才谈得上“同源”。
+ *
+ * 规范原话：**已全线下修 34→30 / 22→19 / 20→18 / 17→16 / 15→14 / 13→12 / 12→11**。
+ * 所以这里的数**不是** Compose 的 `Typography` 默认值，是规范实测值。
+ */
+object Type {
+    /** 56 Bold -1.5 —— 大环内数字 */
+    val displayNumber = 56.sp
+    /** 36 Bold -0.6 */
+    val display = 36.sp
+    /** 30 Bold -0.4 —— 页面大标题 */
+    val largeTitle = 30.sp
+    /** 19 Bold -0.3 —— 卡片主标题 */
+    val title2 = 19.sp
+    /** 18 Semibold -0.2 —— 区块标题 */
+    val title3 = 18.sp
+    /** 16 Semibold -0.2 —— 行标题 */
+    val headline = 16.sp
+    /** 16 Regular -0.1 —— 正文 */
+    val body = 16.sp
+    /** 14 Regular 0 —— 卡片副标题、卡头链接 */
+    val subhead = 14.sp
+    /** 12 Regular 0 —— 辅助说明 */
+    val footnote = 12.sp
+    /** 11 Medium +0.1 —— 图表轴标签（极限值） */
+    val caption = 11.sp
+
+    // ── 六图范式补档 (2026-10-23, 与 iOS DSFont 同源) ──
+    /** 44 Bold -1.4 —— **MetricCard 主角数字**（图 5 的 13,818 / 6.58MI） */
+    val hero = 44.sp
+    /** 13 Regular 0 —— 卡内副文（之前借 footnote 12 会偏挤） */
+    val small = 13.sp
 
 
 }
