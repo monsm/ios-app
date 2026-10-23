@@ -394,7 +394,13 @@ private fun KfApp(unlocker: BleUnlocker) {
                 // 范式 9 / 14-13: 一屏只能有 1 个 >=200pt 的主视觉。旧版这里同时摆了 232dp 圆盘
                 // 和 208dp 的大箭头 = 两个主角。现在箭头降级成仪表行旁的 72dp 指示器 (见下),
                 // 主视觉只剩圆盘一个。
-                UnlockDial(busy = busy, rssi = rssi, onClick = { doUnlock(auto = false) })
+                UnlockDial(
+                    busy = busy,
+                    // 图 1 语言的成功态：环整圈转绿（与 iOS HomeConsole 的 phase == .unlocked 同义）
+                    success = !statusBad && (status.contains("成功") || status.startsWith("已开锁")),
+                    rssi = rssi,
+                    onClick = { doUnlock(auto = false) }
+                )
 
                 Spacer(Modifier.height(KfTokens.Space.l))
 
@@ -715,7 +721,7 @@ private fun Header(lock: LockInfo?) {
  * 零投影: 全仓没有一处 .shadow —— 范式 6.3「应用体卡片靠明度差, 禁止投影」。
  */
 @Composable
-private fun UnlockDial(busy: Boolean, rssi: Int?, onClick: () -> Unit) {
+private fun UnlockDial(busy: Boolean, success: Boolean, rssi: Int?, onClick: () -> Unit) {
     val colors = LocalKfColors.current
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
@@ -808,7 +814,7 @@ private fun UnlockDial(busy: Boolean, rssi: Int?, onClick: () -> Unit) {
                     radius = rimRadius,
                     style = Stroke(rim)
                 )
-                if (busy) {
+                if (busy || success) {
                     // 弧: 12 点起、顺时针 300°。渐变要与弧**同起点**。
                     // iOS 用 AngularGradient(startAngle: .degrees(-90)) 一句话把 0 位对齐到 12 点;
                     // Compose 的 Brush.sweepGradient 没有 startAngle 参数, 0 位固定在 **3 点**。
@@ -819,6 +825,8 @@ private fun UnlockDial(busy: Boolean, rssi: Int?, onClick: () -> Unit) {
                     // 效果等价于 iOS 的 AngularGradient(startAngle: -90) + trim(0...progress)。
                     rotate(degrees = -90f, pivot = Offset(size.width / 2f, size.height / 2f)) {
                         // 六图改造 (2026-10-23): 进度弧改用**图 1 的五段连续渐变**。
+                        // 成功态换成图 1 语言的绿色渐变（dialOKStops）——语义色不能被渐变盖掉，
+                        // 用户要靠颜色判断"到底开没开"。
                         //
                         // 与 iOS HomeConsole 同步：图 1 Health Age 的环是青绿→蓝→深蓝的
                         // **连续**过渡（#4A9E96 → #2E8FC0 → #1E6AAE → #1560A8 → #0A84FF）。
@@ -826,7 +834,7 @@ private fun UnlockDial(busy: Boolean, rssi: Int?, onClick: () -> Unit) {
                         // 而连续渐变让环本身成为一个渐变物体，这是图 1 与普通进度环最本质的差别。
                         drawArc(
                             brush = Brush.linearGradient(
-                                colorStops = KfTokens.dialStops.toTypedArray(),
+                                colorStops = (if (success) KfTokens.dialOKStops else KfTokens.dialStops).toTypedArray(),
                                 start = Offset(0f, size.height),
                                 end = Offset(size.width, 0f)
                             ),
@@ -1089,27 +1097,90 @@ private fun SettingsCard(
         )
         Spacer(Modifier.height(KfTokens.Space.m))
 
-        // 两个文字动作: 触达 48dp 是硬约束 (KfTokens.Hit.min), 但视觉上只是一行 15sp 的字。
-        // 用 Box + heightIn + 居中, 而不是给 Text 加 padding 硬撑 ——
-        // 旧版写 "padding(vertical = 10.dp) 就够 44dp 了", 实际算出来只有 36dp (见 INVENTORY-ANDROID §2 AND-C-022)。
-        Row(horizontalArrangement = Arrangement.spacedBy(KfTokens.Space.xl)) {
+        // 六图改造 (2026-10-23): 两个纯文字动作改成**图 2 的卡内行形态**。
+        //
+        // 图 2 Winding Down 的卡里从不裸放文字链接 —— 每个可点项都是
+        // 「图标块 + 主标题 + 副标题 + 右侧 chevron」这一行。
+        // 之前这里是两个并排的 15sp 文字：用户看不出"点哪"（没有边界），
+        // 也看不出"点下去会发生什么"（没有副标题）。触达 48dp 是够了，可发现性不够。
+        SettingRow(
+            title = "重新扫码绑定",
+            subtitle = "换一把锁，或更新这把锁的凭证",
+            tint = colors.accentText,
+            onClick = onRescan,
+            divider = true
+        )
+        SettingRow(
+            title = "解绑这把锁",
+            subtitle = "删除本机钥匙与全部设置",
+            tint = colors.danger,
+            onClick = onUnbind,
+            divider = false
+        )
+
+        // 图 2 的卡尾：一句说清后果的整句（不是"注意"两个字）
+        Spacer(Modifier.height(KfTokens.Space.s))
+        Text(
+            "解绑只删本机，门锁里的密码与指纹不受影响 —— 下次要用，得在门锁键盘上重置后重新扫码。",
+            color = colors.textTertiary,
+            fontSize = Type.footnote,
+            lineHeight = 18.sp
+        )
+    }
+}
+
+/**
+ * 图 2 的卡内行 —— 图标块 + 主标题 + 副标题 + chevron，触达 >= 48dp。
+ *
+ * 为什么单独抽出来：设置卡里原本每个动作各写一遍 Box + heightIn + clickable，
+ * 三处以后就会开始漂（有的 44dp 有的 48dp、有的有副标题有的没有）。
+ */
+@Composable
+private fun SettingRow(
+    title: String,
+    subtitle: String,
+    tint: Color,
+    onClick: () -> Unit,
+    divider: Boolean
+) {
+    val colors = LocalKfColors.current
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = KfTokens.Hit.min)
+                .clickable { onClick() }
+                .padding(vertical = KfTokens.Space.s),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(KfTokens.Space.m)
+        ) {
             Box(
                 Modifier
-                    .heightIn(min = KfTokens.Hit.min)
-                    .clickable { onRescan() }
-                    .padding(end = KfTokens.Space.s),
-                contentAlignment = Alignment.Center,
+                    .size(34.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(tint.copy(alpha = 0.14f)),
+                contentAlignment = Alignment.Center
             ) {
-                Text("重新扫码绑定", color = colors.accentText, fontSize = Type.subhead)
+                Box(
+                    Modifier
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(tint)
+                )
             }
+            Column(Modifier.weight(1f)) {
+                Text(title, color = tint, fontSize = Type.headline, fontWeight = FontWeight.SemiBold)
+                Text(subtitle, color = colors.textTertiary, fontSize = Type.footnote)
+            }
+            Text("›", color = colors.textTertiary, fontSize = Type.title2)
+        }
+        if (divider) {
             Box(
                 Modifier
-                    .heightIn(min = KfTokens.Hit.min)
-                    .clickable { onUnbind() },
-                contentAlignment = Alignment.Center,
-            ) {
-                Text("解绑", color = colors.danger, fontSize = Type.subhead)
-            }
+                    .fillMaxWidth()
+                    .height(KfTokens.Hairline.width)
+                    .background(colors.hairline)
+            )
         }
     }
 }

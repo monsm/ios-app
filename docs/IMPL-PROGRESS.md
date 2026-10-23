@@ -129,9 +129,9 @@
 |---|---|---|---|
 | 01-home | KfApp + UnlockDial + KfChip | ✅ 图1 五段渐变进度弧 + 环心 44sp dBm 读数 + 图1 双玻璃 chip | ✅ |
 | 02-scan | EmptyState（改造） | ✅ 图6 蓝渐变 hero 包裹取景框 + 白色系文字 | 🟨 |
-| 03-settings | SettingsCard | 图2 卡解剖 + 开关组 | ⬜ |
-| 04-success | UnlockSuccess（新增） | 图1 环转绿 + 回执卡 | ⬜ |
-| 05-rebind | RebindConfirm（新增） | 图2 双卡 + 红警告 | ⬜ |
+| 03-settings | SettingsCard + SettingRow | ✅ 图2 卡内行（图标块+主副文+chevron）+ footer 整句 | ✅ |
+| 04-success | UnlockDial(success:) | ✅ 图1 语言绿色渐变环（dialOKStops），语义色不被渐变盖掉 | ✅ |
+| 05-rebind | 现有确认框 | 🟨 由原有「换绑确认 / 解绑确认」对话框承载，未做双卡对照 | 🟨 |
 
 ---
 
@@ -167,3 +167,6 @@
 | 2026-10-23 | **Android 02-scan 完成**：空态取景框包进图6 蓝渐变 hero，文字改白色系（深灰在蓝底不可读），描边改白 |
 | 2026-10-23 | 校验白名单同步：kotlinbalance 字号档补 44/13（`Type.hero`/`Type.small`）|
 | 2026-10-23 | **8 道门禁全绿**（iOS 5 + Android 3）：swiftcheck/swiftlint/apisig/contrast/dynamictype/kotlinbalance/kotlinshadow/tokendrift |
+| 2026-10-23 | **Android 03-settings 完成**：两个裸文字动作 → 图2 卡内行（图标块+主副文+chevron，48dp 触达），补 footer 整句；抽出 `SettingRow` 组件防漂移 |
+| 2026-10-23 | **Android 04-success 完成**：`UnlockDial` 增 `success` 参数，成功时环走 `dialOKStops` 绿色渐变（图1 语言，与 iOS phase == .unlocked 同义）|
+| 2026-10-23 | Android 5 屏状态：01 ✅ / 02 ✅ / 03 ✅ / 04 ✅ / 05 🟨（沿用既有确认框）|
