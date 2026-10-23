@@ -2363,3 +2363,241 @@ struct XBreathing<Content: View>: View {
             .accessibilityHidden(true)
     }
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// MARK: - 六图范式组件（2026-10-23）
+//
+// 这一组是从 tools/proto 的 HTML 原型反推回 SwiftUI 的共享组件。
+// 每个组件对应一张参考图里的一个可辨识结构，注释里写明"图几的什么"。
+// 页面不许再自己拼这些结构 —— 拼一次就是一次口径漂移。
+// ═══════════════════════════════════════════════════════════════════════
+
+/// **图 1 · 渐变开口环（Dial）** —— Health Age 的主视觉。
+///
+/// 结构（缺一不可）：
+///   ① 底轨：`rgba(255,255,255,.085)`，与点亮段同宽
+///   ② 点亮段：`XGradient.dial` 五段**连续**渐变
+///   ③ **底部开口 11.5%** —— 图 1 的环不是闭合的，缺口正对下方文字区
+///   ④ **游标**：亮蓝圆点 + 白描边（3.2pt），落在点亮弧末端
+///   ⑤ **顶部 tick**：短竖条，`rgba(255,255,255,.34)`
+///   ⑥ 中心插槽：任意 View（通常是 `XHeroNumber`）
+///
+/// 为什么开口在底部：图 1 的缺口是为了让环与下方的两列数据"呼吸"，
+/// 闭合环会形成一个视觉笼子，把下方内容压死。
+struct XGradientDial<Center: View>: View {
+    /// 环径（含线宽）。图 1 实测约 **屏宽 × 0.71**。
+    var size: CGFloat = 322
+    /// 点亮比例 0...1
+    var progress: Double
+    /// 线宽比例（相对尺寸）。图 1 实测 **9.2%**。
+    var widthRatio: CGFloat = 0.092
+    /// 是否显示游标（图 1 有；MetricCard 里的小环没有）
+    var showsCursor: Bool = true
+    /// 是否显示顶部 tick
+    var showsTick: Bool = true
+    /// 渐变；默认 `XGradient.dial`
+    var gradient: LinearGradient = XGradient.dial
+    /// 中心内容
+    @ViewBuilder var center: () -> Center
+
+    /// 底部开口占整圈的比例（图 1 实测 11.5%）
+    private let gap: Double = 0.115
+    /// 环起点：从底部左侧开始（开口居中在正下方）
+    private var startAngle: Angle { .degrees(90 + (gap * 360) / 2) }
+
+    var body: some View {
+        ZStack {
+            // ① 底轨
+            Circle()
+                .trim(from: 0, to: 1 - gap)
+                .stroke(XPalette.hairline.opacity(0.9),
+                        style: StrokeStyle(lineWidth: size * widthRatio, lineCap: .round))
+                .rotationEffect(startAngle)
+
+            // ② 点亮段
+            Circle()
+                .trim(from: 0, to: (1 - gap) * max(0.001, min(1, progress)))
+                .stroke(gradient,
+                        style: StrokeStyle(lineWidth: size * widthRatio, lineCap: .round))
+                .rotationEffect(startAngle)
+
+            // ⑤ 顶部 tick
+            if showsTick {
+                Capsule()
+                    .fill(Color.white.opacity(0.34))
+                    .frame(width: 7, height: size * widthRatio * 0.34)
+                    .offset(y: -(size / 2 - size * widthRatio * 0.5 - 2))
+            }
+
+            // ④ 游标
+            if showsCursor, progress > 0.02 {
+                let r = size / 2
+                let a = startAngle.radians + (1 - gap) * progress * 2 * .pi
+                Circle()
+                    .fill(XPalette.accentText)          // 亮蓝蓝 — 图 1 的 #0A84FF
+                    .overlay(Circle().stroke(Color.white, lineWidth: 3.2))
+                    .frame(width: size * widthRatio * 0.62, height: size * widthRatio * 0.62)
+                    .offset(x: r * cos(a), y: r * sin(a))
+            }
+
+            // ⑥ 中心插槽
+            center()
+        }
+        .frame(width: size, height: size)
+        .accessibilityElement(children: .combine)
+    }
+}
+
+extension XGradientDial where Center == EmptyView {
+    init(size: CGFloat = 322, progress: Double,
+         widthRatio: CGFloat = 0.092, showsCursor: Bool = true, showsTick: Bool = true,
+         gradient: LinearGradient = XGradient.dial) {
+        self.init(size: size, progress: progress, widthRatio: widthRatio,
+                  showsCursor: showsCursor, showsTick: showsTick,
+                  gradient: gradient) { EmptyView() }
+    }
+}
+
+/// **图 1/图 5 · 主角数字** —— 环心或 MetricCard 里的那个大数。
+///
+/// 三档（`DSFont.hero` 44 / `dialNumber` 96 / `dialNumberXL` 118）+ 可选光晕。
+/// 光晕规则（图 1 实测）：半径 = 字号 × 0.47，透明度 0.42 —— **不是固定的 20pt**。
+struct XHeroNumber: View {
+    var text: String
+    /// 字号；默认 44（MetricCard 档）
+    var size: CGFloat = DSFont.hero
+    /// 数字颜色
+    var color: Color = XPalette.text
+    /// 是否带光晕（旗舰环心开，卡片里关）
+    var glow: Bool = false
+    /// 单位（跟在数字后，小一号、灰）
+    var unit: String? = nil
+    /// 单位前的间距
+    var unitGap: CGFloat = 4
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 0) {
+            Text(text)
+                .font(.system(size: size, weight: size >= 96 ? .heavy : .bold, design: .default))
+                .monospacedDigit()
+                .tracking(-size * 0.026)
+                .foregroundStyle(color)
+                .shadow(color: glow ? color.opacity(0.42) : .clear,
+                        radius: glow ? size * 0.47 : 0)
+            if let unit {
+                Text(unit)
+                    .font(.system(size: max(12, size * 0.32), weight: .medium))
+                    .foregroundStyle(XPalette.textTertiary)
+                    .padding(.leading, unitGap)
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// **图 2 · 彩色数据行** —— `● 30/70 cal` 那种点 + 数字 + 单位同色。
+///
+/// 图 2 的关键：**点和数字是同一个颜色**。分开取色会让行散架。
+struct XDataRow: View {
+    var label: String
+    var value: String
+    var unit: String? = nil
+    var color: Color
+    /// 是否显示左侧圆点
+    var dot: Bool = true
+    /// 副标题（可选，图 2 第二行）
+    var note: String? = nil
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            if dot {
+                Circle().fill(color)
+                    .frame(width: 7, height: 7)
+                    .alignmentGuide(.firstTextBaseline) { $0[.bottom] + 2 }
+            }
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(alignment: .firstTextBaseline, spacing: 0) {
+                    Text(value)
+                        .font(.system(size: DSFont.small, weight: .semibold))
+                        .monospacedDigit()
+                        .foregroundStyle(color)
+                    if let unit {
+                        Text(unit)
+                            .font(.system(size: DSFont.small, weight: .medium))
+                            .foregroundStyle(XPalette.textTertiary)
+                            .padding(.leading, 3)
+                    }
+                    Spacer(minLength: 6)
+                    Text(label)
+                        .font(.system(size: DSFont.small))
+                        .foregroundStyle(XPalette.textTertiary)
+                }
+                if let note {
+                    Text(note)
+                        .font(.system(size: DSFont.caption))
+                        .foregroundStyle(XPalette.textTertiary.opacity(0.8))
+                }
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// **图 2 · 细三环带中心数字** —— Winding Down 的 Activity 环。
+///
+/// 与粗三环（`XCycleRing`）的区别：线宽 **4.5%**（粗环约 11%），三环之间留窄缝，
+/// 中心放数字而不是留空。图 2 用它表达"三个维度各自的比例"，不表达总量。
+struct XTripleThinRing: View {
+    var size: CGFloat = 128
+    /// 三个比例 0...1
+    var values: (Double, Double, Double)
+    /// 三色
+    var colors: (Color, Color, Color) = (Color(hex: 0xF11B51),
+                                          Color(hex: 0x3CDE02),
+                                          Color(hex: 0x0ADBD8))
+    /// 中心文字（如 "38"）
+    var centerText: String? = nil
+    var centerSub: String? = nil
+
+    private var lineW: CGFloat { size * 0.045 }
+
+    var body: some View {
+        ZStack {
+            ring(index: 0, value: values.0, color: colors.0)
+            ring(index: 1, value: values.1, color: colors.1)
+            ring(index: 2, value: values.2, color: colors.2)
+            if let centerText {
+                VStack(spacing: 2) {
+                    Text(centerText)
+                        .font(.system(size: size * 0.22, weight: .bold))
+                        .monospacedDigit()
+                        .foregroundStyle(XPalette.text)
+                    if let centerSub {
+                        Text(centerSub)
+                            .font(.system(size: size * 0.10))
+                            .foregroundStyle(XPalette.textTertiary)
+                    }
+                }
+            }
+        }
+        .frame(width: size, height: size)
+        .accessibilityElement(children: .combine)
+    }
+
+    @ViewBuilder
+    private func ring(index: Int, value: Double, color: Color) -> some View {
+        // 三环半径：外 / 中 / 内，间距 = 线宽 + 2
+        let step = lineW + 2
+        let r = size / 2 - lineW / 2 - CGFloat(index) * step
+        ZStack {
+            Circle()
+                .stroke(Color.white.opacity(0.09), lineWidth: lineW)
+                .frame(width: r * 2, height: r * 2)
+            Circle()
+                .trim(from: 0, to: max(0.001, min(1, value)))
+                .stroke(color, style: StrokeStyle(lineWidth: lineW, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .frame(width: r * 2, height: r * 2)
+        }
+    }
+}

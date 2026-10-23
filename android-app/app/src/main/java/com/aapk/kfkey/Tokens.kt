@@ -1,5 +1,8 @@
 package com.aapk.kfkey
 
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -142,4 +145,78 @@ object Type {
     val footnote = 12.sp
     /** 11 Medium +0.1 —— 图表轴标签（极限值） */
     val caption = 11.sp
+
+    // ── 六图范式补档 (2026-10-23, 与 iOS DSFont 同源) ──
+    /** 44 Bold -1.4 —— **MetricCard 主角数字**（图 5 的 13,818 / 6.58MI） */
+    val hero = 44.sp
+    /** 96 Heavy -2.6 —— **旗舰环中心数字**（图 1 的 -4.7） */
+    val dialNumber = 96.sp
+    /** 118 Heavy -3.2 —— 旗舰环超大档（454 宽实测） */
+    val dialNumberXL = 118.sp
+    /** 13 Regular 0 —— 卡内副文（之前借 footnote 12 会偏挤） */
+    val small = 13.sp
+
+
+    // ═══════════════════════════════════════════════════════════
+    // MARK: - 六图范式补档 (2026-10-23 与 iOS Theme.swift 同源)
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * 画布径向渐变 —— 图 1/2/6 实测底。
+     *
+     * 六个参考图的画布没有一个是平的 #000：顶端 6% 处压了一层 #0A0E1A（偏冷深蓝），
+     * 38% 降到 #06070C，底部才是纯黑。平的纯黑会让整屏发死、卡片浮不起来。
+     *
+     * 与 iOS `XPalette.canvasGradient` **逐值相同**（iOS 用 RadialGradient，此处用 Brush）。
+     */
+    val canvasGradient: Brush
+        get() = Brush.radialGradient(
+            colorStops = arrayOf(
+                0.00f to Color(0xFF0A0E1A),
+                0.38f to Color(0xFF06070C),
+                1.00f to Color(0xFF000000),
+            ),
+            center = Offset.Unspecified,
+            radius = 2400f,
+        )
+
+    /**
+     * 卡片顶光渐变 —— 图 2/5/6 实测卡材质。
+     *
+     * `#202020 → #191919 (26%) → #171717`，顶部比底部亮 9 个色阶。
+     * 这 9 个色阶就是"卡片有厚度"的全部来源；平色会让卡片变成贴纸。
+     * 与 iOS `XGradient.cardSurface` 逐值相同。
+     */
+    val cardSurface: Brush
+        get() = Brush.verticalGradient(
+            0.00f to Color(0xFF202020),
+            0.26f to Color(0xFF191919),
+            1.00f to Color(0xFF171717),
+        )
+
+    /**
+     * 图 1 主环五段连续渐变 —— 青绿 → 蓝 → 深蓝。
+     *
+     * `#4A9E96 → #2E8FC0 → #1E6AAE → #1560A8 → #0A84FF`（左下 → 右上）。
+     * **必须连续**：拆成 3 段硬色块就退化成"进度条分档"，图 1 的高级感全部消失。
+     * 与 iOS `XGradient.dial` 逐值相同。
+     */
+    val dialStops: List<Pair<Float, Color>>
+        get() = listOf(
+            0.00f to Color(0xFF4A9E96),
+            0.25f to Color(0xFF2E8FC0),
+            0.50f to Color(0xFF1E6AAE),
+            0.75f to Color(0xFF1560A8),
+            1.00f to Color(0xFF0A84FF),
+        )
+
+    /** 成功态环（图 1 语言的绿色版）—— 与 iOS `XGradient.dialOK` 同源 */
+    val dialOKStops: List<Pair<Float, Color>>
+        get() = listOf(
+            0.00f to Color(0xFF2FD65C),
+            0.55f to Color(0xFF30D158),
+            1.00f to Color(0xFF7CE89A),
+        )
+
+
 }

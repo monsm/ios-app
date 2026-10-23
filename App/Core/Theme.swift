@@ -56,6 +56,24 @@ enum XPalette {
     /// "黑色是画布, 不是背景色"。旧值 0x0A0A0B 是深灰, 会让整屏发灰、卡片浮不起来。
     static var canvas: Color { Color.adaptive(0xF2F2F7, 0x000000) }
 
+    /// 画布**径向渐变** —— 图 1/2/6 的实测底: 顶部 6% 处有一层极淡冷光, 往下沉到纯黑。
+    ///
+    /// 为什么不能只用纯黑: 六个参考图的画布**没有一个是平的 #000**。
+    /// 它们都在画面顶端 6% 处压了一层 #0A0E1A(偏冷的深蓝), 38% 处降到 #06070C, 底部才是纯黑。
+    /// 这层渐变承担两个作用: ① 让顶部状态栏不"悬空" ② 给卡片一个自然的明度落点。
+    /// 平的纯黑会让整屏发死, 卡片浮不起来 —— 这是实测差异, 不是审美偏好。
+    static var canvasGradient: RadialGradient {
+        RadialGradient(
+            stops: [
+                .init(color: Color(hex: 0x0A0E1A), location: 0.00),
+                .init(color: Color(hex: 0x06070C), location: 0.38),
+                .init(color: Color(hex: 0x000000), location: 1.00)
+            ],
+            center: UnitPoint(x: 0.5, y: 0.06),
+            startRadius: 0,
+            endRadius: 900)
+    }
+
     /// 标准卡片。深色档 **#1C1C1E** (范式 3.1 实测值), 圆角 24 (XRadius.card)。
     /// 旧值 0x161618 太暗, 与画布只差 8 个色阶 —— 卡片在纯黑上几乎看不见边界。
     static var surface: Color { Color.adaptive(0xFFFFFF, 0x1C1C1E) }
@@ -646,6 +664,52 @@ enum XGradient {
             startPoint: .top, endPoint: .bottom)
     }
 
+    /// **卡片顶光渐变** —— 图 2/5/6 的实测卡材质。
+    ///
+    /// HTML 原型里的卡片不是平色 #1C1C1E, 而是:
+    ///   linear-gradient(180deg, #202020 0%, #191919 26%, #171717 100%)
+    /// 顶部比底部亮 9 个色阶。这 9 个色阶就是"卡片有厚度"的全部来源 ——
+    /// 换成平色之后卡片会变成一块贴纸, 这是六图与"普通深色 UI"最容易被忽略的差别。
+    /// 再叠一层 inset 高光 (内描边 0.5pt rgba(255,255,255,.055)) 模拟上边缘的反射。
+    static var cardSurface: LinearGradient {
+        LinearGradient(
+            stops: [
+                .init(color: Color(hex: 0x202020), location: 0.00),
+                .init(color: Color(hex: 0x191919), location: 0.26),
+                .init(color: Color(hex: 0x171717), location: 1.00)
+            ],
+            startPoint: .top, endPoint: .bottom)
+    }
+
+    /// **图 1 主环的五段连续渐变** —— 青绿 → 蓝 → 深蓝。
+    ///
+    /// HTML 实测: `linearGradient x1=0 y1=1 x2=1 y2=0`
+    ///   #4A9E96 (左下) → #2E8FC0 → #1E6AAE → #1560A8 → #0A84FF (右上)
+    /// 关键在**连续**: 一旦拆成 3 段硬色块, 环就退化成"进度条分档", 图 1 的高级感全部消失。
+    /// 用法: `Circle().stroke(XGradient.dial, style: ...)` 配 `.trim(from:to:)`。
+    static var dial: LinearGradient {
+        LinearGradient(
+            stops: [
+                .init(color: Color(hex: 0x4A9E96), location: 0.00),
+                .init(color: Color(hex: 0x2E8FC0), location: 0.25),
+                .init(color: Color(hex: 0x1E6AAE), location: 0.50),
+                .init(color: Color(hex: 0x1560A8), location: 0.75),
+                .init(color: Color(hex: 0x0A84FF), location: 1.00)
+            ],
+            startPoint: .bottomLeading, endPoint: .topTrailing)
+    }
+
+    /// 成功态的环 —— 图 1 语言的绿色版 (Android 04-success 已验证)
+    static var dialOK: LinearGradient {
+        LinearGradient(
+            stops: [
+                .init(color: Color(hex: 0x2FD65C), location: 0.00),
+                .init(color: Color(hex: 0x30D158), location: 0.55),
+                .init(color: Color(hex: 0x7CE89A), location: 1.00)
+            ],
+            startPoint: .bottomLeading, endPoint: .topTrailing)
+    }
+
     /// 顶部胶囊底 —— 范式 3.5 chipGradient
     static var chip: LinearGradient {
         LinearGradient(colors: [Color(hex: 0x2A2A2E), Color(hex: 0x1A1A1C)],
@@ -860,4 +924,18 @@ enum DSFont {
     static let footnote: CGFloat = 12
     /// 11 / Medium / +0.1 —— 图表轴标签 (极限值)
     static let caption: CGFloat = 11
+
+    // ── 六图范式补档 (2026-10-23) ──
+    // 六个参考图里反复出现的三档字号, 之前没有对应令牌, 页面只能裸写 .system(size:)。
+    // 裸写的后果是 Dynamic Type 失效 —— 这三档现在进字阶, 页面一律走 .xFont。
+
+    /// 44 / Bold / -1.4 —— **MetricCard 主角数字** (图 5 Activity Details 的 13,818 / 6.58MI)
+    /// 与 displayNumber(56) 的区别: 56 是环内数字, 44 是**卡片内**的主数字。
+    static let hero: CGFloat = 44
+    /// 96 / Heavy / -2.6 —— **旗舰环中心数字** (图 1 Health Age 的 -4.7)
+    static let dialNumber: CGFloat = 96
+    /// 118 / Heavy / -3.2 —— 旗舰环的**超大档** (454 宽屏实测, 图 1 原图比例)
+    static let dialNumberXL: CGFloat = 118
+    /// 13 / Regular / 0 —— 卡内副文 (HTML 里大量用到, 之前借 footnote 12 会偏挤)
+    static let small: CGFloat = 13
 }
