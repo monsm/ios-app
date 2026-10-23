@@ -140,8 +140,8 @@ struct BackupPage: View {
                         } else {
                             XHeroNumber(
                                 text: String(d),
-                                unit: d == 0 ? "今天" : "天前",
-                                color: backupTone.color)
+                                color: backupTone.color,
+                                unit: d == 0 ? "今天" : "天前")
                         }
                         Text(backupHint)
                             .xFont(.footnote)

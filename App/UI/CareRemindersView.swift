@@ -71,7 +71,7 @@ struct CareRemindersView: View {
                                 .foregroundStyle(XPalette.textTertiary)
                                 .fixedSize(horizontal: false, vertical: true)
                         } else {
-                            XHeroNumber(text: "—", unit: "还没填", color: XPalette.textTertiary)
+                            XHeroNumber(text: "—", color: XPalette.textTertiary, unit: "还没填")
                             Text("在下面填了纪念日或生日，这里才会倒计时")
                                 .xFont(.footnote)
                                 .foregroundStyle(XPalette.textTertiary)

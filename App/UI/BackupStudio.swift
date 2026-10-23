@@ -38,7 +38,7 @@ struct BackupStudioView: View {
     /// 图 5 读数卡：44px 份文件 + 环
     private var backupFilesCard: some View {
         // 真实 API 是 BackupStudio.localFiles（apicheck 抓到我先写的 listFiles 不存在）
-        let n = BackupStudio.localFiles.count
+        let n = BackupStudio.localFiles().count
         return XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: 0) {
                 HStack {

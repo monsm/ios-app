@@ -121,7 +121,7 @@ struct SafemodeIntroView: View {
                 Text(unit)
                     .xFont(.caption)
                     .foregroundStyle(XPalette.textTertiary)
-                XHeroNumber(text: letter, unit: unit, color: tone)
+                XHeroNumber(text: letter, color: tone, unit: unit)
                 Text(note)
                     .xFont(.caption2)
                     .foregroundStyle(XPalette.textTertiary)

@@ -78,8 +78,8 @@ struct AppLockSetupView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         XHeroNumber(
                             text: on ? "1" : "0",
-                            unit: "已启用",
-                            color: on ? XPalette.ok : XPalette.warn)
+                            color: on ? XPalette.ok : XPalette.warn,
+                            unit: "已启用")
                         Text(on ? "每次打开 App 都要输口令；保存的密码默认不显示"
                                  : "现在谁拿起这台手机，都能直接看到你保存的密码")
                             .xFont(.footnote)

@@ -353,7 +353,7 @@ struct DevicePage: View {
                 Text(title)
                     .xFont(.caption, weight: .medium)
                     .foregroundStyle(XPalette.textSub)
-                XHeroNumber(text: value, unit: unit, color: tone)
+                XHeroNumber(text: value, color: tone, unit: unit)
                 Text(note)
                     .xFont(.caption2)
                     .foregroundStyle(XPalette.textTertiary)

@@ -202,8 +202,8 @@ struct AddFingerPage: View {
                         VStack(alignment: .leading, spacing: 8) {
                             XHeroNumber(
                                 text: String(left),
-                                unit: "枚可录",
-                                color: full ? XPalette.warn : XPalette.ok)
+                                color: full ? XPalette.warn : XPalette.ok,
+                                unit: "枚可录")
                             Text(full ? "库存已满 — 先删一枚再录" : "已用 " + String(used) + " / " + String(cap))
                                 .xFont(.footnote)
                                 .foregroundStyle(XPalette.textTertiary)
