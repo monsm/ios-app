@@ -1423,21 +1423,53 @@ struct PrivacyDashboard: View {
             // 现在按启用数分三态：一项没开 / 部分开启 / 全部开启，
             // 各给不同的语气色和下一步指引。配置页的"空状态"就是
             // "一项都没开"，用户需要知道这件事有风险、以及怎么开。
+            // 六图改造 (2026-10-23): 摘要卡改**图 2 的「大数字 + 环」形态**。
+            //
+            // 图 2 Winding Down 的评分卡是「卡头 → 大字 Low Score → 右侧带中心数的环」。
+            // 这里本来就有"几项开了"这个量，但只做成一行文字（"当前启用 2 / 5 项防窥"），
+            // 数字埋在句子里。提到 44px 之后，"开了几项"一眼可读，环给出比例。
+            let enabledN = PeekItem.all.filter { $0.on }.count
+            let totalN = max(1, PeekItem.all.count)
             XPanel(kind: .group) {
-                HStack(spacing: XSpace.s) {
-                    Image(systemName: peekSummary.glyph)
-                        .font(.system(size: XIcon.lg, weight: .medium))
-                        .foregroundStyle(peekSummary.tone)
-                        .accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(peekSummary.title)
-                            .xFont(.subheadline, weight: .semibold)
-                            .foregroundStyle(XPalette.text)
-                        Text(peekSummary.detail)
-                            .xFont(.footnote)
-                            .foregroundStyle(XPalette.textSub)
-                            .fixedSize(horizontal: false, vertical: true)
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack {
+                        Text("防窥总览")
+                            .xFont(.subheadline)
+                            .foregroundStyle(XPalette.textTertiary)
+                        Spacer(minLength: 0)
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(XPalette.textTertiary.opacity(0.6))
                     }
+                    HStack(alignment: .center, spacing: XSpace.l) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            XHeroNumber(
+                                text: String(enabledN),
+                                unit: "/ \(totalN) 项",
+                                color: peekSummary.tone)
+                            Text(peekSummary.detail)
+                                .xFont(.footnote)
+                                .foregroundStyle(XPalette.textTertiary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Spacer(minLength: 4)
+                        // 图 2 的环带中心数字：这里中心就是已开数量
+                        XGradientDial(
+                            size: 82,
+                            progress: Double(enabledN) / Double(totalN),
+                            widthRatio: 0.13,
+                            showsCursor: false,
+                            showsTick: false,
+                            gradient: enabledN == totalN ? XGradient.dialOK : XGradient.dial
+                        ) {
+                            Text(String(enabledN))
+                                .font(.system(size: XMetric.dataText(22), weight: .bold))
+                                .monospacedDigit()
+                                .foregroundStyle(peekSummary.tone)
+                        }
+                        .accessibilityHidden(true)
+                    }
+                    .padding(.top, 8)
                 }
                 .frame(minHeight: XHit.min)
             }

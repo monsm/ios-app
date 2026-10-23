@@ -59,7 +59,7 @@
 | 21-lock-profile | LockProfilePage.swift | ✅ 图5 双列 MetricCard（44px 电量 + 环 / 固件大字 + cpu 位）| ✅ |
 | 22-firmware | FirmwarePage.swift | 图2 卡解剖 | ⬜ |
 | 23-gateway | GatewayPage.swift | 图4 分步条 | ⬜ |
-| 24-dongles | DonglesPage.swift | 图5 大数字 | ⬜ |
+| 24-dongles | DonglesPage.swift | ✅ hero 加图5 44px「N 把已配对」+ 环（0 把时给下一步指引）| ✅ |
 | 25-synctime | SyncTimeView | ✅ 偏差 19pt → 44px + 同色光晕（图1 语言）| ✅ |
 
 ### D 成员（P1）
@@ -80,8 +80,8 @@
 | 05-system | MePage.swift | ✅ 图5 主角读数行（44px 待办数 + 渐变环）+ 四瓦片入口保留 | ✅ |
 | 40-security | SecurityPage.swift | ✅ 44px 风险数 + 健康度环（0 风险→绿环）+ 三盏灯保留 | ✅ |
 | 41-applock | AppLockSetupView.swift | 图2 卡解剖 | ⬜ |
-| 42-peek | PrivacyDashboard | 图2 环 + 三态对照 | ⬜ |
-| 43-privacy-dash | PrivacyDashboard | 图2 环 | ⬜ |
+| 42-peek | SecurityCenterView.PrivacyDashboard | ✅ 图2 大数字（44px 已开项）+ 带中心数的环 + 三态语气色 | ✅ |
+| 43-privacy-dash | 同上（42/43 同屏）| ✅ 与 42-peek 同一实现 | ✅ |
 | 44-audit | SecurityCenterView.SecurityAuditView | ✅ 行改图4 节奏（时间在左/图标块/主文/状态胶囊/chevron）| ✅ |
 | 45-destroy | SecurityDestroyView | 图3 警示 | ⬜ |
 | 46-safemode | SettingsView.SafemodeIntroView | ✅ 图2 双角色卡（44px A/B + 单位 + 说明）+ 彩点行说差别 + footer 洞察句 | ✅ |

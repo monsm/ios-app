@@ -78,6 +78,31 @@ struct DonglesPage: View {
                     }
                 }
 
+                // 六图改造 (2026-10-23): 加**图 5 的 44px 读数**（已配对 N 把）。
+                //
+                // 图 5 的卡先给一个量，再给动作。之前这张 hero 只有一句标语 + 一个按钮 ——
+                // 用户不知道自己有没有配对过、配了几把。数量 + 环把"当前状态"补上了。
+                let pairedN = dongles.count
+                HStack(alignment: .center, spacing: XSpace.l) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        XHeroNumber(text: String(pairedN), unit: "把已配对",
+                                    color: XPalette.accentText)
+                        Text(pairedN == 0 ? "还没配对 —— 上电后点下面搜索" : "靠近门锁即可开门")
+                            .xFont(.caption2)
+                            .foregroundStyle(XPalette.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 4)
+                    XGradientDial(
+                        size: 66,
+                        progress: pairedN == 0 ? 0.02 : min(1, Double(pairedN) / 3),
+                        widthRatio: 0.14,
+                        showsCursor: false,
+                        showsTick: false
+                    ) { EmptyView() }
+                    .accessibilityHidden(true)
+                }
+
                 XBusyButton(title: busy ? "搜索中…" : "搜索钥匙串",
                             systemImage: "antenna.radiowaves.left.and.right",
                             busy: busy, style: .primary) {
