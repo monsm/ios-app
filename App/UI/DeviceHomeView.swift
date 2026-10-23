@@ -28,6 +28,8 @@ struct SyncTimeView: View {
     var vkBody: some View {
         XScreen("同步时间", style: .inline) {
             if app.current != nil {
+                // HTML 卡1「偏差范围」—— App 之前缺这一张
+                rangeCard
                 skewCard
                 clockCard
             } else {
@@ -45,6 +47,36 @@ struct SyncTimeView: View {
         }
     }
 
+    /// HTML 卡1「偏差范围」—— 允许的偏差区间与当前是否落在区间内
+    private var rangeCard: some View {
+        let skew = skewSeconds
+        let absSkew = abs(skew ?? 0)
+        let inRange = skew != nil && absSkew <= 5
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                secLabel("偏差范围")
+                HStack(alignment: .top, spacing: XSpace.s) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("允许区间").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text("±5 秒").xFont(.footnote, weight: .semibold)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("当前").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text(inRange ? "在区间内" : (skew == nil ? "未读到" : "超出区间"))
+                            .xFont(.footnote, weight: .semibold)
+                            .foregroundStyle(inRange ? XPalette.ok : XPalette.warn)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                Text("偏差在 ±5 秒内视为准 —— 超过 180 秒锁侧校验会失败。")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
     // ── 偏差卡（核心信息）──
     //
     // 用一根居中刻度条表示偏差: 中心 = 0 秒，左右各代表偏快/偏慢。
@@ -57,7 +89,7 @@ struct SyncTimeView: View {
             : (absSkew <= 5 ? XPalette.ok : (absSkew <= 60 ? XPalette.warn : XPalette.danger))
         return XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: XSpace.m) {
-                secLabel("偏差范围")
+                secLabel("锁钟偏差")
 
                 // 六图改造 (2026-10-23): 偏差数字提到 **44px 主角档 + 光晕**（图 1 语言）。
                 //

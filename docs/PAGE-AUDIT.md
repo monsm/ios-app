@@ -91,6 +91,29 @@ AppLockSetupView / BackupPage / CarePage / CareRemindersView / DiagnosticsPage×
 **判据留存**：`entrygate.js` 的 E1 已在「带 chevron ⇒ 必须有动作」，但只查 `XRow(showsChevron:)`，
 查不到手绘 Image(chevron)。已在本轮人工清理干净。
 
+
+### 24-dongles ✅
+| HTML 卡 | Swift 对位 | 处理 |
+|---|---|---|
+| 已配对（44px 读数 + 环）| headerCard | ✅ 上一轮已加 |
+| 每把钥匙串 | dongleCard | ✅ **手绘 RoundedRectangle 背景 → XPanel**（拿到图2 顶光材质）|
+| 操作（+页脚）| 已有操作按钮 | ✅ |
+
+### 25-synctime ✅
+| HTML 卡 | Swift 对位 | 处理 |
+|---|---|---|
+| **偏差范围**（允许区间/当前）| — | ✅ **新增整卡** |
+| 锁钟偏差（96px + 页脚）| skewCard（44px 主角 + 同色光晕）| ✅ 标签改回「锁钟偏差」|
+| 对照 | clockCard | ✅ |
+| 写入 | actionCard | ✅ |
+
+### 33-archived ✅
+| HTML 卡 | Swift 对位 | 处理 |
+|---|---|---|
+| 归档（44px 读数 + 环）| archivedStatsCard | ✅ |
+| 归档记录（+页脚）| 裸 ForEach | ✅ 加小节标题 + 组容器 + **补页脚** |
+| 归档规则 | — | ⬜ 待补（下轮）|
+
 ---
 
 ## 已审

@@ -969,7 +969,14 @@ struct MemberArchivedView: View {
                         .padding(.vertical, XSpace.l)
                     }
                 } else {
-                    ForEach(archived) { m in
+                    // HTML 卡2「归档记录」—— 显示为小节标题（每行本身已是卡片，不再套一层）
+                    Text("归档记录")
+                        .xFont(.subheadline)
+                        .foregroundStyle(XPalette.textTertiary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.top, XSpace.s)
+                    VStack(spacing: XSpace.s) {
+                            ForEach(archived) { m in
                         XPanel(kind: .group) {
                             HStack(spacing: XSpace.m) {
                                 // ext 在 VStack 作用域声明 —— archivedFact 也要用它。
@@ -1018,6 +1025,12 @@ struct MemberArchivedView: View {
                             }
                         }
                     }
+                    }
+                    Text("归档的成员不占名额，随时可以恢复 —— 恢复后钥匙仍是「未分配」，需要重新认领。")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textTertiary)
+                        .padding(.top, 8)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
             .scrollIndicators(.hidden)

@@ -136,7 +136,10 @@ struct DonglesPage: View {
 
     private func dongleCard(_ d: Dongle) -> some View {
         let hasKey = !d.lastKeyLock.isEmpty
-        return VStack(alignment: .leading, spacing: XSpace.m) {
+        // 审美对齐 HTML：这里原本手绘 RoundedRectangle 背景（拿不到图2 的顶光卡材质），
+        // 改为 XPanel，与全站其它卡同一材质。
+        return XPanel(kind: .group, tone: hasKey ? .neutral : .neutral) {
+          VStack(alignment: .leading, spacing: XSpace.m) {
             // 标题行
             HStack(spacing: XSpace.s) {
                 Image(systemName: "key.horizontal.fill")
@@ -248,16 +251,8 @@ struct DonglesPage: View {
                     timestampRow("绑定时间", d.boundAt, tone: .neutral)
                 }
             }
+          }
         }
-        .padding(XSpace.card)
-        .background(
-            RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
-                .fill(XPalette.surface)
-                .overlay(
-                    RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
-                        .strokeBorder(hasKey ? XPalette.accent.opacity(0.3) : XPalette.hairline,
-                                      lineWidth: 1))
-        )
     }
 
     /// 一行时间戳（右对齐，低调）
