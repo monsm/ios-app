@@ -134,6 +134,9 @@ struct AddKeyPage: View {
 
     private var passwordStage: some View {
         VStack(spacing: XSpace.l) {
+            Text("密码")
+                .xFont(.subheadline)
+                .foregroundStyle(XPalette.textTertiary)
             // 8 个数字位
             HStack(spacing: XSpace.s) {
                 ForEach(0..<8, id: \.self) { i in

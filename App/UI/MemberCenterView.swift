@@ -1294,7 +1294,7 @@ struct UnclaimedClaimView: View {
         return XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
-                    Text("待认领总览")
+                    Text("认领给")
                         .xFont(.subheadline)
                         .foregroundStyle(XPalette.textTertiary)
                     Spacer(minLength: 0)
@@ -1337,7 +1337,9 @@ struct UnclaimedClaimView: View {
                 XPanel(kind: .group) {
                     VStack(alignment: .leading, spacing: XSpace.m) {
                         HStack(spacing: XSpace.s) {
-                            secLabel("未归属记录认领")
+                            Text("那天是谁在家")
+                            .xFont(.subheadline)
+                            .foregroundStyle(XPalette.textTertiary)
                             Spacer(minLength: 0)
                             if !unclaimed.isEmpty {
                                 Text(String(unclaimed.count) + " 条")
