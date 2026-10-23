@@ -39,18 +39,34 @@ struct StatsPage: View {
 
     private var mac: String { app.currentMac }
 
+    /// 给 `XScreen.above` 用的胶囊行 —— 只在有 model 且非降级态时出现。
+    /// 单独抽出来是因为 `above` 的签名是 `(() -> AnyView)?`，
+    /// 而 `chipRow(m)` 需要一个解包后的 `m`。
+    @ViewBuilder
+    private var chipRowIfAny: some View {
+        if let m = model, !m.isDegraded {
+            chipRow(m)
+        }
+    }
+
     var body: some View {
         // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
-        XScreen("统计") {
+        // 2026-10-23：胶囊行挪到**大标题之上**。
+        //
+        // 规范 §5.3 骨架图把它画在标题上面：
+        //   StatusBar → 14pt → **胶囊行** → 29pt → LargeTitle
+        //
+        // 而我上一版只能往 XScreen 的 content 里塞，于是它跑到了标题**之下** ——
+        // 与本页注释自己写的「这一屏最上面那条摘要，它先行」正好相反。
+        // 现在 XScreen 有了 above 槽，它终于在最上面。
+        XScreen("统计", above: { AnyView(chipRowIfAny) }) {
             if let m = model {
                 if m.isDegraded {
                     degradedCard(m).xScrollLift()
                 } else {
-                    // 顶部胶囊行 —— 规范 7.2「双列固定」: 2 个胶囊并排撑满,
+                    // 规范 7.2「双列固定」: 2 个胶囊并排撑满,
                     // 各占 (屏宽 - 28 - 8) / 2, **不滚动**。
-                    // 这是"一屏最上面那条我关心什么"的摘要, 它先行, 卡片跟后。
-                    chipRow(m)
                     safetyCard(m).xScrollLift()
                     paretoCard(m)
                     daypartCard(m)

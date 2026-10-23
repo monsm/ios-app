@@ -225,21 +225,65 @@ struct XScreen<Content: View>: View {
     var style: Style = .large
     /// 一级页面的副标题（Body 16 / 60% 灰）。`.inline` 时忽略。
     var subtitle: String? = nil
+    /// 大标题之上那一条（参考图 3 的胶囊行）。无则 nil。
+    ///
+    /// **这里用 `(() -> AnyView)?` 而不是第二个泛型参数** —— 试过泛型方案，回退了：
+    ///
+    /// 泛型方案要给 45 处现有调用都能推断出 `Above`，只能靠
+    /// `init(… ) where Above == EmptyView` 这个约束。而本机**没有编译器**，
+    /// 我无法验证 Swift 会不会从 `XScreen("标题") { … }` 反推出 `Above == EmptyView`。
+    /// 猜错就是全仓 45 个页面一起编译失败。
+    ///
+    /// 代价是这一条的类型被擦除，SwiftUI 认不出它有没有变 —— 但它通常是个静态的
+    /// 胶囊行，重建成本可接受。**先保证能编译，再谈这一点点性能。**
+    var above: (() -> AnyView)? = nil
+
+    /// 挂「标题之上那一条」。用法：
+    /// ```swift
+    /// XScreen("统计", above: { chipRow(m) }) { … }
+    /// ```
     @ViewBuilder var content: () -> Content
 
     init(_ title: String,
          subtitle: String? = nil,
          style: Style = .large,
+         above: (() -> AnyView)? = nil,
          @ViewBuilder content: @escaping () -> Content) {
         self.title = title
         self.subtitle = subtitle
         self.style = style
+        self.above = above
         self.content = content
     }
+
+    /// **大标题之上**的那一条（参考图 3 的胶囊行）。
+    ///
+    /// 规范 §5.3 的骨架图把这个位置画出来了：
+    ///
+    /// ```
+    /// │  StatusBar                  54pt │
+    /// │  14pt ← 胶囊行（横向滚动）         │
+    /// │  29pt ← LargeTitle 30/Bold       │
+    /// ```
+    ///
+    /// 而我第一版 XScreen 只能把内容放在标题**下面** —— 于是所有胶囊行
+    /// 都被迫挪到标题之下，与参考图的层级正好相反。
+    ///
+    /// 胶囊行讲的是「这一屏我关心什么」，它是**摘要**；大标题只是名字。
+    /// 摘要压在名字上、还是垫在名字下，是两种不同的界面。
+    ///
+    /// **不用 `(() -> AnyView)?`** —— 那会把类型擦掉，SwiftUI 的 diff 就认不出
+    /// 这一条有没有变，每次 body 重算都当新视图重建。用第二个泛型参数更干净。
+    var above: Above
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
+                // §5.3：胶囊行在**大标题之上**，距顶 14。
+                if let above {
+                    above()
+                        .padding(.bottom, XSpace.m)   // 胶囊行 → 标题 12
+                }
                 if style == .inline {
                     // 二级页面：标题在导航栏，页内不再画标题块。
                     // 但仍要一小段呼吸（8）—— 直接贴顶会让第一张卡看起来被导航栏压住。
