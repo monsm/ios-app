@@ -61,36 +61,38 @@ struct DevicePage: View {
     // ═══════════════════════════════════════════════════════
 
     private var identityCard: some View {
-        XPanel(kind: .hero) {
-            VStack(alignment: .leading, spacing: XSpace.m) {
-                // 锁名 + 连接状态
-                HStack(alignment: .firstTextBaseline, spacing: XSpace.s) {
-                    Text(kc.map { LockArchive.displayName($0) } ?? "未选择门锁")
-                        .xFont(.title2, weight: .semibold)
-                        .foregroundStyle(XPalette.text)
-                        .lineLimit(1)
-
-                    Spacer(minLength: XSpace.s)
-
-                    connectionPill
+        // 2026-10-23：改成 XStatCard（规范 §7.6）。
+        //
+        // 改前是手写：XPanel(hero) + VStack + **裸 `Divider()`** + 自己的间距。
+        // 三个问题：
+        //   · 裸 Divider 不走 XHairline —— 分隔线粗细/颜色与全仓其它卡不一致
+        //   · 段间节奏是 VStack(spacing: 12) 给出的，不是 §7.6 的「值→线 14 / 线→下组 12」
+        //   · 没有页脚注释槽位（§15 C7 要求 StatCard 有这个槽）
+        // 卡头不带 action —— 本页是「这台锁」的详情页，它自己就是目的地，
+        // 没有更上一层可去。§7.11 的 chevron 只在**能再进去一层**时才画。
+        XStatCard(kind: .hero, headerTitle: "这台锁") {
+            XStatSection(isFirst: true) {
+                VStack(alignment: .leading, spacing: XSpace.m) {
+                    // 锁名 + 连接状态
+                    HStack(alignment: .firstTextBaseline, spacing: XSpace.s) {
+                        Text(kc.map { LockArchive.displayName($0) } ?? "未选择门锁")
+                            .xFont(.title2, weight: .bold)   // §7.6 标题 19 Bold
+                            .foregroundStyle(XPalette.text)
+                            .lineLimit(1)
+                        Spacer(minLength: XSpace.s)
+                        connectionPill
+                    }
+                    if let detail = connectionDetail {
+                        Text(detail)
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textSub)
+                    }
                 }
-
-                // 连接详情
-                if let detail = connectionDetail {
-                    Text(detail)
-                        .xFont(.footnote)
-                        .foregroundStyle(XPalette.textSub)
-                }
-
-                Divider().overlay(XPalette.hairline)
-
+            }
+            XStatSection {
                 // 电量仪表环 + 两个余量读数
-                //
-                // 电量原来是三个并排数字里的一个, 看不出"还剩多少余量";
-                // 弧形能。余量类读数 (密码/指纹) 没有"耗尽感", 保持数字形态。
                 HStack(alignment: .center, spacing: XSpace.l) {
                     XBatteryGauge(level: snap?.powerLevel, size: 116)
-                
                     VStack(alignment: .leading, spacing: XSpace.m) {
                         readingItem2(
                             value: snap.map { "\($0.pwdStock)" } ?? "—",
