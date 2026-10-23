@@ -45,6 +45,8 @@ struct MembersPage: View {
         XScreen("成员") {
             // 审美对齐 HTML 04-members：卡前 4 个胶囊 + 「成员分布」卡（环 + 两列）
             membersChipsRow
+            // 审美对齐 HTML 30-members-list 卡1「钥匙分布」
+            keysDistributionCard
             membersDistributionCard
             if members.isEmpty {
                 emptyCard
@@ -95,6 +97,39 @@ struct MembersPage: View {
     }
 
     /// HTML「成员分布」卡：三环 + 钥匙总数/指纹总数 两列 + 页脚
+    /// HTML「钥匙分布」卡 —— 每类凭证横向占比条
+    private var keysDistributionCard: some View {
+        let macs = DB.keychains().map { $0.mac }
+        let pwN = macs.reduce(0) { $0 + DB.listPwds($1).filter { !$0.temp }.count }
+        let tempN = macs.reduce(0) { $0 + DB.listPwds($1).filter { $0.temp }.count }
+        let fpN = macs.reduce(0) { $0 + DB.listFps($1).count }
+        let total = max(1, pwN + tempN + fpN)
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                Text("钥匙分布")
+                    .xFont(.subheadline)
+                    .foregroundStyle(XPalette.textTertiary)
+                XDataRow(label: "密码", value: String(pwN), unit: "份", color: XPalette.kindTemp)
+                XDataRow(label: "临时码", value: String(tempN), unit: "个", color: XPalette.kindOtp)
+                XDataRow(label: "指纹", value: String(fpN), unit: "枚", color: XPalette.kindFp)
+                // 横向占比条（不手绘形状：用 XStepBar 的三段语义）
+                GeometryReader { geo in
+                    HStack(spacing: 2) {
+                        Rectangle().fill(XPalette.kindTemp).frame(width: geo.size.width * CGFloat(pwN) / CGFloat(total))
+                        Rectangle().fill(XPalette.kindOtp).frame(width: geo.size.width * CGFloat(tempN) / CGFloat(total))
+                        Rectangle().fill(XPalette.kindFp).frame(width: geo.size.width * CGFloat(fpN) / CGFloat(total))
+                    }
+                }
+                .frame(height: 6)
+                .clipShape(Capsule())
+                Text("条长按数量分 —— 一眼看出这个家主要靠哪种方式进人。")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
     private var membersDistributionCard: some View {
         let macs = DB.keychains().map { $0.mac }
         let pwN = macs.reduce(0) { $0 + DB.listPwds($1).count }

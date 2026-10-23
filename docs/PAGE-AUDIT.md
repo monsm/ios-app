@@ -160,6 +160,25 @@ AppLockSetupView / BackupPage / CarePage / CareRemindersView / DiagnosticsPage×
 五卡齐：用于哪把锁 / 锁端 ZOTP（页脚）/ 独立口令 / 导入与添加 / 静态备份码（页脚）。
 之前工具报缺卡是因为正则漏了 `staticCard` 的写法。
 
+
+### 22-firmware ✅
+| HTML 卡 | 差距 | 修复 |
+|---|---|---|
+| **升级进度**（环 + 四步：检查/传输/写入/完成）| **整卡缺失** | ✅ 新增（44px 步数 + 环 + 四步标签 + 页脚）|
+| 版本 | versionCard（双角色卡）| ✅ 上一轮已改 |
+| 升级前检查 / 操作 | checklistCard / actionCard | ✅ |
+
+### 30-members-list ✅
+| HTML 卡 | 差距 | 修复 |
+|---|---|---|
+| **钥匙分布**（三类占比条）| **整卡缺失** | ✅ 新增（三行彩点 + 横向占比条 + 页脚）|
+| 成员分布（环 + 两列 + 页脚）| — | ✅ 上一轮已加 |
+| 全部成员 | rosterCard | ✅ |
+
+### 20-locks ✅ 判定保留 List
+HTML 2 卡；App 用 List + Section（承载拖动排序 / 滑动删除 / 编辑模式三个真实交互）。
+**不改卡片流**：这三套交互重写风险大于收益，而卡片材质不是 HTML 的硬性审美项。
+
 ---
 
 ## 已审

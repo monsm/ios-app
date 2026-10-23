@@ -79,6 +79,8 @@ struct FirmwarePage: View {
                 } else if failed {
                     failedStage.xScrollLift()
                 } else {
+                    // 审美对齐 HTML 22-firmware 卡1「升级进度」（环 + 四步）
+                    upgradeProgressCard.xScrollLift()
                     versionCard.xScrollLift()
                     if let fw { packageCard(fw).xScrollLift() }
                     checklistCard.xScrollLift()
@@ -114,6 +116,54 @@ struct FirmwarePage: View {
     /// 图 2 Winding Down 的对比永远是两张等宽卡、各带一个大字（A 单一 / B 组合）。
     /// 之前这里是两个 18pt 的 pill 夹一个箭头 —— 版本号是这页的主角，
     /// 18pt 让它看起来像"辅注"。提到 44px 之后，"当前 / 目标"才是可比较的两个对象。
+    /// HTML 卡1「升级进度」—— 四步进度环（检查 → 传输 → 写入 → 完成）
+    private var upgradeProgressCard: some View {
+        let step = running ? 2 : (failed ? 1 : (fw == nil ? 0 : 1))
+        let pct = Double(step) / 4.0
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("升级进度")
+                    .xFont(.subheadline)
+                    .foregroundStyle(XPalette.textTertiary)
+                HStack(alignment: .center, spacing: XSpace.l) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        XHeroNumber(
+                            text: "\(step)",
+                            color: step >= 4 ? XPalette.ok : XPalette.accentText,
+                            unit: "/ 4 步")
+                        Text(step == 0 ? "还没开始 —— 先选升级包" : (running ? "正在传输与写入，别离开这一页" : "已就绪，可以开始升级"))
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 4)
+                    XGradientDial(
+                        size: 76,
+                        progress: max(0.02, pct),
+                        widthRatio: 0.13, showsCursor: false, showsTick: false,
+                        gradient: step >= 4 ? XGradient.dialOK : XGradient.dial
+                    ) { EmptyView() }
+                    .accessibilityHidden(true)
+                }
+                .padding(.top, 8)
+                HStack(spacing: XSpace.xs) {
+                    ForEach(["检查", "传输", "写入", "完成"], id: \.self) { t in
+                        Text(t)
+                            .xFont(.caption2)
+                            .foregroundStyle(XPalette.textTertiary)
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+                .padding(.top, 10)
+                Text("传输和写入必须保持手机靠近门锁 —— 中断会让门锁需要重新配网。")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .padding(.top, 10)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
     private var versionCard: some View {
         VStack(spacing: XSpace.s) {
             HStack(spacing: XSpace.s) {
