@@ -1598,6 +1598,30 @@ struct ExportCenterView: View {
                     .accessibilityHidden(true)
                 }
                 .padding(.top, 8)
+                // HTML「历史导出」的 24 柱 + 轴标（图5 柱图语言）
+                HStack(alignment: .bottom, spacing: 2) {
+                    ForEach(0..<24, id: \.self) { h in
+                        Rectangle()
+                            .fill(h < Int(min(24, max(1, n / 2))) ? XPalette.accentText
+                                                                 : XPalette.text.opacity(0.10))
+                            .frame(maxWidth: .infinity)
+                            .frame(height: max(2, CGFloat(h % 6 + 1) * 6))
+                    }
+                }
+                .frame(height: 40)
+                .padding(.top, 12)
+                HStack {
+                    Text("0").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                    Spacer()
+                    Text("6AM").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                    Spacer()
+                    Text("12PM").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                    Spacer()
+                    Text("6PM").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                    Spacer()
+                    Text("24").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                }
+                .padding(.top, 6)
                 XStatSection {
                     Text("导出与分享会让文件离开本机 —— 脱敏开关开着时，成员名与钥匙号会被替换。")
                         .xFont(.caption2)

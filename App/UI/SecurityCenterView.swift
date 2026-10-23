@@ -1260,6 +1260,23 @@ struct SecurityDestroyView: View {
                         }
                     }
                 }
+                // HTML 卡9「敏感操作视图」—— App 之前没有这张卡（内容散在三级销毁卡里）
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("敏感操作视图")
+                        XDataRow(label: "销毁前需重输应用锁密码",
+                                 value: SecurityPolicy.sudoRequired ? "是" : "否",
+                                 unit: "", color: SecurityPolicy.sudoRequired ? XPalette.warn : XPalette.textSub)
+                        XHairline()
+                        XDataRow(label: "需键入「销毁」二字",
+                                 value: "是", unit: "", color: XPalette.danger)
+                        Text("两道闸叠在一起：知道密码还不够，还要明确打出这个词 —— 防的是手滑。")
+                            .xFont(.caption2)
+                            .foregroundStyle(XPalette.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+
                 .xScrollLift()
 
             }
