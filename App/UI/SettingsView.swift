@@ -49,6 +49,54 @@ struct SafemodeIntroView: View {
                     modeCard(letter: "A", unit: "单一", note: "任选一种即可开锁", tone: XPalette.ok)
                     modeCard(letter: "B", unit: "组合", note: "两种方式组合验证", tone: XPalette.warn)
                 }
+                // HTML 卡1「验证强度」—— parity/台账记为缺失，本轮补上。
+                // HTML 结构：卡头 + 两条进度条（A 模式 1 档 / B 模式 2 档）+ 页脚。
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        secLabel("验证强度")
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack {
+                                Text("A 模式（单一验证）")
+                                    .xFont(.caption)
+                                    .foregroundStyle(XPalette.textSub)
+                                Spacer(minLength: 0)
+                                Text("1").xFont(.caption, weight: .semibold)
+                                    .foregroundStyle(XPalette.ok)
+                            }
+GeometryReader { geo in
+                                ZStack(alignment: .leading) {
+                                    Rectangle().fill(XPalette.text.opacity(0.10))
+                                    Rectangle().fill(XPalette.ok).frame(width: geo.size.width * 0.33)
+                                }
+                            }
+                            .frame(height: 5)
+                            .clipShape(Capsule())
+                        }
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack {
+                                Text("B 模式（组合验证）")
+                                    .xFont(.caption)
+                                    .foregroundStyle(XPalette.textSub)
+                                Spacer(minLength: 0)
+                                Text("2").xFont(.caption, weight: .semibold)
+                                    .foregroundStyle(XPalette.warn)
+                            }
+GeometryReader { geo in
+                                ZStack(alignment: .leading) {
+                                    Rectangle().fill(XPalette.text.opacity(0.10))
+                                    Rectangle().fill(XPalette.warn).frame(width: geo.size.width * 0.66)
+                                }
+                            }
+                            .frame(height: 5)
+                            .clipShape(Capsule())
+                        }
+                        Text("B 模式的强度不是 A 的两倍 —— 它换的是「知道什么 + 有什么」的组合，防的是手机被借走。")
+                            .xFont(.caption2)
+                            .foregroundStyle(XPalette.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+
                 XPanel(kind: .group) {
                     VStack(alignment: .leading, spacing: XSpace.m) {
                         secLabel("两种模式的差别")

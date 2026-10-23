@@ -6,6 +6,21 @@
 
 图例：✅ 已逐页审完并修　🟨 审过但仍有差距　⬜ 未审
 
+
+### 60-care ✅
+| HTML 卡 | Swift 对位 | 处理 |
+|---|---|---|
+| 还剩多少（44px 天数 + 三色环 + 三列：上次/下次/周期 + 页脚）| periodCard | ✅ **整卡按 HTML 重写**（原 XStatCard 内的 19pt 标题 → 44px 主角 + 三列）|
+| 该做的（彩点行 + 页脚）| todoCard | ✅ 上一轮已补卡头 |
+| 入口卡 | historyRow | ✅ 已对齐 |
+
+### 46-safemode ✅
+| HTML 卡 | Swift 对位 | 处理 |
+|---|---|---|
+| 验证强度（A/B 两条进度条 + 页脚）| — | ✅ **新增整卡** |
+| 两种模式的差别（双角色卡 + 彩点行）| modeCard ×2 + XDataRow | ✅ 前一轮已改 |
+| 怎么设置（+页脚）| 已有 | ✅ 已对齐 |
+
 ---
 
 ## 已审
@@ -43,7 +58,7 @@
 
 | 缺口 | 页 |
 |---|---|
-| 3 类 | 60-care、88-exit、42-peek、46-safemode |
+| 3 类 | 88-exit、42-peek |
 | 2 类 | 01-home、10-keys-manage、11-fingerprint、13-key-detail、24-dongles、25-synctime、33-archived、40-security、51-feed、85-battery、86-checklist、87-claim |
 | 1 类 | 02-keys、03-devices、04-members、12-tempcode、14-otp、15-add-key、20-locks、22-firmware、30-members-list、32-member-detail、41-applock、45-destroy、48-export、52-stats、70-icon-picker、80-states、89-share-android |
 

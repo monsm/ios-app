@@ -57,99 +57,87 @@ struct CarePage: View {
     // MARK: - 周期卡
     // ═══════════════════════════════════════════════════════
 
+    /// 审美对齐 HTML (2026-10-24): 「还剩多少」卡按 HTML 标准重写。
+    ///
+    /// HTML 60-care 卡1 = 卡头「还剩多少」+ **44px 大数字（天数）** + 右侧三色环
+    ///   + 三列（上次保养 / 下次保养 / 周期）+ 页脚整句。
+    /// 之前是 XStatCard 内的 19pt 标题 + 16pt 值 —— 数字不够大，三列也不在。
     private var periodCard: some View {
         let days = daysUntilCare
-        // 之前这里写的是 carePeriodDays(opens30d: 0) —— **硬编码 0**。
-        // 后果: 高频锁（30 天 ≥60 次开门）本该 60 天保养一次，
-        // 但界面永远按 90 天算，通知却在第 60 天来催。两边对不上。
-        // 现在读真实开门数，与 BatteryCare 的调度同源。
-        // 周期只从一个地方取（`BatteryCare.carePeriodDays(mac:)`）——
-        // 这里原来自己算一份 opens30，与 daysUntilCare 的算法不同源，两处会给出不同的天数。
         let period = periodDays
         let elapsed = care.lastCareAt > 0 ? (period - days) : 0
-        // 周期环: "还剩多少"是一个进程量, 环比文字更直观。
-        // 弧走的是「已过去多少」而不是「还剩多少」—— 走得越满越该动手。
-        // 规范 §7.6 StatCard 的卡内解剖（对照参考图里那张 Sleep 卡）：
-        //   卡头（14 灰 + chevron）→ 标题（19 Bold）→ 标签（13 灰）→ 值 + **右侧环槽**
-        //   → 分隔线 → 第二组 → 页脚注释。
-        //
-        // 旧实现是「环在左、文字在右」—— 那是图例的排法，不是数据卡。
-        // 规范把环放在**右侧槽**：左列是读的字，右列是扫的形状，眼睛先读标题再看进度。
-        // 2026-10-23：改用 `XStatCard`（规范 §7.6 的组件）。
-        //
-        // 这一张卡此前是**手写** §7.6 的节奏：卡头 → 负 padding 收 6 → 值 → 补 2 让线距成 14
-        // → 页脚 12pt + lineSpacing 7。每一处都要单独算、单独注释，而且算错一次就「松一圈」。
-        //
-        // 现在节奏归组件管：XStatCard 给卡头/页脚/线的净距，XStatSection 给段间。
-        // 页面只负责「这一段放什么内容」。
-        return XStatCard(
-            headerTitle: "保养",
-            headerAction: { showHistory = true },
-            footer: periodDetail(days)
-        ) {
-            XStatSection(isFirst: true) {
-                VStack(alignment: .leading, spacing: XSpace.m) {
-                    Text(periodTitle(days))
-                        .xFont(.title2, weight: .bold)   // §7.6 标题 19 Bold
-                        .foregroundStyle(XPalette.text)
-                        .fixedSize(horizontal: false, vertical: true)
-        
-                    HStack(alignment: .center, spacing: XSpace.m) {
-                        VStack(alignment: .leading, spacing: XSpace.xxs) {
-                            Text(days > 0 ? "距离下次" : "状态")
-                                .xFont(.footnote)
-                                .foregroundStyle(XPalette.textSub)
-                            XValueUnit(
-                                value: days > 0 ? "\(days)" : (care.lastCareAt > 0 ? "该做" : "未记录"),
-                                unit: days > 0 ? "天" : nil,
-                                style: .headline,   // §7.6 值 16 Semibold
-                                weight: .semibold)
-                        }
-                        Spacer(minLength: 0)
-                        XCycleRing(
-                            elapsed: elapsed,
-                            period: max(period, 1),
-                            headline: careRingPct(elapsed: elapsed, period: period),
-                            caption: care.lastCareAt > 0 ? "已用" : "未记录",
-                            a11yText: careRingA11y(days: days, elapsed: elapsed, period: period),
-                            size: 104)
-                    }
-        
-                    if days <= 0 {
-                        Button("记录本次保养") {
-                            markCare()
-                        }
-                        .buttonStyle(XPrimaryButtonStyle())
-                    }
-                }
-            }
-            // 第二段 —— 规范 §7.6 的卡内解剖是「线 → 第二组 → 线 → 页脚」。
-            // 参考图 3 的 Sleep 卡第二段是 Bedtime / 10:30 PM / Avg: 2:19 AM，
-            // 即「这一组读数背后的两个具体事实」。
-            // 本卡对应的是：上次保养是哪天、当前按多少天算。
-            XStatSection {
-                HStack(alignment: .top, spacing: XSpace.xl) {
-                    VStack(alignment: .leading, spacing: XSpace.xxs) {
-                        Text("上次保养")
-                            .xFont(.footnote)
-                            .foregroundStyle(XPalette.textSub)
-                        Text(lastCareText)
-                            .xFont(.body, weight: .semibold, design: .rounded)
-                            .foregroundStyle(XPalette.text)
-                        Text("周期 \(periodDays > 0 ? periodDays : 90) 天")
-                            .xFont(.footnote)
-                            .foregroundStyle(XPalette.textTertiary)
-                    }
+        let pct = period > 0 ? min(1, max(0, Double(elapsed) / Double(period))) : 0
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack {
+                    Text("还剩多少")
+                        .xFont(.subheadline)
+                        .foregroundStyle(XPalette.textTertiary)
                     Spacer(minLength: 0)
-                    VStack(alignment: .trailing, spacing: XSpace.xxs) {
-                        Text("下次保养")
-                            .xFont(.footnote)
-                            .foregroundStyle(XPalette.textSub)
-                        Text(nextCareText)
-                            .xFont(.body, weight: .semibold, design: .rounded)
-                            .foregroundStyle(XPalette.text)
-                    }
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(XPalette.textTertiary.opacity(0.6))
                 }
+                HStack(alignment: .center, spacing: XSpace.l) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        if days > 0 {
+                            XHeroNumber(text: String(days), color: XPalette.warn, unit: "天")
+                            Text("距离下次保养 —— 走到 0 就该动手了")
+                                .xFont(.footnote)
+                                .foregroundStyle(XPalette.textTertiary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        } else if care.lastCareAt > 0 {
+                            XHeroNumber(text: "该做", size: 34, color: XPalette.danger)
+                            Text("已经过了保养周期")
+                                .xFont(.footnote)
+                                .foregroundStyle(XPalette.textTertiary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        } else {
+                            XHeroNumber(text: "—", color: XPalette.textTertiary, unit: "天")
+                            Text("保养周期尚未记录 —— 记一次就会开始倒计时")
+                                .xFont(.footnote)
+                                .foregroundStyle(XPalette.textTertiary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    Spacer(minLength: 4)
+                    XTripleThinRing(
+                        size: 92,
+                        values: (pct, max(0, 1 - pct) * 0.6, 0.06),
+                        colors: (XPalette.ok, XPalette.warn, XPalette.danger),
+                        centerText: care.lastCareAt > 0 ? "\(Int(pct * 100))%" : "—")
+                        .accessibilityHidden(true)
+                }
+                .padding(.top, 8)
+                XHairline().padding(.vertical, 12)
+                // HTML 卡1 的三列
+                HStack(alignment: .top, spacing: XSpace.s) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("上次保养").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text(lastCareText).xFont(.footnote, weight: .semibold)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("下次保养").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text(nextCareText).xFont(.footnote, weight: .semibold)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("周期").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text("\(period > 0 ? period : 90) 天").xFont(.footnote, weight: .semibold)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                if days <= 0 {
+                    Button("记录本次保养") { markCare() }
+                        .buttonStyle(XPrimaryButtonStyle())
+                        .padding(.top, 12)
+                }
+                Text(periodDetail(days))
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .padding(.top, 12)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
