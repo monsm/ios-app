@@ -10,37 +10,58 @@ fs.writeFileSync(D+'81-backup-studio.html', L.page('备份工作室', `
   <div class="h1" style="margin-top:8px">备份工作室</div>
   <div class="sub">数据只存在这台 iPhone</div>
 
+  <!-- 图5 MetricCard：备份状态（44px 大数字 + 环 + 三列细线）-->
   <div class="card" style="margin-top:24px">
-    <div class="cardlink">状态<span class="ch">${sv('chevron')}</span></div>
-    <div class="cols" style="margin-top:6px">
-      <div><div class="clabel" style="margin-top:0">上次导出</div><div class="cvalue">—</div>
-        <div class="csub">从未</div></div>
-      <div><div class="clabel" style="margin-top:0">上次导入</div><div class="cvalue">—</div>
-        <div class="csub">从未</div></div>
+    <div class="cardlink">状态<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;align-items:flex-start;gap:16px;margin-top:2px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:44px;font-weight:700;line-height:1;letter-spacing:-1.4px;
+          font-variant-numeric:tabular-nums;color:#FFA31A">0<span style="font-size:14px;font-weight:500;color:#8A8A90;margin-left:4px">次导出</span></div>
+        <div style="font-size:13px;color:#8A8A90;margin-top:9px;line-height:1.5">从未导出 —— 生成一份之后这里会显示时间与大小。</div>
+      </div>
+      <svg width="76" height="76" viewBox="0 0 76 76" style="flex:0 0 auto">
+        <circle cx="38" cy="38" r="31" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="6"/>
+        <circle cx="38" cy="38" r="31" fill="none" stroke="#FFA31A" stroke-width="6"
+          stroke-linecap="round" stroke-dasharray="4 194.8" transform="rotate(-90 38 38)"/>
+      </svg>
     </div>
     <div class="sep"></div>
-    <div style="font-size:12px;color:#8D8D93;line-height:1.6">
-      撤销本次恢复会回到恢复前自动打的快照。只回写快照里已有的内容，恢复后新建的东西不会被动。
+    <div class="cols">
+      <div><div class="clabel">上次导出</div><div class="cvalue">—</div></div>
+      <div><div class="clabel">上次导入</div><div class="cvalue">—</div></div>
+      <div><div class="clabel">撤销窗口</div><div class="cvalue" style="color:#2FD65C">24 小时</div></div>
     </div>
-    <button class="btn sec" style="margin-top:12px">撤销本次恢复（24h 内）</button>
+    <div class="footer">撤销本次恢复会回到恢复前自动打的快照 —— 只回吹快照里已有的内容，恢复后新建的东西不会被碰。</div>
   </div>
 
+  <!-- 图2 红色警告卡：撤销恢复 -->
+  <div class="card" style="border-radius:16px;background:linear-gradient(180deg,#2A1517,#1F1012);
+    box-shadow:inset 0 0 0 .5px rgba(255,69,58,.22)">
+    <div class="cardlink" style="color:#FF453A">撤销本次恢复（24h 内）<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="font-size:14px;line-height:1.65;color:#E8B0AE;margin-top:8px">
+      只有在恢复时自动打过快照才可用。超过 24 小时快照就清掉了。</div>
+    <button class="btn" style="margin-top:14px;background:rgba(255,69,58,.16);color:#FF453A;font-weight:600">撤销本次恢复</button>
+  </div>
+
+  <!-- 图2 卡解剖：三个向导 -->
   <div class="card" style="padding:6px 0">
-    <div class="cardlink" style="padding:8px 20px 8px">三个向导<span class="ch">${sv('chevron')}</span></div>
+    <div class="cardlink" style="padding:8px 20px">三个向导<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
     <a class="rw" href="47-backup.html">
-      <div class="ic" style="background:transparent;color:#8D8D93">${sv('doc')}</div>
+      <div class="ic" style="background:rgba(123,123,232,.16);color:#7B7BE8"><span class="svgi" data-i="archive"></span></div>
       <div class="tx"><div class="tt">立即备份</div><div class="sb">生成一份完整备份</div></div>
-      <div class="ch">${sv('chevron')}</div></a>
+      <div class="ch"><span class="svgi" data-i="chevron"></span></div></a>
     <div class="sep"></div>
     <a class="rw" href="48-export.html">
-      <div class="ic" style="background:transparent;color:#8D8D93">${sv('export')}</div>
+      <div class="ic" style="background:rgba(10,219,216,.14);color:#0ADBD8"><span class="svgi" data-i="export"></span></div>
       <div class="tx"><div class="tt">导出向导</div><div class="sb">分区勾选 · 口令 · 自描述命名 · 二维码搬运</div></div>
-      <div class="ch">${sv('chevron')}</div></a>
+      <div class="ch"><span class="svgi" data-i="chevron"></span></div></a>
     <div class="sep"></div>
     <a class="rw" href="47-backup.html">
-      <div class="ic" style="background:transparent;color:#8D8D93">${sv('refresh')}</div>
-      <div class="tx"><div class="tt">恢复向导</div><div class="sb">从文件或备份文本恢复</div></div>
-      <div class="ch">${sv('chevron')}</div></a>
+      <div class="ic" style="background:rgba(47,214,92,.14);color:#2FD65C"><span class="svgi" data-i="refresh"></span></div>
+      <div class="tx"><div class="tt">恢复向导</div><div class="sb">从文件或二维码恢复</div></div>
+      <div class="ch"><span class="svgi" data-i="chevron"></span></div></a>
+    <div class="sep"></div>
+    <div class="footer" style="padding:12px 20px 10px;margin:0">三个向导都在本机完成 —— 没有任何一步经过网络。</div>
   </div>
 `, 4, {nav:true, back:'47-backup'}));
 

@@ -14,73 +14,79 @@
   <div class="h1" style="margin-top:8px">维护与保养</div>
   <div class="sub">机械件也该有保养记录</div>
 
-  <!-- periodCard（还剩多少 / 保养周期）-->
+  <!-- 图4 三段分色环 + 图2 卡解剖：保养周期 -->
   <div class="card" style="margin-top:24px">
     <div class="cardlink">还剩多少<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
     <div style="display:flex;align-items:center;gap:18px;margin-top:6px">
-      <div style="flex:1">
-        <div class="ctitle">保养周期尚未记录</div>
-        <div class="clabel" style="margin-top:14px">状态</div>
-        <div class="cvalue" style="color:#FF9F0A">未记录</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:44px;font-weight:700;line-height:1;letter-spacing:-1.4px;
+          font-variant-numeric:tabular-nums;color:#FFA31A">—<span style="font-size:14px;font-weight:500;color:#8A8A90;margin-left:4px">天</span></div>
+        <div style="font-size:13px;color:#8A8A90;margin-top:9px;line-height:1.5">保养周期尚未记录 —— 记一次就会开始倒计时。</div>
       </div>
-      <div style="position:relative;width:101px;height:101px;flex:0 0 auto">
-        <svg width="101" height="101" viewBox="0 0 101 101">
-          <circle cx="50.5" cy="50.5" r="43.5" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="11"/>
-          <circle cx="50.5" cy="50.5" r="43.5" fill="none" stroke="#5E5CE6" stroke-width="11"
-            stroke-linecap="round" stroke-dasharray="6 273" transform="rotate(-90 50.5 50.5)"/>
-          <circle cx="50.5" cy="50.5" r="22" fill="#0A0A0C"/>
-        </svg>
-        <div style="position:absolute;inset:0;display:flex;flex-direction:column;
-          align-items:center;justify-content:center">
-          <div style="font-size:20px;font-weight:700;color:#FFF;line-height:1">—</div>
-          <div style="font-size:10px;color:#8D8D93;margin-top:3px">天</div>
-        </div>
-      </div>
+      <div style="position:relative;width:104px;height:104px;flex:0 0 auto">
+    <svg width="104" height="104" viewBox="0 0 104 104">
+      <circle cx="52" cy="52" r="46.384" fill="none" stroke="rgba(255,255,255,.085)" stroke-width="11.232"/>
+      <circle cx="52" cy="52" r="46.384" fill="none" stroke="#2FD65C" stroke-width="11.232"
+      stroke-linecap="round" stroke-dasharray="74.32 291.44"
+      transform="rotate(-90.0 52 52)"/><circle cx="52" cy="52" r="46.384" fill="none" stroke="#FFA31A" stroke-width="11.232"
+      stroke-linecap="round" stroke-dasharray="118.03 291.44"
+      transform="rotate(18.0 52 52)"/><circle cx="52" cy="52" r="46.384" fill="none" stroke="#5E5CE6" stroke-width="11.232"
+      stroke-linecap="round" stroke-dasharray="59.75 291.44"
+      transform="rotate(180.0 52 52)"/>
+    </svg>
+    <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+      <div style="font-size:23px;font-weight:700;color:#FFF;line-height:1">—</div>
+      <div style="font-size:11px;color:#8D8D93;margin-top:3px">天</div>
+    </div>
+  </div>
     </div>
     <div class="sep"></div>
     <div class="cols">
-      <div><div class="clabel" style="margin-top:0">上次保养</div><div class="cvalue">—</div></div>
-      <div><div class="clabel" style="margin-top:0">下次保养</div><div class="cvalue">—</div></div>
+      <div><div class="clabel">上次保养</div><div class="cvalue">—</div></div>
+      <div><div class="clabel">下次保养</div><div class="cvalue">—</div></div>
+      <div><div class="clabel">周期</div><div class="cvalue">90 天</div></div>
     </div>
     <button class="btn" style="margin-top:14px;background:#5E5CE6;color:#FFF">记录本次保养</button>
-    <div class="footer">记录一次保养，之后会按周期提醒。</div>
+    <div class="footer">记录一次保养，之后会按周期提醒 —— 三色环分别是「已过 / 剩余 / 缓冲」。</div>
   </div>
 
-  <!-- todoCard -->
+  <!-- 图2 卡解剖：该做的（彩色点行）-->
   <div class="card">
     <div class="cardlink">该做的<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
     <div style="display:flex;flex-direction:column;gap:14px;margin-top:10px">
       <div style="display:flex;gap:12px">
-          <span style="width:7px;height:7px;border-radius:50%;background:#30D158;margin-top:7px;flex:0 0 auto"></span>
+          <span style="width:7px;height:7px;border-radius:50%;background:#2FD65C;margin-top:7px;flex:0 0 auto"></span>
           <div style="flex:1"><div style="font-size:15px">换电池</div>
-          <div style="font-size:12px;color:#8D8D93;margin-top:3px">电量 47%，建议尽快更换</div></div>
+          <div style="font-size:12px;color:#8A8A90;margin-top:3px">电量 47%，建议尽快更换</div></div>
         </div><div style="display:flex;gap:12px">
-          <span style="width:7px;height:7px;border-radius:50%;background:#FF9F0A;margin-top:7px;flex:0 0 auto"></span>
+          <span style="width:7px;height:7px;border-radius:50%;background:#FFA31A;margin-top:7px;flex:0 0 auto"></span>
           <div style="flex:1"><div style="font-size:15px">清洁锁体</div>
-          <div style="font-size:12px;color:#8D8D93;margin-top:3px">距上次 92 天，建议每 90 天清一次</div></div>
+          <div style="font-size:12px;color:#8A8A90;margin-top:3px">距上次 92 天，建议每 90 天清一次</div></div>
         </div><div style="display:flex;gap:12px">
-          <span style="width:7px;height:7px;border-radius:50%;background:#8D8D93;margin-top:7px;flex:0 0 auto"></span>
+          <span style="width:7px;height:7px;border-radius:50%;background:#8A8A90;margin-top:7px;flex:0 0 auto"></span>
           <div style="flex:1"><div style="font-size:15px">年度电池体检</div>
-          <div style="font-size:12px;color:#8D8D93;margin-top:3px">已设为每年 11-01</div></div>
+          <div style="font-size:12px;color:#8A8A90;margin-top:3px">已设为每年 11-01</div></div>
         </div>
     </div>
+    <div class="sep"></div>
+    <div class="footer">条目按紧急度排 —— 绿的可以等，橙的该动手了，灰的只是备着。</div>
   </div>
 
-  <!-- historyRow -->
+  <!-- 图2 卡解剖：入口行 -->
   <div class="card" style="padding:6px 0">
-    <a class="rw" href="86-checklist.html">
-      <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="check"></span></div>
+    <a class="rw" href="85-battery.html">
+      <div class="ic" style="background:rgba(47,214,92,.14);color:#2FD65C"><span class="svgi" data-i="battery"></span></div>
       <div class="tx"><div class="tt">锁体保养</div><div class="sb">五项清单</div></div>
       <div class="ch"><span class="svgi" data-i="chevron"></span></div></a>
     <div class="sep"></div>
     <a class="rw" href="85-battery.html">
-      <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="battery"></span></div>
+      <div class="ic" style="background:rgba(255,163,26,.14);color:#FFA31A"><span class="svgi" data-i="bolt"></span></div>
       <div class="tx"><div class="tt">换电指引</div><div class="sb">四步换电 · 记录一次</div></div>
       <div class="ch"><span class="svgi" data-i="chevron"></span></div></a>
     <div class="sep"></div>
-    <a class="rw" href="60-care.html">
-      <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="clock"></span></div>
-      <div class="tx"><div class="tt">保养历史</div><div class="sb">查看做过的保养记录</div></div>
+    <a class="rw" href="05-system.html">
+      <div class="ic" style="background:rgba(255,255,255,.06);color:#8A8A90"><span class="svgi" data-i="clock"></span></div>
+      <div class="tx"><div class="tt">保养历史</div><div class="sb">每次记录都在这里</div></div>
       <div class="ch"><span class="svgi" data-i="chevron"></span></div></a>
   </div>
 

@@ -1,0 +1,62 @@
+
+  <div class="h1" style="margin-top:8px">换电指引</div>
+  <div class="sub">上次换电：还没有换电记录</div>
+
+  <!-- 图5 MetricCard：电量（44px 大数字 + 环 + 三列）-->
+  <div class="card" style="margin-top:24px">
+    <div class="cardlink">当前电量<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;align-items:flex-start;gap:16px;margin-top:2px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:44px;font-weight:700;line-height:1;letter-spacing:-1.4px;
+          font-variant-numeric:tabular-nums;color:#FFA31A">47<span style="font-size:14px;font-weight:500;color:#8A8A90;margin-left:2px">%</span></div>
+        <div style="font-size:13px;color:#8A8A90;margin-top:9px;line-height:1.5">电量偏低，建议尽快更换 —— 换完点下面的按钮记一次。</div>
+      </div>
+      <svg width="76" height="76" viewBox="0 0 76 76" style="flex:0 0 auto">
+        <circle cx="38" cy="38" r="31" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="6"/>
+        <circle cx="38" cy="38" r="31" fill="none" stroke="#FFA31A" stroke-width="6"
+          stroke-linecap="round" stroke-dasharray="91.5 194.8" transform="rotate(-90 38 38)"/>
+      </svg>
+    </div>
+    <div class="sep"></div>
+    <div class="cols">
+      <div><div class="clabel">型号</div><div class="cvalue" style="font-size:14px">见锁信息名片</div></div>
+      <div><div class="clabel">电池档案</div><div class="cvalue" style="font-size:14px">已记录</div></div>
+    </div>
+    <div class="footer">电量低于 20% 会开始提醒 —— 冬天气温低时建议留到 30% 以上再换。</div>
+  </div>
+
+  <!-- 图2 卡解剖：四步换电 -->
+  <div class="card">
+    <div class="cardlink">换电步骤<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;flex-direction:column;gap:16px;margin-top:12px">
+      <div style="display:flex;gap:13px">
+          <span style="width:22px;height:22px;border-radius:50%;background:rgba(94,92,230,.20);
+            color:#7B7BE8;display:inline-flex;align-items:center;justify-content:center;
+            font-size:12px;font-weight:700;flex:0 0 auto">1</span>
+          <div style="flex:1"><div style="font-size:15px;font-weight:600">拆下锁体面板</div>
+          <div style="font-size:12px;color:#8A8A90;margin-top:3px">两颗螺丝，注意别掉地上</div></div>
+        </div><div style="display:flex;gap:13px">
+          <span style="width:22px;height:22px;border-radius:50%;background:rgba(94,92,230,.20);
+            color:#7B7BE8;display:inline-flex;align-items:center;justify-content:center;
+            font-size:12px;font-weight:700;flex:0 0 auto">2</span>
+          <div style="flex:1"><div style="font-size:15px;font-weight:600">取出旧电池</div>
+          <div style="font-size:12px;color:#8A8A90;margin-top:3px">记下型号</div></div>
+        </div><div style="display:flex;gap:13px">
+          <span style="width:22px;height:22px;border-radius:50%;background:rgba(94,92,230,.20);
+            color:#7B7BE8;display:inline-flex;align-items:center;justify-content:center;
+            font-size:12px;font-weight:700;flex:0 0 auto">3</span>
+          <div style="flex:1"><div style="font-size:15px;font-weight:600">装上新电池</div>
+          <div style="font-size:12px;color:#8A8A90;margin-top:3px">注意正负极</div></div>
+        </div><div style="display:flex;gap:13px">
+          <span style="width:22px;height:22px;border-radius:50%;background:rgba(94,92,230,.20);
+            color:#7B7BE8;display:inline-flex;align-items:center;justify-content:center;
+            font-size:12px;font-weight:700;flex:0 0 auto">4</span>
+          <div style="flex:1"><div style="font-size:15px;font-weight:600">装回面板</div>
+          <div style="font-size:12px;color:#8A8A90;margin-top:3px">确认能转开再关</div></div>
+        </div>
+    </div>
+    <div class="sep"></div>
+    <div class="footer">换好后点下面记一次，之后会按周期提醒 —— 记录只存本机。</div>
+  </div>
+
+  <button class="btn" style="margin-top:18px;background:#5E5CE6;color:#FFF;font-weight:600">我换好了</button>

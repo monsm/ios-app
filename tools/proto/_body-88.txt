@@ -1,0 +1,72 @@
+
+  <div class="h1" style="margin-top:8px">退出处置向导</div>
+  <div class="sub">逐条处置：保留 / 移交 / 停用</div>
+
+  <!-- 图5 MetricCard：待处置概览 -->
+  <div class="card" style="margin-top:24px">
+    <div class="cardlink">待处置<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;align-items:flex-start;gap:16px;margin-top:2px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:44px;font-weight:700;line-height:1;letter-spacing:-1.4px;
+          font-variant-numeric:tabular-nums;color:#FFF">2<span style="font-size:14px;font-weight:500;color:#8A8A90;margin-left:4px">把钥匙</span></div>
+        <div style="font-size:13px;color:#8A8A90;margin-top:9px;line-height:1.5">每把都要选一种处置方式，选完才能归档。</div>
+      </div>
+      <svg width="76" height="76" viewBox="0 0 76 76" style="flex:0 0 auto">
+        <circle cx="38" cy="38" r="31" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="6"/>
+        <circle cx="38" cy="38" r="31" fill="none" stroke="#FFA31A" stroke-width="6"
+          stroke-linecap="round" stroke-dasharray="97.4 194.8" transform="rotate(-90 38 38)"/>
+      </svg>
+    </div>
+    <div class="sep"></div>
+    <div class="cols">
+      <div><div class="clabel">保留</div><div class="cvalue">0</div></div>
+      <div><div class="clabel">移交</div><div class="cvalue">0</div></div>
+      <div><div class="clabel">停用</div><div class="cvalue">0</div></div>
+    </div>
+    <div class="footer">保留 = 留着继续用；移交 = 换个人；停用 = 进回收站，可以恢复。</div>
+  </div>
+
+  <!-- 图2 卡解剖：逐条处置（三色按钮）-->
+  <div class="card">
+    <div class="cardlink">逐条处置<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="padding:14px 0;border-bottom:.5px solid rgba(255,255,255,.07)">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:15px;font-weight:600;color:#FFF;flex:1">指纹 10</span>
+          <span style="font-size:12px;color:#FFA31A;font-weight:600">待选择</span>
+        </div>
+        <div style="font-size:12px;color:#8A8A90;margin-top:4px">2026-08-20</div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button style="flex:1;height:34px;border-radius:9px;border:0;font-size:13px;font-weight:600;
+            background:rgba(47,214,92,.14);color:#2FD65C">保留原样</button>
+          <button style="flex:1;height:34px;border-radius:9px;border:0;font-size:13px;font-weight:600;
+            background:rgba(79,195,255,.14);color:#4FC3FF">移交他人</button>
+          <button style="flex:1;height:34px;border-radius:9px;border:0;font-size:13px;font-weight:600;
+            background:rgba(255,69,58,.14);color:#FF453A">停用</button>
+        </div>
+      </div><div style="padding:14px 0;">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:15px;font-weight:600;color:#FFF;flex:1">密码-爱妃-长期</span>
+          <span style="font-size:12px;color:#FFA31A;font-weight:600">待选择</span>
+        </div>
+        <div style="font-size:12px;color:#8A8A90;margin-top:4px">2026-03-12</div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button style="flex:1;height:34px;border-radius:9px;border:0;font-size:13px;font-weight:600;
+            background:rgba(47,214,92,.14);color:#2FD65C">保留原样</button>
+          <button style="flex:1;height:34px;border-radius:9px;border:0;font-size:13px;font-weight:600;
+            background:rgba(79,195,255,.14);color:#4FC3FF">移交他人</button>
+          <button style="flex:1;height:34px;border-radius:9px;border:0;font-size:13px;font-weight:600;
+            background:rgba(255,69,58,.14);color:#FF453A">停用</button>
+        </div>
+      </div>
+    <div class="sep"></div>
+    <div class="footer">停用的钥匙会进回收站，30 天内可以恢复 —— 移交后归属就改成另一个人。</div>
+  </div>
+
+  <!-- 图2 红色警告卡：归档执行 -->
+  <div class="card" style="border-radius:16px;background:linear-gradient(180deg,#2A1517,#1F1012);
+    box-shadow:inset 0 0 0 .5px rgba(255,69,58,.22)">
+    <div class="cardlink" style="color:#FF453A">归档<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="font-size:14px;line-height:1.65;color:#E8B0AE;margin-top:8px">
+      已归档：历史记录保留，归档后这个人不再出现在成员列表，但开门记录仍然算他的。</div>
+    <button class="btn" style="margin-top:14px;background:rgba(255,69,58,.16);color:#FF453A;font-weight:600">归档并执行</button>
+  </div>

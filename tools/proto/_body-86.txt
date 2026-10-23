@@ -1,0 +1,65 @@
+
+  <div class="h1" style="margin-top:8px">锁体保养</div>
+  <div class="sub">五项清单 · 还没保养过</div>
+
+  <!-- 图4 三段分色环 + 图5 大数字：保养进度 -->
+  <div class="card" style="margin-top:24px">
+    <div class="cardlink">保养进度<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;align-items:flex-start;gap:16px;margin-top:2px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:44px;font-weight:700;line-height:1;letter-spacing:-1.4px;
+          font-variant-numeric:tabular-nums;color:#FFF">0<span style="font-size:14px;font-weight:500;color:#8A8A90;margin-left:4px">/ 5 项</span></div>
+        <div style="font-size:13px;color:#8A8A90;margin-top:9px;line-height:1.5">还没开始 —— 逐项打勾，做完点「完成保养」。</div>
+      </div>
+      <svg width="76" height="76" viewBox="0 0 76 76" style="flex:0 0 auto">
+        <circle cx="38" cy="38" r="31" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="6"/>
+        <circle cx="38" cy="38" r="31" fill="none" stroke="#5E5CE6" stroke-width="6"
+          stroke-linecap="round" stroke-dasharray="4 194.8" transform="rotate(-90 38 38)"/>
+        <text x="38" y="43" text-anchor="middle" font-size="15" font-weight="700" fill="#7B7BE8"
+          font-family="system-ui">0/5</text>
+      </svg>
+    </div>
+    <div class="sep"></div>
+    <div class="cols">
+      <div><div class="clabel">保养周期</div><div class="cvalue">90 天</div></div>
+      <div><div class="clabel">下次保养</div><div class="cvalue" style="color:#FFA31A">未记录</div></div>
+    </div>
+    <div class="footer">五项都过一遍大约 5 分钟 —— 主要是看顺滑、看锈蚀、清指纹头。</div>
+  </div>
+
+  <!-- 图2 卡解剖：五项清单（可勾选）-->
+  <div class="card">
+    <div class="cardlink">五项清单<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;flex-direction:column;gap:16px;margin-top:12px">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+          <span style="width:22px;height:22px;border-radius:6px;flex:0 0 auto;margin-top:1px;
+            background:rgba(255,255,255,.055);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.14)"></span>
+          <div style="flex:1"><div style="font-size:15px;font-weight:500">滑轨与把手顺滑</div>
+          <div style="font-size:12px;color:#8A8A90;margin-top:3px">喷一点润滑剂，别用食用油</div></div>
+        </div><div style="display:flex;align-items:flex-start;gap:12px">
+          <span style="width:22px;height:22px;border-radius:6px;flex:0 0 auto;margin-top:1px;
+            background:rgba(255,255,255,.055);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.14)"></span>
+          <div style="flex:1"><div style="font-size:15px;font-weight:500">锁舌伸缩顺畅</div>
+          <div style="font-size:12px;color:#8A8A90;margin-top:3px">手动推拉几次感受阻力</div></div>
+        </div><div style="display:flex;align-items:flex-start;gap:12px">
+          <span style="width:22px;height:22px;border-radius:6px;flex:0 0 auto;margin-top:1px;
+            background:rgba(255,255,255,.055);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.14)"></span>
+          <div style="flex:1"><div style="font-size:15px;font-weight:500">电池触点无锈蚀</div>
+          <div style="font-size:12px;color:#8A8A90;margin-top:3px">发白或发绿就是锈了</div></div>
+        </div><div style="display:flex;align-items:flex-start;gap:12px">
+          <span style="width:22px;height:22px;border-radius:6px;flex:0 0 auto;margin-top:1px;
+            background:rgba(255,255,255,.055);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.14)"></span>
+          <div style="flex:1"><div style="font-size:15px;font-weight:500">指纹头清洁</div>
+          <div style="font-size:12px;color:#8A8A90;margin-top:3px">干布擦，别用酒精</div></div>
+        </div><div style="display:flex;align-items:flex-start;gap:12px">
+          <span style="width:22px;height:22px;border-radius:6px;flex:0 0 auto;margin-top:1px;
+            background:rgba(255,255,255,.055);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.14)"></span>
+          <div style="flex:1"><div style="font-size:15px;font-weight:500">应急钥匙位置确认</div>
+          <div style="font-size:12px;color:#8A8A90;margin-top:3px">确认钥匙还在老地方</div></div>
+        </div>
+    </div>
+    <div class="sep"></div>
+    <div class="footer">打勾只是本机记录 —— 门锁不知道你保养过。</div>
+  </div>
+
+  <button class="btn" style="margin-top:18px;background:#5E5CE6;color:#FFF;font-weight:600">完成保养</button>

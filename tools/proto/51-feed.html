@@ -17,95 +17,141 @@
     <div class="dtabs">
       <div class="t on">全部</div><div class="t">开门 7</div><div class="t">告警 1</div>
     </div>
-    <div style="padding:14px 14px 0">
-      <div class="card" style="margin-bottom:12px">
-        <div style="display:flex;align-items:center;gap:12px">
-          <div style="font-size:24px">🔔</div>
-          <div style="flex:1">
-            <div style="font-size:15px;font-weight:600">今天 3 次开门</div>
-            <div style="font-size:12px;color:var(--text-sub);margin-top:3px">2 位成员参与 · 无告警</div>
-          </div>
-          <span style="color:var(--text-tert);font-size:18px">›</span>
+
+    <!-- 图5 MetricCard：今日时段（44px 大数字 + 环 + 24h 柱图 + 轴标）-->
+    <!--VIZ-->
+  <div class="card" style="margin-top:12px;background:#0C1826">
+    <div class="cardlink">今日时段<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div class="mchart" style="height:44px"><i style="height:3%"></i><i style="height:3%"></i><i style="height:3%"></i><i style="height:3%"></i><i style="height:3%"></i><i style="height:25%"></i><i class="hi" style="height:75%"></i><i class="hi" style="height:100%"></i><i style="height:25%"></i><i style="height:3%"></i><i style="height:3%"></i><i style="height:25%"></i><i style="height:3%"></i><i style="height:3%"></i><i style="height:3%"></i><i style="height:3%"></i><i style="height:3%"></i><i style="height:50%"></i><i style="height:25%"></i><i style="height:3%"></i><i style="height:3%"></i><i style="height:3%"></i><i style="height:3%"></i><i style="height:3%"></i></div><div class="maxis"><span>12AM</span><span>6AM</span><span>12PM</span><span>6PM</span></div></div>
+  <div class="card" style="margin:14px 0">
+      <div class="cardlink">今日时段<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+      <div style="display:flex;align-items:flex-start;gap:16px;margin-top:2px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:44px;font-weight:700;line-height:1;letter-spacing:-1.4px;
+            font-variant-numeric:tabular-nums;color:#4FC3FF">3<span style="font-size:14px;font-weight:500;color:#8A8A90;margin-left:4px">次开门</span></div>
+          <div style="font-size:13px;color:#8A8A90;margin-top:9px;line-height:1.5">2 位成员参与 · 无告警</div>
         </div>
+        <svg width="76" height="76" viewBox="0 0 76 76" style="flex:0 0 auto">
+          <circle cx="38" cy="38" r="31" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="6"/>
+          <circle cx="38" cy="38" r="31" fill="none" stroke="#4FC3FF" stroke-width="6"
+            stroke-linecap="round" stroke-dasharray="48.7 194.8" transform="rotate(-90 38 38)"/>
+        </svg>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:3px;height:48px;margin-top:16px">
+        <div style="flex:1;height:3px;border-radius:2px;
+            background:rgba(79,195,255,.32)"></div><div style="flex:1;height:2px;border-radius:2px;
+            background:rgba(79,195,255,.32)"></div><div style="flex:1;height:2px;border-radius:2px;
+            background:rgba(79,195,255,.32)"></div><div style="flex:1;height:2px;border-radius:2px;
+            background:rgba(79,195,255,.32)"></div><div style="flex:1;height:2px;border-radius:2px;
+            background:rgba(79,195,255,.32)"></div><div style="flex:1;height:7px;border-radius:2px;
+            background:rgba(79,195,255,.32)"></div><div style="flex:1;height:48px;border-radius:2px;
+            background:#4FC3FF"></div><div style="flex:1;height:21px;border-radius:2px;
+            background:rgba(79,195,255,.32)"></div><div style="flex:1;height:14px;border-radius:2px;
+            background:rgba(79,195,255,.32)"></div><div style="flex:1;height:7px;border-radius:2px;
+            background:rgba(79,195,255,.32)"></div><div style="flex:1;height:10px;border-radius:2px;
+            background:rgba(79,195,255,.32)"></div><div style="flex:1;height:3px;border-radius:2px;
+            background:rgba(79,195,255,.32)"></div><div style="flex:1;height:2px;border-radius:2px;
+            background:rgba(79,195,255,.32)"></div><div style="flex:1;height:3px;border-radius:2px;
+            background:rgba(79,195,255,.32)"></div><div style="flex:1;height:7px;border-radius:2px;
+            background:rgba(79,195,255,.32)"></div><div style="flex:1;height:2px;border-radius:2px;
+            background:rgba(79,195,255,.32)"></div><div style="flex:1;height:2px;border-radius:2px;
+            background:rgba(79,195,255,.32)"></div><div style="flex:1;height:3px;border-radius:2px;
+            background:rgba(79,195,255,.32)"></div><div style="flex:1;height:10px;border-radius:2px;
+            background:rgba(79,195,255,.32)"></div><div style="flex:1;height:17px;border-radius:2px;
+            background:rgba(79,195,255,.32)"></div><div style="flex:1;height:7px;border-radius:2px;
+            background:rgba(79,195,255,.32)"></div><div style="flex:1;height:3px;border-radius:2px;
+            background:rgba(79,195,255,.32)"></div><div style="flex:1;height:2px;border-radius:2px;
+            background:rgba(79,195,255,.32)"></div><div style="flex:1;height:2px;border-radius:2px;
+            background:rgba(79,195,255,.32)"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:#6A6A72;margin-top:8px">
+        <span>0</span><span>6AM</span><span>12PM</span><span>6PM</span><span>24</span>
       </div>
     </div>
+
     <div style="padding:0 14px">
-  <div class="dpanel">
-    <div class="dhead">今天</div>
+  <div style="text-align:center;font-size:11px;font-weight:600;letter-spacing:1.4px;
+    color:#5A5A62;padding:22px 0 8px;text-transform:uppercase">今天</div>
+  <div class="card" style="padding:2px 0;margin-bottom:14px">
     
-      <div class="drow72">
-        <div class="dm">07:12</div>
-        <div class="dl" style="display:flex;align-items:center;gap:10px">
-          <span style="color:#0090FC;font-size:15px">🔓</span>
-          <div><div class="dt">开门 · 密码</div><div class="ds">朕 · 手动</div></div>
-        </div>
-        <div style="color:var(--text-tert);font-size:18px">›</div>
+      <div class="rw" style="min-height:62px">
+        <div style="width:38px;font-size:12px;color:#7A7A82;font-variant-numeric:tabular-nums;flex:0 0 auto">07:12</div>
+        <div class="ic" style="background:#4FC3FF1F;color:#4FC3FF"><span class="svgi" data-i="lockOpen" data-sz="17px"></span></div>
+        <div class="tx"><div class="tt">开门 · 密码</div><div class="sb">朕 · 手动</div></div>
+        <span style="font-size:11px;font-weight:600;color:#4FC3FF;background:#4FC3FF1F;
+          padding:3px 8px;border-radius:999px;flex:0 0 auto">成功</span>
+      </div><div class="sep"></div>
+    
+      <div class="rw" style="min-height:62px">
+        <div style="width:38px;font-size:12px;color:#7A7A82;font-variant-numeric:tabular-nums;flex:0 0 auto">07:45</div>
+        <div class="ic" style="background:#2FD65C1F;color:#2FD65C"><span class="svgi" data-i="fingerprint" data-sz="17px"></span></div>
+        <div class="tx"><div class="tt">开门 · 指纹 10</div><div class="sb">爱妃 · 手动</div></div>
+        <span style="font-size:11px;font-weight:600;color:#2FD65C;background:#2FD65C1F;
+          padding:3px 8px;border-radius:999px;flex:0 0 auto">成功</span>
+      </div><div class="sep"></div>
+    
+      <div class="rw" style="min-height:62px">
+        <div style="width:38px;font-size:12px;color:#7A7A82;font-variant-numeric:tabular-nums;flex:0 0 auto">08:03</div>
+        <div class="ic" style="background:#2FD65C1F;color:#2FD65C"><span class="svgi" data-i="bolt" data-sz="17px"></span></div>
+        <div class="tx"><div class="tt">开门 · 自动</div><div class="sb">朕 · 靠近自动开</div></div>
+        <span style="font-size:11px;font-weight:600;color:#2FD65C;background:#2FD65C1F;
+          padding:3px 8px;border-radius:999px;flex:0 0 auto">成功</span>
       </div>
-      <div class="drow72">
-        <div class="dm">07:45</div>
-        <div class="dl" style="display:flex;align-items:center;gap:10px">
-          <span style="color:#0090FC;font-size:15px">🔓</span>
-          <div><div class="dt">开门 · 指纹 10</div><div class="ds">爱妃 · 手动</div></div>
-        </div>
-        <div style="color:var(--text-tert);font-size:18px">›</div>
-      </div>
-      <div class="drow72">
-        <div class="dm">08:03</div>
-        <div class="dl" style="display:flex;align-items:center;gap:10px">
-          <span style="color:#3CDE02;font-size:15px">🔓</span>
-          <div><div class="dt">开门 · 自动</div><div class="ds">朕 · 靠近自动开</div></div>
-        </div>
-        <div style="color:var(--text-tert);font-size:18px">›</div>
-      </div>
+    
   </div>
-  <div class="dpanel">
-    <div class="dhead">昨天</div>
+
+  <div style="text-align:center;font-size:11px;font-weight:600;letter-spacing:1.4px;
+    color:#5A5A62;padding:22px 0 8px;text-transform:uppercase">昨天</div>
+  <div class="card" style="padding:2px 0;margin-bottom:14px">
     
-      <div class="drow72">
-        <div class="dm">18:22</div>
-        <div class="dl" style="display:flex;align-items:center;gap:10px">
-          <span style="color:#0090FC;font-size:15px">🔓</span>
-          <div><div class="dt">开门 · 指纹 10</div><div class="ds">爱妃 · 手动</div></div>
-        </div>
-        <div style="color:var(--text-tert);font-size:18px">›</div>
+      <div class="rw" style="min-height:62px">
+        <div style="width:38px;font-size:12px;color:#7A7A82;font-variant-numeric:tabular-nums;flex:0 0 auto">18:22</div>
+        <div class="ic" style="background:#2FD65C1F;color:#2FD65C"><span class="svgi" data-i="fingerprint" data-sz="17px"></span></div>
+        <div class="tx"><div class="tt">开门 · 指纹 10</div><div class="sb">爱妃 · 手动</div></div>
+        <span style="font-size:11px;font-weight:600;color:#2FD65C;background:#2FD65C1F;
+          padding:3px 8px;border-radius:999px;flex:0 0 auto">成功</span>
+      </div><div class="sep"></div>
+    
+      <div class="rw" style="min-height:62px">
+        <div style="width:38px;font-size:12px;color:#7A7A82;font-variant-numeric:tabular-nums;flex:0 0 auto">19:10</div>
+        <div class="ic" style="background:#FF453A1F;color:#FF453A"><span class="svgi" data-i="warn" data-sz="17px"></span></div>
+        <div class="tx"><div class="tt">试错锁定</div><div class="sb">连续 5 次密码错误</div></div>
+        <span style="font-size:11px;font-weight:600;color:#FF453A;background:#FF453A1F;
+          padding:3px 8px;border-radius:999px;flex:0 0 auto">告警</span>
+      </div><div class="sep"></div>
+    
+      <div class="rw" style="min-height:62px">
+        <div style="width:38px;font-size:12px;color:#7A7A82;font-variant-numeric:tabular-nums;flex:0 0 auto">21:40</div>
+        <div class="ic" style="background:#4FC3FF1F;color:#4FC3FF"><span class="svgi" data-i="lockOpen" data-sz="17px"></span></div>
+        <div class="tx"><div class="tt">开门 · 密码</div><div class="sb">朕 · 手动</div></div>
+        <span style="font-size:11px;font-weight:600;color:#4FC3FF;background:#4FC3FF1F;
+          padding:3px 8px;border-radius:999px;flex:0 0 auto">成功</span>
       </div>
-      <div class="drow72">
-        <div class="dm">19:10</div>
-        <div class="dl" style="display:flex;align-items:center;gap:10px">
-          <span style="color:#FF3B30;font-size:15px">⚠</span>
-          <div><div class="dt">试错锁定</div><div class="ds">连续 5 次密码错误</div></div>
-        </div>
-        <div style="color:var(--text-tert);font-size:18px">›</div>
-      </div>
-      <div class="drow72">
-        <div class="dm">21:40</div>
-        <div class="dl" style="display:flex;align-items:center;gap:10px">
-          <span style="color:#0090FC;font-size:15px">🔓</span>
-          <div><div class="dt">开门 · 密码</div><div class="ds">朕 · 手动</div></div>
-        </div>
-        <div style="color:var(--text-tert);font-size:18px">›</div>
-      </div>
+    
   </div>
-  <div class="dpanel">
-    <div class="dhead">10-21</div>
+
+  <div style="text-align:center;font-size:11px;font-weight:600;letter-spacing:1.4px;
+    color:#5A5A62;padding:22px 0 8px;text-transform:uppercase">10-21 周二</div>
+  <div class="card" style="padding:2px 0;margin-bottom:14px">
     
-      <div class="drow72">
-        <div class="dm">07:08</div>
-        <div class="dl" style="display:flex;align-items:center;gap:10px">
-          <span style="color:#0090FC;font-size:15px">🔓</span>
-          <div><div class="dt">开门 · 密码</div><div class="ds">朕 · 手动</div></div>
-        </div>
-        <div style="color:var(--text-tert);font-size:18px">›</div>
+      <div class="rw" style="min-height:62px">
+        <div style="width:38px;font-size:12px;color:#7A7A82;font-variant-numeric:tabular-nums;flex:0 0 auto">07:08</div>
+        <div class="ic" style="background:#4FC3FF1F;color:#4FC3FF"><span class="svgi" data-i="lockOpen" data-sz="17px"></span></div>
+        <div class="tx"><div class="tt">开门 · 密码</div><div class="sb">朕 · 手动</div></div>
+        <span style="font-size:11px;font-weight:600;color:#4FC3FF;background:#4FC3FF1F;
+          padding:3px 8px;border-radius:999px;flex:0 0 auto">成功</span>
+      </div><div class="sep"></div>
+    
+      <div class="rw" style="min-height:62px">
+        <div style="width:38px;font-size:12px;color:#7A7A82;font-variant-numeric:tabular-nums;flex:0 0 auto">12:30</div>
+        <div class="ic" style="background:#FFA31A1F;color:#FFA31A"><span class="svgi" data-i="timer" data-sz="17px"></span></div>
+        <div class="tx"><div class="tt">开门 · 临时码</div><div class="sb">访客 · 一次性</div></div>
+        <span style="font-size:11px;font-weight:600;color:#FFA31A;background:#FFA31A1F;
+          padding:3px 8px;border-radius:999px;flex:0 0 auto">成功</span>
       </div>
-      <div class="drow72">
-        <div class="dm">12:30</div>
-        <div class="dl" style="display:flex;align-items:center;gap:10px">
-          <span style="color:#E8A05C;font-size:15px">🔓</span>
-          <div><div class="dt">开门 · 临时码</div><div class="ds">访客 · 一次性</div></div>
-        </div>
-        <div style="color:var(--text-tert);font-size:18px">›</div>
-      </div>
-  </div></div>
+    
+  </div>
+</div>
   </div>
   <div class="tabbar">
     <a class="tab on" href="01-home.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg><span>门厅</span></a>
@@ -114,4 +160,4 @@
     <a class="tab" href="04-members.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><circle cx="17" cy="9.5" r="2.4"/><path d="M16 14.2c2.4.2 4.5 1.9 4.5 4.3"/></svg><span>成员</span></a>
     <a class="tab" href="05-system.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.65 8.6a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.56 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg><span>系统</span></a>
   </div>
-</div></div><script src="interact.js"></script></body></html>
+</div></div><script src="icons-render.js"></script><script src="interact.js"></script></body></html>

@@ -242,55 +242,114 @@ fs.writeFileSync(D+'4a-me.html', L.page('本机设置', `
 
 // ══ 61 关怀提醒 —— 彩色数据行 ══
 fs.writeFileSync(D+'61-reminders.html', L.page('关怀提醒', `
+  <!-- 图2 卡解剖：家庭公告板 -->
   <div class="card" style="margin-top:8px">
-    <div class="cardlink">家庭公告板<span class="ch">›</span></div>
+    <div class="cardlink">家庭公告板<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
     <input class="inp" style="margin-top:10px" placeholder="写一句常驻家里的话">
+    <div class="sep"></div>
     <div class="footer">这句便签会贴在几处空态旁：设备页、记录页，以及走引导空态卡的页面。</div>
   </div>
 
-  <div class="duo">
+  <!-- 图5 双列 MetricCard：纪念日 / 生日 -->
+  <div class="duo" style="margin-top:14px">
     <div class="metric-card">
-      <div class="mh"><span class="mt">纪念日</span><span class="mc">›</span></div>
+      <div class="mh"><span class="mt">纪念日</span><span class="mc"><span class="svgi" data-i="chevron" data-sz="13px"></span></span></div>
       <div class="ms">结缘日</div>
-      <div class="mv" style="font-size:20px">2026-10-18</div>
-      <div style="font-size:11px;color:var(--text-sub);margin-top:10px">每年提醒</div>
+      <div class="mv" style="font-size:20px;margin-top:6px">2026-10-18</div>
+      <div class="sep"></div>
+      <div style="font-size:11px;color:#8A8A90">每年提醒</div>
     </div>
     <div class="metric-card">
-      <div class="mh"><span class="mt">生日</span><span class="mc">›</span></div>
+      <div class="mh"><span class="mt">生日</span><span class="mc"><span class="svgi" data-i="chevron" data-sz="13px"></span></span></div>
       <div class="ms">5 位成员</div>
-      <div class="mv" style="color:#FF9F0A">0<small>位已填</small></div>
-      <div style="font-size:11px;color:var(--text-sub);margin-top:10px">格式 MM-dd</div>
+      <div class="mv" style="color:#FFA31A;margin-top:6px">0<small>位已填</small></div>
+      <div class="sep"></div>
+      <div style="font-size:11px;color:#8A8A90">格式 MM-dd</div>
     </div>
   </div>
 
-  <div class="card">
-    <div class="cardlink">纪念日<span class="ch">›</span></div>
+  <!-- 图2 卡解剖：纪念日提醒开关 -->
+  <div class="card" style="margin-top:14px">
+    <div class="cardlink">纪念日<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
     <div style="display:flex;align-items:center;gap:12px;margin-top:12px">
-      <span style="width:8px;height:8px;border-radius:50%;background:#F11B51;flex:0 0 auto"></span>
-      <div style="flex:1"><div style="font-size:16px">结缘纪念日提醒</div>
-      <div style="font-size:12px;color:var(--text-sub);margin-top:3px">2026-10-18 · 每年</div></div>
-      <span class="sw"></span>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="cardlink">成员生日<span class="ch">›</span></div>
-    <div style="display:flex;align-items:center;gap:12px;margin-top:12px">
-      <span style="font-size:16px;flex:1">成员生日提醒（提前一天）</span><span class="sw"></span>
+      <span style="width:8px;height:8px;border-radius:50%;background:#FF2D6F;flex:0 0 auto"></span>
+      <div style="flex:1"><div style="font-size:16px;font-weight:600">结缘纪念日提醒</div>
+      <div style="font-size:12px;color:#8A8A90;margin-top:3px">2026-10-18 · 每年</div></div>
+      <span class="sw on"></span>
     </div>
     <div class="sep"></div>
-    <div style="display:flex;flex-direction:column;gap:14px">
-      ${[['朕','#7B7BE8','9999'],['爱妃','#E8A05C','9999'],['皇子','#30D158','9999'],
-         ['父上','#FF3B30','9999'],['母上','#0ADBD8','9999']].map(([n,c,d])=>`
-        <div style="display:flex;align-items:center;gap:10px;font-size:15px">
-          <span style="width:24px;height:24px;border-radius:50%;background:${c}22;color:${c};
-            display:flex;align-items:center;justify-content:center;font-size:11px;
-            font-weight:600;flex:0 0 auto">${n[0]}</span>
-          <span style="flex:1">${n}</span>
-          <span style="color:var(--text-tert);font-size:13px;font-variant-numeric:tabular-nums">${d} 天后</span>
-        </div>`).join('')}
+    <div class="footer">纪念日当天早上 9 点提醒一次，只推本机，不经过任何服务器。</div>
+  </div>
+
+  <!-- 图6 Face Gallery 画廊语言：生日成员横向滚动卡 -->
+  <div style="margin-top:22px">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div class="cardlink" style="margin-bottom:0">成员生日<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+      <span style="font-size:12px;color:#6A6A72">5 位 · 0 位已填</span>
     </div>
-    <div class="footer">生日在「设置 → 成员管理 → 补全信息」里填写（格式 MM-dd）。提醒通过本地通知送达，全程离线，不依赖任何服务器。</div>
+    <div style="display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;
+      margin-top:14px;padding-bottom:4px">
+      <div style="flex:0 0 auto;width:104px;
+          background:linear-gradient(180deg,#202022 0%,#191919 100%);
+          border-radius:20px;padding:16px 10px;text-align:center;
+          box-shadow:inset 0 .5px 0 rgba(255,255,255,.055),inset 0 0 0 .5px rgba(255,255,255,.03)">
+          <div style="width:44px;height:44px;border-radius:50%;margin:0 auto;
+            background:#4FC3FF1F;color:#4FC3FF;display:flex;align-items:center;justify-content:center;
+            font-size:17px;font-weight:700">朕</div>
+          <div style="font-size:13px;font-weight:600;color:#FFF;margin-top:10px">朕</div>
+          <div style="font-size:11px;color:#6A6A72;margin-top:3px">未填</div>
+        </div><div style="flex:0 0 auto;width:104px;
+          background:linear-gradient(180deg,#202022 0%,#191919 100%);
+          border-radius:20px;padding:16px 10px;text-align:center;
+          box-shadow:inset 0 .5px 0 rgba(255,255,255,.055),inset 0 0 0 .5px rgba(255,255,255,.03)">
+          <div style="width:44px;height:44px;border-radius:50%;margin:0 auto;
+            background:#FF6EB41F;color:#FF6EB4;display:flex;align-items:center;justify-content:center;
+            font-size:17px;font-weight:700">爱</div>
+          <div style="font-size:13px;font-weight:600;color:#FFF;margin-top:10px">爱妃</div>
+          <div style="font-size:11px;color:#6A6A72;margin-top:3px">未填</div>
+        </div><div style="flex:0 0 auto;width:104px;
+          background:linear-gradient(180deg,#202022 0%,#191919 100%);
+          border-radius:20px;padding:16px 10px;text-align:center;
+          box-shadow:inset 0 .5px 0 rgba(255,255,255,.055),inset 0 0 0 .5px rgba(255,255,255,.03)">
+          <div style="width:44px;height:44px;border-radius:50%;margin:0 auto;
+            background:#2FD65C1F;color:#2FD65C;display:flex;align-items:center;justify-content:center;
+            font-size:17px;font-weight:700">皇</div>
+          <div style="font-size:13px;font-weight:600;color:#FFF;margin-top:10px">皇子</div>
+          <div style="font-size:11px;color:#6A6A72;margin-top:3px">未填</div>
+        </div><div style="flex:0 0 auto;width:104px;
+          background:linear-gradient(180deg,#202022 0%,#191919 100%);
+          border-radius:20px;padding:16px 10px;text-align:center;
+          box-shadow:inset 0 .5px 0 rgba(255,255,255,.055),inset 0 0 0 .5px rgba(255,255,255,.03)">
+          <div style="width:44px;height:44px;border-radius:50%;margin:0 auto;
+            background:#FFA31A1F;color:#FFA31A;display:flex;align-items:center;justify-content:center;
+            font-size:17px;font-weight:700">父</div>
+          <div style="font-size:13px;font-weight:600;color:#FFF;margin-top:10px">父上</div>
+          <div style="font-size:11px;color:#6A6A72;margin-top:3px">未填</div>
+        </div><div style="flex:0 0 auto;width:104px;
+          background:linear-gradient(180deg,#202022 0%,#191919 100%);
+          border-radius:20px;padding:16px 10px;text-align:center;
+          box-shadow:inset 0 .5px 0 rgba(255,255,255,.055),inset 0 0 0 .5px rgba(255,255,255,.03)">
+          <div style="width:44px;height:44px;border-radius:50%;margin:0 auto;
+            background:#7B7BE81F;color:#7B7BE8;display:flex;align-items:center;justify-content:center;
+            font-size:17px;font-weight:700">母</div>
+          <div style="font-size:13px;font-weight:600;color:#FFF;margin-top:10px">母上</div>
+          <div style="font-size:11px;color:#6A6A72;margin-top:3px">未填</div>
+        </div>
+    </div>
+    <div class="footer" style="padding:12px 20px 0;margin:0">生日在「成员管理 → 补全信息」里填写（格式 MM-dd）—— 填了才会在这里倒计时。</div>
+  </div>
+
+  <!-- 图2 卡解剖：生日提醒开关 -->
+  <div class="card" style="margin-top:14px">
+    <div class="cardlink">提醒设置<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:12px">
+      <span style="color:#FF6EB4;width:20px;height:20px"><span class="svgi" data-i="heart"></span></span>
+      <div style="flex:1"><div style="font-size:16px;font-weight:600">成员生日提醒</div>
+      <div style="font-size:12px;color:#8A8A90;margin-top:3px">提前一天</div></div>
+      <span class="sw on"></span>
+    </div>
+    <div class="sep"></div>
+    <div class="footer">提醒走本地通知，离线也能响 —— 不依赖任何服务端推送。</div>
   </div>
 `, 4, {nav:true, back:'4a-me'}));
 
