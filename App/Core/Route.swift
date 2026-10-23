@@ -39,7 +39,32 @@ enum Route: String, CaseIterable, Identifiable {
 
     /// 仅 legacy 有意义：新变体里没有"第几个 Tab"这个东西。
     /// 越界返回 -1 而不是崩溃 —— 调用方 (markNav) 本来就靠"拿不到就不记账"来兜住脏值。
-    var tabIndex: Int { Route.byHost.firstIndex(of: self) ?? -1 }
+    /// **真实底部 Tab 序号**（2026-10-24 修复）。
+    ///
+    /// ⚠ 这里原来是 `byHost.firstIndex(of: self)` —— 那是**旧的四 Tab 形态**的序号
+    ///（0 设备 / 1 凭证 / 2 记录 / 3 设置）。但门厅并入底部导航之后，真实布局是：
+    ///     0 门厅 · 1 钥匙 · 2 设备 · 3 成员 · 4 系统
+    ///
+    /// 于是三个落点全错，而且错得很安静：
+    ///   · requestRoute(.device)    → tab 0 = **门厅**（用户想进设备页）
+    ///   · requestRoute(.records)   → tab 2 = **设备**
+    ///   · requestRoute(.settings)  → tab 3 = **成员**（用户想进设置）
+    /// 访客闸也跟着错：guestBlockedTabs 会从 {1,3} 变成 {1,3}，但 3 已不是"设置"而是"成员"，
+    /// 而真正的系统组在 tab 4 —— **访客模式下系统组不受拦**。
+    ///
+    /// 这正是用户反馈的"点了不是对应的内容"。修法：序号与真实布局对齐，
+    /// byHost 只保留它原本的用途（kf:// 深链的 host 序号）。
+    var tabIndex: Int {
+        switch self {
+        case .credentials: return 1   // 钥匙
+        case .device:      return 2   // 设备
+        case .records:     return 2   // 记录不是独立 Tab —— 落在设备组（看门锁轨迹）
+        case .settings:    return 4   // 系统（应用锁/备份/外观/本机设置都在这组）
+        }
+    }
+
+    /// 旧四 Tab 形态的序号，仅供 kf:// 深链 host 表使用（不要再拿它当 tabSelection）。
+    var legacyHostIndex: Int { Route.byHost.firstIndex(of: self) ?? -1 }
 
     /// 377 访客模式下受限的目的地。
     /// 原句口径：「只看设备 Tab / 进凭证要密码 / 退出需密码 / 落点应用锁」，
@@ -60,7 +85,7 @@ enum Route: String, CaseIterable, Identifiable {
     /// kf:// 的 host 白名单。**由 byHost 派生**，不再手写一张 `["device":0, ...]`。
     static var deepLinkHosts: [String: Int] {
         var d = [String: Int]()
-        for r in Route.allCases { d[r.rawValue] = r.tabIndex }
+        for r in Route.allCases { d[r.rawValue] = r.legacyHostIndex }
         return d
     }
 
