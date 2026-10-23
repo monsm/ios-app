@@ -323,6 +323,10 @@ struct BatterySwapGuideView: View {
         // 图 5 的第一张卡永远是大数字 + 环，一屏只有它这么大。
         XPanel(kind: .group, tone: low ? .warn : .ok) {
             VStack(alignment: .leading, spacing: XSpace.m) {
+                // 审美对齐 HTML 85-battery 卡1 卡头
+                Text("当前电量")
+                    .xFont(.subheadline)
+                    .foregroundStyle(XPalette.textTertiary)
                 HStack(alignment: .center, spacing: XSpace.l) {
                     VStack(alignment: .leading, spacing: 8) {
                         XHeroNumber(

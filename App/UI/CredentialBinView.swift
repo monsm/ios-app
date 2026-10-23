@@ -105,6 +105,10 @@ struct CredentialBinView: View {
 
     private var retentionCard: some View {
         XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                Text("保留期")
+                    .xFont(.subheadline)
+                    .foregroundStyle(XPalette.textTertiary)
             HStack(spacing: XSpace.s) {
                 // 这是回收站，图标就该是垃圾桶。原来用 clock.arrow.circlepath（时钟+回溯），
                 // 那是「时间同步 / 保养历史」的语义 —— 同一个图标在两处表示两种完全无关的东西。
@@ -120,7 +124,8 @@ struct CredentialBinView: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("删除后保留 \(retainDays) 天，期间可以恢复")
-    }
+                }
+            }
 
     // ── 条目 ───────────────────────────────────────────────
     private var listCard: some View {
@@ -184,6 +189,10 @@ struct CredentialBinView: View {
 
     private var receiptCard: some View {
         XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                Text("回执")
+                    .xFont(.subheadline)
+                    .foregroundStyle(XPalette.textTertiary)
             HStack(spacing: XSpace.s) {
                 Image(systemName: "checkmark.seal.fill")
                     .font(.system(size: XIcon.sm, weight: .semibold))
@@ -197,7 +206,8 @@ struct CredentialBinView: View {
             .accessibilityElement(children: .combine)
             .accessibilityLabel("刚刚已向门锁发出 \(sense.lastReceipt) 项变更，撤销或变更已生效")
         }
-    }
+                }
+            }
 
     // ── 等待门锁确认的撤销 ─────────────────────────────────
     //
@@ -208,6 +218,9 @@ struct CredentialBinView: View {
     private var pendingCard: some View {
         XPanel(kind: .group, padding: 0) {
             VStack(spacing: 0) {
+                Text("下发状态")
+                    .xFont(.subheadline)
+                    .foregroundStyle(XPalette.textTertiary)
                 HStack(spacing: XSpace.s) {
                     Text("等待门锁确认")
                         .xFont(.caption, weight: .semibold)
