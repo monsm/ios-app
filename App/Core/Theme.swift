@@ -893,6 +893,7 @@ enum XText: Sendable {
         case .subheadline: return .caption
         case .footnote: return .caption
         case .caption, .caption2: return .caption2
+        case .small: return .caption2      // 13 → 11（85%，靠近 §7.16 的 70% 档）
         }
     }
     var relativeTo: Font.TextStyle {
@@ -905,6 +906,7 @@ enum XText: Sendable {
         case .footnote: return .footnote
         case .caption: return .caption
         case .caption2: return .caption2
+        case .small: return .footnote      // 13 最接近 footnote(12) 的缩放曲线
         }
     }
 }
