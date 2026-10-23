@@ -326,9 +326,13 @@ struct XScreen<Content: View>: View {
             .padding(.horizontal, XSpace.gutter)
             // §5.3：页顶 40。这是「标题到首卡」呼吸区的起点，做小了整页会显挤。
             .padding(.top, XSpace.pageTop)
-            // 底部留白：浮动胶囊 56 + 距底 20 + 呼吸 24 = 100。
-            // 少给就会出现「最后一行被胶囊压住」，而那恰好是最下面那行。
-            .padding(.bottom, 100)
+            // 底部留白 —— **原生 TabView 下只需 16。**
+            //
+            // 100 是给手写浮动胶囊算的：56(栏高) + 20(距底) + 24(呼吸)。
+            // 换成原生 TabView 后系统自己让安全区，再补 100 会让每页底部空一大块。
+            //
+            // 留 16（§5.1 的 s4）：只求最后一张卡不贴着栏体。
+            .padding(.bottom, XSpace.l)
         }
         .background(XPalette.canvas)
         .navigationTitle(title)

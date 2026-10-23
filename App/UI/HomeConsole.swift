@@ -159,8 +159,14 @@ struct HomeConsole: View {
                     // 页面顶部留白 40 ——— 规范 5.1 的 s8。这是"标题到首卡"呼吸区的起点,
                     // 做小了整页会显挤 (规范 P.S. 的 L4 验收项就是量这个)。
                     .padding(.top, XSpace.pageTop)
-                    // 底部给悬浮 Tab Bar 留位置：56 + 20(距底) + 16(呼吸)
-                    .padding(.bottom, 108)
+                    // 底部留白 —— **原生 TabView 下只需一点呼吸，不再要 108。**
+                    //
+                    // 108 是给手写浮动胶囊算的：56(栏高) + 20(距底) + 16(呼吸) + 16。
+                    // 换成原生 TabView 后，系统会自己把安全区让出来 ——
+                    // 再补 108 会让页面底部空出一大块，滚到最下面像断了。
+                    //
+                    // 留 16：与 §5.1 的 s4 同档，只求最后一张卡不贴着栏体。
+                    .padding(.bottom, XSpace.l)
                     .opacity(appeared ? 1 : 0)
                 }
                 .scrollIndicators(.hidden)
