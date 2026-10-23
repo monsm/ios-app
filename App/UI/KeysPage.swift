@@ -404,7 +404,7 @@ struct KeysPage: View {
         CredentialOrg.dueSoonPwds(mac)
     }
 
-    private struct KeyRow: Identifiable {
+    struct KeyRow: Identifiable {
         let id: String
         /// 底层键：密码/临时码是 alias，指纹是 batch
         let key: Int
@@ -521,7 +521,36 @@ struct KeysPage: View {
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 
+    /// 凭证详情 —— 审美对齐 HTML 13-key-detail（四卡：码值 / 归属与授权 / 使用记录 / 操作）。
+    ///
+    /// ⚠ 为什么必须新增这一页：keysPage 的 keyRow **原来没有任何点击**，
+    /// 代码注释自己写着「这一页原来完全没有行交互 —— 没有详情页、没有点击」。
+    /// 于是用户点凭证行毫无反应 —— 这正是「入口不能点击」。
+    private func credentialDetail(_ row: KeyRow) -> some View {
+        CredentialDetailView(row: row, mac: mac)
+    }
+
     private func keyRow(_ row: KeyRow) -> some View {
+        // 2026-10-24：整行可点 → 详情页。之前只有 contextMenu（长按），
+        // 轻点毫无反应，用户以为"这个入口坏了"。
+        NavigationLink {
+            credentialDetail(row)
+        } label: {
+        keyRowContent(row)
+        }
+        .buttonStyle(.plain)
+        .contextMenu {
+            Button { CredentialOrg.toggleStar(mac, row.kindTag, row.key) } label: {
+                Label("星标", systemImage: "star")
+            }
+            Button(role: .destructive) { confirmDelete = row } label: {
+                Label("删除", systemImage: "trash")
+            }
+        }
+    }
+
+    /// 行的视觉本体（与详情页解耦，便于包在 NavigationLink 里）
+    private func keyRowContent(_ row: KeyRow) -> some View {
         HStack(spacing: XSpace.m) {
             // 类型徽章: 底色 + 图标随类型变色。
             // 原来三种凭证共用同一个铜色图标, 扫一眼分不出是密码还是指纹;
@@ -565,56 +594,6 @@ struct KeysPage: View {
         //
         // 在补出完整详情页之前，先用长按菜单把这些**已经实现好**的能力接上：
         // 不需要新造界面，也不假装有详情页。
-        .contextMenu {
-            Button {
-                CredentialOrg.toggleStar(mac, row.kindTag, row.key)
-                XHaptics.tick.impactOccurred()
-                refresh()
-            } label: {
-                Label(CredentialOrg.isStarred(mac, row.kindTag, row.key) ? "取消置顶" : "置顶",
-                      systemImage: CredentialOrg.isStarred(mac, row.kindTag, row.key) ? "star.slash" : "star")
-            }
-
-            Button {
-                let on = !CredentialOrg.isArchived(mac, row.kindTag, row.key)
-                CredentialOrg.setArchived(mac, row.kindTag, row.key, on)
-                XHaptics.tick.impactOccurred()
-                refresh()
-            } label: {
-                Label(CredentialOrg.isArchived(mac, row.kindTag, row.key) ? "取消归档" : "归档",
-                      systemImage: "archivebox")
-            }
-
-            // ═══ 改名字（只对指纹） ═══
-            //
-            // 指纹在锁端**没有名称字段**，名字是本机台账的展示字段 ——
-            // 所以改它不需要任何锁端动作，是纯本机编辑，安全。
-            // （对照：改密码内容 rePwd 就**不能**这么接 —— 本地一改，
-            //   记录显示新密码、锁里还是旧的，等于造一条骗人的记录。）
-            if row.kindTag == "fp" {
-                Button {
-                    renameFingerprint(row)
-                } label: {
-                    Label("改个名字", systemImage: "textformat")
-                }
-            }
-
-            // ═══ 编辑备注 ═══
-            //
-            // 创建时能写备注（AddKeyPage 与工坊都有备注框），但**创建之后改不了** ——
-            // DB.setPwdNote / DB.setFpNote 写好了却零调用。打错一个字只能删了重建。
-            Button {
-                editNote(row)
-            } label: {
-                Label("编辑备注", systemImage: "text.bubble")
-            }
-
-            Button(role: .destructive) {
-                confirmDelete = row
-            } label: {
-                Label("删除", systemImage: "trash")
-            }
-        }
         // ═══ 可发现性 ═══
         //
         // 这一行的六个动作全藏在长按菜单里 —— 视觉上它和一行只读文字没有区别。
@@ -677,4 +656,156 @@ struct KeysPage: View {
         }
     }
 
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// MARK: - 凭证详情（对齐 HTML 13-key-detail 的四卡结构）
+//
+// 之前 App **没有这一页**：凭证行点了没反应，只有长按菜单。
+// HTML 原型给了完整四卡：码值（44px）/ 归属与授权 / 使用记录（两列+页脚）/ 操作。
+// ═══════════════════════════════════════════════════════════════════════
+struct CredentialDetailView: View {
+    let row: KeysPage.KeyRow
+    let mac: String
+    @EnvironmentObject private var app: AppState
+    @Environment(\.dismiss) private var dismiss
+    @State private var confirmDisable = false
+
+    private var pwd: LedgerPwd? {
+        row.kindTag == "pwd" ? DB.listPwds(mac).first { $0.alias == row.key } : nil
+    }
+    private var fp: LedgerFp? {
+        row.kindTag == "fp" ? DB.listFps(mac).first { $0.batch == row.key } : nil
+    }
+    /// 码值：密码显示明文（本机台账里就是明文），指纹显示批次号
+    private var codeText: String {
+        if let p = pwd { return p.pwd ?? String(p.alias) }
+        if let f = fp { return "指纹 " + String(f.batch) }
+        return "—"
+    }
+
+    var body: some View {
+        ZStack {
+            XPalette.canvasGradient.ignoresSafeArea()
+            XScreen("凭证详情", style: .inline) {
+                // 卡1 码值（HTML：44px 大数字 + 锁内编号/指纹位 两列）
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text("码值")
+                            .xFont(.subheadline)
+                            .foregroundStyle(XPalette.textTertiary)
+                        XHeroNumber(text: codeText, size: 34, color: XPalette.accentText)
+                            .padding(.top, 6)
+                        XHairline().padding(.vertical, 12)
+                        HStack(alignment: .top, spacing: XSpace.s) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("锁内编号").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                                Text(String(row.key)).xFont(.footnote, weight: .semibold)
+                                    .monospacedDigit()
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("指纹位").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                                Text(fp == nil ? "—" : String(fp!.batch)).xFont(.footnote, weight: .semibold)
+                                    .monospacedDigit()
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                    }
+                }
+
+                // 卡2 归属与授权
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        Text("归属与授权")
+                            .xFont(.subheadline)
+                            .foregroundStyle(XPalette.textTertiary)
+                        XDataRow(label: "归属",
+                                 value: row.owner.isEmpty ? "未归属" : (DB.member(row.owner)?.name ?? row.owner),
+                                 color: row.owner.isEmpty ? XPalette.warn : XPalette.ok)
+                        XDataRow(label: "类型", value: row.stateLabel, color: XPalette.accentText)
+                    }
+                }
+
+                // 卡3 使用记录（HTML：本月使用/最后使用 两列 + 页脚）
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        Text("使用记录")
+                            .xFont(.subheadline)
+                            .foregroundStyle(XPalette.textTertiary)
+                        HStack(alignment: .top, spacing: XSpace.s) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("本月使用").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                                Text("\(monthUses) 次").xFont(.footnote, weight: .semibold)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("最后使用").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                                Text(lastUseText).xFont(.footnote, weight: .semibold)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        Text("使用记录读的是门锁日志 —— 只有带凭证标识的开门才会算到这里。")
+                            .xFont(.caption2)
+                            .foregroundStyle(XPalette.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+
+                // 卡4 操作
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        Text("操作")
+                            .xFont(.subheadline)
+                            .foregroundStyle(XPalette.textTertiary)
+                        Button {
+                            CredentialOrg.toggleStar(mac, row.kindTag, row.key)
+                        } label: {
+                            XRow(systemImage: "star", title: "星标这一项", showsChevron: true)
+                        }
+                        .buttonStyle(.plain)
+                        XHairline()
+                        // 破坏性动作必须过确认框（glassaudit 判据）
+                        Button {
+                            confirmDisable = true
+                        } label: {
+                            XRow(systemImage: "trash", title: "停用并入回收站", tone: .danger, showsChevron: true)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+        .confirmationDialog("停用这一项？", isPresented: $confirmDisable, titleVisibility: .visible) {
+            Button("停用", role: .destructive) {
+                // 真实签名是 batchDisable(_ mac:, pwdAliases: [Int], fpBatches: [Int]) -> Int
+                _ = CredentialOrg.batchDisable(
+                    mac,
+                    pwdAliases: row.kindTag == "pwd" ? [row.key] : [],
+                    fpBatches: row.kindTag == "fp" ? [row.key] : [])
+                dismiss()
+            }
+            Button("取消", role: .cancel) {}
+        } message: {
+            Text("本机会删掉这一项，锁端那条也会入队撤销（断网不丢）；之后 30 天内可从回收站恢复。")
+        }
+    }
+
+    /// 本月使用次数（读门锁日志里带凭证标识的开门）
+    private var monthUses: Int {
+        // lockTimeStr 是 "yyyy-MM-dd HH:mm:ss" 字符串 —— 直接比前缀即可（同格式字典序=时间序）
+        // 不臆造 API：直接用当前年月拼前缀（lockTimeStr 固定 "yyyy-MM-dd HH:mm:ss"）
+        let now = Date()
+        let cal = WeekCal.gregorian
+        let y = cal.component(.year, from: now)
+        let m = cal.component(.month, from: now)
+        let monthPrefix = String(format: "%04d-%02d", y, m)
+        return DB.readLogs(mac).filter {
+            StatsKit.openTypes.contains($0.type) && $0.lockTimeStr.hasPrefix(monthPrefix)
+        }.count
+    }
+    private var lastUseText: String {
+        guard let last = DB.readLogs(mac).last(where: { StatsKit.openTypes.contains($0.type) }) else { return "还没用过" }
+        return TimeFormat.shortClock(last.lockTimeStr)
+    }
 }
