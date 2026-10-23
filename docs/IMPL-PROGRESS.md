@@ -111,16 +111,16 @@
 
 | HTML | SwiftUI | 六图特征 | 状态 |
 |---|---|---|---|
-| 70-icon-picker | IconPicker.swift | 图6 hero + 2×2 | ⬜ |
-| 75-shell | — | 图5 展示壳 | ⬜ |
-| 80-states | Components.swift | 图2 三态 | ⬜ |
-| 81-backup-studio | BackupStudio.swift | 图5 + 图2 红卡 | ⬜ |
-| 82-bin | CredentialBinView | 图2 卡解剖 | ⬜ |
+| 70-icon-picker | IconPicker.swift | ✅ 已达标（XPanel 卡片流 + 当前图标名说明，图标用真实位图）| ✅ |
+| 75-shell | （无对应原生页）| ✅ N/A：展示壳是 App Store 宣传图，App 内无此屏 | ✅ |
+| 80-states | XSkeleton / XEmptyState / XInlineError | ✅ 组件级已达标（三态是组件规范，无独立页）| ✅ |
+undefined
+| 82-bin | CredentialBinView | ✅ 顶部图5 读数卡（44px 回收站条目数 + 环 + 保留天数）| ✅ |
 | 83-studio | CredentialStudio | 图2 卡解剖 | ⬜ |
 | 84-diagnostics | DiagnosticsPage.swift | ✅ 首卡图5 MetricCard（44px 问题数 + 健康度环）+ XStatSection 页脚 | ✅ |
 | 87-claim | MemberCenterView.UnclaimedClaimView | ✅ 顶部图5 读数卡（44px 待认领数 + 环）| ✅ |
 | 88-exit | MemberCenterView.MemberExitWizard | ✅ 顶部图5 读数卡（44px 待处置数 + 环）| ✅ |
-| 89-share-android | ShareToAndroidView | 图6 hero + 二维码 | ⬜ |
+| 89-share-android | ShareToAndroidView | ✅ 已达标（真实二维码 + 静区白底 + 分享按钮 + 风险提示）| ✅ |
 
 ---
 

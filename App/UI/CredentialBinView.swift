@@ -47,6 +47,8 @@ struct CredentialBinView: View {
                                 message: "删除或停用的钥匙会在这里保留 \(retainDays) 天，可以放回原位。")
                 }
             } else {
+                // 六图改造 (2026-10-24): 顶部图5 读数卡（44px 回收站条目数 + 环）
+                binStatsCard
                 retentionCard
                 if receiptVisible { receiptCard }
                 if !pending.isEmpty { pendingCard }
@@ -64,6 +66,43 @@ struct CredentialBinView: View {
     }
 
     // ── 保留期说明 ──────────────────────────────────────────
+    /// 图 5 读数卡：44px 项在回收站 + 环
+    private var binStatsCard: some View {
+        let n = entries.count
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack {
+                    Text("回收站")
+                        .xFont(.subheadline)
+                        .foregroundStyle(XPalette.textTertiary)
+                    Spacer(minLength: 0)
+                }
+                HStack(alignment: .center, spacing: XSpace.l) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        XHeroNumber(
+                            text: String(n),
+                            unit: "项在回收站",
+                            color: n == 0 ? XPalette.textTertiary : XPalette.accentText)
+                        Text(n == 0 ? "空的" : "保留 \(retainDays) 天，可以放回原位")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 4)
+                    XGradientDial(
+                        size: 68,
+                        progress: n == 0 ? 0.02 : min(1, Double(n) / 6),
+                        widthRatio: 0.13,
+                        showsCursor: false,
+                        showsTick: false
+                    ) { EmptyView() }
+                    .accessibilityHidden(true)
+                }
+                .padding(.top, 8)
+            }
+        }
+    }
+
     private var retentionCard: some View {
         XPanel(kind: .group) {
             HStack(spacing: XSpace.s) {

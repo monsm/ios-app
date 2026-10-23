@@ -18,6 +18,8 @@ struct BackupStudioView: View {
         NavigationStack {
             // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
             XScreen("备份工作室", style: .inline) {
+                // 六图改造 (2026-10-24): 顶部图5 读数卡（44px 本机备份文件数 + 环）
+                studioStatsCard
                 trustHeader.xScrollLift()
                 actionCards.xScrollLift()
                 cadenceCard.xScrollLift()
@@ -33,6 +35,44 @@ struct BackupStudioView: View {
     }
 
     // ---------- 512 数据主权声明 (盾形 SF Symbol + 固定一句) + 509 双向天数行 ----------
+    /// 图 5 读数卡：44px 份文件 + 环
+    private var studioStatsCard: some View {
+        // 真实 API 是 BackupStudio.localFiles（apicheck 抓到我先写的 listFiles 不存在）
+        let n = BackupStudio.localFiles.count
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack {
+                    Text("本机备份")
+                        .xFont(.subheadline)
+                        .foregroundStyle(XPalette.textTertiary)
+                    Spacer(minLength: 0)
+                }
+                HStack(alignment: .center, spacing: XSpace.l) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        XHeroNumber(
+                            text: String(n),
+                            unit: "份文件",
+                            color: n == 0 ? XPalette.textTertiary : XPalette.accentText)
+                        Text(n == 0 ? "还没导出过备份 —— 下面可以立刻做一份" : "都在本机，不上传任何服务器")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 4)
+                    XGradientDial(
+                        size: 68,
+                        progress: n == 0 ? 0.02 : min(1, Double(n) / 6),
+                        widthRatio: 0.13,
+                        showsCursor: false,
+                        showsTick: false
+                    ) { EmptyView() }
+                    .accessibilityHidden(true)
+                }
+                .padding(.top, 8)
+            }
+        }
+    }
+
     private var trustHeader: some View {
         Card(tint: .neutral) {   // 同上：卡体不染 ok，让 warn/danger 成为这张卡唯一的强调
             HStack(spacing: XSpace.m) {
