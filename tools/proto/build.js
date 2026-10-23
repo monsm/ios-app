@@ -50,6 +50,8 @@ const ORDER = [
   'gen-keydetail.js',
   'gen-audit.js',
   'gen-states.js',       // 80 三态规范（原生成器丢失）
+  'gen-missing1.js',     // 81 备份工作室 / 82 回收站 / 83 钥匙工坊
+  'gen-missing2.js',     // 85 换电 / 86 保养 / 87 认领 / 88 退出 / 89 分享
   'gen-diag.js',         // 84 诊断与自检（原生成器被注释）        // 44 审计流水（图4 两层结构，接管被注释的旧生成器）   // 13 详情 / 15 添加（必须最后，覆盖其他生成器）       // 42/45/4a/61
 ];
 for (const g of ORDER) {
