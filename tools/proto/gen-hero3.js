@@ -72,12 +72,6 @@ const M = [['朕','#7B7BE8','4'],['爱妃','#E8A05C','2'],['皇子','#30D158','5
 // ══ 31-member-wizard：emoji 代号选择做主角（图 6 的画廊选择）══
 const EMO = [['🐻','熊'],['🐱','猫'],['🐸','蛙'],['🐙','章鱼'],['🦊','狐'],['🐧','企鹅'],['🐯','虎'],['🐼','熊猫']];
 fs.writeFileSync(D+'31-member-wizard.html', L.page('添加成员', `
-  <div style="display:flex;gap:6px;justify-content:center;margin:8px 0 20px">
-    <span style="width:32px;height:4px;border-radius:2px;background:#FF9F0A"></span>
-    <span style="width:32px;height:4px;border-radius:2px;background:rgba(255,255,255,.16)"></span>
-    <span style="width:32px;height:4px;border-radius:2px;background:rgba(255,255,255,.16)"></span>
-  </div>
-
   <div class="h1">步骤 1/3 · 称呼</div>
   <div class="sub">给这位成员起个名字，之后全家都用它称呼</div>
 
@@ -90,18 +84,15 @@ fs.writeFileSync(D+'31-member-wizard.html', L.page('添加成员', `
   <div class="h1" style="margin-top:26px;font-size:19px;font-weight:700">emoji 代号</div>
   <div class="sub" style="font-size:13px;margin-top:6px">选一个能在头像上一眼认出的</div>
 
-  <div class="duo" style="margin-top:16px">
-    ${EMO.map(([e,n],i)=>`
-      <div class="duo-card">
-        <div class="dm">
-          <div style="width:76px;height:76px;border-radius:50%;
-            background:${i===0?'rgba(232,160,92,.20)':'rgba(255,255,255,.06)'};
-            border:2px solid ${i===0?'#E8A05C':'transparent'};
-            display:flex;align-items:center;justify-content:center;font-size:34px">${e}</div>
-        </div>
-        <div class="dt" style="text-align:center;font-size:14px">${n}</div>
-        <div class="dd" style="text-align:center">${i===0?'已选':'轻点选'}</div>
-      </div>`).join('')}
+  <div style="display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;margin-top:16px;padding-bottom:4px">
+    ${EMO.map(([e,n],i)=>`<div style="flex:0 0 auto;width:92px;
+      background:${i===0?'linear-gradient(180deg,#2A2418 0%,#1F1B12 100%)':'linear-gradient(180deg,#202022 0%,#191919 100%)'};
+      border-radius:20px;padding:16px 10px;text-align:center;
+      box-shadow:inset 0 .5px 0 rgba(255,255,255,.055),inset 0 0 0 .5px ${i===0?'rgba(255,159,10,.40)':'rgba(255,255,255,.03)'}">
+      <div style="font-size:34px;line-height:1">${e}</div>
+      <div style="font-size:13px;font-weight:600;color:${i===0?'#FFA31A':'#FFF'};margin-top:10px">${n}</div>
+      <div style="font-size:11px;color:${i===0?'#FFA31A':'#6A6A72'};margin-top:3px">${i===0?'已选':'轻点选'}</div>
+    </div>`).join('')}
   </div>
 
   <div class="tip info" style="margin-top:4px">成员只是「谁能开门」的名录。分配钥匙在下一步。</div>

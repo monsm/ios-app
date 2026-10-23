@@ -12,8 +12,8 @@ fs.writeFileSync(D+'25-synctime.html', L.page('同步时间', `
   <div class="card" style="margin-top:24px">
     <div class="cardlink">锁钟偏差<span class="ch">${sv('chevron')}</span></div>
     <div style="text-align:center;padding:18px 0 8px">
-      <div style="font-size:64px;font-weight:700;letter-spacing:-2px;line-height:1;
-        font-variant-numeric:tabular-nums;color:#FF9F0A">−3<span style="font-size:24px">s</span></div>
+      <div style="font-size:96px;font-weight:700;letter-spacing:-3px;line-height:1;
+        font-variant-numeric:tabular-nums;color:#FFA31A;text-shadow:0 0 44px rgba(255,163,26,.42)">−3<span style="font-size:24px">s</span></div>
       <div style="font-size:13px;color:#8D8D93;margin-top:12px">锁比手机慢 3 秒</div>
     </div>
     <div style="margin-top:10px">

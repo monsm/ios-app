@@ -20,7 +20,9 @@ const KEEP = new Set(['#FF3B30','#30D158','#FFFFFF','#000000','#8D8D93','#6A6A6E
 
 let n = 0;
 const report = [];
+const SKIP_PAGES = new Set(['49-appearance']);   // 色板页：颜色即内容，不可收敛
 for (const p of reg) {
+  if (SKIP_PAGES.has(p.f)) continue;
   const b = BIND[p.f];
   if (!b) continue;
   const fp = path.join(D, p.f + '.html');

@@ -807,3 +807,39 @@ svg circle[stroke^="url(#g"]{
 
 /* 数字统一 tabular */
 [style*="font-variant-numeric"]{font-variant-numeric:tabular-nums}
+
+
+/* ══ HERO 渐变卡内的开关 ══ */
+/* 紫色 HERO 上的默认灰开关对比不足，改成白色轨道 + 深色滑块 */
+.card[style*="linear-gradient"] .sw,
+.grad-hero .sw{
+  background:rgba(255,255,255,.28) !important;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.30) !important;
+}
+.card[style*="linear-gradient"] .sw.on,
+.grad-hero .sw.on{
+  background:#FFFFFF !important;
+  box-shadow:0 1px 4px rgba(0,0,0,.22) !important;
+}
+.card[style*="linear-gradient"] .sw::after,
+.grad-hero .sw::after{
+  background:#5A48C8 !important;
+}
+
+/* 步骤条在卡内更细 */
+.steps{display:flex;gap:6px;align-items:center}
+
+
+/* ══ 底部安全区：内容不被浮动 Tab Bar 遮住 ══ */
+.page{padding-bottom:120px !important}
+
+/* 输入框在卡内更紧凑 */
+.inp{
+  width:100%;height:44px;border-radius:12px;border:0;
+  background:rgba(255,255,255,.055);
+  color:#FFF;font-size:15px;padding:0 14px;
+  font-family:inherit;outline:none;
+  box-shadow:inset 0 0 0 .5px rgba(255,255,255,.07);
+}
+.inp::placeholder{color:#6A6A72}
+.inp:focus{box-shadow:inset 0 0 0 1.5px rgba(232,160,92,.55)}

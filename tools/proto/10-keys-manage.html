@@ -1,58 +1,83 @@
 <!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
 <title>钥匙管理</title><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="pages.css"></head><body>
-<div class="phone">
-<div class="statusbar">
-  <span class="sb-time" data-real-time>12:00</span>
-  <span class="sb-right">
-    <svg width="17" height="11" viewBox="0 0 17 11" fill="#FFF"><rect x="0" y="7.5" width="3" height="3.5" rx="1"/><rect x="4.5" y="5.5" width="3" height="5.5" rx="1"/><rect x="9" y="3" width="3" height="8" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
-    <svg width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="#FFF" stroke-width="1.6" stroke-linecap="round"><path d="M1 3.4a10.5 10.5 0 0 1 14 0"/><path d="M3.6 6.2a6.6 6.6 0 0 1 8.8 0"/><path d="M6.2 8.9a2.9 2.9 0 0 1 3.6 0"/><circle cx="8" cy="10.2" r=".7" fill="#FFF" stroke="none"/></svg>
-    <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x=".5" y=".5" width="21" height="11" rx="3.2" stroke="#FFF" stroke-opacity=".4"/><rect x="2" y="2" width="15" height="8" rx="2" fill="#FFF"/><path d="M23 4.2v3.6a2 2 0 0 0 0-3.6z" fill="#FFF" fill-opacity=".5"/></svg>
-  </span>
-</div><div class="navbar">
+<div class="phone"><div class="navbar">
   <a class="back" href="02-keys.html">‹</a><span class="nt">钥匙管理</span><span class="nr">+</span></div><div class="scroll"><div class="page hasnav">
 
   <div class="h1" style="margin-top:8px">钥匙管理</div>
   <div class="sub">13 项 · 密码 11 / 指纹 2 / 临时码 0</div>
 
-  <!-- expiringCard -->
+  <!-- 图 2 的卡解剖：库存分布（彩色数据行 + 三环）-->
   <div class="card" style="margin-top:24px">
-    <div class="cardlink">即将到期<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
-    <div style="display:flex;flex-direction:column;gap:12px;margin-top:10px">
-      <div style="display:flex;align-items:center;gap:10px">
-          <span style="width:7px;height:7px;border-radius:50%;background:#0090FC;flex:0 0 auto"></span>
-          <div style="flex:1"><div style="font-size:15px">密码 #皇子-临时</div>
-          <div style="font-size:12px;color:#8D8D93;margin-top:2px">2026-10-25 失效</div></div>
-          <span style="font-size:12px;color:#0090FC">5 天</span>
-        </div><div style="display:flex;align-items:center;gap:10px">
-          <span style="width:7px;height:7px;border-radius:50%;background:#FF9F0A;flex:0 0 auto"></span>
-          <div style="flex:1"><div style="font-size:15px">密码 #访客</div>
-          <div style="font-size:12px;color:#8D8D93;margin-top:2px">2026-10-28 失效</div></div>
-          <span style="font-size:12px;color:#FF9F0A">5 天</span>
+    <div class="cardlink">库存分布<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;align-items:center;gap:18px;margin-top:2px">
+      <div style="flex:1">
+        <div class="ctitle">13 项凭证</div>
+        <div style="margin-top:14px">
+          <div class="drow"><span class="dot" style="background:#F11B51"></span>
+            <span class="dv">11<span class="du"> 密码</span></span></div>
+          <div class="drow"><span class="dot" style="background:#3CDE02"></span>
+            <span class="dv">2<span class="du"> 指纹</span></span></div>
+          <div class="drow"><span class="dot" style="background:#0ADBD8"></span>
+            <span class="dv">0<span class="du"> 临时码</span></span></div>
         </div>
+      </div>
+      <svg width="100" height="100" viewBox="0 0 100 100" style="flex:0 0 auto"><circle cx="50" cy="50" r="46.55" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="4.5"/><circle cx="50" cy="50" r="46.55" fill="none" stroke="#F11B51" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="248.6 292.5" transform="rotate(-90 50 50)"/><circle cx="50" cy="50" r="36.55" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="4.5"/><circle cx="50" cy="50" r="36.55" fill="none" stroke="#3CDE02" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="34.4 229.7" transform="rotate(-90 50 50)"/><circle cx="50" cy="50" r="26.549999999999997" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="4.5"/><circle cx="50" cy="50" r="26.549999999999997" fill="none" stroke="#0ADBD8" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="0.0 166.8" transform="rotate(-90 50 50)"/><circle cx="50" cy="50" r="19.3" fill="#0A0A0C"/><text x="50" y="50" text-anchor="middle" dominant-baseline="central" font-size="22" font-weight="700" fill="#FFF" font-family="system-ui,-apple-system" style="font-variant-numeric:tabular-nums">13</text></svg>
     </div>
-    <div class="footer">到期前 7 天会在门厅提示。</div>
+    <div class="sep"></div>
+    <div class="cols">
+      <div><div class="clabel" style="margin-top:0">本周新增</div><div class="cvalue">2 项</div></div>
+      <div><div class="clabel" style="margin-top:0">即将到期</div><div class="cvalue">2 项</div></div>
+    </div>
+    <div class="footer">到期前 7 天会在门厅提示。临时码用完即弃，不进台账。</div>
   </div>
 
-  <!-- segmentBar -->
-  <div style="display:flex;margin-top:14px"><div class="segctl" style="flex:1">
-    <div class="o on">全部</div><div class="o">密码</div><div class="o">指纹</div><div class="o">临时码</div>
-  </div></div>
+  <!-- 即将到期：每条显示真实剩余天数 -->
+  <div class="card">
+    <div class="cardlink">即将到期<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;flex-direction:column;gap:14px;margin-top:10px">
+      <div style="display:flex;align-items:center;gap:11px">
+          <span style="width:6px;height:6px;border-radius:50%;background:#FF694E;flex:0 0 auto"></span>
+          <div style="flex:1">
+            <div style="font-size:15px;color:#FFF">密码 #皇子-临时</div>
+            <div style="font-size:12px;color:#8A8A90;margin-top:2px">10-25 失效</div>
+          </div>
+          <span style="font-size:13px;font-weight:600;color:#FF694E">2 天</span>
+        </div><div style="display:flex;align-items:center;gap:11px">
+          <span style="width:6px;height:6px;border-radius:50%;background:#FF9F0A;flex:0 0 auto"></span>
+          <div style="flex:1">
+            <div style="font-size:15px;color:#FFF">密码 #访客</div>
+            <div style="font-size:12px;color:#8A8A90;margin-top:2px">10-28 失效</div>
+          </div>
+          <span style="font-size:13px;font-weight:600;color:#FF9F0A">5 天</span>
+        </div>
+    </div>
+    <div class="footer">到期后自动失效，不会写进门锁。</div>
+  </div>
 
-  <!-- credentialCard（按类型分组）-->
-  <div class="card" style="margin-top:12px;padding:6px 0">
+  <!-- 分段控件（带外边距，不贴卡）-->
+  <div style="display:flex;margin-top:16px">
+    <div class="segctl" style="flex:1">
+      <div class="o on">全部</div><div class="o">密码</div><div class="o">指纹</div><div class="o">临时码</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px;padding:6px 0">
     <div class="cardlink" style="padding:8px 20px 8px">密码<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
     
       <a class="rw" href="13-key-detail.html">
-        <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="key"></span></div>
+        <div class="ic" style="color:#8D8D93"><span class="svgi" data-i="key"></span></div>
         <div class="tx"><div class="tt">朕-大门-长期</div><div class="sb">朕 · 长期有效</div></div>
+        <span class="badge blue">进行中</span>
         <div class="ch"><span class="svgi" data-i="chevron"></span></div></a><div class="sep"></div>
       <a class="rw" href="13-key-detail.html">
-        <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="key"></span></div>
-        <div class="tx"><div class="tt">密码 #皇子-临时</div><div class="sb">皇子 · 5 天后失效</div></div>
+        <div class="ic" style="color:#8D8D93"><span class="svgi" data-i="key"></span></div>
+        <div class="tx"><div class="tt">密码 #皇子-临时</div><div class="sb">皇子 · 2 天后失效</div></div>
+        <span class="badge warn">即将失效</span>
         <div class="ch"><span class="svgi" data-i="chevron"></span></div></a><div class="sep"></div>
       <a class="rw" href="13-key-detail.html">
-        <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="key"></span></div>
-        <div class="tx"><div class="tt">密码 #访客</div><div class="sb">访客 · 8 天后失效</div></div>
+        <div class="ic" style="color:#8D8D93"><span class="svgi" data-i="key"></span></div>
+        <div class="tx"><div class="tt">密码 #访客</div><div class="sb">访客 · 5 天后失效</div></div>
+        <span class="badge warn">即将失效</span>
         <div class="ch"><span class="svgi" data-i="chevron"></span></div></a>
   </div>
 
@@ -60,17 +85,21 @@
     <div class="cardlink" style="padding:8px 20px 8px">指纹<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
     
       <a class="rw" href="13-key-detail.html">
-        <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="fingerprint"></span></div>
-        <div class="tx"><div class="tt">指纹 12</div><div class="sb">母上</div></div>
+        <div class="ic" style="color:#8D8D93"><span class="svgi" data-i="fingerprint"></span></div>
+        <div class="tx"><div class="tt">指纹 12</div><div class="sb">母上 · 09-01 录入</div></div>
+        <span class="badge ok">有效</span>
         <div class="ch"><span class="svgi" data-i="chevron"></span></div></a><div class="sep"></div>
       <a class="rw" href="13-key-detail.html">
-        <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="fingerprint"></span></div>
-        <div class="tx"><div class="tt">指纹 11</div><div class="sb">母上</div></div>
+        <div class="ic" style="color:#8D8D93"><span class="svgi" data-i="fingerprint"></span></div>
+        <div class="tx"><div class="tt">指纹 11</div><div class="sb">母上 · 09-01 录入</div></div>
+        <span class="badge ok">有效</span>
         <div class="ch"><span class="svgi" data-i="chevron"></span></div></a>
-    <div class="footer">删除撤销命令会排队等待门锁连接，断网也不会丢。</div>
+    <div class="footer" style="padding:12px 20px 0;margin-top:0">
+      删除撤销命令会排队等待门锁连接，断网也不会丢。
+    </div>
   </div>
 
-  <button class="btn" style="margin-top:4px">添加钥匙</button>
+  <a class="btn" href="15-add-key.html" style="margin-top:4px;display:block;text-align:center;text-decoration:none">添加钥匙</a>
 
 </div></div><div class="tabbar">
 <a class="tab" href="01-home.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg><span>门厅</span></a>

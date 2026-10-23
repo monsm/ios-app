@@ -28,6 +28,57 @@ const DATA = {
     <div class="metric-card"><div class="mh"><span class="mt">信号</span><span class="mc">›</span></div>
       <div class="ms">当前</div><div class="mv">−76<small>dBm</small></div>
       ${V.bars([3,3,3,5,10,20,40,70,92,64,36,20,12,8,6,5,6,10,20,34,22,12,7,4],{h:36})}</div></div>`,
+  '13-key-detail': () => `<div class="duo" style="margin-top:12px">
+    <div class="metric-card"><div class="mh"><span class="mt">已使用</span><span class="mc">›</span></div>
+      <div class="ms">累计</div>
+      <div class="mv">24<small>次</small></div>
+      ${V.bars([2,3,1,4,6,3,2,5,8,4,3,6,9,5,4,7,10,6,4,8,5,3,7,4],{h:36,a0:'1',a1:'7',a2:'14',a3:'21'})}</div>
+    <div class="metric-card"><div class="mh"><span class="mt">最近一次</span><span class="mc">›</span></div>
+      <div class="ms">今天</div><div class="mv" style="font-size:22px">07:12</div>
+      <div style="font-size:11px;color:var(--text-sub);margin-top:12px">朕 · 手动</div></div></div>`,
+  '20-locks': () => `<div class="duo" style="margin-top:12px">
+    <div class="metric-card"><div class="mh"><span class="mt">电量</span><span class="mc">›</span></div>
+      <div class="ms">当前</div><div class="mv" style="color:#30D158">47<small>%</small></div>
+      ${V.bars([42,43,44,43,45,44,46,45,47,46,47,47,47,47,47,47,47,47,47,47,47,47,47,47],{h:36})}</div>
+    <div class="metric-card"><div class="mh"><span class="mt">信号</span><span class="mc">›</span></div>
+      <div class="ms">当前</div><div class="mv">−76<small>dBm</small></div>
+      ${V.bars([3,3,3,5,10,20,40,70,92,64,36,20,12,8,6,5,6,10,20,34,22,12,7,4],{h:36})}</div></div>`,
+  '21-lock-profile': () => `<div class="card" style="margin-top:12px"><div class="cardlink">指纹余量<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;align-items:center;gap:18px;margin-top:6px">
+      ${V.ring(88,0.24,'#5E5CE6','12','可录')}
+      <div style="flex:1"><div class="ctitle">38 / 50 已用</div>
+      <div style="font-size:12px;color:var(--text-sub);margin-top:6px">指纹录在锁里，本机只记「谁的第几枚」</div></div>
+    </div></div>`,
+  '13-key-detail': () => `<div class="duo" style="margin-top:12px">
+    <div class="metric-card"><div class="mh"><span class="mt">已使用</span><span class="mc">›</span></div>
+      <div class="ms">累计</div>
+      <div class="mv">24<small>次</small></div>
+      ${V.bars([2,3,1,4,6,3,2,5,8,4,3,6,9,5,4,7,10,6,4,8,5,3,7,4],{h:36,a0:'1',a1:'7',a2:'14',a3:'21'})}</div>
+    <div class="metric-card"><div class="mh"><span class="mt">最近一次</span><span class="mc">›</span></div>
+      <div class="ms">今天</div><div class="mv" style="font-size:22px">07:12</div>
+      <div style="font-size:11px;color:var(--text-sub);margin-top:12px">朕 · 手动</div></div></div>`,
+  '20-locks': () => `<div class="duo" style="margin-top:12px">
+    <div class="metric-card"><div class="mh"><span class="mt">电量</span><span class="mc">›</span></div>
+      <div class="ms">当前</div><div class="mv" style="color:#30D158">47<small>%</small></div>
+      ${V.bars([42,43,44,43,45,44,46,45,47,46,47,47,47,47,47,47,47,47,47,47,47,47,47,47],{h:36})}</div>
+    <div class="metric-card"><div class="mh"><span class="mt">信号</span><span class="mc">›</span></div>
+      <div class="ms">当前</div><div class="mv">−76<small>dBm</small></div>
+      ${V.bars([3,3,3,5,10,20,40,70,92,64,36,20,12,8,6,5,6,10,20,34,22,12,7,4],{h:36})}</div></div>`,
+  '13-key-detail': () => `<div class="duo" style="margin-top:12px">
+    <div class="metric-card"><div class="mh"><span class="mt">已使用</span><span class="mc">›</span></div>
+      <div class="ms">累计</div>
+      <div class="mv">24<small>次</small></div>
+      ${V.bars([2,3,1,4,6,3,2,5,8,4,3,6,9,5,4,7,10,6,4,8,5,3,7,4],{h:36,a0:'1',a1:'7',a2:'14',a3:'21'})}</div>
+    <div class="metric-card"><div class="mh"><span class="mt">最近一次</span><span class="mc">›</span></div>
+      <div class="ms">今天</div><div class="mv" style="font-size:22px">07:12</div>
+      <div style="font-size:11px;color:var(--text-sub);margin-top:12px">朕 · 手动</div></div></div>`,
+  '20-locks': () => `<div class="duo" style="margin-top:12px">
+    <div class="metric-card"><div class="mh"><span class="mt">电量</span><span class="mc">›</span></div>
+      <div class="ms">当前</div><div class="mv" style="color:#30D158">47<small>%</small></div>
+      ${V.bars([42,43,44,43,45,44,46,45,47,46,47,47,47,47,47,47,47,47,47,47,47,47,47,47],{h:36})}</div>
+    <div class="metric-card"><div class="mh"><span class="mt">信号</span><span class="mc">›</span></div>
+      <div class="ms">当前</div><div class="mv">−76<small>dBm</small></div>
+      ${V.bars([3,3,3,5,10,20,40,70,92,64,36,20,12,8,6,5,6,10,20,34,22,12,7,4],{h:36})}</div></div>`,
   '21-lock-profile': () => `<div class="card" style="margin-top:12px"><div class="cardlink">指纹余量<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
     <div style="display:flex;align-items:center;gap:18px;margin-top:6px">
       ${V.ring(88,0.24,'#5E5CE6','12','可录')}

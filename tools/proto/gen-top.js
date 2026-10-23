@@ -21,15 +21,35 @@ fs.writeFileSync(D+'05-system.html', L.page('系统', `
     <div class="sub">应用锁、审计与备份都在这台手机上 · 全程离线</div>
   </div>
 
-  <div class="card grad-hero" style="margin-top:26px">
-    <div style="font-size:var(--f-title3);font-weight:700">有需要处理的项目</div>
-    <div style="font-size:13px;color:rgba(255,255,255,.72);margin-top:6px">应用锁未开启 · 从未备份</div>
-    <div class="sep" style="background:rgba(255,255,255,.18)"></div>
-    <div style="display:flex;justify-content:space-around;text-align:center">
-      ${[['钥匙','无风险'],['审计链','完整'],['数据','正常']].map(([k,v])=>`
-        <div>${sv('check','16px')}
-          <div style="font-size:12px;color:rgba(255,255,255,.72);margin-top:7px">${k}</div>
-          <div style="font-size:12px;color:#30D158;margin-top:2px">${v}</div></div>`).join('')}
+  <!-- 图 5 的 MetricCard 形态：44px 大数字当主角 + 环 + 三列读数 -->
+  <div class="card grad-hero" style="margin-top:26px;padding:22px 20px">
+    <div style="display:flex;align-items:flex-start;gap:16px">
+      <div style="flex:1">
+        <div style="font-size:13px;color:rgba(255,255,255,.74)">待处理项目</div>
+        <div style="font-size:44px;font-weight:700;line-height:1;margin-top:8px;font-variant-numeric:tabular-nums;letter-spacing:-1.2px">2</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.66);margin-top:8px;line-height:1.5">应用锁未开启 · 从未备份</div>
+      </div>
+      <svg width="88" height="88" viewBox="0 0 88 88" style="flex:0 0 auto">
+        <circle cx="44" cy="44" r="36" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="7"/>
+        <circle cx="44" cy="44" r="36" fill="none" stroke="#FFA31A" stroke-width="7" stroke-linecap="round" stroke-dasharray="45.2 226.2" transform="rotate(-90 44 44)"/>
+        <circle cx="44" cy="44" r="24" fill="rgba(0,0,0,.24)"/>
+        <text x="44" y="44" text-anchor="middle" dominant-baseline="central" font-size="17" font-weight="700" fill="#FFF" font-family="system-ui,-apple-system">2/6</text>
+      </svg>
+    </div>
+    <div style="height:1px;background:rgba(255,255,255,.16);margin:18px 0 16px"></div>
+    <div style="display:flex">
+      <div style="text-align:center;flex:1">
+        <div style="font-size:15px;font-weight:600;color:#FFF">无风险</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.60);margin-top:3px">钥匙</div>
+      </div>
+      <div style="text-align:center;flex:1;border-left:1px solid rgba(255,255,255,.12)">
+        <div style="font-size:15px;font-weight:600;color:#FFF">完整</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.60);margin-top:3px">审计链</div>
+      </div>
+      <div style="text-align:center;flex:1;border-left:1px solid rgba(255,255,255,.12)">
+        <div style="font-size:15px;font-weight:600;color:#FFF">正常</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.60);margin-top:3px">数据</div>
+      </div>
     </div>
   </div>
 

@@ -12,6 +12,8 @@ let html = fs.readFileSync(src, 'utf8');
 html = html.replace('</head>', '<style>html,body{height:auto!important;overflow:visible!important}' +
   '.phone{height:auto!important;min-height:0!important;overflow:visible!important}' +
   '.scroll{position:static!important;height:auto!important;overflow:visible!important}' +
+  '.dsheet{position:static!important;height:auto!important;overflow:visible!important}' +
+  '.dbody{overflow:visible!important;padding-bottom:32px!important}' +
   '.page{padding-bottom:32px!important}</style></head>');
 const tmp = path.join(D, '_full_' + name + '.html');
 fs.writeFileSync(tmp, html, 'utf8');

@@ -17,7 +17,7 @@ fs.writeFileSync(D+'21-lock-profile.html', L.page('锁档案', `
       <div style="position:absolute;inset:-24px;background:radial-gradient(circle,rgba(123,123,232,.30) 0%,transparent 70%);
         border-radius:50%;filter:blur(14px)"></div>
       <img src="img/lock-hero@3x.png" alt=""
-        style="width:132px;height:auto;position:relative;
+        style="width:168px;height:auto;position:relative;
         filter:drop-shadow(0 14px 28px rgba(0,0,0,.6));transform:translateY(-4px)">
     </div>
     <div style="font-size:30px;font-weight:600;color:#FFF;margin-top:10px;

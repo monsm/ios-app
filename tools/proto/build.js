@@ -45,7 +45,8 @@ const ORDER = [
   'gen-hero3.js',       // 30/31/32 成员域主角
   'gen-hero2.js',       // 11/13/22 补主角
   'gen-hero.js',        // 52/12/25 补视觉主角
-  'gen-fill4.js',       // 42/45/4a/61
+  'gen-fill4.js',
+  'gen-keydetail.js',   // 13 详情 / 15 添加（必须最后，覆盖其他生成器）       // 42/45/4a/61
 ];
 for (const g of ORDER) {
   const p = path.join(D, g);

@@ -19,17 +19,40 @@ fs.writeFileSync(D+'04-members.html', L.page('成员', `
 
   <div style="height:calc(var(--title-to-card) - 34px)"></div>
 
-  <div class="duo">
-    ${M.map(([n,c,k],i)=>`
-      <a class="duo-card" href="32-member-detail.html">
-        <div class="dm">
-          <div style="width:68px;height:68px;border-radius:50%;background:${c}22;
-            border:2px solid ${i===0?c:'transparent'};display:flex;align-items:center;
-            justify-content:center;font-size:26px;color:${c};font-weight:600">${n[0]}</div>
+  
+  <!-- 图 2 的卡解剖：成员分布 -->
+  <div class="card" style="margin-top:24px">
+    <div class="cardlink">成员分布<span class="ch">${sv('chevron')}</span></div>
+    <div style="display:flex;align-items:center;gap:18px;margin-top:2px">
+      <div style="flex:1">
+        <div class="ctitle">5 位成员</div>
+        <div style="margin-top:14px">
+          ${M.map(([n,c,k2])=>`<div class="drow"><span class="dot" style="background:${c}"></span>
+            <span class="dv">${k2}<span class="du"> 份 · ${n}</span></span></div>`).join('')}
         </div>
-        <div class="dt" style="text-align:center">${n}</div>
-        <div class="dd" style="text-align:center">${k} 份钥匙</div>
-      </a>`).join('')}
+      </div>
+      ${L.tripleRing(100, .40, 1.0, .40, '5')}
+    </div>
+    <div class="sep"></div>
+    <div class="cols">
+      <div><div class="clabel" style="margin-top:0">钥匙总数</div><div class="cvalue">15 份</div></div>
+      <div><div class="clabel" style="margin-top:0">指纹总数</div><div class="cvalue">6 枚</div></div>
+    </div>
+    <div class="footer">每位成员可持有多个钥匙。管理员可分配，长辈默认只读。</div>
+  </div>
+
+  <!-- 图 6 的横向画廊：成员头像 -->
+  <div style="display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;margin-top:12px;padding-bottom:2px">
+    ${M.map(([n,c,k2],idx)=>`<a href="32-member-detail.html" style="flex:0 0 auto;width:104px;
+      background:linear-gradient(180deg,#202022 0%,#191919 100%);border-radius:20px;
+      padding:18px 12px;text-decoration:none;color:inherit;text-align:center;
+      box-shadow:inset 0 .5px 0 rgba(255,255,255,.055),inset 0 0 0 .5px rgba(255,255,255,.03)">
+      <div style="width:56px;height:56px;border-radius:50%;margin:0 auto;
+        background:${c}1F;border:2px solid ${idx===0?c:c+'66'};display:flex;
+        align-items:center;justify-content:center;font-size:22px;color:${c};font-weight:600">${n[0]}</div>
+      <div style="font-size:14px;font-weight:600;color:#FFF;margin-top:12px">${n}</div>
+      <div style="font-size:11px;color:#8A8A90;margin-top:3px">${k2} 份钥匙</div>
+    </a>`).join('')}
   </div>
 
   <div class="card" style="padding:6px 0">

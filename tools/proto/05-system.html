@@ -1,14 +1,6 @@
 <!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
 <title>系统</title><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="pages.css"></head><body>
-<div class="phone">
-<div class="statusbar">
-  <span class="sb-time" data-real-time>12:00</span>
-  <span class="sb-right">
-    <svg width="17" height="11" viewBox="0 0 17 11" fill="#FFF"><rect x="0" y="7.5" width="3" height="3.5" rx="1"/><rect x="4.5" y="5.5" width="3" height="5.5" rx="1"/><rect x="9" y="3" width="3" height="8" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
-    <svg width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="#FFF" stroke-width="1.6" stroke-linecap="round"><path d="M1 3.4a10.5 10.5 0 0 1 14 0"/><path d="M3.6 6.2a6.6 6.6 0 0 1 8.8 0"/><path d="M6.2 8.9a2.9 2.9 0 0 1 3.6 0"/><circle cx="8" cy="10.2" r=".7" fill="#FFF" stroke="none"/></svg>
-    <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x=".5" y=".5" width="21" height="11" rx="3.2" stroke="#FFF" stroke-opacity=".4"/><rect x="2" y="2" width="15" height="8" rx="2" fill="#FFF"/><path d="M23 4.2v3.6a2 2 0 0 0 0-3.6z" fill="#FFF" fill-opacity=".5"/></svg>
-  </span>
-</div><div class="scroll"><div class="page">
+<div class="phone"><div class="scroll"><div class="page">
 
   <div class="chiprow">
     <div class="chip compact"><svg class="ringico" viewBox="0 0 26 26">
@@ -22,12 +14,12 @@
       stroke-dasharray="14.96 56.55"
       transform="rotate(-90.0 13 13)"/></svg><div><div class="lbl">应用锁</div><div class="val">未开启</div></div></div>
     <div class="chip"><svg class="ringico" viewBox="0 0 26 26">
-    <circle cx="13" cy="13" r="9" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="4"/><circle cx="13" cy="13" r="9" fill="none" stroke="#FF9F0A"
+    <circle cx="13" cy="13" r="9" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="4"/><circle cx="13" cy="13" r="9" fill="none" stroke="#F11B51"
       stroke-width="4" stroke-linecap="round"
       stroke-dasharray="3.65 56.55"
       transform="rotate(-90.0 13 13)"/></svg><div><div class="lbl">备份</div><div class="val">从未</div></div></div>
     <div class="chip"><svg class="ringico" viewBox="0 0 26 26">
-    <circle cx="13" cy="13" r="9" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="4"/><circle cx="13" cy="13" r="9" fill="none" stroke="#FF9F0A"
+    <circle cx="13" cy="13" r="9" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="4"/><circle cx="13" cy="13" r="9" fill="none" stroke="#3CDE02"
       stroke-width="4" stroke-linecap="round"
       stroke-dasharray="31.93 56.55"
       transform="rotate(-90.0 13 13)"/></svg><div><div class="lbl">门锁</div><div class="val">1 把</div></div></div>
@@ -38,21 +30,35 @@
     <div class="sub">应用锁、审计与备份都在这台手机上 · 全程离线</div>
   </div>
 
-  <div class="card grad-hero" style="margin-top:26px">
-    <div style="font-size:var(--f-title3);font-weight:700">有需要处理的项目</div>
-    <div style="font-size:13px;color:rgba(255,255,255,.72);margin-top:6px">应用锁未开启 · 从未备份</div>
-    <div class="sep" style="background:rgba(255,255,255,.18)"></div>
-    <div style="display:flex;justify-content:space-around;text-align:center">
-      
-        <div><span class="svgi" data-i="check" data-sz="16px"></span>
-          <div style="font-size:12px;color:rgba(255,255,255,.72);margin-top:7px">钥匙</div>
-          <div style="font-size:12px;color:#30D158;margin-top:2px">无风险</div></div>
-        <div><span class="svgi" data-i="check" data-sz="16px"></span>
-          <div style="font-size:12px;color:rgba(255,255,255,.72);margin-top:7px">审计链</div>
-          <div style="font-size:12px;color:#30D158;margin-top:2px">完整</div></div>
-        <div><span class="svgi" data-i="check" data-sz="16px"></span>
-          <div style="font-size:12px;color:rgba(255,255,255,.72);margin-top:7px">数据</div>
-          <div style="font-size:12px;color:#30D158;margin-top:2px">正常</div></div>
+  <!-- 图 5 的 MetricCard 形态：44px 大数字当主角 + 环 + 三列读数 -->
+  <div class="card grad-hero" style="margin-top:26px;padding:22px 20px">
+    <div style="display:flex;align-items:flex-start;gap:16px">
+      <div style="flex:1">
+        <div style="font-size:13px;color:rgba(255,255,255,.74)">待处理项目</div>
+        <div style="font-size:44px;font-weight:700;line-height:1;margin-top:8px;font-variant-numeric:tabular-nums;letter-spacing:-1.2px">2</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.66);margin-top:8px;line-height:1.5">应用锁未开启 · 从未备份</div>
+      </div>
+      <svg width="88" height="88" viewBox="0 0 88 88" style="flex:0 0 auto">
+        <circle cx="44" cy="44" r="36" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="7"/>
+        <circle cx="44" cy="44" r="36" fill="none" stroke="#FFA31A" stroke-width="7" stroke-linecap="round" stroke-dasharray="45.2 226.2" transform="rotate(-90 44 44)"/>
+        <circle cx="44" cy="44" r="24" fill="rgba(0,0,0,.24)"/>
+        <text x="44" y="44" text-anchor="middle" dominant-baseline="central" font-size="17" font-weight="700" fill="#FFF" font-family="system-ui,-apple-system">2/6</text>
+      </svg>
+    </div>
+    <div style="height:1px;background:rgba(255,255,255,.16);margin:18px 0 16px"></div>
+    <div style="display:flex">
+      <div style="text-align:center;flex:1">
+        <div style="font-size:15px;font-weight:600;color:#FFF">无风险</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.60);margin-top:3px">钥匙</div>
+      </div>
+      <div style="text-align:center;flex:1;border-left:1px solid rgba(255,255,255,.12)">
+        <div style="font-size:15px;font-weight:600;color:#FFF">完整</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.60);margin-top:3px">审计链</div>
+      </div>
+      <div style="text-align:center;flex:1;border-left:1px solid rgba(255,255,255,.12)">
+        <div style="font-size:15px;font-weight:600;color:#FFF">正常</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.60);margin-top:3px">数据</div>
+      </div>
     </div>
   </div>
 
@@ -63,12 +69,12 @@
   <div class="ch"><span class="svgi" data-i="chevron"></span></div></a>
     <div class="sep"></div>
     <a class="rw" href="42-peek">
-  <div class="ic" style="background:#FF9F0A22;color:#FF9F0A"><span class="svgi" data-i="eye"></span></div>
+  <div class="ic" style="background:#0ADBD822;color:#0ADBD8"><span class="svgi" data-i="eye"></span></div>
   <div class="tx"><div class="tt">防窥与遮蔽</div><div class="sb">后台即糊 / 限时可见 / 水印</div></div>
   <div class="ch"><span class="svgi" data-i="chevron"></span></div></a>
     <div class="sep"></div>
     <a class="rw" href="44-audit">
-  <div class="ic" style="background:#FF9F0A22;color:#FF9F0A"><span class="svgi" data-i="list"></span></div>
+  <div class="ic" style="background:#0090FC22;color:#0090FC"><span class="svgi" data-i="list"></span></div>
   <div class="tx"><div class="tt">审计日志</div><div class="sb">谁在什么时候做了什么</div></div>
   <div class="ch"><span class="svgi" data-i="chevron"></span></div></a>
     <div class="sep"></div>
@@ -87,7 +93,7 @@
         <div class="cvalue">—</div>
       </div>
       <svg width="88" height="88" viewBox="0 0 88 88">
-  <circle cx="44" cy="44" r="36.08" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="4.3"/><circle cx="44" cy="44" r="36.08" fill="none" stroke="#FF9F0A" stroke-width="4.3" stroke-linecap="round" stroke-dasharray="7.067893035321578 226.69732588303947" transform="rotate(-90 44 44)"/><text x="44" y="51.480000000000004" text-anchor="middle" font-size="22.880000000000003" font-weight="700" fill="#FFF" font-family="system-ui,-apple-system">!</text></svg>
+  <circle cx="44" cy="44" r="36.08" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="10.120000000000001"/><circle cx="44" cy="44" r="36.08" fill="none" stroke="#FF9F0A" stroke-width="10.120000000000001" stroke-linecap="round" stroke-dasharray="7.067893035321578 226.69732588303947" transform="rotate(-90 44 44)"/><text x="44" y="51.480000000000004" text-anchor="middle" font-size="22.880000000000003" font-weight="700" fill="#FFF" font-family="system-ui,-apple-system">!</text></svg>
     </div>
     <div class="sep"></div>
     <div class="cols">

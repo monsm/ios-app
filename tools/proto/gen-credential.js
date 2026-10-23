@@ -10,81 +10,75 @@ fs.writeFileSync(D+'11-fingerprint.html', L.page('指纹', `
   <div class="h1" style="margin-top:8px">指纹</div>
   <div class="sub">锁内 38 / 50 · 本机登记 3 枚</div>
 
-  <!-- 计数卡（源码：还可录 N / 仅剩 1 枚 警告 / 库存已满）-->
+  <!-- 图 2 卡解剖：指纹库存（细三环 + 彩色数据行）-->
   <div class="card" style="margin-top:24px">
     <div class="cardlink">指纹库存<span class="ch">${sv('chevron')}</span></div>
-    <div style="display:flex;align-items:center;gap:18px;margin-top:6px">
-      <div style="position:relative;width:101px;height:101px;flex:0 0 auto">
-        <svg width="101" height="101" viewBox="0 0 101 101">
-          <circle cx="50.5" cy="50.5" r="43.5" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="11"/>
-          <circle cx="50.5" cy="50.5" r="43.5" fill="none" stroke="#0ADBD8" stroke-width="11"
-            stroke-linecap="round" stroke-dasharray="208 273" transform="rotate(-90 50.5 50.5)"/>
-          <circle cx="50.5" cy="50.5" r="22" fill="#0A0A0C"/>
-        </svg>
-        <div style="position:absolute;inset:0;display:flex;flex-direction:column;
-          align-items:center;justify-content:center">
-          <div style="font-size:22px;font-weight:700;color:#FFF;line-height:1">38</div>
-          <div style="font-size:10px;color:#8D8D93;margin-top:3px">/ 50</div>
-        </div>
-      </div>
+    <div style="display:flex;align-items:center;gap:18px;margin-top:2px">
       <div style="flex:1">
         <div class="ctitle">还可录 12 枚</div>
-        <div style="font-size:12px;color:#8D8D93;margin-top:8px;line-height:1.5">
-          指纹录在锁里，本机只记「谁的第几枚」</div>
+        <div style="margin-top:14px">
+          <div class="drow"><span class="dot" style="background:#0ADBD8"></span>
+            <span class="dv">38<span class="du"> 锁内已用</span></span></div>
+          <div class="drow"><span class="dot" style="background:#3CDE02"></span>
+            <span class="dv">12<span class="du"> 锁内余量</span></span></div>
+          <div class="drow"><span class="dot" style="background:#FF9F0A"></span>
+            <span class="dv">3<span class="du"> 本机登记</span></span></div>
+        </div>
       </div>
+      ${L.tripleRing(100, .76, .24, .06, '38')}
     </div>
     <div class="sep"></div>
     <div class="cols">
-      <div><div class="clabel" style="margin-top:0">本机登记</div><div class="cvalue">3 枚</div></div>
-      <div><div class="clabel" style="margin-top:0">锁内余量</div><div class="cvalue">12 枚</div></div>
+      <div><div class="clabel" style="margin-top:0">上次录入</div><div class="cvalue">09-01</div></div>
+      <div><div class="clabel" style="margin-top:0">建议补录</div><div class="cvalue">1 枚</div></div>
     </div>
     <div class="footer">这把锁只剩 12 枚可用指纹，建议补一枚备用。</div>
   </div>
 
-  <!-- 录入向导（源码原文：请选好的手指按在门锁指纹头上, 抬起, 重复 8 次）-->
+  <!-- 录入向导（源码原文）-->
   <div class="card">
     <div class="cardlink">录入指纹<span class="ch">${sv('chevron')}</span></div>
-    <div style="display:flex;gap:6px;justify-content:center;margin:14px 0">
+    <div style="display:flex;gap:6px;justify-content:center;margin:18px 0 14px">
       ${[1,2,3,4,5,6,7,8].map(i => `<span style="width:26px;height:4px;border-radius:2px;
-        background:${i<=3?'#0ADBD8':'rgba(255,255,255,.16)'}"></span>`).join('')}
+        background:${i<=3?'#0ADBD8':'rgba(255,255,255,.13)'}"></span>`).join('')}
     </div>
-    <div style="text-align:center;font-size:15px;color:#FFF;line-height:1.6">
+    <div style="text-align:center;font-size:15px;color:#FFF;line-height:1.62">
       请选好的手指按在门锁指纹头上，<br>抬起，重复 8 次
     </div>
-    <div style="text-align:center;font-size:13px;color:#0ADBD8;margin-top:8px">录入中… 3 / 8</div>
-    <div style="display:flex;gap:10px;margin-top:16px">
+    <div style="text-align:center;font-size:13px;color:#0ADBD8;margin-top:10px;
+      font-variant-numeric:tabular-nums">录入中… 3 / 8</div>
+    <div style="display:flex;gap:10px;margin-top:18px">
       <button class="btn sec" style="flex:1">重置进度</button>
       <button class="btn" style="flex:1;background:#0ADBD8;color:#062A2A">开始录入</button>
     </div>
   </div>
 
-  <!-- 命名（源码：命名 (点按建议填入) / 建议名 / 自定义名称 / 如: 妈妈·左手食指）-->
+  <!-- 命名 -->
   <div class="card">
     <div class="cardlink">命名<span class="ch">${sv('chevron')}</span></div>
     <div class="clabel" style="margin-top:0">建议名（点按填入）</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
       ${['妈妈·左手食指','妈妈·右手拇指','备用'].map(n=>
-        `<span style="font-size:12px;padding:6px 12px;border-radius:999px;
-          background:rgba(10,219,216,.14);color:#0ADBD8">${n}</span>`).join('')}
+        `<span style="font-size:12px;padding:7px 13px;border-radius:999px;
+          background:rgba(10,219,216,.13);color:#0ADBD8;font-weight:500">${n}</span>`).join('')}
     </div>
     <input class="inp" style="margin-top:12px" placeholder="自定义名称，如: 妈妈·左手食指">
     <div class="footer">仅本机留存。重录会替代原来那枚。</div>
   </div>
 
-  <!-- 已登记列表 -->
+  <!-- 已登记 -->
   <div class="card" style="padding:6px 0">
     <div class="cardlink" style="padding:8px 20px 8px">已登记<span class="ch">${sv('chevron')}</span></div>
-    ${[['1','指纹 12','母上 · 2026-09-01'],['2','指纹 11','母上 · 2026-09-01'],['3','指纹 10','爱妃 · 2026-08-20']].map(([n2,t,s2],i)=>
+    ${[['指纹 12','母上 · 09-01 录入'],['指纹 11','母上 · 09-01 录入'],['指纹 10','爱妃 · 08-20 录入']].map(([t,s2],i)=>
       `${i>0?'<div class="sep"></div>':''}
       <a class="rw" href="13-key-detail.html">
-        <div class="ic" style="background:transparent;color:#8D8D93">${sv('fingerprint')}</div>
+        <div class="ic" style="color:#8D8D93">${sv('fingerprint')}</div>
         <div class="tx"><div class="tt">${t}</div><div class="sb">${s2}</div></div>
         <span class="badge ok">有效</span>
         <div class="ch">${sv('chevron')}</div></a>`).join('')}
   </div>
 `, 1, {nav:true, back:'02-keys', right:'编辑'}));
 
-// ══ 12 临时码（TempCodeStudio：场景预设 + 码值 + 生效时段 + 批量）══
 fs.writeFileSync(D+'12-tempcode.html', L.page('临时码', `
   <div class="h1" style="margin-top:8px">临时码</div>
   <div class="sub">6~8 位数字 · 会占用密码库存</div>
@@ -93,25 +87,31 @@ fs.writeFileSync(D+'12-tempcode.html', L.page('临时码', `
   <div class="card" style="margin-top:24px">
     <div class="cardlink">场景预设<span class="ch">${sv('chevron')}</span></div>
     <div style="font-size:12px;color:#8D8D93;margin-top:6px">选中即套默认时长与备注</div>
-    <div class="duo" style="margin-top:14px;margin-bottom:0">
-      ${[['快递员','10 分钟','#FF694E'],['保洁','2 小时','#0ADBD8'],
-         ['访客','半天','#5E5CE6'],['维修','1 天','#FF9F0A']].map(([n,t,c])=>
-        `<div class="duo-card">
-          <div class="dm"><div style="width:52px;height:52px;border-radius:50%;
-            background:${c}22;display:flex;align-items:center;justify-content:center;
-            color:${c}">${sv('timer','24px')}</div></div>
-          <div class="dt" style="text-align:center;font-size:15px">${n}</div>
-          <div class="dd" style="text-align:center">${t}</div>
+    <div style="display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;margin-top:16px;padding-bottom:2px">
+      ${[['快递员','10 分钟','#FF694E','package'],['保洁','2 小时','#0ADBD8','broom'],
+         ['访客','半天','#5E5CE6','person'],['维修','1 天','#FF9F0A','wrench']].map(([n,t,c,ic])=>
+        `<div style="flex:0 0 auto;width:104px;background:linear-gradient(180deg,#202022 0%,#191919 100%);
+          border-radius:20px;padding:18px 12px;text-align:center;
+          box-shadow:inset 0 .5px 0 rgba(255,255,255,.055),inset 0 0 0 .5px rgba(255,255,255,.03)">
+          <div style="width:52px;height:52px;border-radius:50%;margin:0 auto;
+            background:${c}1F;display:flex;align-items:center;justify-content:center;color:${c}">${sv(ic,'24px')}</div>
+          <div style="font-size:14px;font-weight:600;color:#FFF;margin-top:12px">${n}</div>
+          <div style="font-size:11px;color:#8A8A90;margin-top:3px">${t}</div>
         </div>`).join('')}
-    </div>
+    </div></div>
   </div>
 
   <!-- 码值（源码：码值 (6~8 位数字) / 输入码值, 或点「生成」/ 本地生成 6 位随机码）-->
   <div class="card">
     <div class="cardlink">码值<span class="ch">${sv('chevron')}</span></div>
     <div style="text-align:center;padding:18px 0 6px">
-      <div style="font-size:44px;font-weight:700;letter-spacing:10px;line-height:1;
-        font-variant-numeric:tabular-nums;color:#FF694E">••••••</div>
+      <div style="display:flex;gap:8px;justify-content:center">
+        ${[1,2,3,4,5,6].map(i => `<div style="width:38px;height:50px;border-radius:10px;
+          background:rgba(255,105,78,.10);border:1px solid rgba(255,105,78,.28);
+          display:flex;align-items:center;justify-content:center;
+          font-size:22px;font-weight:700;color:rgba(255,105,78,.45);
+          font-variant-numeric:tabular-nums">·</div>`).join('')}
+      </div>
       <div style="font-size:12px;color:#8D8D93;margin-top:14px">输入码值，或点「生成」</div>
     </div>
     <div style="display:flex;gap:10px;margin-top:6px">
@@ -148,7 +148,7 @@ fs.writeFileSync(D+'14-otp.html', L.page('OTP 与口令', `
   <div class="card" style="margin-top:24px">
     <div class="cardlink">用于哪把锁<span class="ch">${sv('chevron')}</span></div>
     <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
-      <img src="img/lock-45-128.png" alt="" style="width:40px;height:40px;object-fit:contain">
+      <img src="img/lock-45-128.png" alt="" style="width:52px;height:52px;object-fit:contain">
       <div><div style="font-size:16px">然然家</div>
         <div style="font-size:12px;color:#8D8D93;margin-top:2px">JZ · 固件 1.0.2</div></div>
     </div>

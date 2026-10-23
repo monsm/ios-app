@@ -30,7 +30,10 @@ for (const p of reg) {
         .replace(/stroke-width="([\d.]+)"/g, function (mm, v) { return 'stroke-width="' + (parseFloat(v) * k).toFixed(2) + '"'; })
         .replace(/stroke-dasharray="([\d.]+) ([\d.]+)"/g, function (mm, a, b) {
           return 'stroke-dasharray="' + (parseFloat(a) * k).toFixed(2) + ' ' + (parseFloat(b) * k).toFixed(2) + '"'; })
-        .replace(/font-size="([\d.]+)"/g, function (mm, v) { return 'font-size="' + (parseFloat(v) * k).toFixed(2) + '"'; });
+        .replace(/font-size="([\d.]+)"/g, function (mm, v) { return 'font-size="' + (parseFloat(v) * k).toFixed(2) + '"'; })
+        .replace(/rotate\(([-\d.]+) ([\d.]+) ([\d.]+)\)/g, function (mm, deg, rx, ry) {
+          return 'rotate(' + deg + ' ' + (parseFloat(rx) * k).toFixed(2) + ' ' + (parseFloat(ry) * k).toFixed(2) + ')';
+        });
       return '<svg width="' + to + '" height="' + to + '" viewBox="0 0 ' + to + ' ' + to + '">' + scaled + close;
     });
   }

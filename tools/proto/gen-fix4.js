@@ -10,50 +10,85 @@ fs.writeFileSync(D+'10-keys-manage.html', L.page('钥匙管理', `
   <div class="h1" style="margin-top:8px">钥匙管理</div>
   <div class="sub">13 项 · 密码 11 / 指纹 2 / 临时码 0</div>
 
-  <!-- expiringCard -->
+  <!-- 图 2 的卡解剖：库存分布（彩色数据行 + 三环）-->
   <div class="card" style="margin-top:24px">
-    <div class="cardlink">即将到期<span class="ch">${sv('chevron')}</span></div>
-    <div style="display:flex;flex-direction:column;gap:12px;margin-top:10px">
-      ${[['密码 #皇子-临时','2026-10-25 失效','#FF694E'],['密码 #访客','2026-10-28 失效','#FF9F0A']].map(([n,d,c])=>
-        `<div style="display:flex;align-items:center;gap:10px">
-          <span style="width:7px;height:7px;border-radius:50%;background:${c};flex:0 0 auto"></span>
-          <div style="flex:1"><div style="font-size:15px">${n}</div>
-          <div style="font-size:12px;color:#8D8D93;margin-top:2px">${d}</div></div>
-          <span style="font-size:12px;color:${c}">5 天</span>
-        </div>`).join('')}
+    <div class="cardlink">库存分布<span class="ch">${sv('chevron')}</span></div>
+    <div style="display:flex;align-items:center;gap:18px;margin-top:2px">
+      <div style="flex:1">
+        <div class="ctitle">13 项凭证</div>
+        <div style="margin-top:14px">
+          <div class="drow"><span class="dot" style="background:#F11B51"></span>
+            <span class="dv">11<span class="du"> 密码</span></span></div>
+          <div class="drow"><span class="dot" style="background:#3CDE02"></span>
+            <span class="dv">2<span class="du"> 指纹</span></span></div>
+          <div class="drow"><span class="dot" style="background:#0ADBD8"></span>
+            <span class="dv">0<span class="du"> 临时码</span></span></div>
+        </div>
+      </div>
+      ${L.tripleRing(100, .85, .15, .0, '13')}
     </div>
-    <div class="footer">到期前 7 天会在门厅提示。</div>
+    <div class="sep"></div>
+    <div class="cols">
+      <div><div class="clabel" style="margin-top:0">本周新增</div><div class="cvalue">2 项</div></div>
+      <div><div class="clabel" style="margin-top:0">即将到期</div><div class="cvalue">2 项</div></div>
+    </div>
+    <div class="footer">到期前 7 天会在门厅提示。临时码用完即弃，不进台账。</div>
   </div>
 
-  <!-- segmentBar -->
-  <div style="display:flex;margin-top:14px"><div class="segctl" style="flex:1">
-    <div class="o on">全部</div><div class="o">密码</div><div class="o">指纹</div><div class="o">临时码</div>
-  </div></div>
+  <!-- 即将到期：每条显示真实剩余天数 -->
+  <div class="card">
+    <div class="cardlink">即将到期<span class="ch">${sv('chevron')}</span></div>
+    <div style="display:flex;flex-direction:column;gap:14px;margin-top:10px">
+      ${[['密码 #皇子-临时','10-25 失效','#FF694E','2'],['密码 #访客','10-28 失效','#FF9F0A','5']].map(([n,d,c,days])=>
+        `<div style="display:flex;align-items:center;gap:11px">
+          <span style="width:6px;height:6px;border-radius:50%;background:${c};flex:0 0 auto"></span>
+          <div style="flex:1">
+            <div style="font-size:15px;color:#FFF">${n}</div>
+            <div style="font-size:12px;color:#8A8A90;margin-top:2px">${d}</div>
+          </div>
+          <span style="font-size:13px;font-weight:600;color:${c}">${days} 天</span>
+        </div>`).join('')}
+    </div>
+    <div class="footer">到期后自动失效，不会写进门锁。</div>
+  </div>
 
-  <!-- credentialCard（按类型分组）-->
-  <div class="card" style="margin-top:12px;padding:6px 0">
+  <!-- 分段控件（带外边距，不贴卡）-->
+  <div style="display:flex;margin-top:16px">
+    <div class="segctl" style="flex:1">
+      <div class="o on">全部</div><div class="o">密码</div><div class="o">指纹</div><div class="o">临时码</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px;padding:6px 0">
     <div class="cardlink" style="padding:8px 20px 8px">密码<span class="ch">${sv('chevron')}</span></div>
-    ${[['朕-大门-长期','朕 · 长期有效'],['密码 #皇子-临时','皇子 · 5 天后失效'],['密码 #访客','访客 · 8 天后失效']].map(([n,s2],i)=>
+    ${[['朕-大门-长期','朕 · 长期有效','进行中','blue'],
+       ['密码 #皇子-临时','皇子 · 2 天后失效','即将失效','warn'],
+       ['密码 #访客','访客 · 5 天后失效','即将失效','warn']].map(([n,s2,b,cls],i)=>
       `${i>0?'<div class="sep"></div>':''}
       <a class="rw" href="13-key-detail.html">
-        <div class="ic" style="background:transparent;color:#8D8D93">${sv('key')}</div>
+        <div class="ic" style="color:#8D8D93">${sv('key')}</div>
         <div class="tx"><div class="tt">${n}</div><div class="sb">${s2}</div></div>
+        <span class="badge ${cls}">${b}</span>
         <div class="ch">${sv('chevron')}</div></a>`).join('')}
   </div>
 
   <div class="card" style="padding:6px 0">
     <div class="cardlink" style="padding:8px 20px 8px">指纹<span class="ch">${sv('chevron')}</span></div>
-    ${[['指纹 12','母上'],['指纹 11','母上']].map(([n,s2],i)=>
+    ${[['指纹 12','母上 · 09-01 录入','有效'],
+       ['指纹 11','母上 · 09-01 录入','有效']].map(([n,s2,b],i)=>
       `${i>0?'<div class="sep"></div>':''}
       <a class="rw" href="13-key-detail.html">
-        <div class="ic" style="background:transparent;color:#8D8D93">${sv('fingerprint')}</div>
+        <div class="ic" style="color:#8D8D93">${sv('fingerprint')}</div>
         <div class="tx"><div class="tt">${n}</div><div class="sb">${s2}</div></div>
+        <span class="badge ok">${b}</span>
         <div class="ch">${sv('chevron')}</div></a>`).join('')}
-    <div class="footer">删除撤销命令会排队等待门锁连接，断网也不会丢。</div>
+    <div class="footer" style="padding:12px 20px 0;margin-top:0">
+      删除撤销命令会排队等待门锁连接，断网也不会丢。
+    </div>
   </div>
 
-  <button class="btn" style="margin-top:4px">添加钥匙</button>
-`, 1, {nav:true, back:'02-keys', right:'+' }));
+  <a class="btn" href="15-add-key.html" style="margin-top:4px;display:block;text-align:center;text-decoration:none">添加钥匙</a>
+`, 1, {nav:true, back:'02-keys', right:'+'}));
 
 // ══ 13 添加密码（AddKeyPage：capacity / password / validity / owner / action）══
 fs.writeFileSync(D+'13-key-detail.html', L.page('添加密码', `
@@ -114,13 +149,23 @@ fs.writeFileSync(D+'40-security.html', L.page('本机保护', `
   <div class="h1" style="margin-top:8px">本机保护</div>
   <div class="sub">现在安全吗 · 有没有事 · 有哪些功能</div>
 
-  <!-- statusCard -->
+  <!-- statusCard：图 5 的 MetricCard 形态 -->
   <div class="card" style="margin-top:24px">
     <div class="cardlink">现在安全吗<span class="ch">${sv('chevron')}</span></div>
-    <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
-      <span style="color:#30D158;width:22px;height:22px">${sv('shieldCheck')}</span>
-      <div style="flex:1"><div style="font-size:16px;font-weight:600">无风险</div>
-      <div style="font-size:12px;color:#8D8D93;margin-top:2px">数据解析正常 · 审计链完整</div></div>
+    <div style="display:flex;align-items:flex-start;gap:16px;margin-top:4px">
+      <div style="flex:1">
+        <div style="font-size:44px;font-weight:700;line-height:1;color:#2FD65C;
+          font-variant-numeric:tabular-nums;letter-spacing:-1.2px">0</div>
+        <div style="font-size:15px;font-weight:600;color:#FFF;margin-top:8px">项风险</div>
+        <div style="font-size:12px;color:#8A8A90;margin-top:5px">数据解析正常 · 审计链完整</div>
+      </div>
+      <svg width="80" height="80" viewBox="0 0 80 80" style="flex:0 0 auto">
+        <circle cx="40" cy="40" r="32" fill="none" stroke="rgba(47,214,92,.16)" stroke-width="6"/>
+        <circle cx="40" cy="40" r="32" fill="none" stroke="#2FD65C" stroke-width="6"
+          stroke-linecap="round" stroke-dasharray="201 201" transform="rotate(-90 40 40)"/>
+        <path d="M28 40l8 8 16-16" fill="none" stroke="#2FD65C" stroke-width="3.5"
+          stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
     </div>
     <div class="sep"></div>
     <div class="cols">

@@ -1,140 +1,92 @@
 <!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
 <title>指纹</title><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="pages.css"></head><body>
-<div class="phone">
-<div class="statusbar">
-  <span class="sb-time" data-real-time>12:00</span>
-  <span class="sb-right">
-    <svg width="17" height="11" viewBox="0 0 17 11" fill="#FFF"><rect x="0" y="7.5" width="3" height="3.5" rx="1"/><rect x="4.5" y="5.5" width="3" height="5.5" rx="1"/><rect x="9" y="3" width="3" height="8" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
-    <svg width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="#FFF" stroke-width="1.6" stroke-linecap="round"><path d="M1 3.4a10.5 10.5 0 0 1 14 0"/><path d="M3.6 6.2a6.6 6.6 0 0 1 8.8 0"/><path d="M6.2 8.9a2.9 2.9 0 0 1 3.6 0"/><circle cx="8" cy="10.2" r=".7" fill="#FFF" stroke="none"/></svg>
-    <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x=".5" y=".5" width="21" height="11" rx="3.2" stroke="#FFF" stroke-opacity=".4"/><rect x="2" y="2" width="15" height="8" rx="2" fill="#FFF"/><path d="M23 4.2v3.6a2 2 0 0 0 0-3.6z" fill="#FFF" fill-opacity=".5"/></svg>
-  </span>
-</div><div class="navbar">
+<div class="phone"><div class="navbar">
   <a class="back" href="02-keys.html">‹</a><span class="nt">指纹</span><span class="nr">编辑</span></div><div class="scroll"><div class="page hasnav">
 
   <div class="h1" style="margin-top:8px">指纹</div>
   <div class="sub">锁内 38 / 50 · 本机登记 3 枚</div>
 
-  <!-- 计数卡（源码：还可录 N / 仅剩 1 枚 警告 / 库存已满）-->
-  <!--VIZ-->
-  <div class="card"><div class="cardlink">锁内容量<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
-    <div style="display:flex;align-items:center;gap:18px;margin-top:6px">
-      <div style="position:relative;width:88px;height:88px;flex:0 0 auto">
-  <svg width="88" height="88" viewBox="0 0 88 88">
-    <circle cx="44" cy="44" r="36.08" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="4.3"/>
-    <circle cx="44" cy="44" r="36.08" fill="none" stroke="#0ADBD8" stroke-width="4.3"
-      stroke-linecap="round" stroke-dasharray="172.28996767111 226.69732588303947" transform="rotate(-90 44 44)"/>
-  </svg>
-  <div style="position:absolute;inset:0;display:flex;flex-direction:column;
-    align-items:center;justify-content:center">
-    <div style="font-size:23px;font-weight:700;color:#FFF;
-      font-variant-numeric:tabular-nums;line-height:1">76%</div>
-    <div style="font-size:7px;color:#8D8D93;margin-top:3px;max-width:55px;text-align:center;line-height:1.3">已用</div>
-  </div></div>
-      <div style="flex:1"><div style="display:flex;flex-direction:column;gap:12px;margin-top:6px">
-    <div>
-      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">
-        <span style="color:#8D8D93">已录</span>
-        <span style="color:#FFF;font-weight:600;font-variant-numeric:tabular-nums">38</span>
-      </div>
-      <div style="height:5px;border-radius:3px;background:rgba(255,255,255,.08)">
-        <div style="height:5px;border-radius:3px;background:#0ADBD8;width:76%"></div>
-      </div>
-    </div>
-    <div>
-      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">
-        <span style="color:#8D8D93">余量</span>
-        <span style="color:#FFF;font-weight:600;font-variant-numeric:tabular-nums">12</span>
-      </div>
-      <div style="height:5px;border-radius:3px;background:rgba(255,255,255,.08)">
-        <div style="height:5px;border-radius:3px;background:rgba(255,255,255,.24);width:24%"></div>
-      </div>
-    </div></div></div>
-    </div></div>
+  <!-- 图 2 卡解剖：指纹库存（细三环 + 彩色数据行）-->
   <div class="card" style="margin-top:24px">
     <div class="cardlink">指纹库存<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
-    <div style="display:flex;align-items:center;gap:18px;margin-top:6px">
-      <div style="position:relative;width:101px;height:101px;flex:0 0 auto">
-        <svg width="101" height="101" viewBox="0 0 101 101">
-          <circle cx="50.5" cy="50.5" r="43.5" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="4.6"/>
-          <circle cx="50.5" cy="50.5" r="43.5" fill="none" stroke="#0ADBD8" stroke-width="4.6"
-            stroke-linecap="round" stroke-dasharray="208 273" transform="rotate(-90 50.5 50.5)"/>
-          <circle cx="50.5" cy="50.5" r="22" fill="#0A0A0C"/>
-        </svg>
-        <div style="position:absolute;inset:0;display:flex;flex-direction:column;
-          align-items:center;justify-content:center">
-          <div style="font-size:22px;font-weight:700;color:#FFF;line-height:1">38</div>
-          <div style="font-size:10px;color:#8D8D93;margin-top:3px">/ 50</div>
-        </div>
-      </div>
+    <div style="display:flex;align-items:center;gap:18px;margin-top:2px">
       <div style="flex:1">
         <div class="ctitle">还可录 12 枚</div>
-        <div style="font-size:12px;color:#8D8D93;margin-top:8px;line-height:1.5">
-          指纹录在锁里，本机只记「谁的第几枚」</div>
+        <div style="margin-top:14px">
+          <div class="drow"><span class="dot" style="background:#0ADBD8"></span>
+            <span class="dv">38<span class="du"> 锁内已用</span></span></div>
+          <div class="drow"><span class="dot" style="background:#3CDE02"></span>
+            <span class="dv">12<span class="du"> 锁内余量</span></span></div>
+          <div class="drow"><span class="dot" style="background:#FF9F0A"></span>
+            <span class="dv">3<span class="du"> 本机登记</span></span></div>
+        </div>
       </div>
+      <svg width="100" height="100" viewBox="0 0 100 100" style="flex:0 0 auto"><circle cx="50" cy="50" r="46.55" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="4.5"/><circle cx="50" cy="50" r="46.55" fill="none" stroke="#F11B51" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="222.3 292.5" transform="rotate(-90 50 50)"/><circle cx="50" cy="50" r="36.55" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="4.5"/><circle cx="50" cy="50" r="36.55" fill="none" stroke="#3CDE02" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="55.1 229.7" transform="rotate(-90 50 50)"/><circle cx="50" cy="50" r="26.549999999999997" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="4.5"/><circle cx="50" cy="50" r="26.549999999999997" fill="none" stroke="#0ADBD8" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="10.0 166.8" transform="rotate(-90 50 50)"/><circle cx="50" cy="50" r="19.3" fill="#0A0A0C"/><text x="50" y="50" text-anchor="middle" dominant-baseline="central" font-size="22" font-weight="700" fill="#FFF" font-family="system-ui,-apple-system" style="font-variant-numeric:tabular-nums">38</text></svg>
     </div>
     <div class="sep"></div>
     <div class="cols">
-      <div><div class="clabel" style="margin-top:0">本机登记</div><div class="cvalue">3 枚</div></div>
-      <div><div class="clabel" style="margin-top:0">锁内余量</div><div class="cvalue">12 枚</div></div>
+      <div><div class="clabel" style="margin-top:0">上次录入</div><div class="cvalue">09-01</div></div>
+      <div><div class="clabel" style="margin-top:0">建议补录</div><div class="cvalue">1 枚</div></div>
     </div>
     <div class="footer">这把锁只剩 12 枚可用指纹，建议补一枚备用。</div>
   </div>
 
-  <!-- 录入向导（源码原文：请选好的手指按在门锁指纹头上, 抬起, 重复 8 次）-->
+  <!-- 录入向导（源码原文）-->
   <div class="card">
     <div class="cardlink">录入指纹<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
-    <div style="display:flex;gap:6px;justify-content:center;margin:14px 0">
+    <div style="display:flex;gap:6px;justify-content:center;margin:18px 0 14px">
       <span style="width:26px;height:4px;border-radius:2px;
         background:#0ADBD8"></span><span style="width:26px;height:4px;border-radius:2px;
         background:#0ADBD8"></span><span style="width:26px;height:4px;border-radius:2px;
         background:#0ADBD8"></span><span style="width:26px;height:4px;border-radius:2px;
-        background:rgba(255,255,255,.16)"></span><span style="width:26px;height:4px;border-radius:2px;
-        background:rgba(255,255,255,.16)"></span><span style="width:26px;height:4px;border-radius:2px;
-        background:rgba(255,255,255,.16)"></span><span style="width:26px;height:4px;border-radius:2px;
-        background:rgba(255,255,255,.16)"></span><span style="width:26px;height:4px;border-radius:2px;
-        background:rgba(255,255,255,.16)"></span>
+        background:rgba(255,255,255,.13)"></span><span style="width:26px;height:4px;border-radius:2px;
+        background:rgba(255,255,255,.13)"></span><span style="width:26px;height:4px;border-radius:2px;
+        background:rgba(255,255,255,.13)"></span><span style="width:26px;height:4px;border-radius:2px;
+        background:rgba(255,255,255,.13)"></span><span style="width:26px;height:4px;border-radius:2px;
+        background:rgba(255,255,255,.13)"></span>
     </div>
-    <div style="text-align:center;font-size:15px;color:#FFF;line-height:1.6">
+    <div style="text-align:center;font-size:15px;color:#FFF;line-height:1.62">
       请选好的手指按在门锁指纹头上，<br>抬起，重复 8 次
     </div>
-    <div style="text-align:center;font-size:13px;color:#0ADBD8;margin-top:8px">录入中… 3 / 8</div>
-    <div style="display:flex;gap:10px;margin-top:16px">
+    <div style="text-align:center;font-size:13px;color:#0ADBD8;margin-top:10px;
+      font-variant-numeric:tabular-nums">录入中… 3 / 8</div>
+    <div style="display:flex;gap:10px;margin-top:18px">
       <button class="btn sec" style="flex:1">重置进度</button>
       <button class="btn" style="flex:1;background:#0ADBD8;color:#062A2A">开始录入</button>
     </div>
   </div>
 
-  <!-- 命名（源码：命名 (点按建议填入) / 建议名 / 自定义名称 / 如: 妈妈·左手食指）-->
+  <!-- 命名 -->
   <div class="card">
     <div class="cardlink">命名<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
     <div class="clabel" style="margin-top:0">建议名（点按填入）</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-      <span style="font-size:12px;padding:6px 12px;border-radius:999px;
-          background:rgba(10,219,216,.14);color:#0ADBD8">妈妈·左手食指</span><span style="font-size:12px;padding:6px 12px;border-radius:999px;
-          background:rgba(10,219,216,.14);color:#0ADBD8">妈妈·右手拇指</span><span style="font-size:12px;padding:6px 12px;border-radius:999px;
-          background:rgba(10,219,216,.14);color:#0ADBD8">备用</span>
+      <span style="font-size:12px;padding:7px 13px;border-radius:999px;
+          background:rgba(10,219,216,.13);color:#0ADBD8;font-weight:500">妈妈·左手食指</span><span style="font-size:12px;padding:7px 13px;border-radius:999px;
+          background:rgba(10,219,216,.13);color:#0ADBD8;font-weight:500">妈妈·右手拇指</span><span style="font-size:12px;padding:7px 13px;border-radius:999px;
+          background:rgba(10,219,216,.13);color:#0ADBD8;font-weight:500">备用</span>
     </div>
     <input class="inp" style="margin-top:12px" placeholder="自定义名称，如: 妈妈·左手食指">
     <div class="footer">仅本机留存。重录会替代原来那枚。</div>
   </div>
 
-  <!-- 已登记列表 -->
+  <!-- 已登记 -->
   <div class="card" style="padding:6px 0">
     <div class="cardlink" style="padding:8px 20px 8px">已登记<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
     
       <a class="rw" href="13-key-detail.html">
-        <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="fingerprint"></span></div>
-        <div class="tx"><div class="tt">指纹 12</div><div class="sb">母上 · 2026-09-01</div></div>
+        <div class="ic" style="color:#8D8D93"><span class="svgi" data-i="fingerprint"></span></div>
+        <div class="tx"><div class="tt">指纹 12</div><div class="sb">母上 · 09-01 录入</div></div>
         <span class="badge ok">有效</span>
         <div class="ch"><span class="svgi" data-i="chevron"></span></div></a><div class="sep"></div>
       <a class="rw" href="13-key-detail.html">
-        <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="fingerprint"></span></div>
-        <div class="tx"><div class="tt">指纹 11</div><div class="sb">母上 · 2026-09-01</div></div>
+        <div class="ic" style="color:#8D8D93"><span class="svgi" data-i="fingerprint"></span></div>
+        <div class="tx"><div class="tt">指纹 11</div><div class="sb">母上 · 09-01 录入</div></div>
         <span class="badge ok">有效</span>
         <div class="ch"><span class="svgi" data-i="chevron"></span></div></a><div class="sep"></div>
       <a class="rw" href="13-key-detail.html">
-        <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="fingerprint"></span></div>
-        <div class="tx"><div class="tt">指纹 10</div><div class="sb">爱妃 · 2026-08-20</div></div>
+        <div class="ic" style="color:#8D8D93"><span class="svgi" data-i="fingerprint"></span></div>
+        <div class="tx"><div class="tt">指纹 10</div><div class="sb">爱妃 · 08-20 录入</div></div>
         <span class="badge ok">有效</span>
         <div class="ch"><span class="svgi" data-i="chevron"></span></div></a>
   </div>

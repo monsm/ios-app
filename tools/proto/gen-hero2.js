@@ -95,20 +95,25 @@ const sv = (n, sz) => `<span class="svgi" data-i="${n}"${sz?` data-sz="${sz}"`:'
 */
 // ══ 22-firmware：版本对比 + 进度环做主角 ══
 fs.writeFileSync(D+'22-firmware.html', L.page('固件升级', `
-  <div style="margin-top:8px;display:flex;align-items:center;justify-content:center;gap:24px">
+  
+
+  <div class="h1">固件升级</div>
+  <div class="sub">升级前请完成全部检查项</div>
+
+  <div class="card" style="margin-top:24px">
+    <div class="cardlink">版本<span class="ch">${sv('chevron')}</span></div>
+    <div style="margin-top:6px;display:flex;align-items:center;justify-content:center;gap:24px">
     <div style="text-align:center">
       <div style="font-size:11px;color:#8D8D93">当前</div>
-      <div style="font-size:30px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums">1.0.2</div>
+      <div style="font-size:38px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums">1.0.2</div>
     </div>
     <div style="color:#6A6A6E;font-size:20px">→</div>
     <div style="text-align:center">
       <div style="font-size:11px;color:#8D8D93">目标</div>
-      <div style="font-size:30px;font-weight:700;margin-top:4px;color:#5E5CE6">未选</div>
+      <div style="font-size:38px;font-weight:700;margin-top:4px;color:#5E5CE6">未选</div>
     </div>
   </div>
-
-  <div class="h1" style="margin-top:30px">固件升级</div>
-  <div class="sub">升级前请完成全部检查项</div>
+  </div>
 
   <div class="card" style="margin-top:26px">
     <div class="cardlink">升级进度<span class="ch">${sv('chevron')}</span></div>
