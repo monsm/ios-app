@@ -895,6 +895,62 @@ struct SecurityAuditView: View {
 // 四、数据销毁 (393-406 区段 + 296/549)
 // ================================================================
 struct SecurityDestroyView: View {
+    /// 图 2 红色警告读数卡：销毁会删掉多少（44px + 红环）
+    private var destroyScaleCard: some View {
+        // 真实签名是 listPwds(_ mac:) —— **无外部标签**（swiftshape R4 抓到我先写了 mac:）
+        let macs = DB.keychains().map { $0.mac }
+        let pwds = macs.reduce(0) { $0 + DB.listPwds($1).count }
+        let fps = macs.reduce(0) { $0 + DB.listFps($1).count }
+        let total = pwds + fps
+        return XPanel(kind: .group, tone: .danger) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(XPalette.danger)
+                    Text("销毁会删掉多少")
+                        .xFont(.subheadline)
+                        .foregroundStyle(XPalette.danger)
+                    Spacer(minLength: 0)
+                }
+                HStack(alignment: .center, spacing: XSpace.l) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        XHeroNumber(
+                            text: String(total),
+                            unit: "项凭证",
+                            color: XPalette.danger)
+                        Text("\(pwds) 条密码 · \(fps) 枚指纹 · 全部审计链 —— 不可恢复")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.danger.opacity(0.85))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 4)
+                    XGradientDial(
+                        size: 70,
+                        progress: 1,
+                        widthRatio: 0.13,
+                        showsCursor: false,
+                        showsTick: false,
+                        gradient: XGradient.dial
+                    ) {
+                        Image(systemName: "trash")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundStyle(XPalette.danger)
+                    }
+                    .accessibilityHidden(true)
+                }
+                .padding(.top, 8)
+                XStatSection {
+                    Text("销毁前请先备份 —— 备份闸没通过时，这个按钮会先把你带去导出向导。")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.danger.opacity(0.8))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+    }
+
+
     @EnvironmentObject var app: AppState
     @ObservedObject private var center = SecTickCenter.shared
     // 399 三级销毁级联状态
@@ -914,6 +970,11 @@ struct SecurityDestroyView: View {
 
             // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
             XScreen("销毁与应急", style: .inline) {
+                // 六图改造 (2026-10-23): 顶部加**图 2 的红色警告读数卡**。
+                //
+                // 图 2/图 3 的危险动作永远先给一个量化后果（"这会删掉 X 条"），
+                // 再给按钮。之前这一页从"备份闸"开始 —— 说的都是条件，没说要失去多少。
+                destroyScaleCard
                 XPanel(kind: .group) {
                     VStack(alignment: .leading, spacing: XSpace.m) {
                         secLabel("备份闸")

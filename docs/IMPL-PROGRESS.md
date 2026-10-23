@@ -83,7 +83,7 @@
 | 42-peek | SecurityCenterView.PrivacyDashboard | ✅ 图2 大数字（44px 已开项）+ 带中心数的环 + 三态语气色 | ✅ |
 | 43-privacy-dash | 同上（42/43 同屏）| ✅ 与 42-peek 同一实现 | ✅ |
 | 44-audit | SecurityCenterView.SecurityAuditView | ✅ 行改图4 节奏（时间在左/图标块/主文/状态胶囊/chevron）| ✅ |
-| 45-destroy | SecurityDestroyView | 图3 警示 | ⬜ |
+| 45-destroy | SecurityCenterView.SecurityDestroyView | ✅ 顶部图2 红色警告卡（44px「N 项凭证」+ 红环 + 拆分明细）| ✅ |
 | 46-safemode | SettingsView.SafemodeIntroView | ✅ 图2 双角色卡（44px A/B + 单位 + 说明）+ 彩点行说差别 + footer 洞察句 | ✅ |
 | 47-backup | BackupPage.swift | ✅ 状态卡重做：44px 天数 + 新鲜度环 + 三列（加密/派生/撤销窗口）+ footer | ✅ |
 | 48-export | ExportCenterView | 图5 柱图 + 轴标 | ⬜ |
@@ -104,8 +104,8 @@
 |---|---|---|---|
 | 60-care | CarePage.swift | 图4 三段环 + 图2 解剖 | ⬜ |
 | 61-reminders | CareRemindersView | 图2 + 图6 横滚 | ⬜ |
-| 85-battery | BatteryCare.swift | 图5 大数字 + 环 | ⬜ |
-| 86-checklist | CareViews.swift | 图5 环 + 图2 清单 | ⬜ |
+| 85-battery | CareViews.BatterySwapGuideView | ✅ 电量卡改图5（44px 数字 + 环，低电量橙/正常绿）| ✅ |
+| 86-checklist | CareViews.CareChecklistView | ✅ 新增图5 进度卡（44px 已勾 N/5 + 环心数字，全勾转绿）| ✅ |
 
 ### H 周边（P2）
 

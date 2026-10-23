@@ -317,17 +317,33 @@ struct BatterySwapGuideView: View {
         let days: Int = lastSwap.map {
             Int((Date().timeIntervalSince1970 * 1000 - $0.ts) / 86_400_000)
         } ?? -1
-        XPanel(kind: .hero, tone: low ? .warn : .ok) {
+        // 六图改造 (2026-10-23): 电量改**图 5 MetricCard**形态（44px 数字 + 环 + 三列）。
+        //
+        // "还剩多少电"是这一页唯一的量，之前只有 19pt —— 与"上次换电几天前"同级。
+        // 图 5 的第一张卡永远是大数字 + 环，一屏只有它这么大。
+        XPanel(kind: .group, tone: low ? .warn : .ok) {
             VStack(alignment: .leading, spacing: XSpace.m) {
-                HStack(alignment: .firstTextBaseline, spacing: XSpace.s) {
-                    Text(pct >= 0 ? String(pct) + "%" : "—")
-                        .xFont(.title2, weight: .semibold)
-                        .foregroundStyle(low ? XPalette.warn : XPalette.ok)
-                        .monospacedDigit()
-                    Text(low ? "电量偏低，建议尽快更换" : "电量充足")
-                        .xFont(.footnote)
-                        .foregroundStyle(low ? XPalette.warn : XPalette.textSub)
-                    Spacer(minLength: 0)
+                HStack(alignment: .center, spacing: XSpace.l) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        XHeroNumber(
+                            text: pct >= 0 ? String(pct) : "—",
+                            unit: "%",
+                            color: low ? XPalette.warn : XPalette.ok)
+                        Text(low ? "电量偏低，建议尽快更换" : "电量充足")
+                            .xFont(.footnote)
+                            .foregroundStyle(low ? XPalette.warn : XPalette.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 4)
+                    XGradientDial(
+                        size: 74,
+                        progress: pct >= 0 ? Double(pct) / 100 : 0.02,
+                        widthRatio: 0.13,
+                        showsCursor: false,
+                        showsTick: false,
+                        gradient: low ? XGradient.dial : XGradient.dialOK
+                    ) { EmptyView() }
+                    .accessibilityHidden(true)
                 }
                 if days >= 0 {
                     Text("上次换电 " + String(days) + " 天前")
@@ -455,6 +471,55 @@ struct BatterySwapGuideView: View {
 
 
 struct CareChecklistView: View {
+    /// 图 5 进度环：44px 已勾数 + 环（5 项全勾转绿）
+    private var progressRingCard: some View {
+        let done = checks.filter { $0 }.count
+        let total = max(1, items.count)
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack {
+                    Text("保养进度")
+                        .xFont(.subheadline)
+                        .foregroundStyle(XPalette.textTertiary)
+                    Spacer(minLength: 0)
+                    Text("还差 \(total - done) 项")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textTertiary)
+                }
+                HStack(alignment: .center, spacing: XSpace.l) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        XHeroNumber(
+                            text: String(done),
+                            unit: "/ \(total) 项",
+                            color: done == total ? XPalette.ok : XPalette.accentText)
+                        Text(done == total ? "五项都过了一遍 —— 可以点完成保养"
+                                           : "逐项打勾，做完点下面的完成保养")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 4)
+                    XGradientDial(
+                        size: 74,
+                        progress: Double(done) / Double(total),
+                        widthRatio: 0.13,
+                        showsCursor: false,
+                        showsTick: false,
+                        gradient: done == total ? XGradient.dialOK : XGradient.dial
+                    ) {
+                        Text("\(done)")
+                            .font(.system(size: XMetric.dataText(20), weight: .bold))
+                            .monospacedDigit()
+                            .foregroundStyle(done == total ? XPalette.ok : XPalette.accentText)
+                    }
+                    .accessibilityHidden(true)
+                }
+                .padding(.top, 8)
+            }
+        }
+    }
+
+
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
     var onDone: () -> Void = {}
@@ -479,6 +544,11 @@ struct CareChecklistView: View {
                 // 而三件事早就算好了：lastCareAt / carePeriodDays / ekeyCheckAt，
                 // 全在 BatteryCare.CareState 里，只是一个都没接到界面。
                 careLedgerCard
+                // 六图改造 (2026-10-23): 加**图 5 的进度环**（已勾 N/5）。
+                //
+                // 清单页最想知道的就是"还差几项"。之前只有一个勾选列表，
+                // 用户要自己数打了几个勾。图 5 用一枚环 + 一个数回答这件事。
+                progressRingCard
                 XPanel(kind: .group) {
                     VStack(alignment: .leading, spacing: XSpace.m) {
                         secLabel("五项清单")
