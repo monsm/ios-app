@@ -58,7 +58,7 @@
 | 20-locks | LocksPage.swift | ✅ 行内电量 11pt → 17pt 粗 + 语义色 + 锁态胶囊（图4 大数字位）；List 结构保留（拖动排序/滑动删除是真实交互）| ✅ |
 | 21-lock-profile | LockProfilePage.swift | ✅ 图5 双列 MetricCard（44px 电量 + 环 / 固件大字 + cpu 位）| ✅ |
 | 22-firmware | FirmwarePage.swift | ✅ 版本对照改图2 双角色卡（44px 版本号 + 角色 + 说明），对比胶囊独立成卡 | ✅ |
-| 23-gateway | GatewayPage.swift | 图4 分步条 | ⬜ |
+| 23-gateway | GatewayPage.swift | ✅ 图4 三段分步条 + 图5 44px「N 台已接入」+ 环心步序号 | ✅ |
 | 24-dongles | DonglesPage.swift | ✅ hero 加图5 44px「N 把已配对」+ 环（0 把时给下一步指引）| ✅ |
 | 25-synctime | SyncTimeView | ✅ 偏差 19pt → 44px + 同色光晕（图1 语言）| ✅ |
 
@@ -95,7 +95,7 @@
 | HTML | SwiftUI | 六图特征 | 状态 |
 |---|---|---|---|
 | 50-events | EventsPage.swift | 图4 分组头 + 状态胶囊 | ⬜ |
-| 51-feed | FeedPage.swift | 图4 两层 + 图5 柱图 | ⬜ |
+| 51-feed | FeedPage.swift | ✅ 图5 时段卡（44px 今日开门 + 环 + 24 根细柱 + 0/6AM/12PM/6PM/24 轴标）| ✅ |
 | 52-stats | StatsPage.swift | ✅ 新增图5 Activity Rings 首卡（粗三环 + 右侧三行彩色读数）| ✅ |
 
 ### G 关怀（P2）
@@ -117,7 +117,7 @@
 | 81-backup-studio | BackupStudio.swift | 图5 + 图2 红卡 | ⬜ |
 | 82-bin | CredentialBinView | 图2 卡解剖 | ⬜ |
 | 83-studio | CredentialStudio | 图2 卡解剖 | ⬜ |
-| 84-diagnostics | DiagnosticsPage.swift | 图5 MetricCard | ⬜ |
+| 84-diagnostics | DiagnosticsPage.swift | ✅ 首卡图5 MetricCard（44px 问题数 + 健康度环）+ XStatSection 页脚 | ✅ |
 | 87-claim | MemberCenterView | 图5 大数字 + 单选 | ⬜ |
 | 88-exit | — | 图5 + 图2 三色按钮 | ⬜ |
 | 89-share-android | ShareToAndroidView | 图6 hero + 二维码 | ⬜ |

@@ -44,6 +44,11 @@ struct FeedPage: View {
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
         XScreen("动态") {
                     headerBar.xScrollLift()
+                    // 六图改造 (2026-10-23): 加**图 5 的时段概览卡**（44px 今日开门数 + 环 + 24h 柱）。
+                    //
+                    // 动态页原来直接进按天分组的时间线 —— 缺了"今天总共几次"这层。
+                    // 图 5 的第一张卡永远先给量再给细节。
+                    todayOverviewCard.xScrollLift()
                     // 按天分组 —— 原来是一长条平铺，看不出"这是今天的还是上周的"。
                     // 动态页的核心是"最近发生了什么"，日期是最基本的坐标系。
                     LazyVStack(spacing: XSpace.m, pinnedViews: []) {
@@ -256,6 +261,80 @@ struct FeedPage: View {
     }
 
     /// 日期头：今天 / 昨天 / 具体日期 + 条数 + 告警数
+    /// 图 5 时段卡：44px 今日开门数 + 环 + 24 根细柱 + 轴标
+    private var todayOverviewCard: some View {
+        let todayRows = groupedDays.first?.rows ?? []
+        let todayCount = todayRows.count
+        let alarmCount = todayRows.filter { $0.warn }.count
+        // 24 小时分布：从行的时刻取小时
+        var buckets = Array(repeating: 0, count: 24)
+        for r in todayRows {
+            // 历法必须走 WeekCal.gregorian（规范：取分量一律用它，避免用户改了系统历法后错位）
+            let h = WeekCal.gregorian.component(.hour, from: r.ts)
+            if h >= 0 && h < 24 { buckets[h] += 1 }
+        }
+        let peak = max(1, buckets.max() ?? 1)
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack {
+                    Text("今日时段")
+                        .xFont(.subheadline)
+                        .foregroundStyle(XPalette.textTertiary)
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(XPalette.textTertiary.opacity(0.6))
+                }
+                HStack(alignment: .center, spacing: XSpace.l) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        XHeroNumber(
+                            text: String(todayCount),
+                            unit: "次开门",
+                            color: alarmCount > 0 ? XPalette.warn : XPalette.accentText)
+                        Text(alarmCount > 0 ? "其中 \(alarmCount) 条告警 —— 已在下文标红"
+                                            : "没有告警，今天一切正常")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 4)
+                    XGradientDial(
+                        size: 66,
+                        progress: min(1, Double(todayCount) / 8),
+                        widthRatio: 0.14,
+                        showsCursor: false,
+                        showsTick: false
+                    ) { EmptyView() }
+                    .accessibilityHidden(true)
+                }
+                .padding(.top, 8)
+                // 图 5 的 24 柱 + 轴标
+                HStack(alignment: .bottom, spacing: 2) {
+                    ForEach(0..<24, id: \.self) { h in
+                        RoundedRectangle(cornerRadius: 1.5, style: .continuous)
+                            .fill(buckets[h] > 0 ? XPalette.accentText : XPalette.text.opacity(0.10))
+                            .frame(maxWidth: .infinity)
+                            .frame(height: max(2, CGFloat(buckets[h]) / CGFloat(peak) * 40))
+                    }
+                }
+                .frame(height: 40)
+                .padding(.top, 12)
+                HStack {
+                    Text("0").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                    Spacer()
+                    Text("6AM").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                    Spacer()
+                    Text("12PM").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                    Spacer()
+                    Text("6PM").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                    Spacer()
+                    Text("24").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                }
+                .padding(.top, 6)
+            }
+        }
+    }
+
     private func dayHeader(_ day: String, count: Int, alarms: Int) -> some View {
         HStack(spacing: XSpace.xs) {
             Text(dayLabel(day))

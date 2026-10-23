@@ -36,6 +36,12 @@ struct GatewayPage: View {
 
         // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
         XScreen("智能网关", style: .inline) {
+            // 六图改造 (2026-10-23): 顶部加**图 4 的分步条 + 图 5 的读数**。
+            //
+            // 图 4 Sports 的分段条把"现在走到哪一步"摆在最上面（Yesterday/Today/Upcoming）。
+            // 网关配网是有明确步骤的流程（重置 → 连 WiFi → 等配对），
+            // 之前只在 hero 里用文案说"先把网关重置"，没有全局进度感。
+            gatewayStepsCard
             if !confirmed {
                 stepOneCard.xScrollLift()
             } else {
@@ -51,6 +57,66 @@ struct GatewayPage: View {
         }
         }
         .task { reload() }
+    }
+
+    /// 图 4 分步条 + 图 5 44px 读数：当前走到第几步、已配几台网关
+    private var gatewayStepsCard: some View {
+        let stepIndex = confirmed ? (steps.isEmpty && error.isEmpty ? 2 : 3) : 1
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack {
+                    Text("配网进度")
+                        .xFont(.subheadline)
+                        .foregroundStyle(XPalette.textTertiary)
+                    Spacer(minLength: 0)
+                    Text("第 \(stepIndex) / 3 步")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textTertiary)
+                }
+                HStack(alignment: .center, spacing: XSpace.l) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        XHeroNumber(
+                            text: String(gateways.count),
+                            unit: "台已接入",
+                            color: gateways.isEmpty ? XPalette.textTertiary : XPalette.ok)
+                        Text(gateways.isEmpty ? "还没有网关接入 —— 按下面三步走"
+                                              : "已接入的网关能替门锁转发远控指令")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 4)
+                    XGradientDial(
+                        size: 70,
+                        progress: Double(stepIndex) / 3,
+                        widthRatio: 0.13,
+                        showsCursor: false,
+                        showsTick: false
+                    ) {
+                        Text("\(stepIndex)")
+                            .font(.system(size: XMetric.dataText(20), weight: .bold))
+                            .monospacedDigit()
+                            .foregroundStyle(XPalette.accentText)
+                    }
+                    .accessibilityHidden(true)
+                }
+                .padding(.top, 8)
+                // 图 4 的三段分步条
+                HStack(spacing: XSpace.xs) {
+                    ForEach(1...3, id: \.self) { n in
+                        Capsule()
+                            .fill(n <= stepIndex ? XPalette.accentText : XPalette.text.opacity(0.14))
+                            .frame(height: 3)
+                    }
+                }
+                .padding(.top, 12)
+                Text("① 重置网关 → ② 连它的 WiFi → ③ 等它出现在下面列表里")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .padding(.top, 8)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
     }
 
     // ═══════════════════════════════════════════════════════

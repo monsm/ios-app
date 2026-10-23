@@ -49,6 +49,11 @@ struct DiagnosticsPage: View {
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
         XScreen("诊断与自检", style: .inline) {
             let _ = revision
+            // 六图改造 (2026-10-23): 首卡 = **图 5 MetricCard**（44px 问题数 + 环）。
+            //
+            // 图 5 的第一张卡永远是一个量 + 一枚环。诊断页的问题是"有没有事"，
+            // 答案是一个数：几项没通过。之前要往下读三张卡才能拼出来。
+            healthMetricCard
             selfCheckCard
             healthCard
             stabilityCard
@@ -68,6 +73,56 @@ struct DiagnosticsPage: View {
                 }
                 .xFont(.subheadline, weight: .medium)
                 .accessibilityLabel("复制全部诊断信息")
+            }
+        }
+    }
+
+    /// 图 5 MetricCard：44px 问题数 + 健康度环 + 三层细线读数
+    private var healthMetricCard: some View {
+        let bad = selfChecks.filter { !$0.ok }.count
+        let total = max(1, selfChecks.count)
+        let health = Double(total - bad) / Double(total)
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack {
+                    Text("数据健康")
+                        .xFont(.subheadline)
+                        .foregroundStyle(XPalette.textTertiary)
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(XPalette.textTertiary.opacity(0.6))
+                }
+                HStack(alignment: .center, spacing: XSpace.l) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        XHeroNumber(
+                            text: String(bad),
+                            unit: "项问题",
+                            color: bad == 0 ? XPalette.ok : XPalette.warn)
+                        Text(bad == 0 ? "数据键都能解析，没有孤立文件或日志断档"
+                                      : "有 \(bad) 项自检没通过 —— 下面逐条列出了原因")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 4)
+                    XGradientDial(
+                        size: 76,
+                        progress: health,
+                        widthRatio: 0.13,
+                        showsCursor: false,
+                        showsTick: false,
+                        gradient: bad == 0 ? XGradient.dialOK : XGradient.dial
+                    ) { EmptyView() }
+                    .accessibilityHidden(true)
+                }
+                .padding(.top, 8)
+                XStatSection {
+                    Text("每次进入这一页都会重算一次：解析所有数据键、比对事件链、检查文件完整性。")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textTertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
     }
