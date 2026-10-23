@@ -44,6 +44,7 @@ struct DevicePage: View {
                 identityCard.xScrollLift()
                 attentionCard.xScrollLift()
                 capacityCard
+                statusChipsRow
                 metricsRow.xScrollLift()
             }
             VStack(spacing: XSpace.rowGap) {
@@ -312,6 +313,17 @@ struct DevicePage: View {
     /// 之前这里是三枚 XMetricTile 平铺：数字只有 19pt，在深色卡里读不出主次，
     /// 而且三个等重的瓦片让「握手」和「固件版本」看起来同样重要 —— 它们不是。
     /// 固件号是文本不是读数，改成末尾一行小字。
+    /// 审美对齐 HTML (2026-10-24): 顶部玻璃胶囊（HTML 03-devices 有 chip 行）
+    private var statusChipsRow: some View {
+        let snap = DB.readStatus(mac)
+        return HStack(spacing: XSpace.s) {
+            XStatChip(label: "信号", value: sense.lastRssi.map { "\($0)" } ?? "—")
+            XStatChip(label: "固件", value: snap?.firmware.isEmpty == false ? (snap?.firmware ?? "—") : "—")
+            XStatChip(label: "握手", value: sense.connectMs.map { "\($0)ms" } ?? "—")
+            Spacer(minLength: 0)
+        }
+    }
+
     private var metricsRow: some View {
         VStack(spacing: XSpace.s) {
             HStack(spacing: XSpace.s) {

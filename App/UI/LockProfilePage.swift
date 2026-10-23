@@ -51,6 +51,8 @@ struct LockProfilePage: View {
                 // 图 5 的 Step Count / Step Distance 就是「44px 数字 + 迷你环 + 副标」并排。
                 // 锁档案之前只有一排 11pt 小胶囊（电量% / 锁态 / 固件），
                 // 三个信息等重、都很小 —— 而"这把锁还有多少电"是回家路上最想知道的。
+                fpCapacityCard.xScrollLift()
+                identityFactsCard.xScrollLift()
                 metricsCards.xScrollLift()
                 identitySection.xScrollLift()
                 symbolSection.xScrollLift()
@@ -205,6 +207,75 @@ struct LockProfilePage: View {
         }
     }
 
+    /// HTML 对齐 (2026-10-24): 补「指纹余量」卡 —— HTML 21-lock-profile 的第一张卡。
+    /// 安全的名字（keychains 为空时给占位，不取 [0] 索引）
+    private var nameText: String {
+        guard let kc = DB.keychains().first(where: { $0.mac == mac }) else { return "未选锁" }
+        return LockArchive.displayName(kc)
+    }
+
+    private var fpCapacityCard: some View {
+        let snap = DB.readStatus(mac)
+        let cap = snap?.fpCap ?? 0
+        let left = snap?.fpStock ?? -1
+        let used = cap > 0 && left >= 0 ? max(0, cap - left) : 0
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("指纹余量")
+                    .xFont(.subheadline)
+                    .foregroundStyle(XPalette.textTertiary)
+                HStack(alignment: .center, spacing: XSpace.l) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        XHeroNumber(
+                            text: cap > 0 ? String(left) : "—",
+                            color: left <= 0 && cap > 0 ? XPalette.warn : XPalette.ok,
+                            unit: "枚可录")
+                        Text(cap > 0 ? "已用 \(used) / \(cap)" : "还没读到锁容量")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textTertiary)
+                    }
+                    Spacer(minLength: 4)
+                    XGradientDial(
+                        size: 62,
+                        progress: cap > 0 ? Double(used) / Double(max(1, cap)) : 0.02,
+                        widthRatio: 0.14, showsCursor: false, showsTick: false
+                    ) { EmptyView() }
+                    .accessibilityHidden(true)
+                }
+                .padding(.top, 8)
+            }
+        }
+    }
+
+    /// HTML 对齐 (2026-10-24): 「锁态 / 名字」两列（HTML 21-lock-profile 的身份卡）
+    private var identityFactsCard: some View {
+        let snap = DB.readStatus(mac)
+        let rc = snap?.rc
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                Text("身份")
+                    .xFont(.subheadline)
+                    .foregroundStyle(XPalette.textTertiary)
+                HStack(alignment: .top, spacing: XSpace.s) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("名字").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        // 只用本页已有的 mac，不做 keychain 兜底（placeholderKC 不存在）
+                        Text(nameText)
+                            .xFont(.footnote, weight: .semibold)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("锁态").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text(rc == nil ? "未知" : lockStateText(rc!))
+                            .xFont(.footnote, weight: .semibold)
+                            .foregroundStyle(rc == 0 ? XPalette.ok : XPalette.warn)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+        }
+    }
+
     @ViewBuilder
     private var statusStrip: some View {
         let snap = DB.readStatus(mac)
@@ -248,6 +319,10 @@ struct LockProfilePage: View {
     private func lockStateText(_ rc: Int) -> String { StatusParser.lockStateText(rc) }
 
     private var identitySection: some View {
+            Text("身份")
+            .xFont(.subheadline)
+            .foregroundStyle(XPalette.textTertiary)
+            XHairline().padding(.vertical, XSpace.s)
         XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 sectionTitle("身份", icon: "textformat")
@@ -303,6 +378,10 @@ struct LockProfilePage: View {
     // ═══════════════════════════════════════════════════════
 
     private var symbolSection: some View {
+            Text("符号")
+            .xFont(.subheadline)
+            .foregroundStyle(XPalette.textTertiary)
+            XHairline().padding(.vertical, XSpace.s)
         XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 sectionTitle("符号", icon: "sparkles")
@@ -350,6 +429,10 @@ struct LockProfilePage: View {
     // ═══════════════════════════════════════════════════════
 
     private var colorSection: some View {
+            Text("配色")
+            .xFont(.subheadline)
+            .foregroundStyle(XPalette.textTertiary)
+            XHairline().padding(.vertical, XSpace.s)
         XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 sectionTitle("色标", icon: "paintpalette")
@@ -389,6 +472,10 @@ struct LockProfilePage: View {
     // ═══════════════════════════════════════════════════════
 
     private var moreSection: some View {
+            Text("更多")
+            .xFont(.subheadline)
+            .foregroundStyle(XPalette.textTertiary)
+            XHairline().padding(.vertical, XSpace.s)
         XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 sectionTitle("更多", icon: "ellipsis.circle")

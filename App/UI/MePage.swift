@@ -43,6 +43,7 @@ struct MePage: View {
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
         XScreen("本机设置") {
             statusSummary
+            backupRestoreCard
             protectionSection
             lockSection
             dataSection
@@ -82,7 +83,7 @@ struct MePage: View {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .center, spacing: XSpace.l) {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("待处理")
+                        Text("本机状态")
                             .xFont(.subheadline)
                             .foregroundStyle(XPalette.textTertiary)
                         XHeroNumber(
@@ -107,29 +108,55 @@ struct MePage: View {
                 }
                 .padding(.bottom, XSpace.m)
                 XHairline().padding(.bottom, XSpace.s)
+                // ⚠ 2026-10-24 修复：这四个瓦片的注释一直写着"每项都是一个能直接跳过去的入口"，
+                // 但它们**没有 action 参数、也没包在导航里** —— 点上去什么都不会发生。
+                // 这正是用户反馈的"入口不能点击"。现在逐个包 NavigationLink。
                 HStack(spacing: XSpace.s) {
-                    summaryTile(
-                        icon: locked ? "lock.shield.fill" : "lock.open",
-                        value: locked ? "已锁" : "未锁",
-                        label: "应用锁",
-                        tone: locked ? XPalette.ok : XPalette.warn)
-                    summaryTile(
-                        icon: alarmN > 0 ? "exclamationmark.triangle.fill" : "checkmark.circle.fill",
-                        value: alarmN > 0 ? "\(alarmN)" : "0",
-                        label: "待处理告警",
-                        tone: alarmN > 0 ? XPalette.warn : XPalette.ok)
-                    summaryTile(
-                        icon: bkDays < 0 ? "externaldrive.badge.questionmark" : "externaldrive.fill",
-                        // §7.16：单位不拼进数值字符串 —— 拼进去单位会拿到数值的字号与颜色。
-                        value: bkDays < 0 ? "从未" : (bkDays <= 0 ? "今天" : "\(bkDays)"),
-                        label: "上次备份",
-                        tone: bkDays < 0 ? XPalette.warn : (bkDays > 14 ? XPalette.warn : XPalette.ok),
-                        unit: bkDays > 0 ? "天" : nil)
-                    summaryTile(
-                        icon: "square.stack.3d.up.fill",
-                        value: "\(locks)",
-                        label: "门锁",
-                        tone: locks > 0 ? XPalette.accent : XPalette.textTertiary)
+                    NavigationLink {
+                        SecurityPage().environmentObject(app)
+                    } label: {
+                        summaryTile(
+                            icon: locked ? "lock.shield.fill" : "lock.open",
+                            value: locked ? "已锁" : "未锁",
+                            label: "应用锁",
+                            tone: locked ? XPalette.ok : XPalette.warn)
+                    }
+                    .buttonStyle(.plain)
+
+                    NavigationLink {
+                        AlarmsPage().environmentObject(app)
+                    } label: {
+                        summaryTile(
+                            icon: alarmN > 0 ? "exclamationmark.triangle.fill" : "checkmark.circle.fill",
+                            value: alarmN > 0 ? "\(alarmN)" : "0",
+                            label: "待处理告警",
+                            tone: alarmN > 0 ? XPalette.warn : XPalette.ok)
+                    }
+                    .buttonStyle(.plain)
+
+                    NavigationLink {
+                        BackupPage().environmentObject(app)
+                    } label: {
+                        summaryTile(
+                            icon: bkDays < 0 ? "externaldrive.badge.questionmark" : "externaldrive.fill",
+                            // §7.16：单位不拼进数值字符串 —— 拼进去单位会拿到数值的字号与颜色。
+                            value: bkDays < 0 ? "从未" : (bkDays <= 0 ? "今天" : "\(bkDays)"),
+                            label: "上次备份",
+                            tone: bkDays < 0 ? XPalette.warn : (bkDays > 14 ? XPalette.warn : XPalette.ok),
+                            unit: bkDays > 0 ? "天" : nil)
+                    }
+                    .buttonStyle(.plain)
+
+                    NavigationLink {
+                        LocksPage().environmentObject(app)
+                    } label: {
+                        summaryTile(
+                            icon: "square.stack.3d.up.fill",
+                            value: "\(locks)",
+                            label: "门锁",
+                            tone: locks > 0 ? XPalette.accent : XPalette.textTertiary)
+                    }
+                    .buttonStyle(.plain)
                 }
                 .padding(.vertical, XSpace.xs)
             }
@@ -217,7 +244,44 @@ struct MePage: View {
                     subtitle: "自检 · 数据健康 · 启动耗时",
                     showsChevron: true)
             }
+            Text("本机数据与访问权限")
+                .xFont(.caption, weight: .semibold)
+                .foregroundStyle(XPalette.textTertiary)
+                .padding(.bottom, XSpace.xxs)
             caption("这一组动的是本机数据与访问权限, 改动前会二次确认。")
+        }
+    }
+
+    /// HTML 对齐 (2026-10-24): 补「备份恢复」卡 —— 上次导出 / 本机门锁 / 钥匙总数。
+    /// parity 工具指出这一整卡在 App 里缺失（HTML 05-system 有）。
+    private var backupRestoreCard: some View {
+        XPanel {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                Text("备份恢复")
+                    .xFont(.subheadline)
+                    .foregroundStyle(XPalette.textTertiary)
+                HStack(alignment: .top, spacing: XSpace.s) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("上次备份").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text(backupAgeText).xFont(.footnote, weight: .semibold)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("本机门锁").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text("\(DB.keychains().count) 把").xFont(.footnote, weight: .semibold)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("钥匙总数").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text("\(DB.keychains().reduce(0) { $0 + DB.listPwds($1.mac).count + DB.listFps($1.mac).count }) 份")
+                            .xFont(.footnote, weight: .semibold)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                NavigationLink { BackupPage().environmentObject(app) } label: {
+                    XRow(systemImage: "externaldrive", title: "去备份与恢复", showsChevron: true)
+                }
+            }
         }
     }
 
@@ -289,6 +353,10 @@ struct MePage: View {
                     title: "门锁安全模式",
                     showsChevron: true)
             }
+            Text("门锁与设备")
+                .xFont(.caption, weight: .semibold)
+                .foregroundStyle(XPalette.textTertiary)
+                .padding(.bottom, XSpace.xxs)
             caption("这台锁")
         }
     }
@@ -339,6 +407,10 @@ struct MePage: View {
                     value: messageBadge,
                     showsChevron: true)
             }
+            Text("导出与关怀")
+                .xFont(.caption, weight: .semibold)
+                .foregroundStyle(XPalette.textTertiary)
+                .padding(.bottom, XSpace.xxs)
             caption("全程离线: 备份只写本机文件, 不上传任何服务器。")
         }
     }

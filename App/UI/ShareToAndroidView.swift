@@ -66,6 +66,39 @@ struct ShareToAndroidView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .xCallout(XPalette.warn, .control, wash: 0.10)
 
+                // HTML 对齐 (2026-10-24): 补「关于这个码」卡 —— 有效期 / 作用 两列 + 说明。
+                // parity 工具指出这一整卡在 App 里缺失。
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        Text("关于这个码")
+                            .xFont(.subheadline)
+                            .foregroundStyle(XPalette.textTertiary)
+                        HStack(alignment: .top, spacing: XSpace.s) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("有效期")
+                                    .xFont(.caption2)
+                                    .foregroundStyle(XPalette.textTertiary)
+                                Text("一次性")
+                                    .xFont(.footnote, weight: .semibold)
+                                    .foregroundStyle(XPalette.ok)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("作用")
+                                    .xFont(.caption2)
+                                    .foregroundStyle(XPalette.textTertiary)
+                                Text("导入钥匙")
+                                    .xFont(.footnote, weight: .semibold)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        Text("二维码里是这把锁的配对信息，扫一次就失效，重新生成会作废旧码。")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textSub)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+
                 ShareLink(item: Image(uiImage: qr),
                           preview: SharePreview(title + " 的开锁二维码", image: Image(uiImage: qr))) {
                     Label("分享二维码", systemImage: "square.and.arrow.up")

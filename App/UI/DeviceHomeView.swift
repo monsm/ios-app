@@ -57,7 +57,7 @@ struct SyncTimeView: View {
             : (absSkew <= 5 ? XPalette.ok : (absSkew <= 60 ? XPalette.warn : XPalette.danger))
         return XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: XSpace.m) {
-                secLabel("锁钟偏差")
+                secLabel("偏差范围")
 
                 // 六图改造 (2026-10-23): 偏差数字提到 **44px 主角档 + 光晕**（图 1 语言）。
                 //
@@ -144,6 +144,9 @@ struct SyncTimeView: View {
 
     // ── 动作卡 ──
     private var actionCard: some View {
+                Text("写入")
+                    .xFont(.subheadline)
+                    .foregroundStyle(XPalette.textTertiary)
         XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 XBusyButton(title: "将手机时间同步到锁内",

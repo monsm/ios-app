@@ -200,24 +200,41 @@ struct CareRemindersView: View {
                     return (m, md, md.isEmpty ? 9999 : daysUntil(md))
                 }.sorted { $0.2 < $1.2 }
 
-                ForEach(rows, id: \.0.id) { (m, md, days) in
+                // 审美对齐 HTML (2026-10-24): 生日列表 → **图 6 的横向滚动画廊**。
+                //
+                // HTML 61-reminders 这一块是 104pt 宽的横滑卡片（头像圆 + 名字 + 倒计时），
+                // 不是竖排清单。parity 工具把"横向画廊"标为缺失项。
+                ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: XSpace.s) {
-                        Text(m.name)
-                            .xFont(.subheadline)
-                            .foregroundStyle(XPalette.text)
-                        Spacer(minLength: XSpace.m)
-                        if !md.isEmpty {
-                            Text(md)
-                                .xFontExact(.caption.monospacedDigit())
-                                .foregroundStyle(XPalette.textSub)
+                        ForEach(rows, id: \.0.id) { (m, md, days) in
+                            VStack(spacing: 8) {
+                                Text(String(MemberHub.display(m).prefix(1)))
+                                    .xFont(.headline, weight: .semibold)
+                                    .foregroundStyle(XPalette.accentText)
+                                    .frame(width: 44, height: 44)
+                                    .xPlate(XPalette.accent.opacity(0.16), 22)
+                                Text(MemberHub.display(m))
+                                    .xFont(.footnote, weight: .medium)
+                                    .foregroundStyle(XPalette.text)
+                                    .lineLimit(1)
+                                Text(countdownText(days))
+                                    .xFont(.caption2, weight: .semibold)
+                                    .foregroundStyle(countdownTone(days))
+                                    .lineLimit(1)
+                                if !md.isEmpty {
+                                    Text(md)
+                                        .xFontExact(.caption2.monospacedDigit())
+                                        .foregroundStyle(XPalette.textTertiary)
+                                }
+                            }
+                            .xScaledWidth(104)
+                            .padding(.vertical, XSpace.s)
+                            .xPlate(XPalette.surfaceAlt.opacity(0.55), XRadius.tile)
+                            .accessibilityElement(children: .combine)
+                            .accessibilityLabel(m.name + (md.isEmpty ? " 未填写生日" : " 生日 " + md + ", " + countdownText(days)))
                         }
-                        Text(countdownText(days))
-                            .xFontExact(.subheadline.monospacedDigit())
-                            .foregroundStyle(countdownTone(days))
-                            .frame(minWidth: 56, alignment: .trailing)
                     }
-                    .accessibilityElement(children: .combine)
-                    .accessibilityLabel(m.name + (md.isEmpty ? " 未填写生日" : " 生日 " + md + ", " + countdownText(days)))
+                    .padding(.vertical, 2)
                 }
                 Text("生日在 设置-成员管理-补全信息 里填写 (格式 MM-dd)。提醒通过本地通知送达, 全程离线, 不依赖任何服务器。")
                     .xFont(.footnote)

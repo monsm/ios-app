@@ -41,6 +41,7 @@ struct CarePage: View {
         // 现在骨架归组件管，本页只声明「有哪几张卡」。
         XScreen("维护与保养", subtitle: "机械件也该有保养记录") {
             periodCard.xScrollLift()
+            careHistoryGallery.xScrollLift()
             todoCard.xScrollLift()
             historyRow.xScrollLift()
         }
@@ -215,6 +216,9 @@ struct CarePage: View {
     // ═══════════════════════════════════════════════════════
 
     private var todoCard: some View {
+                Text("该做的")
+                    .xFont(.subheadline)
+                    .foregroundStyle(XPalette.textTertiary)
         XPanel(kind: .group, padding: 0) {
             VStack(spacing: 0) {
                 if let battery = batteryTodo {
@@ -317,6 +321,38 @@ struct CarePage: View {
     // ═══════════════════════════════════════════════════════
     // MARK: - 历史
     // ═══════════════════════════════════════════════════════
+
+    /// 审美对齐 HTML (2026-10-24): 保养历史横向画廊（HTML 60-care 是横滑卡）
+    private var careHistoryGallery: some View {
+        let events = BatteryCare.events(mac).filter { $0.kind == "care" }.prefix(8)
+        return ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: XSpace.s) {
+                if events.isEmpty {
+                    Text("还没有保养记录 —— 做完一次就会出现在这里")
+                        .xFont(.footnote)
+                        .foregroundStyle(XPalette.textTertiary)
+                        .frame(width: 240, alignment: .leading)
+                        .padding(XSpace.m)
+                        .xPlate(XPalette.surfaceAlt.opacity(0.5), XRadius.tile)
+                } else {
+                    ForEach(Array(events), id: \.ts) { e in
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("保养").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                            // 真实 API：TimeFormat.shortClock（TimeFormat.day / BatteryCare.daysAgoText 都不存在）
+                            Text(TimeFormat.shortClock(e.ts)).xFont(.footnote, weight: .semibold)
+                                .foregroundStyle(XPalette.text)
+                            Text("\(TimeFormat.daysSince(ms: e.ts)) 天前").xFont(.caption2)
+                                .foregroundStyle(XPalette.textTertiary)
+                        }
+                        .xScaledWidth(104, alignment: .leading)
+                        .padding(XSpace.m)
+                        .xPlate(XPalette.surfaceAlt.opacity(0.55), XRadius.tile)
+                    }
+                }
+            }
+            .padding(.vertical, 2)
+        }
+    }
 
     private var historyRow: some View {
         // XRow 自带 action 参数 (内部就是 Button), 不再手搓 surface 底。

@@ -125,7 +125,7 @@ struct BackupPage: View {
         return XPanel(kind: .group, tone: backupTone) {
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
-                    Text("备份状态")
+                    Text("备份时效")
                         .xFont(.subheadline)
                         .foregroundStyle(XPalette.textTertiary)
                     Spacer(minLength: 0)
@@ -163,18 +163,19 @@ struct BackupPage: View {
                 XHairline().padding(.vertical, 12)
                 HStack(alignment: .top, spacing: XSpace.s) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("加密").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text("加密参数").xFont(.subheadline).foregroundStyle(XPalette.textTertiary)
+                        Text("算法").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
                         Text("AES-128").xFont(.footnote, weight: .semibold)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("口令派生").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
-                        Text("PBKDF2").xFont(.footnote, weight: .semibold)
+                        Text("认证").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text("HMAC-SHA256").xFont(.footnote, weight: .semibold)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("撤销窗口").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
-                        Text("24 小时").xFont(.footnote, weight: .semibold)
+                        Text("派生").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text("PBKDF2 6万轮").xFont(.footnote, weight: .semibold)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }

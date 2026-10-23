@@ -62,7 +62,24 @@ struct AppLockSetupView: View {
     /// 应用锁只有开/关两个状态，但"开没开"这件事值得做成一个**读数**而不是一行字：
     /// 图 5 的第一张卡永远是「一个量 + 一枚环」。这里量是「1/1 或 0/1 已启用」，
     /// 环在开启时满格转绿 —— 与安全页、防窥页保持同一套语言。
-    private var heroCard: some View {
+        /// HTML 对齐 (2026-10-24): 补「保护项」卡 —— HTML 41-applock 有，App 缺。
+    private var protectionItemsCard: some View {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                Text("保护项")
+                    .xFont(.subheadline)
+                    .foregroundStyle(XPalette.textTertiary)
+                XDataRow(label: "打开 App 要口令", value: on ? "已开" : "未开", unit: "",
+                         color: on ? XPalette.ok : XPalette.warn)
+                XDataRow(label: "保存的密码默认不显示", value: on ? "已开" : "未开", unit: "",
+                         color: on ? XPalette.ok : XPalette.warn)
+                XDataRow(label: "切到后台立即变糊", value: on ? "已开" : "未开", unit: "",
+                         color: on ? XPalette.ok : XPalette.warn)
+            }
+        }
+    }
+
+private var heroCard: some View {
         XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
