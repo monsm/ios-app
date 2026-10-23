@@ -955,7 +955,7 @@ private fun SettingsCard(
         Box(
             Modifier
                 .fillMaxWidth()
-                .height(1.dp)
+                .height(KfTokens.Hairline.width)
                 .background(colors.hairline)
         )
         Spacer(Modifier.height(KfTokens.Space.m))

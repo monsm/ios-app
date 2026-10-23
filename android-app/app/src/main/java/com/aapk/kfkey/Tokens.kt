@@ -84,6 +84,18 @@ internal object KfTokens {
     }
 
     /**
+     * 分隔线 —— 规范 §2：**0.5pt** 发丝线，不是 1dp。
+     *
+     * iOS 侧是 `1 / UIScreen.main.scale`（@3x 上 0.33pt 渲染成 1 物理像素）；
+     * Compose 用 0.5dp ≈ 1.5px @3x，是同一档。
+     *
+     * 旧值 `1.dp` = 3px @3x —— **粗了一倍**，与 iOS 在同一屏上不是一条线。
+     */
+    object Hairline {
+        val width = 0.5f.dp
+    }
+
+    /**
      * 图标尺寸。逐值对账 iOS App/Core/Theme.swift:234-242 的 enum XIcon。
      * 范式 10: 全 App 只用这一套, 不许在各屏就地写 30.dp / 3.5f 这种裸值。
      */
