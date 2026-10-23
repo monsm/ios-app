@@ -127,8 +127,8 @@
 
 | HTML | Compose | 六图特征 | 状态 |
 |---|---|---|---|
-| 01-home | KfApp + UnlockDial | 图1 渐变环 + 中心大字 + chip | ⬜ |
-| 02-scan | ScanSheet（新增） | 图6 hero + 取景框 | ⬜ |
+| 01-home | KfApp + UnlockDial + KfChip | ✅ 图1 五段渐变进度弧 + 环心 44sp dBm 读数 + 图1 双玻璃 chip | ✅ |
+| 02-scan | EmptyState（改造） | ✅ 图6 蓝渐变 hero 包裹取景框 + 白色系文字 | 🟨 |
 | 03-settings | SettingsCard | 图2 卡解剖 + 开关组 | ⬜ |
 | 04-success | UnlockSuccess（新增） | 图1 环转绿 + 回执卡 | ⬜ |
 | 05-rebind | RebindConfirm（新增） | 图2 双卡 + 红警告 | ⬜ |
@@ -163,3 +163,7 @@
 | 2026-10-23 | **03-devices 完成**：三枚等重瓦片 → 图5 双列 MetricCard（握手/信号各带 44px 数字 + 迷你环），固件号降为末尾小字 |
 | 2026-10-23 | **04-members 部分**：成员数 12pt 灰字 → 44px 主角数字 |
 | 2026-10-23 | 判断记录：设备页「容量条」保持分格条**不改环** —— 每格代表一个槽位，改环会丢失「还剩几个」的粒度（参考图是调色板，不是模板）|
+| 2026-10-23 | **Android 01-home 完成**：① 进度弧单色 accent → 图1 五段连续渐变 ② 环心新增 44sp dBm 读数（等宽数字防跳动）③ 新增 `KfChip` 组件 + 顶部双玻璃胶囊（自动开锁 / 当前信号）|
+| 2026-10-23 | **Android 02-scan 完成**：空态取景框包进图6 蓝渐变 hero，文字改白色系（深灰在蓝底不可读），描边改白 |
+| 2026-10-23 | 校验白名单同步：kotlinbalance 字号档补 44/13（`Type.hero`/`Type.small`）|
+| 2026-10-23 | **8 道门禁全绿**（iOS 5 + Android 3）：swiftcheck/swiftlint/apisig/contrast/dynamictype/kotlinbalance/kotlinshadow/tokendrift |

@@ -360,6 +360,32 @@ private fun KfApp(unlocker: BleUnlocker) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Header(lock)
+            // 六图改造 (2026-10-23): 加**图 1 的顶部双 chip**。
+            //
+            // 图 1 Health Age 的顶栏是两枚玻璃胶囊：左「Overview / 1 Excellent」、
+            // 右「Health Age / -4.7 years」。它们承担的是「这一屏的两个关键状态」，
+            // 而不是装饰。本端对应的是「已武装」与「当前信号」—— 之前这两个信息
+            // 一个藏在设置卡里、一个只有靠近时才在仪表行露面，进页面看不到。
+            lock?.let {
+                Spacer(Modifier.height(KfTokens.Space.m))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(KfTokens.Space.s)
+                ) {
+                    KfChip(
+                        label = "自动开锁",
+                        value = if (proximity) "已武装" else "已关闭",
+                        tone = if (proximity) colors.ok else colors.textTertiary,
+                        modifier = Modifier.weight(1f)
+                    )
+                    KfChip(
+                        label = "当前信号",
+                        value = if (rssi != null) "$rssi dBm" else "未测到",
+                        tone = if ((rssi ?: -99) >= -40) colors.ok else colors.textSub,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
             Spacer(Modifier.weight(1f))
             if (lock == null) {
                 EmptyState(onScan = { launchScan() })
@@ -368,7 +394,7 @@ private fun KfApp(unlocker: BleUnlocker) {
                 // 范式 9 / 14-13: 一屏只能有 1 个 >=200pt 的主视觉。旧版这里同时摆了 232dp 圆盘
                 // 和 208dp 的大箭头 = 两个主角。现在箭头降级成仪表行旁的 72dp 指示器 (见下),
                 // 主视觉只剩圆盘一个。
-                UnlockDial(busy = busy, onClick = { doUnlock(auto = false) })
+                UnlockDial(busy = busy, rssi = rssi, onClick = { doUnlock(auto = false) })
 
                 Spacer(Modifier.height(KfTokens.Space.l))
 
@@ -594,6 +620,54 @@ private fun KfApp(unlocker: BleUnlocker) {
     }
 }
 
+/**
+ * 图 1 的顶部玻璃胶囊 —— 图标/状态点 + 两行文字（label 12 灰 / value 16 粗）。
+ *
+ * 与 iOS 的 XStatChip 同一语言：圆角 999、底 rgba(255,255,255,.055)、
+ * 内描边 .5dp rgba(255,255,255,.07)。左端一枚语义色状态点，不画图标
+ * —— 胶囊里塞图标会让 24dp 高度撑不开两行字。
+ */
+@Composable
+private fun KfChip(
+    label: String,
+    value: String,
+    tone: Color,
+    modifier: Modifier = Modifier
+) {
+    val colors = LocalKfColors.current
+    Row(
+        modifier = modifier
+            .clip(RoundedCornerShape(999.dp))
+            .background(Color.White.copy(alpha = 0.055f))
+            .border(0.5.dp, Color.White.copy(alpha = 0.07f), RoundedCornerShape(999.dp))
+            .padding(horizontal = KfTokens.Space.m, vertical = 9.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Box(
+            Modifier
+                .size(7.dp)
+                .clip(CircleShape)
+                .background(tone)
+        )
+        Column {
+            Text(
+                text = label,
+                color = colors.textTertiary,
+                fontSize = Type.footnote,
+                maxLines = 1
+            )
+            Text(
+                text = value,
+                color = colors.text,
+                fontSize = Type.headline,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1
+            )
+        }
+    }
+}
+
 @Composable
 private fun Header(lock: LockInfo?) {
     val colors = LocalKfColors.current
@@ -641,7 +715,7 @@ private fun Header(lock: LockInfo?) {
  * 零投影: 全仓没有一处 .shadow —— 范式 6.3「应用体卡片靠明度差, 禁止投影」。
  */
 @Composable
-private fun UnlockDial(busy: Boolean, onClick: () -> Unit) {
+private fun UnlockDial(busy: Boolean, rssi: Int?, onClick: () -> Unit) {
     val colors = LocalKfColors.current
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
@@ -744,13 +818,17 @@ private fun UnlockDial(busy: Boolean, onClick: () -> Unit) {
                     // 这里用 B: 先把画布转到 12 点朝右 (即 sweep 的 0 位), 再画一条从 0° 起、走 300° 的弧。
                     // 效果等价于 iOS 的 AngularGradient(startAngle: -90) + trim(0...progress)。
                     rotate(degrees = -90f, pivot = Offset(size.width / 2f, size.height / 2f)) {
+                        // 六图改造 (2026-10-23): 进度弧改用**图 1 的五段连续渐变**。
+                        //
+                        // 与 iOS HomeConsole 同步：图 1 Health Age 的环是青绿→蓝→深蓝的
+                        // **连续**过渡（#4A9E96 → #2E8FC0 → #1E6AAE → #1560A8 → #0A84FF）。
+                        // 之前这里是单色 accent 的三档透明度 —— 读起来像"进度条推着走"，
+                        // 而连续渐变让环本身成为一个渐变物体，这是图 1 与普通进度环最本质的差别。
                         drawArc(
-                            brush = Brush.sweepGradient(
-                                0f to colors.accent.copy(alpha = 0.35f),
-                                0.42f to colors.accent.copy(alpha = 0.75f),
-                                0.833f to colors.accent,
-                                1f to colors.accent,
-                                center = Offset(size.width / 2f, size.height / 2f)
+                            brush = Brush.linearGradient(
+                                colorStops = KfTokens.dialStops.toTypedArray(),
+                                start = Offset(0f, size.height),
+                                end = Offset(size.width, 0f)
                             ),
                             startAngle = 0f,
                             sweepAngle = 300f,
@@ -763,8 +841,32 @@ private fun UnlockDial(busy: Boolean, onClick: () -> Unit) {
                 }
             }
 
-            // 5 字形 + 手势说明
+            // 5 字形 + 手势说明 + **图 1 的中心读数**
+            //
+            // 图 1 的环心是一个超大数字（-4.7 + YEARS）。本端环心原来是图标 + 文字，
+            // 没有读数 —— 用户看不出"现在信号多强"，只能去别处找。
+            // 现在把 RSSI 做成环心读数（与 Android 01-home HTML 原型一致）。
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                // 图 1 的环心读数：超大数字 + 单位。这里放 RSSI，与 01-home HTML 原型一致。
+                // 没有信号时显示两个短横 —— 不假装有数据。
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(
+                        text = rssi?.toString() ?: "—",
+                        fontSize = 44.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.text,
+                        // 数字必须等宽，否则扫描时数字跳动会把整行推来推去
+                        fontFeatureSettings = "tnum"
+                    )
+                    Text(
+                        text = " dBm",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = colors.textTertiary,
+                        modifier = Modifier.padding(bottom = 7.dp)
+                    )
+                }
+                Spacer(Modifier.height(10.dp))
                 Canvas(Modifier.size(40.dp)) {
                     val g = size.minDimension * 0.30f
                     val cx = size.width / 2
@@ -801,13 +903,37 @@ private fun EmptyState(onScan: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.padding(vertical = KfTokens.Space.xl)
     ) {
+        // 六图改造 (2026-10-23): 取景框外面包一层**图 6 的蓝渐变 hero**。
+        //
+        // 图 6 Face Gallery 的「New Watch Faces」卡是一个蓝紫渐变容器，
+        // 里面放主体视觉 + 一句引导。本屏的"主体视觉"就是那个取景框，
+        // "引导"就是下面那句「对准 iOS 上的钥匙二维码」。
+        // 之前这两样裸放在黑画布上，读起来像临时提示；包进渐变 hero 之后
+        // 才是一张"卡片"——图 6 从不在黑底上裸放视觉主体。
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(24.dp))
+                .background(
+                    Brush.verticalGradient(
+                        colorStops = arrayOf(
+                            0.00f to Color(0xFF4B5AE8),
+                            0.42f to Color(0xFF3D49C8),
+                            1.00f to Color(0xFF232B7A)
+                        )
+                    )
+                )
+                .padding(horizontal = 22.dp, vertical = 26.dp)
+        ) {
         // 二维码角框: 保留 (它是真功能 —— 告诉用户"这里要扫一张码"), 不是装饰图标。
         // 范式 7.17 要求图标 28pt, 但这里的框承担「取景框」语义, 按 96dp 画; 见
         // docs/GLASS/ANDROID-REDESIGN.md 的偏离登记。
         Canvas(Modifier.size(96.dp)) {
             val w = 3.dp.toPx()
             val len = 24.dp.toPx()
-            val c = colors.accent.copy(alpha = 0.85f)
+            // 图 6 hero 内的取景框用白描边（在蓝底上铜色会糊掉）
+            val c = Color.White.copy(alpha = 0.92f)
             fun corner(x: Float, y: Float, dx: Float, dy: Float) {
                 drawLine(c, Offset(x, y), Offset(x + dx * len, y), strokeWidth = w, cap = StrokeCap.Round)
                 drawLine(c, Offset(x, y), Offset(x, y + dy * len), strokeWidth = w, cap = StrokeCap.Round)
@@ -819,15 +945,18 @@ private fun EmptyState(onScan: () -> Unit) {
         }
         Spacer(Modifier.height(10.dp))
         // 范式 12: 空态标题说**原因**, 不说状态。旧句「还没有绑定门锁」是状态。
-        Text("本机还没有钥匙", color = colors.textSub, fontSize = Type.subhead, fontWeight = FontWeight.SemiBold)
+        // hero 内文字必须走白色系 —— 深灰压在蓝渐变上读不清（图 6 的 hero 内也是纯白 + 78% 白）
+        Text("本机还没有钥匙", color = Color.White, fontSize = Type.title2, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(KfTokens.Space.xs))
         Text(
             "在 iOS 端「设置 → 门锁 → 分享给安卓」生成二维码，扫一次即可导入。",
-            color = colors.textTertiary,
+            color = Color.White.copy(alpha = 0.78f),
             fontSize = Type.footnote,
             textAlign = TextAlign.Center,
             lineHeight = 18.sp
         )
+        }
+
         Spacer(Modifier.height(KfTokens.Space.xl))
         // 范式 7.0.6: 主按钮 48pt 高 / 白底黑字 / 圆角 999。
         PrimaryButton(text = "扫码添加门锁", onClick = onScan)

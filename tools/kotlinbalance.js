@@ -128,7 +128,9 @@ console.log(files.length + ' 个 Kotlin 文件括号配平 ✓ (这**不证明**
 // HIG subheadline 默认值（规范已下修成 14）。iOS 侧 766 处已全部收到 XText，
 // 本端现在也补了 Type 令牌，这条判据防它退回去。
 {
-  const SPEC = new Set([11, 12, 14, 16, 18, 19, 30, 36, 56]);   // §4.2 的十档
+  // 2026-10-23: 六图补档新增 Type.hero(44) 与 Type.small(13)，与 iOS DSFont 同源。
+  // 新增字号档时这里必须同步 —— 名单是封闭的。
+  const SPEC = new Set([11, 12, 13, 14, 16, 18, 19, 30, 36, 44, 56]);   // §4.2 十一档
   const bad = [];
   for (const f of files) {
     const lines = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n').split('\n');
