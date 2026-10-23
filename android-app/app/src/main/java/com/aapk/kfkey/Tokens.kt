@@ -149,10 +149,6 @@ object Type {
     // ── 六图范式补档 (2026-10-23, 与 iOS DSFont 同源) ──
     /** 44 Bold -1.4 —— **MetricCard 主角数字**（图 5 的 13,818 / 6.58MI） */
     val hero = 44.sp
-    /** 96 Heavy -2.6 —— **旗舰环中心数字**（图 1 的 -4.7） */
-    val dialNumber = 96.sp
-    /** 118 Heavy -3.2 —— 旗舰环超大档（454 宽实测） */
-    val dialNumberXL = 118.sp
     /** 13 Regular 0 —— 卡内副文（之前借 footnote 12 会偏挤） */
     val small = 13.sp
 

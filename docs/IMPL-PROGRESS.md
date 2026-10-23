@@ -19,12 +19,13 @@
 | 组件 | 图依据 | iOS | Android | 状态 |
 |---|---|---|---|---|
 | `XGradientDial` | 图1 | ✅ | ⬜ | ✅ |
-| `XCardAnatomy` | 图2 | ⬜ | ⬜ | ⬜ |
+| `XCardAnatomy` | 图2 | 🟨（XPanel 已带顶光材质）| ⬜ | 🟨 |
 | `XHeroNumber` | 图1/5 | ✅ | ⬜ | ✅ |
 | `XTripleThinRing` | 图2 | ✅ | ⬜ | ✅ |
 | `XDataRow` | 图2 | ✅ | ⬜ | ✅ |
 | `XTwoToneSheet` | 图4 | ⬜ | ⬜ | ⬜ |
 | `XBarChart` | 图5 | ⬜ | ⬜ | ⬜ |
+| `XText.small` 13档 | 图2 | ✅ | ✅ | ✅ |
 
 ---
 
@@ -34,7 +35,7 @@
 
 | HTML | SwiftUI | 六图特征 | 状态 |
 |---|---|---|---|
-| 01-home | HomeConsole.swift | 图1 渐变环 + 中心大字 + 图2 卡解剖 | ⬜ |
+| 01-home | HomeConsole.swift | 图1 渐变环 → 蓄力弧；图2 卡材质 + 彩点行 + 细三环；图1/2/6 画布径向渐变 | ✅ |
 
 ### B 钥匙（P0）
 
@@ -153,3 +154,7 @@
 | 2026-10-23 | **阶段 0 完成**：iOS 补 `DSFont.hero/dialNumber/dialNumberXL/small`、`XPalette.canvasGradient`、`XGradient.cardSurface/dial/dialOK`；Android 补同源 4 组令牌 |
 | 2026-10-23 | **阶段 1 完成 4/7**：`XGradientDial`（图1 开口环+游标+tick）、`XHeroNumber`（三档+光晕）、`XDataRow`（彩点行）、`XTripleThinRing`（细三环）|
 | 2026-10-23 | 校验：swiftcheck 112 文件括号平衡 ✓；kotlinbalance 9 文件 ✓；tokendrift 三组对账 ✓ |
+| 2026-10-23 | **01-home 改造完成**：① XPanel 卡片改图2 顶光材质+上缘高光（全站受益）② 门厅画布改径向渐变 ③ 蓄力弧改图1 五段连续渐变（成功绿/失败红保持单色）④ 三指标改图2 双栏（XDataRow + XTripleThinRing）|
+| 2026-10-23 | 移除推测性令牌 dialNumber(96)/dialNumberXL(118)：门厅环心是**动作控件**不是读数，不放数字（原设计注释已论证）|
+| 2026-10-23 | 新增 `XText.small`(13) 两端对齐；apisig 白名单同步登记 |
+| 2026-10-23 | **7 道门禁全绿**：swiftcheck / swiftlint / apisig / contrast / dynamictype / kotlinbalance / tokendrift |

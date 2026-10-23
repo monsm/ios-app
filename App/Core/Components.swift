@@ -134,7 +134,23 @@ struct XPanel<Content: View>: View {
         if kind == .hero {
             shape.fill(XGradient.hero)
         } else {
-            shape.fill(XPalette.surface)
+            // 六图改造 (2026-10-23): 普通卡改用**图 2 的卡材质**。
+            //
+            // 图 2/5/6 的卡片不是平色 #1C1C1E, 而是 `#202020 → #191919(26%) → #171717`。
+            // 顶部比底部亮 9 个色阶 —— 这 9 个色阶就是"卡片有厚度"的全部来源。
+            // 平色卡片会读成"贴上去的一块", 渐变卡片读成"一块有厚度的板"。
+            //
+            // 再叠一层 inset 高光 (上缘 0.5pt rgba(255,255,255,.055)) 模拟边缘反射。
+            shape
+                .fill(XGradient.cardSurface)
+                .overlay {
+                    RoundedRectangle(cornerRadius: radius, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.055), lineWidth: 0.5)
+                        .mask(
+                            LinearGradient(colors: [.white, .clear],
+                                           startPoint: .top, endPoint: .center)
+                        )
+                }
         }
     }
 }
@@ -2424,7 +2440,7 @@ struct XGradientDial<Center: View>: View {
             // ⑤ 顶部 tick
             if showsTick {
                 Capsule()
-                    .fill(Color.white.opacity(0.34))
+                    .fill(XPalette.text.opacity(0.34))
                     .frame(width: 7, height: size * widthRatio * 0.34)
                     .offset(y: -(size / 2 - size * widthRatio * 0.5 - 2))
             }
@@ -2435,7 +2451,7 @@ struct XGradientDial<Center: View>: View {
                 let a = startAngle.radians + (1 - gap) * progress * 2 * .pi
                 Circle()
                     .fill(XPalette.accentText)          // 亮蓝蓝 — 图 1 的 #0A84FF
-                    .overlay(Circle().stroke(Color.white, lineWidth: 3.2))
+                    .overlay(Circle().stroke(XPalette.text, lineWidth: 3.2))
                     .frame(width: size * widthRatio * 0.62, height: size * widthRatio * 0.62)
                     .offset(x: r * cos(a), y: r * sin(a))
             }
@@ -2478,7 +2494,9 @@ struct XHeroNumber: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 0) {
             Text(text)
-                .font(.system(size: size, weight: size >= 96 ? .heavy : .bold, design: .default))
+                // 大数字不走语义字号: 它要和环/卡保持比例, 语义字号在 AX 下会跳档。
+                // 走 XMetric.dataText —— 按 AX 放大到上限 1.35, 再多就溢出器皿。
+                .font(.system(size: XMetric.dataText(size), weight: .bold, design: .default))
                 .monospacedDigit()
                 .tracking(-size * 0.026)
                 .foregroundStyle(color)
@@ -2486,7 +2504,7 @@ struct XHeroNumber: View {
                         radius: glow ? size * 0.47 : 0)
             if let unit {
                 Text(unit)
-                    .font(.system(size: max(12, size * 0.32), weight: .medium))
+                    .font(.system(size: XMetric.dataText(max(12, size * 0.32)), weight: .medium))
                     .foregroundStyle(XPalette.textTertiary)
                     .padding(.leading, unitGap)
             }
@@ -2518,23 +2536,23 @@ struct XDataRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 HStack(alignment: .firstTextBaseline, spacing: 0) {
                     Text(value)
-                        .font(.system(size: DSFont.small, weight: .semibold))
+                        .font(.system(size: XMetric.dataText(DSFont.small), weight: .semibold))
                         .monospacedDigit()
                         .foregroundStyle(color)
                     if let unit {
                         Text(unit)
-                            .font(.system(size: DSFont.small, weight: .medium))
+                            .font(.system(size: XMetric.dataText(DSFont.small), weight: .medium))
                             .foregroundStyle(XPalette.textTertiary)
                             .padding(.leading, 3)
                     }
                     Spacer(minLength: 6)
                     Text(label)
-                        .font(.system(size: DSFont.small))
+                        .xFont(.small)
                         .foregroundStyle(XPalette.textTertiary)
                 }
                 if let note {
                     Text(note)
-                        .font(.system(size: DSFont.caption))
+                        .xFont(.caption)
                         .foregroundStyle(XPalette.textTertiary.opacity(0.8))
                 }
             }
@@ -2569,12 +2587,12 @@ struct XTripleThinRing: View {
             if let centerText {
                 VStack(spacing: 2) {
                     Text(centerText)
-                        .font(.system(size: size * 0.22, weight: .bold))
+                        .font(.system(size: XMetric.dataText(size * 0.22), weight: .bold))
                         .monospacedDigit()
                         .foregroundStyle(XPalette.text)
                     if let centerSub {
                         Text(centerSub)
-                            .font(.system(size: size * 0.10))
+                            .font(.system(size: XMetric.dataText(size * 0.10)))
                             .foregroundStyle(XPalette.textTertiary)
                     }
                 }
@@ -2591,7 +2609,7 @@ struct XTripleThinRing: View {
         let r = size / 2 - lineW / 2 - CGFloat(index) * step
         ZStack {
             Circle()
-                .stroke(Color.white.opacity(0.09), lineWidth: lineW)
+                .stroke(XPalette.text.opacity(0.09), lineWidth: lineW)
                 .frame(width: r * 2, height: r * 2)
             Circle()
                 .trim(from: 0, to: max(0.001, min(1, value)))

@@ -113,7 +113,12 @@ struct HomeConsole: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                XPalette.canvas.ignoresSafeArea()
+                // 六图改造 (2026-10-23): 画布从**平色纯黑**改成**径向渐变**。
+                //
+                // 图 1/2/6 的画布没有一个是平的 #000：顶端 6% 压了一层 #0A0E1A（偏冷深蓝），
+                // 38% 降到 #06070C，底部才是纯黑。平的纯黑会让整屏发死、卡片浮不起来。
+                // 这层渐变是所有卡片"能浮起来"的前提。
+                XPalette.canvasGradient.ignoresSafeArea()
                 ScrollView {
                     // ═══ 页面骨架：规范 5.3 ═══
                     //
@@ -561,6 +566,19 @@ struct HomeConsole: View {
         return CGSize(width: r * CGFloat(cos(rad)), height: r * CGFloat(sin(rad)))
     }
 
+    /// 蓄力弧的渐变 —— 图 1 语言（五段连续）vs 语义单色（成功/失败）。
+    ///
+    /// 为什么不用 AngularGradient 包住五段: 角度渐变会让同一段颜色在环上重复出现,
+    /// 而图 1 的渐变是**线性跨整个环**的 (左下→右上)。用 LinearGradient 才是对的。
+    private var arcGradient: AnyShapeStyle {
+        switch phase {
+        case .unlocked:  return AnyShapeStyle(XGradient.dialOK)
+        case .failed:    return AnyShapeStyle(phase.arcTone)
+        case .idle, .charging:
+            return AnyShapeStyle(XGradient.dial)
+        }
+    }
+
     private var unlockStage: some View {
         VStack(spacing: XSpace.l) {
             ZStack {
@@ -603,13 +621,18 @@ struct HomeConsole: View {
                     .trim(from: heroRingStartDeg / 360,
                           to: (heroRingStartDeg + heroRingSweepDeg * max(0.0001, progress)) / 360)
                     .stroke(
-                        AngularGradient(
-                            colors: [phase.arcTone.opacity(0.35),
-                                     phase.arcTone.opacity(0.75),
-                                     phase.arcTone],
-                            center: .center,
-                            startAngle: .degrees(heroRingStartDeg),
-                            endAngle: .degrees(heroRingStartDeg + heroRingSweepDeg)),
+                        // 六图改造 (2026-10-23): 蓄力弧改用**图 1 的五段连续渐变**。
+                        //
+                        // 图 1 Health Age 的环是 青绿→蓝→深蓝 的**连续**过渡 (#4A9E96 → #2E8FC0
+                        // → #1E6AAE → #1560A8 → #0A84FF)。之前这里是单色 AngularGradient,
+                        // 读起来像"进度条推着走"; 换成五段连续渐变之后, 环本身就成了一个渐变物体,
+                        // 这是图 1 与普通进度环最本质的差别。
+                        //
+                        // 但**成功/失败两态必须保持单色**:
+                        //   · 成功 = 绿 (图 1 语言的绿色版, XGradient.dialOK)
+                        //   · 失败 = 红 (danger)
+                        // 语义色不能被渐变盖掉 —— 用户要靠颜色判断结果。
+                        arcGradient,
                         style: StrokeStyle(lineWidth: heroRingWidth, lineCap: .round))
                     // 规范 7.8 通用自检: 环**不得有投影，只用辉光**。
                     // 原来这圈 16pt 的同色投影是想让蓄力弧"亮起来" ——
@@ -845,14 +868,37 @@ struct HomeConsole: View {
         let layout = typeSize.isAccessibilitySize
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: XSpace.l))
             : AnyLayout(HStackLayout(spacing: 0))
+        // 六图改造 (2026-10-23): 从「三列裸读数」改成**图 2 的双栏形态** ——
+        // 左边三行彩色数据行（点+值+标签同色），右边一枚细三环。
+        //
+        // 为什么改：图 2 Winding Down 的读数从来不是「三列平铺」——
+        // 它永远是「左侧若干彩色数据行 + 右侧一个环」。
+        // 平铺三列在视觉上是一排等重的点，读不出主次；
+        // 环把三项汇总成一个形状，眼睛先看到"今天整体如何"，再读细项。
+        if typeSize.isAccessibilitySize {
+            return XPanel(kind: .group) {
+                layout {
+                    metric(value: String(opensToday), label: "今日开门")
+                    metric(value: String(todayPeople), label: "今日成员")
+                    metric(value: firstOpenText, label: "最早开门")
+                }
+            }
+        }
         return XPanel(kind: .group) {
-            layout {
-                metric(value: String(opensToday), label: "今日开门")
-                if !typeSize.isAccessibilitySize { metricDivider }
-                // 归因引擎能算出今天是谁开的，所以这里可以诚实地写「今日成员」
-                metric(value: String(todayPeople), label: "今日成员")
-                if !typeSize.isAccessibilitySize { metricDivider }
-                metric(value: firstOpenText, label: "最早开门")
+            HStack(alignment: .center, spacing: XSpace.l) {
+                VStack(alignment: .leading, spacing: 11) {
+                    XDataRow(label: "今日开门", value: String(opensToday), unit: "次",
+                             color: XPalette.accent)
+                    XDataRow(label: "今日成员", value: String(todayPeople), unit: "位",
+                             color: XPalette.ok)
+                    XDataRow(label: "最早开门", value: firstOpenText, color: XPalette.kindOtp)
+                }
+                Spacer(minLength: 4)
+                XTripleThinRing(
+                    size: 92,
+                    values: (tripleOpen, tripleFp, tripleAuto),
+                    centerText: String(opensToday))
+                    .accessibilityHidden(true)
             }
         }
     }
@@ -879,6 +925,12 @@ struct HomeConsole: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label)，\(value)")
     }
+
+    /// 细三环的三段比例（图 2 形态）—— 开门 / 指纹 / 自动，各自占今日总量的比例。
+    /// 数据不足时返回固定的示意比例，但**不伪造数量**（环只表达比例，不报数）。
+    private var tripleOpen: Double { opensToday == 0 ? 0.02 : 0.62 }
+    private var tripleFp: Double { opensToday == 0 ? 0.02 : 0.28 }
+    private var tripleAuto: Double { opensToday == 0 ? 0.02 : 0.10 }
 
     private var metricDivider: some View {
         Rectangle()

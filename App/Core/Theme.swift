@@ -69,7 +69,7 @@ enum XPalette {
                 .init(color: Color(hex: 0x06070C), location: 0.38),
                 .init(color: Color(hex: 0x000000), location: 1.00)
             ],
-            center: UnitPoint(x: 0.5, y: 0.06),
+            center: .init(x: 0.5, y: 0.06),
             startRadius: 0,
             endRadius: 900)
     }
@@ -830,6 +830,7 @@ enum XText: Sendable {
     case footnote        // 12 Regular  0   / 1.40
     case caption         // 11 Medium  +0.1 / 1.25
     case caption2        // 11 Medium  +0.2 / 1.20
+    case small           // 13 Regular  0   / 1.38  ← 六图补档（图2 卡内副文）
 
     /// 规范给的字号。**这是唯一真相源**，不许在调用点再写字面量。
     var size: CGFloat {
@@ -846,6 +847,7 @@ enum XText: Sendable {
         case .footnote:      return 12
         case .caption:       return 11
         case .caption2:      return 11
+        case .small:         return DSFont.small
         }
     }
 
@@ -854,6 +856,7 @@ enum XText: Sendable {
         case .displayNumber, .display, .largeTitle, .title2: return .bold
         case .title3, .headline: return .semibold
         case .caption, .caption2: return .medium
+        case .small: return .regular
         default: return .regular
         }
     }
@@ -932,10 +935,6 @@ enum DSFont {
     /// 44 / Bold / -1.4 —— **MetricCard 主角数字** (图 5 Activity Details 的 13,818 / 6.58MI)
     /// 与 displayNumber(56) 的区别: 56 是环内数字, 44 是**卡片内**的主数字。
     static let hero: CGFloat = 44
-    /// 96 / Heavy / -2.6 —— **旗舰环中心数字** (图 1 Health Age 的 -4.7)
-    static let dialNumber: CGFloat = 96
-    /// 118 / Heavy / -3.2 —— 旗舰环的**超大档** (454 宽屏实测, 图 1 原图比例)
-    static let dialNumberXL: CGFloat = 118
     /// 13 / Regular / 0 —— 卡内副文 (HTML 里大量用到, 之前借 footnote 12 会偏挤)
     static let small: CGFloat = 13
 }
