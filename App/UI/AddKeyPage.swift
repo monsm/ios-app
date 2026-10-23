@@ -84,18 +84,48 @@ struct AddKeyPage: View {
         if cap > 0, left >= 0 {
             let used = max(0, cap - left)
             let full = left == 0
+            // 六图改造 (2026-10-23): 与指纹页同构 —— 图 5 MetricCard + 图 2 细三环。
+            // 密码库存是"能不能再建一条"的唯一依据，之前做成一行 12pt 灰字，最难被看见。
             XPanel(kind: .group, tone: full ? .warn : .neutral) {
-                HStack(spacing: XSpace.s) {
-                    Image(systemName: "number.square")
-                        .font(.system(size: XIcon.sm, weight: .medium))
-                        .foregroundStyle(full ? XPalette.warn : XPalette.textSub)
-                    Text(full ? "密码库存已满" : "还可录 " + String(left) + " 条")
-                        .xFont(.footnote, weight: .medium)
-                        .foregroundStyle(full ? XPalette.warn : XPalette.textSub)
-                    Spacer(minLength: 0)
-                    Text(String(used) + " / " + String(cap))
-                        .xFontExact(.caption2.monospacedDigit())
-                        .foregroundStyle(XPalette.textSub)
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack {
+                        Text("密码容量")
+                            .xFont(.subheadline)
+                            .foregroundStyle(XPalette.textTertiary)
+                        Spacer(minLength: 0)
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(XPalette.textTertiary.opacity(0.6))
+                    }
+                    HStack(alignment: .center, spacing: XSpace.l) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            XHeroNumber(
+                                text: String(left),
+                                unit: "条可建",
+                                color: full ? XPalette.warn : XPalette.ok)
+                            Text(full ? "库存已满 — 先删一条再建" : "已用 " + String(used) + " / " + String(cap))
+                                .xFont(.footnote)
+                                .foregroundStyle(XPalette.textTertiary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Spacer(minLength: 4)
+                        XTripleThinRing(
+                            size: 84,
+                            values: (
+                                cap > 0 ? Double(used) / Double(cap) : 0,
+                                cap > 0 ? Double(left) / Double(cap) : 0,
+                                0.06
+                            ),
+                            colors: (XPalette.accent, XPalette.ok, XPalette.warn),
+                            centerText: String(cap))
+                            .accessibilityHidden(true)
+                    }
+                    .padding(.top, 8)
+                    XHairline().padding(.vertical, 12)
+                    Text("三环是「已用 / 可建 / 余量」—— 环心是门锁能存的密码总数。")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textTertiary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
             .xScrollLift()

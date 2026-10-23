@@ -182,20 +182,51 @@ struct AddFingerPage: View {
         if cap > 0, left >= 0 {
             let used = max(0, cap - left)
             let full = left == 0
+            // 六图改造 (2026-10-23): 容量从「一行小字」改成**图 5 MetricCard + 图 2 细三环**。
+            //
+            // 图 5 Activity Details 的读数永远是「44px 大数字 + 单位 → 环 → 彩点行」；
+            // 之前这里只有一行 12pt 小字「还可录 3 枚 / 8 / 12」，是整页最该被看见的数，
+            // 却做成了最不起眼的一行 —— 用户要录指纹时第一个要判断的就是"还有没有位置"。
             XPanel(kind: .group, tone: full ? .warn : .neutral) {
-                VStack(alignment: .leading, spacing: XSpace.xs) {
-                    HStack(spacing: XSpace.s) {
-                        Image(systemName: "touchid")
-                            .font(.system(size: XIcon.sm, weight: .medium))
-                            .foregroundStyle(full ? XPalette.warn : XPalette.textSub)
-                        Text(full ? "指纹库存已满" : "还可录 " + String(left) + " 枚")
-                            .xFont(.footnote, weight: .medium)
-                            .foregroundStyle(full ? XPalette.warn : XPalette.textSub)
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack {
+                        Text("指纹容量")
+                            .xFont(.subheadline)
+                            .foregroundStyle(XPalette.textTertiary)
                         Spacer(minLength: 0)
-                        Text(String(used) + " / " + String(cap))
-                            .xFontExact(.caption2.monospacedDigit())
-                            .foregroundStyle(XPalette.textSub)
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(XPalette.textTertiary.opacity(0.6))
                     }
+                    HStack(alignment: .center, spacing: XSpace.l) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            XHeroNumber(
+                                text: String(left),
+                                unit: "枚可录",
+                                color: full ? XPalette.warn : XPalette.ok)
+                            Text(full ? "库存已满 — 先删一枚再录" : "已用 " + String(used) + " / " + String(cap))
+                                .xFont(.footnote)
+                                .foregroundStyle(XPalette.textTertiary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Spacer(minLength: 4)
+                        XTripleThinRing(
+                            size: 84,
+                            values: (
+                                cap > 0 ? Double(used) / Double(cap) : 0,
+                                cap > 0 ? Double(left) / Double(cap) : 0,
+                                0.06
+                            ),
+                            colors: (XPalette.accent, XPalette.ok, XPalette.warn),
+                            centerText: String(cap))
+                            .accessibilityHidden(true)
+                    }
+                    .padding(.top, 8)
+                    XHairline().padding(.vertical, 12)
+                    Text("三环是「已用 / 可录 / 余量」—— 环心是门锁能存的指纹总数。")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textTertiary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
             .xScrollLift()

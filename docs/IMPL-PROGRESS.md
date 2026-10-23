@@ -25,6 +25,7 @@
 | `XDataRow` | 图2 | ✅ | ⬜ | ✅ |
 | `XTwoToneSheet` | 图4 | ⬜ | ⬜ | ⬜ |
 | `XBarChart` | 图5 | ⬜ | ⬜ | ⬜ |
+| `XActivityRings` | 图5 | ✅ | ⬜ | ✅ |
 | `XText.small` 13档 | 图2 | ✅ | ✅ | ✅ |
 
 ---
@@ -43,10 +44,10 @@
 |---|---|---|---|
 | 02-keys | KeysPage.swift | ✅ 图5 MetricCard 主角卡（44px 总数 + 图2 细三环 + 彩点行）| ✅ |
 | 10-keys-manage | KeysPage.swift | 图2 卡解剖 | ⬜ |
-| 11-fingerprint | AddFingerPage.swift | 图2 卡解剖 + 细三环 | ⬜ |
-| 12-tempcode | TempCodeStudio | 图6 横滚 + 图5 大数字 | ⬜ |
+| 11-fingerprint | AddFingerPage.swift | ✅ 图5 MetricCard + 图2 细三环（44px 可录数 + 三环 + footer）| ✅ |
+| 12-tempcode | CredentialStudio.CodeBigCard | ✅ 码 30pt → 44px 主角档（图1/图5 大数字语言，等宽数字）| ✅ |
 | 13-key-detail | AddKeyPage.swift | 图5 MetricCard | ⬜ |
-| 15-add-key | AddKeyPage.swift | 图2 卡解剖 | ⬜ |
+| 15-add-key | AddKeyPage.swift | ✅ 图5 MetricCard + 图2 细三环（密码容量同构改造）| ✅ |
 | 14-otp | — | 图5 大数字 + 环 | ⬜ |
 
 ### C 设备（P0）
@@ -95,7 +96,7 @@
 |---|---|---|---|
 | 50-events | EventsPage.swift | 图4 分组头 + 状态胶囊 | ⬜ |
 | 51-feed | FeedPage.swift | 图4 两层 + 图5 柱图 | ⬜ |
-| 52-stats | StatsPage.swift | 图5 活动环 + 彩条 | ⬜ |
+| 52-stats | StatsPage.swift | ✅ 新增图5 Activity Rings 首卡（粗三环 + 右侧三行彩色读数）| ✅ |
 
 ### G 关怀（P2）
 
@@ -171,3 +172,7 @@
 | 2026-10-23 | **Android 04-success 完成**：`UnlockDial` 增 `success` 参数，成功时环走 `dialOKStops` 绿色渐变（图1 语言，与 iOS phase == .unlocked 同义）|
 | 2026-10-23 | Android 5 屏状态：01 ✅ / 02 ✅ / 03 ✅ / 04 ✅ / 05 🟨（沿用既有确认框）|
 | 2026-10-23 | **iOS 05-system 完成**（实际文件是 MePage.swift）：本机设置首页加图5 主角读数行 —— 44px 待办数 + 渐变环（有待办→图1蓝渐变 / 无待办→pale绿）+ 分隔线 + 四瓦片入口 |
+| 2026-10-23 | **iOS 11-fingerprint 完成**：容量行 → 图5 MetricCard（44px 可录数 + 图2 细三环 + footer）|
+| 2026-10-23 | **iOS 15-add-key 完成**：密码容量同构改造（与指纹页同一形态）|
+| 2026-10-23 | **iOS 12-tempcode 完成**：码从 30pt largeTitle → 44px 主角档 + monospacedDigit（图1 大数字语言）|
+| 2026-10-23 | **iOS 52-stats 完成**：新增 `XActivityRings` 组件（图5 粗三环 11% + 右侧同色数据行）作为首卡 |

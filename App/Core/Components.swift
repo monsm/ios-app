@@ -2619,3 +2619,75 @@ struct XTripleThinRing: View {
         }
     }
 }
+
+
+/// **图 5 · Activity Rings** —— Fitness Summary 的同心三环 + 右侧彩色数据行。
+///
+/// 与 `XTripleThinRing` 的分工（两者不是重复）：
+///   · `XTripleThinRing` 线宽 **4.5%** —— 图 2 的「细三环绕在数字外」，用于次要占比
+///   · `XActivityRings`  线宽 **11%**  —— 图 5 的「三环自成主角」，用于主数据卡
+/// 混用会出两种错：细环当主角撑不起卡，粗环当配角会抢焦点。
+///
+/// 右侧数据行必须与环**同色**（图 5 实测：#FF2D6F / #A8F02C / #00C8D8）——
+/// 颜色是这两个部分唯一的绑定关系，换色就散了。
+struct XActivityRings: View {
+    var size: CGFloat = 128
+    /// 三个比例 0...1
+    var values: (Double, Double, Double)
+    /// 右侧三行：值 / 单位 / 标签
+    var rows: [(value: String, unit: String, label: String)]
+    /// 三色
+    var colors: (Color, Color, Color) = (Color(hex: 0xFF2D6F),
+                                          Color(hex: 0xA8F02C),
+                                          Color(hex: 0x00C8D8))
+
+    private var lineW: CGFloat { size * 0.11 }
+
+    var body: some View {
+        HStack(alignment: .center, spacing: XSpace.l) {
+            ZStack {
+                ring(0, values.0, colors.0)
+                ring(1, values.1, colors.1)
+                ring(2, values.2, colors.2)
+            }
+            .frame(width: size, height: size)
+
+            VStack(alignment: .leading, spacing: 10) {
+                ForEach(Array(rows.enumerated()), id: \.offset) { idx, r in
+                    let tone = [colors.0, colors.1, colors.2][min(idx, 2)]
+                    HStack(alignment: .firstTextBaseline, spacing: 0) {
+                        Text(r.value)
+                            .font(.system(size: XMetric.dataText(17), weight: .bold))
+                            .monospacedDigit()
+                            .foregroundStyle(tone)
+                        Text(" " + r.unit)
+                            .xFont(.caption2)
+                            .foregroundStyle(tone.opacity(0.85))
+                        Spacer(minLength: 6)
+                        Text(r.label)
+                            .xFont(.caption2)
+                            .foregroundStyle(XPalette.textTertiary)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    @ViewBuilder
+    private func ring(_ index: Int, _ value: Double, _ color: Color) -> some View {
+        let step = lineW
+        let r = size / 2 - lineW / 2 - CGFloat(index) * step
+        ZStack {
+            Circle()
+                .stroke(XPalette.text.opacity(0.08), lineWidth: lineW)
+                .frame(width: r * 2, height: r * 2)
+            Circle()
+                .trim(from: 0, to: max(0.001, min(1, value)))
+                .stroke(color, style: StrokeStyle(lineWidth: lineW, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .frame(width: r * 2, height: r * 2)
+        }
+    }
+}

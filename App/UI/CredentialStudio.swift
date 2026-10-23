@@ -370,10 +370,20 @@ struct CodeBigCard: View {
                 .foregroundStyle(XPalette.textSub)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
+            // 六图改造 (2026-10-23): 码从 30pt 提到 **44px 主角档**（图 1 / 图 5 的大数字语言）。
+            //
+            // 这张卡里唯一的主角就是那串码 —— 之前用 largeTitle(30)，与页面标题同级，
+            // 眼睛要"找"才知道看哪。图 1 的 -4.7、图 5 的 13,818 都是 44px 起，
+            // 一屏只有它们被做成这么大。
+            // 走 XMetric.dataText：它按 AX 放大到上限 1.35，超了会溢出卡宽。
             Text(revealed ? code : SecurityPolicy.halfMasked(code))
-                .xFont(.largeTitle, weight: .semibold, design: .rounded)
+                .font(.system(size: XMetric.dataText(DSFont.hero),
+                              weight: .semibold, design: .rounded))
+                .monospacedDigit()
                 .foregroundStyle(XPalette.text)
                 .textSelection(.enabled)
+                .minimumScaleFactor(0.6)
+                .lineLimit(1)
                 // 370: 口述卡这一路也接贴近复蔽 (卡片在屏期间才开监听)
                 .proximityRemask { revealed = false }
             Text(window)

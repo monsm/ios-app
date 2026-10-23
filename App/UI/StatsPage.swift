@@ -67,6 +67,12 @@ struct StatsPage: View {
                 } else {
                     // 规范 7.2「双列固定」: 2 个胶囊并排撑满,
                     // 各占 (屏宽 - 28 - 8) / 2, **不滚动**。
+                    // 六图改造 (2026-10-23): 首卡换成**图 5 Activity Rings**。
+                    //
+                    // 图 5 Fitness Summary 的第一张卡永远是三环 + 右侧彩色数据行。
+                    // 统计页之前直接进「安全」三瓦片 —— 缺了"今天整体跑了多少"这层。
+                    // 三环: 开门 / 指纹 / 自动，各自占今日总量的比例。
+                    activityRingsCard(m).xScrollLift()
                     safetyCard(m).xScrollLift()
                     paretoCard(m)
                     daypartCard(m)
@@ -266,6 +272,42 @@ struct StatsPage: View {
 
     private func hourText(_ h: Int) -> String {
         String(format: "%02d:00", h)
+    }
+
+    /// 图 5 Activity Rings 卡 —— 三环 + 三行彩色读数。
+    private func activityRingsCard(_ m: StatsKit.StatModel) -> some View {
+        let total = max(1, m.totalOpens)
+        let fp = Double(m.byKind["fp"] ?? 0) / Double(total)
+        let pwd = Double(m.byKind["pwd"] ?? 0) / Double(total)
+        let auto = max(0, 1 - fp - pwd)
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack {
+                    Text("今日构成")
+                        .xFont(.subheadline)
+                        .foregroundStyle(XPalette.textTertiary)
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(XPalette.textTertiary.opacity(0.6))
+                }
+                XActivityRings(
+                    size: 116,
+                    values: (fp, pwd, auto),
+                    rows: [
+                        (String(m.byKind["fp"] ?? 0), "次", "指纹"),
+                        (String(m.byKind["pwd"] ?? 0), "次", "密码"),
+                        (String(max(0, total - (m.byKind["fp"] ?? 0) - (m.byKind["pwd"] ?? 0))), "次", "其它")
+                    ]
+                )
+                .padding(.top, 10)
+                XHairline().padding(.vertical, 12)
+                Text("三环按今天实际开门的次数占比画 —— 环越满，那种方式用得越多。")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
     }
 
     private func safetyCard(_ m: StatsKit.StatModel) -> some View {
