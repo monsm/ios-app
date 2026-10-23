@@ -328,6 +328,12 @@ struct FeedPage: View {
                     Text("24").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
                 }
                 .padding(.top, 6)
+                // HTML 卡「今日时段」带页脚整句
+                Text("柱高是该小时的开门次数 —— 空白天不代表没人，只是那一小时没人经过。")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .padding(.top, 10)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }

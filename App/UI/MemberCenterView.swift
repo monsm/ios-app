@@ -905,6 +905,23 @@ struct MemberArchivedView: View {
     }
 
         /// 图 5 读数卡：44px 位已归档 + 环
+    /// HTML 卡3「归档规则」—— 三条彩点行
+    private var archiveRulesCard: some View {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                Text("归档规则")
+                    .xFont(.subheadline)
+                    .foregroundStyle(XPalette.textTertiary)
+                XDataRow(label: "钥匙不删", value: "转成未分配", unit: "", color: XPalette.textSub,
+                         note: "可以再认领")
+                XHairline()
+                XDataRow(label: "记录保留", value: "开门与审计不变", unit: "", color: XPalette.ok)
+                XHairline()
+                XDataRow(label: "不占名额", value: "上限只算活跃成员", unit: "", color: XPalette.warn)
+            }
+        }
+    }
+
     private var archivedStatsCard: some View {
         let n = archived.count
         return XPanel(kind: .group) {
@@ -950,6 +967,8 @@ struct MemberArchivedView: View {
             XScreen("归档成员", style: .inline) {
                 // 六图改造 (2026-10-24): 顶部加图5 读数卡（44px 归档数 + 环）
                 archivedStatsCard
+                // HTML 卡3「归档规则」—— 三条彩点行（App 之前缺这一整卡）
+                archiveRulesCard
                 if archived.isEmpty {
                     XPanel(kind: .group) {
                         VStack(spacing: XSpace.s) {

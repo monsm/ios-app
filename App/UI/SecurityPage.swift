@@ -191,6 +191,11 @@ struct SecurityPage: View {
     private var riskCard: some View {
         XPanel(kind: .group, tone: .warn) {
             VStack(alignment: .leading, spacing: XSpace.s) {
+                // HTML 卡2 卡头「有没有事」
+                Text("有没有事")
+                    .xFont(.subheadline)
+                    .foregroundStyle(XPalette.textTertiary)
+
                 Text("需要处理")
                     .xFont(.subheadline, weight: .medium)
                     .foregroundStyle(XPalette.text)
@@ -263,6 +268,15 @@ struct SecurityPage: View {
     private var actionsCard: some View {
         XPanel(kind: .group, padding: 0) {
             VStack(spacing: 0) {
+                // HTML 卡3 卡头「有哪些功能」
+                Text("有哪些功能")
+                    .xFont(.subheadline)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, XSpace.card)
+                    .padding(.top, XSpace.m)
+                    .padding(.bottom, XSpace.s)
+
                 // 应用锁必须是这一页的第一条:
                 // 后面三条(防窥/审计/销毁)全都建立在"本机已经被锁住"之上。
                 // 之前这一条根本不存在 —— kf_applock 只被读、从未被写，
@@ -288,7 +302,13 @@ struct SecurityPage: View {
                 }
             }
         }
-    }
+                    Text("这几条都是本机能力 —— 门锁并不知道你开了应用锁或审计，它们防的是这台手机被翻。")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .padding(.horizontal, XSpace.card)
+                    .padding(.vertical, 12)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
 
     private func actionRow<Destination: View>(
         icon: String, title: String, detail: String, danger: Bool = false,
