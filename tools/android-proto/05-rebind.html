@@ -1,0 +1,52 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<title>换绑确认</title><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="pages.css"></head><body>
+<div class="phone">
+<div class="statusbar">
+  <span class="sb-time" data-real-time>9:41</span>
+  <span class="sb-right">
+    <svg width="17" height="11" viewBox="0 0 17 11" fill="#FFF"><rect x="0" y="7.5" width="3" height="3.5" rx="1"/><rect x="4.5" y="5.5" width="3" height="5.5" rx="1"/><rect x="9" y="3" width="3" height="8" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+    <svg width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="#FFF" stroke-width="1.6" stroke-linecap="round"><path d="M1 3.4a10.5 10.5 0 0 1 14 0"/><path d="M3.6 6.2a6.6 6.6 0 0 1 8.8 0"/><path d="M6.2 8.9a2.9 2.9 0 0 1 3.6 0"/><circle cx="8" cy="10.2" r=".7" fill="#FFF" stroke="none"/></svg>
+    <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x=".5" y=".5" width="21" height="11" rx="3.2" stroke="#FFF" stroke-opacity=".4"/><rect x="2" y="2" width="15" height="8" rx="2" fill="#FFF"/><path d="M23 4.2v3.6a2 2 0 0 0 0-3.6z" fill="#FFF" fill-opacity=".5"/></svg>
+  </span>
+</div><div class="navbar">
+  <a class="back" href="03-settings.html">‹</a><span class="nt">换绑确认</span><span class="nr"></span></div><div class="scroll"><div class="page hasnav">
+
+  <div class="h1" style="margin-top:8px">更新这把锁的凭证?</div>
+  <div class="sub">本机已绑定「然然家」</div>
+
+  <!-- 图2 卡解剖：新旧锁对照（主/副双卡语言，参考 iOS 34-merge） -->
+  <div class="duo" style="margin-top:24px">
+    <div class="duo-card" style="background:linear-gradient(180deg,#202020,#191919)">
+      <div class="dt">本机当前</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:12px">
+        <span style="width:40px;height:40px;border-radius:50%;background:rgba(10,132,255,.16);color:#4FC3FF;display:inline-flex;align-items:center;justify-content:center"><span class="svgi" data-i="lock" data-sz="19px"></span></span>
+        <div><div style="font-size:15px;font-weight:600">然然家</div><div style="font-size:11px;color:#8A8A90">有效钥匙</div></div>
+      </div>
+    </div>
+    <div class="duo-card" style="background:linear-gradient(180deg,#202020,#191919)">
+      <div class="dt">扫到的锁</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:12px">
+        <span style="width:40px;height:40px;border-radius:50%;background:rgba(255,159,10,.16);color:#FFA31A;display:inline-flex;align-items:center;justify-content:center"><span class="svgi" data-i="key" data-sz="19px"></span></span>
+        <div><div style="font-size:15px;font-weight:600">婆婆家 · 入户门</div><div style="font-size:11px;color:#8A8A90">新凭证</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 图2 红色警告卡（源码解绑全文） -->
+  <div class="card" style="margin-top:22px;border-radius:16px;
+    background:linear-gradient(180deg,#2A1517,#1F1012);box-shadow:inset 0 0 0 .5px rgba(255,69,58,.24)">
+    <div class="cardlink" style="color:#FF453A">换绑后果<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="font-size:14px;line-height:1.65;color:#E8B0AE;margin-top:10px">
+      换成「婆婆家 · 入户门」之后，原来那把锁要从这台手机重新扫码才能再用。</div>
+    <div class="sep" style="background:rgba(255,69,58,.18)"></div>
+    <div style="font-size:14px;line-height:1.65;color:#E8B0AE">
+      解绑则删除「然然家」的钥匙与全部本机设置，删掉之后无法从本机找回 —— 要再用这把锁，得先在门锁键盘上重置、再重新扫码配对。门锁里的密码和指纹不受影响。</div>
+  </div>
+
+  <div style="display:flex;gap:12px;margin-top:22px">
+    <button class="btn" style="flex:1;background:rgba(255,255,255,.10);color:#FFF;height:52px;border-radius:999px;font-size:16px">取消</button>
+    <button class="btn" style="flex:1;background:#FFF;color:#0A0A0C;font-weight:700;height:52px;border-radius:999px;font-size:16px">换绑</button>
+  </div>
+  <button class="btn" style="margin-top:12px;background:rgba(255,69,58,.14);color:#FF453A;font-weight:600;height:52px;border-radius:999px;font-size:16px">只解绑，不换</button>
+
+</div></div></div><script src="icons-render.js"></script><script src="interact.js"></script></body></html>

@@ -1,6 +1,6 @@
 'use strict';
 // tools/android-proto/build.js —— Android 端原型构建
-const steps = ['gen-home.js', 'gen-scan.js', 'gen-settings.js'];
+const steps = ['gen-home.js', 'gen-scan.js', 'gen-settings.js', 'gen-success.js', 'gen-rebind.js'];
 let fail = 0;
 for (const s of steps) {
   try { require('child_process').execSync('node ' + s, { cwd: __dirname, stdio: 'inherit' }); }
