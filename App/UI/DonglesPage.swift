@@ -152,7 +152,7 @@ struct DonglesPage: View {
                     Button("读取状态") { Task { await readStatus(d) } }
                     Button("给当前门锁写入钥匙") { confirmWriteKey(d) }
                     Button("查询全部钥匙") { Task { await listKeys(d) } }
-                    Divider().overlay(XPalette.hairline)
+                    XHairline()
                     Button("删除本锁钥匙", role: .destructive) { confirmDeleteKey(d) }
                     // 2026-10-23：这一条原来是**一键直接执行**（同级那条「删除本锁钥匙」走的是 confirmDeleteKey，它没有）。
                     // 菜单里的破坏性条目更容易误触，必须问一句。

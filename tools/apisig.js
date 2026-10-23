@@ -294,33 +294,38 @@ if (deadCode.length > 0) {
 }
 
 
-// ── 6b. 裸 Divider() ────────────────────────────────────────────────
-// SwiftUI 的 Divider 默认用系统色, 与 XPalette.hairline 不是同一个值。
-// 深色模式下系统色偏亮, 会在我们自己的卡片里画出一道"不属于这里"的白线。
-// 全仓统一要求: Divider 必须 .overlay(XPalette.hairline)。
-// (清过 4 处裸的之后加的这条闸门)
-const bareDividers = [];
+// ── 6b. 分隔线一律走 XHairline ──────────────────────────────────────
+//
+// **2026-10-23 改判据。** 旧判据只要求 "Divider 必须 .overlay(XPalette.hairline)"，
+// 也就是默认 Divider 可以用、只是要手动补色。那是错的：
+//
+//   · SwiftUI 的 Divider 高度是**系统给的**（随字号与平台变），不是 1px 发丝线
+//   · Divider 会进无障碍树，读屏时打断节奏
+//   · 每个调用点都要记得 .overlay —— 靠记性
+//
+// 而 XHairline 三件事全做了：1px 实高、hairline 色、accessibilityHidden。
+// 规范要的是「一条统一的分隔线」，不是「一条记得上色的系统线」。
+//
+// 判据：出现 `Divider(` 一律报（不管有没有 overlay）。
+const dividerHits = [];
 for (const f of files) {
-  const src = fs.readFileSync(f, 'utf8');
+  const src = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n');
   src.split('\n').forEach((line, i) => {
-    // 只看"以 Divider() 结尾"的行, 带 .overlay 的不算
-    if (/Divider\(\)\s*$/.test(line)) {
-      bareDividers.push({ rel: path.relative(ROOT, f), line: i + 1 });
-    }
+    if (/^\s*\/\//.test(line)) return;
+    if (/Divider\(/.test(line)) dividerHits.push({ rel: path.relative(ROOT, f), line: i + 1, text: line.trim() });
   });
 }
-// 自检
+// 自检：确认判据能抓到带 overlay 的形式
 {
-  const probeGood = 'Divider().overlay(XPalette.hairline)';
-  const probeBad  = 'Divider()';
-  const re = /Divider\(\)\s*$/;
-  if (re.test(probeGood)) { console.error('✗ 自检失败: 带 overlay 的 Divider 被误判为裸的'); process.exit(1); }
-  if (!re.test(probeBad)) { console.error('✗ 自检失败: 裸 Divider 没被抓到'); process.exit(1); }
+  const probe = 'Divider().overlay(XPalette.hairline)';
+  if (!/Divider\(/.test(probe)) { console.error('✗ 自检失败: 判据抓不到带 overlay 的 Divider'); process.exit(1); }
 }
-if (bareDividers.length > 0) {
-  for (const b of bareDividers) {
-    console.error(b.rel + ':' + b.line + ': 裸 Divider() —— 加 .overlay(XPalette.hairline), 否则用的是系统色');
+if (dividerHits.length > 0) {
+  for (const d of dividerHits) {
+    console.error(d.rel + ':' + d.line + ': 用 Divider 画分隔线 —— 改用 XHairline（1px 实高 / hairline 色 / 不进无障碍树）');
   }
+  console.error('共 ' + dividerHits.length + ' 处。XHairline 在 Components.swift。');
+  process.exit(1);
 }
 
 
@@ -620,7 +625,7 @@ if (deadExtensions.length > 0) {
 }
 
 // ── 7. 输出 ───────────────────────────────────────────────────────
-if (allProblems.length === 0 && deadCode.length === 0 && bareDividers.length === 0 && deadTokens.length === 0 && deadExtensions.length === 0) {
+if (allProblems.length === 0 && deadCode.length === 0 && deadTokens.length === 0 && deadExtensions.length === 0) {
   console.log('签名 / 死代码 / 裸Divider / 零用令牌 / 零调扩方法 ✓ (' + files.length + ' 文件, '
     + Object.keys(structDefs).length + ' 组件签名, ' + libTypes.length + ' 类型 + 令牌查引用, '
     + '自检 ' + (probes.length + 3) + '/' + (probes.length + 3) + ')');

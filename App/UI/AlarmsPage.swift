@@ -196,7 +196,7 @@ struct AlarmsPage: View {
                             ForEach(Array(alarms.enumerated()), id: \.element.id) { idx, rec in
                                 alarmRow(rec, handled: false)
                                 if idx < alarms.count - 1 {
-                                    Divider().overlay(XPalette.hairline)
+                                    XHairline()
                                         .padding(.leading, XSpace.card + 28 + XSpace.s)
                                 }
                             }
@@ -212,7 +212,7 @@ struct AlarmsPage: View {
                                 ForEach(Array(handled.enumerated()), id: \.element.id) { idx, rec in
                                     alarmRow(rec, handled: true)
                                     if idx < handled.count - 1 {
-                                        Divider().overlay(XPalette.hairline)
+                                        XHairline()
                                             .padding(.leading, XSpace.card + 28 + XSpace.s)
                                     }
                                 }

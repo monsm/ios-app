@@ -201,7 +201,7 @@ struct KeysPage: View {
                     ForEach(Array(rows.enumerated()), id: \.element.id) { idx, row in
                         keyRow(row)
                         if idx < rows.count - 1 {
-                            Divider().overlay(XPalette.hairline)
+                            XHairline()
                                 .padding(.leading, XSpace.card + 28 + XSpace.m)
                         }
                     }

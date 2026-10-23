@@ -70,7 +70,7 @@ struct SecurityPage: View {
                     }
                 }
 
-                Divider().overlay(XPalette.hairline)
+                XHairline()
 
                 // 三盏灯
                 HStack(spacing: XSpace.l) {

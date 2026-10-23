@@ -140,7 +140,7 @@ struct MembersPage: View {
                     }
                     .buttonStyle(.plain)
                     if idx < members.count - 1 {
-                        Divider().overlay(XPalette.hairline)
+                        XHairline()
                             .padding(.leading, XSpace.card + 40 + XSpace.m)
                     }
                 }
@@ -169,7 +169,7 @@ struct MembersPage: View {
                         .padding(.vertical, XSpace.s)
                 }
                 .buttonStyle(.plain)
-                Divider().overlay(XPalette.hairline).padding(.leading, XSpace.card + 40)
+                XHairline().padding(.leading, XSpace.card + 40)
                 NavigationLink {
                     UnclaimedClaimView().environmentObject(app)
                 } label: {
@@ -179,7 +179,7 @@ struct MembersPage: View {
                         .padding(.vertical, XSpace.s)
                 }
                 .buttonStyle(.plain)
-                Divider().overlay(XPalette.hairline).padding(.leading, XSpace.card + 40)
+                XHairline().padding(.leading, XSpace.card + 40)
                 NavigationLink {
                     MemberFamilySettingsView().environmentObject(app)
                 } label: {

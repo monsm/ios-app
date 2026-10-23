@@ -1177,7 +1177,7 @@ struct UnclaimedClaimView: View {
                                     .tint(XPalette.accentText)
                                 }
                                 if r.key != unclaimed.prefix(20).last?.key {
-                                    Divider().overlay(XPalette.hairline)
+                                    XHairline()
                                 }
                             }
                         }

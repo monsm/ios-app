@@ -77,7 +77,7 @@ struct GatewayPage: View {
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Divider().overlay(XPalette.hairline)
+                XHairline()
 
                 XToggle("指示灯已变成橙色", isOn: $confirmed)
                     .xFont(.body)
@@ -253,7 +253,7 @@ struct GatewayPage: View {
                 Menu {
                     Button("刷新状态") { Task { await refresh(g) } }
                     Button("重启网关") { confirmReboot(g) }
-                    Divider().overlay(XPalette.hairline)
+                    XHairline()
                     // 2026-10-23：与 DonglesPage 同形 —— 菜单里一键直接删，同级「重启网关」走的是 confirmReboot。
                     Button("删除记录", role: .destructive) {
                         confirmDestructive("删除这条网关记录？",

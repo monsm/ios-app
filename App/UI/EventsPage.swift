@@ -174,7 +174,7 @@ struct EventsPage: View {
                             filters.save(mac: mac)      // 记住这次选择
                             XHaptics.tick.impactOccurred()
                         }))
-                    Divider().overlay(XPalette.hairline)
+                    XHairline()
                     Button("刷新") { load() }
                     // ═══ 从门锁同步日志 ═══
                     //
@@ -186,7 +186,7 @@ struct EventsPage: View {
                     // 结果是事件页、统计、今日开门全跑在一个永远为空的缓存上。
                     Button(syncing ? "同步中…" : "从门锁同步日志") { syncLogs() }
                         .disabled(syncing || mac.isEmpty)
-                    Divider().overlay(XPalette.hairline)
+                    XHairline()
                     Button("存为筛选视图") {
                         saveName = search
                         showSaveDialog = true

@@ -278,7 +278,7 @@ struct FirmwarePage: View {
                                   systemImage: queueSel.contains(d.mac) ? "checkmark.circle.fill" : "circle")
                         }
                     }
-                    Divider().overlay(XPalette.hairline)
+                    XHairline()
                     Button("批量升级 \(queueSel.count) 把") { showQueueConfirm = true }
                         .disabled(queueSel.isEmpty)
                 } label: {

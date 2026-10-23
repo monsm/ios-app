@@ -63,7 +63,7 @@ struct DevicePage: View {
     private var identityCard: some View {
         // 2026-10-23：改成 XStatCard（规范 §7.6）。
         //
-        // 改前是手写：XPanel(hero) + VStack + **裸 `Divider()`** + 自己的间距。
+        // 改前是手写：XPanel(hero) + VStack + **裸 `XHairline()`** + 自己的间距。
         // 三个问题：
         //   · 裸 Divider 不走 XHairline —— 分隔线粗细/颜色与全仓其它卡不一致
         //   · 段间节奏是 VStack(spacing: 12) 给出的，不是 §7.6 的「值→线 14 / 线→下组 12」
