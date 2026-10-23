@@ -1544,6 +1544,28 @@ struct MemberExitWizard: View {
                     .accessibilityHidden(true)
                 }
                 .padding(.top, 8)
+                XHairline().padding(.vertical, 12)
+                // HTML 卡1 的三列：保留 / 移交 / 停用 各自几条
+                HStack(alignment: .top, spacing: XSpace.s) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("保留").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text("\(decisions.filter { $0.value == "keep" }.count) 项")
+                            .xFont(.footnote, weight: .semibold)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("移交").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text("\(decisions.filter { $0.value == "move" }.count) 项")
+                            .xFont(.footnote, weight: .semibold)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("停用").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text("\(decisions.filter { $0.value == "delete" }.count) 项")
+                            .xFont(.footnote, weight: .semibold)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
             }
         }
     }

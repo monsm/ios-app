@@ -21,6 +21,22 @@
 | 两种模式的差别（双角色卡 + 彩点行）| modeCard ×2 + XDataRow | ✅ 前一轮已改 |
 | 怎么设置（+页脚）| 已有 | ✅ 已对齐 |
 
+
+### 88-exit ✅
+| HTML 卡 | Swift 对位 | 处理 |
+|---|---|---|
+| 待处置（44px + 三列：保留/移交/停用 + 页脚）| exitStatsCard | ✅ 补三列（用真实 decisions 取值 keep/move/delete）|
+| 逐条处置 | 已有 | ✅ 已对齐 |
+| 归档 | **已有「归档并执行」按钮且逻辑完整** | ✅ 判定无需新增（我一度误加红卡，已撤回）|
+
+### 42-peek ✅
+| HTML 卡 | Swift 对位 | 处理 |
+|---|---|---|
+| 防窥项（环）| 已有 | ✅ |
+| 遮蔽样式（圆点/星号/末4位 + 页脚）| — | ✅ **新增整卡** |
+| 隐私总览 | — | ✅ **新增整卡** |
+| 遮蔽与通道（+页脚）| 已有 SecRow 组 | ✅ |
+
 ---
 
 ## 已审
@@ -58,7 +74,7 @@
 
 | 缺口 | 页 |
 |---|---|
-| 3 类 | 88-exit、42-peek |
+
 | 2 类 | 01-home、10-keys-manage、11-fingerprint、13-key-detail、24-dongles、25-synctime、33-archived、40-security、51-feed、85-battery、86-checklist、87-claim |
 | 1 类 | 02-keys、03-devices、04-members、12-tempcode、14-otp、15-add-key、20-locks、22-firmware、30-members-list、32-member-detail、41-applock、45-destroy、48-export、52-stats、70-icon-picker、80-states、89-share-android |
 

@@ -162,11 +162,65 @@ struct SecurityPeekView: View {
     // 375 磨砂挡片: 长按移开, 松手复位
     @State private var frosted = true
 
+    /// HTML 卡「遮蔽样式」—— 三种打码对照（圆点 / 星号 / 末4位）
+    private var maskStyleCard: some View {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                Text("遮蔽样式")
+                    .xFont(.subheadline)
+                    .foregroundStyle(XPalette.textTertiary)
+                HStack(alignment: .top, spacing: XSpace.s) {
+                    maskSample(title: "圆点", text: "4 8 2 • • •")
+                    maskSample(title: "星号", text: "4 8 2 * * *")
+                    maskSample(title: "末4位", text: "• • • 9 5 1 2")
+                }
+                Text("三种打码都只影响本机显示 —— 门锁里的口令本身不变。")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private func maskSample(title: String, text: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title).xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+            Text(text)
+                .xFont(.footnote, weight: .semibold)
+                .monospacedDigit()
+                .foregroundStyle(XPalette.text)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(XSpace.s)
+        .xPlate(XPalette.surfaceAlt.opacity(0.5), XRadius.tile)
+    }
+
+    /// HTML 卡「隐私总览」
+    private var privacyOverviewCard: some View {
+        let items = PeekItem.all
+        let on = items.filter { $0.on }.count
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                Text("隐私总览")
+                    .xFont(.subheadline)
+                    .foregroundStyle(XPalette.textTertiary)
+                XDataRow(label: "已开启", value: String(on), unit: "/ \(items.count)", color: XPalette.ok)
+                XDataRow(label: "未开启", value: String(items.count - on), unit: "项", color: XPalette.warn)
+            }
+        }
+    }
+
     var body: some View { vkBody }
     var vkBody: some View {
 
             // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
             XScreen("防窥与遮蔽", style: .inline) {
+                // HTML 卡3「遮蔽样式」—— 三种打码对照（圆点 / 星号 / 末4位）+ 页脚
+                maskStyleCard
+                // HTML 卡4「隐私总览」—— 逐项开关的汇总
+                privacyOverviewCard
                 XPanel(kind: .group) {
                     VStack(alignment: .leading, spacing: XSpace.m) {
                         SecRow(title: "剪贴板自动清除",
