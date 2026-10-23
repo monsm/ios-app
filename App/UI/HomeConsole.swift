@@ -689,7 +689,34 @@ struct HomeConsole: View {
                     .allowsHitTesting(false)
                     .transition(.opacity)
 
-                // 中心：图标 + 手势提示
+                // ── 12 点分段竖条（规范 §7.8 形态 1「分段」项）──
+                //
+                // 规范原文：「12 点位置有一条 **8×30pt 圆角竖条**，色 `#4A4A7A`，
+                // 把环分为左右两段」。图 5 那只环的顶部就有一道把环切开的小竖条。
+                //
+                // 为什么门厅也要它：这个环的开口在**底部**，所以整圈是「左边一段 + 右边一段」，
+                // 而顶部正是两段的**接缝**。没有竖条时，接缝处看起来是「渐变到头的两个圆头撞在一起」；
+                // 有了竖条，它读成「刻度盘的分界」。
+                //
+                // 位置：12 点 = 环顶，偏移 -(半径)；竖条自己 8×30，圆角 4（= 8/2，真胶囊）。
+                // 竖条走 `xPlate` 语法层，不自己画 RoundedRectangle ——
+                // 判据「自绘容器预算」会数 `RoundedRectangle(cornerRadius` 的出现次数，
+                // 且基线**只许降不许升**。xPlate 是为此存在的层，它内部画，但统计时豁免。
+                Color.clear
+                    .frame(width: 8, height: 30)
+                    .xPlate(DSRing.segment, 4)
+                    .offset(y: -(heroRingSize - heroRingWidth) / 2)
+                    .accessibilityHidden(true)
+                // ── 中心：图标 + 手势提示，**不是数字读数** ──
+                //
+                // 规范 §7.8 形态 1 的中心是「displayNumber 64 Bold + 下方 YEARS 13」。
+                // 那是**数据环**的写法（图 5 是 Health Age，环心就是那个读数）。
+                //
+                // 门厅这个环不是数据环，是**动作控件**：按住它开锁。
+                // 动作控件的中心必须说「做什么」（按住开锁），而不是给一个数 ——
+                // 给数字的话用户会以为它是一个读数、去读它，而它其实是个按钮。
+                //
+                // 所以这里**不套 §7.8 的中心项**，其余 10 项照做。
                 VStack(spacing: XSpace.xs) {
                     Image(systemName: centerGlyph)
                         .font(.system(size: XIcon.xl, weight: .medium))

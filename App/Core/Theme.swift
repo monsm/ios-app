@@ -299,6 +299,11 @@ enum DSRing {
     static let cursor: CGFloat = 18
     /// 内盘 —— **不是纯黑**，深海军蓝。纯黑内盘会让环看起来是个洞。
     static var innerDisc: Color { Color(hex: 0x0A1220) }
+    /// 12 点分段竖条 —— 规范 §7.8 形态 1「分段」项给的值：`#4A4A7A`。
+    ///
+    /// 它把环切成左右两段。颜色比轨道亮、比进度弧暗，
+    /// 既不抢进度弧的注意力，又能让人看出「这里是一道分界」。
+    static var segment: Color { Color(hex: 0x4A4A7A) }
     /// 轨道两端的蓝灰（不是中性白 10%）。
     static var trackTop: Color { Color(hex: 0x2A2F45) }
     static var trackBottom: Color { Color(hex: 0x1A1D2A) }
