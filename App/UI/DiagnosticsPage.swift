@@ -118,7 +118,8 @@ struct DiagnosticsPage: View {
                 HStack(alignment: .top, spacing: XSpace.s) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("孤儿数据").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
-                        Text("\(health.count) 项").xFont(.footnote, weight: .semibold)
+                        // 局部 health 是 Double（健康率 0-1），遮蔽了属性 health:[String] —— CI 抓到 .count 编译错误
+                        Text("\(bad) 项").xFont(.footnote, weight: .semibold)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     VStack(alignment: .leading, spacing: 4) {

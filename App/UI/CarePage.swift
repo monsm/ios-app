@@ -201,11 +201,16 @@ struct CarePage: View {
     // ═══════════════════════════════════════════════════════
 
     private var todoCard: some View {
+        XPanel(kind: .group, padding: 0) {
+            VStack(spacing: 0) {
+                // 审美对齐 HTML 60-care 卡2 卡头
                 Text("该做的")
                     .xFont(.subheadline)
                     .foregroundStyle(XPalette.textTertiary)
-        XPanel(kind: .group, padding: 0) {
-            VStack(spacing: 0) {
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, XSpace.card)
+                    .padding(.top, XSpace.m)
+                    .padding(.bottom, XSpace.s)
                 if let battery = batteryTodo {
                     todoRow(battery)
                     XHairline(inset: XSpace.card)
@@ -308,6 +313,13 @@ struct CarePage: View {
     // ═══════════════════════════════════════════════════════
 
     /// 审美对齐 HTML (2026-10-24): 保养历史横向画廊（HTML 60-care 是横滑卡）
+    /// 把 epoch 毫秒格式化成 MM-dd（WeekCal 取分量，不裸建 DateFormatter）
+    private static func careDateText(_ ms: Double) -> String {
+        let d = Date(timeIntervalSince1970: ms / 1000)
+        let cal = WeekCal.gregorian
+        return String(format: "%02d-%02d", cal.component(.month, from: d), cal.component(.day, from: d))
+    }
+
     private var careHistoryGallery: some View {
         let events = BatteryCare.events(mac).filter { $0.kind == "care" }.prefix(8)
         return ScrollView(.horizontal, showsIndicators: false) {
@@ -323,8 +335,8 @@ struct CarePage: View {
                     ForEach(Array(events), id: \.ts) { e in
                         VStack(alignment: .leading, spacing: 6) {
                             Text("保养").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
-                            // 真实 API：TimeFormat.shortClock（TimeFormat.day / BatteryCare.daysAgoText 都不存在）
-                            Text(TimeFormat.shortClock(e.ts)).xFont(.footnote, weight: .semibold)
+                            // e.ts 是 epoch **毫秒** Double；shortClock 要格式化好的字符串，不能直接传
+                            Text(Self.careDateText(e.ts)).xFont(.footnote, weight: .semibold)
                                 .foregroundStyle(XPalette.text)
                             Text("\(TimeFormat.daysSince(ms: e.ts)) 天前").xFont(.caption2)
                                 .foregroundStyle(XPalette.textTertiary)

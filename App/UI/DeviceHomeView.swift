@@ -176,11 +176,11 @@ struct SyncTimeView: View {
 
     // ── 动作卡 ──
     private var actionCard: some View {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
                 Text("写入")
                     .xFont(.subheadline)
                     .foregroundStyle(XPalette.textTertiary)
-        XPanel(kind: .group) {
-            VStack(alignment: .leading, spacing: XSpace.m) {
                 XBusyButton(title: "将手机时间同步到锁内",
                             systemImage: "clock.arrow.circlepath",
                             busy: busy) {

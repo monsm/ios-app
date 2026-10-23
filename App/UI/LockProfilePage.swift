@@ -319,10 +319,6 @@ struct LockProfilePage: View {
     private func lockStateText(_ rc: Int) -> String { StatusParser.lockStateText(rc) }
 
     private var identitySection: some View {
-            Text("身份")
-            .xFont(.subheadline)
-            .foregroundStyle(XPalette.textTertiary)
-            XHairline().padding(.vertical, XSpace.s)
         XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 sectionTitle("身份", icon: "textformat")
@@ -378,10 +374,6 @@ struct LockProfilePage: View {
     // ═══════════════════════════════════════════════════════
 
     private var symbolSection: some View {
-            Text("符号")
-            .xFont(.subheadline)
-            .foregroundStyle(XPalette.textTertiary)
-            XHairline().padding(.vertical, XSpace.s)
         XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 sectionTitle("符号", icon: "sparkles")
@@ -429,10 +421,6 @@ struct LockProfilePage: View {
     // ═══════════════════════════════════════════════════════
 
     private var colorSection: some View {
-            Text("配色")
-            .xFont(.subheadline)
-            .foregroundStyle(XPalette.textTertiary)
-            XHairline().padding(.vertical, XSpace.s)
         XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 sectionTitle("色标", icon: "paintpalette")
@@ -472,10 +460,6 @@ struct LockProfilePage: View {
     // ═══════════════════════════════════════════════════════
 
     private var moreSection: some View {
-            Text("更多")
-            .xFont(.subheadline)
-            .foregroundStyle(XPalette.textTertiary)
-            XHairline().padding(.vertical, XSpace.s)
         XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 sectionTitle("更多", icon: "ellipsis.circle")

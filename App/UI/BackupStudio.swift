@@ -75,13 +75,13 @@ struct BackupStudioView: View {
                 HStack(alignment: .top, spacing: XSpace.s) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("上次导出").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
-                        Text(BackupStudio.daysSinceLastExport < 0 ? "从未" : "\(BackupStudio.daysSinceLastExport) 天前")
+                        Text(BackupStudio.daysSinceLastExport() < 0 ? "从未" : "\(BackupStudio.daysSinceLastExport()) 天前")
                             .xFont(.footnote, weight: .semibold)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     VStack(alignment: .leading, spacing: 4) {
                         Text("上次导入").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
-                        Text(BackupStudio.daysSinceLastImport < 0 ? "从未" : "\(BackupStudio.daysSinceLastImport) 天前")
+                        Text(BackupStudio.daysSinceLastImport() < 0 ? "从未" : "\(BackupStudio.daysSinceLastImport()) 天前")
                             .xFont(.footnote, weight: .semibold)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -116,7 +116,7 @@ struct BackupStudioView: View {
                     .fixedSize(horizontal: false, vertical: true)
                 Button {
                     if BackupStudio.canUndoLastRestore {
-                        BackupStudio.undoLastRestore()
+                        _ = BackupStudio.undoLastRestore()
                         XHaptics.success()
                     }
                 } label: {
