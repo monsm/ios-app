@@ -486,6 +486,12 @@ struct EventsPage: View {
         // 这样组内所有节点共用一条线，节点之间不会断。
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 0) {
+                // 六图改造 (2026-10-23): 顶部加**图 5 的读数条**。
+                //
+                // 事件页是时间轴，本身形态已经对（不该再改成卡片流）。
+                // 缺的是"一共多少条、其中几条告警"这个总量 —— 图 5 永远先把量给出来。
+                // 用一条紧凑的读数行而不是一张大卡，避免压住下方的时间轴。
+                overviewStrip
                 ForEach(grouped, id: \.day) { group in
                     daySection(group)
                 }
@@ -495,6 +501,37 @@ struct EventsPage: View {
             .padding(.bottom, XSpace.xxl)
         }
         .background(XPalette.canvasGradient)
+    }
+
+    /// 图 5 的读数条：44px 总数 + 告警数 + 分组天数
+    private var overviewStrip: some View {
+        let alarmN = recs.filter { $0.warn }.count
+        return XPanel(kind: .group) {
+            HStack(alignment: .center, spacing: XSpace.l) {
+                VStack(alignment: .leading, spacing: 6) {
+                    XHeroNumber(
+                        text: String(recs.count),
+                        unit: "条记录",
+                        color: XPalette.text)
+                    Text(alarmN > 0 ? "其中 \(alarmN) 条告警 —— 在下面标红"
+                                    : "\(grouped.count) 天 · 没有告警")
+                        .xFont(.footnote)
+                        .foregroundStyle(XPalette.textTertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 4)
+                XGradientDial(
+                    size: 62,
+                    progress: recs.isEmpty ? 0.02 : min(1, Double(recs.count) / 40),
+                    widthRatio: 0.14,
+                    showsCursor: false,
+                    showsTick: false,
+                    gradient: alarmN > 0 ? XGradient.dial : XGradient.dialOK
+                ) { EmptyView() }
+                .accessibilityHidden(true)
+            }
+        }
+        .padding(.bottom, XSpace.s)
     }
 
     /// 一天一组：日期头 + 时间轴

@@ -15,6 +15,11 @@ struct CareRemindersView: View {
         // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
         XScreen("关怀提醒", style: .inline) {
+                // 六图改造 (2026-10-23): 顶部加**图 5 读数卡**（44px 最近多少天 + 环）。
+                //
+                // 这一页存在的意义就是"提醒"，提醒的第一要义是**还剩多久**。
+                // 之前最近的那个日子埋在三张卡里的一行 —— 用户要自己扫一遍才知道"最近是几天后"。
+                countdownHeroCard.xScrollLift()
                 bulletinCard.xScrollLift()
                 annivCard.xScrollLift()
                 bdayCard.xScrollLift()
@@ -23,6 +28,69 @@ struct CareRemindersView: View {
         }
         .onDisappear {
             Milestones.bulletin = bulletin.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+    }
+
+    /// 图 5 读数卡：44px "最近还有几天" + 环（越近越满）
+    private var countdownHeroCard: some View {
+        // 汇总：纪念日 + 成员生日里最近的那个
+        var candidates: [Int] = []
+        let anniv = Milestones.bondDay   // 结缘日就是本页的"纪念日"（String 非可选，不要 ??）
+        if !anniv.isEmpty {
+            let d = daysUntil(anniv)
+            if d >= 0 { candidates.append(d) }
+        }
+        for m in DB.members() {
+            let md = Milestones.memberBirthdays()[m.id] ?? ""
+            if !md.isEmpty {
+                let d = daysUntil(md)
+                if d >= 0 { candidates.append(d) }
+            }
+        }
+        let nearest = candidates.min()
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack {
+                    Text("最近的纪念")
+                        .xFont(.subheadline)
+                        .foregroundStyle(XPalette.textTertiary)
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(XPalette.textTertiary.opacity(0.6))
+                }
+                HStack(alignment: .center, spacing: XSpace.l) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        if let n = nearest {
+                            XHeroNumber(
+                                text: String(n),
+                                unit: n == 0 ? "今天" : "天后",
+                                color: n <= 7 ? XPalette.warn : XPalette.accentText)
+                            Text(n == 0 ? "就是今天 —— 别忘了说一句" : "到那天早上 9 点会提醒一次")
+                                .xFont(.footnote)
+                                .foregroundStyle(XPalette.textTertiary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        } else {
+                            XHeroNumber(text: "—", unit: "还没填", color: XPalette.textTertiary)
+                            Text("在下面填了纪念日或生日，这里才会倒计时")
+                                .xFont(.footnote)
+                                .foregroundStyle(XPalette.textTertiary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    Spacer(minLength: 4)
+                    XGradientDial(
+                        size: 70,
+                        progress: nearest == nil ? 0.02 : max(0.04, 1 - Double(min(nearest!, 60)) / 60),
+                        widthRatio: 0.13,
+                        showsCursor: false,
+                        showsTick: false,
+                        gradient: (nearest ?? 99) <= 7 ? XGradient.dial : XGradient.dialOK
+                    ) { EmptyView() }
+                    .accessibilityHidden(true)
+                }
+                .padding(.top, 8)
+            }
         }
     }
 

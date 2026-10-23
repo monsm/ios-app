@@ -1524,6 +1524,11 @@ struct ExportCenterView: View {
         // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
         XScreen("导出与分享", style: .inline) {
+                // 六图改造 (2026-10-23): 顶部加**图 5 的读数卡**。
+                //
+                // 图 5 的第一张卡永远是「一个大数 + 一枚环」。导出中心之前直接进"范围"选择，
+                // 用户看不到这次会导出多少条。这张卡把「即将导出的条数」做成主角。
+                exportStatsCard.xScrollLift()
                 // 范围与列选择
                 scopeCard.xScrollLift()
                 // 动作分组: 文件导出 / 卡片与长图 / 打印
@@ -1556,6 +1561,53 @@ struct ExportCenterView: View {
             loadVerifyCode()
         }
         .onChange(of: range) { _, _ in loadVerifyCode() }
+    }
+
+    /// 图 5 读数卡：44px 即将导出条数 + 环 + 三列范围信息
+    private var exportStatsCard: some View {
+        let n = records.count
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack {
+                    Text("将要导出")
+                        .xFont(.subheadline)
+                        .foregroundStyle(XPalette.textTertiary)
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(XPalette.textTertiary.opacity(0.6))
+                }
+                HStack(alignment: .center, spacing: XSpace.l) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        XHeroNumber(
+                            text: String(n),
+                            unit: "条记录",
+                            color: n == 0 ? XPalette.textTertiary : XPalette.accentText)
+                        Text(n == 0 ? "当前范围内没有记录 —— 换个范围试试"
+                                    : "按当前范围与列选择算出，导出前可再调")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 4)
+                    XGradientDial(
+                        size: 66,
+                        progress: n == 0 ? 0.02 : min(1, Double(n) / 100),
+                        widthRatio: 0.14,
+                        showsCursor: false,
+                        showsTick: false
+                    ) { EmptyView() }
+                    .accessibilityHidden(true)
+                }
+                .padding(.top, 8)
+                XStatSection {
+                    Text("导出与分享会让文件离开本机 —— 脱敏开关开着时，成员名与钥匙号会被替换。")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textTertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
     }
 
     // ═══════════════════════════════════════════════════════

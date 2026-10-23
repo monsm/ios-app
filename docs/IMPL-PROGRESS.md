@@ -94,7 +94,7 @@
 
 | HTML | SwiftUI | 六图特征 | 状态 |
 |---|---|---|---|
-| 50-events | EventsPage.swift | 图4 分组头 + 状态胶囊 | ⬜ |
+| 50-events | EventsPage.swift | ✅ 顶部图5 读数条（44px 总条数 + 告警数 + 环）；时间轴形态保留（本身就是真时间轴）| ✅ |
 | 51-feed | FeedPage.swift | ✅ 图5 时段卡（44px 今日开门 + 环 + 24 根细柱 + 0/6AM/12PM/6PM/24 轴标）| ✅ |
 | 52-stats | StatsPage.swift | ✅ 新增图5 Activity Rings 首卡（粗三环 + 右侧三行彩色读数）| ✅ |
 
