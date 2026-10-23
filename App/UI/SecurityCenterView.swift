@@ -759,18 +759,42 @@ struct SecurityAuditView: View {
     // ---------- 380 字段级 diff 展开行 ----------
     private func auditRow(_ e: AuditEvent) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: XSpace.xs) {
-                Image(systemName: e.cat == .door ? "door.open.fill" : "gearshape.fill")
+            // 六图改造 (2026-10-23): 审计行改**图 4 Sports 的行节奏**。
+            //
+            // 图 4 的比赛行是「左侧时间 → 图标块 → 主副文 → 右侧状态胶囊 → chevron」。
+            // 之前这里是「小图标 + 一行文字 + 右端时间」，时间是灰 12pt 挤在最右，
+            // 与 chevron 争位置。审计流水的核心信息是"什么时候、发生了什么、有没有异常"，
+            // 所以时间提到最左（图 4 的比分位），状态做成胶囊（图 4 的 Touchdown 位）。
+            HStack(spacing: XSpace.s) {
+                Text(SecFmt.dateStr(e.ts))
+                    .xFontExact(.caption.monospacedDigit())
+                    .foregroundStyle(XPalette.textTertiary)
+                    .frame(width: 64, alignment: .leading)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                // 类型图标块（图 4 的队徽位）
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .fill((e.duress ? XPalette.warn : XPalette.accentText).opacity(0.16))
+                    .frame(width: 26, height: 26)
+                    .overlay {
+                        Image(systemName: e.cat == .door ? "door.open.fill" : "gearshape.fill")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(e.duress ? XPalette.warn : XPalette.accentText)
+                    }
                     .accessibilityHidden(true)
-                    .font(.system(size: XIcon.xs, weight: .semibold))
-                    .foregroundStyle(e.duress ? XPalette.warn : XPalette.accentText)
                 Text("\(e.action) \(e.target)")
                     .xFont(.subheadline)
                     .lineLimit(1)
-                Spacer()
-                Text(SecFmt.dateStr(e.ts))
-                    .xFont(.caption)
-                    .foregroundStyle(XPalette.textSub)
+                Spacer(minLength: XSpace.xs)
+                // 状态胶囊（图 4 的 Touchdown 位）
+                Text(e.duress ? "胁迫" : (e.cat == .door ? "开门" : "管理"))
+                    .xFont(.caption2, weight: .semibold)
+                    .foregroundStyle(e.duress ? XPalette.warn : (e.cat == .door ? XPalette.ok : XPalette.accentText))
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
+                    .background {
+                        Capsule().fill((e.duress ? XPalette.warn : (e.cat == .door ? XPalette.ok : XPalette.accentText)).opacity(0.16))
+                    }
                 Image(systemName: "chevron.down")
                     .accessibilityHidden(true)
                     .font(.system(size: XIcon.xs, weight: .semibold))

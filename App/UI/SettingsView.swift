@@ -40,22 +40,36 @@ struct SafemodeIntroView: View {
                 // 但全仓界面从未显示过这两个位。
                 // 它们和 verifyMode 同属 KLV 0x08 的 securityLevel 位域, 是锁的真实策略。
                 lockSwitchCard
+                // 六图改造 (2026-10-23): 介绍卡改**图 2 的双角色卡 + 彩点行**。
+                //
+                // 图 2 Winding Down 的对比永远是「两张等宽角色卡（大字 + 单位）→ 彩点行说差别
+                // → footer 整句」。之前这里是四段连续灰字 —— 用户要读完全文才知道 A/B 差在哪。
+                // 双角色卡把"A 单一 / B 组合"先摆成两个可比较的对象，再解释细节。
+                HStack(spacing: XSpace.s) {
+                    modeCard(letter: "A", unit: "单一", note: "任选一种即可开锁", tone: XPalette.ok)
+                    modeCard(letter: "B", unit: "组合", note: "两种方式组合验证", tone: XPalette.warn)
+                }
                 XPanel(kind: .group) {
                     VStack(alignment: .leading, spacing: XSpace.m) {
-                        secLabel("门锁的安全模式介绍")
-                        Text("门锁的安全模式分为 A 模式和 B 模式")
-                            .xFont(.subheadline, weight: .medium)
-                            .foregroundStyle(XPalette.text)
-                        Text("A 模式：只需要单一方式（密码／指纹／手机）验证通过就可以开锁")
-                            .xFont(.footnote)
-                            .foregroundStyle(XPalette.textSub)
-                            .fixedSize(horizontal: false, vertical: true)
-                        Text("B 模式：需要用两种不同方式（指纹+密码／指纹+手机／手机+密码）组合验证通过才可开锁")
-                            .xFont(.footnote)
-                            .foregroundStyle(XPalette.textSub)
+                        secLabel("两种模式的差别")
+                        XDataRow(label: "只需要一种",
+                                 value: "A",
+                                 unit: "",
+                                 color: XPalette.ok,
+                                 note: "密码／指纹／手机，任选其一验证通过就可以开锁")
+                        XHairline()
+                        XDataRow(label: "需要两种不同方式",
+                                 value: "B",
+                                 unit: "",
+                                 color: XPalette.warn,
+                                 note: "指纹+密码／指纹+手机／手机+密码，组合验证通过才可开锁")
+                        Text("B 模式的强度不是 A 的两倍 —— 它换的是「知道什么 + 有什么」的组合，防的是手机被借走。")
+                            .xFont(.caption2)
+                            .foregroundStyle(XPalette.textTertiary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
+
 
                 XPanel(kind: .group) {
                     VStack(alignment: .leading, spacing: XSpace.m) {
@@ -100,6 +114,22 @@ struct SafemodeIntroView: View {
     /// 三个位都在 StatusParser 里解析好了，但界面只显示过 verifyMode，
     /// 另外两个位从未出现在任何页面上。
     @ViewBuilder
+    /// 图 2 的双角色卡：44px 字母 + 单位 + 一行说明
+    private func modeCard(letter: String, unit: String, note: String, tone: Color) -> some View {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(unit)
+                    .xFont(.caption)
+                    .foregroundStyle(XPalette.textTertiary)
+                XHeroNumber(text: letter, unit: unit, color: tone)
+                Text(note)
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
     private var lockSwitchCard: some View {
         if let st = app.status {
             XPanel(kind: .group) {

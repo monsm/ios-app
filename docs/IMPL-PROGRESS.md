@@ -82,9 +82,9 @@
 | 41-applock | AppLockSetupView.swift | 图2 卡解剖 | ⬜ |
 | 42-peek | PrivacyDashboard | 图2 环 + 三态对照 | ⬜ |
 | 43-privacy-dash | PrivacyDashboard | 图2 环 | ⬜ |
-| 44-audit | SecurityAuditView | 图4 两层 + 分组头 | ⬜ |
+| 44-audit | SecurityCenterView.SecurityAuditView | ✅ 行改图4 节奏（时间在左/图标块/主文/状态胶囊/chevron）| ✅ |
 | 45-destroy | SecurityDestroyView | 图3 警示 | ⬜ |
-| 46-safemode | SafemodeIntroView | 图2 双角色卡 + 彩点行 | ⬜ |
+| 46-safemode | SettingsView.SafemodeIntroView | ✅ 图2 双角色卡（44px A/B + 单位 + 说明）+ 彩点行说差别 + footer 洞察句 | ✅ |
 | 47-backup | BackupPage.swift | ✅ 状态卡重做：44px 天数 + 新鲜度环 + 三列（加密/派生/撤销窗口）+ footer | ✅ |
 | 48-export | ExportCenterView | 图5 柱图 + 轴标 | ⬜ |
 | 49-appearance | StudioPage.swift | 图6 色板网格 | ⬜ |
