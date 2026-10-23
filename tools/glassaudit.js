@@ -228,6 +228,36 @@ const RULES = [
 
 // ── 工程级断言（不是逐行扫，是整个 App 有没有做这件事）──
 const projectProblems = [];
+// ── §7.6 卡片内字号必须是规范给的三档 ──
+//
+// 规范 §7.6 的表：
+//   标题 **19 Bold** 白 / 标签 **12** textSecondary / 值 **16 Semibold** 白
+//
+// 实证：CarePage 的保养卡写的是 title3(18 Semibold) 与 body(16 Regular)。
+// 标题小一档、轻一档 —— 而那张卡是页面主角。
+//
+// 判据：从 `XStatCard(` 起始，往后 80 行窗口内出现 `xFont(.title3` 或 `style: .body,` → 报。
+// 不做括号深度跟踪 —— 那个思路在这个判据上试了两版都漏判（闭包还没开就先算了深度），
+// 而窗口法对「一张卡最多几十行」这个事实足够准。
+{
+  for (const f of files) {
+    const src = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n');
+    if (!/XStatCard\(/.test(src)) continue;
+    const lines = src.split('\n');
+    for (let k = 0; k < lines.length; k++) {
+      if (!/XStatCard\(/.test(lines[k])) continue;
+      for (let w = k; w < Math.min(lines.length, k + 80); w++) {
+        if (/xFont\(\.title3/.test(lines[w])) {
+          projectProblems.push('§7.6 卡内标题用小了：' + path.relative(ROOT, f) + ':' + (w + 1) + ' 用了 title3(18)，规范要 title2(19 Bold)');
+        }
+        if (/style: \.body,/.test(lines[w])) {
+          projectProblems.push('§7.6 卡内值用错了档：' + path.relative(ROOT, f) + ':' + (w + 1) + ' 用了 body，规范要 headline(16 Semibold)');
+        }
+      }
+    }
+  }
+}
+
 // ── 页面骨架必须走 XScreen ──
 //
 // 实证：53 个 UI 文件里 38 个有 ScrollView，而顶部留白有 **12 种写法** ——

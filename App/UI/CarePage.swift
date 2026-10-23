@@ -89,7 +89,7 @@ struct CarePage: View {
             XStatSection(isFirst: true) {
                 VStack(alignment: .leading, spacing: XSpace.m) {
                     Text(periodTitle(days))
-                        .xFont(.title3, weight: .bold)
+                        .xFont(.title2, weight: .bold)   // §7.6 标题 19 Bold
                         .foregroundStyle(XPalette.text)
                         .fixedSize(horizontal: false, vertical: true)
         
@@ -101,7 +101,7 @@ struct CarePage: View {
                             XValueUnit(
                                 value: days > 0 ? "\(days)" : (care.lastCareAt > 0 ? "该做" : "未记录"),
                                 unit: days > 0 ? "天" : nil,
-                                style: .body,
+                                style: .headline,   // §7.6 值 16 Semibold
                                 weight: .semibold)
                         }
                         Spacer(minLength: 0)
