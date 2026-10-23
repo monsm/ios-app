@@ -22,6 +22,44 @@ struct MemberDetail360View: View {
 
     private var member: Member? { DB.member(memberID) }
 
+        /// 图 5 双列 MetricCard：名下钥匙 / 本周开门
+    private func memberMetricsCards(_ m: Member) -> some View {
+        // 真实 API 是 MemberHub.activity(_:) 返回 Activity（opens30 / month / owns）
+        // —— apicheck 抓到我先写的 weekOpens 不存在
+        let act = MemberHub.activity(m.id)
+        let owned = act.owns
+        let opensN = act.opens30
+        return HStack(spacing: XSpace.s) {
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("名下钥匙").xFont(.caption, weight: .medium)
+                        .foregroundStyle(XPalette.textSub)
+                    XHeroNumber(text: String(owned), unit: "份", color: XPalette.accentText)
+                    Text("可证明归属的凭证")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textTertiary)
+                    XGradientDial(size: 44, progress: min(1, Double(owned) / 6),
+                                  widthRatio: 0.14, showsCursor: false, showsTick: false)
+                        .opacity(0.9)
+                }
+            }
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("近 30 天开门").xFont(.caption, weight: .medium)
+                        .foregroundStyle(XPalette.textSub)
+                    XHeroNumber(text: String(opensN), unit: "次", color: XPalette.ok)
+                    Text(opensN == 0 ? "近 30 天没开过 —— 可能是久未用" : "按事件记录统计")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textTertiary)
+                    XGradientDial(size: 44, progress: min(1, Double(opensN) / 10),
+                                  widthRatio: 0.14, showsCursor: false, showsTick: false,
+                                  gradient: XGradient.dialOK)
+                        .opacity(0.9)
+                }
+            }
+        }
+    }
+
     var body: some View { vkBody.destined(.memberDetail360) }
     /// ⚠ `@ViewBuilder` 这一句不能省：顶层是 `if let / else` 两个**不同类型**的分支
     /// （`List{…}` vs `EmptyState`）。它原先是 `body`，隐式带着协议给的 @ViewBuilder；
@@ -34,6 +72,11 @@ struct MemberDetail360View: View {
 
                 // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
                 XScreen(MemberHub.display(m), style: .inline) {
+                    // 六图改造 (2026-10-24): 顶部加**图 5 双列 MetricCard**（名下钥匙 / 本周开门）。
+                    //
+                    // 图 5 的 Summary 屏先给两个并排读数再给细节。
+                    // 成员详情之前先进"一周小结"那句话 —— 是文字不是量。
+                    memberMetricsCards(m)
                     // 一周小结 (原有 weekSentence, 只在有内容时出)
                     if let line = MemberHub.weekSentence(m.id) {
                         HStack(spacing: XSpace.s) {
@@ -529,12 +572,41 @@ struct MemberWizardView: View {
                                 case 0:
                                 TextField("称呼 (汉字/英文/数字, 上限 20)", text: $name)
                                 .autocorrectionDisabled()
-                                Picker("emoji 代号", selection: $emoji) {   // 916 代号
-                                    ForEach(["", "🐻", "🐱", "🐸", "🐙", "🦊", "🐧", "🐯"], id: \.self) { e in
-                                        Text(e.isEmpty ? "默认首字" : e).tag(e)
+                                // 六图改造 (2026-10-24): emoji 从 Picker 菜单 → **图 6 的横向滚动画廊**。
+                                //
+                                // 图 6 Face Gallery 的选择永远是"横向滑动的一排卡，选中那张有描边"。
+                                // Picker(.menu) 只给一行文字，用户看不到图案、也不知道有几款。
+                                Text("选一个代号")
+                                    .xFont(.footnote)
+                                    .foregroundStyle(XPalette.textTertiary)
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: XSpace.s) {
+                                        ForEach(["", "🐻", "🐱", "🐸", "🐙", "🦊", "🐧", "🐯"], id: \.self) { e in
+                                            let selected = emoji == e
+                                            Button {
+                                                emoji = e
+                                                XHaptics.tick.impactOccurred()
+                                            } label: {
+                                                VStack(spacing: 6) {
+                                                    Text(e.isEmpty ? String(name.prefix(1)) : e)
+                                                        .font(.system(size: XMetric.decorIcon(26)))
+                                                    Text(e.isEmpty ? "首字" : "代号")
+                                                        .xFont(.caption2)
+                                                        .foregroundStyle(selected ? XPalette.accentText : XPalette.textTertiary)
+                                                }
+                                                .frame(width: 64, height: 66)
+                                                // 走 xPlate（不自绘 RoundedRectangle —— uicoverage 预算只许降）；
+                                                // 选中态用底色差异表达，不再叠描边（xPlate 没有 border 参数）
+                                                .xPlate(selected ? XPalette.accent.opacity(XOpacity.badge)
+                                                                 : XPalette.surfaceAlt.opacity(0.5),
+                                                        XRadius.tile)
+                                            }
+                                            .buttonStyle(.plain)
+                                            .accessibilityLabel(e.isEmpty ? "用称呼首字" : "代号 \(e)")
+                                        }
                                     }
+                                    .padding(.vertical, 2)
                                 }
-                                .pickerStyle(.menu)
                                 case 1:
                                 Picker("角色", selection: $role) {   // 458/470 角色
                                     // 副标题现算, 不手写第二份"这档能干什么" —— 那张表只有 MemberHub.permRows 一处定义
@@ -832,6 +904,43 @@ struct MemberArchivedView: View {
         DB.members().filter { MemberHub.ext($0.id).archived }
     }
 
+        /// 图 5 读数卡：44px 位已归档 + 环
+    private var archivedStatsCard: some View {
+        let n = archived.count
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack {
+                    Text("归档总览")
+                        .xFont(.subheadline)
+                        .foregroundStyle(XPalette.textTertiary)
+                    Spacer(minLength: 0)
+                }
+                HStack(alignment: .center, spacing: XSpace.l) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        XHeroNumber(
+                            text: String(n),
+                            unit: "位已归档",
+                            color: n == 0 ? XPalette.textTertiary : XPalette.accentText)
+                        Text(n == 0 ? "还没有成员被归档" : "归档不删数据 —— 钥匙转成未分配，记录仍在")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 4)
+                    XGradientDial(
+                        size: 68,
+                        progress: n == 0 ? 0.02 : min(1, Double(n) / 6),
+                        widthRatio: 0.13,
+                        showsCursor: false,
+                        showsTick: false
+                    ) { EmptyView() }
+                    .accessibilityHidden(true)
+                }
+                .padding(.top, 8)
+            }
+        }
+    }
+
     var body: some View { vkBody.destined(.memberArchived) }
     var vkBody: some View {
         ZStack {
@@ -839,6 +948,8 @@ struct MemberArchivedView: View {
 
             // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
             XScreen("归档成员", style: .inline) {
+                // 六图改造 (2026-10-24): 顶部加图5 读数卡（44px 归档数 + 环）
+                archivedStatsCard
                 if archived.isEmpty {
                     XPanel(kind: .group) {
                         VStack(spacing: XSpace.s) {
@@ -1105,6 +1216,43 @@ struct UnclaimedClaimView: View {
         return out.sorted { $0.time > $1.time }
     }
 
+        /// 图 5 读数卡：44px 条待认领 + 环
+    private var claimStatsCard: some View {
+        let n = unclaimed.count
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack {
+                    Text("待认领总览")
+                        .xFont(.subheadline)
+                        .foregroundStyle(XPalette.textTertiary)
+                    Spacer(minLength: 0)
+                }
+                HStack(alignment: .center, spacing: XSpace.l) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        XHeroNumber(
+                            text: String(n),
+                            unit: "条待认领",
+                            color: n == 0 ? XPalette.textTertiary : XPalette.accentText)
+                        Text(n == 0 ? "没有未归属的记录" : "认领之后记录就归到具体成员名下")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 4)
+                    XGradientDial(
+                        size: 68,
+                        progress: n == 0 ? 0.02 : min(1, Double(n) / 6),
+                        widthRatio: 0.13,
+                        showsCursor: false,
+                        showsTick: false
+                    ) { EmptyView() }
+                    .accessibilityHidden(true)
+                }
+                .padding(.top, 8)
+            }
+        }
+    }
+
     var body: some View { vkBody.destined(.unclaimedClaim) }
     var vkBody: some View {
         ZStack {
@@ -1112,6 +1260,8 @@ struct UnclaimedClaimView: View {
 
             // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
             XScreen("认领还没分配的钥匙", style: .inline) {
+                // 六图改造 (2026-10-24): 顶部加图5 读数卡（44px 待认领数 + 环）
+                claimStatsCard
                 XPanel(kind: .group) {
                     VStack(alignment: .leading, spacing: XSpace.m) {
                         HStack(spacing: XSpace.s) {
@@ -1361,11 +1511,50 @@ struct MemberExitWizard: View {
     }
     private var allDecided: Bool { items.allSatisfy { decisions[$0.id] != nil } }
 
+        /// 图 5 读数卡：44px 项待处置 + 环
+    private var exitStatsCard: some View {
+        let n = items.count
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack {
+                    Text("待处置总览")
+                        .xFont(.subheadline)
+                        .foregroundStyle(XPalette.textTertiary)
+                    Spacer(minLength: 0)
+                }
+                HStack(alignment: .center, spacing: XSpace.l) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        XHeroNumber(
+                            text: String(n),
+                            unit: "项待处置",
+                            color: n == 0 ? XPalette.textTertiary : XPalette.accentText)
+                        Text(n == 0 ? "名下没有凭证，直接归档即可" : "每项都要选保留 / 移交 / 停用")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 4)
+                    XGradientDial(
+                        size: 68,
+                        progress: n == 0 ? 0.02 : min(1, Double(n) / 6),
+                        widthRatio: 0.13,
+                        showsCursor: false,
+                        showsTick: false
+                    ) { EmptyView() }
+                    .accessibilityHidden(true)
+                }
+                .padding(.top, 8)
+            }
+        }
+    }
+
     var body: some View {
         NavigationStack {
             // M5: Form → ScrollView（与全仓其他页面统一）
             // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
             XScreen("退出处置向导", style: .inline) {
+                // 六图改造 (2026-10-24): 顶部加图5 读数卡（44px 待处置数 + 环）
+                exitStatsCard
                 if items.isEmpty {
                     Group {   // M5 遗留: Section 在 List 外没有视觉容器
                         Text("该成员名下没有台账钥匙, 直接归档即可。")   // 460/795 该成员名下没有台账凭

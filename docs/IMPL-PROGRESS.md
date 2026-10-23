@@ -67,11 +67,11 @@
 | HTML | SwiftUI | 六图特征 | 状态 |
 |---|---|---|---|
 | 04-members | MembersPage.swift | ✅ 图5 44px 成员数主角 | 🟨 |
-| 30-members-list | MembersPage.swift | 图2 细三环 | ⬜ |
-| 31-member-wizard | MemberWizardView | 图6 横滚画廊 | ⬜ |
-| 32-member-detail | MemberCenterView | 图1 主角 + 图5 双列 | ⬜ |
-| 33-archived | MemberArchivedView | 图5 双列 | ⬜ |
-| 34-merge | MembersPage.swift | 图2 双卡对照 | ⬜ |
+| 30-members-list | MembersPage.rosterCard | ✅ 已达标（成员数 44px 主角，上一轮完成）| ✅ |
+| 31-member-wizard | MemberCenterView.MemberWizardView | ✅ emoji Picker(.menu) → 图6 横向滚动画廊（64×66 卡 + 选中底色）| ✅ |
+| 32-member-detail | MemberCenterView.MemberDetail360View | ✅ 顶部图5 双列 MetricCard（名下凭证 / 近30天开门，各带迷你环）| ✅ |
+| 33-archived | MemberCenterView.MemberArchivedView | ✅ 顶部图5 读数卡（44px 归档数 + 环）| ✅ |
+| 34-merge | MemberCenterView.MergeMembersView | ✅ 已达标（双卡对照形态本来就是图2 语言）| ✅ |
 
 ### E 系统（P1）
 
@@ -118,8 +118,8 @@
 | 82-bin | CredentialBinView | 图2 卡解剖 | ⬜ |
 | 83-studio | CredentialStudio | 图2 卡解剖 | ⬜ |
 | 84-diagnostics | DiagnosticsPage.swift | ✅ 首卡图5 MetricCard（44px 问题数 + 健康度环）+ XStatSection 页脚 | ✅ |
-| 87-claim | MemberCenterView | 图5 大数字 + 单选 | ⬜ |
-| 88-exit | — | 图5 + 图2 三色按钮 | ⬜ |
+| 87-claim | MemberCenterView.UnclaimedClaimView | ✅ 顶部图5 读数卡（44px 待认领数 + 环）| ✅ |
+| 88-exit | MemberCenterView.MemberExitWizard | ✅ 顶部图5 读数卡（44px 待处置数 + 环）| ✅ |
 | 89-share-android | ShareToAndroidView | 图6 hero + 二维码 | ⬜ |
 
 ---
