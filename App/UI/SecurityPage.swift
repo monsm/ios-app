@@ -300,15 +300,15 @@ struct SecurityPage: View {
                 actionRow(icon: "trash", title: "彻底销毁", detail: "不可恢复", danger: true) {
                     SecurityDestroyView().environmentObject(app)
                 }
-            }
-        }
-                    Text("这几条都是本机能力 —— 门锁并不知道你开了应用锁或审计，它们防的是这台手机被翻。")
+                Text("这几条都是本机能力 —— 门锁并不知道你开了应用锁或审计，它们防的是这台手机被翻。")
                     .xFont(.caption2)
                     .foregroundStyle(XPalette.textTertiary)
                     .padding(.horizontal, XSpace.card)
                     .padding(.vertical, 12)
                     .fixedSize(horizontal: false, vertical: true)
             }
+        }
+    }
 
     private func actionRow<Destination: View>(
         icon: String, title: String, detail: String, danger: Bool = false,

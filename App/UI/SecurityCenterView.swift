@@ -197,17 +197,26 @@ struct SecurityPeekView: View {
         .xPlate(XPalette.surfaceAlt.opacity(0.5), XRadius.tile)
     }
 
-    /// HTML 卡「隐私总览」
+    /// HTML 卡「隐私总览」—— 用真实的防窥开关状态（不臆造 PeekItem 聚合类型）
     private var privacyOverviewCard: some View {
-        let items = PeekItem.all
-        let on = items.filter { $0.on }.count
+        let flags: [(String, Bool)] = [
+            ("剪贴板自动清除", ClipboardCare.autoClearOn),
+            ("后台即糊", true),
+            ("限时可见", revealUntil > 0),
+            ("磨砂挡片", frosted),
+        ]
+        let on = flags.filter { $0.1 }.count
         return XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 Text("隐私总览")
                     .xFont(.subheadline)
                     .foregroundStyle(XPalette.textTertiary)
-                XDataRow(label: "已开启", value: String(on), unit: "/ \(items.count)", color: XPalette.ok)
-                XDataRow(label: "未开启", value: String(items.count - on), unit: "项", color: XPalette.warn)
+                XDataRow(label: "已开启", value: String(on), unit: "/ \(flags.count)", color: XPalette.ok)
+                XDataRow(label: "未开启", value: String(flags.count - on), unit: "项", color: XPalette.warn)
+                Text("四项都是本机能力 —— 门锁不知道你开了防窥。")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
