@@ -46,6 +46,12 @@ struct LockProfilePage: View {
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
         XScreen("锁档案", style: .inline) {
                 plaque.xScrollLift()
+                // 六图改造 (2026-10-23): 加**图 5 双列 MetricCard**（电量 / 信号）。
+                //
+                // 图 5 的 Step Count / Step Distance 就是「44px 数字 + 迷你环 + 副标」并排。
+                // 锁档案之前只有一排 11pt 小胶囊（电量% / 锁态 / 固件），
+                // 三个信息等重、都很小 —— 而"这把锁还有多少电"是回家路上最想知道的。
+                metricsCards.xScrollLift()
                 identitySection.xScrollLift()
                 symbolSection.xScrollLift()
                 colorSection.xScrollLift()
@@ -154,6 +160,51 @@ struct LockProfilePage: View {
     ///
     /// 数据来自 DB.readStatus —— 本页原来完全没读实时状态。
     @ViewBuilder
+    /// 图 5 双列 MetricCard：电量 / 信号
+    private var metricsCards: some View {
+        let snap = DB.readStatus(mac)
+        let power = snap?.powerLevel ?? -1
+        let fw = snap?.firmware ?? ""
+        return HStack(spacing: XSpace.s) {
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("电量").xFont(.caption, weight: .medium)
+                        .foregroundStyle(XPalette.textSub)
+                    XHeroNumber(
+                        text: power >= 0 ? String(power) : "—",
+                        unit: "%",
+                        color: power < 0 ? XPalette.textTertiary
+                            : (power <= 20 ? XPalette.danger : (power <= 40 ? XPalette.warn : XPalette.ok)))
+                    Text(power < 0 ? "还没读到" : (power <= 20 ? "需要换电池" : "还够用"))
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textTertiary)
+                    XGradientDial(size: 44, progress: power >= 0 ? Double(power) / 100 : 0.02,
+                                  widthRatio: 0.14, showsCursor: false, showsTick: false)
+                        .opacity(0.9)
+                }
+            }
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("固件").xFont(.caption, weight: .medium)
+                        .foregroundStyle(XPalette.textSub)
+                    Text(fw.isEmpty ? "—" : fw)
+                        .font(.system(size: XMetric.dataText(22), weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundStyle(fw.isEmpty ? XPalette.textTertiary : XPalette.text)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
+                    Text(fw.isEmpty ? "还没读到" : "锁端版本")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textTertiary)
+                    Image(systemName: "cpu")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(XPalette.textTertiary)
+                        .frame(height: 44)
+                }
+            }
+        }
+    }
+
     private var statusStrip: some View {
         let snap = DB.readStatus(mac)
         let hasAny = (snap?.powerLevel ?? -1) >= 0

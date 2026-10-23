@@ -194,20 +194,36 @@ struct LocksPage: View {
             // 原来电量只混在副标题文字里（"电量 12%"），
             // 低电量没有任何视觉区分，用户扫一眼看不出来哪把锁该换电池。
             // 锁态 (rc) 也从没在这一行出现过。
-            VStack(alignment: .trailing, spacing: 2) {
+            // 六图改造 (2026-10-23): 电量改**图 4 的「右侧大数字」位**。
+            //
+            // 图 4 Sports 的行是「左侧身份 → 右侧大数字（比分）+ 状态胶囊」。
+            // 设备列表的行同理：右侧那个数是「哪把锁该换电池」的唯一线索，
+            // 之前是 11pt 小字塞在图标后面，扫十行看不出谁快没电。
+            // 现在提到 17pt 粗 + 语义色（低电量红），并保留电池图标做形状线索。
+            VStack(alignment: .trailing, spacing: 3) {
                 if let p = snap?.powerLevel, p >= 0 {
-                    HStack(spacing: 2) {
+                    HStack(alignment: .firstTextBaseline, spacing: 3) {
                         Image(systemName: batteryIcon(p))
                             .font(.system(size: XIcon.xs, weight: .medium))
-                        Text(String(p) + "%")
-                            .xFontExact(.caption2.monospacedDigit())
+                            .foregroundStyle(batteryTone(p))
+                        Text(String(p))
+                            .font(.system(size: XMetric.dataText(17), weight: .bold))
+                            .monospacedDigit()
+                            .foregroundStyle(batteryTone(p))
+                        Text("%")
+                            .xFont(.caption2)
+                            .foregroundStyle(batteryTone(p).opacity(0.8))
                     }
-                    .foregroundStyle(batteryTone(p))
                 }
                 if let rc = snap?.rc {
                     Text(lockStateText(rc))
-                        .xFont(.caption2)
+                        .xFont(.caption2, weight: .semibold)
                         .foregroundStyle(lockStateTone(rc))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background {
+                            Capsule().fill(lockStateTone(rc).opacity(0.16))
+                        }
                 }
             }
         }

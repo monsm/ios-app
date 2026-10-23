@@ -55,8 +55,8 @@
 | HTML | SwiftUI | 六图特征 | 状态 |
 |---|---|---|---|
 | 03-devices | DevicePage.swift | ✅ 图5 双列 MetricCard（握手/信号 44px + 迷你环）+ 固件降为小字 | ✅ |
-| 20-locks | LocksPage.swift | 图5 双列卡 | ⬜ |
-| 21-lock-profile | LockProfilePage.swift | 图5 MetricCard | ⬜ |
+| 20-locks | LocksPage.swift | ✅ 行内电量 11pt → 17pt 粗 + 语义色 + 锁态胶囊（图4 大数字位）；List 结构保留（拖动排序/滑动删除是真实交互）| ✅ |
+| 21-lock-profile | LockProfilePage.swift | ✅ 图5 双列 MetricCard（44px 电量 + 环 / 固件大字 + cpu 位）| ✅ |
 | 22-firmware | FirmwarePage.swift | 图2 卡解剖 | ⬜ |
 | 23-gateway | GatewayPage.swift | 图4 分步条 | ⬜ |
 | 24-dongles | DonglesPage.swift | 图5 大数字 | ⬜ |
