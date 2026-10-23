@@ -154,6 +154,7 @@ struct MePage: View {
                     tone: DB.store.getBool("kf_applock") ? .ok : .warn,
                     showsChevron: true)
             }
+            XHairline(inset: XSpace.card + 28 + XSpace.m)
             // ⚠ 这一条原来和上面那条**指向同一个 SecurityPage 根**，
             // 于是「本机数据保护」和「隐私与伪装」点进去看到的是同一屏 ——
             // 用户按标题预期找防窥/伪装，落到的是一张"安全吗"的总览卡。
@@ -166,6 +167,7 @@ struct MePage: View {
                     subtitle: "后台即糊 / 限时可见 / 水印",
                     showsChevron: true)
             }
+            XHairline(inset: XSpace.card + 28 + XSpace.m)
             // ═══ 诊断与自检 ═══
             //
             // DiagKit 有 642 行采集器（自检 / 数据健康 / 异常退出 / 启动耗时 /
@@ -201,6 +203,7 @@ struct MePage: View {
                     subtitle: "容量 / 固件 / 信号",
                     showsChevron: true)
             }
+            XHairline(inset: XSpace.card + 28 + XSpace.m)
             NavigationLink { LocksPage().environmentObject(app) } label: {
                 XRow(
                     systemImage: "square.stack.3d.up",
@@ -209,6 +212,7 @@ struct MePage: View {
                     value: "\(DB.keychains().count) 把",
                     showsChevron: true)
             }
+            XHairline(inset: XSpace.card + 28 + XSpace.m)
             NavigationLink { LockProfilePage().environmentObject(app) } label: {
                 XRow(
                     systemImage: "tag",
@@ -216,12 +220,14 @@ struct MePage: View {
                     subtitle: "昵称 / 符号 / 色标",
                     showsChevron: true)
             }
+            XHairline(inset: XSpace.card + 28 + XSpace.m)
             NavigationLink { SyncTimeView().environmentObject(app) } label: {
                 XRow(
                     systemImage: "clock.arrow.circlepath",
                     title: "校准门锁时间",
                     showsChevron: true)
             }
+            XHairline(inset: XSpace.card + 28 + XSpace.m)
             NavigationLink { LinkPrefsView(mac: mac).environmentObject(app) } label: {
                 XRow(
                     systemImage: "slider.horizontal.3",
@@ -229,6 +235,7 @@ struct MePage: View {
                     subtitle: "按住确认 / 围栏",
                     showsChevron: true)
             }
+            XHairline(inset: XSpace.card + 28 + XSpace.m)
             NavigationLink { AutoCalView(mac: mac).environmentObject(app) } label: {
                 XRow(
                     systemImage: "figure.walk.motion",
@@ -238,6 +245,7 @@ struct MePage: View {
                     tone: AutoOpen.on ? .ok : .neutral,
                     showsChevron: true)
             }
+            XHairline(inset: XSpace.card + 28 + XSpace.m)
             NavigationLink { SafemodeIntroView().environmentObject(app) } label: {
                 XRow(
                     systemImage: "shield.lefthalf.filled",
@@ -262,6 +270,7 @@ struct MePage: View {
                     value: backupAgeText,
                     showsChevron: true)
             }
+            XHairline(inset: XSpace.card + 28 + XSpace.m)
             NavigationLink { ExportCenterView(mac: mac).environmentObject(app) } label: {
                 XRow(
                     systemImage: "square.and.arrow.up",
@@ -269,6 +278,7 @@ struct MePage: View {
                     subtitle: "CSV / 报告",
                     showsChevron: true)
             }
+            XHairline(inset: XSpace.card + 28 + XSpace.m)
             // ═══ 事件记录 ═══
             //
             // EventsPage 是**功能更全**的记录页：按天分组的时间线、查询引擎
@@ -284,6 +294,7 @@ struct MePage: View {
                     subtitle: "按天浏览 · 搜索 · 同步",
                     showsChevron: true)
             }
+            XHairline(inset: XSpace.card + 28 + XSpace.m)
             NavigationLink { FeedPage().environmentObject(app) } label: {
                 XRow(
                     systemImage: "bell",
@@ -327,6 +338,7 @@ struct MePage: View {
                 XRow(systemImage: "app.badge", title: "App 图标",
                      subtitle: "9 款可选", showsChevron: true)
             }
+            XHairline(inset: XSpace.card + 28 + XSpace.m)
             NavigationLink { FirmwarePage().environmentObject(app) } label: {
                 XRow(
                     systemImage: "arrow.up.circle",
@@ -334,12 +346,14 @@ struct MePage: View {
                     value: DB.readStatus(mac)?.firmware,
                     showsChevron: true)
             }
+            XHairline(inset: XSpace.card + 28 + XSpace.m)
             NavigationLink { CarePage().environmentObject(app) } label: {
                 XRow(
                     systemImage: "wrench.and.screwdriver",
                     title: "维护与保养",
                     showsChevron: true)
             }
+            XHairline(inset: XSpace.card + 28 + XSpace.m)
             NavigationLink { CareRemindersView().environmentObject(app) } label: {
                 XRow(
                     systemImage: "heart.text.square",
@@ -347,12 +361,14 @@ struct MePage: View {
                     subtitle: "生日 / 公告板",
                     showsChevron: true)
             }
+            XHairline(inset: XSpace.card + 28 + XSpace.m)
             NavigationLink { DonglesPage().environmentObject(app) } label: {
                 XRow(
                     systemImage: "key.horizontal",
                     title: "蓝牙钥匙串",
                     showsChevron: true)
             }
+            XHairline(inset: XSpace.card + 28 + XSpace.m)
             NavigationLink { GatewayPage().environmentObject(app) } label: {
                 XRow(
                     systemImage: "antenna.radiowaves.left.and.right",
