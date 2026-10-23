@@ -27,104 +27,132 @@ import SwiftUI
 struct ManagerFace: View {
     @EnvironmentObject private var app: AppState
     @Environment(\.dismiss) private var dismiss
-    @State private var group: ManagerGroup = .ledger
-
-    /// 从门厅带一个分组进来（门厅的「管理」按钮点哪个组就开哪个组）
-    init(initialGroup: ManagerGroup = .ledger) {
-        _group = State(initialValue: initialGroup)
+    /// 当前顶级 Tab。**用 AppState.tabSelection 而不是 @State** ——
+    /// 门厅里的「管理」入口（以及深链、快捷指令、摇一摇）都要能切 Tab，
+    /// 而它们拿不到本视图的 @State。放进 AppState 才有唯一的可写点。
+    private var tabIndex: Binding<Int> {
+        Binding(get: { app.tabSelection }, set: { app.tabSelection = $0 })
     }
     @State private var path: [ManagerRoute] = []
 
+    // 2026-10-23：删掉 `init(initialGroup:)`。
+    // 它是「从门厅带一个分组进来」的入口，而门厅现在是第一个 Tab ——
+    // 不是「从外面弹进来一个面板」，所以没有「带一个分组进来」这回事了。
+    // 切组走 `app.tabSelection`（见 openGroup）。
+
     var body: some View {
-        NavigationStack(path: $path) {
-            ZStack(alignment: .bottom) {
-                XPalette.canvas.ignoresSafeArea()
-
-                // ── 内容区 (规范 5.3 屏幕骨架) ──
-                //
-                // 三档间距, 三档语义:
-                //   pageTop(40)  → 页面顶部呼吸区
-                //   section(28)  → 组标题与内容之间 (两个不同的簇)
-                //   colGap(12)   → 行与行之间 (卡片纵向堆叠… 这里行是卡内的, 见 rows())
-                //
-                // 96 的底部留白不是为了"好看": 浮动胶囊高 56 + 距底 8 + 32 的呼吸 = 96。
-                // 少给 8pt 就会出现"最后一行被胶囊压住", 而那恰好是最下面那行。
-        // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
-        // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
-        XScreen("管家台", style: .inline) {
-                    groupHeader
-                    groupContent
-        }
-
-                // ── 浮动液态玻璃分组条 ──
-                groupBar
-            }
-            // 作为 sheet 弹出时，必须有一个看得见的出口。
-            // 只靠下滑关闭对不熟悉手势的人等于没有出口。
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("完成") { dismiss() }
-                        .fontWeight(.medium)
-                }
-            }
-            // ═══ 消费"带落点名过来"的跳转 ═══
+        // ═══════════════════════════════════════════════════════════
+        // 2026-10-23 重构：手写浮动胶囊 → **原生 TabView**
+        // ═══════════════════════════════════════════════════════════
         //
-        // pendingSettingsFocus 是别人在跳转前写下的"到了之后开哪一屏"：
-        //   · 通知「已生成本机还原点」→ backup
-        //   · 销毁前备份闸的"先去备份" → backup
-        // 这三处写入的注释都写着"由设置页收到即开并清空"，
-        // 但三域合并成单一面板之后消费端丢了 —— 写了没人读，等于跳了个寂寞。
-        .onAppear { consumePendingFocus() }
-        .navigationDestination(for: ManagerRoute.self) { r in
-                // 面包屑精确到分组路由：崩在这 20 条里的哪一条，重启后能直接看到名字。
-                routeDestination(r).trackScreen("管理·\(r)")
+        // 三条用户指令：
+        //   1. 不要门厅 —— 门厅的功能全部并入底部导航新建
+        //   2. 能用原生控件的，不要自己新造
+        //
+        // 改前：`XGlassTabBar` 是我自己写的浮动胶囊，配一个手写的 `group` 状态 +
+        // `NavigationStack(path:)` 单栈。问题在于：
+        //   · 原生 TabView 自带**状态保持**（切走再切回，滚动位置与输入都还在）
+        //   · 自带 iOS 26 的 Liquid Glass 栏体（与参考图的 Tab Bar 同源）
+        //   · 自带无障碍（每个 Tab 读出 role、selected 状态）
+        //   · 自带 iPad/横屏的自适应（手写胶囊做不到）
+        //
+        // 改后：5 个 Tab，第一个是**门厅**（原 HomeConsole），其余四个是原来的管理组。
+        // 门厅不再是「根视图」，它与其它四组平级 —— 这正是用户要的「并入底部导航新建」。
+        TabView(selection: tabIndex) {
+            // ── 门厅 ──
+            NavigationStack {
+                HomeConsole()
+                    .navigationBarHidden(true)
             }
+            .tabItem {
+                Label("门厅", systemImage: "house")   // 原生 TabView 自动填色，不需要手写 selected 态
+            }
+            .tag(0)
+
+            // ── 钥匙 ──
+            NavigationStack(path: $path) {
+                groupScreen(for: .ledger)
+                    .navigationDestination(for: ManagerRoute.self) { r in
+                        routeDestination(r).trackScreen("管理·\(r)")
+                    }
+            }
+            .tabItem {
+                Label(ManagerGroup.ledger.rawValue, systemImage: ManagerGroup.ledger.systemImage)
+            }
+            .tag(1)
+
+            // ── 设备 ──
+            NavigationStack {
+                groupScreen(for: .devices)
+                    .navigationDestination(for: ManagerRoute.self) { r in
+                        routeDestination(r).trackScreen("管理·\(r)")
+                    }
+            }
+            .tabItem {
+                Label(ManagerGroup.devices.rawValue, systemImage: ManagerGroup.devices.systemImage)
+            }
+            .tag(2)
+
+            // ── 成员 ──
+            NavigationStack {
+                groupScreen(for: .members)
+                    .navigationDestination(for: ManagerRoute.self) { r in
+                        routeDestination(r).trackScreen("管理·\(r)")
+                    }
+            }
+            .tabItem {
+                Label(ManagerGroup.members.rawValue, systemImage: ManagerGroup.members.systemImage)
+            }
+            .tag(3)
+
+            // ── 系统 ──
+            NavigationStack {
+                groupScreen(for: .system)
+                    .navigationDestination(for: ManagerRoute.self) { r in
+                        routeDestination(r).trackScreen("管理·\(r)")
+                    }
+            }
+            .tabItem {
+                Label(ManagerGroup.system.rawValue, systemImage: ManagerGroup.system.systemImage)
+            }
+            .tag(4)
+        }
+        // 原生 TabView 的栏体在 iOS 26 上就是 Liquid Glass —— 与参考图同源，不再自绘。
+        .tint(XPalette.accentText)
+        .onAppear { consumePendingFocus() }
+    }
+
+    /// 一个管理组的页面。原生 TabView 下每组有自己的 NavigationStack，
+    /// 所以这里只出内容，不再管栏体与选中态。
+    @ViewBuilder
+    private func groupScreen(for g: ManagerGroup) -> some View {
+        XScreen(g.title, style: .inline) {
+            rows(rowsFor(g))
         }
     }
 
-    // ── 组标题 (规范 7.1 LargeTitleHeader) ──
-    //
-    // 30 Bold / 字距 -0.4。旧值 .title2(22) semibold —— 那是卡片主标题的档,
-    // 拿来当页面标题会让本页与它自己的卡片长得一样平。
-    //
-    // 对齐线: 大标题要落在 XSpace.align (29) 上? 本页容器已经给了 gutter(14),
-    // 所以这里再加 (align - gutter) = 15 就正好压在那条线上。
-    private var groupHeader: some View {
-        VStack(alignment: .leading, spacing: XSpace.s) {
-            Text(group.rawValue)
-                .xFont(.largeTitle, weight: .bold)
-                .tracking(-0.4)
-                .foregroundStyle(XPalette.text)
-            Text(group.summary)
-                .xFont(.body)
-                .foregroundStyle(XPalette.textSub)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.leading, XSpace.align - XSpace.gutter)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(group.rawValue)，\(group.summary)")
-    }
 
     // ── 当前组的内容 ──
-    @ViewBuilder
-    private var groupContent: some View {
-        switch group {
+    /// 一个组有哪些入口。原来是挂在 `group` 状态上的计算属性，
+    /// 现在 TabView 下每组独立，所以要能按参数取。
+    private func rowsFor(_ g: ManagerGroup) -> [(ManagerRoute, String, String, String)] {
+        switch g {
         case .ledger:
-            rows([
+            return [
                 (.keys, "钥匙管理", "密码 / 指纹 / 临时码", "key.horizontal"),
                 (.fingerprints, "指纹", "录入与管理", "touchid"),
                 (.tempCodes, "临时密码", "一次性 / 周期", "clock.badge.checkmark"),
-            ])
+            ]
         case .devices:
-            rows([
+            return [
                 (.locks, "我的门锁", "设备列表与切换", "iphone.gen3"),
                 (.firmware, "固件升级", "版本与升级向导", "arrow.down.circle"),
                 (.gateway, "网关配网", "WiFi 与远程", "wifi.router"),
                 (.dongles, "钥匙串", "随身开门", "key.viewfinder"),
                 (.syncTime, "校准时间", "锁内时钟", "clock.arrow.circlepath"),
-            ])
+            ]
         case .members:
-            rows([
+            return [
                 (.members, "成员", "家人与角色", "person.2"),
                 (.memberWizard, "添加成员", "三步向导", "person.badge.plus"),
                 // ⚠ 这一行的落点是 **MembersPage**，不是 MergeMembersView ——
@@ -137,12 +165,12 @@ struct ManagerFace: View {
                 // 现在文案如实描述落点与下一步，不再许诺一个这里进不去的页面。
                 (.mergeMembers, "成员列表", "合并从这里选人发起", "arrow.triangle.merge"),
                 (.archivedMembers, "已归档", "查看归档成员", "archivebox"),
-            ])
+            ]
         case .system:
             // 5 组并成 4 组（规范 §7.10「项数 3–4」，不得出现 More）。
             // 合并的是「安全」+「数据与外观」—— 它们的共同点是**都在管这台手机**，
             // 而不是管那把锁。分两栏时用户要在两个 Tab 之间反复横跳才能配完一次备份。
-            rows([
+            return [
                 (.securityCenter, "隐私看板", "应用锁 / 授权总览", "lock.shield"),
                 (.securityAudit, "安全审计", "变更记录", "list.bullet.rectangle"),
                 (.securityDestroy, "销毁数据", "不可逆清除", "trash"),
@@ -151,7 +179,7 @@ struct ManagerFace: View {
                 (.export, "导出中心", "PDF / CSV / 分享", "square.and.arrow.up"),
                 (.appearance, "外观工作室", "强调色 / 密度 / 周起始", "paintpalette"),
                 (.me, "本机设置", "应用锁 / 备份 / 关于", "person.crop.circle"),
-            ])
+            ]
         }
     }
 
@@ -177,45 +205,8 @@ struct ManagerFace: View {
         }
     }
 
-    // ── 浮动玻璃分组条 (规范 7.10 GlassTabBar) ──
-    //
-    // 旧实现的选中态是 "accent 12% 胶囊" —— 那是**语义色洗底**, 不是范式要的
-    // "更亮的微光胶囊 + 图标与标签同时变语义色"。两者观感完全不同:
-    //   洗底 = 一块有色玻璃贴在栏体上;
-    //   微光 = 栏体本身被顶起一格, 用颜色指认"你在哪"。
-    //
-    // 规范把这个列为**最容易搞反的一处** (7.10 自检), 并给了实测依据:
-    // 选中胶囊只比栏体亮 6 个色阶, 纯黑上几乎看不见 ⇒ **颜色才是主要识别信号**。
-    // 所以这里图标与标签都跟着变语义色, 明度差只做辅助。
-    private var groupBar: some View {
-        XGlassTabBar(items: tabItems, selection: groupIndex) { idx in
-            guard idx < ManagerGroup.allCases.count else { return }
-            withAnimation(XMotion.standard) { group = ManagerGroup.allCases[idx] }
-            XHaptics.tick.impactOccurred()
-        }
-        .padding(.horizontal, XSpace.gutter)
-        .padding(.bottom, XSpace.s)
-    }
 
-    /// ManagerGroup → 规范 TabItem。**四项**，每项图标 + 标签（规范 §7.10：项数 3–4，不得出现 More）。
-    ///
-    /// 2026-10-22 审计修正：此处原本是 5 项，并用一句「规范说每组 3–7 项」给自己开脱 ——
-    /// **规范里根本没有那一条**。那是我为了保留第 5 项编出来的依据。
-    /// 已按 §7.10 合并为 4 项。
-    private var tabItems: [XTabItem] {
-        ManagerGroup.allCases.enumerated().map { idx, g in
-            XTabItem(id: idx, title: g.rawValue, symbol: g.systemImage,
-                     selectedSymbol: g.systemImage + ".fill",
-                     tint: XPalette.accentText)
-        }
-    }
 
-    private var groupIndex: Binding<Int> {
-        Binding(
-            get: { ManagerGroup.allCases.firstIndex(of: group) ?? 0 },
-            set: { group = ManagerGroup.allCases[max(0, min($0, ManagerGroup.allCases.count - 1))] }
-        )
-    }
 
     // ── 路由落地 ──
     private func consumePendingFocus() {
@@ -278,6 +269,10 @@ enum ManagerRoute: String, Hashable, Identifiable {
     case diagnostics
 
     var id: String { rawValue }
+
+    /// 页面标题 —— 与 Tab 标签同字。单列一个属性是为了让调用点读起来是
+    /// 「一个组的标题」而不是「一个枚举的 rawValue」。 */
+    var title: String { rawValue }
 }
 
 // ═══════════════════════════════════════════════════════════════════════

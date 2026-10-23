@@ -68,7 +68,6 @@ struct HomeConsole: View {
     /// .charging，此时第二次调用能顺利通过 phase 检查，于是两次 BLE 开锁并发执行。
     @State private var isUnlocking = false
     @State private var settlingTask: Task<Void, Never>?
-    @State private var managerGroup: ManagerGroup?
     /// 首启用：一把锁都没有时，直接开配对页。
     /// 原来这里走 managerGroup = .devices —— 用户先看到一张**管理面板**，
     /// 还得自己再找一次「添加门锁」。首启最关键的一步不该有多余一跳。
@@ -155,7 +154,6 @@ struct HomeConsole: View {
                                 memberSection
                             }
                         }
-                        manageSection
                     }
                     .padding(.horizontal, XSpace.gutter)
                     // 页面顶部留白 40 ——— 规范 5.1 的 s8。这是"标题到首卡"呼吸区的起点,
@@ -197,7 +195,7 @@ struct HomeConsole: View {
             //     换身份重建，@State 会丢，而用户刚验完口令什么都没发生是最差的表现。
             .onChange(of: app.guestAreaUnlocked) { _, unlocked in
                 guard unlocked, let g = app.takePendingGateGroup() else { return }
-                managerGroup = g
+                openGroup(g)   // 走同一条入口：既有访客闸，也切 Tab
             }
             .onAppear {
                 recompute()
@@ -229,9 +227,6 @@ struct HomeConsole: View {
                 // 它同样必须过访客闸 —— requestRoute 只拦了 tabSelection 这一半,
                 // 而页面真正打开是在这里, 所以闸要跟着一起搬过来。
                 openGroup(ManagerGroup.forRoute(r))
-            }
-            .sheet(item: $managerGroup) { g in
-                ManagerFace(initialGroup: g).environmentObject(app).trackScreen("管理面板")
             }
             .sheet(isPresented: $showAddLock) {
                 AddLockPage().environmentObject(app).trackScreen("配对门锁")
@@ -1007,47 +1002,6 @@ struct HomeConsole: View {
         Double(min(max(index, 0), 5)) * XMotion.cardStagger
     }
 
-    // ─────────────────────────────────────────── ⑧ 管理入口
-    private var manageSection: some View {
-        VStack(alignment: .leading, spacing: XSpace.m) {
-            sectionLabel("管理")
-            // 5 个瓦片在无障碍字号下横排放不下 —— 改 2 列网格，字号不缩。
-            //
-            // 列间距与行间距是**两个不同的值** (规范 5.1): 列 12 / 行 8。
-            // 2026-10-22 审计: 管理组按 §7.10 从 5 组并成 4 组, 这里跟着从 5 列改 4 列。
-            // 4 列比 5 列更宽, 每枚瓦片的触达面反而变大。
-            let cols = typeSize.isAccessibilitySize
-                ? [GridItem(.flexible(), spacing: XSpace.colGap), GridItem(.flexible(), spacing: XSpace.colGap)]
-                : Array(repeating: GridItem(.flexible(), spacing: XSpace.colGap), count: 4)
-            LazyVGrid(columns: cols, spacing: XSpace.rowGap) {
-                ForEach(ManagerGroup.allCases) { g in
-                    Button { openGroup(g) } label: {
-                        VStack(spacing: 7) {
-                            Image(systemName: g.systemImage)
-                                .font(.system(size: XIcon.xm, weight: .medium))
-                                .foregroundStyle(XPalette.accentText)
-                            // 管理网格的标签是可点区域的一部分。
-                            // 原来 caption2(11pt) × 0.75 ≈ 8pt —— 用户得凑近才看得清点哪里。
-                            // 提到 footnote(13pt)，缩放下限放到 0.9（最差 11.7pt）。
-                            Text(g.rawValue)
-                                .xFont(.footnote, weight: .medium)
-                                .foregroundStyle(XPalette.textSub)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.9)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 62)
-                        // 用设计系统的 xPlate 而不是手搓 RoundedRectangle ——
-                        // 形状定义只允许在 Theme/Components 一处（uicoverage 检查五）
-                        .xPlate(XPalette.surface, XRadius.tile)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(PressableScaleStyle())
-                    .accessibilityLabel(g.rawValue)
-                }
-            }
-        }
-    }
 
     private func sectionLabel(_ s: String) -> some View {
         Text(s)
@@ -1213,12 +1167,19 @@ struct HomeConsole: View {
     ///
     /// 修法不是在这页再抄一份判断 (那就是同一件事两处实现, 迟早分家),
     /// 而是把「哪些组受限」声明在 `ManagerGroup` 上, 与 `Route.guestBlocked` 由同一个语义派生。
+    /// 打开一个管理组 —— **切到对应的底部 Tab**。
+    ///
+    /// 2026-10-23：门厅从「根视图」变成「第一个 Tab」之后，这个函数不该再弹 sheet。
+    /// 改前是 `managerGroup = g` → 弹出 `ManagerFace`，而现在 ManagerFace 自己就是
+    /// 包含门厅的 TabView —— 那会形成「门厅里弹出一个包含门厅的面板」的循环。
+    ///
+    /// 现在它切 Tab：门厅与四个管理组在同一条底部导航上，这才是「并入底部导航」。
     private func openGroup(_ g: ManagerGroup) {
         XHaptics.tick.impactOccurred()
         // 判据只有一处: AppState.requestGroupGate 内部问 guestAreaLocked + g.guestBlocked。
         // 这里不再自己写一遍 —— 两份判据是"静默失去覆盖"的经典成因。
         guard !app.requestGroupGate(g) else { return }
-        managerGroup = g
+        app.tabSelection = ManagerGroup.allCases.firstIndex(of: g).map { $0 + 1 } ?? 0
     }
 
     // ─────────────────────────────────────────── 数据

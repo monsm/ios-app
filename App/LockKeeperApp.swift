@@ -1046,7 +1046,15 @@ struct RootView: View {
     /// 主界面的顶部横幅/时刻卡/启动 task/前后台钩子 —— 同上, 继续拆
     @ViewBuilder
     private var mainTabsChrome: some View {
-        HomeConsole()
+        // 2026-10-23 重构：根视图从 `HomeConsole` 改为 `ManagerFace`。
+        //
+        // `ManagerFace` 现在是**原生 TabView**，五个 Tab：门厅 / 钥匙 / 设备 / 成员 / 系统。
+        // 门厅从「包住一切的根视图」降为「第一个 Tab」—— 这正是用户要的
+        // 「不要门厅，门厅的功能全部在底部导航新建」。
+        //
+        // 改前这里是 `HomeConsole()`：它是根，自己画一个浮动胶囊切「管理面板」，
+        // 而那个面板又是一个 sheet —— 两层导航叠在一起。
+        ManagerFace()
         .safeAreaInset(edge: .top, spacing: 0) {
             topBanners
         }
