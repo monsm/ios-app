@@ -172,9 +172,9 @@ struct LockProfilePage: View {
                         .foregroundStyle(XPalette.textSub)
                     XHeroNumber(
                         text: power >= 0 ? String(power) : "—",
-                        color: power < 0 ? XPalette.textTertiary,
-                        unit: "%"
-                            : (power <= 20 ? XPalette.danger : (power <= 40 ? XPalette.warn : XPalette.ok)))
+                        color: power < 0 ? XPalette.textTertiary
+                            : (power <= 20 ? XPalette.danger : (power <= 40 ? XPalette.warn : XPalette.ok)),
+                        unit: "%")
                     Text(power < 0 ? "还没读到" : (power <= 20 ? "需要换电池" : "还够用"))
                         .xFont(.caption2)
                         .foregroundStyle(XPalette.textTertiary)
