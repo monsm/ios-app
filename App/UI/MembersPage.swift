@@ -89,7 +89,7 @@ struct MembersPage: View {
             HStack(spacing: XSpace.s) {
                 XStatChip(label: "成员", value: String(members.count))
                 XStatChip(label: "活跃", value: String(members.filter { MemberHub.isActive($0.id) }.count))
-                XStatChip(label: "归档", value: String(MemberHub.archivedIDs.count))
+                XStatChip(label: "归档", value: String(MemberHub.archivedIDs().count))
                 XStatChip(label: "未归属记录", value: String(unclaimedCount))
             }
             .padding(.vertical, 2)
@@ -143,7 +143,7 @@ struct MembersPage: View {
                 HStack(alignment: .center, spacing: XSpace.l) {
                     VStack(alignment: .leading, spacing: 8) {
                         XHeroNumber(text: String(members.count), color: XPalette.accentText, unit: "位成员")
-                        Text("活跃 \(members.filter { MemberHub.isActive($0.id) }.count) 位 · 归档 \(MemberHub.archivedIDs.count) 位")
+                        Text("活跃 \(members.filter { MemberHub.isActive($0.id) }.count) 位 · 归档 \(MemberHub.archivedIDs().count) 位")
                             .xFont(.footnote)
                             .foregroundStyle(XPalette.textTertiary)
                             .fixedSize(horizontal: false, vertical: true)

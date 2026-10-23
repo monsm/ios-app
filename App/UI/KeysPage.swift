@@ -135,25 +135,8 @@ struct KeysPage: View {
                     Text("\(expiringItems.count) 份即将到期")
                         .xFont(.footnote, weight: .semibold)
                         .foregroundStyle(XPalette.warn)
-                    Spacer(minLength: 0)
                 }
-                ForEach(expiringItems.prefix(3), id: \.alias) { p in
-                    HStack(spacing: XSpace.s) {
-                        Text(p.note.isEmpty ? "密码 #\(p.alias)" : p.note)
-                            .xFont(.subheadline)
-                            .foregroundStyle(XPalette.text)
-                            .lineLimit(1)
-                        Spacer(minLength: XSpace.s)
-                        Text(CredentialOrg.expiryLabel(p.to))
-                            .xFont(.caption2)
-                            .foregroundStyle(XPalette.warn)
-                    }
-                    .accessibilityElement(children: .combine)
-                    .accessibilityLabel("\(p.note) 即将到期, \(CredentialOrg.expiryLabel(p.to))")
-                }
-            }
-        }
-                    XHairline().padding(.vertical, 10)
+                // HTML 10-keys-manage 卡1 的三列：总计 / 密码 / 指纹
                 HStack(alignment: .top, spacing: XSpace.s) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("总计").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
@@ -162,7 +145,8 @@ struct KeysPage: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     VStack(alignment: .leading, spacing: 4) {
                         Text("密码").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
-                        Text("\(expiringItems.filter { !$0.temp }.count) 份").xFont(.footnote, weight: .semibold)
+                        Text("\(expiringItems.filter { !$0.temp }.count) 份")
+                            .xFont(.footnote, weight: .semibold)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     VStack(alignment: .leading, spacing: 4) {
@@ -171,7 +155,13 @@ struct KeysPage: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
-}
+                Text("临时码也会到期 —— 到期前门锁会自动作废，不用手动删。")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
 
     // ── 分段（规范 §7.3 形态 B，全仓唯一实现）──
     //
@@ -709,6 +699,13 @@ struct CredentialDetailView: View {
         row.kindTag == "fp" ? DB.listFps(mac).first { $0.batch == row.key } : nil
     }
     /// 码值：密码显示明文（本机台账里就是明文），指纹显示批次号
+    /// 归属显示文本（owner 是可选）
+    private var ownerText: String {
+        let o = row.owner ?? ""
+        if o.isEmpty { return "未归属" }
+        return DB.member(o)?.name ?? o
+    }
+
     private var codeText: String {
         if let p = pwd { return p.pwd ?? String(p.alias) }
         if let f = fp { return "指纹 " + String(f.batch) }
@@ -751,9 +748,10 @@ struct CredentialDetailView: View {
                         Text("归属与授权")
                             .xFont(.subheadline)
                             .foregroundStyle(XPalette.textTertiary)
+                        // row.owner 是 String?（可选），不能直接 .isEmpty
                         XDataRow(label: "归属",
-                                 value: row.owner.isEmpty ? "未归属" : (DB.member(row.owner)?.name ?? row.owner),
-                                 color: row.owner.isEmpty ? XPalette.warn : XPalette.ok)
+                                 value: ownerText,
+                                 color: (row.owner ?? "").isEmpty ? XPalette.warn : XPalette.ok)
                         XDataRow(label: "类型", value: row.stateLabel, color: XPalette.accentText)
                     }
                 }
