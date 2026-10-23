@@ -785,17 +785,24 @@ struct HomeConsole: View {
     // ─────────────────────────────────────────── ⑤ 三指标
     // 无障碍字号下，三列横排会挤到每列不足 60pt —— 改为纵向堆叠。
     // 这不是"降级"，是让内容本身换一种排法，字号不缩。
+    /// 今日三个读数。**一张卡，三段读数**（规范 §7.6 的多段结构）。
+    ///
+    /// 2026-10-23 按参考图改：原来是**裸数字**铺在黑画布上，只用竖线分隔。
+    /// 图 3 里没有任何「裸数字」—— 它的每组读数都在卡里，卡提供边界，
+    /// 竖线只负责卡内的分隔。裸数字在纯黑上读起来像装饰，不像数据。
     private var metricsRow: some View {
         let layout = typeSize.isAccessibilitySize
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: XSpace.l))
             : AnyLayout(HStackLayout(spacing: 0))
-        return layout {
-            metric(value: String(opensToday), label: "今日开门")
-            if !typeSize.isAccessibilitySize { metricDivider }
-            // 归因引擎能算出今天是谁开的，所以这里可以诚实地写「今日成员」
-            metric(value: String(todayPeople), label: "今日成员")
-            if !typeSize.isAccessibilitySize { metricDivider }
-            metric(value: firstOpenText, label: "最早开门")
+        return XPanel(kind: .group) {
+            layout {
+                metric(value: String(opensToday), label: "今日开门")
+                if !typeSize.isAccessibilitySize { metricDivider }
+                // 归因引擎能算出今天是谁开的，所以这里可以诚实地写「今日成员」
+                metric(value: String(todayPeople), label: "今日成员")
+                if !typeSize.isAccessibilitySize { metricDivider }
+                metric(value: firstOpenText, label: "最早开门")
+            }
         }
     }
 
@@ -942,16 +949,26 @@ struct HomeConsole: View {
 
     // ─────────────────────────────────────────── ⑦ 成员
     @ViewBuilder
+    /// 今日参与的成员。
+    ///
+    /// 2026-10-23 按参考图改：原来是**裸 sectionLabel + 一排卡片**。
+    /// 图 3 里没有「卡外的小标题」—— 每块内容的标题都在**卡头**（`Sleep ›` / `Fitness ›`）。
+    /// 卡外挂标题会让这一块读起来像「页面的一个分区」，而不是「一张能进去的卡」。
+    ///
+    /// 成员是横向滑动的（人多时不换行），所以用 XStatCard 的卡头 + 卡内横向滚动。
     private var memberSection: some View {
         let rows = memberRows
-        if !rows.isEmpty {
-            VStack(alignment: .leading, spacing: XSpace.m) {
-                sectionLabel("成员")
-                ScrollView(.horizontal) {
-                    HStack(spacing: XSpace.s) { ForEach(rows) { memberChip($0) } }
-                        .padding(.vertical, 1)
+        return Group {
+            if !rows.isEmpty {
+                XStatCard(headerTitle: "成员", headerAction: { openGroup(.members) }) {
+                    XStatSection(isFirst: true) {
+                        ScrollView(.horizontal) {
+                            HStack(spacing: XSpace.s) { ForEach(rows) { memberChip($0) } }
+                                .padding(.vertical, 1)
+                        }
+                        .scrollIndicators(.hidden)
+                    }
                 }
-                .scrollIndicators(.hidden)
             }
         }
     }
