@@ -864,6 +864,9 @@ struct HomeConsole: View {
     /// 2026-10-23 按参考图改：原来是**裸数字**铺在黑画布上，只用竖线分隔。
     /// 图 3 里没有任何「裸数字」—— 它的每组读数都在卡里，卡提供边界，
     /// 竖线只负责卡内的分隔。裸数字在纯黑上读起来像装饰，不像数据。
+    // @ViewBuilder 不能省：下面 if/else 两支返回**不同泛型类型**的 XPanel，
+    // 单一 some View 的不透明返回类型推不出来（CI 报 OpaqueTypeInference）。
+    @ViewBuilder
     private var metricsRow: some View {
         let layout = typeSize.isAccessibilitySize
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: XSpace.l))
@@ -876,15 +879,15 @@ struct HomeConsole: View {
         // 平铺三列在视觉上是一排等重的点，读不出主次；
         // 环把三项汇总成一个形状，眼睛先看到"今天整体如何"，再读细项。
         if typeSize.isAccessibilitySize {
-            return XPanel(kind: .group) {
+            XPanel(kind: .group) {
                 layout {
                     metric(value: String(opensToday), label: "今日开门")
                     metric(value: String(todayPeople), label: "今日成员")
                     metric(value: firstOpenText, label: "最早开门")
                 }
             }
-        }
-        return XPanel(kind: .group) {
+        } else {
+            XPanel(kind: .group) {
             HStack(alignment: .center, spacing: XSpace.l) {
                 VStack(alignment: .leading, spacing: 11) {
                     XDataRow(label: "今日开门", value: String(opensToday), unit: "次",
@@ -900,6 +903,7 @@ struct HomeConsole: View {
                     centerText: String(opensToday))
                     .accessibilityHidden(true)
             }
+        }
         }
     }
 

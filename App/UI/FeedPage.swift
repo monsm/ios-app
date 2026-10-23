@@ -270,8 +270,8 @@ struct FeedPage: View {
         var buckets = Array(repeating: 0, count: 24)
         for r in todayRows {
             // 历法必须走 WeekCal.gregorian（规范：取分量一律用它，避免用户改了系统历法后错位）
-            let h = WeekCal.gregorian.component(.hour, from: r.ts)
-            if h >= 0 && h < 24 { buckets[h] += 1 }
+            // FeedRow 只有 time 字符串（"HH:mm"），没有 Date —— 直接解析小时
+            if let h = Int(r.time.prefix(2)), h >= 0, h < 24 { buckets[h] += 1 }
         }
         let peak = max(1, buckets.max() ?? 1)
         return XPanel(kind: .group) {

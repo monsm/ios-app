@@ -205,7 +205,6 @@ struct KeysPage: View {
     /// 三类凭证的数量与占比（细三环的数据源）
     private var fpCount: Int { fps.count }
     private var pwCount: Int { pwds.filter { !$0.temp }.count }
-    private var tempCount: Int { pwds.filter { $0.temp }.count }
     private var allTotal: Int { max(1, fpCount + pwCount + tempCount) }
     private var fpRatio: Double { Double(fpCount) / Double(allTotal) }
     private var pwRatio: Double { Double(pwCount) / Double(allTotal) }

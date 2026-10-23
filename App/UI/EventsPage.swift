@@ -505,7 +505,7 @@ struct EventsPage: View {
 
     /// 图 5 的读数条：44px 总数 + 告警数 + 分组天数
     private var overviewStrip: some View {
-        let alarmN = recs.filter { $0.warn }.count
+        let alarmN = recs.filter { $0.alarm }.count
         return XPanel(kind: .group) {
             HStack(alignment: .center, spacing: XSpace.l) {
                 VStack(alignment: .leading, spacing: 6) {

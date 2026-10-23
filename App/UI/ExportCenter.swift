@@ -1565,7 +1565,8 @@ struct ExportCenterView: View {
 
     /// 图 5 读数卡：44px 即将导出条数 + 环 + 三列范围信息
     private var exportStatsCard: some View {
-        let n = records.count
+        // 数据源就是本文件导出时读的那一份：各锁日志的合计（不臆造中间层 API）
+        let n = DB.keychains().reduce(0) { $0 + DB.readLogs($1.mac).count }
         return XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: 0) {
                 HStack {

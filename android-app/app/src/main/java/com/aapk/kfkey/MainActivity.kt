@@ -72,6 +72,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -858,13 +859,17 @@ private fun UnlockDial(busy: Boolean, success: Boolean, rssi: Int?, onClick: () 
                 // 图 1 的环心读数：超大数字 + 单位。这里放 RSSI，与 01-home HTML 原型一致。
                 // 没有信号时显示两个短横 —— 不假装有数据。
                 Row(verticalAlignment = Alignment.Bottom) {
+                    // Compose 的 Text 没有 fontFeatureSettings 参数 —— 等宽数字要走 TextStyle
+                    // （CI 报 CompilationErrorException，就是这一行）
                     Text(
                         text = rssi?.toString() ?: "—",
-                        fontSize = 44.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.text,
-                        // 数字必须等宽，否则扫描时数字跳动会把整行推来推去
-                        fontFeatureSettings = "tnum"
+                        style = TextStyle(
+                            fontSize = 44.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.text,
+                            // 数字等宽，否则扫描时数字跳动会把整行推来推去
+                            fontFeatureSettings = "tnum"
+                        )
                     )
                     Text(
                         text = " dBm",
