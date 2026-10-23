@@ -301,11 +301,13 @@ struct StatsPage: View {
                     ]
                 )
                 .padding(.top, 10)
-                XHairline().padding(.vertical, 12)
-                Text("三环按今天实际开门的次数占比画 —— 环越满，那种方式用得越多。")
-                    .xFont(.caption2)
-                    .foregroundStyle(XPalette.textTertiary)
-                    .fixedSize(horizontal: false, vertical: true)
+                // §7.6：多段卡的节奏归 XStatSection 管，页面不再自己算 14/12
+                XStatSection {
+                    Text("三环按今天实际开门的次数占比画 —— 环越满，那种方式用得越多。")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textTertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
     }

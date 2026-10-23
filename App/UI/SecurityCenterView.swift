@@ -769,32 +769,25 @@ struct SecurityAuditView: View {
                 Text(SecFmt.dateStr(e.ts))
                     .xFontExact(.caption.monospacedDigit())
                     .foregroundStyle(XPalette.textTertiary)
-                    .frame(width: 64, alignment: .leading)
+                    // §13.1：装文字的固定宽度必须走 xScaledWidth，AX3 大字号下才不会被截断
+                    .xScaledWidth(64)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
-                // 类型图标块（图 4 的队徽位）
-                RoundedRectangle(cornerRadius: 7, style: .continuous)
-                    .fill((e.duress ? XPalette.warn : XPalette.accentText).opacity(0.16))
+                // 类型图标块（图 4 的队徽位）—— 走 xPlate，不自绘形状
+                Image(systemName: e.cat == .door ? "door.open.fill" : "gearshape.fill")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(e.duress ? XPalette.warn : XPalette.accentText)
                     .frame(width: 26, height: 26)
-                    .overlay {
-                        Image(systemName: e.cat == .door ? "door.open.fill" : "gearshape.fill")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(e.duress ? XPalette.warn : XPalette.accentText)
-                    }
+                    .xPlate((e.duress ? XPalette.warn : XPalette.accentText).opacity(0.16), 7)
                     .accessibilityHidden(true)
                 Text("\(e.action) \(e.target)")
                     .xFont(.subheadline)
                     .lineLimit(1)
                 Spacer(minLength: XSpace.xs)
-                // 状态胶囊（图 4 的 Touchdown 位）
-                Text(e.duress ? "胁迫" : (e.cat == .door ? "开门" : "管理"))
-                    .xFont(.caption2, weight: .semibold)
-                    .foregroundStyle(e.duress ? XPalette.warn : (e.cat == .door ? XPalette.ok : XPalette.accentText))
-                    .padding(.horizontal, 7)
-                    .padding(.vertical, 3)
-                    .background {
-                        Capsule().fill((e.duress ? XPalette.warn : (e.cat == .door ? XPalette.ok : XPalette.accentText)).opacity(0.16))
-                    }
+                // 状态胶囊（图 4 的 Touchdown 位）—— 走现成的 XStatusPill，不自绘 Capsule
+                XStatusPill(
+                    text: e.duress ? "胁迫" : (e.cat == .door ? "开门" : "管理"),
+                    tone: e.duress ? .warn : (e.cat == .door ? .ok : .accent))
                 Image(systemName: "chevron.down")
                     .accessibilityHidden(true)
                     .font(.system(size: XIcon.xs, weight: .semibold))

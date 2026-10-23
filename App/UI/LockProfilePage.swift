@@ -205,6 +205,7 @@ struct LockProfilePage: View {
         }
     }
 
+    @ViewBuilder
     private var statusStrip: some View {
         let snap = DB.readStatus(mac)
         let hasAny = (snap?.powerLevel ?? -1) >= 0

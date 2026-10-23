@@ -130,6 +130,7 @@ struct SafemodeIntroView: View {
         }
     }
 
+    @ViewBuilder
     private var lockSwitchCard: some View {
         if let st = app.status {
             XPanel(kind: .group) {
