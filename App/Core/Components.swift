@@ -272,9 +272,16 @@ struct XScreen<Content: View>: View {
     /// 胶囊行讲的是「这一屏我关心什么」，它是**摘要**；大标题只是名字。
     /// 摘要压在名字上、还是垫在名字下，是两种不同的界面。
     ///
-    /// **不用 `(() -> AnyView)?`** —— 那会把类型擦掉，SwiftUI 的 diff 就认不出
-    /// 这一条有没有变，每次 body 重算都当新视图重建。用第二个泛型参数更干净。
-    var above: Above
+    /// **这里用 `(() -> AnyView)?` 而不是第二个泛型参数** —— 试过泛型方案，回退了：
+    ///
+    /// 泛型要给 45 处现有调用都能推断出 `Above`，只能靠
+    /// `init(…) where Above == EmptyView` 这个约束。而本机**没有编译器**，
+    /// 无法验证 Swift 会不会从 `XScreen("统计") { … }` 反推出 `Above == EmptyView`。
+    /// 猜错就是全仓 45 个页面一起编译失败。
+    ///
+    /// 代价是这一条类型被擦除、SwiftUI 认不出它有没有变 —— 但它通常是静态胶囊行，
+    /// 重建成本可接受。**先保证能编译，再谈这一点点性能。**
+    var above: (() -> AnyView)? = nil
 
     var body: some View {
         ScrollView {
@@ -2110,6 +2117,8 @@ struct XStatChip: View {
     var tint: Color = XPalette.accent
     /// compact 变体: 仅图标, 无文字 (规范 §7.2 compact)
     var compact: Bool = false
+    /// 是否撑满可用宽度。双列固定（§7.2 形态一）为 true，横向滚动为 false。
+    var fillsWidth: Bool = true
     var selected: Bool = false
 
     /// 规范 §7.2 自检原文：**「高度必须是 56pt。若写 72，是把两行文字想大了。」**
@@ -2153,7 +2162,13 @@ struct XStatChip: View {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .strokeBorder(XPalette.specular.opacity(selected ? 0.24 : 0.10), lineWidth: 0.5)
         )
-        .frame(maxWidth: compact ? nil : .infinity)
+        // §7.2 两种排布对宽度的要求相反：
+        //   · 双列固定 —— 两枚**撑满**，各占 (屏宽 − 28 − 8) / 2
+        //   · 横向滚动 —— 每枚按内容定宽，不能撑满
+        //
+        // 一个组件同时满足两者只能靠参数。默认撑满（页面里的双列是常见形态），
+        // 滚动容器里显式传 `fillsWidth: false`。
+        .frame(maxWidth: fillsWidth ? .infinity : nil)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(label + ": " + value)
     }

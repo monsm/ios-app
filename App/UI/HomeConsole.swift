@@ -273,13 +273,34 @@ struct HomeConsole: View {
     /// 本 App 的四个读数（按「现在最该知道」排序）：
     ///   连接状态 / 电量 / 今日开门 / 待处理。
     /// 时钟退到最右侧（它仍在，但不再占一整行的左端）。
+    /// 顶部芯片行 + 时钟。
+    ///
+    /// **2026-10-23 改成横向滚动。** 原来是 `HStack` 平铺 4 枚，
+    /// 而 `XStatChip` 有 `minWidth: 120` —— 4 × 120 = 480pt，
+    /// 屏宽只有 375，**必然溢出**（被裁掉半枚，或者把时钟挤没）。
+    ///
+    /// 规范 §7.2 给了两种合法排布：
+    ///   · 双列固定 —— 2 枚并排撑满（图 3）
+    ///   · **横向滚动 —— 间距 8、首尾 14、超出屏幕硬裁切（图 4）**
+    ///
+    /// 本 App 有 4 个读数，只能是后者。首尾 14 与页边距同值，滚动区看起来与卡片对齐。
     private var masthead: some View {
-        HStack(spacing: XSpace.s) {
-            chip(.link)
-            chip(.battery)
-            chip(.today)
-            chip(.alerts)
-            Spacer(minLength: 0)
+        VStack(alignment: .leading, spacing: XSpace.s) {
+            ScrollView(.horizontal) {
+                HStack(spacing: XSpace.s) {
+                    chip(.link)
+                    chip(.battery)
+                    chip(.today)
+                    chip(.alerts)
+                }
+                .padding(.horizontal, XSpace.gutter)
+            }
+            // §7.2：超出屏幕**硬裁切**，不加渐隐 —— 渐隐会让人以为内容到边了就没了。
+            .scrollIndicators(.hidden)
+            // 滚动区要能伸到屏幕边缘（首尾 14 靠内 padding 给），
+            // 所以这里把父层的页边距吃掉。
+            .padding(.horizontal, -XSpace.gutter)
+
             TimelineView(.periodic(from: .now, by: 30)) { ctx in
                 Text(clockText(ctx.date))
                     .xFont(.caption, weight: .medium, design: .rounded)
@@ -298,25 +319,25 @@ struct HomeConsole: View {
         case .link:
             XStatChip(label: "连接", value: phase.label,
                       systemImage: app.status != nil ? "link" : "link.badge.plus",
-                      tint: phase.tone)
+                      tint: phase.tone, fillsWidth: false)
         case .battery:
             if let p = app.status?.powerLevel, p >= 0 {
                 XStatChip(label: "电量", value: "\(p)%",
                           systemImage: BatteryCare.icon(p),
-                          tint: BatteryCare.tier(p).tone.color)
+                          tint: BatteryCare.tier(p).tone.color, fillsWidth: false)
             } else {
-                XStatChip(label: "电量", value: "—", systemImage: "battery.0", tint: XPalette.textSub)
+                XStatChip(label: "电量", value: "—", systemImage: "battery.0", tint: XPalette.textSub, fillsWidth: false)
             }
         case .today:
             XStatChip(label: "今日", value: "\(opensToday) 次",
-                      systemImage: "door.left.hand.open", tint: XPalette.accentText)
+                      systemImage: "door.left.hand.open", tint: XPalette.accentText, fillsWidth: false)
         case .alerts:
             if let n = alarmCount {
                 XStatChip(label: "待处理", value: "\(n)",
-                          systemImage: "exclamationmark.triangle.fill", tint: XPalette.danger)
+                          systemImage: "exclamationmark.triangle.fill", tint: XPalette.danger, fillsWidth: false)
             } else {
                 XStatChip(label: "待处理", value: "无",
-                          systemImage: "checkmark.shield", tint: XPalette.ok)
+                          systemImage: "checkmark.shield", tint: XPalette.ok, fillsWidth: false)
             }
         }
     }

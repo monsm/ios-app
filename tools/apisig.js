@@ -624,7 +624,58 @@ if (allProblems.length === 0 && deadCode.length === 0 && bareDividers.length ===
   console.log('签名 / 死代码 / 裸Divider / 零用令牌 / 零调扩方法 ✓ (' + files.length + ' 文件, '
     + Object.keys(structDefs).length + ' 组件签名, ' + libTypes.length + ' 类型 + 令牌查引用, '
     + '自检 ' + (probes.length + 3) + '/' + (probes.length + 3) + ')');
-  process.exit(0);
+  // ── 组件内引用的类型必须真的存在 ──
+//
+// 三次 CI 红都是这一类：声明不完整 / 编辑残留。
+//   · XStatCard 用了 kind/tone 但属性没加进去
+//   · XScreen 用了 Above 但泛型已回退
+//   · XScreen 的 subtitle 声明了两次
+//
+// 闸门验风格，编译器验类型 —— 而本机没有编译器。
+// 这条判据能抓的只是「引用了一个本仓从未定义过的类型名」，
+// 抓不到「类型存在但没声明在正确的结构体里」。
+// **但它能抓的就必须抓住。**
+{
+  const coreDir = path.join(ROOT, 'App');
+  const allSwift = [];
+  (function walk(d) {
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      const q = path.join(d, e.name);
+      if (e.isDirectory()) walk(q);
+      else if (e.name.endsWith('.swift')) allSwift.push(q);
+    }
+  })(coreDir);
+  const declared = new Set();
+  for (const f of allSwift) {
+    const src = fs.readFileSync(f, 'utf8');
+    for (const m of src.matchAll(/(?:struct|enum|class|protocol|typealias)\s+(\w+)/g)) declared.add(m[1]);
+  }
+  const BUILTIN = new Set(['View','AnyView','String','Bool','CGFloat','Double','Float','Int','Color','ScrollView','VStack','HStack','ZStack','Text','Image','EmptyView','Self','Array','Set','Dictionary','Optional','Shape','InsettableShape','Binding','Date','URL','Data','Never','Void','Group','Spacer','Button','Label','Toggle','Picker','Divider','Rectangle','Circle','Capsule','RoundedRectangle','LinearGradient','AngularGradient','StrokeStyle','Content','Configuration','ButtonStyle','ViewModifier','PreviewProvider','App','Scene','WindowGroup','NavigationStack','NavigationLink','Section','List','Form','Menu','ProgressView','TimelineView','GeometryReader','ScrollViewReader','LazyVStack','LazyVGrid','GridItem','Animation','Transaction','Gesture','TapGesture','DragGesture','Font','TextStyle','NumberFormatter','DateFormatter','UUID','Error','Result','Sequence','Collection','Equatable','Hashable','Codable','Identifiable','Comparable','CaseIterable','RawRepresentable','ObservableObject','Published','State','Environment','EnvironmentObject','StateObject','ObservedObject','ScaledMetric','Namespace','FocusState','MainActor','Sendable','AsyncStream','Task','Duration','Calendar','Gregorian','Locale','TimeZone','Character','Substring','Range','IndexPath','CGRect','CGSize','CGPoint','EdgeInsets','SafeAreaRegions','Axis','Edge','Alignment','HorizontalAlignment','VerticalAlignment','UnitPoint','Material','ShapeStyle','AnyShapeStyle','AnyShape','AnyLayout','LocalizedStringKey','Axis','Animation','Curve','Spring','UnitCurve','FeedbackGenerator','Notification','Bundle','FileManager','UserDefaults']);
+  const ignored = new Set(['XSpace','XRadius','XIcon','XPalette','XText','XGradient','XOpacity','DSRing','DSFont','XMetric','TimeFormat','BatteryCare','LockArchive','StatsKit','MemberHub','ClipboardCare','SecurityPolicy','AuditLog','DestroyKit','ErrorText','StatusParser','Milestones','BackupStudio','DB','XMotion','XHaptics','XAppearance','SecTick','SecKey','SecTickCenter','XStatChip','XStatCard','XStatSection','XScreen','XCardLink','XHairline','XPanel','XContainerKind','XToneColor','XNamedColor','WeekCal','LinkSense','CredentialOrg','StudioTools','LockStats','LockCommand','LockKeySpace','XCycleRing','XValueUnit','XPrimaryButtonStyle','PressableScaleStyle','XGlassTabBar','XTabItem','XSegmented','XSkeleton','XEmptyState','XInlineError','XMetricTile','XRow','XStatusPill','XBreathing','XScaledFrame','XCodeRing','XDayClock','XBatteryGauge','XStepBar','XSkewBar','XScrollLift','XDestinedModifier','XToggle','SecRow','Card']);
+  const problems = [];
+  for (const f of allSwift) {
+    const src = fs.readFileSync(f, 'utf8');
+    // 只看组件层（Components.swift），避免误伤业务代码里的大量外部类型
+    if (!f.endsWith('Components.swift')) continue;
+    // 形状 1：`var x: SomeType`
+    // 形状 2：`var x: (() -> SomeType)?`  ← 闭包，上一版漏了这个
+    // 形状 3：`var x: [SomeType]`
+    const typeRefs = [];
+    for (const m of src.matchAll(/^\s*var \w+: ([A-Z]\w+)\b/gm)) typeRefs.push(m[1]);
+    for (const m of src.matchAll(/^\s*var \w+: \(\(\) -> ([A-Z]\w+)\)/gm)) typeRefs.push(m[1]);
+    for (const m of src.matchAll(/^\s*var \w+: \[([A-Z]\w+)\]/gm)) typeRefs.push(m[1]);
+    for (const name of typeRefs) {
+      if (declared.has(name) || BUILTIN.has(name) || ignored.has(name)) continue;
+      problems.push('引用了未定义的类型：' + name + '  (' + path.relative(ROOT, f) + ')');
+    }
+  }
+  if (problems.length) {
+    for (const p of problems) console.error('  ✗ ' + p);
+    process.exit(1);
+  }
+}
+
+process.exit(0);
 }
 for (const p of allProblems) console.error(p.rel + ':' + p.line + ': ' + p.msg);
 if (allProblems.length > 0) console.error('✗ 组件签名 ' + allProblems.length + ' 处不符');
