@@ -289,12 +289,20 @@ struct SecurityPage: View {
                 XHairline(inset: XSpace.card)
                 actionRow(icon: "eye.slash", title: "防窥与遮蔽",
                           detail: "后台即糊 / 限时可见 / 水印") {
-                    SecurityPeekView().environmentObject(app)
+                    SecurityPeekView().environmentObject(app).destined(.securityPeek)
                 }
                 XHairline(inset: XSpace.card)
                 actionRow(icon: "list.bullet.rectangle", title: "审计日志",
                           detail: "谁在什么时候做了什么") {
                     SecurityAuditView().environmentObject(app)
+                }
+                XHairline(inset: XSpace.card)
+                // 2026-10-24：回收站原来唯一入口是「安全 → 销毁数据 → 回收站」三层深，
+                // 而它正是用户「刚删完东西想找回」时最需要的地方。提到第一层。
+                actionRow(icon: "arrow.uturn.backward.circle",
+                          title: "回收站",
+                          detail: "30 天内可恢复 · 含锁端下发队列") {
+                    CredentialBinView().environmentObject(app).destined(.credentialBin)
                 }
                 XHairline(inset: XSpace.card)
                 actionRow(icon: "trash", title: "彻底销毁", detail: "不可恢复", danger: true) {
