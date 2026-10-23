@@ -1,0 +1,33 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<style>body{margin:0;font-family:monospace}
+#out{font:11px monospace;white-space:pre;padding:8px;background:#fff;color:#000;
+  position:fixed;top:0;left:0;right:0;z-index:99;max-height:340px;overflow:auto}
+iframe{position:absolute;top:350px;left:0;width:454px;height:908px;border:0}</style></head><body>
+<pre id="out">measuring...</pre>
+<iframe id="f" src="01-home.html"></iframe>
+<script>
+window.addEventListener('load', function(){
+  setTimeout(function(){
+    var fr = document.getElementById('f');
+    var d = fr.contentDocument, w = fr.contentWindow;
+    var rows = [];
+    function probe(sel, label){
+      var el = d.querySelector(sel);
+      if (!el) { rows.push(label + ' = (缺)'); return; }
+      var cs = w.getComputedStyle(el), r = el.getBoundingClientRect();
+      rows.push(label.padEnd(10) + ' x=' + String(Math.round(r.left)).padStart(4) +
+        ' w=' + String(Math.round(r.width)).padStart(4) +
+        ' fs=' + cs.fontSize.padStart(6) + '  color=' + cs.color);
+    }
+    probe('.page','page'); probe('.h1','h1'); probe('.sub','sub');
+    probe('.chip','chip'); probe('.card','card');
+    probe('.card .clabel','clabel'); probe('.card .cvalue','cvalue');
+    probe('.footer','footer');
+    var h1 = d.querySelector('.h1'), c1 = d.querySelector('.card');
+    if (h1 && c1) rows.push('h1底→卡顶 = ' + Math.round(c1.getBoundingClientRect().top - h1.getBoundingClientRect().bottom) + 'px (规范 74)');
+    var cards = d.querySelectorAll('.card');
+    if (cards.length > 1) rows.push('卡间距 = ' + Math.round(cards[1].getBoundingClientRect().top - cards[0].getBoundingClientRect().bottom) + 'px (规范 12)');
+    document.getElementById('out').textContent = rows.join('\n');
+  }, 900);
+});
+</script></body></html>

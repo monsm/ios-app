@@ -1,0 +1,25 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<style>body{margin:0;font-family:monospace}
+#o{position:fixed;inset:0 0 auto 0;z-index:99;font:11px/1.5 monospace;white-space:pre;
+padding:8px;background:#fff;color:#000;max-height:500px;overflow:auto}
+iframe{position:absolute;top:510px;left:0;width:454px;height:900px;border:0}</style></head><body>
+<pre id="o">measuring...</pre><iframe id="f" src="01-home.html"></iframe>
+<script>
+window.addEventListener('load',()=>setTimeout(()=>{
+  const fr=document.getElementById('f'), d=fr.contentDocument, w=fr.contentWindow;
+  const pg=d.querySelector('.page');
+  const rows=[];
+  rows.push('page 总高: '+Math.round(pg.getBoundingClientRect().height));
+  rows.push('可视高度: '+Math.round(d.querySelector('.scroll').clientHeight));
+  rows.push('--- 顶层元素 ---');
+  Array.from(pg.children).forEach((el,i)=>{
+    const r=el.getBoundingClientRect();
+    const cs=w.getComputedStyle(el);
+    rows.push(String(i).padStart(2)+' '+String(el.className||el.tagName).slice(0,20).padEnd(21)+
+      ' y='+String(Math.round(r.top)).padStart(4)+
+      ' h='+String(Math.round(r.height)).padStart(4)+
+      ' mt='+cs.marginTop.padStart(6)+' mb='+cs.marginBottom.padStart(6));
+  });
+  document.getElementById('o').textContent=rows.join('\n');
+},900));
+</script></body></html>

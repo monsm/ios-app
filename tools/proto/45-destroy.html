@@ -1,0 +1,160 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<title>销毁与应急</title><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="pages.css"></head><body>
+<div class="phone">
+<div class="statusbar">
+  <span class="sb-time" data-real-time>9:41</span>
+  <span class="sb-right">
+    <svg width="17" height="11" viewBox="0 0 17 11" fill="#FFF"><rect x="0" y="7.5" width="3" height="3.5" rx="1"/><rect x="4.5" y="5.5" width="3" height="5.5" rx="1"/><rect x="9" y="3" width="3" height="8" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+    <svg width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="#FFF" stroke-width="1.6" stroke-linecap="round"><path d="M1 3.4a10.5 10.5 0 0 1 14 0"/><path d="M3.6 6.2a6.6 6.6 0 0 1 8.8 0"/><path d="M6.2 8.9a2.9 2.9 0 0 1 3.6 0"/><circle cx="8" cy="10.2" r=".7" fill="#FFF" stroke="none"/></svg>
+    <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x=".5" y=".5" width="21" height="11" rx="3.2" stroke="#FFF" stroke-opacity=".4"/><rect x="2" y="2" width="15" height="8" rx="2" fill="#FFF"/><path d="M23 4.2v3.6a2 2 0 0 0 0-3.6z" fill="#FFF" fill-opacity=".5"/></svg>
+  </span>
+</div><div class="navbar">
+  <a class="back" href="40-security.html">‹</a><span class="nt">销毁与应急</span><span class="nr"></span></div><div class="scroll"><div class="page hasnav">
+
+  <div class="h1" style="margin-top:8px">销毁与应急</div>
+  <div class="sub">不可逆操作 · 需要二次确认</div>
+
+  <div class="sp74"></div>
+
+  <!-- 备份闸 -->
+  <!--VIZ-->
+  <div class="card" style="margin-top:12px"><div class="cardlink">三级销毁<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+    <div style="flex:1;text-align:center">
+      <div style="height:5px;border-radius:3px;background:#FF3B30"></div>
+      <div style="font-size:12px;color:#FF3B30;margin-top:9px;font-weight:600">删缓存</div>
+    </div>
+    <div style="flex:1;text-align:center">
+      <div style="height:5px;border-radius:3px;background:#FF3B30"></div>
+      <div style="font-size:12px;color:#FF3B30;margin-top:9px;font-weight:600">覆写台账</div>
+    </div>
+    <div style="flex:1;text-align:center">
+      <div style="height:5px;border-radius:3px;background:rgba(255,255,255,.10)"></div>
+      <div style="font-size:12px;color:#6A6A6E;margin-top:9px;font-weight:400">全盘覆写</div>
+    </div></div></div>
+  <div class="card" style="margin-top:24px">
+    <div class="cardlink">备份闸<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;gap:10px;padding:12px;border-radius:12px;
+      background:rgba(255,59,48,.10);margin-top:12px">
+      <span style="color:#FF3B30;width:18px;height:18px;flex:0 0 auto"><span class="svgi" data-i="warn"></span></span>
+      <div style="flex:1;font-size:12px;color:#FF3B30;line-height:1.5">
+        7 天内无备份 — 触发销毁将先跳导出向导（接线点：设置 → 备份）
+      </div>
+    </div>
+  </div>
+
+  <!-- 三级销毁 -->
+  <div class="card">
+    <div class="cardlink">三级销毁<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <div style="flex:1;text-align:center">
+          <div style="height:5px;border-radius:3px;background:#FF3B30;margin-bottom:10px"></div>
+          <div style="font-size:13px;font-weight:600;color:#FF3B30">一级</div>
+          <div style="font-size:11px;color:#6A6A6E;margin-top:3px">删缓存</div>
+        </div><div style="flex:1;text-align:center">
+          <div style="height:5px;border-radius:3px;background:#FF3B30;margin-bottom:10px"></div>
+          <div style="font-size:13px;font-weight:600;color:#FF3B30">二级</div>
+          <div style="font-size:11px;color:#6A6A6E;margin-top:3px">覆写台账</div>
+        </div><div style="flex:1;text-align:center">
+          <div style="height:5px;border-radius:3px;background:#FF3B30;margin-bottom:10px"></div>
+          <div style="font-size:13px;font-weight:600;color:#FF3B30">三级</div>
+          <div style="font-size:11px;color:#6A6A6E;margin-top:3px">全盘覆写</div>
+        </div>
+    </div>
+    <div class="sep"></div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <span style="font-size:15px;flex:1">我理解销毁不可恢复</span><span class="sw"></span>
+    </div>
+    <div style="font-size:12px;color:#8D8D93;margin-top:8px;line-height:1.5">
+      删除+随机覆写全部本地缓存（钥匙串/台账/日志/审计）
+    </div>
+    <button class="btn dgr" style="margin-top:14px;background:#FF3B30;color:#FFF">销毁全部数据</button>
+  </div>
+
+  <!-- 回收站 -->
+  <div class="card" style="padding:6px 0">
+    <div class="cardlink" style="padding:8px 20px 6px">回收站<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <a class="rw" href="82-bin.html">
+      <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="refresh"></span></div>
+      <div class="tx"><div class="tt">查看回收站（可恢复）</div><div class="sb">0 项</div></div>
+      <div class="ch"><span class="svgi" data-i="chevron"></span></div></a>
+    <div class="sep"></div>
+    <div style="padding:14px 20px">
+      <button class="btn sec" data-hold>按住清空回收站</button>
+      <div style="text-align:center;font-size:11px;color:#6A6A6E;margin-top:8px">长按 2 秒释放，松手取消</div>
+    </div>
+  </div>
+
+  <!-- 离职清除 -->
+  <div class="card" style="padding:6px 0">
+    <div class="cardlink" style="padding:8px 20px 6px">离职清除<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    
+      <a class="rw" href="88-exit.html">
+        <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="person"></span></div>
+        <div class="tx"><div class="tt">爱妃</div><div class="sb">名下钥匙入归档，记录保留并标「已离开」</div></div>
+        <span style="font-size:13px;color:#FF3B30;font-weight:600">清除</span></a><div class="sep"></div>
+      <a class="rw" href="88-exit.html">
+        <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="person"></span></div>
+        <div class="tx"><div class="tt">母上</div><div class="sb">名下钥匙入归档，记录保留并标「已离开」</div></div>
+        <span style="font-size:13px;color:#FF3B30;font-weight:600">清除</span></a><div class="sep"></div>
+      <a class="rw" href="88-exit.html">
+        <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="person"></span></div>
+        <div class="tx"><div class="tt">父上</div><div class="sb">名下钥匙入归档，记录保留并标「已离开」</div></div>
+        <span style="font-size:13px;color:#FF3B30;font-weight:600">清除</span></a><div class="sep"></div>
+      <a class="rw" href="88-exit.html">
+        <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="person"></span></div>
+        <div class="tx"><div class="tt">朕</div><div class="sb">名下钥匙入归档，记录保留并标「已离开」</div></div>
+        <span style="font-size:13px;color:#FF3B30;font-weight:600">清除</span></a><div class="sep"></div>
+      <a class="rw" href="88-exit.html">
+        <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="person"></span></div>
+        <div class="tx"><div class="tt">皇子</div><div class="sb">名下钥匙入归档，记录保留并标「已离开」</div></div>
+        <span style="font-size:13px;color:#FF3B30;font-weight:600">清除</span></a>
+  </div>
+
+  <!-- 安全模式 -->
+  <div class="card" style="padding:6px 0">
+    <div class="cardlink" style="padding:8px 20px 6px">安全模式<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <a class="rw" href="46-safemode.html">
+      <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="shieldCheck"></span></div>
+      <div class="tx"><div class="tt">A / B 模式说明</div><div class="sb">本 App 只给变严方向（A→B）</div></div>
+      <div class="ch"><span class="svgi" data-i="chevron"></span></div></a>
+  </div>
+
+  <!-- 口令复用 -->
+  <div class="card" style="padding:6px 0">
+    <div class="cardlink" style="padding:8px 20px 6px">口令复用<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div class="rw" style="cursor:default">
+      <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="lock"></span></div>
+      <div class="tx"><div class="tt">检测重复口令</div><div class="sb">没有发现弱口令或重复</div></div>
+      <span style="font-size:13px;color:#30D158">通过</span>
+    </div>
+  </div>
+
+  <!-- 密码保存 -->
+  <div class="card">
+    <div class="cardlink">密码保存<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
+      <span style="font-size:15px;flex:1">保存到系统钥匙串</span><span class="sw"></span>
+    </div>
+    <div class="footer">打开后口令会存进 iCloud 钥匙串。关掉只存本机。</div>
+  </div>
+
+  <!-- 敏感操作视图 -->
+  <div class="card">
+    <div class="cardlink">敏感操作视图<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
+      <span style="font-size:15px;flex:1">销毁前需重输应用锁密码</span><span class="sw on"></span>
+    </div>
+    <div class="sep"></div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <span style="font-size:15px;flex:1">需键入「销毁」二字</span><span class="sw on"></span>
+    </div>
+  </div>
+
+</div></div><div class="tabbar">
+<a class="tab" href="01-home.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg><span>门厅</span></a>
+<a class="tab" href="02-keys.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="12" r="3.5"/><path d="M11 12h9"/><path d="M17 12v3"/><path d="M20 12v2"/></svg><span>钥匙</span></a>
+<a class="tab" href="03-devices.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10.5 5.5h3"/></svg><span>设备</span></a>
+<a class="tab" href="04-members.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><circle cx="17" cy="9.5" r="2.4"/><path d="M16 14.2c2.4.2 4.5 1.9 4.5 4.3"/></svg><span>成员</span></a>
+<a class="tab on" href="05-system.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.65 8.6a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.56 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg><span>系统</span></a>
+</div></div><script src="icons-render.js"></script><script src="interact.js"></script></body></html>

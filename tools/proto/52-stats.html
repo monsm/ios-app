@@ -1,0 +1,194 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<title>统计</title><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="pages.css"></head><body>
+<div class="phone">
+<div class="statusbar">
+  <span class="sb-time" data-real-time>9:41</span>
+  <span class="sb-right">
+    <svg width="17" height="11" viewBox="0 0 17 11" fill="#FFF"><rect x="0" y="7.5" width="3" height="3.5" rx="1"/><rect x="4.5" y="5.5" width="3" height="5.5" rx="1"/><rect x="9" y="3" width="3" height="8" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+    <svg width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="#FFF" stroke-width="1.6" stroke-linecap="round"><path d="M1 3.4a10.5 10.5 0 0 1 14 0"/><path d="M3.6 6.2a6.6 6.6 0 0 1 8.8 0"/><path d="M6.2 8.9a2.9 2.9 0 0 1 3.6 0"/><circle cx="8" cy="10.2" r=".7" fill="#FFF" stroke="none"/></svg>
+    <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x=".5" y=".5" width="21" height="11" rx="3.2" stroke="#FFF" stroke-opacity=".4"/><rect x="2" y="2" width="15" height="8" rx="2" fill="#FFF"/><path d="M23 4.2v3.6a2 2 0 0 0 0-3.6z" fill="#FFF" fill-opacity=".5"/></svg>
+  </span>
+</div><div class="navbar">
+  <a class="back" href="01-home.html">‹</a><span class="nt">统计</span><span class="nr"></span></div><div class="scroll"><div class="page hasnav">
+
+  <!-- 胶囊行：源码是 2 枚并排（总开门 / 告警），含图标 -->
+  <div class="chiprow">
+    <a class="chip" href="50-events.html" style="flex:1">
+      <span style="color:#E8A05C;width:22px;height:22px"><span class="svgi" data-i="lockOpen"></span></span>
+      <div><div class="lbl">总开门</div><div class="val">127</div></div>
+    </a>
+    <a class="chip" href="44-audit.html" style="flex:1">
+      <span style="color:#0090FC;width:22px;height:22px"><span class="svgi" data-i="warn"></span></span>
+      <div><div class="lbl">告警</div><div class="val">2</div></div>
+    </a>
+  </div>
+
+  <div style="margin-top:26px">
+    <div class="h1">统计</div>
+    <div class="sub">近 30 天 · 1 把门锁 · 5 位成员</div>
+  </div>
+
+  <div class="sp74"></div>
+
+  <!-- ① 安全（源码 safetyCard：卡头是链接 + 三个 MetricTile）-->
+  <div class="card" style="margin-top:24px">
+    <div class="cardlink">安全<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;gap:12px;margin-top:14px">
+      
+  <div style="flex:1;text-align:center">
+    <div style="width:28px;height:28px;margin:0 auto;color:#30D158;display:flex;
+      align-items:center;justify-content:center"><span class="svgi" data-i="warn" data-sz="22px"></span></div>
+    <div style="font-size:20px;font-weight:700;color:#30D158;margin-top:8px;
+      font-variant-numeric:tabular-nums">1.6%</div>
+    <div style="font-size:11px;color:#8D8D93;margin-top:4px">告警率</div>
+  </div>
+      
+  <div style="flex:1;text-align:center">
+    <div style="width:28px;height:28px;margin:0 auto;color:#0090FC;display:flex;
+      align-items:center;justify-content:center"><span class="svgi" data-i="calendar" data-sz="22px"></span></div>
+    <div style="font-size:20px;font-weight:700;color:#0090FC;margin-top:8px;
+      font-variant-numeric:tabular-nums">1</div>
+    <div style="font-size:11px;color:#8D8D93;margin-top:4px">有告警的天</div>
+  </div>
+      
+  <div style="flex:1;text-align:center">
+    <div style="width:28px;height:28px;margin:0 auto;color:#FFF;display:flex;
+      align-items:center;justify-content:center"><span class="svgi" data-i="lockOpen" data-sz="22px"></span></div>
+    <div style="font-size:20px;font-weight:700;color:#FFF;margin-top:8px;
+      font-variant-numeric:tabular-nums">127</div>
+    <div style="font-size:11px;color:#8D8D93;margin-top:4px">总开门</div>
+  </div>
+    </div>
+  </div>
+
+  <!-- ② 怎么开的门（源码 paretoCard：卡头 + 横条）-->
+  <div class="card">
+    <div class="cardlink">怎么开的门<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    
+  <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+    <span style="width:52px;font-size:11px;color:#FFF;flex:0 0 auto">指纹</span>
+    <div style="flex:1;height:6px;border-radius:3px;background:#24242A">
+      <div style="height:6px;border-radius:3px;background:#0090FC;width:41%"></div>
+    </div>
+    <span style="width:28px;text-align:right;font-size:12px;color:#FFF;
+      font-variant-numeric:tabular-nums;flex:0 0 auto">52</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+    <span style="width:52px;font-size:11px;color:#FFF;flex:0 0 auto">密码</span>
+    <div style="flex:1;height:6px;border-radius:3px;background:#24242A">
+      <div style="height:6px;border-radius:3px;background:#0090FC;width:34%"></div>
+    </div>
+    <span style="width:28px;text-align:right;font-size:12px;color:#FFF;
+      font-variant-numeric:tabular-nums;flex:0 0 auto">43</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+    <span style="width:52px;font-size:11px;color:#FFF;flex:0 0 auto">自动</span>
+    <div style="flex:1;height:6px;border-radius:3px;background:#24242A">
+      <div style="height:6px;border-radius:3px;background:#0090FC;width:19%"></div>
+    </div>
+    <span style="width:28px;text-align:right;font-size:12px;color:#FFF;
+      font-variant-numeric:tabular-nums;flex:0 0 auto">24</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+    <span style="width:52px;font-size:11px;color:#FFF;flex:0 0 auto">临时码</span>
+    <div style="flex:1;height:6px;border-radius:3px;background:#24242A">
+      <div style="height:6px;border-radius:3px;background:#0090FC;width:6%"></div>
+    </div>
+    <span style="width:28px;text-align:right;font-size:12px;color:#FFF;
+      font-variant-numeric:tabular-nums;flex:0 0 auto">8</span>
+  </div>
+    <div class="footer">指纹占比最高。自动开锁只在手机靠近时触发。</div>
+  </div>
+
+  <!-- ③ 一天里什么时候最忙（源码 daypartCard：24h 柱）-->
+  <div class="card">
+    <div class="ctitle" style="font-size:18px">一天里什么时候最忙</div>
+    <div class="mchart" style="height:52px;margin-top:12px"><i style="height:3%"></i><i style="height:3%"></i><i style="height:3%"></i><i style="height:3%"></i><i style="height:3%"></i><i style="height:3%"></i><i style="height:24%"></i><i class="hi" style="height:65%"></i><i class="hi" style="height:88%"></i><i style="height:35%"></i><i style="height:18%"></i><i style="height:24%"></i><i style="height:41%"></i><i style="height:18%"></i><i style="height:12%"></i><i style="height:15%"></i><i style="height:29%"></i><i class="hi" style="height:76%"></i><i class="hi" style="height:100%"></i><i style="height:53%"></i><i style="height:26%"></i><i style="height:15%"></i><i style="height:9%"></i><i style="height:3%"></i></div><div class="maxis"><span>0</span><span>6</span><span>12</span><span>18</span><span>24</span></div>
+    <div class="sep"></div>
+    <div class="cols">
+      <div><div class="clabel" style="margin-top:0">高峰</div><div class="cvalue">18–19 点</div></div>
+      <div><div class="clabel" style="margin-top:0">低谷</div><div class="cvalue">1–5 点</div></div>
+    </div>
+  </div>
+
+  <!-- ④ 工作日出门（源码 firstOpenCard）-->
+  <div class="card">
+    <div class="ctitle" style="font-size:18px">工作日出门</div>
+    <div style="display:flex;align-items:baseline;gap:8px;margin-top:14px">
+      <span style="font-size:34px;font-weight:700;color:#0090FC;font-variant-numeric:tabular-nums">07:12</span>
+      <span style="font-size:13px;color:#8D8D93">平均首次开门</span>
+    </div>
+    <div class="sep"></div>
+    <div class="cols">
+      <div><div class="clabel" style="margin-top:0">最早</div><div class="cvalue">06:41</div></div>
+      <div><div class="clabel" style="margin-top:0">最晚</div><div class="cvalue">09:28</div></div>
+    </div>
+  </div>
+
+  <!-- ⑤ 一天里的开门分布（源码 rhythmCard）-->
+  <div class="card">
+    <div class="ctitle" style="font-size:18px">一天里的开门分布</div>
+    <div style="margin-top:12px">
+      
+  <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+    <span style="width:52px;font-size:11px;color:#FFF;flex:0 0 auto">早 6–9</span>
+    <div style="flex:1;height:6px;border-radius:3px;background:#24242A">
+      <div style="height:6px;border-radius:3px;background:#0090FC;width:100%"></div>
+    </div>
+    <span style="width:28px;text-align:right;font-size:12px;color:#FFF;
+      font-variant-numeric:tabular-nums;flex:0 0 auto">38</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+    <span style="width:52px;font-size:11px;color:#FFF;flex:0 0 auto">午 11–14</span>
+    <div style="flex:1;height:6px;border-radius:3px;background:#24242A">
+      <div style="height:6px;border-radius:3px;background:#0090FC;width:58%"></div>
+    </div>
+    <span style="width:28px;text-align:right;font-size:12px;color:#FFF;
+      font-variant-numeric:tabular-nums;flex:0 0 auto">22</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+    <span style="width:52px;font-size:11px;color:#FFF;flex:0 0 auto">晚 17–21</span>
+    <div style="flex:1;height:6px;border-radius:3px;background:#24242A">
+      <div style="height:6px;border-radius:3px;background:#0090FC;width:100%"></div>
+    </div>
+    <span style="width:28px;text-align:right;font-size:12px;color:#FFF;
+      font-variant-numeric:tabular-nums;flex:0 0 auto">47</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+    <span style="width:52px;font-size:11px;color:#FFF;flex:0 0 auto">夜 22–5</span>
+    <div style="flex:1;height:6px;border-radius:3px;background:#24242A">
+      <div style="height:6px;border-radius:3px;background:#0090FC;width:43%"></div>
+    </div>
+    <span style="width:28px;text-align:right;font-size:12px;color:#FFF;
+      font-variant-numeric:tabular-nums;flex:0 0 auto">20</span>
+  </div>
+    </div>
+    <div class="footer">晚上出门最频繁。夜间的 20 次里有 4 次来自临时码。</div>
+  </div>
+
+  <!-- ⑥ 近 14 天（源码 trendCard：折线）-->
+  <div class="card">
+    <div class="ctitle" style="font-size:18px">近 14 天</div>
+    <div style="position:relative;height:88px;margin-top:12px">
+      <div class="dash"><i></i><i></i><i></i><i></i></div>
+      <svg width="100%" height="88" viewBox="0 0 320 88" preserveAspectRatio="none" style="position:absolute;inset:0">
+        <defs><linearGradient id="tr" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#00C6FF" stop-opacity=".40"/>
+          <stop offset="1" stop-color="#0090FC" stop-opacity="0"/></linearGradient></defs>
+        <path d="M0,64 L25,58 L49,44 L74,52 L98,30 L123,42 L147,36 L172,50 L196,46 L221,54 L245,42 L270,48 L294,40 L320,52 L320,88 L0,88 Z" fill="url(#tr)"/>
+        <path d="M0,64 L25,58 L49,44 L74,52 L98,30 L123,42 L147,36 L172,50 L196,46 L221,54 L245,42 L270,48 L294,40 L320,52"
+          fill="none" stroke="#00C6FF" stroke-width="2"/>
+      </svg>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:#6A6A6E;margin-top:8px">
+      <span>10-10</span><span>10-14</span><span>10-18</span><span>10-23</span>
+    </div>
+  </div>
+
+</div></div><div class="tabbar">
+<a class="tab on" href="01-home.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg><span>门厅</span></a>
+<a class="tab" href="02-keys.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="12" r="3.5"/><path d="M11 12h9"/><path d="M17 12v3"/><path d="M20 12v2"/></svg><span>钥匙</span></a>
+<a class="tab" href="03-devices.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10.5 5.5h3"/></svg><span>设备</span></a>
+<a class="tab" href="04-members.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><circle cx="17" cy="9.5" r="2.4"/><path d="M16 14.2c2.4.2 4.5 1.9 4.5 4.3"/></svg><span>成员</span></a>
+<a class="tab" href="05-system.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.65 8.6a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.56 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg><span>系统</span></a>
+</div></div><script src="icons-render.js"></script><script src="interact.js"></script></body></html>

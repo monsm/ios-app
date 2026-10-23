@@ -1,0 +1,120 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<title>钥匙</title><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="pages.css"></head><body>
+<div class="phone">
+<div class="statusbar">
+  <span class="sb-time" data-real-time>9:41</span>
+  <span class="sb-right">
+    <svg width="17" height="11" viewBox="0 0 17 11" fill="#FFF"><rect x="0" y="7.5" width="3" height="3.5" rx="1"/><rect x="4.5" y="5.5" width="3" height="5.5" rx="1"/><rect x="9" y="3" width="3" height="8" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+    <svg width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="#FFF" stroke-width="1.6" stroke-linecap="round"><path d="M1 3.4a10.5 10.5 0 0 1 14 0"/><path d="M3.6 6.2a6.6 6.6 0 0 1 8.8 0"/><path d="M6.2 8.9a2.9 2.9 0 0 1 3.6 0"/><circle cx="8" cy="10.2" r=".7" fill="#FFF" stroke="none"/></svg>
+    <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x=".5" y=".5" width="21" height="11" rx="3.2" stroke="#FFF" stroke-opacity=".4"/><rect x="2" y="2" width="15" height="8" rx="2" fill="#FFF"/><path d="M23 4.2v3.6a2 2 0 0 0 0-3.6z" fill="#FFF" fill-opacity=".5"/></svg>
+  </span>
+</div><div class="scroll"><div class="page">
+
+  <!-- 胶囊行：图 2 形态 —— 第一枚 56×56 纯图标方块，其余三段环 -->
+  <div class="chiprow">
+    <div class="chip compact"><span class="svgi" data-i="heart" data-sz="24px"></span></div>
+    <a class="chip" href="50-events.html">
+      <svg class="ringico" viewBox="0 0 26 26"><circle cx="13" cy="13" r="9" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="4"/><circle cx="13" cy="13" r="9" fill="none" stroke="#0090FC" stroke-width="4" stroke-linecap="round" stroke-dasharray="21.75 56.55" transform="rotate(-90.0 13 13)"/><circle cx="13" cy="13" r="9" fill="none" stroke="#0090FC" stroke-width="4" stroke-linecap="round" stroke-dasharray="13.83 56.55" transform="rotate(82.8 13 13)"/><circle cx="13" cy="13" r="9" fill="none" stroke="#0090FC" stroke-width="4" stroke-linecap="round" stroke-dasharray="11.57 56.55" transform="rotate(205.2 13 13)"/></svg>
+      <div><div class="lbl">密码</div><div class="val">11 条</div></div>
+    </a>
+    <a class="chip" href="11-fingerprint.html">
+      <svg class="ringico" viewBox="0 0 26 26"><circle cx="13" cy="13" r="9" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="4"/><circle cx="13" cy="13" r="9" fill="none" stroke="#0090FC" stroke-width="4" stroke-linecap="round" stroke-dasharray="20.62 56.55" transform="rotate(-90.0 13 13)"/><circle cx="13" cy="13" r="9" fill="none" stroke="#0090FC" stroke-width="4" stroke-linecap="round" stroke-dasharray="16.10 56.55" transform="rotate(75.6 13 13)"/><circle cx="13" cy="13" r="9" fill="none" stroke="#0090FC" stroke-width="4" stroke-linecap="round" stroke-dasharray="10.44 56.55" transform="rotate(212.4 13 13)"/></svg>
+      <div><div class="lbl">指纹</div><div class="val">2 枚</div></div>
+    </a>
+    <a class="chip" href="12-tempcode.html">
+      <svg class="ringico" viewBox="0 0 26 26"><circle cx="13" cy="13" r="9" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="4"/><circle cx="13" cy="13" r="9" fill="none" stroke="#FF9F0A" stroke-width="4" stroke-linecap="round" stroke-dasharray="29.10 56.55" transform="rotate(-90.0 13 13)"/><circle cx="13" cy="13" r="9" fill="none" stroke="#0090FC" stroke-width="4" stroke-linecap="round" stroke-dasharray="11.57 56.55" transform="rotate(129.6 13 13)"/><circle cx="13" cy="13" r="9" fill="none" stroke="#0090FC" stroke-width="4" stroke-linecap="round" stroke-dasharray="7.05 56.55" transform="rotate(237.6 13 13)"/></svg>
+      <div><div class="lbl">临时码</div><div class="val">0 个</div></div>
+    </a>
+  </div>
+
+  <div style="margin-top:30px">
+    <div class="h1">钥匙</div>
+    <div class="sub">13 项钥匙 · 2 类凭证 · 本周 2 项到期</div>
+  </div>
+
+  <div class="sp74"></div>
+
+  <div style="height:24px"></div>
+
+  <div style="display:flex"><div class="segctl" style="flex:1">
+    <div class="o on">全部</div><div class="o">密码</div><div class="o">指纹</div><div class="o">临时码</div>
+  </div></div>
+
+  <!-- 卡 1：图 2 的完整解剖（卡头→标题→label→value→分隔线→第二组→页脚）-->
+  <div class="card" style="margin-top:12px">
+    <div class="cardlink">本周到期<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;justify-content:center;margin:8px 0 -2px">
+      <img src="img/key-render-192.png" alt="" style="width:104px;height:104px;
+        filter:drop-shadow(0 12px 24px rgba(0,0,0,.6))">
+    </div>
+    <div class="ctitle">2 项即将到期</div>
+    <div class="clabel" style="margin-top:14px">总计</div>
+    <div class="cvalue" style="margin-top:2px">13 项</div>
+    <div class="sep"></div>
+    <div class="cols">
+      <div><div class="clabel" style="margin-top:0">密码</div><div class="cvalue">11</div></div>
+      <div><div class="clabel" style="margin-top:0">指纹</div><div class="cvalue">2</div></div>
+    </div>
+    <div class="footer">到期前 7 天会在门厅提示。临时码用完即弃，不进台账。</div>
+  </div>
+
+  <!-- 卡 2：图 2 的 Fitness 形态 —— 左三色数据行 + 右同心三环 -->
+  <div class="card">
+    <div class="cardlink">本周用量<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;align-items:center;gap:18px;margin-top:2px">
+      <div style="flex:1">
+        <div class="drow"><span class="dot" style="background:#0090FC"></span>
+          <span class="dv">8<span class="du">/13 项使用中</span></span></div>
+        <div class="drow"><span class="dot" style="background:#0090FC"></span>
+          <span class="dv">2<span class="du">/2 枚指纹</span></span></div>
+        <div class="drow"><span class="dot" style="background:#0090FC"></span>
+          <span class="dv">0<span class="du">/5 个临时码</span></span></div>
+      </div>
+      <svg width="101" height="101" viewBox="0 0 101 101"><circle cx="50.5" cy="50.5" r="43.43" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="11.62"/><circle cx="50.5" cy="50.5" r="43.43" fill="none" stroke="#0090FC" stroke-width="11.62" stroke-linecap="round" stroke-dasharray="182.83 272.88" transform="rotate(-84 50.5 50.5)"/><circle cx="50.5" cy="50.5" r="30.30" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="10.61"/><circle cx="50.5" cy="50.5" r="30.30" fill="none" stroke="#0090FC" stroke-width="10.61" stroke-linecap="round" stroke-dasharray="91.38 190.38" transform="rotate(-84 50.5 50.5)"/><circle cx="50.5" cy="50.5" r="17.17" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="9.60"/><circle cx="50.5" cy="50.5" r="17.17" fill="none" stroke="#0090FC" stroke-width="9.60" stroke-linecap="round" stroke-dasharray="35.60 107.88" transform="rotate(-84 50.5 50.5)"/><circle cx="50.5" cy="50.5" r="10.1" fill="#0A0A0C"/><circle cx="50.5" cy="7.1" r="4.5" fill="#000"/></svg>
+    </div>
+    <div class="sep"></div>
+    <div class="cols">
+      <div><div class="clabel" style="margin-top:0">本周开门</div><div class="cvalue">47 次</div></div>
+      <div><div class="clabel" style="margin-top:0">日均</div><div class="cvalue">6.7 次</div></div>
+    </div>
+    <div class="footer">三项都在正常范围，本周用量平稳。</div>
+  </div>
+
+  <!-- 钥匙列表 -->
+  <div class="card" style="padding:6px 0">
+    <div class="cardlink">全部钥匙<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    
+      <a class="rw" href="13-key-detail.html">
+        <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="key"></span></div>
+        <div class="tx"><div class="tt">朕-大门-长期</div><div class="sb">朕 · 长期有效</div></div>
+        <span class="badge blue">进行中</span>
+        <div class="ch"><span class="svgi" data-i="chevron"></span></div></a><div class="sep"></div>
+      <a class="rw" href="13-key-detail.html">
+        <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="fingerprint"></span></div>
+        <div class="tx"><div class="tt">指纹 12</div><div class="sb">母上 · 2026-09-01</div></div>
+        <span class="badge ok">有效</span>
+        <div class="ch"><span class="svgi" data-i="chevron"></span></div></a><div class="sep"></div>
+      <a class="rw" href="13-key-detail.html">
+        <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="fingerprint"></span></div>
+        <div class="tx"><div class="tt">指纹 11</div><div class="sb">母上 · 2026-09-01</div></div>
+        <span class="badge ok">有效</span>
+        <div class="ch"><span class="svgi" data-i="chevron"></span></div></a><div class="sep"></div>
+      <a class="rw" href="13-key-detail.html">
+        <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="fingerprint"></span></div>
+        <div class="tx"><div class="tt">指纹 10</div><div class="sb">爱妃 · 2026-08-20</div></div>
+        <span class="badge ok">有效</span>
+        <div class="ch"><span class="svgi" data-i="chevron"></span></div></a><div class="sep"></div>
+      <a class="rw" href="13-key-detail.html">
+        <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="timer"></span></div>
+        <div class="tx"><div class="tt">临时码 #A7</div><div class="sb">10 分钟后失效</div></div>
+        <span class="badge warn">即将失效</span>
+        <div class="ch"><span class="svgi" data-i="chevron"></span></div></a>
+  </div>
+
+</div></div><div class="tabbar">
+<a class="tab" href="01-home.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg><span>门厅</span></a>
+<a class="tab on" href="02-keys.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="12" r="3.5"/><path d="M11 12h9"/><path d="M17 12v3"/><path d="M20 12v2"/></svg><span>钥匙</span></a>
+<a class="tab" href="03-devices.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10.5 5.5h3"/></svg><span>设备</span></a>
+<a class="tab" href="04-members.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><circle cx="17" cy="9.5" r="2.4"/><path d="M16 14.2c2.4.2 4.5 1.9 4.5 4.3"/></svg><span>成员</span></a>
+<a class="tab" href="05-system.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.65 8.6a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.56 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg><span>系统</span></a>
+</div></div><script src="icons-render.js"></script><script src="interact.js"></script></body></html>

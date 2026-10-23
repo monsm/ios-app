@@ -1,0 +1,219 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<title>锁档案</title><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="pages.css"></head><body>
+<div class="phone">
+<div class="statusbar">
+  <span class="sb-time" data-real-time>9:41</span>
+  <span class="sb-right">
+    <svg width="17" height="11" viewBox="0 0 17 11" fill="#FFF"><rect x="0" y="7.5" width="3" height="3.5" rx="1"/><rect x="4.5" y="5.5" width="3" height="5.5" rx="1"/><rect x="9" y="3" width="3" height="8" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+    <svg width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="#FFF" stroke-width="1.6" stroke-linecap="round"><path d="M1 3.4a10.5 10.5 0 0 1 14 0"/><path d="M3.6 6.2a6.6 6.6 0 0 1 8.8 0"/><path d="M6.2 8.9a2.9 2.9 0 0 1 3.6 0"/><circle cx="8" cy="10.2" r=".7" fill="#FFF" stroke="none"/></svg>
+    <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x=".5" y=".5" width="21" height="11" rx="3.2" stroke="#FFF" stroke-opacity=".4"/><rect x="2" y="2" width="15" height="8" rx="2" fill="#FFF"/><path d="M23 4.2v3.6a2 2 0 0 0 0-3.6z" fill="#FFF" fill-opacity=".5"/></svg>
+  </span>
+</div><div class="navbar">
+  <a class="back" href="20-locks.html">‹</a><span class="nt">锁档案</span><span class="nr">保存</span></div><div class="scroll"><div class="page hasnav">
+
+  <!-- ① 锁牌（源码 plaque：3D 锁图 150 + 辉光 + 名称 + 场所 + 三个状态读数）-->
+  <!--VIZ-->
+  <div class="card" style="margin-top:12px"><div class="cardlink">指纹余量<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;align-items:center;gap:18px;margin-top:6px">
+      <div style="position:relative;width:88px;height:88px;flex:0 0 auto">
+  <svg width="88" height="88" viewBox="0 0 88 88">
+    <circle cx="44" cy="44" r="36.08" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="10.120000000000001"/>
+    <circle cx="44" cy="44" r="36.08" fill="none" stroke="#5E5CE6" stroke-width="10.120000000000001"
+      stroke-linecap="round" stroke-dasharray="54.40735821192947 226.69732588303947" transform="rotate(-90 44 44)"/>
+  </svg>
+  <div style="position:absolute;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center">
+    <div style="font-size:23px;font-weight:700;color:#FFF;
+      font-variant-numeric:tabular-nums;line-height:1">12</div>
+    <div style="font-size:7px;color:#8D8D93;margin-top:3px;max-width:55px;text-align:center;line-height:1.3">可录</div>
+  </div></div>
+      <div style="flex:1"><div class="ctitle">38 / 50 已用</div>
+      <div style="font-size:12px;color:var(--text-sub);margin-top:6px">指纹录在锁里，本机只记「谁的第几枚」</div></div>
+    </div></div>
+  <div class="card" style="margin-top:8px;padding:28px 20px 20px;text-align:center">
+    <div style="position:relative;display:inline-block">
+      <div style="position:absolute;inset:-24px;background:radial-gradient(circle,rgba(123,123,232,.30) 0%,transparent 70%);
+        border-radius:50%;filter:blur(14px)"></div>
+      <img src="img/lock-hero@3x.png" alt=""
+        style="width:132px;height:auto;position:relative;
+        filter:drop-shadow(0 14px 28px rgba(0,0,0,.6));transform:translateY(-4px)">
+    </div>
+    <div style="font-size:30px;font-weight:600;color:#FFF;margin-top:10px;
+      letter-spacing:-.4px;line-height:1.15">然然家</div>
+    <div style="font-size:14px;color:#8D8D93;margin-top:4px">婆婆家·入户门</div>
+    <div class="sep" style="margin-top:20px"></div>
+    <div class="cols">
+      <div><div class="clabel" style="margin-top:0">电量</div><div class="cvalue">47%</div></div>
+      <div><div class="clabel" style="margin-top:0">锁态</div><div class="cvalue">已上锁</div></div>
+      <div><div class="clabel" style="margin-top:0">固件</div><div class="cvalue">1.0.2</div></div>
+    </div>
+  </div>
+
+  <!-- ② 身份（源码 identitySection：名字 / 场所 / 分组 / 备注）-->
+  <div class="card">
+    <div class="cardlink">身份<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;flex-direction:column;gap:14px;margin-top:12px">
+      <div>
+        <div class="clabel" style="margin-top:0">名字</div>
+        <input class="inp" style="margin-top:6px" placeholder="给这把锁起个名字" value="然然家">
+      </div>
+      <div>
+        <div class="clabel" style="margin-top:0">场所</div>
+        <input class="inp" style="margin-top:6px" placeholder="如 婆婆家·入户门" value="婆婆家·入户门">
+      </div>
+      <div>
+        <div class="clabel" style="margin-top:0">分组</div>
+        <input class="inp" style="margin-top:6px" placeholder="如 住宅 / 办公">
+      </div>
+      <div>
+        <div class="clabel" style="margin-top:0">备注</div>
+        <input class="inp" style="margin-top:6px" placeholder="随手记">
+      </div>
+    </div>
+  </div>
+
+  <!-- ③ 符号（源码 symbolSection：七个符号可选）-->
+  <div class="card">
+    <div class="cardlink">符号<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;margin-top:14px;padding-bottom:2px">
+      
+        <div style="flex:0 0 auto;text-align:center">
+          <div style="width:56px;height:56px;border-radius:50%;
+            background:rgba(123,123,232,.24);
+            border:2px solid #7B7BE8;
+            display:flex;align-items:center;justify-content:center;
+            color:#FFF"><span class="svgi" data-i="house" data-sz="24px"></span></div>
+          <div style="font-size:11px;color:#FFF;margin-top:8px">家</div>
+        </div>
+        <div style="flex:0 0 auto;text-align:center">
+          <div style="width:56px;height:56px;border-radius:50%;
+            background:rgba(255,255,255,.06);
+            border:2px solid transparent;
+            display:flex;align-items:center;justify-content:center;
+            color:#8D8D93"><span class="svgi" data-i="building" data-sz="24px"></span></div>
+          <div style="font-size:11px;color:#6A6A6E;margin-top:8px">楼栋</div>
+        </div>
+        <div style="flex:0 0 auto;text-align:center">
+          <div style="width:56px;height:56px;border-radius:50%;
+            background:rgba(255,255,255,.06);
+            border:2px solid transparent;
+            display:flex;align-items:center;justify-content:center;
+            color:#8D8D93"><span class="svgi" data-i="car" data-sz="24px"></span></div>
+          <div style="font-size:11px;color:#6A6A6E;margin-top:8px">车库</div>
+        </div>
+        <div style="flex:0 0 auto;text-align:center">
+          <div style="width:56px;height:56px;border-radius:50%;
+            background:rgba(255,255,255,.06);
+            border:2px solid transparent;
+            display:flex;align-items:center;justify-content:center;
+            color:#8D8D93"><span class="svgi" data-i="office" data-sz="24px"></span></div>
+          <div style="font-size:11px;color:#6A6A6E;margin-top:8px">办公</div>
+        </div>
+        <div style="flex:0 0 auto;text-align:center">
+          <div style="width:56px;height:56px;border-radius:50%;
+            background:rgba(255,255,255,.06);
+            border:2px solid transparent;
+            display:flex;align-items:center;justify-content:center;
+            color:#8D8D93"><span class="svgi" data-i="key" data-sz="24px"></span></div>
+          <div style="font-size:11px;color:#6A6A6E;margin-top:8px">钥匙</div>
+        </div>
+        <div style="flex:0 0 auto;text-align:center">
+          <div style="width:56px;height:56px;border-radius:50%;
+            background:rgba(255,255,255,.06);
+            border:2px solid transparent;
+            display:flex;align-items:center;justify-content:center;
+            color:#8D8D93"><span class="svgi" data-i="shield" data-sz="24px"></span></div>
+          <div style="font-size:11px;color:#6A6A6E;margin-top:8px">布防</div>
+        </div>
+        <div style="flex:0 0 auto;text-align:center">
+          <div style="width:56px;height:56px;border-radius:50%;
+            background:rgba(255,255,255,.06);
+            border:2px solid transparent;
+            display:flex;align-items:center;justify-content:center;
+            color:#8D8D93"><span class="svgi" data-i="door" data-sz="24px"></span></div>
+          <div style="font-size:11px;color:#6A6A6E;margin-top:8px">侧门</div>
+        </div>
+    </div>
+    <div class="footer">默认符号用 3D 锁具渲染图。选了别的符号就换成那个符号。</div>
+  </div>
+
+  <!-- ④ 配色（源码 colorSection）-->
+  <div class="card">
+    <div class="cardlink">配色<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;gap:14px;margin-top:14px;flex-wrap:wrap">
+      
+        <div style="width:calc(25% - 11px);text-align:center">
+          <div style="width:44px;height:44px;border-radius:50%;margin:0 auto;background:#7B7BE8;
+            border:3px solid #FFF"></div>
+          <div style="font-size:11px;color:#FFF;margin-top:7px">靛蓝</div>
+        </div>
+        <div style="width:calc(25% - 11px);text-align:center">
+          <div style="width:44px;height:44px;border-radius:50%;margin:0 auto;background:#5E5CE6;
+            border:3px solid transparent"></div>
+          <div style="font-size:11px;color:#6A6A6E;margin-top:7px">蓝</div>
+        </div>
+        <div style="width:calc(25% - 11px);text-align:center">
+          <div style="width:44px;height:44px;border-radius:50%;margin:0 auto;background:#30D158;
+            border:3px solid transparent"></div>
+          <div style="font-size:11px;color:#6A6A6E;margin-top:7px">绿</div>
+        </div>
+        <div style="width:calc(25% - 11px);text-align:center">
+          <div style="width:44px;height:44px;border-radius:50%;margin:0 auto;background:#5E5CE6;
+            border:3px solid transparent"></div>
+          <div style="font-size:11px;color:#6A6A6E;margin-top:7px">橙</div>
+        </div>
+        <div style="width:calc(25% - 11px);text-align:center">
+          <div style="width:44px;height:44px;border-radius:50%;margin:0 auto;background:#5E5CE6;
+            border:3px solid transparent"></div>
+          <div style="font-size:11px;color:#6A6A6E;margin-top:7px">珊瑚</div>
+        </div>
+        <div style="width:calc(25% - 11px);text-align:center">
+          <div style="width:44px;height:44px;border-radius:50%;margin:0 auto;background:#5E5CE6;
+            border:3px solid transparent"></div>
+          <div style="font-size:11px;color:#6A6A6E;margin-top:7px">薄荷</div>
+        </div>
+        <div style="width:calc(25% - 11px);text-align:center">
+          <div style="width:44px;height:44px;border-radius:50%;margin:0 auto;background:#8D8D93;
+            border:3px solid transparent"></div>
+          <div style="font-size:11px;color:#6A6A6E;margin-top:7px">石墨</div>
+        </div>
+    </div>
+    <div class="footer">配色只影响锁牌的辉光与描边，不改正文颜色。</div>
+  </div>
+
+  <!-- ⑤ 更多（源码 moreSection）-->
+  <div class="card" style="padding:6px 0">
+    <div class="cardlink" style="padding:8px 20px 8px">更多<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <a class="rw" href="22-firmware.html">
+      <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="arrowDown"></span></div>
+      <div class="tx"><div class="tt">固件升级</div><div class="sb">1.0.2 · 已是最新</div></div>
+      <div class="ch"><span class="svgi" data-i="chevron"></span></div></a>
+    <div class="sep"></div>
+    <a class="rw" href="25-synctime.html">
+      <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="clock"></span></div>
+      <div class="tx"><div class="tt">锁内时钟</div><div class="sb">偏差 −3 秒</div></div>
+      <div class="ch"><span class="svgi" data-i="chevron"></span></div></a>
+    <div class="sep"></div>
+    <a class="rw" href="85-battery.html">
+      <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="battery"></span></div>
+      <div class="tx"><div class="tt">电池档案</div><div class="sb">型号与换电记录</div></div>
+      <div class="ch"><span class="svgi" data-i="chevron"></span></div></a>
+    <div class="sep"></div>
+    <div class="rw" style="cursor:default">
+      <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="eyeOff"></span></div>
+      <div class="tx"><div class="tt">在翻页里隐藏这把锁</div><div class="sb">隐藏后可在门锁管理的「已隐藏」找回</div></div>
+      <span class="sw"></span>
+    </div>
+  </div>
+
+  <!-- ⑥ 保存（源码 saveButton）-->
+  <button class="btn" style="margin-top:4px">保存</button>
+  <button class="btn dgr" style="margin-top:10px">解除绑定</button>
+
+</div></div><div class="tabbar">
+<a class="tab" href="01-home.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg><span>门厅</span></a>
+<a class="tab" href="02-keys.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="12" r="3.5"/><path d="M11 12h9"/><path d="M17 12v3"/><path d="M20 12v2"/></svg><span>钥匙</span></a>
+<a class="tab on" href="03-devices.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10.5 5.5h3"/></svg><span>设备</span></a>
+<a class="tab" href="04-members.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><circle cx="17" cy="9.5" r="2.4"/><path d="M16 14.2c2.4.2 4.5 1.9 4.5 4.3"/></svg><span>成员</span></a>
+<a class="tab" href="05-system.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.65 8.6a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.56 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg><span>系统</span></a>
+</div></div><script src="icons-render.js"></script><script src="interact.js"></script></body></html>

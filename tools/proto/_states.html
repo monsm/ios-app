@@ -1,0 +1,36 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<title>状态示例</title><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="pages.css"></head><body>
+<div class="phone"><div class="scroll"><div class="page">
+  <div class="h1">三种状态</div>
+  <div class="sub">骨架屏 / 空态 / 错误态</div>
+
+  <div class="card" style="margin-top:24px">
+    <div class="ctitle" style="font-size:18px">① 骨架屏</div>
+    <div style="margin-top:14px">
+      <div class="sk sk-line" style="width:40%"></div>
+      <div class="sk sk-line tall" style="width:65%;margin-top:12px"></div>
+      <div class="sk sk-line" style="width:90%;margin-top:10px"></div>
+      <div class="sk sk-line" style="width:75%;margin-top:8px"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ctitle" style="font-size:18px">② 空态</div>
+    <div class="empty-state">
+      <div class="es-icon"><span class="svgi" data-i="info" data-sz="28px"></span></div>
+      <div class="es-title">昨晚没有开门记录</div>
+      <div class="es-desc">门锁正常在线，只是没人经过</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ctitle" style="font-size:18px">③ 错误态</div>
+    <div class="error-state">
+      <div class="er-icon"><span class="svgi" data-i="warn" data-sz="28px"></span></div>
+      <div class="er-title">连接超时</div>
+      <div class="er-desc">门锁在休眠，唤醒后重试</div>
+      <a class="er-act" href="#">重试</a>
+    </div>
+  </div>
+</div></div>
+<script src="icons-render.js"></script><script src="interact.js"></script></body></html>

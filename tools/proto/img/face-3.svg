@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 100 100">
+  <defs>
+    <filter id="blur4"><feGaussianBlur stdDeviation="9"/></filter>
+    <filter id="blur24"><feGaussianBlur stdDeviation="3"/></filter>
+    <linearGradient id="bg4" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#2E2248"/><stop offset="0.5" stop-color="#181028"/><stop offset="1" stop-color="#07050C"/>
+    </linearGradient>
+    <linearGradient id="gloss4" x1="0" y1="0" x2="0" y2="0.5">
+      <stop offset="0" stop-color="#FFF" stop-opacity=".24"/>
+      <stop offset="1" stop-color="#FFF" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" fill="url(#bg4)"/>
+  <g filter="url(#blur4)"><circle cx="23.3" cy="64.3" r="30.3" fill="#5E5CE6" opacity="0.72"/><circle cx="35.3" cy="53.5" r="33.9" fill="#0090FC" opacity="0.89"/><circle cx="20.9" cy="25.4" r="35.3" fill="#0ADBD8" opacity="0.56"/><circle cx="56.4" cy="25.0" r="35.6" fill="#785AFF" opacity="0.63"/><circle cx="61.4" cy="65.5" r="19.7" fill="#3C60FC" opacity="0.77"/><circle cx="64.5" cy="49.8" r="37.5" fill="#5E5CE6" opacity="0.87"/></g>
+  <g filter="url(#blur24)" opacity=".5"><circle cx="23.3" cy="64.3" r="30.3" fill="#5E5CE6" opacity="0.72"/><circle cx="35.3" cy="53.5" r="33.9" fill="#0090FC" opacity="0.89"/><circle cx="20.9" cy="25.4" r="35.3" fill="#0ADBD8" opacity="0.56"/></g>
+  <rect width="100" height="50" fill="url(#gloss4)"/>
+</svg>

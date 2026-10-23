@@ -1,0 +1,51 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<style>body{margin:0}iframe{width:454px;height:908px;border:0}</style></head><body>
+<iframe id="f" src="61-reminders.html"></iframe>
+<script>
+window.addEventListener('load',function(){setTimeout(function(){
+  var fr=document.getElementById('f'),d=fr.contentDocument,w=fr.contentWindow;
+  var o={};
+  function g(sel,key,prop){
+    var el=d.querySelector(sel); if(!el)return;
+    var cs=w.getComputedStyle(el),r=el.getBoundingClientRect();
+    o[key]={fs:parseFloat(cs.fontSize),x:Math.round(r.left),w:Math.round(r.width)};
+  }
+  g('.page','page'); g('.h1','h1'); g('.sub','sub');
+  g('.card','card'); g('.card .clabel','clabel');
+  g('.card .cvalue','cvalue'); g('.footer','footer');
+  var h1=d.querySelector('.h1');
+  if(h1){
+    // 标题块底部 = max(h1 底, sub 底)。之前取了 h1.parentElement，
+    // 但 h1 的父级就是 .page，等于把整页当标题块 → 量出 610 之类的假数字。
+    var hy=h1.getBoundingClientRect().bottom;
+    var sub=d.querySelector('.sub');
+    if(sub){
+      var sb=sub.getBoundingClientRect().bottom;
+      if(sb>hy) hy=sb;
+    }
+    // 取「在标题下方、且离标题最近」的卡/duo/hero
+    var cands=Array.prototype.slice.call(d.querySelectorAll('.card,.duo,.gallery-hero,.dpanel,.chiprow,.segctl,.segctl2'));
+    var best=null,bestD=1e9;
+    cands.forEach(function(el){
+      var t=el.getBoundingClientRect().top;
+      if(t>hy+1&&t-hy<bestD){bestD=t-hy;best=el;}
+    });
+    if(best)o.titleToCard=Math.round(bestD);
+  }
+  // 只量**真正相邻**的两张卡（中间不能隔着别的块）
+  var pg=d.querySelector('.page');
+  if(pg){
+    var kids=Array.prototype.slice.call(pg.children);
+    for(var i=0;i<kids.length-1;i++){
+      var isA=kids[i].classList&&kids[i].classList.contains('card');
+      var nxt=kids[i+1];
+      var isB=nxt.classList&&nxt.classList.contains('card');
+      if(isA&&isB){
+        o.cardGap=Math.round(nxt.getBoundingClientRect().top-kids[i].getBoundingClientRect().bottom);
+        break;
+      }
+    }
+  }
+  document.title='R|'+JSON.stringify(o);
+},700)});
+</script></body></html>

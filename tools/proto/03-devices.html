@@ -1,0 +1,98 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<title>设备</title><link rel="stylesheet" href="tokens.css"><style>
+.cap{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+.cap .l{display:flex;justify-content:space-between;font-size:13px;color:var(--text-sub)}
+.segbar{display:flex;gap:1px;height:16px;margin-top:7px;border-radius:4px;overflow:hidden}
+.segbar i{flex:1}
+</style></head><body>
+<div class="label">设备</div>
+<div class="phone">
+<div class="statusbar">
+  <span class="sb-time">9:41</span>
+  <span class="sb-right">
+    <svg width="17" height="11" viewBox="0 0 17 11" fill="#FFF"><rect x="0" y="7.5" width="3" height="3.5" rx="1"/><rect x="4.5" y="5.5" width="3" height="5.5" rx="1"/><rect x="9" y="3" width="3" height="8" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+    <svg width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="#FFF" stroke-width="1.6" stroke-linecap="round"><path d="M1 3.4a10.5 10.5 0 0 1 14 0"/><path d="M3.6 6.2a6.6 6.6 0 0 1 8.8 0"/><path d="M6.2 8.9a2.9 2.9 0 0 1 3.6 0"/><circle cx="8" cy="10.2" r=".7" fill="#FFF" stroke="none"/></svg>
+    <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x=".5" y=".5" width="21" height="11" rx="3.2" stroke="#FFF" stroke-opacity=".4"/><rect x="2" y="2" width="15" height="8" rx="2" fill="#FFF"/><path d="M23 4.2v3.6a2 2 0 0 0 0-3.6z" fill="#FFF" fill-opacity=".5"/></svg>
+  </span>
+</div><div class="scroll"><div class="page">
+
+  <div class="chiprow">
+    <div class="chip compact"><span class="svgi" data-i="heart" data-sz="24px"></span></div>
+    <div class="chip"><svg class="ringico" viewBox="0 0 26 26"><circle cx="13" cy="13" r="9" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="4"/><circle cx="13" cy="13" r="9" fill="none" stroke="#0090FC" stroke-width="4" stroke-linecap="round" stroke-dasharray="26.57787384936965 56.548667764616276" transform="rotate(-90 13 13)"/></svg><div><div class="lbl">电量</div><div class="val">47%</div></div></div>
+    <div class="chip">
+      <svg class="ringico" viewBox="0 0 26 26" fill="none" stroke="#E8A05C" stroke-width="1.9" stroke-linecap="round"><path d="M4 15h3l2-6 3 12 2.5-8 2 4h3.5"/></svg>
+      <div><div class="lbl">握手</div><div class="val">1,033 ms</div></div></div>
+    <div class="chip">
+      <svg class="ringico" viewBox="0 0 26 26" fill="none" stroke="#8D8D93" stroke-width="1.8" stroke-linecap="round"><path d="M8 18a5 5 0 0 1 .5-9.9 6 6 0 0 1 11 2A4 4 0 0 1 19 18"/><path d="M13 11v5"/><circle cx="13" cy="19" r="1.2" fill="#8D8D93"/></svg>
+      <div><div class="lbl">信号</div><div class="val">−76 dBm</div></div></div>
+  </div>
+
+  <div style="margin-top:28px">
+    <div class="h1">这台锁</div>
+    <div class="sub">然然家 · 固件 1.0.2 · 已连接</div>
+  </div>
+
+  <div class="sp74"></div>
+  <div style="display:flex;justify-content:center;margin:8px 0 -8px">
+    <img src="img/lock-45.png" alt="" style="width:132px;height:auto;
+      filter:drop-shadow(0 14px 26px rgba(0,0,0,.6))">
+  </div>
+  <div class="card">
+    <div class="cardlink">锁内容量<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;gap:16px;margin-top:6px">
+      <div style="flex:1">
+        <div class="ctitle">充足</div>
+        <div class="clabel" style="margin-top:10px">电量</div>
+        <div class="cvalue">47%</div>
+      </div>
+      <svg width="101" height="101" viewBox="0 0 101 101"><circle cx="50.5" cy="50.5" r="42.92" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="11.82"/><circle cx="50.5" cy="50.5" r="42.92" fill="none" stroke="#0090FC" stroke-width="11.82" stroke-linecap="round" stroke-dasharray="113.28 269.71" transform="rotate(-84 50.5 50.5)"/><circle cx="50.5" cy="50.5" r="26.77" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="10.91"/><circle cx="50.5" cy="50.5" r="26.77" fill="none" stroke="#0090FC" stroke-width="10.91" stroke-linecap="round" stroke-dasharray="114.36 168.17" transform="rotate(-84 50.5 50.5)"/><circle cx="50.5" cy="50.5" r="10.60" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="10.10"/><circle cx="50.5" cy="50.5" r="10.60" fill="none" stroke="#0090FC" stroke-width="10.10" stroke-linecap="round" stroke-dasharray="31.32 66.63" transform="rotate(-84 50.5 50.5)"/><circle cx="50.5" cy="7.6" r="5" fill="#000"/><text x="50.5" y="9.4" text-anchor="middle" font-size="7" fill="#FFF" font-family="system-ui">→</text></svg>
+    </div>
+    <div class="sep"></div>
+    <div class="cap">
+      <div class="l"><span>密码</span><span style="color:#FFF;font-weight:600">63 / 64</span></div>
+      <div class="segbar"><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:rgba(255,255,255,.08)"></i></div>
+      <div style="font-size:12px;color:#0090FC">还可录 1 条</div>
+      <div class="l" style="margin-top:8px"><span>指纹</span><span style="color:#FFF;font-weight:600">38 / 50</span></div>
+      <div class="segbar"><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:#0090FC"></i><i style="background:rgba(255,255,255,.08)"></i><i style="background:rgba(255,255,255,.08)"></i><i style="background:rgba(255,255,255,.08)"></i><i style="background:rgba(255,255,255,.08)"></i><i style="background:rgba(255,255,255,.08)"></i><i style="background:rgba(255,255,255,.08)"></i><i style="background:rgba(255,255,255,.08)"></i><i style="background:rgba(255,255,255,.08)"></i><i style="background:rgba(255,255,255,.08)"></i><i style="background:rgba(255,255,255,.08)"></i><i style="background:rgba(255,255,255,.08)"></i><i style="background:rgba(255,255,255,.08)"></i></div>
+      <div style="font-size:12px;color:var(--text-tert)">还可录 12 枚</div>
+    </div>
+    <div class="footer">电量低于 20% 时门厅会提醒换电池。指纹与密码余量由锁端回报。</div>
+  </div>
+
+  <div style="display:flex;gap:12px">
+    <div class="card" style="flex:1;margin-bottom:0;padding:16px">
+      <div style="font-size:23px;font-weight:700;font-variant-numeric:tabular-nums">1,033</div>
+      <div style="font-size:12px;color:var(--text-sub);margin-top:5px">握手 ms</div></div>
+  <div class="card" style="margin-top:74px;flex:1;margin-bottom:0;padding:16px">
+      <div style="font-size:23px;font-weight:700;font-variant-numeric:tabular-nums">−76</div>
+      <div style="font-size:12px;color:var(--text-sub);margin-top:5px">信号 dBm</div></div>
+    <div class="card" style="flex:1;margin-bottom:0;padding:16px">
+      <div style="font-size:23px;font-weight:700;font-variant-numeric:tabular-nums">1.0.2</div>
+      <div style="font-size:12px;color:var(--text-sub);margin-top:5px">固件</div></div>
+  </div>
+  <div class="card">
+    <div class="cardlink">明细<span class="ch">⌄</span></div>
+    <div style="display:flex;flex-direction:column;gap:13px;margin-top:6px">
+      <div style="display:flex;justify-content:space-between;font-size:14px">
+          <span style="color:var(--text-sub)">锁 ID</span>
+          <span style="font-variant-numeric:tabular-nums">93c5cc95</span></div><div style="display:flex;justify-content:space-between;font-size:14px">
+          <span style="color:var(--text-sub)">配对时间</span>
+          <span style="font-variant-numeric:tabular-nums">2026-10-18T10:05</span></div><div style="display:flex;justify-content:space-between;font-size:14px">
+          <span style="color:var(--text-sub)">固件版本</span>
+          <span style="font-variant-numeric:tabular-nums">1.0.2</span></div><div style="display:flex;justify-content:space-between;font-size:14px">
+          <span style="color:var(--text-sub)">安全等级</span>
+          <span style="font-variant-numeric:tabular-nums">6</span></div><div style="display:flex;justify-content:space-between;font-size:14px">
+          <span style="color:var(--text-sub)">广播模式</span>
+          <span style="font-variant-numeric:tabular-nums">1</span></div>
+    </div>
+  </div>
+
+</div></div><div class="tabbar">
+  <a class="tab" href="01-home.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg><span>门厅</span></a>
+  <a class="tab" href="02-keys.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="12" r="3.5"/><path d="M11 12h9"/><path d="M17 12v3"/><path d="M20 12v2"/></svg><span>钥匙</span></a>
+  <a class="tab on" href="03-devices.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10.5 5.5h3"/></svg><span>设备</span></a>
+  <a class="tab" href="04-members.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><circle cx="17" cy="9.5" r="2.4"/><path d="M16 14.2c2.4.2 4.5 1.9 4.5 4.3"/></svg><span>成员</span></a>
+  <a class="tab" href="05-system.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.65 8.6a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.56 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg><span>系统</span></a>
+</div></div><script src="icons-render.js"></script>
+<script src="interact.js"></script>
+</body></html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<title>导出与分享</title><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="pages.css"></head><body>
+<div class="phone">
+<div class="statusbar">
+  <span class="sb-time" data-real-time>9:41</span>
+  <span class="sb-right">
+    <svg width="17" height="11" viewBox="0 0 17 11" fill="#FFF"><rect x="0" y="7.5" width="3" height="3.5" rx="1"/><rect x="4.5" y="5.5" width="3" height="5.5" rx="1"/><rect x="9" y="3" width="3" height="8" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+    <svg width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="#FFF" stroke-width="1.6" stroke-linecap="round"><path d="M1 3.4a10.5 10.5 0 0 1 14 0"/><path d="M3.6 6.2a6.6 6.6 0 0 1 8.8 0"/><path d="M6.2 8.9a2.9 2.9 0 0 1 3.6 0"/><circle cx="8" cy="10.2" r=".7" fill="#FFF" stroke="none"/></svg>
+    <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x=".5" y=".5" width="21" height="11" rx="3.2" stroke="#FFF" stroke-opacity=".4"/><rect x="2" y="2" width="15" height="8" rx="2" fill="#FFF"/><path d="M23 4.2v3.6a2 2 0 0 0 0-3.6z" fill="#FFF" fill-opacity=".5"/></svg>
+  </span>
+</div><div class="navbar">
+  <a class="back" href="05-system.html">‹</a><span class="nt">导出与分享</span><span class="nr"></span></div><div class="scroll"><div class="page hasnav">
+
+  <div class="h1" style="margin-top:8px">导出与分享</div>
+  <div class="sub">生成过程纯本地，不经过任何网络</div>
+
+  <div class="sp74"></div>
+
+  <!-- scopeCard：范围 -->
+  <!--VIZ-->
+  <div class="card" style="margin-top:12px"><div class="cardlink">历史导出<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div class="mchart" style="height:40px"><i style="height:40%"></i><i style="height:20%"></i><i style="height:60%"></i><i style="height:3%"></i><i style="height:40%"></i><i class="hi" style="height:80%"></i><i style="height:20%"></i><i style="height:40%"></i><i class="hi" style="height:100%"></i><i style="height:60%"></i><i style="height:20%"></i><i style="height:40%"></i><i class="hi" style="height:80%"></i><i style="height:40%"></i></div><div class="maxis"><span>9月</span><span>10月</span><span>12PM</span><span>现在</span></div></div>
+  <div class="card" style="margin-top:24px">
+    <div class="cardlink">范围<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div class="segctl2" style="margin-top:12px">
+      <div class="o on">当月</div><div class="o">全部</div><div class="o">仅告警</div><div class="o">单日</div>
+    </div>
+    <div class="sep"></div>
+    <div style="display:flex;justify-content:space-between">
+      <span style="font-size:14px;color:#8D8D93">导出哪一天</span>
+      <span style="font-size:14px;color:#E8A05C">最新一天 ›</span>
+    </div>
+    <div class="sep"></div>
+    <div style="font-size:12px;color:#8D8D93;line-height:1.6">
+      最新一天可直接用。导出与分享会让文件离开本机。
+    </div>
+  </div>
+
+  <!-- fileActionsCard：文件类导出 -->
+  <div class="card" style="padding:6px 0">
+    <div class="cardlink" style="padding:8px 20px 8px">文件<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div class="rw" style="cursor:default">
+      <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="chart"></span></div>
+      <div class="tx"><div class="tt">CSV 标准导出</div><div class="sb">表格软件可直接打开</div></div>
+    </div>
+    <div class="sep"></div>
+    <div class="rw" style="cursor:default">
+      <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="doc"></span></div>
+      <div class="tx"><div class="tt">原始 JSON + hex</div><div class="sb">含锁端原始报文，供开发核对</div></div>
+    </div>
+    <div class="sep"></div>
+    <div class="rw" style="cursor:default">
+      <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="doc"></span></div>
+      <div class="tx"><div class="tt">月度 PDF 报告</div><div class="sb">打印月度记录</div></div>
+    </div>
+    <div class="sep"></div>
+    <div class="rw" style="cursor:default">
+      <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="list"></span></div>
+      <div class="tx"><div class="tt">列选择</div><div class="sb">时间 / 类型 / 成员 / 告警 / 钥匙 / 原始 hex</div></div>
+    </div>
+    <div class="sep"></div>
+    <div class="rw" style="cursor:default">
+      <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="eye"></span></div>
+      <div class="tx"><div class="tt">脱敏导出</div><div class="sb">关时 JSON 含原始 hex；开时 hex 列留空</div></div>
+      <span class="sw"></span>
+    </div>
+  </div>
+
+  <!-- imageActionsCard：图片类 -->
+  <div class="card" style="padding:6px 0">
+    <div class="cardlink" style="padding:8px 20px 8px">图片<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div class="rw" style="cursor:default">
+      <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="chart"></span></div>
+      <div class="tx"><div class="tt">单日长图</div><div class="sb">一天的全部记录拼成长图</div></div>
+    </div>
+    <div class="sep"></div>
+    <div class="rw" style="cursor:default">
+      <div class="ic" style="background:transparent;color:#0090FC"><span class="svgi" data-i="warn"></span></div>
+      <div class="tx"><div class="tt">告警分享卡</div><div class="sb">9:16 卡片，只含这一条告警</div></div>
+    </div>
+  </div>
+
+  <!-- printActionsCard：打印 -->
+  <div class="card" style="padding:6px 0">
+    <div class="cardlink" style="padding:8px 20px 8px">打印<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div class="rw" style="cursor:default">
+      <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="doc"></span></div>
+      <div class="tx"><div class="tt">告警事实单页</div><div class="sb">与物业沟通用的 PDF</div></div>
+    </div>
+    <div class="sep"></div>
+    <div class="rw" style="cursor:default">
+      <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="export"></span></div>
+      <div class="tx"><div class="tt">用系统邮件发送</div><div class="sb">附件与 CSV 同源</div></div>
+    </div>
+    <div class="sep"></div>
+    <div class="rw" style="cursor:default">
+      <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="export"></span></div>
+      <div class="tx"><div class="tt">邮件模板 .eml</div><div class="sb">复制到邮件客户端</div></div>
+    </div>
+  </div>
+
+  <!-- doneSection：完成态 -->
+  <div class="card">
+    <div class="cardlink">文件位置<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;justify-content:space-between;margin-top:10px">
+      <span style="font-size:14px;color:#8D8D93">最近导出</span>
+      <span style="font-size:14px;color:#6A6A6E">还没有导出过</span>
+    </div>
+    <div class="footer">处理中… 完成后会显示在这里。</div>
+  </div>
+
+  <!-- verifySection：报告校验二维码 -->
+  <div class="card">
+    <div class="cardlink">报告校验二维码<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;align-items:center;gap:16px;margin-top:12px">
+      <div style="width:84px;height:84px;background:#1C1C1E;border-radius:12px;
+        display:flex;align-items:center;justify-content:center;flex:0 0 auto">
+        <span style="color:#6A6A6E;width:40px;height:40px"><span class="svgi" data-i="qrcode" data-sz="40px"></span></span>
+      </div>
+      <div style="flex:1;font-size:12px;color:#8D8D93;line-height:1.6">
+        导出的报告带一枚校验二维码。<br>扫它可核对报告是否被改动。
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <input class="inp" placeholder="加密口令（至少 6 位）" type="password">
+    <button class="btn ghost" style="margin-top:12px">加密压缩导出</button>
+  </div>
+
+</div></div><div class="tabbar">
+<a class="tab" href="01-home.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg><span>门厅</span></a>
+<a class="tab" href="02-keys.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="12" r="3.5"/><path d="M11 12h9"/><path d="M17 12v3"/><path d="M20 12v2"/></svg><span>钥匙</span></a>
+<a class="tab" href="03-devices.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10.5 5.5h3"/></svg><span>设备</span></a>
+<a class="tab" href="04-members.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><circle cx="17" cy="9.5" r="2.4"/><path d="M16 14.2c2.4.2 4.5 1.9 4.5 4.3"/></svg><span>成员</span></a>
+<a class="tab on" href="05-system.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.65 8.6a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.56 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg><span>系统</span></a>
+</div></div><script src="icons-render.js"></script><script src="interact.js"></script></body></html>

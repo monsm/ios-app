@@ -1,0 +1,52 @@
+{
+ "顶层 Tab (5)": [
+  "门厅",
+  "钥匙",
+  "设备",
+  "成员",
+  "系统"
+ ],
+ "二级 · 钥匙域 (4)": [
+  "钥匙管理 KeysPage",
+  "指纹 FpStudio",
+  "临时密码 TempCodeStudio",
+  "密码详情 AddKeyPage"
+ ],
+ "二级 · 设备域 (6)": [
+  "我的门锁 LocksPage",
+  "锁档案 LockProfilePage",
+  "固件升级 FirmwarePage",
+  "网关配网 GatewayPage",
+  "钥匙串 DonglesPage",
+  "校准时间 SyncTimeView"
+ ],
+ "二级 · 成员域 (5)": [
+  "成员列表 MembersPage",
+  "添加成员 MemberWizardView",
+  "成员详情 MemberDetail360View",
+  "已归档 MemberArchivedView",
+  "合并 MergeMembersView"
+ ],
+ "二级 · 系统域 (10)": [
+  "隐私看板 SecurityPage",
+  "应用锁 AppLockSetupView",
+  "防窥与遮蔽 SecurityPeekView",
+  "隐私仪表盘 PrivacyDashboard",
+  "安全审计 SecurityAuditView",
+  "销毁数据 SecurityDestroyView",
+  "安全模式 SafemodeIntroView",
+  "备份恢复 BackupPage",
+  "导出中心 ExportCenterView",
+  "外观工作室 AppearancePage",
+  "本机设置 MePage"
+ ],
+ "事件与统计 (3)": [
+  "事件记录 EventsPage",
+  "动态 FeedPage",
+  "统计 StatsPage"
+ ],
+ "维护 (2)": [
+  "维护与保养 CarePage",
+  "关怀提醒 CareRemindersView"
+ ]
+}

@@ -1,0 +1,21 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<style>body{margin:0;font-family:monospace}#o{position:fixed;inset:0 0 auto 0;z-index:99;
+font:11px/1.6 monospace;white-space:pre;padding:8px;background:#fff;color:#000}
+iframe{position:absolute;top:150px;left:0;width:454px;height:900px;border:0}</style></head><body>
+<pre id="o">…</pre><iframe id="f" src="44-audit.html"></iframe>
+<script>
+window.addEventListener('load',()=>setTimeout(()=>{
+  const fr=document.getElementById('f'),d=fr.contentDocument,w=fr.contentWindow;
+  const body=d.querySelector('.themed-body'),tb=d.querySelector('.tabbar');
+  body.scrollTop = body.scrollHeight;
+  setTimeout(()=>{
+    const last=body.lastElementChild;
+    const lr=last.getBoundingClientRect(), tr=tb.getBoundingClientRect();
+    const rows=['内容板可视高: '+body.clientHeight,
+      '滚动后最后元素底: '+Math.round(lr.bottom),
+      'tabbar 顶: '+Math.round(tr.top),
+      lr.bottom<=tr.top?'✓ 不遮挡':'✗ 遮挡 '+(lr.bottom-tr.top)+'px'];
+    document.getElementById('o').textContent=rows.join('\n');
+  },200);
+},900));
+</script></body></html>

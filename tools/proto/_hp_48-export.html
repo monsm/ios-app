@@ -1,0 +1,15 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<style>body{margin:0}iframe{width:454px;height:900px;border:0;position:absolute;left:0;top:0}</style>
+</head><body><iframe id="f" src="48-export.html"></iframe>
+<script>
+window.addEventListener('load',()=>setTimeout(()=>{
+  const fr=document.getElementById('f'), d=fr.contentDocument;
+  const sc=d.querySelector('.scroll'), pg=d.querySelector('.page');
+  if(!pg){document.body.innerHTML='<div style="font:bold 48px monospace">0 0</div>';return;}
+  const h = Math.round(pg.getBoundingClientRect().height);
+  const vis = sc ? Math.round(sc.clientHeight) : 0;
+  document.body.innerHTML = '<div style="position:fixed;inset:0;background:#fff;color:#000;' +
+    'font:bold 56px monospace;display:flex;align-items:center;justify-content:center;z-index:99">' +
+    h + ' ' + vis + '</div>';
+},600));
+</script></body></html>

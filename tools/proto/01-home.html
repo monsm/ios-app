@@ -1,0 +1,157 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<title>门厅</title><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="pages.css"></head><body>
+<div class="phone">
+<div class="statusbar">
+  <span class="sb-time" data-real-time>9:41</span>
+  <span class="sb-right">
+    <svg width="17" height="11" viewBox="0 0 17 11" fill="#FFF"><rect x="0" y="7.5" width="3" height="3.5" rx="1"/><rect x="4.5" y="5.5" width="3" height="5.5" rx="1"/><rect x="9" y="3" width="3" height="8" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+    <svg width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="#FFF" stroke-width="1.6" stroke-linecap="round"><path d="M1 3.4a10.5 10.5 0 0 1 14 0"/><path d="M3.6 6.2a6.6 6.6 0 0 1 8.8 0"/><path d="M6.2 8.9a2.9 2.9 0 0 1 3.6 0"/><circle cx="8" cy="10.2" r=".7" fill="#FFF" stroke="none"/></svg>
+    <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x=".5" y=".5" width="21" height="11" rx="3.2" stroke="#FFF" stroke-opacity=".4"/><rect x="2" y="2" width="15" height="8" rx="2" fill="#FFF"/><path d="M23 4.2v3.6a2 2 0 0 0 0-3.6z" fill="#FFF" fill-opacity=".5"/></svg>
+  </span>
+</div><div class="scroll"><div class="page">
+
+  <!-- 胶囊行：图 1 只有 **2 枚并排**（Overview / Health Age）—— 不是 4-5 枚滚动 -->
+  <div class="chiprow">
+    <a class="chip" href="50-events.html" style="flex:1">
+      <svg width="30" height="30" viewBox="0 0 30 30">
+    <circle cx="15" cy="15" r="10.799999999999999" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="4.5"/><circle cx="15" cy="15" r="10.799999999999999" fill="none" stroke="#F11B51" stroke-width="4.5"
+        stroke-linecap="round" stroke-dasharray="19.00035236891107 67.85840131753953"
+        transform="rotate(-90 15 15)"/><circle cx="15" cy="15" r="10.799999999999999" fill="none" stroke="#0090FC" stroke-width="4.5"
+        stroke-linecap="round" stroke-dasharray="16.286016316209487 67.85840131753953"
+        transform="rotate(25.200000000000003 15 15)"/><circle cx="15" cy="15" r="10.799999999999999" fill="none" stroke="#0090FC" stroke-width="4.5"
+        stroke-linecap="round" stroke-dasharray="14.928848289858697 67.85840131753953"
+        transform="rotate(126 15 15)"/><circle cx="15" cy="15" r="10.799999999999999" fill="none" stroke="#0090FC" stroke-width="4.5"
+        stroke-linecap="round" stroke-dasharray="17.64318434256028 67.85840131753953"
+        transform="rotate(219.60000000000002 15 15)"/></svg>
+      <div><div class="lbl">Overview</div><div class="val">1 良好</div></div>
+    </a>
+    <a class="chip" href="52-stats.html" style="flex:1">
+      <svg width="30" height="30" viewBox="0 0 30 30">
+    <circle cx="15" cy="15" r="10.799999999999999" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="4.5"/><circle cx="15" cy="15" r="10.799999999999999" fill="none" stroke="#0090FC" stroke-width="4.5"
+        stroke-linecap="round" stroke-dasharray="42.07220881687451 67.85840131753953"
+        transform="rotate(-90 15 15)"/></svg>
+      <div><div class="lbl">今日开门</div><div class="val">0 次</div></div>
+    </a>
+  </div>
+
+  <div style="margin-top:24px"><div style="position:relative;width:300px;height:300px;margin:0 auto">
+  <svg width="300" height="300" viewBox="0 0 300 300">
+    <defs>
+      <linearGradient id="hrg" x1="0" y1="1" x2="1" y2="0">
+        <stop offset="0" stop-color="#00C6FF"/><stop offset="1" stop-color="#0090FC"/>
+      </linearGradient>
+      <linearGradient id="htg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#243050"/><stop offset=".5" stop-color="#182034"/><stop offset="1" stop-color="#10141F"/>
+      </linearGradient>
+    </defs>
+    <circle cx="150" cy="150" r="120" fill="none" stroke="url(#htg)" stroke-width="34"
+      stroke-linecap="round" stroke-dasharray="628.3 754.0"
+      transform="rotate(120 150 150)"/>
+    <circle cx="150" cy="150" r="120" fill="none" stroke="url(#hrg)" stroke-width="34"
+      stroke-linecap="round" stroke-dasharray="125.7 754.0"
+      transform="rotate(120 150 150)"/>
+    <rect x="146" y="14" width="8" height="21" rx="4" fill="#4A4A7A"/>
+    <circle cx="30.0" cy="150.0" r="10" fill="#00C6FF"/>
+  </svg>
+  <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+    <div style="font-size:56px;font-weight:700;letter-spacing:-1.5px;line-height:1;color:#0090FC;
+      font-variant-numeric:tabular-nums">0</div>
+    <div style="font-size:11px;color:#8D8D93;letter-spacing:2.6px;margin-top:10px">次 · 今日</div>
+  </div>
+  <div style="position:absolute;right:6px;top:26px;width:26px;height:26px;border-radius:50%;
+    background:rgba(255,255,255,.10);display:flex;align-items:center;justify-content:center;
+    color:#8D8D93"><span class="svgi" data-i="info" data-sz="13px"></span></div>
+</div></div>
+
+  <!-- 标题块：图 1 是**两行**大标题 + **四行**正文 -->
+  <div style="margin-top:24px">
+    <div class="h1" style="font-size:30px;line-height:1.18;letter-spacing:-.5px">今天还没有开门<br>靠近门锁就能开</div>
+    <div class="sub" style="font-size:16px;line-height:1.42;margin-top:10px;color:#98989E">
+      这个家的记录都在这台手机上。靠近门锁，<br>或者在下方按住圆盘，两种方式都能开门。<br>
+      每次开门都会留一条记录，谁、什么时候、<br>用什么方式。
+    </div>
+  </div>
+
+  <div class="sp74"></div>
+
+  <!-- 两列读数：图 1 只有**一组**两列（Health Age / Actual Age）-->
+  <div class="cols" style="margin-top:20px;padding:0 8px">
+    <div><div class="clabel" style="margin-top:0;font-size:12px">今日开门</div>
+      <div class="cvalue" style="font-size:19px;font-weight:700;margin-top:6px">0 次</div></div>
+    <div><div class="clabel" style="margin-top:0;font-size:12px">最活跃成员</div>
+      <div class="cvalue" style="font-size:19px;font-weight:700;margin-top:6px">爱妃</div></div>
+  </div>
+
+  <!-- 本周卡：图 2 的卡解剖 -->
+  <div class="card" style="margin-top:24px">
+    <div class="cardlink">本周<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;align-items:center;gap:18px;margin-top:2px">
+      <div style="flex:1">
+        <div class="ctitle">三环都在线</div>
+        <div style="margin-top:14px">
+          <div class="drow"><span class="dot" style="background:#F11B51"></span>
+              <span class="dv">12/30<span class="du"> 开门</span></span></div><div class="drow"><span class="dot" style="background:#0090FC"></span>
+              <span class="dv">5/5<span class="du"> 成员</span></span></div><div class="drow"><span class="dot" style="background:#0090FC"></span>
+              <span class="dv">47%<span class="du"> 电量</span></span></div>
+        </div>
+      </div>
+      <svg style="border-radius:50%" width="96" height="96" viewBox="0 0 100 100">
+  <defs>
+    <filter id="fb7"><feGaussianBlur stdDeviation="7"/></filter>
+    <filter id="fb27"><feGaussianBlur stdDeviation="3"/></filter>
+    <radialGradient id="hi7" cx="0.3" cy="0.2">
+      <stop offset="0" stop-color="#FFF" stop-opacity=".28"/>
+      <stop offset="1" stop-color="#FFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bg7" x1="0" y1="0" x2="0.7" y2="1">
+      <stop offset="0" stop-color="#2A2233"/><stop offset="1" stop-color="#0D0B12"/>
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" fill="url(#bg7)"/>
+  <g filter="url(#fb7)"><circle cx="37.2" cy="52.7" r="37.7" fill="#0090FC" opacity="0.76"/><circle cx="73.7" cy="76.6" r="17.6" fill="#0090FC" opacity="0.63"/><circle cx="30.4" cy="81.5" r="17.3" fill="#0090FC" opacity="0.56"/><circle cx="22.6" cy="61.1" r="36.3" fill="#0090FC" opacity="0.85"/></g>
+  <g filter="url(#fb27)" opacity=".55"><circle cx="37.2" cy="52.7" r="37.7" fill="#0090FC" opacity="0.76"/><circle cx="73.7" cy="76.6" r="17.6" fill="#0090FC" opacity="0.63"/></g>
+  <rect width="100" height="100" fill="url(#hi7)"/>
+</svg>
+    </div>
+    <div class="sep"></div>
+    <div class="cols">
+      <div><div class="clabel" style="margin-top:0">握手</div>
+        <div class="cvalue">1,033 ms</div></div>
+      <div><div class="clabel" style="margin-top:0">信号</div>
+        <div class="cvalue">−76 dBm</div></div>
+    </div>
+  </div>
+
+  <!-- 趋势卡：图 1 的 Health Age History -->
+  <div class="card">
+    <div class="ctitle" style="font-size:18px">今日开门分布</div>
+    <div style="position:relative;height:96px;margin-top:14px">
+      <div class="dash"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <svg width="100%" height="96" viewBox="0 0 320 96" preserveAspectRatio="none" style="position:absolute;inset:0">
+        <defs><linearGradient id="ar" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#00C6FF" stop-opacity=".42"/>
+          <stop offset="1" stop-color="#0090FC" stop-opacity="0"/></linearGradient></defs>
+        <path d="M0,90 L40,86 L80,68 L120,32 L160,54 L200,76 L240,84 L280,88 L320,90 L320,96 L0,96 Z" fill="url(#ar)"/>
+        <path d="M0,90 L40,86 L80,68 L120,32 L160,54 L200,76 L240,84 L280,88 L320,90"
+          fill="none" stroke="#00C6FF" stroke-width="2"/>
+        <line x1="0" y1="36" x2="320" y2="36" stroke="rgba(255,255,255,.22)" stroke-width="1" stroke-dasharray="3 4"/>
+      </svg>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:#6A6A6E;margin-top:10px">
+      <span>0</span><span>6</span><span>12</span><span>18</span><span>24</span>
+    </div>
+    <div class="sep"></div>
+    <div class="cols">
+      <div><div class="clabel" style="margin-top:0">最早一次</div><div class="cvalue">—</div></div>
+      <div><div class="clabel" style="margin-top:0">最后一次</div><div class="cvalue">昨天 21:40</div></div>
+    </div>
+    <div class="footer">今天 0 次开门，其中 0 位成员参与。柱高是该小时的开门次数。</div>
+  </div>
+
+</div></div><div class="tabbar">
+<a class="tab on" href="01-home.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg><span>门厅</span></a>
+<a class="tab" href="02-keys.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="12" r="3.5"/><path d="M11 12h9"/><path d="M17 12v3"/><path d="M20 12v2"/></svg><span>钥匙</span></a>
+<a class="tab" href="03-devices.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10.5 5.5h3"/></svg><span>设备</span></a>
+<a class="tab" href="04-members.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><circle cx="17" cy="9.5" r="2.4"/><path d="M16 14.2c2.4.2 4.5 1.9 4.5 4.3"/></svg><span>成员</span></a>
+<a class="tab" href="05-system.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.65 8.6a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.56 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg><span>系统</span></a>
+</div></div><script src="icons-render.js"></script><script src="interact.js"></script></body></html>

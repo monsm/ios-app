@@ -1,0 +1,90 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<title>临时码</title><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="pages.css"></head><body>
+<div class="phone">
+<div class="statusbar">
+  <span class="sb-time" data-real-time>9:41</span>
+  <span class="sb-right">
+    <svg width="17" height="11" viewBox="0 0 17 11" fill="#FFF"><rect x="0" y="7.5" width="3" height="3.5" rx="1"/><rect x="4.5" y="5.5" width="3" height="5.5" rx="1"/><rect x="9" y="3" width="3" height="8" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+    <svg width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="#FFF" stroke-width="1.6" stroke-linecap="round"><path d="M1 3.4a10.5 10.5 0 0 1 14 0"/><path d="M3.6 6.2a6.6 6.6 0 0 1 8.8 0"/><path d="M6.2 8.9a2.9 2.9 0 0 1 3.6 0"/><circle cx="8" cy="10.2" r=".7" fill="#FFF" stroke="none"/></svg>
+    <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x=".5" y=".5" width="21" height="11" rx="3.2" stroke="#FFF" stroke-opacity=".4"/><rect x="2" y="2" width="15" height="8" rx="2" fill="#FFF"/><path d="M23 4.2v3.6a2 2 0 0 0 0-3.6z" fill="#FFF" fill-opacity=".5"/></svg>
+  </span>
+</div><div class="navbar">
+  <a class="back" href="02-keys.html">‹</a><span class="nt">临时码</span><span class="nr"></span></div><div class="scroll"><div class="page hasnav">
+
+  <div class="h1" style="margin-top:8px">临时码</div>
+  <div class="sub">6~8 位数字 · 会占用密码库存</div>
+
+  <div class="sp74"></div>
+
+  <!-- 场景预设（源码：场景预设 (选中即套默认时长与备注)）-->
+  <div class="card" style="margin-top:24px">
+    <div class="cardlink">场景预设<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="font-size:12px;color:#8D8D93;margin-top:6px">选中即套默认时长与备注</div>
+    <div class="duo" style="margin-top:14px;margin-bottom:0">
+      <div class="duo-card">
+          <div class="dm"><div style="width:52px;height:52px;border-radius:50%;
+            background:transparent;border:1px solid #6A6A6E;display:flex;align-items:center;justify-content:center;
+            color:#8D8D93"><span class="svgi" data-i="timer" data-sz="24px"></span></div></div>
+          <div class="dt" style="text-align:center;font-size:15px">快递员</div>
+          <div class="dd" style="text-align:center">10 分钟</div>
+        </div><div class="duo-card">
+          <div class="dm"><div style="width:52px;height:52px;border-radius:50%;
+            background:transparent;border:1px solid #6A6A6E;display:flex;align-items:center;justify-content:center;
+            color:#8D8D93"><span class="svgi" data-i="timer" data-sz="24px"></span></div></div>
+          <div class="dt" style="text-align:center;font-size:15px">保洁</div>
+          <div class="dd" style="text-align:center">2 小时</div>
+        </div><div class="duo-card">
+          <div class="dm"><div style="width:52px;height:52px;border-radius:50%;
+            background:transparent;border:1px solid #6A6A6E;display:flex;align-items:center;justify-content:center;
+            color:#8D8D93"><span class="svgi" data-i="timer" data-sz="24px"></span></div></div>
+          <div class="dt" style="text-align:center;font-size:15px">访客</div>
+          <div class="dd" style="text-align:center">半天</div>
+        </div><div class="duo-card">
+          <div class="dm"><div style="width:52px;height:52px;border-radius:50%;
+            background:transparent;border:1px solid #6A6A6E;display:flex;align-items:center;justify-content:center;
+            color:#8D8D93"><span class="svgi" data-i="timer" data-sz="24px"></span></div></div>
+          <div class="dt" style="text-align:center;font-size:15px">维修</div>
+          <div class="dd" style="text-align:center">1 天</div>
+        </div>
+    </div>
+  </div>
+
+  <!-- 码值（源码：码值 (6~8 位数字) / 输入码值, 或点「生成」/ 本地生成 6 位随机码）-->
+  <div class="card">
+    <div class="cardlink">码值<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="text-align:center;padding:18px 0 6px">
+      <div style="font-size:44px;font-weight:700;letter-spacing:10px;line-height:1;
+        font-variant-numeric:tabular-nums;color:#FF694E">••••••</div>
+      <div style="font-size:12px;color:#8D8D93;margin-top:14px">输入码值，或点「生成」</div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:6px">
+      <button class="btn sec" style="flex:1">扫一扫</button>
+      <button class="btn" style="flex:1;background:#FF694E;color:#1A0805">本地生成</button>
+    </div>
+    <div class="footer">输入 6~8 位数字。生成时会检查其它锁上是否有同值。</div>
+  </div>
+
+  <!-- 生效时段（源码：生效时段 / 今天内 / 生效）-->
+  <div class="card">
+    <div class="cardlink">生效时段<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div class="segctl2" style="margin-top:12px">
+      <div class="o on">今天内</div><div class="o">2 小时</div><div class="o">自定义</div>
+    </div>
+    <div class="sep"></div>
+    <div class="cols">
+      <div><div class="clabel" style="margin-top:0">开始</div><div class="cvalue">现在</div></div>
+      <div><div class="clabel" style="margin-top:0">结束</div><div class="cvalue">今天 23:59</div></div>
+    </div>
+    <div class="footer">临时码也占同一个密码池子。库存满了要先删一条。</div>
+  </div>
+
+  <button class="btn" style="margin-top:4px;background:#FF694E;color:#1A0805">一次生成</button>
+  <button class="btn ghost" style="margin-top:10px">批量生成</button>
+
+</div></div><div class="tabbar">
+<a class="tab" href="01-home.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg><span>门厅</span></a>
+<a class="tab on" href="02-keys.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="12" r="3.5"/><path d="M11 12h9"/><path d="M17 12v3"/><path d="M20 12v2"/></svg><span>钥匙</span></a>
+<a class="tab" href="03-devices.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10.5 5.5h3"/></svg><span>设备</span></a>
+<a class="tab" href="04-members.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><circle cx="17" cy="9.5" r="2.4"/><path d="M16 14.2c2.4.2 4.5 1.9 4.5 4.3"/></svg><span>成员</span></a>
+<a class="tab" href="05-system.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.65 8.6a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.56 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg><span>系统</span></a>
+</div></div><script src="icons-render.js"></script><script src="interact.js"></script></body></html>

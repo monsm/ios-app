@@ -1,0 +1,87 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<title>OTP 与口令</title><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="pages.css"></head><body>
+<div class="phone">
+<div class="statusbar">
+  <span class="sb-time" data-real-time>9:41</span>
+  <span class="sb-right">
+    <svg width="17" height="11" viewBox="0 0 17 11" fill="#FFF"><rect x="0" y="7.5" width="3" height="3.5" rx="1"/><rect x="4.5" y="5.5" width="3" height="5.5" rx="1"/><rect x="9" y="3" width="3" height="8" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+    <svg width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="#FFF" stroke-width="1.6" stroke-linecap="round"><path d="M1 3.4a10.5 10.5 0 0 1 14 0"/><path d="M3.6 6.2a6.6 6.6 0 0 1 8.8 0"/><path d="M6.2 8.9a2.9 2.9 0 0 1 3.6 0"/><circle cx="8" cy="10.2" r=".7" fill="#FFF" stroke="none"/></svg>
+    <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x=".5" y=".5" width="21" height="11" rx="3.2" stroke="#FFF" stroke-opacity=".4"/><rect x="2" y="2" width="15" height="8" rx="2" fill="#FFF"/><path d="M23 4.2v3.6a2 2 0 0 0 0-3.6z" fill="#FFF" fill-opacity=".5"/></svg>
+  </span>
+</div><div class="navbar">
+  <a class="back" href="02-keys.html">‹</a><span class="nt">OTP 与口令</span><span class="nr"></span></div><div class="scroll"><div class="page hasnav">
+
+  <div class="h1" style="margin-top:8px">OTP 与口令</div>
+  <div class="sub">锁端 ZOTP · 独立 TOTP · 静态备份码</div>
+
+  <div class="sp74"></div>
+
+  <!-- 用于哪把锁 -->
+  <div class="card" style="margin-top:24px">
+    <div class="cardlink">用于哪把锁<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
+      <img src="img/lock-45-128.png" alt="" style="width:40px;height:40px;object-fit:contain">
+      <div><div style="font-size:16px">然然家</div>
+        <div style="font-size:12px;color:#8D8D93;margin-top:2px">JZ · 固件 1.0.2</div></div>
+    </div>
+  </div>
+
+  <!-- 锁端 ZOTP（源码：锁端 ZOTP (30 分钟时窗)）-->
+  <div class="card">
+    <div class="cardlink">锁端 ZOTP<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="text-align:center;padding:16px 0 8px">
+      <div style="font-size:40px;font-weight:700;letter-spacing:8px;line-height:1;
+        font-variant-numeric:tabular-nums;color:#0090FC">482 913</div>
+      <div style="font-size:12px;color:#8D8D93;margin-top:12px">30 分钟时窗 · 轻点复制当前码</div>
+    </div>
+    <div style="height:4px;border-radius:2px;background:rgba(255,255,255,.10);overflow:hidden">
+      <div style="height:4px;background:#0090FC;width:62%"></div>
+    </div>
+    <div class="footer">锁端 ZOTP 走分钟级时窗，和手机上的独立 TOTP 不是同一套。</div>
+  </div>
+
+  <!-- 独立口令（源码：独立口令 / 还没有独立口令）-->
+  <div class="card">
+    <div class="cardlink">独立口令<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div class="empty-state" style="padding:20px 0">
+      <div class="es-icon"><span class="svgi" data-i="key" data-sz="26px"></span></div>
+      <div class="es-title">还没有独立口令</div>
+      <div class="es-desc">独立 TOTP 走标准 HMAC-SHA1/256/512<br>可以同时绑多个</div>
+    </div>
+  </div>
+
+  <!-- 导入与添加（源码：导入 otpauth:// 文本 / 手工添加 / 收起手工添加）-->
+  <div class="card" style="padding:6px 0">
+    <div class="cardlink" style="padding:8px 20px 8px">导入与添加<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div class="rw" style="cursor:default">
+      <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="doc"></span></div>
+      <div class="tx"><div class="tt">导入 otpauth:// 文本</div><div class="sb">粘贴标准 otpauth URI</div></div>
+      <div class="ch"><span class="svgi" data-i="chevron"></span></div>
+    </div>
+    <div class="sep"></div>
+    <div class="rw" style="cursor:default">
+      <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="plus"></span></div>
+      <div class="tx"><div class="tt">手工添加</div><div class="sb">直接填 secret 与周期</div></div>
+      <div class="ch"><span class="svgi" data-i="chevron"></span></div>
+    </div>
+  </div>
+
+  <!-- 静态备份码（源码：静态备份码 / 生成 8 位静态码）-->
+  <div class="card">
+    <div class="cardlink">静态备份码<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="text-align:center;padding:14px 0 8px">
+      <div style="font-size:32px;font-weight:700;letter-spacing:6px;
+        font-variant-numeric:tabular-nums;color:#FFF">— — — — — — — —</div>
+      <div style="font-size:12px;color:#8D8D93;margin-top:12px">还没生成</div>
+    </div>
+    <button class="btn sec" style="margin-top:6px">生成 8 位静态码</button>
+    <div class="footer">静态码不过期，用一次就应该换。<strong style="color:#FF9F0A">仅本机留存</strong>。</div>
+  </div>
+
+</div></div><div class="tabbar">
+<a class="tab" href="01-home.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg><span>门厅</span></a>
+<a class="tab on" href="02-keys.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="12" r="3.5"/><path d="M11 12h9"/><path d="M17 12v3"/><path d="M20 12v2"/></svg><span>钥匙</span></a>
+<a class="tab" href="03-devices.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10.5 5.5h3"/></svg><span>设备</span></a>
+<a class="tab" href="04-members.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><circle cx="17" cy="9.5" r="2.4"/><path d="M16 14.2c2.4.2 4.5 1.9 4.5 4.3"/></svg><span>成员</span></a>
+<a class="tab" href="05-system.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.65 8.6a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.56 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg><span>系统</span></a>
+</div></div><script src="icons-render.js"></script><script src="interact.js"></script></body></html>

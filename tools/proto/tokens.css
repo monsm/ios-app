@@ -1,0 +1,629 @@
+/* ══════════════════════════════════════════════════════════════
+   视觉令牌 —— 逐值来自 ios-glass-design-spec
+   ══════════════════════════════════════════════════════════════ */
+:root{
+  --canvas:#000; --surface:#1C1C1E;
+  --text:#FFF; --text-sub:#8D8D93; --text-tert:#6A6A6E;
+
+  /* ── 强调色（规范 §3.4 语义绑定，不得混用） ── */
+  --accent-blue:#0090FC;    /* 数据主色、健康年龄   5.07 */
+  --accent-pink:#F11B51;    /* 心率、Move          3.98 ⚠ 仅 ≥18pt/Bold */
+  --accent-red:#FF3B30;     /* 告警                4.55 */
+  --accent-coral:#FF694E;   /* 睡眠分数            5.90 */
+  --accent-orange:#FF9F0A;  /* 警示、待机          7.34 */
+  --accent-lime:#3CDE02;    /* Exercise            9.25 */
+  --accent-mint:#0ADBD8;    /* 睡眠、Stand         9.65 */
+  --accent-green:#30D158;   /* 成功、正向          10.39 */
+  --accent-indigo:#5E5CE6;  /* 渐变起点            3.42 仅装饰 */
+
+  /* ── 环的三条渐变（规范 §3.5，不是纯色） ── */
+  --ring-health-a:#00C6FF; --ring-health-b:#0090FC;
+  --ring-sleep-a:#0ADBD8;  --ring-sleep-b:#3C60FC;
+  --ring-move-a:#F11B51;   --ring-move-b:#FF9F0A;
+  --accent:#D98B45; --accent-text:#E8A05C; --ok:#30D158; --warn:#FF9F0A; --danger:#FF3B30;
+
+  /* 数据系列（规范 §7.8 形态2/3 的实测值） */
+  --data-mint:#0ADBD8; --data-coral:#FF694E; --data-blue:#3C60FC;
+  --data-red:#F11B51; --data-green:#3CDE02;
+  --ring-blue:#1E90FF;
+
+  /* 环 */
+  --ring-inner:#0A1220;
+  --ring-track:#2A2F45;
+  --ring-seg:#4A4A7A;
+
+  /* 描边 */
+  --hairline:rgba(255,255,255,.08);
+  --glass-edge:rgba(255,255,255,.12);
+  --glass-gloss:rgba(255,255,255,.14);
+
+  /* 间距 */
+  --gutter:14px; --page-top:40px; --section:28px;
+  --title-to-card:74px;   /* §15 L4：标题→首卡，全页最大的呼吸区 */
+  --align:29px;           /* §5.4：文字对齐线 = 14 + 15 */
+  --row-gap:12px; --card-pad:16px;
+  --xsm:6px; --xs:4px; --s:8px; --m:12px; --l:16px; --xl:24px;
+
+  /* 圆角 */
+  --r-card:26px; --r-card-lg:34px; --r-inner:12px; --r-chip:22px; --r-min:8px;
+
+  /* 字号（规范 §4.2） */
+  --f-display:36px;
+  --f-display-num:56px;   /* §4.2 大环内数字，Bold -1.5 行高 1.0 */ --f-large:30px; --f-title2:19px; --f-title3:18px;
+  --f-headline:16px; --f-body:16px; --f-subhead:14px; --f-footnote:12px; --f-caption:11px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased}
+body{background:#0A0A0C;font-family:-apple-system,"SF Pro Text","PingFang SC",sans-serif;
+  color:var(--text);display:flex;flex-wrap:wrap;gap:32px;padding:32px;align-items:flex-start}
+
+/* 机身 */
+.phone{width:390px;height:844px;background:var(--canvas);border-radius:48px;overflow:hidden;
+  position:relative;flex:0 0 auto;box-shadow:0 30px 60px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.06)}
+.scroll{position:absolute;inset:0;overflow-y:auto;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+.page{padding:var(--page-top) var(--gutter) 96px;position:relative}
+
+
+/* ══════════════════════════════════════════════════════════════
+   卡片的"浮起感" —— 参考图的精髓在这里，不是平灰块
+   ══════════════════════════════════════════════════════════════ */
+.card{
+  /* 规范 §6.3：应用体卡片靠**明度差分**分层，不是靠渐变。
+     实测 #1C1C1E 在纯黑上 1.23:1 —— 那点差就是分层的全部。
+     加渐变会让每张卡的"受光角度"看起来不一样，反而散。 */
+  background:var(--surface);
+  border-radius:var(--r-card);
+  padding:var(--card-pad);
+  margin-bottom:var(--row-gap);
+  position:relative;
+  /* 零投影（§6.3 明令）。也不用内描边 —— 描边会让卡片读成"贴上去的一块玻璃片"。 */
+}
+
+/* ── 大标题 ── */
+/* 大标题：不缩进（page padding 已给 14）。§5.4 的对齐由 .align-hero 显式声明 */
+.h1{font-size:var(--f-large);font-weight:700;letter-spacing:-.4px;line-height:1.15}
+.sub{font-size:var(--f-body);color:var(--text-sub);line-height:1.35;margin-top:10px}
+
+/* ── 卡头 ── */
+.cardlink{font-size:var(--f-subhead);color:var(--text-sub);display:flex;align-items:center;
+  gap:5px;margin-bottom:8px}
+.cardlink .ch{font-size:12px;color:rgba(235,235,245,.45);font-weight:600}
+
+/* ── 卡内排版 ── */
+.ctitle{font-size:var(--f-title2);font-weight:700;color:#FFF;line-height:1.2}
+.clabel{font-size:var(--f-footnote);color:var(--text-sub);margin-top:14px;line-height:1.3}
+.cvalue{font-size:var(--f-headline);font-weight:600;color:#FFF;margin-top:2px;
+  font-variant-numeric:tabular-nums}
+.sep{height:1px;background:var(--hairline);margin:16px 0 14px}
+.footer{font-size:var(--f-footnote);color:var(--text-sub);line-height:1.6;margin-top:14px}
+
+/* ── 胶囊行（§7.2 横向滚动） ── */
+.chiprow{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;
+  margin:0 calc(-1*var(--gutter));padding:0 var(--gutter)}
+.chiprow::-webkit-scrollbar{display:none}
+.chip{
+  /* 图 2/3 实测：高 56、r18 圆角矩形（不是全圆胶囊）、内部小环 30 */
+  text-decoration:none;color:inherit;
+  flex:0 0 auto;height:56px;border-radius:18px;padding:0 16px;
+  display:flex;align-items:center;gap:10px;
+  background:#232326;
+  position:relative;overflow:hidden;
+}
+.chip .ringico{width:26px;height:26px;flex:0 0 auto}
+.chip .lbl{font-size:13px;color:var(--text-sub);line-height:1.15}
+.chip .val{font-size:13px;color:#FFF;font-weight:600;line-height:1.15;margin-top:2px}
+.chip.compact{
+  /* 图 2 实测：56×56 r18 方块，内单个 24px 单色图标，无环无文字 */
+  width:56px; padding:0; justify-content:center;
+}
+.chip.compact .svgi{ width:24px; height:24px; color:#F11B51 }
+
+/* ── 大环容器 ── */
+.ringwrap{display:flex;justify-content:center;position:relative;margin:26px 0 8px}
+.ringwrap .glow{
+  position:absolute;width:340px;height:340px;border-radius:50%;
+  filter:blur(56px);opacity:.8;pointer-events:none;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+}
+.ring-hero{position:relative;width:260px;height:260px}
+.ring-hero svg{display:block}
+.ring-hero .center{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+}
+.ring-hero .num{font-size:64px;font-weight:700;letter-spacing:-2px;line-height:1}
+.ring-hero .unit{font-size:13px;font-weight:600;letter-spacing:1px;color:var(--text-tert);
+  margin-top:8px;text-transform:uppercase}
+.ring-hero .info{
+  position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;
+  background:rgba(255,255,255,.12);color:rgba(255,255,255,.75);font-size:12px;
+  display:flex;align-items:center;justify-content:center;font-weight:600;
+}
+
+/* ── 指标（两列 / 三列） ── */
+.cols{display:flex;gap:var(--xl)}
+.cols>div{flex:1}
+.cv-lg{font-size:var(--f-title3);font-weight:600;color:#FFF;margin-top:2px;
+  font-variant-numeric:tabular-nums}
+
+/* ── 行（XRow） ── */
+.row{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 20px}
+.row .ico{width:30px;height:30px;border-radius:9px;background:rgba(141,141,147,.16);
+  display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.row .txt{flex:1;min-width:0}
+.row .t{font-size:var(--f-body);color:#FFF;line-height:1.25}
+.row .s{font-size:var(--f-caption);color:var(--text-sub);line-height:1.25;margin-top:2px}
+.row .chev{font-size:13px;color:var(--text-tert);font-weight:600;flex:0 0 auto}
+.rowlist{padding:6px 0}
+.rowlist .sep{margin:0 0 0 62px}
+
+/* ── Tab Bar（§7.10 玻璃胶囊） ── */
+.tabbar{
+  /* 图 2/6 实测：浮动胶囊，宽度由内容决定（3 项约 260），居中 */
+  position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+  height:62px;border-radius:999px;display:flex;align-items:center;gap:4px;padding:0 10px;
+  background:rgba(28,28,30,.72);
+  backdrop-filter:blur(30px) saturate(1.8);-webkit-backdrop-filter:blur(30px) saturate(1.8);
+  border:.5px solid var(--glass-edge);
+  box-shadow:inset 0 1px 0 var(--glass-gloss),0 8px 24px rgba(0,0,0,.55);
+}
+.tab{flex:1;height:44px;text-decoration:none;border-radius:999px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:3px;font-size:10px;color:rgba(235,235,245,.55)}
+.tab svg{width:22px;height:22px}
+.tab.on{color:#FFF}
+.tab.on .pill{position:absolute;width:52px;height:44px;border-radius:999px;
+  background:rgba(255,255,255,.10);z-index:-1}
+
+/* ── 分段控件（§7.3 形态B） ── */
+.segctl{display:flex;background:rgba(255,255,255,.06);border-radius:999px;padding:2px;height:36px}
+.segctl .o{flex:1;border-radius:999px;display:flex;align-items:center;justify-content:center;
+  font-size:var(--f-subhead);color:rgba(235,235,245,.5)}
+.segctl .o.on{background:rgba(255,255,255,.18);color:#FFF;font-weight:600}
+
+/* ── 分割线（图表用） ── */
+.dash{position:absolute;inset:0;display:flex;justify-content:space-between;pointer-events:none}
+.dash i{width:1px;background:rgba(255,255,255,.10)}
+
+
+/* ══════════════════════════════════════════════════════════════
+   规范 §3.5 渐变 —— 这些是**唯一允许**的渐变，不得自创
+   ══════════════════════════════════════════════════════════════ */
+.grad-hero{background:linear-gradient(180deg,#6B7BE8 0%,#546CE4 28%,#3C489C 62%,#141418 100%)}
+.grad-chip{background:linear-gradient(160deg,#2A2A2E 0%,#1A1A1C 100%)}
+
+/* 数据行（图 3 Fitness 卡）：色点 + 数值 + 单位 */
+.drow{display:flex;align-items:center;gap:9px;margin-top:10px}
+.drow:first-child{margin-top:0}
+.drow .dot{width:10px;height:10px;border-radius:50%;flex:0 0 auto}
+.drow .dv{font-size:var(--f-body);font-weight:600;font-variant-numeric:tabular-nums}
+.drow .du{font-size:12px;color:var(--text-sub);font-weight:400}
+.csub{font-size:11px;color:var(--text-tert);margin-top:2px}
+
+
+/* ══════════════════════════════════════════════════════════════
+   模板 A · 画廊流（图 1 Face Gallery）
+   HERO 220 + 双列图文卡
+   ══════════════════════════════════════════════════════════════ */
+.gallery-hero{
+  /* 图 6 实测：HERO 高 220，但里面放真实渲染图时需 240 */
+  min-height:220px;border-radius:var(--r-card-lg);position:relative;overflow:hidden;
+  display:flex;flex-direction:column;justify-content:space-between;
+  padding:20px;margin-bottom:var(--row-gap);
+}
+.gallery-hero .gt{font-size:var(--f-title3);font-weight:700;color:#FFF}
+.gallery-hero .gm{flex:1;display:flex;align-items:center;justify-content:center;gap:-20px}
+.gallery-hero .gd{font-size:13px;color:rgba(255,255,255,.75);text-align:center}
+
+.duo{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px}
+/* 双列：每张卡占 (100% - gap) / 2，且允许换行 ——
+   不写 flex-wrap 时 8 张画廊卡会全挤在一行，每张被压成一条。 */
+.duo>.metric-card,.duo>.duo-card{flex:0 0 calc(50% - 6px);min-width:0;box-sizing:border-box}
+.duo-card{
+  background:linear-gradient(180deg,rgba(255,255,255,.045) 0%,rgba(255,255,255,0) 50px),
+             linear-gradient(180deg,#202024 0%,#1B1B1E 100%);
+  border-radius:var(--r-card);padding:14px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),inset 0 0 0 .5px rgba(255,255,255,.04);
+}
+.duo-card .dt{font-size:var(--f-headline);font-weight:700;color:#FFF;line-height:1.25}
+.duo-card .dm{display:flex;align-items:center;justify-content:center;padding:16px 0;min-height:104px}
+.duo-card .dd{font-size:11px;color:var(--text-sub);line-height:1.4;text-align:center}
+
+/* ══════════════════════════════════════════════════════════════
+   模板 D · 主题化列表（图 5 Sports）
+   无卡片，72pt 行直接铺在面板上，靠分隔线切分
+   ══════════════════════════════════════════════════════════════ */
+.dpanel{
+  background:#141416;border-radius:var(--r-card);overflow:hidden;
+  margin-bottom:var(--row-gap);
+}
+.dhead{
+  padding:14px 18px;font-size:12px;font-weight:600;letter-spacing:.4px;
+  color:var(--text-tert);text-transform:uppercase;
+  border-bottom:1px solid var(--hairline);
+}
+.drow72{
+  height:72px;display:flex;align-items:center;gap:14px;padding:0 18px;
+  border-bottom:1px solid var(--hairline);text-decoration:none;color:inherit;
+  transition:background .12s;
+}
+.drow72:last-child{border-bottom:0}
+.drow72:hover{background:rgba(255,255,255,.028)}
+.drow72 .dl{flex:1;min-width:0}
+.drow72 .dt{font-size:16px;color:#FFF;line-height:1.2}
+.drow72 .ds{font-size:12px;color:var(--text-sub);line-height:1.2;margin-top:4px}
+.drow72 .dv{font-size:15px;color:#FFF;font-variant-numeric:tabular-nums;
+  font-weight:600;flex:0 0 auto}
+.drow72 .dm{font-size:12px;color:var(--text-tert);flex:0 0 auto;
+  font-variant-numeric:tabular-nums;min-width:44px;text-align:left;letter-spacing:.2px}
+/* 三段式列（图 5 的比分行：左-中-右） */
+.drow72 .c3{display:flex;align-items:center;gap:12px;flex:1}
+.drow72 .c3 .a,.drow72 .c3 .b{flex:1;font-size:16px;font-weight:700;color:#FFF}
+.drow72 .c3 .a{text-align:right}
+.drow72 .c3 .b{text-align:left}
+.drow72 .c3 .mid{flex:0 0 auto;text-align:center;min-width:64px}
+.drow72 .c3 .mid .s{font-size:13px;font-weight:600;color:#FFF}
+.drow72 .c3 .mid .u{font-size:10px;color:var(--text-tert);margin-top:2px}
+
+/* ══════════════════════════════════════════════════════════════
+   双列 MetricCard（图 2 Step Count / Step Distance）
+   ══════════════════════════════════════════════════════════════ */
+.metric-card{
+  background:linear-gradient(180deg,rgba(255,255,255,.045) 0%,rgba(255,255,255,0) 50px),
+             linear-gradient(180deg,#202024 0%,#1B1B1E 100%);
+  border-radius:var(--r-card);padding:14px;min-width:0;overflow:hidden;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),inset 0 0 0 .5px rgba(255,255,255,.04);
+}
+.metric-card .mh{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.metric-card .mt{font-size:var(--f-headline);font-weight:600;color:#FFF}
+.metric-card .mc{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.10);
+  display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text-sub)}
+.metric-card .ms{font-size:12px;color:var(--text-sub);margin-bottom:2px}
+.metric-card .mv{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.15;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.metric-card .mv small{font-size:14px;font-weight:600;color:var(--text-sub);margin-left:1px}
+
+/* 小组件：迷你柱图（图 2 的 Step Count 底部） */
+.minibar{display:flex;align-items:flex-end;gap:1px;height:34px;margin-top:12px;overflow:hidden}
+.minibar i{flex:1;background:rgba(0,144,252,.55);border-radius:1px;min-height:2px}
+
+
+/* ══════════════════════════════════════════════════════════════
+   模板 D 的**两层头部**（图 5 Sports 最独有的形态）
+   头部题色 96pt + 内容面板顶部圆角 24，形成两层
+   ══════════════════════════════════════════════════════════════ */
+.dsheet{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden}
+.dsheet .dtop{
+  flex:0 0 auto;padding:52px 18px 14px;position:relative;
+  background:linear-gradient(180deg,#1A2A4A 0%,#152238 100%);
+}
+.dsheet .dtop .dtitle{font-size:30px;font-weight:700;letter-spacing:-.4px;color:#FFF}
+.dsheet .dtop .dact{
+  position:absolute;right:14px;top:54px;height:34px;padding:0 14px;border-radius:999px;
+  background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.26);
+  display:flex;align-items:center;gap:6px;font-size:15px;font-weight:600;color:#FFF;
+  text-decoration:none;
+}
+.dsheet .dbody{
+  flex:1;min-height:0;overflow-y:auto;scrollbar-width:none;
+  background:var(--canvas);border-radius:24px 24px 0 0;margin-top:-2px;
+  padding:0 0 100px;
+}
+.dsheet .dbody::-webkit-scrollbar{display:none}
+
+/* 文字分段（图 5 的 Yesterday/Today/Upcoming）：44pt，无指示条，下有 1px 线 */
+.dtabs{display:flex;height:44px;align-items:center;border-bottom:1px solid var(--hairline)}
+.dtabs .t{flex:1;text-align:center;font-size:14px;color:rgba(235,235,245,.5);cursor:pointer}
+.dtabs .t.on{color:#FFF;font-weight:600}
+
+/* 双列卡内的 flex 子项必须允许收缩，否则长文本会撑破网格 */
+.metric-card *{min-width:0}
+.metric-card .mh{min-width:0}
+.metric-card .mt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+
+/* ══════════════════════════════════════════════════════════════
+   SVG 图标 —— 替代 emoji（6 张参考图里一个 emoji 都没有）
+   ══════════════════════════════════════════════════════════════ */
+.svgi{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:1.15em;height:1.15em;flex:0 0 auto;
+  vertical-align:-0.14em;color:inherit;
+}
+.svgi svg{width:100%;height:100%;display:block}
+/* 徽章容器里的图标：固定尺寸，不被父级字号影响 */
+.ic > .svgi,.ico > .svgi{width:18px;height:18px}
+.ch > .svgi,.chev > .svgi{width:13px;height:13px;opacity:.6}
+
+
+/* ══════════════════════════════════════════════════════════════
+   行高映射（规范 §4.2）
+   —— 行高不是"看着舒服"调的，每个字号有确定值
+   ══════════════════════════════════════════════════════════════ */
+.h1{line-height:1.15;letter-spacing:-.4px}      /* largeTitle 30 */
+.ctitle{line-height:1.20;letter-spacing:-.3px}   /* title2 19 */
+.cardlink{line-height:1.35}
+.footer{line-height:1.40}
+.sub{line-height:1.35}                           /* body 16 */
+.clabel{line-height:1.25;letter-spacing:.1px}    /* caption 11 */
+.cvalue{line-height:1.30;letter-spacing:-.2px}   /* headline 16 */
+
+
+/* ══════════════════════════════════════════════════════════════
+   §5.4 单条文字对齐线 —— 大标题对齐卡片**内文字**，不是卡片边缘
+   卡片左边缘在 14（page padding），卡内文字在 14+16=30
+   所以大标题要缩进 16，才和卡内文字站在同一条线上
+   ══════════════════════════════════════════════════════════════ */
+
+
+/* 带 hero 环的页面：标题要和环中心对齐 → 用 .align-hero */
+.align-hero{padding-left:calc(var(--align) - var(--gutter))}  /* = 15px */
+
+
+/* ══════════════════════════════════════════════════════════════
+   标题块 → 首卡 = 74（§15 L4）
+   —— 用相邻兄弟选择器**强制清零**，不依赖每页手写的 margin
+   ══════════════════════════════════════════════════════════════ */
+/* sub 后面紧跟 .sp74，被清零的是 .sp74 的**下一个**兄弟（首卡）——
+   之前写成 .sub + * 只选中了 sp74 自己，首卡的 margin-top:22px 从没被清掉。 */
+.sp74{ height:74px; display:block; flex:0 0 auto }
+
+
+/* ══════════════════════════════════════════════════════════════
+   图 2 实测：卡内列表行**不放彩色图标块**
+   —— 参考图的卡里是「文字 + 右侧值 + chevron」，图标块会打断阅读节奏
+   ══════════════════════════════════════════════════════════════ */
+.ic{ background:transparent !important; color:#8D8D93 !important;
+     width:22px !important; height:22px !important; border-radius:0 !important;
+     justify-content:flex-start !important }
+.ic > .svgi{ width:19px !important; height:19px !important }
+
+
+/* ══════════════════════════════════════════════════════════════
+   图 2/3 实测：行内图标**无彩色底**，单色 textTertiary
+   —— 参考图的列表行是「图标(单色) + 文字 + 右侧值 + chevron」
+   ══════════════════════════════════════════════════════════════ */
+.krow .av{ background:transparent !important; color:#8D8D93 !important;
+  width:22px !important; height:22px !important; border-radius:0 !important }
+.krow .av > .svgi{ width:19px; height:19px }
+.mrow .a{ background:transparent !important; border:1px solid #3A3A40 !important;
+  color:#8D8D93 !important }
+/* 分段控件与首卡的间距：图2 里很小（约 12） */
+.segctl{margin-top:0}
+
+
+/* ══════════════════════════════════════════════════════════════
+   图 1/6 实测：Tab Bar 激活项的两种形态
+   · 图 1：只高亮颜色（无胶囊）
+   · 图 6：**橙色胶囊包住图标+文字**
+   本 App 采用图 6 形态（更有辨识度）
+   ══════════════════════════════════════════════════════════════ */
+.tabbar .tab{ position:relative; min-width:66px; padding:0 8px; height:48px; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:3px; border-radius:999px;
+  color:rgba(235,235,245,.55); text-decoration:none; transition:color .15s, background .15s }
+.tabbar .tab span{ font-size:10px; letter-spacing:.1px; line-height:1 }
+.tabbar .tab svg{ width:25px; height:25px }
+.tabbar .tab.on{ color:#FFF; background:rgba(217,139,69,.22) }
+
+
+/* 图 1 胶囊内字阶：label 11 灰在上 / value 14 白粗在下 */
+.chip .lbl{ font-size:12px; color:#8D8D93; line-height:1.2; letter-spacing:0 }
+.chip .val{ font-size:16px; font-weight:600; color:#FFF; line-height:1.2; margin-top:2px }
+.chip .ringico{ width:30px; height:30px; flex:0 0 auto }
+
+
+/* ══════════════════════════════════════════════════════════════
+   图 5 实测：MetricCard 底部柱状图
+   24 根细柱，间隔 1-2px，深灰底 + 少量亮色高柱
+   下方 4 个时间标签（12AM / 6AM / 12PM / 6PM），9px
+   ══════════════════════════════════════════════════════════════ */
+.mchart{ display:flex; align-items:flex-end; gap:2px; height:44px; margin-top:12px }
+.mchart i{ flex:1; background:rgba(255,255,255,.14); border-radius:1px; min-height:2px }
+.mchart i.hi{ background:#0090FC }
+.maxis{ display:flex; justify-content:space-between; font-size:9px; color:#6A6A6E;
+  margin-top:6px; letter-spacing:.2px }
+
+/* ══════════════════════════════════════════════════════════════
+   模板 A0 · 展示壳（图 4 / 图 5 的骨架）§7.0
+   ──────────────────────────────────────────────────────────────
+   纯黑底 + 白色卡片 r40 + 设备样机 + 左右相邻卡露出 28
+   这是 6 张参考图里**唯一没被我实现过**的模板
+   ══════════════════════════════════════════════════════════════ */
+.shell{ position:absolute; inset:0; background:#000; overflow:hidden }
+.shell-close{
+  position:absolute; right:20px; top:52px; width:36px; height:36px; border-radius:999px;
+  background:#2C2C2C; display:flex; align-items:center; justify-content:center; z-index:20;
+  color:#FFF; text-decoration:none;
+}
+.shell-close::before{ content:''; position:absolute; inset:-4px; }   /* 命中区 44pt */
+.shell-close svg{ width:15px; height:15px; stroke-width:2.4 }
+
+/* 轮播：一卡一停，相邻露出 28 */
+.shell-track{
+  position:absolute; inset:121px 0 0 0; display:flex; gap:12px;
+  padding:0 28px; overflow-x:auto; scroll-snap-type:x mandatory;
+  scrollbar-width:none;
+}
+.shell-track::-webkit-scrollbar{ display:none }
+.shell-card{
+  flex:0 0 calc(100% - 56px); background:#FFF; border-radius:40px;
+  padding:40px 24px 32px; scroll-snap-align:center;
+  display:flex; flex-direction:column; align-items:center;
+  color:#1C1C1E;
+}
+/* §7.0.2 ShellCopy */
+.shell-card .stt{ font-size:20px; font-weight:700; color:#1C1C1E; text-align:center;
+  line-height:1.3; max-width:100%; }
+.shell-card .ssub{ font-size:17px; color:#1C1C1E; text-align:center; line-height:1.35;
+  margin-top:8px; max-width:100% }
+
+/* §7.0.3 DeviceMockup：4pt 银边 + 2pt 黑内圈，r44，屏 r36 */
+.shell-card .mock{
+  width:calc(100% - 48px); margin-top:28px; border-radius:44px; overflow:hidden;
+  background:linear-gradient(150deg,#E8E8ED,#9A9AA0 40%,#D8D8DE 60%,#8E8E94);
+  padding:4px; box-shadow:0 24px 48px rgba(0,0,0,.55);
+}
+.shell-card .mock-in{
+  border-radius:40px; overflow:hidden; background:#000;
+  border:2px solid #000; position:relative;
+}
+.shell-card .mock-scr{ border-radius:36px; overflow:hidden; background:#000;
+  aspect-ratio:390/620; position:relative }
+/* 灵动岛 */
+.shell-card .island{
+  position:absolute; top:8px; left:50%; transform:translateX(-50%);
+  width:88px; height:26px; border-radius:999px; background:#000; z-index:5;
+}
+/* 屏内状态栏 */
+.shell-card .sbar{
+  position:absolute; top:0; left:0; right:0; height:44px; display:flex;
+  align-items:center; justify-content:space-between; padding:0 18px;
+  font-size:12px; font-weight:600; color:#FFF; z-index:4;
+}
+
+/* 样机内迷你界面的字号：图 5 里样机内文字是可读的，不能太小 */
+.shell-card .mock-scr .mini-t{ font-size:26px; font-weight:700; letter-spacing:-.5px }
+
+
+/* ══════════════════════════════════════════════════════════════
+   图 4 的**两层结构**（Sports 是绿色，这里换成各页主色）
+   ──────────────────────────────────────────────────────────────
+   头部：题色，比内容板亮约 2×；状态栏在其中
+   内容板：顶部圆角 24，压暗一档，形成"纸叠在桌上"的层次
+   这是模板 D 唯一还没实现的部分
+   ══════════════════════════════════════════════════════════════ */
+.themed{ position:absolute; inset:0; display:flex; flex-direction:column; overflow:hidden }
+
+.themed-head{
+  flex:0 0 auto; position:relative; padding:52px 18px 16px;
+  color:#FFF;
+}
+.themed-head .th-title{ font-size:26px; font-weight:700; letter-spacing:-.4px; line-height:1.15 }
+.themed-head .th-sub{ font-size:13px; margin-top:6px; opacity:.78 }
+/* 头部右侧动作胶囊（图4 的 Home） */
+.themed-head .th-act{
+  position:absolute; right:16px; top:54px; height:34px; padding:0 15px;
+  border-radius:999px; display:flex; align-items:center; gap:6px;
+  font-size:14px; font-weight:600; color:#FFF; text-decoration:none;
+  background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.26);
+  backdrop-filter:blur(12px);
+}
+
+.themed-body{
+  flex:1; min-height:0; overflow-y:auto; scrollbar-width:none;
+  border-radius:24px 24px 0 0;
+  /* 底部留白必须 ≥ tabbar(62) + bottom(10) + 间隙(24) = 96 */
+  padding:0 0 96px;
+  margin-top:-1px;
+}
+.themed-body::-webkit-scrollbar{ display:none }
+
+/* 文字分段（图4：Yesterday / Today / Upcoming，无指示条） */
+.themed-seg{ display:flex; height:44px; align-items:center; }
+.themed-seg .t{ flex:1; text-align:center; font-size:14px; cursor:pointer;
+  color:rgba(235,235,245,.5); text-decoration:none }
+.themed-seg .t.on{ color:#FFF; font-weight:600 }
+
+/* 绿色主题（图4 原色，供对照） */
+.theme-sports .themed-head{ background:linear-gradient(180deg,#015500 0%,#014400 100%) }
+.theme-sports .themed-body{ background:#022803 }
+.theme-sports .themed-seg .t{ color:#6E9B7C }
+.theme-sports .themed-seg .t.on{ color:#FFF }
+
+
+/* ══════════════════════════════════════════════════════════════
+   状态栏 —— 6 张参考图全有（图 1/2/3/6 都是 9:41 + 信号 + WiFi + 电池）
+   高 44，绝对定位在 phone 顶部，不占内容流
+   ══════════════════════════════════════════════════════════════ */
+.statusbar{
+  position:absolute; top:0; left:0; right:0; height:44px; z-index:30;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 26px; pointer-events:none;
+}
+.statusbar .sb-time{
+  font-size:15px; font-weight:600; color:#FFF; letter-spacing:.2px;
+  font-variant-numeric:tabular-nums;
+}
+.statusbar .sb-right{ display:flex; align-items:center; gap:5px }
+/* 内容区为状态栏让出空间：44(状态栏) + 20(呼吸) = 64 */
+.page{ padding-top:64px }
+.page.hasnav{ padding-top:calc(72px + 24px) }
+
+
+/* ══════════════════════════════════════════════════════════════
+   §4.1 中文字重降一档
+   —— 规范原文：「英文/数字 SF Pro；中文 PingFang SC，字重**降一档**
+      （英文 Bold → 中文 Semibold）」
+   —— 原因：中文字形笔画密度高，同字重视觉上比拉丁重一档
+   实施：把 700 的中文降为 600，其余不变
+   ══════════════════════════════════════════════════════════════ */
+@font-face {
+  font-family: 'PingFangSCAdjusted';
+  src: local('PingFang SC');
+  font-weight: 700;
+  /* 浏览器不支持伪降重，改用 :lang 选择器 */
+}
+:lang(zh) .h1, :lang(zh) .ctitle, :lang(zh) .mv, :lang(zh) .dt,
+:lang(zh) .stt, :lang(zh) .th-title { font-weight: 600 }
+/* 数字保持 700（tabular-nums 需要更强对比） */
+.num, .dv, .cvalue, .mv { font-weight: 700 }
+
+
+/* ══════════════════════════════════════════════════════════════
+   §7.20.1 Skeleton 骨架屏
+   与最终内容**同尺寸同圆角**的色块；#24242A；微光 30% 宽扫过，1.4s ease-in-out
+   ══════════════════════════════════════════════════════════════ */
+.sk{
+  background:#24242A; border-radius:6px; position:relative; overflow:hidden;
+  display:block;
+}
+.sk::after{
+  content:''; position:absolute; inset:0; width:30%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);
+  animation: sk-sweep 1.4s ease-in-out infinite;
+}
+@keyframes sk-sweep{
+  0%   { transform:translateX(-100%) }
+  100% { transform:translateX(433%) }
+}
+/* 骨架卡：与 .card 同尺寸同圆角 */
+.sk-card{
+  background:#1C1C1E; border-radius:var(--r-card); padding:var(--card-pad);
+  margin-bottom:var(--row-gap);
+}
+.sk-line{ height:12px; border-radius:6px }
+.sk-line.tall{ height:19px }
+
+/* ══════════════════════════════════════════════════════════════
+   §7.17 EmptyState 空态（卡内垂直居中）
+   图标 28 + 标题 15 Semibold + 说明 12 Regular；上下留白各 24
+   ══════════════════════════════════════════════════════════════ */
+.empty-state{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:24px 16px; text-align:center;
+}
+.empty-state .es-icon{
+  width:28px; height:28px; color:#6A6A6E; margin-bottom:10px;
+}
+.empty-state .es-title{
+  font-size:15px; font-weight:600; color:#8D8D93; line-height:1.3;
+}
+.empty-state .es-desc{
+  font-size:12px; color:#6A6A6E; line-height:1.5; margin-top:4px;
+  max-width:240px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   §7.20.3 ErrorState 错误态
+   ══════════════════════════════════════════════════════════════ */
+.error-state{
+  display:flex; flex-direction:column; align-items:center; text-align:center;
+  padding:24px 16px;
+}
+.error-state .er-icon{ width:28px; height:28px; color:#FF9F0A; margin-bottom:10px }
+.error-state .er-title{ font-size:15px; font-weight:600; color:#FFF }
+.error-state .er-desc{ font-size:12px; color:#8D8D93; margin-top:6px; line-height:1.5 }
+.error-state .er-act{
+  margin-top:14px; height:36px; padding:0 20px; border-radius:999px;
+  background:rgba(255,255,255,.10); color:#FFF; font-size:14px; font-weight:600;
+  display:inline-flex; align-items:center; text-decoration:none;
+}

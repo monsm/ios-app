@@ -1,0 +1,28 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="pages.css">
+</head><body>
+<div class="phone" style="position:relative">
+<div class="scroll"><div class="page hasnav" id="pg">
+  <div class="duo" id="duo">
+    <div class="metric-card" id="c1"><div class="mv">38/50</div></div>
+    <div class="metric-card" id="c2"><div class="mv">3枚</div></div>
+  </div>
+</div></div>
+</div>
+<script>
+window.addEventListener('load',()=>{
+  const r = (el)=>el.getBoundingClientRect();
+  const out = {
+    phone: r(document.querySelector('.phone')).width,
+    page: r(document.getElementById('pg')).width,
+    pageLeft: r(document.getElementById('pg')).left,
+    duo: r(document.getElementById('duo')).width,
+    c1: r(document.getElementById('c1')).width,
+    c2: r(document.getElementById('c2')).width,
+    c2Right: r(document.getElementById('c2')).right,
+    pagePad: getComputedStyle(document.getElementById('pg')).padding,
+  };
+  document.title = JSON.stringify(out);
+  document.body.innerHTML = '<pre id=o>' + JSON.stringify(out,null,1) + '</pre>';
+});
+</script></body></html>

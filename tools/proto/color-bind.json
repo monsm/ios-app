@@ -1,0 +1,169 @@
+{
+ "01-home": {
+  "main": "#0090FC",
+  "accent": "#F11B51",
+  "why": "门厅是大环（健康年龄蓝）+ 心率点缀"
+ },
+ "02-keys": {
+  "main": "#0090FC",
+  "accent": "#FF9F0A",
+  "why": "钥匙=数据蓝，到期=警示橙"
+ },
+ "03-devices": {
+  "main": "#0090FC",
+  "accent": "#30D158",
+  "why": "设备=蓝，连接良好=绿"
+ },
+ "04-members": {
+  "main": "#5E5CE6",
+  "why": "成员=靛蓝（渐变起点色）"
+ },
+ "05-system": {
+  "main": "#FF9F0A",
+  "accent": "#FF3B30",
+  "why": "系统=警示橙为主，危险=红"
+ },
+ "10-keys-manage": {
+  "main": "#0090FC",
+  "accent": "#FF9F0A",
+  "why": "同 02"
+ },
+ "11-fingerprint": {
+  "main": "#0ADBD8",
+  "why": "指纹=薄荷"
+ },
+ "12-tempcode": {
+  "main": "#FF694E",
+  "why": "临时码=珊瑚"
+ },
+ "13-key-detail": {
+  "main": "#5E5CE6",
+  "why": "钥匙详情=靛蓝"
+ },
+ "20-locks": {
+  "main": "#0090FC",
+  "accent": "#30D158",
+  "why": "锁=蓝，电量良好=绿"
+ },
+ "21-lock-profile": {
+  "main": "#5E5CE6",
+  "why": "锁档案=靛蓝"
+ },
+ "22-firmware": {
+  "main": "#5E5CE6",
+  "accent": "#30D158",
+  "why": "升级=靛蓝渐变，检查通过=绿"
+ },
+ "23-gateway": {
+  "main": "#5E5CE6",
+  "why": "配网=靛蓝"
+ },
+ "24-dongles": {
+  "main": "#5E5CE6",
+  "why": "钥匙串=靛蓝"
+ },
+ "25-synctime": {
+  "main": "#FF9F0A",
+  "accent": "#30D158",
+  "why": "时间偏差=橙，同步后=绿"
+ },
+ "30-members-list": {
+  "main": "#5E5CE6",
+  "why": "成员=靛蓝"
+ },
+ "31-member-wizard": {
+  "main": "#FF9F0A",
+  "why": "向导=橙（当前步骤）"
+ },
+ "32-member-detail": {
+  "main": "#FF9F0A",
+  "why": "成员详情=该成员色"
+ },
+ "33-archived": {
+  "main": "#8D8D93",
+  "why": "归档=灰"
+ },
+ "34-merge": {
+  "main": "#FF3B30",
+  "accent": "#5E5CE6",
+  "why": "合并=危险红，主档=靛蓝"
+ },
+ "40-security": {
+  "main": "#5E5CE6",
+  "accent": "#30D158",
+  "why": "隐私=靛蓝，安全=绿"
+ },
+ "41-applock": {
+  "main": "#FF9F0A",
+  "accent": "#30D158",
+  "why": "应用锁=警示橙"
+ },
+ "42-peek": {
+  "main": "#0ADBD8",
+  "why": "防窥=薄荷"
+ },
+ "43-privacy-dash": {
+  "main": "#30D158",
+  "why": "已启用=绿"
+ },
+ "44-audit": {
+  "main": "#0090FC",
+  "accent": "#FF9F0A",
+  "why": "审计=蓝，管理操作=橙"
+ },
+ "45-destroy": {
+  "main": "#FF3B30",
+  "why": "销毁=红"
+ },
+ "46-safemode": {
+  "main": "#30D158",
+  "accent": "#FF9F0A",
+  "why": "A模式=绿，B模式=橙"
+ },
+ "47-backup": {
+  "main": "#5E5CE6",
+  "accent": "#FF9F0A",
+  "why": "备份=靛蓝，未备份=橙"
+ },
+ "48-export": {
+  "main": "#0090FC",
+  "why": "导出=蓝"
+ },
+ "49-appearance": {
+  "main": "#D98B45",
+  "why": "外观=铜色（品牌色）"
+ },
+ "4a-me": {
+  "main": "#FF9F0A",
+  "accent": "#30D158",
+  "why": "设置=橙，正常=绿"
+ },
+ "70-icon-picker": {
+  "main": "#5E5CE6",
+  "why": "图标=靛蓝"
+ },
+ "50-events": {
+  "main": "#0090FC",
+  "accent": "#FF3B30",
+  "why": "事件=蓝，告警=红"
+ },
+ "51-feed": {
+  "main": "#0090FC",
+  "accent": "#FF3B30",
+  "why": "动态=蓝，告警=红"
+ },
+ "52-stats": {
+  "main": "#0090FC",
+  "accent": "#F11B51",
+  "why": "统计=蓝，Move环=粉"
+ },
+ "60-care": {
+  "main": "#5E5CE6",
+  "accent": "#FF9F0A",
+  "why": "保养=靛蓝，待办=橙"
+ },
+ "61-reminders": {
+  "main": "#F11B51",
+  "why": "关怀=粉（情感色）"
+ }
+}

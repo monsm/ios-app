@@ -1,0 +1,49 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<style>html,body{margin:0;padding:0;overflow:hidden;background:#000}svg{display:block;width:256px;height:256px}</style>
+</head><body><svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <!-- 背景：虚化的环境光斑（照片景深感） -->
+    <filter id="bgblur55"><feGaussianBlur stdDeviation="6"/></filter>
+    <radialGradient id="bg55" cx="0.5" cy="0.35">
+      <stop offset="0" stop-color="#3A4A3A"/><stop offset="1" stop-color="#0A0A0E"/>
+    </radialGradient>
+    <!-- 皮肤：径向渐变 + 高光 -->
+    <radialGradient id="skin55" cx="0.38" cy="0.30">
+      <stop offset="0" stop-color="#FFF" stop-opacity=".55"/>
+      <stop offset=".28" stop-color="#BF8768"/>
+      <stop offset="1" stop-color="#2A2028"/>
+    </radialGradient>
+    <radialGradient id="hair55" cx="0.4" cy="0.2">
+      <stop offset="0" stop-color="#2E2028"/><stop offset="1" stop-color="#08070A"/>
+    </radialGradient>
+    <!-- 边缘光（轮廓分离） -->
+    <linearGradient id="rim55" x1="0" y1="0" x2="1" y2="0.4">
+      <stop offset="0" stop-color="#FFF" stop-opacity=".30"/>
+      <stop offset=".35" stop-color="#FFF" stop-opacity="0"/>
+      <stop offset="1" stop-color="#FFF" stop-opacity=".16"/>
+    </linearGradient>
+    <filter id="soft55"><feGaussianBlur stdDeviation="1.6"/></filter>
+  </defs>
+
+  <rect width="100" height="100" fill="url(#bg55)"/>
+  <!-- 背景光斑 -->
+  <g filter="url(#bgblur55)" opacity=".7">
+    <circle cx="25.250877479673772" cy="23.749061110312613" r="23.698730712616225" fill="#3A4A3A" opacity=".8"/>
+    <circle cx="82.33971060362632" cy="28.1274507074279" r="13.097021104347437" fill="#3A4A3A" opacity=".55"/>
+    <circle cx="32.85693764819621" cy="73.66555810145361" r="21.15268355754795" fill="#3A4A3A" opacity=".4"/>
+  </g>
+
+  <!-- 肩与颈 -->
+  <g filter="url(#soft55)">
+    <ellipse cx="50" cy="104" rx="42.62643861986065" ry="30.695662021960906" fill="url(#skin55)"/>
+  </g>
+  <!-- 头 -->
+  <g filter="url(#soft55)">
+    <ellipse cx="50" cy="46" rx="28.12197145918476" ry="32.57488954187133" fill="url(#skin55)"/>
+  </g>
+  <!-- 头发（覆盖上半 + 两侧） -->
+  <path d="M 22 40 Q 26 10 50 8 Q 74 10 78 40 Q 74 26 50 22 Q 26 26 22 40 Z"
+        fill="url(#hair55)" filter="url(#soft55)"/>
+  <!-- 边缘光 -->
+  <ellipse cx="50" cy="46" rx="26.881966829710624" ry="31.71679329952076" fill="url(#rim55)" opacity=".5"/>
+</svg></body></html>

@@ -1,0 +1,10 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<style>body{margin:0;font-family:system-ui}iframe{width:454px;height:908px;border:0}</style></head><body>
+<iframe id="f" src="52-stats.html"></iframe>
+<script>
+window.addEventListener('load',()=>setTimeout(()=>{
+  const d=document.getElementById('f').contentDocument;
+  const sc=d.querySelector('.scroll');
+  if(sc) sc.scrollTop = sc.scrollHeight;
+},900));
+</script></body></html>

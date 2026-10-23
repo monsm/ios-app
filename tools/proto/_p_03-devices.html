@@ -1,0 +1,12 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<style>body{margin:0}iframe{width:454px;height:900px;border:0}</style></head><body>
+<iframe id="f" src="03-devices.html"></iframe>
+<script>
+window.addEventListener('load',()=>setTimeout(()=>{
+  const fr=document.getElementById('f'), d=fr.contentDocument;
+  const sc=d.querySelector('.scroll'), pg=d.querySelector('.page');
+  const h = pg ? Math.round(pg.getBoundingClientRect().height) : 0;
+  const vis = sc ? Math.round(sc.clientHeight) : 0;
+  document.title='R|'+h+'|'+vis;
+},700));
+</script></body></html>
