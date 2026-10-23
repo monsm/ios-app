@@ -8,6 +8,29 @@ fs.writeFileSync(D+'48-export.html', L.page('导出与分享', `
   <div class="h1" style="margin-top:8px">导出与分享</div>
   <div class="sub">生成过程纯本地，不经过任何网络</div>
 
+  <!-- 图5 Step Count 的柱图形态：24 柱 + 轴标 + 今日大数字 -->
+  <div class="card" style="margin-top:24px">
+    <div class="cardlink">历史导出<span class="ch">${sv('chevron')}</span></div>
+    <div style="display:flex;align-items:flex-start;gap:16px;margin-top:2px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:11px;color:#8A8A90">近 3 个月</div>
+        <div style="font-size:44px;font-weight:700;line-height:1;letter-spacing:-1.4px;
+          font-variant-numeric:tabular-nums;color:#4FC3FF;margin-top:6px">12<span style="font-size:14px;font-weight:500;color:#8A8A90;margin-left:4px">次导出</span></div>
+      </div>
+    </div>
+    <!-- 图5 柱图：细柱 + 底部轴标 -->
+    <div style="display:flex;align-items:flex-end;gap:3px;height:56px;margin-top:16px">
+      ${[3,5,2,7,4,6,3,8,5,4,9,6,3,5,7,4,6,8,5,3,7,5,4,6].map((h,i)=>
+        `<div style="flex:1;height:${(h/9*56).toFixed(0)}px;border-radius:2px;
+          background:${i>=19?'#4FC3FF':'rgba(79,195,255,.34)'}"></div>`).join('')}
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:#6A6A72;margin-top:8px">
+      <span>9月</span><span>10月</span><span>11月</span><span>现在</span>
+    </div>
+    <div class="sep"></div>
+    <div class="footer">柱高就是当月导出次数 —— 高亮的是最近 5 次。</div>
+  </div>
+
   <!-- scopeCard：范围 -->
   <div class="card" style="margin-top:24px">
     <div class="cardlink">范围<span class="ch">${sv('chevron')}</span></div>

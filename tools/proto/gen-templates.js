@@ -2,6 +2,7 @@
 const L = require('./lib.js');
 const fs = require('fs');
 const D = __dirname + '/';
+const sv = (n, sz) => `<span class="svgi" data-i="${n}"${sz?` data-sz="${sz}"`:''}></span>`;
 
 // ══ 模板 A · 画廊流（图 1 Face Gallery）→ App 图标选择 ══
 const icons = ['🔒','🔐','🛡','🏠','🔑','🚪','⚙','❤️','🔔','📍'];
@@ -70,9 +71,9 @@ const evRows = [
 ];
 fs.writeFileSync(D+'50-events.html', L.page('事件', `
   <div class="chiprow">
-    <div class="chip compact">${L.ring([['#0090FC',.6]])}</div>
-    <div class="chip">${L.ring([['#3CDE02',.8]])}<div><div class="lbl">今日</div><div class="val">8 条</div></div></div>
-    <div class="chip">${L.ring([['#FF9F0A',.1]])}<div><div class="lbl">告警</div><div class="val">1 条</div></div></div>
+    <div class="chip compact">${L.ring([['#4FC3FF',.6]])}</div>
+    <div class="chip">${L.ring([['#2FD65C',.8]])}<div><div class="lbl">今日</div><div class="val">8 条</div></div></div>
+    <div class="chip">${L.ring([['#FFA31A',.1]])}<div><div class="lbl">告警</div><div class="val">1 条</div></div></div>
     <div class="chip">${L.ring([['#0ADBD8',.3]])}<div><div class="lbl">同步</div><div class="val">06:30</div></div></div>
   </div>
 
@@ -81,30 +82,41 @@ fs.writeFileSync(D+'50-events.html', L.page('事件', `
     <div class="sub">10-23 周四 · 本机保留 20 条</div>
   </div>
 
+  <!-- 图4 分段：无指示条，选中仅亮白 -->
   <div class="segctl2" style="margin-top:22px">
     <div class="o on">今日 8</div><div class="o">本周 47</div><div class="o">全部 127</div>
   </div>
 
-  <div class="dpanel" style="margin-top:14px">
-    <div class="dhead">10-23 · 今天</div>
-    ${evRows.map(([t,n,w,k])=>`
-      <a class="drow72" href="13-key-detail.html">
-        <div class="dm">${t}</div>
-        <div class="dl"><div class="dt">${n}</div>
-          <div class="ds">${w}${k?' · '+k:''}</div></div>
-        <div style="color:var(--text-tert);font-size:18px">›</div>
-      </a>`).join('')}
-  </div>
-
-  <div class="dpanel">
-    <div class="dhead">10-22 · 昨天</div>
-    ${[['07:08','开门 · 密码','朕','手动'],['18:30','开门 · 指纹 10','爱妃','手动'],['21:40','开门 · 密码','朕','手动']].map(([t,n,w,k])=>`
-      <a class="drow72" href="13-key-detail.html">
-        <div class="dm">${t}</div>
-        <div class="dl"><div class="dt">${n}</div><div class="ds">${w} · ${k}</div></div>
-        <div style="color:var(--text-tert);font-size:18px">›</div>
-      </a>`).join('')}
-  </div>
+  <!-- 图4 居中分组头 + 带图标/状态色的事件行 -->
+  ${[['10-23 周四', [
+      ['07:12','lockOpen','#4FC3FF','开门 · 密码','朕 · 手动','#2FD65C','成功'],
+      ['07:45','fingerprint','#2FD65C','开门 · 指纹 10','爱妃 · 手动','#2FD65C','成功'],
+      ['08:03','bolt','#0ADBD8','开门 · 自动','朕 · 接近自动开','#2FD65C','成功'],
+      ['12:30','timer','#FFA31A','开门 · 临时码','一 · 临时','#2FD65C','成功'],
+      ['18:22','fingerprint','#2FD65C','开门 · 指纹 10','爱妃 · 手动','#2FD65C','成功'],
+      ['19:10','warn','#FF453A','试错锁定','连续 5 次密码错误','#FF453A','告警'],
+      ['21:40','lockOpen','#4FC3FF','开门 · 密码','朕 · 手动','#2FD65C','成功'],
+      ['22:05','lock','#8A8A90','上锁','一 · 自动','#8A8A90','完成'],
+    ]], ['10-22 周三', [
+      ['07:08','lockOpen','#4FC3FF','开门 · 密码','朕 · 手动','#2FD65C','成功'],
+      ['18:30','fingerprint','#2FD65C','开门 · 指纹 10','爱妃 · 手动','#2FD65C','成功'],
+      ['21:40','lockOpen','#4FC3FF','开门 · 密码','朕 · 手动','#2FD65C','成功'],
+    ]]].map(([day, rows]) => `
+    <div style="text-align:center;font-size:11px;font-weight:600;letter-spacing:1.4px;
+      color:#5A5A62;padding:22px 0 8px;text-transform:uppercase">${day}</div>
+    <div class="card" style="padding:2px 0">
+      ${rows.map(([t,ic,c,title,sub,sc,tag],i)=>`
+        <a class="rw" href="13-key-detail.html" style="min-height:62px">
+          <div style="width:38px;font-size:12px;color:#7A7A82;font-variant-numeric:tabular-nums;flex:0 0 auto">${t}</div>
+          <div class="ic" style="background:${c}1F;color:${c}">${sv(ic,'17px')}</div>
+          <div class="tx"><div class="tt">${title}</div><div class="sb">${sub}</div></div>
+          <span style="font-size:11px;font-weight:600;color:${sc};background:${sc}1F;
+            padding:3px 8px;border-radius:999px;flex:0 0 auto">${tag}</span>
+          <div class="ch">${sv('chevron','14px')}</div>
+        </a>${i < rows.length-1 ? '<div class="sep"></div>' : ''}
+      `).join('')}
+    </div>
+  `).join('')}
 `, 0, {nav:true, back:'01-home', right:'🔍'}));
 
 // ══ 模板 B 补强 · 双列 MetricCard（图 2 Activity Details）→ 统计 ══

@@ -10,6 +10,7 @@ const S = (d, extra) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentCol
   stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"${extra||''}>${d}</svg>`;
 
 const I = {
+  bolt:       S('<path d="M13 2 5 13.5h5.5L11 22l8-11.5h-5.5L13 2z"/>'),
   // 锁与钥匙
   lock:      S('<rect x="5" y="10.5" width="14" height="10.5" rx="2.6"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/>'),
   lockOpen:  S('<rect x="5" y="10.5" width="14" height="10.5" rx="2.6"/><path d="M8 10.5V7.5a4 4 0 0 1 7.8-1.2"/>'),

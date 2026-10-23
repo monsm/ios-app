@@ -2,88 +2,109 @@
 <title>诊断与自检</title><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="pages.css"></head><body>
 <div class="phone">
 <div class="statusbar">
-  <span class="sb-time" data-real-time>12:00</span>
+  <span class="sb-time" data-real-time>9:41</span>
   <span class="sb-right">
     <svg width="17" height="11" viewBox="0 0 17 11" fill="#FFF"><rect x="0" y="7.5" width="3" height="3.5" rx="1"/><rect x="4.5" y="5.5" width="3" height="5.5" rx="1"/><rect x="9" y="3" width="3" height="8" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
     <svg width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="#FFF" stroke-width="1.6" stroke-linecap="round"><path d="M1 3.4a10.5 10.5 0 0 1 14 0"/><path d="M3.6 6.2a6.6 6.6 0 0 1 8.8 0"/><path d="M6.2 8.9a2.9 2.9 0 0 1 3.6 0"/><circle cx="8" cy="10.2" r=".7" fill="#FFF" stroke="none"/></svg>
     <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x=".5" y=".5" width="21" height="11" rx="3.2" stroke="#FFF" stroke-opacity=".4"/><rect x="2" y="2" width="15" height="8" rx="2" fill="#FFF"/><path d="M23 4.2v3.6a2 2 0 0 0 0-3.6z" fill="#FFF" fill-opacity=".5"/></svg>
   </span>
 </div><div class="navbar">
-  <a class="back" href="4a-me.html">‹</a><span class="nt">诊断与自检</span><span class="nr"></span></div><div class="scroll"><div class="page hasnav">
+  <a class="back" href="05-system.html">‹</a><span class="nt">诊断与自检</span><span class="nr"></span></div><div class="scroll"><div class="page hasnav">
 
   <div class="h1" style="margin-top:8px">诊断与自检</div>
   <div class="sub">进入时算一次，动作后重算</div>
 
-  
-
-  <div class="card" style="">
+  <!-- 图5 MetricCard 主角：数据健康 0 问题 -->
+  <div class="card">
     <div class="cardlink">数据健康<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
-    <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
-      <span style="color:#30D158;width:20px;height:20px"><span class="svgi" data-i="check"></span></span>
-      <div style="flex:1"><div style="font-size:16px">没有发现数据问题</div>
-      <div style="font-size:12px;color:#8D8D93;margin-top:3px">数据键都能解析，也没有孤立文件或日志断档</div></div>
+    <div style="display:flex;align-items:flex-start;gap:16px;margin-top:4px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:44px;font-weight:700;line-height:1;letter-spacing:-1.4px;
+          font-variant-numeric:tabular-nums;color:#2FD65C">0<span style="font-size:14px;font-weight:500;color:#8A8A90;margin-left:4px">项问题</span></div>
+        <div style="font-size:13px;color:#8A8A90;margin-top:9px;line-height:1.5">数据键都能解析，也没有孤立文件或日志断档</div>
+      </div>
+      <svg width="80" height="80" viewBox="0 0 80 80" style="flex:0 0 auto">
+    <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="6"/>
+    <circle cx="40" cy="40" r="34" fill="none" stroke="#2FD65C" stroke-width="6"
+      stroke-linecap="round" stroke-dasharray="213.6 213.6"
+      transform="rotate(-90 40 40)"/>
+  </svg>
     </div>
     <div class="sep"></div>
     <div class="cols">
-      <div><div class="clabel" style="margin-top:0">孤儿数据</div><div class="cvalue">0</div></div>
-      <div><div class="clabel" style="margin-top:0">日志断档</div><div class="cvalue">0</div></div>
+      <div><div class="clabel">孤儿数据</div><div class="cvalue" style="color:#FFF">0</div></div><div><div class="clabel">日志断档</div><div class="cvalue" style="color:#FFF">0</div></div>
     </div>
+    <div class="footer">每次进入这一页都会重算一次：解析所有数据键、比对事件链、检查文件完整性。</div>
   </div>
 
+  <!-- 图5 MetricCard：稳定性和启动耗时 -->
+  <div class="card">
+    <div class="cardlink">稳定性<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;align-items:flex-start;gap:16px;margin-top:4px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:44px;font-weight:700;line-height:1;letter-spacing:-1.4px;
+          font-variant-numeric:tabular-nums;color:#4FC3FF">0.8<span style="font-size:14px;font-weight:500;color:#8A8A90;margin-left:4px">秒</span></div>
+        <div style="font-size:13px;color:#8A8A90;margin-top:9px;line-height:1.5">启动耗时 · 内存占用 42 MB</div>
+      </div>
+      <svg width="80" height="80" viewBox="0 0 80 80" style="flex:0 0 auto">
+    <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="6"/>
+    <circle cx="40" cy="40" r="34" fill="none" stroke="#4FC3FF" stroke-width="6"
+      stroke-linecap="round" stroke-dasharray="196.5 213.6"
+      transform="rotate(-90 40 40)"/>
+  </svg>
+    </div>
+    <div class="sep"></div>
+    <div class="cols">
+      <div><div class="clabel">异常退出</div><div class="cvalue" style="color:#FFA31A">最近一次</div></div><div><div class="clabel">内存占用</div><div class="cvalue" style="color:#FFF">42 MB</div></div><div><div class="clabel">本次启动</div><div class="cvalue" style="color:#2FD65C">0.8 秒</div></div>
+    </div>
+    <div class="footer">异常退出的记录会保留 —— 最近有一次，已经归档到崩溃日志。</div>
+  </div>
+
+  <!-- 图2 卡解剖：本机自检逐项 -->
   <div class="card">
     <div class="cardlink">本机自检<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
     <div style="display:flex;flex-direction:column;gap:14px;margin-top:10px">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:15px">稳定性</span>
-          <span style="font-size:13px;color:#FF9F0A">最近有一次异常退出</span></div><div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:15px">钥匙解析</span>
-          <span style="font-size:13px;color:#30D158">13 项全部可读</span></div><div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:15px">备份完整性</span>
-          <span style="font-size:13px;color:#FF9F0A">从未备份</span></div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="width:7px;height:7px;border-radius:50%;background:#FFA31A;flex:0 0 auto"></span>
+        <span style="font-size:15px;color:#FFF;flex:1">稳定性</span>
+        <span style="font-size:13px;color:#FFA31A;font-weight:600">最近有一次异常退出</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="width:7px;height:7px;border-radius:50%;background:#2FD65C;flex:0 0 auto"></span>
+        <span style="font-size:15px;color:#FFF;flex:1">钥匙解析</span>
+        <span style="font-size:13px;color:#2FD65C;font-weight:600">13 项全部可读</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="width:7px;height:7px;border-radius:50%;background:#FFA31A;flex:0 0 auto"></span>
+        <span style="font-size:15px;color:#FFF;flex:1">备份完整性</span>
+        <span style="font-size:13px;color:#FFA31A;font-weight:600">从未备份</span>
+      </div>
+    </div>
+    <div class="sep"></div>
+    <div class="footer">自检只读本机数据，不上传任何内容。异常退出与断链会在这里标出来。</div>
+  </div>
+
+  <!-- 图2 卡解剖：蓝牙 -->
+  <div class="card">
+    <div class="cardlink">蓝牙<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div class="cols" style="margin-top:8px">
+      <div><div class="clabel">连接状态</div><div class="cvalue" style="color:#2FD65C">已连接</div></div>
+      <div><div class="clabel">握手耗时</div><div class="cvalue">1,033 ms</div></div>
+    </div>
+    <div class="sep"></div>
+    <div class="footer">握手耗时偏高（正常 &lt; 800 ms）—— 靠近门锁再试一次通常更快。</div>
+  </div>
+
+  <!-- 图2 卡解剖：数据保留 -->
+  <div class="card">
+    <div class="cardlink">数据保留<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div class="cols" style="margin-top:8px">
+      <div><div class="clabel">事件记录</div><div class="cvalue">保留 20 条</div></div>
+      <div><div class="clabel">审计日志</div><div class="cvalue">永久</div></div>
     </div>
   </div>
 
-  
-  <div class="card">
-    <div class="cardlink">稳定性<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
-    <div style="display:flex;flex-direction:column;gap:14px;margin-top:10px">
-      <div style="display:flex;justify-content:space-between">
-          <span style="font-size:15px">异常退出</span><span style="font-size:13px;color:#FF9F0A">最近有一次</span></div><div style="display:flex;justify-content:space-between">
-          <span style="font-size:15px">启动耗时</span><span style="font-size:13px;color:#30D158">0.8 秒</span></div><div style="display:flex;justify-content:space-between">
-          <span style="font-size:15px">内存占用</span><span style="font-size:13px;color:#30D158">42 MB</span></div>
-    </div>
-  </div>
-  <div class="card">
-    <div class="cardlink">操作日志<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
-    <div style="display:flex;flex-direction:column;gap:12px;margin-top:10px">
-      <div style="display:flex;justify-content:space-between;font-size:14px">
-          <span>10-23 07:12</span><span style="color:#8D8D93">开门 · 密码</span></div><div style="display:flex;justify-content:space-between;font-size:14px">
-          <span>10-23 06:20</span><span style="color:#8D8D93">改 · 然然家</span></div><div style="display:flex;justify-content:space-between;font-size:14px">
-          <span>10-22 21:40</span><span style="color:#8D8D93">开门 · 自动</span></div>
-    </div>
-  </div>
-  <div class="card">
-    <div class="cardlink">蓝牙<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
-    <div style="display:flex;justify-content:space-between;margin-top:10px">
-      <span style="font-size:15px">连接状态</span><span style="font-size:13px;color:#30D158">已连接</span>
-    </div>
-    <div class="sep"></div>
-    <div style="display:flex;justify-content:space-between">
-      <span style="font-size:15px">握手耗时</span><span style="font-size:13px;color:#FFF">1,033 ms</span>
-    </div>
-  </div>
-  <div class="card">
-    <div class="cardlink">数据保留<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
-    <div style="display:flex;justify-content:space-between;margin-top:10px">
-      <span style="font-size:15px">事件记录</span><span style="font-size:13px;color:#8D8D93">保留 20 条</span>
-    </div>
-    <div class="sep"></div>
-    <div style="display:flex;justify-content:space-between">
-      <span style="font-size:15px">审计日志</span><span style="font-size:13px;color:#8D8D93">永久</span>
-    </div>
-  </div>
-  <button class="btn sec" style="margin-top:4px">复制全部诊断信息</button>
-  <div style="text-align:center;font-size:12px;color:#6A6A6E;margin-top:12px">已复制到剪贴板</div>
+  <button class="btn" style="margin-top:18px;background:rgba(255,255,255,.14);color:#FFF;font-weight:600">复制全部诊断信息</button>
 
 </div></div><div class="tabbar">
 <a class="tab" href="01-home.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg><span>门厅</span></a>

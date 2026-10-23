@@ -1,54 +1,85 @@
 <!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
-<title>状态规范</title><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="pages.css"></head><body>
+<title>三种状态</title><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="pages.css"></head><body>
 <div class="phone">
 <div class="statusbar">
-  <span class="sb-time" data-real-time>12:00</span>
+  <span class="sb-time" data-real-time>9:41</span>
   <span class="sb-right">
     <svg width="17" height="11" viewBox="0 0 17 11" fill="#FFF"><rect x="0" y="7.5" width="3" height="3.5" rx="1"/><rect x="4.5" y="5.5" width="3" height="5.5" rx="1"/><rect x="9" y="3" width="3" height="8" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
     <svg width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="#FFF" stroke-width="1.6" stroke-linecap="round"><path d="M1 3.4a10.5 10.5 0 0 1 14 0"/><path d="M3.6 6.2a6.6 6.6 0 0 1 8.8 0"/><path d="M6.2 8.9a2.9 2.9 0 0 1 3.6 0"/><circle cx="8" cy="10.2" r=".7" fill="#FFF" stroke="none"/></svg>
     <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x=".5" y=".5" width="21" height="11" rx="3.2" stroke="#FFF" stroke-opacity=".4"/><rect x="2" y="2" width="15" height="8" rx="2" fill="#FFF"/><path d="M23 4.2v3.6a2 2 0 0 0 0-3.6z" fill="#FFF" fill-opacity=".5"/></svg>
   </span>
-</div><div class="scroll"><div class="page">
-  <div class="h1">三种状态</div>
-  <div class="sub">骨架屏 / 空态 / 错误态</div>
+</div><div class="navbar">
+  <a class="back" href="05-system.html">‹</a><span class="nt">三种状态</span><span class="nr"></span></div><div class="scroll"><div class="page hasnav">
 
-  
+  <div class="h1" style="margin-top:8px">三种状态</div>
+  <div class="sub">骨架屏 · 空态 · 错误态</div>
 
-  <div class="card" style="">
-    <div class="ctitle" style="font-size:18px">① 骨架屏</div>
-    <div style="margin-top:14px">
-      <div class="sk sk-line" style="width:40%"></div>
-      <div class="sk sk-line tall" style="width:65%;margin-top:12px"></div>
-      <div class="sk sk-line" style="width:90%;margin-top:10px"></div>
-      <div class="sk sk-line" style="width:75%;margin-top:8px"></div>
+  <!-- ① 图2 卡解剖：骨架屏（shimmer 占位，真实布局骨架）-->
+  <div class="card" style="margin-top:24px">
+    <div class="cardlink">① 骨架屏<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="font-size:11px;color:#6A6A72;margin-top:2px">数据还在读，先把版式占住 —— 不闪白、不跳动</div>
+    <div style="margin-top:16px">
+      <!-- 骨架行：与真实卡同高度，灰色块 -->
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.07);flex:0 0 auto"></div>
+        <div style="flex:1">
+          <div style="height:11px;border-radius:6px;background:rgba(255,255,255,.075);width:38%"></div>
+          <div style="height:9px;border-radius:5px;background:rgba(255,255,255,.05);width:62%;margin-top:9px"></div>
+        </div>
+      </div>
+      <div style="height:1px;background:rgba(255,255,255,.06);margin:14px 0"></div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.07);flex:0 0 auto"></div>
+        <div style="flex:1">
+          <div style="height:11px;border-radius:6px;background:rgba(255,255,255,.075);width:52%"></div>
+          <div style="height:9px;border-radius:5px;background:rgba(255,255,255,.05);width:44%;margin-top:9px"></div>
+        </div>
+      </div>
+      <div style="height:1px;background:rgba(255,255,255,.06);margin:14px 0"></div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.07);flex:0 0 auto"></div>
+        <div style="flex:1">
+          <div style="height:11px;border-radius:6px;background:rgba(255,255,255,.075);width:29%"></div>
+          <div style="height:9px;border-radius:5px;background:rgba(255,255,255,.05);width:56%;margin-top:9px"></div>
+        </div>
+      </div>
     </div>
+    <div class="sep"></div>
+    <div class="footer">骨架块用 rgba(255,255,255,.05–.075) —— 比正文暗一档，看起来是「还没到」而不是「坏了」。</div>
   </div>
 
+  <!-- ② 图2 卡解剖：空态（居中图标 + 主文 + 副文）-->
   <div class="card">
-    <div class="ctitle" style="font-size:18px">② 空态</div>
-    <div class="empty-state">
-      <div class="es-icon"><span class="svgi" data-i="info" data-sz="28px"></span></div>
-      <div class="es-title">昨晚没有开门记录</div>
-      <div class="es-desc">门锁正常在线，只是没人经过</div>
+    <div class="cardlink">② 空态<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="text-align:center;padding:34px 0 30px">
+      <div style="width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,.055);
+        color:#8A8A90;display:inline-flex;align-items:center;justify-content:center"><span class="svgi" data-i="clock" data-sz="24px></span></div>
+      <div style="font-size:17px;font-weight:600;color:#FFF;margin-top:16px">昨晚没有开门记录</div>
+      <div style="font-size:13px;color:#8A8A90;margin-top:8px;line-height:1.55">门锁正常在线，只是没人经过</div>
     </div>
+    <div class="sep"></div>
+    <div class="footer">空态要说清楚「是真的没有」还是「读取失败」—— 这里属于前者，所以语气是平的。</div>
   </div>
 
+  <!-- ③ 图2 卡解剖：错误态（警示图标 + 主文 + 副文 + 重试）-->
   <div class="card">
-    <div class="ctitle" style="font-size:18px">③ 错误态</div>
-    <div class="error-state">
-      <div class="er-icon"><span class="svgi" data-i="warn" data-sz="28px"></span></div>
-      <div class="er-title">连接超时</div>
-      <div class="er-desc">门锁在休眠，唤醒后重试</div>
-      <a class="er-act" href="#">重试</a>
+    <div class="cardlink">③ 错误态<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="text-align:center;padding:30px 0 22px">
+      <div style="width:54px;height:54px;border-radius:50%;background:rgba(255,163,26,.14);
+        color:#FFA31A;display:inline-flex;align-items:center;justify-content:center"><span class="svgi" data-i="warn" data-sz="24px></span></div>
+      <div style="font-size:17px;font-weight:600;color:#FFF;margin-top:16px">连接超时</div>
+      <div style="font-size:13px;color:#8A8A90;margin-top:8px;line-height:1.55">门锁在休眠，唤醒后重试</div>
+      <button class="btn" style="margin-top:18px;height:40px;width:auto;padding:0 26px;
+        background:rgba(255,255,255,.12);color:#FFF;font-size:14px;font-weight:600;border-radius:999px">重试</button>
     </div>
+    <div class="sep"></div>
+    <div class="footer">错误态必须给出「下一步做什么」—— 这里写的是「唤醒后重试」，不是「出错了」。</div>
   </div>
-</div></div>
-</div>
-<div class="tabbar">
-  <a class="tab" href="01-home.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg><span>门厅</span></a>
-  <a class="tab" href="02-keys.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="12" r="3.5"/><path d="M11 12h9"/><path d="M17 12v3"/><path d="M20 12v2"/></svg><span>钥匙</span></a>
-  <a class="tab" href="03-devices.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10.5 5.5h3"/></svg><span>设备</span></a>
-  <a class="tab" href="04-members.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><circle cx="17" cy="9.5" r="2.4"/><path d="M16 14.2c2.4.2 4.5 1.9 4.5 4.3"/></svg><span>成员</span></a>
-  <a class="tab" href="05-system.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.65 8.6a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.56 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg><span>系统</span></a>
-</div>
-<script src="icons-render.js"></script><script src="interact.js"></script></body></html>
+
+</div></div><div class="tabbar">
+<a class="tab" href="01-home.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg><span>门厅</span></a>
+<a class="tab" href="02-keys.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="12" r="3.5"/><path d="M11 12h9"/><path d="M17 12v3"/><path d="M20 12v2"/></svg><span>钥匙</span></a>
+<a class="tab" href="03-devices.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10.5 5.5h3"/></svg><span>设备</span></a>
+<a class="tab" href="04-members.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><circle cx="17" cy="9.5" r="2.4"/><path d="M16 14.2c2.4.2 4.5 1.9 4.5 4.3"/></svg><span>成员</span></a>
+<a class="tab on" href="05-system.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.65 8.6a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.56 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg><span>系统</span></a>
+</div></div><script src="icons-render.js"></script><script src="interact.js"></script></body></html>

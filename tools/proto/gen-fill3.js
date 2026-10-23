@@ -51,39 +51,81 @@ fs.writeFileSync(D+'46-safemode.html', L.page('安全模式说明', `
   <div class="h1">安全模式</div>
   <div class="sub">门锁的验证方式分 A / B 两种</div>
 
+  <!-- 图2 卡解剖：A/B 双角色卡（大字 A/B + 单位"种" + footer 全句）-->
   <div class="duo" style="margin-top:22px">
-    ${gcard('A 模式',
-      `<div style="width:64px;height:64px;border-radius:50%;background:rgba(48,209,88,.16);
-        display:flex;align-items:center;justify-content:center;font-size:30px;color:#30D158;font-weight:700">A</div>`,
-      '单一方式即可开锁')}
-    ${gcard('B 模式',
-      `<div style="width:64px;height:64px;border-radius:50%;background:rgba(255,159,10,.16);
-        display:flex;align-items:center;justify-content:center;font-size:30px;color:#FF9F0A;font-weight:700">B</div>`,
-      '两种方式组合验证')}
+    <div class="duo-card">
+      <div class="dt">A 模式</div>
+      <div style="display:flex;align-items:flex-end;gap:6px;margin-top:6px">
+        <div style="font-size:44px;font-weight:700;line-height:1;color:#2FD65C;letter-spacing:-1.4px">A</div>
+        <div style="font-size:13px;color:#8A8A90;padding-bottom:5px">单一</div>
+      </div>
+      <div style="font-size:12px;color:#8A8A90;margin-top:9px;line-height:1.45">任选一种即可开锁</div>
+    </div>
+    <div class="duo-card">
+      <div class="dt">B 模式</div>
+      <div style="display:flex;align-items:flex-end;gap:6px;margin-top:6px">
+        <div style="font-size:44px;font-weight:700;line-height:1;color:#FFA31A;letter-spacing:-1.4px">B</div>
+        <div style="font-size:13px;color:#8A8A90;padding-bottom:5px">组合</div>
+      </div>
+      <div style="font-size:12px;color:#8A8A90;margin-top:9px;line-height:1.45">两种方式组合验证</div>
+    </div>
   </div>
 
+  <!-- 图2 数据卡：验证强度（图2 的 Duration 那一行的等价物）-->
+  <div class="card">
+    <div class="cardlink">验证强度<span class="ch">›</span></div>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">
+          <span style="color:#8A8A90">A 模式（单一验证）</span>
+          <span style="color:#FFF;font-weight:600;font-variant-numeric:tabular-nums">1</span>
+        </div>
+        <div style="height:5px;border-radius:3px;background:rgba(255,255,255,.08)">
+          <div style="height:5px;border-radius:3px;background:#2FD65C;width:33%"></div>
+        </div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">
+          <span style="color:#8A8A90">B 模式（组合验证）</span>
+          <span style="color:#FFF;font-weight:600;font-variant-numeric:tabular-nums">2</span>
+        </div>
+        <div style="height:5px;border-radius:3px;background:rgba(255,255,255,.08)">
+          <div style="height:5px;border-radius:3px;background:#FFA31A;width:66%"></div>
+        </div>
+      </div>
+    </div>
+    <div class="sep"></div>
+    <div class="footer">B 模式的强度不是 A 的两倍 —— 它换的是"知道什么 + 有什么"的组合，防的是手机被借走。</div>
+  </div>
+
+  <!-- 图2 卡解剖：差别（彩色点行 + footer 全句）-->
   <div class="card">
     <div class="cardlink">两种模式的差别<span class="ch">›</span></div>
-    <div style="margin-top:12px;display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;flex-direction:column;gap:16px;margin-top:12px">
       <div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span class="badge ok">A</span><span style="font-size:15px;font-weight:600">只需要一种</span></div>
-        <div style="font-size:13px;color:var(--text-sub);margin-top:8px;line-height:1.6">
+        <div style="display:flex;align-items:center;gap:9px">
+          <span style="width:7px;height:7px;border-radius:50%;background:#2FD65C;flex:0 0 auto"></span>
+          <span style="font-size:15px;font-weight:600">A · 只需要一种</span></div>
+        <div style="font-size:13px;color:#8A8A90;margin-top:7px;line-height:1.6">
           密码／指纹／手机，任选其一验证通过就可以开锁。</div>
       </div>
       <div class="sep" style="margin:0"></div>
       <div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span class="badge warn">B</span><span style="font-size:15px;font-weight:600">需要两种不同方式</span></div>
-        <div style="font-size:13px;color:var(--text-sub);margin-top:8px;line-height:1.6">
+        <div style="display:flex;align-items:center;gap:9px">
+          <span style="width:7px;height:7px;border-radius:50%;background:#FFA31A;flex:0 0 auto"></span>
+          <span style="font-size:15px;font-weight:600">B · 需要两种不同方式</span></div>
+        <div style="font-size:13px;color:#8A8A90;margin-top:7px;line-height:1.6">
           指纹+密码／指纹+手机／手机+密码，组合验证通过才可开锁。</div>
       </div>
     </div>
+    <div class="sep"></div>
+    <div class="footer">A 模式方便，B 模式安全 —— 门锁里只认键盘操作，所以放宽必须走门锁本身。</div>
   </div>
 
+  <!-- 图2 卡解剖：怎么设置（footer 保留原有全句）-->
   <div class="card">
     <div class="cardlink">怎么设置<span class="ch">›</span></div>
-    <div style="font-size:14px;color:var(--text-sub);margin-top:8px;line-height:1.7">
+    <div style="font-size:14px;color:#8A8A90;margin-top:8px;line-height:1.7">
       当前模式在「锁信息名片」(设备页) 读取后显示。本 App 只给变严的方向 (A→B)；要放宽回 A 模式请在门锁键盘上操作或联系管理员。
     </div>
     <div class="footer">还没读到锁状态 —— 先在设备页读一次锁信息，这里才会出现切换按钮。</div>

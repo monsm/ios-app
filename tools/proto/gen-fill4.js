@@ -2,6 +2,7 @@
 const L = require('./lib.js');
 const fs = require('fs');
 const D = __dirname + '/';
+const sv = (n, sz) => `<span class="svgi" data-i="${n}"${sz?` data-sz="${sz}"`:''}></span>`;
 
 // ══ 42 防窥与遮蔽 —— 加「已启用」环 ══
 // [已移交给 gen-peek.js] fs.writeFileSync(D+'42-peek.html', L.page('防窥与遮蔽', `
@@ -124,54 +125,119 @@ fs.writeFileSync(D+'4a-me.html', L.page('本机设置', `
   <div class="h1">本机设置</div>
   <div class="sub">应用锁 · 备份 · 外观 · 关于</div>
 
-  <!-- 四个读数 + 保护率环 -->
-  <div class="card" style="margin-top:22px">
-    <div style="display:flex;align-items:center;gap:16px">
-      <div style="flex:1">
-        <div style="display:flex;justify-content:space-around;text-align:center">
-          ${[['未锁','应用锁','#FF9F0A'],['0','待处理','#30D158'],
-             ['从未','上次备份','#FF9F0A'],['1','门锁','#0090FC']].map(([v,l,c])=>`
-            <div><div style="font-size:20px;font-weight:700;color:${c};
-              font-variant-numeric:tabular-nums">${v}</div>
-            <div style="font-size:11px;color:var(--text-sub);margin-top:5px">${l}</div></div>`).join('')}
-        </div>
-      </div>
-      ${L.donut(72,[['#FF9F0A',0.30],['#30D158',0.25]],'2')}
+  <!-- 图1 顶部双 chip：主状态 + 次状态（玻璃胶囊）-->
+  <div style="display:flex;gap:12px;margin-top:18px">
+    <div class="chip" style="flex:1;display:flex;align-items:center;gap:11px;padding:11px 16px">
+      <span style="width:26px;height:26px;border-radius:8px;background:rgba(255,163,26,.18);
+        display:inline-flex;align-items:center;justify-content:center;color:#FFA31A">${sv('lock','15px')}</span>
+      <span style="flex:1;min-width:0">
+        <span style="display:block;font-size:12px;color:#8A8A90">应用锁</span>
+        <span style="display:block;font-size:16px;font-weight:700;color:#FFA31A;margin-top:1px">未开启</span></span>
+    </div>
+    <div class="chip" style="flex:1;display:flex;align-items:center;gap:11px;padding:11px 16px">
+      <span style="width:26px;height:26px;border-radius:8px;background:rgba(47,214,92,.18);
+        display:inline-flex;align-items:center;justify-content:center;color:#2FD65C">${sv('check','15px')}</span>
+      <span style="flex:1;min-width:0">
+        <span style="display:block;font-size:12px;color:#8A8A90">待处理</span>
+        <span style="display:block;font-size:16px;font-weight:700;color:#FFF;margin-top:1px">0 项</span></span>
     </div>
   </div>
 
-  <div class="card rowlist" style="padding:6px 0">
-    ${L.row('40-security','🔒','rgba(255,159,10,.16)','#FF9F0A','本机数据保护','应用锁 / 审计 / 销毁','<span style="font-size:13px;color:var(--text-tert);margin-right:8px">未开启</span>')}
+  <!-- 图2 卡解剖：本机状态（44px 大数字 + 环 + 三列细线）-->
+  <div class="card" style="margin-top:20px">
+    <div class="cardlink">本机状态<span class="ch">${sv('chevron')}</span></div>
+    <div style="display:flex;align-items:flex-start;gap:16px;margin-top:2px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:44px;font-weight:700;line-height:1;letter-spacing:-1.4px;
+          font-variant-numeric:tabular-nums;color:#FFA31A">1<span style="font-size:14px;font-weight:500;color:#8A8A90;margin-left:4px">项待办</span></div>
+        <div style="font-size:13px;color:#8A8A90;margin-top:9px;line-height:1.5">应用锁未开启 —— 现在谁拿起这台手机，都能直接看到你存的密码。</div>
+      </div>
+      <svg width="76" height="76" viewBox="0 0 76 76" style="flex:0 0 auto">
+        <circle cx="38" cy="38" r="31" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="6"/>
+        <circle cx="38" cy="38" r="31" fill="none" stroke="#FFA31A" stroke-width="6"
+          stroke-linecap="round" stroke-dasharray="58.4 194.8" transform="rotate(-90 38 38)"/>
+      </svg>
+    </div>
     <div class="sep"></div>
-    ${L.row('42-peek','👁','rgba(10,219,216,.16)','#0ADBD8','隐私与伪装','后台即糊 / 限时可见 / 水印')}
-    <div class="sep"></div>
-    ${L.row('4a-me','🩺','rgba(0,144,252,.16)','#0090FC','诊断与自检','自检 · 数据健康 · 启动耗时')}
-  </div>
-  <div class="footer" style="padding:0 20px">这一组动的是本机数据与访问权限，改动前会二次确认。</div>
-
-  <div class="card rowlist" style="margin-top:12px;padding:6px 0">
-    ${L.row('21-lock-profile','🔒','rgba(255,255,255,.08)','#8D8D93','这台锁','容量 / 固件 / 信号')}
-    <div class="sep"></div>
-    ${L.row('20-locks','📱','rgba(255,255,255,.08)','#8D8D93','设备管理','1 把')}
-    <div class="sep"></div>
-    ${L.row('47-backup','💾','rgba(255,159,10,.16)','#FF9F0A','备份与恢复','全量导出 / 导入')}
-    <div class="sep"></div>
-    ${L.row('49-appearance','🎨','rgba(232,160,92,.18)','#E8A05C','外观工作室','强调色 / 对比度 / 周起始')}
-  </div>
-
-  <div class="card rowlist" style="margin-top:12px;padding:6px 0">
-    ${L.row('48-export','📤','rgba(255,255,255,.08)','#8D8D93','导出中心','PDF / CSV / 分享')}
-    <div class="sep"></div>
-    ${L.row('60-care','🔧','rgba(255,255,255,.08)','#8D8D93','维护与保养','周期 / 待办 / 历史')}
-    <div class="sep"></div>
-    ${L.row('61-reminders','🎂','rgba(255,255,255,.08)','#8D8D93','关怀提醒','公告板 / 纪念日 / 生日')}
-    <div class="sep"></div>
-    ${L.row('70-icon-picker','📲','rgba(255,255,255,.08)','#8D8D93','App 图标','10 款可选')}
+    <div class="cols">
+      <div><div class="clabel">门锁</div><div class="cvalue">1 把</div></div>
+      <div><div class="clabel">上次备份</div><div class="cvalue" style="color:#FFA31A">从未</div></div>
+      <div><div class="clabel">设备</div><div class="cvalue">iPhone</div></div>
+    </div>
+    <div class="footer">四个读数都在这一张卡里 —— 动任何一项都会先二次确认。</div>
   </div>
 
-  <div style="text-align:center;font-size:12px;color:var(--text-tert);margin-top:24px">
-    KF Key · 1.0.2 (2026.10.23)
+  <!-- 图2 卡解剖：本机数据与访问权限 -->
+  <div class="card" style="padding:6px 0">
+    <div class="cardlink" style="padding:8px 20px">本机数据与访问权限<span class="ch">${sv('chevron')}</span></div>
+    <a class="rw" href="40-security.html">
+      <div class="ic" style="background:rgba(255,163,26,.14);color:#FFA31A">${sv('shieldCheck')}</div>
+      <div class="tx"><div class="tt">本机数据保护</div><div class="sb">应用锁 / 审计 / 销毁</div></div>
+      <span style="font-size:13px;color:#6A6A72;margin-right:8px">未开启</span>
+      <div class="ch">${sv('chevron')}</div></a>
+    <div class="sep"></div>
+    <a class="rw" href="42-peek.html">
+      <div class="ic" style="background:rgba(10,219,216,.14);color:#0ADBD8">${sv('eye')}</div>
+      <div class="tx"><div class="tt">隐私与伪装</div><div class="sb">后台即糊 / 限时可见 / 水印</div></div>
+      <div class="ch">${sv('chevron')}</div></a>
+    <div class="sep"></div>
+    <a class="rw" href="84-diagnostics.html">
+      <div class="ic" style="background:rgba(79,195,255,.14);color:#4FC3FF">${sv('cpu')}</div>
+      <div class="tx"><div class="tt">诊断与自检</div><div class="sb">自检 · 数据健康 · 启动耗时</div></div>
+      <div class="ch">${sv('chevron')}</div></a>
+    <div class="sep"></div>
+    <div class="footer" style="padding:12px 20px 10px;margin:0">这一组动的是本机数据与访问权限，改动前会二次确认。</div>
   </div>
+
+  <!-- 图2 卡解剖：门锁与设备 -->
+  <div class="card" style="padding:6px 0">
+    <div class="cardlink" style="padding:8px 20px">门锁与设备<span class="ch">${sv('chevron')}</span></div>
+    <a class="rw" href="21-lock-profile.html">
+      <div class="ic" style="background:rgba(255,255,255,.06);color:#8A8A90">${sv('lock')}</div>
+      <div class="tx"><div class="tt">这台锁</div><div class="sb">容量 / 固件 / 信号</div></div>
+      <div class="ch">${sv('chevron')}</div></a>
+    <div class="sep"></div>
+    <a class="rw" href="20-locks.html">
+      <div class="ic" style="background:rgba(255,255,255,.06);color:#8A8A90">${sv('phone')}</div>
+      <div class="tx"><div class="tt">设备管理</div><div class="sb">1 把</div></div>
+      <div class="ch">${sv('chevron')}</div></a>
+    <div class="sep"></div>
+    <a class="rw" href="47-backup.html">
+      <div class="ic" style="background:rgba(255,163,26,.14);color:#FFA31A">${sv('archive')}</div>
+      <div class="tx"><div class="tt">备份与恢复</div><div class="sb">全量导出 / 导入</div></div>
+      <div class="ch">${sv('chevron')}</div></a>
+    <div class="sep"></div>
+    <a class="rw" href="49-appearance.html">
+      <div class="ic" style="background:rgba(217,139,69,.16);color:#D98B45">${sv('star')}</div>
+      <div class="tx"><div class="tt">外观工作室</div><div class="sb">强调色 / 对比度 / 周起始</div></div>
+      <div class="ch">${sv('chevron')}</div></a>
+  </div>
+
+  <!-- 图2 卡解剖：导出与关怀 -->
+  <div class="card" style="padding:6px 0">
+    <div class="cardlink" style="padding:8px 20px">导出与关怀<span class="ch">${sv('chevron')}</span></div>
+    <a class="rw" href="48-export.html">
+      <div class="ic" style="background:rgba(255,255,255,.06);color:#8A8A90">${sv('export')}</div>
+      <div class="tx"><div class="tt">导出中心</div><div class="sb">PDF / CSV / 分享</div></div>
+      <div class="ch">${sv('chevron')}</div></a>
+    <div class="sep"></div>
+    <a class="rw" href="60-care.html">
+      <div class="ic" style="background:rgba(255,255,255,.06);color:#8A8A90">${sv('timer')}</div>
+      <div class="tx"><div class="tt">维护与保养</div><div class="sb">周期 / 待办 / 历史</div></div>
+      <div class="ch">${sv('chevron')}</div></a>
+    <div class="sep"></div>
+    <a class="rw" href="61-reminders.html">
+      <div class="ic" style="background:rgba(255,110,180,.14);color:#FF6EB4">${sv('heart')}</div>
+      <div class="tx"><div class="tt">关怀提醒</div><div class="sb">公告板 / 纪念日 / 生日</div></div>
+      <div class="ch">${sv('chevron')}</div></a>
+    <div class="sep"></div>
+    <a class="rw" href="70-icon-picker.html">
+      <div class="ic" style="background:rgba(255,255,255,.06);color:#8A8A90">${sv('star')}</div>
+      <div class="tx"><div class="tt">App 图标</div><div class="sb">8 款可选</div></div>
+      <div class="ch">${sv('chevron')}</div></a>
+  </div>
+
+
 `, 4, {nav:true, back:'05-system'}));
 
 // ══ 61 关怀提醒 —— 彩色数据行 ══

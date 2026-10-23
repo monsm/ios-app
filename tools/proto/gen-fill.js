@@ -1,4 +1,16 @@
 'use strict';
+
+// 图5 环形（MetricCard 右侧）
+const mRing = (pct, color, size=76, label='') => {
+  const R = size/2 - 4, C = size/2, W = 6, circ = 2*Math.PI*R;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="flex:0 0 auto">
+    <circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="${W}"/>
+    <circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="${color}" stroke-width="${W}"
+      stroke-linecap="round" stroke-dasharray="${(circ*pct).toFixed(1)} ${circ.toFixed(1)}" transform="rotate(-90 ${C} ${C})"/>
+    ${label?`<text x="${C}" y="${C+5}" text-anchor="middle" font-size="${Math.round(size*0.22)}" font-weight="700" fill="${color}" font-family="system-ui">${label}</text>`:''}
+  </svg>`;
+};
+
 const L = require('./lib.js');
 const fs = require('fs');
 const D = __dirname + '/';
@@ -130,52 +142,79 @@ const M = [['朕','#7B7BE8','4'],['爱妃','#E8A05C','2'],['皇子','#30D158','5
 */
 // ══ 47 备份与恢复 —— 加备份时效环（图 3 三段环）══
 fs.writeFileSync(D+'47-backup.html', L.page('备份与恢复', `
-  <div class="card" style="margin-top:8px;background:linear-gradient(160deg,#5E5CE6,#3C489C)">
-    <div style="display:flex;align-items:center;gap:16px">
-      <div style="flex:1">
-        <div style="font-size:18px;font-weight:700">从未备份</div>
-        <div style="font-size:13px;color:rgba(255,255,255,.75);margin-top:6px">
-          备份包含全部钥匙与设置，全程离线加密。</div>
+  <div class="h1">备份与恢复</div>
+  <div class="sub">数据只在这台 iPhone · 全程离线加密</div>
+
+  <!-- 图5 MetricCard 主角：备份状态（44px 大数字 + 灰环）+ 三列细线 -->
+  <div class="card" style="margin-top:24px">
+    <div class="cardlink">备份状态<span class="ch">›</span></div>
+    <div style="display:flex;align-items:flex-start;gap:16px;margin-top:2px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:44px;font-weight:700;line-height:1;letter-spacing:-1.4px;
+          font-variant-numeric:tabular-nums;color:#FFA31A">0<span style="font-size:14px;font-weight:500;color:#8A8A90;margin-left:4px">次备份</span></div>
+        <div style="font-size:13px;color:#8A8A90;margin-top:9px;line-height:1.5">从未备份 —— 建议先做一份完整备份再动别的。</div>
       </div>
-      ${L.donut(88,[['#FF694E',0.02]],'!')}
+      ${mRing(0.035, '#FFA31A', 76, '!')}
     </div>
+    <div class="sep"></div>
+    <div class="cols">
+      <div><div class="clabel">钥匙</div><div class="cvalue">13 把</div></div>
+      <div><div class="clabel">设置</div><div class="cvalue">全部</div></div>
+      <div><div class="clabel">加密</div><div class="cvalue" style="color:#2FD65C">AES-128</div></div>
+    </div>
+    <div class="footer">备份包含全部钥匙与设置，全程离线加密 —— 生成的文件离开本机后也解不开。</div>
   </div>
 
-  <!-- 图 2 的双列：备份与恢复两个动作 -->
-  <div class="duo" style="margin-top:12px">
+  <!-- 图5 双列 MetricCard：导出 / 恢复（各带环 + 三列细线）-->
+  <div class="duo" style="margin-top:14px">
     <div class="metric-card">
       <div class="mh"><span class="mt">导出</span><span class="mc">›</span></div>
-      <div class="ms">本机 → 文件</div>
-      <div class="mv">0<small>次</small></div>
-      <div style="font-size:11px;color:var(--text-sub);margin-top:10px">生成一份备份</div>
+      <div style="display:flex;align-items:flex-start;gap:10px;margin-top:6px">
+        <div style="flex:1;min-width:0">
+          <div class="mv">0<small>次</small></div>
+          <div style="font-size:11px;color:#8A8A90;margin-top:8px">本机 → 文件</div>
+        </div>
+        ${mRing(0.02, '#4FC3FF', 54)}
+      </div>
+      <div class="sep"></div>
+      <div style="font-size:11px;color:#8A8A90">生成一份备份</div>
     </div>
     <div class="metric-card">
       <div class="mh"><span class="mt">恢复</span><span class="mc">›</span></div>
-      <div class="ms">文件 → 本机</div>
-      <div class="mv">0<small>次</small></div>
-      <div style="font-size:11px;color:var(--text-sub);margin-top:10px">同机覆盖，其它保留</div>
+      <div style="display:flex;align-items:flex-start;gap:10px;margin-top:6px">
+        <div style="flex:1;min-width:0">
+          <div class="mv">0<small>次</small></div>
+          <div style="font-size:11px;color:#8A8A90;margin-top:8px">文件 → 本机</div>
+        </div>
+        ${mRing(0.02, '#7B7BE8', 54)}
+      </div>
+      <div class="sep"></div>
+      <div style="font-size:11px;color:#8A8A90">同机覆盖，其它保留</div>
     </div>
   </div>
 
-  <button class="btn" style="margin-top:4px">📄 生成备份</button>
-  <button class="btn ghost" style="margin-top:10px">📂 从文件导入</button>
-  <button class="btn ghost" style="margin-top:10px">📋 粘贴备份文本</button>
+  <button class="btn" style="margin-top:18px">生成备份</button>
+  <button class="btn ghost" style="margin-top:10px">从文件导入</button>
+  <button class="btn ghost" style="margin-top:10px">粘贴备份文本</button>
 
-  <div class="card" style="margin-top:16px">
+  <!-- 图2 卡解剖：备份工作室 -->
+  <div class="card" style="margin-top:18px">
     <div class="cardlink">备份工作室<span class="ch">›</span></div>
-    <div style="font-size:14px;color:var(--text-sub);margin-top:8px">导出 / 恢复 / 校验</div>
+    <div style="font-size:14px;color:#8A8A90;margin-top:8px">导出 / 恢复 / 校验</div>
+    <div class="sep"></div>
+    <div class="footer">工作室里可以做分区勾选、自描述命名、二维码搬运 —— 一整套离线流程都在这。</div>
   </div>
 
+  <!-- 图2 + 图5 三列：加密参数 -->
   <div class="card">
-    <div class="ctitle" style="font-size:var(--f-title3)">加密参数</div>
-    <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;font-size:14px">
-      <div style="display:flex;justify-content:space-between">
-        <span style="color:var(--text-sub)">算法</span><span>AES-128-CBC</span></div>
-      <div style="display:flex;justify-content:space-between">
-        <span style="color:var(--text-sub)">认证</span><span>HMAC-SHA256</span></div>
-      <div style="display:flex;justify-content:space-between">
-        <span style="color:var(--text-sub)">密钥派生</span><span>PBKDF2 60000 轮</span></div>
+    <div class="cardlink">加密参数<span class="ch">›</span></div>
+    <div class="cols" style="margin-top:8px">
+      <div><div class="clabel">算法</div><div class="cvalue" style="font-size:14px">AES-128-CBC</div></div>
+      <div><div class="clabel">认证</div><div class="cvalue" style="font-size:14px">HMAC-SHA256</div></div>
+      <div><div class="clabel">派生</div><div class="cvalue" style="font-size:14px">PBKDF2 6万轮</div></div>
     </div>
+    <div class="sep"></div>
+    <div class="footer">密钥只由你的口令派生，不存任何恢复密钥 —— 忘记口令等于这份备份作废。</div>
   </div>
 `, 4, {nav:true, back:'05-system'}));
 
