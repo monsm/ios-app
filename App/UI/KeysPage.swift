@@ -246,10 +246,11 @@ struct KeysPage: View {
         if !rows.isEmpty {
             XPanel(kind: .group, padding: 0) {
                 VStack(spacing: 0) {
-                    HStack {
-                        Text("\(rows.count) 份生效")
-                            .xFont(.caption, weight: .medium)
-                            .foregroundStyle(XPalette.textSub)
+                    // 六图改造 (2026-10-23): 「N 份生效」从 12pt 灰字 → **图 5 的 44px 读数**。
+                    // 这是列表卡的标题位，但它是本页第二个重要的量（当前分段里有多少生效），
+                    // 12pt 让它读起来像表格注脚。
+                    HStack(alignment: .firstTextBaseline) {
+                        XHeroNumber(text: String(rows.count), unit: "份生效")
                         Spacer(minLength: 0)
                     }
                     .padding(.horizontal, XSpace.card)

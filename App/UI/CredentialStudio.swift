@@ -1509,6 +1509,50 @@ struct OtpStudio: View {
     @State private var targetMac: String = ""
     private var otpMac: String { targetMac.isEmpty ? mac : targetMac }
 
+        /// 图 5 读数卡：44px 本机 OTP 条数 + 环（有过期风险的转橙）
+    private var otpStatsCard: some View {
+        // 真实 API 是 CredentialOrg.totpEntries(_:)（swiftlint 抓到 OtpStore 不存在）
+        let entries = CredentialOrg.totpEntries(otpMac)
+        let total = entries.count
+        let zotpOn = DB.otpStatus(otpMac)?.on == true
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack {
+                    Text("本机 OTP")
+                        .xFont(.subheadline)
+                        .foregroundStyle(XPalette.textTertiary)
+                    Spacer(minLength: 0)
+                    Text(zotpOn ? "锁端 ZOTP 已开" : "锁端 ZOTP 未开")
+                        .xFont(.caption2)
+                        .foregroundStyle(zotpOn ? XPalette.ok : XPalette.textTertiary)
+                }
+                HStack(alignment: .center, spacing: XSpace.l) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        XHeroNumber(
+                            text: String(total),
+                            unit: "条口令",
+                            color: total == 0 ? XPalette.textTertiary : XPalette.accentText)
+                        Text(total == 0 ? "还没有导入过 — 可以在下面粘 otpauth:// 链接"
+                                        : "每 30 秒刷新一次，倒计时在下面的细条上")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 4)
+                    XGradientDial(
+                        size: 70,
+                        progress: total == 0 ? 0.02 : min(1, Double(total) / 6),
+                        widthRatio: 0.13,
+                        showsCursor: false,
+                        showsTick: false
+                    ) { EmptyView() }
+                    .accessibilityHidden(true)
+                }
+                .padding(.top, 8)
+            }
+        }
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -1516,6 +1560,11 @@ struct OtpStudio: View {
 
                 // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
                 XScreen("OTP 与口令", style: .inline) {
+                    // 六图改造 (2026-10-23): 顶部加**图 5 的读数卡**。
+                    //
+                    // OTP 页原来从"用于哪把锁"开始 —— 全是配置项，没有一个量。
+                    // 图 5 的第一张卡永远先给"现在有多少"。这里给的是本机存了几条 OTP。
+                    otpStatsCard.xScrollLift()
                     targetLockCard.xScrollLift()
                     zotpCard.xScrollLift()
                     totpGroup

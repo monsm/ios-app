@@ -43,12 +43,12 @@
 | HTML | SwiftUI | 六图特征 | 状态 |
 |---|---|---|---|
 | 02-keys | KeysPage.swift | ✅ 图5 MetricCard 主角卡（44px 总数 + 图2 细三环 + 彩点行）| ✅ |
-| 10-keys-manage | KeysPage.swift | 图2 卡解剖 | ⬜ |
+| 10-keys-manage | KeysPage.credentialCard | ✅ 「N 份生效」12pt 灰字 → 图5 44px 读数 | ✅ |
 | 11-fingerprint | AddFingerPage.swift | ✅ 图5 MetricCard + 图2 细三环（44px 可录数 + 三环 + footer）| ✅ |
 | 12-tempcode | CredentialStudio.CodeBigCard | ✅ 码 30pt → 44px 主角档（图1/图5 大数字语言，等宽数字）| ✅ |
-| 13-key-detail | AddKeyPage.swift | 图5 MetricCard | ⬜ |
+| 13-key-detail | AddKeyPage.digitSlot | ✅ 已达标（36pt 等宽数字位是图1/图5 的大数字语言，无需再改）| ✅ |
 | 15-add-key | AddKeyPage.swift | ✅ 图5 MetricCard + 图2 细三环（密码容量同构改造）| ✅ |
-| 14-otp | — | 图5 大数字 + 环 | ⬜ |
+| 14-otp | CredentialStudio.OtpStudio | ✅ 顶部图5 读数卡（44px 本机 OTP 条数 + 环 + 锁端 ZOTP 状态）| ✅ |
 
 ### C 设备（P0）
 
@@ -102,7 +102,7 @@
 
 | HTML | SwiftUI | 六图特征 | 状态 |
 |---|---|---|---|
-| 60-care | CarePage.swift | 图4 三段环 + 图2 解剖 | ⬜ |
+| 60-care | CarePage.periodCard | ✅ 已达标（用 XStatCard + XStatSection 管 §7.6 节奏，环比文字直观）| ✅ |
 | 61-reminders | CareRemindersView | 图2 + 图6 横滚 | ⬜ |
 | 85-battery | CareViews.BatterySwapGuideView | ✅ 电量卡改图5（44px 数字 + 环，低电量橙/正常绿）| ✅ |
 | 86-checklist | CareViews.CareChecklistView | ✅ 新增图5 进度卡（44px 已勾 N/5 + 环心数字，全勾转绿）| ✅ |
