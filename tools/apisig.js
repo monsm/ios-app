@@ -675,6 +675,50 @@ if (allProblems.length === 0 && deadCode.length === 0 && bareDividers.length ===
   }
 }
 
+
+// ── 同一结构体内不得重复声明同名属性 ──
+//
+// 这个错误犯过三次：
+//   · XScreen.subtitle 声明两次
+//   · XScreen.above 声明两次（两轮各一次）
+//
+// 原因都一样：改代码时**插入了一段新的，旧的没删**。
+// 闸门验风格，编译器验类型 —— 而重复声明只有编译器会抓。
+//
+// 判据：按顶层结构体切分，每块内统计 `var <name>:` 的出现次数。
+{
+  const compFile = path.join(ROOT, 'App', 'Core', 'Components.swift');
+  const src = fs.readFileSync(compFile, 'utf8').replace(/\r\n/g, '\n');
+  const lines = src.split('\n');
+  // 找顶层 `struct Xxx` / `enum Xxx` / `extension Xxx` 的起止
+  const structs = [];
+  for (let i = 0; i < lines.length; i++) {
+    const m = /^(?:struct|enum|extension|final class|class) (\w+)/.exec(lines[i]);
+    if (!m) continue;
+    let depth = 0, started = false, end = i;
+    for (let k = i; k < lines.length; k++) {
+      for (const ch of lines[k]) { if (ch === '{') { depth++; started = true; } else if (ch === '}') depth--; }
+      if (started && depth === 0) { end = k; break; }
+    }
+    structs.push({ name: m[1], start: i, end });
+  }
+  const problems = [];
+  for (const st of structs) {
+    const body = lines.slice(st.start, st.end + 1).join('\n');
+    const counts = {};
+    for (const mm of body.matchAll(/^    (?:@\w+ )?var (\w+):/gm)) {
+      counts[mm[1]] = (counts[mm[1]] || 0) + 1;
+    }
+    for (const [k, v] of Object.entries(counts)) {
+      if (v > 1) problems.push(st.name + '.' + k + ' 声明了 ' + v + ' 次');
+    }
+  }
+  if (problems.length) {
+    for (const p of problems) console.error('  ✗ 重复声明：' + p);
+    process.exit(1);
+  }
+}
+
 process.exit(0);
 }
 for (const p of allProblems) console.error(p.rel + ':' + p.line + ': ' + p.msg);

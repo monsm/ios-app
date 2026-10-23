@@ -225,23 +225,6 @@ struct XScreen<Content: View>: View {
     var style: Style = .large
     /// 一级页面的副标题（Body 16 / 60% 灰）。`.inline` 时忽略。
     var subtitle: String? = nil
-    /// 大标题之上那一条（参考图 3 的胶囊行）。无则 nil。
-    ///
-    /// **这里用 `(() -> AnyView)?` 而不是第二个泛型参数** —— 试过泛型方案，回退了：
-    ///
-    /// 泛型方案要给 45 处现有调用都能推断出 `Above`，只能靠
-    /// `init(… ) where Above == EmptyView` 这个约束。而本机**没有编译器**，
-    /// 我无法验证 Swift 会不会从 `XScreen("标题") { … }` 反推出 `Above == EmptyView`。
-    /// 猜错就是全仓 45 个页面一起编译失败。
-    ///
-    /// 代价是这一条的类型被擦除，SwiftUI 认不出它有没有变 —— 但它通常是个静态的
-    /// 胶囊行，重建成本可接受。**先保证能编译，再谈这一点点性能。**
-    var above: (() -> AnyView)? = nil
-
-    /// 挂「标题之上那一条」。用法：
-    /// ```swift
-    /// XScreen("统计", above: { chipRow(m) }) { … }
-    /// ```
     @ViewBuilder var content: () -> Content
 
     init(_ title: String,
@@ -411,8 +394,8 @@ struct XStatCard<Content: View>: View {
                     //
                     // 为什么不去改 XCardLink 让它不撑高：那条链接是卡里唯一的入口，
                     // 触达不足等于整张卡进不去。**宁可这里算一次，也不牺牲触达。**
-                    // 数字怎么来的：6 − (44 − 14)/2 = 6 − 15 = **−9**。
-                    Color.clear.frame(height: 0).padding(.top, -9)
+                    // 数字怎么来的：XSpace.xsm(6) − (44 − 14)/2 = 6 − 15 = **−9**。
+                    Color.clear.frame(height: 0).padding(.top, XSpace.xsm - (XHit.min - 14) / 2)
                 }
                 content()
                 if let footer {

@@ -38,7 +38,8 @@ internal object KfTokens {
      * 间距 (4dp 基数)。逐值对账 iOS App/Core/Theme.swift:171-204 的 enum XSpace。
      */
     object Space {
-        val xs = 4.dp           // = iOS XSpace.xs  (Theme.swift:173)
+        val xs = 4.dp
+        val xsm = 6.dp           // = iOS XSpace.xs  (Theme.swift:173)
         val s = 8.dp            // = iOS XSpace.s   (Theme.swift:174)
         val m = 12.dp           // = iOS XSpace.m   (Theme.swift:175)
         val l = 16.dp           // = iOS XSpace.l   (Theme.swift:176)

@@ -203,6 +203,14 @@ enum XPalette {
 enum XSpace {
     static var xxs: CGFloat { d(2) }
     static var xs: CGFloat { d(4) }
+    /// **6** —— 卡头 → 标题（§7.6「实测墨迹间距 14px」）。
+    ///
+    /// 这个值在规范里出现 5 次却一直没进令牌表：§5.1 的档位是 2/4/8/12，
+    /// 跳到 8 会「松一档」。而 §15 K4 明写「卡片内部纵向节奏按 **6 / 12 / 2 / 14** 执行」——
+    /// 6 是这个节奏的第一个数，缺了它只能靠负 padding 硬凑。
+    ///
+    /// 命名对齐 §5.1 的 s1..s8 体系：xs(4) 与 s(8) 之间。
+    static var xsm: CGFloat { d(6) }
     static var s: CGFloat { d(8) }
     static var m: CGFloat { d(12) }
     static var l: CGFloat { d(16) }
