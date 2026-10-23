@@ -1,0 +1,71 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<title>门锁设置</title><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="pages.css"></head><body>
+<div class="phone">
+<div class="statusbar">
+  <span class="sb-time" data-real-time>9:41</span>
+  <span class="sb-right">
+    <svg width="17" height="11" viewBox="0 0 17 11" fill="#FFF"><rect x="0" y="7.5" width="3" height="3.5" rx="1"/><rect x="4.5" y="5.5" width="3" height="5.5" rx="1"/><rect x="9" y="3" width="3" height="8" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+    <svg width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="#FFF" stroke-width="1.6" stroke-linecap="round"><path d="M1 3.4a10.5 10.5 0 0 1 14 0"/><path d="M3.6 6.2a6.6 6.6 0 0 1 8.8 0"/><path d="M6.2 8.9a2.9 2.9 0 0 1 3.6 0"/><circle cx="8" cy="10.2" r=".7" fill="#FFF" stroke="none"/></svg>
+    <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x=".5" y=".5" width="21" height="11" rx="3.2" stroke="#FFF" stroke-opacity=".4"/><rect x="2" y="2" width="15" height="8" rx="2" fill="#FFF"/><path d="M23 4.2v3.6a2 2 0 0 0 0-3.6z" fill="#FFF" fill-opacity=".5"/></svg>
+  </span>
+</div><div class="navbar">
+  <a class="back" href="01-home.html">‹</a><span class="nt">门锁设置</span><span class="nr"></span></div><div class="scroll"><div class="page hasnav">
+
+  <div class="h1" style="margin-top:8px">门锁设置</div>
+  <div class="sub">然然家 · 已武装 · 信号 −42 dBm</div>
+
+  <!-- 图2 卡解剖：开关组 -->
+  <div class="card" style="margin-top:24px">
+    <div class="cardlink">自动开锁<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
+      <span style="color:#30D158;width:22px;height:22px"><span class="svgi" data-i="lockOpen"></span></span>
+      <div style="flex:1"><div style="font-size:16px;font-weight:600">靠近自动开锁</div>
+      <div style="font-size:12px;color:#8A8A90;margin-top:2px">RSSI ≥ −38 dBm 且距上次 &gt; 8 秒</div></div>
+      <span class="sw on"></span>
+    </div>
+    <div class="sep"></div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <span style="color:#4FC3FF;width:22px;height:22px"><span class="svgi" data-i="bell"></span></span>
+      <div style="flex:1"><div style="font-size:16px;font-weight:600">提示音</div>
+      <div style="font-size:12px;color:#8A8A90;margin-top:2px">开锁时「滴滴滴」</div></div>
+      <span class="sw on"></span>
+    </div>
+    <div class="sep"></div>
+    <div class="footer">一次靠近只开一次：要走开让信号掉到 −55 dBm 以下，隔 6 秒后再靠近才会再开。手机要解锁、App 在前台。</div>
+  </div>
+
+  <!-- 图2 卡解剖：凭证与绑定 -->
+  <div class="card">
+    <div class="cardlink">凭证与绑定<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <a class="rw" href="02-scan.html" style="min-height:60px">
+      <div class="ic" style="background:rgba(10,132,255,.14);color:#4FC3FF"><span class="svgi" data-i="qrcode"></span></div>
+      <div class="tx"><div class="tt">重新扫码绑定</div><div class="sb">换一把锁或更新凭证</div></div>
+      <div class="ch"><span class="svgi" data-i="chevron"></span></div>
+    </a>
+    <div class="sep"></div>
+    <a class="rw" href="03-settings.html" style="min-height:60px">
+      <div class="ic" style="background:rgba(255,69,58,.14);color:#FF453A"><span class="svgi" data-i="trash"></span></div>
+      <div class="tx"><div class="tt" style="color:#FF453A">解绑这把锁</div><div class="sb">删除本机钥匙与全部设置</div></div>
+      <div class="ch"><span class="svgi" data-i="chevron"></span></div>
+    </a>
+    <div class="sep"></div>
+    <div class="footer">本机会删除「然然家」的钥匙与全部本机设置，删掉之后无法从本机找回。门锁里的密码和指纹不受影响。</div>
+  </div>
+
+  <!-- 图2 数据行：当前绑定信息 -->
+  <div class="card">
+    <div class="cardlink">当前绑定<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div class="cols" style="margin-top:8px">
+      <div><div class="clabel">门锁</div><div class="cvalue">然然家</div></div>
+      <div><div class="clabel">绑定方式</div><div class="cvalue">扫码</div></div>
+    </div>
+    <div class="sep"></div>
+    <div class="cols">
+      <div><div class="clabel">凭证类型</div><div class="cvalue">离线锁钥匙</div></div>
+      <div><div class="clabel">协议</div><div class="cvalue">04 接近事件</div></div>
+    </div>
+    <div class="sep"></div>
+    <div class="footer">每个接近事件只发一次 04 命令 —— 秒开在 RSSI ≥ −38 dBm 时触发。</div>
+  </div>
+
+</div></div></div><script src="icons-render.js"></script><script src="interact.js"></script></body></html>

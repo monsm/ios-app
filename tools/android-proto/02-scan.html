@@ -1,0 +1,47 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<title>扫码添加门锁</title><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="pages.css"></head><body>
+<div class="phone">
+<div class="statusbar">
+  <span class="sb-time" data-real-time>9:41</span>
+  <span class="sb-right">
+    <svg width="17" height="11" viewBox="0 0 17 11" fill="#FFF"><rect x="0" y="7.5" width="3" height="3.5" rx="1"/><rect x="4.5" y="5.5" width="3" height="5.5" rx="1"/><rect x="9" y="3" width="3" height="8" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+    <svg width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="#FFF" stroke-width="1.6" stroke-linecap="round"><path d="M1 3.4a10.5 10.5 0 0 1 14 0"/><path d="M3.6 6.2a6.6 6.6 0 0 1 8.8 0"/><path d="M6.2 8.9a2.9 2.9 0 0 1 3.6 0"/><circle cx="8" cy="10.2" r=".7" fill="#FFF" stroke="none"/></svg>
+    <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x=".5" y=".5" width="21" height="11" rx="3.2" stroke="#FFF" stroke-opacity=".4"/><rect x="2" y="2" width="15" height="8" rx="2" fill="#FFF"/><path d="M23 4.2v3.6a2 2 0 0 0 0-3.6z" fill="#FFF" fill-opacity=".5"/></svg>
+  </span>
+</div><div class="navbar">
+  <a class="back" href="01-home.html">‹</a><span class="nt">扫码添加门锁</span><span class="nr"></span></div><div class="scroll"><div class="page hasnav">
+
+  <!-- 图6 hero：蓝渐变 + 主体视觉 + 引导语（扫码绑定=本页灵魂） -->
+  <div style="margin-top:16px;border-radius:24px;overflow:hidden;
+    background:linear-gradient(180deg,#4B5AE8 0%,#3D49C8 42%,#232B7A 100%);
+    padding:26px 22px 24px;text-align:center;
+    box-shadow:0 18px 48px rgba(59,72,200,.34),inset 0 .5px 0 rgba(255,255,255,.22)">
+    <div style="font-size:17px;font-weight:700;color:#FFF">对准 iOS 上的钥匙二维码</div>
+    <div style="margin:22px auto 0;width:210px;height:210px;border-radius:20px;position:relative;
+      background:rgba(0,0,0,.24);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)">
+      <!-- 取景四角（图6 表盘堆叠的圆角语言） -->
+      <span style="position:absolute;width:26px;height:26px;top:14px;left:14px;border-top:3px solid #FFF;border-left:3px solid #FFF;border-radius:4px"></span><span style="position:absolute;width:26px;height:26px;top:14px;right:14px;border-top:3px solid #FFF;border-right:3px solid #FFF;border-radius:4px"></span><span style="position:absolute;width:26px;height:26px;bottom:14px;left:14px;border-bottom:3px solid #FFF;border-left:3px solid #FFF;border-radius:4px"></span><span style="position:absolute;width:26px;height:26px;bottom:14px;right:14px;border-bottom:3px solid #FFF;border-right:3px solid #FFF;border-radius:4px"></span>
+      <div style="position:absolute;left:18px;right:18px;top:50%;height:2px;border-radius:1px;
+        background:linear-gradient(90deg,transparent,#0A84FF 30%,#4FC3FF 70%,transparent);
+        box-shadow:0 0 12px rgba(10,132,255,.8);top:calc(50% - 1px)"></div>
+    </div>
+    <div style="font-size:13px;color:rgba(255,255,255,.72);margin-top:18px;line-height:1.55">
+      在 iOS 端「设置 → 门锁 → 分享给安卓」生成二维码<br>扫一次即可导入</div>
+  </div>
+
+  <!-- 图2 卡解剖：相机权限说明（源码真实文案） -->
+  <div class="card" style="margin-top:22px">
+    <div class="cardlink">相机权限<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
+      <span style="color:#FFA31A;width:22px;height:22px"><span class="svgi" data-i="lock"></span></span>
+      <div style="flex:1"><div style="font-size:16px;font-weight:600">缺少权限: 相机</div>
+      <div style="font-size:12px;color:#8A8A90;margin-top:2px">— 扫码与开锁会失败</div></div>
+    </div>
+    <div class="sep"></div>
+    <div class="footer">请到系统设置里允许相机权限，返回后对准 iOS 端生成的二维码即可完成绑定。</div>
+  </div>
+
+  <!-- 源码规范：主按钮白底黑字胶囊 -->
+  <button class="btn" style="margin-top:20px;background:#FFF;color:#0A0A0C;font-weight:700;height:54px;border-radius:999px;font-size:17px">去开启相机权限</button>
+
+</div></div></div><script src="icons-render.js"></script><script src="interact.js"></script></body></html>

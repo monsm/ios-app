@@ -1,0 +1,86 @@
+{
+ "11-fingerprint": {
+  "kind": "ring",
+  "why": "锁内容量 38/50 → 环"
+ },
+ "13-key-detail": {
+  "kind": "ring",
+  "why": "使用次数 24 → 环"
+ },
+ "20-locks": {
+  "kind": "bars",
+  "why": "电量 24h / 信号 24h → 柱图"
+ },
+ "21-lock-profile": {
+  "kind": "ring",
+  "why": "指纹余量 → 环"
+ },
+ "22-firmware": {
+  "kind": "ring",
+  "why": "升级进度 → 环"
+ },
+ "23-gateway": {
+  "kind": "steps",
+  "why": "配网 3 步 → 进度条"
+ },
+ "24-dongles": {
+  "kind": "ring",
+  "why": "已配对 0/N → 环"
+ },
+ "25-synctime": {
+  "kind": "gauge",
+  "why": "偏差 −3s → 双向刻度"
+ },
+ "30-members-list": {
+  "kind": "bars",
+  "why": "各成员钥匙数 → 横条"
+ },
+ "31-member-wizard": {
+  "kind": "steps",
+  "why": "3 步向导 → 进度点"
+ },
+ "33-archived": {
+  "kind": "ring",
+  "why": "归档 1 位 → 环"
+ },
+ "34-merge": {
+  "kind": "compare",
+  "why": "主档 4 / 副档 2 → 双条对比"
+ },
+ "41-applock": {
+  "kind": "ring",
+  "why": "保护 0/3 项 → 环"
+ },
+ "42-peek": {
+  "kind": "ring",
+  "why": "已启用 2/5 → 环"
+ },
+ "44-audit": {
+  "kind": "bars",
+  "why": "每日操作数 → 柱图"
+ },
+ "45-destroy": {
+  "kind": "steps",
+  "why": "三级销毁 → 进度条"
+ },
+ "46-safemode": {
+  "kind": "compare",
+  "why": "A/B 模式 → 双条对比"
+ },
+ "47-backup": {
+  "kind": "ring",
+  "why": "备份时效 → 环"
+ },
+ "48-export": {
+  "kind": "bars",
+  "why": "导出格式分布 → 柱图"
+ },
+ "51-feed": {
+  "kind": "bars",
+  "why": "今日 3 次 → 时段柱"
+ },
+ "61-reminders": {
+  "kind": "ring",
+  "why": "生日已填 0/5 → 环"
+ }
+}
