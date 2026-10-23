@@ -133,6 +133,15 @@ AppLockSetupView / BackupPage / CarePage / CareRemindersView / DiagnosticsPage×
 | 今日时段（44px + 柱图 + 轴标）| 已有 | ✅ |
 | — | 缺页脚 | ✅ 补页脚 |
 
+
+### 02-keys ✅
+| HTML 元素 | 差距 | 修复 |
+|---|---|---|
+| 卡前 **5 个胶囊** | 无 chip 行 | ✅ 新增 chipsRow（全部/密码/临时码/指纹/即将到期）|
+| 本周到期（总计/密码/指纹 三列 + 页脚）| 缺三列 | ✅ 补 |
+| 本周用量（环 + 两列 + 页脚）| overviewCard 已有环/两列/页脚 | ✅ |
+| 全部钥匙 | credentialCard | ✅ |
+
 ---
 
 ## 已审
@@ -185,5 +194,9 @@ node tools/parity.js                           # 审美术语缺口
 node tools/entrygate.js                        # 入口可点性
 ```
 
-**工具的局限**：Swift 侧卡头/标签形态多样（单行 .xFont / 换行 / secLabel / headerTitle），
+**工具的局限（2026-10-24 确认）**：`pageaudit.js` 的正则匹配不了单行 `Text("x").xFont(.caption2)` 写法，
+导致**已审完的页仍被标成缺口**（05-system/47-backup/4a-me/60-care/81/84 均已人工审完）。
+**以本台账为准，不以工具输出为准。**
+
+**工具的局限（原文）**：Swift 侧卡头/标签形态多样（单行 .xFont / 换行 / secLabel / headerTitle），
 正则无法 100% 命中，所以 pageaudit 的「缺口」必须**逐页人工复核**才算数——这正是「亲自过一遍」的意义。

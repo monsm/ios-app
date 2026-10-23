@@ -62,6 +62,8 @@ struct KeysPage: View {
         // 那个解释是对的，但它本该写在**组件里一次**，而不是在每个页面重讲一遍。
         // 现在 XScreen 给骨架，本页只声明「有哪几块」。
         XScreen("钥匙管理") {
+            // 审美对齐 HTML 02-keys：卡之前有一排胶囊（用作分类摘要）
+            chipsRow
             if !expiringItems.isEmpty { expiringCard }
             VStack(spacing: XSpace.section) {
                 // 六图改造 (2026-10-23): 加图 5 的 MetricCard 主角卡。
@@ -151,7 +153,25 @@ struct KeysPage: View {
                 }
             }
         }
-    }
+                    XHairline().padding(.vertical, 10)
+                HStack(alignment: .top, spacing: XSpace.s) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("总计").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text("\(expiringItems.count) 份").xFont(.footnote, weight: .semibold)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("密码").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text("\(expiringItems.filter { !$0.temp }.count) 份").xFont(.footnote, weight: .semibold)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("指纹").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text("0 份").xFont(.footnote, weight: .semibold)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+}
 
     // ── 分段（规范 §7.3 形态 B，全仓唯一实现）──
     //
@@ -162,6 +182,20 @@ struct KeysPage: View {
     ///
     /// 图 5 的结构：卡头 → 44px 大数字 + 单位 → 右侧环 → sep → 彩点行 → footer 整句。
     /// 这里环用细三环（图 2）而不是单环，因为它要同时表达三类凭证的比例。
+    /// HTML 02-keys 卡前的五个胶囊 —— 各类凭证的实时条数
+    private var chipsRow: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: XSpace.s) {
+                XStatChip(label: "全部", value: String(pwds.count + fps.count))
+                XStatChip(label: "密码", value: String(pwCount))
+                XStatChip(label: "临时码", value: String(tempCount))
+                XStatChip(label: "指纹", value: String(fps.count))
+                XStatChip(label: "即将到期", value: String(expiringItems.count))
+            }
+            .padding(.vertical, 2)
+        }
+    }
+
     private var overviewCard: some View {
         XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: 0) {
