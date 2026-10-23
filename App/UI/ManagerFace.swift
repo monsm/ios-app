@@ -290,6 +290,10 @@ enum ManagerGroup: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    /// 页面标题 —— 与 Tab 标签同字。单列一个属性是为了让调用点读起来是
+    /// 「一个组的标题」而不是「一个枚举的 rawValue」。
+    var title: String { rawValue }
+
     var systemImage: String {
         switch self {
         case .ledger: return "key.horizontal"

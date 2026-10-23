@@ -80,13 +80,43 @@ final class AppState: ObservableObject {
     /// 2026-10-14: 行为类偏好 (开锁怎么开/什么动静) 的轻量变更信号 —— 见 setUnlockOption 注释。
     /// 与 appearanceSeed 的关键区别: 只让视图体重算，**不换身份**，所以滚动位置/焦点/动画全部保留。
     @Published var prefSeed = 0
-    @Published var tabSelection = 0 { // 设备/凭证/记录/设置
+    /// 底部导航的当前项。
+    ///
+    /// **2026-10-23 语义变更**：这个值原来指旧的四 Tab（0 设备 / 1 凭证 / 2 记录 / 3 设置），
+    /// 现在指新的五 Tab（**0 门厅 / 1 钥匙 / 2 设备 / 3 成员 / 4 系统**）。
+    ///
+    /// 两套编号并存过一阵，`didSet` 里的两个魔数因此**静默失效**：
+    /// 原来 `!= 3` 是「不在设置页」、`!= 0` 是「不在设备页」，
+    /// 换到新编号后变成「不在成员页」「不在门厅」—— 判据还在，判的是别的东西。
+    ///
+    /// 现在改成**按名字判**，不再依赖序号。
+    @Published var tabSelection = 0 {
         didSet {
-            // 54/372 摇一摇的过程态跟着换页走: 回位票只在"留在设置页"期间有效,
+            // 54/372 摇一摇的过程态跟着换页走: 回位票只在「留在系统页」期间有效,
             // 迷你开锁面板只属于设备页 —— 换页不收拾就是两条残影。
-            if tabSelection != 3 { shakeReturnTab = nil }
-            if tabSelection != 0 { shakePanel = false }
+            if tabSelection != Self.systemTab { shakeReturnTab = nil }
+            if tabSelection != Self.deviceTab { shakePanel = false }
         }
+    }
+
+    /// 新五 Tab 的序号 —— **唯一声明处**。别处一律用这些常量，不写魔数。
+    static let homeTab = 0
+    static let keysTab = 1
+    static let deviceTab = 2
+    static let membersTab = 3
+    static let systemTab = 4
+
+    /// 访客受限的 Tab 序号 —— **由 ManagerGroup.guestBlocked 派生**，不手写数字。
+    ///
+    /// 新五 Tab 下受限的是 钥匙(1) / 成员(3) / 系统(4)；门厅(0) 与设备(2) 不受限。
+    /// 旧的那份 `Route.guestBlockedTabs` 是四 Tab 口径（{1,3} = 凭证/设置），
+    /// 在新编号下 1=钥匙、3=成员，**漏掉了 4=系统** —— 用它会让系统页在访客模式下敞开。
+    static var guestBlockedTabNums: Set<Int> {
+        var out = Set<Int>()
+        for g in ManagerGroup.allCases where g.guestBlocked {
+            if let i = ManagerGroup.allCases.firstIndex(of: g) { out.insert(i + 1) }
+        }
+        return out
     }
     // 294 本地深链 (kf://): 白名单路由; 应用锁未解开时**先挂起**, 解锁后才落地 (深链不得绕过门禁)
     @Published var pendingRoute: Route?
@@ -178,7 +208,7 @@ final class AppState: ObservableObject {
             let before = tabSelection
             requestRoute(.settings)
             // 门禁拦下时没真到设置页, 不发回位票 (否则再摇一次会跳到没人去过的地方)
-            shakeReturnTab = tabSelection == 3 ? before : nil
+            shakeReturnTab = tabSelection == Self.systemTab ? before : nil
         case 0:
             if current != nil { shakePanel.toggle() }
         default:
@@ -197,7 +227,10 @@ final class AppState: ObservableObject {
         // 挂起的"复核后要开哪个管理组"也要一起清 —— 不清的话, 用户锁屏前点了一次
         // 受限瓦片、复核没做完就走了, 下次再放开访客区会**诈尸**打开那个组。
         guestGateGroup = nil
-        if Self.guestBlockedTabs.contains(tabSelection) { tabSelection = 0 }
+        // 受限 Tab → 回门厅。判据来自 ManagerGroup.guestBlocked（新五 Tab 口径），
+        // 不用 Route.guestBlockedTabs —— 那是旧四 Tab 的编号 {1,3}，
+        // 在新编号下 1=钥匙 3=成员，漏掉了 4=系统。
+        if Self.guestBlockedTabNums.contains(tabSelection) { tabSelection = Self.homeTab }
     }
     /// 377: 应用锁通道验过之后的落地。常规门禁置 appUnlocked; 受限区复核只放开 Tab 并跳到用户要的那页。
     /// 两条都从这一个出口走, 398 会话痕迹与 391 胁迫打标才是同一套口径, 而不是"另一套解锁的边角料"。
@@ -269,7 +302,7 @@ final class AppState: ObservableObject {
     var ambientRanked: [Ambient] {
         var out: [Ambient] = []
         if BackupStudio.selfCheckWarning != nil { out.append(.selfCheck) }
-        if pasteSuggestion != nil, tabSelection != 1 { out.append(.pasteCare) }   // 站凭证页时不挂 (人就在那, 不用指路)
+        if pasteSuggestion != nil, tabSelection != Self.keysTab { out.append(.pasteCare) }   // 站凭证页时不挂 (人就在那, 不用指路)
         // 42/268 首用气泡承诺的热点是「主控卡上的连接耗时标记」= ConnectMsBadge (67, hero 上的胶囊),
         // 单锁也画 ⇒ 不看 devices.count。我上一版照旧注释里"这排胶囊"的说法加了 >1 的闸, 那会把
         // 单锁用户的首用提示整个吞掉 —— 已收回 (文案说的是哪一块, 得以代码里那块真画不画为准)。
@@ -1216,7 +1249,7 @@ struct RootView: View {
         // 162 握手可离开: 圆盘握手 (connecting/opening) 在别的 Tab 上走到 success → 设备 Tab 挂角标。
         // 在设备页看着完成的人不打扰; 失败走 852 主动播报那条通道, 这里只报"完成"。
         .onChange(of: app.unlockState) { old, new in
-            guard !app.decoyMode, app.tabSelection != 0 else { return }
+            guard !app.decoyMode, app.tabSelection != AppState.deviceTab else { return }
             if (old == .connecting || old == .opening), new == .success { handshakeDoneAway = true }
         }
         .sensoryFeedback(.selection, trigger: app.tabSelection)   // Tab 切换的轻触感
