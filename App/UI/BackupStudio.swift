@@ -19,7 +19,7 @@ struct BackupStudioView: View {
             // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
             XScreen("备份工作室", style: .inline) {
                 // 六图改造 (2026-10-24): 顶部图5 读数卡（44px 本机备份文件数 + 环）
-                studioStatsCard
+                backupFilesCard
                 trustHeader.xScrollLift()
                 actionCards.xScrollLift()
                 cadenceCard.xScrollLift()
@@ -36,7 +36,7 @@ struct BackupStudioView: View {
 
     // ---------- 512 数据主权声明 (盾形 SF Symbol + 固定一句) + 509 双向天数行 ----------
     /// 图 5 读数卡：44px 份文件 + 环
-    private var studioStatsCard: some View {
+    private var backupFilesCard: some View {
         // 真实 API 是 BackupStudio.localFiles（apicheck 抓到我先写的 listFiles 不存在）
         let n = BackupStudio.localFiles.count
         return XPanel(kind: .group) {

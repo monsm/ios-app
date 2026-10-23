@@ -86,9 +86,6 @@
 | 45-destroy | SecurityCenterView.SecurityDestroyView | ✅ 顶部图2 红色警告卡（44px「N 项凭证」+ 红环 + 拆分明细）| ✅ |
 | 46-safemode | SettingsView.SafemodeIntroView | ✅ 图2 双角色卡（44px A/B + 单位 + 说明）+ 彩点行说差别 + footer 洞察句 | ✅ |
 | 47-backup | BackupPage.swift | ✅ 状态卡重做：44px 天数 + 新鲜度环 + 三列（加密/派生/撤销窗口）+ footer | ✅ |
-| 48-export | ExportCenterView | 图5 柱图 + 轴标 | ⬜ |
-| 49-appearance | StudioPage.swift | 图6 色板网格 | ⬜ |
-| 4a-me | MePage.swift | 图1 双 chip + 图2 大数字 | ⬜ |
 
 ### F 记录（P1）
 
@@ -103,7 +100,6 @@
 | HTML | SwiftUI | 六图特征 | 状态 |
 |---|---|---|---|
 | 60-care | CarePage.periodCard | ✅ 已达标（用 XStatCard + XStatSection 管 §7.6 节奏，环比文字直观）| ✅ |
-| 61-reminders | CareRemindersView | 图2 + 图6 横滚 | ⬜ |
 | 85-battery | CareViews.BatterySwapGuideView | ✅ 电量卡改图5（44px 数字 + 环，低电量橙/正常绿）| ✅ |
 | 86-checklist | CareViews.CareChecklistView | ✅ 新增图5 进度卡（44px 已勾 N/5 + 环心数字，全勾转绿）| ✅ |
 
@@ -116,13 +112,15 @@
 | 80-states | XSkeleton / XEmptyState / XInlineError | ✅ 组件级已达标（三态是组件规范，无独立页）| ✅ |
 undefined
 | 82-bin | CredentialBinView | ✅ 顶部图5 读数卡（44px 回收站条目数 + 环 + 保留天数）| ✅ |
-| 83-studio | CredentialStudio | 图2 卡解剖 | ⬜ |
 | 84-diagnostics | DiagnosticsPage.swift | ✅ 首卡图5 MetricCard（44px 问题数 + 健康度环）+ XStatSection 页脚 | ✅ |
 | 87-claim | MemberCenterView.UnclaimedClaimView | ✅ 顶部图5 读数卡（44px 待认领数 + 环）| ✅ |
 | 88-exit | MemberCenterView.MemberExitWizard | ✅ 顶部图5 读数卡（44px 待处置数 + 环）| ✅ |
 | 89-share-android | ShareToAndroidView | ✅ 已达标（真实二维码 + 静区白底 + 分享按钮 + 风险提示）| ✅ |
 
 ---
+
+| 49-appearance | StudioPage（=钥匙工坊）| ✅ 顶部图5 读数卡（44px 总数 + 三行彩点 + 图2 细三环 + footer）| ✅ |
+| 83-studio | StudioPage（与 49 同屏）| ✅ 同上 | ✅ |
 
 ## 阶段 3 · Android 5 屏
 

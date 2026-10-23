@@ -60,6 +60,53 @@ struct StudioPage: View {
         }
     }
 
+    /// 图 5 读数卡：四类凭证各自的条数（44px 总数 + 三行彩点）
+    private var studioStatsCard: some View {
+        let mac = app.current?.mac ?? ""
+        let pwN = DB.listPwds(mac).filter { !$0.temp }.count
+        let tempN = DB.listPwds(mac).filter { $0.temp }.count
+        let fpN = DB.listFps(mac).count
+        let otpN = CredentialOrg.totpEntries(mac).count
+        let total = pwN + tempN + fpN + otpN
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack {
+                    Text("全部凭证")
+                        .xFont(.subheadline)
+                        .foregroundStyle(XPalette.textTertiary)
+                    Spacer(minLength: 0)
+                }
+                HStack(alignment: .center, spacing: XSpace.l) {
+                    VStack(alignment: .leading, spacing: 9) {
+                        XHeroNumber(
+                            text: String(total),
+                            unit: "份",
+                            color: total == 0 ? XPalette.textTertiary : XPalette.accentText)
+                        XDataRow(label: "密码", value: String(pwN), unit: "项", color: XPalette.kindTemp)
+                        XDataRow(label: "临时码", value: String(tempN), unit: "个", color: XPalette.kindOtp)
+                        XDataRow(label: "指纹", value: String(fpN), unit: "枚", color: XPalette.kindFp)
+                    }
+                    Spacer(minLength: 4)
+                    XTripleThinRing(
+                        size: 88,
+                        values: (Double(fpN) / Double(max(1, total)),
+                                 Double(pwN) / Double(max(1, total)),
+                                 Double(tempN) / Double(max(1, total))),
+                        colors: (XPalette.kindFp, XPalette.kindTemp, XPalette.kindOtp),
+                        centerText: String(total))
+                        .accessibilityHidden(true)
+                }
+                .padding(.top, 8)
+                XStatSection {
+                    Text("四类凭证各管一段场景 —— 密码最常用，临时码给访客，指纹最快，OTP 给远程。")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textTertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+    }
+
     private var content: some View {
         ZStack {
             XPalette.canvasGradient.ignoresSafeArea()
@@ -67,6 +114,11 @@ struct StudioPage: View {
         // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
         XScreen("钥匙工坊") {
+                // 六图改造 (2026-10-24): 顶部加**图 5 的四类凭证读数卡**。
+                //
+                // 工坊是"造东西"的入口页 —— 用户进来第一句想问的是"我现在各有多少"。
+                // 之前一进来就是四个入口卡，一个量都没有。
+                studioStatsCard
                 // 双列网格: 列间距 12 / 行间距 8 (规范 §5.1 两个不同的数)。
                 LazyVGrid(columns: columns, spacing: XSpace.rowGap) {
                     card(.pwd)
