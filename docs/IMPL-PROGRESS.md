@@ -76,7 +76,7 @@
 
 | HTML | SwiftUI | 六图特征 | 状态 |
 |---|---|---|---|
-| 05-system | SettingsView.swift | 图5 MetricCard | ⬜ |
+| 05-system | MePage.swift | ✅ 图5 主角读数行（44px 待办数 + 渐变环）+ 四瓦片入口保留 | ✅ |
 | 40-security | SecurityPage.swift | 图5 大数字 + 环 | ⬜ |
 | 41-applock | AppLockSetupView.swift | 图2 卡解剖 | ⬜ |
 | 42-peek | PrivacyDashboard | 图2 环 + 三态对照 | ⬜ |
@@ -170,3 +170,4 @@
 | 2026-10-23 | **Android 03-settings 完成**：两个裸文字动作 → 图2 卡内行（图标块+主副文+chevron，48dp 触达），补 footer 整句；抽出 `SettingRow` 组件防漂移 |
 | 2026-10-23 | **Android 04-success 完成**：`UnlockDial` 增 `success` 参数，成功时环走 `dialOKStops` 绿色渐变（图1 语言，与 iOS phase == .unlocked 同义）|
 | 2026-10-23 | Android 5 屏状态：01 ✅ / 02 ✅ / 03 ✅ / 04 ✅ / 05 🟨（沿用既有确认框）|
+| 2026-10-23 | **iOS 05-system 完成**（实际文件是 MePage.swift）：本机设置首页加图5 主角读数行 —— 44px 待办数 + 渐变环（有待办→图1蓝渐变 / 无待办→pale绿）+ 分隔线 + 四瓦片入口 |

@@ -70,32 +70,69 @@ struct MePage: View {
             : -1
         let locks = DB.keychains().count
 
+        // 六图改造 (2026-10-23): 在四枚瓦片之上加**图 5 的主角读数行**。
+        //
+        // 图 5 Activity Details 的第一张卡是「44px 大数字 + 一枚环 → 三列细线」。
+        // 之前这里是四枚等重大瓦片：每枚都是 19pt，读不出"现在最该管哪件事"。
+        // 加一行 44px 主角之后，眼睛先看到"有 1 件事要处理"，再往下看是哪四类；
+        // 环给出"待办占整体的比例"，不需要用户自己算。
+        let pending = (locked ? 0 : 1) + alarmN + (bkDays < 0 ? 1 : 0)
+        let total = 4
         return XPanel {
-            HStack(spacing: XSpace.s) {
-                summaryTile(
-                    icon: locked ? "lock.shield.fill" : "lock.open",
-                    value: locked ? "已锁" : "未锁",
-                    label: "应用锁",
-                    tone: locked ? XPalette.ok : XPalette.warn)
-                summaryTile(
-                    icon: alarmN > 0 ? "exclamationmark.triangle.fill" : "checkmark.circle.fill",
-                    value: alarmN > 0 ? "\(alarmN)" : "0",
-                    label: "待处理告警",
-                    tone: alarmN > 0 ? XPalette.warn : XPalette.ok)
-                summaryTile(
-                    icon: bkDays < 0 ? "externaldrive.badge.questionmark" : "externaldrive.fill",
-                    // §7.16：单位不拼进数值字符串 —— 拼进去单位会拿到数值的字号与颜色。
-                    value: bkDays < 0 ? "从未" : (bkDays <= 0 ? "今天" : "\(bkDays)"),
-                    label: "上次备份",
-                    tone: bkDays < 0 ? XPalette.warn : (bkDays > 14 ? XPalette.warn : XPalette.ok),
-                    unit: bkDays > 0 ? "天" : nil)
-                summaryTile(
-                    icon: "square.stack.3d.up.fill",
-                    value: "\(locks)",
-                    label: "门锁",
-                    tone: locks > 0 ? XPalette.accent : XPalette.textTertiary)
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .center, spacing: XSpace.l) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("待处理")
+                            .xFont(.subheadline)
+                            .foregroundStyle(XPalette.textTertiary)
+                        XHeroNumber(
+                            text: String(pending),
+                            unit: "项",
+                            color: pending > 0 ? XPalette.warn : XPalette.ok)
+                        Text(pending > 0 ? "都在这台手机里，点下面的方块可直达" : "这台手机没有需要处理的事")
+                            .xFont(.caption2)
+                            .foregroundStyle(XPalette.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 4)
+                    XGradientDial(
+                        size: 72,
+                        progress: Double(total - pending) / Double(total),
+                        widthRatio: 0.13,
+                        showsCursor: false,
+                        showsTick: false,
+                        gradient: pending > 0 ? XGradient.dial : XGradient.dialOK
+                    ) { EmptyView() }
+                    .accessibilityHidden(true)
+                }
+                .padding(.bottom, XSpace.m)
+                XHairline().padding(.bottom, XSpace.s)
+                HStack(spacing: XSpace.s) {
+                    summaryTile(
+                        icon: locked ? "lock.shield.fill" : "lock.open",
+                        value: locked ? "已锁" : "未锁",
+                        label: "应用锁",
+                        tone: locked ? XPalette.ok : XPalette.warn)
+                    summaryTile(
+                        icon: alarmN > 0 ? "exclamationmark.triangle.fill" : "checkmark.circle.fill",
+                        value: alarmN > 0 ? "\(alarmN)" : "0",
+                        label: "待处理告警",
+                        tone: alarmN > 0 ? XPalette.warn : XPalette.ok)
+                    summaryTile(
+                        icon: bkDays < 0 ? "externaldrive.badge.questionmark" : "externaldrive.fill",
+                        // §7.16：单位不拼进数值字符串 —— 拼进去单位会拿到数值的字号与颜色。
+                        value: bkDays < 0 ? "从未" : (bkDays <= 0 ? "今天" : "\(bkDays)"),
+                        label: "上次备份",
+                        tone: bkDays < 0 ? XPalette.warn : (bkDays > 14 ? XPalette.warn : XPalette.ok),
+                        unit: bkDays > 0 ? "天" : nil)
+                    summaryTile(
+                        icon: "square.stack.3d.up.fill",
+                        value: "\(locks)",
+                        label: "门锁",
+                        tone: locks > 0 ? XPalette.accent : XPalette.textTertiary)
+                }
+                .padding(.vertical, XSpace.xs)
             }
-            .padding(.vertical, XSpace.xs)
         }
     }
 
