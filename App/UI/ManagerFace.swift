@@ -183,25 +183,35 @@ struct ManagerFace: View {
         }
     }
 
-    /// 一行一张卡 —— 规范 5.1 的**行间距 8**（`XSpace.rowGap`）。
+    /// 一组入口。**一张卡，多行，行间细线**（规范 §7.6 的多段结构）。
     ///
-    /// 为什么一行一张卡而不是"一卡包所有行":
-    ///   规范 §8 模板 C（详情页）与 §7 的组件都是**一张卡一件事**;
-    ///   把所有入口塞进一张卡会变成系统设置那种"长白条列表",
-    ///   而那恰好是范式 §1.5 点名「它绝不等于」的第四项（Material You 卡片墙的反面）。
+    /// 2026-10-23 按参考图改。改前是**一行一张卡** —— 五个入口就是五张独立的卡，
+    /// 卡与卡之间 12pt 空隙。图 3 里没有这种形态：它是一张卡装多段，段间一条细线。
     ///
-    /// 另外: 每张卡都可点, 所以每张都是独立触达面 —— 44pt 的下限由 XRow 自己保证。
+    /// 差别不只是「看起来紧凑」：
+    ///   · 一行一张卡 → 读成五个彼此无关的入口
+    ///   · 一卡多行     → 读成「同一类东西的五个选项」
+    ///
+    /// 后者才是这几个管理组的真实关系。
     private func rows(_ items: [(ManagerRoute, String, String, String)]) -> some View {
-        VStack(spacing: XSpace.rowGap) {
-            ForEach(items, id: \.0) { item in
-                let (route, title, subtitle, icon) = item
-                XPanel(kind: .group) {
+        XPanel(kind: .group, padding: 0) {
+            VStack(spacing: 0) {
+                // id 用序号：这些元组没有天然唯一键，而 items 是常量数组顺序稳定。
+                ForEach(Array(items.enumerated()), id: \.offset) { idx, item in
+                    let (route, title, subtitle, icon) = item
+                    if idx > 0 {
+                        // 行间细线：内缩到文字左边缘（对齐图标之后），
+                        // 与系统列表同口径 —— 全宽线会把一列行切成一格一格。
+                        XHairline(inset: XSpace.card + 28 + XSpace.m)
+                    }
                     XRow(systemImage: icon, title: title,
                          subtitle: subtitle, showsChevron: true) {
                         path.append(route)
                     }
+                    .padding(.horizontal, XSpace.card)
                 }
             }
+            .padding(.vertical, XSpace.xs)
         }
     }
 
