@@ -59,11 +59,17 @@ struct SyncTimeView: View {
             VStack(alignment: .leading, spacing: XSpace.m) {
                 secLabel("锁钟偏差")
 
+                // 六图改造 (2026-10-23): 偏差数字提到 **44px 主角档 + 光晕**（图 1 语言）。
+                //
+                // 这一页唯一有信息量的数字就是"差多少秒"，校准的全部意义就是消掉它。
+                // 之前是 19pt title2，与卡片标题同级 —— 用户在页面上要"找"这个数。
+                // 图 1 Health Age 的 -4.7 是 44px 起 + 同色辉光，一屏只有它这么大。
                 HStack(alignment: .firstTextBaseline, spacing: XSpace.xs) {
-                    Text(skewText(skew))
-                        .xFont(.title2, weight: .semibold)
-                        .foregroundStyle(tone)
-                        .monospacedDigit()
+                    XHeroNumber(
+                        text: skewText(skew),
+                        size: DSFont.hero,
+                        color: tone,
+                        glow: skew != nil)
                     Text(skewWord(skew))
                         .xFont(.caption)
                         .foregroundStyle(XPalette.textSub)

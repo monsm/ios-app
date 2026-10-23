@@ -60,7 +60,7 @@
 | 22-firmware | FirmwarePage.swift | 图2 卡解剖 | ⬜ |
 | 23-gateway | GatewayPage.swift | 图4 分步条 | ⬜ |
 | 24-dongles | DonglesPage.swift | 图5 大数字 | ⬜ |
-| 25-synctime | SyncTimeView | 图1 大数字主角 | ⬜ |
+| 25-synctime | SyncTimeView | ✅ 偏差 19pt → 44px + 同色光晕（图1 语言）| ✅ |
 
 ### D 成员（P1）
 
@@ -78,14 +78,14 @@
 | HTML | SwiftUI | 六图特征 | 状态 |
 |---|---|---|---|
 | 05-system | MePage.swift | ✅ 图5 主角读数行（44px 待办数 + 渐变环）+ 四瓦片入口保留 | ✅ |
-| 40-security | SecurityPage.swift | 图5 大数字 + 环 | ⬜ |
+| 40-security | SecurityPage.swift | ✅ 44px 风险数 + 健康度环（0 风险→绿环）+ 三盏灯保留 | ✅ |
 | 41-applock | AppLockSetupView.swift | 图2 卡解剖 | ⬜ |
 | 42-peek | PrivacyDashboard | 图2 环 + 三态对照 | ⬜ |
 | 43-privacy-dash | PrivacyDashboard | 图2 环 | ⬜ |
 | 44-audit | SecurityAuditView | 图4 两层 + 分组头 | ⬜ |
 | 45-destroy | SecurityDestroyView | 图3 警示 | ⬜ |
 | 46-safemode | SafemodeIntroView | 图2 双角色卡 + 彩点行 | ⬜ |
-| 47-backup | BackupPage.swift | 图5 MetricCard + 三列 | ⬜ |
+| 47-backup | BackupPage.swift | ✅ 状态卡重做：44px 天数 + 新鲜度环 + 三列（加密/派生/撤销窗口）+ footer | ✅ |
 | 48-export | ExportCenterView | 图5 柱图 + 轴标 | ⬜ |
 | 49-appearance | StudioPage.swift | 图6 色板网格 | ⬜ |
 | 4a-me | MePage.swift | 图1 双 chip + 图2 大数字 | ⬜ |

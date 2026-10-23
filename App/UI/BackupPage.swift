@@ -112,23 +112,77 @@ struct BackupPage: View {
     // MARK: - 状态卡
     // ═══════════════════════════════════════════════════════
 
+    /// 六图改造 (2026-10-23): 状态卡改**图 5 MetricCard**形态。
+    ///
+    /// 图 5 的第一张卡是「44px 大数字 + 单位 → 环 → 三列细线 → footer」。
+    /// 之前这里是「图标 + 一行 title3 + 一行灰字」——没有一个数，
+    /// 而"上次备份是几天前"恰恰是本页唯一的量化事实。
+    /// 现在把天数做成 44px 主角，环的进度 = 新鲜度（7 天内满格），
+    /// 三列给出密钥/口令/撤销窗口这些决定恢复能力的参数。
     private var statusCard: some View {
-        XPanel(kind: .hero, tone: backupTone) {
-            VStack(alignment: .leading, spacing: XSpace.s) {
-                HStack(spacing: XSpace.s) {
-                    Image(systemName: backupTone == .ok ? "checkmark.circle.fill" : "exclamationmark.circle")
-                        .font(.system(size: XIcon.lg, weight: .medium))
-                        .foregroundStyle(backupTone.color)
-                        .accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(lastBackupText)
-                            .xFont(.title3, weight: .semibold)
-                            .foregroundStyle(XPalette.text)
+        let d = daysSinceBackup
+        let fresh: Double = d < 0 ? 0.02 : max(0.02, min(1, 1 - Double(d) / 30))
+        return XPanel(kind: .group, tone: backupTone) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack {
+                    Text("备份状态")
+                        .xFont(.subheadline)
+                        .foregroundStyle(XPalette.textTertiary)
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(XPalette.textTertiary.opacity(0.6))
+                }
+                HStack(alignment: .center, spacing: XSpace.l) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        if d < 0 {
+                            XHeroNumber(text: "从未", size: 34, color: backupTone.color)
+                        } else {
+                            XHeroNumber(
+                                text: String(d),
+                                unit: d == 0 ? "今天" : "天前",
+                                color: backupTone.color)
+                        }
                         Text(backupHint)
                             .xFont(.footnote)
-                            .foregroundStyle(XPalette.textSub)
+                            .foregroundStyle(XPalette.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
+                    Spacer(minLength: 4)
+                    XGradientDial(
+                        size: 76,
+                        progress: fresh,
+                        widthRatio: 0.13,
+                        showsCursor: false,
+                        showsTick: false,
+                        gradient: backupTone == .ok ? XGradient.dialOK : XGradient.dial
+                    ) { EmptyView() }
+                    .accessibilityHidden(true)
                 }
+                .padding(.top, 8)
+                XHairline().padding(.vertical, 12)
+                HStack(alignment: .top, spacing: XSpace.s) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("加密").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text("AES-128").xFont(.footnote, weight: .semibold)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("口令派生").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text("PBKDF2").xFont(.footnote, weight: .semibold)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("撤销窗口").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text("24 小时").xFont(.footnote, weight: .semibold)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                Text("环越满代表备份越新 —— 超过 30 天没备份时，恢复会丢很多最近的记录。")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .padding(.top, 12)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }

@@ -52,22 +52,46 @@ struct SecurityPage: View {
     // MARK: - 状态卡
     // ═══════════════════════════════════════════════════════
 
+    /// 六图改造 (2026-10-23): 状态卡改**图 5 MetricCard**形态（44px 风险数 + 环）。
+    ///
+    /// 图 5 用一个大数字回答"现在什么情况"。本页的问题是"有没有事"，
+    /// 答案就是一个数：**有几项风险**。之前是一行 title3 文字（"无风险"），
+    /// 用户读到的只是形容词，读不到量。
     private var statusCard: some View {
-        XPanel(kind: .hero) {
+        let riskTotal = risks.count + (auditBroken ? 1 : 0) + selfCheckIssues.count + (appLocked ? 0 : 1)
+        let health: Double = riskTotal == 0 ? 1.0 : max(0.04, 1 - Double(riskTotal) / 6)
+        return XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: XSpace.m) {
-                HStack(spacing: XSpace.s) {
-                    Image(systemName: overallTone == .ok ? "checkmark.shield.fill" : "exclamationmark.shield.fill")
-                        .font(.system(size: XIcon.lg, weight: .medium))
-                        .foregroundStyle(overallTone.color)
-                        .accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(overallTitle)
-                            .xFont(.title3, weight: .semibold)
-                            .foregroundStyle(XPalette.text)
+                HStack {
+                    Text("现在安全吗")
+                        .xFont(.subheadline)
+                        .foregroundStyle(XPalette.textTertiary)
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(XPalette.textTertiary.opacity(0.6))
+                }
+                HStack(alignment: .center, spacing: XSpace.l) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        XHeroNumber(
+                            text: String(riskTotal),
+                            unit: "项风险",
+                            color: overallTone.color)
                         Text(overallDetail)
                             .xFont(.footnote)
-                            .foregroundStyle(XPalette.textSub)
+                            .foregroundStyle(XPalette.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
+                    Spacer(minLength: 4)
+                    XGradientDial(
+                        size: 76,
+                        progress: health,
+                        widthRatio: 0.13,
+                        showsCursor: false,
+                        showsTick: false,
+                        gradient: riskTotal == 0 ? XGradient.dialOK : XGradient.dial
+                    ) { EmptyView() }
+                    .accessibilityHidden(true)
                 }
 
                 XHairline()
