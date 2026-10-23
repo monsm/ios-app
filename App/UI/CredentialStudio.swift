@@ -557,10 +557,23 @@ struct TempCodeStudio: View {
 
     // ---------- 添加 (515 单页三段, 表单体验 516/520/522/523) ----------
     private var addForm: some View {
+        // 审美对齐 HTML 12-tempcode：三张卡（场景预设 / 码值 / 生效时段），
+        // 原来是裸 ScrollView + VStack（没有卡材质，也没有卡头）。
         ScrollView {
-            VStack(alignment: .leading, spacing: XSpace.l) {
+            VStack(alignment: .leading, spacing: XSpace.section) {
                 // 容量提示 —— 临时码与常驻密码**共用同一份库存**（协议 0x25 pwdStock），
                 // 原来这页完全不显示还剩几个坑位，用户会填完表单才被锁端拒绝。
+                XPanel(kind: .group) {
+                    VStack(alignment: .leading, spacing: XSpace.m) {
+                        Text("场景预设")
+                            .xFont(.subheadline)
+                            .foregroundStyle(XPalette.textTertiary)
+                        Text("选一个用途，自动填好名称与时长 —— 也可以自己改。")
+                            .xFont(.caption2)
+                            .foregroundStyle(XPalette.textTertiary)
+                    }
+                }
+
                 if let snap = DB.readStatus(mac), let cap = snap.pwdCap, cap > 0 {
                     let left = snap.pwdStock
                     let used = max(0, cap - left)

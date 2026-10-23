@@ -43,6 +43,9 @@ struct MembersPage: View {
         // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
         XScreen("成员") {
+            // 审美对齐 HTML 04-members：卡前 4 个胶囊 + 「成员分布」卡（环 + 两列）
+            membersChipsRow
+            membersDistributionCard
             if members.isEmpty {
                 emptyCard
             } else {
@@ -78,6 +81,77 @@ struct MembersPage: View {
     // M5 形态: 成员页的识别锚点是**脸**，不是文字行。
     // 所以顶部先给一条横向头像带 —— 一眼认全家人，
     // 下面的卡片再给细节。
+    /// HTML 04-members 卡前的 4 个胶囊
+    private var membersChipsRow: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: XSpace.s) {
+                XStatChip(label: "成员", value: String(members.count))
+                XStatChip(label: "活跃", value: String(members.filter { MemberHub.isActive($0.id) }.count))
+                XStatChip(label: "归档", value: String(MemberHub.archivedIDs.count))
+                XStatChip(label: "未归属记录", value: String(unclaimedCount))
+            }
+            .padding(.vertical, 2)
+        }
+    }
+
+    /// HTML「成员分布」卡：三环 + 钥匙总数/指纹总数 两列 + 页脚
+    private var membersDistributionCard: some View {
+        let macs = DB.keychains().map { $0.mac }
+        let pwN = macs.reduce(0) { $0 + DB.listPwds($1).count }
+        let fpN = macs.reduce(0) { $0 + DB.listFps($1).count }
+        let total = max(1, pwN + fpN)
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("成员分布")
+                    .xFont(.subheadline)
+                    .foregroundStyle(XPalette.textTertiary)
+                HStack(alignment: .center, spacing: XSpace.l) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        XHeroNumber(text: String(members.count), color: XPalette.accentText, unit: "位成员")
+                        Text("活跃 \(members.filter { MemberHub.isActive($0.id) }.count) 位 · 归档 \(MemberHub.archivedIDs.count) 位")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 4)
+                    XTripleThinRing(
+                        size: 88,
+                        values: (Double(pwN) / Double(total), Double(fpN) / Double(total), 0.06),
+                        colors: (XPalette.kindTemp, XPalette.kindFp, XPalette.textSub),
+                        centerText: String(pwN + fpN))
+                        .accessibilityHidden(true)
+                }
+                .padding(.top, 8)
+                XHairline().padding(.vertical, 12)
+                HStack(alignment: .top, spacing: XSpace.s) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("钥匙总数").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text("\(pwN) 份").xFont(.footnote, weight: .semibold)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("指纹总数").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text("\(fpN) 枚").xFont(.footnote, weight: .semibold)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                Text("环是按凭证类型分的 —— 人多了以后，看颜色比数名单快。")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .padding(.top, 10)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    /// 未归属记录数（成员页胶囊用）
+    private var unclaimedCount: Int {
+        let macs = DB.keychains().map { $0.mac }
+        return macs.reduce(0) { n, m in
+            n + DB.listPwds(m).filter { ($0.owner ?? "").isEmpty }.count
+        }
+    }
+
     private var avatarStrip: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: XSpace.l) {

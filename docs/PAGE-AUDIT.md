@@ -142,6 +142,24 @@ AppLockSetupView / BackupPage / CarePage / CareRemindersView / DiagnosticsPage×
 | 本周用量（环 + 两列 + 页脚）| overviewCard 已有环/两列/页脚 | ✅ |
 | 全部钥匙 | credentialCard | ✅ |
 
+
+### 04-members ✅
+| HTML 元素 | 差距 | 修复 |
+|---|---|---|
+| 卡前 **4 个胶囊** | 无 | ✅ 新增 membersChipsRow（成员/活跃/归档/未归属）|
+| 成员分布（三环 + 钥匙总数/指纹总数 两列 + 页脚）| 无 | ✅ **新增整卡** |
+| 头像带 / 成员卡 | avatarStrip / rosterCard | ✅ 已有 |
+
+### 12-tempcode ✅（部分）
+| HTML 卡 | 差距 | 修复 |
+|---|---|---|
+| 场景预设 | 裸 ScrollView 无卡结构 | ✅ **新增卡** + 外层改 section 间距 |
+| 码值 / 生效时段 | 在 addForm 内 | 🟨 待下一轮细化卡包装 |
+
+### 14-otp ✅ 判定已达标
+五卡齐：用于哪把锁 / 锁端 ZOTP（页脚）/ 独立口令 / 导入与添加 / 静态备份码（页脚）。
+之前工具报缺卡是因为正则漏了 `staticCard` 的写法。
+
 ---
 
 ## 已审
