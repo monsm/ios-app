@@ -275,10 +275,16 @@ struct StatsPage: View {
     }
 
     /// 图 5 Activity Rings 卡 —— 三环 + 三行彩色读数。
+    ///
+    /// 真实字段：StatModel.opensTotal（总开门）与 pareto（按 kind 的分布）。
+    /// 我第一次写的是 totalOpens / byKind —— 都不存在，CI 抓到了。
     private func activityRingsCard(_ m: StatsKit.StatModel) -> some View {
-        let total = max(1, m.totalOpens)
-        let fp = Double(m.byKind["fp"] ?? 0) / Double(total)
-        let pwd = Double(m.byKind["pwd"] ?? 0) / Double(total)
+        let total = max(1, m.opensTotal)
+        func cnt(_ k: String) -> Int { m.pareto.first { $0.kind == k }?.count ?? 0 }
+        let fpN = cnt("fp")
+        let pwdN = cnt("pwd")
+        let fp = Double(fpN) / Double(total)
+        let pwd = Double(pwdN) / Double(total)
         let auto = max(0, 1 - fp - pwd)
         return XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: 0) {
@@ -295,9 +301,9 @@ struct StatsPage: View {
                     size: 116,
                     values: (fp, pwd, auto),
                     rows: [
-                        (String(m.byKind["fp"] ?? 0), "次", "指纹"),
-                        (String(m.byKind["pwd"] ?? 0), "次", "密码"),
-                        (String(max(0, total - (m.byKind["fp"] ?? 0) - (m.byKind["pwd"] ?? 0))), "次", "其它")
+                        (String(fpN), "次", "指纹"),
+                        (String(pwdN), "次", "密码"),
+                        (String(max(0, m.opensTotal - fpN - pwdN)), "次", "其它")
                     ]
                 )
                 .padding(.top, 10)
