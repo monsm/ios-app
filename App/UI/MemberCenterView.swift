@@ -22,7 +22,43 @@ struct MemberDetail360View: View {
 
     private var member: Member? { DB.member(memberID) }
 
-        /// 图 5 双列 MetricCard：名下钥匙 / 本周开门
+        /// HTML 32-member-detail 卡2「最近活动」（+页脚）
+    private func recentActivityCard(_ m: Member) -> some View {
+        // recentExcerpts 返回 [Excerpt]（字段 time / text），不是字符串数组
+        let acts = MemberHub.recentExcerpts(m.id, 4)
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                Text("最近活动")
+                    .xFont(.subheadline)
+                    .foregroundStyle(XPalette.textTertiary)
+                if acts.isEmpty {
+                    Text("还没有活动 —— 开过一次门之后这里会有内容")
+                        .xFont(.footnote)
+                        .foregroundStyle(XPalette.textTertiary)
+                } else {
+                    ForEach(Array(acts.enumerated()), id: \.offset) { idx, ex in
+                        if idx > 0 { XHairline() }
+                        HStack(alignment: .firstTextBaseline, spacing: XSpace.s) {
+                            Text(ex.time)
+                                .xFont(.caption2, weight: .medium)
+                                .foregroundStyle(XPalette.textTertiary)
+                                .xScaledWidth(52, alignment: .leading)
+                            Text(ex.text)
+                                .xFont(.footnote)
+                                .foregroundStyle(XPalette.text)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+                Text("活动来自门锁日志 —— 只有能证明归属的开门才算到这个成员名下。")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    /// 图 5 双列 MetricCard：名下钥匙 / 本周开门
     private func memberMetricsCards(_ m: Member) -> some View {
         // 真实 API 是 MemberHub.activity(_:) 返回 Activity（opens30 / month / owns）
         // —— apicheck 抓到我先写的 weekOpens 不存在
@@ -77,6 +113,7 @@ struct MemberDetail360View: View {
                     // 图 5 的 Summary 屏先给两个并排读数再给细节。
                     // 成员详情之前先进"一周小结"那句话 —— 是文字不是量。
                     memberMetricsCards(m)
+                    recentActivityCard(m)
                     // 一周小结 (原有 weekSentence, 只在有内容时出)
                     if let line = MemberHub.weekSentence(m.id) {
                         HStack(spacing: XSpace.s) {
@@ -565,7 +602,10 @@ struct MemberWizardView: View {
 
                 // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
                 XScreen("建档向导", style: .inline) {
-                    XPanel(kind: .group) {
+                                    // 审美对齐 HTML 31-member-wizard：卡前有步骤条
+                XStepBar(titles: steps, current: step)
+                    .padding(.bottom, XSpace.s)
+                XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
                             secLabel("步骤 \(step + 1)/3 · " + steps[step])
                             switch step {

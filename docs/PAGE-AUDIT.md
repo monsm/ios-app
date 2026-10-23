@@ -179,6 +179,22 @@ AppLockSetupView / BackupPage / CarePage / CareRemindersView / DiagnosticsPage×
 HTML 2 卡；App 用 List + Section（承载拖动排序 / 滑动删除 / 编辑模式三个真实交互）。
 **不改卡片流**：这三套交互重写风险大于收益，而卡片材质不是 HTML 的硬性审美项。
 
+
+### 31-member-wizard ✅
+| HTML 元素 | 差距 | 修复 |
+|---|---|---|
+| **卡前步骤条** | 无（只有 secLabel "步骤 X/3"）| ✅ 补 `XStepBar(titles:current:)` |
+| 称呼卡 + emoji 画廊 + 角色 | 已有 | ✅ |
+
+### 32-member-detail ✅
+| HTML 卡 | 差距 | 修复 |
+|---|---|---|
+| **最近活动**（+页脚）| **整卡缺失** | ✅ 新增（时间列 + 文本 + 页脚，用真实 `Excerpt.time/text`）|
+| 名下钥匙 / 本周开门 | memberMetricsCards（双列）| ✅ 上一轮已加 |
+
+### 34-merge ✅ 判定已达标
+HTML 两卡「将迁移」「选择副档」在 Swift 中都有对应实现（4 个 XPanel）。
+
 ---
 
 ## 已审
