@@ -99,8 +99,7 @@ struct DiagnosticsPage: View {
                             text: String(bad),
                             color: bad == 0 ? XPalette.ok : XPalette.warn,
                             unit: "项问题")
-                        Text(bad == 0 ? "数据键都能解析，没有孤立文件或日志断档"
-                                      : "有 \(bad) 项自检没通过 —— 下面逐条列出了原因")
+                        Text(bad == 0 ? "数据键都能解析" : "有 \(bad) 项没通过")
                             .xFont(.footnote)
                             .foregroundStyle(XPalette.textTertiary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -117,6 +116,20 @@ struct DiagnosticsPage: View {
                     .accessibilityHidden(true)
                 }
                 .padding(.top, 8)
+                XHairline().padding(.vertical, 12)
+                // HTML 卡1 的两列：孤儿数据 / 日志断档
+                HStack(alignment: .top, spacing: XSpace.s) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("孤儿数据").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text("\(health.count) 项").xFont(.footnote, weight: .semibold)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("日志断档").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text("\(gapDays.count) 天").xFont(.footnote, weight: .semibold)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
                 XStatSection {
                     Text("每次进入这一页都会重算一次：解析所有数据键、比对事件链、检查文件完整性。")
                         .xFont(.caption2)
@@ -200,35 +213,72 @@ struct DiagnosticsPage: View {
     }
 
     // ── 稳定性 ────────────────────────────────────────────
+    /// HTML 卡2「稳定性」—— 图 5 MetricCard：44px 启动耗时 + 环 + 三列 + 页脚
     private var stabilityCard: some View {
         let startup = StartupTrace.totalMs
         let crashed = CrashGuard.pendingAbnormal
-        return XPanel(kind: .group, padding: 0) {
-            VStack(spacing: 0) {
-                header("稳定性", tone: crashed ? XPalette.warn : XPalette.ok)
-                // 这里说"最近"，不说"上次"：pending 现在会在下一次正常启动时自动清掉，
-                // 而档案里可能还留着多次历史 —— 说"上次"会让人以为是刚才那次。
-                itemRow(icon: crashed ? "bolt.trianglebadge.exclamationmark.fill" : "checkmark.circle.fill",
-                        tone: crashed ? XPalette.warn : XPalette.ok,
-                        title: crashed ? "最近有一次异常退出" : "最近一次是正常退出",
-                        detail: crashed ? "不是崩溃上报，只是本机记录到会话没有正常结束" : nil)
-                XHairline(inset: XSpace.card)
-                itemRow(icon: startup > 800 ? "clock.badge.exclamationmark" : "clock",
-                        tone: startup > 800 ? XPalette.warn : XPalette.textSub,
-                        title: String(format: "本次启动 %.0f ms", startup),
-                        detail: startup > 800 ? "超过 800ms 预算，冷启动可能偏慢" : "在 800ms 预算内")
-                let arch = CrashGuard.archList()
-                if !arch.isEmpty {
-                    XHairline(inset: XSpace.card)
-                    itemRow(icon: "archivebox", tone: XPalette.textSub,
-                            title: "保留 \(arch.count) 次异常会话记录",
-                            detail: arch.prefix(3).joined(separator: " · "))
+        let logN = DiagLogs.all().count
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack {
+                    Text("稳定性")
+                        .xFont(.subheadline)
+                        .foregroundStyle(XPalette.textTertiary)
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(XPalette.textTertiary.opacity(0.6))
                 }
+                HStack(alignment: .center, spacing: XSpace.l) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        XHeroNumber(
+                            text: String(format: "%.1f", startup / 1000),
+                            color: crashed ? XPalette.warn : XPalette.ok,
+                            unit: "秒启动")
+                        Text(crashed ? "最近有一次异常退出，已归档到崩溃日志" : "没有异常退出记录")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 4)
+                    XGradientDial(
+                        size: 72,
+                        progress: min(1, startup / 3000),
+                        widthRatio: 0.13, showsCursor: false, showsTick: false,
+                        gradient: crashed ? XGradient.dial : XGradient.dialOK
+                    ) { EmptyView() }
+                    .accessibilityHidden(true)
+                }
+                .padding(.top, 8)
+                XHairline().padding(.vertical, 12)
+                HStack(alignment: .top, spacing: XSpace.s) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("异常退出").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text(crashed ? "1 次" : "0 次")
+                            .xFont(.footnote, weight: .semibold)
+                            .foregroundStyle(crashed ? XPalette.warn : XPalette.ok)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("日志条数").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text("\(logN) 条").xFont(.footnote, weight: .semibold)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("本次启动").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text(String(format: "%.1f 秒", startup / 1000)).xFont(.footnote, weight: .semibold)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                Text("启动耗时按冷启动算 —— 热启动会快很多，不用拿这个数吓自己。")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .padding(.top, 12)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
 
-    // ── 最近操作 ──────────────────────────────────────────
     private var opsCard: some View {
         let ops = DiagOps.list()
         return XPanel(kind: .group, padding: 0) {
@@ -287,7 +337,13 @@ struct DiagnosticsPage: View {
                 }
             }
         }
-    }
+    
+                Text("握手耗时偏高时先靠近门锁再试 —— 距离对蓝牙的影响比信号格更直接。")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .padding(.top, 10)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
 
     // ── 日志保留 ──────────────────────────────────────────
     private var retentionCard: some View {
@@ -301,7 +357,13 @@ struct DiagnosticsPage: View {
                         detail: days == nil ? "永久保留（不自动清理）" : "只保留最近 \(days!) 天")
             }
         }
-    }
+    
+                Text("日志只留本机；清理策略按天滚动，不会把审计链一起删掉。")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .padding(.top, 10)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
 
     // ── 处置 ──────────────────────────────────────────────
     //

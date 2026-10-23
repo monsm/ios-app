@@ -1,0 +1,62 @@
+# 逐页审美审核台账
+
+> 目标（用户 2026-10-24）：**app 每一页都亲自过一遍**，核对是否做到 HTML 对应页的审美 / 视觉 / 布局。
+> 口径：审美以 tools/proto/*.html 为准；功能以真实 App 为准。
+> 方法：逐页读 HTML 卡结构与 Swift 实现，对照 ①卡序 ②卡内解剖（卡头→标题→标签/值→分隔线→页脚）③视觉词汇（环/大数字/胶囊/彩点行），不一致就改 Swift。
+
+图例：✅ 已逐页审完并修　🟨 审过但仍有差距　⬜ 未审
+
+---
+
+## 已审
+
+### 84-diagnostics ✅
+| HTML 卡 | Swift 对位 | 处理 |
+|---|---|---|
+| 数据健康（44px+环+孤儿数据/日志断档+页脚）| healthMetricCard | ✅ 补两列+页脚 |
+| 稳定性（44px+环+异常退出/内存占用/本次启动+页脚）| stabilityCard | ✅ 整卡重构为图5 MetricCard |
+| 本机自检 | selfCheckCard | ✅ 已对齐 |
+| 蓝牙（连接状态/握手耗时+页脚）| bleCard | ✅ 补页脚 |
+| 数据保留（事件记录/审计日志）| retentionCard | ✅ 补页脚 |
+
+### 81-backup-studio ✅
+| HTML 卡 | Swift 对位 | 处理 |
+|---|---|---|
+| 状态（44px+上次导出/上次导入/撤销窗口+页脚）| backupFilesCard | ✅ 补三列+页脚 |
+| 撤销本次恢复（24h 内）红卡 | — | ✅ 新增整卡 |
+| 三个向导（+页脚）| actionCards | ✅ 已对齐 |
+
+### 前几轮已审 ✅
+- 47-backup：卡头「备份时效/备份状态/加密参数」+ 标签 算法/认证/派生
+- 89-share-android：新增「关于这个码」卡（有效期/作用）
+- 21-lock-profile：新增「指纹余量」「身份（名字/锁态）」+ 四卡头
+- 05-system / 4a-me（同为 MePage）：新增「备份恢复」卡 + 四卡头改名
+- 41-applock：新增「保护项」卡
+- 60-care：「该做的」卡头 + 保养历史横滑
+- 25-synctime：「偏差范围」「写入」卡头
+- 61-reminders：生日清单 → 图6 横向画廊
+- 03-devices：补 XStatChip 玻璃胶囊
+
+---
+
+## 待审（38 页）
+
+| 缺口 | 页 |
+|---|---|
+| 3 类 | 60-care、88-exit、42-peek、46-safemode |
+| 2 类 | 01-home、10-keys-manage、11-fingerprint、13-key-detail、24-dongles、25-synctime、33-archived、40-security、51-feed、85-battery、86-checklist、87-claim |
+| 1 类 | 02-keys、03-devices、04-members、12-tempcode、14-otp、15-add-key、20-locks、22-firmware、30-members-list、32-member-detail、41-applock、45-destroy、48-export、52-stats、70-icon-picker、80-states、89-share-android |
+
+---
+
+## 工具
+
+```bash
+node tools/pageaudit.js                        # 全站三层对照总表
+node tools/pageaudit.js --page 84-diagnostics  # 单页明细
+node tools/parity.js                           # 审美术语缺口
+node tools/entrygate.js                        # 入口可点性
+```
+
+**工具的局限**：Swift 侧卡头/标签形态多样（单行 .xFont / 换行 / secLabel / headerTitle），
+正则无法 100% 命中，所以 pageaudit 的「缺口」必须**逐页人工复核**才算数——这正是「亲自过一遍」的意义。

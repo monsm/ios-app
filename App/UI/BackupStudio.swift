@@ -20,6 +20,7 @@ struct BackupStudioView: View {
             XScreen("备份工作室", style: .inline) {
                 // 六图改造 (2026-10-24): 顶部图5 读数卡（44px 本机备份文件数 + 环）
                 backupFilesCard
+                undoRestoreCard.xScrollLift()
                 trustHeader.xScrollLift()
                 actionCards.xScrollLift()
                 cadenceCard.xScrollLift()
@@ -69,6 +70,63 @@ struct BackupStudioView: View {
                     .accessibilityHidden(true)
                 }
                 .padding(.top, 8)
+                XHairline().padding(.vertical, 12)
+                // HTML 卡1 的三列：上次导出 / 上次导入 / 撤销窗口
+                HStack(alignment: .top, spacing: XSpace.s) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("上次导出").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text(BackupStudio.daysSinceLastExport < 0 ? "从未" : "\(BackupStudio.daysSinceLastExport) 天前")
+                            .xFont(.footnote, weight: .semibold)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("上次导入").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text(BackupStudio.daysSinceLastImport < 0 ? "从未" : "\(BackupStudio.daysSinceLastImport) 天前")
+                            .xFont(.footnote, weight: .semibold)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("撤销窗口").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text("24 小时").xFont(.footnote, weight: .semibold)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                Text("三列决定「这份备份能不能救回来」 —— 撤销窗口一过，快照就清掉了。")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .padding(.top, 12)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    /// HTML 卡2「撤销本次恢复（24h 内）」—— 红警告卡，App 之前缺这一整张。
+    private var undoRestoreCard: some View {
+        XPanel(kind: .group, tone: .danger) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                HStack(spacing: XSpace.xs) {
+                    Text("撤销本次恢复（24h 内）")
+                        .xFont(.subheadline)
+                        .foregroundStyle(XPalette.danger)
+                    Spacer(minLength: 0)
+                }
+                Text("只有在恢复时自动打过快照才可用。超过 24 小时快照就清掉了。")
+                    .xFont(.footnote)
+                    .foregroundStyle(XPalette.danger.opacity(0.85))
+                    .fixedSize(horizontal: false, vertical: true)
+                Button {
+                    if BackupStudio.canUndoLastRestore {
+                        BackupStudio.undoLastRestore()
+                        XHaptics.success()
+                    }
+                } label: {
+                    Text(BackupStudio.canUndoLastRestore ? "撤销本次恢复" : "没有可撤销的快照")
+                        .xFont(.subheadline, weight: .semibold)
+                        .frame(maxWidth: .infinity, minHeight: XHit.min)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(XPalette.danger.opacity(0.24))
+                .disabled(!BackupStudio.canUndoLastRestore)
             }
         }
     }
