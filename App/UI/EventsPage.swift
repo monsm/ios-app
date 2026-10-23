@@ -98,7 +98,7 @@ struct EventsPage: View {
             }
             }
         }
-        .background(XPalette.canvas)
+        .background(XPalette.canvasGradient)
         .onChange(of: search) { _, _ in filtered = computeFiltered() }
         .onChange(of: alarmOnly) { _, _ in filtered = computeFiltered() }
         .onChange(of: hourFilter) { _, _ in filtered = computeFiltered() }
@@ -494,7 +494,7 @@ struct EventsPage: View {
             .padding(.top, XSpace.s)
             .padding(.bottom, XSpace.xxl)
         }
-        .background(XPalette.canvas)
+        .background(XPalette.canvasGradient)
     }
 
     /// 一天一组：日期头 + 时间轴

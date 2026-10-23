@@ -350,7 +350,7 @@ struct XScreen<Content: View>: View {
             // 留 16（§5.1 的 s4）：只求最后一张卡不贴着栏体。
             .padding(.bottom, XSpace.l)
         }
-        .background(XPalette.canvas)
+        .background(XPalette.canvasGradient)
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(style == .large ? .large : .inline)
         .scrollIndicators(.hidden)

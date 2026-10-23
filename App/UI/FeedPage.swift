@@ -35,7 +35,7 @@ struct FeedPage: View {
 
     var body: some View {
         ZStack {
-            XPalette.canvas.ignoresSafeArea()
+            XPalette.canvasGradient.ignoresSafeArea()
 
             if rows.isEmpty {
                 emptyState

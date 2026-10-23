@@ -367,7 +367,7 @@ struct BackupPage: View {
                 Spacer()
             }
             .padding(XSpace.gutter)
-            .background(XPalette.canvas)
+            .background(XPalette.canvasGradient)
             .navigationTitle("恢复备份")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

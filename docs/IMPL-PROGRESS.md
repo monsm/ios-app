@@ -41,7 +41,7 @@
 
 | HTML | SwiftUI | 六图特征 | 状态 |
 |---|---|---|---|
-| 02-keys | KeysPage.swift | 图2 卡解剖 + 细三环 + 彩点行 | ⬜ |
+| 02-keys | KeysPage.swift | ✅ 图5 MetricCard 主角卡（44px 总数 + 图2 细三环 + 彩点行）| ✅ |
 | 10-keys-manage | KeysPage.swift | 图2 卡解剖 | ⬜ |
 | 11-fingerprint | AddFingerPage.swift | 图2 卡解剖 + 细三环 | ⬜ |
 | 12-tempcode | TempCodeStudio | 图6 横滚 + 图5 大数字 | ⬜ |
@@ -53,7 +53,7 @@
 
 | HTML | SwiftUI | 六图特征 | 状态 |
 |---|---|---|---|
-| 03-devices | DevicePage.swift | 图5 双 MetricCard | ⬜ |
+| 03-devices | DevicePage.swift | ✅ 图5 双列 MetricCard（握手/信号 44px + 迷你环）+ 固件降为小字 | ✅ |
 | 20-locks | LocksPage.swift | 图5 双列卡 | ⬜ |
 | 21-lock-profile | LockProfilePage.swift | 图5 MetricCard | ⬜ |
 | 22-firmware | FirmwarePage.swift | 图2 卡解剖 | ⬜ |
@@ -65,7 +65,7 @@
 
 | HTML | SwiftUI | 六图特征 | 状态 |
 |---|---|---|---|
-| 04-members | MembersPage.swift | 图2 解剖 + 图6 画廊 | ⬜ |
+| 04-members | MembersPage.swift | ✅ 图5 44px 成员数主角 | 🟨 |
 | 30-members-list | MembersPage.swift | 图2 细三环 | ⬜ |
 | 31-member-wizard | MemberWizardView | 图6 横滚画廊 | ⬜ |
 | 32-member-detail | MemberCenterView | 图1 主角 + 图5 双列 | ⬜ |
@@ -158,3 +158,8 @@
 | 2026-10-23 | 移除推测性令牌 dialNumber(96)/dialNumberXL(118)：门厅环心是**动作控件**不是读数，不放数字（原设计注释已论证）|
 | 2026-10-23 | 新增 `XText.small`(13) 两端对齐；apisig 白名单同步登记 |
 | 2026-10-23 | **7 道门禁全绿**：swiftcheck / swiftlint / apisig / contrast / dynamictype / kotlinbalance / tokendrift |
+| 2026-10-23 | **全局画布横扫**：26 个文件 / 37 处背景 → 径向渐变（图1/2/6 语言），一次覆盖全站 |
+| 2026-10-23 | **02-keys 完成**：新增图5 MetricCard 主角卡（44px 总数 + 细三环 + 三类彩点行 + footer）|
+| 2026-10-23 | **03-devices 完成**：三枚等重瓦片 → 图5 双列 MetricCard（握手/信号各带 44px 数字 + 迷你环），固件号降为末尾小字 |
+| 2026-10-23 | **04-members 部分**：成员数 12pt 灰字 → 44px 主角数字 |
+| 2026-10-23 | 判断记录：设备页「容量条」保持分格条**不改环** —— 每格代表一个槽位，改环会丢失「还剩几个」的粒度（参考图是调色板，不是模板）|

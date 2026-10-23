@@ -30,7 +30,7 @@ struct MemberDetail360View: View {
     @ViewBuilder var vkBody: some View {
         if let m = member {
             ZStack {
-                XPalette.canvas.ignoresSafeArea()
+                XPalette.canvasGradient.ignoresSafeArea()
 
                 // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
                 XScreen(MemberHub.display(m), style: .inline) {
@@ -518,7 +518,7 @@ struct MemberWizardView: View {
     var vkBody: some View {
         NavigationStack {
             ZStack {
-                XPalette.canvas.ignoresSafeArea()
+                XPalette.canvasGradient.ignoresSafeArea()
 
                 // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
                 XScreen("建档向导", style: .inline) {
@@ -835,7 +835,7 @@ struct MemberArchivedView: View {
     var body: some View { vkBody.destined(.memberArchived) }
     var vkBody: some View {
         ZStack {
-            XPalette.canvas.ignoresSafeArea()
+            XPalette.canvasGradient.ignoresSafeArea()
 
             // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
             XScreen("归档成员", style: .inline) {
@@ -997,7 +997,7 @@ struct MemberFamilySettingsView: View {
                 .padding(.horizontal, XSpace.gutter)
                 .padding(.vertical, XSpace.l)
             }
-            .background(XPalette.canvas)
+            .background(XPalette.canvasGradient)
             .navigationTitle("家庭设置")
             .toolbar { ToolbarItem(placement: .navigationBarLeading) {
                 Button("保存") {
@@ -1108,7 +1108,7 @@ struct UnclaimedClaimView: View {
     var body: some View { vkBody.destined(.unclaimedClaim) }
     var vkBody: some View {
         ZStack {
-            XPalette.canvas.ignoresSafeArea()
+            XPalette.canvasGradient.ignoresSafeArea()
 
             // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
             XScreen("认领还没分配的钥匙", style: .inline) {

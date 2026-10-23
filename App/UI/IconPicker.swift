@@ -61,7 +61,7 @@ struct IconPicker: View {
         // 全仓 30 处用 XPanel、只有 LocksPage 故意留 List（它要 swipeActions + onMove）。
         // 这页没有行操作，一并换成 ScrollView + XPanel。
         ZStack {
-            XPalette.canvas.ignoresSafeArea()
+            XPalette.canvasGradient.ignoresSafeArea()
 
         // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。

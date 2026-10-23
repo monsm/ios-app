@@ -121,11 +121,16 @@ struct MembersPage: View {
     private var rosterCard: some View {
         XPanel(kind: .group, padding: 0) {
             VStack(spacing: 0) {
-                HStack {
-                    Text("\(members.count) 位成员")
-                        .xFont(.caption, weight: .medium)
-                        .foregroundStyle(XPalette.textSub)
+                // 六图改造 (2026-10-23): 成员数从 caption 灰字改成**图 5 的 44px 主角数字**。
+                //
+                // 图 5 的第一张卡永远把「有多少」做成 44px 大数字 —— 它是这一屏的主读数。
+                // 之前这里是 12pt 灰字，读起来像"表格标题"，用户要眯眼才知道家里几个人。
+                HStack(alignment: .firstTextBaseline) {
+                    XHeroNumber(text: String(members.count), unit: "位成员")
                     Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(XPalette.textTertiary.opacity(0.6))
                 }
                 .padding(.horizontal, XSpace.card)
                 .padding(.top, XSpace.m)

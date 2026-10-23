@@ -534,7 +534,7 @@ struct AutoCalView: View {
     var body: some View { vkBody.destined(.autoCal) }
     var vkBody: some View {
         ZStack {
-            XPalette.canvas.ignoresSafeArea()
+            XPalette.canvasGradient.ignoresSafeArea()
 
             ScrollView {
                 VStack(spacing: XSpace.section) {

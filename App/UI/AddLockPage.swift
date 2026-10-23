@@ -45,7 +45,7 @@ struct AddLockPage: View {
 
     var body: some View {
         ZStack {
-            XPalette.canvas.ignoresSafeArea()
+            XPalette.canvasGradient.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 if flow != .done {

@@ -64,6 +64,11 @@ struct KeysPage: View {
         XScreen("钥匙管理") {
             if !expiringItems.isEmpty { expiringCard }
             VStack(spacing: XSpace.section) {
+                // 六图改造 (2026-10-23): 加图 5 的 MetricCard 主角卡。
+                // 图 5 的第一张卡永远是「44px 大数字 + 一枚环 + 彩点行」。
+                // 钥匙页原来从「到期预警」直接跳到分段 + 列表，缺了「一共多少、都是哪几类」
+                // 这一层 —— 用户进页面第一眼看不出总量与构成，只能一行行数。
+                overviewCard
                 segmentBar
                 VStack(spacing: XSpace.rowGap) {
                     credentialCard
@@ -153,6 +158,59 @@ struct KeysPage: View {
     // 原来是手搓的 axGlassCapsule + 选中项 accent 洗底 —— 而 §7.3/§7.10 都点名：
     // 选中块应当是 rgba(255,255,255,0.18) 的**白色**块，不是语义色洗底。
     // 语义色留给「当前状态」，不留给「你选了什么」。
+    /// 图 5 MetricCard 主角卡 —— 44px 总量 + 图 2 细三环 + 彩点行。
+    ///
+    /// 图 5 的结构：卡头 → 44px 大数字 + 单位 → 右侧环 → sep → 彩点行 → footer 整句。
+    /// 这里环用细三环（图 2）而不是单环，因为它要同时表达三类凭证的比例。
+    private var overviewCard: some View {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack {
+                    Text("全部凭证")
+                        .xFont(.subheadline)
+                        .foregroundStyle(XPalette.textTertiary)
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(XPalette.textTertiary.opacity(0.6))
+                }
+                HStack(alignment: .center, spacing: XSpace.l) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        XHeroNumber(text: String(fpCount + pwCount + tempCount), unit: "份")
+                        XDataRow(label: "指纹", value: String(fpCount), unit: "枚",
+                                 color: XPalette.kindFp)
+                        XDataRow(label: "密码", value: String(pwCount), unit: "项",
+                                 color: XPalette.kindTemp)
+                        XDataRow(label: "临时码", value: String(tempCount), unit: "个",
+                                 color: XPalette.kindOtp)
+                    }
+                    Spacer(minLength: 4)
+                    XTripleThinRing(
+                        size: 92,
+                        values: (fpRatio, pwRatio, tempRatio),
+                        colors: (XPalette.kindFp, XPalette.kindTemp, XPalette.kindOtp),
+                        centerText: String(fpCount + pwCount + tempCount))
+                        .accessibilityHidden(true)
+                }
+                .padding(.top, 8)
+                XHairline().padding(.vertical, 12)
+                Text("三类凭证按数量占比画成三环 —— 一眼看出这把锁主要靠哪种方式进人。")
+                    .xFont(.footnote)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    /// 三类凭证的数量与占比（细三环的数据源）
+    private var fpCount: Int { fps.count }
+    private var pwCount: Int { pwds.filter { !$0.temp }.count }
+    private var tempCount: Int { pwds.filter { $0.temp }.count }
+    private var allTotal: Int { max(1, fpCount + pwCount + tempCount) }
+    private var fpRatio: Double { Double(fpCount) / Double(allTotal) }
+    private var pwRatio: Double { Double(pwCount) / Double(allTotal) }
+    private var tempRatio: Double { Double(tempCount) / Double(allTotal) }
+
     private var segmentBar: some View {
         XSegmented(items: Seg.allCases, title: { $0.title }, selection: Binding(
             get: { Seg(rawValue: seg) ?? .all },

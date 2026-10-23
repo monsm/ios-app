@@ -306,23 +306,61 @@ struct DevicePage: View {
         .accessibilityLabel(label + " 已用 " + String(used) + " 共 " + String(cap) + ", " + (left == 0 ? "已满" : "剩余 " + String(left)))
     }
 
+    /// 图 5 双列 MetricCard —— 握手 / 信号各一张，44px 大数字 + 迷你环。
+    ///
+    /// 图 5 的 Step Count / Step Distance 两张卡就是「44px 数字 + 小环 + 副标」。
+    /// 之前这里是三枚 XMetricTile 平铺：数字只有 19pt，在深色卡里读不出主次，
+    /// 而且三个等重的瓦片让「握手」和「固件版本」看起来同样重要 —— 它们不是。
+    /// 固件号是文本不是读数，改成末尾一行小字。
     private var metricsRow: some View {
-        HStack(spacing: XSpace.s) {
-            XMetricTile(
-                value: sense.connectMs.map { "\($0)" } ?? "—",
-                label: "握手 ms",
-                tone: .neutral,
-                systemImage: "bolt.horizontal")
-            XMetricTile(
-                value: sense.lastRssi.map { "\($0)" } ?? "—",
-                label: "信号 dBm",
-                tone: .neutral,
-                systemImage: "antenna.radiowaves.left.and.right")
-            XMetricTile(
-                value: snap?.firmware.isEmpty == false ? (snap?.firmware ?? "—") : "—",
-                label: "固件",
-                tone: .neutral,
-                systemImage: "cpu")
+        VStack(spacing: XSpace.s) {
+            HStack(spacing: XSpace.s) {
+                metricCard(
+                    title: "握手",
+                    value: sense.connectMs.map { String($0) } ?? "—",
+                    unit: "ms",
+                    note: "越短越顺",
+                    progress: sense.connectMs.map { max(0.05, min(1, 1 - Double($0) / 2000)) } ?? 0.05,
+                    tone: XPalette.kindOtp)
+                metricCard(
+                    title: "信号",
+                    value: sense.lastRssi.map { String($0) } ?? "—",
+                    unit: "dBm",
+                    note: "越近越强",
+                    progress: sense.lastRssi.map { max(0.05, min(1, (Double($0) + 100) / 60)) } ?? 0.05,
+                    tone: XPalette.ok)
+            }
+            if let fw = snap?.firmware, !fw.isEmpty {
+                HStack(spacing: XSpace.xs) {
+                    Image(systemName: "cpu")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(XPalette.textTertiary)
+                    Text("固件 \(fw)")
+                        .xFont(.caption)
+                        .foregroundStyle(XPalette.textTertiary)
+                    Spacer(minLength: 0)
+                }
+                .padding(.leading, 2)
+            }
+        }
+    }
+
+    /// 图 5 单张 MetricCard：标题 → 44px 数字 + 单位 → 副标 → 迷你环
+    private func metricCard(title: String, value: String, unit: String,
+                            note: String, progress: Double, tone: Color) -> some View {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(title)
+                    .xFont(.caption, weight: .medium)
+                    .foregroundStyle(XPalette.textSub)
+                XHeroNumber(text: value, unit: unit, color: tone)
+                Text(note)
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textTertiary)
+                XGradientDial(size: 44, progress: progress,
+                              widthRatio: 0.14, showsCursor: false, showsTick: false)
+                    .opacity(0.9)
+            }
         }
     }
 

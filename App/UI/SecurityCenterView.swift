@@ -332,7 +332,7 @@ struct SecurityPeekView: View {
         .overlay {
             if bgBlurred {
                 ZStack {
-                    XPalette.canvas.ignoresSafeArea()
+                    XPalette.canvasGradient.ignoresSafeArea()
                     VStack(spacing: XSpace.s) {
                         Image(systemName: "eye.slash.fill")
                             .font(.system(size: XIcon.xl, weight: .medium))
@@ -1387,7 +1387,7 @@ struct PrivacyDashboard: View {
 
     var body: some View {
         ZStack {
-            XPalette.canvas.ignoresSafeArea()
+            XPalette.canvasGradient.ignoresSafeArea()
 
             ScrollView {
                 VStack(spacing: XSpace.section) {

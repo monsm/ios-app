@@ -657,7 +657,7 @@ struct LinkPrefsView: View {
     var body: some View { vkBody.destined(.linkPrefs) }
     var vkBody: some View {
         ZStack {
-            XPalette.canvas.ignoresSafeArea()
+            XPalette.canvasGradient.ignoresSafeArea()
 
             ScrollView {
                 VStack(spacing: XSpace.section) {

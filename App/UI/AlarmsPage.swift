@@ -46,7 +46,7 @@ struct AlarmsPage: View {
                 alarmList
             }
         }
-        .background(XPalette.canvas)
+        .background(XPalette.canvasGradient)
         .navigationTitle("告警")
         .navigationBarTitleDisplayMode(.large)
         .task { if !loaded { load() } }
@@ -243,7 +243,7 @@ struct AlarmsPage: View {
             .padding(.top, XSpace.m)
             .padding(.bottom, XSpace.xxl)
         }
-        .background(XPalette.canvas)
+        .background(XPalette.canvasGradient)
     }
 
     /// 卡内组头 —— 取代原来 Section 的 header

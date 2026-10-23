@@ -781,7 +781,7 @@ struct TempCodeStudio: View {
             }
             .padding(XSpace.l)
         }
-        .background(XPalette.canvas.ignoresSafeArea())
+        .background(XPalette.canvasGradient.ignoresSafeArea())
         .axBottomAnchor()   // 870
         .onAppear { checkClipboard() }
     }
@@ -937,7 +937,7 @@ struct TempCodeStudio: View {
             }
             .padding(.vertical, XSpace.l)
         }
-        .background(XPalette.canvas.ignoresSafeArea())
+        .background(XPalette.canvasGradient.ignoresSafeArea())
     }
 
     private func checkClipboard() {
@@ -1110,7 +1110,7 @@ struct FpStudio: View {
                     .padding(.horizontal, XSpace.gutter)
                     .padding(.vertical, XSpace.l)
                 }
-                .background(XPalette.canvas.ignoresSafeArea())
+                .background(XPalette.canvasGradient.ignoresSafeArea())
                 .axBottomAnchor()   // 870
             }
         }
@@ -1336,7 +1336,7 @@ struct FpStudio: View {
         }
         .padding(XSpace.l)
         .frame(maxWidth: .infinity)
-        .background(XPalette.canvas.ignoresSafeArea())
+        .background(XPalette.canvasGradient.ignoresSafeArea())
     }
     private var fallbackName: String { "指纹" + String(doneBatch ?? 0) }
 
@@ -1502,7 +1502,7 @@ struct OtpStudio: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                XPalette.canvas.ignoresSafeArea()
+                XPalette.canvasGradient.ignoresSafeArea()
 
                 // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
                 XScreen("OTP 与口令", style: .inline) {
@@ -1710,7 +1710,7 @@ struct OtpStudio: View {
     private var importSheet: some View {
         NavigationStack {
             ZStack {
-                XPalette.canvas.ignoresSafeArea()
+                XPalette.canvasGradient.ignoresSafeArea()
                 // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
                 XScreen("导入 otpauth", style: .inline) {
                     XPanel(kind: .group) {

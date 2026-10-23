@@ -39,7 +39,7 @@ struct MaintenanceView: View {
     var body: some View { vkBody.destined(.maintenance) }
     var vkBody: some View {
         ZStack {
-            XPalette.canvas.ignoresSafeArea()
+            XPalette.canvasGradient.ignoresSafeArea()
 
             // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
             XScreen("维护与保养", style: .inline) {
@@ -363,7 +363,7 @@ struct BatterySwapGuideView: View {
     var body: some View { vkBody.destined(.batterySwapGuide) }
     var vkBody: some View {
         ZStack {
-            XPalette.canvas.ignoresSafeArea()
+            XPalette.canvasGradient.ignoresSafeArea()
 
             // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
             XScreen("换电指引", style: .inline) {
@@ -469,7 +469,7 @@ struct CareChecklistView: View {
 
     var body: some View {
         ZStack {
-            XPalette.canvas.ignoresSafeArea()
+            XPalette.canvasGradient.ignoresSafeArea()
 
             // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
             XScreen("锁体保养", style: .inline) {
