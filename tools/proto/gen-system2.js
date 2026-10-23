@@ -276,7 +276,7 @@ const D = __dirname + '/';
           <span style="width:22px;height:22px;border-radius:50%;background:${c}22;color:${c};
             display:flex;align-items:center;justify-content:center;font-size:11px">${n[0]}</span>
           <span style="flex:1">${n}</span>
-          <span style="color:var(--text-tert);font-size:13px">9999 天后</span></div>`).join('')}
+          <span style="color:var(--text-tert);font-size:13px">未填生日</span></div>`).join('')}
     </div>
     <div class="footer">生日在「设置 → 成员管理 → 补全信息」里填写（格式 MM-dd）。提醒通过本地通知送达，全程离线，不依赖任何服务器。</div>
   </div>

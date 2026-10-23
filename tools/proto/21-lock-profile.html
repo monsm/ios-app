@@ -1,9 +1,35 @@
 <!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
 <title>锁档案</title><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="pages.css"></head><body>
-<div class="phone"><div class="navbar">
+<div class="phone">
+<div class="statusbar">
+  <span class="sb-time" data-real-time>9:41</span>
+  <span class="sb-right">
+    <svg width="17" height="11" viewBox="0 0 17 11" fill="#FFF"><rect x="0" y="7.5" width="3" height="3.5" rx="1"/><rect x="4.5" y="5.5" width="3" height="5.5" rx="1"/><rect x="9" y="3" width="3" height="8" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+    <svg width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="#FFF" stroke-width="1.6" stroke-linecap="round"><path d="M1 3.4a10.5 10.5 0 0 1 14 0"/><path d="M3.6 6.2a6.6 6.6 0 0 1 8.8 0"/><path d="M6.2 8.9a2.9 2.9 0 0 1 3.6 0"/><circle cx="8" cy="10.2" r=".7" fill="#FFF" stroke="none"/></svg>
+    <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x=".5" y=".5" width="21" height="11" rx="3.2" stroke="#FFF" stroke-opacity=".4"/><rect x="2" y="2" width="15" height="8" rx="2" fill="#FFF"/><path d="M23 4.2v3.6a2 2 0 0 0 0-3.6z" fill="#FFF" fill-opacity=".5"/></svg>
+  </span>
+</div><div class="navbar">
   <a class="back" href="20-locks.html">‹</a><span class="nt">锁档案</span><span class="nr">保存</span></div><div class="scroll"><div class="page hasnav">
 
   <!-- ① 锁牌（源码 plaque：3D 锁图 150 + 辉光 + 名称 + 场所 + 三个状态读数）-->
+  <!--VIZ-->
+  <div class="card" style="margin-top:12px"><div class="cardlink">指纹余量<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;align-items:center;gap:18px;margin-top:6px">
+      <div style="position:relative;width:88px;height:88px;flex:0 0 auto">
+  <svg width="88" height="88" viewBox="0 0 88 88">
+    <circle cx="44" cy="44" r="36.08" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="10.120000000000001"/>
+    <circle cx="44" cy="44" r="36.08" fill="none" stroke="#5E5CE6" stroke-width="10.120000000000001"
+      stroke-linecap="round" stroke-dasharray="54.40735821192947 226.69732588303947" transform="rotate(-90 44 44)"/>
+  </svg>
+  <div style="position:absolute;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center">
+    <div style="font-size:23px;font-weight:700;color:#FFF;
+      font-variant-numeric:tabular-nums;line-height:1">12</div>
+    <div style="font-size:7px;color:#8D8D93;margin-top:3px;max-width:55px;text-align:center;line-height:1.3">可录</div>
+  </div></div>
+      <div style="flex:1"><div class="ctitle">38 / 50 已用</div>
+      <div style="font-size:12px;color:var(--text-sub);margin-top:6px">指纹录在锁里，本机只记「谁的第几枚」</div></div>
+    </div></div>
   <div class="card" style="margin-top:8px;padding:28px 20px 20px;text-align:center">
     <div style="position:relative;display:inline-block">
       <div style="position:absolute;inset:-24px;background:radial-gradient(circle,rgba(123,123,232,.30) 0%,transparent 70%);
@@ -122,7 +148,7 @@
           <div style="font-size:11px;color:#FFF;margin-top:7px">靛蓝</div>
         </div>
         <div style="width:calc(25% - 11px);text-align:center">
-          <div style="width:44px;height:44px;border-radius:50%;margin:0 auto;background:#0090FC;
+          <div style="width:44px;height:44px;border-radius:50%;margin:0 auto;background:#5E5CE6;
             border:3px solid transparent"></div>
           <div style="font-size:11px;color:#6A6A6E;margin-top:7px">蓝</div>
         </div>
@@ -132,17 +158,17 @@
           <div style="font-size:11px;color:#6A6A6E;margin-top:7px">绿</div>
         </div>
         <div style="width:calc(25% - 11px);text-align:center">
-          <div style="width:44px;height:44px;border-radius:50%;margin:0 auto;background:#FF9F0A;
+          <div style="width:44px;height:44px;border-radius:50%;margin:0 auto;background:#5E5CE6;
             border:3px solid transparent"></div>
           <div style="font-size:11px;color:#6A6A6E;margin-top:7px">橙</div>
         </div>
         <div style="width:calc(25% - 11px);text-align:center">
-          <div style="width:44px;height:44px;border-radius:50%;margin:0 auto;background:#FF694E;
+          <div style="width:44px;height:44px;border-radius:50%;margin:0 auto;background:#5E5CE6;
             border:3px solid transparent"></div>
           <div style="font-size:11px;color:#6A6A6E;margin-top:7px">珊瑚</div>
         </div>
         <div style="width:calc(25% - 11px);text-align:center">
-          <div style="width:44px;height:44px;border-radius:50%;margin:0 auto;background:#0ADBD8;
+          <div style="width:44px;height:44px;border-radius:50%;margin:0 auto;background:#5E5CE6;
             border:3px solid transparent"></div>
           <div style="font-size:11px;color:#6A6A6E;margin-top:7px">薄荷</div>
         </div>

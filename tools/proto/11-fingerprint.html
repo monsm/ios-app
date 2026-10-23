@@ -1,12 +1,55 @@
 <!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
 <title>指纹</title><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="pages.css"></head><body>
-<div class="phone"><div class="navbar">
+<div class="phone">
+<div class="statusbar">
+  <span class="sb-time" data-real-time>9:41</span>
+  <span class="sb-right">
+    <svg width="17" height="11" viewBox="0 0 17 11" fill="#FFF"><rect x="0" y="7.5" width="3" height="3.5" rx="1"/><rect x="4.5" y="5.5" width="3" height="5.5" rx="1"/><rect x="9" y="3" width="3" height="8" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+    <svg width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="#FFF" stroke-width="1.6" stroke-linecap="round"><path d="M1 3.4a10.5 10.5 0 0 1 14 0"/><path d="M3.6 6.2a6.6 6.6 0 0 1 8.8 0"/><path d="M6.2 8.9a2.9 2.9 0 0 1 3.6 0"/><circle cx="8" cy="10.2" r=".7" fill="#FFF" stroke="none"/></svg>
+    <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x=".5" y=".5" width="21" height="11" rx="3.2" stroke="#FFF" stroke-opacity=".4"/><rect x="2" y="2" width="15" height="8" rx="2" fill="#FFF"/><path d="M23 4.2v3.6a2 2 0 0 0 0-3.6z" fill="#FFF" fill-opacity=".5"/></svg>
+  </span>
+</div><div class="navbar">
   <a class="back" href="02-keys.html">‹</a><span class="nt">指纹</span><span class="nr">编辑</span></div><div class="scroll"><div class="page hasnav">
 
   <div class="h1" style="margin-top:8px">指纹</div>
   <div class="sub">锁内 38 / 50 · 本机登记 3 枚</div>
 
   <!-- 图 2 卡解剖：指纹库存（细三环 + 彩色数据行）-->
+  <!--VIZ-->
+  <div class="card"><div class="cardlink">锁内容量<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;align-items:center;gap:18px;margin-top:6px">
+      <div style="position:relative;width:88px;height:88px;flex:0 0 auto">
+  <svg width="88" height="88" viewBox="0 0 88 88">
+    <circle cx="44" cy="44" r="36.08" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="10.120000000000001"/>
+    <circle cx="44" cy="44" r="36.08" fill="none" stroke="#0ADBD8" stroke-width="10.120000000000001"
+      stroke-linecap="round" stroke-dasharray="172.28996767111 226.69732588303947" transform="rotate(-90 44 44)"/>
+  </svg>
+  <div style="position:absolute;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center">
+    <div style="font-size:23px;font-weight:700;color:#FFF;
+      font-variant-numeric:tabular-nums;line-height:1">76%</div>
+    <div style="font-size:7px;color:#8D8D93;margin-top:3px;max-width:55px;text-align:center;line-height:1.3">已用</div>
+  </div></div>
+      <div style="flex:1"><div style="display:flex;flex-direction:column;gap:12px;margin-top:6px">
+    <div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">
+        <span style="color:#8D8D93">已录</span>
+        <span style="color:#FFF;font-weight:600;font-variant-numeric:tabular-nums">38</span>
+      </div>
+      <div style="height:5px;border-radius:3px;background:rgba(255,255,255,.08)">
+        <div style="height:5px;border-radius:3px;background:#0ADBD8;width:76%"></div>
+      </div>
+    </div>
+    <div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">
+        <span style="color:#8D8D93">余量</span>
+        <span style="color:#FFF;font-weight:600;font-variant-numeric:tabular-nums">12</span>
+      </div>
+      <div style="height:5px;border-radius:3px;background:rgba(255,255,255,.08)">
+        <div style="height:5px;border-radius:3px;background:rgba(255,255,255,.24);width:24%"></div>
+      </div>
+    </div></div></div>
+    </div></div>
   <div class="card" style="margin-top:24px">
     <div class="cardlink">指纹库存<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
     <div style="display:flex;align-items:center;gap:18px;margin-top:2px">
@@ -15,13 +58,13 @@
         <div style="margin-top:14px">
           <div class="drow"><span class="dot" style="background:#0ADBD8"></span>
             <span class="dv">38<span class="du"> 锁内已用</span></span></div>
-          <div class="drow"><span class="dot" style="background:#3CDE02"></span>
+          <div class="drow"><span class="dot" style="background:#0ADBD8"></span>
             <span class="dv">12<span class="du"> 锁内余量</span></span></div>
-          <div class="drow"><span class="dot" style="background:#FF9F0A"></span>
+          <div class="drow"><span class="dot" style="background:#0ADBD8"></span>
             <span class="dv">3<span class="du"> 本机登记</span></span></div>
         </div>
       </div>
-      <svg width="100" height="100" viewBox="0 0 100 100" style="flex:0 0 auto"><circle cx="50" cy="50" r="46.55" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="4.5"/><circle cx="50" cy="50" r="46.55" fill="none" stroke="#F11B51" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="222.3 292.5" transform="rotate(-90 50 50)"/><circle cx="50" cy="50" r="36.55" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="4.5"/><circle cx="50" cy="50" r="36.55" fill="none" stroke="#3CDE02" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="55.1 229.7" transform="rotate(-90 50 50)"/><circle cx="50" cy="50" r="26.549999999999997" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="4.5"/><circle cx="50" cy="50" r="26.549999999999997" fill="none" stroke="#0ADBD8" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="10.0 166.8" transform="rotate(-90 50 50)"/><circle cx="50" cy="50" r="19.3" fill="#0A0A0C"/><text x="50" y="50" text-anchor="middle" dominant-baseline="central" font-size="22" font-weight="700" fill="#FFF" font-family="system-ui,-apple-system" style="font-variant-numeric:tabular-nums">38</text></svg>
+      <svg width="100" height="100" viewBox="0 0 100 100" style="flex:0 0 auto"><circle cx="50" cy="50" r="46.55" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="4.5"/><circle cx="50" cy="50" r="46.55" fill="none" stroke="#0ADBD8" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="222.3 292.5" transform="rotate(-90 50 50)"/><circle cx="50" cy="50" r="36.55" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="4.5"/><circle cx="50" cy="50" r="36.55" fill="none" stroke="#0ADBD8" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="55.1 229.7" transform="rotate(-90 50 50)"/><circle cx="50" cy="50" r="26.549999999999997" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="4.5"/><circle cx="50" cy="50" r="26.549999999999997" fill="none" stroke="#0ADBD8" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="10.0 166.8" transform="rotate(-90 50 50)"/><circle cx="50" cy="50" r="19.3" fill="#0A0A0C"/><text x="50" y="50" text-anchor="middle" dominant-baseline="central" font-size="22" font-weight="700" fill="#FFF" font-family="system-ui,-apple-system" style="font-variant-numeric:tabular-nums">38</text></svg>
     </div>
     <div class="sep"></div>
     <div class="cols">

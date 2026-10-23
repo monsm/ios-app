@@ -1,57 +1,80 @@
 <!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
-<title>添加密码</title><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="pages.css"></head><body>
-<div class="phone"><div class="navbar">
-  <a class="back" href="10-keys-manage.html">‹</a><span class="nt">添加密码</span><span class="nr"></span></div><div class="scroll"><div class="page hasnav">
+<title>密码详情</title><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="pages.css"></head><body>
+<div class="phone">
+<div class="statusbar">
+  <span class="sb-time" data-real-time>9:41</span>
+  <span class="sb-right">
+    <svg width="17" height="11" viewBox="0 0 17 11" fill="#FFF"><rect x="0" y="7.5" width="3" height="3.5" rx="1"/><rect x="4.5" y="5.5" width="3" height="5.5" rx="1"/><rect x="9" y="3" width="3" height="8" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+    <svg width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="#FFF" stroke-width="1.6" stroke-linecap="round"><path d="M1 3.4a10.5 10.5 0 0 1 14 0"/><path d="M3.6 6.2a6.6 6.6 0 0 1 8.8 0"/><path d="M6.2 8.9a2.9 2.9 0 0 1 3.6 0"/><circle cx="8" cy="10.2" r=".7" fill="#FFF" stroke="none"/></svg>
+    <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x=".5" y=".5" width="21" height="11" rx="3.2" stroke="#FFF" stroke-opacity=".4"/><rect x="2" y="2" width="15" height="8" rx="2" fill="#FFF"/><path d="M23 4.2v3.6a2 2 0 0 0 0-3.6z" fill="#FFF" fill-opacity=".5"/></svg>
+  </span>
+</div><div class="navbar">
+  <a class="back" href="10-keys-manage.html">‹</a><span class="nt">密码详情</span><span class="nr">编辑</span></div><div class="scroll"><div class="page hasnav">
 
-  <div class="h1" style="margin-top:8px">添加密码</div>
-  <div class="sub">6~8 位数字 · 写入门锁</div>
+  <div class="h1" style="margin-top:8px">朕-大门-长期</div>
+  <div class="sub">密码 · 长期有效 · 归属朕</div>
 
-  <!-- capacityCard -->
-  <div class="card" style="margin-top:24px">
-    <div class="cardlink">密码库存<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
-    <div class="ctitle">还可录 1 条</div>
-    <div class="clabel">锁内已用</div>
-    <div class="cvalue" style="font-size:19px;font-weight:700">63 / 64</div>
-    <div class="footer">密码库存已满时，新增前要先删一条。临时码也占这个池子。</div>
-  </div>
-
-  <!-- passwordStage -->
-  <div class="card">
-    <div class="cardlink">密码<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
-    <div style="text-align:center;padding:16px 0 8px">
-      <div style="font-size:40px;font-weight:700;letter-spacing:12px;line-height:1;
-        font-variant-numeric:tabular-nums;color:#5E5CE6">••••••</div>
-      <div style="font-size:12px;color:#8D8D93;margin-top:14px">输入码值，或点「生成」</div>
-    </div>
-    <div style="display:flex;gap:10px">
-      <button class="btn sec" style="flex:1">生成随机码</button>
-      <button class="btn sec" style="flex:1">粘贴</button>
-    </div>
-    <div class="footer">密码够长（6 位以上）才能写入。逐位回显，重复会被拦截。</div>
-  </div>
-
-  <!-- validitySection -->
-  <div class="card">
-    <div class="cardlink">有效期<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
-    <div class="segctl2" style="margin-top:12px">
-      <div class="o on">长期</div><div class="o">7 天</div><div class="o">30 天</div><div class="o">自定义</div>
+  <!-- 码值主角卡（大字号显示）-->
+  <!--VIZ-->
+  <div class="duo" style="margin-top:12px">
+    <div class="metric-card"><div class="mh"><span class="mt">已使用</span><span class="mc">›</span></div>
+      <div class="ms">累计</div>
+      <div class="mv">24<small>次</small></div>
+      <div class="mchart" style="height:36px"><i style="height:20%"></i><i style="height:30%"></i><i style="height:10%"></i><i style="height:40%"></i><i style="height:60%"></i><i style="height:30%"></i><i style="height:20%"></i><i style="height:50%"></i><i class="hi" style="height:80%"></i><i style="height:40%"></i><i style="height:30%"></i><i style="height:60%"></i><i class="hi" style="height:90%"></i><i style="height:50%"></i><i style="height:40%"></i><i class="hi" style="height:70%"></i><i class="hi" style="height:100%"></i><i style="height:60%"></i><i style="height:40%"></i><i class="hi" style="height:80%"></i><i style="height:50%"></i><i style="height:30%"></i><i class="hi" style="height:70%"></i><i style="height:40%"></i></div><div class="maxis"><span>1</span><span>7</span><span>14</span><span>21</span></div></div>
+    <div class="metric-card"><div class="mh"><span class="mt">最近一次</span><span class="mc">›</span></div>
+      <div class="ms">今天</div><div class="mv" style="font-size:22px">07:12</div>
+      <div style="font-size:11px;color:var(--text-sub);margin-top:12px">朕 · 手动</div></div></div>
+  <div class="card" style="margin-top:24px;text-align:center;padding:26px 20px">
+    <div class="cardlink" style="text-align:left">码值<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="font-size:44px;font-weight:700;letter-spacing:8px;line-height:1;
+      font-variant-numeric:tabular-nums;color:#FFF;margin:16px 0 6px">483 921</div>
+    <div style="font-size:12px;color:#8D8D93">轻点复制 · 复制后 60 秒自动清除</div>
+    <div class="sep" style="margin-top:20px"></div>
+    <div class="cols">
+      <div><div class="clabel" style="margin-top:0">锁内编号</div><div class="cvalue">#12</div></div>
+      <div><div class="clabel" style="margin-top:0">指纹位</div><div class="cvalue">—</div></div>
     </div>
   </div>
 
-  <!-- ownerSection -->
+  <!-- 归属与授权 -->
   <div class="card" style="padding:6px 0">
-    <div class="cardlink" style="padding:8px 20px 8px">归属<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
-    <a class="rw" href="30-members-list.html">
-      <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="person"></span></div>
-      <div class="tx"><div class="tt">未归属</div><div class="sb">备注自动填命名模板</div></div>
+    <div class="cardlink" style="padding:8px 20px 8px">归属与授权<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <a class="rw" href="32-member-detail.html">
+      <div style="width:36px;height:36px;border-radius:50%;background:#7B7BE81F;
+        border:2px solid #7B7BE8;display:flex;align-items:center;justify-content:center;
+        font-size:16px;color:#7B7BE8;font-weight:600;flex:0 0 auto">朕</div>
+      <div class="tx"><div class="tt">朕</div><div class="sb">管理员 · 2026-03-12 创建</div></div>
       <div class="ch"><span class="svgi" data-i="chevron"></span></div></a>
+    <div class="sep"></div>
+    <div class="rw" style="cursor:default">
+      <div class="ic" style="background:transparent;color:#8D8D93"><span class="svgi" data-i="clock"></span></div>
+      <div class="tx"><div class="tt">有效期</div><div class="sb">长期 — 不过期</div></div>
+    </div>
   </div>
 
-  <!-- actionSection -->
+  <!-- 使用记录 -->
   <div class="card">
-    <button class="btn" style="background:#5E5CE6;color:#FFF">添加密码</button>
-    <button class="btn sec" style="margin-top:10px">下发 10 分钟临时密码</button>
-    <div class="footer">点了没反应 —— 请先选择门锁。</div>
+    <div class="cardlink">使用记录<span class="ch"><span class="svgi" data-i="chevron"></span></span></div>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-top:10px">
+      <div style="display:flex;justify-content:space-between;font-size:14px">
+          <span>今天 07:12</span><span style="color:#30D158">开门成功</span></div><div style="display:flex;justify-content:space-between;font-size:14px">
+          <span>昨天 21:40</span><span style="color:#30D158">开门成功</span></div><div style="display:flex;justify-content:space-between;font-size:14px">
+          <span>10-21 18:22</span><span style="color:#30D158">开门成功</span></div>
+    </div>
+    <div class="sep"></div>
+    <div class="cols">
+      <div><div class="clabel" style="margin-top:0">本月使用</div><div class="cvalue">23 次</div></div>
+      <div><div class="clabel" style="margin-top:0">最后使用</div><div class="cvalue">今天</div></div>
+    </div>
+    <div class="footer">每次使用都会进审计流水，可以按这个密码筛。</div>
+  </div>
+
+  <!-- 操作 -->
+  <div class="card">
+    <button class="btn sec">改个名字</button>
+    <button class="btn sec" style="margin-top:10px">改有效期</button>
+    <button class="btn dgr" style="margin-top:10px">删除这项钥匙</button>
+    <div class="footer">删除撤销命令会排队等待门锁连接，断网也不会丢。</div>
   </div>
 
 </div></div><div class="tabbar">

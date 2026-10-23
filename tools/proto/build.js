@@ -39,7 +39,8 @@ const ORDER = [
   'gen-credential.js',   // 11/12/14 凭证三页（按源码）
   'gen-dongle-gw.js',    // 24/23 按源码
   'gen-locks.js',        // 20 门锁（按源码）
-  'gen-stats.js',        // 52 统计（按源码六卡）
+  'gen-stats.js',
+  'inject-rings.js',      // 52 活动环（图 5 核心组件）        // 52 统计（按源码六卡）
   'gen-peek.js',         // 42 防窥（按源码重做）
   'gen-members-list.js', // 30 成员列表（重做）
   'gen-hero3.js',       // 30/31/32 成员域主角

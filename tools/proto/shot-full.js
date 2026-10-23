@@ -13,6 +13,8 @@ html = html.replace('</head>', '<style>html,body{height:auto!important;overflow:
   '.phone{height:auto!important;min-height:0!important;overflow:visible!important}' +
   '.scroll{position:static!important;height:auto!important;overflow:visible!important}' +
   '.dsheet{position:static!important;height:auto!important;overflow:visible!important}' +
+  '.shell{position:static!important;height:auto!important;overflow:visible!important}' +
+  '.shell-track,.shell-card{position:static!important;height:auto!important;overflow:visible!important}' +
   '.dbody{overflow:visible!important;padding-bottom:32px!important}' +
   '.page{padding-bottom:32px!important}</style></head>');
 const tmp = path.join(D, '_full_' + name + '.html');

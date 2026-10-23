@@ -29,11 +29,12 @@ fs.writeFileSync(D+'05-system.html', L.page('系统', `
         <div style="font-size:44px;font-weight:700;line-height:1;margin-top:8px;font-variant-numeric:tabular-nums;letter-spacing:-1.2px">2</div>
         <div style="font-size:12px;color:rgba(255,255,255,.66);margin-top:8px;line-height:1.5">应用锁未开启 · 从未备份</div>
       </div>
-      <svg width="88" height="88" viewBox="0 0 88 88" style="flex:0 0 auto">
-        <circle cx="44" cy="44" r="36" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="7"/>
-        <circle cx="44" cy="44" r="36" fill="none" stroke="#FFA31A" stroke-width="7" stroke-linecap="round" stroke-dasharray="45.2 226.2" transform="rotate(-90 44 44)"/>
-        <circle cx="44" cy="44" r="24" fill="rgba(0,0,0,.24)"/>
-        <text x="44" y="44" text-anchor="middle" dominant-baseline="central" font-size="17" font-weight="700" fill="#FFF" font-family="system-ui,-apple-system">2/6</text>
+      <svg width="84" height="84" viewBox="0 0 84 84" style="flex:0 0 auto">
+        <circle cx="42" cy="42" r="34.36" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="6.68"/>
+        <circle cx="42" cy="42" r="34.36" fill="none" stroke="#FFA31A" stroke-width="6.68" stroke-linecap="round" stroke-dasharray="43.15 215.91" transform="rotate(-90 42 42)"/>
+        <circle cx="42" cy="42" r="22.91" fill="rgba(0,0,0,.24)"/>
+        <text x="42" y="42" text-anchor="middle" dominant-baseline="central"
+          font-size="16.15" font-weight="700" fill="#FFF" font-family="system-ui,-apple-system">2/6</text>
       </svg>
     </div>
     <div style="height:1px;background:rgba(255,255,255,.16);margin:18px 0 16px"></div>

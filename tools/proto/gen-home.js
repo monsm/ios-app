@@ -77,7 +77,7 @@ fs.writeFileSync(D+'01-home.html', L.page('门厅', `
 
   <!-- 标题块：图 1 是**两行**大标题 + **四行**正文 -->
   <div style="margin-top:24px">
-    <div class="h1" style="font-size:44px;line-height:1.10;letter-spacing:-1.2px">今天还没有开门<br>靠近门锁就能开</div>
+    <div class="h1" style="font-size:30px;line-height:1.15;letter-spacing:-.5px">今天还没有开门<br>靠近门锁就能开</div>
     <div class="sub" style="font-size:15px;line-height:1.52;margin-top:14px;color:#9A9AA0">
       这个家的记录都在这台手机上。靠近门锁，<br>或者在下方按住圆盘，两种方式都能开门。<br>
       每次开门都会留一条记录，谁、什么时候、<br>用什么方式。
@@ -87,9 +87,9 @@ fs.writeFileSync(D+'01-home.html', L.page('门厅', `
   <!-- 两列读数：图 1 只有**一组**两列（Health Age / Actual Age）-->
   <div class="cols" style="margin-top:20px;padding:0 8px">
     <div><div class="clabel" style="margin-top:0;font-size:13px">今日开门</div>
-      <div class="cvalue" style="font-size:28px;font-weight:700;margin-top:6px;letter-spacing:-.4px">0 次</div></div>
+      <div class="cvalue" style="font-weight:700;margin-top:6px">0 次</div></div>
     <div><div class="clabel" style="margin-top:0;font-size:13px">最活跃成员</div>
-      <div class="cvalue" style="font-size:28px;font-weight:700;margin-top:6px;letter-spacing:-.4px">爱妃</div></div>
+      <div class="cvalue" style="font-weight:700;margin-top:6px">爱妃</div></div>
   </div>
 
   
