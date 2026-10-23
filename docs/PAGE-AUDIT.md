@@ -37,6 +37,22 @@
 | 隐私总览 | — | ✅ **新增整卡** |
 | 遮蔽与通道（+页脚）| 已有 SecRow 组 | ✅ |
 
+
+### 01-home ✅（主屏）
+| HTML 元素 | Swift 对位 | 处理 |
+|---|---|---|
+| 顶部 3 玻璃胶囊 | masthead 的 4 个 chip（link/battery/today/alerts）| ✅ 已有，判定对齐 |
+| 巨型渐变环 + 环心数字 | unlockStage（220pt 按住开锁环）| ✅ 保留（功能是"按住开锁"，非数据环）|
+| **44px 大数字** | metricsRow 三个等重 XDataRow | ✅ **把「今日开门」提为 44px 主角** + 两条数据行 |
+| 「本周」卡（两列 + 页脚）| todaySection（XStatCard + 页脚 + 最早一次/最后一次）| ✅ 已对齐 |
+
+### 10-keys-manage ✅
+| HTML 卡 | Swift 对位 | 处理 |
+|---|---|---|
+| 库存分布（环 + 两列：本周新增/即将到期 + 页脚）| overviewCard（44px + 三环 + 页脚）| ✅ **补两列 + weekAdded** |
+| 即将到期（+页脚）| expiringCard | ✅ 已对齐 |
+| 密码 / 指纹（+页脚）| credentialCard | ✅ 已对齐 |
+
 ---
 
 ## 已审
@@ -75,7 +91,7 @@
 | 缺口 | 页 |
 |---|---|
 
-| 2 类 | 01-home、10-keys-manage、11-fingerprint、13-key-detail、24-dongles、25-synctime、33-archived、40-security、51-feed、85-battery、86-checklist、87-claim |
+| 2 类 | 11-fingerprint、13-key-detail、24-dongles、25-synctime、33-archived、40-security、51-feed、85-battery、86-checklist、87-claim |
 | 1 类 | 02-keys、03-devices、04-members、12-tempcode、14-otp、15-add-key、20-locks、22-firmware、30-members-list、32-member-detail、41-applock、45-destroy、48-export、52-stats、70-icon-picker、80-states、89-share-android |
 
 ---

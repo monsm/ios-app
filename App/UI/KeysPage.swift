@@ -194,12 +194,37 @@ struct KeysPage: View {
                 }
                 .padding(.top, 8)
                 XHairline().padding(.vertical, 12)
+                // 审美对齐 HTML 10-keys-manage 卡1「库存分布」：两列（本周新增 / 即将到期）
+                HStack(alignment: .top, spacing: XSpace.s) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("本周新增").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text("\(weekAdded) 份").xFont(.footnote, weight: .semibold)
+                            .foregroundStyle(XPalette.ok)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("即将到期").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text("\(expiringItems.count) 份").xFont(.footnote, weight: .semibold)
+                            .foregroundStyle(expiringItems.isEmpty ? XPalette.text : XPalette.warn)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .padding(.bottom, 10)
                 Text("三类凭证按数量占比画成三环 —— 一眼看出这把锁主要靠哪种方式进人。")
                     .xFont(.footnote)
                     .foregroundStyle(XPalette.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+    }
+
+    /// 本周新增的凭证数（HTML「库存分布」卡的一列）
+    ///
+    /// ⚠ LedgerPwd.at 是 **epoch 毫秒**（Store.swift 有明确注释：
+    /// CredBinEntry.at / CredSnapshot.at 是秒，混用会差一千倍）。所以阈值也要毫秒。
+    private var weekAdded: Int {
+        let cutoffMs = (Date().timeIntervalSince1970 - 7 * 86400) * 1000
+        return pwds.filter { $0.at >= cutoffMs }.count
     }
 
     /// 三类凭证的数量与占比（细三环的数据源）

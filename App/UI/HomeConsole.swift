@@ -890,8 +890,10 @@ struct HomeConsole: View {
             XPanel(kind: .group) {
             HStack(alignment: .center, spacing: XSpace.l) {
                 VStack(alignment: .leading, spacing: 11) {
-                    XDataRow(label: "今日开门", value: String(opensToday), unit: "次",
-                             color: XPalette.accent)
+                    // 审美对齐 HTML 01-home（2026-10-24）：HTML 的首页有一个 **44px 大数字**
+                    // 作为主读数。App 之前三个 XDataRow 等重，没有主角。
+                    // 功能以 App 为准（数据仍是今日开门/成员/最早），只是把"今日开门"提成主角。
+                    XHeroNumber(text: String(opensToday), color: XPalette.accent, unit: "次开门")
                     XDataRow(label: "今日成员", value: String(todayPeople), unit: "位",
                              color: XPalette.ok)
                     XDataRow(label: "最早开门", value: firstOpenText, color: XPalette.kindOtp)
