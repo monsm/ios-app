@@ -327,8 +327,8 @@ struct BatterySwapGuideView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         XHeroNumber(
                             text: pct >= 0 ? String(pct) : "—",
-                            unit: "%",
-                            color: low ? XPalette.warn : XPalette.ok)
+                            color: low ? XPalette.warn : XPalette.ok,
+                            unit: "%")
                         Text(low ? "电量偏低，建议尽快更换" : "电量充足")
                             .xFont(.footnote)
                             .foregroundStyle(low ? XPalette.warn : XPalette.textTertiary)
@@ -490,8 +490,8 @@ struct CareChecklistView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         XHeroNumber(
                             text: String(done),
-                            unit: "/ \(total) 项",
-                            color: done == total ? XPalette.ok : XPalette.accentText)
+                            color: done == total ? XPalette.ok : XPalette.accentText,
+                            unit: "/ \(total) 项")
                         Text(done == total ? "五项都过了一遍 —— 可以点完成保养"
                                            : "逐项打勾，做完点下面的完成保养")
                             .xFont(.footnote)

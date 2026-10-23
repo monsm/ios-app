@@ -1530,8 +1530,8 @@ struct OtpStudio: View {
                     VStack(alignment: .leading, spacing: 8) {
                         XHeroNumber(
                             text: String(total),
-                            unit: "条口令",
-                            color: total == 0 ? XPalette.textTertiary : XPalette.accentText)
+                            color: total == 0 ? XPalette.textTertiary : XPalette.accentText,
+                            unit: "条口令")
                         Text(total == 0 ? "还没有导入过 — 可以在下面粘 otpauth:// 链接"
                                         : "每 30 秒刷新一次，倒计时在下面的细条上")
                             .xFont(.footnote)

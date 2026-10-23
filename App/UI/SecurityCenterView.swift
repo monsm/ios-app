@@ -917,8 +917,8 @@ struct SecurityDestroyView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         XHeroNumber(
                             text: String(total),
-                            unit: "项凭证",
-                            color: XPalette.danger)
+                            color: XPalette.danger,
+                            unit: "项凭证")
                         Text("\(pwds) 条密码 · \(fps) 枚指纹 · 全部审计链 —— 不可恢复")
                             .xFont(.footnote)
                             .foregroundStyle(XPalette.danger.opacity(0.85))
@@ -1499,8 +1499,8 @@ struct PrivacyDashboard: View {
                         VStack(alignment: .leading, spacing: 8) {
                             XHeroNumber(
                                 text: String(enabledN),
-                                unit: "/ \(totalN) 项",
-                                color: peekSummary.tone)
+                                color: peekSummary.tone,
+                                unit: "/ \(totalN) 项")
                             Text(peekSummary.detail)
                                 .xFont(.footnote)
                                 .foregroundStyle(XPalette.textTertiary)

@@ -51,8 +51,8 @@ struct BackupStudioView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         XHeroNumber(
                             text: String(n),
-                            unit: "份文件",
-                            color: n == 0 ? XPalette.textTertiary : XPalette.accentText)
+                            color: n == 0 ? XPalette.textTertiary : XPalette.accentText,
+                            unit: "份文件")
                         Text(n == 0 ? "还没导出过备份 —— 下面可以立刻做一份" : "都在本机，不上传任何服务器")
                             .xFont(.footnote)
                             .foregroundStyle(XPalette.textTertiary)

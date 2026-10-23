@@ -289,8 +289,8 @@ struct FeedPage: View {
                     VStack(alignment: .leading, spacing: 8) {
                         XHeroNumber(
                             text: String(todayCount),
-                            unit: "次开门",
-                            color: alarmCount > 0 ? XPalette.warn : XPalette.accentText)
+                            color: alarmCount > 0 ? XPalette.warn : XPalette.accentText,
+                            unit: "次开门")
                         Text(alarmCount > 0 ? "其中 \(alarmCount) 条告警 —— 已在下文标红"
                                             : "没有告警，今天一切正常")
                             .xFont(.footnote)

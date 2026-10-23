@@ -81,8 +81,8 @@ struct CredentialBinView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         XHeroNumber(
                             text: String(n),
-                            unit: "项在回收站",
-                            color: n == 0 ? XPalette.textTertiary : XPalette.accentText)
+                            color: n == 0 ? XPalette.textTertiary : XPalette.accentText,
+                            unit: "项在回收站")
                         Text(n == 0 ? "空的" : "保留 \(retainDays) 天，可以放回原位")
                             .xFont(.footnote)
                             .foregroundStyle(XPalette.textTertiary)

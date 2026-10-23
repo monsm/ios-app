@@ -77,8 +77,8 @@ struct GatewayPage: View {
                     VStack(alignment: .leading, spacing: 8) {
                         XHeroNumber(
                             text: String(gateways.count),
-                            unit: "台已接入",
-                            color: gateways.isEmpty ? XPalette.textTertiary : XPalette.ok)
+                            color: gateways.isEmpty ? XPalette.textTertiary : XPalette.ok,
+                            unit: "台已接入")
                         Text(gateways.isEmpty ? "还没有网关接入 —— 按下面三步走"
                                               : "已接入的网关能替门锁转发远控指令")
                             .xFont(.footnote)

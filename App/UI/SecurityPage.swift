@@ -75,8 +75,8 @@ struct SecurityPage: View {
                     VStack(alignment: .leading, spacing: 8) {
                         XHeroNumber(
                             text: String(riskTotal),
-                            unit: "项风险",
-                            color: overallTone.color)
+                            color: overallTone.color,
+                            unit: "项风险")
                         Text(overallDetail)
                             .xFont(.footnote)
                             .foregroundStyle(XPalette.textTertiary)

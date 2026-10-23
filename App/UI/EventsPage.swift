@@ -511,8 +511,8 @@ struct EventsPage: View {
                 VStack(alignment: .leading, spacing: 6) {
                     XHeroNumber(
                         text: String(recs.count),
-                        unit: "条记录",
-                        color: XPalette.text)
+                        color: XPalette.text,
+                        unit: "条记录")
                     Text(alarmN > 0 ? "其中 \(alarmN) 条告警 —— 在下面标红"
                                     : "\(grouped.count) 天 · 没有告警")
                         .xFont(.footnote)

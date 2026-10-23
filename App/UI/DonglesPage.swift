@@ -85,8 +85,8 @@ struct DonglesPage: View {
                 let pairedN = dongles.count
                 HStack(alignment: .center, spacing: XSpace.l) {
                     VStack(alignment: .leading, spacing: 6) {
-                        XHeroNumber(text: String(pairedN), unit: "把已配对",
-                                    color: XPalette.accentText)
+                        XHeroNumber(text: String(pairedN), color: XPalette.accentText,
+                                    unit: "把已配对")
                         Text(pairedN == 0 ? "还没配对 —— 上电后点下面搜索" : "靠近门锁即可开门")
                             .xFont(.caption2)
                             .foregroundStyle(XPalette.textTertiary)

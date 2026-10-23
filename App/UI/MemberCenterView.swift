@@ -34,7 +34,7 @@ struct MemberDetail360View: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("名下钥匙").xFont(.caption, weight: .medium)
                         .foregroundStyle(XPalette.textSub)
-                    XHeroNumber(text: String(owned), unit: "份", color: XPalette.accentText)
+                    XHeroNumber(text: String(owned), color: XPalette.accentText, unit: "份")
                     Text("可证明归属的凭证")
                         .xFont(.caption2)
                         .foregroundStyle(XPalette.textTertiary)
@@ -47,7 +47,7 @@ struct MemberDetail360View: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("近 30 天开门").xFont(.caption, weight: .medium)
                         .foregroundStyle(XPalette.textSub)
-                    XHeroNumber(text: String(opensN), unit: "次", color: XPalette.ok)
+                    XHeroNumber(text: String(opensN), color: XPalette.ok, unit: "次")
                     Text(opensN == 0 ? "近 30 天没开过 —— 可能是久未用" : "按事件记录统计")
                         .xFont(.caption2)
                         .foregroundStyle(XPalette.textTertiary)
@@ -919,8 +919,8 @@ struct MemberArchivedView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         XHeroNumber(
                             text: String(n),
-                            unit: "位已归档",
-                            color: n == 0 ? XPalette.textTertiary : XPalette.accentText)
+                            color: n == 0 ? XPalette.textTertiary : XPalette.accentText,
+                            unit: "位已归档")
                         Text(n == 0 ? "还没有成员被归档" : "归档不删数据 —— 钥匙转成未分配，记录仍在")
                             .xFont(.footnote)
                             .foregroundStyle(XPalette.textTertiary)
@@ -1231,8 +1231,8 @@ struct UnclaimedClaimView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         XHeroNumber(
                             text: String(n),
-                            unit: "条待认领",
-                            color: n == 0 ? XPalette.textTertiary : XPalette.accentText)
+                            color: n == 0 ? XPalette.textTertiary : XPalette.accentText,
+                            unit: "条待认领")
                         Text(n == 0 ? "没有未归属的记录" : "认领之后记录就归到具体成员名下")
                             .xFont(.footnote)
                             .foregroundStyle(XPalette.textTertiary)
@@ -1526,8 +1526,8 @@ struct MemberExitWizard: View {
                     VStack(alignment: .leading, spacing: 8) {
                         XHeroNumber(
                             text: String(n),
-                            unit: "项待处置",
-                            color: n == 0 ? XPalette.textTertiary : XPalette.accentText)
+                            color: n == 0 ? XPalette.textTertiary : XPalette.accentText,
+                            unit: "项待处置")
                         Text(n == 0 ? "名下没有凭证，直接归档即可" : "每项都要选保留 / 移交 / 停用")
                             .xFont(.footnote)
                             .foregroundStyle(XPalette.textTertiary)

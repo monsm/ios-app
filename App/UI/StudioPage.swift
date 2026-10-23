@@ -80,8 +80,8 @@ struct StudioPage: View {
                     VStack(alignment: .leading, spacing: 9) {
                         XHeroNumber(
                             text: String(total),
-                            unit: "份",
-                            color: total == 0 ? XPalette.textTertiary : XPalette.accentText)
+                            color: total == 0 ? XPalette.textTertiary : XPalette.accentText,
+                            unit: "份")
                         XDataRow(label: "密码", value: String(pwN), unit: "项", color: XPalette.kindTemp)
                         XDataRow(label: "临时码", value: String(tempN), unit: "个", color: XPalette.kindOtp)
                         XDataRow(label: "指纹", value: String(fpN), unit: "枚", color: XPalette.kindFp)

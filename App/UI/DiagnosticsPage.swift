@@ -97,8 +97,8 @@ struct DiagnosticsPage: View {
                     VStack(alignment: .leading, spacing: 8) {
                         XHeroNumber(
                             text: String(bad),
-                            unit: "项问题",
-                            color: bad == 0 ? XPalette.ok : XPalette.warn)
+                            color: bad == 0 ? XPalette.ok : XPalette.warn,
+                            unit: "项问题")
                         Text(bad == 0 ? "数据键都能解析，没有孤立文件或日志断档"
                                       : "有 \(bad) 项自检没通过 —— 下面逐条列出了原因")
                             .xFont(.footnote)

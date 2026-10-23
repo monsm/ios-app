@@ -87,8 +87,8 @@ struct MePage: View {
                             .foregroundStyle(XPalette.textTertiary)
                         XHeroNumber(
                             text: String(pending),
-                            unit: "项",
-                            color: pending > 0 ? XPalette.warn : XPalette.ok)
+                            color: pending > 0 ? XPalette.warn : XPalette.ok,
+                            unit: "项")
                         Text(pending > 0 ? "都在这台手机里，点下面的方块可直达" : "这台手机没有需要处理的事")
                             .xFont(.caption2)
                             .foregroundStyle(XPalette.textTertiary)

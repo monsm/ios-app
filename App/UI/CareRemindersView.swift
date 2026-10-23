@@ -64,8 +64,8 @@ struct CareRemindersView: View {
                         if let n = nearest {
                             XHeroNumber(
                                 text: String(n),
-                                unit: n == 0 ? "今天" : "天后",
-                                color: n <= 7 ? XPalette.warn : XPalette.accentText)
+                                color: n <= 7 ? XPalette.warn : XPalette.accentText,
+                                unit: n == 0 ? "今天" : "天后")
                             Text(n == 0 ? "就是今天 —— 别忘了说一句" : "到那天早上 9 点会提醒一次")
                                 .xFont(.footnote)
                                 .foregroundStyle(XPalette.textTertiary)

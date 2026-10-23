@@ -1581,8 +1581,8 @@ struct ExportCenterView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         XHeroNumber(
                             text: String(n),
-                            unit: "条记录",
-                            color: n == 0 ? XPalette.textTertiary : XPalette.accentText)
+                            color: n == 0 ? XPalette.textTertiary : XPalette.accentText,
+                            unit: "条记录")
                         Text(n == 0 ? "当前范围内没有记录 —— 换个范围试试"
                                     : "按当前范围与列选择算出，导出前可再调")
                             .xFont(.footnote)
