@@ -165,7 +165,10 @@ struct FirmwarePage: View {
     }
 
     private var versionCard: some View {
-        VStack(spacing: XSpace.s) {
+        // 审美对齐 HTML 22-firmware 卡2：单卡解剖（卡头在卡材质内）。
+        // 之前是"裸 VStack 卡头 + 内嵌子卡"，卡头浮在画布上没有卡面。
+        XPanel(kind: .group) {
+            VStack(spacing: XSpace.s) {
             Text("版本")
                 .xFont(.subheadline)
                 .foregroundStyle(XPalette.textTertiary)
@@ -209,7 +212,8 @@ struct FirmwarePage: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-    }
+            }
+}
 
     private var compareTag: (text: String, tone: XToneColor)? {
         guard let v = fw?.version else { return nil }
