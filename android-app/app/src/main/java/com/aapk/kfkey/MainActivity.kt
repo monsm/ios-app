@@ -123,6 +123,9 @@ private fun KfApp(unlocker: BleUnlocker) {
     /// 失败时的过程留痕 (令牌前缀 / rc) —— 真机排障就靠这一行, 平时不占地方
     var detail by remember { mutableStateOf("") }
     var statusBad by remember { mutableStateOf(false) }
+    // 开锁回执（对齐 android-proto 04-success）：成功那一刻记下"谁 · 怎么开的"，
+    // 供主屏的回执卡展示。null = 本次会话还没成功过。
+    var receiptAuto by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
     // 初值从本机读 (跨重启保留); 切换时立刻落盘 —— 见 LockStore.loadProximity 的注释
     var proximity by remember { mutableStateOf(LockStore.loadProximity(ctx)) }
@@ -201,6 +204,7 @@ private fun KfApp(unlocker: BleUnlocker) {
             // "谁把我门开了"必须能回答。只在成功时冠来源: 失败那句是诊断文案,
             // 再加前缀会把它挤得读不完。
             say(if (r.ok) (if (auto) "自动开锁成功 — " else "手动开锁成功 — ") + r.message else r.message, !r.ok)
+            if (r.ok) receiptAuto = auto
             detail = if (r.ok || r.trace.isEmpty()) "" else r.trace
             // 2026-10-18: 统一走 KfHaptics (与 iOS DS.Haptics 三档语义对齐)。
             // 原来只有成功震一下, 失败是静默的 —— 开锁失败是最需要被感知的时刻。
@@ -452,6 +456,17 @@ private fun KfApp(unlocker: BleUnlocker) {
                 // 审美对齐 android-proto 01-home 卡1「自动开锁」：
                 // HTML 这张卡给了**规则原文 + footer 整句**，App 之前只有顶部一枚 chip。
                 // chip 说"现在什么状态"，卡说"什么条件下会发生"——两者不是一件事。
+                // 审美对齐 android-proto 04-success 卡「开锁回执」：
+                // HTML 的成功态不只有"已开锁"三个字，还有一张回执卡说清
+                // **谁 · 怎么开的 · 走的是哪条命令**。App 之前只有一行状态文字。
+                if (!statusBad && (status.contains("成功") || status.startsWith("已开锁"))) {
+                    Spacer(Modifier.height(KfTokens.Space.m))
+                    ReceiptCard(
+                        lockName = lock?.name ?: "这把锁",
+                        auto = receiptAuto
+                    )
+                }
+
                 Spacer(Modifier.height(KfTokens.Space.l))
                 AutoUnlockCard(
                     proximity = proximity,
@@ -698,6 +713,68 @@ private fun KfChip(
  * 这条规则是"靠近会自动开门"这个功能的安全边界，必须写在主屏上，不能只藏在设置里。
  */
 @Composable
+/**
+ * 「开锁回执」卡 —— 对齐 android-proto 04-success。
+ *
+ * HTML 结构：卡头「开锁回执」→ 主体「谁 · 手动/自动」→ 副「04 接近事件 · 一次靠近只开一次」
+ *            → 两列「命令 04 / 触发 手动轻点」→ footer 整句。
+ *
+ * 为什么值得单独成卡：开锁是这个 App 唯一的高危动作。只给"成功"两个字回答不了
+ * 「谁把我门开了」—— 而那正是用户回看这一屏时要问的问题。
+ */
+@Composable
+private fun ReceiptCard(lockName: String, auto: Boolean) {
+    val colors = LocalKfColors.current
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = KfTokens.Space.l)
+            .clip(RoundedCornerShape(KfTokens.Radius.card))
+            .background(colors.surface)
+            .padding(KfTokens.Space.card)
+    ) {
+        Text("开锁回执", color = colors.textSub, fontSize = Type.subhead)
+        Spacer(Modifier.height(KfTokens.Space.m))
+        Text(
+            lockName + " · " + (if (auto) "自动" else "手动"),
+            color = colors.text,
+            fontSize = Type.title3,
+            fontWeight = FontWeight.SemiBold
+        )
+        Text(
+            "04 接近事件 · 一次靠近只开一次",
+            color = colors.textSub,
+            fontSize = Type.caption,
+            modifier = Modifier.padding(top = 2.dp)
+        )
+        Spacer(Modifier.height(KfTokens.Space.m))
+        Row(Modifier.fillMaxWidth()) {
+            Column(Modifier.weight(1f)) {
+                Text("命令", color = colors.textSub, fontSize = Type.footnote)
+                Text("04", color = colors.text, fontSize = Type.footnote, fontWeight = FontWeight.SemiBold)
+            }
+            Column(Modifier.weight(1f)) {
+                Text("触发", color = colors.textSub, fontSize = Type.footnote)
+                Text(if (auto) "靠近自动" else "手动轻点", color = colors.text, fontSize = Type.footnote, fontWeight = FontWeight.SemiBold)
+            }
+        }
+        Spacer(Modifier.height(KfTokens.Space.m))
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(colors.hairline)
+        )
+        Spacer(Modifier.height(KfTokens.Space.m))
+        Text(
+            "手动与自动开锁成功都会在这里留一条回执 —— 谁把我门开了，一看便知。",
+            color = colors.textTertiary,
+            fontSize = Type.footnote,
+            lineHeight = 18.sp
+        )
+    }
+}
+
 private fun AutoUnlockCard(proximity: Boolean, armed: Boolean, onClick: () -> Unit) {
     val colors = LocalKfColors.current
     val on = proximity
