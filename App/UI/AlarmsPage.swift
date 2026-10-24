@@ -34,21 +34,29 @@ struct AlarmsPage: View {
     private var macs: [String] { DB.keychains().map { $0.mac } }
 
     var body: some View {
-        Group {
-            if !loaded {
-                ScrollView {
-                    XSkeleton(blocks: 3, blockHeight: 96)
+        VStack(spacing: 0) {
+            alarmsHeader
+            Group {
+                if !loaded {
+                    ScrollView {
+                        XSkeleton(blocks: 3, blockHeight: 96)
+                    }
+                    .scrollDisabled(true)
+                } else if alarms.isEmpty && handled.isEmpty {
+                    emptyState
+                } else {
+                    alarmList
                 }
-                .scrollDisabled(true)
-            } else if alarms.isEmpty && handled.isEmpty {
-                emptyState
-            } else {
-                alarmList
             }
         }
         .background(XPalette.canvasGradient)
-        .navigationTitle("告警")
-        .navigationBarTitleDisplayMode(.large)
+        // ═══ 2026-10-24 逐页对齐 HTML 53-alarms ═══
+        //
+        // 与 EventsPage 同一个遗漏：这一页也是手写骨架，第 1 轮统一修 XScreen 时漏了。
+        // 原写法 .navigationTitle("告警") + .large = 导航栏大标题 + 页内无标题，
+        // 而 HTML 的标题「告警中心」在页内（H1 + SUB「门锁主动报上来的异常」）。
+        // 顺带：标题词也不一致，HTML 是「告警中心」不是「告警」。
+        .navigationBarTitleDisplayMode(.inline)
         .task { if !loaded { load() } }
         .refreshable { load() }
     }
@@ -56,6 +64,23 @@ struct AlarmsPage: View {
     // ═══════════════════════════════════════════════════════
     // MARK: - 数据
     // ═══════════════════════════════════════════════════════
+
+    /// HTML 53-alarms 的页内标题区：H1「告警中心」+ SUB
+    private var alarmsHeader: some View {
+        VStack(alignment: .leading, spacing: XSpace.xs) {
+            Text("告警中心")
+                .xFont(.largeTitle, weight: .bold)
+                .tracking(-0.4)
+                .foregroundStyle(XPalette.text)
+            Text("门锁主动报上来的异常 · 处置后不再重复提醒")
+                .xFont(.body)
+                .foregroundStyle(XPalette.textSub)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, XSpace.gutter)
+        .padding(.top, XSpace.s)
+        .padding(.bottom, XSpace.m)
+    }
 
     private func load() {
         recs = RecordSearch.buildRecs(macs: macs)
