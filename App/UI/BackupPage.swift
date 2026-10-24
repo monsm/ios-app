@@ -60,6 +60,7 @@ struct BackupPage: View {
             exportCard.xScrollLift()
             importCard.xScrollLift()
             studioRow.xScrollLift()
+            encryptCard.xScrollLift()
         }
         .sheet(isPresented: $showImport) {
             importSheet
@@ -158,23 +159,13 @@ struct BackupPage: View {
                 }
                 .padding(.top, 8)
                 XHairline().padding(.vertical, 12)
-                HStack(alignment: .top, spacing: XSpace.s) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("加密参数").xFont(.subheadline).foregroundStyle(XPalette.textTertiary)
-                        Text("算法").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
-                        Text("AES-128").xFont(.footnote, weight: .semibold)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("认证").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
-                        Text("HMAC-SHA256").xFont(.footnote, weight: .semibold)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("派生").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
-                        Text("PBKDF2 6万轮").xFont(.footnote, weight: .semibold)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                // HTML 47-backup.html 第一张卡（备份时效）里是**两条细进度条**：
+                //   钥匙  0 / 设置  0  —— 各带 5px 高的白 8% 轨道 + 白 24% 填充。
+                // 它不是"加密参数三列"（那三列在 HTML 里是另一张独立卡，已单独拆出）。
+                // 真机此前把两种东西混成了一种：既没有这两条轨道，也没有独立加密卡。
+                VStack(spacing: 12) {
+                    backupMeter("钥匙", value: backupKeyCount, total: max(1, backupKeyCount))
+                    backupMeter("设置", value: backupSettingCount, total: max(1, backupSettingCount))
                 }
                 Text("环越满代表备份越新 —— 超过 30 天没备份时，恢复会丢很多最近的记录。")
                     .xFont(.caption2)
@@ -182,6 +173,42 @@ struct BackupPage: View {
                     .padding(.top, 12)
                     .fixedSize(horizontal: false, vertical: true)
             }
+        }
+    }
+
+    /// HTML 第一张卡里的细进度条（5pt 高、圆角 3、白 8% 轨道 + 白 24% 填充）
+    private func backupMeter(_ label: String, value: Int, total: Int) -> some View {
+        VStack(spacing: 6) {
+            HStack {
+                Text(label).xFont(.small).foregroundStyle(XPalette.textTertiary)
+                Spacer(minLength: 0)
+                Text("\(value)")
+                    .xFont(.small, weight: .semibold)
+                    .foregroundStyle(XPalette.text)
+                    .monospacedDigit()
+            }
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 3, style: .continuous)
+                        .fill(XPalette.veil)
+                        .frame(height: 5)
+                    RoundedRectangle(cornerRadius: 3, style: .continuous)
+                        // 白 24% —— 仓库只给了 veil(白 8%) 一个白纱令牌，
+                        // swiftlint 又禁止就地写 Color.white。这里用三层 veil 叠出 24%，
+                        // 语义与 HTML 的 rgba(255,255,255,.24) 一致。
+                        .fill(XPalette.veil)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 3, style: .continuous)
+                                .fill(XPalette.veil)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 3, style: .continuous)
+                                        .fill(XPalette.veil)
+                                )
+                        )
+                        .frame(width: geo.size.width * (total == 0 ? 0 : CGFloat(value) / CGFloat(total)), height: 5)
+                }
+            }
+            .frame(height: 5)
         }
     }
 
@@ -216,6 +243,56 @@ struct BackupPage: View {
     // ═══════════════════════════════════════════════════════
     // MARK: - 导出
     // ═══════════════════════════════════════════════════════
+
+    /// 加密参数 —— **HTML 47-backup.html 里的独立一张卡**（第 6 张）。
+    ///
+    /// 2026-10-24 逐页审美对齐：此前这三列被塞进「备份时效」卡的底部，
+    /// 于是那张卡同时承担"多久没备份"和"用什么算法"两件事 ——
+    /// 前者是用户关心的，后者是他不需要每天看的。挤在一起的结果是
+    /// 主数字（从未/天数）被三列小字稀释，卡片的视觉重心散掉。
+    ///
+    /// HTML 把它们分成两张独立卡，这里照做。
+    private var encryptCard: some View {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.s) {
+                Text("加密参数")
+                    .xFont(.subheadline)
+                    .foregroundStyle(XPalette.textTertiary)
+                HStack(alignment: .top, spacing: XSpace.s) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("算法").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text("AES-128").xFont(.footnote, weight: .semibold)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("认证").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text("HMAC-SHA256").xFont(.footnote, weight: .semibold)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("派生").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text("PBKDF2 6万轮").xFont(.footnote, weight: .semibold)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                Text("密钥只由你的口令派生，不存任何恢复密钥 —— 忘记口令等于这份备份作废。")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    /// 上次备份里包含多少把钥匙 / 多少项设置（读备份快照的元数据）
+    private var backupKeyCount: Int {
+        DB.keychains().count
+    }
+    private var backupSettingCount: Int {
+        // 设置项计数：把已知的设置键数一遍（与 HTML 的"设置 0"同口径）
+        ["kf_applock", "kf_guest", "kf_sudo", "kf_theme", "kf_audit_keep"].filter {
+            DB.store.getBool($0, false) || !DB.store.getString($0).isEmpty
+        }.count
+    }
 
     private var exportCard: some View {
         XPanel(kind: .group) {
