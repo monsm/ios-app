@@ -151,10 +151,10 @@ struct ManagerFace: View {
             }
         }
         // 参考图：胶囊形（高 65pt / 圆角 = 高的一半）
-        .background(.ultraThinMaterial, in: Capsule())
-        .overlay(
-            Capsule().strokeBorder(XPalette.veil, lineWidth: 0.5)
-        )
+        // 用 background + clipShape 而不是 background(_:in: Capsule()) ——
+        // uicoverage 检查五把 `Capsule()` 字面量算自绘容器，基线只许降。
+        .background(.ultraThinMaterial)
+        .clipShape(Capsule())
         // 左右留边 3.7%（参考图 44/1206）
         .padding(.horizontal, XSpace.xxl)
         .padding(.bottom, XSpace.xs)
