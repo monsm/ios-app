@@ -1523,7 +1523,7 @@ struct ExportCenterView: View {
 
         // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
-        XScreen("导出与分享", style: .inline) {
+        XScreen("导出与分享", subtitle: "生成过程纯本地，不经过任何网络") {
                 // 六图改造 (2026-10-23): 顶部加**图 5 的读数卡**。
                 //
                 // 图 5 的第一张卡永远是「一个大数 + 一枚环」。导出中心之前直接进"范围"选择，

@@ -225,7 +225,7 @@ struct SecurityPeekView: View {
     var vkBody: some View {
 
             // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
-            XScreen("防窥与遮蔽", style: .inline) {
+            XScreen("防窥与遮蔽", subtitle: "口令与码值在本机怎么藏") {
                 // HTML 卡3「遮蔽样式」—— 三种打码对照（圆点 / 星号 / 末4位）+ 页脚
                 maskStyleCard
                 // HTML 卡4「隐私总览」—— 逐项开关的汇总
@@ -538,7 +538,7 @@ struct SecurityAuditView: View {
     var vkBody: some View {
 
             // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
-            XScreen("审计流水", style: .inline) {
+            XScreen("审计流水") {
                 XPanel(kind: .group) {
                     VStack(alignment: .leading, spacing: XSpace.m) {
                         secLabel("双流水")
@@ -1032,7 +1032,7 @@ struct SecurityDestroyView: View {
     var vkBody: some View {
 
             // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
-            XScreen("销毁与应急", style: .inline) {
+            XScreen("销毁与应急", subtitle: "不可逆操作 · 需要二次确认") {
                 // 六图改造 (2026-10-23): 顶部加**图 2 的红色警告读数卡**。
                 //
                 // 图 2/图 3 的危险动作永远先给一个量化后果（"这会删掉 X 条"），

@@ -17,7 +17,7 @@ struct BackupStudioView: View {
     var vkBody: some View {
         NavigationStack {
             // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
-            XScreen("备份工作室", style: .inline) {
+            XScreen("备份工作室", subtitle: "数据只存在这台 iPhone") {
                 // 六图改造 (2026-10-24): 顶部图5 读数卡（44px 本机备份文件数 + 环）
                 backupFilesCard
                 undoRestoreCard.xScrollLift()

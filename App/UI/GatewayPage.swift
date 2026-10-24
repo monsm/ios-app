@@ -35,7 +35,7 @@ struct GatewayPage: View {
             XPalette.canvasGradient.ignoresSafeArea()
 
         // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
-        XScreen("智能网关", style: .inline) {
+        XScreen("智能网关") {
             // 六图改造 (2026-10-23): 顶部加**图 4 的分步条 + 图 5 的读数**。
             //
             // 图 4 Sports 的分段条把"现在走到哪一步"摆在最上面（Yesterday/Today/Upcoming）。

@@ -715,7 +715,7 @@ struct CredentialDetailView: View {
     var body: some View {
         ZStack {
             XPalette.canvasGradient.ignoresSafeArea()
-            XScreen("凭证详情", style: .inline) {
+            XScreen("凭证详情") {
                 // 卡1 码值（HTML：44px 大数字 + 锁内编号/指纹位 两列）
                 XPanel(kind: .group) {
                     VStack(alignment: .leading, spacing: 0) {

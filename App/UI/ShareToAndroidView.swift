@@ -24,7 +24,7 @@ struct ShareToAndroidView: View {
     var body: some View {
         NavigationStack {
         // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
-        XScreen("分享给安卓", style: .inline) {
+        XScreen("分享给安卓", subtitle: "这把锁的开锁二维码") {
             if let qr {
                 Image(uiImage: qr)
                     .interpolation(.none)          // 二维码放大必须硬边, 插值会糊掉模块

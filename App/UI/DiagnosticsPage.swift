@@ -47,7 +47,7 @@ struct DiagnosticsPage: View {
     var body: some View {
         // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
-        XScreen("诊断与自检", style: .inline) {
+        XScreen("诊断与自检", subtitle: "进入时算一次，动作后重算") {
             let _ = revision
             // 六图改造 (2026-10-23): 首卡 = **图 5 MetricCard**（44px 问题数 + 环）。
             //

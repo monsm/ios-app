@@ -1572,7 +1572,7 @@ struct OtpStudio: View {
                 XPalette.canvasGradient.ignoresSafeArea()
 
                 // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
-                XScreen("OTP 与口令", style: .inline) {
+                XScreen("OTP 与口令", subtitle: "锁端 ZOTP · 独立 TOTP · 静态备份码") {
                     // 六图改造 (2026-10-23): 顶部加**图 5 的读数卡**。
                     //
                     // OTP 页原来从"用于哪把锁"开始 —— 全是配置项，没有一个量。
@@ -1784,7 +1784,7 @@ struct OtpStudio: View {
             ZStack {
                 XPalette.canvasGradient.ignoresSafeArea()
                 // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
-                XScreen("导入 otpauth", style: .inline) {
+                XScreen("导入 otpauth") {
                     XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
                             secLabel("粘贴 otpauth 文本")

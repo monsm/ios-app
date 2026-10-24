@@ -31,7 +31,7 @@ struct AppearancePage: View {
     var body: some View {
         // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
-        XScreen("外观工作室", style: .inline) {
+        XScreen("外观工作室", subtitle: "正文始终是正文的颜色，不会因此变得看不清") {
             miscCard
         }
     }

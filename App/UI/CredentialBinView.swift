@@ -39,7 +39,7 @@ struct CredentialBinView: View {
     var body: some View {
         // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
-        XScreen("回收站", style: .inline) {
+        XScreen("回收站", subtitle: "删掉的钥匙在这里，可以恢复") {
             if entries.isEmpty {
                 XPanel(kind: .group) {
                     XEmptyState(systemImage: "trash.slash",

@@ -50,7 +50,7 @@ struct AddFingerPage: View {
 
         // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
-        XScreen("录入指纹", style: .inline) {
+        XScreen("录入指纹") {
                 if doneBatch != nil {
                     successStage.xScrollLift()
                 } else {

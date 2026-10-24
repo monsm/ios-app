@@ -14,7 +14,7 @@ struct CareRemindersView: View {
 
         // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
-        XScreen("关怀提醒", style: .inline) {
+        XScreen("关怀提醒") {
                 // 六图改造 (2026-10-23): 顶部加**图 5 读数卡**（44px 最近多少天 + 环）。
                 //
                 // 这一页存在的意义就是"提醒"，提醒的第一要义是**还剩多久**。

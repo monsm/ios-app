@@ -26,7 +26,7 @@ struct SyncTimeView: View {
 
     var body: some View { vkBody.destined(.syncTime) }
     var vkBody: some View {
-        XScreen("同步时间", style: .inline) {
+        XScreen("同步时间", subtitle: "锁钟偏差 · 写入手机时间") {
             if app.current != nil {
                 // HTML 卡1「偏差范围」—— App 之前缺这一张
                 rangeCard

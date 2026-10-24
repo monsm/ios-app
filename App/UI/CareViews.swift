@@ -42,7 +42,7 @@ struct MaintenanceView: View {
             XPalette.canvasGradient.ignoresSafeArea()
 
             // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
-            XScreen("维护与保养", style: .inline) {
+            XScreen("维护与保养", subtitle: "机械件也该有保养记录") {
                 carePeriodSection.xScrollLift()
                 historySection.xScrollLift()
                 swapSection.xScrollLift()
@@ -386,7 +386,7 @@ struct BatterySwapGuideView: View {
             XPalette.canvasGradient.ignoresSafeArea()
 
             // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
-            XScreen("换电指引", style: .inline) {
+            XScreen("换电指引", subtitle: "上次换电：还没有换电记录") {
                 // 当前电量卡 —— 换电指南却不显示电量，是最大的缺口。
                 // 用户点进来就是想知道"是不是真该换了"。
                 batteryNowCard
@@ -541,7 +541,7 @@ struct CareChecklistView: View {
             XPalette.canvasGradient.ignoresSafeArea()
 
             // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
-            XScreen("锁体保养", style: .inline) {
+            XScreen("锁体保养", subtitle: "五项清单 · 还没保养过") {
                 // 保养台账 —— 这张卡原来不存在。
                 //
                 // 清单页只让用户打勾，但**不告诉他上次是什么时候保养的**。

@@ -601,7 +601,7 @@ struct MemberWizardView: View {
                 XPalette.canvasGradient.ignoresSafeArea()
 
                 // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
-                XScreen("建档向导", style: .inline) {
+                XScreen("建档向导") {
                                     // 审美对齐 HTML 31-member-wizard：卡前有步骤条
                 XStepBar(titles: steps, current: step)
                     .padding(.bottom, XSpace.s)
@@ -804,7 +804,7 @@ struct MergeMembersView: View {
             //
             // 全仓其他页面都是 ScrollView + XPanel，这里统一。
             // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
-            XScreen("重复合并", style: .inline) {
+            XScreen("重复合并", subtitle: "选一位作为主档案，另一位并入") {
                 XPanel(kind: .group) {
                     VStack(alignment: .leading, spacing: XSpace.m) {
                         secLabel("主档 (保留)")
@@ -1004,7 +1004,7 @@ struct MemberArchivedView: View {
             XPalette.canvasGradient.ignoresSafeArea()
 
             // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
-            XScreen("归档成员", style: .inline) {
+            XScreen("归档成员") {
                 // 六图改造 (2026-10-24): 顶部加图5 读数卡（44px 归档数 + 环）
                 archivedStatsCard
                 // HTML 卡3「归档规则」—— 三条彩点行（App 之前缺这一整卡）
@@ -1331,7 +1331,7 @@ struct UnclaimedClaimView: View {
             XPalette.canvasGradient.ignoresSafeArea()
 
             // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
-            XScreen("认领还没分配的钥匙", style: .inline) {
+            XScreen("认领还没分配的钥匙") {
                 // 六图改造 (2026-10-24): 顶部加图5 读数卡（44px 待认领数 + 环）
                 claimStatsCard
                 XPanel(kind: .group) {
@@ -1648,7 +1648,7 @@ struct MemberExitWizard: View {
         NavigationStack {
             // M5: Form → ScrollView（与全仓其他页面统一）
             // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
-            XScreen("退出处置向导", style: .inline) {
+            XScreen("退出处置向导") {
                 // 六图改造 (2026-10-24): 顶部加图5 读数卡（44px 待处置数 + 环）
                 exitStatsCard
                 if items.isEmpty {
