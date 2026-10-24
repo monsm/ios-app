@@ -59,4 +59,11 @@ struct DataScannerView: UIViewControllerRepresentable {
 }
 
 extension RecognizedItem {
+    /// 取码文本: 只认条码, 文本块返回 nil。
+    /// 真实形状是 `RecognizedItem` 枚举的 `.barcode(Barcode)` 分支, `Barcode.payloadStringValue` 才是载荷;
+    /// 旧写法的 `r.data.item?.string` 三层取值链对不上任何符号, 故收进这一处。
+    var codeString: String? {
+        if case let .barcode(b) = self { return b.payloadStringValue }
+        return nil
+    }
 }

@@ -20,41 +20,6 @@ struct MemberDetail360View: View {
 
     private var member: Member? { DB.member(memberID) }
 
-        /// HTML 32-member-detail 卡2「最近活动」（+页脚）
-    private func recentActivityCard(_ m: Member) -> some View {
-        // recentExcerpts 返回 [Excerpt]（字段 time / text），不是字符串数组
-        let acts = MemberHub.recentExcerpts(m.id, 4)
-        return XPanel(kind: .group) {
-            VStack(alignment: .leading, spacing: XSpace.m) {
-                Text("最近活动")
-                    .xFont(.subheadline)
-                    .foregroundStyle(XPalette.textTertiary)
-                if acts.isEmpty {
-                    Text("还没有活动 —— 开过一次门之后这里会有内容")
-                        .xFont(.footnote)
-                        .foregroundStyle(XPalette.textTertiary)
-                } else {
-                    ForEach(Array(acts.enumerated()), id: \.offset) { idx, ex in
-                        if idx > 0 { XHairline() }
-                        HStack(alignment: .firstTextBaseline, spacing: XSpace.s) {
-                            Text(ex.time)
-                                .xFont(.caption2, weight: .medium)
-                                .foregroundStyle(XPalette.textTertiary)
-                                .xScaledWidth(52, alignment: .leading)
-                            Text(ex.text)
-                                .xFont(.footnote)
-                                .foregroundStyle(XPalette.text)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                    }
-                }
-                Text("活动来自门锁日志 —— 只有能证明归属的开门才算到这个成员名下。")
-                    .xFont(.caption2)
-                    .foregroundStyle(XPalette.textTertiary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
 
     /// 图 5 双列 MetricCard：名下钥匙 / 本周开门
     private func memberMetricsCards(_ m: Member) -> some View {
@@ -110,37 +75,10 @@ struct MemberDetail360View: View {
                     //
                     // 图 5 的 Summary 屏先给两个并排读数再给细节。
                     // 成员详情之前先进"一周小结"那句话 —— 是文字不是量。
+                    // ═══ 2026-10-24 坚决精简 ═══
+                    // 原 App 成员详情只有一句「成员管理」。留：名下钥匙读数 + 名下凭证列表。
                     memberMetricsCards(m)
-                    recentActivityCard(m)
-                    // 一周小结 (原有 weekSentence, 只在有内容时出)
-                    if let line = MemberHub.weekSentence(m.id) {
-                        HStack(spacing: XSpace.s) {
-                            Image(systemName: "calendar.badge.clock")
-                            .font(.system(size: XIcon.sm, weight: .medium))
-                            .foregroundStyle(XPalette.accentText)
-                            .accessibilityHidden(true)
-                            Text(line)
-                            .xFont(.footnote)
-                            .foregroundStyle(XPalette.text)
-                            .fixedSize(horizontal: false, vertical: true)
-                            Spacer(minLength: 0)
-                        }
-                        .padding(XSpace.card)
-                        .background(
-                        RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
-                        .fill(XPalette.accent.opacity(XOpacity.wash))
-                        .overlay(
-                        RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
-                        .strokeBorder(XPalette.accent.opacity(0.25), lineWidth: 1))
-                        )
-                    }
-                    // 6 个原有区块: 内部仍是 List/Section 形状, 这里只负责纵向节奏
-                    archiveSection(m)
                     credsSection(m)
-                    excerptSection(m)
-                    feedSection(m)
-                    sourceSection(m)
-                    sceneSection(m)
                 }
                 .scrollIndicators(.hidden)
             }
@@ -167,90 +105,6 @@ struct MemberDetail360View: View {
         }
     }
 
-    // ---------- 档案区 (457/458/916/265/461/464/465/485/1017/653/480 · 994 角标) ----------
-    private func archiveSection(_ m: Member) -> some View {
-        let e = MemberHub.ext(m.id)
-        let a = MemberHub.activity(m.id)
-        // 994 这一位已选的角标: 与头像右下角同一道取数 (存了 id 但徽章总表查不到 = 当没选, 两处口径一致)
-        let corner = Milestones.memberBadges()[m.id].flatMap { Milestones.badge($0) }
-        // 994 指路文案: 两种状态各说各的实话 —— 没选的时候不许写"角标已画在右下角"那种指着空气的话。
-        // 整句一行写完 (单行字面量不许跨行), 入口措辞照 Sheets.swift 成员管理列表的真实菜单项写。
-        let hintNone = "选法: 「设置 → 成员管理」里长按这一位成员的行 →「授予徽章」(那份菜单列的是本机已点亮的徽章), 选中的那枚就画在本成员头像的右下角。"
-        let hintSome = "角标已画在本成员头像的右下角, 图形就是这枚徽章自己的那枚符号。改选或撤下: 「设置 → 成员管理」里长按这一位成员的行 →「授予徽章」, 同一菜单里有「移除角标」。"
-        let cornerHint = corner == nil ? hintNone : hintSome
-        return XPanel(kind: .group) {
-            VStack(alignment: .leading, spacing: XSpace.m) {
-                secLabel("档案")
-                VStack(alignment: .leading, spacing: XSpace.s) {
-                HStack(spacing: XSpace.s) {
-                // 规范 §10：「队徽/头像 | 圆形，**直径 28pt**，可含图像」。
-                // 原来这里写 44 —— 档案页的头像比列表大一圈，看起来更像主角，
-                // 但那是我按感觉定的；规范给的是单一尺寸。已改回 28。
-                MemberAvatar(member: m, size: 28)
-                VStack(alignment: .leading, spacing: XSpace.xxs) {
-                Text(MemberHub.display(m))
-                .xFont(.title3, weight: .semibold)
-                .foregroundStyle(XPalette.text)
-                Text(MemberHub.roleLabel(e.role) + (m.relation.isEmpty ? "" : " · " + m.relation))
-                .xFont(.caption)
-                .foregroundStyle(XPalette.textSub)
-                }
-                Spacer(minLength: 0)
-                XStatusPill(text: "名下 \(a.owns) 条", tone: .accent, systemImage: "key.fill")
-                }
-                // 465 紧急联系行 (纯本地)
-                LabeledContent("紧急联系") {   // 465 紧急联系
-                Text(e.emergency.isEmpty ? "未填" : e.emergency)
-                .xFont(.subheadline)
-                .foregroundStyle(XPalette.textSub)
-                }
-                // 464 常用锁
-                if !e.commonLocks.isEmpty {
-                LabeledContent("常用锁") {   // 464 常用锁
-                let names = e.commonLocks.map { LockArchive.displayName(DB.keychain($0) ?? Keychain(mac: $0, skey: "")) }
-                Text(names.joined(separator: "、"))
-                .xFont(.subheadline)
-                .foregroundStyle(XPalette.textSub)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-                }
-                }
-                // 485/1017/653 生日行 (Milestones 已有数据与提前一天通知, 只接线不重做)
-                if let bd = Milestones.memberBirthdays()[m.id] {
-                LabeledContent("生日") {   // 485 生日
-                Text(bd + " · 提前一天提醒")
-                .xFont(.subheadline)
-                .foregroundStyle(XPalette.textSub)
-                }
-                }
-                // 994 角标行: 只报 kf_member_badge 里真实存下的那一枚 —— 已选就报徽章名,
-                // 那一位还没挑的照实读作"未选角标", 两种状态都是本机台账的原话。
-                LabeledContent("角标") {   // 994 角标
-                Text(corner.map { "已选「\($0.title)」" } ?? "未选角标")
-                .xFont(.subheadline)
-                .foregroundStyle(corner == nil ? XPalette.textSub : XPalette.text)
-                }
-                // 994 指路行: 选与撤的真实入口在「设置 → 成员管理」那张列表的长按菜单里
-                // (「授予徽章」子菜单 +「移除角标」), 这一页只报状态并把人指到那个真实入口 ——
-                // 徽章选择器全 App 保持一处实现, 两处写迟早一处改了另一处走偏。
-                // 文案随状态分两路: 已选的说"改选/撤下", 未选的说"怎么挑", 各自只说自己那一份。
-                Text(cornerHint)
-                .xFont(.caption)
-                .foregroundStyle(XPalette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
-                // 480 孩子码关怀文案 (家长视角)
-                if !e.careText.isEmpty {
-                LabeledContent("关怀语") {   // 480 关怀语
-                Text(e.careText)
-                .xFont(.subheadline)
-                .foregroundStyle(XPalette.accentText)
-                }
-                }
-                }
-                .accessibilityElement(children: .combine)
-            }
-        }
-    }
 
     // ---------- 261/472 名下凭证 (含借用横条) ----------
     private func credsSection(_ m: Member) -> some View {
@@ -286,130 +140,10 @@ struct MemberDetail360View: View {
         }
     }
 
-    // ---------- 459 最近开门摘录 (⚠台账推断, 带"约") ----------
-    private func excerptSection(_ m: Member) -> some View {
-        let rows = MemberHub.recentExcerpts(m.id, 10)
-        return XPanel(kind: .group) {
-            VStack(alignment: .leading, spacing: XSpace.m) {
-                secLabel("最近开门 (约)")
-                ForEach(Array(rows.enumerated()), id: \.offset) { _, r in
-                HStack(spacing: XSpace.s) {
-                Text(String(r.time.prefix(10)))
-                .xFontExact(.caption.monospacedDigit())
-                .foregroundStyle(XPalette.textSub)
-                Text(r.text)
-                .xFont(.subheadline)
-                .foregroundStyle(XPalette.text)
-                Spacer(minLength: 0)
-                Text("约")
-                .xFont(.caption2)
-                .foregroundStyle(XPalette.textSub)
-                }
-                .accessibilityElement(children: .combine)
-                }
-                if rows.isEmpty {
-                Text("还没有可证明归属的开门记录 (台账积累中, 属正常)。")
-                .xFont(.footnote)
-                .foregroundStyle(XPalette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-        }
-    }
-
-    // ---------- 367 停用动态 (读敏感流水里归属本成员的那几条; 不新建存储、不新建键) ----------
-    private func feedSection(_ m: Member) -> some View {
-        let rows = SensitiveLedger().memberItems(m.id)
-        return XPanel(kind: .group) {
-            VStack(alignment: .leading, spacing: XSpace.m) {
-                secLabel("钥匙停用动态")
-                ForEach(Array(rows.enumerated()), id: \.offset) { _, r in
-                HStack(spacing: XSpace.s) {
-                Text(SensitiveLedger.stamp(r))
-                .xFontExact(.caption.monospacedDigit())
-                .foregroundStyle(XPalette.textSub)
-                VStack(alignment: .leading, spacing: XSpace.xxs) {
-                Text(r.kind).xFont(.subheadline)
-                Text(r.target).xFont(.caption).foregroundStyle(XPalette.textSub)
-                }
-                Spacer(minLength: 0)
-                }
-                .accessibilityElement(children: .combine)
-                }
-                if rows.isEmpty {
-                Text("还没有停用记录。停用钥匙时勾「写入该成员动态」才会写进这里；不勾只在敏感操作流水里留一条汇总，不落到个人档案。")   // 367 还没有停用记录
-                .xFont(.footnote)
-                .foregroundStyle(XPalette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-        }
-    }
-
-    // ---------- 473 授权来源统计 ----------
-    private func sourceSection(_ m: Member) -> some View {
-        let s = MemberHub.sourceCounts(m.id)
-        return XPanel(kind: .group) {
-            VStack(alignment: .leading, spacing: XSpace.m) {
-                secLabel("授权来源")
-                HStack(spacing: XSpace.m) {
-                sourceCell("创建", s.created)
-                sourceCell("移交", s.moved)
-                sourceCell("恢复", s.restored)
-                }
-                .accessibilityElement(children: .combine)
-            }
-        }
-    }
-    private func sourceCell(_ label: String, _ n: Int) -> some View {
-        VStack(spacing: XSpace.xs) {
-            Text(String(n))
-                .xFont(.title3, weight: .semibold)
-                .monospacedDigit()
-                .foregroundStyle(XPalette.accentText)
-            Text(label)
-                .xFont(.caption2)
-                .foregroundStyle(XPalette.textSub)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, XSpace.s)
-        .xPlate(XPalette.surfaceAlt, .control)
-    }
 
 
-    // ---------- 家庭场景 (481/468/469/480/484/475) ----------
-    private func sceneSection(_ m: Member) -> some View {
-        let role = MemberHub.ext(m.id).role
-        return XPanel(kind: .group) {
-            VStack(alignment: .leading, spacing: XSpace.m) {
-                secLabel("家庭场景")
-                // 470 这一档真收 UI 的地方之一: 「管凭证」为禁用的角色 (访客) 不出现这枚代管开关,
-                // 并且把"为什么这里少了一枚"写在原地 —— 收起来却不说明, 就是本仓反复犯的无声忽略。
-                if MemberHub.permAllows(role, "管钥匙") {
-                XToggle("由我代管 (TA 名下钥匙被单条停用时, 便签补一句 管理员代操作)", isOn: Binding(
-                get: { MemberHub.ext(m.id).proxy },
-                set: { v in
-                var ext = MemberHub.ext(m.id); ext.proxy = v
-                MemberHub.saveExt(m.id, ext)
-                onChanged()
-                }))
-                .fixedSize(horizontal: false, vertical: true)
-                } else {
-                Text("角色是「" + MemberHub.roleLabel(role) + "」: 矩阵里「管钥匙」为禁用, 所以这一档不给代管开关。")   // 468/470 矩阵里
-                .xFont(.caption)
-                .foregroundStyle(XPalette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
-                }
-                if MemberHub.proxyNames.contains(m.id) {
-                Text("代管中: 在钥匙页对 TA 名下钥匙做单条停用时, 那一行的停用便签会写上 管理员代操作; "   // 468 代管中
-                + "家庭会议摘要也点名代管中的成员。锁端没有代操作这一位, 这句标注只落本机。")   // 482 家庭会议摘要
-                .xFont(.footnote)
-                .foregroundStyle(XPalette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-        }
-    }
+
+
 
     /// 843 角色示例行：能/不能两串**由 MemberHub.permRows 现算**，只有场景句是写死的文案
     /// (场景讲的是"这种人通常是谁"，不是权限位 —— 权限位改了这里会跟着变，不会两边各说一套)。
