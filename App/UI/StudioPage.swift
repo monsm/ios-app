@@ -113,7 +113,7 @@ struct StudioPage: View {
 
         // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
-        XScreen("钥匙工坊") {
+        XScreen("钥匙工坊", subtitle: "密码 / 临时码 / 指纹 / OTP") {
                 // 六图改造 (2026-10-24): 顶部加**图 5 的四类凭证读数卡**。
                 //
                 // 工坊是"造东西"的入口页 —— 用户进来第一句想问的是"我现在各有多少"。

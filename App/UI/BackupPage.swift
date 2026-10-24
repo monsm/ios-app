@@ -52,7 +52,7 @@ struct BackupPage: View {
     var body: some View {
         // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
-        XScreen("备份与恢复") {
+        XScreen("备份与恢复", subtitle: "数据只在这台 iPhone · 全程离线加密") {
             if let b = pendingRestore {
                 restoreConfirmCard(b)
             }

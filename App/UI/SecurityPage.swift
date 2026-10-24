@@ -39,7 +39,7 @@ struct SecurityPage: View {
     var body: some View {
         // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
-        XScreen("本机保护") {
+        XScreen("本机保护", subtitle: "现在安全吗 · 有没有事 · 有哪些功能") {
             statusCard.xScrollLift()
             if !risks.isEmpty || auditBroken || !selfCheckIssues.isEmpty {
                 riskCard.xScrollLift()
