@@ -243,7 +243,7 @@ struct CredentialBinView: View {
                     Spacer(minLength: 0)
                     Text("\(pending.count) 条")
                         .xFont(.caption, weight: .medium)
-                        .foregroundStyle(XPalette.warn)
+                        .foregroundStyle(XPalette.textSub)
                 }
                 .padding(.horizontal, XSpace.card)
                 .padding(.top, XSpace.m)
