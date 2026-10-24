@@ -289,9 +289,9 @@ struct EventsPage: View {
                 HStack(spacing: XSpace.s) {
                     XStatChip(label: "今日", value: "\(todayCount) 条",
                               ringFraction: 1, tint: XPalette.accent, fillsWidth: false)
-                    XStatChip(label: "告警", value: "\(alarmCount) 条",
-                              ringFraction: alarmCount > 0 ? 1 : 0,
-                              tint: alarmCount > 0 ? XPalette.danger : XPalette.ok, fillsWidth: false)
+                    XStatChip(label: "告警", value: "\(alarmRowCount) 条",
+                              ringFraction: alarmRowCount > 0 ? 1 : 0,
+                              tint: alarmRowCount > 0 ? XPalette.danger : XPalette.ok, fillsWidth: false)
                     XStatChip(label: "本机保留", value: "\(totalCount) 条",
                               ringFraction: 1, tint: XPalette.textTertiary, fillsWidth: false)
                 }
@@ -323,7 +323,7 @@ struct EventsPage: View {
         return filtered.filter { $0.timeStr.hasPrefix(prefix) }.count
     }
     /// 告警条数 —— 字段名是 .alarm（与 computeFiltered 的判据一致）
-    private var alarmCount: Int { filtered.filter { $0.alarm }.count }
+    private var alarmRowCount: Int { filtered.filter { $0.alarm }.count }
     private var totalCount: Int { filtered.count }
 
     func computeFiltered() -> [Rec] {
