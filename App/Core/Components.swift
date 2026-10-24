@@ -169,12 +169,19 @@ struct XPanel<Content: View>: View {
             //   ② 卡内保留背景色相（R35G34B39 偏冷 / R39G35B34 偏暖）—— 实色永远是中性灰
             // ② 只能由"背景被模糊放大后透上来"产生。
             //
-            // 但 §14-#6 铁律：**毛玻璃只许功能层**（TabBar/浮层/Sheet），内容卡不许 .ultraThinMaterial。
-            // 折中方案：用极低透明度白 + 一层 blur —— 用 .background(.ultraThinMaterial) 违规，
-            // 所以改用 **低透明白 + 提饱和**模拟：0.055 白（对齐 tokens.css 的 rgba(255,255,255,.055)）。
-            // 透光效果弱于真玻璃，但守住了层级别铁律。
-            shape.fill(XPalette.veil.opacity(0.69))
-                .overlay(shape.fill(XPalette.surface.opacity(0.30)))
+            // ═══ 2026-10-24 新优先级裁定：内容卡改用**真毛玻璃** ═══
+            //
+            // 用户明确的审美优先级：**参考图 > html预览 > 规范 > app**。
+            //
+            // 规范 §14-#6 写着「毛玻璃只许功能层（TabBar/浮层/Sheet），内容卡不许」，
+            // 而参考图 2 的卡片实测 R35G34B39（比画布亮 25-30 色阶）+ **保留背景色相**——
+            // 那只有真模糊透光才能产生，低透明白做不到（叠白只会得到中性灰）。
+            //
+            // 两者冲突 ⇒ 按新优先级取**参考图** ⇒ 内容卡用 .ultraThinMaterial。
+            // 这不是"绕过规范"，是规范在这一条上落后于参考图；
+            // 已记入 docs/REFERENCE-AUDIT.md，待规范同步修订。
+            shape.fill(.ultraThinMaterial)
+                .overlay(shape.fill(XPalette.veil.opacity(0.35)))
         }
     }
 }

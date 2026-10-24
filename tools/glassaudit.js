@@ -643,9 +643,16 @@ const projectProblems = [];
 {
   // 规范 §14-#6：**内容层不许用毛玻璃** —— 违反 HIG 两层模型（内容不透明 / 功能层玻璃）。
   //
-  // 本仓唯一合法的玻璃是 `XGlassTabBar`（功能层）。实证有一处越界：
-  // SecurityCenterView 的挡片用 .ultraThinMaterial 盖 OTP —— 既违反分层，
-  // 又没达成目的（那种材质故意透背景，秘密可能被部分读出）。
+  // ═══ 2026-10-24 按新优先级修订 ═══
+  // 用户明确的审美优先级：**参考图 > html预览 > 规范 > app**。
+  // 参考图 2 的卡片实测 R35G34B39（比画布亮 25-30）+ **保留背景色相** ——
+  // 低透明白做不出色相，只有真模糊透光能。所以参考图的**内容卡就是毛玻璃**。
+  // 规范与参考图冲突 ⇒ 按优先级取参考图。
+  //
+  // 新规则：内容卡用毛玻璃**允许，但必须在同一行上方 8 行内有出处标记**
+  // `参考图` 或 `REFERENCE-AUDIT` —— 逼每个用玻璃的地方说清依据，不放过"顺手加一个"。
+  //
+  // 仍不允许的无出处用法：SecurityCenterView 挡片那种"盖住秘密还想透光"的自相矛盾用法。
   const MATERIAL = /\.(ultraThinMaterial|thinMaterial|regularMaterial|thickMaterial|ultraThickMaterial)\b/;
   for (const f of files) {
     const rel = path.relative(ROOT, f);
@@ -661,6 +668,9 @@ const projectProblems = [];
       // 两处合法：功能层 Tab Bar 自身，以及**玻璃配方的唯一实现** XGlassSurface。
       // 后者不是「内容层用玻璃」，而是玻璃这个材质本身的定义 —— 内容层若直接用它会另报。
       if (/struct XGlassTabBar|struct XGlassSurface/.test(around)) return;
+      // 2026-10-24 新优先级：内容卡允许毛玻璃，但**必须在附近写出处**
+      // （`参考图` / `REFERENCE-AUDIT` / `优先级`），逼每个用法说清依据。
+      if (/参考图|REFERENCE-AUDIT|优先级/.test(around)) return;
       projectProblems.push('§14-#6 内容层用了毛玻璃（只许在功能层 / XGlassTabBar）：' +
                            rel + ':' + (i + 1) + '  ' + raw.trim().slice(0, 50));
     });

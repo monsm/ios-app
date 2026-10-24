@@ -1695,7 +1695,8 @@ struct PrivacyDashboard: View {
                                 .stroke(XPalette.ok, style: StrokeStyle(lineWidth: 10, lineCap: .round))
                                 .rotationEffect(.degrees(-90))
                             Text(String(enabledN))
-                                .font(.system(size: 22, weight: .bold))
+                                // 环心数字在 84pt 固定器皿里 —— 用 XMetric.dataText 做 AX 缩放上限
+                                .font(.system(size: XMetric.dataText(22), weight: .bold))
                                 .monospacedDigit()
                                 .foregroundStyle(XPalette.text)
                         }
