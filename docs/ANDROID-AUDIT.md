@@ -85,3 +85,15 @@ Android 的**唯一外部入口**是桌面图标（LAUNCHER intent-filter）。
 
 本地通知缺失与伪装/访客同类——**产品范围差异**（极简单机版没有提醒场景）。
 若未来补，接线点是 NotificationCompat + CareReminders 的调度逻辑移植。
+
+---
+
+## 附五：触觉反馈对账（第 95 轮）
+
+| iOS | Android | 对齐 |
+|---|---|---|
+| success / failure | **ok / fail** | ✓ 结果档对齐 |
+| tick / trigger / soft / warning / prepare | 无 | ✓ **有意裁剪**（注释明言"只保留有调用点的两档"；极简定位 + 真机事故教训：绝不让震动打断开锁流程）|
+
+Android 触觉的静默降级（无马达/系统关闭/ROM 异常一律静默返回）也是对齐项——
+iOS 的 XHaptics 无此层，因为 UIKit 自身不抛。
