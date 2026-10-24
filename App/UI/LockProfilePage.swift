@@ -45,13 +45,21 @@ struct LockProfilePage: View {
         // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
         XScreen("锁档案", subtitle: "这台锁的名字 / 符号 / 配色") {
+                // ═══ 2026-10-24 逐页对齐 HTML 21-lock-profile 的**卡片顺序** ═══
+                //
+                // HTML 的顺序是：①指纹余量 → ②锁牌(大图) → ③身份 → ④符号 → ⑤配色 → ⑥更多
+                // 真机此前把**锁牌放第一**、指纹余量第二 —— 正好反了。
+                //
+                // 为什么 HTML 把指纹余量放最前：它是这一页唯一带"锁里还剩几个槽位"的
+                // **容量读数**（12 可录 / 38 已用 of 50），是用户来这里的第一目的；
+                // 而锁牌是视觉主角，放在第二屏位置反而更耐看（先给数据，再给形象）。
+                fpCapacityCard.xScrollLift()
                 plaque.xScrollLift()
                 // 六图改造 (2026-10-23): 加**图 5 双列 MetricCard**（电量 / 信号）。
                 //
                 // 图 5 的 Step Count / Step Distance 就是「44px 数字 + 迷你环 + 副标」并排。
                 // 锁档案之前只有一排 11pt 小胶囊（电量% / 锁态 / 固件），
                 // 三个信息等重、都很小 —— 而"这把锁还有多少电"是回家路上最想知道的。
-                fpCapacityCard.xScrollLift()
                 identityFactsCard.xScrollLift()
                 metricsCards.xScrollLift()
                 identitySection.xScrollLift()
