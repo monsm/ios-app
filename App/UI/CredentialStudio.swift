@@ -442,16 +442,6 @@ extension View {
     }
 }
 extension String {
-    /// 308 4 位分段
-    func chunked(_ n: Int) -> [String] {
-        var out: [String] = []
-        var rest = Array(self)
-        while !rest.isEmpty {
-            out.append(String(rest.prefix(n)))
-            rest = Array(rest.dropFirst(n))
-        }
-        return out
-    }
 }
 
 
@@ -986,11 +976,6 @@ func fpDoubleSignCheck(mac: String, batch: Int, confirmTitle: String, action: @e
 
 // Double 台账毫秒 → 本地日期串 (凭证页同源, 局部实现)
 private extension Double {
-    func credDay() -> String {
-        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"
-        f.locale = Locale(identifier: "en_US_POSIX")
-        return f.string(from: Date(timeIntervalSince1970: self / 1000))
-    }
 }
 
 // 2026-10-24 已删除旧页面 struct OtpStudio

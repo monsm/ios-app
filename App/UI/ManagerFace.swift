@@ -420,14 +420,6 @@ enum ManagerTab: Hashable, CaseIterable {
         }
     }
 
-    /// 选中态图标（实心版）—— 选中/未选中用两套字形是 iOS 的既有语言，
-    /// 这里给门厅换成实心房子，其余沿用组图标（它们本身就是唯一的）。
-    var selectedIcon: String {
-        switch self {
-        case .home: return "house.fill"
-        default: return icon
-        }
-    }
 
     static func from(index: Int) -> ManagerTab? {
         allCases.first { $0.index == index }
