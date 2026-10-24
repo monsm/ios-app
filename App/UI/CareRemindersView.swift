@@ -19,6 +19,15 @@ struct CareRemindersView: View {
                 //
                 // 这一页存在的意义就是"提醒"，提醒的第一要义是**还剩多久**。
                 // 之前最近的那个日子埋在三张卡里的一行 —— 用户要自己扫一遍才知道"最近是几天后"。
+                // ═══ 2026-10-24 逐页对齐 HTML 61-reminders 卡1 ═══
+                //
+                // HTML 的第一张卡是**生日填写进度**：「0/5 已填 · 格式 MM-dd，
+                // 在「成员管理 → 补全信息」里填写」。
+                // 它和下面的「成员生日」卡不是同一件事：
+                //   · 这张是**入口/进度**（填了几位、去哪儿填）
+                //   · 那张是**名单**（谁填了、谁没填、倒计时几天）
+                // 真机只有名单没有入口，用户看到"5 位成员 未填"却不知道要回哪儿补。
+                birthdayProgressCard.xScrollLift()
                 countdownHeroCard.xScrollLift()
                 bulletinCard.xScrollLift()
                 annivCard.xScrollLift()
@@ -28,6 +37,37 @@ struct CareRemindersView: View {
         }
         .onDisappear {
             Milestones.bulletin = bulletin.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+    }
+
+    /// HTML 61-reminders 卡1：生日填写进度（0/5 已填 + 格式口径）
+    ///
+    /// 与「成员生日」卡的分工：这张答"还差几个人没填、在哪填"，
+    /// 那张答"每个人分别是几天后"。合并成一张会让入口藏在名单底部。
+    private var birthdayProgressCard: some View {
+        // 生日唯一来源是 Milestones.memberBirthdays()（Member 类型里没有 birthday 字段）
+        let bdays = Milestones.memberBirthdays()
+        let total = DB.members().count
+        let filled = DB.members().filter { !(bdays[$0.id] ?? "").isEmpty }.count
+        return XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.s) {
+                Text("生日填写")
+                    .xFont(.subheadline)
+                    .foregroundStyle(XPalette.textTertiary)
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    Text("\(filled)")
+                        .xFont(.largeTitle, weight: .bold)
+                        .foregroundStyle(filled > 0 ? XPalette.text : XPalette.textTertiary)
+                    Text("/ \(total) 已填")
+                        .xFont(.subheadline)
+                        .foregroundStyle(XPalette.textSub)
+                    Spacer(minLength: 0)
+                }
+                Text("格式 MM-dd，在「成员管理 → 补全信息」里填写")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 
