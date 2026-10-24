@@ -93,3 +93,17 @@
 
 静态可验证范围 100% 闭环。**像素级观感与真实点击手感需要真机**——
 REVIEW.html（56 项双端对照）已把验收成本压到「翻卡片 + 勾选 + 导出」。
+
+---
+
+## 附：kf:// 深链现状（第 72 轮核查）
+
+`Route.deepLinkHosts` / `pendingRoute` / `applyPendingRoute()` 这一族是**未接线的预留**：
+
+- 全仓无 `onOpenURL` 入口
+- 项目无 Info.plist URL scheme 注册
+- 因此深链从未能工作过（不是本次对齐弄坏的）
+
+**判定**：功能以 App 为准 → 不实现。未来若要接，接线点是
+`WindowGroup.onOpenURL` → 解析 host → `Route.from(host:)` → `pendingRoute`。
+在那之前，`deepLinkHosts` 保持死代码状态（无害）。
