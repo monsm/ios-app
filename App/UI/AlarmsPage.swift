@@ -341,7 +341,7 @@ struct AlarmsPage: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("二级").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
                         Text("\(lv2) 条").xFont(.footnote, weight: .semibold)
-                            .foregroundStyle(XPalette.warn)
+                            .foregroundStyle(XPalette.text)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     VStack(alignment: .leading, spacing: 4) {

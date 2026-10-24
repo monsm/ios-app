@@ -636,7 +636,7 @@ struct EventsPage: View {
                     Text("\(alarms)")
                         .xFontExact(.caption2.monospacedDigit())
                 }
-                .foregroundStyle(XPalette.warn)
+                .foregroundStyle(XPalette.text)
             }
             Spacer(minLength: 0)
         }

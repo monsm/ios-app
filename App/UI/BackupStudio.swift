@@ -873,7 +873,7 @@ struct ExportWizardView: View {
                         ShareLink(item: u, preview: SharePreview("离线锁管家增量包")) {
                             Text("分享 \(u.lastPathComponent)")
                                 .xFont(.footnote)
-                                .foregroundStyle(XPalette.accentText)
+                                .foregroundStyle(XPalette.textSub)
                         }
                     }
                     if !incMsg.isEmpty {

@@ -813,7 +813,9 @@ struct CredentialDetailView: View {
                         Text("码值")
                             .xFont(.subheadline)
                             .foregroundStyle(XPalette.textTertiary)
-                        XHeroNumber(text: codeText, size: 34, color: XPalette.accentText)
+                        // 码值数字改白（暖色治理）：HTML 13-key-detail 的 .mv 无内联色=继承白。
+                        // 码值是"数据本身"，不是状态——着橙没有语义，只是装饰。
+                        XHeroNumber(text: codeText, size: 34, color: XPalette.text)
                             .padding(.top, 6)
                         XHairline().padding(.vertical, 12)
                         HStack(alignment: .top, spacing: XSpace.s) {

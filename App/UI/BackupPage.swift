@@ -330,7 +330,7 @@ struct BackupPage: View {
                     Text("本机 → 文件").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
                     Text("生成一份备份")
                         .xFont(.caption2, weight: .medium)
-                        .foregroundStyle(XPalette.accentText)
+                        .foregroundStyle(XPalette.textSub)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -354,7 +354,7 @@ struct BackupPage: View {
                     Text("文件 → 本机").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
                     Text("同机覆盖，其它保留")
                         .xFont(.caption2, weight: .medium)
-                        .foregroundStyle(XPalette.accentText)
+                        .foregroundStyle(XPalette.textSub)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
