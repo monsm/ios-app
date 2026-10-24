@@ -316,7 +316,7 @@ enum ManagerRoute: String, Hashable, Identifiable {
 /// 用枚举而不是 Int 做 selection 的类型：
 ///   · tag 与 selection 类型一致由编译器保证（Int tag 配错不报错）
 ///   · openGroup/rememberTab 等存量 Int 接口在**唯一**的换算点转换
-enum ManagerTab: Hashable {
+enum ManagerTab: Hashable, CaseIterable {
     case home, keys, devices, members, system
 
     var label: String {
