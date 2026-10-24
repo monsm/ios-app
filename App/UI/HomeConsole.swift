@@ -1014,14 +1014,17 @@ struct HomeConsole: View {
                         }
                     }
                 }
-                .frame(height: 150)
+                // 面积图必须有确定高度（GeometryReader 不自动撑高）；
+                // 用 minHeight 而不是 height —— 闸门口径：装内容的固定高度在
+                // Dynamic Type 放大时会被裁。这里内容不会变高，但保持同一写法。
+                .frame(minHeight: 150, maxHeight: 150)
                 // 右侧「更早 / 更近」
                 VStack(alignment: .trailing) {
                     Text("更早").xFont(.small).foregroundStyle(XPalette.textTertiary)
                     Spacer(minLength: 0)
                     Text("更近").xFont(.small).foregroundStyle(XPalette.textTertiary)
                 }
-                .frame(height: 150)
+                .frame(minHeight: 150, maxHeight: 150)
             }
             // 底部月份轴（三枚日期）
             HStack(spacing: 0) {
