@@ -540,6 +540,14 @@ struct AutoCalView: View {
                 VStack(spacing: XSpace.section) {
                     signalCard
                     dataCard
+                    // ═══ 2026-10-24 逐页对齐新建原型 27-distance.html 卡3 ═══
+                    //
+                    // 原型里有「为什么要标定」卡：解释"每个门口的蓝牙环境不同 ——
+                    // 走廊金属多、门厚、邻居路由器都影响 RSSI。固定出厂值只能对一半人有效"。
+                    // 以及两条绿勾：①标定只影响靠近自动开锁，手动点圆盘始终可用 ②数据只存本机。
+                    //
+                    // App 此前只有刻度条与标定数据两卡 —— 用户看到"未标定"但不知道为什么要标。
+                    whyCard
                 }
                 .padding(.horizontal, XSpace.gutter)
                 .padding(.vertical, XSpace.l)
@@ -547,6 +555,41 @@ struct AutoCalView: View {
             .scrollIndicators(.hidden)
         }
         .navigationTitle("距离标定")
+    }
+
+    /// 新建原型 27-distance.html 卡3：为什么要标定
+    private var whyCard: some View {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.m) {
+                Text("为什么要标定")
+                    .xFont(.title2, weight: .bold)
+                    .foregroundStyle(XPalette.text)
+                Text("每个门口的蓝牙环境不同 —— 走廊金属多、门厚、邻居路由器都会影响 RSSI。固定一个出厂值只能对一半的人有效。标定一次之后，App 用你自己门口的强度判断「走近了」。")
+                    .xFont(.body)
+                    .foregroundStyle(XPalette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
+                XHairline()
+                HStack(alignment: .top, spacing: XSpace.s) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: XIcon.sm, weight: .semibold))
+                        .foregroundStyle(XPalette.ok)
+                        .accessibilityHidden(true)
+                    Text("标定只影响「靠近自动开锁」，手动点圆盘始终可用。")
+                        .xFont(.footnote)
+                        .foregroundStyle(XPalette.textSub)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                HStack(alignment: .top, spacing: XSpace.s) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: XIcon.sm, weight: .semibold))
+                        .foregroundStyle(XPalette.ok)
+                        .accessibilityHidden(true)
+                    Text("数据只存本机，不上传。")
+                        .xFont(.footnote)
+                        .foregroundStyle(XPalette.textSub)
+                }
+            }
+        }
     }
 
     // ── 信号卡：实时波形 + 采集进度 ──
