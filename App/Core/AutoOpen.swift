@@ -359,7 +359,12 @@ final class AutoOpenController {
         // 真正耗电的是**为了即时而持续开着的扫描**。所以门判定可以在两个模式下都在，
         // 但"每 150ms 读一次 RSSI"那种激进采样**只在箭头界面里发生** ——
         // 那个开关在 FindArrowSession 里，此处不重复判。
-        if armed, FindArrowPower.intensive { tickDwell(mac: mac) }
+        // 2026-10-24: 删掉 FindArrowLayer（iOS 版精确查找箭头从未做成 UI）。
+        // 原来这里有 `if armed, FindArrowPower.intensive` 的前置条件 ——
+        // 那是"箭头界面在场时用激进采样"的开关，而箭头界面不存在 ⇒ 该条件恒 false
+        // ⇒ 这一整行**永远不会执行** ⇒ 连接后 F2' 立刻触发门判定的功能是死的。
+        // 现在去掉前置条件：信号达标（armed）就立刻判一次门。
+        if armed { tickDwell(mac: mac) }
     }
     func rssiArmed() -> Bool { armed }
 

@@ -34,6 +34,14 @@ struct MePage: View {
 
     private var mac: String { app.currentMac }
 
+    /// 2026-10-24 接入 SettingsGroups：五组筛选片。
+    ///
+    /// 这一页此前把 6 个区块平铺一屏（状态摘要 / 数据保护 / 备份 / 锁 / 数据 / 关于），
+    /// 与 SettingsGroups.swift 里那套「五组分片」的数据模型对不上 ——
+    /// 那套模型定义了却全仓零调用。现在把它接上：
+    /// 顶部一排筛选片，每个区块按归属只在其组下出现；「全部」时与改动前逐字一致。
+    @State private var settingsGroup: SettingsGroup? = nil
+
     var body: some View {
         // M5 重做: List + Section → ScrollView + XPanel 卡片流
         //
@@ -70,12 +78,13 @@ struct MePage: View {
             }
             .scrollIndicators(.hidden)
             .padding(.bottom, XSpace.m)
-            statusSummary
-            backupRestoreCard
-            protectionSection
-            lockSection
-            dataSection
-            aboutSection
+            settingsGroupBar
+            if settingsSectionShown(settingsGroup, .daily) { statusSummary }
+            if settingsSectionShown(settingsGroup, .daily) { backupRestoreCard }
+            if settingsSectionShown(settingsGroup, .data) { protectionSection }
+            if settingsSectionShown(settingsGroup, .daily) { lockSection }
+            if settingsSectionShown(settingsGroup, .data) { dataSection }
+            if settingsSectionShown(settingsGroup, .help) { aboutSection }
         }
     }
 
@@ -90,6 +99,49 @@ struct MePage: View {
     /// 四项: 应用锁 / 未处理告警 / 备份新鲜度 / 门锁数量。
     /// 每项都是一个能直接跳过去的入口 —— 摘要不是只读的仪表,
     /// 看到"未开启"就该能一点就进去开。
+    /// 五组筛选片 —— 「全部 + 开门日常 / 钥匙与成员 / 数据与安全 / 外观与辅助 / 帮助与关于」
+    ///
+    /// 用 XStatChip 的风格但在选中态上给实底：它与页面顶部的读数胶囊不是一回事
+    /// （那是"读数"，这是"筛选"），所以走独立的样式而不是复用 XStatChip。
+    private var settingsGroupBar: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: XSpace.s) {
+                groupChip(nil, "全部")
+                ForEach(SettingsGroup.allCases) { g in
+                    groupChip(g, g.title)
+                }
+            }
+            .padding(.horizontal, XSpace.gutter)
+        }
+        .scrollIndicators(.hidden)
+        // 抵消外层 gutter，让筛选片能滑到屏幕边缘
+        .padding(.horizontal, -XSpace.gutter)
+        .padding(.bottom, XSpace.s)
+    }
+
+    private func groupChip(_ g: SettingsGroup?, _ title: String) -> some View {
+        let on = settingsGroup == g
+        return Button {
+            withAnimation(XMotion.quick) { settingsGroup = g }
+            XHaptics.tick.impactOccurred()
+        } label: {
+            Text(title)
+                .xFont(.subheadline, weight: on ? .semibold : .regular)
+                .foregroundStyle(on ? XPalette.onAccent : XPalette.textSub)
+                .padding(.horizontal, XSpace.m)
+                // 规范：装文字的容器不用固定高度（AX 字号下会破版），
+                // 且按钮视觉高可小于 44，但**触达必须补到 44**。
+                .frame(minHeight: 36)
+                .frame(minHeight: XHit.min)
+                .background(
+                    Capsule().fill(on ? XPalette.accent : XPalette.surface.opacity(0.55))
+                )
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(on ? [.isSelected, .isButton] : .isButton)
+    }
+
     private var statusSummary: some View {
         let locked = DB.store.getBool("kf_applock")
         let alarmN = RecordSearch.unhandledAlarmCount(macs: DB.keychains().map { $0.mac })
