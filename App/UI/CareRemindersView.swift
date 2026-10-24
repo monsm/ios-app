@@ -30,6 +30,13 @@ struct CareRemindersView: View {
                 birthdayProgressCard.xScrollLift()
                 countdownHeroCard.xScrollLift()
                 bulletinCard.xScrollLift()
+                // ═══ 2026-10-24 逐页对齐 61-reminders 的 duo ═══
+                //
+                // 原型的「纪念日」与「生日」是**并排两张 metric-card**：
+                //   左「纪念日 · 结缘日 · 2026-10-18 · 每年提醒」
+                //   右「生日 · 5 位成员 · 0 位已填 · 格式 MM-dd」
+                // App 此前做成上下两张全宽卡。并排才看得出它们是"两个倒计时源"。
+                reminderDuo.xScrollLift()
                 annivCard.xScrollLift()
                 bdayCard.xScrollLift()
         }
@@ -201,6 +208,38 @@ struct CareRemindersView: View {
     // ═══════════════════════════════════════════════════════
     // MARK: - 纪念日
     // ═══════════════════════════════════════════════════════
+
+    /// 61-reminders 的 duo：纪念日 / 生日两张 metric-card
+    private var reminderDuo: some View {
+        let anniv = Milestones.bondDay
+        let bdays = Milestones.memberBirthdays()
+        let total = DB.members().count
+        let filled = DB.members().filter { !(bdays[$0.id] ?? "").isEmpty }.count
+        return HStack(spacing: XSpace.s) {
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("纪念日").xFont(.caption, weight: .medium).foregroundStyle(XPalette.textSub)
+                    Text("结缘日").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                    Text(anniv.isEmpty ? "未填" : anniv)
+                        .xFont(.title3, weight: .bold)
+                        .foregroundStyle(anniv.isEmpty ? XPalette.textTertiary : XPalette.text)
+                    Text("每年提醒").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("生日").xFont(.caption, weight: .medium).foregroundStyle(XPalette.textSub)
+                    Text("\(total) 位成员").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                    Text("\(filled) 位已填")
+                        .xFont(.title3, weight: .bold)
+                        .foregroundStyle(filled > 0 ? XPalette.text : XPalette.textTertiary)
+                    Text("格式 MM-dd").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+    }
 
     private var annivCard: some View {
         XPanel(kind: .group) {

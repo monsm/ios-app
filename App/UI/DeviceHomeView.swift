@@ -159,16 +159,47 @@ struct SyncTimeView: View {
     }
 
     // ── 两侧时钟对照 ──
+    /// 对照卡 —— **逐页对齐 25-synctime 的双列 metric-card**（2026-10-24）
+    ///
+    /// 原型里这是 `<div class="duo">` 里的**两张并排卡**（左「锁内时钟 / 读到的」、
+    /// 右「手机时间 / 现在」），而 App 此前把它们做成一张卡里的上下两行。
+    ///
+    /// 差异不是排版偏好：双列让「两个时间差多少」**可以横向直接比较**，
+    /// 上下行则会让人先去读两行字再在心里算。这一页的全部意义就是对比这两个值。
     private var clockCard: some View {
-        XPanel(kind: .group) {
-            VStack(alignment: .leading, spacing: XSpace.m) {
-                secLabel("对照")
-                LabeledRow("锁内时钟",
-                           app.status?.lockTime.map { ProtoTime.localStr($0) } ?? "—")
-                LabeledRow("手机时间",
-                           DateFormatter.localizedString(from: Date(),
-                                                         dateStyle: .medium,
-                                                         timeStyle: .medium))
+        HStack(spacing: XSpace.s) {
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("锁内时钟")
+                        .xFont(.caption, weight: .medium)
+                        .foregroundStyle(XPalette.textSub)
+                    Text(app.status?.lockTime.map { ProtoTime.localStr($0) } ?? "—")
+                        .xFont(.title2, weight: .bold)
+                        .monospacedDigit()
+                        .foregroundStyle(XPalette.text)
+                    Text("读到的")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textTertiary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("手机时间")
+                        .xFont(.caption, weight: .medium)
+                        .foregroundStyle(XPalette.textSub)
+                    Text(DateFormatter.localizedString(from: Date(),
+                                                       dateStyle: .medium,
+                                                       timeStyle: .medium))
+                        .xFont(.footnote, weight: .semibold)
+                        .foregroundStyle(XPalette.text)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("现在")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textTertiary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
         .xScrollLift()

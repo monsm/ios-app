@@ -57,6 +57,17 @@ struct BackupPage: View {
                 restoreConfirmCard(b)
             }
             statusCard.xScrollLift()
+            // ═══ 2026-10-24 逐页对齐 47-backup 的 duo（两张 metric-card）═══
+            //
+            // 原型的导出与恢复是**并排两张卡**（各带一枚小环）：
+            //   左「导出 › 0 次 · 本机 → 文件 · 生成一份备份」
+            //   右「恢复 › 0 次 · 文件 → 本机」+ 紫色环 #7B7BE8
+            //
+            // App 此前把它们做成**上下两张全宽大卡**（各带一整块按钮区）——
+            // 那让"导出/恢复"读成两个独立功能页，而它们其实是**同一对方向操作**。
+            // 并排才看得出"本机 → 文件"与"文件 → 本机"是镜像关系。
+            transferDuo.xScrollLift()
+            // 详细动作仍保留全宽（按钮多，并排会挤）
             exportCard.xScrollLift()
             importCard.xScrollLift()
             studioRow.xScrollLift()
@@ -292,6 +303,51 @@ struct BackupPage: View {
         ["kf_applock", "kf_guest", "kf_sudo", "kf_theme", "kf_audit_keep"].filter {
             DB.store.getBool($0, false) || !DB.store.getString($0).isEmpty
         }.count
+    }
+
+    /// 47-backup 的 duo：导出 / 恢复两张 metric-card（镜像方向）
+    private var transferDuo: some View {
+        let exportN = ExportHistory.countWithin(days: 30)
+        return HStack(spacing: XSpace.s) {
+            // 左：导出
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("导出").xFont(.caption, weight: .medium).foregroundStyle(XPalette.textSub)
+                        Spacer(minLength: 0)
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(XPalette.textTertiary.opacity(0.6))
+                    }
+                    Text("\(exportN) 次").xFont(.title2, weight: .bold).monospacedDigit()
+                        .foregroundStyle(XPalette.text)
+                    Text("本机 → 文件").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                    Text("生成一份备份")
+                        .xFont(.caption2, weight: .medium)
+                        .foregroundStyle(XPalette.accentText)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            // 右：恢复
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("恢复").xFont(.caption, weight: .medium).foregroundStyle(XPalette.textSub)
+                        Spacer(minLength: 0)
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(XPalette.textTertiary.opacity(0.6))
+                    }
+                    Text("0 次").xFont(.title2, weight: .bold).monospacedDigit()
+                        .foregroundStyle(XPalette.textTertiary)
+                    Text("文件 → 本机").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                    Text("同机覆盖，其它保留")
+                        .xFont(.caption2, weight: .medium)
+                        .foregroundStyle(XPalette.accentText)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
     }
 
     private var exportCard: some View {

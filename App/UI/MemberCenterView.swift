@@ -962,6 +962,50 @@ struct MemberArchivedView: View {
         }
     }
 
+    /// 33-archived 的 duo：已归档成员 / 待认领钥匙
+    private var archivedDuo: some View {
+        let n = archived.count
+        let unowned = RecordSearch.buildRecs(macs: DB.keychains().map { $0.mac })
+            .filter { $0.alarm == false && ($0.whoId ?? "").isEmpty }
+            .count
+        return HStack(spacing: XSpace.s) {
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("已归档").xFont(.caption, weight: .medium).foregroundStyle(XPalette.textSub)
+                    Text("成员").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                        Text(String(n))
+                            .xFont(.title, weight: .bold)
+                            .monospacedDigit()
+                            .foregroundStyle(n > 0 ? XPalette.text : XPalette.textTertiary)
+                        Text("位").xFont(.caption2).foregroundStyle(XPalette.textSub)
+                    }
+                    Text(n > 0 ? "可随时恢复" : "还没有成员被归档")
+                        .xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        .lineLimit(2)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("待认领").xFont(.caption, weight: .medium).foregroundStyle(XPalette.textSub)
+                    Text("钥匙").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                        Text(String(unowned))
+                            .xFont(.title, weight: .bold)
+                            .monospacedDigit()
+                            .foregroundStyle(unowned > 0 ? XPalette.warn : XPalette.textTertiary)
+                        Text("份").xFont(.caption2).foregroundStyle(XPalette.textSub)
+                    }
+                    Text(unowned > 0 ? "去「认领」分配" : "无人认领")
+                        .xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        .lineLimit(2)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+    }
+
     private var archivedStatsCard: some View {
         let n = archived.count
         return XPanel(kind: .group) {
@@ -1006,6 +1050,14 @@ struct MemberArchivedView: View {
             // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
             XScreen("归档成员", subtitle: "归档不删数据，名下钥匙转成「未分配」") {
                 // 六图改造 (2026-10-24): 顶部加图5 读数卡（44px 归档数 + 环）
+                // ═══ 2026-10-24 逐页对齐 33-archived 的 duo ═══
+                //
+                // 原型的顶部是**两张并排卡**：
+                //   左「已归档 · 成员 · 1 位 · 2026-08-01 归档」
+                //   右「待认领 · 钥匙 · 0 份 · 无人认领」
+                // App 此前只有一张「归档总数」读数卡，缺了"待认领钥匙"这一半 ——
+                // 而那正是归档之后真正待处理的事。
+                archivedDuo
                 archivedStatsCard
                 // HTML 卡3「归档规则」—— 三条彩点行（App 之前缺这一整卡）
                 archiveRulesCard

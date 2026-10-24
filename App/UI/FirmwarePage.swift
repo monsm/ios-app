@@ -83,6 +83,17 @@ struct FirmwarePage: View {
                     upgradeProgressCard.xScrollLift()
                     versionCard.xScrollLift()
                     if let fw { packageCard(fw).xScrollLift() }
+                    // ═══ 2026-10-24 逐页对齐 22-firmware 的 duo（两张 metric-card）═══
+                    //
+                    // 原型在「升级进度」之后是**两张并排读数卡**：
+                    //   左「电量 · 升级需 ≥30% · **47%** · ✓ 充足」
+                    //   右「连接 · 蓝牙 · **已就绪** · −76 dBm」
+                    // 然后才是「升级前检查」卡。
+                    //
+                    // App 此前把这两项**合并进 checklist 的勾选行**（"电量充足 / 蓝牙已开启"）——
+                    // 信息都在，但读法不同：勾选行回答"能不能升"，metric-card 回答"现在多少"。
+                    // 升级前真正要判断的是后者（47% 够不够、信号强不强）。
+                    readinessDuo.xScrollLift()
                     checklistCard.xScrollLift()
                     actionCard.xScrollLift()
                     if !queueSel.isEmpty || !queueOutcomes.isEmpty { queueCard.xScrollLift() }
@@ -250,6 +261,60 @@ struct FirmwarePage: View {
     // ═══════════════════════════════════════════════════════
     // MARK: - 体检单
     // ═══════════════════════════════════════════════════════
+
+    /// 22-firmware 的 duo：电量 + 连接两张 metric-card
+    private var readinessDuo: some View {
+        let rssi = LinkSense.shared.lastRssi ?? 0
+        let hasRssi = rssi != 0
+        let bleOk = bleSvc.isPoweredOn
+        return HStack(spacing: XSpace.s) {
+            // 左：电量
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("电量").xFont(.caption, weight: .medium).foregroundStyle(XPalette.textSub)
+                        Spacer(minLength: 0)
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(XPalette.textTertiary.opacity(0.6))
+                    }
+                    Text("升级需 ≥30%").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                    XHeroNumber(
+                        text: battPct >= 0 ? String(battPct) : "—",
+                        color: battOk ? XPalette.ok : XPalette.danger,
+                        unit: "%")
+                    HStack(spacing: 4) {
+                        Image(systemName: battOk ? "checkmark" : "xmark")
+                            .font(.system(size: 11, weight: .semibold))
+                        Text(battPct < 0 ? "读不到" : (battOk ? "充足" : "不够"))
+                            .xFont(.caption2)
+                    }
+                    .foregroundStyle(battOk ? XPalette.ok : XPalette.danger)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            // 右：连接
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("连接").xFont(.caption, weight: .medium).foregroundStyle(XPalette.textSub)
+                        Spacer(minLength: 0)
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(XPalette.textTertiary.opacity(0.6))
+                    }
+                    Text("蓝牙").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                    Text(bleOk ? "已就绪" : "未开启")
+                        .xFont(.title2, weight: .bold)
+                        .foregroundStyle(bleOk ? XPalette.ok : XPalette.danger)
+                    Text(hasRssi ? "\(rssi) dBm" : "—")
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textTertiary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+    }
 
     private var checklistCard: some View {
         XPanel(kind: .group) {
