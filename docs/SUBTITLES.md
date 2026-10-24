@@ -17,7 +17,7 @@
 | 录入指纹 | 每枚指纹都对应锁里的一个槽位 | AddFingerPage |
 | 凭证详情 | 这一条凭证的码值与使用记录 | KeysPage |
 | 认领还没分配的钥匙 | 把无主记录归到人 | MemberCenterView |
-| 锁档案 | 这台锁的名字 / 符号 / 配色 | LockProfilePage |
+| 锁档案 | 这台锁的名字与真实读数 | LockProfilePage |
 | 添加密码 | 写入门锁 · 会占用密码库存 | AddKeyPage |
 | 同步时间 | 锁钟偏差 · 写入手机时间 | DeviceHomeView |
 | 钥匙管理 | **动态**（项数与分类计数，格式见 KeysPage.subline） | KeysPage |

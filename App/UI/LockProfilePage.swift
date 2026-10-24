@@ -22,7 +22,6 @@ import UIKit
 struct LockProfilePage: View {
     @EnvironmentObject private var app: AppState
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.dynamicTypeSize) private var typeSize
 
     @State private var name = ""
     @State private var place = ""

@@ -621,17 +621,7 @@ enum XMotion {
         }
     }
 
-    // ── 召唤 / 揭示 ──
-    //
-    // 规范 §11.1 是一张**封闭清单**（"只能用这些"），里面与"内容被召唤出来"最接近的
-    // 是「Sheet 弹出 | .spring | 0.42 / 0.88」。这条与 doorReveal 原先自造的
-    // timingCurve(0.22,0.76,0.03,1, 0.45) 合并成同一条 —— 规范里没有的曲线不留。
-    static var summon: Animation {
-        switch tier {
-        case "calm": return .easeOut(duration: 0.20)
-        default: return .spring(response: 0.42, dampingFraction: 0.88)
-        }
-    }
+    // 2026-10-24 精简：summon 零使用已删
 
     /// 元件入场 / 数值归位（头像、仪表、进度环）。
     ///
