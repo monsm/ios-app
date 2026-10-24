@@ -35,6 +35,10 @@
 | B4 | 44-audit / 51-feed | 两层结构（dsheet：深色品牌头 + 内容板）| 单层 `XScreen` | **只有 2/50 页**用两层，是原型里的少数实验；App 全站统一单层。若你认为该加，我加一个 `XThemedHeader` 组件 |
 | B5 | 80-states | 三态规范页 | 无独立页 | 是组件规范（`XSkeleton`/`XEmptyState`/`XInlineError`），组件已存在并被各页使用 |
 | B6 | 75-shell | 展示壳（App Store 宣传图）| 无 | App 内没有这一屏 |
+| B7 | 02-keys「全部钥匙」| 卡头「全部凭证」| 凭证涵盖密码+指纹+OTP，比"钥匙"准 |
+| B8 | 11-fingerprint 两卡（锁内容量+指纹库存）| capacityCard 一卡 | 44px+三环+两列+页脚已含两卡全部信息 |
+| B9 | 01-home 卡1「本周（握手）」| 不补 | 周聚合数据层不存在（功能以 App 为准）；握手是工程量不进主屏 |
+| B10 | 双端主屏 chip 数不同（iOS 4 / Android 2）| 保留 | 各自忠实于各自 HTML（iOS 01-home 4 枚、Android 原型 2 枚）|
 
 ---
 
