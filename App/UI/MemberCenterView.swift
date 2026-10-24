@@ -89,7 +89,7 @@ struct MemberDetail360View: View {
                         .foregroundStyle(XPalette.textTertiary)
                     XGradientDial(size: 44, progress: min(1, Double(opensN) / 10),
                                   widthRatio: 0.14, showsCursor: false, showsTick: false,
-                                  solid: XPalette.ok)
+                                  solid: XPalette.ok) { EmptyView() }
                         .opacity(0.9)
                 }
             }

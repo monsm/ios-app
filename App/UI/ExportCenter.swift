@@ -2321,54 +2321,7 @@ struct ExportCenterView: View {
 
     // ---------- 各导出动作 (692: 全部经 ExportProgress 生成, 可取消) ----------
     /// 719 完成反馈: 成功触感/失败触感已由 progress.start 触发, 这里补路径与 Toast
-/// 导出历史（2026-10-24 新增）—— HTML 48-export「历史导出」柱状图的数据源
-///
-/// 只记**时间戳**，不记文件名/内容：柱状图要的是"哪个月导出了几次"，
-/// 文件名属于隐私（可能含锁名），没有理由为一张图存下来。
-enum ExportHistory {
-    static let key = "kf_export_history"
-    /// 最多保留 200 条（够画 3 个月柱状图，且不会无限增长）
-    private static let cap = 200
 
-    /// 记一次导出（毫秒时间戳）
-    static func record() {
-        var list = all()
-        list.append(Int(Date().timeIntervalSince1970 * 1000))
-        if list.count > cap { list = Array(list.suffix(cap)) }
-        DB.store.set(key, list.map(String.init).joined(separator: ","))
-    }
-
-    /// 全部导出时间戳（毫秒）
-    static func all() -> [Int] {
-        DB.store.getString(key)
-            .split(separator: ",")
-            .compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
-    }
-
-    /// 最近 N 次导出的数量（HTML："近 3 个月 12 次导出"）
-    static func countWithin(days: Int) -> Int {
-        let cutoff = Int((Date().timeIntervalSince1970 - Double(days) * 86_400) * 1000)
-        return all().filter { $0 >= cutoff }.count
-    }
-
-    /// 按月聚合：最近 N 个月的每月导出次数（柱状图用）
-    static func monthlyBars(months: Int) -> [(label: String, count: Int)] {
-        let cal = WeekCal.gregorian
-        let now = Date()
-        let all = all()
-        return (0..<months).reversed().compactMap { back -> (String, Int)? in
-            guard let monthStart = cal.date(byAdding: .month, value: -back, to: now) else { return nil }
-            let comps = cal.dateComponents([.year, .month], from: monthStart)
-            guard let y = comps.year, let m = comps.month else { return nil }
-            let n = all.filter { ts in
-                let d = Date(timeIntervalSince1970: Double(ts) / 1000)
-                let c = cal.dateComponents([.year, .month], from: d)
-                return c.year == y && c.month == m
-            }.count
-            return ("\(m)月", n)
-        }
-    }
-}
 
     private func onDone(_ item: ExportItem?, _ err: String) {
         if let item {
@@ -2679,6 +2632,55 @@ struct QLPreviewView: UIViewControllerRepresentable {
         func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem {
             // URL 本身就是 QLPreviewItem (NSURL 遵循该协议); 旧写法调的 urlPreviewItem 不存在
             url as NSURL
+        }
+    }
+}
+
+/// 导出历史（2026-10-24 新增）—— HTML 48-export「历史导出」柱状图的数据源
+///
+/// 只记**时间戳**，不记文件名/内容：柱状图要的是"哪个月导出了几次"，
+/// 文件名属于隐私（可能含锁名），没有理由为一张图存下来。
+enum ExportHistory {
+    static let key = "kf_export_history"
+    /// 最多保留 200 条（够画 3 个月柱状图，且不会无限增长）
+    private static let cap = 200
+
+    /// 记一次导出（毫秒时间戳）
+    static func record() {
+        var list = all()
+        list.append(Int(Date().timeIntervalSince1970 * 1000))
+        if list.count > cap { list = Array(list.suffix(cap)) }
+        DB.store.set(key, list.map(String.init).joined(separator: ","))
+    }
+
+    /// 全部导出时间戳（毫秒）
+    static func all() -> [Int] {
+        DB.store.getString(key)
+            .split(separator: ",")
+            .compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
+    }
+
+    /// 最近 N 次导出的数量（HTML："近 3 个月 12 次导出"）
+    static func countWithin(days: Int) -> Int {
+        let cutoff = Int((Date().timeIntervalSince1970 - Double(days) * 86_400) * 1000)
+        return all().filter { $0 >= cutoff }.count
+    }
+
+    /// 按月聚合：最近 N 个月的每月导出次数（柱状图用）
+    static func monthlyBars(months: Int) -> [(label: String, count: Int)] {
+        let cal = WeekCal.gregorian
+        let now = Date()
+        let all = all()
+        return (0..<months).reversed().compactMap { back -> (String, Int)? in
+            guard let monthStart = cal.date(byAdding: .month, value: -back, to: now) else { return nil }
+            let comps = cal.dateComponents([.year, .month], from: monthStart)
+            guard let y = comps.year, let m = comps.month else { return nil }
+            let n = all.filter { ts in
+                let d = Date(timeIntervalSince1970: Double(ts) / 1000)
+                let c = cal.dateComponents([.year, .month], from: d)
+                return c.year == y && c.month == m
+            }.count
+            return ("\(m)月", n)
         }
     }
 }
