@@ -179,13 +179,6 @@ struct MembersPage: View {
         }
     }
 
-    /// 未归属记录数（成员页胶囊用）
-    private var unclaimedCount: Int {
-        let macs = DB.keychains().map { $0.mac }
-        return macs.reduce(0) { n, m in
-            n + DB.listPwds(m).filter { ($0.owner ?? "").isEmpty }.count
-        }
-    }
 
     private var avatarStrip: some View {
         ScrollView(.horizontal, showsIndicators: false) {

@@ -604,7 +604,6 @@ enum XMotion {
         }
     }
     /// 卡片入场逐卡延迟
-    static let cardStagger: Double = 0.04
 
     /// 环形生长 —— 范式「easeOut 1.00s / delay 0.15」
     static var ringGrow: Animation {

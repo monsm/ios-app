@@ -324,14 +324,6 @@ struct ManagerFace: View {
 
 
 
-    // ── 路由落地 ──
-    private func consumePendingFocus() {
-        // 重做后无共享 path：深链焦点退化为「切到系统 Tab」，
-        // 目标入口行就在系统组首屏（备份恢复/诊断与自检都是常驻行）。
-        guard app.pendingSettingsFocus != nil else { return }
-        app.pendingSettingsFocus = nil
-        app.tabSelection = ManagerTab.system.index
-    }
 
     @ViewBuilder
     private func routeDestination(_ r: ManagerRoute) -> some View {

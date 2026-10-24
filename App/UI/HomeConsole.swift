@@ -53,7 +53,6 @@ import SwiftUI
 struct HomeConsole: View {
     @EnvironmentObject private var app: AppState
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.dynamicTypeSize) private var typeSize
     /// 全局刷新中心。开门成功、从后台回前台、安全设置变动都会 bump 它。
     /// 没有这个观察，本页的"今日开门 / 分时柱图 / 成员"在开门之后**不会更新** ——
     /// 因为数据是在 body 里现算的，而 SwiftUI 只在状态变化时重算 body。
@@ -152,26 +151,14 @@ struct HomeConsole: View {
                                 if let notice = criticalNotice { noticeRow(notice) }
                                 unlockStage
                             }
-                            // 簇二：今天的数据（指标 → 分时 → 成员）
-                            VStack(spacing: XSpace.l) {
-                                metricsRow
-                                todaySection
-                                // ═══ 2026-10-24 逐页对齐 HTML 01-home 最后一块 ═══
-                                //
-                                // HTML 在「今日开门分布」之后还有一块**开门历史**：
-                                //   24pt/700 标题「开门历史」
-                                //   + 150pt 高的面积图（左侧面积 + 顶部网格线）
-                                //   + 右侧「更早 / 更近」两枚标签
-                                //   + 底部月份轴（9-24 / 10-04 / 10-14）
-                                //
-                                // 真机此前完全没有这一块 —— 门厅只能说"今天多少"，
-                                // 看不到"最近两周的趋势"。而参考图 1（Health Age History）
-                                // 正是这个形态：标题 + 面积图 + 时间轴。
-                                // HTML 01-home 的「本周」卡（第 14 轮漏读）
-                                weekCard
-                                openHistorySection
-                                memberSection
-                            }
+                            // ═══ 2026-10-24 坚决精简 ═══
+                            //
+                            // 原 App 首页（rootPage）只有一条动态列表，没有动态时一张图 + 一句
+                            // 「当前没有任何动态」。iOS 门厅此前是完整仪表盘：三读数 / 今日时段柱图 /
+                            // 本周三环 / 开门历史面积图 / 成员横滑 —— 五块原 App 没有的东西。
+                            //
+                            // 用户裁定「删到只剩大环和锁名」。上面「簇一」就是大环与锁身份，
+                            // 簇二整块删掉。要看这些数据可去「钥匙」「成员」各组页。
                         }
                     }
                     .padding(.horizontal, XSpace.gutter)
@@ -861,368 +848,17 @@ struct HomeConsole: View {
         }
     }
 
-    // ─────────────────────────────────────────── ⑤ 三指标
-    // 无障碍字号下，三列横排会挤到每列不足 60pt —— 改为纵向堆叠。
-    // 这不是"降级"，是让内容本身换一种排法，字号不缩。
-    /// 今日三个读数。**一张卡，三段读数**（规范 §7.6 的多段结构）。
-    ///
-    /// 2026-10-23 按参考图改：原来是**裸数字**铺在黑画布上，只用竖线分隔。
-    /// 图 3 里没有任何「裸数字」—— 它的每组读数都在卡里，卡提供边界，
-    /// 竖线只负责卡内的分隔。裸数字在纯黑上读起来像装饰，不像数据。
-    // @ViewBuilder 不能省：下面 if/else 两支返回**不同泛型类型**的 XPanel，
-    // 单一 some View 的不透明返回类型推不出来（CI 报 OpaqueTypeInference）。
-    @ViewBuilder
-    private var metricsRow: some View {
-        let layout = typeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: XSpace.l))
-            : AnyLayout(HStackLayout(spacing: 0))
-        // 六图改造 (2026-10-23): 从「三列裸读数」改成**图 2 的双栏形态** ——
-        // 左边三行彩色数据行（点+值+标签同色），右边一枚细三环。
-        //
-        // 为什么改：图 2 Winding Down 的读数从来不是「三列平铺」——
-        // 它永远是「左侧若干彩色数据行 + 右侧一个环」。
-        // 平铺三列在视觉上是一排等重的点，读不出主次；
-        // 环把三项汇总成一个形状，眼睛先看到"今天整体如何"，再读细项。
-        if typeSize.isAccessibilitySize {
-            XPanel(kind: .group) {
-                layout {
-                    metric(value: String(opensToday), label: "今日开门")
-                    metric(value: String(todayPeople), label: "今日成员")
-                    metric(value: firstOpenText, label: "最早开门")
-                }
-            }
-        } else {
-            XPanel(kind: .group) {
-            HStack(alignment: .center, spacing: XSpace.l) {
-                VStack(alignment: .leading, spacing: 11) {
-                    // 审美对齐 HTML 01-home（2026-10-24）：HTML 的首页有一个 **44px 大数字**
-                    // 作为主读数。App 之前三个 XDataRow 等重，没有主角。
-                    // 功能以 App 为准（数据仍是今日开门/成员/最早），只是把"今日开门"提成主角。
-                    XHeroNumber(text: String(opensToday), color: XPalette.accent, unit: "次开门")
-                    XDataRow(label: "今日成员", value: String(todayPeople), unit: "位",
-                             color: XPalette.ok)
-                    XDataRow(label: "最早开门", value: firstOpenText, color: XPalette.kindOtp)
-                }
-                Spacer(minLength: 4)
-                XTripleThinRing(
-                    size: 92,
-                    values: (tripleOpen, tripleFp, tripleAuto),
-                    centerText: String(opensToday))
-                    .accessibilityHidden(true)
-            }
-        }
-        }
-    }
 
-    /// 统计三段式 (规范 4.3 强制): 标签灰在上 / 值白粗在下。
-    ///
-    /// 旧实现把值放上面、标签放下面 —— 那是仪表盘的做法，不是这个范式的。
-    /// 规范 7.2 的 StatChip 与 7.6 的 StatCard 都规定**标签在上、值在下**，
-    /// 而且标签是灰的、值是白的粗的。"主次反了"是本仓列过的返工项之一。
-    private func metric(value: String, label: String) -> some View {
-        VStack(spacing: 2) {
-            // 标签: 灰、在上
-            Text(label)
-                .xFont(.footnote)
-                .foregroundStyle(XPalette.textSub)
-            // 值: 白、粗、在下
-            Text(value)
-                .xFont(.title2, weight: .semibold, design: .rounded)
-                .foregroundStyle(XPalette.text)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-        }
-        .frame(maxWidth: .infinity)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(label)，\(value)")
-    }
 
-    /// 细三环的三段比例（图 2 形态）—— 开门 / 指纹 / 自动，各自占今日总量的比例。
-    /// 数据不足时返回固定的示意比例，但**不伪造数量**（环只表达比例，不报数）。
-    private var tripleOpen: Double { opensToday == 0 ? 0.02 : 0.62 }
-    private var tripleFp: Double { opensToday == 0 ? 0.02 : 0.28 }
-    private var tripleAuto: Double { opensToday == 0 ? 0.02 : 0.10 }
 
-    private var metricDivider: some View {
-        Rectangle()
-            .fill(XPalette.hairline)
-            .frame(width: 1, height: 34)
-            .accessibilityHidden(true)
-    }
 
-    // ─────────────────────────────────────────── ⑥ 今天
-    /// HTML 01-home 最后一块：**开门历史**（图 1 Health Age History 同形）
-    ///
-    /// 结构（逐项对齐 HTML）：
-    ///   · 24pt/700 标题「开门历史」（在卡片外，是页面级标题）
-    ///   · 150pt 高的面积图：左侧面积填充 + 3 条水平网格线（白 6%）
-    ///   · 右侧两枚标签：「更早」(顶) / 「更近」(底)
-    ///   · 底部月份轴：三枚日期（12pt，灰）
-    ///
-    /// 数据：最近 21 天每天的开门次数（从各锁日志里按天聚合）。
-    /// HTML 01-home 的「本周」卡 —— **第 14 轮读骨架时漏掉了这一张**
-    ///
-    /// 结构（HTML 原文）：
-    ///   卡头「本周 ›」+ 标题「三环都在线」
-    ///   三行彩点读数：12/30 开门（红）/ 5/5 成员（蓝）/ 47% 电量（蓝）
-    ///   右侧 100pt 三环图（三圈同心，各占一档）
-    ///   分隔线后：握手 1,033 ms / 信号 −76 dBm
-    ///
-    /// 它是门厅唯一的"本周整体状况"，与「今日开门分布」互补：
-    /// 前者看长期趋势，后者看当天细节。
-    private var weekCard: some View {
-        let opens = weekOpenCount
-        let members = weekMemberCount
-        let totalMembers = max(1, DB.members().count)
-        let battery = DB.readStatus(mac)?.powerLevel ?? -1
-        // LinkSense 的真实属性名是 lastRssi（Int?，可选）；
-        // 握手耗时没有现成属性 —— 用 0 表示"没测过"，
-        // 不发明 API（第 16 轮 CachedLog.at 的教训）
-        let rssi = LinkSense.shared.lastRssi ?? 0
-        let handshake = 0
-        return XStatCard(
-            headerTitle: "本周",
-            footer: "三环分别是开门次数、参与成员、门锁电量 —— 都在线就是这一周正常。"
-        ) {
-            XStatSection(isFirst: true) {
-                HStack(alignment: .center, spacing: XSpace.l) {
-                    VStack(alignment: .leading, spacing: XSpace.s) {
-                        Text("三环都在线")
-                            // §7.6 卡内标题（ctitle）= title2 19/Bold，不是 title3
-                            .xFont(.title2, weight: .bold)
-                            .foregroundStyle(XPalette.text)
-                        VStack(alignment: .leading, spacing: 8) {
-                            weekRow("12/30 开门", value: "\(opens)/30", unit: " 开门", color: XPalette.danger)
-                            weekRow("", value: "\(members)/\(totalMembers)", unit: " 成员", color: XPalette.accent)
-                            weekRow("", value: battery >= 0 ? "\(battery)%" : "—", unit: " 电量", color: XPalette.accent)
-                        }
-                    }
-                    Spacer(minLength: 0)
-                    // 右侧三环（同心 100pt）
-                    ZStack {
-                        ForEach(0..<3, id: \.self) { ring in
-                            Circle()
-                                .trim(from: 0, to: ringProgress(ring))
-                                .stroke(ringColor(ring), style: StrokeStyle(lineWidth: 6, lineCap: .round))
-                                .frame(width: CGFloat(84 - ring * 22), height: CGFloat(84 - ring * 22))
-                                .rotationEffect(.degrees(-90))
-                        }
-                    }
-                    .frame(width: 100, height: 100)
-                    .accessibilityHidden(true)
-                }
-            }
-            XStatSection {
-                HStack(spacing: XSpace.l) {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("握手").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
-                        Text(handshake > 0 ? "\(handshake) ms" : "—")
-                            .xFont(.footnote, weight: .semibold)
-                            .monospacedDigit()
-                    }
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("信号").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
-                        Text(rssi != 0 ? "\(rssi) dBm" : "—")
-                            .xFont(.footnote, weight: .semibold)
-                            .monospacedDigit()
-                    }
-                    Spacer(minLength: 0)
-                }
-            }
-        }
-    }
 
-    private func weekRow(_ label: String, value: String, unit: String, color: Color) -> some View {
-        HStack(spacing: 8) {
-            Circle().fill(color).frame(width: 8, height: 8)
-            Text(value)
-                // HTML 的 .dv 是 19px/Bold，与卡内标题同档（title2）
-                .xFont(.title2, weight: .bold)
-                .monospacedDigit()
-                .foregroundStyle(XPalette.text)
-            Text(unit)
-                .xFont(.footnote)
-                .foregroundStyle(XPalette.textSub)
-            Spacer(minLength: 0)
-        }
-    }
 
-    private func ringColor(_ i: Int) -> Color {
-        i == 0 ? XPalette.danger : XPalette.accent
-    }
-    private func ringProgress(_ i: Int) -> CGFloat {
-        switch i {
-        case 0: return min(1, CGFloat(weekOpenCount) / 30)
-        case 1: return min(1, CGFloat(weekMemberCount) / CGFloat(max(1, DB.members().count)))
-        default:
-            let b = DB.readStatus(mac)?.powerLevel ?? 0
-            return b >= 0 ? CGFloat(b) / 100 : 0.02
-        }
-    }
 
-    /// 本周开门次数（近 7 天）
-    private var weekOpenCount: Int {
-        let cal = WeekCal.gregorian
-        let today = cal.startOfDay(for: Date())
-        var n = 0
-        for kc in DB.keychains() {
-            for log in DB.readLogs(kc.mac) where StatsKit.openTypes.contains(log.type) {
-                let unix = ZKProtocol.protoSecondsToUnix(log.lockTime)
-                let d = cal.startOfDay(for: Date(timeIntervalSince1970: unix))
-                if let days = cal.dateComponents([.day], from: d, to: today).day, days >= 0, days < 7 { n += 1 }
-            }
-        }
-        return n
-    }
-    /// 本周有开门的成员数
-    private var weekMemberCount: Int {
-        let cal = WeekCal.gregorian
-        let today = cal.startOfDay(for: Date())
-        var ids = Set<String>()
-        for kc in DB.keychains() {
-            for log in DB.readLogs(kc.mac) where StatsKit.openTypes.contains(log.type) {
-                let unix = ZKProtocol.protoSecondsToUnix(log.lockTime)
-                let d = cal.startOfDay(for: Date(timeIntervalSince1970: unix))
-                if let days = cal.dateComponents([.day], from: d, to: today).day, days >= 0, days < 7 {
-                    ids.insert("\(kc.mac)-\(log.idxRaw)")
-                }
-            }
-        }
-        return ids.isEmpty ? DB.members().count : min(ids.count, DB.members().count)
-    }
 
-    private var openHistorySection: some View {
-        let daily = dailyOpenCounts(days: 21)
-        let peak = max(daily.map { $0.count }.max() ?? 0, 1)
-        return VStack(alignment: .leading, spacing: XSpace.m) {
-            Text("开门历史")
-                .xFont(.title2, weight: .bold)
-                .tracking(-0.4)
-                .foregroundStyle(XPalette.text)
-            HStack(alignment: .top, spacing: XSpace.s) {
-                // 面积图（150pt 高）
-                GeometryReader { geo in
-                    let w = geo.size.width
-                    let h = geo.size.height
-                    let step = daily.isEmpty ? w : w / CGFloat(max(1, daily.count - 1))
-                    // 折线点
-                    let pts: [CGPoint] = daily.enumerated().map { i, d in
-                        CGPoint(x: CGFloat(i) * step,
-                                y: h - (h * CGFloat(d.count) / CGFloat(peak)))
-                    }
-                    ZStack(alignment: .bottomLeading) {
-                        // 3 条水平网格线（HTML: 白 6%，顶/中/底）
-                        ForEach(0..<3, id: \.self) { k in
-                            Rectangle()
-                                .fill(XPalette.veil.opacity(0.75))
-                                .frame(height: 1)
-                                .frame(maxHeight: .infinity, alignment: k == 0 ? .top : (k == 1 ? .center : .bottom))
-                        }
-                        // 面积填充
-                        if pts.count > 1 {
-                            Path { p in
-                                p.move(to: CGPoint(x: 0, y: h))
-                                for pt in pts { p.addLine(to: pt) }
-                                p.addLine(to: CGPoint(x: CGFloat(pts.count - 1) * step, y: h))
-                                p.closeSubpath()
-                            }
-                            .fill(XPalette.accent.opacity(0.18))
-                            // 顶部折线
-                            Path { p in
-                                if let f = pts.first {
-                                    p.move(to: f)
-                                    for pt in pts.dropFirst() { p.addLine(to: pt) }
-                                }
-                            }
-                            .stroke(XPalette.accent, style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
-                        }
-                    }
-                }
-                // 面积图必须有确定高度（GeometryReader 不自动撑高）；
-                // 用 minHeight 而不是 height —— 闸门口径：装内容的固定高度在
-                // Dynamic Type 放大时会被裁。这里内容不会变高，但保持同一写法。
-                .frame(minHeight: 150, maxHeight: 150)
-                // 右侧「更早 / 更近」
-                VStack(alignment: .trailing) {
-                    Text("更早").xFont(.small).foregroundStyle(XPalette.textTertiary)
-                    Spacer(minLength: 0)
-                    Text("更近").xFont(.small).foregroundStyle(XPalette.textTertiary)
-                }
-                .frame(minHeight: 150, maxHeight: 150)
-            }
-            // 底部月份轴（三枚日期）
-            HStack(spacing: 0) {
-                ForEach(axisLabels(daily), id: \.self) { label in
-                    Text(label)
-                        .xFont(.caption2)
-                        .foregroundStyle(XPalette.textTertiary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            }
-        }
-        .padding(.top, XSpace.m)
-    }
 
-    /// 最近 N 天每天的开门次数（按天聚合各锁日志）
-    private func dailyOpenCounts(days: Int) -> [(date: Date, count: Int)] {
-        let cal = WeekCal.gregorian
-        let today = cal.startOfDay(for: Date())
-        var buckets: [Date: Int] = [:]
-        for kc in DB.keychains() {
-            // 判据与全仓一致（照 StatsPage / StatsKit 的既有写法）：
-            //   · type 是 Int，用 StatsKit.openTypes 判"开门"
-            //   · 时间是 lockTime(Int64, 协议秒)，必须过 ZKProtocol.protoSecondsToUnix
-            //     —— 直接当 Unix 秒用会差 2000 年（协议秒是 2000-01-01 起算）
-            for log in DB.readLogs(kc.mac) where StatsKit.openTypes.contains(log.type) {
-                let unix = ZKProtocol.protoSecondsToUnix(log.lockTime)
-                let d = cal.startOfDay(for: Date(timeIntervalSince1970: unix))
-                buckets[d, default: 0] += 1
-            }
-        }
-        return (0..<days).reversed().compactMap { back in
-            guard let d = cal.date(byAdding: .day, value: -back, to: today) else { return nil }
-            return (d, buckets[d] ?? 0)
-        }
-    }
 
-    /// 底部轴标签：取首、中、尾三天
-    private func axisLabels(_ daily: [(date: Date, count: Int)]) -> [String] {
-        guard daily.count > 2 else { return [] }
-        let cal = WeekCal.gregorian
-        let picks = [daily.first!.date, daily[daily.count / 2].date, daily.last!.date]
-        return picks.map { d in
-            "\(cal.component(.month, from: d))-\(cal.component(.day, from: d))"
-        }
-    }
 
-    private var todaySection: some View {
-        // 参考图里数据块**是卡**：§7.11 的「标题 ›」在顶 → 主内容 → §7.6 分隔线 → 页脚。
-        //
-        // 2026-10-23：改用 `XStatCard`。这一张此前手写全套节奏
-        //（分隔线补 2 凑 14、页脚 lineSpacing 7 凑 1.6），每一处都要单独算。
-        // 现在节奏归组件管，这里只写「第一段放图，第二段放最早一次」。
-        XStatCard(
-            // 卡头对齐 HTML 01-home 卡2（.ctitle「今日开门分布」）——
-            // "今天"没有说清卡里画的是什么；分布图自己会说话。
-            headerTitle: "今日开门分布",
-            headerAction: { showEvents = true },
-            footer: "今天 \(opensToday) 次开门，其中 \(todayPeople) 位成员参与。柱高是该小时的开门次数。"
-        ) {
-            XStatSection(isFirst: true) {
-                dayChart
-            }
-            XStatSection {
-                VStack(alignment: .leading, spacing: XSpace.xxs) {
-                    Text("最早一次")
-                        .xFont(.caption)
-                        .foregroundStyle(XPalette.textSub)
-                    Text(firstOpenText)
-                        .xFont(.body, weight: .semibold, design: .rounded)
-                        .foregroundStyle(XPalette.text)
-                }
-            }
-        }
-    }
 
     private var dayChart: some View {
         let counts = hourCounts
@@ -1307,93 +943,11 @@ struct HomeConsole: View {
         return XPalette.accent.opacity(0.55)
     }
 
-    // ─────────────────────────────────────────── ⑦ 成员
-    @ViewBuilder
-    /// 今日参与的成员。
-    ///
-    /// 2026-10-23 按参考图改：原来是**裸 sectionLabel + 一排卡片**。
-    /// 图 3 里没有「卡外的小标题」—— 每块内容的标题都在**卡头**（`Sleep ›` / `Fitness ›`）。
-    /// 卡外挂标题会让这一块读起来像「页面的一个分区」，而不是「一张能进去的卡」。
-    ///
-    /// 成员是横向滑动的（人多时不换行），所以用 XStatCard 的卡头 + 卡内横向滚动。
-    private var memberSection: some View {
-        let rows = memberRows
-        return Group {
-            if !rows.isEmpty {
-                XStatCard(headerTitle: "成员", headerAction: { openGroup(.members) }) {
-                    XStatSection(isFirst: true) {
-                        ScrollView(.horizontal) {
-                            HStack(spacing: XSpace.s) { ForEach(rows) { memberChip($0) } }
-                                .padding(.vertical, 1)
-                        }
-                        .scrollIndicators(.hidden)
-                    }
-                }
-            }
-        }
-    }
-
-    private func memberChip(_ r: MemberStat) -> some View {
-        Button {
-            XHaptics.tick.impactOccurred()
-            memberSheetID = r.id
-        } label: {
-            memberChipBody(r)
-                // 成员胶囊是按一下就能进详情的入口 —— 视觉高度由卡内容决定，
-                // 但整枚都必须落在 44 的命中区里（规范验收 C8）。
-                .frame(minHeight: XHit.min)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(r.today > 0
-            ? "\(r.name)，今天 \(r.today) 次，轻点查看他的钥匙"
-            : "\(r.name)，近 30 天 \(r.opens30) 次，轻点查看他的钥匙")
-    }
-
-    private func memberChipBody(_ r: MemberStat) -> some View {
-        HStack(spacing: XSpace.s) {
-            Text(String(r.name.prefix(1)))
-                .xFont(.subheadline, weight: .semibold)
-                .foregroundStyle(XPalette.text)
-                .frame(width: 28, height: 28)
-                .background(XPalette.surfaceAlt, in: Circle())
-            VStack(alignment: .leading, spacing: 1) {
-                Text(r.name)
-                    .xFont(.footnote, weight: .medium)
-                    .foregroundStyle(XPalette.text)
-                    .lineLimit(1)
-                Text(r.today > 0 ? "今天 \(r.today) 次" : "近 30 天 \(r.opens30) 次")
-                    .xFont(.caption2)
-                    .foregroundStyle(XPalette.textTertiary)
-            }
-        }
-        .padding(.leading, 5)
-        .padding(.trailing, 12)
-        .padding(.vertical, 5)
-        .xPlate(XPalette.surface, .capsule)
-        // 无障碍标签由外层 Button 统一给出（含"轻点查看"的动作提示）——
-        // 这里再挂一次会和它重复，VoiceOver 会念两遍。
-        .accessibilityHidden(true)
-    }
-
-    /// 卡片入场延迟 (规范 11.1: 逐卡延迟 40ms, **最多 6 张**)。
-    ///
-    /// 为什么封顶 6 张: 一页十几张卡时, 第 10 张要等 400ms 才出现 ——
-    /// 那时用户已经在读第 3 张了, 后面几张的入场被完全错过, 白付出重排代价。
-    /// 而且这个延迟是**纯视觉**的, 不该拖住可交互性。
-    private func stagger(_ index: Int) -> Double {
-        Double(min(max(index, 0), 5)) * XMotion.cardStagger
-    }
 
 
-    private func sectionLabel(_ s: String) -> some View {
-        Text(s)
-            .xFont(.caption2, weight: .semibold)
-            .foregroundStyle(XPalette.textTertiary)
-            .textCase(.uppercase)
-            .tracking(0.8)
-            .frame(maxWidth: .infinity, alignment: .leading)
-    }
+
+
+
 
     // ─────────────────────────────────────────── 交互
     private func beginPress() {
@@ -1661,10 +1215,6 @@ struct HomeConsole: View {
         .map { $0 }
     }
 
-    /// 成员活跃 —— 协议日志没有凭证身份字段（CAPABILITY §3），
-    /// 所以归属只能到"约"级。这里用 MemberHub 的 30 天统计，
-    /// 并在无障碍标签里如实说"近 30 天"，不假装是今日。
-    private var memberRows: [MemberStat] { memberStats }
 
     private var firstOpenText: String {
         let c = hourCounts

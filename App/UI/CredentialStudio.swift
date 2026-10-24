@@ -511,17 +511,6 @@ struct TempCodeStudio: View {
             VStack(alignment: .leading, spacing: XSpace.section) {
                 // 容量提示 —— 临时码与常驻密码**共用同一份库存**（协议 0x25 pwdStock），
                 // 原来这页完全不显示还剩几个坑位，用户会填完表单才被锁端拒绝。
-                XPanel(kind: .group) {
-                    VStack(alignment: .leading, spacing: XSpace.m) {
-                        Text("场景预设")
-                            .xFont(.subheadline)
-                            .foregroundStyle(XPalette.textTertiary)
-                        Text("选一个用途，自动填好名称与时长 —— 也可以自己改。")
-                            .xFont(.caption2)
-                            .foregroundStyle(XPalette.textTertiary)
-                    }
-                }
-
                 if let snap = DB.readStatus(mac), let cap = snap.pwdCap, cap > 0 {
                     let left = snap.pwdStock
                     let used = max(0, cap - left)
@@ -540,18 +529,7 @@ struct TempCodeStudio: View {
                     .xCallout(left == 0 ? XPalette.warn : XPalette.hairline, .control, wash: left == 0 ? 0.10 : 0.06)
                 }
 
-                // 325 五场景预设
-                VStack(alignment: .leading, spacing: XSpace.xs) {
-                    Text("场景预设 (选中即套默认时长与备注)")
-                        .xFont(.footnote, weight: .semibold)
-                        .foregroundStyle(XPalette.text)
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: XSpace.xs)], spacing: XSpace.xs) {
-                        ForEach(StudioTools.scenes) { s in
-                            sceneChip(s)
-                        }
-                    }
-                }
-                .card()
+                // 2026-10-24 坚决精简：删「场景预设」——原 App 的 OTP 页只有生成/显示/复制/倒计时。
 
                 // 码值 (301 剪贴板即建 + 303 回显 + 173 生成 + 522 扫号 + 516 数字键盘)
                 VStack(alignment: .leading, spacing: XSpace.xs) {
@@ -757,37 +735,6 @@ struct TempCodeStudio: View {
         .onAppear { checkClipboard() }
     }
 
-    private func sceneChip(_ s: StudioTools.SceneDef) -> some View {
-        Button {
-            scene = s.key
-            from = Date()
-            to = Date().addingTimeInterval(TimeInterval(s.hours * 3600))
-            if note.isEmpty { note = s.note }
-            XHaptics.tick.impactOccurred()
-        } label: {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(s.name)
-                    .xFont(.footnote, weight: .semibold)
-                    .lineLimit(1)
-                Text(s.hint)
-                    .xFont(.caption2)
-                    .foregroundStyle(XPalette.textSub)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, XSpace.s)
-            .padding(.vertical, XSpace.xs + 2)
-            .foregroundStyle(scene == s.key ? XPalette.onAccent : XPalette.text)
-            .background(scene == s.key ? XPalette.accent : XPalette.surfaceAlt,
-                        in: RoundedRectangle(cornerRadius: XRadius.control, style: .continuous))
-            .frame(minHeight: XHit.min)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("场景 \(s.name): \(s.hint)")   // 325 场景
-        .accessibilityAddTraits(scene == s.key ? [.isSelected] : [])
-    }
     private func quickPill(_ t: String, _ act: @escaping () -> Void) -> some View {
         Button {
             act()

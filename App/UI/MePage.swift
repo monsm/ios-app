@@ -454,10 +454,6 @@ struct MePage: View {
         return "\(days) 天前"
     }
 
-    private var messageBadge: String? {
-        let n = RecordSearch.unhandledAlarmCount(macs: DB.keychains().map { $0.mac })
-        return n > 0 ? "\(n) 条" : nil
-    }
 
     // ═══════════════════════════════════════════════════════
     // MARK: - ④ 关于与偏好

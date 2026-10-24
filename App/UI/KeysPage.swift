@@ -291,14 +291,6 @@ struct KeysPage: View {
         }
     }
 
-    private func countFor(_ s: Seg) -> Int {
-        switch s {
-        case .all: return rows.count
-        case .pwd: return pwdCount
-        case .fp: return fps.count
-        case .temp: return tempCount
-        }
-    }
 
     // ── 凭证卡 ──
     @ViewBuilder
@@ -329,26 +321,6 @@ struct KeysPage: View {
         }
     }
 
-    /// 删除一份凭证 —— **本机台账与门锁两端一起撤**。
-    ///
-    /// ⚠ 这里原来调的是 DB.delPwd / DB.delFp，那**只删本机台账**，
-    /// 锁上那条密码/指纹仍然有效。对门锁来说这是最危险的假安全感：
-    /// 用户以为权限收回了，实际上拿着那张卡依然能开门。
-    ///
-    /// 正确路径是 CredentialOrg.batchDisable：它先删本机台账，
-    /// 再把 del_pwd / del_fp 入队，等连上锁时由 LinkSenseKit 下发。
-    /// 断网也不会丢 —— 队列会等下一次连接。
-    /// 给指纹改名。锁端无名称字段，这个名字只存在本机台账。
-    private func renameFingerprint(_ row: KeyRow) {
-        let current = DB.ledger(mac).fps.first { $0.batch == row.key }?.name ?? ""
-        promptText("改个名字", "只存本机 —— 门锁里没有名称字段，你在这里写的名字不会传给任何设备。",
-                   placeholder: "例如：爸爸的右手食指", initial: current) { text in
-            DB.renameFp(mac, row.key, text)
-            XHaptics.success()
-            app.showToast(text.isEmpty ? "名字已清空" : "已改名为「\(text)」")
-            refresh()
-        }
-    }
 
     /// 改一条凭证的备注。密码按 alias 定位、指纹按 batch 定位。
     private func editNote(_ row: KeyRow) {
@@ -531,7 +503,6 @@ struct KeysPage: View {
 
 
 
-    private var pwdCount: Int { pwds.filter { !$0.temp }.count }
     private var tempCount: Int { pwds.filter { $0.temp }.count }
 
     /// 副标题 + 归属合成一行

@@ -40,9 +40,6 @@ struct AddFingerPage: View {
 
     private let total = 8
 
-    private var progress: CGFloat {
-        CGFloat(min(presses.count, total)) / CGFloat(total)
-    }
 
     var body: some View {
         ZStack {
