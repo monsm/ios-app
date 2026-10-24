@@ -133,6 +133,7 @@ struct AddKeyPage: View {
     }
 
     private var passwordStage: some View {
+        XPanel(kind: .group) {
         VStack(spacing: XSpace.l) {
             Text("密码")
                 .xFont(.subheadline)
@@ -241,6 +242,7 @@ struct AddKeyPage: View {
         .contentShape(Rectangle())
         .animation(XMotion.quick, value: filled)
         .accessibilityHidden(true)
+        }
     }
 
     private var pwdHint: String {
