@@ -51,8 +51,18 @@ object LockStore {
         ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE).edit().putBoolean(KEY_PROX, on).apply()
     }
 
+    /**
+     * 解绑 = 把这把锁的**全部**本机状态一起清掉。
+     *
+     * 旧实现只 remove(KEY), 而「靠近自动开锁」是另一个键 —— 内存里把 proximity 置 false 不等于落盘:
+     * 下次扫一把新锁, loadProximity 读回 true ⇒ 新锁一绑上就默认自动开。这是 03 X-03 的真实后果。
+     * 两个键必须同一次 commit 清掉, 否则又会出现"清了一个、留了一个"。
+     */
     fun clear(ctx: Context) {
-        ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE).edit().remove(KEY).apply()
+        ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE).edit()
+            .remove(KEY)
+            .remove(KEY_PROX)
+            .apply()
     }
 
     /**
