@@ -130,7 +130,28 @@ struct ManagerFace: View {
     private var tabIndex: Binding<ManagerTab> {
         Binding(
             get: { ManagerTab.from(index: app.tabSelection) ?? .home },
-            set: { app.tabSelection = $0.index })
+            set: { newTab in
+                // ═══ 2026-10-24 修「访客通道开启后 Tab 点不中」的核心一处 ═══
+                //
+                // 原生 TabView 的点击**不经过 requestRoute** —— 它直接写这个 Binding。
+                // 而访客闸只装在 requestRoute 里（那是编程式跳转的漏斗），
+                // 于是"从底部导航点进去"这条最常用的路径**完全绕过了访客闸**。
+                //
+                // 反过来说，之前观察到"某些 Tab 点不中"也不是闸挡的 ——
+                // 是这个 Binding 的 set 写入后，revokeSessionGrants 又把 tabSelection
+                // 拽回 homeTab，两边打架，界面表现成"点了没反应"。
+                //
+                // 现在的口径：点进去先判访客闸。受限 → 记落点并弹口令复核（不切）；
+                // 通过后由 commitUnlock(reauth:) 切过去。不受限 → 直接切。
+                let target = newTab.index
+                if app.guestAreaLocked, AppState.guestBlockedTabs.contains(target) {
+                    app.guestGateTarget = target
+                    app.showGuestGate = true
+                    app.needGuestGatePrompt = true
+                    return
+                }
+                app.tabSelection = target
+            })
     }
 
     /// 一个管理组的页面。原生 TabView 下每组有自己的 NavigationStack，

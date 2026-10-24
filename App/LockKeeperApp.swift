@@ -55,6 +55,17 @@ final class AppState: ObservableObject {
     /// 377: 复核完成后要落到的 Tab (nil = 只放开受限区, 不指定落点)
     @Published var guestGateTarget: Int?
     /// 377: 受限区的复核页开关 (承载体就是既有 AppLockView, 不新造第二个解锁面)
+    /// SwiftUI 侧要弹复核页时置 true；RootView 的 onChange 立刻消费并复位。
+    ///
+    /// 为什么需要这个方法之外的第二个入口：原生 TabView 的点击发生在**视图层**，
+    /// 那里拿不到 AppState 的 @MainActor 方法上下文去 present UIKit 弹窗；
+    /// 只能置一个位，交给挂在根视图上的 onChange 去 present。
+    @Published var needGuestGatePrompt = false
+
+    /// ⚠ 2026-10-24: 这个标志**不再驱动任何界面**（曾计划用它弹复核页但从未实现）。
+    /// 复核现在由 presentGuestGate() 直接 present UIAlertController。
+    /// 保留它是因为 commitUnlock / revokeSessionGrants 会清零，删字段会牵动一堆调用点；
+    /// 若后续要改成 SwiftUI sheet，这是现成的挂点。
     @Published var showGuestGate = false
     /// 383: 当场验过应用锁口令才发得出的券; 真正的拦点在 DestroyKit.destroyAll (AuditChain.swift)
     @Published var sudoTicket: SudoTicket?
@@ -147,7 +158,48 @@ static let guestBlockedTabs: Set<Int> = Route.guestBlockedTabs
             tabSelection = r.tabIndex; return
         }
         guestGateTarget = r.tabIndex
-        showGuestGate = true
+        presentGuestGate()
+    }
+
+    /// ═══ 2026-10-24 修「访客通道开启后 Tab 点不中」═══
+    ///
+    /// 原状：这里（及 openGuestGate / requestGroupGate）只写 `showGuestGate = true` 就返回，
+    /// 而**全仓没有任何视图读取 showGuestGate** —— 6 处引用全是写入或清零。
+    /// 后果：访客通道一开，点受限 Tab 时状态被置位、请求被拦下，然后**什么都不发生**。
+    /// 用户看到的就是「这个 Tab 点不中」。
+    ///
+    /// 这与 Alerts.swift 里 promptPasscode 头注记录的是**同一个 bug 模式**
+    ///（「这条闸原来只写了 showGate = true 就 return —— 而没有任何界面消费它」）。
+    /// 那次改成直接 present 一个 UIAlertController，这次用同一个已存在的入口。
+    ///
+    /// 落点：guestGateTarget 已经记下了用户想去哪；验证通过后 commitUnlock(reauth: true)
+    /// 会把 tabSelection 设过去。
+    /// 视图层入口（RootView 的 onChange 调这个）。
+    /// 与 presentGuestGate 是同一个实现，只是把 @MainActor 边界放在这里。
+    @MainActor
+    func presentGuestGateFromView() { presentGuestGate() }
+
+    @MainActor
+    func presentGuestGate() {
+        // 口令没设过就没得验 —— 直接放开，否则访客通道开启后受限区永久锁死。
+        guard DB.hasPasscode() else {
+            guestAreaUnlocked = true
+            if let t = guestGateTarget { tabSelection = t }
+            guestGateTarget = nil
+            return
+        }
+        promptPasscode("访客通道",
+                       "进入钥匙、成员与系统需要先验证应用锁口令。",
+                       onConfirm: { [weak self] pw in
+                           guard let self else { return }
+                           if DB.verifyPasscode(pw) {
+                               self.commitUnlock(reauth: true)
+                           } else {
+                               self.guestGateTarget = nil
+                               self.showToast("口令不对，未进入")
+                           }
+                       },
+                       onCancel: { [weak self] in self?.guestGateTarget = nil })
     }
     /// 兼容适配器：2026-10-16 起全仓**代码里**已无 `requestTab(<字面量>)`（只剩注释引述），
     /// 仍在用的只有从深链序号 / List 选中集派生的动态形式；两者都汇到同一个漏斗。
@@ -159,7 +211,7 @@ static let guestBlockedTabs: Set<Int> = Route.guestBlockedTabs
     /// 377: 底部那颗"钥匙与设置"胶囊 —— 只放开受限区, 不指定落点
     func openGuestGate() {
         guestGateTarget = nil
-        showGuestGate = true
+        presentGuestGate()
     }
 
     // ---------- 377 访客通道 · 管理组这一支 ----------
@@ -181,7 +233,7 @@ static let guestBlockedTabs: Set<Int> = Route.guestBlockedTabs
         guard guestAreaLocked, g.guestBlocked else { return false }
         guestGateTarget = nil
         guestGateGroup = g
-        showGuestGate = true
+        presentGuestGate()
         return true
     }
 
@@ -236,7 +288,18 @@ static let guestBlockedTabs: Set<Int> = Route.guestBlockedTabs
         // 受限 Tab → 回门厅。判据来自 ManagerGroup.guestBlocked（新五 Tab 口径），
         // 不用 Route.guestBlockedTabs —— 那是旧四 Tab 的编号 {1,3}，
         // 在新编号下 1=钥匙 3=成员，漏掉了 4=系统。
-        if Self.guestBlockedTabNums.contains(tabSelection) { tabSelection = Self.homeTab }
+        // ═══ 2026-10-24 只在**确实站在受限页**时才回退 ═══
+        //
+        // 这一行原来无条件执行，而 revokeSessionGrants 的调用点多达十几处
+        //（锁屏、落锁、拨访客开关、改安全设置……）。于是任何一处触发都会把用户
+        // 从当前页**拽回门厅** —— 表现就是"点别的页进不去、老弹回门厅"。
+        //
+        // 真正需要的语义只有一句：**别把一个已经收起来的页面留在前台**。
+        // 所以判据必须同时满足"当前页受限" + "访客区确实锁着"；
+        // 访客区已放开（验过口令）时不该回退，否则用户刚验完又被踢走。
+        if guestAreaLocked, Self.guestBlockedTabNums.contains(tabSelection) {
+            tabSelection = Self.homeTab
+        }
     }
     /// 377: 应用锁通道验过之后的落地。常规门禁置 appUnlocked; 受限区复核只放开 Tab 并跳到用户要的那页。
     /// 两条都从这一个出口走, 398 会话痕迹与 391 胁迫打标才是同一套口径, 而不是"另一套解锁的边角料"。
@@ -1266,6 +1329,14 @@ struct RootView: View {
         .onChange(of: app.unlockState) { old, new in
             guard !app.decoyMode, app.tabSelection != AppState.deviceTab else { return }
             if (old == .connecting || old == .opening), new == .success { handshakeDoneAway = true }
+        }
+        // ═══ 2026-10-24 访客复核的视图侧触发 ═══
+        // 原生 TabView 的点击在视图层，那里不能直接 present UIKit 弹窗 ——
+        // 置位后由这里消费。这是"访客通道开着时点 Tab 没反应"的第二半修复。
+        .onChange(of: app.needGuestGatePrompt) { _, need in
+            guard need else { return }
+            app.needGuestGatePrompt = false
+            app.presentGuestGateFromView()
         }
         .sensoryFeedback(.selection, trigger: app.tabSelection)   // Tab 切换的轻触感
         // 规范 §10：图标**渲染方式**是 `.hierarchical`，双色用 `.palette`。
