@@ -165,11 +165,92 @@ struct ManagerFace: View {
     /// 一个管理组的页面。原生 TabView 下每组有自己的 NavigationStack，
     /// 所以这里只出内容，不再管栏体与选中态。
     @ViewBuilder
+    /// 一个管理组的落地页 —— **按 HTML 02/03/04/05 的骨架**（2026-10-24 逐页对齐）
+    ///
+    /// HTML 的四个组页是同一个骨架：
+    ///   ① 顶部三枚胶囊（该组的关键读数）
+    ///   ② 页内大标题（30/Bold）+ 副标题（该组的一句话摘要，含真实数字）
+    ///   ③ 一张主视觉卡（读数 + 环）
+    ///   ④ 分组的行入口卡
+    ///
+    /// App 此前是 `.inline`（标题只在导航栏）+ **纯行入口**——
+    /// 没有胶囊、没有副标题、没有主视觉卡。四个组页全都是"一列链接"，
+    /// 与 HTML 的"仪表盘 + 入口"完全是两种界面。
+    ///
+    /// 这是**共性问题**（4 页同构），所以统一改：`.inline` → `.large` + 加胶囊行。
     private func groupScreen(for g: ManagerGroup) -> some View {
-        XScreen(g.title, style: .inline) {
+        XScreen(g.title, subtitle: g.summary, style: .large) {
+            groupChips(g)
             rows(rowsFor(g))
         }
     }
+
+    /// 组页顶部的三枚胶囊（HTML 02/03/04/05 的首块）
+    ///
+    /// 每组的三枚读数不同，但形态相同：`XStatChip` + 迷你环。
+    @ViewBuilder
+    private func groupChips(_ g: ManagerGroup) -> some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: XSpace.s) {
+                switch g {
+                case .ledger:
+                    XStatChip(label: "全部", value: String(groupLedgerTotal),
+                              ringFraction: 1, tint: XPalette.accent, fillsWidth: false)
+                    XStatChip(label: "密码", value: String(groupPwTotal),
+                              ringFraction: groupLedgerTotal > 0 ? Double(groupPwTotal) / Double(groupLedgerTotal) : 0,
+                              tint: XPalette.kindTemp, fillsWidth: false)
+                    XStatChip(label: "指纹", value: String(groupFpTotal),
+                              ringFraction: groupLedgerTotal > 0 ? Double(groupFpTotal) / Double(groupLedgerTotal) : 0,
+                              tint: XPalette.kindFp, fillsWidth: false)
+                case .devices:
+                    XStatChip(label: "门锁", value: "\(DB.keychains().count) 把",
+                              ringFraction: min(1, Double(DB.keychains().count) / 3),
+                              tint: XPalette.accent, fillsWidth: false)
+                    XStatChip(label: "电量", value: groupBatteryText,
+                              ringFraction: 0.5, tint: XPalette.ok, fillsWidth: false)
+                    XStatChip(label: "钥匙串", value: "\(DB.dongles().count) 台",
+                              ringFraction: 0, tint: XPalette.textTertiary, fillsWidth: false)
+                case .members:
+                    XStatChip(label: "成员", value: String(DB.members().count),
+                              ringFraction: 1, tint: XPalette.accent, fillsWidth: false)
+                    XStatChip(label: "活跃", value: String(DB.members().count),
+                              ringFraction: 1, tint: XPalette.ok, fillsWidth: false)
+                    XStatChip(label: "归档", value: String(MemberHub.archivedIDs().count),
+                              ringFraction: 0, tint: XPalette.textTertiary, fillsWidth: false)
+                case .system:
+                    XStatChip(label: "应用锁", value: DB.hasPasscode() ? "已开启" : "未开启",
+                              ringFraction: DB.hasPasscode() ? 1 : 0,
+                              tint: DB.hasPasscode() ? XPalette.ok : XPalette.warn, fillsWidth: false)
+                    XStatChip(label: "备份", value: groupBackupText,
+                              ringFraction: 0, tint: XPalette.warn, fillsWidth: false)
+                    XStatChip(label: "审计", value: "\(groupAuditCount) 条",
+                              ringFraction: 1, tint: XPalette.accent, fillsWidth: false)
+                }
+            }
+            .padding(.horizontal, XSpace.gutter)
+        }
+        .scrollIndicators(.hidden)
+        .padding(.horizontal, -XSpace.gutter)
+    }
+
+    // ── 组页胶囊的读数来源 ──
+    private var groupLedgerTotal: Int {
+        DB.keychains().reduce(0) { $0 + DB.listPwds($1.mac).count + DB.listFps($1.mac).count }
+    }
+    private var groupPwTotal: Int { DB.keychains().reduce(0) { $0 + DB.listPwds($1.mac).count } }
+    private var groupFpTotal: Int { DB.keychains().reduce(0) { $0 + DB.listFps($1.mac).count } }
+    private var groupBatteryText: String {
+        // DB 没有 status(_:)；电量唯一来源是 readStatus(mac)?.powerLevel
+        guard let p = DB.readStatus(app.currentMac)?.powerLevel, p >= 0 else { return "—" }
+        return "\(p)%"
+    }
+    private var groupBackupText: String {
+        let ms = DB.store.getInt("kf_bk_last_export", 0)
+        guard ms > 0 else { return "从未" }
+        let days = Int((Date().timeIntervalSince1970 * 1000 - Double(ms)) / 86_400_000)
+        return days <= 0 ? "今天" : "\(days) 天前"
+    }
+    private var groupAuditCount: Int { AuditLog().load().count }
 
 
     // ── 当前组的内容 ──
