@@ -179,6 +179,10 @@ struct ManagerFace: View {
                 (.export, "导出中心", "PDF / CSV / 分享", "square.and.arrow.up"),
                 (.appearance, "外观工作室", "强调色 / 密度 / 周起始", "paintpalette"),
                 (.me, "本机设置", "应用锁 / 备份 / 关于", "person.crop.circle"),
+                // ManagerRoute.diagnostics 之前**没有任何入口行**（死用例）：
+                // routeDestination 里有它的落点，但 rowsFor 三个组都没列它，
+                // 于是诊断页只能从「本机设置」里绕进去，路由表里那条永远走不到。
+                (.diagnostics, "诊断与自检", "数据健康 / 稳定性 / 蓝牙", "stethoscope"),
             ]
         }
     }
