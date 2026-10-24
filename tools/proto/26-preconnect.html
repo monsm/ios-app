@@ -1,0 +1,87 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<title>连接与预握手</title><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="pages.css"></head><body>
+<div class="phone">
+<div class="statusbar">
+  <span class="sb-time" data-real-time>9:41</span>
+  <span class="sb-right">
+    <svg width="17" height="11" viewBox="0 0 17 11" fill="#FFF"><rect x="0" y="7.5" width="3" height="3.5" rx="1"/><rect x="4.5" y="5.5" width="3" height="5.5" rx="1"/><rect x="9" y="3" width="3" height="8" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+    <svg width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="#FFF" stroke-width="1.6" stroke-linecap="round"><path d="M1 3.4a10.5 10.5 0 0 1 14 0"/><path d="M3.6 6.2a6.6 6.6 0 0 1 8.8 0"/><path d="M6.2 8.9a2.9 2.9 0 0 1 3.6 0"/><circle cx="8" cy="10.2" r=".7" fill="#FFF" stroke="none"/></svg>
+    <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x=".5" y=".5" width="21" height="11" rx="3.2" stroke="#FFF" stroke-opacity=".4"/><rect x="2" y="2" width="15" height="8" rx="2" fill="#FFF"/><path d="M23 4.2v3.6a2 2 0 0 0 0-3.6z" fill="#FFF" fill-opacity=".5"/></svg>
+  </span>
+</div><div class="navbar">
+  <a class="back" href="03-devices.html">‹</a><span class="nt">连接与预握手</span><span class="nr"></span></div><div class="scroll"><div class="page hasnav">
+
+  <div class="h1" style="margin-top:8px">连接与预握手</div>
+  <div class="sub">信号门槛 · 预热点开就有</div>
+
+  <!-- 图5 MetricCard：当前信号 -->
+  <div class="card" style="margin-top:12px">
+    <div class="cardlink">当前信号<span class="ch">↻</span></div>
+    <div style="display:flex;align-items:center;gap:18px;margin-top:6px">
+      <div style="flex:1">
+        <div style="font-size:44px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1">−76<small style="font-size:16px;font-weight:400;color:#8D8D93;margin-left:4px">dBm</small></div>
+        <div class="clabel" style="margin-top:10px">低于门槛 −70 dBm — 不会自动预热</div>
+      </div>
+      <div style="position:relative;width:88px;height:88px;flex:0 0 auto">
+        <svg width="88" height="88" viewBox="0 0 88 88">
+          <circle cx="44" cy="44" r="36.08" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="10.12"/>
+          <circle cx="44" cy="44" r="36.08" fill="none" stroke="#FF9F0A" stroke-width="10.12" stroke-linecap="round" stroke-dasharray="90 226.7" transform="rotate(-90 44 44)"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+          <div style="font-size:23px;font-weight:700">忽</div>
+        </div>
+      </div>
+    </div>
+    <div class="sep"></div>
+    <div class="footer">信号强度来自最近的 BLE 广播。走近门锁后刷新可看到变化。</div>
+  </div>
+
+  <!-- 预握手偏好 -->
+  <div class="card" style="margin-top:24px">
+    <div class="cardlink">自动预握手<span class="ch">›</span></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px">
+      <div>
+        <div style="font-size:16px">进页 / 回前台自动预热连接</div>
+        <div style="font-size:12px;color:var(--text-sub);margin-top:3px">省电开关：关掉后每次都要等握手</div>
+      </div>
+      <div class="toggle on"><i></i></div>
+    </div>
+    <div class="sep"></div>
+    <div class="drow"><span class="dv">手动连接模式</span><span class="du" style="margin-left:auto">自动</span></div>
+    <div class="sep"></div>
+    <div class="drow"><span class="dv" style="color:#FF9F0A">标准 (≥ −70) ⌃</span></div>
+    <div class="footer">RSSI 达标才预热，低信号不浪费电量。只影响自动预握手的启动门槛；手动点圆盘、靠近自动开锁（AUTOOPEN）的判定不受这一档约束。</div>
+  </div>
+
+  <!-- 连接统计 -->
+  <div class="card" style="margin-top:24px">
+    <div class="cardlink">连接统计<span class="ch">›</span></div>
+    <div style="display:flex;align-items:center;gap:18px;margin-top:6px">
+      <div style="flex:1">
+        <div style="font-size:44px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1">0<small style="font-size:16px;font-weight:400;color:#8D8D93;margin-left:4px">%</small></div>
+        <div class="clabel" style="margin-top:10px">连接成功率 · 28 次</div>
+      </div>
+      <div style="position:relative;width:88px;height:88px;flex:0 0 auto">
+        <svg width="88" height="88" viewBox="0 0 88 88">
+          <circle cx="44" cy="44" r="36.08" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="10.12"/>
+          <circle cx="44" cy="44" r="36.08" fill="none" stroke="#FF453A" stroke-width="10.12" stroke-linecap="round" stroke-dasharray="0.5 226.7" transform="rotate(-90 44 44)"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+          <div style="font-size:23px;font-weight:700">0</div>
+        </div>
+      </div>
+    </div>
+    <div class="sep"></div>
+    <div class="drow"><span class="dv">高成功率时段</span><span class="du" style="margin-left:auto">统计中 (28/30)</span></div>
+    <div class="drow"><span class="dv">占用类错误</span><span class="du" style="margin-left:auto">0 次</span></div>
+    <div class="footer">成功率需 7 天握手数据积累 —— 每次连接结果都记在本地，攒够才给结论。</div>
+  </div>
+
+</div></div>
+<div class="tabbar">
+<a class="tab" href="01-home.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg><span>门厅</span></a>
+<a class="tab" href="02-keys.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="12" r="3.5"/><path d="M11 12h9"/><path d="M17 12v3"/><path d="M20 12v2"/></svg><span>钥匙</span></a>
+<a class="tab on" href="03-devices.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10.5 5.5h3"/></svg><span>设备</span></a>
+<a class="tab" href="04-members.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><circle cx="17" cy="9.5" r="2.4"/><path d="M16 14.2c2.4.2 4.5 1.9 4.5 4.3"/></svg><span>成员</span></a>
+<a class="tab" href="05-system.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.65 8.6a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.56 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg><span>系统</span></a>
+</div></div><script src="icons-render.js"></script><script src="interact.js"></script></body></html>
