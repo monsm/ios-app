@@ -146,9 +146,22 @@ func quickDestination(_ id: String) -> some View {
     case "otp":      SafemodeIntroView(mode: "otp")
     case "syncTime": SyncTimeView()
     case "addFp":    NavigationStack { AddFingerPage() }
-    case "studio":   StudioPage(embedded: true)
-    case "backup":   BackupView(embedded: true)
-    case "alarm":    AlarmCenterView(embedded: true)
+    // ═══ 2026-10-24 功能点归位修正 ═══
+    //
+    // 这三行原来指向 **2026-10-21 之前的老页面**：
+    //   StudioPage     → 旧「钥匙工坊」（新页是 KeysPage）
+    //   BackupView     → 旧「备份」（新页是 BackupPage，注释写明"全新重写"）
+    //   AlarmCenterView→ 旧「告警中心」（新页是 AlarmsPage，同上）
+    //
+    // 后果：用户从设备页快捷格点「钥匙工坊 / 备份 / 告警」，
+    // 进到的是**已经被替代的旧界面** —— 两套页面并存，旧的那套还在被入口引用。
+    // 这是"页面被合理归位"最典型的反例：同一个功能点有两个实现，入口指向报废的那个。
+    //
+    // 三个旧文件零其他引用（全仓只有这里和它们的定义行），因此这条改完之后
+    // 它们是**真正的死代码**，已同步删除（见同批提交）。
+    case "studio":   KeysPage()
+    case "backup":   BackupPage()
+    case "alarm":    AlarmsPage()
     case "firmware": FirmwarePage()
     case "care":     MaintenanceView()
     case "again":    Text("「再开一次」在设备页长按编辑或直接点按, 不需要新页面")   // 921 再开一次

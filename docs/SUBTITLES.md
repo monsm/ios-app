@@ -10,12 +10,10 @@
 | 保养历史 | 每次保养都记在这里，不做云同步 | CareViews |
 | 备份工作室 | 数据只存在这台 iPhone | BackupStudio |
 | 备份与恢复 | 数据只在这台 iPhone · 全程离线加密 | BackupPage |
-| 备份与云盘 | 本机备份 · 云盘账号只存这一台 | BackupView |
 | 本机保护 | 现在安全吗 · 有没有事 · 有哪些功能 | SecurityPage |
 | 本机设置 | 这台手机上的保护与数据 | MePage |
 | 成员 | 谁能开门 · 各自的授权来源 | MembersPage |
 | 导出与分享 | 生成过程纯本地，不经过任何网络 | ExportCenter |
-| 导入 otpauth | 从验证器 App 搬到本机台账 | CredentialStudio |
 | 动态 | 这把锁今天发生了什么 | FeedPage |
 | 防窥与遮蔽 | 口令与码值在本机怎么藏 | SecurityCenterView |
 | 分享给安卓 | 这把锁的开锁二维码 | ShareToAndroidView |
@@ -38,7 +36,6 @@
 | 外观工作室 | 正文始终是正文的颜色，不会因此变得看不清 | AppearancePage |
 | 维护与保养 | 机械件也该有保养记录 | CarePage |
 | 销毁与应急 | 不可逆操作 · 需要二次确认 | SecurityCenterView |
-| 钥匙工坊 | 密码 / 临时码 / 指纹 / OTP | StudioPage |
 | 钥匙管理 | **动态**（项数与分类计数，格式见 KeysPage.subline） | KeysPage |
 | 应用锁 | 打开 App 前先验一次口令 | AppLockSetupView |
 | 这台锁 | 这把锁的身份与实时状态 | DevicePage |
@@ -46,7 +43,6 @@
 | 智能网关 | 把门锁接到家里网络 | GatewayPage |
 | 重复合并 | 选一位作为主档案，另一位并入 | MemberCenterView |
 | App 图标 | 轻点任意一款立即生效 | IconPicker |
-| OTP 与口令 | 锁端 ZOTP · 独立 TOTP · 静态备份码 | CredentialStudio |
 
 ---
 

@@ -237,16 +237,11 @@ struct MePage: View {
 
     private var protectionSection: some View {
         XPanel {
-            NavigationLink { SecurityPage().environmentObject(app) } label: {
-                XRow(
-                    systemImage: "lock.shield",
-                    title: "本机数据保护",
-                    subtitle: "应用锁 / 审计 / 销毁",
-                    value: DB.store.getBool("kf_applock") ? "已开启" : "未开启",
-                    tone: DB.store.getBool("kf_applock") ? .ok : .warn,
-                    showsChevron: true)
-            }
-            XHairline(inset: XSpace.card + 28 + XSpace.m)
+            // ═══ 2026-10-24 去重 ═══
+            // 这里原来有一行「本机数据保护 → SecurityPage」，与上方 statusSummary 的
+            // 「应用锁」摘要瓦片落同一个页面；底部导航「系统」组的 PrivacyDashboard 也在同一片安全域。
+            // 三个入口指向同一件事，用户无从判断该点哪个。保留摘要瓦片（带实时值）与底部导航。
+            // 下方「隐私与伪装 → SecurityPeekView」保留：它是另一件事（防窥/遮蔽配置）。
             // ⚠ 这一条原来和上面那条**指向同一个 SecurityPage 根**，
             // 于是「本机数据保护」和「隐私与伪装」点进去看到的是同一屏 ——
             // 用户按标题预期找防窥/伪装，落到的是一张"安全吗"的总览卡。

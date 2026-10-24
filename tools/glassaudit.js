@@ -272,6 +272,13 @@ const projectProblems = [];
     if (!f.includes(path.join('App', 'UI'))) continue;
     const src = fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n');
     if (/XScreen\(/.test(src)) continue;
+    // 2026-10-24 新增豁免：**结果/完成页**。
+    // XScreen 是"可浏览的列表/表单页"的骨架（导航标题+大标题+副标题）。
+    // 写入成功后的完成页是一次性结果展示 —— 没有副标题可写，套 XScreen
+    // 会让标题重复两次（本仓修过的"双标题"问题）。这类页在源码里显式标注：
+    //   /// 页面骨架例外：结果/完成页（一次性展示，无副标题语义）
+    const EXEMPT = /页面骨架例外：结果\/完成页/;
+    if (EXEMPT.test(src)) continue;
     const m = /ScrollView\s*\{\s*\n\s*VStack\(spacing:\s*XSpace\.section\)\s*\{/.exec(src);
     if (!m) continue;
     projectProblems.push('页面骨架手写：' + path.relative(ROOT, f) +
