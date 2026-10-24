@@ -30,12 +30,6 @@ struct ManagerFace: View {
     /// 当前顶级 Tab。**用 AppState.tabSelection 而不是 @State** ——
     /// 门厅里的「管理」入口（以及深链、快捷指令、摇一摇）都要能切 Tab，
     /// 而它们拿不到本视图的 @State。放进 AppState 才有唯一的可写点。
-    private var tabIndex: Binding<ManagerTab> {
-        // selection 用枚举：tag 类型错误直接编译失败，不会静默配错
-        Binding(
-            get: { ManagerTab.from(index: app.tabSelection) ?? .home },
-            set: { app.tabSelection = $0.index })
-    }
     // 2026-10-24 修复底部导航瘫痪（用户真机反馈）：
     //
     // 症状：①点 Tab 无反应 ②子项点了没反应 ③切到别的 Tab 反而显示刚才点的子项。
@@ -51,87 +45,121 @@ struct ManagerFace: View {
     // 不是「从外面弹进来一个面板」，所以没有「带一个分组进来」这回事了。
     // 切组走 `app.tabSelection`（见 openGroup）。
 
-        var body: some View {
+            var body: some View {
         // ═══════════════════════════════════════════════════════════
-        // 2026-10-24 全新重做（第 4 轮，用户指令：重做一套全新的原生底部导航）
+        // 2026-10-24 第五轮：**弃用 TabView**，自建确定性底部栏（用户指令：重做一套全新的原生底部导航）
         //
-        // 前两轮补丁（独立 path / Tab(value:)）都没治好真机上的"吸附"症状
-        // （点设备跳钥匙、点成员跳系统）。这次不再在旧结构上修：
+        // 为什么不再用 TabView：真机上两版 TabView 写法（.tabItem+.tag 与 Tab(value:)）
+        // 都出现同一个症状——点设备吸附到钥匙、点成员吸附到系统。这是系统容器
+        // 在 iOS 27 SDK 上的行为，我们**无法在应用层控制它的命中区**。
         //
-        //   · 每页用**独立的 NavigationStack + NavigationLink(value:)** 导航——
-        //     子页跳转不再经过共享 path 状态，从入口行到子页是**直接值链接**，
-        //     不存在"push 到别的 Tab 的栈"这类错位。
-        //   · Tab 内容包一层 Group 防 iOS 26 的布局融合怪癖。
-        //   · 门厅是唯一无栈页（它自己管理弹层），管理四组各有独立栈。
+        // 于是换成完全确定的结构：
+        //   contentArea + .safeAreaInset(edge: .bottom) { 底部栏 }
+        //   · 内容区按 selected 直接 switch 出对应页面（不留后台副本，也就没有"吸附"）
+        //   · 底部栏五个等宽按钮，每格 .frame(maxWidth: .infinity) + .contentShape(Rectangle())
+        //     —— 命中区就是可见区，不存在错位
+        //   · 每页有自己的 NavigationStack，值是 NavigationLink(value:)（官方推荐写法）
+        //   · 内容区用 safeAreaInset 避让栏体，滚动到底不被挡住
         //
-        // 子页面定位核对（本轮一并完成，21 条全查）：
-        //   钥匙组: 钥匙管理→KeysPage 指纹→AddFingerPage 临时密码→TempCodeStudio ✓
-        //   设备组: 我的门锁→LocksPage 固件→FirmwarePage 网关→GatewayPage
-        //           钥匙串→DonglesPage 校准时间→SyncTimeView ✓
-        //   成员组: 成员→MembersPage 添加成员→MemberWizardView 合并→MembersPage(注)
-        //           已归档→MemberArchivedView ✓
-        //   系统组: 隐私看板→PrivacyDashboard 安全审计→SecurityAuditView
-        //           销毁→SecurityDestroyView 安全模式→SafemodeIntroView
-        //           备份→BackupPage 导出→ExportCenterView 外观→AppearancePage
-        //           本机设置→MePage 诊断→DiagnosticsPage ✓
+        // 子页面定位（21 条已逐条核对，见 routeDestination）：
+        //   钥匙 3 · 设备 5 · 成员 4 · 系统 9，每条都对到预期页面。
         // ═══════════════════════════════════════════════════════════
-        TabView(selection: tabIndex) {
-            // ── 门厅 ──
-            Group {
-                HomeConsole()
-                    .navigationBarHidden(true)
+        contentArea
+            // 用 safeAreaInset 而不是 VStack：内容区（含 ScrollView）自动避让栏体，
+            // 列表滚到底时最后一行不会被栏体压住。
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                bottomBar
             }
-            .tabItem { Label(ManagerTab.home.label, systemImage: ManagerTab.home.icon) }
-            .tag(ManagerTab.home)
+            .background(XPalette.canvas.ignoresSafeArea())
+    }
 
-            // ── 钥匙 ──
-            Group {
-                NavigationStack {
-                    groupScreen(for: .ledger)
-                        .navigationDestination(for: ManagerRoute.self) { r in
-                            routeDestination(r).trackScreen("管理·\(r)")
-                        }
-                }
+    /// 内容区 —— 直接按选中项出页。每个管理组自带 NavigationStack，
+    /// 门厅自己管理弹层（它内部已有 4 处 NavigationStack）。
+    @ViewBuilder
+    private var contentArea: some View {
+        switch selected {
+        case .home:
+            HomeConsole()
+        case .keys:
+            NavigationStack {
+                groupScreen(for: .ledger)
+                    .navigationDestination(for: ManagerRoute.self) { r in
+                        routeDestination(r).trackScreen("管理·\(r)")
+                    }
             }
-            .tabItem { Label(ManagerGroup.ledger.rawValue, systemImage: ManagerGroup.ledger.systemImage) }
-            .tag(ManagerTab.keys)
-
-            // ── 设备 ──
-            Group {
-                NavigationStack {
-                    groupScreen(for: .devices)
-                        .navigationDestination(for: ManagerRoute.self) { r in
-                            routeDestination(r).trackScreen("管理·\(r)")
-                        }
-                }
+        case .devices:
+            NavigationStack {
+                groupScreen(for: .devices)
+                    .navigationDestination(for: ManagerRoute.self) { r in
+                        routeDestination(r).trackScreen("管理·\(r)")
+                    }
             }
-            .tabItem { Label(ManagerGroup.devices.rawValue, systemImage: ManagerGroup.devices.systemImage) }
-            .tag(ManagerTab.devices)
-
-            // ── 成员 ──
-            Group {
-                NavigationStack {
-                    groupScreen(for: .members)
-                        .navigationDestination(for: ManagerRoute.self) { r in
-                            routeDestination(r).trackScreen("管理·\(r)")
-                        }
-                }
+        case .members:
+            NavigationStack {
+                groupScreen(for: .members)
+                    .navigationDestination(for: ManagerRoute.self) { r in
+                        routeDestination(r).trackScreen("管理·\(r)")
+                    }
             }
-            .tabItem { Label(ManagerGroup.members.rawValue, systemImage: ManagerGroup.members.systemImage) }
-            .tag(ManagerTab.members)
-
-            // ── 系统 ──
-            Group {
-                NavigationStack {
-                    groupScreen(for: .system)
-                        .navigationDestination(for: ManagerRoute.self) { r in
-                            routeDestination(r).trackScreen("管理·\(r)")
-                        }
-                }
+        case .system:
+            NavigationStack {
+                groupScreen(for: .system)
+                    .navigationDestination(for: ManagerRoute.self) { r in
+                        routeDestination(r).trackScreen("管理·\(r)")
+                    }
             }
-            .tabItem { Label(ManagerGroup.system.rawValue, systemImage: ManagerGroup.system.systemImage) }
-            .tag(ManagerTab.system)
         }
+    }
+
+    /// 底部栏 —— 五格等宽，命中区 = 可见区。
+    ///
+    /// 每一格是 Button + .contentShape(Rectangle())，整格都在命中区内；
+    /// 这正是 TabView 在真机上没做到的事（它的 internal hit region 与视觉不等宽）。
+    private var bottomBar: some View {
+        HStack(spacing: 0) {
+            ForEach(ManagerTab.allCases, id: \.self) { t in
+                Button {
+                    guard selected != t else { return }
+                    XHaptics.tick.impactOccurred()
+                    app.tabSelection = t.index
+                } label: {
+                    VStack(spacing: XSpace.xxs) {
+                        Image(systemName: selected == t ? selectedIcon(t) : t.icon)
+                            .font(.system(size: XIcon.md, weight: selected == t ? .semibold : .regular))
+                        Text(t.label)
+                            .xFont(.caption2, weight: selected == t ? .semibold : .regular)
+                    }
+                    .foregroundStyle(selected == t ? XPalette.text : XPalette.textTertiary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, XSpace.xs)
+                    .contentShape(Rectangle())   // 整格可点，不留缝
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(t.label)
+                .accessibilityAddTraits(selected == t ? [.isSelected, .isButton] : .isButton)
+            }
+        }
+        .padding(.top, XSpace.xxs)
+        .background(alignment: .bottom) {
+            // 栏体：不透明 surface + 顶部 1 发丝线（与全 App 分隔线同口径）
+            VStack(spacing: 0) {
+                Rectangle()
+                    .fill(XPalette.hairline)
+                    .frame(height: 1 / UIScreen.main.scale)
+                XPalette.surface
+            }
+            .ignoresSafeArea(edges: .bottom)
+        }
+    }
+
+    /// 选中态的图标（门厅用实心房子，其余沿用组图标）
+    private func selectedIcon(_ t: ManagerTab) -> String {
+        t.selectedIcon
+    }
+
+    /// 当前选中页 —— 从 AppState 读取，写入只有一个出口（app.tabSelection）
+    private var selected: ManagerTab {
+        ManagerTab.from(index: app.tabSelection) ?? .home
     }
 
     /// 一个管理组的页面。原生 TabView 下每组有自己的 NavigationStack，
@@ -345,6 +373,15 @@ enum ManagerTab: Hashable, CaseIterable {
         case .devices: return 2
         case .members: return 3
         case .system: return 4
+        }
+    }
+
+    /// 选中态图标（实心版）—— 选中/未选中用两套字形是 iOS 的既有语言，
+    /// 这里给门厅换成实心房子，其余沿用组图标（它们本身就是唯一的）。
+    var selectedIcon: String {
+        switch self {
+        case .home: return "house.fill"
+        default: return icon
         }
     }
 
