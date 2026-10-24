@@ -37,6 +37,10 @@ final class LinkSense: ObservableObject {
     @Published private(set) var lastReceipt = 0              // 535 同步回执 (最近一次补发条数)
     @Published private(set) var connectSource = "预热"        // 98 冷热连接标识: 预热/回连 vs 即连
     @Published private(set) var btOn = BLEService.shared.isPoweredOn   // 69 系统蓝牙开关镜像
+    /// 「系统蓝牙关着」和「本 App 没拿到权限」是**两件事**，用户要做的事也不同。
+    /// 之前只有 btOn，于是在权限被拒时也显示"蓝牙已关闭"，用户去开蓝牙、
+    /// 回来还是失败 —— 因为他关掉的是另一扇门。
+    @Published private(set) var btDenied = false
     @Published private(set) var receiptShownAt: Date = Date.distantPast
     @Published private(set) var revalidating = false         // 131 会话重协商进行中 (假死巡检触发, 完成即消)
     private var lastLadderAt = Date.distantPast
@@ -46,7 +50,10 @@ final class LinkSense: ObservableObject {
 
     private init() {}
     /// 69: 跟随 BLEService 的开关变化 (回连循环 2s tick 顺带刷新, 不另起订阅)
-    func syncBtOn() { btOn = BLEService.shared.isPoweredOn }
+    func syncBtOn() {
+        btOn = BLEService.shared.isPoweredOn
+        btDenied = (BLEService.shared.powerState == .unauthorized)
+    }
     /// 69 "去开启": 系统设置无 App 级深链 API, 只能引导用户自行开启 (文案 + 常驻提示条)
     func openBluetoothSettings() {
         // 69: iOS 没有直达"蓝牙"面板的 App 级深链, 能跳的只有本 App 的设置页 (与 DiagnosticsView 同一个出口)。
@@ -931,15 +938,21 @@ struct BLEStrip: View {
 
 /// 69 蓝牙直通条: 系统蓝牙关闭时全 App 顶部引导条 (深链不可用 → 系统设置指引文案)。
 struct BLEOffBanner: View {
+    /// true = 本 App 没有蓝牙权限（要去设置里**允许**）；false = 系统蓝牙开关关着。
+    var denied: Bool = false
     var onOpen: () -> Void
     var body: some View {
         Button(action: onOpen) {
             HStack(spacing: DS.Space.s) {
-                Image(systemName: "antenna.radiowaves.left.and.right.slash")
+                Image(systemName: denied
+                      ? "exclamationmark.shield.fill"
+                      : "antenna.radiowaves.left.and.right.slash")
                     .font(.system(size: DS.Icon.sm, weight: .semibold))
                     .foregroundStyle(DS.Palette.warn)
                     .accessibilityHidden(true)
-                Text("蓝牙已关闭 — 打开系统蓝牙后, 门锁才能被唤醒")
+                Text(denied
+                     ? "本 App 没有蓝牙权限 — 到设置里允许后, 才能配对与开锁"
+                     : "蓝牙已关闭 — 打开系统蓝牙后, 门锁才能被唤醒")
                     .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.text)
                     .fixedSize(horizontal: false, vertical: true)
@@ -955,7 +968,9 @@ struct BLEOffBanner: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("蓝牙已关闭, 点按前往系统设置开启")
-        .accessibilityHint("到系统设置打开蓝牙开关")
+        .accessibilityLabel(denied
+                            ? "本 App 没有蓝牙权限, 点按前往系统设置允许"
+                            : "蓝牙已关闭, 点按前往系统设置开启")
+        .accessibilityHint(denied ? "到系统设置允许本 App 使用蓝牙" : "到系统设置打开蓝牙开关")
     }
 }
