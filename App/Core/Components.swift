@@ -2290,7 +2290,8 @@ struct XStatChip: View {
             } else if let systemImage {
                 Image(systemName: systemImage)
                     .xFontExact(.system(size: XIcon.sm, weight: .semibold))
-                    .foregroundStyle(tint)
+                    // tint 可选化后图标也兜底：nil = 中性灰（HTML .ic = #8D8D93）
+                    .foregroundStyle(tint ?? XPalette.textSub)
             }
         }
         .frame(width: 34, height: 34)
