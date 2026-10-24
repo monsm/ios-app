@@ -703,7 +703,8 @@ struct XPrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .xFont(.body, weight: .semibold)
-            .foregroundStyle(XPalette.onAccent)
+            // 字色改 accentText —— 底变玻璃后，深字 #14100A 会读不清
+            .foregroundStyle(XPalette.accentText)
             .frame(maxWidth: fullWidth ? .infinity : nil)
             .frame(minHeight: XHit.min)
             .padding(.horizontal, XSpace.l)
@@ -725,8 +726,18 @@ struct XPrimaryButtonStyle: ButtonStyle {
                 // 改法：不当眼的"贴纸橙"，改成**铜色 + 降透明**的实体按钮 ——
                 //   保留"这是主操作"的可辨识度（HIG 要求主次分明），
                 //   但不再用满饱和色横扫一屏。
+                // ═══ 2026-10-24 第二步：实底 88% 铜 → **铜色玻璃 14%** ═══
+                //
+                // 为什么还要再降：改完色值后我用无头浏览器实测了一页「备份与恢复」，
+                // 暖色像素仍占 **5.47%** —— 而参考图上限是 0.31%（差 17 倍）。
+                // 定位到元凶就是这一整块实底按钮：单块面积 ≈ 屏的 5%。
+                //
+                // 参考图 1/2（App 内部）**零个实色按钮**，主操作靠
+                // "铜色字 + 一层极淡的同色底 + 半像素内描边"表达 ——
+                // 既符合 HIG 的主次分明，又把暖色从"一块面"缩到"一条边"。
+                // 这与 HTML 的 .btn 改动是同一处（pages.css 已同步）。
                 RoundedRectangle(cornerRadius: XRadius.control, style: .continuous)
-                    .fill(XPalette.accent.opacity(0.88))
+                    .fill(XPalette.accent.opacity(0.14))
                     .overlay(
                         RoundedRectangle(cornerRadius: XRadius.control, style: .continuous)
                             .fill(
@@ -734,6 +745,10 @@ struct XPrimaryButtonStyle: ButtonStyle {
                                     colors: [XPalette.specular.opacity(0.10), .clear],
                                     startPoint: .top, endPoint: .bottom)
                             )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: XRadius.control, style: .continuous)
+                            .strokeBorder(XPalette.accent.opacity(0.30), lineWidth: 0.5)
                     )
                     .opacity(configuration.isPressed ? 0.82 : 1)
             )
