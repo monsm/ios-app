@@ -134,21 +134,29 @@ struct XPanel<Content: View>: View {
         if kind == .hero {
             shape.fill(XGradient.hero)
         } else {
-            // 2026-10-24 回退为**平色**（用户口径变更）。
+            // 卡面材质的三次演进（每次都是口径变化，不是反复横跳）：
+            //   ① 渐变 XGradient.cardSurface（依 6 张参考图量到的 9 色阶厚度）
+            //   ② 平色 #1C1C1E（依 HTML .card + 规范 §6.3「靠明度差分不分层」）
+            //   ③ 半透明玻璃（依用户 2026-10-24 终极口径：**审美 = 参考图**）
             //
-            // 此前这里用 `XGradient.cardSurface`（#202020 → #171717）+ 上缘 0.5pt 高光，
-            // 依据是从六张参考图里量到的"卡面有 9 个色阶厚度"。
+            // ②→③ 的依据：参考图 2 的卡片实测比画布亮 25-30 色阶且保留背景色相
+            // （R36 G37 B42 卡内 vs R58 G47 B45 卡间），平色抹掉了透光与色相。
+            // §6.3 说的「不用内描边」仍然遵守 —— 这里给的是材质，不是描边。
+            // ═══ 2026-10-24 真机审美对齐：平色 → 半透明玻璃 ═══
             //
-            // 但用户 2026-10-24 明确：「**html 只是审美，功能业务以实际 app 为准，
-            // 但是界面审美一定要以做好的 html 当标准**」。而 HTML 原型的 `.card` 是
-            // **平色 #1C1C1E、零投影、无内描边**，并且它的注释引的正是规范 §6.3：
-            // 「应用体卡片靠**明度差分**分层，不是靠渐变……也不用内描边 —— 描边会让卡片
-            // 读成『贴上去的一块玻璃片』」。
+            // 依据变了：此前按 HTML 的 .card 用平色 #1C1C1E（第 23/80 轮）。
+            // 但用户 2026-10-24 的终极口径是「**审美标准 = 6 张参考图**」，
+            // 而参考图 2（Winding Down）的卡片像素实测是：
+            //   卡内 R36 G37 B42 vs 卡间空隙 R58 G47 B45 —— 卡片是**比画布亮一档的半透明材质**，
+            //   并且保留了画布顶部冷光与彩色环透出的色相（R40 G36 B33 这种暖偏色）。
+            // 平色 #1C1C1E 抹掉了这两件事：卡内是中性灰、卡间是纯黑，玻璃感完全消失。
             //
-            // 也就是说：渐变版与**仓库自己的规范**是冲突的。HTML 与 §6.3 站同一边，
-            // 所以按 HTML 回退。若日后要改回渐变，请同时改 HTML 的 tokens.css 与 §6.3，
-            // 别让三个地方各说一套。
-            shape.fill(XPalette.surface)
+            // 现在用 material 而非纯色：
+            //   · .ultraThinMaterial 提供模糊与透光（参考图的模糊半径观感）
+            //   · 再叠一层极淡白 0.03，让卡面在纯黑画布上有"一片玻璃"的实体感
+            //   · 描边只在非 neutral 时加（tone 语义保持）
+            shape.fill(.ultraThinMaterial)
+                .overlay(shape.fill(Color.white.opacity(0.03)))
         }
     }
 }
@@ -227,6 +235,22 @@ struct XHairline: View {
 /// }
 /// ```
 /// 页面只负责「有哪些卡」，骨架、背景、标题、对齐线全归这里。
+/// 只在需要时往导航栏写标题的小修饰符。
+///
+/// 为什么不用 `.navigationTitle(style == .inline ? title : "")`：
+/// 空字符串仍会占住导航栏中央并触发 large-title 的收缩逻辑；
+/// 直接不施加 `.navigationTitle` 才是「没有标题」。
+private struct XNavTitle: ViewModifier {
+    let title: String?
+    func body(content: Content) -> some View {
+        if let title {
+            content.navigationTitle(title)
+        } else {
+            content
+        }
+    }
+}
+
 struct XScreen<Content: View>: View {
     var title: String
     /// 标题样式。
@@ -349,8 +373,28 @@ struct XScreen<Content: View>: View {
             .padding(.bottom, XSpace.l)
         }
         .background(XPalette.canvasGradient)
-        .navigationTitle(title)
-        .navigationBarTitleDisplayMode(style == .large ? .large : .inline)
+        // ═══ 2026-10-24 真机审美对齐（参考图 1-6 复核）═══
+        //
+        // **不再设 .navigationTitle(title)**。原因是从真机截图看到的硬伤：
+        // 每个页面顶部同时出现「导航栏标题」和「页内大标题」两个同名标题，
+        // 而 6 张参考图里**从来没有过两个标题** —— 参考图 1「Winding Down」、
+        // 参考图 2「Face Gallery」、图 3「Summary」都只有一个页内大标题，
+        // 状态栏下面直接是胶囊行，没有第二条标题带。
+        //
+        // 旧写法 .navigationTitle(title) + .navigationBarTitleDisplayMode(.large)
+        // 会让系统再画一个大标题（iOS 的 large title 会随滚动收缩），
+        // 页内又画一个 30/Bold —— 两层同名标题是这一版最刺眼的不专业感来源。
+        //
+        // 现在标题**只由页内 XScreen 画**（.large 模式），导航栏保持空标题，
+        // 返回按钮仍由系统提供（我们有自定义 chevron，见各页 toolbar）。
+        // 分工（与参考图 1-6 一致，也是 iOS 惯例）：
+        //   · .large  —— 标题由**页内**画（30/Bold + 副标题）。导航栏不写字，
+        //               否则就是「导航栏大标题 + 页内大标题」两条同名标题。
+        //   · .inline —— 标题由**导航栏**画，页内不画（二级页面）。
+        //
+        // 两条路各只有一个标题 —— 这就是参考图里始终成立的那件事。
+        .navigationBarTitleDisplayMode(.inline)
+        .modifier(XNavTitle(title: style == .inline ? title : nil))
         .scrollIndicators(.hidden)
     }
 }
