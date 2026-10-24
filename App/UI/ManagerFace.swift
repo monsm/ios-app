@@ -129,7 +129,7 @@ struct ManagerFace: View {
                         }
                 }
             }
-            .tabItem { Label(ManagerGroup.system.rawValue, systemImage: ManagerGroup.systemImage) }
+            .tabItem { Label(ManagerGroup.system.rawValue, systemImage: ManagerGroup.system.systemImage) }
             .tag(ManagerTab.system)
         }
     }
