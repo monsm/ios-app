@@ -372,4 +372,46 @@ function upd(){const n=document.querySelectorAll('input[value=no]:checked').leng
 document.addEventListener('change',upd);
 function ex(){const out=[];document.querySelectorAll('input:checked').forEach(i=>out.push(i.name+'='+i.value));
   const t=out.join('\n');navigator.clipboard.writeText(t).then(()=>alert('已复制 '+out.length+' 条：\n'+t.slice(0,500)));}
-</script></html>
+</script></html<h1 style="margin-top:28px">Android（6 页）</h1><p class="lead">android-proto 原型对照</p><div class="grid"><div class="p">
+    <div class="h"><b>01-home</b><span>开锁主屏</span></div>
+    <iframe src="../android-proto/01-home.html" loading="lazy"></iframe>
+    <div class="n">信号转盘 · 秒开 · 自动开锁</div>
+    <div class="r"><label><input type="radio" name="android-01-home" value="ok">对</label>
+    <label><input type="radio" name="android-01-home" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>02-scan</b><span>扫码添加门锁</span></div>
+    <iframe src="../android-proto/02-scan.html" loading="lazy"></iframe>
+    <div class="n">取景框 · 权限 · 导入</div>
+    <div class="r"><label><input type="radio" name="android-02-scan" value="ok">对</label>
+    <label><input type="radio" name="android-02-scan" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>03-settings</b><span>门锁设置</span></div>
+    <iframe src="../android-proto/03-settings.html" loading="lazy"></iframe>
+    <div class="n">自动开锁 · 提示音 · 解绑</div>
+    <div class="r"><label><input type="radio" name="android-03-settings" value="ok">对</label>
+    <label><input type="radio" name="android-03-settings" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>04-success</b><span>已开锁</span></div>
+    <iframe src="../android-proto/04-success.html" loading="lazy"></iframe>
+    <div class="n">成功态 · 回执</div>
+    <div class="r"><label><input type="radio" name="android-04-success" value="ok">对</label>
+    <label><input type="radio" name="android-04-success" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>05-rebind</b><span>换绑确认</span></div>
+    <iframe src="../android-proto/05-rebind.html" loading="lazy"></iframe>
+    <div class="n">新旧对照 · 后果警告</div>
+    <div class="r"><label><input type="radio" name="android-05-rebind" value="ok">对</label>
+    <label><input type="radio" name="android-05-rebind" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>06-airtag</b><span>精确查找</span></div>
+    <iframe src="../android-proto/06-airtag.html" loading="lazy"></iframe>
+    <div class="n">全屏箭头 · 信号灌绿 · 距离档位</div>
+    <div class="r"><label><input type="radio" name="android-06-airtag" value="ok">对</label>
+    <label><input type="radio" name="android-06-airtag" value="no">不对</label></div>
+  </div></div>
+>
