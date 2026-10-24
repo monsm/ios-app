@@ -86,7 +86,8 @@ for (const fn of ['runUpgrade(', 'runUpgradeQueue(']) {
 const guardSrc = read('App/Core/LockGuard.swift');
 const actionEnum = guardSrc.split('enum LockAction {')[1]?.split('var blockedInReadOnly')[0] || '';
 const actions = [...actionEnum.matchAll(/case\s+(\w+)/g)].map(m => m[1]);
-if (actions.length < 7) bad('LockAction 解析异常 (cases=' + actions.length + ')');
+// 2026-10-24: 期望值从 7 降到 6 —— importExport 随导出中心移除
+if (actions.length < 6) bad('LockAction 解析异常 (cases=' + actions.length + ')');
 const denialBlock = guardSrc.split('var denial: String {')[1]?.split('struct SudoTicket')[0] || '';
 for (const a of actions) {
   if (!new RegExp(`case\\s+\\.${a}\\s*:`).test(denialBlock)) bad(`LockAction.${a} 没有拒因文案`);
@@ -95,7 +96,8 @@ for (const [name, action] of policyOf) {
   if (action !== null && !actions.includes(action)) bad(`LockCommand.${name} 的策略 .${action} 不是 LockAction 的 case`);
 }
 // 界面级动作 (不属于任何单条命令) 必须仍有真实调用点, 否则就是"只声明不接线"
-for (const a of ['unlock', 'destroy', 'importExport']) {
+// 2026-10-24: importExport 随导出中心移除（备份简化为 iCloud 文件存取）
+for (const a of ['unlock', 'destroy']) {
   const hits = [...lockSvc.matchAll(new RegExp(`SecurityPolicy\\.allows\\(\\.${a}\\)`, 'g'))].length
     + [...read('App/LockKeeperApp.swift').matchAll(new RegExp(`SecurityPolicy\\.allows\\(\\.${a}\\)`, 'g'))].length
     + [...read('App/UI/SecurityCenterView.swift').matchAll(new RegExp(`SecurityPolicy\\.allows\\(\\.${a}\\)`, 'g'))].length;
@@ -103,7 +105,7 @@ for (const a of ['unlock', 'destroy', 'importExport']) {
 }
 // 命令策略必须真的被某条命令使用 (防止策略族只剩声明)
 for (const a of actions) {
-  if (['destroy', 'importExport'].includes(a)) continue;
+  if (a === 'destroy') continue;
   if (![...policyOf.values()].includes(a)) bad(`LockAction.${a} 没有被任何命令使用`);
 }
 

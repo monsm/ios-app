@@ -425,13 +425,7 @@ struct MePage: View {
             // 两个都在：动态消息看"最近发生了什么"，事件记录做"翻旧账/查证据"。
             // 2026-10-24: EventsPage 已删（用户裁定）。原先它下面的子页 StatsPage
             // 只从 EventsPage 进 —— 页面一删就成了孤岛，这里补一个入口。
-            NavigationLink { StatsPage().environmentObject(app).trackScreen("统计") } label: {
-                XRow(
-                    systemImage: "chart.bar",
-                    title: "统计",
-                    subtitle: "开门次数 / 趋势 / 分布",
-                    showsChevron: true)
-            }
+            // 2026-10-24 精简：统计页已删（门厅已有同类图表）
             XHairline(inset: XSpace.card + 28 + XSpace.m)
             XHairline(inset: XSpace.card + 28 + XSpace.m)
             // 2026-10-24: FeedPage 已删（用户裁定）

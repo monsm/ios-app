@@ -276,15 +276,12 @@ struct ManagerFace: View {
             // 而不是管那把锁。分两栏时用户要在两个 Tab 之间反复横跳才能配完一次备份。
             return [
                 (.securityCenter, "应用锁", "应用锁 / 授权总览", "lock.shield"),
-                (.securityAudit, "安全审计", "变更记录", "list.bullet.rectangle"),
-                (.securityDestroy, "销毁数据", "不可逆清除", "trash"),
                 (.safemode, "安全模式", "变严方向", "shield.lefthalf.filled"),
                 (.backup, "备份恢复", "导出 / 导入 / 校验", "externaldrive.badge.timemachine"),
                 (.me, "本机设置", "应用锁 / 备份 / 关于", "person.crop.circle"),
                 // ManagerRoute.diagnostics 之前**没有任何入口行**（死用例）：
                 // routeDestination 里有它的落点，但 rowsFor 三个组都没列它，
                 // 于是诊断页只能从「本机设置」里绕进去，路由表里那条永远走不到。
-                (.diagnostics, "诊断与自检", "数据健康 / 稳定性 / 蓝牙", "stethoscope"),
             ]
         }
     }
@@ -356,15 +353,12 @@ struct ManagerFace: View {
         // 2026-10-24: SecurityPage 已删（用户裁定）。系统组首项改为「应用锁」——
         // 安全域剩下的可配置项就是它；审计/销毁/回收站仍是本组独立入口。
         case .securityCenter: AppLockSetupView()
-        case .securityAudit:  SecurityAuditView()
-        case .securityDestroy: SecurityDestroyView()
         case .safemode:       SafemodeIntroView()
         case .backup:         BackupPage()
         // 2026-10-24: ExportCenterView 已删（备份模块精简为 iCloud 文件存取）
         // ⚠ 这里原来指向 StudioPage —— 而 StudioPage 是「钥匙工坊」（密码/临时/指纹/OTP），
             //   与「外观工作室 · 主题 / 强调色 / 密度」毫无关系。
             //   菜单名与实际页面不符，同时外观相关的 4 个 setter 全都没有入口。
-            case .diagnostics:    DiagnosticsPage().trackScreen("诊断与自检")
         case .me:             MePage().trackScreen("本机设置")
         }
     }
@@ -382,7 +376,6 @@ enum ManagerRoute: String, Hashable, Identifiable {
     case members, memberWizard, archivedMembers
     case securityCenter, securityAudit, securityDestroy, safemode
     case backup, me
-    case diagnostics
 
     var id: String { rawValue }
 

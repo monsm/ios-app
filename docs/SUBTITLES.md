@@ -13,21 +13,17 @@
 | 成员 | 谁能开门 · 各自的授权来源 | MembersPage |
 | 固件升级 | 升级前请完成全部检查项 | FirmwarePage |
 | 归档成员 | 归档不删数据，名下钥匙转成「未分配」 | MemberCenterView |
-| 回收站 | 删掉的钥匙在这里，可以恢复 | CredentialBinView |
 | 建档向导 | 给这位成员起个名字，之后全家都用它称呼 | MemberCenterView |
 | 蓝牙钥匙串 | 随身开门的实体钥匙串 | DonglesPage |
 | 录入指纹 | 每枚指纹都对应锁里的一个槽位 | AddFingerPage |
 | 凭证详情 | 这一条凭证的码值与使用记录 | KeysPage |
 | 认领还没分配的钥匙 | 把无主记录归到人 | MemberCenterView |
-| 审计流水 | 谁在什么时候做了什么 | SecurityCenterView |
 | 锁档案 | 这台锁的名字 / 符号 / 配色 | LockProfilePage |
 | 添加密码 | 写入门锁 · 会占用密码库存 | AddKeyPage |
 | 同步时间 | 锁钟偏差 · 写入手机时间 | DeviceHomeView |
-| 销毁与应急 | 不可逆操作 · 需要二次确认 | SecurityCenterView |
 | 钥匙管理 | **动态**（项数与分类计数，格式见 KeysPage.subline） | KeysPage |
 | 应用锁 | 打开 App 前先验一次口令 | AppLockSetupView |
 | 这台锁 | 这把锁的身份与实时状态 | DevicePage |
-| 诊断与自检 | 进入时算一次，动作后重算 | DiagnosticsPage |
 | 智能网关 | 把门锁接到家里网络 | GatewayPage |
 
 ---
