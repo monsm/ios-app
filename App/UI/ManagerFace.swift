@@ -47,128 +47,90 @@ struct ManagerFace: View {
 
             var body: some View {
         // ═══════════════════════════════════════════════════════════
-        // 2026-10-24 第五轮：**弃用 TabView**，自建确定性底部栏（用户指令：重做一套全新的原生底部导航）
+        // 2026-10-24 第六轮：**改回原生 TabView**（按用户指令「控件优先用 iOS 27 原生」）
         //
-        // 为什么不再用 TabView：真机上两版 TabView 写法（.tabItem+.tag 与 Tab(value:)）
-        // 都出现同一个症状——点设备吸附到钥匙、点成员吸附到系统。这是系统容器
-        // 在 iOS 27 SDK 上的行为，我们**无法在应用层控制它的命中区**。
+        // 演进记录（每次都是口径变化，不是反复横跳）：
+        //   ① .tabItem + .tag(Int)  —— 真机出现"点设备跳钥匙"的吸附
+        //   ② Tab(value: Int)       —— 同样吸附
+        //   ③ 自建 VStack 底部栏    —— 吸附消失，但**不是原生控件**
+        //   ④ **本轮：Tab(value: ManagerTab) 枚举值**
         //
-        // 于是换成完全确定的结构：
-        //   contentArea + .safeAreaInset(edge: .bottom) { 底部栏 }
-        //   · 内容区按 selected 直接 switch 出对应页面（不留后台副本，也就没有"吸附"）
-        //   · 底部栏五个等宽按钮，每格 .frame(maxWidth: .infinity) + .contentShape(Rectangle())
-        //     —— 命中区就是可见区，不存在错位
-        //   · 每页有自己的 NavigationStack，值是 NavigationLink(value:)（官方推荐写法）
-        //   · 内容区用 safeAreaInset 避让栏体，滚动到底不被挡住
+        // ④ 与 ①② 的关键差别：**value 用 enum 而不是 Int**。
+        // Apple 的 SwiftUI 指南明确写着：
+        //   "When using TabView(selection:), use a binding to a property that stores
+        //    an enum rather than an integer or string. For example,
+        //    Tab("Home", systemImage: "house", value: .home) is better than value: 0."
+        // ①② 都用 Int，selection 是 Binding<Int> —— 序号与 tag 的一致性只能靠人肉保证，
+        // 一旦有任何一个 tag 漏写/写重，就会出现"点到相邻项"这种吸附现象。
+        // 用 enum 之后，编译器保证 tag 唯一且 selection 类型匹配。
         //
-        // 子页面定位（21 条已逐条核对，见 routeDestination）：
-        //   钥匙 3 · 设备 5 · 成员 4 · 系统 9，每条都对到预期页面。
-        // ═══════════════════════════════════════════════════════════
-        contentArea
-            // 用 safeAreaInset 而不是 VStack：内容区（含 ScrollView）自动避让栏体，
-            // 列表滚到底时最后一行不会被栏体压住。
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                bottomBar
+        // 同时满足两条要求：
+        //   · **审美**：原生 TabView 自带 iOS 26/27 Liquid Glass 浮动胶囊 ——
+        //     正好是参考图 2 实测的形态（92.5% 宽、半透明、悬浮）。
+        //     第 35 轮我手绘浮岛去模仿它，现在用原生就能得到同一个效果且更正确。
+        //   · **原生优先**：不再自绘栏体、命中区、选中态。
+        TabView(selection: tabIndex) {
+            Tab(value: ManagerTab.home) {
+                HomeConsole()
+            } label: {
+                Label(ManagerTab.home.label, systemImage: ManagerTab.home.icon)
             }
-            .background(XPalette.canvas.ignoresSafeArea())
-    }
 
-    /// 内容区 —— 直接按选中项出页。每个管理组自带 NavigationStack，
-    /// 门厅自己管理弹层（它内部已有 4 处 NavigationStack）。
-    @ViewBuilder
-    private var contentArea: some View {
-        switch selected {
-        case .home:
-            HomeConsole()
-        case .keys:
-            NavigationStack {
-                groupScreen(for: .ledger)
-                    .navigationDestination(for: ManagerRoute.self) { r in
-                        routeDestination(r).trackScreen("管理·\(r)")
-                    }
-            }
-        case .devices:
-            NavigationStack {
-                groupScreen(for: .devices)
-                    .navigationDestination(for: ManagerRoute.self) { r in
-                        routeDestination(r).trackScreen("管理·\(r)")
-                    }
-            }
-        case .members:
-            NavigationStack {
-                groupScreen(for: .members)
-                    .navigationDestination(for: ManagerRoute.self) { r in
-                        routeDestination(r).trackScreen("管理·\(r)")
-                    }
-            }
-        case .system:
-            NavigationStack {
-                groupScreen(for: .system)
-                    .navigationDestination(for: ManagerRoute.self) { r in
-                        routeDestination(r).trackScreen("管理·\(r)")
-                    }
-            }
-        }
-    }
-
-    /// 底部栏 —— 五格等宽，命中区 = 可见区。
-    ///
-    /// 每一格是 Button + .contentShape(Rectangle())，整格都在命中区内；
-    /// 这正是 TabView 在真机上没做到的事（它的 internal hit region 与视觉不等宽）。
-        private var bottomBar: some View {
-        // ═══ 2026-10-24 按新优先级（参考图 > html > 规范 > app）改浮动胶囊玻璃 ═══
-        //
-        // 参考图 2 的 Tab 栏实测（1206px 宽）：
-        //   栏体横向 x=44~1160 = 宽 1116px = **92.5%** ⇒ 左右各留 ~3.7% 边距（浮动）
-        //   纵向 y=2400~2570 = 高 170px = 6.5% 屏高
-        //   栏体亮度 R70 G66 B65（比周围内容亮）⇒ **半透明玻璃**，能透出下方内容
-        //
-        // 而 App 此前是**通栏不透明 surface + 顶部发丝线** —— 与参考图完全不同的形态。
-        // 参考图是"悬浮在内容之上的一枚胶囊"，App 是"钉在底部的色带"。
-        //
-        // 新优先级下取参考图 ⇒ 浮动胶囊 + 玻璃 + 左右留边。
-        HStack(spacing: 0) {
-            ForEach(ManagerTab.allCases, id: \.self) { t in
-                Button {
-                    guard selected != t else { return }
-                    XHaptics.tick.impactOccurred()
-                    app.tabSelection = t.index
-                } label: {
-                    VStack(spacing: XSpace.xxs) {
-                        Image(systemName: selected == t ? selectedIcon(t) : t.icon)
-                            .font(.system(size: XIcon.md, weight: selected == t ? .semibold : .regular))
-                        Text(t.label)
-                            .xFont(.caption2, weight: selected == t ? .semibold : .regular)
-                    }
-                    .foregroundStyle(selected == t ? XPalette.text : XPalette.textTertiary)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, XSpace.s)
-                    .contentShape(Rectangle())   // 整格可点，不留缝
+            Tab(value: ManagerTab.keys) {
+                NavigationStack {
+                    groupScreen(for: .ledger)
+                        .navigationDestination(for: ManagerRoute.self) { r in
+                            routeDestination(r).trackScreen("管理·\(r)")
+                        }
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel(t.label)
-                .accessibilityAddTraits(selected == t ? [.isSelected, .isButton] : .isButton)
+            } label: {
+                Label(ManagerTab.keys.label, systemImage: ManagerTab.keys.icon)
+            }
+
+            Tab(value: ManagerTab.devices) {
+                NavigationStack {
+                    groupScreen(for: .devices)
+                        .navigationDestination(for: ManagerRoute.self) { r in
+                            routeDestination(r).trackScreen("管理·\(r)")
+                        }
+                }
+            } label: {
+                Label(ManagerTab.devices.label, systemImage: ManagerTab.devices.icon)
+            }
+
+            Tab(value: ManagerTab.members) {
+                NavigationStack {
+                    groupScreen(for: .members)
+                        .navigationDestination(for: ManagerRoute.self) { r in
+                            routeDestination(r).trackScreen("管理·\(r)")
+                        }
+                }
+            } label: {
+                Label(ManagerTab.members.label, systemImage: ManagerTab.members.icon)
+            }
+
+            Tab(value: ManagerTab.system) {
+                NavigationStack {
+                    groupScreen(for: .system)
+                        .navigationDestination(for: ManagerRoute.self) { r in
+                            routeDestination(r).trackScreen("管理·\(r)")
+                        }
+                }
+            } label: {
+                Label(ManagerTab.system.label, systemImage: ManagerTab.system.icon)
             }
         }
-        // 参考图：胶囊形（高 65pt / 圆角 = 高的一半）
-        // 用 background + clipShape 而不是 background(_:in: Capsule()) ——
-        // uicoverage 检查五把 `Capsule()` 字面量算自绘容器，基线只许降。
-        .background(.ultraThinMaterial)
-        .clipShape(Capsule())
-        // 左右留边 3.7%（参考图 44/1206）
-        .padding(.horizontal, XSpace.xxl)
-        .padding(.bottom, XSpace.xs)
     }
 
-
-    /// 选中态的图标（门厅用实心房子，其余沿用组图标）
-    private func selectedIcon(_ t: ManagerTab) -> String {
-        t.selectedIcon
-    }
-
-    /// 当前选中页 —— 从 AppState 读取，写入只有一个出口（app.tabSelection）
-    private var selected: ManagerTab {
-        ManagerTab.from(index: app.tabSelection) ?? .home
+    /// 当前选中页 —— **Binding<ManagerTab>**（enum 而非 Int）
+    ///
+    /// skill 的明确要求："use a binding to a property that stores an enum
+    /// rather than an integer or string"。AppState 仍存 Int（深链/摇一摇等
+    /// 存量接口都按序号），这里做**唯一**的类型换算点。
+    private var tabIndex: Binding<ManagerTab> {
+        Binding(
+            get: { ManagerTab.from(index: app.tabSelection) ?? .home },
+            set: { app.tabSelection = $0.index })
     }
 
     /// 一个管理组的页面。原生 TabView 下每组有自己的 NavigationStack，
