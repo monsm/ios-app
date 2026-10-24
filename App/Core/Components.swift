@@ -155,8 +155,17 @@ struct XPanel<Content: View>: View {
             //   · .ultraThinMaterial 提供模糊与透光（参考图的模糊半径观感）
             //   · 再叠一层极淡白 0.03，让卡面在纯黑画布上有"一片玻璃"的实体感
             //   · 描边只在非 neutral 时加（tone 语义保持）
-            shape.fill(.ultraThinMaterial)
-                .overlay(shape.fill(Color.white.opacity(0.03)))
+            // §14-#6 铁律：**毛玻璃只许在功能层**（TabBar/浮层/Sheet），内容卡不许用
+            // .ultraThinMaterial。所以玻璃感不能靠 blur 材质，改用**半透明白叠加**：
+            // 它同样能透出画布渐变的色相（参考图实测的 R36 G37 B42 vs R58 G47 B45 关系），
+            // 又不引入模糊层，因此不触碰 §14-#6。
+            //
+            // 叠两层：① 墨色底 0.55（保证文字对比度）② 白 0.06（抬亮到参考图的档位）。
+            // 合起来等效亮度 ≈ #1F1F24 @ 黑底，接近参考图卡内实测值。
+            // 用 XPalette.veil（本仓的"白纱"令牌，8% 纯白）而不是就地写 Color.white ——
+            // swiftlint 的铁律是"白要有出处"，veil 就是那个出处。
+            shape.fill(XPalette.surface.opacity(0.55))
+                .overlay(shape.fill(XPalette.veil.opacity(0.75)))
         }
     }
 }
