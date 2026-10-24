@@ -231,7 +231,9 @@ struct GatewayPage: View {
     private var progressCard: some View {
         XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: XSpace.s) {
-                Text("配网进度")
+                // 与顶部那张「配网进度」（环 + 44px 读数）区分开：
+                // 这一张是**逐步清单**，同名会让用户以为重复了。
+                Text("配网步骤")
                     .xFont(.subheadline, weight: .medium)
                     .foregroundStyle(XPalette.textSub)
 
