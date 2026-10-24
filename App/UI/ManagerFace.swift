@@ -115,7 +115,18 @@ struct ManagerFace: View {
     ///
     /// 每一格是 Button + .contentShape(Rectangle())，整格都在命中区内；
     /// 这正是 TabView 在真机上没做到的事（它的 internal hit region 与视觉不等宽）。
-    private var bottomBar: some View {
+        private var bottomBar: some View {
+        // ═══ 2026-10-24 按新优先级（参考图 > html > 规范 > app）改浮动胶囊玻璃 ═══
+        //
+        // 参考图 2 的 Tab 栏实测（1206px 宽）：
+        //   栏体横向 x=44~1160 = 宽 1116px = **92.5%** ⇒ 左右各留 ~3.7% 边距（浮动）
+        //   纵向 y=2400~2570 = 高 170px = 6.5% 屏高
+        //   栏体亮度 R70 G66 B65（比周围内容亮）⇒ **半透明玻璃**，能透出下方内容
+        //
+        // 而 App 此前是**通栏不透明 surface + 顶部发丝线** —— 与参考图完全不同的形态。
+        // 参考图是"悬浮在内容之上的一枚胶囊"，App 是"钉在底部的色带"。
+        //
+        // 新优先级下取参考图 ⇒ 浮动胶囊 + 玻璃 + 左右留边。
         HStack(spacing: 0) {
             ForEach(ManagerTab.allCases, id: \.self) { t in
                 Button {
@@ -131,7 +142,7 @@ struct ManagerFace: View {
                     }
                     .foregroundStyle(selected == t ? XPalette.text : XPalette.textTertiary)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, XSpace.xs)
+                    .padding(.vertical, XSpace.s)
                     .contentShape(Rectangle())   // 整格可点，不留缝
                 }
                 .buttonStyle(.plain)
@@ -139,18 +150,16 @@ struct ManagerFace: View {
                 .accessibilityAddTraits(selected == t ? [.isSelected, .isButton] : .isButton)
             }
         }
-        .padding(.top, XSpace.xxs)
-        .background(alignment: .bottom) {
-            // 栏体：不透明 surface + 顶部 1 发丝线（与全 App 分隔线同口径）
-            VStack(spacing: 0) {
-                Rectangle()
-                    .fill(XPalette.hairline)
-                    .frame(height: 1 / UIScreen.main.scale)
-                XPalette.surface
-            }
-            .ignoresSafeArea(edges: .bottom)
-        }
+        // 参考图：胶囊形（高 65pt / 圆角 = 高的一半）
+        .background(.ultraThinMaterial, in: Capsule())
+        .overlay(
+            Capsule().strokeBorder(XPalette.veil, lineWidth: 0.5)
+        )
+        // 左右留边 3.7%（参考图 44/1206）
+        .padding(.horizontal, XSpace.xxl)
+        .padding(.bottom, XSpace.xs)
     }
+
 
     /// 选中态的图标（门厅用实心房子，其余沿用组图标）
     private func selectedIcon(_ t: ManagerTab) -> String {
