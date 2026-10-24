@@ -79,6 +79,8 @@ struct EventsPage: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            // HTML 50-events 的页内标题区（胶囊行 + H1 + SUB）
+            eventsHeader
             if let h = hourFilter {
                 hourFilterBar(h)
             }
@@ -102,8 +104,15 @@ struct EventsPage: View {
         .onChange(of: search) { _, _ in filtered = computeFiltered() }
         .onChange(of: alarmOnly) { _, _ in filtered = computeFiltered() }
         .onChange(of: hourFilter) { _, _ in filtered = computeFiltered() }
-        .navigationTitle("事件")
-        .navigationBarTitleDisplayMode(.large)
+        // ═══ 2026-10-24 逐页对齐：去掉重复标题 ═══
+        //
+        // 这一页是手写骨架（没用 XScreen），所以第 1 轮统一修 XScreen 时漏了它。
+        // 原写法 .navigationTitle("事件") + .large = 导航栏画一个大标题，
+        // 而 HTML 50-events 的标题在**页内**（H1 + SUB + 胶囊行 + 分段）。
+        // 两者同时存在就是两行同名标题。
+        //
+        // 现在导航栏只留 inline 空标题（返回箭头仍在），标题交给页内。
+        .navigationBarTitleDisplayMode(.inline)
         .searchable(text: $search, isPresented: $searchActive, prompt: "搜索事件")
         // 删除筛选视图的二次确认。说清"删的是什么"——不是一个"确定吗"。
         .confirmationDialog(
