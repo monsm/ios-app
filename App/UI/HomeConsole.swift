@@ -1263,6 +1263,12 @@ enum UnlockPhase {
 // 不用 .opacity 变化 —— 深色底上透明度变化几乎看不出，缩放在触觉之外
 // 给出第二重"按到了"的证据。
 struct PressableScaleStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.96 : 1)
+            // 金属不弹：纯缓出 120ms（按钮反馈 120–180ms 档的下限，要"立刻"）
+            .animation(XMotion.quick, value: configuration.isPressed)
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════════

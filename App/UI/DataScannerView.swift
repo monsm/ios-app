@@ -25,8 +25,25 @@ struct DataScannerView: UIViewControllerRepresentable {
         self.results = results
     }
 
+    func makeUIViewController(context: Context) -> DataScannerViewController {
+        let vc = DataScannerViewController(
+            recognizedDataTypes: [.barcode(symbologies: symbologies)],
+            qualityLevel: .balanced,
+            recognizesMultipleItems: true,
+            isHighFrameRateTrackingEnabled: false,
+            isPinchToZoomEnabled: true,
+            isGuidanceEnabled: true,
+            isHighlightingEnabled: true)
+        vc.delegate = context.coordinator
+        // 设备不支持 / 相机不可用 (模拟器) 时 startScanning 会抛错 —— 扫码本身是可选路径,
+        // 失败就停在取景页让用户退回手工输入 (522 原句「失败回退人工输入」), 不静默崩。
+        try? vc.startScanning()
+        return vc
+    }
 
+    func updateUIViewController(_ uiViewController: DataScannerViewController, context: Context) {}
 
+    func makeCoordinator() -> Coordinator { Coordinator(results: results) }
 
     final class Coordinator: NSObject, DataScannerViewControllerDelegate {
         private let results: ([RecognizedItem]) -> Void
