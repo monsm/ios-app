@@ -62,20 +62,14 @@ struct KeysPage: View {
         // 那个解释是对的，但它本该写在**组件里一次**，而不是在每个页面重讲一遍。
         // 现在 XScreen 给骨架，本页只声明「有哪几块」。
         XScreen("钥匙管理", subtitle: subline) {
-            // 审美对齐 HTML 02-keys：卡之前有一排胶囊（用作分类摘要）
-            chipsRow
-            if !expiringItems.isEmpty { expiringCard }
-            VStack(spacing: XSpace.section) {
-                // 六图改造 (2026-10-23): 加图 5 的 MetricCard 主角卡。
-                // 图 5 的第一张卡永远是「44px 大数字 + 一枚环 + 彩点行」。
-                // 钥匙页原来从「到期预警」直接跳到分段 + 列表，缺了「一共多少、都是哪几类」
-                // 这一层 —— 用户进页面第一眼看不出总量与构成，只能一行行数。
-                overviewCard
-                segmentBar
-                VStack(spacing: XSpace.rowGap) {
-                    credentialCard
-                    if rows.isEmpty { emptyCard }
-                }
+            // ═══ 2026-10-24 坚决精简 ═══
+            //
+            // 原 App 的凭证页只有「密码列表 + 添加密码」，没有即将到期预警、
+            // 没有库存分布卡、没有顶部胶囊。这里删掉这三块，只留分段 + 列表。
+            segmentBar
+            VStack(spacing: XSpace.rowGap) {
+                credentialCard
+                if rows.isEmpty { emptyCard }
             }
         }
         .searchable(text: $search, isPresented: $searchActive, prompt: "搜索名称 / 备注 / 归属")
@@ -124,72 +118,7 @@ struct KeysPage: View {
         }
     }
 
-    // ── 到期预警卡 ──
-    private var expiringCard: some View {
-        XPanel(tone: .warn) {
-            VStack(alignment: .leading, spacing: XSpace.s) {
-                // 卡头对齐 HTML 10-keys-manage 卡1
-                Text("本周到期")
-                    .xFont(.subheadline)
-                    .foregroundStyle(XPalette.textTertiary)
-                Spacer(minLength: XSpace.xs)
-                HStack(spacing: XSpace.xs) {
-                    Image(systemName: "clock.badge.exclamationmark")
-                        .font(.system(size: XIcon.sm, weight: .medium))
-                        .foregroundStyle(XPalette.warn)
-                    Text("\(expiringItems.count) 份即将到期")
-                        .xFont(.footnote, weight: .semibold)
-                        .foregroundStyle(XPalette.warn)
-                }
-                // HTML 10-keys-manage 卡1 的三列：总计 / 密码 / 指纹
-                HStack(alignment: .top, spacing: XSpace.s) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("总计").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
-                        Text("\(expiringItems.count) 份").xFont(.footnote, weight: .semibold)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("密码").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
-                        Text("\(expiringItems.filter { !$0.temp }.count) 份")
-                            .xFont(.footnote, weight: .semibold)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("指纹").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
-                        Text("0 份").xFont(.footnote, weight: .semibold)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                Text("临时码也会到期 —— 到期前门锁会自动作废，不用手动删。")
-                    .xFont(.caption2)
-                    .foregroundStyle(XPalette.textTertiary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
 
-    // ── 分段（规范 §7.3 形态 B，全仓唯一实现）──
-    //
-    // 原来是手搓的 axGlassCapsule + 选中项 accent 洗底 —— 而 §7.3/§7.10 都点名：
-    // 选中块应当是 rgba(255,255,255,0.18) 的**白色**块，不是语义色洗底。
-    // 语义色留给「当前状态」，不留给「你选了什么」。
-    /// 图 5 MetricCard 主角卡 —— 44px 总量 + 图 2 细三环 + 彩点行。
-    ///
-    /// 图 5 的结构：卡头 → 44px 大数字 + 单位 → 右侧环 → sep → 彩点行 → footer 整句。
-    /// 这里环用细三环（图 2）而不是单环，因为它要同时表达三类凭证的比例。
-    /// HTML 02-keys 卡前的五个胶囊 —— 各类凭证的实时条数
-    private var chipsRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: XSpace.s) {
-                XStatChip(label: "全部", value: String(pwds.count + fps.count))
-                XStatChip(label: "密码", value: String(pwCount))
-                XStatChip(label: "临时码", value: String(tempCount))
-                XStatChip(label: "指纹", value: String(fps.count))
-                XStatChip(label: "即将到期", value: String(expiringItems.count))
-            }
-            .padding(.vertical, 2)
-        }
-    }
 
     /// 页内副标题 —— 对齐 HTML 10-keys-manage 的 SUB：
     /// 「13 项 · 密码 11 / 指纹 2 / 临时码 0」
@@ -201,75 +130,11 @@ struct KeysPage: View {
         "\(fpCount + pwCount + tempCount) 项 · 指纹 \(fpCount) / 密码 \(pwCount) / 临时码 \(tempCount)"
     }
 
-    private var overviewCard: some View {
-        XPanel(kind: .group) {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack {
-                    Text("库存分布")
-                        .xFont(.subheadline)
-                        .foregroundStyle(XPalette.textTertiary)
-                    Spacer(minLength: 0)
-                }
-                HStack(alignment: .center, spacing: XSpace.l) {
-                    VStack(alignment: .leading, spacing: 10) {
-                        XHeroNumber(text: String(fpCount + pwCount + tempCount), unit: "份")
-                        XDataRow(label: "指纹", value: String(fpCount), unit: "枚",
-                                 color: XPalette.kindFp)
-                        XDataRow(label: "密码", value: String(pwCount), unit: "项",
-                                 color: XPalette.kindTemp)
-                        XDataRow(label: "临时码", value: String(tempCount), unit: "个",
-                                 color: XPalette.kindOtp)
-                    }
-                    Spacer(minLength: 4)
-                    XTripleThinRing(
-                        size: 92,
-                        values: (fpRatio, pwRatio, tempRatio),
-                        colors: (XPalette.kindFp, XPalette.kindTemp, XPalette.kindOtp),
-                        centerText: String(fpCount + pwCount + tempCount))
-                        .accessibilityHidden(true)
-                }
-                .padding(.top, 8)
-                XHairline().padding(.vertical, 12)
-                // 审美对齐 HTML 10-keys-manage 卡1「库存分布」：两列（本周新增 / 即将到期）
-                HStack(alignment: .top, spacing: XSpace.s) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("本周新增").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
-                        Text("\(weekAdded) 份").xFont(.footnote, weight: .semibold)
-                            .foregroundStyle(XPalette.ok)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("即将到期").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
-                        Text("\(expiringItems.count) 份").xFont(.footnote, weight: .semibold)
-                            .foregroundStyle(expiringItems.isEmpty ? XPalette.text : XPalette.warn)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .padding(.bottom, 10)
-                Text("三类凭证按数量占比画成三环 —— 一眼看出这把锁主要靠哪种方式进人。")
-                    .xFont(.footnote)
-                    .foregroundStyle(XPalette.textTertiary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
 
-    /// 本周新增的凭证数（HTML「库存分布」卡的一列）
-    ///
-    /// ⚠ LedgerPwd.at 是 **epoch 毫秒**（Store.swift 有明确注释：
-    /// CredBinEntry.at / CredSnapshot.at 是秒，混用会差一千倍）。所以阈值也要毫秒。
-    private var weekAdded: Int {
-        let cutoffMs = (Date().timeIntervalSince1970 - 7 * 86400) * 1000
-        return pwds.filter { $0.at >= cutoffMs }.count
-    }
 
     /// 三类凭证的数量与占比（细三环的数据源）
     private var fpCount: Int { fps.count }
     private var pwCount: Int { pwds.filter { !$0.temp }.count }
-    private var allTotal: Int { max(1, fpCount + pwCount + tempCount) }
-    private var fpRatio: Double { Double(fpCount) / Double(allTotal) }
-    private var pwRatio: Double { Double(pwCount) / Double(allTotal) }
-    private var tempRatio: Double { Double(tempCount) / Double(allTotal) }
 
     private var segmentBar: some View {
         XSegmented(items: Seg.allCases, title: { $0.title }, selection: Binding(
@@ -407,10 +272,6 @@ struct KeysPage: View {
         }
     }
 
-    /// 即将到期 (7 天内) —— 与 Tab 角标同源
-    private var expiringItems: [LedgerPwd] {
-        CredentialOrg.dueSoonPwds(mac)
-    }
 
     struct KeyRow: Identifiable {
         let id: String
