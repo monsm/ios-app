@@ -292,8 +292,12 @@ enum XRadius {
     static var control: CGFloat { r(12) }
     /// 瓦片 —— 14。
     static var tile: CGFloat { r(14) }
-    /// 顶部胶囊 (StatChip) —— **14, 是圆角矩形不是胶囊** (范式 7.2 实测 13.3)。
-    static var chip: CGFloat { r(14) }
+    /// 顶部胶囊 (StatChip) —— **22**（对齐 HTML tokens.css 的 `--r-chip:22`）。
+    ///
+    /// 2026-10-24 用户口径：审美以 HTML 为准。HTML 的胶囊是 22，
+    /// 而这里此前是 14（规范 §7.2 实测 13.3）。两者相差 8pt ——
+    /// 14 读作"圆角矩形"，22 才读作"胶囊"，是形态差别不是粗细差别。
+    static var chip: CGFloat { r(22) }
     /// 小角标
     static var min: CGFloat { r(8) }
     /// 设备样机外框 —— 44。
@@ -671,16 +675,7 @@ enum XGradient {
     /// 顶部比底部亮 9 个色阶。这 9 个色阶就是"卡片有厚度"的全部来源 ——
     /// 换成平色之后卡片会变成一块贴纸, 这是六图与"普通深色 UI"最容易被忽略的差别。
     /// 再叠一层 inset 高光 (内描边 0.5pt rgba(255,255,255,.055)) 模拟上边缘的反射。
-    static var cardSurface: LinearGradient {
-        LinearGradient(
-            stops: [
-                .init(color: Color(hex: 0x202020), location: 0.00),
-                .init(color: Color(hex: 0x191919), location: 0.26),
-                .init(color: Color(hex: 0x171717), location: 1.00)
-            ],
-            startPoint: .top, endPoint: .bottom)
-    }
-
+    s
     /// **图 1 主环的五段连续渐变** —— 青绿 → 蓝 → 深蓝。
     ///
     /// HTML 实测: `linearGradient x1=0 y1=1 x2=1 y2=0`

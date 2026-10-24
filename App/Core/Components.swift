@@ -134,23 +134,21 @@ struct XPanel<Content: View>: View {
         if kind == .hero {
             shape.fill(XGradient.hero)
         } else {
-            // 六图改造 (2026-10-23): 普通卡改用**图 2 的卡材质**。
+            // 2026-10-24 回退为**平色**（用户口径变更）。
             //
-            // 图 2/5/6 的卡片不是平色 #1C1C1E, 而是 `#202020 → #191919(26%) → #171717`。
-            // 顶部比底部亮 9 个色阶 —— 这 9 个色阶就是"卡片有厚度"的全部来源。
-            // 平色卡片会读成"贴上去的一块", 渐变卡片读成"一块有厚度的板"。
+            // 此前这里用 `XGradient.cardSurface`（#202020 → #171717）+ 上缘 0.5pt 高光，
+            // 依据是从六张参考图里量到的"卡面有 9 个色阶厚度"。
             //
-            // 再叠一层 inset 高光 (上缘 0.5pt rgba(255,255,255,.055)) 模拟边缘反射。
-            shape
-                .fill(XGradient.cardSurface)
-                .overlay {
-                    RoundedRectangle(cornerRadius: radius, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.055), lineWidth: 0.5)
-                        .mask(
-                            LinearGradient(colors: [.white, .clear],
-                                           startPoint: .top, endPoint: .center)
-                        )
-                }
+            // 但用户 2026-10-24 明确：「**html 只是审美，功能业务以实际 app 为准，
+            // 但是界面审美一定要以做好的 html 当标准**」。而 HTML 原型的 `.card` 是
+            // **平色 #1C1C1E、零投影、无内描边**，并且它的注释引的正是规范 §6.3：
+            // 「应用体卡片靠**明度差分**分层，不是靠渐变……也不用内描边 —— 描边会让卡片
+            // 读成『贴上去的一块玻璃片』」。
+            //
+            // 也就是说：渐变版与**仓库自己的规范**是冲突的。HTML 与 §6.3 站同一边，
+            // 所以按 HTML 回退。若日后要改回渐变，请同时改 HTML 的 tokens.css 与 §6.3，
+            // 别让三个地方各说一套。
+            shape.fill(XPalette.surface)
         }
     }
 }
