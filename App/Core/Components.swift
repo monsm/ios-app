@@ -1839,6 +1839,14 @@ extension View {
 /// 规范给的数：
 ///   容器 `rgba(255,255,255,0.06)` · 高 **36** · r=999 · pad **2**
 ///   选中块 `rgba(255,255,255,0.18)` + **白字 Semibold**
+///
+/// ── 2026-10-24 为什么**不**改回原生 `Picker(.segmented)` ──
+/// 用户指令：「控件要以**审美为基础**的前提下优先使用 iOS 27 的原生控件」。
+/// 审美是第一约束、原生是第二约束。而两者在本控件上**形态不同**：
+///   · HTML `.segctl2`：height **38px** / `border-radius: **999**`（**胶囊**）
+///   · 原生 Picker：height **32pt** / cornerRadius **~7**（**圆角矩形**）
+/// 胶囊与圆角矩形是两种形态，不是粗细差异 —— 按"审美优先"应保留自绘。
+/// 反过来，底部导航的 Tab 栏已改回原生 `TabView`（那里形态一致，原生自带 Liquid Glass）。
 struct XSegmented<T: Hashable>: View {
     var items: [T]
     var title: (T) -> String
