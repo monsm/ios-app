@@ -449,6 +449,16 @@ private fun KfApp(unlocker: BleUnlocker) {
                     }
                 }
 
+                // 审美对齐 android-proto 01-home 卡1「自动开锁」：
+                // HTML 这张卡给了**规则原文 + footer 整句**，App 之前只有顶部一枚 chip。
+                // chip 说"现在什么状态"，卡说"什么条件下会发生"——两者不是一件事。
+                Spacer(Modifier.height(KfTokens.Space.l))
+                AutoUnlockCard(
+                    proximity = proximity,
+                    armed = armed,
+                    onClick = { showSettings = true }
+                )
+
                 if (detail.isNotEmpty()) {
                     Spacer(Modifier.height(KfTokens.Space.xs))
                     // 排障留痕: 11sp 是范式 14-11 的字号下限; 用 textTertiary (深色档 4.51:1 on 次表面)
@@ -672,6 +682,74 @@ private fun KfChip(
                 maxLines = 1
             )
         }
+    }
+}
+
+/**
+ * 「自动开锁」说明卡 —— 对齐 android-proto 01-home 卡1。
+ *
+ * HTML 结构：卡头「自动开锁」+ chevron → 盾牌图标 + **已武装/已关闭** + 规则短句
+ *            → sep → footer 整句（一次靠近只开一次，要走开再靠近）。
+ *
+ * 为什么值得单独成卡：chip 只说"现在是什么状态"，用户仍不知道**什么时候会自动开**。
+ * 这条规则是"靠近会自动开门"这个功能的安全边界，必须写在主屏上，不能只藏在设置里。
+ */
+@Composable
+private fun AutoUnlockCard(proximity: Boolean, armed: Boolean, onClick: () -> Unit) {
+    val colors = LocalKfColors.current
+    val on = proximity
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = KfTokens.Space.l)
+            .clip(RoundedCornerShape(KfTokens.Radius.card))
+            .background(colors.surface)
+            .clickable(onClick = onClick)
+            .padding(KfTokens.Space.card)
+    ) {
+        // 卡头：14 Regular 灰 + chevron（范式 7.6）
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text("自动开锁", color = colors.textSub, fontSize = Type.subhead)
+            Spacer(Modifier.width(KfTokens.Space.xs))
+            Text("›", color = colors.textTertiary, fontSize = Type.subhead, fontWeight = FontWeight.SemiBold)
+        }
+        Spacer(Modifier.height(KfTokens.Space.m))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = if (on) "已武装" else "已关闭",
+                color = if (on) colors.ok else colors.textTertiary,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(Modifier.width(KfTokens.Space.s))
+            Text(
+                text = if (on) (if (armed) "已进入可触发区" else "等待靠近") else "靠近不会自动开门",
+                color = colors.textSub,
+                fontSize = Type.caption
+            )
+        }
+        Text(
+            text = "RSSI ≥ −38 dBm 且距上次 > 8 秒",
+            color = colors.textSub,
+            fontSize = Type.caption,
+            modifier = Modifier.padding(top = 2.dp)
+        )
+        // sep
+        Spacer(Modifier.height(KfTokens.Space.m))
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(colors.hairline)
+        )
+        Spacer(Modifier.height(KfTokens.Space.m))
+        Text(
+            text = "开着它：手机解了锁、App 在前台时，靠近到 −38 dBm 以内会自动开一次。" +
+                "一次靠近只开一次 —— 要走开让信号掉到 −55 dBm 以下，隔 6 秒后再靠近才会再开。",
+            color = colors.textSub,
+            fontSize = Type.caption,
+            lineHeight = Type.caption * 1.6f
+        )
     }
 }
 
