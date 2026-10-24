@@ -336,10 +336,38 @@ if (process.argv.includes('--json')) {
 // 与本台账的键集做集合差，差一个就报错，不需要人维护对照表。
 if (process.argv.includes('--emit')) {
   const camel = (n) => n.charAt(0).toLowerCase() + n.slice(1).replace(/View$/, '');
-  const rows = list.map(([n]) => `    case ${camel(n)} = "${n}"`);
+  // ═══ 2026-10-24 修：保留既有枚举里「扫描器认不出、但代码在引用」的 case ═══
+  //
+  // 事故：本轮删除旧页后重跑 --emit，Destination 从 22 条降到 20 条，
+  // 把 exportCenter / safemodeIntro 两个 case 删了 ——
+  // 而 ExportCenter.swift:1519 的 `.destined(.exportCenter)` 与
+  // SettingsView.swift:20 的 `.destined(.safemodeIntro)` 仍在引用，**直接编译失败**。
+  //
+  // 为什么扫描器认不出它们：
+  //   · ExportCenterView 的实例化带参数（ExportCenterView(mac: …)），
+  //     而扫描器按「类型名以 View 结尾 + 紧跟 (」匹配，参数表解析在带嵌套括号时退出；
+  //   · SafemodeIntroView 在 ManagerFace 的 routeDestination 里是 **compose**（switch 分支里直接返回），
+  //     按本工具口径「只被 compose 不算目的地」—— 但 .destined() 又确实需要一个枚举 case。
+  //
+  // 判据：**枚举是给 .destined() 用的符号表，不是台账的镜像**。
+  // 台账决定"呈现通道里有哪些页"，枚举还要多担"谁被 .destined() 点名"。
+  // 所以生成时合并：扫描结果 ∪ 既有文件里的 case。
+  const ENUM_PATH = path.join('App', 'Core', 'Destination.swift');
+  const existing = new Map();   // camel -> typeName
+  if (fs.existsSync(ENUM_PATH)) {
+    const old = fs.readFileSync(ENUM_PATH, 'utf8');
+    for (const m of old.matchAll(/case (\w+) = "(\w+)"/g)) existing.set(m[1], m[2]);
+  }
+  const scanned = new Map(list.map(([n]) => [camel(n), n]));
+  // 合并：扫描结果为准，既有里多出来的保留
+  for (const [k, v] of existing) if (!scanned.has(k)) scanned.set(k, v);
+  const merged = [...scanned.entries()].sort((a, b) => a[1].localeCompare(b[1]));
+  const rows = merged.map(([k, v]) => `    case ${k} = "${v}"`);
+  const carryN = merged.length - list.length;
   const out = [
     '// 本文件由 `node tools/destmap.js --emit` 生成，**不要手改**。',
-    `// 生成时的目的地总数 = ${list.length}。改了界面呈现方式之后重新生成，`,
+    `// 生成时的目的地总数 = ${merged.length}（呈现通道 ${list.length} + 仅被 .destined() 引用 ${carryN}）。`,
+    '// 后一半是扫描器认不出、但源码里有 `.destined(.xxx)` 的 case —— 删掉会直接编译失败。',
     '// 并核对 diff —— 少一条就是某套界面会缺一个页面而没人发现。',
     'import SwiftUI',
     '',
@@ -351,8 +379,8 @@ if (process.argv.includes('--emit')) {
     '}',
     ''
   ].join('\n');
-  fs.writeFileSync(path.join('App', 'Core', 'Destination.swift'), out);
-  console.log(`已写 App/Core/Destination.swift —— ${list.length} 个 case`);
+  fs.writeFileSync(ENUM_PATH, out);
+  console.log(`已写 App/Core/Destination.swift —— ${merged.length} 个 case（保留 ${carryN} 个非台账 case）`);
 }
 
 const st = selfTest();

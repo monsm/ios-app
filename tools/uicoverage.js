@@ -424,9 +424,34 @@ function main() {
   }
   const inEnum = new Set(cases.map((c) => c.typeName));
   const missing = ledger.filter((v) => !inEnum.has(v));
-  const extra = [...inEnum].filter((v) => !ledger.includes(v));
+  let extra = [...inEnum].filter((v) => !ledger.includes(v));
+
+  // ═══ 2026-10-24 修：枚举可以合法地多出「被 .destined() 点名」的 case ═══
+  //
+  // 事故：删除旧页后重跑 `destmap --emit`，台账剩 20 条，而
+  // ExportCenter.swift / SettingsView.swift 里还有 `.destined(.exportCenter)` /
+  // `.destined(.safemodeIntro)` —— 这两个 View 一个是带参数实例化、
+  // 一个在 routeDestination 里是 compose 形态，扫描器按口径都不收进台账。
+  //
+  // 于是「枚举=台账镜像」这条断言不再成立：**枚举还要承担 .destined() 的符号表职责**。
+  // 新判据：多出来的 case 必须在源码里被 `.destined(.caseName)` 引用，否则仍算漂移
+  // （防止有人手加无用 case 蒙混过关）。
+  const enumByType = new Map(cases.map((c) => [c.typeName, c.swCase]));
+  const appSrc = readSwiftFiles('App')
+    .filter((f) => f !== ENUM && f !== GRAMMAR)
+    .map((f) => fs.readFileSync(f, 'utf8')).join('\n');
+  const extraJustified = [];
+  extra = extra.filter((typeName) => {
+    const swCase = enumByType.get(typeName);
+    if (swCase && new RegExp('\\.destined\\(\\s*\\.' + swCase + '\\b').test(appSrc)) {
+      extraJustified.push(typeName);
+      return false;   // 有 .destined() 引用 ⇒ 合法，不算漂移
+    }
+    return true;
+  });
+
   if (missing.length) drift.push(`枚举少了 ${missing.length} 条 (台账有、枚举没有): ${missing.join(', ')}`);
-  if (extra.length) drift.push(`枚举多了 ${extra.length} 条 (枚举有、台账没有): ${extra.join(', ')}`);
+  if (extra.length) drift.push(`枚举多了 ${extra.length} 条 (枚举有、台账没有且无 .destined() 引用): ${extra.join(', ')}`);
 
   const hit = seamCoverage(cases);
   const covered = [...hit.entries()].filter(([, v]) => v.length > 0);
