@@ -144,7 +144,7 @@ struct DonglesPage: View {
             HStack(spacing: XSpace.s) {
                 Image(systemName: "key.horizontal.fill")
                     .font(.system(size: XIcon.md, weight: .medium))
-                    .foregroundStyle(hasKey ? XPalette.accent : XPalette.textTertiary)
+                    .foregroundStyle(hasKey ? XPalette.textSub : XPalette.textTertiary)
                     .frame(width: 40, height: 40)
                     .background(
                         (hasKey ? XPalette.accent : XPalette.textTertiary).opacity(0.12),

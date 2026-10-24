@@ -1562,7 +1562,7 @@ struct XBatteryGauge: View {
                     }
                     Text(statusWord)
                         .xFontExact(.system(size: XMetric.dataText(max(11, size * 0.072)), weight: .medium))
-                        .foregroundStyle(tint)
+                        .foregroundStyle(tint ?? XPalette.text)
                 } else {
                     Text("—")
                         .xFontExact(.system(size: XMetric.dataText(size * 0.26), weight: .semibold, design: .rounded))
@@ -2210,7 +2210,14 @@ struct XStatChip: View {
     var systemImage: String? = nil
     /// 迷你环进度 0...1; nil = 画符号
     var ringFraction: Double? = nil
-    var tint: Color = XPalette.accent
+    /// 默认 tint —— **2026-10-24 从 accent 改中性**（暖色治理第 3 步）
+    ///
+    /// HTML 的 `.chip` 实测：底 `#232326`（中性灰）、`color:inherit`（白字）、
+    /// 内部小环才带色。胶囊**从来不是橙的**。
+    /// 而 App 有 33 个胶囊不传 tint 时落到 accent 橙 —— 这是高频橙源之一
+    /// （每页顶部 3 个 × 全部页面）。
+    /// 需要彩色的胶囊（如告警数）仍可显式传 tint。
+    var tint: Color? = nil
     /// compact 变体: 仅图标, 无文字 (规范 §7.2 compact)
     var compact: Bool = false
     /// 是否撑满可用宽度。双列固定（§7.2 形态一）为 true，横向滚动为 false。
@@ -2277,7 +2284,7 @@ struct XStatChip: View {
             if let ringFraction {
                 Circle()
                     .trim(from: 0, to: min(max(ringFraction, 0), 1))
-                    .stroke(tint, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                    .stroke(tint ?? XPalette.textSub, style: StrokeStyle(lineWidth: 3, lineCap: .round))
                     .rotationEffect(.degrees(-90))
                     .padding(4)
             } else if let systemImage {

@@ -586,7 +586,7 @@ struct TempCodeStudio: View {
                         Image(systemName: "number.square")
                     }
                     .xFont(.caption)
-                    .foregroundStyle(left == 0 ? XPalette.warn : XPalette.textSub)
+                    .foregroundStyle(left == 0 ? XPalette.textSub : XPalette.textSub)
                     .padding(.horizontal, XSpace.s)
                     .padding(.vertical, 4)
                     .xCallout(left == 0 ? XPalette.warn : XPalette.hairline, .control, wash: left == 0 ? 0.10 : 0.06)
@@ -746,7 +746,7 @@ struct TempCodeStudio: View {
                             Image(systemName: "arrow.left.arrow.right")
                         }
                         .xFont(.footnote)
-                        .foregroundStyle(XPalette.warn)
+                        .foregroundStyle(XPalette.textSub)
                     }
                     // 330 装修黄条
                     if scene == "reno" {
@@ -1183,7 +1183,7 @@ struct FpStudio: View {
                 Image(systemName: "touchid")
             }
             .xFont(.caption)
-            .foregroundStyle(left == 0 ? XPalette.warn : XPalette.textSub)
+            .foregroundStyle(left == 0 ? XPalette.textSub : XPalette.textSub)
             .padding(.horizontal, XSpace.s)
             .padding(.vertical, 4)
             .xCallout(XPalette.hairline, .control, wash: 0.06)

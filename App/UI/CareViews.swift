@@ -516,7 +516,7 @@ struct CareChecklistView: View {
                         Text("\(done)")
                             .font(.system(size: XMetric.dataText(20), weight: .bold))
                             .monospacedDigit()
-                            .foregroundStyle(done == total ? XPalette.ok : XPalette.accentText)
+                            .foregroundStyle(done == total ? XPalette.ok : XPalette.textSub)
                     }
                     .accessibilityHidden(true)
                 }
@@ -649,7 +649,7 @@ struct CareChecklistView: View {
                     HStack(spacing: XSpace.xs) {
                         Image(systemName: "touchid")
                             .font(.system(size: XIcon.xs, weight: .semibold))
-                            .foregroundStyle(XPalette.warn)
+                            .foregroundStyle(XPalette.textSub)
                         Text("指纹头可能需清洁")
                             .xFont(.caption2)
                             .foregroundStyle(XPalette.warn)

@@ -162,7 +162,7 @@ struct AlarmCenterView: View {
             } label: {
                 Text("这些告警是什么")   // 744 这些告警是什么
                     .xFont(.subheadline, weight: .medium)
-                    .foregroundStyle(XPalette.accentText)
+                    .foregroundStyle(XPalette.textSub)
                     .frame(minHeight: XHit.min)
             }
             }
