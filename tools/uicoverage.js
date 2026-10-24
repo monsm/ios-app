@@ -60,7 +60,11 @@ function enumDestinations() {
   if (!fs.existsSync(ENUM)) return null;
   const src = fs.readFileSync(ENUM, 'utf8');
   const out = [];
-  const re = /^\s*case\s+([a-zA-Z0-9_]+)\s*=\s*"([A-Za-z0-9_]+View)"/gm;
+  // 2026-10-24：原正则要求类型名以 View 结尾，于是 `case homeConsole = "HomeConsole"`
+  // 被漏掉 —— 实测 Destination.swift 有 22 个 case，这里只数到 21，
+  // 报出"台账有、枚举没有: HomeConsole"的假 DRIFT。类型名不保证以 View 结尾
+  // （HomeConsole / MePage / KeysPage 这类都在用），放宽为任意标识符。
+  const re = /^\s*case\s+([a-zA-Z0-9_]+)\s*=\s*"([A-Za-z0-9_]+)"/gm;
   let m;
   while ((m = re.exec(src))) out.push({ swCase: m[1], typeName: m[2] });
   return out;
