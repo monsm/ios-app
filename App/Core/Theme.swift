@@ -621,7 +621,17 @@ enum XMotion {
         }
     }
 
-    // 2026-10-24 精简：summon 零使用已删
+    // ── 召唤 / 揭示 ──
+    //
+    // 规范 §11.1 是**封闭清单**（"只能用这些"），summon 必须在册 ——
+    // tools/motionlock.js 会核对 XMotion 与规范表逐条对齐，缺一个就判失败。
+    // 即便当前零调用也要保留：它是规范允许的动效语汇，不是死代码。
+    static var summon: Animation {
+        switch tier {
+        case "calm": return .easeOut(duration: 0.20)
+        default: return .spring(response: 0.42, dampingFraction: 0.88)
+        }
+    }
 
     /// 元件入场 / 数值归位（头像、仪表、进度环）。
     ///
