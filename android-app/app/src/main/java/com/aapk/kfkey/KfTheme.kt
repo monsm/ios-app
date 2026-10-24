@@ -80,7 +80,7 @@ internal val KfDarkColors = KfColors(
     accentText = Color(0xFFE8A05C),
     onAccent = Color(0xFF14100A),
     ok = Color(0xFF30D158),
-    warn = Color(0xFFFF9F0A),
+    warn = Color(0xFFDFA063),
     danger = Color(0xFFFF3B30),   // 规范 §3.4 accentRed
 )
 // 主题色板的 CompositionLocal。
