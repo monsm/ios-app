@@ -33,7 +33,19 @@ struct ManagerFace: View {
     private var tabIndex: Binding<Int> {
         Binding(get: { app.tabSelection }, set: { app.tabSelection = $0 })
     }
-    @State private var path: [ManagerRoute] = []
+    // 2026-10-24 修复底部导航瘫痪（用户真机反馈）：
+    //
+    // 症状：①点 Tab 无反应 ②子项点了没反应 ③切到别的 Tab 反而显示刚才点的子项。
+    // 根因：**5 个 Tab 只有钥匙组绑了 path**，其余组的行点击 path.append(route)
+    // 都 push 到钥匙组的栈 —— 在设备组点「固件升级」，push 发生在看不见的钥匙栈里；
+    // 切回钥匙 Tab 才看到固件页（症状③的原话）。
+    //
+    // 修法：每个管理组一个独立栈。字典在组维度的 push 互不串台，
+    // Tab 切换自然恢复（不再被"看似没反应"的栈污染）。
+    @State private var ledgerPath: [ManagerRoute] = []
+    @State private var devicesPath: [ManagerRoute] = []
+    @State private var membersPath: [ManagerRoute] = []
+    @State private var systemPath: [ManagerRoute] = []
 
     // 2026-10-23：删掉 `init(initialGroup:)`。
     // 它是「从门厅带一个分组进来」的入口，而门厅现在是第一个 Tab ——
@@ -70,7 +82,7 @@ struct ManagerFace: View {
             .tag(0)
 
             // ── 钥匙 ──
-            NavigationStack(path: $path) {
+            NavigationStack(path: $ledgerPath) {
                 groupScreen(for: .ledger)
                     .navigationDestination(for: ManagerRoute.self) { r in
                         routeDestination(r).trackScreen("管理·\(r)")
@@ -82,7 +94,7 @@ struct ManagerFace: View {
             .tag(1)
 
             // ── 设备 ──
-            NavigationStack {
+            NavigationStack(path: $devicesPath) {
                 groupScreen(for: .devices)
                     .navigationDestination(for: ManagerRoute.self) { r in
                         routeDestination(r).trackScreen("管理·\(r)")
@@ -94,7 +106,7 @@ struct ManagerFace: View {
             .tag(2)
 
             // ── 成员 ──
-            NavigationStack {
+            NavigationStack(path: $membersPath) {
                 groupScreen(for: .members)
                     .navigationDestination(for: ManagerRoute.self) { r in
                         routeDestination(r).trackScreen("管理·\(r)")
@@ -106,7 +118,7 @@ struct ManagerFace: View {
             .tag(3)
 
             // ── 系统 ──
-            NavigationStack {
+            NavigationStack(path: $systemPath) {
                 groupScreen(for: .system)
                     .navigationDestination(for: ManagerRoute.self) { r in
                         routeDestination(r).trackScreen("管理·\(r)")
@@ -127,7 +139,7 @@ struct ManagerFace: View {
     @ViewBuilder
     private func groupScreen(for g: ManagerGroup) -> some View {
         XScreen(g.title, style: .inline) {
-            rows(rowsFor(g))
+            rows(rowsFor(g), of: g)
         }
     }
 
@@ -197,7 +209,7 @@ struct ManagerFace: View {
     ///   · 一卡多行     → 读成「同一类东西的五个选项」
     ///
     /// 后者才是这几个管理组的真实关系。
-    private func rows(_ items: [(ManagerRoute, String, String, String)]) -> some View {
+    private func rows(_ items: [(ManagerRoute, String, String, String)], of g: ManagerGroup) -> some View {
         XPanel(kind: .group, padding: 0) {
             VStack(spacing: 0) {
                 // id 用序号：这些元组没有天然唯一键，而 items 是常量数组顺序稳定。
@@ -210,7 +222,13 @@ struct ManagerFace: View {
                     }
                     XRow(systemImage: icon, title: title,
                          subtitle: subtitle, showsChevron: true) {
-                        path.append(route)
+                        // 按组追加 —— push 发生在**本组自己的栈**上（修复跨 Tab 串台）
+                        switch g {
+                        case .ledger: ledgerPath.append(route)
+                        case .devices: devicesPath.append(route)
+                        case .members: membersPath.append(route)
+                        case .system: systemPath.append(route)
+                        }
                     }
                     .padding(.horizontal, XSpace.card)
                 }
@@ -227,8 +245,8 @@ struct ManagerFace: View {
         guard let f = app.pendingSettingsFocus else { return }
         app.pendingSettingsFocus = nil
         switch f {
-        case "backup": path = [.backup]
-        case "diag": path = [.diagnostics]
+        case "backup": systemPath = [.backup]
+        case "diag": systemPath = [.diagnostics]
         default: break        // 认不出的落点名不做猜测，留在原地
         }
     }
