@@ -1088,9 +1088,10 @@ struct RootView: View {
         // 改前这里是 `HomeConsole()`：它是根，自己画一个浮动胶囊切「管理面板」，
         // 而那个面板又是一个 sheet —— 两层导航叠在一起。
         ManagerFace()
-        .safeAreaInset(edge: .top, spacing: 0) {
-            topBanners
-        }
+        // 2026-10-24 诊断（真机 Tab 吸附 bug 第 3 轮）：临时摘掉顶部横幅层，
+        // 验证 safeAreaInset 是否在 iOS 26 下压住/错位了 TabBar 命中区。
+        // 若摘掉后 Tab 恢复，则改为 overlay(alignment: .top) 方案。
+        // topBannersSafeAreaInset
         // 包18: 一次性时刻卡 (里程碑/周年/史诗徽章) 覆盖层
         // 2026-10-16: 纪念卡层抽成 MomentLayer 修饰符 —— 和 bootstrapOnce 同一条理由：
         // 它原先长在 mainTabsChrome 上，两个新变体不挂 mainTabsChrome 就会**静默收不到纪念时刻**。
