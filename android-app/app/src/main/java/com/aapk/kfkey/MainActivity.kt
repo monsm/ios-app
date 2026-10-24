@@ -709,16 +709,6 @@ private fun KfChip(
 }
 
 /**
- * 「自动开锁」说明卡 —— 对齐 android-proto 01-home 卡1。
- *
- * HTML 结构：卡头「自动开锁」+ chevron → 盾牌图标 + **已武装/已关闭** + 规则短句
- *            → sep → footer 整句（一次靠近只开一次，要走开再靠近）。
- *
- * 为什么值得单独成卡：chip 只说"现在是什么状态"，用户仍不知道**什么时候会自动开**。
- * 这条规则是"靠近会自动开门"这个功能的安全边界，必须写在主屏上，不能只藏在设置里。
- */
-@Composable
-/**
  * 「开锁回执」卡 —— 对齐 android-proto 04-success。
  *
  * HTML 结构：卡头「开锁回执」→ 主体「谁 · 手动/自动」→ 副「04 接近事件 · 一次靠近只开一次」
@@ -780,6 +770,16 @@ private fun ReceiptCard(lockName: String, auto: Boolean) {
     }
 }
 
+/**
+ * 「自动开锁」说明卡 —— 对齐 android-proto 01-home 卡1。
+ *
+ * HTML 结构：卡头「自动开锁」+ chevron → 盾牌图标 + **已武装/已关闭** + 规则短句
+ *            → sep → footer 整句（一次靠近只开一次，要走开再靠近）。
+ *
+ * 为什么值得单独成卡：chip 只说"现在是什么状态"，用户仍不知道**什么时候会自动开**。
+ * 这条规则是"靠近会自动开门"这个功能的安全边界，必须写在主屏上，不能只藏在设置里。
+ */
+@Composable
 private fun AutoUnlockCard(proximity: Boolean, armed: Boolean, onClick: () -> Unit) {
     val colors = LocalKfColors.current
     val on = proximity
