@@ -2,6 +2,7 @@
 
 > 审核标准：`tools/android-proto/*.html`（5 页原型）。
 > 口径：审美以 HTML 为准；功能以实际 App 为准；规范可错，HTML 优先。
+> 相关：根 `README.md` 的「2026-10-24 审美对齐专项」索引 · `docs/AUTHORITY.md` 权威顺序
 
 | # | 界面 | HTML | 状态 | 处理 |
 |---|---|---|---|---|
