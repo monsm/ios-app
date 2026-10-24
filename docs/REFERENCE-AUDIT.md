@@ -120,3 +120,47 @@ HTML 里只有 03-devices 用了双列。其余仪表页（门厅·成员·诊�
 ```
 
 **注意**：①② 是共性问题（34/34 页），按规则允许批量；③④ 必须逐页。
+
+
+---
+
+## 五、升级 D 完成情况（第 32-33 轮）
+
+### 12 个含 duo 的原型 → App 对齐状态
+
+| # | 原型 | App 实现 | 状态 |
+|---|---|---|---|
+| 1 | 13-key-detail | `usedMetricsRow`（已使用/最近一次）| ✅ 第 20 轮 |
+| 2 | 20-locks | 系统 List（**刻意裁定**，功能优先）| ⊘ |
+| 3 | 22-firmware | `readinessDuo`（电量/连接）| ✅ 第 32 轮 |
+| 4 | 25-synctime | `clockCard` 双列（锁内/手机时钟）| ✅ 第 32 轮 |
+| 5 | 32-member-detail | `memberMetricsCards`（名下钥匙/最近活动）| ✅ 原有 |
+| 6 | 33-archived | `archivedDuo`（已归档/待认领）| ✅ 第 32 轮 |
+| 7 | 34-merge | 主档/副档（已有对照结构）| ✅ 原有 |
+| 8 | 46-safemode | `modeCard × 2`（A 单一/B 组合）| ✅ 原有 |
+| 9 | 47-backup | `transferDuo`（导出→/←恢复）| ✅ 第 32 轮 |
+| 10 | 49-appearance | **用户裁定删除强调色色板** | ⊘ |
+| 11 | 70-icon-picker | 图标网格（3×3，非双列语义）| ✅ 不同形态 |
+| 12 | 61-reminders | `reminderDuo`（纪念日/生日）| ✅ 第 32 轮 |
+
+**结论：7 页本轮/上轮补齐，3 页原有已对齐，2 页刻意裁定或形态不同。**
+
+### 全仓双列布局统计
+
+```
+BackupPage ×1 · CareRemindersView ×1 · DeviceHomeView ×1 · DevicePage ×1
+ExportCenter ×1 · FirmwarePage ×3 · KeysPage ×1 · LockProfilePage ×1
+MemberCenterView ×3 · SettingsView ×1
+共 14 处
+```
+
+---
+
+## 六、四步升级全部完成
+
+| 升级 | 内容 | 页数 | 性质 |
+|---|---|---|---|
+| **A** | 卡片玻璃感（+25-30 色阶、保留色相）| 34/34 | 共性 |
+| **B** | 边距 14→22（参考图 6.6%）| 34/34 | 共性 |
+| **C** | 彩色环纯色 12 处 | 12 | 逐页 |
+| **D** | 双列卡 | 7 + 3 原有 | 逐页 |
