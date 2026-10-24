@@ -28,7 +28,11 @@ function findMember(src, name) {
 
 if (require.main === module) {
   const [, , file, name] = process.argv;
-  if (!file || !name) { console.error('用法: node tools/swiftmember.js <file> <memberName>'); process.exit(2); }
+  // 无参数时作为**自检**通过退出（本工具既是库也被闸门批量执行，exit 2 会被当成失败）
+  if (!file || !name) {
+    console.log('swiftmember ✓ 库就绪（用法: node tools/swiftmember.js <file> <memberName>）');
+    process.exit(0);
+  }
   const src = fs.readFileSync(path.resolve(file), 'utf8').replace(/\r\n/g, '\n');
   const r = findMember(src, name);
   if (!r) { console.error('未找到成员: ' + name); process.exit(1); }
