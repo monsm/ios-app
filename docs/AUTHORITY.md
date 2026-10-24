@@ -39,6 +39,7 @@
 | `tokendrift`（色板/字阶两端同源）| 临时把 Android `surfaceAlt` 改回 `0x24242A` | ✅ 立即报 MISMATCH，还原后恢复 |
 | `SecFmt.__bogus`（apicheck 自检）| 注入不存在的成员符号 | ✅ 报出（仓内既有自检）|
 | `subtitlesync`（S1-S4 基线对账）| 基线表漏一行/副标题含数字 | ✅ 两个方向都报 |
+| `swiftmember.js`（成员精确边界）| 三次 CI 失败的沉淀：'下一个 private var' 边界法在 func 成员处漏判（c6c802a/6270b60 两次失败）→ 深度归 0 法 + 计数验证 + 读回，一次成功 | ✅ 自测三成员边界全对 |
 | `swiftshape` 正控 | 12 种坏形状 | ✅ 各开火一次 |
 
 ## 原有闸门仍然有效
