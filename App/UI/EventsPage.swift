@@ -279,7 +279,54 @@ struct EventsPage: View {
         return WeekCal.gregorian.component(.hour, from: d)
     }
 
-    private func computeFiltered() -> [Rec] {
+    private /// HTML 50-events 的页内标题区：三枚读数胶囊 + H1 + SUB
+    ///
+    /// 这一页是**手写骨架**（没走 XScreen），第 1 轮统一修 XScreen 时漏了它：
+    /// 标题一直被交给导航栏（.navigationTitle + .large），页内一个标题都没有。
+    private var eventsHeader: some View {
+        VStack(alignment: .leading, spacing: XSpace.m) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: XSpace.s) {
+                    XStatChip(label: "今日", value: "\(todayCount) 条",
+                              ringFraction: 1, tint: XPalette.accent, fillsWidth: false)
+                    XStatChip(label: "告警", value: "\(alarmCount) 条",
+                              ringFraction: alarmCount > 0 ? 1 : 0,
+                              tint: alarmCount > 0 ? XPalette.danger : XPalette.ok, fillsWidth: false)
+                    XStatChip(label: "本机保留", value: "\(totalCount) 条",
+                              ringFraction: 1, tint: XPalette.textTertiary, fillsWidth: false)
+                }
+                .padding(.horizontal, XSpace.gutter)
+            }
+            .scrollIndicators(.hidden)
+            VStack(alignment: .leading, spacing: XSpace.xs) {
+                Text("事件")
+                    .xFont(.largeTitle, weight: .bold)
+                    .tracking(-0.4)
+                    .foregroundStyle(XPalette.text)
+                Text("本机保留 \(totalCount) 条 · 今日 \(todayCount) 条")
+                    .xFont(.body)
+                    .foregroundStyle(XPalette.textSub)
+            }
+            .padding(.horizontal, XSpace.gutter)
+        }
+        .padding(.top, XSpace.s)
+    }
+
+    /// 今日条数 —— Rec.timeStr 是 "yyyy-MM-dd HH:mm:ss"，比日期前缀
+    private var todayCount: Int {
+        let cal = WeekCal.gregorian
+        let now = Date()
+        let prefix = String(format: "%04d-%02d-%02d",
+                            cal.component(.year, from: now),
+                            cal.component(.month, from: now),
+                            cal.component(.day, from: now))
+        return filtered.filter { $0.timeStr.hasPrefix(prefix) }.count
+    }
+    /// 告警条数 —— 字段名是 .alarm（与 computeFiltered 的判据一致）
+    private var alarmCount: Int { filtered.filter { $0.alarm }.count }
+    private var totalCount: Int { filtered.count }
+
+    func computeFiltered() -> [Rec] {
         var out = recs
         if alarmOnly { out = out.filter { $0.alarm } }
         // 小时过滤放在提前 return 之前 —— 搜索为空时它同样要生效。
