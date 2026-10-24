@@ -677,9 +677,10 @@ private fun KfChip(
     val colors = LocalKfColors.current
     Row(
         modifier = modifier
-            .clip(RoundedCornerShape(999.dp))
+            // 圆角对齐 HTML .chip CSS（高56/r18 圆角矩形）——按 KfChip 高度 42dp 等比 13dp
+            .clip(RoundedCornerShape(13.dp))
             .background(Color.White.copy(alpha = 0.055f))
-            .border(0.5.dp, Color.White.copy(alpha = 0.07f), RoundedCornerShape(999.dp))
+            .border(0.5.dp, Color.White.copy(alpha = 0.07f), RoundedCornerShape(13.dp))
             .padding(horizontal = KfTokens.Space.m, vertical = 9.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)

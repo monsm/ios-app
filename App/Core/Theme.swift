@@ -296,12 +296,13 @@ enum XRadius {
     static var control: CGFloat { r(12) }
     /// 瓦片 —— 14。
     static var tile: CGFloat { r(14) }
-    /// 顶部胶囊 (StatChip) —— **22**（对齐 HTML tokens.css 的 `--r-chip:22`）。
+    /// 顶部胶囊 (StatChip) —— **18，圆角矩形（不是全圆胶囊）**。
     ///
-    /// 2026-10-24 用户口径：审美以 HTML 为准。HTML 的胶囊是 22，
-    /// 而这里此前是 14（规范 §7.2 实测 13.3）。两者相差 8pt ——
-    /// 14 读作"圆角矩形"，22 才读作"胶囊"，是形态差别不是粗细差别。
-    static var chip: CGFloat { r(22) }
+    /// 2026-10-24 二次修正：HTML 原型的 .chip CSS 实测是「高 56 / r18 / '不是全圆胶囊'」
+    /// （tokens.css 里 .chip 规则的原文注释）。同文件 --r-chip:22 与之矛盾——
+    /// 按「HTML 为准」的口径取**渲染事实** 18 而非变量 22。
+    /// 高度由 XStatChip 的 56 自检保证（与 .chip height:56px 一致）。
+    static var chip: CGFloat { r(18) }
     /// 小角标
     static var min: CGFloat { r(8) }
     /// 设备样机外框 —— 44。
