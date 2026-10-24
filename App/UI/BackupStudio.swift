@@ -230,7 +230,10 @@ struct BackupStudioView: View {
                     .foregroundStyle(DS.Palette.accentText)
                     .frame(minHeight: DS.Hit.min)
                 if !ExportDir.name.isEmpty {
-                    Button("清除") { ExportDir.clear(); dirTick += 1 }
+                    // 文案必须说清「删的是什么」：ExportDir.clear() 只删**书签**，不删任何文件。
+                    // 写成「清除」会让人以为要删掉目录里的备份 —— 于是不敢按，或者按了以为文件没了。
+                    Button("取消固定") { ExportDir.clear(); dirTick += 1 }
+                        .accessibilityHint("只忘记这个目录的选择，不删除目录里的任何文件")
                         .vkFont(.footnote)
                         .foregroundStyle(DS.Palette.danger)
                         .frame(minHeight: DS.Hit.min)
