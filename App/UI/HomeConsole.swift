@@ -156,6 +156,18 @@ struct HomeConsole: View {
                             VStack(spacing: XSpace.l) {
                                 metricsRow
                                 todaySection
+                                // ═══ 2026-10-24 逐页对齐 HTML 01-home 最后一块 ═══
+                                //
+                                // HTML 在「今日开门分布」之后还有一块**开门历史**：
+                                //   24pt/700 标题「开门历史」
+                                //   + 150pt 高的面积图（左侧面积 + 顶部网格线）
+                                //   + 右侧「更早 / 更近」两枚标签
+                                //   + 底部月份轴（9-24 / 10-04 / 10-14）
+                                //
+                                // 真机此前完全没有这一块 —— 门厅只能说"今天多少"，
+                                // 看不到"最近两周的趋势"。而参考图 1（Health Age History）
+                                // 正是这个形态：标题 + 面积图 + 时间轴。
+                                openHistorySection
                                 memberSection
                             }
                         }
@@ -946,6 +958,114 @@ struct HomeConsole: View {
     }
 
     // ─────────────────────────────────────────── ⑥ 今天
+    /// HTML 01-home 最后一块：**开门历史**（图 1 Health Age History 同形）
+    ///
+    /// 结构（逐项对齐 HTML）：
+    ///   · 24pt/700 标题「开门历史」（在卡片外，是页面级标题）
+    ///   · 150pt 高的面积图：左侧面积填充 + 3 条水平网格线（白 6%）
+    ///   · 右侧两枚标签：「更早」(顶) / 「更近」(底)
+    ///   · 底部月份轴：三枚日期（12pt，灰）
+    ///
+    /// 数据：最近 21 天每天的开门次数（从各锁日志里按天聚合）。
+    private var openHistorySection: some View {
+        let daily = dailyOpenCounts(days: 21)
+        let peak = max(daily.map { $0.count }.max() ?? 0, 1)
+        return VStack(alignment: .leading, spacing: XSpace.m) {
+            Text("开门历史")
+                .xFont(.title2, weight: .bold)
+                .tracking(-0.4)
+                .foregroundStyle(XPalette.text)
+            HStack(alignment: .top, spacing: XSpace.s) {
+                // 面积图（150pt 高）
+                GeometryReader { geo in
+                    let w = geo.size.width
+                    let h = geo.size.height
+                    let step = daily.isEmpty ? w : w / CGFloat(max(1, daily.count - 1))
+                    // 折线点
+                    let pts: [CGPoint] = daily.enumerated().map { i, d in
+                        CGPoint(x: CGFloat(i) * step,
+                                y: h - (h * CGFloat(d.count) / CGFloat(peak)))
+                    }
+                    ZStack(alignment: .bottomLeading) {
+                        // 3 条水平网格线（HTML: 白 6%，顶/中/底）
+                        ForEach(0..<3, id: \.self) { k in
+                            Rectangle()
+                                .fill(XPalette.veil.opacity(0.75))
+                                .frame(height: 1)
+                                .frame(maxHeight: .infinity, alignment: k == 0 ? .top : (k == 1 ? .center : .bottom))
+                        }
+                        // 面积填充
+                        if pts.count > 1 {
+                            Path { p in
+                                p.move(to: CGPoint(x: 0, y: h))
+                                for pt in pts { p.addLine(to: pt) }
+                                p.addLine(to: CGPoint(x: CGFloat(pts.count - 1) * step, y: h))
+                                p.closeSubpath()
+                            }
+                            .fill(XPalette.accent.opacity(0.18))
+                            // 顶部折线
+                            Path { p in
+                                if let f = pts.first {
+                                    p.move(to: f)
+                                    for pt in pts.dropFirst() { p.addLine(to: pt) }
+                                }
+                            }
+                            .stroke(XPalette.accent, style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
+                        }
+                    }
+                }
+                .frame(height: 150)
+                // 右侧「更早 / 更近」
+                VStack(alignment: .trailing) {
+                    Text("更早").xFont(.small).foregroundStyle(XPalette.textTertiary)
+                    Spacer(minLength: 0)
+                    Text("更近").xFont(.small).foregroundStyle(XPalette.textTertiary)
+                }
+                .frame(height: 150)
+            }
+            // 底部月份轴（三枚日期）
+            HStack(spacing: 0) {
+                ForEach(axisLabels(daily), id: \.self) { label in
+                    Text(label)
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textTertiary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+        }
+        .padding(.top, XSpace.m)
+    }
+
+    /// 最近 N 天每天的开门次数（按天聚合各锁日志）
+    private func dailyOpenCounts(days: Int) -> [(date: Date, count: Int)] {
+        let cal = WeekCal.gregorian
+        let today = cal.startOfDay(for: Date())
+        var buckets: [Date: Int] = [:]
+        for kc in DB.keychains() {
+            // 判据与全仓一致：StatsKit.openTypes 才是"开门"事件类型集合
+            // （日志的 type 是字符串码，不是 Bool；写 log.isOpen 编不过）
+            for log in DB.readLogs(kc.mac) where StatsKit.openTypes.contains(log.type) {
+                let ms = log.at > 1e12 ? log.at : log.at * 1000
+                let d = cal.startOfDay(for: Date(timeIntervalSince1970: ms / 1000))
+                buckets[d, default: 0] += 1
+            }
+        }
+        return (0..<days).reversed().compactMap { back in
+            guard let d = cal.date(byAdding: .day, value: -back, to: today) else { return nil }
+            return (d, buckets[d] ?? 0)
+        }
+    }
+
+    /// 底部轴标签：取首、中、尾三天
+    private func axisLabels(_ daily: [(date: Date, count: Int)]) -> [String] {
+        guard daily.count > 2 else { return [] }
+        let cal = WeekCal.gregorian
+        let picks = [daily.first!.date, daily[daily.count / 2].date, daily.last!.date]
+        return picks.map { d in
+            "\(cal.component(.month, from: d))-\(cal.component(.day, from: d))"
+        }
+    }
+
     private var todaySection: some View {
         // 参考图里数据块**是卡**：§7.11 的「标题 ›」在顶 → 主内容 → §7.6 分隔线 → 页脚。
         //
