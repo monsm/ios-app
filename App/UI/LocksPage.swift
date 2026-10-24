@@ -132,8 +132,16 @@ struct LocksPage: View {
             }
         }
         .onAppear { reload() }
-        // 2026-10-24: 「分享给安卓」已删（对照原 App：无此功能）。
-        // shareTarget 状态保留 —— Android 端从二维码导入的通路在 AndroidPair.swift。
+        // 「分享给安卓」—— **数据互通的唯一通道**。
+        //
+        // 2026-10-24 我曾按「原 App 无此功能」删掉它，那是误判：
+        // 用户目标明确要求「android app 保证简单的开门功能和 ios app 数据互通」，
+        // 而这条二维码（KFA1:{v,n,m,p,e}）就是 iOS → Android 的全部通路。
+        // 删了它，Android 端就无法拿到 ekey，等于两端各自孤立。
+        .sheet(item: $shareTarget) { kc in
+            ShareToAndroidView(kc: kc)
+                .environmentObject(app)
+        }
         // onDismiss 必须重载：配对成功后本页的 locks 是 @State 缓存，
         // 父视图的 onAppear 不会因为 sheet 关闭而重新触发 ——
         // 不加这一句，刚配好的门锁不会出现在列表里。

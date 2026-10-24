@@ -191,6 +191,11 @@ enum XPalette {
     /// 强调色的**文字档** —— 比 accent 亮/深一档，专供「只有文字没有底」的场合
     /// （卡头链接、可点文本）。与 accent 分开是因为文字要过 4.5，填充只要 3.0。
     static var accentText: Color { Color.adaptive(0xA05E20, 0xE8A05C) }
+    /// 二维码安静区（白色）—— 扫码端要靠这圈白边定位，透明底会扫不出。
+    /// 2026-10-24 曾误删（当时以为 ShareToAndroidView 要一起删），
+    /// 但「分享给安卓」是 iOS→Android 数据互通的唯一通道，必须保留。
+    static var qrQuietZone: Color { Color.white }
+
     /// 强调色上的前景。
     static var onAccent: Color { Color.adaptive(0xFFFFFF, 0x14100A) }
 
