@@ -727,10 +727,86 @@ struct CredentialDetailView: View {
         return "—"
     }
 
+    /// HTML 13-key-detail 顶部两张并排 metric-card（已使用 / 最近一次）
+    private var usedMetricsRow: some View {
+        HStack(spacing: XSpace.s) {
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: XSpace.xs) {
+                    Text("已使用").xFont(.subheadline).foregroundStyle(XPalette.textTertiary)
+                    Text("累计").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                        Text(String(usedTotal))
+                            .xFont(.largeTitle, weight: .bold)
+                            .monospacedDigit()
+                            .foregroundStyle(XPalette.text)
+                        Text("次").xFont(.footnote).foregroundStyle(XPalette.textSub)
+                    }
+                    HStack(alignment: .bottom, spacing: 1.5) {
+                        ForEach(Array(usedBars.enumerated()), id: \.offset) { _, v in
+                            Capsule()
+                                .fill(v > 0 ? XPalette.accent : XPalette.veil)
+                                .frame(width: 3, height: max(3, 30 * v))
+                        }
+                    }
+                    .frame(height: 30, alignment: .bottom)
+                }
+            }
+            XPanel(kind: .group) {
+                VStack(alignment: .leading, spacing: XSpace.xs) {
+                    Text("最近一次").xFont(.subheadline).foregroundStyle(XPalette.textTertiary)
+                    Text("时间").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                    Text(lastUsedText)
+                        .xFont(.headline, weight: .semibold)
+                        .foregroundStyle(XPalette.text)
+                        .lineLimit(1)
+                    Text(lastUsedWho)
+                        .xFont(.caption2)
+                        .foregroundStyle(XPalette.textTertiary)
+                        .lineLimit(2)
+                }
+            }
+        }
+    }
+
+    private var usedTotal: Int {
+        DB.readLogs(row.mac).filter { StatsKit.openTypes.contains($0.type) }.count
+    }
+    private var usedBars: [CGFloat] {
+        let cal = WeekCal.gregorian
+        let today = cal.startOfDay(for: Date())
+        var buckets: [Date: Int] = [:]
+        for log in DB.readLogs(row.mac) where StatsKit.openTypes.contains(log.type) {
+            let unix = ZKProtocol.protoSecondsToUnix(log.lockTime)
+            let d = cal.startOfDay(for: Date(timeIntervalSince1970: unix))
+            buckets[d, default: 0] += 1
+        }
+        let counts = (0..<24).reversed().compactMap { back -> Int? in
+            guard let d = cal.date(byAdding: .day, value: -back, to: today) else { return nil }
+            return buckets[d] ?? 0
+        }
+        let peak = max(counts.max() ?? 1, 1)
+        return counts.map { CGFloat($0) / CGFloat(peak) }
+    }
+    private var lastUsedText: String {
+        let logs = DB.readLogs(row.mac).filter { StatsKit.openTypes.contains($0.type) }
+        guard let last = logs.max(by: { $0.lockTime < $1.lockTime }) else { return "还没用过" }
+        return String(last.lockTimeStr.suffix(11))
+    }
+    private var lastUsedWho: String { row.owner ?? "本机" }
+
     var body: some View {
         ZStack {
             XPalette.canvasGradient.ignoresSafeArea()
             XScreen("凭证详情", subtitle: "这一条凭证的码值与使用记录") {
+                // ═══ 2026-10-24 逐页对齐 HTML 13-key-detail 顶部 duo ═══
+                //
+                // HTML 在标题下方先是**两张并排的 metric-card**：
+                //   左：「已使用 · 累计 24 次」+ 24 根柱图（1/7/14/21 轴）
+                //   右：「最近一次 · 今天 07:12」+「朕 · 手动」
+                // 然后才是「码值」卡。App 此前直接从码值开始 ——
+                // 那两张卡回答的是"这条钥匙用过几次、上次什么时候"，
+                // 是用户点进详情后第一个想知道的事，而码值反而可以缓一步。
+                usedMetricsRow
                 // 卡1 码值（HTML：44px 大数字 + 锁内编号/指纹位 两列）
                 XPanel(kind: .group) {
                     VStack(alignment: .leading, spacing: 0) {
