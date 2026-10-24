@@ -1,0 +1,375 @@
+<!doctype html><html lang="zh"><meta charset="utf-8">
+<title>审美验收 · 50 页对照</title>
+<style>
+body{background:#0a0e13;color:#e6e6ea;font:14px/1.6 -apple-system,"PingFang SC",sans-serif;margin:0;padding:24px}
+h1{font-size:22px;margin:0 0 6px}p.lead{color:#8d8d93;margin:0 0 20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+.p{background:#15171c;border:1px solid #24262c;border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.h{padding:8px 10px;border-bottom:1px solid #24262c;display:flex;justify-content:space-between;gap:8px;font-size:12px}
+.h span{color:#8d8d93}
+iframe{width:100%;height:300px;border:0;background:#000}
+.n{padding:8px 10px;font-size:12px;color:#9bd1a8;border-top:1px solid #24262c;flex:1}
+.r{padding:6px 10px 10px;display:flex;gap:14px;font-size:12px;color:#c9c9d0}
+label{cursor:pointer}
+.bar{position:sticky;top:0;background:#0a0e13;padding:10px 0;border-bottom:1px solid #24262c;margin-bottom:16px;display:flex;gap:16px;align-items:center}
+button{background:#1f6fd0;color:#fff;border:0;border-radius:8px;padding:6px 14px;cursor:pointer}
+#cnt{color:#8d8d93}
+</style>
+<div class="bar"><b>50 页审美对照</b><button onclick="ex()">导出我的判断</button><span id="cnt">0 / 50 已判</span></div>
+<p class="lead">左边是 HTML 原型（审美标准），右边你在真机上看同类页面。判断"这页像不像 HTML"，点对/不对，然后导出——我会按结果精准修。</p>
+<div class="grid"><div class="p">
+    <div class="h"><b>01-home</b><span>门厅</span></div>
+    <iframe src="01-home.html" loading="lazy"></iframe>
+    <div class="n">44px 主角数字 + 4 胶囊（已有）</div>
+    <div class="r"><label><input type="radio" name="01-home" value="ok">对</label>
+    <label><input type="radio" name="01-home" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>02-keys</b><span>钥匙</span></div>
+    <iframe src="02-keys.html" loading="lazy"></iframe>
+    <div class="n">补卡前 5 胶囊 + 到期卡三列</div>
+    <div class="r"><label><input type="radio" name="02-keys" value="ok">对</label>
+    <label><input type="radio" name="02-keys" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>03-devices</b><span>设备</span></div>
+    <iframe src="03-devices.html" loading="lazy"></iframe>
+    <div class="n">补玻璃胶囊行</div>
+    <div class="r"><label><input type="radio" name="03-devices" value="ok">对</label>
+    <label><input type="radio" name="03-devices" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>04-members</b><span>成员</span></div>
+    <iframe src="04-members.html" loading="lazy"></iframe>
+    <div class="n">补 4 胶囊 + 成员分布卡</div>
+    <div class="r"><label><input type="radio" name="04-members" value="ok">对</label>
+    <label><input type="radio" name="04-members" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>05-system</b><span>系统</span></div>
+    <iframe src="05-system.html" loading="lazy"></iframe>
+    <div class="n">新增备份恢复卡 + 4 卡头改名</div>
+    <div class="r"><label><input type="radio" name="05-system" value="ok">对</label>
+    <label><input type="radio" name="05-system" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>10-keys-manage</b><span>钥匙管理</span></div>
+    <iframe src="10-keys-manage.html" loading="lazy"></iframe>
+    <div class="n">补库存分布两列</div>
+    <div class="r"><label><input type="radio" name="10-keys-manage" value="ok">对</label>
+    <label><input type="radio" name="10-keys-manage" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>11-fingerprint</b><span>指纹</span></div>
+    <iframe src="11-fingerprint.html" loading="lazy"></iframe>
+    <div class="n">补指纹库存两列</div>
+    <div class="r"><label><input type="radio" name="11-fingerprint" value="ok">对</label>
+    <label><input type="radio" name="11-fingerprint" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>12-tempcode</b><span>临时密码</span></div>
+    <iframe src="12-tempcode.html" loading="lazy"></iframe>
+    <div class="n">（结构已核对）</div>
+    <div class="r"><label><input type="radio" name="12-tempcode" value="ok">对</label>
+    <label><input type="radio" name="12-tempcode" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>13-key-detail</b><span>密码详情</span></div>
+    <iframe src="13-key-detail.html" loading="lazy"></iframe>
+    <div class="n">**新增整页详情** + 点击接通</div>
+    <div class="r"><label><input type="radio" name="13-key-detail" value="ok">对</label>
+    <label><input type="radio" name="13-key-detail" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>15-add-key</b><span>添加密码</span></div>
+    <iframe src="15-add-key.html" loading="lazy"></iframe>
+    <div class="n">（结构已核对）</div>
+    <div class="r"><label><input type="radio" name="15-add-key" value="ok">对</label>
+    <label><input type="radio" name="15-add-key" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>14-otp</b><span>OTP 与口令</span></div>
+    <iframe src="14-otp.html" loading="lazy"></iframe>
+    <div class="n">判定已达标</div>
+    <div class="r"><label><input type="radio" name="14-otp" value="ok">对</label>
+    <label><input type="radio" name="14-otp" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>20-locks</b><span>我的门锁</span></div>
+    <iframe src="20-locks.html" loading="lazy"></iframe>
+    <div class="n">判定保留 List</div>
+    <div class="r"><label><input type="radio" name="20-locks" value="ok">对</label>
+    <label><input type="radio" name="20-locks" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>21-lock-profile</b><span>锁档案</span></div>
+    <iframe src="21-lock-profile.html" loading="lazy"></iframe>
+    <div class="n">新增指纹余量 + 身份两卡</div>
+    <div class="r"><label><input type="radio" name="21-lock-profile" value="ok">对</label>
+    <label><input type="radio" name="21-lock-profile" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>22-firmware</b><span>固件升级</span></div>
+    <iframe src="22-firmware.html" loading="lazy"></iframe>
+    <div class="n">新增升级进度卡</div>
+    <div class="r"><label><input type="radio" name="22-firmware" value="ok">对</label>
+    <label><input type="radio" name="22-firmware" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>23-gateway</b><span>网关配网</span></div>
+    <iframe src="23-gateway.html" loading="lazy"></iframe>
+    <div class="n">（结构已核对）</div>
+    <div class="r"><label><input type="radio" name="23-gateway" value="ok">对</label>
+    <label><input type="radio" name="23-gateway" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>24-dongles</b><span>蓝牙钥匙串</span></div>
+    <iframe src="24-dongles.html" loading="lazy"></iframe>
+    <div class="n">卡片材质改 XPanel</div>
+    <div class="r"><label><input type="radio" name="24-dongles" value="ok">对</label>
+    <label><input type="radio" name="24-dongles" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>25-synctime</b><span>校准时间</span></div>
+    <iframe src="25-synctime.html" loading="lazy"></iframe>
+    <div class="n">新增偏差范围卡</div>
+    <div class="r"><label><input type="radio" name="25-synctime" value="ok">对</label>
+    <label><input type="radio" name="25-synctime" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>30-members-list</b><span>成员列表</span></div>
+    <iframe src="30-members-list.html" loading="lazy"></iframe>
+    <div class="n">新增钥匙分布卡</div>
+    <div class="r"><label><input type="radio" name="30-members-list" value="ok">对</label>
+    <label><input type="radio" name="30-members-list" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>31-member-wizard</b><span>添加成员</span></div>
+    <iframe src="31-member-wizard.html" loading="lazy"></iframe>
+    <div class="n">补步骤条</div>
+    <div class="r"><label><input type="radio" name="31-member-wizard" value="ok">对</label>
+    <label><input type="radio" name="31-member-wizard" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>32-member-detail</b><span>成员详情</span></div>
+    <iframe src="32-member-detail.html" loading="lazy"></iframe>
+    <div class="n">补最近活动卡</div>
+    <div class="r"><label><input type="radio" name="32-member-detail" value="ok">对</label>
+    <label><input type="radio" name="32-member-detail" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>33-archived</b><span>已归档成员</span></div>
+    <iframe src="33-archived.html" loading="lazy"></iframe>
+    <div class="n">补归档规则卡 + 页脚</div>
+    <div class="r"><label><input type="radio" name="33-archived" value="ok">对</label>
+    <label><input type="radio" name="33-archived" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>34-merge</b><span>重复合并</span></div>
+    <iframe src="34-merge.html" loading="lazy"></iframe>
+    <div class="n">判定已达标</div>
+    <div class="r"><label><input type="radio" name="34-merge" value="ok">对</label>
+    <label><input type="radio" name="34-merge" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>40-security</b><span>隐私看板</span></div>
+    <iframe src="40-security.html" loading="lazy"></iframe>
+    <div class="n">补两卡头 + 页脚</div>
+    <div class="r"><label><input type="radio" name="40-security" value="ok">对</label>
+    <label><input type="radio" name="40-security" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>41-applock</b><span>应用锁</span></div>
+    <iframe src="41-applock.html" loading="lazy"></iframe>
+    <div class="n">新增保护项卡</div>
+    <div class="r"><label><input type="radio" name="41-applock" value="ok">对</label>
+    <label><input type="radio" name="41-applock" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>42-peek</b><span>防窥与遮蔽</span></div>
+    <iframe src="42-peek.html" loading="lazy"></iframe>
+    <div class="n">新增遮蔽样式 + 隐私总览两卡</div>
+    <div class="r"><label><input type="radio" name="42-peek" value="ok">对</label>
+    <label><input type="radio" name="42-peek" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>43-privacy-dash</b><span>隐私仪表盘</span></div>
+    <iframe src="43-privacy-dash.html" loading="lazy"></iframe>
+    <div class="n">（结构已核对）</div>
+    <div class="r"><label><input type="radio" name="43-privacy-dash" value="ok">对</label>
+    <label><input type="radio" name="43-privacy-dash" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>44-audit</b><span>安全审计</span></div>
+    <iframe src="44-audit.html" loading="lazy"></iframe>
+    <div class="n">（结构已核对）</div>
+    <div class="r"><label><input type="radio" name="44-audit" value="ok">对</label>
+    <label><input type="radio" name="44-audit" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>45-destroy</b><span>销毁与应急</span></div>
+    <iframe src="45-destroy.html" loading="lazy"></iframe>
+    <div class="n">新增敏感操作视图卡</div>
+    <div class="r"><label><input type="radio" name="45-destroy" value="ok">对</label>
+    <label><input type="radio" name="45-destroy" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>46-safemode</b><span>安全模式说明</span></div>
+    <iframe src="46-safemode.html" loading="lazy"></iframe>
+    <div class="n">新增验证强度卡</div>
+    <div class="r"><label><input type="radio" name="46-safemode" value="ok">对</label>
+    <label><input type="radio" name="46-safemode" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>47-backup</b><span>备份与恢复</span></div>
+    <iframe src="47-backup.html" loading="lazy"></iframe>
+    <div class="n">卡头/标签对齐 + 加密参数</div>
+    <div class="r"><label><input type="radio" name="47-backup" value="ok">对</label>
+    <label><input type="radio" name="47-backup" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>48-export</b><span>导出中心</span></div>
+    <iframe src="48-export.html" loading="lazy"></iframe>
+    <div class="n">补 24 柱 + 轴标</div>
+    <div class="r"><label><input type="radio" name="48-export" value="ok">对</label>
+    <label><input type="radio" name="48-export" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>49-appearance</b><span>外观工作室</span></div>
+    <iframe src="49-appearance.html" loading="lazy"></iframe>
+    <div class="n">（结构已核对）</div>
+    <div class="r"><label><input type="radio" name="49-appearance" value="ok">对</label>
+    <label><input type="radio" name="49-appearance" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>4a-me</b><span>本机设置</span></div>
+    <iframe src="4a-me.html" loading="lazy"></iframe>
+    <div class="n">（结构已核对）</div>
+    <div class="r"><label><input type="radio" name="4a-me" value="ok">对</label>
+    <label><input type="radio" name="4a-me" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>70-icon-picker</b><span>App 图标</span></div>
+    <iframe src="70-icon-picker.html" loading="lazy"></iframe>
+    <div class="n">判定已达标</div>
+    <div class="r"><label><input type="radio" name="70-icon-picker" value="ok">对</label>
+    <label><input type="radio" name="70-icon-picker" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>75-shell</b><span>功能导览</span></div>
+    <iframe src="75-shell.html" loading="lazy"></iframe>
+    <div class="n">N/A（无原生页）</div>
+    <div class="r"><label><input type="radio" name="75-shell" value="ok">对</label>
+    <label><input type="radio" name="75-shell" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>50-events</b><span>事件记录</span></div>
+    <iframe src="50-events.html" loading="lazy"></iframe>
+    <div class="n">判定保留时间轴</div>
+    <div class="r"><label><input type="radio" name="50-events" value="ok">对</label>
+    <label><input type="radio" name="50-events" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>51-feed</b><span>动态</span></div>
+    <iframe src="51-feed.html" loading="lazy"></iframe>
+    <div class="n">补页脚</div>
+    <div class="r"><label><input type="radio" name="51-feed" value="ok">对</label>
+    <label><input type="radio" name="51-feed" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>52-stats</b><span>统计</span></div>
+    <iframe src="52-stats.html" loading="lazy"></iframe>
+    <div class="n">判定已达标（7 卡全对齐）</div>
+    <div class="r"><label><input type="radio" name="52-stats" value="ok">对</label>
+    <label><input type="radio" name="52-stats" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>60-care</b><span>维护与保养</span></div>
+    <iframe src="60-care.html" loading="lazy"></iframe>
+    <div class="n">整卡按 HTML 重写（44px+三列）</div>
+    <div class="r"><label><input type="radio" name="60-care" value="ok">对</label>
+    <label><input type="radio" name="60-care" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>61-reminders</b><span>关怀提醒</span></div>
+    <iframe src="61-reminders.html" loading="lazy"></iframe>
+    <div class="n">生日清单 → 图6 横滑画廊</div>
+    <div class="r"><label><input type="radio" name="61-reminders" value="ok">对</label>
+    <label><input type="radio" name="61-reminders" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>80-states</b><span>状态规范</span></div>
+    <iframe src="80-states.html" loading="lazy"></iframe>
+    <div class="n">N/A（组件规范）</div>
+    <div class="r"><label><input type="radio" name="80-states" value="ok">对</label>
+    <label><input type="radio" name="80-states" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>81-backup-studio</b><span>备份工作室</span></div>
+    <iframe src="81-backup-studio.html" loading="lazy"></iframe>
+    <div class="n">新增撤销恢复红卡 + 三列</div>
+    <div class="r"><label><input type="radio" name="81-backup-studio" value="ok">对</label>
+    <label><input type="radio" name="81-backup-studio" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>82-bin</b><span>回收站</span></div>
+    <iframe src="82-bin.html" loading="lazy"></iframe>
+    <div class="n">补三卡头</div>
+    <div class="r"><label><input type="radio" name="82-bin" value="ok">对</label>
+    <label><input type="radio" name="82-bin" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>83-studio</b><span>钥匙工坊</span></div>
+    <iframe src="83-studio.html" loading="lazy"></iframe>
+    <div class="n">判定已达标</div>
+    <div class="r"><label><input type="radio" name="83-studio" value="ok">对</label>
+    <label><input type="radio" name="83-studio" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>84-diagnostics</b><span>诊断与自检</span></div>
+    <iframe src="84-diagnostics.html" loading="lazy"></iframe>
+    <div class="n">稳定性卡重构为图5 MetricCard</div>
+    <div class="r"><label><input type="radio" name="84-diagnostics" value="ok">对</label>
+    <label><input type="radio" name="84-diagnostics" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>85-battery</b><span>换电指引</span></div>
+    <iframe src="85-battery.html" loading="lazy"></iframe>
+    <div class="n">补电量卡头</div>
+    <div class="r"><label><input type="radio" name="85-battery" value="ok">对</label>
+    <label><input type="radio" name="85-battery" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>86-checklist</b><span>锁体保养</span></div>
+    <iframe src="86-checklist.html" loading="lazy"></iframe>
+    <div class="n">判定已达标</div>
+    <div class="r"><label><input type="radio" name="86-checklist" value="ok">对</label>
+    <label><input type="radio" name="86-checklist" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>87-claim</b><span>认领钥匙</span></div>
+    <iframe src="87-claim.html" loading="lazy"></iframe>
+    <div class="n">卡头改名对齐</div>
+    <div class="r"><label><input type="radio" name="87-claim" value="ok">对</label>
+    <label><input type="radio" name="87-claim" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>88-exit</b><span>退出处置</span></div>
+    <iframe src="88-exit.html" loading="lazy"></iframe>
+    <div class="n">（结构已核对）</div>
+    <div class="r"><label><input type="radio" name="88-exit" value="ok">对</label>
+    <label><input type="radio" name="88-exit" value="no">不对</label></div>
+  </div>
+<div class="p">
+    <div class="h"><b>89-share-android</b><span>分享给安卓</span></div>
+    <iframe src="89-share-android.html" loading="lazy"></iframe>
+    <div class="n">新增关于这个码卡</div>
+    <div class="r"><label><input type="radio" name="89-share-android" value="ok">对</label>
+    <label><input type="radio" name="89-share-android" value="no">不对</label></div>
+  </div></div>
+<script>
+function upd(){const n=document.querySelectorAll('input[value=no]:checked').length;const ok=document.querySelectorAll('input[value=ok]:checked').length;document.getElementById('cnt').textContent=(ok+n)+' / 50 已判';}
+document.addEventListener('change',upd);
+function ex(){const out=[];document.querySelectorAll('input:checked').forEach(i=>out.push(i.name+'='+i.value));
+  const t=out.join('\n');navigator.clipboard.writeText(t).then(()=>alert('已复制 '+out.length+' 条：\n'+t.slice(0,500)));}
+</script></html>
