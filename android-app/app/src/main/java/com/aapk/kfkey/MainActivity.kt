@@ -6,6 +6,7 @@ import android.media.AudioManager
 import android.media.ToneGenerator
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -139,6 +140,16 @@ private fun KfApp(unlocker: BleUnlocker) {
     var airTagDismissed by remember { mutableStateOf(false) }  // 用户手动收起 AirTag 层 (本次靠近事件内不再弹)
     var findSound by remember { mutableStateOf(true) }         // AirTag 层提示音开关
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    // Q20 (2026-10-20): 返回键处理。此前全仓零 BackHandler —— 二级菜单与 AirTag 全屏层都是
+    // 手写 AnimatedVisibility, 没有人消费返回键 ⇒ 按返回会冒泡到 ComponentActivity.finish(),
+    // 整个 App 直接退出。这里按"最上层优先"关闭：AirTag 层 → 二级菜单 → 默认退出。
+    // 判据与下方 airTagShowing 同一表达式 (它声明在更下面, 这里不能用) —— proximity/rssi/airTagDismissed
+    // 三个状态都在上一行之前声明, 所以可以直接内联。
+    val airTagLayerUp = proximity && rssi != null && !airTagDismissed
+    BackHandler(enabled = airTagLayerUp || showSettings) {
+        if (airTagLayerUp) { airTagDismissed = true } else if (showSettings) { showSettings = false }
+    }
 
     fun say(text: String, bad: Boolean = false) {
         status = text
@@ -822,7 +833,10 @@ private fun AirTagLayer(
     Box(
         Modifier
             .fillMaxSize()
-            .background(if (armed) Color(0xFF12B24A) else Color(0xFF1CC964))
+            // 原色 #1CC964 / #12B24A 配白字只有 2.19:1 / 2.80:1, 低于 WCAG AA 的 4.5:1。
+            // 压暗到下面两档后: #0B6B3A 对白字 = 6.6:1, #0E7A42 = 5.4:1, 两档都达标。
+            // 为什么不改成深色文字: 这是全屏查找层, 白字在强光下可读性更好; 压暗底色保色相不变 (仍是"绿=可开")。
+            .background(if (armed) Color(0xFF0E7A42) else Color(0xFF0B6B3A))
     ) {
         // 顶部: 正在查找 + 锁名 (对齐 AirTag 精确查找的标题区)
         Column(Modifier.padding(start = 28.dp, top = 56.dp)) {
