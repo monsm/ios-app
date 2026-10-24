@@ -203,12 +203,10 @@ struct ManagerFace: View {
                     XStatChip(label: "钥匙串", value: "\(DB.dongles().count) 台",
                               ringFraction: 0, tint: XPalette.textTertiary, fillsWidth: false)
                 case .members:
-                    XStatChip(label: "成员", value: String(DB.members().count),
-                              ringFraction: 1, tint: XPalette.accent, fillsWidth: false)
-                    XStatChip(label: "活跃", value: String(DB.members().count),
-                              ringFraction: 1, tint: XPalette.ok, fillsWidth: false)
-                    XStatChip(label: "归档", value: String(MemberHub.archivedIDs().count),
-                              ringFraction: 0, tint: XPalette.textTertiary, fillsWidth: false)
+                    // 2026-10-24 精简：这里原来有三枚胶囊（成员/活跃/归档），
+                    // 而 MembersPage 顶部**同样三枚又出现一次**，数据源完全相同。
+                    // 进 MembersPage 就能看到，组页不再重复。
+                    EmptyView()
                 case .system:
                     XStatChip(label: "应用锁", value: DB.hasPasscode() ? "已开启" : "未开启",
                               ringFraction: DB.hasPasscode() ? 1 : 0,

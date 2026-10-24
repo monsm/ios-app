@@ -23,14 +23,12 @@
 | 锁档案 | 这台锁的名字 / 符号 / 配色 | LockProfilePage |
 | 添加密码 | 写入门锁 · 会占用密码库存 | AddKeyPage |
 | 同步时间 | 锁钟偏差 · 写入手机时间 | DeviceHomeView |
-| 退出处置向导 | 逐条处置：保留 / 移交 / 停用 | MemberCenterView |
 | 销毁与应急 | 不可逆操作 · 需要二次确认 | SecurityCenterView |
 | 钥匙管理 | **动态**（项数与分类计数，格式见 KeysPage.subline） | KeysPage |
 | 应用锁 | 打开 App 前先验一次口令 | AppLockSetupView |
 | 这台锁 | 这把锁的身份与实时状态 | DevicePage |
 | 诊断与自检 | 进入时算一次，动作后重算 | DiagnosticsPage |
 | 智能网关 | 把门锁接到家里网络 | GatewayPage |
-| 重复合并 | 选一位作为主档案，另一位并入 | MemberCenterView |
 
 ---
 

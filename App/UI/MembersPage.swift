@@ -90,7 +90,7 @@ struct MembersPage: View {
                 XStatChip(label: "成员", value: String(members.count))
                 XStatChip(label: "活跃", value: String(members.filter { MemberHub.isActive($0.id) }.count))
                 XStatChip(label: "归档", value: String(MemberHub.archivedIDs().count))
-                XStatChip(label: "未归属记录", value: String(unclaimedCount))
+                    // 2026-10-24 精简：删「未归属记录」胶囊 —— 原 App 没有，且信息在「匿名认领」入口里已有
             }
             .padding(.vertical, 2)
         }
@@ -291,14 +291,7 @@ struct MembersPage: View {
                 }
                 .buttonStyle(.plain)
                 XHairline().padding(.leading, XSpace.card + 40)
-                NavigationLink {
-                    MemberFamilySettingsView().environmentObject(app)
-                } label: {
-                    XRow(systemImage: "person.3", title: "家庭设置",
-                         subtitle: "长辈模式 / 隐私浏览", showsChevron: true)
-                        .padding(.horizontal, XSpace.card)
-                        .padding(.vertical, XSpace.s)
-                }
+            // 2026-10-24 精简：家庭设置已删（原 App 无此功能）
                 .buttonStyle(.plain)
             }
         }

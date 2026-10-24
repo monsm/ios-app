@@ -181,27 +181,8 @@ enum StudioTools {
 
 // ================= 共享小组件 =================
 
-/// 515 分步表单顶部进度圆点条
-struct StepDots: View {
-    let total: Int
-    var index: Int
-    var labels: [String] = []
-    var body: some View {
-        HStack(spacing: XSpace.xs) {
-            ForEach(0..<total, id: \.self) { i in
-                Circle()
-                    .fill(i <= index ? XPalette.accent : XPalette.hairline)
-                    .frame(width: 7, height: 7)
-            }
-            Text("第 \(index + 1)/\(total) 步" + (labels.indices.contains(index) ? " · \(labels[index])" : ""))
-                .xFont(.caption)
-                .foregroundStyle(XPalette.textSub)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-        }
-        .accessibilityLabel("表单进度 第 \(index + 1) 步, 共 \(total) 步")
-    }
-}
+// 2026-10-24 精简：StepDots 零引用，已删
+
 
 /// 370 贴近复蔽: 面部贴近听筒 (通话贴脸那套传感器) 时把已揭示的码位立刻复遮。
 /// UIDevice 的 proximity 是公开 API; **只在页面在屏时开监听** (onAppear 开、onDisappear 关) ——
@@ -309,49 +290,8 @@ struct MaskedDigits: View {
 }
 
 
-/// 171/337 时窗进度细条 (⚠ 锁端 ZOTP 分钟级; 独立 TOTP 秒级; 末 5 秒转橙并轻震)
-struct WindowBar: View {
-    let totalSec: Int
-    let label: String
-    @State private var now = Date()
-    private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-    /// 337/171 时窗倒计时的**唯一**实现: per - epoch % per (取余不是取整除)。
-    /// CredentialOrg 里曾有同公式的 totpRemaining, 零调用, 已删, 免得看着像两套口径。
-    private func remaining(_ d: Date) -> Int { max(0, totalSec - Int(d.timeIntervalSince1970) % max(totalSec, 1)) }
-    var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            GeometryReader { geo in
-                Capsule().fill(remaining(now) <= 5 ? XPalette.warn : XPalette.accent)
-                    .frame(height: 4)
-                    .frame(width: max(CGFloat(remaining(now)) / CGFloat(max(totalSec, 1)) * geo.size.width, 0))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .frame(height: 4)
-            .animation(XMotion.exit, value: remaining(now))
-            HStack(spacing: XSpace.xs) {
-                Text(label)
-                    .xFont(.caption2)
-                    .foregroundStyle(XPalette.textSub)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                Spacer(minLength: 0)
-                Text("剩约 \(remaining(now)) 秒")
-                    .xFont(.caption2)
-                    .monospacedDigit()
-                    .foregroundStyle(XPalette.textSub)
-                    .lineLimit(1)
-            }
-        }
-        .onReceive(timer) { t in
-            let old = remaining(now)
-            now = t
-            if remaining(t) <= 5 && old > 5 && remaining(t) > 0 {
-                XHaptics.tick.impactOccurred()   // 337 末 5 秒轻震
-            }
-        }
-        .accessibilityLabel(label + " 剩约 \(remaining(now)) 秒")
-    }
-}
+// 2026-10-24 精简：WindowBar 零引用，已删
+
 
 /// 172/328 大字口述卡 (可拍照/可剪贴; 34 卡片厚度; 含码风险提示)
 struct CodeBigCard: View {
