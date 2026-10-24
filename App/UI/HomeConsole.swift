@@ -256,14 +256,7 @@ struct HomeConsole: View {
             .sheet(isPresented: $showAddLock) {
                 AddLockPage().environmentObject(app).trackScreen("配对门锁")
             }
-            .sheet(isPresented: Binding(get: { hourSheet != nil },
-                                       set: { if !$0 { hourSheet = nil } })) {
-                if let h = hourSheet {
-                    NavigationStack {
-                        EventsPage(initialHour: h).environmentObject(app).trackScreen("事件·某小时")
-                    }
-                }
-            }
+        // 2026-10-24: EventsPage 已删，此处原为「点环上某小时看该小时事件」sheet
             // 环的口径说明（§7.8 形态 1 的 info 按钮指向这里）
         .alert("这个环是什么", isPresented: $showRingInfo) {
             Button("知道了", role: .cancel) {}
@@ -271,9 +264,7 @@ struct HomeConsole: View {
             Text("环上的一圈是「今天开过几次门」：满圈是最近 30 天里最忙的那一天。\n"
                  + "只统计开锁类事件，不含失败的尝试；自动开锁也算一次。")
         }
-        .sheet(isPresented: $showEvents) {
-                NavigationStack { EventsPage().environmentObject(app).trackScreen("事件记录") }
-            }
+        // 2026-10-24: EventsPage 已删（用户裁定），此处原为「事件记录」sheet
             .sheet(isPresented: Binding(get: { memberSheetID != nil },
                                        set: { if !$0 { memberSheetID = nil } })) {
                 if let id = memberSheetID {

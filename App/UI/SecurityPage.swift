@@ -297,11 +297,7 @@ struct SecurityPage: View {
                     AppLockSetupView().environmentObject(app).trackScreen("应用锁")
                 }
                 XHairline(inset: XSpace.card)
-                actionRow(icon: "eye.slash", title: "防窥与遮蔽",
-                          detail: "后台即糊 / 限时可见 / 水印") {
-                    SecurityPeekView().environmentObject(app).destined(.securityPeek)
-                }
-                XHairline(inset: XSpace.card)
+                // 2026-10-24: 删「防窥与遮蔽」入口（用户裁定不需要防窥功能）
                 actionRow(icon: "list.bullet.rectangle", title: "审计日志",
                           detail: "谁在什么时候做了什么") {
                     SecurityAuditView().environmentObject(app)

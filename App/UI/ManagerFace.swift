@@ -352,7 +352,9 @@ struct ManagerFace: View {
         case .members:        MembersPage()
         case .memberWizard:   MemberWizardView()
         case .archivedMembers: MemberArchivedView()
-        case .securityCenter: PrivacyDashboard()
+        // 2026-10-24: PrivacyDashboard 已删（用户裁定「不需要防窥功能」）。
+        // 系统组首项改为「本机保护」—— 安全域的入口收在这一个页面上。
+        case .securityCenter: SecurityPage()
         case .securityAudit:  SecurityAuditView()
         case .securityDestroy: SecurityDestroyView()
         case .safemode:       SafemodeIntroView()

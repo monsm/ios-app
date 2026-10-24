@@ -299,13 +299,7 @@ struct MePage: View {
             // 用户按标题预期找防窥/伪装，落到的是一张"安全吗"的总览卡。
             // 现在直达真正承载这三件事的那一页（SecurityPeekView，
             // 它正是 SecurityPage 里「防窥与遮蔽」那条的落点）。
-            NavigationLink { SecurityPeekView().environmentObject(app) } label: {
-                XRow(
-                    systemImage: "eye.slash",
-                    title: "隐私与伪装",
-                    subtitle: "后台即糊 / 限时可见 / 水印",
-                    showsChevron: true)
-            }
+            // 2026-10-24: SecurityPeekView 已删（用户裁定）
             XHairline(inset: XSpace.card + 28 + XSpace.m)
             // ═══ 诊断与自检 ═══
             //
@@ -449,21 +443,18 @@ struct MePage: View {
             // 但它**全仓零引用**，没有任何入口。上面那个"动态消息"是更简单的卡片流。
             //
             // 两个都在：动态消息看"最近发生了什么"，事件记录做"翻旧账/查证据"。
-            NavigationLink { EventsPage().environmentObject(app) } label: {
+            // 2026-10-24: EventsPage 已删（用户裁定）。原先它下面的子页 StatsPage
+            // 只从 EventsPage 进 —— 页面一删就成了孤岛，这里补一个入口。
+            NavigationLink { StatsPage().environmentObject(app).trackScreen("统计") } label: {
                 XRow(
-                    systemImage: "list.bullet.rectangle",
-                    title: "事件记录",
-                    subtitle: "按天浏览 · 搜索 · 同步",
+                    systemImage: "chart.bar",
+                    title: "统计",
+                    subtitle: "开门次数 / 趋势 / 分布",
                     showsChevron: true)
             }
             XHairline(inset: XSpace.card + 28 + XSpace.m)
-            NavigationLink { FeedPage().environmentObject(app) } label: {
-                XRow(
-                    systemImage: "bell",
-                    title: "动态消息",
-                    value: messageBadge,
-                    showsChevron: true)
-            }
+            XHairline(inset: XSpace.card + 28 + XSpace.m)
+            // 2026-10-24: FeedPage 已删（用户裁定）
             Text("导出与关怀")
                 .xFont(.caption, weight: .semibold)
                 .foregroundStyle(XPalette.textTertiary)

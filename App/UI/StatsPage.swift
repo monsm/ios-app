@@ -85,7 +85,7 @@ struct StatsPage: View {
             }
         }
         .sheet(isPresented: $showEvents) {
-            EventsPage().environmentObject(app)
+            EmptyView()  // 2026-10-24: EventsPage 已删（用户裁定）
         }
         .sheet(isPresented: $showSecurity) {
             SecurityPage().environmentObject(app)

@@ -14,8 +14,6 @@
 | 本机设置 | 这台手机上的保护与数据 | MePage |
 | 成员 | 谁能开门 · 各自的授权来源 | MembersPage |
 | 导出与分享 | 生成过程纯本地，不经过任何网络 | ExportCenter |
-| 动态 | 这把锁今天发生了什么 | FeedPage |
-| 防窥与遮蔽 | 口令与码值在本机怎么藏 | SecurityCenterView |
 | 分享给安卓 | 这把锁的开锁二维码 | ShareToAndroidView |
 | 固件升级 | 升级前请完成全部检查项 | FirmwarePage |
 | 关怀提醒 | 生日与纪念日的本地提醒 | CareRemindersView |

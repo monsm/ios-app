@@ -25,7 +25,6 @@ enum Destination: String, CaseIterable, Identifiable {
     case mergeMembers = "MergeMembersView"
     case restoreWizard = "RestoreWizardView"
     case safemodeIntro = "SafemodeIntroView"
-    case securityPeek = "SecurityPeekView"
     case shareToAndroid = "ShareToAndroidView"
     case syncTime = "SyncTimeView"
     case unclaimedClaim = "UnclaimedClaimView"
