@@ -40,12 +40,26 @@ struct CredentialBinView: View {
         // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
         XScreen("回收站", subtitle: "删掉的钥匙在这里，可以恢复") {
+            // ═══ 2026-10-24 逐页对齐 HTML 82-bin ═══
+            //
+            // HTML 的回收站**空态时也有 4 张卡**：
+            //   ① 空态卡（"回收站是空的"）
+            //   ② 保留期卡（"删掉的钥匙保留 30 天 / 到期自动清"）
+            //   ③ 回执卡（"恢复命令发出后，门锁会返回一条回执"）
+            //   ④ 下发状态卡（"等待门锁确认 0 条 / 等待连接后发出 0 条"）
+            //
+            // 真机此前把 ②③④ 全锁在 `else` 分支里 —— 于是**新建的 App 回收站是空的，
+            // 用户永远看不到保留期规则、也不知道"恢复要靠门锁回执"**。
+            // 那三张卡恰恰是空态时最该读的：它们解释"为什么现在没有东西"和"以后会怎样"。
             if entries.isEmpty {
                 XPanel(kind: .group) {
                     XEmptyState(systemImage: "trash.slash",
                                 title: "回收站是空的",
-                                message: "删除或停用的钥匙会在这里保留 \(retainDays) 天，可以放回原位。")
+                                message: "删掉的钥匙会先放这里 —— 刚删完就后悔还能捞回来。")
                 }
+                retentionCard
+                receiptCard
+                pendingCard
             } else {
                 // 六图改造 (2026-10-24): 顶部图5 读数卡（44px 回收站条目数 + 环）
                 binStatsCard
