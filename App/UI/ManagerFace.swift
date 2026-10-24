@@ -277,7 +277,7 @@ struct ManagerFace: View {
             // 合并的是「安全」+「数据与外观」—— 它们的共同点是**都在管这台手机**，
             // 而不是管那把锁。分两栏时用户要在两个 Tab 之间反复横跳才能配完一次备份。
             return [
-                (.securityCenter, "隐私看板", "应用锁 / 授权总览", "lock.shield"),
+                (.securityCenter, "应用锁", "应用锁 / 授权总览", "lock.shield"),
                 (.securityAudit, "安全审计", "变更记录", "list.bullet.rectangle"),
                 (.securityDestroy, "销毁数据", "不可逆清除", "trash"),
                 (.safemode, "安全模式", "变严方向", "shield.lefthalf.filled"),

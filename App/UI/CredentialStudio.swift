@@ -11,7 +11,7 @@ import Combine
 
 // ================= 本地工具 (纯离线, 不碰锁端) =================
 // 309 的逐位朗读原来在这里另建一台 AVSpeechSynthesizer (private `StudioTTS`)，
-// 与 AppIntents 里那台各说各话 ⇒ 已收进 `App/Core/SpeechKit.swift` 的 `Speech.digits`。
+// 与 AppIntents 里那台各说各话。2026-10-24: SpeechKit.swift 已删（空壳，零声明）。
 
 enum StudioTools {
     /// 173 本地 CSPRNG 数字生成 (KeyGen 即 SecureRandom 底层)

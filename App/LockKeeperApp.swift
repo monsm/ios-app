@@ -1019,7 +1019,7 @@ static let guestBlockedTabs: Set<Int> = Route.guestBlockedTabs
         // 2026-10-15 走查 (对照 H5 权威 main.js @577111): 双验模式 (verifyMode==1) 下 rc==0
         // 只是第一道通过, H5 原版此刻会提示「门锁已开启双重验证，请继续使用指纹/密码开锁」。
         // 此前直接报「门已打开」= 对 B 模式用户说谎; 用状态帧镜像判, 快照未读到时宁可不提示 (与
-        // LockOverviewView「未读到≠无告警」同一口径)。
+        // 「未读到≠无告警」同一口径)。
         if status?.verifyMode == 1 {
             showToast("双验模式: 第一道已通过, 请再用指纹或密码完成第二道验证")
         } else {
@@ -1491,8 +1491,7 @@ struct RootView: View {
                 app.refreshPasteSuggestion()
                 // 671 自动档: 用户没开开关时这里一次请求都不发；开了也每进程只发一次 (HolidayFeed 内部判)
                 Task { await HolidayFeed.autoRefreshIfNeeded() }
-                // 897 四季图标: 默认关。开着也只在"季节真的换了"时对齐一次 (年-季记号)，不每次回前台打扰
-                SeasonIcon.syncIfNeeded()
+                // 2026-10-24: 四季自动换图标随 IconPicker 一起删除（对照原 App：无换图标功能）
             }
         } else if phase == .background {
             // 2026-10-14: 只有**真进后台**才算退后台。旧实现把 .inactive (下拉通知中心/控制中心、

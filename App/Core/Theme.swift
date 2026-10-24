@@ -783,7 +783,7 @@ enum XAppearance {
 extension Color {
     /// 解析成员档案里存的 "#RRGGBB" 色串。
     ///
-    /// 为什么要有这一枚: 同一个函数在 `FpOwnerPicker` / `MembersPage` / `SecurityCenterView`
+    /// 为什么要有这一枚: 同一个函数在 `MembersPage` / `SecurityCenterView`
     /// 各写了一遍, 而且**回落值三处不同**(textSub / accent / textSub) —— 同一个成员在一次
     /// 解析失败里会显示成三种颜色。数据是同一份(`Member.color`), 解析就该只有一处。
     ///

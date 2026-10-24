@@ -47,7 +47,7 @@ enum TimeFormat {
     /// 不做时区换算: 源串是锁端/本机记下的墙上时钟，换一次就与锁端键盘上的数字不一致了。
     /// 从 `yyyy-MM-dd HH:mm:ss` 里截出 `HH:mm`。**唯一实现**。
     ///
-    /// 2026-10-23：这段在 `AlarmsPage` 与 `EventsPage` 里各写了一遍（连注释都一样）。
+    /// 2026-10-23：这段曾在两个页面各写一遍（连注释都一样）；那两页已按原版对照删除。
     /// 它不涉及时制改写（那是上面的 `clock`），只是取时刻段，所以单独一支。
     static func shortClock(_ full: String) -> String {
         guard full.count >= 16 else { return full }

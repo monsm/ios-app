@@ -199,11 +199,11 @@ struct XHairline: View {
     /// 行自己的 `.padding(.vertical)` 已经给了留白，分隔线再补就会把行撑高。
     ///
     /// **2026-10-23 更正**：这里原来写着「本 App 没有多段指标卡 —— 所以这个参数保留、默认不用」。
-    /// 那是假的：`CarePage.periodCard` 与 `HomeConsole.todaySection` 都是多段卡，而且都在传 14。
+    /// 那是假的：多段卡（如 `HomeConsole.todaySection`）都在传 14。
     /// 更要紧的是**传 14 也是错的** —— 规范 §7.6 的节奏表是「值→线 **14pt**」这个**净距**，
     /// 不是「线上下各补 14」。线补 14 再叠容器 12，净距成了 26，比规范松近一倍。
     ///
-    /// 正确用法（见 CarePage.periodCard）：线不补白，用 `.padding(.top, 2)` 补足上方净距。
+    /// 正确用法（见 `HomeConsole.todaySection`）：线不补白，用 `.padding(.top, 2)` 补足上方净距。
     var verticalPadding: CGFloat = 0
 
     var body: some View {

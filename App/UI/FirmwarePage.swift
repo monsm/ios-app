@@ -63,7 +63,7 @@ struct FirmwarePage: View {
     }
     private var battOk: Bool { battPct > 30 }
     private var checklistOk: Bool { battOk && bleSvc.isPoweredOn && tickBackup && tickTime }
-    /// 文案唯一实现在 BackupStudio.lastBackupText。
+    /// 文案口径与 BackupPage.lastBackupText 保持一致（备份工作室已随原版对照删除）。
     /// 这里原来自己读 `kf_backup_hist` 且措辞更短（没有「昨天」），同一件事两种说法。
     private var lastBackupText: String {
         let ms = DB.store.getInt("kf_bk_last_export", 0)
