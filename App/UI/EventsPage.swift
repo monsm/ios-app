@@ -279,7 +279,7 @@ struct EventsPage: View {
         return WeekCal.gregorian.component(.hour, from: d)
     }
 
-    private /// HTML 50-events 的页内标题区：三枚读数胶囊 + H1 + SUB
+    /// HTML 50-events 的页内标题区：三枚读数胶囊 + H1 + SUB
     ///
     /// 这一页是**手写骨架**（没走 XScreen），第 1 轮统一修 XScreen 时漏了它：
     /// 标题一直被交给导航栏（.navigationTitle + .large），页内一个标题都没有。
