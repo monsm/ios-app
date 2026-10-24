@@ -42,7 +42,9 @@ struct MaintenanceView: View {
             XPalette.canvasGradient.ignoresSafeArea()
 
             // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
-            XScreen("维护与保养", subtitle: "机械件也该有保养记录") {
+            // 这一页是**保养历史**（从门锁名片/设置打开），与主页面「维护与保养」不是同一屏。
+            // 用同名标题会让用户以为点错了 —— 属于「点了不是对应的内容」。
+            XScreen("保养历史", subtitle: "每次保养都记在这里，不做云同步") {
                 carePeriodSection.xScrollLift()
                 historySection.xScrollLift()
                 swapSection.xScrollLift()

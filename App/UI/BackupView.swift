@@ -36,7 +36,10 @@ struct BackupView: View {
 
         // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
-        XScreen("备份与恢复", subtitle: "数据只在这台 iPhone · 全程离线加密") {
+        // 与本文件外的 `BackupPage`（管理组「备份恢复」入口）**不是同一屏**：
+            // 这一屏从快捷格进，多出云盘账号与 WebDAV 导出两块。
+            // 用同名标题会让用户以为点错了页 —— 「点了不是对应的内容」。
+            XScreen("备份与云盘", subtitle: "本机备份 · 云盘账号只存这一台") {
                 exportSection.xScrollLift()
                 importSection.xScrollLift()
                 studioSection.xScrollLift()

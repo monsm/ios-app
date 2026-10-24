@@ -601,7 +601,7 @@ struct MemberWizardView: View {
                 XPalette.canvasGradient.ignoresSafeArea()
 
                 // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
-                XScreen("建档向导") {
+                XScreen("建档向导", subtitle: "给这位成员起个名字，之后全家都用它称呼") {
                                     // 审美对齐 HTML 31-member-wizard：卡前有步骤条
                 XStepBar(titles: steps, current: step)
                     .padding(.bottom, XSpace.s)
@@ -1004,7 +1004,7 @@ struct MemberArchivedView: View {
             XPalette.canvasGradient.ignoresSafeArea()
 
             // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
-            XScreen("归档成员") {
+            XScreen("归档成员", subtitle: "归档不删数据，名下钥匙转成「未分配」") {
                 // 六图改造 (2026-10-24): 顶部加图5 读数卡（44px 归档数 + 环）
                 archivedStatsCard
                 // HTML 卡3「归档规则」—— 三条彩点行（App 之前缺这一整卡）
@@ -1648,7 +1648,7 @@ struct MemberExitWizard: View {
         NavigationStack {
             // M5: Form → ScrollView（与全仓其他页面统一）
             // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
-            XScreen("退出处置向导") {
+            XScreen("退出处置向导", subtitle: "逐条处置：保留 / 移交 / 停用") {
                 // 六图改造 (2026-10-24): 顶部加图5 读数卡（44px 待处置数 + 环）
                 exitStatsCard
                 if items.isEmpty {
