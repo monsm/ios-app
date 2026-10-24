@@ -128,6 +128,11 @@ struct KeysPage: View {
     private var expiringCard: some View {
         XPanel(tone: .warn) {
             VStack(alignment: .leading, spacing: XSpace.s) {
+                // 卡头对齐 HTML 10-keys-manage 卡1
+                Text("本周到期")
+                    .xFont(.subheadline)
+                    .foregroundStyle(XPalette.textTertiary)
+                Spacer(minLength: XSpace.xs)
                 HStack(spacing: XSpace.xs) {
                     Image(systemName: "clock.badge.exclamationmark")
                         .font(.system(size: XIcon.sm, weight: .medium))

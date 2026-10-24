@@ -166,6 +166,9 @@ struct FirmwarePage: View {
 
     private var versionCard: some View {
         VStack(spacing: XSpace.s) {
+            Text("版本")
+                .xFont(.subheadline)
+                .foregroundStyle(XPalette.textTertiary)
             HStack(spacing: XSpace.s) {
                 versionRoleCard("当前", curFw.isEmpty ? "—" : curFw, note: "锁里现在跑的", tone: XPalette.text)
                 versionRoleCard("目标", fw?.version ?? "未选",

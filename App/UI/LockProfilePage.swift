@@ -423,7 +423,7 @@ struct LockProfilePage: View {
     private var colorSection: some View {
         XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: XSpace.m) {
-                sectionTitle("色标", icon: "paintpalette")
+                sectionTitle("配色", icon: "paintpalette")
 
                 HStack(spacing: XSpace.m) {
                     ForEach(LockArchive.swatches) { s in
