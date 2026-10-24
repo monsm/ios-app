@@ -17,16 +17,24 @@ const doc = fs.readFileSync(DOC, 'utf8');
 const baseline = new Map();   // title -> sub
 for (const m of doc.matchAll(/^\| ([^|]+) \| ([^|]+) \|/gm)) {
   const t = m[1].trim(), s = m[2].trim();
-  if (t && t !== '页' && !t.startsWith('---') && s && s !== '副标题') baseline.set(t, s);
+  if (t && t !== '页' && !t.startsWith('---') && s && s !== '副标题') {
+    baseline.set(t, /^\*\*动态\*\*/.test(s) ? 'DYNAMIC' : s);
+  }
 }
 // ② 扫代码
 const code = new Map();       // title -> sub ('' = 无)
 let noSub = [];
 for (const f of fs.readdirSync(UI).filter(x => x.endsWith('.swift'))) {
   const s = fs.readFileSync(path.join(UI, f), 'utf8').replace(/\r\n/g, '\n');
-  for (const m of s.matchAll(/XScreen\(\s*"([^"]+)"\s*(?:,\s*subtitle:\s*"([^"]*)")?\s*\)/g)) {
-    code.set(m[1], m[2] || '');
-    if (!m[2]) noSub.push(f + ' 「' + m[1] + '」');
+  // 2026-10-24：支持 subtitle 传**计算属性**的形态（HTML 把分类计数写进副标题，
+  // 例如钥匙管理「13 项 · 指纹 12 / 密码 1 / 临时码 0」—— 这类必须动态，
+  // 不能写死文案）。判据：subtitle 参数不是字符串字面量时，记为 DYNAMIC 哨兵，
+  // 基线表对应行写 **动态** 即可对上。
+  for (const m of s.matchAll(/XScreen\(\s*"([^"]+)"\s*(?:,\s*subtitle:\s*([^)]+?)\s*)?\)/g)) {
+    const raw = (m[2] || '').trim();
+    if (!raw) { code.set(m[1], ''); noSub.push(f + ' 「' + m[1] + '」'); continue; }
+    if (raw.startsWith('"')) { code.set(m[1], raw.replace(/^"|"$/g, '')); continue; }
+    code.set(m[1], 'DYNAMIC');
   }
 }
 // ③ 对账

@@ -39,7 +39,7 @@
 | 维护与保养 | 机械件也该有保养记录 | CarePage |
 | 销毁与应急 | 不可逆操作 · 需要二次确认 | SecurityCenterView |
 | 钥匙工坊 | 密码 / 临时码 / 指纹 / OTP | StudioPage |
-| 钥匙管理 | 密码 / 指纹 / 临时码的台账 | KeysPage |
+| 钥匙管理 | **动态**（项数与分类计数，格式见 KeysPage.subline） | KeysPage |
 | 应用锁 | 打开 App 前先验一次口令 | AppLockSetupView |
 | 这台锁 | 这把锁的身份与实时状态 | DevicePage |
 | 诊断与自检 | 进入时算一次，动作后重算 | DiagnosticsPage |

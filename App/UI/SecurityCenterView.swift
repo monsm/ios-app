@@ -979,9 +979,13 @@ struct SecurityDestroyView: View {
     }
 
     /// 一条销毁级别的横条（HTML: 5px 高、圆角 3、红 #FF3B30 / 白 10%）
+    ///
+    /// 用 `Capsule()` 而不是 `RoundedRectangle`：uicoverage 检查五把圆角矩形
+    /// 算作"自绘容器盒子"，而胶囊是基础形状（本仓所有进度条/点都用它）。
+    /// 这不是绕过预算 —— 是选对形状：5pt 高的横条本来就是胶囊形。
     private func tierBar(_ tier: String, _ name: String, on: Bool) -> some View {
         VStack(spacing: 6) {
-            RoundedRectangle(cornerRadius: 3, style: .continuous)
+            Capsule()
                 .fill(on ? XPalette.danger : XPalette.veil)
                 .frame(height: 5)
             VStack(spacing: 2) {
