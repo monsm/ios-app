@@ -347,7 +347,7 @@ struct BatterySwapGuideView: View {
                         widthRatio: 0.13,
                         showsCursor: false,
                         showsTick: false,
-                        gradient: solid: low ? XPalette.warn : XPalette.ok
+                        solid: low ? XPalette.warn : XPalette.ok
                     ) { EmptyView() }
                     .accessibilityHidden(true)
                 }
@@ -511,7 +511,7 @@ struct CareChecklistView: View {
                         widthRatio: 0.13,
                         showsCursor: false,
                         showsTick: false,
-                        gradient: solid: done == total ? XPalette.ok : XPalette.accent
+                        solid: done == total ? XPalette.ok : XPalette.accent
                     ) {
                         Text("\(done)")
                             .font(.system(size: XMetric.dataText(20), weight: .bold))

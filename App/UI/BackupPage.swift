@@ -164,7 +164,7 @@ struct BackupPage: View {
                         widthRatio: 0.13,
                         showsCursor: false,
                         showsTick: false,
-                        gradient: solid: backupTone == .ok ? XPalette.ok : XPalette.warn
+                        solid: backupTone == .ok ? XPalette.ok : XPalette.warn
                     ) { EmptyView() }
                     .accessibilityHidden(true)
                 }

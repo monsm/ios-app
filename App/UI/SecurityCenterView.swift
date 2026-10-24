@@ -1081,7 +1081,7 @@ struct SecurityDestroyView: View {
                         widthRatio: 0.13,
                         showsCursor: false,
                         showsTick: false,
-                        gradient: solid: XPalette.ok
+                        solid: XPalette.ok
                     ) {
                         Image(systemName: "trash")
                             .font(.system(size: 20, weight: .semibold))

@@ -152,7 +152,7 @@ struct FirmwarePage: View {
                         size: 76,
                         progress: max(0.02, pct),
                         widthRatio: 0.13, showsCursor: false, showsTick: false,
-                        gradient: solid: step >= 4 ? XPalette.ok : XPalette.accent
+                        solid: step >= 4 ? XPalette.ok : XPalette.accent
                     ) { EmptyView() }
                     .accessibilityHidden(true)
                 }

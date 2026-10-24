@@ -108,7 +108,7 @@ struct DiagnosticsPage: View {
                         widthRatio: 0.13,
                         showsCursor: false,
                         showsTick: false,
-                        gradient: solid: bad == 0 ? XPalette.ok : XPalette.danger
+                        solid: bad == 0 ? XPalette.ok : XPalette.danger
                     ) { EmptyView() }
                     .accessibilityHidden(true)
                 }
@@ -240,7 +240,7 @@ struct DiagnosticsPage: View {
                         size: 72,
                         progress: min(1, startup / 3000),
                         widthRatio: 0.13, showsCursor: false, showsTick: false,
-                        gradient: solid: crashed ? XPalette.danger : XPalette.ok
+                        solid: crashed ? XPalette.danger : XPalette.ok
                     ) { EmptyView() }
                     .accessibilityHidden(true)
                 }

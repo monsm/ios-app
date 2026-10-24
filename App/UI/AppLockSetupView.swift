@@ -107,7 +107,7 @@ private var heroCard: some View {
                         widthRatio: 0.13,
                         showsCursor: false,
                         showsTick: false,
-                        gradient: solid: XPalette.warn
+                        solid: XPalette.warn
                     ) {
                         Image(systemName: on ? "lock.shield.fill" : "lock.open")
                             .font(.system(size: 22, weight: .medium))
