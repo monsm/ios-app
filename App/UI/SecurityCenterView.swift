@@ -959,6 +959,43 @@ struct SecurityAuditView: View {
 // ================================================================
 struct SecurityDestroyView: View {
     /// 图 2 红色警告读数卡：销毁会删掉多少（44px + 红环）
+    /// 三级销毁示意 —— 对齐 HTML 45-destroy 第 1 张卡
+    ///
+    /// 三条 5pt 高的横条 + 条下 12pt 字。红 = 已包含在该级，白 10% = 未包含。
+    /// 这是 HTML 里的视觉语法：**用横条颜色表达"到第几级"**，不是文字列表。
+    private var threeTierStrip: some View {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.s) {
+                Text("三级销毁")
+                    .xFont(.subheadline)
+                    .foregroundStyle(XPalette.textTertiary)
+                HStack(spacing: XSpace.xs) {
+                    tierBar("一级", "删缓存", on: true)
+                    tierBar("二级", "覆写台账", on: true)
+                    tierBar("三级", "全盘覆写", on: false)
+                }
+            }
+        }
+    }
+
+    /// 一条销毁级别的横条（HTML: 5px 高、圆角 3、红 #FF3B30 / 白 10%）
+    private func tierBar(_ tier: String, _ name: String, on: Bool) -> some View {
+        VStack(spacing: 6) {
+            RoundedRectangle(cornerRadius: 3, style: .continuous)
+                .fill(on ? XPalette.danger : XPalette.veil)
+                .frame(height: 5)
+            VStack(spacing: 2) {
+                Text(tier)
+                    .xFont(.small, weight: .semibold)
+                    .foregroundStyle(on ? XPalette.danger : XPalette.textTertiary)
+                Text(name)
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textTertiary)
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+
     private var destroyScaleCard: some View {
         // 真实签名是 listPwds(_ mac:) —— **无外部标签**（swiftshape R4 抓到我先写了 mac:）
         let macs = DB.keychains().map { $0.mac }
@@ -1038,6 +1075,13 @@ struct SecurityDestroyView: View {
                 // 图 2/图 3 的危险动作永远先给一个量化后果（"这会删掉 X 条"），
                 // 再给按钮。之前这一页从"备份闸"开始 —— 说的都是条件，没说要失去多少。
                 destroyScaleCard
+                // ═══ 2026-10-24 逐页对齐 HTML 45-destroy 第 1 张卡 ═══
+                //
+                // HTML 的「三级销毁」示意卡是**三条 5px 高彩色横条 + 条下 12px 字**：
+                //   删缓存(红 #FF3B30) / 覆写台账(红) / 全盘覆写(白 10% = 未启用)
+                // 这是"销毁分三级、当前走到哪一级"的一眼读数。
+                // 真机此前完全没有这张卡 —— 直接跳到备份闸，用户不知道"三级"指什么。
+                threeTierStrip
                 XPanel(kind: .group) {
                     VStack(alignment: .leading, spacing: XSpace.m) {
                         secLabel("备份闸")

@@ -61,7 +61,7 @@ struct KeysPage: View {
         // 改前这段手写骨架 + 三行注释解释「为什么 14 / 28 / 8 各不相同」——
         // 那个解释是对的，但它本该写在**组件里一次**，而不是在每个页面重讲一遍。
         // 现在 XScreen 给骨架，本页只声明「有哪几块」。
-        XScreen("钥匙管理", subtitle: "密码 / 指纹 / 临时码的台账") {
+        XScreen("钥匙管理", subtitle: subline) {
             // 审美对齐 HTML 02-keys：卡之前有一排胶囊（用作分类摘要）
             chipsRow
             if !expiringItems.isEmpty { expiringCard }
@@ -191,11 +191,21 @@ struct KeysPage: View {
         }
     }
 
+    /// 页内副标题 —— 对齐 HTML 10-keys-manage 的 SUB：
+    /// 「13 项 · 密码 11 / 指纹 2 / 临时码 0」
+    ///
+    /// HTML 把**分类计数直接写进副标题**，这是它信息密度高的一个细节：
+    /// 用户不用滚到下面的卡就知道构成。此前这里是固定文案
+    /// 「密码 / 指纹 / 临时码的台账」—— 同长度但不含任何数字。
+    private var subline: String {
+        "\(fpCount + pwCount + tempCount) 项 · 指纹 \(fpCount) / 密码 \(pwCount) / 临时码 \(tempCount)"
+    }
+
     private var overviewCard: some View {
         XPanel(kind: .group) {
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
-                    Text("全部凭证")
+                    Text("库存分布")
                         .xFont(.subheadline)
                         .foregroundStyle(XPalette.textTertiary)
                     Spacer(minLength: 0)
