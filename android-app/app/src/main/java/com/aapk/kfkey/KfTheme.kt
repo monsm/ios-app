@@ -26,6 +26,8 @@ internal data class KfColors(
     val ink: Color,
     val inkSub: Color,
     val accent: Color,
+    // 强调色上的前景色: 暗色档的暖金很亮, 用深墨字; 浅色档的暖金被压深, 必须用白字。
+    val onAccent: Color,
     val ok: Color,
     val bad: Color
 )
@@ -38,6 +40,7 @@ internal val KfDarkColors = KfColors(
     ink = Color(0xFFF3F6FA),
     inkSub = Color(0xFF8B96A8),
     accent = Color(0xFFE8B45C),
+    onAccent = Color(0xFF14181E),
     ok = Color(0xFF6EE7A8),
     bad = Color(0xFFF87171)
 )
@@ -55,6 +58,7 @@ internal val KfLightColors = KfColors(
     ink = Color(0xFF17140F),
     inkSub = Color(0xFF5C5245),
     accent = Color(0xFF8F6119),
+    onAccent = Color(0xFFFFFFFF),
     ok = Color(0xFF15803D),
     bad = Color(0xFFB91C1C)
 )

@@ -4,10 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.media.AudioManager
 import android.media.ToneGenerator
-import android.os.Build
 import android.os.Bundle
-import android.os.VibrationEffect
-import android.os.VibratorManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -148,11 +145,26 @@ private fun KfApp(unlocker: BleUnlocker) {
         statusBad = bad
     }
 
-    // 权限: 扫描/连接 (Android 12+) + 相机 (扫码)
-    val perms = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { }
+    // 权限: 扫描/连接 + 相机 (扫码)。minSdk=33 ⇒ 三项都是运行时权限, 没有版本分支。
+    // 旧回调是空 lambda: 用户点了"拒绝"之后界面只会停在"正在寻找门锁…", 既不解释也不给去设置的路。
+    val permNames = mapOf(
+        Manifest.permission.BLUETOOTH_SCAN to "蓝牙扫描",
+        Manifest.permission.BLUETOOTH_CONNECT to "蓝牙连接",
+        Manifest.permission.CAMERA to "相机",
+    )
+    val perms = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
+        val denied = result.filterValues { !it }.keys
+        if (denied.isNotEmpty()) {
+            val names = denied.map { permNames[it] ?: it }
+            say("缺少权限: " + names.joinToString("、") + " — 扫码与开锁会失败, 请到系统设置里允许", true)
+        }
+    }
     LaunchedEffect(Unit) {
-        val need = mutableListOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
-        if (Build.VERSION.SDK_INT >= 33) need += Manifest.permission.CAMERA
+        val need = listOf(
+            Manifest.permission.BLUETOOTH_SCAN,
+            Manifest.permission.BLUETOOTH_CONNECT,
+            Manifest.permission.CAMERA,
+        )
         perms.launch(need.toTypedArray())
     }
 
@@ -239,7 +251,7 @@ private fun KfApp(unlocker: BleUnlocker) {
     // 写成局部函数而不是塞进 collect 的 lambda: collect 外面已经套着 LaunchedEffect 一层
     // lambda, 再从内层跨出去要写 return@collect 那个 label —— label 名字错了就是编译失败,
     // 而这一段的判据本身就是会算错的东西, 不该押在一个字符串上。
-    // 预热线: 比武装线 (AutoOpenKit.BASE = -38) 弱 24 dB ⇒ 功率约 1/250, 大致一两米开外。
+    // 预热线: 比武装线 (AutoOpenKit.BASE = -40) 弱 24 dB ⇒ 功率约 1/250, 大致一两米开外。
     // 越过它就在后台把链路建好 (prewarm 只建链, 一个命令都不发), 等越过武装线时只剩
     // 01+04 两个往返 —— "秒开"靠的是这一步, 不是把协议改快。
     // 用 PREWARM 这个固定值而不是标定值: 安卓端没有标定页 (见 AutoOpenKit 注释)。
@@ -333,6 +345,8 @@ private fun KfApp(unlocker: BleUnlocker) {
                 // 所以箭头指"转动手机时信号最强的那个朝向", 不谎称指针自动指向门 (见 SignalArrow 头注)。
                 AnimatedVisibility(visible = proximity && !airTagShowing) {
                     SignalArrow(
+                        okColor = colors.ok,
+                        outlineColor = colors.ink,
                         azimuthDeg = azimuth,
                         peakDeg = peakAz,
                         rssi = rssi,
@@ -363,14 +377,14 @@ private fun KfApp(unlocker: BleUnlocker) {
                         armed -> "信号已满 (当前 $rssi dBm) — 马上自动开"
                         else -> "还差一点 (当前 $rssi dBm) — 走近或转动手机"
                     },
-                    color = InkSub.copy(alpha = 0.7f),
+                    color = colors.inkSub.copy(alpha = 0.7f),
                     fontSize = 12.sp,
                     fontFamily = FontFamily.Monospace
                 )
                 if (!detail.isEmpty()) {
                     Text(
                         text = detail,
-                        color = InkSub.copy(alpha = 0.55f),
+                        color = colors.inkSub.copy(alpha = 0.55f),
                         fontSize = 11.sp,
                         fontFamily = FontFamily.Monospace,
                         textAlign = TextAlign.Center,
@@ -505,7 +519,7 @@ private fun Header(lock: LockInfo?) {
             Spacer(Modifier.height(6.dp))
             Text(
                 text = lock.macText,
-                color = InkSub.copy(alpha = 0.75f),
+                color = colors.inkSub.copy(alpha = 0.75f),
                 fontSize = 12.sp,
                 fontFamily = FontFamily.Monospace,
                 letterSpacing = 1.5.sp
@@ -533,7 +547,7 @@ private fun UnlockDial(busy: Boolean, onClick: () -> Unit) {
         Canvas(Modifier.size(300.dp)) {
             drawCircle(
                 brush = Brush.radialGradient(
-                    listOf(Accent.copy(alpha = 0.16f), Color.Transparent),
+                    listOf(colors.accent.copy(alpha = 0.16f), Color.Transparent),
                     center = center, radius = size.minDimension / 2
                 ),
                 radius = size.minDimension / 2
@@ -611,7 +625,7 @@ private fun UnlockDial(busy: Boolean, onClick: () -> Unit) {
 
                 if (busy) {
                     drawArc(
-                        color = Accent.copy(alpha = 0.9f),
+                        color = colors.accent.copy(alpha = 0.9f),
                         startAngle = -90f,
                         sweepAngle = 300f,
                         useCenter = false,
@@ -633,7 +647,7 @@ private fun EmptyState(onScan: () -> Unit) {
         Canvas(Modifier.size(120.dp)) {
             val w = 3.dp.toPx()
             val len = 26.dp.toPx()
-            val c = Accent.copy(alpha = 0.85f)
+            val c = colors.accent.copy(alpha = 0.85f)
             fun corner(x: Float, y: Float, dx: Float, dy: Float) {
                 drawLine(c, Offset(x, y), Offset(x + dx * len, y), strokeWidth = w, cap = StrokeCap.Round)
                 drawLine(c, Offset(x, y), Offset(x, y + dy * len), strokeWidth = w, cap = StrokeCap.Round)
@@ -663,47 +677,50 @@ private fun ProximityCard(
     onUnbind: () -> Unit,
     onClose: () -> Unit,
 ) {
+    // 2026-10-20: 这张卡此前整块读 Theme.kt 的固定暗色值 —— 浅色模式下是浅底 + 暗卡 + 浅字。
+    val colors = LocalKfColors.current
     Column(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(22.dp))
-            .background(Surface)
-            .padding(horizontal = 18.dp, vertical = 16.dp)
+            .clip(RoundedCornerShape(KfTokens.Radius.card))
+            .background(colors.surface)
+            .padding(horizontal = KfTokens.Space.l, vertical = KfTokens.Space.l)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text("靠近自动开锁", color = Ink, fontSize = 15.sp)
+                Text("靠近自动开锁", color = colors.ink, fontSize = 15.sp)
                 Spacer(Modifier.height(3.dp))
                 // 文案里的数值一律从 AutoOpenKit 取: 写死数字的注释/文案, 在阈值改动那天就变成假话
                 // (这一句原来写的是 -38/-41, 阈值早就挪到 -40/-43 了, 界面却还在按旧数字承诺)。
                 Text(
                     "开着它: 手机解了锁、App 在前台时, 靠近到 " + AutoOpenKit.BASE + " dBm 以内会自动开一次。",
-                    color = InkSub, fontSize = 12.sp, lineHeight = 17.sp,
+                    color = colors.inkSub, fontSize = 12.sp, lineHeight = 17.sp,
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
                     "一次靠近只开一次: 要走开让信号掉到 " + AutoOpenKit.disarmThreshold() +
                         " dBm 以下, 隔 6 秒后再靠近才会再开。",
-                    color = InkSub.copy(alpha = 0.75f), fontSize = 12.sp, lineHeight = 17.sp,
+                    color = colors.inkSub.copy(alpha = 0.75f), fontSize = 12.sp, lineHeight = 17.sp,
                 )
             }
             Switch(
                 checked = on,
                 onCheckedChange = onToggle,
                 colors = SwitchDefaults.colors(
-                    checkedThumbColor = BgTop,
-                    checkedTrackColor = Accent,
-                    uncheckedThumbColor = InkSub,
-                    uncheckedTrackColor = Color(0xFF232A34),
-                    uncheckedBorderColor = Color.Transparent
+                    checkedThumbColor = colors.bgTop,
+                    checkedTrackColor = colors.accent,
+                    uncheckedThumbColor = colors.inkSub,
+                    // 关闭态不能再用 bgBottom: 浅色档里底色与白卡几乎同色, 开关会"消失"。
+                    uncheckedTrackColor = colors.inkSub.copy(alpha = 0.30f),
+                    uncheckedBorderColor = colors.inkSub.copy(alpha = 0.45f)
                 )
             )
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("门锁设置", color = InkSub.copy(alpha = 0.6f), fontSize = 12.sp, modifier = Modifier.weight(1f))
+            Text("门锁设置", color = colors.inkSub.copy(alpha = 0.6f), fontSize = 12.sp, modifier = Modifier.weight(1f))
             Text(
                 "完成",
-                color = Accent.copy(alpha = 0.9f),
+                color = colors.accent.copy(alpha = 0.9f),
                 fontSize = 13.sp,
                 // 文字按钮也要够按: 用 padding 把触达撑到 44dp 以上 (可点区最小尺寸是硬规)
                 modifier = Modifier.clickable { onClose() }.padding(vertical = 10.dp, horizontal = 12.dp),
@@ -713,7 +730,7 @@ private fun ProximityCard(
         Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
             Text(
                 "重新扫码绑定",
-                color = Accent.copy(alpha = 0.9f),
+                color = colors.accent.copy(alpha = 0.9f),
                 fontSize = 13.sp,
                 modifier = Modifier
                     .clickable { onRescan() }
@@ -721,7 +738,7 @@ private fun ProximityCard(
             )
             Text(
                 "解绑",
-                color = InkSub,
+                color = colors.inkSub,
                 fontSize = 13.sp,
                 modifier = Modifier
                     .clickable { onUnbind() }
@@ -739,7 +756,7 @@ private fun GearButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
         modifier
             .size(56.dp)
             .clip(CircleShape)
-            .background(Surface.copy(alpha = 0.92f))
+            .background(colors.surface.copy(alpha = 0.92f))
             .clickable { onClick() },
         contentAlignment = Alignment.Center,
     ) {
@@ -774,7 +791,7 @@ private fun PillButton(text: String, onClick: () -> Unit) {
             .clickable { onClick() }
             .padding(horizontal = 28.dp, vertical = 14.dp)
     ) {
-        Text(text, color = Color(0xFF14181E), fontSize = 15.sp, fontWeight = FontWeight.Medium)
+        Text(text, color = colors.onAccent, fontSize = 15.sp, fontWeight = FontWeight.Medium)
     }
 }
 

@@ -13,8 +13,10 @@ import androidx.compose.ui.graphics.Color
  *   ① DrawScope 里 (GearButton / SignalArrow 的 Canvas 绘制);
  *   ② 非 Composable 的普通 fun 里 (maybeAutoUnlock 拼状态色)。
  * @Composable 属性在那种位置读不了。所以这里保持固定值。
- * 深浅双模的入口是 KfTheme.kt 的 LocalKfColors, **新写的界面**用 `LocalKfColors.current.xxx` 取;
- * 既有 25 处调用点维持暗色档不变 (D14: Android 保留暗色 + 暖金)。
+ * 深浅双模的入口是 KfTheme.kt 的 LocalKfColors。Composable 页面一律从它取色 ——
+ * 2026-10-20 已把 MainActivity 的 ProximityCard/Header/UnlockDial/EmptyState/PillButton
+ * 与 SignalArrow 的描边全部接上。下面这几个固定 val 只留给**非 Composable 的默认参数**
+ * (SignalArrow 的 okColor/outlineColor) 与 DrawScope 兜底, 不再是页面取色入口。
  */
 internal val BgTop = Color(0xFF0A0C10)
 internal val BgBottom = Color(0xFF141A22)
