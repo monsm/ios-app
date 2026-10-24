@@ -19,6 +19,17 @@
 | 卡片面材质 | 平色 `#1C1C1E`（§6.3）| 平色 `#1C1C1E` | 一致 | App 此前用渐变（与两边都冲突），已回退 |
 | 二级页标题 | `.inline`（标题只在导航栏）| **页内 `.h1` + `.sub`** | **HTML** | 31 页补回页内大标题 |
 
+## 30 道闸门分类（各管哪一层）
+
+| 层 | 闸门 | 测的对象 |
+|---|---|---|
+| 协议正确性 | golden / shadowdiff | BLE 核心 JS↔Swift 字节级差分（**与 UI 无关**，UI 改动不影响它们）|
+| 编译形状 | swiftcheck / swiftshape / swiftsyn / apicheck / apisig / declcheck | 括号/参数标签/成员存在/重复声明 |
+| 风格令牌 | tokendrift / contrast / glassaudit / dynamictype / uicoverage | 三端同源/对比度/自绘预算/AX 字号/缝覆盖 |
+| 内容基线 | subtitlesync / reviewsync / copynum / changelogcheck / keyspace | 副标题/验收页/文案数/变更记录 |
+| 导航 | destmap / entrygate / sheetcover | 路由表/入口动作/sheet 收摊 |
+| Android | kotlinbalance / kotlinshadow | 字面量/字阶 |
+
 ## 闸门有效性实证（2026-10-24）
 
 判断"一把尺子还有没有用"的方法不是看它绿不绿，而是**注入坏值看它响不响**：
