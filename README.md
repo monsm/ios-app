@@ -316,3 +316,24 @@ node tools/kotlinlocal.js
 小程序侧 (`../miniprogram-app`) 协议/业务有改动时：把对应 .js 覆盖进 vendor/app 同路径，
 然后 `node tools/golden.js` 重新生成金标——若 Swift 与 JS 行为出现分歧，差分测试会当场失败，
 此时以 JS（真机验证过）为准修正 Swift。
+
+## 2026-10-24 审美对齐专项（索引）
+
+以 `tools/proto/`（iOS 51 页 + Android 6 页原型）为审美标准做过一轮全量对齐：
+令牌三端同源、41 页页内大标题、卡解剖四层、16 张补卡、8 个入口 Bug、
+2 个补原型（53-alarms / 06-airtag）。详细台账：
+
+| 文档 | 内容 |
+|---|---|
+| `docs/AUTHORITY.md` | 权威顺序（HTML>规范）+ 31 道闸门分类 + 实证表 |
+| `docs/GOAL-LEDGER.md` | 三大问题处理总账（60+ 轮）|
+| `docs/PAGE-AUDIT.md` | iOS 50 页逐页审美台账 |
+| `docs/ANDROID-AUDIT.md` | Android 6 屏逐屏台账 |
+| `docs/NO-HTML-SCREENS.md` | 无原型界面处置清单（13/13 清零）|
+| `docs/SUBTITLES.md` | 40 页副标题基线 |
+| `docs/DEVIATIONS.md` | 30 条刻意偏离 HTML 的裁定 |
+| `docs/ACCEPTANCE-GUIDE.md` | 真机验收三步指引 |
+| `tools/REVIEW.html` | 56 项双端对照验收页 |
+
+新增闸门：`entrygate`（入口可点性）/ `subtitlesync`（副标题基线）/
+`reviewsync`（验收页一致性）/ `protosweep`（原型完整性）。
