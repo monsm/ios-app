@@ -67,7 +67,13 @@ final class AppState: ObservableObject {
     /// 原来这张字面量集合是"同一个量的第二次计算"（判据的另一半在视图里按序号摘除层级），
     /// 而新变体没有 Tab 序号 —— 两处同时失去指称对象，访客门禁会**静默**不再覆盖
     /// 应用锁/访客/伪装/销毁那一块，不崩不报错。判据收到 Route.guestBlocked 一处。
-    static let guestBlockedTabs: Set<Int> = Route.guestBlockedTabs
+        /// 底部导航的最大页签序号（五 Tab：0 门厅 … 4 系统）。
+    ///
+    /// **单一声明处** —— rememberTab/restoreLastTab 都读它。
+    /// 四 Tab 时代这里散着字面量 3，改五 Tab 时漏了一处，
+    /// 结果"上次停在系统页"被夹回成员页（真机现象：怎么点都回不到该回的地方）。
+    static let maxTabIndex = 4
+static let guestBlockedTabs: Set<Int> = Route.guestBlockedTabs
     /// 377: 已进 App、但受限区还没放开
     var guestAreaLocked: Bool {
         appUnlocked && !decoyMode && SecurityPolicy.guestActive && !guestAreaUnlocked
@@ -256,7 +262,15 @@ final class AppState: ObservableObject {
     /// 挂起的深链优先 (那是用户明确要去的地方), 否则回到上次停留的 Tab; 越界档位夹回四页内。
     func restoreLastTab() {
         guard appUnlocked, !decoyMode, pendingRoute == nil else { return }
-        let t = min(max(DB.store.getInt(AppState.lastTabKey, 0), 0), 3)
+        // ═══ 2026-10-24 真机审美诊断修的第 3 个 Bug ═══
+        // 旧值把"上次停留"夹在 0...3 —— 那是**四 Tab 时代**的口径。
+        // 现在是五 Tab（0 门厅 / 1 钥匙 / 2 设备 / 3 成员 / 4 系统），
+        // 于是系统页（4）永远存不下：用户停在系统页 → 存 4 → 下次启动被夹成 3（成员）。
+        // 更糟的是它盖住了「首次进入应该是门厅」这条预期 ——
+        // 真机 77 张截图里一张门厅都没有，就是因为它每次都被"上次停留"顶掉了。
+        //
+        // 夹取上界改成 Self.maxTabIndex，由 Tab 定义处单一声明。
+        let t = min(max(DB.store.getInt(AppState.lastTabKey, 0), 0), Self.maxTabIndex)
         // 377: 上次停在 凭证/设置 而访客通道开着 ⇒ 既不拉门禁也不越界, 落在设备页
         // (恢复"上次停留"不是用户明示的跳转, 拿它去弹口令页就是每次解锁都可能被打断)
         tabSelection = guestAreaLocked && Self.guestBlockedTabs.contains(t) ? 0 : t
