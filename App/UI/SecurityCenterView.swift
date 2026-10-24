@@ -538,7 +538,7 @@ struct SecurityAuditView: View {
     var vkBody: some View {
 
             // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
-            XScreen("审计流水") {
+            XScreen("审计流水", subtitle: "谁在什么时候做了什么") {
                 XPanel(kind: .group) {
                     VStack(alignment: .leading, spacing: XSpace.m) {
                         secLabel("双流水")

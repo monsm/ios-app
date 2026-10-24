@@ -61,7 +61,7 @@ struct KeysPage: View {
         // 改前这段手写骨架 + 三行注释解释「为什么 14 / 28 / 8 各不相同」——
         // 那个解释是对的，但它本该写在**组件里一次**，而不是在每个页面重讲一遍。
         // 现在 XScreen 给骨架，本页只声明「有哪几块」。
-        XScreen("钥匙管理") {
+        XScreen("钥匙管理", subtitle: "密码 / 指纹 / 临时码的台账") {
             // 审美对齐 HTML 02-keys：卡之前有一排胶囊（用作分类摘要）
             chipsRow
             if !expiringItems.isEmpty { expiringCard }
@@ -715,7 +715,7 @@ struct CredentialDetailView: View {
     var body: some View {
         ZStack {
             XPalette.canvasGradient.ignoresSafeArea()
-            XScreen("凭证详情") {
+            XScreen("凭证详情", subtitle: "这一条凭证的码值与使用记录") {
                 // 卡1 码值（HTML：44px 大数字 + 锁内编号/指纹位 两列）
                 XPanel(kind: .group) {
                     VStack(alignment: .leading, spacing: 0) {

@@ -41,7 +41,7 @@ struct MePage: View {
         // 只把外壳换成 XPanel，header/footer 转成卡片底部 caption。
         // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
-        XScreen("本机设置") {
+        XScreen("本机设置", subtitle: "这台手机上的保护与数据") {
             // 审美对齐 HTML 05-system / 4a-me：卡之前有一排**带迷你环的玻璃胶囊**。
             // App 这一页此前**一个胶囊都没有** —— 进来先是一排卡片，看不到本机各项状态的总览。
             ScrollView(.horizontal, showsIndicators: false) {

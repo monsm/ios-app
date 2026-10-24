@@ -32,7 +32,7 @@ struct DonglesPage: View {
 
         // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
-        XScreen("蓝牙钥匙串") {
+        XScreen("蓝牙钥匙串", subtitle: "随身开门的实体钥匙串") {
                 headerCard.xScrollLift()
 
                 if app.current == nil {

@@ -39,7 +39,7 @@ struct DevicePage: View {
     var body: some View {
         // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
-        XScreen("这台锁") {
+        XScreen("这台锁", subtitle: "这把锁的身份与实时状态") {
             VStack(spacing: XSpace.section) {
                 identityCard.xScrollLift()
                 attentionCard.xScrollLift()

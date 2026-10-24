@@ -1331,7 +1331,7 @@ struct UnclaimedClaimView: View {
             XPalette.canvasGradient.ignoresSafeArea()
 
             // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
-            XScreen("认领还没分配的钥匙") {
+            XScreen("认领还没分配的钥匙", subtitle: "把无主记录归到人") {
                 // 六图改造 (2026-10-24): 顶部加图5 读数卡（44px 待认领数 + 环）
                 claimStatsCard
                 XPanel(kind: .group) {

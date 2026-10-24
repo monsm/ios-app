@@ -44,7 +44,7 @@ struct LockProfilePage: View {
 
         // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
-        XScreen("锁档案") {
+        XScreen("锁档案", subtitle: "这台锁的名字 / 符号 / 配色") {
                 plaque.xScrollLift()
                 // 六图改造 (2026-10-23): 加**图 5 双列 MetricCard**（电量 / 信号）。
                 //

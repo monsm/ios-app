@@ -48,7 +48,7 @@ struct AddKeyPage: View {
 
         // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
-        XScreen("添加密码") {
+        XScreen("添加密码", subtitle: "6~8 位数字 · 会占用密码库存") {
                 capacityCard
                 passwordStage.xScrollLift()
                 validitySection.xScrollLift()

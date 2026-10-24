@@ -42,7 +42,7 @@ struct MembersPage: View {
         // 数据逻辑（reload / members / mac）一行没动。
         // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
-        XScreen("成员") {
+        XScreen("成员", subtitle: "谁能开门 · 各自的授权来源") {
             // 审美对齐 HTML 04-members：卡前 4 个胶囊 + 「成员分布」卡（环 + 两列）
             membersChipsRow
             // 审美对齐 HTML 30-members-list 卡1「钥匙分布」

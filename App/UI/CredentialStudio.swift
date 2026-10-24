@@ -1784,7 +1784,7 @@ struct OtpStudio: View {
             ZStack {
                 XPalette.canvasGradient.ignoresSafeArea()
                 // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
-                XScreen("导入 otpauth") {
+                XScreen("导入 otpauth", subtitle: "从验证器 App 搬到本机台账") {
                     XPanel(kind: .group) {
                         VStack(alignment: .leading, spacing: XSpace.m) {
                             secLabel("粘贴 otpauth 文本")

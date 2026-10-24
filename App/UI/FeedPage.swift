@@ -42,7 +42,7 @@ struct FeedPage: View {
             } else {
         // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
-        XScreen("动态") {
+        XScreen("动态", subtitle: "这把锁今天发生了什么") {
                     headerBar.xScrollLift()
                     // 六图改造 (2026-10-23): 加**图 5 的时段概览卡**（44px 今日开门数 + 环 + 24h 柱）。
                     //
