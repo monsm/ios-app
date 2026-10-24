@@ -72,62 +72,65 @@ struct ManagerFace: View {
         // 门厅不再是「根视图」，它与其它四组平级 —— 这正是用户要的「并入底部导航新建」。
         TabView(selection: tabIndex) {
             // ── 门厅 ──
-            NavigationStack {
-                HomeConsole()
-                    .navigationBarHidden(true)
+            // 2026-10-24 二次修复：.tabItem+.tag 在 iOS 26+ SDK 的 5-Tab 布局下
+            // 会出现部分 Tab 无法点击（真机反馈：只能进钥匙/系统）。
+            // 换 Tab(value:) API（iOS 18+ 推荐，27 完全支持）。
+            Tab(value: 0) {
+                NavigationStack {
+                    HomeConsole()
+                        .navigationBarHidden(true)
+                }
+            } label: {
+                Label("门厅", systemImage: "house")
             }
-            .tabItem {
-                Label("门厅", systemImage: "house")   // 原生 TabView 自动填色，不需要手写 selected 态
-            }
-            .tag(0)
 
             // ── 钥匙 ──
-            NavigationStack(path: $ledgerPath) {
+            Tab(value: 1) {
+NavigationStack(path: $ledgerPath) {
                 groupScreen(for: .ledger)
                     .navigationDestination(for: ManagerRoute.self) { r in
                         routeDestination(r).trackScreen("管理·\(r)")
                     }
             }
-            .tabItem {
+            } label: {
                 Label(ManagerGroup.ledger.rawValue, systemImage: ManagerGroup.ledger.systemImage)
             }
-            .tag(1)
 
             // ── 设备 ──
-            NavigationStack(path: $devicesPath) {
+            Tab(value: 2) {
+NavigationStack(path: $devicesPath) {
                 groupScreen(for: .devices)
                     .navigationDestination(for: ManagerRoute.self) { r in
                         routeDestination(r).trackScreen("管理·\(r)")
                     }
             }
-            .tabItem {
+            } label: {
                 Label(ManagerGroup.devices.rawValue, systemImage: ManagerGroup.devices.systemImage)
             }
-            .tag(2)
 
             // ── 成员 ──
-            NavigationStack(path: $membersPath) {
+            Tab(value: 3) {
+NavigationStack(path: $membersPath) {
                 groupScreen(for: .members)
                     .navigationDestination(for: ManagerRoute.self) { r in
                         routeDestination(r).trackScreen("管理·\(r)")
                     }
             }
-            .tabItem {
+            } label: {
                 Label(ManagerGroup.members.rawValue, systemImage: ManagerGroup.members.systemImage)
             }
-            .tag(3)
 
             // ── 系统 ──
-            NavigationStack(path: $systemPath) {
+            Tab(value: 4) {
+NavigationStack(path: $systemPath) {
                 groupScreen(for: .system)
                     .navigationDestination(for: ManagerRoute.self) { r in
                         routeDestination(r).trackScreen("管理·\(r)")
                     }
             }
-            .tabItem {
+            } label: {
                 Label(ManagerGroup.system.rawValue, systemImage: ManagerGroup.system.systemImage)
             }
-            .tag(4)
         }
         // 原生 TabView 的栏体在 iOS 26 上就是 Liquid Glass —— 与参考图同源，不再自绘。
         .tint(XPalette.accentText)
