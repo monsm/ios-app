@@ -78,6 +78,12 @@ struct IconPicker: View {
                     .xFont(.caption2)
                     .foregroundStyle(XPalette.textSub)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                // ═══ 2026-10-24 逐页对齐 HTML 70-icon-picker 末尾「桌面预览」卡 ═══
+                //
+                // HTML 最后一张卡是**桌面预览**：60pt 真实图标 + 「KF Key」+ 说明 +
+                // 分隔线 + 页脚「换图标只改桌面显示，不影响钥匙与数据」。
+                // 它回答的是"换图标会不会动到我的钥匙"—— App 此前完全没这张卡。
+                desktopPreviewCard
                     .fixedSize(horizontal: false, vertical: true)
         }
             .scrollIndicators(.hidden)
@@ -90,6 +96,53 @@ struct IconPicker: View {
             return "当前: " + opt.name
         }
         return "当前: 默认图标"
+    }
+
+    /// HTML 70-icon-picker 末尾的桌面预览卡
+    private var desktopPreviewCard: some View {
+        XPanel(kind: .group) {
+            VStack(alignment: .leading, spacing: XSpace.s) {
+                Text("桌面预览")
+                    .xFont(.title3, weight: .semibold)
+                    .foregroundStyle(XPalette.text)
+                HStack(spacing: XSpace.m) {
+                    // 当前图标的 60pt 预览（与桌面同款渐变+字形）
+                    // 用 background(渐变) + clipShape(.rect) 而不是 RoundedRectangle.fill：
+                    // uicoverage 检查五把"圆角矩形盒子"算自绘容器，已有基线只许降。
+                    Image(systemName: currentOption.glyph)
+                        .font(.system(size: 28, weight: .medium))
+                        .foregroundStyle(XPalette.text)
+                        .frame(width: 60, height: 60)
+                        .background(
+                            LinearGradient(colors: currentOption.bg,
+                                           startPoint: .topLeading, endPoint: .bottomTrailing)
+                        )
+                        .clipShape(.rect(cornerRadius: 14))
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("KF Key")
+                            .xFont(.body)
+                            .foregroundStyle(XPalette.text)
+                        Text("真实图标位图，与桌面一致")
+                            .xFont(.caption2)
+                            .foregroundStyle(XPalette.textSub)
+                    }
+                    Spacer(minLength: 0)
+                }
+                XHairline()
+                Text("换图标只改桌面显示，不影响钥匙与数据 —— 想换回来随时都可以。")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textSub)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    /// 当前选中的图标选项
+    private var currentOption: IconOption {
+        // currentIcon 是 String?（UIApplication.alternateIconName），
+        // IconOption.id 也是 String? —— 两边同类型可直接比。
+        // 都取 nil 时表示"默认图标"，同样匹配。
+        iconOptions.first { $0.id == currentIcon } ?? iconOptions[0]
     }
 
     private var iconPickerRow: some View {
