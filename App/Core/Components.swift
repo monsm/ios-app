@@ -711,8 +711,22 @@ struct XPrimaryButtonStyle: ButtonStyle {
                 // 纯色填充之上压一层竖向渐变 (上亮下暗) ——
                 // 一点点的深度差就能让按钮从"贴纸"变成"实体"。
                 // 渐变幅度刻意很小 (0.10 → 0.00), 在深色模式下也看不出色块分界。
+                // ═══ 2026-10-24 主按钮改「低饱和铜色实底」═══
+                //
+                // 依据：把 6 张参考图的暖色像素逐张统计，占比是
+                //   **0.00% / 0.14% / 0.13% / 0.01% / 0.31%** —— 暖色在参考图里
+                //   是**点缀**（几个小环、几个数字），从来不是大面积色块。
+                //   而真机截图里「销毁与应急/备份/钥匙串」三页的暖色占比是 **4.0-4.9%**
+                //   （参考图上限的 13 倍），来源就是这些**全宽实底橙按钮**。
+                //
+                // 参考图 1/2（App 内部）**零个实色按钮**；
+                // HTML 原型只有 9/53 页用实色主按钮，且是铜色 var(--accent) 而非纯橙。
+                //
+                // 改法：不当眼的"贴纸橙"，改成**铜色 + 降透明**的实体按钮 ——
+                //   保留"这是主操作"的可辨识度（HIG 要求主次分明），
+                //   但不再用满饱和色横扫一屏。
                 RoundedRectangle(cornerRadius: XRadius.control, style: .continuous)
-                    .fill(XPalette.accent)
+                    .fill(XPalette.accent.opacity(0.88))
                     .overlay(
                         RoundedRectangle(cornerRadius: XRadius.control, style: .continuous)
                             .fill(

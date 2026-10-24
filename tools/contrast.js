@@ -138,7 +138,12 @@ const SPEC_VALUES = {
   textSub: 0x8D8D93,
   textTertiary: 0x6A6A6E,
   danger: 0xFF3B30,        // 规范 §3.4 accentRed
-  warn: 0xFF9F0A,          // 规范 §3.4 accentOrange
+  // 2026-10-24 按审美优先级（参考图 > html > 规范 > app）改判据：
+  // 规范 §3.4 的 accentOrange #FF9F0A 在纯黑画布上 S100%/L52% 读成「荧光橘」，
+  // 而 6 张参考图的暖色实测是 L60-65% / S42-62%（#FFAC45 #D8B059 #DCA56D #AF7148）。
+  // 用户明确「app 里的橙色很丑，没有参考图高级耐看」⇒ 取参考图，规范此条落后。
+  // 新值 #DFA063：H30 S66% L63%（落在参考图区间），对比度黑底 9.35:1 远超 4.5 要求。
+  warn: 0xDFA063,
   ok: 0x30D158,            // 规范 §3.4 accentGreen
 };
 {
