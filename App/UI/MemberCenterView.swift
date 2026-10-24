@@ -596,7 +596,7 @@ struct MemberWizardView: View {
 
     var body: some View { vkBody.destined(.memberWizard) }
     var vkBody: some View {
-        NavigationStack {
+        
             ZStack {
                 XPalette.canvasGradient.ignoresSafeArea()
 
@@ -708,8 +708,8 @@ struct MemberWizardView: View {
             }
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("取消") { dismiss() } } }
             .axBottomAnchor()   // 870
-        }
-    }
+        
+}
 
     private func createMember() -> String? {
         let n = name.trimmingCharacters(in: .whitespaces)
@@ -1181,7 +1181,7 @@ struct MemberFamilySettingsView: View {
 
     var body: some View { vkBody.destined(.memberFamilySettings) }
     var vkBody: some View {
-        NavigationStack {
+        
             // M5: Form → ScrollView（与全仓其他页面统一）
             ScrollView {
                 VStack(spacing: XSpace.section) {
@@ -1244,8 +1244,8 @@ struct MemberFamilySettingsView: View {
             .onAppear {
                 privacyLeft = max(0, Int(MemberHub.privacyUntilSec - Date().timeIntervalSince1970))
             }
-        }
-    }
+        
+}
 
     /// 家庭协作实况：代管名单 + 关怀到期
     ///

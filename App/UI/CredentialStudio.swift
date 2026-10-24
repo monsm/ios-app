@@ -544,14 +544,22 @@ struct TempCodeStudio: View {
     }
 
     var body: some View {
-        NavigationStack {
+        // ═══ 2026-10-24 修「临时密码进不去」═══
+        //
+        // 原来这里包着自己的 NavigationStack —— 这页最早是 .sheet 弹出的，
+        // sheet 里必须有它才能有标题栏和「关闭」。
+        // 但第 38 轮把它接进 navigationDestination（Tab 的 NavigationStack 推入）之后，
+        // 变成了 **NavigationStack 嵌套 NavigationStack** —— iOS 26/27 上推入失败，
+        // 表现就是「点临时密码没反应」。
+        //
+        // 推入页不需要自己的栈：navigationTitle/toolbar 挂在内容上即可。
+        // 「关闭」按钮也去掉 —— 推入场景的返回由系统的‹ Back 承担；
+        // 这页若再被 sheet 用到（目前没有调用方），届时再按需加回。
+        Group {
             if result == nil { addForm } else { doneCard }
         }
-        // 写入进行中不允许下滑关闭。
-        .interactiveDismissDisabled(busy)
         .navigationTitle(result != nil && MemberHub.elderMode ? "口述卡" : "临时码")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("关闭") { dismiss() } } }
         .sheet(isPresented: $showScan) { CodeScanSheet { onScan($0) } }
     }
 

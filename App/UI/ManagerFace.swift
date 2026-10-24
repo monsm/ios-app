@@ -266,17 +266,8 @@ struct ManagerFace: View {
             ]
         case .members:
             return [
-                (.members, "成员", "家人与角色", "person.2"),
+                (.members, "成员", "家人与角色 · 合并从这里发起", "person.2"),
                 (.memberWizard, "添加成员", "三步向导", "person.badge.plus"),
-                // ⚠ 这一行的落点是 **MembersPage**，不是 MergeMembersView ——
-                // 合并本身要从「一条具体成员」发起（MergeMembersView 需要 `primary: Member`），
-                // 路由层拿不到那个 Member（ManagerFace.swift 的 routeDestination 里已注明）。
-                //
-                // 改之前这里写的是「合并成员 / 先选一位作为主档案」，而点进去看到的是
-                // 一个没有任何"合并"字样的成员列表 —— 与本仓自己记录过的前科
-                // （「外观工作室」曾指向「钥匙工坊」）是同一类：**菜单名与落点不符**。
-                // 现在文案如实描述落点与下一步，不再许诺一个这里进不去的页面。
-                (.mergeMembers, "成员列表", "合并从这里选人发起", "arrow.triangle.merge"),
                 (.archivedMembers, "已归档", "查看归档成员", "archivebox"),
             ]
         case .system:
@@ -360,10 +351,6 @@ struct ManagerFace: View {
         case .syncTime:       SyncTimeView()
         case .members:        MembersPage()
         case .memberWizard:   MemberWizardView()
-        // MergeMembersView 需要 primary: Member（它是 sheet 里的视图，
-        // 从一条具体成员发起合并）。路由层拿不到那个 Member，
-        // 所以落到成员列表 —— 在那儿选人再合并。
-        case .mergeMembers:   MembersPage()
         case .archivedMembers: MemberArchivedView()
         case .securityCenter: PrivacyDashboard()
         case .securityAudit:  SecurityAuditView()
@@ -391,7 +378,7 @@ struct ManagerFace: View {
 enum ManagerRoute: String, Hashable, Identifiable {
     case keys, fingerprints, tempCodes
     case locks, firmware, gateway, dongles, syncTime
-    case members, memberWizard, mergeMembers, archivedMembers
+    case members, memberWizard, archivedMembers
     case securityCenter, securityAudit, securityDestroy, safemode
     case backup, export, appearance, me
     case diagnostics
