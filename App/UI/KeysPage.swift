@@ -769,13 +769,13 @@ struct CredentialDetailView: View {
     }
 
     private var usedTotal: Int {
-        DB.readLogs(row.mac).filter { StatsKit.openTypes.contains($0.type) }.count
+        DB.readLogs(mac).filter { StatsKit.openTypes.contains($0.type) }.count
     }
     private var usedBars: [CGFloat] {
         let cal = WeekCal.gregorian
         let today = cal.startOfDay(for: Date())
         var buckets: [Date: Int] = [:]
-        for log in DB.readLogs(row.mac) where StatsKit.openTypes.contains(log.type) {
+        for log in DB.readLogs(mac) where StatsKit.openTypes.contains(log.type) {
             let unix = ZKProtocol.protoSecondsToUnix(log.lockTime)
             let d = cal.startOfDay(for: Date(timeIntervalSince1970: unix))
             buckets[d, default: 0] += 1
@@ -788,7 +788,7 @@ struct CredentialDetailView: View {
         return counts.map { CGFloat($0) / CGFloat(peak) }
     }
     private var lastUsedText: String {
-        let logs = DB.readLogs(row.mac).filter { StatsKit.openTypes.contains($0.type) }
+        let logs = DB.readLogs(mac).filter { StatsKit.openTypes.contains($0.type) }
         guard let last = logs.max(by: { $0.lockTime < $1.lockTime }) else { return "还没用过" }
         return String(last.lockTimeStr.suffix(11))
     }
