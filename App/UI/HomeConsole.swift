@@ -997,7 +997,8 @@ struct HomeConsole: View {
                 HStack(alignment: .center, spacing: XSpace.l) {
                     VStack(alignment: .leading, spacing: XSpace.s) {
                         Text("三环都在线")
-                            .xFont(.title3, weight: .semibold)
+                            // §7.6 卡内标题（ctitle）= title2 19/Bold，不是 title3
+                            .xFont(.title2, weight: .bold)
                             .foregroundStyle(XPalette.text)
                         VStack(alignment: .leading, spacing: 8) {
                             weekRow("12/30 开门", value: "\(opens)/30", unit: " 开门", color: XPalette.danger)
@@ -1044,7 +1045,8 @@ struct HomeConsole: View {
         HStack(spacing: 8) {
             Circle().fill(color).frame(width: 8, height: 8)
             Text(value)
-                .xFont(.title3, weight: .bold)
+                // HTML 的 .dv 是 19px/Bold，与卡内标题同档（title2）
+                .xFont(.title2, weight: .bold)
                 .monospacedDigit()
                 .foregroundStyle(XPalette.text)
             Text(unit)
