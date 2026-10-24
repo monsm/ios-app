@@ -35,3 +35,20 @@
 | 字号（display..caption + hero）| 11 | 11 |
 
 **结论：设计令牌层已与 HTML 逐值同源。剩余差异只在「页面结构内容」，不在令牌。**
+
+## 三端字号档对账（2026-10-24 复核）
+
+| HTML --f-* | iOS XText / DSFont | Android Type | 值 |
+|---|---|---|---|
+| display / display-num | display / displayNumber | display / displayNumber | 36 / 56 |
+| large | largeTitle | largeTitle | 30 |
+| title2 / title3 | title2 / title3 | title2 / title3 | 19 / 18 |
+| headline / body | headline / body | headline / body | 16 / 16 |
+| subhead | subheadline | subhead | 14 |
+| footnote / caption | footnote / caption(+caption2) | footnote / caption | 12 / 11 |
+| （无）| hero / small | hero / small | 44 / 13 |
+
+**三端 12 档逐值相同**（含六图补档 hero=44 与 small=13 —— 它们是 HTML 里 44px 大数字与
+13px 卡内副文的档位化，Android/iOS 的 tokendrift 闸门守着不许漂移）。
+另有页面级排版逐值核对：XScreen 大标题 = .h1（30 Bold / -0.4 / 1.15）✓，
+副标题 = .sub（16 / textSub）✓。
