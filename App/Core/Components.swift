@@ -2282,59 +2282,7 @@ struct XTabItem: Identifiable {
 ///
 /// 而且**只有明度差不够**: 实测选中胶囊只比栏体亮 6 个色阶 (#0B0B0B → #111213),
 /// 纯黑上几乎看不见。所以图标与标签必须**同时**变语义色 —— 颜色才是主要识别信号。
-struct XGlassTabBar: View {
-    let items: [XTabItem]
-    @Binding var selection: Int
-    var onSelect: ((Int) -> Void)? = nil
-
-    @Namespace private var pill
-
-    var body: some View {
-        HStack(spacing: 0) {
-            ForEach(items) { item in
-                let on = selection == item.id
-                Button {
-                    guard !on else { return }
-                    selection = item.id
-                    onSelect?(item.id)
-                } label: {
-                    ZStack {
-                        // 选中: 白 10% 高光胶囊 —— 比栏体**更亮**, 不是更暗
-                        if on {
-                            Capsule()
-                                .fill(XPalette.specular.opacity(XOpacity.tabSelected))
-                                .overlay(Capsule().stroke(XPalette.specular.opacity(0.10), lineWidth: 0.5))
-                                .frame(width: 64, height: 36)
-                                .matchedGeometryEffect(id: "tabpill", in: pill)
-                        }
-                        VStack(spacing: 2) {
-                            Image(systemName: on ? item.selectedSymbol : item.symbol)
-                                .xFontExact(.system(size: XIcon.md, weight: on ? .semibold : .regular))
-                                .contentTransition(.symbolEffect(.replace))
-                            Text(item.title)
-                                .xFont(.caption2, weight: on ? .semibold : .regular)
-                        }
-                        // 图标与标签**同时**变语义色
-                        .foregroundStyle(on ? item.tint : XPalette.tabIdleLabel)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 44)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(item.title)
-                .accessibilityAddTraits(on ? [.isSelected, .isButton] : [.isButton])
-            }
-        }
-        .padding(.horizontal, 6)
-        .frame(height: 56)
-        .xGlass(in: Capsule())
-        .animation(XMotion.standard, value: selection)
-        .sensoryFeedback(.selection, trigger: selection)
-    }
-}
-
-
+s
 // ─────────────────────────────────────────── 呼吸循环 (无限动画的唯一实现)
 /// 无限循环的「呼吸」动画 —— 全仓**唯一**一处 `repeatForever` 的合法出口。
 ///
