@@ -17,6 +17,7 @@
 | 14 | 原型完整性（57 页 P1-P4）| 58 |
 | 15 | 外部入口机制（双端）| 77 |
 | 16 | 空态双要素 + 骨架/错误组件落地（XSkeleton×3 / XInlineError×3 / 15 处空态）| 89 |
+| 17 | 屏幕方向与启动（Android 锁 portrait ✓ / iOS 由云端项目配置）| 91 |
 
 **矩阵中每一格的判定都可被质疑——但都写在台账里，不会消失。**
 
@@ -135,3 +136,15 @@ REVIEW.html（57 项双端对照）已把验收成本压到「翻卡片 + 勾选
 **判定**：功能以 App 为准 → 不实现。未来若要接，接线点是
 `WindowGroup.onOpenURL` → 解析 host → `Route.from(host:)` → `pendingRoute`。
 在那之前，`deepLinkHosts` 保持死代码状态（无害）。
+
+---
+
+## 附五：屏幕方向与启动画面（第 91 轮核查）
+
+| 项 | iOS | Android |
+|---|---|---|
+| 方向 | 代码无显式锁定——由云端项目设置决定（本地无 pbxproj 可查）| `screenOrientation="portrait"` 明确锁定 ✓ |
+| 启动画面 | 未查（LaunchScreen.storyboard 在项目层）| 无专用 splash（Compose 直入）|
+
+**判定**：Android 明确 ✓；iOS 方向在云端配置，真机若发现横屏破版，修法是项目设置加
+Portrait-only —— 记入此处备查。
