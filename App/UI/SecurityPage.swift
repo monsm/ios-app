@@ -68,7 +68,18 @@ struct SecurityPage: View {
                         .foregroundStyle(XPalette.textTertiary)
                     Spacer(minLength: 0)
                 }
-                HStack(alignment: .center, spacing: XSpace.l) {
+                // ═══ 2026-10-24 逐页审美对齐 #1（本机保护，对照参考图 1/2）═══
+                //
+                // 参考图 1「Health Age」的主视觉环：直径约屏宽 55%（≈220pt），
+                // 环宽 ≈ 20pt（占直径 9%），饱和渐变，环心是 56pt 大数字。
+                // 参考图 2「Sleep」的卡内环：直径 ≈ 120pt 也远大于 76。
+                //
+                // 而这里原来是 **76pt / 环宽 13%** —— 在 1206px 宽的真机上读起来
+                // 只是一枚"进度小图标"，撑不起主视觉。这是本页景深不够的直接原因。
+                //
+                // 改成 150pt（卡内可容纳的最大值），环宽比例降到 0.11（更接近参考图的细环），
+                // 环心不再放数字（大数字留在左侧 XHeroNumber，避免两处重复）。
+                HStack(alignment: .center, spacing: XSpace.m) {
                     VStack(alignment: .leading, spacing: 8) {
                         XHeroNumber(
                             text: String(riskTotal),
@@ -79,11 +90,11 @@ struct SecurityPage: View {
                             .foregroundStyle(XPalette.textTertiary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
-                    Spacer(minLength: 4)
+                    Spacer(minLength: 0)
                     XGradientDial(
-                        size: 76,
+                        size: 150,
                         progress: health,
-                        widthRatio: 0.13,
+                        widthRatio: 0.11,
                         showsCursor: false,
                         showsTick: false,
                         gradient: riskTotal == 0 ? XGradient.dialOK : XGradient.dial
