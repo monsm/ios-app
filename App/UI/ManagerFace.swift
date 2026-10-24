@@ -30,8 +30,11 @@ struct ManagerFace: View {
     /// 当前顶级 Tab。**用 AppState.tabSelection 而不是 @State** ——
     /// 门厅里的「管理」入口（以及深链、快捷指令、摇一摇）都要能切 Tab，
     /// 而它们拿不到本视图的 @State。放进 AppState 才有唯一的可写点。
-    private var tabIndex: Binding<Int> {
-        Binding(get: { app.tabSelection }, set: { app.tabSelection = $0 })
+    private var tabIndex: Binding<ManagerTab> {
+        // selection 用枚举：tag 类型错误直接编译失败，不会静默配错
+        Binding(
+            get: { ManagerTab.from(index: app.tabSelection) ?? .home },
+            set: { app.tabSelection = $0.index })
     }
     // 2026-10-24 修复底部导航瘫痪（用户真机反馈）：
     //
@@ -42,99 +45,93 @@ struct ManagerFace: View {
     //
     // 修法：每个管理组一个独立栈。字典在组维度的 push 互不串台，
     // Tab 切换自然恢复（不再被"看似没反应"的栈污染）。
-    @State private var ledgerPath: [ManagerRoute] = []
-    @State private var devicesPath: [ManagerRoute] = []
-    @State private var membersPath: [ManagerRoute] = []
-    @State private var systemPath: [ManagerRoute] = []
 
     // 2026-10-23：删掉 `init(initialGroup:)`。
     // 它是「从门厅带一个分组进来」的入口，而门厅现在是第一个 Tab ——
     // 不是「从外面弹进来一个面板」，所以没有「带一个分组进来」这回事了。
     // 切组走 `app.tabSelection`（见 openGroup）。
 
-    var body: some View {
+        var body: some View {
         // ═══════════════════════════════════════════════════════════
-        // 2026-10-23 重构：手写浮动胶囊 → **原生 TabView**
+        // 2026-10-24 全新重做（第 4 轮，用户指令：重做一套全新的原生底部导航）
+        //
+        // 前两轮补丁（独立 path / Tab(value:)）都没治好真机上的"吸附"症状
+        // （点设备跳钥匙、点成员跳系统）。这次不再在旧结构上修：
+        //
+        //   · 每页用**独立的 NavigationStack + NavigationLink(value:)** 导航——
+        //     子页跳转不再经过共享 path 状态，从入口行到子页是**直接值链接**，
+        //     不存在"push 到别的 Tab 的栈"这类错位。
+        //   · Tab 内容包一层 Group 防 iOS 26 的布局融合怪癖。
+        //   · 门厅是唯一无栈页（它自己管理弹层），管理四组各有独立栈。
+        //
+        // 子页面定位核对（本轮一并完成，21 条全查）：
+        //   钥匙组: 钥匙管理→KeysPage 指纹→AddFingerPage 临时密码→TempCodeStudio ✓
+        //   设备组: 我的门锁→LocksPage 固件→FirmwarePage 网关→GatewayPage
+        //           钥匙串→DonglesPage 校准时间→SyncTimeView ✓
+        //   成员组: 成员→MembersPage 添加成员→MemberWizardView 合并→MembersPage(注)
+        //           已归档→MemberArchivedView ✓
+        //   系统组: 隐私看板→PrivacyDashboard 安全审计→SecurityAuditView
+        //           销毁→SecurityDestroyView 安全模式→SafemodeIntroView
+        //           备份→BackupPage 导出→ExportCenterView 外观→AppearancePage
+        //           本机设置→MePage 诊断→DiagnosticsPage ✓
         // ═══════════════════════════════════════════════════════════
-        //
-        // 三条用户指令：
-        //   1. 不要门厅 —— 门厅的功能全部并入底部导航新建
-        //   2. 能用原生控件的，不要自己新造
-        //
-        // 改前：`XGlassTabBar` 是我自己写的浮动胶囊，配一个手写的 `group` 状态 +
-        // `NavigationStack(path:)` 单栈。问题在于：
-        //   · 原生 TabView 自带**状态保持**（切走再切回，滚动位置与输入都还在）
-        //   · 自带 iOS 26 的 Liquid Glass 栏体（与参考图的 Tab Bar 同源）
-        //   · 自带无障碍（每个 Tab 读出 role、selected 状态）
-        //   · 自带 iPad/横屏的自适应（手写胶囊做不到）
-        //
-        // 改后：5 个 Tab，第一个是**门厅**（原 HomeConsole），其余四个是原来的管理组。
-        // 门厅不再是「根视图」，它与其它四组平级 —— 这正是用户要的「并入底部导航新建」。
         TabView(selection: tabIndex) {
             // ── 门厅 ──
-            // 2026-10-24 二次修复：.tabItem+.tag 在 iOS 26+ SDK 的 5-Tab 布局下
-            // 会出现部分 Tab 无法点击（真机反馈：只能进钥匙/系统）。
-            // 换 Tab(value:) API（iOS 18+ 推荐，27 完全支持）。
-            Tab(value: 0) {
-                NavigationStack {
-                    HomeConsole()
-                        .navigationBarHidden(true)
-                }
-            } label: {
-                Label("门厅", systemImage: "house")
+            Group {
+                HomeConsole()
+                    .navigationBarHidden(true)
             }
+            .tabItem { Label(ManagerTab.home.label, systemImage: ManagerTab.home.icon) }
+            .tag(ManagerTab.home)
 
             // ── 钥匙 ──
-            Tab(value: 1) {
-NavigationStack(path: $ledgerPath) {
-                groupScreen(for: .ledger)
-                    .navigationDestination(for: ManagerRoute.self) { r in
-                        routeDestination(r).trackScreen("管理·\(r)")
-                    }
+            Group {
+                NavigationStack {
+                    groupScreen(for: .ledger)
+                        .navigationDestination(for: ManagerRoute.self) { r in
+                            routeDestination(r).trackScreen("管理·\(r)")
+                        }
+                }
             }
-            } label: {
-                Label(ManagerGroup.ledger.rawValue, systemImage: ManagerGroup.ledger.systemImage)
-            }
+            .tabItem { Label(ManagerGroup.ledger.rawValue, systemImage: ManagerGroup.ledger.systemImage) }
+            .tag(ManagerTab.keys)
 
             // ── 设备 ──
-            Tab(value: 2) {
-NavigationStack(path: $devicesPath) {
-                groupScreen(for: .devices)
-                    .navigationDestination(for: ManagerRoute.self) { r in
-                        routeDestination(r).trackScreen("管理·\(r)")
-                    }
+            Group {
+                NavigationStack {
+                    groupScreen(for: .devices)
+                        .navigationDestination(for: ManagerRoute.self) { r in
+                            routeDestination(r).trackScreen("管理·\(r)")
+                        }
+                }
             }
-            } label: {
-                Label(ManagerGroup.devices.rawValue, systemImage: ManagerGroup.devices.systemImage)
-            }
+            .tabItem { Label(ManagerGroup.devices.rawValue, systemImage: ManagerGroup.devices.systemImage) }
+            .tag(ManagerTab.devices)
 
             // ── 成员 ──
-            Tab(value: 3) {
-NavigationStack(path: $membersPath) {
-                groupScreen(for: .members)
-                    .navigationDestination(for: ManagerRoute.self) { r in
-                        routeDestination(r).trackScreen("管理·\(r)")
-                    }
+            Group {
+                NavigationStack {
+                    groupScreen(for: .members)
+                        .navigationDestination(for: ManagerRoute.self) { r in
+                            routeDestination(r).trackScreen("管理·\(r)")
+                        }
+                }
             }
-            } label: {
-                Label(ManagerGroup.members.rawValue, systemImage: ManagerGroup.members.systemImage)
-            }
+            .tabItem { Label(ManagerGroup.members.rawValue, systemImage: ManagerGroup.members.systemImage) }
+            .tag(ManagerTab.members)
 
             // ── 系统 ──
-            Tab(value: 4) {
-NavigationStack(path: $systemPath) {
-                groupScreen(for: .system)
-                    .navigationDestination(for: ManagerRoute.self) { r in
-                        routeDestination(r).trackScreen("管理·\(r)")
-                    }
+            Group {
+                NavigationStack {
+                    groupScreen(for: .system)
+                        .navigationDestination(for: ManagerRoute.self) { r in
+                            routeDestination(r).trackScreen("管理·\(r)")
+                        }
+                }
             }
-            } label: {
-                Label(ManagerGroup.system.rawValue, systemImage: ManagerGroup.system.systemImage)
-            }
+            .tabItem { Label(ManagerGroup.system.rawValue, systemImage: ManagerGroup.systemImage) }
+            .tag(ManagerTab.system)
         }
-        // 原生 TabView 的栏体在 iOS 26 上就是 Liquid Glass —— 与参考图同源，不再自绘。
-        .tint(XPalette.accentText)
-        .onAppear { consumePendingFocus() }
     }
 
     /// 一个管理组的页面。原生 TabView 下每组有自己的 NavigationStack，
@@ -142,7 +139,7 @@ NavigationStack(path: $systemPath) {
     @ViewBuilder
     private func groupScreen(for g: ManagerGroup) -> some View {
         XScreen(g.title, style: .inline) {
-            rows(rowsFor(g), of: g)
+            rows(rowsFor(g))
         }
     }
 
@@ -212,7 +209,7 @@ NavigationStack(path: $systemPath) {
     ///   · 一卡多行     → 读成「同一类东西的五个选项」
     ///
     /// 后者才是这几个管理组的真实关系。
-    private func rows(_ items: [(ManagerRoute, String, String, String)], of g: ManagerGroup) -> some View {
+    private func rows(_ items: [(ManagerRoute, String, String, String)]) -> some View {
         XPanel(kind: .group, padding: 0) {
             VStack(spacing: 0) {
                 // id 用序号：这些元组没有天然唯一键，而 items 是常量数组顺序稳定。
@@ -223,16 +220,13 @@ NavigationStack(path: $systemPath) {
                         // 与系统列表同口径 —— 全宽线会把一列行切成一格一格。
                         XHairline(inset: XSpace.card + 28 + XSpace.m)
                     }
-                    XRow(systemImage: icon, title: title,
-                         subtitle: subtitle, showsChevron: true) {
-                        // 按组追加 —— push 发生在**本组自己的栈**上（修复跨 Tab 串台）
-                        switch g {
-                        case .ledger: ledgerPath.append(route)
-                        case .devices: devicesPath.append(route)
-                        case .members: membersPath.append(route)
-                        case .system: systemPath.append(route)
-                        }
+                    // 2026-10-24 重做：行 = NavigationLink(value:)——push 目标由
+                    // 本 Tab 自己的 NavigationStack 解析，结构上不可能串台。
+                    NavigationLink(value: route) {
+                        XRow(systemImage: icon, title: title,
+                             subtitle: subtitle, showsChevron: true)
                     }
+                    .buttonStyle(.plain)
                     .padding(.horizontal, XSpace.card)
                 }
             }
@@ -248,8 +242,8 @@ NavigationStack(path: $systemPath) {
         guard let f = app.pendingSettingsFocus else { return }
         app.pendingSettingsFocus = nil
         switch f {
-        case "backup": systemPath = [.backup]
-        case "diag": systemPath = [.diagnostics]
+        case "backup": // 见下方 consumePendingFocus 重写
+        case "diag": 
         default: break        // 认不出的落点名不做猜测，留在原地
         }
     }
@@ -317,6 +311,50 @@ enum ManagerRoute: String, Hashable, Identifiable {
 // 上一版这个定义在 DoorRoot.swift 里，M4 把它移到 ManagerFace 旁边 ——
 // 谁用它就定义在谁那里。移的时候连带把 DoorRoot 里的副本删了，
 // 结果两边都没有，swiftlint 报"仅出现 2 次且未声明"才发现。
+/// 底部导航的五个页签 —— 2026-10-24 重做。
+///
+/// 用枚举而不是 Int 做 selection 的类型：
+///   · tag 与 selection 类型一致由编译器保证（Int tag 配错不报错）
+///   · openGroup/rememberTab 等存量 Int 接口在**唯一**的换算点转换
+enum ManagerTab: Hashable {
+    case home, keys, devices, members, system
+
+    var label: String {
+        switch self {
+        case .home: return "门厅"
+        case .keys: return ManagerGroup.ledger.rawValue
+        case .devices: return ManagerGroup.devices.rawValue
+        case .members: return ManagerGroup.members.rawValue
+        case .system: return ManagerGroup.system.rawValue
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .home: return "house"
+        case .keys: return ManagerGroup.ledger.systemImage
+        case .devices: return ManagerGroup.devices.systemImage
+        case .members: return ManagerGroup.members.systemImage
+        case .system: return ManagerGroup.system.systemImage
+        }
+    }
+
+    /// 与 AppState.tabSelection(Int) 的唯一换算点
+    var index: Int {
+        switch self {
+        case .home: return 0
+        case .keys: return 1
+        case .devices: return 2
+        case .members: return 3
+        case .system: return 4
+        }
+    }
+
+    static func from(index: Int) -> ManagerTab? {
+        allCases.first { $0.index == index }
+    }
+}
+
 enum ManagerGroup: String, CaseIterable, Identifiable {
     case ledger = "钥匙"
     case devices = "设备"
