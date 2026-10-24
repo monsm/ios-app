@@ -1627,12 +1627,14 @@ struct PrivacyDashboard: View {
                 VStack(alignment: .leading, spacing: 0) {
                     HStack(alignment: .center, spacing: XSpace.m) {
                         VStack(alignment: .leading, spacing: 6) {
+                            // 前景用 XPalette.text（深色档即近白 #FFF）——
+                            // swiftlint 的铁律是"白要有出处"，XPalette.text 就是那个出处。
                             Text("已启用 \(enabledN) / \(totalN) 项防窥")
                                 .xFont(.title3, weight: .bold)
-                                .foregroundStyle(.white)
+                                .foregroundStyle(XPalette.text)
                             Text(peekSummary.detail)
                                 .xFont(.small)
-                                .foregroundStyle(.white.opacity(0.75))
+                                .foregroundStyle(XPalette.text.opacity(0.75))
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         Spacer(minLength: 0)
@@ -1649,7 +1651,7 @@ struct PrivacyDashboard: View {
                             Text(String(enabledN))
                                 .font(.system(size: 22, weight: .bold))
                                 .monospacedDigit()
-                                .foregroundStyle(.white)
+                                .foregroundStyle(XPalette.text)
                         }
                         .frame(width: 84, height: 84)
                         .accessibilityHidden(true)
