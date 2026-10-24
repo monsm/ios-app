@@ -44,7 +44,7 @@ struct LockProfilePage: View {
 
         // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
-        XScreen("锁档案", subtitle: "这台锁的名字 / 符号 / 配色") {
+        XScreen("锁档案", subtitle: "这台锁的名字与真实读数") {
                 // ═══ 2026-10-24 逐页对齐 HTML 21-lock-profile 的**卡片顺序** ═══
                 //
                 // HTML 的顺序是：①指纹余量 → ②锁牌(大图) → ③身份 → ④符号 → ⑤配色 → ⑥更多
@@ -53,18 +53,16 @@ struct LockProfilePage: View {
                 // 为什么 HTML 把指纹余量放最前：它是这一页唯一带"锁里还剩几个槽位"的
                 // **容量读数**（12 可录 / 38 已用 of 50），是用户来这里的第一目的；
                 // 而锁牌是视觉主角，放在第二屏位置反而更耐看（先给数据，再给形象）。
-                fpCapacityCard.xScrollLift()
-                plaque.xScrollLift()
-                // 六图改造 (2026-10-23): 加**图 5 双列 MetricCard**（电量 / 信号）。
+                // ═══ 2026-10-24 坚决精简 ═══
                 //
-                // 图 5 的 Step Count / Step Distance 就是「44px 数字 + 迷你环 + 副标」并排。
-                // 锁档案之前只有一排 11pt 小胶囊（电量% / 锁态 / 固件），
-                // 三个信息等重、都很小 —— 而"这把锁还有多少电"是回家路上最想知道的。
+                // 用户裁定「保留锁的真实信息即可」。原 App 的锁设置只有「改设备名 + 删除设备」。
+                // 删掉纯视觉定制：锁牌（3D 视觉主角）/ 符号选择 / 配色选择 —— 这三块原 App 完全没有。
+                // 留下的是这把锁**是什么**：指纹余量 · 电量信号读数 · 身份事实 · 状态条 · 改名 · 删除。
+                fpCapacityCard.xScrollLift()
                 identityFactsCard.xScrollLift()
                 metricsCards.xScrollLift()
+                statusStrip.xScrollLift()
                 identitySection.xScrollLift()
-                symbolSection.xScrollLift()
-                colorSection.xScrollLift()
                 moreSection.xScrollLift()
                 saveButton.xScrollLift()
         }
@@ -76,91 +74,6 @@ struct LockProfilePage: View {
     // MARK: - 锁牌 (视觉主角)
     // ═══════════════════════════════════════════════════════
 
-    private var plaque: some View {
-        let tint = LockArchive.swatchColor(colorKey)
-        return VStack(spacing: XSpace.m) {
-            ZStack {
-                // 圆盘只在**用符号时**出现 —— 3D 图自带体积与落地影，
-                // 底下再垫一个 96pt 的彩色圆盘，盘边会从图的外缘露出来，
-                // 读成「图没对齐」而不是「锁放在圆盘上」。
-                if !symbol.isEmpty {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [tint.opacity(0.9), tint.opacity(0.6)],
-                                startPoint: .topLeading, endPoint: .bottomTrailing))
-                        .frame(width: 96, height: 96)
-                }
-                // 规范 7.8 通用自检: 环/圆盘**不得有投影，只用辉光**。
-                // 这是全页的视觉主角 (锁牌), 18pt 的彩色投影在纯黑上会糊成一圈
-                // 与主题色同色的脏边; 换成 radial 辉光才是「它在发光」。
-                // 辉光独立于圆盘 —— 3D 图态下只有辉光没有盘。
-                Circle()
-                    .fill(XGradient.glow(tint))
-                    .frame(width: 168, height: 168)
-                    .blur(radius: 22)
-                    .allowsHitTesting(false)
-
-                // ── 主视觉：3D 锁具渲染图（默认符号时）/ SF Symbol（用户选了别的符号时）──
-                //
-                // 规范 §6.4.3 要求「主体亮度高于卡片底色 >=3 档」且**背景透明**。
-                // 这张图是 three.js 在无头 Edge 里渲的（tools/prism/lock.html）：
-                // 深钛锁体 + 铜色锁芯，左上方单一主光，抠成透明底，1x/2x/3x 同源。
-                //
-                // 为什么只在默认符号时用：用户能从七个符号里挑（家/楼栋/车库/办公/钥匙/
-                // 布防/侧门）。挑了「车库」却还显示一把锁，那是把功能吃了。
-                // 所以 —— 默认态给主视觉，选了别的符号就回到符号。
-                if symbol.isEmpty {
-                    Image("LockHero")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 150, height: 150)
-                        // 150pt：图带落地影，比 96 的盘大一圈。默认态不画盘，
-                        // 所以这 150 是它对整行的占位高度，也是辉光的内切尺寸。
-                        .offset(y: -6)
-                        .contentTransition(.opacity)
-                } else {
-                    Image(systemName: symbol)
-                        .font(.system(size: XMetric.decorIcon(46), weight: .medium))
-                        .foregroundStyle(XPalette.onAccent)
-                        .contentTransition(.symbolEffect(.replace))
-                }
-            }
-            .animation(XMotion.summon, value: symbol)
-            .animation(XMotion.summon, value: colorKey)
-            .accessibilityHidden(true)
-
-            VStack(spacing: XSpace.xxs) {
-                Text(trimmed.isEmpty ? "未命名" : trimmed)
-                    .xFont(.display, weight: .semibold)
-                    .foregroundStyle(XPalette.text)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-
-                Text(place.trimmingCharacters(in: .whitespaces).isEmpty
-                     ? "未填场所" : place)
-                    .xFont(.subheadline)
-                    .foregroundStyle(XPalette.textSub)
-                    .lineLimit(1)
-            }
-
-            // 状态条 —— 锁档案页只管身份（名字/场所/图标/配色），
-            // 但用户在这里最想确认的是"这把锁现在什么状况"。
-            // 三个实时读数（电量 / 锁态 / 固件）挤在一行，不抢身份卡的视觉重心。
-            statusStrip
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, XSpace.xl)
-        .background(
-            RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
-                .fill(XPalette.surface)
-                .overlay(
-                    RoundedRectangle(cornerRadius: XRadius.card, style: .continuous)
-                        .strokeBorder(tint.opacity(XOpacity.edge), lineWidth: 1))
-        )
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("预览: \(trimmed.isEmpty ? "未命名" : trimmed), \(place.isEmpty ? "未填场所" : place)")
-    }
 
     // ═══════════════════════════════════════════════════════
     // MARK: - 身份
@@ -381,87 +294,11 @@ struct LockProfilePage: View {
     // MARK: - 符号
     // ═══════════════════════════════════════════════════════
 
-    private var symbolSection: some View {
-        XPanel(kind: .group) {
-            VStack(alignment: .leading, spacing: XSpace.m) {
-                sectionTitle("符号", icon: "sparkles")
-
-                // 规范 §13.1 AX1：多列网格 → 单列。5 列在无障碍字号下每格不足 40pt，
-                // 图标本身还在，但下面那行符号名会被压成竖排。
-                // 按 AX 档降列而不是缩字号 —— 缩字号等于拒绝放大。
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: XSpace.rowGap),
-                                         count: typeSize.isAccessibilitySize ? 3 : 5),
-                          spacing: XSpace.m) {
-                    ForEach(LockArchive.symbols) { s in
-                        let selected = symbol == s.name
-                        Button {
-                            symbol = s.name
-                            XHaptics.tick.impactOccurred()
-                        } label: {
-                            VStack(spacing: XSpace.xxs) {
-                                Image(systemName: s.name)
-                                    .font(.system(size: XIcon.md, weight: .medium))
-                                    .foregroundStyle(selected ? XPalette.onAccent : XPalette.textSub)
-                                    .frame(width: 48, height: 48)
-                                    .background(
-                                        Circle().fill(selected
-                                            ? LockArchive.swatchColor(colorKey)
-                                            : XPalette.surfaceAlt)
-                                    )
-                                Text(s.label)
-                                    .xFont(.caption2)
-                                    .foregroundStyle(selected ? XPalette.text : XPalette.textSub)
-                                    .lineLimit(1)
-                            }
-                        }
-                        .buttonStyle(.plain)
-                        .animation(XMotion.quick, value: selected)
-                        .accessibilityLabel("符号 \(s.label)")
-                        .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
-                    }
-                }
-            }
-        }
-    }
 
     // ═══════════════════════════════════════════════════════
     // MARK: - 色标
     // ═══════════════════════════════════════════════════════
 
-    private var colorSection: some View {
-        XPanel(kind: .group) {
-            VStack(alignment: .leading, spacing: XSpace.m) {
-                sectionTitle("配色", icon: "paintpalette")
-
-                HStack(spacing: XSpace.m) {
-                    ForEach(LockArchive.swatches) { s in
-                        let selected = colorKey == s.key
-                        Button {
-                            colorKey = s.key
-                            XHaptics.tick.impactOccurred()
-                        } label: {
-                            Circle()
-                                .fill(LockArchive.swatchColor(s.key))
-                                .frame(width: selected ? 40 : 34, height: selected ? 40 : 34)
-                                // 色板圆点视觉最大 40pt（选中态），差 4pt。
-                                // 加透明外圈补到 44：圆点看着还是那么大，手指够得着。
-                                .frame(width: XHit.min, height: XHit.min)
-                                .contentShape(Circle())
-                                .overlay(
-                                    Circle().strokeBorder(
-                                        selected ? XPalette.text : XPalette.hairline,
-                                        lineWidth: selected ? 2 : 1)
-                                )
-                        }
-                        .buttonStyle(.plain)
-                        .animation(XMotion.summon, value: selected)
-                        .accessibilityLabel("色标 \(s.name)")
-                        .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
-                    }
-                }
-            }
-        }
-    }
 
     // ═══════════════════════════════════════════════════════
     // MARK: - 更多

@@ -134,47 +134,27 @@ struct DonglesPage: View {
     // MARK: - 钥匙串卡
     // ═══════════════════════════════════════════════════════
 
+    /// 钥匙串卡 —— 2026-10-24 坚决精简
+    ///
+    /// 原 App 的 AddkeychainPage/KeychaindetailPage/DelblekeyPage 只做三件事：
+    /// **配对钥匙串 · 查看列表 · 删除**。用户裁定「只留配对+列表+删除」。
+    ///
+    /// 删掉：40pt 图标器皿与辉光 / MAC 小字 / 电量横条与信号读数 / 状态胶囊。
+    /// 留下：名字 + 是否已配钥匙 + 一行菜单（写钥匙 / 查钥匙 / 删钥匙 / 删记录）。
     private func dongleCard(_ d: Dongle) -> some View {
         let hasKey = !d.lastKeyLock.isEmpty
-        // 审美对齐 HTML：这里原本手绘 RoundedRectangle 背景（拿不到图2 的顶光卡材质），
-        // 改为 XPanel，与全站其它卡同一材质。
-        return XPanel(kind: .group, tone: hasKey ? .neutral : .neutral) {
-          VStack(alignment: .leading, spacing: XSpace.m) {
-            // 标题行
+        return XPanel(kind: .group) {
             HStack(spacing: XSpace.s) {
-                Image(systemName: "key.horizontal.fill")
-                    .font(.system(size: XIcon.md, weight: .medium))
-                    .foregroundStyle(hasKey ? XPalette.textSub : XPalette.textTertiary)
-                    .frame(width: 40, height: 40)
-                    .background(
-                        (hasKey ? XPalette.accent : XPalette.textTertiary).opacity(0.12),
-                        in: Circle())
-                    // 规范 7.8: 圆形器皿上的"发光"要用**辉光**(radial), 不是投影。
-                    // 投影会在黑底上把这个图标压出一圈灰边, 而意图是"它在亮"。
-                    .overlay {
-                        if hasKey {
-                            Circle()
-                                .fill(XGradient.glow(XPalette.accent))
-                                .blur(radius: 10)
-                                .allowsHitTesting(false)
-                        }
-                    }
-                    .accessibilityHidden(true)
-
                 VStack(alignment: .leading, spacing: 2) {
                     Text(d.name.isEmpty ? "钥匙串" : d.name)
                         .xFont(.body, weight: .medium)
                         .foregroundStyle(XPalette.text)
-                    Text(dongleDisplay(d.mac))
-                        .xFontExact(.caption.monospaced())
-                        .foregroundStyle(XPalette.textSub)
+                    Text(hasKey ? "已配钥匙" : "未配钥匙")
+                        .xFont(.caption)
+                        .foregroundStyle(hasKey ? XPalette.ok : XPalette.textTertiary)
                 }
 
                 Spacer(minLength: 0)
-
-                if hasKey {
-                    XStatusPill(text: "已配钥匙", tone: .ok)
-                }
 
                 Menu {
                     Button("读取状态") { Task { await readStatus(d) } }
@@ -182,8 +162,6 @@ struct DonglesPage: View {
                     Button("查询全部钥匙") { Task { await listKeys(d) } }
                     XHairline()
                     Button("删除本锁钥匙", role: .destructive) { confirmDeleteKey(d) }
-                    // 2026-10-23：这一条原来是**一键直接执行**（同级那条「删除本锁钥匙」走的是 confirmDeleteKey，它没有）。
-                    // 菜单里的破坏性条目更容易误触，必须问一句。
                     Button("删除记录", role: .destructive) {
                         confirmDestructive("删除这条网关记录？",
                                            "只从本机列表移除这条记录，门锁上的设置不受影响。",
@@ -198,103 +176,13 @@ struct DonglesPage: View {
                 }
                 .accessibilityLabel("更多操作")
             }
-
-            // 读数区
-            if let st = d.stat {
-                VStack(spacing: XSpace.s) {
-                    // 电量横条
-                    HStack(spacing: XSpace.s) {
-                        Image(systemName: batteryIcon(st.power))
-                            .font(.system(size: XIcon.sm, weight: .medium))
-                            .foregroundStyle(batteryTone(st.power).color)
-                            .accessibilityHidden(true)
-
-                        GeometryReader { geo in
-                            ZStack(alignment: .leading) {
-                                Capsule().fill(XPalette.surfaceSunken)
-                                if st.power >= 0 {
-                                    Capsule()
-                                        .fill(batteryTone(st.power).color)
-                                        .frame(width: geo.size.width * CGFloat(min(max(st.power, 0), 100)) / 100)
-                                }
-                            }
-                        }
-                        .frame(height: 6)
-
-                        Text(st.power < 0 ? "—" : "\(st.power)%")
-                            .xFontExact(.caption.monospacedDigit())
-                            .foregroundStyle(XPalette.textSub)
-                            .xScaledWidth(40, alignment: .trailing)
-                    }
-                    .accessibilityElement(children: .combine)
-                    .accessibilityLabel("电量 \(st.power < 0 ? "未知" : "\(st.power)%")")
-
-                    HStack(spacing: XSpace.m) {
-                        readPair("钥匙存量", keyCountText(st))
-                        readPair("固件", st.firmware.isEmpty ? "—" : st.firmware)
-                    }
-                }
-            }
-
-            // 时间戳台账 —— Dongle 里有三个时间字段，但卡片从没显示过。
-            //
-            // lastSeenAt 尤其重要: 钥匙串是电池设备，长期没被看到
-            // 意味着可能没电/丢在包里/离得太远。现在只有"已配钥匙"一个状态。
-            VStack(spacing: XSpace.xs) {
-                if !d.lastSeenAt.isEmpty {
-                    timestampRow("最近看到", d.lastSeenAt, tone: .neutral)
-                }
-                if !d.lastKeyAt.isEmpty {
-                    timestampRow("上次写钥匙", d.lastKeyAt, tone: .neutral)
-                }
-                if !d.boundAt.isEmpty {
-                    timestampRow("绑定时间", d.boundAt, tone: .neutral)
-                }
-            }
-          }
         }
     }
 
-    /// 一行时间戳（右对齐，低调）
-    private func timestampRow(_ label: String, _ value: String, tone: XToneColor) -> some View {
-        HStack(spacing: XSpace.s) {
-            Text(label)
-                .xFont(.caption2)
-                .foregroundStyle(XPalette.textSub)
-            Spacer(minLength: 0)
-            Text(value)
-                .xFontExact(.caption2.monospacedDigit())
-                .foregroundStyle(tone == .neutral ? XPalette.textSub : tone.color)
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(label + " " + value)
-    }
 
-    private func readPair(_ label: String, _ value: String) -> some View {
-        VStack(alignment: .leading, spacing: 1) {
-            Text(label)
-                .xFont(.caption2)
-                .foregroundStyle(XPalette.textSub)
-            Text(value)
-                .xFontExact(.caption.monospacedDigit())
-                .foregroundStyle(XPalette.text)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
 
-    private func keyCountText(_ st: DongleStat) -> String {
-        // 两侧独立解析 (KLV#24/#25 各默认 -1), "读到存量没读到上限" 是正常回字
-        if st.ekeyCount < 0 { return "—" }
-        if st.ekeyAmount < 0 { return "\(st.ekeyCount) / —" }
-        return "\(st.ekeyCount) / \(st.ekeyAmount)"
-    }
 
-    /// 图标映射只有一处（BatteryCare.tier）—— 这里原来自己一套阈值，
-    /// 结果 p=5 显示 25% 图标、p=85 还停在 75% 图标。
-    private func batteryIcon(_ p: Int) -> String { BatteryCare.icon(p) }
 
-    /// 配色映射也只有一处（BatteryCare.tier）—— 这原是第二套阈值（20/40），与 tier 的 10/20/35/60 不同。
-    private func batteryTone(_ p: Int) -> XToneColor { BatteryCare.tier(p).tone }
 
     // ═══════════════════════════════════════════════════════
     // MARK: - 空态
