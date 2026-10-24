@@ -32,7 +32,7 @@
 | 审计流水 | 谁在什么时候做了什么 | SecurityCenterView |
 | 锁档案 | 这台锁的名字 / 符号 / 配色 | LockProfilePage |
 | 锁体保养 | 五项清单 · 还没保养过 | CareViews |
-| 添加密码 | 6~8 位数字 · 会占用密码库存 | AddKeyPage |
+| 添加密码 | 写入门锁 · 会占用密码库存 | AddKeyPage |
 | 同步时间 | 锁钟偏差 · 写入手机时间 | DeviceHomeView |
 | 退出处置向导 | 逐条处置：保留 / 移交 / 停用 | MemberCenterView |
 | 外观工作室 | 正文始终是正文的颜色，不会因此变得看不清 | AppearancePage |
