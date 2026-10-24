@@ -316,11 +316,17 @@ struct BackupPage: View {
                         Text("导出").xFont(.caption, weight: .medium).foregroundStyle(XPalette.textSub)
                         Spacer(minLength: 0)
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 10, weight: .semibold))
+                            .font(.system(size: XIcon.xs, weight: .semibold))
                             .foregroundStyle(XPalette.textTertiary.opacity(0.6))
                     }
-                    Text("\(exportN) 次").xFont(.title2, weight: .bold).monospacedDigit()
-                        .foregroundStyle(XPalette.text)
+                    // §7.16：指标值不能把单位拼进字符串，走 HStack + 小号单位
+                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                        Text(String(exportN))
+                            .xFont(.title2, weight: .bold)
+                            .monospacedDigit()
+                            .foregroundStyle(XPalette.text)
+                        Text("次").xFont(.caption2).foregroundStyle(XPalette.textSub)
+                    }
                     Text("本机 → 文件").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
                     Text("生成一份备份")
                         .xFont(.caption2, weight: .medium)
@@ -335,11 +341,16 @@ struct BackupPage: View {
                         Text("恢复").xFont(.caption, weight: .medium).foregroundStyle(XPalette.textSub)
                         Spacer(minLength: 0)
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 10, weight: .semibold))
+                            .font(.system(size: XIcon.xs, weight: .semibold))
                             .foregroundStyle(XPalette.textTertiary.opacity(0.6))
                     }
-                    Text("0 次").xFont(.title2, weight: .bold).monospacedDigit()
-                        .foregroundStyle(XPalette.textTertiary)
+                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                        Text("0")
+                            .xFont(.title2, weight: .bold)
+                            .monospacedDigit()
+                            .foregroundStyle(XPalette.textTertiary)
+                        Text("次").xFont(.caption2).foregroundStyle(XPalette.textSub)
+                    }
                     Text("文件 → 本机").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
                     Text("同机覆盖，其它保留")
                         .xFont(.caption2, weight: .medium)

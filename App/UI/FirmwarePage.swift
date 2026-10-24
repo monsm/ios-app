@@ -275,7 +275,7 @@ struct FirmwarePage: View {
                         Text("电量").xFont(.caption, weight: .medium).foregroundStyle(XPalette.textSub)
                         Spacer(minLength: 0)
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 10, weight: .semibold))
+                            .font(.system(size: XIcon.xs, weight: .semibold))
                             .foregroundStyle(XPalette.textTertiary.opacity(0.6))
                     }
                     Text("升级需 ≥30%").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
@@ -300,7 +300,7 @@ struct FirmwarePage: View {
                         Text("连接").xFont(.caption, weight: .medium).foregroundStyle(XPalette.textSub)
                         Spacer(minLength: 0)
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 10, weight: .semibold))
+                            .font(.system(size: XIcon.xs, weight: .semibold))
                             .foregroundStyle(XPalette.textTertiary.opacity(0.6))
                     }
                     Text("蓝牙").xFont(.caption2).foregroundStyle(XPalette.textTertiary)

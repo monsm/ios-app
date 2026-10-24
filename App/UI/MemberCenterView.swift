@@ -975,7 +975,7 @@ struct MemberArchivedView: View {
                     Text("成员").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
                     HStack(alignment: .firstTextBaseline, spacing: 2) {
                         Text(String(n))
-                            .xFont(.title, weight: .bold)
+                            .xFont(.title2, weight: .bold)
                             .monospacedDigit()
                             .foregroundStyle(n > 0 ? XPalette.text : XPalette.textTertiary)
                         Text("位").xFont(.caption2).foregroundStyle(XPalette.textSub)
@@ -992,7 +992,7 @@ struct MemberArchivedView: View {
                     Text("钥匙").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
                     HStack(alignment: .firstTextBaseline, spacing: 2) {
                         Text(String(unowned))
-                            .xFont(.title, weight: .bold)
+                            .xFont(.title2, weight: .bold)
                             .monospacedDigit()
                             .foregroundStyle(unowned > 0 ? XPalette.warn : XPalette.textTertiary)
                         Text("份").xFont(.caption2).foregroundStyle(XPalette.textSub)
