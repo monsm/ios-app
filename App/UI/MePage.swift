@@ -42,6 +42,34 @@ struct MePage: View {
         // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
         XScreen("本机设置") {
+            // 审美对齐 HTML 05-system / 4a-me：卡之前有一排**带迷你环的玻璃胶囊**。
+            // App 这一页此前**一个胶囊都没有** —— 进来先是一排卡片，看不到本机各项状态的总览。
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: XSpace.s) {
+                    XStatChip(label: "应用锁",
+                              value: DB.hasPasscode() ? "已开启" : "未开启",
+                              ringFraction: DB.hasPasscode() ? 1 : 0,
+                              tint: DB.hasPasscode() ? XPalette.ok : XPalette.warn,
+                              fillsWidth: false)
+                    XStatChip(label: "待处理告警",
+                              value: String(RecordSearch.unhandledAlarmCount(macs: DB.keychains().map { $0.mac })),
+                              ringFraction: RecordSearch.unhandledAlarmCount(macs: DB.keychains().map { $0.mac }) > 0 ? 1 : 0,
+                              tint: RecordSearch.unhandledAlarmCount(macs: DB.keychains().map { $0.mac }) > 0 ? XPalette.danger : XPalette.ok,
+                              fillsWidth: false)
+                    XStatChip(label: "上次导出",
+                              value: backupAgeChipText,
+                              ringFraction: backupAgeChipFraction,
+                              tint: backupAgeChipFraction > 0.5 ? XPalette.warn : XPalette.ok,
+                              fillsWidth: false)
+                    XStatChip(label: "门锁",
+                              value: "\(DB.keychains().count) 把",
+                              ringFraction: min(1, Double(DB.keychains().count) / 3),
+                              tint: XPalette.accent,
+                              fillsWidth: false)
+                }
+            }
+            .scrollIndicators(.hidden)
+            .padding(.bottom, XSpace.m)
             statusSummary
             backupRestoreCard
             protectionSection
@@ -254,6 +282,20 @@ struct MePage: View {
 
     /// HTML 对齐 (2026-10-24): 补「备份恢复」卡 —— 上次导出 / 本机门锁 / 钥匙总数。
     /// parity 工具指出这一整卡在 App 里缺失（HTML 05-system 有）。
+    /// 胶囊用：上次导出距今天数（-1 = 从未）
+    private var backupAgeChipFraction: Double {
+        let ms = DB.store.getInt("kf_bk_last_export", 0)
+        if ms <= 0 { return 0 }
+        let days = (Date().timeIntervalSince1970 * 1000 - Double(ms)) / 86_400_000
+        return max(0, min(1, days / 30))
+    }
+    private var backupAgeChipText: String {
+        let ms = DB.store.getInt("kf_bk_last_export", 0)
+        if ms <= 0 { return "从未" }
+        let days = Int((Date().timeIntervalSince1970 * 1000 - Double(ms)) / 86_400_000)
+        return days <= 0 ? "今天" : "\(days) 天前"
+    }
+
     private var backupRestoreCard: some View {
         XPanel {
             VStack(alignment: .leading, spacing: XSpace.m) {
