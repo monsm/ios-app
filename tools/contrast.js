@@ -122,10 +122,17 @@ if (overrideSrc) {
 // 本仓出过两次这种事故：danger 被从 #FF3B30 提到 #FF4A40（理由是迁就自造的用法），
 // textTertiary 被从 #6A6A6E 提到 #78787F（理由是迁就自加的断言）。
 // 两次都让对比度「更达标」，也都让界面离规范更远。
+//
+// ⚠ 2026-10-24 用户口径：「**规范有时候可能是错的，以 html 的视觉审美为标准**」。
+// 所以这张表的权威来源改为 tools/proto/tokens.css（HTML 原型的令牌），
+// 规范文档与它冲突时以 HTML 为准。surfaceAlt 就是第一处实例：
+//   规范 §2.x 写 #24242A，HTML --surface-alt 写 #202022 —— 取 HTML 的 #202022。
+// 反过来，下面 danger / textTertiary 那两次"迁就用法"的事故仍然要拦：
+// 它们是把令牌往**偏离规范且无 HTML 依据**的方向改，与本条不冲突。
 const SPEC_VALUES = {
-  canvas: 0x000000,        // 规范 §2.1：画布纯黑
-  surface: 0x1C1C1E,       // 规范 §2.2：应用体卡片
-  surfaceAlt: 0x24242A,
+  canvas: 0x000000,        // HTML --canvas / 规范 §2.1：画布纯黑
+  surface: 0x1C1C1E,       // HTML --surface / 规范 §2.2：应用体卡片
+  surfaceAlt: 0x202022,    // HTML --surface-alt（规范写 #24242A，按新口径取 HTML）
   surfaceSunken: 0x101012,
   text: 0xFFFFFF,          // 规范 §3.3
   textSub: 0x8D8D93,

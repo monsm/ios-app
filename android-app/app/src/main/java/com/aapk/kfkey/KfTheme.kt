@@ -66,7 +66,7 @@ internal data class KfColors(
 internal val KfDarkColors = KfColors(
     canvas = Color(0xFF000000),          // 范式 §2.1: 画布纯黑
     surface = Color(0xFF1C1C1E),         // 范式 §2.2: 应用体卡片
-    surfaceAlt = Color(0xFF24242A),
+    surfaceAlt = Color(0xFF202022),
     surfaceSunken = Color(0xFF101012),
     // 规范 §2 原文就是半透明白 rgba(255,255,255,0.08) —— 不是实色。0.08*255 = 20 = 0x14
     hairline = Color(0x14FFFFFF),

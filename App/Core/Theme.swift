@@ -78,7 +78,11 @@ enum XPalette {
     /// 旧值 0x161618 太暗, 与画布只差 8 个色阶 —— 卡片在纯黑上几乎看不见边界。
     static var surface: Color { Color.adaptive(0xFFFFFF, 0x1C1C1E) }
     /// 卡内次级块 (卡里再分块的底)。深色档 #24242A。
-    static var surfaceAlt: Color { Color.adaptive(0xEFEFF4, 0x24242A) }
+    /// 卡内次级块。深色档 **#202022** —— 对齐 HTML tokens.css 的 `--surface-alt`。
+    ///
+    /// 2026-10-24：此前是 #24242A，比 HTML 亮 4 个色阶。token 全量对账只剩这一处色差，
+    /// 而用户口径是「规范有时候可能是错的，**以 html 的视觉审美为标准**」。
+    static var surfaceAlt: Color { Color.adaptive(0xEFEFF4, 0x202022) }
     /// 第三表面 —— 输入框底、图表容器。深色档 #101012, **比画布亮、比卡片暗**,
     /// 是"凹陷"的那一档 (范式 3.1 surfaceSunken)。
     static var surfaceSunken: Color { Color.adaptive(0xE5E5EA, 0x101012) }
