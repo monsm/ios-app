@@ -953,7 +953,9 @@ struct HomeConsole: View {
         //（分隔线补 2 凑 14、页脚 lineSpacing 7 凑 1.6），每一处都要单独算。
         // 现在节奏归组件管，这里只写「第一段放图，第二段放最早一次」。
         XStatCard(
-            headerTitle: "今天",
+            // 卡头对齐 HTML 01-home 卡2（.ctitle「今日开门分布」）——
+            // "今天"没有说清卡里画的是什么；分布图自己会说话。
+            headerTitle: "今日开门分布",
             headerAction: { showEvents = true },
             footer: "今天 \(opensToday) 次开门，其中 \(todayPeople) 位成员参与。柱高是该小时的开门次数。"
         ) {
