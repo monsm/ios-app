@@ -34,8 +34,6 @@ struct StatsPage: View {
     @State private var model: StatsKit.StatModel?
     @State private var loaded = false
     /// 「怎么开的门」的明细在记录页 —— §7.11 的卡头链接需要一个真实目的地。
-    @State private var showEvents = false
-    @State private var showSecurity = false
 
     private var mac: String { app.currentMac }
 
@@ -84,12 +82,6 @@ struct StatsPage: View {
                 XSkeleton(blocks: 3, blockHeight: 132)
             }
         }
-        .sheet(isPresented: $showEvents) {
-            EmptyView()  // 2026-10-24: EventsPage 已删（用户裁定）
-        }
-        .sheet(isPresented: $showSecurity) {
-            EmptyView()  // 2026-10-24: SecurityPage 已删
-        }
         .task { if !loaded { load() } }
     }
 
@@ -133,7 +125,7 @@ struct StatsPage: View {
                 VStack(alignment: .leading, spacing: XSpace.m) {
                     // 规范 §7.11：卡内顶部的标题是**链接**（灰 14 + chevron），不是白粗标题。
                     // 这张卡的数据出自「记录」页，点它能直接进去看明细 —— 之前没有这个入口。
-                    XCardLink(title: "怎么开的门") { showEvents = true }
+                    XCardLink(title: "怎么开的门") { /* 2026-10-24: EventsPage 已删 */ }
 
                     let peak = max(rows.map { $0.count }.max() ?? 1, 1)
                     ForEach(Array(rows.enumerated()), id: \.offset) { _, r in
@@ -323,7 +315,7 @@ struct StatsPage: View {
                 // 这一处**有真去处**（安全中心），所以做成 §7.11 的卡头链接。
                 // 同页其余四个区块标题没有独立页面 —— 它们保持纯标签。
                 // 硬套链接会是假可供性：点了没反应比没有箭头更糟。
-                XCardLink(title: "安全") { showSecurity = true }
+                XCardLink(title: "安全") { /* 2026-10-24: SecurityPage 已删 */ }
 
                 HStack(spacing: XSpace.l) {
                     XMetricTile(

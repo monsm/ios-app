@@ -46,7 +46,6 @@ struct BackupPage: View {
     /// 原来只有「复制到剪贴板」—— 那是给聊天工具用的，
     /// 但备份的正常去处是「存到 iCloud 云盘 / 我的 iPhone」。
     @State private var showFileExporter = false
-    @State private var showStudio = false
     @State private var pendingRestore: BackupBundle?
 
     var body: some View {
@@ -109,9 +108,6 @@ struct BackupPage: View {
                       allowedContentTypes: [.item],   // 备份文件是 .enc —— 之前限 .json/.data，系统把它判成未知类型直接灰掉，点了不选中
                       allowsMultipleSelection: false) { result in
             handleFileImport(result)
-        }
-        .sheet(isPresented: $showStudio) {
-            EmptyView()  // 2026-10-24: 备份工作室已删（只留 iCloud 文件存取）
         }
         // 选择器收起后再呈现确认框 —— 见 handleFileImport 里的说明。
 
@@ -734,7 +730,7 @@ struct BackupPage: View {
                 subtitle: "导出 / 恢复 / 校验",
                 showsChevron: true
             ) {
-                showStudio = true
+                /* 2026-10-24: 备份工作室已删 */
             }
         }
     }
