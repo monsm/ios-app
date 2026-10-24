@@ -514,7 +514,10 @@ private fun KfApp(unlocker: BleUnlocker) {
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     SettingsCard(
+                        lock = lock,
                         on = proximity,
+                        sound = findSound,
+                        onSound = { findSound = it },
                         onToggle = {
                             proximity = it
                             LockStore.saveProximity(ctx, it)
@@ -1097,8 +1100,11 @@ private fun SignalMetric(armed: Boolean, rssi: Int?, proximity: Boolean, modifie
  */
 @Composable
 private fun SettingsCard(
+    lock: LockInfo?,
     on: Boolean,
     onToggle: (Boolean) -> Unit,
+    sound: Boolean,
+    onSound: (Boolean) -> Unit,
     onRescan: () -> Unit,
     onUnbind: () -> Unit,
     onClose: () -> Unit,
@@ -1155,6 +1161,28 @@ private fun SettingsCard(
             )
         }
 
+        // 审美对齐 android-proto 03-settings 卡1 的第二行「提示音」。
+        // App 里这个开关一直存在（findSound），但只在 AirTag 全屏层里露过面 ——
+        // 设置面板里没有它，用户找不到"在哪儿关声音"。
+        Spacer(Modifier.height(KfTokens.Space.s))
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.weight(1f)) {
+                Text("提示音", color = colors.text, fontSize = Type.subhead)
+                Text("开锁时「滴滴滴」", color = colors.textSub, fontSize = Type.caption)
+            }
+            Switch(
+                checked = sound,
+                onCheckedChange = onSound,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = colors.onAccent,
+                    checkedTrackColor = colors.accent,
+                    uncheckedThumbColor = colors.textSub,
+                    uncheckedTrackColor = colors.surfaceAlt,
+                    uncheckedBorderColor = colors.hairline,
+                )
+            )
+        }
+
         // 标签 -> 值 2pt: 这里是「值」组 (说明两行), 与上面的控件紧贴
         Spacer(Modifier.height(2.dp))
 
@@ -1179,6 +1207,11 @@ private fun SettingsCard(
                 .background(colors.hairline)
         )
         Spacer(Modifier.height(KfTokens.Space.m))
+
+        // 审美对齐 android-proto 03-settings：HTML 把「凭证与绑定」单独成卡（卡2），
+        // 这里相当于该卡的卡内区。补一行卡头文字，让"这一段是凭证类动作"可被扫读认出来。
+        Text("凭证与绑定", color = colors.textSub, fontSize = Type.subhead)
+        Spacer(Modifier.height(KfTokens.Space.s))
 
         // 六图改造 (2026-10-23): 两个纯文字动作改成**图 2 的卡内行形态**。
         //
@@ -1209,6 +1242,43 @@ private fun SettingsCard(
             fontSize = Type.footnote,
             lineHeight = 18.sp
         )
+
+        // ── 卡3「当前绑定」── 对齐 android-proto 03-settings 卡3
+        // HTML 给的三行事实：门锁名 / 绑定方式 / 凭证类型 + 一条协议 footer。
+        // 这些在 App 里都真实存在（LockInfo），只是此前只在主屏 Header 露出一行名字。
+        if (lock != null) {
+            Spacer(Modifier.height(KfTokens.Space.m))
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(KfTokens.Hairline.width)
+                    .background(colors.hairline)
+            )
+            Spacer(Modifier.height(KfTokens.Space.m))
+            Text("当前绑定", color = colors.textSub, fontSize = Type.subhead)
+            Spacer(Modifier.height(KfTokens.Space.s))
+            Row(Modifier.fillMaxWidth()) {
+                Text("门锁", color = colors.textSub, fontSize = Type.footnote, modifier = Modifier.weight(1f))
+                Text(lock.name, color = colors.text, fontSize = Type.footnote, fontWeight = FontWeight.SemiBold)
+            }
+            Spacer(Modifier.height(KfTokens.Space.xs))
+            Row(Modifier.fillMaxWidth()) {
+                Text("凭证类型", color = colors.textSub, fontSize = Type.footnote, modifier = Modifier.weight(1f))
+                Text("离线锁钥匙", color = colors.text, fontSize = Type.footnote, fontWeight = FontWeight.SemiBold)
+            }
+            Spacer(Modifier.height(KfTokens.Space.xs))
+            Row(Modifier.fillMaxWidth()) {
+                Text("协议", color = colors.textSub, fontSize = Type.footnote, modifier = Modifier.weight(1f))
+                Text("04", color = colors.text, fontSize = Type.footnote, fontWeight = FontWeight.SemiBold)
+            }
+            Spacer(Modifier.height(KfTokens.Space.s))
+            Text(
+                "每个接近事件只发一次 04 命令 —— 秒开在 RSSI ≥ " + AutoOpenKit.BASE + " dBm 时触发。",
+                color = colors.textTertiary,
+                fontSize = Type.footnote,
+                lineHeight = 18.sp
+            )
+        }
     }
 }
 
