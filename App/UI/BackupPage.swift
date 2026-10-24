@@ -153,7 +153,7 @@ struct BackupPage: View {
                         widthRatio: 0.13,
                         showsCursor: false,
                         showsTick: false,
-                        gradient: backupTone == .ok ? XGradient.dialOK : XGradient.dial
+                        gradient: solid: backupTone == .ok ? XPalette.ok : XPalette.warn
                     ) { EmptyView() }
                     .accessibilityHidden(true)
                 }

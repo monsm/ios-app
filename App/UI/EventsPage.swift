@@ -582,7 +582,7 @@ struct EventsPage: View {
                     widthRatio: 0.14,
                     showsCursor: false,
                     showsTick: false,
-                    gradient: alarmN > 0 ? XGradient.dial : XGradient.dialOK
+                    gradient: solid: alarmN > 0 ? XPalette.danger : XPalette.ok
                 ) { EmptyView() }
                 .accessibilityHidden(true)
             }

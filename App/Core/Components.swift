@@ -2403,6 +2403,14 @@ struct XGradientDial<Center: View>: View {
     var showsTick: Bool = true
     /// 渐变；默认 `XGradient.dial`
     var gradient: LinearGradient = XGradient.dial
+    /// **纯色环** —— 2026-10-24 逐页对齐新增。
+    ///
+    /// HTML 原型的环是**单一 stroke 色**（`<circle stroke="#FF9F0A">`），不是渐变：
+    /// 每页的环色不同（应用锁橙 / 关怀提醒红 / 固件紫 / 本机保护绿…），
+    /// 用统一渐变会让 13 个页面的环长得一样，且丢掉"颜色即语义"。
+    ///
+    /// 传了 solid 就用它，忽略 gradient。
+    var solid: Color? = nil
     /// 中心内容
     @ViewBuilder var center: () -> Center
 
@@ -2423,7 +2431,7 @@ struct XGradientDial<Center: View>: View {
             // ② 点亮段
             Circle()
                 .trim(from: 0, to: (1 - gap) * max(0.001, min(1, progress)))
-                .stroke(gradient,
+                .stroke(solid.map { AnyShapeStyle($0) } ?? AnyShapeStyle(gradient),
                         style: StrokeStyle(lineWidth: size * widthRatio, lineCap: .round))
                 .rotationEffect(startAngle)
 

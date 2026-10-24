@@ -122,7 +122,7 @@ struct CareRemindersView: View {
                         widthRatio: 0.13,
                         showsCursor: false,
                         showsTick: false,
-                        gradient: (nearest ?? 99) <= 7 ? XGradient.dial : XGradient.dialOK
+                        gradient: solid: (nearest ?? 99) <= 7 ? XPalette.danger : XPalette.ok
                     ) { EmptyView() }
                     .accessibilityHidden(true)
                 }

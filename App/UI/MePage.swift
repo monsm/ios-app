@@ -130,7 +130,7 @@ struct MePage: View {
                         widthRatio: 0.13,
                         showsCursor: false,
                         showsTick: false,
-                        gradient: pending > 0 ? XGradient.dial : XGradient.dialOK
+                        gradient: solid: pending > 0 ? XPalette.warn : XPalette.ok
                     ) { EmptyView() }
                     .accessibilityHidden(true)
                 }

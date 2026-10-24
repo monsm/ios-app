@@ -96,7 +96,7 @@ struct SecurityPage: View {
                         widthRatio: 0.13,
                         showsCursor: false,
                         showsTick: false,
-                        gradient: riskTotal == 0 ? XGradient.dialOK : XGradient.dial
+                        gradient: solid: riskTotal == 0 ? XPalette.ok : XPalette.danger
                     ) { EmptyView() }
                     .accessibilityHidden(true)
                 }
