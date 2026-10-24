@@ -1612,43 +1612,46 @@ struct PrivacyDashboard: View {
             // 数字埋在句子里。提到 44px 之后，"开了几项"一眼可读，环给出比例。
             let enabledN = PeekItem.all.filter { $0.on }.count
             let totalN = max(1, PeekItem.all.count)
-            XPanel(kind: .group) {
+            // ═══ 2026-10-24 逐页对齐 HTML 43-privacy-dash 首卡 ═══
+            //
+            // HTML 的首卡是**全屏唯一的紫色渐变大卡**（linear-gradient(160deg,#5E5CE6,#3C489C)）：
+            //   · 左：17px/700 白字「已启用 1 / 5 项防窥」+ 13px 白 75% 说明
+            //   · 右：84px 环，轨道白 8%，进度色 #30D158（绿），环心 21.84px 白数字
+            //   · 没有卡头（没有「防窥总览」小标），因为渐变卡本身就是主角
+            //
+            // 真机此前是「深灰 XPanel + 卡头 + 44px 大数字 + 蓝环」—— 三个偏离：
+            //   ① 丢了渐变（HTML 用紫色渐变区分"这是摘要，不是列表项"）
+            //   ② 多了卡头小标（HTML 首卡没有）
+            //   ③ 环色是蓝渐变而非纯绿 #30D158
+            XPanel(kind: .hero) {
                 VStack(alignment: .leading, spacing: 0) {
-                    HStack {
-                        Text("防窥总览")
-                            .xFont(.subheadline)
-                            .foregroundStyle(XPalette.textTertiary)
-                        Spacer(minLength: 0)
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(XPalette.textTertiary.opacity(0.6))
-                    }
-                    HStack(alignment: .center, spacing: XSpace.l) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            XHeroNumber(
-                                text: String(enabledN),
-                                color: peekSummary.tone,
-                                unit: "/ \(totalN) 项")
+                    HStack(alignment: .center, spacing: XSpace.m) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("已启用 \(enabledN) / \(totalN) 项防窥")
+                                .xFont(.title3, weight: .bold)
+                                .foregroundStyle(.white)
                             Text(peekSummary.detail)
-                                .xFont(.footnote)
-                                .foregroundStyle(XPalette.textTertiary)
+                                .xFont(.small)
+                                .foregroundStyle(.white.opacity(0.75))
                                 .fixedSize(horizontal: false, vertical: true)
                         }
-                        Spacer(minLength: 4)
-                        // 图 2 的环带中心数字：这里中心就是已开数量
-                        XGradientDial(
-                            size: 82,
-                            progress: Double(enabledN) / Double(totalN),
-                            widthRatio: 0.13,
-                            showsCursor: false,
-                            showsTick: false,
-                            gradient: enabledN == totalN ? XGradient.dialOK : XGradient.dial
-                        ) {
+                        Spacer(minLength: 0)
+                        // HTML 的环：84px / 轨道白 8% / 进度 **恒为绿 #30D158** / 环心 21.84px 白数字。
+                        // 真机此前用 dialOK/dial 两条渐变、环心用 peekSummary.tone 着色 ——
+                        // 而 HTML 的绿是固定的（"已启用"这个量本身用绿色表示，不随开启数变）。
+                        ZStack {
+                            Circle()
+                                .stroke(XPalette.veil, lineWidth: 10)
+                            Circle()
+                                .trim(from: 0, to: Double(enabledN) / Double(totalN))
+                                .stroke(XPalette.ok, style: StrokeStyle(lineWidth: 10, lineCap: .round))
+                                .rotationEffect(.degrees(-90))
                             Text(String(enabledN))
-                                .font(.system(size: XMetric.dataText(22), weight: .bold))
+                                .font(.system(size: 22, weight: .bold))
                                 .monospacedDigit()
-                                .foregroundStyle(peekSummary.tone)
+                                .foregroundStyle(.white)
                         }
+                        .frame(width: 84, height: 84)
                         .accessibilityHidden(true)
                     }
                     .padding(.top, 8)
