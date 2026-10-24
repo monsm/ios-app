@@ -569,9 +569,14 @@ private fun KfApp(unlocker: BleUnlocker) {
             title = { Text(if (same) "更新这把锁的凭证?" else "换一把锁?", fontWeight = FontWeight.SemiBold) },
             text = {
                 Text(
+                    // 文案对齐 android-proto 05-rebind：那张「换绑后果」卡给了**两段**后果 ——
+                    // 一段说换绑之后旧锁会怎样，一段说解绑会删掉什么。
+                    // App 之前只有第一段：用户看不到"如果我选解绑，会失去什么"。
                     if (same) "本机已绑定「${pendingLock.name}」。用新扫到的凭证覆盖它?"
-                    else "本机现在绑定的是「${lock?.name ?: ""}」(${lock?.macText ?: ""})。\n" +
-                        "换成「${pendingLock.name}」(${pendingLock.macText}) 之后, 原来那把锁要从这台手机重新扫码才能再用。"
+                    else "本机现在绑定的是「${lock?.name ?: ""}」(${lock?.macText ?: ""})。\n\n" +
+                        "换成「${pendingLock.name}」(${pendingLock.macText}) 之后, 原来那把锁要从这台手机重新扫码才能再用。\n\n" +
+                        "解绑则删除「${lock?.name ?: ""}」的钥匙与全部本机设置, 删掉之后无法从本机找回 —— " +
+                        "要再用这把锁, 得先在门锁键盘上重置、再重新扫码配对。门锁里的密码和指纹不受影响。"
                 )
             },
             confirmButton = {
