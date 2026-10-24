@@ -265,13 +265,7 @@ struct MePage: View {
             // DiagKit 有 642 行采集器（自检 / 数据健康 / 异常退出 / 启动耗时 /
             // 最近操作 / 蓝牙遥测 / 日志保留），这一屏之前**不存在**，
             // 采集的数据没有任何地方显示。
-            NavigationLink { DiagnosticsPage().environmentObject(app).trackScreen("诊断与自检") } label: {
-                XRow(
-                    systemImage: "stethoscope",
-                    title: "诊断与自检",
-                    subtitle: "自检 · 数据健康 · 启动耗时",
-                    showsChevron: true)
-            }
+
             Text("本机数据与访问权限")
                 .xFont(.caption, weight: .semibold)
                 .foregroundStyle(XPalette.textTertiary)
@@ -347,14 +341,10 @@ struct MePage: View {
                     showsChevron: true)
             }
             XHairline(inset: XSpace.card + 28 + XSpace.m)
-            NavigationLink { LocksPage().environmentObject(app) } label: {
-                XRow(
-                    systemImage: "square.stack.3d.up",
-                    title: "设备管理",
-                    subtitle: "排序 / 分组 / 批量",
-                    value: "\(DB.keychains().count) 把",
-                    showsChevron: true)
-            }
+            // 2026-10-24 去重：这里原来是「设备管理 → LocksPage」的第二入口，
+            // 而底部导航「设备」组的第一项就是它对同一页面。
+            // 同一页两个入口会让用户以为它们不同（一个叫"设备管理"一个叫"我的门锁"）。
+            // 保留底部导航那条；本页需要看门锁数量时，上方 statusSummary 的「门锁」摘要卡仍在。
             XHairline(inset: XSpace.card + 28 + XSpace.m)
             NavigationLink { LockProfilePage().environmentObject(app) } label: {
                 XRow(
@@ -364,12 +354,7 @@ struct MePage: View {
                     showsChevron: true)
             }
             XHairline(inset: XSpace.card + 28 + XSpace.m)
-            NavigationLink { SyncTimeView().environmentObject(app) } label: {
-                XRow(
-                    systemImage: "clock.arrow.circlepath",
-                    title: "校准门锁时间",
-                    showsChevron: true)
-            }
+
             XHairline(inset: XSpace.card + 28 + XSpace.m)
             NavigationLink { LinkPrefsView(mac: mac).environmentObject(app) } label: {
                 XRow(
@@ -389,12 +374,7 @@ struct MePage: View {
                     showsChevron: true)
             }
             XHairline(inset: XSpace.card + 28 + XSpace.m)
-            NavigationLink { SafemodeIntroView().environmentObject(app) } label: {
-                XRow(
-                    systemImage: "shield.lefthalf.filled",
-                    title: "门锁安全模式",
-                    showsChevron: true)
-            }
+
             Text("门锁与设备")
                 .xFont(.caption, weight: .semibold)
                 .foregroundStyle(XPalette.textTertiary)
@@ -409,23 +389,11 @@ struct MePage: View {
 
     private var dataSection: some View {
         XPanel {
-            NavigationLink { BackupPage().environmentObject(app) } label: {
-                XRow(
-                    systemImage: "externaldrive",
-                    title: "备份与恢复",
-                    subtitle: "全量导出 / 导入",
-                    value: backupAgeText,
-                    showsChevron: true)
-            }
-            XHairline(inset: XSpace.card + 28 + XSpace.m)
-            NavigationLink { ExportCenterView(mac: mac).environmentObject(app) } label: {
-                XRow(
-                    systemImage: "square.and.arrow.up",
-                    title: "导出中心",
-                    subtitle: "CSV / 报告",
-                    showsChevron: true)
-            }
-            XHairline(inset: XSpace.card + 28 + XSpace.m)
+            // ═══ 2026-10-24 去重 ═══
+            // 删掉「备份与恢复」与「导出中心」两行 —— 底部导航「系统」组里都是一级入口。
+            // 同一页两处入口会让用户以为"本机设置里的备份"和"系统组的备份"是两个东西。
+            // 本页保留 backupRestoreCard：它只在**备份陈旧/从未备份**时出现，
+            // 是一条带语境与时效的提醒（"已经 23 天没备份了"），不是常驻菜单项。
             // ═══ 事件记录 ═══
             //
             // EventsPage 是**功能更全**的记录页：按天分组的时间线、查询引擎
@@ -490,13 +458,7 @@ struct MePage: View {
                      subtitle: "9 款可选", showsChevron: true)
             }
             XHairline(inset: XSpace.card + 28 + XSpace.m)
-            NavigationLink { FirmwarePage().environmentObject(app) } label: {
-                XRow(
-                    systemImage: "arrow.up.circle",
-                    title: "检查固件更新",
-                    value: DB.readStatus(mac)?.firmware,
-                    showsChevron: true)
-            }
+
             XHairline(inset: XSpace.card + 28 + XSpace.m)
             NavigationLink { CarePage().environmentObject(app) } label: {
                 XRow(
@@ -513,19 +475,9 @@ struct MePage: View {
                     showsChevron: true)
             }
             XHairline(inset: XSpace.card + 28 + XSpace.m)
-            NavigationLink { DonglesPage().environmentObject(app) } label: {
-                XRow(
-                    systemImage: "key.horizontal",
-                    title: "蓝牙钥匙串",
-                    showsChevron: true)
-            }
+
             XHairline(inset: XSpace.card + 28 + XSpace.m)
-            NavigationLink { GatewayPage().environmentObject(app) } label: {
-                XRow(
-                    systemImage: "antenna.radiowaves.left.and.right",
-                    title: "智能网关",
-                    showsChevron: true)
-            }
+
             caption("关于与偏好")
         }
     }
