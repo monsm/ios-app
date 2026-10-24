@@ -383,7 +383,11 @@ if (theme) {
       }
       external += n;
     }
-    if (internal === 0 && external === 0) deadTokens.push(name);
+    // 2026-10-24 豁免：规范 §11.1 的动效语汇是**封闭清单**，
+    // tools/motionlock.js 要求 XMotion 与那张表逐条对齐 —— 缺一个就判失败。
+    // 所以这些令牌即便当前零调用也必须保留，不算死令牌。
+    const MOTION_LOCKED = new Set(['summon', 'doorReveal', 'chargeReset', 'soft', 'standard', 'quick']);
+    if (internal === 0 && external === 0 && !MOTION_LOCKED.has(name)) deadTokens.push(name);
   }
 }
 // 自检: 人造一个零使用令牌, 确认能抓到
