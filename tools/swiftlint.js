@@ -118,6 +118,12 @@ const SYS_NAMES = new Set(['AngularGradient','AxisGridLine','AxisMarks','AxisVal
 // ⚠ 加白不等于它编得过: 本机无 Xcode, 只能靠 CI 编译定案 (与 SymbolEffectOptions 那条同口径)。
 'SecItemAdd', 'SecItemUpdate', 'SecItemCopyMatching', 'SecItemDelete', 'SymbolEffectOptions',
 'UnevenRoundedRectangle',
+// FileWrapper — Foundation 的「把一段数据包成文件」类型, 配合 SwiftUI 的 FileDocument 做
+// fileExporter (App/UI/BackupView.swift 的 iCloud 文件备份)。全仓只此一处 ⇒ 落进本检查的误报形态。
+// 用法依据: Apple 文档 Foundation/FileWrapper/init(regularFileWithContents:) 与
+// FileDocument/fileWrapper(configuration:) —— 都是必须实现的协议方法, 不是凭记忆拼的。
+// 加白不等于它编得过: 本机无 Xcode, 只能靠 CI 编译定案。
+'FileWrapper',
 // Thread — Foundation 的"现在是不是主线程"判据 (`Thread.isMainThread`)。用得少是因为全仓只该有
 // 一处需要它: BLEService.publishOnMain —— 2026-10-17 真机崩溃 (Thread stack size exceeded,
 // 栈里 Published.setter ← 一个 Task 续体, body ← NavigationStack.init(root:)) 的修复点。
