@@ -40,9 +40,19 @@ struct CarePage: View {
         // + padding(.vertical, .l)。四个页面各写各的版本 —— 顶部留白全仓有 12 种写法。
         // 现在骨架归组件管，本页只声明「有哪几张卡」。
         XScreen("维护与保养", subtitle: "机械件也该有保养记录") {
+            // ═══ 2026-10-24 逐页对齐 HTML 60-care ═══
+            //
+            // HTML 的卡序是：①「还剩多少」→ ②「该做的」→ ③三行入口（锁体保养 / 换电指引 / 保养历史）
+            //
+            // 真机此前在 ①②之间插了一张 careHistoryGallery（横滑保养记录），
+            // 而 **HTML 60-care 里没有任何横滑容器**（已用 overflow-x/scroll-snap 实测确认）。
+            // 那张卡是上一轮"以为 HTML 有横滑卡"的误读产物，代码注释也写错了依据。
+            //
+            // 现在按 HTML 恢复：①周期卡 → ②该做的 → ③三行入口。
             periodCard.xScrollLift()
-            careHistoryGallery.xScrollLift()
             todoCard.xScrollLift()
+            // ③三行入口（HTML 的 "锁体保养 / 换电指引 / 保养历史"）
+            bottomLinks
             historyRow.xScrollLift()
         }
         .onAppear { if !loaded { reload() } }
@@ -348,6 +358,33 @@ struct CarePage: View {
                 }
             }
             .padding(.vertical, 2)
+        }
+    }
+
+    /// HTML 60-care 卡3 的三行入口：
+    ///   锁体保养（五项清单）/ 换电指引（四步换电）/ 保养历史（每次记录都在这里）
+    ///
+    /// 真机此前只有"保养历史"一行 —— 换电指引与锁体保养两个**已存在的页面**
+    /// （BatterySwapGuideView / CareChecklistView）在这一页没有任何入口，
+    /// 用户根本走不到，只能从别处绕。
+    private var bottomLinks: some View {
+        XPanel(kind: .group, padding: 0) {
+            VStack(spacing: 0) {
+                NavigationLink { CareChecklistView() } label: {
+                    XRow(systemImage: "checklist", title: "锁体保养",
+                         subtitle: "五项清单", showsChevron: true)
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, XSpace.card)
+                XHairline(inset: XSpace.card)
+                NavigationLink { BatterySwapGuideView() } label: {
+                    XRow(systemImage: "battery.100percent", title: "换电指引",
+                         subtitle: "四步换电 · 记录一次", showsChevron: true)
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, XSpace.card)
+            }
+            .padding(.vertical, XSpace.xs)
         }
     }
 
