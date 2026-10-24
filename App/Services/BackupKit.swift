@@ -203,8 +203,27 @@ struct BackupBundle: Codable {
             var launchLine: Bool?     // kf_launch_line (898)
             var festive: Bool?        // kf_festive (890)
             var plain: Bool?          // kf_plain (1046)
-            var recentCount: Int?     // kf_recent_count (910)
+            var recentCount: Int?     // kf_recent_count (910) → JSON 键名是 "recent"
             var heroStats: [String]?  // kf_hero_stats (909)
+
+            /// 显式的键映射 —— 只有 recentCount 一处的 Swift 名与 JSON 键不同。
+            ///
+            /// 修的 bug: canonical 写出的键是 "recent" (BackupCanonical:229 的
+            /// av.append(("recent", ...)))，而合成的 Codable 按**字段名**解码，
+            /// 找的是 "recentCount" → 永远 nil。
+            /// 于是导入端重算 canonical 时少了这个字段 → checksum 必然对不上 → 整包被拒。
+            ///
+            /// 影响面: 只要备份包的外观段带 recent (即用户把"最近记录条数"设成 3/5/10)，
+            /// 这份包**永远导不回来**。
+            ///
+            /// 为什么用 CodingKeys 而不是把字段改名成 recent:
+            /// 字段名 recentCount 在 BackupKit / BackupStudioKit 里被多处引用，改名牵连面大；
+            /// 而问题本质是 "JSON 键名与 Swift 名不同"，正是 CodingKeys 的用途。
+            enum CodingKeys: String, CodingKey {
+                case theme, accent, density, radius, hc, weekStart, rowH, tlGap
+                case motion, heroTex, launchLine, festive, plain, heroStats
+                case recentCount = "recent"
+            }
         }
         /// D-36 (2026-10-11 拍板「同意进包」): 设备组织随包 —— 顺序 / 分组 / 分组折叠 / 隐藏。
         /// 四点写在这里, 免得下一个人照"包格式变更"的直觉去动 schema:
