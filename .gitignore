@@ -43,3 +43,6 @@ wc.txt
 
 # tools/kotlinlocal.js 的临时输出 (本地编译通道, 每次跑都重建)
 .kotlinlocal/
+
+# GitHub API 轮询临时文件
+/ci*.json
