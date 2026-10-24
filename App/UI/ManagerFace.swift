@@ -280,7 +280,6 @@ struct ManagerFace: View {
                 (.securityDestroy, "销毁数据", "不可逆清除", "trash"),
                 (.safemode, "安全模式", "变严方向", "shield.lefthalf.filled"),
                 (.backup, "备份恢复", "导出 / 导入 / 校验", "externaldrive.badge.timemachine"),
-                (.export, "导出中心", "PDF / CSV / 分享", "square.and.arrow.up"),
                 (.appearance, "外观工作室", "强调色 / 密度 / 周起始", "paintpalette"),
                 (.me, "本机设置", "应用锁 / 备份 / 关于", "person.crop.circle"),
                 // ManagerRoute.diagnostics 之前**没有任何入口行**（死用例）：
@@ -361,8 +360,7 @@ struct ManagerFace: View {
         case .securityDestroy: SecurityDestroyView()
         case .safemode:       SafemodeIntroView()
         case .backup:         BackupPage()
-        case .export:         ExportCenterView(mac: app.currentMac)
-                                  .environmentObject(app)
+        // 2026-10-24: ExportCenterView 已删（备份模块精简为 iCloud 文件存取）
         // ⚠ 这里原来指向 StudioPage —— 而 StudioPage 是「钥匙工坊」（密码/临时/指纹/OTP），
             //   与「外观工作室 · 主题 / 强调色 / 密度」毫无关系。
             //   菜单名与实际页面不符，同时外观相关的 4 个 setter 全都没有入口。
@@ -384,7 +382,7 @@ enum ManagerRoute: String, Hashable, Identifiable {
     case locks, firmware, gateway, dongles, syncTime
     case members, memberWizard, archivedMembers
     case securityCenter, securityAudit, securityDestroy, safemode
-    case backup, export, appearance, me
+    case backup, appearance, me
     case diagnostics
 
     var id: String { rawValue }

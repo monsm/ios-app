@@ -378,7 +378,7 @@ static let guestBlockedTabs: Set<Int> = Route.guestBlockedTabs
     /// 刻意在这里一次算完 (而不是每条横幅自己 `if`)：六条各自独立判断时，"这屏已经有别的在说话"这件事没人知道。
     var ambientRanked: [Ambient] {
         var out: [Ambient] = []
-        if BackupStudio.selfCheckWarning != nil { out.append(.selfCheck) }
+        // 2026-10-24: 备份模块精简（用户裁定只留 iCloud 文件存取），库体自检随 BackupStudio 移除
         if pasteSuggestion != nil, tabSelection != Self.keysTab { out.append(.pasteCare) }   // 站凭证页时不挂 (人就在那, 不用指路)
         // 42/268 首用气泡承诺的热点是「主控卡上的连接耗时标记」= ConnectMsBadge (67, hero 上的胶囊),
         // 单锁也画 ⇒ 不看 devices.count。我上一版照旧注释里"这排胶囊"的说法加了 >1 的闸, 那会把
@@ -995,13 +995,11 @@ static let guestBlockedTabs: Set<Int> = Route.guestBlockedTabs
         // 包8: 448 启动自检 (库体哈希 vs 上次快照, 异常挂黄条) + 1018 月度备份日排程
         //       + 428 充电备份 BGTask 注册 (系统择机执行, 不承诺接电即备) + 445 中断迁移检测
         Task { @MainActor in
-            _ = BackupStudio.runStartupSelfCheck()
-            await BackupStudio.scheduleMonthlyBackup()
+            // 2026-10-24: 备份模块精简 —— 启动自检与月度自动备份排程一并移除。
+            // 保留的是备份页上那两个按钮：存到 iCloud 文件 / 从文件恢复。
             // 428: BGTask 注册已移到 QuickActionDelegate.didFinishLaunchingWithOptions ——
             // 必须早于启动完成 (Apple 契约), 且每进程只注册一次 (onLaunch 可能被多次调用)。
-            if let s = BackupStudio.pendingMigration() {
-                self.showToast("检测到未完成的换机迁移 (\(s.channel) \(s.step)%) — 可回滚或继续")
-            }
+            // 2026-10-24: 换机迁移向导随备份模块精简移除
         }
     }
     /// 开锁成功后的里程碑结算 (24/992/1005/1010/1000); 凌晨静默态(1002)只计数不播时刻
@@ -1129,9 +1127,7 @@ struct RootView: View {
             }
             // 包8/448 启动自检黄条: 库体哈希与上次快照不一致 → 设备 Tab 顶部黄条 "去诊断"
             // 乱源治理第 2 批: 它不再无条件挂 —— 闲时提醒同屏只留一条, 由 app.ambientTop 说了算
-            if app.ambientTop == .selfCheck, let w = BackupStudio.selfCheckWarning {
-                selfCheckBanner(w)
-            }
+            // 2026-10-24: 启动自检黄条随备份模块精简移除
             // 344 粘贴建议条: 回前台时本会话刚复制的凭证还在不在, 一条快捷条解决。
             // 站凭证页时不挂 (人就在那, 不用指路); 文案里的秒数取自回前台那一刻的快照。
             if app.ambientTop == .pasteCare, let s = app.pasteSuggestion {

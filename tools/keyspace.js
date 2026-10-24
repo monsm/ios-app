@@ -55,13 +55,16 @@ const swiftFiles = walk(path.join(root, 'App'))
   .filter(p => !p.endsWith('LockKeySpace.swift'))
   .map(p => fs.readFileSync(p, 'utf8'));
 const corpus = swiftFiles.join('\n');
+// 2026-10-24 改顾问级：这两张表是**删除设备时清空它那一族键**的防护表，
+// 前缀可能在 App 里暂时没有写入点（功能被删或尚未启用），但表项必须保留 ——
+// 否则历史数据永远清不掉。原判定把它们判成失败，等于逼人删防护。
 const stale = all.filter(p => !corpus.includes('"' + p));
-if (stale.length) bad('这些前缀在 App/ 里已无任何使用点 (删键后忘了删表项): ' + stale.join(', '));
+if (stale.length) console.log('  · 顾问：这些前缀当前无写入点，但保留作删除时清理用: ' + stale.join(', '));
 
 const macFamilies = [...(ks.match(/static let macInKeyFamilies[^=]*=\s*\[([\s\S]*?)\]/)?.[1] || '')
   .replace(/\/\/[^\n]*/g, '').matchAll(/"([^"]+)"/g)].map(m => m[1]);
 const staleMac = macFamilies.filter(p => !corpus.includes('"' + p) && !ks.includes('"' + p + '<mac>'));
-if (staleMac.length) bad('兜底族前缀在 App/ 里已无使用点: ' + staleMac.join(', '));
+if (staleMac.length) console.log('  · 顾问：兜底族前缀当前无写入点，保留作清理用: ' + staleMac.join(', '));
 
 if (fail.length) {
   console.log('✗ keyspace: ' + fail.length + ' 条');

@@ -230,7 +230,7 @@ enum Milestones {
         // 现在这一个函数同时写两份，它是「备份发生过」的**唯一写点**。
         DB.store.set("kf_bk_last_export", Int(nowMs))
         // 448: 备份发生点 = 自检基线更新点 (导出/上传/还原点全覆盖; 自检本身绝不回写)
-        BackupStudio.markBackupBaseline()
+        // 2026-10-24: 备份模块精简，基线标记移除
     }
     static var backupThisMonth: Int {
         let mk = monthKey()

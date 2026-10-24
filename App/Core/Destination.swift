@@ -1,5 +1,5 @@
 // 本文件由 `node tools/destmap.js --emit` 生成，**不要手改**。
-// 生成时的目的地总数 = 21（呈现通道 19 + 仅被 .destined() 引用 2）。
+// 生成时的目的地总数 = 17（呈现通道 16 + 仅被 .destined() 引用 1）。
 // 后一半是扫描器认不出、但源码里有 `.destined(.xxx)` 的 case —— 删掉会直接编译失败。
 // 并核对 diff —— 少一条就是某套界面会缺一个页面而没人发现。
 import SwiftUI
@@ -8,13 +8,10 @@ import SwiftUI
 /// rawValue 是 View 类型名，供 tools/uicoverage.js 与本台账对账。
 enum Destination: String, CaseIterable, Identifiable {
     case autoCal = "AutoCalView"
-    case backupStudio = "BackupStudioView"
     case batterySwapGuide = "BatterySwapGuideView"
     case careChecklist = "CareChecklistView"
     case careReminders = "CareRemindersView"
     case credentialBin = "CredentialBinView"
-    case exportCenter = "ExportCenterView"
-    case exportWizard = "ExportWizardView"
     case homeConsole = "HomeConsole"
     case linkPrefs = "LinkPrefsView"
     case maintenance = "MaintenanceView"
@@ -23,7 +20,6 @@ enum Destination: String, CaseIterable, Identifiable {
     case memberFamilySettings = "MemberFamilySettingsView"
     case memberWizard = "MemberWizardView"
     case mergeMembers = "MergeMembersView"
-    case restoreWizard = "RestoreWizardView"
     case safemodeIntro = "SafemodeIntroView"
     case shareToAndroid = "ShareToAndroidView"
     case syncTime = "SyncTimeView"

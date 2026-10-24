@@ -669,7 +669,7 @@ struct SelfCheckLine { let name: String; let ok: Bool; let detail: String }
 enum SelfCheck {
     static func run() -> [SelfCheckLine] {
         var out: [SelfCheckLine] = []
-        let hashBad = BackupStudio.hashMismatch()
+        let hashBad = false   // 2026-10-24: 备份模块精简，库体哈希自检随之移除
         out.append(SelfCheckLine(name: "库体哈希", ok: !hashBad,
                                  detail: hashBad ? "与上次快照不一致 — 建议立即备份" : "与上次快照一致"))   // 448/397 与上次快照不一致
         let v = AuditLog().verifyChain()

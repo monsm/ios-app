@@ -108,19 +108,10 @@ for (const a of actions) {
 }
 
 // ---------- 4. 411 二维码只许出口令信封 ----------
-const studio = read('App/Services/BackupStudioKit.swift');
-const qrFn = studio.split('static func credentialQRPayload')[1]?.split('// ---------- 412/431')[0] || '';
-if (!qrFn) bad('找不到 credentialQRPayload');
-if (!/password:\s*String/.test(qrFn)) bad('credentialQRPayload 必须要求 password 参数');
-if (!/CryptoBox\.encryptText/.test(qrFn)) bad('credentialQRPayload 没有走 CryptoBox.encryptText —— 可能又退回了明文');
-if (/return\s+t\b/.test(qrFn)) bad('credentialQRPayload 直接返回了 canonical 明文 t');
-// 容量口径必须是 UTF-8 字节 (中文 1 字符 3 字节), 信封上限要对得上 QR 纠错档 M 的真实容量。
-if (!/t\.utf8\.count\s*<=\s*900/.test(qrFn)) bad('credentialQRPayload 的容量闸不是 UTF-8 字节口径 (t.count 会把中文算小 3 倍)');
-if (!/env\.count\s*<=\s*2200/.test(qrFn)) bad('credentialQRPayload 没有信封 ≤2200 的容量闸');
-const ui = read('App/UI/BackupStudio.swift');
-for (const m of ui.matchAll(/credentialQRPayload\(([^)]*)\)/g)) {
-  if (!/password\s*:/.test(m[1])) bad('BackupStudio 有一处 credentialQRPayload 调用没传 password: ' + m[0]);
-}
+// 2026-10-24: 备份模块精简（用户裁定只留 iCloud 文件存取），
+// BackupStudioKit / BackupStudio 已删除，credentialQRPayload 这个能力随之移除。
+// 这条断言保留文字说明而不是删空 —— 将来若重新加二维码搬运，必须同样走口令信封。
+
 
 // ---------- 输出 ----------
 if (fail.length) {

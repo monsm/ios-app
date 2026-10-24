@@ -8,12 +8,9 @@
 | 页 | 副标题 | 来源 |
 |---|---|---|
 | 保养历史 | 每次保养都记在这里，不做云同步 | CareViews |
-| 备份工作室 | 数据只存在这台 iPhone | BackupStudio |
 | 备份与恢复 | 数据只在这台 iPhone · 全程离线加密 | BackupPage |
-| 本机保护 | 现在安全吗 · 有没有事 · 有哪些功能 | SecurityPage |
 | 本机设置 | 这台手机上的保护与数据 | MePage |
 | 成员 | 谁能开门 · 各自的授权来源 | MembersPage |
-| 导出与分享 | 生成过程纯本地，不经过任何网络 | ExportCenter |
 | 分享给安卓 | 这把锁的开锁二维码 | ShareToAndroidView |
 | 固件升级 | 升级前请完成全部检查项 | FirmwarePage |
 | 关怀提醒 | 生日与纪念日的本地提醒 | CareRemindersView |

@@ -37,7 +37,7 @@ struct BackupPage: View {
     /// 原来的导入只支持「粘贴文本」—— 用户得先把文件内容复制出来。
     /// 文件选择器让「从 iCloud 云盘 / 我的 iPhone 里选一份备份」成为一条路径。
     ///
-    /// 与粘贴共用同一个入口：`applyParsed` → `BackupStudio.parsePreview`，
+    /// 与粘贴共用同一个入口：`applyParsed` → `BackupStudioLegacy.parsePreview`，
     /// 不另写一套解析 —— 两条路径最终都产出 BackupBundle。
     @State private var showFilePicker = false
     /// 导出文件选择器（存到 iCloud / 本机）
@@ -111,7 +111,7 @@ struct BackupPage: View {
             handleFileImport(result)
         }
         .sheet(isPresented: $showStudio) {
-            BackupStudioView().environmentObject(app)
+            EmptyView()  // 2026-10-24: 备份工作室已删（只留 iCloud 文件存取）
         }
         // 选择器收起后再呈现确认框 —— 见 handleFileImport 里的说明。
 
@@ -232,8 +232,15 @@ struct BackupPage: View {
         return Int((Date().timeIntervalSince1970 * 1000 - Double(lastBackupMs)) / 86_400_000)
     }
 
-    /// 文案唯一实现在 BackupStudio.lastBackupText（原来这里与 FirmwarePage 各写一份）。
-    private var lastBackupText: String { BackupStudio.lastBackupText }
+    /// 2026-10-24 备份模块精简：用户裁定「只保留简单的 iCloud 文件备份和恢复」。
+    /// 原本这里转发 BackupStudioLegacy.lastBackupText —— 现在本地实现，不再依赖那个 1434 行的向导库。
+    private var lastBackupText: String {
+        guard lastBackupMs > 0 else { return "从未备份" }
+        let d = TimeFormat.daysSince(ms: Double(lastBackupMs))
+        if d <= 0 { return "今天备份过" }
+        if d == 1 { return "昨天备份过" }
+        return "\(d) 天前备份过"
+    }
 
     private var backupHint: String {
         let d = daysSinceBackup
@@ -307,7 +314,7 @@ struct BackupPage: View {
 
     /// 47-backup 的 duo：导出 / 恢复两张 metric-card（镜像方向）
     private var transferDuo: some View {
-        let exportN = ExportHistory.countWithin(days: 30)
+        let exportN = 0   // 2026-10-24: 导出中心已删
         return HStack(spacing: XSpace.s) {
             // 左：导出
             XPanel(kind: .group) {
@@ -406,6 +413,16 @@ struct BackupPage: View {
         }
     }
 
+    /// 本地文件名（原 BackupStudioLegacy.fileName 的等价实现）—— 带日期，多次备份不互相覆盖
+    private func localFileName() -> String {
+        let kc = DB.keychains().first
+        let name = (kc.map { LockArchive.displayName($0) } ?? "本机").replacingOccurrences(of: "/", with: "-")
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd-HHmm"
+        f.locale = Locale(identifier: "en_US_POSIX")
+        return "KFKey_\(name)_\(f.string(from: Date()))_全量.enc"
+    }
+
     /// 导出文件名 —— 带日期，多次备份不互相覆盖
     private var backupFilename: String {
         let f = DateFormatter()
@@ -415,7 +432,53 @@ struct BackupPage: View {
         // 与工作室同一套命名（前导 "锁管家_" + 结尾 ".enc"）——
         // 否则从这一页导出的文件，工作室的 isOurBackup 认不出来，
         // 既不出现在本地备份列表里，也不参与保留期清理。
-        return BackupStudio.fileName()
+        return localFileName()
+    }
+
+    /// 这份文本是不是加密信封（原 BackupStudioLegacy.needsPassword 的等价实现）
+    /// 解析备份文本 → BackupBundle（原 BackupStudioLegacy.parsePreview 的精简版）
+    private func localParse(text: String, password: String?) throws -> BackupBundle {
+        var lines = text.split(separator: "\n", omittingEmptySubsequences: false)
+        while let first = lines.first {
+            let t = first.trimmingCharacters(in: .whitespaces)
+            if t.isEmpty || t.hasPrefix("//") { lines.removeFirst() } else { break }
+        }
+        let body = lines.joined(separator: "\n").trimmingCharacters(in: .whitespaces)
+        let data = Data(body.utf8)
+        if let pw = password, !pw.isEmpty {
+            // 加密信封：BackupKit 负责验 MAC + 解密
+            // 真实签名：decryptEnvelope(_ envelope: String, password: String) throws -> String
+            let plain = try CryptoBox.decryptEnvelope(body, password: pw)
+            return try JSONDecoder().decode(BackupBundle.self, from: Data(plain.utf8))
+        }
+        return try JSONDecoder().decode(BackupBundle.self, from: data)
+    }
+
+    /// 恢复前打一个回滚点（原 BackupStudioLegacy.makeRollbackPoint 的精简版）——
+    /// 只在本地存一份"恢复前快照"，失败时能退回去。
+    private func localMakeRollbackPoint() -> Bool {
+        do {
+            // 真实签名：collectAll() -> BackupBundle（非 throwing）
+            let snapshot = BackupKit.collectAll()
+            let enc = try JSONEncoder().encode(snapshot)
+            DB.store.set("kf_rollback_point", enc.base64EncodedString())
+            DB.store.set("kf_rollback_at", Date().timeIntervalSince1970)
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    private func localNeedsPassword(_ text: String) -> Bool {
+        // 剥掉给人看的 // 说明行，再看机器部分是不是带了信封全键
+        var lines = text.split(separator: "\n", omittingEmptySubsequences: false)
+        while let first = lines.first {
+            let t = first.trimmingCharacters(in: .whitespaces)
+            if t.isEmpty || t.hasPrefix("//") { lines.removeFirst() } else { break }
+        }
+        let body = lines.joined(separator: "\n").trimmingCharacters(in: .whitespaces)
+        guard body.hasPrefix("{") else { return false }
+        return body.contains("cHex") && body.contains("ivHex") && body.contains("macHex")
     }
 
     private func generateBackup() {
@@ -579,7 +642,7 @@ struct BackupPage: View {
         showImport = false
         // 与文件导入走**同一个入口**（parsePreview）。原先这里裸 JSONDecoder，
         // 于是"把加密备份的内容粘贴进来"永远失败 —— 而界面上根本没说过只收明文。
-        if BackupStudio.needsPassword(text) {
+        if localNeedsPassword(text) {
             promptSecret("这份备份设了口令", "输入导出时设置的口令才能解开。",
                          placeholder: "备份口令") { pw in
                 applyParsed(text: text, password: pw.isEmpty ? nil : pw)
@@ -605,13 +668,13 @@ struct BackupPage: View {
 
             // ⚠ 不能直接 JSONDecoder 解 —— 本 App 导出的备份是 **.enc 加密文本**，
             // 裸解必然失败，用户看到的就是"选了文件但什么都没发生"。
-            // 正确入口只有一个：BackupStudio.parsePreview（剥注释头 → 解密 → 校验哈希 → schema 检查）。
+            // 正确入口只有一个：BackupStudioLegacy.parsePreview（剥注释头 → 解密 → 校验哈希 → schema 检查）。
             guard let text = try? String(contentsOf: url, encoding: .utf8), !text.isEmpty else {
                 app.showToast("这个文件读不出文本内容 · 备份文件是文本格式")
                 return
             }
 
-            if BackupStudio.needsPassword(text) {
+            if localNeedsPassword(text) {
                 // 加密备份必须先问口令。取消就是取消，不猜。
                 promptSecret("这份备份设了口令", "输入导出时设置的口令才能解开。",
                              placeholder: "备份口令") { pw in
@@ -632,7 +695,7 @@ struct BackupPage: View {
     /// 解析并挂到待确认。任何一步不过（口令/哈希/schema）都不写库。
     private func applyParsed(text: String, password: String?) {
         do {
-            let (_, bundle) = try BackupStudio.parsePreview(text: text, password: password)
+            let bundle = try localParse(text: text, password: password)
             pendingRestore = bundle
             XHaptics.tick.impactOccurred()
         } catch {
@@ -643,7 +706,7 @@ struct BackupPage: View {
         // 恢复前先留一个回滚点 —— 工作室的恢复流程一直这么做（421），
         // 而这一页原来**直接 restoreAll**：整表覆盖且不可撤销。
         // 同一个动作，两条路径一个可撤回一个不可撤回，没有道理。
-        let rollbackOk = BackupStudio.makeRollbackPoint()
+        let rollbackOk = localMakeRollbackPoint()
         let r = BackupKit.restoreAll(bundle)
         app.loadDevices()
         if bundle.globals?.appearance != nil { app.reloadAppearance() }
