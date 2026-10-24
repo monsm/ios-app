@@ -268,45 +268,71 @@ struct AlarmsPage: View {
     /// 告警页最该先回答的是"有多严重", 而不是"有几条"。
     /// 原来只有每行左边一根 3pt 色条, 要一行行看才拼得出全貌;
     /// 这里用一条比例横条把三级一次说完, 数字跟在后面。
+    /// 「待处理」读数卡 —— 对齐 tools/proto/53-alarms.html（本轮新建的原型）。
+    ///
+    /// 原型结构：卡头「待处理」→ 44px 待处理数 + 单位 → 右侧三色环（一/二/三级各一圈）
+    ///          → sep → 三列（一级/二级/三级）→ footer 整句（三级各自是什么意思）。
+    /// 改前是「一条比例条 + 一组读数」：没有主角数字，也没有把"三级各是什么"写出来。
     private var severityOverview: some View {
         let lv3 = alarms.filter { AlarmMeta.level($0.type) == 3 }.count
         let lv2 = alarms.filter { AlarmMeta.level($0.type) == 2 }.count
         let lv1 = alarms.count - lv3 - lv2
         let total = max(alarms.count, 1)
         return XPanel(kind: .group) {
-            VStack(alignment: .leading, spacing: XSpace.m) {
-                // 比例条
-                GeometryReader { geo in
-                    HStack(spacing: 2) {
-                        if lv3 > 0 {
-                            segment(width: geo.size.width * CGFloat(lv3) / CGFloat(total),
-                                    color: XPalette.danger)
-                        }
-                        if lv2 > 0 {
-                            segment(width: geo.size.width * CGFloat(lv2) / CGFloat(total),
-                                    color: XPalette.warn)
-                        }
-                        if lv1 > 0 {
-                            segment(width: geo.size.width * CGFloat(lv1) / CGFloat(total),
-                                    color: XPalette.warn.opacity(0.55))
-                        }
+            VStack(alignment: .leading, spacing: 0) {
+                Text("待处理")
+                    .xFont(.subheadline)
+                    .foregroundStyle(XPalette.textTertiary)
+                HStack(alignment: .center, spacing: XSpace.l) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        XHeroNumber(
+                            text: String(alarms.count),
+                            color: lv3 > 0 ? XPalette.danger : (lv2 > 0 ? XPalette.warn : XPalette.ok),
+                            unit: "条")
+                        Text(lv3 > 0 ? "最高一级 \(lv3) 条 —— 先处置它" : "没有一级告警")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
+                    Spacer(minLength: 4)
+                    XTripleThinRing(
+                        size: 92,
+                        values: (Double(lv3) / Double(total),
+                                 Double(lv2) / Double(total),
+                                 Double(lv1) / Double(total)),
+                        colors: (XPalette.danger, XPalette.warn, XPalette.ok),
+                        centerText: String(alarms.count))
+                        .accessibilityHidden(true)
                 }
-                .frame(height: 8)
-                .animation(XMotion.standard, value: alarms.count)   // 标记已处理后比例条平滑收缩
-                .accessibilityHidden(true)
-
-                // 三级读数
-                HStack(spacing: XSpace.l) {
-                    severityItem("严重", lv3, XPalette.danger)
-                    severityItem("警告", lv2, XPalette.warn)
-                    severityItem("提示", lv1, XPalette.warn.opacity(0.55))
-                    Spacer(minLength: 0)
+                .padding(.top, 8)
+                XHairline().padding(.vertical, 12)
+                HStack(alignment: .top, spacing: XSpace.s) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("一级").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text("\(lv3) 条").xFont(.footnote, weight: .semibold)
+                            .foregroundStyle(XPalette.danger)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("二级").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text("\(lv2) 条").xFont(.footnote, weight: .semibold)
+                            .foregroundStyle(XPalette.warn)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("三级").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text("\(lv1) 条").xFont(.footnote, weight: .semibold)
+                            .foregroundStyle(XPalette.ok)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                Text("一级是「可能被撬或电量见底」，二级是「能用但该处理」，三级只是记录。")
+                    .xFont(.caption2)
+                    .foregroundStyle(XPalette.textTertiary)
+                    .padding(.top, 12)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("待处理告警 \(alarms.count) 条, 严重 \(lv3), 警告 \(lv2), 提示 \(lv1)")
     }
 
     private func segment(width: CGFloat, color: Color) -> some View {

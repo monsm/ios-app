@@ -103,6 +103,7 @@ const MAP = {
   '50-events': ['EventsPage.swift'],
   '51-feed': ['FeedPage.swift'],
   '52-stats': ['StatsPage.swift'],
+  '53-alarms': ['AlarmsPage.swift'],
   '60-care': ['CarePage.swift'],
   '61-reminders': ['CareRemindersView.swift'],
   '70-icon-picker': ['IconPicker.swift'],
