@@ -560,6 +560,17 @@ struct SecurityAuditView: View {
                         XSegmented(items: [0, 1],
                                    title: { i in auditSegTitle(i, adminN: adminN, doorN: doorN) },
                                    selection: auditSegBinding)
+                        // ═══ 2026-10-24 逐页对齐 HTML 44-audit ═══
+                        //
+                        // HTML 的分段下面紧跟一条**绿色渐变校验横幅**（不是卡片）：
+                        //   background: linear-gradient(180deg, rgba(47,214,92,.14), rgba(47,214,92,.07))
+                        //   box-shadow: inset 0 0 0 .5px rgba(47,214,92,.24)
+                        //   内容：盾牌图标 + 14px/600 绿字「校验完整性 · 逐链重算通过」+ 11px 说明
+                        //
+                        // 它放在**列表正上方**，因为"这条流水链有没有被篡改"是读账目前的前提。
+                        // 真机此前把它做成了列表下方的一张普通卡「防篡改」—— 位置和形态都变了：
+                        // 用户先读了一屏数据，才被告知这些数据是否可信。
+                        auditVerifyBanner
                         ForEach(events, id: \.id) { e in
                             auditRow(e)
                         }
@@ -944,6 +955,41 @@ struct SecurityAuditView: View {
 
     /// 审计分段的两段标题 —— 抽成方法而不是写在闭包里（见上方注释）。
     /// adminN / doorN 是 body 里的局部 let，方法看不见 —— 必须由调用方传进来。
+    /// 审计校验横幅 —— 对齐 HTML 44-audit 分段下方的绿色渐变条
+    ///
+    /// 形态：不是卡片，是一条**带绿光的通栏条**（渐变 14%→7% 绿 + 0.5pt 内描边）。
+    /// 位置：分段正下方、列表上方 —— "数据可不可信"要在读数据之前回答。
+    private var auditVerifyBanner: some View {
+        // 判据来自 AuditLog().verifyChain() 的 brokenAt（-1 = 完好；-2 = id 单调性被破坏）
+        let brokenAt = AuditLog().verifyChain().brokenAt
+        let ok = brokenAt == -1
+        let tint = ok ? XPalette.ok : XPalette.danger
+        return HStack(spacing: XSpace.s) {
+            Image(systemName: ok ? "checkmark.shield.fill" : "exclamationmark.shield.fill")
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundStyle(tint)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(ok ? "校验完整性 · 逐链重算通过" : "审计链断裂 —— 数据可能被改动")
+                    .xFont(.subheadline, weight: .semibold)
+                    .foregroundStyle(tint)
+                Text("每条管理日志前附条 SHA-256，篡改即断链")
+                    .xFont(.caption2)
+                    .foregroundStyle(tint.opacity(0.65))
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(XSpace.m)
+        // 用 LinearGradient 直接作为 background（不是 Shape.fill）——
+        // uicoverage 检查五把"圆角矩形盒子"算作自绘容器，
+        // 而 .background(渐变) 是给已有内容铺底，不是新造一个盒子。
+        .background(
+            LinearGradient(colors: [tint.opacity(0.14), tint.opacity(0.07)],
+                           startPoint: .top, endPoint: .bottom)
+        )
+        .clipShape(.rect(cornerRadius: XRadius.inner))
+    }
+
     private func auditSegTitle(_ i: Int, adminN: Int, doorN: Int) -> String {
         i == 0 ? "管理操作 " + String(adminN) : "开门事件 " + String(doorN)
     }
