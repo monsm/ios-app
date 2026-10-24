@@ -192,11 +192,7 @@ struct MePage: View {
                 // 但它们**没有 action 参数、也没包在导航里** —— 点上去什么都不会发生。
                 // 这正是用户反馈的"入口不能点击"。现在逐个包 NavigationLink。
                 HStack(spacing: XSpace.s) {
-            // 2026-10-24: SecurityPage 已删（用户裁定）
-                    .buttonStyle(.plain)
 
-            // 2026-10-24: AlarmsPage 已删（用户裁定）
-                    .buttonStyle(.plain)
 
                     NavigationLink {
                         BackupPage().environmentObject(app)
