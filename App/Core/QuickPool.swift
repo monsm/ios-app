@@ -36,7 +36,6 @@ enum QuickPool {
         // ↓ 四个是从本页其它位置也到达得到的真实页面，不是新造的入口
         QuickAction(id: "backup",   icon: "archivebox",                  label: "备份与恢复"),
         QuickAction(id: "alarm",    icon: "bell.badge",                  label: "告警中心"),
-        QuickAction(id: "firmware", icon: "memorychip",                  label: "固件升级"),
         QuickAction(id: "care",     icon: "house.and.flag",              label: "家政与维保"),
     ]
     /// 默认选中现状那六格 = 与旧版观感一致
@@ -162,7 +161,7 @@ func quickDestination(_ id: String) -> some View {
     case "studio":   KeysPage()
     case "backup":   BackupPage()
     case "alarm":    Text("告警功能已移除")   // 2026-10-24: AlarmsPage 已删
-    case "firmware": FirmwarePage()
+    case "firmware": Text("固件升级功能已移除")   // 2026-10-24
     case "care":     Text("保养功能已随原版对照精简移除")   // 2026-10-24
     case "again":    Text("「再开一次」在设备页长按编辑或直接点按, 不需要新页面")   // 921 再开一次
     default:         Text("这个快捷入口对应的页面已不存在，请到设置-外观里重新选择")

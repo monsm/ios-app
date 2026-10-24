@@ -11,7 +11,6 @@
 | 备份与恢复 | 数据只在这台 iPhone · 全程离线加密 | BackupPage |
 | 本机设置 | 这台手机上的保护与数据 | MePage |
 | 成员 | 谁能开门 · 各自的授权来源 | MembersPage |
-| 固件升级 | 升级前请完成全部检查项 | FirmwarePage |
 | 归档成员 | 归档不删数据，名下钥匙转成「未分配」 | MemberCenterView |
 | 建档向导 | 给这位成员起个名字，之后全家都用它称呼 | MemberCenterView |
 | 蓝牙钥匙串 | 随身开门的实体钥匙串 | DonglesPage |

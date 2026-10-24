@@ -259,7 +259,6 @@ struct ManagerFace: View {
                 (.locks, "我的门锁", "设备列表与切换", "iphone.gen3"),
                 // 2026-10-24 补原小程序移植缺口：布防（DefendPage/DefendhomePage）
                 (.defend, "布防", "出门布防 · 时段设置", "shield.lefthalf.filled"),
-                (.firmware, "固件升级", "版本与升级向导", "arrow.down.circle"),
                 (.gateway, "网关配网", "WiFi 与远程", "wifi.router"),
                 (.dongles, "钥匙串", "随身开门", "key.viewfinder"),
                 (.syncTime, "校准时间", "锁内时钟", "clock.arrow.circlepath"),
@@ -333,7 +332,6 @@ struct ManagerFace: View {
         case .tempCodes:      TempCodeStudio()
         case .locks:          LocksPage()
         case .defend:          DefendPage().trackScreen("布防")
-        case .firmware:       FirmwarePage()
         case .gateway:        GatewayPage()
         case .dongles:        DonglesPage()
         case .syncTime:       SyncTimeView()
@@ -364,9 +362,9 @@ struct ManagerFace: View {
 // M5 逐页重做时，这些落地页会被独立重写。
 enum ManagerRoute: String, Hashable, Identifiable {
     case keys, fingerprints, tempCodes
-    case locks, defend, firmware, gateway, dongles, syncTime
+    case locks, defend, gateway, dongles, syncTime
     case members, memberWizard, archivedMembers
-    case securityCenter, securityAudit, securityDestroy, safemode
+    case securityCenter, safemode
     case backup, me
 
     var id: String { rawValue }

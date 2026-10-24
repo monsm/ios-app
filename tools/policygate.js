@@ -74,13 +74,9 @@ if (!/try\s+LockCommand\.requireAllowed\(cmdObj\.cmd\)/.test(hw)) {
 }
 const hwWrites = [...hw.matchAll(/ble\.writeFrameHex\(/g)].length;
 if (hwWrites !== 1) bad(`HardwareService 里直写 ble.writeFrameHex 有 ${hwWrites} 处 (预期 1: send)`);
-const dfu = read('App/Services/DFUKit.swift');
-for (const fn of ['runUpgrade(', 'runUpgradeQueue(']) {
-  const at = dfu.indexOf('static func ' + fn);
-  if (at < 0) { bad('DFUKit 里找不到 ' + fn); continue; }
-  const seg = dfu.slice(at, at + 2600);
-  if (!/SecurityPolicy\.allows\(\.dfu\)/.test(seg)) bad(`DFUKit.${fn.replace('(', '')} 没有挡 .dfu`);
-}
+// 2026-10-24 精简：固件升级功能已删（用户裁定），DFUKit.swift 随之删除。
+// 这段机检退役 —— 被检对象不存在了，保留只会让脚本崩在 readFileSync。
+// 将来若恢复固件升级，必须同样在 runUpgrade 里挡 .dfu。
 
 // ---------- 3. LockAction 文案与策略闭环 ----------
 const guardSrc = read('App/Core/LockGuard.swift');

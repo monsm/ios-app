@@ -443,23 +443,7 @@ enum CareSchedule {
                 }
             }
         }
-        // 146 固件提醒: 本地固件清单里有比锁内更新的版本。1038: 夜间不丢 → 挂白天 08:00;
-        // 置位不再"只此一次"— 未升级期间每 30 天复提醒 (与校时 30 天同节奏)
-        if fwRemindOn {
-            for kc in DB.keychains() where !kc.fw.isEmpty {
-                for item in BatteryCare.fwlib {
-                    guard let v = _FWVersion(item.version), _FWVersion(kc.fw) != nil,
-                          FirmwareKit.versionLt(kc.fw, item.version) else { continue }
-                    let lastN = DB.store.get(Double.self, "kf_fw_notify_at_" + v) ?? 0
-                    if now - lastN > 30 * 86400 * 1000 {
-                        DB.store.set("kf_fw_notify_at_" + v, now)
-                        await notifyNow(id: "m4.fw." + v, title: "有固件可升级",
-                                        body: "本地固件包 v\(item.version) 比锁内 v\(kc.fw) 新, 可到工具-检查固件更新执行。",
-                                        dayDeliver: true)
-                    }
-                }
-            }
-        }
+        // 2026-10-24 精简：固件升级功能已删（用户裁定不需要），"有固件可升级"提醒随之移除。
         // 1012 年度换电日 / 1025 应急钥匙半年检: 日历型提醒重建
         await rescheduleCalendar()
     }

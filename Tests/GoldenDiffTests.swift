@@ -309,39 +309,9 @@ final class GoldenDiffTests: XCTestCase {
         XCTAssertEqual(ZKProtocol.protoSecondsFromMs(1_262_304_000_000), (t["protoFromMs_zero"] as? Int).map(Int64.init))
     }
 
-    // ================= inflate (Apple Compression vs node zlib 金标) =================
-    func testInflate() throws {
-        let vectors = try XCTUnwrap(Self.golden["inflate"] as? [[String: Any]])
-        for (i, v) in vectors.enumerated() {
-            let rawB64 = try XCTUnwrap(v["raw"] as? String)
-            let defB64 = try XCTUnwrap(v["deflated"] as? String)
-            let size = try XCTUnwrap(v["size"] as? Int)
-            guard let raw = Data(base64Encoded: rawB64), let def = Data(base64Encoded: defB64) else {
-                return XCTFail("inflate[\(i)] base64 解码失败")
-            }
-            let out = try ZipKit.inflate([UInt8](def), expected: size)
-            XCTAssertEqual(out, [UInt8](raw), "inflate[\(i)] 往返不一致")
-        }
-    }
+    // 2026-10-24 精简：ZipKit 随 DFUKit 删除，inflate 金标测试随之移除
 
-    // ================= 真实固件包解析 (KX_V5.2.9) =================
-    func testDfuZipParse() throws {
-        let g = try XCTUnwrap(Self.golden["dfuZip"] as? [String: Any])
-        guard let url = Bundle(for: GoldenDiffTests.self).url(forResource: "KX_V5.2.9_180503183402", withExtension: "zip"),
-              let data = try? Data(contentsOf: url) else {
-            return XCTFail("测试 bundle 缺少固件包 fixture")
-        }
-        let fw = try FirmwareKit.parse(zipData: [UInt8](data), fileName: g["fileName"] as? String ?? "")
-        XCTAssertEqual(fw.binSize, g["binSize"] as? Int)
-        XCTAssertEqual(fw.datSize, g["datSize"] as? Int)
-        XCTAssertEqual(fw.version, g["version"] as? String)
-        XCTAssertEqual(CRC32.crc32(HexKit.bytes(fw.binHex)), UInt32(g["binCrc32"] as? Int ?? 0))
-        XCTAssertEqual(fw.datHex, g["datHex"] as? String)
-        XCTAssertEqual(FirmwareKit.nextMac("aabbccddeeff"), g["nextMac"] as? String)
-        XCTAssertEqual(FirmwareKit.nextMac("aabbccddeeff0f"), g["nextMac_wrap"] as? String)
-        XCTAssertEqual(FirmwareKit.versionLt("5.2.8", "5.2.9"), g["versionLt_528_529"] as? Bool)
-        XCTAssertEqual(FirmwareKit.versionLt("5.2.9", "5.2.9"), g["versionLt_529_529"] as? Bool)
-    }
+    // 2026-10-24 精简：固件升级功能已删，DFU zip 解析测试随之移除
 
     // ================= rc 文案表 =================
     func testRcMsg() throws {

@@ -52,25 +52,16 @@ struct BackupPage: View {
         // 2026-10-23：改用 XScreen（规范 §5.3 骨架 / §5.4 对齐线）。
         // 改前是手写 ScrollView + VStack(section) + 各自的 padding 与 background。
         XScreen("备份与恢复", subtitle: "数据只在这台 iPhone · 全程离线加密") {
+            // ═══ 2026-10-24 坚决精简 ═══
+            //
+            // 原 App 完全没有备份功能；用户要求「只留导出到文件 + 从文件恢复」。
+            // 删掉：状态卡（上次备份几时）/ 加密参数卡 / 导出恢复双列 / 工作室入口。
+            // 留下的就是两个动作本身。
             if let b = pendingRestore {
                 restoreConfirmCard(b)
             }
-            statusCard.xScrollLift()
-            // ═══ 2026-10-24 逐页对齐 47-backup 的 duo（两张 metric-card）═══
-            //
-            // 原型的导出与恢复是**并排两张卡**（各带一枚小环）：
-            //   左「导出 › 0 次 · 本机 → 文件 · 生成一份备份」
-            //   右「恢复 › 0 次 · 文件 → 本机」+ 紫色环 #7B7BE8
-            //
-            // App 此前把它们做成**上下两张全宽大卡**（各带一整块按钮区）——
-            // 那让"导出/恢复"读成两个独立功能页，而它们其实是**同一对方向操作**。
-            // 并排才看得出"本机 → 文件"与"文件 → 本机"是镜像关系。
-            transferDuo.xScrollLift()
-            // 详细动作仍保留全宽（按钮多，并排会挤）
             exportCard.xScrollLift()
             importCard.xScrollLift()
-            studioRow.xScrollLift()
-            encryptCard.xScrollLift()
         }
         .sheet(isPresented: $showImport) {
             importSheet
@@ -120,113 +111,12 @@ struct BackupPage: View {
     // MARK: - 状态卡
     // ═══════════════════════════════════════════════════════
 
-    /// 六图改造 (2026-10-23): 状态卡改**图 5 MetricCard**形态。
-    ///
-    /// 图 5 的第一张卡是「44px 大数字 + 单位 → 环 → 三列细线 → footer」。
-    /// 之前这里是「图标 + 一行 title3 + 一行灰字」——没有一个数，
-    /// 而"上次备份是几天前"恰恰是本页唯一的量化事实。
-    /// 现在把天数做成 44px 主角，环的进度 = 新鲜度（7 天内满格），
-    /// 三列给出密钥/口令/撤销窗口这些决定恢复能力的参数。
-    private var statusCard: some View {
-        let d = daysSinceBackup
-        let fresh: Double = d < 0 ? 0.02 : max(0.02, min(1, 1 - Double(d) / 30))
-        return XPanel(kind: .group, tone: backupTone) {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack {
-                    Text("备份时效")
-                        .xFont(.subheadline)
-                        .foregroundStyle(XPalette.textTertiary)
-                    Spacer(minLength: 0)
-                }
-                HStack(alignment: .center, spacing: XSpace.l) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        if d < 0 {
-                            XHeroNumber(text: "从未", size: 34, color: backupTone.color)
-                        } else {
-                            XHeroNumber(
-                                text: String(d),
-                                color: backupTone.color,
-                                unit: d == 0 ? "今天" : "天前")
-                        }
-                        Text(backupHint)
-                            .xFont(.footnote)
-                            .foregroundStyle(XPalette.textTertiary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    Spacer(minLength: 4)
-                    XGradientDial(
-                        size: 76,
-                        progress: fresh,
-                        widthRatio: 0.13,
-                        showsCursor: false,
-                        showsTick: false,
-                        solid: backupTone == .ok ? XPalette.ok : XPalette.warn
-                    ) { EmptyView() }
-                    .accessibilityHidden(true)
-                }
-                .padding(.top, 8)
-                XHairline().padding(.vertical, 12)
-                // HTML 47-backup.html 第一张卡（备份时效）里是**两条细进度条**：
-                //   钥匙  0 / 设置  0  —— 各带 5px 高的白 8% 轨道 + 白 24% 填充。
-                // 它不是"加密参数三列"（那三列在 HTML 里是另一张独立卡，已单独拆出）。
-                // 真机此前把两种东西混成了一种：既没有这两条轨道，也没有独立加密卡。
-                VStack(spacing: 12) {
-                    backupMeter("钥匙", value: backupKeyCount, total: max(1, backupKeyCount))
-                    backupMeter("设置", value: backupSettingCount, total: max(1, backupSettingCount))
-                }
-                Text("环越满代表备份越新 —— 超过 30 天没备份时，恢复会丢很多最近的记录。")
-                    .xFont(.caption2)
-                    .foregroundStyle(XPalette.textTertiary)
-                    .padding(.top, 12)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
 
-    /// HTML 第一张卡里的细进度条（5pt 高、圆角 3、白 8% 轨道 + 白 24% 填充）
-    private func backupMeter(_ label: String, value: Int, total: Int) -> some View {
-        VStack(spacing: 6) {
-            HStack {
-                Text(label).xFont(.small).foregroundStyle(XPalette.textTertiary)
-                Spacer(minLength: 0)
-                Text("\(value)")
-                    .xFont(.small, weight: .semibold)
-                    .foregroundStyle(XPalette.text)
-                    .monospacedDigit()
-            }
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 3, style: .continuous)
-                        .fill(XPalette.veil)
-                        .frame(height: 5)
-                    RoundedRectangle(cornerRadius: 3, style: .continuous)
-                        // 白 24% —— 仓库只给了 veil(白 8%) 一个白纱令牌，
-                        // swiftlint 又禁止就地写 Color.white。这里用三层 veil 叠出 24%，
-                        // 语义与 HTML 的 rgba(255,255,255,.24) 一致。
-                        .fill(XPalette.veil)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 3, style: .continuous)
-                                .fill(XPalette.veil)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 3, style: .continuous)
-                                        .fill(XPalette.veil)
-                                )
-                        )
-                        .frame(width: geo.size.width * (total == 0 ? 0 : CGFloat(value) / CGFloat(total)), height: 5)
-                }
-            }
-            .frame(height: 5)
-        }
-    }
 
     private var lastBackupMs: Int {
         DB.store.getInt("kf_bk_last_export", 0)
     }
 
-    private var daysSinceBackup: Int {
-        guard lastBackupMs > 0 else { return -1 }
-        return Int((Date().timeIntervalSince1970 * 1000 - Double(lastBackupMs)) / 86_400_000)
-    }
 
     /// 2026-10-24 备份模块精简：用户裁定「只保留简单的 iCloud 文件备份和恢复」。
     /// 原本这里转发 BackupStudioLegacy.lastBackupText —— 现在本地实现，不再依赖那个 1434 行的向导库。
@@ -238,131 +128,14 @@ struct BackupPage: View {
         return "\(d) 天前备份过"
     }
 
-    private var backupHint: String {
-        let d = daysSinceBackup
-        if d < 0 { return "备份包含全部钥匙与设置, 全程离线加密。" }
-        if d <= 7 { return "备份状态良好。" }
-        if d <= 30 { return "建议尽快再备份一次。" }
-        return "已经很久没备份了, 建议现在备份。"
-    }
 
-    private var backupTone: XToneColor {
-        let d = daysSinceBackup
-        if d < 0 { return .warn }
-        if d <= 7 { return .ok }
-        if d <= 30 { return .warn }
-        return .danger
-    }
 
     // ═══════════════════════════════════════════════════════
     // MARK: - 导出
     // ═══════════════════════════════════════════════════════
 
-    /// 加密参数 —— **HTML 47-backup.html 里的独立一张卡**（第 6 张）。
-    ///
-    /// 2026-10-24 逐页审美对齐：此前这三列被塞进「备份时效」卡的底部，
-    /// 于是那张卡同时承担"多久没备份"和"用什么算法"两件事 ——
-    /// 前者是用户关心的，后者是他不需要每天看的。挤在一起的结果是
-    /// 主数字（从未/天数）被三列小字稀释，卡片的视觉重心散掉。
-    ///
-    /// HTML 把它们分成两张独立卡，这里照做。
-    private var encryptCard: some View {
-        XPanel(kind: .group) {
-            VStack(alignment: .leading, spacing: XSpace.s) {
-                Text("加密参数")
-                    .xFont(.subheadline)
-                    .foregroundStyle(XPalette.textTertiary)
-                HStack(alignment: .top, spacing: XSpace.s) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("算法").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
-                        Text("AES-128").xFont(.footnote, weight: .semibold)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("认证").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
-                        Text("HMAC-SHA256").xFont(.footnote, weight: .semibold)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("派生").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
-                        Text("PBKDF2 6万轮").xFont(.footnote, weight: .semibold)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                Text("密钥只由你的口令派生，不存任何恢复密钥 —— 忘记口令等于这份备份作废。")
-                    .xFont(.caption2)
-                    .foregroundStyle(XPalette.textTertiary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
 
-    /// 上次备份里包含多少把钥匙 / 多少项设置（读备份快照的元数据）
-    private var backupKeyCount: Int {
-        DB.keychains().count
-    }
-    private var backupSettingCount: Int {
-        // 设置项计数：把已知的设置键数一遍（与 HTML 的"设置 0"同口径）
-        ["kf_applock", "kf_guest", "kf_sudo", "kf_theme", "kf_audit_keep"].filter {
-            DB.store.getBool($0, false) || !DB.store.getString($0).isEmpty
-        }.count
-    }
 
-    /// 47-backup 的 duo：导出 / 恢复两张 metric-card（镜像方向）
-    private var transferDuo: some View {
-        let exportN = 0   // 2026-10-24: 导出中心已删
-        return HStack(spacing: XSpace.s) {
-            // 左：导出
-            XPanel(kind: .group) {
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack {
-                        Text("导出").xFont(.caption, weight: .medium).foregroundStyle(XPalette.textSub)
-                        Spacer(minLength: 0)
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: XIcon.xs, weight: .semibold))
-                            .foregroundStyle(XPalette.textTertiary.opacity(0.6))
-                    }
-                    // §7.16：指标值不能把单位拼进字符串，走 HStack + 小号单位
-                    HStack(alignment: .firstTextBaseline, spacing: 2) {
-                        Text(String(exportN))
-                            .xFont(.title2, weight: .bold)
-                            .monospacedDigit()
-                            .foregroundStyle(XPalette.text)
-                        Text("次").xFont(.caption2).foregroundStyle(XPalette.textSub)
-                    }
-                    Text("本机 → 文件").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
-                    Text("生成一份备份")
-                        .xFont(.caption2, weight: .medium)
-                        .foregroundStyle(XPalette.textSub)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            // 右：恢复
-            XPanel(kind: .group) {
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack {
-                        Text("恢复").xFont(.caption, weight: .medium).foregroundStyle(XPalette.textSub)
-                        Spacer(minLength: 0)
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: XIcon.xs, weight: .semibold))
-                            .foregroundStyle(XPalette.textTertiary.opacity(0.6))
-                    }
-                    HStack(alignment: .firstTextBaseline, spacing: 2) {
-                        Text("0")
-                            .xFont(.title2, weight: .bold)
-                            .monospacedDigit()
-                            .foregroundStyle(XPalette.textTertiary)
-                        Text("次").xFont(.caption2).foregroundStyle(XPalette.textSub)
-                    }
-                    Text("文件 → 本机").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
-                    Text("同机覆盖，其它保留")
-                        .xFont(.caption2, weight: .medium)
-                        .foregroundStyle(XPalette.textSub)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }
-    }
 
     private var exportCard: some View {
         XPanel(kind: .group) {
@@ -721,19 +494,6 @@ struct BackupPage: View {
     // MARK: - 工作室
     // ═══════════════════════════════════════════════════════
 
-    private var studioRow: some View {
-        // XRow 自带 action 参数 (内部就是 Button), 不需要外层 Button + 手搓背景
-        XPanel(kind: .group) {
-            XRow(
-                systemImage: "wrench.and.screwdriver",
-                title: "备份工作室",
-                subtitle: "导出 / 恢复 / 校验",
-                showsChevron: true
-            ) {
-                /* 2026-10-24: 备份工作室已删 */
-            }
-        }
-    }
 }
 
 // ═══════════════════════════════════════════════════════════════════════
