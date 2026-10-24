@@ -10,7 +10,7 @@
   --accent-pink:#F11B51;    /* 心率、Move          3.98 ⚠ 仅 ≥18pt/Bold */
   --accent-red:#FF3B30;     /* 告警                4.55 */
   --accent-coral:#FF694E;   /* 睡眠分数            5.90 */
-  --accent-orange:#FF9F0A;  /* 警示、待机          7.34 */
+  --accent-orange:#DFA063;  /* 警示、待机  2026-10-24 按参考图改值(旧#FF9F0A在黑底S100%/L52%读成荧光橘; 参考图暖色实测L60-65/S42-62) 黑底9.35:1 */
   --accent-lime:#3CDE02;    /* Exercise            9.25 */
   --accent-mint:#0ADBD8;    /* 睡眠、Stand         9.65 */
   --accent-green:#30D158;   /* 成功、正向          10.39 */
@@ -19,8 +19,8 @@
   /* ── 环的三条渐变（规范 §3.5，不是纯色） ── */
   --ring-health-a:#00C6FF; --ring-health-b:#0090FC;
   --ring-sleep-a:#0ADBD8;  --ring-sleep-b:#3C60FC;
-  --ring-move-a:#F11B51;   --ring-move-b:#FF9F0A;
-  --accent:#D98B45; --accent-text:#E8A05C; --ok:#30D158; --warn:#FF9F0A; --danger:#FF3B30;
+  --ring-move-a:#F11B51;   --ring-move-b:#DFA063;
+  --accent:#E0A055; --accent-text:#E8A05C; --ok:#30D158; --warn:#DFA063; --danger:#FF3B30;  /* 2026-10-24 暖色治理: accent L56->60(琥珀), warn 按参考图区间 */
 
   /* 数据系列（规范 §7.8 形态2/3 的实测值） */
   --data-mint:#0ADBD8; --data-coral:#FF694E; --data-blue:#3C60FC;
@@ -622,7 +622,7 @@ body{background:#0A0A0C;font-family:-apple-system,"SF Pro Text","PingFang SC",sa
   display:flex; flex-direction:column; align-items:center; text-align:center;
   padding:24px 16px;
 }
-.error-state .er-icon{ width:28px; height:28px; color:#FF9F0A; margin-bottom:10px }
+.error-state .er-icon{ width:28px; height:28px; color:#DFA063; margin-bottom:10px }
 .error-state .er-title{ font-size:15px; font-weight:600; color:#FFF }
 .error-state .er-desc{ font-size:12px; color:#8D8D93; margin-top:6px; line-height:1.5 }
 .error-state .er-act{
