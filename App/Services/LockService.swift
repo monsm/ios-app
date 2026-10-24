@@ -541,6 +541,19 @@ final class LockService: ObservableObject {
         try await execOk(ZKCmdBuilder.cmd19OpenZotp(m, sk, on))
     }
 
+    /// cmd 25 布防 —— **2026-10-24 补的服务方法**。
+    ///
+    /// 背景：`ZKCmdBuilder.cmd25Defence`、`DB.saveDefend`、`AutoOpenKit.defendActive`、
+    /// `PidMap.canDefend` 全都实现了，但从没有任何界面调用过 —— 原小程序（jzzns22561）的
+    /// `DefendPage` / `DefendhomePage` 是核心安防功能，移植到 iOS 时**断在最后一米**。
+    ///
+    /// 参数语义照 cmd25 定义：control(1B) + start(4B LE) + end(4B LE)。
+    /// control: 0=撤防 / 1=布防（与 DB.DefendCfg.control 同口径）。
+    func setDefence(control: Int, startSec: Int, endSec: Int) async throws {
+        let (m, sk) = try keys()
+        try await execOk(ZKCmdBuilder.cmd25Defence(m, sk, control, startSec, endSec))
+    }
+
     // ---------- 密码 ----------
     // 0A 响应 KLV#04 = alias (LE 2B)
     private func aliasFrom(_ r: ExecResult) -> Int? {
