@@ -18,7 +18,7 @@
 
 ## 第二步：对照 HTML 看三页（5 分钟）
 
-打开 `tools/proto/REVIEW.html`（56 项双端对照），重点看：
+打开 `tools/proto/REVIEW.html`（57 项双端对照），重点看：
 
 | 页 | 看什么 |
 |---|---|
