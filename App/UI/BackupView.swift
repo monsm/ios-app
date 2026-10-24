@@ -3,6 +3,7 @@
 // 因为要先下载解密拿到包, 才能告诉用户"会覆盖几台设备"。
 import SwiftUI
 import UIKit
+import UniformTypeIdentifiers
 
 struct BackupView: View {
     @EnvironmentObject var app: AppState
@@ -28,6 +29,15 @@ struct BackupView: View {
     @State private var busy = false
     /// 云端已下载但尚未经用户确认的备份包 (nil = 无待确认的恢复)
     @State private var pendingRestore: BackupBundle?
+    /// 导出文件选择器（存到 iCloud 云盘 / 我的 iPhone）
+    /// 与导入对称: 导入能选文件, 导出也该能存文件 —— 原来只有「复制/分享文本」这一条路,
+    /// 而备份的正常去处就是 iCloud 云盘。
+    @State private var showFileExporter = false
+    /// 导入文件选择器（从 iCloud 云盘 / 我的 iPhone 选一份备份）
+    @State private var showFilePicker = false
+    /// 文件已读入但**还没**弹确认框 —— 选择器还在关闭过程中弹 UIAlertController 会被静默丢掉
+    /// (两层模态套着)。所以先存这里, 等选择器真正收起后再问。
+    @State private var pendingFileText: String?
 
     // 2026-10-15 走查·CI 补刀: 上一批改这一行时把 `showStudio` **改名成了** `showWebDAV`，
     // 而 `$showStudio`(:64) 与 `showStudio = true`(:303) 两处用法都还在 ⇒ 编译报 cannot find 'showStudio'（run 99）。
@@ -68,6 +78,37 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
         }
         .sheet(isPresented: $showStudio) { BackupStudioView() }
         .sheet(isPresented: $showWebDAV) { WebDAVStudioView() }
+        // 方案 a: 文件选择器 —— 备份的正常去处是「iCloud 云盘 / 我的 iPhone」。
+        // 与「粘贴文本」共用同一个解析入口 (doImportText → parsePreview), 不另写一套解析。
+        .fileExporter(isPresented: $showFileExporter,
+                      document: BackupDoc(text: exportText),
+                      contentType: .json,
+                      defaultFilename: backupFilename) { result in
+            if case .success = result {
+                Milestones.recordBackup()   // 落盘即算一次备份 (与生成备份文本同口径)
+                app.evaluateAchievements()
+                app.showToast("已保存到文件")
+            } else if case .failure(let e) = result {
+                // 用户取消不报错 (NSUserCancelledError)
+                if (e as NSError).code != NSUserCancelledError {
+                    app.showToast("保存失败: " + e.localizedDescription)
+                }
+            }
+        }
+        .fileImporter(isPresented: $showFilePicker,
+                      // 不按扩展名筛: 备份可能是 .json / .txt / .enc (工作室导出的加密包)。
+                      // 内容正确性由 parsePreview 把关 (解密 → 内容哈希 → schema), 不靠文件类型。
+                      allowedContentTypes: [.item],
+                      allowsMultipleSelection: false) { result in
+            handleFileImport(result)
+        }
+        // 选择器收起之后再弹确认框 (见 handleFileImport 里的说明)。
+        .onChange(of: showFilePicker) { _, showing in
+            guard !showing, let text = pendingFileText else { return }
+            pendingFileText = nil
+            importText = text
+            confirmImport()
+        }
     }
 
     // pendingRestore != nil 即为"待确认", 确认/取消后都要清空以防重复触发
@@ -127,6 +168,14 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
                         .lineLimit(8).truncationMode(.tail)
                         .textSelection(.enabled) // 也可手动复制
                     ShareLink(item: exportText, preview: SharePreview("离线锁管家备份"))
+                    // 主路径: 存到文件 (iCloud 云盘 / 本机) —— 与下面的导入对称
+                    Button {
+                        showFileExporter = true
+                    } label: {
+                        Label("存到 iCloud 云盘 / 本机", systemImage: "folder.badge.plus")
+                            .frame(minHeight: DS.Hit.min)
+                    }
+                    .accessibilityHint("选 iCloud 云盘或我的 iPhone 里的位置保存备份文件")
                 }
                 .accessibilityElement(children: .contain)
             }
@@ -156,6 +205,14 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
                     .frame(minHeight: DS.Hit.min)
             }
             .disabled(busy || importText.isEmpty)
+            // 从文件选择 (iCloud 云盘 / 我的 iPhone) —— 备份存在文件里时不必先复制再粘贴
+            Button {
+                showFilePicker = true
+            } label: {
+                Label("从文件选择", systemImage: "folder")
+                    .frame(minHeight: DS.Hit.min)
+            }
+            .disabled(busy)
             Button("导入", role: .destructive) { confirmImport() } // 覆盖同名设备, 属破坏性动作
                 .disabled(busy || importText.isEmpty)
         }
@@ -259,6 +316,48 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
         DB.store.set("kf_migrate_pending", ISO8601DateFormatter().string(from: Date()))
     }
 
+    // ---------- 文件导入 (iCloud 云盘 / 我的 iPhone) ----------
+
+    /// 导出文件名 —— 带日期, 多次备份不互相覆盖。
+    private var backupFilename: String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.calendar = WeekCal.gregorian
+        f.dateFormat = "yyyyMMdd-HHmm"
+        return "锁管家备份-\(f.string(from: Date()))"
+    }
+
+    /// 文件选择器的结果处理。
+    ///
+    /// 要点:
+    ///   · fileImporter 给的是**临时可访问 URL**, 必须 startAccessingSecurityScopedResource
+    ///     否则 read 会失败 (这是 iOS 沙盒规则, 不是可选步骤)
+    ///   · 读出来的文本走与「粘贴导入」**同一个入口** (parsePreview), 不另写一套解析
+    ///   · 任何失败都给 toast, 不静默
+    private func handleFileImport(_ result: Result<[URL], Error>) {
+        switch result {
+        case .success(let urls):
+            guard let url = urls.first else { return }
+            let scoped = url.startAccessingSecurityScopedResource()
+            defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+            guard let text = try? String(contentsOf: url, encoding: .utf8), !text.isEmpty else {
+                app.showToast("这个文件读不出文本内容 · 备份文件是文本格式")
+                return
+            }
+            // 不在这个回调里直接弹确认框: 它发生在**系统文件选择器还在关闭**的过程中,
+            // 而 confirmDestructive 要 present 一个 UIAlertController —— 上一层模态没消失前
+            // 系统会把它丢掉, 用户看到的就是「选了文件, 界面没有任何反应」。
+            // 先存起来, 由 onChange(showFilePicker) 在选择器收起后再问。
+            pendingFileText = text
+        case .failure(let error):
+            // 用户取消不报错 (NSUserCancelledError)
+            if (error as NSError).code != NSUserCancelledError {
+                app.showToast("没能打开文件")
+            }
+        }
+    }
+
+    // ---------- 云端上传 ----------
     // ---------- 云端上传 ----------
     private func push() async {
         guard !busy else { return }
@@ -348,5 +447,22 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
         let due = last.addingTimeInterval(TimeInterval(days) * 86_400)
         if due <= Date() { return "按当前的\(label)节奏, 已经到该再备份一次的时候了" }   // 822 按当前的
         return "按当前的\(label)节奏, 建议 " + due.formatted(date: .abbreviated, time: .shortened) + " 前再备一次"   // 822 前再备一次
+    }
+}
+
+/// fileExporter 要的文档类型 —— 备份是一段 UTF-8 文本, 用 `.json` 内容类型。
+///
+/// 用 FileDocument 而不是 Transferable: `.fileExporter(document:contentType:)` 这一形
+/// 在 iOS 16+ 上是**同步可用**的, 而 Transferable 那一形要求文件已经落在磁盘上。
+struct BackupDoc: FileDocument {
+    static var readableContentTypes: [UTType] { [.json] }
+    var text: String
+    init(text: String) { self.text = text }
+    init(configuration: ReadConfiguration) throws {
+        let data = configuration.file.regularFileContents ?? Data()
+        text = String(data: data, encoding: .utf8) ?? ""
+    }
+    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+        FileWrapper(regularFileWithContents: Data(text.utf8))
     }
 }
