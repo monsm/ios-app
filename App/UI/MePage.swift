@@ -475,27 +475,13 @@ struct MePage: View {
 
     private var aboutSection: some View {
         XPanel {
-            NavigationLink { IconPicker().environmentObject(app) } label: {
-                XRow(systemImage: "app.badge", title: "App 图标",
-                     subtitle: "9 款可选", showsChevron: true)
-            }
+            // 2026-10-24: IconPicker 已删（对照原 App）
             XHairline(inset: XSpace.card + 28 + XSpace.m)
 
             XHairline(inset: XSpace.card + 28 + XSpace.m)
-            NavigationLink { CarePage().environmentObject(app) } label: {
-                XRow(
-                    systemImage: "wrench.and.screwdriver",
-                    title: "维护与保养",
-                    showsChevron: true)
-            }
+            // 2026-10-24: CarePage 已删（对照原 App）
             XHairline(inset: XSpace.card + 28 + XSpace.m)
-            NavigationLink { CareRemindersView().environmentObject(app) } label: {
-                XRow(
-                    systemImage: "heart.text.square",
-                    title: "关怀提醒",
-                    subtitle: "生日 / 公告板",
-                    showsChevron: true)
-            }
+            // 2026-10-24: CareRemindersView 已删（对照原 App）
             XHairline(inset: XSpace.card + 28 + XSpace.m)
 
             XHairline(inset: XSpace.card + 28 + XSpace.m)

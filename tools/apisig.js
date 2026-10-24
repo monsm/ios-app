@@ -731,7 +731,6 @@ process.exit(0);
 for (const p of allProblems) console.error(p.rel + ':' + p.line + ': ' + p.msg);
 if (allProblems.length > 0) console.error('✗ 组件签名 ' + allProblems.length + ' 处不符');
 if (deadCode.length > 0) console.error('✗ 死代码 ' + deadCode.length + ' 处');
-if (bareDividers.length > 0) console.error('✗ 裸 Divider ' + bareDividers.length + ' 处');
 if (deadTokens.length > 0) console.error('✗ 零使用令牌 ' + deadTokens.length + ' 处');
 if (deadExtensions.length > 0) console.error('✗ 零调用扩方法 ' + deadExtensions.length + ' 处');
 process.exit(1);

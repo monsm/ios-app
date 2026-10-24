@@ -132,10 +132,8 @@ struct LocksPage: View {
             }
         }
         .onAppear { reload() }
-        .sheet(item: $shareTarget) { kc in
-            ShareToAndroidView(kc: kc)
-                .environmentObject(app)
-        }
+        // 2026-10-24: 「分享给安卓」已删（对照原 App：无此功能）。
+        // shareTarget 状态保留 —— Android 端从二维码导入的通路在 AndroidPair.swift。
         // onDismiss 必须重载：配对成功后本页的 locks 是 @State 缓存，
         // 父视图的 onAppear 不会因为 sheet 关闭而重新触发 ——
         // 不加这一句，刚配好的门锁不会出现在列表里。

@@ -163,7 +163,7 @@ func quickDestination(_ id: String) -> some View {
     case "backup":   BackupPage()
     case "alarm":    Text("告警功能已移除")   // 2026-10-24: AlarmsPage 已删
     case "firmware": FirmwarePage()
-    case "care":     MaintenanceView()
+    case "care":     Text("保养功能已随原版对照精简移除")   // 2026-10-24
     case "again":    Text("「再开一次」在设备页长按编辑或直接点按, 不需要新页面")   // 921 再开一次
     default:         Text("这个快捷入口对应的页面已不存在，请到设置-外观里重新选择")
     }

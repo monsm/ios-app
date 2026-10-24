@@ -304,23 +304,8 @@ for (const mode of ['dark']) {
 
 // C. AMOLED 纯黑: canvas 深色臂已是纯黑近值, 只看深色模式下 token 是否仍达标 (上面的 dark 已覆盖)
 
-// D. 图标预览块的写死底色 (IconPicker 的九款渐变色)
-const iconSrc = fs.readFileSync(path.join(__dirname, '..', 'App', 'UI', 'IconPicker.swift'), 'utf8');
-const reIconBg = /bg:\s*\[Color\(hex:\s*0x([0-9a-fA-F]{6})\),\s*Color\(hex:\s*0x([0-9a-fA-F]{6})\)\]/g;
-let im;
-let iconHits = 0;
-while ((im = reIconBg.exec(iconSrc)) !== null) {
-  iconHits++;
-  const before = iconSrc.slice(0, im.index);
-  const nm = before.match(/IconOption\(id:\s*(?:nil|"[^"]*"),\s*name:\s*"([^"]*)"/g);
-  const label = (nm && (nm[nm.length - 1].match(/name:\s*"([^"]*)"/) || [])[1]) || 'icon' + iconHits;
-  push('both', 'white', `图标预览 ${label}.A`, 4.5, '预览块上的白符号压写死渐变亮端', 0xFFFFFF, parseInt(im[1], 16));
-  push('both', 'white', `图标预览 ${label}.B`, 4.5, '预览块上的白符号压写死渐变暗端', 0xFFFFFF, parseInt(im[2], 16));
-}
-if (iconHits === 0) {
-  console.error('✗ 没从 IconPicker.swift 解析到图标预览底色 — 预览块与白符号的搭配失去机检');
-  process.exit(1);
-}
+// D. 图标预览块 —— 2026-10-24: IconPicker.swift 已删（对照原 App：无换图标功能）。
+// 这段机检随之退役：被检对象不存在了，保留代码只会让脚本崩在 readFileSync。
 
 // 兼容旧 tail 里的主题计数
 const themes = accentThemes;

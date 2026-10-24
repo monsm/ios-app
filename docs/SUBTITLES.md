@@ -7,16 +7,12 @@
 
 | 页 | 副标题 | 来源 |
 |---|---|---|
-| 保养历史 | 每次保养都记在这里，不做云同步 | CareViews |
 | 布防 | 出门布防 · 触碰键盘与指纹时指示灯闪烁 |
 | 备份与恢复 | 数据只在这台 iPhone · 全程离线加密 | BackupPage |
 | 本机设置 | 这台手机上的保护与数据 | MePage |
 | 成员 | 谁能开门 · 各自的授权来源 | MembersPage |
-| 分享给安卓 | 这把锁的开锁二维码 | ShareToAndroidView |
 | 固件升级 | 升级前请完成全部检查项 | FirmwarePage |
-| 关怀提醒 | 生日与纪念日的本地提醒 | CareRemindersView |
 | 归档成员 | 归档不删数据，名下钥匙转成「未分配」 | MemberCenterView |
-| 换电指引 | 上次换电：还没有换电记录 | CareViews |
 | 回收站 | 删掉的钥匙在这里，可以恢复 | CredentialBinView |
 | 建档向导 | 给这位成员起个名字，之后全家都用它称呼 | MemberCenterView |
 | 蓝牙钥匙串 | 随身开门的实体钥匙串 | DonglesPage |
@@ -25,12 +21,9 @@
 | 认领还没分配的钥匙 | 把无主记录归到人 | MemberCenterView |
 | 审计流水 | 谁在什么时候做了什么 | SecurityCenterView |
 | 锁档案 | 这台锁的名字 / 符号 / 配色 | LockProfilePage |
-| 锁体保养 | 五项清单 · 还没保养过 | CareViews |
 | 添加密码 | 写入门锁 · 会占用密码库存 | AddKeyPage |
 | 同步时间 | 锁钟偏差 · 写入手机时间 | DeviceHomeView |
 | 退出处置向导 | 逐条处置：保留 / 移交 / 停用 | MemberCenterView |
-| 外观工作室 | 正文始终是正文的颜色，不会因此变得看不清 | AppearancePage |
-| 维护与保养 | 机械件也该有保养记录 | CarePage |
 | 销毁与应急 | 不可逆操作 · 需要二次确认 | SecurityCenterView |
 | 钥匙管理 | **动态**（项数与分类计数，格式见 KeysPage.subline） | KeysPage |
 | 应用锁 | 打开 App 前先验一次口令 | AppLockSetupView |
@@ -38,7 +31,6 @@
 | 诊断与自检 | 进入时算一次，动作后重算 | DiagnosticsPage |
 | 智能网关 | 把门锁接到家里网络 | GatewayPage |
 | 重复合并 | 选一位作为主档案，另一位并入 | MemberCenterView |
-| App 图标 | 轻点任意一款立即生效 | IconPicker |
 
 ---
 

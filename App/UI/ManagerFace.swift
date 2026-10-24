@@ -282,7 +282,6 @@ struct ManagerFace: View {
                 (.securityDestroy, "销毁数据", "不可逆清除", "trash"),
                 (.safemode, "安全模式", "变严方向", "shield.lefthalf.filled"),
                 (.backup, "备份恢复", "导出 / 导入 / 校验", "externaldrive.badge.timemachine"),
-                (.appearance, "外观工作室", "强调色 / 密度 / 周起始", "paintpalette"),
                 (.me, "本机设置", "应用锁 / 备份 / 关于", "person.crop.circle"),
                 // ManagerRoute.diagnostics 之前**没有任何入口行**（死用例）：
                 // routeDestination 里有它的落点，但 rowsFor 三个组都没列它，
@@ -367,7 +366,6 @@ struct ManagerFace: View {
         // ⚠ 这里原来指向 StudioPage —— 而 StudioPage 是「钥匙工坊」（密码/临时/指纹/OTP），
             //   与「外观工作室 · 主题 / 强调色 / 密度」毫无关系。
             //   菜单名与实际页面不符，同时外观相关的 4 个 setter 全都没有入口。
-            case .appearance:     AppearancePage().trackScreen("外观工作室")
             case .diagnostics:    DiagnosticsPage().trackScreen("诊断与自检")
         case .me:             MePage().trackScreen("本机设置")
         }
@@ -385,7 +383,7 @@ enum ManagerRoute: String, Hashable, Identifiable {
     case locks, defend, firmware, gateway, dongles, syncTime
     case members, memberWizard, archivedMembers
     case securityCenter, securityAudit, securityDestroy, safemode
-    case backup, appearance, me
+    case backup, me
     case diagnostics
 
     var id: String { rawValue }

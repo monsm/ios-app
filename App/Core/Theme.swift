@@ -165,7 +165,6 @@ enum XPalette {
     /// 它不是界面表面, 是给摄像头读的图形: ISO/IEC 18004 要求二维码四周留白色静区,
     /// 深色底上扫不出来。所以它是**语义色**, 不是一个漏改的 `Color.white`。
     /// 用具名令牌而不用字面量, 是为了让它出现在 grep 里时能一眼看出「这是有理由的」。
-    static var qrQuietZone: Color { Color.white }
 
     // ── 强调: 铜 (锁芯黄铜) ──
     //
@@ -282,7 +281,6 @@ enum XSpace {
     static var gutter: CGFloat { d(22) }
     /// 卡片间距 —— 纵向堆叠 8 / 横向网格 12。**两个不同的数, 不许合并成一个 token。**
     static var rowGap: CGFloat { d(8) }
-    static var colGap: CGFloat { d(12) }
     /// 区块之间 (簇与簇) —— 28。与簇内的 16 形成层级差: 等距等于没有分组。
     static var section: CGFloat { d(28) }
     /// 页面顶部留白 —— 40。
