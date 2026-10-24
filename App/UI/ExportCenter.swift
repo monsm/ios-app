@@ -1528,6 +1528,12 @@ struct ExportCenterView: View {
                 //
                 // 图 5 的第一张卡永远是「一个大数 + 一枚环」。导出中心之前直接进"范围"选择，
                 // 用户看不到这次会导出多少条。这张卡把「即将导出的条数」做成主角。
+                // ═══ 2026-10-24 逐页对齐 HTML 48-export 卡1-2「历史导出」═══
+                //
+                // HTML 的前两张卡是历史导出：柱状图（每月次数）+「近 3 个月 N 次导出」。
+                // 此前做不出来是因为**没有数据源**（全仓无导出历史记录）。
+                // 本轮已实现 ExportHistory（每次导出落一条毫秒时间戳），现在可以画了。
+                historyExportCard.xScrollLift()
                 exportStatsCard.xScrollLift()
                 // 范围与列选择
                 scopeCard.xScrollLift()
@@ -1564,6 +1570,54 @@ struct ExportCenterView: View {
     }
 
     /// 图 5 读数卡：44px 即将导出条数 + 环 + 三列范围信息
+    /// HTML 48-export 卡1-2「历史导出」：柱状图 + 近 3 个月计数
+    ///
+    /// HTML 原文：
+    ///   卡1 卡头「历史导出」+ 月份轴（9月 10月 12PM 现在）
+    ///   卡2「近 3 个月 · 12 次导出」+ 柱状图 + 「柱高就是当月导出次数」
+    ///
+    /// 合并成一张卡（HTML 那两张其实是同一件事的两半：数字与图），
+    /// 与 App 其它页的 XStatCard「标题 › + 主内容 + 分隔线 + 页脚」同构。
+    private var historyExportCard: some View {
+        let bars = ExportHistory.monthlyBars(months: 3)
+        let recent = ExportHistory.countWithin(days: 90)
+        let peak = max(bars.map { $0.count }.max() ?? 0, 1)
+        return XStatCard(
+            headerTitle: "历史导出",
+            footer: "柱高就是当月导出次数 —— 只记时间戳，不记文件名。"
+        ) {
+            XStatSection(isFirst: true) {
+                VStack(alignment: .leading, spacing: XSpace.s) {
+                    HStack(alignment: .firstTextBaseline, spacing: 4) {
+                        Text(String(recent))
+                            .xFont(.largeTitle, weight: .bold)
+                            .monospacedDigit()
+                            .foregroundStyle(recent > 0 ? XPalette.text : XPalette.textTertiary)
+                        Text("次导出 · 近 3 个月")
+                            .xFont(.footnote)
+                            .foregroundStyle(XPalette.textSub)
+                        Spacer(minLength: 0)
+                    }
+                    // 三个月柱状图
+                    HStack(alignment: .bottom, spacing: XSpace.m) {
+                        ForEach(Array(bars.enumerated()), id: \.offset) { _, bar in
+                            VStack(spacing: 6) {
+                                Capsule()
+                                    .fill(bar.count > 0 ? XPalette.accent : XPalette.veil)
+                                    .frame(width: 22, height: max(6, 60 * CGFloat(bar.count) / CGFloat(peak)))
+                                Text(bar.label)
+                                    .xFont(.caption2)
+                                    .foregroundStyle(XPalette.textTertiary)
+                            }
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    .frame(height: 90, alignment: .bottom)
+                }
+            }
+        }
+    }
+
     private var exportStatsCard: some View {
         // 数据源就是本文件导出时读的那一份：各锁日志的合计（不臆造中间层 API）
         let n = DB.keychains().reduce(0) { $0 + DB.readLogs($1.mac).count }
@@ -2267,8 +2321,65 @@ struct ExportCenterView: View {
 
     // ---------- 各导出动作 (692: 全部经 ExportProgress 生成, 可取消) ----------
     /// 719 完成反馈: 成功触感/失败触感已由 progress.start 触发, 这里补路径与 Toast
+/// 导出历史（2026-10-24 新增）—— HTML 48-export「历史导出」柱状图的数据源
+///
+/// 只记**时间戳**，不记文件名/内容：柱状图要的是"哪个月导出了几次"，
+/// 文件名属于隐私（可能含锁名），没有理由为一张图存下来。
+enum ExportHistory {
+    static let key = "kf_export_history"
+    /// 最多保留 200 条（够画 3 个月柱状图，且不会无限增长）
+    private static let cap = 200
+
+    /// 记一次导出（毫秒时间戳）
+    static func record() {
+        var list = all()
+        list.append(Int(Date().timeIntervalSince1970 * 1000))
+        if list.count > cap { list = Array(list.suffix(cap)) }
+        DB.store.set(key, list.map(String.init).joined(separator: ","))
+    }
+
+    /// 全部导出时间戳（毫秒）
+    static func all() -> [Int] {
+        DB.store.getString(key)
+            .split(separator: ",")
+            .compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
+    }
+
+    /// 最近 N 次导出的数量（HTML："近 3 个月 12 次导出"）
+    static func countWithin(days: Int) -> Int {
+        let cutoff = Int((Date().timeIntervalSince1970 - Double(days) * 86_400) * 1000)
+        return all().filter { $0 >= cutoff }.count
+    }
+
+    /// 按月聚合：最近 N 个月的每月导出次数（柱状图用）
+    static func monthlyBars(months: Int) -> [(label: String, count: Int)] {
+        let cal = WeekCal.gregorian
+        let now = Date()
+        let all = all()
+        return (0..<months).reversed().compactMap { back -> (String, Int)? in
+            guard let monthStart = cal.date(byAdding: .month, value: -back, to: now) else { return nil }
+            let comps = cal.dateComponents([.year, .month], from: monthStart)
+            guard let y = comps.year, let m = comps.month else { return nil }
+            let n = all.filter { ts in
+                let d = Date(timeIntervalSince1970: Double(ts) / 1000)
+                let c = cal.dateComponents([.year, .month], from: d)
+                return c.year == y && c.month == m
+            }.count
+            return ("\(m)月", n)
+        }
+    }
+}
+
     private func onDone(_ item: ExportItem?, _ err: String) {
         if let item {
+            // ═══ 2026-10-24 实现 HTML 48-export 的「历史导出」数据源 ═══
+            //
+            // HTML 有两张卡（历史导出的柱状图 + 近 3 个月 N 次），但全仓此前
+            // **没有任何导出历史记录**（只有 kf_bk_last_export = 最后**备份**时间）。
+            // 所以那两张卡做不出来 —— 不是 UI 问题，是缺数据。
+            //
+            // 现在每次导出成功落一条时间戳（毫秒），键 kf_export_history。
+            ExportHistory.record()
             // 2026-10-14: 写盘失败也报"已生成"是假成功; 内容仍可分享, 但如实告知没落盘。
             if let url = item.writeLocal() {
                 lastPath = url.path
