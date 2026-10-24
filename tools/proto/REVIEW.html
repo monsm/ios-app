@@ -372,7 +372,14 @@ function upd(){const n=document.querySelectorAll('input[value=no]:checked').leng
 document.addEventListener('change',upd);
 function ex(){const out=[];document.querySelectorAll('input:checked').forEach(i=>out.push(i.name+'='+i.value));
   const t=out.join('\n');navigator.clipboard.writeText(t).then(()=>alert('已复制 '+out.length+' 条：\n'+t.slice(0,500)));}
-</script></html<h1 style="margin-top:28px">Android（6 页）</h1><p class="lead">android-proto 原型对照</p><div class="grid"><div class="p">
+</script></html<div class="p">
+    <div class="h"><b>53-alarms</b><span>告警中心</span></div>
+    <iframe src="53-alarms.html" loading="lazy"></iframe>
+    <div class="n">（新页）</div>
+    <div class="r"><label><input type="radio" name="53-alarms" value="ok">对</label>
+    <label><input type="radio" name="53-alarms" value="no">不对</label></div>
+  </div>
+<h1 style="margin-top:28px">Android（6 页）</h1><p class="lead">android-proto 原型对照</p><div class="grid"><div class="p">
     <div class="h"><b>01-home</b><span>开锁主屏</span></div>
     <iframe src="../android-proto/01-home.html" loading="lazy"></iframe>
     <div class="n">信号转盘 · 秒开 · 自动开锁</div>
