@@ -1045,11 +1045,13 @@ struct HomeConsole: View {
         let today = cal.startOfDay(for: Date())
         var buckets: [Date: Int] = [:]
         for kc in DB.keychains() {
-            // 判据与全仓一致：StatsKit.openTypes 才是"开门"事件类型集合
-            // （日志的 type 是字符串码，不是 Bool；写 log.isOpen 编不过）
+            // 判据与全仓一致（照 StatsPage / StatsKit 的既有写法）：
+            //   · type 是 Int，用 StatsKit.openTypes 判"开门"
+            //   · 时间是 lockTime(Int64, 协议秒)，必须过 ZKProtocol.protoSecondsToUnix
+            //     —— 直接当 Unix 秒用会差 2000 年（协议秒是 2000-01-01 起算）
             for log in DB.readLogs(kc.mac) where StatsKit.openTypes.contains(log.type) {
-                let ms = log.at > 1e12 ? log.at : log.at * 1000
-                let d = cal.startOfDay(for: Date(timeIntervalSince1970: ms / 1000))
+                let unix = ZKProtocol.protoSecondsToUnix(log.lockTime)
+                let d = cal.startOfDay(for: Date(timeIntervalSince1970: unix))
                 buckets[d, default: 0] += 1
             }
         }
