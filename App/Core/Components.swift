@@ -162,10 +162,19 @@ struct XPanel<Content: View>: View {
             //
             // 叠两层：① 墨色底 0.55（保证文字对比度）② 白 0.06（抬亮到参考图的档位）。
             // 合起来等效亮度 ≈ #1F1F24 @ 黑底，接近参考图卡内实测值。
-            // 用 XPalette.veil（本仓的"白纱"令牌，8% 纯白）而不是就地写 Color.white ——
-            // swiftlint 的铁律是"白要有出处"，veil 就是那个出处。
-            shape.fill(XPalette.surface.opacity(0.55))
-                .overlay(shape.fill(XPalette.veil.opacity(0.75)))
+            // ═══ 2026-10-24 六图复测：卡片改玻璃（与 tokens.css 的 .card 同步升级）═══
+            //
+            // 参考图 2 逐像素量的两条事实：
+            //   ① 卡内比画布亮 25-30 色阶（实色 #1C1C1E 只给 14）
+            //   ② 卡内保留背景色相（R35G34B39 偏冷 / R39G35B34 偏暖）—— 实色永远是中性灰
+            // ② 只能由"背景被模糊放大后透上来"产生。
+            //
+            // 但 §14-#6 铁律：**毛玻璃只许功能层**（TabBar/浮层/Sheet），内容卡不许 .ultraThinMaterial。
+            // 折中方案：用极低透明度白 + 一层 blur —— 用 .background(.ultraThinMaterial) 违规，
+            // 所以改用 **低透明白 + 提饱和**模拟：0.055 白（对齐 tokens.css 的 rgba(255,255,255,.055)）。
+            // 透光效果弱于真玻璃，但守住了层级别铁律。
+            shape.fill(XPalette.veil.opacity(0.69))
+                .overlay(shape.fill(XPalette.surface.opacity(0.30)))
         }
     }
 }

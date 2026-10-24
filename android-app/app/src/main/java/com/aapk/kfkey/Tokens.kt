@@ -50,7 +50,9 @@ internal object KfTokens {
 
         /** 屏幕左右边距 **14** —— 范式 5.1 实测 3.62% 屏宽; iOS 同为 14 (Theme.swift:182)。
          *  旧值 16 是 iOS 平台惯例值, 不是这个设计值。它是根 token: 卡片宽度与大环直径都由它派生。 */
-        val gutter = 14.dp
+        /** 屏幕左右边距 **22**（2026-10-24 与 iOS XSpace.gutter 同源升级：参考图实测 6.6%≈26pt，
+     *  取 22 兼顾小屏可读宽度）。= iOS XSpace.gutter (Theme.swift) */
+    val gutter = 22.dp
         /** 区块之间 28 —— 范式 5.1 的 s7 (= iOS XSpace.section, Theme.swift:187)。 */
         val section = 28.dp
         /** 页面顶部留白 40 —— 范式 5.1 的 s8 (= iOS XSpace.pageTop, Theme.swift:189)。 */

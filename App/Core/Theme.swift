@@ -236,9 +236,17 @@ enum XSpace {
     static var xl: CGFloat { d(24) }
     static var xxl: CGFloat { d(32) }
 
-    /// 屏幕左右边距 —— **14** (范式实测 3.62% × 393)。
-    /// 卡片、Tab Bar、顶部胶囊行**共用**这一个值, 不许各写各的。
-    static var gutter: CGFloat { d(14) }
+    /// 屏幕左右边距 —— **22**（2026-10-24 六图复测从 14 上调）
+    ///
+    /// 卡片、Tab Bar、顶部胶囊行**共用**这一个值，不许各写各的。
+    ///
+    /// ■ 为什么从 14 改成 22：
+    ///   参考图 2（1206px 宽）实测卡片左边界在 x=80，即 **6.6% ≈ 26pt**。
+    ///   旧的 14pt 是 4.6% —— 卡片几乎贴边，读起来"挤"。
+    ///   直接跳 26 会让 375pt 小屏内容区只剩 323pt，所以取 **22（5.9%）**：
+    ///   明显更接近参考图，又不牺牲可读宽度。
+    /// ■ 与 tools/proto/tokens.css 的 `--gutter:22px` 同值（原型已同步升级）。
+    static var gutter: CGFloat { d(22) }
     /// 卡片间距 —— 纵向堆叠 8 / 横向网格 12。**两个不同的数, 不许合并成一个 token。**
     static var rowGap: CGFloat { d(8) }
     static var colGap: CGFloat { d(12) }
