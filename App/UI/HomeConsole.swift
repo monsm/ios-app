@@ -167,6 +167,8 @@ struct HomeConsole: View {
                                 // 真机此前完全没有这一块 —— 门厅只能说"今天多少"，
                                 // 看不到"最近两周的趋势"。而参考图 1（Health Age History）
                                 // 正是这个形态：标题 + 面积图 + 时间轴。
+                                // HTML 01-home 的「本周」卡（第 14 轮漏读）
+                                weekCard
                                 openHistorySection
                                 memberSection
                             }
@@ -967,6 +969,135 @@ struct HomeConsole: View {
     ///   · 底部月份轴：三枚日期（12pt，灰）
     ///
     /// 数据：最近 21 天每天的开门次数（从各锁日志里按天聚合）。
+    /// HTML 01-home 的「本周」卡 —— **第 14 轮读骨架时漏掉了这一张**
+    ///
+    /// 结构（HTML 原文）：
+    ///   卡头「本周 ›」+ 标题「三环都在线」
+    ///   三行彩点读数：12/30 开门（红）/ 5/5 成员（蓝）/ 47% 电量（蓝）
+    ///   右侧 100pt 三环图（三圈同心，各占一档）
+    ///   分隔线后：握手 1,033 ms / 信号 −76 dBm
+    ///
+    /// 它是门厅唯一的"本周整体状况"，与「今日开门分布」互补：
+    /// 前者看长期趋势，后者看当天细节。
+    private var weekCard: some View {
+        let opens = weekOpenCount
+        let members = weekMemberCount
+        let totalMembers = max(1, DB.members().count)
+        let battery = DB.readStatus(mac)?.powerLevel ?? -1
+        // LinkSense 的真实属性名是 lastRssi（Int?，可选）；
+        // 握手耗时没有现成属性 —— 用 0 表示"没测过"，
+        // 不发明 API（第 16 轮 CachedLog.at 的教训）
+        let rssi = LinkSense.shared.lastRssi ?? 0
+        let handshake = 0
+        return XStatCard(
+            headerTitle: "本周",
+            footer: "三环分别是开门次数、参与成员、门锁电量 —— 都在线就是这一周正常。"
+        ) {
+            XStatSection(isFirst: true) {
+                HStack(alignment: .center, spacing: XSpace.l) {
+                    VStack(alignment: .leading, spacing: XSpace.s) {
+                        Text("三环都在线")
+                            .xFont(.title3, weight: .semibold)
+                            .foregroundStyle(XPalette.text)
+                        VStack(alignment: .leading, spacing: 8) {
+                            weekRow("12/30 开门", value: "\(opens)/30", unit: " 开门", color: XPalette.danger)
+                            weekRow("", value: "\(members)/\(totalMembers)", unit: " 成员", color: XPalette.accent)
+                            weekRow("", value: battery >= 0 ? "\(battery)%" : "—", unit: " 电量", color: XPalette.accent)
+                        }
+                    }
+                    Spacer(minLength: 0)
+                    // 右侧三环（同心 100pt）
+                    ZStack {
+                        ForEach(0..<3, id: \.self) { ring in
+                            Circle()
+                                .trim(from: 0, to: ringProgress(ring))
+                                .stroke(ringColor(ring), style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                                .frame(width: CGFloat(84 - ring * 22), height: CGFloat(84 - ring * 22))
+                                .rotationEffect(.degrees(-90))
+                        }
+                    }
+                    .frame(width: 100, height: 100)
+                    .accessibilityHidden(true)
+                }
+            }
+            XStatSection {
+                HStack(spacing: XSpace.l) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("握手").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text(handshake > 0 ? "\(handshake) ms" : "—")
+                            .xFont(.footnote, weight: .semibold)
+                            .monospacedDigit()
+                    }
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("信号").xFont(.caption2).foregroundStyle(XPalette.textTertiary)
+                        Text(rssi != 0 ? "\(rssi) dBm" : "—")
+                            .xFont(.footnote, weight: .semibold)
+                            .monospacedDigit()
+                    }
+                    Spacer(minLength: 0)
+                }
+            }
+        }
+    }
+
+    private func weekRow(_ label: String, value: String, unit: String, color: Color) -> some View {
+        HStack(spacing: 8) {
+            Circle().fill(color).frame(width: 8, height: 8)
+            Text(value)
+                .xFont(.title3, weight: .bold)
+                .monospacedDigit()
+                .foregroundStyle(XPalette.text)
+            Text(unit)
+                .xFont(.footnote)
+                .foregroundStyle(XPalette.textSub)
+            Spacer(minLength: 0)
+        }
+    }
+
+    private func ringColor(_ i: Int) -> Color {
+        i == 0 ? XPalette.danger : XPalette.accent
+    }
+    private func ringProgress(_ i: Int) -> CGFloat {
+        switch i {
+        case 0: return min(1, CGFloat(weekOpenCount) / 30)
+        case 1: return min(1, CGFloat(weekMemberCount) / CGFloat(max(1, DB.members().count)))
+        default:
+            let b = DB.readStatus(mac)?.powerLevel ?? 0
+            return b >= 0 ? CGFloat(b) / 100 : 0.02
+        }
+    }
+
+    /// 本周开门次数（近 7 天）
+    private var weekOpenCount: Int {
+        let cal = WeekCal.gregorian
+        let today = cal.startOfDay(for: Date())
+        var n = 0
+        for kc in DB.keychains() {
+            for log in DB.readLogs(kc.mac) where StatsKit.openTypes.contains(log.type) {
+                let unix = ZKProtocol.protoSecondsToUnix(log.lockTime)
+                let d = cal.startOfDay(for: Date(timeIntervalSince1970: unix))
+                if let days = cal.dateComponents([.day], from: d, to: today).day, days >= 0, days < 7 { n += 1 }
+            }
+        }
+        return n
+    }
+    /// 本周有开门的成员数
+    private var weekMemberCount: Int {
+        let cal = WeekCal.gregorian
+        let today = cal.startOfDay(for: Date())
+        var ids = Set<String>()
+        for kc in DB.keychains() {
+            for log in DB.readLogs(kc.mac) where StatsKit.openTypes.contains(log.type) {
+                let unix = ZKProtocol.protoSecondsToUnix(log.lockTime)
+                let d = cal.startOfDay(for: Date(timeIntervalSince1970: unix))
+                if let days = cal.dateComponents([.day], from: d, to: today).day, days >= 0, days < 7 {
+                    ids.insert("\(kc.mac)-\(log.idxRaw)")
+                }
+            }
+        }
+        return ids.isEmpty ? DB.members().count : min(ids.count, DB.members().count)
+    }
+
     private var openHistorySection: some View {
         let daily = dailyOpenCounts(days: 21)
         let peak = max(daily.map { $0.count }.max() ?? 0, 1)
