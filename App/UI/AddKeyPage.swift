@@ -201,6 +201,7 @@ struct AddKeyPage: View {
             }
             .animation(XMotion.quick, value: pwdOK)
         }
+        }
     }
 
     private func digitSlot(at index: Int) -> some View {
@@ -242,7 +243,6 @@ struct AddKeyPage: View {
         .contentShape(Rectangle())
         .animation(XMotion.quick, value: filled)
         .accessibilityHidden(true)
-        }
     }
 
     private var pwdHint: String {
