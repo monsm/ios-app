@@ -161,7 +161,7 @@ func quickDestination(_ id: String) -> some View {
     // 它们是**真正的死代码**，已同步删除（见同批提交）。
     case "studio":   KeysPage()
     case "backup":   BackupPage()
-    case "alarm":    AlarmsPage()
+    case "alarm":    Text("告警功能已移除")   // 2026-10-24: AlarmsPage 已删
     case "firmware": FirmwarePage()
     case "care":     MaintenanceView()
     case "again":    Text("「再开一次」在设备页长按编辑或直接点按, 不需要新页面")   // 921 再开一次

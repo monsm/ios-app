@@ -192,26 +192,10 @@ struct MePage: View {
                 // 但它们**没有 action 参数、也没包在导航里** —— 点上去什么都不会发生。
                 // 这正是用户反馈的"入口不能点击"。现在逐个包 NavigationLink。
                 HStack(spacing: XSpace.s) {
-                    NavigationLink {
-                        SecurityPage().environmentObject(app)
-                    } label: {
-                        summaryTile(
-                            icon: locked ? "lock.shield.fill" : "lock.open",
-                            value: locked ? "已锁" : "未锁",
-                            label: "应用锁",
-                            tone: locked ? XPalette.ok : XPalette.warn)
-                    }
+            // 2026-10-24: SecurityPage 已删（用户裁定）
                     .buttonStyle(.plain)
 
-                    NavigationLink {
-                        AlarmsPage().environmentObject(app)
-                    } label: {
-                        summaryTile(
-                            icon: alarmN > 0 ? "exclamationmark.triangle.fill" : "checkmark.circle.fill",
-                            value: alarmN > 0 ? "\(alarmN)" : "0",
-                            label: "待处理告警",
-                            tone: alarmN > 0 ? XPalette.warn : XPalette.ok)
-                    }
+            // 2026-10-24: AlarmsPage 已删（用户裁定）
                     .buttonStyle(.plain)
 
                     NavigationLink {

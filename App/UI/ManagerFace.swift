@@ -354,7 +354,9 @@ struct ManagerFace: View {
         case .archivedMembers: MemberArchivedView()
         // 2026-10-24: PrivacyDashboard 已删（用户裁定「不需要防窥功能」）。
         // 系统组首项改为「本机保护」—— 安全域的入口收在这一个页面上。
-        case .securityCenter: SecurityPage()
+        // 2026-10-24: SecurityPage 已删（用户裁定）。系统组首项改为「应用锁」——
+        // 安全域剩下的可配置项就是它；审计/销毁/回收站仍是本组独立入口。
+        case .securityCenter: AppLockSetupView()
         case .securityAudit:  SecurityAuditView()
         case .securityDestroy: SecurityDestroyView()
         case .safemode:       SafemodeIntroView()
