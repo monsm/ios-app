@@ -7,6 +7,7 @@
 //   · ManualKit.chapters —— MemberCenterView 的「四步图文」直接读 ch.family 那一章,
 //     所以这张表只剩一章: 帮助手册整本删了, 但成员页仍在用它, 删表就等于删成员页的教程。
 import SwiftUI
+import UIKit
 
 
 
@@ -136,5 +137,25 @@ enum BatterySwapGuide {
             ("clock.arrow.circlepath", "换电后校准门锁时间", "临时密码与时间窗凭证依赖锁钟"),
             ("checkmark.seal", "点下方「已换新」复位", "基线与低电提醒一并重置"),
         ]
+    }
+}
+
+// ---------- 长任务期间不许自动锁屏 ----------
+// 原住 ScreenCare.swift (录屏遮罩), 那个文件已随本轮删减移除;
+// 但 Sheets 的录指纹入口仍在用它 —— 用户手指按在锁上时屏一黑本进程就被挂起, 蓝牙录入链断在半途。
+struct ScreenAwakeWhile: ViewModifier {
+    let active: Bool
+    func body(content: Content) -> some View {
+        content.onChange(of: active, initial: true) { _, on in
+            UIApplication.shared.isIdleTimerDisabled = on
+        }
+        .onDisappear { UIApplication.shared.isIdleTimerDisabled = false }
+    }
+}
+
+extension View {
+    /// 长任务期间不许自动锁屏。调用点: StartAddFpView (录入中)。
+    func keepingScreenAwake(_ active: Bool) -> some View {
+        modifier(ScreenAwakeWhile(active: active))
     }
 }

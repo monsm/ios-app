@@ -415,8 +415,6 @@ struct CredentialsView: View {
                         ForEach(CredentialOrg.smartLists(mac)) { l in
                             Button(CredentialOrg.smartListLabel(l)) { smartSel = l.id }
                         }
-                        Button("新建智能列表…") { newSmartList() }
-                        Button("管理智能列表") { manageSmartLists() }
                     }
                     Section("整理") {
                         Button { showOrganize = true } label: {
@@ -587,7 +585,6 @@ struct CredentialsView: View {
     private var listBody: some View {
             searchSection
             queueSection
-            stockSection
             dueSoonBanner
             otpStockHint
             archivedStrip
@@ -1815,20 +1812,6 @@ struct CredentialsView: View {
     }
 
 
-    private func manageSmartLists() {
-        let lists = CredentialOrg.smartLists(mac)
-        guard !lists.isEmpty else { app.showToast("还没有智能列表"); return }
-        let alert = UIAlertController(title: "管理智能列表", message: nil, preferredStyle: .actionSheet)   // 527 管理智能列表
-        for l in lists {
-            // 删除是不可逆动作: 菜单里给全标签 (名称 · 属主 · 状态) 才认得出删的是哪一条
-            alert.addAction(UIAlertAction(title: "删除「\(CredentialOrg.smartListLabel(l))」", style: .destructive) { _ in
-                CredentialOrg.saveSmartLists(mac, lists.filter { $0.id != l.id })
-                if smartSel == l.id { smartSel = "" }
-            })
-        }
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-        UIApplication.topViewController()?.present(alert, animated: true)
-    }
 
     /// 363 月历点日 → 落到当日到期清单 (App 内滚动到位)
     private func pickDay(_ date: Date) {

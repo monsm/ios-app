@@ -371,6 +371,7 @@ enum DS {
         // 语义角色不变, 只是明端向纯黑 / 暗端向纯白再走一步 (hairline 可辨 1.2:1 余量放大);
         // 页面继续引用 hairline/textSub 不感知, 只有这两组"增强"变体不同。
         private static let hairlineHC = Color.adaptive(0x8A7D6A, 0x6E6454)
+        @MainActor static var hairlineStrong: Color { Appearance.highContrast ? hairlineHC : hairline }
 
         // ---------- 品牌主题表 (idea 31: 靛蓝/墨绿/琥珀) ----------
         // 结构: [主题: [明暗: [角色: hex]]]。tools/contrast.js 机检本表:

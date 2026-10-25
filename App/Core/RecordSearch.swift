@@ -1078,3 +1078,17 @@ enum RecordSearch {
         return sorted.prefix(max(0, count)).map { $0.element }
     }
 }
+
+
+extension RecordSearch {
+    /// 724 四级色标 → DS 令牌映射 (紧急 danger / 严重 danger 降饱和 / 提示 warn)
+    /// 原住 AlarmCenterView (已删), 但 RecordsTimeline 的记录行仍用它上色。
+    static func toneColor(for type: Int) -> Color {
+        switch AlarmMeta.level(type) {
+        case 3: return DS.Palette.danger
+        case 2: return DS.Palette.danger.opacity(0.72)
+        case 1: return type == 6 ? DS.Palette.warn : DS.Palette.textSub
+        default: return DS.Palette.textSub
+        }
+    }
+}

@@ -345,6 +345,19 @@ enum BatteryCare {
         guard logs.count == 3 else { return false }
         return logs.allSatisfy { $0.type == 13 }
     }
+
+    /// 版本串比较 (a < b): 逐段按数字比, 缺段补 0。原住 DFUKit.FirmwareKit,
+    /// 那个文件的 DFU 升级逻辑已删, 这条判据被固件提醒留着。
+    static func versionLt(_ a: String, _ b: String) -> Bool {
+        let pa = a.split(separator: ".").map { Int($0) ?? 0 }
+        let pb = b.split(separator: ".").map { Int($0) ?? 0 }
+        for i in 0..<3 {
+            let x = i < pa.count ? pa[i] : 0
+            let y = i < pb.count ? pb[i] : 0
+            if x != y { return x < y }
+        }
+        return false
+    }
 }
 
 // ================= 包4 关怀提醒调度 (本地通知; 1031 夜间免扰 / 1038 白天送达) =================
@@ -453,23 +466,10 @@ enum CareSchedule {
                     guard let v = _FWVersion(item.version), _FWVersion(kc.fw) != nil,
                           Self.versionLt(kc.fw, item.version) else { continue }
                     let lastN = DB.store.get(Double.self, "kf_fw_notify_at_" + v) ?? 0
-
-    /// 版本串比较 (a < b): 逐段按数字比, 缺段补 0。原住 DFUKit.FirmwareKit,
-    /// 那个文件的 DFU 升级逻辑已删, 这条判据被固件提醒留着。
-    static func versionLt(_ a: String, _ b: String) -> Bool {
-        let pa = a.split(separator: ".").map { Int($0) ?? 0 }
-        let pb = b.split(separator: ".").map { Int($0) ?? 0 }
-        for i in 0..<3 {
-            let x = i < pa.count ? pa[i] : 0
-            let y = i < pb.count ? pb[i] : 0
-            if x != y { return x < y }
-        }
-        return false
-    }
                     if now - lastN > 30 * 86400 * 1000 {
                         DB.store.set("kf_fw_notify_at_" + v, now)
                         await notifyNow(id: "m4.fw." + v, title: "有固件可升级",
-                                        body: "本地固件包 v\(item.version) 比锁内 v\(kc.fw) 新, 可到工具-检查固件更新执行。",
+                                        body: "本地固件包 v\(item.version) 比锁内 v\(kc.fw) 新, 本版 App 已不提供固件升级入口, 请用厂商工具升级。",
                                         dayDeliver: true)
                     }
                 }

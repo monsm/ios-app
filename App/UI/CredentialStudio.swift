@@ -3054,14 +3054,14 @@ struct OtpStudio: View {
                     app.showToast("已复制当前码")   // 338 已复制当前码
                 } label: {
                     HStack(spacing: DS.Space.xs) {
-                        Text(cap.recording ? "已隐去" : now)   // 374 已隐去
+                        Text(now)
                             .vkFont(.title3.monospacedDigit(), weight: .semibold)
                             .foregroundStyle(DS.Palette.text)
                             .textSelection(.enabled)
                         Text("↓")
                             .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
-                        Text(cap.recording ? "已隐去" : next)   // 374 已隐去
+                        Text(next)
                             .vkFont(.title3.monospacedDigit(), weight: .semibold)
                             .foregroundStyle(DS.Palette.textSub)
                     }

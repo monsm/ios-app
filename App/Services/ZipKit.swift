@@ -153,3 +153,90 @@ enum ZipKit {
         return entries.first { $0.name.split(separator: "/").last.map(String.init)?.lowercased() == base }
     }
 }
+
+// ---------- 固件包解析 (原 DFUKit.swift, DFU 升级流程已删但解析仍被金标测试用) ----------
+// GoldenDiffTests 拿 FirmwareKit.parse/nextMac/versionLt 与 vendor dfu.js 逐格对拍,
+// 删了测试就断, 所以解析层跟 ZipKit 一起留在这个文件里。
+struct FirmwarePackage {
+    var binHex: String
+    var datHex: String
+    var binSize: Int
+    var datSize: Int
+    var version: String?   // 文件名 KX_V5.2.9_* → 5.2.9
+    var sourceName: String
+}
+
+enum FirmwareKit {
+    static let limits = (manifest: 4096, dat: 4096, bin: 8 * 1024 * 1024)
+    static func parse(zipData: [UInt8], fileName: String) throws -> FirmwarePackage {
+        let entries = try ZipKit.parse(zipData)
+        guard let manifestE = ZipKit.find(entries, "manifest.json") else { throw DFUError.zip("固件包缺少 manifest.json") }
+        guard manifestE.data.count <= limits.manifest else { throw DFUError.zip("manifest.json 异常过大") }
+        // 2026-10-14: bin/dat 都验了 CRC, manifest 只验了大小 —— 补齐 (篡改但仍合法 JSON 的 manifest 会漏过)
+        guard manifestE.crcOk else { throw DFUError.zip("manifest.json CRC 校验失败 (包损坏)") }
+        guard let raw = String(bytes: manifestE.data, encoding: .utf8),
+              let obj = try? JSONSerialization.jsonObject(with: Data(raw.utf8)) as? [String: Any],
+              let manifest = obj["manifest"] as? [String: Any],
+              let app = (manifest["application"] as? [String: Any]) ?? (manifest["bootloader"] as? [String: Any]) else {
+            throw DFUError.zip("manifest.json 不是有效结构")
+        }
+        // 别名对齐 vendor dfu.js: 个别厂商包用 binFilename/data_file
+        let binName = app["bin_file"] as? String ?? app["binFilename"] as? String ?? ""
+        let datName = app["dat_file"] as? String ?? app["data_file"] as? String ?? ""
+        guard let binE = ZipKit.find(entries, binName), !binName.isEmpty else { throw DFUError.zip("固件包缺少固件文件 (\(binName))") }
+        guard let datE = ZipKit.find(entries, datName), !datName.isEmpty else { throw DFUError.zip("固件包缺少 init packet (\(datName))") }
+        guard binE.crcOk else { throw DFUError.zip("固件文件 CRC 校验失败 (包损坏)") }
+        guard datE.crcOk else { throw DFUError.zip("init packet CRC 校验失败 (包损坏)") }
+        guard binE.data.count >= 512, binE.data.count <= limits.bin else { throw DFUError.zip("固件尺寸异常 (\(binE.data.count)B)") }
+        guard datE.data.count >= 16, datE.data.count <= limits.dat else { throw DFUError.zip("init packet 尺寸异常 (\(datE.data.count)B)") }
+        // 2026-10-13 对抗式排查: ⚠ **固件包没有任何签名 / 来源校验**。
+        // 这条链上已有的全都只是"一致性"检查 (CRC / 尺寸 / manifest 形状), 而"这个包是谁产的"
+        // 完全没有判 —— manifest.json 与文件名都可构造, bin/dat 的 CRC 可以重算, 广播名带目标 MAC
+        // 后 8 位的 "ZkDFU" 也照协议走。⇒ 构造一个 zip 就能把**任意固件**烧进锁,
+        // 而删 App / 重新配对都清不掉它 (属持久控制, 供应链/社工即可)。
+        // 真正根治要厂商签名 (公钥烧在锁里), 本仓拿不到; 拿到之前只做两件不假装已解决的事:
+        //   ① 如上, 在代码里把"未认证"写明, 不让人误以为校验过;
+        //   ② 至少拒绝**降级** (versionLt 自第一百九十六批起就存在, 但一直没用过一次) ——
+        //      调用方见 `DFUKit.downgradeBlocked(current:pkg:)`。
+        return FirmwarePackage(binHex: HexKit.hex(binE.data), datHex: HexKit.hex(datE.data),
+                               binSize: binE.data.count, datSize: datE.data.count,
+                               version: versionFromFileName(fileName), sourceName: fileName)
+    }
+
+    /// 降级闸: 包版本低于锁端当前版本时返回一句人话 (nil = 放行)。
+    /// 2026-10-13 对抗式排查新增 —— versionLt 此前全仓零调用; 烧旧固件本身不是漏洞,
+    /// 但配合"无签名"就是攻击者最省事的一条 (拿一个已知有问题的旧版本往回刷)。
+    /// 2026-10-14: 已在 DFURunner.runUpgrade 接线 —— 单锁与批量两条入口都过它 (不再零调用)。
+    /// 判据用本机记录的 kc.fw (锁端当前版本): 该值陈旧时漏判 (fail-open), 但不会误拦正常升级。
+    static func downgradeBlocked(current: String?, pkg: FirmwarePackage) -> String? {
+        guard let cur = current, !cur.isEmpty, let pv = pkg.version, !pv.isEmpty else { return nil }
+        return versionLt(pv, cur) ? "固件版本 \(pv) 低于锁端当前 \(cur) — 已拒绝降级烧录" : nil
+    }
+    static func versionFromFileName(_ name: String) -> String? {
+        // 2026-10-14: 旧式强制尾随 `_`, 遇 "KX_V5.2.9.zip" / "KX_V5.2.9" 匹配失败 => version=nil =>
+        // 版本对比与降级判据整体静默失效。尾随改 `(_|\.|$)`。
+        guard let m = name.range(of: "_?V?(\\d+\\.\\d+\\.\\d+)(?:_|\\.|$)", options: .regularExpression) else { return nil }
+        let s = name[m]
+        var digits = s.drop(while: { !$0.isNumber })
+        while let last = digits.last, !last.isNumber { digits = digits.dropLast() } // 剥尾部 _ (P3-1)
+        return digits.isEmpty ? nil : String(digits)
+    }
+    static func versionLt(_ a: String, _ b: String) -> Bool {
+        let pa = a.split(separator: ".").map { Int($0) ?? 0 }
+        let pb = b.split(separator: ".").map { Int($0) ?? 0 }
+        for i in 0..<3 {
+            let x = i < pa.count ? pa[i] : 0
+            let y = i < pb.count ? pb[i] : 0
+            if x != y { return x < y }
+        }
+        return false
+    }
+    // DFU 模式 MAC 启发式: 末字节 +1 (255→0 回绕)
+    static func nextMac(_ macHex: String) -> String {
+        let m = macHex.replacingOccurrences(of: ":", with: "").lowercased()
+        guard m.count == 12 else { return m }
+        let last = UInt8(m.suffix(2), radix: 16) ?? 0
+        let inc = String(format: "%02x", last &+ 1)
+        return String(m.dropLast(2)) + inc
+    }
+}
