@@ -759,7 +759,6 @@ struct ExportWizardView: View {
             // 507 角标 + 511 事件 (分卷路径旧实现漏记, 一并统一)
             BackupStudio.recordEvent("导出备份")
             Milestones.recordBackup()
-            app.evaluateAchievements()
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             DS.Haptics.tick.impactOccurred()
             exporting = false
@@ -1421,7 +1420,6 @@ struct WebDAVStudioView: View {
                     let n = await BackupStudio.pruneRemote(acct: acct, appPw: appPw, root: root, keep: BackupStudio.rollingKeep)
                     if n > 0 { app.showToast("滚动保留: 已清理远端 \(n) 份超限") }   // 430 滚动保留
                 }
-                app.evaluateAchievements()
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
                 app.showToast("上传成功")
             } catch {

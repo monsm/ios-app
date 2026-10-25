@@ -413,7 +413,6 @@ struct CareChecklistView: View {
         // 2026-10-15 走查: 这句原先把 90 写死在字面量里, 而保养页自己那个 periodDays 对高频锁给的是
         // 60 —— 用户按屏上说的等 90 天, 通知却在第 60 天就来催。天数与判据取同一处。
         app.showToast("保养已记录, \(BatteryCare.carePeriodDays(mac: mac)) 天周期重新起算")
-        app.evaluateAchievements()                       // 1030 爱洁之家徽章结算
         onDone()
         dismiss()
     }
@@ -509,7 +508,6 @@ struct BatterySwapGuideView: View {
         BatteryCare.recordBatterySwap(mac)
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         app.showToast("已换新 · 基线与提醒已复位")
-        app.evaluateAchievements()   // 1039 续航管家徽章结算
         dismiss()
     }
 }

@@ -86,7 +86,6 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
                       defaultFilename: backupFilename) { result in
             if case .success = result {
                 Milestones.recordBackup()   // 落盘即算一次备份 (与生成备份文本同口径)
-                app.evaluateAchievements()
                 app.showToast("已保存到文件")
             } else if case .failure(let e) = result {
                 // 用户取消不报错 (NSUserCancelledError)
@@ -127,7 +126,6 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
                 Milestones.recordBackup()   // 980 备份卫士
                 exportText = BackupCanonical.exportText(BackupKit.collectAll())
                 BackupStudio.markExportSize(exportText)   // 193: 记本次尺寸, 下次预估行对比用
-                app.evaluateAchievements()
             }
             // 822 从未备份的信封: 没有备份时这页最该说的不是"怎么导出"，而是"现在一个都没有"。
             // 文案不写"建议每周一次"这种本 App 没有依据的规范；给的是**已发生的事实**与下一步动作。
@@ -375,7 +373,6 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
             try await CloudSync.push(acct: cloudAcct, app: cloudApp, envelope: envelope)
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             Milestones.recordBackup()   // 980 备份卫士
-            app.evaluateAchievements()
             app.showToast("上传成功")
         } catch { app.showToast(error.localizedDescription) }
     }
