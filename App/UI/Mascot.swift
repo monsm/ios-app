@@ -3,7 +3,7 @@
 // 本文件原为 HelpCenter.swift (帮助与文案规范, 673 行): 使用手册整本 / 离线 FAQ /
 // 症状排查 / 就任证书 / 演练场 / 文案体检彩蛋。这些页面已随大删波 3 移除 (用户决策:
 // 「没锁交互的不影响核心功能的就剥离删掉」)。留下的两件都有真实消费方, 不是文档:
-//   · DemoMascot / EmptyMascotHeader —— 空态与引导页的实际图形 (Onboarding:275、DesignSystem:1074)
+//   · DemoMascot / EmptyMascotHeader —— 空态的实际图形 (DesignSystem:1074)
 //   · ManualKit.chapters —— MemberCenterView 的「四步图文」直接读 ch.family 那一章,
 //     所以这张表只剩一章: 帮助手册整本删了, 但成员页仍在用它, 删表就等于删成员页的教程。
 import SwiftUI
