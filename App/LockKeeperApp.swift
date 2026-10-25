@@ -92,8 +92,6 @@ final class AppState: ObservableObject {
         didSet {
             // 54/372 摇一摇的过程态跟着换页走: 回位票只在"留在设置页"期间有效,
             // 迷你开锁面板只属于设备页 —— 换页不收拾就是两条残影。
-            if tabSelection != 3 { shakeReturnTab = nil }
-            if tabSelection != 0 { shakePanel = false }
         }
     }
     // 294 本地深链 (kf://): 白名单路由; 应用锁未解开时**先挂起**, 解锁后才落地 (深链不得绕过门禁)
@@ -153,36 +151,6 @@ final class AppState: ObservableObject {
         guestGateTarget = nil
         showGuestGate = true
     }
-    // ---------- 54/372 摇一摇: 一个传感器, 一条路由口 ----------
-    /// 54: 设备页摇动 → 迷你开锁面板 (浮层).
-    @Published var shakePanel = false
-    /// 372: 记录/凭证页摇动 → 遁到设置页; 这一位是"回位票", 再摇一次回到原页.
-    /// 刻意是内存态: 回位票只在"正躲在设置页"期间有意义, 落了盘反而会跨启动诈尸.
-    @Published var shakeReturnTab: Int?
-    /// 54 与 372 同抢一个传感器 —— 按当前 Tab 定死优先级, 不做"两个都试试":
-    /// 记录(2)/凭证(1) → 372 遁走 (走的还是 requestTab, 377 访客门禁照常);
-    /// 设备(0) → 54 面板开合; 设置(3) → 不响应 (已经是遁走目的地, 再摇没有可去的地方);
-    /// 未解锁 / 伪装态 → 不响应 (摇动不得绕过门禁). Tab 换了由 tabSelection.didSet 收拾过程态.
-    func handleShake() {
-        guard appUnlocked, !decoyMode else { return }
-        if let back = shakeReturnTab {
-            shakeReturnTab = nil
-            tabSelection = back
-            return
-        }
-        switch tabSelection {
-        case 1, 2:
-            shakePanel = false
-            let before = tabSelection
-            requestRoute(.settings)
-            // 门禁拦下时没真到设置页, 不发回位票 (否则再摇一次会跳到没人去过的地方)
-            shakeReturnTab = tabSelection == 3 ? before : nil
-        case 0:
-            if current != nil { shakePanel.toggle() }
-        default:
-            break
-        }
-    }
     /// 377/383 会话授权收回: 应用锁重新落下时调用 (含 393/394 到点自动锁, 也含安全中心里就地生效的访客开关)。
     /// 访客区与 sudo 说的都是"这一次会话内验过", 锁都重新落了还认旧账就等于没拦。
     /// 顺带把落在受限 Tab 的选中位收回设备页 —— 那两个 Tab 此刻已不在层级树里,
@@ -220,8 +188,6 @@ final class AppState: ObservableObject {
         // (恢复"上次停留"不是用户明示的跳转, 拿它去弹口令页就是每次解锁都可能被打断)
         tabSelection = guestAreaLocked && Self.guestBlockedTabs.contains(t) ? 0 : t
     }
-    // 包14: 首启引导完成/跳过的会话内标记 (OnboardingView 触发, 驱动 RootView 切主界面)
-    @Published var onboardingFinished = false
     // 包18: Hero 一句话 (1000 晚归) / 连续失败 (1003) / 一次性时刻卡队列 (24/992/1010/1021/1050)
     @Published var homeMoment: String?
     @Published var failStreak = 0
@@ -350,17 +316,6 @@ final class AppState: ObservableObject {
         UNUserNotificationCenter.current().delegate = UNDelegate.shared
         // 374: 录屏采集监听在启动就装好 —— 遮罩只有在"进详情页之前"就知道状态才有意义
         ScreenCaptureWatch.shared.start()
-        // 54/372: 摇一摇信号在启动就装好, 与当前页无关 —— 落点由 handleShake 按 Tab 分流.
-        // 不移除观察者: 单例的存活期就是进程期.
-        //
-        // 怎么接的 (2026-10-13 改): 原先写 `UIAccessibility.shakeNotification` —— Apple **从未**公开过
-        // 这个符号 (UIKit 的无障碍通知名清单里没有它), 所以编译不过。改从 `UIWindow.motionEnded`
-        // 改成一层零尺寸 UIViewController 接住 motionEnded, 转成 App 内 .kfDeviceShake 通知 ——
-        // 这是唯一真正会到达的做法: WindowGroup 的 window 由框架自建, 换不成自建子类。
-        NotificationCenter.default.addObserver(forName: .kfDeviceShake,
-                                               object: nil, queue: .main) { [weak self] _ in
-            Task { @MainActor in self?.handleShake() }
-        }
     }
 
     var current: Keychain? {
@@ -477,34 +432,9 @@ final class AppState: ObservableObject {
             return
         }
         unlockTask?.cancel()
-        // 836 演练包装层: 演示模式下开锁全走本地模拟 (不碰 BLE/协议/失败日志), 三阶段节奏同真实路径
-        if DemoKit.isOn {
-            demoUnlock()
-            return
-        }
         unlockTask = Task { await runUnlock() }
     }
 
-    private func demoUnlock() {
-        DemoKit.simulateDemoUnlock(phase: { p in
-            self.phase = p
-            self.unlockState = p == 1 ? .connecting : .opening
-        }, onDone: {
-            self.unlockState = .success
-            self.phase = 0
-            self.finishDemoDwell()
-            self.showToast("演示开锁成功 (demo_ 不碰真实门锁)")
-        })
-    }
-    private func finishDemoDwell() {
-        Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 2_000_000_000)
-            if unlockState == .success {
-                unlockState = .idle
-                phase = 0
-            }
-        }
-    }
 
     /// 56/89: 提前取消 (撤销窗口 / 握手超时取消按钮)
     func cancelUnlock(notify: Bool = false) {
@@ -953,8 +883,6 @@ struct RootView: View {
     @ViewBuilder
     private var topBanners: some View {
         VStack(spacing: 0) {
-            // 包14/836 演示模式常驻横幅: 四 Tab 共用, 演示数据全路径可辨识
-            DemoBanner()
             // 包2/69 蓝牙直通条: 系统蓝牙关闭时全 App 顶部提示 (深链系统设置不可用 → 指引文案)
             if !LinkSense.shared.btOn {
                 BLEOffBanner(denied: LinkSense.shared.btDenied) {
@@ -1032,7 +960,6 @@ struct RootView: View {
             switch selected.first ?? -1 {
             case 0:
                 if app.current != nil {
-                    Button("打开迷你开锁面板") { app.requestRoute(.device); app.shakePanel = true }
                 }
                 Button("只看今天的记录") {
                     app.pendingRecordsDay = StatsKit.dayKey(Date())
@@ -1172,36 +1099,19 @@ struct RootView: View {
         rootChrome
     }
 
-    /// RootView 的四种形态 (引导/伪装空壳/主界面/应用锁) —— 从巨型 body 拆出
+    /// 主界面。首启引导已随本轮删减移除, 启动不再分形态 —— 这里只返回主界面本体。
     @ViewBuilder
     private var rootGroup: some View {
-        Group {
-            if !Onboarding.allDone && !app.onboardingFinished {
-                // 包14 首启五步: 承诺/导览/角色/权限/演示/自检/证书, 进度逐键存档 (804);
-                // 完成后切换进主界面, 其 .task 触发 onLaunch 结算
-                OnboardingView(onExit: { app.onboardingFinished = true })
-                    .environmentObject(app)
-            } else {
-                // 2026-10-17 拍板 A: 应用锁启动门禁已删 (伪装口令 390 随之不可达, 一并移除)。
-                // 进 App 只分两种形态: 首启引导 / 主界面。
-                //
-                mainTabsChrome
-            }
-        }
+        mainTabsChrome
     }
 
     /// 摇一摇/外观种子/字号/灰度/加粗/动效/水印层 —— 继续拆 (原表达式报 type-check 超时)
     @ViewBuilder
     private var rootCore: some View {
         rootGroup
-        // 54/372 摇一摇接收层: SwiftUI 无该手势, UIKit 入口 UIWindow.motionEnded 又换不了 WindowGroup
-        // 的 window —— 用一层零尺寸 VC 接住再转 .kfDeviceShake (实现见文件尾部)。
-        .onDeviceShake()
         // 包16: 外观种子变更时整树重建 — 配色/密度即时全局生效; withAnimation 提供淡入淡出 (idea 21)
         // 2026-10-18 门面改造: 启动/回前台按策略决定是否展示门面。
         // 冷启动展示; 回前台 < 300s 不重演; 深链进入时一律不展示。
-        .onChange(of: scenePhase) { _, newPhase in
-        }
         .id(app.appearanceSeed)
         // 包15: App 字号五档 × 系统 Dynamic Type 叠加 (858, 含 866 极限字号自检 200% 预览)
         .dynamicTypeSize(AXFlags.typeSize())
@@ -1574,37 +1484,5 @@ struct SectionTitle: View {
         // 2026-10-16: 形状交给当前变体决定 (VK.sectionTitle)，21 处调用一次跟着两套走。
         // legacy 分支是这里原来的实现逐字搬过去的，见 VariantGrammar.swift。
         VK().sectionTitle(text: text, count: count)
-    }
-}
-
-// 摇一摇 (54/372) 的接收端 —— 一层零尺寸、不接触摸的 UIViewController。
-// 为什么需要这一层: SwiftUI 没有"摇一摇"手势; UIKit 的入口是 UIWindow.motionEnded, 而 WindowGroup 的
-// window 由框架自建、不能换成自建子类 (试过直接写 `class ShakeWindow: UIWindow` —— 编得过但一个实例
-// 都不会被用上, 等于假热区)。所以走 UIResponder 事件链: 在这层 VC 上覆写 motionEnded,
-// 把 .motionShake 转成 App 内 .kfDeviceShake 通知, 挂到 RootView 根部 (见 onDeviceShake)。
-extension Notification.Name {
-    static let kfDeviceShake = Notification.Name("kf.device.shake")
-}
-
-private struct ShakeReceiver: UIViewControllerRepresentable {
-    func makeUIViewController(context: Context) -> ShakeReceiverVC { ShakeReceiverVC() }
-    func updateUIViewController(_ uiViewController: ShakeReceiverVC, context: Context) {}
-}
-
-final class ShakeReceiverVC: UIViewController {
-    override func motionEnded(_ motion: UIEvent.EventSubtype, with event: UIEvent?) {
-        if motion == .motionShake {
-            NotificationCenter.default.post(name: .kfDeviceShake, object: event)
-        }
-    }
-}
-
-extension View {
-    /// 挂上摇一摇接收层 (0 尺寸 / 不吃触摸 / 不进朗读, 只为接住 UIResponder 的 motion 事件)
-    func onDeviceShake() -> some View {
-        background(ShakeReceiver()
-            .allowsHitTesting(false)
-            .frame(width: 0, height: 0)
-            .accessibilityHidden(true))
     }
 }

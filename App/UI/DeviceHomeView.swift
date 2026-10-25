@@ -35,8 +35,6 @@ struct DeviceHomeView: View {
     @State private var confirmMac: String?
     @State private var confirmPulse = false
     @State private var autoLockLeft: Int?
-    @State private var wizardBusy = ""
-    @State private var wizardDismissed = false
     @State private var showSettings = false   // 包8/507 备份角标跳转
     @State private var showTileEdit = false   // 905 长按快捷格 → 编辑面板
     // 827 的"本会话点过哪些格 / 是否关了提示"两态搬到 AppState (ambientTipUsed / ambientTipOff):
@@ -77,7 +75,6 @@ struct DeviceHomeView: View {
                             // 1044 家庭公告板: 空态里的一张便签
                         }
                     } else {
-                        if !wizardDismissed { migrationWizard.staggered(0) }
                         if app.devices.count > 1 { capsuleSwitcher.staggered(0) }
                         // 42 首用气泡引导: 多锁用户最容易错过的动作是"长按这排胶囊看最近状态变化"
                         // (那件事本身是 268，已经实现)。只说一次、由用户自己点掉;
@@ -145,12 +142,6 @@ struct DeviceHomeView: View {
             // 54 摇一摇唤出: 迷你开锁面板浮在设备页顶部。挂在 ScrollView 上而不是卡片里 ——
             // 浮层不随内容滚动, 摇出来就必须一直在眼前。面板态只属于设备页, 换页由 AppState 收掉。
             .overlay(alignment: .top) {
-                if app.shakePanel, app.current != nil {
-                    shakeMiniPanel
-                        .padding(.horizontal, DS.Space.m)
-                        .padding(.top, DS.Space.s)
-                        .transition(reduceMotion ? .opacity : .move(edge: .top).combined(with: .opacity))
-                }
             }
             // 826 聚光教练标: 首进设备 Tab 用半透明遮罩圈住一个焦点单点讲解, 点任意处推进下一焦点。
             // 只做一次 (kf_coach_done); 遮罩自己吃掉点击, 所以它同时也是"推进/结束"的手势面。
@@ -160,7 +151,6 @@ struct DeviceHomeView: View {
             .task {
                 if !DB.store.getBool("kf_coach_done"), app.current != nil { coachStep = 0 }
             }
-            .animation(reduceMotion ? nil : DS.Motion.standard, value: app.shakePanel)
             .navigationTitle(app.displayName)
             .toolbar {
                 ToolbarItem(placement: barSide) {
@@ -1151,54 +1141,6 @@ struct DeviceHomeView: View {
         return f
     }()
 
-    // ---------- 54 摇一摇迷你开锁面板 ----------
-    /// 摇一摇唤出的迷你开锁面 (IDEA-BANK #54): 浮在设备页顶部, 再摇一次或点角上「收起」关掉。
-    /// 开锁按钮走 app.requestUnlock() —— 与圆盘是**同一个入口**, 244 去重 / 250 二次应用锁 /
-    /// 56 撤销窗口 / 296 只读模式逐道照常。轻点直发等于绕过按住确认, 与 53 双击直开同一减配口径,
-    /// 所以卡面自己把这一点说出来, 不留"摇出来的是快车道"这种未言明的差别。
-    private var shakeMiniPanel: some View {
-        VStack(alignment: .leading, spacing: DS.Space.s) {
-            HStack(spacing: DS.Space.xs) {
-                Circle()
-                    .fill(bleOn ? DS.Palette.ok : DS.Palette.warn)
-                    .frame(width: 8, height: 8)
-                    .accessibilityHidden(true)
-                Text(app.displayName)
-                    .vkFont(.subheadline, weight: .semibold)
-                    .lineLimit(1)
-                Text(bleOn ? "已连接" : "未连接 · 开锁会自动唤醒")
-                    .vkFont(.caption2)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .lineLimit(1)
-                Spacer(minLength: 0)
-                Button {
-                    withAnimation(reduceMotion ? .easeInOut(duration: 0.2) : DS.Motion.exit) { app.shakePanel = false }
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: DS.Icon.xs, weight: .medium))
-                        .foregroundStyle(DS.Palette.textSub)
-                        .frame(width: DS.Hit.min, height: DS.Hit.min)
-                }
-                .buttonStyle(PressableButtonStyle())
-                .accessibilityLabel("收起迷你开锁面板")
-            }
-            Button {
-                app.shakePanel = false
-                app.requestUnlock()
-            } label: {
-                Label("开锁", systemImage: "lock.open")
-            }
-            .buttonStyle(PrimaryActionStyle(fullWidth: false))
-            .accessibilityHint("轻点直发, 绕过按住确认")
-            Text("轻点直发: 绕过按住确认 (同 53 口径); 二次应用锁与防抖去重照常")
-                .vkFont(.caption2)
-                .foregroundStyle(DS.Palette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(DS.Space.m)
-        .axGlass(DS.Radius.card)
-        .accessibilityElement(children: .contain)
-    }
 
     // ---------- 开锁主控 ----------
     private var unlockDial: some View {
@@ -1356,62 +1298,6 @@ struct DeviceHomeView: View {
     // ---------- 112 换机验证向导 (恢复备份后逐锁点按验证连接) ----------
     // kf_migrate_pending 由备份恢复写入; 每锁 kf_migok_<mac> 打勾, 全部通过后收起。
     @ViewBuilder
-    private var migrationWizard: some View {
-        if DB.store.getString("kf_migrate_pending").isEmpty == false {
-            let pending = app.devices.filter { !DB.store.getBool("kf_migok_" + $0.mac) }
-            // 112: 不设多锁门槛 —— 单锁用户换机恢复备份后同样要验证密钥与连接, 原句只讲"恢复备份后逐锁验证"。
-            if !pending.isEmpty {
-                Card {
-                    VStack(alignment: .leading, spacing: DS.Space.s) {
-                        HStack(spacing: DS.Space.s) {
-                            SectionTitle(text: "换机迁移验证")
-                            Spacer(minLength: 0)
-                            Button("收起") { wizardDismissed = true }
-                                .vkFont(.footnote)
-                                .foregroundStyle(DS.Palette.textSub)
-                        }
-                        Text("检测到刚恢复过备份。逐把靠近门锁点「验证」，确认密钥与连接都正常。")
-                            .vkFont(.footnote)
-                            .foregroundStyle(DS.Palette.textSub)
-                            .fixedSize(horizontal: false, vertical: true)
-                        ForEach(pending) { kc in
-                            HStack(spacing: DS.Space.s) {
-                                Circle().fill(LockArchive.swatchColor(LockArchive.meta(kc.mac).colorKey))
-                                    .frame(width: 8, height: 8)
-                                Text(LockArchive.displayName(kc))
-                                    .vkFont(.subheadline)
-                                    .foregroundStyle(DS.Palette.text)
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.85)
-                                Spacer(minLength: DS.Space.s)
-                                if wizardBusy == kc.mac {
-                                    ProgressView().controlSize(.small)
-                                } else {
-                                    Button("验证") { Task { await verifyMigrated(kc) } }
-                                        .buttonStyle(SecondaryActionStyle(fullWidth: false))
-                                }
-                            }
-                            .frame(minHeight: DS.Hit.min)
-                        }
-                    }
-                }
-            }
-        }
-    }
-    private func verifyMigrated(_ kc: Keychain) async {
-        guard wizardBusy.isEmpty else { return }
-        wizardBusy = kc.mac
-        defer { wizardBusy = "" }
-        do {
-            try await app.lock.ensureConnected(mac: kc.mac)
-            _ = try await app.lock.getStatus(mac: kc.mac)
-            DB.store.set("kf_migok_" + kc.mac, true)
-            DS.Haptics.tick.impactOccurred()
-            app.showToast("「\(LockArchive.displayName(kc))」验证通过")
-        } catch {
-            app.showToast("「\(LockArchive.displayName(kc))」验证失败: \(error.localizedDescription)")
-        }
-    }
 
     // 87 排查清单: 查蓝牙 / 走近 / 查电量, 逐项可勾
     private var checklist: some View {

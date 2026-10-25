@@ -464,7 +464,7 @@ enum DB {
         // 兜底清理 (审计 §6.6): 一批每锁键在 mac 之后**还带尾段**, 精确前缀删永远删不掉 ——
         // kf_calert_<mac>_<kind>_<key>、kf_cestudy_earlyexp_<mac>_<alias>、kf_cotp_t_/<mac>、
         // kf_cdraft_<mac>、kf_logarch_<mac>、kf_mborrow_/kf_mclaim_/kf_mig_lockact_<mac>、kf_offboard_<member> 等。
-        // 判据: 键名里含本锁 MAC (大小写不敏感, 兼容 DemoKit 的大写 demoMac) 即属该锁数据族。
+        // 判据: 键名里含本锁 MAC (大小写不敏感) 即属该锁数据族。
         let up = m.uppercased()
         for k in store.keys() where k.contains(m) || k.contains(up) { store.remove(k) }
         // 指针类全局键: 删除后不得悬空

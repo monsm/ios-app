@@ -99,7 +99,6 @@ struct SettingsView: View {
             if settingsSectionShown(groupFilter, .daily) { autoOpenSection.id(SettingsAnchor.autoOpen) }
             if settingsSectionShown(groupFilter, .keys) { familySection.id(SettingsAnchor.family) }
             if settingsSectionShown(groupFilter, .data) { toolsSection.id(SettingsAnchor.tools) }
-            if settingsSectionShown(groupFilter, .data) { drillSection.id(SettingsAnchor.drill) }
             if settingsSectionShown(groupFilter, .data) { applockSection.id(SettingsAnchor.applock) }
             if settingsSectionShown(groupFilter, .look) { a11ySection.id(SettingsAnchor.a11y) }
             if settingsSectionShown(groupFilter, .look) { appearanceSection.id(SettingsAnchor.appearance) }
@@ -289,7 +288,6 @@ struct SettingsView: View {
             SearchHit(id: "s.appearance", title: "外观 (主题/品牌色/密度)", icon: "paintbrush", anchor: .appearance),
             SearchHit(id: "s.achievements", title: "我的成就", icon: "rosette", anchor: .memory),
             SearchHit(id: "s.maintremind", title: "维护提醒", icon: "bell.badge", anchor: .reminder),
-            SearchHit(id: "s.demo", title: "演示模式 (演示数据铺底/一键清除)", icon: "theatermasks", anchor: .drill),
             SearchHit(id: "s.flow", title: "数据流向说明", icon: "arrow.right.circle", anchor: .help),
             SearchHit(id: "s.credits", title: "致谢与许可", icon: "hands.clap", anchor: .help),
             SearchHit(id: "s.copycheck", title: "文案体检", icon: "text.badge.checkmark", anchor: .help),   // 664 文案体检
@@ -319,43 +317,16 @@ struct SettingsView: View {
         }
     }
 
-    // ---------- 包14 演练区 (836/842): 演示模式总开关 + 首备演练转正 ----------
-    private var drillSection: some View {
-        Section {
-            VariantToggle("演示模式 (所有开锁走模拟, 不碰锁端)", isOn: Binding(
-                get: { DemoKit.isOn },
-                set: { on in
-                    DemoKit.setOn(on)
-                    app.loadDevices()
-                    app.showToast(on ? "演示模式已开 · demo_ 数据已铺底" : "已清除全部演示数据")
-                }))
-            if DemoKit.drillBackupOn {
-                Button("首备演练完成, 转正式备份", role: .destructive) {   // 842 首备演练完成
-                    DemoKit.finishDrillBackup()
-                    app.showToast("备份已转正式")
-                }
-            }
-        } header: {
-            Text("演练与演示")
-        } footer: {
-            Text("演示数据全部带 demo_ 前缀 + 常驻横幅标识, 一键清除不影响真实台账; 演示模式不触碰 BLE 与协议。")
-        }
-    }
 
     // ---------- 包14 帮助区 (805): 引导回看。手册/FAQ/症状排查/就任证书已随大删波 3 移除 ----------
     private var helpSection: some View {
         Section {
             Button {
-                Onboarding.replayAll()
-                app.onboardingFinished = false
                 app.showToast("下次冷启动重新走引导, 或现在就看")
             } label: {
                 HStack(spacing: DS.Space.s) {
                     Text("重看新手引导")   // 805 重看新手引导
                     Spacer(minLength: DS.Space.s)
-                    // 805 已完成度: 与证书页同一份 finishedSteps, 不另记账
-                    Text("已完成 \(Onboarding.finishedSteps.count)/\(Onboarding.Step.allCases.count) 步")
-                        .vkFont(.caption)
                         .foregroundStyle(DS.Palette.textSub)
                 }
             }
@@ -397,9 +368,7 @@ struct SettingsView: View {
                 }
             }
             if app.current == nil {
-                // 包14 空态族第一次在设置页真接上 (814 顶部进度点 / 815 双按钮 / 834 演示链 / 841 小管家 / 1044 便签):
-                // 814 的 1/3 = 三卡导览的次序 (连锁→录凭证→开门, 与 Onboarding 801 同口径), 这里停在"连锁"前一步;
-                // 834 演示链 = 开演示锁并跳设备页 (组件的 accessibilityHint 承诺的就是这条路径, 不另编一套);
+                // 814 的 1/3 = 引导次序 (连锁→录凭证→开门), 这里停在"连锁"前一步;
                 // 此前这里只有一个裸「添加设备」按钮, 空态组件在设置页零消费。
                 GuidedEmptyView(systemImage: "lock",
                                 title: "还没有添加门锁",
@@ -407,24 +376,7 @@ struct SettingsView: View {
                                 step: 1, stepTotal: 3,
                                 primaryTitle: "添加设备",
                                 primary: { showAdd = true },
-                                secondaryTitle: "重看新手引导",
-                                secondary: {
-                                    Onboarding.replayAll()
-                                    app.onboardingFinished = false
-                                    app.showToast("下次冷启动重新走引导")
-                                },
-                                demoAction: {
-                                    DemoKit.setOn(true)
-                                    app.loadDevices()
-                                    app.requestRoute(.device)
-                                    // 收摊口径：SettingsView 有两种呈现 —— ① Tab 3 的根 (LockKeeperApp:1081)，
-                                    // 这一句是真跳转，**不该**收摊；② 设备页 `.sheet { SettingsView() }`
-                                    // (DeviceHomeView:197)，用户本来就在设备页 ⇒ 切 0 是空转、缺的正是 dismiss()。
-                                    // 补一句 dismiss() 会同时作用在两种呈现上，而"dismiss() 在自带 NavigationStack 的
-                                    // Tab 根上会不会 pop 栈/退到别处"本机判不了 ⇒ 不猜，挂真机卡 (交接书 §7.9 卡 10)。
-                                    // 判它的尺子是常驻闸门 tools/sheetcover.js（行 LII 那条一次性尺子的落盘版）。
-                                    app.showToast("演示锁已就位: 在设备页点圆盘走一遍, 顶部横幅可一键清除")
-                                })
+                                )
                     .listRowInsets(EdgeInsets())
             } else {
                 NavigationLink("锁档案 (昵称/符号/色标/备注)") { LockProfileView() }

@@ -2283,12 +2283,6 @@ struct RecordsView: View {
                     ForEach(0..<3, id: \.self) { i in
                         sampleRow(i)
                     }
-                    // 845 空态直通生成器 (此前只在帮助中心演练场): 口径与 HelpCenter 一致, 不另造按钮语义
-                    Button("生成 7 天示例记录") {   // 845 生成
-                        DemoKit.generateSevenDaySamples()
-                        app.loadDevices()
-                        app.showToast("已生成 7 天 demo_ 样例记录, 顶部横幅可一键清除")
-                    }
                     .vkFont(.footnote)
                 }
                 .padding(.vertical, DS.Space.m)

@@ -463,11 +463,6 @@ final class AutoOpenController {
             AutoOpen.audit(mac, "拒开: 伪装会话期间禁止自动下发 04")
             return
         }
-        // 演示模式红线: 不得触碰真实 BLE (旧实现只在 requestUnlock 里守, 自动链直连 lock 绕过)
-        guard !DemoKit.isOn else {
-            AutoOpen.audit(mac, "拒开 演示模式 (demo) 不允许自动下发 04")
-            return
-        }
         if eventFired.contains(mac) { return }   // F5 一次性: 每个接近事件只发一次 04
 
         let ctx = makeContext(mac: mac, app: app)
