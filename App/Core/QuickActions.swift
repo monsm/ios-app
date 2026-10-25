@@ -10,7 +10,6 @@
 //   ① 复用**同一个**门禁: handleDeepLink 里"应用锁未解开时只挂起 pendingRoute"这条性质
 //      由既有代码保证，快速操作因此自动不可能绕过应用锁 (Swift 6 下也不用再造一个跨隔离的可变闭包);
 //   ② UserDefaults 是本仓唯一的存储层 (Store.swift)，本身就线程安全。
-import SwiftUI
 import UIKit
 
 enum QuickActions {

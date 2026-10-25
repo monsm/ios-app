@@ -1,7 +1,6 @@
 // 离线锁管家 for iOS — App 入口与全局状态 (SwiftUI 全原生)
 import SwiftUI
 import UIKit
-import AudioToolbox
 import UserNotifications
 import CoreSpotlight   // 293/951 接住 Spotlight 结果回传的 NSUserActivity (索引写入见 App/Core/SpotlightKit.swift)
 
@@ -1638,8 +1637,6 @@ struct RootView: View {
             // 来电、Face ID 系统弹窗) 也当退后台 —— 会误记锁定到期时刻 (反复下拉可无限顺延宽限),
             // 还会提前清掉崩溃标记 (随后真崩溃被判成"正常退出")。.inactive 只收起过期的快捷条。
             app.pasteSuggestion = nil
-            // 393: 退后台按档位记锁定到期时刻 ("" = 立即, 最严)
-            LockGuard.onBackground()
             // 221 退后台收尾: 记会话时长并清崩溃标记 (CrashGuard 的判定就依赖这一步)
             CrashGuard.markCleanExit()
             AutoOpenController.shared.onBackground()

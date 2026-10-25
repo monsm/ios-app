@@ -113,8 +113,6 @@ enum LockFaceStyle {
     /// 门转动开始时刻 (相对开锁成功 t=0)。中缝透光要先亮起来, 门才转。
     static let doorTurnDelay: Double = 0.34
 
-    /// App 层入场延迟 (与门的转动同刻开始, 再各带自己的 140ms)。
-    static let appRevealDelay: Double = 0.14
 
     /// 中缝光在门开完之后延迟多久淡出。
     static let lightLeakFadeDelay: Double = 0.42
@@ -171,5 +169,4 @@ enum LockFaceStyle {
     // MARK: - 皮肤持久化键
 
     /// 皮肤存在 LockMeta 里 (D12/audit-B): 不是 LockProfile (那个类型不存在)。
-    static let skinKey = "skin"
 }

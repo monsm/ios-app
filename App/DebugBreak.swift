@@ -2,7 +2,6 @@
 // break-ui 原则: 改数据不改组件 — 从数据边界注入一份"最坏数据集",
 // 让同一份数据同时打穿多行 (超长名 / 尾部差异值 / 无时间日志 / 存量 -1 / 告警行),
 // 用来检验布局与截断是否崩。仅 DEBUG 可用, 带一键清除, 绝不进 Release。
-import Foundation
 
 enum BreakFixture {
     static let mac = "DEADBEEF0001"

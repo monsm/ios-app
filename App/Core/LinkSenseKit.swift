@@ -4,10 +4,10 @@
 //   离线队列 510/533/535/538 · 跨页 135/136/162 · 70/539 积累占位
 // 底层纪律: 不改 BLEService 协议帧/命令构造器, 只包一层连接管理与 UI 组件;
 // 日志复用 DiagKit 事件流水 (BleTelemetry/DiagOps) 与 LockService 分级日志。
+import UIKit
 import SwiftUI
 import CoreGraphics
 import Combine
-import AudioToolbox
 
 // ---------- 链路三态 (64 语义色: 已连接 / 握手中 / 未连接) ----------
 enum LinkState: Equatable {

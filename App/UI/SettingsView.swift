@@ -850,7 +850,6 @@ struct SettingsView: View {
             guard f1.count >= 4 else { app.showToast("密码需 4 位以上"); return } // 与提示文案一致
             guard f1.allSatisfy({ $0.isNumber }) else { app.showToast("只能使用数字"); return }
             DB.setPasscode(f1)
-            DB.store.set(SecKey.randKeyDigits, true)   // 396 前提标记: 本机密码确为纯数字
             app.showToast("已设置")
         })
         UIApplication.topViewController()?.present(alert, animated: true)

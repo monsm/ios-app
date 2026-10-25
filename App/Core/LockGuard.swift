@@ -10,9 +10,6 @@ import Foundation
 
 @MainActor
 enum LockGuard {
-    // 393 的锁定时刻与 394/398 的解锁时刻没有既有键, 这里补两个 (同 kf. 前缀族, 与 Miniprogram 互通键无冲突)
-    private static let bgDeadline = "kf_slock_bgdeadline"
-    private static let unlockedAt = "kf_sses_unlockadat"
     private static let coolBaseSec = 30.0
     private static let coolCapSec = 600.0
     private static let traceCap = 50
@@ -46,23 +43,6 @@ enum LockGuard {
         DB.store.set(SecKey.traceEvents, list)
     }
 
-    // ---------- 393 退后台锁定时机 / 394 短时免验 ----------
-    /// "" 或未知档位 = 退后台即锁 (最严); m1/m5/next 记锁定到期时刻
-    static func onBackground(now: Date = Date()) {
-        let t = now.timeIntervalSince1970
-        let deadline: Double
-        switch DB.store.getString(SecKey.lockTiming, "") {
-        case "m1": deadline = t + 60
-        case "m5": deadline = t + 300
-        case "next":
-            var c = WeekCal.gregorian.dateComponents([.year, .month, .day], from: now)
-            c.day = (c.day ?? 1) + 1
-            c.hour = 0; c.minute = 0; c.second = 0
-            deadline = WeekCal.gregorian.date(from: c)?.timeIntervalSince1970 ?? t
-        default: deadline = t
-        }
-        DB.store.set(bgDeadline, deadline)
-    }
     // 2026-10-13 run 63: 原来它是 @MainActor 隔离的 (LockGuard 整个是 @MainActor), 而
     // Store.saveLedger (非隔离) 在写审计链时要读它 ⇒ "main actor-isolated static property
     // 'inDuressSession' can not be referenced from a nonisolated context"。

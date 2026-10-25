@@ -5,7 +5,6 @@
 import Foundation
 import UIKit
 import UserNotifications
-import AudioToolbox
 
 // ---------- 徽章定义 (977 四类 / 979 稀有度 / 978 隐藏) ----------
 enum BadgeRarity {

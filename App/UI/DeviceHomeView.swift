@@ -2395,19 +2395,6 @@ struct SyncTimeView: View {
     }
 }
 
-/// 呼吸缩放 (1004 喂电提醒): reduceMotion 时静止
-private struct BreathingGlyph: ViewModifier {
-    @Environment(\.accessibilityReduceMotion) private var rm
-    @State private var on = false
-    func body(content: Content) -> some View {
-        content
-            .scaleEffect(on ? 1.12 : 1.0)
-            .onAppear {
-                guard !rm else { return }
-                withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) { on = true }
-            }
-    }
-}
 
 struct LabeledRow: View {
     var label: String
