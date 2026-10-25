@@ -14,33 +14,6 @@ enum LockGuard {
     private static let coolCapSec = 600.0
     private static let traceCap = 50
 
-    /// 冷却档位是否启用 (关时不锁, 但仍累计连败数供 392/877 用)
-    static var cooldownEnabled: Bool { DB.store.getBool(SecKey.lockCoolOn) }
-
-    /// 一次验证失败: 累加连败 → 按 30s·2^n 上取冷却 (封顶 10 分钟) → 392 留痕
-    /// 392: `how` 是"方式" (密码/面容…) —— 原句要的留痕是「时间+方式+连败次数」,
-    /// 原先只有密码一条路进得来, 留痕里读不出方式。默认"密码"不动既有两条调用点。
-    static func registerFailure(now: Date = Date(), how: String = "密码") {
-        let n = DB.store.getInt(SecKey.lockStreak) + 1
-        DB.store.set(SecKey.lockStreak, n)
-        if cooldownEnabled {
-            let secs = min(coolCapSec, coolBaseSec * pow(2.0, Double(min(n, 6)) - 1))
-            appendTrace("应用锁\(how)验证失败 第\(n)次, 冷却 \(Int(secs)) 秒")
-        } else {
-            appendTrace("应用锁\(how)验证失败 第\(n)次 (冷却开关未开)")
-        }
-    }
-    // ---------- 392 失败留痕 (只存事件, 绝不存输入) ----------
-    static func appendTrace(_ s: String, now: Date = Date()) {
-        guard DB.store.getBool(SecKey.traceOn) else { return }
-        var list = DB.store.get([String].self, SecKey.traceEvents) ?? []
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "MM-dd HH:mm:ss"
-        list.insert(f.string(from: now) + " " + s, at: 0)
-        if list.count > traceCap { list = Array(list.prefix(traceCap)) }
-        DB.store.set(SecKey.traceEvents, list)
-    }
 
 }
 

@@ -118,36 +118,3 @@ enum ExportKit {
     }
 }
 
-// ---------- 导出落点 (安全作用域书签) ----------
-// 原住 ExportCenter.swift; BackupStudio 的「固定导出目录」开关仍在用它 (选择/更换/取消固定),
-// 所以书签这层留下来 —— 它只是文件系统授权, 与导出中心那套按钮无关。
-enum ExportDir {
-    private static let key = "kf_export_dir_bm"
-    static var name: String {
-        guard let u = resolve(startScope: false) else { return "" }
-        return u.lastPathComponent
-    }
-    static func set(_ url: URL) {
-        // 生成书签时这一份 URL 必须处于"可访问"状态 (fileImporter 给的是临时可访问 URL)
-        let ok = url.startAccessingSecurityScopedResource()
-        defer { if ok { url.stopAccessingSecurityScopedResource() } }
-        if let bm = try? url.bookmarkData() { DB.store.setCodable(key, bm) }
-    }
-    static func clear() { DB.store.remove(key) }
-    /// 解析书签; startScope=true 时已开启安全作用域 (调用方用完必须 stop)
-    static func resolve(startScope: Bool) -> URL? {
-        guard let bm = DB.store.get(Data.self, key) else { return nil }
-        var stale = false
-        guard let u = try? URL(resolvingBookmarkData: bm, bookmarkDataIsStale: &stale) else { return nil }
-        if startScope, !u.startAccessingSecurityScopedResource() { return nil }
-        return u
-    }
-    /// 导出落点: (目录, 是否已开安全作用域需 stop)
-    static func target() -> (url: URL, scoped: Bool) {
-        if let u = resolve(startScope: true) { return (u, true) }
-        let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("exports", isDirectory: true)
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        return (dir, false)
-    }
-}

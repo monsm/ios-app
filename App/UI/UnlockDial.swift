@@ -249,7 +249,6 @@ struct UnlockDial: View {
     @State private var tapStreak = 0                 // 53/58 连点计数
     @State private var tapReset: Task<Void, Never>? = nil
     @State private var pressStart = Date()           // 判"轻点"用的按下时长起点
-    @State private var rippleKey = 0                 // 73 每次确认递增，靠 id 重挂动效
     @State private var drill = false                 // 59 手势演练层是否浮现
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -514,7 +513,6 @@ struct UnlockDial: View {
             slowTask?.cancel()
             // 73 指令确认瞬间 (.idle→.opening) 放一次涟漪。靠 id 换键重挂，而不是给同一个视图改属性:
             // 连开两次时上一段 0.72s 的动画余帧会接着播，看着像"涟漪只出现了一半"。
-            if s == .opening { rippleKey += 1 }
             if case .connecting = s {
                 slowTask = Task { @MainActor in
                     try? await Task.sleep(for: .seconds(4))

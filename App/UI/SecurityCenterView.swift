@@ -146,9 +146,6 @@ enum SecFmt {
         f.locale = Locale(identifier: "en_US_POSIX")
         return f
     }()
-    static func dateStr(_ t: Double) -> String {
-        fmt.string(from: Date(timeIntervalSince1970: t))
-    }
 }
 
 struct SecurityCenterView: View {

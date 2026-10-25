@@ -158,28 +158,6 @@ enum LockArchive {
         let alive = Set(DB.keychains().map { $0.mac })
         DB.store.setCodable(orderKey, macs.filter { alive.contains($0) })
     }
-    static func clearManualOrder() { DB.store.remove(orderKey) }
-
-    /// 766 设备顺序的唯一读点: 手工顺序优先, 表里没有的 (新绑定) 按绑定先后垫后;
-    /// 无手工顺序时按绑定先后, 但**启动默认锁仍占首位** —— 设备管理页的"第一行就是启动默认锁"
-    /// 与设备页的 271 兜底排序讲的是同一件事, 这里漏掉默认锁就会两页各说一套。
-    /// 低电置顶 (114) 不在这里做 —— 自动置顶会把用户明确排好的顺序挪走, 与 108 隐藏 vs 292 沉睡
-    /// 同一口径 (明确动作优先于推断), 低电改由 764 图标行的橙点如实标出 (1041 电量升序是另一条明确开关)。
-    static func orderedDevices(_ devices: [Keychain]) -> [Keychain] {
-        let o = orderMacs
-        guard !o.isEmpty else {
-            let def = defaultMac
-            return devices.sorted { a, b in
-                if a.mac == def { return true }
-                if b.mac == def { return false }
-                return a.pairedAt < b.pairedAt
-            }
-        }
-        let byMac = Dictionary(devices.map { ($0.mac, $0) }, uniquingKeysWith: { a, _ in a })
-        let head = o.compactMap { byMac[$0] }
-        let rest = devices.filter { !o.contains($0.mac) }.sorted { $0.pairedAt < $1.pairedAt }
-        return head + rest
-    }
 
     /// 组内拖动回写 (104): 只把这一组成员的新内部次序放回它们**原本占据的位置**,
     /// 其他组与未分组的位置一步不动 —— 否则"把仓库组两把锁对调"会把别的组一起挤走。
@@ -195,15 +173,6 @@ enum LockArchive {
         return out
     }
 
-    /// 置顶 = 首位 + 启动默认锁 (271/766 同一动作, 见上面 setDefaultMac)
-    static func pinToFront(_ mac: String, _ devices: [Keychain]) {
-        guard !mac.isEmpty else { return }
-        var l = orderedDevices(devices).map { $0.mac }
-        l.removeAll { $0 == mac }
-        l.insert(mac, at: 0)
-        setOrder(l)
-        setDefaultMac(mac)
-    }
 
     // 105 色标: 只走 DS 语义令牌 (不引入自定义 hex, 保证对比度闸门覆盖)
     struct Swatch: Identifiable {
@@ -355,59 +324,12 @@ enum LockStats {
         }
     }
 
-    /// 779 成员×锁交叉矩阵: 行成员 / 列锁 / 格内次数 — 归属只走 Attribution 可证明链
-    /// (R1 临时码窗口 / R2 唯一凭证), 推不出的格子留空, 绝不猜测。
-    static func memberMatrix(_ usages: [LockUsage]) -> (members: [Member], counts: [[String: Int]]) {
-        var members = DB.members()
-        var counts: [[String: Int]] = []
-        for u in usages {
-            let pwds = DB.listPwds(u.mac), fps = DB.listFps(u.mac)
-            let snap = DB.readStatus(u.mac)
-            let status: (fpStock: Int, pwdStock: Int, lockTime: Int64)? = snap.map {
-                ($0.fpStock, $0.pwdStock, $0.lockTime)
-            }
-            let logs = DB.readLogs(u.mac).filter { openTypes.contains($0.type) }
-            let rows = Attribution.classify(
-                logs: logs.map { LogEntry(type: $0.type, typeName: $0.typeName, idx: $0.idxRaw, idxRaw: $0.idxRaw,
-                                          lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr, body: "") },
-                pwds: pwds, fps: fps, status: status)
-            var perMember = [String: Int]()
-            for r in rows {
-                guard let who = r.who else { continue }
-                perMember[who, default: 0] += 1
-            }
-            counts.append(perMember)
-        }
-        // 只保留至少有一次可证明归属的成员, 空矩阵不占版面
-        let active = members.enumerated().filter { i, m in
-            counts.contains { $0[m.id, default: 0] > 0 }
-        }
-        members = active.map { $0.element }
-        return (members, counts)
-    }
 
     /// 768 待维护锁清单: 低电 / 近 30 天有告警 / 密钥未绑定, 全部来自可读证据
     struct MaintenanceItem: Identifiable {
         let usage: LockUsage
         let reasons: [String]
         var id: String { usage.mac }
-    }
-    static func maintenance(_ usages: [LockUsage]) -> [MaintenanceItem] {
-        var out: [MaintenanceItem] = []
-        for u in usages {
-            var reasons: [String] = []
-            if (0...20).contains(u.power) { reasons.append("电量 \(u.power)%") }
-            if u.alarms30d > 0 { reasons.append("近 30 天 \(u.alarms30d) 条告警") }
-            // 快照缺失 = 密钥状态未知, 不能当成"正常": 旧写法 (…?.sKeyStatus ?? 0) != 0 在 nil 时判假,
-            // 从未连过的锁直接跳过这一项检查 (fail-open)。
-            if let snap = DB.readStatus(u.mac) {
-                if snap.sKeyStatus != 0 { reasons.append("密钥未绑定") }
-            } else {
-                reasons.append("密钥状态未知 (无 03 快照)")
-            }
-            if !reasons.isEmpty { out.append(MaintenanceItem(usage: u, reasons: reasons)) }
-        }
-        return out
     }
 
     /// 764 图标行的告警判据: 近 windowDays 天内**日志缓存里**有告警类记录的锁。
@@ -420,40 +342,7 @@ enum LockStats {
         return set
     }
 
-    /// 787 对比结论一句话 (财报解读式模板, 只引用上方同源数字)
-    static func summary(_ usages: [LockUsage]) -> String {
-        let active = usages.filter { !$0.sleeping }
-        guard usages.count > 1 else {
-            return "当前只有一把锁, 添加更多门锁后即可在这里对比活跃度与告警。"
-        }
-        guard let top = active.max(by: { $0.opens30d < $1.opens30d }), top.opens30d > 0 else {
-            return "近 \(windowDays) 天各锁都还没有开门记录, 连接门锁读取日志后再来看对比。"
-        }
-        var parts: [String] = ["近 \(windowDays) 天「\(top.name)」开门 \(top.opens30d) 次, 是最活跃的一把"]
-        let rest = active.filter { $0.mac != top.mac && $0.opens30d > 0 }
-        if let second = rest.max(by: { $0.opens30d < $1.opens30d }), second.opens30d > 0 {
-            let ratio = Double(top.opens30d) / Double(second.opens30d)
-            parts.append(String(format: "约为「%@」的 %.1f 倍", second.name, ratio))
-        }
-        let alarmTop = active.max(by: { $0.alarmRate < $1.alarmRate })
-        if let a = alarmTop, a.alarmRate >= 0.1, a.alarms30d > 0 {
-            parts.append(String(format: "「%@」告警占比最高 (%.0f%%), 建议看看告警记录", a.name, a.alarmRate * 100))
-        }
-        if usages.contains(where: { $0.sleeping }) {
-            parts.append("另有 \(usages.filter { $0.sleeping }.count) 把锁已 30 天未连接, 归入沉睡组")
-        }
-        return parts.joined(separator: "; ") + "。"
-    }
 
-    /// 784 固件对照: 返回 (该锁版本是否落后于本机最任一把, 本机最新版本)
-    static func fwLag(_ usages: [LockUsage]) -> (latest: String, lagging: Set<String>) {
-        let vers = usages.map { $0.fw }.filter { !$0.isEmpty }
-        guard !vers.isEmpty else { return ("", []) }
-        let latest = vers.max { fwCmp($0, $1) < 0 } ?? ""
-        var lagging = Set<String>()
-        for u in usages where !u.fw.isEmpty && fwCmp(u.fw, latest) < 0 { lagging.insert(u.mac) }
-        return (latest, lagging)
-    }
     static func fwCmp(_ a: String, _ b: String) -> Int {
         let pa = a.split(separator: ".").map { Int($0) ?? 0 }
         let pb = b.split(separator: ".").map { Int($0) ?? 0 }

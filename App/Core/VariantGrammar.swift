@@ -147,33 +147,10 @@ struct VK {
 
     // MARK: - 结构件
 
-    /// 分隔线。**三套都用两端淡出的发丝线** —— 这是唯一一处"变体之间不许不同"的地方：
-    /// 实线贯穿是"表格感"的来源，而两套新界面都判定它是要去掉的东西。
-    func hairline() -> AnyView {
-        AnyView(
-            LinearGradient(colors: [.clear, hair, hair, .clear],
-                           startPoint: .leading, endPoint: .trailing)
-                .frame(height: 0.7)
-        )
-    }
 
-    /// 容器。三套在这里真正分道扬镳。
-    func container<C: View>(_ kind: ContainerKind, @ViewBuilder _ content: () -> C) -> AnyView {
-        let pad: CGFloat = kind == .inset ? 12 : (kind == .hero ? 18 : 16)
-        return AnyView(
-            content()
-                .padding(pad)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(RoundedRectangle(cornerRadius: corner, style: .continuous).fill(bezel))
-        )
-    }
 
     // MARK: - 排版件
 
-    /// 页面标题。
-    func title(_ text: String) -> AnyView {
-        return AnyView(Text(text).font(.system(.headline, design: .default).weight(.semibold)).foregroundStyle(ink))
-    }
 
     // 2026-10-17 清理: eyebrow / metric / rowTitle / rowSub / primaryButton 五件删除。
     // 它们是两套实验界面还活着时为那两套写的排版件，界面与本文件的那批 switch 一并删掉之后，

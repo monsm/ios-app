@@ -961,9 +961,6 @@ enum CredentialOrg {
     static func smartLists(_ mac: String) -> [CredSmartList] {
         DB.get([CredSmartList].self, listsKey(mac)) ?? []
     }
-    static func saveSmartLists(_ mac: String, _ l: [CredSmartList]) {
-        DB.setCodable(l, listsKey(mac))
-    }
     // 527 智能列表的"整表是否有内容"判定 (原名 `matches(_:_:)`) 与"取某条快照的最新版本"(`latest`)
     // 都在第九十二批删除：两者全库零调用点 (deadscan 的 A/B 档逐条人读确认，同名调用都属于别的类型)。
     // 智能列表的**过滤**规则只有一个真实现身 = CredentialsView.swift:759-767 的 inline filter；
@@ -1414,20 +1411,6 @@ enum CredentialOrg {
         return who.isEmpty ? "指纹·" + base : who + "·" + base
     }
 
-    // ---------- 331 提前失效滑杆 (本地意图, 不改协议; 到点只作提示, 不自动下发停用) ----------
-    // 备案口径见 docs/DEFERRED.md 包5 的 331 那一行: 滑杆只写 kf_cestudy_earlyexp_, 不改协议。
-    // 这里补的是那两个判据 (原文件只有键的读写, 没有任何地方真的算过到没到点):
-    //  · `effectiveExpiry` = 锁端到期时刻减掉本机设的提前量, 是**本机自己的一把尺**;
-    //  · `isEarlyExpired`  = 当前时刻有没有越过那把尺。
-    // ⚠ 越过它**不会**给锁发任何命令, 门锁在自己那份到期时刻之前照样开门 ——
-    //   到点只提示停用 (详情页顶部提醒条 + 状态行标注), 要不要真停用仍由人决定。
-    /// 331 本地提前失效时刻; 滑杆为 0 时就等于锁端到期时刻, 长期有效 (2118) 无到期点 ⇒ nil。
-    static func effectiveExpiry(_ mac: String, _ p: LedgerPwd) -> Date? {
-        guard let to = expiryDate(p) else { return nil }
-        let m = earlyExpireMin(mac, p.alias)
-        guard m > 0 else { return to }
-        return to.addingTimeInterval(-Double(m) * 60)
-    }
     /// 331 是否已过本机设定的提前失效时刻。`now` 由调用方给一次、两处提示共用 (顶部提醒条与状态行
     /// 同帧同判据), 不留隐式 Date() —— 隐式取时刻会让同一屏里两条结论各自漂。没设提前量恒 false。
     static func isEarlyExpired(_ mac: String, _ p: LedgerPwd, _ now: Date) -> Bool {

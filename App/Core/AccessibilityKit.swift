@@ -198,73 +198,6 @@ enum AXTools {
         }
     }
 
-    // ---------- 855 焦点顺序巡检 (开发向, 主页面焦点序列人工编排表) ----------
-    static let focusReport: [String: [String]] = [
-        "设备": ["状态卡(合并)", "切换胶囊", "开锁圆盘(含转子 adjust)", "快捷格×4", "最近开门", "安心打卡"],
-        "凭证": ["总数行", "排序", "月历", "整理", "选择", "类型分段", "按成员", "OTP 卡", "密码列表行", "指纹列表行"],
-        "记录": ["读取状态条", "刷新", "更多菜单", "过滤芯片", "天分组行(自然语朗读)", "认领钮(60pt 命中)"],
-        "设置": ["门锁", "安全", "开锁", "家人与钥匙", "工具", "本机数据保护", "无障碍", "外观", "纪念", "提醒", "关于"],
-    ]
-    /// 855 实屏焦点序列: key window 递归收集无障碍元素标签; 取不到时回落人工表 (不谎报)
-    static func liveFocusSequence() -> [String] {
-        guard let win = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene })
-                .flatMap({ $0.windows }).first(where: { $0.isKeyWindow }),
-              let root = win.rootViewController?.view else { return [] }
-        var out: [String] = []
-        func visit(_ o: Any) {
-            if let e = o as? UIAccessibilityElement {
-                if let l = e.accessibilityLabel, !l.isEmpty { out.append(l) }
-                return
-            }
-            guard let v = o as? UIView else { return }
-            if let kids = v.accessibilityElements, !kids.isEmpty { kids.forEach(visit); return }
-            if v.isAccessibilityElement {
-                if let l = v.accessibilityLabel, !l.isEmpty { out.append(l) }
-            } else { v.subviews.forEach(visit) }
-        }
-        visit(root)
-        return out
-    }
-    /// 打开巡检: 优先实屏读序, 实屏取不到退回人工表; 打印 + 播报 (DEBUG 入口挂 DiagnosticsView)
-    static func runFocusAudit(page: String) {
-        let live = liveFocusSequence()
-        let seq = live.isEmpty ? (focusReport[page] ?? []) : live
-        let line = "焦点顺序 [\(live.isEmpty ? page + " · 人工表兜底" : "实屏")]: " + seq.joined(separator: " → ")
-        print("[A11Y 855] " + line)
-        announce(line)
-    }
-
-    // ---------- 883 对比度计算器: 与 tools/contrast.js 同款 WCAG 2.1 相对亮度公式 ----------
-    static func contrastRatio(_ a: UInt32, _ b: UInt32) -> Double {
-        func lum(_ hex: UInt32) -> Double {
-            func ch(_ c: UInt32) -> Double {
-                let s = Double(c & 0xff) / 255.0
-                return s <= 0.03928 ? s / 12.92 : pow((s + 0.055) / 1.055, 2.4)
-            }
-            return 0.2126 * ch((a >> 16) & 0xff) + 0.7152 * ch((a >> 8) & 0xff) + 0.0722 * ch(a & 0xff)
-        }
-        let la = lum(a), lb = lum(b)
-        let hi = max(la, lb), lo = min(la, lb)
-        return (hi + 0.05) / (lo + 0.05)
-    }
-    /// 883 令牌表 (App/Core/DesignSystem.swift 的机检同款取值, 明暗各一套)
-    struct CalcToken: Identifiable { let name: String; let light: UInt32; let dark: UInt32; var id: String { name } }
-    static let calcTokens: [CalcToken] = [
-        CalcToken(name: "页面底", light: 0xF2F4F9, dark: 0x070B12),
-        CalcToken(name: "卡片", light: 0xFFFFFF, dark: 0x151D29),
-        CalcToken(name: "次级块", light: 0xF5F7FB, dark: 0x1C2534),
-        CalcToken(name: "分隔线", light: 0xD3DCE7, dark: 0x29343F),
-        CalcToken(name: "正文", light: 0x0D1626, dark: 0xF2F6FB),
-        CalcToken(name: "次文本", light: 0x525E77, dark: 0x9FACBE),
-        CalcToken(name: "成功", light: 0x15803D, dark: 0x4ADE80),
-        CalcToken(name: "警告", light: 0xB45309, dark: 0xFBBF24),
-        CalcToken(name: "错误", light: 0xB91C1C, dark: 0xF87171),
-        CalcToken(name: "靛蓝heroA", light: 0x5A55EC, dark: 0x5B5BD6),
-    ]
-}
-
-// ---------- App 偏好读点 (包15 全 App 开关集中于此, 页面不直接查 DB) ----------
-enum AXPrefs {
     /// 872 防连点开关: 高频按钮 300ms 内重复点击忽略 (默认开, 防双击误开门)
     static var dbltapGuard: Bool { DB.store.getBool("kf_dbltap_guard", true) }
     /// 875 按住时长跟随 (⚠ 系统"按住持续时间"无读取 API, 自定滑杆 0.4–1.6s, 默认 0.9 与包1 对齐)
@@ -313,34 +246,6 @@ enum AuthKit {
         var err: NSError?
         guard ctx.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &err),
               err?.code != LAError.biometryNotAvailable.rawValue else { return false }
-        return true
-    }
-    @discardableResult
-    // 两个回调标 @MainActor: 它们最终写的是界面状态, 而 evaluatePolicy 的 reply 是 @Sendable 的 ——
-    // 只有把回调本身标成"主 actor 隔离"(因此 Sendable), 才能在 reply 里安全地跨到主 actor 执行,
-    // 而不是靠 assumeIsolated 赌线程。
-    static func verifyBiometric(_ onSuccess: @escaping @MainActor () -> Void,
-                                onFail: (@MainActor (String) -> Void)? = nil) -> Bool {
-        let ctx = LAContext()
-        var err: NSError?
-        guard ctx.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &err),
-              err?.code != LAError.biometryNotAvailable.rawValue else { return false }
-        // evaluatePolicy(_:localizedReason:reply:) 的返回值是 Void (结果经 reply 回调异步回),
-        // 所以不能 `return ctx.evaluatePolicy(...)` —— 那是把 Void 当 Bool 返回 (run 57 就报这个)。
-        // 本函数的 Bool = "是否成功发起验证" (canEvaluate 通过就 true), 真正的成败在 reply 里走 onSuccess/onFail。
-        ctx.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics,
-                           localizedReason: "用 Face ID / Touch ID 代替本机密码") { ok, err in
-            Task { @MainActor in
-                if ok {
-                    // F1 面容时刻记账: 这是一次真实的面容/指纹通过 (evaluatePolicy 返回 ok),
-                    // 与 AutoOpen 的"标准档 = 沿用最近一次真实验证的 60s 窗口"是同一条证据。
-                    // 缺这一行的后果是**功能整条死掉**: 标准档 (默认) 下 lastFace 永远是 nil,
-                    // faceFresh 恒 false ⇒ F1 恒拒 ⇒ 靠近自动开锁一次都不会触发 (见 AutoOpen.swift:114)。
-                    AutoOpenKit.noteFaceSuccess()
-                    onSuccess()
-                } else { onFail?(reasonText(err)) }
-            }
-        }
         return true
     }
     /// 392: 面容失败的原因翻成人话 —— 留痕要能读到"到哪一步没成" (不匹配/取消/锁停分开),

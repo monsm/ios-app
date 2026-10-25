@@ -1065,23 +1065,6 @@ enum MaintenanceLog {
         list.insert(Act(at: Date().timeIntervalSince1970, label: label), at: 0)
         DB.store.setCodable(key, Array(list.prefix(8)))
     }
-    /// 本次会话开始时刻之前的动作 = "上次会话"。点过"知道了"后按 seen 水位隐藏。
-    static func lastSessionLine(sessionStart: Double) -> String? {
-        guard sessionStart > 0 else { return nil }
-        let acts = (DB.store.get([Act].self, key) ?? []).filter { $0.at < sessionStart }
-        let seen = DB.store.get(seenKey, Double.self) ?? 0
-        let fresh = acts.filter { $0.at > seen }
-        guard let newest = fresh.max(by: { $0.at < $1.at }) else { return nil }
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "MM-dd HH:mm"
-        return "上次会话本机完成 \(fresh.count) 项维护 · 最近: \(newest.label) (\(f.string(from: Date(timeIntervalSince1970: newest.at))))"
-    }
-    /// "知道了" = 把水位推到这批动作里最新的一条, 不删历史 (真空清理/归档的账要留着)
-    static func markSeen(sessionStart: Double) {
-        guard let m = (DB.store.get([Act].self, key) ?? []).filter({ $0.at < sessionStart }).max(by: { $0.at < $1.at }) else { return }
-        DB.store.set(seenKey, m.at)
-    }
 }
 
 // ---------- 149/150/160/545/760 一键体检引擎 (10 项, 单项可复测) ----------

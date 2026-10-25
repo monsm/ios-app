@@ -165,26 +165,6 @@ final class AuditLog {
         }
     }
 
-    /// 382 脱敏导出: 密码类字段默认替换为哈希前 4 位; 勾选含明文需调用方自行二次确认
-    func exportJSON(includePlaintext: Bool) -> String {
-        let evs = load()
-        let rows = evs.map { e -> [String: String] in
-            var d = [
-                "id": String(e.id), "ts": String(e.ts), "cat": e.cat.rawValue,
-                "action": e.action, "target": e.target, "op": e.operator_,
-                "duress": e.duress ? "1" : "0", "hash": e.hash,
-            ]
-            for (k, vals) in e.diff {
-                let v0 = includePlaintext ? (vals.first ?? "") : HashKit.fingerprint(vals.first ?? "")
-                let v1 = includePlaintext ? (vals.count > 1 ? vals[1] : "") : HashKit.fingerprint(vals.count > 1 ? vals[1] : "")
-                d["diff.\(k)"] = "\(v0) → \(v1)"
-            }
-            return d
-        }
-        let data = (try? JSONSerialization.data(withJSONObject: ["lockkeeper_audit": rows],
-                                                 options: [.prettyPrinted, .sortedKeys])) ?? Data("[]".utf8)
-        return String(decoding: data, as: UTF8.self)
-    }
 
     func clear() { DB.store.remove(AuditLog.key) }
 }
@@ -234,43 +214,7 @@ final class SensitiveLedger {
 
 // ---------- 402 离职清除: 成员档案打标 + 名下凭证入回收站 (非物理删除) ----------
 enum Offboard {
-    /// 成员标记"已离开"; 名下凭证入回收站 (kf_cbin_) —— 402 改成可 365/504 取回的那条路。
-    /// 旧写法学过 kf_offboard_<member> 归档族, 但那条路没有取回入口, 等于进了黑洞。
-    static func markDeparted(_ memberId: String, name: String) {
-        var map = DB.store.getDict("kf_members")
-        if var m = map[memberId] as? [String: Any] {
-            let label = (m["name"] as? String ?? name) + "（已离开）"
-            m["name"] = label
-            m["left"] = Date().timeIntervalSince1970
-            map[memberId] = m
-            DB.store.set("kf_members", map)
-        }
-        var l = DB.ledger(DB.currentMac)
-        var archive: [LedgerPwd] = []
-        // 2026-10-14 对抗式排查: 旧闭包对**每个有 owner 的凭证**都 append 进 archive, 只在 return 处
-        // 按 memberId/name 判归属 => 离职清除会把**其他成员**的凭证也复制进回收站并清掉 owner (数据损坏)。
-        // 只有命中本成员才入档 + 移除。
-        l.pwds.removeAll { p in
-            guard let o = p.owner else { return false }
-            if o == memberId || o == name { archive.append(p); return true }
-            return false
-        }
-        DB.saveLedger(DB.currentMac, l)
-        // 402: 名下凭证逐条入回收站 (kf_cbin_), owner 清掉避免离职成员再被关联;
-        // saveLedger 的 379/380 字段级 diff 已在上面那一步留了管理员流水, 这里不重复。
-        let batchId = UUID().uuidString   // 这一次离职清除的多条凭证共用一个批次号 (501 整组还原)
-        for p in archive {
-            var cp = p
-            cp.owner = nil
-            CredentialOrg.addToBin(DB.currentMac, pwd: cp, source: .manual, batchId: batchId)
-        }
-    }
 
-    static func members() -> [Member] {
-        let map = DB.store.getDict("kf_members")
-        return map.values.compactMap { $0 as? [String: Any] }
-            .compactMap { Member.fromDict($0) }
-    }
 }
 
 // ---------- 401 覆写收尾 (Store 底层 = UserDefaults plist: 覆写 = 随机字节重灌再删) ----------
@@ -413,25 +357,6 @@ enum DestroyKit {
         return out
     }
 
-    /// 406 独立复核: 旧 UI 调的是 `checkResidue([])` —— 空片段直接走 guard return 0,
-    /// 所以屏幕上的"残留复核: 零残留"依旧是恒真结论。这里不依赖调用方传值, 直接验两条硬不变量:
-    /// ① 密钥类落盘目录必须已空; ② 存活键位里不能再有含 skey/ekey 的键锁 JSON。
-    static func residueSelfCheck() -> (hits: Int, scanned: Int) {
-        var hits = 0, scanned = 0
-        for k in DB.store.keys() {
-            guard let raw = DB.store.rawText(k) else { continue }
-            scanned += 1
-            if raw.contains("\"skey\"") || raw.contains("\"ekey\"") { hits += 1 }
-        }
-        let fm = FileManager.default
-        for base in localSecretDirs {
-            guard let en = try? fm.contentsOfDirectory(at: base, includingPropertiesForKeys: nil,
-                                                      options: [.skipsHiddenFiles]) else { continue }
-            scanned += en.count
-            hits += en.count
-        }
-        return (hits, scanned)
-    }
 
     /// 400 销毁前备份闸: 7 天内无备份文件即拦截, 先跳导出向导
     /// 备份时间戳读 Sheets 既有 kf_backup_hist ([Double] 时间线), 不另造写点。
@@ -457,21 +382,4 @@ enum DestroyKit {
 
 // ---------- 405/剪贴板与 549 口令复用检测 (读现有台账即可, 不新增写点) ----------
 enum PwReuse {
-    /// 新增/修改口令时与本机存量比对: 命中则提示"与已有口令重复"
-    static func reuseWarnings(mac: String, newPwd: String, ignoreAlias: Int = -1) -> [String] {
-        guard newPwd.count >= 4 else { return [] }
-        var hits: [String] = []
-        // 本锁台账
-        for p in DB.listPwds(mac) where p.alias != ignoreAlias && p.pwd == newPwd {
-            hits.append("本锁别名 \(p.alias)")
-        }
-        // 其余锁台账
-        for kc in DB.keychains() where kc.mac != mac {
-            for p in DB.listPwds(kc.mac) where p.pwd == newPwd {
-                hits.append((kc.name.isEmpty ? kc.mac : kc.name) + " 别名 \(p.alias)")
-            }
-        }
-        // 549 与应用锁口令同值: 口令只存 FNV 摘要不可反推, 明文比对须由 UI 层当场传值 (见 SecurityCenterView)
-        return hits
-    }
 }

@@ -243,12 +243,6 @@ enum MemberHub {
         return (created, moved, restored)
     }
 
-    // ---------- 476 归属图谱 (谁创建给谁, 两列自绘) ----------
-    struct Edge {
-        var label: String   // 凭证描述
-        var peer: String    // 对端成员名
-        var direction: String // "out" 我创建的给对方 / "in" 对方转给我的
-    }
     /// 移交注记的**落盘前缀** = CredentialOrg.batchTransfer 写进版本历史的那一条: 「移交 → 使用人」。
     /// 原先这里判 hasPrefix("移交给") —— 两个字符串永不相等, 条件还与 owner != id 互斥,
     /// 于是图谱恒为占位句, 而界面写的是"移交后这里会画出创建人→使用人"。改成与真实注记同源。
@@ -256,47 +250,6 @@ enum MemberHub {
     /// 图谱上限: 逐条凭证都要解一次版本历史, 这是展示层不是台账层, 扫到够画就停。
     private static let graphCap = 24
 
-    static func graph(_ id: String) -> [Edge] {
-        var out = [Edge]()
-        for kc in DB.keychains() {
-            for p in DB.listPwds(kc.mac) {
-                if out.count >= graphCap { break }
-                appendEdge(&out, forMe: id, label: "密码 #" + String(p.alias),
-                           snaps: CredentialOrg.history(kc.mac, "pwd", p.alias),
-                           ownerOf: { $0.pwd?.owner })
-            }
-            for f in DB.listFps(kc.mac) {
-                if out.count >= graphCap { break }
-                appendEdge(&out, forMe: id, label: "指纹「" + f.name + "」",
-                           snaps: CredentialOrg.history(kc.mac, "fp", f.batch),
-                           ownerOf: { $0.fp?.owner })
-            }
-        }
-        return out
-    }
-    /// 一条凭证能画出的边: 取**最后一条**「移交 → X」快照 —— 它存的是移交之后的归属,
-    /// 版本号比它小的那一版存的就是移交之前的归属 (按 version 找上一版, 不按数组下标:
-    /// CredentialOrg.snapshot 落盘时把 488 的自动还原点单独排在手动版之后, 下标不等于时间序)。
-    /// 两端都只在本机版本历史留得下来时才知道; 查不到上一手 (最早一版就已经是移交) 就不画,
-    /// 也不拿一个"家庭成员"顶上 (原先的 in 边就编过这个名字)。
-    private static func appendEdge(_ out: inout [Edge], forMe id: String, label: String,
-                                   snaps: [CredSnapshot], ownerOf: (CredSnapshot) -> String?) {
-        guard let hit = snaps.lastIndex(where: { $0.note.hasPrefix(transferNotePrefix) }) else { return }
-        let s = snaps[hit]
-        let to = ownerOf(s)
-        let prev = snaps.filter { $0.version < s.version }.max(by: { $0.version < $1.version })
-        let from = prev.flatMap(ownerOf)
-        if let from, from == id, to != id {
-            out.append(Edge(label: label, peer: peerName(to), direction: "out"))
-        } else if let from, to == id, from != id {
-            out.append(Edge(label: label, peer: peerName(from), direction: "in"))
-        }
-    }
-    /// 对端显示名: 成员真在名册里才报名字; 已删/未指派一律写"未指派", 不编一个看起来像名字的词。
-    private static func peerName(_ id: String?) -> String {
-        guard let id, let m = DB.member(id) else { return "未指派" }
-        return m.name
-    }
 
     /// 468 代管: 目标成员的 id 集合 (读点三处 — 成员页那一行、482 会议摘要、
     /// 以及凭证页单条停用时往 361 便签里补的那一句「管理员代操作」)。
@@ -316,13 +269,6 @@ enum MemberHub {
         DB.store.setCodable("kf_mborrow_" + mac, all)
     }
 
-    // ---------- 483 家政周期预设 (整段起止窗, 降级备案) ----------
-    static func houseWin(_ mac: String) -> HouseWin? {
-        DB.store.get(HouseWin.self, "kf_house_win_" + mac)
-    }
-    static func saveHouseWin(_ mac: String, _ w: HouseWin) {
-        DB.store.setCodable("kf_house_win_" + mac, w)
-    }
 
     // ---------- 481 本周轮值 ----------
     private static func weekKey(_ d: Date = Date()) -> String {
@@ -385,18 +331,5 @@ enum MemberHub {
     struct CareDue {
         var member: Member
         var days: Int
-    }
-    static func careDue(_ mac: String) -> [CareDue] {
-        var out = [CareDue]()
-        let soon = 3 * 86400
-        let now = Date().timeIntervalSince1970
-        for p in DB.listPwds(mac) where p.temp && !(p.owner ?? "").isEmpty {
-            guard let exp = CredentialOrg.expiryDate(p) else { continue }
-            let d = exp.timeIntervalSince1970 - now
-            guard d >= 0, d <= Double(soon) else { continue }
-            guard let owner = p.owner, let m = DB.member(owner) else { continue }
-            out.append(CareDue(member: m, days: Int(d / 86400) + 1))
-        }
-        return out
     }
 }

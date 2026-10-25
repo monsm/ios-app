@@ -133,9 +133,6 @@ enum BatteryCare {
         }
         return nil
     }
-    static func inColdMonth(_ m: Int, from: Int, to: Int) -> Bool {
-        from <= to ? (m >= from && m <= to) : (m >= from || m <= to)
-    }
 
     // ============ 电量采样 (idea 45 的数据地基) ============
     static func samples(_ mac: String) -> [BattSample] {
@@ -237,23 +234,6 @@ enum BatteryCare {
                                             body: body) }
     }
 
-    /// 118 换电复位: 强制落一个基线采样点 + 重置低电通知武装位 + 写入 1014 事件。
-    /// 采样表不清空 — 换电后电量跳升本身就是有效样本; 电池档案 (batteryChangedAt) 由调用方写。
-    static func recordBatterySwap(_ mac: String) {
-        guard !mac.isEmpty else { return }
-        var list = samples(mac)
-        let now = Date().timeIntervalSince1970 * 1000
-        if let pct = DB.readStatus(mac)?.powerLevel, pct >= 0 {
-            lowCacheLock.withLock { $0 = (mac, isLow(pct)) }   // 120: 换电后电量跳变, 缓存立刻跟上
-            list.append(BattSample(t: now, pct: pct))
-            let cutoff = now - 90 * 86400 * 1000
-            list.removeAll { $0.t < cutoff }
-            if list.count > 500 { list = Array(list.suffix(500)) }
-            DB.store.setCodable("kf_batt_" + mac, list)
-        }
-        DB.store.set("kf_batt_state_" + mac, 0)
-        addEvent(mac, kind: "battery", note: "更换电池")
-    }
 
     // ============ 维护事件 (1014/1028) ============
     static func events(_ mac: String) -> [MaintEvent] {
@@ -272,42 +252,13 @@ enum BatteryCare {
     /// 这条判据此前有**三份** —— 通知侧 (本文件)、保养清单页的 `periodDays`、以及"保养已记录"那句
     /// toast; 第三份把 90 写死在字面量里, 于是高频锁按屏幕说的等 90 天, 实际 60 天就被催。收成一处。
     static func carePeriodDays(opens30d: Int) -> Int { opens30d >= 60 ? 60 : 90 }
-    /// 按 mac 取那一档 (usage 那份读法留在主线程侧, 与通知侧那条 await 同一口径)
-    @MainActor static func carePeriodDays(mac: String) -> Int {
-        carePeriodDays(opens30d: LockStats.usage().first(where: { $0.mac == mac })?.opens30d ?? 0)
-    }
     static func care(_ mac: String) -> CareState {
         DB.store.get(CareState.self, "kf_maint_" + mac) ?? CareState()
-    }
-    static func saveCare(_ mac: String, _ s: CareState) {
-        DB.store.setCodable("kf_maint_" + mac, s)
     }
 
     // ---------- 1030 清洁月历打点 + 连续月数 ----------
     static func careMarks() -> [String: Bool] {
         DB.store.get([String: Bool].self, "kf_care_marks") ?? [:]
-    }
-    static func markCareToday() {
-        var m = careMarks()
-        m[Milestones.dayKey()] = true
-        DB.store.setCodable("kf_care_marks", m)
-    }
-    /// 连续有保养的月数 (从本月起, 本月没打则从上月起 — 与 backupStreakMonths 同语义)
-    static var careStreakMonths: Int {
-        let months = Set(careMarks().keys.map { String($0.prefix(7)) })
-        let cal = WeekCal.gregorian
-        var cursor = Date()
-        if !months.contains(Milestones.monthKey(cursor)) {
-            guard let prev = cal.date(byAdding: .month, value: -1, to: cursor) else { return 0 }
-            cursor = prev
-        }
-        var n = 0
-        while months.contains(Milestones.monthKey(cursor)), n < 36 {
-            n += 1
-            guard let prev = cal.date(byAdding: .month, value: -1, to: cursor) else { break }
-            cursor = prev
-        }
-        return n
     }
 
     // ============ 1019 固件服役天数 (诚实口径: 从本机首次读到该版本起算, 不猜锁端出厂时间) ============
@@ -322,21 +273,7 @@ enum BatteryCare {
 
     // ============ 513/145 固件本地清单 · 147 升级历史 ============
     static var fwlib: [FWLibItem] { DB.store.get([FWLibItem].self, "kf_fwlib") ?? [] }
-    static func addFWLib(name: String, version: String?, size: Int) {
-        var l = fwlib
-        guard !l.contains(where: { $0.name == name }) else { return }
-        l.insert(FWLibItem(name: name, version: version ?? "未知", size: size,
-                           at: Date().timeIntervalSince1970 * 1000), at: 0)
-        if l.count > 20 { l = Array(l.prefix(20)) }
-        DB.store.setCodable("kf_fwlib", l)
-    }
     static var dfuHist: [DFURecord] { DB.store.get([DFURecord].self, "kf_dfu_hist") ?? [] }
-    static func addDFURecord(_ r: DFURecord) {
-        var l = dfuHist
-        l.insert(r, at: 0)
-        if l.count > 20 { l = Array(l.prefix(20)) }
-        DB.store.setCodable("kf_dfu_hist", l)
-    }
 
     // ============ 1023 指纹头清洁: 锁日志最近 3 条连续为指纹告警 (type 13) ============
     static func fpCleanNeeded(_ mac: String) -> Bool {
