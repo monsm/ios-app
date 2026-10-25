@@ -259,7 +259,7 @@ struct WebDAVStudioView: View {
     }
     private func commitDL() {
         guard let dl = pendingDL else { return }
-        let r = BackupStudio.restore(dl.b, strategy: .merge, zones: BZones())
+        let r = BackupStudio.restore(dl.b, zones: BZones())
         if dl.b.globals?.appearance != nil { app.reloadAppearance() }
         app.loadDevices()
         BackupStudio.markImported()

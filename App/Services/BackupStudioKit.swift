@@ -480,7 +480,7 @@ enum BackupStudio {
     /// - conflictTakeBackup: 419 冲突裁决 — id (mac:p:别名 / mac:f:批次) 集合, 命中 = 该条取备份, 未命中保本机
     /// - makeSnapshot: 445 迁移事务自己持回滚点, 逐锁调用时传 false, 免得把迁移前的快照覆盖成中途态
     @discardableResult
-    static func restore(_ bundle: BackupBundle, strategy: MergeStrategy, zones: BZones,
+    static func restore(_ bundle: BackupBundle, zones: BZones,
                         lockActs: [String: String] = [:],
                         conflictTakeBackup: Set<String> = [],
                         makeSnapshot: Bool = true) -> (imported: Int, overwritten: Int, skipped: Int) {
@@ -489,169 +489,106 @@ enum BackupStudio {
         let c = prune(b, zones)
         // 421 恢复回滚点: 执行前自动全库快照
         if makeSnapshot { _ = makeRollbackPoint() }
-        switch strategy {
-        case .overwrite:
-            // 包6 ⚠488 备案复活点: 全量恢复前打自动还原点 (非按凭证, 用整库回滚点语义; 快照走 421 rollback)
-            // 419 冲突 = 同 ID 凭证两边都有: UI 层预列出逐条裁决, 此处置 0 跳过
-            let r = BackupKit.restoreAll(c)
-            return (r.imported, r.overwritten, 0)
-        case .merge:
-            // 合并 = **只增不删**。旧实现把 .merge 并入 .overwrite 走 restoreAll,
-            // 而 restoreAll 用 DB.saveLedger 整表替换 (BackupKit.swift:206) → 选"合并"仍删掉本机新增凭证。
-            var remap = [String: String]()
-            if let members = c.members {
-                for m in members {
-                    if let hit = DB.members().first(where: { $0.name == m.name }) {
-                        remap[m.id] = hit.id
-                    } else if let created = DB.addMember(m.name) {
-                        remap[m.id] = created.id
-                        DB.setMemberInfo(created.id, ["relation": m.relation, "phone": m.phone])
-                    }
+        // 合并 = **只增不删**。旧实现把 .merge 并入 .overwrite 走 restoreAll,
+        // 而 restoreAll 用 DB.saveLedger 整表替换 (BackupKit.swift:206) → 选"合并"仍删掉本机新增凭证。
+        var remap = [String: String]()
+        if let members = c.members {
+            for m in members {
+                if let hit = DB.members().first(where: { $0.name == m.name }) {
+                    remap[m.id] = hit.id
+                } else if let created = DB.addMember(m.name) {
+                    remap[m.id] = created.id
+                    DB.setMemberInfo(created.id, ["relation": m.relation, "phone": m.phone])
                 }
             }
-            var mimp = 0, mover = 0, mskip = 0
-            for d in c.devices {
-                guard HexKit.bytes(d.mac).count == 6, !d.kc.skey.isEmpty else { continue }
-                let mac = DB.normalizeMac(d.mac)
-                // 441 逐把确认: merge(默认) = 钥匙串与凭证都并; keep = 保留本机台账, 只迁直连参数; skip = 整锁跳过
-                let act = lockActs[mac] ?? "merge"
-                if act == "skip" { mskip += 1; continue }
-                var kc = d.kc
-                kc.mac = mac
-                // 441 BLE 直连参数随锁走: 已有锁也刷新钥匙串, 否则换机后新机连不上这把锁
-                let existed = DB.keychain(mac) != nil
-                DB.saveKeychain(kc)
-                if existed { mover += 1 } else { mimp += 1 }
-                // 441 锁端运行参数 (防御/防尾随/同步时间/OTP 状态) 与钥匙串同批迁移;
-                // 旧实现只在 .missing 分支写 meta, 合并路径永远迁不过去
-                if let meta = d.meta {
-                    if let x = meta.defend { DB.saveDefend(mac, x) }
-                    if let x = meta.tailgate { DB.saveTailgate(mac, x) }
-                    if let t = meta.synctime { DB.saveSyncTime(mac, t) }
-                    if let o = meta.otpStatus { DB.saveOtpStatus(mac, o) }
-                    if let o = meta.otpIdx { DB.saveOtpIdx(mac, o) }
-                }
-                guard act != "keep", let l = d.ledger else { continue }
-                var cur = DB.ledger(mac)
-                let haveP = Set(cur.pwds.map { $0.alias }), haveF = Set(cur.fps.map { $0.batch })
-                for p0 in l.pwds {
-                    var p = p0
-                    if let o = p.owner { p.owner = remap[o] ?? (DB.member(o) != nil ? o : nil) }
-                    if haveP.contains(p0.alias) {
-                        // 419 同 ID 凭证冲突: 只有用户裁决为"取备份"才覆盖, 未裁决默认保本机 (只增不删)
-                        guard conflictTakeBackup.contains("\(mac):p:\(p0.alias)") else { continue }
-                        if let i = cur.pwds.firstIndex(where: { $0.alias == p0.alias }) {
-                            cur.pwds[i] = p
-                            mover += 1
-                        }
-                    } else {
-                        cur.pwds.append(p)
-                        mimp += 1
-                    }
-                }
-                for f0 in l.fps {
-                    var f = f0
-                    if let o = f.owner { f.owner = remap[o] ?? (DB.member(o) != nil ? o : nil) }
-                    if haveF.contains(f0.batch) {
-                        guard conflictTakeBackup.contains("\(mac):f:\(f0.batch)") else { continue }
-                        if let i = cur.fps.firstIndex(where: { $0.batch == f0.batch }) {
-                            cur.fps[i] = f
-                            mover += 1
-                        }
-                    } else {
-                        cur.fps.append(f)
-                        mimp += 1
-                    }
-                }
-                DB.saveLedger(mac, cur)
-            }
-            // 全局项 (dongle/gateway/应用锁/OTP 键位/记录) 旧实现合并分支一个不写 ——
-            // WebDAV 下载恢复与换机迁移走的都是 .merge, 结果这些内容整类进不来。与 .missing 同口径补齐。
-            if let g = c.globals {
-                // 2026-10-14: 外观与设备组织随包落地 (与 .overwrite 同口径)
-                BackupKit.applyGlobalsAppearanceAndOrg(g, devices: c.devices)
-                for d in g.keychainDongles ?? [] { DB.saveDongle(d) }
-                for gw in g.gatewayList ?? [] { DB.saveGateway(gw) }
-                if let pc = g.passcode, !pc.s.isEmpty, !pc.d.isEmpty {
-                    // 同 BackupKit.restoreAll: 只写 s/d (d2 不进 canonical, 包体里没有)
-                    DB.store.set("kf_passcode", ["s": pc.s, "d": pc.d])
-                }
-                if let otps = g.otpKeys, !otps.isEmpty {
-                    // 与 BackupKit.restoreAll 同口径: 只允许本包内锁的 totp/static 键进库
-                    var allowed = Set<String>()
-                    for d in c.devices {
-                        for m in [d.mac, DB.normalizeMac(d.mac)] {
-                            allowed.insert(CredentialOrg.totpKey(m))
-                            allowed.insert(CredentialOrg.staticKey(m))
-                        }
-                    }
-                    for (k, v) in otps where allowed.contains(k) && !v.isEmpty { DB.store.set(k, v) }
-                }
-                if let tr = g.trace, let lines = tr.lines, !lines.isEmpty {
-                    DB.store.set("kf_trace_persist_v1", [
-                        "savedAt": tr.savedAt ?? 0, "count": lines.count,
-                        "chars": tr.chars ?? 0, "lines": lines,
-                    ])
-                }
-            }
-            markImported()
-            return (mimp, mover, mskip)
-        case .missing:
-            // 仅补缺失: 跳过已存在的锁, 只写新机没有的
-            var imp = 0, skipped = 0
-            for d in c.devices {
-                guard HexKit.bytes(d.mac).count == 6, !d.kc.skey.isEmpty else { continue }
-                let mac = DB.normalizeMac(d.mac)
-                guard DB.keychain(mac) == nil else { skipped += 1; continue }
-                var kc = d.kc; kc.mac = mac
-                DB.saveKeychain(kc)
-                if let l = d.ledger { DB.saveLedger(mac, l) }
-                if let meta = d.meta {
-                    if let x = meta.defend { DB.saveDefend(mac, x) }
-                    if let x = meta.tailgate { DB.saveTailgate(mac, x) }
-                    if let t = meta.synctime { DB.saveSyncTime(mac, t) }
-                    if let o = meta.otpStatus { DB.saveOtpStatus(mac, o) }
-                    if let o = meta.otpIdx { DB.saveOtpIdx(mac, o) }
-                }
-                imp += 1
-            }
-            if let ms = c.members {
-                for m in ms where DB.member(m.id) == nil && DB.members().first(where: { $0.name == m.name }) == nil {
-                    if let created = DB.addMember(m.name) {
-                        DB.setMemberInfo(created.id, ["relation": m.relation, "phone": m.phone])
-                    }
-                }
-            }
-            if let g = c.globals {
-                // 2026-10-14: 外观与设备组织随包落地 (与 .overwrite 同口径)
-                BackupKit.applyGlobalsAppearanceAndOrg(g, devices: c.devices)
-                for d in g.keychainDongles ?? [] { DB.saveDongle(d) }
-                for gw in g.gatewayList ?? [] { DB.saveGateway(gw) }
-                if let pc = g.passcode, !pc.s.isEmpty, !pc.d.isEmpty {
-                    // 同 BackupKit.restoreAll: 只写 s/d (d2 不进 canonical, 包体里没有)
-                    DB.store.set("kf_passcode", ["s": pc.s, "d": pc.d])
-                }
-                if let otps = g.otpKeys, !otps.isEmpty {
-                    // 与 BackupKit.restoreAll 同口径: 只允许本包内锁的 totp/static 键进库
-                    var allowed = Set<String>()
-                    for d in c.devices {
-                        for m in [d.mac, DB.normalizeMac(d.mac)] {
-                            allowed.insert(CredentialOrg.totpKey(m))
-                            allowed.insert(CredentialOrg.staticKey(m))
-                        }
-                    }
-                    for (k, v) in otps where allowed.contains(k) && !v.isEmpty { DB.store.set(k, v) }
-                }
-                if let tr = g.trace, let lines = tr.lines, !lines.isEmpty {
-                    DB.store.set("kf_trace_persist_v1", [
-                        "savedAt": tr.savedAt ?? 0, "count": lines.count,
-                        "chars": tr.chars ?? 0, "lines": lines,
-                    ])
-                }
-            }
-            markImported()
-            return (imp, 0, skipped)
         }
+        var mimp = 0, mover = 0, mskip = 0
+        for d in c.devices {
+            guard HexKit.bytes(d.mac).count == 6, !d.kc.skey.isEmpty else { continue }
+            let mac = DB.normalizeMac(d.mac)
+            // 441 逐把确认: merge(默认) = 钥匙串与凭证都并; keep = 保留本机台账, 只迁直连参数; skip = 整锁跳过
+            let act = lockActs[mac] ?? "merge"
+            if act == "skip" { mskip += 1; continue }
+            var kc = d.kc
+            kc.mac = mac
+            // 441 BLE 直连参数随锁走: 已有锁也刷新钥匙串, 否则换机后新机连不上这把锁
+            let existed = DB.keychain(mac) != nil
+            DB.saveKeychain(kc)
+            if existed { mover += 1 } else { mimp += 1 }
+            // 441 锁端运行参数 (防御/防尾随/同步时间/OTP 状态) 与钥匙串同批迁移;
+            // 旧实现只在 .missing 分支写 meta, 合并路径永远迁不过去
+            if let meta = d.meta {
+                if let x = meta.defend { DB.saveDefend(mac, x) }
+                if let x = meta.tailgate { DB.saveTailgate(mac, x) }
+                if let t = meta.synctime { DB.saveSyncTime(mac, t) }
+                if let o = meta.otpStatus { DB.saveOtpStatus(mac, o) }
+                if let o = meta.otpIdx { DB.saveOtpIdx(mac, o) }
+            }
+            guard act != "keep", let l = d.ledger else { continue }
+            var cur = DB.ledger(mac)
+            let haveP = Set(cur.pwds.map { $0.alias }), haveF = Set(cur.fps.map { $0.batch })
+            for p0 in l.pwds {
+                var p = p0
+                if let o = p.owner { p.owner = remap[o] ?? (DB.member(o) != nil ? o : nil) }
+                if haveP.contains(p0.alias) {
+                    // 419 同 ID 凭证冲突: 只有用户裁决为"取备份"才覆盖, 未裁决默认保本机 (只增不删)
+                    guard conflictTakeBackup.contains("\(mac):p:\(p0.alias)") else { continue }
+                    if let i = cur.pwds.firstIndex(where: { $0.alias == p0.alias }) {
+                        cur.pwds[i] = p
+                        mover += 1
+                    }
+                } else {
+                    cur.pwds.append(p)
+                    mimp += 1
+                }
+            }
+            for f0 in l.fps {
+                var f = f0
+                if let o = f.owner { f.owner = remap[o] ?? (DB.member(o) != nil ? o : nil) }
+                if haveF.contains(f0.batch) {
+                    guard conflictTakeBackup.contains("\(mac):f:\(f0.batch)") else { continue }
+                    if let i = cur.fps.firstIndex(where: { $0.batch == f0.batch }) {
+                        cur.fps[i] = f
+                        mover += 1
+                    }
+                } else {
+                    cur.fps.append(f)
+                    mimp += 1
+                }
+            }
+            DB.saveLedger(mac, cur)
+        }
+        // 全局项 (dongle/gateway/应用锁/OTP 键位/记录) 旧实现合并分支一个不写 ——
+        // WebDAV 下载恢复与换机迁移走的都是 .merge, 结果这些内容整类进不来。与 .missing 同口径补齐。
+        if let g = c.globals {
+            // 2026-10-14: 外观与设备组织随包落地 (与 .overwrite 同口径)
+            BackupKit.applyGlobalsAppearanceAndOrg(g, devices: c.devices)
+            for d in g.keychainDongles ?? [] { DB.saveDongle(d) }
+            for gw in g.gatewayList ?? [] { DB.saveGateway(gw) }
+            if let pc = g.passcode, !pc.s.isEmpty, !pc.d.isEmpty {
+                // 同 BackupKit.restoreAll: 只写 s/d (d2 不进 canonical, 包体里没有)
+                DB.store.set("kf_passcode", ["s": pc.s, "d": pc.d])
+            }
+            if let otps = g.otpKeys, !otps.isEmpty {
+                // 与 BackupKit.restoreAll 同口径: 只允许本包内锁的 totp/static 键进库
+                var allowed = Set<String>()
+                for d in c.devices {
+                    for m in [d.mac, DB.normalizeMac(d.mac)] {
+                        allowed.insert(CredentialOrg.totpKey(m))
+                        allowed.insert(CredentialOrg.staticKey(m))
+                    }
+                }
+                for (k, v) in otps where allowed.contains(k) && !v.isEmpty { DB.store.set(k, v) }
+            }
+            if let tr = g.trace, let lines = tr.lines, !lines.isEmpty {
+                DB.store.set("kf_trace_persist_v1", [
+                    "savedAt": tr.savedAt ?? 0, "count": lines.count,
+                    "chars": tr.chars ?? 0, "lines": lines,
+                ])
+            }
+        }
+        markImported()
+        return (mimp, mover, mskip)
     }
 
 
