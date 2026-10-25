@@ -6,6 +6,19 @@ import Foundation
 import CryptoKit
 import CommonCrypto
 
+/// 通用错误类型 (原住 DFUKit.swift, 那个文件的 DFU 升级逻辑已随本轮删减移除,
+/// 但备份/凭证/协议各处仍在抛这个类型 —— 形状留在这里)。
+enum DFUError: LocalizedError {
+    case zip(String)
+    case msg(String)
+    var errorDescription: String? {
+        switch self {
+        case .zip(let m): return m
+        case .msg(let m): return m
+        }
+    }
+}
+
 struct BackupEnvelope: Codable {
     var v: Int
     var alg: String

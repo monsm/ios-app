@@ -75,7 +75,6 @@ struct RecordsView: View {
     @State private var noteDraft = ""
     @State private var showActiveCreds = false  // 574 活跃凭证排序
     @State private var showOutWin = false      // 575 越界开门清单
-    @State private var showAlarmCenter = false // 735 告警中心
     @State private var alarmTick = 0          // 735 角标刷新 (从告警中心返回时重算)
     @State private var showAlarmKinds = false // 565 告警类型多选面板
     @State private var expandedMerged: Set<String> = []  // 592 连击合并展开态
@@ -236,7 +235,6 @@ struct RecordsView: View {
     @ToolbarContentBuilder
     private var recordsToolbar: some ToolbarContent {
         ToolbarItem(placement: .navigationBarTrailing) {
-            // 735 告警中心入口 + 未处置角标 (口径 = RecordSearch.unhandledAlarmCount, 与告警中心 734 队列同源)
             Button { showAlarmCenter = true } label: {
                 Image(systemName: "bell.badge.exclamationmark")
                     .overlay(alignment: .topTrailing) {
@@ -405,10 +403,6 @@ struct RecordsView: View {
         // 565 告警类型多选: 选中集直接写回 filters (走既有 onChange(of: filters) → applyFilter)
         .sheet(isPresented: $showAlarmKinds) { AlarmKindsSheet(sel: $filters.alarmKinds) }
         .sheet(isPresented: $showOutWin) { OutWinSheet() }
-        .sheet(isPresented: $showAlarmCenter) {
-            // 735 未处置角标: 从告警中心处置回来重算角标
-            AlarmCenterView().onDisappear { alarmTick += 1 }
-        }
         .sheet(item: $detailRec) { rec in
             // 186/188 备注与标旗在详情卡里改, 关闭时要让时间线重算 (沿用 735 的 alarmTick 刷新机制)
             // 580/584: 把**当前显示顺序**交给详情卡，上下条与邻近横滑才走在用户刚才看到的那份结果里

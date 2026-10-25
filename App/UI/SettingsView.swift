@@ -9,7 +9,6 @@ struct SettingsView: View {
     @State private var showMembers = false
     @State private var showKeychainHW = false
     @State private var showGateway = false
-    @State private var showFirmware = false
     @State private var showDeviceInfo = false
     @State private var showBackup = false
     @State private var showMessages = false
@@ -111,7 +110,6 @@ struct SettingsView: View {
         .sheet(isPresented: $showMembers) { MembersView() }
         .sheet(isPresented: $showKeychainHW) { KeychainHWView() }
         .sheet(isPresented: $showGateway) { GatewayView() }
-        .sheet(isPresented: $showFirmware) { FirmwareView() }
         .sheet(isPresented: $showDeviceInfo) { DeviceInfoView() }
         .sheet(isPresented: $showBackup) { BackupView() }
         .sheet(isPresented: $showMessages) { MessagesView() }
@@ -275,7 +273,6 @@ struct SettingsView: View {
             SearchHit(id: "s.members", title: "成员管理", icon: "person.2") { showMembers = true },
             SearchHit(id: "s.keychainhw", title: "蓝牙钥匙串", icon: "key.horizontal") { showKeychainHW = true },
             SearchHit(id: "s.gateway", title: "智能网关", icon: "antenna.radiowaves.left.and.right") { showGateway = true },
-            SearchHit(id: "s.firmware", title: "检查固件更新", icon: "arrow.up.circle") { showFirmware = true },
             SearchHit(id: "s.backup", title: "备份与恢复", icon: "externaldrive") { showBackup = true },
             SearchHit(id: "s.backupstudio", title: "备份工作室 (导出向导/恢复/WebDAV策略/换机迁移)", icon: "wrench.and.scissors") { showBackup = true },
             SearchHit(id: "s.messages", title: "动态消息", icon: "bell") { showMessages = true },
