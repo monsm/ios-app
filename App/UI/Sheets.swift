@@ -1100,10 +1100,6 @@ struct DeviceInfoView: View {
                     .foregroundStyle(DS.Palette.warn)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            NavigationLink { MaintenanceView() } label: {
-                Label("维护与保养 (周期/换电/提醒)", systemImage: "checklist")
-                    .frame(minHeight: DS.Hit.min)
-            }
         } header: {
             Text("电池档案")
         } footer: {

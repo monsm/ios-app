@@ -161,3 +161,18 @@ func cjkSpaced(_ s: String, gap: CGFloat = 0.09) -> Text {
     }
     return Text(out)
 }
+
+// ---------- 116 换电图文引导的步骤表 ----------
+// 原住 CareViews.swift (维护关怀整页已随大删波 4 移除); 但 AlarmCenterView:560 / 578 的低电告警
+// 里仍在逐条列这五步, 所以步骤表留下来 —— 删表就等于删掉告警页的换电指引。
+enum BatterySwapGuide {
+    static func steps(modelHint: String) -> [(icon: String, title: String, detail: String)] {
+        [
+            ("battery.100", "备好同型号新电池", modelHint),
+            ("wrench.and.screwdriver", "拆下电池盖板", "一般在室内面板, 不需要拆卸整锁"),
+            ("arrow.triangle.2.circlepath", "整组换新", "不要新旧电池混用, 触点对准弹簧"),
+            ("clock.arrow.circlepath", "换电后校准门锁时间", "临时密码与时间窗凭证依赖锁钟"),
+            ("checkmark.seal", "点下方「已换新」复位", "基线与低电提醒一并重置"),
+        ]
+    }
+}

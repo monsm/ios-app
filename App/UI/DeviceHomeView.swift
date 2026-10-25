@@ -737,9 +737,6 @@ struct DeviceHomeView: View {
     @ViewBuilder
     private func heroNotice(kc: Keychain, tier: BatteryCare.Tier, isCurrent: Bool) -> some View {
         if isCurrent, tier.severe {
-            NavigationLink { BatterySwapGuideView() } label: {
-                heroNoticeRow(icon: "arrow.right.circle", text: "打开换电图文指引", tint: DS.heroFg)
-            }
             .buttonStyle(PressableButtonStyle())
             .accessibilityLabel("电量告急, 打开换电图文指引")
         } else if isLow(kc) {

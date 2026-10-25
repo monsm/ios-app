@@ -575,12 +575,6 @@ struct AlarmCenterView: View {
                         }
                         .padding(.vertical, 2)
                     }
-                    NavigationLink { BatterySwapGuideView() } label: {
-                        Label("打开完整换电指引", systemImage: "arrow.right.circle")
-                            .vkFont(.footnote)
-                            .foregroundStyle(DS.Palette.accentText)
-                            .frame(minHeight: DS.Hit.min)
-                    }
                 } label: {
                     Label("换电注意事项", systemImage: "battery.25percent")   // 728 换电注意事项
                         .vkFont(.caption, weight: .medium)

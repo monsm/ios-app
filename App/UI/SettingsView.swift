@@ -17,7 +17,6 @@ struct SettingsView: View {
     /// 2026-10-17 安卓版: 把当前锁的开锁凭证渲染成二维码 (扫码导入, 之后不再需要)
     @State private var shareLock: Keychain?
     @State private var showDiag = false   // 587: 记录详情低电告警带 mac 过来 → 切锁并推诊断页
-    @State private var showCare = false   // 1013: 保养到期通知带 mac 过来 → 切锁并推维护页 (与 587 同构)
     // 2026-10-15 走查: 两枚"目标页自带 NavigationStack"的入口改用 sheet 呈现 (见 memberFamilyRows 注释)
     @State private var showUnclaimed = false
     @State private var showFamilySettings = false
@@ -132,11 +131,6 @@ struct SettingsView: View {
         .sheet(isPresented: $showDiag) {
             NavigationStack { DiagnosticsView() }
                 .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { showDiag = false } } }
-        }
-        // 1013: 保养通知落点, 与 showDiag 逐字同构 (复用已验证的 sheet+NavigationStack 写法)
-        .sheet(isPresented: $showCare) {
-            NavigationStack { MaintenanceView() }
-                .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { showCare = false } } }
         }
         .task { landPendingDiag(app.pendingDiag) }              // 冷启动/首次挂载: 值已挂着
         .onChange(of: app.pendingDiag) { _, m in landPendingDiag(m) }
@@ -292,7 +286,6 @@ struct SettingsView: View {
             SearchHit(id: "s.applock", title: "本机数据保护 (应用锁)", icon: "lock.shield", anchor: .applock),
             SearchHit(id: "s.appearance", title: "外观 (主题/品牌色/密度)", icon: "paintbrush", anchor: .appearance),
             SearchHit(id: "s.achievements", title: "我的成就", icon: "rosette", anchor: .memory),
-            SearchHit(id: "s.care", title: "关怀提醒与公告板", icon: "heart.text.square", anchor: .memory),
             SearchHit(id: "s.maintremind", title: "维护提醒", icon: "bell.badge", anchor: .reminder),
             SearchHit(id: "s.demo", title: "演示模式 (演示数据铺底/一键清除)", icon: "theatermasks", anchor: .drill),
             SearchHit(id: "s.flow", title: "数据流向说明", icon: "arrow.right.circle", anchor: .help),
@@ -460,11 +453,6 @@ struct SettingsView: View {
                 note("关掉门锁键盘的提示音；不影响本 App 的通知。")
                 NavigationLink("校准门锁时间") { SyncTimeView() }
                 note("锁端时钟不准时，临时码和有效期会失效。")
-                NavigationLink("维护与保养 (周期/换电)") { MaintenanceView() }
-                if canDefend {
-                    NavigationLink("一键布防") { DefendView() }
-                    note("出门后锁端拒绝一切开锁，需再次连上解除。")
-                }
                 if canTailgate {
                     NavigationLink("防尾随入室") { TailgateView() }
                     note("开门后短时间内刷同一凭证才告警。")
@@ -1142,8 +1130,6 @@ struct SettingsView: View {
     // ---------- 维护提醒 (包4: 287 阈值/1031 免扰/1038 白天送达/146 升级提醒 的入口) ----------
     private var reminderSection: some View {
         Section {
-            NavigationLink { MaintSettingsView() } label: { Label("维护提醒", systemImage: "bell.badge") }
-        } header: {
             Text("提醒")
         } footer: {
             Text("低电、保养、校时与固件提醒全部通过本地通知送达, 免扰时段可一键安静。")
