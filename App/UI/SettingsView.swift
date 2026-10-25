@@ -1256,9 +1256,6 @@ struct SettingsView: View {
                 .fixedSize(horizontal: false, vertical: true)
             // 733 胁迫档: 与 390/391 的既有不变量直接相冲 —— 那两档靠"反馈与真解锁一致"才不被看出来,
             // 而三声急促音恰恰是胁迫放行当场的一个可听破绽。所以它不从属于总开关, 单独一刀 + 默认关 + 写明风险。
-            VariantToggle("胁迫告警三音 (有风险, 默认关)", isOn: Binding(
-                get: { DB.store.getBool("kf_duress_tone") },
-                set: { app.setUnlockOption("kf_duress_tone", $0) }))
                 .disabled(!DB.store.getBool("kf_alert_tone"))
             if DB.store.getBool("kf_alert_tone") {
                 // 2026-10-14 走查: 这条是 `"…" + "…"` 拼的 ⇒ Text 不解析 Markdown, 屏上会出现

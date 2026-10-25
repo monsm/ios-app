@@ -12,14 +12,9 @@ import AudioToolbox
 enum AlertTone {
     /// 848 失败短音开关 (成功那枚沿用既有 kf_unlock_sound，两者互相独立，可只开一个)
     static var failOn: Bool { DB.store.getBool("kf_unlock_fail_sound") }
-    /// 733 告警分级音总开关 (胁迫三音 / 低电单音都归它管，关掉就全部静默)
     static var alertOn: Bool { DB.store.getBool("kf_alert_tone") }
-    /// ⚠ 胁迫档另有一道**独立开关**，默认关，且打开时界面必须把风险说清：
-    /// 本仓 390/391 的既有不变量是"伪装与胁迫放行的反馈**与真解锁一致**，否则开关本身就是破绽"
-    /// (LockKeeperApp 的 unlockAttempt 里那三段注释)。而"胁迫急促三音"恰恰要在胁迫放行的当场
     /// 发出一个与平时不同的声音 —— 按住口令的那个人就听得出来。
     /// 所以这一档不并进总开关，单独一刀、默认关、标签自曝风险；真要静默就让它一直关着。
-    static var duressToneOn: Bool { DB.store.getBool("kf_duress_tone") }
 
     // ---------- 音色 ID ----------
     // ⚠ API-VERIFY: 下面的数字只有 1104 是本仓既有用过的 (76 成功短音)。
@@ -31,7 +26,6 @@ enum AlertTone {
     // argument type 'SystemSoundID' (aka 'UInt32')"。显式标注成 SystemSoundID。
     private static let idSuccess: SystemSoundID = 1104
     private static let idFailure: SystemSoundID = 1053
-    private static let idDuress: SystemSoundID = 1102
     private static let idLowBattery: SystemSoundID = 1006
 
     /// 76/848 开锁成功短音 (开关在 设置-开锁，原 kf_unlock_sound 语义不变)
@@ -60,7 +54,6 @@ enum AlertTone {
     }
 
     enum Tier {
-        case duress        // 733 胁迫: 急促三音
         case lowBattery    // 733 低电: 单音
     }
 
@@ -70,14 +63,10 @@ enum AlertTone {
         switch tier {
         case .lowBattery:
             AudioServicesPlaySystemSound(idLowBattery)
-        case .duress:
-            // 独立第二道闸 (默认关)，理由见上面 duressToneOn 那段：这一声会在胁迫放行的当场响出来。
-            guard duressToneOn else { return }
             // 三声间隔 140ms：短、急促、不连成一片。用 asyncAfter 而不是循环 sleep ——
             // 提示音不该占住主线程的等待预算。
             for i in 0..<3 {
                 DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.14) {
-                    AudioServicesPlaySystemSound(idDuress)
                 }
             }
         }

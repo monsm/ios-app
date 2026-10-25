@@ -43,12 +43,6 @@ enum LockGuard {
         DB.store.set(SecKey.traceEvents, list)
     }
 
-    // 2026-10-13 run 63: 原来它是 @MainActor 隔离的 (LockGuard 整个是 @MainActor), 而
-    // Store.saveLedger (非隔离) 在写审计链时要读它 ⇒ "main actor-isolated static property
-    // 'inDuressSession' can not be referenced from a nonisolated context"。
-    // 它只是一次 DB.store 纯读 (DB.store 非隔离) ⇒ 按本文件既有口径 (见下方 LockAction 那段
-    // "刻意不加 @MainActor") 标 nonisolated。
-    nonisolated static var inDuressSession: Bool { DB.store.getBool(SecKey.sessionDuress) }
 }
 
 // ---------- 安全中心五枚开关的唯一判据口 (376/377/383/296) ----------

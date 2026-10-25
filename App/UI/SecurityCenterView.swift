@@ -19,7 +19,6 @@ enum SecKey {
     static let traceOn        = "kf_strace_on"          // 392 失败留痕总开关
     static let traceEvents    = "kf_strace_events"      // 392 失败事件 [String]
     static let sessionHow     = "kf_sses_how"           // 398 验证方式
-    static let sessionDuress  = "kf_sses_duress"        // 391 会话胁迫打标
     static let maskStyle      = "kf_smask_style"        // 369 "" 圆点 / stars / tail4
     static let bgBlurOn       = "kf_speek_bgblur"       // 371 切后台即糊
     static let timedReveal    = "kf_speek_timedsec"     // 373 限时可见秒数 (0=关)
@@ -77,7 +76,7 @@ func askSudoThen(_ app: AppState, then action: @escaping () -> Void) {
         app.sudoTicket = ticket
         AuditLog().append(.admin, "sudo", target: "毁灭操作复核通过",
                           operator_: "面容/指纹",
-                          duress: DB.store.getBool(SecKey.sessionDuress, false))
+)
         SecTick.bump()
         action()
     }
@@ -764,7 +763,7 @@ struct SecurityAuditView: View {
                 Button {
                     let who = DB.store.getString(SecKey.sessionHow, "本机")
                     AuditLog().append(seg == 0 ? .admin : .door, "记", target: "手动补记",
-                                      operator_: who, duress: DB.store.getBool(SecKey.sessionDuress, false))
+                                      operator_: who)
                     SecTick.bump()
                     self.center.bump()
                 } label: {
@@ -1244,7 +1243,7 @@ struct SecurityDestroyView: View {
                                 guardedDestroy(app) {
                                     Offboard.markDeparted(m.id, name: m.name)
                                     AuditLog().append(.admin, "离", target: m.name,
-                                                      duress: DB.store.getBool(SecKey.sessionDuress, false))
+)
                                     app.showToast("\(m.name) 已归档")
                                     SecTick.bump()
                                     self.center.bump()
@@ -1418,7 +1417,7 @@ struct SecurityDestroyView: View {
         app.sudoTicket = ticket
         AuditLog().append(.admin, "销毁", target: "sudo 验证通过",
                            operator_: DB.store.getString(SecKey.sessionHow, "本机密码"),
-                           duress: DB.store.getBool(SecKey.sessionDuress, false))
+)
         SecTick.bump()
     }
 
@@ -1487,7 +1486,7 @@ struct SecurityDestroyView: View {
                                      ?? "无 sudo 复核"   // 383 复核
         AuditLog().append(.admin, "销", target: "全部本地数据, 覆写 \(rep.keys.count) 键 · " + sudoNote,
                            operator_: DB.store.getString(SecKey.sessionHow, "sudo"),
-                           duress: DB.store.getBool(SecKey.sessionDuress, false))
+)
         typedWord = ""
         ack = false
         // 383: 券是一次性的 —— 销毁跑完就作废, 下一次毁灭动作必须重新验 (留着它等于一次输入放开全部)

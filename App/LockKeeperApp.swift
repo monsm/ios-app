@@ -748,7 +748,7 @@ final class AppState: ObservableObject {
     static let behaviorKeys: Set<String> = [
         "kf_hold_confirm", "kf_fence", "kf_tap_direct",
         "kf_unlock_sound", "kf_unlock_fail_sound", "kf_auto_retry",
-        "kf_alert_tone", "kf_duress_tone",
+        "kf_alert_tone",
         "kf_status_checkin", "kf_status_checkin_hour", "kf_vo_announce",
         // 2026-10-15 走查 §7.4-10: 无障碍那批键此前全部走 applyAppearance ⇒ 换身份 ⇒ 整树重建
         // = **拨一次开关被弹回设置页顶部**（同一条病灶作者已用上面这批治过）。这十枚并入的准入条件是逐键查出来的：
@@ -1056,7 +1056,6 @@ struct RootView: View {
         DeviceHomeView()
             .onAppear { PageTrace.shown("设备") }
             .keyboardShortcut("1", modifiers: .command)
-            .toolbar { appIndexToolbar }
     }
     @ViewBuilder private var credentialsTabContent: some View {
         // 身份挂在这里 (父层) 才有效: CredentialsView 的 @State 由 TabView 持有,
@@ -1066,23 +1065,6 @@ struct RootView: View {
             .safeAreaInset(edge: .top, spacing: 0) { bleStatusStrip(app: app, sense: sense) }
             .onAppear { PageTrace.shown("凭证") }
             .keyboardShortcut("2", modifiers: .command)
-            .toolbar { appIndexToolbar }
-    }
-    /// 2026-10-18 门面改造: Tab 根右上角「全部」入口 (PART2 §4.1 的第一处触达)。
-    /// 为什么做成 toolbar 而不是塞进各页面: 76 个目的地各自维护自己的导航栏,
-    /// 在父层挂一次就够, 页面里一处都不用改。
-    @ViewBuilder private var appIndexToolbar: some ToolbarContent {
-        ToolbarItem(placement: .topBarTrailing) {
-            Button {
-                showAppIndex = true
-            } label: {
-                Text("全部")
-                    .vkFont(.body)
-                    .frame(minHeight: DS.Hit.min)
-            }
-            .accessibilityLabel("全部功能")
-            .accessibilityHint("打开 77 项功能目录")
-        }
     }
     @ViewBuilder private var recordsTabContent: some View {
         // 同凭证 Tab: 记录是纯 per-lock 数据, 在父层挂身份才能整体重建。
@@ -1092,14 +1074,12 @@ struct RootView: View {
             .safeAreaInset(edge: .top, spacing: 0) { bleStatusStrip(app: app, sense: sense) }
             .onAppear { PageTrace.shown("记录") }
             .keyboardShortcut("3", modifiers: .command)
-            .toolbar { appIndexToolbar }
     }
     @ViewBuilder private var settingsTabContent: some View {
         SettingsView()
             .safeAreaInset(edge: .top, spacing: 0) { bleStatusStrip(app: app, sense: sense) }
             .onAppear { PageTrace.shown("设置") }
             .keyboardShortcut("4", modifiers: .command)
-            .toolbar { appIndexToolbar }
     }
 
     /// 顶部横幅栈 (演示/BLE/自检/粘贴建议/toast/写入回执) —— 从 body 内联的 safeAreaInset
@@ -1332,29 +1312,6 @@ struct RootView: View {
     /// 实例便捷转发，供 `.task` 直接调用（保持 body 表达式小，见本文件多处 type-check 超时的教训）。
     private func bootstrapOnce() { RootView.bootstrapOnce(app) }
 
-    /// 2026-10-18 门面改造: 是否展示门面层。由 LockFacePolicy 在启动/回前台时决定。
-    @State private var showLockFace = false
-    /// 2026-10-18: 是否已"推门而入"(App 可见)。与 showLockFace 分开是因为
-    /// 门转开需要 820ms, 那段时间门还在屏上但 App 还不该出现。
-    @State private var entered = false
-    /// 2026-10-18 门面改造: 76 项目录 (sheet 级, 不占 Tab 位 — D1/D7)。
-    @State private var showAppIndex = false
-
-    /// 门面展示判定。**纯调用策略**, 不自己判时间 —— 阈值与规则都在 LockFacePolicy。
-    /// @MainActor: 读的是 @Published (devices/pendingRoute), 与同文件 handleScenePhase 同一处置。
-    @MainActor
-    private func evaluateLockFace(launchedFresh: Bool) {
-        // 本仓没有专门记"退后台时刻"的状态位, 用 handleScenePhase 维护的 activeSince 近似。
-        let away: TimeInterval? = LockFaceRuntime.shared.awaySeconds()
-        let show = LockFacePolicy.shouldPresent(
-            launchedFresh: launchedFresh,
-            awaySeconds: away,
-            hasLocks: !app.devices.isEmpty,
-            onboardingDone: Onboarding.allDone || app.onboardingFinished,
-            cameFromDeepLink: app.pendingRoute != nil || app.pendingMac != nil
-        )
-        withAnimation(DS.Motion.doorReveal) { showLockFace = show }
-    }
 
     var body: some View {
         rootChrome
@@ -1373,31 +1330,7 @@ struct RootView: View {
                 // 2026-10-17 拍板 A: 应用锁启动门禁已删 (伪装口令 390 随之不可达, 一并移除)。
                 // 进 App 只分两种形态: 首启引导 / 主界面。
                 //
-                // 2026-10-18 门面改造: 在"主界面"这一形态外包一层 ZStack, 门面在最底。
-                // 为什么用 ZStack + opacity 而不是 if 条件插入/移除主界面:
-                //   条件插入会重建 TabView 持有的 @State (CredentialsView 的筛选/展开状态会丢),
-                //   本仓 1065-1068 已就这条留过注释。这里主界面始终在树上, 只改显隐。
-                ZStack {
-                    // 门层: 门关着时可见。门转开后它自己淡出, 但**仍留在树上**
-                    // (转开的门扇不需要再显示, 淡出即可; 移除会打断正在进行的动画)。
-                    LockFaceView(presented: $showLockFace, entered: $entered)
-                        .opacity(showLockFace ? 1 : 0)
-                        .allowsHitTesting(showLockFace && !entered)
-                        .accessibilityHidden(!showLockFace || entered)
-
-                    // 门后 App: 只有**进了门**才可见 (不是门一关就可见)。
-                    // 这两个状态分开是必须的 —— 门层在屏上(showLockFace) 与 已进门(entered)
-                    // 是两个不同的时刻, 中间隔着 820ms 的转门动画。
-                    mainTabsChrome
-                        .opacity(entered ? 1 : 0)
-                        .allowsHitTesting(entered)
-                        .accessibilityHidden(!entered)
-                        .scaleEffect(entered ? 1 : 0.986)
-                }
-                .animation(DS.Motion.doorReveal, value: entered)
-                .sheet(isPresented: $showAppIndex) {
-                    AppIndexView().environmentObject(app)
-                }
+                mainTabsChrome
             }
         }
     }
@@ -1412,9 +1345,7 @@ struct RootView: View {
         // 包16: 外观种子变更时整树重建 — 配色/密度即时全局生效; withAnimation 提供淡入淡出 (idea 21)
         // 2026-10-18 门面改造: 启动/回前台按策略决定是否展示门面。
         // 冷启动展示; 回前台 < 300s 不重演; 深链/小组件/Siri 一律不展示。
-        .task { evaluateLockFace(launchedFresh: true) }
         .onChange(of: scenePhase) { _, newPhase in
-            if newPhase == .active { evaluateLockFace(launchedFresh: false) }
         }
         .id(app.appearanceSeed)
         // 包15: App 字号五档 × 系统 Dynamic Type 叠加 (858, 含 866 极限字号自检 200% 预览)
@@ -1614,8 +1545,6 @@ struct RootView: View {
     /// "unable to type-check this expression in reasonable time"。抽成方法后 body 只留一行调用。
     @MainActor
     private func handleScenePhase(_ phase: ScenePhase) {
-        // 2026-10-18 门面改造: 记下退后台时刻, 回前台时按 LockFacePolicy.revealAfter 判定要不要重演门。
-        if phase == .background { LockFaceRuntime.shared.markBackground() }
         LinkSense.shared.setSceneActive(phase == .active)
         if phase == .active {
             // 动效令牌的非隔离读点: 系统"减弱动态效果"只能在设置里改, 改完回来必然经过这里。

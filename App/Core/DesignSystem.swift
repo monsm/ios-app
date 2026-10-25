@@ -321,49 +321,6 @@ enum DS {
             default: return .easeOut(duration: 0.15)
             }
         }
-        /// 门面层: 两扇门转开/转回 (2026-10-18 门面改造新增)。
-        /// 为什么是 timingCurve 而不是 spring: 106° 是大角度, spring 即使 damping 1.0
-        /// 也可能因 response 与初速度产生过冲, 越过 90° 会露出镜像背面。timingCurve 单调, 不会越过终点。
-        /// 为什么必须写在这里而不是视图里: `tier` 是 private, 只有本文件能读到降级档;
-        /// 在视图里直接写 withAnimation(...) 等于把降级规则实现第二遍。
-        static var doorSwing: Animation {
-            switch tier {
-            case "calm": return .easeOut(duration: 0.12)
-            default: return .timingCurve(0.22, 0.76, 0.03, 1, duration: 0.82)
-            }
-        }
-
-        /// 门面层: 中缝透光亮起 (先于门转动 340ms)。calm 档直接显示, 不做渐入。
-        static var lightLeak: Animation {
-            switch tier {
-            case "calm": return .easeOut(duration: 0.10)
-            default: return .easeOut(duration: 0.42)
-            }
-        }
-
-        /// 门面层: 门后 App 层入场 (opacity 460ms + scale 700ms, 都延迟 140ms)。
-        static var doorReveal: Animation {
-            switch tier {
-            case "calm": return .easeOut(duration: 0.20)
-            default: return .timingCurve(0.22, 0.76, 0.03, 1, duration: 0.70)
-            }
-        }
-
-        /// 门面层: 锁体字形闭环/开环互换 (260ms)。
-        static var glyphSwap: Animation {
-            switch tier {
-            case "calm": return .easeOut(duration: 0.12)
-            default: return .easeOut(duration: 0.26)
-            }
-        }
-
-        /// 门面层: 充能松手回零 (180ms)。
-        static var chargeReset: Animation {
-            switch tier {
-            case "calm": return .easeOut(duration: 0.08)
-            default: return .easeOut(duration: 0.18)
-            }
-        }
     }
     /// 时长令牌 (idea 211): 150/250 毫秒两档 — 微交互 / 标准转场。
     /// 需要 Animation 对象用 Motion, 只需要时长 (如 Task 前的 withAnimation) 用这里。
