@@ -102,7 +102,6 @@ struct SettingsView: View {
             if settingsSectionShown(groupFilter, .data) { applockSection.id(SettingsAnchor.applock) }
             if settingsSectionShown(groupFilter, .look) { a11ySection.id(SettingsAnchor.a11y) }
             if settingsSectionShown(groupFilter, .look) { appearanceSection.id(SettingsAnchor.appearance) }
-            if settingsSectionShown(groupFilter, .help) { memorySection.id(SettingsAnchor.memory) }
             if settingsSectionShown(groupFilter, .daily) { reminderSection.id(SettingsAnchor.reminder) }
             if settingsSectionShown(groupFilter, .help) { helpSection.id(SettingsAnchor.help) }
             if settingsSectionShown(groupFilter, .help) { aboutSection.id(SettingsAnchor.about) }
@@ -286,7 +285,6 @@ struct SettingsView: View {
             SearchHit(id: "s.logs", title: "诊断与运行日志", icon: "list.bullet.rectangle") { showDiag = true },
             SearchHit(id: "s.applock", title: "本机数据保护 (应用锁)", icon: "lock.shield", anchor: .applock),
             SearchHit(id: "s.appearance", title: "外观 (主题/品牌色/密度)", icon: "paintbrush", anchor: .appearance),
-            SearchHit(id: "s.achievements", title: "我的成就", icon: "rosette", anchor: .memory),
             SearchHit(id: "s.maintremind", title: "维护提醒", icon: "bell.badge", anchor: .reminder),
             SearchHit(id: "s.flow", title: "数据流向说明", icon: "arrow.right.circle", anchor: .help),
             SearchHit(id: "s.credits", title: "致谢与许可", icon: "hands.clap", anchor: .help),
@@ -1072,14 +1070,6 @@ struct SettingsView: View {
         }
     }
 
-    // ---------- 纪念与成就 (包18) ----------
-    private var memorySection: some View {
-        Section {
-            Text("纪念与成就")
-        } footer: {
-            Text("安心夜月历与纪念日提醒全部本地运行, 素颜模式可一键安静。")
-        }
-    }
 
     // ---------- 维护提醒 (包4: 287 阈值/1031 免扰/1038 白天送达/146 升级提醒 的入口) ----------
     private var reminderSection: some View {

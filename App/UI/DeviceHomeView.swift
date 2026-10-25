@@ -118,8 +118,6 @@ struct DeviceHomeView: View {
                             .accessibilityLabel("开锁圆盘组")   // 868 开锁圆盘组
                         moduleSlot(devOrder[1], delay: 4)   // 904
                         moduleSlot(devOrder[2], delay: 5)   // 904
-                        if shown(.nightCheck) { nightCheckRow.staggered(6) }
-                        if shown(.familyCare) { familyCareRows.staggered(6) }
                         if shown(.privacyNote) { privacyFootnote.staggered(6) }
                         // 904 模块排序入口: 做成显式文字按钮 —— 原句点名的"长按设备页空白进编辑态"会与
                         // 60/873 那族手势链冲突 (设备页是 ScrollView, 空白长按同时是滚动/下拉刷新的一部分),
@@ -1717,8 +1715,6 @@ struct DeviceHomeView: View {
 
     // ---------- 安心夜打卡 (976): 22 点后手动确认 (协议无上锁状态位, 不猜测) ----------
     @ViewBuilder
-    private var nightCheckRow: some View {
-    }
 
     private var privacyFootnote: some View {
         Text("数据全部保存在本机 · 全程离线，不上传任何服务器")
@@ -1735,154 +1731,6 @@ struct DeviceHomeView: View {
         if s.hasPrefix("#") { s.removeFirst() }
         guard let v = UInt32(s, radix: 16) else { return DS.Palette.accent }
         return Color(hex: v)
-    }
-
-    // ---------- 包13 家庭关怀行 (485 生日 / 480 孩子码 / 475 家庭便签): 当前锁的活页面 ----------
-    @ViewBuilder
-    private var familyCareRows: some View {
-        let care = MemberHub.careDue(app.currentMac)
-        if let c = care.first {
-            let note = MemberHub.ext(c.member.id).careText
-            // 480 成员色高亮: 警告语义留给卡片染色 (warn), 身份用成员建档色 —— 色条 + 头像同色,
-            // 一眼看出"这是在说谁"; 通用 accentText 头像在多成员家庭里分不出人。
-            let who = Self.memberHexColor(c.member)
-            Card(tint: .warn) {
-                HStack(spacing: DS.Space.s) {
-                    Rectangle().fill(who).frame(width: 3).clipShape(Capsule())
-                        .accessibilityHidden(true)
-                    MemberAvatar(member: c.member, tint: who)
-                    VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                        Text("「" + MemberHub.display(c.member) + "」的临时码还有 " + String(c.days) + " 天到期")   // 480 天到期
-                            .vkFont(.footnote, weight: .medium)
-                            .foregroundStyle(DS.Palette.text)
-                            .fixedSize(horizontal: false, vertical: true)
-                        if !note.isEmpty {
-                            Text(note)
-                                .vkFont(.caption)
-                                .foregroundStyle(DS.Palette.textSub)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                    }
-                    Spacer(minLength: 0)
-                }
-                .contentShape(Rectangle())
-                .frame(minHeight: DS.Hit.min)
-            }
-        }
-        // 485 生日行: Milestones 已有当天寿星与提前一天通知, 这里只补当日祝语行
-        // 480 同族: 寿星头像同样随成员色 (与上面那张关怀卡同一"说谁像谁"的口径)
-        // 387 维护回执: 上次会话本机做过的整理 (清理空值/归档/自动补发) 回一行, 点"知道了"后隐藏
-        // 措辞按实际能力写"上次会话" —— 本 App 无后台执行面, "退出期间完成"是不存在的说法
-        if let line = MaintenanceLog.lastSessionLine(sessionStart: DB.store.get("kf_session_start", Double.self) ?? 0) {
-            Card {
-                HStack(spacing: DS.Space.s) {
-                    Image(systemName: "wrench.and.screwdriver")
-                        .font(.system(size: DS.Icon.sm))
-                        .foregroundStyle(DS.Palette.accentText)
-                        .accessibilityHidden(true)
-                    Text(line)
-                        .vkFont(.footnote)
-                        .foregroundStyle(DS.Palette.text)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Spacer(minLength: DS.Space.s)
-                    Button("知道了") {
-                        MaintenanceLog.markSeen(sessionStart: DB.store.get("kf_session_start", Double.self) ?? 0)
-                        app.showToast("已收起维护回执")
-                    }
-                    .vkFont(.caption, weight: .medium)
-                    .foregroundStyle(DS.Palette.accentText)
-                    .frame(minHeight: DS.Hit.min)
-                }
-            }
-        }
-        // 437 备份复核钉: 到日的复核催一行 (未到日不出现在这里, 只在备份列表里存档)
-        // 按钮只跳设置 Tab —— "本地备份文件"藏在 设置→备份与恢复→备份工作室 三层 sheet 之后,
-        // 不为这一行造一套 pending-sheet 路由, 所以文案把路径写全, 不假装"一点就到"。
-        if let p = duePins.first {
-            Card(tint: .warn) {
-                VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                    HStack(spacing: DS.Space.s) {
-                        Image(systemName: "calendar.badge.exclamationmark")
-                            .font(.system(size: DS.Icon.sm))
-                            .foregroundStyle(DS.Palette.warn)
-                            .accessibilityHidden(true)
-                        Text("该复核 \(BackupStudio.pinDayText(p.day)) 的那份备份了: \(BackupStudio.pinLabel(p.file))")
-                            .vkFont(.footnote, weight: .medium)
-                            .foregroundStyle(DS.Palette.text)
-                            .fixedSize(horizontal: false, vertical: true)
-                        Spacer(minLength: 0)
-                    }
-                    Text(p.overDays == 0 ? "复核日就是今天"
-                                         : "已过 \(p.overDays) 天")
-                        .vkFont(.caption)
-                        .foregroundStyle(DS.Palette.textSub)
-                    Text("路径: 备份与恢复 → 备份工作室 → 本地备份文件")
-                        .vkFont(.caption)
-                        .foregroundStyle(DS.Palette.textSub)
-                        .fixedSize(horizontal: false, vertical: true)
-                    HStack(spacing: DS.Space.s) {
-                        Button("去设置") {
-                            // 2026-10-15 走查 §4.3: 原来只 requestTab(3) —— 把人放到设置页根上,
-                            // 而这一行自己写着路径要从「备份与恢复」起头。带落点名, 由设置页直接开它。
-                            app.pendingSettingsFocus = "backup"
-                            app.requestRoute(.settings)
-                        }   // 2026-10-14 走查: 原直写 tabSelection, 访客态绕过门禁
-                        Button("知道了") {
-                            BackupStudio.markPinSeen(p.file, p.day)
-                            duePins = BackupStudio.duePins()   // 立刻重算: 撤掉的这一钉不该在同一屏上还挂着
-                            app.showToast("这一钉不再催；把复核日挪到新一天会重新催")
-                        }
-                    }
-                    .vkFont(.caption, weight: .medium)
-                    .foregroundStyle(DS.Palette.accentText)
-                    .frame(minHeight: DS.Hit.min)
-                }
-            }
-            if duePins.count > 1 {
-                Text("另有 \(duePins.count - 1) 个复核钉也到期了")   // 437 另有
-                    .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.textSub)
-            }
-        }
-        // 475 家庭便签: 设备页 Hero 卡下浮动一行 (与成员绑定)
-        let notes = DB.members().compactMap { m -> (Member, String)? in
-            let n = MemberHub.ext(m.id).note
-            return n.isEmpty ? nil : (m, n)
-        }
-        if !notes.isEmpty {
-            Card {
-                // notes 是 [(Member, String)]: 元组不能遵循 Identifiable, 所以单参 ForEach 用不了 ——
-                // 与 key path 无关 (元组元素的 key path 合法, 见 LockStats.grouped 那处 2026-10-13 的查证更正)
-                // → 与本页 attentionCard 同型写法, enumerated + offset 作身份
-                ForEach(Array(notes.enumerated()), id: \.offset) { _, n in
-                    HStack(spacing: DS.Space.s) {
-                        MemberAvatar(member: n.0, size: 22)
-                        Text(MemberHub.display(n.0) + " 的便签: " + n.1)
-                            .vkFont(.footnote)
-                            .foregroundStyle(DS.Palette.text)
-                            .fixedSize(horizontal: false, vertical: true)
-                        Spacer(minLength: 0)
-                    }
-                }
-            }
-        }
-        // 481 本周轮值副标题: 已挂到 Hero 卡 heroMomentText 之后
-        if let d = MemberHub.dutyThisWeek, let dm = DB.member(d) {
-            Card {
-                HStack(spacing: DS.Space.s) {
-                    Image(systemName: "calendar.badge.clock")
-                        .font(.system(size: DS.Icon.sm))
-                        .foregroundStyle(DS.Palette.accentText)
-                        .accessibilityHidden(true)
-                    Text("本周主责: " + MemberHub.display(dm))   // 481 本周主责
-                        .vkFont(.footnote)
-                        .foregroundStyle(DS.Palette.text)
-                    Spacer(minLength: 0)
-                }
-                .frame(minHeight: DS.Hit.min)
-                .contentShape(Rectangle())
-            }
-        }
     }
 
     // ---------- 派生数据 (包3: 参数化到任意锁 — 当前页吃实时, 其余页读快照) ----------

@@ -572,10 +572,6 @@ enum RecordSearch {
     static func holidayName(_ dayKey: String) -> String? { ensureMerged(); return mergedLock.withLock { $0.map[dayKey] } }
     /// 671 调休补班日 (上班的日子, 不是假期) —— 色带与"假日顺延"都必须把它和放假日分开
     static func isMakeupWorkday(_ dayKey: String) -> Bool { ensureMerged(); return mergedLock.withLock { $0.makeup.contains(dayKey) } }
-    /// 内置表覆盖到哪一年 (UI 文案据此说明"次年公告未发布前不显示", 不假装全都有)
-    static var builtinHolidayYearMax: Int { builtinRows.compactMap { Int($0.day.prefix(4)) }.max() ?? 0 }
-    /// 生效表覆盖到哪一年 (现在恒等于内置表口径)
-    static var holidayYearMax: Int { holidays.compactMap { Int($0.day.prefix(4)) }.max() ?? 0 }
     /// 672 假日顺延: 节假日当日"异常时段"判定结束时间 +2 小时 (设置可关)
     static var holidayExtendOn: Bool { DB.store.getBool("kf_holiday_extend", true) }
     static func extendedEndHour(_ dayKey: String) -> Int? {

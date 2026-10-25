@@ -33,8 +33,6 @@ struct StatsView: View {
     @State private var drillDay: String? = nil  // 638 三级下钻: 主图选中的日
     @State private var brush: ClosedRange<String>? = nil   // 621 刷选区间 (日 key, 只在本次会话)
     @State private var labelMode: Int                     // 640 数值标签 0 避让 / 1 仅最大值 / 2 不标 (存本机)
-    @State private var showYearSheet = false    // 50 年报告占位
-    @State private var excludeIdle = DB.store.getBool("kf_stats_excl_idle")   // 782 排除闲置锁口径
 
     init(mac: String = DB.currentMac) {
         _mac = State(initialValue: mac.isEmpty ? (DB.keychains().first?.mac ?? "") : mac)
@@ -1625,58 +1623,9 @@ struct StatsView: View {
                 .padding(.horizontal, DS.Space.gutter)
             }
 
-            // 619 凭证类使用榜 (排的是类, 不是逐条凭证 —— 口径写在 top5Section 上方)
-            top5Section(m)
 
             // 613/620 告警构成与月度对比
             alertSection(m)
-        }
-    }
-
-    /// 619 榜: 原句是"本月最常用凭证 Top5 条形榜, 前三名金/银/铜强调, 点击跳该凭证历史"。
-    /// 这三样本仓都给不出, 所以界面改说得出证据的话, 而不是留三个假承诺:
-    ///   · 排的是**凭证类** (pareto 那一份, 最多 4 类), 不是逐条凭证 —— 锁端不给逐凭证次数 (CAPABILITY §3);
-    ///     只有 626 那条长期密码的台账推断是逐条的, 覆盖面撑不出一条逐条榜。
-    ///   · "Top 5"这个数在四类的事实上永远到不了 5, 标题改报**真实行数** (top.count)。
-    ///   · 前三名金/银/铜: DS 令牌里没有金银铜, 拿别的语义色冒充就是给颜色编假语义 —— 改成老老实实的名次数。
-    ///   · 点击跳该凭证历史: 记录页没有"按单条凭证过滤"这个入口 (成员过滤是 pendingRecordsFilter 那一条, 不是一回事),
-    ///     所以这一排不是按钮、不给 chevron、读屏也不提点按 —— 不承诺不存在的热区。
-    /// 窗口天数与统计同一个出处 (`m.windowDays`), 不写死"本月" (算的是窗口 ∩ 缓存, 不是自然月)。
-    @ViewBuilder
-    private func top5Section(_ m: StatsKit.StatModel) -> some View {
-        let top = Array(m.pareto.prefix(5))
-        if !top.isEmpty {
-            VStack(alignment: .leading, spacing: DS.Space.s) {
-                Text("凭证类使用榜 · 近 \(m.windowDays) 天")   // 619 凭证类使用榜
-                    .vkFont(.subheadline, weight: .medium)
-                    .foregroundStyle(DS.Palette.text)
-                ForEach(Array(top.enumerated()), id: \.offset) { i, p in
-                    HStack(spacing: DS.Space.s) {
-                        Text(String(i + 1))
-                            .vkFont(.caption2, weight: .semibold)
-                            .foregroundStyle(DS.Palette.textSub)
-                            .monospacedDigit()
-                            .frame(width: 18, alignment: .leading)
-                            .accessibilityLabel("第 \(i + 1) 名")
-                        Text(p.label)
-                            .vkFont(.footnote, weight: .medium)
-                            .foregroundStyle(DS.Palette.text)
-                            .lineLimit(1)
-                        Spacer(minLength: 0)
-                        Text(StatsKit.StatModel.compact(p.count) + " · 累计 " + String(Int(p.cumPct)) + "%")
-                            .vkFont(.caption)
-                            .foregroundStyle(DS.Palette.textSub)
-                            .lineLimit(1)
-                    }
-                    .frame(minHeight: DS.Hit.min)
-                    .accessibilityElement(children: .combine)
-                }
-                Text("排的是凭证类 (窗口内共 \(top.count) 类上榜), 类内不逐条; 名次按窗口内开门次数排。")
-                    .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .padding(.horizontal, DS.Space.gutter)
         }
     }
 

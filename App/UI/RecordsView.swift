@@ -76,9 +76,6 @@ struct RecordsView: View {
     @State private var noteDraft = ""
     @State private var showActiveCreds = false  // 574 活跃凭证排序
     @State private var showOutWin = false      // 575 越界开门清单
-    @State private var travelDismissed = false // 1016 出行观察横幅 (会话内可关)
-    @State private var travelUntil = DB.store.getString("kf_travel_until")   // 1016 用户声明的出行结束日 (dayKey)
-    @State private var showTravelPick = false                                  // 1016 出行时长选择
     @State private var showAlarmCenter = false // 735 告警中心
     @State private var alarmTick = 0          // 735 角标刷新 (从告警中心返回时重算)
     @State private var showAlarmKinds = false // 565 告警类型多选面板
@@ -196,12 +193,9 @@ struct RecordsView: View {
         List {
             statusBanner
             if offline { jumpBackRow }
-            travelBanner
-            streakBanner
-            activeLine
             // ─────────────────────────────────────────────────────────────
             // 2026-10-18 重构: 列表前方原来叠了 **14 个区** ——
-            //   todaySummary / birthdayBanner / scopeRow / searchBar / monthJumpRow /
+            //   scopeRow / searchBar / monthJumpRow /
             //   dayFocusBanner / resultCount / filterChips / memberChips / doorGods /
             //   emptyHint / runningRow / dropWatchSection / lastYearTodayRow
             // 记录列表被推到屏幕外, 这就是"记录页很乱"的真正来源。
@@ -211,7 +205,6 @@ struct RecordsView: View {
             //   · **按需 2 个**: 日期跳转(选了月才显示) / 结果计数(有筛选才显示)
             //   · 其余全部**收进"更多"或移到列表之后**: 生日条 / 成员 chip / 门神 / 掉电观察 / 去年今日
             // ─────────────────────────────────────────────────────────────
-            todaySummary
             scopeRow
             searchBar
             monthJumpRow
@@ -448,7 +441,7 @@ struct RecordsView: View {
 
     /// 749 对账结果导出一行 (拍板 #28)。只说本次会话内的事实, 而且**三种结论都要有对应措辞**:
     /// 拉全 / 未拉全 (带剩余条数) / 锁端没报告剩余所以不可判 —— 最后一种最容易被写成"已拉全"。
-    /// 复制走 UIPasteboard 的普通文本路径 (不含口令等敏感值), 不进 ClipboardCare 的自清族。
+    /// 复制走 UIPasteboard 的普通文本路径 (不含口令等敏感值)。
     @ViewBuilder
     private var reconRow: some View {
         if !reconLine.isEmpty {
@@ -1024,9 +1017,7 @@ struct RecordsView: View {
             .accessibilityLabel("更多记录视图")
 
             if secondaryRowsExpanded {
-                birthdayBanner
                 memberChips
-                doorGods
                 dropWatchSection
                 lastYearTodayRow
             }
@@ -1096,171 +1087,7 @@ struct RecordsView: View {
         .accessibilityAddTraits(on.wrappedValue ? .isSelected : [])
     }
 
-    // ---------- 顶部情绪行 ----------
-    /// 975 管家连续天数
-    @ViewBuilder
-    private var streakBanner: some View {
-    }
-
-    /// 590 连续活跃行 + 断档灰点 (近 7 天; 从 allRows 取, 断档是事实不该被过滤搬走)
-    private var openDaySet: Set<String> {
-        Set(allRows.filter { $0.kind != nil || StatsKit.openTypes.contains($0.type) }.map(\.dayKey))
-    }
-    private var openGapDots: [(day: String, open: Bool)] {
-        let cal = WeekCal.gregorian
-        let today = cal.startOfDay(for: Date())
-        return (0..<7).map { i in
-            let d = cal.date(byAdding: .day, value: -(6 - i), to: today)!
-            return (Self.dayKey(d), openDaySet.contains(Self.dayKey(d)))
-        }
-    }
-    @ViewBuilder
-    private var activeLine: some View {
-        let n = openStreakDays
-        if n >= 1 {
-            Section {
-                if n >= 2 {
-                    Label {
-                        Text("连续 \(n) 天有人开门 · 这个家一直在")   // 590 连续
-                            .fixedSize(horizontal: false, vertical: true)
-                    } icon: {
-                        Image(systemName: "flame").accessibilityHidden(true)
-                    }
-                    .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.ok)
-                }
-                // 590 断档灰点: 旧→新, 实心=有人开门, 灰点=断档那天
-                HStack(spacing: DS.Space.s) {
-                    ForEach(0..<7, id: \.self) { i in
-                        Circle()
-                            .fill(openGapDots[i].open ? DS.Palette.ok : DS.Palette.hairline)
-                            .frame(width: 6, height: 6)
-                    }
-                    Text("近 7 天")   // 590 界面文案
-                        .vkFont(.caption2)
-                        .foregroundStyle(DS.Palette.textSub)
-                }
-                .accessibilityElement(children: .combine)
-                .accessibilityLabel("近 7 天开门断档")   // 590 天开门断档
-            }
-        }
-    }
-    /// 935 替代: 今日首次与最近一次开门 —— 原句要的中尺寸"早晚两点 Widget"在免费账号读不到台账
-    /// (App Groups 禁), 替代栏给的是"App 内今日概要行显示首末开门时间"。
-    /// 直接用时间线行里已经算好的 `time` 串 (647 制式统一出口), 不另造一套格式化;
-    /// 判据沿用本文件既有的 dayKey (649 凌晨归属已算过), 不重算"今天"。
-    @ViewBuilder
-    private var todaySummary: some View {
-        let mine = allRows.filter { ($0.kind != nil || StatsKit.openTypes.contains($0.type)) && $0.dayKey == Self.dayKey(Date()) }
-        let times = mine.map(\.time).sorted()
-        if let f = times.first, let l = times.last {
-            Section {
-                Label {
-                    // 935 今日
-                    // 935 今日
-                    Text(f == l ? "今日 \(f) 开过一次门" : "今日 \(f) 第一次开门 · \(l) 最近一次")
-                        .fixedSize(horizontal: false, vertical: true)
-                } icon: {
-                    Image(systemName: "clock").accessibilityHidden(true)
-                }
-                .vkFont(.caption)
-                .foregroundStyle(DS.Palette.textSub)
-            }
-        }
-    }
-
-    private var openStreakDays: Int {
-        let daySet = Set(rows.filter { $0.kind != nil || StatsKit.openTypes.contains($0.type) }.map(\.dayKey))
-        guard daySet.contains(Self.dayKey(Date())) else { return 0 }
-        var n = 0
-        var d = WeekCal.gregorian.startOfDay(for: Date())
-        while daySet.contains(Self.dayKey(d)) {
-            n += 1
-            d = WeekCal.gregorian.date(byAdding: .day, value: -1, to: d)!
-        }
-        return n
-    }
-
-    /// 1016 出行观察横幅: 未开门 3 天以上提醒一次; 或者**用户自己声明**了出行日期段
-    /// （声明期内不打扰, 只把事实陈述出来, 可随时点掉）。声明只写一个本地 dayKey 字符串,
-    /// 不涉协议、不写门锁、不进备份包 —— 它描述的是"这台手机的主人去哪了", 不是锁的状态。
-    private var travelActive: Bool { !travelUntil.isEmpty && travelUntil >= Self.dayKey(Date()) }
-    private var travelBannerActive: Bool {
-        if travelActive { return true }
-        guard !travelDismissed, let last = lastOpenDate else { return false }
-        return Date().timeIntervalSince(last) >= 3 * 86400
-    }
-    /// 1016 写点: 只写结束日, 不带任何上报面
-    private func markTravel(days: Int) {
-        travelUntil = Self.dayKey(Date().addingTimeInterval(Double(days) * 86400))
-        DB.store.set("kf_travel_until", travelUntil)
-        travelDismissed = true
-        app.showToast("已标记出行至 " + travelUntil)   // 1016 已标记出行至
-    }
-    @ViewBuilder
-    private var travelBanner: some View {
-        if travelBannerActive {
-            Section {
-                HStack(spacing: DS.Space.s) {
-                    Image(systemName: "airplane")
-                        .font(.system(size: DS.Icon.sm))
-                        .foregroundStyle(DS.Palette.textSub)
-                        .accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: 2) {
-                        // 1016 出行中
-                        // 1016 近期没人回家
-                        Text(travelActive ? "出行中" : "近期没人回家?")
-                            .vkFont(.footnote, weight: .semibold)
-                            .lineLimit(1)
-                            .foregroundStyle(DS.Palette.text)
-                        if travelActive {
-                            Text("已标记出行至 " + travelUntil + " — 这期间没有开门记录属预期, 不再提醒。")
-                                .vkFont(.caption)
-                                .foregroundStyle(DS.Palette.textSub)
-                                .fixedSize(horizontal: false, vertical: true)
-                        } else if let last = lastOpenDate {
-                            Text("已连续 " + String(Int(Date().timeIntervalSince(last) / 86400)) + " 天没有开门记录 — 出行观察中, 一切正常可忽略。")
-                                .vkFont(.caption)
-                                .foregroundStyle(DS.Palette.textSub)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                    }
-                    Spacer(minLength: 0)
-                    if !travelActive {
-                        Button("标记出行") { showTravelPick = true }
-                            .vkFont(.caption)
-                            .frame(minHeight: DS.Hit.min)
-                            .accessibilityLabel("标记出行日期段, 这期间不再提醒")
-                    }
-                    Button {
-                        if travelActive {
-                            travelUntil = ""
-                            DB.store.set("kf_travel_until", "")
-                            app.showToast("已结束出行标记")   // 1016 已结束出行标记
-                        } else {
-                            travelDismissed = true
-                        }
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: DS.Icon.sm))
-                            .foregroundStyle(DS.Palette.textSub)
-                    }
-                    .frame(minWidth: DS.Hit.min, minHeight: DS.Hit.min)
-                    .contentShape(Rectangle())
-                    .accessibilityLabel(travelActive ? "结束出行标记" : "关闭出行观察横幅")
-                }
-                .padding(.vertical, DS.Space.xs)
-            }
-            .confirmationDialog("标记出行日期段", isPresented: $showTravelPick, titleVisibility: .visible) {   // 1016 标记出行日期段
-                Button("7 天") { markTravel(days: 7) }
-                Button("14 天") { markTravel(days: 14) }
-                Button("30 天") { markTravel(days: 30) }
-                Button("取消", role: .cancel) { }
-            } message: {
-                Text("标记期间不再提醒「没人回家」, 出行结束可随时点掉。不写门锁、不联网。")
-            }
-        }
-    }
+    /// 最近一次开门时刻 (出行观察已删, 但记录页仍用它判断空态措辞)
     private var lastOpenDate: Date? {
         var last: Date? = nil
         for m in macs {
@@ -1269,52 +1096,6 @@ struct RecordsView: View {
             }
         }
         return last
-    }
-
-    /// 991 生日撒花: 当天寿星横幅
-    @ViewBuilder
-    private var birthdayBanner: some View {
-    }
-
-    /// 983 本月门神榜 + 989/994 成员徽章角标
-    @ViewBuilder
-    private var doorGods: some View {
-        let rank = doorRank
-        if let top = rank.first, top.count > 0 {
-            Section("本月门神榜") {
-                ForEach(Array(rank.enumerated()), id: \.offset) { i, r in
-                    HStack(spacing: DS.Space.s) {
-                        Image(systemName: i == 0 ? "crown.fill" : "person.fill")
-                            .font(.system(size: DS.Icon.sm))
-                            .foregroundStyle(i == 0 ? DS.Palette.warn : DS.Palette.textSub)
-                            .accessibilityHidden(true)
-                        Text(r.name)
-                            .vkFont(.subheadline)
-                            .foregroundStyle(DS.Palette.text)
-                        Spacer(minLength: 0)
-                        if i == 0 {
-                            Text("本月门神")
-                                .vkFont(.caption2, weight: .medium)
-                                .foregroundStyle(DS.Palette.accentText)
-                        }
-                        Text("\(r.count) 次")
-                            .vkFont(.subheadline)
-                            .monospacedDigit()
-                            .foregroundStyle(DS.Palette.textSub)
-                    }
-                    .accessibilityElement(children: .combine)
-                }
-            }
-        }
-    }
-    private var doorRank: [(id: String, name: String, count: Int)] {
-        let mk = Milestones.monthKey()
-        var counts: [String: Int] = [:]
-        for r in allRows where r.whoId != nil && r.dayKey.hasPrefix(mk) {
-            counts[r.whoId!, default: 0] += 1
-        }
-        return counts.map { (id: $0.key, name: DB.member($0.key)?.name ?? "成员", count: $0.value) }
-            .sorted { $0.count > $1.count }
     }
 
     /// 190 第一扇门纪念: 滚到最早记录的结语行
@@ -3464,7 +3245,6 @@ struct OutWinSheet: View {
     }
 }
 
-// ---------- 1045 感谢清单 (本地按月留存, 可生成感谢卡文本) ----------
 // ---------- 808 记录空态的「真实数据从这里开始」引导卡 ----------
 /// 从示例条目点进来。这一页只说三件能核的事: ① 刚才那三条是示例不是数据; ② 记录存在门锁自己的日志里;
 /// ③ 把它变成真行要做的动作。两个按钮都是真出口: 「在本页重新读取」调 RecordsView 既有的 fetch 链

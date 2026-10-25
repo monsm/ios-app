@@ -2642,7 +2642,7 @@ struct MembersView: View {
                             .tint(DS.Palette.accent)
                     }
                 } footer: {
-                    Text("每月全家一起备份 4 次, 备份卫士徽章就稳了。")
+                    Text("每月全家一起备份 4 次, 就不会丢东西。")
                 }
                 Section("成员 (\(members.count))") {
                     if members.isEmpty {
@@ -2675,7 +2675,6 @@ struct MembersView: View {
                 MemberCenterView()
             }
             .sheet(item: $welcome) { m in
-                MemberWelcomeCard(member: m)   // 995 入伙欢迎卡
             }
             .task { reload() }
         }
@@ -2825,31 +2824,6 @@ struct MembersView: View {
     }
 }
 
-/// 995 入伙欢迎卡: 三步指路 + 一个去凭证页的动作; 不替用户动任何数据。
-private struct MemberWelcomeCard: View {
-    @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
-    let member: Member
-    var body: some View {
-        VStack(alignment: .leading, spacing: DS.Space.m) {
-            Text("欢迎 \(member.name) 入伙")   // 995 欢迎
-                .vkFont(.headline)
-            Text("下一步: ① 去凭证页给 TA 录一条凭证 ② 在凭证详情把「归属」改成 \(member.name) ③ 归属后「各就各位」与「入伙」徽章一起点亮")
-                .vkFont(.subheadline)
-                .foregroundStyle(DS.Palette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
-            HStack(spacing: DS.Space.s) {
-                Button("去凭证页") { dismiss(); app.requestRoute(.credentials) }
-                    .buttonStyle(SecondaryActionStyle(fullWidth: false))
-                Spacer(minLength: 0)
-                Button("知道了") { dismiss() }
-                    .buttonStyle(SecondaryActionStyle(fullWidth: false))
-            }
-        }
-        .padding(DS.Space.l)
-        .presentationDetents([.height(260)])
-    }
-}
 
 // ================= 动态 (message 页离线等价: 全部门锁日志汇总) =================
 struct MessagesView: View {

@@ -98,15 +98,6 @@ struct VK {
         )
     }
 
-    /// 分组线：默认是发丝色，带语义色时整根染过去。
-    @ViewBuilder private func rule(tint: Color?) -> some View {
-        let c = tint ?? hair
-        LinearGradient(colors: [.clear, c, c, .clear],
-                       startPoint: .leading, endPoint: .trailing)
-            .frame(height: 0.7)
-            .padding(.bottom, DS.Space.m)
-            .accessibilityHidden(true)
-    }
 
     /// 分区标题。**21 处 `SectionTitle` 全走这里。** legacy 分支逐字搬自原实现。
     func sectionTitle(text: String, count: Int?) -> AnyView {

@@ -5,7 +5,6 @@
 import SwiftUI
 import UIKit
 import AVFoundation
-import VisionKit
 import CryptoKit
 import Combine
 
@@ -295,7 +294,7 @@ struct MaskedDigits: View {
 
     /// 849 双击/转子动作: 拷贝整条明文 (与详情页「复制」同一条 405 通路)
     private func copyAll() {
-        ClipboardCare.copySecret(value, via: "密码明文")
+        UIPasteboard.general.string = value
         app.showToast("已复制")
     }
 
@@ -440,7 +439,7 @@ struct CodeBigCard: View {
                 .frame(minHeight: DS.Hit.min)
                 .accessibilityLabel(revealed ? "重新遮挡码值" : "完整显示码值")
                 Button {
-                    ClipboardCare.copySecret(revealed ? code : SecurityPolicy.halfMasked(code), via: "工作室 TOTP")   // 405
+                    UIPasteboard.general.string = revealed ? code : SecurityPolicy.halfMasked(code)   // 405
                     app.showToast(revealed ? "码值已复制" : "已复制遮半码值 (完整值先点「完整显示」)")
                 } label: {
                     Label("复制", systemImage: "doc.on.doc")
@@ -481,39 +480,6 @@ struct CodeBigCard: View {
     }
 }
 
-/// 522 相机取号 (VisionKit 扫二维码/数据矩阵; 结果抽数字串, 失败回退人工输入)
-struct CodeScanSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    let onResult: (String) -> Void
-    var body: some View {
-        NavigationStack {
-            scanner
-                .navigationTitle("扫一扫")   // 522 扫一扫
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar { ToolbarItem(placement: .cancellationAction) {
-                    Button("关闭") {
-                        onResult("")
-                        dismiss()
-                    }
-                } }
-        }
-    }
-    private var scanner: some View {
-        // 522 相机取号: 走共享的 UIKit 扫码包装 (docs/API-VERIFY.md:44 那条退路), 不再自造形状。
-        DataScannerView { results in
-            for r in results {
-                if let s = r.codeString {
-                    let digits = s.filter { $0.isNumber }
-                    onResult(digits)
-                    dismiss()
-                    return
-                }
-            }
-            onResult("")
-            dismiss()
-        }
-    }
-}
 
 // 卡片面 + 308 4 位分段 (全 App 只此一份)
 extension View {
@@ -666,7 +632,6 @@ struct PwdStudio: View {
     //   没有可用的滚动容器与锚点, 那句写出来就是假话; 而步间真拦已经保证坏值出不了当前这一步,
     //   所以"停在当前步 + 红字 + 字段下方一行"就是这一版能兑现的全部, 不多许。
     @State private var errorField: String = ""
-    @State private var showScan = false
     // 301 剪贴板来源条
     @State private var clipSource = false
     @State private var showDraftBar = true
@@ -686,7 +651,6 @@ struct PwdStudio: View {
                 NavigationStack { form }
             }
         }
-        .sheet(isPresented: $showScan) { CodeScanSheet { onScanResult($0) } }
     }
 
     private var form: some View {
@@ -939,7 +903,6 @@ struct PwdStudio: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             Button {
-                showScan = true
             } label: {
                 Label("扫一扫取号", systemImage: "qrcode.viewfinder")   // 522 扫一扫取号
             }
@@ -1393,7 +1356,6 @@ struct TempCodeStudio: View {
     @State private var to = Date().addingTimeInterval(3600)   // 同上: 默认窗口 1 小时, 与第一个快捷档一致
     @State private var owner: String? = nil
     @State private var note = ""
-    @State private var showScan = false
     @State private var clipSource = false
     @State private var result: LedgerPwd?
     @State private var busy = false
@@ -1416,7 +1378,6 @@ struct TempCodeStudio: View {
         .navigationTitle(result != nil && MemberHub.elderMode ? "口述卡" : "临时码")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("关闭") { dismiss() } } }
-        .sheet(isPresented: $showScan) { CodeScanSheet { onScan($0) } }
     }
 
     // ---------- 添加 (515 单页三段, 表单体验 516/520/522/523) ----------
@@ -1482,7 +1443,6 @@ struct TempCodeStudio: View {
                         .buttonStyle(.bordered)
                         .frame(minHeight: DS.Hit.min)
                         .accessibilityLabel("本地生成 6 位随机码")   // 173 本地生成
-                        Button("扫一扫") { showScan = true }   // 522 扫一扫
                             .vkFont(.caption, weight: .medium)
                             .buttonStyle(.bordered)
                             .frame(minHeight: DS.Hit.min)
@@ -1715,7 +1675,7 @@ struct TempCodeStudio: View {
                 if let r = result, !MemberHub.elderMode {
                     let text = StudioTools.oneLine(p: r, lockName: lockName, value: r.pwd)
                     Button {
-                        ClipboardCare.copySecret(text, via: "一句话口令")   // 405 含口令明文
+                        UIPasteboard.general.string = text   // 405 含口令明文
                         app.showToast("一句话口令已复制")   // 329 一句话口令已复制
                     } label: {
                         VStack(spacing: DS.Space.xs) {
@@ -1862,7 +1822,6 @@ struct PwdDetailStudio: View {
     @State private var showCard = false
     @State private var renewing = false
     @State private var copiedFlash = false   // 11 复制按钮形变
-    @ObservedObject private var cap = ScreenCaptureWatch.shared   // 374 录屏遮罩 + 336 截图计数
     // 336 用的"本页打开时刻"。写成带初值的 `let`：它不进成员初始化器，
     // 所以 `PwdDetailStudio(alias:)` 这些既有调用点一个字都不用改。
     let openedAt = Date().timeIntervalSince1970
@@ -1914,46 +1873,9 @@ struct PwdDetailStudio: View {
                         }
                         .listRowBackground(DS.Palette.warn.opacity(0.06))
                     }
-                    // 336 截图警示 (银行 App 水印那一形态的本地替代 —— 本仓零位图资产, 打不了水印):
-                    // 监的是 `UIApplication.userDidTakeScreenshotNotification` (公开 API, 见 docs/API-VERIFY.md)。
-                    // 比的是"本页打开之后有没有发生过一次截图"，**不说"你的密码已被拍走"**：
-                    // 截图 API 只报"发生过", 不保证拍到的就是这一屏 (可能拍完才切过来)。
-                    if p.pwd != nil && cap.screenshotAt > openedAt {
-                        Section {
-                            HStack(spacing: DS.Space.s) {
-                                // 2026-10-14 走查: shotNotice 是 String 常量 ⇒ `Label(String, systemImage:)`
-                                // 走 StringProtocol 重载, 不解析 Markdown, 那句「码值**可能**已进那张图片」
-                                // 会把两颗星画在告警条上。改用 ViewBuilder 形态喂 mdText。
-                                Label {
-                                    mdText(ScreenCaptureWatch.shotNotice)
-                                } icon: {
-                                    Image(systemName: "camera.viewfinder")
-                                }
-                                .vkFont(.caption)
-                                .foregroundStyle(DS.Palette.warn)
-                                .fixedSize(horizontal: false, vertical: true)
-                                Spacer(minLength: 0)
-                                Button("换码") { showEdit = true }
-                                    .vkFont(.caption, weight: .medium)
-                                    .buttonStyle(.bordered)
-                                    .frame(minHeight: DS.Hit.min)
-                                    .accessibilityLabel("改造该密码")   // 306 改造该密码
-                            }
-                        }
-                        .listRowBackground(DS.Palette.warn.opacity(0.06))
-                    }
                     Section("码值 (默认打码, 点位揭示)") {
                         if let v = p.pwd {
-                            // 374: 采集进行中连"点一下揭示"都不给 —— 遮的是明文那一格, 不整页替换,
-                            // 整页黑掉会让人以为 App 坏了, 反而看不出是录屏在挡
-                            if cap.recording {
-                                Label(ScreenCaptureWatch.notice, systemImage: "record.circle")
-                                    .vkFont(.caption)
-                                    .foregroundStyle(DS.Palette.warn)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            } else {
                                 MaskedDigits(value: v, big: true)
-                            }
                         } else {
                             Text("当时未留存明文, 可在锁上核对后回填")
                                 .vkFont(.caption)
@@ -1963,7 +1885,7 @@ struct PwdDetailStudio: View {
                         if let v = p.pwd {
                             HStack(spacing: DS.Space.xs) {
                                 Button {
-                                    ClipboardCare.copySecret(v, via: "密码明文")   // 405
+                                    UIPasteboard.general.string = v   // 405
                                     app.showToast("已复制")
                                     // 11 形变: 按下 1.2 秒内按钮变成"已复制 + 对勾", 给一次按下确认
                                     withAnimation(DS.Motion.standard) { copiedFlash = true }
@@ -1990,7 +1912,7 @@ struct PwdDetailStudio: View {
                                 HStack(spacing: DS.Space.s) {
                                     ForEach(Array(v.chunked(4).enumerated()), id: \.offset) { i, c in
                                         Button {
-                                            ClipboardCare.copySecret(c, via: "密码分段")   // 405 分段也是口令明文的一部分
+                                            UIPasteboard.general.string = c   // 405 分段也是口令明文的一部分
                                             app.showToast("已复制第 \(i * 4 + 1)~\(min(i * 4 + 4, v.count)) 位")
                                         } label: {
                                             Text(c)
@@ -2844,7 +2766,6 @@ private extension Double {
 
 // ================= OTP 工坊 (171/337 ⚠ 时窗细条 / 340 双码 / 341 otpauth / 343 独立组 / 345 参数小字 / 346 静态备份码) =================
 struct OtpStudio: View {
-    @ObservedObject private var cap = ScreenCaptureWatch.shared   // 374: 当前码与下一码都是可用口令
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
     // 337/171: `tick` 是**刷新驱动器**——每秒写它一次就够 (写 @State 即让本 view 重算 body,
@@ -3129,7 +3050,7 @@ struct OtpStudio: View {
                 // 338 单击即复制 (拍板: **不改行的点击语义**) —— 只把码值这一块做成整块可点的复制区，
                 // 行本身不当事件源；下面那个「复制」按钮保留，给 VoiceOver 和不想瞄准的人。
                 Button {
-                    ClipboardCare.copySecret(now, via: "独立 TOTP")   // 405 同一出口
+                    UIPasteboard.general.string = now   // 405 同一出口
                     app.showToast("已复制当前码")   // 338 已复制当前码
                 } label: {
                     HStack(spacing: DS.Space.xs) {
@@ -3154,7 +3075,7 @@ struct OtpStudio: View {
             WindowBar(totalSec: max(e.period, 1), label: "当前/下一时窗并排 · " + CredentialOrg.totpParams(e))
             HStack(spacing: DS.Space.xs) {
                 Button {
-                    ClipboardCare.copySecret(now, via: "独立 TOTP")   // 405
+                    UIPasteboard.general.string = now   // 405
                     app.showToast("已复制当前码")
                 } label: {
                     Label("复制", systemImage: "doc.on.doc")

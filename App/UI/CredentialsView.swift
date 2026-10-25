@@ -25,7 +25,6 @@ struct CredentialsView: View {
     @State private var otpWin = ""
     @State private var otpBig = false   // 885 凭证大字模式: 双击或开关切大字号对照抄写""
     @State private var otpPeek = false  // 375 磨砂挡片长按移开中 (松手复位)
-    @ObservedObject private var cap = ScreenCaptureWatch.shared   // 374 录屏遮罩
 
     // ---------- 包6 列表组织 ----------
     @State private var seg: Int = 0          // 524 类型分段: 0 全部 / 1 密码 / 2 指纹 / 3 临时码
@@ -1351,7 +1350,7 @@ struct CredentialsView: View {
         .accessibilityActions {
             if let v = hit.pwd?.pwd {
                 Button("拷贝密码明文") {   // 849 拷贝密码明文
-                    ClipboardCare.copySecret(v, via: "密码明文")
+                    UIPasteboard.general.string = v
                     app.showToast("已复制")
                 }
             }
@@ -1369,7 +1368,7 @@ struct CredentialsView: View {
         // 编辑态整行单击已归勾选, 双击里再判一次 editMode, 两种模式不抢手势
         .onTapGesture(count: 2) {
             if !editMode, let v = hit.pwd?.pwd {
-                ClipboardCare.copySecret(v, via: "密码明文")
+                UIPasteboard.general.string = v
                 app.showToast("已复制")
             }
         }
@@ -2037,7 +2036,7 @@ struct CredentialsView: View {
     private var otpGenRow: some View {
         HStack(spacing: DS.Space.s) {
             // 374: 采集进行中不把码排出来, 大字模式也拿不到明文 (刻意只换文本, 不整页遮黑)
-            Text(cap.recording ? "录屏中已隐去" : otpPwd)   // 374 录屏中已隐去
+                        Text(otpPwd)
                 // 885 大字模式: 开关 (kf_ax_bigotp) 或双击切换, 等宽数字防跳 (231)
                 .vkFont((DB.store.getBool("kf_ax_bigotp") || otpBig) ? .largeTitle.weight(.semibold).monospacedDigit() : .title3.weight(.semibold).monospacedDigit())
                 // 342 换码微动效: 值换掉时逐位滚过去 (与 207 电量数字滚动同一个 contentTransition(.numericText()))。
@@ -2076,7 +2075,7 @@ struct CredentialsView: View {
             .buttonStyle(.borderedProminent)
             .disabled(isBusy)
             Button {
-                ClipboardCare.copySecret(otpPwd, via: "临时码卡片")   // 405
+                UIPasteboard.general.string = otpPwd   // 405
                 app.showToast("已复制")
             } label: {
                 Image(systemName: "doc.on.doc")
@@ -2125,7 +2124,7 @@ struct CredentialsView: View {
         DB.saveOtpIdx(mac, OtpIdx(idx: idx, invalidTime: win))
         otpPwd = pwd
         otpWin = win
-        ClipboardCare.copySecret(pwd, via: "生成临时码")   // 405
+        UIPasteboard.general.string = pwd   // 405
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         return true
     }

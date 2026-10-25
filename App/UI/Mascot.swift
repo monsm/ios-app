@@ -8,45 +8,7 @@
 //     所以这张表只剩一章: 帮助手册整本删了, 但成员页仍在用它, 删表就等于删成员页的教程。
 import SwiftUI
 
-// ---------- 小管家形象 (841): SF Symbols 组合, 纯矢量贯穿全部空态 ----------
-struct DemoMascot: View {
-    var size: CGFloat = 56
-    var body: some View {
-        ZStack {
-            // 圆座: 品牌渐变玻璃
-            Circle()
-                .fill(DS.heroGradientSafe)
-                .frame(width: size, height: size)
-                .overlay(Circle().strokeBorder(DS.heroFg.opacity(0.25), lineWidth: 1))
-            // 脸: 两个眼睛 + 微笑 (纯符号组合, 无图片资源)
-            HStack(spacing: size * 0.14) {
-                Circle().fill(DS.heroFg).frame(width: size * 0.09)
-                Circle().fill(DS.heroFg).frame(width: size * 0.09)
-            }
-            .offset(y: -size * 0.06)
-            Image(systemName: "lock.shield")
-                .font(.system(size: size * 0.30, weight: .medium))
-                .foregroundStyle(DS.heroFg.opacity(0.9))
-                .offset(y: size * 0.16)
-        }
-        .accessibilityLabel("小管家")
-        .accessibilityHidden(true)
-    }
-}
 
-/// 空态统一小管家顶饰 (841): 放在各 Tab 空态图标上方形成记忆点
-struct EmptyMascotHeader: View {
-    var caption: String = "小管家在这"
-    var body: some View {
-        VStack(spacing: DS.Space.xs) {
-            DemoMascot(size: 56)
-            Text(caption)
-                .vkFont(.caption2)
-                .foregroundStyle(DS.Palette.textSub)
-        }
-        .accessibilityElement(children: .ignore)
-    }
-}
 
 // ---------- 成员中心「给家人开门禁」四步 (973) ----------
 // 原先整本说明书住在这里, 帮助页删掉后只留成员页真正读的那一章。

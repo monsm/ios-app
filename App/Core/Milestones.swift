@@ -62,9 +62,7 @@ enum Milestones {
     // ---------- 1007 整理计数 ----------
     static var organizeTotal: Int { DB.store.getInt("kf_organize_count") }
     @discardableResult
-    static func recordOrganize() -> Bool {
-        let n = organizeTotal + 1
-        DB.store.set("kf_organize_count", n)
-        return false   // 致谢弹窗随徽章引擎删除, 恒不弹
+    static func recordOrganize() {
+        DB.store.set("kf_organize_count", organizeTotal + 1)
     }
 }

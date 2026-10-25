@@ -32,7 +32,7 @@ extension Color {
 /// ① 拼接出来的 (`Text("a" + "b")`)、② 三元表达式的结果、③ 存在数据结构里当 `String` 用
 /// (`Text(entry.detail)`), 就走 `Text(_: some StringProtocol)` —— **不解析 Markdown**,
 /// 用户看到的是原样的两颗星 `**`。2026-10-14 走查在 `ChangelogView` 的条目详情、
-/// `RecoveryTip.detail`、`ScreenCaptureWatch.shotNotice` 与设置页两处脚注上都踩到了这个形状。
+/// `RecoveryTip.detail` 与设置页两处脚注上都踩到了这个形状。
 ///
 /// 这里**不引** `AttributedString(markdown:)`: 本仓文案里 `锁管家_` / `demo_` 这类下划线是正常字符,
 /// 交给 CommonMark 会被当成强调符吃掉。自己按 `**` 切段反而可预测 —— 只有成对的 `**` 会变粗,
@@ -371,8 +371,6 @@ enum DS {
         // 语义角色不变, 只是明端向纯黑 / 暗端向纯白再走一步 (hairline 可辨 1.2:1 余量放大);
         // 页面继续引用 hairline/textSub 不感知, 只有这两组"增强"变体不同。
         private static let hairlineHC = Color.adaptive(0x8A7D6A, 0x6E6454)
-        private static let textSubHC  = Color.adaptive(0x443D32, 0xD4C9B6)
-        @MainActor static var hairlineStrong: Color { Appearance.highContrast ? hairlineHC : hairline }
 
         // ---------- 品牌主题表 (idea 31: 靛蓝/墨绿/琥珀) ----------
         // 结构: [主题: [明暗: [角色: hex]]]。tools/contrast.js 机检本表:
@@ -1071,7 +1069,6 @@ struct GuidedEmptyView: View {
             // 903 空态装饰图形挂素颜模式 (kf_plain)，见 DS.Metric.emptyMascot：
             // 不再造第二个"关插画"开关，理由写在那条令牌的注释里。
             if mascot, DS.Metric.emptyMascot {
-                EmptyMascotHeader()
             }
             ContentUnavailableView {
                 Label(title, systemImage: systemImage)

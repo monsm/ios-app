@@ -287,14 +287,6 @@ struct UnlockDial: View {
     private var isBusy: Bool {
         state == .connecting || state == .opening
     }
-    private var tone: ToneColor {
-        switch state {
-        case .idle, .connecting, .opening: return .accent
-        case .success: return .ok
-        case .doubleVerify: return .warn
-        case .failed: return .danger
-        }
-    }
     /// 241 中心三态符号: 锁闭(未就绪)/开启(就绪)/警告(失败·双验), 过程态另有信号/旋转
     private var iconName: String {
         switch state {

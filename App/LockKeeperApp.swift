@@ -39,6 +39,15 @@ enum Theme {
 
 // ---------- 全局状态 ----------
 @MainActor
+/// 一张时刻卡的数据 (队列元素)。原本住在 MomentLayer.swift, 该文件随本轮删减移除,
+/// 但异常退出 (758) 与保留期到期 (752) 两类提醒仍靠它排队 —— 数据形状留在这里。
+struct Moment: Identifiable, Equatable {
+    let id: String
+    let icon: String
+    let title: String
+    let subtitle: String
+}
+
 final class AppState: ObservableObject {
     @Published var devices: [Keychain] = []
     @Published var currentMac: String = ""
@@ -193,13 +202,6 @@ final class AppState: ObservableObject {
     @Published var failStreak = 0
     @Published var moment: Moment?
     @Published var writeReceipt: String?   // 包8/508 写入回执: 凭证保存成功后"已写入本机"对勾浮出
-    /// 344 粘贴建议条: 回前台瞬间从 ClipboardCare 取一次快照。状态源本身是内存态 (不落盘),
-    /// 这里只是把它喂给 View 树; 每次刷新都重跑 changeCount 比对, 所以"还在剪贴板"是可被证伪的说法。
-    // 517 粘贴来源条: 检测到剪贴板里有本 App 相关的敏感值时给出的提示条 (RootView 挂在非凭证页的顶部)。
-    // 为什么是全局一条而不是每个输入框一条: 清除动作要作用于**剪贴板**而不是某个字段,
-    // 每个字段一条会同时出现好几个"清除"按钮，指向的却是同一份剪贴板内容。
-    @Published var pasteSuggestion: ClipboardCare.Suggestion?
-    func refreshPasteSuggestion() { pasteSuggestion = ClipboardCare.suggestion }
     // ---------- 同屏"闲时提醒"预算 (乱源治理第 2 批) ----------
     /// 827: 本会话里已点过的快捷格。原先挂在 DeviceHomeView 的 @State 上，而"谁上台"要看全局排位 ——
     /// 视图层的 @State 预算读不到，所以这一位搬到状态源 (判据一条没改，只是换了存放处)。
@@ -314,8 +316,6 @@ final class AppState: ObservableObject {
         // 366/1013: delegate 此前只在"排月度备份提醒"那条路径里顺手装 (BackupStudioKit:108)
         // → 没开月备的用户点任何本地通知都没反应。分派器必须在启动就装好, 与是否开月备无关。
         UNUserNotificationCenter.current().delegate = UNDelegate.shared
-        // 374: 录屏采集监听在启动就装好 —— 遮罩只有在"进详情页之前"就知道状态才有意义
-        ScreenCaptureWatch.shared.start()
     }
 
     var current: Keychain? {
@@ -893,11 +893,6 @@ struct RootView: View {
             if let w = BackupStudio.selfCheckWarning {
                 selfCheckBanner(w)
             }
-            // 344 粘贴建议条: 回前台时本会话刚复制的凭证还在不在, 一条快捷条解决。
-            // 站凭证页时不挂 (人就在那, 不用指路); 文案里的秒数取自回前台那一刻的快照。
-            if let s = app.pasteSuggestion, app.tabSelection != 1 {
-                pasteSuggestionBar(s)
-            }
             if let t = app.toast {
                 ToastView(text: t)
                     .allowsHitTesting(false)   // 顶部提示不吃点击
@@ -1043,11 +1038,6 @@ struct RootView: View {
         .safeAreaInset(edge: .top, spacing: 0) {
             topBanners
         }
-        // 包18: 一次性时刻卡 (里程碑/周年/史诗徽章) 覆盖层
-        // 2026-10-16: 纪念卡层抽成 MomentLayer 修饰符 —— 和 bootstrapOnce 同一条理由：
-        // 它原先长在 mainTabsChrome 上，两个新变体不挂 mainTabsChrome 就会**静默收不到纪念时刻**。
-        // 一处实现、两处挂载，禁止复制第二份条件与 transition。
-        .modifier(MomentLayer())
         .task { bootstrapOnce() }
         // 2026-10-13 run 60: 原来把整段前后台收尾逻辑内联在这个闭包里, 与上下十几个
         // .onChange / .overlay 同处一个巨型 body 表达式 ⇒ 编译器报
@@ -1206,54 +1196,6 @@ struct RootView: View {
         .background(DS.Palette.warn.opacity(0.14))
     }
 
-    /// 344 粘贴建议条 —— 2026-10-13 run 63 从 body 内联块抽出: 该表达式报 type-check 超时。
-    @ViewBuilder
-    private func pasteSuggestionBar(_ s: ClipboardCare.Suggestion) -> some View {
-        HStack(spacing: DS.Space.xs) {
-            Image(systemName: "doc.on.clipboard")
-                .font(.system(size: DS.Icon.sm))
-                .accessibilityHidden(true)
-            Group {
-                switch s.stage {
-                case .waiting(let n):
-                    Text("刚复制的「\(s.label)」还在剪贴板 — \(n) 秒后自动清除")
-                case .cleared:
-                    Text("刚复制的「\(s.label)」到点已自动清除")
-                }
-            }
-            .vkFont(.caption)
-            .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: DS.Space.xs)
-            if case .waiting = s.stage {
-                // 517 立即清除: 走 ClipboardCare.clearNow() (唯一出口), 不在这里直接写 pasteboard
-                Button("立即清除") {   // 517 立即清除
-                    ClipboardCare.clearNow()
-                    withAnimation(DS.Motion.standard) { app.pasteSuggestion = nil }
-                }
-                Button("再复制一次") {
-                    ClipboardCare.recopy()
-                    withAnimation(DS.Motion.standard) { app.refreshPasteSuggestion() }
-                }
-            } else {
-                Button("回凭证页") {
-                    ClipboardCare.dismissSuggestion()
-                    app.requestRoute(.credentials)   // 377: 访客通道开着时这条快捷条同样不能白切进去
-                    withAnimation(DS.Motion.standard) { app.pasteSuggestion = nil }
-                }
-            }
-            Button("知道了") {
-                ClipboardCare.dismissSuggestion()
-                withAnimation(DS.Motion.standard) { app.pasteSuggestion = nil }
-            }
-        }
-        .vkFont(.caption, weight: .medium)
-        .foregroundStyle(DS.Palette.accentText)
-        .padding(.horizontal, DS.Space.l)
-        .padding(.vertical, DS.Space.s)
-        .background(DS.Palette.accent.opacity(0.12))
-        .transition(.move(edge: .top).combined(with: .opacity))
-    }
-
     /// 包8/508 写入回执浮层 —— 2026-10-13 run 63 从 body 内联块抽出:
     /// 巨型 body 里这一段报 "unable to type-check this expression in reasonable time"。
     @ViewBuilder
@@ -1292,7 +1234,6 @@ struct RootView: View {
                 // 靠近自动开锁 (AUTOOPEN): F0 前台门 + F1 进前台按档位刷面容 (挂起期静默)
                 AutoOpenController.shared.onForeground(mac: app.currentMac)
                 // 344 回前台才出快捷条 (344 的原话就是"回前台显示"), 顺带重算剩余秒数
-                app.refreshPasteSuggestion()
                 // 897 四季图标: 默认关。开着也只在"季节真的换了"时对齐一次 (年-季记号)，不每次回前台打扰
             }
         } else if phase == .background {
