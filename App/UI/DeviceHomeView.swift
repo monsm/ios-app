@@ -14,9 +14,6 @@ struct DeviceHomeView: View {
     @ObservedObject private var sense = LinkSense.shared
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var showAdd = false
-    /// 437 到期的备份复核钉。**不进 body 里算** —— duePins 要列一次目录 + 解两份偏好,
-    /// 而本页 body 随 BLE 状态频繁重算 (与 432 的 buildCover 同一条理由), 所以进页/刷新时算一次。
-    @State private var duePins: [BackupStudio.PinDue] = []
     @State private var refreshing = false
     @State private var showFocus = false      // 81 全屏专注开锁
     @State private var reconnectDot = false   // 91 回连静默小点
@@ -236,7 +233,6 @@ struct DeviceHomeView: View {
         // 进页 `.task` 与切锁后的自动刷新不算 (口径见 AppState.refreshStatusQuietly 与 :71 那条既有注释)。
         await app.refreshStatusQuietly(manual: manual)
         refreshing = false
-        duePins = BackupStudio.duePins()   // 437: 进页与手动刷新各算一次, 不在 body 里列目录
         // 764 图标行的红点 + 765 跨锁合并流: 同一批"要遍历各锁日志"的聚合放在一起算一次。
         // 都走本地缓存, 不主动连锁 —— 下拉刷新已经把 03 快照发出去了, 这里不再叠一轮 IO。
         let us = LockStats.usage()

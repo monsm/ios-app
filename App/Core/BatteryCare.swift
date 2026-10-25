@@ -13,58 +13,9 @@ struct BattSample: Codable {
     var pct: Int
 }
 
-/// 维护事件 (1014: 记录页"更换电池/保养完成"事件; 1028: 记录页专属过滤)
-struct MaintEvent: Codable {
-    var ts: Double      // Unix 毫秒
-    var kind: String    // "care" | "battery"
-    var note: String
-}
 
-/// 保养状态 (per-lock, kf_maint_<mac>)
-/// 自定义 decodeIfPresent: 与 Keychain 同理 — 后续加字段不能让旧 JSON 解码失败而静默清档
-struct CareState: Codable {
-    var lastCareAt: Double = 0      // 1013 90 天周期起点 (Unix 毫秒)
-    var yearlyBattDay: String = ""  // 1012 每年换电池提醒 "MM-dd" (空 = 未设)
-    var ekeyCheckAt: Double = 0     // 1025 应急钥匙半年检上次打卡
-    var ekeyRemindOn: Bool = false
-    var chargeAt: Double = 0        // 1034 充电记录 (可充电型号): 上次充电日期 (Unix 毫秒)
-    var chargeLenMin: Int = 0       // 1034: 充电时长 (分钟; 0 = 未记)
 
-    private enum CodingKeys: String, CodingKey {
-        case lastCareAt, yearlyBattDay, ekeyCheckAt, ekeyRemindOn, chargeAt, chargeLenMin
-    }
-    init() {}
-    init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        lastCareAt = try c.decodeIfPresent(Double.self, forKey: .lastCareAt) ?? 0
-        yearlyBattDay = try c.decodeIfPresent(String.self, forKey: .yearlyBattDay) ?? ""
-        ekeyCheckAt = try c.decodeIfPresent(Double.self, forKey: .ekeyCheckAt) ?? 0
-        ekeyRemindOn = try c.decodeIfPresent(Bool.self, forKey: .ekeyRemindOn) ?? false
-        chargeAt = try c.decodeIfPresent(Double.self, forKey: .chargeAt) ?? 0
-        chargeLenMin = try c.decodeIfPresent(Int.self, forKey: .chargeLenMin) ?? 0
-    }
-}
 
-/// 513/145 固件本地清单条目 (只记出处元数据, 不落包体 — zip 最大 8MB 不进 UserDefaults)
-struct FWLibItem: Codable, Identifiable {
-    var name: String
-    var version: String
-    var size: Int
-    var at: Double
-    var id: Double { at }
-}
-
-/// 147 升级历史
-struct DFURecord: Codable, Identifiable {
-    var mac: String
-    var name: String
-    var from: String
-    var to: String
-    var at: Double
-    var ok: Bool
-    var ms: Double?          // 147 本次升级耗时 (毫秒, 连接+传输+校验); 可选型 = 旧记录没有该键也照样能解出来
-    var id: Double { at }
-}
 
 enum BatteryCare {
     // ============ 122/113 五档电量 (满/高/中/低/空) ============
@@ -220,19 +171,6 @@ enum BatteryCare {
     }
 
 
-    // ============ 维护事件 (1014/1028) ============
-    static func events(_ mac: String) -> [MaintEvent] {
-        DB.store.get([MaintEvent].self, "kf_mevents_" + mac) ?? []
-    }
-
-    // ============ 保养状态 (1012/1013/1025) ============
-    /// 1022 保养周期档: 近 30 天开门 ≥60 次的锁算高频, 周期从 90 天缩到 60 天。
-    /// 这条判据此前有**三份** —— 通知侧 (本文件)、保养清单页的 `periodDays`、以及"保养已记录"那句
-    /// toast; 第三份把 90 写死在字面量里, 于是高频锁按屏幕说的等 90 天, 实际 60 天就被催。收成一处。
-    static func carePeriodDays(opens30d: Int) -> Int { opens30d >= 60 ? 60 : 90 }
-    static func care(_ mac: String) -> CareState {
-        DB.store.get(CareState.self, "kf_maint_" + mac) ?? CareState()
-    }
 
 
     // ============ 1019 固件服役天数 (诚实口径: 从本机首次读到该版本起算, 不猜锁端出厂时间) ============
@@ -245,9 +183,6 @@ enum BatteryCare {
         return s
     }
 
-    // ============ 513/145 固件本地清单 · 147 升级历史 ============
-    static var fwlib: [FWLibItem] { DB.store.get([FWLibItem].self, "kf_fwlib") ?? [] }
-    static var dfuHist: [DFURecord] { DB.store.get([DFURecord].self, "kf_dfu_hist") ?? [] }
 
     // ============ 1023 指纹头清洁: 锁日志最近 3 条连续为指纹告警 (type 13) ============
     static func fpCleanNeeded(_ mac: String) -> Bool {
@@ -318,7 +253,7 @@ enum CareSchedule {
             .requestAuthorization(options: [.alert, .sound, .badge])) ?? false
     }
 
-    /// 启动巡检 (app.onLaunch 调用): 1013 保养到期 / 1023 指纹头 / 校时 30 天 / 1024 防潮 / 146 固件
+    /// 启动巡检 (app.onLaunch 调用): 1023 指纹头 / 校时 30 天 / 1024 防潮
     static func refreshOnLaunch() async {
         guard !DB.keychains().isEmpty else { return }
         guard await requestAuth() else { return }
@@ -327,16 +262,6 @@ enum CareSchedule {
         let usage30 = await MainActor.run { LockStats.usage() }
         for kc in DB.keychains() {
             let name = LockArchive.displayName(kc)
-            // 1013 保养到期: 满周期起每天最多一条, 完成保养即停
-            let s = BatteryCare.care(kc.mac)
-            let opens30d = usage30.first(where: { $0.mac == kc.mac })?.opens30d ?? 0
-            let carePeriod = BatteryCare.carePeriodDays(opens30d: opens30d)
-            if s.lastCareAt > 0, now - s.lastCareAt >= Double(carePeriod) * 86400 * 1000,
-               DB.store.getString("kf_care_notify_" + kc.mac) != Milestones.dayKey() {
-                DB.store.set("kf_care_notify_" + kc.mac, Milestones.dayKey())
-                await notifyNow(id: "m4.care." + kc.mac, title: "保养到期",
-                                body: "「\(name)」距上次保养已满 \(carePeriod) 天, 找个方便的时间清洁锁体吧。")
-            }
             // 1024 潮湿位: 场所含湿区关键词 ∧ 6–7 月梅雨 → 每 7 天一条
             let place = LockArchive.meta(kc.mac).place
             let damp = ["浴室", "户外", "院", "阳台", "天台"].contains { place.contains($0) }
@@ -369,69 +294,8 @@ enum CareSchedule {
                 }
             }
         }
-        // 146 固件提醒: 本地固件清单里有比锁内更新的版本。1038: 夜间不丢 → 挂白天 08:00;
-        // 置位不再"只此一次"— 未升级期间每 30 天复提醒 (与校时 30 天同节奏)
-        if fwRemindOn {
-            for kc in DB.keychains() where !kc.fw.isEmpty {
-                for item in BatteryCare.fwlib {
-                    guard let v = _FWVersion(item.version), _FWVersion(kc.fw) != nil,
-                          BatteryCare.versionLt(kc.fw, item.version) else { continue }
-                    let lastN = DB.store.get(Double.self, "kf_fw_notify_at_" + v) ?? 0
-                    if now - lastN > 30 * 86400 * 1000 {
-                        DB.store.set("kf_fw_notify_at_" + v, now)
-                        await notifyNow(id: "m4.fw." + v, title: "有固件可升级",
-                                        body: "本地固件包 v\(item.version) 比锁内 v\(kc.fw) 新, 本版 App 已不提供固件升级入口, 请用厂商工具升级。",
-                                        dayDeliver: true)
-                    }
-                }
-            }
-        }
-        // 1012 年度换电日 / 1025 应急钥匙半年检: 日历型提醒重建
-        await rescheduleCalendar()
     }
 
-    /// 日历型提醒: 统一 10:00 送达 (1038 白天送达), 年/半年重复
-    static func rescheduleCalendar() async {
-        let center = UNUserNotificationCenter.current()
-        let ids = DB.keychains().flatMap { ["m4.ybatt." + $0.mac, "m4.ekey." + $0.mac] }
-        guard !ids.isEmpty else { return }
-        center.removePendingNotificationRequests(withIdentifiers: ids)
-        guard await requestAuth() else { return }
-        let cal = WeekCal.gregorian
-        for kc in DB.keychains() {
-            let s = BatteryCare.care(kc.mac)
-            // 1012 每年换电池提醒
-            if s.yearlyBattDay.count == 5 {
-                let p = s.yearlyBattDay.split(separator: "-").compactMap { Int($0) }
-                if p.count == 2, p[0] >= 1, p[0] <= 12, p[1] >= 1, p[1] <= 31 {
-                    var comp = DateComponents(month: p[0], day: p[1])
-                    comp.hour = 10
-                    let c = UNMutableNotificationContent()
-                    c.title = "年度换电日"
-                    c.body = "今天是「\(LockArchive.displayName(kc))」的年度换电日, 换完顺手记录到电池档案。"
-                    c.sound = .default
-                    try? await center.add(UNNotificationRequest(
-                        identifier: "m4.ybatt." + kc.mac, content: c,
-                        trigger: UNCalendarNotificationTrigger(dateMatching: comp, repeats: true)))
-                }
-            }
-            // 1025 应急钥匙半年检 (从上次打卡起算 182 天; 从未打卡则从开启日算)
-            if s.ekeyRemindOn {
-                let base = s.ekeyCheckAt > 0 ? s.ekeyCheckAt : Date().timeIntervalSince1970 * 1000
-                var due = Date(timeIntervalSince1970: base / 1000 + 182 * 86400)
-                if due < Date() { due = cal.date(byAdding: .day, value: 1, to: Date()) ?? due }
-                var comp = cal.dateComponents([.year, .month, .day], from: due)
-                comp.hour = 10
-                let c = UNMutableNotificationContent()
-                c.title = "应急钥匙半年检"
-                c.body = "半年到了 — 确认「\(LockArchive.displayName(kc))」的应急钥匙还在老地方, 到维护页打卡。"
-                c.sound = .default
-                try? await center.add(UNNotificationRequest(
-                    identifier: "m4.ekey." + kc.mac, content: c,
-                    trigger: UNCalendarNotificationTrigger(dateMatching: comp, repeats: false)))
-            }
-        }
-    }
 }
 
 /// "5.2.9" → 可比较字符串; 非法版本返回 nil (146 提醒只对两段都能解析的版本生效)

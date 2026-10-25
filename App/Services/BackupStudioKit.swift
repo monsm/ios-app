@@ -130,7 +130,7 @@ enum BackupStudio {
         "kf_mborrow_", "kf_mclaim_", "kf_house_win_", "kf_offboard_",   // 467 的 kf_mtransfer 族已随待接受区一起撤掉
         "kf_rnote_", "kf_rflag_", "kf_rflt_",                       // 186 备注 / 188 标旗 / 记录筛选视图
         "kf_cseq_", "kf_cstar_", "kf_calias_display", "kf_cbin_", "kf_cdisrea_", "kf_clists_", "kf_cqueue_",
-        "kf_bk_note", "kf_bk_pin", "kf_bk_pin_seen",                 // 433 备注 / 437 复核钉
+        "kf_bk_note",                 // 433 备注
         // 2026-10-13 对抗式排查: TOTP/静态口令族漏收。三种导入模式都会写这四个族
         //   · BackupKit.restoreAll :375-376 → otpStatus_ / otpIdx_
         //   · BackupStudioKit :740/:765 → kf_cotp_t_ (TOTP 种子) 与 kf_cotp_s_ (静态口令)
@@ -952,69 +952,6 @@ enum BackupStudio {
         }
     }
 
-    // ================= 437 备份复核钉 =================
-    // 备份的失效方式是"到要用的那天才发现用不了"，所以这里钉的是**复核日期**而不是提醒文案。
-    // 三条口径:
-    //   1. 键一律用**真实文件名** (433 的别名只改显示、可能被人改), 显示时才换成别名;
-    //   2. 只列目录里真存在的文件 —— 文件被删掉而键残留时, 提醒不能再指向一个不存在的东西;
-    //   3. "知道了"记的是**那一个复核日**, 把日期往后挪一钉就会重新催 (挪了日期还装看不见是不成立的)。
-    static let pinKey = "kf_bk_pin"
-    static let pinSeenKey = "kf_bk_pin_seen"
-    struct PinDue { let file: String; let day: String; let overDays: Int }
-    static func pins() -> [String: String] { DB.store.get([String: String].self, pinKey) ?? [:] }
-    static func setPin(_ file: String, _ day: String) {
-        var m = pins()
-        if day.isEmpty { m.removeValue(forKey: file) } else { m[file] = day }
-        DB.store.setCodable(pinKey, m)
-    }
-    static func dayDate(_ s: String) -> Date? {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "yyyy-MM-dd"
-        f.timeZone = TimeZone.current
-        return f.date(from: s)
-    }
-    static func dayString(_ d: Date) -> String {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "yyyy-MM-dd"
-        f.timeZone = TimeZone.current
-        return f.string(from: d)
-    }
-    /// 到日 (含) 之后每天都算到期, 因为"错过一天就再也不提"只会让备份更晚被发现坏掉
-    static func duePins(now: Date = Date()) -> [PinDue] {
-        let cal = WeekCal.gregorian
-        let today = cal.startOfDay(for: now)
-        let live = Set((try? FileManager.default.contentsOfDirectory(at: dir,
-            includingPropertiesForKeys: nil))?.map { $0.lastPathComponent } ?? [])
-        let seen = DB.store.get([String: String].self, pinSeenKey) ?? [:]
-        var out: [PinDue] = []
-        for (file, day) in pins() where live.contains(file) && seen[file] != day {
-            guard let d = dayDate(day) else { continue }        // 存坏的日期串不猜, 直接不提
-            let pin = cal.startOfDay(for: d)
-            guard pin <= today else { continue }
-            out.append(PinDue(file: file, day: day, overDays: cal.dateComponents([.day], from: pin, to: today).day ?? 0))
-        }
-        return out.sorted { $0.day < $1.day }
-    }
-    static func markPinSeen(_ file: String, _ day: String) {
-        var m = DB.store.get([String: String].self, pinSeenKey) ?? [:]
-        m[file] = day
-        DB.store.setCodable(pinSeenKey, m)
-    }
-    /// 显示名: 433 别名第一行优先, 没有别名就用真实文件名 (提醒里必须能认出是哪一份)
-    static func pinLabel(_ file: String) -> String {
-        let note = DB.store.get([String: String].self, "kf_bk_note")?[file] ?? ""
-        let alias = note.split(separator: "\n").first.map(String.init) ?? ""
-        return alias.isEmpty ? file : alias
-    }
-    static func pinDayText(_ day: String) -> String {
-        guard let d = dayDate(day) else { return day }
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "zh_CN")
-        f.dateFormat = "M 月 d 日"
-        return f.string(from: d)
-    }
 }
 
 // ---------- UNUserNotificationCenter delegate 单例 (1018 通知点按 → 还原点 + 指路备份) ----------

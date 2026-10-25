@@ -287,16 +287,6 @@ enum RecordSearch {
                                    cred: "", alarm: false, care: false, failMsg: fe.msg))
                 }
             }
-            if includeCare {
-                for ce in BatteryCare.events(mac) {
-                    let isBatt = ce.kind == "battery"
-                    out.append(Rec(key: "c_" + String(Int(ce.ts)), mac: mac, lockName: lockName, type: 0,
-                                   typeName: isBatt ? "更换电池" : "保养完成 · " + ce.note,
-                                   idxRaw: 0, lockTime: 0,
-                           timeStr: Self.localStr(ce.ts / 1000), whoName: nil, kind: nil, provable: nil,
-                                   cred: "", alarm: false, care: true, failMsg: ""))
-                }
-            }
         }
         out.sort { $0.timeStr > $1.timeStr }   // 字符串序 = 时间倒序 (同格式)
         return out

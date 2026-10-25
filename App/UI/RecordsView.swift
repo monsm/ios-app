@@ -2280,22 +2280,6 @@ struct RecordsView: View {
             })
             merged.sort { $0.lockTimeStr > $1.lockTimeStr }
         }
-        // 1014/1028 (包4): 保养/换电手机侧维护事件合入时间线 (kf_mevents_, 与锁日志严格分开)
-        let cares = BatteryCare.events(mac)
-        if !cares.isEmpty {
-            merged.append(contentsOf: cares.enumerated().map { i, e in
-                let raw = UInt32(truncatingIfNeeded: Int(e.ts) + i)
-                sideKey[raw] = "c_" + String(Int(e.ts))
-                return LogEntry(type: 0,
-                                typeName: e.kind == "battery" ? "更换电池" : "保养完成 · " + e.note,
-                                idx: 0,
-                                idxRaw: raw,
-                                lockTime: 0,
-                                lockTimeStr: failTimeStr(e.ts / 1000),
-                                body: "")
-            })
-            merged.sort { $0.lockTimeStr > $1.lockTimeStr }
-        }
         let cls = Attribution.classify(
             logs: merged,
             pwds: DB.listPwds(mac), fps: DB.listFps(mac),
