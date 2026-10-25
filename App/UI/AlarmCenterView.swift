@@ -774,10 +774,6 @@ struct AlarmCenterView: View {
                         .foregroundStyle(DS.Palette.textSub)
                         .lineLimit(1)
                 }
-                Text("间隔分布图需「告警发生时刻」与「处置时刻」成对积累后绘制 (占位)。")
-                    .vkFont(.caption2)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }

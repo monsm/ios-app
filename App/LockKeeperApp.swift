@@ -258,7 +258,7 @@ final class AppState: ObservableObject {
     @Published var pendingCredSelect: [Int]?
     // 包9/582 图表下钻: 统计页成员条 → 记录 Tab 按该成员过滤
     @Published var pendingRecordsMember: String?
-    /// 817 成员示例格直达建档: 记录页空态/过滤条的「添加成员」→ 成员中心到达即弹建档向导。
+    /// 817 建档向导直达: 记录页/其它入口置 pendingMemberAdd → 成员中心到达即弹建档向导。
     /// 与 pendingRecordsMember 同类: 只负责"到了那页之后做什么", 落地仍走同一个 Tab 门禁。
     @Published var pendingMemberAdd = false
     /// 317 指纹工坊无成员直达: "request"=已请人建档; 建完改写为新成员 id, FpStudio 取走预选

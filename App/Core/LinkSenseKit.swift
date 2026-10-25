@@ -689,13 +689,6 @@ struct LinkPrefsView: View {
             Section("连接统计") {
                 LabeledRow("连接成功率", LinkSense.successRateText(mac: mac))   // 70 连接成功率
                 LabeledRow("高成功率时段", LinkSense.bestHourHint())   // 539 高成功率时段
-                LabeledRow("占用类错误", "保守文案 — 协议占用细分未确证")   // 124 占用类错误
-                // 124 成功率需
-                // 539 成功率需
-                Text("成功率需 7 天握手数据积累, 当前为占位; 占用类与高成功率时段均备案 DEFERRED。")
-                    .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .navigationTitle("连接与预握手")

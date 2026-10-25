@@ -85,7 +85,6 @@ struct RecordsView: View {
     /// 原先这两个数取自 g.rows —— 那是筛过、截过的显示集, 于是每设一次过滤就在谎报"今天只有 3 条"。
     @State private var dayFullCount: [String: Int] = [:]
     @State private var dayLatest: [String: String] = [:]
-    @State private var showSampleGuide = false   // 808 示例条目点开的引导卡
 
     struct RowVM: Identifiable {
         var key: String
@@ -392,8 +391,6 @@ struct RecordsView: View {
             recordsCore
         }
         .sheet(isPresented: $showAdd) { AddDeviceView() }
-        // 808 示例条目点开的引导卡: "在本页重新读取"走的就是右上角那一条 fetch 链, 不另开第二条读取路径。
-        .sheet(isPresented: $showSampleGuide) { RecordsSampleGuideView(onFetch: { Task { await fetch() } }) }
         // 185/597 行备注弹窗: 前缘(597)与后缘(185)两个滑出都把目标装进 noteTarget, 共用这一只
         .alert("行备注 (最多 60 字)", isPresented: Binding(
             get: { noteTarget != nil },
@@ -2054,63 +2051,13 @@ struct RecordsView: View {
                     HStack(spacing: DS.Space.s) {
                         Button("连接设备") { app.requestRoute(.device) }
                             .buttonStyle(PrimaryActionStyle())
-                        Button("了解这里记什么") { showSampleGuide = true }
                             .buttonStyle(SecondaryActionStyle(fullWidth: false))
-                    }
-                    Text("下面三条是示例, 只说明真实记录读进来长什么样 · 点一条看怎么开始")   // 808 下面三条是示例
-                        .vkFont(.caption2)
-                        .foregroundStyle(DS.Palette.textSub)
-                        .fixedSize(horizontal: false, vertical: true)
-                    ForEach(0..<3, id: \.self) { i in
-                        sampleRow(i)
                     }
                     .vkFont(.footnote)
                 }
                 .padding(.vertical, DS.Space.m)
             }
         }
-    }
-    /// 808 示例条目: 灰阶 + 写明「示例」+ 点按弹引导卡。
-    /// 这一行**不是** RowVM 也不是 Rec ⇒ 不进过滤、不进 562 计数、不进统计与导出、不能被深链定位,
-    /// 它就是空态里画出来的三段形状; 三条的内容取真实存在的三种形状 (指纹开门 / 一次性密码开门 /
-    /// 键盘锁定告警, 动词表来自 RecordVerbs, 告警类只用 CAPABILITY 认过的 5 种之一), 不虚构事件类型。
-    /// 承诺的热区只有一个: 点一条 —— 没有写长按、左滑、拖动这些本页没有的手势。
-    private func sampleRow(_ i: Int) -> some View {
-        let clock = i == 0 ? "08:12" : (i == 1 ? "18:20" : "23:47")
-        let word = i == 0 ? "用指纹开了门" : (i == 1 ? "用一次性密码开门" : "键盘被锁定")
-        let alarm = i == 2
-        return Button { showSampleGuide = true } label: {
-            HStack(alignment: .top, spacing: DS.Space.m) {
-                Text(clock)
-                    .vkFont(.caption.monospacedDigit())
-                    .foregroundStyle(DS.Palette.textSub)
-                    .frame(width: 42, alignment: .trailing)
-                    .padding(.top, 2)
-                // 形状照抄真行 (普通圆点 / 告警菱形), 但颜色一律压灰: 示例不借 danger 报警色
-                Image(systemName: alarm ? "diamond.fill" : "circle.fill")
-                    .font(.system(size: alarm ? 10 : 8))
-                    .foregroundStyle(DS.Palette.hairline)
-                    .frame(width: 12)
-                    .padding(.top, 5)
-                    .accessibilityHidden(true)
-                Text("示例 · " + word)
-                    .vkFont(.subheadline)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .lineLimit(1)
-                Spacer(minLength: 0)
-            }
-            .padding(.horizontal, DS.Space.s)
-            .padding(.vertical, DS.Space.xs)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(DS.Palette.surfaceAlt,
-                        in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: DS.Radius.control)
-                .strokeBorder(DS.Palette.hairline, lineWidth: 0.5))
-            .contentShape(Rectangle())
-            .frame(minHeight: DS.Hit.min)
-        }
-        .buttonStyle(PlainButtonStyle())
-        .accessibilityLabel("示例条目 " + clock + " " + word + ", 点按看真实数据从哪里开始")   // 808 点按看真实数据从哪里
     }
 
     private var runningRow: some View {
@@ -2171,38 +2118,6 @@ struct RecordsView: View {
                         chip("__unknown", "无法识别 · 可认领")
                     }
                     if allRows.contains(where: { $0.care }) { chip("__care", "保养") }   // 1028
-                    // 817 成员示例头像: 一个成员都没有时，过滤条只剩"全部"一枚 = 死胡同
-                    // (用户不知道该去哪儿建成员)。给两枚**灰底示例**而不是造假成员数据:
-                    // 字样写死在占位里、不参与任何筛选，点它直达成员入口 (切到设置 Tab 并说明去哪)。
-                    if DB.members().isEmpty {
-                        ForEach(["妈", "我"], id: \.self) { sample in
-                            Button {
-                                app.pendingMemberAdd = true   // 817: 到了成员中心直接弹建档向导, 不再只指路
-                                app.pendingSettingsFocus = "members"   // §4.3: 上面写着"直达成员入口", 原来只到设置页根
-                                app.requestRoute(.settings)   // 2026-10-14 走查: 原直写 tabSelection, 访客态绕过 377 门禁
-                                // 收摊口径：同上 —— requestTab 走 requestRoute 唯一漏斗，
-                                // core/gauge 下换的是域浮层的内容本身而非"切到身后那个 Tab"，
-                                // legacy 下本页是 Tab 根没有层压着。两种情形都不需要 dismiss()。
-                                app.showToast("在「家人与钥匙」里添加成员")   // 817 家人与钥匙
-                            } label: {
-                                HStack(spacing: DS.Space.xs) {
-                                    Text(sample)
-                                        .vkFont(.caption2, weight: .medium)
-                                        .foregroundStyle(DS.Palette.textSub)
-                                        .frame(width: 20, height: 20)
-                                        .background(Circle().fill(DS.Palette.hairline.opacity(0.6)))
-                                    Text("添加成员")
-                                        .vkFont(.caption)
-                                        .foregroundStyle(DS.Palette.textSub)
-                                }
-                                .padding(.horizontal, DS.Space.s)
-                                .frame(minHeight: DS.Hit.min)
-                                .contentShape(Capsule())
-                            }
-                            .buttonStyle(PressableButtonStyle())
-                            .accessibilityLabel("还没有成员，去添加成员")   // 817 还没有成员
-                        }
-                    }
                 }
                 .padding(.vertical, DS.Space.xxs)
             }
@@ -3245,93 +3160,3 @@ struct OutWinSheet: View {
     }
 }
 
-// ---------- 808 记录空态的「真实数据从这里开始」引导卡 ----------
-/// 从示例条目点进来。这一页只说三件能核的事: ① 刚才那三条是示例不是数据; ② 记录存在门锁自己的日志里;
-/// ③ 把它变成真行要做的动作。两个按钮都是真出口: 「在本页重新读取」调 RecordsView 既有的 fetch 链
-/// (与右上角那枚刷新同一个函数, 不另开第二条读取路径), 「去设备页连接门锁」走 136 那条同一个 tab 出口。
-/// 这里不写"左滑 / 长按 / 自动同步"这类本页根本没有的热区。
-struct RecordsSampleGuideView: View {
-    @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
-    var onFetch: () -> Void = {}
-
-    var body: some View { vkBody.destined(.recordsSampleGuide) }
-    var vkBody: some View {
-        NavigationStack {
-            List {
-                Section {
-                    Text("刚才那三条是示例, 只说明真实记录读进来长什么样。这个家的一次开门、一次告警, 都会成为这样的一行。")
-                        .vkFont(.footnote)
-                        .foregroundStyle(DS.Palette.text)
-                        .fixedSize(horizontal: false, vertical: true)
-                } header: {
-                    Text("真实数据从这里开始")   // 808 真实数据从这里开始
-                }
-                Section {
-                    stepRow(1, "带着手机走到门锁前, 让蓝牙能连上它。")
-                    stepRow(2, "点下面的「在本页重新读取」, 或先到设备页连接门锁再读。")
-                    stepRow(3, "读到的开门与操作记录会替掉这三条示例, 按天分组排在最上面。")
-                } header: {
-                    Text("三步把记录读进来")
-                } footer: {
-                    Text("记录存在门锁自己的日志里, 只有连上锁去读才会出现在这一页; 示例条目是本机画出的形状, "
-                         + "不会进统计、导出与告警, 也不会替你编出任何一次开门。")
-                        .vkFont(.caption2)
-                        .foregroundStyle(DS.Palette.textSub)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Section {
-                    Button {
-                        dismiss()
-                        onFetch()
-                    } label: {
-                        Label("在本页重新读取", systemImage: "arrow.clockwise")
-                            .vkFont(.subheadline, weight: .medium)
-                            .foregroundStyle(DS.Palette.accentText)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .frame(minHeight: DS.Hit.min)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    Button {
-                        dismiss()
-                        app.requestRoute(.device)
-                    } label: {
-                        Label("去设备页连接门锁", systemImage: "lock.rotation")
-                            .vkFont(.subheadline, weight: .medium)
-                            .foregroundStyle(DS.Palette.accentText)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .frame(minHeight: DS.Hit.min)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    .accessibilityHint("切到设备页, 在那里连接这把锁")   // 136 切到设备页
-                } header: {
-                    Text("现在就试")
-                }
-            }
-            .navigationTitle("记录空态")   // 808 记录空态
-            .variantList()
-            .dsScreenBackground()
-            .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
-        }
-    }
-
-    private func stepRow(_ n: Int, _ text: String) -> some View {
-        HStack(alignment: .top, spacing: DS.Space.s) {
-            Text(String(n))
-                .vkFont(.caption.monospacedDigit(), weight: .semibold)
-                .foregroundStyle(DS.Palette.onAccent)
-                .frame(width: 20, height: 20)
-                .background(DS.Palette.accent, in: Circle())
-                .accessibilityHidden(true)
-            Text(text)
-                .vkFont(.footnote)
-                .foregroundStyle(DS.Palette.text)
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 0)
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("第 \(n) 步, " + text)
-    }
-}
