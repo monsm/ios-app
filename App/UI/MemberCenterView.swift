@@ -484,54 +484,13 @@ struct MemberRow: View {
 }
 
 // 457 首字符号头像 + 916 emoji 代号: 零图片资源 (本地绘制)
-// 994 右下角叠加"该成员已选的徽章"角标 (SF Symbol, 取徽章总表的 icon 字段, 守 219 零图片资源纪律)。
 // 影响面 (grep "MemberAvatar(" 全仓 12 处构造点): 本文件 8 处 + DeviceHomeView 4 处 (hero 那三枚叠放
-// 头像 / 临时码到期卡 / 生日卡 / 便签行), 全站头像因此都会长角标 —— 但只长在 kf_member_badge 里
-// 真存了那枚徽章的成员身上; 虚拟成员"访客"(__visitor)与概览头那个 id "g" 的占位档永远查不到角标 ——
 // 「授予徽章」那份菜单只遍历 DB.members() 的真实成员 (Sheets.swift 的 reload 就是这条数据源),
 // 这两个虚拟 id 进不了表, 所以它们的头像观感维持原样。
 struct MemberAvatar: View {
     let member: Member
     var size: CGFloat = 34
     var tint: Color? = nil   // 480: 传成员建档色时整个头像随该色; 不传维持原 accentText 口径
-
-    // ---------- 994 角标取数与档位 ----------
-    /// 994 已选徽章 id → 徽章总表里查到的那一枚; 两道都查到才算有一枚角标。
-    /// 查不到时头像走"只画头像本体"那条分支, 交回与加这段代码之前逐字同一条修饰符链 ——
-    /// 没选角标的成员观感零变化, 角标位始终由真实选定的那一枚徽章独占。
-    /// 降级口径 (依据 Milestones.heroFlairActive 那段 999 的判法): 素颜模式 (kf_plain) 关的是
-    /// **动效与装饰层** —— 999 关的是史诗徽章那圈流光边, 徽章本体照留; 设置页对素颜模式的承诺也是
-    /// "关闭庆祝与徽章动效"; DS.Metric.emptyMascot 关的是纯装饰的空态图形。
-    /// 这一枚角标是业主在「授予徽章」里亲手选定、进 kf_member_badge 且随备份走的**内容**,
-    /// 画法又是纯静态 (零粒子零流光), 所以素颜模式照显示 —— 否则详情页写着"已选角标 X"而头像上
-    /// 什么都没有, 就成了文案与画面对不上。高对比档同样照常显示: 底板与细边都是实色 (半透明叠字在
-    /// 高对比档属禁用), 走的正是 AccessibilityKit 里"高对比降为实底"那一条口径。
-    private var cornerBadge: Badge? {
-    }
-    /// 994 角标字号随头像档位, 只取 DS.Icon 现成档位 (xs 13 / sm 16 / md 20), 不自造字号:
-    /// 22–26 小头像走 xs, 28–39 标准行头像走 sm, 40 以上 (详情页 44) 走 md。
-    private var cornerGlyph: CGFloat {
-        if size >= 40 { return DS.Icon.md }
-        if size >= 28 { return DS.Icon.sm }
-        return DS.Icon.xs
-    }
-    /// 994 角标图: 徽章自己的 SF Symbol + 与头像同源的 tint 前景。
-    /// 底板与细边同色 (DS.Palette.surface) —— 细边那 1.5pt 的作用是把角标从头像那圈 base@0.5 外环上
-    /// "切"出来, 两者各留边界; 与 DeviceHomeView 锁位角标、AccessibilityKit 圆片是同一条抠边口径。
-    /// 对 VoiceOver 隐藏: 徽章名已由头像的 accessibilityLabel 一并合读, 屏幕上因此多出来的是图形而非第二个朗读元素。
-    private func badgeCornerMark(_ b: Badge, base: Color) -> some View {
-        Image(systemName: b.icon)
-            .font(.system(size: cornerGlyph, weight: .semibold))
-            .foregroundStyle(base)
-            .padding(DS.Space.xxs)
-            // 2026-10-14 材质统一批次: 这一处**故意留实底**。它是角标与头像外环之间的抠边片
-            // (下一行那圈同色 1.5pt 描边也是抠边用的, 两者必须同色才切得开), 玻璃的折射底会把
-            // 头像那圈环再映一遍 —— 换材质反而把"切出来"这件事糊掉。
-            // @layout-allow 面板实底
-            .background(DS.Palette.surface, in: Circle())
-            .overlay(Circle().strokeBorder(DS.Palette.surface, lineWidth: 1.5))
-            .accessibilityHidden(true)
-    }
 
     /// 457: 未显式传 tint 时读成员建档色 (480 建档色此前只有 480 自己消费, 头像一直恒为 accentText)。
     /// 994: 这段原先写在 body 里的 `var base = …; if … { base = … }` 提到独立计算属性 ——
@@ -544,28 +503,14 @@ struct MemberAvatar: View {
         return DS.Palette.accentText
     }
 
-    // 994: body 改成 @ViewBuilder, 是为了让"只画头像本体"那条分支交回原样的头像链, 有角标时才在外面
-    // 多挂一层 overlay。头像本体的 frame/ZStack/字号/命中区保持原样: `.overlay` 只叠在已算好的尺寸上
-    // (主视图的 frame 与它占的 spacing 都由头像自己那 `.frame(width:height:)` 说了算),
-    // 而角标又落在头像自己那 size×size 方块的右下角之内 (只用 alignment 定位, 因此越不出 frame、压不到相邻行文字)。
-    @ViewBuilder
     var body: some View {
-        let base = baseColor
-        if let b = cornerBadge {
-            // 994 有角标: overlay 挂在头像链的外面
-            avatarCircle(base: base, badge: b)
-                .overlay(alignment: .bottomTrailing) { badgeCornerMark(b, base: base) }
-        } else {
-            // 994 只画头像本体这一支: 与改动前逐字相同的那条链, overlay 整层缺席
-            avatarCircle(base: base, badge: nil)
-        }
+        avatarCircle(base: baseColor)
     }
 
     /// 457/916 头像本体 (994 抽出成函数只为给上面两条分支复用同一条链, 渲染内容与抽出前一致)
-    private func avatarCircle(base: Color, badge b: Badge?) -> some View {
+    private func avatarCircle(base: Color) -> some View {
         let e = MemberHub.ext(member.id)
         let ch = String(member.name.prefix(1))
-        // 994 a11y: 有角标时在头像标签尾部并读"角标 <徽章名>", 无角标时标签与改动前逐字相同。
         return ZStack {
             Circle()
                 .fill(base.opacity(0.14))
@@ -586,7 +531,7 @@ struct MemberAvatar: View {
         }
         .frame(width: size, height: size)
         .accessibilityLabel("头像 " + (member.name.isEmpty ? "成员" : member.name)
-                            + (b.map { ", 角标 \($0.title)" } ?? ""))
+                            )
     }
 }
 
@@ -653,15 +598,11 @@ struct MemberDetail360View: View {
         }
     }
 
-    // ---------- 档案区 (457/458/916/265/461/464/465/485/1017/653/480 · 994 角标) ----------
+    // ---------- 档案区 (457/458/916/265/461/464/465/485/1017/653/480) ----------
     private func archiveSection(_ m: Member) -> some View {
         let e = MemberHub.ext(m.id)
         let a = MemberHub.activity(m.id)
-        // 994 这一位已选的角标: 与头像右下角同一道取数 (存了 id 但徽章总表查不到 = 当没选, 两处口径一致)
         // 整句一行写完 (单行字面量不许跨行), 入口措辞照 Sheets.swift 成员管理列表的真实菜单项写。
-        let hintNone = "选法: 「设置 → 成员管理」里长按这一位成员的行 →「授予徽章」(那份菜单列的是本机已点亮的徽章), 选中的那枚就画在本成员头像的右下角。"
-        let hintSome = "角标已画在本成员头像的右下角, 图形就是这枚徽章自己的那枚符号。改选或撤下: 「设置 → 成员管理」里长按这一位成员的行 →「授予徽章」, 同一菜单里有「移除角标」。"
-        let cornerHint = corner == nil ? hintNone : hintSome
         return Section {
             VStack(alignment: .leading, spacing: DS.Space.s) {
                 HStack(spacing: DS.Space.s) {
@@ -694,22 +635,6 @@ struct MemberDetail360View: View {
                             .minimumScaleFactor(0.8)
                     }
                 }
-                // 485/1017/653 生日行 (Milestones 已有数据与提前一天通知, 只接线不重做)
-                // 994 角标行: 只报 kf_member_badge 里真实存下的那一枚 —— 已选就报徽章名,
-                // 那一位还没挑的照实读作"未选角标", 两种状态都是本机台账的原话。
-                LabeledContent("角标") {   // 994 角标
-                    Text(corner.map { "已选「\($0.title)」" } ?? "未选角标")
-                        .vkFont(.subheadline)
-                        .foregroundStyle(corner == nil ? DS.Palette.textSub : DS.Palette.text)
-                }
-                // 994 指路行: 选与撤的真实入口在「设置 → 成员管理」那张列表的长按菜单里
-                // (「授予徽章」子菜单 +「移除角标」), 这一页只报状态并把人指到那个真实入口 ——
-                // 徽章选择器全 App 保持一处实现, 两处写迟早一处改了另一处走偏。
-                // 文案随状态分两路: 已选的说"改选/撤下", 未选的说"怎么挑", 各自只说自己那一份。
-                Text(cornerHint)
-                    .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
                 // 480 孩子码关怀文案 (家长视角)
                 if !e.careText.isEmpty {
                     LabeledContent("关怀语") {   // 480 关怀语

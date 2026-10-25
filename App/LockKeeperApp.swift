@@ -918,6 +918,7 @@ final class AppState: ObservableObject {
         // 76 成功短音效: 默认只震动, 开关在设置-开锁 (系统铃声开关静音时自动无声)
         AlertTone.unlockSuccess()
         Milestones.recordUnlockSuccess()
+        let hour = WeekCal.gregorian.component(.hour, from: Date())
         if hour >= 22 { publishHomeMoment("欢迎回家, 辛苦了") }
     }
     /// Hero 卡一句话 (1000 晚归欢迎语), 8 秒后自行淡出
