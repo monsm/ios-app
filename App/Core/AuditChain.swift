@@ -212,10 +212,6 @@ final class SensitiveLedger {
     }
 }
 
-// ---------- 402 离职清除: 成员档案打标 + 名下凭证入回收站 (非物理删除) ----------
-enum Offboard {
-
-}
 
 // ---------- 401 覆写收尾 (Store 底层 = UserDefaults plist: 覆写 = 随机字节重灌再删) ----------
 enum DestroyKit {
@@ -231,6 +227,3 @@ enum DestroyKit {
     }
 }
 
-// ---------- 405/剪贴板与 549 口令复用检测 (读现有台账即可, 不新增写点) ----------
-enum PwReuse {
-}

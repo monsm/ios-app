@@ -118,21 +118,6 @@ enum BatteryCare {
         return m == 11 || m == 12 || m <= 3
     }
 
-    /// 1026 本地气候表: 城市关键词 → 粗粒度寒季窗口 (from > to 即跨年)。表外回退上方 11–3 月默认档。
-    /// 按原句口径"城市手动填、本地气候表" —— 固定粗档只调提醒时机与文案, 不做气象预报 (无网络)。
-    static let coldCityTable: [(keys: [String], label: String, from: Int, to: Int)] = [
-        (["哈尔滨", "长春", "沈阳", "乌鲁木齐", "呼和浩特"], "严寒地区寒季 10–4 月", 10, 4),
-        (["北京", "天津", "石家庄", "太原", "济南", "郑州", "西安", "青岛"], "北方寒季 11–3 月", 11, 3),
-        (["上海", "南京", "杭州", "合肥", "武汉", "长沙", "重庆", "成都"], "长江流域冷月 12–2 月", 12, 2),
-        (["广州", "深圳", "南宁", "福州", "厦门", "海口", "三亚"], "华南低纬 — 仅 1 月提一句", 1, 1),
-    ]
-    static func cityColdWindow(_ city: String) -> (label: String, from: Int, to: Int)? {
-        guard !city.isEmpty else { return nil }
-        for row in coldCityTable where row.keys.contains(where: { city.contains($0) }) {
-            return (row.label, row.from, row.to)
-        }
-        return nil
-    }
 
     // ============ 电量采样 (idea 45 的数据地基) ============
     static func samples(_ mac: String) -> [BattSample] {
@@ -239,13 +224,6 @@ enum BatteryCare {
     static func events(_ mac: String) -> [MaintEvent] {
         DB.store.get([MaintEvent].self, "kf_mevents_" + mac) ?? []
     }
-    static func addEvent(_ mac: String, kind: String, note: String) {
-        guard !mac.isEmpty else { return }
-        var l = events(mac)
-        l.insert(MaintEvent(ts: Date().timeIntervalSince1970 * 1000, kind: kind, note: note), at: 0)
-        if l.count > 100 { l = Array(l.prefix(100)) }
-        DB.store.setCodable("kf_mevents_" + mac, l)
-    }
 
     // ============ 保养状态 (1012/1013/1025) ============
     /// 1022 保养周期档: 近 30 天开门 ≥60 次的锁算高频, 周期从 90 天缩到 60 天。
@@ -256,10 +234,6 @@ enum BatteryCare {
         DB.store.get(CareState.self, "kf_maint_" + mac) ?? CareState()
     }
 
-    // ---------- 1030 清洁月历打点 + 连续月数 ----------
-    static func careMarks() -> [String: Bool] {
-        DB.store.get([String: Bool].self, "kf_care_marks") ?? [:]
-    }
 
     // ============ 1019 固件服役天数 (诚实口径: 从本机首次读到该版本起算, 不猜锁端出厂时间) ============
     struct FwSince: Codable { var fw: String; var at: Double }

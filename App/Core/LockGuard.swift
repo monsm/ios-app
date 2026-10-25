@@ -1,6 +1,5 @@
 // 应用锁安全族消费者 (389–395/398) — 这些键位原先只在设置页写与显示, 验证路径一个都不读,
 // 于是"失败冷却 / 伪装码 / 胁迫码 / 失败留痕 / 锁定时机 / 免验窗口 / 救援码"全是死开关。
-// 本文件是唯一消费者: AppLockView 与 RootView 的 scenePhase 都走这里, 口径集中便于审计。
 // 原则: 任何配置缺失都按**最严格**解释 (fail-closed), 不因为读不到值就放行。
 //
 // 同一个道理的第二批 (第一百批): 文件末尾的 LockAction + SecurityPolicy 是 376/377/383/296 那五枚开关的
@@ -8,14 +7,6 @@
 // 只读安全模式"四句承诺一句都没兑现。界面与调用点一律读 SecurityPolicy, 不许再各处 DB.store.getBool。
 import Foundation
 
-@MainActor
-enum LockGuard {
-    private static let coolBaseSec = 30.0
-    private static let coolCapSec = 600.0
-    private static let traceCap = 50
-
-
-}
 
 // ---------- 安全中心五枚开关的唯一判据口 (376/377/383/296) ----------
 /// 危险动作族: 296 只读模式要停下来的那一族, 也是 383 要追问口令的那一族的父集。

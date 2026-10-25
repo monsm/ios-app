@@ -96,13 +96,6 @@ enum HotCache {
         var store: [String: [CachedLog]] = [:]
         var currentMac: String = ""
     }
-    static var currentMac: String { lock.withLock { $0.currentMac } }
-    static func load(mac: String) {
-        lock.withLock { h in
-            h.currentMac = mac
-            h.store[mac] = DB.readLogs(mac)
-        }
-    }
     /// 日志写入后作废 (惰性: 下一次 recent 重读) —— 比"写完立刻重读一遍"少一次解码。
     static func invalidate(_ mac: String) { lock.withLock { $0.store[mac] = nil } }
     static func recent(_ mac: String) -> [CachedLog] {
@@ -1058,8 +1051,6 @@ enum Recovery {
 enum MaintenanceLog {
     struct Act: Codable { var at: Double; var label: String }
     static let key = "kf_maint_acts"
-    private static let seenKey = "kf_maint_seen_at"
-
     static func record(_ label: String) {
         var list = DB.store.get([Act].self, key) ?? []
         list.insert(Act(at: Date().timeIntervalSince1970, label: label), at: 0)

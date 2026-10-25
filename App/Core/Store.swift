@@ -83,13 +83,6 @@ final class Store: @unchecked Sendable {
     func remove(_ k: String) { defaults.removeObject(forKey: key(k)) }
     /// 键是否存在 (区分"无数据"与"有数据但解不出")
     func has(_ k: String) -> Bool { defaults.object(forKey: key(k)) != nil }
-    /// 取值的文本形态 (供"销毁后残留检索"用): 旧实现只检索键名, 值从未参与检查
-    func rawText(_ k: String) -> String? {
-        if let s = defaults.string(forKey: key(k)) { return s }
-        if let d = defaults.data(forKey: key(k)) { return String(data: d, encoding: .utf8) }
-        if let o = defaults.object(forKey: key(k)) { return String(describing: o) }
-        return nil
-    }
     func keys() -> [String] {
         defaults.dictionaryRepresentation().keys.filter { $0.hasPrefix("kf.") }.map { String($0.dropFirst(3)) }
     }

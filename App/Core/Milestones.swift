@@ -12,8 +12,6 @@ enum Milestones {
     /// 日 key 的唯一口径是 `StatsKit.dayKey` (yyyy-MM-dd + en_US_POSIX + 当前时区)。
     static func dayKey(_ d: Date = Date()) -> String { StatsKit.dayKey(d) }
     static func monthKey(_ d: Date = Date()) -> String { String(dayKey(d).prefix(7)) }
-    static func mdKey(_ d: Date = Date()) -> String { String(dayKey(d).suffix(5)) }
-
     // ---------- 一次性标记 (启动结算/审计去重键) ----------
     static func onceDone(_ k: String) -> Bool {
         let m = DB.store.get([String: Bool].self, "kf_once") ?? [:]
@@ -25,11 +23,6 @@ enum Milestones {
         DB.store.setCodable("kf_once", m)
     }
 
-    // ---------- 首启日期 ----------
-    static var firstDate: Date? {
-        let t = DB.store.get(Double.self, "kf_first_at") ?? 0
-        return t > 0 ? Date(timeIntervalSince1970: t) : nil
-    }
 
     // ---------- 980/997 备份历史 (备份页"距上次备份"与新鲜度判定的唯一数据源) ----------
     @MainActor

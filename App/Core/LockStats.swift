@@ -180,19 +180,6 @@ enum LockArchive {
         DB.store.setCodable(orderKey, macs.filter { alive.contains($0) })
     }
 
-    /// 组内拖动回写 (104): 只把这一组成员的新内部次序放回它们**原本占据的位置**,
-    /// 其他组与未分组的位置一步不动 —— 否则"把仓库组两把锁对调"会把别的组一起挤走。
-    static func reordered(_ all: [Keychain], newGroupOrder groupLocks: [Keychain]) -> [Keychain] {
-        let member = Set(groupLocks.map { $0.mac })
-        guard !member.isEmpty else { return all }
-        var queue = groupLocks
-        var out = [Keychain]()
-        for kc in all {
-            if member.contains(kc.mac), queue.isEmpty == false { out.append(queue.removeFirst()) }
-            else { out.append(kc) }
-        }
-        return out
-    }
 
 
     // 105 色标: 只走 DS 语义令牌 (不引入自定义 hex, 保证对比度闸门覆盖)
@@ -244,11 +231,6 @@ enum LockArchive {
     static func subtitle(_ kc: Keychain) -> String {
         let m = meta(kc.mac)
         return m.place.isEmpty ? PidMap.productName(kc.pid) : m.place
-    }
-    /// 769 绑定时间小字 (设备管理行 / 总览固件卡同口径: 未记录就不虚构日期)
-    static func boundLabel(_ pairedAt: String) -> String {
-        guard pairedAt.count >= 10 else { return "绑定时间未记录" }
-        return "绑定于 " + pairedAt.prefix(10).replacingOccurrences(of: "-", with: "/")
     }
 }
 
@@ -364,14 +346,4 @@ enum LockStats {
     }
 
 
-    static func fwCmp(_ a: String, _ b: String) -> Int {
-        let pa = a.split(separator: ".").map { Int($0) ?? 0 }
-        let pb = b.split(separator: ".").map { Int($0) ?? 0 }
-        for i in 0..<3 {
-            let x = i < pa.count ? pa[i] : 0
-            let y = i < pb.count ? pb[i] : 0
-            if x != y { return x > y ? 1 : -1 }
-        }
-        return 0
-    }
 }

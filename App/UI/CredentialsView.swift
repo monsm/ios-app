@@ -1083,12 +1083,6 @@ struct CredentialsView: View {
     private func pwdKeys(_ group: [LedgerPwd]) -> [Int] { group.map { $0.alias } }
     private func fpKeys(_ group: [LedgerFp]) -> [Int] { group.map { $0.batch } }
 
-    /// 已用 = 容量上限 − 剩余; 上限未知 (旧快照无 KLV#24/#27) 时不做推断 → 0。
-    /// 抽成函数是因为 ViewBuilder 里不能出现 `if/else` 赋值语句 (会报 `() cannot conform to View`)。
-    private func excessInLock(_ cap: Int?, _ stock: Int, _ have: Int) -> Int {
-        guard let cap, cap > 0, stock >= 0 else { return 0 }
-        return max(0, (cap - stock) - have)
-    }
 
     /// 529 段尾统计行的统一渲染。两个段种的"使用"不是一个读数 (密码有逐条时间窗推断, 指纹只有锁整体),
     /// 所以只共用样式, 话各说各的 —— 不拿同一句糊过去。

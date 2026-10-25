@@ -31,46 +31,6 @@ enum ZipKit {
     // `crc32` 转发第九十二批删除：CRC 的唯一实现是上面的 `enum CRC32`，本文件的三处调用
     // (:107/:348/:370) 都直连 `CRC32.crc32`，留一个零调用的同名转发等于留第二套"看起来能用"的 CRC 入口。
 
-    // ---------- 691 store-only ZIP 写入器 ----------
-    /// 只做**方法 0 (store, 不压缩)** 这一档: 写 deflate 要自己实现压缩器 (仓内只有解压侧
-    /// `compression_decode_buffer`), 而 691 的要点是"打包 + 加密", 不是压缩率 —— CSV/PDF 本来已是紧凑文本。
-    /// 格式简单且**可被自家读侧验证**: 写完立刻用本文件的 `parse` 往返读回 (CRC 逐条核), 读侧就是判据。
-    static func write(entries: [(name: String, data: [UInt8])]) -> [UInt8] {
-        var out: [UInt8] = []
-        var central: [UInt8] = []
-        var recs: [(name: [UInt8], crc: UInt32, size: Int, off: Int)] = []
-        func u16(_ v: Int) -> [UInt8] { [UInt8(v & 0xff), UInt8((v >> 8) & 0xff)] }
-        func u32(_ v: UInt32) -> [UInt8] {
-            [UInt8(v & 0xff), UInt8((v >> 8) & 0xff), UInt8((v >> 16) & 0xff), UInt8((v >> 24) & 0xff)]
-        }
-        for e in entries {
-            let nb = Array(e.name.utf8)
-            let crc = CRC32.crc32(e.data)
-            let off = out.count
-            out += u32(0x04034b50)
-            out += u16(20) + u16(0) + u16(0) + u16(0) + u16(0)          // 版本/标志/方法0/时间/日期
-            out += u32(crc) + u32(UInt32(e.data.count)) + u32(UInt32(e.data.count))
-            out += u16(nb.count) + u16(0)
-            out += nb
-            out += e.data
-            recs.append((nb, crc, e.data.count, off))
-        }
-        let cdStart = out.count
-        for r in recs {
-            central += u32(0x02014b50)
-            central += u16(20) + u16(20) + u16(0) + u16(0) + u16(0) + u16(0)
-            central += u32(r.crc) + u32(UInt32(r.size)) + u32(UInt32(r.size))
-            central += u16(r.name.count) + u16(0) + u16(0) + u16(0) + u16(0)
-            central += u32(0)
-            central += u32(UInt32(r.off))
-            central += r.name
-        }
-        out += central
-        out += u32(0x06054b50)
-        out += u16(0) + u16(0) + u16(recs.count) + u16(recs.count)
-        out += u32(UInt32(central.count)) + u32(UInt32(cdStart)) + u16(0)
-        return out
-    }
 
     // 原生 inflate (raw deflate) — 上限防护
     static func inflate(_ data: [UInt8], expected: Int) throws -> [UInt8] {
@@ -203,15 +163,6 @@ enum FirmwareKit {
                                version: versionFromFileName(fileName), sourceName: fileName)
     }
 
-    /// 降级闸: 包版本低于锁端当前版本时返回一句人话 (nil = 放行)。
-    /// 2026-10-13 对抗式排查新增 —— versionLt 此前全仓零调用; 烧旧固件本身不是漏洞,
-    /// 但配合"无签名"就是攻击者最省事的一条 (拿一个已知有问题的旧版本往回刷)。
-    /// 2026-10-14: 已在 DFURunner.runUpgrade 接线 —— 单锁与批量两条入口都过它 (不再零调用)。
-    /// 判据用本机记录的 kc.fw (锁端当前版本): 该值陈旧时漏判 (fail-open), 但不会误拦正常升级。
-    static func downgradeBlocked(current: String?, pkg: FirmwarePackage) -> String? {
-        guard let cur = current, !cur.isEmpty, let pv = pkg.version, !pv.isEmpty else { return nil }
-        return versionLt(pv, cur) ? "固件版本 \(pv) 低于锁端当前 \(cur) — 已拒绝降级烧录" : nil
-    }
     static func versionFromFileName(_ name: String) -> String? {
         // 2026-10-14: 旧式强制尾随 `_`, 遇 "KX_V5.2.9.zip" / "KX_V5.2.9" 匹配失败 => version=nil =>
         // 版本对比与降级判据整体静默失效。尾随改 `(_|\.|$)`。

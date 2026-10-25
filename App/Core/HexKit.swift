@@ -54,11 +54,6 @@ enum HexKit {
         guard b.count >= byteOffset + 2 else { return 0 }
         return Int(b[byteOffset]) | (Int(b[byteOffset + 1]) << 8)
     }
-    static func readU32LE(_ hex: String, byteOffset: Int) -> UInt32 {
-        let b = bytes(hex)
-        guard b.count >= byteOffset + 4 else { return 0 }
-        return UInt32(b[byteOffset]) | (UInt32(b[byteOffset + 1]) << 8) | (UInt32(b[byteOffset + 2]) << 16) | (UInt32(b[byteOffset + 3]) << 24)
-    }
     // JS En.toNormalByteOrder: 字节对反转 (奇数长度返回 '')
     static func reversePairs(_ hex: String) -> String {
         guard hex.count % 2 == 0 else { return "" }

@@ -112,21 +112,6 @@ enum CryptoBox {
         let d = try JSONEncoder().encode(env)
         return String(data: d, encoding: .utf8) ?? ""
     }
-    /// 691: 二进制信封 —— 与 `encryptText` **同一套 KDF/AES/HMAC 与同一个信封结构**,
-    /// 只是明文是字节 (zip) 而不是文本; 不新造第二套算法 (备份包与加密导出件要能用同一流程打开)。
-    static func encryptBytes(_ bytes: [UInt8], password: String, iter: Int = defaultIter) throws -> String {
-        let salt = HexKit.hex(KeyGen.randomBytes(16))
-        let iv = HexKit.hex(KeyGen.randomBytes(16))
-        let keys = deriveKey(password, saltHex: salt, iter: iter)
-        let ct = try aesCbcEncrypt(bytes, key: keys.enc, ivHex: iv)
-        let mac = hmacSha256(keys.mac, concat(HexKit.bytes(iv), ct))
-        let env = BackupEnvelope(v: 1, alg: "aes-128-cbc+hmac-sha256",
-                                 kdf: .init(alg: "pbkdf2-hmac-sha256", iter: iter, saltHex: salt),
-                                 ivHex: iv, macHex: HexKit.hex(mac), cHex: HexKit.hex(ct),
-                                 meta: .init(size: bytes.count, at: Date().timeIntervalSince1970 * 1000))
-        let d = try JSONEncoder().encode(env)
-        return String(data: d, encoding: .utf8) ?? ""
-    }
 
     /// 449: 严格十六进制+长度 —— HexKit.bytes 对坏输入是"尽力解"(奇数长/非 hex 字会静默产出偏短的
     /// 结果), 当校验判据用等于放行; 这里逐字符查, 供信封头校验。

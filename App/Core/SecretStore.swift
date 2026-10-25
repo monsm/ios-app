@@ -52,9 +52,4 @@ enum SecretStore {
         SecItemDelete(baseQuery(account) as CFDictionary)
     }
 
-    /// 核弹销毁: 清空本服务下全部账户 (UserDefaults 的 keys() 全表清碰不到系统 Keychain)。
-    static func removeAll() {
-        SecItemDelete([kSecClass as String: kSecClassGenericPassword,
-                       kSecAttrService as String: service] as CFDictionary)
-    }
 }

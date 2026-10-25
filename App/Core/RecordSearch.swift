@@ -113,21 +113,6 @@ extension RecordSearch {
     }
 }
 
-/// 660 告警措辞分级: 紧急强措辞 / 严重关注 / 提示建议式, 文案集中一处
-enum AlarmWords {
-    static func phrase(_ t: Int) -> String {
-        switch t {
-        case 7: return "请立即确认门体安全"
-        case 224: return "键盘已锁定, 请留意近期异常试错"
-        case 10: return "多次密码失败已触发锁定, 请关注"
-        case 13: return "指纹模块告警, 建议检查传感器"
-        case 6: return "建议两周内更换电池"
-        case 0: return failPhrase   // 92 手机侧失败行 (非锁端告警)
-        default: return "请留意"
-        }
-    }
-    static let failPhrase = "本次开锁未成功, 请留意原因"
-}
 
 /// 674 通勤时段标签: 工作日 7-9 / 17-19 实时计算, 无需积累
 enum CommuteLabel {
@@ -421,14 +406,6 @@ enum RecordSearch {
     /// 737 今日试错 (⚠ keyboardErrCount 语义不确定, 只用日志条数, 标题带"?"由 UI 层标)
     static func trialCountToday(macs: [String]) -> Int {
         macs.reduce(0) { $0 + trialRowsToday(mac: $1).count }
-    }
-    /// 737 今日试错的逐次事件: 锁端只记"锁定级事件"行, 一次一行 —— 把行本身列出来,
-    /// 而不是只给一个计数。涉事凭证在锁定级日志里没有槽位字段 (属协议失败明细, 未实现),
-    /// 所以这里**不带**归属字段: 不猜，由 UI 层写明"无法归属"。
-    struct TrialEvent: Identifiable {
-        var id: String        // mac#行键 (同日多锁也不重)
-        var timeStr: String
-        var lockName: String
     }
 
     static func dateOf(_ l: CachedLog) -> Date? { StatsKit.dateOf(l) }
@@ -766,11 +743,6 @@ enum RecordSearch {
         if !note.isEmpty { s += " " + note }
         return s
     }
-    private static func hayOf(_ r: Rec) -> String {
-        // Rec 侧与时间线行侧 (RecordsView.applyFilter) 共用 `searchFace` 这一份定义。
-        // note 传空串: 由调用方那一层命中备注。failMsg 早已并进 typeName (`开锁失败 · 原因`), 不再重复拼。
-        searchFace(title: r.typeName, lockName: r.lockName, whoName: r.whoName ?? "", cred: r.cred, note: "")
-    }
 
     /// 553 搜索历史 (本地偏好, 最近 5 条, 可单删)
     private static let histKey = "kf_rsearch_hist"
@@ -882,12 +854,6 @@ enum RecordSearch {
         return (Array(before).reversed(), Array(after).reversed())
     }
 
-    /// 747 前后对比: 当日与前后 7 天每日开门量 (辅助判断试探迹象, 只读统计)
-    struct DayOpen {
-        var key: String
-        var count: Int
-        var isAlertDay: Bool
-    }
 
     /// 735 Tab 未读角标数据源: 未处置告警数 (734 未处理队列)
     /// 581 未处置告警落在哪些自然日: 与 735 角标、734 队列同一 `dispositions` 口径 (不另造"已读"状态)。

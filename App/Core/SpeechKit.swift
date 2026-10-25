@@ -40,9 +40,4 @@ enum Speech {
         _ = zh("密码逐位: " + spelled.joined(separator: "、") + "。", rate: 0.35)
     }
 
-    /// 收页时调用: 引导卡关了却还在念下一张的内容, 比不念更让人摸不着头脑。
-    /// (没有留 `isSpeaking` 这种读点 —— 全仓没有读者, 而 AVFoundation 自己也随时能问。)
-    static func stop() {
-        synth.withLock { s in if s.isSpeaking { s.stopSpeaking(at: .immediate) } }
-    }
 }

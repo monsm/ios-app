@@ -62,6 +62,13 @@ const SYS_NAMES = new Set([
   "short", "long", "full", "half", "top", "bottom", "left", "right", "middle", "center",
   "red", "green", "blue", "white", "black", "gray", "clear", "fill", "stroke", "border",
   "expected", "actual", "received", "given", "want", "got", "left", "right", "prev",
+  // Swift 标准库/系统 API 与常见局部变量名 —— 在基线里出现过但非本项目"功能"
+  "removeAll", "insert", "append", "remove", "contains", "sorted", "filter", "map", "reduce",
+  "compactMap", "flatMap", "enumerated", "reversed", "prefix", "suffix", "dropFirst", "dropLast",
+  "firstIndex", "lastIndex", "min", "max", "abs", "formatted", "components", "removeAll",
+  "central", "peripheral", "manager", "delegate", "phrase", "range", "match", "token",
+  "firstDate", "lastDate", "startOfDay", "timeInterval", "string", "int", "double", "bool",
+  "keyPath", "content", "configuration", "context", "coordinator", "representable",
   "radius", "spacing", "padding", "margin", "frame", "bounds", "origin", "position",
 ]);
 
@@ -129,6 +136,7 @@ const findings = [];
 for (const name of deleted) {
   if (name.length < 3) continue;               // 太短误报太多
   if (SYS_NAMES.has(name)) continue;         // 系统 API / 框架成员, 非本项目定义
+  if (/^\d/.test(name)) continue;                 // 数字字面量被正则误捕获 (如 [7, 224] 里的 224)
   if (/^[a-z]/.test(name) && name.length < 5) continue;
   const re = new RegExp("\\b" + name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b");
   const hits = [];
