@@ -213,8 +213,6 @@ struct RecordsView: View {
             // 187 按月跳转 (等价实现): 选月即只看该月, 顶部有清除口。
             // 原设计的"月份滚轮 + scrollTo"需把 List 包进 ScrollViewReader 并移动整条修饰符链,
             // 在这个从未编译过的工程里做结构性改动的风险不对等 → 记入需编译器清单, 这里先给可用能力。
-            dropWatchSection   // 1040 掉电观察行 (时间线顶部, 有命中才出现)
-            lastYearTodayRow   // 654 去年今日 (有数据才出现)
             ForEach(groups.filter { g in (monthJump.isEmpty || g.key.hasPrefix(monthJump)) && (dayFocus.isEmpty || g.key == dayFocus) }) { g in
                 // 657: 缺口行走独立的极简一行，不冒充一天的组头 (它没有"当天 N 条"可说)
                 if g.isGap { gapRow(g) } else { daySection(g) }

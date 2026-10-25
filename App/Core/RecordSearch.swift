@@ -88,7 +88,6 @@ enum AlarmMeta {
     /// 且在意的告警: 防撬 / 试错锁定 / 键盘锁定。比 `urgent`([7,224]) 有意多收 10:
     /// 试错锁定是"有人在试密码"的读数, "这一天出过事"这件事里它必须算。
     static let damageTypes: Set<Int> = [7, 10, 224]
-    static let info: Set<Int> = [6]          // 低电量
     static func level(_ t: Int) -> Int {
         if urgent.contains(t) { return 3 }
         if serious.contains(t) { return 2 }

@@ -425,7 +425,6 @@ struct SettingsView: View {
             .foregroundStyle(DS.Palette.textSub)
             .fixedSize(horizontal: false, vertical: true)
     }
-    private var canDefend: Bool { PidMap.canDefend(app.current?.pid ?? 0) }
     private var canTailgate: Bool { PidMap.canTailgate(app.current?.pid ?? 0, fw: app.current?.fw) }
     private var canClearPwd: Bool { PidMap.canClearPwd(app.current?.pid ?? 0) }
 

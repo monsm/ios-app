@@ -196,7 +196,6 @@ struct AutoOpenGate {
     var defendStartSec: Int
     var defendEndSec: Int
     var rssiArmed: Bool          // F3 滤波当前态
-    var calibrated: Bool         // 该锁做过距离标定
     var coolReady: Bool          // F5 冷却: 上一次下发距今 >60s
     var lockReady: Bool          // F6: 非 busy(25) 且非防拆(26)
 
@@ -206,7 +205,6 @@ struct AutoOpenGate {
         case f0                  // 非前台/App 未解锁
         case f1face             // 面容档不满足 (无面容/过期/严格未刷)
         case f4defend          // 布防时段一票否决
-        case f3nocal           // 未标定 (已不是开门条件; 保留给审计历史与 UI 文案)
         case f3rssi            // 信号未武装
         case f5cool            // 6s 冷却中
         case f6busy            // 锁忙 / 防拆 (锁态门)
@@ -250,7 +248,6 @@ struct AutoOpenGate {
         case .f0: return "F0 非前台/App 未解锁"
         case .f1face: return "F1 面容未确认 (严格档要求本次进前台刷过脸)"
         case .f4defend: return "F4 布防时段内, 一票否决"
-        case .f3nocal: return "F3 未做距离标定"
         case .f3rssi: return "F3 信号未达武装线"
         case .f5cool: return "F5 冷却中 (6 秒)"
         case .f6busy: return "F6 锁态未知或忙 (rc=25/无 03 回显)"
@@ -417,7 +414,6 @@ final class AutoOpenController {
             defendEndSec: d?.endSec ?? 0,
             rssiArmed: armed,
             // calibrated 现在如实表示"做过按锁标定" (不再是能不能开的硬条件 —— 未标定走 fallbackBase)
-            calibrated: AutoOpen.autocal(mac) != nil,
             coolReady: coolReady,
             // F6 锁态门 fail-closed: StatusSnapshotData.rc 默认 0 = "成功", 无快照时旧写法会误判锁态绿
             lockReady: snap != nil && snap?.rc != 25 && snap?.rc != 26

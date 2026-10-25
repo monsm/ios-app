@@ -221,35 +221,7 @@ enum AXTools {
         }
     }
 
-    /// 872 防连点开关: 高频按钮 300ms 内重复点击忽略 (默认开, 防双击误开门)
-    static var dbltapGuard: Bool { DB.store.getBool("kf_dbltap_guard", true) }
-    /// 875 按住时长跟随 (⚠ 系统"按住持续时间"无读取 API, 自定滑杆 0.4–1.6s, 默认 0.9 与包1 对齐)
-    static var holdDuration: Double {
-        let v = Double(DB.store.getString("kf_ax_hold", "0.9")) ?? 0.9
-        return min(1.6, max(0.4, v))
-    }
-    /// 869 眼动停留参数 (⚠ 系统停留时长无公开 API, 自定滑杆 0.5–4s, 默认 2s):
-    /// 2026-10-15 走查更正口径 —— 原第二行说它是「扫描组 (868) 逐项聚焦的停留基准」，那半句不成立:
-    /// 这个值**没有任何行为消费者**，读它的只有辅助页那枚滑杆自己与练习区两句演示文字
-    /// (逐条判据: `grep -rn 'kf_ax_dwell\|dwellTime' App --include=*.swift | grep -v '^[^:]*:[0-9]*:[[:space:]]*//'` ⇒ 8 行
-    ///  = 本定义处 2 行 + 辅助页滑杆与其展示 4 行 + 练习区两句演示文字 2 行，除这两处外没有第三家)。
-    /// 逐项聚焦的节奏由系统 VoiceOver/切换控制决定; App 侧接线后这枚滑杆才成为行为源。
-    static var dwellTime: Double {
-        let v = Double(DB.store.getString("kf_ax_dwell", "2.0")) ?? 2.0
-        return min(4.0, max(0.5, v))
-    }
-    /// 881 字幕式过程条: 开锁/连接过程底部三步文字字幕 (可关)
-    static var captions: Bool { DB.store.getBool("kf_ax_captions", true) }
-    /// 876 新条目双震 (默认开, 设置可关; 设备级"振动"总开关由系统拦截)
-    static var doubleHaptic: Bool { DB.store.getBool("kf_ax_doublehaptic", true) }
-    /// 873/60 圆盘热区偏移 (单手下沉): 圆盘整体下移落入拇指区, 快捷格随之贴底
-    static var onehand: Bool { DB.store.getBool("kf_onehand") }
-    /// 229 左手模式: 工具栏与快捷格镜像 (落点设备 Tab)
-    static var lefty: Bool { DB.store.getBool("kf_lefty") }
-    /// 230 大格模式: 快捷操作格 2 列大格 (默认 3 列), 长辈友好
-    static var bigTile: Bool { DB.store.getBool("kf_bigtile") }
-    /// 870 底部对齐表单: 键盘弹起时表单贴底不滚动跳
-    static var bottomForm: Bool { DB.store.getBool("kf_form_bottom") }
+
 }
 
 /// 870 底部对齐表单: 开启后 List/Form 默认贴底锚定 (iOS 17 defaultScrollAnchor)

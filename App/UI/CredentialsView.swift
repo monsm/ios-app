@@ -1258,10 +1258,6 @@ struct CredentialsView: View {
                 if let o = p?.owner ?? f?.owner, !o.isEmpty {
                     ownerBadge(CredentialOrg.ownerName(o))
                 }
-                // 1011 满年小徽章: 副行 "已陪伴 N 天 · 满一年了" 只在满年时给一枚同判据胶囊
-                if false {
-                    StatusPill(text: "满一年", systemImage: "rosette", tone: .accent)
-                }
                 Spacer(minLength: 0)
                 if hit.pinned {
                     Image(systemName: "star.fill")
@@ -1432,11 +1428,6 @@ struct CredentialsView: View {
             Button(hit.pinned ? "取消置顶" : "置顶") {
                 CredentialOrg.toggleStar(mac, "pwd", p.alias)
                 DS.Haptics.tick.impactOccurred()
-            }
-            if let sug = CredentialOrg.starSuggestion(mac), sug == "p\(p.alias)" {
-                Button("标为常用 (近 30 天约最常用)") {
-                    CredentialOrg.toggleStar(mac, "pwd", p.alias)
-                }
             }
             // 354 移出归档
             // 354 归档

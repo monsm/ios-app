@@ -230,8 +230,6 @@ struct MaskedDigits: View {
     let value: String
     var big: Bool = false
     @State private var revealed: Set<Int> = []
-    // 373 揭示限时: 按 kf_speek_timedsec 立复遮期限 (0 = 不自动复遮, 与安全中心演示挡片同口径)
-    @State private var clearAt: Double = 0
     // 388 首次"揭示=查看"记一次敏感台账, 防逐位点按刷屏
     @State private var ledgerLogged = false
     var body: some View {
@@ -255,8 +253,6 @@ struct MaskedDigits: View {
                         ledgerLogged = true
                         SensitiveLedger().record("查看", target: "密码")
                     }
-                    let s = DB.store.getInt(SecKey.timedReveal, 0)
-                    clearAt = s > 0 ? Date().timeIntervalSince1970 + Double(s) : 0
                     DS.Haptics.tick.impactOccurred()
                 } label: {
                     Text(shown)
@@ -281,14 +277,7 @@ struct MaskedDigits: View {
         .onTapGesture(count: 2) { copyAll() }
         // 370 贴近复蔽: 面部贴近 → 已揭示的位立刻复遮 (与 373 到点复遮同一结局, 只是触发源不同)
         .proximityRemask {
-            if !revealed.isEmpty { revealed = []; clearAt = 0 }
-        }
-        // 373 到点整集复遮 (revealed 清空即回打码态)
-        .onReceive(Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()) { now in
-            if clearAt > 0, now.timeIntervalSince1970 >= clearAt {
-                revealed = []
-                clearAt = 0
-            }
+            if !revealed.isEmpty { revealed = [] }
         }
     }
 
@@ -636,7 +625,7 @@ struct PwdStudio: View {
     @State private var clipSource = false
     @State private var showDraftBar = true
     @State private var submitted = false   // 518: 提交成功不许回存废稿
-    // 521 二次输入确认: 保存前重输码值核对 (开关 kf_scred_2nd, 默认开; 设置-安全可关)
+    // 521 二次输入确认: 保存前重输码值核对 (恒开; 原开关在设置-安全页, 该页已删)
     @State private var confirmPwd = ""
     private var mac: String { app.current?.mac ?? "" }
     private var editing: LedgerPwd? { editAlias.flatMap { DB.getPwd(mac, $0) } }
@@ -902,27 +891,8 @@ struct PwdStudio: View {
                     .foregroundStyle(DS.Palette.warn)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            Button {
-            } label: {
-                Label("扫一扫取号", systemImage: "qrcode.viewfinder")   // 522 扫一扫取号
-            }
-            .vkFont(.caption, weight: .medium)
-            .foregroundStyle(DS.Palette.accentText)
-            .frame(minHeight: DS.Hit.min)
-            .contentShape(Rectangle())
-            .accessibilityHint("用相机识别印刷码, 结果自动填入码值字段")
         }
         .card()
-    }
-    func onScanResult(_ s: String) {
-        if !s.isEmpty {
-            pwd = s
-            clipSource = false
-            app.showToast("已识别 \(s.count) 位数字, 请核对位数与内容")   // 522 已识别
-            DS.Haptics.trigger.impactOccurred()
-        } else {
-            app.showToast("未识别到数字码, 请人工输入")   // 522 未识别到数字码
-        }
     }
 
     // ---------- 520/523 step2 有效期与备注 ----------
@@ -1131,25 +1101,23 @@ struct PwdStudio: View {
                     .frame(minHeight: DS.Hit.min)
             } else {
                 // 521 二次输入确认: 重输码值一致才放行 (与转账复核同语义; 开关在设置-安全页)
-                if DB.store.getBool("kf_scred_2nd", true) {
-                    HStack(spacing: DS.Space.xs) {
-                        TextField("重输一遍码值", text: $confirmPwd)   // 521 重输一遍码值
-                            .keyboardType(.numberPad)
-                            .vkFont(.subheadline.monospaced())
-                            .autocorrectionDisabled()
-                        if !confirmPwd.isEmpty, confirmPwd != pwd {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: DS.Icon.sm, weight: .medium))
-                                .foregroundStyle(DS.Palette.danger)
-                        } else if !confirmPwd.isEmpty {
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.system(size: DS.Icon.sm, weight: .medium))
-                                .foregroundStyle(DS.Palette.ok)
-                        }
-                    }
-                    .padding(DS.Space.s)
-                    .variantPlate(DS.Palette.surfaceAlt, .control)
+            HStack(spacing: DS.Space.xs) {
+                TextField("重输一遍码值", text: $confirmPwd)   // 521 重输一遍码值
+                    .keyboardType(.numberPad)
+                    .vkFont(.subheadline.monospaced())
+                    .autocorrectionDisabled()
+                if !confirmPwd.isEmpty, confirmPwd != pwd {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: DS.Icon.sm, weight: .medium))
+                        .foregroundStyle(DS.Palette.danger)
+                } else if !confirmPwd.isEmpty {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: DS.Icon.sm, weight: .medium))
+                        .foregroundStyle(DS.Palette.ok)
                 }
+            }
+            .padding(DS.Space.s)
+            .variantPlate(DS.Palette.surfaceAlt, .control)
                 // 541 替代: 原句是下发前的乐观锁提示 ("此锁配置上次同步于 X, 建议到场核对后重试")。
                 // 锁端没有配置序号字段, 所以这把尺只到本机台账 (365 队列里最后一条"已下发"的时刻),
                 // 文案把这件事说穿 —— 提示不说成"锁端就是这样"。
@@ -1169,7 +1137,7 @@ struct PwdStudio: View {
                 BusyButton(title: editing == nil ? "下发密码" : "保存改造", systemImage: "key.fill", isBusy: busy) {
                     Task { await submit() }
                 }
-                .disabled(DB.store.getBool("kf_scred_2nd", true) && confirmPwd != pwd)
+                .disabled(confirmPwd != pwd)
             }
             Text("请将手机靠近门锁; 成功后登记到本机台账并留一档版本快照。")   // 487 请将手机靠近门锁
                 .vkFont(.caption2)
@@ -1443,10 +1411,6 @@ struct TempCodeStudio: View {
                         .buttonStyle(.bordered)
                         .frame(minHeight: DS.Hit.min)
                         .accessibilityLabel("本地生成 6 位随机码")   // 173 本地生成
-                            .vkFont(.caption, weight: .medium)
-                            .buttonStyle(.bordered)
-                            .frame(minHeight: DS.Hit.min)
-                            .accessibilityLabel("相机识别印刷码")   // 522 相机识别印刷码
                         Spacer(minLength: 0)
                     }
                     // 178 批量临时码 (锁端无批量命令, 走既有 0A 逐条, 失败逐条报)
@@ -1762,15 +1726,6 @@ struct TempCodeStudio: View {
             clipSource = true
         }
     }
-    private func onScan(_ s: String) {
-        if !s.isEmpty {
-            pwd = s
-            app.showToast("已识别 \(s.count) 位数字, 请核对")   // 522 已识别
-            DS.Haptics.trigger.impactOccurred()
-        } else {
-            app.showToast("未识别到数字码, 请人工输入")   // 522 未识别到数字码
-        }
-    }
     private func isoShort(_ d: Date, prefix: String = "") -> String {
         prefix + d.formatted(.dateTime.month().day().hour().minute())
     }
@@ -1818,13 +1773,9 @@ struct PwdDetailStudio: View {
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
     let alias: Int
-    @State private var showEdit = false
     @State private var showCard = false
     @State private var renewing = false
     @State private var copiedFlash = false   // 11 复制按钮形变
-    // 336 用的"本页打开时刻"。写成带初值的 `let`：它不进成员初始化器，
-    // 所以 `PwdDetailStudio(alias:)` 这些既有调用点一个字都不用改。
-    let openedAt = Date().timeIntervalSince1970
     private var mac: String { app.current?.mac ?? "" }
     private var p: LedgerPwd? { DB.getPwd(mac, alias) }
 
@@ -1862,11 +1813,6 @@ struct PwdDetailStudio: View {
                                     .fixedSize(horizontal: false, vertical: true)
                                     .accessibilityLabel(staleNotice)
                                 Spacer(minLength: 0)
-                                Button("换码") { showEdit = true }
-                                    .vkFont(.caption, weight: .medium)
-                                    .buttonStyle(.bordered)
-                                    .frame(minHeight: DS.Hit.min)
-                                    .accessibilityLabel("改造该密码")   // 306 改造该密码
                             }
                             .vkFont(.caption)
                             .foregroundStyle(DS.Palette.warn)
@@ -2119,11 +2065,6 @@ struct PwdDetailStudio: View {
                 .toolbar { ToolbarItem(placement: .navigationBarLeading) {
                     Button("关闭") { dismiss() }
                 } }
-                .sheet(isPresented: $showEdit) {
-                    NavigationStack {
-                        PwdStudio(embedded: true, editAlias: p.alias)
-                    }
-                }
                 .sheet(isPresented: $showCard) {
                     if let v = p.pwd {
                         NavigationStack {
