@@ -134,6 +134,29 @@ extension DS {
 }
 
 // ---------- 朗读词表 (880): accessibilityLabel 统一走这里, 审计口径 = 本文件 ----------
+// ---------- App 偏好读点 (包15 全 App 开关集中于此, 页面不直接查 DB) ----------
+enum AXPrefs {
+    /// 872 防连点开关: 高频按钮 300ms 内重复点击忽略 (默认开, 防双击误开门)
+    static var dbltapGuard: Bool { DB.store.getBool("kf_dbltap_guard", true) }
+    /// 875 按住时长跟随 (⚠ 系统"按住持续时间"无读取 API, 自定滑杆 0.4–1.6s, 默认 0.9 与包1 对齐)
+    static var holdDuration: Double {
+        let v = Double(DB.store.getString("kf_ax_hold", "0.9")) ?? 0.9
+        return min(1.6, max(0.4, v))
+    }
+    /// 881 字幕式过程条: 开锁/连接过程底部三步文字字幕 (可关)
+    static var captions: Bool { DB.store.getBool("kf_ax_captions", true) }
+    /// 876 新条目双震 (默认开, 设置可关; 设备级"振动"总开关由系统拦截)
+    static var doubleHaptic: Bool { DB.store.getBool("kf_ax_doublehaptic", true) }
+    /// 873/60 圆盘热区偏移 (单手下沉): 圆盘整体下移落入拇指区, 快捷格随之贴底
+    static var onehand: Bool { DB.store.getBool("kf_onehand") }
+    /// 229 左手模式: 工具栏与快捷格镜像 (落点设备 Tab)
+    static var lefty: Bool { DB.store.getBool("kf_lefty") }
+    /// 230 大格模式: 快捷操作格 2 列大格 (默认 3 列), 长辈友好
+    static var bigTile: Bool { DB.store.getBool("kf_bigtile") }
+    /// 870 底部对齐表单: 键盘弹起时表单贴底不滚动跳
+    static var bottomForm: Bool { DB.store.getBool("kf_form_bottom") }
+}
+
 enum AXTerms {
     static let lock = "门锁"
     static let credential = "凭证"          // 不混用"密钥/口令"

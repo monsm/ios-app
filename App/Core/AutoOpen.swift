@@ -353,6 +353,13 @@ final class AutoOpenController {
     }
 
     // ---------- 全门判定 + 下发 (每个接近事件只发一次: F5) ----------
+    /// 每 2 秒由 LinkSense 驱动一次: 武装态下检查信号是否已达标, 达标则尝试下发。
+    /// 静置判定已删 —— 信号达标即唯一条件 (与 F3 门控口径一致)。
+    func tickDwell(mac: String) {
+        guard AutoOpen.on, armed else { return }
+        attempt(mac: mac)
+    }
+
     func attempt(mac: String) {
         guard AutoOpen.on, !inFlight else { return }
         guard let app = AppState.hostRef else { return }

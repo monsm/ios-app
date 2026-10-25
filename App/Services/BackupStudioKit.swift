@@ -326,6 +326,13 @@ enum BackupStudio {
     }
 
     /// 分区裁剪的统一口径 (导出 / 恢复 / 预演共用, 427 分区选择性恢复)
+    /// 组包 + 分区裁剪: 未勾分区在包内置空 (恢复端按 nil 语义跳过)
+    static func bundleFor(_ zones: BZones) -> BackupBundle {
+        var b = BackupKit.collectAll()
+        b.at = ISO8601DateFormatter().string(from: Date())
+        return prune(b, zones)
+    }
+
     static func prune(_ b: BackupBundle, _ z: BZones) -> BackupBundle {
         var c = b
         if !z.devices { c.devices = [] }
@@ -356,6 +363,21 @@ enum BackupStudio {
 
 
     /// 453 哈希层判定: 与 verifyChecksum 共用一套算法 (新语义 + 旧语义两条都认)
+    enum ChecksumState: Equatable { case ok, mismatch, absent }
+
+    struct Preview: Equatable {
+        var source: String        // 477 来源信息: 导出时间 + 原设备
+        var schema: Int
+        var zones: [String]
+        var macs: [String]
+        var pwdCount: Int
+        var fpCount: Int
+        var memberCount: Int
+        var sampleOk: Int
+        var previewTrace: [String]?
+        var checksum: ChecksumState = .absent   // 453 哈希层: 解析时算一次, 预览卡直接显示
+    }
+
     static func checksumState(_ text: String) -> ChecksumState {
         guard let data = text.data(using: .utf8),
               let b = try? JSONDecoder().decode(BackupBundle.self, from: data) else { return .absent }
