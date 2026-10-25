@@ -66,30 +66,6 @@ enum StatsKit {
         return max(1, Int(Date().timeIntervalSince(e) / 86400) + 1)
     }
 
-    // ---------- 646 小时桶降采样 (明细列表的上屏折叠) ----------
-    /// 646 的折叠本体: 把一组逐条日志按 (日, 小时) 折成桶, 桶内各自计开门/告警, 并留**最近一条真日志**做跳转样本。
-    /// 最新桶在前 (与 621 逐条列表同一个方向, "列最近 N 个"的截断才能同侧取前 N)。
-    /// 只在 `StatModel.isHourFolded` 那一档才调用; 折完行数没少时调用方继续逐条列 (界面那句"已折叠"也不出现)。
-    /// 要说清的边界: 日志缓存每锁只有 300 条 (`Store` 合并日志时硬截), 这里折的是**上屏行数**;
-    /// 原句"万条日志保持 60fps"那个量级本仓读不到, 不拿这一条冒充它。
-    static func hourBuckets(_ rows: [CachedLog]) -> [HourBucket] {
-        var map = [String: (day: String, hour: Int16, opens: Int, alarms: Int, sample: CachedLog)]()
-        for l in rows {
-            guard let d = dateOf(l) else { continue }      // 没有锁端时刻 = 没有日期, 不进桶 (见 dateOf 那条口径)
-            let day = dayKey(d)
-            let h = Int16(WeekCal.gregorian.component(.hour, from: d))
-            let k = day + " " + String(format: "%02d", h)   // 小时补零 ⇒ 字符串序就是时间序 (与全仓排序口径一致)
-            var rec = map[k] ?? (day, h, 0, 0, l)
-            if openTypes.contains(l.type) { rec.opens += 1 }
-            if alarmTypes.contains(l.type) { rec.alarms += 1 }
-            if d >= (dateOf(rec.sample) ?? .distantPast) { rec.sample = l }
-            map[k] = rec
-        }
-        return map.keys.sorted().reversed().compactMap { k in
-            guard let r = map[k] else { return nil }
-            return HourBucket(key: k, day: r.day, hour: r.hour, opens: r.opens, alarms: r.alarms, sample: r.sample)
-        }
-    }
 
     // ---------- 模型 ----------
     struct DailyPoint: Identifiable {
@@ -1000,20 +976,6 @@ enum StatsKit {
                          logs: logs, pwds: DB.listPwds(mac), earliest: earliestDate(logs))
     }
 
-    /// 782 闲置锁判据 (全仓唯一读点): 本机日志里超 30 天无开门行 —— 说的是"没读到"而非"没人开";
-    /// 从没拉取过日志的锁同样判闲置。对照页的灰标签与统计页的排除口径开关都读这一处。
-    @MainActor
-    static func isIdleLock(_ mac: String) -> Bool {
-        let m = build(mac: mac, week: 7, window: 90)
-        // 2026-10-13 对抗式排查: 原写 `m.dailyPoints.map{ $0.day }.max()` —— `dailyPoints` 是**逐日补齐**到
-        // 今天的 (0 次也补行, 见其构造的 "逐日补齐" 注释), 所以 max() 恒等于今天 0 点,
-        // `timeIntervalSince(last)` ≈ 0.x 天 < 30 天 ⇒ **本函数恒返回 false**。
-        // 后果: 闲置锁标签永远显示"30 天内有开门"
-        // 判据说的是"超 30 天无开门行", 所以要取**真有开门那天**里的最晚一个。
-        let lastOpen = m.dailyPoints.filter { $0.opens > 0 }.map { $0.day }.max()
-        guard let last = lastOpen else { return true }   // 90 天里一次开门都没有 = 闲置 (口径原文: 从没拉取过日志的锁同样判)
-        return Date().timeIntervalSince(last) > 30 * 86_400
-    }
 
     /// 673 春节区间:**直接取 671 表里该年春节"放假日"的首末日**, 不再用"前一日/后六日"推算。
     /// 旧推算在 2026 就偏了 (公告口径是 02-15~02-23, 且表里现在还含 02-14/02-28 两个补班日,

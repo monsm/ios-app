@@ -1446,57 +1446,6 @@ enum FrameFields {
     }
 }
 
-// ---------- 282 症状向导 (故障树, 本地词表) ----------
-enum SymptomGuide {
-    struct Step {
-        let question: String
-        let yesNext: [String]   // 下一步的 step id
-        let noNext: [String]
-        var conclusion: String? = nil
-    }
-    static let lockOpen: [String: Step] = [
-        "q1": Step(question: "手机蓝牙是否已开启?",
-                   yesNext: ["q2"], noNext: ["done_ble"]),
-        "q2": Step(question: "手机是否紧贴门锁 (1 米内)?",
-                   yesNext: ["q3"], noNext: ["done_dist"]),
-        "q3": Step(question: "门锁是否通电 (键盘有反应)?",
-                   yesNext: ["q4"], noNext: ["done_power"]),
-        "q4": Step(question: "刚才是否提示「锁正忙」或「通讯过期」?",
-                   yesNext: ["done_busy"], noNext: ["q5"]),
-        "q5": Step(question: "换条凭证/重新添加一次还失败吗?",
-                   yesNext: ["done_firmware"], noNext: ["done_fixed"]),
-        "done_ble": Step(question: "", yesNext: [], noNext: [], conclusion: "蓝牙未开 — 控制中心打开蓝牙即可, 无需修复门锁"),
-        "done_dist": Step(question: "", yesNext: [], noNext: [], conclusion: "距离太远 — 靠近到 1 米内重试, 蓝牙近场协议在墙外信号极弱"),
-        "done_power": Step(question: "", yesNext: [], noNext: [], conclusion: "门锁断电 — 检查电池仓, 部分锁断电会清键盘输入缓冲"),
-        "done_busy": Step(question: "", yesNext: [], noNext: [], conclusion: "锁正忙或时钟偏差 — 先在快捷操作「校准时间」, 等 10 秒再开"),
-        "done_firmware": Step(question: "", yesNext: [], noNext: [], conclusion: "大概率凭证与锁状态不同步 — 到诊断页拉一次日志, 看「最近错误」并重新下发凭证; 仍不行可试固件更新"),
-        "done_fixed": Step(question: "", yesNext: [], noNext: [], conclusion: "已恢复 — 这次成功说明是偶发链路抖动, 关注是否再次出现")
-    ]
-    static let bleConnect: [String: Step] = [
-        "q1": Step(question: "手机能搜到「ZkDFU」以外的其它蓝牙设备吗?",
-                   yesNext: ["q2"], noNext: ["done_bt"]),
-        "q2": Step(question: "门锁的广播名/型号是否与本 App 记录一致?",
-                   yesNext: ["q3"], noNext: ["done_repair"]),
-        "q3": Step(question: "反复重连 3 次以上仍超时?",
-                   yesNext: ["done_watchdog"], noNext: ["done_wait"]),
-        "done_bt": Step(question: "", yesNext: [], noNext: [], conclusion: "手机蓝牙本身异常 — 开关一次蓝牙再试, 或重启手机"),
-        "done_repair": Step(question: "", yesNext: [], noNext: [], conclusion: "档案与实物对不上 — 删除该锁重新配对 (本地钥匙串会同步更新)"),
-        "done_watchdog": Step(question: "", yesNext: [], noNext: [], conclusion: "连接不稳 — 看诊断页「BLE 事件流水」与失败归类, 建议先查电量; 保持前台时自动回连与会话巡检会自行重连, 无需额外开关"),   // 275/131 连接不稳
-        "done_wait": Step(question: "", yesNext: [], noNext: [], conclusion: "偶发超时属正常 — 蓝牙近场受干扰常见, 保持 1 米内重试即可")
-    ]
-    static let records: [String: Step] = [
-        "q1": Step(question: "「记录」页顶部是否显示过离线/未连接横幅?",
-                   yesNext: ["q2"], noNext: ["q3"]),
-        "q2": Step(question: "手动点一次「重新读取」能出记录吗?",
-                   yesNext: ["done_offline"], noNext: ["done_fetchfail"]),
-        "q3": Step(question: "刚发生的开门是否也读不到?",
-                   yesNext: ["done_gap"], noNext: ["done_ok"]),
-        "done_offline": Step(question: "", yesNext: [], noNext: [], conclusion: "上次读的时候没连接上 — 靠近门锁点「重新读取」即可, 记录一直在锁里"),
-        "done_fetchfail": Step(question: "", yesNext: [], noNext: [], conclusion: "读取失败 — 跑一次一键体检, 优先看「蓝牙权限/门锁连接」两项"),
-        "done_gap": Step(question: "", yesNext: [], noNext: [], conclusion: "锁端日志有上限会滚动 — 早期记录被新记录顶掉了, 属正常; 重要记录当时导出备份即可"),
-        "done_ok": Step(question: "", yesNext: [], noNext: [], conclusion: "数据完整 — 记录读取正常")
-    ]
-}
 
 // ---------- 397 本机库体自检 ----------
 /// 创意原文写"解锁后在后台跑 SQLite quick_check"，但本 App 的库体在 Keychain + UserDefaults，

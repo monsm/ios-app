@@ -268,8 +268,6 @@ protocol FaceService {
     var biometricAvailable: Bool { get }
     /// 严格档: 进前台必弹 (LAContext.evaluatePolicy 系统弹窗), 成功即记 lastFace
     func promptFace()
-    /// 标准档: 静默复用 ≤60s 生物窗口 — 不弹窗, 窗口内成功才刷新 lastFace, 窗口外不刷 = F1 门保持不过
-    func silentRefresh()
 }
 
 struct SystemFaceService: FaceService {
@@ -289,12 +287,6 @@ struct SystemFaceService: FaceService {
                 if ok { AutoOpenKit.noteFaceSuccess() }
             }
         }
-    }
-    func silentRefresh() {
-        // 2026-10-17 真机勘误「一直在请求 Face ID, 按压开锁也被挡住」:
-        // iOS 没有静默的生物识别 —— evaluatePolicy 一调就弹系统模态窗, 而 onForeground 每次
-        // 进前台都调它 (标准档), 于是切回 App / BLE 重连 / 点通知都弹一次, 弹窗期间开锁圆盘的
-        // 按压被吃掉。改为标准档不主动验证, 只沿用最近一次真实验证的 60s 窗口。
     }
 }
 
@@ -390,8 +382,6 @@ final class AutoOpenController {
             promptStartedAt = Date()    // 严格档: 记录弹窗发起时刻, 供在途位与"本次必刷"判定
             faceAtPrompt = AutoOpenKit.lastFace()
             face.promptFace()
-        } else {
-            face.silentRefresh()
         }
     }
     func onBackground() {
@@ -427,21 +417,6 @@ final class AutoOpenController {
         // 早判定只是把「同样的判定」提前到广播到达那一刻，不新增任何放行路径。
         // 省电也没变差：真正耗电的是持续开着扫描，而这里只是收到广播后多做一次纯计算。
         if armed { tickDwell(mac: mac) }
-    }
-    func rssiArmed() -> Bool { armed }
-
-    // ---------- F2': RSSI 武装 → 立刻触发一次门判定 ----------
-    //
-    // 2026-10-18 拍板变更（用户口径："连接后信号合格直接解锁"）:
-    // **删掉静置判定**。原实现要求 `MotionStillness.met()`（加速度计方差 < 阈值并持续 1s），
-    // 目的是拦"骑车路过门口"。代价是站到门口还要等满静置窗口才判定。
-    // 现在信号达标 (`armed`) 就是唯一条件 —— 拦"路过"不再靠静止，靠 RSSI 的进入/退出回差
-    // (见 AutoOpenKit.rssiSample: 进入线与解除线是两条不同的阈值，本身就有滞回)。
-    //
-    // 同时把调用点从"2s tick"改成"feedRssi 事件驱动"——见 AutoOpenController.feedRssi 尾部。
-    func tickDwell(mac: String) {
-        guard AutoOpen.on, armed else { return }
-        attempt(mac: mac)
     }
 
     // ---------- 全门判定 + 下发 (每个接近事件只发一次: F5) ----------

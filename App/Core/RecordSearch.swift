@@ -88,12 +88,6 @@ enum AlarmMeta {
     /// 试错锁定是"有人在试密码"的读数, "这一天出过事"这件事里它必须算。
     static let damageTypes: Set<Int> = [7, 10, 224]
     static let info: Set<Int> = [6]          // 低电量
-    static func isAlarm(_ t: Int) -> Bool { urgent.contains(t) || serious.contains(t) || info.contains(t) }
-    static func level(_ t: Int) -> Int {
-        if urgent.contains(t) { return 3 }
-        if serious.contains(t) { return 2 }
-        return 1
-    }
     static func levelName(_ t: Int) -> String {
         switch level(t) {
         case 3: return "紧急"
@@ -109,11 +103,6 @@ extension RecordSearch {
     static func alarmTitle(_ r: Rec) -> String {
         if !r.typeName.isEmpty { return r.typeName }
         return RecordVerbs.line(type: r.type, who: r.whoName, kindWord: nil, typeName: "告警 #\(r.type)")
-    }
-    /// 「同类 N」预览计数 —— 同样此前无声明 (`AlarmCenterView:242` 调用)。
-    /// 口径: 本机日志缓存里与该行同 type 的条数 (不虚构锁端总量)。
-    static func sameCountPreview(_ r: Rec) -> Int {
-        DB.readLogs(r.mac).filter { $0.type == r.type }.count
     }
 }
 
@@ -433,17 +422,6 @@ enum RecordSearch {
         var id: String        // mac#行键 (同日多锁也不重)
         var timeStr: String
         var lockName: String
-    }
-    static func trialEventsToday(macs: [String]) -> [TrialEvent] {
-        var out = [TrialEvent]()
-        for mac in macs {
-            let kc = DB.keychain(mac)
-            let name = LockArchive.displayName(kc ?? Keychain(mac: mac, skey: ""))
-            for l in trialRowsToday(mac: mac) {
-                out.append(TrialEvent(id: mac + "#" + String(l.idxRaw), timeStr: l.lockTimeStr, lockName: name))
-            }
-        }
-        return out.sorted { $0.timeStr > $1.timeStr }
     }
 
     static func dateOf(_ l: CachedLog) -> Date? { StatsKit.dateOf(l) }
@@ -767,70 +745,6 @@ enum RecordSearch {
         return nil
     }
 
-    /// 551 全局搜索 + 过滤: 文本命中走下面那份 `searchFace` (成员名 / 凭证标签 / 类型名) + 过滤条件
-    /// ⚠ 这条是 Rec 侧的同口径实现, 当前**零调用点** —— 记录页的检索与筛选走 `RecordsView.applyFilter`
-    /// (它要在行池上接着做 592 合并、598 分页与 593 的全天口径)。两边共用的是那份搜索面定义,
-    /// 不是各写一遍字符串拼接 (原先就是各写一遍, 于是界面承诺的「备注」两边都搜不到)。
-    static func search(recs: [Rec], query: Query, filters: QueryFilters) -> [Rec] {
-        let cal = WeekCal.gregorian
-        var out = [Rec]()
-        let hasTextCond = !(query.must.isEmpty && query.member == nil && !query.alarmOnly && query.credKind == nil)
-        for r in recs {
-            if hasTextCond {
-                let hay = hayOf(r)
-                // 555: 全部正词须命中 (OR 成员名), 全部负词须未命中
-                let memberHit = query.member.map { hay.localizedCaseInsensitiveContains($0) } ?? false
-                let mustHit = query.must.isEmpty || query.must.allSatisfy { hay.localizedCaseInsensitiveContains($0) } || memberHit
-                let notHit = query.not.allSatisfy { !hay.localizedCaseInsensitiveContains($0) }
-                guard mustHit, notHit else { continue }
-                if query.alarmOnly, !r.alarm { continue }
-                if let k = query.credKind, r.kind != k { continue }
-                // 纯成员查询 (无其他关键词): 只看有归属且相符的行; 有关键词时非归属行由关键词裁决
-                if let m = query.member, query.must.isEmpty {
-                    guard r.whoName == m else { continue }
-                } else if let m = query.member, let w = r.whoName, w != m {
-                    continue
-                }
-            }
-            // 554 时间窗
-            if let rng = query.range, let d = dateOf(r) {
-                if d < rng.from || d > rng.to { continue }
-            }
-            // 567 仅告警
-            if filters.alarmOnly {
-                guard r.alarm else { continue }
-            }
-            if filters.failedOnly {
-                // ⚠569: 锁端仅记录告警级 (10/13/224), 无逐次失败明细 — UI 文案已标注
-                guard r.failMsg.isEmpty ? ([10, 13, 224].contains(r.type)) : true else { continue }
-            }
-            // 564/572 时段 (深夜预设跟随 676 夜间时段配置)
-            if let d = dateOf(r) {
-                let hour = cal.component(.hour, from: d)
-                // 用 649 的归属日 (凌晨归前一晚), 与记录分组键和 RecordsView 过滤同一口径, 免得两条路径判出两种结果
-                let inLate = isLateNight(hour, dayKey: dayKeyOfNight(d))
-                if filters.lateNight && !inLate { continue }
-                switch filters.segment {
-                case 1: if !(6...9).contains(hour) { continue }
-                case 2: if !(10...14).contains(hour) { continue }
-                case 3: if !(15...21).contains(hour) { continue }
-                case 4: if !inLate { continue }
-                default: break
-                }
-                // 571 工作日/周末
-                let wk = cal.component(.weekday, from: d)
-                let isWeekend = wk == 1 || wk == 7
-                if filters.dayKind == 1 && isWeekend { continue }
-                if filters.dayKind == 2 && !isWeekend { continue }
-            }
-            // 568 凭证维度
-            if !filters.kind.isEmpty {
-                if r.kind != filters.kind && !r.cred.contains(filters.kind) { continue }
-            }
-            out.append(r)
-        }
-        return out
-    }
     /// 551 搜索面 = 一行「能被搜到的文字」, 全仓只有这一份定义。
     /// 搜索框占位文案承诺了「成员 / 凭证 / 备注」三段 (RecordsView 的 searchBar), 那三段就得真在串里:
     ///   · title —— 655 动词化的行标题 (行上显示的那句话, 含成员名与类型词)
@@ -898,28 +812,6 @@ enum RecordSearch {
     private static let dispKey = "kf_rdispo"
     static func dispositions() -> [String: Disposition] { DB.store.get([String: Disposition].self, dispKey) ?? [:] }
     static func disposition(key: String) -> Disposition? { dispositions()[key] }
-    /// 729 误报降权读侧: 已标「误报」的告警, 其**同锁同类型**在标记时刻后 24 小时内的后续告警,
-    /// 算"疑似同类误报"并回一组键 (mac#idxRaw) 给界面做折叠灰显。
-    /// 键里只有 mac#idxRaw, 类型与时刻要回日志缓存里取 (与 745 testMarkedKeys 同一套键格式)。
-    /// 只回标记, **不改** 723 逐行流 / 741 同类计数的任何口径 —— 折叠是显示层的事。
-    static func misfireFold(macs: [String]) -> Set<String> {
-        let mis = dispositions().filter { $0.value.verdict == "误报" }
-        guard !mis.isEmpty else { return [] }
-        var folded = Set<String>()
-        for mac in macs {
-            let logs = DB.readLogs(mac)
-            for l in logs {
-                let key = mac + "#" + String(l.idxRaw)
-                guard mis[key] != nil, let t = dateOf(l) else { continue }
-                let until = t.addingTimeInterval(24 * 3600)
-                for l2 in logs where l2.type == l.type && l2.idxRaw != l.idxRaw {
-                    guard let t2 = dateOf(l2), t2 > t, t2 <= until else { continue }
-                    folded.insert(mac + "#" + String(l2.idxRaw))
-                }
-            }
-        }
-        return folded
-    }
     static func markDisposition(key: String, verdict: String) {
         var all = dispositions()
         all[key] = Disposition(at: Date().timeIntervalSince1970, verdict: verdict)
@@ -989,25 +881,6 @@ enum RecordSearch {
         var count: Int
         var isAlertDay: Bool
     }
-    static func aroundDays(mac: String, aroundKey: String, days: Int = 7) -> [DayOpen] {
-        let recs = buildRecs(macs: [mac], includeFails: false, includeCare: false)
-        guard let mid = recs.first(where: { $0.key == aroundKey }),
-              let md = dateOf(mid) else { return [] }
-        let cal = WeekCal.gregorian
-        let alertKey = dayKeyOf(md)
-        var out = [DayOpen]()
-        for i in stride(from: -days, through: days, by: 1) {
-            let k = cal.date(byAdding: .day, value: i, to: md).map { dayKeyOf($0) } ?? alertKey
-            guard let start = dateFromKey(k) else { continue }
-            let end = cal.date(byAdding: .day, value: 1, to: start)!
-            let c = recs.filter {
-                guard let d = dateOf($0) else { return false }
-                return d >= start && d < end && StatsKit.openTypes.contains($0.type)
-            }.count
-            out.append(DayOpen(key: k, count: c, isAlertDay: k == alertKey))
-        }
-        return out
-    }
 
     /// 735 Tab 未读角标数据源: 未处置告警数 (734 未处理队列)
     /// 581 未处置告警落在哪些自然日: 与 735 角标、734 队列同一 `dispositions` 口径 (不另造"已读"状态)。
@@ -1047,18 +920,6 @@ enum RecordSearch {
             }
         }
         return n
-    }
-    /// 723 跨锁告警流: 全部锁的告警行, 未处置优先排序
-    static func alarmStream(macs: [String], unhandledOnly: Bool) -> [Rec] {
-        let recs = buildRecs(macs: macs, includeFails: true, includeCare: false).filter { $0.alarm }
-        let disp = dispositions()
-        func rank(_ r: Rec) -> Int {
-            unhandledOnly ? (disp[r.mac + "#" + r.key] == nil ? 0 : 1) : 2
-        }
-        // 734 未处理置顶; 处理过的按时间倒序垫后
-        let unhandled = recs.filter { disp[$0.mac + "#" + $0.key] == nil }
-        let handled = recs.filter { disp[$0.mac + "#" + $0.key] != nil }
-        return unhandledOnly ? unhandled : unhandled + handled
     }
 
     /// 765 跨锁合并"最近开门": 各锁日志按时间并成一条流 (行尾的锁名标签由 UI 用 Rec.lockName 打)。
