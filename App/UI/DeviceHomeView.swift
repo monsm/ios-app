@@ -35,7 +35,6 @@ struct DeviceHomeView: View {
     @State private var autoLockLeft: Int?
     @State private var showSettings = false   // 包8/507 备份角标跳转
     @State private var showTileEdit = false   // 905 长按快捷格 → 编辑面板
-    // 827 的"本会话点过哪些格 / 是否关了提示"两态搬到 AppState (ambientTipUsed / ambientTipOff):
     // 同屏提醒要按预算排位，视图层的 @State 预算读不到。判据一字未改，只是换了存放处。
     @State private var showRssi = false   // 63 点信号格弹出 dBm 数值 (格数看不出 1 格还是 2 格时看数字化)
     // 乱源治理第 3 批: 设备页模块显隐。默认空集 = 一块都不隐 (拍板口径), 面板只给能力不给默认。
@@ -74,28 +73,6 @@ struct DeviceHomeView: View {
                         }
                     } else {
                         if app.devices.count > 1 { capsuleSwitcher }
-                        // 42 首用气泡引导: 多锁用户最容易错过的动作是"长按这排胶囊看最近状态变化"
-                        // (那件事本身是 268，已经实现)。只说一次、由用户自己点掉;
-                        // 提示承诺的必须是**页面上真做得出**的动作 —— 832 那条就想承诺一个不存在的长按。
-                        if !app.firstUseCapsuleDone {
-                            Button { app.firstUseCapsuleDone = true; HintOnce.mark("capsule268") } label: {
-                                HStack(spacing: DS.Space.xs) {
-                                    Image(systemName: "hand.point.up.left")
-                                        .font(.system(size: DS.Icon.xs))
-                                    Text("小提示：长按主控卡上的「连接耗时」标记可看最近状态变化")   // 42/268 小提示
-                                        .vkFont(.caption2)
-                                        .multilineTextAlignment(.leading)
-                                }
-                                .foregroundStyle(DS.Palette.textSub)
-                                .padding(.horizontal, DS.Space.s)
-                                .padding(.vertical, DS.Space.xs)
-                                .variantPlate(DS.Palette.surfaceAlt, .capsule)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .frame(minHeight: DS.Hit.min)
-                            }
-                            .buttonStyle(PressableButtonStyle())
-                            .accessibilityLabel("首用提示：长按主控卡上的连接耗时标记可看最近状态变化，点按收起")
-                        }
                         // 767 按组切换 + 764 多锁状态图标行: 都放在 Hero 卡上方 ——
                         // 先一眼看清"哪把锁有事", 再落到当前锁的主控卡。
                         if app.devices.count > 1 {
@@ -723,7 +700,7 @@ struct DeviceHomeView: View {
         let connected = isCurrent && bleOn
         // 113 五档电量 / 120: 低电降级档 (≤20%) 关流光边并压亮度, 动效令牌同步降 calm
         let tier = BatteryCare.tier(batteryPct(for: kc))
-        return HeroCard(flair: false) {
+        return HeroCard {
             VStack(alignment: .leading, spacing: DS.Space.m) {
                 HStack(alignment: .top, spacing: DS.Space.m) {
                     HStack(spacing: DS.Space.s) {
@@ -1380,10 +1357,6 @@ struct DeviceHomeView: View {
         let target = QuickPool.repeatTarget(app.currentMac)
         Button {
             QuickPool.recordTap("again")
-            if app.quickTipTile?.id == "again" {
-                app.ambientTipUsed.insert("again")
-                HintOnce.mark("827seen_again")
-            }
             if let t = target {
                 app.pendingCredNav = t.nav
                 app.pendingCredNavMac = app.currentMac

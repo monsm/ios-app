@@ -234,24 +234,6 @@ struct RecordsView: View {
     @ToolbarContentBuilder
     private var recordsToolbar: some ToolbarContent {
         ToolbarItem(placement: .navigationBarTrailing) {
-            Button { showAlarmCenter = true } label: {
-                Image(systemName: "bell.badge.exclamationmark")
-                    .overlay(alignment: .topTrailing) {
-                        let n = RecordSearch.unhandledAlarmCount(macs: DB.keychains().map { $0.mac })
-                        if n > 0 {
-                            Text("\(n)")
-                                .vkFont(.caption2, weight: .semibold)
-                                .lineLimit(1)
-                                .foregroundStyle(DS.Palette.onSem)
-                                .padding(.horizontal, 4)
-                                .padding(.vertical, DS.Space.xxs)
-                                // @layout-allow VK豁免 语义色填充: 实心语义角标：填充就是信息，且前景走 onSem —— 去掉填充等于换掉一个已量过对比度的关系
-                                .background(DS.Palette.danger, in: Capsule())
-                                .offset(x: 12, y: -9)
-                                .accessibilityHidden(true)
-                        }
-                    }
-            }
             .accessibilityLabel("告警中心, \(RecordSearch.unhandledAlarmCount(macs: DB.keychains().map { $0.mac })) 条未处置")
         }
         ToolbarItem(placement: .navigationBarTrailing) {
@@ -756,9 +738,6 @@ struct RecordsView: View {
                             .foregroundStyle(DS.Palette.accentText)
                     }
                     .accessibilityLabel("切换当前锁，当前为 \(app.displayName)")
-                }
-                if scope == 1 {
-                    .buttonStyle(PlainButtonStyle())
                 }
                 Spacer(minLength: 0)
             }

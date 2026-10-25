@@ -773,7 +773,6 @@ struct SettingsView: View {
                     .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .pickerStyle(.menu)
             // 布局密度 (包16): 只缩放间距令牌, 字号与触达不动
             Picker("布局密度", selection: Binding(
                 get: { DB.store.getString("kf_density") },

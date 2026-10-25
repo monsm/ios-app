@@ -136,6 +136,27 @@ enum LockArchive {
     /// "key path cannot refer to tuple element" 这条, 公开资料亦以 `id: \.1.id` / `id: \.element.id`
     /// 为可用写法)。真正会编译不过的是**单参 `ForEach`/`Chart`**: 那版初始化器要求元素 `Identifiable`,
     /// 而元组不能遵循协议。换成结构体是为了拿到**稳定身份** (组名唯一、可读), 不是为了绕开 key path。
+    /// 766 设备顺序的唯一读点: 手工顺序优先, 表里没有的 (新绑定) 按绑定先后垫后;
+    /// 无手工顺序时按绑定先后, 但**启动默认锁仍占首位** —— 设备管理页的"第一行就是启动默认锁"
+    /// 与设备页的 271 兜底排序讲的是同一件事, 这里漏掉默认锁就会两页各说一套。
+    /// 低电置顶 (114) 不在这里做 —— 自动置顶会把用户明确排好的顺序挪走, 与 108 隐藏 vs 292 沉睡
+    /// 同一口径 (明确动作优先于推断), 低电改由 764 图标行的橙点如实标出 (1041 电量升序是另一条明确开关)。
+    static func orderedDevices(_ devices: [Keychain]) -> [Keychain] {
+        let o = orderMacs
+        guard !o.isEmpty else {
+            let def = defaultMac
+            return devices.sorted { a, b in
+                if a.mac == def { return true }
+                if b.mac == def { return false }
+                return a.pairedAt < b.pairedAt
+            }
+        }
+        let byMac = Dictionary(devices.map { ($0.mac, $0) }, uniquingKeysWith: { a, _ in a })
+        let head = o.compactMap { byMac[$0] }
+        let rest = devices.filter { !o.contains($0.mac) }.sorted { $0.pairedAt < $1.pairedAt }
+        return head + rest
+    }
+
     static func grouped(_ devices: [Keychain]) -> [LockGroup] {
         var names = [String]()
         var buckets = [String: [Keychain]]()

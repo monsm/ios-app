@@ -89,6 +89,12 @@ enum AlarmMeta {
     /// 试错锁定是"有人在试密码"的读数, "这一天出过事"这件事里它必须算。
     static let damageTypes: Set<Int> = [7, 10, 224]
     static let info: Set<Int> = [6]          // 低电量
+    static func level(_ t: Int) -> Int {
+        if urgent.contains(t) { return 3 }
+        if serious.contains(t) { return 2 }
+        return 1
+    }
+
     static func levelName(_ t: Int) -> String {
         switch level(t) {
         case 3: return "紧急"

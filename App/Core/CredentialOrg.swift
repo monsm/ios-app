@@ -1413,6 +1413,14 @@ enum CredentialOrg {
 
     /// 331 是否已过本机设定的提前失效时刻。`now` 由调用方给一次、两处提示共用 (顶部提醒条与状态行
     /// 同帧同判据), 不留隐式 Date() —— 隐式取时刻会让同一屏里两条结论各自漂。没设提前量恒 false。
+    /// 331 本地提前失效时刻; 滑杆为 0 时就等于锁端到期时刻, 长期有效 (2118) 无到期点 ⇒ nil。
+    static func effectiveExpiry(_ mac: String, _ p: LedgerPwd) -> Date? {
+        guard let to = expiryDate(p) else { return nil }
+        let m = earlyExpireMin(mac, p.alias)
+        guard m > 0 else { return to }
+        return to.addingTimeInterval(-Double(m) * 60)
+    }
+
     static func isEarlyExpired(_ mac: String, _ p: LedgerPwd, _ now: Date) -> Bool {
         guard earlyExpireMin(mac, p.alias) > 0, let e = effectiveExpiry(mac, p) else { return false }
         return now >= e

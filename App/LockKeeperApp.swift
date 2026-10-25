@@ -173,6 +173,22 @@ final class AppState: ObservableObject {
     }
     /// 377: 应用锁通道验过之后的落地。常规门禁置 appUnlocked; 受限区复核只放开 Tab 并跳到用户要的那页。
     /// 两条都从这一个出口走, 398 会话痕迹与 391 胁迫打标才是同一套口径, 而不是"另一套解锁的边角料"。
+    /// 397 本机库体自检 (三项都是本地只读, 不碰 BLE)。结果存这里给诊断页显示, 返回异常项数给调用方决定要不要出声。
+    /// 拆成"跑/存"与"提示"两步是因为: 解锁路径只在异常时提示 (每次解锁都弹"一切正常"会被关掉),
+    /// 而手动按钮必须无论结果都给反馈。
+    @Published var selfCheck397: [SelfCheckLine] = []
+    @discardableResult
+
+    func runSelfCheck397() -> Int {
+        let ls = SelfCheck.run()
+        selfCheck397 = ls
+        let bad = ls.filter { !$0.ok }
+        if let first = bad.first {
+            lock.log("warn", "本机自检 \(bad.count) 项异常: \(first.name) — \(first.detail)")   // 397 本机自检
+        }
+        return bad.count
+    }
+
     func commitUnlock(reauth: Bool) {
         showGuestGate = false
         if reauth {
@@ -718,9 +734,6 @@ final class AppState: ObservableObject {
             await BackupStudio.scheduleMonthlyBackup()
             // 428: BGTask 注册已移到 QuickActionDelegate.didFinishLaunchingWithOptions ——
             // 必须早于启动完成 (Apple 契约), 且每进程只注册一次 (onLaunch 可能被多次调用)。
-            if let s = BackupStudio.pendingMigration() {
-                self.showToast("检测到未完成的换机迁移 (\(s.channel) \(s.step)%) — 可回滚或继续")
-            }
         }
     }
     /// 开锁成功后的里程碑结算 (24/992/1005/1010/1000); 凌晨静默态(1002)只计数不播时刻

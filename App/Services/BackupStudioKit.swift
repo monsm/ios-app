@@ -615,6 +615,18 @@ enum BackupStudio {
 
 
     /// 193 体积预估: 本次 canonical 字符数 × 加密膨胀 (~1.75x hex) 估算, 与上次对比
+    static func expiredTemporaryCount() -> Int {
+        // 到期口径: 台账 from/to 是 "yyyy-MM-dd" 字符串, 直接按日比较 (与 CredentialOrg 状态推断同向)
+        let today = Milestones.dayKey()
+        var n = 0
+        for kc in DB.keychains() {
+            for p in DB.ledger(kc.mac).pwds where p.temp && !p.to.isEmpty && p.to != "2118-12-31" {
+                if p.to.compare(today) == .orderedAscending { n += 1 }
+            }
+        }
+        return n
+    }
+
     static func estimateBytes() -> Int? {
         let plain = BackupCanonical.exportText(bundleFor(BZones()))
         guard !plain.isEmpty else { return nil }
@@ -630,6 +642,22 @@ enum BackupStudio {
         return "本次预计 ~" + String(format: "%.1f KB", Double(bytes) / 1024) + " · " + cmp   // 193 界面文案
     }
 
+
+    // ================= 完整性与信任感 (448-454 / 507-512) =================
+    /// 库体指纹 (448/397 共用一份算法, 免得两处各算各的后端口径漂移)
+    /// 库体指纹算法版本: 变更时递增 —— 旧基线 (不带前缀) 不参与比对, 免得升级后误报自检异常。
+    private static let fpVersion = "2:"
+    private static func dbFingerprint() -> String {
+        // 旧实现只统计长度 (skey.count + pins.count) —— 替换等长 skey / 增删等量 pin 察觉不到。
+        // 改为对 skey 与 pins **内容**取摘要。
+        var m = [String: String]()
+        for kc in DB.keychains() {
+            let pinsHash = BackupCanonical.fnv1a32Hex(kc.pins.joined(separator: ","))
+            m[DB.normalizeMac(kc.mac)] = BackupCanonical.fnv1a32Hex(kc.skey.lowercased()) + ":" + pinsHash
+        }
+        let canon = m.sorted { $0.key < $1.key }.map { "\($0.0):\($0.1)" }.joined(separator: "|")
+        return fpVersion + BackupCanonical.fnv1a32Hex(canon)
+    }
 
     /// 397 解锁后自检用的**只读**核对: 只比不改。基线由备份时写入 (markBackupBaseline), 本函数只比不改 ——
     /// 一处"每检查一次就把上次的异常抹平"的检查证明不了任何事, 所以自检绝不回写基线。
@@ -870,6 +898,12 @@ enum BackupStudio {
             }
             return "已轮换 — 旧口令失效, 请用新口令访问"   // 237 已轮换
         } catch { return "轮换中断: \(error.localizedDescription)" }
+    }
+
+    private static func jsonStr(_ s: String, _ marker: String) -> String? {
+        guard let r = s.firstRange(of: marker) else { return nil }
+        guard let end = s[r.upperBound...].firstRange(of: "\"") else { return nil }
+        return String(s[r.upperBound..<end.lowerBound])
     }
 
     private static func jsonNum(_ s: String, _ marker: String) -> Int? {
