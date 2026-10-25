@@ -23,7 +23,6 @@ struct MemberCenterView: View {
     // 自带 NavigationStack + leading「保存」+ dismiss, 本来就是**按 sheet 设计的页** —— 所以这里
     // 按同菜单 showGroups 的既有写法弹出来, 而不是再 push 一层。
     @State private var showFamilySettings = false
-    @State private var showActiveTable = false   // 2026-10-15: 同上, 目标页自带 NavigationStack
     // 415 名册导出: ShareLink 要在渲染期就有 URL, 所以点菜单时先按需生成再开面板 (不在 body 里写盘)
     @State private var rosterURL: URL?
     @State private var showRoster = false
@@ -47,7 +46,6 @@ struct MemberCenterView: View {
                 visitorSection
                 archivedSection
                 sceneSection
-                guideSection      // 973 给家人开门禁的四步
                 navSection
             }
             .navigationTitle("成员中心")
@@ -86,7 +84,6 @@ struct MemberCenterView: View {
             // 是 sheet 形态 —— 这里弹出来正好。navSection 的「家庭设置」与设置页那条入口同批改成 sheet,
             // 不再 push (push 会把内层 NavigationStack 套进外层 ⇒ 两层导航栏)。
             .sheet(isPresented: $showFamilySettings) { MemberFamilySettingsView() }
-            .sheet(isPresented: $showActiveTable) { MemberActiveTable(onChanged: { tick += 1 }) }
             // 817c 记录页"添加成员"示例位跳过来时直接弹向导; 标记一次性消费。
             // 下一轮 runloop 再置 sheet: onAppear 同步段里开 sheet 在首帧可能因视图未入窗被吞掉。
             .onAppear {
@@ -356,30 +353,9 @@ struct MemberCenterView: View {
     // 手表那半步做不到 (本 App 无 watch target，协议也不能让手表替锁开门)，
     // 章里第一段就把这句写在明面上 —— 做不到就说不做，不拿四步里的某一步含糊带过。
     @ViewBuilder
-    private var guideSection: some View {
-        if let ch = ManualKit.chapters.first(where: { $0.id == "ch.family" }) {
-            DisclosureGroup {
-                ForEach(ch.lines, id: \.self) { line in
-                    Text(line)
-                        .vkFont(.footnote)
-                        .foregroundStyle(DS.Palette.textSub)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(.vertical, 2)
-                }
-            } label: {
-                Text(ch.title)   // 973 界面文案
-                    .vkFont(.subheadline, weight: .semibold)
-                    .foregroundStyle(DS.Palette.text)
-            }
-        }
-    }
 
     private var navSection: some View {
         Section {
-            // 2026-10-15 走查: 这两行原为 NavigationLink, 而目标页**自带 NavigationStack**
-            // (leading「完成」「保存」+ dismiss 的 sheet 形态) ⇒ push 进去内层栈套外层, 两层导航栏。
-            // 与本文件菜单里那条「成员家庭设置」同一处理: 改用 sheet 呈现。
-            Button("成员活跃总表") { showActiveTable = true }   // 788/789 成员活跃总表
             Button("家庭设置") { showFamilySettings = true }   // 479/794 家庭设置
         } header: {
             Text("聚合视图")
@@ -792,48 +768,6 @@ struct MemberDetail360View: View {
         .variantPlate(DS.Palette.surfaceAlt, .control)
     }
 
-    // ---------- 476 归属图谱 (SwiftUI 自绘两列: 创建人→使用人) ----------
-    private func graphSection(_ m: Member) -> some View {
-        let edges = MemberHub.graph(m.id)
-        return Section {
-            if edges.isEmpty {
-                Text("暂无「谁创建给谁」的凭证关系 — 这一张图只画得出本机版本历史里留得下那一手移交的凭证。"   // 476 暂无
-                     + "在凭证页批量移交之后, 这里就画出 创建人→使用人。")   // 349 在凭证页批量移交
-                    .vkFont(.footnote)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            ForEach(Array(edges.enumerated()), id: \.offset) { _, e in
-                HStack(spacing: DS.Space.s) {
-                    MemberAvatar(member: m, size: 26)
-                    Image(systemName: e.direction == "out" ? "arrow.right.circle.fill" : "arrow.left.circle.fill")
-                        .font(.system(size: DS.Icon.xs))
-                        .foregroundStyle(DS.Palette.accentText)
-                        .accessibilityHidden(true)
-                    Text(e.peer)
-                        .vkFont(.subheadline)
-                        .foregroundStyle(DS.Palette.text)
-                        .lineLimit(1)
-                    Spacer(minLength: 0)
-                    Text(e.label)
-                        .vkFont(.caption)
-                        .foregroundStyle(DS.Palette.textSub)
-                        .lineLimit(1)
-                }
-                .accessibilityElement(children: .combine)
-                .accessibilityLabel((e.direction == "out" ? "TA 移交给 " : "移交给 TA 的, 上一手 ") + e.peer + ", " + e.label)
-            }
-        } header: {
-            Text("归属图谱")   // 476 归属图谱
-        } footer: {
-            // 判据与落盘注记同源 (MemberHub.transferNotePrefix 对 CredentialOrg.batchTransfer),
-            // 所以这里说的"移交之后会画出来"是真的会画出来 —— 原先判的是另一个字符串, 这一栏恒为占位句。
-            Text("箭头方向: 右 = TA 移交出去 (对端是现在的持有人), 左 = 别人移交给 TA (对端是上一手)。"
-                 + "两端都取版本历史里那条「移交 → 使用人」注记与它前一版的归属; 查不到上一手就不画, 不编一个名字顶上。")
-                .vkFont(.caption2)
-                .foregroundStyle(DS.Palette.textSub)
-        }
-    }
 
     // ---------- 家庭场景 (481/468/469/480/484/475) ----------
     private func sceneSection(_ m: Member) -> some View {
@@ -1004,7 +938,6 @@ struct MemberDetail360View: View {
         let fRemark = field("备注名", e.remark)   // 461 备注名
         let fEmoji = field("emoji 代号", e.emoji)   // 916 代号
         let fEmergency = field("紧急联系 姓名+电话", e.emergency)   // 465 紧急联系
-        let fNote = field("家庭便签 (如 周六换锁芯)", e.note)
         let fCare = field("孩子码关怀文案", e.careText)   // 480 孩子码关怀文案
         let fWelcome = field("访客欢迎语", e.welcome)   // 484 访客欢迎语
         let fGroup = field("分组标签 家人/访客/服务人员", e.groupTag)   // 630 分组标签
@@ -1711,369 +1644,7 @@ struct UnclaimedClaimView: View {
     }
 }
 
-// ================= 788 成员活跃总表 (每人一行, 点击进 789 聚合详情) =================
-struct MemberActiveTable: View {
-    @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
-    var onChanged: () -> Void = {}
-
-    private struct Row: Identifiable {
-        var m: Member
-        var a: MemberHub.Activity
-        var id: String { m.id }
-    }
-    private var rows: [Row] {
-        DB.members()
-            .filter { !MemberHub.ext($0.id).archived }
-            .map { m in Row(m: m, a: MemberHub.activity(m.id)) }
-            .sorted { $0.a.owns > $1.a.owns }
-    }
-
-    var body: some View {
-        NavigationStack {
-            List {
-                Section("成员活跃总表 (本月次数/最近使用/凭证数)") {   // 788 成员活跃总表
-                    ForEach(rows) { r in
-                        NavigationLink {
-                            MemberDetail360View(memberID: r.m.id, onChanged: { onChanged() })
-                        } label: {
-                            HStack(spacing: DS.Space.s) {
-                                MemberAvatar(member: r.m)
-                                VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                                    Text(MemberHub.display(r.m))
-                                        .vkFont(.subheadline)
-                                        .foregroundStyle(DS.Palette.text)
-                                    Text("本月约 \(r.a.month) 次 · 名下 \(r.a.owns) 条 · 最近 "
-                                         + (r.a.last.isEmpty ? "—" : String(r.a.last.prefix(10))))
-                                        .vkFont(.caption)
-                                        .foregroundStyle(DS.Palette.textSub)
-                                        .lineLimit(1)
-                                        .minimumScaleFactor(0.8)
-                                }
-                                Spacer(minLength: 0)
-                            }
-                            .contentShape(Rectangle())
-                            .frame(minHeight: DS.Hit.min)
-                        }
-                        .accessibilityElement(children: .combine)
-                    }
-                    if rows.isEmpty {
-                        // 这一屏的 rows 排除**已归档**成员，所以"空"有两种完全不同的原因：
-                        // 一台都没建过档 vs 全都归档了。后者说"去建档"是在催用户重复建一遍档案。
-                        // 计数按"档案还在名册里的归档者"算 —— ext 表可能留着已删成员的残档。
-                        let archIds = MemberHub.archivedIDs()
-                        let arch = DB.members().filter { archIds.contains($0.id) }.count
-                        Text(arch > 0
-                            ? "在册成员是空的 — 本机有 \(arch) 位归档成员，回成员中心点「归档成员」那一栏找回。"   // 788 在册成员是空的
-                            : "还没有成员 — 在 成员中心 走建档向导。")
-                            .vkFont(.footnote)
-                            .foregroundStyle(DS.Palette.textSub)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-            }
-            .navigationTitle("成员活跃总表")   // 788 成员活跃总表
-            .variantList()
-            .dsScreenBackground()
-            // 2026-10-15 走查: 「完成」原写 `app.tabSelection = 3` —— 本页是设置 Tab 下 push 进来的
-            // (设置 → 安全中心 → 成员中心 → 成员活跃总表), 切 Tab 是**空转**, 点了没反应。
-            // 「完成」该做的就是收掉这一页: dismiss() 在 push 语境里是 pop、在 sheet 语境里是关,
-            // 两种进入方式都对。
-            .toolbar { ToolbarItem(placement: .navigationBarLeading) {
-                Button("完成") { dismiss() }
-            } }
-        }
-    }
-}
-
-// ================= 798 成员堆叠面积图 + 792 成员轮换小节 (全锁台账推断, 带"约") =================
-struct MemberStackedView: View {
-    struct StackPt: Identifiable {
-        var day: Date
-        var who: String
-        var n: Int
-        var id: String { "\(who)|\(day.timeIntervalSince1970)" }
-    }
-    struct RotationPoint {
-        var label: String
-        var detail: String
-    }
-
-    /// 798 成员堆叠面积图: 真序列 = 每个 (日 × 成员) 一个点，AreaMark 按成员分层累加。
-    /// 旧写法把所有点的 day 都填 now、y 恒为 1、x 是跨成员的累计数 ——
-    /// 那画出来是一条与时间无关的水平带，轴标却写"成员分层累计 (30 天)"，是纯装饰。
-    private var stack: [StackPt] {
-        var per: [String: [String: Int]] = [:]          // who -> 日 key -> 次数
-        let now = Date()
-        for kc in DB.keychains() {
-            let logs = DB.readLogs(kc.mac).filter { StatsKit.openTypes.contains($0.type) }
-            let status = DB.readStatus(kc.mac)
-            let rows = Attribution.classify(
-                logs: logs.map { LogEntry(type: $0.type, typeName: $0.typeName, idx: $0.idxRaw, idxRaw: $0.idxRaw,
-                                          lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr, body: "") },
-                pwds: DB.listPwds(kc.mac), fps: DB.listFps(kc.mac),
-                status: status.map { ($0.fpStock, $0.pwdStock, $0.lockTime) })
-            let cutoff = now.addingTimeInterval(-30 * 86400)
-            for (i, r) in rows.enumerated() {
-                guard let who = r.who else { continue }
-                let unix = ZKProtocol.protoSecondsToUnix(Int64(logs[i].lockTime))
-                guard unix >= cutoff.timeIntervalSince1970 else { continue }
-                let day = Date(timeIntervalSince1970: Double(unix))
-                // 日 key 走 StatsKit.dayKey 那一份 (与 616/780/642 同一套周序与假日口径)
-                per[who, default: [:]][StatsKit.dayKey(day), default: 0] += 1
-            }
-        }
-        var out: [StackPt] = []
-        for (who, days) in per {
-            for (key, n) in days {
-                guard let d = RecordSearch.dateFromKey(key) else { continue }
-                out.append(StackPt(day: d, who: who, n: n))
-            }
-        }
-        return out.sorted { $0.day < $1.day }
-    }
-
-    private var rotations: [RotationPoint] {
-        var out: [RotationPoint] = []
-        let cal = WeekCal.gregorian
-        for kc in DB.keychains() {
-            let logs = DB.readLogs(kc.mac).filter { StatsKit.openTypes.contains($0.type) }
-            let rows = Attribution.classify(
-                logs: logs.map { LogEntry(type: $0.type, typeName: $0.typeName, idx: $0.idxRaw, idxRaw: $0.idxRaw,
-                                          lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr, body: "") },
-                pwds: DB.listPwds(kc.mac), fps: DB.listFps(kc.mac), status: nil)
-            var prevFirst: String? = nil
-            var byDay: [String: [String]] = [:]
-            var order: [String] = []
-            for (i, r) in rows.enumerated() where r.who != nil {
-                let dk = String(logs[i].lockTimeStr.prefix(10))
-                if byDay[dk] == nil { order.append(dk) }
-                byDay[dk, default: []].append(r.who!)
-            }
-            for dk in order.suffix(7) {
-                // 792: 保序去重 — 原先 Set(...) 打乱"在家顺序", 同一天顺序每次刷新都在变
-                var seen = Set<String>()
-                let names = byDay[dk]!.filter { seen.insert($0).inserted }.map { DB.member($0)?.name ?? "成员" }
-                let first = names.joined(separator: " / ")
-                if let p = prevFirst, p != first, !names.isEmpty {
-                    out.append(RotationPoint(label: "「" + (DB.keychain(kc.mac).map { LockArchive.displayName($0) } ?? kc.mac) + "」"
-                                             + String(dk.dropFirst(5)),
-                                             detail: "在家顺序变化: " + first))
-                }
-                if !names.isEmpty { prevFirst = first }
-            }
-            _ = cal
-        }
-        return out
-    }
-
-    var body: some View { vkBody.destined(.memberStacked) }
-    var vkBody: some View {
-        VStack(spacing: 0) {
-            if stack.isEmpty {
-                Text("近 30 天还没有可证明归属的开门数据, 积累后这里会出按人堆叠的图 (约级口径)。")
-                    .vkFont(.footnote)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .padding(DS.Space.l)
-                    .fixedSize(horizontal: false, vertical: true)
-            } else {
-                Chart(stack) { p in
-                    AreaMark(x: .value("日期", p.day),
-                             y: .value("开门次数", p.n))
-                        // 798: 图例显示成员名而不是归属 id (unknown 归 id 显示兜底)
-                        .foregroundStyle(by: .value("成员", DB.member(p.who).map(MemberHub.display) ?? p.who))
-                        .interpolationMethod(.monotone)
-                }
-                .chartXAxisLabel("近 30 天逐日 (台账推断, 约)", alignment: .leading)
-                .frame(height: 140)
-                .padding(.horizontal, DS.Space.gutter)
-            }
-            // 789: 图例成员可点进 360 (与活跃总表行同一落点)
-            if !stack.isEmpty {
-                ForEach(Set(stack.map(\.who)).sorted(), id: \.self) { w in
-                    NavigationLink { MemberDetail360View(memberID: w) } label: {
-                        Label(DB.member(w).map(MemberHub.display) ?? w, systemImage: "person.circle")
-                            .vkFont(.footnote)
-                            .foregroundStyle(DS.Palette.accentText)
-                    }
-                    .frame(minHeight: DS.Hit.min)
-                }
-            }
-            if !rotations.isEmpty {
-                VStack(alignment: .leading, spacing: DS.Space.s) {
-                    SectionTitle(text: "成员轮换", count: rotations.count)   // 792 成员轮换
-                    ForEach(rotations.prefix(5), id: \.label) { r in
-                        VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                            Text(r.label)
-                                .vkFont(.caption)
-                                .foregroundStyle(DS.Palette.textSub)
-                            Text(r.detail)
-                                .vkFont(.subheadline)
-                                .foregroundStyle(DS.Palette.text)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                    }
-                }
-                .padding(.horizontal, DS.Space.gutter)
-            }
-        }
-        .padding(.vertical, DS.Space.s)
-    }
-}
 
 
-// ================= 475 家庭便签 (一行本地文本, 与成员绑定, 设备页 Hero 下浮动显示) =================
-struct FamilyNoteView: View {
-    @EnvironmentObject var app: AppState
-    @State private var selMember: String
-    @State private var text: String = ""
-    @State private var tick = 0
 
-    init() {
-        _selMember = State(initialValue: DB.members().first?.id ?? "")
-    }
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: DS.Space.m) {
-            if !selMember.isEmpty {
-                LabeledContent("挂在谁名下") {
-                    // @layout-allow 触达托管 Picker: 控件本体高度由系统渲染, 我们撑 frame 只会多出一片点不动的死区。
-                    // 上机复测: 用拇指点这一行的上下边缘, 看打不打得开 (打得开=系统已给够 44, 这条可以销)
-                    Picker("成员", selection: $selMember) {
-                        // 2026-10-15 走查 (性能): 同上 — Picker 数据源 ext 逐成员解码, 集合一次取。
-                        let arch = MemberHub.archivedIDs()
-                        ForEach(DB.members().filter { !arch.contains($0.id) }) { m in
-                            Text(MemberHub.display(m)).tag(m.id)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                }
-            }
-            TextField("一行便签 (如 周六换锁芯)", text: $text)
-                .autocorrectionDisabled()
-                .lineLimit(2)
-            Text("便签存在本机, 绑在成员身上, 设备页 Hero 卡下方浮动显示。")   // 475 便签存在本机
-                .vkFont(.caption)
-                .foregroundStyle(DS.Palette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
-            HStack(spacing: DS.Space.s) {
-                Button { save() } label: {
-                    Text("保存便签")
-                        .frame(maxWidth: .infinity)
-                        .frame(minHeight: DS.Hit.min)
-                }
-                .buttonStyle(PrimaryActionStyle())
-                .disabled(selMember.isEmpty || text.isEmpty)
-            }
-        }
-        .padding(DS.Space.l)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .dsScreenBackground()
-        .onAppear {
-            text = MemberHub.ext(selMember).note
-        }
-        .onChange(of: selMember) { _, _ in
-            text = MemberHub.ext(selMember).note
-            tick += 1
-        }
-        .id(tick)
-    }
-
-    private func save() {
-        var e = MemberHub.ext(selMember)
-        e.note = text
-        MemberHub.saveExt(selMember, e)
-        app.showToast("便签已挂到「" + (DB.member(selMember)?.name ?? "成员") + "」名下")
-    }
-}
-
-// ================= 483 家政周期预设 (⚠降级: 协议无循环时段, 只做整段起止窗) =================
-struct HouseCleaningPresetView: View {
-    @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
-    @State private var mac: String
-    @State private var from: Date
-    @State private var to: Date
-    @State private var label = "家政"
-    @State private var busy = false
-
-    init() {
-        _mac = State(initialValue: DB.preferredMac())
-        _from = State(initialValue: Date())
-        _to = State(initialValue: Date().addingTimeInterval(8 * 3600))
-    }
-
-    var body: some View { vkBody.destined(.houseCleaningPreset) }
-    var vkBody: some View {
-        NavigationStack {
-            Form {
-                Section("家政周期预设") {   // 483 家政周期预设
-                    DatePicker("开始", selection: $from, displayedComponents: [.date, .hourAndMinute])
-                    DatePicker("结束", selection: $to, displayedComponents: [.date, .hourAndMinute])
-                    TextField("标签", text: $label)
-                        .autocorrectionDisabled()
-                    Text("协议未定义循环时段, 预设只生成一段整窗; 工作日 8:00-18:00 每日循环需锁端支持, 暂不做。")
-                        .vkFont(.caption)
-                        .foregroundStyle(DS.Palette.textSub)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Section {
-                    BusyButton(title: busy ? "生成中…" : "生成家政整窗",
-                                systemImage: "calendar.badge.clock", isBusy: busy) {
-                        submit()
-                    }
-                    .disabled(mac.isEmpty || from >= to)
-                }
-                // houseWin(mac) 此前零调用: 只能写入、读不回来, 用户提交后页面一片空白, 看着像没存上
-                if let cur = MemberHub.houseWin(mac) {
-                    Section("当前已登记") {   // 483 当前已登记
-                        LabeledRow("标签", cur.label.isEmpty ? "(无)" : cur.label)
-                        LabeledRow("整窗", cur.from + " → " + cur.to)
-                        Text("每把锁只留最近一段 (再次生成会覆盖)。这条登记不产生锁端命令, 家政人员用自带钥匙进出。")
-                            .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-            }
-            .navigationTitle("家政周期预设")   // 483 家政周期预设
-            .navigationBarTitleDisplayMode(.inline)
-            .variantList()
-            .dsScreenBackground()
-            .toolbar { ToolbarItem(placement: .navigationBarLeading) {
-                Button("完成") {
-                    // 2026-10-15 走查: 原为 `app.tabSelection = 1; dismiss()` —— 而本页全仓**只有一个入口**,
-                    // 就是设置页 (设置 → 家人与钥匙 → 家政周期预设) 的 NavigationLink, 它属于设置 Tab。
-                    // 跳凭证 Tab 等于把用户扔去别处, 而设置栈里这一页还留着 —— 下次回设置 Tab 仍停在这。
-                    // 「完成」的语义就是收掉这一页: dismiss() 在 push 语境里是 pop。
-                    dismiss()
-                }
-            } }
-        }
-    }
-
-    private func submit() {
-        busy = true
-        Task {
-            defer { busy = false }
-            do {
-                try await app.lock.ensureConnected(mac: mac)
-                let f = DateFormatter()
-                f.locale = Locale(identifier: "en_US_POSIX")
-                f.dateFormat = "yyyy-MM-dd HH:mm:ss"
-                let fromS = f.string(from: from)
-                let toS = f.string(from: to)
-                MemberHub.saveHouseWin(mac, HouseWin(from: fromS, to: toS, label: label))
-                // 只登记到本机 (kf_house_win_)。**不写进凭证台账, 所以 359 三档预警不会盯它** ——
-                // 359 只按凭证的 from/to 排本地通知; 家政窗是另一族数据 (上面的"当前已登记"区回显)。
-                // 不下发 0 码, 家政自带钥匙。
-                app.showToast("家政窗口 " + label + " 已登记 (整段起止, 无循环; 不参与凭证到期预警)")
-                // 2026-10-15 走查: 同上 —— 原来这里跟着 `app.tabSelection = 1`, 登记完把人送去凭证 Tab。
-                // 登记的是本机家政窗 (kf_house_win_), 上面那句 toast 已经写明它不参与凭证到期预警,
-                // 所以"去看凭证"不是这一步的下一步。收掉本页即可。
-                dismiss()
-            } catch {
-                app.showToast("登记失败: " + error.localizedDescription)
-            }
-        }
-    }
-}

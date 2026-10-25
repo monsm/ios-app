@@ -19,7 +19,7 @@ enum DevModule: String, CaseIterable, Identifiable {
     case statusIcons     // 764 多锁状态图标行 (家庭 App 房间行)
     case linkSense       // 包2: 69 蓝牙直通条 / 126 回连节律 / 125 最后已知状态 / 535 同步回执 / 130 唤醒失败细分
     case nightCheck      // 976 安心夜打卡
-    case familyCare      // 包13: 485 生日 / 480 孩子码 / 475 家庭便签
+    case familyCare      // 包13: 485 生日 / 480 孩子码
     case privacyNote     // 隐私脚注
 
     var id: String { rawValue }

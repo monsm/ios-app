@@ -22,7 +22,6 @@ struct SettingsView: View {
     @State private var showFamilySettings = false
     // 2026-10-15 走查: 这两个目标页也自带 NavigationStack, 同样只能走 sheet
     @State private var showSecurity = false
-    @State private var showHouseCleaning = false
     // 包14: 27 设置内搜索 — 顶部搜索框过滤全部设置项
     @State private var query = ""
     // 乱源治理第 4 批: 五组筛选的当前组。nil = 全部 (默认态与分组之前完全一样)。
@@ -122,8 +121,6 @@ struct SettingsView: View {
         .sheet(isPresented: $showUnclaimed) { UnclaimedClaimView() }
         .sheet(isPresented: $showFamilySettings) { MemberFamilySettingsView() }
         .sheet(isPresented: $showSecurity, onDismiss: { landPendingFocus(app.pendingSettingsFocus) }) { SecurityCenterView() }
-        .sheet(isPresented: $showHouseCleaning) { HouseCleaningPresetView() }
-        // 587: 诊断页用 sheet 呈现 (设置栈里那行 NavigationLink 仍走 push, 两条入口同一个页面)。
         // 为什么不用 navigationDestination(isPresented:): 全仓无先例, 而 sheet+NavigationStack 与
         // 与 showDiag 那一段逐字同构 —— 无编译器的机器上, 复用已验证的写法是唯一稳的取向。
         .sheet(isPresented: $showDiag) {
@@ -612,8 +609,6 @@ struct SettingsView: View {
         // 作者当时的处理就是改用 sheet —— 这里照同一条做法。成员活跃结构 (MemberStackedView)
         // 没有自带栈, 仍走 push, 不动。
         Button { showUnclaimed = true } label: { Label("未归属记录认领", systemImage: "questionmark.circle") }   // 791 未归属记录认领
-        NavigationLink { MemberStackedView() } label: { Label("成员活跃结构", systemImage: "chart.bar.fill") }   // 798/792 成员活跃结构
-        Button { showHouseCleaning = true } label: { Label("家政周期预设", systemImage: "broom.fill") }   // 483 家政周期预设
         Button { showFamilySettings = true } label: { Label("家庭设置：长辈模式/隐私浏览", systemImage: "hand.raised.fill") }   // 479/794 家庭设置
         Button { showKeychainHW = true } label: { Label("蓝牙钥匙串", systemImage: "key.horizontal") }
         // 2026-10-14 走查: 「添加另一把锁」原先挂在本节末尾 —— 它讲的是"再加一把锁", 属于门锁本身,
