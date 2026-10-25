@@ -38,7 +38,6 @@ enum Theme {
 }
 
 // ---------- 全局状态 ----------
-@MainActor
 /// 一张时刻卡的数据 (队列元素)。原本住在 MomentLayer.swift, 该文件随本轮删减移除,
 /// 但异常退出 (758) 与保留期到期 (752) 两类提醒仍靠它排队 —— 数据形状留在这里。
 struct Moment: Identifiable, Equatable {
@@ -48,6 +47,7 @@ struct Moment: Identifiable, Equatable {
     let subtitle: String
 }
 
+@MainActor
 final class AppState: ObservableObject {
     @Published var devices: [Keychain] = []
     @Published var currentMac: String = ""

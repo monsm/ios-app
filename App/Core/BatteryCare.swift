@@ -464,7 +464,7 @@ enum CareSchedule {
             for kc in DB.keychains() where !kc.fw.isEmpty {
                 for item in BatteryCare.fwlib {
                     guard let v = _FWVersion(item.version), _FWVersion(kc.fw) != nil,
-                          Self.versionLt(kc.fw, item.version) else { continue }
+                          BatteryCare.versionLt(kc.fw, item.version) else { continue }
                     let lastN = DB.store.get(Double.self, "kf_fw_notify_at_" + v) ?? 0
                     if now - lastN > 30 * 86400 * 1000 {
                         DB.store.set("kf_fw_notify_at_" + v, now)

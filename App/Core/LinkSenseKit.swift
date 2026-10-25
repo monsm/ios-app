@@ -644,7 +644,11 @@ final class LinkSense: ObservableObject {
 
 // ---------- AppState 宿主注册 (LinkSense 只读协作, 不建循环依赖) ----------
 extension AppState {
-    static var hostRef: AppState?
+    /// 全 App 唯一的 AppState 弱引用入口 (由 RootView 挂载时赋值)。
+    /// `nonisolated(unsafe)`: 读取方跨隔离域 (BLE 回调 / 通知代理 / 后台 Task),
+    /// 而写入只在主 actor 的 onAppear。本仓既有约定是「读一次拿局部引用, 不缓存跨调用」,
+    /// 所以这里显式标注而不是加 @MainActor —— 加了会让所有后台读点编译不过。
+    nonisolated(unsafe) static var hostRef: AppState?
 }
 
 // ================= UI 组件 (颜色只经 DS 令牌, hero 渐变白字用既有半透明变体) =================

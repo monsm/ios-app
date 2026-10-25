@@ -2415,12 +2415,12 @@ struct CredentialsView: View {
     }
 
     /// 1007 维护致谢: 整理动作计数, 每 10 次附一句致谢
+    /// 1007 整理动作计数 (致谢文案已随徽章引擎删除, 这里只记数 + 刷新)
     private func showToastOrganized(_ base: String) {
-        let thanks = Milestones.recordOrganize()
-        app.showToast(thanks ? base + " · 谢谢你把家管得井井有条" : base)
+        Milestones.recordOrganize()
+        app.showToast(base)
         refreshTick += 1
     }
-
     @ViewBuilder
     private func ownerMenu(isPwd: Bool, key: Int) -> some View {
         ForEach(DB.members()) { m in
