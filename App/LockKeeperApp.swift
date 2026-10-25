@@ -1240,7 +1240,6 @@ struct RootView: View {
             // 2026-10-14: 只有**真进后台**才算退后台。旧实现把 .inactive (下拉通知中心/控制中心、
             // 来电、Face ID 系统弹窗) 也当退后台 —— 会误记锁定到期时刻 (反复下拉可无限顺延宽限),
             // 还会提前清掉崩溃标记 (随后真崩溃被判成"正常退出")。.inactive 只收起过期的快捷条。
-            app.pasteSuggestion = nil
             // 221 退后台收尾: 记会话时长并清崩溃标记 (CrashGuard 的判定就依赖这一步)
             CrashGuard.markCleanExit()
             AutoOpenController.shared.onBackground()
@@ -1248,7 +1247,6 @@ struct RootView: View {
             // .inactive: 只收起过期的快捷条, **不**记锁定到期时刻 (否则反复下拉通知中心可无限顺延宽限)。
             // 但崩溃标记仍要清 —— 从任务切换器强退时进程多在 .inactive 被 SIGKILL,
             // 只在 .background 清会把正常强退误报成"异常退出"。
-            app.pasteSuggestion = nil
             CrashGuard.markCleanExit()
             // 2026-10-14: .inactive 也要停自动开锁的武装态与加速度计 (下拉通知中心/来电/系统弹窗期间
             // AUTOOPEN 不该继续武装并喂传感器); 锁定计时与崩溃标记的取舍见上。

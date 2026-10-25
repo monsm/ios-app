@@ -538,7 +538,6 @@ struct MemberDetail360View: View {
                 excerptSection(m)
                 feedSection(m)
                 sourceSection(m)
-                graphSection(m)
                 sceneSection(m)
                 permSection(m)
             }
@@ -950,7 +949,6 @@ struct MemberDetail360View: View {
             next.emoji = fEmoji.text ?? ""
             next.remark = fRemark.text ?? ""
             next.emergency = fEmergency.text ?? ""
-            next.note = fNote.text ?? ""
             next.careText = fCare.text ?? ""
             next.welcome = fWelcome.text ?? ""
             next.groupTag = fGroup.text ?? ""

@@ -648,7 +648,6 @@ struct SettingsView: View {
     // ---------- 工具 (原网关/固件/备份/诊断 四个单行 Section 合并) ----------
     private var toolsSection: some View {
         Section("工具") {
-            Button { showFirmware = true } label: { Label("检查固件更新", systemImage: "arrow.up.circle") }
             Button { showBackup = true } label: { Label("备份与恢复", systemImage: "externaldrive") }
             // 动态消息只走 sheet: MessagesView 自带 NavigationStack, 用 NavigationLink 会嵌套两层导航栏
             Button { showMessages = true } label: { Label("动态消息", systemImage: "bell") }
