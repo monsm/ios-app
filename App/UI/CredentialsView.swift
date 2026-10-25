@@ -42,7 +42,7 @@ struct CredentialsView: View {
     // 347 编辑模式
     @State private var editMode = false
     // 182 排序档: 与编辑模式互斥的第二种"行内控件"形态。开启时 List 进系统编辑态,
-    // 带 onMove 的那几个分组当场出现排序把手 (本仓第一处拖动排序在 DeviceManageView:125, 写法照它)。
+    // 带 onMove 的那几个分组当场出现排序把手。
     @State private var sorting = false
     @State private var selPwds: [Int] = []
     @State private var selFps: [Int] = []
@@ -1103,7 +1103,7 @@ struct CredentialsView: View {
     }
 
     // ---------- 182 组内拖动排序 ----------
-    /// onMove 收到的 IndexSet / 目的下标都是**本段内**的下标 (与 DeviceManageView:125 同一口径),
+    /// onMove 收到的 IndexSet / 目的下标都是**本段内**的下标,
     /// 所以先在本段里搬, 再把搬完的这一串依次回写到"整表里属于本段的那些位置"上 ——
     /// 别段的位次一格不动, 段内先后就落进了 kf_cseq_。
     /// 下标先过一道范围筛: 数组搬动用越界 IndexSet 是当场 trap, 而这一句的索引来自系统回调。

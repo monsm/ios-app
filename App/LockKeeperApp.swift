@@ -847,7 +847,7 @@ final class AppState: ObservableObject {
         // 2026-10-15 走查 (对照 H5 权威 main.js @577111): 双验模式 (verifyMode==1) 下 rc==0
         // 只是第一道通过, H5 原版此刻会提示「门锁已开启双重验证，请继续使用指纹/密码开锁」。
         // 此前直接报「门已打开」= 对 B 模式用户说谎; 用状态帧镜像判, 快照未读到时宁可不提示 (与
-        // LockOverviewView「未读到≠无告警」同一口径)。
+        // 与本 App「未读到≠无告警」同一口径)。
         if status?.verifyMode == 1 {
             showToast("双验模式: 第一道已通过, 请再用指纹或密码完成第二道验证")
         } else {

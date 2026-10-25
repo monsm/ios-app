@@ -14,8 +14,6 @@ struct SettingsView: View {
     @State private var showBackup = false
     @State private var showMessages = false
     @State private var showAdd = false
-    @State private var showOverview = false
-    @State private var showManage = false
     /// 2026-10-17 安卓版: 把当前锁的开锁凭证渲染成二维码 (扫码导入, 之后不再需要)
     @State private var shareLock: Keychain?
     @State private var showDiag = false   // 587: 记录详情低电告警带 mac 过来 → 切锁并推诊断页
@@ -123,8 +121,6 @@ struct SettingsView: View {
         .sheet(isPresented: $showMessages) { MessagesView() }
         .sheet(item: $shareLock) { ShareToAndroidView(kc: $0) }
         .sheet(isPresented: $showAdd) { AddDeviceView() }
-        .sheet(isPresented: $showOverview) { LockOverviewView() }
-        .sheet(isPresented: $showManage) { DeviceManageView() }
         // 2026-10-15 走查: 与上面那批 sheet 同款 —— 目标页自带 NavigationStack, 只能走 sheet
         .sheet(isPresented: $showUnclaimed) { UnclaimedClaimView() }
         .sheet(isPresented: $showFamilySettings) { MemberFamilySettingsView() }
@@ -279,7 +275,6 @@ struct SettingsView: View {
             // 由 searchResults 负责"切组 + scrollTo 滚到那一节"。
             // 不在本页的功能 (开 sheet 的那些) 仍是 `anchor: nil`, 交给 go 直接开。
             SearchHit(id: "s.lockprofile", title: "锁档案 (昵称/符号/色标)", icon: "lock", anchor: .lock),
-            SearchHit(id: "s.devicemanage", title: "设备管理 (排序/分组/批量) — 置顶即启动默认锁", icon: "rectangle.3.group") { showManage = true },
             SearchHit(id: "s.mute", title: "静音模式", icon: "speaker.slash", anchor: .lock),
             SearchHit(id: "s.synctime", title: "校准门锁时间", icon: "clock.arrow.circlepath", anchor: .lock),
             SearchHit(id: "s.maint", title: "维护与保养", icon: "wrench.and.screwdriver", anchor: .lock),
@@ -386,12 +381,6 @@ struct SettingsView: View {
     // 而且一把锁都没绑的时候也要进得去 (从备份恢复完的锁要先排序)。
     private var deviceManageSection: some View {
         Section {
-            // 2026-10-15 走查: DeviceManageView 自带 NavigationStack, 而本页**已经**有一条 sheet 入口
-            // (`showManage`, 页内搜索命中「设备管理」走它) —— 这里再 push 一次既是重复入口, 又是
-            // "自带栈的页被 push" ⇒ 两层导航栏。两条入口并成一条, 统一走 sheet。
-            Button { showManage = true } label: {
-                Label("设备管理 (排序/分组/批量)", systemImage: "rectangle.3.group")
-            }
             // 766 拖动排序与置顶同步设
             // 271 拖动排序与置顶同步设
             Text("拖动排序与置顶同步设备页的翻页顺序，第一行即启动默认锁。"
@@ -727,8 +716,6 @@ struct SettingsView: View {
     // ---------- 工具 (原网关/固件/备份/诊断 四个单行 Section 合并) ----------
     private var toolsSection: some View {
         Section("工具") {
-            Button { showOverview = true } label: { Label("全部锁总览与对比", systemImage: "chart.bar.horizontal") }
-            Button { showGateway = true } label: { Label("智能网关", systemImage: "antenna.radiowaves.left.and.right") }
             Button { showFirmware = true } label: { Label("检查固件更新", systemImage: "arrow.up.circle") }
             Button { showBackup = true } label: { Label("备份与恢复", systemImage: "externaldrive") }
             // 动态消息只走 sheet: MessagesView 自带 NavigationStack, 用 NavigationLink 会嵌套两层导航栏
@@ -740,9 +727,6 @@ struct SettingsView: View {
     // ---------- 包15 无障碍与操作辅助 (设置-辅助功能入口) ----------
     private var a11ySection: some View {
         Section {
-            NavigationLink { AccessibilityView() } label: {
-                Label("辅助功能 (VoiceOver/视觉/运动/输入/听觉)", systemImage: "accessibility")
-            }
         } header: {
             Text("无障碍")
         } footer: {

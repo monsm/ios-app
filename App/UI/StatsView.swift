@@ -13,7 +13,7 @@ struct StatsView: View {
     // 2026-10-15 走查: 这一页全仓只有一个呈现点 —— 记录页里的 sheet。sheet 浮在最上层时改
     // tabSelection, 切的是**被盖住的那层 TabView**: 用户点了"去读取记录/去添加门锁"只看见屏幕
     // 没反应, 等他下拉甩掉这张 sheet 才发现自己站在别的 Tab 上。同锁同页的既有正解见
-    // LockOverviewView 那两枚格子 (跳 Tab 之后紧跟一句 dismiss), 这里照抄, 不另造第三套。
+    // 跳到别的 Tab 之后紧跟一句 dismiss —— 全仓统一这一套, 不另造第二套。
     @Environment(\.dismiss) private var dismiss
     // 643 横屏分栏的档位读数。形状先例: @Environment 这一族本文件已有 (:2179 年报告与 :2265 时段 sheet 的 \.dismiss),
     // size class 这一路在本条落地前的 App/ 全量 grep 里零命中。
@@ -204,7 +204,6 @@ struct StatsView: View {
                     credentialSection(m)
                     summarySection(m)
                     yearReportSection(m)
-                    compareEntry
                     if let h = selHour { drillSection(m, hour: h) }
                 }
             }
@@ -236,18 +235,6 @@ struct StatsView: View {
     /// 775 一族 (775/783/781/782) 的入口。只有一把锁时**不出现**，
     /// 而不是进来看到一句"请再添加一把锁" —— 对比这个动作在单锁设备上根本不存在。
     @ViewBuilder
-    private var compareEntry: some View {
-        if DB.keychains().count >= 2 {
-            Section {
-                NavigationLink { LockCompareView() } label: {
-                    Label("多锁对比", systemImage: "rectangle.split.2x1")   // 775/783/781/782 多锁对比
-                        .vkFont(.subheadline, weight: .medium)
-                        .foregroundStyle(DS.Palette.accentText)
-                        .frame(minHeight: DS.Hit.min)
-                }
-            }
-        }
-    }
 
     // ---------- 678/634/636 窗口胶囊 + 上下文标签 ----------
     /// 636 在这里落地的是原句的后半 (7/30/90/365 四档窗口 + 窗口状态在本次会话内保持, 见 `windowDays` 那枚 @State)。
@@ -1338,7 +1325,7 @@ struct StatsView: View {
 
     // @ViewBuilder 不是装饰: 体内先一条 let 绑定点数组, 再接一条 Chart{}.chartOverlay{}.frame(...) 的尾随表达式,
     // 已是多语句 body 且没有 return —— 少了这个属性编译器报 "function declares an opaque return type,
-    // but has no return statements" (与 run 56 的 LockCompareView/rhythmSection 同一类, swiftshape R1b 现在盯这个)。
+    // but has no return statements" (swiftshape R1b 现在盯这个)。
     /// 628 曲线起点旗标 —— 2026-10-13 run 63 从 memberLines 的内联 Chart 内容里抽出:
     /// 该表达式报 type-check 超时。(Chart 内容用 @ChartContentBuilder, 不是 @ViewBuilder)
     @ChartContentBuilder

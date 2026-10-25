@@ -37,8 +37,6 @@ struct DeviceHomeView: View {
     @State private var autoLockLeft: Int?
     @State private var wizardBusy = ""
     @State private var wizardDismissed = false
-    @State private var showOverview = false
-    @State private var showManage = false     // 104/107/766 设备管理 (排序/分组/批量)
     @State private var showSettings = false   // 包8/507 备份角标跳转
     @State private var showTileEdit = false   // 905 长按快捷格 → 编辑面板
     // 827 的"本会话点过哪些格 / 是否关了提示"两态搬到 AppState (ambientTipUsed / ambientTipOff):
@@ -180,15 +178,6 @@ struct DeviceHomeView: View {
             }
             .sheet(isPresented: $showAdd) { AddDeviceView() }
             .sheet(isPresented: $showModuleOrder) { moduleOrderSheet }
-            // 包3: 全部锁总览与对比 (768/776/778/779/784/787/773)
-            .sheet(isPresented: $showOverview) { LockOverviewView() }
-            // 104/107/766: 排序与分组改的是"这一屏看得见哪些锁、按什么次序", 关页时立刻重算,
-            // 不能等下次进页 — 用户拖完就看, 拖不动的那种反馈最伤信任。
-            .sheet(isPresented: $showManage, onDismiss: {
-                syncPageOrder()
-                alarmMacs = LockStats.recentAlarmMacs(LockStats.usage())
-                recomputeMerged()
-            }) { DeviceManageView() }
             .sheet(isPresented: $showSettings) { SettingsView() }
             .sheet(isPresented: $showTileEdit) { QuickTileEditorSheet() }   // 905 长按快捷格进编辑
             // 250 二次开锁应用锁闸
@@ -619,12 +608,6 @@ struct DeviceHomeView: View {
             }
             .frame(minHeight: DS.Hit.min)   // 2026-10-18: 菜单项在窄屏上原来只有文字行高
             Divider()
-            Button { showOverview = true } label: {
-                Label("全部锁总览与对比", systemImage: "chart.bar.horizontal")
-            }
-            Button { showManage = true } label: {
-                Label("设备管理 (排序/分组/批量)", systemImage: "rectangle.3.group")
-            }
         } label: {
             HStack(spacing: DS.Space.xs) {
                 Circle().fill(LockArchive.swatchColor(LockArchive.meta(app.currentMac).colorKey))
@@ -1226,7 +1209,7 @@ struct DeviceHomeView: View {
         // 868 切换控制扫描组: 圆盘为独立扫描组 (调用处 `unlockDial.staggered(3)` 后面那两行
         // `.accessibilityElement(children: .contain)` + `accessibilityLabel("开锁圆盘组")`), 外接开关可以按组逐项聚焦。⚠ 2026-10-15 走查修正: 这里原先写着"停留时长按 869 自定滑杆" —— 那枚滑杆
         // (`kf_ax_dwell`) 全仓**没有行为消费者**，只被辅助页的滑杆自己与练习区演示文字读 (判据见
-        // `App/UI/AccessibilityView.swift` 那段的同一条注释)，聚焦节奏实际由系统 VoiceOver/切换控制决定。
+        // 聚焦节奏实际由系统 VoiceOver/切换控制决定。
         VStack(spacing: DS.Space.m) {
             UnlockDial(state: app.unlockState,
                        phase: app.phase,

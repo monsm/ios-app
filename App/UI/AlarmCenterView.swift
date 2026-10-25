@@ -12,7 +12,7 @@ import UIKit
 struct AlarmCenterView: View {
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
-    /// 768/778: 从全部锁总览的待维护行/活跃度行下钻时带 LockOverviewView 的 mac —
+    /// 768/778: 从告警行下钻时带 mac —— 单锁告警流靠它定位到具体那台锁。
     /// 只流这一把锁的告警。nil = 跨锁流 (记录页铃铛入口的默认形态, 一行行为不变)。
     var lockMac: String? = nil
     @State private var unhandledOnly = true     // 734 未处理队列优先 (默认)
