@@ -47,17 +47,6 @@ enum BackupStudio {
         return base
     }
 
-    /// 409 自描述文件名: 锁管家_主锁名_2026-10-08-1830_全量.enc (410 分卷时尾部加 _卷N)
-    /// 194 自动命名 = 这一处 (备份页文件行显示的就是它, 用户不用自己起名): 日期时分在名字里, 不在弹窗里。
-    static func fileName(vol: Int = 0) -> String {
-        let kc = DB.keychains().first
-        let name = (kc.map { LockArchive.displayName($0) } ?? "本机").replacingOccurrences(of: "/", with: "-")
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd-HHmm"
-        f.locale = Locale(identifier: "en_US_POSIX")
-        let stamp = f.string(from: Date())
-        return Self.filePrefix + "\(name)_\(stamp)_全量" + (vol > 0 ? "_卷\(vol)" : "") + ".enc"
-    }
 
     // ================= 策略配置 (198 节奏三档 / 430 滚动保留 / 429 新鲜度) =================
     /// 198: manual / weekly / monthly — 备份节奏三档 (落地为本地通知提醒, 不做后台静默写)
@@ -76,27 +65,8 @@ enum BackupStudio {
         guard let ms = lastExportMs else { return -1 }
         return Int(Date().timeIntervalSince1970 / 86400) - Int(ms / 1000 / 86400)
     }
-    /// 509 双向天数行: 上次导入距今
-    static func daysSinceLastImport() -> Int {
-        guard let ms = DB.store.get(Double.self, "kf_bk_last_import") else { return -1 }
-        return Int(Date().timeIntervalSince1970 / 86400) - Int(ms / 1000 / 86400)
-    }
     static func markImported() { DB.store.set("kf_bk_last_import", Date().timeIntervalSince1970 * 1000) }
 
-    /// 198: 档位落地为本地通知提醒 (不做后台静默写); manual 不排期, 换档即重排
-    static func scheduleCadenceReminder() async {
-        let id = "kf.bk.cadence"
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [id])
-        guard cadence != "manual", await CareSchedule.requestAuth() else { return }
-        let c = UNMutableNotificationContent()
-        c.title = "该备份了"   // 198 该备份了
-        c.body = "按「" + (cadence == "weekly" ? "每周" : "每月") + "」节奏, 做一份备份并演练验证。"
-        var comps = DateComponents(); comps.hour = 9
-        if cadence == "weekly" { comps.weekday = 2 } else { comps.day = monthlyDay > 0 ? monthlyDay : 1 }
-        try? await UNUserNotificationCenter.current().add(UNNotificationRequest(
-            identifier: id, content: c, trigger: UNCalendarNotificationTrigger(dateMatching: comps, repeats: true)))
-        UNUserNotificationCenter.current().delegate = UNDelegate.shared
-    }
 
     // ---------- 1018 月度备份日: 每月固定日本地通知, 点通知生成本机还原点并指路备份工作室 ----------
     static var monthlyDay: Int {
@@ -355,34 +325,6 @@ enum BackupStudio {
         "已把后台备份任务交给系统, 由系统在你接电且闲置时择机执行 — 具体时刻由系统决定, 不承诺接电即备。"
     }
 
-    // ================= 导出 (407-413 / 181) =================
-    /// 分区条数 (向导实时显示, 407)
-    static func zoneCounts() -> [String: Int] {
-        var out: [String: Int] = [:]
-        out["设备"] = DB.keychains().count
-        var pw = 0, fp = 0
-        for kc in DB.keychains() {
-            let l = DB.ledger(kc.mac)
-            pw += l.pwds.count; fp += l.fps.count
-        }
-        out["凭证"] = pw + fp
-        // 2026-10-15 走查: 原先这里报 `DB.keychains().count` 并把界面文案写成"锁端日志缓存 (按锁约) 份缓存",
-        // 两头都不对 —— 锁端日志缓存 (`kf_logcache_`) **从不进包** (BackupKit 全文零命中)，而这一档真正裁的是
-        // `globals.trace` 那**一份**本机记录写入轨迹 (见下方 `if !z.records` 那两条)。勾掉它不会让日志消失,
-        // 勾上它也恢复不出锁端日志 —— 报数与单位都说成实际那一件事。
-        out["记录"] = DB.get(BackupBundle.Globals.TraceRec.self, "kf_trace_persist_v1") == nil ? 0 : 1
-        out["设置"] = DB.members().count + DB.dongles().count + DB.gateways().count
-        return out
-    }
-    /// 181 OTP 备份开关: 默认排除 (独立口令组密钥不进备份), 显式勾选才追加
-    static func otpIncluded() -> Bool { DB.store.getBool("kf_bk_otp", false) }
-
-    /// 组包 + 分区裁剪: 未勾分区在包内置空 (恢复端按 nil 语义跳过)
-    static func bundleFor(_ zones: BZones) -> BackupBundle {
-        var b = BackupKit.collectAll()
-        b.at = ISO8601DateFormatter().string(from: Date())
-        return prune(b, zones)
-    }
     /// 分区裁剪的统一口径 (导出 / 恢复 / 预演共用, 427 分区选择性恢复)
     static func prune(_ b: BackupBundle, _ z: BZones) -> BackupBundle {
         var c = b
@@ -410,171 +352,9 @@ enum BackupStudio {
         }
         return c
     }
-    /// 导出文本 (409): 可选口令加密 (408 两遍输入在 UI 层); 返回 canonical 文本或加密信封
-    static func exportText(zones: BZones, encrypt: String?) -> String? {
-        var text = BackupCanonical.exportText(bundleFor(zones))
-        if text.isEmpty { return nil }
-        if let pw = encrypt, !pw.isEmpty {
-            text = (try? CryptoBox.encryptText(text, password: pw)) ?? ""
-        }
-        return text.isEmpty ? nil : text
-    }
-    /// 写本地文件 (413 分享用), 返回 URL。
-    /// 181 的 OTP 密钥段已**收进包体** (见 BackupKit.collectAll 的 globals.otpKeys): 随整包加密、
-    /// 进 canonical 校验和、且 restore 能读回来。旧实现在密文信封后追加 `//OTPK` 段 —— 那既让
-    /// ".enc 文件含明文 2FA 种子"成为可能, 又全库没有任何导入方读它, 是只写不读的旁路。
-    @discardableResult
-    static func writeLocal(_ text: String, name: String) -> URL? {
-        // `name` 是**完整文件名**：409 的 `fileName()` 本身就以 ".enc" 结尾，这里原先又拼了一次，
-        // 于是主路径导出的文件一直叫 `锁管家_主锁_2026-10-10_全量.enc.enc`
-        // (413 那句"已写入 …"显示的就是它)。后缀判据 `hasSuffix(".enc")` 看不出来，所以一直没暴露。
-        let url = dir.appendingPathComponent(name)
-        guard (try? text.write(to: url, atomically: true, encoding: .utf8)) != nil else { return nil }
-        Milestones.recordBackup()
-        return url
-    }
 
-    // ---------- 411 二维码搬运: CIQRCodeGenerator 自绘, 纯本地 ----------
-    static func qrImage(_ payload: String, scale: CGFloat = 6) -> UIImage? {
-        guard let data = payload.data(using: .utf8) else { return nil }
-        let filter = CIFilter.qrCodeGenerator()
-        filter.message = data
-        guard let out = filter.outputImage else { return nil }
-        let scaled = out.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
-        let ctx = CIContext()
-        guard let cg = ctx.createCGImage(scaled, from: scaled.extent) else { return nil }
-        return UIImage(cgImage: cg)
-    }
-    /// 411: 仅凭证的小备份 → QR 载荷 (明文 canonical, 接收方 App 扫码导入; 超容量则失败)
-    static func credentialQRPayload() -> String? {
-        var b = BackupKit.collectAll()
-        for i in b.devices.indices {
-            b.devices[i].meta = nil          // 只带密钥与台账, 不带锁端运行参数
-        }
-        b.globals = nil
-        // 2026-10-13 run 63: 原写 `b.members = b.members` (自赋值, 编译器报 "assigning a property to
-        // itself")。语义上就是"members 原样保留" —— 凭证的 owner 归属要用它, 不能像 globals 那样清掉。
-        // 删掉这行空操作, 用注释说清意图。
-        let t = BackupCanonical.exportText(b)
-        guard !t.isEmpty, t.count < 2000 else { return nil }
-        return t
-    }
 
-    // ---------- 412/431 导出前体检 + 清理联动 ----------
-    struct HealthCheck: Identifiable { var id: String { label + text }; let label: String; let text: String }
-    static func preExportHealth() -> [HealthCheck] {
-        var rows: [HealthCheck] = []
-        let expired = expiredTemporaryCount()
-        if expired > 0 {
-            rows.append(.init(label: "过期临时码",
-                              text: "\(expired) 条已过时效仍占台账, 可勾「先清理」减少条数"))   // 431 条已过时效仍占台账
-        }
-        let noOwner = DB.keychains().reduce(0) { acc, kc in
-            let l = DB.ledger(kc.mac)
-            return acc + l.pwds.filter { $0.owner == nil }.count + l.fps.filter { $0.owner == nil }.count
-        }
-        if noOwner > 0 {
-            rows.append(.init(label: "无归属",
-                              text: "\(noOwner) 条凭证未指定成员, 恢复后仍需认领"))   // 412 条凭证未指定成员
-        }
-        if daysSinceLastExport() >= 14 {
-            rows.append(.init(label: "数据陈旧",
-                              text: "距上次备份已 \(daysSinceLastExport()) 天, 本次建议全量并演练验证"))   // 429 距上次备份已
-        } else if lastExportMs == nil {
-            rows.append(.init(label: "首次备份",
-                              text: "这是第一份备份 — 建议同时开 WebDAV 通道做异地冗余"))
-        }
-        return rows
-    }
-    static func expiredTemporaryCount() -> Int {
-        // 到期口径: 台账 from/to 是 "yyyy-MM-dd" 字符串, 直接按日比较 (与 CredentialOrg 状态推断同向)
-        let today = Milestones.dayKey()
-        var n = 0
-        for kc in DB.keychains() {
-            for p in DB.ledger(kc.mac).pwds where p.temp && !p.to.isEmpty && p.to != "2118-12-31" {
-                if p.to.compare(today) == .orderedAscending { n += 1 }
-            }
-        }
-        return n
-    }
-    /// 431 清理联动: 移除过期临时码 (本地台账; 锁端删除交给既有 0A/0B/15 队列), 返回条数
-    @discardableResult
-    static func cleanExpired() -> Int {
-        var n = 0
-        for kc in DB.keychains() {
-            let mac = kc.mac
-            var l = DB.ledger(mac)
-            let before = l.pwds.count
-            l.pwds = l.pwds.filter { p in
-                if p.temp, !p.to.isEmpty, p.to != "2118-12-31", p.to.compare(Milestones.dayKey()) == .orderedAscending {
-                    CredentialOrg.snapshotBeforeDelete(mac, pwd: p, fp: nil)
-                    n += 1
-                    return false
-                }
-                return true
-            }
-            DB.saveLedger(mac, l)
-            _ = before
-        }
-        return n
-    }
 
-    // ---------- 410 按年分卷: 记录区超阈值时按年拆卷, 各卷可独立恢复 ----------
-    struct Volume: Identifiable { var id: Int { index }; let index: Int; let label: String; let text: String }
-    static let volumeThreshold = 400   // 记录条数阈值
-    /// 返回 nil = 记录不足不需分卷; 否则 vol0 = 基础卷 (无 trace), vol1..n = 逐年 trace
-    static func volumes(zones: BZones, encrypt: String?) -> [Volume]? {
-        let b = bundleFor(zones)
-        let tr = b.globals?.trace?.lines ?? []
-        guard tr.count >= volumeThreshold else { return nil }
-        var perYear = [String: [String]]()
-        for ln in tr {
-            let y = String(ln.prefix(4))
-            if Int(y) != nil { perYear[y, default: []].append(ln) }
-        }
-        var out: [Volume] = []
-        var head = b
-        head.globals = head.globals.map {
-            var g = $0; g.trace = nil; return g
-        }
-        var headText = BackupCanonical.exportText(head)
-        if let pw = encrypt { headText = (try? CryptoBox.encryptText(headText, password: pw)) ?? "" }
-        out.append(Volume(index: 0, label: "基础卷 · 设备/凭证/设置", text: headText))
-        for (y, lines) in perYear.sorted(by: { $0.key > $1.key }) {
-            var v = b
-            v.globals = v.globals.map {
-                var g = $0
-                g.trace = .init(savedAt: b.globals?.trace?.savedAt, count: lines.count,
-                                chars: lines.count * 60, lines: lines)
-                g.keychainDongles = nil
-                g.gatewayList = nil
-                return g
-            }
-            var t = BackupCanonical.exportText(v)
-            if let pw = encrypt { t = (try? CryptoBox.encryptText(t, password: pw)) ?? "" }
-            out.append(Volume(index: out.count, label: "记录卷 · \(y) 年 (\(lines.count) 条)", text: t))
-        }
-        return out
-    }
-
-    // ================= 恢复 (417-427 / 449-450 / 456) =================
-    enum MergeStrategy: String, CaseIterable { case overwrite = "覆盖", merge = "合并", missing = "仅补缺失" }
-
-    /// 453 失败分层第三层: 内容哈希。absent (旧包无字段/人工编辑件) 与 mismatch (内容被改过) 必须分开
-    enum ChecksumState: Equatable { case ok, mismatch, absent }
-
-    struct Preview: Equatable {
-        var source: String        // 477 来源信息: 导出时间 + 原设备
-        var schema: Int
-        var zones: [String]
-        var macs: [String]
-        var pwdCount: Int
-        var fpCount: Int
-        var memberCount: Int
-        var sampleOk: Int
-        var previewTrace: [String]?
-        var checksum: ChecksumState = .absent   // 453 哈希层: 解析时算一次, 预览卡直接显示
-    }
     /// 453 哈希层判定: 与 verifyChecksum 共用一套算法 (新语义 + 旧语义两条都认)
     static func checksumState(_ text: String) -> ChecksumState {
         guard let data = text.data(using: .utf8),
@@ -635,21 +415,6 @@ enum BackupStudio {
                          previewTrace: Array((m.globals?.trace?.lines ?? []).prefix(5)),
                          checksum: ck)
         return (pv, m)
-    }
-    /// 424 升级链预览: 逐级步骤列举 (执行侧 upgradeChain 就按这个顺序跑)
-    struct UpgradeStep: Identifiable {
-        var id: Int { to }
-        let from: Int
-        let to: Int
-        let note: String
-    }
-    static func upgradeSteps(from schema: Int) -> [UpgradeStep] {
-        var out: [UpgradeStep] = []
-        if schema < 2 { out.append(UpgradeStep(from: 1, to: 2, note: "初始化成员数组")) }
-        if schema < 3 { out.append(UpgradeStep(from: 2, to: 3, note: "设备 MAC 规范化")) }
-        if schema < 4 { out.append(UpgradeStep(from: 3, to: 4, note: "记录区键位兼容")) }
-        if schema < 5 { out.append(UpgradeStep(from: 4, to: 5, note: "OTP 状态与序号拆为独立键位")) }
-        return out
     }
     /// 1048: 剥掉开头连续的 // 说明行与空行 (交接包头部), 返回机器可读部分; 没有头部则原样返回。
     private static func stripCommentHeader(_ s: String) -> String {
@@ -888,74 +653,7 @@ enum BackupStudio {
             return (imp, 0, skipped)
         }
     }
-    /// 419 冲突裁决: 同 ID 凭证两边都有 → 逐条选新版/旧版, 支持整批。
-    /// id 与 restore(conflictTakeBackup:) 同形状: mac:p:别名 / mac:f:批次 — 密码与指纹各算一条。
-    struct Conflict: Identifiable {
-        let id: String
-        let mac: String
-        let alias: String
-        let kind: String
-    }
-    static func conflicts(_ bundle: BackupBundle) -> [Conflict] {
-        var out: [Conflict] = []
-        for d in bundle.devices {
-            let mac = DB.normalizeMac(d.mac)
-            guard DB.keychain(mac) != nil, let l = d.ledger else { continue }
-            for p in l.pwds where DB.getPwd(mac, p.alias) != nil {
-                out.append(Conflict(id: "\(mac):p:\(p.alias)", mac: mac, alias: String(p.alias), kind: "密码"))
-            }
-            for f in l.fps where DB.getFp(mac, f.batch) != nil {
-                out.append(Conflict(id: "\(mac):f:\(f.batch)", mac: mac, alias: String(f.batch), kind: "指纹"))
-            }
-        }
-        return out
-    }
 
-    // ---------- 444/425 迁移后核对表 + 差异报告 ----------
-    struct DiffRow: Identifiable { var id: String { label }; let label: String; let a: Int; let b: Int }
-    static func compare(_ bundle: BackupBundle, _ current: BackupBundle) -> [DiffRow] {
-        func tally(_ x: BackupBundle) -> [String: Int] {
-            var m: [String: Int] = ["设备": x.devices.count]
-            m["凭证"] = x.devices.reduce(0) { $0 + ($1.ledger?.pwds.count ?? 0) + ($1.ledger?.fps.count ?? 0) }
-            m["成员"] = x.members?.count ?? 0
-            m["记录"] = x.globals?.trace?.lines?.count ?? 0
-            return m
-        }
-        let ta = tally(bundle), tb = tally(current)
-        return ["设备", "凭证", "成员", "记录"].map {
-            DiffRow(label: $0, a: ta[$0] ?? 0, b: tb[$0] ?? 0)
-        }
-    }
-    /// 425/440 逐锁对账行: 备份 vs 本机现况 (id = 规范化 mac)
-    struct LockDiff: Identifiable {
-        let id: String
-        let label: String
-        let backup: Int
-        let local: Int
-        let note: String
-        var ok: Bool { backup <= local }
-    }
-    static func lockDiffRows(_ bundle: BackupBundle) -> [LockDiff] {
-        var out: [LockDiff] = []
-        for d in bundle.devices {
-            let mac = DB.normalizeMac(d.mac)
-            let bp = (d.ledger?.pwds.count ?? 0) + (d.ledger?.fps.count ?? 0)
-            guard let kc = DB.keychain(mac) else {
-                out.append(LockDiff(id: mac, label: LockArchive.displayName(d.kc), backup: bp, local: 0,
-                                    note: "本机还没有这把锁"))
-                continue
-            }
-            let l = DB.ledger(mac)
-            let lp = l.pwds.count + l.fps.count
-            out.append(LockDiff(id: mac, label: LockArchive.displayName(kc), backup: bp, local: lp,
-                                note: bp > lp ? "本机少 \(bp - lp) 条凭证" : "已一致"))
-        }
-        return out
-    }
-    /// 440 迁移完成页用: 只看"旧机有新机缺"的行
-    static func lockGaps(_ bundle: BackupBundle) -> [LockDiff] {
-        lockDiffRows(bundle).filter { !$0.ok }
-    }
 
     /// 193 体积预估: 本次 canonical 字符数 × 加密膨胀 (~1.75x hex) 估算, 与上次对比
     static func estimateBytes() -> Int? {
@@ -973,188 +671,7 @@ enum BackupStudio {
         return "本次预计 ~" + String(format: "%.1f KB", Double(bytes) / 1024) + " · " + cmp   // 193 界面文案
     }
 
-    // ================= 换机迁移 (438-446) =================
-    /// 438 三通道: 备份文件 / 扫码 / WebDAV
-    enum Channel: String, CaseIterable { case file = "备份文件", qr = "扫码", webdav = "WebDAV" }
-    /// 445 中断续迁: 会话可序列化, 重启检测临时事务表
-    struct MigSession: Codable {
-        var channel: String
-        var startedAt: Double
-        var step: Int
-        var total: Int
-        var imported: Int
-        var done: Bool
-    }
-    static func loadMigSession() -> MigSession? { DB.store.get(MigSession.self, "kf_mig_session") }
-    static func saveMigSession(_ s: MigSession) { DB.store.setCodable("kf_mig_session", s) }
-    static func clearMigSession() { DB.store.remove("kf_mig_session") }
-    /// 445: 冷启动检测未完成的迁移会话
-    static func pendingMigration() -> MigSession? {
-        let s = loadMigSession()
-        return s?.done == false ? s : nil
-    }
 
-    /// 445 真事务表: 本次迁移的回滚点 (421 快照) + 已落库的锁。
-    /// 中断判定认的是**这个键**, 不是会话百分比 —— 会话只描述进度外观, 事务表才决定能否回滚/续做。
-    struct MigTxn: Codable {
-        var channel: String
-        var rollbackPath: String
-        var at: Double
-        var doneMacs: [String]
-        init(channel: String, rollbackPath: String, at: Double, doneMacs: [String]) {
-            self.channel = channel
-            self.rollbackPath = rollbackPath
-            self.at = at
-            self.doneMacs = doneMacs
-        }
-        /// 显式解码 (缺字段用保守默认, 不静默丢整表): 与 swiftshape R3 对 Codable 带默认字段的要求一致
-        init(from decoder: Decoder) throws {
-            let c = try decoder.container(keyedBy: CodingKeys.self)
-            channel = try c.decodeIfPresent(String.self, forKey: .channel) ?? "备份文件"
-            rollbackPath = try c.decodeIfPresent(String.self, forKey: .rollbackPath) ?? ""
-            at = try c.decodeIfPresent(Double.self, forKey: .at) ?? 0
-            doneMacs = try c.decodeIfPresent([String].self, forKey: .doneMacs) ?? []
-        }
-    }
-    static func loadMigTxn() -> MigTxn? { DB.store.get(MigTxn.self, "kf_mig_txn") }
-    static func saveMigTxn(_ t: MigTxn) { DB.store.setCodable("kf_mig_txn", t) }
-    /// 445 开始/续做迁移: 首次先打全库快照 (打不出就不允许开跑); 有可用旧事务表则沿用其回滚点,
-    /// 不重拍快照 —— 否则中途崩溃后"回滚"只能回到半截状态, 等于没有回滚。
-    @discardableResult
-    static func beginMigrationTxn(channel: String) -> Bool {
-        if let t = loadMigTxn(), !t.rollbackPath.isEmpty,
-           FileManager.default.fileExists(atPath: t.rollbackPath) {
-            return true
-        }
-        guard makeRollbackPoint() else { return false }
-        let path = DB.store.getString("kf_bk_rollback")
-        guard !path.isEmpty, FileManager.default.fileExists(atPath: path) else { return false }
-        saveMigTxn(MigTxn(channel: channel, rollbackPath: path,
-                          at: Date().timeIntervalSince1970 * 1000, doneMacs: []))
-        return true
-    }
-    /// 445: 每把锁真实落库后调用 — 这是续迁的断点
-    static func noteMigTxnDone(_ mac: String) {
-        guard var t = loadMigTxn() else { return }
-        let m = DB.normalizeMac(mac)
-        if !t.doneMacs.contains(m) { t.doneMacs.append(m) }
-        saveMigTxn(t)
-    }
-    /// 445: 快照文件仍在的事务表才算未完成; 快照被清掉的事务表不可回滚, 当不存在
-    static func pendingMigrationTxn() -> MigTxn? {
-        guard let t = loadMigTxn(), !t.rollbackPath.isEmpty,
-              FileManager.default.fileExists(atPath: t.rollbackPath) else { return nil }
-        return t
-    }
-    static func finishMigrationTxn() { DB.store.remove("kf_mig_txn") }
-    /// 445 回滚: 把库体还原到迁移前快照, 并清掉迁移期间立起的全部标记
-    @discardableResult
-    static func rollbackMigrationTxn() -> Bool {
-        guard let t = pendingMigrationTxn() else { return false }
-        guard restoreRollbackSnapshot(t.rollbackPath) else { return false }
-        DB.store.remove("kf_mig_txn")
-        clearMigSession()
-        if DB.store.getString("kf_bk_rollback") == t.rollbackPath { DB.store.remove("kf_bk_rollback") }
-        DB.store.remove("kf_migrate_pending")
-        for kc in DB.keychains() { DB.store.remove("kf_migok_" + kc.mac) }
-        Milestones.recordBackup()
-        return true
-    }
-    /// 442 恢复/迁移落库后立起首验清单: 清掉旧勾, 挂待验标记 (DeviceHomeView 逐锁验证写 kf_migok_)
-    static func armFirstChecks() {
-        for kc in DB.keychains() { DB.store.remove("kf_migok_" + kc.mac) }
-        // 2026-10-15 走查: 上面这句注释承诺"清掉旧勾", 而这一支原先只清 kf_migok_, **没清 kf_mig_checks**。
-        // 后果是那道"每把锁都要在新机上验一遍"的闸被上一轮自己满足了: 第二次换机迁移一进完成页,
-        // 四格首验全是上一次的勾,「完成迁移」不验任何东西就能点。清掉才是注释说的那件事。
-        DB.store.remove("kf_mig_checks")
-        DB.store.set("kf_migrate_pending", ISO8601DateFormatter().string(from: Date()))
-    }
-
-    /// 439/441/445 真实迁移导入: 逐段 (410 分卷可多段) 逐锁真实执行, 每完成一个真实单元回调一次
-    /// (进度只跟着真做完的单元走); 每把锁落库后立即写事务表 doneMacs — 中断续做按它跳过,
-    /// 不是把百分比接着画。skipMacs = 上次已落库的锁 (整锁跳过, 计 skipped)。
-    @discardableResult
-    static func migrateImport(_ b: BackupBundle, zones: BZones,
-                              lockActs: [String: String] = [:],
-                              conflictTakeBackup: Set<String> = [],
-                              skipMacs: Set<String> = [],
-                              onStep: (Int, Int, String) -> Void) async -> (imported: Int, overwritten: Int, skipped: Int) {
-        let valid = b.devices.filter { HexKit.bytes($0.mac).count == 6 && !$0.kc.skey.isEmpty }
-        let total = valid.count + 1
-        var imp = 0, ov = 0, sk = 0
-        // 单元①: 设置/成员/全局 (不含 otpKeys — 它按锁白名单, 放逐锁单元)
-        var setBundle = b
-        setBundle.globals = setBundle.globals.map { var g = $0; g.otpKeys = nil; return g }
-        var z0 = zones
-        z0.devices = false
-        let r0 = restore(setBundle, strategy: .merge, zones: z0, makeSnapshot: false)
-        imp += r0.imported; ov += r0.overwritten; sk += r0.skipped
-        onStep(1, total, "设置与成员")
-        try? await Task.sleep(for: .milliseconds(60))
-        // 单元②…: 逐锁真实执行
-        for (i, d) in valid.enumerated() {
-            let mac = DB.normalizeMac(d.mac)
-            let name = LockArchive.displayName(d.kc)
-            if skipMacs.contains(mac) {
-                sk += 1
-                onStep(i + 2, total, name + " · 已迁移过, 跳过")
-                try? await Task.sleep(for: .milliseconds(60))
-                continue
-            }
-            var one = b
-            one.devices = [d]
-            one.members = nil
-            // 全局只留 otpKeys: 白名单按本锁算, 其余全局项已在单元①落库
-            one.globals = b.globals.map { var g = $0
-                g.trace = nil
-                g.keychainDongles = nil
-                g.gatewayList = nil
-                g.passcode = nil
-                g.appearance = nil
-                return g
-            }
-            let r = restore(one, strategy: .merge, zones: zones,
-                            lockActs: lockActs, conflictTakeBackup: conflictTakeBackup,
-                            makeSnapshot: false)
-            imp += r.imported; ov += r.overwritten; sk += r.skipped
-            noteMigTxnDone(mac)
-            onStep(i + 2, total, name)
-            try? await Task.sleep(for: .milliseconds(60))
-        }
-        return (imp, ov, sk)
-    }
-    /// 442 首验清单: 恢复后逐项打勾 (开一次门 / 看一条记录 / 验一处遮蔽)
-    static func firstChecks() -> [String: Bool] {
-        DB.store.get([String: Bool].self, "kf_mig_checks") ?? [:]
-    }
-    static func markFirstCheck(_ k: String, on: Bool = true) {
-        var m = firstChecks()
-        m[k] = on   // 2026-10-15 走查: 原先只会写 true —— 取消勾选落不了盘, 而这份字典是完成页那四格的初值
-        DB.store.setCodable("kf_mig_checks", m)
-    }
-    static var firstChecksAllDone: Bool {
-        !DB.store.getString("kf_migrate_pending").isEmpty &&
-        DB.keychains().allSatisfy { DB.store.getBool("kf_migok_" + $0.mac) }
-    }
-    /// 446 旧机退役横幅: 首验全勾 → 旧机顶部引导本地销毁
-    static var retirementBanner: Bool { DB.store.getBool("kf_mig_retire") }
-    static func markRetired() { DB.store.set("kf_mig_retire", true) }
-
-    // ================= 完整性与信任感 (448-454 / 507-512) =================
-    /// 库体指纹 (448/397 共用一份算法, 免得两处各算各的后端口径漂移)
-    /// 库体指纹算法版本: 变更时递增 —— 旧基线 (不带前缀) 不参与比对, 免得升级后误报自检异常。
-    private static let fpVersion = "2:"
-    private static func dbFingerprint() -> String {
-        // 2026-10-14: 旧实现只统计长度 (skey.count + pins.count) —— 替换等长 skey / 增删等量 pin 察觉不到。
-        // 改为对 skey 与 pins **内容**取摘要。
-        var m = [String: String]()
-        for kc in DB.keychains() {
-            let pinsHash = BackupCanonical.fnv1a32Hex(kc.pins.joined(separator: ","))
-            m[DB.normalizeMac(kc.mac)] = BackupCanonical.fnv1a32Hex(kc.skey.lowercased()) + ":" + pinsHash
-        }
-        let canon = m.sorted { $0.key < $1.key }.map { "\($0.0):\($0.1)" }.joined(separator: "|")
-        return fpVersion + BackupCanonical.fnv1a32Hex(canon)
-    }
     /// 397 解锁后自检用的**只读**核对: 只比不改。基线由备份时写入 (markBackupBaseline), 本函数只比不改 ——
     /// 一处"每检查一次就把上次的异常抹平"的检查证明不了任何事, 所以自检绝不回写基线。
     static func hashMismatch() -> Bool {
@@ -1319,41 +836,6 @@ enum BackupStudio {
         guard let r = name.range(of: #"\d{4}-\d{2}-\d{2}"#, options: .regularExpression) else { return "" }
         return String(name[r])
     }
-    // 删除面：只删本 App 自己写出来的备份文件 —— 名字族 `锁管家_…_全量[_卷N].enc`、且必须在当前目录一层内
-    // (不含 "/")；固定名 `zklock-backup.enc` 不参与计数 (423/436 读的就是它)。
-    // 为什么这里要窄到名字族：`webdavRoot` 的**默认值就是整个坚果云根目录**
-    // (`https://dav.jianguoyun.com/dav/我的坚果云`)，而 430 那枚 Stepper 就摆在备份页上、写着"远端只留 N 份"。
-    // 原先的实现是「把 PROPFIND 列表按名字排序、删掉第 N 条以后的**全部**」——
-    // 在默认 root 下那些条目是用户的照片、合同、子文件夹 (许多服务端对文件夹的 DELETE 是递归的)，
-    // 一旦用户把保留份数从 0 调成任何正数，进这一页就会**不可逆地删掉网盘里其它东西** (§10.40)。
-    // 另一处同族错：按整名字典序排 ≠ 按时间排 —— 名字是 `锁管家_<锁名>_…`，锁名先参与比较，
-    // 于是"阿爸"那把锁的所有旧备份都排在"大门"今天那份之前，超限被删的正是最新那份。
-    /// 430 本地滚动保留: 与 pruneRemote 同一套名字族 (isOurBackup) 与"一份 = 一卷组" (volumeSet) 的口径,
-    /// 同样保最近 N 份 + 每月再保 1 份。差别只在删除面是本机目录, 不存在误删网盘相册那一类风险;
-    /// 触发点是**写完新备份之后** (BackupStudio 导出流程尾), 不是列表页 onAppear ——
-    /// "打开看一眼就把用户的备份文件清掉"是 scanOrphans 那处注释明令禁止的实现。
-    @discardableResult
-    static func pruneLocal(keep: Int) -> Int {
-        guard keep > 0 else { return 0 }
-        let fm = FileManager.default
-        let all = (try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)) ?? []
-        var groups: [String: [URL]] = [:]
-        for u in all where isOurBackup(u.lastPathComponent) {
-            groups[volumeSet(u.lastPathComponent), default: []].append(u)
-        }
-        let ordered = groups.keys.sorted { a, b in
-            let da = dateInName(a), db = dateInName(b)
-            return da == db ? a > b : da > db
-        }
-        var pruned = 0
-        var keptMonths = Set<String>()
-        for (i, key) in ordered.enumerated() {
-            let month = String(dateInName(key).prefix(7))
-            if i < keep || (!month.isEmpty && keptMonths.insert(month).inserted) { continue }
-            for u in groups[key] ?? [] where (try? fm.removeItem(at: u)) != nil { pruned += 1 }
-        }
-        return pruned
-    }
     @discardableResult
     static func pruneRemote(acct: String, appPw: String, root: String, keep: Int) async -> Int {
         guard keep > 0, let entries = try? await listRemote(acct: acct, appPw: appPw, root: root) else { return 0 }
@@ -1431,62 +913,6 @@ enum BackupStudio {
         } catch { return "轮换中断: \(error.localizedDescription)" }
     }
 
-    // ================= 1048 管家交接包 =================
-    struct Handover { let text: String; let fileName: String }
-    /// 1048 交接包 —— 2026-10-14: 必须加密。包体含整库 skey 与台账口令, 旧实现却按明文写出,
-    /// 而说明文字还让收件人"输入口令" (名不副实)。改为以交接口令 CryptoBox 加密后再落盘/复制。
-    @discardableResult
-    static func handoverPackage(password: String) -> Handover? {
-        guard !password.isEmpty else { return nil }
-        let b = BackupKit.collectAll()
-        let canon = BackupCanonical.exportText(b)
-        guard !canon.isEmpty else { return nil }
-        let use = """
-        // 离线锁管家 · 交接信 (1048)
-        // 给下一位管家人: 这份备份含 \(b.devices.count) 台门锁 / \(b.members?.count ?? 0) 位成员。
-        // 1. 新机装「离线锁管家」, 备份页选「导入」, 粘贴本文件并输入口令。
-        // 2. 选「合并」策略, 逐锁验证连接 (换机首验清单)。
-        // 3. 旧机走「设置→备份→交接」, 本机数据三级清空。
-        // 本文件已用交接口令加密 — 口令另行线下交接, 不要与文件同渠道发出。
-        """
-        // 只加密**包体**, 说明头留明文 —— parsePreview 先剥 "//" 头再解密。
-        // 若把头也加密进去, 解密后仍是 "// ...\n{json}", JSONDecoder 解不出 (本 App 自己导出的包反而导不回来)。
-        guard let enc = try? CryptoBox.encryptText(canon, password: password) else { return nil }
-        return Handover(text: use + "\n" + enc, fileName: "锁管家_交接_\(Milestones.dayKey()).txt")
-    }
-
-    /// 440 增量补传小包: 只打入勾选的锁 (kc + 运行参数 + 台账), 不带记录卷 —— 小包越小越好传;
-    /// 恢复端走 .merge 只增不删, 重复导入同一把锁不会产生副本。返回 canonical 文本或加密信封。
-    static func incrementalExportText(macs: Set<String>, zones: BZones, encrypt: String?) -> String? {
-        var b = bundleFor(zones)
-        b.devices = b.devices.filter { macs.contains(DB.normalizeMac($0.mac)) }
-        guard !b.devices.isEmpty else { return nil }
-        b.globals = b.globals.map { var g = $0; g.trace = nil; return g }
-        var text = BackupCanonical.exportText(b)
-        guard !text.isEmpty else { return nil }
-        if let pw = encrypt, !pw.isEmpty {
-            text = (try? CryptoBox.encryptText(text, password: pw)) ?? ""
-        }
-        return text.isEmpty ? nil : text
-    }
-    /// 440 增量包文件名: 与 409 同族 (锁管家_主锁名_日期时分_增量.enc), 430 滚动保留能按日期份计数
-    static func incrementalFileName() -> String {
-        let kc = DB.keychains().first
-        let name = (kc.map { LockArchive.displayName($0) } ?? "本机").replacingOccurrences(of: "/", with: "-")
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd-HHmm"
-        f.locale = Locale(identifier: "en_US_POSIX")
-        return Self.filePrefix + "\(name)_\(f.string(from: Date()))_增量.enc"
-    }
-
-    // ================= 435 逐文件算法标注 =================
-    // 工作室首页那枚徽章写的是"当前代码用什么算法"；435 要的是**这一份备份自己**的参数，
-    // 所以直接读信封 JSON 的开头几 KB (alg/kdf/iter 就在文件头)，不解密、不要口令、也不猜。
-    private static func jsonStr(_ s: String, _ marker: String) -> String? {
-        guard let r = s.firstRange(of: marker) else { return nil }
-        guard let end = s[r.upperBound...].firstRange(of: "\"") else { return nil }
-        return String(s[r.upperBound..<end.lowerBound])
-    }
     private static func jsonNum(_ s: String, _ marker: String) -> Int? {
         guard let r = s.firstRange(of: marker) else { return nil }
         let digits = s[r.upperBound...].prefix { $0.isNumber }
