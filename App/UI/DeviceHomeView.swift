@@ -737,8 +737,7 @@ struct DeviceHomeView: View {
     @ViewBuilder
     private func heroNotice(kc: Keychain, tier: BatteryCare.Tier, isCurrent: Bool) -> some View {
         if isCurrent, tier.severe {
-            .buttonStyle(PressableButtonStyle())
-            .accessibilityLabel("电量告急, 打开换电图文指引")
+            heroNoticeRow(icon: "battery.0percent", text: "电量告急, 尽快换电池", tint: DS.Palette.danger)
         } else if isLow(kc) {
             heroNoticeRow(icon: "battery.25percent", text: "该喂电了, 别让它饿着", tint: DS.Palette.warn)
         } else if !LockArchive.isVerified(kc.mac) {

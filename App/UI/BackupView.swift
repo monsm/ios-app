@@ -54,7 +54,6 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
             exportSection
             importSection
             cloudSection
-            studioSection
         }
         .navigationTitle("备份与恢复")
         .variantList()
@@ -392,21 +391,6 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
     }
 
 
-    // ---------- 包8: 备份工作室入口 (导出向导/恢复/WebDAV策略/换机迁移) ----------
-    private var studioSection: some View {
-        Section("备份工作室") {
-            Button {
-                Label("打开备份工作室", systemImage: "wrench.and.scissors")
-                    .vkFont(.subheadline, weight: .semibold)
-                    .foregroundStyle(DS.Palette.accentText)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .frame(minHeight: DS.Hit.min)
-            }
-            Text("导出向导 · 恢复预演 · WebDAV 策略 · 换机迁移 · 完整性信任。")
-                .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
 
     private func applyPendingRestore() {
         guard let bundle = pendingRestore else { return }
