@@ -284,7 +284,7 @@ final class AppState: ObservableObject {
     @Published var pendingAddDevice = false
     /// 2026-10-15 走查: 设置 Tab **栈内**子页的"去设置…"落点。
     /// 起因: 安全中心里的两枚按钮 (`SecurityLockConfigView` 的"去「设置」把本机密码重设为纯数字"、
-    /// `SecurityDestroyView` 销毁前备份闸的"先去备份") 动作都写着 `app.tabSelection = 3` ——
+    /// 子页里那些"去设置…"动作) 写着 `app.tabSelection = 3` ——
     /// 而它们本来就是**设置 Tab 下 push 进去的页**, 切 Tab 是一次空转: 点了什么都不发生,
     /// 前者还配着"跳转设置 Tab 的密码区"的无障碍提示, 后者配着"已切到设置"的 toast。
     /// 与 pendingDiag / pendingCare 同一条路由形态: 把"到了之后开什么"带过去, 设置页收到即开并清空。
