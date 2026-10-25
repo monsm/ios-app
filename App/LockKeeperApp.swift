@@ -202,42 +202,6 @@ final class AppState: ObservableObject {
     @Published var failStreak = 0
     @Published var moment: Moment?
     @Published var writeReceipt: String?   // 包8/508 写入回执: 凭证保存成功后"已写入本机"对勾浮出
-    // ---------- 同屏"闲时提醒"预算 (乱源治理第 2 批) ----------
-    /// 827: 本会话里已点过的快捷格。原先挂在 DeviceHomeView 的 @State 上，而"谁上台"要看全局排位 ——
-    /// 视图层的 @State 预算读不到，所以这一位搬到状态源 (判据一条没改，只是换了存放处)。
-    @Published var ambientTipUsed: Set<String> = []
-    /// 827 「不再提示」的即时状态。写盘那份是 HintOnce(偏好)，而 UserDefaults 不是可观察源 ——
-    /// 只改盘不改状态，这行提示会留到下次进页才消失，看起来像按钮没反应。
-    @Published var ambientTipOff = HintOnce.shown("827off")
-    /// 42/268 首用气泡的同一条坑: HintOnce 写的是偏好盘，而盘不是可观察源 —— 只 mark 不改这一位，
-    /// 气泡会留到下一次状态变化才消失，看起来就是"点掉它没反应"。与 ambientTipOff 同一手法成对出现。
-    @Published var firstUseCapsuleDone = HintOnce.shown("capsule268")
-    /// 827: 显示顺序里"还没被点过"的第一格; 全部点过或用户关了提示 ⇒ nil (整行不占位)。
-    /// 判据三选一即算用过: 本次会话点掉过、以前点掉过、或 QuickPool 频次表里已有点击 ——
-    /// 1047 静默学习只在没被手动关过时开着 (SettingsView 那条"关掉就清空计数"的承诺由 QuickPool.recordingOn 兑现)。
-    var quickTipTile: QuickAction? {
-        guard !ambientTipOff, !HintOnce.shown("827off") else { return nil }
-        let c = QuickPool.counts
-        return QuickPool.ordered().first { a in
-            if ambientTipUsed.contains(a.id) || HintOnce.shown("827seen_" + a.id) { return false }
-            return (c[a.id] ?? 0) == 0
-        }
-    }
-
-    /// 397 本机库体自检 (三项都是本地只读, 不碰 BLE)。结果存这里给诊断页显示, 返回异常项数给调用方决定要不要出声。
-    /// 拆成"跑/存"与"提示"两步是因为: 解锁路径只在异常时提示 (每次解锁都弹"一切正常"会被关掉),
-    /// 而手动按钮必须无论结果都给反馈。
-    @Published var selfCheck397: [SelfCheckLine] = []
-    @discardableResult
-    func runSelfCheck397() -> Int {
-        let ls = SelfCheck.run()
-        selfCheck397 = ls
-        let bad = ls.filter { !$0.ok }
-        if let first = bad.first {
-            lock.log("warn", "本机自检 \(bad.count) 项异常: \(first.name) — \(first.detail)")   // 397 本机自检
-        }
-        return bad.count
-    }
     // 包1: 开锁过程态 — 80 三段进度 / 85 重试节奏 / 250 二次开锁应用锁闸
     @Published var phase = 0            // 0 空闲 · 1 握手 · 2 鉴权 · 3 执行
     @Published var retryWait: Int?      // 85 自动重试倒计时 (秒)

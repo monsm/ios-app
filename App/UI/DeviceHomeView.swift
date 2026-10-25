@@ -19,7 +19,6 @@ struct DeviceHomeView: View {
     @State private var duePins: [BackupStudio.PinDue] = []
     @State private var refreshing = false
     @State private var showFocus = false      // 81 全屏专注开锁
-    @State private var flipped = false        // 78 Hero 卡翻面
     @State private var reconnectDot = false   // 91 回连静默小点
     @State private var checks = [false, false, false]   // 87 排查清单勾选态
     // 包3 多锁导航: 101/763 横滑翻页 / 102 胶囊切换器 / 267 换锁二次确认 / 271 上滑默认 / 39 倒计时 / 112 换机向导
@@ -30,7 +29,6 @@ struct DeviceHomeView: View {
     // 764 图标行的红点判据 + 765 跨锁合并流: 都在进页/刷新时算一次, 不在 body 里遍历各锁日志 (与 437 同一条理由)
     @State private var alarmMacs: Set<String> = []
     @State private var mergedRecent: [Rec] = []
-    @State private var activeTops: [Member] = []   // 790 最近活跃头像圈 (与 mergedRecent 同一刷新时机)
     @State private var recentAllLocks = false   // 765 当前锁 / 全部锁 (持久化 kf_recent_all, 与 566 同一口径)
     @State private var confirmMac: String?
     @State private var confirmPulse = false
@@ -118,7 +116,6 @@ struct DeviceHomeView: View {
                             .accessibilityLabel("开锁圆盘组")   // 868 开锁圆盘组
                         moduleSlot(devOrder[1], delay: 4)   // 904
                         moduleSlot(devOrder[2], delay: 5)   // 904
-                        if shown(.privacyNote) { privacyFootnote.staggered(6) }
                         // 904 模块排序入口: 做成显式文字按钮 —— 原句点名的"长按设备页空白进编辑态"会与
                         // 60/873 那族手势链冲突 (设备页是 ScrollView, 空白长按同时是滚动/下拉刷新的一部分),
                         // 排序落成上/下移按钮, 不改整页手势。
@@ -140,14 +137,6 @@ struct DeviceHomeView: View {
             // 54 摇一摇唤出: 迷你开锁面板浮在设备页顶部。挂在 ScrollView 上而不是卡片里 ——
             // 浮层不随内容滚动, 摇出来就必须一直在眼前。面板态只属于设备页, 换页由 AppState 收掉。
             .overlay(alignment: .top) {
-            }
-            // 826 聚光教练标: 首进设备 Tab 用半透明遮罩圈住一个焦点单点讲解, 点任意处推进下一焦点。
-            // 只做一次 (kf_coach_done); 遮罩自己吃掉点击, 所以它同时也是"推进/结束"的手势面。
-            .overlay {
-                if let step = coachStep { coachOverlay(step) }
-            }
-            .task {
-                if !DB.store.getBool("kf_coach_done"), app.current != nil { coachStep = 0 }
             }
             .navigationTitle(app.displayName)
             .toolbar {
@@ -183,7 +172,6 @@ struct DeviceHomeView: View {
             }
             // 包3: 换锁后同步翻页索引 + 清理与锁绑定的过程态
             .onChange(of: app.currentMac) { _, new in
-                flipped = false
                 if confirmMac != new { confirmMac = nil }   // 菜单/联动切锁不设防, 只有横滑才设
                 if let i = pageOrder.firstIndex(of: new) {
                     if i != pageIndex { pageIndex = i }
@@ -355,7 +343,6 @@ struct DeviceHomeView: View {
         mergedRecent = RecordSearch.mergedRecentOpens(macs: rowLocks.map { $0.mac }, count: 10)
         // 790 最近活跃头像圈借同一刷新时机重算 —— Hero 卡每帧现算 = 成员数 × 全量日志各解一遍,
         // 那是这个文件里最贵的操作; 跟着 onAppear/换锁/换组走足够 (活跃度本来就是"约"级信息)。
-        activeTops = DB.members()
             .filter { !MemberHub.ext($0.id).archived }
             .map { ($0, MemberHub.activity($0.id).last) }
             .filter { !$0.1.isEmpty }
@@ -687,35 +674,13 @@ struct DeviceHomeView: View {
     // 78 卡片翻面: 开锁成功翻到背面看本次开门摘要, 点按翻回 (reduceMotion 退化为淡入淡出)。
     private func statusCard(for kc: Keychain) -> some View {
         let isCurrent = kc.mac == app.currentMac
-        return ZStack {
-            heroCard(for: kc, isCurrent: isCurrent)
-                .opacity(flipped ? 0 : 1)
-                .accessibilityHidden(flipped)
-            heroBack
-                .opacity(flipped ? 1 : 0)
-                .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
-                .accessibilityHidden(!flipped)
-        }
-        .rotation3DEffect(.degrees(flipped ? 180 : 0), axis: (x: 0, y: 1, z: 0))
+        return heroCard(for: kc, isCurrent: isCurrent)
         // 包4: 低电分级触感 — 进入 ≤20% 一次 warning, 跌入 ≤10% (告急) 一次 error
         .sensoryFeedback(trigger: lowBucket(kc)) { old, new in
             guard isCurrent else { return nil }
             if new == "sev", old != "sev" { return .error }
             if new == "low", old != "low" { return .warning }
             return nil
-        }
-        .onTapGesture {
-            guard isCurrent else { return }   // 非当前页是静态预览, 翻面只在当前锁生效
-            withAnimation(reduceMotion ? .easeInOut(duration: 0.2) : DS.Motion.standard) { flipped.toggle() }
-        }
-        .onChange(of: app.unlockState) { _, s in
-            guard isCurrent else { return }
-            guard case .success = s else { return }
-            withAnimation(reduceMotion ? .easeInOut(duration: 0.2) : DS.Motion.standard) { flipped = true }
-            Task { @MainActor in
-                try? await Task.sleep(for: .seconds(6))
-                if flipped { withAnimation(DS.Motion.soft) { flipped = false } }
-            }
         }
     }
     // 243 断连灰化: 连接断开时整卡去饱和, 恢复即回彩
@@ -872,13 +837,6 @@ struct DeviceHomeView: View {
                                  emphasized: false)
                     }
                 }
-                // 982 开门里程碑: Hero 卡角标小旗 (全局计数, 只在当前页展示)
-                if isCurrent, Milestones.unlockTotal >= 100 {
-                    HStack(spacing: DS.Space.s) {
-                        HeroPill(text: "已守护 \(Milestones.unlockTotal) 次", systemImage: "flag.fill")
-                        Spacer(minLength: 0)
-                    }
-                }
                 // 包8/507 备份状态角标: 两态 (今日已备份 / 多日未备份), 点按跳设置-备份
                 if isCurrent {
                     let bs = BackupStudio.badgeState
@@ -908,7 +866,6 @@ struct DeviceHomeView: View {
                 if isCurrent {
                     HStack(spacing: DS.Space.s) {
                         Spacer(minLength: 0)
-                        activeMembersBadge
                     }
                 }
             }
@@ -920,62 +877,7 @@ struct DeviceHomeView: View {
         .accessibilityLabel(AXTerms.lock + ": " + AXTerms.br((connected ? AXTerms.connected : AXTerms.notConnected) + ", " + AXTerms.battery + " " + batteryText(for: kc)))
     }
 
-    /// 790 头像圈: 叠放的 3 枚首字头像 (数据来自 activeTops, 刷新时机与合并流同一条);
-    /// 点开列出成员名, 选择即落记录页按该成员过滤 —— 复用 559 的 openMemberRecords (同一落点两处入口)。
-    @ViewBuilder
-    private var activeMembersBadge: some View {
-        if !activeTops.isEmpty {
-            Menu {
-                ForEach(activeTops) { m in
-                    Button { openMemberRecords(m.id) } label: {
-                        Label(MemberHub.display(m), systemImage: "person.crop.circle")
-                    }
-                }
-            } label: {
-                HStack(spacing: DS.Space.xxs) {
-                    ForEach(activeTops) { m in
-                        MemberAvatar(member: m, size: 26, tint: DS.heroFg)
-                            .overlay(Circle().strokeBorder(DS.heroFg.opacity(0.6), lineWidth: 1.5))
-                    }
-                }
-                .frame(minHeight: DS.Hit.min)
-                .contentShape(Rectangle())
-            }
-            .accessibilityLabel("最近活跃成员: 点开按成员查记录")   // 790 最近活跃成员
-        }
-    }
 
-    // 78 翻面 (背面): 82 对勾弹出 + 本次开门摘要
-    private var heroBack: some View {
-        HeroCard(flair: false) {
-            VStack(alignment: .leading, spacing: DS.Space.m) {
-                HStack(spacing: DS.Space.xs) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: DS.Icon.sm, weight: .semibold))
-                        .foregroundStyle(DS.heroFg)      // 863: 反转下 hero 会变浅, 写死白=白压白
-                        // 82: 每次翻面弹性弹出一次
-                        .symbolEffect(.bounce, value: flipped)
-                    Text("已开锁")
-                        .vkFont(.headline)
-                        .foregroundStyle(DS.heroFg)
-                        .lineLimit(1)
-                }
-                Text(backSummary)
-                    .vkFont(.footnote)
-                    .foregroundStyle(DS.heroFg.opacity(0.92))
-                    .fixedSize(horizontal: false, vertical: true)
-                Text("轻点翻回正面")
-                    .vkFont(.caption2)
-                    .foregroundStyle(DS.heroFg.opacity(0.7))
-            }
-        }
-        .saturation(bleOn ? 1 : 0.55)
-    }
-    private var backSummary: String {
-        let last = app.recentRecords(count: 1).first
-        let when = (last?.time.count ?? 0) >= 16 ? String(last!.time.dropFirst(5).prefix(11)) : "本次"
-        return "\(when) · 已守护 \(Milestones.unlockTotal) 次"
-    }
 
     // ---------- 需要用户处理的异常: 只在真有问题时出现, 不占常驻版面 ----------
     @ViewBuilder
@@ -1374,11 +1276,6 @@ struct DeviceHomeView: View {
                                       onTap: {
                                           // 1047: 静默记一次本机点击 (手动关过开关即停记, 见 QuickPool.recordingOn)
                                           QuickPool.recordTap(a.id)
-                                          // 827: 点的正是当前被提示那一格 ⇒ 消掉它, 下次讲下一格
-                                          if app.quickTipTile?.id == a.id {
-                                              app.ambientTipUsed.insert(a.id)
-                                              HintOnce.mark("827seen_" + a.id)
-                                          }
                                       }
                             ) { quickDestination(a.id) }
                             // 905: 长按任一格 → 编辑面板。走系统 contextMenu 而不是自挂长按手势:
@@ -1424,38 +1321,8 @@ struct DeviceHomeView: View {
                     }
                 }
             }
-            // 827 顺序揭幕提示 (Telegram tips): 每次只提"按显示顺序第一格还没被点过"的那一格，
-            // 点过一次就换下一格 (用一次消一格)。
-            // 浮签做在网格**下方一行**而不是盖在格子上：Grid 里给一格加 overlay 会压到邻格，
-            // 而且盖住正在讲的那格，等于让人看不见它长什么样。
-            // 乱源治理第 2 批: 这一行也进预算了 —— 顶部有自检黄条或剪贴板条在说话时，这里就静默，
-            // 内容由"还有 N 条提醒"汇总胶囊逐条给回，不丢。
-            if let t = app.quickTipTile {
-                HStack(spacing: DS.Space.s) {
-                    Image(systemName: "hand.point.up.left")
-                        .font(.system(size: DS.Icon.xs))
-                        .foregroundStyle(DS.Palette.textSub)
-                        .accessibilityHidden(true)
-                    Text("试试「" + t.label + "」—— 这一格你还没用过")   // 827 这一格你还没用过
-                        .vkFont(.caption2)
-                        .foregroundStyle(DS.Palette.textSub)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Spacer(minLength: 0)
-                    Button("不再提示") { app.ambientTipOff = true; HintOnce.mark("827off") }
-                        .vkFont(.caption2)
-                        .foregroundStyle(DS.Palette.accentText)
-                        .frame(minHeight: DS.Hit.min - DS.Space.m)
-                        // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 没有 minHeight (< 44)。
-                        // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
-                        .frame(minHeight: DS.Hit.min)
-                        .contentShape(Rectangle())
-                }
-                .padding(.horizontal, DS.Space.gutter)
-            }
         }
     }
-    // 827 的"还没被点过的第一格"判据搬到 AppState.quickTipTile —— 预算要拿它排位，
-    // 而视图层的 private var 预算读不到。判据三选一 (本会话点过 / 以前点过 / 频次表已有点击) 一字未改。
     /// 905/1047: `onTap` 是给 1047 记频次用的**可选**回调。
     /// 用 simultaneousGesture 而不是把 NavigationLink 换成 Button：换掉就会丢导航，
     /// 而 simultaneousGesture 让点击既走导航又能记账。传 nil 时一个手势都不加。
@@ -1713,29 +1580,8 @@ struct DeviceHomeView: View {
         return false
     }
 
-    // ---------- 安心夜打卡 (976): 22 点后手动确认 (协议无上锁状态位, 不猜测) ----------
-    @ViewBuilder
-
-    private var privacyFootnote: some View {
-        Text("数据全部保存在本机 · 全程离线，不上传任何服务器")
-            .vkFont(.caption)
-            .foregroundStyle(DS.Palette.textSub)
-            .multilineTextAlignment(.center)
-            .padding(.horizontal, DS.Space.xl)
-            .padding(.bottom, DS.Space.m)
-    }
-
-    /// 480 成员色: 走成员档案 hex 档, 与 RecordsView/SecurityCenterView 同一纪律 (各自本地换算, 不另建共享层)
-    private static func memberHexColor(_ m: Member) -> Color {
-        var s = m.color
-        if s.hasPrefix("#") { s.removeFirst() }
-        guard let v = UInt32(s, radix: 16) else { return DS.Palette.accent }
-        return Color(hex: v)
-    }
-
     // ---------- 派生数据 (包3: 参数化到任意锁 — 当前页吃实时, 其余页读快照) ----------
     /// 826 聚光教练标: nil = 不显示; 0/1/2 = 当前焦点序号 (只在首进设备 Tab 时出现一次)
-    @State private var coachStep: Int? = nil
     // 904 模块排序: 排序表开关 + 改完强制重算 (顺序存在 DB 里)
     @State private var showModuleOrder = false
     @State private var orderTick = 0
@@ -1885,57 +1731,6 @@ struct DeviceHomeView: View {
         .padding(.horizontal, DS.Space.gutter)
     }
 
-    /// 826 聚光教练标: 三个焦点 (圆盘 / 快捷格 / 状态卡) 依次聚光讲解, 点任意处推进, 末步写 kf_coach_done。
-    /// 遮罩用**偶奇填充**挖洞 (Rect 减去 Ellipse), 不依赖 blendMode —— 后者在 overlay 里容易被合成层吃掉。
-    /// 焦点位置是页面内的相对比例近似: 全仓没有 PreferenceKey 取锚点的先例, 为一次引导引入那套链不划算。
-    @ViewBuilder
-    private func coachOverlay(_ step: Int) -> some View {
-        let items: [(title: String, body: String, y: CGFloat, r: CGFloat)] = [
-            // 手势那句从 UnlockPrefs.gestureHint 取: 三连点/旋转充能档里"按住或上滑"是不成立的说明。
-            // 这个数组必须留在函数体内 (每次调用重建才跟得上档位) —— 挪成视图的存储属性就变成构造时快照。
-            ("开锁圆盘", "开锁方式: " + UnlockPrefs.gestureHint + "; 失败会给一份排查清单。", 0.46, 96),
-            ("快捷操作格", "常用动作都在这里; 长按可换格。", 0.70, 76),   // 169 常用动作都在这里
-            ("状态卡", "电量 / 固件 / 锁钟与连接态都在这张卡上。", 0.18, 108),   // 63/119/272 电量
-        ]
-        let it = items[min(step, items.count - 1)]
-        GeometryReader { geo in
-            let c = CGPoint(x: geo.size.width / 2, y: geo.size.height * it.y)
-            ZStack {
-                Canvas { ctx, size in
-                    var p = Path(CGRect(origin: .zero, size: size))
-                    p.addEllipse(in: CGRect(x: c.x - it.r, y: c.y - it.r, width: it.r * 2, height: it.r * 2))
-                    ctx.fill(p, with: .color(.black.opacity(0.55)), style: FillStyle(eoFill: true))
-                    let ring = Path(ellipseIn: CGRect(x: c.x - it.r, y: c.y - it.r, width: it.r * 2, height: it.r * 2))
-                    ctx.stroke(ring, with: .color(.white.opacity(0.85)), lineWidth: 2)
-                }
-                .ignoresSafeArea()
-                VStack(spacing: DS.Space.s) {
-                    Text("第 \(step + 1)/\(items.count) 步 · \(it.title)")
-                        .vkFont(.subheadline, weight: .semibold)
-                    Text(it.body)
-                        .vkFont(.footnote)
-                        .multilineTextAlignment(.center)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Text(step + 1 < items.count ? "点任意处继续" : "点任意处开始使用")
-                        .vkFont(.caption2)
-                        .foregroundStyle(DS.heroFg.opacity(0.8))
-                }
-                // 黑底卡上的前景走 heroFg (不是裸 .white): 它同时承担智能反转 (863) 的幂等色职责
-                .foregroundStyle(DS.heroFg)
-                .padding(DS.Space.l)
-                .background(.black.opacity(0.62), in: RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous))
-                .padding(.horizontal, DS.Space.l)
-                .position(x: geo.size.width / 2, y: geo.size.height * (it.y > 0.5 ? it.y - 0.26 : it.y + 0.26))
-            }
-            .contentShape(Rectangle())
-            .onTapGesture {
-                if step + 1 < items.count { coachStep = step + 1 }
-                else { DB.store.set("kf_coach_done", true); coachStep = nil }
-            }
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel("新手引导第 \(step + 1) 步: \(it.title)。\(it.body)。点任意处继续")
-        }
-    }
     private var bleOn: Bool { app.lock.connectedMAC == app.currentMac }
     // 包2/69 系统蓝牙开关 (btReady): 关时全 App 顶部出引导条; 与 bleOn (该锁会话) 区分
     private var btReady: Bool { bleSvc.isPoweredOn }
