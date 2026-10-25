@@ -202,6 +202,66 @@ struct StatsView: View {
         }
     }
 
+    // ---------- 摘要卡 (652 总量 + 667 万级缩写) ----------
+    // 自然句 (652) 与黄金时段 (1020) 已随本轮删减移除, 只留两枚数字卡。
+    @ViewBuilder
+    private func headlineCards(_ m: StatsKit.StatModel) -> some View {
+        // 开门总量只认 `opensTotal` 那一个定义 (StatsKit 里那条注释就是冲着"别在视图里再 reduce 一遍"写的)
+        let total = m.opensTotal
+        VStack(spacing: DS.Space.s) {
+            HStack(spacing: DS.Space.s) {
+                summaryCard("近 " + String(m.windowDays) + " 天开门", StatsKit.StatModel.compact(total),
+                            sub: "", delta: m.weekDelta, icon: "door.open.fill")
+                summaryCard("告警", String(m.alertTotalMonth),
+                            sub: m.alertTotalLast > m.alertTotalMonth ? "少于上月" : "较上月",
+                            delta: nil, icon: "exclamationmark.triangle.fill")
+            }
+        }
+        .padding(.horizontal, DS.Space.gutter)
+    }
+
+    private func summaryCard(_ title: String, _ value: String, sub: String, delta: Double?, icon: String) -> some View {
+        Card {
+            VStack(alignment: .leading, spacing: DS.Space.xs) {
+                HStack(spacing: DS.Space.xs) {
+                    Image(systemName: icon)
+                        .font(.system(size: DS.Icon.sm))
+                        .foregroundStyle(DS.Palette.accentText)
+                        .accessibilityHidden(true)
+                    Text(title)
+                        .vkFont(.caption)
+                        .foregroundStyle(DS.Palette.textSub)
+                        .lineLimit(1)
+                    Spacer(minLength: 0)
+                    if let d = delta {
+                        let up = d >= 0
+                        Image(systemName: up ? "arrow.up.right" : "arrow.down.right")
+                            .font(.system(size: DS.Icon.xs, weight: .semibold))
+                            .foregroundStyle(DS.Palette.accentText)   // 641 中性靛蓝, 避免涨跌误导
+                            .accessibilityHidden(true)
+                        Text((up ? "+" : "") + String(Int(d * 100)) + "% 较上周")
+                            .vkFont(.caption2)
+                            .foregroundStyle(DS.Palette.accentText)
+                            .lineLimit(1)
+                    }
+                }
+                HStack(alignment: .firstTextBaseline, spacing: DS.Space.xs) {
+                    Text(value)
+                        .vkFont(.title2, weight: .semibold)
+                        .foregroundStyle(DS.Palette.text)
+                        .monospacedDigit()
+                    if !sub.isEmpty {
+                        Text(sub)
+                            .vkFont(.caption)
+                            .foregroundStyle(DS.Palette.textSub)
+                            .lineLimit(1)
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, 0)
+    }
+
     // ---------- 772 锁选择器 ----------
     private var lockPicker: some View {
         // @layout-allow 触达托管 Picker: 控件本体高度由系统渲染, 我们撑 frame 只会多出一片点不动的死区。
