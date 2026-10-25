@@ -365,6 +365,12 @@ enum DS {
             }
         }
     }
+    /// 时长令牌 (idea 211): 150/250 毫秒两档 — 微交互 / 标准转场。
+    /// 需要 Animation 对象用 Motion, 只需要时长 (如 Task 前的 withAnimation) 用这里。
+    enum Duration {
+        static let quick: TimeInterval = 0.15
+        static let standard: TimeInterval = 0.25
+    }
     /// 外观引擎 (包16): 品牌主题 / AMOLED 的存储键解析点。
     /// 只读 DB.store (UserDefaults), 变更即时性由 AppState.applyAppearance → RootView .id 重建保证。
     enum Appearance {
