@@ -17,23 +17,11 @@ enum SecKey {
     static let lockStreak     = "kf_slock_streak"       // 连败计数 (冷却 = 30s * 2^n)
     static let lockUntil      = "kf_slock_lockuntil"    // 冷却锁至时刻
     static let lockTiming     = "kf_slock_timing"       // 393 "" 退后台即锁 / m1 / m5 / next
-    static let graceOn        = "kf_slock_graceon"      // 394 短时免验总开关
-    static let graceSec       = "kf_slock_gracese"      // 394 免验窗口 (秒)
-    static let rescueOn       = "kf_srescue_on"         // 395 一次性救援码启用
-    static let rescueCode     = "kf_srescue_code"       // 395 码值 (消费后清空)
-    static let rescueSeen     = "kf_srescue_seen"       // 395 已手抄确认
-    static let randomKeys     = "kf_slock_randkey"      // 396 随机键位
     /// 396 前提标记: 本机密码确认为纯数字 (设/改密码时写)。标记为假时锁屏页不出现随机键盘,
     /// 否则历史遗留的含字母密码用户将永远输不进去 = 自己把自己锁死。
     static let randKeyDigits  = "kf_slock_randdig"
-    static let decoyOn        = "kf_sdecoy_on"          // 390 伪装模式启用
-    static let decoyCode      = "kf_sdecoy_code"        // 390 伪装口令 (明文仅本机)
-    static let duressOn       = "kf_sduress_on"         // 391 胁迫码启用
-    static let duressCodeRaw  = "kf_sduress_code"       // 391 胁迫码明文 (本机)
-    static let duressAt       = "kf_sduress_at"         // 391 最近打标时刻
     static let traceOn        = "kf_strace_on"          // 392 失败留痕总开关
     static let traceEvents    = "kf_strace_events"      // 392 失败事件 [String]
-    static let sessionAt      = "kf_sses_at"            // 398 会话开始时刻
     static let sessionHow     = "kf_sses_how"           // 398 验证方式
     static let sessionDuress  = "kf_sses_duress"        // 391 会话胁迫打标
     static let maskStyle      = "kf_smask_style"        // 369 "" 圆点 / stars / tail4
