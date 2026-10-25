@@ -66,6 +66,16 @@ jobs:
       - name: '删页残留符号 (判失败: 被删 .swift 里声明的类型/函数若仍被引用且全仓无同名声明 ⇒ 红)'
         run: node tools/orphanscan.js --base HEAD~1
 
+      # 定义集对比 (2026-10-25 加): 上面 orphanscan 只看「被删文件声明过的符号」,
+      # 而这一轮栽的是另一种形态 —— 定义还在, 但**函数体/成员被我连着删了**,
+      # 于是 grep -w 符号名 抓不到调用方 (Self.foo / app.foo / 枚举内同名成员)。
+      # 本步改用定义集对比: 基线全部定义名 - HEAD 全部定义名 = 删掉的名字,
+      # 逐个在当前代码里查代码级引用, 有引用即悬空 ⇒ 红。
+      # 这正是 6fd0d7c 之后那 23 处编译错的成因 (jsonStr/effectiveExpiry/orderedDevices/
+      # expiredTemporaryCount/AlarmMeta.level/selfCheck397/fpVersion/dbFingerprint)。
+      - name: '定义集对比 (判失败: 已删除的定义名若仍有代码级引用 ⇒ 红)'
+        run: node tools/rescuescan.js --base HEAD~1
+
       - name: 闸门脚本自身语法检查 (工具也是代码; 第七十批就在改 swiftlint 时吃掉过一个右括号)
         run: for f in tools/*.js; do node --check "$f"; done
 

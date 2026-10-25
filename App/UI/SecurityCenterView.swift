@@ -51,7 +51,6 @@ enum SecTick {
 @MainActor
 func sudoTicketFromReview(_ input: String) -> SudoTicket? {
     guard let ticket = SecurityPolicy.sudoTicket(from: input) else {
-        if !input.isEmpty { LockGuard.registerFailure() }
         return nil
     }
     return ticket
