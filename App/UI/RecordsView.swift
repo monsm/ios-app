@@ -1776,13 +1776,6 @@ struct RecordsView: View {
                             .foregroundStyle(DS.Palette.textSub)
                             .accessibilityLabel("该日是调休补班日，不是假期")
                     }
-                    // 755 固件随行标注: 只有该日或更早真读到过状态才显示; "全部锁"模式不标 (各锁固件可能不同)
-                    if scope == 0, let fw = FirmwareHistory.observed(mac: mac, onOrBefore: g.key) {
-                        Text("固件 \(fw.fw)")
-                            .vkFont(.caption2)
-                            .foregroundStyle(DS.Palette.textSub)
-                            .accessibilityLabel("该日前后读到过的固件版本 \(fw.fw)，观测日 \(fw.day)")
-                    }
                     // 649 凌晨归属: 组内含 0:00-4:59 事件时注明
                     if g.hasNight {
                         Text("含次日凌晨")

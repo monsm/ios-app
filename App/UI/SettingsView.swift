@@ -109,7 +109,6 @@ struct SettingsView: View {
             if settingsSectionShown(groupFilter, .look) { appearanceSection.id(SettingsAnchor.appearance) }
             if settingsSectionShown(groupFilter, .help) { memorySection.id(SettingsAnchor.memory) }
             if settingsSectionShown(groupFilter, .daily) { reminderSection.id(SettingsAnchor.reminder) }
-            if settingsSectionShown(groupFilter, .daily) { alertToneSection.id(SettingsAnchor.alertTone) }
             if settingsSectionShown(groupFilter, .help) { helpSection.id(SettingsAnchor.help) }
             if settingsSectionShown(groupFilter, .help) { aboutSection.id(SettingsAnchor.about) }
         }
@@ -290,7 +289,7 @@ struct SettingsView: View {
             SearchHit(id: "s.synctime", title: "校准门锁时间", icon: "clock.arrow.circlepath", anchor: .lock),
             SearchHit(id: "s.maint", title: "维护与保养", icon: "wrench.and.screwdriver", anchor: .lock),
             SearchHit(id: "s.safemode", title: "门锁安全模式", icon: "shield.lefthalf.filled", anchor: .security),
-            SearchHit(id: "s.unlockopt", title: "开锁偏好 (按住确认/围栏/提示音)", icon: "hand.draw", anchor: .unlock),
+            SearchHit(id: "s.unlockopt", title: "开锁偏好 (按住确认/围栏/圆盘尺寸)", icon: "hand.draw", anchor: .unlock),
             SearchHit(id: "s.autoopen", title: "靠近自动开锁 (走近自动开门/距离标定)", icon: "person.walk", anchor: .autoOpen),
             SearchHit(id: "s.members", title: "成员管理", icon: "person.2") { showMembers = true },
             SearchHit(id: "s.keychainhw", title: "蓝牙钥匙串", icon: "key.horizontal") { showKeychainHW = true },
@@ -590,7 +589,7 @@ struct SettingsView: View {
         }
     }
 
-    // ---------- 开锁 (包1: 按住确认/围栏/提示音/自动重试/圆盘尺寸) ----------
+    // ---------- 开锁 (包1: 按住确认/围栏/自动重试/圆盘尺寸) ----------
     // ---------- 647 时间显示 (制式 + 是否到秒) ----------
     /// 单一出口: 时间线/详情卡/导出都读 `TimeFormat`，这里写的就是它们的结果。
     /// 分屏/多锁时"同一条记录显示成三个样子"是 647 的原罪，所以这节不提供任何页面级覆盖。
@@ -651,32 +650,6 @@ struct SettingsView: View {
                     .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
             }
-            VariantToggle("成功提示音", isOn: Binding(
-                get: { DB.store.getBool("kf_unlock_sound") },
-                set: { app.setUnlockOption("kf_unlock_sound", $0) }))
-            // 2026-10-13 对抗式排查: 实时活动的开关位 (`kf_live_unlock`) 原先全仓只有读没有写
-            // ⇒ LiveUnlock.enabled 恒 true, 用户根本关不掉 (77/939/941 "可关" 是假能力)。
-            // 这里补上唯一写入点。关掉只影响锁屏/灵动岛的展示, 开锁链本身一个字不变。
-            VariantToggle("开锁实时活动 (锁屏/灵动岛)", isOn: Binding(
-                get: { LiveUnlock.enabled },
-                set: { LiveUnlock.setEnabled($0) }))
-            // 848 成败两音各自一枚开关: 只开"失败"的人要的是"没开成就别吵我", 只开"成功"的人反过来 ——
-            // 合成一枚开关就只能服务其中一半人, 而这一半永远察觉不到另一半的存在。
-            VariantToggle("失败提示音", isOn: Binding(
-                get: { DB.store.getBool("kf_unlock_fail_sound") },
-                set: { app.setUnlockOption("kf_unlock_fail_sound", $0) }))
-            // 音色 ID 未经真机核对 (AlertTone 里标着 ⚠), 所以文案不承诺"两声不同", 只说各响一次。
-            Text("失败音只在**试完全部重试仍没开成**那一刻响一次, 中途静默重试不响。两枚开关都默认关, 走系统同一音量通道, 手机静音时一起安静。")
-                .vkFont(.caption)
-                .foregroundStyle(DS.Palette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
-            // 884 公共场合音量提示: 把"这个声音走的是媒体音量"说出来 —— 用户调小本 App 却发现
-            // 响的是整台手机的媒体音量，那才是吓人的地方。界面不假装自己有一个独立音量。
-            Text("提示音跟随系统媒体音量：本 App 不单独放大，也不新开一路音量。"   // 884 提示音跟随系统媒体音
-                 + "公共场合请先调系统的侧键音量，或直接关掉这一开关改用触感。")
-                .vkFont(.caption)
-                .foregroundStyle(DS.Palette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
             VariantToggle("失败自动重试", isOn: Binding(
                 get: { DB.store.getBool("kf_auto_retry", true) },
                 set: { app.setUnlockOption("kf_auto_retry", $0) }))
@@ -1219,68 +1192,6 @@ struct SettingsView: View {
         }
     }
 
-    // ---------- 733 告警音分级 + 963 每晚状态确认 ----------
-    // 三枚开关全部默认关: 一条每天定时响的通知和一个会在告警时出声的 App,
-    // 必须由用户明确点过才成立 —— 关着的开关也要看得出"它现在不响"。
-    private var alertToneSection: some View {
-        Section {
-            VariantToggle("告警提示音 (低电单音)", isOn: Binding(
-                get: { DB.store.getBool("kf_alert_tone") },
-                set: { app.setUnlockOption("kf_alert_tone", $0) }))
-            Text("只在低电告警**到达**那一刻响一声 (两档滞回各一次, 与那条本地通知同一时机)。总开关关掉, 下面这一档也不会响。")
-                .vkFont(.caption)
-                .foregroundStyle(DS.Palette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
-            // 733 胁迫档: 与 390/391 的既有不变量直接相冲 —— 那两档靠"反馈与真解锁一致"才不被看出来,
-            // 而三声急促音恰恰是胁迫放行当场的一个可听破绽。所以它不从属于总开关, 单独一刀 + 默认关 + 写明风险。
-                .disabled(!DB.store.getBool("kf_alert_tone"))
-            if DB.store.getBool("kf_alert_tone") {
-                // 2026-10-14 走查: 这条是 `"…" + "…"` 拼的 ⇒ Text 不解析 Markdown, 屏上会出现
-                // `**不一样**`。改走 mdText。
-                mdText("⚠ 打开后, 用胁迫口令放行的那一刻会响三声, 和正常开锁**不一样** —— 站在旁边的人听得出来。"
-                     + "本 App 的胁迫通道原本刻意做得与真解锁一模一样, 这一开关是主动放弃那层掩护去换\"我能听见告警\"。只想留痕不要声音, 就让它关着。")   // 390/391 的胁迫通道原本刻意做
-                    .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.warn)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            // 963 每晚状态确认: 与 1031 免扰 (22–08) 的冲突是结构性的, 界面直接说谁赢。
-            VariantToggle("每晚状态确认提醒", isOn: Binding(
-                get: { StatusCheckNotice.on },
-                set: { v in
-                    app.setUnlockOption("kf_status_checkin", v)
-                    // 回执说的是"排上了没有", 不是"开关动了没有" —— 免扰挡下的那一支必须当场看得见
-                    if !v {
-                        app.showToast("已撤销每晚确认")
-                    } else if StatusCheckNotice.sync() {
-                        app.showToast("已排上: 每天 \(StatusCheckNotice.hour):00 一条本地通知")
-                    } else {
-                        app.showToast("开关已打开, 但这条没排上 —— 免扰时段挡下, 或台账里还没有锁")
-                    }
-                }))
-            Picker("确认时点", selection: Binding(
-                get: { StatusCheckNotice.hour },
-                set: { v in
-                    app.setUnlockOption("kf_status_checkin_hour", v)
-                    StatusCheckNotice.sync()
-                })) {
-                Text("20:00").tag(20)
-                Text("21:00").tag(21)
-                Text("22:00").tag(22)
-            }
-            .pickerStyle(.menu)
-            .disabled(!StatusCheckNotice.on)
-            // 2026-10-14 走查: 三元表达式的结果是 String ⇒ Text 不解析 Markdown, 命中免扰时
-            // 屏上会出现 `**没有排上**`。改走 mdText。
-            mdText(StatusCheckNotice.on && CareSchedule.quietOn && StatusCheckNotice.insideQuiet(StatusCheckNotice.hour)
-                 ? "现在这条**没有排上**: 免扰时段覆盖 22–08, 你选的 \(StatusCheckNotice.hour):00 正落在里面, 按\"免扰优先\"不排。把免扰关掉, 或把时点挪到 20:00/21:00 才会响。"   // 1031 现在这条
-                 : "到点给一条本地通知, 写的是台账里数得出的数 (几把锁、今天连上过几把)。通知不联网不连锁, 锁的真实状态要到场连上才知道。")
-                .vkFont(.caption)
-                .foregroundStyle(DS.Palette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
-        } header: {
-            Text("告警声音与定时确认")
-        }
-    }
 
     // ---------- 关于 ----------
     private var aboutSection: some View {

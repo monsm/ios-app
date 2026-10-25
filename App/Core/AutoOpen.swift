@@ -537,11 +537,6 @@ final class AutoOpenController {
                     app.showToast("自动: 第一道已通过 — 请再用指纹或密码完成第二道")
                 } else {
                     app.showToast("自动开锁成功 — \(app.displayName)")
-                    // 2026-10-18: 自动开锁成功音 (独立持久化开关 kf_auto_unlock_sound, 默认开)。
-                    // 为什么自动档需要它而手动档已有: 手动开锁时用户盯着屏幕, toast 看得见;
-                    // 自动开锁是"走近它自己开的", 手机可能还在口袋里 —— 声音是唯一的到场信号。
-                    // 只在**真成功**这一支响: 双验第一道不算成功 (用户还没进门), 不能响。
-                    AlertTone.autoUnlockSuccess()
                 }
             case 3:
                 // 0E 双确认自愈 (rc=3 命令过期): 30s < |偏差| < 24h 才写, ≥24h 只提示不写
@@ -677,13 +672,6 @@ struct AutoOpenSection: View {
                 get: { AutoOpen.on },
                 set: { AutoOpen.on = $0 }))
             if AutoOpen.on {
-                // 2026-10-18 自动开锁成功音 (独立持久化开关, 默认开)。
-                // 为什么默认开: 自动开锁时手机可能还在口袋里, 声音是唯一的"门开了"信号。
-                // 为什么与手动那枚「成功提示音」分开: 手动是主动按的(看得见 toast),
-                // 自动是被动触发的(可能看不到), 两者需求不同 —— 并成一枚只能服务一半人。
-                VariantToggle("自动开锁成功音", isOn: Binding(
-                    get: { AlertTone.autoUnlockOn },
-                    set: { DB.store.set("kf_auto_unlock_sound", $0) }))
                 Picker("面容确认", selection: Binding(
                     get: { AutoOpen.faceTier },
                     set: { AutoOpen.faceTier = $0 })) {

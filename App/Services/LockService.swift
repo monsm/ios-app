@@ -412,7 +412,6 @@ final class LockService: ObservableObject {
         if st.rc == 0 {
             DB.writeStatus(curMac, st) // 离线快照 (随时可读)
             BatteryCare.sample(curMac, pct: st.powerLevel)   // 包4/45: 电量本地采样埋点 (90 天截断)
-            FirmwareHistory.record(mac: curMac, fw: st.firmware)   // 755: 顺带记"哪天读到哪个固件"
         }
         return st
     }

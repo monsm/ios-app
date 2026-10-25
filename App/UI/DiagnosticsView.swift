@@ -118,9 +118,6 @@ struct DiagnosticsView: View {
         .frame(minHeight: DS.Hit.min)
         .accessibilityElement(children: .combine)
     }
-#if DEBUG
-    @State private var seeded = BreakFixture.isSeeded()
-#endif
 
     var body: some View { vkBody.destined(.diagnostics) }
     var vkBody: some View {
@@ -736,26 +733,6 @@ struct DiagnosticsView: View {
                         .vkFont(.caption)
                 }
             }
-#if DEBUG
-            // break-ui: 注入最坏数据一次性检验长名/长备注/无时间日志/告警行是否撑爆布局,
-            // 一键清除。绝不进 Release。
-            // 带 footer 的 Section 必须用 content/header/footer 三段式重载,
-            // 不存在 Section("标题") { } footer: { } 这种写法
-            Section {
-                // 标签必须由 @State 驱动: set 里只做副作用不改状态的话, 开关文案不会翻转
-                VariantToggle(seeded ? "清除最坏数据" : "注入最坏数据",
-                       isOn: Binding(get: { seeded },
-                                     set: { on in
-                                         seeded = on
-                                         on ? BreakFixture.seed() : BreakFixture.clear()
-                                         app.loadDevices()   // 让注入的门锁立即出现在设备列表
-                                     }))
-            } header: {
-                Text("布局压力自检 (仅 DEBUG)")
-            } footer: {
-                Text("注入一台名字超长、备注超长、含无时间戳与告警行的测试门锁，用来人工走查各界面在极端数据下是否破版。")
-            }
-            #endif
             // 靠近自动开锁 (AUTOOPEN): 上次拒开原因行 (读 kf_autoopen_audit_, 只记哪道门拒了, 永不记密钥材料)
             if let last = AutoOpen.lastReject(app.currentMac), !app.currentMac.isEmpty {
                 Section {

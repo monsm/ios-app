@@ -84,7 +84,7 @@ struct DeviceHomeView: View {
                         // 42 首用气泡引导: 多锁用户最容易错过的动作是"长按这排胶囊看最近状态变化"
                         // (那件事本身是 268，已经实现)。只说一次、由用户自己点掉;
                         // 提示承诺的必须是**页面上真做得出**的动作 —— 832 那条就想承诺一个不存在的长按。
-                        if app.ambientTop == .firstUseCapsule {
+                        if !app.firstUseCapsuleDone {
                             Button { app.firstUseCapsuleDone = true; HintOnce.mark("capsule268") } label: {
                                 HStack(spacing: DS.Space.xs) {
                                     Image(systemName: "hand.point.up.left")
@@ -1571,7 +1571,7 @@ struct DeviceHomeView: View {
             // 而且盖住正在讲的那格，等于让人看不见它长什么样。
             // 乱源治理第 2 批: 这一行也进预算了 —— 顶部有自检黄条或剪贴板条在说话时，这里就静默，
             // 内容由"还有 N 条提醒"汇总胶囊逐条给回，不丢。
-            if let t = app.quickTipTile, app.ambientTop == .quickTileTip {
+            if let t = app.quickTipTile {
                 HStack(spacing: DS.Space.s) {
                     Image(systemName: "hand.point.up.left")
                         .font(.system(size: DS.Icon.xs))

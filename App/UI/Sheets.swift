@@ -1686,24 +1686,20 @@ struct FirmwareView: View {
     // ---------- 825 固件首检引导 (Apple Support 那一形态) ----------
     // 创意原句两半：「首次进入显示当前版本占位」+「比对出厂版本清单按钮」。两半分开处理：
     //  · 占位这一半是真做得到的 —— 读不到当前版本时明写"没读到"，并说清为什么 (没连过锁 = 没发过 03 状态查询)。
-    //  · 「出厂版本清单」**本机没有这张表**：全仓版本真相只有三处 —— 锁侧 03 快照回的 firmware 字段、
-    //    本机每次读到过的版本历史 (FirmwareHistory)、导入过的包名 (kf_fwlib)。所以这里把这三处一次摊开，
+    //  · 「出厂版本清单」**本机没有这张表**：全仓版本真相只有两处 ——
+    //    锁侧 03 快照回的 firmware 字段、导入过的包名 (kf_fwlib)。所以这里把这两处一次摊开，
     //    而不是凭空造一张厂商对照表：点进去只有一句假话的那种按钮，本仓宁可不放。
     @ViewBuilder
     private var firstGlanceSection: some View {
-        let obs = FirmwareHistory.observations(mac: mac)
         let lib = BatteryCare.fwlib
         Section {
             LabeledRow("锁上读到的版本", curFw.isEmpty ? "没读到 · 先连一次锁" : curFw)
-            LabeledRow("本机读到过的版本",
-                       obs.isEmpty ? "还没有观测记录"
-                       : obs.prefix(3).map { $0.fw + "(" + $0.day + ")" }.joined(separator: " · "))
             LabeledRow("导入过的固件包",
                        lib.isEmpty ? "本机还没有包" : "\(lib.count) 个 · 最近 \(lib.first?.version ?? "未知")")
         } header: {
             Text("进这一页先对一眼")   // 825 进这一页先对一眼
         } footer: {
-            Text("没有「出厂版本对照表」可点：厂商云已停服，本机只有上面这三处版本真相。"   // 513/145 没有
+            Text("没有「出厂版本对照表」可点：厂商云已停服，本机只有上面这两处版本真相。"   // 513/145 没有
                  + "要升级就带自己的包来，比对以锁上读到的那一个为准。")
                 .vkFont(.caption2)
         }

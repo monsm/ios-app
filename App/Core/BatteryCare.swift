@@ -228,7 +228,6 @@ enum BatteryCare {
         // 先记账再发送: 发送被免扰静默也不反复轰炸
         DB.store.set(key, level)
         // 733 低电单音: 告警**到达**这一刻响 (两档滞回各响一次, 与通知同一时机), 总开关默认关
-        AlertTone.alert(.lowBattery)
         let name = DB.keychain(mac).map { LockArchive.displayName($0) } ?? mac
         let body = level == 2
             ? "「\(name)」只剩 \(pct)%, 请尽快更换电池"

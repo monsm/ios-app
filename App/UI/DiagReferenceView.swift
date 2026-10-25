@@ -1,5 +1,5 @@
 // 诊断查阅页 (包11 收尾): 把已经存在于代码里的四张对照表 + 二维码/崩溃档案接到界面上。
-// 这一页只读、不发包、不写业务数据；所有内容的唯一来源是 StatusParser / PidMap / ProtocolDict / IconSemantics / CrashGuard / FirmwareHistory / QueryTemplates。
+// 这一页只读、不发包、不写业务数据；所有内容的唯一来源是 StatusParser / PidMap / ProtocolDict / IconSemantics / CrashGuard / QueryTemplates。
 import SwiftUI
 
 struct DiagReferenceView: View {
@@ -85,23 +85,6 @@ struct DiagReferenceView: View {
                     .foregroundStyle(DS.Palette.textSub)
             }
 
-            // 755: 本机读到过的固件观测点 (observations() 此前零调用, 记录只在写侧落库)
-            Section("本机固件观测点 · 当前锁") {   // 755 本机固件观测点
-                let obs = FirmwareHistory.observations(mac: app.currentMac)
-                if obs.isEmpty {
-                    Text("这台手机还没有读到过该锁的固件版本 —— 连上一次并读取状态后这里会出现记录。")
-                        .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
-                        .fixedSize(horizontal: false, vertical: true)
-                } else {
-                    // 先转成字符串再 ForEach: 元组不能遵循 Identifiable, 单参 ForEach 用不了 (id 走 self)
-                    ForEach(obs.map { $0.day + " → " + $0.fw }, id: \.self) { line in
-                        Text(line).vkFont(.caption.monospaced()).foregroundStyle(DS.Palette.text)
-                    }
-                    Text("只是**这台手机读到过**的日期与版本, 不是门锁的完整固件历史; 中间没连过的日子不会补。")
-                        .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
 
             // 159 错误码对照表 (rc → 人话, 源自 StatusParser)
             Section("错误码对照表 · \(StatusParser.rcMsg.count) 条") {   // 159 错误码对照表
