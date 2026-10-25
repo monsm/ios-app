@@ -8,7 +8,7 @@ struct DiagnosticsView: View {
     // 2026-10-15 走查: 这一页有三条来路 —— 设备页 push、设置页 push、以及设置页那张 sheet
     // (`SettingsView` 的 `showDiag` = `NavigationStack { DiagnosticsView() }`)。
     // 空态那枚「去设备页操作」原先只写 `app.tabSelection = 0`：sheet 那条路里 TabView 整个被盖住
-    // ⇒ 点了没反应，甩掉 sheet 才发现自己在设备页 (§7.3 那一族；`StatsView` 六枚格子是同类先例)。
+    // ⇒ 点了没反应，甩掉 sheet 才发现自己在设备页 (§7.3 那一族)。
     @Environment(\.dismiss) private var dismiss
     @State private var debugRaw = DB.store.getBool("kf_debug_raw")
     @State private var copied = false

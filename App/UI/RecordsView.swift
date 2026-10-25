@@ -33,7 +33,6 @@ struct RecordsView: View {
     @State private var reconLine = ""     // 749 对账结果一行 (可复制, 供发给管理员/记进工单)
     @State private var sel = "" // '' 全部 / 成员id / __unknown
     @State private var showAdd = false
-    @State private var showStats = false       // 包10 统计
     // 716 选区导出: 按天整组勾选 (行级多选不做 —— 一页上千行, 逐行勾选的手势成本远高于按天勾)
     @State private var showRangePick = false
     @State private var rangeSel: Set<String> = []
@@ -272,7 +271,6 @@ struct RecordsView: View {
         ToolbarItem(placement: .navigationBarTrailing) {
             Menu {
                 if app.current != nil {
-                    Button { showStats = true } label: { Label("统计与图表", systemImage: "chart.bar") }
                     Button { copyLastWeekDigest() } label: { Label("复制上周小结", systemImage: "doc.on.clipboard") }   // 698 复制上周小结
                     Button { showRangePick = true } label: { Label("选区导出", systemImage: "checklist") }   // 716 选区导出
                     Button { showActiveCreds = true } label: { Label("活跃凭证排序 (约)", systemImage: "list.number") }
@@ -358,7 +356,7 @@ struct RecordsView: View {
             applyFilter()
         }
         .onChange(of: app.pendingRecordsMember) { _, m in
-            // 582 图表下钻: 统计页成员条写的那个 id 此前**全仓没有读取方** (只在 StatsView:1317 赋值),
+            // 582 图表下钻: 统计页已随本轮删减移除, 这条落点保留给其它来源。
             // 所以点成员条跳过来什么也没发生。落点在 landMember —— 与点成员 chip 走同一条过滤链。
             guard let m else { return }
             landMember(m)
@@ -403,9 +401,6 @@ struct RecordsView: View {
             Text("备注跟着这一行 (锁 + 行标识) 走, 不写进锁端日志; 详情页里也能改。")   // 576 备注跟着这一行
         }
         .sheet(isPresented: $showRangePick) { rangePickSheet }
-        .sheet(isPresented: $showStats) {
-            if app.current != nil { StatsView(mac: app.current!.mac) }
-        }
         .sheet(isPresented: $showActiveCreds) { ActiveCredsSheet() }
         // 565 告警类型多选: 选中集直接写回 filters (走既有 onChange(of: filters) → applyFilter)
         .sheet(isPresented: $showAlarmKinds) { AlarmKindsSheet(sel: $filters.alarmKinds) }
