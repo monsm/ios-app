@@ -10,6 +10,7 @@
 // 纪律: 颜色只走 DS 令牌 (danger 派生, 页面层 .opacity); 告警类型只用 CAPABILITY §3
 //       真实存在的 5 种 (6 低电 / 7 防撬 / 10 试错锁定 / 13 指纹告警 / 224 键盘锁定);
 //       归属统计走 Attribution 可证明链, 推断值一律标"约"。
+import SwiftUI
 import Foundation
 
 /// 一条可检索的记录行 (跨锁聚合单元, 770)

@@ -293,7 +293,6 @@ struct RecordsView: View {
         if app.current == nil {
             noLockPlaceholder
         } else {
-        } else {
             mainList
         }
     }

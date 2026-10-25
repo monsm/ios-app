@@ -938,6 +938,7 @@ struct MemberDetail360View: View {
         let fEmoji = field("emoji 代号", e.emoji)   // 916 代号
         let fEmergency = field("紧急联系 姓名+电话", e.emergency)   // 465 紧急联系
         let fCare = field("孩子码关怀文案", e.careText)   // 480 孩子码关怀文案
+        let fNote = field("家庭便签 (如 周六换锁芯)", e.note)
         let fWelcome = field("访客欢迎语", e.welcome)   // 484 访客欢迎语
         let fGroup = field("分组标签 家人/访客/服务人员", e.groupTag)   // 630 分组标签
         let fCommon = field("常用锁 (mac 或名称, 逗号分隔; 多锁时排前)",
@@ -949,6 +950,7 @@ struct MemberDetail360View: View {
             next.emoji = fEmoji.text ?? ""
             next.remark = fRemark.text ?? ""
             next.emergency = fEmergency.text ?? ""
+            next.note = fNote.text ?? ""
             next.careText = fCare.text ?? ""
             next.welcome = fWelcome.text ?? ""
             next.groupTag = fGroup.text ?? ""

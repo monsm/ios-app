@@ -17,6 +17,7 @@ struct MemberExt: Codable {
     var proxy: Bool = false          // 468 代管标记 (停用 TA 名下凭证时, 361 便签补一句 管理员代操作)
     var emergencyAdmin: Bool = false // 469 紧急管理员 (本机点名档: 成员页与 482 会议摘要点名; 锁端与救援码本体都不读它)
     var careText: String = ""        // 480 孩子码关怀文案
+    var note: String = ""            // 475 家庭便签 (与成员绑定; 成员中心与 vCard 导出在用)
     var welcome: String = ""         // 484 访客欢迎语 (归属靠时间推断, 展示带"约")
 }
 
