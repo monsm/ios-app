@@ -285,7 +285,6 @@ struct RecordsView: View {
         }
         ToolbarItem(placement: .navigationBarTrailing) {
             Menu {
-                Button { showGratitude = true } label: { Label("感谢清单", systemImage: "heart.text.square") }
                 if app.current != nil {
                     Button { showExport = true } label: { Label("导出与分享", systemImage: "square.and.arrow.up.on.square") }
                     Button { showStats = true } label: { Label("统计与图表", systemImage: "chart.bar") }
@@ -1728,14 +1727,6 @@ struct RecordsView: View {
                         .lineLimit(1)
                         .foregroundStyle(DS.Palette.textSub)
                 }
-                if showYear {
-                    if let y = g.date {
-                        Text(String(WeekCal.gregorian.component(.year, from: y)) + " 年")
-                            .vkFont(.title3, weight: .semibold)
-                            .lineLimit(1)
-                            .foregroundStyle(DS.Palette.textSub)
-                    }
-                }
                 HStack(spacing: DS.Space.s) {
                     Text(dayLabel(g.key))
                         .vkFont(.headline)
@@ -1797,12 +1788,6 @@ struct RecordsView: View {
                         Text("含次日凌晨")
                             .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
-                    }
-                    if let c = celebrant {
-                        Text("今天是" + c.name + "的生日")
-                            .vkFont(.caption, weight: .medium)
-                            .lineLimit(1)
-                            .foregroundStyle(DS.Palette.warn)
                     }
                     Spacer(minLength: DS.Space.s)
                     // 588 组头计数徽标: 开门 N · 告警 M (含告警日染浅红)

@@ -27,7 +27,7 @@ enum Milestones {
 
     // ---------- 首启日期 ----------
     static var firstDate: Date? {
-        let t = DB.store.getDouble("kf_first_at", 0)
+        let t = DB.store.get(Double.self, "kf_first_at") ?? 0
         return t > 0 ? Date(timeIntervalSince1970: t) : nil
     }
 
