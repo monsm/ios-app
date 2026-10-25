@@ -58,6 +58,14 @@ jobs:
           node tools/contrast.js
           node tools/dynamictype.js
 
+      # 删页残留符号 (2026-10-25 加): 本次大删里同一个坑踩了四次 —— 删掉整页 .swift 时,
+      # 那个文件里还住着**别的页面在用**的小构件 (cjkSpaced / CaptionStepBar / ExportDir /
+      # BatterySwapGuide), 而上面所有闸门只看语法形状、不看符号生死 ⇒ 每次都是本地全绿、CI 编译才红。
+      # 这一步把「被删文件声明过的符号还有谁在用」变成提交前就能答的问题。
+      # 基线取最近一次推送前的提交 → 逐个 push 的改动面都能覆盖到。
+      - name: '删页残留符号 (判失败: 被删 .swift 里声明的类型/函数若仍被引用且全仓无同名声明 ⇒ 红)'
+        run: node tools/orphanscan.js --base HEAD~1
+
       - name: 闸门脚本自身语法检查 (工具也是代码; 第七十批就在改 swiftlint 时吃掉过一个右括号)
         run: for f in tools/*.js; do node --check "$f"; done
 
