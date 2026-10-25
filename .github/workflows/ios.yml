@@ -27,6 +27,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 2   # rescuescan/orphanscan 需要 HEAD~1 作基线; 默认 depth:1 取不到
 
       - name: '工作流自检 (step 名里的裸冒号会让严格 YAML 解析器拒收整份工作流)'
         run: |

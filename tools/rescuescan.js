@@ -95,9 +95,14 @@ function readText(ref, file) {
 }
 
 // ---------- 基线 ----------
-if (!BASE || git(["cat-file", "-t", BASE]).trim() !== "commit") {
-  console.log("✗ --base " + BASE + " 不是有效提交");
-  process.exit(2);
+// 基线不可用 (浅克隆 / 指定 ref 不存在) ⇒ 跳过而不是判失败。
+// CI 的 actions/checkout 默认 fetch-depth:1, HEAD~1 取不到 —— 那时本步无从比起。
+// 真要有覆盖, workflow 里把 fetch-depth 设成 2 (ios.yml 已改)。
+const baseType = BASE ? git(["cat-file", "-t", BASE]).trim() : "";
+if (baseType !== "commit") {
+  console.log("⚠ 基线 " + BASE + " 不可用 (浅克隆或 ref 不存在) —— 本次跳过定义集对比。");
+  console.log("  要让它生效: actions/checkout 带 fetch-depth: 2, 或本地显式 --base <ref>。");
+  process.exit(0);
 }
 
 const baseFiles = listSwift(BASE);
