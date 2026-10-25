@@ -39,30 +39,6 @@ struct SettingsView: View {
     /// "已看过"的落库放在 destination 的 .onAppear: 写在 ViewBuilder 里等于在构造视图时改数据,
     /// 视图被重建/预取时会反复触发, 而且 body 有副作用本来就是 SwiftUI 明确要避免的。
     @ViewBuilder
-    func newBadgeRow(_ title: String, _ feature: String, @ViewBuilder dest: () -> some View) -> some View {
-        NavigationLink {
-            dest()
-                .onAppear { DB.store.set("kf_seen_" + feature, true) }
-        } label: {
-            HStack(spacing: DS.Space.xs) {
-                Label(title, systemImage: "sparkles")
-                if !DB.store.getBool("kf_seen_" + feature) {
-                    Text("NEW")
-                        .vkFont(.caption2, weight: .medium)
-                        .foregroundStyle(DS.Palette.onAccent)
-                        .padding(.horizontal, DS.Space.xs)
-                        .padding(.vertical, DS.Space.xxs)
-                        .variantPlate(DS.Palette.accent, .capsule)
-                        .accessibilityLabel("新功能")
-                }
-            }
-        }
-        // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 16.6pt (< 44)。
-        // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
-        .frame(minHeight: DS.Hit.min)
-        .contentShape(Rectangle())
-    }
-
     var body: some View { vkBody.destined(.settings) }
     var vkBody: some View {
         NavigationStack {
@@ -90,7 +66,6 @@ struct SettingsView: View {
             SettingsGroupChips(selection: $groupFilter)
             // 每节挂一枚稳定锚 (`.id`), 供页内搜索 scrollTo 用。锚是字符串常量, 与筛选片无关。
             if settingsSectionShown(groupFilter, .daily) { lockSection.id(SettingsAnchor.lock) }
-            if settingsSectionShown(groupFilter, .daily) { deviceManageSection.id(SettingsAnchor.deviceManage) }
             if settingsSectionShown(groupFilter, .data) { securitySection.id(SettingsAnchor.security) }
             if settingsSectionShown(groupFilter, .daily) { unlockSection.id(SettingsAnchor.unlock) }
             if settingsSectionShown(groupFilter, .look) { timeSection.id(SettingsAnchor.time) }
@@ -98,10 +73,7 @@ struct SettingsView: View {
             if settingsSectionShown(groupFilter, .keys) { familySection.id(SettingsAnchor.family) }
             if settingsSectionShown(groupFilter, .data) { toolsSection.id(SettingsAnchor.tools) }
             if settingsSectionShown(groupFilter, .data) { applockSection.id(SettingsAnchor.applock) }
-            if settingsSectionShown(groupFilter, .look) { a11ySection.id(SettingsAnchor.a11y) }
             if settingsSectionShown(groupFilter, .look) { appearanceSection.id(SettingsAnchor.appearance) }
-            if settingsSectionShown(groupFilter, .daily) { reminderSection.id(SettingsAnchor.reminder) }
-            if settingsSectionShown(groupFilter, .help) { helpSection.id(SettingsAnchor.help) }
             if settingsSectionShown(groupFilter, .help) { aboutSection.id(SettingsAnchor.about) }
         }
         .navigationTitle("设置")
@@ -227,16 +199,16 @@ struct SettingsView: View {
     /// `group` = 这一节归哪个筛选分组。跳转前必须先切过去, 否则命中节可能压根没被渲染,
     /// `scrollTo` 会**静默落空** (这正是"点了搜索没反应"的另一种形态)。
     private enum SettingsAnchor: String {
-        case lock, deviceManage, security, unlock, time, autoOpen, family
+        case lock, security, unlock, time, autoOpen, family
         case tools, drill, applock, a11y, appearance, memory, reminder, alertTone, help, about
 
         var group: SettingsGroup {
             switch self {
-            case .lock, .deviceManage, .unlock, .autoOpen, .reminder, .alertTone: return .daily
+            case .lock, .unlock, .autoOpen, .alertTone: return .daily
             case .security, .tools, .drill, .applock: return .data
             case .family: return .keys
-            case .time, .a11y, .appearance: return .look
-            case .memory, .help, .about: return .help
+            case .time, .appearance: return .look
+            case .memory, .about: return .help
             }
         }
     }
@@ -266,7 +238,6 @@ struct SettingsView: View {
             SearchHit(id: "s.lockprofile", title: "锁档案 (昵称/符号/色标)", icon: "lock", anchor: .lock),
             SearchHit(id: "s.mute", title: "静音模式", icon: "speaker.slash", anchor: .lock),
             SearchHit(id: "s.synctime", title: "校准门锁时间", icon: "clock.arrow.circlepath", anchor: .lock),
-            SearchHit(id: "s.maint", title: "维护与保养", icon: "wrench.and.screwdriver", anchor: .lock),
             SearchHit(id: "s.safemode", title: "门锁安全模式", icon: "shield.lefthalf.filled", anchor: .security),
             SearchHit(id: "s.unlockopt", title: "开锁偏好 (按住确认/围栏/圆盘尺寸)", icon: "hand.draw", anchor: .unlock),
             SearchHit(id: "s.autoopen", title: "靠近自动开锁 (走近自动开门/距离标定)", icon: "person.walk", anchor: .autoOpen),
@@ -274,15 +245,11 @@ struct SettingsView: View {
             SearchHit(id: "s.keychainhw", title: "蓝牙钥匙串", icon: "key.horizontal") { showKeychainHW = true },
             SearchHit(id: "s.gateway", title: "智能网关", icon: "antenna.radiowaves.left.and.right") { showGateway = true },
             SearchHit(id: "s.backup", title: "备份与恢复", icon: "externaldrive") { showBackup = true },
-            SearchHit(id: "s.backupstudio", title: "备份工作室 (导出向导/恢复/WebDAV策略/换机迁移)", icon: "wrench.and.scissors") { showBackup = true },
+            SearchHit(id: "s.backupstudio", title: "备份与恢复", icon: "wrench.and.scissors") { showBackup = true },
             SearchHit(id: "s.messages", title: "动态消息", icon: "bell") { showMessages = true },
             SearchHit(id: "s.logs", title: "诊断与运行日志", icon: "list.bullet.rectangle") { showDiag = true },
             SearchHit(id: "s.applock", title: "本机数据保护 (应用锁)", icon: "lock.shield", anchor: .applock),
             SearchHit(id: "s.appearance", title: "外观 (主题/品牌色/密度)", icon: "paintbrush", anchor: .appearance),
-            SearchHit(id: "s.maintremind", title: "维护提醒", icon: "bell.badge", anchor: .reminder),
-            SearchHit(id: "s.flow", title: "数据流向说明", icon: "arrow.right.circle", anchor: .help),
-            SearchHit(id: "s.credits", title: "致谢与许可", icon: "hands.clap", anchor: .help),
-            SearchHit(id: "s.copycheck", title: "文案体检", icon: "text.badge.checkmark", anchor: .help),   // 664 文案体检
         ]
         return all.filter { $0.title.localizedCaseInsensitiveContains(q) || $0.id.hasSuffix(q) }
     }
@@ -308,48 +275,6 @@ struct SettingsView: View {
             }
         }
     }
-
-
-    // ---------- 包14 帮助区 (805): 引导回看。手册/FAQ/症状排查/就任证书已随大删波 3 移除 ----------
-    private var helpSection: some View {
-        Section {
-            Button {
-                app.showToast("下次冷启动重新走引导, 或现在就看")
-            } label: {
-                HStack(spacing: DS.Space.s) {
-                    Text("重看新手引导")   // 805 重看新手引导
-                    Spacer(minLength: DS.Space.s)
-                        .foregroundStyle(DS.Palette.textSub)
-                }
-            }
-            // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 16.5pt (< 44)。
-            // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
-            .frame(minHeight: DS.Hit.min)
-            .contentShape(Rectangle())
-        } header: {
-            Text("帮助与关于")
-        } footer: {
-            Text("引导进度全部记在本机, 不上传。")
-        }
-    }
-
-    // ---------- 门锁 ----------
-    // ---------- 设备管理 (104 分组 / 107 批量 / 766 排序置顶 / 767 分组场景) ----------
-    // 单独成一段而不是塞进"门锁"段: 那一段讲的是**当前这把锁**的设置, 这一段讲的是锁与锁之间的关系,
-    // 而且一把锁都没绑的时候也要进得去 (从备份恢复完的锁要先排序)。
-    private var deviceManageSection: some View {
-        Section {
-            // 766 拖动排序与置顶同步设
-            // 271 拖动排序与置顶同步设
-            Text("拖动排序与置顶同步设备页的翻页顺序，第一行即启动默认锁。"
-                 + "顺序、分组、分组折叠与隐藏随全量备份包走 (D-36)：换机恢复后不必重排；"
-                 + "锁档案的场所副标题 / 备注 / 符号色标仍只存本机。")
-                .vkFont(.caption2)
-                .foregroundStyle(DS.Palette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
     private var lockSection: some View {
         Section("门锁") {
             // 分享给安卓: 只在有当前锁时出现。入口放在门锁段而不是设备管理页 ——
@@ -653,20 +578,6 @@ struct SettingsView: View {
             NavigationLink("诊断与运行日志") { DiagnosticsView() }
         }
     }
-
-    // ---------- 包15 无障碍与操作辅助 (设置-辅助功能入口) ----------
-    private var a11ySection: some View {
-        Section {
-        } header: {
-            Text("无障碍")
-        } footer: {
-            Text("圆盘转子调节、字号五档、切换控制扫描、键盘快捷键、练习场与对比度计算器集中在辅助功能页。")
-                .vkFont(.caption)
-                .foregroundStyle(DS.Palette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
     // ---------- 本机数据保护 ----------
     private var applockSection: some View {
         Section {
@@ -1030,18 +941,6 @@ struct SettingsView: View {
             app.showToast("已恢复默认外观")
         }
     }
-
-
-    // ---------- 维护提醒 (包4: 287 阈值/1031 免扰/1038 白天送达/146 升级提醒 的入口) ----------
-    private var reminderSection: some View {
-        Section {
-            Text("提醒")
-        } footer: {
-            Text("低电、保养、校时与固件提醒全部通过本地通知送达, 免扰时段可一键安静。")
-        }
-    }
-
-
     // ---------- 关于 ----------
     private var aboutSection: some View {
         Section {

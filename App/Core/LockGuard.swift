@@ -38,14 +38,6 @@ enum LockAction {
     }
 }
 
-/// 383 毁灭动作的入场券。`init` 是 fileprivate ⇒ 本文件之外**造不出**它,
-/// 只能由 SecurityPolicy.sudoTicket(from:) 当场验过应用锁口令之后发一张。
-/// 为什么不用一个 Bool 标志: 布尔能被任何调用方随手写成 true, 而"要不要重输口令"这件事
-/// 一旦可以由调用方自述, 383 就又是一枚只改标签的开关。
-struct SudoTicket {
-    let issuedAt: Double
-    fileprivate init(issuedAt: Double) { self.issuedAt = issuedAt }
-}
 
 /// 安全中心五枚开关的唯一判据口。刻意**不加 @MainActor**:
 /// 判据口要能被界面、逻辑层 (DestroyKit) 与静态上下文一律读到,
@@ -59,8 +51,6 @@ enum SecurityPolicy {
     static var guestActive: Bool { DB.store.getBool("kf_speek_guest", false) }
     /// 377 访客视图筛敏感成员 (本机没有成员敏感标记位, 见 SecurityCenterView 那行的实话文案)
     static var hideSensitiveInGuest: Bool { DB.store.getBool(SecKey.sensitiveOnly, false) }
-    /// 383 毁灭操作需重输应用锁口令
-    static var sudoRequired: Bool { DB.store.getBool(SecKey.sudoOn, true) }
     /// 296 只读安全模式
     static var readOnly: Bool { DB.store.getBool(SecKey.safeModeOn, false) }
     /// 376 口述卡与导出预览默认遮码值下半段
@@ -85,24 +75,4 @@ enum SecurityPolicy {
     /// 376 渲染侧的一行读法: 开关关着原样给, 开着遮下半段 (调用点不必自己写三目)
     static func halfMasked(_ digits: String) -> String { shareHalf ? masked(digits) : digits }
 
-    // ---------- 383: 毁灭动作的口令复核 (走既有 DB.verifyPasscode, 不新建存储也不新建口令位) ----------
-    /// 当场比对应用锁口令。两处 fail-closed: 空输入不放行、本机没设口令不放行 (无凭据可验 = 不放行毁灭动作)。
-    /// 只验不记: 失败留痕走界面侧那条 LockGuard 通道 (见 SecurityCenterView 的 sudoTicketFromReview)。
-    static func sudoOk(_ input: String) -> Bool {
-        guard !input.isEmpty else { return false }
-        guard DB.hasPasscode() else { return false }
-        return DB.verifyPasscode(input)
-    }
-    /// 验过才发券; 没验过就是 nil, 销毁那一步在 AuditChain 里自己停手
-    static func sudoTicket(from input: String) -> SudoTicket? {
-        guard sudoOk(input) else { return nil }
-        return SudoTicket(issuedAt: Date().timeIntervalSince1970)
-    }
-    /// 2026-10-17 拍板 A: 面容/指纹复核通过后发同一张券。
-    /// `SudoTicket.init` 是 fileprivate ⇒ 只能在本文件铸造 —— 这条也留在本文件里,
-    /// 界面只把"生物识别通过了"这个事实传进来, 仍然造不出无凭据的券。
-    static func sudoTicketBiometric(_ passed: Bool) -> SudoTicket? {
-        guard passed else { return nil }
-        return SudoTicket(issuedAt: Date().timeIntervalSince1970)
-    }
 }

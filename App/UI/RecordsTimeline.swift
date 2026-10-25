@@ -540,7 +540,7 @@ struct RecDetailSheet: View {
     /// Rec → ExportRecord 的映射: 只带这一条**能证明**的字段, 归属不可证明就留空 (与导出中心同一口径)。
     private var exportRow: ExportRecord {
         ExportRecord(time: rec.timeStr, typeName: rec.typeName, member: rec.whoName ?? "",
-                     credWord: rec.cred, isAlarm: rec.alarm, hex: "",
+                     isAlarm: rec.alarm, hex: "",
                      dayKey: rec.timeStr.count >= 10 ? String(rec.timeStr.prefix(10)) : "未知",
                      levelName: rec.alarm ? AlarmMeta.levelName(rec.type) : "")
     }

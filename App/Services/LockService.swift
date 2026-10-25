@@ -478,11 +478,6 @@ final class LockService: ObservableObject {
         return r.rc  // 0 成功; 22 双验继续
     }
 
-    // ---------- 布防 / 时间 / 设置 ----------
-    func setDefence(control: Int, startSec: Int, endSec: Int) async throws {
-        let (m, sk) = try keys()
-        try await execOk(ZKCmdBuilder.cmd25Defence(m, sk, control, startSec, endSec))
-    }
     /// 校时 (cmd 0E): 发**手机当前时间** —— 与原版 APK synctime 页完全一致
     /// (那边就是 `new St(En.getNowTimeString(), mac)`, 载荷为手机此刻的协议秒)。
     /// 旧实现算的是 `target = now + (lockSec - now)`, 数学上等于**把锁自己的钟原样写回去**:
@@ -763,21 +758,6 @@ final class LockService: ObservableObject {
         return LogPage(surplus: surplus, logs: logs)
     }
 
-    // ---------- DFU 进入 (cmd 22) ----------
-    func enableDfu() async throws {
-        let (m, sk) = try keys()
-        do {
-            _ = try await execOk(ZKCmdBuilder.cmd22EnableDfu(m, sk, 0), retries: 2)
-        } catch {
-            // 锁重启瞬间断链属预期 (App sendDFUCmd 同样只等 rc)
-            let msg = error.localizedDescription
-            if msg.contains("断开") || msg.contains("disconnect") {
-                log("info", "cmd 22 后锁断链 (进入升级模式的预期行为)")
-                return
-            }
-            throw error
-        }
-    }
 
     // ---------- 配网编排 (重置后全流程, App devicereset 页) ----------
     func pair(deviceId: String, mac: String, progress: @escaping (String) -> Void) async throws -> Keychain {

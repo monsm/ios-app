@@ -1592,17 +1592,9 @@ struct TempCodeStudio: View {
                             extraFoot: batchCount > 1 ? "批量共 \(batchCount) 张, 其余已逐张下发" : "")
                 if MemberHub.elderMode {
                     // 486 代际完成页切换: 长辈模式下完成页默认形态 = 口述卡 (页标题也切到「口述卡」) + 一枚大「完成」;
-                    // 329/333/再发一张 是常规形态的入口, 这一档收起来并在原地说明 —— 收了不吭声就是本仓反复犯的无声忽略。
+                    // 486 代际完成页切换: 长辈模式下完成页默认形态 = 口述卡 (页标题也切到「口述卡」) + 一枚大「完成」。
                     Button("完成") { dismiss() }
                         .buttonStyle(PrimaryActionStyle())
-                    // 329 常规模式这里还有
-                    // 333 常规模式这里还有
-                    // 486 常规模式这里还有
-                    Text("常规模式这里还有 一句话口令 / 首用回执 / 再发一张 — 长辈模式下不显示。")
-                        .vkFont(.caption2)
-                        .foregroundStyle(DS.Palette.textSub)
-                        .multilineTextAlignment(.center)
-                        .fixedSize(horizontal: false, vertical: true)
                 }
                 // 329 一句话口令文本
                 if let r = result, !MemberHub.elderMode {

@@ -10,7 +10,6 @@ struct ShareToAndroidView: View {
     let kc: Keychain
 
     @State private var qr: UIImage?
-    @State private var payload = ""
     @State private var failed = ""
 
     private var title: String { AndroidPair.displayName(kc) }
@@ -97,7 +96,6 @@ struct ShareToAndroidView: View {
             failed = "这把锁在本机没有可用的开锁凭证 (ekey 与 PIN 都缺), 无法分享。请先在本机开一次锁, 或重新配网。"
             return
         }
-        payload = p
         guard let img = Self.qrImage(p) else {
             failed = "二维码生成失败 (文本过长或系统滤镜不可用), 请重试。"
             return

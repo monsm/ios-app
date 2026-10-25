@@ -11,27 +11,7 @@ import UIKit
 
 
 
-// ---------- 成员中心「给家人开门禁」四步 (973) ----------
-// 原先整本说明书住在这里, 帮助页删掉后只留成员页真正读的那一章。
-// 手表那半步做不到 (本 App 无 watch target, 协议也不能让手表替锁开门),
-// 章里最后一段就把这句写在明面上 —— 做不到就说不做。
-struct ManualChapter: Identifiable {
-    var id: String
-    var title: String
-    var lines: [String]
-}
 
-enum ManualKit {
-    static let chapters: [ManualChapter] = [
-        ManualChapter(id: "ch.family", title: "给家人开门禁（四步）",
-                      lines: ["第一步 建档：「成员中心」里加称呼与关系，需要就选角色。",   // 458/843 第一步
-                              "第二步 给凭证：在 Ta 名下录指纹或密码，到场连接后下发到锁。",   // 177/306 第二步
-                              "第三步 限时段：给这条密码设生效与到期；给访客用临时码，到点自动作废。",   // 520/806 第三步
-                              "第四步 收回：停用凭证或把人归档；锁端的删除要连接执行，本机台账同步标记。",   // 353/460 第四步
-                              "关于手表：本 App 没有 watch target，Apple Watch 也替不了这把锁开门 (协议与工程里都没有那条路)。"
-                               + "创意原文那句「给家人配手表」在这里做不到，这一章给的是四步做得完的。"]),   // 973 创意原文那句
-    ]
-}
 
 // ---------- 881 字幕式过程条: 连接/开锁 验证/执行/完成 三步文字字幕 ----------
 // 原住在 AccessibilityView.swift, 该页随大删波 3 移除; 但 DeviceHomeView:1226 仍在用它给听障用户
@@ -125,20 +105,6 @@ func cjkSpaced(_ s: String, gap: CGFloat = 0.09) -> Text {
     return Text(out)
 }
 
-// ---------- 116 换电图文引导的步骤表 ----------
-// 原住 CareViews.swift (维护关怀整页已随大删波 4 移除); 但 AlarmCenterView:560 / 578 的低电告警
-// 里仍在逐条列这五步, 所以步骤表留下来 —— 删表就等于删掉告警页的换电指引。
-enum BatterySwapGuide {
-    static func steps(modelHint: String) -> [(icon: String, title: String, detail: String)] {
-        [
-            ("battery.100", "备好同型号新电池", modelHint),
-            ("wrench.and.screwdriver", "拆下电池盖板", "一般在室内面板, 不需要拆卸整锁"),
-            ("arrow.triangle.2.circlepath", "整组换新", "不要新旧电池混用, 触点对准弹簧"),
-            ("clock.arrow.circlepath", "换电后校准门锁时间", "临时密码与时间窗凭证依赖锁钟"),
-            ("checkmark.seal", "点下方「已换新」复位", "基线与低电提醒一并重置"),
-        ]
-    }
-}
 
 // ---------- 长任务期间不许自动锁屏 ----------
 // 原住 ScreenCare.swift (录屏遮罩), 那个文件已随本轮删减移除;

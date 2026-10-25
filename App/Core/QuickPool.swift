@@ -35,7 +35,6 @@ enum QuickPool {
         QuickAction(id: "again",    icon: "arrow.counterclockwise",      label: "再开一次"),   // 921
         // ↓ 四个是从本页其它位置也到达得到的真实页面，不是新造的入口
         QuickAction(id: "backup",   icon: "archivebox",                  label: "备份与恢复"),
-        QuickAction(id: "care",     icon: "house.and.flag",              label: "家政与维保"),
     ]
     /// 默认选中现状那六格 = 与旧版观感一致
     static let defaultIds = ["addPwd", "otp", "syncTime", "addFp", "studio"]

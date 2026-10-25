@@ -14,12 +14,10 @@ struct ExportRecord {
     var time: String      // yyyy-MM-dd HH:mm:ss, 无时间戳为 ""
     var typeName: String
     var member: String    // "" = 无法证明归属
-    var credWord: String  // 指纹/密码/一次性密码/数字钥匙; 非开门事件为 ""
     var isAlarm: Bool
     var hex: String       // 缓存层存了协议帧则原样带出, 否则 ""
     var dayKey: String    // yyyy-MM-dd, 未知为 "未知"
     var key: String = ""  // 锁端行键 (idxRaw) — mac#key 即 726 留痕键; 无 idx 的行留空
-    var levelName: String = ""  // 724 告警级别字样 (AlarmMeta.levelName); 非告警留空
 }
 
 /// 718 单条记录卡分享: UIImage 不满足 Transferable, 而"分享这一条"不值得为它造一个完整导出条目。
@@ -73,28 +71,6 @@ enum ExportKit {
     }
 
     // ---------- 415 成员名册 (vCard 3.0) ----------
-    static func memberRoster() -> String {
-        var out = ""
-        for m in DB.members() {
-            let ext = MemberHub.ext(m.id)
-            out += "BEGIN:VCARD\nVERSION:3.0\n"
-            out += "FN:" + vcfEscape(MemberHub.display(m)) + "\n"
-            if !ext.remark.isEmpty { out += "NICKNAME:" + vcfEscape(ext.remark) + "\n" }
-            if !m.phone.isEmpty { out += "TEL;TYPE=CELL:" + vcfEscape(m.phone) + "\n" }
-            if !ext.groupTag.isEmpty { out += "CATEGORIES:" + vcfEscape(ext.groupTag) + "\n" }
-            var note: [String] = []
-            if !m.relation.isEmpty { note.append("关系 " + m.relation) }
-            if ext.role == "main" { note.append("主管理员") }
-            if ext.archived { note.append("已归档") }
-            if ext.proxy { note.append("代管中") }
-            if !ext.emergency.isEmpty { note.append("紧急联系 " + ext.emergency) }
-            if !ext.note.isEmpty { note.append("便签 " + ext.note) }
-            if !ext.careText.isEmpty { note.append("关怀 " + ext.careText) }
-            if !note.isEmpty { out += "NOTE:" + vcfEscape(note.joined(separator: " · ")) + "\n" }
-            out += "END:VCARD\n"
-        }
-        return out
-    }
 
     static func vcfEscape(_ s: String) -> String {
         s.replacingOccurrences(of: "\\", with: "\\\\")
@@ -106,7 +82,26 @@ enum ExportKit {
     /// 写成 Caches/exports 下的 .vcf 文件。文件名带日期: 415 的用途是核对,
     /// "哪一次的名册"必须能从名字看出来。
     static func writeRoster() -> URL? {
-        let text = memberRoster()
+var out = ""
+for m in DB.members() {
+    let ext = MemberHub.ext(m.id)
+    out += "BEGIN:VCARD\nVERSION:3.0\n"
+    out += "FN:" + vcfEscape(MemberHub.display(m)) + "\n"
+    if !ext.remark.isEmpty { out += "NICKNAME:" + vcfEscape(ext.remark) + "\n" }
+    if !m.phone.isEmpty { out += "TEL;TYPE=CELL:" + vcfEscape(m.phone) + "\n" }
+    if !ext.groupTag.isEmpty { out += "CATEGORIES:" + vcfEscape(ext.groupTag) + "\n" }
+    var note: [String] = []
+    if !m.relation.isEmpty { note.append("关系 " + m.relation) }
+    if ext.role == "main" { note.append("主管理员") }
+    if ext.archived { note.append("已归档") }
+    if ext.proxy { note.append("代管中") }
+    if !ext.emergency.isEmpty { note.append("紧急联系 " + ext.emergency) }
+    if !ext.note.isEmpty { note.append("便签 " + ext.note) }
+    if !ext.careText.isEmpty { note.append("关怀 " + ext.careText) }
+    if !note.isEmpty { out += "NOTE:" + vcfEscape(note.joined(separator: " · ")) + "\n" }
+    out += "END:VCARD\n"
+}
+return out
         guard !text.isEmpty else { return nil }
         let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"; f.timeZone = TimeZone.current; f.locale = Locale(identifier: "en_US_POSIX")
         let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]

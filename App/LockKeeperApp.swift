@@ -73,8 +73,6 @@ final class AppState: ObservableObject {
     @Published var guestGateTarget: Int?
     /// 377: 受限区的复核页开关 (承载体就是既有 AppLockView, 不新造第二个解锁面)
     @Published var showGuestGate = false
-    /// 383: 当场验过应用锁口令才发得出的券; 真正的拦点在 DestroyKit.destroyAll (AuditChain.swift)
-    @Published var sudoTicket: SudoTicket?
     /// 377 被收起来的那两个 Tab 号 (与下面 TabView 里的 value 一一对应: 1 凭证 / 3 设置)。
     /// 236 与本条同行为一 (DEFERRED 舍弃表: 访客模式并入 377): 原句「只看设备 Tab / 进凭证要密码 /
     /// 退出需密码 / 落点应用锁」全部落在本通道; 只拦 凭证/设置 两页, 记录页不含凭证本体照常可看,
@@ -166,7 +164,6 @@ final class AppState: ObservableObject {
     /// 不收回就是一个选不中也看不见的空档。
     func revokeSessionGrants() {
         guestAreaUnlocked = false
-        sudoTicket = nil
         showGuestGate = false
         guestGateTarget = nil
         if Self.guestBlockedTabs.contains(tabSelection) { tabSelection = 0 }

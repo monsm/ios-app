@@ -27,7 +27,6 @@ enum SecKey {
     static let watermarkOn    = "kf_swmark_on"          // 378 常驻水印
     static let watermarkTxt   = "kf_swmark_txt"         // 378 水印文案种子
     static let auditRetention = "kf_saudit_months"      // 385 保留期 (0=永久)
-    static let sudoOn         = "kf_saudit_sudo"        // 383 毁灭操作 sudo 口令
     static let safeModeOn     = "kf_sdest_safemode"     // 296 只读安全模式
     static let pwdReuseOn     = "kf_sdest_reuseon"      // 549 口令复用检测
 }
@@ -49,46 +48,16 @@ enum SecTick {
 /// 副作用如实写在这里: sudo 输错与主锁屏输错共用同一条连败计数与冷却, 因为试的是同一把口令 ——
 /// 不给这条共用的话, 销毁按钮就成了绕过 389 递增冷却的第二个试错面。
 @MainActor
-func sudoTicketFromReview(_ input: String) -> SudoTicket? {
-    guard let ticket = SecurityPolicy.sudoTicket(from: input) else {
-        return nil
-    }
-    return ticket
-}
 
 /// 383 毁灭操作的当场复核 —— 2026-10-17 拍板 A: **只走面容/指纹**, 不再问本机密码。
 /// 原实现弹 UIAlertController 收口令再 `SecurityPolicy.sudoTicket(from:)` 比对摘要;
 /// 口令这个凭据已随启动门禁一起删掉, 所以这里换成一次生物识别, 通过即发同一张 SudoTicket。
 /// 开关关着就直放行: 这一支的存在才是这枚开关的意义 —— 关着少一道确认, 开着一定拦得住。
 @MainActor
-func askSudoThen(_ app: AppState, then action: @escaping () -> Void) {
-    guard SecurityPolicy.sudoRequired else { action(); return }
-    if app.sudoTicket != nil { action(); return }
-    Task { @MainActor in
-        let ok = await AuthKit.verifyBiometricAsync(reason: "这是毁灭级操作, 请用面容/指纹确认")
-        guard ok, let ticket = SecurityPolicy.sudoTicketBiometric(ok) else {
-            app.showToast("未通过面容/指纹确认, 已拒绝毁灭操作")   // 383 未通过确认
-            return
-        }
-        app.sudoTicket = ticket
-        AuditLog().append(.admin, "sudo", target: "毁灭操作复核通过",
-                          operator_: "面容/指纹",
-)
-        SecTick.bump()
-        action()
-    }
-}
 
 /// 296 + 383 两道闸的合用写法: 先问"只读模式下准不准做", 再问"要不要重输口令"。
 /// 顺序是定的: 只读模式开着时连复核都不该问 (问了也做不成, 那是白打扰)。
 @MainActor
-func guardedDestroy(_ app: AppState, _ action: @escaping () -> Void) {
-    guard SecurityPolicy.allows(.destroy) else {
-        app.showToast(SecurityPolicy.denialMessage(.destroy))
-        return
-    }
-    askSudoThen(app, then: action)
-}
 
 // ---------- 378 常驻水印层 (截图加扰降级案: 页面常驻, 半透明对角重复) ----------
 struct SecurityWatermark: View {
@@ -195,22 +164,6 @@ struct SecurityCenterView: View {
 
 
                 Section {
-                    // 只读试验模式: 护栏本体 (ZKProtocol.assertReadOnly) 与执行点 (LockService.request 读
-                    // kf_trial_guard) 两边早就写好，**但全仓没有任何写入方** —— 开关不存在，这道保险从来上不上。
-                    // 放行清单直接从 readonlyCmds 现取，不在文案里另抄一份十六进制表:
-                    // 抄了就会与表漂移，而这条恰好是"看着像有、实际拦错命令"最贵的那种漂移。
-                    SecRow(title: "只读试验模式",
-                           subtitle: trialGuardLine,
-                           icon: "exclamationmark.shield", iconTone: .warn) {
-                        VariantToggle("", isOn: Binding(
-                            get: { DB.store.getBool("kf_trial_guard", false) },
-                            set: { DB.store.set("kf_trial_guard", $0); SecTick.bump() }))
-                            .labelsHidden()
-                    }
-                    Text("用途: 连真机做只读试验 (读状态/读日志/查钥匙串) 时防止误发写入命令。开启后 04 开门、05 换钥、08 同步 PIN、31 写网关口令等一律在成帧前拦下报错，不会发包。关闭即恢复正常下发，不留残余限制。")
-                        .vkFont(.footnote)
-                        .foregroundStyle(DS.Palette.textSub)
-                        .fixedSize(horizontal: false, vertical: true)
                 } header: {
                     Text("下发护栏")
                 }
@@ -250,13 +203,6 @@ struct SecurityCenterView: View {
         }
     }
 
-    /// 只读试验模式状态行。放行清单**取自 ZKProtocol.readonlyCmds** (Set 无序，排序后拼)，
-    /// 不在文案里另抄一份命令表 —— 两处各写一遍迟早对不上，而对不上的是"以为被拦住了"这种事故。
-    private var trialGuardLine: String {
-        guard DB.store.getBool("kf_trial_guard", false) else { return "关闭 — 全部命令正常下发" }
-        let list = ZKProtocol.readonlyCmds.map { String(format: "%02X", $0) }.sorted().joined(separator: "/")
-        return "已开启 — 仅放行只读命令 " + list
-    }
 
 }
 

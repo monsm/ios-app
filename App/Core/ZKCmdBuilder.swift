@@ -63,6 +63,16 @@ enum ZKCmdBuilder {
     static func cmd01Session() -> ZKCmd {
         ZKCmd(name: "01 会话令牌", cmd: 0x01, hex: ZKProtocol.buildFrame(0x01, "", header: 8))
     }
+    // 22/25 两条命令的**帧构造**保留: GoldenDiffTests 拿它们与 vendor JS 做字节对拍 (金标资产)。
+    // App 侧的调用封装 (LockService.enableDfu / setDefence) 已随 DFU 与布防入口删除。
+    static func cmd22EnableDfu(_ macHex: String, _ skeyHex: String, _ param: Int = 0) -> ZKCmd {
+        ZKCmd(name: "22 DFU", cmd: 0x22, hex: ZKProtocol.wrapFrame(0x22, macHex, skeyHex, HexKit.hexPair(UInt32(param & 0xff)), 0x02))
+    }
+    static func cmd25Defence(_ macHex: String, _ skeyHex: String, _ control: Int, _ startSec: Int, _ endSec: Int) -> ZKCmd {
+        let body = HexKit.hexPair(UInt32(truncatingIfNeeded: control)) + HexKit.u32leHex(UInt32(truncatingIfNeeded: startSec)) + HexKit.u32leHex(UInt32(truncatingIfNeeded: endSec))
+        return ZKCmd(name: "25 布防", cmd: 0x25, hex: ZKProtocol.wrapFrame(0x25, macHex, skeyHex, body, 0x01))
+    }
+
     static func cmd23ExKeyWay() -> ZKCmd {
         ZKCmd(name: "23 交换方式", cmd: 0x23, hex: ZKProtocol.buildFrame(0x23, "", header: 8))
     }
@@ -225,18 +235,9 @@ enum ZKCmdBuilder {
     static func cmd20ValidationMode(_ macHex: String, _ skeyHex: String, _ bMode: Bool) -> ZKCmd {
         ZKCmd(name: "20 验证模式", cmd: 0x20, hex: ZKProtocol.wrapFrame(0x20, macHex, skeyHex, HexKit.hexPair(UInt32(bMode ? 1 : 0)), 0x02))
     }
-    // cmd 22: enableDFUstate param(1B, 0 → 重启进 bootloader)
-    static func cmd22EnableDfu(_ macHex: String, _ skeyHex: String, _ param: Int = 0) -> ZKCmd {
-        ZKCmd(name: "22 DFU", cmd: 0x22, hex: ZKProtocol.wrapFrame(0x22, macHex, skeyHex, HexKit.hexPair(UInt32(param & 0xff)), 0x02))
-    }
     // cmd 24: interval(1B 档位 1-6)
     static func cmd24AutoLock(_ macHex: String, _ skeyHex: String, _ interval: Int) -> ZKCmd {
         ZKCmd(name: "24 自动上锁", cmd: 0x24, hex: ZKProtocol.wrapFrame(0x24, macHex, skeyHex, HexKit.hexPair(UInt32(truncatingIfNeeded: interval)), 0x01))
-    }
-    // cmd 25: control(1B) + start(4B LE) + end(4B LE)
-    static func cmd25Defence(_ macHex: String, _ skeyHex: String, _ control: Int, _ startSec: Int, _ endSec: Int) -> ZKCmd {
-        let body = HexKit.hexPair(UInt32(truncatingIfNeeded: control)) + HexKit.u32leHex(UInt32(truncatingIfNeeded: startSec)) + HexKit.u32leHex(UInt32(truncatingIfNeeded: endSec))
-        return ZKCmd(name: "25 布防", cmd: 0x25, hex: ZKProtocol.wrapFrame(0x25, macHex, skeyHex, body, 0x01))
     }
 
     // ---- 钥匙串硬件 (ZKBBV1 pid=16289; 87 帧明文 KLV, needToken=false) ----
