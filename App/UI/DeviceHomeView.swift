@@ -1295,10 +1295,6 @@ struct DeviceHomeView: View {
         }
     }
 
-    // ---------- 112 换机验证向导 (恢复备份后逐锁点按验证连接) ----------
-    // kf_migrate_pending 由备份恢复写入; 每锁 kf_migok_<mac> 打勾, 全部通过后收起。
-    @ViewBuilder
-
     // 87 排查清单: 查蓝牙 / 走近 / 查电量, 逐项可勾
     private var checklist: some View {
         VStack(alignment: .leading, spacing: 0) {
