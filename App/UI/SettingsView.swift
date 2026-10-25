@@ -200,7 +200,7 @@ struct SettingsView: View {
     /// `scrollTo` 会**静默落空** (这正是"点了搜索没反应"的另一种形态)。
     private enum SettingsAnchor: String {
         case lock, security, unlock, time, autoOpen, family
-        case tools, drill, applock, a11y, appearance, memory, reminder, alertTone, help, about
+        case tools, drill, applock, appearance, memory, alertTone, about
 
         var group: SettingsGroup {
             switch self {

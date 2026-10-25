@@ -541,8 +541,7 @@ struct RecDetailSheet: View {
     private var exportRow: ExportRecord {
         ExportRecord(time: rec.timeStr, typeName: rec.typeName, member: rec.whoName ?? "",
                      isAlarm: rec.alarm, hex: "",
-                     dayKey: rec.timeStr.count >= 10 ? String(rec.timeStr.prefix(10)) : "未知",
-                     levelName: rec.alarm ? AlarmMeta.levelName(rec.type) : "")
+                     dayKey: rec.timeStr.count >= 10 ? String(rec.timeStr.prefix(10)) : "未知")
     }
     @ViewBuilder
     private var shareSection: some View {
