@@ -201,7 +201,7 @@ final class SensitiveLedger {
         var member: String?
     }
     /// 2026-10-14: 与 AuditLog 同款的 load→改→save 非原子序列; 调用方既有 MainActor (复制)
-    /// 又有后台 (Siri 意图 / 导出), 并发会丢条目。加锁。
+    又有导出与其他异步路径, 并发会丢条目。加锁。
     private static let recordLock = NSLock()
     /// 默认不写 member: 默认形态与改动前逐字相同 (同一条事件不在敏感流水里出现两行)。
     func record(_ kind: String, target: String, member: String? = nil) {
@@ -211,18 +211,9 @@ final class SensitiveLedger {
         items = Array(items.suffix(100))
         DB.store.setCodable(SensitiveLedger.key, items)
     }
-    /// 388 敏感操作视图 / 953 意图分区共用的取数 (先倒序再筛, 同一套「新在前」)。
-    /// 默认不取「intent·」族 —— 六条意图每次执行都记流水, 混排会把 388 的"最近 5 条"
-    /// 整段挤成快捷指令日志, 真正点名的"查看/复制/导出"反而看不见; 意图那支走 intentItems()。
-    func recent(limit: Int = 20, includeIntents: Bool = false) -> [Item] {
+    /// 388 敏感操作视图的取数 (先倒序再筛, 「新在前」)。
+    func recent(limit: Int = 20) -> [Item] {
         Array((DB.store.get([Item].self, SensitiveLedger.key) ?? [])
-              .filter { includeIntents || !$0.kind.hasPrefix("intent·") }
-              .reversed().prefix(limit))
-    }
-    /// 953 意图执行分区: 只取「intent·」族 (快捷指令每次调用一条, 含冷却拦截留痕)。
-    func intentItems(limit: Int = 10) -> [Item] {
-        Array((DB.store.get([Item].self, SensitiveLedger.key) ?? [])
-              .filter { $0.kind.hasPrefix("intent·") }
               .reversed().prefix(limit))
     }
     /// 367 成员详情页读的那一支: 先倒序再筛, 与 recent 同一套「新在前」口径。

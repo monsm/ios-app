@@ -926,33 +926,6 @@ struct SecurityAuditView: View {
                 Text("敏感操作视图")   // 388 敏感操作视图
             }
 
-            // 953 快捷指令执行日志: 独立分区 (原先把意图流水混在 388 里, 每次 Siri 调用都记,
-            // 会把"最近 5 条"整段挤成意图日志)。被冷却拦下的尝试也留痕 —— 那是风暴的样子。
-            Section {
-                let intents = SensitiveLedger().intentItems(limit: 10)
-                if intents.isEmpty {
-                    Text("暂无 — 六条快捷指令意图每次执行都会记到这里 (被冷却拦下的也留痕)")
-                        .vkFont(.footnote)
-                        .foregroundStyle(DS.Palette.textSub)
-                } else {
-                    ForEach(intents) { it in
-                        HStack(spacing: DS.Space.xs) {
-                            Image(systemName: "command")
-                                .font(.system(size: DS.Icon.xs, weight: .semibold))
-                                .foregroundStyle(DS.Palette.accentText)
-                            Text(String(it.kind.dropFirst("intent·".count)) + " · " + it.target)
-                                .vkFont(.footnote)
-                                .foregroundStyle(DS.Palette.textSub)
-                            Spacer()
-                            Text(SecFmt.dateStr(Double(it.id) / 1000))
-                                .vkFont(.caption)
-                                .foregroundStyle(DS.Palette.textSub)
-                        }
-                    }
-                }
-            } header: {
-                Text("快捷指令执行")   // 953 快捷指令执行
-            }
         }
         .variantList()
         .dsScreenBackground()
@@ -979,9 +952,9 @@ struct SecurityAuditView: View {
         case "查看": return "eye"
         case "复制": return "doc.on.doc"
         default:
-            // 964 触发来源标记: 意图来源在审计里以 "intent·<意图名>" 记账 (AppIntents.swift 唯一生产点),
+            // 964 触发来源标记: 「查看/复制」以外的敏感动作用导出图标示意。
             // 时间线行给专属图标; NFC 来源等 959/957-963 真机探测过再说, 先不画。
-            return kind.hasPrefix("intent·") ? "command" : "square.and.arrow.up"
+            return "square.and.arrow.up"
         }
     }
 

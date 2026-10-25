@@ -1,5 +1,5 @@
 // 本文件由 `node tools/destmap.js --emit` 生成，**不要手改**。
-// 生成时的目的地总数 = 70。改了界面呈现方式之后重新生成，
+// 生成时的目的地总数 = 69。改了界面呈现方式之后重新生成，
 // 并核对 diff —— 少一条就是某套界面会缺一个页面而没人发现。
 import SwiftUI
 
@@ -38,7 +38,6 @@ enum Destination: String, CaseIterable, Identifiable {
     case focusUnlock = "FocusUnlockView"
     case gateway = "GatewayView"
     case houseCleaningPreset = "HouseCleaningPresetView"
-    case integrationCenter = "IntegrationCenterView"
     case keychainHW = "KeychainHWView"
     case linkPrefs = "LinkPrefsView"
     case localFiles = "LocalFilesView"

@@ -756,10 +756,6 @@ struct SettingsView: View {
             // 动态消息只走 sheet: MessagesView 自带 NavigationStack, 用 NavigationLink 会嵌套两层导航栏
             Button { showMessages = true } label: { Label("动态消息", systemImage: "bell") }
             NavigationLink("诊断与运行日志") { DiagnosticsView() }
-            // 包17: 系统集成 (快捷指令/深链/NFC 登记/Watch 路线图)
-            NavigationLink { IntegrationCenterView() } label: {
-                Label("系统集成 (快捷指令/入口)", systemImage: "point.3.forward")
-            }
         }
     }
 

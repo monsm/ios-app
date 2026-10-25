@@ -1,4 +1,4 @@
-// 全站唯一的一份本地朗读出口 (810 逐卡朗读 / 309 密码逐位 / Siri 那一条"读最近记录")。
+(810 逐卡朗读 / 309 密码逐位)
 // 为什么必须只有一个：这之前有**两份各自 new 的 AVSpeechSynthesizer** ——
 // `App/Intents/AppIntents.swift` 里的 private enum TTS 与 `App/UI/CredentialStudio.swift` 里的 StudioTTS。
 // 两个实例可以同时在说话 (念密码念到一半来一条记录朗读就叠在一起)，
