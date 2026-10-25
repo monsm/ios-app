@@ -1,46 +1,12 @@
-// 943 主屏长按快速操作 (2026-10-10 拍板补做)。
-// 旧台账 (docs/DEFERRED.md 包17) 把这条记成"⚠DONE: 不建 Widget/快捷 target"—— 那是**混了两件事**:
-// 主屏长按快捷项是 `UIApplication.shortcutItems`，不需要额外 target，也不需要付费 capability。
-// 三项**全都不开锁** (拍板: 主屏/锁屏上一键开锁是新的误开面，与 AUTOOPEN 那套七道门的方向相反):
-// 查看记录 / 生成临时码 / 查电量。
-//
-// 落地方式刻意走"深链中继"而不是给快捷项配闭包:
-//   委托把被点的 type 写进 UserDefaults → 界面下一次出现在用户面前时读一次并交给
-//   `AppState.handleDeepLink`。这样做的理由不是省事 ——
-//   ① 复用**同一个**门禁: handleDeepLink 里"应用锁未解开时只挂起 pendingRoute"这条性质
-//      由既有代码保证，快速操作因此自动不可能绕过应用锁 (Swift 6 下也不用再造一个跨隔离的可变闭包);
-//   ② UserDefaults 是本仓唯一的存储层 (Store.swift)，本身就线程安全。
+// 启动期系统职责的落点 (原 943「主屏长按快速操作」已随波 2 删除 —— 三项都只是跳转到已有页面)。
+// 本文件现在只剩 QuickActionDelegate: UIApplicationDelegate 的三个启动职责 ——
+//   ① 428 充电备份 BGTask 注册 (Apple 契约: 必须早于启动完成, 且每进程只注册一次);
+//   ② 旧 plist 明文密钥搬进系统 Keychain;
+//   ③ 0x88 包络 MAC 字节序裁定灌回协议层。
+// 这三件都**不能**放进 App 的 onLaunch(): 那个函数挂在 .task 上、可能多次调用, 而
+// BGTaskScheduler.register 晚于 applicationDidFinishLaunching 会抛 NSInternalInconsistencyException 直接崩进程。
 import UIKit
 
-enum QuickActions {
-    /// (type, 标题, SF Symbol, 目标深链) —— 图标全部 systemName，不引位图 (219 资源纪律)。
-    static let table: [(type: String, title: String, icon: String, link: String)] = [
-        ("records", "查看记录", "list.bullet.rectangle", "kf://records"),
-        ("tempcode", "生成临时码", "number.square", "kf://credentials"),
-        ("battery", "查电量", "battery.25", "kf://device"),
-    ]
-    /// 一次性中转键: 只存"哪个快捷项被点过"，不存任何数据内容 (值本身在消费后立即删除)。
-    static let tappedKey = "kf_quick_action"
-
-    /// 写 UIApplication.shared.shortcutItems = 改系统主屏菜单, UIKit 侧主 actor。
-    /// 调用点只有 App 启动那一次 (.task), 本来就在主 actor 上。
-    @MainActor
-    static func install() {
-        UIApplication.shared.shortcutItems = table.map {
-            UIApplicationShortcutItem(type: $0.type, localizedTitle: $0.title, localizedSubtitle: "",
-                                      icon: UIApplicationShortcutIcon(systemImageName: $0.icon), userInfo: nil)
-        }
-    }
-
-    /// 读一次即清: 第二次进界面不该再跳一次。
-    static func consume() -> URL? {
-        let type = DB.store.getString(tappedKey)
-        guard !type.isEmpty else { return nil }
-        DB.store.remove(tappedKey)
-        guard let row = table.first(where: { $0.type == type }), let url = URL(string: row.link) else { return nil }
-        return url
-    }
-}
 
 /// 快捷项回调 + 启动期 BGTask 注册 (428)。
 final class QuickActionDelegate: NSObject, UIApplicationDelegate {
@@ -52,18 +18,8 @@ final class QuickActionDelegate: NSObject, UIApplicationDelegate {
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // 2026-10-14: 无条件注册 (注册须在启动窗口内且很轻); 排期由开关决定, 见 registerChargeBackup。
         BackupStudio.registerChargeBackup()
-        // 2026-10-14: ①旧 plist 明文密钥搬进系统 Keychain ②Spotlight id 制式从明文 MAC 换成哈希,
-        // 旧索引要重刷一次才不残留明文 MAC。
         DB.migrateSecretsToKeychain()
         DB.hydrateMacOrders()   // 0x88 包络 MAC 字节序: 把已裁定的顺序灌回协议层 (2026-10-17)
-        SpotlightKit.scheduleReindex()
         return true
-    }
-    func application(_ application: UIApplication,
-                     performActionFor shortcutItem: UIApplicationShortcutItem,
-                     completionHandler: @escaping (Bool) -> Void) {
-        DB.store.set(QuickActions.tappedKey, shortcutItem.type)
-        // 冷启动时界面还没出现，这条会留在键上，等 RootView 出现时被 consume() 取走
-        completionHandler(true)
     }
 }

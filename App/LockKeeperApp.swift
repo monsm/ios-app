@@ -2,33 +2,18 @@
 import SwiftUI
 import UIKit
 import UserNotifications
-import CoreSpotlight   // 293/951 接住 Spotlight 结果回传的 NSUserActivity (索引写入见 App/Core/SpotlightKit.swift)
 
 @main
 struct LockKeeperApp: App {
     @StateObject private var app = AppState()
-    // 943 主屏长按快速操作: 只借 UIApplicationDelegate 的 performActionFor 一个回调，
-    // 其余方法一律不接 (本 App 没有后台任务需求)。取舍与"为什么不配闭包"写在 App/Core/QuickActions.swift。
+    // 启动期系统职责走 UIApplicationDelegate 适配器 (BGTask 注册 / 密钥迁移 / MAC 字节序回灌)。
+    // 为什么不能放进 App 的 onLaunch(): 那函数挂在 .task 上可能多次调用, 而 BGTask 注册必须早于启动完成。
     @UIApplicationDelegateAdaptor(QuickActionDelegate.self) private var quickActions
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environmentObject(app)
                 .tint(DS.Palette.accent)
-                .task {
-                    QuickActions.install()   // 装三项; 从未启动过时长按看不到它们, 是系统限制不是漏做
-                    SpotlightKit.reindexNow()   // 293/951 启动即整刷一次索引 (改名/增删另有即时钩子, 见 Store)
-                }
-                .onAppear {
-                    // 落地走 handleDeepLink: 与手点深链**同一个**门禁 (应用锁未解开时只挂起 pendingRoute)，
-                    // 快速操作因此不可能绕过应用锁 —— 这条性质由既有代码保证，不在新文件里重做一遍。
-                    if let url = QuickActions.consume() { app.handleDeepLink(url) }
-                }
-                // 293/951 Spotlight 结果落地: 仍走 handleDeepLink 那一套门禁 —— 应用锁没开时只记 pending，
-                // 解锁后由 applyPendingRoute 补走。索引能给的是"跳到哪"，不是"绕过锁"。
-                .onContinueUserActivity(CSSearchableItemActionType) { activity in
-                    app.handleSpotlight(activity)
-                }
         }
     }
 }
@@ -142,19 +127,6 @@ final class AppState: ObservableObject {
         guard let r = pendingRoute else { return }
         pendingRoute = nil
         if appUnlocked && !decoyMode { requestRoute(r) }
-    }
-    /// 293/951 Spotlight 结果 → 既有落点。两条路都是**别人用过的**口:
-    /// 锁走 `kf://device?mac=` (与深链/小组件同一个 handleDeepLink)，
-    /// 凭证走 `pendingCredNav` 那对状态 (与通知落地同一个词表，解析端 CredentialsView.consumeCredJump
-    /// 会自己切锁并打开 pwd:/fp: 详情)。认不出的 identifier 什么都不做 —— 索引可能比台账慢半拍，
-    /// 条目点不开就不跳，不拿"跳到一个空页"冒充直达。
-    func handleSpotlight(_ activity: NSUserActivity) {
-        guard let id = activity.userInfo?[CSSearchableItemActivityIdentifier] as? String else { return }
-        if let url = SpotlightKit.deviceURL(for: id) { handleDeepLink(url); return }
-        guard let t = SpotlightKit.credentialTarget(for: id) else { return }
-        pendingCredNav = t.nav
-        pendingCredNavMac = t.mac
-        if appUnlocked && !decoyMode { requestRoute(.credentials) } else { pendingRoute = .credentials }
     }
     // ---------- 377 访客通道: 受限 Tab 的唯一走位口 ----------
     /// 受控跳转都汇到这里: 目标是被收起来的 Tab 且本会话没重输过口令, 就把既有应用锁页拉起来而不是切过去。
