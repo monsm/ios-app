@@ -375,7 +375,6 @@ struct SettingsView: View {
             NavigationLink { CreditsPage() } label: { Label("致谢与许可", systemImage: "hands.clap") }   // 300 致谢与许可
             // 43/44 新变化与更新说明: 每条都带功能编号，构建时由 tools/changelogcheck.js 拿代码标注对拍，
             // 对不上就判失败 —— 所以这一页不可能出现"说了没做"的功能。
-            NavigationLink { ChangelogView() } label: { Label("新变化", systemImage: "sparkles") }   // 43/44 新变化
             NavigationLink { CopyCheckPage() } label: { Label("文案体检", systemImage: "text.badge.checkmark") }   // 664 文案体检
             if DB.store.getBool("kf_onb_ceremony") {
                 NavigationLink { ButlerCertificateView() } label: {
@@ -991,11 +990,11 @@ struct SettingsView: View {
                 get: { DS.HeroStats.shows("lockclock") },
                 set: { v in app.setHeroStats(DS.HeroStats.all.filter { $0 != "lockclock" || v }) }))
             note("主控卡上那几个小位要显示哪几个；电量不给关。")
-            // 素颜模式 (idea 1046): 一键关闭庆祝与徽章动效
+            // 素颜模式 (idea 1046): 关掉空态装饰图形与礼花一类纯装饰层
             VariantToggle("素颜模式", isOn: Binding(
                 get: { DB.store.getBool("kf_plain") },
                 set: { DB.store.set("kf_plain", $0) }))
-            note("关掉彩带、徽章动效一类的庆祝效果。")
+            note("关掉空态插画与其它纯装饰层；功能与数据一律不受影响。")
             // 最近开门条数 (idea 910): 设备页时间线长度
             Picker("最近开门条数", selection: Binding(
                 get: { DB.store.getInt("kf_recent_count", 5) },
@@ -1006,18 +1005,6 @@ struct SettingsView: View {
             }
             .pickerStyle(.menu)
             iconPickerRow
-            // 897 四季图标自动对齐: 默认关。桌面图标是用户首屏上看得见的东西，悄悄换属于越界。
-            VariantToggle("回前台时按当季对齐图标", isOn: Binding(
-                get: { SeasonIcon.autoOn },
-                set: { v in
-                    SeasonIcon.setAuto(v)
-                    if v { SeasonIcon.syncIfNeeded() } else { DB.store.remove(SeasonIcon.lastKey) }
-                    app.showToast(v ? "只在季节真的换了时对齐一次；不想用就关掉"
-                                      : "已关掉自动对齐，手动选的图标不受影响")
-                }))
-            Text("春夏秋冬分别用现有的四款图标（春绿环 / 夏主图标 / 秋琥珀钥匙 / 冬石墨盾）。只在你选过这四款之一时对齐；手动选别的图标不会被覆盖。")
-                .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
             // 892 自定义强调色 (ColorPicker 管线)。存的是"色相来源"，上屏的每一档都要过亮度带，
             // 所以选到近白/近黄这类压不住白字的颜色时，主卡不会变白糊一片 —— 是被压暗后的同色系。
             ColorPicker("自定义强调色 (会盖过上面六套)",
@@ -1220,7 +1207,7 @@ struct SettingsView: View {
         Section {
             Text("纪念与成就")
         } footer: {
-            Text("徽章、安心夜月历与纪念日提醒全部本地运行, 素颜模式可一键安静。")
+            Text("安心夜月历与纪念日提醒全部本地运行, 素颜模式可一键安静。")
         }
     }
 

@@ -1485,7 +1485,6 @@ struct RootView: View {
                 // 671 自动档: 用户没开开关时这里一次请求都不发；开了也每进程只发一次 (HolidayFeed 内部判)
                 Task { await HolidayFeed.autoRefreshIfNeeded() }
                 // 897 四季图标: 默认关。开着也只在"季节真的换了"时对齐一次 (年-季记号)，不每次回前台打扰
-                SeasonIcon.syncIfNeeded()
             }
         } else if phase == .background {
             // 2026-10-14: 只有**真进后台**才算退后台。旧实现把 .inactive (下拉通知中心/控制中心、
