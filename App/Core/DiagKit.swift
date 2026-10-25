@@ -516,9 +516,9 @@ enum DataHealth {
     static func composition() -> [Slice] {
         let rep = UserDefaults.standard.dictionaryRepresentation()
         var data = 0, logT = 0, pref = 0
-        let dataPrefix = ["kf_keychains", "kf_ledger_", "kf_snap_", "kf_logcache_", "kf_members", "kf_keychain_dongles",
+        let dataPrefix = ["keychains", "ledger_", "snap_", "logcache_", "members", "keychain_dongles",
                           "kf_gateways", "kf_chist_", "kf_cbin_", "kf_ccred", "kf_cseq_", "kf_clists_", "kf_calert_", "kf_fevents_"]
-        let logPrefix = ["kf_diag_logs", "kf_ble_events", "kf_conn_attempts", "kf_crash_", "kf_wd_"]
+        let logPrefix = ["diag_logs", "ble_events", "conn_attempts", "crash_", "wd_"]
         for (k, v) in rep where k.hasPrefix("kf.") {
             let b = bytesOf(v)
             let kk = String(k.dropFirst(3))

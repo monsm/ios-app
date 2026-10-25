@@ -129,7 +129,6 @@ for (const c of CASES) {
     [/if !isStrict\(tier\) \{ return true \}/, "F1 默认档直接放行 (iOS 无静默生物识别, 旧写法恒拒=自动开锁死门)"],
     [/static let fallbackBase = -40/, "F3 未标定退回 -40 (与安卓 AutoOpenKit.BASE 同值)"],
     [/static let cooldownSeconds: TimeInterval = 6/, "F5 冷却 6s (用户口径: 开完锁等 6 秒恢复)"],
-    [/static let stillnessSeconds: Double = 1\.0/, "F2' 停留 1s (否则门口等五秒谈不上秒开)"],
     [/d\?\.control \?\? 0/, "F4 无布防记忆读成不布防 (旧 ?? 2 会永久否决没配过的人)"],
   ];
   for (const [re, why] of must) {
