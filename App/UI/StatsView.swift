@@ -34,7 +34,6 @@ struct StatsView: View {
     @State private var brush: ClosedRange<String>? = nil   // 621 刷选区间 (日 key, 只在本次会话)
     @State private var labelMode: Int                     // 640 数值标签 0 避让 / 1 仅最大值 / 2 不标 (存本机)
     @State private var showYearSheet = false    // 50 年报告占位
-    @State private var showExport = false       // 包12 导出中心入口
     @State private var excludeIdle = DB.store.getBool("kf_stats_excl_idle")   // 782 排除闲置锁口径
 
     init(mac: String = DB.currentMac) {
@@ -122,15 +121,12 @@ struct StatsView: View {
                     // 包12: 统计页导出入口 — 复用记录 Tab 导出中心 (范围默认当月, 685/701)
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Menu {
-                            Button("导出与分享") { showExport = true }   // 685 导出与分享
                         } label: {
                             Image(systemName: "square.and.arrow.up")
                         }
                         .accessibilityLabel("导出")
                     }
                 }
-                .sheet(isPresented: $showExport) { ExportCenterView(mac: mac) }
-                .sheet(isPresented: $showYearSheet) { YearReportView(mac: mac) }
                 .sheet(item: $selHour) { h in
                     HourDetailSheet(mac: mac, hour: h, windowDays: windowDays)
                 }

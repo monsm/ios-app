@@ -33,7 +33,6 @@ struct RecordsView: View {
     @State private var reconLine = ""     // 749 对账结果一行 (可复制, 供发给管理员/记进工单)
     @State private var sel = "" // '' 全部 / 成员id / __unknown
     @State private var showAdd = false
-    @State private var showExport = false      // 包12 导出中心
     @State private var showStats = false       // 包10 统计
     // 716 选区导出: 按天整组勾选 (行级多选不做 —— 一页上千行, 逐行勾选的手势成本远高于按天勾)
     @State private var showRangePick = false
@@ -281,7 +280,6 @@ struct RecordsView: View {
         ToolbarItem(placement: .navigationBarTrailing) {
             Menu {
                 if app.current != nil {
-                    Button { showExport = true } label: { Label("导出与分享", systemImage: "square.and.arrow.up.on.square") }
                     Button { showStats = true } label: { Label("统计与图表", systemImage: "chart.bar") }
                     Button { copyLastWeekDigest() } label: { Label("复制上周小结", systemImage: "doc.on.clipboard") }   // 698 复制上周小结
                     Button { showRangePick = true } label: { Label("选区导出", systemImage: "checklist") }   // 716 选区导出
@@ -415,9 +413,6 @@ struct RecordsView: View {
             Text("备注跟着这一行 (锁 + 行标识) 走, 不写进锁端日志; 详情页里也能改。")   // 576 备注跟着这一行
         }
         .sheet(isPresented: $showRangePick) { rangePickSheet }
-        .sheet(isPresented: $showExport) {
-            if app.current != nil { ExportCenterView(mac: app.current!.mac) }
-        }
         .sheet(isPresented: $showStats) {
             if app.current != nil { StatsView(mac: app.current!.mac) }
         }
