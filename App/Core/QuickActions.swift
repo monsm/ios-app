@@ -57,7 +57,6 @@ final class QuickActionDelegate: NSObject, UIApplicationDelegate {
         DB.migrateSecretsToKeychain()
         DB.hydrateMacOrders()   // 0x88 包络 MAC 字节序: 把已裁定的顺序灌回协议层 (2026-10-17)
         SpotlightKit.scheduleReindex()
-        LiveUnlock.reapOrphans()
         return true
     }
     func application(_ application: UIApplication,

@@ -135,7 +135,7 @@ jobs:
       - name: '界面文案去规格编号 (夹具契约判失败 + 现网顾问级: 七种包围形状各有正控, 量纲/标准名/示例/脱敏样例四类反控不许误响; 现网命中只打印不判失败)'
         run: |
           node tools/copynum.js --selftest
-          node tools/copynum.js App Widget
+          node tools/copynum.js App
 
       - name: '界面完整性与一致性 (判失败: 目的地枚举不得与台账漂移 / 不得再出现绕过 requestRoute 的裸写换页; 覆盖率只报进度不判失败)'
         run: |
@@ -165,13 +165,13 @@ jobs:
           # (磁盘上没有 checked-in 的 plist, git ls-files 为空), 所以正确位置是 generate 之后、
           # xcodebuild 之前 —— 不引入"把生成物提交回仓库"这种会把金标漂移检查带偏的规矩。
           #
-          # ⚠ App 与 Widget 两份都要改: Apple 要求 app-extension 的 CFBundleVersion 与容器 App
-          #   一致, 只改一份会在安装/校验时被拒 (报得像签名问题, 实际是版本不匹配)。
+          # 只有一个 Info.plist 了: 927 小组件扩展 (原第二份 plist) 与实时活动已随波 2 删除,
+          #   不再需要「extension 与容器版本必须一致」那套双改。循环保留以便将来加 target。
           # CFBundleShortVersionString 保持 1.0.0 (人认的产品版本), 变的是"构建"那一行:
           #   设置页 LabeledRow("构建") 与诊断报告读的都是 CFBundleVersion。
           STAMP="${{ needs.stamp.outputs.kf_build_stamp }}"
           [ -n "$STAMP" ] || { echo "::error::stamp 作业没输出 kf_build_stamp"; exit 1; }
-          for PLIST in App/Info.plist Widget/Info.plist; do
+          for PLIST in App/Info.plist; do
             [ -f "$PLIST" ] || { echo "::error::XcodeGen 没生成 $PLIST"; exit 1; }
             # Set 在键不存在时会失败 —— 键来自 project.yml 的 info.properties, 那边被人删掉就
             # 正好落在这里; 回退成 Add, 别把一个配置漂移变成 CI 红。

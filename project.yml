@@ -35,12 +35,6 @@ targets:
     platform: iOS
     sources:
       - path: App
-      # 77/939/941: 开锁实时活动的属性类型 —— **同时编进主 App 与 widget 两个 target**,
-      # 因为 ActivityKit 要求属性类型跨 target 形状一致, 而 app-extension 不能 import 主 App 的类型。
-      - path: Shared
-    # 927: 桌面小组件扩展。XcodeGen 会把 app-extension 依赖自动放进 PlugIns/ (embed 默认 true)
-    dependencies:
-      - target: OfflineLockWidget
     info:
       path: App/Info.plist
       properties:
@@ -80,8 +74,6 @@ targets:
         UIBackgroundModes:
           - fetch
         ITSAppUsesNonExemptEncryption: false
-        # 77/939/941 实时活动 (灵动岛/锁屏): 缺这一条 Activity.request 直接失败
-        NSSupportsLiveActivities: true
         # 备选 App 图标 (包16/idea 896): 键名 = setAlternateIconName 入参, 与 Assets.xcassets 的 appiconset 同名
         # 896 由 4 款扩到 9 款 (2026-10-12 拍板"造位图"): 新增五款的位图由 _audit1012/mkicon.js 按
         # 下面这五个品牌色与几何画出 (底色必须与 SettingsView.iconOptions 里的 hex 逐字相同, 否则
@@ -120,29 +112,6 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         INFOPLIST_KEY_UIUserInterfaceStyle: Automatic
-  # 927 哑按钮小组件 (拍板 #30 选 B)。免费账号无 App Groups → 这个 target 读不到主 App 的任何数据
-  # (docs/CONSTRAINTS.md 的 ❌ 表)，因此它只能拉起 App，不显示锁状态/电量 (那属已判 ❌ 的 924)。
-  OfflineLockWidget:
-    type: app-extension
-    platform: iOS
-    sources:
-      - path: Widget
-      - path: Shared   # 77/939/941: 与主 App 共用同一份活动属性定义 (见上)
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.aapk.OfflineLock.widget
-        TARGETED_DEVICE_FAMILY: "1"
-    info:
-      path: Widget/Info.plist
-      properties:
-        CFBundleDisplayName: 离线锁管家
-        CFBundleShortVersionString: "1.0.0"
-        # 与主 App 同源: CI 注入编译号时**两份 Info.plist 一起改** —— Apple 要求
-        # app-extension 的 CFBundleVersion 与容器 App 一致, 只改一份会在安装时被拒,
-        # 报出来像签名问题, 实际是版本不匹配。
-        CFBundleVersion: "1"
-        NSExtension:
-          NSExtensionPointIdentifier: com.apple.widgetkit-extension
   OfflineLockTests:
     type: bundle.unit-test
     platform: iOS

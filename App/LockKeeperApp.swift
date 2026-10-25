@@ -544,9 +544,6 @@ final class AppState: ObservableObject {
             unlockState = .idle
             if notify { showToast("已取消") }
         }
-        // 2026-10-14: 取消也要收起实时活动 —— 否则 current 未清, 下一次 begin() 被 `current == nil` 挡掉,
-        // 新开锁没有锁屏活动, 旧的"连接中"还挂在锁屏 (30s staleDate 只是标脏, 不会自动 end)。
-        LiveUnlock.failed()
     }
 
     // ---------- 246 本次用哪条 PIN ----------
@@ -565,7 +562,6 @@ final class AppState: ObservableObject {
         let attempts = DB.store.getBool("kf_auto_retry", true) ? 3 : 1
         var lastMsg = ""
         var lastRc: Int? = nil   // 86: 服务层回的错误码 (异常路径没有码, 保持 nil)
-        let liveToken = LiveUnlock.begin(lockName: displayName)   // 77/939/941: 锁屏/灵动岛起一场"连接中" 
         for attempt in 1...attempts {
             phase = 1
             unlockState = .connecting
@@ -585,13 +581,11 @@ final class AppState: ObservableObject {
                     unlockState = .doubleVerify
                     UINotificationFeedbackGenerator().notificationOccurred(.warning)
                     finishDwell(.doubleVerify)
-                    LiveUnlock.fail(liveToken)   // 2026-10-14: 双验档本次流程结束, 收起活动 (代次校验)
                     return
                 }
                 lastRc = rc                             // 86: 错误码进失败快照
                 lastMsg = StatusParser.rcFriendly(rc)   // 84 人话直读
             } catch is CancellationError {
-                LiveUnlock.fail(liveToken)   // 2026-10-14: 取消路径也收活动 (代次校验: 不误收新开锁的活动)
                 return   // cancelUnlock 已复位, 不计入失败
             } catch {
                 lastMsg = error.localizedDescription
@@ -620,7 +614,6 @@ final class AppState: ObservableObject {
                            rssi: LinkSense.shared.lastRssi,
                            pct: DB.readStatus(kc.mac)?.powerLevel,
                            rc: lastRc)
-        LiveUnlock.fail(liveToken)   // 77/939/941: 失败立刻收起 (代次校验: 不误收新开锁的活动)
         finishDwell(.failed(lastMsg))
     }
 
@@ -799,8 +792,6 @@ final class AppState: ObservableObject {
             DB.store.remove("kf_festive")
             // kf_motion 的默认档是 "standard"，remove 就等于回到默认 (不是关掉动效)
             DB.store.remove("kf_motion")
-            DB.store.remove("kf_icon_season")
-            DB.store.remove("kf_icon_season_last")
             DB.store.remove("kf_digit_font")   // 902
             themeSeed = ""
         }
@@ -877,7 +868,6 @@ final class AppState: ObservableObject {
         // 此前 `finishDwell(.success)` 零调用 (死码): 开完门圆盘一直停在 .success, 回待机与那句提示都不发生。
         // 顺带接上它尾部的 refreshStatusQuietly() —— 即"开锁后静默重读电量"那一半 (135)。
         finishDwell(.success)
-        LiveUnlock.succeeded(lockName: displayName)   // 77/939/941: 更新成"已开锁", 10 秒后自动收起
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         // 包3: 258 首连验证标记 (开锁成功=全链路跑通) + 292 连接基准刷新
         LockArchive.markVerified(currentMac)
