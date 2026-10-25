@@ -692,16 +692,6 @@ enum StatsKit {
             return (rows.joined(separator: "\n"), lines)
         }
 
-        /// 1020 黄金时段一句话
-        var goldenSentence: String {
-            let hs = hourStats
-            let total = hs.reduce(0) { $0 + $1.opens }
-            guard total > 0 else { return "暂无足够开门数据定位黄金时段" }
-            let top = hs.filter { $0.opens == hs.map { $0.opens }.max() }.sorted { $0.hour < $1.hour }
-            let h = top[0].hour
-            let ph = (h + 1) % 24
-            return "你家最常开门的时段是 \(h)-\(ph) 点"
-        }
 
         /// 626/628 凭证维度: 逐条长期密码的台账推断用量与首用 (锁端无逐凭证计数, CAPABILITY §3, 展示必须带"约")
         var pwdUses: [PwdUse] {
@@ -908,13 +898,6 @@ enum StatsKit {
             return String(n) + " 次"
         }
 
-        /// 652 指标自然句
-        static func naturalSentence(total: Int, days: Int) -> String {
-            guard days > 0, total > 0 else { return "窗口内还没有开门记录" }
-            let avg = Double(total) / Double(days)
-            let s = avg >= 10 ? String(Int(avg)) : String(format: "%.1f", avg)
-            return "平均每天开门 \(s) 次"
-        }
 
         /// 成员色 (612 成员水平条 / 成员小结): 按序号在 DS 令牌间轮转 — 颜色只走令牌, 不硬编码 hex
         static func memberColors() -> [Color] {
