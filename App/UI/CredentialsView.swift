@@ -924,8 +924,6 @@ struct CredentialsView: View {
         let pinned = pwds.filter { CredentialOrg.isStarred(mac, "pwd", $0.alias) }
         if !pinned.isEmpty {
             Section("置顶 (\(pinned.count))") {
-                // 212 首次进入各行错开入场: 复用 DesignSystem 的 staggered (会话内只播一次, reduceMotion 退化淡入)。
-                // 步长沿用共享值 50ms —— 原句写 30ms, 但那份机制是全 App 一份, 不为一行注释差异动共享数。
                 ForEach(Array(pinned.enumerated()), id: \.offset) { i, p in
                     credRow(CredHit(id: "p\(p.alias)", pwd: p, pinned: true))
                         .staggered(min(i, 8))
@@ -941,7 +939,7 @@ struct CredentialsView: View {
                     let rows = group.filter { !CredentialOrg.isStarred(mac, "pwd", $0.alias) }
                     ForEach(Array(rows.enumerated()), id: \.offset) { i, p in
                         credRow(CredHit(id: "p\(p.alias)", pwd: p, pinned: false))
-                            .staggered(min(i, 8))   // 212 同置顶段交错入场
+                            .staggered(min(i, 8))
                     }
                     .onMove { src, dst in
                         commitGroupMove(keys: pwdKeys(rows), slot: "p", src: src, dst: dst)
@@ -1152,7 +1150,7 @@ struct CredentialsView: View {
             }
             ForEach(Array(fps.enumerated()), id: \.offset) { i, f in
                 credRow(CredHit(id: "f\(f.batch)", fp: f, pinned: CredentialOrg.isStarred(mac, "fp", f.batch)))
-                    .staggered(min(i, 8))   // 212 指纹段同样交错入场
+                    .staggered(min(i, 8))
             }
             .onMove { src, dst in
                 commitGroupMove(keys: fpKeys(fps), slot: "f", src: src, dst: dst)   // 182 指纹段内拖动

@@ -176,14 +176,6 @@ enum DS {
         /// 理由就写在调用点：一个 App 里同时存在"关庆祝"和"关插画"两个语义重叠开关，
         /// 用户只会记住其中一个，而记住的那个会变成"切了没反应"。
         static var emptyMascot: Bool { !DB.store.getBool("kf_plain") }
-        /// 889 Hero 纹理: kf_hero_tex ""(无)/"grid" 网格/"grain" 细点。
-        /// 214 噪点质感 (杂志封面颗粒) = 这里的 "grain" 档 —— 纯矢量画点，不引位图 (219 资源纪律)，
-        /// 而且和 889 一样在"关掉装饰"的射程内: 装饰层不许越过无障碍与素颜模式开关。
-        /// 白名单之外的值一律当"无" —— 偏好键走文本存储，不做区间校验就会读出垃圾值再画垃圾。
-        static var heroTexture: String {
-            let v = DB.store.getString("kf_hero_tex")
-            return ["grid", "grain"].contains(v) ? v : ""
-        }
         /// 902 数字字体两档: kf_digit_font ""(圆体 = 默认, 与旧版观感一致) / "plain"(系统默认体)。
         /// 射程如实圈死: 这一档只管**读数令牌的两处落点** (MetricTile 与 HeroStat 的数字 Text),
         /// 902 原句就是"Hero 卡电量数字圆体/默认体可选"。它不是全 App 数字字体总闸 ——
@@ -194,42 +186,6 @@ enum DS {
         }
     }
 
-    /// 889 Hero 卡纹理层 (纯矢量)。三档里默认档是"无纹理"，即与旧版完全一致。
-    struct HeroTexture: View {
-        let kind: String
-        // @ViewBuilder 是必须的: 这里的 if / else if 没有收尾的 else，
-        // 裸 `var body: some View` 在那种形状下编译不过 (要 buildEither/buildOptional)。
-        @ViewBuilder
-        var body: some View {
-            if kind == "grid" {
-                Canvas { ctx, size in
-                    let step: CGFloat = 14
-                    var path = Path()
-                    var x: CGFloat = step
-                    while x < size.width { path.move(to: CGPoint(x: x, y: 0)); path.addLine(to: CGPoint(x: x, y: size.height)); x += step }
-                    var y: CGFloat = step
-                    while y < size.height { path.move(to: CGPoint(x: 0, y: y)); path.addLine(to: CGPoint(x: size.width, y: y)); y += step }
-                    ctx.stroke(path, with: .color(.white.opacity(0.05)), lineWidth: 0.5)
-                }
-            } else if kind == "grain" {
-                Canvas { ctx, size in
-                    // 固定种子 (线性同余) 而不是 arc4random: 纹理必须每次重建都长一样，
-                    // 否则外观种子每变一次，卡面上的点就整体重掷一次，看着像"闪了一下噪点"。
-                    var seed: UInt64 = 0x9E3779B9
-                    let n = 130
-                    for _ in 0..<n {
-                        seed = seed &* 6364136223846793005 &+ 1442695040888963407
-                        let u = CGFloat(Double(seed >> 11) / Double(1 << 53))
-                        seed = seed &* 6364136223846793005 &+ 1442695040888963407
-                        let v = CGFloat(Double(seed >> 11) / Double(1 << 53))
-                        let r: CGFloat = 0.9
-                        ctx.fill(Path(ellipseIn: CGRect(x: u * size.width, y: v * size.height, width: r * 2, height: r * 2)),
-                                 with: .color(.white.opacity(0.07)))
-                    }
-                }
-            }
-        }
-    }
     /// 909 Hero 指标位显隐: kf_hero_stats 存"要看的参考项"，白名单外的一律丢弃。
     /// **电量不在可选项里**：它决定"还能不能开锁"，能被自己藏掉的读数就不是读数 (DeviceHomeView 恒显示它)。
     /// 默认两项全开 = 与旧版观感一致；两项全关时回退全开，不留一张没有指标的空板卡。
@@ -255,12 +211,6 @@ enum DS {
     enum Haptics {
         static let tick = UIImpactFeedbackGenerator(style: .light)
         static let trigger = UIImpactFeedbackGenerator(style: .medium)
-    }
-    /// 夜间降亮度 (idea 248): 22 点–6 点圆盘光晕与 Hero 卡光源自动降峰值防刺眼。
-    /// 只降装饰层透明度, 文字与语义对比度不受影响。
-    static var isNightDim: Bool {
-        let h = WeekCal.gregorian.component(.hour, from: Date())
-        return h >= 22 || h < 6
     }
     /// SF Symbols 尺寸令牌 — 全 App 只用这一套, 避免 17/20/28 混用
     enum Icon {
@@ -573,6 +523,7 @@ enum DS {
                     "btnA": fill, "btnB": darkenTo(fill, 0.10)]
         }
     }
+    /// 渐变: 品牌层的"深度"来源。hero 压纯白文字 (装饰层不做动态色, 两端对比度机检于 themeTable)。
     /// 890 节日限定色：**默认关**。颜色是用户的既有心智，替他把主控卡换色属于"打扰"，
     /// 所以这一档必须显式开 (kf_festive)，并且关掉时与旧版完全一致。
     /// 数据源复用 671 的假日表 (RecordSearch.holidayName)，不另建一份节日清单 —— 两份迟早对不上。
@@ -599,13 +550,12 @@ enum DS {
             return p
         }
     }
-    /// 渐变: 品牌层的"深度"来源。hero 压纯白文字 (装饰层不做动态色, 两端对比度机检于 themeTable)。
+
     enum Gradient {
         /// 主控卡 / 开锁盘 idle 态 / 主按钮 — 主题色向深色端的对角渐变 (随 kf_accent 切换)
         static var hero: LinearGradient {
-            // 890 节日限定色改在**这个出口**上：hero 面有四处消费点 (主控卡 / 成就 / 礼花 / 导出卡)，
-            // 在各处各判一次就会出现"有的面变色有的不变"。反转色降级 (863) 在更外层的 DS.heroGradientSafe，
-            // 优先级仍由它说了算 —— 系统反转时该中性就中性，节日色不得越过它。
+            // 890 节日限定色改在**这个出口**上 (机检于 tools/contrast.js E4):
+            // 节日开关已无 UI 入口, isOn 恒 false ⇒ 恒走主题色分支, 但表与分支保留给机检。
             if let p = Festive.todayPair() {
                 return LinearGradient(colors: [Color(hex: p.0), Color(hex: p.1)],
                                       startPoint: .topLeading, endPoint: .bottomTrailing)
@@ -695,6 +645,10 @@ extension View {
             else { DS.Gradient.screenMesh.ignoresSafeArea() }
         }
     }
+    /// 入场编排已删 (纯观感)。保留同签名恒等实现:
+    /// 三处调用点串在 credRow(...) 的链尾, 直接删调用行会留下孤立括号。
+    func staggered(_ index: Int) -> some View { self }
+
 }
 
 
@@ -737,10 +691,6 @@ private struct StaggeredAppear: ViewModifier {
 }
 
 extension View {
-    /// 入场编排: index 决定出场次序 (0 起, 每档 50ms)
-    func staggered(_ index: Int) -> some View {
-        modifier(StaggeredAppear(index: index))
-    }
 }
 
 // ---------- 状态语义色 (供状态胶囊 / 文案统一取用) ----------
@@ -907,16 +857,10 @@ struct HeroStat: View {
 /// 深浅色共用同一套渐变与白色文字；卡内叠层 (渐变→纹理→柔光→heroScrim) 之后白正文实测 ≥5.11:1
 /// (六套主题 × 明暗 × 最亮端 + 节日色, 机检 tools/contrast.js E4)。
 struct HeroCard<Content: View>: View {
-    var flair: Bool
     @ViewBuilder var content: Content
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency   // 226: 纯色底 + 描边
     @State private var drift = false
-    /// `flair` (idea 999): 史诗徽章点亮后 7 天的一圈流光边, 素颜模式不显示
-    init(flair: Bool = false, @ViewBuilder content: () -> Content) {
-        self.flair = flair
-        self.content = content()
-    }
 
     var body: some View {
         content
@@ -934,7 +878,6 @@ struct HeroCard<Content: View>: View {
                     // (本 App 除 App 图标外零位图，与 Celebration.swift 的礼花同源都走 Canvas 自绘)。
                     // 透明度钉在 0.05–0.09 之间 —— 纹理压在 hero 渐变上，而渐变上永远有纯白正文 (≥4.7:1)；
                     // 再高就会把白字的局部对比拉下来，那是把"好看"换来"看不清"。
-                    DS.HeroTexture(kind: DS.Metric.heroTexture)
                         .clipShape(RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous))
                     // 右上一团柔光: 给渐变一个"光源", 缓慢漂移 (±8pt / 9s) 让它活过来,
                     // 慢到只剩"页面在呼吸"的潜意识感受; reduceMotion 时静止
@@ -943,7 +886,6 @@ struct HeroCard<Content: View>: View {
                         .frame(width: 170, height: 170)
                         .blur(radius: 42)
                         // 248: 22 点后光源与圆盘同档降峰值
-                        .opacity(DS.isNightDim ? 0.55 : 1)
                         .offset(x: drift ? 54 : 46, y: drift ? -51 : -44)
                     // 整幅薄黑纱压在渐变+柔光之上 (第八十三批): 最亮 hero 端上纯白正文只有 4.75~4.80:1,
                     // 光斑再把局部亮度抬上去就掉出 4.5。纱在上、光在下 ⇒ 光斑处实测仍 ≥5.16:1,
@@ -954,7 +896,6 @@ struct HeroCard<Content: View>: View {
             }
             .clipShape(RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous))
             .overlay {
-                if flair { HeroFlairBorder() }
                 // 226 降透明: 渐变退纯色后补一圈描边, 找回卡片边界 (色走 heroSolidStroke, 反转档自动跟随)
                 if reduceTransparency {
                     RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous)
@@ -970,24 +911,6 @@ struct HeroCard<Content: View>: View {
     }
 }
 
-/// 999 流光边: 品牌渐变描边缓慢呼吸; reduceMotion 时静态常亮
-private struct HeroFlairBorder: View {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var glow = false
-    var body: some View {
-        RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous)
-            .strokeBorder(LinearGradient(colors: [DS.Palette.themed("heroA"), DS.heroFg, DS.Palette.themed("heroB")],
-                                         startPoint: .topLeading, endPoint: .bottomTrailing),
-                          lineWidth: 1.5)
-            .opacity(glow ? 0.9 : 0.45)
-            .allowsHitTesting(false)
-            .accessibilityHidden(true)
-            .onAppear {
-                guard !reduceMotion else { glow = true; return }
-                withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) { glow = true }
-            }
-    }
-}
 
 /// 空状态: 复用系统 ContentUnavailableView, 图标 + 说明 + 主动作三件套齐全,
 /// 避免用户停在无路可走的页面上; 也能自动跟随系统深浅色与动态字体。

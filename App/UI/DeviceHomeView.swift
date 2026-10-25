@@ -73,7 +73,7 @@ struct DeviceHomeView: View {
                             // 1044 家庭公告板: 空态里的一张便签
                         }
                     } else {
-                        if app.devices.count > 1 { capsuleSwitcher.staggered(0) }
+                        if app.devices.count > 1 { capsuleSwitcher }
                         // 42 首用气泡引导: 多锁用户最容易错过的动作是"长按这排胶囊看最近状态变化"
                         // (那件事本身是 268，已经实现)。只说一次、由用户自己点掉;
                         // 提示承诺的必须是**页面上真做得出**的动作 —— 832 那条就想承诺一个不存在的长按。
@@ -99,19 +99,19 @@ struct DeviceHomeView: View {
                         // 767 按组切换 + 764 多锁状态图标行: 都放在 Hero 卡上方 ——
                         // 先一眼看清"哪把锁有事", 再落到当前锁的主控卡。
                         if app.devices.count > 1 {
-                            if shown(.groupChips) { groupChips.staggered(0) }
-                            if shown(.statusIcons) { statusIconRow.staggered(0) }
+                            if shown(.groupChips) { groupChips }
+                            if shown(.statusIcons) { statusIconRow }
                         }
                         // 868 扫描组划分: 状态卡 / 圆盘 / 快捷格各自成组 (children: .contain),
                         // 外接开关与"切换控制"可以按组逐项聚焦, 不用在整页里一个个划过去。
                         moduleSlot(devOrder[0], delay: 1)   // 904: 槽位固定, 哪个模块占这个槽由用户定
-                        attentionCard.staggered(2)
-                        if shown(.linkSense) { linkSenseCard.staggered(2) }
+                        attentionCard
+                        if shown(.linkSense) { linkSenseCard }
                         // 246 凭证选择胶囊: 该锁有多条可用 PIN 且还没签发 ekey 时才出现 (有 ekey 时开锁根本不用 PIN, 给了是假选择)
                         if let kc = app.current, kc.ekey.isEmpty, kc.pins.count > 1 {
-                            pinPickCapsule(kc).staggered(2)
+                            pinPickCapsule(kc)
                         }
-                        unlockDial.staggered(3)
+                        unlockDial
                             .accessibilityElement(children: .contain)
                             .accessibilityLabel("开锁圆盘组")   // 868 开锁圆盘组
                         moduleSlot(devOrder[1], delay: 4)   // 904
@@ -1044,7 +1044,7 @@ struct DeviceHomeView: View {
 
     // ---------- 开锁主控 ----------
     private var unlockDial: some View {
-        // 868 切换控制扫描组: 圆盘为独立扫描组 (调用处 `unlockDial.staggered(3)` 后面那两行
+        // 868 切换控制扫描组: 圆盘为独立扫描组 (调用处 `unlockDial` 后面那两行
         // `.accessibilityElement(children: .contain)` + `accessibilityLabel("开锁圆盘组")`), 外接开关可以按组逐项聚焦。⚠ 2026-10-15 走查修正: 这里原先写着"停留时长按 869 自定滑杆" —— 那枚滑杆
         // (`kf_ax_dwell`) 全仓**没有行为消费者**，只被辅助页的滑杆自己与练习区演示文字读 (判据见
         // 聚焦节奏实际由系统 VoiceOver/切换控制决定。
@@ -1613,13 +1613,13 @@ struct DeviceHomeView: View {
     private func moduleSlot(_ id: String, delay: Int) -> some View {
         switch id {
         case "quick":
-            quickActions.staggered(delay)
+            quickActions
                 .accessibilityElement(children: .contain)
                 .accessibilityLabel("快捷操作格组")   // 868 快捷操作格组
         case "recent":
-            recentCard.staggered(delay)
+            recentCard
         default:
-            heroPager.staggered(delay)
+            heroPager
                 .accessibilityElement(children: .contain)
                 .accessibilityLabel("状态卡组")   // 868 状态卡组
         }

@@ -757,13 +757,6 @@ struct SettingsView: View {
             }
             .pickerStyle(.menu)
             // Hero 卡纹理 (889): 纯矢量三层之一，默认"无纹理"= 与旧版一致
-            Picker("主控卡纹理", selection: Binding(
-                get: { DS.Metric.heroTexture },
-                set: { app.setHeroTexture($0) })) {
-                Text("无").tag("")
-                Text("细网格").tag("grid")
-                Text("微噪点").tag("grain")
-            }
             .pickerStyle(.menu)
             note("只换主控卡的底纹，不影响内容与读数。")
             // 动效档位 (899): 管的是全 App 动效令牌，不是"只换 Tab 那一下" —— 文案照实写
@@ -779,27 +772,6 @@ struct SettingsView: View {
                 Text("系统「减弱动态效果」已开启，当前强制走克制档，上面的选择暂不生效。")
                     .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
-            }
-            // 节日限定色 (890): 默认关。给用户的既有界面换色属于"打扰"，必须显式开。
-            // 只在 671 表里的法定假日当天生效；补班日不染色 (那是要上班的日子)；表外节日一律不猜色。
-            VariantToggle("法定节假日染主控卡", isOn: Binding(
-                get: { DB.store.getBool("kf_festive") },
-                set: { app.setFestive($0) }))
-            // 高对比皮肤 (893): App 内这一档，不必为一只 App 去改整机设置。
-            // getter 只读**本机偏好** kf_hc —— 读 DS.Appearance.highContrast (系统∪本机) 的话，
-            // 系统那边开着而本机没开时这个开关会"关不下去"，看着像坏了。
-            VariantToggle("高对比皮肤", isOn: Binding(
-                get: { DB.store.getBool("kf_hc") },
-                set: { app.setHighContrast($0) }))
-            note("文字与分隔线加深一档，不必去改整机设置。")
-            // 周起始日 (912): 一处读点管住"本周"时间词 / 月历表头与格子 / 本周整理数 / 本周轮值键
-            Picker("周起始日", selection: Binding(
-                get: { WeekCal.key },
-                set: { app.setWeekStart($0) })) {
-                Text("跟随系统（当前为 \(WeekCal.effectiveName)）").tag("")
-                Text("周一").tag("mon")
-                Text("周日").tag("sun")
-                Text("周六").tag("sat")
             }
             .pickerStyle(.menu)
             // 布局密度 (包16): 只缩放间距令牌, 字号与触达不动

@@ -555,7 +555,6 @@ final class AppState: ObservableObject {
     func setHeroStats(_ ids: [String]) {
         applyAppearance { DS.HeroStats.setVisible(ids) }
     }
-    /// 889 主控卡纹理: ""(无)/grid/grain，白名单在 DS.Metric.heroTexture 里守
     func setHeroTexture(_ key: String) {
         applyAppearance { DB.store.set("kf_hero_tex", key) }
     }
