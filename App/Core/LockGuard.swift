@@ -63,7 +63,9 @@ struct SudoTicket {
 enum SecurityPolicy {
     // ---------- 唯一读点: 界面与调用点一律从这里取, 不许再摸 DB.store ----------
     /// 377 访客通道: 真开时主 TabView 只暴露 设备/记录, 进 凭证/设置 要先过口令
-    static var guestActive: Bool { DB.store.getBool(SecKey.guestOn, false) }
+    /// 377 访客通道: 开关 UI 已随安全中心子页删除, 这里直读原键名 —— 
+    /// 老用户若曾打开过仍会生效, 但已无任何入口能再拨它。
+    static var guestActive: Bool { DB.store.getBool("kf_speek_guest", false) }
     /// 377 访客视图筛敏感成员 (本机没有成员敏感标记位, 见 SecurityCenterView 那行的实话文案)
     static var hideSensitiveInGuest: Bool { DB.store.getBool(SecKey.sensitiveOnly, false) }
     /// 383 毁灭操作需重输应用锁口令

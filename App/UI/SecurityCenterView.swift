@@ -23,7 +23,6 @@ enum SecKey {
     static let timedReveal    = "kf_speek_timedsec"     // 373 限时可见秒数 (0=关)
     static let frostedOn      = "kf_speek_frost"        // 375 磨砂挡片
     static let shareHalfOn    = "kf_speek_sharehalf"    // 376 分享遮半
-    static let guestOn        = "kf_speek_guest"        // 377 访客通道
     static let sensitiveOnly  = "kf_speek_glast"        // 377 访客模式隐藏敏感成员开关
     static let watermarkOn    = "kf_swmark_on"          // 378 常驻水印
     static let watermarkTxt   = "kf_swmark_txt"         // 378 水印文案种子
@@ -90,18 +89,6 @@ func guardedDestroy(_ app: AppState, _ action: @escaping () -> Void) {
         return
     }
     askSudoThen(app, then: action)
-}
-
-/// 377 访客通道的**唯一写侧**: 落键之后必须把会话级授权一起收回。
-/// 拨开关的人此刻正站在受限的那一页上 (设置页 = Tab 3), AppState.revokeSessionGrants 会把
-/// 选中位 snap 回设备页 —— 不并这一脚就是一句"翻了标签但层级树还没收"的空承诺。
-/// 防窥页那枚 Toggle 与隐私仪表盘那枚轻点即切换的格子都走这里, 别留第二条只落键的侧门。
-@MainActor
-func setGuestChannel(_ on: Bool, app: AppState) {
-    DB.store.set(SecKey.guestOn, on)
-    app.revokeSessionGrants()
-    app.showToast(on ? "访客通道已生效: 已回到设备页, 想进凭证与设置要用面容/指纹确认"   // 377 访客通道已生效
-                      : "访客通道已关闭: 四页照常, 本次会话内不再复核")   // 377 访客通道已关闭
 }
 
 // ---------- 378 常驻水印层 (截图加扰降级案: 页面常驻, 半透明对角重复) ----------
