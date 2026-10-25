@@ -98,7 +98,7 @@ enum MemberHub {
 
     /// 469 紧急管理员: 档案上的点名档。
     /// 原先这个位只有成员页 Toggle 的 set、全仓零读取方, 界面却写"救援码说明与其绑定" ⇒ 空头支票。
-    /// 现在的真读点: 成员页点名 (权限与应急段) + 482 家庭会议摘要 + 设置-安全 救援码下的保管人声明
+    现在的真读点: 成员页点名 (权限与应急段) + 设置-安全 救援码下的保管人声明
     /// (SecurityCenterView.rescueCustodyLine) 三处各读一次。
     static func emergencyAdmins() -> [Member] {
         // 一次解表再筛名册: 逐成员调 ext() 会把整张表重复解 N 遍 (同 MemberCenterView 归档计数那一处教训)
