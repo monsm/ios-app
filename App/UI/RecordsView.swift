@@ -234,9 +234,6 @@ struct RecordsView: View {
     @ToolbarContentBuilder
     private var recordsToolbar: some ToolbarContent {
         ToolbarItem(placement: .navigationBarTrailing) {
-            .accessibilityLabel("告警中心, \(RecordSearch.unhandledAlarmCount(macs: DB.keychains().map { $0.mac })) 条未处置")
-        }
-        ToolbarItem(placement: .navigationBarTrailing) {
             // 读取中把刷新按钮换成进度圈, 状态一目了然
             if running {
                 ProgressView()
@@ -254,8 +251,6 @@ struct RecordsView: View {
                     Button { showRangePick = true } label: { Label("选区导出", systemImage: "checklist") }   // 716 选区导出
                     Button { showActiveCreds = true } label: { Label("活跃凭证排序 (约)", systemImage: "list.number") }
                     Button { showOutWin = true } label: { Label("越界开门清单 (约)", systemImage: "clock.badge.exclamationmark") }
-                    if scope == 1 {
-                    }
                 }
             } label: {
                 Image(systemName: "ellipsis.circle")
