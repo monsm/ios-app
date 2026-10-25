@@ -142,6 +142,11 @@ enum CredentialOrg {
     static func queueKey(_ mac: String) -> String { "kf_cqueue_" + mac }
     static func starKey(_ mac: String) -> String { "kf_cstar_" + mac }
     /// 354 归档区: 与星标同式的本机单键 (同一把锁一份)
+    // 341/346 两族的键名 (数据本体已随 OtpStudio 删除, 但备份白名单仍要能认出这两个键,
+    // 否则老包装进来时会被当成未知键 —— BackupKit:272/458 与 BackupStudioKit:599 在读)
+    static func totpKey(_ mac: String) -> String { "kf_cotp_t_" + mac }
+    static func staticKey(_ mac: String) -> String { "kf_cotp_s_" + mac }
+
     static func archKey(_ mac: String) -> String { "kf_carch_" + mac }
     static func alertKey(_ mac: String, _ kind: String, _ key: Int) -> String { "kf_calert_\(mac)_\(kind)_\(key)" }
     static func listsKey(_ mac: String) -> String { "kf_clists_" + mac }
@@ -1442,66 +1447,6 @@ enum CredentialOrg {
     }
 
     // ---------- 341/343/346 OTP 独立口令组与静态备份码 (纯本地, 不走锁端) ----------
-    // 341 有两条入口 (otpauth:// 文本导入 + 手工添加), 但只有一份落库形状 = 下面这个 TOTPEntry:
-    // 解析在 UI 侧的 StudioTools.parseOtpAuth, 两条路都经 `addTotp` 落库 ⇒ 存、读、备份只有一套字段。
-    struct TOTPEntry: Codable, Identifiable {
-        var id: String
-        var name: String
-        var secret: String      // Base32
-        var algo: String        // SHA1 / SHA256 / SHA512
-        var period: Int        // 秒, 默认 30
-        var digits: Int        // 默认 6
-        var at: Double
-    }
-    struct StaticCode: Codable, Identifiable {
-        var id: String
-        var name: String
-        var code: String
-        var note: String
-        var used: Bool
-        var at: Double
-    }
-    /// 343 独立口令的存档键**带 mac**, 这是刻意的: 口令的算法与锁协议毫无关系 (HMAC-TOTP, 手机自己算),
-    /// 但备份是**按锁导出**的 (凭证分区一锁一包, 见 `exportPackage` 与 BackupStudioKit),
-    /// 去掉 mac 就会把 A 锁的包里混进 B 锁的口令、还原时又一并倒回去。
-    /// ⚠ 所以别把键名读成"这些口令属于这把锁": 它只是**按当前锁分格存放**, 换一把锁看的就是另一组。
-    static func totpKey(_ mac: String) -> String { "kf_cotp_t_" + mac }
-    static func staticKey(_ mac: String) -> String { "kf_cotp_s_" + mac }
-    static func totpEntries(_ mac: String) -> [TOTPEntry] {
-        DB.get([TOTPEntry].self, totpKey(mac)) ?? []
-    }
-    static func addTotp(_ mac: String, _ e: TOTPEntry) {
-        saveTotpEntries(mac, totpEntries(mac) + [e])
-    }
-    static func saveTotpEntries(_ mac: String, _ e: [TOTPEntry]) {
-        DB.setCodable(e, totpKey(mac))
-    }
-    static func removeTotp(_ mac: String, _ id: String) {
-        saveTotpEntries(mac, totpEntries(mac).filter { $0.id != id })
-    }
-    static func staticCodes(_ mac: String) -> [StaticCode] {
-        DB.get([StaticCode].self, staticKey(mac)) ?? []
-    }
-    static func addStaticCode(_ mac: String, _ c: StaticCode) {
-        saveStaticCodes(mac, staticCodes(mac) + [c])
-    }
-    static func saveStaticCodes(_ mac: String, _ c: [StaticCode]) {
-        DB.setCodable(c, staticKey(mac))
-    }
-    static func removeStaticCode(_ mac: String, _ id: String) {
-        saveStaticCodes(mac, staticCodes(mac).filter { $0.id != id })
-    }
-
-    // ---------- 337/171 独立 TOTP 时窗 ----------
-    // 倒计时的唯一实现是 WindowBar.remaining (CredentialStudio.swift:238, 同一公式 per - epoch % per)。
-    // 这里曾有 totpRemaining —— 与它逐字重复且全仓零调用, 留着只会让人以为有两套口径。
-    // (⚠ 锁端 ZOTP 为分钟级, 秒级只属独立口令)
-    /// 345 参数小字: "SHA1·6位·30s"
-    static func totpParams(_ e: TOTPEntry) -> String {
-        e.algo + "·" + String(e.digits) + "位·" + String(e.period > 0 ? e.period : 30) + "s (独立口令, 约)"
-    }
-
-    // ---------- 518 草稿续填 (关闭自动保留, 成功保存即清) ----------
     struct StudioDraft: Codable {
         var step: Int
         var kind: Int          // 0 密码 / 1 临时码

@@ -62,6 +62,7 @@ const SYS_NAMES = new Set([
   "short", "long", "full", "half", "top", "bottom", "left", "right", "middle", "center",
   "red", "green", "blue", "white", "black", "gray", "clear", "fill", "stroke", "border",
   "expected", "actual", "received", "given", "want", "got", "left", "right", "prev",
+  "named", "label", "value", "isOn", "offset", "count", "index", "text", "title",
   // Swift 标准库/系统 API 与常见局部变量名 —— 在基线里出现过但非本项目"功能"
   "removeAll", "insert", "append", "remove", "contains", "sorted", "filter", "map", "reduce",
   "compactMap", "flatMap", "enumerated", "reversed", "prefix", "suffix", "dropFirst", "dropLast",
