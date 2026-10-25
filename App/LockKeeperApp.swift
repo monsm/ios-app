@@ -40,9 +40,6 @@ enum Theme {
     static var accent: Color { DS.Palette.accentText }
     static var warn: Color { DS.Palette.warn }
     static var ok: Color { DS.Palette.ok }
-    static var isLight: Bool {
-        DB.store.getString("kf_theme") == "light"
-    }
     // 跟随系统: 未设置时 nil; 设置过则固定。纯黑 (idea 30) 走深色语义, 表面由 Palette 覆盖为纯黑
     static func scheme(for key: String) -> ColorScheme? {
         switch key {

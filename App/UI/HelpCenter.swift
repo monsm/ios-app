@@ -624,7 +624,6 @@ struct ButlerCertificateView: View {
 // ---------- 演练场 (837 样例备份 / 845 七天样例 / 844 锁死演练 / 838 录前预习) ----------
 struct DemoLabsView: View {
     @EnvironmentObject var app: AppState
-    @State private var sampleOpen = false
     @State private var drillRunning = false
     @State private var drillPhase = 0
     @State private var drillCool = 0    // 844 冷却倒计时剩余秒 (演练演示值, 不碰锁端)

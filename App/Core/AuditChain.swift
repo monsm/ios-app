@@ -40,14 +40,6 @@ enum HashKit {
         }
         return hash
     }
-
-    /// 8 位一次性救援码 (395): 防混淆字符集, 分组 4+4 展示
-    static func rescueCode() -> String {
-        let alphabet = Array("23456789ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz")
-        var out = ""
-        for _ in 0..<8 { out.append(alphabet.randomElement()!) }
-        return out
-    }
 }
 
 // ---------- 审计事件 (379 双流水: 开门事件 / 管理操作) ----------

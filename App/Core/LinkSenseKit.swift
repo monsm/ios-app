@@ -271,14 +271,6 @@ final class LinkSense: ObservableObject {
             }
         }
     }
-    /// 回连循环的拆除口。**目前刻意没有调用点** —— 这个 2s tick 同时是 AUTOOPEN 的停留判定驱动器
-    /// (autoReconnectTick 里 `AutoOpenController.shared.tickDwell` 在"是否自动回连"偏好**之前**执行),
-    /// 关掉自动回连就停循环 = 悄悄把"靠近自动开锁"也停了, 那是比省电严重得多的副作用。
-    /// 等 tickDwell 有独立节拍后再启用本口; 现在停它反而制造"设置没生效"的错觉。
-    func stopReconnectLoop() {
-        reconnectTask?.cancel()
-        reconnectTask = nil
-    }
     /// 135 scenePhase 消费点: .active → 回前台即刷新 (静默预热一次 + 补发); 非 active 暂停回连
     func setSceneActive(_ active: Bool) {
         sceneActive = active
@@ -384,12 +376,6 @@ final class LinkSense: ObservableObject {
                 self.deadbeatCheck()
             }
         }
-    }
-    /// 假死看门狗的拆除口, 同样**没有安全调用点**: 未连接时 deadbeatCheck 第一行就 return,
-    /// 循环本身是惰性的; 真要停它得把"重启动"绑到下一次连接成功上, 那是节拍改造 → 留口不开, 不假接。
-    func stopDeadWatch() {
-        deadWatchTask?.cancel()
-        deadWatchTask = nil
     }
     private func deadbeatCheck() {
         guard !DiagFlags.silent else { return }

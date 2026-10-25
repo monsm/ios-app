@@ -59,7 +59,6 @@ struct VK {
 
     var ink: Color   { DS.Palette.text }
     var sub: Color   { DS.Palette.textSub }
-    var faint: Color { DS.Palette.textSub.opacity(0.82) }
 
     /// 页面左右边距。三套刻意不同 —— 这是"两套看着就不一样"最便宜的一处。
     var gutter: CGFloat {

@@ -98,10 +98,6 @@ private extension Color {
 }
 
 extension DS {
-    /// 226 降透明实测: hero 面退纯色 (取品牌渐变暗端 heroB; 863 反转档取降级暗端)。
-    /// 选暗端的理由: 纯色只有一层底可兜, 而纯白压 heroB 的比值已在 tools/contrast.js C 段机检 (≥4.5:1),
-    /// 卡内纹理/柔光/黑纱叠上去只会更稳; 前景色仍由 heroFg 给, 这里只换底, 不动 863 的反转判定。
-    @MainActor static var heroSolid: Color { AXFlags.invertColors ? Color.invHeroBottom : Palette.themed("heroB") }
 
     /// 226+863 hero 面唯一出口 (沿用旧名 heroGradientSafe, 12 个消费点不用挨个改):
     /// 降透明 → 纯色 (226); 反转色 → 中性降级渐变 (863); 常规 → 品牌渐变。

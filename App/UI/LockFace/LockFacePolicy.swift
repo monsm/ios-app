@@ -48,11 +48,4 @@ enum LockFacePolicy {
         let raw = LockArchive.meta(mac).skin
         return LockFaceSkin(rawValue: raw) ?? .wood
     }
-
-    /// 写皮肤。走 LockArchive.save, 保留其余字段不变。
-    static func setSkin(_ skin: LockFaceSkin, for mac: String) {
-        var m = LockArchive.meta(mac)
-        m.skin = skin.rawValue
-        LockArchive.save(mac, m)
-    }
 }

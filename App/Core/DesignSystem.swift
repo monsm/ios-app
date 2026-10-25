@@ -293,25 +293,6 @@ enum DS {
         }
         /// 召唤锁核的位移弹簧（跟手后的回位与吸附）。
         /// 放在令牌层而不是写在视图里，只有一个理由：`calm` 档（系统减弱动态 / 低电量）
-        /// 必须能把它压成直落 —— 动效策略**只有一个读点**，写在视图里就等于把降级规则实现第二遍。
-        /// 数值：response 0.35 / damping 1.0（与 Apple 判据同向）
-        /// （临界阻尼、不过冲）；`calm` 档不给过冲，换成直落。
-        static var summon: Animation {
-            switch tier {
-            case "calm": return .easeOut(duration: 0.12)
-            default: return .spring(response: 0.35, dampingFraction: 1.0)
-            }
-        }
-
-        /// 带动量的释放（甩出去、松手回弹）：同一张表给 damping 0.82。
-        /// **只有手势本身带动量时才用这一档** —— 慢慢拖到一半松手给了它，就会莫名其妙弹过头。
-        static var fling: Animation {
-            switch tier {
-            case "calm": return .easeOut(duration: 0.12)
-            default: return .spring(response: 0.35, dampingFraction: 0.82)
-            }
-        }
-
         static var quick: Animation {
             switch tier {
             case "calm": return .easeOut(duration: 0.10)
@@ -384,16 +365,6 @@ enum DS {
             }
         }
     }
-    /// 时长令牌 (idea 211): 150/250/400 毫秒三档 — 微交互 / 标准转场 / 强调时刻。
-    /// 需要 Animation 对象用 Motion, 只需要时长 (如 Task 前的 withAnimation) 用这里。
-    /// deadscan B 档点过 `slow` 零引用: 现役强调动作 (开锁成功 / Moment 卡) 都走 Motion 档
-    /// (90 处受 899 减弱动态联动), 而这一档给的是"不受档位管的长强调"; 暂无真实的"值得 400ms"动作,
-    /// 与 LinkSense stop* / ExportItem.linkMetadata 同类 —— 留口并写清为什么, 不硬接一个动作改观感。
-    enum Duration {
-        static let quick: TimeInterval = 0.15
-        static let standard: TimeInterval = 0.25
-        static let slow: TimeInterval = 0.40
-    }
     /// 外观引擎 (包16): 品牌主题 / AMOLED 的存储键解析点。
     /// 只读 DB.store (UserDefaults), 变更即时性由 AppState.applyAppearance → RootView .id 重建保证。
     enum Appearance {
@@ -439,7 +410,6 @@ enum DS {
         private static let hairlineHC = Color.adaptive(0x8A7D6A, 0x6E6454)
         private static let textSubHC  = Color.adaptive(0x443D32, 0xD4C9B6)
         @MainActor static var hairlineStrong: Color { Appearance.highContrast ? hairlineHC : hairline }
-        @MainActor static var textSubStrong: Color { Appearance.highContrast ? textSubHC : textSub }
 
         // ---------- 品牌主题表 (idea 31: 靛蓝/墨绿/琥珀) ----------
         // 结构: [主题: [明暗: [角色: hex]]]。tools/contrast.js 机检本表:

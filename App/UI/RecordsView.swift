@@ -222,6 +222,7 @@ struct RecordsView: View {
             scopeRow
             searchBar
             monthJumpRow
+            dayFocusBanner   // 586 只看某天时必须给"看全部日子"的退出入口
             if !searchText.isEmpty || activeFilters { resultCount }
             filterChips          // 已折叠为一行摘要 + 可展开面板 (见 filterChips 注释)
             // 低频区: 收进一行"更多"之后, 不再占首屏
@@ -461,13 +462,6 @@ struct RecordsView: View {
         } message: {
             Text("只接受 https 前缀，程序会在后面拼 <年份>.json。清空输入框即回到内置源；换源不影响已缓存的年份，需重新拉取。")
         }
-    }
-
-
-    // ---------- 735 角标刷新 (处置状态在告警中心内变化, 返回时重算) ----------
-    private var unhandledCount: Int {
-        _ = alarmTick
-        return RecordSearch.unhandledAlarmCount(macs: DB.keychains().map { $0.mac })
     }
 
     private var macs: [String] { scope == 1 ? DB.keychains().map { $0.mac } : [mac] }
@@ -3050,8 +3044,10 @@ struct RecordsView: View {
     /// 含节假日的那一档才升级成 675 的"假期外出？"问句 (非警告样式 —— 它不是异常，只是一个猜测,
     /// 所以行里带问号也带"约"味, 不写成"假期外出"这种断定)。
     /// 586 当天全景的顶部条: 说明"现在只看这一天"并给出**唯一的退出入口**。
-    /// 少了这条，跳转后用户看到的是一天孤零零的列表，会以为别的记录没了 ——
-    /// 收窄显示范围必须同时告诉用户范围被收窄了 (与 657 那行"这不是没记录是筛掉了"同一个原则)。
+    ///
+    /// 少了这条，从统计页/时间线点某天跳进来后，用户看到的是一天孤零零的列表，
+    /// 会以为别的记录没了；而且**没有任何回到全部日子的入口**（只能绕去"按月份跳转→清除"）。
+    /// 收窄显示范围必须同时告诉用户范围被收窄了 —— 与 657 那行"这不是没记录是筛掉了"同一个原则。
     @ViewBuilder
     private var dayFocusBanner: some View {
         if !dayFocus.isEmpty {

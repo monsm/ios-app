@@ -155,11 +155,6 @@ enum StatsKit {
         // 把外层 StatModel.coverage 作为字段传进来 (构造点在 monthPair)。
         let coverage: Int
         /// 数据积累中还差多少天 (622 降级文案用)
-        /// 2026-10-13 对抗式排查: 原写 `max(0, Int(start.timeIntervalSince1970 / 86400) - coverage) + 1` ——
-        /// `start.timeIntervalSince1970 / 86400` 是 **epoch 绝对日号** (今天是 20686 这样的数),
-        /// 减掉 coverage 再加 1 得到的是 20627 这种天文数字, 不是"还差几天"。
-        /// 正确的是"从本月首日到今天共几天"减"已覆盖几天", 不足 0 夹到 0。
-        var lackingDays: Int { max(0, Int(Date().timeIntervalSince(start) / 86_400) + 1 - coverage) }
     }
     struct TempGantt: Identifiable {
         let alias: Int
