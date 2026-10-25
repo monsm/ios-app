@@ -507,8 +507,6 @@ struct MemberAvatar: View {
     /// 什么都没有, 就成了文案与画面对不上。高对比档同样照常显示: 底板与细边都是实色 (半透明叠字在
     /// 高对比档属禁用), 走的正是 AccessibilityKit 里"高对比降为实底"那一条口径。
     private var cornerBadge: Badge? {
-        guard let bid = Milestones.memberBadges()[member.id] else { return nil }
-        return Milestones.badge(bid)   // 双保险与 RecordsView 门神榜同一条判据: 总表里查得到的那一枚才落到角标位
     }
     /// 994 角标字号随头像档位, 只取 DS.Icon 现成档位 (xs 13 / sm 16 / md 20), 不自造字号:
     /// 22–26 小头像走 xs, 28–39 标准行头像走 sm, 40 以上 (详情页 44) 走 md。
@@ -660,8 +658,6 @@ struct MemberDetail360View: View {
         let e = MemberHub.ext(m.id)
         let a = MemberHub.activity(m.id)
         // 994 这一位已选的角标: 与头像右下角同一道取数 (存了 id 但徽章总表查不到 = 当没选, 两处口径一致)
-        let corner = Milestones.memberBadges()[m.id].flatMap { Milestones.badge($0) }
-        // 994 指路文案: 两种状态各说各的实话 —— 没选的时候不许写"角标已画在右下角"那种指着空气的话。
         // 整句一行写完 (单行字面量不许跨行), 入口措辞照 Sheets.swift 成员管理列表的真实菜单项写。
         let hintNone = "选法: 「设置 → 成员管理」里长按这一位成员的行 →「授予徽章」(那份菜单列的是本机已点亮的徽章), 选中的那枚就画在本成员头像的右下角。"
         let hintSome = "角标已画在本成员头像的右下角, 图形就是这枚徽章自己的那枚符号。改选或撤下: 「设置 → 成员管理」里长按这一位成员的行 →「授予徽章」, 同一菜单里有「移除角标」。"
@@ -699,13 +695,6 @@ struct MemberDetail360View: View {
                     }
                 }
                 // 485/1017/653 生日行 (Milestones 已有数据与提前一天通知, 只接线不重做)
-                if let bd = Milestones.memberBirthdays()[m.id] {
-                    LabeledContent("生日") {   // 485 生日
-                        Text(bd + " · 提前一天提醒")
-                            .vkFont(.subheadline)
-                            .foregroundStyle(DS.Palette.textSub)
-                    }
-                }
                 // 994 角标行: 只报 kf_member_badge 里真实存下的那一枚 —— 已选就报徽章名,
                 // 那一位还没挑的照实读作"未选角标", 两种状态都是本机台账的原话。
                 LabeledContent("角标") {   // 994 角标

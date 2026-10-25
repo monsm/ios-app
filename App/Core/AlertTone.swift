@@ -3,7 +3,7 @@
 // 制式沿用包15 声音策略 (DesignSystem.swift:592-594): App 音效一律走系统 systemSound，
 // 铃声静音开关打开时由系统本身出无声，不读路由、不自建音量通道、不新开一路音量。
 // 本文件之后，全 App 的裸 AudioServicesPlaySystemSound 调用点只剩下面那几个私有 ID 常量处
-// (原有两处已接进来: 开锁成功短音 LockKeeperApp.settleUnlockSuccess / 成就收集音 Milestones.playCollectSound)。
+// (已接: 开锁成功短音; 成就收集音随徽章引擎删除)。
 //
 // 三条开关都是**默认关** (拍板口径): 服务不盯屏的用户要的是"响一声"，
 // 而在会议室里突然三声急促音是打扰 —— 所以必须用户自己开。
@@ -74,7 +74,4 @@ enum AlertTone {
 
     /// 977-980 成就点亮音 (原先直接裸调 AudioServicesPlaySystemSound(1104)，接进来收敛调用点；
     /// 它不归 848/733 任何一枚开关管 —— 庆祝音的开关是 15 包那套庆祝预算，不是提示音)
-    static func achievement() {
-        AudioServicesPlaySystemSound(idSuccess)
-    }
 }

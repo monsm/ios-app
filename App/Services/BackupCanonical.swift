@@ -223,7 +223,6 @@ enum BackupCanonical {
                 put("weekStart", ap.weekStart)
                 putB("festive", ap.festive)
                 putB("hc", ap.hc)
-                putB("launchLine", ap.launchLine)
                 putB("plain", ap.plain)
                 // 与 trace.savedAt 同型: 数字走 .num (stringify 对整数值输出整数形态)
                 if let n = ap.recentCount { av.append(("recent", .num(Double(n)))) }

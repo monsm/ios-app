@@ -77,12 +77,6 @@ struct DeviceHomeView: View {
                             }
                             .buttonStyle(PressableButtonStyle())
                             // 1044 家庭公告板: 空态里的一张便签
-                            if !Milestones.bulletin.isEmpty {
-                                Label(Milestones.bulletin, systemImage: "pin.fill")
-                                    .vkFont(.footnote)
-                                    .foregroundStyle(DS.Palette.accentText)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
                         }
                     } else {
                         if !wizardDismissed { migrationWizard.staggered(0) }
@@ -797,7 +791,7 @@ struct DeviceHomeView: View {
         let connected = isCurrent && bleOn
         // 113 五档电量 / 120: 低电降级档 (≤20%) 关流光边并压亮度, 动效令牌同步降 calm
         let tier = BatteryCare.tier(batteryPct(for: kc))
-        return HeroCard(flair: isCurrent && Milestones.heroFlairActive && !tier.severe) {
+        return HeroCard(flair: false) {
             VStack(alignment: .leading, spacing: DS.Space.m) {
                 HStack(alignment: .top, spacing: DS.Space.m) {
                     HStack(spacing: DS.Space.s) {
@@ -986,7 +980,7 @@ struct DeviceHomeView: View {
 
     // 78 翻面 (背面): 82 对勾弹出 + 本次开门摘要
     private var heroBack: some View {
-        HeroCard(flair: Milestones.heroFlairActive) {
+        HeroCard(flair: false) {
             VStack(alignment: .leading, spacing: DS.Space.m) {
                 HStack(spacing: DS.Space.xs) {
                     Image(systemName: "checkmark.circle.fill")
@@ -1863,24 +1857,6 @@ struct DeviceHomeView: View {
     // ---------- 安心夜打卡 (976): 22 点后手动确认 (协议无上锁状态位, 不猜测) ----------
     @ViewBuilder
     private var nightCheckRow: some View {
-        if Milestones.canNightCheckIn, Milestones.nightMarks()[Milestones.dayKey()] == nil {
-            Card {
-                Button {
-                    if Milestones.checkInTonight() {
-                        UINotificationFeedbackGenerator().notificationOccurred(.success)
-                        app.showToast("今晚已安心打卡")
-                    }
-                } label: {
-                    Label("安心夜打卡 · 记录今晚", systemImage: "moon.stars.fill")
-                        .vkFont(.subheadline, weight: .medium)
-                        .foregroundStyle(DS.Palette.accentText)
-                        .frame(maxWidth: .infinity)
-                        .frame(minHeight: DS.Hit.min)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(PressableButtonStyle())
-            }
-        }
     }
 
     private var privacyFootnote: some View {
@@ -1934,20 +1910,6 @@ struct DeviceHomeView: View {
         }
         // 485 生日行: Milestones 已有当天寿星与提前一天通知, 这里只补当日祝语行
         // 480 同族: 寿星头像同样随成员色 (与上面那张关怀卡同一"说谁像谁"的口径)
-        if let b = Milestones.birthdayCelebrantToday {
-            Card {
-                HStack(spacing: DS.Space.s) {
-                    MemberAvatar(member: b, tint: Self.memberHexColor(b))
-                    Text("今天是" + MemberHub.display(b) + "的生日, 替我们说声生日快乐")   // 485 的生日
-                        .vkFont(.footnote)
-                        .foregroundStyle(DS.Palette.accentText)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Spacer(minLength: 0)
-                }
-                .contentShape(Rectangle())
-                .frame(minHeight: DS.Hit.min)
-            }
-        }
         // 387 维护回执: 上次会话本机做过的整理 (清理空值/归档/自动补发) 回一行, 点"知道了"后隐藏
         // 措辞按实际能力写"上次会话" —— 本 App 无后台执行面, "退出期间完成"是不存在的说法
         if let line = MaintenanceLog.lastSessionLine(sessionStart: DB.store.get("kf_session_start", Double.self) ?? 0) {
@@ -2276,8 +2238,7 @@ struct DeviceHomeView: View {
     // 1000 晚归欢迎语优先; 其次节气问候 (1001, 纯本地寿星公式); 再其次今天的启动一句话 (898)
     private var heroMomentText: String? {
         if let m = app.homeMoment { return m }
-        if let term = Milestones.solarTermToday() { return "\(term) · " + Milestones.solarTermHint(term) }
-        return Milestones.launchPhrase()
+        return nil
     }
     // 1004/114 低电判定 (0~20, 判定逻辑收敛到 BatteryCare)
     private func isLow(_ kc: Keychain) -> Bool { BatteryCare.isLow(batteryPct(for: kc)) }

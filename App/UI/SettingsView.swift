@@ -927,10 +927,6 @@ struct SettingsView: View {
             VariantToggle("法定节假日染主控卡", isOn: Binding(
                 get: { DB.store.getBool("kf_festive") },
                 set: { app.setFestive($0) }))
-            // 启动一句话 (898): 按当天定值的一句本地短语，晚归语与节气排在它前面
-            VariantToggle("主控卡每日一句话", isOn: Binding(
-                get: { DB.store.getBool("kf_launch_line", true) },
-                set: { app.setLaunchLine($0) }))
             // 高对比皮肤 (893): App 内这一档，不必为一只 App 去改整机设置。
             // getter 只读**本机偏好** kf_hc —— 读 DS.Appearance.highContrast (系统∪本机) 的话，
             // 系统那边开着而本机没开时这个开关会"关不下去"，看着像坏了。
@@ -1222,9 +1218,6 @@ struct SettingsView: View {
     // ---------- 纪念与成就 (包18) ----------
     private var memorySection: some View {
         Section {
-            NavigationLink { AchievementsView() } label: { Label("我的成就", systemImage: "rosette") }
-            NavigationLink { CareRemindersView() } label: { Label("关怀提醒与公告板", systemImage: "heart.text.square") }
-        } header: {
             Text("纪念与成就")
         } footer: {
             Text("徽章、安心夜月历与纪念日提醒全部本地运行, 素颜模式可一键安静。")
@@ -1361,11 +1354,6 @@ struct SettingsView: View {
         }
         .onAppear {
             // VoiceOver 致意 (idea 1049): 累计 30 天后一句静默致谢
-            if UIAccessibility.isVoiceOverRunning { Milestones.markVoiceOver() }
-            if let days = Milestones.voiceOverDays, days >= 30, !Milestones.onceDone("vo30") {
-                Milestones.markOnce("vo30")
-                voLine = " VoiceOver 已陪伴这个家 \(days) 天, 谢谢你听见每一扇门。"
-            }
         }
     }
 

@@ -1311,7 +1311,7 @@ struct CredentialsView: View {
                     ownerBadge(CredentialOrg.ownerName(o))
                 }
                 // 1011 满年小徽章: 副行 "已陪伴 N 天 · 满一年了" 只在满年时给一枚同判据胶囊
-                if let at = p?.at ?? f?.at, Milestones.companionFullYear(at) {
+                if false {
                     StatusPill(text: "满一年", systemImage: "rosette", tone: .accent)
                 }
                 Spacer(minLength: 0)
@@ -1435,7 +1435,7 @@ struct CredentialsView: View {
             return [
                 p.temp ? "一次性" : "",
                 p.at > 0 ? "添加于 " + shortDate(p.at) : "",
-                Milestones.companionText(p.at) ?? "",
+                "",
                 // 331 设过本机提前量时按本机尺读数并标注, 没设与原来完全同值
                 CredentialOrg.listCountdown(mac, p, now),
                 !p.note.isEmpty ? "备注 \(p.note)" : ""
@@ -1444,7 +1444,7 @@ struct CredentialsView: View {
         if let f = hit.fp {
             return [
                 f.at > 0 ? "登记于 " + shortDate(f.at) : "已登记在门锁内",
-                f.at > 0 ? Milestones.companionText(f.at, prefix: "入家") ?? "" : "",
+                f.at > 0 ? "" : "",
                 f.src == "app" ? "本机录入" : "",
                 !f.note.isEmpty ? "备注 \(f.note)" : ""
             ].filter { !$0.isEmpty }.joined(separator: " · ")

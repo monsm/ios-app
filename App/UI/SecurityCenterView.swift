@@ -15,7 +15,6 @@ import UIKit
 enum SecKey {
     static let lockCoolOn     = "kf_slock_coolon"      // 389/234 递增冷却总开关
     static let lockStreak     = "kf_slock_streak"       // 连败计数 (冷却 = 30s * 2^n)
-    static let lockUntil      = "kf_slock_lockuntil"    // 冷却锁至时刻
     static let traceOn        = "kf_strace_on"          // 392 失败留痕总开关
     static let traceEvents    = "kf_strace_events"      // 392 失败事件 [String]
     static let sessionHow     = "kf_sses_how"           // 398 验证方式

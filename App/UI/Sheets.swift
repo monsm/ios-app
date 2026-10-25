@@ -2707,7 +2707,6 @@ struct MembersView: View {
         VStack(alignment: .leading, spacing: DS.Space.xxs) {
             HStack(spacing: DS.Space.xs) {
                 Text(m.name).vkFont(.subheadline).foregroundStyle(DS.Palette.text)
-                memberBadgeIcon(m)   // 989/994 徽章角标
             }
             if !m.relation.isEmpty || !m.phone.isEmpty {
                 Text([m.relation, m.phone].filter { !$0.isEmpty }.joined(separator: " · "))
@@ -2727,20 +2726,6 @@ struct MembersView: View {
             }
             Button("重命名") { rename(m) }
             Button("补全信息") { info(m) }
-            Menu("授予徽章") {
-                ForEach(Milestones.latestUnlocked(Milestones.definitions.count), id: \.badge.id) { item in
-                    Button(item.badge.title) {
-                        Milestones.setMemberBadge(m.id, item.badge.id)
-                        reload()
-                    }
-                }
-                if Milestones.memberBadges()[m.id] != nil {
-                    Button("移除角标", role: .destructive) {
-                        Milestones.setMemberBadge(m.id, nil)
-                        reload()
-                    }
-                }
-            }
         }
         // 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 命中高仅约 14.5pt (< 44)。
         // 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。
@@ -2748,16 +2733,6 @@ struct MembersView: View {
         .contentShape(Rectangle())
     }
 
-    private func memberBadgeIcon(_ m: Member) -> some View {
-        Group {
-            if let bid = Milestones.memberBadges()[m.id], let b = Milestones.badge(bid) {
-                Image(systemName: b.icon)
-                    .font(.system(size: DS.Icon.sm))
-                    .foregroundStyle(DS.Palette.accentText)
-                    .accessibilityLabel("徽章 \(b.title)")
-            }
-        }
-    }
 
     private func rename(_ m: Member) {
         prompt(title: "重命名", message: nil,
@@ -2777,11 +2752,10 @@ struct MembersView: View {
         prompt(title: "补全信息 (只填空缺)", message: nil,
                fields: [FieldSpec(placeholder: "与你的关系", text: m.relation),
                         FieldSpec(placeholder: "电话 (换机恢复第二匹配键)", text: m.phone, keyboard: .phonePad),
-                        FieldSpec(placeholder: "生日 MM-dd (用于提醒)", text: Milestones.memberBirthdays()[m.id] ?? "")],
+                        FieldSpec(placeholder: "生日 MM-dd (用于提醒)", text: "")],
                confirmTitle: "保存") { vals in
             DB.setMemberInfo(m.id, ["relation": vals.first ?? "", "phone": vals.count > 1 ? vals[1] : ""])
             let bday = vals.count > 2 ? vals[2].trimmingCharacters(in: .whitespaces) : ""
-            Milestones.setMemberBirthday(m.id, bday.isEmpty ? nil : bday)   // 991 生日手填
             reload()
         }
     }

@@ -200,7 +200,6 @@ struct BackupBundle: Codable {
             var tlGap: String?        // kf_tl_gap (907)
             var motion: String?       // kf_motion (899)
             var heroTex: String?      // kf_hero_tex (889)
-            var launchLine: Bool?     // kf_launch_line (898)
             var festive: Bool?        // kf_festive (890)
             var plain: Bool?          // kf_plain (1046)
             var recentCount: Int?     // kf_recent_count (910) → JSON 键名是 "recent"
@@ -221,7 +220,7 @@ struct BackupBundle: Codable {
             /// 而问题本质是 "JSON 键名与 Swift 名不同"，正是 CodingKeys 的用途。
             enum CodingKeys: String, CodingKey {
                 case theme, accent, density, radius, hc, weekStart, rowH, tlGap
-                case motion, heroTex, launchLine, festive, plain, heroStats
+                case motion, heroTex, festive, plain, heroStats
                 case recentCount = "recent"
             }
         }
@@ -313,7 +312,6 @@ enum BackupKit {
             tlGap: enumVal("kf_tl_gap", ["", "tight", "loose"]),
             motion: enumVal("kf_motion", ["", "calm", "standard", "lively"]),
             heroTex: enumVal("kf_hero_tex", ["", "grid", "grain"]),
-            launchLine: DB.store.has("kf_launch_line") ? DB.store.getBool("kf_launch_line") : nil,
             festive: DB.store.has("kf_festive") ? DB.store.getBool("kf_festive") : nil,
             plain: DB.store.has("kf_plain") ? DB.store.getBool("kf_plain") : nil,
             recentCount: [3, 5, 10].contains(recent) ? recent : nil,
@@ -389,7 +387,6 @@ enum BackupKit {
         set("kf_motion", a.motion, ["", "calm", "standard", "lively"])
         set("kf_hero_tex", a.heroTex, ["", "grid", "grain"])
         if let v = a.hc { DB.store.set("kf_hc", v) }
-        if let v = a.launchLine { DB.store.set("kf_launch_line", v) }
         if let v = a.festive { DB.store.set("kf_festive", v) }
         if let v = a.plain { DB.store.set("kf_plain", v) }
         if let n = a.recentCount, [3, 5, 10].contains(n) { DB.store.set("kf_recent_count", n) }

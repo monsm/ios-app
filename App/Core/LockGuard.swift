@@ -25,7 +25,6 @@ enum LockGuard {
         DB.store.set(SecKey.lockStreak, n)
         if cooldownEnabled {
             let secs = min(coolCapSec, coolBaseSec * pow(2.0, Double(min(n, 6)) - 1))
-            DB.store.set(SecKey.lockUntil, now.timeIntervalSince1970 + secs)
             appendTrace("应用锁\(how)验证失败 第\(n)次, 冷却 \(Int(secs)) 秒")
         } else {
             appendTrace("应用锁\(how)验证失败 第\(n)次 (冷却开关未开)")

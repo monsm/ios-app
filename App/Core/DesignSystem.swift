@@ -175,7 +175,7 @@ enum DS {
         /// 903 空态装饰图形: 复用**已有的** 素颜模式 (kf_plain)，不另立新键。
         /// 理由就写在调用点：一个 App 里同时存在"关庆祝"和"关插画"两个语义重叠开关，
         /// 用户只会记住其中一个，而记住的那个会变成"切了没反应"。
-        static var emptyMascot: Bool { !Milestones.plainMode }
+        static var emptyMascot: Bool { !DB.store.getBool("kf_plain") }
         /// 889 Hero 纹理: kf_hero_tex ""(无)/"grid" 网格/"grain" 细点。
         /// 214 噪点质感 (杂志封面颗粒) = 这里的 "grain" 档 —— 纯矢量画点，不引位图 (219 资源纪律)，
         /// 而且和 889 一样在"关掉装饰"的射程内: 装饰层不许越过无障碍与素颜模式开关。
@@ -698,22 +698,6 @@ extension View {
     }
 }
 
-/// 33 玻璃 sheet 底: 弹层(sheet)用薄材料垫底, 开启系统"降低透明度"时降级为实底 surface。
-/// 复用 226 那条既有闸门与降级纪律 (AXFlags.reduceTransparency 是本仓降透明的唯一读点,
-/// 与 AccessibilityKit 的 axGlass 同源), 不另立第二套"什么算玻璃"的判据。
-/// 台账判 PART 的收口: 全仓此前只有 SecurityCenterView 一处把 ultraThinMaterial 落在卡片底,
-/// sheet 面没有任何玻璃语义 —— 这一枚令牌就是 sheet 侧的统一入口; 首个真实消费点是
-/// 成就页徽章详情 sheet (自带 detents、无自绘底, 材料能透出来)。其余 sheet 按批次逐个换。
-extension View {
-    @ViewBuilder   // 两支 presentationBackground 的 ShapeStyle 类型不同 (Material vs Color) → 必须 builder
-    func dsSheetGlass() -> some View {
-        if AXFlags.reduceTransparency {
-            presentationBackground(DS.Palette.surface)   // 降透明 = 实底, 信息零丢失
-        } else {
-            presentationBackground(.ultraThinMaterial)   // 33 玻璃底
-        }
-    }
-}
 
 // ---------- 入场编排 ----------
 /// 包15 声音策略 (857 静音开关尊重): App 内 App 音效一律走系统 systemSound —
@@ -1105,12 +1089,6 @@ struct GuidedEmptyView: View {
                     .controlSize(.large)
             }
             // 1044 家庭公告板: 便签也进引导空态 (此前只有设备页/记录页两处直挂, 组件本身不认它)
-            if !Milestones.bulletin.isEmpty {
-                Label("公告: " + Milestones.bulletin, systemImage: "pin.fill")
-                    .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.accentText)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
             if let demoAction, showDemoLink {
                 Button("看看它如何工作 (30 秒演示)") { demoAction() }
                     .vkFont(.footnote, weight: .medium)

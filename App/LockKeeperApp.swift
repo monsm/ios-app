@@ -719,9 +719,6 @@ final class AppState: ObservableObject {
         applyAppearance { DB.store.set("kf_hero_tex", key) }
     }
     /// 898 主控卡每日一句话 (按当天定值，不是每次刷新随机)
-    func setLaunchLine(_ v: Bool) {
-        applyAppearance { DB.store.set("kf_launch_line", v) }
-    }
     /// 890 节日限定色 (默认关)：走外观通道，切换当天 hero 立刻重新取值
     func setFestive(_ v: Bool) {
         applyAppearance { DB.store.set("kf_festive", v) }
@@ -818,8 +815,6 @@ final class AppState: ObservableObject {
             DB.store.remove("kf_hero_stats")
             DB.store.remove("kf_accent_custom")   // 892
             DB.store.remove("kf_hero_tex")
-            // kf_launch_line 默认开：remove 就是回到默认，不是"关掉"
-            DB.store.remove("kf_launch_line")
             DB.store.remove("kf_festive")
             // kf_motion 的默认档是 "standard"，remove 就等于回到默认 (不是关掉动效)
             DB.store.remove("kf_motion")
@@ -840,24 +835,8 @@ final class AppState: ObservableObject {
     func advanceMoment() {
         withAnimation(DS.Motion.soft) { moment = momentQueue.isEmpty ? nil : momentQueue.removeFirst() }
     }
-    /// 成就结算 (开锁/备份/整理/打卡后调用): 音效(996)/本地通知(986)/时刻卡或 toast
-    func evaluateAchievements() {
-        for b in Milestones.evaluate() {
-            if Milestones.collectSound && !Milestones.plainMode { Milestones.playCollectSound() }
-            if Milestones.achNotify { Task { await Milestones.notifyAchievement(b) } }
-            if Milestones.plainMode {
-                showToast("徽章点亮: \(b.title)")
-            } else if b.rarity == .epic {
-                enqueueMoment(Moment(id: "m18." + b.id, icon: b.icon, title: "徽章点亮",
-                                     subtitle: "\(b.title) · \(b.rarity.title)", celebrate: true))
-            } else {
-                showToast("成就达成: \(b.title)")
-            }
-        }
-    }
     /// 启动结算: 跨年烟花(1021) / 安装周年卡(1050) / VoiceOver 记录(1049) / 成就补结算
     func onLaunch() {
-        Milestones.bootstrap()
         // 963 每晚状态确认通知: 启动这一趟负责把排期对齐当前开关 (开关/免扰/台账任一变化都要重排)。
         // 授权沿用 CareSchedule 那一份请求口, 不弹第二个系统授权框。
         Task { await StatusCheckNotice.requestAuthAndSync() }
@@ -894,37 +873,6 @@ final class AppState: ObservableObject {
         let cal = WeekCal.gregorian
         let now = Date()
         let year = cal.component(.year, from: now)
-        if cal.component(.month, from: now) == 1, cal.component(.day, from: now) == 1,
-           !Milestones.onceDone("ny\(year)") {
-            Milestones.markOnce("ny\(year)")
-            enqueueMoment(Moment(id: "ny\(year)", icon: "sparkles", title: "陪你跨入新一年",
-                                 subtitle: "日历翻过一页, 这扇门继续交给你。", celebrate: true))
-        }
-        if let first = Milestones.firstDate, Milestones.daysSinceFirst >= 365,
-           Milestones.isSameMonthDay(first, now), !Milestones.onceDone("appann\(year)") {
-            Milestones.markOnce("appann\(year)")
-            enqueueMoment(Moment(id: "appann\(year)", icon: "rosette",
-                                 title: "一起管了 \(Milestones.daysSinceFirst) 天",
-                                 subtitle: "从第一天到现在, 谢谢你一直在。", celebrate: true))
-        }
-        if UIAccessibility.isVoiceOverRunning { Milestones.markVoiceOver() }
-        // 998 徽章周年回忆: 某枚徽章恰好满一年 (同一月日, 且去年或更早达成) → 一年只弹一次的时刻卡。
-        // badgeAnniversaryToday 此前零调用 = 引擎写好了没人走。onceDone 键带年份, 与 appann 同一防重口径。
-        if let b = Milestones.badgeAnniversaryToday(), !Milestones.onceDone("badgeann_\(b.id)_\(year)") {
-            Milestones.markOnce("badgeann_\(b.id)_\(year)")
-            enqueueMoment(Moment(id: "badgeann_\(b.id)_\(year)", icon: b.icon,
-                                 title: "「\(b.title)」满一年了",
-                                 subtitle: "去年这天拿到的徽章, 现在还在你手上。", celebrate: true))
-        }
-        // 1043 时光胶囊到期: 到日启动弹一次时刻卡 (onceDone 键带 openOn 防重, 与 badgeann 同口径)
-        if let c = Milestones.capsule(), Milestones.capsuleIsOpen(c),
-           !Milestones.onceDone("capsule_\(c.openOn)") {
-            Milestones.markOnce("capsule_\(c.openOn)")
-            enqueueMoment(Moment(id: "capsule." + c.openOn, icon: "hourglass",
-                                 title: "时光胶囊到时间了",
-                                 subtitle: "打开成就页看看那时写下的话。", celebrate: true))
-        }
-        evaluateAchievements()
         // 包4: 关怀提醒巡检 (1013 保养到期/1023 指纹头/校时 30 天/1024 防潮/146 固件, 全部本地通知)
         Task { await CareSchedule.refreshOnLaunch() }
         // 包6: 凭证流转巡检 — 回收站 30 天自动清 (497) + 月度清理任务排程 (366, 幂等)
@@ -969,29 +917,7 @@ final class AppState: ObservableObject {
         }
         // 76 成功短音效: 默认只震动, 开关在设置-开锁 (系统铃声开关静音时自动无声)
         AlertTone.unlockSuccess()
-        let crossing = Milestones.recordUnlockSuccess()
-        let hour = WeekCal.gregorian.component(.hour, from: Date())
-        defer { evaluateAchievements() }
-        guard hour >= 6 else { return }   // 1002: 0-6 点只留触感, 不播全屏时刻
-        if crossing.first {
-            enqueueMoment(Moment(id: "m18.first", icon: "key.horizontal.fill",
-                                 title: "第一扇门, 由你打开",
-                                 subtitle: "这是你和这个家故事的开始。", celebrate: !Milestones.plainMode))
-        } else if crossing.at100 {
-            // 里程碑开锁触发一次庆祝: 与包18 礼花打通 (素颜模式只亮卡不撒花)
-            enqueueMoment(Moment(id: "m18.100", icon: "flag.fill",
-                                 title: "你已守护这个家 100 次",
-                                 subtitle: "寻常的日子, 不寻常的守护。",
-                                 celebrate: !Milestones.plainMode))
-        }
-        if crossing.at1000 { Milestones.heartbeatHaptic() }
-        let year = WeekCal.gregorian.component(.year, from: Date())
-        if Milestones.isBondAnniversaryToday, !Milestones.onceDone("bondann\(year)") {
-            Milestones.markOnce("bondann\(year)")
-            DB.store.set("kf_bond_anniv_done", true)
-            enqueueMoment(Moment(id: "m18.bondann", icon: "sparkles", title: "结缘纪念日快乐",
-                                 subtitle: "这一年的每一次开关, 都有你。", celebrate: !Milestones.plainMode))
-        }
+        Milestones.recordUnlockSuccess()
         if hour >= 22 { publishHomeMoment("欢迎回家, 辛苦了") }
     }
     /// Hero 卡一句话 (1000 晚归欢迎语), 8 秒后自行淡出

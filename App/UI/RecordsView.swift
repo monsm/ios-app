@@ -33,7 +33,6 @@ struct RecordsView: View {
     @State private var reconLine = ""     // 749 对账结果一行 (可复制, 供发给管理员/记进工单)
     @State private var sel = "" // '' 全部 / 成员id / __unknown
     @State private var showAdd = false
-    @State private var showGratitude = false   // 1045 感谢清单
     @State private var showExport = false      // 包12 导出中心
     @State private var showStats = false       // 包10 统计
     // 716 选区导出: 按天整组勾选 (行级多选不做 —— 一页上千行, 逐行勾选的手势成本远高于按天勾)
@@ -408,7 +407,6 @@ struct RecordsView: View {
             recordsCore
         }
         .sheet(isPresented: $showAdd) { AddDeviceView() }
-        .sheet(isPresented: $showGratitude) { GratitudeView() }
         // 808 示例条目点开的引导卡: "在本页重新读取"走的就是右上角那一条 fetch 链, 不另开第二条读取路径。
         .sheet(isPresented: $showSampleGuide) { RecordsSampleGuideView(onFetch: { Task { await fetch() } }) }
         // 185/597 行备注弹窗: 前缘(597)与后缘(185)两个滑出都把目标装进 noteTarget, 共用这一只
@@ -1187,19 +1185,6 @@ struct RecordsView: View {
     /// 975 管家连续天数
     @ViewBuilder
     private var streakBanner: some View {
-        let s = Milestones.streak()
-        if s.cur >= 1 {
-            Section {
-                Label {
-                    Text(s.cur > 1 ? "管家连续 \(s.cur) 天 · 最佳 \(s.best) 天" : "管家第 1 天, 明天也要来")
-                        .fixedSize(horizontal: false, vertical: true)
-                } icon: {
-                    Image(systemName: "flame.fill").accessibilityHidden(true)
-                }
-                .vkFont(.caption)
-                .foregroundStyle(DS.Palette.accentText)
-            }
-        }
     }
 
     /// 590 连续活跃行 + 断档灰点 (近 7 天; 从 allRows 取, 断档是事实不该被过滤搬走)
@@ -1374,18 +1359,6 @@ struct RecordsView: View {
     /// 991 生日撒花: 当天寿星横幅
     @ViewBuilder
     private var birthdayBanner: some View {
-        if let m = Milestones.birthdayCelebrantToday {
-            Section {
-                Label {
-                    Text("今天是\(m.name)的生日, 替我们说声生日快乐")
-                        .fixedSize(horizontal: false, vertical: true)
-                } icon: {
-                    Image(systemName: "party.popper").accessibilityHidden(true)
-                }
-                .vkFont(.footnote)
-                .foregroundStyle(DS.Palette.accentText)
-            }
-        }
     }
 
     /// 983 本月门神榜 + 989/994 成员徽章角标
@@ -1403,12 +1376,6 @@ struct RecordsView: View {
                         Text(r.name)
                             .vkFont(.subheadline)
                             .foregroundStyle(DS.Palette.text)
-                        if let bid = Milestones.memberBadges()[r.id], let b = Milestones.badge(bid) {
-                            Image(systemName: b.icon)
-                                .font(.system(size: DS.Icon.xs))
-                                .foregroundStyle(DS.Palette.accentText)
-                                .accessibilityLabel("徽章 " + b.title)
-                        }
                         Spacer(minLength: 0)
                         if i == 0 {
                             Text("本月门神")
@@ -1692,8 +1659,6 @@ struct RecordsView: View {
     private func daySection(_ g: DayGroup) -> some View {
         // 653 生日组头: 该成员生日日 (MM-dd 命中组头日期) → "今日是妈妈的生日"标签
         let bday = g.key.count == 10 ? String(g.key.suffix(5)) : ""
-        let celebrant = bday.isEmpty ? nil : (Milestones.memberBirthdays().first { $0.value == bday }.map { DB.member($0.key) }.flatMap { $0 })
-        let showYear = g.yearSeparate   // 679 年份大字分隔 (1 月 1-2 日组头)
         let hasAlarm = g.rows.contains(where: \.warn)
         let openN = g.rows.filter { StatsKit.openTypes.contains($0.type) || $0.kind != nil }.count
         let alarmN = g.rows.filter(\.warn).count
@@ -2407,12 +2372,6 @@ struct RecordsView: View {
                             .foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                         // 1044 家庭公告板
-                        if !Milestones.bulletin.isEmpty {
-                            Text("公告: " + Milestones.bulletin)
-                                .vkFont(.caption)
-                                .foregroundStyle(DS.Palette.accentText)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
                     }
                     .accessibilityElement(children: .combine)
                     // 815 空态两个真出路: 记录是锁里拉出来的, 先连设备; 不知道这里记什么就看示例说明。
@@ -2723,7 +2682,6 @@ struct RecordsView: View {
             sel = filters.member
             applyFilter()
         }
-        Milestones.markRecordsViewed()   // 975 管家连续天数
         // 包3/779: 多锁矩阵点格带入的成员过滤 (消费后清空, 不影响手动切换)
         if let f = app.pendingRecordsFilter {
             sel = f
@@ -3619,83 +3577,6 @@ struct OutWinSheet: View {
 }
 
 // ---------- 1045 感谢清单 (本地按月留存, 可生成感谢卡文本) ----------
-struct GratitudeView: View {
-    @EnvironmentObject var app: AppState
-    @Environment(\.dismiss) private var dismiss
-    @State private var names: [String] = []
-    @State private var input = ""
-
-    var body: some View { vkBody.destined(.gratitude) }
-    var vkBody: some View {
-        NavigationStack {
-            List {
-                Section {
-                    HStack(spacing: DS.Space.m) {
-                        TextField("本月想感谢谁?", text: $input)
-                            .submitLabel(.done)
-                            .onSubmit(add)
-                        Button("添加", action: add)
-                            .buttonStyle(SecondaryActionStyle(fullWidth: false))
-                            .disabled(input.trimmingCharacters(in: .whitespaces).isEmpty)
-                    }
-                } header: {
-                    Text("本月感谢清单")
-                } footer: {
-                    Text("记下这个月为这扇门出过力的人, 全部只存在本机。")
-                }
-                Section {
-                    if names.isEmpty {
-                        Text("还没有记录, 从一句谢谢开始。")
-                            .vkFont(.footnote)
-                            .foregroundStyle(DS.Palette.textSub)
-                    }
-                    ForEach(names, id: \.self) { n in
-                        HStack(spacing: DS.Space.s) {
-                            Image(systemName: "heart.fill")
-                                .font(.system(size: DS.Icon.sm))
-                                .foregroundStyle(DS.Palette.danger)
-                                .accessibilityHidden(true)
-                            Text(n)
-                                .vkFont(.subheadline)
-                                .foregroundStyle(DS.Palette.text)
-                            Spacer(minLength: 0)
-                        }
-                        .swipeActions {
-                            Button(role: .destructive) {
-                                Milestones.removeGratitude(n)
-                                reload()
-                            } label: { Label("移除", systemImage: "trash") }
-                        }
-                    }
-                }
-                if !names.isEmpty {
-                    Section {
-                        Button {
-                            UIPasteboard.general.string = "本月想感谢: " + names.joined(separator: "、")
-                                + "。谢谢你, 把家管得有人情味。"
-                            app.showToast("感谢卡已复制")
-                        } label: {
-                            Label("生成感谢卡 (复制文本)", systemImage: "doc.on.doc")
-                                .frame(minHeight: DS.Hit.min)
-                        }
-                    }
-                }
-            }
-            .navigationTitle("感谢清单")
-            .variantList()
-            .dsScreenBackground()
-            .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { dismiss() } } }
-            .onAppear(perform: reload)
-        }
-    }
-    private func add() {
-        Milestones.addGratitude(input)
-        input = ""
-        reload()
-    }
-    private func reload() { names = Milestones.gratitude() }
-}
-
 // ---------- 808 记录空态的「真实数据从这里开始」引导卡 ----------
 /// 从示例条目点进来。这一页只说三件能核的事: ① 刚才那三条是示例不是数据; ② 记录存在门锁自己的日志里;
 /// ③ 把它变成真行要做的动作。两个按钮都是真出口: 「在本页重新读取」调 RecordsView 既有的 fetch 链
