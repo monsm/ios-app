@@ -39,10 +39,6 @@ struct BackupView: View {
     /// (两层模态套着)。所以先存这里, 等选择器真正收起后再问。
     @State private var pendingFileText: String?
 
-    // 2026-10-15 走查·CI 补刀: 上一批改这一行时把 `showStudio` **改名成了** `showWebDAV`，
-    // 而 `$showStudio`(:64) 与 `showStudio = true`(:303) 两处用法都还在 ⇒ 编译报 cannot find 'showStudio'（run 99）。
-    // 两个 sheet 各自一枚状态，顺带把这批遗留的 8 空格缩进收齐。
-    @State private var showStudio = false      // 备份工作室（自带 NavigationStack ⇒ 只能 sheet，不能 push）
     @State private var showWebDAV = false      // WebDAV 策略页，同上
 
 private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloudPw.isEmpty }
@@ -76,7 +72,6 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
         } message: {
             Text("云端备份里包含 \(pendingRestore?.devices.count ?? 0) 台门锁。恢复后同名设备会被云端数据覆盖，本机现有改动将丢失。")
         }
-        .sheet(isPresented: $showStudio) { BackupStudioView() }
         .sheet(isPresented: $showWebDAV) { WebDAVStudioView() }
         // 方案 a: 文件选择器 —— 备份的正常去处是「iCloud 云盘 / 我的 iPhone」。
         // 与「粘贴文本」共用同一个解析入口 (doImportText → parsePreview), 不另写一套解析。
@@ -228,7 +223,7 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
                     Label("文件先在本机加密，服务器只拿到密文", systemImage: "lock.rectangle.stack")
                     Label("不配也能用：本页的文本导出与本地导入是完整可用的", systemImage: "square.and.arrow.down")
                     // 2026-10-15 走查: WebDAVStudioView 自带 NavigationStack, 而本页是 sheet ——
-                    // push 进去就是内层栈套外层 (两层导航栏)。本页已有 `showStudio` 走 sheet 的先例,
+                    // push 进去就是内层栈套外层 (两层导航栏)。本页已有 `showWebDAV` 走 sheet 的先例,
                     // 这一条照同款改。
                     Button { showWebDAV = true } label: {
                         Text("服务器根路径默认内置坚果云，点这里可改")   // 816 服务器根路径默认内置
@@ -401,8 +396,6 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
     private var studioSection: some View {
         Section("备份工作室") {
             Button {
-                showStudio = true
-            } label: {
                 Label("打开备份工作室", systemImage: "wrench.and.scissors")
                     .vkFont(.subheadline, weight: .semibold)
                     .foregroundStyle(DS.Palette.accentText)

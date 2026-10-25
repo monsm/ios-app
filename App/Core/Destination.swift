@@ -1,5 +1,5 @@
 // 本文件由 `node tools/destmap.js --emit` 生成，**不要手改**。
-// 生成时的目的地总数 = 56。改了界面呈现方式之后重新生成，
+// 生成时的目的地总数 = 51。改了界面呈现方式之后重新生成，
 // 并核对 diff —— 少一条就是某套界面会缺一个页面而没人发现。
 import SwiftUI
 
@@ -10,7 +10,6 @@ enum Destination: String, CaseIterable, Identifiable {
     case addPwd = "AddPwdView"
     case alarmCenter = "AlarmCenterView"
     case autoCal = "AutoCalView"
-    case backupStudio = "BackupStudioView"
     case backup = "BackupView"
     case borrowSheet = "BorrowSheetView"
     case credBin = "CredBinView"
@@ -26,14 +25,12 @@ enum Destination: String, CaseIterable, Identifiable {
     case deviceInfo = "DeviceInfoView"
     case diagnostics = "DiagnosticsView"
     case diagReference = "DiagReferenceView"
-    case exportWizard = "ExportWizardView"
     case firmware = "FirmwareView"
     case focusUnlock = "FocusUnlockView"
     case gateway = "GatewayView"
     case houseCleaningPreset = "HouseCleaningPresetView"
     case keychainHW = "KeychainHWView"
     case linkPrefs = "LinkPrefsView"
-    case localFiles = "LocalFilesView"
     case lockProfile = "LockProfileView"
     case memberArchived = "MemberArchivedView"
     case memberCenter = "MemberCenterView"
@@ -44,10 +41,8 @@ enum Destination: String, CaseIterable, Identifiable {
     case memberWizard = "MemberWizardView"
     case mergeMembers = "MergeMembersView"
     case messages = "MessagesView"
-    case migrationWizard = "MigrationWizardView"
     case recordsSampleGuide = "RecordsSampleGuideView"
     case records = "RecordsView"
-    case restoreWizard = "RestoreWizardView"
     case safemodeIntro = "SafemodeIntroView"
     case securityAudit = "SecurityAuditView"
     case securityCenter = "SecurityCenterView"
