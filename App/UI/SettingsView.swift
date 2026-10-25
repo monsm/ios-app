@@ -371,11 +371,8 @@ struct SettingsView: View {
             NavigationLink { FAQPage() } label: { Label("常见问题", systemImage: "questionmark.circle") }   // 514 常见问题
             // 831: 这一页是本轮新建的, 用 NEW 角标做首见提示 (进入一次即消)
             newBadgeRow("按症状排查", "guide282") { SymptomGuideView() }   // 282 按症状排查
-            NavigationLink { DataFlowPage() } label: { Label("数据从哪来到哪去", systemImage: "arrow.right.circle") }   // 240 数据从哪来到哪去
-            NavigationLink { CreditsPage() } label: { Label("致谢与许可", systemImage: "hands.clap") }   // 300 致谢与许可
             // 43/44 新变化与更新说明: 每条都带功能编号，构建时由 tools/changelogcheck.js 拿代码标注对拍，
             // 对不上就判失败 —— 所以这一页不可能出现"说了没做"的功能。
-            NavigationLink { CopyCheckPage() } label: { Label("文案体检", systemImage: "text.badge.checkmark") }   // 664 文案体检
             if DB.store.getBool("kf_onb_ceremony") {
                 NavigationLink { ButlerCertificateView() } label: {
                     Label("我的就任证书", systemImage: "rosette")   // 813 我的就任证书
