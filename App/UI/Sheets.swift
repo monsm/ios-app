@@ -76,8 +76,8 @@ struct AddDeviceView: View {
             if !pairError.isEmpty {
                 // 256: 回滚完成后错误必须可见, 不能无声吞掉
                 // 829 (2026-10-11 拍板, D-150a 方案①): 失败面 = 页内常驻横幅 + 直达说明书症状树。
-                // 排查内容不再在本页抄第四遍 —— 单一来源 = DiagKit.SymptomGuide.bleConnect (282 判断树),
-                // 与 DFU 失败页 (142/1037) 同一先例: 横幅常驻, 出口就挂在横幅旁边, 不新造形状。
+                // 排查只给一句能当场做的事; 原先这里挂「看三步排查」指到帮助页的症状问答树,
+                // 那套问答随大删波 3 移除 (用户决策), 所以横幅不再指向一个不存在的页面。
                 Section {
                     Label {
                         Text(pairError).fixedSize(horizontal: false, vertical: true)
@@ -86,15 +86,8 @@ struct AddDeviceView: View {
                     }
                     .vkFont(.footnote)
                     .foregroundStyle(DS.Palette.danger)
-                    NavigationLink {
-                        SymptomGuideView(initial: "bleConnect")
-                    } label: {
-                        Label("看三步排查", systemImage: "stethoscope")   // 829 看三步排查
-                            .vkFont(.footnote)
-                            .frame(minHeight: DS.Hit.min)
-                    }
                 } footer: {
-                    Text("配不上先别反复重试: 点上面一步一问答, 结论只给下一步动作, 全程只在本机问答。")
+                    Text("配不上先别反复重试: 先确认锁已上电、手机蓝牙开着, 再回设备页重连一次。")
                 }
             }
             Section("操作指引") {

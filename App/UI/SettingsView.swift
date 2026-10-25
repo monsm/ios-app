@@ -18,7 +18,6 @@ struct SettingsView: View {
     @State private var showManage = false
     /// 2026-10-17 安卓版: 把当前锁的开锁凭证渲染成二维码 (扫码导入, 之后不再需要)
     @State private var shareLock: Keychain?
-    @State private var showManual = false
     @State private var showDiag = false   // 587: 记录详情低电告警带 mac 过来 → 切锁并推诊断页
     @State private var showCare = false   // 1013: 保养到期通知带 mac 过来 → 切锁并推维护页 (与 587 同构)
     // 2026-10-15 走查: 两枚"目标页自带 NavigationStack"的入口改用 sheet 呈现 (见 memberFamilyRows 注释)
@@ -131,13 +130,9 @@ struct SettingsView: View {
         .sheet(isPresented: $showFamilySettings) { MemberFamilySettingsView() }
         .sheet(isPresented: $showSecurity, onDismiss: { landPendingFocus(app.pendingSettingsFocus) }) { SecurityCenterView() }
         .sheet(isPresented: $showHouseCleaning) { HouseCleaningPresetView() }
-        .sheet(isPresented: $showManual) {
-            NavigationStack { ManualPage() }
-                .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { showManual = false } } }
-        }
         // 587: 诊断页用 sheet 呈现 (设置栈里那行 NavigationLink 仍走 push, 两条入口同一个页面)。
         // 为什么不用 navigationDestination(isPresented:): 全仓无先例, 而 sheet+NavigationStack 与
-        // showManual 那一段逐字同构 —— 无编译器的机器上, 复用已验证的写法是唯一稳的取向。
+        // 与 showDiag 那一段逐字同构 —— 无编译器的机器上, 复用已验证的写法是唯一稳的取向。
         .sheet(isPresented: $showDiag) {
             NavigationStack { DiagnosticsView() }
                 .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("完成") { showDiag = false } } }
@@ -304,9 +299,7 @@ struct SettingsView: View {
             SearchHit(id: "s.achievements", title: "我的成就", icon: "rosette", anchor: .memory),
             SearchHit(id: "s.care", title: "关怀提醒与公告板", icon: "heart.text.square", anchor: .memory),
             SearchHit(id: "s.maintremind", title: "维护提醒", icon: "bell.badge", anchor: .reminder),
-            SearchHit(id: "s.demo", title: "演练与演示 (演示模式/样例备份/七天样例)", icon: "theatermasks", anchor: .drill),
-            SearchHit(id: "s.faq", title: "常见问题 (FAQ)", icon: "questionmark") { showManual = true },
-            SearchHit(id: "s.manual", title: "使用手册", icon: "book") { showManual = true },
+            SearchHit(id: "s.demo", title: "演示模式 (演示数据铺底/一键清除)", icon: "theatermasks", anchor: .drill),
             SearchHit(id: "s.flow", title: "数据流向说明", icon: "arrow.right.circle", anchor: .help),
             SearchHit(id: "s.credits", title: "致谢与许可", icon: "hands.clap", anchor: .help),
             SearchHit(id: "s.copycheck", title: "文案体检", icon: "text.badge.checkmark", anchor: .help),   // 664 文案体检
@@ -336,7 +329,7 @@ struct SettingsView: View {
         }
     }
 
-    // ---------- 包14 演练区 (836/837/844/845): 演示模式总开关 + 样例备份 + 演练入口 ----------
+    // ---------- 包14 演练区 (836/842): 演示模式总开关 + 首备演练转正 ----------
     private var drillSection: some View {
         Section {
             VariantToggle("演示模式 (所有开锁走模拟, 不碰锁端)", isOn: Binding(
@@ -346,9 +339,6 @@ struct SettingsView: View {
                     app.loadDevices()
                     app.showToast(on ? "演示模式已开 · demo_ 数据已铺底" : "已清除全部演示数据")
                 }))
-            NavigationLink { DemoLabsView() } label: {
-                Label("演练场: 样例备份/七天样例/锁死演练", systemImage: "testtube.2")   // 837/845/844 演练场
-            }
             if DemoKit.drillBackupOn {
                 Button("首备演练完成, 转正式备份", role: .destructive) {   // 842 首备演练完成
                     DemoKit.finishDrillBackup()
@@ -362,21 +352,9 @@ struct SettingsView: View {
         }
     }
 
-    // ---------- 包14 帮助区 (835/514/240/300/664/813): 手册/FAQ/数据流向/致谢/文案体检/证书 ----------
+    // ---------- 包14 帮助区 (805): 引导回看。手册/FAQ/症状排查/就任证书已随大删波 3 移除 ----------
     private var helpSection: some View {
         Section {
-            Button { showManual = true } label: { Label("使用手册与常见问题", systemImage: "book") }
-            // 上一行写着"与常见问题", 但 FAQPage 全仓没有入口 (零引用) → 承诺与实现不符, 这里补上真入口
-            NavigationLink { FAQPage() } label: { Label("常见问题", systemImage: "questionmark.circle") }   // 514 常见问题
-            // 831: 这一页是本轮新建的, 用 NEW 角标做首见提示 (进入一次即消)
-            newBadgeRow("按症状排查", "guide282") { SymptomGuideView() }   // 282 按症状排查
-            // 43/44 新变化与更新说明: 每条都带功能编号，构建时由 tools/changelogcheck.js 拿代码标注对拍，
-            // 对不上就判失败 —— 所以这一页不可能出现"说了没做"的功能。
-            if DB.store.getBool("kf_onb_ceremony") {
-                NavigationLink { ButlerCertificateView() } label: {
-                    Label("我的就任证书", systemImage: "rosette")   // 813 我的就任证书
-                }
-            }
             Button {
                 Onboarding.replayAll()
                 app.onboardingFinished = false
@@ -398,7 +376,7 @@ struct SettingsView: View {
         } header: {
             Text("帮助与关于")
         } footer: {
-            Text("全部本地内容, 无在线客服; 手册章节随引导进度标记未读。")
+            Text("引导进度全部记在本机, 不上传。")
         }
     }
 
