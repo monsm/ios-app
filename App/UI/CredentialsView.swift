@@ -836,46 +836,6 @@ struct CredentialsView: View {
         }
     }
 
-    // ---------- 锁内存量行 + 台账对账 (无数据时整段隐藏, 不留空段) ----------
-    @ViewBuilder
-    private var stockSection: some View {
-        let st = app.status
-        let snap = app.snapshot
-        let pStock = st?.pwdStock ?? snap?.pwdStock ?? -1
-        let fStock = st?.fpStock ?? snap?.fpStock ?? -1
-        if pStock >= 0 || fStock >= 0 {
-            Section("锁内存量") {
-                HStack(alignment: .top, spacing: DS.Space.s) {
-                    Text("最近读到的锁内余量")
-                        .foregroundStyle(DS.Palette.textSub)
-                    Spacer(minLength: DS.Space.m)
-                    Text([pStock >= 0 ? "密码 \(pStock)" : nil, fStock >= 0 ? "指纹 \(fStock)" : nil].compactMap { $0 }.joined(separator: " · "))
-                        .vkFont(.subheadline)
-                        .foregroundStyle(DS.Palette.text)
-                        .multilineTextAlignment(.trailing)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .accessibilityElement(children: .combine)
-                // 口径修正: pStock/fStock 是锁内**剩余**容量, 旧写法拿"剩余 − 本机条数"当作
-                // "锁内多出的未知凭证数", 数值与结论都是错的 (正例见 Sheets:959 的 cap − stock)。
-                // 已用 = 容量上限 − 剩余; 上限未知 (旧快照无 KLV#24/#27) 时不做推断, 宁可不显示。
-                let snap = DB.readStatus(mac)
-                let dp = excessInLock(snap?.pwdCap, pStock, DB.listPwds(mac).count)
-                let df = excessInLock(snap?.fpCap, fStock, DB.listFps(mac).count)
-                if dp > 0 || df > 0 {
-                    Label {
-                        Text("锁内还有 \(dp > 0 ? "密码 \(dp) 条" : "")\(dp > 0 && df > 0 ? "、" : "")\(df > 0 ? "指纹 \(df) 条" : "") 不在本机台账 — 可能由键盘或其他管理员添加。")
-                            .fixedSize(horizontal: false, vertical: true)
-                    } icon: {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .accessibilityHidden(true)
-                    }
-                    .vkFont(.caption)
-                    .foregroundStyle(DS.Palette.warn)
-                }
-            }
-        }
-    }
 
     // ---------- 524/526/527/914/182 密码段 (三态分组头 528 + 置顶 + 组尾统计 529) ----------
     private var sortedPwds: [LedgerPwd] { orderedPwds(segFilteredPwds()) }
@@ -1854,70 +1814,7 @@ struct CredentialsView: View {
         reload()
     }
 
-    // ---------- 智能列表 (527) 管理 ----------
-    /// 527 新建向导的条件勾选集: 向导是多层弹层 (名称 → 条件), 勾选态要跨层保留。
-    /// 旧写法把 Pick 放函数体里、勾一次整条向导重启, 勾选和名称全丢; 提成引用类型后条件层只重建自己。
-    final class SmartPick { var chosen: Set<String> = [] }
 
-    private func newSmartList(pick: SmartPick = SmartPick(), named: String = "", owner: String = "") {
-        let alert = UIAlertController(title: "新建智能列表", message: "把常用筛选组合存为命名快捷", preferredStyle: .alert)   // 527 新建智能列表
-        alert.addTextField { $0.placeholder = "名称 (如: 已过期访客)"; $0.text = named }
-        // 527: 属主可选。筛选 (:890/:1054) 是**成员 id 精确匹配**, 手输姓名在这里解析成 id;
-        // 空 = 全部属主。解析不到会退回这一步 (保留已勾条件, 免得存出一条永远 0 命中的列表)
-        alert.addTextField { $0.placeholder = "属主 (可选: 成员 id 或姓名)"; $0.text = owner }
-        alert.addAction(UIAlertAction(title: "下一步", style: .default) { _ in
-            let name = (alert.textFields?.first?.text ?? "").trimmingCharacters(in: .whitespaces)
-            guard !name.isEmpty else { app.showToast("起个名字"); return }
-            let raw = (alert.textFields?.dropFirst().first?.text ?? "").trimmingCharacters(in: .whitespaces)
-            var ownerID = ""
-            if !raw.isEmpty {
-                if DB.member(raw) != nil {
-                    ownerID = raw
-                } else if let m = DB.members().first(where: { $0.name == raw }) {
-                    ownerID = m.id
-                } else {
-                    app.showToast("没找到成员「\(raw)」: 属主按成员 id 或姓名对上才行, 请重填")
-                    newSmartList(pick: pick, named: name, owner: raw)
-                    return
-                }
-            }
-            UIApplication.topViewController()?.present(smartSheet(pick, name: name, owner: ownerID), animated: true)
-        })
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-        UIApplication.topViewController()?.present(alert, animated: true)
-    }
-
-    /// 527 条件多选层: 勾选只重建这一层, 名称/属主不再重问
-    private func smartSheet(_ pick: SmartPick, name: String, owner: String) -> UIAlertController {
-        let sheet = UIAlertController(title: "筛选条件", message: "可多选, 全部满足才命中", preferredStyle: .actionSheet)
-        // 「添加超一年」而非「一年未用」：台账里只有**添加时刻** (`LedgerFp.at` / `LedgerPwd.at`)，
-        // 锁端没有"逐凭证最后使用"这一读数 (529 那套是从日志推断的、还会返回 nil)，
-        // 所以这条筛的就是建档时间，措辞不能说成"未使用"。存盘的 tag 值仍是 "stale"，老列表不受影响。
-        for opt in ["密码", "指纹", "已过期", "无归属", "添加超一年"] {
-            let box = pick.chosen.contains(opt) ? "☑ " : "☐ "
-            sheet.addAction(UIAlertAction(title: box + opt, style: .default) { _ in
-                if pick.chosen.contains(opt) { pick.chosen.remove(opt) } else { pick.chosen.insert(opt) }
-                // 等旧弹层收完再挂新弹层 (同步 present 会在收场动画里被系统丢掉)
-                if let top = UIApplication.topViewController() {
-                    top.dismiss(animated: true) { top.present(smartSheet(pick, name: name, owner: owner), animated: true) }
-                }
-            })
-        }
-        sheet.addAction(UIAlertAction(title: "保存", style: .default) { _ in
-            let kind = pick.chosen.contains("指纹") ? "fp" : "pwd"
-            var state = ""
-            if pick.chosen.contains("已过期") { state = "expired" }
-            let tag = pick.chosen.contains("无归属") ? "noowner" : (pick.chosen.contains("添加超一年") ? "stale" : "")
-            var lists = CredentialOrg.smartLists(mac)
-            let l = CredSmartList(id: UUID().uuidString, name: name, kind: kind, owner: owner, state: state, tag: tag)
-            lists.append(l)
-            CredentialOrg.saveSmartLists(mac, lists)
-            smartSel = l.id
-            app.showToast("已套用智能列表「\(name)」")
-        })
-        sheet.addAction(UIAlertAction(title: "取消", style: .cancel))
-        return sheet
-    }
     private func manageSmartLists() {
         let lists = CredentialOrg.smartLists(mac)
         guard !lists.isEmpty else { app.showToast("还没有智能列表"); return }
@@ -1977,60 +1874,10 @@ struct CredentialsView: View {
                 .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
             } else {
-                otpExplainer   // 820 科普空态: 未开通时先把机制讲清, 而不是只丢一枚看不懂的开关
             }
         }
     }
 
-    // ---------- 820 OTP 科普空态 (Authy) ----------
-    // 原句写的是「图解 30 秒动态码原理 + 手动录入按钮」，两处都得按真实机制改口径：
-    // ① 本锁 ZOTP 的窗口是 **30 分钟**，不是 30 秒 (ZOTP.generate: now/(60*period)，金标 case v30_*/v60_0
-    //    就是这个换算)。照创意原文写「30 秒」等于让界面承诺一个算法里不存在的东西。
-    // ② 没有「手动录入」那一步可录：种子就是这把锁的 skey (绑定时已在本地)，用户手上不存在一个要抄的 secret。
-    //    所以这里给的两个动作都是真做得到的：开通 = 上面那枚开关；校准 = 进 SyncTimeView。
-    // 三格"图解"用的是符号 + 短句，不是插图：本仓零位图资产 (219 / tools/assetscheck.js)，
-    // 画不出来的东西就不该用一张不存在的图去承诺。
-    private var otpExplainer: some View {
-        VStack(alignment: .leading, spacing: DS.Space.s) {
-            Text("临时密码是怎么来的")   // 820 临时密码是怎么来的
-                .vkFont(.subheadline, weight: .medium)
-                .foregroundStyle(DS.Palette.text)
-            HStack(alignment: .top, spacing: DS.Space.s) {
-                otpStepCell("key.horizontal", "这把锁的密钥", "绑定时已存在本机，从不外发")
-                otpStepCell("clock", "当前 30 分钟窗口", "按门锁自己的钟切，不是手机时间")
-                otpStepCell("number", "算出 6 位码", "过了窗口自动作废")
-            }
-            NavigationLink { SyncTimeView() } label: {
-                Label("先校准门锁时间 (窗口按锁钟切)", systemImage: "clock.arrow.2.circlepath")
-            }
-            Text("再打开上面那枚「开通临时密码」就能生成。每个窗口最多 100 个码，用完等下一个窗口。")
-                .vkFont(.caption)
-                .foregroundStyle(DS.Palette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(DS.Space.s)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .variantPlate(DS.Palette.surfaceAlt, .control)
-        .accessibilityElement(children: .contain)
-    }
-    private func otpStepCell(_ symbol: String, _ title: String, _ note: String) -> some View {
-        VStack(alignment: .leading, spacing: DS.Space.xxs) {
-            Image(systemName: symbol)
-                .font(.system(size: DS.Icon.sm))
-                .foregroundStyle(DS.Palette.accentText)
-                .accessibilityHidden(true)
-            Text(title)
-                .vkFont(.caption, weight: .medium)
-                .foregroundStyle(DS.Palette.text)
-                .fixedSize(horizontal: false, vertical: true)
-            Text(note)
-                .vkFont(.caption2)
-                .foregroundStyle(DS.Palette.textSub)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .combine)
-    }
 
     @ViewBuilder
     private var otpGenRow: some View {
