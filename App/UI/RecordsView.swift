@@ -75,11 +75,6 @@ struct RecordsView: View {
     // 185/597 左滑(前缘/后缘两个方向)共用的行备注弹窗目标 + 草稿
     @State private var noteTarget: RowVM? = nil
     @State private var noteDraft = ""
-    // 671 在线假日源的状态: 拉取中标记 + 上一次结果 (成功/失败都如实留一行, 不弹完就消失)
-    @State private var holBusy = false
-    @State private var holMsg = ""
-    @State private var holSrcDraft = ""
-    @State private var showHolSrc = false
     @State private var showActiveCreds = false  // 574 活跃凭证排序
     @State private var showOutWin = false      // 575 越界开门清单
     @State private var travelDismissed = false // 1016 出行观察横幅 (会话内可关)
@@ -448,17 +443,6 @@ struct RecordsView: View {
                     }
                 }
         }
-        // 671 换源: 只填前缀, 拼上年份才是完整地址 —— 不让用户贴一整条带年份的 URL, 免得明年悄悄失效
-        .alert("假日表来源", isPresented: $showHolSrc) {   // 671 假日表来源
-            TextField("https:// 开头的 JSON 前缀，以 / 结尾", text: $holSrcDraft)
-            Button("保存") {
-                HolidayFeed.setSource(holSrcDraft)
-                holMsg = "来源已设为" + (HolidayFeed.usingBuiltinSource ? "内置公开源" : "自定义源") + " — 按一次「更新」才生效"
-            }
-            Button("取消", role: .cancel) {}
-        } message: {
-            Text("只接受 https 前缀，程序会在后面拼 <年份>.json。清空输入框即回到内置源；换源不影响已缓存的年份，需重新拉取。")
-        }
     }
 
     private var macs: [String] { scope == 1 ? DB.keychains().map { $0.mac } : [mac] }
@@ -487,67 +471,6 @@ struct RecordsView: View {
                 .foregroundStyle(DS.Palette.accentText)
                 .frame(minHeight: DS.Hit.min)
             }
-        }
-    }
-
-    /// 671 在线假日源入口 (拍板 #22)。三条口径同时写在 UI 上，因为它们是"能不能信这张表"的一部分：
-    /// ① 拉取失败**绝不清空**已有表 (HolidayFeed 只在整份校验通过后替换，结果原样回显)；
-    /// ② 自动档默认关 —— 这是个离线工具，联网必须用户明确开；
-    /// ③ 源里的年份整年覆盖内置表，不在同一年内混两副表 (公告改期时会出现半新半旧)。
-    @ViewBuilder
-    private var holidayFeedRows: some View {
-        let thisYear = WeekCal.gregorian.component(.year, from: Date())
-        Text(HolidayFeed.coverageText + " · 生效表覆盖至 \(RecordSearch.holidayYearMax) 年")
-            .vkFont(.caption2)
-            .foregroundStyle(DS.Palette.textSub)
-            .fixedSize(horizontal: false, vertical: true)
-        HStack(spacing: DS.Space.s) {
-            Button(holBusy ? "拉取中…" : "更新 \(thisYear) 年假日表") {   // 671 更新
-                holBusy = true
-                holMsg = ""
-                Task {
-                    switch await HolidayFeed.fetch(year: thisYear) {
-                    case .success(let ok): holMsg = ok
-                    case .failure(let bad): holMsg = bad.message
-                    }
-                    holBusy = false
-                }
-            }
-            .vkFont(.caption, weight: .medium)
-            .foregroundStyle(DS.Palette.accentText)
-            .disabled(holBusy)
-            .frame(minHeight: DS.Hit.min)
-            Button("源") {
-                holSrcDraft = HolidayFeed.sourceBase
-                showHolSrc = true
-            }
-            .vkFont(.caption, weight: .medium)
-            .foregroundStyle(DS.Palette.textSub)
-            .frame(minHeight: DS.Hit.min)
-            if HolidayFeed.lastUpdateSec > 0 {
-                Button("清除在线") {
-                    HolidayFeed.clearCache()
-                    holMsg = "已清除在线缓存，回到只信内置表"
-                }
-                .vkFont(.caption, weight: .medium)
-                .foregroundStyle(DS.Palette.warn)
-                .frame(minHeight: DS.Hit.min)
-            }
-            Spacer(minLength: 0)
-        }
-        VariantToggle("回前台时自动更新今年", isOn: Binding(get: { HolidayFeed.autoOn },   // 671 回前台时自动更新今年
-                                                          set: { HolidayFeed.setAuto($0) }))
-            .vkFont(.caption)
-            .frame(minHeight: DS.Hit.min)
-        Text("默认源是公开仓库按国务院公告发布的年份文件；内置表仍保底，联网失败不影响判定。")
-            .vkFont(.caption2)
-            .foregroundStyle(DS.Palette.textSub)
-            .fixedSize(horizontal: false, vertical: true)
-        if !holMsg.isEmpty {
-            Text(holMsg)
-                .vkFont(.caption2)
-                .foregroundStyle(holMsg.hasPrefix("已收录") || holMsg.hasPrefix("已清除") ? DS.Palette.ok : DS.Palette.warn)
-                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
@@ -1035,8 +958,6 @@ struct RecordsView: View {
                     .vkFont(.caption2)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)
-                // 671 在线假日源 (拍板 #22): 内置表始终兜底, 拉到的年份按年整体覆盖; 自动档默认关。
-                holidayFeedRows
             }
             // 复位按钮: 原来是 section header 里的附属品, 现在面板展开时放在顶部一行
             if activeFilters {

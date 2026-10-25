@@ -545,29 +545,26 @@ enum RecordSearch {
         Holiday(day: "2026-10-07", name: "国庆", off: true),
         Holiday(day: "2026-10-10", name: "国庆节", off: false),
     ]
-    /// 671 生效表 = 内置 + 在线缓存 (按年整体覆盖, 见 `HolidayFeed`)。
-    /// 本枚举不是 @MainActor, 但这里只加**只读语义的缓存**：所有调用方都在主线程 (View / @MainActor 的 HolidayFeed),
-    /// 失效键是偏好里的"最近更新时间"整数 —— 写缓存的那一步必然改它, 所以不会读到过期合并结果。
+    /// 671 生效表 = 内置表 (按国务院公告逐日核对)。在线拉取已随波 2 移除。
+    /// 本枚举不是 @MainActor，但这里只加**只读语义的缓存**：合并结果只由内置表派生，启动后不再变。
+    /// 生效表不再随偏好变化 (无在线缓存), 所以不需要外部失效键。
     // 三个缓存 + 失效键是一组 (ensureMerged 一次写全, accessor 只读) —— 用一把原生锁护住整组。
     // 选 Locked (值活在临界区内) 而不是 unsafe: 它是 Swift 并发组里的标准互斥原语,
-    // withLock 保证 unlock 一定执行; 读多写少 (只在公告更新时才写), 锁竞争可忽略。
+    // withLock 保证 unlock 一定执行; 内置表是常量, 合并只在首次访问时发生一次。
     private struct Merged: Sendable {
         var rows: [Holiday] = []
         var map: [String: String] = [:]
         var makeup: Set<String> = []
-        var stamp = -2
+        var stamp = 0
     }
     private static let mergedLock = Locked(Merged())
     private static func ensureMerged() {
-        let s = HolidayFeed.lastUpdateSec
         mergedLock.withLock { m in
-            guard s != m.stamp else { return }
-            let rows = HolidayFeed.rows
-            m.rows = rows
-            m.map = Dictionary(rows.filter { $0.off }.map { ($0.day, $0.name) }, uniquingKeysWith: { a, _ in a })
-            m.makeup = Set(rows.filter { !$0.off }.map { $0.day }
-            )
-            m.stamp = s
+            guard m.stamp == 0 else { return }
+            m.rows = builtinRows
+            m.map = Dictionary(builtinRows.filter { $0.off }.map { ($0.day, $0.name) }, uniquingKeysWith: { a, _ in a })
+            m.makeup = Set(builtinRows.filter { !$0.off }.map { $0.day })
+            m.stamp = 1
         }
     }
     static var holidays: [Holiday] { ensureMerged(); return mergedLock.withLock { $0.rows } }
@@ -577,7 +574,7 @@ enum RecordSearch {
     static func isMakeupWorkday(_ dayKey: String) -> Bool { ensureMerged(); return mergedLock.withLock { $0.makeup.contains(dayKey) } }
     /// 内置表覆盖到哪一年 (UI 文案据此说明"次年公告未发布前不显示", 不假装全都有)
     static var builtinHolidayYearMax: Int { builtinRows.compactMap { Int($0.day.prefix(4)) }.max() ?? 0 }
-    /// 生效表覆盖到哪一年 (在线拉到 2027 公告后这里就变成 2027)
+    /// 生效表覆盖到哪一年 (现在恒等于内置表口径)
     static var holidayYearMax: Int { holidays.compactMap { Int($0.day.prefix(4)) }.max() ?? 0 }
     /// 672 假日顺延: 节假日当日"异常时段"判定结束时间 +2 小时 (设置可关)
     static var holidayExtendOn: Bool { DB.store.getBool("kf_holiday_extend", true) }

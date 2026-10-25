@@ -1383,8 +1383,6 @@ struct RootView: View {
                 AutoOpenController.shared.onForeground(mac: app.currentMac)
                 // 344 回前台才出快捷条 (344 的原话就是"回前台显示"), 顺带重算剩余秒数
                 app.refreshPasteSuggestion()
-                // 671 自动档: 用户没开开关时这里一次请求都不发；开了也每进程只发一次 (HolidayFeed 内部判)
-                Task { await HolidayFeed.autoRefreshIfNeeded() }
                 // 897 四季图标: 默认关。开着也只在"季节真的换了"时对齐一次 (年-季记号)，不每次回前台打扰
             }
         } else if phase == .background {
