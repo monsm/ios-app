@@ -1182,7 +1182,7 @@ struct RecordsView: View {
     /// 698 上周小结: 上一个完整自然周 (周一–周日) 的 CSV + 三句话摘要, 一起进剪贴板。
     /// 归属口径与 799 同源 (Attribution 可证明才计成员, 带"约"); 缓存只留 300 条, 拿不到就如实说。
     private func copyLastWeekDigest() {
-        let m = StatsKit.build(mac: app.currentMac, week: 7, window: 30)
+        let m = StatsKit.build(mac: app.currentMac)
         let d = m.lastWeekDigest()
         let text = d.lines.joined(separator: "\n") + "\n\n" + d.csv
         UIPasteboard.general.string = text
