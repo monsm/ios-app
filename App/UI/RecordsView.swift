@@ -3,7 +3,7 @@
 // 包9 增量: 时间线升级 (578 组头吸顶 / 738 告警行红条+浅红底 / 592 连击合并 /
 //           183 成员色点 / 184 开门方式图标 / 655 动词化文案 / 681 农历小字 /
 //           679 年份分隔 / 649 凌晨归属 / 590 连续活跃 / 796 第N位使用者 /
-//           1016 出行观察 / 785 泳道时间线) +
+//           1016 出行观察 / )+
 //           检索 (551/553/554/555/557/562/560/564/571/572/567/568/569/570/574/575/561/770) +
 //           告警中心入口 (735 未处置角标) + 详情 (576/577/727/736/737/742, 见 RecordsTimeline.swift)。
 // 本批 (第一百八十九批·记录族默认路径):
@@ -47,7 +47,6 @@ struct RecordsView: View {
     /// 2026-10-18: 低频区是否展开。默认收起。
     @State private var secondaryRowsExpanded = false
     @State private var reversed = false       // 570 正序回放
-    @State private var laneMode = false       // 785 泳道时间线 (全部锁模式)
     @State private var detailRec: Rec?        // 576 记录详情 sheet
     // 586 当天全景 / 583 结果定位高亮 —— 两个都是"从别处跳进时间线"的落点，用完即清。
     // dayFocus 是**显示范围**的收窄而不是筛选条件: 它不进 QueryFilters、不进 192 会话保留，
@@ -274,7 +273,6 @@ struct RecordsView: View {
                     Button { showActiveCreds = true } label: { Label("活跃凭证排序 (约)", systemImage: "list.number") }
                     Button { showOutWin = true } label: { Label("越界开门清单 (约)", systemImage: "clock.badge.exclamationmark") }
                     if scope == 1 {
-                        VariantToggle("泳道时间线", isOn: $laneMode)   // 785 泳道时间线
                     }
                 }
             } label: {
@@ -289,13 +287,12 @@ struct RecordsView: View {
         recordsChrome
     }
 
-    /// 记录页三选一 (无锁占位 / 泳道 / 主体列表) —— 从 recordsCore 拆出: 该表达式报 type-check 超时
+    /// 记录页二选一 (无锁占位 / 主体列表) —— 从 recordsCore 拆出: 该表达式报 type-check 超时
     @ViewBuilder
     private var recordsGroup: some View {
         if app.current == nil {
             noLockPlaceholder
-        } else if laneMode && scope == 1 {
-            laneView   // 785 泳道时间线 (全部锁模式简化案)
+        } else {
         } else {
             mainList
         }
@@ -367,7 +364,6 @@ struct RecordsView: View {
             filters = QueryFilters()
             reversed = false
             expandedMerged = []
-            if s == 0 { laneMode = false }
             applyFilter()
         }
         .onChange(of: filters) { applyFilter() }
@@ -763,18 +759,7 @@ struct RecordsView: View {
                     .accessibilityLabel("切换当前锁，当前为 \(app.displayName)")
                 }
                 if scope == 1 {
-                    Button { laneMode.toggle() } label: {
-                        Label(laneMode ? "看时间线" : "泳道", systemImage: "rectangle.split.3x1")   // 785 泳道
-                            .vkFont(.caption, weight: .medium)
-                            .foregroundStyle(DS.Palette.accentText)
-                            .padding(.horizontal, DS.Space.s)
-                            .padding(.vertical, DS.Space.xs)
-                            .variantPlate(DS.Palette.accentText.opacity(0.10), .capsule)
-                            .frame(minHeight: DS.Hit.min)
-                            .contentShape(Capsule())
-                    }
                     .buttonStyle(PlainButtonStyle())
-                    .accessibilityLabel(laneMode ? "切回时间线" : "打开泳道时间线")
                 }
                 Spacer(minLength: 0)
             }
@@ -2145,23 +2130,6 @@ struct RecordsView: View {
         .accessibilityAddTraits(on ? .isSelected : [])
     }
 
-    // ---------- 785 泳道时间线 (全部锁简化案): 按锁分组的平行小点阵, 同日水平对齐 ----------
-    private var laneView: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: DS.Space.m) {
-                Text("泳道时间线: 最近 14 天 × 各锁的开门量, 点阵越密越热闹")   // 785 泳道时间线
-                    .vkFont(.footnote)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .fixedSize(horizontal: false, vertical: true)
-                ForEach(laneDays) { day in
-                    laneRow(day)
-                }
-            }
-            .padding(.horizontal, DS.Space.l)
-            .padding(.vertical, DS.Space.m)
-        }
-        .dsScreenBackground()
-    }
     struct LaneDay: Identifiable {
         var key: String
         var cells: [(name: String, count: Int, alarm: Bool)]
@@ -2197,47 +2165,7 @@ struct RecordsView: View {
         }
         return out
     }
-    private func laneRow(_ day: LaneDay) -> some View {
-        let hasAlarm = day.cells.contains { $0.alarm }
-        return HStack(spacing: DS.Space.s) {
-            Text(dayLabel(day.key))
-                .vkFont(.caption.monospacedDigit())
-                .foregroundStyle(DS.Palette.textSub)
-                .frame(width: 64, alignment: .trailing)
-            HStack(spacing: DS.Space.xs + 2) {
-                ForEach(Array(day.cells.enumerated()), id: \.offset) { _, c in
-                    // 2026-10-13 run 63: 单元格内容抽成 laneCell —— 内联时整个 laneRow 报 type-check 超时。
-                    laneCell(name: c.name, count: c.count, alarm: c.alarm)
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, DS.Space.xs)
-        .background(hasAlarm ? DS.Palette.danger.opacity(0.05) : Color.clear,
-                    in: RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
-    }
 
-    /// 638/747 泳道单元格 (从 laneRow 抽出: 巨型表达式报 type-check 超时)
-    @ViewBuilder
-    private func laneCell(name: String, count: Int, alarm: Bool) -> some View {
-        let dots = min(count / 2, 8)
-        HStack(spacing: DS.Space.xs) {
-            ForEach(0..<max(dots, 0), id: \.self) { _ in
-                Circle()
-                    .fill(alarm ? DS.Palette.danger : DS.Palette.accent)
-                    .frame(width: 6, height: 6)
-                    .accessibilityHidden(true)
-            }
-            if count > 0 {
-                Text("×" + String(count))
-                    .vkFont(.caption2)
-                    .lineLimit(1)
-                    .foregroundStyle(alarm ? DS.Palette.danger : DS.Palette.textSub)
-            }
-        }
-        .frame(minWidth: 52, alignment: .leading)
-        .accessibilityLabel(name + " 当日 " + String(count) + " 次开门" + (alarm ? ", 含告警" : ""))
-    }
 
     // ---------- 数据 ----------
     /// 进页收尾 —— 2026-10-13 run 63 从 body 内联的 .onAppear 闭包里抽出 (巨型 body 里那段报 type-check 超时)。
