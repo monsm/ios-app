@@ -61,6 +61,7 @@ const SYS_NAMES = new Set([
   "source", "target", "result", "output", "input", "state", "mode", "type", "kind", "role",
   "short", "long", "full", "half", "top", "bottom", "left", "right", "middle", "center",
   "red", "green", "blue", "white", "black", "gray", "clear", "fill", "stroke", "border",
+  "expected", "actual", "received", "given", "want", "got", "left", "right", "prev",
   "radius", "spacing", "padding", "margin", "frame", "bounds", "origin", "position",
 ]);
 
@@ -83,10 +84,14 @@ function collectDefs(text) {
 
 // ---------- 文件清单 ----------
 function listSwift(ref) {
+  // App/ 与 Tests/ 都算 —— 测试文件引用被删符号同样会让 CI 编译红
+  // (AUTOOPENTests 的 dwellMet/f2dwell/rssiArmed 就是这么漏过去的)。
   if (ref === null) {
-    return git(["ls-files", "--", "App/**/*.swift", "App/*.swift"]).split(/\r?\n/).filter(Boolean);
+    // 注意: Tests 是平铺目录, "Tests/**/*.swift" 匹配不到零层 —— 必须写 "Tests/*.swift"
+    return git(["ls-files", "--", "App/**/*.swift", "App/*.swift", "Tests/*.swift"]).split(/\r?\n/).filter(Boolean);
   }
-  return git(["ls-tree", "-r", "--name-only", ref, "--", "App"]).split(/\r?\n/).filter(f => f.endsWith(".swift"));
+  return git(["ls-tree", "-r", "--name-only", ref, "--", "App", "Tests"]).split(/\r?\n/).filter(f => f.endsWith(".swift"));
+  // ls-tree -r 对 App 会列出嵌套, Tests 平铺也在内 —— 上面不过滤目录层级是对的
 }
 
 function readText(ref, file) {
@@ -133,7 +138,7 @@ for (const name of deleted) {
       if (/^\s*(\/\/|\/\*|\*)/.test(line)) return;
       const code = stripCode(line);
       if (!code) return;
-      if (re.test(code)) hits.push({ file: f.replace(/^App\//, ""), line: i + 1, txt: line.trim().slice(0, 88) });
+      if (re.test(code)) hits.push({ file: f.replace(/^(App|Tests)\//, ""), line: i + 1, txt: line.trim().slice(0, 88) });
     });
   }
   if (hits.length) findings.push({ name, hits });
