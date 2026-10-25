@@ -1019,13 +1019,6 @@ enum StatsKit {
 
     /// 955 语音「某人今天开了几次门」的跨锁汇总: 逐锁构建模型只取今日归属数, 只列有次数的锁 (全 0 返回空数组)
     @MainActor
-    static func memberTodayCounts(id: String) -> [(name: String, n: Int)] {
-        DB.keychains().compactMap { kc in
-            let m = build(mac: kc.mac, week: 7, window: 30)
-            let n = m.memberTodayCount(id: id)
-            return n > 0 ? (name: m.lockName, n: n) : nil
-        }
-    }
 
     /// 782 闲置锁判据 (全仓唯一读点): 本机日志里超 30 天无开门行 —— 说的是"没读到"而非"没人开";
     /// 从没拉取过日志的锁同样判闲置。对照页的灰标签与统计页的排除口径开关都读这一处。
