@@ -201,7 +201,7 @@ final class SensitiveLedger {
         var member: String?
     }
     /// 2026-10-14: 与 AuditLog 同款的 load→改→save 非原子序列; 调用方既有 MainActor (复制)
-    又有导出与其他异步路径, 并发会丢条目。加锁。
+    /// 又有导出与其他异步路径, 并发会丢条目。加锁。
     private static let recordLock = NSLock()
     /// 默认不写 member: 默认形态与改动前逐字相同 (同一条事件不在敏感流水里出现两行)。
     func record(_ kind: String, target: String, member: String? = nil) {

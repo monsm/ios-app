@@ -2107,9 +2107,9 @@ struct CredentialsView: View {
             UINotificationFeedbackGenerator().notificationOccurred(.error)
             return false
         }
-        // 周期必须取**锁端上报**的 zotpPeriod (03#05, 单位分钟), 缺省才回落 30 —— 与 AppIntents 同口径。
+        // 周期必须取**锁端上报**的 zotpPeriod (03#05, 单位分钟), 缺省才回落 30。
         // 2026-10-17 对拍发现: 这里写死 30, 而锁端若是别的窗口, 页面算出的六位码锁端必判错
-        (读快照生成、反而能用)
+        // (读快照生成、反而能用)
         let pRaw = DB.readStatus(kc.mac)?.zotpPeriod ?? 0
         let period = pRaw > 0 ? pRaw : 30
         let pwd = ZOTP.generate(macHex: kc.mac, skeyHex: kc.skey, periodSec: period, idx: idx)

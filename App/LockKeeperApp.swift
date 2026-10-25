@@ -1199,7 +1199,7 @@ struct RootView: View {
         .onDeviceShake()
         // 包16: 外观种子变更时整树重建 — 配色/密度即时全局生效; withAnimation 提供淡入淡出 (idea 21)
         // 2026-10-18 门面改造: 启动/回前台按策略决定是否展示门面。
-        深链进入时一律不展示。
+        // 冷启动展示; 回前台 < 300s 不重演; 深链进入时一律不展示。
         .onChange(of: scenePhase) { _, newPhase in
         }
         .id(app.appearanceSeed)

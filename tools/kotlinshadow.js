@@ -229,8 +229,8 @@ else good('A4 令牌通道 KLV#0xEE');
   if (wfText.indexOf("KF_BUILD_STAMP: ${{ needs.stamp.outputs.kf_build_stamp }}") < 0) bad("A10 缺 KF_BUILD_STAMP (改名步骤会产出 KfKey-.apk, 而上传通配照样命中)");
   else good("A10 KF_BUILD_STAMP → 改名步骤");
   const injStep = (wfText.slice(wfText.indexOf("注入编译号"), wfText.indexOf("注入编译号") + 1400));
-  if (!injStep.includes("App/Info.plist Widget/Info.plist") || !injStep.includes("CFBundleVersion")) bad("A10 iOS 没给 App+Widget 两份 plist 都注入 CFBundleVersion");
-  else good("A10 App 与 Widget 两份 plist 都注入");
+  if (!injStep.includes("App/Info.plist") || !injStep.includes("CFBundleVersion")) bad("A10 iOS 没给 App/Info.plist 注入 CFBundleVersion");
+  else good("A10 App/Info.plist 注入编译号");   // 927 小组件扩展已随大删波 2 移除, 不再有第二份 plist
   if (!/dump badging/.test(wfText)) bad("A10 没有从 APK 产物本身核对编译号 (日志只证明 gradle 算过, 不证明写进了 APK)");
   else good("A10 产物级核对在");
   if (gradle.indexOf("KfBuildStamp") < 0) bad("A10 gradle 配置期那行 KfBuildStamp 打印被删 (aapt 缺席时就没有退路核对)");
