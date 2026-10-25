@@ -32,10 +32,6 @@ const BASE = baseIdx >= 0 ? argv[baseIdx + 1] : 'HEAD~1';
 // 1. 被删的 swift 文件
 const deleted = git(['log', '--diff-filter=D', '--name-only', '--pretty=format:', `${BASE}..HEAD`])
   .split(/\r?\n/).filter((f) => f.endsWith('.swift'));
-if (!deleted.length) {
-  console.log(`基线 ${BASE}..HEAD 没有删除任何 .swift 文件 ⇒ 本闸门无事可做`);
-  process.exit(0);
-}
 
 // 2. 这些文件里声明过的符号 (带上它最后所在的提交, 便于 --base 取到内容)
 const DECL = /^(?:@\w+(?:\([^)]*\))?\s+)*(?:public |private |internal |fileprivate |final |open |static )*(?:struct|enum|class|actor|protocol)\s+(\w+)/gm;
@@ -60,11 +56,14 @@ for (const f of deleted) {
 
 // 3. 当前工作树: 谁还声明了同名符号 / 谁还在引用
 const live = git(['ls-files', '--', '*.swift']).split(/\r?\n/).filter(Boolean);
+const rawBodies = new Map();   // 保留注释与空行: 属性悬空检查要看原始形状
 const bodies = new Map();
 for (const f of live) {
   const full = path.join(ROOT, f);
   if (!fs.existsSync(full)) continue;
-  bodies.set(f, fs.readFileSync(full, 'utf8').split(/\r?\n/).map((l) => l.replace(/\/\/.*$/, '')).join('\n'));
+  const rawText = fs.readFileSync(full, 'utf8');
+  rawBodies.set(f, rawText.split(/\r?\n/));
+  bodies.set(f, rawText.split(/\r?\n/).map((l) => l.replace(/\/\/.*$/, '')).join('\n'));
 }
 
 const dangling = [];
@@ -82,16 +81,52 @@ for (const [name, origin] of syms) {
   if (users.length) dangling.push({ name, origin, users });
 }
 
-if (!dangling.length) {
-  console.log(`删页残留符号检查 ✓ (${syms.size} 个被删符号全部有着落)`);
+// ---- 第二种伤: 属性悬空 (删函数时最容易留下) ----
+// 形状: `@ViewBuilder` / `@MainActor` 后面紧跟空行, 再接一段无关的声明。
+// Swift 会把那个属性算到**下一个**声明头上 (或者干脆报 Expected declaration),
+// 本轮删减里就这样踩了 5 次, 而所有语法闸门都看不见它。
+const orphans = [];
+for (const [f, ls] of rawBodies) {
+  if (!f.startsWith('App/')) continue;   // fixtures 是闸门的样本, 不按产品码要求
+  for (let i = 0; i < ls.length - 1; i++) {
+    const t = ls[i].trim();
+    if (!/^@\w+(\([^)]*\))?$/.test(t)) continue;
+    // 属性与声明之间允许夹注释 (合法写法), 所以跳过空行与注释行, 看第一个真内容行
+    let j = i + 1;
+    let sawBlank = false;
+    while (j < ls.length) {
+      const u = ls[j].trim();
+      if (u === '') { sawBlank = true; j++; continue; }
+      if (u.startsWith('//')) { j++; continue; }
+      break;
+    }
+    if (!sawBlank) continue;
+    if (j >= ls.length) { orphans.push(`${f}:${i + 1}  ${t} (文件末尾悬空)`); continue; }
+    const nxt = ls[j].trim();
+    // 下一处真内容若仍是声明/属性/右括号, 说明属性有归属; 否则才是悬空
+    // 属性只对 func / var / 类型 / subscript / init / case 合法 —— 挂到 `let` 或语句上是非法归属
+    if (/^(@|#|private |public |internal |fileprivate |static |final |class |override |mutating |nonisolated |lazy |weak |func |var |subscript|init|deinit|case |struct |enum |extension |\})/.test(nxt)) continue;
+    orphans.push(`${f}:${i + 1}  ${t}  → 下一行是 「${nxt.slice(0, 36)}」`);
+  }
+}
+
+if (!dangling.length && !orphans.length) {
+  console.log(`删页残留检查 ✓ (${syms.size} 个被删符号有着落; 无属性悬空)`);
   process.exit(0);
 }
-console.log(`✗ 悬空符号 ${dangling.length} 个 —— 定义随文件删了, 但还有代码在引用:`);
-for (const d of dangling) {
-  console.log(`  ${d.name}  (原 ${d.origin})`);
-  console.log(`     仍在用: ${d.users.slice(0, 4).join(', ')}${d.users.length > 4 ? ` …共 ${d.users.length} 处` : ''}`);
+if (orphans.length) {
+  console.log(`✗ 属性悬空 ${orphans.length} 处 —— 属性后面紧跟空行, 它挂不到任何声明上:`);
+  for (const o of orphans) console.log('  ' + o);
+  console.log('  多半是删函数时注释与 @属性 没跟着一起删。');
+}
+if (dangling.length) {
+  console.log(`✗ 悬空符号 ${dangling.length} 个 —— 定义随文件删了, 但还有代码在引用:`);
+  for (const d of dangling) {
+    console.log(`  ${d.name}  (原 ${d.origin})`);
+    console.log(`     仍在用: ${d.users.slice(0, 4).join(', ')}${d.users.length > 4 ? ` …共 ${d.users.length} 处` : ''}`);
+  }
 }
 console.log('');
-console.log('处理方式二选一: ① 把该符号搬进存活文件 (它还有真消费者) ② 连同调用点一起删掉。');
-console.log('不要把它留在原地 —— CI 编译到那一行才会红, 而闸门全绿会让你以为没事。');
+console.log('处理方式: ① 符号还有消费者就搬进存活文件 ② 连同调用点一起删 ③ 悬空属性连注释一起删。');
+console.log('不要留在原地 —— CI 编译到那一行才会红, 而闸门全绿会让你以为没事。');
 process.exit(1);
