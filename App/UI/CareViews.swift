@@ -534,12 +534,7 @@ struct MaintSettingsView: View {
             Section {
                 VariantToggle("夜间免扰 (22–8 点)", isOn: Binding(
                     get: { CareSchedule.quietOn },
-                    // 963: 免扰一改动就要立刻重排"每晚状态确认" (22:00 档正撞这条免扰段),
-                    // 不重排就会出现"刚关了免扰却还以为那条没排上"或反过来。
-                    set: { v in
-                        DB.store.set("kf_quiet_night", v)
-                        StatusCheckNotice.sync()
-                    }))
+                    set: { DB.store.set("kf_quiet_night", $0) }))
             } header: {
                 Text("免扰")
             } footer: {

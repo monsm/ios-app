@@ -1612,21 +1612,6 @@ final class UNDelegate: NSObject, UNUserNotificationCenterDelegate, @unchecked S
                 await BackupStudio.onMonthlyTap()
             }
         }
-        // 963 每晚状态确认: 点它就落到设备页 (与深链/快速操作同一个 requestTab 口,
-        // 应用锁还锁着时只记 pendingRoute, 不因为"是从通知进来的"就放行)。
-        if r.notification.request.identifier == StatusCheckNotice.notifID {
-            Task { @MainActor in
-                var waited = 0
-                while AppState.hostRef == nil && waited < 10 {
-                    try? await Task.sleep(nanoseconds: 200_000_000)
-                    waited += 1
-                }
-                // 2026-10-14: 与月度/保养通知同口径 —— 锁着或伪装态只记 pendingRoute, 不因"从通知进来"放行。
-                if let app = AppState.hostRef {
-                    if app.appUnlocked && !app.decoyMode { app.requestRoute(.device) } else { app.pendingRoute = .device }
-                }
-            }
-        }
         // 366/1013: 凭证族通知此前只排期不分派 —— handleNotificationAction 全仓零调用,
         // 点"密码临期"通知落到系统默认行为(打开 App 停在原页面)。这里补上转发。
         if let act = CredentialOrg.handleNotificationAction(r.notification.request.identifier) {

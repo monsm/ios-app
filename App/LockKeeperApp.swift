@@ -816,11 +816,8 @@ final class AppState: ObservableObject {
     func advanceMoment() {
         withAnimation(DS.Motion.soft) { moment = momentQueue.isEmpty ? nil : momentQueue.removeFirst() }
     }
-    /// 启动结算: 跨年烟花(1021) / 安装周年卡(1050) / VoiceOver 记录(1049) / 成就补结算
+    /// 启动结算: 异常退出卡(758) / 保留期到期卡(752) / 自动归档(223) / 关怀与凭证巡检 / 启动自检与月度备份排程
     func onLaunch() {
-        // 963 每晚状态确认通知: 启动这一趟负责把排期对齐当前开关 (开关/免扰/台账任一变化都要重排)。
-        // 授权沿用 CareSchedule 那一份请求口, 不弹第二个系统授权框。
-        Task { await StatusCheckNotice.requestAuthAndSync() }
         // 758 启动提示: 上次异常退出时先给一张时刻卡 —— 此前只有走进诊断页才看得到那条标签,
         // "启动时提示"这一半不存在。防重键带档案首行 (含检测时刻), 同一次异常只弹一次。
         if CrashGuard.pendingAbnormal, let top = CrashGuard.archList().first,
@@ -896,7 +893,7 @@ final class AppState: ObservableObject {
             // 只在非双验时报"成功", 双验那条上面已经给了实话。
             showToast("手动开锁成功 — \(displayName)")
         }
-        // 76 成功短音效: 默认只震动, 开关在设置-开锁 (系统铃声开关静音时自动无声)
+        // 成功反馈: 触感 + 圆盘回待机 (提示音已随波 1 移除)
         Milestones.recordUnlockSuccess()
         let hour = WeekCal.gregorian.component(.hour, from: Date())
         if hour >= 22 { publishHomeMoment("欢迎回家, 辛苦了") }
