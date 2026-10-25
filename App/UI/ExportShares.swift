@@ -82,26 +82,26 @@ enum ExportKit {
     /// 写成 Caches/exports 下的 .vcf 文件。文件名带日期: 415 的用途是核对,
     /// "哪一次的名册"必须能从名字看出来。
     static func writeRoster() -> URL? {
-var out = ""
-for m in DB.members() {
-    let ext = MemberHub.ext(m.id)
-    out += "BEGIN:VCARD\nVERSION:3.0\n"
-    out += "FN:" + vcfEscape(MemberHub.display(m)) + "\n"
-    if !ext.remark.isEmpty { out += "NICKNAME:" + vcfEscape(ext.remark) + "\n" }
-    if !m.phone.isEmpty { out += "TEL;TYPE=CELL:" + vcfEscape(m.phone) + "\n" }
-    if !ext.groupTag.isEmpty { out += "CATEGORIES:" + vcfEscape(ext.groupTag) + "\n" }
-    var note: [String] = []
-    if !m.relation.isEmpty { note.append("关系 " + m.relation) }
-    if ext.role == "main" { note.append("主管理员") }
-    if ext.archived { note.append("已归档") }
-    if ext.proxy { note.append("代管中") }
-    if !ext.emergency.isEmpty { note.append("紧急联系 " + ext.emergency) }
-    if !ext.note.isEmpty { note.append("便签 " + ext.note) }
-    if !ext.careText.isEmpty { note.append("关怀 " + ext.careText) }
-    if !note.isEmpty { out += "NOTE:" + vcfEscape(note.joined(separator: " · ")) + "\n" }
-    out += "END:VCARD\n"
-}
-return out
+        var out = ""
+        for m in DB.members() {
+            let ext = MemberHub.ext(m.id)
+            out += "BEGIN:VCARD\nVERSION:3.0\n"
+            out += "FN:" + vcfEscape(MemberHub.display(m)) + "\n"
+            if !ext.remark.isEmpty { out += "NICKNAME:" + vcfEscape(ext.remark) + "\n" }
+            if !m.phone.isEmpty { out += "TEL;TYPE=CELL:" + vcfEscape(m.phone) + "\n" }
+            if !ext.groupTag.isEmpty { out += "CATEGORIES:" + vcfEscape(ext.groupTag) + "\n" }
+            var note: [String] = []
+            if !m.relation.isEmpty { note.append("关系 " + m.relation) }
+            if ext.role == "main" { note.append("主管理员") }
+            if ext.archived { note.append("已归档") }
+            if ext.proxy { note.append("代管中") }
+            if !ext.emergency.isEmpty { note.append("紧急联系 " + ext.emergency) }
+            if !ext.note.isEmpty { note.append("便签 " + ext.note) }
+            if !ext.careText.isEmpty { note.append("关怀 " + ext.careText) }
+            if !note.isEmpty { out += "NOTE:" + vcfEscape(note.joined(separator: " · ")) + "\n" }
+            out += "END:VCARD\n"
+        }
+        let text = out
         guard !text.isEmpty else { return nil }
         let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"; f.timeZone = TimeZone.current; f.locale = Locale(identifier: "en_US_POSIX")
         let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]

@@ -162,7 +162,7 @@ enum Prewarm {
                 default: _ = DB.store.getString("kf_theme")
                 }
             }
-            DispatchQueue.main.async { HotCache.load(mac: mac) }
+            DispatchQueue.main.async { _ = HotCache.recent(mac) }   // 惰性重读即预热 (load 已并入 recent)
         }
     }
 }
