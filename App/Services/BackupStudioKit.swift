@@ -1617,7 +1617,7 @@ final class UNDelegate: NSObject, UNUserNotificationCenterDelegate, @unchecked S
         if let act = CredentialOrg.handleNotificationAction(r.notification.request.identifier) {
             Task { @MainActor in CredentialOrg.applyNotification(act) }
         }
-        // 1013: 保养到期通知 → 保养清单页。mac 就在通知 id 里 (m4.care.<mac>)。
+        // 1013: 保养到期通知 → 设备页那台锁 (mac 就在通知 id 里: m4.care.<mac>)。
         // 冷启动点按: hostRef 要等 RootView 挂载才就位, 等它 (最多 2 秒) 再落点, 不丢这次点按;
         // 锁着/伪装态不直接切页, 与深链同口径记 pendingRoute, 解锁后由 applyPendingRoute 补走。
         if r.notification.request.identifier.hasPrefix("m4.care.") {

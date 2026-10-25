@@ -868,7 +868,7 @@ struct MemberDetail360View: View {
             .fixedSize(horizontal: false, vertical: true)
             if MemberHub.proxyNames.contains(m.id) {
                 Text("代管中: 在凭证页对 TA 名下凭证做单条停用时, 那一行的停用便签会写上 管理员代操作; "   // 468 代管中
-                     +"锁端没有代操作这一位, 这句标注只落本机。")
+                     + "锁端没有代操作这一位, 这句标注只落本机。")
                     .vkFont(.caption)
                     .foregroundStyle(DS.Palette.textSub)
                     .fixedSize(horizontal: false, vertical: true)

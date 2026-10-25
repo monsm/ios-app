@@ -149,12 +149,14 @@ struct SettingsView: View {
         showDiag = true
     }
 
-    /// 1013 落点: 切到通知里那台锁, 再推维护与保养页
+    /// 1013 落点: 切到通知里那台锁。
+    /// 维护与保养页已随大删波4移除, 所以落到**设备页该锁** —— 电量、低电横幅、换电指引都在那里,
+    /// 通知说的事 (该换电池了) 在设备页能就地看到, 不再指一个不存在的页面。
     private func landPendingCare(_ m: String?) {
         guard let m, !m.isEmpty else { return }
         app.pendingCare = nil
         if m != app.currentMac { app.select(m) }
-        showCare = true
+        app.requestRoute(.device)
     }
 
     /// 2026-10-15 落点: 设置 Tab **栈内**子页带回来的"到了之后开什么"。
