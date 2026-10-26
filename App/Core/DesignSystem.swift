@@ -645,10 +645,6 @@ extension View {
             else { DS.Gradient.screenMesh.ignoresSafeArea() }
         }
     }
-    /// 入场编排已删 (纯观感)。保留同签名恒等实现:
-    /// 三处调用点串在 credRow(...) 的链尾, 直接删调用行会留下孤立括号。
-    func staggered(_ index: Int) -> some View { self }
-
 }
 
 
@@ -667,28 +663,6 @@ extension View {
     }
 }
 
-/// 首屏卡片按序浮起 (每次会话只播一次): 纯 transform/opacity, stagger 50ms;
-/// reduceMotion 下退化为纯淡入。惊喜预算只花在"罕见时刻"(应用启动), 高频路径不动。
-private struct StaggeredAppear: ViewModifier {
-    let index: Int
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var shown = false
-
-    func body(content: Content) -> some View {
-        content
-            .opacity(shown ? 1 : 0)
-            .offset(y: shown || reduceMotion ? 0 : 14)
-            .onAppear {
-                guard !shown else { return }
-                let delay = Double(index) * 0.05
-                if reduceMotion {
-                    withAnimation(.easeOut(duration: 0.2).delay(delay)) { shown = true }
-                } else {
-                    withAnimation(.spring(response: 0.45, dampingFraction: 0.9).delay(delay)) { shown = true }
-                }
-            }
-    }
-}
 
 extension View {
 }
@@ -874,11 +848,14 @@ struct HeroCard<Content: View>: View {
                     // 863 反转保护 + 226 降透明: hero 底的两种降级 (中性渐变 / 纯色) 都收在 DS.heroGradientSafe
                     RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous)
                         .fill(DS.heroGradientSafe)
+                        .clipShape(RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous))
                     // 889 Hero 纹理三档 (kf_hero_tex)：纯矢量，不引入任何图片资源
                     // (本 App 除 App 图标外零位图，与 Celebration.swift 的礼花同源都走 Canvas 自绘)。
                     // 透明度钉在 0.05–0.09 之间 —— 纹理压在 hero 渐变上，而渐变上永远有纯白正文 (≥4.7:1)；
                     // 再高就会把白字的局部对比拉下来，那是把"好看"换来"看不清"。
-                        .clipShape(RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous))
+                    // 2026-10-26: 这段注释此前**没有对应实现** —— 键/备份/写入口/复算登记都齐，只差这里的消费点。
+                    // 实现落在 App/Core/HeroTexture.swift（HeroTextureLayer），降透明档自动不画。
+                    HeroTextureLayer(kind: HeroTexture.current, cornerRadius: DS.Radius.card)
                     // 右上一团柔光: 给渐变一个"光源", 缓慢漂移 (±8pt / 9s) 让它活过来,
                     // 慢到只剩"页面在呼吸"的潜意识感受; reduceMotion 时静止
                     Circle()
@@ -952,9 +929,11 @@ struct EmptyState: View {
     }
 }
 
-/// 空态皆引导 (包14: 814 进度点 / 815 双按钮 / 808 示例铺底 / 834 演示链接 / 841 小管家 / 1044 便签):
-/// 空态卡 = 顶部"第 N/M 步"进度圆点 + 小管家顶饰 + 主/次双按钮 + 可选"看 30 秒演示"文字链 + 公告板便签。
-/// 默认值口径 (本轮包14 缺陷整改): mascot 默认开 —— 841 原句是"贯穿**全部**空态"，关掉走素颜模式 (kf_plain) 统一闸；
+/// 空态皆引导 (包14: 814 进度点 / 815 双按钮 / 808 示例铺底 / 834 演示链接 / 1044 便签):
+/// 空态卡 = 顶部"第 N/M 步"进度圆点 + 主/次双按钮 + 可选"看 30 秒演示"文字链 + 公告板便签。
+/// 2026-10-26: 原注释提到"841 小管家顶饰"，但那个装饰图形**从未实现** ——
+/// `if mascot, DS.Metric.emptyMascot { }` 一直是个空块，`mascot` 参数也没有任何消费者。
+/// 空块与本参数已删除（留着一个空 if 比没有更容易让人以为功能在）。
 /// showDemoLink 默认开 —— 演示链出不出现由 demoAction 决定 (调用方给了动作就上屏，没给就没有)，
 /// 而不是由一个全仓没人置真的旗标决定 (旧写法: showDemoLink 默认 false 且零处置真 ⇒ 834 从未渲染)。
 struct GuidedEmptyView: View {
@@ -969,7 +948,6 @@ struct GuidedEmptyView: View {
     var secondary: (() -> Void)?
     var showDemoLink: Bool = true     // 834 30 秒演示链接; 传了 demoAction 才可能上屏, 不想要时显式传 false
     var demoAction: (() -> Void)?
-    var mascot: Bool = true           // 841 小管家顶饰 (素颜模式整体熄灭, 见 DS.Metric.emptyMascot)
 
     // 自定义 init(systemImage:title:message:) 会顶掉编译器合成的 memberwise init, 于是 step/双按钮/
     // 演示链/小管家 这族带默认值的参数一个都传不进去 —— 整族成了装饰。删掉它, 用合成 init:
@@ -989,10 +967,6 @@ struct GuidedEmptyView: View {
                         .foregroundStyle(DS.Palette.textSub)
                 }
                 .accessibilityLabel("引导阶段 第 \(step) 步, 共 \(stepTotal) 步")
-            }
-            // 903 空态装饰图形挂素颜模式 (kf_plain)，见 DS.Metric.emptyMascot：
-            // 不再造第二个"关插画"开关，理由写在那条令牌的注释里。
-            if mascot, DS.Metric.emptyMascot {
             }
             ContentUnavailableView {
                 Label(title, systemImage: systemImage)

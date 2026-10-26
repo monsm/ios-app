@@ -925,7 +925,6 @@ struct CredentialsView: View {
             Section("置顶 (\(pinned.count))") {
                 ForEach(Array(pinned.enumerated()), id: \.offset) { i, p in
                     credRow(CredHit(id: "p\(p.alias)", pwd: p, pinned: true))
-                        .staggered(min(i, 8))
                 }
             }
         }
@@ -938,7 +937,6 @@ struct CredentialsView: View {
                     let rows = group.filter { !CredentialOrg.isStarred(mac, "pwd", $0.alias) }
                     ForEach(Array(rows.enumerated()), id: \.offset) { i, p in
                         credRow(CredHit(id: "p\(p.alias)", pwd: p, pinned: false))
-                            .staggered(min(i, 8))
                     }
                     .onMove { src, dst in
                         commitGroupMove(keys: pwdKeys(rows), slot: "p", src: src, dst: dst)
@@ -1143,7 +1141,6 @@ struct CredentialsView: View {
             }
             ForEach(Array(fps.enumerated()), id: \.offset) { i, f in
                 credRow(CredHit(id: "f\(f.batch)", fp: f, pinned: CredentialOrg.isStarred(mac, "fp", f.batch)))
-                    .staggered(min(i, 8))
             }
             .onMove { src, dst in
                 commitGroupMove(keys: fpKeys(fps), slot: "f", src: src, dst: dst)   // 182 指纹段内拖动

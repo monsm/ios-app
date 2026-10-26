@@ -709,6 +709,12 @@ struct DiagnosticsView: View {
                     // ⇒ 在这页拨完，根上那枚 `.dynamicTypeSize` 要等下一次别的重建才跟上，看着就是"拨了没作用"。
                     // 同一状态两个通道必已不一致 (本仓反复实撞那一族)，这里统一走 setUnlockOption 那一个口。
                     set: { app.setUnlockOption("kf_ax_bigpreview", $0) }))
+                // 2026-10-26: `kf_ax_bigotp`（OTP 大字）此前**只有读点**（CredentialsView 的临时码字体），
+                // 全仓没有任何写点 ⇒ 那个键永远是 false，用户只能靠双击临时码卡临时放大。
+                // 挂在同一段、走同一个 setUnlockOption 口（与上面 bigPreview 同一条纪律：同一键只有一个写通道）。
+                VariantToggle("临时码大字 (OTP 数字放大)", isOn: Binding(
+                    get: { DB.store.getBool("kf_ax_bigotp") },
+                    set: { app.setUnlockOption("kf_ax_bigotp", $0) }))
                 LabeledRow("命中域", "可点控件全 App 下限 44pt (DS.Hit.min); 时间线认领区加余量到 60pt; 圆盘外沿再留 10pt")   // 871 命中域
             } header: {
                 Text("渲染自检")   // 866 渲染自检
@@ -1023,8 +1029,7 @@ struct DiagnosticsView: View {
                                     primaryTitle: "跑一键体检",
                                     primary: { rerunAll() },
                                     secondaryTitle: "去设备页操作",
-                                    secondary: { app.requestRoute(.device); dismiss() },   // 收掉这一层 (sheet 或 push) 才看得见切好的 Tab
-                                    mascot: true)
+                                    secondary: { app.requestRoute(.device); dismiss() })   // 收掉这一层 (sheet 或 push) 才看得见切好的 Tab
                         .listRowInsets(EdgeInsets())
                     // 818 日志来源说明: 空态不只说"还没有", 还说出**哪四类**会进这里。
                     // 名单就是本页自己那四个分区 —— 不在这里另编一套分类法; 两套分类迟早对不上,

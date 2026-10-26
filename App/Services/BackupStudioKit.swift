@@ -614,7 +614,8 @@ enum BackupStudio {
     }
 
 
-    /// 193 体积预估: 本次 canonical 字符数 × 加密膨胀 (~1.75x hex) 估算, 与上次对比
+    /// 已过期临时凭证计数（用于提示"有几条临时码已经过期可清理"）。
+    /// 2026-10-26: 原注释写的是「193 体积预估」—— 与下面的函数毫无关系（注释错位，属搬运时漏改）。
     static func expiredTemporaryCount() -> Int {
         // 到期口径: 台账 from/to 是 "yyyy-MM-dd" 字符串, 直接按日比较 (与 CredentialOrg 状态推断同向)
         let today = Milestones.dayKey()

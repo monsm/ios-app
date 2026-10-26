@@ -121,6 +121,35 @@
 
 ---
 
+## 第二批：自动化 / 诊断类（16 条）
+
+### 已修（本轮）
+
+| # | 原未决项 | 处置 |
+|---|---|---|
+| 1 | `AutoOpen:512` 文案写「未标定则 F3 门不过」 | **`[已修]` 文案对齐实现**：`rssiBase` 未标定时回退 `fallbackBase = -40`（与安卓 `AutoOpenKit.BASE` 同值），未标定**能开**。文案改为「用通用基准 -40，建议标定以提高准确度」 |
+| 2 | `AutoOpen:102` 注释仍写「F1 标准=60s 窗口静默复用」 | `[已核实]` 实现已是 0 档不发起弹窗，属注释漂移；同批已修过同类（批三 B1） |
+| 3 | `AutoOpen:199` coolReady 写「>60s」 | **`[已修]`**（批三 B1）改为引用 `cooldownSeconds(=6)` |
+| 4 | `LinkSenseKit:294` 称静置 3s 才判定 | **`[已修]`**（批三 B2）注明该判定已删 |
+| 5 | `BatteryCare:3` 头注列 `kf_mevents_`/`kf_maint_` | **`[已修]`**（批三 B3）标为未实现待办 |
+| 14 | `BackupStudioKit:875` rotateKey 称「重命名留痕」 | **`[已修]`**（批三 B4）实现是直接覆盖 |
+| 8 | `DesignSystem:995` GuidedEmptyView 的 `if mascot, … { }` 空块 | **`[已修]` 删空块 + 删 `mascot` 参数 + 删 DiagnosticsView 的实参**（留空 if 比没有更容易让人以为功能在） |
+| 9 | `DesignSystem:648` `staggered(_:)` 恒等 | **`[已修]` 删 no-op 与三处调用 + 删随之孤立的 `StaggeredAppear`（22 行）** |
+| 7 | `DesignSystem:877` Hero 纹理三档无渲染 | **`[已修]` 新增 `App/Core/HeroTexture.swift`**：`HeroTexture` 三档枚举 + `HeroTextureLayer`（Canvas 自绘，不引位图）。透明度按注释口径 0.06/0.08，降透明档不画，`allowsHitTesting(false)` + `accessibilityHidden(true)`。已接进 `HeroCard` |
+| 16 | `DesignSystem:159` `kf_ax_bigotp` 只在注释里 | **`[已修]` 判断与前设相反**：该键**有活的读点**（`CredentialsView:1850` 控制临时码字号），只是**没有写点** ⇒ 永远 false。补上开关（`DiagnosticsView` 渲染自检段，走 `setUnlockOption` 与 `bigPreview` 同一通道）比删键更符合原设计 |
+| 10 | `BackupStudioKit:617` `expiredTemporaryCount` 注释错位 | **`[已修]`** 原注释是「193 体积预估」，与函数无关，已换成语义正确的说明 |
+| 11 | `BackupKit:487` 硬编码坚果云 vs `webdavRoot` 可配 | **`[已修]` 加口径说明**：这是**默认值**，用户自配根会覆盖；文件名恒为 `zklock-backup.enc`（远端只留一份，轮换即覆盖） |
+| 13 | `ZipKit:31` 引用已失效行号 | **`[已修]`** 清掉 `:107/:348/:370`，并写一条纪律：这类注释只写符号名，不写行号 |
+
+### 保留（如实标注）
+
+| # | 原未决项 | 处置 |
+|---|---|---|
+| 6 | `BatteryCare:6` 协议只给百分比、无电压/充电位 | `[已核实]` 这是**协议约束**，不是缺陷。充放电建议/续航估算在本仓无数据来源，不应造节点 |
+| 12 | `BackupStudioKit:481` v4/v5 迁移是空操作 | **`[保留+如实标注]`**：迁移链当年的动作是自赋值，现在只推进版本号。不加假迁移，但在台账写明「v4/v5 不作为已实现能力」 |
+| 15 | `DiagKit:414` 与 `LinkSenseKit:363` 互指旧行号 | `[已核实]` 同 #13 一族；两处注释描述的历史实现已删，行号引用不可核对 |
+
+---
 ## 第二批及之后
 
 - **UI 与入口类**（ios-ui-device 17 + ios-ui-records 17 + ios-ui-cred 9 = 43 条）：待裁

@@ -509,7 +509,10 @@ struct AutoCalView: View {
                     LabeledRow("武装线 / 解除线 (回差)",
                                "\(AutoOpenKit.armThreshold(base: c.rssiP95)) / \(AutoOpenKit.disarmThreshold(base: c.rssiP95))")
                 } else {
-                    LabeledRow("当前基准", "未标定 — 未标定则 F3 门不过")
+                    // 2026-10-26 勘误: 原写"未标定则 F3 门不过"与实现相反。
+                    // AutoOpenKit.rssiBase 在未标定时回退 fallbackBase = -40（与安卓 AutoOpenKit.BASE 同值），
+                    // 所以未标定**能开**，只是用通用基准、不按这把锁的实际摆放位置调。
+                    LabeledRow("当前基准", "未标定 — 用通用基准 \(AutoOpenKit.fallbackBase)，建议标定以提高准确度")
                 }
                 BusyButton(title: calibrating ? "采集中 (\(collected) 样本)" : "重新标定",
                            systemImage: "dot.radiowaves.left.and.right",

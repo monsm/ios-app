@@ -490,6 +490,11 @@ enum BackupKit {
 
 // ---------- WebDAV 同步 (JS services/cloudsync.js) ----------
 enum CloudSync {
+    /// 默认远端（坚果云固定路径）。**这只是默认值，不是唯一口径**：
+    /// 用户可以在「备份工作室 → WebDAV」里自配根地址（见 BackupStudio.webdavRoot），
+    /// 那条路径会覆盖这里。2026-10-26 走查发现两套口径并存且没有注释说明谁优先 ——
+    /// 现在写明：**能配就用配的，配不了才回落到这个默认**。
+    /// 文件名恒为 `zklock-backup.enc`，不随根地址变化（远端只保留一份，轮换即覆盖）。
     static let remoteURL = "https://dav.jianguoyun.com/dav/%E6%88%91%E7%9A%84%E5%9D%9A%E6%9E%9C%E4%BA%91/zklock-backup.enc"
     static func basicAuth(_ acct: String, _ app: String) -> String {
         let raw = Data("\(acct):\(app)".utf8).base64EncodedString()
