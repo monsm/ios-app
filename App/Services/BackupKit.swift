@@ -171,6 +171,9 @@ struct BackupBundle: Codable {
             var synctime: Double?
             var otpStatus: OtpStatus?
             var otpIdx: OtpIdx?
+            /// 手机钥匙（kf_mkey_<mac>）。与「蓝牙钥匙串」不同：这是发给成员手机的 ekey 记录，
+            /// 含 pin / ekey / 归属成员 / 有效期。缺省 = 这次备份没带 = 恢复时不动本机（与其它字段同口径）。
+            var mobileKeys: [MobileKey]?
         }
     }
     struct Globals: Codable {
@@ -256,7 +259,8 @@ enum BackupKit {
                 meta: BackupBundle.Device.Meta(
                     defend: DB.defend(mac), tailgate: DB.tailgate(mac),
                     synctime: DB.syncTime(mac) == 0 ? nil : DB.syncTime(mac),
-                    otpStatus: DB.otpStatus(mac), otpIdx: DB.otpIdx(mac)))
+                    otpStatus: DB.otpStatus(mac), otpIdx: DB.otpIdx(mac),
+                    mobileKeys: MobileKeyService.list(mac).isEmpty ? nil : MobileKeyService.list(mac)))
         }
         let dongles = DB.dongles()
         let gws = DB.gateways()
@@ -435,6 +439,8 @@ enum BackupKit {
                 if let t = meta.synctime { DB.saveSyncTime(kc.mac, t) }
                 if let o = meta.otpStatus { DB.saveOtpStatus(kc.mac, o) }
                 if let o = meta.otpIdx { DB.saveOtpIdx(kc.mac, o) }
+                // 手机钥匙：整表覆盖（这是"这次导入的锁档案"，不是合并）。幂等 —— 同一包导两次结果相同。
+                if let mk = meta.mobileKeys { MobileKeyService.save(kc.mac, mk) }
             }
             if existed { overwritten += 1 } else { imported += 1 }
         }

@@ -141,6 +141,9 @@ jobs:
       - name: 功能点覆盖台账 (1050 项 × 判定 × 代码标注 × 台账下落; 报线索不判失败)
         run: node tools/featuremap.js
 
+      - name: '功能图谱派生一致性 (docs/feature-web 的 features.json/html/清单 必须与 inventory 源同步; inventory 改了忘重建就红)'
+        run: node tools/featurewebcheck.js
+
       - name: 'Swift 形状机检 (判失败: R1 缺 @ViewBuilder / R2 属性挂到值类型 / R4 参数标签 / R5 实参个数 / R3 棘轮; 正控 fixtures/swiftshape)'
         run: node tools/swiftshape.js
 

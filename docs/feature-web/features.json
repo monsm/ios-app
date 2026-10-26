@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-26T05:45:55.183Z",
+    "generated": "2026-10-26T06:01:33.555Z",
     "sources": [
       {
         "scout": "android-native",
@@ -52899,7 +52899,7 @@
           "line": 486,
           "symbol": "enum CloudSync",
           "note": "",
-          "text": "enum CloudSync {"
+          "text": "if DB.keychain(normCurrent) != nil { DB.currentMac = normCurrent }"
         },
         {
           "platform": "ios",
@@ -52915,7 +52915,7 @@
           "line": 487,
           "symbol": "remoteURL",
           "note": "",
-          "text": "static let remoteURL = \"https://dav.jianguoyun.com/dav/%E6%88%91%E7%9A%84%E5%9D%9A%E6%9E%9C%E4%BA%91/zklock-backup.enc\""
+          "text": "return (imported, overwritten)"
         },
         {
           "platform": "ios",
@@ -52923,7 +52923,7 @@
           "line": 492,
           "symbol": "push",
           "note": "",
-          "text": "static func push(acct: String, app: String, envelope: String) async throws {"
+          "text": "enum CloudSync {"
         },
         {
           "platform": "ios",
@@ -52931,7 +52931,7 @@
           "line": 506,
           "symbol": "download",
           "note": "",
-          "text": "static func download(acct: String, app: String) async throws -> String? {"
+          "text": "guard let http = resp as? HTTPURLResponse else { throw DFUError.msg(\"网络请求失败\") }"
         }
       ],
       "platformEvidence": {
@@ -53054,7 +53054,7 @@
           "line": 397,
           "symbol": "restoreAll(_:)",
           "note": "",
-          "text": "static func restoreAll(_ bundle: BackupBundle) -> (imported: Int, overwritten: Int) {"
+          "text": "DB.store.set(\"kf_hero_stats\", DS.HeroStats.all.filter { stats.contains($0) })"
         },
         {
           "platform": "ios",
@@ -53070,7 +53070,7 @@
           "line": 413,
           "symbol": "mac/skey 守卫",
           "note": "",
-          "text": "guard HexKit.bytes(d.mac).count == 6, !d.kc.skey.isEmpty else { continue }"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -53078,7 +53078,7 @@
           "line": 422,
           "symbol": "owner 重映射 / 置 nil",
           "note": "",
-          "text": "for i in fixed.pwds.indices where fixed.pwds[i].owner != nil {"
+          "text": "if let l = d.ledger {"
         },
         {
           "platform": "ios",
@@ -53086,7 +53086,7 @@
           "line": 451,
           "symbol": "otpKeys 白名单",
           "note": "",
-          "text": "if let otps = globals.otpKeys, !otps.isEmpty {"
+          "text": "// 2026-10-14: 这里**刻意**只写 s/d。强摘要 d2 不在 canonical 里 (canonical 是与小程序"
         }
       ],
       "platformEvidence": {
@@ -53196,7 +53196,7 @@
           "line": 249,
           "symbol": "collectAll()",
           "note": "",
-          "text": "static func collectAll() -> BackupBundle {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -53212,7 +53212,7 @@
           "line": 256,
           "symbol": "Device.Meta 逐项",
           "note": "",
-          "text": "meta: BackupBundle.Device.Meta("
+          "text": "return BackupBundle.Device("
         },
         {
           "platform": "ios",
@@ -53220,7 +53220,7 @@
           "line": 279,
           "symbol": "BackupBundle 组装",
           "note": "",
-          "text": "return BackupBundle("
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -53445,7 +53445,7 @@
           "line": 255,
           "symbol": "ledger 为空置 nil",
           "note": "",
-          "text": "ledger: (l.pwds.isEmpty && l.fps.isEmpty) ? nil : l,"
+          "text": "let l = DB.ledger(mac)"
         }
       ],
       "platformEvidence": {
@@ -53821,7 +53821,7 @@
           "line": 176,
           "symbol": "struct Globals",
           "note": "",
-          "text": "struct Globals: Codable {"
+          "text": "var mobileKeys: [MobileKey]?"
         },
         {
           "platform": "ios",
@@ -53829,7 +53829,7 @@
           "line": 267,
           "symbol": "kf_bk_otp 勾选才收 OTP",
           "note": "",
-          "text": "// 181: 仅在用户显勾选时把 OTP 密钥收进包体 (默认排除 —— 独立口令组的密钥不该随手进备份文件)"
+          "text": "let passcode = DB.get([String: String].self, \"kf_passcode\").map {"
         },
         {
           "platform": "ios",
@@ -53837,7 +53837,7 @@
           "line": 444,
           "symbol": "passcode 只写 s/d",
           "note": "",
-          "text": "if let pc = globals.passcode, !pc.s.isEmpty, !pc.d.isEmpty {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -53845,7 +53845,7 @@
           "line": 469,
           "symbol": "trace 脱敏",
           "note": "",
-          "text": "if let tr = globals.trace, let lines = tr.lines, !lines.isEmpty {"
+          "text": "DB.store.set(k, v)"
         }
       ],
       "platformEvidence": {
@@ -58389,7 +58389,7 @@
           "line": 233,
           "symbol": "var deviceOrg",
           "note": "",
-          "text": "var deviceOrg: DeviceOrg?"
+          "text": "///  ③ 一律用**数组**而不是字典: 小程序 canonicalBundle 对 globals 内层是原样透传 (只对顶层键排序),"
         },
         {
           "platform": "ios",
@@ -58397,7 +58397,7 @@
           "line": 320,
           "symbol": "collectDeviceOrg",
           "note": "",
-          "text": "static func collectDeviceOrg() -> BackupBundle.Globals.DeviceOrg? {"
+          "text": "heroStats: stats.count == DS.HeroStats.all.count ? nil : Array(stats).sorted())"
         },
         {
           "platform": "ios",
@@ -58405,7 +58405,7 @@
           "line": 343,
           "symbol": "applyGlobalsAppearanceAndOrg",
           "note": "",
-          "text": "static func applyGlobalsAppearanceAndOrg(_ globals: BackupBundle.Globals, devices: [BackupBundle.Device]) {"
+          "text": "/// 894/D-36: 外观与设备组织随包落地的**唯一**实现 —— overwrite / merge / missing 三条恢复路共用。"
         },
         {
           "platform": "ios",
@@ -58413,7 +58413,7 @@
           "line": 349,
           "symbol": "known = 包内 ∩ 本机",
           "note": "",
-          "text": "let known = Set(devices.map { DB.normalizeMac($0.mac) })"
+          "text": "guard let org = globals.deviceOrg else { return }"
         }
       ],
       "platformEvidence": {
@@ -58944,7 +58944,7 @@
           "line": 189,
           "symbol": "struct Appearance",
           "note": "",
-          "text": "var appearance: Appearance?"
+          "text": "/// 当初踩过的坑 (本文件 :239-253 的白名单就是为它加的)。typed 之后，包体能影响的键"
         },
         {
           "platform": "ios",
@@ -58952,7 +58952,7 @@
           "line": 219,
           "symbol": "CodingKeys recentCount = \"recent\"",
           "note": "",
-          "text": "enum CodingKeys: String, CodingKey {"
+          "text": "/// 为什么用 CodingKeys 而不是把字段改名成 recent:"
         },
         {
           "platform": "ios",
@@ -58960,7 +58960,7 @@
           "line": 295,
           "symbol": "collectAppearance",
           "note": "",
-          "text": "static func collectAppearance() -> BackupBundle.Globals.Appearance {"
+          "text": "deviceOrg: collectDeviceOrg()))"
         },
         {
           "platform": "ios",
@@ -58968,7 +58968,7 @@
           "line": 373,
           "symbol": "applyAppearance",
           "note": "",
-          "text": "static func applyAppearance(_ a: BackupBundle.Globals.Appearance) {"
+          "text": "let hid = Set(hidden.map { DB.normalizeMac($0) })"
         }
       ],
       "platformEvidence": {
@@ -63671,7 +63671,7 @@
           "line": 218,
           "symbol": "build-for-testing",
           "note": "",
-          "text": "xcodebuild build-for-testing \\"
+          "text": "# (先前试过 SWIFT_ENABLE_BATCH_MODE=NO, 不够 —— xcodebuild 仍会在首个失败后停派新任务。)"
         }
       ],
       "platformEvidence": {
