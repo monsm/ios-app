@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-26T14:28:55.713Z",
+    "generated": "2026-10-26T14:32:55.798Z",
     "sources": [
       {
         "scout": "android-native",
@@ -46550,7 +46550,7 @@ const DATA = {
           "line": 504,
           "symbol": "restore(bundle:zones:lockActs:conflictTakeBackup:makeSnapshot:)",
           "note": "",
-          "text": "guard let url = URL(string: root) else { return \"地址非法\" }"
+          "text": "var req = URLRequest(url: url)"
         },
         {
           "platform": "ios",
@@ -46558,7 +46558,7 @@ const DATA = {
           "line": 510,
           "symbol": "清 currentMac",
           "note": "",
-          "text": "req.timeoutInterval = 15"
+          "text": "do {"
         },
         {
           "platform": "ios",
@@ -46566,7 +46566,7 @@ const DATA = {
           "line": 532,
           "symbol": "act merge/keep/skip",
           "note": "",
-          "text": "// Depth: 1 必须显式写。不写时按 RFC 4918 服务端默认取 **Infinity**，那 430 滚动保留看到的就是"
+          "text": "// 整个子树的每一层条目 (默认 root 又是整个坚果云根目录) —— 配合下面的删除面就是删到用户照片里。"
         },
         {
           "platform": "ios",
@@ -46574,7 +46574,7 @@ const DATA = {
           "line": 557,
           "symbol": "冲突裁决 guard",
           "note": "",
-          "text": "func cap(_ tag: String, from: String.Index) -> String {"
+          "text": "var idx = from"
         },
         {
           "platform": "ios",
@@ -46582,7 +46582,7 @@ const DATA = {
           "line": 613,
           "symbol": "返回三元组",
           "note": "",
-          "text": "let (data, _) = try await URLSession.shared.data(for: req)"
+          "text": "let raw = String(data: data, encoding: .utf8) ?? \"\""
         }
       ],
       "platformEvidence": {
@@ -46777,7 +46777,7 @@ const DATA = {
           "line": 689,
           "symbol": "enum BadgeState",
           "note": "",
-          "text": "/// 读侧兼容旧形态: 万一磁盘上躺着 [Double] (只有毫秒没有名字), 解成新结构并标\"未具名\", 不静默丢历史"
+          "text": "private static func bkEvents() -> [BkEvent] {"
         },
         {
           "platform": "ios",
@@ -46785,7 +46785,7 @@ const DATA = {
           "line": 690,
           "symbol": "badgeState",
           "note": "",
-          "text": "private static func bkEvents() -> [BkEvent] {"
+          "text": "if let v = DB.store.get([BkEvent].self, \"kf_bk_events\") { return v }"
         }
       ],
       "platformEvidence": {
@@ -46988,7 +46988,7 @@ const DATA = {
           "line": 493,
           "symbol": "verifyChecksum",
           "note": "",
-          "text": "/// 422 时间列: RFC1123 → 本地短格式, 解不开原样返回"
+          "text": "static func humanDate(_ s: String) -> String {"
         },
         {
           "platform": "ios",
@@ -46996,7 +46996,7 @@ const DATA = {
           "line": 497,
           "symbol": "shortHash 8 位",
           "note": "",
-          "text": "guard let d = f.date(from: s) else { return s }"
+          "text": "let g = DateFormatter(); g.locale = Locale(identifier: \"en_US_POSIX\"); g.dateFormat = \"yyyy-MM-dd HH:mm\""
         }
       ],
       "platformEvidence": {
@@ -49789,7 +49789,7 @@ const DATA = {
           "line": 385,
           "symbol": "pull 里同一入口",
           "note": "",
-          "text": "UINotificationFeedbackGenerator().notificationOccurred(.success)"
+          "text": "///"
         }
       ],
       "platformEvidence": {
@@ -50083,7 +50083,7 @@ const DATA = {
           "line": 481,
           "symbol": "v5 只推进版本号",
           "note": "",
-          "text": "DB.store.getBool(\"kf_bk_selfwarn\") ? \"数据自检异常, 去诊断\" : nil   // 448 数据自检异常"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -50152,7 +50152,7 @@ const DATA = {
           "line": 395,
           "symbol": "applyPendingRestore",
           "note": "",
-          "text": "/// 在 iOS 16+ 上是**同步可用**的, 而 Transferable 那一形要求文件已经落在磁盘上。"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -50160,7 +50160,7 @@ const DATA = {
           "line": 398,
           "symbol": "BackupKit.restoreAll(bundle)",
           "note": "",
-          "text": "var text: String"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -50168,7 +50168,7 @@ const DATA = {
           "line": 400,
           "symbol": "reloadAppearance 条件",
           "note": "",
-          "text": "init(configuration: ReadConfiguration) throws {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -50176,7 +50176,7 @@ const DATA = {
           "line": 403,
           "symbol": "恢复完成",
           "note": "",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -50184,7 +50184,7 @@ const DATA = {
           "line": 404,
           "symbol": "cloudPw = \"\"",
           "note": "",
-          "text": "func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -50618,7 +50618,7 @@ const DATA = {
           "line": 382,
           "symbol": "CloudSync.download",
           "note": "",
-          "text": "app.loadDevices()"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -50626,7 +50626,7 @@ const DATA = {
           "line": 383,
           "symbol": "云端暂无备份",
           "note": "",
-          "text": "if bundle.globals?.appearance != nil { app.reloadAppearance() }   // 894 带外观段才刷, 免得白重建一次全树"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -50634,7 +50634,7 @@ const DATA = {
           "line": 387,
           "symbol": "BackupStudio.parsePreview(text:password: cloudPw)",
           "note": "",
-          "text": "BackupPassphrase.clear()   // 2026-10-26: 改用共享口令容器后，清空走它的入口（原写 cloudPw = \"\"）"
+          "text": "/// 在 iOS 16+ 上是**同步可用**的, 而 Transferable 那一形要求文件已经落在磁盘上。"
         }
       ],
       "platformEvidence": {

@@ -377,15 +377,7 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !Backu
 
 
 
-    private func applyPendingRestore() {
-        let r = BackupKit.restoreAll(bundle)
-        app.loadDevices()
-        if bundle.globals?.appearance != nil { app.reloadAppearance() }   // 894 带外观段才刷, 免得白重建一次全树
-        armMigrateWizard(r)
-        UINotificationFeedbackGenerator().notificationOccurred(.success)
-        app.showToast("恢复完成: 新增 \(r.imported), 覆盖 \(r.overwritten)")
-        BackupPassphrase.clear()   // 2026-10-26: 改用共享口令容器后，清空走它的入口（原写 cloudPw = ""）
-    }
+    // 2026-10-26 精简：applyPendingRestore 已删 —— 它读的 pendingRestore 随「待确认恢复包」一起移除。
 
 }
 

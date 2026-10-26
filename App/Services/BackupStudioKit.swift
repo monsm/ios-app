@@ -476,7 +476,6 @@ enum BackupStudio {
     /// 448 启动自检: 库体哈希 vs 上次备份时的基线; 不一致返回黄条文案。
     /// 基线只在备份发生点 (markBackupBaseline, 由 Milestones.recordBackup 尾调用) 更新,
     /// 本函数只比不改 —— 自查后回写会把上一次的异常直接抹平。
-    @discardableResult
     static var selfCheckWarning: String? {
         DB.store.getBool("kf_bk_selfwarn") ? "数据自检异常, 去诊断" : nil   // 448 数据自检异常
     }
