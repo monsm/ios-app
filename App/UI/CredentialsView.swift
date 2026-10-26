@@ -29,7 +29,6 @@ struct CredentialsView: View {
     // ---------- 包6 列表组织 ----------
     @State private var seg: Int = 0          // 524 类型分段: 0 全部 / 1 密码 / 2 指纹 / 3 临时码
     @State private var memberView = CredentialOrg.groupMode == .owner   // 355 按成员视图
-    @State private var smartSel: String = "" // 527 智能列表选中 id ("" = 默认)
     @State private var search = ""
     /// 2026-10-26 恢复：`isBusy` 在清理四件套时被误删（它读 busyKey，是主流程状态）。
     private var isBusy: Bool { busyKey != nil }
@@ -290,7 +289,6 @@ struct CredentialsView: View {
                         }
                     }
                     Section("筛选") {
-                        Button("默认 (全部)") { smartSel = "" }
             // 2026-10-26 精简：智能列表（命名过滤）已删。
                     }
                     Section("整理") {
