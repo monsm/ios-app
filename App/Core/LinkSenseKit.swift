@@ -208,13 +208,7 @@ final class LinkSense: ObservableObject {
         }
     }
 
-    // ---------- 到场补发 (535): 只补 kf_cqueue_ 既有队列, 不主动下发新凭证 ----------
-    /// 预握手完成且确有排队变更时触发 (96 边界: 无队列绝不动手)。
-    func onPreconnectDone() {
-        guard !DiagFlags.silent else { return }
-        let app = self.app
-        guard let mac = app?.currentMac, lockSvc.connectedMAC == mac,
-    }
+    // 2026-10-26 精简：onPreconnectDone（预握手后触发到场补发）已删 —— 队列移除后无对象。
     // 2026-10-26 精简：resync（到场/回前台自动补发队列）已删 —— 队列功能整套移除。
 
 
@@ -242,7 +236,6 @@ final class LinkSense: ObservableObject {
             Task { @MainActor [weak self] in
                 guard let self else { return }
                 await self.refresh()
-                self.onPreconnectDone()
             }
         } else {
             // 用户口径 2026-10-17: **后台不许扫锁** (不耗手机射频, 也不逼锁一直广播费它的电)。
@@ -603,7 +596,6 @@ final class LinkSense: ObservableObject {
             guard let self, !Task.isCancelled else { return }
             await self.preconnect()
             guard !Task.isCancelled else { return }
-            self.onPreconnectDone()
         }
     }
 
@@ -612,7 +604,6 @@ final class LinkSense: ObservableObject {
         Task { @MainActor [weak self] in
             guard let self else { return }
             await self.preconnect()
-            self.onPreconnectDone()
         }
     }
 }
