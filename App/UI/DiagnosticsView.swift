@@ -606,31 +606,7 @@ struct DiagnosticsView: View {
                     }
                 }
             }
-            // 156 操作流水: DiagOps 早就在记 (预握手 / 到场补发 / 冷启动扫描, 上限 50 条),
-            // 但第九十二批查出 `DiagOps.list()` 全库零调用 —— 记了没人读, 只是往 UserDefaults 里堆。
-            // 这里补上出口, 让"记下来"真的能被看到 (与 72 断连流水并列, 同一个开关管)。
-            Section {
-                let ops = DiagOps.list()
-                if ops.isEmpty {
-                    Text("暂无操作打点 — 预握手、到场补发与冷启动扫描都会在这里各留一行。")
-                        .vkFont(.caption)
-                        .foregroundStyle(DS.Palette.textSub)
-                } else {
-                    ForEach(ops.prefix(20)) { op in
-                        LabeledRow(op.t, op.label)
-                    }
-                }
-                // 156 开关：`DiagOps.record` 一直是"先读 isOn 再记"，但全仓没有任何一处写
-                // kf_diag_ops_on (默认 true) —— footer 那句"关掉开关即不再记"根本没有开关可关。补真开关。
-                VariantToggle("记录操作打点", isOn: Binding(   // 156 记录操作打点
-                    get: { DiagOps.isOn() },
-                    set: { DB.store.set(DiagOps.on, $0) }))
-            } header: {
-                Text("操作流水")   // 156 操作流水
-            } footer: {
-                Text("只留最近 \(DiagOps.maxCount) 条；关掉上面这枚开关即不再记。")   // 156 只留最近
-                    .vkFont(.caption)
-            }
+            // 2026-10-26 精简：「操作流水」整节已删（DiagOps 随遥测一起移除）。
             // 2026-10-26 精简：「渲染自检」整节已删（用户确认）。
             // 133 蓝牙堆栈急救: 连续 GATT/连接失败后给出 关开蓝牙/重启手机 分步指引
             if failsInLast20 >= 3 {
@@ -641,7 +617,10 @@ struct DiagnosticsView: View {
                 } header: {
                     Text("蓝牙急救")   // 133 蓝牙急救
                 } footer: {
-                    Text("近 20 条断连事件中有 \(failsInLast20) 条失败 — 建议按序执行。")
+                    // 2026-10-26: 拆成 let 再交给 Text —— 直接写 Text("..." + 插值) 会让编译器
+                    // 在整条表达式上做类型推断而超时。
+                    let rescueLine = "近 20 条断连事件中有 \(failsInLast20) 条失败 — 建议按序执行。"
+                    Text(rescueLine)
                         .vkFont(.caption)
                 }
             }

@@ -506,6 +506,9 @@ enum RecordSearch {
         var member: String?    // 551 成员名
         var range: (from: Date, to: Date)?   // 554 时间短语
         var alarmOnly: Bool    // "告警" 关键词
+        var credKind: String?  // 凭证类词 (指纹/密码/临时码/NFC/钥匙)
+        var parsedTags: [String]   // 555 预览标签
+    }
     /// 551 搜索面 = 一行「能被搜到的文字」, 全仓只有这一份定义。
     /// 搜索框占位文案承诺了「成员 / 凭证 / 备注」三段 (RecordsView 的 searchBar), 那三段就得真在串里:
     ///   · title —— 655 动词化的行标题 (行上显示的那句话, 含成员名与类型词)
@@ -519,9 +522,6 @@ enum RecordSearch {
         var s = title + " " + lockName + " " + whoName + " " + cred
         if !note.isEmpty { s += " " + note }
         return s
-    }
-        var credKind: String?  // 凭证类词 (指纹/密码/临时码/NFC/钥匙)
-        var parsedTags: [String]   // 555 预览标签
     }
     static func parse(_ raw: String) -> Query {
         var q = Query(must: [], not: [], member: nil, range: nil, alarmOnly: false, credKind: nil, parsedTags: [])
