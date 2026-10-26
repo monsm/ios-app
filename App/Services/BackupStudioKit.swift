@@ -553,11 +553,6 @@ enum BackupStudio {
         guard let r = name.range(of: #"\d{4}-\d{2}-\d{2}"#, options: .regularExpression) else { return "" }
         return String(name[r])
     }
-    @discardableResult
-    /// 237 密钥轮换: 新口令重加密后**直接覆盖**远端同一文件（`zklock-backup.enc`）。
-    /// ⚠ 注释曾写「旧文件重命名留痕」—— 实现里没有任何重命名/留档分支, 轮换即覆盖,
-    ///   旧密文不可恢复。要留痕得先加一份 `.bak` 上传, 那是未实现的设计意图。
-    @discardableResult
 
     private static func jsonStr(_ s: String, _ marker: String) -> String? {
         guard let r = s.firstRange(of: marker) else { return nil }
