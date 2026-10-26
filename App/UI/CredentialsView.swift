@@ -1863,7 +1863,7 @@ struct CredentialsView: View {
                     // 2026-10-17 真机勘误「临时码能生成但不显示」: 挡片默认值原为 true ——
                     // 生成出来的六位码被一层 .ultraThinMaterial 常驻盖住, 只有长按 0.5s 才露出来,
                     // 用户看到的就是"空白/******"。默认改为关 (需要的人仍可在设置-安全里打开)。
-                    if DB.store.getBool(SecKey.frostedOn, false), !otpPeek {
+                    if !otpPeek {
                         RoundedRectangle(cornerRadius: DS.Radius.control)
                             .fill(.ultraThinMaterial)
                             .onLongPressGesture(minimumDuration: 0.5, maximumDistance: 50, pressing: { p in

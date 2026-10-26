@@ -274,7 +274,6 @@ struct WebDAVStudioView: View {
         let r = BackupStudio.restore(dl.b, zones: BZones())
         if dl.b.globals?.appearance != nil { app.reloadAppearance() }
         app.loadDevices()
-        BackupStudio.markImported()
         app.showToast("恢复完成: 新增 \(r.imported), 覆盖 \(r.overwritten)")
         pendingDL = nil
     }

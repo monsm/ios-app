@@ -369,12 +369,8 @@ final class AppState: ObservableObject {
     // 包1 手势族统一入口: 按住确认/上滑/VO 直开都汇到 requestUnlock。
     // 防误触三保险: 244 去重队列 → 250 二次开锁应用锁 → 56 撤销窗口 (执行期轻点)。
     func requestUnlock() {
-        // 296 只读安全模式: 圆盘、快捷操作、AppIntents、深链这几条侧门全汇到这一个入口,
-        // 拦在这里就等于拦住了"开锁"这一族动作本身, 而不是拦住某一个按钮。
-        guard SecurityPolicy.allows(.unlock) else {
-            showToast(SecurityPolicy.denialMessage(.unlock))
-            return
-        }
+        // 2026-10-26: 这里原有 guard SecurityPolicy.allows(.unlock) 拦截（296 只读安全模式）。
+        // readOnly 读的 SecKey.safeModeOn 从来没有写点（设置页无此开关）⇒ 恒 false ⇒ guard 永远放行，已删。
         guard current != nil else { return }
         if unlockState == .connecting || unlockState == .opening {
             // 56: 指令发出后 0.8s 内轻点圆盘 = 撤销 — 拦截回执等待与自动重试链
@@ -402,12 +398,7 @@ final class AppState: ObservableObject {
     }
 
     func startUnlock() {
-        // 296: 这一层还有两个不走 requestUnlock 的来源 —— 靠近自动开锁 (AutoOpen.swift:291)
-        // 与 250 二次开锁闸放行后的重发。闸落在这里, 自动档就开不了"只读模式还能自己开门"这个口子。
-        guard SecurityPolicy.allows(.unlock) else {
-            showToast(SecurityPolicy.denialMessage(.unlock))
-            return
-        }
+        // 同上：startUnlock 那层 guard 也已删（同一个恒 false 的只读模式判据）。
         unlockTask?.cancel()
         unlockTask = Task { await runUnlock() }
     }
@@ -670,22 +661,9 @@ final class AppState: ObservableObject {
                                  title: "上次是异常退出",
                                  subtitle: "时长与最后操作存在诊断页「异常退出档案」里, 进去可以核对。"))   // 758 时长与最后操作存在诊
         }
-        // 385 保留期到期: 启动时自动物理删除 + 重封链 + 留清理记录 (此前只靠安全中心手动按钮才会碰它);
-        // months=0 (永久) 时 purgeExpired 内部直接返回, 无须另判。
-        // 752 清理前导出提醒: 自动这一支现在也过诊断页/销毁共用的**同一道备份闸** (DestroyKit.backupGatePass,
-        // 口径 = 7 天内有本机备份)。闸没放开就**不删**, 只弹一张卡指去「设置-备份与恢复」;
-        // 导过一次之后下次启动自然会把这批清掉。手动按钮那边仍是当场二次确认 (那边有人在场, 这里没有)。
-        let retention = DB.store.getInt(SecKey.auditRetention, 0)
-        if retention > 0 {
-            if DestroyKit.backupGatePass {
-                AuditLog().purgeExpired(months: retention)
-            } else if !Milestones.onceDone("purge752_\(retention)") {
-                Milestones.markOnce("purge752_\(retention)")
-                enqueueMoment(Moment(id: "purge752", icon: "externaldrive.fill",
-                                     title: "保留期到了, 但先不删",
-                                     subtitle: "审计流水已过 \(retention) 个月保留档, 最近 7 天却没有本机备份 —— 这一次清理已跳过。导出一次备份 (设置-备份与恢复), 下次启动就会把这批清掉。"))
-            }
-        }
+        // 2026-10-26: 「保留期到了但先不删」这段已删 —— 它读 SecKey.auditRetention（385 保留期），
+        // 而那个键**从来没有写点**（设置页没有保留期选项）⇒ retention 恒 0 ⇒ 整个 if 永不进入。
+        // AuditLog().purgeExpired(months:) 因此从未被自动调用过；手动清理入口仍在诊断页，不受影响。
         // 223 启动自动归档: 诊断页那枚开关开着才动手 (默认关), 走与手动按钮同一引擎; 条数进维护回执 (387)
         if DB.store.getBool("kf_diag_autoarchive") {
             let archived = DataHealth.archiveOldLogs()
@@ -785,8 +763,6 @@ final class AppState: ObservableObject {
 struct RootView: View {
     @EnvironmentObject var app: AppState
     @ObservedObject private var sense = LinkSense.shared
-    // 378: 安全中心那页的开关拨动后 SecTick.bump, 这里重算水印层 (跨页即时生效)
-    @ObservedObject private var secTick = SecTickCenter.shared
     // 162 握手可离开: 圆盘握手在别的 Tab 完成 → 设备 Tab 亮角标; 回到设备页清零
     @State private var handshakeDoneAway = false
     @Environment(\.scenePhase) private var scenePhase
@@ -1067,15 +1043,6 @@ struct RootView: View {
         // 两档都显式, 不依赖系统默认推断 (LegibilityWeight.bold 的官方语义就是 "force Accessibility Bold")。
         .environment(\.legibilityWeight, AXFlags.boldText ? .bold : .regular)
         .animation(DS.Motion.soft, value: app.appUnlocked)
-        // 378 常驻水印: 全局对角重复层 (安全中心页内那份保留不动, 那里是设置项自己的预览)。
-        // 读一下 tick 使开关拨动后整层重算; hitTesting/朗读屏蔽在 SecurityWatermark 内部已带。
-        .overlay {
-            let _ = secTick.tick
-            if DB.store.getBool(SecKey.watermarkOn, false) {
-                SecurityWatermark(seed: DB.store.getString(SecKey.watermarkTxt))
-                    .ignoresSafeArea()
-            }
-        }
     }
 
     /// 后台隐私幕/深链/Tab 与解锁状态钩子/触感/配色 —— 同上

@@ -10,17 +10,6 @@
 import SwiftUI
 import UIKit
 
-// ---------- 存储键常量 (包7 专属族, 与 Store 既有键无碰撞) ----------
-// 一律 String 常量, 供 DB.store getString/set 直接使用
-enum SecKey {
-    static let maskStyle      = "kf_smask_style"        // 369 "" 圆点 / stars / tail4
-    static let frostedOn      = "kf_speek_frost"        // 375 磨砂挡片
-    static let shareHalfOn    = "kf_speek_sharehalf"    // 376 分享遮半
-    static let watermarkOn    = "kf_swmark_on"          // 378 常驻水印
-    static let watermarkTxt   = "kf_swmark_txt"         // 378 水印文案种子
-    static let auditRetention = "kf_saudit_months"      // 385 保留期 (0=永久)
-    static let safeModeOn     = "kf_sdest_safemode"     // 296 只读安全模式
-}
 
 // ---------- 配置变更广播: 子页写完 kf_ 键后 bump, 各页派生文案 2s 节拍内刷新 ----------
 @MainActor
@@ -31,37 +20,6 @@ final class SecTickCenter: ObservableObject {
 }
 @MainActor
 
-// ---------- 378 常驻水印层 (截图加扰降级案: 页面常驻, 半透明对角重复) ----------
-struct SecurityWatermark: View {
-    var seed: String
-    /// 水印是画在 `Canvas` 里的 `Text`：`GraphicsContext.draw` 收 `Text`，**不收 `some View`**，
-    /// 所以这里不能写 `.vkFont(...)`（它返回的是 `some View`），改取排版语法的
-    /// `Font` 结果——`VKTypography.font(...)` 与 `.vkFont` 是**同一个实现处**。
-    var body: some View {
-        Canvas { ctx, size in
-            let tile: CGFloat = 120
-            let stampFont = VKTypography.font(.caption2, weight: nil)
-            let stamp = seed.isEmpty ? "离线锁管家 \(Date().formatted(.dateTime.year().month().day()))" : seed
-            var row = 0
-            var y: CGFloat = -tile / 3
-            while y < size.height + tile {
-                var x: CGFloat = row.isMultiple(of: 2) ? 0 : -tile / 2
-                while x < size.width + tile {
-                    var t = ctx
-                    t.translateBy(x: x, y: y)
-                    t.rotate(by: .degrees(-18))
-                    t.opacity = 0.05   // 装饰层: 只留潜意识, 不破正文对比度 (颜色仍取 text 令牌的动态色)
-                    t.draw(Text(stamp).font(stampFont).foregroundColor(DS.Palette.text), at: .zero)
-                    x += tile
-                }
-                y += tile / 1.6
-                row += 1
-            }
-        }
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
-    }
-}
 
 struct SecurityCenterView: View {
     @EnvironmentObject var app: AppState
@@ -132,14 +90,8 @@ struct SecurityCenterView: View {
             .toolbar { ToolbarItem(placement: .navigationBarLeading) {
                 Button("关闭") { dismiss() }
             } }
-            // 378 常驻水印层: 全页对角重复, 设置可关
-            .overlay {
-                if DB.store.getBool(SecKey.watermarkOn, false) {
-                    SecurityWatermark(seed: DB.store.getString(SecKey.watermarkTxt))
-                }
-            }
             // 2s 节拍：本页**不读** tick，但它是 bump 的**唯一驱动源** ——
-            // LockKeeperApp.swift:1094 的全局水印层读 secTick.tick 靠它重算。
+            // 2026-10-26: 全局水印层已删（SecKey.watermarkOn 无写点），本页的节拍现在只服务本页自己。
             // 子页拨开关后也会主动 bump（见 :167 上方那条 dismiss 注释），那条路径不依赖这个节拍。
             .onReceive(Timer.publish(every: 2, on: .main, in: .common).autoconnect()) { _ in
                 self.center.bump()

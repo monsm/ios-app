@@ -129,7 +129,7 @@ struct MaskedDigits: View {
     @State private var ledgerLogged = false
     var body: some View {
         // 369 遮蔽样式: 与安全中心 maskStyleLabel 三档口径逐字对齐
-        let style = DB.store.getString(SecKey.maskStyle)
+        let style = ""
         HStack(spacing: DS.Space.xs) {
             ForEach(Array(value.enumerated()), id: \.offset) { i, ch in
                 let on = revealed.contains(i)

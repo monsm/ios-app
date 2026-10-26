@@ -1,64 +1,24 @@
 // 应用锁安全族消费者 (389–395/398) — 这些键位原先只在设置页写与显示, 验证路径一个都不读,
 // 于是"失败冷却 / 伪装码 / 胁迫码 / 失败留痕 / 锁定时机 / 免验窗口 / 救援码"全是死开关。
 // 原则: 任何配置缺失都按**最严格**解释 (fail-closed), 不因为读不到值就放行。
-//
-// 同一个道理的第二批 (第一百批): 文件末尾的 LockAction + SecurityPolicy 是 376/377/383/296 那五枚开关的
-// 唯一判据口 —— 它们此前只改自己的标签, 全仓没有一个消费者, 于是"访客通道 / 分享遮半 / sudo 口令 /
-// 只读安全模式"四句承诺一句都没兑现。界面与调用点一律读 SecurityPolicy, 不许再各处 DB.store.getBool。
 import Foundation
 
-
-// ---------- 安全中心五枚开关的唯一判据口 (376/377/383/296) ----------
-/// 危险动作族: 296 只读模式要停下来的那一族, 也是 383 要追问口令的那一族的父集。
-/// 界面与调用点报的是同一个枚举, 不再各处写 `if DB.store.getBool(SecKey.xxx)` ——
-/// 这五枚开关此前失效的成因正是"读点散在设置页的文案里": 标签跟着开关变, 行为一行没动。
-enum LockAction {
-    case unlock             // 圆盘/手势/自动开锁的开锁动作
-    case writeCredential    // 凭证增删改 (口令/指纹/临时码)
-    case provision          // 网关配网
-    case dfu                // 固件升级
-    case destroy            // 销毁/清空回收站/离职清除这类不可逆动作
-    case importExport       // 备份导入与导出分享
-
-    /// 只读安全模式 (296) 下全族都停: 开关的原话是"只读查看日志"。
-    /// **设置页自身的开关不在这一族里** —— 把写类动作一把全锁死会把关掉只读模式的路也一起锁死,
-    /// 那就不是应急位而是自锁。
-    var blockedInReadOnly: Bool { true }
-
-    /// 被拦下时对用户说的那句实话: 点名是哪枚开关拦的, 不写成含糊的"操作失败"
-    var denial: String {
-        switch self {
-        case .unlock: return "只读安全模式已开: 开锁已停用, 要开门请先关掉这枚开关"   // 296 只读安全模式已开
-        case .writeCredential: return "只读安全模式已开: 凭证写入已停用"   // 296 只读安全模式已开
-        case .provision: return "只读安全模式已开: 网关配网已停用"   // 296 只读安全模式已开
-        case .dfu: return "只读安全模式已开: 固件升级已停用"   // 296 只读安全模式已开
-        case .destroy: return "只读安全模式已开: 销毁与清空已停用"   // 296 只读安全模式已开
-        case .importExport: return "只读安全模式已开: 导入导出已停用"   // 296 只读安全模式已开
-        }
-    }
-}
-
-
-/// 安全中心五枚开关的唯一判据口。刻意**不加 @MainActor**:
-/// 判据口要能被界面、逻辑层 (DestroyKit) 与静态上下文一律读到,
-/// 一旦隔离到某个 actor, 每个调用点就得为边界绕路, 绕着绕着就又写回 `DB.store.getBool` 去了。
-/// 失败留痕 (389/392 那条通道是 @MainActor 的 LockGuard) 因此放在界面侧那一步做。
+// ---------- 安全策略判据口 ----------
+/// 2026-10-26 精简说明：本文件原有五枚开关的判据（377 访客 / 376 分享遮半 / 383 sudo / 296 只读 / 398 会话），
+/// 逐条核实后处置如下 ——
+///   · **保留 guestActive（377）与 halfMasked（376）**：这两条是真实生效的行为，
+///     `kf_speek_guest` / `kf_speek_sharehalf` 虽然也没有开关 UI，但默认值就决定了它们一直在起作用
+///     （访客通道默认关所以不显示；分享遮半默认**开**，所以分享/复制出去的码值一直是遮半的）。
+///   · **删除 readOnly（296）与其动作闸**：`SecKey.safeModeOn` 无写点 ⇒ 恒 false ⇒
+///     `allows()` 永远放行、`denialMessage()` 永远不显示，是纯死逻辑。连同 `LockAction` 枚举一并删。
 enum SecurityPolicy {
     // ---------- 唯一读点: 界面与调用点一律从这里取, 不许再摸 DB.store ----------
-    /// 377 访客通道: 真开时主 TabView 只暴露 设备/记录, 进 凭证/设置 要先过口令
-    /// 377 访客通道: 开关 UI 已随安全中心子页删除, 这里直读原键名 —— 
-    /// 老用户若曾打开过仍会生效, 但已无任何入口能再拨它。
+    /// 377 访客通道: 真开时主 TabView 只暴露 设备/记录, 进 凭证/设置 要先过口令。
+    /// 开关 UI 已随安全中心子页删除, 这里直读原键名 —— 老用户若曾打开过仍会生效, 但已无入口能再拨它。
     static var guestActive: Bool { DB.store.getBool("kf_speek_guest", false) }
-    /// 296 只读安全模式
-    static var readOnly: Bool { DB.store.getBool(SecKey.safeModeOn, false) }
-    /// 376 口述卡与导出预览默认遮码值下半段
-    static var shareHalf: Bool { DB.store.getBool(SecKey.shareHalfOn, true) }
-
-    // ---------- 296: 动作闸 ----------
-    /// 这个动作现在准不准做。只读模式开着 ⇒ 全族拦下。
-    static func allows(_ action: LockAction) -> Bool { !(readOnly && action.blockedInReadOnly) }
-    /// 拦下时该说的那句话
-    static func denialMessage(_ action: LockAction) -> String { action.denial }
+    /// 376 分享遮半（**默认开**，所以它一直在生效）：口述卡 / 复制 / 分享载荷里只给下半段遮码值。
+    /// 原开关 UI 已删，键名直读 —— 与 guestActive 同一条处置（默认值即行为）。
+    static var shareHalf: Bool { DB.store.getBool("kf_speek_sharehalf", true) }
 
     // ---------- 376: 遮下半段 ----------
     private static let maskChar: Character = "●"
@@ -72,5 +32,4 @@ enum SecurityPolicy {
     }
     /// 376 渲染侧的一行读法: 开关关着原样给, 开着遮下半段 (调用点不必自己写三目)
     static func halfMasked(_ digits: String) -> String { shareHalf ? masked(digits) : digits }
-
 }

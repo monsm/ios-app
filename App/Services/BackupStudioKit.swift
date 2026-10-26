@@ -65,8 +65,6 @@ enum BackupStudio {
         guard let ms = lastExportMs else { return -1 }
         return Int(Date().timeIntervalSince1970 / 86400) - Int(ms / 1000 / 86400)
     }
-    static func markImported() { DB.store.set("kf_bk_last_import", Date().timeIntervalSince1970 * 1000) }
-
 
     // ---------- 1018 月度备份日: 每月固定日本地通知, 点通知生成本机还原点并指路备份工作室 ----------
     static var monthlyDay: Int {
@@ -183,7 +181,6 @@ enum BackupStudio {
         guard let data = try? JSONEncoder().encode(snap),
               (try? data.write(to: rollURL, options: .atomic)) != nil else { return false }
         pruneRollback(keep: 4)
-        DB.store.set("kf_bk_rollback", rollURL.path)
         return true
     }
     @discardableResult
@@ -522,7 +519,6 @@ enum BackupStudio {
                 ])
             }
         }
-        markImported()
         return (mimp, mover, mskip)
     }
 
