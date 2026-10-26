@@ -517,7 +517,7 @@ struct SettingsView: View {
         } header: {
             Text("开锁")
         } footer: {
-            Text("按住圆盘时长 (默认 0.9s, 可在 辅助功能 里 0.4–1.6s 自定) 或上滑触发开锁；关闭「按住确认」后退回轻点直开 (适合单手与 VoiceOver)。误触围栏开启后需先从圆盘边缘拖到中心再执行开锁手势。")
+            Text("按住圆盘时长 (默认 0.9s，可在上方「外观」里 0.4–1.6s 自定) 或上滑触发开锁；关闭「按住确认」后退回轻点直开 (适合单手与 VoiceOver)。误触围栏开启后需先从圆盘边缘拖到中心再执行开锁手势。")
                 .vkFont(.caption)
                 .foregroundStyle(DS.Palette.textSub)
                 .fixedSize(horizontal: false, vertical: true)
@@ -865,6 +865,38 @@ struct SettingsView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             // 恢复默认外观 (idea 202): 带确认弹窗, 只重置外观偏好
+            // ---------- 2026-10-26 补的 4 枚开关 ----------
+            // 这四枚的读取与消费代码本来就都在（长按进度条 / 快捷格列数 / 双击防抖 / 低电阈值），
+            // 但**全仓没有写点** —— 键永远等于默认值，等于开关不存在。补在这里让它们真能用。
+            VStack(alignment: .leading, spacing: DS.Space.xxs) {
+                Picker("长按确认时长", selection: Binding(
+                    get: { AXPrefs.holdDuration },
+                    set: { app.setUnlockOption("kf_ax_hold", String(format: "%.1f", $0)) })) {
+                    ForEach([0.4, 0.6, 0.9, 1.2, 1.6], id: \.self) { s in
+                        Text(String(format: "%.1f 秒", s)).tag(s)
+                    }
+                }
+                .pickerStyle(.menu)
+                // 520 行那句"可在辅助功能里 0.4–1.6s 自定"长期是空承诺（没有那个页），现在成真。
+                Text("按住圆盘多久算确认。关掉「按住确认」后此项不生效。")
+                    .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
+            }
+            VariantToggle("大格模式 (快捷格 2 列)", isOn: Binding(
+                get: { AXPrefs.bigTile },
+                set: { app.setUnlockOption("kf_bigtile", $0) }))
+            VariantToggle("双击防抖 (0.3 秒内忽略重复触发)", isOn: Binding(
+                get: { AXPrefs.dbltapGuard },
+                set: { app.setUnlockOption("kf_dbltap_guard", $0) }))
+            Picker("低电提醒阈值", selection: Binding(
+                get: { CareSchedule.battThreshold },
+                set: { app.setUnlockOption("kf_batt_threshold", $0) })) {
+                // 只给 10/15/20：CareSchedule.battThreshold 的白名单就是这三个（其它值会被夹回 15）。
+                // 多给档位等于给一个"选了不生效"的选项。
+                ForEach([10, 15, 20], id: \.self) { v in
+                    Text("\(v)%").tag(v)
+                }
+            }
+            .pickerStyle(.menu)
             Button("恢复默认外观") { resetAppearance() }
         } header: {
             Text("外观")

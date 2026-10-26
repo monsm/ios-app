@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-26T07:32:51.413Z",
+    "generated": "2026-10-26T07:39:56.596Z",
     "sources": [
       {
         "scout": "android-native",
@@ -14125,7 +14125,7 @@
           "line": 1114,
           "symbol": "切换到 B 模式按钮",
           "note": "",
-          "text": "try await app.lock.setAutoLock(seconds - 1) // cmd24 档位 = 秒数-1"
+          "text": "@State private var busy = false"
         },
         {
           "platform": "apk",
@@ -14141,7 +14141,7 @@
           "line": 1138,
           "symbol": "switchToDoubleVerify",
           "note": "",
-          "text": "Text(\"门锁的安全模式分为A模式和B模式\").vkFont(.subheadline)"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -50826,7 +50826,7 @@
           "line": 1079,
           "symbol": "struct SafemodeIntroView",
           "note": "",
-          "text": "struct TailgateView: View {"
+          "text": "private var aboutFooterText: String {"
         },
         {
           "platform": "ios",
@@ -50842,7 +50842,7 @@
           "line": 1096,
           "symbol": "A模式：只需要单一方式 …",
           "note": "",
-          "text": "}"
+          "text": ".frame(width: 22)"
         },
         {
           "platform": "ios",
@@ -50850,7 +50850,7 @@
           "line": 1109,
           "symbol": "else if app.status?.verifyMode == 1",
           "note": "",
-          "text": "guard let kc = app.current, !busy else { return }"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -50938,7 +50938,7 @@
           "line": 1036,
           "symbol": "struct TailgateView",
           "note": "",
-          "text": "} footer: {"
+          "text": "// 2026-10-13 run 63: 原来把 infoDictionary 取值 + 三段拼接全内联进 Text, 报 type-check 超时。"
         },
         {
           "platform": "apk",
@@ -51852,7 +51852,7 @@
           "line": 1114,
           "symbol": "Button(\"切换到 B 模式（双验，更严）(cmd 20)\")",
           "note": "",
-          "text": "try await app.lock.setAutoLock(seconds - 1) // cmd24 档位 = 秒数-1"
+          "text": "@State private var busy = false"
         },
         {
           "platform": "ios",
@@ -51868,7 +51868,7 @@
           "line": 1141,
           "symbol": "try await app.lock.setValidationMode(true)",
           "note": "",
-          "text": "}"
+          "text": "guard let kc = app.current, !busy else { return }"
         },
         {
           "platform": "ios",
@@ -51876,7 +51876,7 @@
           "line": 1147,
           "symbol": "if app.status?.verifyMode == 1",
           "note": "",
-          "text": "// 而锁端不记录是谁改的 —— 本机审计只会留下一条无法解释的降级。"
+          "text": "DB.saveTailgate(kc.mac, TailgateCfg(interval: seconds - 1, at: Date().timeIntervalSince1970 * 1000))"
         }
       ],
       "platformEvidence": {
@@ -51953,7 +51953,7 @@
           "line": 1065,
           "symbol": "private func run() async",
           "note": "",
-          "text": "// @layout-allow VK豁免 刻度点: 22pt 宽的控制零件，不是容器"
+          "text": "LabeledRow(\"构建\", Bundle.main.infoDictionary?[\"CFBundleVersion\"] as? String ?? \"?\")"
         },
         {
           "platform": "ios",
@@ -51969,7 +51969,7 @@
           "line": 1071,
           "symbol": "try await app.lock.setAutoLock(seconds - 1)",
           "note": "",
-          "text": "}"
+          "text": ".foregroundStyle(DS.Palette.textSub)"
         }
       ],
       "platformEvidence": {
@@ -52359,7 +52359,7 @@
           "line": 1045,
           "symbol": "Picker 2...6",
           "note": "",
-          "text": "}"
+          "text": "Button {"
         },
         {
           "platform": "apk",
@@ -70282,7 +70282,7 @@
           "line": 936,
           "symbol": "resetAppearance()",
           "note": "",
-          "text": ".foregroundStyle(.white)"
+          "text": "IconOption(id: \"AppIcon-Home\", name: \"家门\", glyph: \"house.fill\","
         },
         {
           "platform": "ios",
@@ -71194,7 +71194,7 @@
           "line": 945,
           "symbol": "aboutSection",
           "note": "",
-          "text": ".offset(x: 4, y: 4)"
+          "text": "bg: [Color(hex: 0x7C3AED), Color(hex: 0x7C3AED)]),"
         },
         {
           "platform": "ios",
@@ -71202,7 +71202,7 @@
           "line": 969,
           "symbol": "Button { versionTaps += 1; if versionTaps >= 10 … }",
           "note": "",
-          "text": "// 所以跳一次主 actor 再写 —— 不是 assumeIsolated 赌线程。"
+          "text": ")"
         },
         {
           "platform": "ios",
@@ -71210,7 +71210,7 @@
           "line": 1003,
           "symbol": "aboutFooterText",
           "note": "",
-          "text": "Spacer(minLength: DS.Space.m)"
+          "text": "if let error {"
         }
       ],
       "platformEvidence": {
@@ -72516,7 +72516,7 @@
           "line": 971,
           "symbol": "if versionTaps >= 10, !eggShown { eggShown = true; … }",
           "note": "",
-          "text": "if let error {"
+          "text": "Image(systemName: \"checkmark.circle.fill\")"
         },
         {
           "platform": "ios",
@@ -72524,7 +72524,7 @@
           "line": 989,
           "symbol": "LabeledRow(\"构建\", …)",
           "note": "",
-          "text": "private var aboutSection: some View {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -72532,7 +72532,7 @@
           "line": 990,
           "symbol": "LabeledRow(\"遥测\", \"无 · 全程离线\")",
           "note": "",
-          "text": "Section {"
+          "text": "/// 887 备选图标: 八套备选集 (Ring/Key/Shield + 896 新增的 Home/Bell/Pin/Guard/Heart) 均已含"
         }
       ],
       "platformEvidence": {
@@ -72608,7 +72608,7 @@
           "line": 872,
           "symbol": "iconPickerRow",
           "note": "",
-          "text": "Text(\"主题、品牌色（六套）、密度、圆角、高对比、周起始日、行高与行距、指标位、纹理、动效强度、节日色、每日一句话都在本机生效，即时可见，不上传。高对比与系统「辅助功能-增加对比度」是并联关系，任一开着都加强；系统「减弱动态效果」会把动效强度压到克制档。素颜模式一键关闭庆祝与徽章动效；纯黑适合 OLED 夜间。\")"
+          "text": "Picker(\"长按确认时长\", selection: Binding("
         },
         {
           "platform": "ios",
@@ -72616,7 +72616,7 @@
           "line": 918,
           "symbol": "setIcon(_:)",
           "note": "",
-          "text": "// \"标题在左、图排在右的一行\"改成\"标题在上、图排自适应换行\"的两段式。"
+          "text": "let id: String?      // nil = 默认图标"
         }
       ],
       "platformEvidence": {
@@ -73036,7 +73036,7 @@
           "line": 936,
           "symbol": "resetAppearance()",
           "note": "",
-          "text": ".foregroundStyle(.white)"
+          "text": "IconOption(id: \"AppIcon-Home\", name: \"家门\", glyph: \"house.fill\","
         },
         {
           "platform": "ios",
