@@ -141,40 +141,53 @@ final class DFUSession: NSObject, @unchecked Sendable {
     /// 也就是「广播里的 pid 等于目标锁 pid」+「frameCtrl 的 bit5（dfuState）为 1」，
     /// **不是**靠广播名匹配。名字只作为附加兜底（少数固件在 DFU 态仍带 ZkDFU 前缀）。
     /// Swift 侧的 `ZKProtocol.parseAdv` 已经解出同样的字段（dfuState = frameCtrl & 0x20），直接复用。
+    /// 扫描 DFU 设备：判据是「广播 pid == 目标 pid」+「frameCtrl bit5 (dfuState) == 1」，
+    /// 也就是「广播里的 pid 等于目标锁 pid」+「frameCtrl 的 bit5（dfuState）为 1」，
+    /// **不是**靠广播名匹配。名字只作为附加兜底（少数固件在 DFU 态仍带 ZkDFU 前缀）。
     private func scanForDFUDevice() async throws -> CBPeripheral {
         let wantPid = targetPid
         return try await withCheckedThrowingContinuation { (cont: CheckedContinuation<CBPeripheral, Error>) in
-            let mgr = central   // 嵌套函数里不跨隔离碰 self.central, 先取局部
-            var done = false
-            func finish(_ r: Result<CBPeripheral, Error>) {
-                guard !done else { return }
-                done = true
-                mgr.stopScan()
-                cont.resume(with: r)
-            }
-            central.scanForPeripherals(withServices: nil, options: [CBCentralManagerScanOptionAllowDuplicatesKey: true])
+            // 2026-10-26: 原先这里用嵌套函数 + 局部 var done / let mgr，被 asyncAfter 与
+            // scanHandler 两个逃逸闭包捕获 ⇒ Swift 6 报 sending risks data races。
+            // 改为把续体与一次性闸挂到 self 上（本类已是 @unchecked Sendable），
+            // 闭包只捕获 self，不再捕获局部可变状态。
+            self.scanCont = cont
+            self.scanDone = false
+            self.central.scanForPeripherals(withServices: nil,
+                                           options: [CBCentralManagerScanOptionAllowDuplicatesKey: true])
             // 10 秒窗口：与 APK BleDfu.doScan 的 handler.postDelayed(…, 10000) 同值
-            DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
-                finish(.failure(DFUTransportError.ble("10 秒内没发现升级模式设备。请确认门锁已通电、靠近手机，"
+            DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [weak self] in
+                self?.finishScan(.failure(DFUTransportError.ble(
+                    "10 秒内没发现升级模式设备。请确认门锁已通电、靠近手机，"
                     + "且已下发 22 进 DFU（广播里 dfuState 位为 1）。")))
             }
-            self.scanHandler = { p, adv in
+            self.scanHandler = { [weak self] p, adv in
+                guard let self else { return }
                 // ① 优先按 APK 判据：厂商段解析出 pid + dfuState
                 if let mf = adv[CBAdvertisementDataManufacturerDataKey] as? Data {
                     let hex = HexKit.hex([UInt8](mf))
                     if let a = ZKProtocol.parseAdv(hex), a.dfuState == 1,
                        wantPid == 0 || a.pid == wantPid {
-                        finish(.success(p))
+                        self.finishScan(.success(p))
                         return
                     }
                 }
                 // ② 兜底：名字命中 ZkDFU（部分固件不带厂商段）
                 let name = (adv[CBAdvertisementDataLocalNameKey] as? String)?.uppercased() ?? ""
-                if name.contains("ZKDFU") {
-                    finish(.success(p))
-                }
+                if name.contains("ZKDFU") { self.finishScan(.success(p)) }
             }
         }
+    }
+
+    private var scanCont: CheckedContinuation<CBPeripheral, Error>?
+    private var scanDone = false
+    private func finishScan(_ r: Result<CBPeripheral, Error>) {
+        guard !scanDone, let c = scanCont else { return }
+        scanDone = true
+        scanCont = nil
+        scanHandler = nil
+        central.stopScan()
+        c.resume(with: r)
     }
     private var scanHandler: ((CBPeripheral, [String: Any]) -> Void)?
 
@@ -184,9 +197,9 @@ final class DFUSession: NSObject, @unchecked Sendable {
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
             self.connectCont = cont
             central.connect(p, options: nil)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 20) {
-                if self.connectCont != nil {
-                    self.connectCont = nil
+            DispatchQueue.main.asyncAfter(deadline: .now() + 20) { [weak self] in
+                if self?.connectCont != nil {
+                    self?.connectCont = nil
                     cont.resume(throwing: DFUTransportError.ble("连升级设备超时（20s）"))
                 }
             }
@@ -222,9 +235,9 @@ final class DFUSession: NSObject, @unchecked Sendable {
     private func waitDiscover() async throws {
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
             self.discoverCont = cont
-            DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
-                if self.discoverCont != nil {
-                    self.discoverCont = nil
+            DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [weak self] in
+                if self?.discoverCont != nil {
+                    self?.discoverCont = nil
                     cont.resume(throwing: DFUTransportError.ble("服务发现超时（10s）"))
                 }
             }
@@ -353,9 +366,9 @@ final class DFUSession: NSObject, @unchecked Sendable {
         if ackBuffer != nil { ackBuffer = nil; return }
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
             self.ackCont = cont
-            DispatchQueue.main.asyncAfter(deadline: .now() + 15) {
-                if self.ackCont != nil {
-                    self.ackCont = nil
+            DispatchQueue.main.asyncAfter(deadline: .now() + 15) { [weak self] in
+                if self?.ackCont != nil {
+                    self?.ackCont = nil
                     cont.resume(throwing: DFUTransportError.protocolError("等回执超时（15s）"))
                 }
             }
