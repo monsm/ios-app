@@ -4919,9 +4919,9 @@
       "parentKey": "security.policy",
       "domain": "security",
       "level": 3,
-      "name": "访客通道与敏感成员隐藏",
+      "name": "访客通道（已删）",
       "kind": "setting",
-      "summary": "`guestActive` 时主 TabView 只暴露设备/记录，进凭证/设置要先过口令。`kf_speek_guest` 默认关、且**已无开关 UI 能拨它** —— 老用户若曾打开过仍生效。原描述里提到的 `hideSensitiveInGuest` 已随 2026-10-26 精简删除（本机没有成员敏感标记位）。",
+      "summary": "**2026-10-26 已删**：`kf_speek_guest` 从来没有写点（设置页无此开关）⇒ `guestActive` 恒 false ⇒ 下游四条判据全部恒等于「访客未开启」。按\"删功能\"处置：删掉 `SecurityPolicy.guestActive`、`AppState.guestAreaLocked` / `guestAreaUnlocked` / `guestGateTarget` / `showGuestGate` / `openGuestGate`、`Route.guestBlocked` / `guestBlockedTabs`、`GuestReauthGate` 视图，以及 Tab 树里两处`if !guestAreaLocked` 条件（展开为无条件挂载）。**保留 `revokeSessionGrants()`**：它是「用户离开 App = 会话结束」的落点，安全关键。",
       "details": [
         "kf_speek_guest 的开关 UI 已随安全中心子页删除，但老用户曾打开仍会生效，且已无入口再拨它（LockGuard.swift:48-51）",
         "hideSensitiveInGuest 读 SecKey.sensitiveOnly（LockGuard.swift:53）",
@@ -4939,7 +4939,7 @@
         "访客",
         "设置偏好"
       ],
-      "status": "partial"
+      "status": "removed"
     },
     {
       "key": "security.policy.share-half",

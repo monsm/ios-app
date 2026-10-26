@@ -41,10 +41,6 @@ enum Route: String, CaseIterable, Identifiable {
     /// 越界返回 -1 而不是崩溃 —— 调用方 (markNav) 本来就靠"拿不到就不记账"来兜住脏值。
     var tabIndex: Int { Route.byHost.firstIndex(of: self) ?? -1 }
 
-    /// 377 访客模式下受限的目的地。
-    /// 原句口径：「只看设备 Tab / 进凭证要密码 / 退出需密码 / 落点应用锁」，
-    /// 只拦 凭证/设置 两页；记录页不含凭证本体，照常可看。
-    var guestBlocked: Bool { self == .credentials || self == .settings }
 
     /// 设置页/深链/语音里给用户看的那一行字。
     var title: String {
@@ -64,9 +60,6 @@ enum Route: String, CaseIterable, Identifiable {
         return d
     }
 
-    /// 访客受限 Tab 号集合。**由 guestBlocked 派生**，不再手写 `[1, 3]`。
-    /// 留着它只为兼容仍按序号摘除层级的那两处视图代码；判据本身在 guestBlocked 里。
-    static var guestBlockedTabs: Set<Int> {
-        Set(Route.allCases.filter { $0.guestBlocked }.map { $0.tabIndex })
-    }
+    // 2026-10-26: `guestBlocked` / `guestBlockedTabs` 已删 —— 它们只服务 377 访客通道，
+    // 而那条通道整套删除（`kf_speek_guest` 无写点 ⇒ guestActive 恒 false）。
 }

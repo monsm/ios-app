@@ -135,6 +135,12 @@ struct DeviceHomeView: View {
             .onChange(of: lockSvc.connectedMAC) { _, new in
                 guard new == app.currentMac, !new.isEmpty else { return }
                 reconnectDot = true
+                // 112 换机迁移验证：这台锁真的连上过一次 ⇒ 打上已验证标记。
+                // 原先只有 BackupView 立旗标 + 这里清旗标的读侧，**没有任何地方把 kf_migok_ 置真**，
+                // 于是 allSatisfy 恒 false、向导永远收不起来。现在以「连接成功」作为验证通过的判据。
+                if !DB.store.getString("kf_migrate_pending").isEmpty {
+                    DB.store.set("kf_migok_" + new, true)
+                }
                 Task { @MainActor in
                     try? await Task.sleep(for: .seconds(3))
                     reconnectDot = false

@@ -110,10 +110,14 @@ function listSwift(ref) {
 }
 
 function readText(ref, file) {
-  if (ref === null) return fs.readFileSync(path.join(REPO, file), "utf8");
+  // 2026-10-26: 当前侧（ref === null）读不到时返回空串 —— 基线里存在、当前已删的文件
+  // 是本工具的**正常输入**（它专门用来查"删掉的符号还有没有消费者"），不该因此崩。
+  if (ref === null) {
+    try { return fs.readFileSync(path.join(REPO, file), "utf8"); }
+    catch { return ""; }
+  }
   return git(["show", ref + ":" + file]);
 }
-
 // ---------- 基线 ----------
 // 基线不可用 (浅克隆 / 指定 ref 不存在) ⇒ 跳过而不是判失败。
 // CI 的 actions/checkout 默认 fetch-depth:1, HEAD~1 取不到 —— 那时本步无从比起。

@@ -12,10 +12,6 @@ import Foundation
 ///   · **删除 readOnly（296）与其动作闸**：`SecKey.safeModeOn` 无写点 ⇒ 恒 false ⇒
 ///     `allows()` 永远放行、`denialMessage()` 永远不显示，是纯死逻辑。连同 `LockAction` 枚举一并删。
 enum SecurityPolicy {
-    // ---------- 唯一读点: 界面与调用点一律从这里取, 不许再摸 DB.store ----------
-    /// 377 访客通道: 真开时主 TabView 只暴露 设备/记录, 进 凭证/设置 要先过口令。
-    /// 开关 UI 已随安全中心子页删除, 这里直读原键名 —— 老用户若曾打开过仍会生效, 但已无入口能再拨它。
-    static var guestActive: Bool { DB.store.getBool("kf_speek_guest", false) }
     /// 376 分享遮半（**默认开**，所以它一直在生效）：口述卡 / 复制 / 分享载荷里只给下半段遮码值。
     /// 原开关 UI 已删，键名直读 —— 与 guestActive 同一条处置（默认值即行为）。
     static var shareHalf: Bool { DB.store.getBool("kf_speek_sharehalf", true) }

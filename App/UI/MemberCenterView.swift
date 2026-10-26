@@ -93,7 +93,7 @@ struct MemberCenterView: View {
                 }
             }
             // 415 名册分享面板: 用 ShareLink(item: URL) 而不是 UIActivityViewController ——
-            // 后者要么设 popover 锚点 (iPad), 要么就是本仓 SecurityCenterView:1238 那种裸用法;
+            // 后者要么设 popover 锚点 (iPad), 要么就是本仓别处（如原 SecurityCenterView）那种裸用法;
             // 本 App 现在是 iPhone-only (project.yml TARGETED_DEVICE_FAMILY=1), 今天不会崩, 但改设备族时那就是个雷,
             // 新代码一律走免锚点的 ShareLink。
             .sheet(isPresented: $showRoster) {

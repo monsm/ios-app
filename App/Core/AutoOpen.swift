@@ -370,7 +370,7 @@ final class AutoOpenController {
         //   ③输入伪装口令 → decoyMode=true, appUnlocked=true;
         //   ④LinkSense 的 2s tick 继续驱动 tickDwell → F0 查 appUnlocked(true) ✓ F1 脸在窗内 ✓ → 下发 04。
         // 390 行原话: "伪装口令进来的会话只渲染空壳" —— 空壳后面门被打开, 就是这个 bug。
-        // 手动锁定也应清零武装/面容时刻 (SecurityCenterView 那条), 这里先保证自动链在伪装态一律拒。
+        // 手动锁定也应清零武装/面容时刻 （原 SecurityCenterView 那条，该页已删）, 这里先保证自动链在伪装态一律拒。
         guard !app.decoyMode else {
             AutoOpen.audit(mac, "拒开: 伪装会话期间禁止自动下发 04")
             return

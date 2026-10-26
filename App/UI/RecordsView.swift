@@ -117,10 +117,6 @@ struct RecordsView: View {
         var isGap = false
         var gapDays = 0
         var gapHoliday: String? = nil
-        // 595 月界大字 (PART —— 渐显那一半未做): 每个"月"的第一个有记录日打一次标记。
-        // 为什么标记在分组阶段而不是派生属性: 派生属性只看得到自己这一天，无从知道上一组是不是同月。
-        // 派生属性只看得到自己这一天，无从知道上一组是不是同月 —— 那正是 679 年份分隔踩过的形状。
-        var showMonthBig = false
         var id: String { key }
         var date: Date? { RecordSearch.dateFromKey(key) }
         var isNone: Bool { key == "__none" }
@@ -1343,14 +1339,6 @@ struct RecordsView: View {
             }
         } header: {
             VStack(alignment: .leading, spacing: 2) {
-                // 595 月界大字 (PART —— "上滑跨月时渐显"那一半没做: 那要 scrollTarget/scrollPosition 一类
-                // 滚动驱动 API，本机无编译器时属于"只有首编译能抓"的改动，先只上**静态**月份大字)。
-                if g.showMonthBig, let md = g.date {
-                    Text("\(WeekCal.gregorian.component(.month, from: md)) 月")
-                        .vkFont(.title3, weight: .semibold)
-                        .lineLimit(1)
-                        .foregroundStyle(DS.Palette.textSub)
-                }
                 HStack(spacing: DS.Space.s) {
                     Text(dayLabel(g.key))
                         .vkFont(.headline)
@@ -1889,7 +1877,7 @@ struct RecordsView: View {
                 .accessibilityLabel("成员 " + m.name + " 的色点")
         }
     }
-    /// 183 成员色 (走成员档案 hex, 与 SecurityCenterView 同一纪律)
+    /// 183 成员色 (走成员档案 hex, 与安全中心同一纪律（该页已删，纪律沿用）)
     private func memberColor(_ m: Member) -> Color {
         var s = m.color
         if s.hasPrefix("#") { s.removeFirst() }
@@ -2679,17 +2667,6 @@ struct RecordsView: View {
                 }
             }
             groups = filled
-        }
-        // 595 月界大字的标记 (PART —— 只做了静态大字): 逐组比上一个月键，变了就给这一组打标。
-        // 缺口行 (gap-*) 跳过 —— 它们不是"一天"，让它们参与月份判断会让"新的一月"落在一个空日上。
-        var lastMonth = ""
-        for i in groups.indices {
-            if groups[i].isGap { continue }
-            let mk = String(groups[i].key.prefix(7))
-            if mk != lastMonth {
-                groups[i].showMonthBig = true
-                lastMonth = mk
-            }
         }
         // 581 蓝点集合随本次分组一并算一次 (逐行渲染时再读全量日志是白烧 IO)
         alarmDays = RecordSearch.unhandledAlarmDays(macs: macs)

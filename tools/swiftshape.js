@@ -669,7 +669,7 @@ function r4(root) {
 // LockMeta 已补显式 init(from:)。剩下这 14 个 struct 现在都还没被加过字段，所以不是现行缺陷 ——
 // 但下一次有人往里塞字段就会是。棘轮写法 (基线只许减) 而不是判"有就是错"：
 // 因为"当前没错"是真的，而"以后会错"也是真的，两个都得留下记录。
-const R3_BASELINE = 13;   // 第一百八十七批由 14 下调 (CredAlert 补了显式解码器, 见 r3Gate 上方注释)
+const R3_BASELINE = 12;   // 第一百八十七批由 14 下调 (CredAlert 补了显式解码器, 见 r3Gate 上方注释)
 
 function r3Hits(root) {
   const hits = [];

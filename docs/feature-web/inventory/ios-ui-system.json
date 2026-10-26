@@ -716,9 +716,9 @@
       "parentKey": "backup.center",
       "domain": "backup",
       "level": 3,
-      "name": "换机迁移验证向导",
+      "name": "换机迁移验证向导（已补完）",
       "kind": "flow",
-      "summary": "换机恢复后立起验证向导：设备 Tab 逐锁点按验证连接，全部通过后自动收起。实现点：`BackupView:312`（立起）+ `DeviceHomeView:237`（全通过后清旗标）。标 partial 是因为「全部通过」的判据只认本机成功连过一次，尚无跨设备实测覆盖。",
+      "summary": "**2026-10-26 补完**：原先只有「立旗标」（`BackupView.armMigrateWizard`）与「清旗标」（`DeviceHomeView` 的 allSatisfy 判据）两侧，**中间没有任何地方把 `kf_migok_<mac>` 置真** —— 于是 allSatisfy 恒 false、向导永远收不起来（旗标一直挂着）。现在以「该锁真的连上过一次」作为验证通过判据：`DeviceHomeView` 的 `.onChange(of: lockSvc.connectedMAC)` 钩子里写 `kf_migok_<mac> = true`。完整链路：恢复备份 → 立旗标 → 用户逐锁连一次 → 全部通过 → 自动清旗标。",
       "details": [
         "guard r.imported + r.overwritten > 0，无变化不启动",
         "先对每把锁 DB.store.remove(\"kf_migok_\" + kc.mac) 清旧验证标记",
@@ -751,7 +751,7 @@
         "迁移",
         "流程"
       ],
-      "status": "partial"
+      "status": "implemented"
     },
     {
       "key": "backup.webdav",
@@ -1192,53 +1192,6 @@
         "导航"
       ],
       "status": "implemented"
-    },
-    {
-      "key": "backup.zones",
-      "parentKey": "backup.restore",
-      "domain": "backup",
-      "level": 4,
-      "name": "备份分区模型（UI 未暴露）",
-      "kind": "edge",
-      "summary": "设备 / 凭证 / 记录 / 设置四个分区开关。分区模型与恢复端的 nil 语义都完整，只是**UI 没有暴露这四个开关**（调用方恒传\"全选\"）。需要时把开关接出来即可，不必改数据层。2026-10-26 起「设置」分区不再含 OTP 密钥段。",
-      "details": [
-        "BZones 四档：devices（门锁钥匙串 + BLE 直连参数）/ credentials（密码与指纹台账）/ records（锁端日志缓存 + 全局事件）/ settings（成员 / 应用锁摘要 / dongle / gateway），默认全 true",
-        "工作室上传 bundleFor(BZones())、入库 restore(dl.b, zones: BZones()) 都是全选",
-        "备份页的导出/导入是整包，不暴露分区；预演返回的 zones 只用于展示（pv.zones.joined）",
-        "结论：分区能力在引擎层存在，界面层不可选（见 unresolved）"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 215,
-          "symbol": "BackupStudio.bundleFor(BZones())"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 262,
-          "symbol": "restore(dl.b, zones: BZones())"
-        },
-        {
-          "file": "App/UI/BackupStudio.swift",
-          "line": 256,
-          "symbol": "pv.zones.joined"
-        },
-        {
-          "file": "App/Services/BackupStudioKit.swift",
-          "line": 12,
-          "symbol": "struct BZones"
-        },
-        {
-          "file": "App/Services/BackupStudioKit.swift",
-          "line": 13,
-          "symbol": "四分区默认 true"
-        }
-      ],
-      "tags": [
-        "备份",
-        "范围"
-      ],
-      "status": "partial"
     },
     {
       "key": "backup.webdav.studio",

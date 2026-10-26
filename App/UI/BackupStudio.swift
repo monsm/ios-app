@@ -224,7 +224,7 @@ struct WebDAVStudioView: View {
         busy = true
         Task {
             do {
-                let b = BackupStudio.bundleFor(BZones())
+                let b = BackupStudio.bundleFor()
                 let plain = BackupCanonical.exportText(b)
                 BackupStudio.markExportSize(plain)   // 193: 上传路径也记尺寸
                 let env = try CryptoBox.encryptText(plain, password: encPw)
@@ -271,7 +271,7 @@ struct WebDAVStudioView: View {
     }
     private func commitDL() {
         guard let dl = pendingDL else { return }
-        let r = BackupStudio.restore(dl.b, zones: BZones())
+        let r = BackupStudio.restore(dl.b, )
         if dl.b.globals?.appearance != nil { app.reloadAppearance() }
         app.loadDevices()
         app.showToast("恢复完成: 新增 \(r.imported), 覆盖 \(r.overwritten)")

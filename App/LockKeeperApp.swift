@@ -66,27 +66,10 @@ final class AppState: ObservableObject {
     // 加这一位让启动块幂等 (AppState 是引用类型, 不受视图换身份影响)。
     var launchBootstrapped = false
     // ---------- 236/377 访客通道 / 383 毁灭复核: 两枚会话级授权位 ----------
-    /// 377: 访客通道开着时主 TabView 只挂 设备/记录; 这一位记"本会话是否已重输口令放开 凭证/设置"。
-    /// 刻意是内存态而不是存储键 —— 落盘就等于"退出不用再输密码", 与开关原话相反。
-    @Published var guestAreaUnlocked = false
-    /// 377: 复核完成后要落到的 Tab (nil = 只放开受限区, 不指定落点)
-    @Published var guestGateTarget: Int?
-    /// 377: 受限区的复核页开关 (承载体就是既有 AppLockView, 不新造第二个解锁面)
-    @Published var showGuestGate = false
-    /// 377 被收起来的那两个 Tab 号 (与下面 TabView 里的 value 一一对应: 1 凭证 / 3 设置)。
-    /// 236 与本条同行为一 (DEFERRED 舍弃表: 访客模式并入 377): 原句「只看设备 Tab / 进凭证要密码 /
-    /// 退出需密码 / 落点应用锁」全部落在本通道; 只拦 凭证/设置 两页, 记录页不含凭证本体照常可看,
-    /// 界面文字也只写"凭证与设置", 不夸口拦记录。
-    ///
-    /// 2026-10-16 C1: 值改为**从 Route.guestBlocked 派生**，不再手写 `[1, 3]`。
-    /// 原来这张字面量集合是"同一个量的第二次计算"（判据的另一半在视图里按序号摘除层级），
-    /// 而新变体没有 Tab 序号 —— 两处同时失去指称对象，访客门禁会**静默**不再覆盖
-    /// 应用锁/访客/伪装/销毁那一块，不崩不报错。判据收到 Route.guestBlocked 一处。
-    static let guestBlockedTabs: Set<Int> = Route.guestBlockedTabs
-    /// 377: 已进 App、但受限区还没放开
-    var guestAreaLocked: Bool {
-        appUnlocked && !decoyMode && SecurityPolicy.guestActive && !guestAreaUnlocked
-    }
+    // 2026-10-26: 原 `guestAreaLocked`（377 访客通道闸）已删 —— 它依赖 `SecurityPolicy.guestActive`，
+    // 而 `kf_speek_guest` **从来没有写点**（设置页无此开关）⇒ 恒 false ⇒ 本属性恒 false。
+    // 于是下游四处判据全部恒等于「访客未开启」：凭证/设置 Tab 永远显示、访客入口按钮永不出现、
+    // 换页闸永不拦截。按"删功能"处置：连同下面四处判据一起展开成无条件。
     @Published var toast: String?
     // 主题键的镜像: 变更时驱动 RootView 重建, 让配色立即生效
     @Published var themeSeed: String = DB.store.getString("kf_theme")
@@ -139,12 +122,18 @@ final class AppState: ObservableObject {
     /// 不并到这条口上就会留成绕过访客限制的侧门。
     /// 换页的**唯一漏斗**。377 访客闸也只在这里判一次。
     func requestRoute(_ r: Route) {
-        // 现行行为逐字不变：受限区先过闸，不受限直接切 Tab。
-        guard guestAreaLocked, Self.guestBlockedTabs.contains(r.tabIndex) else {
-            tabSelection = r.tabIndex; return
-        }
-        guestGateTarget = r.tabIndex
-        showGuestGate = true
+        // 2026-10-26: 原「受限区先过闸」已删（guestAreaLocked 恒 false）⇒ 换页直接切。
+        tabSelection = r.tabIndex
+    }
+
+    /// 会话授权收回：真进后台时调用（见 handleScenePhase 的 .background 分支）。
+    /// 2026-10-26: 原实现含访客三行（guestAreaUnlocked / showGuestGate / guestGateTarget），
+    /// 已随 377 访客通道整套删除。**本函数本身必须保留** —— 它是「用户离开 App = 本次会话结束」
+    /// 的落点；启动门禁删掉后 appUnlocked 再也不会变 false，若连它也不调，就等于一次放开永久敞开。
+    /// 现在它只做一件事：检查 7 天未备份的提醒标记（原访客逻辑之外的那部分职责）。
+    func revokeSessionGrants() {
+        // 377 访客通道已删；当前无可收回的会话级授权。
+        // 保留空实现的理由见上方注释：调用点还在，且未来若再加会话级授权，这里是唯一落点。
     }
     /// 兼容适配器：2026-10-16 起全仓**代码里**已无 `requestTab(<字面量>)`（只剩注释引述），
     /// 仍在用的只有从深链序号 / List 选中集派生的动态形式；两者都汇到同一个漏斗。
@@ -152,21 +141,6 @@ final class AppState: ObservableObject {
     func requestTab(_ t: Int) {
         guard let r = Route.from(tab: t) else { return }
         requestRoute(r)
-    }
-    /// 377: 底部那颗"凭证与设置"胶囊 —— 只放开受限区, 不指定落点
-    func openGuestGate() {
-        guestGateTarget = nil
-        showGuestGate = true
-    }
-    /// 377/383 会话授权收回: 应用锁重新落下时调用 (含 393/394 到点自动锁, 也含安全中心里就地生效的访客开关)。
-    /// 访客区与 sudo 说的都是"这一次会话内验过", 锁都重新落了还认旧账就等于没拦。
-    /// 顺带把落在受限 Tab 的选中位收回设备页 —— 那两个 Tab 此刻已不在层级树里,
-    /// 不收回就是一个选不中也看不见的空档。
-    func revokeSessionGrants() {
-        guestAreaUnlocked = false
-        showGuestGate = false
-        guestGateTarget = nil
-        if Self.guestBlockedTabs.contains(tabSelection) { tabSelection = 0 }
     }
     /// 377: 应用锁通道验过之后的落地。常规门禁置 appUnlocked; 受限区复核只放开 Tab 并跳到用户要的那页。
     /// 两条都从这一个出口走, 398 会话痕迹与 391 胁迫打标才是同一套口径, 而不是"另一套解锁的边角料"。
@@ -186,14 +160,10 @@ final class AppState: ObservableObject {
         return bad.count
     }
 
-    func commitUnlock(reauth: Bool) {
-        showGuestGate = false
-        if reauth {
-            guestAreaUnlocked = true
-            if let t = guestGateTarget { tabSelection = t }
-            guestGateTarget = nil
-            return
-        }
+    /// 应用锁验证通过后的落地。
+    /// 2026-10-26: 原 `reauth` 参数已删 —— 它只服务 377 访客通道的「只放开 Tab 不动 appUnlocked」，
+    /// 而那条通道已整套删除（guestAreaLocked 恒 false）。现在只有一种落地：置 appUnlocked。
+    func commitUnlock() {
         withAnimation(DS.Motion.standard) { appUnlocked = true }
     }
     // ---------- 161 应用锁秒进: 验证通过后回到上次停留的 Tab ----------
@@ -206,9 +176,8 @@ final class AppState: ObservableObject {
     func restoreLastTab() {
         guard appUnlocked, !decoyMode, pendingRoute == nil else { return }
         let t = min(max(DB.store.getInt(AppState.lastTabKey, 0), 0), 3)
-        // 377: 上次停在 凭证/设置 而访客通道开着 ⇒ 既不拉门禁也不越界, 落在设备页
-        // (恢复"上次停留"不是用户明示的跳转, 拿它去弹口令页就是每次解锁都可能被打断)
-        tabSelection = guestAreaLocked && Self.guestBlockedTabs.contains(t) ? 0 : t
+        // 2026-10-26: 原「上次停在受限区就不恢复」已删（guestAreaLocked 恒 false）⇒ 直接恢复。
+        tabSelection = t
     }
     // 包18: Hero 一句话 (1000 晚归) / 连续失败 (1003) / 一次性时刻卡队列 (24/992/1010/1021/1050)
     @Published var homeMoment: String?
@@ -836,24 +805,16 @@ struct RootView: View {
             Tab("设备", systemImage: "lock.fill", value: 0) { deviceTabContent }
                 // 162 握手可离开: 握手在别的 Tab 完成时这里亮一枚 "✓" (nil = 无角标); 回设备页即清
                 .badge(handshakeDoneAway ? Text("✓") : nil)
-            // 377 访客通道: 受限区没放开时, 凭证与设置这两个 Tab 根本**不进层级树**
-            // (不是禁点、不是加遮罩 —— 进不去的那两页连同里面的口令与成员名都不该挂在屏上)。
-            if !app.guestAreaLocked {
-                // 930 替代: 原句要的中尺寸"到期凭证 Widget"在免费账号读不到台账 (App Groups 禁),
-                // 替代栏给的是"到期前 7/3/1 天三级本地通知 + 凭证页顶部红点" —— 通知在
-                // CredentialOrg.scheduleAlerts, 红点落在系统 Tab 角标上 (与记录 Tab 的 735 角标同一手法,
-                // 0 时系统自动隐藏)。口径与 363 月历格同源, 不另算一套。
-                Tab("凭证", systemImage: "key.horizontal.fill", value: 1) { credentialsTabContent }
-                    .badge(CredentialOrg.expiringSoonCount(macs: DB.keychains().map { $0.mac }))
-            }
+            // 930 替代: 原句要的中尺寸"到期凭证 Widget"在免费账号读不到台账 (App Groups 禁),
+            // 替代栏给的是"到期前 7/3/1 天三级本地通知 + 凭证页顶部红点" —— 通知在
+            // CredentialOrg.scheduleAlerts, 红点落在系统 Tab 角标上 (与记录 Tab 的 735 角标同一手法,
+            // 0 时系统自动隐藏)。口径与 363 月历格同源, 不另算一套。
+            Tab("凭证", systemImage: "key.horizontal.fill", value: 1) { credentialsTabContent }
+                .badge(CredentialOrg.expiringSoonCount(macs: DB.keychains().map { $0.mac }))
             Tab("记录", systemImage: "list.bullet.rectangle.fill", value: 2) { recordsTabContent }
                 // 735 Tab 角标: 口径与记录页铃铛同源 (RecordSearch.unhandledAlarmCount); 0 时系统自动隐藏
                 .badge(RecordSearch.unhandledAlarmCount(macs: DB.keychains().map { $0.mac }))
-            // 377: 设置页同样收起 —— 里面是本机密码、备份与销毁这些不该给访客看的东西;
-            // 代价如实写在这里: 想关掉访客通道本身也要先重输一次口令 (开关原话的"退出需密码")。
-            if !app.guestAreaLocked {
-                Tab("设置", systemImage: "gearshape.fill", value: 3) { settingsTabContent }
-            }
+            Tab("设置", systemImage: "gearshape.fill", value: 3) { settingsTabContent }
         }
     }
 
@@ -927,31 +888,12 @@ struct RootView: View {
                     .controlSize(.large)
                     .transition(.opacity)
                 }
-                // 377 访客通道: 受限区唯一的入口。点它不切页 —— 把**既有**应用锁页拉起来复核,
-                // 通过之后 TabView 才把 凭证/设置 挂回层级树 (不新造第二个解锁面)。
-                if app.guestAreaLocked {
-                    Button {
-                        DS.Haptics.tick.impactOccurred()
-                        app.openGuestGate()
-                    } label: {
-                        Label("凭证与设置 (需重输密码)", systemImage: "lock.badge.clock")
-                            .accessibilityLabel("访客模式已开, 轻点后用应用锁密码放开凭证与设置")
-                    }
-                    .buttonStyle(.bordered)
-                    .buttonBorderShape(.capsule)
-                    .controlSize(.large)
-                    .transition(.opacity)
-                }
+                    // 2026-10-26: 原「访客通道入口按钮」已删 —— guestAreaLocked 恒 false，
+                    // 这个按钮从未显示过。
             }
             .padding(.bottom, DS.Space.xs)
         }
         .animation(DS.Motion.quick, value: app.tabSelection)
-        // 377: 受限区复核用的承载体就是 AppLockView 本身 (reauth 档: 验过只放开 Tab, 不动 appUnlocked)。
-        // 用 fullScreenCover 而不是 sheet: 半屏会把底下那层凭证/记录的内容露一角出来。
-        .fullScreenCover(isPresented: $app.showGuestGate) {
-            GuestReauthGate()
-                .environmentObject(app)
-        }
         // 用 safeAreaInset 而不是 overlay — 覆盖式会压住导航栏标题
     }
 
@@ -1220,51 +1162,8 @@ struct ToastView: View {
     }
 }
 
-// ---------- 377 访客受限区复核 (2026-10-17 拍板 A: 只走面容/指纹, 不再有本机密码) ----------
-/// 原承载体是 AppLockView 的口令键盘。启动门禁删掉后, 口令这个凭据在本机已不存在,
-/// 复核只剩生物识别一条路 —— 所以这里是一个**只做一件事**的小页, 不重建第二个解锁面。
-struct GuestReauthGate: View {
-    @EnvironmentObject var app: AppState
-    @State private var busy = false
-    @State private var note = "用面容/指纹确认是你本人后, 放开凭证与设置两页"
-    var body: some View {
-        VStack(spacing: DS.Space.m) {
-            Image(systemName: "faceid")
-                .font(.system(size: 44))
-                .foregroundStyle(DS.Palette.accentText)
-                .accessibilityHidden(true)
-            Text("凭证与设置已收起")
-                .vkFont(.headline)
-            Text(note)
-                .vkFont(.footnote)
-                .foregroundStyle(DS.Palette.textSub)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-            Button {
-                Task { await verify() }
-            } label: {
-                Text(busy ? "验证中…" : "验证")
-                    .frame(maxWidth: .infinity, minHeight: DS.Hit.min)
-            }
-            .buttonStyle(.borderedProminent)
-            .disabled(busy)
-            Button("取消") { app.showGuestGate = false }
-                .frame(minHeight: DS.Hit.min)
-        }
-        .padding(DS.Space.l)
-        .task { await verify() }
-    }
-    private func verify() async {
-        guard !busy else { return }
-        busy = true
-        defer { busy = false }
-        if await AuthKit.verifyBiometricAsync(reason: "放开凭证与设置") {
-            app.commitUnlock(reauth: true)
-        } else {
-            note = "未通过面容/指纹确认, 这两页仍收着"
-        }
-    }
-}
+// 2026-10-26: 原 `GuestReauthGate`（377 访客受限区复核页）已删 —— 它的唯一入口
+// （fullScreenCover on showGuestGate）已随访客通道一起移除，视图本身零引用。
 
 struct PressFeedback: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {

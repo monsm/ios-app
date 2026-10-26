@@ -8,13 +8,10 @@ import CoreImage.CIFilterBuiltins
 import BackgroundTasks
 @preconcurrency import UserNotifications   // 通知中心对象是系统侧线程安全的, SDK 未标 Sendable
 
-// ---------- 分区模型 (407: 设备/凭证/记录/设置 四分区 + 181 OTP 开关) ----------
-struct BZones: Codable, Equatable {
-    var devices: Bool = true      // 门锁钥匙串 + BLE 直连参数 (441 迁移逐把确认)
-    var credentials: Bool = true  // 台账 (密码/指纹)
-    var records: Bool = true      // 锁端日志缓存 + 全局事件
-    var settings: Bool = true     // 成员 / 应用锁摘要 / dongle / gateway
-}
+
+// 2026-10-26: 原 `BZones`（设备/凭证/记录/设置四分区）已删 —— 分区模型从来没有 UI 暴露，
+// 全部调用点都传 `BZones()`（= 全选）。既然用户永远只能全量备份，那四个开关就是纯装饰。
+// `prune(_:_:)` 与 `bundleFor(_:)` 的分区参数一并去掉，改为一律全量。
 
 @MainActor
 enum BackupStudio {
@@ -249,13 +246,13 @@ enum BackupStudio {
 
     /// 分区裁剪的统一口径 (导出 / 恢复 / 预演共用, 427 分区选择性恢复)
     /// 组包 + 分区裁剪: 未勾分区在包内置空 (恢复端按 nil 语义跳过)
-    static func bundleFor(_ zones: BZones) -> BackupBundle {
+    static func bundleFor() -> BackupBundle {
         var b = BackupKit.collectAll()
         b.at = ISO8601DateFormatter().string(from: Date())
-        return prune(b, zones)
+        return prune(b)
     }
 
-    static func prune(_ b: BackupBundle, _ z: BZones) -> BackupBundle {
+    static func prune(_ b: BackupBundle) -> BackupBundle {
         var c = b
         if !z.devices { c.devices = [] }
         if !z.credentials { for i in c.devices.indices { c.devices[i].ledger = nil } }
@@ -423,13 +420,13 @@ enum BackupStudio {
     /// - conflictTakeBackup: 419 冲突裁决 — id (mac:p:别名 / mac:f:批次) 集合, 命中 = 该条取备份, 未命中保本机
     /// - makeSnapshot: 445 迁移事务自己持回滚点, 逐锁调用时传 false, 免得把迁移前的快照覆盖成中途态
     @discardableResult
-    static func restore(_ bundle: BackupBundle, zones: BZones,
+    static func restore(_ bundle: BackupBundle, 
                         lockActs: [String: String] = [:],
                         conflictTakeBackup: Set<String> = [],
                         makeSnapshot: Bool = true) -> (imported: Int, overwritten: Int, skipped: Int) {
         var b = bundle
         b.currentMac = ""   // 首验清 currentMac, 避免指向另一台设备的锁
-        let c = prune(b, zones)
+        let c = prune(b)
         // 421 恢复回滚点: 执行前自动全库快照
         if makeSnapshot { _ = makeRollbackPoint() }
         // 合并 = **只增不删**。旧实现把 .merge 并入 .overwrite 走 restoreAll,
@@ -538,7 +535,7 @@ enum BackupStudio {
     }
 
     static func estimateBytes() -> Int? {
-        let plain = BackupCanonical.exportText(bundleFor(BZones()))
+        let plain = BackupCanonical.exportText(bundleFor())
         guard !plain.isEmpty else { return nil }
         return plain.count * 2
     }

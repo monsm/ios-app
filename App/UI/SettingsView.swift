@@ -20,7 +20,6 @@ struct SettingsView: View {
     @State private var showUnclaimed = false
     @State private var showFamilySettings = false
     // 2026-10-15 走查: 这两个目标页也自带 NavigationStack, 同样只能走 sheet
-    @State private var showSecurity = false
     // 包14: 27 设置内搜索 — 顶部搜索框过滤全部设置项
     @State private var query = ""
     // 乱源治理第 4 批: 五组筛选的当前组。nil = 全部 (默认态与分组之前完全一样)。
@@ -89,7 +88,6 @@ struct SettingsView: View {
         // 2026-10-15 走查: 与上面那批 sheet 同款 —— 目标页自带 NavigationStack, 只能走 sheet
         .sheet(isPresented: $showUnclaimed) { UnclaimedClaimView() }
         .sheet(isPresented: $showFamilySettings) { MemberFamilySettingsView() }
-        .sheet(isPresented: $showSecurity, onDismiss: { landPendingFocus(app.pendingSettingsFocus) }) { SecurityCenterView() }
         // 为什么不用 navigationDestination(isPresented:): 全仓无先例, 而 sheet+NavigationStack 与
         // 与 showDiag 那一段逐字同构 —— 无编译器的机器上, 复用已验证的写法是唯一稳的取向。
         .sheet(isPresented: $showDiag) {
@@ -128,11 +126,9 @@ struct SettingsView: View {
     /// 安全中心那两枚按钮原先只写 `app.tabSelection = 3`, 而它们就在设置 Tab 下, 等于空转。
     /// 2026-10-15 §4.2 补一条: **被安全中心 sheet 盖住时不许消费**。这一页的所有落点 (备份 sheet /
     /// 密码 alert) 都挂在被盖住的那层 List 上, 当场开等于开给一个看不见的界面看; 而值一清就再也
-    /// 没人重试。改成"盖着就留着", 由 showSecurity 的 onDismiss 再叫一次 —— 两条路都以"消费即清空"
-    /// 收尾, 所以真机上是开一次还是等人回来才开一次, 都会且只会开一次。
+    /// 没人重试。改成"盖着就留着" —— 两条路都以"消费即清空"收尾, 所以真机上是开一次还是等人回来才开一次, 都会且只会开一次。
     private func landPendingFocus(_ f: String?) {
         guard let f, !f.isEmpty else { return }
-        guard !showSecurity else { return }
         app.pendingSettingsFocus = nil
         switch f {
         case "backup":
@@ -432,13 +428,8 @@ struct SettingsView: View {
         Section("安全") {
             NavigationLink("门锁安全模式") { SafemodeIntroView(mode: "safe") }
             note("单次 / 双重验证：决定开一道锁还是两道。")
-            // 包7: 安全·隐私·审计中心 (应用锁增强/防窥/审计流水/数据销毁)
-            // 2026-10-15 走查: SecurityCenterView 自带 NavigationStack, push 进去会套两层导航栏
-            // (判据见本文件「动态消息」那条注释)。改用 sheet —— 本页已有十余个设置子页走 sheet。
-            Button { showSecurity = true } label: {
-                Label("安全中心 (应用锁/防窥/审计/销毁)", systemImage: "lock.shield")
-            }
-            note("应用锁、防窥、审计流水与数据销毁都在这页。")
+            // 2026-10-26: 原「安全中心」入口已删 —— 那一页精简后只剩风险体检一块，
+            // 且原设计的十个安全开关只剩两条生效。风险评估改由诊断页的库体自检覆盖。
         }
     }
 

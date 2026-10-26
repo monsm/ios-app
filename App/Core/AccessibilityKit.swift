@@ -218,7 +218,7 @@ enum AuthKit {
                   err?.code != LAError.biometryNotAvailable.rawValue else { cont.resume(returning: false); return }
             ctx.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { ok, _ in
                 // 同上: 真实面容通过就记账。受限区复核
-                // (LockKeeperApp:1647)、毁灭操作复核 (SecurityCenterView:88) 都走这一支 ——
+                // (LockKeeperApp:1647)、毁灭操作复核（原 SecurityCenterView:88，该页已于 2026-10-26 删除） 都走这一支 ——
                 // 这三处是标准档下唯一能拿到"最近刷过脸"这个事实的地方。
                 if ok { AutoOpenKit.noteFaceSuccess() }
                 cont.resume(returning: ok)

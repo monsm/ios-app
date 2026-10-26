@@ -735,46 +735,6 @@
       "status": "implemented"
     },
     {
-      "key": "record.list.monthBig",
-      "parentKey": "record.timeline",
-      "domain": "record",
-      "level": 4,
-      "name": "月界大字（静态部分已做，渐显未做）",
-      "kind": "state",
-      "summary": "**代码注释自认「PART」**：每个「月」的第一个有记录日打一次标记并画大字（已做）；「上滑跨月时渐隐渐显」那一半**没做** —— 那需要 scrollTarget / scrollPosition 一类 API，实现点在 `RecordsView:120/1346/2683`，三处注释都记着同一件事。",
-      "details": [
-        "标记在分组阶段完成：逐组比 `key.prefix(7)`，变化即打 showMonthBig",
-        "缺口行跳过，否则「新的一月」会落在空日上",
-        "滚动驱动渐显未实现（需 scrollTarget/scrollPosition 类 API）"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/RecordsView.swift",
-          "line": 2735,
-          "symbol": "applyFilter",
-          "note": "月键变化打标"
-        },
-        {
-          "file": "App/UI/RecordsView.swift",
-          "line": 1363,
-          "symbol": "daySection.header",
-          "note": "静态月大字"
-        },
-        {
-          "file": "App/UI/RecordsView.swift",
-          "line": 120,
-          "symbol": "DayGroup.showMonthBig",
-          "note": "字段注释（PART）"
-        }
-      ],
-      "tags": [
-        "记录",
-        "时间线",
-        "未完成"
-      ],
-      "status": "partial"
-    },
-    {
       "key": "record.list.dayFooter",
       "parentKey": "record.timeline",
       "domain": "record",
