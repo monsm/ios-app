@@ -79,6 +79,23 @@ enum AXFlags {
     /// 866 极限字号自检: 诊断开关, 以 200% 字号预览关键页 (仅自检用)
     static var bigPreview: Bool { DB.store.getBool("kf_ax_bigpreview") }
 }
+    static let notConnected = "未连接"
+    static let records = "开门记录"
+
+    /// 850 时间线自然语: "今天 14:02, 张三用指纹开了门" — 字段不堆叠, 拼成一句人话
+    static func rowSentence(dayKey: String, time: String, title: String,
+    /// 850 时间线自然语: "今天 14:02, 张三用指纹开了门" — 字段不堆叠, 拼成一句人话
+    static func rowSentence(dayKey: String, time: String, title: String,
+                           warn: Bool, isToday: Bool, dayLabel: String) -> String {
+        let when = isToday ? "今天 \(time)" : "\(dayLabel) \(time)"
+        let s = when + ", " + title
+        return warn ? "告警记录, " + s : s
+    }
+                           warn: Bool, isToday: Bool, dayLabel: String) -> String {
+        let when = isToday ? "今天 \(time)" : "\(dayLabel) \(time)"
+        let s = when + ", " + title
+        return warn ? "告警记录, " + s : s
+    }
 
 // ---------- 863 反转保护色: 降级底走中性色, 避免品牌渐变成"负片" ----------
 // 第八十三批实测更正: 原实现把两端写死成"近白 0xF5F7FB → 近黑 0x0B0F18", 而前景 heroFg 取随明暗的
@@ -97,11 +114,6 @@ extension DS {
     /// 之所以做成 ShapeStyle.resolve(in:) 而不是静态判断: 环境只有渲染时可知, 消费点各自读一遍旗标
     /// 迟早在某个页面上漂开 —— 收在这一处, 主控卡/开锁盘/成就卡/导出卡/帮助页/引导页同帧一起换。
     struct HeroSurface: ShapeStyle {
-    }
-    /// 863 反转降级渐变 (两端**同侧**: 浅档中性浅、深档中性深; 文字用 heroFg) — HeroSurface 的 863 分支
-    static var heroInvertGradient: LinearGradient {
-        LinearGradient(colors: [Color.invHeroTop, Color.invHeroBottom],
-                       startPoint: .top, endPoint: .bottom)
     }
     /// 226 降透明档的卡片描边色: 与 heroFg 同源 (常规档白、反转档 text), 压在同侧纯色底上边界可辨
     @MainActor static var heroSolidStroke: Color { heroFg.opacity(0.30) }
@@ -133,18 +145,6 @@ enum AXTerms {
     static let otp = "临时码"
     static let battery = "电量"
     static let firmware = "固件"
-    static let lockClock = "锁钟"
-    static let connected = "已连接"
-    static let notConnected = "未连接"
-    static let records = "开门记录"
-
-    /// 850 时间线自然语: "今天 14:02, 张三用指纹开了门" — 字段不堆叠, 拼成一句人话
-    static func rowSentence(dayKey: String, time: String, title: String,
-                           warn: Bool, isToday: Bool, dayLabel: String) -> String {
-        let when = isToday ? "今天 \(time)" : "\(dayLabel) \(time)"
-        let s = when + ", " + title
-        return warn ? "告警记录, " + s : s
-    }
 
     /// 856 盲文简写表: 数值/状态类控件的 accessibilityValue 走简写, 降低盲文转译音节
     static func br(_ s: String) -> String {

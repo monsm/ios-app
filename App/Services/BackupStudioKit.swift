@@ -188,61 +188,6 @@ enum BackupStudio {
         return true
     }
     @discardableResult
-    /// 421/445 快照还原实体: 由 undoLastRestore 与迁移事务回滚 (rollbackMigrationTxn) 共用。
-    /// 只写回快照里已有的键, 不碰锁端协议; 快照之后用户新攒的键不会被删 (见下方 extras 段)。
-    static func restoreRollbackSnapshot(_ path: String) -> Bool {
-        guard !path.isEmpty,
-              let data = try? Data(contentsOf: URL(fileURLWithPath: path)),
-              let snap = try? JSONDecoder().decode(RollbackBundle.self, from: data) else { return false }
-        // 421: 逐分区还原 — 只写回本机键位, 不碰锁端协议
-        for s in snap.keychains {
-            if let d = s.data(using: .utf8), let kc = try? JSONDecoder().decode(Keychain.self, from: d) {
-                DB.saveKeychain(kc)
-            }
-        }
-        // 2026-10-13 run 63: snap.ledgers 的类型是 [[String: String]] (每锁一个单键字典, 见上方构造),
-        // 原写 `for (mac, s) in snap.ledgers` 把元素当元组 ⇒ "tuple pattern cannot match values of
-        // non-tuple type '[String : String]'" (并连带 s.data(using:) 报 'utf8' 推不出)。逐层展开。
-        for ledger in snap.ledgers {
-            for (mac, s) in ledger {
-                if let d = s.data(using: .utf8), let l = try? JSONDecoder().decode(Ledger.self, from: d) {
-                    DB.saveLedger(mac, l)
-                }
-            }
-        }
-        for s in snap.dongles {
-            if let d = s.data(using: .utf8), let dl = try? JSONDecoder().decode(Dongle.self, from: d) {
-                DB.saveDongle(dl)
-            }
-        }
-        for s in snap.gateways {
-            if let d = s.data(using: .utf8), let gw = try? JSONDecoder().decode(Gateway.self, from: d) {
-                DB.saveGateway(gw)
-            }
-        }
-        if let s = snap.passcode, let d = s.data(using: .utf8), let pc = try? JSONDecoder().decode([String: String].self, from: d) {
-            DB.store.set("kf_passcode", pc)
-        }
-        for s in snap.members {
-            if let d = s.data(using: .utf8), let m = try? JSONDecoder().decode(Member.self, from: d) {
-                let existing = DB.members().first(where: { $0.name == m.name })
-                if existing != nil {
-                    DB.setMemberInfo(existing!.id, ["relation": m.relation, "phone": m.phone, "color": m.color])
-                } else {
-                    let created = DB.addMember(m.name)
-                    if let c = created {
-                        DB.setMemberInfo(c.id, ["relation": m.relation, "phone": m.phone, "color": m.color])
-                    }
-                }
-            }
-        }
-        // 421: 分区之外的内容族原样写回。**只覆盖快照里有的键** ——
-        // 快照之后用户新攒的键 (刚钉的 437 复核日、新写的 186 备注) 不在快照里, 删除它们就是把"回滚"变成"抹掉更新的数据"。
-        for (k, b64) in snap.extras ?? [:] {
-            if let d = Data(base64Encoded: b64) { DB.store.setRawData(k, d) }
-        }
-        return true
-    }
     private nonisolated static func pruneRollback(keep: Int) {
         let all = (try? FileManager.default.contentsOfDirectory(at: rollbackDir,
                   includingPropertiesForKeys: nil)) ?? []

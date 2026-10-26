@@ -69,24 +69,6 @@ enum StudioTools {
         let clean = secret.uppercased().replacingOccurrences(of: "=", with: "").replacingOccurrences(of: " ", with: "")
         return "口令·" + String(clean.suffix(4))
     }
-    /// Base32 → 原始字节 (otpauth secret 约定)
-    static func base32Decode(_ s: String) -> [UInt8]? {
-        let alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
-        let clean = s.uppercased().replacingOccurrences(of: "=", with: "").replacingOccurrences(of: " ", with: "")
-        guard !clean.isEmpty else { return nil }
-        var bits = 0, value = 0
-        var out: [UInt8] = []
-        for ch in clean {
-            guard let idx = alpha.firstIndex(of: ch) else { return nil }
-            value = (value << 5) | Int(alpha.distance(from: alpha.startIndex, to: idx))
-            bits += 5
-            if bits >= 8 {
-                bits -= 8
-                out.append(UInt8((value >> bits) & 0xFF))
-            }
-        }
-        return out
-    }
     struct SceneDef: Identifiable {
         let key: String
         let name: String

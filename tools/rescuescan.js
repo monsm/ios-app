@@ -75,6 +75,9 @@ const SYS_NAMES = new Set([
   // 但全仓的 .trailing / .inset(by:) 用的是**框架自带的**同名词，不是那个被删的定义。
   // 被删来源：SecRow.trailing（属性）、ContainerKind.inset（枚举 case）。
   "trailing", "inset", "leading",
+  // 2026-10-26: UIColor.getRed(_:green:blue:alpha:) 的系统参数标签。
+  // 它不是本项目定义；删掉带 alpha 参数的辅助函数后会被误判成悬空引用。
+  "alpha", "green", "blue", "red",
 ]);
 
 function stripCode(line) {

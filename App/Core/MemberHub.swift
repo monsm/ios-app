@@ -35,6 +35,13 @@ enum MemberHub {
     static func isVisitorRow(kind: String?, whoId: String?) -> Bool {
         kind == "temp" && whoId == nil
     }
+    /// 468 代管: 目标成员的 id 集合 (读点三处 — 成员页那一行、482 会议摘要、
+    /// 以及凭证页单条停用时往 361 便签里补的那一句「管理员代操作」)。
+    /// 锁端没有"代操作"这一位, 所以这一族标注只落本机便签与本机摘要, 不发往锁。
+    static var proxyNames: Set<String> {
+        // 同上: map 出 [String] 需显式转 Set (调用方 MemberCenterView 用 .contains)
+        Set((DB.store.get([String: MemberExt].self, extKey) ?? [:]).filter { $0.value.proxy }.map(\.key))
+    }
 
     // ---------- 档案扩展 ----------
     private static let extKey = "kf_member_ext"
@@ -235,22 +242,6 @@ enum MemberHub {
             }
         }
         return (created, moved, restored)
-    }
-
-    /// 移交注记的**落盘前缀** = CredentialOrg.batchTransfer 写进版本历史的那一条: 「移交 → 使用人」。
-    /// 原先这里判 hasPrefix("移交给") —— 两个字符串永不相等, 条件还与 owner != id 互斥,
-    /// 于是图谱恒为占位句, 而界面写的是"移交后这里会画出创建人→使用人"。改成与真实注记同源。
-    private static let transferNotePrefix = "移交 → "
-    /// 图谱上限: 逐条凭证都要解一次版本历史, 这是展示层不是台账层, 扫到够画就停。
-    private static let graphCap = 24
-
-
-    /// 468 代管: 目标成员的 id 集合 (读点三处 — 成员页那一行、482 会议摘要、
-    /// 以及凭证页单条停用时往 361 便签里补的那一句「管理员代操作」)。
-    /// 锁端没有"代操作"这一位, 所以这一族标注只落本机便签与本机摘要, 不发往锁。
-    static var proxyNames: Set<String> {
-        // 同上: map 出 [String] 需显式转 Set (调用方 MemberCenterView 用 .contains)
-        Set((DB.store.get([String: MemberExt].self, extKey) ?? [:]).filter { $0.value.proxy }.map(\.key))
     }
 
     // ---------- 472 借用登记 (per-lock) ----------

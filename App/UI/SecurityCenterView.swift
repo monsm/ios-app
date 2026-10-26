@@ -13,22 +13,13 @@ import UIKit
 // ---------- 存储键常量 (包7 专属族, 与 Store 既有键无碰撞) ----------
 // 一律 String 常量, 供 DB.store getString/set 直接使用
 enum SecKey {
-    static let lockCoolOn     = "kf_slock_coolon"      // 389/234 递增冷却总开关
-    static let lockStreak     = "kf_slock_streak"       // 连败计数 (冷却 = 30s * 2^n)
-    static let traceOn        = "kf_strace_on"          // 392 失败留痕总开关
-    static let traceEvents    = "kf_strace_events"      // 392 失败事件 [String]
-    static let sessionHow     = "kf_sses_how"           // 398 验证方式
     static let maskStyle      = "kf_smask_style"        // 369 "" 圆点 / stars / tail4
-    static let bgBlurOn       = "kf_speek_bgblur"       // 371 切后台即糊
-    static let timedReveal    = "kf_speek_timedsec"     // 373 限时可见秒数 (0=关)
     static let frostedOn      = "kf_speek_frost"        // 375 磨砂挡片
     static let shareHalfOn    = "kf_speek_sharehalf"    // 376 分享遮半
-    static let sensitiveOnly  = "kf_speek_glast"        // 377 访客模式隐藏敏感成员开关
     static let watermarkOn    = "kf_swmark_on"          // 378 常驻水印
     static let watermarkTxt   = "kf_swmark_txt"         // 378 水印文案种子
     static let auditRetention = "kf_saudit_months"      // 385 保留期 (0=永久)
     static let safeModeOn     = "kf_sdest_safemode"     // 296 只读安全模式
-    static let pwdReuseOn     = "kf_sdest_reuseon"      // 549 口令复用检测
 }
 
 // ---------- 配置变更广播: 子页写完 kf_ 键后 bump, 各页派生文案 2s 节拍内刷新 ----------

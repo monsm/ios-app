@@ -56,9 +56,6 @@ final class GoldenDiffTests: XCTestCase {
                     XCTAssertEqual(AESKit.encryptHex("00112233445566778899aabbccddeeff", keyHex: "00112233445566778899aabbccddeeff"), expected, "aes.\(name)")
                 case "encrypt_padded":
                     XCTAssertEqual(AESKit.encryptHex("8800aabbccddeeff", keyHex: "00112233445566778899aabbccddeeff"), expected, "aes.\(name)")
-                case "decrypt_roundtrip":
-                    let cipher = AESKit.encryptHex("8800aabbccddeeff" + "0102030405060708", keyHex: "00112233445566778899aabbccddeeff")
-                    XCTAssertEqual(AESKit.decryptHex(cipher, keyHex: "00112233445566778899aabbccddeeff"), expected, "aes.\(name)")
                 case "nist_vector":
                     XCTAssertEqual(AESKit.encryptHex("00112233445566778899aabbccddeeff", keyHex: "000102030405060708090a0b0c0d0e0f"), expected, "aes.\(name)")
                 default: break
@@ -112,9 +109,7 @@ final class GoldenDiffTests: XCTestCase {
         built["cmd38GWStatus"] = ZKCmdBuilder.cmd38GWStatus().hex
         built["cmd31GWSetWifi"] = ZKCmdBuilder.cmd31GWSetWifi("HomeWiFi", "pass1234").hex
         built["cmd31GWSetWifi_cn"] = ZKCmdBuilder.cmd31GWSetWifi("客厅网关", "密码88").hex
-        built["cmd32GWSetIot"] = ZKCmdBuilder.cmd32GWSetIot("aabb", "cc", "dd").hex
         built["cmd35GWReboot"] = ZKCmdBuilder.cmd35GWReboot().hex
-        built["cmd30GWDeviceName"] = ZKCmdBuilder.cmd30GWDeviceName().hex
 
         var mismatches: [String] = []
         for (name, expected) in cmds {
@@ -337,8 +332,6 @@ final class GoldenDiffTests: XCTestCase {
         XCTAssertEqual(fw.version, g["version"] as? String)
         XCTAssertEqual(CRC32.crc32(HexKit.bytes(fw.binHex)), UInt32(g["binCrc32"] as? Int ?? 0))
         XCTAssertEqual(fw.datHex, g["datHex"] as? String)
-        XCTAssertEqual(FirmwareKit.nextMac("aabbccddeeff"), g["nextMac"] as? String)
-        XCTAssertEqual(FirmwareKit.nextMac("aabbccddeeff0f"), g["nextMac_wrap"] as? String)
         XCTAssertEqual(FirmwareKit.versionLt("5.2.8", "5.2.9"), g["versionLt_528_529"] as? Bool)
         XCTAssertEqual(FirmwareKit.versionLt("5.2.9", "5.2.9"), g["versionLt_529_529"] as? Bool)
     }

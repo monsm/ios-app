@@ -57,6 +57,13 @@ struct LockMeta: Codable {
         skin = try c.decodeIfPresent(String.self, forKey: .skin) ?? ""
     }
 }
+    private static let orderKey = "kf_lock_order"
+
+    static func group(_ mac: String) -> String { meta(mac).grp }
+    static let ungroupedLabel = "未分组"
+    private static let orderKey = "kf_lock_order"
+
+    static func group(_ mac: String) -> String { meta(mac).grp }
 
 // ---------- 104/767 分组 ----------
 /// 一组成员: 组名 + 按总顺序排好的锁。Identifiable 用组名当 id (组名在设备管理里就是它的身份)。
@@ -111,14 +118,6 @@ enum LockArchive {
         o.remove(at: i); o.insert(mac, at: 0)
         DB.store.setCodable(orderKey, o)
     }
-
-    // ---------- 104/767 分组 + 766 手工排序 ----------
-    /// 分组名建议 (104 原句的"大门/卧室"就是用户自填): 只作快捷选项, 不是枚举白名单
-    static let groupPresets = ["家用", "仓库", "办公"]
-    static let ungroupedLabel = "未分组"
-    private static let orderKey = "kf_lock_order"
-
-    static func group(_ mac: String) -> String { meta(mac).grp }
     /// 组名归一 (去空白 + 12 字上限): 设备管理页与锁档案两处写同一个字段, 口径放这一个函数里,
     /// 免得一处截 12 字、另一处不截 —— 组名要当 Section 标题和胶囊 chip 用, 超了就只能裁切。
     static func normalizedGroup(_ g: String) -> String {

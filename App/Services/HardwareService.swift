@@ -260,15 +260,9 @@ final class HardwareService: ObservableObject {
         // 界面弹的就是"没有查询到钥匙"——把一次失败说成一把钥匙都没有（与 §10.48 的 43 同一族）。
         let rc = rcOf(f)
         if rc > 0 { throw BLEErrorX.msg("查钥匙失败: " + StatusParser.rcMessage(rc) + " (这不代表硬件狗里没有钥匙)") }
-        guard let k = f.klvs.first(where: { $0.key == 0x04 }) else { return [] }
-        let h = k.val
-        var out = [String]()
-        var i = h.startIndex
-        while h.distance(from: i, to: h.endIndex) >= 12 {
-            out.append(String(h[i..<h.index(i, offsetBy: 12)]).lowercased())
-            i = h.index(i, offsetBy: 12)
-        }
-        return out
+        // 2026-10-26: 原先这里有一份**与 parseEkeyMacs 逐字相同**的内联解析（两份真相）。
+        // 现在只保留 parseEkeyMacs 一份，这里直接调它 —— 改一处就够，不会一处改了一处没改。
+        return Self.parseEkeyMacs(f.klvs)
     }
     /// cmd 44 响应: KLV#04 = MAC 列表 (每 6B 一台)
     nonisolated static func parseEkeyMacs(_ klvs: [ZKLV]) -> [String] {

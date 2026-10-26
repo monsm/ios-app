@@ -21,21 +21,4 @@ enum AESKit {
         guard status == kCCSuccess else { return "" }
         return HexKit.hex(Array(out.prefix(outLen)))
     }
-
-    static func decryptHex(_ cipherHex: String, keyHex: String) -> String {
-        let cipher = HexKit.bytes(cipherHex)
-        guard cipher.count > 0, cipher.count % 16 == 0 else { return "" }
-        let key = HexKit.bytes(keyHex)
-        guard key.count == 16 else { return "" }
-        var out = [UInt8](repeating: 0, count: cipher.count)
-        var outLen = 0
-        let status = CCCrypt(CCOperation(kCCDecrypt), CCAlgorithm(kCCAlgorithmAES),
-                             CCOptions(kCCOptionECBMode),
-                             key, key.count, nil,
-                             cipher, cipher.count,
-                             &out, out.count, &outLen)
-        guard status == kCCSuccess else { return "" }
-        // JS decryptHex 不剥尾 0 ("ZeroPadding 解密不剥尾 0, 由上层按长度截取") — 保持一致
-        return HexKit.hex(Array(out.prefix(outLen)))
-    }
 }

@@ -259,8 +259,6 @@ enum CareSchedule {
         guard !DB.keychains().isEmpty else { return }
         guard await requestAuth() else { return }
         let now = Date().timeIntervalSince1970 * 1000
-        // 1022: 到期判据走 carePeriodDays(opens30d:) 那一处 (本文件上方), 通知侧不再自己算 60/90
-        let usage30 = await MainActor.run { LockStats.usage() }
         for kc in DB.keychains() {
             let name = LockArchive.displayName(kc)
             // 1024 潮湿位: 场所含湿区关键词 ∧ 6–7 月梅雨 → 每 7 天一条

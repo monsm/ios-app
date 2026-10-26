@@ -162,10 +162,4 @@ final class FirmwareKitTests: XCTestCase {
     }
 
     // MARK: - DFU 模式 MAC 启发式
-
-    func testNextMac() {
-        XCTAssertEqual(FirmwareKit.nextMac("aabbccddeeff"), "aabbccddee00", "末字节 +1 回绕")
-        XCTAssertEqual(FirmwareKit.nextMac("aabbccddeef0"), "aabbccddeef1")
-        XCTAssertEqual(FirmwareKit.nextMac("aabbccddeef0".uppercased()), "aabbccddeef1", "大写输入也要处理")
-    }
 }

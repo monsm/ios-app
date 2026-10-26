@@ -273,14 +273,7 @@ enum ZKCmdBuilder {
             + ZKProtocol.buildKLV(0x05, "00")
         return ZKCmd(name: "31 网关配网", cmd: 0x31, hex: ZKProtocol.buildFrame(0x31, klv, header: 8))
     }
-    static func cmd32GWSetIot(_ iotpKey: String, _ iotdSec: String, _ devAccToken: String) -> ZKCmd {
-        let klv = ZKProtocol.buildKLV(0x05, iotpKey) + ZKProtocol.buildKLV(0x06, iotdSec) + ZKProtocol.buildKLV(0x07, devAccToken)
-        return ZKCmd(name: "32 网关 IoT", cmd: 0x32, hex: ZKProtocol.buildFrame(0x32, klv, header: 8))
-    }
     static func cmd35GWReboot() -> ZKCmd {
         ZKCmd(name: "35 网关重启", cmd: 0x35, hex: ZKProtocol.buildFrame(0x35, "", header: 8))
-    }
-    static func cmd30GWDeviceName() -> ZKCmd {
-        ZKCmd(name: "30 网关名称", cmd: 0x30, hex: ZKProtocol.buildFrame(0x30, "", header: 8))
     }
 }

@@ -184,14 +184,6 @@ enum FirmwareKit {
         }
         return false
     }
-    // DFU 模式 MAC 启发式: 末字节 +1 (255→0 回绕)
-    static func nextMac(_ macHex: String) -> String {
-        let m = macHex.replacingOccurrences(of: ":", with: "").lowercased()
-        guard m.count == 12 else { return m }
-        let last = UInt8(m.suffix(2), radix: 16) ?? 0
-        let inc = String(format: "%02x", last &+ 1)
-        return String(m.dropLast(2)) + inc
-    }
 
     // 降级闸 —— 第 160 行那条注释里提到但一直没实现的那个入口。
     // 口径：**当前固件版本 > 包内版本** 就是降级，直接拒绝。
