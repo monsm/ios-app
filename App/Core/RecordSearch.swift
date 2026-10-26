@@ -217,30 +217,8 @@ extension QueryFilters {
 
 
 enum RecordSearch {
-    /// 362 复活检测（**仅本机类型级推断**）: 回收站条目删除之后, 是否仍出现同凭证类型的开门事件。
-    /// 协议没有"读锁内凭证清单"的命令, 所以只能说"可能仍在用", 绝不能写成"已核对锁内"。
-    /// 比较用的是锁自己记的时间串与手机删除时刻 —— 锁钟未校准时会有偏差, 调用方需带这句提示。
-    static func resurrectionHints(mac: String) -> [(text: String, kind: String, n: Int)] {
-        let entries: [(String, Int)] = []
-        guard !entries.isEmpty else { return [] }
-        let opens = buildRecs(macs: [mac], includeFails: false, includeCare: false)
-            .filter { StatsKit.openTypes.contains($0.type) && !$0.timeStr.isEmpty }
-        guard !opens.isEmpty else { return [] }
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        var out: [(text: String, kind: String, n: Int)] = []
-        for e in entries where e.at > 0 {
-            let kind: String
-            if let p = e.pwd { kind = p.temp ? "temp" : "pwd" }
-            else if e.fp != nil { kind = "fp" }
-            else { continue }
-            let cutoff = f.string(from: Date(timeIntervalSince1970: e.at))
-            let n = opens.filter { $0.kind == kind && $0.timeStr > cutoff }.count
-            if n > 0 { out.append((e.text, kind, n)) }
-        }
-        return out
-    }
+    // 2026-10-26 精简：resurrectionHints（回收站「已删凭证可复活」提示）已删 ——
+    // 它读的是 CredBinEntry 回收站条目，而回收站整套移除。
 
     // ---------- 数据源: 聚合多锁 + 手机侧事件 (561/770 跨锁范围切换) ----------
     static func buildRecs(macs: [String], includeFails: Bool = true, includeCare: Bool = true) -> [Rec] {

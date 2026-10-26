@@ -399,7 +399,11 @@ struct DiagnosticsView: View {
                             .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                             .fixedSize(horizontal: false, vertical: true)
                     } else {
-                        Text("近 14 天有 \(gaps.count) 天整天没有日志: " + gaps.joined(separator: " "))
+                        // 2026-10-26: 原为一句 `Text("..." + gaps.joined(...))` —— 编译器在这条表达式上
+                        // 报 "unable to type-check in reasonable time" (字符串插值 + 方法调用 + 加号三件事同层)。
+                        // 拆成先算一个 let 再交给 Text，语义不变。
+                        let gapLine = "近 14 天有 \(gaps.count) 天整天没有日志: " + gaps.joined(separator: " ")
+                        Text(gapLine)
                             .vkFont(.caption2).foregroundStyle(DS.Palette.warn)
                             .fixedSize(horizontal: false, vertical: true)
                         Text("空洞通常意味着那几天没连过锁 (日志只在读取/操作时产生), 不等于数据丢了。")
