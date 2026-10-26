@@ -53,7 +53,6 @@ struct CredentialsView: View {
     @State private var showBin = false
     /// 532 搜索兜底: 「去回收站搜」要把当前搜索词递进回收站, 而不是只把门打开 (空搜索框等于把人丢回原地)
     @State private var binQuery = ""
-    @State private var showDemo = false   // 包14/834 30 秒演示链接
     @State private var pwdDetailItem: LedgerPwd?   // 包5 PwdDetailStudio
     @State private var fpDetailItem: LedgerFp?     // 包5 FpDetailStudio
     @State private var histItem: HistItem?
@@ -1957,13 +1956,6 @@ struct CredentialsView: View {
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(SecondaryActionStyle(fullWidth: false))
-                    Button { showDemo = true } label: {
-                        Text("看看它如何工作")
-                            .vkFont(.subheadline, weight: .semibold)
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(SecondaryActionStyle(fullWidth: false))
-                    .accessibilityHint("打开演示锁试玩, 不碰真实门锁")
                 }
                 .padding(.top, DS.Space.xs)
             }

@@ -1,4 +1,7 @@
-// 包5 凭证工坊 — 四类凭证 (密码/临时码/指纹/OTP) 的添加·编辑·详情
+// 包5 凭证工坊 — **三类**凭证 (密码/临时码/指纹) 的添加·编辑·详情
+// 2026-10-26 勘误: 头注原写"四类(…/OTP)"。OTP 独立口令（TOTP/静态备份码）**从未建过页面** ——
+//   StudioHome 只列三类，数据层 kf_cotp_t_ / kf_cotp_s_ 已随 OtpStudio 删除（只剩备份白名单认键）。
+//   临时码（ZOTP）是**另一回事**：它由锁端种子算出、按 30 分钟窗口变，不是独立的 TOTP 种子。
 // 收录 (按 ROADMAP 包5): 7-8/11/34/41/171-174/177-179/301/303-317/319-320/322-346/515-523
 // ⚠ 降级项 (全部本地推断, 文案带"约"): 311/316/320/326/335/332/333/337; 舍弃 302/318/321 不实现。
 // 纪律: 颜色只走 DS 令牌; 不新增协议命令 (178 批量走既有 0A 逐条); 新键 kf_c* 向后兼容。
@@ -2123,23 +2126,27 @@ func fpDoubleSignCheck(mac: String, batch: Int, confirmTitle: String, action: @e
                            confirmTitle: confirmTitle) { action() }
         return
     }
-    let mask = String(v.prefix(max(v.count / 2, 2)))
+    // 2026-10-26: 原实现只比对前 max(v.count/2, 2) 位 —— 6 位密码只需输对 3 位就能删掉
+    // 某人的最后一枚指纹。那不是"双签"，是"双签的样子"。改成全量比对。
+    // 提示文案仍不显示密码本身，只说位数。
+    let maskLen = v.count
     let alert = UIAlertController(
         title: "双签验证",   // 323 双签验证
-        message: "这是「" + (CredentialOrg.ownerName(f.owner).isEmpty ? "未归属" : CredentialOrg.ownerName(f.owner)) + "」名下最后一枚可用指纹。输入任一在用密码的前 " + String(mask.count) + " 位完成双签。",
+        message: "这是「" + (CredentialOrg.ownerName(f.owner).isEmpty ? "未归属" : CredentialOrg.ownerName(f.owner)) + "」名下最后一枚可用指纹。输入任一在用密码（完整 " + String(maskLen) + " 位）完成双签。",
         preferredStyle: .alert)
     alert.addTextField { tf in
-        tf.placeholder = "在用密码前 " + String(mask.count) + " 位"
+        tf.placeholder = "完整密码（" + String(maskLen) + " 位）"
         tf.keyboardType = .numberPad
     }
     alert.addAction(UIAlertAction(title: "取消", style: .cancel))
     alert.addAction(UIAlertAction(title: confirmTitle, style: .destructive) { _ in
         let input = alert.textFields?.first?.text ?? ""
-        if input.hasPrefix(mask) {
+        // 全量比对（常量时间无所谓：这是本机 UI，不在网络上）
+        if input == v {
             UIPasteboard.general.string = ""
             action()
         } else {
-            let fail = UIAlertController(title: "双签未通过", message: "前缀不符, 删除已取消。", preferredStyle: .alert)   // 323 前缀不符
+            let fail = UIAlertController(title: "双签未通过", message: "密码不符, 删除已取消。", preferredStyle: .alert)   // 323 密码不符
             fail.addAction(UIAlertAction(title: "好", style: .cancel))
             UIApplication.topViewController()?.present(fail, animated: true)
         }

@@ -280,8 +280,6 @@ struct UnlockDial: View {
         let c = CGPoint(x: dial / 2, y: dial / 2)
         return hypot(p.x - c.x, p.y - c.y) <= dial * 0.39
     }
-    /// 夜间降亮度 (idea 248): 22 点后装饰光效降峰值
-    private var dim: CGFloat { 1 }
 
     private var isBusy: Bool {
         state == .connecting || state == .opening
@@ -341,11 +339,11 @@ struct UnlockDial: View {
                 // 呼吸光晕: 径向渐变模拟柔光, 只动 scale/opacity (比动画阴影便宜得多);
                 // 让主控"活着", 站在门口余光也知道该按哪里 (248: 夜间降峰值)
                 Circle()
-                    .fill(RadialGradient(colors: [dialGlow.opacity(0.38 * dim), .clear],
+                    .fill(RadialGradient(colors: [dialGlow.opacity(0.38), .clear],
                                          center: .center, startRadius: 24, endRadius: 120))
                     .frame(width: 240, height: 240)
                     .scaleEffect(breathe ? 1.1 : 0.96)
-                    .opacity((breathe ? 0.85 : 0.55) * dim)
+                    .opacity(breathe ? 0.85 : 0.55)
                     .allowsHitTesting(false)
                     .onAppear {
                         guard !reduceMotion else { return }
@@ -833,7 +831,7 @@ struct UnlockDial: View {
         // 顶部内高光: 一层"玻璃厚度" (248: 夜间降峰值)
         .overlay {
             Circle()
-                .fill(LinearGradient(colors: [DS.heroFg.opacity(0.20 * dim), .clear],
+                .fill(LinearGradient(colors: [DS.heroFg.opacity(0.20), .clear],
                                      startPoint: .top, endPoint: .center))
                 .allowsHitTesting(false)
         }

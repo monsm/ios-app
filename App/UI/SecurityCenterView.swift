@@ -146,11 +146,6 @@ struct SecurityCenterView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
-
-                Section {
-                } header: {
-                    Text("下发护栏")
-                }
             }
             .variantList()
             .dsScreenBackground()
@@ -167,7 +162,9 @@ struct SecurityCenterView: View {
                     SecurityWatermark(seed: DB.store.getString(SecKey.watermarkTxt))
                 }
             }
-            // 2s 节拍重算派生文案 (哈希链长度/启用数等), 子页 bump 后立即生效
+            // 2s 节拍：本页**不读** tick，但它是 bump 的**唯一驱动源** ——
+            // LockKeeperApp.swift:1094 的全局水印层读 secTick.tick 靠它重算。
+            // 子页拨开关后也会主动 bump（见 :167 上方那条 dismiss 注释），那条路径不依赖这个节拍。
             .onReceive(Timer.publish(every: 2, on: .main, in: .common).autoconnect()) { _ in
                 self.center.bump()
             }

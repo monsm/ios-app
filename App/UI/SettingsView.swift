@@ -33,7 +33,6 @@ struct SettingsView: View {
     // 包18: 版本彩蛋 (298) / VoiceOver 致意 (1049)
     @State private var eggShown = false
     @State private var versionTaps = 0
-    @State private var voLine = ""
 
     /// 831 NEW 角标: 新功能首见, 进入一次即消 (状态存偏好表 kf_seen_)
     /// "已看过"的落库放在 destination 的 .onAppear: 写在 ViewBuilder 里等于在构造视图时改数据,
@@ -1037,7 +1036,6 @@ struct SettingsView: View {
     private var aboutFooterText: String {
         var s = "厂商已停服的智能锁离线管理端。门锁数据、密码台账、家人档案全部保存在本机。换新手机用「备份与恢复」转移, 门锁无需重置。"
         if eggShown { s += " Build \(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?") · 本地构建。" }
-        s += voLine
         return s
     }
 }

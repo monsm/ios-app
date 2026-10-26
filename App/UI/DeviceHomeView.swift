@@ -108,10 +108,6 @@ struct DeviceHomeView: View {
             // 用户主动下拉属于手动动作 (与"手动圆盘照常"同一条口径), 所以这里不看 DiagFlags.silent。
             .refreshable { await rescanPull() }
             .dsScreenBackground()
-            // 54 摇一摇唤出: 迷你开锁面板浮在设备页顶部。挂在 ScrollView 上而不是卡片里 ——
-            // 浮层不随内容滚动, 摇出来就必须一直在眼前。面板态只属于设备页, 换页由 AppState 收掉。
-            .overlay(alignment: .top) {
-            }
             .navigationTitle(app.displayName)
             .toolbar {
                 ToolbarItem(placement: barSide) {

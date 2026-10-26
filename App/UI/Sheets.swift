@@ -1946,9 +1946,6 @@ struct MembersView: View {
             .sheet(isPresented: $showCenter) {
                 MemberCenterView()
             }
-            .sheet(item: $welcome) { m in
-            }
-            .task { reload() }
         }
     }
 

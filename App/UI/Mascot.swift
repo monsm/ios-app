@@ -3,7 +3,8 @@
 // 本文件原为 HelpCenter.swift (帮助与文案规范, 673 行): 使用手册整本 / 离线 FAQ /
 // 症状排查 / 就任证书 / 演练场 / 文案体检彩蛋。这些页面已随大删波 3 移除 (用户决策:
 // 「没锁交互的不影响核心功能的就剥离删掉」)。留下的两件都有真实消费方, 不是文档:
-//   · DemoMascot / EmptyMascotHeader —— 空态的实际图形 (DesignSystem:1074)
+//   · （原计划里的 DemoMascot / EmptyMascotHeader 空态图形**从未实现**，2026-10-26 核实全仓无定义。
+//      此处原先指向 DesignSystem:1074，那里也没有。空态图形现由 GuidedEmptyView 承担。）
 //   · ManualKit.chapters —— MemberCenterView 的「四步图文」直接读 ch.family 那一章,
 //     所以这张表只剩一章: 帮助手册整本删了, 但成员页仍在用它, 删表就等于删成员页的教程。
 import SwiftUI
@@ -15,7 +16,7 @@ import UIKit
 
 // ---------- 881 字幕式过程条: 连接/开锁 验证/执行/完成 三步文字字幕 ----------
 // 原住在 AccessibilityView.swift, 该页随大删波 3 移除; 但 DeviceHomeView:1226 仍在用它给听障用户
-// 逐字跟读「现在进行到哪一步」, 所以搬到这里和 DemoMascot 一起作为存活的小构件。
+// 逐字跟读「现在进行到哪一步」, 所以搬到这里作为存活的小构件。
 struct CaptionStepBar: View {
     var phase: Int
     var unlockState: AppState.UnlockState
@@ -59,7 +60,7 @@ struct CaptionStepBar: View {
 
 // ---------- 668 中西文间距 (排版 kerning 路线, 不插不可见字符) ----------
 // 原住 HelpCenter.swift (帮助页已随大删波 3 移除), 但 DeviceHomeView:2350/2352 的标签行仍在用,
-// 所以与 DemoMascot/CaptionStepBar 一起作为存活的小构件留在这里。
+// 所以与 CaptionStepBar 一起作为存活的小构件留在这里。
 
 // 668 中西文间距 —— 改走排版 (kerning) 路线。
 // 原先此处是 `func cjkSpacing() -> some View { return self }`：名字承诺"包一层即补间距"，实现原样返回，
