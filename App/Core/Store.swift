@@ -89,7 +89,6 @@ final class Store: @unchecked Sendable {
     /// 421 回滚快照: 原样读出 defaults 里那段 JSON Data。
     /// 不走 get/JSONDecoder —— 快照要的是**字节不变**，重新编码会把形状 (键序/可选字段) 改写一遍。
     func rawData(_ k: String) -> Data? { defaults.data(forKey: key(k)) }
-    func setRawData(_ k: String, _ d: Data) { defaults.set(d, forKey: key(k)) }
     /// 按前缀族取键 (已去掉 "kf." 头): 回滚只收"恢复会动到"的那几族, 不把日志/遥测这类大块拖进快照
     func matchingKeys(prefixes: [String]) -> [String] {
         keys().filter { k in prefixes.contains { p in k.hasPrefix(p) } }
@@ -455,7 +454,6 @@ enum DB {
             for k in store.keys() where k.hasPrefix(p) { store.remove(k) }
         }
         // 兜底清理 (审计 §6.6): 一批每锁键在 mac 之后**还带尾段**, 精确前缀删永远删不掉 ——
-        // kf_calert_<mac>_<kind>_<key>、kf_cestudy_earlyexp_<mac>_<alias>、kf_cotp_t_/<mac>、
         // kf_cdraft_<mac>、kf_logarch_<mac>、kf_mborrow_/kf_mclaim_/kf_mig_lockact_<mac>、kf_offboard_<member> 等。
         // 判据: 键名里含本锁 MAC (大小写不敏感) 即属该锁数据族。
         let up = m.uppercased()

@@ -202,7 +202,7 @@ enum BackupCanonical {
             )),
             ("members", .arr((b.members ?? []).sorted { $0.id < $1.id }.map(memberValue))),
         ]
-        // canonGlobals: 键按字母序 (appearance < gatewayList < keychainDongles < otpKeys < passcode < trace), 剔 null/空
+        // canonGlobals: 键按字母序 (appearance < gatewayList < keychainDongles < passcode < trace), 剔 null/空
         if let g = b.globals {
             var gp: [(String, JValue)] = []
             // 894 外观段进校验和：字段按**固定字母序**逐个 emit，缺字段就不 emit。
@@ -261,9 +261,6 @@ enum BackupCanonical {
                 gp.append(("keychainDongles", .arr(list.map(dongleValue))))
             }
             // 181 OTP 段进校验和: 键按字典序排, 值随键走 (否则同一包体两次导出会得到不同 canonical)
-            if let otp = g.otpKeys, !otp.isEmpty {
-                gp.append(("otpKeys", .obj(otp.keys.sorted().map { k in (k, .str(otp[k] ?? "")) })))
-            }
             if let pc = g.passcode, !pc.s.isEmpty, !pc.d.isEmpty {
                 gp.append(("passcode", .obj([("s", .str(pc.s)), ("d", .str(pc.d))])))
             }

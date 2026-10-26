@@ -181,11 +181,8 @@ struct BackupBundle: Codable {
         var gatewayList: [Gateway]?
         var passcode: PasscodeRec?   // JS 包互通: {s,d} 应用锁摘要
         var trace: TraceRec?         // JS 包互通: LOCK 日志恢复档 (原样存取)
-        /// 181 OTP 密钥段: 改到**包体内** (随整包加密, 且进 canonical 校验和), 不再作为文件尾部旁路段。
-        /// 键必须白名单核验 (见 BackupKit.restoreAll), 否则恶意包体能借它写任意偏好键。
-        var otpKeys: [String: String]?
         /// 894 外观随备份走: **typed 结构而不是自由字典**。
-        /// 用字典就等于把"任意偏好键写入"重新开放给一个可伪造的 JSON 字段 —— 那正是 otpKeys
+        /// 用字典就等于把"任意偏好键写入"重新开放给一个可伪造的 JSON 字段。
         /// 当初踩过的坑 (本文件 :239-253 的白名单就是为它加的)。typed 之后，包体能影响的键
         /// 只有下面这些，且每个值都还要过一遍档位白名单 (见 Appearance.apply)。
         /// 全部字段可选：缺字段 = 这次备份没带 = 恢复时不动本机，而不是"重置成默认"。
@@ -268,18 +265,6 @@ enum BackupKit {
             BackupBundle.Globals.PasscodeRec(s: $0["s"] ?? "", d: $0["d"] ?? "")
         }
         let trace = DB.get(BackupBundle.Globals.TraceRec.self, "kf_trace_persist_v1")
-        // 181: 仅在用户显勾选时把 OTP 密钥收进包体 (默认排除 —— 独立口令组的密钥不该随手进备份文件)
-        var otps: [String: String]?
-        if DB.store.getBool("kf_bk_otp", false) {
-            var dict = [String: String]()
-            for kc in DB.keychains() {
-                for k in [CredentialOrg.totpKey(kc.mac), CredentialOrg.staticKey(kc.mac)] {
-                    let v = DB.store.getString(k)
-                    if !v.isEmpty { dict[k] = v }
-                }
-            }
-            if !dict.isEmpty { otps = dict }
-        }
         return BackupBundle(
             at: ISO8601DateFormatter().string(from: Date()),
             currentMac: DB.currentMac,
@@ -290,7 +275,6 @@ enum BackupKit {
                 gatewayList: gws.isEmpty ? nil : gws,
                 passcode: passcode,
                 trace: trace,
-                otpKeys: otps,
                 appearance: collectAppearance(),
                 deviceOrg: collectDeviceOrg()))
     }
@@ -453,21 +437,6 @@ enum BackupKit {
                 // 上一版"补回 d2"是死逻辑, 已撤。跨机恢复后应用锁先按 32bit FNV 校验, 用户首次输对
                 // 即由 verifyPasscode 静默升级为 PBKDF2 强摘要 (无感迁移), 不把人锁在外面。
                 DB.store.set("kf_passcode", ["s": pc.s, "d": pc.d]) // 应用锁摘要跨端迁移
-            }
-            if let otps = globals.otpKeys, !otps.isEmpty {
-                // 白名单核验: 包体可能来自别的设备/被改过, 键只允许"本包内某把锁"的 totp/static 键位。
-                // 不做核验就等于把"任意偏好键写入"开放给一个可伪造的 JSON 字段。
-                // 锁名同时收原样与规范化两种形态, 免得因大小写/分隔符差异把合法键全部丢掉。
-                var allowed = Set<String>()
-                for d in bundle.devices {
-                    for m in [d.mac, DB.normalizeMac(d.mac)] {
-                        allowed.insert(CredentialOrg.totpKey(m))
-                        allowed.insert(CredentialOrg.staticKey(m))
-                    }
-                }
-                for (k, v) in otps where allowed.contains(k) && !v.isEmpty {
-                    DB.store.set(k, v)
-                }
             }
             // 894 外观随备份走: 逐值白名单复核后才落盘 (见 applyAppearance)。
             // 恢复完由调用方走一次外观重建通道，否则"备份里是深色、屏幕上还是浅色"要等到下次冷启动。

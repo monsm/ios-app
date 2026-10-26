@@ -133,11 +133,10 @@ enum BackupStudio {
         "kf_bk_note",                 // 433 备注
         // 2026-10-13 对抗式排查: TOTP/静态口令族漏收。三种导入模式都会写这四个族
         //   · BackupKit.restoreAll :375-376 → otpStatus_ / otpIdx_
-        //   · BackupStudioKit :740/:765 → kf_cotp_t_ (TOTP 种子) 与 kf_cotp_s_ (静态口令)
         // 而回滚快照只覆盖上面列出的族 ⇒ 导错备份再点「撤销恢复」, 成员/凭证/备注都回去了,
         // **TOTP 种子与静态口令仍停在错包的值** (既是数据错, 也是 2FA 密钥残留, 撤销永远不完整)。
         // 判据①"恢复流程确实会改写它们"②"里面是用户自己攒的内容" 对这四族完全成立。
-        "otpStatus_", "otpIdx_", "kf_cotp_t_", "kf_cotp_s_",
+        "otpStatus_", "otpIdx_", 
         "kf_trace_persist_v1",                                       // 583 最近记录写入回执追踪 (同为恢复写入的用户内容)
         // 2026-10-14 对抗式排查: restoreAll 还会写这七族, 而快照没收 ⇒ 导错备份再"撤销恢复"撤不回来。
         //   · BackupKit.restoreAll 的 meta 段 → kf_defend_ / kf_tailgate_ / kf_synctime_
@@ -273,13 +272,12 @@ enum BackupStudio {
                 g.keychainDongles = nil
                 g.gatewayList = nil
                 g.passcode = nil
-                g.otpKeys = nil            // 181 属"设置"分区: 不勾设置就不能带 2FA 种子
                 g.appearance = nil         // 894 同属"设置"分区: 不勾设置就不带外观 (外观是偏好不是内容)
                 g.trace = z.records ? g.trace : nil
                 return g
             }
             if let g = c.globals, g.keychainDongles == nil, g.gatewayList == nil,
-               g.passcode == nil, g.otpKeys == nil, g.appearance == nil, g.trace == nil {
+               g.passcode == nil, g.appearance == nil, g.trace == nil {
                 c.globals = nil
             }
         }
@@ -516,17 +514,6 @@ enum BackupStudio {
             if let pc = g.passcode, !pc.s.isEmpty, !pc.d.isEmpty {
                 // 同 BackupKit.restoreAll: 只写 s/d (d2 不进 canonical, 包体里没有)
                 DB.store.set("kf_passcode", ["s": pc.s, "d": pc.d])
-            }
-            if let otps = g.otpKeys, !otps.isEmpty {
-                // 与 BackupKit.restoreAll 同口径: 只允许本包内锁的 totp/static 键进库
-                var allowed = Set<String>()
-                for d in c.devices {
-                    for m in [d.mac, DB.normalizeMac(d.mac)] {
-                        allowed.insert(CredentialOrg.totpKey(m))
-                        allowed.insert(CredentialOrg.staticKey(m))
-                    }
-                }
-                for (k, v) in otps where allowed.contains(k) && !v.isEmpty { DB.store.set(k, v) }
             }
             if let tr = g.trace, let lines = tr.lines, !lines.isEmpty {
                 DB.store.set("kf_trace_persist_v1", [

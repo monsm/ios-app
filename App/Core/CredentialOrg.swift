@@ -141,11 +141,6 @@ enum CredentialOrg {
     static func binKey(_ mac: String) -> String { "kf_cbin_" + mac }
     static func queueKey(_ mac: String) -> String { "kf_cqueue_" + mac }
     static func starKey(_ mac: String) -> String { "kf_cstar_" + mac }
-    /// 354 归档区: 与星标同式的本机单键 (同一把锁一份)
-    // 341/346 两族的键名 (数据本体已随 OtpStudio 删除, 但备份白名单仍要能认出这两个键,
-    // 否则老包装进来时会被当成未知键 —— BackupKit:272/458 与 BackupStudioKit:599 在读)
-    static func totpKey(_ mac: String) -> String { "kf_cotp_t_" + mac }
-    static func staticKey(_ mac: String) -> String { "kf_cotp_s_" + mac }
 
     static func archKey(_ mac: String) -> String { "kf_carch_" + mac }
     static func alertKey(_ mac: String, _ kind: String, _ key: Int) -> String { "kf_calert_\(mac)_\(kind)_\(key)" }

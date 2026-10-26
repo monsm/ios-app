@@ -2086,11 +2086,6 @@ struct RecordsView: View {
         .accessibilityAddTraits(on ? .isSelected : [])
     }
 
-    struct LaneDay: Identifiable {
-        var key: String
-        var cells: [(name: String, count: Int, alarm: Bool)]
-        var id: String { key }
-    }
 
 
     // ---------- 数据 ----------

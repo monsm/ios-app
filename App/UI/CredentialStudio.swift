@@ -1,6 +1,6 @@
 // 包5 凭证工坊 — **三类**凭证 (密码/临时码/指纹) 的添加·编辑·详情
 // 2026-10-26 勘误: 头注原写"四类(…/OTP)"。OTP 独立口令（TOTP/静态备份码）**从未建过页面** ——
-//   StudioHome 只列三类，数据层 kf_cotp_t_ / kf_cotp_s_ 已随 OtpStudio 删除（只剩备份白名单认键）。
+//   StudioHome 只列三类，数据层 kf_cotp_t_ / kf_cotp_s_ 已随 OtpStudio 删除（2026-10-26 连备份白名单也一并删了）。
 //   临时码（ZOTP）是**另一回事**：它由锁端种子算出、按 30 分钟窗口变，不是独立的 TOTP 种子。
 // 收录 (按 ROADMAP 包5): 7-8/11/34/41/171-174/177-179/301/303-317/319-320/322-346/515-523
 // ⚠ 降级项 (全部本地推断, 文案带"约"): 311/316/320/326/335/332/333/337; 舍弃 302/318/321 不实现。
@@ -54,20 +54,6 @@ enum StudioTools {
     static func mdy(_ d: Date) -> String {
         let f = DateFormatter(); f.dateFormat = "M月d日"
         return f.string(from: d)
-    }
-    /// 341 解析失败的真实缺失点。旧写法把「空 / 协议头不对 / 不是 totp / 缺 secret / Base32 非法」
-    /// 五种情况压成同一句解析失败, 用户照着那句话补全等于瞎猜 —— 现在失败原因就是**真缺的那一样**。
-    enum OtpFail: String, Error {
-        case blank = "粘贴框是空的"
-        case scheme = "不是 otpauth:// 开头"
-        case host = "协议头里的类型不是 totp (本 App 只按时间窗算码, 不认 HOTP)"
-        case secret = "缺 secret 参数"
-        case base32 = "secret 不是合法 Base32: 只允许 A-Z 与 2-7 (0/1/8/9 不在这个字母表里)"
-    }
-    /// 341 名称缺失时的回退名: 取密钥尾 4 位, 让列表里两条不至于都叫同一个占位名。
-    static func fallbackName(_ secret: String) -> String {
-        let clean = secret.uppercased().replacingOccurrences(of: "=", with: "").replacingOccurrences(of: " ", with: "")
-        return "口令·" + String(clean.suffix(4))
     }
     struct SceneDef: Identifiable {
         let key: String
