@@ -761,7 +761,6 @@ struct SettingsView: View {
                 Text("10 条").tag(10)
             }
             .pickerStyle(.menu)
-            iconPickerRow
             // 892 自定义强调色 (ColorPicker 管线)。存的是"色相来源"，上屏的每一档都要过亮度带，
             // 所以选到近白/近黄这类压不住白字的颜色时，主卡不会变白糊一片 —— 是被压暗后的同色系。
             ColorPicker("自定义强调色 (会盖过上面六套)",
@@ -881,22 +880,6 @@ struct SettingsView: View {
         }
     }
 
-    // ---------- 备选 App 图标 (idea 896) ----------
-    // 缩略预览色块与真实 PNG 同底色同符号; 点按走 UIApplication.setAlternateIconName。
-    // 更正一条旧断言：原注释写"系统自带确认弹窗"——Apple 文档只说结果经 completionHandler 回报，
-    // 没有承诺过任何弹窗。真机上会不会弹属于**待实测**，已进验收单；不把它当既有事实写。
-    // 先判 supportsAlternateIcons (文档: 只有它为 true 才允许换), 不支持就如实说明而不是静默失败。
-    private struct IconOption: Identifiable {
-        let id: String?      // nil = 默认图标
-        let name: String
-        let glyph: String
-        let bg: [Color]
-    }
-    private var iconPickerRow: some View {
-            // 2026-10-27 二轮精简：备选 App 图标选择区已删（settings.appearance.icon）。
-        .vkFont(.body)
-        .foregroundStyle(DS.Palette.text)
-    }
 
 
     private func resetAppearance() {

@@ -289,11 +289,9 @@ struct RecordsView: View {
             recordsToolbar
         }
         .onAppear { onRecordsAppear() }
-        // 576/191: 换当前锁必须重取数据。此前本页只在 onAppear 里 loadFromCache()，
         // 从设备页/矩阵点另一把锁回来时 allRows 还是旧锁的、recPool 已是新锁的
         // ⇒ 点行命中"这条记录不在当前显示范围里"的兜底 toast，看起来像数据丢了。
         .onChange(of: app.currentMac) { _, _ in
-            loadFromCache()
         }
         .onChange(of: app.pendingSearch) { _, q in
             guard let q else { return }
@@ -1661,7 +1659,6 @@ struct RecordsView: View {
             alert.addAction(UIAlertAction(title: m.name, style: .default) { _ in
                 MemberHub.claim(mac, logKey: r.key, memberId: m.id)
                 app.showToast("已认领给「" + m.name + "」(本机覆盖层)")
-                loadFromCache()
             })
         }
         UIApplication.topViewController()?.present(alert, animated: true)
@@ -1840,7 +1837,6 @@ struct RecordsView: View {
         // 「每次都从全部开始 / 每次默认只看告警」这两档从第二次进场起就形同虚设
         // (设置页那句"只改变进入记录页时的起点"落了空)。进场就按策略重取一次, 来源与构造时一致。
         filters = QueryFilters.load(mac: DB.preferredMac())
-        loadFromCache()
         // 566 开场恢复成员选择。908 的策略**不在这里重复判**: 策略是 QueryFilters.load 负责的
         // (选"每次空白"时它返回的就是空对象, member 自然为空) —— 这里再判一次就是两套规则。
         // 恢复后必须自己 applyFilter(): loadFromCache 已经跑过一次过滤，那一次还不知道有成员要恢复。
@@ -1862,14 +1858,7 @@ struct RecordsView: View {
         // 563 搜索词回填落地 (进页时一次性)
         if let q = app.pendingSearch { landSearch(q) }
     }
-    private func loadFromCache() {
-        // 220: 首屏走热点缓存 (整份解码结果常驻, 免每次重解 UserDefaults JSON);
-        // 缓存由唯一写入口 Store.writeLogs/replaceLogs 作废, 不存在陈旧窗。
-        guard !cached.isEmpty else { return }
-        // 有过成功读取记录 = 缓存可信, 不再报"未连接"; 从没成功读过才算离线
-        render(cached.map { LogEntry(type: $0.type, typeName: $0.typeName, idx: $0.idxRaw, idxRaw: $0.idxRaw, lockTime: $0.lockTime, lockTimeStr: $0.lockTimeStr, body: "") },
-               offline: lastSyncAt() == nil)
-    }
+    // 2026-10-27 二轮精简：loadFromCache 已删（HotCache 移除后无缓存可读）。
 
     private func fetch() async {
         guard !running, let kc = app.current else { return }

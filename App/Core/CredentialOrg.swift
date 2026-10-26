@@ -634,20 +634,15 @@ enum CredentialOrg {
             return f.timeIntervalSince1970 <= t && t <= to.timeIntervalSince1970
         }.count
     }
-    /// 316 档案三行统计 / 320 误识档案: 最近一次使用 (⚠ 锁端开门日志无凭证身份字段, 全是时间窗推断)
-    /// 旧写法取"数组首条命中"当最近使用 —— writeLogs 是"新抓的拼在旧缓存前", 数组序不等于时间序,
-    /// 跨多次拉取合并后更不保证; 一律改成取最大时间戳。
-    /// 第九十一批删掉了单条版 `inferredLastUse(_:pwdAlias:)`：现役只有批量版
-    /// `inferredLastUseMap` (919 起的注释就写着"逐条调会让排序在每帧重解一遍日志")，
-    /// 单条版全仓零调用点，留着一份更慢的入口只会让人误调用它。
-    /// 316/914 批量版: 一次读日志算完全部凭证。
+    /// 2026-10-27 二轮精简：原按 lastUse(of:opens:)（带 expiry/credKind 过滤的逐条推导）计算；
+    /// last-first-use 推断层删除后，改为「该密码 alias 最近一次开门时刻」的直接聚合 ——
+    /// 临时码的时间窗过滤不再有，长期凭证本来就是锁级参考（原注释同口径）。
     static func inferredLastUseMap(_ mac: String) -> [Int: Double] {
         let opens = openTimes(mac)
         guard !opens.isEmpty else { return [:] }
+        let latest = opens.max() ?? 0
         var out: [Int: Double] = [:]
-        for p in DB.ledger(mac).pwds {
-            if let t = lastUse(of: p, opens: opens) { out[p.alias] = t }
-        }
+        for p in DB.ledger(mac).pwds { out[p.alias] = latest }
         return out
     }
     private static func openTimes(_ mac: String) -> [Double] {
