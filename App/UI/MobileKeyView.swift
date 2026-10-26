@@ -160,6 +160,10 @@ struct MobileKeyView: View {
         busy = true
         defer { busy = false }
         let fmt = DateFormatter()
+        // 这个串会**落盘**（kf_mkey_ 的 validFrom/validTo），必须钉公元历：
+        // 非公历系统历法下 "yyyy" 会给出异 era 年份，与 MobileKeyService 里的
+        // "2118-01-01 00:00:00" 永久判据对不上。
+        fmt.locale = Locale(identifier: "en_US_POSIX")
         fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
         do {
             _ = try await MobileKeyService.issue(app,
@@ -198,7 +202,10 @@ struct MobileKeyView: View {
     }
 
     private func dateText(_ ms: Double) -> String {
+        // 必须钉公元历：非公历系统历法（佛历/回历）下 "MM-dd" 会算出异 era 的年份。
+        // 仓里同类写法统一用 en_US_POSIX（见 swiftlint 的「日期格式没钉历法」那条）。
         let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
         f.dateFormat = "MM-dd HH:mm"
         return f.string(from: Date(timeIntervalSince1970: ms / 1000))
     }

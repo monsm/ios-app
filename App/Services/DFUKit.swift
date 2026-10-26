@@ -195,7 +195,10 @@ final class DFUSession: NSObject {
         p.discoverServices([DFUMode.secure.service, DFUMode.legacy.service])
         try await waitDiscover()
         guard let svc = p.services?.first(where: { $0.uuid == DFUMode.secure.service || $0.uuid == DFUMode.legacy.service }) else {
-            throw DFUTransportError.protocolError("没找到 DFU 服务（FE59 / 1530），这台固件可能不支持 OTA")
+            // 用户可见文案不写 UUID（FE59 / 1530 对用户没有意义，只会挤占这句的唯一作用：
+            // 告诉他"这台固件可能没有升级能力"）。技术细节留在下面的注释里。
+            // 内部对照：Secure = 0xFE59，Legacy = 0x1530（见 DFUMode）。
+            throw DFUTransportError.protocolError("这台门锁的固件没有升级模式，不支持 OTA")
         }
         mode = svc.uuid == DFUMode.secure.service ? .secure : .legacy
         p.discoverCharacteristics([DFUMode.secure.controlPoint, DFUMode.secure.packetPoint,
