@@ -412,7 +412,7 @@
         },
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2670,
+          "line": 2551,
           "symbol": "CredStudioEntryView"
         }
       ],
@@ -599,7 +599,7 @@
         },
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2615,
+          "line": 2415,
           "symbol": "FpDetailStudio",
           "note": "指纹不存在空态"
         }
@@ -2007,7 +2007,7 @@
       "level": 4,
       "name": "码值遮挡、大字与复制",
       "kind": "state",
-      "summary": "六位码默认显示、可双击切大字、可开磨砂挡片防偷看，一键复制；未生成时显示 ******。",
+      "summary": "六位码默认显示、可双击切大字、可开磨砂挡片防偷看，一键复制；未生成时显示 ******。磨砂挡片键（`SecKey.frostedOn`）无写点 ⇒ 恒关，2026-10-26 已删。",
       "details": [
         "初始 otpPwd = 「******」(24)；字体走 monospacedDigit，kf_ax_bigotp 或 otpBig 为真时 largeTitle (1852-1854)",
         "双击码值切换 otpBig（挡片上也挂同一份，否则开挡片时双击失灵）(1862, 1878)",
@@ -3239,7 +3239,7 @@
       "level": 3,
       "name": "逐位打码与揭示（MaskedDigits）",
       "kind": "state",
-      "summary": "码值默认打码，可逐位点开；遮蔽样式三档，贴近面部或离开页面就复遮，首次揭示记一次敏感台账。",
+      "summary": "码值默认打码，可逐位点开；贴近面部或离开页面就复遮，首次揭示记一次敏感台账。遮蔽样式原有三档（`SecKey.maskStyle`），该键无写点 ⇒ 恒默认，2026-10-26 已删，现固定圆点。",
       "details": [
         "遮蔽三档取 DB.store.getString(SecKey.maskStyle)：stars=全星、tail4=只留末四位、其余圆点 (210-220, 264-270)",
         "逐位点按切换揭示/复遮；第一次揭示时 SensitiveLedger().record(查看, 密码) 只记一次（防点按刷屏）(224-230, 207-208)",
@@ -3723,7 +3723,7 @@
         },
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2610,
+          "line": 2415,
           "symbol": "FpDetailStudio",
           "note": "prefillReplace"
         }
@@ -3865,7 +3865,7 @@
         },
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2611,
+          "line": 2415,
           "symbol": "FpDetailStudio",
           "note": "sheet FpStudio"
         }
@@ -3905,7 +3905,7 @@
         },
         {
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2643,
+          "line": 2473,
           "symbol": "FpDetailStudio.delete",
           "note": "fpDelete 15"
         }
@@ -3930,11 +3930,28 @@
         "保留期默认 30 天；页脚说明「彻底删除不可找回。保留期可在 设置-家人与钥匙-凭证整理 调整。」(232)"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialCenterView.swift", "line": 102, "symbol": "CredBinView", "note": "binHeader"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 110, "symbol": "CredBinView", "note": "下次自动清理"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 232, "symbol": "CredBinView", "note": "保留期可调"}
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 102,
+          "symbol": "CredBinView",
+          "note": "binHeader"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 110,
+          "symbol": "CredBinView",
+          "note": "下次自动清理"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 232,
+          "symbol": "CredBinView",
+          "note": "保留期可调"
+        }
       ],
-      "tags": ["回收站"],
+      "tags": [
+        "回收站"
+      ],
       "status": "implemented"
     },
     {
@@ -3952,11 +3969,29 @@
         "从凭证页带词进来时补一句「这词是从凭证页的搜索带进来的, 要改要清都在这里。」(153-159)"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialCenterView.swift", "line": 122, "symbol": "CredBinView", "note": "六档来源"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 130, "symbol": "CredBinView", "note": "过滤点击"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 150, "symbol": "CredBinView", "note": "搜索框"}
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 122,
+          "symbol": "CredBinView",
+          "note": "六档来源"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 130,
+          "symbol": "CredBinView",
+          "note": "过滤点击"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 150,
+          "symbol": "CredBinView",
+          "note": "搜索框"
+        }
       ],
-      "tags": ["回收站", "筛选"],
+      "tags": [
+        "回收站",
+        "筛选"
+      ],
       "status": "implemented"
     },
     {
@@ -3974,11 +4009,27 @@
         "剩余天数 = (e.at 秒 + 保留天数×86400 - now) / 86400 向下取整 (371-375)"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialCenterView.swift", "line": 286, "symbol": "binRow"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 296, "symbol": "binRow", "note": "剩余天数"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 307, "symbol": "binRow", "note": "停用原因便签"}
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 286,
+          "symbol": "binRow"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 296,
+          "symbol": "binRow",
+          "note": "剩余天数"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 307,
+          "symbol": "binRow",
+          "note": "停用原因便签"
+        }
       ],
-      "tags": ["回收站"],
+      "tags": [
+        "回收站"
+      ],
       "status": "implemented"
     },
     {
@@ -3996,11 +4047,29 @@
         "恢复可能触发 504 重新下发排队；回执不写死「已恢复」，由数据层说清"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialCenterView.swift", "line": 322, "symbol": "binRow", "note": "恢复窗口判定"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 330, "symbol": "binRow", "note": "副本"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 382, "symbol": "restore", "note": "restoreBin 回执"}
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 322,
+          "symbol": "binRow",
+          "note": "恢复窗口判定"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 330,
+          "symbol": "binRow",
+          "note": "副本"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 382,
+          "symbol": "restore",
+          "note": "restoreBin 回执"
+        }
       ],
-      "tags": ["回收站", "恢复"],
+      "tags": [
+        "回收站",
+        "恢复"
+      ],
       "status": "implemented"
     },
     {
@@ -4018,11 +4087,28 @@
         "当整批比当前列出的多，补一句「按删除批次归组: 上面筛选没列出的同批条目也会一并还原。」(213-218)"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialCenterView.swift", "line": 191, "symbol": "CredBinView", "note": "整组还原"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 278, "symbol": "restoreGroup"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 200, "symbol": "CredBinView", "note": "restoreBin 逐条"}
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 191,
+          "symbol": "CredBinView",
+          "note": "整组还原"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 278,
+          "symbol": "restoreGroup"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 200,
+          "symbol": "CredBinView",
+          "note": "restoreBin 逐条"
+        }
       ],
-      "tags": ["回收站", "批量"],
+      "tags": [
+        "回收站",
+        "批量"
+      ],
       "status": "implemented"
     },
     {
@@ -4041,11 +4127,29 @@
         "成功回执「已彻底删除 (指纹无法再录入; 密码值可再生成)」(361)"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialCenterView.swift", "line": 336, "symbol": "binRow", "note": "彻底删除按钮"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 346, "symbol": "binRow", "note": "confirmationDialog"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 354, "symbol": "binRow", "note": "guardedPurge"}
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 336,
+          "symbol": "binRow",
+          "note": "彻底删除按钮"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 346,
+          "symbol": "binRow",
+          "note": "confirmationDialog"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 354,
+          "symbol": "binRow",
+          "note": "guardedPurge"
+        }
       ],
-      "tags": ["破坏性", "安全"],
+      "tags": [
+        "破坏性",
+        "安全"
+      ],
       "status": "implemented"
     },
     {
@@ -4063,11 +4167,29 @@
         "成功 toast「已清空回收站」+ 记 Milestones.recordOrganize (402-405)"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialCenterView.swift", "line": 222, "symbol": "CredBinView", "note": "清空按钮"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 390, "symbol": "purgeAll", "note": "空态提示"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 395, "symbol": "purgeAll", "note": "guardedPurge"}
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 222,
+          "symbol": "CredBinView",
+          "note": "清空按钮"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 390,
+          "symbol": "purgeAll",
+          "note": "空态提示"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 395,
+          "symbol": "purgeAll",
+          "note": "guardedPurge"
+        }
       ],
-      "tags": ["破坏性", "安全"],
+      "tags": [
+        "破坏性",
+        "安全"
+      ],
       "status": "implemented"
     },
     {
@@ -4084,11 +4206,29 @@
         "同屏写明局限：协议没有「读取锁内凭证清单」的命令，这是按凭证类型的推断；比较用锁自己记的时间，锁钟未校准时会有偏差；要确认请在锁键盘上试或逐条删除 (169)"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialCenterView.swift", "line": 162, "symbol": "CredBinView", "note": "复活提示段"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 166, "symbol": "CredBinView", "note": "提示行文案"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 169, "symbol": "CredBinView", "note": "推断局限说明"}
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 162,
+          "symbol": "CredBinView",
+          "note": "复活提示段"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 166,
+          "symbol": "CredBinView",
+          "note": "提示行文案"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 169,
+          "symbol": "CredBinView",
+          "note": "推断局限说明"
+        }
       ],
-      "tags": ["推断", "诊断"],
+      "tags": [
+        "推断",
+        "诊断"
+      ],
       "status": "implemented"
     },
     {
@@ -4106,11 +4246,28 @@
         "配额来自 CredentialOrg.quota(mac)，默认 10 版（设置里 3~30 可调）(496)"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialCenterView.swift", "line": 419, "symbol": "CredHistoryListView", "note": "有快照段"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 429, "symbol": "CredHistoryListView", "note": "N 版"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 455, "symbol": "CredHistoryListView", "note": "空态"}
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 419,
+          "symbol": "CredHistoryListView",
+          "note": "有快照段"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 429,
+          "symbol": "CredHistoryListView",
+          "note": "N 版"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 455,
+          "symbol": "CredHistoryListView",
+          "note": "空态"
+        }
       ],
-      "tags": ["快照"],
+      "tags": [
+        "快照"
+      ],
       "status": "implemented"
     },
     {
@@ -4129,11 +4286,28 @@
         "footer 三条规则：自动还原点（批量操作前）置顶加标记；星标版不受配额淘汰；恢复不覆盖、生成「恢复自 vX」新档 (500)"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialCenterView.swift", "line": 510, "symbol": "snaps", "note": "排序"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 523, "symbol": "snapRow", "note": "自动还原点"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 538, "symbol": "snapRow", "note": "星标"}
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 510,
+          "symbol": "snaps",
+          "note": "排序"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 523,
+          "symbol": "snapRow",
+          "note": "自动还原点"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 538,
+          "symbol": "snapRow",
+          "note": "星标"
+        }
       ],
-      "tags": ["快照"],
+      "tags": [
+        "快照"
+      ],
       "status": "implemented"
     },
     {
@@ -4151,11 +4325,29 @@
         "prevOf 在基线等于本行时退回上一版，避免 diff(自己,自己) 全 same 导致整块空白 (612-619)"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialCenterView.swift", "line": 576, "symbol": "snapRow", "note": "看差异/取消基线"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 557, "symbol": "snapRow", "note": "逐字段 diff"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 616, "symbol": "prevOf", "note": "基线回退"}
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 576,
+          "symbol": "snapRow",
+          "note": "看差异/取消基线"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 557,
+          "symbol": "snapRow",
+          "note": "逐字段 diff"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 616,
+          "symbol": "prevOf",
+          "note": "基线回退"
+        }
       ],
-      "tags": ["快照", "diff"],
+      "tags": [
+        "快照",
+        "diff"
+      ],
       "status": "implemented"
     },
     {
@@ -4172,10 +4364,22 @@
         "同段补一句「顶栏「回到此版」= 按此版生成新档, 不覆盖历史。」(628)"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialCenterView.swift", "line": 583, "symbol": "snapRow", "note": "回看此版"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 624, "symbol": "previewSection", "note": "只读预览"}
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 583,
+          "symbol": "snapRow",
+          "note": "回看此版"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 624,
+          "symbol": "previewSection",
+          "note": "只读预览"
+        }
       ],
-      "tags": ["快照"],
+      "tags": [
+        "快照"
+      ],
       "status": "implemented"
     },
     {
@@ -4192,11 +4396,28 @@
         "恢复后 reloadTick 自增触发列表重查 (595, 635-636)"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialCenterView.swift", "line": 589, "symbol": "snapRow", "note": "恢复到 vX"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 593, "symbol": "snapRow", "note": "CredentialOrg.restore"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 636, "symbol": "reloadCenter"}
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 589,
+          "symbol": "snapRow",
+          "note": "恢复到 vX"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 593,
+          "symbol": "snapRow",
+          "note": "CredentialOrg.restore"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 636,
+          "symbol": "reloadCenter"
+        }
       ],
-      "tags": ["快照", "恢复"],
+      "tags": [
+        "快照",
+        "恢复"
+      ],
       "status": "implemented"
     },
     {
@@ -4215,11 +4436,29 @@
         "点格切换 picked（再点取消）并回调 onPick (730-732)；进入页面清空 picked (712)"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialCenterView.swift", "line": 651, "symbol": "CredCalendarView", "note": "monthDeadlines"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 735, "symbol": "dayCell", "note": "到期角标"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 720, "symbol": "weekdayHeaders", "note": "周起点同源"}
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 651,
+          "symbol": "CredCalendarView",
+          "note": "monthDeadlines"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 735,
+          "symbol": "dayCell",
+          "note": "到期角标"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 720,
+          "symbol": "weekdayHeaders",
+          "note": "周起点同源"
+        }
       ],
-      "tags": ["到期", "月历"],
+      "tags": [
+        "到期",
+        "月历"
+      ],
       "status": "implemented"
     },
     {
@@ -4236,10 +4475,22 @@
         "当天无到期则不显示清单段（只有角标为 0 的格子）(687)"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialCenterView.swift", "line": 685, "symbol": "CredCalendarView", "note": "当日清单"},
-        {"file": "App/UI/CredentialsView.swift", "line": 1800, "symbol": "pickDay", "note": "toast 汇总"}
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 685,
+          "symbol": "CredCalendarView",
+          "note": "当日清单"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1800,
+          "symbol": "pickDay",
+          "note": "toast 汇总"
+        }
       ],
-      "tags": ["到期"],
+      "tags": [
+        "到期"
+      ],
       "status": "implemented"
     },
     {
@@ -4259,11 +4510,28 @@
         "空态「没有待整理的项, 台账很干净。」+ checkmark.seal (796-805)"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialCenterView.swift", "line": 794, "symbol": "CredOrganizeView", "note": "advice 取数"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 806, "symbol": "CredOrganizeView", "note": "建议行遍历"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 796, "symbol": "CredOrganizeView", "note": "空态"}
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 794,
+          "symbol": "CredOrganizeView",
+          "note": "advice 取数"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 806,
+          "symbol": "CredOrganizeView",
+          "note": "建议行遍历"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 796,
+          "symbol": "CredOrganizeView",
+          "note": "空态"
+        }
       ],
-      "tags": ["整理"],
+      "tags": [
+        "整理"
+      ],
       "status": "implemented"
     },
     {
@@ -4283,11 +4551,29 @@
         "凭证页 consumeCredSelect：关掉排序档、进编辑模式、把 ids 灌进 selPwds (295-302)"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialCenterView.swift", "line": 872, "symbol": "CredOrganizeView", "note": "apply"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 910, "symbol": "CredOrganizeView", "note": "pendingCredSelect"},
-        {"file": "App/UI/CredentialsView.swift", "line": 295, "symbol": "consumeCredSelect", "note": "预勾选落地"}
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 872,
+          "symbol": "CredOrganizeView",
+          "note": "apply"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 910,
+          "symbol": "CredOrganizeView",
+          "note": "pendingCredSelect"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 295,
+          "symbol": "consumeCredSelect",
+          "note": "预勾选落地"
+        }
       ],
-      "tags": ["整理", "批量"],
+      "tags": [
+        "整理",
+        "批量"
+      ],
       "status": "implemented"
     },
     {
@@ -4305,11 +4591,28 @@
         "空态：「没有待处理项。停用/删除/延期操作在锁端未连接时会自动记入这里。」(931-941)"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialCenterView.swift", "line": 944, "symbol": "CredQueueView", "note": "段头"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 964, "symbol": "CredQueueView", "note": "三步步条"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 931, "symbol": "CredQueueView", "note": "空态"}
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 944,
+          "symbol": "CredQueueView",
+          "note": "段头"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 964,
+          "symbol": "CredQueueView",
+          "note": "三步步条"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 931,
+          "symbol": "CredQueueView",
+          "note": "空态"
+        }
       ],
-      "tags": ["容错"],
+      "tags": [
+        "容错"
+      ],
       "status": "implemented"
     },
     {
@@ -4327,11 +4630,28 @@
         "失败 markQueue(failed)，toast「重试失败: …」(1069-1072)"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialCenterView.swift", "line": 1050, "symbol": "retry"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 1066, "symbol": "retry", "note": "sendQueued"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 1070, "symbol": "retry", "note": "失败标记"}
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1050,
+          "symbol": "retry"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1066,
+          "symbol": "retry",
+          "note": "sendQueued"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1070,
+          "symbol": "retry",
+          "note": "失败标记"
+        }
       ],
-      "tags": ["锁端读写", "容错"],
+      "tags": [
+        "锁端读写",
+        "容错"
+      ],
       "status": "implemented"
     },
     {
@@ -4349,11 +4669,28 @@
         "applyItem 只是 sendQueued 的最小包装（旧注释里提到的 applyItem 曾全仓未定义）(1081-1083)"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialCenterView.swift", "line": 984, "symbol": "CredQueueView", "note": "全部重试"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 986, "symbol": "CredQueueView", "note": "互斥"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 1082, "symbol": "applyItem"}
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 984,
+          "symbol": "CredQueueView",
+          "note": "全部重试"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 986,
+          "symbol": "CredQueueView",
+          "note": "互斥"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1082,
+          "symbol": "applyItem"
+        }
       ],
-      "tags": ["容错", "批量"],
+      "tags": [
+        "容错",
+        "批量"
+      ],
       "status": "implemented"
     },
     {
@@ -4371,11 +4708,28 @@
         "默认区间 from=今天、to=今天+30 天 (1099-1100)"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialCenterView.swift", "line": 1108, "symbol": "CredExtendView", "note": "生效"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 1109, "symbol": "CredExtendView", "note": "延期至 in: from..."},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 1115, "symbol": "CredExtendView", "note": "变更清单"}
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1108,
+          "symbol": "CredExtendView",
+          "note": "生效"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1109,
+          "symbol": "CredExtendView",
+          "note": "延期至 in: from..."
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1115,
+          "symbol": "CredExtendView",
+          "note": "变更清单"
+        }
       ],
-      "tags": ["批量"],
+      "tags": [
+        "批量"
+      ],
       "status": "implemented"
     },
     {
@@ -4392,11 +4746,29 @@
         "真实生效应等队列补发（0B）；本机立即生效"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialCenterView.swift", "line": 1132, "symbol": "CredExtendView", "note": "执行按钮"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 1151, "symbol": "apply", "note": "batchExtend"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 1153, "symbol": "apply", "note": "回执"}
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1132,
+          "symbol": "CredExtendView",
+          "note": "执行按钮"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1151,
+          "symbol": "apply",
+          "note": "batchExtend"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1153,
+          "symbol": "apply",
+          "note": "回执"
+        }
       ],
-      "tags": ["锁端读写", "批量"],
+      "tags": [
+        "锁端读写",
+        "批量"
+      ],
       "status": "implemented"
     },
     {
@@ -4413,11 +4785,28 @@
         "说明「批量改归属并各写一条本地记录; 锁端无归属字段, 移交只作用于本机台账。」(1180)"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialCenterView.swift", "line": 1172, "symbol": "CredTransferView", "note": "段头"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 1173, "symbol": "CredTransferView", "note": "Picker"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 1180, "symbol": "CredTransferView", "note": "口径说明"}
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1172,
+          "symbol": "CredTransferView",
+          "note": "段头"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1173,
+          "symbol": "CredTransferView",
+          "note": "Picker"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1180,
+          "symbol": "CredTransferView",
+          "note": "口径说明"
+        }
       ],
-      "tags": ["归属"],
+      "tags": [
+        "归属"
+      ],
       "status": "implemented"
     },
     {
@@ -4433,10 +4822,23 @@
         "toast「已移交 N 条 → 成员名 / → 无归属」+ 记里程碑 + onDone() (1188-1190)"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialCenterView.swift", "line": 1186, "symbol": "CredTransferView", "note": "确认按钮"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 1187, "symbol": "CredTransferView", "note": "batchTransfer"}
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1186,
+          "symbol": "CredTransferView",
+          "note": "确认按钮"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1187,
+          "symbol": "CredTransferView",
+          "note": "batchTransfer"
+        }
       ],
-      "tags": ["归属", "批量"],
+      "tags": [
+        "归属",
+        "批量"
+      ],
       "status": "implemented"
     },
     {
@@ -4454,11 +4856,28 @@
         "不可逆说明 danger 色：「停用后本机台账移除, 锁端删除记为「待下发」— 7 天内可一键恢复, 超期需重新录入/生成。」(1288-1291)"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialCenterView.swift", "line": 1247, "symbol": "CredDisableSheet", "note": "摘要段"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 1263, "symbol": "CredDisableSheet", "note": "影响 N 位成员"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 1288, "symbol": "CredDisableSheet", "note": "不可逆说明"}
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1247,
+          "symbol": "CredDisableSheet",
+          "note": "摘要段"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1263,
+          "symbol": "CredDisableSheet",
+          "note": "影响 N 位成员"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1288,
+          "symbol": "CredDisableSheet",
+          "note": "不可逆说明"
+        }
       ],
-      "tags": ["破坏性"],
+      "tags": [
+        "破坏性"
+      ],
       "status": "implemented"
     },
     {
@@ -4476,11 +4895,28 @@
         "无障碍提示区分两种状态（需先选原因 / 点按即执行）(1365-1367)"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialCenterView.swift", "line": 1294, "symbol": "CredDisableSheet", "note": "原因芯片"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 1315, "symbol": "CredDisableSheet", "note": "未选提示"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 1358, "symbol": "CredDisableSheet", "note": "按钮文案"}
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1294,
+          "symbol": "CredDisableSheet",
+          "note": "原因芯片"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1315,
+          "symbol": "CredDisableSheet",
+          "note": "未选提示"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1358,
+          "symbol": "CredDisableSheet",
+          "note": "按钮文案"
+        }
       ],
-      "tags": ["合规"],
+      "tags": [
+        "合规"
+      ],
       "status": "implemented"
     },
     {
@@ -4497,11 +4933,28 @@
         "开：按成员各写一条 SensitiveLedger（target 记该成员名下条数）；关：写一条汇总流水；两种形态绝不双写（否则一次停用会被数成两次）(1319-1338)"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialCenterView.swift", "line": 1219, "symbol": "writeToFeed", "note": "默认关"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 1323, "symbol": "CredDisableSheet", "note": "VariantToggle"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 1334, "symbol": "CredDisableSheet", "note": "SensitiveLedger 按成员写"}
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1219,
+          "symbol": "writeToFeed",
+          "note": "默认关"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1323,
+          "symbol": "CredDisableSheet",
+          "note": "VariantToggle"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1334,
+          "symbol": "CredDisableSheet",
+          "note": "SensitiveLedger 按成员写"
+        }
       ],
-      "tags": ["审计"],
+      "tags": [
+        "审计"
+      ],
       "status": "implemented"
     },
     {
@@ -4520,11 +4973,29 @@
         "「取消」只 dismiss，绝不触发 onDone（否则取消也会停用）(1373-1376)"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialCenterView.swift", "line": 1331, "symbol": "CredDisableSheet", "note": "lock.log"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 1347, "symbol": "CredDisableSheet", "note": "markDisabled"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 1375, "symbol": "CredDisableSheet", "note": "取消只 dismiss"}
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1331,
+          "symbol": "CredDisableSheet",
+          "note": "lock.log"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1347,
+          "symbol": "CredDisableSheet",
+          "note": "markDisabled"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1375,
+          "symbol": "CredDisableSheet",
+          "note": "取消只 dismiss"
+        }
       ],
-      "tags": ["审计", "破坏性"],
+      "tags": [
+        "审计",
+        "破坏性"
+      ],
       "status": "implemented"
     },
     {
@@ -4543,11 +5014,29 @@
         "0 是「不指定」保留值：LockService 对 pwdDelete/pwdModify 收到 0 直接抛错，避免「回包成功但锁里没删」；本页 guard 见 protocol.cred-guard"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialsView.swift", "line": 2302, "symbol": "doDeletePwd", "note": "pwdDelete → 0A 删"},
-        {"file": "App/UI/CredentialsView.swift", "line": 2187, "symbol": "modifyPwd", "note": "pwdModify → 0A 改写"},
-        {"file": "App/UI/CredentialStudio.swift", "line": 1256, "symbol": "PwdStudio.submit", "note": "pwdAdd → 0A 加"}
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2302,
+          "symbol": "doDeletePwd",
+          "note": "pwdDelete → 0A 删"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2187,
+          "symbol": "modifyPwd",
+          "note": "pwdModify → 0A 改写"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1256,
+          "symbol": "PwdStudio.submit",
+          "note": "pwdAdd → 0A 加"
+        }
       ],
-      "tags": ["锁端读写", "协议"],
+      "tags": [
+        "锁端读写",
+        "协议"
+      ],
       "status": "implemented"
     },
     {
@@ -4565,11 +5054,29 @@
         "长期码的 to 固定 2118-01-01 00:00:00（UI 侧 periodText 用 2118 前缀判长期）"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialsView.swift", "line": 2226, "symbol": "doResetPwdPeriod", "note": "pwdExpire → 0B"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 1151, "symbol": "CredExtendView.apply", "note": "batchExtend 入队 period"},
-        {"file": "App/UI/CredentialStudio.swift", "line": 2081, "symbol": "renewExpired", "note": "续期失败入队 period"}
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2226,
+          "symbol": "doResetPwdPeriod",
+          "note": "pwdExpire → 0B"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1151,
+          "symbol": "CredExtendView.apply",
+          "note": "batchExtend 入队 period"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2081,
+          "symbol": "renewExpired",
+          "note": "续期失败入队 period"
+        }
       ],
-      "tags": ["锁端读写", "协议"],
+      "tags": [
+        "锁端读写",
+        "协议"
+      ],
       "status": "implemented"
     },
     {
@@ -4588,11 +5095,29 @@
         "UI 的 8 个圆点由 onPress 回调逐帧点亮（不是等整次调用返回）"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialStudio.swift", "line": 2497, "symbol": "FpStudio.start", "note": "fpStart(times: 8)"},
-        {"file": "App/UI/CredentialStudio.swift", "line": 2500, "symbol": "FpStudio.start", "note": "onPress 逐帧点亮"},
-        {"file": "App/UI/CredentialStudio.swift", "line": 2504, "symbol": "FpStudio.start", "note": "不满 8 次不写入"}
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2497,
+          "symbol": "FpStudio.start",
+          "note": "fpStart(times: 8)"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2500,
+          "symbol": "FpStudio.start",
+          "note": "onPress 逐帧点亮"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2504,
+          "symbol": "FpStudio.start",
+          "note": "不满 8 次不写入"
+        }
       ],
-      "tags": ["锁端读写", "协议"],
+      "tags": [
+        "锁端读写",
+        "协议"
+      ],
       "status": "implemented"
     },
     {
@@ -4610,11 +5135,29 @@
         "关页取消（enrollTask.cancel）后先判 Task.isCancelled，不越过这一步；台账也要到第 3 步命名归属后才写"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialStudio.swift", "line": 2517, "symbol": "FpStudio.start", "note": "fpConfirm → 14"},
-        {"file": "App/UI/CredentialStudio.swift", "line": 2508, "symbol": "FpStudio.start", "note": "无有效批次中止"},
-        {"file": "App/UI/CredentialStudio.swift", "line": 2513, "symbol": "FpStudio.start", "note": "取消不越过"}
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2517,
+          "symbol": "FpStudio.start",
+          "note": "fpConfirm → 14"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2508,
+          "symbol": "FpStudio.start",
+          "note": "无有效批次中止"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2513,
+          "symbol": "FpStudio.start",
+          "note": "取消不越过"
+        }
       ],
-      "tags": ["锁端读写", "协议"],
+      "tags": [
+        "锁端读写",
+        "协议"
+      ],
       "status": "implemented"
     },
     {
@@ -4632,11 +5175,29 @@
         "删除成功后本机只留档案，开门能力需本人到锁前重录"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialStudio.swift", "line": 2643, "symbol": "FpDetailStudio.delete", "note": "fpDelete → 15"},
-        {"file": "App/UI/CredentialsView.swift", "line": 2330, "symbol": "doDeleteFp", "note": "batchU32 越界中止"},
-        {"file": "App/UI/CredentialsView.swift", "line": 1785, "symbol": "batchDelete", "note": "批量分支同样转换"}
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2473,
+          "symbol": "FpDetailStudio.delete",
+          "note": "fpDelete → 15"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2330,
+          "symbol": "doDeleteFp",
+          "note": "batchU32 越界中止"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1785,
+          "symbol": "batchDelete",
+          "note": "批量分支同样转换"
+        }
       ],
-      "tags": ["锁端读写", "协议"],
+      "tags": [
+        "锁端读写",
+        "协议"
+      ],
       "status": "implemented"
     },
     {
@@ -4654,11 +5215,29 @@
         "busyKey=otp 期间开关与生成按钮都 disabled"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialsView.swift", "line": 1823, "symbol": "otpSection", "note": "setZotp → 19"},
-        {"file": "App/UI/CredentialsView.swift", "line": 1822, "symbol": "otpSection", "note": "先 ensureConnected 钉锁"},
-        {"file": "App/UI/CredentialsView.swift", "line": 1826, "symbol": "otpSection", "note": "失败分支"}
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1823,
+          "symbol": "otpSection",
+          "note": "setZotp → 19"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1822,
+          "symbol": "otpSection",
+          "note": "先 ensureConnected 钉锁"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1826,
+          "symbol": "otpSection",
+          "note": "失败分支"
+        }
       ],
-      "tags": ["锁端读写", "协议"],
+      "tags": [
+        "锁端读写",
+        "协议"
+      ],
       "status": "implemented"
     },
     {
@@ -4676,10 +5255,23 @@
         "本页可见证据：OTP 生成处读 zotpPeriod；其余为调用 ensureConnected 的各命令入口"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialsView.swift", "line": 1925, "symbol": "genOtp", "note": "readStatus.zotpPeriod"},
-        {"file": "App/UI/CredentialsView.swift", "line": 1822, "symbol": "otpSection", "note": "ensureConnected 读状态"}
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1925,
+          "symbol": "genOtp",
+          "note": "readStatus.zotpPeriod"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1822,
+          "symbol": "otpSection",
+          "note": "ensureConnected 读状态"
+        }
       ],
-      "tags": ["锁端读写", "协议"],
+      "tags": [
+        "锁端读写",
+        "协议"
+      ],
       "status": "implemented"
     },
     {
@@ -4697,11 +5289,29 @@
         "添加链的另一半：0A 响应缺 KLV#04 alias 时 pwdAdd 抛错，而不是返回 0（否则台账会记成 0 号并在以后「删除成功」却删不掉）"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialsView.swift", "line": 2302, "symbol": "doDeletePwd", "note": "别名下发前已取台账值"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 1066, "symbol": "retry", "note": "sendQueued 统一把关"},
-        {"file": "App/UI/CredentialsView.swift", "line": 1767, "symbol": "batchDelete", "note": "对象已不在台账则中止"}
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2302,
+          "symbol": "doDeletePwd",
+          "note": "别名下发前已取台账值"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1066,
+          "symbol": "retry",
+          "note": "sendQueued 统一把关"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1767,
+          "symbol": "batchDelete",
+          "note": "对象已不在台账则中止"
+        }
       ],
-      "tags": ["协议", "防御"],
+      "tags": [
+        "协议",
+        "防御"
+      ],
       "status": "implemented"
     },
     {
@@ -4719,11 +5329,29 @@
         "坏表防御：手动序数组存在重复 alias 时用 uniquingKeysWith 取第一个位次，而不是 uniqueKeysWithValues（后者会 trap 整个凭证页）"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialsView.swift", "line": 875, "symbol": "orderedPwds", "note": "读 seq[p]"},
-        {"file": "App/UI/CredentialsView.swift", "line": 1076, "symbol": "commitGroupMove", "note": "写 seq"},
-        {"file": "App/UI/CredentialsView.swift", "line": 889, "symbol": "manualIndex", "note": "重复别名防 trap"}
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 875,
+          "symbol": "orderedPwds",
+          "note": "读 seq[p]"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1076,
+          "symbol": "commitGroupMove",
+          "note": "写 seq"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 889,
+          "symbol": "manualIndex",
+          "note": "重复别名防 trap"
+        }
       ],
-      "tags": ["数据", "排序"],
+      "tags": [
+        "数据",
+        "排序"
+      ],
       "status": "implemented"
     },
     {
@@ -4741,11 +5369,28 @@
         "两者都不改台账、不发锁端命令"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialsView.swift", "line": 871, "symbol": "orderedPwds", "note": "isStarred 分置顶段"},
-        {"file": "App/UI/CredentialsView.swift", "line": 1436, "symbol": "credMenu", "note": "setArchived"},
-        {"file": "App/UI/CredentialsView.swift", "line": 2019, "symbol": "archivedStrip", "note": "指纹 100000+batch"}
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 871,
+          "symbol": "orderedPwds",
+          "note": "isStarred 分置顶段"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1436,
+          "symbol": "credMenu",
+          "note": "setArchived"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2019,
+          "symbol": "archivedStrip",
+          "note": "指纹 100000+batch"
+        }
       ],
-      "tags": ["数据"],
+      "tags": [
+        "数据"
+      ],
       "status": "implemented"
     },
     {
@@ -4763,11 +5408,29 @@
         "写点：单条停用/彻底删除、批量停用/删除、成员级联、重录继承、诊断无主隔离"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialsView.swift", "line": 2254, "symbol": "disablePwd", "note": "addToBin"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 22, "symbol": "CredCenterView", "note": "bin 计数与保留天数"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 372, "symbol": "daysLeftOf", "note": "保留期换算"}
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2254,
+          "symbol": "disablePwd",
+          "note": "addToBin"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 22,
+          "symbol": "CredCenterView",
+          "note": "bin 计数与保留天数"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 372,
+          "symbol": "daysLeftOf",
+          "note": "保留期换算"
+        }
       ],
-      "tags": ["数据", "回收站"],
+      "tags": [
+        "数据",
+        "回收站"
+      ],
       "status": "implemented"
     },
     {
@@ -4786,11 +5449,29 @@
         "写点：单条停用（del_pwd/del_fp）、统一延期（period）、续期失败（period）、恢复（restore）、重录继承清旧枚（del_fp）"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialsView.swift", "line": 2256, "symbol": "disablePwd", "note": "enqueue del_pwd"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 974, "symbol": "CredQueueView", "note": "attempt/lastAt 展示"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 996, "symbol": "CredQueueView", "note": "markQueue(done)"}
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2256,
+          "symbol": "disablePwd",
+          "note": "enqueue del_pwd"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 974,
+          "symbol": "CredQueueView",
+          "note": "attempt/lastAt 展示"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 996,
+          "symbol": "CredQueueView",
+          "note": "markQueue(done)"
+        }
       ],
-      "tags": ["数据", "容错"],
+      "tags": [
+        "数据",
+        "容错"
+      ],
       "status": "implemented"
     },
     {
@@ -4809,11 +5490,29 @@
         "写点：改密码值、改价效期、改备注、改名（指纹）、改造、原码续期、批量延期"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialStudio.swift", "line": 2198, "symbol": "modifyPwd", "note": "snapshot 修改了密码值"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 496, "symbol": "CredHistoryView", "note": "quota 展示"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 500, "symbol": "CredHistoryView", "note": "三条规则"}
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 2198,
+          "symbol": "modifyPwd",
+          "note": "snapshot 修改了密码值"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 496,
+          "symbol": "CredHistoryView",
+          "note": "quota 展示"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 500,
+          "symbol": "CredHistoryView",
+          "note": "三条规则"
+        }
       ],
-      "tags": ["数据", "快照"],
+      "tags": [
+        "数据",
+        "快照"
+      ],
       "status": "implemented"
     },
     {
@@ -4832,11 +5531,29 @@
         "通知排期失败只写 os 日志，不假装成功"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialsView.swift", "line": 2434, "symbol": "toggleAlerts", "note": "saveAlert + scheduleAlerts"},
-        {"file": "App/UI/CredentialStudio.swift", "line": 1855, "symbol": "PwdDetailStudio", "note": "详情页同键读写"},
-        {"file": "App/UI/CredentialStudio.swift", "line": 1890, "symbol": "PwdDetailStudio", "note": "五档与到期时通知口径"}
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2434,
+          "symbol": "toggleAlerts",
+          "note": "saveAlert + scheduleAlerts"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1855,
+          "symbol": "PwdDetailStudio",
+          "note": "详情页同键读写"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1890,
+          "symbol": "PwdDetailStudio",
+          "note": "五档与到期时通知口径"
+        }
       ],
-      "tags": ["数据", "通知"],
+      "tags": [
+        "数据",
+        "通知"
+      ],
       "status": "implemented"
     },
     {
@@ -4855,11 +5572,29 @@
         "单条停用没有原因四选一，如实记「未填」而不是编一个默认原因"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialsView.swift", "line": 2258, "symbol": "disablePwd", "note": "markDisabled 未填"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 307, "symbol": "binRow", "note": "disableMarkText 回显"},
-        {"file": "App/UI/CredentialCenterView.swift", "line": 1350, "symbol": "CredDisableSheet", "note": "批量代管标注"}
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 2258,
+          "symbol": "disablePwd",
+          "note": "markDisabled 未填"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 307,
+          "symbol": "binRow",
+          "note": "disableMarkText 回显"
+        },
+        {
+          "file": "App/UI/CredentialCenterView.swift",
+          "line": 1350,
+          "symbol": "CredDisableSheet",
+          "note": "批量代管标注"
+        }
       ],
-      "tags": ["数据", "审计"],
+      "tags": [
+        "数据",
+        "审计"
+      ],
       "status": "implemented"
     },
     {
@@ -4877,11 +5612,29 @@
         "不保存的情况：已提交、或还在第 0 步且没填码值"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialStudio.swift", "line": 1191, "symbol": "saveDraft", "note": "StudioDraft 落盘"},
-        {"file": "App/UI/CredentialStudio.swift", "line": 1174, "symbol": "restoreDraft", "note": "回填"},
-        {"file": "App/UI/CredentialStudio.swift", "line": 638, "symbol": "PwdStudio", "note": "onDisappear 留稿"}
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1191,
+          "symbol": "saveDraft",
+          "note": "StudioDraft 落盘"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1174,
+          "symbol": "restoreDraft",
+          "note": "回填"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 638,
+          "symbol": "PwdStudio",
+          "note": "onDisappear 留稿"
+        }
       ],
-      "tags": ["数据", "草稿"],
+      "tags": [
+        "数据",
+        "草稿"
+      ],
       "status": "implemented"
     },
     {
@@ -4899,11 +5652,29 @@
         "到点不做任何自动下发：只在本页挂提醒条 + 状态行标注"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialStudio.swift", "line": 1917, "symbol": "PwdDetailStudio", "note": "Slider 写值"},
-        {"file": "App/UI/CredentialStudio.swift", "line": 1904, "symbol": "PwdDetailStudio", "note": "读值"},
-        {"file": "App/UI/CredentialsView.swift", "line": 1248, "symbol": "credRow", "note": "提前失效胶囊"}
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1917,
+          "symbol": "PwdDetailStudio",
+          "note": "Slider 写值"
+        },
+        {
+          "file": "App/UI/CredentialStudio.swift",
+          "line": 1904,
+          "symbol": "PwdDetailStudio",
+          "note": "读值"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1248,
+          "symbol": "credRow",
+          "note": "提前失效胶囊"
+        }
       ],
-      "tags": ["数据", "本机推断"],
+      "tags": [
+        "数据",
+        "本机推断"
+      ],
       "status": "implemented"
     },
     {
@@ -4921,11 +5692,29 @@
         "kf_smask_style（SecKey.maskStyle）：stars 全星 / tail4 留末四位 / 其余圆点，作用于 MaskedDigits"
       ],
       "evidence": [
-        {"file": "App/UI/CredentialsView.swift", "line": 1236, "symbol": "credRow", "note": "kf_row_h"},
-        {"file": "App/UI/CredentialsView.swift", "line": 1854, "symbol": "otpGenRow", "note": "kf_ax_bigotp"},
-        {"file": "App/UI/CredentialsView.swift", "line": 1870, "symbol": "otpGenRow", "note": "frostedOn 挡片"}
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1236,
+          "symbol": "credRow",
+          "note": "kf_row_h"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1854,
+          "symbol": "otpGenRow",
+          "note": "kf_ax_bigotp"
+        },
+        {
+          "file": "App/UI/CredentialsView.swift",
+          "line": 1870,
+          "symbol": "otpGenRow",
+          "note": "frostedOn 挡片"
+        }
       ],
-      "tags": ["数据", "显示"],
+      "tags": [
+        "数据",
+        "显示"
+      ],
       "status": "implemented"
     }
   ],

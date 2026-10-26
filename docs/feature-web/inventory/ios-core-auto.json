@@ -27,13 +27,39 @@
         "门控只加判定，不改协议帧与命令构造，仍走 LockService.unlock。"
       ],
       "evidence": [
-        {"file": "App/Core/AutoOpen.swift", "line": 13, "symbol": "enum AutoOpen", "note": "存储 accessor：kf_autoopen / kf_autoopen_face / 挂起 / 审计 / 标定"},
-        {"file": "App/Core/AutoOpen.swift", "line": 188, "symbol": "AutoOpenGate", "note": "门控矩阵与 Reject 枚举"},
-        {"file": "App/Core/AutoOpen.swift", "line": 288, "symbol": "AutoOpenController", "note": "@MainActor 单例状态机"},
-        {"file": "App/Core/AutoOpen.swift", "line": 497, "symbol": "AutoCalView"},
-        {"file": "App/Core/AutoOpen.swift", "line": 572, "symbol": "AutoOpenSection"}
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 13,
+          "symbol": "enum AutoOpen",
+          "note": "存储 accessor：kf_autoopen / kf_autoopen_face / 挂起 / 审计 / 标定"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 188,
+          "symbol": "AutoOpenGate",
+          "note": "门控矩阵与 Reject 枚举"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 288,
+          "symbol": "AutoOpenController",
+          "note": "@MainActor 单例状态机"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 497,
+          "symbol": "AutoCalView"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 572,
+          "symbol": "AutoOpenSection"
+        }
       ],
-      "tags": ["自动开锁", "核心"],
+      "tags": [
+        "自动开锁",
+        "核心"
+      ],
       "status": "implemented"
     },
     {
@@ -50,11 +76,29 @@
         "设置区 footer 明示：仅 App 前台且不在布防时段生效，布防时段与防拆事件会自动关闭。"
       ],
       "evidence": [
-        {"file": "App/Core/AutoOpen.swift", "line": 15, "symbol": "AutoOpen.on", "note": "getBool(\"kf_autoopen\", false)"},
-        {"file": "App/Core/AutoOpen.swift", "line": 576, "symbol": "VariantToggle", "note": "设置项「走近自动开门」"},
-        {"file": "App/Core/AutoOpen.swift", "line": 611, "symbol": "footer Text", "note": "仅前台/非布防生效"}
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 15,
+          "symbol": "AutoOpen.on",
+          "note": "getBool(\"kf_autoopen\", false)"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 576,
+          "symbol": "VariantToggle",
+          "note": "设置项「走近自动开门」"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 611,
+          "symbol": "footer Text",
+          "note": "仅前台/非布防生效"
+        }
       ],
-      "tags": ["开关", "默认关"],
+      "tags": [
+        "开关",
+        "默认关"
+      ],
       "status": "implemented"
     },
     {
@@ -71,12 +115,34 @@
         "严格档 = 0 窗口：弹窗在途可放行，否则必须是「本次进前台之后」刷成的脸（lastFace >= promptStartedAt）。"
       ],
       "evidence": [
-        {"file": "App/Core/AutoOpen.swift", "line": 23, "symbol": "AutoOpen.faceTier", "note": "kf_autoopen_face 默认 0"},
-        {"file": "App/Core/AutoOpen.swift", "line": 106, "symbol": "AutoOpenKit.isStrict", "note": "tier != 0"},
-        {"file": "App/Core/AutoOpen.swift", "line": 114, "symbol": "AutoOpenKit.faceFresh"},
-        {"file": "App/Core/AutoOpen.swift", "line": 580, "symbol": "Picker 面容确认", "note": "tag 0 免额外验证 / tag 1 严格"}
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 23,
+          "symbol": "AutoOpen.faceTier",
+          "note": "kf_autoopen_face 默认 0"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 106,
+          "symbol": "AutoOpenKit.isStrict",
+          "note": "tier != 0"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 114,
+          "symbol": "AutoOpenKit.faceFresh"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 580,
+          "symbol": "Picker 面容确认",
+          "note": "tag 0 免额外验证 / tag 1 严格"
+        }
       ],
-      "tags": ["面容", "档位"],
+      "tags": [
+        "面容",
+        "档位"
+      ],
       "status": "implemented"
     },
     {
@@ -93,10 +159,21 @@
         "介意者被引导切到严格档（每次进前台刷一次脸）。"
       ],
       "evidence": [
-        {"file": "App/Core/AutoOpen.swift", "line": 77, "symbol": "AutoOpen.riskDisclosure"},
-        {"file": "App/Core/AutoOpen.swift", "line": 587, "symbol": "Text(AutoOpen.riskDisclosure)"}
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 77,
+          "symbol": "AutoOpen.riskDisclosure"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 587,
+          "symbol": "Text(AutoOpen.riskDisclosure)"
+        }
       ],
-      "tags": ["安全披露", "文案"],
+      "tags": [
+        "安全披露",
+        "文案"
+      ],
       "status": "implemented"
     },
     {
@@ -113,11 +190,26 @@
         "rejectText 把拒因翻成人话（含门名），供审计与设置页回显。"
       ],
       "evidence": [
-        {"file": "App/Core/AutoOpen.swift", "line": 202, "symbol": "AutoOpenGate.Reject"},
-        {"file": "App/Core/AutoOpen.swift", "line": 215, "symbol": "rejectReason"},
-        {"file": "App/Core/AutoOpen.swift", "line": 244, "symbol": "rejectText"}
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 202,
+          "symbol": "AutoOpenGate.Reject"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 215,
+          "symbol": "rejectReason"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 244,
+          "symbol": "rejectText"
+        }
       ],
-      "tags": ["门控", "核心"],
+      "tags": [
+        "门控",
+        "核心"
+      ],
       "status": "implemented"
     },
     {
@@ -133,10 +225,21 @@
         "伪装会话同样 appUnlocked==true，因此 F0 通过 —— 伪装红线另设在指令入口（attempt 内 guard）。"
       ],
       "evidence": [
-        {"file": "App/Core/AutoOpen.swift", "line": 402, "symbol": "f0Foreground"},
-        {"file": "App/Core/AutoOpen.swift", "line": 222, "symbol": "guard f0Foreground"}
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 402,
+          "symbol": "f0Foreground"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 222,
+          "symbol": "guard f0Foreground"
+        }
       ],
-      "tags": ["F0", "前台"],
+      "tags": [
+        "F0",
+        "前台"
+      ],
       "status": "implemented"
     },
     {
@@ -153,11 +256,26 @@
         "不满足统一返回 .f1face，文案「F1 面容未确认」。"
       ],
       "evidence": [
-        {"file": "App/Core/AutoOpen.swift", "line": 226, "symbol": "if AutoOpenKit.isStrict(faceTier)"},
-        {"file": "App/Core/AutoOpen.swift", "line": 229, "symbol": "guard AutoOpenKit.faceFresh"},
-        {"file": "App/Core/AutoOpen.swift", "line": 406, "symbol": "facePendingPrompt 计算"}
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 226,
+          "symbol": "if AutoOpenKit.isStrict(faceTier)"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 229,
+          "symbol": "guard AutoOpenKit.faceFresh"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 406,
+          "symbol": "facePendingPrompt 计算"
+        }
       ],
-      "tags": ["F1", "面容"],
+      "tags": [
+        "F1",
+        "面容"
+      ],
       "status": "implemented"
     },
     {
@@ -173,10 +291,21 @@
         "不满足返回 .f3rssi，文案「F3 信号未达武装线」。"
       ],
       "evidence": [
-        {"file": "App/Core/AutoOpen.swift", "line": 237, "symbol": "guard rssiArmed"},
-        {"file": "App/Core/AutoOpen.swift", "line": 415, "symbol": "rssiArmed: armed"}
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 237,
+          "symbol": "guard rssiArmed"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 415,
+          "symbol": "rssiArmed: armed"
+        }
       ],
-      "tags": ["F3", "RSSI"],
+      "tags": [
+        "F3",
+        "RSSI"
+      ],
       "status": "implemented"
     },
     {
@@ -194,11 +323,26 @@
         "跨午夜 start > end 时段取 [start, 24h) ∪ [0, end)；本机从未存过布防记录时按 control 0 处理（不拒）。"
       ],
       "evidence": [
-        {"file": "App/Core/AutoOpen.swift", "line": 91, "symbol": "AutoOpenKit.defendActive"},
-        {"file": "App/Core/AutoOpen.swift", "line": 232, "symbol": "guard !defendActive"},
-        {"file": "App/Core/AutoOpen.swift", "line": 412, "symbol": "defendControl: d?.control ?? 0"}
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 91,
+          "symbol": "AutoOpenKit.defendActive"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 232,
+          "symbol": "guard !defendActive"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 412,
+          "symbol": "defendControl: d?.control ?? 0"
+        }
       ],
-      "tags": ["F4", "布防"],
+      "tags": [
+        "F4",
+        "布防"
+      ],
       "status": "implemented"
     },
     {
@@ -215,12 +359,32 @@
         "成功后 armed 复位，下次必须重新靠近才可能再发。"
       ],
       "evidence": [
-        {"file": "App/Core/AutoOpen.swift", "line": 163, "symbol": "cooldownSeconds = 6"},
-        {"file": "App/Core/AutoOpen.swift", "line": 164, "symbol": "AutoOpenKit.coolReady"},
-        {"file": "App/Core/AutoOpen.swift", "line": 378, "symbol": "if eventFired.contains(mac) { return }"},
-        {"file": "App/Core/AutoOpen.swift", "line": 431, "symbol": "eventFired.insert(mac)"}
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 163,
+          "symbol": "cooldownSeconds = 6"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 164,
+          "symbol": "AutoOpenKit.coolReady"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 378,
+          "symbol": "if eventFired.contains(mac) { return }"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 431,
+          "symbol": "eventFired.insert(mac)"
+        }
       ],
-      "tags": ["F5", "冷却", "去重"],
+      "tags": [
+        "F5",
+        "冷却",
+        "去重"
+      ],
       "status": "implemented"
     },
     {
@@ -236,10 +400,21 @@
         "不满足返回 .f6busy，文案「F6 锁态未知或忙 (rc=25/无 03 回显)」。"
       ],
       "evidence": [
-        {"file": "App/Core/AutoOpen.swift", "line": 419, "symbol": "lockReady: snap != nil && snap?.rc != 25 && snap?.rc != 26"},
-        {"file": "App/Core/AutoOpen.swift", "line": 239, "symbol": "guard lockReady"}
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 419,
+          "symbol": "lockReady: snap != nil && snap?.rc != 25 && snap?.rc != 26"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 239,
+          "symbol": "guard lockReady"
+        }
       ],
-      "tags": ["F6", "锁态"],
+      "tags": [
+        "F6",
+        "锁态"
+      ],
       "status": "implemented"
     },
     {
@@ -257,12 +432,34 @@
         "删除设备时该键随每锁数据族被 DB.removeDevice 按前缀清理。"
       ],
       "evidence": [
-        {"file": "App/Core/AutoOpen.swift", "line": 41, "symbol": "struct AuditEntry"},
-        {"file": "App/Core/AutoOpen.swift", "line": 46, "symbol": "AutoOpen.audit", "note": "插入队首，>500 截断"},
-        {"file": "App/Core/AutoOpen.swift", "line": 55, "symbol": "lastReject"},
-        {"file": "App/Core/AutoOpen.swift", "line": 595, "symbol": "设置页最后一次拒因", "note": "VStack + accessibilityElement"}
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 41,
+          "symbol": "struct AuditEntry"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 46,
+          "symbol": "AutoOpen.audit",
+          "note": "插入队首，>500 截断"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 55,
+          "symbol": "lastReject"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 595,
+          "symbol": "设置页最后一次拒因",
+          "note": "VStack + accessibilityElement"
+        }
       ],
-      "tags": ["审计", "诊断", "透明度"],
+      "tags": [
+        "审计",
+        "诊断",
+        "透明度"
+      ],
       "status": "implemented"
     },
     {
@@ -279,12 +476,31 @@
         "下发侧遇 rc=26 写入 now+24h 并 toast「检测到防拆事件, 自动开锁已暂停 24 小时」。"
       ],
       "evidence": [
-        {"file": "App/Core/AutoOpen.swift", "line": 28, "symbol": "AutoOpen.suspendUntil"},
-        {"file": "App/Core/AutoOpen.swift", "line": 35, "symbol": "AutoOpen.isSuspended"},
-        {"file": "App/Core/AutoOpen.swift", "line": 457, "symbol": "setSuspendUntil(+24h)"},
-        {"file": "App/Core/AutoOpen.swift", "line": 307, "symbol": "onForeground 挂起分支"}
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 28,
+          "symbol": "AutoOpen.suspendUntil"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 35,
+          "symbol": "AutoOpen.isSuspended"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 457,
+          "symbol": "setSuspendUntil(+24h)"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 307,
+          "symbol": "onForeground 挂起分支"
+        }
       ],
-      "tags": ["防拆", "挂起"],
+      "tags": [
+        "防拆",
+        "挂起"
+      ],
       "status": "implemented"
     },
     {
@@ -301,12 +517,32 @@
         "dBm 是对数单位，直接乘系数（旧 0.7×/0.5× 写法）会把方向算反，注释已写明该式作废。"
       ],
       "evidence": [
-        {"file": "App/Core/AutoOpen.swift", "line": 139, "symbol": "回差阈值换算注释"},
-        {"file": "App/Core/AutoOpen.swift", "line": 142, "symbol": "armThreshold"},
-        {"file": "App/Core/AutoOpen.swift", "line": 143, "symbol": "disarmThreshold"},
-        {"file": "App/Core/AutoOpen.swift", "line": 151, "symbol": "AutoOpenKit.rssiSample"}
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 139,
+          "symbol": "回差阈值换算注释"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 142,
+          "symbol": "armThreshold"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 143,
+          "symbol": "disarmThreshold"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 151,
+          "symbol": "AutoOpenKit.rssiSample"
+        }
       ],
-      "tags": ["回差", "滤波", "核心"],
+      "tags": [
+        "回差",
+        "滤波",
+        "核心"
+      ],
       "status": "implemented"
     },
     {
@@ -323,11 +559,26 @@
         "旧实现未标定返回 nil 会让 armed 永不置位，自动开锁对没标定过的用户永不触发。"
       ],
       "evidence": [
-        {"file": "App/Core/AutoOpen.swift", "line": 62, "symbol": "struct AutoCal"},
-        {"file": "App/Core/AutoOpen.swift", "line": 135, "symbol": "fallbackBase = -40"},
-        {"file": "App/Core/AutoOpen.swift", "line": 136, "symbol": "AutoOpenKit.rssiBase"}
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 62,
+          "symbol": "struct AutoCal"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 135,
+          "symbol": "fallbackBase = -40"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 136,
+          "symbol": "AutoOpenKit.rssiBase"
+        }
       ],
-      "tags": ["标定", "存储键"],
+      "tags": [
+        "标定",
+        "存储键"
+      ],
       "status": "implemented"
     },
     {
@@ -345,12 +596,31 @@
         "采集中按钮标题变为「采集中 (N 样本)」且 isBusy 禁用。"
       ],
       "evidence": [
-        {"file": "App/Core/AutoOpen.swift", "line": 544, "symbol": "AutoCalView.run()"},
-        {"file": "App/Core/AutoOpen.swift", "line": 551, "symbol": "while < 30 秒"},
-        {"file": "App/Core/AutoOpen.swift", "line": 560, "symbol": "sleep 500ms"},
-        {"file": "App/Core/AutoOpen.swift", "line": 562, "symbol": "p95 落盘 / 样本不足提示"}
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 544,
+          "symbol": "AutoCalView.run()"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 551,
+          "symbol": "while < 30 秒"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 560,
+          "symbol": "sleep 500ms"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 562,
+          "symbol": "p95 落盘 / 样本不足提示"
+        }
       ],
-      "tags": ["标定", "流程"],
+      "tags": [
+        "标定",
+        "流程"
+      ],
       "status": "implemented"
     },
     {
@@ -368,13 +638,36 @@
         "未标定分支文案仍写着「未标定则 F3 门不过」，与实际 -40 回退不一致（见 unresolved）。"
       ],
       "evidence": [
-        {"file": "App/Core/AutoOpen.swift", "line": 497, "symbol": "struct AutoCalView"},
-        {"file": "App/Core/AutoOpen.swift", "line": 507, "symbol": "当前 P95 / 武装线-解除线"},
-        {"file": "App/Core/AutoOpen.swift", "line": 512, "symbol": "未标定文案"},
-        {"file": "App/Core/AutoOpen.swift", "line": 530, "symbol": "清除标定（destructive + 确认）"},
-        {"file": "App/Core/AutoOpen.swift", "line": 539, "symbol": "navigationTitle 距离标定"}
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 497,
+          "symbol": "struct AutoCalView"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 507,
+          "symbol": "当前 P95 / 武装线-解除线"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 512,
+          "symbol": "未标定文案"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 530,
+          "symbol": "清除标定（destructive + 确认）"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 539,
+          "symbol": "navigationTitle 距离标定"
+        }
       ],
-      "tags": ["标定页", "破坏性操作"],
+      "tags": [
+        "标定页",
+        "破坏性操作"
+      ],
       "status": "implemented"
     },
     {
@@ -390,10 +683,21 @@
         "lo==hi 时直接取该点，否则按小数部分插值后 rounded()。"
       ],
       "evidence": [
-        {"file": "App/Core/AutoOpen.swift", "line": 122, "symbol": "AutoOpenKit.p95"},
-        {"file": "App/Core/AutoOpen.swift", "line": 125, "symbol": "rank = (n-1)*0.95"}
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 122,
+          "symbol": "AutoOpenKit.p95"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 125,
+          "symbol": "rank = (n-1)*0.95"
+        }
       ],
-      "tags": ["算法", "P95"],
+      "tags": [
+        "算法",
+        "P95"
+      ],
       "status": "implemented"
     },
     {
@@ -410,11 +714,26 @@
         "成功回调 noteFaceSuccess 记时刻；biometryNotAvailable 等失败静默不发。"
       ],
       "evidence": [
-        {"file": "App/Core/AutoOpen.swift", "line": 260, "symbol": "protocol FaceService"},
-        {"file": "App/Core/AutoOpen.swift", "line": 266, "symbol": "struct SystemFaceService"},
-        {"file": "App/Core/AutoOpen.swift", "line": 278, "symbol": "evaluatePolicy"}
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 260,
+          "symbol": "protocol FaceService"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 266,
+          "symbol": "struct SystemFaceService"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 278,
+          "symbol": "evaluatePolicy"
+        }
       ],
-      "tags": ["面容", "服务"],
+      "tags": [
+        "面容",
+        "服务"
+      ],
       "status": "implemented"
     },
     {
@@ -430,11 +749,26 @@
         "onBackground 清 promptStartedAt 与 faceAtPrompt，回前台严格档重新发起弹窗。"
       ],
       "evidence": [
-        {"file": "App/Core/AutoOpen.swift", "line": 182, "symbol": "lastFaceLock = Locked<Date?>(nil)"},
-        {"file": "App/Core/AutoOpen.swift", "line": 183, "symbol": "noteFaceSuccess"},
-        {"file": "App/Core/AutoOpen.swift", "line": 324, "symbol": "onBackground 清在途位"}
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 182,
+          "symbol": "lastFaceLock = Locked<Date?>(nil)"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 183,
+          "symbol": "noteFaceSuccess"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 324,
+          "symbol": "onBackground 清在途位"
+        }
       ],
-      "tags": ["面容", "生命周期"],
+      "tags": [
+        "面容",
+        "生命周期"
+      ],
       "status": "implemented"
     },
     {
@@ -451,11 +785,26 @@
         "onBackground 清 armed/eventFired/promptStartedAt/faceAtPrompt（不依赖开关当前值）。"
       ],
       "evidence": [
-        {"file": "App/Core/AutoOpen.swift", "line": 305, "symbol": "onForeground"},
-        {"file": "App/Core/AutoOpen.swift", "line": 312, "symbol": "严格档发起弹窗"},
-        {"file": "App/Core/AutoOpen.swift", "line": 318, "symbol": "onBackground"}
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 305,
+          "symbol": "onForeground"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 312,
+          "symbol": "严格档发起弹窗"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 318,
+          "symbol": "onBackground"
+        }
       ],
-      "tags": ["前后台", "生命周期"],
+      "tags": [
+        "前后台",
+        "生命周期"
+      ],
       "status": "implemented"
     },
     {
@@ -472,12 +821,31 @@
         "inFlight 防重入；不通过时审计拼接门名（doorName = 钥匙串名或 mac 前 6 位）。"
       ],
       "evidence": [
-        {"file": "App/Core/AutoOpen.swift", "line": 360, "symbol": "func attempt(mac:)"},
-        {"file": "App/Core/AutoOpen.swift", "line": 374, "symbol": "decoyMode 红线"},
-        {"file": "App/Core/AutoOpen.swift", "line": 381, "symbol": "rejectReason 调用"},
-        {"file": "App/Core/AutoOpen.swift", "line": 388, "symbol": "inFlight + Task dispatch"}
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 360,
+          "symbol": "func attempt(mac:)"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 374,
+          "symbol": "decoyMode 红线"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 381,
+          "symbol": "rejectReason 调用"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 388,
+          "symbol": "inFlight + Task dispatch"
+        }
       ],
-      "tags": ["判定", "安全"],
+      "tags": [
+        "判定",
+        "安全"
+      ],
       "status": "implemented"
     },
     {
@@ -495,12 +863,32 @@
         "异常统一审计「下发异常 <localizedDescription>」，defer 复位 inFlight。"
       ],
       "evidence": [
-        {"file": "App/Core/AutoOpen.swift", "line": 423, "symbol": "private func dispatch"},
-        {"file": "App/Core/AutoOpen.swift", "line": 428, "symbol": "app.lock.unlock(mac:)"},
-        {"file": "App/Core/AutoOpen.swift", "line": 441, "symbol": "verifyMode==1 双验提示"},
-        {"file": "App/Core/AutoOpen.swift", "line": 453, "symbol": "rc=25 / rc=26 分支"}
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 423,
+          "symbol": "private func dispatch"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 428,
+          "symbol": "app.lock.unlock(mac:)"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 441,
+          "symbol": "verifyMode==1 双验提示"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 453,
+          "symbol": "rc=25 / rc=26 分支"
+        }
       ],
-      "tags": ["下发", "返回码", "cmd04"],
+      "tags": [
+        "下发",
+        "返回码",
+        "cmd04"
+      ],
       "status": "implemented"
     },
     {
@@ -517,11 +905,26 @@
         "读锁钟失败写审计「rc=3 读锁钟失败, 未自动校时」。"
       ],
       "evidence": [
-        {"file": "App/Core/AutoOpen.swift", "line": 171, "symbol": "AutoOpenKit.dualTimeSync"},
-        {"file": "App/Core/AutoOpen.swift", "line": 469, "symbol": "selfHealTime"},
-        {"file": "App/Core/AutoOpen.swift", "line": 476, "symbol": "ntpConfirmed: false"}
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 171,
+          "symbol": "AutoOpenKit.dualTimeSync"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 469,
+          "symbol": "selfHealTime"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 476,
+          "symbol": "ntpConfirmed: false"
+        }
       ],
-      "tags": ["校时", "防自伤"],
+      "tags": [
+        "校时",
+        "防自伤"
+      ],
       "status": "implemented"
     },
     {
@@ -538,12 +941,31 @@
         "attempt 要求 mac == app.currentMac，非当前锁的 RSSI 只喂滤波不触发下发。"
       ],
       "evidence": [
-        {"file": "App/Core/AutoOpen.swift", "line": 293, "symbol": "armedMac"},
-        {"file": "App/Core/AutoOpen.swift", "line": 294, "symbol": "lastDispatch: [String: TimeInterval]"},
-        {"file": "App/Core/AutoOpen.swift", "line": 333, "symbol": "mac != armedMac 时复位"},
-        {"file": "App/Core/AutoOpen.swift", "line": 363, "symbol": "guard app.currentMac == mac"}
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 293,
+          "symbol": "armedMac"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 294,
+          "symbol": "lastDispatch: [String: TimeInterval]"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 333,
+          "symbol": "mac != armedMac 时复位"
+        },
+        {
+          "file": "App/Core/AutoOpen.swift",
+          "line": 363,
+          "symbol": "guard app.currentMac == mac"
+        }
       ],
-      "tags": ["多锁", "隔离"],
+      "tags": [
+        "多锁",
+        "隔离"
+      ],
       "status": "implemented"
     },
     {
@@ -560,15 +982,46 @@
         "日志复用 DiagKit 事件流水（BleTelemetry/DiagOps）与 LockService 分级日志。"
       ],
       "evidence": [
-        {"file": "App/Core/LinkSenseKit.swift", "line": 28, "symbol": "final class LinkSense"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 13, "symbol": "enum LinkState"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 658, "symbol": "LinkPrefsView"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 705, "symbol": "RSSIBars"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 735, "symbol": "LinkPill"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 852, "symbol": "BLEStrip"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 923, "symbol": "BLEOffBanner"}
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 28,
+          "symbol": "final class LinkSense"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 13,
+          "symbol": "enum LinkState"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 658,
+          "symbol": "LinkPrefsView"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 705,
+          "symbol": "RSSIBars"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 735,
+          "symbol": "LinkPill"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 852,
+          "symbol": "BLEStrip"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 923,
+          "symbol": "BLEOffBanner"
+        }
       ],
-      "tags": ["连接", "核心"],
+      "tags": [
+        "连接",
+        "核心"
+      ],
       "status": "implemented"
     },
     {
@@ -585,11 +1038,25 @@
         "holdMinutes 记录会话已保持分钟数，供异常久时提示重连。"
       ],
       "evidence": [
-        {"file": "App/Core/LinkSenseKit.swift", "line": 14, "symbol": "case ready, connecting, down"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 75, "symbol": "var linkState"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 591, "symbol": "holdMinutes"}
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 14,
+          "symbol": "case ready, connecting, down"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 75,
+          "symbol": "var linkState"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 591,
+          "symbol": "holdMinutes"
+        }
       ],
-      "tags": ["状态机"],
+      "tags": [
+        "状态机"
+      ],
       "status": "implemented"
     },
     {
@@ -608,12 +1075,32 @@
         "底板用压暗黑纱 DS.heroPlate + 0.38 描边，accessibilityLabel 合并状态与信号档位。"
       ],
       "evidence": [
-        {"file": "App/Core/LinkSenseKit.swift", "line": 735, "symbol": "struct LinkPill"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 747, "symbol": "redundancyIcon"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 754, "symbol": "source 冷热标注"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 787, "symbol": "拟人状态文案"}
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 735,
+          "symbol": "struct LinkPill"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 747,
+          "symbol": "redundancyIcon"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 754,
+          "symbol": "source 冷热标注"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 787,
+          "symbol": "拟人状态文案"
+        }
       ],
-      "tags": ["Hero", "状态胶囊", "无障碍"],
+      "tags": [
+        "Hero",
+        "状态胶囊",
+        "无障碍"
+      ],
       "status": "implemented"
     },
     {
@@ -630,11 +1117,26 @@
         "accessibilityLabel「信号 + 档位名」。"
       ],
       "evidence": [
-        {"file": "App/Core/LinkSenseKit.swift", "line": 705, "symbol": "struct RSSIBars"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 721, "symbol": "rssiLevel 阈值"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 729, "symbol": "rssiLabel"}
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 705,
+          "symbol": "struct RSSIBars"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 721,
+          "symbol": "rssiLevel 阈值"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 729,
+          "symbol": "rssiLabel"
+        }
       ],
-      "tags": ["信号", "双通道"],
+      "tags": [
+        "信号",
+        "双通道"
+      ],
       "status": "implemented"
     },
     {
@@ -651,10 +1153,21 @@
         "文案分别带 (旧 → 新) 数值与当前 RSSI。"
       ],
       "evidence": [
-        {"file": "App/Core/LinkSenseKit.swift", "line": 594, "symbol": "weakSignalHint"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 351, "symbol": "updateRssi / prevRssi"}
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 594,
+          "symbol": "weakSignalHint"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 351,
+          "symbol": "updateRssi / prevRssi"
+        }
       ],
-      "tags": ["信号", "提示"],
+      "tags": [
+        "信号",
+        "提示"
+      ],
       "status": "implemented"
     },
     {
@@ -671,10 +1184,21 @@
         "accessibilityLabel「最近一次连接耗时 n 毫秒」。"
       ],
       "evidence": [
-        {"file": "App/Core/LinkSenseKit.swift", "line": 807, "symbol": "struct ConnectMsBadge"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 814, "symbol": "ms >= 2000 变色"}
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 807,
+          "symbol": "struct ConnectMsBadge"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 814,
+          "symbol": "ms >= 2000 变色"
+        }
       ],
-      "tags": ["耗时", "Hero"],
+      "tags": [
+        "耗时",
+        "Hero"
+      ],
       "status": "implemented"
     },
     {
@@ -693,12 +1217,32 @@
         "失败：attempt = min(kind+1, 5)，只记遥测不弹窗。"
       ],
       "evidence": [
-        {"file": "App/Core/LinkSenseKit.swift", "line": 258, "symbol": "ladderSeconds"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 290, "symbol": "autoReconnectTick"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 315, "symbol": "pendingCount > 0 才回连"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 338, "symbol": "失败 attempt 递增封顶"}
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 258,
+          "symbol": "ladderSeconds"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 290,
+          "symbol": "autoReconnectTick"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 315,
+          "symbol": "pendingCount > 0 才回连"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 338,
+          "symbol": "失败 attempt 递增封顶"
+        }
       ],
-      "tags": ["重连", "退避", "省电"],
+      "tags": [
+        "重连",
+        "退避",
+        "省电"
+      ],
       "status": "implemented"
     },
     {
@@ -715,10 +1259,21 @@
         "整体合并为一个无障碍元素并朗读轮次。"
       ],
       "evidence": [
-        {"file": "App/Core/LinkSenseKit.swift", "line": 824, "symbol": "struct ReconnectDots"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 844, "symbol": "fill(_:)"}
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 824,
+          "symbol": "struct ReconnectDots"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 844,
+          "symbol": "fill(_:)"
+        }
       ],
-      "tags": ["重连", "可视化"],
+      "tags": [
+        "重连",
+        "可视化"
+      ],
       "status": "implemented"
     },
     {
@@ -737,13 +1292,36 @@
         "失败按 classifyFailure 分类记遥测与分级日志。"
       ],
       "evidence": [
-        {"file": "App/Core/LinkSenseKit.swift", "line": 135, "symbol": "func preconnect()"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 142, "symbol": "scan(timeoutMs: 6000)"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 152, "symbol": "信号围栏拦截"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 168, "symbol": "近场轻提醒"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 174, "symbol": "DiagOps.record 预握手"}
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 135,
+          "symbol": "func preconnect()"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 142,
+          "symbol": "scan(timeoutMs: 6000)"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 152,
+          "symbol": "信号围栏拦截"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 168,
+          "symbol": "近场轻提醒"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 174,
+          "symbol": "DiagOps.record 预握手"
+        }
       ],
-      "tags": ["预热", "围栏"],
+      "tags": [
+        "预热",
+        "围栏"
+      ],
       "status": "implemented"
     },
     {
@@ -760,12 +1338,31 @@
         "只影响自动预握手；手动点圆盘与 AUTOOPEN 判定不受这一档约束（文案已写明）。"
       ],
       "evidence": [
-        {"file": "App/Core/LinkSenseKit.swift", "line": 68, "symbol": "static var rssiFence"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 151, "symbol": "fence 判定"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 673, "symbol": "Picker 信号围栏"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 685, "symbol": "只影响自动预握手"}
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 68,
+          "symbol": "static var rssiFence"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 151,
+          "symbol": "fence 判定"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 673,
+          "symbol": "Picker 信号围栏"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 685,
+          "symbol": "只影响自动预握手"
+        }
       ],
-      "tags": ["设置", "围栏"],
+      "tags": [
+        "设置",
+        "围栏"
+      ],
       "status": "implemented"
     },
     {
@@ -783,11 +1380,26 @@
         "常用锁 warmLocks 按本机日志行数降序取前 N 把（不是全扫）。"
       ],
       "evidence": [
-        {"file": "App/Core/LinkSenseKit.swift", "line": 95, "symbol": "preconnectOthers(limit:timeoutMs:)"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 117, "symbol": "saveRssi 只写信号档"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 127, "symbol": "warmLocks"}
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 95,
+          "symbol": "preconnectOthers(limit:timeoutMs:)"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 117,
+          "symbol": "saveRssi 只写信号档"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 127,
+          "symbol": "warmLocks"
+        }
       ],
-      "tags": ["多锁", "预热"],
+      "tags": [
+        "多锁",
+        "预热"
+      ],
       "status": "implemented"
     },
     {
@@ -804,10 +1416,21 @@
         "失败只记遥测与 attempt+1，不弹错误（静默）。"
       ],
       "evidence": [
-        {"file": "App/Core/LinkSenseKit.swift", "line": 185, "symbol": "func refresh()"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 189, "symbol": "已连接直接 markReady"}
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 185,
+          "symbol": "func refresh()"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 189,
+          "symbol": "已连接直接 markReady"
+        }
       ],
-      "tags": ["预热", "刷新"],
+      "tags": [
+        "预热",
+        "刷新"
+      ],
       "status": "implemented"
     },
     {
@@ -825,11 +1448,26 @@
         "时长计入 ScanStats（285）。"
       ],
       "evidence": [
-        {"file": "App/Core/LinkSenseKit.swift", "line": 537, "symbol": "coldStartScan()"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 567, "symbol": "kf_link_env / kf_link_envms"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 580, "symbol": "envConclusion()"}
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 537,
+          "symbol": "coldStartScan()"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 567,
+          "symbol": "kf_link_env / kf_link_envms"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 580,
+          "symbol": "envConclusion()"
+        }
       ],
-      "tags": ["冷启动", "环境"],
+      "tags": [
+        "冷启动",
+        "环境"
+      ],
       "status": "implemented"
     },
     {
@@ -847,12 +1485,31 @@
         "来源字符串为「到场」或「回前台」，用于日志与回执。"
       ],
       "evidence": [
-        {"file": "App/Core/LinkSenseKit.swift", "line": 213, "symbol": "onPreconnectDone()"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 221, "symbol": "resync(mac:from:)"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 242, "symbol": "lastReceipt"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 253, "symbol": "applyQueueItem → CredentialOrg.sendQueued"}
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 213,
+          "symbol": "onPreconnectDone()"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 221,
+          "symbol": "resync(mac:from:)"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 242,
+          "symbol": "lastReceipt"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 253,
+          "symbol": "applyQueueItem → CredentialOrg.sendQueued"
+        }
       ],
-      "tags": ["补发", "回执"],
+      "tags": [
+        "补发",
+        "回执"
+      ],
       "status": "implemented"
     },
     {
@@ -870,12 +1527,31 @@
         "无待办不打扰（省电 + 不打扰锁）。"
       ],
       "evidence": [
-        {"file": "App/Core/LinkSenseKit.swift", "line": 370, "symbol": "startDeadWatch()"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 380, "symbol": "deadbeatCheck()"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 385, "symbol": "idle > 600 && 间隔 > 300"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 404, "symbol": "kf_wd_heals + 1"}
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 370,
+          "symbol": "startDeadWatch()"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 380,
+          "symbol": "deadbeatCheck()"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 385,
+          "symbol": "idle > 600 && 间隔 > 300"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 404,
+          "symbol": "kf_wd_heals + 1"
+        }
       ],
-      "tags": ["巡检", "自愈"],
+      "tags": [
+        "巡检",
+        "自愈"
+      ],
       "status": "implemented"
     },
     {
@@ -894,11 +1570,26 @@
         "每类配 SF Symbol（425-433），名称取自仓内已在用符号。"
       ],
       "evidence": [
-        {"file": "App/Core/LinkSenseKit.swift", "line": 419, "symbol": "struct FailKind"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 425, "symbol": "icon 计算属性"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 435, "symbol": "classifyFailure"}
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 419,
+          "symbol": "struct FailKind"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 425,
+          "symbol": "icon 计算属性"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 435,
+          "symbol": "classifyFailure"
+        }
       ],
-      "tags": ["失败分类", "提示"],
+      "tags": [
+        "失败分类",
+        "提示"
+      ],
       "status": "implemented"
     },
     {
@@ -914,9 +1605,16 @@
         "文案自述「占用细分未确证」以避免过度承诺。"
       ],
       "evidence": [
-        {"file": "App/Core/LinkSenseKit.swift", "line": 453, "symbol": "occupationHint()"}
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 453,
+          "symbol": "occupationHint()"
+        }
       ],
-      "tags": ["边界", "文案"],
+      "tags": [
+        "边界",
+        "文案"
+      ],
       "status": "partial"
     },
     {
@@ -933,10 +1631,21 @@
         "展示在连接偏好页「连接统计」段。"
       ],
       "evidence": [
-        {"file": "App/Core/LinkSenseKit.swift", "line": 458, "symbol": "successRateText(mac:)"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 694, "symbol": "连接成功率行"}
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 458,
+          "symbol": "successRateText(mac:)"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 694,
+          "symbol": "连接成功率行"
+        }
       ],
-      "tags": ["统计", "占位"],
+      "tags": [
+        "统计",
+        "占位"
+      ],
       "status": "implemented"
     },
     {
@@ -953,11 +1662,26 @@
         "小时从「MM-dd HH:mm:ss」字符串第 6 位起截两位，不再过一次历法。"
       ],
       "evidence": [
-        {"file": "App/Core/LinkSenseKit.swift", "line": 469, "symbol": "bestHourHint()"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 479, "symbol": "每桶 >= 10"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 695, "symbol": "高成功率时段行"}
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 469,
+          "symbol": "bestHourHint()"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 479,
+          "symbol": "每桶 >= 10"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 695,
+          "symbol": "高成功率时段行"
+        }
       ],
-      "tags": ["统计", "建议"],
+      "tags": [
+        "统计",
+        "建议"
+      ],
       "status": "implemented"
     },
     {
@@ -976,13 +1700,37 @@
         "整体 44pt 触达 + 两条无障碍标签。"
       ],
       "evidence": [
-        {"file": "App/Core/LinkSenseKit.swift", "line": 39, "symbol": "btOn"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 43, "symbol": "btDenied"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 58, "symbol": "openBluetoothSettings()"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 923, "symbol": "struct BLEOffBanner"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 936, "symbol": "两条文案分支"}
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 39,
+          "symbol": "btOn"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 43,
+          "symbol": "btDenied"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 58,
+          "symbol": "openBluetoothSettings()"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 923,
+          "symbol": "struct BLEOffBanner"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 936,
+          "symbol": "两条文案分支"
+        }
       ],
-      "tags": ["蓝牙", "错误态", "横幅"],
+      "tags": [
+        "蓝牙",
+        "错误态",
+        "横幅"
+      ],
       "status": "implemented"
     },
     {
@@ -999,11 +1747,26 @@
         "右侧按钮 minHeight 44，无障碍 hint「点按跳回设备页, 定位到该锁」。"
       ],
       "evidence": [
-        {"file": "App/Core/LinkSenseKit.swift", "line": 852, "symbol": "struct BLEStrip"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 895, "symbol": "stIcon 选择理由"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 887, "symbol": "底部 2pt 细线"}
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 852,
+          "symbol": "struct BLEStrip"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 895,
+          "symbol": "stIcon 选择理由"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 887,
+          "symbol": "底部 2pt 细线"
+        }
       ],
-      "tags": ["跨页", "状态条"],
+      "tags": [
+        "跨页",
+        "状态条"
+      ],
       "status": "implemented"
     },
     {
@@ -1022,12 +1785,31 @@
         "连接统计段展示成功率与高成功率时段。"
       ],
       "evidence": [
-        {"file": "App/Core/LinkSenseKit.swift", "line": 658, "symbol": "struct LinkPrefsView"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 664, "symbol": "自动预握手 Toggle"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 667, "symbol": "手动连接模式回显"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 693, "symbol": "Section 连接统计"}
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 658,
+          "symbol": "struct LinkPrefsView"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 664,
+          "symbol": "自动预握手 Toggle"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 667,
+          "symbol": "手动连接模式回显"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 693,
+          "symbol": "Section 连接统计"
+        }
       ],
-      "tags": ["设置页", "偏好"],
+      "tags": [
+        "设置页",
+        "偏好"
+      ],
       "status": "implemented"
     },
     {
@@ -1043,11 +1825,26 @@
         "由 LinkPill 宿主的 onChange 调用 noteStateHop（本文件内只有写入实现）。"
       ],
       "evidence": [
-        {"file": "App/Core/LinkSenseKit.swift", "line": 605, "symbol": "struct StateHop"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 606, "symbol": "history()"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 610, "symbol": "noteStateHop"}
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 605,
+          "symbol": "struct StateHop"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 606,
+          "symbol": "history()"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 610,
+          "symbol": "noteStateHop"
+        }
       ],
-      "tags": ["历史", "存储键"],
+      "tags": [
+        "历史",
+        "存储键"
+      ],
       "status": "implemented"
     },
     {
@@ -1063,10 +1860,21 @@
         "最终汇到 preconnect()，行为/幂等/失败处理完全一致，并顺手 onPreconnectDone 补发。"
       ],
       "evidence": [
-        {"file": "App/Core/LinkSenseKit.swift", "line": 625, "symbol": "startupPreconnect(mac:)"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 636, "symbol": "enterPage()"}
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 625,
+          "symbol": "startupPreconnect(mac:)"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 636,
+          "symbol": "enterPage()"
+        }
       ],
-      "tags": ["启动", "预热"],
+      "tags": [
+        "启动",
+        "预热"
+      ],
       "status": "implemented"
     },
     {
@@ -1084,12 +1892,32 @@
         "noteScannedRssi 只更新最近信号，不动连接态（扫到广播 ≠ 已连接）。"
       ],
       "evidence": [
-        {"file": "App/Core/LinkSenseKit.swift", "line": 492, "symbol": "func scan(mac:timeoutMs:)"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 504, "symbol": "300ms 轮询 + 取消判据"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 519, "symbol": "noteScannedRssi"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 525, "symbol": "saveRssi / rssiFor"}
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 492,
+          "symbol": "func scan(mac:timeoutMs:)"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 504,
+          "symbol": "300ms 轮询 + 取消判据"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 519,
+          "symbol": "noteScannedRssi"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 525,
+          "symbol": "saveRssi / rssiFor"
+        }
       ],
-      "tags": ["扫描", "RSSI", "存储键"],
+      "tags": [
+        "扫描",
+        "RSSI",
+        "存储键"
+      ],
       "status": "implemented"
     },
     {
@@ -1106,11 +1934,27 @@
         "数据落盘族：kf_batt_ / kf_batt_state_ / kf_fwsince_ / kf_damp_last_ / kf_clock_notify_ / kf_fp_last_。"
       ],
       "evidence": [
-        {"file": "App/Core/BatteryCare.swift", "line": 20, "symbol": "enum BatteryCare"},
-        {"file": "App/Core/BatteryCare.swift", "line": 210, "symbol": "enum CareSchedule"},
-        {"file": "App/Core/BatteryCare.swift", "line": 3, "symbol": "存储键族头注"}
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 20,
+          "symbol": "enum BatteryCare"
+        },
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 210,
+          "symbol": "enum CareSchedule"
+        },
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 3,
+          "symbol": "存储键族头注"
+        }
       ],
-      "tags": ["电量", "关怀", "核心"],
+      "tags": [
+        "电量",
+        "关怀",
+        "核心"
+      ],
       "status": "implemented"
     },
     {
@@ -1127,11 +1971,25 @@
         "档位表是「档位映射说明」的数据源，界面展示原值 + 映射，不标毫伏。"
       ],
       "evidence": [
-        {"file": "App/Core/BatteryCare.swift", "line": 24, "symbol": "struct Tier"},
-        {"file": "App/Core/BatteryCare.swift", "line": 30, "symbol": "tier(_:)"},
-        {"file": "App/Core/BatteryCare.swift", "line": 42, "symbol": "isLow(0...20)"}
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 24,
+          "symbol": "struct Tier"
+        },
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 30,
+          "symbol": "tier(_:)"
+        },
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 42,
+          "symbol": "isLow(0...20)"
+        }
       ],
-      "tags": ["电量档位"],
+      "tags": [
+        "电量档位"
+      ],
       "status": "implemented"
     },
     {
@@ -1148,11 +2006,26 @@
         "动效令牌 Motion.tier 里 BatteryCare.appLowBattery 直接返回 calm，用户显式 lively 也让路。"
       ],
       "evidence": [
-        {"file": "App/Core/BatteryCare.swift", "line": 53, "symbol": "appLowBattery"},
-        {"file": "App/Core/BatteryCare.swift", "line": 109, "symbol": "低电缓存刷新"},
-        {"file": "App/Core/DesignSystem.swift", "line": 240, "symbol": "低电 → calm"}
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 53,
+          "symbol": "appLowBattery"
+        },
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 109,
+          "symbol": "低电缓存刷新"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 240,
+          "symbol": "低电 → calm"
+        }
       ],
-      "tags": ["低电", "动效降级"],
+      "tags": [
+        "低电",
+        "动效降级"
+      ],
       "status": "implemented"
     },
     {
@@ -1170,11 +2043,26 @@
         "返回 Bool 表示本次是否真的追加。"
       ],
       "evidence": [
-        {"file": "App/Core/BatteryCare.swift", "line": 11, "symbol": "struct BattSample"},
-        {"file": "App/Core/BatteryCare.swift", "line": 107, "symbol": "sample(_:pct:)"},
-        {"file": "App/Core/BatteryCare.swift", "line": 112, "symbol": "1 小时去重 + 90 天 + 500 条"}
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 11,
+          "symbol": "struct BattSample"
+        },
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 107,
+          "symbol": "sample(_:pct:)"
+        },
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 112,
+          "symbol": "1 小时去重 + 90 天 + 500 条"
+        }
       ],
-      "tags": ["采样", "存储键"],
+      "tags": [
+        "采样",
+        "存储键"
+      ],
       "status": "implemented"
     },
     {
@@ -1191,11 +2079,26 @@
         "faceText：<0 → \"--\"；>80 → \">80%\"（锁侧该量本身是粗估档）；其余 \"N%\"。"
       ],
       "evidence": [
-        {"file": "App/Core/BatteryCare.swift", "line": 84, "symbol": "displayPct"},
-        {"file": "App/Core/BatteryCare.swift", "line": 94, "symbol": "facePct"},
-        {"file": "App/Core/BatteryCare.swift", "line": 98, "symbol": "faceText"}
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 84,
+          "symbol": "displayPct"
+        },
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 94,
+          "symbol": "facePct"
+        },
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 98,
+          "symbol": "faceText"
+        }
       ],
-      "tags": ["读数", "展示"],
+      "tags": [
+        "读数",
+        "展示"
+      ],
       "status": "implemented"
     },
     {
@@ -1213,11 +2116,27 @@
         "与可调横幅阈值 kf_batt_threshold（10/15/20）互相独立。"
       ],
       "evidence": [
-        {"file": "App/Core/BatteryCare.swift", "line": 151, "symbol": "evaluateLowBattery"},
-        {"file": "App/Core/BatteryCare.swift", "line": 154, "symbol": ">30 复位武装"},
-        {"file": "App/Core/BatteryCare.swift", "line": 168, "symbol": "notifyNow(id: m4.batt.)"}
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 151,
+          "symbol": "evaluateLowBattery"
+        },
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 154,
+          "symbol": ">30 复位武装"
+        },
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 168,
+          "symbol": "notifyNow(id: m4.batt.)"
+        }
       ],
-      "tags": ["低电", "通知", "滞回"],
+      "tags": [
+        "低电",
+        "通知",
+        "滞回"
+      ],
       "status": "implemented"
     },
     {
@@ -1234,10 +2153,21 @@
         "返回按日倒序的 (day, from, to, drop)，日期格式 yyyy-MM-dd（en_US_POSIX）。"
       ],
       "evidence": [
-        {"file": "App/Core/BatteryCare.swift", "line": 122, "symbol": "bigDropDays(_:days:threshold:)"},
-        {"file": "App/Core/BatteryCare.swift", "line": 146, "symbol": "drop > threshold 收集"}
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 122,
+          "symbol": "bigDropDays(_:days:threshold:)"
+        },
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 146,
+          "symbol": "drop > threshold 收集"
+        }
       ],
-      "tags": ["掉电", "诊断"],
+      "tags": [
+        "掉电",
+        "诊断"
+      ],
       "status": "implemented"
     },
     {
@@ -1253,10 +2183,21 @@
         "读取时做白名单校验，避免脏值产生奇怪阈值。"
       ],
       "evidence": [
-        {"file": "App/Core/BatteryCare.swift", "line": 213, "symbol": "battThreshold"},
-        {"file": "App/Core/BatteryCare.swift", "line": 215, "symbol": "kf_batt_threshold 默认 15"}
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 213,
+          "symbol": "battThreshold"
+        },
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 215,
+          "symbol": "kf_batt_threshold 默认 15"
+        }
       ],
-      "tags": ["设置", "阈值"],
+      "tags": [
+        "设置",
+        "阈值"
+      ],
       "status": "implemented"
     },
     {
@@ -1272,11 +2213,26 @@
         "免扰判定同时被预握手近场提醒、回连成功触感、前台通知展示复用。"
       ],
       "evidence": [
-        {"file": "App/Core/BatteryCare.swift", "line": 211, "symbol": "quietOn"},
-        {"file": "App/Core/BatteryCare.swift", "line": 221, "symbol": "isQuietHour"},
-        {"file": "App/Core/BatteryCare.swift", "line": 233, "symbol": "免扰分支"}
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 211,
+          "symbol": "quietOn"
+        },
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 221,
+          "symbol": "isQuietHour"
+        },
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 233,
+          "symbol": "免扰分支"
+        }
       ],
-      "tags": ["免扰", "设置"],
+      "tags": [
+        "免扰",
+        "设置"
+      ],
       "status": "implemented"
     },
     {
@@ -1293,11 +2249,26 @@
         "未标记 dayDeliver 的即时通知在免扰期直接 return。"
       ],
       "evidence": [
-        {"file": "App/Core/BatteryCare.swift", "line": 228, "symbol": "notifyNow(dayDeliver:)"},
-        {"file": "App/Core/BatteryCare.swift", "line": 236, "symbol": "目标日 08:00 计算"},
-        {"file": "App/Core/BatteryCare.swift", "line": 244, "symbol": "UNCalendarNotificationTrigger"}
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 228,
+          "symbol": "notifyNow(dayDeliver:)"
+        },
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 236,
+          "symbol": "目标日 08:00 计算"
+        },
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 244,
+          "symbol": "UNCalendarNotificationTrigger"
+        }
       ],
-      "tags": ["通知", "调度"],
+      "tags": [
+        "通知",
+        "调度"
+      ],
       "status": "implemented"
     },
     {
@@ -1314,11 +2285,26 @@
         "通知 id 前缀 m4.damp. / m4.clock. / m4.fp. + mac。"
       ],
       "evidence": [
-        {"file": "App/Core/BatteryCare.swift", "line": 256, "symbol": "refreshOnLaunch()"},
-        {"file": "App/Core/BatteryCare.swift", "line": 258, "symbol": "空钥匙串 / 授权前置"},
-        {"file": "App/Core/BatteryCare.swift", "line": 263, "symbol": "逐锁循环"}
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 256,
+          "symbol": "refreshOnLaunch()"
+        },
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 258,
+          "symbol": "空钥匙串 / 授权前置"
+        },
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 263,
+          "symbol": "逐锁循环"
+        }
       ],
-      "tags": ["巡检", "关怀"],
+      "tags": [
+        "巡检",
+        "关怀"
+      ],
       "status": "implemented"
     },
     {
@@ -1335,11 +2321,26 @@
         "文案点名锁名与「梅雨季湿气重」。"
       ],
       "evidence": [
-        {"file": "App/Core/BatteryCare.swift", "line": 265, "symbol": "防潮判定"},
-        {"file": "App/Core/BatteryCare.swift", "line": 267, "symbol": "湿区关键词表"},
-        {"file": "App/Core/BatteryCare.swift", "line": 273, "symbol": "通知 m4.damp."}
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 265,
+          "symbol": "防潮判定"
+        },
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 267,
+          "symbol": "湿区关键词表"
+        },
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 273,
+          "symbol": "通知 m4.damp."
+        }
       ],
-      "tags": ["防潮", "提醒"],
+      "tags": [
+        "防潮",
+        "提醒"
+      ],
       "status": "implemented"
     },
     {
@@ -1356,11 +2357,26 @@
         "文案「已超 30 天未校时, 临时密码可能失效」。"
       ],
       "evidence": [
-        {"file": "App/Core/BatteryCare.swift", "line": 277, "symbol": "校时关怀判定"},
-        {"file": "App/Core/BatteryCare.swift", "line": 280, "symbol": "kf_clock_notify_"},
-        {"file": "App/Core/BatteryCare.swift", "line": 283, "symbol": "通知 m4.clock."}
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 277,
+          "symbol": "校时关怀判定"
+        },
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 280,
+          "symbol": "kf_clock_notify_"
+        },
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 283,
+          "symbol": "通知 m4.clock."
+        }
       ],
-      "tags": ["校时", "提醒"],
+      "tags": [
+        "校时",
+        "提醒"
+      ],
       "status": "implemented"
     },
     {
@@ -1377,11 +2393,26 @@
         "通知节流 7 天，键 kf_fp_last_<mac>，id m4.fp.<mac>。"
       ],
       "evidence": [
-        {"file": "App/Core/BatteryCare.swift", "line": 188, "symbol": "fpCleanNeeded"},
-        {"file": "App/Core/BatteryCare.swift", "line": 190, "symbol": "按 lockTime 降序取 3"},
-        {"file": "App/Core/BatteryCare.swift", "line": 288, "symbol": "巡检内调用"}
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 188,
+          "symbol": "fpCleanNeeded"
+        },
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 190,
+          "symbol": "按 lockTime 降序取 3"
+        },
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 288,
+          "symbol": "巡检内调用"
+        }
       ],
-      "tags": ["指纹", "诊断"],
+      "tags": [
+        "指纹",
+        "诊断"
+      ],
       "status": "implemented"
     },
     {
@@ -1398,11 +2429,21 @@
         "本文件只保留判据，DFU 升级流程已删。"
       ],
       "evidence": [
-        {"file": "App/Core/BatteryCare.swift", "line": 176, "symbol": "struct FwSince / fwSince"},
-        {"file": "App/Core/BatteryCare.swift", "line": 197, "symbol": "versionLt"},
-        {"file": "App/Core/BatteryCare.swift", "line": 302, "symbol": "_FWVersion 三段校验"}
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 176,
+          "symbol": "struct FwSince / fwSince"
+        },
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 197,
+          "symbol": "versionLt"
+        }
       ],
-      "tags": ["固件", "版本"],
+      "tags": [
+        "固件",
+        "版本"
+      ],
       "status": "implemented"
     },
     {
@@ -1418,9 +2459,16 @@
         "本文件内是公开只读判据，具体提示文案在其他页使用。"
       ],
       "evidence": [
-        {"file": "App/Core/BatteryCare.swift", "line": 66, "symbol": "isColdSeason"}
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 66,
+          "symbol": "isColdSeason"
+        }
       ],
-      "tags": ["季节", "判据"],
+      "tags": [
+        "季节",
+        "判据"
+      ],
       "status": "implemented"
     },
     {
@@ -1436,9 +2484,16 @@
         "月度备份调度也复用同一入口。"
       ],
       "evidence": [
-        {"file": "App/Core/BatteryCare.swift", "line": 251, "symbol": "requestAuth()"}
+        {
+          "file": "App/Core/BatteryCare.swift",
+          "line": 251,
+          "symbol": "requestAuth()"
+        }
       ],
-      "tags": ["通知", "权限"],
+      "tags": [
+        "通知",
+        "权限"
+      ],
       "status": "implemented"
     },
     {
@@ -1455,11 +2510,26 @@
         "多数能力是「数据 + 只读判据」，删除类动作只发生在显式按钮路径。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 1, "symbol": "文件头注"},
-        {"file": "App/Core/DiagKit.swift", "line": 21, "symbol": "enum DiagTime"},
-        {"file": "App/Core/DiagKit.swift", "line": 73, "symbol": "218/221 删因说明"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1,
+          "symbol": "文件头注"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 21,
+          "symbol": "enum DiagTime"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 73,
+          "symbol": "218/221 删因说明"
+        }
       ],
-      "tags": ["诊断", "核心"],
+      "tags": [
+        "诊断",
+        "核心"
+      ],
       "status": "implemented"
     },
     {
@@ -1476,11 +2546,26 @@
         "崩溃档案取其中最近 5 条作为「最后操作」。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 42, "symbol": "struct DiagOp"},
-        {"file": "App/Core/DiagKit.swift", "line": 48, "symbol": "kf_diag_ops_on"},
-        {"file": "App/Core/DiagKit.swift", "line": 52, "symbol": "record(_:)"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 42,
+          "symbol": "struct DiagOp"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 48,
+          "symbol": "kf_diag_ops_on"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 52,
+          "symbol": "record(_:)"
+        }
       ],
-      "tags": ["诊断", "流水"],
+      "tags": [
+        "诊断",
+        "流水"
+      ],
       "status": "implemented"
     },
     {
@@ -1497,11 +2582,26 @@
         "打点表由 Locked 保护，可被多处并发写。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 63, "symbol": "StartupTrace"},
-        {"file": "App/Core/DiagKit.swift", "line": 66, "symbol": "mark(_:)"},
-        {"file": "App/Core/DiagKit.swift", "line": 70, "symbol": "overBudget > 800ms"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 63,
+          "symbol": "StartupTrace"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 66,
+          "symbol": "mark(_:)"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 70,
+          "symbol": "overBudget > 800ms"
+        }
       ],
-      "tags": ["启动", "性能"],
+      "tags": [
+        "启动",
+        "性能"
+      ],
       "status": "implemented"
     },
     {
@@ -1518,11 +2618,26 @@
         "recent(mac) 命中 currentMac 才复用，否则读盘并写入缓存。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 89, "symbol": "enum HotCache"},
-        {"file": "App/Core/DiagKit.swift", "line": 100, "symbol": "invalidate"},
-        {"file": "App/Core/DiagKit.swift", "line": 101, "symbol": "recent(_:)"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 89,
+          "symbol": "enum HotCache"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 100,
+          "symbol": "invalidate"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 101,
+          "symbol": "recent(_:)"
+        }
       ],
-      "tags": ["缓存", "性能"],
+      "tags": [
+        "缓存",
+        "性能"
+      ],
       "status": "implemented"
     },
     {
@@ -1539,11 +2654,27 @@
         "建议三档：日均 <5s 已很省 / <30s 正常（带当前档位窗口 ms）/ >=30s 偏多，建议换省电档或关预握手。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 114, "symbol": "enum ScanStats"},
-        {"file": "App/Core/DiagKit.swift", "line": 122, "symbol": "record(seconds:)"},
-        {"file": "App/Core/DiagKit.swift", "line": 136, "symbol": "advice()"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 114,
+          "symbol": "enum ScanStats"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 122,
+          "symbol": "record(seconds:)"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 136,
+          "symbol": "advice()"
+        }
       ],
-      "tags": ["扫描", "省电", "统计"],
+      "tags": [
+        "扫描",
+        "省电",
+        "统计"
+      ],
       "status": "implemented"
     },
     {
@@ -1560,11 +2691,26 @@
         "回主线程执行 HotCache.recent(mac) 作为惰性预热。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 149, "symbol": "enum Prewarm"},
-        {"file": "App/Core/DiagKit.swift", "line": 151, "symbol": "run(mac:)"},
-        {"file": "App/Core/DiagKit.swift", "line": 158, "symbol": "concurrentPerform(3)"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 149,
+          "symbol": "enum Prewarm"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 151,
+          "symbol": "run(mac:)"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 158,
+          "symbol": "concurrentPerform(3)"
+        }
       ],
-      "tags": ["启动", "预热"],
+      "tags": [
+        "启动",
+        "预热"
+      ],
       "status": "implemented"
     },
     {
@@ -1582,12 +2728,31 @@
         "today() 返回当日条目；all() 返回按保留策略过滤后的全量。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 171, "symbol": "struct DiagLogEntry"},
-        {"file": "App/Core/DiagKit.swift", "line": 192, "symbol": "localDay"},
-        {"file": "App/Core/DiagKit.swift", "line": 229, "symbol": "append(_:_:date:time:)"},
-        {"file": "App/Core/DiagKit.swift", "line": 224, "symbol": "today()"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 171,
+          "symbol": "struct DiagLogEntry"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 192,
+          "symbol": "localDay"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 229,
+          "symbol": "append(_:_:date:time:)"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 224,
+          "symbol": "today()"
+        }
       ],
-      "tags": ["日志", "存储键"],
+      "tags": [
+        "日志",
+        "存储键"
+      ],
       "status": "implemented"
     },
     {
@@ -1604,11 +2769,26 @@
         "append 与 all 用同一口径（本地日字符串比较）。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 179, "symbol": "retentionKey"},
-        {"file": "App/Core/DiagKit.swift", "line": 207, "symbol": "pruneCount"},
-        {"file": "App/Core/DiagKit.swift", "line": 215, "symbol": "pruneNow"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 179,
+          "symbol": "retentionKey"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 207,
+          "symbol": "pruneCount"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 215,
+          "symbol": "pruneNow"
+        }
       ],
-      "tags": ["保留策略", "破坏性操作"],
+      "tags": [
+        "保留策略",
+        "破坏性操作"
+      ],
       "status": "implemented"
     },
     {
@@ -1625,11 +2805,27 @@
         "entityDetail 绝不输出 pwd 字段明文；台账查不到时提示回收站或建议拉一次凭证清单。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 240, "symbol": "struct EntityRef"},
-        {"file": "App/Core/DiagKit.swift", "line": 268, "symbol": "entities(in:)"},
-        {"file": "App/Core/DiagKit.swift", "line": 296, "symbol": "entityDetail"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 240,
+          "symbol": "struct EntityRef"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 268,
+          "symbol": "entities(in:)"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 296,
+          "symbol": "entityDetail"
+        }
       ],
-      "tags": ["日志", "深链", "隐私"],
+      "tags": [
+        "日志",
+        "深链",
+        "隐私"
+      ],
       "status": "implemented"
     },
     {
@@ -1646,13 +2842,36 @@
         "successRate() 为「全部留存」口径（不是滚动 30 天），界面不得写成近 30 天。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 330, "symbol": "struct BleEvent"},
-        {"file": "App/Core/DiagKit.swift", "line": 336, "symbol": "struct ConnAttempt"},
-        {"file": "App/Core/DiagKit.swift", "line": 343, "symbol": "recordEvent"},
-        {"file": "App/Core/DiagKit.swift", "line": 350, "symbol": "recordAttempt"},
-        {"file": "App/Core/DiagKit.swift", "line": 358, "symbol": "successRate()"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 330,
+          "symbol": "struct BleEvent"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 336,
+          "symbol": "struct ConnAttempt"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 343,
+          "symbol": "recordEvent"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 350,
+          "symbol": "recordAttempt"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 358,
+          "symbol": "successRate()"
+        }
       ],
-      "tags": ["遥测", "统计"],
+      "tags": [
+        "遥测",
+        "统计"
+      ],
       "status": "implemented"
     },
     {
@@ -1669,11 +2888,26 @@
         "冷启动无数据时返回空数组，界面显示「积累中」。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 367, "symbol": "struct DayRate"},
-        {"file": "App/Core/DiagKit.swift", "line": 374, "symbol": "dailyRates()"},
-        {"file": "App/Core/DiagKit.swift", "line": 393, "symbol": "failClasses()"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 367,
+          "symbol": "struct DayRate"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 374,
+          "symbol": "dailyRates()"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 393,
+          "symbol": "failClasses()"
+        }
       ],
-      "tags": ["统计", "失败分析"],
+      "tags": [
+        "统计",
+        "失败分析"
+      ],
       "status": "implemented"
     },
     {
@@ -1689,11 +2923,26 @@
         "消费点全在 LinkSenseKit（:96/:136/:186/:214/:291/:381/:541），本文件不实现行为只提供开关。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 424, "symbol": "127 静默模式说明"},
-        {"file": "App/Core/DiagKit.swift", "line": 427, "symbol": "enum DiagFlags"},
-        {"file": "App/Core/DiagKit.swift", "line": 428, "symbol": "kf_silent_trouble"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 424,
+          "symbol": "127 静默模式说明"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 427,
+          "symbol": "enum DiagFlags"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 428,
+          "symbol": "kf_silent_trouble"
+        }
       ],
-      "tags": ["排查", "开关"],
+      "tags": [
+        "排查",
+        "开关"
+      ],
       "status": "implemented"
     },
     {
@@ -1711,12 +2960,31 @@
         "consumePending 读后即清（供 UI 一次性提示）。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 432, "symbol": "enum CrashGuard"},
-        {"file": "App/Core/DiagKit.swift", "line": 436, "symbol": "checkAbnormalExit"},
-        {"file": "App/Core/DiagKit.swift", "line": 455, "symbol": "markCleanExit"},
-        {"file": "App/Core/DiagKit.swift", "line": 467, "symbol": "consumePending"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 432,
+          "symbol": "enum CrashGuard"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 436,
+          "symbol": "checkAbnormalExit"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 455,
+          "symbol": "markCleanExit"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 467,
+          "symbol": "consumePending"
+        }
       ],
-      "tags": ["崩溃", "档案"],
+      "tags": [
+        "崩溃",
+        "档案"
+      ],
       "status": "implemented"
     },
     {
@@ -1734,12 +3002,31 @@
         "integrity 干净时也会返回一条「数据解析正常」，判 ok 必须按该前缀过滤。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 476, "symbol": "enum DataHealth"},
-        {"file": "App/Core/DiagKit.swift", "line": 488, "symbol": "families()"},
-        {"file": "App/Core/DiagKit.swift", "line": 529, "symbol": "integrity()"},
-        {"file": "App/Core/DiagKit.swift", "line": 541, "symbol": "fragmentsAllowed"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 476,
+          "symbol": "enum DataHealth"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 488,
+          "symbol": "families()"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 529,
+          "symbol": "integrity()"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 541,
+          "symbol": "fragmentsAllowed"
+        }
       ],
-      "tags": ["数据健康", "诊断"],
+      "tags": [
+        "数据健康",
+        "诊断"
+      ],
       "status": "implemented"
     },
     {
@@ -1756,11 +3043,26 @@
         "口径为键值长度估算，不是磁盘真实占用（必须与数字一起说明）。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 504, "symbol": "struct Slice"},
-        {"file": "App/Core/DiagKit.swift", "line": 509, "symbol": "composition()"},
-        {"file": "App/Core/DiagKit.swift", "line": 524, "symbol": "human(_:)"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 504,
+          "symbol": "struct Slice"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 509,
+          "symbol": "composition()"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 524,
+          "symbol": "human(_:)"
+        }
       ],
-      "tags": ["存储", "可视化"],
+      "tags": [
+        "存储",
+        "可视化"
+      ],
       "status": "implemented"
     },
     {
@@ -1778,11 +3080,26 @@
         "只读自检（integrity）里绝不删数据，清理动作全在显式路径。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 557, "symbol": "vacuum()"},
-        {"file": "App/Core/DiagKit.swift", "line": 573, "symbol": "purgeOrphanLogCaches"},
-        {"file": "App/Core/DiagKit.swift", "line": 589, "symbol": "quarantineOrphanCredentials"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 557,
+          "symbol": "vacuum()"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 573,
+          "symbol": "purgeOrphanLogCaches"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 589,
+          "symbol": "quarantineOrphanCredentials"
+        }
       ],
-      "tags": ["整理", "破坏性操作"],
+      "tags": [
+        "整理",
+        "破坏性操作"
+      ],
       "status": "implemented"
     },
     {
@@ -1798,10 +3115,21 @@
         "文案区分「留作无主记录」与「立即整理会隔离保留」。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 612, "symbol": "scanOrphans()"},
-        {"file": "App/Core/DiagKit.swift", "line": 628, "symbol": "此处不删的说明"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 612,
+          "symbol": "scanOrphans()"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 628,
+          "symbol": "此处不删的说明"
+        }
       ],
-      "tags": ["只读", "孤儿"],
+      "tags": [
+        "只读",
+        "孤儿"
+      ],
       "status": "implemented"
     },
     {
@@ -1817,10 +3145,21 @@
         "last 与 first 之间的空洞才纳入，避免把「从未连过」误报成缺数据。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 636, "symbol": "gapDays(mac:days:)"},
-        {"file": "App/Core/DiagKit.swift", "line": 648, "symbol": "只报两侧都有数据的空洞"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 636,
+          "symbol": "gapDays(mac:days:)"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 648,
+          "symbol": "只报两侧都有数据的空洞"
+        }
       ],
-      "tags": ["空洞", "日志"],
+      "tags": [
+        "空洞",
+        "日志"
+      ],
       "status": "implemented"
     },
     {
@@ -1837,11 +3176,26 @@
         "返回实际移动条数；archivedCount 读归档数量。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 656, "symbol": "archiveOldLogs()"},
-        {"file": "App/Core/DiagKit.swift", "line": 667, "symbol": "按 idxRaw 去重"},
-        {"file": "App/Core/DiagKit.swift", "line": 678, "symbol": "DB.replaceLogs"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 656,
+          "symbol": "archiveOldLogs()"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 667,
+          "symbol": "按 idxRaw 去重"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 678,
+          "symbol": "DB.replaceLogs"
+        }
       ],
-      "tags": ["归档", "日志"],
+      "tags": [
+        "归档",
+        "日志"
+      ],
       "status": "implemented"
     },
     {
@@ -1859,13 +3213,36 @@
         "输出 PullGapReport：totalRows/clocklessRows/firstDay/lastDay/coveredDays/segments/segmentsHidden/missingDayTotal/windowed/tail/idxGaps/idxGapTotal/idxGapSkippedTotal/idxAnomalies。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 712, "symbol": "struct PullSegment"},
-        {"file": "App/Core/DiagKit.swift", "line": 736, "symbol": "struct PullGapReport"},
-        {"file": "App/Core/DiagKit.swift", "line": 755, "symbol": "enum RecordReconcile"},
-        {"file": "App/Core/DiagKit.swift", "line": 770, "symbol": "pendingPull(logs:…)"},
-        {"file": "App/Core/DiagKit.swift", "line": 758, "symbol": "idxGapCap = 5000"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 712,
+          "symbol": "struct PullSegment"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 736,
+          "symbol": "struct PullGapReport"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 755,
+          "symbol": "enum RecordReconcile"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 770,
+          "symbol": "pendingPull(logs:…)"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 758,
+          "symbol": "idxGapCap = 5000"
+        }
       ],
-      "tags": ["对账", "纯函数"],
+      "tags": [
+        "对账",
+        "纯函数"
+      ],
       "status": "implemented"
     },
     {
@@ -1882,11 +3259,26 @@
         "跨度超 maxSpanDays 时只扫最近一段，并把窗口左边钉在本机有日志的那一天（不破「两侧都有数据」口径）。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 810, "symbol": "尾段只数到昨天"},
-        {"file": "App/Core/DiagKit.swift", "line": 824, "symbol": "daySet >= 2 才推中段"},
-        {"file": "App/Core/DiagKit.swift", "line": 851, "symbol": "连续缺天并段"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 810,
+          "symbol": "尾段只数到昨天"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 824,
+          "symbol": "daySet >= 2 才推中段"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 851,
+          "symbol": "连续缺天并段"
+        }
       ],
-      "tags": ["缺口", "日期"],
+      "tags": [
+        "缺口",
+        "日期"
+      ],
       "status": "implemented"
     },
     {
@@ -1903,11 +3295,26 @@
         "used Int64 中转避免 0 附近截断语义。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 787, "symbol": "断档计算"},
-        {"file": "App/Core/DiagKit.swift", "line": 796, "symbol": "skipped > idxGapCap → anomalies"},
-        {"file": "App/Core/DiagKit.swift", "line": 728, "symbol": "struct IdxGap"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 787,
+          "symbol": "断档计算"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 796,
+          "symbol": "skipped > idxGapCap → anomalies"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 728,
+          "symbol": "struct IdxGap"
+        }
       ],
-      "tags": ["序号", "缺口"],
+      "tags": [
+        "序号",
+        "缺口"
+      ],
       "status": "implemented"
     },
     {
@@ -1925,13 +3332,36 @@
         "口径是「下界型参考值」，不含 BLE/网络，界面不得称渲染耗时。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 898, "symbol": "struct PageOpen"},
-        {"file": "App/Core/DiagKit.swift", "line": 906, "symbol": "enum PageTrace"},
-        {"file": "App/Core/DiagKit.swift", "line": 931, "symbol": "markNav(to:)"},
-        {"file": "App/Core/DiagKit.swift", "line": 941, "symbol": "shown(_:)"},
-        {"file": "App/Core/DiagKit.swift", "line": 947, "symbol": "ms <= 3000 过滤"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 898,
+          "symbol": "struct PageOpen"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 906,
+          "symbol": "enum PageTrace"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 931,
+          "symbol": "markNav(to:)"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 941,
+          "symbol": "shown(_:)"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 947,
+          "symbol": "ms <= 3000 过滤"
+        }
       ],
-      "tags": ["性能", "自统计"],
+      "tags": [
+        "性能",
+        "自统计"
+      ],
       "status": "implemented"
     },
     {
@@ -1948,12 +3378,31 @@
         "回收站/归档/保留策略的实际删除动作留在各节既有确认流程。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 965, "symbol": "struct RecoveryTip"},
-        {"file": "App/Core/DiagKit.swift", "line": 974, "symbol": "enum Recovery"},
-        {"file": "App/Core/DiagKit.swift", "line": 997, "symbol": "日志 >= 64KB 建议"},
-        {"file": "App/Core/DiagKit.swift", "line": 1022, "symbol": "回滚快照不给清理入口"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 965,
+          "symbol": "struct RecoveryTip"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 974,
+          "symbol": "enum Recovery"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 997,
+          "symbol": "日志 >= 64KB 建议"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1022,
+          "symbol": "回滚快照不给清理入口"
+        }
       ],
-      "tags": ["空间", "建议"],
+      "tags": [
+        "空间",
+        "建议"
+      ],
       "status": "implemented"
     },
     {
@@ -1969,11 +3418,26 @@
         "创意原文写「退出期间」，但本 App 唯一后台任务（充电备份）不做这三类维护，故按「上次会话」口径改写。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 1051, "symbol": "enum MaintenanceLog"},
-        {"file": "App/Core/DiagKit.swift", "line": 1053, "symbol": "kf_maint_acts"},
-        {"file": "App/Core/DiagKit.swift", "line": 1054, "symbol": "record(_:)"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1051,
+          "symbol": "enum MaintenanceLog"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1053,
+          "symbol": "kf_maint_acts"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1054,
+          "symbol": "record(_:)"
+        }
       ],
-      "tags": ["维护", "回执"],
+      "tags": [
+        "维护",
+        "回执"
+      ],
       "status": "implemented"
     },
     {
@@ -1994,13 +3458,36 @@
         "面容项无生物硬件不算故障，如实写「该能力走 DEFERRED」。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 1062, "symbol": "struct HealthCheckItem"},
-        {"file": "App/Core/DiagKit.swift", "line": 1075, "symbol": "enum DiagHealth"},
-        {"file": "App/Core/DiagKit.swift", "line": 1082, "symbol": "items 十项清单"},
-        {"file": "App/Core/DiagKit.swift", "line": 1102, "symbol": "percent"},
-        {"file": "App/Core/DiagKit.swift", "line": 1118, "symbol": "saveArchive"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1062,
+          "symbol": "struct HealthCheckItem"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1075,
+          "symbol": "enum DiagHealth"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1082,
+          "symbol": "items 十项清单"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1102,
+          "symbol": "percent"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1118,
+          "symbol": "saveArchive"
+        }
       ],
-      "tags": ["体检", "核心"],
+      "tags": [
+        "体检",
+        "核心"
+      ],
       "status": "implemented"
     },
     {
@@ -2016,10 +3503,21 @@
         "全绿结果恒为 100。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 1099, "symbol": "149 总分口径"},
-        {"file": "App/Core/DiagKit.swift", "line": 1102, "symbol": "percent(_:)"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1099,
+          "symbol": "149 总分口径"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1102,
+          "symbol": "percent(_:)"
+        }
       ],
-      "tags": ["体检", "算法"],
+      "tags": [
+        "体检",
+        "算法"
+      ],
       "status": "implemented"
     },
     {
@@ -2035,11 +3533,26 @@
         "unknown 明示「不等于蓝牙正常」，引导进门锁页后复测（旧实现自建无代理中心管理器导致恒红）。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 1132, "symbol": "checkBLE()"},
-        {"file": "App/Core/DiagKit.swift", "line": 1134, "symbol": "authorization == .denied"},
-        {"file": "App/Core/DiagKit.swift", "line": 1152, "symbol": "unknown / @unknown default"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1132,
+          "symbol": "checkBLE()"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1134,
+          "symbol": "authorization == .denied"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1152,
+          "symbol": "unknown / @unknown default"
+        }
       ],
-      "tags": ["体检", "蓝牙"],
+      "tags": [
+        "体检",
+        "蓝牙"
+      ],
       "status": "implemented"
     },
     {
@@ -2056,11 +3569,26 @@
         "图片只上屏给人扫，不过 CIContext、不落盘。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 1264, "symbol": "enum DiagQR"},
-        {"file": "App/Core/DiagKit.swift", "line": 1269, "symbol": "inputCorrectionLevel M"},
-        {"file": "App/Core/DiagKit.swift", "line": 1279, "symbol": "summaryText(app:)"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1264,
+          "symbol": "enum DiagQR"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1269,
+          "symbol": "inputCorrectionLevel M"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1279,
+          "symbol": "summaryText(app:)"
+        }
       ],
-      "tags": ["二维码", "分享"],
+      "tags": [
+        "二维码",
+        "分享"
+      ],
       "status": "implemented"
     },
     {
@@ -2078,11 +3606,26 @@
         "copyable() 输出「键 名称 — 说明」逐行文本。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 1298, "symbol": "enum ProtocolDict"},
-        {"file": "App/Core/DiagKit.swift", "line": 1307, "symbol": "statusFields"},
-        {"file": "App/Core/DiagKit.swift", "line": 1329, "symbol": "copyable()"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1298,
+          "symbol": "enum ProtocolDict"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1307,
+          "symbol": "statusFields"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1329,
+          "symbol": "copyable()"
+        }
       ],
-      "tags": ["协议", "字典"],
+      "tags": [
+        "协议",
+        "字典"
+      ],
       "status": "implemented"
     },
     {
@@ -2098,10 +3641,21 @@
         "每行 {icon, use}，id 即符号名。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 1335, "symbol": "enum IconSemantics"},
-        {"file": "App/Core/DiagKit.swift", "line": 1341, "symbol": "rows 表"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1335,
+          "symbol": "enum IconSemantics"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1341,
+          "symbol": "rows 表"
+        }
       ],
-      "tags": ["图标", "规范"],
+      "tags": [
+        "图标",
+        "规范"
+      ],
       "status": "implemented"
     },
     {
@@ -2119,12 +3673,31 @@
         "recentFails()：DB.failEvents 前 10 条，时间本地化格式化。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 1362, "symbol": "enum QueryTemplates"},
-        {"file": "App/Core/DiagKit.swift", "line": 1364, "symbol": "lastNLogs"},
-        {"file": "App/Core/DiagKit.swift", "line": 1377, "symbol": "memberUsage"},
-        {"file": "App/Core/DiagKit.swift", "line": 1386, "symbol": "recentFails"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1362,
+          "symbol": "enum QueryTemplates"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1364,
+          "symbol": "lastNLogs"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1377,
+          "symbol": "memberUsage"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1386,
+          "symbol": "recentFails"
+        }
       ],
-      "tags": ["查询", "只读"],
+      "tags": [
+        "查询",
+        "只读"
+      ],
       "status": "implemented"
     },
     {
@@ -2141,10 +3714,21 @@
         "空数据显示「(无数据)」。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 1395, "symbol": "enum HexDump"},
-        {"file": "App/Core/DiagKit.swift", "line": 1396, "symbol": "dump(_:lineLen:)"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1395,
+          "symbol": "enum HexDump"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1396,
+          "symbol": "dump(_:lineLen:)"
+        }
       ],
-      "tags": ["报文", "调试"],
+      "tags": [
+        "报文",
+        "调试"
+      ],
       "status": "implemented"
     },
     {
@@ -2160,11 +3744,26 @@
         "16 号命令用「16#%02X」，其它用「#%02X」去字典取名；查不到回落「KLV XX」。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 1411, "symbol": "enum FrameFields"},
-        {"file": "App/Core/DiagKit.swift", "line": 1412, "symbol": "name(cmd:key:)"},
-        {"file": "App/Core/DiagKit.swift", "line": 1416, "symbol": "parse(_:)"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1411,
+          "symbol": "enum FrameFields"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1412,
+          "symbol": "name(cmd:key:)"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1416,
+          "symbol": "parse(_:)"
+        }
       ],
-      "tags": ["协议", "解析"],
+      "tags": [
+        "协议",
+        "解析"
+      ],
       "status": "implemented"
     },
     {
@@ -2182,11 +3781,26 @@
         "summary 文案：全通过「本机自检三项全部通过」，否则「n 项异常 — 详情见下」。"
       ],
       "evidence": [
-        {"file": "App/Core/DiagKit.swift", "line": 1429, "symbol": "struct SelfCheckLine"},
-        {"file": "App/Core/DiagKit.swift", "line": 1432, "symbol": "run()"},
-        {"file": "App/Core/DiagKit.swift", "line": 1450, "symbol": "summary(_:)"}
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1429,
+          "symbol": "struct SelfCheckLine"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 1432,
+          "symbol": "run()"
+        },
+        {
+          "file": "App/Core/DiagKit.swift",
+          "line": 445,
+          "symbol": "summary(_:)"
+        }
       ],
-      "tags": ["自检", "只读"],
+      "tags": [
+        "自检",
+        "只读"
+      ],
       "status": "implemented"
     },
     {
@@ -2203,12 +3817,31 @@
         "加解密语义不动，BackupStudio 只做外围策略（分区、保留、远端、回滚）。"
       ],
       "evidence": [
-        {"file": "App/Services/BackupKit.swift", "line": 1, "symbol": "文件头注"},
-        {"file": "App/Services/BackupKit.swift", "line": 34, "symbol": "enum CryptoBox"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 20, "symbol": "enum BackupStudio"},
-        {"file": "App/Services/BackupCanonical.swift", "line": 52, "symbol": "enum BackupCanonical"}
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 1,
+          "symbol": "文件头注"
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 34,
+          "symbol": "enum CryptoBox"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 20,
+          "symbol": "enum BackupStudio"
+        },
+        {
+          "file": "App/Services/BackupCanonical.swift",
+          "line": 52,
+          "symbol": "enum BackupCanonical"
+        }
       ],
-      "tags": ["备份", "核心"],
+      "tags": [
+        "备份",
+        "核心"
+      ],
       "status": "implemented"
     },
     {
@@ -2226,12 +3859,31 @@
         "加密失败必须抛错，返回空数组会把「加密失败」误诊成「文件头损坏」。"
       ],
       "evidence": [
-        {"file": "App/Services/BackupKit.swift", "line": 22, "symbol": "struct BackupEnvelope"},
-        {"file": "App/Services/BackupKit.swift", "line": 102, "symbol": "encryptText"},
-        {"file": "App/Services/BackupKit.swift", "line": 107, "symbol": "hmac(iv‖ct)"},
-        {"file": "App/Services/BackupKit.swift", "line": 78, "symbol": "PKCS7 双重填充修复"}
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 22,
+          "symbol": "struct BackupEnvelope"
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 102,
+          "symbol": "encryptText"
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 107,
+          "symbol": "hmac(iv‖ct)"
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 78,
+          "symbol": "PKCS7 双重填充修复"
+        }
       ],
-      "tags": ["加密", "信封"],
+      "tags": [
+        "加密",
+        "信封"
+      ],
       "status": "implemented"
     },
     {
@@ -2248,12 +3900,31 @@
         "defaultIter = 60000。"
       ],
       "evidence": [
-        {"file": "App/Services/BackupKit.swift", "line": 35, "symbol": "defaultIter = 60000"},
-        {"file": "App/Services/BackupKit.swift", "line": 44, "symbol": "pbkdf2"},
-        {"file": "App/Services/BackupKit.swift", "line": 64, "symbol": "iterMin / iterMax"},
-        {"file": "App/Services/BackupKit.swift", "line": 66, "symbol": "deriveKey → (enc 16, mac 32)"}
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 35,
+          "symbol": "defaultIter = 60000"
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 44,
+          "symbol": "pbkdf2"
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 64,
+          "symbol": "iterMin / iterMax"
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 66,
+          "symbol": "deriveKey → (enc 16, mac 32)"
+        }
       ],
-      "tags": ["KDF", "安全"],
+      "tags": [
+        "KDF",
+        "安全"
+      ],
       "status": "implemented"
     },
     {
@@ -2270,11 +3941,26 @@
         "版本 v != 1 报「信封格式/版本不支持」。"
       ],
       "evidence": [
-        {"file": "App/Services/BackupKit.swift", "line": 118, "symbol": "isHex(_:len:)"},
-        {"file": "App/Services/BackupKit.swift", "line": 132, "symbol": "IV / HMAC / 盐 / 密文长度校验"},
-        {"file": "App/Services/BackupKit.swift", "line": 126, "symbol": "e.v == 1"}
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 118,
+          "symbol": "isHex(_:len:)"
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 132,
+          "symbol": "IV / HMAC / 盐 / 密文长度校验"
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 126,
+          "symbol": "e.v == 1"
+        }
       ],
-      "tags": ["校验", "错误分层"],
+      "tags": [
+        "校验",
+        "错误分层"
+      ],
       "status": "implemented"
     },
     {
@@ -2290,11 +3976,26 @@
         "解密成功后按 UTF-8 还原文本；非法字节返回空串（上层 JSON 层会再报不是备份）。"
       ],
       "evidence": [
-        {"file": "App/Services/BackupKit.swift", "line": 123, "symbol": "decryptEnvelope"},
-        {"file": "App/Services/BackupKit.swift", "line": 141, "symbol": "MAC 比对"},
-        {"file": "App/Services/BackupKit.swift", "line": 96, "symbol": "填充无效"}
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 123,
+          "symbol": "decryptEnvelope"
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 141,
+          "symbol": "MAC 比对"
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 96,
+          "symbol": "填充无效"
+        }
       ],
-      "tags": ["解密", "错误分层"],
+      "tags": [
+        "解密",
+        "错误分层"
+      ],
       "status": "implemented"
     },
     {
@@ -2311,12 +4012,31 @@
         "dir 与 rollbackDir 为 nonisolated，供 nonisolated 的快照函数使用。"
       ],
       "evidence": [
-        {"file": "App/Services/BackupStudioKit.swift", "line": 24, "symbol": "static var dir"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 34, "symbol": "rollbackDir"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 39, "symbol": "isExcludedFromBackup"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 44, "symbol": "删除旧明文 rollback 目录"}
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 24,
+          "symbol": "static var dir"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 34,
+          "symbol": "rollbackDir"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 39,
+          "symbol": "isExcludedFromBackup"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 44,
+          "symbol": "删除旧明文 rollback 目录"
+        }
       ],
-      "tags": ["文件布局", "安全"],
+      "tags": [
+        "文件布局",
+        "安全"
+      ],
       "status": "implemented"
     },
     {
@@ -2333,12 +4053,31 @@
         "ledger 为空（无密码且无指纹）时置 nil，避免包体塞空表。"
       ],
       "evidence": [
-        {"file": "App/Services/BackupKit.swift", "line": 148, "symbol": "struct BackupBundle"},
-        {"file": "App/Services/BackupKit.swift", "line": 157, "symbol": "currentSchema = 5"},
-        {"file": "App/Services/BackupKit.swift", "line": 163, "symbol": "struct Device"},
-        {"file": "App/Services/BackupKit.swift", "line": 255, "symbol": "ledger 为空置 nil"}
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 148,
+          "symbol": "struct BackupBundle"
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 157,
+          "symbol": "currentSchema = 5"
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 163,
+          "symbol": "struct Device"
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 255,
+          "symbol": "ledger 为空置 nil"
+        }
       ],
-      "tags": ["包体", "schema"],
+      "tags": [
+        "包体",
+        "schema"
+      ],
       "status": "implemented"
     },
     {
@@ -2355,12 +4094,31 @@
         "trace 落盘前行过 Redact.frameHex 脱敏（小程序 trace 行内含令牌/密钥 hex）。"
       ],
       "evidence": [
-        {"file": "App/Services/BackupKit.swift", "line": 176, "symbol": "struct Globals"},
-        {"file": "App/Services/BackupKit.swift", "line": 267, "symbol": "kf_bk_otp 勾选才收 OTP"},
-        {"file": "App/Services/BackupKit.swift", "line": 444, "symbol": "passcode 只写 s/d"},
-        {"file": "App/Services/BackupKit.swift", "line": 469, "symbol": "trace 脱敏"}
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 176,
+          "symbol": "struct Globals"
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 267,
+          "symbol": "kf_bk_otp 勾选才收 OTP"
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 444,
+          "symbol": "passcode 只写 s/d"
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 469,
+          "symbol": "trace 脱敏"
+        }
       ],
-      "tags": ["包体", "全局段"],
+      "tags": [
+        "包体",
+        "全局段"
+      ],
       "status": "implemented"
     },
     {
@@ -2378,12 +4136,31 @@
         "heroStats 全选时不写、全空由 DS.HeroStats 回退全开。"
       ],
       "evidence": [
-        {"file": "App/Services/BackupKit.swift", "line": 189, "symbol": "struct Appearance"},
-        {"file": "App/Services/BackupKit.swift", "line": 219, "symbol": "CodingKeys recentCount = \"recent\""},
-        {"file": "App/Services/BackupKit.swift", "line": 295, "symbol": "collectAppearance"},
-        {"file": "App/Services/BackupKit.swift", "line": 373, "symbol": "applyAppearance"}
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 189,
+          "symbol": "struct Appearance"
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 219,
+          "symbol": "CodingKeys recentCount = \"recent\""
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 295,
+          "symbol": "collectAppearance"
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 373,
+          "symbol": "applyAppearance"
+        }
       ],
-      "tags": ["外观", "迁移"],
+      "tags": [
+        "外观",
+        "迁移"
+      ],
       "status": "implemented"
     },
     {
@@ -2401,12 +4178,31 @@
         "folded 只接受当前真存在的组名。"
       ],
       "evidence": [
-        {"file": "App/Services/BackupKit.swift", "line": 233, "symbol": "var deviceOrg"},
-        {"file": "App/Services/BackupKit.swift", "line": 320, "symbol": "collectDeviceOrg"},
-        {"file": "App/Services/BackupKit.swift", "line": 343, "symbol": "applyGlobalsAppearanceAndOrg"},
-        {"file": "App/Services/BackupKit.swift", "line": 349, "symbol": "known = 包内 ∩ 本机"}
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 233,
+          "symbol": "var deviceOrg"
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 320,
+          "symbol": "collectDeviceOrg"
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 343,
+          "symbol": "applyGlobalsAppearanceAndOrg"
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 349,
+          "symbol": "known = 包内 ∩ 本机"
+        }
       ],
-      "tags": ["设备组织", "迁移"],
+      "tags": [
+        "设备组织",
+        "迁移"
+      ],
       "status": "implemented"
     },
     {
@@ -2423,11 +4219,25 @@
         "members 为空时置 nil。"
       ],
       "evidence": [
-        {"file": "App/Services/BackupKit.swift", "line": 249, "symbol": "collectAll()"},
-        {"file": "App/Services/BackupKit.swift", "line": 256, "symbol": "Device.Meta 逐项"},
-        {"file": "App/Services/BackupKit.swift", "line": 279, "symbol": "BackupBundle 组装"}
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 249,
+          "symbol": "collectAll()"
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 256,
+          "symbol": "Device.Meta 逐项"
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 279,
+          "symbol": "BackupBundle 组装"
+        }
       ],
-      "tags": ["导出"],
+      "tags": [
+        "导出"
+      ],
       "status": "implemented"
     },
     {
@@ -2445,13 +4255,36 @@
         "currentMac 只在本机确实存在该锁时才切换。"
       ],
       "evidence": [
-        {"file": "App/Services/BackupKit.swift", "line": 397, "symbol": "restoreAll(_:)"},
-        {"file": "App/Services/BackupKit.swift", "line": 413, "symbol": "mac/skey 守卫"},
-        {"file": "App/Services/BackupKit.swift", "line": 422, "symbol": "owner 重映射 / 置 nil"},
-        {"file": "App/Services/BackupKit.swift", "line": 451, "symbol": "otpKeys 白名单"},
-        {"file": "App/Services/BackupKit.swift", "line": 479, "symbol": "currentMac 校验"}
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 397,
+          "symbol": "restoreAll(_:)"
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 413,
+          "symbol": "mac/skey 守卫"
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 422,
+          "symbol": "owner 重映射 / 置 nil"
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 451,
+          "symbol": "otpKeys 白名单"
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 479,
+          "symbol": "currentMac 校验"
+        }
       ],
-      "tags": ["恢复", "白名单"],
+      "tags": [
+        "恢复",
+        "白名单"
+      ],
       "status": "implemented"
     },
     {
@@ -2468,11 +4301,26 @@
         "导出/恢复/预演共用同一 prune 口径。"
       ],
       "evidence": [
-        {"file": "App/Services/BackupStudioKit.swift", "line": 12, "symbol": "struct BZones"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 330, "symbol": "bundleFor(_:)"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 336, "symbol": "prune(_:_:)"}
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 12,
+          "symbol": "struct BZones"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 330,
+          "symbol": "bundleFor(_:)"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 336,
+          "symbol": "prune(_:_:)"
+        }
       ],
-      "tags": ["分区", "选择性"],
+      "tags": [
+        "分区",
+        "选择性"
+      ],
       "status": "implemented"
     },
     {
@@ -2491,13 +4339,37 @@
         "返回 (imported, overwritten, skipped)。"
       ],
       "evidence": [
-        {"file": "App/Services/BackupStudioKit.swift", "line": 504, "symbol": "restore(bundle:zones:lockActs:conflictTakeBackup:makeSnapshot:)"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 510, "symbol": "清 currentMac"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 532, "symbol": "act merge/keep/skip"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 557, "symbol": "冲突裁决 guard"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 613, "symbol": "返回三元组"}
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 504,
+          "symbol": "restore(bundle:zones:lockActs:conflictTakeBackup:makeSnapshot:)"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 510,
+          "symbol": "清 currentMac"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 532,
+          "symbol": "act merge/keep/skip"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 557,
+          "symbol": "冲突裁决 guard"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 613,
+          "symbol": "返回三元组"
+        }
       ],
-      "tags": ["合并", "冲突", "迁移"],
+      "tags": [
+        "合并",
+        "冲突",
+        "迁移"
+      ],
       "status": "implemented"
     },
     {
@@ -2515,13 +4387,36 @@
         "Preview 含来源（备份时间 + 来源锁名）、schema、分区统计文本、macs、密码/指纹/成员数、抽样命中数、trace 前 5 行、checksum 状态。"
       ],
       "evidence": [
-        {"file": "App/Services/BackupStudioKit.swift", "line": 368, "symbol": "struct Preview"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 400, "symbol": "parsePreview"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 412, "symbol": "schema 上限拒绝"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 442, "symbol": "stripCommentHeader"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 456, "symbol": "looksEncrypted 全键判据"}
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 368,
+          "symbol": "struct Preview"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 400,
+          "symbol": "parsePreview"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 412,
+          "symbol": "schema 上限拒绝"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 442,
+          "symbol": "stripCommentHeader"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 456,
+          "symbol": "looksEncrypted 全键判据"
+        }
       ],
-      "tags": ["预演", "导入"],
+      "tags": [
+        "预演",
+        "导入"
+      ],
       "status": "implemented"
     },
     {
@@ -2537,11 +4432,26 @@
         "每级判断读的是已推进的 s，因此可重复执行。"
       ],
       "evidence": [
-        {"file": "App/Services/BackupStudioKit.swift", "line": 470, "symbol": "upgradeChain"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 474, "symbol": "v3 mac 归一化"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 481, "symbol": "v5 只推进版本号"}
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 470,
+          "symbol": "upgradeChain"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 474,
+          "symbol": "v3 mac 归一化"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 481,
+          "symbol": "v5 只推进版本号"
+        }
       ],
-      "tags": ["迁移", "schema"],
+      "tags": [
+        "迁移",
+        "schema"
+      ],
       "status": "partial"
     },
     {
@@ -2558,12 +4468,31 @@
         "JValue.stringify 紧凑输出：非 ASCII 原样、控制符 \\uXXXX、整数值输出整数形态。"
       ],
       "evidence": [
-        {"file": "App/Services/BackupCanonical.swift", "line": 8, "symbol": "enum JValue"},
-        {"file": "App/Services/BackupCanonical.swift", "line": 186, "symbol": "canonical(_:)"},
-        {"file": "App/Services/BackupCanonical.swift", "line": 203, "symbol": "members 按 id 排序"},
-        {"file": "App/Services/BackupCanonical.swift", "line": 286, "symbol": "exportText 追加 checksum"}
+        {
+          "file": "App/Services/BackupCanonical.swift",
+          "line": 8,
+          "symbol": "enum JValue"
+        },
+        {
+          "file": "App/Services/BackupCanonical.swift",
+          "line": 186,
+          "symbol": "canonical(_:)"
+        },
+        {
+          "file": "App/Services/BackupCanonical.swift",
+          "line": 203,
+          "symbol": "members 按 id 排序"
+        },
+        {
+          "file": "App/Services/BackupCanonical.swift",
+          "line": 286,
+          "symbol": "exportText 追加 checksum"
+        }
       ],
-      "tags": ["canonical", "互通"],
+      "tags": [
+        "canonical",
+        "互通"
+      ],
       "status": "implemented"
     },
     {
@@ -2580,11 +4509,26 @@
         "FNV 无密钥，只作意外损坏检测，不是防篡改（构造者可重算）。"
       ],
       "evidence": [
-        {"file": "App/Services/BackupCanonical.swift", "line": 53, "symbol": "fnv1a32 算法说明"},
-        {"file": "App/Services/BackupCanonical.swift", "line": 61, "symbol": "fnv1a32Hex(_:)"},
-        {"file": "App/Services/BackupCanonical.swift", "line": 78, "symbol": "fnv1a32HexLegacy"}
+        {
+          "file": "App/Services/BackupCanonical.swift",
+          "line": 53,
+          "symbol": "fnv1a32 算法说明"
+        },
+        {
+          "file": "App/Services/BackupCanonical.swift",
+          "line": 61,
+          "symbol": "fnv1a32Hex(_:)"
+        },
+        {
+          "file": "App/Services/BackupCanonical.swift",
+          "line": 78,
+          "symbol": "fnv1a32HexLegacy"
+        }
       ],
-      "tags": ["校验和", "互通"],
+      "tags": [
+        "校验和",
+        "互通"
+      ],
       "status": "implemented"
     },
     {
@@ -2601,12 +4545,31 @@
         "「旧语义只对旧 schema 放行」的收紧已撤回：会把用户已有包误判成篡改，且不增安全。"
       ],
       "evidence": [
-        {"file": "App/Services/BackupStudioKit.swift", "line": 366, "symbol": "enum ChecksumState"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 381, "symbol": "checksumState"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 493, "symbol": "verifyChecksum"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 497, "symbol": "shortHash 8 位"}
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 366,
+          "symbol": "enum ChecksumState"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 381,
+          "symbol": "checksumState"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 493,
+          "symbol": "verifyChecksum"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 497,
+          "symbol": "shortHash 8 位"
+        }
       ],
-      "tags": ["校验", "完整性"],
+      "tags": [
+        "校验",
+        "完整性"
+      ],
       "status": "implemented"
     },
     {
@@ -2624,13 +4587,36 @@
         "还原只写快照里已有的键，不删快照之后用户新攒的内容。"
       ],
       "evidence": [
-        {"file": "App/Services/BackupStudioKit.swift", "line": 128, "symbol": "rollbackFamilies"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 148, "symbol": "struct RollbackBundle"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 159, "symbol": "makeRollbackPoint"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 190, "symbol": "canUndoLastRestore"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 208, "symbol": "restoreRollbackSnapshot"}
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 128,
+          "symbol": "rollbackFamilies"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 148,
+          "symbol": "struct RollbackBundle"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 159,
+          "symbol": "makeRollbackPoint"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 190,
+          "symbol": "canUndoLastRestore"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 208,
+          "symbol": "restoreRollbackSnapshot"
+        }
       ],
-      "tags": ["回滚", "安全网"],
+      "tags": [
+        "回滚",
+        "安全网"
+      ],
       "status": "implemented"
     },
     {
@@ -2649,11 +4635,26 @@
         "刻意不收：日志与遥测（体积大且不是内容）、外观与开关（恢复不该动它们）。"
       ],
       "evidence": [
-        {"file": "App/Services/BackupStudioKit.swift", "line": 121, "symbol": "判定标准两条"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 140, "symbol": "OTP 四族"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 145, "symbol": "meta 与设备组织族"}
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 121,
+          "symbol": "判定标准两条"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 140,
+          "symbol": "OTP 四族"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 145,
+          "symbol": "meta 与设备组织族"
+        }
       ],
-      "tags": ["回滚", "键族"],
+      "tags": [
+        "回滚",
+        "键族"
+      ],
       "status": "implemented"
     },
     {
@@ -2670,12 +4671,31 @@
         "onMonthlyTap：先 makeRollbackPoint + Milestones.recordBackup，等 hostRef 最多 2 秒再路由（锁着/伪装态记 pendingRoute）。"
       ],
       "evidence": [
-        {"file": "App/Services/BackupStudioKit.swift", "line": 53, "symbol": "cadence"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 72, "symbol": "monthlyDay"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 76, "symbol": "scheduleMonthlyBackup"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 99, "symbol": "onMonthlyTap"}
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 53,
+          "symbol": "cadence"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 72,
+          "symbol": "monthlyDay"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 76,
+          "symbol": "scheduleMonthlyBackup"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 99,
+          "symbol": "onMonthlyTap"
+        }
       ],
-      "tags": ["调度", "通知"],
+      "tags": [
+        "调度",
+        "通知"
+      ],
       "status": "implemented"
     },
     {
@@ -2693,12 +4713,31 @@
         "UI 文案只承诺「已交给系统，由系统择机执行」，不承诺接电即备。"
       ],
       "evidence": [
-        {"file": "App/Services/BackupStudioKit.swift", "line": 274, "symbol": "chargeBackupTaskId"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 289, "symbol": "registerChargeBackup"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 313, "symbol": "rescheduleChargeBackup"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 324, "symbol": "chargeBackupNote"}
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 274,
+          "symbol": "chargeBackupTaskId"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 289,
+          "symbol": "registerChargeBackup"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 313,
+          "symbol": "rescheduleChargeBackup"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 324,
+          "symbol": "chargeBackupNote"
+        }
       ],
-      "tags": ["后台任务", "诚实文案"],
+      "tags": [
+        "后台任务",
+        "诚实文案"
+      ],
       "status": "implemented"
     },
     {
@@ -2714,12 +4753,31 @@
         "badgeState：今日为 .fresh；否则 .stale(n)；无历史 .none。"
       ],
       "evidence": [
-        {"file": "App/Services/BackupStudioKit.swift", "line": 62, "symbol": "429 新鲜度注释"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 63, "symbol": "lastExportMs"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 689, "symbol": "enum BadgeState"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 690, "symbol": "badgeState"}
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 62,
+          "symbol": "429 新鲜度注释"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 63,
+          "symbol": "lastExportMs"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 689,
+          "symbol": "enum BadgeState"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 690,
+          "symbol": "badgeState"
+        }
       ],
-      "tags": ["角标", "新鲜度"],
+      "tags": [
+        "角标",
+        "新鲜度"
+      ],
       "status": "implemented"
     },
     {
@@ -2736,12 +4794,31 @@
         "本文件另有过期临时凭证计数 expiredTemporaryCount（to 早于今天且非 2118-12-31），注释位置与实际语义错位（见 unresolved）。"
       ],
       "evidence": [
-        {"file": "App/Services/BackupStudioKit.swift", "line": 617, "symbol": "193 体积预估注释"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 630, "symbol": "estimateBytes"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 637, "symbol": "markExportSize"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 638, "symbol": "sizeText"}
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 617,
+          "symbol": "193 体积预估注释"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 630,
+          "symbol": "estimateBytes"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 637,
+          "symbol": "markExportSize"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 638,
+          "symbol": "sizeText"
+        }
       ],
-      "tags": ["体积", "预估"],
+      "tags": [
+        "体积",
+        "预估"
+      ],
       "status": "implemented"
     },
     {
@@ -2758,12 +4835,31 @@
         "异常时置 kf_bk_selfwarn，UI 读 selfCheckWarning。"
       ],
       "evidence": [
-        {"file": "App/Services/BackupStudioKit.swift", "line": 649, "symbol": "fpVersion"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 650, "symbol": "dbFingerprint"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 664, "symbol": "hashMismatch"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 675, "symbol": "runStartupSelfCheck"}
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 649,
+          "symbol": "fpVersion"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 650,
+          "symbol": "dbFingerprint"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 664,
+          "symbol": "hashMismatch"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 675,
+          "symbol": "runStartupSelfCheck"
+        }
       ],
-      "tags": ["自检", "指纹"],
+      "tags": [
+        "自检",
+        "指纹"
+      ],
       "status": "implemented"
     },
     {
@@ -2780,12 +4876,26 @@
         "dataEvents 输出 yyyy-MM-dd HH:mm · label。"
       ],
       "evidence": [
-        {"file": "App/Services/BackupStudioKit.swift", "line": 933, "symbol": "struct BkEvent"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 934, "symbol": "recordEvent"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 941, "symbol": "旧形态兼容"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 946, "symbol": "dataEvents"}
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 845,
+          "symbol": "struct BkEvent"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 846,
+          "symbol": "recordEvent"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 858,
+          "symbol": "dataEvents"
+        }
       ],
-      "tags": ["事件", "历史"],
+      "tags": [
+        "事件",
+        "历史"
+      ],
       "status": "implemented"
     },
     {
@@ -2802,12 +4912,31 @@
         "basicAuth = base64(账号:应用密码) 作为 Authorization 头，运行时输入。"
       ],
       "evidence": [
-        {"file": "App/Services/BackupKit.swift", "line": 486, "symbol": "enum CloudSync"},
-        {"file": "App/Services/BackupKit.swift", "line": 487, "symbol": "remoteURL"},
-        {"file": "App/Services/BackupKit.swift", "line": 492, "symbol": "push"},
-        {"file": "App/Services/BackupKit.swift", "line": 506, "symbol": "download"}
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 486,
+          "symbol": "enum CloudSync"
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 487,
+          "symbol": "remoteURL"
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 492,
+          "symbol": "push"
+        },
+        {
+          "file": "App/Services/BackupKit.swift",
+          "line": 486,
+          "symbol": "download"
+        }
       ],
-      "tags": ["云同步", "WebDAV"],
+      "tags": [
+        "云同步",
+        "WebDAV"
+      ],
       "status": "implemented"
     },
     {
@@ -2826,14 +4955,42 @@
         "清理后写审计「WebDAV 滚动保留: 清理远端 N 个文件」。"
       ],
       "evidence": [
-        {"file": "App/Services/BackupStudioKit.swift", "line": 714, "symbol": "testWebdav"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 734, "symbol": "listRemote"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 745, "symbol": "Depth: 1"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 795, "symbol": "safeRemoteURL"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 827, "symbol": "pruneRemote"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 844, "symbol": "每月再保 1 份"}
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 714,
+          "symbol": "testWebdav"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 734,
+          "symbol": "listRemote"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 745,
+          "symbol": "Depth: 1"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 795,
+          "symbol": "safeRemoteURL"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 827,
+          "symbol": "pruneRemote"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 844,
+          "symbol": "每月再保 1 份"
+        }
       ],
-      "tags": ["远端", "保留策略", "安全"],
+      "tags": [
+        "远端",
+        "保留策略",
+        "安全"
+      ],
       "status": "implemented"
     },
     {
@@ -2850,11 +5007,26 @@
         "轮换目标是固定名 zklock-backup.enc；旧文件不另存历史副本（沿用固定名语义）。"
       ],
       "evidence": [
-        {"file": "App/Services/BackupStudioKit.swift", "line": 860, "symbol": "dryRunRemote"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 876, "symbol": "rotateKey"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 896, "symbol": "上传失败保留旧口令"}
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 860,
+          "symbol": "dryRunRemote"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 876,
+          "symbol": "rotateKey"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 896,
+          "symbol": "上传失败保留旧口令"
+        }
       ],
-      "tags": ["演练", "轮换"],
+      "tags": [
+        "演练",
+        "轮换"
+      ],
       "status": "implemented"
     },
     {
@@ -2872,12 +5044,31 @@
         "前台展示：免扰时段 completion([])，否则 [.banner, .sound]。"
       ],
       "evidence": [
-        {"file": "App/Services/BackupStudioKit.swift", "line": 960, "symbol": "final class UNDelegate"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 964, "symbol": "didReceive response"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 979, "symbol": "m4.care. 分派"},
-        {"file": "App/Services/BackupStudioKit.swift", "line": 996, "symbol": "willPresent"}
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 94,
+          "symbol": "final class UNDelegate"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 876,
+          "symbol": "didReceive response"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 891,
+          "symbol": "m4.care. 分派"
+        },
+        {
+          "file": "App/Services/BackupStudioKit.swift",
+          "line": 908,
+          "symbol": "willPresent"
+        }
       ],
-      "tags": ["通知", "深链"],
+      "tags": [
+        "通知",
+        "深链"
+      ],
       "status": "implemented"
     },
     {
@@ -2895,12 +5086,31 @@
         "inflate 用 compression_decode_buffer + COMPRESSION_ZLIB，声称输出超上限即判 zip 炸弹。"
       ],
       "evidence": [
-        {"file": "App/Services/ZipKit.swift", "line": 28, "symbol": "maxEntrySize / maxEntries"},
-        {"file": "App/Services/ZipKit.swift", "line": 36, "symbol": "inflate(_:expected:)"},
-        {"file": "App/Services/ZipKit.swift", "line": 50, "symbol": "parse(_:)"},
-        {"file": "App/Services/ZipKit.swift", "line": 105, "symbol": "crcOk 判定"}
+        {
+          "file": "App/Services/ZipKit.swift",
+          "line": 28,
+          "symbol": "maxEntrySize / maxEntries"
+        },
+        {
+          "file": "App/Services/ZipKit.swift",
+          "line": 36,
+          "symbol": "inflate(_:expected:)"
+        },
+        {
+          "file": "App/Services/ZipKit.swift",
+          "line": 50,
+          "symbol": "parse(_:)"
+        },
+        {
+          "file": "App/Services/ZipKit.swift",
+          "line": 105,
+          "symbol": "crcOk 判定"
+        }
       ],
-      "tags": ["ZIP", "校验"],
+      "tags": [
+        "ZIP",
+        "校验"
+      ],
       "status": "implemented"
     },
     {
@@ -2916,10 +5126,21 @@
         "crc32 从 0xFFFFFFFF 起算，末尾 ~ 取反。"
       ],
       "evidence": [
-        {"file": "App/Services/ZipKit.swift", "line": 6, "symbol": "enum CRC32"},
-        {"file": "App/Services/ZipKit.swift", "line": 14, "symbol": "crc32(_:)"}
+        {
+          "file": "App/Services/ZipKit.swift",
+          "line": 6,
+          "symbol": "enum CRC32"
+        },
+        {
+          "file": "App/Services/ZipKit.swift",
+          "line": 14,
+          "symbol": "crc32(_:)"
+        }
       ],
-      "tags": ["CRC", "算法"],
+      "tags": [
+        "CRC",
+        "算法"
+      ],
       "status": "implemented"
     },
     {
@@ -2937,12 +5158,31 @@
         "包内没有任何签名/来源校验（manifest 与文件名可构造、CRC 可重算）——代码里明确写明未认证，不假装已校验。"
       ],
       "evidence": [
-        {"file": "App/Services/ZipKit.swift", "line": 120, "symbol": "struct FirmwarePackage"},
-        {"file": "App/Services/ZipKit.swift", "line": 130, "symbol": "limits"},
-        {"file": "App/Services/ZipKit.swift", "line": 131, "symbol": "FirmwareKit.parse"},
-        {"file": "App/Services/ZipKit.swift", "line": 152, "symbol": "无签名/来源校验的显式说明"}
+        {
+          "file": "App/Services/ZipKit.swift",
+          "line": 120,
+          "symbol": "struct FirmwarePackage"
+        },
+        {
+          "file": "App/Services/ZipKit.swift",
+          "line": 130,
+          "symbol": "limits"
+        },
+        {
+          "file": "App/Services/ZipKit.swift",
+          "line": 131,
+          "symbol": "FirmwareKit.parse"
+        },
+        {
+          "file": "App/Services/ZipKit.swift",
+          "line": 152,
+          "symbol": "无签名/来源校验的显式说明"
+        }
       ],
-      "tags": ["固件", "解析"],
+      "tags": [
+        "固件",
+        "解析"
+      ],
       "status": "implemented"
     },
     {
@@ -2959,11 +5199,26 @@
         "nextMac：非 12 位直接返回；末字节 &+ 1（255→0 回绕）后拼回前缀。"
       ],
       "evidence": [
-        {"file": "App/Services/ZipKit.swift", "line": 166, "symbol": "versionFromFileName"},
-        {"file": "App/Services/ZipKit.swift", "line": 175, "symbol": "versionLt"},
-        {"file": "App/Services/ZipKit.swift", "line": 186, "symbol": "nextMac"}
+        {
+          "file": "App/Services/ZipKit.swift",
+          "line": 166,
+          "symbol": "versionFromFileName"
+        },
+        {
+          "file": "App/Services/ZipKit.swift",
+          "line": 175,
+          "symbol": "versionLt"
+        },
+        {
+          "file": "App/Services/ZipKit.swift",
+          "line": 186,
+          "symbol": "nextMac"
+        }
       ],
-      "tags": ["固件", "版本"],
+      "tags": [
+        "固件",
+        "版本"
+      ],
       "status": "implemented"
     },
     {
@@ -2980,12 +5235,31 @@
         "对比度由工具链机检（正文 ≥4.5:1、分隔线 ≥1.2:1），六套主题 + AMOLED 全表覆盖。"
       ],
       "evidence": [
-        {"file": "App/Core/DesignSystem.swift", "line": 106, "symbol": "enum DS"},
-        {"file": "App/Core/DesignSystem.swift", "line": 1, "symbol": "文件头注"},
-        {"file": "App/Core/DesignSystem.swift", "line": 20, "symbol": "Color.adaptive"},
-        {"file": "App/Core/DesignSystem.swift", "line": 697, "symbol": "enum ToneColor"}
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 106,
+          "symbol": "enum DS"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 1,
+          "symbol": "文件头注"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 20,
+          "symbol": "Color.adaptive"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 697,
+          "symbol": "enum ToneColor"
+        }
       ],
-      "tags": ["设计系统", "核心"],
+      "tags": [
+        "设计系统",
+        "核心"
+      ],
       "status": "implemented"
     },
     {
@@ -3002,12 +5276,31 @@
         "AccentTheme.preview 用 heroA→heroB 渐变作为色板小样，与 App 图标/主控卡同色。"
       ],
       "evidence": [
-        {"file": "App/Core/DesignSystem.swift", "line": 337, "symbol": "themeTable"},
-        {"file": "App/Core/DesignSystem.swift", "line": 386, "symbol": "effectiveKey 默认 brass"},
-        {"file": "App/Core/DesignSystem.swift", "line": 393, "symbol": "themed(role:key:)"},
-        {"file": "App/Core/DesignSystem.swift", "line": 612, "symbol": "accentThemes"}
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 337,
+          "symbol": "themeTable"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 386,
+          "symbol": "effectiveKey 默认 brass"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 393,
+          "symbol": "themed(role:key:)"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 612,
+          "symbol": "accentThemes"
+        }
       ],
-      "tags": ["主题", "外观"],
+      "tags": [
+        "主题",
+        "外观"
+      ],
       "status": "implemented"
     },
     {
@@ -3025,12 +5318,31 @@
         "仅在未显式指定主题 key 时生效，否则六个色板小样会被自定义色染成一样。"
       ],
       "evidence": [
-        {"file": "App/Core/DesignSystem.swift", "line": 444, "symbol": "enum CustomAccent"},
-        {"file": "App/Core/DesignSystem.swift", "line": 485, "symbol": "darkenTo"},
-        {"file": "App/Core/DesignSystem.swift", "line": 513, "symbol": "derived 六档角色"},
-        {"file": "App/Core/DesignSystem.swift", "line": 397, "symbol": "key == nil 才用自定义色"}
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 444,
+          "symbol": "enum CustomAccent"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 485,
+          "symbol": "darkenTo"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 513,
+          "symbol": "derived 六档角色"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 397,
+          "symbol": "key == nil 才用自定义色"
+        }
       ],
-      "tags": ["自定义色", "对比度"],
+      "tags": [
+        "自定义色",
+        "对比度"
+      ],
       "status": "implemented"
     },
     {
@@ -3047,12 +5359,31 @@
         "hairlineStrong 在加强时改用 HChairline，页面继续引用 hairline/textSub 不感知。"
       ],
       "evidence": [
-        {"file": "App/Core/DesignSystem.swift", "line": 287, "symbol": "isAMOLED"},
-        {"file": "App/Core/DesignSystem.swift", "line": 292, "symbol": "highContrast"},
-        {"file": "App/Core/DesignSystem.swift", "line": 381, "symbol": "amoledOverride"},
-        {"file": "App/Core/DesignSystem.swift", "line": 324, "symbol": "hairlineStrong"}
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 287,
+          "symbol": "isAMOLED"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 292,
+          "symbol": "highContrast"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 381,
+          "symbol": "amoledOverride"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 324,
+          "symbol": "hairlineStrong"
+        }
       ],
-      "tags": ["AMOLED", "高对比"],
+      "tags": [
+        "AMOLED",
+        "高对比"
+      ],
       "status": "implemented"
     },
     {
@@ -3070,13 +5401,36 @@
         "ToneColor 五档（neutral/accent/ok/warn/danger）供状态胶囊与文案统一取色。"
       ],
       "evidence": [
-        {"file": "App/Core/DesignSystem.swift", "line": 297, "symbol": "canvasBase / surfaceBase"},
-        {"file": "App/Core/DesignSystem.swift", "line": 303, "symbol": "ok / warn / danger"},
-        {"file": "App/Core/DesignSystem.swift", "line": 314, "symbol": "onSem / onFillWash"},
-        {"file": "App/Core/DesignSystem.swift", "line": 308, "symbol": "dayKind 三档固定色"},
-        {"file": "App/Core/DesignSystem.swift", "line": 697, "symbol": "ToneColor.color"}
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 297,
+          "symbol": "canvasBase / surfaceBase"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 303,
+          "symbol": "ok / warn / danger"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 314,
+          "symbol": "onSem / onFillWash"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 308,
+          "symbol": "dayKind 三档固定色"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 697,
+          "symbol": "ToneColor.color"
+        }
       ],
-      "tags": ["语义色", "明暗"],
+      "tags": [
+        "语义色",
+        "明暗"
+      ],
       "status": "implemented"
     },
     {
@@ -3093,12 +5447,31 @@
         "变更由 AppState.bumpAppearance 驱动全局重建，即时生效。"
       ],
       "evidence": [
-        {"file": "App/Core/DesignSystem.swift", "line": 110, "symbol": "enum Space"},
-        {"file": "App/Core/DesignSystem.swift", "line": 112, "symbol": "densityScale"},
-        {"file": "App/Core/DesignSystem.swift", "line": 120, "symbol": "d(v) 吸附 0.5pt"},
-        {"file": "App/Core/DesignSystem.swift", "line": 129, "symbol": "gutter"}
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 110,
+          "symbol": "enum Space"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 112,
+          "symbol": "densityScale"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 120,
+          "symbol": "d(v) 吸附 0.5pt"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 129,
+          "symbol": "gutter"
+        }
       ],
-      "tags": ["密度", "布局"],
+      "tags": [
+        "密度",
+        "布局"
+      ],
       "status": "implemented"
     },
     {
@@ -3114,11 +5487,26 @@
         "原第四档 pill=999 已删除（全仓胶囊一律走 Capsule()，该值零读取）。"
       ],
       "evidence": [
-        {"file": "App/Core/DesignSystem.swift", "line": 135, "symbol": "enum Radius"},
-        {"file": "App/Core/DesignSystem.swift", "line": 137, "symbol": "k 三档"},
-        {"file": "App/Core/DesignSystem.swift", "line": 144, "symbol": "card / control / tile"}
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 135,
+          "symbol": "enum Radius"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 137,
+          "symbol": "k 三档"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 144,
+          "symbol": "card / control / tile"
+        }
       ],
-      "tags": ["圆角", "外观"],
+      "tags": [
+        "圆角",
+        "外观"
+      ],
       "status": "implemented"
     },
     {
@@ -3137,14 +5525,41 @@
         "kf_plain 开启素颜模式时同时关掉空态插画（不再造第二个「关插画」开关）。"
       ],
       "evidence": [
-        {"file": "App/Core/DesignSystem.swift", "line": 152, "symbol": "enum Metric"},
-        {"file": "App/Core/DesignSystem.swift", "line": 153, "symbol": "dial 三档"},
-        {"file": "App/Core/DesignSystem.swift", "line": 160, "symbol": "rowMinH 44/60"},
-        {"file": "App/Core/DesignSystem.swift", "line": 166, "symbol": "tlGap 叠乘"},
-        {"file": "App/Core/DesignSystem.swift", "line": 184, "symbol": "digitDesign"},
-        {"file": "App/Core/DesignSystem.swift", "line": 178, "symbol": "emptyMascot = !kf_plain"}
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 152,
+          "symbol": "enum Metric"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 153,
+          "symbol": "dial 三档"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 160,
+          "symbol": "rowMinH 44/60"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 166,
+          "symbol": "tlGap 叠乘"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 184,
+          "symbol": "digitDesign"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 178,
+          "symbol": "emptyMascot = !kf_plain"
+        }
       ],
-      "tags": ["尺寸", "排印"],
+      "tags": [
+        "尺寸",
+        "排印"
+      ],
       "status": "implemented"
     },
     {
@@ -3161,11 +5576,26 @@
         "电量决定「还能不能开锁」，因此不在可选项里。"
       ],
       "evidence": [
-        {"file": "App/Core/DesignSystem.swift", "line": 189, "symbol": "HeroStats 说明"},
-        {"file": "App/Core/DesignSystem.swift", "line": 192, "symbol": "enum HeroStats"},
-        {"file": "App/Core/DesignSystem.swift", "line": 194, "symbol": "visible 白名单与回退"}
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 189,
+          "symbol": "HeroStats 说明"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 192,
+          "symbol": "enum HeroStats"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 194,
+          "symbol": "visible 白名单与回退"
+        }
       ],
-      "tags": ["Hero", "显隐"],
+      "tags": [
+        "Hero",
+        "显隐"
+      ],
       "status": "implemented"
     },
     {
@@ -3182,11 +5612,26 @@
         "名字里不写「模式/空间/过滤」——本 App 没有内容分级机制，叫儿童模式就是虚假承诺。"
       ],
       "evidence": [
-        {"file": "App/Core/DesignSystem.swift", "line": 418, "symbol": "895 命名理由"},
-        {"file": "App/Core/DesignSystem.swift", "line": 421, "symbol": "enum FriendlyPreset"},
-        {"file": "App/Core/DesignSystem.swift", "line": 422, "symbol": "apply 六键"}
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 418,
+          "symbol": "895 命名理由"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 421,
+          "symbol": "enum FriendlyPreset"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 422,
+          "symbol": "apply 六键"
+        }
       ],
-      "tags": ["预设", "可访问性"],
+      "tags": [
+        "预设",
+        "可访问性"
+      ],
       "status": "implemented"
     },
     {
@@ -3204,13 +5649,36 @@
         "Duration 另给纯时长令牌 0.15（quick）/0.25（standard），供只需时长的 withAnimation。"
       ],
       "evidence": [
-        {"file": "App/Core/DesignSystem.swift", "line": 230, "symbol": "enum Motion"},
-        {"file": "App/Core/DesignSystem.swift", "line": 235, "symbol": "systemReduceMotion"},
-        {"file": "App/Core/DesignSystem.swift", "line": 240, "symbol": "appLowBattery → calm"},
-        {"file": "App/Core/DesignSystem.swift", "line": 246, "symbol": "quick"},
-        {"file": "App/Core/DesignSystem.swift", "line": 277, "symbol": "enum Duration"}
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 230,
+          "symbol": "enum Motion"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 235,
+          "symbol": "systemReduceMotion"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 240,
+          "symbol": "appLowBattery → calm"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 246,
+          "symbol": "quick"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 277,
+          "symbol": "enum Duration"
+        }
       ],
-      "tags": ["动效", "降级"],
+      "tags": [
+        "动效",
+        "降级"
+      ],
       "status": "implemented"
     },
     {
@@ -3228,13 +5696,36 @@
         "整族标 @MainActor；唯一非 UI 调用点（预握手节律）显式跳主 actor。"
       ],
       "evidence": [
-        {"file": "App/Core/DesignSystem.swift", "line": 204, "symbol": "触感分级说明"},
-        {"file": "App/Core/DesignSystem.swift", "line": 211, "symbol": "enum Haptics"},
-        {"file": "App/Core/DesignSystem.swift", "line": 212, "symbol": "tick / trigger"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 169, "symbol": "DS.Haptics.tick 调用点"},
-        {"file": "App/Core/LinkSenseKit.swift", "line": 327, "symbol": "success 结果触感"}
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 204,
+          "symbol": "触感分级说明"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 211,
+          "symbol": "enum Haptics"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 212,
+          "symbol": "tick / trigger"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 169,
+          "symbol": "DS.Haptics.tick 调用点"
+        },
+        {
+          "file": "App/Core/LinkSenseKit.swift",
+          "line": 327,
+          "symbol": "success 结果触感"
+        }
       ],
-      "tags": ["触感", "分级"],
+      "tags": [
+        "触感",
+        "分级"
+      ],
       "status": "implemented"
     },
     {
@@ -3251,11 +5742,26 @@
         "BusyButton 是标准示例：菊花/图标 + 文字 + 44pt 触达 + busy/disabled 双闸。"
       ],
       "evidence": [
-        {"file": "App/Core/DesignSystem.swift", "line": 149, "symbol": "enum Hit min = 44"},
-        {"file": "App/Core/DesignSystem.swift", "line": 216, "symbol": "enum Icon 五档"},
-        {"file": "App/Core/DesignSystem.swift", "line": 1086, "symbol": "BusyButton 补 44pt 触达"}
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 149,
+          "symbol": "enum Hit min = 44"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 216,
+          "symbol": "enum Icon 五档"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 1036,
+          "symbol": "BusyButton 补 44pt 触达"
+        }
       ],
-      "tags": ["触达", "图标"],
+      "tags": [
+        "触达",
+        "图标"
+      ],
       "status": "implemented"
     },
     {
@@ -3274,14 +5780,41 @@
         "heroTint(light) 在反转色模式下降级为 text，避免淡色压中性浅底消失。"
       ],
       "evidence": [
-        {"file": "App/Core/DesignSystem.swift", "line": 731, "symbol": "heroScrim"},
-        {"file": "App/Core/DesignSystem.swift", "line": 736, "symbol": "heroPlate"},
-        {"file": "App/Core/DesignSystem.swift", "line": 734, "symbol": "heroGlow"},
-        {"file": "App/Core/DesignSystem.swift", "line": 859, "symbol": "struct HeroCard"},
-        {"file": "App/Core/DesignSystem.swift", "line": 889, "symbol": "漂移 ±8pt / 9s"},
-        {"file": "App/Core/DesignSystem.swift", "line": 900, "symbol": "降透明描边"}
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 731,
+          "symbol": "heroScrim"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 736,
+          "symbol": "heroPlate"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 734,
+          "symbol": "heroGlow"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 859,
+          "symbol": "struct HeroCard"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 889,
+          "symbol": "漂移 ±8pt / 9s"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 900,
+          "symbol": "降透明描边"
+        }
       ],
-      "tags": ["玻璃", "Hero"],
+      "tags": [
+        "玻璃",
+        "Hero"
+      ],
       "status": "implemented"
     },
     {
@@ -3298,13 +5831,36 @@
         "dsScreenBackground 把渐变放进 .background，内容留前景；flat 条件 = AMOLED 或 invertColors 或 reduceTransparency。"
       ],
       "evidence": [
-        {"file": "App/Core/DesignSystem.swift", "line": 556, "symbol": "Gradient.hero"},
-        {"file": "App/Core/DesignSystem.swift", "line": 572, "symbol": "screenMesh 3×3"},
-        {"file": "App/Core/DesignSystem.swift", "line": 593, "symbol": "Gradient.button"},
-        {"file": "App/Core/DesignSystem.swift", "line": 628, "symbol": "dsScreenBackground"},
-        {"file": "App/Core/DesignSystem.swift", "line": 642, "symbol": "flat 三档回落"}
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 556,
+          "symbol": "Gradient.hero"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 572,
+          "symbol": "screenMesh 3×3"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 593,
+          "symbol": "Gradient.button"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 628,
+          "symbol": "dsScreenBackground"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 642,
+          "symbol": "flat 三档回落"
+        }
       ],
-      "tags": ["渐变", "背景"],
+      "tags": [
+        "渐变",
+        "背景"
+      ],
       "status": "implemented"
     },
     {
@@ -3322,12 +5878,31 @@
         "注释称当前已无 UI 入口，isOn 恒 false。"
       ],
       "evidence": [
-        {"file": "App/Core/DesignSystem.swift", "line": 530, "symbol": "enum Festive"},
-        {"file": "App/Core/DesignSystem.swift", "line": 533, "symbol": "pairs 七项"},
-        {"file": "App/Core/DesignSystem.swift", "line": 545, "symbol": "todayPair 补班日排除"},
-        {"file": "App/Core/DesignSystem.swift", "line": 559, "symbol": "hero 出口分支"}
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 530,
+          "symbol": "enum Festive"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 533,
+          "symbol": "pairs 七项"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 545,
+          "symbol": "todayPair 补班日排除"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 559,
+          "symbol": "hero 出口分支"
+        }
       ],
-      "tags": ["节日", "主题"],
+      "tags": [
+        "节日",
+        "主题"
+      ],
       "status": "implemented"
     },
     {
@@ -3345,13 +5920,36 @@
         "演示链按钮补 44pt 触达与 accessibilityHint。"
       ],
       "evidence": [
-        {"file": "App/Core/DesignSystem.swift", "line": 917, "symbol": "struct EmptyState"},
-        {"file": "App/Core/DesignSystem.swift", "line": 960, "symbol": "struct GuidedEmptyView"},
-        {"file": "App/Core/DesignSystem.swift", "line": 980, "symbol": "进度点 7pt"},
-        {"file": "App/Core/DesignSystem.swift", "line": 1013, "symbol": "30 秒演示链"},
-        {"file": "App/Core/DesignSystem.swift", "line": 995, "symbol": "mascot 空块"}
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 917,
+          "symbol": "struct EmptyState"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 960,
+          "symbol": "struct GuidedEmptyView"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 980,
+          "symbol": "进度点 7pt"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 1013,
+          "symbol": "30 秒演示链"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 995,
+          "symbol": "mascot 空块"
+        }
       ],
-      "tags": ["空态", "引导"],
+      "tags": [
+        "空态",
+        "引导"
+      ],
       "status": "partial"
     },
     {
@@ -3368,12 +5966,31 @@
         "BusyButton 忙时显示 ProgressView + 文案「处理中…」，并同时 disabled(isBusy || disabled)。"
       ],
       "evidence": [
-        {"file": "App/Core/DesignSystem.swift", "line": 1030, "symbol": "PrimaryActionStyle"},
-        {"file": "App/Core/DesignSystem.swift", "line": 1043, "symbol": "SecondaryActionStyle"},
-        {"file": "App/Core/DesignSystem.swift", "line": 1056, "symbol": "DestructiveActionStyle"},
-        {"file": "App/Core/DesignSystem.swift", "line": 1066, "symbol": "BusyButton"}
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 1030,
+          "symbol": "PrimaryActionStyle"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 1043,
+          "symbol": "SecondaryActionStyle"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 1056,
+          "symbol": "DestructiveActionStyle"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 1036,
+          "symbol": "BusyButton"
+        }
       ],
-      "tags": ["按钮", "组件"],
+      "tags": [
+        "按钮",
+        "组件"
+      ],
       "status": "implemented"
     },
     {
@@ -3391,13 +6008,36 @@
         "accessibilityElement(children: .combine) + accessibilityLabel「标签 值」。"
       ],
       "evidence": [
-        {"file": "App/Core/DesignSystem.swift", "line": 770, "symbol": "struct MetricTile"},
-        {"file": "App/Core/DesignSystem.swift", "line": 796, "symbol": "monospacedDigit"},
-        {"file": "App/Core/DesignSystem.swift", "line": 797, "symbol": "fontDesign 数字字体令牌"},
-        {"file": "App/Core/DesignSystem.swift", "line": 800, "symbol": "contentTransition numericText"},
-        {"file": "App/Core/DesignSystem.swift", "line": 817, "symbol": "struct HeroStat"}
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 770,
+          "symbol": "struct MetricTile"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 796,
+          "symbol": "monospacedDigit"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 797,
+          "symbol": "fontDesign 数字字体令牌"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 800,
+          "symbol": "contentTransition numericText"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 817,
+          "symbol": "struct HeroStat"
+        }
       ],
-      "tags": ["读数", "动效"],
+      "tags": [
+        "读数",
+        "动效"
+      ],
       "status": "implemented"
     },
     {
@@ -3414,12 +6054,31 @@
         "FlowLayout 保留子视图固有宽度（胶囊仍贴字），不像 LazyVGrid 那样把每格拉等宽。"
       ],
       "evidence": [
-        {"file": "App/Core/DesignSystem.swift", "line": 40, "symbol": "mdText(_:)"},
-        {"file": "App/Core/DesignSystem.swift", "line": 46, "symbol": "stronglyEmphasized"},
-        {"file": "App/Core/DesignSystem.swift", "line": 63, "symbol": "struct FlowLayout"},
-        {"file": "App/Core/DesignSystem.swift", "line": 88, "symbol": "placeSubviews 换行"}
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 40,
+          "symbol": "mdText(_:)"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 46,
+          "symbol": "stronglyEmphasized"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 63,
+          "symbol": "struct FlowLayout"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 88,
+          "symbol": "placeSubviews 换行"
+        }
       ],
-      "tags": ["文本", "布局"],
+      "tags": [
+        "文本",
+        "布局"
+      ],
       "status": "implemented"
     },
     {
@@ -3440,15 +6099,46 @@
         "字号不做全局总闸：本文件只在注里引用无障碍页的 kf_ax_bigotp（OTP 大字），字号放大实际走系统动态字体与 AX 系列（不在本文件），故此处不列字号令牌。"
       ],
       "evidence": [
-        {"file": "App/Core/DesignSystem.swift", "line": 235, "symbol": "reduceMotionSnapshot"},
-        {"file": "App/Core/DesignSystem.swift", "line": 292, "symbol": "highContrast"},
-        {"file": "App/Core/DesignSystem.swift", "line": 642, "symbol": "invertColors / reduceTransparency"},
-        {"file": "App/Core/DesignSystem.swift", "line": 159, "symbol": "kf_ax_bigotp 交叉引用"},
-        {"file": "App/Core/DesignSystem.swift", "line": 664, "symbol": "axOnehand dy 48"},
-        {"file": "App/Core/DesignSystem.swift", "line": 870, "symbol": "AXPrefs.lefty 镜像"},
-        {"file": "App/Core/DesignSystem.swift", "line": 908, "symbol": "reduceMotion 静止漂移"}
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 235,
+          "symbol": "reduceMotionSnapshot"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 292,
+          "symbol": "highContrast"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 642,
+          "symbol": "invertColors / reduceTransparency"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 159,
+          "symbol": "kf_ax_bigotp 交叉引用"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 664,
+          "symbol": "axOnehand dy 48"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 870,
+          "symbol": "AXPrefs.lefty 镜像"
+        },
+        {
+          "file": "App/Core/DesignSystem.swift",
+          "line": 908,
+          "symbol": "reduceMotion 静止漂移"
+        }
       ],
-      "tags": ["无障碍", "降级"],
+      "tags": [
+        "无障碍",
+        "降级"
+      ],
       "status": "implemented"
     }
   ],

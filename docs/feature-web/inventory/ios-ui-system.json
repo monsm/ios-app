@@ -393,7 +393,7 @@
       "level": 3,
       "name": "导入恢复",
       "kind": "action",
-      "summary": "粘贴文本或选文件导入备份；相同设备覆盖、其它设备保留，门锁无需重置。",
+      "summary": "整包写回本机：成员同名并入、mac 归一化、归属重映射、全局段按白名单落地，并统计新增/覆盖数。2026-10-26 起全局段不再包含 OTP 密钥分区。",
       "details": [
         "Section「导入恢复」+ 说明行「相同设备将覆盖, 其它设备保留 (门锁无需重置)」",
         "多行 TextField（axis .vertical，lineLimit 3...6），关闭自动大写与自动纠错，busy 时禁用",
@@ -1200,7 +1200,7 @@
       "level": 4,
       "name": "备份分区模型（UI 未暴露）",
       "kind": "edge",
-      "summary": "引擎有四分区，但界面两处都传全选，没有分区勾选入口。",
+      "summary": "设备 / 凭证 / 记录 / 设置四个开关；未勾分区在包内置空，恢复端按 nil 语义跳过。2026-10-26 起「设置」分区不再含 OTP 密钥段。",
       "details": [
         "BZones 四档：devices（门锁钥匙串 + BLE 直连参数）/ credentials（密码与指纹台账）/ records（锁端日志缓存 + 全局事件）/ settings（成员 / 应用锁摘要 / dongle / gateway），默认全 true",
         "工作室上传 bundleFor(BZones())、入库 restore(dl.b, zones: BZones()) 都是全选",
@@ -1767,7 +1767,7 @@
       "level": 4,
       "name": "预演门确认入库",
       "kind": "action",
-      "summary": "下载只做校验与预演；确认恢复入库才真正写本机。",
+      "summary": "预演通过后才真正写库，并记录入库统计。原 `markImported()`（写 kf_bk_last_import 时间戳）只写不读，2026-10-26 删除。",
       "details": [
         "confirmationDialog 标题取 pendingDL.line，message「预演不动真库」",
         "按钮「确认恢复入库」→ restore(dl.b, zones: BZones()) + 按需 reloadAppearance + loadDevices + markImported",
@@ -6785,9 +6785,9 @@
       "parentKey": "unlock",
       "domain": "unlock",
       "level": 3,
-      "name": "只读安全模式闸",
+      "name": "只读安全模式（iOS 侧已删实现）",
       "kind": "edge",
-      "summary": "开锁这一族动作统一在入口被拦，而不是拦某个按钮。",
+      "summary": "**2026-10-26 精简：iOS 侧实现已删除。** 原判据 `SecurityPolicy.readOnly` 读的 `SecKey.safeModeOn` 从来没有写点（设置页无此开关）⇒ 恒 false ⇒ 两道 `guard allows(.unlock)` 永远放行，是纯死逻辑，已连同 `LockAction` 动作闸一并删除。原版 APK 仍有此能力（见 apk-baseline 的同名节点）。",
       "details": [
         "SecurityPolicy.allows(.unlock) 不通过 → showToast(SecurityPolicy.denialMessage(.unlock)) 并 return",
         "拦两层：requestUnlock()（圆盘/快捷操作/AppIntents/深链汇入）与 startUnlock()（自动开锁 rearm 后重发）",
@@ -6830,7 +6830,7 @@
         "安全",
         "开锁"
       ],
-      "status": "edge"
+      "status": "removed"
     },
     {
       "key": "unlock.gate",

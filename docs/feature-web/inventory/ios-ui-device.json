@@ -3583,7 +3583,7 @@
       "level": 2,
       "name": "安全中心",
       "kind": "sheet",
-      "summary": "独立挂载的安全页，当前实际只有两块：凭证风险体检（只读扫描）与一个空标题「下发护栏」。",
+      "summary": "独立安全页。**2026-10-26 精简后只剩两块**：凭证风险体检（只读扫描）与本机库体自检；原来的常驻水印层、「下发护栏」空分区、`SecKey` 常量组都随对应开关一起删除。",
       "details": [
         "设计意图是四分区（应用锁升级 / 防窥 / 审计留痕 / 数据销毁），但对应开关在现版本已无写入 UI",
         "以 sheet 呈现且自带 NavigationStack，左上「关闭」是唯一显式出口",
@@ -3597,12 +3597,12 @@
         },
         {
           "file": "App/UI/SecurityCenterView.swift",
-          "line": 157,
+          "line": 86,
           "symbol": ".navigationTitle(\"安全中心\")"
         },
         {
           "file": "App/UI/SecurityCenterView.swift",
-          "line": 161,
+          "line": 91,
           "symbol": "ToolbarItem(placement: .navigationBarLeading) { Button(\"关闭\") }"
         }
       ],
@@ -3639,7 +3639,7 @@
         },
         {
           "file": "App/UI/SecurityCenterView.swift",
-          "line": 135,
+          "line": 66,
           "symbol": "另有 \\(risks.count - 8) 条"
         }
       ],
@@ -3665,7 +3665,7 @@
       "evidence": [
         {
           "file": "App/UI/SecurityCenterView.swift",
-          "line": 143,
+          "line": 77,
           "symbol": "只读扫描本机台账: 同值 / 添加超 180 天未改 / 弱口令 (少于 6 位、全部同数字、连续序列)"
         },
         {
@@ -3706,7 +3706,7 @@
         },
         {
           "file": "App/UI/SecurityCenterView.swift",
-          "line": 165,
+          "line": 43,
           "symbol": ".overlay { if DB.store.getBool(SecKey.watermarkOn, false) { SecurityWatermark(…) } }"
         }
       ],
@@ -3714,30 +3714,6 @@
         "安全"
       ],
       "status": "partial"
-    },
-    {
-      "key": "security.center.guardrails",
-      "parentKey": "security.center",
-      "domain": "security",
-      "level": 3,
-      "name": "「下发护栏」空分区",
-      "kind": "edge",
-      "summary": "页面第二块只有一个 header「下发护栏」的 Section，内部没有任何行。",
-      "details": [
-        "Section 体为空，用户看到的是一个孤立标题",
-        "对应的护栏能力（递增冷却 / 失败留痕 / 审计保留期 / 只读安全模式）在 SecKey 里有键，但没有落到本页"
-      ],
-      "evidence": [
-        {
-          "file": "App/UI/SecurityCenterView.swift",
-          "line": 150,
-          "symbol": "Section { } header: { Text(\"下发护栏\") }"
-        }
-      ],
-      "tags": [
-        "空态"
-      ],
-      "status": "edge"
     },
     {
       "key": "security.center.shell",
@@ -3755,17 +3731,17 @@
       "evidence": [
         {
           "file": "App/UI/SecurityCenterView.swift",
-          "line": 171,
+          "line": 96,
           "symbol": ".onReceive(Timer.publish(every: 2, …))"
         },
         {
           "file": "App/UI/SecurityCenterView.swift",
-          "line": 183,
+          "line": 108,
           "symbol": ".onChange(of: app.pendingSettingsFocus)"
         },
         {
           "file": "App/UI/SecurityCenterView.swift",
-          "line": 162,
+          "line": 26,
           "symbol": "Button(\"关闭\") { dismiss() }"
         }
       ],
@@ -5707,7 +5683,7 @@
         },
         {
           "file": "App/Core/LockGuard.swift",
-          "line": 55,
+          "line": 18,
           "symbol": "static var readOnly: Bool { DB.store.getBool(SecKey.safeModeOn, false) }"
         },
         {

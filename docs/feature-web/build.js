@@ -82,7 +82,7 @@ function normNode(n, scout) {
     details: Array.isArray(n.details) ? n.details.map(String) : (n.details ? [String(n.details)] : []),
     evidence: (Array.isArray(n.evidence) ? n.evidence : [n.evidence]).map(normEvidence).filter(Boolean),
     tags: Array.isArray(n.tags) ? n.tags.map(String) : [],
-    status: ['implemented', 'partial', 'edge', 'deprecated'].includes(n.status) ? n.status : 'implemented',
+    status: ['implemented', 'partial', 'edge', 'deprecated', 'removed'].includes(n.status) ? n.status : 'implemented',
     platform,
     source: scout.scout || scout.__file,
   };

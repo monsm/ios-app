@@ -1657,12 +1657,6 @@
           "line": 13,
           "symbol": "encryptHex",
           "note": "key.count == 16 门禁"
-        },
-        {
-          "file": "App/Core/AESKit.swift",
-          "line": 38,
-          "symbol": "decryptHex",
-          "note": "不剥尾 0"
         }
       ],
       "tags": [
@@ -4039,11 +4033,6 @@
       ],
       "evidence": [
         {
-          "file": "App/Core/ZKCmdBuilder.swift",
-          "line": 283,
-          "symbol": "cmd30GWDeviceName"
-        },
-        {
           "file": "App/Services/HardwareService.swift",
           "line": 292,
           "symbol": "readGatewayState",
@@ -5659,7 +5648,7 @@
       "evidence": [
         {
           "file": "App/Services/HardwareService.swift",
-          "line": 375,
+          "line": 346,
           "symbol": "errCodeOf"
         },
         {

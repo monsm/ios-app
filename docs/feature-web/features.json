@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-26T08:17:12.807Z",
+    "generated": "2026-10-26T08:19:35.435Z",
     "sources": [
       {
         "scout": "android-native",
@@ -25,7 +25,7 @@
         "scout": "ios-core-data",
         "platform": "ios",
         "file": "ios-core-data.json",
-        "nodes": 180
+        "nodes": 177
       },
       {
         "scout": "ios-core-proto",
@@ -43,7 +43,7 @@
         "scout": "ios-ui-device",
         "platform": "ios",
         "file": "ios-ui-device.json",
-        "nodes": 160
+        "nodes": 159
       },
       {
         "scout": "ios-ui-records",
@@ -14719,9 +14719,9 @@
       "parent": "unlock",
       "domain": "unlock",
       "level": 3,
-      "name": "只读安全模式闸",
+      "name": "只读安全模式（iOS 侧已删实现）",
       "kind": "screen",
-      "summary": "纯说明页：A 模式单因子、B 模式双因子、C 级在 B 基础上停止广播（KX 才显示 C）。",
+      "summary": "**2026-10-26 精简：iOS 侧实现已删除。** 原判据 `SecurityPolicy.readOnly` 读的 `SecKey.safeModeOn` 从来没有写点（设置页无此开关）⇒ 恒 false ⇒ 两道 `guard allows(.unlock)` 永远放行，是纯死逻辑，已连同 `LockAction` 动作闸一并删除。原版 APK 仍有此能力（见 apk-baseline 的同名节点）。",
       "details": [
         "A「只需要单一方式（密码／指纹／手机）验证通过就可以开锁」",
         "B「两种不同方式（指纹+密码／指纹+手机／手机+密码）组合」",
@@ -14843,7 +14843,7 @@
       ],
       "status": {
         "apk": "implemented",
-        "ios": "edge"
+        "ios": "removed"
       },
       "commands": [],
       "sources": [
@@ -14853,7 +14853,7 @@
       "childCount": 0,
       "isDomain": false,
       "weight": 1,
-      "path": "开锁与鉴权 › 只读安全模式闸"
+      "path": "开锁与鉴权 › 只读安全模式（iOS 侧已删实现）"
     },
     {
       "id": "unlock.autoopen.master-switch",
@@ -21654,10 +21654,10 @@
         {
           "platform": "ios",
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2615,
+          "line": 2415,
           "symbol": "FpDetailStudio",
           "note": "指纹不存在空态",
-          "text": ""
+          "text": "struct FpDetailStudio: View {"
         }
       ],
       "platformEvidence": {
@@ -21676,7 +21676,7 @@
           },
           {
             "file": "App/UI/CredentialStudio.swift",
-            "line": 2615,
+            "line": 2415,
             "symbol": "FpDetailStudio",
             "note": "指纹不存在空态"
           }
@@ -22065,10 +22065,10 @@
         {
           "platform": "ios",
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2670,
+          "line": 2551,
           "symbol": "CredStudioEntryView",
           "note": "",
-          "text": ""
+          "text": "struct CredStudioEntryView: View {"
         }
       ],
       "platformEvidence": {
@@ -22087,7 +22087,7 @@
           },
           {
             "file": "App/UI/CredentialStudio.swift",
-            "line": 2670,
+            "line": 2551,
             "symbol": "CredStudioEntryView",
             "note": ""
           }
@@ -23811,10 +23811,10 @@
         {
           "platform": "ios",
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2643,
+          "line": 2473,
           "symbol": "FpDetailStudio.delete",
           "note": "fpDelete 15",
-          "text": ""
+          "text": "Task { await delete() }"
         }
       ],
       "platformEvidence": {
@@ -23833,7 +23833,7 @@
           },
           {
             "file": "App/UI/CredentialStudio.swift",
-            "line": 2643,
+            "line": 2473,
             "symbol": "FpDetailStudio.delete",
             "note": "fpDelete 15"
           }
@@ -33233,10 +33233,10 @@
         {
           "platform": "ios",
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2610,
+          "line": 2415,
           "symbol": "FpDetailStudio",
           "note": "prefillReplace",
-          "text": ""
+          "text": "struct FpDetailStudio: View {"
         }
       ],
       "platformEvidence": {
@@ -33255,7 +33255,7 @@
           },
           {
             "file": "App/UI/CredentialStudio.swift",
-            "line": 2610,
+            "line": 2415,
             "symbol": "FpDetailStudio",
             "note": "prefillReplace"
           }
@@ -33309,10 +33309,10 @@
         {
           "platform": "ios",
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2611,
+          "line": 2415,
           "symbol": "FpDetailStudio",
           "note": "sheet FpStudio",
-          "text": ""
+          "text": "struct FpDetailStudio: View {"
         }
       ],
       "platformEvidence": {
@@ -33325,7 +33325,7 @@
           },
           {
             "file": "App/UI/CredentialStudio.swift",
-            "line": 2611,
+            "line": 2415,
             "symbol": "FpDetailStudio",
             "note": "sheet FpStudio"
           }
@@ -33360,7 +33360,7 @@
       "level": 3,
       "name": "逐位打码与揭示（MaskedDigits）",
       "kind": "state",
-      "summary": "码值默认打码，可逐位点开；遮蔽样式三档，贴近面部或离开页面就复遮，首次揭示记一次敏感台账。",
+      "summary": "码值默认打码，可逐位点开；贴近面部或离开页面就复遮，首次揭示记一次敏感台账。遮蔽样式原有三档（`SecKey.maskStyle`），该键无写点 ⇒ 恒默认，2026-10-26 已删，现固定圆点。",
       "details": [
         "遮蔽三档取 DB.store.getString(SecKey.maskStyle)：stars=全星、tail4=只留末四位、其余圆点 (210-220, 264-270)",
         "逐位点按切换揭示/复遮；第一次揭示时 SensitiveLedger().record(查看, 密码) 只记一次（防点按刷屏）(224-230, 207-208)",
@@ -34063,7 +34063,7 @@
       "level": 4,
       "name": "码值遮挡、大字与复制",
       "kind": "state",
-      "summary": "六位码默认显示、可双击切大字、可开磨砂挡片防偷看，一键复制；未生成时显示 ******。",
+      "summary": "六位码默认显示、可双击切大字、可开磨砂挡片防偷看，一键复制；未生成时显示 ******。磨砂挡片键（`SecKey.frostedOn`）无写点 ⇒ 恒关，2026-10-26 已删。",
       "details": [
         "初始 otpPwd = 「******」(24)；字体走 monospacedDigit，kf_ax_bigotp 或 otpBig 为真时 largeTitle (1852-1854)",
         "双击码值切换 otpBig（挡片上也挂同一份，否则开挡片时双击失灵）(1862, 1878)",
@@ -38755,14 +38755,6 @@
           "symbol": "HouseWin",
           "note": "",
           "text": "// 793 访客虚拟分组: 只存在于本地展示层, 绝不写入锁端凭证表"
-        },
-        {
-          "platform": "ios",
-          "file": "App/Core/MemberHub.swift",
-          "line": 332,
-          "symbol": "CareDue",
-          "note": "",
-          "text": ""
         }
       ],
       "platformEvidence": {
@@ -38771,12 +38763,6 @@
             "file": "App/Core/MemberHub.swift",
             "line": 32,
             "symbol": "HouseWin",
-            "note": ""
-          },
-          {
-            "file": "App/Core/MemberHub.swift",
-            "line": 332,
-            "symbol": "CareDue",
             "note": ""
           }
         ],
@@ -39514,10 +39500,10 @@
         {
           "platform": "ios",
           "file": "App/Core/MemberHub.swift",
-          "line": 328,
+          "line": 313,
           "symbol": "elderMode",
           "note": "",
-          "text": ""
+          "text": "static var elderMode: Bool { DB.store.getBool(\"kf_elder_mode\") }"
         }
       ],
       "platformEvidence": {
@@ -39536,7 +39522,7 @@
           },
           {
             "file": "App/Core/MemberHub.swift",
-            "line": 328,
+            "line": 313,
             "symbol": "elderMode",
             "note": ""
           }
@@ -43335,10 +43321,10 @@
         {
           "platform": "ios",
           "file": "App/Core/LockStats.swift",
-          "line": 341,
+          "line": 330,
           "symbol": "recentAlarmMacs(_:)",
           "note": "",
-          "text": ""
+          "text": "static func recentAlarmMacs(_ usages: [LockUsage]? = nil) -> Set<String> {"
         }
       ],
       "platformEvidence": {
@@ -43351,7 +43337,7 @@
           },
           {
             "file": "App/Core/LockStats.swift",
-            "line": 341,
+            "line": 330,
             "symbol": "recentAlarmMacs(_:)",
             "note": ""
           }
@@ -46601,18 +46587,18 @@
         {
           "platform": "ios",
           "file": "App/UI/RecordsView.swift",
-          "line": 2991,
+          "line": 2515,
           "symbol": "RecordSearch.outOfWindow",
           "note": "数据源",
-          "text": ""
+          "text": "let outWins = RecordSearch.outOfWindow(macs: macs)"
         },
         {
           "platform": "ios",
           "file": "App/UI/RecordsView.swift",
-          "line": 3011,
+          "line": 371,
           "symbol": "OutWinSheet",
           "note": "越界文案",
-          "text": ""
+          "text": ".sheet(isPresented: $showOutWin) { OutWinSheet() }"
         },
         {
           "platform": "ios",
@@ -46633,13 +46619,13 @@
           },
           {
             "file": "App/UI/RecordsView.swift",
-            "line": 2991,
+            "line": 2515,
             "symbol": "RecordSearch.outOfWindow",
             "note": "数据源"
           },
           {
             "file": "App/UI/RecordsView.swift",
-            "line": 3011,
+            "line": 371,
             "symbol": "OutWinSheet",
             "note": "越界文案"
           },
@@ -50704,94 +50690,10 @@
       "status": {},
       "commands": [],
       "sources": [],
-      "childCount": 6,
+      "childCount": 5,
       "isDomain": true,
       "weight": 1,
       "path": "安全与防御"
-    },
-    {
-      "id": "security.center",
-      "key": "security.center",
-      "parent": "security",
-      "domain": "security",
-      "level": 2,
-      "name": "安全中心",
-      "kind": "sheet",
-      "summary": "独立挂载的安全页，当前实际只有两块：凭证风险体检（只读扫描）与一个空标题「下发护栏」。",
-      "details": [
-        "设计意图是四分区（应用锁升级 / 防窥 / 审计留痕 / 数据销毁），但对应开关在现版本已无写入 UI",
-        "以 sheet 呈现且自带 NavigationStack，左上「关闭」是唯一显式出口",
-        "页面自带 kf_ 键常量族 SecKey（14 个）供其它页面读写同一批偏好"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/SecurityCenterView.swift",
-          "line": 90,
-          "symbol": "struct SecurityCenterView",
-          "note": "",
-          "text": ".toolbar { ToolbarItem(placement: .navigationBarLeading) {"
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/SecurityCenterView.swift",
-          "line": 157,
-          "symbol": ".navigationTitle(\"安全中心\")",
-          "note": "",
-          "text": ""
-        },
-        {
-          "platform": "ios",
-          "file": "App/UI/SecurityCenterView.swift",
-          "line": 161,
-          "symbol": "ToolbarItem(placement: .navigationBarLeading) { Button(\"关闭\") }",
-          "note": "",
-          "text": ""
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/SecurityCenterView.swift",
-            "line": 90,
-            "symbol": "struct SecurityCenterView",
-            "note": ""
-          },
-          {
-            "file": "App/UI/SecurityCenterView.swift",
-            "line": 157,
-            "symbol": ".navigationTitle(\"安全中心\")",
-            "note": ""
-          },
-          {
-            "file": "App/UI/SecurityCenterView.swift",
-            "line": 161,
-            "symbol": "ToolbarItem(placement: .navigationBarLeading) { Button(\"关闭\") }",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "安全",
-        "核心"
-      ],
-      "status": {
-        "ios": "partial"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-device"
-      ],
-      "childCount": 4,
-      "isDomain": false,
-      "weight": 4,
-      "path": "安全与防御 › 安全中心"
     },
     {
       "id": "security.policy",
@@ -50799,9 +50701,9 @@
       "parent": "security",
       "domain": "security",
       "level": 2,
-      "name": "门锁安全模式说明（A/B 双验）",
+      "name": "安全策略判据口（SecurityPolicy）",
       "kind": "service",
-      "summary": "LockAction + SecurityPolicy 把只读模式、访客通道、分享遮半、敏感成员隐藏收成唯读点，界面不许再摸 DB.store。",
+      "summary": "2026-10-26 精简后 `SecurityPolicy` 只剩两条：`guestActive`（377 访客通道）与 `shareHalf`（376 分享遮半）。原 `readOnly`(296) 与 `LockAction` 六族动作闸因无写点已删除。",
       "details": [
         "此前这五枚开关只改自己的标签、全仓没有消费者，于是四句承诺一句没兑现（LockGuard.swift:5-7）",
         "刻意不加 @MainActor：判据口要能被界面、DestroyKit 与静态上下文一律读到（LockGuard.swift:42-45）",
@@ -50815,10 +50717,10 @@
         {
           "platform": "ios",
           "file": "App/Core/LockGuard.swift",
-          "line": 46,
+          "line": 14,
           "symbol": "SecurityPolicy",
           "note": "",
-          "text": ""
+          "text": "enum SecurityPolicy {"
         },
         {
           "platform": "ios",
@@ -50857,7 +50759,7 @@
         "ios": [
           {
             "file": "App/Core/LockGuard.swift",
-            "line": 46,
+            "line": 14,
             "symbol": "SecurityPolicy",
             "note": ""
           },
@@ -50907,10 +50809,94 @@
         "ios-core-data",
         "ios-ui-device"
       ],
-      "childCount": 4,
+      "childCount": 3,
       "isDomain": false,
-      "weight": 4,
-      "path": "安全与防御 › 门锁安全模式说明（A/B 双验）"
+      "weight": 3,
+      "path": "安全与防御 › 安全策略判据口（SecurityPolicy）"
+    },
+    {
+      "id": "security.center",
+      "key": "security.center",
+      "parent": "security",
+      "domain": "security",
+      "level": 2,
+      "name": "安全中心",
+      "kind": "sheet",
+      "summary": "独立安全页。**2026-10-26 精简后只剩两块**：凭证风险体检（只读扫描）与本机库体自检；原来的常驻水印层、「下发护栏」空分区、`SecKey` 常量组都随对应开关一起删除。",
+      "details": [
+        "设计意图是四分区（应用锁升级 / 防窥 / 审计留痕 / 数据销毁），但对应开关在现版本已无写入 UI",
+        "以 sheet 呈现且自带 NavigationStack，左上「关闭」是唯一显式出口",
+        "页面自带 kf_ 键常量族 SecKey（14 个）供其它页面读写同一批偏好"
+      ],
+      "evidence": [
+        {
+          "platform": "ios",
+          "file": "App/UI/SecurityCenterView.swift",
+          "line": 90,
+          "symbol": "struct SecurityCenterView",
+          "note": "",
+          "text": ".toolbar { ToolbarItem(placement: .navigationBarLeading) {"
+        },
+        {
+          "platform": "ios",
+          "file": "App/UI/SecurityCenterView.swift",
+          "line": 86,
+          "symbol": ".navigationTitle(\"安全中心\")",
+          "note": "",
+          "text": ".navigationTitle(\"安全中心\")"
+        },
+        {
+          "platform": "ios",
+          "file": "App/UI/SecurityCenterView.swift",
+          "line": 91,
+          "symbol": "ToolbarItem(placement: .navigationBarLeading) { Button(\"关闭\") }",
+          "note": "",
+          "text": "Button(\"关闭\") { dismiss() }"
+        }
+      ],
+      "platformEvidence": {
+        "ios": [
+          {
+            "file": "App/UI/SecurityCenterView.swift",
+            "line": 90,
+            "symbol": "struct SecurityCenterView",
+            "note": ""
+          },
+          {
+            "file": "App/UI/SecurityCenterView.swift",
+            "line": 86,
+            "symbol": ".navigationTitle(\"安全中心\")",
+            "note": ""
+          },
+          {
+            "file": "App/UI/SecurityCenterView.swift",
+            "line": 91,
+            "symbol": "ToolbarItem(placement: .navigationBarLeading) { Button(\"关闭\") }",
+            "note": ""
+          }
+        ],
+        "android": [],
+        "apk": []
+      },
+      "platforms": [
+        "ios"
+      ],
+      "platformCount": 1,
+      "tags": [
+        "安全",
+        "核心"
+      ],
+      "status": {
+        "ios": "partial"
+      },
+      "commands": [],
+      "sources": [
+        "ios-ui-device"
+      ],
+      "childCount": 3,
+      "isDomain": false,
+      "weight": 3,
+      "path": "安全与防御 › 安全中心"
     },
     {
       "id": "security.tailgate",
@@ -51077,74 +51063,6 @@
       "path": "安全与防御 › 敏感操作流水（388）"
     },
     {
-      "id": "security.destroy",
-      "key": "security.destroy",
-      "parent": "security",
-      "domain": "security",
-      "level": 2,
-      "name": "数据销毁（401）",
-      "kind": "service",
-      "summary": "Store 底层是 UserDefaults plist，所以「覆写」= 随机字节重灌再删除；销毁前还有一道备份闸。",
-      "details": [
-        "DestroyKit 目前只实现备份闸这一支，覆写流程在核弹销毁入口（AuditChain.swift:216-228）"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/Core/AuditChain.swift",
-          "line": 217,
-          "symbol": "DestroyKit",
-          "note": "",
-          "text": ""
-        },
-        {
-          "platform": "ios",
-          "file": "App/Core/AuditChain.swift",
-          "line": 216,
-          "symbol": "覆写收尾",
-          "note": "Store 底层 = UserDefaults plist",
-          "text": ""
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/Core/AuditChain.swift",
-            "line": 217,
-            "symbol": "DestroyKit",
-            "note": ""
-          },
-          {
-            "file": "App/Core/AuditChain.swift",
-            "line": 216,
-            "symbol": "覆写收尾",
-            "note": "Store 底层 = UserDefaults plist"
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "安全",
-        "数据销毁"
-      ],
-      "status": {
-        "ios": "partial"
-      },
-      "commands": [],
-      "sources": [
-        "ios-core-data"
-      ],
-      "childCount": 1,
-      "isDomain": false,
-      "weight": 1,
-      "path": "安全与防御 › 数据销毁（401）"
-    },
-    {
       "id": "security.defense",
       "key": "security.defense",
       "parent": "security",
@@ -51277,60 +51195,6 @@
       "path": "安全与防御 › 一键布防（cmd25，iOS 侧已补齐）"
     },
     {
-      "id": "security.center.guardrails",
-      "key": "security.center.guardrails",
-      "parent": "security.center",
-      "domain": "security",
-      "level": 3,
-      "name": "「下发护栏」空分区",
-      "kind": "edge",
-      "summary": "页面第二块只有一个 header「下发护栏」的 Section，内部没有任何行。",
-      "details": [
-        "Section 体为空，用户看到的是一个孤立标题",
-        "对应的护栏能力（递增冷却 / 失败留痕 / 审计保留期 / 只读安全模式）在 SecKey 里有键，但没有落到本页"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/UI/SecurityCenterView.swift",
-          "line": 150,
-          "symbol": "Section { } header: { Text(\"下发护栏\") }",
-          "note": "",
-          "text": ""
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/UI/SecurityCenterView.swift",
-            "line": 150,
-            "symbol": "Section { } header: { Text(\"下发护栏\") }",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "空态"
-      ],
-      "status": {
-        "ios": "edge"
-      },
-      "commands": [],
-      "sources": [
-        "ios-ui-device"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "安全与防御 › 安全中心 › 「下发护栏」空分区"
-    },
-    {
       "id": "security.defense.home",
       "key": "security.defense.home",
       "parent": "security.defense",
@@ -51455,10 +51319,10 @@
         {
           "platform": "ios",
           "file": "App/UI/SecurityCenterView.swift",
-          "line": 165,
+          "line": 43,
           "symbol": ".overlay { if DB.store.getBool(SecKey.watermarkOn, false) { SecurityWatermark(…) } }",
           "note": "",
-          "text": ""
+          "text": ".fixedSize(horizontal: false, vertical: true)"
         }
       ],
       "platformEvidence": {
@@ -51477,7 +51341,7 @@
           },
           {
             "file": "App/UI/SecurityCenterView.swift",
-            "line": 165,
+            "line": 43,
             "symbol": ".overlay { if DB.store.getBool(SecKey.watermarkOn, false) { SecurityWatermark(…) } }",
             "note": ""
           }
@@ -51512,7 +51376,7 @@
       "level": 3,
       "name": "访客通道与敏感成员隐藏",
       "kind": "setting",
-      "summary": "guestActive 时主 TabView 只暴露设备/记录；另有 hideSensitiveInGuest 开关（本机没有成员敏感标记位）。",
+      "summary": "`guestActive` 时主 TabView 只暴露设备/记录，进凭证/设置要先过口令。原描述里提到的 `hideSensitiveInGuest`（敏感成员隐藏）已随 2026-10-26 精简删除。",
       "details": [
         "kf_speek_guest 的开关 UI 已随安全中心子页删除，但老用户曾打开仍会生效，且已无入口再拨它（LockGuard.swift:48-51）",
         "hideSensitiveInGuest 读 SecKey.sensitiveOnly（LockGuard.swift:53）",
@@ -51522,32 +51386,18 @@
         {
           "platform": "ios",
           "file": "App/Core/LockGuard.swift",
-          "line": 51,
+          "line": 18,
           "symbol": "guestActive",
           "note": "",
-          "text": ""
-        },
-        {
-          "platform": "ios",
-          "file": "App/Core/LockGuard.swift",
-          "line": 53,
-          "symbol": "hideSensitiveInGuest",
-          "note": "",
-          "text": ""
+          "text": "static var guestActive: Bool { DB.store.getBool(\"kf_speek_guest\", false) }"
         }
       ],
       "platformEvidence": {
         "ios": [
           {
             "file": "App/Core/LockGuard.swift",
-            "line": 51,
+            "line": 18,
             "symbol": "guestActive",
-            "note": ""
-          },
-          {
-            "file": "App/Core/LockGuard.swift",
-            "line": 53,
-            "symbol": "hideSensitiveInGuest",
             "note": ""
           }
         ],
@@ -51573,7 +51423,7 @@
       "childCount": 0,
       "isDomain": false,
       "weight": 1,
-      "path": "安全与防御 › 门锁安全模式说明（A/B 双验） › 访客通道与敏感成员隐藏"
+      "path": "安全与防御 › 安全策略判据口（SecurityPolicy） › 访客通道与敏感成员隐藏"
     },
     {
       "id": "security.ledger.sensitive",
@@ -51609,10 +51459,10 @@
         {
           "platform": "ios",
           "file": "App/Core/AuditChain.swift",
-          "line": 207,
+          "line": 183,
           "symbol": "stamp(_:)",
           "note": "",
-          "text": ""
+          "text": "static func stamp(_ item: Item) -> String {"
         }
       ],
       "platformEvidence": {
@@ -51631,7 +51481,7 @@
           },
           {
             "file": "App/Core/AuditChain.swift",
-            "line": 207,
+            "line": 183,
             "symbol": "stamp(_:)",
             "note": ""
           }
@@ -51659,91 +51509,6 @@
       "isDomain": false,
       "weight": 1,
       "path": "安全与防御 › 敏感操作流水（388） › 流水条目、成员维度与时刻格式"
-    },
-    {
-      "id": "security.policy.actions",
-      "key": "security.policy.actions",
-      "parent": "security.policy",
-      "domain": "security",
-      "level": 3,
-      "name": "六类危险动作与逐条拒绝文案",
-      "kind": "rule",
-      "summary": "unlock / writeCredential / provision / dfu / destroy / importExport 六族，只读模式下全停，且各自有一句点名是哪个开关拦的实话。",
-      "details": [
-        "全族 blockedInReadOnly 都是 true；设置页自身的开关不在这一族（否则会把关掉只读模式的路也锁死）（LockGuard.swift:23-26）",
-        "denial 文案逐条不同：开锁已停用 / 凭证写入已停用 / 网关配网已停用 / 固件升级已停用 / 销毁与清空已停用 / 导入导出已停用（LockGuard.swift:29-38）",
-        "allows(action) = !(readOnly && action.blockedInReadOnly)（LockGuard.swift:61）"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/Core/LockGuard.swift",
-          "line": 15,
-          "symbol": "LockAction",
-          "note": "",
-          "text": "// ---------- 唯一读点: 界面与调用点一律从这里取, 不许再摸 DB.store ----------"
-        },
-        {
-          "platform": "ios",
-          "file": "App/Core/LockGuard.swift",
-          "line": 61,
-          "symbol": "allows(_:)",
-          "note": "",
-          "text": ""
-        },
-        {
-          "platform": "ios",
-          "file": "App/Core/LockGuard.swift",
-          "line": 55,
-          "symbol": "readOnly",
-          "note": "SecKey.safeModeOn",
-          "text": ""
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/Core/LockGuard.swift",
-            "line": 15,
-            "symbol": "LockAction",
-            "note": ""
-          },
-          {
-            "file": "App/Core/LockGuard.swift",
-            "line": 61,
-            "symbol": "allows(_:)",
-            "note": ""
-          },
-          {
-            "file": "App/Core/LockGuard.swift",
-            "line": 55,
-            "symbol": "readOnly",
-            "note": "SecKey.safeModeOn"
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "安全",
-        "策略",
-        "只读"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-core-data"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "安全与防御 › 门锁安全模式说明（A/B 双验） › 六类危险动作与逐条拒绝文案"
     },
     {
       "id": "security.center.risks",
@@ -51780,10 +51545,10 @@
         {
           "platform": "ios",
           "file": "App/UI/SecurityCenterView.swift",
-          "line": 135,
+          "line": 66,
           "symbol": "另有 \\(risks.count - 8) 条",
           "note": "",
-          "text": ""
+          "text": "if risks.count > 8 {"
         }
       ],
       "platformEvidence": {
@@ -51802,7 +51567,7 @@
           },
           {
             "file": "App/UI/SecurityCenterView.swift",
-            "line": 135,
+            "line": 66,
             "symbol": "另有 \\(risks.count - 8) 条",
             "note": ""
           }
@@ -51930,7 +51695,7 @@
       "childCount": 0,
       "isDomain": false,
       "weight": 1,
-      "path": "安全与防御 › 门锁安全模式说明（A/B 双验） › 切换到 B 模式（cmd20 + 回读校验）"
+      "path": "安全与防御 › 安全策略判据口（SecurityPolicy） › 切换到 B 模式（cmd20 + 回读校验）"
     },
     {
       "id": "security.tailgate.set",
@@ -52020,77 +51785,6 @@
       "path": "安全与防御 › 防尾随入室（等待时长） › 下发等待时长（cmd24 档位）"
     },
     {
-      "id": "security.destroy.backup-gate",
-      "key": "security.destroy.backup-gate",
-      "parent": "security.destroy",
-      "domain": "security",
-      "level": 3,
-      "name": "销毁前备份闸（7 天）",
-      "kind": "rule",
-      "summary": "7 天内没有备份文件就拦截销毁；备份时刻读既有 kf_backup_hist，不另造写点。",
-      "details": [
-        "历史写的是 epoch 毫秒，lastBackupAt 读时 /1000 换算成秒（AuditChain.swift:219-224）",
-        "backupGatePass = 有备份 且 now - last < 7*86400（AuditChain.swift:225-227）",
-        "kf_backup_hist 由 Milestones.recordBackup 写入，最多 60 条（Milestones.swift:29-36）"
-      ],
-      "evidence": [
-        {
-          "platform": "ios",
-          "file": "App/Core/AuditChain.swift",
-          "line": 221,
-          "symbol": "lastBackupAt",
-          "note": "",
-          "text": ""
-        },
-        {
-          "platform": "ios",
-          "file": "App/Core/AuditChain.swift",
-          "line": 225,
-          "symbol": "backupGatePass",
-          "note": "",
-          "text": ""
-        }
-      ],
-      "platformEvidence": {
-        "ios": [
-          {
-            "file": "App/Core/AuditChain.swift",
-            "line": 221,
-            "symbol": "lastBackupAt",
-            "note": ""
-          },
-          {
-            "file": "App/Core/AuditChain.swift",
-            "line": 225,
-            "symbol": "backupGatePass",
-            "note": ""
-          }
-        ],
-        "android": [],
-        "apk": []
-      },
-      "platforms": [
-        "ios"
-      ],
-      "platformCount": 1,
-      "tags": [
-        "安全",
-        "数据销毁",
-        "阈值"
-      ],
-      "status": {
-        "ios": "implemented"
-      },
-      "commands": [],
-      "sources": [
-        "ios-core-data"
-      ],
-      "childCount": 0,
-      "isDomain": false,
-      "weight": 1,
-      "path": "安全与防御 › 数据销毁（401） › 销毁前备份闸（7 天）"
-    },
-    {
       "id": "security.center.shell",
       "key": "security.center.shell",
       "parent": "security.center",
@@ -52108,45 +51802,45 @@
         {
           "platform": "ios",
           "file": "App/UI/SecurityCenterView.swift",
-          "line": 171,
+          "line": 96,
           "symbol": ".onReceive(Timer.publish(every: 2, …))",
           "note": "",
-          "text": ""
+          "text": ".onReceive(Timer.publish(every: 2, on: .main, in: .common).autoconnect()) { _ in"
         },
         {
           "platform": "ios",
           "file": "App/UI/SecurityCenterView.swift",
-          "line": 183,
+          "line": 108,
           "symbol": ".onChange(of: app.pendingSettingsFocus)",
           "note": "",
-          "text": ""
+          "text": ".onChange(of: app.pendingSettingsFocus) { _, f in"
         },
         {
           "platform": "ios",
           "file": "App/UI/SecurityCenterView.swift",
-          "line": 162,
+          "line": 26,
           "symbol": "Button(\"关闭\") { dismiss() }",
           "note": "",
-          "text": ""
+          "text": "@Environment(\\.dismiss) private var dismiss"
         }
       ],
       "platformEvidence": {
         "ios": [
           {
             "file": "App/UI/SecurityCenterView.swift",
-            "line": 171,
+            "line": 96,
             "symbol": ".onReceive(Timer.publish(every: 2, …))",
             "note": ""
           },
           {
             "file": "App/UI/SecurityCenterView.swift",
-            "line": 183,
+            "line": 108,
             "symbol": ".onChange(of: app.pendingSettingsFocus)",
             "note": ""
           },
           {
             "file": "App/UI/SecurityCenterView.swift",
-            "line": 162,
+            "line": 26,
             "symbol": "Button(\"关闭\") { dismiss() }",
             "note": ""
           }
@@ -52191,45 +51885,45 @@
         {
           "platform": "ios",
           "file": "App/Core/LockGuard.swift",
-          "line": 57,
+          "line": 21,
           "symbol": "shareHalf",
           "note": "",
-          "text": ""
+          "text": "static var shareHalf: Bool { DB.store.getBool(\"kf_speek_sharehalf\", true) }"
         },
         {
           "platform": "ios",
           "file": "App/Core/LockGuard.swift",
-          "line": 69,
+          "line": 27,
           "symbol": "masked(_:)",
           "note": "",
-          "text": ""
+          "text": "static func masked(_ digits: String) -> String {"
         },
         {
           "platform": "ios",
           "file": "App/Core/LockGuard.swift",
-          "line": 76,
+          "line": 34,
           "symbol": "halfMasked(_:)",
           "note": "",
-          "text": ""
+          "text": "static func halfMasked(_ digits: String) -> String { shareHalf ? masked(digits) : digits }"
         }
       ],
       "platformEvidence": {
         "ios": [
           {
             "file": "App/Core/LockGuard.swift",
-            "line": 57,
+            "line": 21,
             "symbol": "shareHalf",
             "note": ""
           },
           {
             "file": "App/Core/LockGuard.swift",
-            "line": 69,
+            "line": 27,
             "symbol": "masked(_:)",
             "note": ""
           },
           {
             "file": "App/Core/LockGuard.swift",
-            "line": 76,
+            "line": 34,
             "symbol": "halfMasked(_:)",
             "note": ""
           }
@@ -52256,7 +51950,7 @@
       "childCount": 0,
       "isDomain": false,
       "weight": 1,
-      "path": "安全与防御 › 门锁安全模式说明（A/B 双验） › 遮下半段（376）"
+      "path": "安全与防御 › 安全策略判据口（SecurityPolicy） › 遮下半段（376）"
     },
     {
       "id": "security.defense.rules",
@@ -52431,10 +52125,10 @@
         {
           "platform": "ios",
           "file": "App/UI/SecurityCenterView.swift",
-          "line": 143,
+          "line": 77,
           "symbol": "只读扫描本机台账: 同值 / 添加超 180 天未改 / 弱口令 (少于 6 位、全部同数字、连续序列)",
           "note": "",
-          "text": ""
+          "text": "Text(\"只读扫描本机台账: 同值 / 添加超 180 天未改 / 弱口令 (少于 6 位、全部同数字、连续序列)。处置在凭证 Tab 改码。\")   // 305/306 只读扫描本机台账"
         },
         {
           "platform": "ios",
@@ -52449,7 +52143,7 @@
         "ios": [
           {
             "file": "App/UI/SecurityCenterView.swift",
-            "line": 143,
+            "line": 77,
             "symbol": "只读扫描本机台账: 同值 / 添加超 180 天未改 / 弱口令 (少于 6 位、全部同数字、连续序列)",
             "note": ""
           },
@@ -52927,11 +52621,11 @@
         },
         {
           "platform": "ios",
-          "file": "App/Services/BackupKit.swift",
-          "line": 506,
-          "symbol": "download",
+          "file": "App/UI/BackupView.swift",
+          "line": 18,
+          "symbol": "cloudAcct 读穿透",
           "note": "",
-          "text": ""
+          "text": "private var cloudAcct: String { DB.store.getString(\"kf_cloudcfg_acct\") }"
         }
       ],
       "platformEvidence": {
@@ -52952,12 +52646,6 @@
             "file": "App/Services/BackupKit.swift",
             "line": 492,
             "symbol": "push",
-            "note": ""
-          },
-          {
-            "file": "App/Services/BackupKit.swift",
-            "line": 506,
-            "symbol": "download",
             "note": ""
           },
           {
@@ -53036,7 +52724,7 @@
       "level": 3,
       "name": "覆盖式恢复 restoreAll",
       "kind": "action",
-      "summary": "整包写回本机：成员同名并入、mac 归一化、归属重映射、全局段按白名单落地，并统计新增/覆盖数。",
+      "summary": "整包写回本机：成员同名并入、mac 归一化、归属重映射、全局段按白名单落地，并统计新增/覆盖数。2026-10-26 起全局段不再包含 OTP 密钥分区。",
       "details": [
         "先按名字建成员 remap，再逐设备写 kc/ledger/meta；ml 要求 mac 6 字节且 skey 非空。",
         "凭证/指纹 owner 先查 remap，再查本机成员是否存在，都不中就置 nil（不留悬空 owner）。",
@@ -53906,7 +53594,7 @@
       "level": 3,
       "name": "备份分区模型（UI 未暴露）",
       "kind": "setting",
-      "summary": "设备 / 凭证 / 记录 / 设置四个开关；未勾分区在包内置空，恢复端按 nil 语义跳过。",
+      "summary": "设备 / 凭证 / 记录 / 设置四个开关；未勾分区在包内置空，恢复端按 nil 语义跳过。2026-10-26 起「设置」分区不再含 OTP 密钥段。",
       "details": [
         "关 devices：devices = []。关 credentials：清每把锁的 ledger。关 records：清 globals.trace。",
         "关 settings：清 members 与 dongle/gateway/passcode/otpKeys/appearance；若 globals 全空则整段置 nil。",
@@ -55500,59 +55188,45 @@
         {
           "platform": "ios",
           "file": "App/Services/BackupStudioKit.swift",
-          "line": 933,
+          "line": 845,
           "symbol": "struct BkEvent",
           "note": "",
-          "text": ""
+          "text": "struct BkEvent: Codable { var at: Double; var label: String }"
         },
         {
           "platform": "ios",
           "file": "App/Services/BackupStudioKit.swift",
-          "line": 934,
+          "line": 846,
           "symbol": "recordEvent",
           "note": "",
-          "text": ""
+          "text": "static func recordEvent(_ label: String) {"
         },
         {
           "platform": "ios",
           "file": "App/Services/BackupStudioKit.swift",
-          "line": 941,
-          "symbol": "旧形态兼容",
-          "note": "",
-          "text": ""
-        },
-        {
-          "platform": "ios",
-          "file": "App/Services/BackupStudioKit.swift",
-          "line": 946,
+          "line": 858,
           "symbol": "dataEvents",
           "note": "",
-          "text": ""
+          "text": "static func dataEvents() -> [String] {"
         }
       ],
       "platformEvidence": {
         "ios": [
           {
             "file": "App/Services/BackupStudioKit.swift",
-            "line": 933,
+            "line": 845,
             "symbol": "struct BkEvent",
             "note": ""
           },
           {
             "file": "App/Services/BackupStudioKit.swift",
-            "line": 934,
+            "line": 846,
             "symbol": "recordEvent",
             "note": ""
           },
           {
             "file": "App/Services/BackupStudioKit.swift",
-            "line": 941,
-            "symbol": "旧形态兼容",
-            "note": ""
-          },
-          {
-            "file": "App/Services/BackupStudioKit.swift",
-            "line": 946,
+            "line": 858,
             "symbol": "dataEvents",
             "note": ""
           }
@@ -55697,59 +55371,59 @@
         {
           "platform": "ios",
           "file": "App/Services/BackupStudioKit.swift",
-          "line": 960,
+          "line": 94,
           "symbol": "final class UNDelegate",
           "note": "",
-          "text": ""
+          "text": "UNUserNotificationCenter.current().delegate = UNDelegate.shared"
         },
         {
           "platform": "ios",
           "file": "App/Services/BackupStudioKit.swift",
-          "line": 964,
+          "line": 876,
           "symbol": "didReceive response",
           "note": "",
-          "text": ""
+          "text": "func userNotificationCenter(_ c: UNUserNotificationCenter, didReceive r: UNNotificationResponse,"
         },
         {
           "platform": "ios",
           "file": "App/Services/BackupStudioKit.swift",
-          "line": 979,
+          "line": 891,
           "symbol": "m4.care. 分派",
           "note": "",
-          "text": ""
+          "text": "if r.notification.request.identifier.hasPrefix(\"m4.care.\") {"
         },
         {
           "platform": "ios",
           "file": "App/Services/BackupStudioKit.swift",
-          "line": 996,
+          "line": 908,
           "symbol": "willPresent",
           "note": "",
-          "text": ""
+          "text": "func userNotificationCenter(_ c: UNUserNotificationCenter, willPresent n: UNNotification,"
         }
       ],
       "platformEvidence": {
         "ios": [
           {
             "file": "App/Services/BackupStudioKit.swift",
-            "line": 960,
+            "line": 94,
             "symbol": "final class UNDelegate",
             "note": ""
           },
           {
             "file": "App/Services/BackupStudioKit.swift",
-            "line": 964,
+            "line": 876,
             "symbol": "didReceive response",
             "note": ""
           },
           {
             "file": "App/Services/BackupStudioKit.swift",
-            "line": 979,
+            "line": 891,
             "symbol": "m4.care. 分派",
             "note": ""
           },
           {
             "file": "App/Services/BackupStudioKit.swift",
-            "line": 996,
+            "line": 908,
             "symbol": "willPresent",
             "note": ""
           }
@@ -59522,7 +59196,7 @@
       "level": 4,
       "name": "预演门确认入库",
       "kind": "action",
-      "summary": "下载只做校验与预演；确认恢复入库才真正写本机。",
+      "summary": "预演通过后才真正写库，并记录入库统计。原 `markImported()`（写 kf_bk_last_import 时间戳）只写不读，2026-10-26 删除。",
       "details": [
         "confirmationDialog 标题取 pendingDL.line，message「预演不动真库」",
         "按钮「确认恢复入库」→ restore(dl.b, zones: BZones()) + 按需 reloadAppearance + loadDevices + markImported",
@@ -61024,14 +60698,6 @@
           "symbol": "versionLt",
           "note": "",
           "text": ""
-        },
-        {
-          "platform": "ios",
-          "file": "App/Core/BatteryCare.swift",
-          "line": 302,
-          "symbol": "_FWVersion 三段校验",
-          "note": "",
-          "text": ""
         }
       ],
       "platformEvidence": {
@@ -61046,12 +60712,6 @@
             "file": "App/Core/BatteryCare.swift",
             "line": 197,
             "symbol": "versionLt",
-            "note": ""
-          },
-          {
-            "file": "App/Core/BatteryCare.swift",
-            "line": 302,
-            "symbol": "_FWVersion 三段校验",
             "note": ""
           }
         ],
@@ -63527,10 +63187,10 @@
         {
           "platform": "ios",
           "file": "App/Core/DiagKit.swift",
-          "line": 1450,
+          "line": 445,
           "symbol": "summary(_:)",
           "note": "",
-          "text": ""
+          "text": "let summary = ops.map { $0.t + \" \" + $0.label }.joined(separator: \"\\n\")"
         },
         {
           "platform": "ios",
@@ -63557,7 +63217,7 @@
           },
           {
             "file": "App/Core/DiagKit.swift",
-            "line": 1450,
+            "line": 445,
             "symbol": "summary(_:)",
             "note": ""
           },
@@ -75401,10 +75061,10 @@
         {
           "platform": "ios",
           "file": "App/Core/AccessibilityKit.swift",
-          "line": 320,
+          "line": 52,
           "symbol": "body",
           "note": "",
-          "text": ""
+          "text": "UIFont.preferredFont(forTextStyle: .body).pointSize / 17.0"
         }
       ],
       "platformEvidence": {
@@ -75429,7 +75089,7 @@
           },
           {
             "file": "App/Core/AccessibilityKit.swift",
-            "line": 320,
+            "line": 52,
             "symbol": "body",
             "note": ""
           }
@@ -81704,14 +81364,6 @@
           "text": "guard key.count == 16 else { return \"\" }"
         },
         {
-          "platform": "ios",
-          "file": "App/Core/AESKit.swift",
-          "line": 38,
-          "symbol": "decryptHex",
-          "note": "不剥尾 0",
-          "text": ""
-        },
-        {
           "platform": "android",
           "file": "android-app/app/src/main/java/com/aapk/kfkey/KfProtocol.kt",
           "line": 63,
@@ -81747,12 +81399,6 @@
             "line": 13,
             "symbol": "encryptHex",
             "note": "key.count == 16 门禁"
-          },
-          {
-            "file": "App/Core/AESKit.swift",
-            "line": 38,
-            "symbol": "decryptHex",
-            "note": "不剥尾 0"
           }
         ],
         "android": [
@@ -83660,10 +83306,10 @@
         {
           "platform": "ios",
           "file": "App/UI/CredentialStudio.swift",
-          "line": 2643,
+          "line": 2473,
           "symbol": "FpDetailStudio.delete",
           "note": "fpDelete → 15",
-          "text": ""
+          "text": "Task { await delete() }"
         },
         {
           "platform": "ios",
@@ -83706,7 +83352,7 @@
           },
           {
             "file": "App/UI/CredentialStudio.swift",
-            "line": 2643,
+            "line": 2473,
             "symbol": "FpDetailStudio.delete",
             "note": "fpDelete → 15"
           },
@@ -84825,14 +84471,6 @@
       "evidence": [
         {
           "platform": "ios",
-          "file": "App/Core/ZKCmdBuilder.swift",
-          "line": 283,
-          "symbol": "cmd30GWDeviceName",
-          "note": "",
-          "text": ""
-        },
-        {
-          "platform": "ios",
           "file": "App/Services/HardwareService.swift",
           "line": 292,
           "symbol": "readGatewayState",
@@ -84850,12 +84488,6 @@
       ],
       "platformEvidence": {
         "ios": [
-          {
-            "file": "App/Core/ZKCmdBuilder.swift",
-            "line": 283,
-            "symbol": "cmd30GWDeviceName",
-            "note": ""
-          },
           {
             "file": "App/Services/HardwareService.swift",
             "line": 292,
@@ -87487,10 +87119,10 @@
         {
           "platform": "ios",
           "file": "App/Services/HardwareService.swift",
-          "line": 375,
+          "line": 346,
           "symbol": "errCodeOf",
           "note": "",
-          "text": ""
+          "text": "let ec = errCodeOf(wf)"
         },
         {
           "platform": "ios",
@@ -87513,7 +87145,7 @@
         "ios": [
           {
             "file": "App/Services/HardwareService.swift",
-            "line": 375,
+            "line": 346,
             "symbol": "errCodeOf",
             "note": ""
           },
@@ -97234,10 +96866,10 @@
         {
           "platform": "ios",
           "file": "App/Core/LockGuard.swift",
-          "line": 55,
+          "line": 18,
           "symbol": "static var readOnly: Bool { DB.store.getBool(SecKey.safeModeOn, false) }",
           "note": "",
-          "text": ""
+          "text": "static var guestActive: Bool { DB.store.getBool(\"kf_speek_guest\", false) }"
         },
         {
           "platform": "ios",
@@ -97258,7 +96890,7 @@
           },
           {
             "file": "App/Core/LockGuard.swift",
-            "line": 55,
+            "line": 18,
             "symbol": "static var readOnly: Bool { DB.store.getBool(SecKey.safeModeOn, false) }",
             "note": ""
           },
@@ -97813,10 +97445,10 @@
         {
           "platform": "ios",
           "file": "App/Core/DesignSystem.swift",
-          "line": 1066,
+          "line": 1036,
           "symbol": "BusyButton",
           "note": "",
-          "text": ""
+          "text": "struct BusyButton: View {"
         }
       ],
       "platformEvidence": {
@@ -97841,7 +97473,7 @@
           },
           {
             "file": "App/Core/DesignSystem.swift",
-            "line": 1066,
+            "line": 1036,
             "symbol": "BusyButton",
             "note": ""
           }
@@ -102219,31 +101851,31 @@
         {
           "platform": "ios",
           "file": "App/Core/VariantGrammar.swift",
-          "line": 429,
+          "line": 408,
           "symbol": "vkFont(_:weight:)",
           "note": "",
-          "text": ""
+          "text": "func vkFont(_ base: Font, weight: Font.Weight? = nil) -> some View {"
         },
         {
           "platform": "ios",
           "file": "App/Core/VariantGrammar.swift",
-          "line": 417,
+          "line": 90,
           "symbol": "font(_:weight:)",
           "note": "",
-          "text": ""
+          "text": "Text(text).font(.headline).foregroundStyle(DS.Palette.text)"
         }
       ],
       "platformEvidence": {
         "ios": [
           {
             "file": "App/Core/VariantGrammar.swift",
-            "line": 429,
+            "line": 408,
             "symbol": "vkFont(_:weight:)",
             "note": ""
           },
           {
             "file": "App/Core/VariantGrammar.swift",
-            "line": 417,
+            "line": 90,
             "symbol": "font(_:weight:)",
             "note": ""
           }
@@ -104915,10 +104547,10 @@
         {
           "platform": "ios",
           "file": "App/Core/DesignSystem.swift",
-          "line": 1086,
+          "line": 1036,
           "symbol": "BusyButton 补 44pt 触达",
           "note": "",
-          "text": ""
+          "text": "struct BusyButton: View {"
         }
       ],
       "platformEvidence": {
@@ -104937,7 +104569,7 @@
           },
           {
             "file": "App/Core/DesignSystem.swift",
-            "line": 1086,
+            "line": 1036,
             "symbol": "BusyButton 补 44pt 触达",
             "note": ""
           }
@@ -114632,12 +114264,12 @@
     },
     {
       "source": "security",
-      "target": "security.center",
+      "target": "security.policy",
       "type": "tree"
     },
     {
       "source": "security",
-      "target": "security.policy",
+      "target": "security.center",
       "type": "tree"
     },
     {
@@ -114652,17 +114284,7 @@
     },
     {
       "source": "security",
-      "target": "security.destroy",
-      "type": "tree"
-    },
-    {
-      "source": "security",
       "target": "security.defense",
-      "type": "tree"
-    },
-    {
-      "source": "security.center",
-      "target": "security.center.guardrails",
       "type": "tree"
     },
     {
@@ -114686,11 +114308,6 @@
       "type": "tree"
     },
     {
-      "source": "security.policy",
-      "target": "security.policy.actions",
-      "type": "tree"
-    },
-    {
       "source": "security.center",
       "target": "security.center.risks",
       "type": "tree"
@@ -114703,11 +114320,6 @@
     {
       "source": "security.tailgate",
       "target": "security.tailgate.set",
-      "type": "tree"
-    },
-    {
-      "source": "security.destroy",
-      "target": "security.destroy.backup-gate",
       "type": "tree"
     },
     {
@@ -118042,13 +117654,13 @@
     }
   ],
   "stats": {
-    "nodes": 1192,
+    "nodes": 1188,
     "domains": 13,
-    "modules": 131,
-    "features": 710,
+    "modules": 130,
+    "features": 707,
     "details": 338,
     "byPlatform": {
-      "ios": 1039,
+      "ios": 1035,
       "android": 91,
       "apk": 163
     },
@@ -118058,7 +117670,7 @@
       "credential": 188,
       "member": 60,
       "record": 95,
-      "security": 22,
+      "security": 18,
       "backup": 72,
       "care": 23,
       "diagnostic": 70,
@@ -118067,7 +117679,7 @@
       "data": 114,
       "apk": 66
     },
-    "evidence": 4002,
+    "evidence": 3988,
     "commands": 45,
     "platSets": {
       "ios+android+apk": [
@@ -118531,19 +118143,15 @@
         "record.filter.reversed",
         "record.list.dayFooter",
         "record.search.history",
-        "security.center",
         "security.policy",
+        "security.center",
         "security.ledger",
-        "security.destroy",
-        "security.center.guardrails",
         "security.center.watermark",
         "security.policy.guest",
         "security.ledger.sensitive",
-        "security.policy.actions",
         "security.center.risks",
         "security.policy.switch",
         "security.tailgate.set",
-        "security.destroy.backup-gate",
         "security.center.shell",
         "security.policy.share-half",
         "security.center.risks.rules",
@@ -119415,7 +119023,7 @@
       {
         "id": "security",
         "name": "安全中心 / 审计 / 销毁",
-        "count": 27,
+        "count": 23,
         "platforms": [
           "apk",
           "ios"

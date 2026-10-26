@@ -2032,13 +2032,13 @@
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 2991,
+          "line": 2515,
           "symbol": "RecordSearch.outOfWindow",
           "note": "数据源"
         },
         {
           "file": "App/UI/RecordsView.swift",
-          "line": 3011,
+          "line": 371,
           "symbol": "OutWinSheet",
           "note": "越界文案"
         },

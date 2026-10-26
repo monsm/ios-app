@@ -1906,12 +1906,12 @@
       "evidence": [
         {
           "file": "App/Core/VariantGrammar.swift",
-          "line": 429,
+          "line": 408,
           "symbol": "vkFont(_:weight:)"
         },
         {
           "file": "App/Core/VariantGrammar.swift",
-          "line": 417,
+          "line": 90,
           "symbol": "font(_:weight:)"
         }
       ],
@@ -4039,7 +4039,7 @@
         },
         {
           "file": "App/Core/MemberHub.swift",
-          "line": 328,
+          "line": 313,
           "symbol": "elderMode"
         }
       ],
@@ -4068,11 +4068,6 @@
           "file": "App/Core/MemberHub.swift",
           "line": 32,
           "symbol": "HouseWin"
-        },
-        {
-          "file": "App/Core/MemberHub.swift",
-          "line": 332,
-          "symbol": "CareDue"
         }
       ],
       "tags": [
@@ -4736,7 +4731,7 @@
         },
         {
           "file": "App/Core/LockStats.swift",
-          "line": 341,
+          "line": 330,
           "symbol": "recentAlarmMacs(_:)"
         }
       ],
@@ -4893,9 +4888,9 @@
       "parentKey": "security",
       "domain": "security",
       "level": 2,
-      "name": "安全中心开关的唯一判据口",
+      "name": "安全策略判据口（SecurityPolicy）",
       "kind": "service",
-      "summary": "LockAction + SecurityPolicy 把只读模式、访客通道、分享遮半、敏感成员隐藏收成唯读点，界面不许再摸 DB.store。",
+      "summary": "2026-10-26 精简后 `SecurityPolicy` 只剩两条：`guestActive`（377 访客通道）与 `shareHalf`（376 分享遮半）。原 `readOnly`(296) 与 `LockAction` 六族动作闸因无写点已删除。",
       "details": [
         "此前这五枚开关只改自己的标签、全仓没有消费者，于是四句承诺一句没兑现（LockGuard.swift:5-7）",
         "刻意不加 @MainActor：判据口要能被界面、DestroyKit 与静态上下文一律读到（LockGuard.swift:42-45）"
@@ -4903,7 +4898,7 @@
       "evidence": [
         {
           "file": "App/Core/LockGuard.swift",
-          "line": 46,
+          "line": 14,
           "symbol": "SecurityPolicy"
         },
         {
@@ -4920,51 +4915,13 @@
       "status": "implemented"
     },
     {
-      "key": "security.policy.actions",
-      "parentKey": "security.policy",
-      "domain": "security",
-      "level": 3,
-      "name": "六类危险动作与逐条拒绝文案",
-      "kind": "rule",
-      "summary": "unlock / writeCredential / provision / dfu / destroy / importExport 六族，只读模式下全停，且各自有一句点名是哪个开关拦的实话。",
-      "details": [
-        "全族 blockedInReadOnly 都是 true；设置页自身的开关不在这一族（否则会把关掉只读模式的路也锁死）（LockGuard.swift:23-26）",
-        "denial 文案逐条不同：开锁已停用 / 凭证写入已停用 / 网关配网已停用 / 固件升级已停用 / 销毁与清空已停用 / 导入导出已停用（LockGuard.swift:29-38）",
-        "allows(action) = !(readOnly && action.blockedInReadOnly)（LockGuard.swift:61）"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/LockGuard.swift",
-          "line": 15,
-          "symbol": "LockAction"
-        },
-        {
-          "file": "App/Core/LockGuard.swift",
-          "line": 61,
-          "symbol": "allows(_:)"
-        },
-        {
-          "file": "App/Core/LockGuard.swift",
-          "line": 55,
-          "symbol": "readOnly",
-          "note": "SecKey.safeModeOn"
-        }
-      ],
-      "tags": [
-        "安全",
-        "策略",
-        "只读"
-      ],
-      "status": "implemented"
-    },
-    {
       "key": "security.policy.guest",
       "parentKey": "security.policy",
       "domain": "security",
       "level": 3,
       "name": "访客通道与敏感成员隐藏",
       "kind": "setting",
-      "summary": "guestActive 时主 TabView 只暴露设备/记录；另有 hideSensitiveInGuest 开关（本机没有成员敏感标记位）。",
+      "summary": "`guestActive` 时主 TabView 只暴露设备/记录，进凭证/设置要先过口令。原描述里提到的 `hideSensitiveInGuest`（敏感成员隐藏）已随 2026-10-26 精简删除。",
       "details": [
         "kf_speek_guest 的开关 UI 已随安全中心子页删除，但老用户曾打开仍会生效，且已无入口再拨它（LockGuard.swift:48-51）",
         "hideSensitiveInGuest 读 SecKey.sensitiveOnly（LockGuard.swift:53）",
@@ -4973,13 +4930,8 @@
       "evidence": [
         {
           "file": "App/Core/LockGuard.swift",
-          "line": 51,
+          "line": 18,
           "symbol": "guestActive"
-        },
-        {
-          "file": "App/Core/LockGuard.swift",
-          "line": 53,
-          "symbol": "hideSensitiveInGuest"
         }
       ],
       "tags": [
@@ -5005,17 +4957,17 @@
       "evidence": [
         {
           "file": "App/Core/LockGuard.swift",
-          "line": 57,
+          "line": 21,
           "symbol": "shareHalf"
         },
         {
           "file": "App/Core/LockGuard.swift",
-          "line": 69,
+          "line": 27,
           "symbol": "masked(_:)"
         },
         {
           "file": "App/Core/LockGuard.swift",
-          "line": 76,
+          "line": 34,
           "symbol": "halfMasked(_:)"
         }
       ],
@@ -5077,7 +5029,7 @@
         },
         {
           "file": "App/Core/AuditChain.swift",
-          "line": 207,
+          "line": 183,
           "symbol": "stamp(_:)"
         }
       ],
@@ -5085,68 +5037,6 @@
         "安全",
         "审计",
         "隐私"
-      ],
-      "status": "implemented"
-    },
-    {
-      "key": "security.destroy",
-      "parentKey": "security",
-      "domain": "security",
-      "level": 2,
-      "name": "数据销毁（401）",
-      "kind": "service",
-      "summary": "Store 底层是 UserDefaults plist，所以「覆写」= 随机字节重灌再删除；销毁前还有一道备份闸。",
-      "details": [
-        "DestroyKit 目前只实现备份闸这一支，覆写流程在核弹销毁入口（AuditChain.swift:216-228）"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/AuditChain.swift",
-          "line": 217,
-          "symbol": "DestroyKit"
-        },
-        {
-          "file": "App/Core/AuditChain.swift",
-          "line": 216,
-          "symbol": "覆写收尾",
-          "note": "Store 底层 = UserDefaults plist"
-        }
-      ],
-      "tags": [
-        "安全",
-        "数据销毁"
-      ],
-      "status": "partial"
-    },
-    {
-      "key": "security.destroy.backup-gate",
-      "parentKey": "security.destroy",
-      "domain": "security",
-      "level": 3,
-      "name": "销毁前备份闸（7 天）",
-      "kind": "rule",
-      "summary": "7 天内没有备份文件就拦截销毁；备份时刻读既有 kf_backup_hist，不另造写点。",
-      "details": [
-        "历史写的是 epoch 毫秒，lastBackupAt 读时 /1000 换算成秒（AuditChain.swift:219-224）",
-        "backupGatePass = 有备份 且 now - last < 7*86400（AuditChain.swift:225-227）",
-        "kf_backup_hist 由 Milestones.recordBackup 写入，最多 60 条（Milestones.swift:29-36）"
-      ],
-      "evidence": [
-        {
-          "file": "App/Core/AuditChain.swift",
-          "line": 221,
-          "symbol": "lastBackupAt"
-        },
-        {
-          "file": "App/Core/AuditChain.swift",
-          "line": 225,
-          "symbol": "backupGatePass"
-        }
-      ],
-      "tags": [
-        "安全",
-        "数据销毁",
-        "阈值"
       ],
       "status": "implemented"
     },
@@ -5290,7 +5180,7 @@
         },
         {
           "file": "App/Core/AccessibilityKit.swift",
-          "line": 320,
+          "line": 52,
           "symbol": "body"
         }
       ],
