@@ -329,7 +329,7 @@ select{width:100%;height:29px;border-radius:8px;border:1px solid var(--line);bac
 const DATA = {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-26T10:28:51.464Z",
+    "generated": "2026-10-26T10:33:46.878Z",
     "sources": [
       {
         "scout": "android-native",
@@ -53013,7 +53013,7 @@ const DATA = {
           "line": 714,
           "symbol": "testWebdav",
           "note": "",
-          "text": "}"
+          "text": "// 按日期段 (其次按组名) 从新到旧；`zklock-backup.enc` 那种固定名备份不在名字族内，永不参与计数"
         },
         {
           "platform": "ios",
@@ -53037,7 +53037,7 @@ const DATA = {
           "line": 745,
           "symbol": "Depth: 1",
           "note": "",
-          "text": "var req = URLRequest(url: url)"
+          "text": "req.setValue(CloudSync.basicAuth(acct, appPw), forHTTPHeaderField: \"Authorization\")"
         },
         {
           "platform": "ios",
@@ -53045,7 +53045,7 @@ const DATA = {
           "line": 795,
           "symbol": "safeRemoteURL",
           "note": "",
-          "text": "let digits = s[r.upperBound...].prefix { $0.isNumber }"
+          "text": "return digits.isEmpty ? nil : Int(digits)"
         }
       ],
       "platformEvidence": {
@@ -53406,7 +53406,7 @@ const DATA = {
           "line": 845,
           "symbol": "struct BkEvent",
           "note": "",
-          "text": "static let shared = UNDelegate()"
+          "text": "// 方法名必须是 `withCompletionHandler:`。原写法 `completionHandler:` 与协议要求只差一个前缀,"
         },
         {
           "platform": "ios",
@@ -53414,7 +53414,7 @@ const DATA = {
           "line": 846,
           "symbol": "recordEvent",
           "note": "",
-          "text": "// 方法名必须是 `withCompletionHandler:`。原写法 `completionHandler:` 与协议要求只差一个前缀,"
+          "text": "// 编译器给的是 nearly-matches 告警, 而运行时这一支**永远不被调用** —— 通知点按等于没接。"
         },
         {
           "platform": "ios",
@@ -53422,7 +53422,7 @@ const DATA = {
           "line": 858,
           "symbol": "dataEvents",
           "note": "",
-          "text": "Task { @MainActor in CredentialOrg.applyNotification(act) }"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -53490,7 +53490,7 @@ const DATA = {
           "line": 649,
           "symbol": "fpVersion",
           "note": "",
-          "text": "i = e.upperBound"
+          "text": "func cap(_ tag: String, from: String.Index) -> String {"
         },
         {
           "platform": "ios",
@@ -53498,7 +53498,7 @@ const DATA = {
           "line": 650,
           "symbol": "dbFingerprint",
           "note": "",
-          "text": "func cap(_ tag: String, from: String.Index) -> String {"
+          "text": "var idx = from"
         },
         {
           "platform": "ios",
@@ -53506,7 +53506,7 @@ const DATA = {
           "line": 664,
           "symbol": "hashMismatch",
           "note": "",
-          "text": "etag: cap(\"getetag\", from: i),"
+          "text": "modified: cap(\"getlastmodified\", from: i)))"
         },
         {
           "platform": "ios",
@@ -53514,7 +53514,7 @@ const DATA = {
           "line": 675,
           "symbol": "runStartupSelfCheck",
           "note": "",
-          "text": "return out"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -53787,7 +53787,7 @@ const DATA = {
           "line": 504,
           "symbol": "restore(bundle:zones:lockActs:conflictTakeBackup:makeSnapshot:)",
           "note": "",
-          "text": "for kc in DB.keychains() {"
+          "text": "for p in DB.ledger(kc.mac).pwds where p.temp && !p.to.isEmpty && p.to != \"2118-12-31\" {"
         },
         {
           "platform": "ios",
@@ -53795,7 +53795,7 @@ const DATA = {
           "line": 510,
           "symbol": "清 currentMac",
           "note": "",
-          "text": "}"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -53803,7 +53803,7 @@ const DATA = {
           "line": 532,
           "symbol": "act merge/keep/skip",
           "note": "",
-          "text": "private static func dbFingerprint() -> String {"
+          "text": "// 旧实现只统计长度 (skey.count + pins.count) —— 替换等长 skey / 增删等量 pin 察觉不到。"
         },
         {
           "platform": "ios",
@@ -53811,7 +53811,7 @@ const DATA = {
           "line": 557,
           "symbol": "冲突裁决 guard",
           "note": "",
-          "text": "static func runStartupSelfCheck() -> String? {"
+          "text": "let fp = dbFingerprint()"
         },
         {
           "platform": "ios",
@@ -53819,7 +53819,7 @@ const DATA = {
           "line": 613,
           "symbol": "返回三元组",
           "note": "",
-          "text": "} catch { return \"网络不可达: \\(error.localizedDescription)\" }"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -54008,7 +54008,7 @@ const DATA = {
           "line": 876,
           "symbol": "didReceive response",
           "note": "",
-          "text": "completionHandler()"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -54099,7 +54099,7 @@ const DATA = {
           "line": 368,
           "symbol": "struct Preview",
           "note": "",
-          "text": "if s \u003c 4 {"
+          "text": "// 2026-10-13 run 63: 原写 `if var g = out.globals { g.trace = g.trace; out.globals = g }` ——"
         },
         {
           "platform": "ios",
@@ -54107,7 +54107,7 @@ const DATA = {
           "line": 400,
           "symbol": "parsePreview",
           "note": "",
-          "text": "conflictTakeBackup: Set\u003cString> = [],"
+          "text": "makeSnapshot: Bool = true) -> (imported: Int, overwritten: Int, skipped: Int) {"
         },
         {
           "platform": "ios",
@@ -54115,7 +54115,7 @@ const DATA = {
           "line": 412,
           "symbol": "schema 上限拒绝",
           "note": "",
-          "text": "if let hit = DB.members().first(where: { $0.name == m.name }) {"
+          "text": "remap[m.id] = hit.id"
         },
         {
           "platform": "ios",
@@ -54123,7 +54123,7 @@ const DATA = {
           "line": 442,
           "symbol": "stripCommentHeader",
           "note": "",
-          "text": "guard act != \"keep\", let l = d.ledger else { continue }"
+          "text": "var cur = DB.ledger(mac)"
         },
         {
           "platform": "ios",
@@ -54131,7 +54131,7 @@ const DATA = {
           "line": 456,
           "symbol": "looksEncrypted 全键判据",
           "note": "",
-          "text": "cur.pwds.append(p)"
+          "text": "mimp += 1"
         }
       ],
       "platformEvidence": {
@@ -54226,7 +54226,7 @@ const DATA = {
           "line": 689,
           "symbol": "enum BadgeState",
           "note": "",
-          "text": "name.hasPrefix(filePrefix) && name.hasSuffix(\".enc\") && !name.contains(\"/\")"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -54234,7 +54234,7 @@ const DATA = {
           "line": 690,
           "symbol": "badgeState",
           "note": "",
-          "text": "}"
+          "text": "/// 一\"份\"的组键 = 去掉尾部 `_卷N` 的名字 (410 分卷时同一次导出会写成基础卷 + 逐年卷)。"
         }
       ],
       "platformEvidence": {
@@ -54333,7 +54333,7 @@ const DATA = {
           "line": 190,
           "symbol": "canUndoLastRestore",
           "note": "",
-          "text": "// Swift 的 `suffix(from:)` 越界是 **preconditionFailure = 直接崩进程**, 不是返回空。"
+          "text": "// 触发路径: 设置-备份点「生成本机还原点」第一次点就崩 (且文件已写盘, 重启后再点还是崩, 直到攒够 4 个)。"
         },
         {
           "platform": "ios",
@@ -54341,7 +54341,7 @@ const DATA = {
           "line": 208,
           "symbol": "restoreRollbackSnapshot",
           "note": "",
-          "text": "done = true"
+          "text": "task.setTaskCompleted(success: success)"
         }
       ],
       "platformEvidence": {
@@ -54519,7 +54519,7 @@ const DATA = {
           "line": 617,
           "symbol": "193 体积预估注释",
           "note": "",
-          "text": "// 原先这一行是 `return \"地址非法\"` —— 一个声明 `-> [RemoteEntry]` 的函数返回 String，编译器必拒。"
+          "text": "// 可核实的出处：这一行在 `origin/main` (31df7a6，最后一次推送) 里就已经是这个样子，"
         },
         {
           "platform": "ios",
@@ -54527,7 +54527,7 @@ const DATA = {
           "line": 630,
           "symbol": "estimateBytes",
           "note": "",
-          "text": "req.httpBody = Data(\"\u003c?xml version=\\\"1.0\\\"?>\u003cpropfind xmlns=\\\"DAV:\\\">\u003cprop>\u003cresourcename/>\u003cgetcontentlength/>\u003cgetetag/>\u003cgetlastmodified/>\u003c/prop>\u003c/propfind>\".utf8)"
+          "text": "req.timeoutInterval = 20"
         },
         {
           "platform": "ios",
@@ -54535,7 +54535,7 @@ const DATA = {
           "line": 637,
           "symbol": "markExportSize",
           "note": "",
-          "text": "// 422/423 远端列表: 拉 etag (哈希) + 大小, 再按需拉正文 — 断点友好"
+          "text": "// 对抗硬化: 只取 UTF-8 可读正文, 恶意/二进制 XML 直接拒绝 (不静默误读为空)"
         },
         {
           "platform": "ios",
@@ -54543,7 +54543,7 @@ const DATA = {
           "line": 638,
           "symbol": "sizeText",
           "note": "",
-          "text": "// 对抗硬化: 只取 UTF-8 可读正文, 恶意/二进制 XML 直接拒绝 (不静默误读为空)"
+          "text": "guard let xml = String(data: data, encoding: .utf8), !xml.isEmpty else { throw DFUError.msg(\"远端列表解析失败 (响应非 UTF-8 XML)\") }"
         }
       ],
       "platformEvidence": {
@@ -54617,7 +54617,7 @@ const DATA = {
           "line": 366,
           "symbol": "enum ChecksumState",
           "note": "",
-          "text": "if s \u003c 2 { out.members = out.members ?? []; s = 2 }"
+          "text": "if s \u003c 3 { for i in out.devices.indices { out.devices[i].mac = DB.normalizeMac(out.devices[i].mac) }; s = 3 }"
         },
         {
           "platform": "ios",
@@ -54625,7 +54625,7 @@ const DATA = {
           "line": 381,
           "symbol": "checksumState",
           "note": "",
-          "text": "return out"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -54633,7 +54633,7 @@ const DATA = {
           "line": 493,
           "symbol": "verifyChecksum",
           "note": "",
-          "text": "}"
+          "text": "return (mimp, mover, mskip)"
         },
         {
           "platform": "ios",
@@ -54641,7 +54641,7 @@ const DATA = {
           "line": 497,
           "symbol": "shortHash 8 位",
           "note": "",
-          "text": ""
+          "text": "/// 已过期临时凭证计数（用于提示\"有几条临时码已经过期可清理\"）。"
         }
       ],
       "platformEvidence": {
@@ -55316,7 +55316,7 @@ const DATA = {
           "line": 274,
           "symbol": "chargeBackupTaskId",
           "note": "",
-          "text": "var checksum: ChecksumState = .absent   // 453 哈希层: 解析时算一次, 预览卡直接显示"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -55324,7 +55324,7 @@ const DATA = {
           "line": 289,
           "symbol": "registerChargeBackup",
           "note": "",
-          "text": "}"
+          "text": "/// 195/417/449/450 恢复预演: 魔数/长度先行 (449), 口令解码, schema 升级 (424), 抽 5 条 (450)"
         },
         {
           "platform": "ios",
@@ -55332,7 +55332,7 @@ const DATA = {
           "line": 313,
           "symbol": "rescheduleChargeBackup",
           "note": "",
-          "text": "throw DFUError.msg(\"内容哈希不一致 — 已拦下, 未写任何数据; 建议重传这份备份\")   // 453 内容哈希不一致"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -55340,7 +55340,7 @@ const DATA = {
           "line": 324,
           "symbol": "chargeBackupNote",
           "note": "",
-          "text": "let pv = Preview(source: \"备份时间 \\(m.at)\" + (sourceName.isEmpty ? \"\" : \" · 来源 \\(sourceName)\"),"
+          "text": "schema: m.schema,"
         }
       ],
       "platformEvidence": {
@@ -55795,7 +55795,7 @@ const DATA = {
           "line": 860,
           "symbol": "dryRunRemote",
           "note": "",
-          "text": "// 1013: 保养到期通知 → 设备页那台锁 (mac 就在通知 id 里: m4.care.\u003cmac>)。"
+          "text": "// 冷启动点按: hostRef 要等 RootView 挂载才就位, 等它 (最多 2 秒) 再落点, 不丢这次点按;"
         },
         {
           "platform": "ios",
@@ -55803,7 +55803,7 @@ const DATA = {
           "line": 876,
           "symbol": "rotateKey",
           "note": "",
-          "text": "completionHandler()"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -57530,7 +57530,7 @@ const DATA = {
           "line": 470,
           "symbol": "upgradeChain",
           "note": "",
-          "text": "cur.fps.append(f)"
+          "text": "mimp += 1"
         },
         {
           "platform": "ios",
@@ -57538,7 +57538,7 @@ const DATA = {
           "line": 474,
           "symbol": "v3 mac 归一化",
           "note": "",
-          "text": "DB.saveLedger(mac, cur)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -57546,7 +57546,7 @@ const DATA = {
           "line": 481,
           "symbol": "v5 只推进版本号",
           "note": "",
-          "text": "for d in g.keychainDongles ?? [] { DB.saveDongle(d) }"
+          "text": "for gw in g.gatewayList ?? [] { DB.saveGateway(gw) }"
         }
       ],
       "platformEvidence": {

@@ -180,7 +180,6 @@ enum BackupStudio {
         pruneRollback(keep: 4)
         return true
     }
-    @discardableResult
     private nonisolated static func pruneRollback(keep: Int) {
         let all = (try? FileManager.default.contentsOfDirectory(at: rollbackDir,
                   includingPropertiesForKeys: nil)) ?? []
