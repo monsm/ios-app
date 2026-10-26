@@ -375,11 +375,22 @@ function merge(all) {
 }
 
 const SRC = new Map();
+// 2026-10-26: 这里原来写死了 `path.join('D:/aapk/ios-app', file)` —— 开发机上的绝对路径。
+// CI 上那个目录不存在 ⇒ readFileSync 抛错 ⇒ 每条 evidence.text 都变空串，
+// features.json 少了 15 万字符。于是 `featurewebcheck` 在 CI 上必红、本地永远绿
+// （本地恰好有那个目录），连红三场就是这么来的。
+// 现在从本文件位置向上两级推导仓库根：docs/feature-web/build.js → 仓库根。
+const REPO_ROOT = path.resolve(__dirname, '..', '..');
 function srcLine(file, line) {
   if (!file) return '';
   if (!SRC.has(file)) {
-    try { SRC.set(file, fs.readFileSync(path.join('D:/aapk/ios-app', file), 'utf8').split('\n')); }
-    catch (e) { SRC.set(file, null); }
+    // 先按仓库根找；找不到再退回开发机绝对路径（仅本地，不影响 CI）
+    const candidates = [path.join(REPO_ROOT, file), path.join('D:/aapk/ios-app', file)];
+    let arr = null;
+    for (const p of candidates) {
+      try { arr = fs.readFileSync(p, 'utf8').split('\n'); break; } catch (e) { /* 试下一个 */ }
+    }
+    SRC.set(file, arr);
   }
   const arr = SRC.get(file);
   if (!arr) return '';
