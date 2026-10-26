@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-26T10:00:36.385Z",
+    "generated": "2026-10-26T10:12:42.021Z",
     "sources": [
       {
         "scout": "android-native",
@@ -109741,7 +109741,7 @@
           "line": 85,
           "symbol": "final class DFUSession",
           "note": "",
-          "text": "@MainActor"
+          "text": "// 2026-10-26: 本类要同时满足 CBCentralManagerDelegate / CBPeripheralDelegate 两个**非隔离**协议，"
         },
         {
           "platform": "ios",

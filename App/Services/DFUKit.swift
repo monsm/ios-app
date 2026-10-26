@@ -82,8 +82,11 @@ enum DFUMode {
 ///
 /// 使用方式（DFUView 里）：
 ///   1. `let session = DFUSession(...)` 2. `try await session.run()` 3. 看 `onState` / `onProgress`
-@MainActor
-final class DFUSession: NSObject {
+// 2026-10-26: 本类要同时满足 CBCentralManagerDelegate / CBPeripheralDelegate 两个**非隔离**协议，
+// 标 @MainActor 会让这两个 conformance 报 "crosses into main actor-isolated code"。
+// 而它的全部状态只在该一个线程上访问（CBCentralManager 用 .main 队列构造，delegate 回调也在主线程），
+// 所以用 @unchecked Sendable 如实声明，而不是硬套 @MainActor。
+final class DFUSession: NSObject, @unchecked Sendable {
     /// 状态回调（主线程）
     var onState: ((DFUState, String) -> Void)?
     /// 进度回调 0…1
@@ -141,11 +144,12 @@ final class DFUSession: NSObject {
     private func scanForDFUDevice() async throws -> CBPeripheral {
         let wantPid = targetPid
         return try await withCheckedThrowingContinuation { (cont: CheckedContinuation<CBPeripheral, Error>) in
+            let mgr = central   // 嵌套函数里不跨隔离碰 self.central, 先取局部
             var done = false
             func finish(_ r: Result<CBPeripheral, Error>) {
                 guard !done else { return }
                 done = true
-                self.central.stopScan()
+                mgr.stopScan()
                 cont.resume(with: r)
             }
             central.scanForPeripherals(withServices: nil, options: [CBCentralManagerScanOptionAllowDuplicatesKey: true])
