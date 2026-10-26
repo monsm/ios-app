@@ -37,15 +37,6 @@ enum AXFlags {
     /// Apple 文档: `static var isReduceTransparencyEnabled: Bool { get }` —— 同样是**属性**。
     /// 此前写成 `isReduceTransparencyEnabled()` (方法与属性记混) ⇒ run 57 报 "cannot call value of non-function type 'Bool'"。
     static var reduceTransparency: Bool { UIAccessibility.isReduceTransparencyEnabled }
-
-    // ---------- App 内字号五档 (858): kf_font_scale 0.8/1.0/1.25/1.5/1.75, 默认 1.0 ----------
-    /// 叠加语义 (务必先读): App 档位只决定"相对系统正文 17pt 的放大倍率",
-    /// 系统 Dynamic Type 取"用户所选字号"的相对值 — 两者相乘后取更接近的 DynamicTypeSize 档位,
-    /// 即 App 放大永远叠加在系统放大之上, 系统更大时系统胜出 (max 语义), 不互相打架。
-    static var appFontScale: Double {
-        let v = Double(DB.store.getString("kf_font_scale", "1.0")) ?? 1.0
-        return [0.8, 1.0, 1.25, 1.5, 1.75].contains(v) ? v : 1.0
-    }
     // ---------- 非隔离读点 (只给动效令牌) ----------
     /// `DS.Motion` 的令牌要在**非隔离**处求值 (ButtonStyle / ToggleStyle 的 makeBody 都不是主 actor),
     /// 而系统"减弱动态效果"是主 actor 旗标。这里留一份"最近一次在主 actor 上读到的值":
@@ -63,7 +54,9 @@ enum AXFlags {
     /// 858 生效档: App 档 × 系统相对, 映射到最近的 DynamicTypeSize 预设 (RootView 统一挂)
     /// 866 极限字号自检: bigPreview 开启时按 200% 预览关键页 (仅自检用)
     static func typeSize() -> DynamicTypeSize {
-        let base = bigPreview ? 2.0 : appFontScale
+        // 2026-10-26: 原为 bigPreview ? 2.0 : appFontScale。kf_font_scale 无写点 ⇒ 恒 1.0，
+        // 键与该读取属性已删，这里直接写 1.0（App 档不再可调；系统 Dynamic Type 仍在 systemTypeRel 里生效）。
+        let base = bigPreview ? 2.0 : 1.0
         let rel = base * systemTypeRel
         // 预设近似倍率 (正文 17pt 基线): xLarge≈1.25, xxLarge≈1.5, xxxLarge≈1.75, accessibility1..5 ≈ 2.0/2.5/3.0/4.0/5.0
         // ⚠ 2026-10-13 run 57: 此前写成 .xsmall/.xlarge/.xxlarge —— DynamicTypeSize 的官方 case 是
@@ -80,11 +73,11 @@ enum AXFlags {
     }
     /// 859 AX 档降级布局: 字号 ≥1.5 时圆盘缩至 128pt (UnlockDial.dial 消费本旗标)。
     /// 原设计还含"Hero 指标纵向堆叠", 那半未实现 —— 已从说明文案删除, 不要凭本注释以为已做。
-    static var axStackLayout: Bool { appFontScale >= 1.5 }
+    /// 2026-10-26: 原为 `appFontScale >= 1.5`，而 `kf_font_scale` 无写点 ⇒ 恒 false。
+    /// 键与读点已删，这里保留常量 false 以让调用点无需改动（AX 堆叠布局不再触发）。
+    static var axStackLayout: Bool { false }
     /// 866 极限字号自检: 诊断开关, 以 200% 字号预览关键页 (仅自检用)
     static var bigPreview: Bool { DB.store.getBool("kf_ax_bigpreview") }
-    /// 879 灰度预览自检: 全 App 去饱和渲染, 检查渐变主题无色可读性 (仅自检用)
-    static var grayPreview: Bool { DB.store.getBool("kf_ax_gray") }
 }
 
 // ---------- 863 反转保护色: 降级底走中性色, 避免品牌渐变成"负片" ----------
@@ -104,21 +97,6 @@ extension DS {
     /// 之所以做成 ShapeStyle.resolve(in:) 而不是静态判断: 环境只有渲染时可知, 消费点各自读一遍旗标
     /// 迟早在某个页面上漂开 —— 收在这一处, 主控卡/开锁盘/成就卡/导出卡/帮助页/引导页同帧一起换。
     struct HeroSurface: ShapeStyle {
-        func resolve(in environment: EnvironmentValues) -> AnyShapeStyle {
-            // 判据全部取自 EnvironmentValues, 不读 UIAccessibility 全局: resolve 是渲染期回调,
-            // 而系统旗标在 Swift 6 下属于主 actor。环境里本来就有同样三个值 (降透明/增强对比/反转),
-            // 走环境既没有隔离问题, 也保证同一次渲染里所有令牌看到的是同一份环境。
-            // App 内的 kf_hc 皮肤不是系统状态, 直接读偏好 (Store 线程安全, 不涉及隔离)。
-            let flat = environment.accessibilityReduceTransparency
-                || environment.colorSchemeContrast == .increased
-                || DB.store.getBool("kf_hc")
-            if flat {
-                let base = environment.accessibilityInvertColors ? Color.invHeroBottom : Palette.themed("heroB")
-                return AnyShapeStyle(base)
-            }
-            if environment.accessibilityInvertColors { return AnyShapeStyle(DS.heroInvertGradient) }
-            return AnyShapeStyle(Gradient.hero)
-        }
     }
     /// 863 反转降级渐变 (两端**同侧**: 浅档中性浅、深档中性深; 文字用 heroFg) — HeroSurface 的 863 分支
     static var heroInvertGradient: LinearGradient {
@@ -143,18 +121,8 @@ enum AXPrefs {
         let v = Double(DB.store.getString("kf_ax_hold", "0.9")) ?? 0.9
         return min(1.6, max(0.4, v))
     }
-    /// 881 字幕式过程条: 开锁/连接过程底部三步文字字幕 (可关)
-    static var captions: Bool { DB.store.getBool("kf_ax_captions", true) }
-    /// 876 新条目双震 (默认开, 设置可关; 设备级"振动"总开关由系统拦截)
-    static var doubleHaptic: Bool { DB.store.getBool("kf_ax_doublehaptic", true) }
-    /// 873/60 圆盘热区偏移 (单手下沉): 圆盘整体下移落入拇指区, 快捷格随之贴底
-    static var onehand: Bool { DB.store.getBool("kf_onehand") }
-    /// 229 左手模式: 工具栏与快捷格镜像 (落点设备 Tab)
-    static var lefty: Bool { DB.store.getBool("kf_lefty") }
     /// 230 大格模式: 快捷操作格 2 列大格 (默认 3 列), 长辈友好
     static var bigTile: Bool { DB.store.getBool("kf_bigtile") }
-    /// 870 底部对齐表单: 键盘弹起时表单贴底不滚动跳
-    static var bottomForm: Bool { DB.store.getBool("kf_form_bottom") }
 }
 
 enum AXTerms {
@@ -202,7 +170,6 @@ enum AXTerms {
 enum AXTools {
     /// 852 错误主动播报: UIAccessibility.post — VO 运行时即时朗读, 非运行时排队不影响
     static func announce(_ text: String) {
-        guard DB.store.getBool("kf_vo_announce", true) else { return }
         UIAccessibility.post(notification: .announcement, argument: text)
     }
     /// 连接失败播报话术 (852 示例: "连接失败, 可能离门太远")
@@ -210,9 +177,8 @@ enum AXTools {
         announce("连接失败, 可能离门太远. \(reason)")
     }
     /// 876 新条目双震: 两段 success 触感间隔 220ms — 帮听障用户确认"有新记录";
-    /// App 内可关 (AXPrefs.doubleHaptic); 设备级"减少触感/振动"由系统直接拦截, 天然遵循
+    /// App 内恒开（AXPrefs.doubleHaptic 已于 2026-10-26 删除）; 设备级"减少触感/振动"由系统直接拦截, 天然遵循
     static func newEntryHaptic() {
-        guard AXPrefs.doubleHaptic else { return }
         let g = UINotificationFeedbackGenerator()
         g.notificationOccurred(.success)
         Task { @MainActor in
@@ -229,7 +195,7 @@ extension View {
     @ViewBuilder
     func axBottomAnchor() -> some View {
         // 三目两支 opaque 返回类型不同 (ModifiedContent vs Self) → 必须 @ViewBuilder
-        if AXPrefs.bottomForm { defaultScrollAnchor(.bottom) } else { self }
+        self
     }
 }
 
@@ -242,21 +208,6 @@ enum AuthKit {
         guard ctx.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &err),
               err?.code != LAError.biometryNotAvailable.rawValue else { return false }
         return true
-    }
-    /// 392: 面容失败的原因翻成人话 —— 留痕要能读到"到哪一步没成" (不匹配/取消/锁停分开),
-    /// 只记一句笼统的"失败"等于有记录读不出事。取消/改用密码是人的选择, 由调用方决定不计连败。
-    /// 纯函数 (只做 LAError 到中文的映射, 不碰 UI) —— 显式 nonisolated, 让非 UI 层也能直接问原因。
-    nonisolated static func reasonText(_ err: Error?) -> String {
-        guard let e = err as? LAError else { return "未知原因" }
-        switch e.code {
-        case .authenticationFailed: return "识别不匹配"
-        case .userCancel: return "用户取消"
-        case .userFallback: return "用户选择改用密码"
-        case .systemCancel: return "系统中断"
-        case .biometryLockout: return "连续失败已锁停生物识别"
-        case .biometryNotEnrolled, .biometryNotAvailable: return "本机未录入或不可用"
-        default: return "错误码 \(e.code.rawValue)"
-        }
     }
     /// 945: 供 Intent await 的生物验证 (与 verifyBiometric 同 canEvaluate 判据)
     static func verifyBiometricAsync(reason: String) async -> Bool {

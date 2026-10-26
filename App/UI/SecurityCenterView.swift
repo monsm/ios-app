@@ -39,9 +39,6 @@ final class SecTickCenter: ObservableObject {
     func bump() { tick &+= 1 }
 }
 @MainActor
-enum SecTick {
-    static func bump() { SecTickCenter.shared.bump() }
-}
 
 // ---------- 378 常驻水印层 (截图加扰降级案: 页面常驻, 半透明对角重复) ----------
 struct SecurityWatermark: View {
@@ -73,18 +70,6 @@ struct SecurityWatermark: View {
         .allowsHitTesting(false)
         .accessibilityHidden(true)
     }
-}
-
-// ---------- 主入口 ----------
-// 审计流水的时间戳格式 (原 SecurityLockConfigView.dateStr 的落点: 那个页随应用锁一起删了,
-// 本页各处共用同一个格式串, 不复制第二份)。
-enum SecFmt {
-    private static let fmt: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "MM-dd HH:mm"
-        f.locale = Locale(identifier: "en_US_POSIX")
-        return f
-    }()
 }
 
 struct SecurityCenterView: View {
@@ -185,44 +170,4 @@ struct SecurityCenterView: View {
     }
 
 
-}
-
-// ---------- 通用行组件 (触达 ≥44pt, 颜色只走 DS 令牌) ----------
-struct SecRow<Trailing: View>: View {
-    private let title: String
-    private let subtitle: String
-    private let icon: String
-    private let iconTone: ToneColor
-    private let trailing: Trailing
-
-    init(title: String, subtitle: String = "", icon: String = "circle.fill",
-         iconTone: ToneColor = .neutral, @ViewBuilder trailing: () -> Trailing) {
-        self.title = title
-        self.subtitle = subtitle
-        self.icon = icon
-        self.iconTone = iconTone
-        self.trailing = trailing()
-    }
-
-    var body: some View {
-        HStack(spacing: DS.Space.s) {
-            Image(systemName: icon)
-                .font(.system(size: DS.Icon.sm, weight: .medium))
-                .foregroundStyle(iconTone.color)
-                .frame(width: DS.Icon.md, height: DS.Icon.md)
-            VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                Text(title)
-                    .vkFont(.subheadline, weight: .medium)
-                if !subtitle.isEmpty {
-                    Text(subtitle)
-                        .vkFont(.footnote)
-                        .foregroundStyle(DS.Palette.textSub)
-                }
-            }
-            Spacer(minLength: DS.Space.s)
-            trailing
-        }
-        .frame(minHeight: DS.Hit.min)
-        .contentShape(Rectangle())
-    }
 }

@@ -153,10 +153,6 @@ struct RecordsView: View {
             return (wk == 1 || wk == 7) ? .weekend : .workday
         }
         var lunarLabel: String? { isNone ? nil : Self.lunar(key) }
-        var yearSeparate: Bool {
-            guard let d = date else { return false }
-            return WeekCal.gregorian.component(.month, from: d) == 1 && WeekCal.gregorian.component(.day, from: d) <= 2
-        }
         var distinctUsers: Int { Set(rows.compactMap(\.whoId)).count }
         static func lunar(_ key: String) -> String? {
             guard let d = RecordSearch.dateFromKey(key) else { return nil }
@@ -1027,17 +1023,6 @@ struct RecordsView: View {
         .buttonStyle(PlainButtonStyle())
         .accessibilityLabel(title)
         .accessibilityAddTraits(on.wrappedValue ? .isSelected : [])
-    }
-
-    /// 最近一次开门时刻 (出行观察已删, 但记录页仍用它判断空态措辞)
-    private var lastOpenDate: Date? {
-        var last: Date? = nil
-        for m in macs {
-            for l in DB.readLogs(m) where StatsKit.openTypes.contains(l.type) {
-                if let d = StatsKit.dateOf(l) { last = max(last ?? d, d) }
-            }
-        }
-        return last
     }
 
     /// 190 第一扇门纪念: 滚到最早记录的结语行
@@ -2105,36 +2090,6 @@ struct RecordsView: View {
         var key: String
         var cells: [(name: String, count: Int, alarm: Bool)]
         var id: String { key }
-    }
-    private var laneDays: [LaneDay] {
-        let allMacs = DB.keychains().map { $0.mac }
-        var names: [String: String] = [:]
-        for kc in DB.keychains() { names[kc.mac] = LockArchive.displayName(kc) }
-        var byDay: [String: [String: (n: Int, a: Int)]] = [:]
-        for m in allMacs {
-            for l in DB.readLogs(m) {
-                guard let d = StatsKit.dateOf(l) else { continue }
-                let k = Self.dayKey(d)
-                var dict = byDay[k] ?? [:]
-                var e = dict[m] ?? (n: 0, a: 0)
-                if StatsKit.openTypes.contains(l.type) { e.n += 1 }
-                if StatsKit.alarmTypes.contains(l.type) { e.a += 1 }
-                dict[m] = e
-                byDay[k] = dict
-            }
-        }
-        var out: [LaneDay] = []
-        let cal = WeekCal.gregorian
-        let today = cal.startOfDay(for: Date())
-        for i in 0..<14 {
-            let d = cal.date(byAdding: .day, value: -i, to: today)!
-            let k = Self.dayKey(d)
-            let cells = allMacs.map { m -> (name: String, count: Int, alarm: Bool) in
-                (names[m] ?? m, byDay[k]?[m]?.n ?? 0, (byDay[k]?[m]?.a ?? 0) > 0)
-            }
-            out.append(LaneDay(key: k, cells: cells))
-        }
-        return out
     }
 
 

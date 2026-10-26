@@ -518,7 +518,6 @@ enum RecordSearch {
             m.stamp = 1
         }
     }
-    static var holidays: [Holiday] { ensureMerged(); return mergedLock.withLock { $0.rows } }
     /// 671 节假日名 (组头标签); 补班日不在此列
     static func holidayName(_ dayKey: String) -> String? { ensureMerged(); return mergedLock.withLock { $0.map[dayKey] } }
     /// 671 调休补班日 (上班的日子, 不是假期) —— 色带与"假日顺延"都必须把它和放假日分开

@@ -187,22 +187,7 @@ enum BackupStudio {
         DB.store.set("kf_bk_rollback", rollURL.path)
         return true
     }
-    static var canUndoLastRestore: Bool {
-        // Store.getString 返回非可选 String: 旧写法 guard let 绑定非可选值 → 编译不过
-        let path = DB.store.getString("kf_bk_rollback")
-        guard !path.isEmpty,
-              let m = (try? FileManager.default.attributesOfItem(atPath: path))?[.modificationDate] as? Date
-        else { return false }
-        return Date().timeIntervalSince(m) < 86400
-    }
     @discardableResult
-    static func undoLastRestore() -> Bool {
-        let path = DB.store.getString("kf_bk_rollback")
-        guard restoreRollbackSnapshot(path) else { return false }
-        DB.store.remove("kf_bk_rollback")
-        Milestones.recordBackup()
-        return true
-    }
     /// 421/445 快照还原实体: 由 undoLastRestore 与迁移事务回滚 (rollbackMigrationTxn) 共用。
     /// 只写回快照里已有的键, 不碰锁端协议; 快照之后用户新攒的键不会被删 (见下方 extras 段)。
     static func restoreRollbackSnapshot(_ path: String) -> Bool {
@@ -319,10 +304,6 @@ enum BackupStudio {
             guard let err else { return }
             MaintenanceLog.record("后台备份排期失败: " + err.localizedDescription)
         }
-    }
-    /// UI 文案: 只承诺"注册给系统, 由系统择机执行"
-    static var chargeBackupNote: String {
-        "已把后台备份任务交给系统, 由系统在你接电且闲置时择机执行 — 具体时刻由系统决定, 不承诺接电即备。"
     }
 
     /// 分区裁剪的统一口径 (导出 / 恢复 / 预演共用, 427 分区选择性恢复)

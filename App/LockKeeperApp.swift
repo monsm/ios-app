@@ -543,18 +543,9 @@ final class AppState: ObservableObject {
     func setDensity(_ key: String) {
         applyAppearance { DB.store.set("kf_density", key) }
     }
-    /// 893 App 内高对比皮肤: 与系统"增加对比度"并联，任一开着就加强
-    func setHighContrast(_ v: Bool) {
-        applyAppearance { DB.store.set("kf_hc", v) }
-    }
     /// 900 全局圆角档位: ""(标准)/soft/plump
     func setRadius(_ key: String) {
         applyAppearance { DB.store.set("kf_radius", key) }
-    }
-    /// 912 周起始日: ""(跟随系统)/mon/sun/sat。走外观通道 ——
-    /// 周界变了的话"本周"区、月历表头与轮值键都要重算，留着旧值就是三处各说一套。
-    func setWeekStart(_ key: String) {
-        applyAppearance { DB.store.set("kf_week_start", key) }
     }
     /// 901 凭证行高: ""(标准)/tall
     func setRowHeight(_ key: String) {
@@ -567,14 +558,6 @@ final class AppState: ObservableObject {
     /// 909 Hero 参考指标位 (电量不参与)
     func setHeroStats(_ ids: [String]) {
         applyAppearance { DS.HeroStats.setVisible(ids) }
-    }
-    func setHeroTexture(_ key: String) {
-        applyAppearance { DB.store.set("kf_hero_tex", key) }
-    }
-    /// 898 主控卡每日一句话 (按当天定值，不是每次刷新随机)
-    /// 890 节日限定色 (默认关)：走外观通道，切换当天 hero 立刻重新取值
-    func setFestive(_ v: Bool) {
-        applyAppearance { DB.store.set("kf_festive", v) }
     }
     /// 899 动效强度: calm/standard/lively (系统"减弱动态"会在令牌层把任何档压到 calm)
     func setMotionTier(_ key: String) {
@@ -598,28 +581,19 @@ final class AppState: ObservableObject {
     static let behaviorKeys: Set<String> = [
         "kf_hold_confirm", "kf_fence", "kf_tap_direct",
         "kf_auto_retry",
-        "kf_vo_announce",
         // 2026-10-15 走查 §7.4-10: 无障碍那批键此前全部走 applyAppearance ⇒ 换身份 ⇒ 整树重建
-        // = **拨一次开关被弹回设置页顶部**（同一条病灶作者已用上面这批治过）。这十枚并入的准入条件是逐键查出来的：
-        // 它的**全部**读取点都落在"会因 AppState 的 @Published 变化而重算 body"的位置 ——
-        //   · 根上那两枚修饰符 `.dynamicTypeSize(...)` / `.saturation(...)` 挂在 `.id(app.appearanceSeed)`
-        //     **之外**、RootView.body 之内，而 RootView 观察 app ⇒ prefSeed 一样让它们重算，
-        //     "根层修饰符"不构成否决（这条最反直觉，是 kf_ax_gray / kf_ax_bigpreview 能并的依据）；
+        // = **拨一次开关被弹回设置页顶部**。并入条件是逐键查出来的：**全部**读取点都必须落在
+        // "会因 AppState 的 @Published 变化而重算 body"的位置。
+        //   · 根上 `.dynamicTypeSize(...)` 挂在 `.id(app.appearanceSeed)` **之外**、RootView.body 之内，
+        //     而 RootView 观察 app ⇒ prefSeed 一样让它们重算，"根层修饰符"不构成否决；
         //   · UnlockDial 自己不观察 app，但 `kf_hold_confirm` / `kf_fence` 早就在里面以同一形状
-        //     （计算属性喂 body）被读、且已在名单里跑了很久 ⇒ `kf_dial_size` / `kf_gesture_mode` /
-        //     `kf_ax_hold` 走的是同一条级联，不是新机制；
-        //   · `kf_onehand` 的读取是 `axOnehand(_ on: Bool = AXPrefs.onehand, …)` 的**默认实参**，
-        //     每次调用点展开求值，不是"构造时读一次"；
-        //   · `kf_ax_doublehaptic` / `kf_ax_bigotp` / `kf_ax_captions` / `kf_bigtile` 的读点都在 obs 宿主体内。
-        // **刻意没并的四枚**（判据不齐，宁可留着"跳顶"这个已知 annoyance，也不把开关改成"拨了没作用"）：
-        //   `kf_ax_dwell`（除滑杆与演示文字外**没有任何行为消费者**）、
-        //   `kf_font_scale`（档位变 = 全树布局尺寸变，UIKit-backed 的 List 行不换身份能否重取档位，本机无证据）、
-        //   `kf_form_bottom`（`defaultScrollAnchor` 的语义是"首次布局时的锚点"，偏好变了而不换布局身份能否把已存在的 List 重新锚底，未知）、
-        //   `kf_lefty`（`HeroCard` 不观察 app，且值不从父层传入、没有传参链可追，只能指望级联 —— 无证据可证死也无证据可证活）。
-        // 这一条要真收口，得等一次真机：把四枚逐一试"拨完不退出页面，值是否即时生效"。
-        "kf_ax_bigotp", "kf_ax_bigpreview", "kf_ax_captions", "kf_ax_doublehaptic",
-        "kf_ax_gray", "kf_ax_hold", "kf_bigtile", "kf_dial_size",
-        "kf_gesture_mode", "kf_onehand"
+        //     （计算属性喂 body）被读 ⇒ `kf_dial_size` / `kf_gesture_mode` / `kf_ax_hold` 同一条级联。
+        //
+        // 2026-10-26 精简：原名单里 8 枚键连同它们的读取属性与消费代码一起删除（无写点 ⇒ 恒默认值），
+        // 因此从本名单移除：kf_ax_captions / kf_ax_doublehaptic / kf_ax_gray / kf_onehand /
+        // kf_font_scale / kf_form_bottom / kf_lefty / kf_vo_announce。
+        "kf_ax_bigotp", "kf_ax_bigpreview", "kf_ax_hold", "kf_bigtile",
+        "kf_dial_size", "kf_gesture_mode"
     ]
     func setUnlockOption(_ key: String, _ v: Any) {
         DB.store.set(key, v)
@@ -1088,7 +1062,6 @@ struct RootView: View {
         // 包15: App 字号五档 × 系统 Dynamic Type 叠加 (858, 含 866 极限字号自检 200% 预览)
         .dynamicTypeSize(AXFlags.typeSize())
         // 包15: 灰度预览自检 (879) — 全 App 去饱和, 检查渐变主题无色可读性
-        .saturation(AXFlags.grayPreview ? 0 : 1)
         // 861 系统加粗跟随: 读系统"加粗文本"开关, 在根上设 legibilityWeight ——
         // 显式字重的文本 (凭证名/开关标签) 才跟着加粗。关档时给 .regular 而不是留空:
         // 两档都显式, 不依赖系统默认推断 (LegibilityWeight.bold 的官方语义就是 "force Accessibility Bold")。

@@ -25,15 +25,6 @@ import SwiftUI
 //   不会因类型推导爆炸而失败**。等真机跑通、CI 绿了再考虑收窄。
 // ============================================================
 
-/// 容器的语义种类。页面只说"这是一个分组 / 一块瓦片 / 一条内嵌行"，
-/// **长成什么样由当前变体决定** —— 这是两套 UIUX 能真正不同、又不会各画一遍的关键切分。
-enum ContainerKind {
-    case group      // 一组相关读数/设置
-    case tile       // 可点的一次性入口
-    case inset      // 嵌在别的东西里面的小格
-    case hero       // 首屏主角那一块
-}
-
 struct VK {
 
     /// 视觉语法。拿不到 AppState 的叶子视图走这个静态入口。
@@ -49,24 +40,12 @@ struct VK {
         return DS.Palette.canvasBase
     }
 
-    var bezel: Color {
-        return DS.Palette.surfaceBase
-    }
-
-    var hair: Color {
-        return DS.Palette.hairline
-    }
-
     var ink: Color   { DS.Palette.text }
     var sub: Color   { DS.Palette.textSub }
 
     /// 页面左右边距。三套刻意不同 —— 这是"两套看着就不一样"最便宜的一处。
     var gutter: CGFloat {
         return DS.Space.gutter            // 16 标准
-    }
-
-    var corner: CGFloat {
-        return DS.Radius.card              // 22 档，跟随 kf_radius
     }
 
     /// 主表面容器。**`Card` 的全部 53 处调用都走这里** —— 一处改动让两套在首屏以下真正分开，

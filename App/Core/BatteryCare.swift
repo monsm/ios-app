@@ -218,8 +218,6 @@ enum CareSchedule {
         let v = DB.store.getInt("kf_batt_threshold", 15)
         return [10, 15, 20].contains(v) ? v : 15
     }
-    /// 146 下次打开 App 提醒升级 (默认开, 只对照本地固件清单)
-    static var fwRemindOn: Bool { DB.store.getBool("kf_fw_remind", true) }
 
     static func isQuietHour(_ d: Date = Date()) -> Bool {
         let h = WeekCal.gregorian.component(.hour, from: d)
@@ -299,11 +297,4 @@ enum CareSchedule {
         }
     }
 
-}
-
-/// "5.2.9" → 可比较字符串; 非法版本返回 nil (146 提醒只对两段都能解析的版本生效)
-private func _FWVersion(_ s: String) -> String? {
-    let parts = s.split(separator: ".")
-    guard parts.count == 3, parts.allSatisfy({ !$0.isEmpty && $0.allSatisfy(\.isNumber) }) else { return nil }
-    return s
 }

@@ -69,13 +69,4 @@ enum WeekCal {
         default: return "跟随系统"
         }
     }
-
-    /// "" 档下系统实际用哪天起一周，供 UI 把"跟随系统"翻译成看得见的哪天。
-    /// 直接按 firstWeekday 取名字，而不是拿 name() 反查键：反查在系统落到"周二"这类
-    /// 本偏好没给档位的日子上时会返回默认分支，屏幕上就成了"跟随系统（当前为 跟随系统）"。
-    static var effectiveName: String {
-        let names = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"]
-        let i = min(max(calendar.firstWeekday - 1, 0), 6)
-        return names[i]
-    }
 }

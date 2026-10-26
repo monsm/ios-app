@@ -294,14 +294,14 @@ struct DeviceHomeView: View {
     /// 图标行的锁集: 组过滤后**全部**可见 (含沉睡/隐藏) — 它是"看一眼有没有事"的面,
     /// 把沉睡锁藏起来正好会让最该被看见的那把消失。
     /// 229 左手模式：工具条两侧对调、快捷格顺序镜像（常用那格落到拇指侧）。
-    /// 开关只有 `AXPrefs.lefty` 一个出处 (AccessibilityKit.swift:214)，此前它被设置页读写、
+    /// （左手模式已于 2026-10-26 删除，工具栏位置/次序现为恒定。）此前它被设置页读写、
     /// 全仓没有任何消费者 —— "镜像"是两个只改自己标签的按钮之一，这两行把它接上。
     private var barSide: ToolbarItemPlacement {
-        AXPrefs.lefty ? .navigationBarLeading : .navigationBarTrailing
+        .navigationBarTrailing
     }
     private var tiles: [QuickAction] {
         let o = QuickPool.ordered()
-        return AXPrefs.lefty ? o.reversed() : o
+        return o
     }
 
     private var rowLocks: [Keychain] {
@@ -1029,10 +1029,8 @@ struct DeviceHomeView: View {
                        action: { dialAction() },
                        cancelAction: { app.cancelUnlock(notify: true) })
             // 包15 字幕式过程条 (881): 连接/开锁过程逐字文案条给听障用户 (设置-辅助可关)
-            if AXPrefs.captions {
-                CaptionStepBar(phase: app.phase, unlockState: app.unlockState)
-                    .transition(.opacity)
-            }
+            CaptionStepBar(phase: app.phase, unlockState: app.unlockState)
+                .transition(.opacity)
             // 39 自动上锁倒计时 (协议 cmd24 档位的本地回放, 不虚构门磁): 开锁成功后提醒关手
             if let left = autoLockLeft {
                 Label("约 \(left) 秒后自动上锁 · 请确认门已关好", systemImage: "timer")
@@ -1099,7 +1097,7 @@ struct DeviceHomeView: View {
             }
         }
         .axOnehand()   // 873/60 单手下沉: 圆盘区整体下移入拇指区
-                       // (挂在整个圆盘区 VStack 上 —— 原先误挂在 `if AXPrefs.captions` 分支后,
+                       // (挂在整个圆盘区 VStack 上 —— 原先误挂在一个条件分支后（if AXPrefs.captions，该开关已于 2026-10-26 删除）,
                        //  那是把修饰符接在 if 语句上, 编译器按隐式成员解析报 "cannot be used on type 'View'")
         .padding(.vertical, DS.Space.l)
         .animation(DS.Motion.soft, value: app.failStreak)

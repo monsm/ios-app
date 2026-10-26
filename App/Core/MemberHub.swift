@@ -28,13 +28,6 @@ struct MemberBorrow: Codable {
     var at: Double       // 登记时刻
 }
 
-/// 483 家政周期预设 (⚠降级: 协议无循环时段, 只做整段起止窗)
-struct HouseWin: Codable {
-    var from: String      // "yyyy-MM-dd HH:mm:ss"
-    var to: String
-    var label: String
-}
-
 enum MemberHub {
     // 793 访客虚拟分组: 只存在于本地展示层, 绝不写入锁端凭证表
     static let visitorId = "__visitor"
@@ -328,10 +321,4 @@ enum MemberHub {
     /// 其余页面仍不跟这一档 —— 成员页的开关说明按这个口径写, 不许它承诺"全 App 大字"。
     static var elderMode: Bool { DB.store.getBool("kf_elder_mode") }
     static func setElderMode(_ on: Bool) { DB.store.set("kf_elder_mode", on) }
-
-    // ---------- 480 孩子码关怀: 名下临时码 N 天内到期 (台账推断) ----------
-    struct CareDue {
-        var member: Member
-        var days: Int
-    }
 }

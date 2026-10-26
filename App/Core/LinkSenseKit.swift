@@ -755,7 +755,7 @@ struct LinkPill: View {
             Image(systemName: icon)
                 .font(.system(size: DS.Icon.xs, weight: .semibold))
             // 228 色觉冗余: 三态不能只靠颜色 + 链路圈的虚实来分 —— 色觉障碍下 fill/dashed 几乎同形，
-            // 而本 App 还有一个"灰阶预览"开关 (AXFlags.grayPreview)，那一档里 tint 整条通道直接归零。
+            // （原还有"灰阶预览"开关 AXFlags.grayPreview，2026-10-26 随该开关一起删除。）
             // 所以补一枚语义符号 (✓ / ⏳ / ✗) 当第三通道: 形状自己就说清状态。
             Image(systemName: redundancyIcon)
                 .font(.system(size: DS.Icon.xs, weight: .bold))

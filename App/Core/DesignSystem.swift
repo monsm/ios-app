@@ -172,10 +172,6 @@ enum DS {
             }
             return (DS.Space.m * f * 2).rounded() / 2
         }
-        /// 903 空态装饰图形: 复用**已有的** 素颜模式 (kf_plain)，不另立新键。
-        /// 理由就写在调用点：一个 App 里同时存在"关庆祝"和"关插画"两个语义重叠开关，
-        /// 用户只会记住其中一个，而记住的那个会变成"切了没反应"。
-        static var emptyMascot: Bool { !DB.store.getBool("kf_plain") }
         /// 902 数字字体两档: kf_digit_font ""(圆体 = 默认, 与旧版观感一致) / "plain"(系统默认体)。
         /// 射程如实圈死: 这一档只管**读数令牌的两处落点** (MetricTile 与 HeroStat 的数字 Text),
         /// 902 原句就是"Hero 卡电量数字圆体/默认体可选"。它不是全 App 数字字体总闸 ——
@@ -655,9 +651,9 @@ extension View {
 
 // ---------- 无障碍布局辅助 (包15) ----------
 extension View {
-    /// 873/60 单手下沉: 圆盘整体下移落入拇指区 (开关在 设置-辅助, AXPrefs.onehand)
+    /// 873/60 单手下沉: 圆盘整体下移落入拇指区 (开关 AXPrefs.onehand 已于 2026-10-26 删除，参数默认 false)
     @ViewBuilder
-    func axOnehand(_ on: Bool = AXPrefs.onehand, dy: CGFloat = 48) -> some View {
+    func axOnehand(_ on: Bool = false, dy: CGFloat = 48) -> some View {
         // 三目两支 opaque 返回类型不同 (ModifiedContent vs Self) → 必须 @ViewBuilder, 同 axBottomAnchor
         if on { offset(y: dy) } else { self }
     }
@@ -840,8 +836,8 @@ struct HeroCard<Content: View>: View {
         content
             .frame(maxWidth: .infinity, alignment: .leading)
             // 229 左手模式: Hero 卡本体镜像 —— 与 DeviceHomeView 的 barSide(工具条两侧对调)/快捷格 reversed
-            // 同一档 (AXPrefs.lefty)。只翻卡内排列方向, 不动卡外页面结构; 未开左手模式时是恒等值。
-            .environment(\.layoutDirection, AXPrefs.lefty ? .rightToLeft : .leftToRight)
+            // （原按 AXPrefs.lefty 翻卡内排列方向；左手模式已于 2026-10-26 删除，现在恒为 LTR。）
+            .environment(\.layoutDirection, .leftToRight)
             .padding(DS.Space.l + DS.Space.xs)
             .background {
                 ZStack(alignment: .topTrailing) {
@@ -932,8 +928,8 @@ struct EmptyState: View {
 /// 空态皆引导 (包14: 814 进度点 / 815 双按钮 / 808 示例铺底 / 834 演示链接 / 1044 便签):
 /// 空态卡 = 顶部"第 N/M 步"进度圆点 + 主/次双按钮 + 可选"看 30 秒演示"文字链 + 公告板便签。
 /// 2026-10-26: 原注释提到"841 小管家顶饰"，但那个装饰图形**从未实现** ——
-/// `if mascot, DS.Metric.emptyMascot { }` 一直是个空块，`mascot` 参数也没有任何消费者。
-/// 空块与本参数已删除（留着一个空 if 比没有更容易让人以为功能在）。
+/// `if mascot, ... { }` 一直是个空块，`mascot` 参数也没有任何消费者；
+/// 连带 `DS.Metric.emptyMascot`（素颜档判定）也已删除。三样全清，不留空壳。
 /// showDemoLink 默认开 —— 演示链出不出现由 demoAction 决定 (调用方给了动作就上屏，没给就没有)，
 /// 而不是由一个全仓没人置真的旗标决定 (旧写法: showDemoLink 默认 false 且零处置真 ⇒ 834 从未渲染)。
 struct GuidedEmptyView: View {

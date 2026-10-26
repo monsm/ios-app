@@ -49,8 +49,6 @@ enum SecurityPolicy {
     /// 377 访客通道: 开关 UI 已随安全中心子页删除, 这里直读原键名 —— 
     /// 老用户若曾打开过仍会生效, 但已无任何入口能再拨它。
     static var guestActive: Bool { DB.store.getBool("kf_speek_guest", false) }
-    /// 377 访客视图筛敏感成员 (本机没有成员敏感标记位, 见 SecurityCenterView 那行的实话文案)
-    static var hideSensitiveInGuest: Bool { DB.store.getBool(SecKey.sensitiveOnly, false) }
     /// 296 只读安全模式
     static var readOnly: Bool { DB.store.getBool(SecKey.safeModeOn, false) }
     /// 376 口述卡与导出预览默认遮码值下半段

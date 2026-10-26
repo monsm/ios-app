@@ -64,56 +64,6 @@ enum StudioTools {
         case secret = "缺 secret 参数"
         case base32 = "secret 不是合法 Base32: 只允许 A-Z 与 2-7 (0/1/8/9 不在这个字母表里)"
     }
-    /// 341 otpauth://totp 解析 (纯本地; 不联网、不落库, 落库仍走 CredentialOrg.addTotp)。
-    /// 缺省补的是 RFC 6238 的默认档 (SHA1 · 30 秒 · 6 位) 与名称回退, **每一项都记进 defaulted**
-    /// 交调用方在成功提示里原样透出 —— 补了值却不吭声, 就等于替用户改了他没写的那几个字段。
-    static func parseOtpAuth(_ uri: String) -> Result<(name: String, secret: String, algo: String,
-                                                       period: Int, digits: Int, defaulted: [String]), OtpFail> {
-        let s = uri.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !s.isEmpty else { return .failure(.blank) }
-        guard let u = URL(string: s) else { return .failure(.scheme) }
-        guard u.scheme?.lowercased() == "otpauth" else { return .failure(.scheme) }
-        guard u.host?.lowercased() == "totp" else { return .failure(.host) }
-        var secret = "", name = "", algo = "", periodS = "", digitsS = ""
-        for pair in (u.query ?? "").split(separator: "&") {
-            let kv = pair.split(separator: "=", maxSplits: 1)
-            guard kv.count == 2 else { continue }
-            switch String(kv[0]).lowercased() {
-            case "secret": secret = String(kv[1])
-            case "issuer", "label": if name.isEmpty { name = String(kv[1]) }
-            case "algorithm": algo = String(kv[1]).uppercased()
-            case "period": periodS = String(kv[1])
-            case "digits": digitsS = String(kv[1])
-            default: break
-            }
-        }
-        guard !secret.isEmpty else { return .failure(.secret) }
-        guard base32Decode(secret) != nil else { return .failure(.base32) }
-        var defaulted: [String] = []
-        // 名称: 真实 uri 的账户名在**路径段** (otpauth://totp/张三?secret=…), 旧写法只读 issuer/label
-        // 两个查询参数 ⇒ 大多数链接的名称会静默空掉。现在路径段 → issuer → 占位, 走到占位才记 defaulted。
-        if name.isEmpty {
-            let raw = u.path.replacingOccurrences(of: "/", with: "")
-            let label = raw.removingPercentEncoding?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            if !label.isEmpty { name = label }
-        }
-        if name.isEmpty {
-            name = fallbackName(secret)
-            defaulted.append("名称按密钥尾段记作「\(name)」")
-        }
-        let knownAlgo = ["SHA1", "SHA256", "SHA512"]
-        let algoOut = knownAlgo.contains(algo) ? algo : "SHA1"
-        if algoOut == "SHA1" && !knownAlgo.contains(algo) {
-            defaulted.append(algo.isEmpty ? "算法按默认 SHA1 (uri 没写 algorithm)" : "算法按默认 SHA1 (\(algo) 不在 SHA1/SHA256/SHA512 之内)")
-        }
-        var period = 30
-        if let v = Int(periodS), v > 0 { period = v }
-        else { defaulted.append(periodS.isEmpty ? "周期按默认 30 秒 (uri 没写 period)" : "周期按默认 30 秒 (period=\(periodS) 读不出正整数)") }
-        var digits = 6
-        if let v = Int(digitsS), v > 0, v <= 8 { digits = v }
-        else { defaulted.append(digitsS.isEmpty ? "位数按默认 6 (uri 没写 digits)" : "位数按默认 6 (digits=\(digitsS) 不在 1~8)") }
-        return .success((name, secret, algoOut, period, digits, defaulted))
-    }
     /// 341 名称缺失时的回退名: 取密钥尾 4 位, 让列表里两条不至于都叫同一个占位名。
     static func fallbackName(_ secret: String) -> String {
         let clean = secret.uppercased().replacingOccurrences(of: "=", with: "").replacingOccurrences(of: " ", with: "")
@@ -311,50 +261,6 @@ struct PwdDiffView: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("新旧密码逐位对比, 共 \(changed.count) 位改动")
-    }
-}
-
-/// 171/337 时窗进度细条 (⚠ 锁端 ZOTP 分钟级; 独立 TOTP 秒级; 末 5 秒转橙并轻震)
-struct WindowBar: View {
-    let totalSec: Int
-    let label: String
-    @State private var now = Date()
-    private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-    /// 337/171 时窗倒计时的**唯一**实现: per - epoch % per (取余不是取整除)。
-    /// CredentialOrg 里曾有同公式的 totpRemaining, 零调用, 已删, 免得看着像两套口径。
-    private func remaining(_ d: Date) -> Int { max(0, totalSec - Int(d.timeIntervalSince1970) % max(totalSec, 1)) }
-    var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            GeometryReader { geo in
-                Capsule().fill(remaining(now) <= 5 ? DS.Palette.warn : DS.Palette.accent)
-                    .frame(height: 4)
-                    .frame(width: max(CGFloat(remaining(now)) / CGFloat(max(totalSec, 1)) * geo.size.width, 0))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .frame(height: 4)
-            .animation(DS.Motion.exit, value: remaining(now))
-            HStack(spacing: DS.Space.xs) {
-                Text(label)
-                    .vkFont(.caption2)
-                    .foregroundStyle(DS.Palette.textSub)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                Spacer(minLength: 0)
-                Text("剩约 \(remaining(now)) 秒")
-                    .vkFont(.caption2)
-                    .monospacedDigit()
-                    .foregroundStyle(DS.Palette.textSub)
-                    .lineLimit(1)
-            }
-        }
-        .onReceive(timer) { t in
-            let old = remaining(now)
-            now = t
-            if remaining(t) <= 5 && old > 5 && remaining(t) > 0 {
-                DS.Haptics.tick.impactOccurred()   // 337 末 5 秒轻震
-            }
-        }
-        .accessibilityLabel(label + " 剩约 \(remaining(now)) 秒")
     }
 }
 

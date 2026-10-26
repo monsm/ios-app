@@ -255,8 +255,6 @@ struct LockUsage: Identifiable {
     var verified: Bool = false   // 258
     var pairedAt: String = ""    // 769 绑定时间
     var id: String { mac }
-    /// 778 告警率 = 告警 / (告警+开门), 万一全告警也算 100%
-    var alarmRate: Double { opens30d + alarms30d == 0 ? 0 : Double(alarms30d) / Double(opens30d + alarms30d) }
 }
 
 @MainActor
@@ -325,14 +323,6 @@ enum LockStats {
             u.pairedAt = kc.pairedAt
             return u
         }
-    }
-
-
-    /// 768 待维护锁清单: 低电 / 近 30 天有告警 / 密钥未绑定, 全部来自可读证据
-    struct MaintenanceItem: Identifiable {
-        let usage: LockUsage
-        let reasons: [String]
-        var id: String { usage.mac }
     }
 
     /// 764 图标行的告警判据: 近 windowDays 天内**日志缓存里**有告警类记录的锁。

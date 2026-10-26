@@ -71,6 +71,10 @@ const SYS_NAMES = new Set([
   "firstDate", "lastDate", "startOfDay", "timeInterval", "string", "int", "double", "bool",
   "keyPath", "content", "configuration", "context", "coordinator", "representable",
   "radius", "spacing", "padding", "margin", "frame", "bounds", "origin", "position",
+  // 2026-10-26: SwiftUI 内置成员名 —— 它们会出现在某个被删类型的属性/枚举 case 里，
+  // 但全仓的 .trailing / .inset(by:) 用的是**框架自带的**同名词，不是那个被删的定义。
+  // 被删来源：SecRow.trailing（属性）、ContainerKind.inset（枚举 case）。
+  "trailing", "inset", "leading",
 ]);
 
 function stripCode(line) {

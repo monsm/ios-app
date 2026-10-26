@@ -70,13 +70,6 @@ enum TimeFormat {
         return String(parts.dropLast().joined(separator: " ")) + " " + out
     }
 
-    /// 780 那类"时刻对照"要的是钟点，不是日期：源串 "2026-10-05 07:12:33" 只取时刻那一段。
-    /// 走的仍是 clock() 那一份 12/24 制规则 —— 这里只负责"取哪一段"，不改写格式。
-    static func clockOnly(_ raw: String) -> String {
-        let tail = raw.split(separator: " ", omittingEmptySubsequences: true).last.map(String.init) ?? raw
-        return clock(tail)
-    }
-
     /// 665 区间日期精简: 同年省年份、同月省月份，跨年才补全。"2026-10-01"~"2026-10-07" → "10月1日–7日"。
     /// 按数字比较而不是按字符串找"月"字 —— 字符串写法一变 (补零、非零填充) 判断就悄悄失效。
     static func range(fromDay: String, toDay: String) -> String {

@@ -116,8 +116,6 @@ final class AuditLog {
     }
 
     // 379 双流水分段
-    func doorEvents() -> [AuditEvent] { load().filter { $0.cat == .door }.reversed() }
-    func adminEvents() -> [AuditEvent] { load().filter { $0.cat == .admin }.reversed() }
 
     /// 386 防篡改校验: 逐链重算, 返回 (总长, 断链点下标) — -1 = 完好; -2 = id 单调性被破坏
     /// (头部裁剪/换序重放: 旧实现只验哈希, 攻击者截掉前 N 条重封 GENESIS 链即通过, 此处堵死)
