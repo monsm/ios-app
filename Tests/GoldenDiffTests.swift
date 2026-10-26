@@ -205,7 +205,7 @@ final class GoldenDiffTests: XCTestCase {
             let expected = try XCTUnwrap(zotp[name] as? String, name)
             let actual = ZOTP.generate(macHex: "aabbccddeeff",
                                        skeyHex: "00112233445566778899aabbccddeeff",
-                                       periodSec: periods[name] ?? 30,
+                                       periodMin: periods[name] ?? 30,   // 单位=分钟（金标 v30_*/v60_0 同口径）
                                        idx: idxs[name] ?? 0, nowSec: fixedSec)
             XCTAssertEqual(actual, expected, "zotp.\(name)")
         }

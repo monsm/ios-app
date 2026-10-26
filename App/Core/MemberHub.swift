@@ -308,14 +308,15 @@ enum MemberHub {
         }
     }
 
-    // ---------- 794 隐私浏览 (限时 10 分钟) ----------\n    /// 现状: 只有 kf_privacy_until 一个时间戳, 消费方仅成员设置页倒计时回显;\n    /// 794 原句的\"只显示本人数据 + 水印\"两要素未接线 (StatsKit/StatsView 零 privacy 消费), 2026-10-13 文案已按此诚实化。
-    static var privacyActive: Bool {
-        (DB.store.get(Double.self, "kf_privacy_until") ?? 0) > Date().timeIntervalSince1970
-    }
-    static var privacyUntilSec: Double { DB.store.get(Double.self, "kf_privacy_until") ?? 0 }
-    static func setPrivacy(_ on: Bool) {
-        DB.store.set("kf_privacy_until", on ? Date().timeIntervalSince1970 + 600.0 : 0.0)
-    }
+    // 794「隐私浏览」—— 2026-10-26 **已删除**（用户决策）。
+    //
+    // 原实现只写一个 `kf_privacy_until` 时间戳，唯一消费方是成员设置页的倒计时回显；
+    // 794 原句承诺的「只显示本人数据 + 水印」两要素从未接线（StatsKit/StatsView 零 privacy 消费）。
+    // 一个只写时间戳、不改变任何可见行为的开关，比没有更糟：用户以为自己在保护隐私。
+    // 删除而不是补全的理由：真要做就得改统计口径 + 全页水印，那是另一个特性，
+    // 而离线的单人锁场景里「给谁看」这个前提本身就不成立。
+    //
+    // 键名 `kf_privacy_until` 保留在 Store 的族删清单里（老用户升级时会被清掉）。
 
     // ---------- 479/486 长辈模式 (本机布局档) ----------
     /// 479 这一档真实改的是**凭证页**那一族: 分段只留 全部/密码/指纹 (CredentialsView 分段胶囊)、

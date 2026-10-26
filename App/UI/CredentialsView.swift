@@ -1924,7 +1924,7 @@ struct CredentialsView: View {
         // (读快照生成、反而能用)
         let pRaw = DB.readStatus(kc.mac)?.zotpPeriod ?? 0
         let period = pRaw > 0 ? pRaw : 30
-        let pwd = ZOTP.generate(macHex: kc.mac, skeyHex: kc.skey, periodSec: period, idx: idx)
+        let pwd = ZOTP.generate(macHex: kc.mac, skeyHex: kc.skey, periodMin: period, idx: idx)   // period 单位=分钟（来自锁端 KLV#05 zotpPeriod）
         // `generate` 只在算得出码时才返回值 (钥匙串长度、MAC 形状任一不过就返回空串，见 ZOTP.swift)。
         // 空串不许当「生成成功」：原先会一路把空值写进 otpPwd、复制进剪贴板、再震一下「成功」，
         // 屏幕上是一个看不见的码，而 idx 也已经被记进窗口 —— 用户只知道「没开门」。

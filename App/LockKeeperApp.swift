@@ -914,6 +914,9 @@ struct RootView: View {
         // 包2/136 跨页状态细条: 非设备 Tab 顶部一条 BLE 状态细线, 点按跳回设备页定位当前锁;
         // 162 握手可离开: 切走 Tab 不取消进行中的握手 (回连循环/看门狗继续跑)
         mainTabView
+            // 只读试验模式：全 App 顶部常驻红条。**必须常驻** ——
+            // 用户第二天忘了自己开过它，会以为"App 坏了、什么都改不了"。
+            .safeAreaInset(edge: .top, spacing: 0) { TrialGuardBanner() }
         // 26 Tab 长按快捷菜单 (iOS 18)。这一条只在"真按得动"的项上开口:
         // 每一项都汇进本仓**已有的落点口** (requestTab / pendingCredPanel 词表 /
         // pendingRecordsDay / pendingDiag), 没有一项指向还不存在的页面 ——

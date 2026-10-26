@@ -181,7 +181,10 @@ private fun KfApp(unlocker: BleUnlocker) {
 
     fun doUnlock(auto: Boolean) {
         val l = lock ?: return
-        if (busy) return
+        // busy 时**不能静默丢弃**：自动开锁正在跑时用户点圆盘，手动那一下没有发生，
+        // 而界面此前毫无反馈 —— 用户会以为"点了没反应"，然后在门口反复点。
+        // 给一句明确的话，并说清是哪一路在跑。
+        if (busy) { say(if (auto) "正在开锁, 请稍候…" else "自动开锁进行中, 请稍候…"); return }
         busy = true
         say(if (auto) "已靠近, 正在开锁…" else "正在开锁…")
         scope.launch {

@@ -12,12 +12,19 @@ enum ZOTP {
         let x = UInt32(truncatingIfNeeded: v)
         return String(format: "%04x", x & 0xffff).uppercased()
     }
-    /// `periodSec` 这个名字是**沿用 JS 基线**的 (vendor/app/utils/zotp.js:19)，而它真正的单位是**分钟**：
-    /// 计数器 = nowProtoSeconds / (60 * t)，t=30 ⇒ 窗口 30 分钟 (金标 case v30_*/v60_0 就是这个换算)。
-    /// 不在 Swift 侧单独改名：那会让同一概念在两种语言里叫不同名字，而读基线的人比读这里更多。
-    /// 改名要连 vendor 与金标 fixture 一起动，属于跨语言基线决定 (已记入 docs/DECISION-NEEDED.md)。
-    static func generate(macHex: String, skeyHex: String, periodSec: Int, idx: Int, nowSec: Int64? = nil) -> String {
-        let t = periodSec > 0 ? periodSec : 30
+    /// `periodMin`：单位是**分钟**，不是秒。
+    /// 计数器 = nowProtoSeconds / (60 * t)，t=30 ⇒ 窗口 30 分钟（金标 case v30_* / v60_0 就是这个换算）。
+    ///
+    /// 2026-10-26 改名：原名 `periodSec` 沿用 JS 基线（vendor/app/utils/zotp.js:23），
+    /// 但名字说的单位与代码做的换算相反 —— 读代码的人看到 `periodSec: 30` 会以为 30 秒。
+    /// **vendor 侧保持原名不改**（那是基线资产，改名会让金标 fixture 的语义漂移）；
+    /// 这里用 `periodMin`，并在调用点写清换算。两边名字不同是有意的：
+    /// 读基线的人看 JS，写 App 的人看这里，各按各自的名字理解。
+    static func generate(macHex: String, skeyHex: String, periodMin: Int, idx: Int, nowSec: Int64? = nil) -> String {
+        // 断言单位：锁端真实窗口在 1–120 分钟量级；若有人误传秒（如 1800），这里明确崩而不是静默错窗。
+        assert(periodMin <= 0 || (1...120).contains(periodMin),
+               "periodMin 单位是分钟；传入 \(periodMin) 看起来像秒 —— 请确认调用点")
+        let t = periodMin > 0 ? periodMin : 30
         let now = nowSec ?? ZKProtocol.nowProtoSeconds()
         let u = String(format: "%llx", now / Int64(60 * t)).uppercased()
         let uPadded = String(repeating: "0", count: max(0, 8 - u.count)) + u

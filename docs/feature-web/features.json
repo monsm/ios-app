@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-26T06:01:33.555Z",
+    "generated": "2026-10-26T06:20:45.097Z",
     "sources": [
       {
         "scout": "android-native",
@@ -449,7 +449,7 @@
           "line": 338,
           "symbol": "KfApp",
           "note": "Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(colors.bgTop, colors.bgBottom))))",
-          "text": "Box("
+          "text": "// 暗色档仍取既有 Theme.kt 的值 (D14: Android 保留暗色 + 暖金),"
         },
         {
           "platform": "android",
@@ -489,7 +489,7 @@
           "line": 343,
           "symbol": "KfApp",
           "note": "Column(fillMaxSize().padding(horizontal = 24.dp, vertical = 28.dp), CenterHorizontally)",
-          "text": "Column("
+          "text": ".fillMaxSize()"
         },
         {
           "platform": "android",
@@ -497,7 +497,7 @@
           "line": 411,
           "symbol": "KfApp",
           "note": "if (lock != null) GearButton(Modifier.align(Alignment.BottomEnd).padding(24.dp))",
-          "text": "if (lock != null) {"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -1361,7 +1361,7 @@
           "line": 417,
           "symbol": "KfApp",
           "note": "AnimatedVisibility(visible = showSettings && lock != null, enter = fadeIn(160)+slideInVertically(220) { it/3 }, exit = fadeOut(140)+slideOutVertically(200) { it/3 })",
-          "text": "AnimatedVisibility("
+          "text": "}"
         },
         {
           "platform": "apk",
@@ -1377,7 +1377,7 @@
           "line": 684,
           "symbol": "ProximityCard",
           "note": "private fun ProximityCard(on, onToggle, onRescan, onUnbind, onClose)",
-          "text": "private fun ProximityCard("
+          "text": "}"
         },
         {
           "platform": "android",
@@ -1385,7 +1385,7 @@
           "line": 693,
           "symbol": "ProximityCard",
           "note": "clip(RoundedCornerShape(KfTokens.Radius.card)).background(colors.surface).padding(KfTokens.Space.l)",
-          "text": "Column("
+          "text": ") {"
         }
       ],
       "platformEvidence": {
@@ -1652,7 +1652,7 @@
           "line": 230,
           "symbol": "KfApp",
           "note": "DisposableEffect(lifecycleOwner) { val obs = LifecycleEventObserver { _, ev -> when (ev) { ON_RESUME -> ...; ON_PAUSE -> ... } }; onDispose { removeObserver(obs) } }",
-          "text": "DisposableEffect(lifecycleOwner) {"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -2328,7 +2328,7 @@
           "line": 351,
           "symbol": "KfApp",
           "note": "if (lock == null) { EmptyState(onScan = { launchScan() }) } else { ... }",
-          "text": "if (lock == null) {"
+          "text": ") {"
         }
       ],
       "platformEvidence": {
@@ -2560,7 +2560,7 @@
           "line": 197,
           "symbol": "doUnlock",
           "note": "if (r.ok) KfHaptics.ok(ctx) else KfHaptics.fail(ctx)",
-          "text": "if (r.ok) KfHaptics.ok(ctx) else KfHaptics.fail(ctx)"
+          "text": "detail = if (r.ok || r.trace.isEmpty()) \"\" else r.trace"
         },
         {
           "platform": "android",
@@ -8756,7 +8756,7 @@
           "line": 522,
           "symbol": "Header",
           "note": "Text(text = lock?.name ?: \"离线锁钥匙\", fontSize = if (lock == null) 22.sp else 26.sp, Light)",
-          "text": "Text("
+          "text": "private fun Header(lock: LockInfo?) {"
         },
         {
           "platform": "android",
@@ -8772,7 +8772,7 @@
           "line": 529,
           "symbol": "Header",
           "note": "if (lock != null) { ... Text(text = lock.macText, monospace, letterSpacing = 1.5.sp) }",
-          "text": "if (lock != null) {"
+          "text": "fontWeight = FontWeight.Light,"
         }
       ],
       "platformEvidence": {
@@ -8839,7 +8839,7 @@
           "line": 764,
           "symbol": "GearButton",
           "note": "private fun GearButton(modifier: Modifier = Modifier, onClick: () -> Unit)",
-          "text": "private fun GearButton(modifier: Modifier = Modifier, onClick: () -> Unit) {"
+          "text": ""
         },
         {
           "platform": "android",
@@ -8847,7 +8847,7 @@
           "line": 768,
           "symbol": "GearButton",
           "note": ".size(56.dp).clip(CircleShape).background(colors.surface.copy(alpha = 0.92f)).clickable { onClick() }",
-          "text": ".size(56.dp)"
+          "text": "val colors = LocalKfColors.current"
         },
         {
           "platform": "android",
@@ -8855,7 +8855,7 @@
           "line": 778,
           "symbol": "GearButton",
           "note": "for (k in 0 until 8) { val a = Math.toRadians((k * 45).toDouble()) ... }",
-          "text": "for (k in 0 until 8) {"
+          "text": "Canvas(Modifier.size(30.dp)) {"
         }
       ],
       "platformEvidence": {
@@ -8922,7 +8922,7 @@
           "line": 425,
           "symbol": "KfApp",
           "note": ".background(Color(0xB3050709))",
-          "text": ".background(Color(0xB3050709))"
+          "text": "Column("
         },
         {
           "platform": "android",
@@ -8930,7 +8930,7 @@
           "line": 427,
           "symbol": "KfApp",
           "note": ".clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { showSettings = false }",
-          "text": ".clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {"
+          "text": ".fillMaxSize()"
         },
         {
           "platform": "android",
@@ -8938,7 +8938,7 @@
           "line": 454,
           "symbol": "ProximityCard",
           "note": "onClose = { showSettings = false }（“完成”按钮）",
-          "text": "onClose = { showSettings = false },"
+          "text": "scope.launch { unlocker.release() }"
         }
       ],
       "platformEvidence": {
@@ -9229,7 +9229,7 @@
           "line": 233,
           "symbol": "KfApp",
           "note": "Lifecycle.Event.ON_RESUME -> { foreground = true; prewarmStarted = false; fired = false; airTagDismissed = false }",
-          "text": "Lifecycle.Event.ON_RESUME -> {"
+          "text": "DisposableEffect(lifecycleOwner) {"
         },
         {
           "platform": "android",
@@ -9237,7 +9237,7 @@
           "line": 309,
           "symbol": "KfApp",
           "note": "LaunchedEffect(proximity, lock?.mac, busy, warming, foreground) { ... observeSignal(l).collect { ... } }",
-          "text": "LaunchedEffect(proximity, lock?.mac, busy, warming, foreground) {"
+          "text": "// 不只是抢射频: 同 App 里第二次 startScan 会重启扫描, 前一个 callback 静默失声,"
         },
         {
           "platform": "android",
@@ -9245,7 +9245,7 @@
           "line": 312,
           "symbol": "KfApp",
           "note": "开锁在途或预热在途都撤下监测；撤下后 rssi 保持最后读数不抹成 null",
-          "text": "// 开锁在途 **或预热在途** 都撤下监测: 安卓同时只跑一路扫描, 而且边扫边连极易 133。"
+          "text": "LaunchedEffect(proximity, lock?.mac, busy, warming, foreground) {"
         }
       ],
       "platformEvidence": {
@@ -9466,7 +9466,7 @@
           "line": 717,
           "symbol": "ProximityCard",
           "note": "Switch(checked = on, onCheckedChange = onToggle, colors = SwitchDefaults.colors(...))",
-          "text": "Switch("
+          "text": "color = colors.inkSub.copy(alpha = 0.75f), fontSize = 12.sp, lineHeight = 17.sp,"
         },
         {
           "platform": "android",
@@ -9474,7 +9474,7 @@
           "line": 720,
           "symbol": "ProximityCard",
           "note": "checkedThumbColor = colors.bgTop, checkedTrackColor = colors.accent, uncheckedTrackColor = colors.inkSub.copy(alpha = 0.30f)",
-          "text": "colors = SwitchDefaults.colors("
+          "text": "Switch("
         }
       ],
       "platformEvidence": {
@@ -9536,7 +9536,7 @@
           "line": 654,
           "symbol": "EmptyState",
           "note": "private fun EmptyState(onScan: () -> Unit)",
-          "text": "private fun EmptyState(onScan: () -> Unit) {"
+          "text": "}"
         },
         {
           "platform": "android",
@@ -9544,7 +9544,7 @@
           "line": 658,
           "symbol": "EmptyState",
           "note": "Canvas(Modifier.size(120.dp)) { ... 四个角 corner(...) }",
-          "text": "Canvas(Modifier.size(120.dp)) {"
+          "text": "val colors = LocalKfColors.current"
         },
         {
           "platform": "android",
@@ -9552,7 +9552,7 @@
           "line": 674,
           "symbol": "EmptyState",
           "note": "Text(\"在 iOS 端「设置 → 门锁 → 分享给安卓」生成二维码,\\n扫一次即可。之后开锁不再需要它。\")",
-          "text": "Text("
+          "text": "Spacer(Modifier.height(28.dp))"
         }
       ],
       "platformEvidence": {
@@ -9979,7 +9979,7 @@
           "line": 242,
           "symbol": "KfApp",
           "note": "Lifecycle.Event.ON_PAUSE -> { foreground = false; armed = false; prewarmStarted = false; scope.launch { unlocker.release() } }",
-          "text": "Lifecycle.Event.ON_PAUSE -> {"
+          "text": "fired = false"
         },
         {
           "platform": "android",
@@ -9987,7 +9987,7 @@
           "line": 246,
           "symbol": "KfApp",
           "note": "scope.launch { unlocker.release() }",
-          "text": "scope.launch { unlocker.release() }"
+          "text": "foreground = false"
         },
         {
           "platform": "android",
@@ -9995,7 +9995,7 @@
           "line": 902,
           "symbol": "ProximityBeep",
           "note": "if (!active || !soundOn || level < 0 || !foreground) return@LaunchedEffect",
-          "text": "if (!active || !soundOn || level < 0 || !foreground) return@LaunchedEffect"
+          "text": "else -> -1"
         }
       ],
       "platformEvidence": {
@@ -10283,7 +10283,7 @@
           "line": 440,
           "symbol": "ProximityCard",
           "note": "onRescan = { showSettings = false; launchScan() }",
-          "text": "onRescan = {"
+          "text": "LockStore.saveProximity(ctx, it)"
         },
         {
           "platform": "android",
@@ -10291,7 +10291,7 @@
           "line": 742,
           "symbol": "ProximityCard",
           "note": "Text(\"重新扫码绑定\", color = colors.accent.copy(alpha = 0.9f), ... .clickable { onRescan() })",
-          "text": "Text("
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -10986,7 +10986,7 @@
           "line": 544,
           "symbol": "UnlockDial",
           "note": "private fun UnlockDial(busy: Boolean, onClick: () -> Unit)",
-          "text": "private fun UnlockDial(busy: Boolean, onClick: () -> Unit) {"
+          "text": ""
         },
         {
           "platform": "apk",
@@ -11010,7 +11010,7 @@
           "line": 558,
           "symbol": "UnlockDial",
           "note": "Canvas(Modifier.size(300.dp)) 外圈柔光",
-          "text": "Canvas(Modifier.size(300.dp)) {"
+          "text": ""
         },
         {
           "platform": "android",
@@ -11018,7 +11018,7 @@
           "line": 568,
           "symbol": "UnlockDial",
           "note": "Box .size(232.dp).clip(CircleShape).clickable(...)",
-          "text": "Box("
+          "text": ")"
         },
         {
           "platform": "android",
@@ -11026,7 +11026,7 @@
           "line": 583,
           "symbol": "UnlockDial",
           "note": "第 1 层 金属倒角 Brush.sweepGradient",
-          "text": "drawCircle("
+          "text": "val rOuter = dim.minDimension / 2 - 1.dp.toPx()"
         }
       ],
       "platformEvidence": {
@@ -11314,7 +11314,7 @@
           "line": 190,
           "symbol": "doUnlock",
           "note": "注释：开完要能说清是自动开的还是自己点的",
-          "text": "// 来源标注 (用户 2026-10-17): 开完要能说清是自动开的还是自己点的 ——"
+          "text": "scope.launch {"
         },
         {
           "platform": "android",
@@ -11346,7 +11346,7 @@
           "line": 194,
           "symbol": "doUnlock",
           "note": "detail = if (r.ok || r.trace.isEmpty()) \"\" else r.trace",
-          "text": "detail = if (r.ok || r.trace.isEmpty()) \"\" else r.trace"
+          "text": "// \"谁把我门开了\"必须能回答。只在成功时冠来源: 失败那句是诊断文案,"
         },
         {
           "platform": "android",
@@ -11354,7 +11354,7 @@
           "line": 197,
           "symbol": "doUnlock",
           "note": "if (r.ok) KfHaptics.ok(ctx) else KfHaptics.fail(ctx)",
-          "text": "if (r.ok) KfHaptics.ok(ctx) else KfHaptics.fail(ctx)"
+          "text": "detail = if (r.ok || r.trace.isEmpty()) \"\" else r.trace"
         }
       ],
       "platformEvidence": {
@@ -11550,7 +11550,7 @@
           "line": 271,
           "symbol": "maybeAutoUnlock",
           "note": "fun maybeAutoUnlock(r: Int)",
-          "text": "fun maybeAutoUnlock(r: Int) {"
+          "text": "// 用 PREWARM 这个固定值而不是标定值: 安卓端没有标定页 (见 AutoOpenKit 注释)。"
         },
         {
           "platform": "android",
@@ -11558,7 +11558,7 @@
           "line": 317,
           "symbol": "KfApp",
           "note": "unlocker.observeSignal(l).collect { r -> rssi = r; ...; maybeAutoUnlock(r) }",
-          "text": "unlocker.observeSignal(l).collect { r ->"
+          "text": "if (!proximity || busy || warming || !foreground) return@LaunchedEffect"
         },
         {
           "platform": "android",
@@ -11566,7 +11566,7 @@
           "line": 301,
           "symbol": "maybeAutoUnlock",
           "note": "doUnlock(auto = true)",
-          "text": "doUnlock(auto = true)"
+          "text": "if (busy) return"
         },
         {
           "platform": "android",
@@ -11574,7 +11574,7 @@
           "line": 311,
           "symbol": "KfApp",
           "note": "if (!proximity) { rssi = null; armed = false; fired = false; prewarmStarted = false; peakRssi = null; peakAz = null; airTagDismissed = false }",
-          "text": "if (!proximity) { rssi = null; armed = false; fired = false; prewarmStarted = false; peakRssi = null; peakAz = null; airTagDismissed = false }"
+          "text": "// \"当前信号\"再也不更新, 用户只能关掉开关再打开。"
         }
       ],
       "platformEvidence": {
@@ -11741,7 +11741,7 @@
           "line": 357,
           "symbol": "KfApp",
           "note": "AnimatedVisibility(visible = proximity && !airTagShowing) { SignalArrow(...) }",
-          "text": "AnimatedVisibility(visible = proximity && !airTagShowing) {"
+          "text": "// 靠近指示箭头 (FindMy 式): 只在开了「靠近自动开锁」时出现。"
         },
         {
           "platform": "android",
@@ -11818,7 +11818,7 @@
           "line": 202,
           "symbol": "scan",
           "note": "val scan = rememberLauncherForActivityResult(ScanContract())",
-          "text": "val scan = rememberLauncherForActivityResult(ScanContract()) { result ->"
+          "text": "}"
         },
         {
           "platform": "android",
@@ -11834,7 +11834,7 @@
           "line": 222,
           "symbol": "launchScan",
           "note": "setPrompt(\"对准 iOS 上的钥匙二维码\")（218-226 整段 ScanOptions 配置）",
-          "text": ".setPrompt(\"对准 iOS 上的钥匙二维码\")"
+          "text": "scan.launch("
         }
       ],
       "platformEvidence": {
@@ -11903,7 +11903,7 @@
           "line": 493,
           "symbol": "KfApp",
           "note": "AnimatedVisibility(visible = airTagShowing, enter = fadeIn(180)+slideInVertically(260))",
-          "text": "AnimatedVisibility("
+          "text": "// ---------- 上层: AirTag 精确查找层 (连上锁信号自动弹出, 可手动收起) ----------"
         },
         {
           "platform": "android",
@@ -11911,7 +11911,7 @@
           "line": 811,
           "symbol": "AirTagLayer",
           "note": "private fun AirTagLayer(name, rssi, armed, busy, azimuthDeg, peakDeg, pitch, roll, soundOn, foreground, onToggleSound, onClose)",
-          "text": "private fun AirTagLayer("
+          "text": ""
         },
         {
           "platform": "android",
@@ -11919,7 +11919,7 @@
           "line": 839,
           "symbol": "AirTagLayer",
           "note": ".background(if (armed) Color(0xFF0E7A42) else Color(0xFF0B6B3A))",
-          "text": ".background(if (armed) Color(0xFF0E7A42) else Color(0xFF0B6B3A))"
+          "text": "// 原色 #1CC964 / #12B24A 配白字只有 2.19:1 / 2.80:1, 低于 WCAG AA 的 4.5:1。"
         }
       ],
       "platformEvidence": {
@@ -12107,7 +12107,7 @@
           "line": 462,
           "symbol": "KfApp",
           "note": "val same = p.mac == lock?.mac",
-          "text": "val same = p.mac == lock?.mac"
+          "text": ""
         },
         {
           "platform": "android",
@@ -12115,7 +12115,7 @@
           "line": 463,
           "symbol": "KfApp",
           "note": "AlertDialog(onDismissRequest = { pending = null }, ...)",
-          "text": "AlertDialog("
+          "text": "// 已绑定过 → 再次扫码要**二次确认**: 覆盖的是一把能开门的钥匙, 不能静默替换"
         },
         {
           "platform": "android",
@@ -12123,7 +12123,7 @@
           "line": 482,
           "symbol": "KfApp",
           "note": "Text(if (same) \"覆盖\" else \"换绑\", color = colors.accent)",
-          "text": "}) { Text(if (same) \"覆盖\" else \"换绑\", color = colors.accent) }"
+          "text": "lock = p"
         }
       ],
       "platformEvidence": {
@@ -12201,7 +12201,7 @@
           "line": 186,
           "symbol": "doUnlock",
           "note": "say(if (auto) \"已靠近, 正在开锁…\" else \"正在开锁…\")",
-          "text": "say(if (auto) \"已靠近, 正在开锁…\" else \"正在开锁…\")"
+          "text": "// 给一句明确的话，并说清是哪一路在跑。"
         },
         {
           "platform": "android",
@@ -12209,7 +12209,7 @@
           "line": 193,
           "symbol": "doUnlock",
           "note": "say(if (r.ok) (if (auto) \"自动开锁成功 — \" else \"手动开锁成功 — \") + r.message else r.message, !r.ok)",
-          "text": "say(if (r.ok) (if (auto) \"自动开锁成功 — \" else \"手动开锁成功 — \") + r.message else r.message, !r.ok)"
+          "text": "// 来源标注 (用户 2026-10-17): 开完要能说清是自动开的还是自己点的 ——"
         },
         {
           "platform": "android",
@@ -12217,7 +12217,7 @@
           "line": 371,
           "symbol": "KfApp",
           "note": "onClick = { doUnlock(auto = false) }",
-          "text": "UnlockDial(busy = busy, onClick = { doUnlock(auto = false) })"
+          "text": "sizeDp = 208,"
         }
       ],
       "platformEvidence": {
@@ -12646,7 +12646,7 @@
           "line": 1273,
           "symbol": "拍板 A 注释",
           "note": "",
-          "text": "// ---------- 377 访客受限区复核 (2026-10-17 拍板 A: 只走面容/指纹, 不再有本机密码) ----------"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -12654,7 +12654,7 @@
           "line": 1276,
           "symbol": "struct GuestReauthGate",
           "note": "",
-          "text": "struct GuestReauthGate: View {"
+          "text": "// ---------- 377 访客受限区复核 (2026-10-17 拍板 A: 只走面容/指纹, 不再有本机密码) ----------"
         },
         {
           "platform": "ios",
@@ -12662,7 +12662,7 @@
           "line": 1279,
           "symbol": "@State note",
           "note": "",
-          "text": "@State private var note = \"用面容/指纹确认是你本人后, 放开凭证与设置两页\""
+          "text": "struct GuestReauthGate: View {"
         },
         {
           "platform": "ios",
@@ -12670,7 +12670,7 @@
           "line": 1286,
           "symbol": "凭证与设置已收起",
           "note": "",
-          "text": "Text(\"凭证与设置已收起\")"
+          "text": ".font(.system(size: 44))"
         },
         {
           "platform": "ios",
@@ -12678,7 +12678,7 @@
           "line": 1293,
           "symbol": "Button 验证",
           "note": "",
-          "text": "Button {"
+          "text": ".foregroundStyle(DS.Palette.textSub)"
         }
       ],
       "platformEvidence": {
@@ -12861,7 +12861,7 @@
           "line": 444,
           "symbol": "ProximityCard",
           "note": "onUnbind = { LockStore.clear(ctx); lock = null; proximity = false; showSettings = false; ... say(\"已解绑\") }",
-          "text": "onUnbind = {"
+          "text": "showSettings = false"
         },
         {
           "platform": "android",
@@ -12869,7 +12869,7 @@
           "line": 451,
           "symbol": "ProximityCard",
           "note": "scope.launch { unlocker.release() }",
-          "text": "scope.launch { unlocker.release() }"
+          "text": "showSettings = false"
         },
         {
           "platform": "android",
@@ -12877,7 +12877,7 @@
           "line": 750,
           "symbol": "ProximityCard",
           "note": "Text(\"解绑\", ... .clickable { onUnbind() })",
-          "text": "Text("
+          "text": ".clickable { onRescan() }"
         }
       ],
       "platformEvidence": {
@@ -15575,7 +15575,7 @@
           "line": 547,
           "symbol": "UnlockDial",
           "note": "val pressed by interaction.collectIsPressedAsState()",
-          "text": "val pressed by interaction.collectIsPressedAsState()"
+          "text": "private fun UnlockDial(busy: Boolean, onClick: () -> Unit) {"
         },
         {
           "platform": "android",
@@ -15591,7 +15591,7 @@
           "line": 550,
           "symbol": "UnlockDial",
           "note": "animateFloatAsState(0.972f, tween(100, CubicBezierEasing(0.42f,0f,0.58f,1f)))",
-          "text": "val scale by animateFloatAsState("
+          "text": "val pressed by interaction.collectIsPressedAsState()"
         }
       ],
       "platformEvidence": {
@@ -15861,7 +15861,7 @@
           "line": 184,
           "symbol": "doUnlock",
           "note": "if (busy) return",
-          "text": "if (busy) return"
+          "text": "// busy 时**不能静默丢弃**：自动开锁正在跑时用户点圆盘，手动那一下没有发生，"
         },
         {
           "platform": "android",
@@ -15869,7 +15869,7 @@
           "line": 185,
           "symbol": "doUnlock",
           "note": "busy = true",
-          "text": "busy = true"
+          "text": "// 而界面此前毫无反馈 —— 用户会以为\"点了没反应\"，然后在门口反复点。"
         },
         {
           "platform": "android",
@@ -15877,7 +15877,7 @@
           "line": 189,
           "symbol": "doUnlock",
           "note": "busy = false",
-          "text": "busy = false"
+          "text": "say(if (auto) \"已靠近, 正在开锁…\" else \"正在开锁…\")"
         }
       ],
       "platformEvidence": {
@@ -15946,7 +15946,7 @@
           "line": 842,
           "symbol": "AirTagLayer",
           "note": "Text(\"正在查找\") + Text(name, 30.sp, Bold)",
-          "text": "Column(Modifier.padding(start = 28.dp, top = 56.dp)) {"
+          "text": ".background(if (armed) Color(0xFF0E7A42) else Color(0xFF0B6B3A))"
         },
         {
           "platform": "android",
@@ -15954,7 +15954,7 @@
           "line": 866,
           "symbol": "AirTagLayer",
           "note": "CircleIconButton(label = \"✕\", onClick = onClose)",
-          "text": "Box(Modifier.align(Alignment.BottomStart).padding(28.dp)) {"
+          "text": "Text(directionLabel(bearing), color = Color.White.copy(alpha = 0.92f), fontSize = 26.sp, fontWeight = FontWeight.SemiBold)"
         },
         {
           "platform": "android",
@@ -15962,7 +15962,7 @@
           "line": 871,
           "symbol": "AirTagLayer",
           "note": "CircleIconButton(label = if (soundOn) \"🔊\" else \"🔇\", onClick = onToggleSound)",
-          "text": "CircleIconButton(label = if (soundOn) \"🔊\" else \"🔇\", onClick = onToggleSound)"
+          "text": "}"
         },
         {
           "platform": "android",
@@ -16052,7 +16052,7 @@
           "line": 828,
           "symbol": "AirTagLayer",
           "note": "val distText = when { dist < 0f -> \"测距中…\"; dist < 1f -> 厘米; else -> 米 }",
-          "text": "val distText = when {"
+          "text": "val fill = signalFill(rssi)"
         }
       ],
       "platformEvidence": {
@@ -16277,7 +16277,7 @@
           "line": 863,
           "symbol": "AirTagLayer",
           "note": "Text(directionLabel(bearing), fontSize = 26.sp)",
-          "text": "Text(directionLabel(bearing), color = Color.White.copy(alpha = 0.92f), fontSize = 26.sp, fontWeight = FontWeight.SemiBold)"
+          "text": "// 底部左: 粗估距离 + 方向 (诚实: 是估计值, 不是 UWB 测距)"
         },
         {
           "platform": "android",
@@ -16352,7 +16352,7 @@
           "line": 203,
           "symbol": "scan",
           "note": "val text = result.contents ?: return@rememberLauncherForActivityResult",
-          "text": "val text = result.contents ?: return@rememberLauncherForActivityResult"
+          "text": ""
         },
         {
           "platform": "android",
@@ -16360,7 +16360,7 @@
           "line": 205,
           "symbol": "scan",
           "note": "say(\"这不是本 App 的钥匙码 — 请让 iOS 端重新生成\", true)",
-          "text": "if (parsed == null) {"
+          "text": "val scan = rememberLauncherForActivityResult(ScanContract()) { result ->"
         }
       ],
       "platformEvidence": {
@@ -16500,7 +16500,7 @@
           "line": 319,
           "symbol": "KfApp",
           "note": "val (br, bp, changed) = peakUpdate(peakRssi, peakAz, r, azimuth); if (changed) { peakRssi = br; peakAz = bp }",
-          "text": "val (br, bp, changed) = peakUpdate(peakRssi, peakAz, r, azimuth)"
+          "text": "// 那一刻起收不到任何样本 —— 那正是自动开锁最需要信号的时刻 (详见 BleUnlocker 注释)。"
         },
         {
           "platform": "android",
@@ -16575,7 +16575,7 @@
           "line": 472,
           "symbol": "KfApp",
           "note": "\"本机现在绑定的是「${lock?.name ?: \"\"}」(${lock?.macText ?: \"\"})。\\n\" + \"换成「${p.name}」(${p.macText}) 之后, 原来那把锁要从这台手机重新扫码才能再用。\"",
-          "text": "else \"本机现在绑定的是「${lock?.name ?: \"\"}」(${lock?.macText ?: \"\"})。\\n\" +"
+          "text": "text = {"
         },
         {
           "platform": "android",
@@ -16583,7 +16583,7 @@
           "line": 478,
           "symbol": "KfApp",
           "note": "LockStore.save(ctx, p); lock = p; pending = null; say(\"已绑定「${p.name}」\")",
-          "text": "LockStore.save(ctx, p)"
+          "text": "},"
         }
       ],
       "platformEvidence": {
@@ -16654,7 +16654,7 @@
           "line": 293,
           "symbol": "maybeAutoUnlock",
           "note": "armed = AutoOpenKit.rssiSample(prevArmed = armed, rssi = r)",
-          "text": "armed = AutoOpenKit.rssiSample(prevArmed = armed, rssi = r)"
+          "text": "}"
         },
         {
           "platform": "android",
@@ -16662,7 +16662,7 @@
           "line": 244,
           "symbol": "KfApp",
           "note": "Lifecycle.Event.ON_PAUSE -> { foreground = false; armed = false; ... }",
-          "text": "armed = false              // 回前台必须由新的信号样本重新武决, 不沿用后台前的判断"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -16763,7 +16763,7 @@
           "line": 1123,
           "symbol": "appUnlocked false 时调用",
           "note": "",
-          "text": "app.revokeSessionGrants()"
+          "text": "} else {"
         }
       ],
       "platformEvidence": {
@@ -16944,7 +16944,7 @@
           "line": 893,
           "symbol": "ProximityBeep",
           "note": "private fun ProximityBeep(active, fill, soundOn, foreground)",
-          "text": "private fun ProximityBeep(active: Boolean, fill: Float, soundOn: Boolean, foreground: Boolean) {"
+          "text": ""
         },
         {
           "platform": "android",
@@ -16952,7 +16952,7 @@
           "line": 894,
           "symbol": "ProximityBeep",
           "note": "val level = when { fill > 0.85f -> 3; fill > 0.6f -> 2; fill > 0.3f -> 1; fill > 0.05f -> 0; else -> -1 }",
-          "text": "val level = when {"
+          "text": "/** 靠近提示音: 信号越强间隔越短 (AirTag 那种\"滴滴滴\"加速)。按 fill 分档, 档位不变就不重启协程。 */"
         },
         {
           "platform": "android",
@@ -16960,7 +16960,7 @@
           "line": 901,
           "symbol": "ProximityBeep",
           "note": "LaunchedEffect(active, soundOn, level, foreground) { if (!active || !soundOn || level < 0 || !foreground) return }",
-          "text": "LaunchedEffect(active, soundOn, level, foreground) {"
+          "text": "fill > 0.05f -> 0"
         },
         {
           "platform": "android",
@@ -16968,7 +16968,7 @@
           "line": 904,
           "symbol": "ProximityBeep",
           "note": "val period = when (level) { 3 -> 240L; 2 -> 420L; 1 -> 700L; else -> 1100L }",
-          "text": "val period = when (level) { 3 -> 240L; 2 -> 420L; 1 -> 700L; else -> 1100L }"
+          "text": "LaunchedEffect(active, soundOn, level, foreground) {"
         }
       ],
       "platformEvidence": {
@@ -17043,7 +17043,7 @@
           "line": 193,
           "symbol": "doUnlock",
           "note": "say(... !r.ok)",
-          "text": "say(if (r.ok) (if (auto) \"自动开锁成功 — \" else \"手动开锁成功 — \") + r.message else r.message, !r.ok)"
+          "text": "// 来源标注 (用户 2026-10-17): 开完要能说清是自动开的还是自己点的 ——"
         },
         {
           "platform": "android",
@@ -17219,7 +17219,7 @@
           "line": 435,
           "symbol": "ProximityCard",
           "note": "onToggle = { proximity = it; LockStore.saveProximity(ctx, it); if (!it) rssi = null }",
-          "text": "onToggle = {"
+          "text": "if (lock != null) {"
         },
         {
           "platform": "android",
@@ -17312,7 +17312,7 @@
           "line": 297,
           "symbol": "maybeAutoUnlock",
           "note": "if (!AutoOpenKit.coolReady(lastAuto, now)) return",
-          "text": "if (!AutoOpenKit.coolReady(lastAuto, now)) return"
+          "text": "// 信号掉回解除线以下 = 这一次接近事件结束 → 放开闩锁与预热位, 下次靠近重来一遍"
         },
         {
           "platform": "android",
@@ -17328,7 +17328,7 @@
           "line": 712,
           "symbol": "ProximityCard",
           "note": "\"一次靠近只开一次: 要走开让信号掉到 \" + AutoOpenKit.disarmThreshold() + \" dBm 以下, 隔 6 秒后再靠近才会再开。\"",
-          "text": "\"一次靠近只开一次: 要走开让信号掉到 \" + AutoOpenKit.disarmThreshold() +"
+          "text": ")"
         }
       ],
       "platformEvidence": {
@@ -17472,7 +17472,7 @@
           "line": 573,
           "symbol": "UnlockDial",
           "note": "clickable(interactionSource = interaction, indication = null, enabled = !busy)",
-          "text": ".clickable(interactionSource = interaction, indication = null, enabled = !busy) { onClick() },"
+          "text": ".size(232.dp)"
         },
         {
           "platform": "android",
@@ -17488,7 +17488,7 @@
           "line": 637,
           "symbol": "UnlockDial",
           "note": "if (busy) drawArc(startAngle = -90f, sweepAngle = 300f)",
-          "text": "if (busy) {"
+          "text": "color = colors.accent"
         },
         {
           "platform": "android",
@@ -17653,7 +17653,7 @@
           "line": 275,
           "symbol": "maybeAutoUnlock",
           "note": "if (!foreground) return   // 后台不预热",
-          "text": "if (!foreground) return   // 后台不预热: 预热就是起连接, 那是一次射频开销"
+          "text": "val now = System.currentTimeMillis()"
         },
         {
           "platform": "android",
@@ -17661,7 +17661,7 @@
           "line": 314,
           "symbol": "KfApp",
           "note": "if (!proximity || busy || warming || !foreground) return@LaunchedEffect",
-          "text": "if (!proximity || busy || warming || !foreground) return@LaunchedEffect"
+          "text": "if (!proximity) { rssi = null; armed = false; fired = false; prewarmStarted = false; peakRssi = null; peakAz = null; airTagDismissed = false }"
         },
         {
           "platform": "android",
@@ -17669,7 +17669,7 @@
           "line": 309,
           "symbol": "KfApp",
           "note": "LaunchedEffect(proximity, lock?.mac, busy, warming, foreground)",
-          "text": "LaunchedEffect(proximity, lock?.mac, busy, warming, foreground) {"
+          "text": "// 不只是抢射频: 同 App 里第二次 startScan 会重启扫描, 前一个 callback 静默失声,"
         }
       ],
       "platformEvidence": {
@@ -17820,7 +17820,7 @@
           "line": 679,
           "symbol": "EmptyState",
           "note": "PillButton(\"扫码添加门锁\", onScan)",
-          "text": "PillButton(\"扫码添加门锁\", onScan)"
+          "text": "color = colors.inkSub, fontSize = 13.sp, textAlign = TextAlign.Center, lineHeight = 20.sp"
         },
         {
           "platform": "android",
@@ -17828,7 +17828,7 @@
           "line": 440,
           "symbol": "ProximityCard",
           "note": "onRescan = { showSettings = false; launchScan() }",
-          "text": "onRescan = {"
+          "text": "LockStore.saveProximity(ctx, it)"
         },
         {
           "platform": "android",
@@ -17836,7 +17836,7 @@
           "line": 742,
           "symbol": "ProximityCard",
           "note": "Text(\"重新扫码绑定\", ... .clickable { onRescan() })",
-          "text": "Text("
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -17904,7 +17904,7 @@
           "line": 1307,
           "symbol": "private func verify",
           "note": "",
-          "text": "private func verify() async {"
+          "text": ".padding(DS.Space.l)"
         },
         {
           "platform": "ios",
@@ -17912,7 +17912,7 @@
           "line": 1308,
           "symbol": "guard !busy",
           "note": "",
-          "text": "guard !busy else { return }"
+          "text": ".task { await verify() }"
         },
         {
           "platform": "ios",
@@ -17920,7 +17920,7 @@
           "line": 1311,
           "symbol": "AuthKit.verifyBiometricAsync",
           "note": "",
-          "text": "if await AuthKit.verifyBiometricAsync(reason: \"放开凭证与设置\") {"
+          "text": "guard !busy else { return }"
         },
         {
           "platform": "ios",
@@ -17928,7 +17928,7 @@
           "line": 1312,
           "symbol": "commitUnlock(reauth: true)",
           "note": "",
-          "text": "app.commitUnlock(reauth: true)"
+          "text": "busy = true"
         },
         {
           "platform": "ios",
@@ -17936,7 +17936,7 @@
           "line": 1314,
           "symbol": "未通过 note",
           "note": "",
-          "text": "note = \"未通过面容/指纹确认, 这两页仍收着\""
+          "text": "if await AuthKit.verifyBiometricAsync(reason: \"放开凭证与设置\") {"
         }
       ],
       "platformEvidence": {
@@ -18034,7 +18034,7 @@
           "line": 512,
           "symbol": "KfApp",
           "note": "onClose = { airTagDismissed = true }",
-          "text": "onClose = { airTagDismissed = true },"
+          "text": "soundOn = findSound,"
         },
         {
           "platform": "android",
@@ -18050,7 +18050,7 @@
           "line": 240,
           "symbol": "KfApp",
           "note": "ON_RESUME -> { ... airTagDismissed = false }",
-          "text": "airTagDismissed = false"
+          "text": "foreground = true"
         }
       ],
       "platformEvidence": {
@@ -18128,7 +18128,7 @@
           "line": 326,
           "symbol": "KfApp",
           "note": "LaunchedEffect(foreground) { if (!foreground) return@LaunchedEffect; HeadingSense.attitude(ctx).collect { ... } }",
-          "text": "LaunchedEffect(foreground) {"
+          "text": "}"
         },
         {
           "platform": "android",
@@ -18217,7 +18217,7 @@
           "line": 209,
           "symbol": "scan",
           "note": "if (lock == null) { LockStore.save(ctx, parsed); lock = parsed; say(\"已绑定「${parsed.name}」\") }",
-          "text": "if (lock == null) {"
+          "text": "say(\"这不是本 App 的钥匙码 — 请让 iOS 端重新生成\", true)"
         },
         {
           "platform": "android",
@@ -18385,7 +18385,7 @@
           "line": 468,
           "symbol": "KfApp",
           "note": "Text(if (same) \"更新这把锁的凭证?\" else \"换一把锁?\")",
-          "text": "title = { Text(if (same) \"更新这把锁的凭证?\" else \"换一把锁?\", fontWeight = FontWeight.Medium) },"
+          "text": "containerColor = colors.surface,"
         },
         {
           "platform": "android",
@@ -18393,7 +18393,7 @@
           "line": 471,
           "symbol": "KfApp",
           "note": "if (same) \"本机已绑定「${p.name}」。用新扫到的凭证覆盖它?\"",
-          "text": "if (same) \"本机已绑定「${p.name}」。用新扫到的凭证覆盖它?\""
+          "text": "title = { Text(if (same) \"更新这把锁的凭证?\" else \"换一把锁?\", fontWeight = FontWeight.Medium) },"
         }
       ],
       "platformEvidence": {
@@ -18463,7 +18463,7 @@
           "line": 707,
           "symbol": "ProximityCard",
           "note": "\"开着它: 手机解了锁、App 在前台时, 靠近到 \" + AutoOpenKit.BASE + \" dBm 以内会自动开一次。\"",
-          "text": "\"开着它: 手机解了锁、App 在前台时, 靠近到 \" + AutoOpenKit.BASE + \" dBm 以内会自动开一次。\","
+          "text": "// 文案里的数值一律从 AutoOpenKit 取: 写死数字的注释/文案, 在阈值改动那天就变成假话"
         },
         {
           "platform": "android",
@@ -18624,7 +18624,7 @@
           "line": 295,
           "symbol": "maybeAutoUnlock",
           "note": "if (!armed) { fired = false; prewarmStarted = false }",
-          "text": "if (!armed) { fired = false; prewarmStarted = false }"
+          "text": "}"
         },
         {
           "platform": "android",
@@ -18632,7 +18632,7 @@
           "line": 296,
           "symbol": "maybeAutoUnlock",
           "note": "if (!armed || fired) return",
-          "text": "if (!armed || fired) return"
+          "text": "armed = AutoOpenKit.rssiSample(prevArmed = armed, rssi = r)"
         },
         {
           "platform": "android",
@@ -18640,7 +18640,7 @@
           "line": 299,
           "symbol": "maybeAutoUnlock",
           "note": "fired = true; lastAuto = now",
-          "text": "fired = true"
+          "text": "if (!armed || fired) return"
         },
         {
           "platform": "android",
@@ -18724,7 +18724,7 @@
           "line": 276,
           "symbol": "maybeAutoUnlock",
           "note": "if (!prewarmStarted && !busy && !warming && r >= prewarmLineDbm && lock != null)",
-          "text": "if (!prewarmStarted && !busy && !warming && r >= prewarmLineDbm && lock != null) {"
+          "text": "// 预热不排队、不抢锁: prewarm 内部 mutex 会排在建链后面, 而开锁那一趟优先级更高,"
         },
         {
           "platform": "android",
@@ -18740,7 +18740,7 @@
           "line": 283,
           "symbol": "maybeAutoUnlock",
           "note": "warming = true; delay(220); try { unlocker.prewarm(target) } finally { warming = false }",
-          "text": "// 等一帧多, 让 LaunchedEffect 因 warming 变化而把监测流拆掉 (那句 awaitClose"
+          "text": "val target = lock ?: return"
         },
         {
           "platform": "android",
@@ -18827,7 +18827,7 @@
           "line": 269,
           "symbol": "KfApp",
           "note": "val prewarmLineDbm = AutoOpenKit.BASE - 24",
-          "text": "val prewarmLineDbm = AutoOpenKit.BASE - 24"
+          "text": "// 越过它就在后台把链路建好 (prewarm 只建链, 一个命令都不发), 等越过武装线时只剩"
         },
         {
           "platform": "android",
@@ -18835,7 +18835,7 @@
           "line": 276,
           "symbol": "maybeAutoUnlock",
           "note": "if (!prewarmStarted && !busy && !warming && r >= prewarmLineDbm && lock != null)",
-          "text": "if (!prewarmStarted && !busy && !warming && r >= prewarmLineDbm && lock != null) {"
+          "text": "// 预热不排队、不抢锁: prewarm 内部 mutex 会排在建链后面, 而开锁那一趟优先级更高,"
         }
       ],
       "platformEvidence": {
@@ -19002,7 +19002,7 @@
           "line": 332,
           "symbol": "KfApp",
           "note": "val airTagShowing = proximity && rssi != null && !airTagDismissed",
-          "text": "val airTagShowing = proximity && rssi != null && !airTagDismissed"
+          "text": "}"
         },
         {
           "platform": "android",
@@ -36538,7 +36538,7 @@
           "line": 1488,
           "symbol": "Section(\"长辈模式\")",
           "note": "长辈模式段",
-          "text": "Section(\"长辈模式\") {   // 479/486 长辈模式"
+          "text": ".fixedSize(horizontal: false, vertical: true)"
         },
         {
           "platform": "ios",
@@ -36546,7 +36546,7 @@
           "line": 1507,
           "symbol": "Section(\"隐私浏览\")",
           "note": "隐私浏览段",
-          "text": "Section(\"隐私浏览\") {   // 794 隐私浏览"
+          "text": ".variantList()"
         },
         {
           "platform": "ios",
@@ -36554,7 +36554,7 @@
           "line": 1524,
           "symbol": "Button(\"保存\")",
           "note": "保存写入两个开关",
-          "text": ".toolbar { ToolbarItem(placement: .navigationBarLeading) {"
+          "text": "@State private var selMember: [String: String] = [:]"
         }
       ],
       "platformEvidence": {
@@ -37220,7 +37220,7 @@
           "line": 1539,
           "symbol": "struct UnclaimedClaimView",
           "note": "页面声明",
-          "text": "struct UnclaimedClaimView: View {"
+          "text": "for kc in DB.keychains() where kc.mac == mac {"
         },
         {
           "platform": "ios",
@@ -37244,7 +37244,7 @@
           "line": 1556,
           "symbol": "unclaimed",
           "note": "未归属行判定",
-          "text": "private var unclaimed: [Row] {"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -38762,7 +38762,7 @@
           "line": 332,
           "symbol": "CareDue",
           "note": "",
-          "text": "struct CareDue {"
+          "text": "// ---------- 480 孩子码关怀: 名下临时码 N 天内到期 (台账推断) ----------"
         }
       ],
       "platformEvidence": {
@@ -39501,7 +39501,7 @@
           "line": 311,
           "symbol": "privacyActive",
           "note": "",
-          "text": "// ---------- 794 隐私浏览 (限时 10 分钟) ----------\\n    /// 现状: 只有 kf_privacy_until 一个时间戳, 消费方仅成员设置页倒计时回显;\\n    /// 794 原句的\\\"只显示本人数据 + 水印\\\"两要素未接线 (StatsKit/StatsView 零 privacy 消费), 2026-10-13 文案已按此诚实化。"
+          "text": "// 794「隐私浏览」—— 2026-10-26 **已删除**（用户决策）。"
         },
         {
           "platform": "ios",
@@ -39509,7 +39509,7 @@
           "line": 316,
           "symbol": "setPrivacy(_:)",
           "note": "",
-          "text": "static func setPrivacy(_ on: Bool) {"
+          "text": "// 删除而不是补全的理由：真要做就得改统计口径 + 全页水印，那是另一个特性，"
         },
         {
           "platform": "ios",
@@ -39517,7 +39517,7 @@
           "line": 328,
           "symbol": "elderMode",
           "note": "",
-          "text": "static var elderMode: Bool { DB.store.getBool(\"kf_elder_mode\") }"
+          "text": "/// 其余页面仍不跟这一档 —— 成员页的开关说明按这个口径写, 不许它承诺\"全 App 大字\"。"
         }
       ],
       "platformEvidence": {
@@ -40776,7 +40776,7 @@
           "line": 1617,
           "symbol": "Button 认领所选",
           "note": "提交循环",
-          "text": "Button {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -40784,7 +40784,7 @@
           "line": 1623,
           "symbol": "showToast",
           "note": "条数提示",
-          "text": "app.showToast(\"已认领 \\(n) 条 (本机覆盖层, 不改锁端数据)\")"
+          "text": ".toolbar { ToolbarItem(placement: .navigationBarLeading) { Button(\"完成\") { dismiss() } } }"
         },
         {
           "platform": "ios",
@@ -40792,7 +40792,7 @@
           "line": 1627,
           "symbol": "认领所选 (N)",
           "note": "按钮文案与禁用",
-          "text": "Label(\"认领所选 (\\(selMember.count))\", systemImage: \"checkmark.seal\")"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -41406,7 +41406,7 @@
           "line": 1508,
           "symbol": "VariantToggle(\"隐私浏览\")",
           "note": "开关",
-          "text": "VariantToggle(\"隐私浏览 (限时 10 分钟: 写隐私时段标记, 本页回显剩余时间)\", isOn: $privacy)"
+          "text": ".dsScreenBackground()"
         },
         {
           "platform": "ios",
@@ -41414,7 +41414,7 @@
           "line": 1511,
           "symbol": "privacyLeft",
           "note": "倒计时回显",
-          "text": "Text(privacyLeft > 0"
+          "text": "MemberHub.setElderMode(elder)"
         },
         {
           "platform": "ios",
@@ -41422,7 +41422,7 @@
           "line": 1532,
           "symbol": "onAppear",
           "note": "剩余秒数计算",
-          "text": "privacyLeft = max(0, Int(MemberHub.privacyUntilSec - Date().timeIntervalSince1970))"
+          "text": "var time: String"
         },
         {
           "platform": "ios",
@@ -41430,7 +41430,7 @@
           "line": 1527,
           "symbol": "setPrivacy",
           "note": "保存写时间戳",
-          "text": "MemberHub.setPrivacy(privacy)"
+          "text": "_mac = State(initialValue: DB.preferredMac())"
         }
       ],
       "platformEvidence": {
@@ -41506,7 +41506,7 @@
           "line": 1489,
           "symbol": "VariantToggle(\"长辈模式\")",
           "note": "开关与说明",
-          "text": "VariantToggle(\"长辈模式 (凭证页大字高对比、只留密码/指纹两组 · 临时码完成页收成口述卡)\", isOn: $elder)"
+          "text": "if elder {"
         },
         {
           "platform": "ios",
@@ -41514,7 +41514,7 @@
           "line": 1492,
           "symbol": "长辈模式说明",
           "note": "凭证页生效细节",
-          "text": "Text(\"凭证页: 分段只留 全部/密码/指纹, 批量与导出入口收起, 组尾那条过期清理也不出现; \""
+          "text": "+ \"这一档只动凭证页与临时码完成页, 其它页面不跟着变。\")"
         },
         {
           "platform": "ios",
@@ -41522,7 +41522,7 @@
           "line": 1498,
           "symbol": "长辈模式说明",
           "note": "临时码完成页生效细节",
-          "text": "Text(\"临时码完成页: 开这一档后完成页只留大字号口述卡 + 一枚大「完成」, \"   // 486 临时码完成页"
+          "text": "// 333 一句话口令"
         },
         {
           "platform": "ios",
@@ -41530,7 +41530,7 @@
           "line": 1526,
           "symbol": "setElderMode",
           "note": "保存写库",
-          "text": "MemberHub.setElderMode(elder)"
+          "text": "init() {"
         }
       ],
       "platformEvidence": {
@@ -41789,7 +41789,7 @@
           "line": 1597,
           "symbol": "Picker(\"认领给\")",
           "note": "成员选择器",
-          "text": "Picker(\"认领给\", selection: Binding("
+          "text": "Section {"
         },
         {
           "platform": "ios",
@@ -41797,7 +41797,7 @@
           "line": 1583,
           "symbol": "claimArch",
           "note": "归档集提到循环外",
-          "text": "let claimArch = MemberHub.archivedIDs()"
+          "text": "Text(MemberHub.display(m)).tag(m.id)"
         },
         {
           "platform": "ios",
@@ -41805,7 +41805,7 @@
           "line": 1543,
           "symbol": "selMember",
           "note": "页面内暂存",
-          "text": "@State private var selMember: [String: String] = [:]"
+          "text": "logs: logs.map { LogEntry(type: $0.type, typeName: $0.typeName, idx: $0.idxRaw, idxRaw: $0.idxRaw,"
         }
       ],
       "platformEvidence": {
@@ -49547,7 +49547,7 @@
           "line": 1620,
           "symbol": "UnclaimedClaimView",
           "note": "另一入口：批量认领",
-          "text": "MemberHub.claim(mac, logKey: k, memberId: mid)"
+          "text": ".navigationBarTitleDisplayMode(.inline)"
         },
         {
           "platform": "ios",
@@ -65733,7 +65733,7 @@
           "line": 1111,
           "symbol": "PageTrace.markNav",
           "note": "",
-          "text": "PageTrace.markNav(to: new)"
+          "text": ".onChange(of: app.tabSelection) { _, new in"
         },
         {
           "platform": "ios",
@@ -68240,7 +68240,7 @@
           "line": 1037,
           "symbol": "StartupTrace.mark",
           "note": "",
-          "text": "StartupTrace.mark(\"onLaunch 结束\")"
+          "text": "app.onLaunch()"
         },
         {
           "platform": "ios",
@@ -71600,7 +71600,7 @@
           "line": 1009,
           "symbol": "mainTabsChrome",
           "note": "",
-          "text": "private var mainTabsChrome: some View {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -71608,7 +71608,7 @@
           "line": 1014,
           "symbol": ".task { bootstrapOnce() }",
           "note": "",
-          "text": ".task { bootstrapOnce() }"
+          "text": ".safeAreaInset(edge: .top, spacing: 0) {"
         },
         {
           "platform": "ios",
@@ -71616,7 +71616,7 @@
           "line": 1022,
           "symbol": "2026-10-16 抽出注释",
           "note": "",
-          "text": "/// 2026-10-16 启动块从 `mainTabsChrome` 里抽出来成这一个函数，**不是重构好看**："
+          "text": ".onChange(of: scenePhase) { _, phase in handleScenePhase(phase) }   // 135 回前台即刷新"
         },
         {
           "platform": "ios",
@@ -71624,7 +71624,7 @@
           "line": 1027,
           "symbol": "static func bootstrapOnce",
           "note": "",
-          "text": "static func bootstrapOnce(_ app: AppState) {"
+          "text": "/// 异常退出档案、onLaunch 的自检/月备排程/成就结算、启动预热、LinkSense 宿主注册与冷启动扫描"
         },
         {
           "platform": "ios",
@@ -71632,7 +71632,7 @@
           "line": 1032,
           "symbol": "CrashGuard.checkAbnormalExit",
           "note": "",
-          "text": "CrashGuard.checkAbnormalExit()"
+          "text": "app.launchBootstrapped = true"
         }
       ],
       "platformEvidence": {
@@ -72144,7 +72144,7 @@
           "line": 1019,
           "symbol": ".onChange(of: scenePhase)",
           "note": "",
-          "text": ".onChange(of: scenePhase) { _, phase in handleScenePhase(phase) }   // 135 回前台即刷新"
+          "text": "// .onChange / .overlay 同处一个巨型 body 表达式 ⇒ 编译器报"
         },
         {
           "platform": "ios",
@@ -72152,7 +72152,7 @@
           "line": 1198,
           "symbol": "handleScenePhase 注释",
           "note": "",
-          "text": "@MainActor"
+          "text": "/// 135 前后台切换收尾 —— 2026-10-13 run 60 从 body 的内联 .onChange 闭包里抽出来:"
         },
         {
           "platform": "ios",
@@ -72160,7 +72160,7 @@
           "line": 1199,
           "symbol": "private func handleScenePhase",
           "note": "",
-          "text": "private func handleScenePhase(_ phase: ScenePhase) {"
+          "text": "/// 内联时整个 body (十几个 .onChange/.overlay 串在一起) 是一个巨型表达式, 编译器报"
         },
         {
           "platform": "ios",
@@ -72168,7 +72168,7 @@
           "line": 1200,
           "symbol": "setSceneActive",
           "note": "",
-          "text": "LinkSense.shared.setSceneActive(phase == .active)"
+          "text": "/// \"unable to type-check this expression in reasonable time\"。抽成方法后 body 只留一行调用。"
         },
         {
           "platform": "ios",
@@ -72176,7 +72176,7 @@
           "line": 1206,
           "symbol": "if app.appUnlocked",
           "note": "",
-          "text": "if app.appUnlocked {"
+          "text": "AXFlags.refreshSnapshots()"
         }
       ],
       "platformEvidence": {
@@ -72685,7 +72685,7 @@
           "line": 959,
           "symbol": "25 底栏注释",
           "note": "",
-          "text": "// 25 Tab 栏中央主按钮 (Instagram 式)。iOS 的 TabView 没有\"中间那个按钮\"这种系统位,"
+          "text": "// 长按后直接点一下 (竖屏主操作) = 进那一页, 走的仍是 requestTab 那道访客门禁"
         },
         {
           "platform": "ios",
@@ -72693,7 +72693,7 @@
           "line": 964,
           "symbol": ".safeAreaInset(edge: .bottom)",
           "note": "",
-          "text": ".safeAreaInset(edge: .bottom, spacing: 0) {"
+          "text": "// 覆盖式会压住导航栏标题与页面内容 (本文件注释里已经记过一次这个坑)。"
         },
         {
           "platform": "ios",
@@ -72701,7 +72701,7 @@
           "line": 966,
           "symbol": "if tabSelection != 0",
           "note": "",
-          "text": "if app.tabSelection != 0, !app.decoyMode {"
+          "text": "// 也违背拍板\"主屏/锁屏一键开锁是新的误开面\"那条同向判断。"
         },
         {
           "platform": "ios",
@@ -72709,7 +72709,7 @@
           "line": 971,
           "symbol": "Label 开锁",
           "note": "",
-          "text": "Label(\"开锁\", systemImage: \"lock.open.fill\")"
+          "text": "DS.Haptics.tick.impactOccurred()"
         },
         {
           "platform": "ios",
@@ -72717,7 +72717,7 @@
           "line": 981,
           "symbol": "if app.guestAreaLocked",
           "note": "",
-          "text": "if app.guestAreaLocked {"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -74037,7 +74037,7 @@
           "line": 1252,
           "symbol": "struct ToastView",
           "note": "",
-          "text": "struct ToastView: View {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -74045,7 +74045,7 @@
           "line": 1258,
           "symbol": "lineLimit(3)",
           "note": "",
-          "text": ".lineLimit(3)"
+          "text": "Text(text)"
         }
       ],
       "platformEvidence": {
@@ -76023,7 +76023,7 @@
           "line": 1088,
           "symbol": "378 常驻水印注释",
           "note": "",
-          "text": "// 378 常驻水印: 全局对角重复层 (安全中心页内那份保留不动, 那里是设置项自己的预览)。"
+          "text": "// 两档都显式, 不依赖系统默认推断 (LegibilityWeight.bold 的官方语义就是 \"force Accessibility Bold\")。"
         },
         {
           "platform": "ios",
@@ -76031,7 +76031,7 @@
           "line": 1090,
           "symbol": ".overlay",
           "note": "",
-          "text": ".overlay {"
+          "text": ".animation(DS.Motion.soft, value: app.appUnlocked)"
         },
         {
           "platform": "ios",
@@ -76039,7 +76039,7 @@
           "line": 1091,
           "symbol": "let _ = secTick.tick",
           "note": "",
-          "text": "let _ = secTick.tick"
+          "text": "// 378 常驻水印: 全局对角重复层 (安全中心页内那份保留不动, 那里是设置项自己的预览)。"
         },
         {
           "platform": "ios",
@@ -76047,7 +76047,7 @@
           "line": 1092,
           "symbol": "if DB.store.getBool(SecKey.watermarkOn)",
           "note": "",
-          "text": "if DB.store.getBool(SecKey.watermarkOn, false) {"
+          "text": "// 读一下 tick 使开关拨动后整层重算; hitTesting/朗读屏蔽在 SecurityWatermark 内部已带。"
         },
         {
           "platform": "ios",
@@ -76055,7 +76055,7 @@
           "line": 1093,
           "symbol": "SecurityWatermark(seed:)",
           "note": "",
-          "text": "SecurityWatermark(seed: DB.store.getString(SecKey.watermarkTxt))"
+          "text": ".overlay {"
         }
       ],
       "platformEvidence": {
@@ -76143,7 +76143,7 @@
           "line": 1329,
           "symbol": "872 防连点注释",
           "note": "",
-          "text": "/// 872 防连点: 300ms 内重复点击忽略 (开关 AXPrefs.dbltapGuard, 默认开)。"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -76151,7 +76151,7 @@
           "line": 1334,
           "symbol": "struct PressableButtonStyle",
           "note": "",
-          "text": "struct PressableButtonStyle: PrimitiveButtonStyle {"
+          "text": "/// ButtonStyle 拿不到 action (拦不住点击), 而直接在外层用 onTapGesture 会把 List 行点击、"
         },
         {
           "platform": "ios",
@@ -76159,7 +76159,7 @@
           "line": 1344,
           "symbol": "guard !AXPrefs.dbltapGuard",
           "note": "",
-          "text": "guard !AXPrefs.dbltapGuard || now.timeIntervalSince(lastFire) >= 0.3 else { return }"
+          "text": "var body: some View {"
         },
         {
           "platform": "ios",
@@ -76167,7 +76167,7 @@
           "line": 1345,
           "symbol": "lastFire = now",
           "note": "",
-          "text": "lastFire = now"
+          "text": "Button {"
         },
         {
           "platform": "ios",
@@ -76175,7 +76175,7 @@
           "line": 1319,
           "symbol": "struct PressFeedback",
           "note": "",
-          "text": "struct PressFeedback: ButtonStyle {"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -76381,7 +76381,7 @@
           "line": 1229,
           "symbol": "包2/136 跨页状态细条注释",
           "note": "",
-          "text": "// 包2/136 跨页状态细条: 非设备 Tab 顶部一条 BLE 状态细线 (2pt 语义色 + 状态行),"
+          "text": "AutoOpenController.shared.onBackground()"
         },
         {
           "platform": "ios",
@@ -76389,7 +76389,7 @@
           "line": 1232,
           "symbol": "func bleStatusStrip",
           "note": "",
-          "text": "private func bleStatusStrip(app: AppState, sense: LinkSense) -> some View {"
+          "text": "// 包2/136 跨页状态细条: 非设备 Tab 顶部一条 BLE 状态细线 (2pt 语义色 + 状态行),"
         },
         {
           "platform": "ios",
@@ -76397,7 +76397,7 @@
           "line": 1233,
           "symbol": "BLEStrip",
           "note": "",
-          "text": "BLEStrip(title: \"跳回设备页\", state: sense.linkState,"
+          "text": "// 点按跳回设备 Tab 并定位当前锁; 135 scenePhase .active 时静默刷新, 退后台暂停回连。"
         },
         {
           "platform": "ios",
@@ -76405,7 +76405,7 @@
           "line": 1235,
           "symbol": "requestRoute(.device)",
           "note": "",
-          "text": "app.requestRoute(.device)"
+          "text": "private func bleStatusStrip(app: AppState, sense: LinkSense) -> some View {"
         },
         {
           "platform": "ios",
@@ -76413,7 +76413,7 @@
           "line": 1236,
           "symbol": "pendingJumpLock",
           "note": "",
-          "text": "app.pendingJumpLock = app.currentMac"
+          "text": "BLEStrip(title: \"跳回设备页\", state: sense.linkState,"
         }
       ],
       "platformEvidence": {
@@ -76512,7 +76512,7 @@
           "line": 1073,
           "symbol": "rootCore",
           "note": "",
-          "text": "private var rootCore: some View {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -76520,7 +76520,7 @@
           "line": 1078,
           "symbol": ".id(app.appearanceSeed)",
           "note": "",
-          "text": ".id(app.appearanceSeed)"
+          "text": "// 包16: 外观种子变更时整树重建 — 配色/密度即时全局生效; withAnimation 提供淡入淡出 (idea 21)"
         },
         {
           "platform": "ios",
@@ -76528,7 +76528,7 @@
           "line": 1080,
           "symbol": ".dynamicTypeSize",
           "note": "",
-          "text": ".dynamicTypeSize(AXFlags.typeSize())"
+          "text": "// 冷启动展示; 回前台 < 300s 不重演; 深链进入时一律不展示。"
         },
         {
           "platform": "ios",
@@ -76536,7 +76536,7 @@
           "line": 1082,
           "symbol": ".saturation",
           "note": "",
-          "text": ".saturation(AXFlags.grayPreview ? 0 : 1)"
+          "text": "// 包15: App 字号五档 × 系统 Dynamic Type 叠加 (858, 含 866 极限字号自检 200% 预览)"
         },
         {
           "platform": "ios",
@@ -76544,7 +76544,7 @@
           "line": 1086,
           "symbol": ".environment(legibilityWeight)",
           "note": "",
-          "text": ".environment(\\.legibilityWeight, AXFlags.boldText ? .bold : .regular)"
+          "text": "// 861 系统加粗跟随: 读系统\"加粗文本\"开关, 在根上设 legibilityWeight ——"
         }
       ],
       "platformEvidence": {
@@ -76656,7 +76656,7 @@
           "line": 1113,
           "symbol": ".onChange(of: app.appUnlocked)",
           "note": "",
-          "text": ".onChange(of: app.appUnlocked) { _, unlocked in"
+          "text": "// 因为对用户而言那也是一次\"页面打开\"。"
         },
         {
           "platform": "ios",
@@ -76664,7 +76664,7 @@
           "line": 1116,
           "symbol": "restoreLastTab + applyPendingRoute",
           "note": "",
-          "text": "app.restoreLastTab(); app.applyPendingRoute()"
+          "text": ".onChange(of: app.appUnlocked) { _, unlocked in"
         }
       ],
       "platformEvidence": {
@@ -77007,7 +77007,7 @@
           "line": 1201,
           "symbol": "if phase == .active",
           "note": "",
-          "text": "if phase == .active {"
+          "text": "@MainActor"
         },
         {
           "platform": "ios",
@@ -77015,7 +77015,7 @@
           "line": 1203,
           "symbol": "AXFlags.refreshSnapshots()",
           "note": "",
-          "text": "AXFlags.refreshSnapshots()"
+          "text": "LinkSense.shared.setSceneActive(phase == .active)"
         },
         {
           "platform": "ios",
@@ -77023,7 +77023,7 @@
           "line": 1207,
           "symbol": "F0 前台门注释",
           "note": "",
-          "text": "// 靠近自动开锁 (AUTOOPEN): F0 前台门 + F1 进前台按档位刷面容 (挂起期静默)"
+          "text": "// 2026-10-17 拍板 A: 「到点自动落锁」随启动门禁一起删 —— 现在没有锁屏页可回,"
         },
         {
           "platform": "ios",
@@ -77031,7 +77031,7 @@
           "line": 1208,
           "symbol": "AutoOpenController.onForeground",
           "note": "",
-          "text": "AutoOpenController.shared.onForeground(mac: app.currentMac)"
+          "text": "// 留着它只会把 appUnlocked 置 false, 让深链/落点/回连那些 guard 静默失效。"
         },
         {
           "platform": "ios",
@@ -77039,7 +77039,7 @@
           "line": 1204,
           "symbol": "到点自动落锁已删",
           "note": "",
-          "text": "// 2026-10-17 拍板 A: 「到点自动落锁」随启动门禁一起删 —— 现在没有锁屏页可回,"
+          "text": "if phase == .active {"
         }
       ],
       "platformEvidence": {
@@ -77319,7 +77319,7 @@
           "line": 1027,
           "symbol": "bootstrapOnce",
           "note": "",
-          "text": "static func bootstrapOnce(_ app: AppState) {"
+          "text": "/// 异常退出档案、onLaunch 的自检/月备排程/成就结算、启动预热、LinkSense 宿主注册与冷启动扫描"
         },
         {
           "platform": "ios",
@@ -77327,7 +77327,7 @@
           "line": 1028,
           "symbol": "guard !launchBootstrapped",
           "note": "",
-          "text": "guard !app.launchBootstrapped else { return }"
+          "text": "/// 全都不跑，而且不报错。这就是本仓\"删/改名留悬空引用\"那一族的新成员：**换容器留孤儿副作用**。"
         },
         {
           "platform": "ios",
@@ -77335,7 +77335,7 @@
           "line": 1029,
           "symbol": "launchBootstrapped = true",
           "note": "",
-          "text": "app.launchBootstrapped = true"
+          "text": "/// 现在 legacy 与两个新变体都调用这一个实现，`launchBootstrapped` 继续兜 `.id(appearanceSeed)` 的重放。"
         }
       ],
       "platformEvidence": {
@@ -77546,7 +77546,7 @@
           "line": 1151,
           "symbol": "selfCheckBanner",
           "note": "",
-          "text": "private func selfCheckBanner(_ w: String) -> some View {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -77554,7 +77554,7 @@
           "line": 1158,
           "symbol": "Button 去诊断",
           "note": "",
-          "text": "Button(\"去诊断\") {"
+          "text": ".accessibilityHidden(true)"
         }
       ],
       "platformEvidence": {
@@ -77850,7 +77850,7 @@
           "line": 1212,
           "symbol": "else if phase == .background",
           "note": "",
-          "text": "} else if phase == .background {"
+          "text": "// 344 回前台才出快捷条 (344 的原话就是\"回前台显示\"), 顺带重算剩余秒数"
         },
         {
           "platform": "ios",
@@ -77858,7 +77858,7 @@
           "line": 1216,
           "symbol": "221 退后台收尾注释",
           "note": "",
-          "text": "// 221 退后台收尾: 记会话时长并清崩溃标记 (CrashGuard 的判定就依赖这一步)"
+          "text": "// 2026-10-14: 只有**真进后台**才算退后台。旧实现把 .inactive (下拉通知中心/控制中心、"
         },
         {
           "platform": "ios",
@@ -77866,7 +77866,7 @@
           "line": 1217,
           "symbol": "CrashGuard.markCleanExit",
           "note": "",
-          "text": "CrashGuard.markCleanExit()"
+          "text": "// 来电、Face ID 系统弹窗) 也当退后台 —— 会误记锁定到期时刻 (反复下拉可无限顺延宽限),"
         },
         {
           "platform": "ios",
@@ -77874,7 +77874,7 @@
           "line": 1218,
           "symbol": "AutoOpenController.onBackground",
           "note": "",
-          "text": "AutoOpenController.shared.onBackground()"
+          "text": "// 还会提前清掉崩溃标记 (随后真崩溃被判成\"正常退出\")。.inactive 只收起过期的快捷条。"
         },
         {
           "platform": "ios",
@@ -77882,7 +77882,7 @@
           "line": 1221,
           "symbol": "inactive 清崩溃标记理由",
           "note": "",
-          "text": "// 但崩溃标记仍要清 —— 从任务切换器强退时进程多在 .inactive 被 SIGKILL,"
+          "text": "AutoOpenController.shared.onBackground()"
         }
       ],
       "platformEvidence": {
@@ -78613,7 +78613,7 @@
           "line": 917,
           "symbol": "26 长按菜单注释",
           "note": "",
-          "text": "// 26 Tab 长按快捷菜单 (iOS 18)。这一条只在\"真按得动\"的项上开口:"
+          "text": "// 只读试验模式：全 App 顶部常驻红条。**必须常驻** ——"
         },
         {
           "platform": "ios",
@@ -78621,7 +78621,7 @@
           "line": 927,
           "symbol": ".contextMenu(forSelectionType: Int.self)",
           "note": "",
-          "text": ".contextMenu(forSelectionType: Int.self) { selected in"
+          "text": "// 2026-10-13 run 69: 这两个闭包的形参是**选中集 `Set<Int>`** (不是单个 Int) ——"
         },
         {
           "platform": "ios",
@@ -78629,7 +78629,7 @@
           "line": 929,
           "symbol": "case 0",
           "note": "",
-          "text": "case 0:"
+          "text": "// match values of type 'Set<Int>'\" / \"cannot convert 'Set<Int>' to 'Int'\"。取首个元素。"
         },
         {
           "platform": "ios",
@@ -78637,7 +78637,7 @@
           "line": 932,
           "symbol": "只看今天的记录",
           "note": "",
-          "text": "Button(\"只看今天的记录\") {"
+          "text": "case 0:"
         },
         {
           "platform": "ios",
@@ -78645,7 +78645,7 @@
           "line": 937,
           "symbol": "凭证回收站",
           "note": "",
-          "text": "Button(\"凭证回收站\") { app.pendingCredPanel = \"bin\"; app.requestRoute(.credentials) }"
+          "text": "app.requestRoute(.records)"
         }
       ],
       "platformEvidence": {
@@ -78959,7 +78959,7 @@
           "line": 73,
           "symbol": "BLEService",
           "note": "",
-          "text": "final class BLEService: NSObject, ObservableObject, @unchecked Sendable {"
+          "text": "}"
         },
         {
           "platform": "apk",
@@ -78975,7 +78975,7 @@
           "line": 538,
           "symbol": "didUpdateNotificationState",
           "note": "",
-          "text": "public func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {"
+          "text": "let cb = connectCompletion"
         },
         {
           "platform": "ios",
@@ -78983,7 +78983,7 @@
           "line": 92,
           "symbol": "publishOnMain",
           "note": "",
-          "text": "private func publishOnMain(_ apply: @escaping @Sendable () -> Void) {"
+          "text": ""
         },
         {
           "platform": "apk",
@@ -81030,7 +81030,7 @@
           "line": 19,
           "symbol": "generate",
           "note": "",
-          "text": "static func generate(macHex: String, skeyHex: String, periodSec: Int, idx: Int, nowSec: Int64? = nil) -> String {"
+          "text": "/// 但名字说的单位与代码做的换算相反 —— 读代码的人看到 `periodSec: 30` 会以为 30 秒。"
         },
         {
           "platform": "android",
@@ -81054,7 +81054,7 @@
           "line": 45,
           "symbol": "nextWindow",
           "note": "",
-          "text": "// 30 分钟窗口失效时刻 (JS credentials.nextWindow: 分钟>30 → 下一半点, 否则本半点)"
+          "text": "var i = 0"
         },
         {
           "platform": "android",
@@ -81170,7 +81170,7 @@
           "line": 126,
           "symbol": "assembler",
           "note": "",
-          "text": "private let assembler = ZKProtocol.FrameAssembler()"
+          "text": "private var readyCont: CheckedContinuation<Void, Never>?"
         }
       ],
       "platformEvidence": {
@@ -81835,7 +81835,7 @@
           "line": 20,
           "symbol": "svcDfuSecure",
           "note": "",
-          "text": "static let svcDfuSecure = CBUUID(string: \"0000FE59-0000-1000-8000-00805F9B34FB\")"
+          "text": "static let svcGW = CBUUID(string: \"0000FE90-0000-1000-8000-00805F9B34FB\")     // 网关"
         },
         {
           "platform": "ios",
@@ -81851,7 +81851,7 @@
           "line": 23,
           "symbol": "svcDfuLegacy",
           "note": "",
-          "text": "static let svcDfuLegacy = CBUUID(string: \"00001530-1212-EFDE-1523-785FEABCD123\")"
+          "text": "// DFU (Nordic): Secure FE59 / Legacy 1530 + 蓝牙钥匙串 (自定义 6E401001)"
         }
       ],
       "platformEvidence": {
@@ -84147,7 +84147,7 @@
           "line": 326,
           "symbol": "writeFrameHex",
           "note": "",
-          "text": "func writeFrameHex(_ hex: String) async throws {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -84155,7 +84155,7 @@
           "line": 339,
           "symbol": "writeFrameHex",
           "note": "逐片 await writeChunk",
-          "text": "try await writeChunk(part, on: device, characteristic: ch)"
+          "text": "// 分片之间**不加** sleep: APK Java `writeRXCharacteristic` 是每片 write 后等"
         },
         {
           "platform": "ios",
@@ -84163,7 +84163,7 @@
           "line": 423,
           "symbol": "writeChunk",
           "note": "8.0 秒 ack 超时",
-          "text": "DispatchQueue.main.asyncAfter(deadline: .now() + 8.0, execute: work)"
+          "text": "device.writeValue(data, for: ch, type: .withResponse)"
         },
         {
           "platform": "ios",
@@ -84171,7 +84171,7 @@
           "line": 396,
           "symbol": "writeChunk",
           "note": "withoutResponse 回退",
-          "text": "device.writeValue(data, for: ch, type: .withoutResponse)"
+          "text": "// 之前 withoutResponse + 20ms 假 ack — CoreBluetooth 无响应队列满时会静默丢包, 锁收到残帧"
         }
       ],
       "platformEvidence": {
@@ -84756,7 +84756,7 @@
           "line": 20,
           "symbol": "generate",
           "note": "t = periodSec > 0 ? periodSec : 30",
-          "text": "let t = periodSec > 0 ? periodSec : 30"
+          "text": "/// **vendor 侧保持原名不改**（那是基线资产，改名会让金标 fixture 的语义漂移）；"
         },
         {
           "platform": "ios",
@@ -84764,7 +84764,7 @@
           "line": 46,
           "symbol": "nextWindow",
           "note": "",
-          "text": "static func nextWindow(from now: Date = Date()) -> String {"
+          "text": "while i + 1 < bytes.count {"
         }
       ],
       "platformEvidence": {
@@ -85457,7 +85457,7 @@
           "line": 22,
           "symbol": "generate",
           "note": "计数器",
-          "text": "let u = String(format: \"%llx\", now / Int64(60 * t)).uppercased()"
+          "text": "/// 读基线的人看 JS，写 App 的人看这里，各按各自的名字理解。"
         },
         {
           "platform": "ios",
@@ -85465,7 +85465,7 @@
           "line": 30,
           "symbol": "generate",
           "note": "MAC 12 hex 门禁",
-          "text": "guard r.count == 12, r.allSatisfy({ $0.isHexDigit }) else { return \"\" }"
+          "text": "let uPadded = String(repeating: \"0\", count: max(0, 8 - u.count)) + u"
         },
         {
           "platform": "ios",
@@ -85473,7 +85473,7 @@
           "line": 40,
           "symbol": "generate",
           "note": "异或取个位",
-          "text": "m += String((Int(bytes[i]) ^ Int(bytes[i + 1])) % 10)"
+          "text": "let p = AESKit.encryptHex(c, keyHex: skeyHex).uppercased()"
         }
       ],
       "platformEvidence": {
@@ -86594,7 +86594,7 @@
           "line": 267,
           "symbol": "disconnect",
           "note": "",
-          "text": "func disconnect() {"
+          "text": "// connect() 是非隔离 async 函数 ⇒ 续体在 cooperative 线程上恢复, 这行绝不能直写 (见类头那段)"
         },
         {
           "platform": "ios",
@@ -86602,7 +86602,7 @@
           "line": 463,
           "symbol": "didDisconnectPeripheral",
           "note": "",
-          "text": "public func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {"
+          "text": "let cb = connectCompletion"
         },
         {
           "platform": "ios",
@@ -86610,7 +86610,7 @@
           "line": 477,
           "symbol": "didDisconnectPeripheral",
           "note": "写确认与连接等待被唤醒",
-          "text": "if let w = writeAckCont {"
+          "text": "if let r = readyCont {"
         }
       ],
       "platformEvidence": {
@@ -86832,7 +86832,7 @@
           "line": 13,
           "symbol": "svcMain/chrWrite/chrNotify",
           "note": "",
-          "text": "static let svcMain = CBUUID(string: \"6E400001-B5A3-F393-E0A9-E50E24DCCA9E\")   // 门锁 NUS"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -86840,7 +86840,7 @@
           "line": 16,
           "symbol": "svcGW/chrGWWrite/chrGWNotify",
           "note": "",
-          "text": "static let svcGW = CBUUID(string: \"0000FE90-0000-1000-8000-00805F9B34FB\")     // 网关"
+          "text": "enum BLEUUID {"
         },
         {
           "platform": "ios",
@@ -86848,7 +86848,7 @@
           "line": 20,
           "symbol": "svcDfuSecure/dfuSecureControl/dfuSecurePacket",
           "note": "",
-          "text": "static let svcDfuSecure = CBUUID(string: \"0000FE59-0000-1000-8000-00805F9B34FB\")"
+          "text": "static let svcGW = CBUUID(string: \"0000FE90-0000-1000-8000-00805F9B34FB\")     // 网关"
         }
       ],
       "platformEvidence": {
@@ -87223,7 +87223,7 @@
           "line": 227,
           "symbol": "connect",
           "note": "",
-          "text": "func connect(deviceId: String, timeoutMs: Int = 20000) async throws {"
+          "text": "// 曾另有 advDevice(_ deviceId:) 按 deviceId 单查: 全仓零调用 (连接走 CB 的"
         },
         {
           "platform": "ios",
@@ -87231,7 +87231,7 @@
           "line": 249,
           "symbol": "connect",
           "note": "超时工作项",
-          "text": "let work = DispatchWorkItem { [weak self] in"
+          "text": "case .failure(let e): cont.resume(throwing: e)"
         },
         {
           "platform": "ios",
@@ -87239,7 +87239,7 @@
           "line": 497,
           "symbol": "didDiscoverServices",
           "note": "NUS 优先 / FE90 回退",
-          "text": "let target = services.first { $0.uuid == BLEUUID.svcMain }?.uuid"
+          "text": "cb?(.failure(BLEErrorX.code(.parseFail)))"
         },
         {
           "platform": "ios",
@@ -87247,7 +87247,7 @@
           "line": 150,
           "symbol": "readyMessage",
           "note": "",
-          "text": "private func readyMessage() -> String {"
+          "text": "if Date() > deadline { throw BLEErrorX.msg(readyMessage()) }"
         }
       ],
       "platformEvidence": {
@@ -87322,7 +87322,7 @@
           "line": 306,
           "symbol": "readLinkRSSI",
           "note": "",
-          "text": "func readLinkRSSI(timeoutMs: Int = 1500, completion: @escaping (Int?) -> Void) {"
+          "text": "/// iOS 此前从没调过 readRSSI (本轮查实), 安卓对应的是 BleUnlocker.observeSignal 里的"
         },
         {
           "platform": "ios",
@@ -87330,7 +87330,7 @@
           "line": 577,
           "symbol": "didReadRSSI",
           "note": "",
-          "text": "public func peripheral(_ peripheral: CBPeripheral, didReadRSSI RSSI: NSNumber, error: Error?) {"
+          "text": "c.resume()"
         },
         {
           "platform": "ios",
@@ -87338,7 +87338,7 @@
           "line": 299,
           "symbol": "readLinkRSSI",
           "note": "注释：连上后门锁停止广播",
-          "text": "/// 为什么非要有这一条: 门锁一旦被连上就停止广播, 所以 didDiscover 那一侧从\"连上\"那一刻起"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -88728,7 +88728,7 @@
           "line": 200,
           "symbol": "startScan",
           "note": "",
-          "text": "@MainActor"
+          "text": "//      ⇒ 超时回调永不触发 ⇒ 扫描窗口永不自动关, scanning 卡 true, 射频空转到下一次 startScan。"
         },
         {
           "platform": "ios",
@@ -88736,7 +88736,7 @@
           "line": 170,
           "symbol": "ScanProfile",
           "note": "",
-          "text": "enum ScanProfile: String, CaseIterable {"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -88744,7 +88744,7 @@
           "line": 209,
           "symbol": "startScan",
           "note": "到点 stopScanInternal 的定时器",
-          "text": "scanTimer = Timer.scheduledTimer(withTimeInterval: Double(timeoutMs) / 1000.0, repeats: false) { [weak self] _ in"
+          "text": "scanning = true"
         }
       ],
       "platformEvidence": {
@@ -88812,7 +88812,7 @@
           "line": 549,
           "symbol": "didUpdateValueFor",
           "note": "",
-          "text": "public func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -88820,7 +88820,7 @@
           "line": 160,
           "symbol": "onFrame",
           "note": "",
-          "text": "func onFrame(_ cb: @escaping (ZKProtocol.ParsedFrame) -> Void) {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -88828,7 +88828,7 @@
           "line": 538,
           "symbol": "didUpdateNotificationState",
           "note": "",
-          "text": "public func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {"
+          "text": "let cb = connectCompletion"
         }
       ],
       "platformEvidence": {
@@ -89082,7 +89082,7 @@
           "line": 265,
           "symbol": "connect",
           "note": "连接成功后 assembler.reset()",
-          "text": "assembler.reset()"
+          "text": "throw error"
         }
       ],
       "platformEvidence": {
@@ -89944,7 +89944,7 @@
           "line": 120,
           "symbol": "writeSlot",
           "note": "",
-          "text": "private let writeSlot = Locked((busy: false, waiters: [CheckedContinuation<Void, Never>]()))"
+          "text": "/// 为什么不能再用裸 Bool: 取槽是\"检查并占用\"的复合动作, 而 writeFrameHex 是非隔离 async"
         },
         {
           "platform": "ios",
@@ -89952,7 +89952,7 @@
           "line": 344,
           "symbol": "acquireWriteSlot",
           "note": "",
-          "text": "private func acquireWriteSlot() async {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -89960,7 +89960,7 @@
           "line": 362,
           "symbol": "releaseWriteSlot",
           "note": "",
-          "text": "private func releaseWriteSlot() {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -89968,7 +89968,7 @@
           "line": 281,
           "symbol": "disconnect",
           "note": "唤醒队列",
-          "text": "let queued = writeSlot.withLock { s -> [CheckedContinuation<Void, Never>] in"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -90916,7 +90916,7 @@
           "line": 38,
           "symbol": "BLEError",
           "note": "",
-          "text": "enum BLEError: Int {"
+          "text": "var serviceUUIDs: [String]"
         },
         {
           "platform": "apk",
@@ -90940,7 +90940,7 @@
           "line": 48,
           "symbol": "BLEError.message",
           "note": "",
-          "text": "var message: String {"
+          "text": "case writeTimeout = 6001"
         },
         {
           "platform": "ios",
@@ -90948,7 +90948,7 @@
           "line": 415,
           "symbol": "writeChunk",
           "note": "超时抛 writeFailed",
-          "text": "cont.resume(throwing: BLEErrorX.code(.writeFailed))"
+          "text": "try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in"
         },
         {
           "platform": "apk",
@@ -97245,7 +97245,7 @@
           "line": 1092,
           "symbol": "if DB.store.getBool(SecKey.watermarkOn, false)",
           "note": "",
-          "text": "if DB.store.getBool(SecKey.watermarkOn, false) {"
+          "text": "// 读一下 tick 使开关拨动后整层重算; hitTesting/朗读屏蔽在 SecurityWatermark 内部已带。"
         }
       ],
       "platformEvidence": {
@@ -104123,7 +104123,7 @@
           "line": 172,
           "symbol": "ScanProfile.storeKey",
           "note": "",
-          "text": "static let storeKey = \"kf_scan_profile\""
+          "text": "/// 123 扫描强度三档: **只作用于发现型扫描** (冷启动扫描 / 环境拥挤度), 不改连接与 AUTOOPEN 的时序，"
         },
         {
           "platform": "ios",
@@ -104131,7 +104131,7 @@
           "line": 174,
           "symbol": "ScanProfile.timeoutMs",
           "note": "",
-          "text": "var timeoutMs: Int {"
+          "text": "enum ScanProfile: String, CaseIterable {"
         },
         {
           "platform": "ios",
@@ -104139,7 +104139,7 @@
           "line": 182,
           "symbol": "ScanProfile.allowDuplicates",
           "note": "",
-          "text": "var allowDuplicates: Bool { self == .fast }"
+          "text": "case .fast: return 10_000"
         }
       ],
       "platformEvidence": {
@@ -105782,7 +105782,7 @@
           "line": 445,
           "symbol": "ProximityCard",
           "note": "onUnbind 首行 LockStore.clear(ctx)",
-          "text": "LockStore.clear(ctx)"
+          "text": "launchScan()"
         }
       ],
       "platformEvidence": {

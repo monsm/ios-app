@@ -1468,7 +1468,7 @@ struct MemberGroupSheet: View {
     }
 }
 
-// ================= 479/794 家庭设置 (长辈模式 · 隐私浏览) =================
+// ================= 479/794 家庭设置 (长辈模式) =================
 // 486 (长辈模式下临时码完成页默认进口述卡) 已接: 落地点在 CredentialStudio 的 TempCodeStudio.doneCard,
 // 那边读 MemberHub.elderMode —— 完成页收成 口述卡 + 一枚大「完成」, 常规那几段 (329/333/再发一张) 就地说明后收起。
 // 这一页只负责把话说明白 (见下面 elder 那一节), 不做第二份实现。
@@ -1476,8 +1476,6 @@ struct MemberFamilySettingsView: View {
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
     @State private var elder = MemberHub.elderMode
-    @State private var privacy = MemberHub.privacyActive
-    @State private var privacyLeft = 0
 
     var body: some View { vkBody.destined(.memberFamilySettings) }
     var vkBody: some View {
@@ -1504,19 +1502,6 @@ struct MemberFamilySettingsView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
-                Section("隐私浏览") {   // 794 隐私浏览
-                    VariantToggle("隐私浏览 (限时 10 分钟: 写隐私时段标记, 本页回显剩余时间)", isOn: $privacy)
-                        .fixedSize(horizontal: false, vertical: true)
-                    if privacy {
-                        Text(privacyLeft > 0
-                             ? "剩余 \(privacyLeft) 秒后自动关闭"
-                             : "开启后 10 分钟自动关闭; 当前只写隐私时段标记并在本页回显, 不改统计口径")   // 794 开启后
-                            .vkFont(.caption)
-                            .monospacedDigit()
-                            .foregroundStyle(DS.Palette.textSub)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
             }
             .navigationTitle("家庭设置")
             .variantList()
@@ -1524,13 +1509,9 @@ struct MemberFamilySettingsView: View {
             .toolbar { ToolbarItem(placement: .navigationBarLeading) {
                 Button("保存") {
                     MemberHub.setElderMode(elder)
-                    MemberHub.setPrivacy(privacy)
                     dismiss()
                 }
             } }
-            .onAppear {
-                privacyLeft = max(0, Int(MemberHub.privacyUntilSec - Date().timeIntervalSince1970))
-            }
         }
     }
 }

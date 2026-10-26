@@ -1,7 +1,11 @@
 // BLE 服务 — CoreBluetooth 实现 (JS services/ble.js 的 iOS 等价)
-//   * 扫描: CBUUID 过滤 (NUS 6E400001 / 网关 FE90), 10s 自动停扫 (对齐 App BleScan/BleDfu)
+//   * 扫描: **全扫**（`scanForPeripherals(withServices: nil)`），10s 自动停扫。
+//     为什么不用 CBUUID 过滤：门锁(NUS 6E40…) / 网关(FE90) / 钥匙串(6E401001) / DFU(FE59/1530)
+//     是四套不同 service，过滤列表一漏就"扫不到"；全扫只是多耗一点电，
+//     调用方自己按广播解析结果筛（见 ZKProtocol.parseAdv / PidMap）。
 //   * 连接: 20s 超时, 发现服务→特征→开 notify; MTU 由系统协商 (无需 setBLEMTU)
-//   * 写: 20B 分片 + 30ms 间隔 (对齐 JS writeFrame); 5xx 错误码映射
+//   * 写: 20B 分片，**分片间无固定 sleep** —— 每片等 didWriteValueFor 回执（ack 即流控，
+//     与 APK Java `writeRXCharacteristic` 同语义）。旧实现额外加 30ms/片，长帧白等 0.15~0.5s。
 //   * 粘包重组: ZKProtocol.FrameAssembler (与 JS makeAssembler 逐行一致)
 import Foundation
 import Combine
