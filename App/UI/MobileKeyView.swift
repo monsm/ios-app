@@ -133,7 +133,7 @@ struct MobileKeyView: View {
                     .swipeActions(edge: .trailing) {
                         Button(role: .destructive) {
                             confirmRevoke(kc, k)
-                        } label: { Label("撤销", systemImage: "trash") }
+                        } label: { Label("撤销此钥匙", systemImage: "trash") }
                     }
                 }
             }
