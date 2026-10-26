@@ -930,8 +930,6 @@ struct RootView: View {
         .contextMenu(forSelectionType: Int.self) { selected in
             switch selected.first ?? -1 {
             case 0:
-                if app.current != nil {
-                }
                 Button("只看今天的记录") {
                     app.pendingRecordsDay = StatsKit.dayKey(Date())
                     app.requestRoute(.records)
@@ -1039,6 +1037,14 @@ struct RootView: View {
         // Prewarm 只做本地键位与热点缓存读取, 不碰 BLE —— 不会在启动时偷偷发起连接。
         StartupTrace.mark("onLaunch 结束")
         Prewarm.run(mac: app.currentMac)
+        // 2026-10-26: 两件事从已失效的 .onChange(of: app.appUnlocked) 搬来这里。
+        // 冷启动必跑（原入口的触发条件"appUnlocked 变为 true"在删掉启动门禁后永不成立）。
+        app.restoreLastTab()          // 161: 回到上次停留的 Tab（内部见 pendingRoute 就避让）
+        app.applyPendingRoute()       // 落地挂起的深链
+        let selfCheckBad = app.runSelfCheck397()
+        if selfCheckBad > 0 {
+            app.showToast("本机自检发现 \(selfCheckBad) 项异常，详见「设置-诊断」")   // 397 本机自检发现
+        }
         if StartupTrace.overBudget {
             app.lock.log("warn", "启动耗时 \(Int(StartupTrace.totalMs))ms, 超 800ms 预算")   // 215 启动耗时
         }
@@ -1113,19 +1119,14 @@ struct RootView: View {
             // 因为对用户而言那也是一次"页面打开"。
             PageTrace.markNav(to: new)
         }
-        .onChange(of: app.appUnlocked) { _, unlocked in
-            // 161: 先回上次停留位, 再落地挂起深链 (restoreLastTab 内部见 pendingRoute 就避让)
-            if unlocked {
-                app.restoreLastTab(); app.applyPendingRoute()
-                // 397 解锁后跑一次本机库体自检 (纯本地读, 不碰 BLE); 只在异常时出声
-                let bad = app.runSelfCheck397()
-                if bad > 0 { app.showToast("本机自检发现 \(bad) 项异常，详见「设置-诊断」") }   // 397 本机自检发现
-            } else {
-                // 377/383: 锁重新落下 (手动锁 / 393 到点自动锁) 就把会话级授权一起收回 ——
-                // 访客区的放开与 sudo 券说的都是"这一次解锁验过", 锁都落了还认旧账就等于没拦。
-                app.revokeSessionGrants()
-            }
-        }
+        // 2026-10-26: 这里原本是 `.onChange(of: app.appUnlocked)`，承接三件事：
+        //   · 解锁后 restoreLastTab() —— 回到上次停留的 Tab
+        //   · 解锁后 runSelfCheck397() —— 本机库体自检（异常才出声）
+        //   · 锁落下时 revokeSessionGrants() —— 这条**已改挂** scenePhase == .background（见 handleScenePhase）
+        // 2026-10-17 拍板删掉启动门禁后 init() 里 `appUnlocked = true`，此后它**再也不会变**，
+        // 于是这个 onChange 一次都不触发 —— 三件事全部静默失效（"回到上次停留"与自检一直没跑）。
+        // 现在：前两件搬进 bootstrapOnce（冷启动必跑，语义等价且更早）；
+        // 第三件随"手动锁/到点自动锁"一起去掉了（那条路径已不存在，没有"锁落下"这个事件）。
         .onChange(of: app.tabSelection) { _, t in
             app.rememberTab(t)   // 161 记"上次停留"
             if t == 0 { handshakeDoneAway = false }   // 162: 人回到设备页, 完成角标的使命结束
@@ -1219,6 +1220,12 @@ struct RootView: View {
             // 221 退后台收尾: 记会话时长并清崩溃标记 (CrashGuard 的判定就依赖这一步)
             CrashGuard.markCleanExit()
             AutoOpenController.shared.onBackground()
+            // 2026-10-26: 访客区/临时授权在这里收回。
+            // 原来由 .onChange(of: app.appUnlocked) 在"锁落下"时收 —— 但启动门禁删掉后
+            // appUnlocked 再也不会变 false，那条路径永不触发，等于**一次放开就永久敞开**。
+            // 改挂"真进后台"：用户离开 App 就是"这一次查验的会话结束了"，这与原意一致，
+            // 且比"锁落下"更容易成立（后者那个事件已经不存在）。
+            app.revokeSessionGrants()
         } else {
             // .inactive: 只收起过期的快捷条, **不**记锁定到期时刻 (否则反复下拉通知中心可无限顺延宽限)。
             // 但崩溃标记仍要清 —— 从任务切换器强退时进程多在 .inactive 被 SIGKILL,

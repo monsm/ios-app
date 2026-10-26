@@ -150,6 +150,46 @@
 | 15 | `DiagKit:414` 与 `LinkSenseKit:363` 互指旧行号 | `[已核实]` 同 #13 一族；两处注释描述的历史实现已删，行号引用不可核对 |
 
 ---
+## 第三批：UI 系统 / 备份 / 启动链（14 条）
+
+| # | 原未决项 | 处置 |
+|---|---|---|
+| 1 | `BackupStudio:117` 空态文案提「先在导出向导生成并上传」 | **`[已修]`** 导出向导已随大删波4 移除（本文件头注写着），文案改为只指向本页真实存在的按钮 |
+| 2 | `BackupView:69/72` 本机台数 vs 包内台数并列 | **`[已修]`** 按钮文案加「（本机现有）」、message 加「（覆盖来源）」，并补一句「两个数字不一致是正常的（换过机/删过锁/包比本机旧）」 |
+| 3 | `LockKeeperApp:287-296/:1113` 启动门禁已删，`.onChange(of: appUnlocked)` 不触发 | **`[已修]` 这条是**真缺陷**：onChange 里承接的三件事全部静默失效。处置：`restoreLastTab()` + `applyPendingRoute()` + `runSelfCheck397()` **搬进 bootstrapOnce**（冷启动必跑）；`revokeSessionGrants()` **改挂 `scenePhase == .background`** |
+| 4 | `LockKeeperApp:929` 空 `if app.current != nil { }` | **`[已修]`** 删空块 |
+| 5 | `LockKeeperApp:1065` 注释称有「门面/300s 门禁」 | **`[已修]`** 记录在 #3 的说明里：那条路径随启动门禁一起删除 |
+| 6 | `BackupStudio:175` `persist()` 只在 test/upload 调，改完关窗就丢 | **`[已修]`** 三条 `.onChange(onChange(of: root/acct/appPw))` 挂在整个 Form 上（不是挂单个字段 —— 那样另两个字段永不触发） |
+| 7 | `DiagReferenceView:58-61` 「已知晓」只丢返回值 | **`[已修]` 注释如实化**：说明 `consumePending()` 的清理若失败，界面仍会显示已清 —— 这是已知局限 |
+| 9 | `BackupStudio:255` vs `BackupView:387` 两个口令字段 | **`[已修]` 统一**：新增 `App/Core/BackupPassphrase.swift`（会话级、仅内存，不落盘），两页的 `encPw`/`cloudPw` 都代理到它 ⇒ 一次输入两页通用 |
+| 10 | `DiagnosticsView:1107` 完整帧依赖内存环形缓冲 | **`[已修]` 注释补两条边界**：容量 **60 条**、**重启 App 后全部丢失**。并写明这是刻意取舍（完整帧带 skey/ekey/PIN 明文，落盘等于把密钥写在磁盘上） |
+| 11 | `LockKeeperApp:1027` `coldStartScan`/`startupPreconnect` 是裸 Task 不可取消 | **`[已修]`** `LinkSenseKit` 新增 `coldScanTask`/`preconnectTask` 句柄：第二次调用先 cancel 上一次，体内加 `Task.isCancelled` 检查 |
+| 12 | `Store:1015/1031/1048` toDict/fromDict 无独立功能 | **`[已核实并结案]`** Codable 手写编解码，用户不可感知；容错口径已由 `data.schema` 节点覆盖 |
+| 13 | `CredentialsView:2517` topViewController | **`[已核实并结案]`** 取顶层 VC 的 presenter 工具，无独立功能语义 |
+| 14 | `CredentialStudio:359` CodeBigCard | **`[已核实并结案]`** 已被 `credential.pwd.detail.card` 与 `credential.tempcode.done` 覆盖 |
+
+### 本批最重要的一条
+
+**#3 是本次 129 条裁决里发现的最严重缺陷**（比双签前缀比对更严重）：
+
+```
+2026-10-17 拍板删掉启动门禁 → init() 里 appUnlocked = true
+        ↓
+appUnlocked 再也不会变 false
+        ↓
+.onChange(of: app.appUnlocked) 一次都不触发
+        ↓
+三件事全部静默失效：
+  · restoreLastTab()      —— 「回到上次停留的 Tab」从来没生效过
+  · applyPendingRoute()   —— 深链落地依赖它
+  · revokeSessionGrants() —— **访客区/临时授权一次放开就永久敞开**
+```
+
+前两件是功能缺失，第三件是**安全退化**。现在：前两件搬进 bootstrapOnce，第三件挂到"真进后台"。
+
+---
+## 第四批：APK 基线（19 条，待裁）
+
 ## 第二批及之后
 
 - **UI 与入口类**（ios-ui-device 17 + ios-ui-records 17 + ios-ui-cred 9 = 43 条）：待裁

@@ -536,9 +536,18 @@ final class LinkSense: ObservableObject {
     }
 
     /// 134 冷启动先扫描: App 启动广播扫描一次, 把可见已配对锁的 RSSI 落档 (不连接、不下发)
+    /// 冷启动扫描的任务句柄。2026-10-26: 原来是裸 Task —— 视图销毁后它照跑，
+    /// 与 `.task` 的取消语义不一致（`.task` 修饰符内的子任务会随视图取消，裸 Task 不会）。
+    /// 现在留着句柄，第二次调用先取消上一次，避免"重复冷扫"叠加。
+    private var coldScanTask: Task<Void, Never>?
+    /// 启动预连接的任务句柄（同上）。startupPreconnect 与 enterPage 都会调 preconnect，
+    /// 并存时会各自建链 —— 由 LinkSense 内部去重兜底，但句柄让"后来的覆盖先前"可显式表达。
+    private var preconnectTask: Task<Void, Never>?
+
     func coldStartScan() {
-        Task { @MainActor [weak self] in
-            guard self != nil else { return }   // 只为"已销毁就别扫", 本体内不读 self
+        coldScanTask?.cancel()
+        coldScanTask = Task { @MainActor [weak self] in
+            guard self != nil, !Task.isCancelled else { return }   // 只为"已销毁/已取消就别扫"
             let ble = BLEService.shared
             guard ble.isPoweredOn, !DiagFlags.silent else { return }
             do {
@@ -627,9 +636,11 @@ final class LinkSense: ObservableObject {
     func startupPreconnect(mac: String) {
         guard !mac.isEmpty else { return }
         guard DB.store.getBool("kf_link_auto_" + mac, true) else { return }
-        Task { @MainActor [weak self] in
-            guard let self else { return }
+        preconnectTask?.cancel()
+        preconnectTask = Task { @MainActor [weak self] in
+            guard let self, !Task.isCancelled else { return }
             await self.preconnect()
+            guard !Task.isCancelled else { return }
             self.onPreconnectDone()
         }
     }

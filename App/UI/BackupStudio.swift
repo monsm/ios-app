@@ -16,7 +16,11 @@ struct WebDAVStudioView: View {
     @State private var root = ""
     @State private var acct = ""
     @State private var appPw = ""
-    @State private var encPw = ""
+    /// 2026-10-26: 与另一页共用 BackupPassphrase（同一份 zklock-backup.enc 的加密口令）。
+    /// 原来是各自一个 @State，用户在工作室传上去、到这一页恢复还要再输一遍，且没人说明是同一个口令。
+    private var encPw: Binding<String> {
+        Binding(get: { BackupPassphrase.current }, set: { BackupPassphrase.current = $0 })
+    }
     @State private var entries: [BackupStudio.RemoteEntry] = []
     @State private var testResult = ""
     @State private var dryRunResult = ""
@@ -114,7 +118,9 @@ struct WebDAVStudioView: View {
                             }
                         }
                     } else {
-                        Text("暂无远端备份 — 先在导出向导生成并上传, 或点下方「上传」")
+                    // 2026-10-26: 原文案写"先在导出向导生成并上传"，而导出向导已随大删波4 移除
+                    // （见本文件头注）—— 用户在界面上找不到那个入口。改成只指向本页真实存在的按钮。
+                    Text("暂无远端备份 — 点下方「上传」把本机当前备份传上去；若已有旧包，也可用「下载并验证」检查它是否可读")
                             .vkFont(.caption)
                             .foregroundStyle(DS.Palette.textSub)
                     }
@@ -145,6 +151,12 @@ struct WebDAVStudioView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
+            // 2026-10-26: 改完即写。原先 persist() 只在 test()/upload() 里调 ——
+            // 用户改完根地址/账号直接关窗就丢了，与备份页输入框"直写 Store"的口径不一致。
+            // 三条挂在 Form 上（不是各自字段）：挂到某个字段上会让另两个字段的变化永远不触发。
+            .onChange(of: root) { _, _ in persist() }
+            .onChange(of: acct) { _, _ in persist() }
+            .onChange(of: appPw) { _, _ in persist() }
             .navigationTitle("WebDAV 工作室")
             .variantList()
             .dsScreenBackground()

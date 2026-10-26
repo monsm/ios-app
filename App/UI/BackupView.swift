@@ -18,7 +18,11 @@ struct BackupView: View {
     private var cloudAcct: String { DB.store.getString("kf_cloudcfg_acct") }
     private var cloudApp: String { DB.store.getString("kf_cloudcfg_app") }
     /// 加密口令**不入库**，所以它仍是 `@State`（每次输入、用完即弃）。
-    @State private var cloudPw = ""
+    /// 2026-10-26: 与另一页共用 BackupPassphrase（同一份 zklock-backup.enc 的加密口令）。
+    /// 原来是各自一个 @State，用户在工作室传上去、到这一页恢复还要再输一遍，且没人说明是同一个口令。
+    private var cloudPw: Binding<String> {
+        Binding(get: { BackupPassphrase.current }, set: { BackupPassphrase.current = $0 })
+    }
     /// 输入框直写本机存储：与工坊那页共用一份真相，谁改完另一页立刻读到新值。
     private var cloudAcctField: Binding<String> {
         Binding(get: { cloudAcct }, set: { DB.store.set("kf_cloudcfg_acct", $0) })
@@ -66,10 +70,14 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
         // AnyView 擦平两分支类型差异 (与 AddPwdView 同一写法): 两支只差最外层那一只容器
         (embedded ? AnyView(listContent) : AnyView(NavigationStack { listContent }))
         .confirmationDialog("从云端恢复", isPresented: pendingRestoreBinding, titleVisibility: .visible) {
-            Button("覆盖本机 \(DB.keychains().count) 台设备", role: .destructive) { applyPendingRestore() }
+            // 2026-10-26: 这里有两个不同口径的数字，必须各自说清，否则读起来像自相矛盾 ——
+            //   按钮上"本机 N 台" = 这台手机台账里现在有几把锁（会被覆盖的那一侧）
+            //   message 里"云端 M 台" = 备份包里有几把锁（覆盖来源那一侧）
+            //   N 与 M 不相等是正常的：换过机、删过锁、或包比本机旧。
+            Button("覆盖本机 \(DB.keychains().count) 台设备（本机现有）", role: .destructive) { applyPendingRestore() }
             Button("取消", role: .cancel) { pendingRestore = nil }
         } message: {
-            Text("云端备份里包含 \(pendingRestore?.devices.count ?? 0) 台门锁。恢复后同名设备会被云端数据覆盖，本机现有改动将丢失。")
+            Text("云端备份里包含 \(pendingRestore?.devices.count ?? 0) 台门锁（覆盖来源）。恢复后同名设备会被云端数据覆盖，本机现有改动将丢失。两个数字不一致是正常的（换过机 / 删过锁 / 包比本机旧）。")
         }
         .sheet(isPresented: $showWebDAV) { WebDAVStudioView() }
         // 方案 a: 文件选择器 —— 备份的正常去处是「iCloud 云盘 / 我的 iPhone」。
@@ -401,7 +409,7 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
         armMigrateWizard(r)
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         app.showToast("恢复完成: 新增 \(r.imported), 覆盖 \(r.overwritten)")
-        cloudPw = ""   // 口令用完即弃, 不留在内存里等下次
+        BackupPassphrase.clear()   // 2026-10-26: 改用共享口令容器后，清空走它的入口（原写 cloudPw = ""）
     }
 
     /// 822: 按节奏档 (weekly/monthly) 与上次备份时刻算建议; 仅手动档给 nil (没有节奏就没有到期)。

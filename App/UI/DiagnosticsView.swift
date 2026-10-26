@@ -1308,6 +1308,11 @@ struct DiagnosticsView: View {
 
     /// 740: 完整帧只存在于 LockService.recentFrames (内存环形, 不写盘)。
     /// 日志行是脱敏后的版本 (`hex=ABCD(n 位已隐去)`), 所以用"脱敏后是否等于该行"反查原帧 —— 这是精确匹配, 不靠时间猜。
+    ///
+    /// 2026-10-26 补两条边界（不写清会让排障的人以为"帧丢了"是 bug）：
+    ///   · **容量 60 条**（`LockService.recentFrames` 的 removeFirst 那一行），超出后最早的被丢弃；
+    ///   · **重启 App 后全部丢失** —— 之后只能看脱敏帧头，永远点不开完整帧。
+    /// 这是刻意取舍：完整帧带 skey/ekey/PIN 明文，落盘等于把密钥写在磁盘上。
     private func rawFrame(of line: String) -> String {
         app.lock.recentFrames.first { Redact.frameHex($0) == line } ?? ""
     }
