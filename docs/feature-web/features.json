@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-26T14:56:17.904Z",
+    "generated": "2026-10-26T15:04:26.010Z",
     "sources": [
       {
         "scout": "android-native",
@@ -52939,7 +52939,7 @@
           "line": 1183,
           "symbol": "navigationTitle 诊断与运行日志",
           "note": "",
-          "text": "if !logQuery.isEmpty {"
+          "text": "var src = Array(app.lock.logs.suffix(150))"
         },
         {
           "platform": "ios",
@@ -52947,7 +52947,7 @@
           "line": 1186,
           "symbol": ".task 进页即出分",
           "note": "",
-          "text": "// 542: 时间窗过滤 (小时段)。与上面两条串联, 互不改各自口径; 取不到小时位的行不进窗。"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -53310,7 +53310,7 @@
           "line": 917,
           "symbol": "Section 运行日志",
           "note": "",
-          "text": "}"
+          "text": ".accessibilityElement()"
         },
         {
           "platform": "ios",
@@ -53473,7 +53473,7 @@
           "line": 450,
           "symbol": "749 注释",
           "note": "",
-          "text": "Text(\"本机覆盖跨度超过 \\(RecordReconcile.defaultMaxSpanDays) 天, 这里只扫了最近这一段 — 更早的日期段没算进来。\")   // 749 本机覆盖跨度超过"
+          "text": ".fixedSize(horizontal: false, vertical: true)"
         },
         {
           "platform": "ios",
@@ -53931,7 +53931,7 @@
           "line": 732,
           "symbol": "AUTOOPEN 注释",
           "note": "",
-          "text": ".fixedSize(horizontal: false, vertical: true)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -53939,7 +53939,7 @@
           "line": 733,
           "symbol": "if let last = AutoOpen.lastReject",
           "note": "",
-          "text": "}"
+          "text": "Text(\"本 App 的库体在钥匙串与偏好表里, 没有 SQLite —— 这一栏不是 quick_check, 也不重建索引; 它只做上面这三件读检查。\")"
         },
         {
           "platform": "ios",
@@ -53947,7 +53947,7 @@
           "line": 735,
           "symbol": "上次拒开原因",
           "note": "",
-          "text": "// 无记录就明说\"尚无\", 不画 100% 假基线; 口径写\"已留存 N 次\"而不是滚动天数。"
+          "text": ".foregroundStyle(DS.Palette.textSub)"
         },
         {
           "platform": "ios",
@@ -53955,7 +53955,7 @@
           "line": 737,
           "symbol": "更早拒开",
           "note": "",
-          "text": "// 86 失败快照"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -53963,7 +53963,7 @@
           "line": 743,
           "symbol": "永不落明文",
           "note": "",
-          "text": "if !scans.isEmpty {"
+          "text": "// 285 失败快照"
         }
       ],
       "platformEvidence": {
@@ -54044,7 +54044,7 @@
           "line": 719,
           "symbol": "133 蓝牙堆栈急救注释",
           "note": "",
-          "text": ".foregroundStyle(DS.Palette.text)"
+          "text": ".accessibilityHidden(true)"
         },
         {
           "platform": "ios",
@@ -54052,7 +54052,7 @@
           "line": 720,
           "symbol": "if failsInLast20 >= 3",
           "note": "",
-          "text": "Text(l.detail)"
+          "text": "VStack(alignment: .leading, spacing: DS.Space.xxs) {"
         },
         {
           "platform": "ios",
@@ -54060,7 +54060,7 @@
           "line": 722,
           "symbol": "第 1 步",
           "note": "",
-          "text": ".foregroundStyle(DS.Palette.textSub)"
+          "text": ".vkFont(.subheadline)"
         },
         {
           "platform": "ios",
@@ -54068,7 +54068,7 @@
           "line": 723,
           "symbol": "第 2 步",
           "note": "",
-          "text": ".fixedSize(horizontal: false, vertical: true)"
+          "text": ".foregroundStyle(DS.Palette.text)"
         },
         {
           "platform": "ios",
@@ -54076,7 +54076,7 @@
           "line": 724,
           "symbol": "第 3 步",
           "note": "",
-          "text": "}"
+          "text": "Text(l.detail)"
         }
       ],
       "platformEvidence": {
@@ -54254,7 +54254,7 @@
           "line": 823,
           "symbol": "748 注释",
           "note": "",
-          "text": "}"
+          "text": "Spacer(minLength: DS.Space.m)"
         },
         {
           "platform": "ios",
@@ -54262,7 +54262,7 @@
           "line": 871,
           "symbol": "Section 连接成功率",
           "note": "",
-          "text": "if let a = winFrom, let b = winTo {"
+          "text": "HStack(spacing: DS.Space.xs) {"
         },
         {
           "platform": "ios",
@@ -54270,7 +54270,7 @@
           "line": 872,
           "symbol": "successRate()",
           "note": "",
-          "text": "Text(\"\\(min(a, b))–\\(max(a, b)) 时\")"
+          "text": "Text(\"时间窗\")"
         },
         {
           "platform": "ios",
@@ -54278,7 +54278,7 @@
           "line": 884,
           "symbol": "dailyRates()",
           "note": "",
-          "text": "Text(\"按住刻度拖动选择小时段\")   // 542 按住刻度拖动选择小时"
+          "text": "// 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。"
         },
         {
           "platform": "ios",
@@ -54286,7 +54286,7 @@
           "line": 886,
           "symbol": "Chart LineMark/PointMark",
           "note": "",
-          "text": ".foregroundStyle(DS.Palette.textSub)"
+          "text": ".contentShape(Rectangle())"
         }
       ],
       "platformEvidence": {
@@ -54865,7 +54865,7 @@
           "line": 823,
           "symbol": "86/277/285 注释",
           "note": "",
-          "text": "}"
+          "text": "Spacer(minLength: DS.Space.m)"
         },
         {
           "platform": "ios",
@@ -54873,7 +54873,7 @@
           "line": 829,
           "symbol": "Section 失败快照",
           "note": "",
-          "text": "// 153 级别过滤 (取自日志行自带的 [level]) + 154 关键词高亮"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -54881,7 +54881,7 @@
           "line": 831,
           "symbol": "ScanStats.recent(days:7)",
           "note": "",
-          "text": "ForEach([\"\", \"info\", \"warn\", \"error\"], id: \\.self) { lv in"
+          "text": ""
         },
         {
           "platform": "ios",
@@ -54889,7 +54889,7 @@
           "line": 842,
           "symbol": "ScanStats.advice()",
           "note": "",
-          "text": ".contentShape(Rectangle())"
+          "text": ".padding(.horizontal, DS.Space.s).padding(.vertical, 4)"
         },
         {
           "platform": "ios",
@@ -54897,7 +54897,7 @@
           "line": 845,
           "symbol": "会话自恢复 kf_wd_heals",
           "note": "",
-          "text": "// 2026-10-14 布局审计 R5: 自绘 label 没写 minHeight ⇒ 没有 minHeight (< 44)。"
+          "text": ".frame(minHeight: DS.Hit.min - DS.Space.xs)"
         }
       ],
       "platformEvidence": {
@@ -55280,7 +55280,7 @@
           "line": 1068,
           "symbol": "原始报文 contextMenu",
           "note": "",
-          "text": "HStack(spacing: DS.Space.m) {"
+          "text": ".fixedSize(horizontal: false, vertical: true)"
         },
         {
           "platform": "ios",
@@ -55296,7 +55296,7 @@
           "line": 1066,
           "symbol": "contextMenu 查看原始报文",
           "note": "",
-          "text": ".vkFont(.caption2).foregroundStyle(DS.Palette.textSub)"
+          "text": ".vkFont(.subheadline)"
         },
         {
           "platform": "ios",
@@ -55304,7 +55304,7 @@
           "line": 1069,
           "symbol": "dumpedLine = row",
           "note": "",
-          "text": "Button(\"关闭\") { entityRef = nil }"
+          "text": "Text(\"这里只显示台账元数据 (备注/属主/有效期)。口令、指纹特征与密钥不会出现在日志和本页。\")"
         }
       ],
       "platformEvidence": {
@@ -55498,7 +55498,7 @@
           "line": 1054,
           "symbol": "entityRows 计数",
           "note": "",
-          "text": ".padding(DS.Space.l)"
+          "text": ".fixedSize(horizontal: false, vertical: true)"
         },
         {
           "platform": "ios",
@@ -55522,7 +55522,7 @@
           "line": 1080,
           "symbol": "ents 胶囊按钮",
           "note": "",
-          "text": "}"
+          "text": "switch ref.kind {"
         }
       ],
       "platformEvidence": {
@@ -55654,7 +55654,7 @@
           "line": 678,
           "symbol": "156 操作流水注释",
           "note": "",
-          "text": "// 159 跳转出口: 每行 rc 一点就落到错误码对照表; 抠到 rc 值就聚焦那一行。"
+          "text": ".foregroundStyle(Self.cmdTone(line))"
         },
         {
           "platform": "ios",
@@ -55678,7 +55678,7 @@
           "line": 681,
           "symbol": "Section 操作流水",
           "note": "",
-          "text": "// 2026-10-26 精简：rc 码跳转查阅入口已删（DiagReferenceView 整个删除）。"
+          "text": "Spacer(minLength: 0)"
         }
       ],
       "platformEvidence": {
@@ -56365,7 +56365,7 @@
           "line": 644,
           "symbol": "包2/128 注释",
           "note": "",
-          "text": "// 靠近自动开锁 (AUTOOPEN): 上次拒开原因行 (读 kf_autoopen_audit_, 只记哪道门拒了, 永不记密钥材料)"
+          "text": "Text(\"近 20 条断连事件中有 \\(failsInLast20) 条失败 — 建议按序执行。\")"
         },
         {
           "platform": "ios",
@@ -56389,7 +56389,7 @@
           "line": 646,
           "symbol": "环境拥挤度",
           "note": "",
-          "text": "Section {"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -56503,7 +56503,7 @@
           "line": 783,
           "symbol": "397 注释",
           "note": "",
-          "text": "if let rate = BleTelemetry.successRate() {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -56527,7 +56527,7 @@
           "line": 784,
           "symbol": "Section 本机库体自检",
           "note": "",
-          "text": "HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -56719,7 +56719,7 @@
           "line": 595,
           "symbol": "性能面板注释",
           "note": "",
-          "text": "if BleTelemetry.events.isEmpty {"
+          "text": ".vkFont(.caption)"
         },
         {
           "platform": "ios",
@@ -56735,7 +56735,7 @@
           "line": 597,
           "symbol": "VariantToggle 采集页面打开耗时",
           "note": "",
-          "text": ".vkFont(.caption)"
+          "text": "// 包2/72 断连原因行: BLE 断连/握手失败事件翻译成人话按时间列出 (数据源 BleTelemetry 流水)"
         },
         {
           "platform": "ios",
@@ -56743,7 +56743,7 @@
           "line": 600,
           "symbol": "口径说明",
           "note": "",
-          "text": "ForEach(BleTelemetry.events.prefix(20)) { ev in"
+          "text": "Text(\"暂无断连事件 — 连接全程顺畅。\")"
         },
         {
           "platform": "ios",
@@ -56751,7 +56751,7 @@
           "line": 603,
           "symbol": "PageTrace.entries()",
           "note": "",
-          "text": "}"
+          "text": "} else {"
         }
       ],
       "platformEvidence": {
@@ -56874,7 +56874,7 @@
           "line": 1026,
           "symbol": "secondary requestRoute(.device) + dismiss",
           "note": "",
-          "text": "let pf = FrameFields.parse(hx)   // 740 字段解析"
+          "text": "ScrollView {"
         },
         {
           "platform": "ios",
@@ -56882,7 +56882,7 @@
           "line": 1172,
           "symbol": "requestRoute(.credentials) + dismiss",
           "note": "",
-          "text": ""
+          "text": "private struct LogLine: Identifiable {"
         }
       ],
       "platformEvidence": {
@@ -57833,7 +57833,7 @@
           "line": 1007,
           "symbol": "两档空态注释",
           "note": "",
-          "text": "// 补 44pt 触达: frame 只加竖直空间, 背景画在这两行之前 ⇒ 视觉不撑, 整块矩形可点。"
+          "text": ".buttonStyle(.plain)"
         },
         {
           "platform": "ios",
@@ -57841,7 +57841,7 @@
           "line": 1013,
           "symbol": "if logRows.isEmpty && app.lock.logs.isEmpty",
           "note": "",
-          "text": "}"
+          "text": ".contentShape(Rectangle())"
         },
         {
           "platform": "ios",
@@ -57849,7 +57849,7 @@
           "line": 1018,
           "symbol": "GuidedEmptyView",
           "note": "",
-          "text": "VStack(alignment: .leading, spacing: DS.Space.s) {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -57857,7 +57857,7 @@
           "line": 1021,
           "symbol": "step: logGuideStep",
           "note": "",
-          "text": ".lineLimit(2).fixedSize(horizontal: false, vertical: true)"
+          "text": ".sheet(item: $dumpedLine) { row in"
         },
         {
           "platform": "ios",
@@ -57865,7 +57865,7 @@
           "line": 1024,
           "symbol": "primary rerunAll",
           "note": "",
-          "text": "// 一个 40+ 字节的帧只剩 2 字节, \"查看原始报文\"名不副实)"
+          "text": "Text(row.line).vkFont(.caption2).foregroundStyle(DS.Palette.textSub)"
         }
       ],
       "platformEvidence": {
@@ -57964,7 +57964,7 @@
           "line": 918,
           "symbol": "153 注释",
           "note": "",
-          "text": "if logRows.isEmpty && !app.lock.logs.isEmpty {"
+          "text": ".accessibilityLabel(winFrom == nil"
         },
         {
           "platform": "ios",
@@ -57972,7 +57972,7 @@
           "line": 920,
           "symbol": "ForEach 级别",
           "note": "",
-          "text": ".vkFont(.caption)"
+          "text": ": \"日志时间窗 \\(min(winFrom ?? 0, winTo ?? 0)) 到 \\(max(winFrom ?? 0, winTo ?? 0)) 时\")"
         },
         {
           "platform": "ios",
@@ -57980,7 +57980,7 @@
           "line": 922,
           "symbol": "Button 级别",
           "note": "",
-          "text": ".fixedSize(horizontal: false, vertical: true)"
+          "text": "if logRows.isEmpty && !app.lock.logs.isEmpty {"
         },
         {
           "platform": "ios",
@@ -57988,7 +57988,7 @@
           "line": 943,
           "symbol": "TextField 搜索日志",
           "note": "",
-          "text": "VStack(alignment: .leading, spacing: DS.Space.xs) {"
+          "text": "// 818 日志来源说明: 空态不只说\"还没有\", 还说出**哪四类**会进这里。"
         },
         {
           "platform": "ios",
@@ -57996,7 +57996,7 @@
           "line": 947,
           "symbol": "清空",
           "note": "",
-          "text": "(\"操作打点\", \"stopwatch\")].enumerated()), id: \\.offset) { _, s in"
+          "text": "VStack(alignment: .leading, spacing: DS.Space.xs) {"
         }
       ],
       "platformEvidence": {
@@ -58179,7 +58179,7 @@
           "line": 953,
           "symbol": "542 注释",
           "note": "",
-          "text": ".foregroundStyle(DS.Palette.textSub)"
+          "text": "Image(systemName: s.1)"
         },
         {
           "platform": "ios",
@@ -58187,7 +58187,7 @@
           "line": 955,
           "symbol": "时间窗 VStack",
           "note": "",
-          "text": "Text(\"做一次连接、开锁或读取, 四类里对应的那几栏就会开始积累。\")   // 818 做一次连接"
+          "text": "Text(s.0).vkFont(.caption2)"
         },
         {
           "platform": "ios",
@@ -58195,7 +58195,7 @@
           "line": 973,
           "symbol": "按住刻度拖动",
           "note": "",
-          "text": ".vkFont(.caption.monospaced())"
+          "text": "ForEach(logRows) { row in"
         },
         {
           "platform": "ios",
@@ -58203,7 +58203,7 @@
           "line": 986,
           "symbol": "Capsule 宽度",
           "note": "",
-          "text": "+ (rawFrame(of: row.line).isEmpty ? \" (仅帧头留存)\" : \"\"))"
+          "text": ".disabled(Self.hexOf(row.line).isEmpty)"
         },
         {
           "platform": "ios",
@@ -58211,7 +58211,7 @@
           "line": 992,
           "symbol": "DragGesture",
           "note": "",
-          "text": "ForEach(ents) { e in"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -58440,7 +58440,7 @@
           "line": 497,
           "symbol": "信号 B 注释",
           "note": "",
-          "text": ".vkFont(.footnote, weight: .medium)"
+          "text": ".frame(maxWidth: .infinity, alignment: .leading)"
         },
         {
           "platform": "ios",
@@ -58464,7 +58464,7 @@
           "line": 498,
           "symbol": "idxGapTotal == 0 && idxAnomalies == 0",
           "note": "",
-          "text": ".foregroundStyle(DS.Palette.accentText)"
+          "text": ".contentShape(Rectangle())"
         }
       ],
       "platformEvidence": {
@@ -58579,7 +58579,7 @@
           "line": 458,
           "symbol": "noLogs 分支",
           "note": "",
-          "text": ".vkFont(.caption2).foregroundStyle(DS.Palette.textSub)"
+          "text": "// 749 尾段单列: 它只有前一侧有依据, 混进上面的空洞就成了越界推断"
         },
         {
           "platform": "ios",
@@ -58587,7 +58587,7 @@
           "line": 464,
           "symbol": "占位时刻 2010-01-01 说明",
           "note": "",
-          "text": ".vkFont(.caption2).foregroundStyle(DS.Palette.textSub)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -58595,7 +58595,7 @@
           "line": 467,
           "symbol": "singleDay 分支",
           "note": "",
-          "text": "Text(\"本机相邻行之间的序号差全都超过了报号上限 — 一个号数都不报, 只出下面那一行。\")   // 749 本机相邻行之间的序号"
+          "text": "Text(\"序号连续: 本机相邻两行之间没有空号。\")   // 749 序号连续"
         },
         {
           "platform": "ios",
@@ -58603,7 +58603,7 @@
           "line": 471,
           "symbol": "segments 空分支",
           "note": "",
-          "text": "ForEach(r.idxGaps) { g in"
+          "text": "Text(\"本机相邻行之间的序号差全都超过了报号上限 — 一个号数都不报, 只出下面那一行。\")   // 749 本机相邻行之间的序号"
         },
         {
           "platform": "ios",
@@ -58611,7 +58611,7 @@
           "line": 541,
           "symbol": "锁内上报总数在协议里没有",
           "note": "",
-          "text": ".vkFont(.footnote).foregroundStyle(DS.Palette.accentText)"
+          "text": "LabeledRow(r.name, \"\\(r.ms) ms · \\(PageTrace.clock(r.at))\")"
         }
       ],
       "platformEvidence": {
@@ -58775,7 +58775,7 @@
           "line": 490,
           "symbol": "749 尾段单列注释",
           "note": "",
-          "text": "app.showToast(\"待补拉清单已复制\")   // 749 待补拉清单已复制"
+          "text": ".fixedSize(horizontal: false, vertical: true)"
         },
         {
           "platform": "ios",
@@ -58783,7 +58783,7 @@
           "line": 491,
           "symbol": "if let t = r.tail",
           "note": "",
-          "text": "} label: {"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -58791,7 +58791,7 @@
           "line": 492,
           "symbol": "pullGapRow(t, tag: 尾段)",
           "note": "",
-          "text": "Label(\"复制待补拉清单\", systemImage: \"doc.on.doc\")   // 749 复制待补拉清单"
+          "text": "Button {"
         },
         {
           "platform": "ios",
@@ -58799,7 +58799,7 @@
           "line": 493,
           "symbol": "尾段与前面的空洞不是一回事",
           "note": "",
-          "text": ".frame(maxWidth: .infinity, alignment: .leading)"
+          "text": "UIPasteboard.general.string = RecordReconcile.plainLine(r, name: app.displayName)"
         }
       ],
       "platformEvidence": {
@@ -58875,7 +58875,7 @@
           "line": 1299,
           "symbol": "rcOf",
           "note": "取 rc",
-          "text": "}"
+          "text": "} else {"
         },
         {
           "platform": "ios",
@@ -58883,7 +58883,7 @@
           "line": 1306,
           "symbol": "rawFrame",
           "note": "完整帧十六进制",
-          "text": "out += \"\\n--- 近 7 天留档日志 (\\(week.count) 条, 取最近 100) ---\\n\""
+          "text": "out += app.lock.logs.suffix(100).joined(separator: \"\\n\")"
         },
         {
           "platform": "ios",
@@ -58983,7 +58983,7 @@
           "line": 1194,
           "symbol": "renderDiagShot",
           "note": "",
-          "text": "out.reserveCapacity(src.count)"
+          "text": "guard let h = Self.hourOf(line) else { return false }"
         },
         {
           "platform": "ios",
@@ -58991,7 +58991,7 @@
           "line": 1207,
           "symbol": "frame(width: 720)",
           "note": "",
-          "text": ""
+          "text": "/// 是因为两份同族记录迟早对不上; 这些行本身只含命令名与结果码。"
         },
         {
           "platform": "ios",
@@ -58999,7 +58999,7 @@
           "line": 1210,
           "symbol": "时间水印",
           "note": "",
-          "text": "guard let r = line.range(of: \"rc=\") else { return nil }"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -59007,7 +59007,7 @@
           "line": 1213,
           "symbol": "rotationEffect(-18)",
           "note": "",
-          "text": ""
+          "text": "private static func rcOf(_ line: String) -> Int? {"
         }
       ],
       "platformEvidence": {
@@ -59100,7 +59100,7 @@
           "line": 648,
           "symbol": "Picker",
           "note": "",
-          "text": "if AutoOpen.audits(app.currentMac).count > 1 {"
+          "text": "// 靠近自动开锁 (AUTOOPEN): 上次拒开原因行 (读 kf_autoopen_audit_, 只记哪道门拒了, 永不记密钥材料)"
         },
         {
           "platform": "ios",
@@ -59108,7 +59108,7 @@
           "line": 651,
           "symbol": "ForEach ScanProfile.allCases",
           "note": "",
-          "text": "}"
+          "text": "LabeledRow(\"上次拒开原因\", last.reason)"
         },
         {
           "platform": "ios",
@@ -59116,7 +59116,7 @@
           "line": 652,
           "symbol": "Text(p.label).tag(p)",
           "note": "",
-          "text": "} header: {"
+          "text": "if AutoOpen.audits(app.currentMac).count > 1 {"
         },
         {
           "platform": "ios",
@@ -59124,7 +59124,7 @@
           "line": 656,
           "symbol": "只影响发现型扫描",
           "note": "",
-          "text": ".vkFont(.caption)"
+          "text": "} header: {"
         }
       ],
       "platformEvidence": {
@@ -59199,7 +59199,7 @@
           "line": 616,
           "symbol": "215 只有这一处打点",
           "note": "",
-          "text": "LabeledRow(op.t, op.label)"
+          "text": ".vkFont(.caption)"
         },
         {
           "platform": "ios",
@@ -59215,7 +59215,7 @@
           "line": 617,
           "symbol": "StartupTrace.ms",
           "note": "",
-          "text": "}"
+          "text": ".foregroundStyle(DS.Palette.textSub)"
         },
         {
           "platform": "ios",
@@ -59223,7 +59223,7 @@
           "line": 619,
           "symbol": "超 800ms 预算",
           "note": "",
-          "text": "// 156 开关：`DiagOps.record` 一直是\"先读 isOn 再记\"，但全仓没有任何一处写"
+          "text": "ForEach(ops.prefix(20)) { op in"
         },
         {
           "platform": "ios",
@@ -59231,7 +59231,7 @@
           "line": 621,
           "symbol": "没有数就不编数",
           "note": "",
-          "text": "VariantToggle(\"记录操作打点\", isOn: Binding(   // 156 记录操作打点"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -94541,7 +94541,7 @@
           "line": 630,
           "symbol": "kf_debug_raw",
           "note": "",
-          "text": "// 2026-10-26 精简：「渲染自检」整节已删（用户确认）。"
+          "text": "} footer: {"
         },
         {
           "platform": "ios",
@@ -94549,7 +94549,7 @@
           "line": 638,
           "symbol": "kf_silent_trouble",
           "note": "",
-          "text": "Text(\"蓝牙急救\")   // 133 蓝牙急救"
+          "text": "LabeledRow(\"第 1 步\", \"到 控制中心 关闭再打开系统蓝牙, 等 10 秒回设备页\")"
         },
         {
           "platform": "ios",
@@ -94557,7 +94557,7 @@
           "line": 696,
           "symbol": "DiagOps.on",
           "note": "",
-          "text": "Button(\"立即自检 (只读)\") {"
+          "text": "}"
         }
       ],
       "platformEvidence": {

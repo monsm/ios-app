@@ -27,7 +27,7 @@ struct DFUView: View {
         case failed
     }
 
-    var body: some View { vkBody.destined(.dfu) }
+    var body: some View { vkBody.destined(.dFU) }
     var vkBody: some View {
         Form {
             versionSection

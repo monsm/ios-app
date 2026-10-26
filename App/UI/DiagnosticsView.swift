@@ -440,8 +440,12 @@ struct DiagnosticsView: View {
                             ForEach(r.segments) { s in
                                 pullGapRow(s, tag: "", icon: "calendar.badge.exclamationmark")
                             }
-                            Text("合计约 \(r.missingDayTotal) 天 (本机天, 不是锁端条数) · 列出最近 \(r.segments.count) 段"
-                                 + (r.segmentsHidden > 0 ? " · 另有 \(r.segmentsHidden) 段未列出" : ""))
+                            // 2026-10-26: 原为一句 `Text("..." + (cond ? "..." : ""))` —— 字符串插值 +
+                            // 三元表达式 + 加号三件事同层，编译器报 "unable to type-check in reasonable time"。
+                            // 拆成先算 let 再交给 Text，语义不变。
+                            let gapTotalLine = "合计约 \(r.missingDayTotal) 天 (本机天, 不是锁端条数) · 列出最近 \(r.segments.count) 段"
+                                + (r.segmentsHidden > 0 ? " · 另有 \(r.segmentsHidden) 段未列出" : "")
+                            Text(gapTotalLine)
                                 .vkFont(.caption2).foregroundStyle(DS.Palette.warn)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
