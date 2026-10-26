@@ -252,7 +252,7 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !Backu
                 .disabled(busy)
             SecureField("应用专属密码 (非登录密码)", text: cloudAppField)
                 .disabled(busy)
-            SecureField("加密口令 (不落盘)", text: $cloudPw)
+            SecureField("加密口令 (不落盘)", text: cloudPw)
                 .disabled(busy)
             BusyButton(title: "上传备份到坚果云", systemImage: "icloud.and.arrow.up", isBusy: busy && cloudMode == .push) {
                 Task { await push() }

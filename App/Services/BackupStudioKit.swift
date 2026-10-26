@@ -313,19 +313,16 @@ enum BackupStudio {
             throw DFUError.msg("内容哈希不一致 — 已拦下, 未写任何数据; 建议重传这份备份")   // 453 内容哈希不一致
         }
         let m = upgradeChain(raw)
-        var zones: [String] = []
-        if !m.devices.isEmpty { zones.append("设备 \(m.devices.count)") }
+        // 2026-10-26: 这里原有一个 zones 局部数组（设备/凭证/成员/记录四段摘要），
+        // 它只用来填 Preview.zones —— 那个字段随分区概念一起删了，所以这里也删。
+        // 凭证/指纹计数（Preview 的 pwdCount / fpCount 要用）
         var p = 0, f = 0
         for d in m.devices { p += d.ledger?.pwds.count ?? 0; f += d.ledger?.fps.count ?? 0 }
-        if p + f > 0 { zones.append("凭证 \(p + f)") }
-        if let ms = m.members, !ms.isEmpty { zones.append("成员 \(ms.count)") }
-        if m.globals?.trace?.lines?.isEmpty == false { zones.append("记录") }
         let sample = (m.globals?.trace?.lines ?? []).shuffled().prefix(5).count
         let fallback = Keychain(mac: m.currentMac, skey: "")
         let sourceName = m.currentMac.isEmpty ? "" : LockArchive.displayName(DB.keychain(m.currentMac) ?? fallback)
         let pv = Preview(source: "备份时间 \(m.at)" + (sourceName.isEmpty ? "" : " · 来源 \(sourceName)"),
                          schema: m.schema,
-                         zones: zones,
                          macs: m.devices.map { $0.mac },
                          pwdCount: p, fpCount: f,
                          memberCount: m.members?.count ?? 0,

@@ -135,7 +135,7 @@ struct WebDAVStudioView: View {
                     Button("上传当前备份 (含口令加密)") { upload() }
                         .vkFont(.subheadline)
                         .foregroundStyle(DS.Palette.accentText)
-                    SecureField("加密口令 (上传/下载)", text: $encPw)
+                    SecureField("加密口令 (上传/下载)", text: encPw)
                     SecureField("新口令 (轮换后旧口令随即失效)", text: $rotPw)
                     Button("密钥轮换: 新口令重加密替换远端") { showRotate = true }   // 237 密钥轮换
                         .vkFont(.subheadline)
@@ -265,13 +265,13 @@ struct WebDAVStudioView: View {
                 let raw = String(data: data, encoding: .utf8) ?? ""
                 // 422: 先预演后再入库 (parsePreview 内部先校哈希后解码, 不动真库)
                 let (pv, b) = try BackupStudio.parsePreview(text: raw, password: BackupPassphrase.current.isEmpty ? nil : BackupPassphrase.current)
-                pendingDL = (b, e.name + " · 校验通过 · " + pv.zones.joined(separator: "、"))
+                pendingDL = (b, e.name + " · 校验通过 · " + "设备 \(pv.macs.count) 台")
             } catch { app.showToast(error.localizedDescription) }
         }
     }
     private func commitDL() {
         guard let dl = pendingDL else { return }
-        let r = BackupStudio.restore(dl.b, )
+        let r = BackupStudio.restore(dl.b)
         if dl.b.globals?.appearance != nil { app.reloadAppearance() }
         app.loadDevices()
         app.showToast("恢复完成: 新增 \(r.imported), 覆盖 \(r.overwritten)")
