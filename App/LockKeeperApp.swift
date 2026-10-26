@@ -259,9 +259,6 @@ final class AppState: ObservableObject {
         // 其余安全动作 (毁灭操作复核 383 / 访客受限区复核 377) 改成**只走面容/指纹**。
         appUnlocked = true
         loadDevices(preferDefault: true)   // 包3/271: 冷启动落到上滑固定的默认锁
-        // 366/1013: delegate 此前只在"排月度备份提醒"那条路径里顺手装 (BackupStudioKit:108)
-        // → 没开月备的用户点任何本地通知都没反应。分派器必须在启动就装好, 与是否开月备无关。
-        UNUserNotificationCenter.current().delegate = UNDelegate.shared
     }
 
     var current: Keychain? {
@@ -601,7 +598,6 @@ final class AppState: ObservableObject {
             DB.store.remove("kf_hero_stats")
             DB.store.remove("kf_accent_custom")   // 892
             DB.store.remove("kf_hero_tex")
-            DB.store.remove("kf_festive")
             // kf_motion 的默认档是 "standard"，remove 就等于回到默认 (不是关掉动效)
             DB.store.remove("kf_motion")
             DB.store.remove("kf_digit_font")   // 902
@@ -645,8 +641,6 @@ final class AppState: ObservableObject {
         // 包8: 448 启动自检 (库体哈希 vs 上次快照, 异常挂黄条) + 1018 月度备份日排程
         //       + 428 充电备份 BGTask 注册 (系统择机执行, 不承诺接电即备) + 445 中断迁移检测
         Task { @MainActor in
-            _ = BackupStudio.runStartupSelfCheck()
-            await BackupStudio.scheduleMonthlyBackup()
             // 428: BGTask 注册已移到 QuickActionDelegate.didFinishLaunchingWithOptions ——
             // 必须早于启动完成 (Apple 契约), 且每进程只注册一次 (onLaunch 可能被多次调用)。
         }

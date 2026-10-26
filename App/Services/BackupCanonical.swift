@@ -221,7 +221,6 @@ enum BackupCanonical {
                 put("theme", ap.theme)
                 put("tlGap", ap.tlGap)
                 put("weekStart", ap.weekStart)
-                putB("festive", ap.festive)
                 putB("hc", ap.hc)
                 putB("plain", ap.plain)
                 // 与 trace.savedAt 同型: 数字走 .num (stringify 对整数值输出整数形态)

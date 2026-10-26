@@ -165,6 +165,10 @@ for (const [name, t] of Object.entries(themes)) {
 // C. 节日限定色 (idea 890): 纯白正文压在节日 hero 两端 —— 同样机检。
 // 第七十三批先是用一次性脚本算过就写进 Swift，那等于"这次对了"而没有守住"以后别改错"；
 // 这一组把它变成闸门：节日表里任何一端亮度上浮到白字 <4.5:1 就红。
+//
+// 2026-10-26 功能精简：`enum Festive` 整套移除（用户确认删除节日限定色）。
+// 这条检查随之失效 —— 但没有直接删掉：把它改成「若将来有人把 Festive 加回来，
+// 检查必须自动复活」，这样删掉的是功能、不是守门能力。
 const festBlock = src.match(/enum Festive \{[\s\S]*?pairs: \[String: \(UInt32, UInt32\)\] = \[([\s\S]*?)\n        \]/);
 let festCount = 0;
 const festivePairs = [];
@@ -184,8 +188,9 @@ if (festBlock) {
     process.exit(1);
   }
 } else {
-  console.error('✗ 未在 DesignSystem.swift 中定位 enum Festive 的 pairs 表 — 890 的配色失去机检');
-  process.exit(1);
+  // 2026-10-26: 功能已删 ⇒ 这里**不是**失败，而是"检查对象不存在"。
+  // 若将来 Festive 被加回来，上面那个 if 分支会重新接管，无需改代码。
+  console.log('节日限定色: 功能已移除 (enum Festive 不存在), 本条检查休眠');
 }
 
 // D. AMOLED 纯黑 (idea 30): kf_theme=="black" 时强制深色语义, 用各令牌 dark 值

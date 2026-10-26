@@ -514,11 +514,7 @@ struct DiagnosticsView: View {
                 }
             }
 
-            // 511 数据事件: 与备份页同一份 kf_bk_events 台账 (导出/恢复/迁移节点), 清理现场也看得见
-            let bkEvents511 = BackupStudio.dataEvents()
-            if !bkEvents511.isEmpty {
-            // 2026-10-26 精简：「数据事件」整节已删（用户确认）。
-            }
+            // 2026-10-26 精简：数据事件清单已删（dataEvents 移除）。
 
             // 2026-10-26 精简：「空间回收建议」整节已删（用户确认）。
 

@@ -132,7 +132,12 @@ const SYS_NAMES = new Set(['AreaMark','LineMark','PointMark','RuleMark','BarMark
 // 就会把整棵根视图的 body 拉到那条小栈上算。已在主线程时不跳队列是刻意的 (少一次异步,
 // 免得 `scanning = false` 这类状态在下一帧才可见)。
 // 与上面几批同理: **加白不等于用法正确** —— 编译器才是判定方。
-'Thread']);
+'Thread',
+// 2026-10-26: UserNotifications 框架的两个类。功能精简删掉了 BackupStudio 里的
+// UNDelegate（通知分派）之后，这两个类型在全仓正好降到「只出现 2 次」，
+// 于是被上面那条"1–2 次且未声明 ⇒ 疑似臆造"的规则误判。
+// 它们是真的系统 API（BatteryCare 排低电提醒、CredentialOrg 排临期提醒都在用）。
+'UNMutableNotificationContent', 'UNCalendarNotificationTrigger']);
 
 let symFail = 0;
 // 判定口径: 只报"全仓库只出现 1–2 次、又不是本仓库声明的类型"的驼峰名 ——

@@ -45,72 +45,7 @@ enum BackupStudio {
     }
 
 
-    // ================= 策略配置 (198 节奏三档 / 430 滚动保留 / 429 新鲜度) =================
-    /// 198: manual / weekly / monthly — 备份节奏三档 (落地为本地通知提醒, 不做后台静默写)
-    static var cadence: String {
-        get { DB.store.getString("kf_bk_cadence", "manual") }
-        set { DB.store.set("kf_bk_cadence", newValue) }
-    }
-    /// 430 滚动保留: 远端只留最近 N 份 (0 = 不限)
-    static var rollingKeep: Int {
-        get { DB.store.getInt("kf_bk_keep", 0) }
-        set { DB.store.set("kf_bk_keep", newValue) }
-    }
-    /// 429 新鲜度: 距上次备份超过 14 天升级提醒
-    static var lastExportMs: Double? { (DB.store.get([Double].self, "kf_backup_hist") ?? []).last }
-    static func daysSinceLastExport() -> Int {
-        guard let ms = lastExportMs else { return -1 }
-        return Int(Date().timeIntervalSince1970 / 86400) - Int(ms / 1000 / 86400)
-    }
 
-    // ---------- 1018 月度备份日: 每月固定日本地通知, 点通知生成本机还原点并指路备份工作室 ----------
-    static var monthlyDay: Int {
-        get { DB.store.getInt("kf_bk_month_day", 0) }
-        set { DB.store.set("kf_bk_month_day", max(0, min(31, newValue))) }
-    }
-    static func scheduleMonthlyBackup() async {
-        let day = monthlyDay
-        guard day > 0 else { return }
-        guard await CareSchedule.requestAuth() else { return }
-        // pendingRequests() 这个成员不存在; 本函数本来就是 async, 直接走 async 版即可。
-        let center = UNUserNotificationCenter.current()
-        for r in await center.pendingNotificationRequests() where r.identifier == "kf.bk.monthly" {
-            center.removePendingNotificationRequests(withIdentifiers: [r.identifier])
-        }
-        let c = UNMutableNotificationContent()
-        c.title = "月度备份日"   // 1018 月度备份日
-        c.body = "今天是本月备份日 — 打开管家做一份备份并顺带演练验证。"
-        c.sound = .default
-        c.categoryIdentifier = "KF_BK"
-        var comps = DateComponents()
-        comps.day = day
-        comps.hour = 9
-        let req = UNNotificationRequest(identifier: "kf.bk.monthly", content: c,
-                                        trigger: UNCalendarNotificationTrigger(dateMatching: comps, repeats: true))
-        try? await UNUserNotificationCenter.current().add(req)
-        UNUserNotificationCenter.current().delegate = UNDelegate.shared
-    }
-    /// 1018 通知点按: 本机还原点 + 记历史, 并把用户送到备份工作室 (口令加密备份与演练的落点)
-    @MainActor static func onMonthlyTap() async {
-        _ = makeRollbackPoint()
-        Milestones.recordBackup()
-        // 冷启动点按: hostRef 等 RootView 挂载 (最多 2 秒), 与 1013 保养通知同款, 不丢这次点按
-        var waited = 0
-        while AppState.hostRef == nil && waited < 10 {
-            try? await Task.sleep(nanoseconds: 200_000_000)
-            waited += 1
-        }
-        guard let app = AppState.hostRef else { return }
-        if app.appUnlocked && !app.decoyMode {
-            // 2026-10-15 走查 §4.3: 通知正文指着「设置 · 备份」, 原来 requestTab(3) 只到设置页根。
-            // 带落点名, 设置页挂载即开「备份与恢复」。
-            app.pendingSettingsFocus = "backup"
-            app.requestRoute(.settings)
-            app.showToast("已生成本机还原点 — 口令加密备份与演练在「设置 · 备份」")   // 1018 已生成本机还原点
-        } else {
-            app.pendingRoute = .settings
-        }
-    }
 
     // ---------- 421 恢复回滚点 (24h 内可撤销): 完整库体 JSON 快照 ----------
     /// 421 回滚点补洞: 这些键族不在六个分区里, 而**覆盖恢复会整表替换台账、按名字重建成员** ——
@@ -511,15 +446,6 @@ enum BackupStudio {
         guard !plain.isEmpty else { return nil }
         return plain.count * 2
     }
-    /// 193 体积对比: 上次实际导出的字符数 (markExportSize 在三条导出路径写入)
-    static var lastExportBytes: Int { DB.store.getInt("kf_bk_last_bytes", 0) }
-    static func markExportSize(_ text: String) { DB.store.set("kf_bk_last_bytes", text.count * 2) }
-    static func sizeText(_ bytes: Int) -> String {
-        let last = lastExportBytes
-        let cmp = last > 0 ? "上次 " + String(format: "%.1f KB", Double(last) / 1024)
-                                + " (\(max(0, daysSinceLastExport())) 天前)" : "上次暂无记录"
-        return "本次预计 ~" + String(format: "%.1f KB", Double(bytes) / 1024) + " · " + cmp   // 193 界面文案
-    }
 
 
     // ================= 完整性与信任感 (448-454 / 507-512) =================
@@ -551,27 +477,11 @@ enum BackupStudio {
     /// 基线只在备份发生点 (markBackupBaseline, 由 Milestones.recordBackup 尾调用) 更新,
     /// 本函数只比不改 —— 自查后回写会把上一次的异常直接抹平。
     @discardableResult
-    static func runStartupSelfCheck() -> String? {
-        let fp = dbFingerprint()
-        let last = DB.store.getString("kf_bk_dbhash")
-        if last.hasPrefix(fpVersion), last != fp {
-            DB.store.set("kf_bk_selfwarn", true)
-            return "数据自检异常 — 库体哈希与上次备份快照不一致, 建议立即备份并去诊断"   // 448 数据自检异常
-        }
-        if DB.store.getBool("kf_bk_selfwarn") { DB.store.remove("kf_bk_selfwarn") }
-        return nil
-    }
     static var selfCheckWarning: String? {
         DB.store.getBool("kf_bk_selfwarn") ? "数据自检异常, 去诊断" : nil   // 448 数据自检异常
     }
     /// 507 备份状态角标: 今日已备份 / 多日未备份
-    enum BadgeState: Equatable { case fresh, stale(Int), none }
-    static var badgeState: BadgeState {
-        guard let ms = lastExportMs else { return .none }
-        let today = Milestones.dayKey(Date())
-        if Milestones.dayKey(Date(timeIntervalSince1970: ms / 1000)) == today { return .fresh }
-        return .stale(daysSinceLastExport())
-    }
+    // 2026-10-26 精简：badgeState（备份状态角标）已删 —— 它依赖的 lastExportMs 随策略类一起移除。
 
     // ================= WebDAV 增强 (197/422-423/430/436) =================
     /// 用户自配 WebDAV 根 (坚果云或任意 WebDAV), 运行时输入 Basic Auth; 绝不上传非用户自配位置
@@ -677,14 +587,6 @@ enum BackupStudio {
         for part in name.split(separator: "/") where part == ".." { return nil }
         return URL(string: root + "/" + name)
     }
-    /// 430 滚动保留: 远端只留最近 N 份, 按名字 (带日期戳) 排序
-    /// 本 App 自己写出来的备份文件名 (409 命名 = `锁管家_<锁名>_<yyyy-MM-dd-HHmm>_全量[_卷N].enc`)。
-    /// 只有这个名字族才允许被滚动保留删掉 —— 见 `pruneRemote` 上方那段。
-    static let filePrefix = "锁管家_"
-    static func isOurBackup(_ name: String) -> Bool {
-        // 不含 "/" 是关键：带斜杠的是子目录里的东西 (Depth: 1 之后本不该出现，但服务端不守约也不能删)
-        name.hasPrefix(filePrefix) && name.hasSuffix(".enc") && !name.contains("/")
-    }
     /// 一"份"的组键 = 去掉尾部 `_卷N` 的名字 (410 分卷时同一次导出会写成基础卷 + 逐年卷)。
     /// 按文件数取舍会把一套卷切成半套 —— 基础卷 (设备/凭证/设置) 没了，剩下的记录卷恢复不出任何东西。
     /// 只剥**结尾**那一截 `_卷数字`：锁的显示名也可能含 "_卷" (409 把它拼在名字里)，
@@ -702,40 +604,6 @@ enum BackupStudio {
         guard let r = name.range(of: #"\d{4}-\d{2}-\d{2}"#, options: .regularExpression) else { return "" }
         return String(name[r])
     }
-    @discardableResult
-    static func pruneRemote(acct: String, appPw: String, root: String, keep: Int) async -> Int {
-        guard keep > 0, let entries = try? await listRemote(acct: acct, appPw: appPw, root: root) else { return 0 }
-        var groups: [String: [RemoteEntry]] = [:]
-        for e in entries where isOurBackup(e.name) {
-            groups[volumeSet(e.name), default: []].append(e)
-        }
-        // 按日期段 (其次按组名) 从新到旧；`zklock-backup.enc` 那种固定名备份不在名字族内，永不参与计数
-        let ordered = groups.keys.sorted { a, b in
-            let da = dateInName(a), db = dateInName(b)
-            return da == db ? a > b : da > db
-        }
-        var pruned = 0
-        // 430 每月 1 份档: 最近 N 份之外每月再保最新 1 份 (Time Machine 口径); 无日期组只走 N。
-        // ordered 是从新到旧, 所以某月第一次出现的那组就是该月最新的一份。
-        var keptMonths = Set<String>()
-        for (i, key) in ordered.enumerated() {
-            let month = String(dateInName(key).prefix(7))
-            if i < keep || (!month.isEmpty && keptMonths.insert(month).inserted) { continue }
-            for e in groups[key] ?? [] {
-                guard let url = safeRemoteURL(root: root, name: e.name) else { continue }
-                var req = URLRequest(url: url)
-                req.httpMethod = "DELETE"
-                req.setValue(CloudSync.basicAuth(acct, appPw), forHTTPHeaderField: "Authorization")
-                _ = try? await URLSession.shared.data(for: req)
-                pruned += 1
-            }
-        }
-        if pruned > 0 {
-            AuditLog().append(.admin, "清", target: "WebDAV 滚动保留: 清理远端 \(pruned) 个文件")   // 430 滚动保留
-        }
-        return pruned
-    }
-    /// 436 演练恢复: 远端 → 内存解密试读 + 哈希, 不碰真库
     @discardableResult
     static func dryRunRemote(acct: String, appPw: String, root: String, name: String, password: String) async -> String {
         guard let url = safeRemoteURL(root: root, name: name) else { return "地址非法 (远端条目名被护栏拒绝)" }
@@ -824,62 +692,6 @@ enum BackupStudio {
         if let old = DB.store.get([Double].self, "kf_bk_events") { return old.map { BkEvent(at: $0, label: "未具名") } }
         return []
     }
-    static func dataEvents() -> [String] {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd HH:mm"
-        f.locale = Locale(identifier: "en_US_POSIX")
-        return bkEvents().enumerated().reversed().prefix(12).map { i, e in
-            "\(f.string(from: Date(timeIntervalSince1970: e.at / 1000))) · \(e.label)"
-        }
-    }
 
 }
 
-// ---------- UNUserNotificationCenter delegate 单例 (1018 通知点按 → 还原点 + 指路备份) ----------
-/// @unchecked Sendable 的依据是**没有可保护的状态**: 本类零存储属性, 唯一职责是把点按转发成
-/// 主 actor 上的路由动作 (每个分支都已经 Task { @MainActor in })。不是"把检查关掉", 是无锁可上。
-final class UNDelegate: NSObject, UNUserNotificationCenterDelegate, @unchecked Sendable {
-    static let shared = UNDelegate()
-    // 方法名必须是 `withCompletionHandler:`。原写法 `completionHandler:` 与协议要求只差一个前缀,
-    // 编译器给的是 nearly-matches 告警, 而运行时这一支**永远不被调用** —— 通知点按等于没接。
-    func userNotificationCenter(_ c: UNUserNotificationCenter, didReceive r: UNNotificationResponse,
-                               withCompletionHandler completionHandler: @escaping () -> Void) {
-        if r.notification.request.identifier == "kf.bk.monthly" {
-            Task { @MainActor in
-                await BackupStudio.onMonthlyTap()
-            }
-        }
-        // 366/1013: 凭证族通知此前只排期不分派 —— handleNotificationAction 全仓零调用,
-        // 点"密码临期"通知落到系统默认行为(打开 App 停在原页面)。这里补上转发。
-        if let act = CredentialOrg.handleNotificationAction(r.notification.request.identifier) {
-            Task { @MainActor in CredentialOrg.applyNotification(act) }
-        }
-        // 1013: 保养到期通知 → 设备页那台锁 (mac 就在通知 id 里: m4.care.<mac>)。
-        // 冷启动点按: hostRef 要等 RootView 挂载才就位, 等它 (最多 2 秒) 再落点, 不丢这次点按;
-        // 锁着/伪装态不直接切页, 与深链同口径记 pendingRoute, 解锁后由 applyPendingRoute 补走。
-        if r.notification.request.identifier.hasPrefix("m4.care.") {
-            let careMac = String(r.notification.request.identifier.dropFirst("m4.care.".count))
-            Task { @MainActor in
-                var waited = 0
-                while AppState.hostRef == nil && waited < 10 {
-                    try? await Task.sleep(nanoseconds: 200_000_000)
-                    waited += 1
-                }
-                guard let host = AppState.hostRef else { return }
-                host.pendingCare = careMac
-                if host.appUnlocked && !host.decoyMode { host.requestRoute(.settings) } else { host.pendingRoute = .settings }
-            }
-        }
-        completionHandler()
-    }
-    /// 前台展示: 不实现 willPresent 时系统默认"前台完全静默", 用户正拿着手机反而看不到"密码临期"这类提醒。
-    /// 夜间免扰 (1031) 时段仍静默, 与 BatteryCare 的即时通知口径一致。
-    func userNotificationCenter(_ c: UNUserNotificationCenter, willPresent n: UNNotification,
-                               withCompletionHandler completion: @escaping (UNNotificationPresentationOptions) -> Void) {
-        if CareSchedule.quietOn, CareSchedule.isQuietHour() {
-            completion([])
-        } else {
-            completion([.banner, .sound])
-        }
-    }
-}

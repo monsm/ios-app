@@ -812,24 +812,7 @@ struct DeviceHomeView: View {
                                  emphasized: false)
                     }
                 }
-                // 包8/507 备份状态角标: 两态 (今日已备份 / 多日未备份), 点按跳设置-备份
-                if isCurrent {
-                    let bs = BackupStudio.badgeState
-                    Button { showSettings = true } label: {
-                        HStack(spacing: DS.Space.xs) {
-                            Circle().fill(bs == .fresh ? DS.Palette.ok : DS.heroFg)
-                                .frame(width: 6, height: 6)
-                            Text(bs == .fresh ? "今日已备份" : "多日未备份")
-                                .vkFont(.caption2)
-                                .foregroundStyle(DS.heroFg.opacity(0.92))
-                        }
-                        .padding(.horizontal, DS.Space.xs)
-                        .padding(.vertical, DS.Space.xxs)
-                        .background(DS.heroFg.opacity(0.14), in: Capsule())
-                    }
-                    .frame(minHeight: DS.Hit.min)
-                    .accessibilityLabel("备份状态角标, 打开备份设置")   // 507 备份状态角标
-                }
+                // 2026-10-26 精简：备份状态角标已删（badgeState 随备份策略类一起移除）。
                 // 2026-10-18 构图预算 (MASTER.md §3.1: Hero 条件提示行 ≤1):
                 // 原来这里有四条独立提示行 (未验证 / 低电 / 严重低电 / 冷季),
                 // 它们**可以同时出现** —— 一屏 Hero 卡里叠四行叮嘱, 卡片就不像身份卡了。

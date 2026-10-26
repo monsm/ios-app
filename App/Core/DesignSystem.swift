@@ -519,43 +519,12 @@ enum DS {
                     "btnA": fill, "btnB": darkenTo(fill, 0.10)]
         }
     }
-    /// 渐变: 品牌层的"深度"来源。hero 压纯白文字 (装饰层不做动态色, 两端对比度机检于 themeTable)。
-    /// 890 节日限定色：**默认关**。颜色是用户的既有心智，替他把主控卡换色属于"打扰"，
-    /// 所以这一档必须显式开 (kf_festive)，并且关掉时与旧版完全一致。
-    /// 数据源复用 671 的假日表 (RecordSearch.holidayName)，不另建一份节日清单 —— 两份迟早对不上。
-    enum Festive {
-        /// 只给"白字压得住"的深色对 (全部实测 white 对比度 ≥7.4:1)。
-        /// 表里没有的节日一律不染色：宁可少一个效果，也不要一个凭印象编出来的"节日常规色"。
-        private static let pairs: [String: (UInt32, UInt32)] = [
-            "春节": (0x9B1C1C, 0x5E1212),
-            "国庆": (0x8A1515, 0x4E0C0C),
-            "国庆节": (0x8A1515, 0x4E0C0C),
-            "中秋": (0x1F3A5F, 0x14263F),
-            "劳动节": (0x7C4A03, 0x4A2C02),
-            "端午": (0x14532D, 0x0B3018),
-            "元旦": (0x312E81, 0x1E1B4B),
-        ]
-        static var isOn: Bool { DB.store.getBool("kf_festive") }
-        /// 今天该用哪一对；不在表里 / 开关关着 / 补班日 都返回 nil (不染色)。
-        /// 补班日必须排除：它按 671 的口径"不是假期"，给它上节日色等于告诉用户今天休息。
-        static func todayPair(_ now: Date = Date()) -> (UInt32, UInt32)? {
-            guard isOn else { return nil }
-            let day = StatsKit.dayKey(now)   // 节假日表是公历日串，自建 formatter 在非公历历法下会全年配不上 (§10.30)
-            guard let name = RecordSearch.holidayName(day), !RecordSearch.isMakeupWorkday(day),
-                  let p = pairs[name] else { return nil }
-            return p
-        }
-    }
+    // 2026-10-26 精简：Festive（节日限定色）已删。
 
     enum Gradient {
         /// 主控卡 / 开锁盘 idle 态 / 主按钮 — 主题色向深色端的对角渐变 (随 kf_accent 切换)
         static var hero: LinearGradient {
-            // 890 节日限定色改在**这个出口**上 (机检于 tools/contrast.js E4):
-            // 节日开关已无 UI 入口, isOn 恒 false ⇒ 恒走主题色分支, 但表与分支保留给机检。
-            if let p = Festive.todayPair() {
-                return LinearGradient(colors: [Color(hex: p.0), Color(hex: p.1)],
-                                      startPoint: .topLeading, endPoint: .bottomTrailing)
-            }
+            // 2026-10-26 精简：节日限定色分支已删（festive 整套移除，恒走主题色）。
             return LinearGradient(colors: [Palette.themed("heroA"), Palette.themed("heroB")],
                                   startPoint: .topLeading, endPoint: .bottomTrailing)
         }

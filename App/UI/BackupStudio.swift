@@ -209,11 +209,7 @@ struct WebDAVStudioView: View {
         do {
             entries = try await BackupStudio.listRemote(acct: acct, appPw: appPw, root: root)
             // 430 滚动保留
-            let keep = BackupStudio.rollingKeep
-            if keep > 0 {
-                let pruned = await BackupStudio.pruneRemote(acct: acct, appPw: appPw, root: root, keep: keep)
-                if pruned > 0 { app.showToast("滚动保留: 已清理远端 \(pruned) 份超限") }   // 430 滚动保留
-            }
+        // 2026-10-26 精简：滚动保留已删（rollingKeep/pruneRemote 整套移除）。
         } catch {
             app.showToast(error.localizedDescription)
         }
@@ -226,16 +222,12 @@ struct WebDAVStudioView: View {
             do {
                 let b = BackupStudio.bundleFor()
                 let plain = BackupCanonical.exportText(b)
-                BackupStudio.markExportSize(plain)   // 193: 上传路径也记尺寸
                 let env = try CryptoBox.encryptText(plain, password: BackupPassphrase.current)
                 try await CloudSync.push(acct: acct, app: appPw, envelope: env)
                 persist()
                 Milestones.recordBackup()
                 // 430 上传后自动滚动清理: 最近 N 份之外每月再保最新 1 份 (下载/恢复口不受影响)
-                if BackupStudio.rollingKeep > 0 {
-                    let n = await BackupStudio.pruneRemote(acct: acct, appPw: appPw, root: root, keep: BackupStudio.rollingKeep)
-                    if n > 0 { app.showToast("滚动保留: 已清理远端 \(n) 份超限") }   // 430 滚动保留
-                }
+        // 2026-10-26 精简：滚动保留已删（rollingKeep/pruneRemote 整套移除）。
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
                 app.showToast("上传成功")
             } catch {

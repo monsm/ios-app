@@ -31,8 +31,6 @@ struct BackupView: View {
         Binding(get: { cloudApp }, set: { DB.store.set("kf_cloudcfg_app", $0) })
     }
     @State private var busy = false
-    /// 云端已下载但尚未经用户确认的备份包 (nil = 无待确认的恢复)
-    @State private var pendingRestore: BackupBundle?
     /// 导出文件选择器（存到 iCloud 云盘 / 我的 iPhone）
     /// 与导入对称: 导入能选文件, 导出也该能存文件 —— 原来只有「复制/分享文本」这一条路,
     /// 而备份的正常去处就是 iCloud 云盘。
@@ -69,16 +67,7 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !Backu
     var vkBody: some View {
         // AnyView 擦平两分支类型差异 (与 AddPwdView 同一写法): 两支只差最外层那一只容器
         (embedded ? AnyView(listContent) : AnyView(NavigationStack { listContent }))
-        .confirmationDialog("从云端恢复", isPresented: pendingRestoreBinding, titleVisibility: .visible) {
-            // 2026-10-26: 这里有两个不同口径的数字，必须各自说清，否则读起来像自相矛盾 ——
-            //   按钮上"本机 N 台" = 这台手机台账里现在有几把锁（会被覆盖的那一侧）
-            //   message 里"云端 M 台" = 备份包里有几把锁（覆盖来源那一侧）
-            //   N 与 M 不相等是正常的：换过机、删过锁、或包比本机旧。
-            Button("覆盖本机 \(DB.keychains().count) 台设备（本机现有）", role: .destructive) { applyPendingRestore() }
-            Button("取消", role: .cancel) { pendingRestore = nil }
-        } message: {
-            Text("云端备份里包含 \(pendingRestore?.devices.count ?? 0) 台门锁（覆盖来源）。恢复后同名设备会被云端数据覆盖，本机现有改动将丢失。两个数字不一致是正常的（换过机 / 删过锁 / 包比本机旧）。")
-        }
+            // 2026-10-26 精简：待确认恢复包（pendingRestore）已删。
         .sheet(isPresented: $showWebDAV) { WebDAVStudioView() }
         // 方案 a: 文件选择器 —— 备份的正常去处是「iCloud 云盘 / 我的 iPhone」。
         // 与「粘贴文本」共用同一个解析入口 (doImportText → parsePreview), 不另写一套解析。
@@ -112,11 +101,6 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !Backu
         }
     }
 
-    // pendingRestore != nil 即为"待确认", 确认/取消后都要清空以防重复触发
-    private var pendingRestoreBinding: Binding<Bool> {
-        Binding(get: { pendingRestore != nil },
-                set: { if !$0 { pendingRestore = nil } })
-    }
 
     // ---------- 全量备份 ----------
     private var exportSection: some View {
@@ -127,7 +111,6 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !Backu
             BusyButton(title: "生成备份文本", systemImage: "doc.text", isBusy: false) {
                 Milestones.recordBackup()   // 980 备份卫士
                 exportText = BackupCanonical.exportText(BackupKit.collectAll())
-                BackupStudio.markExportSize(exportText)   // 193: 记本次尺寸, 下次预估行对比用
             }
             // 822 从未备份的信封: 没有备份时这页最该说的不是"怎么导出"，而是"现在一个都没有"。
             // 文案不写"建议每周一次"这种本 App 没有依据的规范；给的是**已发生的事实**与下一步动作。
@@ -150,13 +133,8 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !Backu
                         .vkFont(.caption).foregroundStyle(DS.Palette.textSub)
                     // 822 建议备份时间: 读「备份工作室」的节奏档 (198 的 kf_bk_cadence, 本处为它的读方),
                     // 到期与否按上次备份时刻实算; 节奏为「仅手动」时不建议 —— 没有节奏就没有"到期"这一说。
-                    if let tip = Self.backupDueTip(cadence: BackupStudio.cadence, last: at) {
-                        Text(tip).vkFont(.caption).foregroundStyle(DS.Palette.textSub)
-                    }
+                    // 2026-10-26 精简：备份节奏提醒已删（cadence 整套移除）。
                     // 193 体积预估: 本次预计 vs 上次实际 (备份工作室同样一行, 这里补全量导出入口的对照)
-                    if let est = BackupStudio.estimateBytes() {
-                        Text(BackupStudio.sizeText(est)).vkFont(.caption).foregroundStyle(DS.Palette.textSub)
-                    }
                 }
             }
             if !exportText.isEmpty {
@@ -394,15 +372,12 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !Backu
             // schema 上界闸与 upgradeChain (本地粘贴与工作室 WebDAV 都过它)。云端包同样不可信。
             let (_, bundle) = try BackupStudio.parsePreview(text: envelope, password: BackupPassphrase.current)
             // 不直接落盘: 交给 confirmationDialog, 用户确认后才覆盖本机
-            pendingRestore = bundle
         } catch { app.showToast(error.localizedDescription) }
     }
 
 
 
     private func applyPendingRestore() {
-        guard let bundle = pendingRestore else { return }
-        pendingRestore = nil
         let r = BackupKit.restoreAll(bundle)
         app.loadDevices()
         if bundle.globals?.appearance != nil { app.reloadAppearance() }   // 894 带外观段才刷, 免得白重建一次全树
@@ -412,24 +387,6 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !Backu
         BackupPassphrase.clear()   // 2026-10-26: 改用共享口令容器后，清空走它的入口（原写 cloudPw = ""）
     }
 
-    /// 822: 按节奏档 (weekly/monthly) 与上次备份时刻算建议; 仅手动档给 nil (没有节奏就没有到期)。
-    private static func backupDueTip(cadence: String, last: Date) -> String? {
-        let days: Int
-        let label: String
-        switch cadence {
-        case "monthly":
-            days = 30
-            label = "每月"
-        case "weekly":
-            days = 7
-            label = "每周"
-        default:
-            return nil
-        }
-        let due = last.addingTimeInterval(TimeInterval(days) * 86_400)
-        if due <= Date() { return "按当前的\(label)节奏, 已经到该再备份一次的时候了" }   // 822 按当前的
-        return "按当前的\(label)节奏, 建议 " + due.formatted(date: .abbreviated, time: .shortened) + " 前再备一次"   // 822 前再备一次
-    }
 }
 
 /// fileExporter 要的文档类型 —— 备份是一段 UTF-8 文本, 用 `.json` 内容类型。
