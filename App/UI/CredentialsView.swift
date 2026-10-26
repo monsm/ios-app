@@ -1822,11 +1822,7 @@ struct CredentialsView: View {
     // 第一百五十二批把这片的措辞改成**跟着真实路径走**：撤销要收回的东西不止回收站那一格 ——
     // 停用那条路还排着一条"待下发的锁端删除"并写着 361 停用便签；彻底删除那条路锁端已经真删了，
     // 本机恢复≠锁上还有。所以话术由 `CredentialOrg.undoRemove` 一份生成，界面不再各写一遍。
-    @ViewBuilder
-    private func stopUndoTimer() {
-        
-        
-    }
+    // 2026-10-26 精简：stopUndoTimer 已删（undoBar 移除后无撤销条可停）。
 
     // ---------- 动作 ----------
     private static let shortDateFormatter: DateFormatter = {

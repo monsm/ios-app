@@ -223,25 +223,15 @@ enum MemberHub {
         return out.suffix(n).reversed().map { $0 }
     }
 
-    // ---------- 473 授权来源统计 (本地可证明: 版本历史快照注记) ----------
+    /// 2026-10-26 精简：`sourceCounts` 原按版本快照的 note 区分「移交/恢复/新建」，
+    /// 版本历史整套移除后快照恒 nil ⇒ moved 与 restored 恒 0，只剩 created。
     static func sourceCounts(_ id: String) -> (created: Int, moved: Int, restored: Int) {
-        var created = 0, moved = 0, restored = 0
+        var created = 0
         for kc in DB.keychains() {
-            for p in DB.listPwds(kc.mac) where p.owner == id {
-                // 2026-10-14: 快照表把 auto 版排在末尾 ⇒ .last 常是较旧的自动快照; 取版本号最大者。
-                let snap: CredentialSnapshotStub? = nil
-                if let s = snap, s.note.hasPrefix("移交") { moved += 1 }
-                else if let s = snap, s.note.hasPrefix("恢复") { restored += 1 }
-                else { created += 1 }
-            }
-            for f in DB.listFps(kc.mac) where f.owner == id {
-                let snap: CredentialSnapshotStub? = nil
-                if let s = snap, s.note.hasPrefix("移交") { moved += 1 }
-                else if let s = snap, s.note.hasPrefix("恢复") { restored += 1 }
-                else { created += 1 }
-            }
+            created += DB.listPwds(kc.mac).filter { $0.owner == id }.count
+            created += DB.listFps(kc.mac).filter { $0.owner == id }.count
         }
-        return (created, moved, restored)
+        return (created, 0, 0)
     }
 
     // ---------- 472 借用登记 (per-lock) ----------

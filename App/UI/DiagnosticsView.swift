@@ -174,9 +174,6 @@ struct DiagnosticsView: View {
                         .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-        // 2026-10-26 精简：原「诊断查阅」入口（DiagReferenceView）已删 ——
-        // 它整页是协议字典 / 图标语义表 / rc 码对照的只读查阅，属于协议工程师工具。
-                .vkFont(.footnote)
             }
             // 149/150/160/158/151 一键体检: 引擎 (DiagHealth) 一直在, 此前**全库没有任何界面调用它** →
             // 现在跑分、单项复测、结果存档、权限深链四件事一次接上。

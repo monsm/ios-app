@@ -18,6 +18,7 @@ enum Destination: String, CaseIterable, Identifiable {
     case deviceInfo = "DeviceInfoView"
     case dFU = "DFUView"
     case diagnostics = "DiagnosticsView"
+    case dfu = "DFUView"
     case focusUnlock = "FocusUnlockView"
     case gateway = "GatewayView"
     case keychainHW = "KeychainHWView"
