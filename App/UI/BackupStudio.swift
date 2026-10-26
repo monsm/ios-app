@@ -220,14 +220,14 @@ struct WebDAVStudioView: View {
         busy = false
     }
     private func upload() {
-        guard !encPw.isEmpty else { app.showToast("请先填加密口令"); return }
+        guard !BackupPassphrase.current.isEmpty else { app.showToast("请先填加密口令"); return }
         busy = true
         Task {
             do {
                 let b = BackupStudio.bundleFor()
                 let plain = BackupCanonical.exportText(b)
                 BackupStudio.markExportSize(plain)   // 193: 上传路径也记尺寸
-                let env = try CryptoBox.encryptText(plain, password: encPw)
+                let env = try CryptoBox.encryptText(plain, password: BackupPassphrase.current)
                 try await CloudSync.push(acct: acct, app: appPw, envelope: env)
                 persist()
                 Milestones.recordBackup()
@@ -264,7 +264,7 @@ struct WebDAVStudioView: View {
                 let (data, _) = try await URLSession.shared.data(for: req)
                 let raw = String(data: data, encoding: .utf8) ?? ""
                 // 422: 先预演后再入库 (parsePreview 内部先校哈希后解码, 不动真库)
-                let (pv, b) = try BackupStudio.parsePreview(text: raw, password: encPw.isEmpty ? nil : encPw)
+                let (pv, b) = try BackupStudio.parsePreview(text: raw, password: BackupPassphrase.current.isEmpty ? nil : BackupPassphrase.current)
                 pendingDL = (b, e.name + " · 校验通过 · " + pv.zones.joined(separator: "、"))
             } catch { app.showToast(error.localizedDescription) }
         }
@@ -281,18 +281,18 @@ struct WebDAVStudioView: View {
         busy = true
         Task {
             dryRunResult = await BackupStudio.dryRunRemote(acct: acct, appPw: appPw,
-                                                          root: root, name: e.name, password: encPw)
+                                                          root: root, name: e.name, password: BackupPassphrase.current)
             busy = false
         }
     }
     private func rotate() {
-        guard !encPw.isEmpty, !rotPw.isEmpty, encPw != rotPw else {
+        guard !BackupPassphrase.current.isEmpty, !rotPw.isEmpty, BackupPassphrase.current != rotPw else {
             app.showToast("需填旧口令(加密口令)与新口令"); return   // 237 需填旧口令
         }
         busy = true
         Task {
             rotateMsg = await BackupStudio.rotateKey(acct: acct, appPw: appPw,
-                                                     root: root, oldPw: encPw, newPw: rotPw)
+                                                     root: root, oldPw: BackupPassphrase.current, newPw: rotPw)
             busy = false
         }
     }

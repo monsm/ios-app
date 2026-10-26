@@ -45,7 +45,7 @@ struct BackupView: View {
 
     @State private var showWebDAV = false      // WebDAV 策略页，同上
 
-private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloudPw.isEmpty }
+private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !BackupPassphrase.current.isEmpty }
 
     /// 内容是否已经嵌在外部导航容器里。2026-10-15 走查 §7.4-16: 这一页**自带 NavigationStack**,
     /// 有两个呈现点 —— 设置页的 sheet (要自己那层栏) 和设备页快捷格的 `quickDestination` push
@@ -371,7 +371,7 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
                   let text = String(data: data, encoding: .utf8), !text.isEmpty else {
                 throw NSError(domain: "backup", code: 1, userInfo: [NSLocalizedDescriptionKey: "备份编码失败, 已中止上传"])
             }
-            let envelope = try CryptoBox.encryptText(text, password: cloudPw)
+            let envelope = try CryptoBox.encryptText(text, password: BackupPassphrase.current)
             try await CloudSync.push(acct: cloudAcct, app: cloudApp, envelope: envelope)
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             Milestones.recordBackup()   // 980 备份卫士
@@ -392,7 +392,7 @@ private var cloudReady: Bool { !cloudAcct.isEmpty && !cloudApp.isEmpty && !cloud
             }
             // 2026-10-14: 走 parsePreview —— 旧实现自己 decrypt+decode, 绕过了 453 内容哈希闸、
             // schema 上界闸与 upgradeChain (本地粘贴与工作室 WebDAV 都过它)。云端包同样不可信。
-            let (_, bundle) = try BackupStudio.parsePreview(text: envelope, password: cloudPw)
+            let (_, bundle) = try BackupStudio.parsePreview(text: envelope, password: BackupPassphrase.current)
             // 不直接落盘: 交给 confirmationDialog, 用户确认后才覆盖本机
             pendingRestore = bundle
         } catch { app.showToast(error.localizedDescription) }

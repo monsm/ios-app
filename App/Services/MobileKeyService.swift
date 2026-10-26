@@ -50,6 +50,7 @@ struct MobileKey: Codable, Identifiable {
     }
 }
 
+@MainActor
 enum MobileKeyService {
     static let foreverTo = "2118-01-01 00:00:00"
     static let epochFrom = "2010-01-01 00:00:00"

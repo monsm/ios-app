@@ -60,20 +60,20 @@ enum DFUMode {
 
     var service: CBUUID {
         switch self {
-        case .secure: return BLEService.svcDfuSecure
-        case .legacy: return BLEService.svcDfuLegacy
+        case .secure: return BLEUUID.svcDfuSecure
+        case .legacy: return BLEUUID.svcDfuLegacy
         }
     }
     var controlPoint: CBUUID {
         switch self {
-        case .secure: return BLEService.dfuSecureControl
-        case .legacy: return BLEService.dfuLegacyControl
+        case .secure: return BLEUUID.dfuSecureControl
+        case .legacy: return BLEUUID.dfuLegacyControl
         }
     }
     var packetPoint: CBUUID {
         switch self {
-        case .secure: return BLEService.dfuSecurePacket
-        case .legacy: return BLEService.dfuLegacyPacket
+        case .secure: return BLEUUID.dfuSecurePacket
+        case .legacy: return BLEUUID.dfuLegacyPacket
         }
     }
 }

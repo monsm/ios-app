@@ -252,31 +252,10 @@ enum BackupStudio {
         return prune(b)
     }
 
-    static func prune(_ b: BackupBundle) -> BackupBundle {
-        var c = b
-        if !z.devices { c.devices = [] }
-        if !z.credentials { for i in c.devices.indices { c.devices[i].ledger = nil } }
-        if !z.records {
-            c.globals = c.globals.map { var g = $0; g.trace = nil; return g }
-        }
-        if !z.settings {
-            c.members = nil
-            c.globals = c.globals.map {
-                var g = $0
-                g.keychainDongles = nil
-                g.gatewayList = nil
-                g.passcode = nil
-                g.appearance = nil         // 894 同属"设置"分区: 不勾设置就不带外观 (外观是偏好不是内容)
-                g.trace = z.records ? g.trace : nil
-                return g
-            }
-            if let g = c.globals, g.keychainDongles == nil, g.gatewayList == nil,
-               g.passcode == nil, g.appearance == nil, g.trace == nil {
-                c.globals = nil
-            }
-        }
-        return c
-    }
+    /// 2026-10-26: 原 prune(_ b: BackupBundle, _ z: BZones) 按四分区裁剪；分区概念已删
+    /// （从来没有 UI 暴露，全部调用点都传全选），所以本函数不再裁剪任何东西，原样返回。
+    /// 保留函数壳是因为 bundleFor() 与 WebDAV 推包两处都调它 —— 改签名会波及无关代码。
+    static func prune(_ b: BackupBundle) -> BackupBundle { b }
 
 
 
@@ -286,7 +265,6 @@ enum BackupStudio {
     struct Preview: Equatable {
         var source: String        // 477 来源信息: 导出时间 + 原设备
         var schema: Int
-        var zones: [String]
         var macs: [String]
         var pwdCount: Int
         var fpCount: Int

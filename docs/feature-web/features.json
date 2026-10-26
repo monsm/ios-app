@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "离线锁管家 · iOS × Android 功能蜘蛛网",
-    "generated": "2026-10-26T09:33:02.879Z",
+    "generated": "2026-10-26T09:42:21.165Z",
     "sources": [
       {
         "scout": "android-native",
@@ -5662,7 +5662,7 @@
           "line": 124,
           "symbol": "revoke",
           "note": "",
-          "text": ""
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -6095,7 +6095,7 @@
           "line": 96,
           "symbol": "issue",
           "note": "",
-          "text": "validFrom: String,"
+          "text": "forever: Bool,"
         },
         {
           "platform": "ios",
@@ -6103,7 +6103,7 @@
           "line": 124,
           "symbol": "revoke",
           "note": "",
-          "text": ""
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -9958,7 +9958,7 @@
           "line": 82,
           "symbol": "availablePin",
           "note": "",
-          "text": "/// 返回 nil 表示锁状态没读到（0x23 缺失），此时不该给用户任何断言。"
+          "text": "/// 锁端「已绑定 pin 数」与本机已发数的差额 —— 用来提示\"还有别人的钥匙\"。"
         },
         {
           "platform": "apk",
@@ -50676,7 +50676,7 @@
           "line": 22,
           "symbol": "apply",
           "note": "",
-          "text": "throw BLEErrorX.msg(bad)"
+          "text": "if let bad = DefendKit.validate(mode: mode, startSec: startSec, endSec: endSec) {"
         },
         {
           "platform": "ios",
@@ -52685,7 +52685,7 @@
           "line": 714,
           "symbol": "testWebdav",
           "note": "",
-          "text": "name.hasPrefix(filePrefix) && name.hasSuffix(\".enc\") && !name.contains(\"/\")"
+          "text": "var groups: [String: [RemoteEntry]] = [:]"
         },
         {
           "platform": "ios",
@@ -52701,7 +52701,7 @@
           "line": 734,
           "symbol": "listRemote",
           "note": "",
-          "text": "static func pruneRemote(acct: String, appPw: String, root: String, keep: Int) async -> Int {"
+          "text": "req.setValue(CloudSync.basicAuth(acct, appPw), forHTTPHeaderField: \"Authorization\")"
         },
         {
           "platform": "ios",
@@ -52709,7 +52709,7 @@
           "line": 745,
           "symbol": "Depth: 1",
           "note": "",
-          "text": "var pruned = 0"
+          "text": "@discardableResult"
         },
         {
           "platform": "ios",
@@ -52717,7 +52717,7 @@
           "line": 795,
           "symbol": "safeRemoteURL",
           "note": "",
-          "text": "}"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -53078,7 +53078,7 @@
           "line": 845,
           "symbol": "struct BkEvent",
           "note": "",
-          "text": "h.append(BkEvent(at: Date().timeIntervalSince1970 * 1000, label: label))"
+          "text": "/// @unchecked Sendable 的依据是**没有可保护的状态**: 本类零存储属性, 唯一职责是把点按转发成"
         },
         {
           "platform": "ios",
@@ -53086,7 +53086,7 @@
           "line": 846,
           "symbol": "recordEvent",
           "note": "",
-          "text": "if h.count > 60 { h.removeFirst(h.count - 60) }"
+          "text": "/// 主 actor 上的路由动作 (每个分支都已经 Task { @MainActor in })。不是\"把检查关掉\", 是无锁可上。"
         },
         {
           "platform": "ios",
@@ -53094,7 +53094,7 @@
           "line": 858,
           "symbol": "dataEvents",
           "note": "",
-          "text": "f.locale = Locale(identifier: \"en_US_POSIX\")"
+          "text": "// 366/1013: 凭证族通知此前只排期不分派 —— handleNotificationAction 全仓零调用,"
         }
       ],
       "platformEvidence": {
@@ -53162,7 +53162,7 @@
           "line": 649,
           "symbol": "fpVersion",
           "note": "",
-          "text": "req.httpMethod = \"PROPFIND\""
+          "text": "var name = String(xml[i..<e.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)"
         },
         {
           "platform": "ios",
@@ -53170,7 +53170,7 @@
           "line": 650,
           "symbol": "dbFingerprint",
           "note": "",
-          "text": "// Depth: 1 必须显式写。不写时按 RFC 4918 服务端默认取 **Infinity**，那 430 滚动保留看到的就是"
+          "text": "name = Self.xmlUnescape(name)"
         },
         {
           "platform": "ios",
@@ -53178,7 +53178,7 @@
           "line": 664,
           "symbol": "hashMismatch",
           "note": "",
-          "text": "guard let xml = String(data: data, encoding: .utf8), !xml.isEmpty else { throw DFUError.msg(\"远端列表解析失败 (响应非 UTF-8 XML)\") }"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -53186,7 +53186,7 @@
           "line": 675,
           "symbol": "runStartupSelfCheck",
           "note": "",
-          "text": "func cap(_ tag: String, from: String.Index) -> String {"
+          "text": "for (ent, ch) in [(\"&#38;\", \"&\"), (\"&amp;\", \"&\"), (\"&lt;\", \"<\"), (\"&gt;\", \">\"), (\"&quot;\", \"\\\"\"), (\"&apos;\", \"'\")] {"
         }
       ],
       "platformEvidence": {
@@ -53459,7 +53459,7 @@
           "line": 504,
           "symbol": "restore(bundle:zones:lockActs:conflictTakeBackup:makeSnapshot:)",
           "note": "",
-          "text": "// 2026-10-14: 外观与设备组织随包落地 (与 .overwrite 同口径)"
+          "text": "// 到期口径: 台账 from/to 是 \"yyyy-MM-dd\" 字符串, 直接按日比较 (与 CredentialOrg 状态推断同向)"
         },
         {
           "platform": "ios",
@@ -53467,7 +53467,7 @@
           "line": 510,
           "symbol": "清 currentMac",
           "note": "",
-          "text": "DB.store.set(\"kf_passcode\", [\"s\": pc.s, \"d\": pc.d])"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -53475,7 +53475,7 @@
           "line": 532,
           "symbol": "act merge/keep/skip",
           "note": "",
-          "text": "}"
+          "text": "/// 库体指纹 (448/397 共用一份算法, 免得两处各算各的后端口径漂移)"
         },
         {
           "platform": "ios",
@@ -53483,7 +53483,7 @@
           "line": 557,
           "symbol": "冲突裁决 guard",
           "note": "",
-          "text": "private static func dbFingerprint() -> String {"
+          "text": "/// 基线只在备份发生点 (markBackupBaseline, 由 Milestones.recordBackup 尾调用) 更新,"
         },
         {
           "platform": "ios",
@@ -53491,7 +53491,7 @@
           "line": 613,
           "symbol": "返回三元组",
           "note": "",
-          "text": "let f = DateFormatter(); f.locale = Locale(identifier: \"en_US_POSIX\")"
+          "text": "}"
         }
       ],
       "platformEvidence": {
@@ -53680,7 +53680,7 @@
           "line": 876,
           "symbol": "didReceive response",
           "note": "",
-          "text": "Task { @MainActor in"
+          "text": "if host.appUnlocked && !host.decoyMode { host.requestRoute(.settings) } else { host.pendingRoute = .settings }"
         },
         {
           "platform": "ios",
@@ -53688,7 +53688,7 @@
           "line": 891,
           "symbol": "m4.care. 分派",
           "note": "",
-          "text": "var waited = 0"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -53696,7 +53696,7 @@
           "line": 908,
           "symbol": "willPresent",
           "note": "",
-          "text": "completion([])"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -53771,7 +53771,7 @@
           "line": 368,
           "symbol": "struct Preview",
           "note": "",
-          "text": "}"
+          "text": "var s = b.schema"
         },
         {
           "platform": "ios",
@@ -53779,7 +53779,7 @@
           "line": 400,
           "symbol": "parsePreview",
           "note": "",
-          "text": "// v5: otpStatus/otpIdx 从 synctime 序列拆出为独立键位 (旧版塞在 meta 之后)。"
+          "text": "@discardableResult"
         },
         {
           "platform": "ios",
@@ -53787,7 +53787,7 @@
           "line": 412,
           "symbol": "schema 上限拒绝",
           "note": "",
-          "text": "checksumState(text) == .ok"
+          "text": "var remap = [String: String]()"
         },
         {
           "platform": "ios",
@@ -53795,7 +53795,7 @@
           "line": 442,
           "symbol": "stripCommentHeader",
           "note": "",
-          "text": "}"
+          "text": "if let o = meta.otpStatus { DB.saveOtpStatus(mac, o) }"
         },
         {
           "platform": "ios",
@@ -53803,7 +53803,7 @@
           "line": 456,
           "symbol": "looksEncrypted 全键判据",
           "note": "",
-          "text": "DB.saveKeychain(kc)"
+          "text": "mover += 1"
         }
       ],
       "platformEvidence": {
@@ -53898,7 +53898,7 @@
           "line": 689,
           "symbol": "enum BadgeState",
           "note": "",
-          "text": "etag: cap(\"getetag\", from: i),"
+          "text": "static let filePrefix = \"锁管家_\""
         },
         {
           "platform": "ios",
@@ -53906,7 +53906,7 @@
           "line": 690,
           "symbol": "badgeState",
           "note": "",
-          "text": "modified: cap(\"getlastmodified\", from: i)))"
+          "text": "static func isOurBackup(_ name: String) -> Bool {"
         }
       ],
       "platformEvidence": {
@@ -54191,7 +54191,7 @@
           "line": 617,
           "symbol": "193 体积预估注释",
           "note": "",
-          "text": "return g.string(from: d)"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -54199,7 +54199,7 @@
           "line": 630,
           "symbol": "estimateBytes",
           "note": "",
-          "text": "let (_, resp) = try await URLSession.shared.data(for: req)"
+          "text": "req.setValue(\"1\", forHTTPHeaderField: \"Depth\")"
         },
         {
           "platform": "ios",
@@ -54207,7 +54207,7 @@
           "line": 637,
           "symbol": "markExportSize",
           "note": "",
-          "text": "return \"HTTP \\(http.statusCode)\""
+          "text": "if http.statusCode == 404 { return [] }"
         },
         {
           "platform": "ios",
@@ -54215,7 +54215,7 @@
           "line": 638,
           "symbol": "sizeText",
           "note": "",
-          "text": "} catch { return \"网络不可达: \\(error.localizedDescription)\" }"
+          "text": "if http.statusCode == 401 || http.statusCode == 403 { throw DFUError.msg(\"账号或应用密码错误\") }"
         }
       ],
       "platformEvidence": {
@@ -54289,7 +54289,7 @@
           "line": 366,
           "symbol": "enum ChecksumState",
           "note": "",
-          "text": "if t.isEmpty || t.hasPrefix(\"//\") { idx = i + 1; continue }"
+          "text": "static func upgradeChain(_ b: BackupBundle) -> BackupBundle {"
         },
         {
           "platform": "ios",
@@ -54297,7 +54297,7 @@
           "line": 381,
           "symbol": "checksumState",
           "note": "",
-          "text": "guard looksEncrypted(text) else { return text }"
+          "text": "s = 5"
         },
         {
           "platform": "ios",
@@ -54305,7 +54305,7 @@
           "line": 493,
           "symbol": "verifyChecksum",
           "note": "",
-          "text": "}"
+          "text": "\"chars\": tr.chars ?? 0, \"lines\": lines,"
         },
         {
           "platform": "ios",
@@ -54313,7 +54313,7 @@
           "line": 497,
           "symbol": "shortHash 8 位",
           "note": "",
-          "text": "}"
+          "text": "return (mimp, mover, mskip)"
         }
       ],
       "platformEvidence": {
@@ -54988,7 +54988,7 @@
           "line": 274,
           "symbol": "chargeBackupTaskId",
           "note": "",
-          "text": "g.passcode == nil, g.appearance == nil, g.trace == nil {"
+          "text": "var checksum: ChecksumState = .absent   // 453 哈希层: 解析时算一次, 预览卡直接显示"
         },
         {
           "platform": "ios",
@@ -54996,7 +54996,7 @@
           "line": 289,
           "symbol": "registerChargeBackup",
           "note": "",
-          "text": "var zones: [String]"
+          "text": "}"
         },
         {
           "platform": "ios",
@@ -55004,7 +55004,7 @@
           "line": 313,
           "symbol": "rescheduleChargeBackup",
           "note": "",
-          "text": "static func preview(text: String, password: String?) throws -> Preview {"
+          "text": "throw DFUError.msg(\"内容哈希不一致 — 已拦下, 未写任何数据; 建议重传这份备份\")   // 453 内容哈希不一致"
         },
         {
           "platform": "ios",
@@ -55012,7 +55012,7 @@
           "line": 324,
           "symbol": "chargeBackupNote",
           "note": "",
-          "text": "}"
+          "text": "let fallback = Keychain(mac: m.currentMac, skey: \"\")"
         }
       ],
       "platformEvidence": {
@@ -55467,7 +55467,7 @@
           "line": 860,
           "symbol": "dryRunRemote",
           "note": "",
-          "text": "\"\\(f.string(from: Date(timeIntervalSince1970: e.at / 1000))) · \\(e.label)\""
+          "text": "if let act = CredentialOrg.handleNotificationAction(r.notification.request.identifier) {"
         },
         {
           "platform": "ios",
@@ -55475,7 +55475,7 @@
           "line": 876,
           "symbol": "rotateKey",
           "note": "",
-          "text": "Task { @MainActor in"
+          "text": "if host.appUnlocked && !host.decoyMode { host.requestRoute(.settings) } else { host.pendingRoute = .settings }"
         },
         {
           "platform": "ios",
@@ -55483,7 +55483,7 @@
           "line": 896,
           "symbol": "上传失败保留旧口令",
           "note": "",
-          "text": "guard let host = AppState.hostRef else { return }"
+          "text": ""
         }
       ],
       "platformEvidence": {
@@ -57202,7 +57202,7 @@
           "line": 470,
           "symbol": "upgradeChain",
           "note": "",
-          "text": "for p0 in l.pwds {"
+          "text": "mover += 1"
         },
         {
           "platform": "ios",
@@ -57210,7 +57210,7 @@
           "line": 474,
           "symbol": "v3 mac 归一化",
           "note": "",
-          "text": "// 419 同 ID 凭证冲突: 只有用户裁决为\"取备份\"才覆盖, 未裁决默认保本机 (只增不删)"
+          "text": "mimp += 1"
         },
         {
           "platform": "ios",
@@ -57218,7 +57218,7 @@
           "line": 481,
           "symbol": "v5 只推进版本号",
           "note": "",
-          "text": "cur.pwds.append(p)"
+          "text": "if let g = c.globals {"
         }
       ],
       "platformEvidence": {
@@ -57287,7 +57287,7 @@
           "line": 395,
           "symbol": "applyPendingRestore",
           "note": "",
-          "text": "let (_, bundle) = try BackupStudio.parsePreview(text: envelope, password: cloudPw)"
+          "text": "let (_, bundle) = try BackupStudio.parsePreview(text: envelope, password: BackupPassphrase.current)"
         },
         {
           "platform": "ios",
@@ -58459,7 +58459,7 @@
           "line": 223,
           "symbol": "上传后清理",
           "note": "",
-          "text": "guard !encPw.isEmpty else { app.showToast(\"请先填加密口令\"); return }"
+          "text": "guard !BackupPassphrase.current.isEmpty else { app.showToast(\"请先填加密口令\"); return }"
         },
         {
           "platform": "ios",

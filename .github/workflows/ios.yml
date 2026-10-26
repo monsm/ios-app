@@ -1,459 +1,462 @@
-# iOS 云编译 — GitHub Actions
-# 镜像: `xcode-27` (Public preview, macOS 27, arm64) —— 它带 iOS 27.0/27.1/27.2 SDK (Xcode 27.0-27.2),
-#   比稳定通道 (`macos-latest` = macOS 26) 的 iOS 26.5 高一档。2026-10-17 按拍板切过来。
-#   ⚠ 预览镜像无 SLA、3C/7G; 若它抽风, 把下面 runs-on 改回 `macos-latest` 即可 (SDK 退回 26.5, 代码不用动)。
-# 部署目标: iOS 27.0 (随"全量最新"拍板抬上来; 手机必须 iOS 27+, iOS 26.x 装不上)。
-# 产物: 未签名设备 .ipa (供 AltStore/Sideloadly 自签安装) + 编译/测试日志
-#
-# 关于 XCTest: macos-latest 镜像自 2026-09 起不再附带 iOS 模拟器设备,
-# 且禁止 simctl create (SimError 403), 因此差分测试无法在云端执行;
-# 这里保留 build-for-testing 编译闸门, 保证测试代码不会悄悄腐坏。
-# 需要真正执行测试时, 在装有 iOS 27 模拟器的 Mac 上跑:
-#   xcodebuild test -project OfflineLock.xcodeproj -scheme OfflineLock \
-#     -destination 'platform=iOS Simulator,name=iPhone 17 Pro' CODE_SIGNING_ALLOWED=NO
-name: Build (iOS + Android)
-
-on:
-  push:
-    branches: [main, master]
-  pull_request:            # PR 也跑: 编译/测试错误在合并前暴露
-  workflow_dispatch:
-
-jobs:
-  build:
-    name: Build (iOS 27 SDK, unsigned IPA)
-    runs-on: xcode-27
-    needs: stamp
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 2   # rescuescan/orphanscan 需要 HEAD~1 作基线; 默认 depth:1 取不到
-
-      - name: '工作流自检 (step 名里的裸冒号会让严格 YAML 解析器拒收整份工作流)'
-        run: |
-          # 为什么判失败：`- name: 资源纪律检查 (219: 位图…)` 这种写法 GitHub 容忍、
-          # 严格解析器报 "mapping values are not allowed here" —— 于是 actionlint / 编辑器 / 任何
-          # 标准工具眼里的这份工作流一直是坏的。第一百三十七批加新步骤时自己就踩了一次,
-          # 是 `python -c "import yaml; yaml.safe_load(...)"` 当场抓出来的 (那条正控现在写在下面)。
-          if grep -nE '^      - name: [^'"'"'"].*: .*' .github/workflows/ios.yml; then
-            echo "::error file=.github/workflows/ios.yml::上面的 step 名里有未加单引号的冒号, 请给整条名字加引号"
-            exit 1
-          fi
-          echo "工作流 step 名检查 ✓"
-
-      - name: Setup Node (金标漂移校验用)
-        uses: actions/setup-node@v7
-        with:
-          node-version: "24"
-
-      - name: 金标漂移校验 (committed 必须等于 JS 核心输出; 改 vendor 后须重生成并提交)
-        run: node tools/golden.js --check
-
-      - name: 影子对拍 (Swift 侧纯函数手抄端口 vs vendor JS; 编译前的字节面差分, 不替代 XCTest)
-        run: node tools/shadowdiff.js
-
-      - name: Swift 静态闸门 (括号/字符串平衡 + 结构粗检 + 对比度 + 动态字体/触达)
-        run: |
-          node tools/swiftcheck.js
-          node tools/swiftlint.js
-          node tools/contrast.js
-          node tools/dynamictype.js
-
-      # 删页残留符号 (2026-10-25 加): 本次大删里同一个坑踩了四次 —— 删掉整页 .swift 时,
-      # 那个文件里还住着**别的页面在用**的小构件 (cjkSpaced / CaptionStepBar / ExportDir /
-      # BatterySwapGuide), 而上面所有闸门只看语法形状、不看符号生死 ⇒ 每次都是本地全绿、CI 编译才红。
-      # 这一步把「被删文件声明过的符号还有谁在用」变成提交前就能答的问题。
-      # 基线取最近一次推送前的提交 → 逐个 push 的改动面都能覆盖到。
-      - name: '删页残留符号 (判失败: 被删 .swift 里声明的类型/函数若仍被引用且全仓无同名声明 ⇒ 红)'
-        run: node tools/orphanscan.js --base HEAD~1
-
-      # 定义集对比 (2026-10-25 加): 上面 orphanscan 只看「被删文件声明过的符号」,
-      # 而这一轮栽的是另一种形态 —— 定义还在, 但**函数体/成员被我连着删了**,
-      # 于是 grep -w 符号名 抓不到调用方 (Self.foo / app.foo / 枚举内同名成员)。
-      # 本步改用定义集对比: 基线全部定义名 - HEAD 全部定义名 = 删掉的名字,
-      # 逐个在当前代码里查代码级引用, 有引用即悬空 ⇒ 红。
-      # 这正是 6fd0d7c 之后那 23 处编译错的成因 (jsonStr/effectiveExpiry/orderedDevices/
-      # expiredTemporaryCount/AlarmMeta.level/selfCheck397/fpVersion/dbFingerprint)。
-      - name: '定义集对比 (判失败: 已删除的定义名若仍有代码级引用 ⇒ 红)'
-        run: node tools/rescuescan.js --base HEAD~1
-
-      - name: 闸门脚本自身语法检查 (工具也是代码; 第七十批就在改 swiftlint 时吃掉过一个右括号)
-        run: for f in tools/*.js; do node --check "$f"; done
-
-      - name: 零引用声明扫描 (线索不判失败, 恒退出 0; 逐条判定见 docs/AUDIT-DEADCODE.md)
-        run: node tools/deadscan.js
-
-      - name: API 线索扫描 (链式修饰符里需由框架提供的名字; 报线索不判失败)
-        run: node tools/apisweep.js
-
-      - name: 台账引用核查 (摘录 vs 源码; 行号漂不判失败, 搜不到需人读)
-        run: node tools/citecheck.js
-
-      - name: '台账指针存活检查 (散文型指针: X.swift / 文件名当类型名 / 死指针候选; 报线索不判失败)'
-        run: node tools/docpointers.js
-
-      - name: 活读选中态检查 (await 之后仍用裸 mac 写本机台账; 报线索不判失败)
-        run: node tools/macpin.js
-
-      - name: '资源纪律检查 (219: 位图只许在 appiconset、界面图标走 systemName; 报线索不判失败)'
-        run: node tools/assetscheck.js
-
-      - name: '图标一致性检查 (210: 同一条标签文字必须配同一图标基名; 报线索不判失败)'
-        run: node tools/iconmap.js
-
-      - name: '图标一致性硬闸门 (210: 同标签多图标即失败; 接线日实测 0 族命中)'
-        run: node tools/iconmap.js --strict
-
-      - name: 假开关扫描 (kf_ 键的读写两侧是否都有人; 别名/搬运函数/单行 setter 已认, 残余局限见工具头注; 报线索不判失败)
-        run: node tools/keydead.js
-
-      - name: '删除点对账 (501/506/629: 本机删一条凭证有没有交代锁端那一半; 窗口是启发式, 报线索不判失败)'
-        run: node tools/delsweep.js
-
-      - name: '改锁命令对账 (365/504/670: 发一条会改锁的命令, 本机这一半跟着写还是当场声明不落; 报线索不判失败)'
-        run: node tools/lockpair.js
-
-      - name: '日志类型分类对账 (CAPABILITY:61 的 5 类告警 / 5 类开门: 手写或链与抄两份的集合; 报线索不判失败)'
-        run: node tools/typepred.js
-
-      - name: 'AUTOOPEN 纯函数影子对拍 (第一百七十一批: XCTest 从未执行 ⇒ 六个纯函数用 node 复刻再算一遍, 与 Swift 期望表对不上就红)'
-        run: node tools/autoopenshadow.js
-
-      - name: 'ZOTP 跨语言差分 (临时密码 6 位数的算术: Swift 侧逐行复刻进 node, 与 vendor 金标四格 + 三条不变式对拍)'
-        run: node tools/zotpshadow.js
-
-      - name: 'ZK 命令帧跨语言差分 (Swift 侧逐行复刻进 node, 与 vendor 基线夹具整帧逐字节比对; 覆盖 32/40, 未覆盖项由工具打印)'
-        run: node tools/cmdsshadow.js
-
-      - name: 'APK 基线协议对照 (以 apk_raw/assets/www/build/main.js + Java LockCommBase 为权威, 不用 vendor 移植稿; 帧头/KLV/EKey 包络/命令体/令牌注入键/pin 编码逐项断言)'
-        run: node tools/apkshadow.js
-
-      - name: '解析侧跨语言差分 (锁回来的帧 → 状态/日志/广播/词表; 输入与期望都取自金标夹具, 算法复刻自 Swift)'
-        run: node tools/parseshadow.js
-
-      - name: '备份包校验和跨语言差分 (第一百七十八批: 权威侧 = 小程序 utils/storage.js fnv1a32, vendor 里没有这个文件 ⇒ 向量烘进 fixtures/canonical.json; 复刻不一致就红)'
-        run: node tools/bundleshadow.js
-
-      - name: '逻辑面差分 (判失败: 分片/写确认超时/重试次数/令牌刷新时机/rc 自愈/13 采集窗口 等 17 条时序不变量 + 4 条已裁定分歧 + 3 条反向围栏; 规则表 fixtures/logic-parity.json 每条带 APK 证据)'
-        run: node tools/logicparity.js
-
-      - name: 功能点覆盖台账 (1050 项 × 判定 × 代码标注 × 台账下落; 报线索不判失败)
-        run: node tools/featuremap.js
-
-      - name: '功能图谱派生一致性 (docs/feature-web 的 features.json/html/清单 必须与 inventory 源同步; inventory 改了忘重建就红)'
-        run: node tools/featurewebcheck.js
-
-      - name: 'Swift 形状机检 (判失败: R1 缺 @ViewBuilder / R2 属性挂到值类型 / R4 参数标签 / R5 实参个数 / R3 棘轮; 正控 fixtures/swiftshape)'
-        run: node tools/swiftshape.js
-
-      - name: 'Swift 语法形状机检 (判失败: S1 for-in 头逗号 / S2 带标签尾随闭包后接非花括号 / S3 裸美元符 / S4 参数名后属性缺冒号; 正控 fixtures/swiftsyn)'
-        run: node tools/swiftsyn.js
+# iOS 云编译 — GitHub Actions
+# 镜像: `xcode-27` (Public preview, macOS 27, arm64) —— 它带 iOS 27.0/27.1/27.2 SDK (Xcode 27.0-27.2),
+#   比稳定通道 (`macos-latest` = macOS 26) 的 iOS 26.5 高一档。2026-10-17 按拍板切过来。
+#   ⚠ 预览镜像无 SLA、3C/7G; 若它抽风, 把下面 runs-on 改回 `macos-latest` 即可 (SDK 退回 26.5, 代码不用动)。
+# 部署目标: iOS 27.0 (随"全量最新"拍板抬上来; 手机必须 iOS 27+, iOS 26.x 装不上)。
+# 产物: 未签名设备 .ipa (供 AltStore/Sideloadly 自签安装) + 编译/测试日志
+#
+# 关于 XCTest: macos-latest 镜像自 2026-09 起不再附带 iOS 模拟器设备,
+# 且禁止 simctl create (SimError 403), 因此差分测试无法在云端执行;
+# 这里保留 build-for-testing 编译闸门, 保证测试代码不会悄悄腐坏。
+# 需要真正执行测试时, 在装有 iOS 27 模拟器的 Mac 上跑:
+#   xcodebuild test -project OfflineLock.xcodeproj -scheme OfflineLock \
+#     -destination 'platform=iOS Simulator,name=iPhone 17 Pro' CODE_SIGNING_ALLOWED=NO
+name: Build (iOS + Android)
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:            # PR 也跑: 编译/测试错误在合并前暴露
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build (iOS 27 SDK, unsigned IPA)
+    runs-on: xcode-27
+    needs: stamp
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2   # rescuescan/orphanscan 需要 HEAD~1 作基线; 默认 depth:1 取不到
+
+      - name: '工作流自检 (step 名里的裸冒号会让严格 YAML 解析器拒收整份工作流)'
+        run: |
+          # 为什么判失败：`- name: 资源纪律检查 (219: 位图…)` 这种写法 GitHub 容忍、
+          # 严格解析器报 "mapping values are not allowed here" —— 于是 actionlint / 编辑器 / 任何
+          # 标准工具眼里的这份工作流一直是坏的。第一百三十七批加新步骤时自己就踩了一次,
+          # 是 `python -c "import yaml; yaml.safe_load(...)"` 当场抓出来的 (那条正控现在写在下面)。
+          if grep -nE '^      - name: [^'"'"'"].*: .*' .github/workflows/ios.yml; then
+            echo "::error file=.github/workflows/ios.yml::上面的 step 名里有未加单引号的冒号, 请给整条名字加引号"
+            exit 1
+          fi
+          echo "工作流 step 名检查 ✓"
+
+      - name: Setup Node (金标漂移校验用)
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: 金标漂移校验 (committed 必须等于 JS 核心输出; 改 vendor 后须重生成并提交)
+        run: node tools/golden.js --check
+
+      - name: 影子对拍 (Swift 侧纯函数手抄端口 vs vendor JS; 编译前的字节面差分, 不替代 XCTest)
+        run: node tools/shadowdiff.js
+
+      - name: Swift 静态闸门 (括号/字符串平衡 + 结构粗检 + 对比度 + 动态字体/触达)
+        run: |
+          node tools/swiftcheck.js
+          node tools/swiftlint.js
+          node tools/contrast.js
+          node tools/dynamictype.js
+
+      # 删页残留符号 (2026-10-25 加): 本次大删里同一个坑踩了四次 —— 删掉整页 .swift 时,
+      # 那个文件里还住着**别的页面在用**的小构件 (cjkSpaced / CaptionStepBar / ExportDir /
+      # BatterySwapGuide), 而上面所有闸门只看语法形状、不看符号生死 ⇒ 每次都是本地全绿、CI 编译才红。
+      # 这一步把「被删文件声明过的符号还有谁在用」变成提交前就能答的问题。
+      # 基线取最近一次推送前的提交 → 逐个 push 的改动面都能覆盖到。
+      - name: '删页残留符号 (判失败: 被删 .swift 里声明的类型/函数若仍被引用且全仓无同名声明 ⇒ 红)'
+        run: node tools/orphanscan.js --base HEAD~1
+
+      # 定义集对比 (2026-10-25 加): 上面 orphanscan 只看「被删文件声明过的符号」,
+      # 而这一轮栽的是另一种形态 —— 定义还在, 但**函数体/成员被我连着删了**,
+      # 于是 grep -w 符号名 抓不到调用方 (Self.foo / app.foo / 枚举内同名成员)。
+      # 本步改用定义集对比: 基线全部定义名 - HEAD 全部定义名 = 删掉的名字,
+      # 逐个在当前代码里查代码级引用, 有引用即悬空 ⇒ 红。
+      # 这正是 6fd0d7c 之后那 23 处编译错的成因 (jsonStr/effectiveExpiry/orderedDevices/
+      # expiredTemporaryCount/AlarmMeta.level/selfCheck397/fpVersion/dbFingerprint)。
+      - name: '定义集对比 (判失败: 已删除的定义名若仍有代码级引用 ⇒ 红)'
+        run: node tools/rescuescan.js --base HEAD~1
+
+      - name: 闸门脚本自身语法检查 (工具也是代码; 第七十批就在改 swiftlint 时吃掉过一个右括号)
+        run: for f in tools/*.js; do node --check "$f"; done
+
+      - name: 零引用声明扫描 (线索不判失败, 恒退出 0; 逐条判定见 docs/AUDIT-DEADCODE.md)
+        run: node tools/deadscan.js
+
+      - name: API 线索扫描 (链式修饰符里需由框架提供的名字; 报线索不判失败)
+        run: node tools/apisweep.js
+
+      - name: 台账引用核查 (摘录 vs 源码; 行号漂不判失败, 搜不到需人读)
+        run: node tools/citecheck.js
+
+      - name: '台账指针存活检查 (散文型指针: X.swift / 文件名当类型名 / 死指针候选; 报线索不判失败)'
+        run: node tools/docpointers.js
+
+      - name: 活读选中态检查 (await 之后仍用裸 mac 写本机台账; 报线索不判失败)
+        run: node tools/macpin.js
+
+      - name: '资源纪律检查 (219: 位图只许在 appiconset、界面图标走 systemName; 报线索不判失败)'
+        run: node tools/assetscheck.js
+
+      - name: '图标一致性检查 (210: 同一条标签文字必须配同一图标基名; 报线索不判失败)'
+        run: node tools/iconmap.js
+
+      - name: '图标一致性硬闸门 (210: 同标签多图标即失败; 接线日实测 0 族命中)'
+        run: node tools/iconmap.js --strict
+
+      - name: 假开关扫描 (kf_ 键的读写两侧是否都有人; 别名/搬运函数/单行 setter 已认, 残余局限见工具头注; 报线索不判失败)
+        run: node tools/keydead.js
+
+      - name: '删除点对账 (501/506/629: 本机删一条凭证有没有交代锁端那一半; 窗口是启发式, 报线索不判失败)'
+        run: node tools/delsweep.js
+
+      - name: '改锁命令对账 (365/504/670: 发一条会改锁的命令, 本机这一半跟着写还是当场声明不落; 报线索不判失败)'
+        run: node tools/lockpair.js
+
+      - name: '日志类型分类对账 (CAPABILITY:61 的 5 类告警 / 5 类开门: 手写或链与抄两份的集合; 报线索不判失败)'
+        run: node tools/typepred.js
+
+      - name: 'AUTOOPEN 纯函数影子对拍 (第一百七十一批: XCTest 从未执行 ⇒ 六个纯函数用 node 复刻再算一遍, 与 Swift 期望表对不上就红)'
+        run: node tools/autoopenshadow.js
+
+      - name: 'ZOTP 跨语言差分 (临时密码 6 位数的算术: Swift 侧逐行复刻进 node, 与 vendor 金标四格 + 三条不变式对拍)'
+        run: node tools/zotpshadow.js
+
+      - name: 'ZK 命令帧跨语言差分 (Swift 侧逐行复刻进 node, 与 vendor 基线夹具整帧逐字节比对; 覆盖 32/40, 未覆盖项由工具打印)'
+        run: node tools/cmdsshadow.js
+
+      - name: 'APK 基线协议对照 (以 apk_raw/assets/www/build/main.js + Java LockCommBase 为权威, 不用 vendor 移植稿; 帧头/KLV/EKey 包络/命令体/令牌注入键/pin 编码逐项断言)'
+        run: node tools/apkshadow.js
+
+      - name: '解析侧跨语言差分 (锁回来的帧 → 状态/日志/广播/词表; 输入与期望都取自金标夹具, 算法复刻自 Swift)'
+        run: node tools/parseshadow.js
+
+      - name: '备份包校验和跨语言差分 (第一百七十八批: 权威侧 = 小程序 utils/storage.js fnv1a32, vendor 里没有这个文件 ⇒ 向量烘进 fixtures/canonical.json; 复刻不一致就红)'
+        run: node tools/bundleshadow.js
+
+      - name: '逻辑面差分 (判失败: 分片/写确认超时/重试次数/令牌刷新时机/rc 自愈/13 采集窗口 等 17 条时序不变量 + 4 条已裁定分歧 + 3 条反向围栏; 规则表 fixtures/logic-parity.json 每条带 APK 证据)'
+        run: node tools/logicparity.js
+
+      - name: 功能点覆盖台账 (1050 项 × 判定 × 代码标注 × 台账下落; 报线索不判失败)
+        run: node tools/featuremap.js
+
+      - name: '功能图谱派生一致性 (docs/feature-web 的 features.json/html/清单 必须与 inventory 源同步; inventory 改了忘重建就红)'
+        run: node tools/featurewebcheck.js
+
+      - name: 'Swift 形状机检 (判失败: R1 缺 @ViewBuilder / R2 属性挂到值类型 / R4 参数标签 / R5 实参个数 / R3 棘轮; 正控 fixtures/swiftshape)'
+        run: node tools/swiftshape.js
+
+      - name: 'Swift 语法形状机检 (判失败: S1 for-in 头逗号 / S2 带标签尾随闭包后接非花括号 / S3 裸美元符 / S4 参数名后属性缺冒号; 正控 fixtures/swiftsyn)'
+        run: node tools/swiftsyn.js
 
       - name: '顶层成员闸门 (判失败: 成员必须在类型内部 —— 括号平衡抓不到这一半)'
         run: node tools/toplevel.js
 
-      - name: '更新说明对账 (43/44: 每条必须能查到实现证据, 否则判失败)'
-        run: node tools/changelogcheck.js
-
-      - name: 'sheet 盖住切 Tab 收摊检查 (判失败: 被 sheet/fullScreenCover 端出来的页面里换 Tab, 动作附近必须有 dismiss(); requestTab 只过访客门禁、不算修好; 正控 fixtures/sheetcover/fire 3 条, 反控 ok/ 4 形 0 条)'
-        run: |
-          node tools/sheetcover.js --selftest
-          node tools/sheetcover.js
-
-      - name: '界面文案去规格编号 (夹具契约判失败 + 现网顾问级: 七种包围形状各有正控, 量纲/标准名/示例/脱敏样例四类反控不许误响; 现网命中只打印不判失败)'
-        run: |
-          node tools/copynum.js --selftest
-          node tools/copynum.js App
-
-      - name: '界面完整性与一致性 (判失败: 目的地枚举不得与台账漂移 / 不得再出现绕过 requestRoute 的裸写换页; 覆盖率只报进度不判失败)'
-        run: |
-          node tools/destmap.js
-          node tools/uicoverage.js
-
-      - name: '选用镜像里最新的 Xcode (最新 iOS SDK)'
-        run: |
-          # 镜像里同时装了 27.0/27.1/27.2, 默认可能是旧的 —— 显式挑版本号最大的那个,
-          # 否则 deploymentTarget 与 SDK 会差档 (报 "deployment target is greater than SDK")。
-          echo "已安装: $(ls -d /Applications/Xcode*.app | xargs -n1 basename | tr '\n' ' ')"
-          LATEST=$(ls -d /Applications/Xcode*.app | sort | tail -1)   # BSD sort 没有 -V; Xcode_27.0/27.1/27.2 字典序即版本序
-          echo "选用: $LATEST"
-          sudo xcode-select -s "$LATEST"
-          xcodebuild -version
-          xcrun --sdk iphoneos --show-sdk-version
-
-      - name: Install XcodeGen
-        run: brew install xcodegen
-
-      - name: Generate Xcode Project
-        run: xcodegen generate
-
-      - name: 注入编译号
-        run: |
-          # 为什么改生成物而不是改 project.yml: Info.plist 是 XcodeGen 每次**重新生成**的
-          # (磁盘上没有 checked-in 的 plist, git ls-files 为空), 所以正确位置是 generate 之后、
-          # xcodebuild 之前 —— 不引入"把生成物提交回仓库"这种会把金标漂移检查带偏的规矩。
-          #
-          # 只有一个 Info.plist 了: 927 小组件扩展 (原第二份 plist) 与实时活动已随波 2 删除,
-          #   不再需要「extension 与容器版本必须一致」那套双改。循环保留以便将来加 target。
-          # CFBundleShortVersionString 保持 1.0.0 (人认的产品版本), 变的是"构建"那一行:
-          #   设置页 LabeledRow("构建") 与诊断报告读的都是 CFBundleVersion。
-          STAMP="${{ needs.stamp.outputs.kf_build_stamp }}"
-          [ -n "$STAMP" ] || { echo "::error::stamp 作业没输出 kf_build_stamp"; exit 1; }
-          for PLIST in App/Info.plist; do
-            [ -f "$PLIST" ] || { echo "::error::XcodeGen 没生成 $PLIST"; exit 1; }
-            # Set 在键不存在时会失败 —— 键来自 project.yml 的 info.properties, 那边被人删掉就
-            # 正好落在这里; 回退成 Add, 别把一个配置漂移变成 CI 红。
-            /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $STAMP" "$PLIST" 2>/dev/null \
-              || /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string $STAMP" "$PLIST"
-            GOT=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$PLIST")
-            # 写进去的必须就是它: 读回核对, 不一致宁可红 (装出来的包挂错时刻, 后面全靠猜)
-            [ "$GOT" = "$STAMP" ] || { echo "::error::$PLIST CFBundleVersion=$GOT 期望=$STAMP"; exit 1; }
-            echo "$PLIST -> $GOT"
-          done
-
-      - name: 编译校验测试目标 (云端无模拟器, 只编译不执行)
-        run: |
-          # SWIFT_COMPILATION_MODE=wholemodule: 整模块**一次** swift-frontend 调用编译。
-          # 为什么: 默认的增量/批量模式下, 一个批次 (或文件) 失败 → 构建即停, 后面的根本没编,
-          # 于是每次 run 只能暴露"下一批"的错误, 一轮一轮挤牙膏 (run 59→62 就是这么过来的)。
-          # 整模块单次调用会把**全仓所有** error 一次性列出来。
-          # (先前试过 SWIFT_ENABLE_BATCH_MODE=NO, 不够 —— xcodebuild 仍会在首个失败后停派新任务。)
-          mkdir -p build
-          set -o pipefail
-          xcodebuild build-for-testing \
-            -project OfflineLock.xcodeproj \
-            -scheme OfflineLock \
-            -destination 'generic/platform=iOS Simulator' \
-            -derivedDataPath build/DerivedData \
-            SWIFT_COMPILATION_MODE=wholemodule \
-            CODE_SIGNING_ALLOWED=NO | tee build/test.log
-
-      - name: Build (Device, unsigned IPA)
-        run: |
-          mkdir -p build
-          set -o pipefail
-          xcodebuild archive \
-            -project OfflineLock.xcodeproj \
-            -scheme OfflineLock \
-            -sdk iphoneos \
-            -configuration Release \
-            -archivePath build/OfflineLock.xcarchive \
-            SWIFT_COMPILATION_MODE=wholemodule \
-            CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" | tee build/device.log
-          mkdir -p build/Payload
-          cp -R "build/OfflineLock.xcarchive/Products/Applications/OfflineLock.app" build/Payload/
-          # 文件名与包内 CFBundleVersion 同一个串: AltStore 里堆三份 "unsigned.ipa" 时,
-          # 装错版本比不装更糟 (开了门才发现不是这把锁的号)。
-          # 每个 step 是独立 shell, 上一步里的 $STAMP 到这里已经不存在 —— 必须重新取一次。
-          STAMP="${{ needs.stamp.outputs.kf_build_stamp }}"
-          [ -n "$STAMP" ] || { echo "::error::stamp 作业没输出 kf_build_stamp"; exit 1; }
-          cd build && zip -qry "OfflineLock-$STAMP-unsigned.ipa" Payload
-
-      - name: 编译失败时把错误行转成注解 (不登录也能读)
-        if: failure()
-        run: |
-          # 为什么要这一步：本仓 run 44–47 连红四场，而日志下载与产物都要登录鉴权 ——
-          # 于是"CI 红了"这个事实没有下文，本地 16 道闸门又不含编译器，臆造 API 就这么躲过去了
-          # (这一批抓到的 `Calendar.date(bySetting: .hourAndMinute(...))` 就是其中一条)。
-          # ::error 工作流命令会生成 check annotations，那是**公开 API 无鉴权可读**的唯一一份证据。
-          # 不设 head 上限: 之前 head -40 会把真问题截掉 (round-6 一次就有 107 个 error)。
-          # 配 SWIFT_ENABLE_BATCH_MODE=NO, 一次 run 就能列出全仓所有 error, 不再一轮挤一个批次。
-          for L in build/test.log build/device.log; do
-            [ -f "$L" ] || continue
-            grep -E "error: " "$L" | sed "s#^#::error file=$L::#" || true
-          done
-          {
-            echo "## 编译错误摘录 (全量, 去重)"
-            grep -hE "error: " build/test.log build/device.log 2>/dev/null | sed -E 's#^/[^ ]*/##' | sort -u \
-              || echo "(两份日志里都没有 error: 行 —— 那多半是环境/签名/模拟器问题，不是源码)"
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: 上传产物
-        if: always()          # 失败也能拿到日志
-        uses: actions/upload-artifact@v7
-        with:
-          name: OfflineLock-build
-          path: |
-            build/test.log
-            build/device.log
-            build/OfflineLock-*-unsigned.ipa
-          if-no-files-found: error
-
-  # ================= 构建时刻 = 两端编译号的唯一来源 =================
-  # iOS 的 CFBundleVersion 与安卓的 versionCode/versionName 都由这一个戳派生:
-  #   一次 push 出一个时刻 → 两个并行 job 各自取 now 会差几十秒 (archive 排在 build-for-testing 之后),
-  #   于是"同一次生成的 ipa 和 apk"对不上号。所以 stamp 单独算一次, 两个 job needs 它。
-  # ⚠ 时区与格式只在**这一支**里算 (ubuntu = GNU date); macOS 没有 GNU 的 date -d,
-  #   所以 iOS 那支直接用算好的字符串, 不再自己转换 —— 否则 BSD date 会当场报错。
-  stamp:
-    name: Stamp 构建时刻
-    runs-on: ubuntu-latest
-    outputs:
-      kf_build_ts: ${{ steps.ts.outputs.kf_build_ts }}
-      kf_build_stamp: ${{ steps.ts.outputs.kf_build_stamp }}
-    steps:
-      - name: 取构建时刻
-        id: ts
-        run: |
-          TS=$(date +%s)
-          STAMP=$(TZ=Asia/Shanghai date -d "@$TS" +%Y%m%d.%H%M%S)
-          echo "kf_build_ts=$TS" >> "$GITHUB_OUTPUT"
-          echo "kf_build_stamp=$STAMP" >> "$GITHUB_OUTPUT"
-      - name: 回读校验 时刻与戳必须能互相换算
-        run: |
-          # 早失败: 戳与 ts 对不上 (时区没生效/date 行为变了) 就宁可红,
-          # 也不要产出"包内号与文件名不是同一时刻"的两种ipa 混在安装台上分不出来。
-          # ⚠ -d 后面必须带 @ 前缀: GNU date 拿裸的 10 位秒数会按 YYYYMMDDHH 解析成
-          #   invalid date (run 173/174 就是栽在这一步, BACK 空串 ⇒ 与 STAMP 不等 ⇒ 整个工作流连坐 skip)。
-          BACK=$(TZ=Asia/Shanghai date -d "@${{ steps.ts.outputs.kf_build_ts }}" +%Y%m%d.%H%M%S)
-          [ "$BACK" = "${{ steps.ts.outputs.kf_build_stamp }}" ] || { echo "::error::stamp 与 ts 不一致: $BACK"; exit 1; }
-          echo "构建时刻 ts=${{ steps.ts.outputs.kf_build_ts }} → ${{ steps.ts.outputs.kf_build_stamp }} (东八区)"
-
-  # ================= 安卓极简版 (KfKey) =================
-  # 与 iOS 同一个仓库、同一次 push: 上面出 IPA, 这里出 APK —— 用户口径是"一次性生成 ipa 和 apk"。
-  # 只做两件事: 点一下开锁 / 靠近自动开锁 (RSSI 强于 -38 dBm)。锁信息由 iOS 生成的二维码导入。
-  android:
-    name: Build (Android 13+, APK)
-    runs-on: ubuntu-latest
-    needs: stamp
-    env:
-      # gradle 读它当编译号 (android-app/app/build.gradle.kts); 本地手编没这个变量时回落"构建当刻"
-      KF_BUILD_TS: ${{ needs.stamp.outputs.kf_build_ts }}
-      KF_BUILD_STAMP: ${{ needs.stamp.outputs.kf_build_stamp }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Setup JDK 17
-        uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: "17"
-
-      # 不再调 android-actions/setup-android: 它在 ubuntu-latest 上这一步本身就失败过
-      # (v3 的 Node 运行时与镜像不匹配)。GitHub 的 ubuntu 镜像**自带** Android SDK
-      # ($ANDROID_HOME 已设好、licenses 已接受), AGP 缺哪个平台会自己补。
-      - name: 确认镜像自带 Android SDK
-        run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          ls "$ANDROID_HOME/platforms" || true
-          ls "$ANDROID_HOME/build-tools" || true
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
-        with:
-          gradle-version: "8.9"
-
-      # 编译只证明"编得过", 不证明"发出去的字节与 vendor 权威口径相同"。
-      # 2026-10-17 那个"恒报错误码 13"的坑就是编译全绿、真机全废: injectToken 把长度字段读偏
-      # 一个字节 → 自己那行长度守卫成立 → 令牌被静默丢掉 → 04 裸发。gradle 永远看不出这件事。
-      # 这一支排在 gradle **之前**: 只要 node, 秒级出结果, 不必等三分多钟的 APK 构建。
-      # (步骤名不含裸冒号, 与上面那条工作流自检的 grep 兼容。)
-      - name: '安卓端字节面影子对拍 (KfProtocol/AutoOpenKit vs vendor JS + golden, 判失败)'
-        run: node tools/kotlinshadow.js
-
-      # 签名密钥指纹核对 (2026-10-18): 用户报"签名不一致, 不能覆盖安装"。
-      # 排查结论: keystore/kfkey.p12 自 c4a6a4d 起就随仓库走且从未被改过 (本地与 HEAD 的
-      # SHA-256 一致), 所以不一致的那台手机装的是 **c4a6a4d 之前**的产物 —— 那时 debug 还没
-      # 绑固定签名, 每台 CI runner 用自己的临时 debug.keystore, 换一次构建就换一次签名。
-      # 这一步把指纹钉死: 密钥若被无意替换 (重新生成 / 换机器 / 误提交), 立刻红并说明后果,
-      # 而不是让用户在手机上撞 "INSTALL_FAILED_UPDATE_INCOMPATIBLE" 才发现。
-      - name: 核对签名密钥指纹
-        working-directory: android-app
-        run: |
-          WANT=4fed9ca07b2d86ece40d65174214215c0ab928bd413b2d962ffb790778878268
-          [ -f app/keystore/kfkey.p12 ] || { echo "::error::app/keystore/kfkey.p12 不见了, debug/release 都绑了它"; exit 1; }
-          GOT=$(sha256sum app/keystore/kfkey.p12 | cut -d" " -f1)
-          if [ "$GOT" != "$WANT" ]; then
-            echo "::error::签名密钥指纹变了 GOT=$GOT 期望=$WANT"
-            echo "::error::换密钥 = 老手机上这个 App 只能先卸载再装 (签名不同不能覆盖安装)。"
-            echo "::error::确实是有意轮换的话, 把上面 WANT 改成新指纹, 并在提交说明里写清要重装。"
-            exit 1
-          fi
-          echo "签名密钥指纹一致 ($GOT), 可与既往构建互相覆盖安装"
-
-      - name: 编译 APK (debug, 可直接安装)
-        working-directory: android-app
-        run: |
-          set -o pipefail
-          gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log
-
-      - name: 核对编译号 = 注入的时刻
-        working-directory: android-app
-        run: |
-          # 为什么单独立一步: KF_BUILD_TS 万一没传进来 (env 名写错 / stamp 作业被改名),
-          # gradle 会**静默**回落 Instant.now() —— 号照样单调、照样能覆盖安装, 一切看着都对,
-          # 只剩"ipa 与 apk 的时刻不再相同"这一个后果, 而那正是这次改动唯一要解决的问题。
-          #
-          # 优先读**产物本身**: 日志行只证明 gradle 算过, 不证明它写进了 APK。
-          # aapt 不在/没产物时退回日志核对 (build-tools 里 aapt 是遗留 shim, 不能假定它一定在)。
-          SRC=app/build/outputs/apk/debug/app-debug.apk
-          AAPT=$(ls "$ANDROID_HOME"/build-tools/*/aapt 2>/dev/null | tail -1 || true)
-          BADGE=""
-          if [ -n "$AAPT" ] && [ -f "$SRC" ]; then
-            BADGE=$("$AAPT" dump badging "$SRC" 2>/dev/null | grep -E "^package:" | head -1 || true)
-          fi
-          if [ -n "$BADGE" ]; then
-            echo "产物头部: $BADGE"
-            # 只从 versionName/versionCode= 后面吃"数字和点": 不依赖 GNU sed 的 \x27、
-            # 也不依赖 aapt 属性顺序与引号风格 (aapt2/badging 的引号会变)。
-            VN=$(printf "%s" "$BADGE" | sed -E "s/.*versionName=[^0-9A-Za-z]*([0-9][0-9.]*)?.*/\1/")
-            VC=$(printf "%s" "$BADGE" | sed -E "s/.*versionCode=[^0-9]*([0-9]+).*/\1/")
-            echo "读到的 versionName=$VN versionCode=$VC  期望时刻=$KF_BUILD_STAMP"
-            case "$VN" in
-              "1.0.$KF_BUILD_STAMP") echo "versionName 与注入时刻一致" ;;
-              *) echo "::error::APK 里的 versionName=$VN 不是本次注入的 1.0.$KF_BUILD_STAMP"; exit 1 ;;
-            esac
-            # versionCode 也要跟着变: 只动 versionName 的话, 系统按 versionCode 判新旧,
-            # 覆盖安装会报"已存在更高版本"或静默不更新 —— 又回到"装一次就不让升级"。
-            case "$VC" in
-              ""|1) echo "::error::versionCode=$VC 仍是旧默认值, 时间戳没生效"; exit 1 ;;
-              *) echo "versionCode=$VC (距 2026-01-01 的秒数)" ;;
-            esac
-          else
-            echo "没有 aapt 或没有产物 —— 退回 gradle 配置期打印核对"
-            grep -F "KfBuildStamp" build.log || { echo "::error::既读不到产物也找不到 KfBuildStamp 日志行"; exit 1; }
-            ACTUAL=$(grep -F "KfBuildStamp" build.log | tail -1 | sed -E "s/.*versionName=1\.0\.//")
-            [ "$ACTUAL" = "$KF_BUILD_STAMP" ] || { echo "::error::gradle 用的时刻 ($ACTUAL) 与 stamp 作业 ($KF_BUILD_STAMP) 不一致"; exit 1; }
-          fi
-      - name: 产物改名带编译号
-        working-directory: android-app
-        run: |
-          # gradle 恒输出 app-debug.apk (不含版本), 装几份下来就全同名了 —— 与 iOS 那支同一个理由:
-          # 名字、包内 versionName、包内 versionCode 三者同源于 stamp 作业那一个时刻。
-          [ -n "$KF_BUILD_STAMP" ] || { echo "::error::env 里的 KF_BUILD_STAMP 是空的 (stamp 作业没输出)"; exit 1; }
-          # 空戳会产出 "KfKey-.apk" —— 上传那条是通配 KfKey-*.apk, 照样命中, 于是**静默**拿到一个
-          # 没有时刻的包, 正是这次要治的"桌面上分不清版本"。所以在这里就拦住。
-          # 钉死源文件名, 不用 *.apk 通配后 head -1: 一旦目录里已经有 KfKey-<戳>.apk (本地手跑过
-          # 这一步、或同一 runner 复用过), head -1 按字母序可能挑到它, 于是"改名"改的是上次的产物。
-          SRC=app/build/outputs/apk/debug/app-debug.apk
-          [ -f "$SRC" ] || { echo "::error::找不到 $SRC (gradle 产物路径变了?)"; exit 1; }
-          cp "$SRC" "app/build/outputs/apk/debug/KfKey-$KF_BUILD_STAMP.apk"
-          ls -l app/build/outputs/apk/debug/
-          echo "本次编译号: versionCode=距 2026-01-01 的秒数 (KF_BUILD_TS=$KF_BUILD_TS), versionName=1.0.$KF_BUILD_STAMP" >> "$GITHUB_STEP_SUMMARY"
-
-      - name: 编译失败时把 Kotlin 错误写进摘要
-        if: failure()
-        working-directory: android-app
-        run: |
-          # 与 iOS 那支同一个理由: 日志要登录才能下载, 而 ::error 生成的 check annotation
-          # 是**无鉴权可读**的唯一一份证据。run#188 就是栽在"只知道红了、读不到 e: 行",
-          # 于是把一条 import 写错当成修好了 (SignalArrow 的 graphicsLayer 包名)。
-          # 先按 file= 形式提升 (GitHub 会把注解挂到文件行号上), 落不到文件名的退回纯文本。
-          grep -hE "^e: " build.log \
-            | sed -E 's#^e: file://[^:]+/(android-app/.*)$#::error file=\1#' \
-            | sed -E 's#^e: #::error::e: #' || true
-          {
-            echo "## Android 编译错误"
-            grep -E "^e: |^w: .*error|error:" build.log | head -60 || echo "(build.log 里没有 e: 行)"
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: 上传 APK
-        uses: actions/upload-artifact@v7
-        with:
-          name: KfKey-apk
-          # 通配会连 app-debug.apk 一起传上去 (两份同内容不同名, 容易拿错):
-          # 只传带编译号的那一份, 拿到的文件名就是这次构建的时刻。
-          path: android-app/app/build/outputs/apk/debug/KfKey-*.apk
-          if-no-files-found: error
+      - name: 'Binding 误用闸门 (判失败: Binding<T> 属性被当成值算 —— 括号/形状都抓不到)'
+        run: node tools/bindinguse.js
+
+      - name: '更新说明对账 (43/44: 每条必须能查到实现证据, 否则判失败)'
+        run: node tools/changelogcheck.js
+
+      - name: 'sheet 盖住切 Tab 收摊检查 (判失败: 被 sheet/fullScreenCover 端出来的页面里换 Tab, 动作附近必须有 dismiss(); requestTab 只过访客门禁、不算修好; 正控 fixtures/sheetcover/fire 3 条, 反控 ok/ 4 形 0 条)'
+        run: |
+          node tools/sheetcover.js --selftest
+          node tools/sheetcover.js
+
+      - name: '界面文案去规格编号 (夹具契约判失败 + 现网顾问级: 七种包围形状各有正控, 量纲/标准名/示例/脱敏样例四类反控不许误响; 现网命中只打印不判失败)'
+        run: |
+          node tools/copynum.js --selftest
+          node tools/copynum.js App
+
+      - name: '界面完整性与一致性 (判失败: 目的地枚举不得与台账漂移 / 不得再出现绕过 requestRoute 的裸写换页; 覆盖率只报进度不判失败)'
+        run: |
+          node tools/destmap.js
+          node tools/uicoverage.js
+
+      - name: '选用镜像里最新的 Xcode (最新 iOS SDK)'
+        run: |
+          # 镜像里同时装了 27.0/27.1/27.2, 默认可能是旧的 —— 显式挑版本号最大的那个,
+          # 否则 deploymentTarget 与 SDK 会差档 (报 "deployment target is greater than SDK")。
+          echo "已安装: $(ls -d /Applications/Xcode*.app | xargs -n1 basename | tr '\n' ' ')"
+          LATEST=$(ls -d /Applications/Xcode*.app | sort | tail -1)   # BSD sort 没有 -V; Xcode_27.0/27.1/27.2 字典序即版本序
+          echo "选用: $LATEST"
+          sudo xcode-select -s "$LATEST"
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode Project
+        run: xcodegen generate
+
+      - name: 注入编译号
+        run: |
+          # 为什么改生成物而不是改 project.yml: Info.plist 是 XcodeGen 每次**重新生成**的
+          # (磁盘上没有 checked-in 的 plist, git ls-files 为空), 所以正确位置是 generate 之后、
+          # xcodebuild 之前 —— 不引入"把生成物提交回仓库"这种会把金标漂移检查带偏的规矩。
+          #
+          # 只有一个 Info.plist 了: 927 小组件扩展 (原第二份 plist) 与实时活动已随波 2 删除,
+          #   不再需要「extension 与容器版本必须一致」那套双改。循环保留以便将来加 target。
+          # CFBundleShortVersionString 保持 1.0.0 (人认的产品版本), 变的是"构建"那一行:
+          #   设置页 LabeledRow("构建") 与诊断报告读的都是 CFBundleVersion。
+          STAMP="${{ needs.stamp.outputs.kf_build_stamp }}"
+          [ -n "$STAMP" ] || { echo "::error::stamp 作业没输出 kf_build_stamp"; exit 1; }
+          for PLIST in App/Info.plist; do
+            [ -f "$PLIST" ] || { echo "::error::XcodeGen 没生成 $PLIST"; exit 1; }
+            # Set 在键不存在时会失败 —— 键来自 project.yml 的 info.properties, 那边被人删掉就
+            # 正好落在这里; 回退成 Add, 别把一个配置漂移变成 CI 红。
+            /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $STAMP" "$PLIST" 2>/dev/null \
+              || /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string $STAMP" "$PLIST"
+            GOT=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$PLIST")
+            # 写进去的必须就是它: 读回核对, 不一致宁可红 (装出来的包挂错时刻, 后面全靠猜)
+            [ "$GOT" = "$STAMP" ] || { echo "::error::$PLIST CFBundleVersion=$GOT 期望=$STAMP"; exit 1; }
+            echo "$PLIST -> $GOT"
+          done
+
+      - name: 编译校验测试目标 (云端无模拟器, 只编译不执行)
+        run: |
+          # SWIFT_COMPILATION_MODE=wholemodule: 整模块**一次** swift-frontend 调用编译。
+          # 为什么: 默认的增量/批量模式下, 一个批次 (或文件) 失败 → 构建即停, 后面的根本没编,
+          # 于是每次 run 只能暴露"下一批"的错误, 一轮一轮挤牙膏 (run 59→62 就是这么过来的)。
+          # 整模块单次调用会把**全仓所有** error 一次性列出来。
+          # (先前试过 SWIFT_ENABLE_BATCH_MODE=NO, 不够 —— xcodebuild 仍会在首个失败后停派新任务。)
+          mkdir -p build
+          set -o pipefail
+          xcodebuild build-for-testing \
+            -project OfflineLock.xcodeproj \
+            -scheme OfflineLock \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/DerivedData \
+            SWIFT_COMPILATION_MODE=wholemodule \
+            CODE_SIGNING_ALLOWED=NO | tee build/test.log
+
+      - name: Build (Device, unsigned IPA)
+        run: |
+          mkdir -p build
+          set -o pipefail
+          xcodebuild archive \
+            -project OfflineLock.xcodeproj \
+            -scheme OfflineLock \
+            -sdk iphoneos \
+            -configuration Release \
+            -archivePath build/OfflineLock.xcarchive \
+            SWIFT_COMPILATION_MODE=wholemodule \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" | tee build/device.log
+          mkdir -p build/Payload
+          cp -R "build/OfflineLock.xcarchive/Products/Applications/OfflineLock.app" build/Payload/
+          # 文件名与包内 CFBundleVersion 同一个串: AltStore 里堆三份 "unsigned.ipa" 时,
+          # 装错版本比不装更糟 (开了门才发现不是这把锁的号)。
+          # 每个 step 是独立 shell, 上一步里的 $STAMP 到这里已经不存在 —— 必须重新取一次。
+          STAMP="${{ needs.stamp.outputs.kf_build_stamp }}"
+          [ -n "$STAMP" ] || { echo "::error::stamp 作业没输出 kf_build_stamp"; exit 1; }
+          cd build && zip -qry "OfflineLock-$STAMP-unsigned.ipa" Payload
+
+      - name: 编译失败时把错误行转成注解 (不登录也能读)
+        if: failure()
+        run: |
+          # 为什么要这一步：本仓 run 44–47 连红四场，而日志下载与产物都要登录鉴权 ——
+          # 于是"CI 红了"这个事实没有下文，本地 16 道闸门又不含编译器，臆造 API 就这么躲过去了
+          # (这一批抓到的 `Calendar.date(bySetting: .hourAndMinute(...))` 就是其中一条)。
+          # ::error 工作流命令会生成 check annotations，那是**公开 API 无鉴权可读**的唯一一份证据。
+          # 不设 head 上限: 之前 head -40 会把真问题截掉 (round-6 一次就有 107 个 error)。
+          # 配 SWIFT_ENABLE_BATCH_MODE=NO, 一次 run 就能列出全仓所有 error, 不再一轮挤一个批次。
+          for L in build/test.log build/device.log; do
+            [ -f "$L" ] || continue
+            grep -E "error: " "$L" | sed "s#^#::error file=$L::#" || true
+          done
+          {
+            echo "## 编译错误摘录 (全量, 去重)"
+            grep -hE "error: " build/test.log build/device.log 2>/dev/null | sed -E 's#^/[^ ]*/##' | sort -u \
+              || echo "(两份日志里都没有 error: 行 —— 那多半是环境/签名/模拟器问题，不是源码)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 上传产物
+        if: always()          # 失败也能拿到日志
+        uses: actions/upload-artifact@v7
+        with:
+          name: OfflineLock-build
+          path: |
+            build/test.log
+            build/device.log
+            build/OfflineLock-*-unsigned.ipa
+          if-no-files-found: error
+
+  # ================= 构建时刻 = 两端编译号的唯一来源 =================
+  # iOS 的 CFBundleVersion 与安卓的 versionCode/versionName 都由这一个戳派生:
+  #   一次 push 出一个时刻 → 两个并行 job 各自取 now 会差几十秒 (archive 排在 build-for-testing 之后),
+  #   于是"同一次生成的 ipa 和 apk"对不上号。所以 stamp 单独算一次, 两个 job needs 它。
+  # ⚠ 时区与格式只在**这一支**里算 (ubuntu = GNU date); macOS 没有 GNU 的 date -d,
+  #   所以 iOS 那支直接用算好的字符串, 不再自己转换 —— 否则 BSD date 会当场报错。
+  stamp:
+    name: Stamp 构建时刻
+    runs-on: ubuntu-latest
+    outputs:
+      kf_build_ts: ${{ steps.ts.outputs.kf_build_ts }}
+      kf_build_stamp: ${{ steps.ts.outputs.kf_build_stamp }}
+    steps:
+      - name: 取构建时刻
+        id: ts
+        run: |
+          TS=$(date +%s)
+          STAMP=$(TZ=Asia/Shanghai date -d "@$TS" +%Y%m%d.%H%M%S)
+          echo "kf_build_ts=$TS" >> "$GITHUB_OUTPUT"
+          echo "kf_build_stamp=$STAMP" >> "$GITHUB_OUTPUT"
+      - name: 回读校验 时刻与戳必须能互相换算
+        run: |
+          # 早失败: 戳与 ts 对不上 (时区没生效/date 行为变了) 就宁可红,
+          # 也不要产出"包内号与文件名不是同一时刻"的两种ipa 混在安装台上分不出来。
+          # ⚠ -d 后面必须带 @ 前缀: GNU date 拿裸的 10 位秒数会按 YYYYMMDDHH 解析成
+          #   invalid date (run 173/174 就是栽在这一步, BACK 空串 ⇒ 与 STAMP 不等 ⇒ 整个工作流连坐 skip)。
+          BACK=$(TZ=Asia/Shanghai date -d "@${{ steps.ts.outputs.kf_build_ts }}" +%Y%m%d.%H%M%S)
+          [ "$BACK" = "${{ steps.ts.outputs.kf_build_stamp }}" ] || { echo "::error::stamp 与 ts 不一致: $BACK"; exit 1; }
+          echo "构建时刻 ts=${{ steps.ts.outputs.kf_build_ts }} → ${{ steps.ts.outputs.kf_build_stamp }} (东八区)"
+
+  # ================= 安卓极简版 (KfKey) =================
+  # 与 iOS 同一个仓库、同一次 push: 上面出 IPA, 这里出 APK —— 用户口径是"一次性生成 ipa 和 apk"。
+  # 只做两件事: 点一下开锁 / 靠近自动开锁 (RSSI 强于 -38 dBm)。锁信息由 iOS 生成的二维码导入。
+  android:
+    name: Build (Android 13+, APK)
+    runs-on: ubuntu-latest
+    needs: stamp
+    env:
+      # gradle 读它当编译号 (android-app/app/build.gradle.kts); 本地手编没这个变量时回落"构建当刻"
+      KF_BUILD_TS: ${{ needs.stamp.outputs.kf_build_ts }}
+      KF_BUILD_STAMP: ${{ needs.stamp.outputs.kf_build_stamp }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # 不再调 android-actions/setup-android: 它在 ubuntu-latest 上这一步本身就失败过
+      # (v3 的 Node 运行时与镜像不匹配)。GitHub 的 ubuntu 镜像**自带** Android SDK
+      # ($ANDROID_HOME 已设好、licenses 已接受), AGP 缺哪个平台会自己补。
+      - name: 确认镜像自带 Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls "$ANDROID_HOME/platforms" || true
+          ls "$ANDROID_HOME/build-tools" || true
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "8.9"
+
+      # 编译只证明"编得过", 不证明"发出去的字节与 vendor 权威口径相同"。
+      # 2026-10-17 那个"恒报错误码 13"的坑就是编译全绿、真机全废: injectToken 把长度字段读偏
+      # 一个字节 → 自己那行长度守卫成立 → 令牌被静默丢掉 → 04 裸发。gradle 永远看不出这件事。
+      # 这一支排在 gradle **之前**: 只要 node, 秒级出结果, 不必等三分多钟的 APK 构建。
+      # (步骤名不含裸冒号, 与上面那条工作流自检的 grep 兼容。)
+      - name: '安卓端字节面影子对拍 (KfProtocol/AutoOpenKit vs vendor JS + golden, 判失败)'
+        run: node tools/kotlinshadow.js
+
+      # 签名密钥指纹核对 (2026-10-18): 用户报"签名不一致, 不能覆盖安装"。
+      # 排查结论: keystore/kfkey.p12 自 c4a6a4d 起就随仓库走且从未被改过 (本地与 HEAD 的
+      # SHA-256 一致), 所以不一致的那台手机装的是 **c4a6a4d 之前**的产物 —— 那时 debug 还没
+      # 绑固定签名, 每台 CI runner 用自己的临时 debug.keystore, 换一次构建就换一次签名。
+      # 这一步把指纹钉死: 密钥若被无意替换 (重新生成 / 换机器 / 误提交), 立刻红并说明后果,
+      # 而不是让用户在手机上撞 "INSTALL_FAILED_UPDATE_INCOMPATIBLE" 才发现。
+      - name: 核对签名密钥指纹
+        working-directory: android-app
+        run: |
+          WANT=4fed9ca07b2d86ece40d65174214215c0ab928bd413b2d962ffb790778878268
+          [ -f app/keystore/kfkey.p12 ] || { echo "::error::app/keystore/kfkey.p12 不见了, debug/release 都绑了它"; exit 1; }
+          GOT=$(sha256sum app/keystore/kfkey.p12 | cut -d" " -f1)
+          if [ "$GOT" != "$WANT" ]; then
+            echo "::error::签名密钥指纹变了 GOT=$GOT 期望=$WANT"
+            echo "::error::换密钥 = 老手机上这个 App 只能先卸载再装 (签名不同不能覆盖安装)。"
+            echo "::error::确实是有意轮换的话, 把上面 WANT 改成新指纹, 并在提交说明里写清要重装。"
+            exit 1
+          fi
+          echo "签名密钥指纹一致 ($GOT), 可与既往构建互相覆盖安装"
+
+      - name: 编译 APK (debug, 可直接安装)
+        working-directory: android-app
+        run: |
+          set -o pipefail
+          gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log
+
+      - name: 核对编译号 = 注入的时刻
+        working-directory: android-app
+        run: |
+          # 为什么单独立一步: KF_BUILD_TS 万一没传进来 (env 名写错 / stamp 作业被改名),
+          # gradle 会**静默**回落 Instant.now() —— 号照样单调、照样能覆盖安装, 一切看着都对,
+          # 只剩"ipa 与 apk 的时刻不再相同"这一个后果, 而那正是这次改动唯一要解决的问题。
+          #
+          # 优先读**产物本身**: 日志行只证明 gradle 算过, 不证明它写进了 APK。
+          # aapt 不在/没产物时退回日志核对 (build-tools 里 aapt 是遗留 shim, 不能假定它一定在)。
+          SRC=app/build/outputs/apk/debug/app-debug.apk
+          AAPT=$(ls "$ANDROID_HOME"/build-tools/*/aapt 2>/dev/null | tail -1 || true)
+          BADGE=""
+          if [ -n "$AAPT" ] && [ -f "$SRC" ]; then
+            BADGE=$("$AAPT" dump badging "$SRC" 2>/dev/null | grep -E "^package:" | head -1 || true)
+          fi
+          if [ -n "$BADGE" ]; then
+            echo "产物头部: $BADGE"
+            # 只从 versionName/versionCode= 后面吃"数字和点": 不依赖 GNU sed 的 \x27、
+            # 也不依赖 aapt 属性顺序与引号风格 (aapt2/badging 的引号会变)。
+            VN=$(printf "%s" "$BADGE" | sed -E "s/.*versionName=[^0-9A-Za-z]*([0-9][0-9.]*)?.*/\1/")
+            VC=$(printf "%s" "$BADGE" | sed -E "s/.*versionCode=[^0-9]*([0-9]+).*/\1/")
+            echo "读到的 versionName=$VN versionCode=$VC  期望时刻=$KF_BUILD_STAMP"
+            case "$VN" in
+              "1.0.$KF_BUILD_STAMP") echo "versionName 与注入时刻一致" ;;
+              *) echo "::error::APK 里的 versionName=$VN 不是本次注入的 1.0.$KF_BUILD_STAMP"; exit 1 ;;
+            esac
+            # versionCode 也要跟着变: 只动 versionName 的话, 系统按 versionCode 判新旧,
+            # 覆盖安装会报"已存在更高版本"或静默不更新 —— 又回到"装一次就不让升级"。
+            case "$VC" in
+              ""|1) echo "::error::versionCode=$VC 仍是旧默认值, 时间戳没生效"; exit 1 ;;
+              *) echo "versionCode=$VC (距 2026-01-01 的秒数)" ;;
+            esac
+          else
+            echo "没有 aapt 或没有产物 —— 退回 gradle 配置期打印核对"
+            grep -F "KfBuildStamp" build.log || { echo "::error::既读不到产物也找不到 KfBuildStamp 日志行"; exit 1; }
+            ACTUAL=$(grep -F "KfBuildStamp" build.log | tail -1 | sed -E "s/.*versionName=1\.0\.//")
+            [ "$ACTUAL" = "$KF_BUILD_STAMP" ] || { echo "::error::gradle 用的时刻 ($ACTUAL) 与 stamp 作业 ($KF_BUILD_STAMP) 不一致"; exit 1; }
+          fi
+      - name: 产物改名带编译号
+        working-directory: android-app
+        run: |
+          # gradle 恒输出 app-debug.apk (不含版本), 装几份下来就全同名了 —— 与 iOS 那支同一个理由:
+          # 名字、包内 versionName、包内 versionCode 三者同源于 stamp 作业那一个时刻。
+          [ -n "$KF_BUILD_STAMP" ] || { echo "::error::env 里的 KF_BUILD_STAMP 是空的 (stamp 作业没输出)"; exit 1; }
+          # 空戳会产出 "KfKey-.apk" —— 上传那条是通配 KfKey-*.apk, 照样命中, 于是**静默**拿到一个
+          # 没有时刻的包, 正是这次要治的"桌面上分不清版本"。所以在这里就拦住。
+          # 钉死源文件名, 不用 *.apk 通配后 head -1: 一旦目录里已经有 KfKey-<戳>.apk (本地手跑过
+          # 这一步、或同一 runner 复用过), head -1 按字母序可能挑到它, 于是"改名"改的是上次的产物。
+          SRC=app/build/outputs/apk/debug/app-debug.apk
+          [ -f "$SRC" ] || { echo "::error::找不到 $SRC (gradle 产物路径变了?)"; exit 1; }
+          cp "$SRC" "app/build/outputs/apk/debug/KfKey-$KF_BUILD_STAMP.apk"
+          ls -l app/build/outputs/apk/debug/
+          echo "本次编译号: versionCode=距 2026-01-01 的秒数 (KF_BUILD_TS=$KF_BUILD_TS), versionName=1.0.$KF_BUILD_STAMP" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 编译失败时把 Kotlin 错误写进摘要
+        if: failure()
+        working-directory: android-app
+        run: |
+          # 与 iOS 那支同一个理由: 日志要登录才能下载, 而 ::error 生成的 check annotation
+          # 是**无鉴权可读**的唯一一份证据。run#188 就是栽在"只知道红了、读不到 e: 行",
+          # 于是把一条 import 写错当成修好了 (SignalArrow 的 graphicsLayer 包名)。
+          # 先按 file= 形式提升 (GitHub 会把注解挂到文件行号上), 落不到文件名的退回纯文本。
+          grep -hE "^e: " build.log \
+            | sed -E 's#^e: file://[^:]+/(android-app/.*)$#::error file=\1#' \
+            | sed -E 's#^e: #::error::e: #' || true
+          {
+            echo "## Android 编译错误"
+            grep -E "^e: |^w: .*error|error:" build.log | head -60 || echo "(build.log 里没有 e: 行)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 上传 APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: KfKey-apk
+          # 通配会连 app-debug.apk 一起传上去 (两份同内容不同名, 容易拿错):
+          # 只传带编译号的那一份, 拿到的文件名就是这次构建的时刻。
+          path: android-app/app/build/outputs/apk/debug/KfKey-*.apk
+          if-no-files-found: error

@@ -5,6 +5,7 @@
 // 「锁端在布防、本机 F4 还在放行自动开锁」这种两边不一致。
 import Foundation
 
+@MainActor
 enum DefendService {
     /// 目标：让锁端与本地配置同时等于 (mode, startSec, endSec)。
     ///
