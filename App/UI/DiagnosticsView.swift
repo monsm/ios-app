@@ -641,39 +641,8 @@ struct DiagnosticsView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            // 455 指令重放摘要: 数据源直接取现有内存日志里 `命令名 -> rc=N` 这一族行 ——
-            // 不另建一份流水, 免得两份记录早晚对不上 (行内只有命令名与结果码, 不含帧、密钥或口令)。
-            Section("指令流水 (最近 \(min(cmdTrace.count, 20)) 条)") {   // 455 指令流水
-                if cmdTrace.isEmpty {
-                    Text("本次会话还没有指令结果 — 做一次开锁/读取后这里才有内容。")
-                        .vkFont(.footnote).foregroundStyle(DS.Palette.textSub)
-                        .fixedSize(horizontal: false, vertical: true)
-                } else {
-                    ForEach(Array(cmdTrace.prefix(20).enumerated()), id: \.offset) { _, line in
-                        HStack(spacing: DS.Space.s) {
-                            Text(line)
-                                .vkFont(.caption.monospaced())
-                                // 283: rc != 0 的指令行标红 (判据见 cmdTone)
-                                .foregroundStyle(Self.cmdTone(line))
-                                .textSelection(.enabled)
-                                .fixedSize(horizontal: false, vertical: true)
-                            Spacer(minLength: 0)
-                            // 159 跳转出口: 每行 rc 一点就落到错误码对照表; 抠到 rc 值就聚焦那一行。
-                            // 不用整行 NavigationLink 是因为会吃掉上面 textSelection 的复制手势 —— 两个能力都留。
-                            NavigationLink {
-                                        // 2026-10-26 精简：rc 码跳转查阅入口已删（DiagReferenceView 整个删除）。
-                                Image(systemName: "text.book.closed")
-                                    .vkFont(.footnote)
-                                    .foregroundStyle(DS.Palette.accentText)
-                            }
-                            .accessibilityLabel("查错误码对照表")   // 159 查错误码对照表
-                        }
-                    }
-                    Text("只列命令类型与结果码 (rc)。开启\"记录原始收发 hex\"后, 落进日志的行也只剩帧头 4 位并标注已隐去多少位；完整帧只在内存里留着给\"原始报文\"看，不写盘、不进报告与导出。")
-                        .vkFont(.caption2).foregroundStyle(DS.Palette.textSub)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
+            // 2026-10-26 精简：「指令流水」整节已删（用户确认删 diagnostic.cmd-trace）。
+            // 它原本还带一个「rc 码跳转查阅」入口，而那个入口指向的 DiagReferenceView 也一并删了。
             // 397: 创意写的是 SQLite quick_check, 而本 App 没有 SQLite —— 这一栏做**等价**的三件本地核对, 并且不叫 quick_check。
             Section("本机库体自检") {   // 397 本机库体自检
                 Button("立即自检 (只读)") {
@@ -1130,15 +1099,7 @@ struct DiagnosticsView: View {
         if line.contains("[warn]") { return DS.Palette.warn }
         return DS.Palette.text
     }
-    /// 283 指令流水着色: `命令名 -> rc=N` 里 N != 0 的行标红 (与 455 的行格式同源)。
-    private static func cmdTone(_ line: String) -> Color {
-        guard let r = line.range(of: "rc=") else { return DS.Palette.text }
-        var s = ""
-        for c in line[r.upperBound...] {
-            if c.isNumber || (c == "-" && s.isEmpty) { s.append(c) } else { break }
-        }
-        return (Int(s) ?? 0) != 0 ? DS.Palette.danger : DS.Palette.text
-    }
+    // 2026-10-26 精简：cmdTone 已删（「指令流水」整节移除后无消费者）。
     private static func hexOf(_ line: String) -> String {
         guard let r = line.range(of: "hex=") else { return "" }
         var out = ""
@@ -1182,11 +1143,7 @@ struct DiagnosticsView: View {
         }
         return out
     }
-    /// 455: 指令流水 = 内存日志里 `命令名 -> rc=N` 那一族行 (最新在前)。取现成日志而不是另建一份环形队列,
-    /// 是因为两份同族记录迟早对不上; 这些行本身只含命令名与结果码。
-    private var cmdTrace: [String] {
-        app.lock.logs.reversed().filter { $0.contains("-> rc=") }
-    }
+    // 2026-10-26 精简：cmdTrace 已删（「指令流水」整节移除后无消费者）。
 
     /// 159: 从 `命令名 -> rc=N` 行里抠出结果码; 抠不到返回 nil (照常打开对照表, 只是不聚焦)
     private static func rcOf(_ line: String) -> Int? {
