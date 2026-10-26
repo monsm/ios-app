@@ -328,6 +328,23 @@ struct SettingsView: View {
                     NavigationLink("防尾随入室") { TailgateView() }
                     note("开门后短时间内刷同一凭证才告警。")
                 }
+                // 包9 布防 (cmd25): 原版 APK 有、iOS 此前只有构造器没有入口。
+                // 门禁用 canDefend (KX / V1_Pro 家族)，与 APK 的 canDefend 白名单同源。
+                if canDefend {
+                    NavigationLink {
+                        DefendView()
+                    } label: {
+                        HStack(spacing: DS.Space.s) {
+                            Text("布防")
+                            Spacer(minLength: 0)
+                            Text(DefendKit.summary(DB.defend(mac)))
+                                .vkFont(.caption)
+                                .foregroundStyle(DefendKit.isActive(DB.defend(mac))
+                                                 ? DS.Palette.ok : DS.Palette.textSub)
+                        }
+                    }
+                    note("时段内一票否决自动开锁；布防期间靠近门锁不会自动开门。")
+                }
                 if canClearPwd {
                     Button("清空密码", role: .destructive) { clearPwd() }
                         .disabled(clearingPwd)
@@ -351,6 +368,7 @@ struct SettingsView: View {
             .fixedSize(horizontal: false, vertical: true)
     }
     private var canTailgate: Bool { PidMap.canTailgate(app.current?.pid ?? 0, fw: app.current?.fw) }
+    private var canDefend: Bool { PidMap.canDefend(app.current?.pid ?? 0) }
     private var canClearPwd: Bool { PidMap.canClearPwd(app.current?.pid ?? 0) }
 
     private func clearPwd() {
@@ -532,6 +550,22 @@ struct SettingsView: View {
         Button { showUnclaimed = true } label: { Label("未归属记录认领", systemImage: "questionmark.circle") }   // 791 未归属记录认领
         Button { showFamilySettings = true } label: { Label("家庭设置：长辈模式/隐私浏览", systemImage: "hand.raised.fill") }   // 479/794 家庭设置
         Button { showKeychainHW = true } label: { Label("蓝牙钥匙串", systemImage: "key.horizontal") }
+        // 包9 固件升级 (cmd22 + Nordic DFU): 原版 APK 有完整 OTA, iOS 此前把 DFU 逻辑整体删掉只剩包解析。
+        // 门禁用 canDeviceUpgrade (与 APK 同源), 防网关/钥匙串误入。
+        if PidMap.canDeviceUpgrade(app.current?.pid ?? 0) {
+            NavigationLink {
+                DFUView()
+            } label: {
+                Label("固件升级", systemImage: "arrow.up.circle")
+            }
+        }
+        // 包9 手机钥匙 (41/43/44 的成员侧): 与「蓝牙钥匙串」并列 ——
+        // 前者是把钥匙写进随身硬件, 后者是把 ekey 发给成员的手机, 归属对象不同, 不能合并成一条。
+        NavigationLink {
+            MobileKeyView()
+        } label: {
+            Label("手机钥匙", systemImage: "iphone.gen3.badge.key")
+        }
         // 2026-10-14 走查: 「添加另一把锁」原先挂在本节末尾 —— 它讲的是"再加一把锁", 属于门锁本身,
         // 与"谁能开门"（家人与钥匙）不是同一件事; 而且本节的 footer 正在解释成员分组, 摆一个添加设备
         // 在下面读起来像"给这个成员再加一把锁"。已挪进 lockSection 的「门锁」节 (与「删除设备」同处,

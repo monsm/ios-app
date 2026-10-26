@@ -190,4 +190,19 @@ enum FirmwareKit {
         let inc = String(format: "%02x", last &+ 1)
         return String(m.dropLast(2)) + inc
     }
+
+    // 降级闸 —— 第 160 行那条注释里提到但一直没实现的那个入口。
+    // 口径：**当前固件版本 > 包内版本** 就是降级，直接拒绝。
+    // 为什么不给"允许降级"开关：这条链上没有任何签名校验（见 parse() 里那段说明），
+    // 降级是攻击者把锁刷回存在已知漏洞的旧固件的最短路径；而普通用户降级的正当理由几乎没有。
+    // 返回 nil = 放行；返回字符串 = 要原样展示的拒绝理由。
+    static func downgradeBlocked(current: String?, pkg: FirmwarePackage) -> String? {
+        guard let cur = current, !cur.isEmpty else { return nil }   // 读不到当前版本时不拦（无法判定）
+        guard let target = pkg.version else { return nil }          // 包名里没有版本号时无法判定
+        if versionLt(target, cur) {
+            return "包内固件版本 \(target) 低于锁内版本 \(cur)，已拒绝降级"
+                 + "（本仓无法校验固件签名，降级是刷入旧漏洞固件的最短路径）"
+        }
+        return nil
+    }
 }

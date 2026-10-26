@@ -126,6 +126,9 @@ jobs:
       - name: 'ZK 命令帧跨语言差分 (Swift 侧逐行复刻进 node, 与 vendor 基线夹具整帧逐字节比对; 覆盖 32/40, 未覆盖项由工具打印)'
         run: node tools/cmdsshadow.js
 
+      - name: 'APK 基线协议对照 (以 apk_raw/assets/www/build/main.js + Java LockCommBase 为权威, 不用 vendor 移植稿; 帧头/KLV/EKey 包络/命令体/令牌注入键/pin 编码逐项断言)'
+        run: node tools/apkshadow.js
+
       - name: '解析侧跨语言差分 (锁回来的帧 → 状态/日志/广播/词表; 输入与期望都取自金标夹具, 算法复刻自 Swift)'
         run: node tools/parseshadow.js
 

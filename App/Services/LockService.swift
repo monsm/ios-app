@@ -531,6 +531,30 @@ final class LockService: ObservableObject {
         try await execOk(ZKCmdBuilder.cmd19OpenZotp(m, sk, on))
     }
 
+    // ---------- 布防 (cmd25 SETDEFENCE) —— 补齐 iOS 侧缺失的入口 ----------
+    /// 布防/撤防。control: 0 撤防 / 1 不定期 / 2 时段；startSec/endSec 是**协议半秒**的日内值，
+    /// 由 DefendKit.protoSec 换算；撤防与不定期一律传 0（与 APK 的 time 字段全 0 一致）。
+    ///
+    /// 这条命令显式带会话令牌：它改动锁的安全策略，与 04/05 同族；漏令牌会拿到 rc=13「通讯过期」，
+    /// 且重试也不会自愈，所以把 needToken 写出来而不是靠默认值。
+    func setDefence(control: Int, startSec: Int, endSec: Int) async throws {
+        let (m, sk) = try keys()
+        try await execOk(ZKCmdBuilder.cmd25Defence(m, sk, control, startSec, endSec), needToken: true)
+        log("info", "布防已下发 (25): control=\(control) start=\(startSec) end=\(endSec)")
+    }
+
+    // ---------- 进 DFU (cmd22) —— 补齐 OTA 链路的第一步 ----------
+    /// 让锁重启进 bootloader。**这是预期断链**：锁收到 22 后会以 `ZkDFU` + MAC 后 8 位重新广播，
+    /// 所以本方法成功后不要等回包以外的任何东西，也不要把随后的 disconnect 当失败。
+    ///
+    /// 与 APK 的 sendDFUCmd 同口径：param 传 0 表示"重启进 bootloader"。
+    func enableDfu(param: Int = 0) async throws {
+        let (m, sk) = try keys()
+        // 超时给短一点：锁可能在回 rc 后立刻开始重启，等太久只会拿到断链错误。
+        try await execOk(ZKCmdBuilder.cmd22EnableDfu(m, sk, param), needToken: true, retries: 1)
+        log("info", "已下发 22 进 DFU: param=\(param)（随后断链属预期）")
+    }
+
     // ---------- 密码 ----------
     // 0A 响应 KLV#04 = alias (LE 2B)
     private func aliasFrom(_ r: ExecResult) -> Int? {
@@ -596,6 +620,28 @@ final class LockService: ObservableObject {
         let (m, sk) = try keys()
         try await execOk(try ZKCmdBuilder.cmd0ASyncPwd(m, sk, delAlias: 0xFFFF))
     }
+
+    // ---------- PIN 池单条删除 (cmd08 delPins) —— 撤销手机钥匙要用 ----------
+    /// 只发 delPins、addPins 为空。用于撤销一把手机钥匙：把它的 pin 从锁里摘掉，
+    /// 否则下一个用旧 pin 签出来的 ekey 仍然能开门。
+    ///
+    /// 与配网时的整池写入（pair() 里 20/批 + 首批带 0xFFFFFFFF 哨兵）是两条路径：
+    /// 那条是"重置成这 64 个"，这条是"删掉这一个"，删的时候**绝不能带哨兵**。
+    func deletePins(_ pins: [String]) async throws {
+        guard !pins.isEmpty else { return }
+        let (m, sk) = try keys()
+        var i = 0
+        while i < pins.count {
+            let batch = Array(pins[i..<min(i + 20, pins.count)])
+            guard let c = ZKCmdBuilder.cmd08SyncPinsBatch(m, sk, [], delPins: batch) else {
+                throw BLEErrorX.msg("PIN 删除批次构建失败")
+            }
+            try await execOk(c)
+            log("info", "已删除 \(batch.count) 个 PIN (08 delPins)")
+            i += 20
+        }
+    }
+
     func pwdExpire(_ alias: Int, _ from: String, _ to: String) async throws {
         let (m, sk) = try keys()
         try await execOk(ZKCmdBuilder.cmd0BSyncPwdExpire(m, sk, alias, from, to))
